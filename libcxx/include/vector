@@ -1146,8 +1146,8 @@ vector<_Tp, _Allocator>::vector(vector&& __x, const allocator_type& __a)
     }
     else
     {
-        typedef move_iterator<iterator> _I;
-        assign(_I(__x.begin()), _I(__x.end()));
+        typedef move_iterator<iterator> _Ip;
+        assign(_Ip(__x.begin()), _Ip(__x.end()));
     }
 }
 
@@ -1203,8 +1203,8 @@ vector<_Tp, _Allocator>::__move_assign(vector& __c, false_type)
 {
     if (__base::__alloc() != __c.__alloc())
     {
-        typedef move_iterator<iterator> _I;
-        assign(_I(__c.begin()), _I(__c.end()));
+        typedef move_iterator<iterator> _Ip;
+        assign(_Ip(__c.begin()), _Ip(__c.end()));
     }
     else
         __move_assign(__c, true_type());

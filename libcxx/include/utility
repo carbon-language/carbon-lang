@@ -180,12 +180,12 @@ swap_ranges(_ForwardIterator1 __first1, _ForwardIterator1 __last1, _ForwardItera
     return __first2;
 }
 
-template<class _Tp, size_t _N>
+template<class _Tp, size_t _Np>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-swap(_Tp (&__a)[_N], _Tp (&__b)[_N]) _NOEXCEPT_(__is_nothrow_swappable<_Tp>::value)
+swap(_Tp (&__a)[_Np], _Tp (&__b)[_Np]) _NOEXCEPT_(__is_nothrow_swappable<_Tp>::value)
 {
-    _VSTD::swap_ranges(__a, __a + _N, __b);
+    _VSTD::swap_ranges(__a, __a + _Np, __b);
 }
 
 template <class _Tp>

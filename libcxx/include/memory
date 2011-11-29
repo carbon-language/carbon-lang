@@ -1064,10 +1064,10 @@ struct __const_void_pointer<_Ptr, _Alloc, false>
 #endif
 };
 
-template <class _T>
+template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
-_T*
-__to_raw_pointer(_T* __p) _NOEXCEPT
+_Tp*
+__to_raw_pointer(_Tp* __p) _NOEXCEPT
 {
     return __p;
 }
@@ -2517,20 +2517,20 @@ public:
                 "unique_ptr constructed with null function pointer deleter");
         }
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template <class _P,
-              class = typename enable_if<is_same<_P, pointer>::value>::type
+    template <class _Pp,
+              class = typename enable_if<is_same<_Pp, pointer>::value>::type
              >
-    _LIBCPP_INLINE_VISIBILITY explicit unique_ptr(_P __p) _NOEXCEPT
+    _LIBCPP_INLINE_VISIBILITY explicit unique_ptr(_Pp __p) _NOEXCEPT
         : __ptr_(__p)
         {
             static_assert(!is_pointer<deleter_type>::value,
                 "unique_ptr constructed with null function pointer deleter");
         }
 
-    template <class _P,
-              class = typename enable_if<is_same<_P, pointer>::value>::type
+    template <class _Pp,
+              class = typename enable_if<is_same<_Pp, pointer>::value>::type
              >
-    _LIBCPP_INLINE_VISIBILITY unique_ptr(_P __p, typename conditional<
+    _LIBCPP_INLINE_VISIBILITY unique_ptr(_Pp __p, typename conditional<
                                        is_reference<deleter_type>::value,
                                        deleter_type,
                                        typename add_lvalue_reference<const deleter_type>::type>::type __d)
@@ -2544,11 +2544,11 @@ public:
              _NOEXCEPT
         : __ptr_(pointer(), __d) {}
 
-    template <class _P,
-              class = typename enable_if<is_same<_P, pointer>::value ||
-                                         is_same<_P, nullptr_t>::value>::type
+    template <class _Pp,
+              class = typename enable_if<is_same<_Pp, pointer>::value ||
+                                         is_same<_Pp, nullptr_t>::value>::type
              >
-    _LIBCPP_INLINE_VISIBILITY unique_ptr(_P __p, typename remove_reference<deleter_type>::type&& __d)
+    _LIBCPP_INLINE_VISIBILITY unique_ptr(_Pp __p, typename remove_reference<deleter_type>::type&& __d)
              _NOEXCEPT
         : __ptr_(__p, _VSTD::move(__d))
         {
@@ -2628,10 +2628,10 @@ public:
     }
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template <class _P,
-              class = typename enable_if<is_same<_P, pointer>::value>::type
+    template <class _Pp,
+              class = typename enable_if<is_same<_Pp, pointer>::value>::type
              >
-    _LIBCPP_INLINE_VISIBILITY void reset(_P __p) _NOEXCEPT
+    _LIBCPP_INLINE_VISIBILITY void reset(_Pp __p) _NOEXCEPT
     {
         pointer __tmp = __ptr_.first();
         __ptr_.first() = __p;
@@ -3116,13 +3116,13 @@ public:
     bool unique() const _NOEXCEPT {return use_count() == 1;}
     _LIBCPP_INLINE_VISIBILITY
     /*explicit*/ operator bool() const _NOEXCEPT {return get() != 0;}
-    template <class _U>
+    template <class _Up>
         _LIBCPP_INLINE_VISIBILITY
-        bool owner_before(shared_ptr<_U> const& __p) const
+        bool owner_before(shared_ptr<_Up> const& __p) const
         {return __cntrl_ < __p.__cntrl_;}
-    template <class _U>
+    template <class _Up>
         _LIBCPP_INLINE_VISIBILITY
-        bool owner_before(weak_ptr<_U> const& __p) const
+        bool owner_before(weak_ptr<_Up> const& __p) const
         {return __cntrl_ < __p.__cntrl_;}
 
 #ifndef _LIBCPP_NO_RTTI
@@ -4151,10 +4151,10 @@ struct _LIBCPP_VISIBLE hash<shared_ptr<_Tp> >
     }
 };
 
-template<class _CharT, class _Traits, class _Y>
+template<class _CharT, class _Traits, class _Yp>
 inline _LIBCPP_INLINE_VISIBILITY
 basic_ostream<_CharT, _Traits>&
-operator<<(basic_ostream<_CharT, _Traits>& __os, shared_ptr<_Y> const& __p);
+operator<<(basic_ostream<_CharT, _Traits>& __os, shared_ptr<_Yp> const& __p);
 
 //enum class
 struct _LIBCPP_VISIBLE pointer_safety

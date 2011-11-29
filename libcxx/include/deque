@@ -280,10 +280,10 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY __deque_iterator() _NOEXCEPT {}
 
-    template <class _P, class _R, class _MP>
+    template <class _Pp, class _Rp, class _MP>
     _LIBCPP_INLINE_VISIBILITY
-    __deque_iterator(const __deque_iterator<value_type, _P, _R, _MP, difference_type, __block_size>& __it,
-                typename enable_if<is_convertible<_P, pointer>::value>::type* = 0) _NOEXCEPT
+    __deque_iterator(const __deque_iterator<value_type, _Pp, _Rp, _MP, difference_type, __block_size>& __it,
+                typename enable_if<is_convertible<_Pp, pointer>::value>::type* = 0) _NOEXCEPT
         : __m_iter_(__it.__m_iter_), __ptr_(__it.__ptr_) {}
 
     _LIBCPP_INLINE_VISIBILITY reference operator*() const {return *__ptr_;}
@@ -409,9 +409,9 @@ private:
     _LIBCPP_INLINE_VISIBILITY __deque_iterator(__map_iterator __m, pointer __p) _NOEXCEPT
         : __m_iter_(__m), __ptr_(__p) {}
 
-    template <class _Tp, class _A> friend class __deque_base;
-    template <class _Tp, class _A> friend class _LIBCPP_VISIBLE deque;
-    template <class _V, class _P, class _R, class _MP, class _D, _D>
+    template <class _Tp, class _Ap> friend class __deque_base;
+    template <class _Tp, class _Ap> friend class _LIBCPP_VISIBLE deque;
+    template <class _Vp, class _Pp, class _Rp, class _MP, class _Dp, _Dp>
         friend class _LIBCPP_VISIBLE __deque_iterator;
 
     template <class _RAIter,
@@ -1510,8 +1510,8 @@ deque<_Tp, _Allocator>::deque(deque&& __c, const allocator_type& __a)
 {
     if (__a != __c.__alloc())
     {
-        typedef move_iterator<iterator> _I;
-        assign(_I(__c.begin()), _I(__c.end()));
+        typedef move_iterator<iterator> _Ip;
+        assign(_Ip(__c.begin()), _Ip(__c.end()));
     }
 }
 
@@ -1533,8 +1533,8 @@ deque<_Tp, _Allocator>::__move_assign(deque& __c, false_type)
 {
     if (__base::__alloc() != __c.__alloc())
     {
-        typedef move_iterator<iterator> _I;
-        assign(_I(__c.begin()), _I(__c.end()));
+        typedef move_iterator<iterator> _Ip;
+        assign(_Ip(__c.begin()), _Ip(__c.end()));
     }
     else
         __move_assign(__c, true_type());

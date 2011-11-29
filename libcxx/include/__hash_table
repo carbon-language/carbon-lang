@@ -604,15 +604,15 @@ public:
     pair<iterator, bool> __insert_unique(const value_type& __x);
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template <class _P>
-        pair<iterator, bool> __insert_unique(_P&& __x);
+    template <class _Pp>
+        pair<iterator, bool> __insert_unique(_Pp&& __x);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template <class _P>
-        iterator __insert_multi(_P&& __x);
-    template <class _P>
-        iterator __insert_multi(const_iterator __p, _P&& __x);
+    template <class _Pp>
+        iterator __insert_multi(_Pp&& __x);
+    template <class _Pp>
+        iterator __insert_multi(const_iterator __p, _Pp&& __x);
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     iterator __insert_multi(const value_type& __x);
     iterator __insert_multi(const_iterator __p, const value_type& __x);
@@ -644,8 +644,8 @@ public:
     template <class _Key>
         const_iterator find(const _Key& __x) const;
 
-    typedef __hash_node_destructor<__node_allocator> _D;
-    typedef unique_ptr<__node, _D> __node_holder;
+    typedef __hash_node_destructor<__node_allocator> _Dp;
+    typedef unique_ptr<__node, _Dp> __node_holder;
 
     iterator erase(const_iterator __p);
     iterator erase(const_iterator __first, const_iterator __last);
@@ -752,37 +752,37 @@ private:
     _LIBCPP_INLINE_VISIBILITY
         void __move_assign_alloc(__hash_table&, false_type) _NOEXCEPT {}
 
-    template <class _A>
+    template <class _Ap>
     _LIBCPP_INLINE_VISIBILITY
     static
     void
-    __swap_alloc(_A& __x, _A& __y)
+    __swap_alloc(_Ap& __x, _Ap& __y)
         _NOEXCEPT_(
-            !allocator_traits<_A>::propagate_on_container_swap::value ||
-            __is_nothrow_swappable<_A>::value)
+            !allocator_traits<_Ap>::propagate_on_container_swap::value ||
+            __is_nothrow_swappable<_Ap>::value)
     {
         __swap_alloc(__x, __y,
                      integral_constant<bool,
-                        allocator_traits<_A>::propagate_on_container_swap::value
+                        allocator_traits<_Ap>::propagate_on_container_swap::value
                                       >());
     }
 
-    template <class _A>
+    template <class _Ap>
     _LIBCPP_INLINE_VISIBILITY
     static
     void
-    __swap_alloc(_A& __x, _A& __y, true_type)
-        _NOEXCEPT_(__is_nothrow_swappable<_A>::value)
+    __swap_alloc(_Ap& __x, _Ap& __y, true_type)
+        _NOEXCEPT_(__is_nothrow_swappable<_Ap>::value)
     {
         using _VSTD::swap;
         swap(__x, __y);
     }
 
-    template <class _A>
+    template <class _Ap>
     _LIBCPP_INLINE_VISIBILITY
     static
     void
-    __swap_alloc(_A& __x, _A& __y, false_type) _NOEXCEPT {}
+    __swap_alloc(_Ap& __x, _Ap& __y, false_type) _NOEXCEPT {}
 
     void __deallocate(__node_pointer __np) _NOEXCEPT;
     __node_pointer __detach() _NOEXCEPT;
@@ -1422,11 +1422,11 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__emplace_hint_multi(
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-template <class _P>
+template <class _Pp>
 pair<typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator, bool>
-__hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique(_P&& __x)
+__hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique(_Pp&& __x)
 {
-    __node_holder __h = __construct_node(_VSTD::forward<_P>(__x));
+    __node_holder __h = __construct_node(_VSTD::forward<_Pp>(__x));
     pair<iterator, bool> __r = __node_insert_unique(__h.get());
     if (__r.second)
         __h.release();
@@ -1438,23 +1438,23 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique(_P&& __x)
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-template <class _P>
+template <class _Pp>
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
-__hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_multi(_P&& __x)
+__hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_multi(_Pp&& __x)
 {
-    __node_holder __h = __construct_node(_VSTD::forward<_P>(__x));
+    __node_holder __h = __construct_node(_VSTD::forward<_Pp>(__x));
     iterator __r = __node_insert_multi(__h.get());
     __h.release();
     return __r;
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
-template <class _P>
+template <class _Pp>
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_multi(const_iterator __p,
-                                                         _P&& __x)
+                                                         _Pp&& __x)
 {
-    __node_holder __h = __construct_node(_VSTD::forward<_P>(__x));
+    __node_holder __h = __construct_node(_VSTD::forward<_Pp>(__x));
     iterator __r = __node_insert_multi(__p, __h.get());
     __h.release();
     return __r;
@@ -1616,7 +1616,7 @@ typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_holder
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(_Args&& ...__args)
 {
     __node_allocator& __na = __node_alloc();
-    __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
+    __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
     __node_traits::construct(__na, _VSTD::addressof(__h->__value_), _VSTD::forward<_Args>(__args)...);
     __h.get_deleter().__value_constructed = true;
     __h->__hash_ = hash_function()(__h->__value_);
@@ -1632,7 +1632,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(value_type&& __v,
                                                            size_t __hash)
 {
     __node_allocator& __na = __node_alloc();
-    __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
+    __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
     __node_traits::construct(__na, _VSTD::addressof(__h->__value_), _VSTD::move(__v));
     __h.get_deleter().__value_constructed = true;
     __h->__hash_ = __hash;
@@ -1647,7 +1647,7 @@ typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_holder
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(const value_type& __v)
 {
     __node_allocator& __na = __node_alloc();
-    __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
+    __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
     __node_traits::construct(__na, _VSTD::addressof(__h->__value_), __v);
     __h.get_deleter().__value_constructed = true;
     __h->__hash_ = hash_function()(__h->__value_);
@@ -1663,7 +1663,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(const value_type& __v
                                                            size_t __hash)
 {
     __node_allocator& __na = __node_alloc();
-    __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
+    __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
     __node_traits::construct(__na, _VSTD::addressof(__h->__value_), __v);
     __h.get_deleter().__value_constructed = true;
     __h->__hash_ = __hash;
@@ -1758,7 +1758,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::remove(const_iterator __p) _NOEXCEPT
     __pn->__next_ = __cn->__next_;
     __cn->__next_ = nullptr;
     --size();
-    return __node_holder(__cn, _D(__node_alloc(), true));
+    return __node_holder(__cn, _Dp(__node_alloc(), true));
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>

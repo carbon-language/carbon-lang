@@ -1667,8 +1667,8 @@ struct __is_seed_sequence
 // linear_congruential_engine
 
 template <unsigned long long __a, unsigned long long __c,
-          unsigned long long __m, unsigned long long _M,
-          bool _MightOverflow = (__a != 0 && __m != 0 && __m-1 > (_M-__c)/__a)>
+          unsigned long long __m, unsigned long long _Mp,
+          bool _MightOverflow = (__a != 0 && __m != 0 && __m-1 > (_Mp-__c)/__a)>
 struct __lce_ta;
 
 // 64
@@ -1732,16 +1732,16 @@ struct __lce_ta<__a, __c, 0, (unsigned long long)(~0), false>
 
 // 32
 
-template <unsigned long long _A, unsigned long long _C, unsigned long long _M>
-struct __lce_ta<_A, _C, _M, unsigned(~0), true>
+template <unsigned long long _Ap, unsigned long long _Cp, unsigned long long _Mp>
+struct __lce_ta<_Ap, _Cp, _Mp, unsigned(~0), true>
 {
     typedef unsigned result_type;
     _LIBCPP_INLINE_VISIBILITY
     static result_type next(result_type __x)
     {
-        const result_type __a = static_cast<result_type>(_A);
-        const result_type __c = static_cast<result_type>(_C);
-        const result_type __m = static_cast<result_type>(_M);
+        const result_type __a = static_cast<result_type>(_Ap);
+        const result_type __c = static_cast<result_type>(_Cp);
+        const result_type __m = static_cast<result_type>(_Mp);
         // Schrage's algorithm
         const result_type __q = __m / __a;
         const result_type __r = __m % __a;
@@ -1753,15 +1753,15 @@ struct __lce_ta<_A, _C, _M, unsigned(~0), true>
     }
 };
 
-template <unsigned long long _A, unsigned long long _M>
-struct __lce_ta<_A, 0, _M, unsigned(~0), true>
+template <unsigned long long _Ap, unsigned long long _Mp>
+struct __lce_ta<_Ap, 0, _Mp, unsigned(~0), true>
 {
     typedef unsigned result_type;
     _LIBCPP_INLINE_VISIBILITY
     static result_type next(result_type __x)
     {
-        const result_type __a = static_cast<result_type>(_A);
-        const result_type __m = static_cast<result_type>(_M);
+        const result_type __a = static_cast<result_type>(_Ap);
+        const result_type __m = static_cast<result_type>(_Mp);
         // Schrage's algorithm
         const result_type __q = __m / __a;
         const result_type __r = __m % __a;
@@ -1772,29 +1772,29 @@ struct __lce_ta<_A, 0, _M, unsigned(~0), true>
     }
 };
 
-template <unsigned long long _A, unsigned long long _C, unsigned long long _M>
-struct __lce_ta<_A, _C, _M, unsigned(~0), false>
+template <unsigned long long _Ap, unsigned long long _Cp, unsigned long long _Mp>
+struct __lce_ta<_Ap, _Cp, _Mp, unsigned(~0), false>
 {
     typedef unsigned result_type;
     _LIBCPP_INLINE_VISIBILITY
     static result_type next(result_type __x)
     {
-        const result_type __a = static_cast<result_type>(_A);
-        const result_type __c = static_cast<result_type>(_C);
-        const result_type __m = static_cast<result_type>(_M);
+        const result_type __a = static_cast<result_type>(_Ap);
+        const result_type __c = static_cast<result_type>(_Cp);
+        const result_type __m = static_cast<result_type>(_Mp);
         return (__a * __x + __c) % __m;
     }
 };
 
-template <unsigned long long _A, unsigned long long _C>
-struct __lce_ta<_A, _C, 0, unsigned(~0), false>
+template <unsigned long long _Ap, unsigned long long _Cp>
+struct __lce_ta<_Ap, _Cp, 0, unsigned(~0), false>
 {
     typedef unsigned result_type;
     _LIBCPP_INLINE_VISIBILITY
     static result_type next(result_type __x)
     {
-        const result_type __a = static_cast<result_type>(_A);
-        const result_type __c = static_cast<result_type>(_C);
+        const result_type __a = static_cast<result_type>(_Ap);
+        const result_type __c = static_cast<result_type>(_Cp);
         return __a * __x + __c;
     }
 };
@@ -1816,16 +1816,16 @@ template <class _UIntType, _UIntType __a, _UIntType __c, _UIntType __m>
 class linear_congruential_engine;
 
 template <class _CharT, class _Traits,
-          class _U, _U _A, _U _C, _U _N>
+          class _Up, _Up _Ap, _Up _Cp, _Up _Np>
 basic_ostream<_CharT, _Traits>&
 operator<<(basic_ostream<_CharT, _Traits>& __os,
-           const linear_congruential_engine<_U, _A, _C, _N>&);
+           const linear_congruential_engine<_Up, _Ap, _Cp, _Np>&);
 
 template <class _CharT, class _Traits,
-          class _U, _U _A, _U _C, _U _N>
+          class _Up, _Up _Ap, _Up _Cp, _Up _Np>
 basic_istream<_CharT, _Traits>&
 operator>>(basic_istream<_CharT, _Traits>& __is,
-           linear_congruential_engine<_U, _A, _C, _N>& __x);
+           linear_congruential_engine<_Up, _Ap, _Cp, _Np>& __x);
 
 template <class _UIntType, _UIntType __a, _UIntType __c, _UIntType __m>
 class _LIBCPP_VISIBLE linear_congruential_engine
@@ -1837,7 +1837,7 @@ public:
 private:
     result_type __x_;
 
-    static const result_type _M = result_type(~0);
+    static const result_type _Mp = result_type(~0);
 
     static_assert(__m == 0 || __a < __m, "linear_congruential_engine invalid parameters");
     static_assert(__m == 0 || __c < __m, "linear_congruential_engine invalid parameters");
@@ -1883,7 +1883,7 @@ public:
     // generating functions
     _LIBCPP_INLINE_VISIBILITY
     result_type operator()()
-        {return __x_ = static_cast<result_type>(__lce_ta<__a, __c, __m, _M>::next(__x_));}
+        {return __x_ = static_cast<result_type>(__lce_ta<__a, __c, __m, _Mp>::next(__x_));}
     _LIBCPP_INLINE_VISIBILITY
     void discard(unsigned long long __z) {for (; __z; --__z) operator()();}
 
@@ -1914,18 +1914,18 @@ private:
         void __seed(_Sseq& __q, integral_constant<unsigned, 2>);
 
     template <class _CharT, class _Traits,
-              class _U, _U _A, _U _C, _U _N>
+              class _Up, _Up _Ap, _Up _Cp, _Up _Np>
     friend
     basic_ostream<_CharT, _Traits>&
     operator<<(basic_ostream<_CharT, _Traits>& __os,
-               const linear_congruential_engine<_U, _A, _C, _N>&);
+               const linear_congruential_engine<_Up, _Ap, _Cp, _Np>&);
 
     template <class _CharT, class _Traits,
-              class _U, _U _A, _U _C, _U _N>
+              class _Up, _Up _Ap, _Up _Cp, _Up _Np>
     friend
     basic_istream<_CharT, _Traits>&
     operator>>(basic_istream<_CharT, _Traits>& __is,
-               linear_congruential_engine<_U, _A, _C, _N>& __x);
+               linear_congruential_engine<_Up, _Ap, _Cp, _Np>& __x);
 };
 
 template <class _UIntType, _UIntType __a, _UIntType __c, _UIntType __m>
@@ -2022,41 +2022,41 @@ template <class _UIntType, size_t __w, size_t __n, size_t __m, size_t __r,
           _UIntType __b, size_t __t, _UIntType __c, size_t __l, _UIntType __f>
 class mersenne_twister_engine;
 
-template <class _UI, size_t _W, size_t _N, size_t _M, size_t _R,
-          _UI _A, size_t _U, _UI _D, size_t _S,
-          _UI _B, size_t _T, _UI _C, size_t _L, _UI _F>
+template <class _UI, size_t _Wp, size_t _Np, size_t _Mp, size_t _Rp,
+          _UI _Ap, size_t _Up, _UI _Dp, size_t _Sp,
+          _UI _Bp, size_t _Tp, _UI _Cp, size_t _Lp, _UI _Fp>
 bool
-operator==(const mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                         _B, _T, _C, _L, _F>& __x,
-           const mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                         _B, _T, _C, _L, _F>& __y);
+operator==(const mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                         _Bp, _Tp, _Cp, _Lp, _Fp>& __x,
+           const mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                         _Bp, _Tp, _Cp, _Lp, _Fp>& __y);
 
-template <class _UI, size_t _W, size_t _N, size_t _M, size_t _R,
-          _UI _A, size_t _U, _UI _D, size_t _S,
-          _UI _B, size_t _T, _UI _C, size_t _L, _UI _F>
+template <class _UI, size_t _Wp, size_t _Np, size_t _Mp, size_t _Rp,
+          _UI _Ap, size_t _Up, _UI _Dp, size_t _Sp,
+          _UI _Bp, size_t _Tp, _UI _Cp, size_t _Lp, _UI _Fp>
 bool
-operator!=(const mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                         _B, _T, _C, _L, _F>& __x,
-           const mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                         _B, _T, _C, _L, _F>& __y);
+operator!=(const mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                         _Bp, _Tp, _Cp, _Lp, _Fp>& __x,
+           const mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                         _Bp, _Tp, _Cp, _Lp, _Fp>& __y);
 
 template <class _CharT, class _Traits,
-          class _UI, size_t _W, size_t _N, size_t _M, size_t _R,
-          _UI _A, size_t _U, _UI _D, size_t _S,
-          _UI _B, size_t _T, _UI _C, size_t _L, _UI _F>
+          class _UI, size_t _Wp, size_t _Np, size_t _Mp, size_t _Rp,
+          _UI _Ap, size_t _Up, _UI _Dp, size_t _Sp,
+          _UI _Bp, size_t _Tp, _UI _Cp, size_t _Lp, _UI _Fp>
 basic_ostream<_CharT, _Traits>&
 operator<<(basic_ostream<_CharT, _Traits>& __os,
-           const mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                         _B, _T, _C, _L, _F>& __x);
+           const mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                         _Bp, _Tp, _Cp, _Lp, _Fp>& __x);
 
 template <class _CharT, class _Traits,
-          class _UI, size_t _W, size_t _N, size_t _M, size_t _R,
-          _UI _A, size_t _U, _UI _D, size_t _S,
-          _UI _B, size_t _T, _UI _C, size_t _L, _UI _F>
+          class _UI, size_t _Wp, size_t _Np, size_t _Mp, size_t _Rp,
+          _UI _Ap, size_t _Up, _UI _Dp, size_t _Sp,
+          _UI _Bp, size_t _Tp, _UI _Cp, size_t _Lp, _UI _Fp>
 basic_istream<_CharT, _Traits>&
 operator>>(basic_istream<_CharT, _Traits>& __is,
-           mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                   _B, _T, _C, _L, _F>& __x);
+           mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                   _Bp, _Tp, _Cp, _Lp, _Fp>& __x);
 
 template <class _UIntType, size_t __w, size_t __n, size_t __m, size_t __r,
           _UIntType __a, size_t __u, _UIntType __d, size_t __s,
@@ -2136,45 +2136,45 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     void discard(unsigned long long __z) {for (; __z; --__z) operator()();}
 
-    template <class _UI, size_t _W, size_t _N, size_t _M, size_t _R,
-              _UI _A, size_t _U, _UI _D, size_t _S,
-              _UI _B, size_t _T, _UI _C, size_t _L, _UI _F>
+    template <class _UI, size_t _Wp, size_t _Np, size_t _Mp, size_t _Rp,
+              _UI _Ap, size_t _Up, _UI _Dp, size_t _Sp,
+              _UI _Bp, size_t _Tp, _UI _Cp, size_t _Lp, _UI _Fp>
     friend
     bool
-    operator==(const mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                             _B, _T, _C, _L, _F>& __x,
-               const mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                             _B, _T, _C, _L, _F>& __y);
+    operator==(const mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                             _Bp, _Tp, _Cp, _Lp, _Fp>& __x,
+               const mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                             _Bp, _Tp, _Cp, _Lp, _Fp>& __y);
 
-    template <class _UI, size_t _W, size_t _N, size_t _M, size_t _R,
-              _UI _A, size_t _U, _UI _D, size_t _S,
-              _UI _B, size_t _T, _UI _C, size_t _L, _UI _F>
+    template <class _UI, size_t _Wp, size_t _Np, size_t _Mp, size_t _Rp,
+              _UI _Ap, size_t _Up, _UI _Dp, size_t _Sp,
+              _UI _Bp, size_t _Tp, _UI _Cp, size_t _Lp, _UI _Fp>
     friend
     bool
-    operator!=(const mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                             _B, _T, _C, _L, _F>& __x,
-               const mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                             _B, _T, _C, _L, _F>& __y);
+    operator!=(const mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                             _Bp, _Tp, _Cp, _Lp, _Fp>& __x,
+               const mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                             _Bp, _Tp, _Cp, _Lp, _Fp>& __y);
 
     template <class _CharT, class _Traits,
-              class _UI, size_t _W, size_t _N, size_t _M, size_t _R,
-              _UI _A, size_t _U, _UI _D, size_t _S,
-              _UI _B, size_t _T, _UI _C, size_t _L, _UI _F>
+              class _UI, size_t _Wp, size_t _Np, size_t _Mp, size_t _Rp,
+              _UI _Ap, size_t _Up, _UI _Dp, size_t _Sp,
+              _UI _Bp, size_t _Tp, _UI _Cp, size_t _Lp, _UI _Fp>
     friend
     basic_ostream<_CharT, _Traits>&
     operator<<(basic_ostream<_CharT, _Traits>& __os,
-               const mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                             _B, _T, _C, _L, _F>& __x);
+               const mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                             _Bp, _Tp, _Cp, _Lp, _Fp>& __x);
 
     template <class _CharT, class _Traits,
-              class _UI, size_t _W, size_t _N, size_t _M, size_t _R,
-              _UI _A, size_t _U, _UI _D, size_t _S,
-              _UI _B, size_t _T, _UI _C, size_t _L, _UI _F>
+              class _UI, size_t _Wp, size_t _Np, size_t _Mp, size_t _Rp,
+              _UI _Ap, size_t _Up, _UI _Dp, size_t _Sp,
+              _UI _Bp, size_t _Tp, _UI _Cp, size_t _Lp, _UI _Fp>
     friend
     basic_istream<_CharT, _Traits>&
     operator>>(basic_istream<_CharT, _Traits>& __is,
-               mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                       _B, _T, _C, _L, _F>& __x);
+               mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                       _Bp, _Tp, _Cp, _Lp, _Fp>& __x);
 private:
 
     template<class _Sseq>
@@ -2297,9 +2297,9 @@ mersenne_twister_engine<_UIntType, __w, __n, __m, __r, __a, __u, __d, __s, __b,
     const size_t __j = (__i_ + 1) % __n;
     const result_type __mask = __r == _Dt ? result_type(~0) :
                                        (result_type(1) << __r) - result_type(1);
-    const result_type _Y = (__x_[__i_] & ~__mask) | (__x_[__j] & __mask);
+    const result_type _Yp = (__x_[__i_] & ~__mask) | (__x_[__j] & __mask);
     const size_t __k = (__i_ + __m) % __n;
-    __x_[__i_] = __x_[__k] ^ __rshift<1>(_Y) ^ (__a * (_Y & 1));
+    __x_[__i_] = __x_[__k] ^ __rshift<1>(_Yp) ^ (__a * (_Yp & 1));
     result_type __z = __x_[__i_] ^ (__rshift<__u>(__x_[__i_]) & __d);
     __i_ = __j;
     __z ^= __lshift<__s>(__z) & __b;
@@ -2307,78 +2307,78 @@ mersenne_twister_engine<_UIntType, __w, __n, __m, __r, __a, __u, __d, __s, __b,
     return __z ^ __rshift<__l>(__z);
 }
 
-template <class _UI, size_t _W, size_t _N, size_t _M, size_t _R,
-          _UI _A, size_t _U, _UI _D, size_t _S,
-          _UI _B, size_t _T, _UI _C, size_t _L, _UI _F>
+template <class _UI, size_t _Wp, size_t _Np, size_t _Mp, size_t _Rp,
+          _UI _Ap, size_t _Up, _UI _Dp, size_t _Sp,
+          _UI _Bp, size_t _Tp, _UI _Cp, size_t _Lp, _UI _Fp>
 bool
-operator==(const mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                         _B, _T, _C, _L, _F>& __x,
-           const mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                         _B, _T, _C, _L, _F>& __y)
+operator==(const mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                         _Bp, _Tp, _Cp, _Lp, _Fp>& __x,
+           const mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                         _Bp, _Tp, _Cp, _Lp, _Fp>& __y)
 {
     if (__x.__i_ == __y.__i_)
-        return _VSTD::equal(__x.__x_, __x.__x_ + _N, __y.__x_);
+        return _VSTD::equal(__x.__x_, __x.__x_ + _Np, __y.__x_);
     if (__x.__i_ == 0 || __y.__i_ == 0)
     {
-        size_t __j = _VSTD::min(_N - __x.__i_, _N - __y.__i_);
+        size_t __j = _VSTD::min(_Np - __x.__i_, _Np - __y.__i_);
         if (!_VSTD::equal(__x.__x_ + __x.__i_, __x.__x_ + __x.__i_ + __j,
                          __y.__x_ + __y.__i_))
             return false;
         if (__x.__i_ == 0)
-            return _VSTD::equal(__x.__x_ + __j, __x.__x_ + _N, __y.__x_);
-        return _VSTD::equal(__x.__x_, __x.__x_ + (_N - __j), __y.__x_ + __j);
+            return _VSTD::equal(__x.__x_ + __j, __x.__x_ + _Np, __y.__x_);
+        return _VSTD::equal(__x.__x_, __x.__x_ + (_Np - __j), __y.__x_ + __j);
     }
     if (__x.__i_ < __y.__i_)
     {
-        size_t __j = _N - __y.__i_;
+        size_t __j = _Np - __y.__i_;
         if (!_VSTD::equal(__x.__x_ + __x.__i_, __x.__x_ + (__x.__i_ + __j),
                          __y.__x_ + __y.__i_))
             return false;
-        if (!_VSTD::equal(__x.__x_ + (__x.__i_ + __j), __x.__x_ + _N,
+        if (!_VSTD::equal(__x.__x_ + (__x.__i_ + __j), __x.__x_ + _Np,
                          __y.__x_))
             return false;
         return _VSTD::equal(__x.__x_, __x.__x_ + __x.__i_,
-                           __y.__x_ + (_N - (__x.__i_ + __j)));
+                           __y.__x_ + (_Np - (__x.__i_ + __j)));
     }
-    size_t __j = _N - __x.__i_;
+    size_t __j = _Np - __x.__i_;
     if (!_VSTD::equal(__y.__x_ + __y.__i_, __y.__x_ + (__y.__i_ + __j),
                      __x.__x_ + __x.__i_))
         return false;
-    if (!_VSTD::equal(__y.__x_ + (__y.__i_ + __j), __y.__x_ + _N,
+    if (!_VSTD::equal(__y.__x_ + (__y.__i_ + __j), __y.__x_ + _Np,
                      __x.__x_))
         return false;
     return _VSTD::equal(__y.__x_, __y.__x_ + __y.__i_,
-                       __x.__x_ + (_N - (__y.__i_ + __j)));
+                       __x.__x_ + (_Np - (__y.__i_ + __j)));
 }
 
-template <class _UI, size_t _W, size_t _N, size_t _M, size_t _R,
-          _UI _A, size_t _U, _UI _D, size_t _S,
-          _UI _B, size_t _T, _UI _C, size_t _L, _UI _F>
+template <class _UI, size_t _Wp, size_t _Np, size_t _Mp, size_t _Rp,
+          _UI _Ap, size_t _Up, _UI _Dp, size_t _Sp,
+          _UI _Bp, size_t _Tp, _UI _Cp, size_t _Lp, _UI _Fp>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-operator!=(const mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                         _B, _T, _C, _L, _F>& __x,
-           const mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                         _B, _T, _C, _L, _F>& __y)
+operator!=(const mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                         _Bp, _Tp, _Cp, _Lp, _Fp>& __x,
+           const mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                         _Bp, _Tp, _Cp, _Lp, _Fp>& __y)
 {
     return !(__x == __y);
 }
 
 template <class _CharT, class _Traits,
-          class _UI, size_t _W, size_t _N, size_t _M, size_t _R,
-          _UI _A, size_t _U, _UI _D, size_t _S,
-          _UI _B, size_t _T, _UI _C, size_t _L, _UI _F>
+          class _UI, size_t _Wp, size_t _Np, size_t _Mp, size_t _Rp,
+          _UI _Ap, size_t _Up, _UI _Dp, size_t _Sp,
+          _UI _Bp, size_t _Tp, _UI _Cp, size_t _Lp, _UI _Fp>
 basic_ostream<_CharT, _Traits>&
 operator<<(basic_ostream<_CharT, _Traits>& __os,
-           const mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                         _B, _T, _C, _L, _F>& __x)
+           const mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                         _Bp, _Tp, _Cp, _Lp, _Fp>& __x)
 {
     __save_flags<_CharT, _Traits> _(__os);
     __os.flags(ios_base::dec | ios_base::left);
     _CharT __sp = __os.widen(' ');
     __os.fill(__sp);
     __os << __x.__x_[__x.__i_];
-    for (size_t __j = __x.__i_ + 1; __j < _N; ++__j)
+    for (size_t __j = __x.__i_ + 1; __j < _Np; ++__j)
         __os << __sp << __x.__x_[__j];
     for (size_t __j = 0; __j < __x.__i_; ++__j)
         __os << __sp << __x.__x_[__j];
@@ -2386,22 +2386,22 @@ operator<<(basic_ostream<_CharT, _Traits>& __os,
 }
 
 template <class _CharT, class _Traits,
-          class _UI, size_t _W, size_t _N, size_t _M, size_t _R,
-          _UI _A, size_t _U, _UI _D, size_t _S,
-          _UI _B, size_t _T, _UI _C, size_t _L, _UI _F>
+          class _UI, size_t _Wp, size_t _Np, size_t _Mp, size_t _Rp,
+          _UI _Ap, size_t _Up, _UI _Dp, size_t _Sp,
+          _UI _Bp, size_t _Tp, _UI _Cp, size_t _Lp, _UI _Fp>
 basic_istream<_CharT, _Traits>&
 operator>>(basic_istream<_CharT, _Traits>& __is,
-           mersenne_twister_engine<_UI, _W, _N, _M, _R, _A, _U, _D, _S,
-                                   _B, _T, _C, _L, _F>& __x)
+           mersenne_twister_engine<_UI, _Wp, _Np, _Mp, _Rp, _Ap, _Up, _Dp, _Sp,
+                                   _Bp, _Tp, _Cp, _Lp, _Fp>& __x)
 {
     __save_flags<_CharT, _Traits> _(__is);
     __is.flags(ios_base::dec | ios_base::skipws);
-    _UI __t[_N];
-    for (size_t __i = 0; __i < _N; ++__i)
+    _UI __t[_Np];
+    for (size_t __i = 0; __i < _Np; ++__i)
         __is >> __t[__i];
     if (!__is.fail())
     {
-        for (size_t __i = 0; __i < _N; ++__i)
+        for (size_t __i = 0; __i < _Np; ++__i)
             __x.__x_[__i] = __t[__i];
         __x.__i_ = 0;
     }
@@ -2424,29 +2424,29 @@ typedef mersenne_twister_engine<uint_fast64_t, 64, 312, 156, 31,
 template<class _UIntType, size_t __w, size_t __s, size_t __r>
 class subtract_with_carry_engine;
 
-template<class _UI, size_t _W, size_t _S, size_t _R>
+template<class _UI, size_t _Wp, size_t _Sp, size_t _Rp>
 bool
 operator==(
-    const subtract_with_carry_engine<_UI, _W, _S, _R>& __x,
-    const subtract_with_carry_engine<_UI, _W, _S, _R>& __y);
+    const subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __x,
+    const subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __y);
 
-template<class _UI, size_t _W, size_t _S, size_t _R>
+template<class _UI, size_t _Wp, size_t _Sp, size_t _Rp>
 bool
 operator!=(
-    const subtract_with_carry_engine<_UI, _W, _S, _R>& __x,
-    const subtract_with_carry_engine<_UI, _W, _S, _R>& __y);
+    const subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __x,
+    const subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __y);
 
 template <class _CharT, class _Traits,
-          class _UI, size_t _W, size_t _S, size_t _R>
+          class _UI, size_t _Wp, size_t _Sp, size_t _Rp>
 basic_ostream<_CharT, _Traits>&
 operator<<(basic_ostream<_CharT, _Traits>& __os,
-           const subtract_with_carry_engine<_UI, _W, _S, _R>& __x);
+           const subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __x);
 
 template <class _CharT, class _Traits,
-          class _UI, size_t _W, size_t _S, size_t _R>
+          class _UI, size_t _Wp, size_t _Sp, size_t _Rp>
 basic_istream<_CharT, _Traits>&
 operator>>(basic_istream<_CharT, _Traits>& __is,
-           subtract_with_carry_engine<_UI, _W, _S, _R>& __x);
+           subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __x);
 
 template<class _UIntType, size_t __w, size_t __s, size_t __r>
 class _LIBCPP_VISIBLE subtract_with_carry_engine
@@ -2507,33 +2507,33 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     void discard(unsigned long long __z) {for (; __z; --__z) operator()();}
 
-    template<class _UI, size_t _W, size_t _S, size_t _R>
+    template<class _UI, size_t _Wp, size_t _Sp, size_t _Rp>
     friend
     bool
     operator==(
-        const subtract_with_carry_engine<_UI, _W, _S, _R>& __x,
-        const subtract_with_carry_engine<_UI, _W, _S, _R>& __y);
+        const subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __x,
+        const subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __y);
 
-    template<class _UI, size_t _W, size_t _S, size_t _R>
+    template<class _UI, size_t _Wp, size_t _Sp, size_t _Rp>
     friend
     bool
     operator!=(
-        const subtract_with_carry_engine<_UI, _W, _S, _R>& __x,
-        const subtract_with_carry_engine<_UI, _W, _S, _R>& __y);
+        const subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __x,
+        const subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __y);
 
     template <class _CharT, class _Traits,
-              class _UI, size_t _W, size_t _S, size_t _R>
+              class _UI, size_t _Wp, size_t _Sp, size_t _Rp>
     friend
     basic_ostream<_CharT, _Traits>&
     operator<<(basic_ostream<_CharT, _Traits>& __os,
-               const subtract_with_carry_engine<_UI, _W, _S, _R>& __x);
+               const subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __x);
 
     template <class _CharT, class _Traits,
-              class _UI, size_t _W, size_t _S, size_t _R>
+              class _UI, size_t _Wp, size_t _Sp, size_t _Rp>
     friend
     basic_istream<_CharT, _Traits>&
     operator>>(basic_istream<_CharT, _Traits>& __is,
-               subtract_with_carry_engine<_UI, _W, _S, _R>& __x);
+               subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __x);
 
 private:
 
@@ -2619,71 +2619,71 @@ subtract_with_carry_engine<_UIntType, __w, __s, __r>::operator()()
     return __xr;
 }
 
-template<class _UI, size_t _W, size_t _S, size_t _R>
+template<class _UI, size_t _Wp, size_t _Sp, size_t _Rp>
 bool
 operator==(
-    const subtract_with_carry_engine<_UI, _W, _S, _R>& __x,
-    const subtract_with_carry_engine<_UI, _W, _S, _R>& __y)
+    const subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __x,
+    const subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __y)
 {
     if (__x.__c_ != __y.__c_)
         return false;
     if (__x.__i_ == __y.__i_)
-        return _VSTD::equal(__x.__x_, __x.__x_ + _R, __y.__x_);
+        return _VSTD::equal(__x.__x_, __x.__x_ + _Rp, __y.__x_);
     if (__x.__i_ == 0 || __y.__i_ == 0)
     {
-        size_t __j = _VSTD::min(_R - __x.__i_, _R - __y.__i_);
+        size_t __j = _VSTD::min(_Rp - __x.__i_, _Rp - __y.__i_);
         if (!_VSTD::equal(__x.__x_ + __x.__i_, __x.__x_ + __x.__i_ + __j,
                          __y.__x_ + __y.__i_))
             return false;
         if (__x.__i_ == 0)
-            return _VSTD::equal(__x.__x_ + __j, __x.__x_ + _R, __y.__x_);
-        return _VSTD::equal(__x.__x_, __x.__x_ + (_R - __j), __y.__x_ + __j);
+            return _VSTD::equal(__x.__x_ + __j, __x.__x_ + _Rp, __y.__x_);
+        return _VSTD::equal(__x.__x_, __x.__x_ + (_Rp - __j), __y.__x_ + __j);
     }
     if (__x.__i_ < __y.__i_)
     {
-        size_t __j = _R - __y.__i_;
+        size_t __j = _Rp - __y.__i_;
         if (!_VSTD::equal(__x.__x_ + __x.__i_, __x.__x_ + (__x.__i_ + __j),
                          __y.__x_ + __y.__i_))
             return false;
-        if (!_VSTD::equal(__x.__x_ + (__x.__i_ + __j), __x.__x_ + _R,
+        if (!_VSTD::equal(__x.__x_ + (__x.__i_ + __j), __x.__x_ + _Rp,
                          __y.__x_))
             return false;
         return _VSTD::equal(__x.__x_, __x.__x_ + __x.__i_,
-                           __y.__x_ + (_R - (__x.__i_ + __j)));
+                           __y.__x_ + (_Rp - (__x.__i_ + __j)));
     }
-    size_t __j = _R - __x.__i_;
+    size_t __j = _Rp - __x.__i_;
     if (!_VSTD::equal(__y.__x_ + __y.__i_, __y.__x_ + (__y.__i_ + __j),
                      __x.__x_ + __x.__i_))
         return false;
-    if (!_VSTD::equal(__y.__x_ + (__y.__i_ + __j), __y.__x_ + _R,
+    if (!_VSTD::equal(__y.__x_ + (__y.__i_ + __j), __y.__x_ + _Rp,
                      __x.__x_))
         return false;
     return _VSTD::equal(__y.__x_, __y.__x_ + __y.__i_,
-                       __x.__x_ + (_R - (__y.__i_ + __j)));
+                       __x.__x_ + (_Rp - (__y.__i_ + __j)));
 }
 
-template<class _UI, size_t _W, size_t _S, size_t _R>
+template<class _UI, size_t _Wp, size_t _Sp, size_t _Rp>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator!=(
-    const subtract_with_carry_engine<_UI, _W, _S, _R>& __x,
-    const subtract_with_carry_engine<_UI, _W, _S, _R>& __y)
+    const subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __x,
+    const subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __y)
 {
     return !(__x == __y);
 }
 
 template <class _CharT, class _Traits,
-          class _UI, size_t _W, size_t _S, size_t _R>
+          class _UI, size_t _Wp, size_t _Sp, size_t _Rp>
 basic_ostream<_CharT, _Traits>&
 operator<<(basic_ostream<_CharT, _Traits>& __os,
-           const subtract_with_carry_engine<_UI, _W, _S, _R>& __x)
+           const subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __x)
 {
     __save_flags<_CharT, _Traits> _(__os);
     __os.flags(ios_base::dec | ios_base::left);
     _CharT __sp = __os.widen(' ');
     __os.fill(__sp);
     __os << __x.__x_[__x.__i_];
-    for (size_t __j = __x.__i_ + 1; __j < _R; ++__j)
+    for (size_t __j = __x.__i_ + 1; __j < _Rp; ++__j)
         __os << __sp << __x.__x_[__j];
     for (size_t __j = 0; __j < __x.__i_; ++__j)
         __os << __sp << __x.__x_[__j];
@@ -2692,21 +2692,21 @@ operator<<(basic_ostream<_CharT, _Traits>& __os,
 }
 
 template <class _CharT, class _Traits,
-          class _UI, size_t _W, size_t _S, size_t _R>
+          class _UI, size_t _Wp, size_t _Sp, size_t _Rp>
 basic_istream<_CharT, _Traits>&
 operator>>(basic_istream<_CharT, _Traits>& __is,
-           subtract_with_carry_engine<_UI, _W, _S, _R>& __x)
+           subtract_with_carry_engine<_UI, _Wp, _Sp, _Rp>& __x)
 {
     __save_flags<_CharT, _Traits> _(__is);
     __is.flags(ios_base::dec | ios_base::skipws);
-    _UI __t[_R+1];
-    for (size_t __i = 0; __i < _R+1; ++__i)
+    _UI __t[_Rp+1];
+    for (size_t __i = 0; __i < _Rp+1; ++__i)
         __is >> __t[__i];
     if (!__is.fail())
     {
-        for (size_t __i = 0; __i < _R; ++__i)
+        for (size_t __i = 0; __i < _Rp; ++__i)
             __x.__x_[__i] = __t[__i];
-        __x.__c_ = __t[_R];
+        __x.__c_ = __t[_Rp];
         __x.__i_ = 0;
     }
     return __is;
@@ -2783,33 +2783,33 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     const _Engine& base() const {return __e_;}
 
-    template<class _Eng, size_t _P, size_t _R>
+    template<class _Eng, size_t _Pp, size_t _Rp>
     friend
     bool
     operator==(
-        const discard_block_engine<_Eng, _P, _R>& __x,
-        const discard_block_engine<_Eng, _P, _R>& __y);
+        const discard_block_engine<_Eng, _Pp, _Rp>& __x,
+        const discard_block_engine<_Eng, _Pp, _Rp>& __y);
 
-    template<class _Eng, size_t _P, size_t _R>
+    template<class _Eng, size_t _Pp, size_t _Rp>
     friend
     bool
     operator!=(
-        const discard_block_engine<_Eng, _P, _R>& __x,
-        const discard_block_engine<_Eng, _P, _R>& __y);
+        const discard_block_engine<_Eng, _Pp, _Rp>& __x,
+        const discard_block_engine<_Eng, _Pp, _Rp>& __y);
 
     template <class _CharT, class _Traits,
-              class _Eng, size_t _P, size_t _R>
+              class _Eng, size_t _Pp, size_t _Rp>
     friend
     basic_ostream<_CharT, _Traits>&
     operator<<(basic_ostream<_CharT, _Traits>& __os,
-               const discard_block_engine<_Eng, _P, _R>& __x);
+               const discard_block_engine<_Eng, _Pp, _Rp>& __x);
 
     template <class _CharT, class _Traits,
-              class _Eng, size_t _P, size_t _R>
+              class _Eng, size_t _Pp, size_t _Rp>
     friend
     basic_istream<_CharT, _Traits>&
     operator>>(basic_istream<_CharT, _Traits>& __is,
-               discard_block_engine<_Eng, _P, _R>& __x);
+               discard_block_engine<_Eng, _Pp, _Rp>& __x);
 };
 
 template<class _Engine, size_t __p, size_t __r>
@@ -2825,29 +2825,29 @@ discard_block_engine<_Engine, __p, __r>::operator()()
     return __e_();
 }
 
-template<class _Eng, size_t _P, size_t _R>
+template<class _Eng, size_t _Pp, size_t _Rp>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-operator==(const discard_block_engine<_Eng, _P, _R>& __x,
-           const discard_block_engine<_Eng, _P, _R>& __y)
+operator==(const discard_block_engine<_Eng, _Pp, _Rp>& __x,
+           const discard_block_engine<_Eng, _Pp, _Rp>& __y)
 {
     return __x.__n_ == __y.__n_ && __x.__e_ == __y.__e_;
 }
 
-template<class _Eng, size_t _P, size_t _R>
+template<class _Eng, size_t _Pp, size_t _Rp>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-operator!=(const discard_block_engine<_Eng, _P, _R>& __x,
-           const discard_block_engine<_Eng, _P, _R>& __y)
+operator!=(const discard_block_engine<_Eng, _Pp, _Rp>& __x,
+           const discard_block_engine<_Eng, _Pp, _Rp>& __y)
 {
     return !(__x == __y);
 }
 
 template <class _CharT, class _Traits,
-          class _Eng, size_t _P, size_t _R>
+          class _Eng, size_t _Pp, size_t _Rp>
 basic_ostream<_CharT, _Traits>&
 operator<<(basic_ostream<_CharT, _Traits>& __os,
-           const discard_block_engine<_Eng, _P, _R>& __x)
+           const discard_block_engine<_Eng, _Pp, _Rp>& __x)
 {
     __save_flags<_CharT, _Traits> _(__os);
     __os.flags(ios_base::dec | ios_base::left);
@@ -2857,10 +2857,10 @@ operator<<(basic_ostream<_CharT, _Traits>& __os,
 }
 
 template <class _CharT, class _Traits,
-          class _Eng, size_t _P, size_t _R>
+          class _Eng, size_t _Pp, size_t _Rp>
 basic_istream<_CharT, _Traits>&
 operator>>(basic_istream<_CharT, _Traits>& __is,
-           discard_block_engine<_Eng, _P, _R>& __x)
+           discard_block_engine<_Eng, _Pp, _Rp>& __x)
 {
     __save_flags<_CharT, _Traits> _(__is);
     __is.flags(ios_base::dec | ios_base::skipws);
@@ -2883,15 +2883,15 @@ typedef discard_block_engine<ranlux48_base, 389, 11> ranlux48;
 template<class _Engine, size_t __w, class _UIntType>
 class _LIBCPP_VISIBLE independent_bits_engine
 {
-    template <class _UI, _UI _R0, size_t _W, size_t _M>
+    template <class _UI, _UI _R0, size_t _Wp, size_t _Mp>
     class __get_n
     {
         static const size_t _Dt = numeric_limits<_UI>::digits;
-        static const size_t _N = _W / _M + (_W % _M != 0);
-        static const size_t _W0 = _W / _N;
+        static const size_t _Np = _Wp / _Mp + (_Wp % _Mp != 0);
+        static const size_t _W0 = _Wp / _Np;
         static const _UI _Y0 = _W0 >= _Dt ? 0 : (_R0 >> _W0) << _W0;
     public:
-        static const size_t value = _R0 - _Y0 > _Y0 / _N ? _N + 1 : _N;
+        static const size_t value = _R0 - _Y0 > _Y0 / _Np ? _Np + 1 : _Np;
     };
 public:
     // types
@@ -2912,18 +2912,18 @@ private:
                 _Engine_result_type
         >::type _Working_result_type;
     // Temporary work around for lack of constexpr
-    static const _Working_result_type _R = _Engine::_Max - _Engine::_Min
+    static const _Working_result_type _Rp = _Engine::_Max - _Engine::_Min
                                                          + _Working_result_type(1);
-    static const size_t __m = __log2<_Working_result_type, _R>::value;
-    static const size_t __n = __get_n<_Working_result_type, _R, __w, __m>::value;
+    static const size_t __m = __log2<_Working_result_type, _Rp>::value;
+    static const size_t __n = __get_n<_Working_result_type, _Rp, __w, __m>::value;
     static const size_t __w0 = __w / __n;
     static const size_t __n0 = __n - __w % __n;
     static const size_t _WDt = numeric_limits<_Working_result_type>::digits;
     static const size_t _EDt = numeric_limits<_Engine_result_type>::digits;
     static const _Working_result_type __y0 = __w0 >= _WDt ? 0 :
-                                                   (_R >> __w0) << __w0;
+                                                   (_Rp >> __w0) << __w0;
     static const _Working_result_type __y1 = __w0 >= _WDt - 1 ? 0 :
-                                                   (_R >> (__w0+1)) << (__w0+1);
+                                                   (_Rp >> (__w0+1)) << (__w0+1);
     static const _Engine_result_type __mask0 = __w0 > 0 ?
                                 _Engine_result_type(~0) >> (_EDt - __w0) :
                                 _Engine_result_type(0);
@@ -2975,7 +2975,7 @@ public:
 
     // generating functions
     _LIBCPP_INLINE_VISIBILITY
-    result_type operator()() {return __eval(integral_constant<bool, _R != 0>());}
+    result_type operator()() {return __eval(integral_constant<bool, _Rp != 0>());}
     _LIBCPP_INLINE_VISIBILITY
     void discard(unsigned long long __z) {for (; __z; --__z) operator()();}
 
@@ -2983,33 +2983,33 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     const _Engine& base() const {return __e_;}
 
-    template<class _Eng, size_t _W, class _UI>
+    template<class _Eng, size_t _Wp, class _UI>
     friend
     bool
     operator==(
-        const independent_bits_engine<_Eng, _W, _UI>& __x,
-        const independent_bits_engine<_Eng, _W, _UI>& __y);
+        const independent_bits_engine<_Eng, _Wp, _UI>& __x,
+        const independent_bits_engine<_Eng, _Wp, _UI>& __y);
 
-    template<class _Eng, size_t _W, class _UI>
+    template<class _Eng, size_t _Wp, class _UI>
     friend
     bool
     operator!=(
-        const independent_bits_engine<_Eng, _W, _UI>& __x,
-        const independent_bits_engine<_Eng, _W, _UI>& __y);
+        const independent_bits_engine<_Eng, _Wp, _UI>& __x,
+        const independent_bits_engine<_Eng, _Wp, _UI>& __y);
 
     template <class _CharT, class _Traits,
-              class _Eng, size_t _W, class _UI>
+              class _Eng, size_t _Wp, class _UI>
     friend
     basic_ostream<_CharT, _Traits>&
     operator<<(basic_ostream<_CharT, _Traits>& __os,
-               const independent_bits_engine<_Eng, _W, _UI>& __x);
+               const independent_bits_engine<_Eng, _Wp, _UI>& __x);
 
     template <class _CharT, class _Traits,
-              class _Eng, size_t _W, class _UI>
+              class _Eng, size_t _Wp, class _UI>
     friend
     basic_istream<_CharT, _Traits>&
     operator>>(basic_istream<_CharT, _Traits>& __is,
-               independent_bits_engine<_Eng, _W, _UI>& __x);
+               independent_bits_engine<_Eng, _Wp, _UI>& __x);
 
 private:
     result_type __eval(false_type);
@@ -3048,7 +3048,7 @@ template<class _Engine, size_t __w, class _UIntType>
 _UIntType
 independent_bits_engine<_Engine, __w, _UIntType>::__eval(true_type)
 {
-    result_type _S = 0;
+    result_type _Sp = 0;
     for (size_t __k = 0; __k < __n0; ++__k)
     {
         _Engine_result_type __u;
@@ -3056,7 +3056,7 @@ independent_bits_engine<_Engine, __w, _UIntType>::__eval(true_type)
         {
             __u = __e_() - _Engine::min();
         } while (__u >= __y0);
-        _S = static_cast<result_type>(__lshift<__w0>(_S) + (__u & __mask0));
+        _Sp = static_cast<result_type>(__lshift<__w0>(_Sp) + (__u & __mask0));
     }
     for (size_t __k = __n0; __k < __n; ++__k)
     {
@@ -3065,45 +3065,45 @@ independent_bits_engine<_Engine, __w, _UIntType>::__eval(true_type)
         {
             __u = __e_() - _Engine::min();
         } while (__u >= __y1);
-        _S = static_cast<result_type>(__lshift<__w0+1>(_S) + (__u & __mask1));
+        _Sp = static_cast<result_type>(__lshift<__w0+1>(_Sp) + (__u & __mask1));
     }
-    return _S;
+    return _Sp;
 }
 
-template<class _Eng, size_t _W, class _UI>
+template<class _Eng, size_t _Wp, class _UI>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator==(
-    const independent_bits_engine<_Eng, _W, _UI>& __x,
-    const independent_bits_engine<_Eng, _W, _UI>& __y)
+    const independent_bits_engine<_Eng, _Wp, _UI>& __x,
+    const independent_bits_engine<_Eng, _Wp, _UI>& __y)
 {
     return __x.base() == __y.base();
 }
 
-template<class _Eng, size_t _W, class _UI>
+template<class _Eng, size_t _Wp, class _UI>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator!=(
-    const independent_bits_engine<_Eng, _W, _UI>& __x,
-    const independent_bits_engine<_Eng, _W, _UI>& __y)
+    const independent_bits_engine<_Eng, _Wp, _UI>& __x,
+    const independent_bits_engine<_Eng, _Wp, _UI>& __y)
 {
     return !(__x == __y);
 }
 
 template <class _CharT, class _Traits,
-          class _Eng, size_t _W, class _UI>
+          class _Eng, size_t _Wp, class _UI>
 basic_ostream<_CharT, _Traits>&
 operator<<(basic_ostream<_CharT, _Traits>& __os,
-           const independent_bits_engine<_Eng, _W, _UI>& __x)
+           const independent_bits_engine<_Eng, _Wp, _UI>& __x)
 {
     return __os << __x.base();
 }
 
 template <class _CharT, class _Traits,
-          class _Eng, size_t _W, class _UI>
+          class _Eng, size_t _Wp, class _UI>
 basic_istream<_CharT, _Traits>&
 operator>>(basic_istream<_CharT, _Traits>& __is,
-           independent_bits_engine<_Eng, _W, _UI>& __x)
+           independent_bits_engine<_Eng, _Wp, _UI>& __x)
 {
     _Eng __e;
     __is >> __e;
@@ -3126,14 +3126,14 @@ struct __ugcd<_Xp, 0>
     static const uint64_t value = _Xp;
 };
 
-template <uint64_t _N, uint64_t _D>
+template <uint64_t _Np, uint64_t _Dp>
 class __uratio
 {
-    static_assert(_D != 0, "__uratio divide by 0");
-    static const uint64_t __gcd = __ugcd<_N, _D>::value;
+    static_assert(_Dp != 0, "__uratio divide by 0");
+    static const uint64_t __gcd = __ugcd<_Np, _Dp>::value;
 public:
-    static const uint64_t num = _N / __gcd;
-    static const uint64_t den = _D / __gcd;
+    static const uint64_t num = _Np / __gcd;
+    static const uint64_t den = _Dp / __gcd;
 
     typedef __uratio<num, den> type;
 };
@@ -3163,7 +3163,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     static const/*expr*/ result_type max() { return _Max; }
 
-    static const unsigned long long _R = _Max - _Min + 1ull;
+    static const unsigned long long _Rp = _Max - _Min + 1ull;
 
     // constructors and seeding functions
     _LIBCPP_INLINE_VISIBILITY
@@ -3198,7 +3198,7 @@ public:
 
     // generating functions
     _LIBCPP_INLINE_VISIBILITY
-    result_type operator()() {return __eval(integral_constant<bool, _R != 0>());}
+    result_type operator()() {return __eval(integral_constant<bool, _Rp != 0>());}
     _LIBCPP_INLINE_VISIBILITY
     void discard(unsigned long long __z) {for (; __z; --__z) operator()();}
 
@@ -3207,33 +3207,33 @@ public:
     const _Engine& base() const {return __e_;}
 
 private:
-    template<class _Eng, size_t _K>
+    template<class _Eng, size_t _Kp>
     friend
     bool
     operator==(
-        const shuffle_order_engine<_Eng, _K>& __x,
-        const shuffle_order_engine<_Eng, _K>& __y);
+        const shuffle_order_engine<_Eng, _Kp>& __x,
+        const shuffle_order_engine<_Eng, _Kp>& __y);
 
-    template<class _Eng, size_t _K>
+    template<class _Eng, size_t _Kp>
     friend
     bool
     operator!=(
-        const shuffle_order_engine<_Eng, _K>& __x,
-        const shuffle_order_engine<_Eng, _K>& __y);
+        const shuffle_order_engine<_Eng, _Kp>& __x,
+        const shuffle_order_engine<_Eng, _Kp>& __y);
 
     template <class _CharT, class _Traits,
-              class _Eng, size_t _K>
+              class _Eng, size_t _Kp>
     friend
     basic_ostream<_CharT, _Traits>&
     operator<<(basic_ostream<_CharT, _Traits>& __os,
-               const shuffle_order_engine<_Eng, _K>& __x);
+               const shuffle_order_engine<_Eng, _Kp>& __x);
 
     template <class _CharT, class _Traits,
-              class _Eng, size_t _K>
+              class _Eng, size_t _Kp>
     friend
     basic_istream<_CharT, _Traits>&
     operator>>(basic_istream<_CharT, _Traits>& __is,
-               shuffle_order_engine<_Eng, _K>& __x);
+               shuffle_order_engine<_Eng, _Kp>& __x);
 
     _LIBCPP_INLINE_VISIBILITY
     void __init()
@@ -3246,34 +3246,34 @@ private:
     _LIBCPP_INLINE_VISIBILITY
     result_type __eval(false_type) {return __eval2(integral_constant<bool, __k & 1>());}
     _LIBCPP_INLINE_VISIBILITY
-    result_type __eval(true_type) {return __eval(__uratio<__k, _R>());}
+    result_type __eval(true_type) {return __eval(__uratio<__k, _Rp>());}
 
     _LIBCPP_INLINE_VISIBILITY
     result_type __eval2(false_type) {return __eval(__uratio<__k/2, 0x8000000000000000ull>());}
     _LIBCPP_INLINE_VISIBILITY
     result_type __eval2(true_type) {return __evalf<__k, 0>();}
 
-    template <uint64_t _N, uint64_t _D>
+    template <uint64_t _Np, uint64_t _Dp>
         _LIBCPP_INLINE_VISIBILITY
         typename enable_if
         <
-            (__uratio<_N, _D>::num > 0xFFFFFFFFFFFFFFFFull / (_Max - _Min)),
+            (__uratio<_Np, _Dp>::num > 0xFFFFFFFFFFFFFFFFull / (_Max - _Min)),
             result_type
         >::type
-        __eval(__uratio<_N, _D>)
-            {return __evalf<__uratio<_N, _D>::num, __uratio<_N, _D>::den>();}
+        __eval(__uratio<_Np, _Dp>)
+            {return __evalf<__uratio<_Np, _Dp>::num, __uratio<_Np, _Dp>::den>();}
 
-    template <uint64_t _N, uint64_t _D>
+    template <uint64_t _Np, uint64_t _Dp>
         _LIBCPP_INLINE_VISIBILITY
         typename enable_if
         <
-            __uratio<_N, _D>::num <= 0xFFFFFFFFFFFFFFFFull / (_Max - _Min),
+            __uratio<_Np, _Dp>::num <= 0xFFFFFFFFFFFFFFFFull / (_Max - _Min),
             result_type
         >::type
-        __eval(__uratio<_N, _D>)
+        __eval(__uratio<_Np, _Dp>)
         {
-            const size_t __j = static_cast<size_t>(__uratio<_N, _D>::num * (_Y_ - _Min)
-                                                   / __uratio<_N, _D>::den);
+            const size_t __j = static_cast<size_t>(__uratio<_Np, _Dp>::num * (_Y_ - _Min)
+                                                   / __uratio<_Np, _Dp>::den);
             _Y_ = _V_[__j];
             _V_[__j] = __e_();
             return _Y_;
@@ -3283,72 +3283,72 @@ private:
         _LIBCPP_INLINE_VISIBILITY
         result_type __evalf()
         {
-            const double _F = __d == 0 ?
+            const double _Fp = __d == 0 ?
                 __n / (2. * 0x8000000000000000ull) :
                 __n / (double)__d;
-            const size_t __j = static_cast<size_t>(_F * (_Y_ - _Min));
+            const size_t __j = static_cast<size_t>(_Fp * (_Y_ - _Min));
             _Y_ = _V_[__j];
             _V_[__j] = __e_();
             return _Y_;
         }
 };
 
-template<class _Eng, size_t _K>
+template<class _Eng, size_t _Kp>
 bool
 operator==(
-    const shuffle_order_engine<_Eng, _K>& __x,
-    const shuffle_order_engine<_Eng, _K>& __y)
+    const shuffle_order_engine<_Eng, _Kp>& __x,
+    const shuffle_order_engine<_Eng, _Kp>& __y)
 {
-    return __x._Y_ == __y._Y_ && _VSTD::equal(__x._V_, __x._V_ + _K, __y._V_) &&
+    return __x._Y_ == __y._Y_ && _VSTD::equal(__x._V_, __x._V_ + _Kp, __y._V_) &&
            __x.__e_ == __y.__e_;
 }
 
-template<class _Eng, size_t _K>
+template<class _Eng, size_t _Kp>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator!=(
-    const shuffle_order_engine<_Eng, _K>& __x,
-    const shuffle_order_engine<_Eng, _K>& __y)
+    const shuffle_order_engine<_Eng, _Kp>& __x,
+    const shuffle_order_engine<_Eng, _Kp>& __y)
 {
     return !(__x == __y);
 }
 
 template <class _CharT, class _Traits,
-          class _Eng, size_t _K>
+          class _Eng, size_t _Kp>
 basic_ostream<_CharT, _Traits>&
 operator<<(basic_ostream<_CharT, _Traits>& __os,
-           const shuffle_order_engine<_Eng, _K>& __x)
+           const shuffle_order_engine<_Eng, _Kp>& __x)
 {
     __save_flags<_CharT, _Traits> _(__os);
     __os.flags(ios_base::dec | ios_base::left);
     _CharT __sp = __os.widen(' ');
     __os.fill(__sp);
     __os << __x.__e_ << __sp << __x._V_[0];
-    for (size_t __i = 1; __i < _K; ++__i)
+    for (size_t __i = 1; __i < _Kp; ++__i)
         __os << __sp << __x._V_[__i];
     return __os << __sp << __x._Y_;
 }
 
 template <class _CharT, class _Traits,
-          class _Eng, size_t _K>
+          class _Eng, size_t _Kp>
 basic_istream<_CharT, _Traits>&
 operator>>(basic_istream<_CharT, _Traits>& __is,
-           shuffle_order_engine<_Eng, _K>& __x)
+           shuffle_order_engine<_Eng, _Kp>& __x)
 {
-    typedef typename shuffle_order_engine<_Eng, _K>::result_type result_type;
+    typedef typename shuffle_order_engine<_Eng, _Kp>::result_type result_type;
     __save_flags<_CharT, _Traits> _(__is);
     __is.flags(ios_base::dec | ios_base::skipws);
     _Eng __e;
-    result_type _V[_K+1];
+    result_type _Vp[_Kp+1];
     __is >> __e;
-    for (size_t __i = 0; __i < _K+1; ++__i)
-        __is >> _V[__i];
+    for (size_t __i = 0; __i < _Kp+1; ++__i)
+        __is >> _Vp[__i];
     if (!__is.fail())
     {
         __x.__e_ = __e;
-        for (size_t __i = 0; __i < _K; ++__i)
-            __x._V_[__i] = _V[__i];
-        __x._Y_ = _V[_K];
+        for (size_t __i = 0; __i < _Kp; ++__i)
+            __x._V_[__i] = _Vp[__i];
+        __x._Y_ = _Vp[_Kp];
     }
     return __is;
 }
@@ -3435,7 +3435,7 @@ private:
     void operator=(const seed_seq&); // = delete;
 
     _LIBCPP_INLINE_VISIBILITY
-    static result_type _T(result_type __x) {return __x ^ (__x >> 27);}
+    static result_type _Tp(result_type __x) {return __x ^ (__x >> 27);}
 };
 
 template<class _InputIterator>
@@ -3465,7 +3465,7 @@ seed_seq::generate(_RandomAccessIterator __first, _RandomAccessIterator __last)
         const size_t __m = _VSTD::max(__s + 1, __n);
         // __k = 0;
         {
-            result_type __r = 1664525 * _T(__first[0] ^ __first[__p]
+            result_type __r = 1664525 * _Tp(__first[0] ^ __first[__p]
                                                       ^  __first[__n - 1]);
             __first[__p] += __r;
             __r += __s;
@@ -3476,7 +3476,7 @@ seed_seq::generate(_RandomAccessIterator __first, _RandomAccessIterator __last)
         {
             const size_t __kmodn = __k % __n;
             const size_t __kpmodn = (__k + __p) % __n;
-            result_type __r = 1664525 * _T(__first[__kmodn] ^ __first[__kpmodn]
+            result_type __r = 1664525 * _Tp(__first[__kmodn] ^ __first[__kpmodn]
                                            ^ __first[(__k - 1) % __n]);
             __first[__kpmodn] += __r;
             __r +=  __kmodn + __v_[__k-1];
@@ -3487,7 +3487,7 @@ seed_seq::generate(_RandomAccessIterator __first, _RandomAccessIterator __last)
         {
             const size_t __kmodn = __k % __n;
             const size_t __kpmodn = (__k + __p) % __n;
-            result_type __r = 1664525 * _T(__first[__kmodn] ^ __first[__kpmodn]
+            result_type __r = 1664525 * _Tp(__first[__kmodn] ^ __first[__kpmodn]
                                            ^ __first[(__k - 1) % __n]);
             __first[__kpmodn] += __r;
             __r +=  __kmodn;
@@ -3498,7 +3498,7 @@ seed_seq::generate(_RandomAccessIterator __first, _RandomAccessIterator __last)
         {
             const size_t __kmodn = __k % __n;
             const size_t __kpmodn = (__k + __p) % __n;
-            result_type __r = 1566083941 * _T(__first[__kmodn] +
+            result_type __r = 1566083941 * _Tp(__first[__kmodn] +
                                               __first[__kpmodn] +
                                               __first[(__k - 1) % __n]);
             __first[__kpmodn] ^= __r;
@@ -3519,12 +3519,12 @@ generate_canonical(_URNG& __g)
     const size_t __b = _Dt < __bits ? _Dt : __bits;
     const size_t __logR = __log2<uint64_t, _URNG::_Max - _URNG::_Min + uint64_t(1)>::value;
     const size_t __k = __b / __logR + (__b % __logR != 0) + (__b == 0);
-    const _RealType _R = _URNG::_Max - _URNG::_Min + _RealType(1);
-    _RealType __base = _R;
-    _RealType _S = __g() - _URNG::_Min;
-    for (size_t __i = 1; __i < __k; ++__i, __base *= _R)
-        _S += (__g() - _URNG::_Min) * __base;
-    return _S / __base;
+    const _RealType _Rp = _URNG::_Max - _URNG::_Min + _RealType(1);
+    _RealType __base = _Rp;
+    _RealType _Sp = __g() - _URNG::_Min;
+    for (size_t __i = 1; __i < __k; ++__i, __base *= _Rp)
+        _Sp += (__g() - _URNG::_Min) * __base;
+    return _Sp / __base;
 }
 
 // uniform_int_distribution
@@ -4171,11 +4171,11 @@ template<class _URNG>
 _RealType
 normal_distribution<_RealType>::operator()(_URNG& __g, const param_type& __p)
 {
-    result_type _U;
+    result_type _Up;
     if (_V_hot_)
     {
         _V_hot_ = false;
-        _U = _V_;
+        _Up = _V_;
     }
     else
     {
@@ -4189,12 +4189,12 @@ normal_distribution<_RealType>::operator()(_URNG& __g, const param_type& __p)
             __v = _Uni(__g);
             __s = __u * __u + __v * __v;
         } while (__s > 1 || __s == 0);
-        result_type _F = _VSTD::sqrt(-2 * _VSTD::log(__s) / __s);
-        _V_ = __v * _F;
+        result_type _Fp = _VSTD::sqrt(-2 * _VSTD::log(__s) / __s);
+        _V_ = __v * _Fp;
         _V_hot_ = true;
-        _U = __u * _F;
+        _Up = __u * _Fp;
     }
-    return _U * __p.stddev() + __p.mean();
+    return _Up * __p.stddev() + __p.mean();
 }
 
 template <class _CharT, class _Traits, class _RT>
@@ -4225,16 +4225,16 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
     __is.flags(ios_base::dec | ios_base::skipws);
     result_type __mean;
     result_type __stddev;
-    result_type _V = 0;
+    result_type _Vp = 0;
     bool _V_hot = false;
     __is >> __mean >> __stddev >> _V_hot;
     if (_V_hot)
-        __is >> _V;
+        __is >> _Vp;
     if (!__is.fail())
     {
         __x.param(param_type(__mean, __stddev));
         __x._V_hot_ = _V_hot;
-        __x._V_ = _V;
+        __x._V_ = _Vp;
     }
     return __is;
 }
@@ -6421,23 +6421,23 @@ void
 piecewise_linear_distribution<_RealType>::param_type::__init()
 {
     __areas_.assign(__densities_.size() - 1, result_type());
-    result_type _S = 0;
+    result_type _Sp = 0;
     for (size_t __i = 0; __i < __areas_.size(); ++__i)
     {
         __areas_[__i] = (__densities_[__i+1] + __densities_[__i]) *
                         (__b_[__i+1] - __b_[__i]) * .5;
-        _S += __areas_[__i];
+        _Sp += __areas_[__i];
     }
     for (size_t __i = __areas_.size(); __i > 1;)
     {
         --__i;
-        __areas_[__i] = __areas_[__i-1] / _S;
+        __areas_[__i] = __areas_[__i-1] / _Sp;
     }
     __areas_[0] = 0;
     for (size_t __i = 1; __i < __areas_.size(); ++__i)
         __areas_[__i] += __areas_[__i-1];
     for (size_t __i = 0; __i < __densities_.size(); ++__i)
-        __densities_[__i] /= _S;
+        __densities_[__i] /= _Sp;
 }
 
 template<class _RealType>

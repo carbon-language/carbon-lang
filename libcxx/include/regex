@@ -2794,49 +2794,49 @@ private:
                  match_results<const _CharT*, _Allocator>& __m,
                  regex_constants::match_flag_type __flags, bool) const;
 
-    template <class _B, class _A, class _C, class _T>
+    template <class _Bp, class _Ap, class _Cp, class _Tp>
     friend
     bool
-    regex_search(_B, _B, match_results<_B, _A>&, const basic_regex<_C, _T>&,
+    regex_search(_Bp, _Bp, match_results<_Bp, _Ap>&, const basic_regex<_Cp, _Tp>&,
                  regex_constants::match_flag_type);
 
-    template <class _A, class _C, class _T>
+    template <class _Ap, class _Cp, class _Tp>
     friend
     bool
-    regex_search(const _C*, const _C*, match_results<const _C*, _A>&,
-                 const basic_regex<_C, _T>&, regex_constants::match_flag_type);
+    regex_search(const _Cp*, const _Cp*, match_results<const _Cp*, _Ap>&,
+                 const basic_regex<_Cp, _Tp>&, regex_constants::match_flag_type);
 
-    template <class _B, class _C, class _T>
+    template <class _Bp, class _Cp, class _Tp>
     friend
     bool
-    regex_search(_B, _B, const basic_regex<_C, _T>&,
+    regex_search(_Bp, _Bp, const basic_regex<_Cp, _Tp>&,
                  regex_constants::match_flag_type);
 
-    template <class _C, class _T>
+    template <class _Cp, class _Tp>
     friend
     bool
-    regex_search(const _C*, const _C*,
-                 const basic_regex<_C, _T>&, regex_constants::match_flag_type);
+    regex_search(const _Cp*, const _Cp*,
+                 const basic_regex<_Cp, _Tp>&, regex_constants::match_flag_type);
 
-    template <class _C, class _A, class _T>
+    template <class _Cp, class _Ap, class _Tp>
     friend
     bool
-    regex_search(const _C*, match_results<const _C*, _A>&, const basic_regex<_C, _T>&,
+    regex_search(const _Cp*, match_results<const _Cp*, _Ap>&, const basic_regex<_Cp, _Tp>&,
                  regex_constants::match_flag_type);
 
-    template <class _ST, class _SA, class _C, class _T>
+    template <class _ST, class _SA, class _Cp, class _Tp>
     friend
     bool
-    regex_search(const basic_string<_C, _ST, _SA>& __s,
-                 const basic_regex<_C, _T>& __e,
+    regex_search(const basic_string<_Cp, _ST, _SA>& __s,
+                 const basic_regex<_Cp, _Tp>& __e,
                  regex_constants::match_flag_type __flags);
 
-    template <class _ST, class _SA, class _A, class _C, class _T>
+    template <class _ST, class _SA, class _Ap, class _Cp, class _Tp>
     friend
     bool
-    regex_search(const basic_string<_C, _ST, _SA>& __s,
-                 match_results<typename basic_string<_C, _ST, _SA>::const_iterator, _A>&,
-                 const basic_regex<_C, _T>& __e,
+    regex_search(const basic_string<_Cp, _ST, _SA>& __s,
+                 match_results<typename basic_string<_Cp, _ST, _SA>::const_iterator, _Ap>&,
+                 const basic_regex<_Cp, _Tp>& __e,
                  regex_constants::match_flag_type __flags);
 
     template <class, class> friend class __lookahead;
@@ -5263,12 +5263,12 @@ public:
     // swap:
     void swap(match_results& __m);
 
-    template <class _B, class _A>
+    template <class _Bp, class _Ap>
         _LIBCPP_INLINE_VISIBILITY
         void __assign(_BidirectionalIterator __f, _BidirectionalIterator __l,
-                      const match_results<_B, _A>& __m, bool __no_update_pos)
+                      const match_results<_Bp, _Ap>& __m, bool __no_update_pos)
     {
-        _B __mf = __m.prefix().first;
+        _Bp __mf = __m.prefix().first;
         __matches_.resize(__m.size());
         for (size_type __i = 0; __i < __matches_.size(); ++__i)
         {
@@ -5297,16 +5297,16 @@ private:
 
     template <class, class> friend class basic_regex;
 
-    template <class _B, class _A, class _C, class _T>
+    template <class _Bp, class _Ap, class _Cp, class _Tp>
     friend
     bool
-    regex_match(_B, _B, match_results<_B, _A>&, const basic_regex<_C, _T>&,
+    regex_match(_Bp, _Bp, match_results<_Bp, _Ap>&, const basic_regex<_Cp, _Tp>&,
                 regex_constants::match_flag_type);
 
-    template <class _B, class _A>
+    template <class _Bp, class _Ap>
     friend
     bool
-    operator==(const match_results<_B, _A>&, const match_results<_B, _A>&);
+    operator==(const match_results<_Bp, _Ap>&, const match_results<_Bp, _Ap>&);
 
     template <class, class> friend class __lookahead;
 };
@@ -5497,7 +5497,7 @@ basic_regex<_CharT, _Traits>::__match_at_start_ecma(
 {
     vector<__state> __states;
     ptrdiff_t __j = 0;
-    ptrdiff_t _N = _VSTD::distance(__first, __last);
+    ptrdiff_t _Np = _VSTD::distance(__first, __last);
     __node* __st = __start_.get();
     if (__st)
     {
@@ -5563,7 +5563,7 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_nosubs(
 {
     deque<__state> __states;
     ptrdiff_t __highest_j = 0;
-    ptrdiff_t _N = _VSTD::distance(__first, __last);
+    ptrdiff_t _Np = _VSTD::distance(__first, __last);
     __node* __st = __start_.get();
     if (__st)
     {
@@ -5588,7 +5588,7 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_nosubs(
                 if (!__matched || __highest_j < __s.__current_ - __s.__first_)
                     __highest_j = __s.__current_ - __s.__first_;
                 __matched = true;
-                if (__highest_j == _N)
+                if (__highest_j == _Np)
                     __states.clear();
                 else
                     __states.pop_back();
@@ -5643,7 +5643,7 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_subs(
     __state __best_state;
     ptrdiff_t __j = 0;
     ptrdiff_t __highest_j = 0;
-    ptrdiff_t _N = _VSTD::distance(__first, __last);
+    ptrdiff_t _Np = _VSTD::distance(__first, __last);
     __node* __st = __start_.get();
     if (__st)
     {
@@ -5673,7 +5673,7 @@ basic_regex<_CharT, _Traits>::__match_at_start_posix_subs(
                     __best_state = __s;
                 }
                 __matched = true;
-                if (__highest_j == _N)
+                if (__highest_j == _Np)
                     __states.clear();
                 else
                     __states.pop_back();
@@ -6088,11 +6088,11 @@ public:
                          regex_constants::match_flag_type __m =
                                                 regex_constants::match_default);
 #endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
-    template <size_t _N>
+    template <size_t _Np>
         regex_token_iterator(_BidirectionalIterator __a,
                              _BidirectionalIterator __b,
                              const regex_type& __re,
-                             const int (&__submatches)[_N],
+                             const int (&__submatches)[_Np],
                              regex_constants::match_flag_type __m =
                                                 regex_constants::match_default);
     regex_token_iterator(const regex_token_iterator&);
@@ -6194,15 +6194,15 @@ regex_token_iterator<_BidirectionalIterator, _CharT, _Traits>::
 #endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
 
 template <class _BidirectionalIterator, class _CharT, class _Traits>
-template <size_t _N>
+template <size_t _Np>
 regex_token_iterator<_BidirectionalIterator, _CharT, _Traits>::
     regex_token_iterator(_BidirectionalIterator __a, _BidirectionalIterator __b,
                              const regex_type& __re,
-                             const int (&__submatches)[_N],
+                             const int (&__submatches)[_Np],
                              regex_constants::match_flag_type __m)
     : __position_(__a, __b, __re, __m),
       _N_(0),
-      __subs_(__submatches, __submatches + _N)
+      __subs_(__submatches, __submatches + _Np)
 {
     __init(__a, __b);
 }

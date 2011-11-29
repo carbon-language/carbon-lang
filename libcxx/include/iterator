@@ -1039,9 +1039,9 @@ template <class _Iter>
 __wrap_iter<_Iter>
 operator+(typename __wrap_iter<_Iter>::difference_type, __wrap_iter<_Iter>) _NOEXCEPT;
 
-template <class _I, class _O> _O copy(_I, _I, _O);
+template <class _Ip, class _Op> _Op copy(_Ip, _Ip, _Op);
 template <class _B1, class _B2> _B2 copy_backward(_B1, _B1, _B2);
-template <class _I, class _O> _O move(_I, _I, _O);
+template <class _Ip, class _Op> _Op move(_Ip, _Ip, _Op);
 template <class _B1, class _B2> _B2 move_backward(_B1, _B1, _B2);
 
 template <class _Tp>
@@ -1212,9 +1212,9 @@ private:
     __wrap_iter<_Iter1>
     operator+(typename __wrap_iter<_Iter1>::difference_type, __wrap_iter<_Iter1>) _NOEXCEPT;
 
-    template <class _I, class _O> friend _O copy(_I, _I, _O);
+    template <class _Ip, class _Op> friend _Op copy(_Ip, _Ip, _Op);
     template <class _B1, class _B2> friend _B2 copy_backward(_B1, _B1, _B2);
-    template <class _I, class _O> friend _O move(_I, _I, _O);
+    template <class _Ip, class _Op> friend _Op move(_Ip, _Ip, _Op);
     template <class _B1, class _B2> friend _B2 move_backward(_B1, _B1, _B2);
 
     template <class _Tp>
@@ -1715,88 +1715,88 @@ operator+(typename __debug_iter<_Container, _Iter>::difference_type __n,
 
 #if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_TRAILING_RETURN)
 
-template <class _C>
+template <class _Cp>
 inline _LIBCPP_INLINE_VISIBILITY
 auto
-begin(_C& __c) -> decltype(__c.begin())
+begin(_Cp& __c) -> decltype(__c.begin())
 {
     return __c.begin();
 }
 
-template <class _C>
+template <class _Cp>
 inline _LIBCPP_INLINE_VISIBILITY
 auto
-begin(const _C& __c) -> decltype(__c.begin())
+begin(const _Cp& __c) -> decltype(__c.begin())
 {
     return __c.begin();
 }
 
-template <class _C>
+template <class _Cp>
 inline _LIBCPP_INLINE_VISIBILITY
 auto
-end(_C& __c) -> decltype(__c.end())
+end(_Cp& __c) -> decltype(__c.end())
 {
     return __c.end();
 }
 
-template <class _C>
+template <class _Cp>
 inline _LIBCPP_INLINE_VISIBILITY
 auto
-end(const _C& __c) -> decltype(__c.end())
+end(const _Cp& __c) -> decltype(__c.end())
 {
     return __c.end();
 }
 
 #else  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_TRAILING_RETURN)
 
-template <class _C>
+template <class _Cp>
 inline _LIBCPP_INLINE_VISIBILITY
-typename _C::iterator
-begin(_C& __c)
+typename _Cp::iterator
+begin(_Cp& __c)
 {
     return __c.begin();
 }
 
-template <class _C>
+template <class _Cp>
 inline _LIBCPP_INLINE_VISIBILITY
-typename _C::const_iterator
-begin(const _C& __c)
+typename _Cp::const_iterator
+begin(const _Cp& __c)
 {
     return __c.begin();
 }
 
-template <class _C>
+template <class _Cp>
 inline _LIBCPP_INLINE_VISIBILITY
-typename _C::iterator
-end(_C& __c)
+typename _Cp::iterator
+end(_Cp& __c)
 {
     return __c.end();
 }
 
-template <class _C>
+template <class _Cp>
 inline _LIBCPP_INLINE_VISIBILITY
-typename _C::const_iterator
-end(const _C& __c)
+typename _Cp::const_iterator
+end(const _Cp& __c)
 {
     return __c.end();
 }
 
 #endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_TRAILING_RETURN)
 
-template <class _T, size_t _N>
+template <class _Tp, size_t _Np>
 inline _LIBCPP_INLINE_VISIBILITY
-_T*
-begin(_T (&__array)[_N])
+_Tp*
+begin(_Tp (&__array)[_Np])
 {
     return __array;
 }
 
-template <class _T, size_t _N>
+template <class _Tp, size_t _Np>
 inline _LIBCPP_INLINE_VISIBILITY
-_T*
-end(_T (&__array)[_N])
+_Tp*
+end(_Tp (&__array)[_Np])
 {
-    return __array + _N;
+    return __array + _Np;
 }
 
 _LIBCPP_END_NAMESPACE_STD

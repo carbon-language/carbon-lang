@@ -342,11 +342,11 @@ basic_ostream<_CharT, _Traits>::operator<<(basic_streambuf<char_type, traits_typ
                 try
                 {
 #endif  // _LIBCPP_NO_EXCEPTIONS
-                    typedef istreambuf_iterator<_CharT, _Traits> _I;
-                    typedef ostreambuf_iterator<_CharT, _Traits> _O;
-                    _I __i(__sb);
-                    _I __eof;
-                    _O __o(*this);
+                    typedef istreambuf_iterator<_CharT, _Traits> _Ip;
+                    typedef ostreambuf_iterator<_CharT, _Traits> _Op;
+                    _Ip __i(__sb);
+                    _Ip __eof;
+                    _Op __o(*this);
                     size_t __c = 0;
                     for (; __i != __eof; ++__i, ++__o, ++__c)
                     {
@@ -388,8 +388,8 @@ basic_ostream<_CharT, _Traits>::operator<<(bool __n)
         sentry __s(*this);
         if (__s)
         {
-            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _F;
-            const _F& __f = use_facet<_F>(this->getloc());
+            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _Fp;
+            const _Fp& __f = use_facet<_Fp>(this->getloc());
             if (__f.put(*this, *this, this->fill(), __n).failed())
                 this->setstate(ios_base::badbit | ios_base::failbit);
         }
@@ -415,8 +415,8 @@ basic_ostream<_CharT, _Traits>::operator<<(short __n)
         if (__s)
         {
             ios_base::fmtflags __flags = ios_base::flags() & ios_base::basefield;
-            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _F;
-            const _F& __f = use_facet<_F>(this->getloc());
+            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _Fp;
+            const _Fp& __f = use_facet<_Fp>(this->getloc());
             if (__f.put(*this, *this, this->fill(),
                         __flags == ios_base::oct || __flags == ios_base::hex ?
                         static_cast<long>(static_cast<unsigned short>(__n))  :
@@ -444,8 +444,8 @@ basic_ostream<_CharT, _Traits>::operator<<(unsigned short __n)
         sentry __s(*this);
         if (__s)
         {
-            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _F;
-            const _F& __f = use_facet<_F>(this->getloc());
+            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _Fp;
+            const _Fp& __f = use_facet<_Fp>(this->getloc());
             if (__f.put(*this, *this, this->fill(), static_cast<unsigned long>(__n)).failed())
                 this->setstate(ios_base::badbit | ios_base::failbit);
         }
@@ -471,8 +471,8 @@ basic_ostream<_CharT, _Traits>::operator<<(int __n)
         if (__s)
         {
             ios_base::fmtflags __flags = ios_base::flags() & ios_base::basefield;
-            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _F;
-            const _F& __f = use_facet<_F>(this->getloc());
+            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _Fp;
+            const _Fp& __f = use_facet<_Fp>(this->getloc());
             if (__f.put(*this, *this, this->fill(),
                         __flags == ios_base::oct || __flags == ios_base::hex ?
                         static_cast<long>(static_cast<unsigned int>(__n))  :
@@ -500,8 +500,8 @@ basic_ostream<_CharT, _Traits>::operator<<(unsigned int __n)
         sentry __s(*this);
         if (__s)
         {
-            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _F;
-            const _F& __f = use_facet<_F>(this->getloc());
+            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _Fp;
+            const _Fp& __f = use_facet<_Fp>(this->getloc());
             if (__f.put(*this, *this, this->fill(), static_cast<unsigned long>(__n)).failed())
                 this->setstate(ios_base::badbit | ios_base::failbit);
         }
@@ -526,8 +526,8 @@ basic_ostream<_CharT, _Traits>::operator<<(long __n)
         sentry __s(*this);
         if (__s)
         {
-            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _F;
-            const _F& __f = use_facet<_F>(this->getloc());
+            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _Fp;
+            const _Fp& __f = use_facet<_Fp>(this->getloc());
             if (__f.put(*this, *this, this->fill(), __n).failed())
                 this->setstate(ios_base::badbit | ios_base::failbit);
         }
@@ -552,8 +552,8 @@ basic_ostream<_CharT, _Traits>::operator<<(unsigned long __n)
         sentry __s(*this);
         if (__s)
         {
-            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _F;
-            const _F& __f = use_facet<_F>(this->getloc());
+            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _Fp;
+            const _Fp& __f = use_facet<_Fp>(this->getloc());
             if (__f.put(*this, *this, this->fill(), __n).failed())
                 this->setstate(ios_base::badbit | ios_base::failbit);
         }
@@ -578,8 +578,8 @@ basic_ostream<_CharT, _Traits>::operator<<(long long __n)
         sentry __s(*this);
         if (__s)
         {
-            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _F;
-            const _F& __f = use_facet<_F>(this->getloc());
+            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _Fp;
+            const _Fp& __f = use_facet<_Fp>(this->getloc());
             if (__f.put(*this, *this, this->fill(), __n).failed())
                 this->setstate(ios_base::badbit | ios_base::failbit);
         }
@@ -604,8 +604,8 @@ basic_ostream<_CharT, _Traits>::operator<<(unsigned long long __n)
         sentry __s(*this);
         if (__s)
         {
-            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _F;
-            const _F& __f = use_facet<_F>(this->getloc());
+            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _Fp;
+            const _Fp& __f = use_facet<_Fp>(this->getloc());
             if (__f.put(*this, *this, this->fill(), __n).failed())
                 this->setstate(ios_base::badbit | ios_base::failbit);
         }
@@ -630,8 +630,8 @@ basic_ostream<_CharT, _Traits>::operator<<(float __n)
         sentry __s(*this);
         if (__s)
         {
-            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _F;
-            const _F& __f = use_facet<_F>(this->getloc());
+            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _Fp;
+            const _Fp& __f = use_facet<_Fp>(this->getloc());
             if (__f.put(*this, *this, this->fill(), static_cast<double>(__n)).failed())
                 this->setstate(ios_base::badbit | ios_base::failbit);
         }
@@ -656,8 +656,8 @@ basic_ostream<_CharT, _Traits>::operator<<(double __n)
         sentry __s(*this);
         if (__s)
         {
-            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _F;
-            const _F& __f = use_facet<_F>(this->getloc());
+            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _Fp;
+            const _Fp& __f = use_facet<_Fp>(this->getloc());
             if (__f.put(*this, *this, this->fill(), __n).failed())
                 this->setstate(ios_base::badbit | ios_base::failbit);
         }
@@ -682,8 +682,8 @@ basic_ostream<_CharT, _Traits>::operator<<(long double __n)
         sentry __s(*this);
         if (__s)
         {
-            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _F;
-            const _F& __f = use_facet<_F>(this->getloc());
+            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _Fp;
+            const _Fp& __f = use_facet<_Fp>(this->getloc());
             if (__f.put(*this, *this, this->fill(), __n).failed())
                 this->setstate(ios_base::badbit | ios_base::failbit);
         }
@@ -708,8 +708,8 @@ basic_ostream<_CharT, _Traits>::operator<<(const void* __n)
         sentry __s(*this);
         if (__s)
         {
-            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _F;
-            const _F& __f = use_facet<_F>(this->getloc());
+            typedef num_put<char_type, ostreambuf_iterator<char_type, traits_type> > _Fp;
+            const _Fp& __f = use_facet<_Fp>(this->getloc());
             if (__f.put(*this, *this, this->fill(), __n).failed())
                 this->setstate(ios_base::badbit | ios_base::failbit);
         }
@@ -734,8 +734,8 @@ operator<<(basic_ostream<_CharT, _Traits>& __os, _CharT __c)
         typename basic_ostream<_CharT, _Traits>::sentry __s(__os);
         if (__s)
         {
-            typedef ostreambuf_iterator<_CharT, _Traits> _I;
-            if (__pad_and_output(_I(__os),
+            typedef ostreambuf_iterator<_CharT, _Traits> _Ip;
+            if (__pad_and_output(_Ip(__os),
                                  &__c,
                                  (__os.flags() & ios_base::adjustfield) == ios_base::left ?
                                      &__c + 1 :
@@ -767,8 +767,8 @@ operator<<(basic_ostream<_CharT, _Traits>& __os, char __cn)
         if (__s)
         {
             _CharT __c = __os.widen(__cn);
-            typedef ostreambuf_iterator<_CharT, _Traits> _I;
-            if (__pad_and_output(_I(__os),
+            typedef ostreambuf_iterator<_CharT, _Traits> _Ip;
+            if (__pad_and_output(_Ip(__os),
                                  &__c,
                                  (__os.flags() & ios_base::adjustfield) == ios_base::left ?
                                      &__c + 1 :
@@ -799,8 +799,8 @@ operator<<(basic_ostream<char, _Traits>& __os, char __c)
         typename basic_ostream<char, _Traits>::sentry __s(__os);
         if (__s)
         {
-            typedef ostreambuf_iterator<char, _Traits> _I;
-            if (__pad_and_output(_I(__os),
+            typedef ostreambuf_iterator<char, _Traits> _Ip;
+            if (__pad_and_output(_Ip(__os),
                                  &__c,
                                  (__os.flags() & ios_base::adjustfield) == ios_base::left ?
                                      &__c + 1 :
@@ -831,8 +831,8 @@ operator<<(basic_ostream<char, _Traits>& __os, signed char __c)
         typename basic_ostream<char, _Traits>::sentry __s(__os);
         if (__s)
         {
-            typedef ostreambuf_iterator<char, _Traits> _I;
-            if (__pad_and_output(_I(__os),
+            typedef ostreambuf_iterator<char, _Traits> _Ip;
+            if (__pad_and_output(_Ip(__os),
                                  (char*)&__c,
                                  (__os.flags() & ios_base::adjustfield) == ios_base::left ?
                                      (char*)&__c + 1 :
@@ -863,8 +863,8 @@ operator<<(basic_ostream<char, _Traits>& __os, unsigned char __c)
         typename basic_ostream<char, _Traits>::sentry __s(__os);
         if (__s)
         {
-            typedef ostreambuf_iterator<char, _Traits> _I;
-            if (__pad_and_output(_I(__os),
+            typedef ostreambuf_iterator<char, _Traits> _Ip;
+            if (__pad_and_output(_Ip(__os),
                                  (char*)&__c,
                                  (__os.flags() & ios_base::adjustfield) == ios_base::left ?
                                      (char*)&__c + 1 :
@@ -895,9 +895,9 @@ operator<<(basic_ostream<_CharT, _Traits>& __os, const _CharT* __str)
         typename basic_ostream<_CharT, _Traits>::sentry __s(__os);
         if (__s)
         {
-            typedef ostreambuf_iterator<_CharT, _Traits> _I;
+            typedef ostreambuf_iterator<_CharT, _Traits> _Ip;
             size_t __len = _Traits::length(__str);
-            if (__pad_and_output(_I(__os),
+            if (__pad_and_output(_Ip(__os),
                                  __str,
                                  (__os.flags() & ios_base::adjustfield) == ios_base::left ?
                                      __str + __len :
@@ -928,7 +928,7 @@ operator<<(basic_ostream<_CharT, _Traits>& __os, const char* __strn)
         typename basic_ostream<_CharT, _Traits>::sentry __s(__os);
         if (__s)
         {
-            typedef ostreambuf_iterator<_CharT, _Traits> _I;
+            typedef ostreambuf_iterator<_CharT, _Traits> _Ip;
             size_t __len = char_traits<char>::length(__strn);
             const int __bs = 100;
             _CharT __wbb[__bs];
@@ -943,7 +943,7 @@ operator<<(basic_ostream<_CharT, _Traits>& __os, const char* __strn)
             }
             for (_CharT* __p = __wb; *__strn != '\0'; ++__strn, ++__p)
                 *__p = __os.widen(*__strn);
-            if (__pad_and_output(_I(__os),
+            if (__pad_and_output(_Ip(__os),
                                  __wb,
                                  (__os.flags() & ios_base::adjustfield) == ios_base::left ?
                                      __wb + __len :
@@ -974,9 +974,9 @@ operator<<(basic_ostream<char, _Traits>& __os, const char* __str)
         typename basic_ostream<char, _Traits>::sentry __s(__os);
         if (__s)
         {
-            typedef ostreambuf_iterator<char, _Traits> _I;
+            typedef ostreambuf_iterator<char, _Traits> _Ip;
             size_t __len = _Traits::length(__str);
-            if (__pad_and_output(_I(__os),
+            if (__pad_and_output(_Ip(__os),
                                  __str,
                                  (__os.flags() & ios_base::adjustfield) == ios_base::left ?
                                      __str + __len :
@@ -1007,9 +1007,9 @@ operator<<(basic_ostream<char, _Traits>& __os, const signed char* __str)
         typename basic_ostream<char, _Traits>::sentry __s(__os);
         if (__s)
         {
-            typedef ostreambuf_iterator<char, _Traits> _I;
+            typedef ostreambuf_iterator<char, _Traits> _Ip;
             size_t __len = _Traits::length((const char*)__str);
-            if (__pad_and_output(_I(__os),
+            if (__pad_and_output(_Ip(__os),
                                  (const char*)__str,
                                  (__os.flags() & ios_base::adjustfield) == ios_base::left ?
                                      (const char*)__str + __len :
@@ -1040,9 +1040,9 @@ operator<<(basic_ostream<char, _Traits>& __os, const unsigned char* __str)
         typename basic_ostream<char, _Traits>::sentry __s(__os);
         if (__s)
         {
-            typedef ostreambuf_iterator<char, _Traits> _I;
+            typedef ostreambuf_iterator<char, _Traits> _Ip;
             size_t __len = _Traits::length((const char*)__str);
-            if (__pad_and_output(_I(__os),
+            if (__pad_and_output(_Ip(__os),
                                  (const char*)__str,
                                  (__os.flags() & ios_base::adjustfield) == ios_base::left ?
                                      (const char*)__str + __len :
@@ -1073,8 +1073,8 @@ basic_ostream<_CharT, _Traits>::put(char_type __c)
         sentry __s(*this);
         if (__s)
         {
-            typedef ostreambuf_iterator<_CharT, _Traits> _O;
-            _O __o(*this);
+            typedef ostreambuf_iterator<_CharT, _Traits> _Op;
+            _Op __o(*this);
             *__o = __c;
             if (__o.failed())
                 this->setstate(ios_base::badbit);
@@ -1100,8 +1100,8 @@ basic_ostream<_CharT, _Traits>::write(const char_type* __s, streamsize __n)
         sentry __sen(*this);
         if (__sen && __n)
         {
-            typedef ostreambuf_iterator<_CharT, _Traits> _O;
-            _O __o(*this);
+            typedef ostreambuf_iterator<_CharT, _Traits> _Op;
+            _Op __o(*this);
             for (; __n; --__n, ++__o, ++__s)
             {
                 *__o = *__s;
@@ -1240,9 +1240,9 @@ operator<<(basic_ostream<_CharT, _Traits>& __os,
         typename basic_ostream<_CharT, _Traits>::sentry __s(__os);
         if (__s)
         {
-            typedef ostreambuf_iterator<_CharT, _Traits> _I;
+            typedef ostreambuf_iterator<_CharT, _Traits> _Ip;
             size_t __len = __str.size();
-            if (__pad_and_output(_I(__os),
+            if (__pad_and_output(_Ip(__os),
                                  __str.data(),
                                  (__os.flags() & ios_base::adjustfield) == ios_base::left ?
                                      __str.data() + __len :
@@ -1270,10 +1270,10 @@ operator<<(basic_ostream<_CharT, _Traits>& __os, const error_code& __ec)
     return __os << __ec.category().name() << ':' << __ec.value();
 }
 
-template<class _CharT, class _Traits, class _Y>
+template<class _CharT, class _Traits, class _Yp>
 inline _LIBCPP_INLINE_VISIBILITY
 basic_ostream<_CharT, _Traits>&
-operator<<(basic_ostream<_CharT, _Traits>& __os, shared_ptr<_Y> const& __p)
+operator<<(basic_ostream<_CharT, _Traits>& __os, shared_ptr<_Yp> const& __p)
 {
     return __os << __p.get();
 }

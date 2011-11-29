@@ -2422,29 +2422,29 @@ minmax(initializer_list<_Tp> __t, _Compare __comp)
 
 // __independent_bits_engine
 
-template <unsigned long long _X, size_t _R>
+template <unsigned long long _Xp, size_t _Rp>
 struct __log2_imp
 {
-    static const size_t value = _X & ((unsigned long long)(1) << _R) ? _R
-                                           : __log2_imp<_X, _R - 1>::value;
+    static const size_t value = _Xp & ((unsigned long long)(1) << _Rp) ? _Rp
+                                           : __log2_imp<_Xp, _Rp - 1>::value;
 };
 
-template <unsigned long long _X>
-struct __log2_imp<_X, 0>
+template <unsigned long long _Xp>
+struct __log2_imp<_Xp, 0>
 {
     static const size_t value = 0;
 };
 
-template <size_t _R>
-struct __log2_imp<0, _R>
+template <size_t _Rp>
+struct __log2_imp<0, _Rp>
 {
-    static const size_t value = _R + 1;
+    static const size_t value = _Rp + 1;
 };
 
-template <class _UI, _UI _X>
+template <class _UI, _UI _Xp>
 struct __log2
 {
-    static const size_t value = __log2_imp<_X,
+    static const size_t value = __log2_imp<_Xp,
                                          sizeof(_UI) * __CHAR_BIT__ - 1>::value;
 };
 
@@ -2474,9 +2474,9 @@ private:
     _Engine_result_type __mask0_;
     _Engine_result_type __mask1_;
 
-    static const _Working_result_type _R = _Engine::_Max - _Engine::_Min
+    static const _Working_result_type _Rp = _Engine::_Max - _Engine::_Min
                                                          + _Working_result_type(1);
-    static const size_t __m = __log2<_Working_result_type, _R>::value;
+    static const size_t __m = __log2<_Working_result_type, _Rp>::value;
     static const size_t _WDt = numeric_limits<_Working_result_type>::digits;
     static const size_t _EDt = numeric_limits<_Engine_result_type>::digits;
 
@@ -2485,7 +2485,7 @@ public:
     __independent_bits_engine(_Engine& __e, size_t __w);
 
     // generating functions
-    result_type operator()() {return __eval(integral_constant<bool, _R != 0>());}
+    result_type operator()() {return __eval(integral_constant<bool, _Rp != 0>());}
 
 private:
     result_type __eval(false_type);
@@ -2500,24 +2500,24 @@ __independent_bits_engine<_Engine, _UIntType>
 {
     __n_ = __w_ / __m + (__w_ % __m != 0);
     __w0_ = __w_ / __n_;
-    if (_R == 0)
-        __y0_ = _R;
+    if (_Rp == 0)
+        __y0_ = _Rp;
     else if (__w0_ < _WDt)
-        __y0_ = (_R >> __w0_) << __w0_;
+        __y0_ = (_Rp >> __w0_) << __w0_;
     else
         __y0_ = 0;
-    if (_R - __y0_ > __y0_ / __n_)
+    if (_Rp - __y0_ > __y0_ / __n_)
     {
         ++__n_;
         __w0_ = __w_ / __n_;
         if (__w0_ < _WDt)
-            __y0_ = (_R >> __w0_) << __w0_;
+            __y0_ = (_Rp >> __w0_) << __w0_;
         else
             __y0_ = 0;
     }
     __n0_ = __n_ - __w_ % __n_;
     if (__w0_ < _WDt - 1)
-        __y1_ = (_R >> (__w0_ + 1)) << (__w0_ + 1);
+        __y1_ = (_Rp >> (__w0_ + 1)) << (__w0_ + 1);
     else
         __y1_ = 0;
     __mask0_ = __w0_ > 0 ? _Engine_result_type(~0) >> (_EDt - __w0_) :
@@ -2539,7 +2539,7 @@ template<class _Engine, class _UIntType>
 _UIntType
 __independent_bits_engine<_Engine, _UIntType>::__eval(true_type)
 {
-    result_type _S = 0;
+    result_type _Sp = 0;
     for (size_t __k = 0; __k < __n0_; ++__k)
     {
         _Engine_result_type __u;
@@ -2548,10 +2548,10 @@ __independent_bits_engine<_Engine, _UIntType>::__eval(true_type)
             __u = __e_() - _Engine::min();
         } while (__u >= __y0_);
         if (__w0_ < _WDt)
-            _S <<= __w0_;
+            _Sp <<= __w0_;
         else
-            _S = 0;
-        _S += __u & __mask0_;
+            _Sp = 0;
+        _Sp += __u & __mask0_;
     }
     for (size_t __k = __n0_; __k < __n_; ++__k)
     {
@@ -2561,12 +2561,12 @@ __independent_bits_engine<_Engine, _UIntType>::__eval(true_type)
             __u = __e_() - _Engine::min();
         } while (__u >= __y1_);
         if (__w0_ < _WDt - 1)
-            _S <<= __w0_ + 1;
+            _Sp <<= __w0_ + 1;
         else
-            _S = 0;
-        _S += __u & __mask1_;
+            _Sp = 0;
+        _Sp += __u & __mask1_;
     }
-    return _S;
+    return _Sp;
 }
 
 // uniform_int_distribution
@@ -2639,22 +2639,22 @@ uniform_int_distribution<_IntType>::operator()(_URNG& __g, const param_type& __p
 {
     typedef typename conditional<sizeof(result_type) <= sizeof(uint32_t),
                                             uint32_t, uint64_t>::type _UIntType;
-    const _UIntType _R = __p.b() - __p.a() + _UIntType(1);
-    if (_R == 1)
+    const _UIntType _Rp = __p.b() - __p.a() + _UIntType(1);
+    if (_Rp == 1)
         return __p.a();
     const size_t _Dt = numeric_limits<_UIntType>::digits;
     typedef __independent_bits_engine<_URNG, _UIntType> _Eng;
-    if (_R == 0)
+    if (_Rp == 0)
         return static_cast<result_type>(_Eng(__g, _Dt)());
-    size_t __w = _Dt - __clz(_R) - 1;
-    if ((_R & (_UIntType(~0) >> (_Dt - __w))) != 0)
+    size_t __w = _Dt - __clz(_Rp) - 1;
+    if ((_Rp & (_UIntType(~0) >> (_Dt - __w))) != 0)
         ++__w;
     _Eng __e(__g, __w);
     _UIntType __u;
     do
     {
         __u = __e();
-    } while (__u >= _R);
+    } while (__u >= _Rp);
     return static_cast<result_type>(__u + __p.a());
 }
 
@@ -2691,16 +2691,16 @@ void
 random_shuffle(_RandomAccessIterator __first, _RandomAccessIterator __last)
 {
     typedef typename iterator_traits<_RandomAccessIterator>::difference_type difference_type;
-    typedef uniform_int_distribution<ptrdiff_t> _D;
-    typedef typename _D::param_type _P;
+    typedef uniform_int_distribution<ptrdiff_t> _Dp;
+    typedef typename _Dp::param_type _Pp;
     difference_type __d = __last - __first;
     if (__d > 1)
     {
-        _D __uid;
+        _Dp __uid;
         __rs_default __g = __rs_get();
         for (--__last, --__d; __first < __last; ++__first, --__d)
         {
-            difference_type __i = __uid(__g, _P(0, __d));
+            difference_type __i = __uid(__g, _Pp(0, __d));
             if (__i != difference_type(0))
                 swap(*__first, *(__first + __i));
         }
@@ -2737,15 +2737,15 @@ template<class _RandomAccessIterator, class _UniformRandomNumberGenerator>
 #endif
 {
     typedef typename iterator_traits<_RandomAccessIterator>::difference_type difference_type;
-    typedef uniform_int_distribution<ptrdiff_t> _D;
-    typedef typename _D::param_type _P;
+    typedef uniform_int_distribution<ptrdiff_t> _Dp;
+    typedef typename _Dp::param_type _Pp;
     difference_type __d = __last - __first;
     if (__d > 1)
     {
-        _D __uid;
+        _Dp __uid;
         for (--__last, --__d; __first < __last; ++__first, --__d)
         {
-            difference_type __i = __uid(__g, _P(0, __d));
+            difference_type __i = __uid(__g, _Pp(0, __d));
             if (__i != difference_type(0))
                 swap(*__first, *(__first + __i));
         }

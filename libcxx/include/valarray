@@ -495,14 +495,14 @@ struct __bit_shift_right : binary_function<_Tp, _Tp, _Tp>
         {return __x >> __y;}
 };
 
-template <class _Tp, class _F>
+template <class _Tp, class _Fp>
 struct __apply_expr   : unary_function<_Tp, _Tp>
 {
 private:
-    _F __f_;
+    _Fp __f_;
 public:
     _LIBCPP_INLINE_VISIBILITY
-    explicit __apply_expr(_F __f) : __f_(__f) {}
+    explicit __apply_expr(_Fp __f) : __f_(__f) {}
 
     _LIBCPP_INLINE_VISIBILITY
     _Tp operator()(const _Tp& __x) const
@@ -690,7 +690,7 @@ private:
     ptrdiff_t __ul_;
     ptrdiff_t __sn_;
     ptrdiff_t __n_;
-    static const ptrdiff_t _N = static_cast<ptrdiff_t>(
+    static const ptrdiff_t _Np = static_cast<ptrdiff_t>(
                                     sizeof(ptrdiff_t) * __CHAR_BIT__ - 1);
 
     _LIBCPP_INLINE_VISIBILITY
@@ -699,8 +699,8 @@ private:
           __size_(__e.size()),
           __n_(__n)
         {
-            ptrdiff_t __neg_n = static_cast<ptrdiff_t>(__n_ >> _N);
-            __sn_ = __neg_n | static_cast<ptrdiff_t>(static_cast<size_t>(-__n_) >> _N);
+            ptrdiff_t __neg_n = static_cast<ptrdiff_t>(__n_ >> _Np);
+            __sn_ = __neg_n | static_cast<ptrdiff_t>(static_cast<size_t>(-__n_) >> _Np);
             __ul_ = ((__size_ - __n_) & ~__neg_n) | ((__n_ + 1) & __neg_n);
         }
 public:
@@ -709,7 +709,7 @@ public:
     result_type operator[](size_t __j) const
         {
             ptrdiff_t __i = static_cast<size_t>(__j);
-            ptrdiff_t __m = (__sn_ * __i - __ul_) >> _N;
+            ptrdiff_t __m = (__sn_ * __i - __ul_) >> _Np;
             return (__expr_[(__i + __n_) & __m] & __m) | (value_type() & ~__m);
         }
 

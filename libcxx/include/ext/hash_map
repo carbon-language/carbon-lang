@@ -499,8 +499,8 @@ private:
     typedef typename __table::__node_traits                __node_traits;
     typedef typename __table::__node_allocator             __node_allocator;
     typedef typename __table::__node                       __node;
-    typedef __hash_map_node_destructor<__node_allocator>   _D;
-    typedef unique_ptr<__node, _D>                         __node_holder;
+    typedef __hash_map_node_destructor<__node_allocator>   _Dp;
+    typedef unique_ptr<__node, _Dp>                         __node_holder;
     typedef allocator_traits<allocator_type>               __alloc_traits;
 public:
     typedef typename __alloc_traits::pointer         pointer;
@@ -671,7 +671,7 @@ typename hash_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__node_holder
 hash_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(const key_type& __k)
 {
     __node_allocator& __na = __table_.__node_alloc();
-    __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
+    __node_holder __h(__node_traits::allocate(__na, 1), _Dp(__na));
     __node_traits::construct(__na, _VSTD::addressof(__h->__value_.first), __k);
     __h.get_deleter().__first_constructed = true;
     __node_traits::construct(__na, _VSTD::addressof(__h->__value_.second));
@@ -776,8 +776,8 @@ private:
     typedef typename __table::__node_traits                __node_traits;
     typedef typename __table::__node_allocator             __node_allocator;
     typedef typename __table::__node                       __node;
-    typedef __hash_map_node_destructor<__node_allocator>   _D;
-    typedef unique_ptr<__node, _D>                         __node_holder;
+    typedef __hash_map_node_destructor<__node_allocator>   _Dp;
+    typedef unique_ptr<__node, _Dp>                         __node_holder;
     typedef allocator_traits<allocator_type>               __alloc_traits;
 public:
     typedef typename __alloc_traits::pointer         pointer;

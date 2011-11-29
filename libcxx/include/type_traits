@@ -148,7 +148,7 @@ namespace std
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-template <bool _B, class _If, class _Then>
+template <bool _Bp, class _If, class _Then>
     struct _LIBCPP_VISIBLE conditional {typedef _If type;};
 template <class _If, class _Then>
     struct _LIBCPP_VISIBLE conditional<false, _If, _Then> {typedef _Then type;};
@@ -1418,215 +1418,215 @@ struct __member_pointer_traits_imp
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
-template <class _R, class _Class, class ..._Param>
-struct __member_pointer_traits_imp<_R (_Class::*)(_Param...), true, false>
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...), true, false>
 {
     typedef _Class _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) const, true, false>
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const, true, false>
 {
     typedef _Class const _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) volatile, true, false>
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) volatile, true, false>
 {
     typedef _Class volatile _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) const volatile, true, false>
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const volatile, true, false>
 {
     typedef _Class const volatile _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
 #if __has_feature(cxx_reference_qualified_functions)
 
-template <class _R, class _Class, class ..._Param>
-struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) &, true, false>
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) &, true, false>
 {
     typedef _Class& _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) const&, true, false>
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const&, true, false>
 {
     typedef _Class const& _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) volatile&, true, false>
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) volatile&, true, false>
 {
     typedef _Class volatile& _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) const volatile&, true, false>
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const volatile&, true, false>
 {
     typedef _Class const volatile& _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) &&, true, false>
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) &&, true, false>
 {
     typedef _Class&& _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) const&&, true, false>
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const&&, true, false>
 {
     typedef _Class const&& _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) volatile&&, true, false>
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) volatile&&, true, false>
 {
     typedef _Class volatile&& _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) const volatile&&, true, false>
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const volatile&&, true, false>
 {
     typedef _Class const volatile&& _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
 #endif  // __has_feature(cxx_reference_qualified_functions)
 
 #else  // _LIBCPP_HAS_NO_VARIADICS
 
-template <class _R, class _Class>
-struct __member_pointer_traits_imp<_R (_Class::*)(), true, false>
+template <class _Rp, class _Class>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(), true, false>
 {
     typedef _Class _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class _P0>
-struct __member_pointer_traits_imp<_R (_Class::*)(_P0), true, false>
+template <class _Rp, class _Class, class _P0>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0), true, false>
 {
     typedef _Class _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class _P0, class _P1>
-struct __member_pointer_traits_imp<_R (_Class::*)(_P0, _P1), true, false>
+template <class _Rp, class _Class, class _P0, class _P1>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1), true, false>
 {
     typedef _Class _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class _P0, class _P1, class _P2>
-struct __member_pointer_traits_imp<_R (_Class::*)(_P0, _P1, _P2), true, false>
+template <class _Rp, class _Class, class _P0, class _P1, class _P2>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, _P2), true, false>
 {
     typedef _Class _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class>
-struct __member_pointer_traits_imp<_R (_Class::*)() const, true, false>
+template <class _Rp, class _Class>
+struct __member_pointer_traits_imp<_Rp (_Class::*)() const, true, false>
 {
     typedef _Class const _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class _P0>
-struct __member_pointer_traits_imp<_R (_Class::*)(_P0) const, true, false>
+template <class _Rp, class _Class, class _P0>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0) const, true, false>
 {
     typedef _Class const _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class _P0, class _P1>
-struct __member_pointer_traits_imp<_R (_Class::*)(_P0, _P1) const, true, false>
+template <class _Rp, class _Class, class _P0, class _P1>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1) const, true, false>
 {
     typedef _Class const _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class _P0, class _P1, class _P2>
-struct __member_pointer_traits_imp<_R (_Class::*)(_P0, _P1, _P2) const, true, false>
+template <class _Rp, class _Class, class _P0, class _P1, class _P2>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, _P2) const, true, false>
 {
     typedef _Class const _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class>
-struct __member_pointer_traits_imp<_R (_Class::*)() volatile, true, false>
+template <class _Rp, class _Class>
+struct __member_pointer_traits_imp<_Rp (_Class::*)() volatile, true, false>
 {
     typedef _Class volatile _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class _P0>
-struct __member_pointer_traits_imp<_R (_Class::*)(_P0) volatile, true, false>
+template <class _Rp, class _Class, class _P0>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0) volatile, true, false>
 {
     typedef _Class volatile _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class _P0, class _P1>
-struct __member_pointer_traits_imp<_R (_Class::*)(_P0, _P1) volatile, true, false>
+template <class _Rp, class _Class, class _P0, class _P1>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1) volatile, true, false>
 {
     typedef _Class volatile _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class _P0, class _P1, class _P2>
-struct __member_pointer_traits_imp<_R (_Class::*)(_P0, _P1, _P2) volatile, true, false>
+template <class _Rp, class _Class, class _P0, class _P1, class _P2>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, _P2) volatile, true, false>
 {
     typedef _Class volatile _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class>
-struct __member_pointer_traits_imp<_R (_Class::*)() const volatile, true, false>
+template <class _Rp, class _Class>
+struct __member_pointer_traits_imp<_Rp (_Class::*)() const volatile, true, false>
 {
     typedef _Class const volatile _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class _P0>
-struct __member_pointer_traits_imp<_R (_Class::*)(_P0) const volatile, true, false>
+template <class _Rp, class _Class, class _P0>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0) const volatile, true, false>
 {
     typedef _Class const volatile _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class _P0, class _P1>
-struct __member_pointer_traits_imp<_R (_Class::*)(_P0, _P1) const volatile, true, false>
+template <class _Rp, class _Class, class _P0, class _P1>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1) const volatile, true, false>
 {
     typedef _Class const volatile _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
-template <class _R, class _Class, class _P0, class _P1, class _P2>
-struct __member_pointer_traits_imp<_R (_Class::*)(_P0, _P1, _P2) const volatile, true, false>
+template <class _Rp, class _Class, class _P0, class _P1, class _P2>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, _P2) const volatile, true, false>
 {
     typedef _Class const volatile _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
-template <class _R, class _Class>
-struct __member_pointer_traits_imp<_R _Class::*, false, true>
+template <class _Rp, class _Class>
+struct __member_pointer_traits_imp<_Rp _Class::*, false, true>
 {
     typedef _Class _ClassType;
-    typedef _R _ReturnType;
+    typedef _Rp _ReturnType;
 };
 
 template <class _MP>
@@ -1673,21 +1673,21 @@ struct __result_of_mp<_MP, _Tp, true>
 template <class _MP, class _Tp, bool>
 struct __result_of_mdp;
 
-template <class _R, class _Class, class _Tp>
-struct __result_of_mdp<_R _Class::*, _Tp, false>
+template <class _Rp, class _Class, class _Tp>
+struct __result_of_mdp<_Rp _Class::*, _Tp, false>
 {
-    typedef typename __apply_cv<decltype(*_VSTD::declval<_Tp>()), _R>::type&& type;
+    typedef typename __apply_cv<decltype(*_VSTD::declval<_Tp>()), _Rp>::type&& type;
 };
 
-template <class _R, class _Class, class _Tp>
-struct __result_of_mdp<_R _Class::*, _Tp, true>
+template <class _Rp, class _Class, class _Tp>
+struct __result_of_mdp<_Rp _Class::*, _Tp, true>
 {
-    typedef typename __apply_cv<_Tp, _R>::type&& type;
+    typedef typename __apply_cv<_Tp, _Rp>::type&& type;
 };
 
-template <class _R, class _Class, class _Tp>
-struct __result_of_mp<_R _Class::*, _Tp, false>
-    : public __result_of_mdp<_R _Class::*, _Tp,
+template <class _Rp, class _Class, class _Tp>
+struct __result_of_mp<_Rp _Class::*, _Tp, false>
+    : public __result_of_mdp<_Rp _Class::*, _Tp,
             is_base_of<_Class, typename remove_reference<_Tp>::type>::value>
 {
 };
@@ -1758,21 +1758,21 @@ struct __result_of_mp<_MP, _Tp, true>
 template <class _MP, class _Tp, bool>
 struct __result_of_mdp;
 
-template <class _R, class _Class, class _Tp>
-struct __result_of_mdp<_R _Class::*, _Tp, false>
+template <class _Rp, class _Class, class _Tp>
+struct __result_of_mdp<_Rp _Class::*, _Tp, false>
 {
-    typedef typename __apply_cv<decltype(*_VSTD::declval<_Tp>()), _R>::type& type;
+    typedef typename __apply_cv<decltype(*_VSTD::declval<_Tp>()), _Rp>::type& type;
 };
 
-template <class _R, class _Class, class _Tp>
-struct __result_of_mdp<_R _Class::*, _Tp, true>
+template <class _Rp, class _Class, class _Tp>
+struct __result_of_mdp<_Rp _Class::*, _Tp, true>
 {
-    typedef typename __apply_cv<_Tp, _R>::type& type;
+    typedef typename __apply_cv<_Tp, _Rp>::type& type;
 };
 
-template <class _R, class _Class, class _Tp>
-struct __result_of_mp<_R _Class::*, _Tp, false>
-    : public __result_of_mdp<_R _Class::*, _Tp,
+template <class _Rp, class _Class, class _Tp>
+struct __result_of_mp<_Rp _Class::*, _Tp, false>
+    : public __result_of_mdp<_Rp _Class::*, _Tp,
             is_base_of<_Class, typename remove_reference<_Tp>::type>::value>
 {
 };
@@ -1879,8 +1879,8 @@ struct __is_constructible // false, _Tp is not a scalar
 
 //      function types are not constructible
 
-template <class _R, class... _A1, class... _A2>
-struct __is_constructible<false, _R(_A1...), _A2...>
+template <class _Rp, class... _A1, class... _A2>
+struct __is_constructible<false, _Rp(_A1...), _A2...>
     : public false_type
     {};
 
@@ -1956,22 +1956,22 @@ struct _LIBCPP_VISIBLE is_constructible
 //      Array types are default constructible if their element type
 //      is default constructible
 
-template <class _A, size_t _N>
-struct __is_constructible<false, _A[_N]>
-    : public is_constructible<typename remove_all_extents<_A>::type>
+template <class _Ap, size_t _Np>
+struct __is_constructible<false, _Ap[_Np]>
+    : public is_constructible<typename remove_all_extents<_Ap>::type>
     {};
 
 //      Otherwise array types are not constructible by this syntax
 
-template <class _A, size_t _N, class ..._Args>
-struct __is_constructible<false, _A[_N], _Args...>
+template <class _Ap, size_t _Np, class ..._Args>
+struct __is_constructible<false, _Ap[_Np], _Args...>
     : public false_type
     {};
 
 //      Incomplete array types are not constructible
 
-template <class _A, class ..._Args>
-struct __is_constructible<false, _A[], _Args...>
+template <class _Ap, class ..._Args>
+struct __is_constructible<false, _Ap[], _Args...>
     : public false_type
     {};
 
@@ -2124,35 +2124,35 @@ struct _LIBCPP_VISIBLE is_constructible<_Tp, _A0, __is_construct::__nat>
 //      Array types are default constructible if their element type
 //      is default constructible
 
-template <class _A, size_t _N>
-struct __is_constructible0_imp<false, _A[_N]>
-    : public is_constructible<typename remove_all_extents<_A>::type>
+template <class _Ap, size_t _Np>
+struct __is_constructible0_imp<false, _Ap[_Np]>
+    : public is_constructible<typename remove_all_extents<_Ap>::type>
     {};
 
-template <class _A, size_t _N, class _A0>
-struct __is_constructible1_imp<false, _A[_N], _A0>
+template <class _Ap, size_t _Np, class _A0>
+struct __is_constructible1_imp<false, _Ap[_Np], _A0>
     : public false_type
     {};
 
-template <class _A, size_t _N, class _A0, class _A1>
-struct __is_constructible2_imp<false, _A[_N], _A0, _A1>
+template <class _Ap, size_t _Np, class _A0, class _A1>
+struct __is_constructible2_imp<false, _Ap[_Np], _A0, _A1>
     : public false_type
     {};
 
 //      Incomplete array types are not constructible
 
-template <class _A>
-struct __is_constructible0_imp<false, _A[]>
+template <class _Ap>
+struct __is_constructible0_imp<false, _Ap[]>
     : public false_type
     {};
 
-template <class _A, class _A0>
-struct __is_constructible1_imp<false, _A[], _A0>
+template <class _Ap, class _A0>
+struct __is_constructible1_imp<false, _Ap[], _A0>
     : public false_type
     {};
 
-template <class _A, class _A0, class _A1>
-struct __is_constructible2_imp<false, _A[], _A0, _A1>
+template <class _Ap, class _A0, class _A1>
+struct __is_constructible2_imp<false, _Ap[], _A0, _A1>
     : public false_type
     {};
 
@@ -2761,134 +2761,134 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_trivial
 
 // Check for complete types
 
-template <class ..._T> struct __check_complete;
+template <class ..._Tp> struct __check_complete;
 
 template <>
 struct __check_complete<>
 {
 };
 
-template <class _H, class _T0, class ..._T>
-struct __check_complete<_H, _T0, _T...>
-    : private __check_complete<_H>,
-      private __check_complete<_T0, _T...>
+template <class _Hp, class _T0, class ..._Tp>
+struct __check_complete<_Hp, _T0, _Tp...>
+    : private __check_complete<_Hp>,
+      private __check_complete<_T0, _Tp...>
 {
 };
 
-template <class _H>
-struct __check_complete<_H, _H>
-    : private __check_complete<_H>
+template <class _Hp>
+struct __check_complete<_Hp, _Hp>
+    : private __check_complete<_Hp>
 {
 };
 
-template <class _T>
-struct __check_complete<_T>
+template <class _Tp>
+struct __check_complete<_Tp>
 {
-    static_assert(sizeof(_T) > 0, "Type must be complete.");
+    static_assert(sizeof(_Tp) > 0, "Type must be complete.");
 };
 
-template <class _T>
-struct __check_complete<_T&>
-    : private __check_complete<_T>
-{
-};
-
-template <class _T>
-struct __check_complete<_T&&>
-    : private __check_complete<_T>
+template <class _Tp>
+struct __check_complete<_Tp&>
+    : private __check_complete<_Tp>
 {
 };
 
-template <class _R, class ..._Param>
-struct __check_complete<_R (*)(_Param...)>
+template <class _Tp>
+struct __check_complete<_Tp&&>
+    : private __check_complete<_Tp>
+{
+};
+
+template <class _Rp, class ..._Param>
+struct __check_complete<_Rp (*)(_Param...)>
     : private __check_complete<_Param...>
 {
 };
 
-template <class _R, class ..._Param>
-struct __check_complete<_R (_Param...)>
+template <class _Rp, class ..._Param>
+struct __check_complete<_Rp (_Param...)>
     : private __check_complete<_Param...>
 {
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __check_complete<_R (_Class::*)(_Param...)>
+template <class _Rp, class _Class, class ..._Param>
+struct __check_complete<_Rp (_Class::*)(_Param...)>
     : private __check_complete<_Class, _Param...>
 {
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __check_complete<_R (_Class::*)(_Param...) const>
+template <class _Rp, class _Class, class ..._Param>
+struct __check_complete<_Rp (_Class::*)(_Param...) const>
     : private __check_complete<_Class, _Param...>
 {
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __check_complete<_R (_Class::*)(_Param...) volatile>
+template <class _Rp, class _Class, class ..._Param>
+struct __check_complete<_Rp (_Class::*)(_Param...) volatile>
     : private __check_complete<_Class, _Param...>
 {
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __check_complete<_R (_Class::*)(_Param...) const volatile>
+template <class _Rp, class _Class, class ..._Param>
+struct __check_complete<_Rp (_Class::*)(_Param...) const volatile>
     : private __check_complete<_Class, _Param...>
 {
 };
 
 #if __has_feature(cxx_reference_qualified_functions)
 
-template <class _R, class _Class, class ..._Param>
-struct __check_complete<_R (_Class::*)(_Param...) &>
+template <class _Rp, class _Class, class ..._Param>
+struct __check_complete<_Rp (_Class::*)(_Param...) &>
     : private __check_complete<_Class, _Param...>
 {
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __check_complete<_R (_Class::*)(_Param...) const&>
+template <class _Rp, class _Class, class ..._Param>
+struct __check_complete<_Rp (_Class::*)(_Param...) const&>
     : private __check_complete<_Class, _Param...>
 {
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __check_complete<_R (_Class::*)(_Param...) volatile&>
+template <class _Rp, class _Class, class ..._Param>
+struct __check_complete<_Rp (_Class::*)(_Param...) volatile&>
     : private __check_complete<_Class, _Param...>
 {
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __check_complete<_R (_Class::*)(_Param...) const volatile&>
+template <class _Rp, class _Class, class ..._Param>
+struct __check_complete<_Rp (_Class::*)(_Param...) const volatile&>
     : private __check_complete<_Class, _Param...>
 {
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __check_complete<_R (_Class::*)(_Param...) &&>
+template <class _Rp, class _Class, class ..._Param>
+struct __check_complete<_Rp (_Class::*)(_Param...) &&>
     : private __check_complete<_Class, _Param...>
 {
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __check_complete<_R (_Class::*)(_Param...) const&&>
+template <class _Rp, class _Class, class ..._Param>
+struct __check_complete<_Rp (_Class::*)(_Param...) const&&>
     : private __check_complete<_Class, _Param...>
 {
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __check_complete<_R (_Class::*)(_Param...) volatile&&>
+template <class _Rp, class _Class, class ..._Param>
+struct __check_complete<_Rp (_Class::*)(_Param...) volatile&&>
     : private __check_complete<_Class, _Param...>
 {
 };
 
-template <class _R, class _Class, class ..._Param>
-struct __check_complete<_R (_Class::*)(_Param...) const volatile&&>
+template <class _Rp, class _Class, class ..._Param>
+struct __check_complete<_Rp (_Class::*)(_Param...) const volatile&&>
     : private __check_complete<_Class, _Param...>
 {
 };
 
 #endif
 
-template <class _R, class _Class>
-struct __check_complete<_R _Class::*>
+template <class _Rp, class _Class>
+struct __check_complete<_Rp _Class::*>
     : private __check_complete<_Class>
 {
 };
@@ -2904,70 +2904,70 @@ __invoke(__any, _Args&& ...__args)
 
 // bullets 1 and 2
 
-template <class _F, class _A0, class ..._Args>
+template <class _Fp, class _A0, class ..._Args>
 auto
-__invoke(_F&& __f, _A0&& __a0, _Args&& ...__args)
+__invoke(_Fp&& __f, _A0&& __a0, _Args&& ...__args)
     -> decltype((_VSTD::forward<_A0>(__a0).*__f)(_VSTD::forward<_Args>(__args)...));
 
-template <class _F, class _A0, class ..._Args>
+template <class _Fp, class _A0, class ..._Args>
 auto
-__invoke(_F&& __f, _A0&& __a0, _Args&& ...__args)
+__invoke(_Fp&& __f, _A0&& __a0, _Args&& ...__args)
     -> decltype(((*_VSTD::forward<_A0>(__a0)).*__f)(_VSTD::forward<_Args>(__args)...));
 
 // bullets 3 and 4
 
-template <class _F, class _A0>
+template <class _Fp, class _A0>
 auto
-__invoke(_F&& __f, _A0&& __a0)
+__invoke(_Fp&& __f, _A0&& __a0)
     -> decltype(_VSTD::forward<_A0>(__a0).*__f);
 
-template <class _F, class _A0>
+template <class _Fp, class _A0>
 auto
-__invoke(_F&& __f, _A0&& __a0)
+__invoke(_Fp&& __f, _A0&& __a0)
     -> decltype((*_VSTD::forward<_A0>(__a0)).*__f);
 
 // bullet 5
 
-template <class _F, class ..._Args>
+template <class _Fp, class ..._Args>
 auto
-__invoke(_F&& __f, _Args&& ...__args)
-    -> decltype(_VSTD::forward<_F>(__f)(_VSTD::forward<_Args>(__args)...));
+__invoke(_Fp&& __f, _Args&& ...__args)
+    -> decltype(_VSTD::forward<_Fp>(__f)(_VSTD::forward<_Args>(__args)...));
 
 // __invokable
 
-template <class _F, class ..._Args>
+template <class _Fp, class ..._Args>
 struct __invokable_imp
-    : private __check_complete<_F, _Args...>
+    : private __check_complete<_Fp, _Args...>
 {
     typedef decltype(
-            __invoke(_VSTD::declval<_F>(), _VSTD::declval<_Args>()...)
+            __invoke(_VSTD::declval<_Fp>(), _VSTD::declval<_Args>()...)
                     ) type;
     static const bool value = !is_same<type, __nat>::value;
 };
 
-template <class _F, class ..._Args>
+template <class _Fp, class ..._Args>
 struct __invokable
     : public integral_constant<bool,
-          __invokable_imp<_F, _Args...>::value>
+          __invokable_imp<_Fp, _Args...>::value>
 {
 };
 
 // __invoke_of
 
-template <bool _Invokable, class _F, class ..._Args>
+template <bool _Invokable, class _Fp, class ..._Args>
 struct __invoke_of_imp  // false
 {
 };
 
-template <class _F, class ..._Args>
-struct __invoke_of_imp<true, _F, _Args...>
+template <class _Fp, class ..._Args>
+struct __invoke_of_imp<true, _Fp, _Args...>
 {
-    typedef typename __invokable_imp<_F, _Args...>::type type;
+    typedef typename __invokable_imp<_Fp, _Args...>::type type;
 };
 
-template <class _F, class ..._Args>
+template <class _Fp, class ..._Args>
 struct __invoke_of
-    : public __invoke_of_imp<__invokable<_F, _Args...>::value, _F, _Args...>
+    : public __invoke_of_imp<__invokable<_Fp, _Args...>::value, _Fp, _Args...>
 {
 };
 

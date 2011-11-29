@@ -464,23 +464,23 @@ private:
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
-template <class _F>
+template <class _Fp>
 class __call_once_param
 {
-    _F __f_;
+    _Fp __f_;
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    explicit __call_once_param(_F&& __f) : __f_(_VSTD::move(__f)) {}
+    explicit __call_once_param(_Fp&& __f) : __f_(_VSTD::move(__f)) {}
 #else
     _LIBCPP_INLINE_VISIBILITY
-    explicit __call_once_param(const _F& __f) : __f_(__f) {}
+    explicit __call_once_param(const _Fp& __f) : __f_(__f) {}
 #endif
 
     _LIBCPP_INLINE_VISIBILITY
     void operator()()
     {
-        typedef typename __make_tuple_indices<tuple_size<_F>::value, 1>::type _Index;
+        typedef typename __make_tuple_indices<tuple_size<_Fp>::value, 1>::type _Index;
         __execute(_Index());
     }
 
@@ -495,17 +495,17 @@ private:
 
 #else
 
-template <class _F>
+template <class _Fp>
 class __call_once_param
 {
-    _F __f_;
+    _Fp __f_;
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    explicit __call_once_param(_F&& __f) : __f_(_VSTD::move(__f)) {}
+    explicit __call_once_param(_Fp&& __f) : __f_(_VSTD::move(__f)) {}
 #else
     _LIBCPP_INLINE_VISIBILITY
-    explicit __call_once_param(const _F& __f) : __f_(__f) {}
+    explicit __call_once_param(const _Fp& __f) : __f_(__f) {}
 #endif
 
     _LIBCPP_INLINE_VISIBILITY
@@ -517,11 +517,11 @@ public:
 
 #endif
 
-template <class _F>
+template <class _Fp>
 void
 __call_once_proxy(void* __vp)
 {
-    __call_once_param<_F>* __p = static_cast<__call_once_param<_F>*>(__vp);
+    __call_once_param<_Fp>* __p = static_cast<__call_once_param<_Fp>*>(__vp);
     (*__p)();
 }
 
@@ -536,10 +536,10 @@ call_once(once_flag& __flag, _Callable&& __func, _Args&&... __args)
 {
     if (__builtin_expect(__flag.__state_ , ~0ul) != ~0ul)
     {
-        typedef tuple<typename decay<_Callable>::type, typename decay<_Args>::type...> _G;
-        __call_once_param<_G> __p(_G(__decay_copy(_VSTD::forward<_Callable>(__func)),
+        typedef tuple<typename decay<_Callable>::type, typename decay<_Args>::type...> _Gp;
+        __call_once_param<_Gp> __p(_Gp(__decay_copy(_VSTD::forward<_Callable>(__func)),
                                 __decay_copy(_VSTD::forward<_Args>(__args))...));
-        __call_once(__flag.__state_, &__p, &__call_once_proxy<_G>);
+        __call_once(__flag.__state_, &__p, &__call_once_proxy<_Gp>);
     }
 }
 

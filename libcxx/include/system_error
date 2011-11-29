@@ -419,10 +419,10 @@ public:
     error_condition(int __val, const error_category& __cat) _NOEXCEPT
         : __val_(__val), __cat_(&__cat) {}
 
-    template <class _E>
+    template <class _Ep>
         _LIBCPP_ALWAYS_INLINE
-        error_condition(_E __e,
-              typename enable_if<is_error_condition_enum<_E>::value>::type* = 0
+        error_condition(_Ep __e,
+              typename enable_if<is_error_condition_enum<_Ep>::value>::type* = 0
                                                                      ) _NOEXCEPT
             {*this = make_error_condition(__e);}
 
@@ -433,14 +433,14 @@ public:
         __cat_ = &__cat;
     }
 
-    template <class _E>
+    template <class _Ep>
         _LIBCPP_ALWAYS_INLINE
         typename enable_if
         <
-            is_error_condition_enum<_E>::value,
+            is_error_condition_enum<_Ep>::value,
             error_condition&
         >::type
-        operator=(_E __e) _NOEXCEPT
+        operator=(_Ep __e) _NOEXCEPT
             {*this = make_error_condition(__e); return *this;}
 
     _LIBCPP_ALWAYS_INLINE
@@ -491,10 +491,10 @@ public:
     error_code(int __val, const error_category& __cat) _NOEXCEPT
         : __val_(__val), __cat_(&__cat) {}
 
-    template <class _E>
+    template <class _Ep>
         _LIBCPP_ALWAYS_INLINE
-        error_code(_E __e,
-                   typename enable_if<is_error_code_enum<_E>::value>::type* = 0
+        error_code(_Ep __e,
+                   typename enable_if<is_error_code_enum<_Ep>::value>::type* = 0
                                                                      ) _NOEXCEPT
             {*this = make_error_code(__e);}
 
@@ -505,14 +505,14 @@ public:
         __cat_ = &__cat;
     }
 
-    template <class _E>
+    template <class _Ep>
         _LIBCPP_ALWAYS_INLINE
         typename enable_if
         <
-            is_error_code_enum<_E>::value,
+            is_error_code_enum<_Ep>::value,
             error_code&
         >::type
-        operator=(_E __e) _NOEXCEPT
+        operator=(_Ep __e) _NOEXCEPT
             {*this = make_error_code(__e); return *this;}
 
     _LIBCPP_ALWAYS_INLINE

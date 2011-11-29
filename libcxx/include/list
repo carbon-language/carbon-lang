@@ -1195,8 +1195,8 @@ list<_Tp, _Alloc>::list(list&& __c, const allocator_type& __a)
         splice(end(), __c);
     else
     {
-        typedef move_iterator<iterator> _I;
-        assign(_I(__c.begin()), _I(__c.end()));
+        typedef move_iterator<iterator> _Ip;
+        assign(_Ip(__c.begin()), _Ip(__c.end()));
     }
 }
 
@@ -1219,8 +1219,8 @@ list<_Tp, _Alloc>::__move_assign(list& __c, false_type)
 {
     if (base::__node_alloc() != __c.__node_alloc())
     {
-        typedef move_iterator<iterator> _I;
-        assign(_I(__c.begin()), _I(__c.end()));
+        typedef move_iterator<iterator> _Ip;
+        assign(_Ip(__c.begin()), _Ip(__c.end()));
     }
     else
         __move_assign(__c, true_type());
@@ -1286,8 +1286,8 @@ list<_Tp, _Alloc>::insert(const_iterator __p, const value_type& __x)
         " referring to this list");
 #endif
     __node_allocator& __na = base::__node_alloc();
-    typedef __allocator_destructor<__node_allocator> _D;
-    unique_ptr<__node, _D> __hold(__node_alloc_traits::allocate(__na, 1), _D(__na, 1));
+    typedef __allocator_destructor<__node_allocator> _Dp;
+    unique_ptr<__node, _Dp> __hold(__node_alloc_traits::allocate(__na, 1), _Dp(__na, 1));
     __hold->__prev_ = 0;
     __node_alloc_traits::construct(__na, _VSTD::addressof(__hold->__value_), __x);
     __link_nodes(const_cast<__node&>(*__p.__ptr_), *__hold, *__hold);
@@ -1311,8 +1311,8 @@ list<_Tp, _Alloc>::insert(const_iterator __p, size_type __n, const value_type& _
     {
         size_type __ds = 0;
         __node_allocator& __na = base::__node_alloc();
-        typedef __allocator_destructor<__node_allocator> _D;
-        unique_ptr<__node, _D> __hold(__node_alloc_traits::allocate(__na, 1), _D(__na, 1));
+        typedef __allocator_destructor<__node_allocator> _Dp;
+        unique_ptr<__node, _Dp> __hold(__node_alloc_traits::allocate(__na, 1), _Dp(__na, 1));
         __hold->__prev_ = 0;
         __node_alloc_traits::construct(__na, _VSTD::addressof(__hold->__value_), __x);
         ++__ds;
@@ -1379,8 +1379,8 @@ list<_Tp, _Alloc>::insert(const_iterator __p, _InpIter __f, _InpIter __l,
     {
         size_type __ds = 0;
         __node_allocator& __na = base::__node_alloc();
-        typedef __allocator_destructor<__node_allocator> _D;
-        unique_ptr<__node, _D> __hold(__node_alloc_traits::allocate(__na, 1), _D(__na, 1));
+        typedef __allocator_destructor<__node_allocator> _Dp;
+        unique_ptr<__node, _Dp> __hold(__node_alloc_traits::allocate(__na, 1), _Dp(__na, 1));
         __hold->__prev_ = 0;
         __node_alloc_traits::construct(__na, _VSTD::addressof(__hold->__value_), *__f);
         ++__ds;
@@ -1434,8 +1434,8 @@ void
 list<_Tp, _Alloc>::push_front(const value_type& __x)
 {
     __node_allocator& __na = base::__node_alloc();
-    typedef __allocator_destructor<__node_allocator> _D;
-    unique_ptr<__node, _D> __hold(__node_alloc_traits::allocate(__na, 1), _D(__na, 1));
+    typedef __allocator_destructor<__node_allocator> _Dp;
+    unique_ptr<__node, _Dp> __hold(__node_alloc_traits::allocate(__na, 1), _Dp(__na, 1));
     __node_alloc_traits::construct(__na, _VSTD::addressof(__hold->__value_), __x);
     __link_nodes(*base::__end_.__next_, *__hold, *__hold);
     ++base::__sz();
@@ -1447,8 +1447,8 @@ void
 list<_Tp, _Alloc>::push_back(const value_type& __x)
 {
     __node_allocator& __na = base::__node_alloc();
-    typedef __allocator_destructor<__node_allocator> _D;
-    unique_ptr<__node, _D> __hold(__node_alloc_traits::allocate(__na, 1), _D(__na, 1));
+    typedef __allocator_destructor<__node_allocator> _Dp;
+    unique_ptr<__node, _Dp> __hold(__node_alloc_traits::allocate(__na, 1), _Dp(__na, 1));
     __node_alloc_traits::construct(__na, _VSTD::addressof(__hold->__value_), __x);
     __link_nodes(static_cast<__node&>(base::__end_), *__hold, *__hold);
     ++base::__sz();
@@ -1462,8 +1462,8 @@ void
 list<_Tp, _Alloc>::push_front(value_type&& __x)
 {
     __node_allocator& __na = base::__node_alloc();
-    typedef __allocator_destructor<__node_allocator> _D;
-    unique_ptr<__node, _D> __hold(__node_alloc_traits::allocate(__na, 1), _D(__na, 1));
+    typedef __allocator_destructor<__node_allocator> _Dp;
+    unique_ptr<__node, _Dp> __hold(__node_alloc_traits::allocate(__na, 1), _Dp(__na, 1));
     __node_alloc_traits::construct(__na, _VSTD::addressof(__hold->__value_), _VSTD::move(__x));
     __link_nodes(*base::__end_.__next_, *__hold, *__hold);
     ++base::__sz();
@@ -1475,8 +1475,8 @@ void
 list<_Tp, _Alloc>::push_back(value_type&& __x)
 {
     __node_allocator& __na = base::__node_alloc();
-    typedef __allocator_destructor<__node_allocator> _D;
-    unique_ptr<__node, _D> __hold(__node_alloc_traits::allocate(__na, 1), _D(__na, 1));
+    typedef __allocator_destructor<__node_allocator> _Dp;
+    unique_ptr<__node, _Dp> __hold(__node_alloc_traits::allocate(__na, 1), _Dp(__na, 1));
     __node_alloc_traits::construct(__na, _VSTD::addressof(__hold->__value_), _VSTD::move(__x));
     __link_nodes(static_cast<__node&>(base::__end_), *__hold, *__hold);
     ++base::__sz();
@@ -1491,8 +1491,8 @@ void
 list<_Tp, _Alloc>::emplace_front(_Args&&... __args)
 {
     __node_allocator& __na = base::__node_alloc();
-    typedef __allocator_destructor<__node_allocator> _D;
-    unique_ptr<__node, _D> __hold(__node_alloc_traits::allocate(__na, 1), _D(__na, 1));
+    typedef __allocator_destructor<__node_allocator> _Dp;
+    unique_ptr<__node, _Dp> __hold(__node_alloc_traits::allocate(__na, 1), _Dp(__na, 1));
     __node_alloc_traits::construct(__na, _VSTD::addressof(__hold->__value_), _VSTD::forward<_Args>(__args)...);
     __link_nodes(*base::__end_.__next_, *__hold, *__hold);
     ++base::__sz();
@@ -1505,8 +1505,8 @@ void
 list<_Tp, _Alloc>::emplace_back(_Args&&... __args)
 {
     __node_allocator& __na = base::__node_alloc();
-    typedef __allocator_destructor<__node_allocator> _D;
-    unique_ptr<__node, _D> __hold(__node_alloc_traits::allocate(__na, 1), _D(__na, 1));
+    typedef __allocator_destructor<__node_allocator> _Dp;
+    unique_ptr<__node, _Dp> __hold(__node_alloc_traits::allocate(__na, 1), _Dp(__na, 1));
     __node_alloc_traits::construct(__na, _VSTD::addressof(__hold->__value_), _VSTD::forward<_Args>(__args)...);
     __link_nodes(static_cast<__node&>(base::__end_), *__hold, *__hold);
     ++base::__sz();
@@ -1519,8 +1519,8 @@ typename list<_Tp, _Alloc>::iterator
 list<_Tp, _Alloc>::emplace(const_iterator __p, _Args&&... __args)
 {
     __node_allocator& __na = base::__node_alloc();
-    typedef __allocator_destructor<__node_allocator> _D;
-    unique_ptr<__node, _D> __hold(__node_alloc_traits::allocate(__na, 1), _D(__na, 1));
+    typedef __allocator_destructor<__node_allocator> _Dp;
+    unique_ptr<__node, _Dp> __hold(__node_alloc_traits::allocate(__na, 1), _Dp(__na, 1));
     __hold->__prev_ = 0;
     __node_alloc_traits::construct(__na, _VSTD::addressof(__hold->__value_), _VSTD::forward<_Args>(__args)...);
     __link_nodes(const_cast<__node&>(*__p.__ptr_), *__hold, *__hold);
@@ -1544,8 +1544,8 @@ list<_Tp, _Alloc>::insert(const_iterator __p, value_type&& __x)
         " referring to this list");
 #endif
     __node_allocator& __na = base::__node_alloc();
-    typedef __allocator_destructor<__node_allocator> _D;
-    unique_ptr<__node, _D> __hold(__node_alloc_traits::allocate(__na, 1), _D(__na, 1));
+    typedef __allocator_destructor<__node_allocator> _Dp;
+    unique_ptr<__node, _Dp> __hold(__node_alloc_traits::allocate(__na, 1), _Dp(__na, 1));
     __hold->__prev_ = 0;
     __node_alloc_traits::construct(__na, _VSTD::addressof(__hold->__value_), _VSTD::move(__x));
     __link_nodes(const_cast<__node&>(*__p.__ptr_), *__hold, *__hold);
@@ -1708,8 +1708,8 @@ list<_Tp, _Alloc>::resize(size_type __n)
         __n -= base::__sz();
         size_type __ds = 0;
         __node_allocator& __na = base::__node_alloc();
-        typedef __allocator_destructor<__node_allocator> _D;
-        unique_ptr<__node, _D> __hold(__node_alloc_traits::allocate(__na, 1), _D(__na, 1));
+        typedef __allocator_destructor<__node_allocator> _Dp;
+        unique_ptr<__node, _Dp> __hold(__node_alloc_traits::allocate(__na, 1), _Dp(__na, 1));
         __hold->__prev_ = 0;
         __node_alloc_traits::construct(__na, _VSTD::addressof(__hold->__value_));
         ++__ds;
@@ -1767,8 +1767,8 @@ list<_Tp, _Alloc>::resize(size_type __n, const value_type& __x)
         __n -= base::__sz();
         size_type __ds = 0;
         __node_allocator& __na = base::__node_alloc();
-        typedef __allocator_destructor<__node_allocator> _D;
-        unique_ptr<__node, _D> __hold(__node_alloc_traits::allocate(__na, 1), _D(__na, 1));
+        typedef __allocator_destructor<__node_allocator> _Dp;
+        unique_ptr<__node, _Dp> __hold(__node_alloc_traits::allocate(__na, 1), _Dp(__na, 1));
         __hold->__prev_ = 0;
         __node_alloc_traits::construct(__na, _VSTD::addressof(__hold->__value_), __x);
         ++__ds;

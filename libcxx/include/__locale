@@ -1123,7 +1123,7 @@ extern template class codecvt_byname<char32_t, char, mbstate_t>;
 
 _LIBCPP_VISIBLE void __throw_runtime_error(const char*);
 
-template <size_t _N>
+template <size_t _Np>
 struct __narrow_to_utf8
 {
     template <class _OutputIterator, class _CharT>
@@ -1213,7 +1213,7 @@ struct __narrow_to_utf8<32>
     }
 };
 
-template <size_t _N>
+template <size_t _Np>
 struct __widen_from_utf8
 {
     template <class _OutputIterator>

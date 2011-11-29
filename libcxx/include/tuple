@@ -359,10 +359,10 @@ struct __all<>
     static const bool value = true;
 };
 
-template <bool _B0, bool ... _B>
-struct __all<_B0, _B...>
+template <bool _B0, bool ... _Bp>
+struct __all<_B0, _Bp...>
 {
-    static const bool value = _B0 && __all<_B...>::value;
+    static const bool value = _B0 && __all<_Bp...>::value;
 };
 
 // __tuple_impl
@@ -577,12 +577,12 @@ public:
     template <class _Alloc>
     _LIBCPP_INLINE_VISIBILITY
         tuple(allocator_arg_t, const _Alloc&, const tuple&) {}
-    template <class _U>
+    template <class _Up>
     _LIBCPP_INLINE_VISIBILITY
-        tuple(array<_U, 0>) {}
-    template <class _Alloc, class _U>
+        tuple(array<_Up, 0>) {}
+    template <class _Alloc, class _Up>
     _LIBCPP_INLINE_VISIBILITY
-        tuple(allocator_arg_t, const _Alloc&, array<_U, 0>) {}
+        tuple(allocator_arg_t, const _Alloc&, array<_Up, 0>) {}
     _LIBCPP_INLINE_VISIBILITY
     void swap(tuple&) _NOEXCEPT {}
 };
@@ -684,14 +684,14 @@ forward_as_tuple(_Tp&&... __t)
     return tuple<_Tp&&...>(_VSTD::forward<_Tp>(__t)...);
 }
 
-template <size_t _I>
+template <size_t _Ip>
 struct __tuple_equal
 {
     template <class _Tp, class _Up>
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Tp& __x, const _Up& __y)
     {
-        return __tuple_equal<_I - 1>()(__x, __y) && get<_I-1>(__x) == get<_I-1>(__y);
+        return __tuple_equal<_Ip - 1>()(__x, __y) && get<_Ip-1>(__x) == get<_Ip-1>(__y);
     }
 };
 
@@ -722,15 +722,15 @@ operator!=(const tuple<_Tp...>& __x, const tuple<_Up...>& __y)
     return !(__x == __y);
 }
 
-template <size_t _I>
+template <size_t _Ip>
 struct __tuple_less
 {
     template <class _Tp, class _Up>
     _LIBCPP_INLINE_VISIBILITY
     bool operator()(const _Tp& __x, const _Up& __y)
     {
-        return __tuple_less<_I-1>()(__x, __y) ||
-             (!__tuple_less<_I-1>()(__y, __x) && get<_I-1>(__x) < get<_I-1>(__y));
+        return __tuple_less<_Ip-1>()(__x, __y) ||
+             (!__tuple_less<_Ip-1>()(__y, __x) && get<_Ip-1>(__x) < get<_Ip-1>(__y));
     }
 };
 
@@ -835,7 +835,7 @@ tuple_cat()
     return tuple<>();
 }
 
-template <class _R, class _Indices, class _Tuple0, class ..._Tuples>
+template <class _Rp, class _Indices, class _Tuple0, class ..._Tuples>
 struct __tuple_cat_return_ref_imp;
 
 template <class ..._Types, size_t ..._I0, class _Tuple0>

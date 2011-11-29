@@ -60,140 +60,140 @@ public:
           }
 };
 
-template<class _R, class _T>
+template<class _Rp, class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R _T::*>
-mem_fn(_R _T::* __pm)
+__mem_fn<_Rp _Tp::*>
+mem_fn(_Rp _Tp::* __pm)
 {
-    return __mem_fn<_R _T::*>(__pm);
+    return __mem_fn<_Rp _Tp::*>(__pm);
 }
 
-template<class _R, class _T>
+template<class _Rp, class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R (_T::*)()>
-mem_fn(_R (_T::* __pm)())
+__mem_fn<_Rp (_Tp::*)()>
+mem_fn(_Rp (_Tp::* __pm)())
 {
-    return __mem_fn<_R (_T::*)()>(__pm);
+    return __mem_fn<_Rp (_Tp::*)()>(__pm);
 }
 
-template<class _R, class _T, class _A0>
+template<class _Rp, class _Tp, class _A0>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R (_T::*)(_A0)>
-mem_fn(_R (_T::* __pm)(_A0))
+__mem_fn<_Rp (_Tp::*)(_A0)>
+mem_fn(_Rp (_Tp::* __pm)(_A0))
 {
-    return __mem_fn<_R (_T::*)(_A0)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0)>(__pm);
 }
 
-template<class _R, class _T, class _A0, class _A1>
+template<class _Rp, class _Tp, class _A0, class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R (_T::*)(_A0, _A1)>
-mem_fn(_R (_T::* __pm)(_A0, _A1))
+__mem_fn<_Rp (_Tp::*)(_A0, _A1)>
+mem_fn(_Rp (_Tp::* __pm)(_A0, _A1))
 {
-    return __mem_fn<_R (_T::*)(_A0, _A1)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0, _A1)>(__pm);
 }
 
-template<class _R, class _T, class _A0, class _A1, class _A2>
+template<class _Rp, class _Tp, class _A0, class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R (_T::*)(_A0, _A1, _A2)>
-mem_fn(_R (_T::* __pm)(_A0, _A1, _A2))
+__mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2)>
+mem_fn(_Rp (_Tp::* __pm)(_A0, _A1, _A2))
 {
-    return __mem_fn<_R (_T::*)(_A0, _A1, _A2)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2)>(__pm);
 }
 
-template<class _R, class _T>
+template<class _Rp, class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R (_T::*)()>
-mem_fn(_R (_T::* __pm)() const)
+__mem_fn<_Rp (_Tp::*)()>
+mem_fn(_Rp (_Tp::* __pm)() const)
 {
-    return __mem_fn<_R (_T::*)()>(__pm);
+    return __mem_fn<_Rp (_Tp::*)()>(__pm);
 }
 
-template<class _R, class _T, class _A0>
+template<class _Rp, class _Tp, class _A0>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R (_T::*)(_A0)>
-mem_fn(_R (_T::* __pm)(_A0) const)
+__mem_fn<_Rp (_Tp::*)(_A0)>
+mem_fn(_Rp (_Tp::* __pm)(_A0) const)
 {
-    return __mem_fn<_R (_T::*)(_A0)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0)>(__pm);
 }
 
-template<class _R, class _T, class _A0, class _A1>
+template<class _Rp, class _Tp, class _A0, class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R (_T::*)(_A0, _A1)>
-mem_fn(_R (_T::* __pm)(_A0, _A1) const)
+__mem_fn<_Rp (_Tp::*)(_A0, _A1)>
+mem_fn(_Rp (_Tp::* __pm)(_A0, _A1) const)
 {
-    return __mem_fn<_R (_T::*)(_A0, _A1)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0, _A1)>(__pm);
 }
 
-template<class _R, class _T, class _A0, class _A1, class _A2>
+template<class _Rp, class _Tp, class _A0, class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R (_T::*)(_A0, _A1, _A2)>
-mem_fn(_R (_T::* __pm)(_A0, _A1, _A2) const)
+__mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2)>
+mem_fn(_Rp (_Tp::* __pm)(_A0, _A1, _A2) const)
 {
-    return __mem_fn<_R (_T::*)(_A0, _A1, _A2)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2)>(__pm);
 }
 
-template<class _R, class _T>
+template<class _Rp, class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R (_T::*)()>
-mem_fn(_R (_T::* __pm)() volatile)
+__mem_fn<_Rp (_Tp::*)()>
+mem_fn(_Rp (_Tp::* __pm)() volatile)
 {
-    return __mem_fn<_R (_T::*)()>(__pm);
+    return __mem_fn<_Rp (_Tp::*)()>(__pm);
 }
 
-template<class _R, class _T, class _A0>
+template<class _Rp, class _Tp, class _A0>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R (_T::*)(_A0)>
-mem_fn(_R (_T::* __pm)(_A0) volatile)
+__mem_fn<_Rp (_Tp::*)(_A0)>
+mem_fn(_Rp (_Tp::* __pm)(_A0) volatile)
 {
-    return __mem_fn<_R (_T::*)(_A0)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0)>(__pm);
 }
 
-template<class _R, class _T, class _A0, class _A1>
+template<class _Rp, class _Tp, class _A0, class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R (_T::*)(_A0, _A1)>
-mem_fn(_R (_T::* __pm)(_A0, _A1) volatile)
+__mem_fn<_Rp (_Tp::*)(_A0, _A1)>
+mem_fn(_Rp (_Tp::* __pm)(_A0, _A1) volatile)
 {
-    return __mem_fn<_R (_T::*)(_A0, _A1)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0, _A1)>(__pm);
 }
 
-template<class _R, class _T, class _A0, class _A1, class _A2>
+template<class _Rp, class _Tp, class _A0, class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R (_T::*)(_A0, _A1, _A2)>
-mem_fn(_R (_T::* __pm)(_A0, _A1, _A2) volatile)
+__mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2)>
+mem_fn(_Rp (_Tp::* __pm)(_A0, _A1, _A2) volatile)
 {
-    return __mem_fn<_R (_T::*)(_A0, _A1, _A2)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2)>(__pm);
 }
 
-template<class _R, class _T>
+template<class _Rp, class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R (_T::*)()>
-mem_fn(_R (_T::* __pm)() const volatile)
+__mem_fn<_Rp (_Tp::*)()>
+mem_fn(_Rp (_Tp::* __pm)() const volatile)
 {
-    return __mem_fn<_R (_T::*)()>(__pm);
+    return __mem_fn<_Rp (_Tp::*)()>(__pm);
 }
 
-template<class _R, class _T, class _A0>
+template<class _Rp, class _Tp, class _A0>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R (_T::*)(_A0)>
-mem_fn(_R (_T::* __pm)(_A0) const volatile)
+__mem_fn<_Rp (_Tp::*)(_A0)>
+mem_fn(_Rp (_Tp::* __pm)(_A0) const volatile)
 {
-    return __mem_fn<_R (_T::*)(_A0)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0)>(__pm);
 }
 
-template<class _R, class _T, class _A0, class _A1>
+template<class _Rp, class _Tp, class _A0, class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R (_T::*)(_A0, _A1)>
-mem_fn(_R (_T::* __pm)(_A0, _A1) const volatile)
+__mem_fn<_Rp (_Tp::*)(_A0, _A1)>
+mem_fn(_Rp (_Tp::* __pm)(_A0, _A1) const volatile)
 {
-    return __mem_fn<_R (_T::*)(_A0, _A1)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0, _A1)>(__pm);
 }
 
-template<class _R, class _T, class _A0, class _A1, class _A2>
+template<class _Rp, class _Tp, class _A0, class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
-__mem_fn<_R (_T::*)(_A0, _A1, _A2)>
-mem_fn(_R (_T::* __pm)(_A0, _A1, _A2) const volatile)
+__mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2)>
+mem_fn(_Rp (_Tp::* __pm)(_A0, _A1, _A2) const volatile)
 {
-    return __mem_fn<_R (_T::*)(_A0, _A1, _A2)>(__pm);
+    return __mem_fn<_Rp (_Tp::*)(_A0, _A1, _A2)>(__pm);
 }
 
 // bad_function_call
@@ -208,32 +208,32 @@ template<class _Fp> class _LIBCPP_VISIBLE function; // undefined
 namespace __function
 {
 
-template<class _F>
+template<class _Fp>
 struct __maybe_derive_from_unary_function
 {
 };
 
-template<class _R, class _A1>
-struct __maybe_derive_from_unary_function<_R(_A1)>
-    : public unary_function<_A1, _R>
+template<class _Rp, class _A1>
+struct __maybe_derive_from_unary_function<_Rp(_A1)>
+    : public unary_function<_A1, _Rp>
 {
 };
 
-template<class _F>
+template<class _Fp>
 struct __maybe_derive_from_binary_function
 {
 };
 
-template<class _R, class _A1, class _A2>
-struct __maybe_derive_from_binary_function<_R(_A1, _A2)>
-    : public binary_function<_A1, _A2, _R>
+template<class _Rp, class _A1, class _A2>
+struct __maybe_derive_from_binary_function<_Rp(_A1, _A2)>
+    : public binary_function<_A1, _A2, _Rp>
 {
 };
 
 template<class _Fp> class __base;
 
-template<class _R>
-class __base<_R()>
+template<class _Rp>
+class __base<_Rp()>
 {
     __base(const __base&);
     __base& operator=(const __base&);
@@ -244,15 +244,15 @@ public:
     virtual void __clone(__base*) const = 0;
     virtual void destroy() = 0;
     virtual void destroy_deallocate() = 0;
-    virtual _R operator()() = 0;
+    virtual _Rp operator()() = 0;
 #ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const = 0;
     virtual const std::type_info& target_type() const = 0;
 #endif  // _LIBCPP_NO_RTTI
 };
 
-template<class _R, class _A0>
-class __base<_R(_A0)>
+template<class _Rp, class _A0>
+class __base<_Rp(_A0)>
 {
     __base(const __base&);
     __base& operator=(const __base&);
@@ -263,15 +263,15 @@ public:
     virtual void __clone(__base*) const = 0;
     virtual void destroy() = 0;
     virtual void destroy_deallocate() = 0;
-    virtual _R operator()(_A0) = 0;
+    virtual _Rp operator()(_A0) = 0;
 #ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const = 0;
     virtual const std::type_info& target_type() const = 0;
 #endif  // _LIBCPP_NO_RTTI
 };
 
-template<class _R, class _A0, class _A1>
-class __base<_R(_A0, _A1)>
+template<class _Rp, class _A0, class _A1>
+class __base<_Rp(_A0, _A1)>
 {
     __base(const __base&);
     __base& operator=(const __base&);
@@ -282,15 +282,15 @@ public:
     virtual void __clone(__base*) const = 0;
     virtual void destroy() = 0;
     virtual void destroy_deallocate() = 0;
-    virtual _R operator()(_A0, _A1) = 0;
+    virtual _Rp operator()(_A0, _A1) = 0;
 #ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const = 0;
     virtual const std::type_info& target_type() const = 0;
 #endif  // _LIBCPP_NO_RTTI
 };
 
-template<class _R, class _A0, class _A1, class _A2>
-class __base<_R(_A0, _A1, _A2)>
+template<class _Rp, class _A0, class _A1, class _A2>
+class __base<_Rp(_A0, _A1, _A2)>
 {
     __base(const __base&);
     __base& operator=(const __base&);
@@ -301,7 +301,7 @@ public:
     virtual void __clone(__base*) const = 0;
     virtual void destroy() = 0;
     virtual void destroy_deallocate() = 0;
-    virtual _R operator()(_A0, _A1, _A2) = 0;
+    virtual _Rp operator()(_A0, _A1, _A2) = 0;
 #ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const = 0;
     virtual const std::type_info& target_type() const = 0;
@@ -310,360 +310,360 @@ public:
 
 template<class _FD, class _Alloc, class _FB> class __func;
 
-template<class _F, class _Alloc, class _R>
-class __func<_F, _Alloc, _R()>
-    : public  __base<_R()>
+template<class _Fp, class _Alloc, class _Rp>
+class __func<_Fp, _Alloc, _Rp()>
+    : public  __base<_Rp()>
 {
-    __compressed_pair<_F, _Alloc> __f_;
+    __compressed_pair<_Fp, _Alloc> __f_;
 public:
-    explicit __func(_F __f) : __f_(_VSTD::move(__f)) {}
-    explicit __func(_F __f, _Alloc __a) : __f_(_VSTD::move(__f), _VSTD::move(__a)) {}
-    virtual __base<_R()>* __clone() const;
-    virtual void __clone(__base<_R()>*) const;
+    explicit __func(_Fp __f) : __f_(_VSTD::move(__f)) {}
+    explicit __func(_Fp __f, _Alloc __a) : __f_(_VSTD::move(__f), _VSTD::move(__a)) {}
+    virtual __base<_Rp()>* __clone() const;
+    virtual void __clone(__base<_Rp()>*) const;
     virtual void destroy();
     virtual void destroy_deallocate();
-    virtual _R operator()();
+    virtual _Rp operator()();
 #ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const;
     virtual const std::type_info& target_type() const;
 #endif  // _LIBCPP_NO_RTTI
 };
 
-template<class _F, class _Alloc, class _R>
-__base<_R()>*
-__func<_F, _Alloc, _R()>::__clone() const
+template<class _Fp, class _Alloc, class _Rp>
+__base<_Rp()>*
+__func<_Fp, _Alloc, _Rp()>::__clone() const
 {
-    typedef typename _Alloc::template rebind<__func>::other _A;
-    _A __a(__f_.second());
-    typedef __allocator_destructor<_A> _D;
-    unique_ptr<__func, _D> __hold(__a.allocate(1), _D(__a, 1));
+    typedef typename _Alloc::template rebind<__func>::other _Ap;
+    _Ap __a(__f_.second());
+    typedef __allocator_destructor<_Ap> _Dp;
+    unique_ptr<__func, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
     ::new (__hold.get()) __func(__f_.first(), _Alloc(__a));
     return __hold.release();
 }
 
-template<class _F, class _Alloc, class _R>
+template<class _Fp, class _Alloc, class _Rp>
 void
-__func<_F, _Alloc, _R()>::__clone(__base<_R()>* __p) const
+__func<_Fp, _Alloc, _Rp()>::__clone(__base<_Rp()>* __p) const
 {
     ::new (__p) __func(__f_.first(), __f_.second());
 }
 
-template<class _F, class _Alloc, class _R>
+template<class _Fp, class _Alloc, class _Rp>
 void
-__func<_F, _Alloc, _R()>::destroy()
+__func<_Fp, _Alloc, _Rp()>::destroy()
 {
-    __f_.~__compressed_pair<_F, _Alloc>();
+    __f_.~__compressed_pair<_Fp, _Alloc>();
 }
 
-template<class _F, class _Alloc, class _R>
+template<class _Fp, class _Alloc, class _Rp>
 void
-__func<_F, _Alloc, _R()>::destroy_deallocate()
+__func<_Fp, _Alloc, _Rp()>::destroy_deallocate()
 {
-    typedef typename _Alloc::template rebind<__func>::other _A;
-    _A __a(__f_.second());
-    __f_.~__compressed_pair<_F, _Alloc>();
+    typedef typename _Alloc::template rebind<__func>::other _Ap;
+    _Ap __a(__f_.second());
+    __f_.~__compressed_pair<_Fp, _Alloc>();
     __a.deallocate(this, 1);
 }
 
-template<class _F, class _Alloc, class _R>
-_R
-__func<_F, _Alloc, _R()>::operator()()
+template<class _Fp, class _Alloc, class _Rp>
+_Rp
+__func<_Fp, _Alloc, _Rp()>::operator()()
 {
     return __invoke(__f_.first());
 }
 
 #ifndef _LIBCPP_NO_RTTI
 
-template<class _F, class _Alloc, class _R>
+template<class _Fp, class _Alloc, class _Rp>
 const void*
-__func<_F, _Alloc, _R()>::target(const type_info& __ti) const
+__func<_Fp, _Alloc, _Rp()>::target(const type_info& __ti) const
 {
-    if (__ti == typeid(_F))
+    if (__ti == typeid(_Fp))
         return &__f_.first();
     return (const void*)0;
 }
 
-template<class _F, class _Alloc, class _R>
+template<class _Fp, class _Alloc, class _Rp>
 const std::type_info&
-__func<_F, _Alloc, _R()>::target_type() const
+__func<_Fp, _Alloc, _Rp()>::target_type() const
 {
-    return typeid(_F);
+    return typeid(_Fp);
 }
 
 #endif  // _LIBCPP_NO_RTTI
 
-template<class _F, class _Alloc, class _R, class _A0>
-class __func<_F, _Alloc, _R(_A0)>
-    : public  __base<_R(_A0)>
+template<class _Fp, class _Alloc, class _Rp, class _A0>
+class __func<_Fp, _Alloc, _Rp(_A0)>
+    : public  __base<_Rp(_A0)>
 {
-    __compressed_pair<_F, _Alloc> __f_;
+    __compressed_pair<_Fp, _Alloc> __f_;
 public:
-    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f) : __f_(_VSTD::move(__f)) {}
-    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f, _Alloc __a)
+    _LIBCPP_INLINE_VISIBILITY explicit __func(_Fp __f) : __f_(_VSTD::move(__f)) {}
+    _LIBCPP_INLINE_VISIBILITY explicit __func(_Fp __f, _Alloc __a)
         : __f_(_VSTD::move(__f), _VSTD::move(__a)) {}
-    virtual __base<_R(_A0)>* __clone() const;
-    virtual void __clone(__base<_R(_A0)>*) const;
+    virtual __base<_Rp(_A0)>* __clone() const;
+    virtual void __clone(__base<_Rp(_A0)>*) const;
     virtual void destroy();
     virtual void destroy_deallocate();
-    virtual _R operator()(_A0);
+    virtual _Rp operator()(_A0);
 #ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const;
     virtual const std::type_info& target_type() const;
 #endif  // _LIBCPP_NO_RTTI
 };
 
-template<class _F, class _Alloc, class _R, class _A0>
-__base<_R(_A0)>*
-__func<_F, _Alloc, _R(_A0)>::__clone() const
+template<class _Fp, class _Alloc, class _Rp, class _A0>
+__base<_Rp(_A0)>*
+__func<_Fp, _Alloc, _Rp(_A0)>::__clone() const
 {
-    typedef typename _Alloc::template rebind<__func>::other _A;
-    _A __a(__f_.second());
-    typedef __allocator_destructor<_A> _D;
-    unique_ptr<__func, _D> __hold(__a.allocate(1), _D(__a, 1));
+    typedef typename _Alloc::template rebind<__func>::other _Ap;
+    _Ap __a(__f_.second());
+    typedef __allocator_destructor<_Ap> _Dp;
+    unique_ptr<__func, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
     ::new (__hold.get()) __func(__f_.first(), _Alloc(__a));
     return __hold.release();
 }
 
-template<class _F, class _Alloc, class _R, class _A0>
+template<class _Fp, class _Alloc, class _Rp, class _A0>
 void
-__func<_F, _Alloc, _R(_A0)>::__clone(__base<_R(_A0)>* __p) const
+__func<_Fp, _Alloc, _Rp(_A0)>::__clone(__base<_Rp(_A0)>* __p) const
 {
     ::new (__p) __func(__f_.first(), __f_.second());
 }
 
-template<class _F, class _Alloc, class _R, class _A0>
+template<class _Fp, class _Alloc, class _Rp, class _A0>
 void
-__func<_F, _Alloc, _R(_A0)>::destroy()
+__func<_Fp, _Alloc, _Rp(_A0)>::destroy()
 {
-    __f_.~__compressed_pair<_F, _Alloc>();
+    __f_.~__compressed_pair<_Fp, _Alloc>();
 }
 
-template<class _F, class _Alloc, class _R, class _A0>
+template<class _Fp, class _Alloc, class _Rp, class _A0>
 void
-__func<_F, _Alloc, _R(_A0)>::destroy_deallocate()
+__func<_Fp, _Alloc, _Rp(_A0)>::destroy_deallocate()
 {
-    typedef typename _Alloc::template rebind<__func>::other _A;
-    _A __a(__f_.second());
-    __f_.~__compressed_pair<_F, _Alloc>();
+    typedef typename _Alloc::template rebind<__func>::other _Ap;
+    _Ap __a(__f_.second());
+    __f_.~__compressed_pair<_Fp, _Alloc>();
     __a.deallocate(this, 1);
 }
 
-template<class _F, class _Alloc, class _R, class _A0>
-_R
-__func<_F, _Alloc, _R(_A0)>::operator()(_A0 __a0)
+template<class _Fp, class _Alloc, class _Rp, class _A0>
+_Rp
+__func<_Fp, _Alloc, _Rp(_A0)>::operator()(_A0 __a0)
 {
     return __invoke(__f_.first(), __a0);
 }
 
 #ifndef _LIBCPP_NO_RTTI
 
-template<class _F, class _Alloc, class _R, class _A0>
+template<class _Fp, class _Alloc, class _Rp, class _A0>
 const void*
-__func<_F, _Alloc, _R(_A0)>::target(const type_info& __ti) const
+__func<_Fp, _Alloc, _Rp(_A0)>::target(const type_info& __ti) const
 {
-    if (__ti == typeid(_F))
+    if (__ti == typeid(_Fp))
         return &__f_.first();
     return (const void*)0;
 }
 
-template<class _F, class _Alloc, class _R, class _A0>
+template<class _Fp, class _Alloc, class _Rp, class _A0>
 const std::type_info&
-__func<_F, _Alloc, _R(_A0)>::target_type() const
+__func<_Fp, _Alloc, _Rp(_A0)>::target_type() const
 {
-    return typeid(_F);
+    return typeid(_Fp);
 }
 
 #endif  // _LIBCPP_NO_RTTI
 
-template<class _F, class _Alloc, class _R, class _A0, class _A1>
-class __func<_F, _Alloc, _R(_A0, _A1)>
-    : public  __base<_R(_A0, _A1)>
+template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1>
+class __func<_Fp, _Alloc, _Rp(_A0, _A1)>
+    : public  __base<_Rp(_A0, _A1)>
 {
-    __compressed_pair<_F, _Alloc> __f_;
+    __compressed_pair<_Fp, _Alloc> __f_;
 public:
-    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f) : __f_(_VSTD::move(__f)) {}
-    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f, _Alloc __a)
+    _LIBCPP_INLINE_VISIBILITY explicit __func(_Fp __f) : __f_(_VSTD::move(__f)) {}
+    _LIBCPP_INLINE_VISIBILITY explicit __func(_Fp __f, _Alloc __a)
         : __f_(_VSTD::move(__f), _VSTD::move(__a)) {}
-    virtual __base<_R(_A0, _A1)>* __clone() const;
-    virtual void __clone(__base<_R(_A0, _A1)>*) const;
+    virtual __base<_Rp(_A0, _A1)>* __clone() const;
+    virtual void __clone(__base<_Rp(_A0, _A1)>*) const;
     virtual void destroy();
     virtual void destroy_deallocate();
-    virtual _R operator()(_A0, _A1);
+    virtual _Rp operator()(_A0, _A1);
 #ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const;
     virtual const std::type_info& target_type() const;
 #endif  // _LIBCPP_NO_RTTI
 };
 
-template<class _F, class _Alloc, class _R, class _A0, class _A1>
-__base<_R(_A0, _A1)>*
-__func<_F, _Alloc, _R(_A0, _A1)>::__clone() const
+template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1>
+__base<_Rp(_A0, _A1)>*
+__func<_Fp, _Alloc, _Rp(_A0, _A1)>::__clone() const
 {
-    typedef typename _Alloc::template rebind<__func>::other _A;
-    _A __a(__f_.second());
-    typedef __allocator_destructor<_A> _D;
-    unique_ptr<__func, _D> __hold(__a.allocate(1), _D(__a, 1));
+    typedef typename _Alloc::template rebind<__func>::other _Ap;
+    _Ap __a(__f_.second());
+    typedef __allocator_destructor<_Ap> _Dp;
+    unique_ptr<__func, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
     ::new (__hold.get()) __func(__f_.first(), _Alloc(__a));
     return __hold.release();
 }
 
-template<class _F, class _Alloc, class _R, class _A0, class _A1>
+template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1>
 void
-__func<_F, _Alloc, _R(_A0, _A1)>::__clone(__base<_R(_A0, _A1)>* __p) const
+__func<_Fp, _Alloc, _Rp(_A0, _A1)>::__clone(__base<_Rp(_A0, _A1)>* __p) const
 {
     ::new (__p) __func(__f_.first(), __f_.second());
 }
 
-template<class _F, class _Alloc, class _R, class _A0, class _A1>
+template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1>
 void
-__func<_F, _Alloc, _R(_A0, _A1)>::destroy()
+__func<_Fp, _Alloc, _Rp(_A0, _A1)>::destroy()
 {
-    __f_.~__compressed_pair<_F, _Alloc>();
+    __f_.~__compressed_pair<_Fp, _Alloc>();
 }
 
-template<class _F, class _Alloc, class _R, class _A0, class _A1>
+template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1>
 void
-__func<_F, _Alloc, _R(_A0, _A1)>::destroy_deallocate()
+__func<_Fp, _Alloc, _Rp(_A0, _A1)>::destroy_deallocate()
 {
-    typedef typename _Alloc::template rebind<__func>::other _A;
-    _A __a(__f_.second());
-    __f_.~__compressed_pair<_F, _Alloc>();
+    typedef typename _Alloc::template rebind<__func>::other _Ap;
+    _Ap __a(__f_.second());
+    __f_.~__compressed_pair<_Fp, _Alloc>();
     __a.deallocate(this, 1);
 }
 
-template<class _F, class _Alloc, class _R, class _A0, class _A1>
-_R
-__func<_F, _Alloc, _R(_A0, _A1)>::operator()(_A0 __a0, _A1 __a1)
+template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1>
+_Rp
+__func<_Fp, _Alloc, _Rp(_A0, _A1)>::operator()(_A0 __a0, _A1 __a1)
 {
     return __invoke(__f_.first(), __a0, __a1);
 }
 
 #ifndef _LIBCPP_NO_RTTI
 
-template<class _F, class _Alloc, class _R, class _A0, class _A1>
+template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1>
 const void*
-__func<_F, _Alloc, _R(_A0, _A1)>::target(const type_info& __ti) const
+__func<_Fp, _Alloc, _Rp(_A0, _A1)>::target(const type_info& __ti) const
 {
-    if (__ti == typeid(_F))
+    if (__ti == typeid(_Fp))
         return &__f_.first();
     return (const void*)0;
 }
 
-template<class _F, class _Alloc, class _R, class _A0, class _A1>
+template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1>
 const std::type_info&
-__func<_F, _Alloc, _R(_A0, _A1)>::target_type() const
+__func<_Fp, _Alloc, _Rp(_A0, _A1)>::target_type() const
 {
-    return typeid(_F);
+    return typeid(_Fp);
 }
 
 #endif  // _LIBCPP_NO_RTTI
 
-template<class _F, class _Alloc, class _R, class _A0, class _A1, class _A2>
-class __func<_F, _Alloc, _R(_A0, _A1, _A2)>
-    : public  __base<_R(_A0, _A1, _A2)>
+template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1, class _A2>
+class __func<_Fp, _Alloc, _Rp(_A0, _A1, _A2)>
+    : public  __base<_Rp(_A0, _A1, _A2)>
 {
-    __compressed_pair<_F, _Alloc> __f_;
+    __compressed_pair<_Fp, _Alloc> __f_;
 public:
-    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f) : __f_(_VSTD::move(__f)) {}
-    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f, _Alloc __a)
+    _LIBCPP_INLINE_VISIBILITY explicit __func(_Fp __f) : __f_(_VSTD::move(__f)) {}
+    _LIBCPP_INLINE_VISIBILITY explicit __func(_Fp __f, _Alloc __a)
         : __f_(_VSTD::move(__f), _VSTD::move(__a)) {}
-    virtual __base<_R(_A0, _A1, _A2)>* __clone() const;
-    virtual void __clone(__base<_R(_A0, _A1, _A2)>*) const;
+    virtual __base<_Rp(_A0, _A1, _A2)>* __clone() const;
+    virtual void __clone(__base<_Rp(_A0, _A1, _A2)>*) const;
     virtual void destroy();
     virtual void destroy_deallocate();
-    virtual _R operator()(_A0, _A1, _A2);
+    virtual _Rp operator()(_A0, _A1, _A2);
 #ifndef _LIBCPP_NO_RTTI
     virtual const void* target(const type_info&) const;
     virtual const std::type_info& target_type() const;
 #endif  // _LIBCPP_NO_RTTI
 };
 
-template<class _F, class _Alloc, class _R, class _A0, class _A1, class _A2>
-__base<_R(_A0, _A1, _A2)>*
-__func<_F, _Alloc, _R(_A0, _A1, _A2)>::__clone() const
+template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1, class _A2>
+__base<_Rp(_A0, _A1, _A2)>*
+__func<_Fp, _Alloc, _Rp(_A0, _A1, _A2)>::__clone() const
 {
-    typedef typename _Alloc::template rebind<__func>::other _A;
-    _A __a(__f_.second());
-    typedef __allocator_destructor<_A> _D;
-    unique_ptr<__func, _D> __hold(__a.allocate(1), _D(__a, 1));
+    typedef typename _Alloc::template rebind<__func>::other _Ap;
+    _Ap __a(__f_.second());
+    typedef __allocator_destructor<_Ap> _Dp;
+    unique_ptr<__func, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
     ::new (__hold.get()) __func(__f_.first(), _Alloc(__a));
     return __hold.release();
 }
 
-template<class _F, class _Alloc, class _R, class _A0, class _A1, class _A2>
+template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1, class _A2>
 void
-__func<_F, _Alloc, _R(_A0, _A1, _A2)>::__clone(__base<_R(_A0, _A1, _A2)>* __p) const
+__func<_Fp, _Alloc, _Rp(_A0, _A1, _A2)>::__clone(__base<_Rp(_A0, _A1, _A2)>* __p) const
 {
     ::new (__p) __func(__f_.first(), __f_.second());
 }
 
-template<class _F, class _Alloc, class _R, class _A0, class _A1, class _A2>
+template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1, class _A2>
 void
-__func<_F, _Alloc, _R(_A0, _A1, _A2)>::destroy()
+__func<_Fp, _Alloc, _Rp(_A0, _A1, _A2)>::destroy()
 {
-    __f_.~__compressed_pair<_F, _Alloc>();
+    __f_.~__compressed_pair<_Fp, _Alloc>();
 }
 
-template<class _F, class _Alloc, class _R, class _A0, class _A1, class _A2>
+template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1, class _A2>
 void
-__func<_F, _Alloc, _R(_A0, _A1, _A2)>::destroy_deallocate()
+__func<_Fp, _Alloc, _Rp(_A0, _A1, _A2)>::destroy_deallocate()
 {
-    typedef typename _Alloc::template rebind<__func>::other _A;
-    _A __a(__f_.second());
-    __f_.~__compressed_pair<_F, _Alloc>();
+    typedef typename _Alloc::template rebind<__func>::other _Ap;
+    _Ap __a(__f_.second());
+    __f_.~__compressed_pair<_Fp, _Alloc>();
     __a.deallocate(this, 1);
 }
 
-template<class _F, class _Alloc, class _R, class _A0, class _A1, class _A2>
-_R
-__func<_F, _Alloc, _R(_A0, _A1, _A2)>::operator()(_A0 __a0, _A1 __a1, _A2 __a2)
+template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1, class _A2>
+_Rp
+__func<_Fp, _Alloc, _Rp(_A0, _A1, _A2)>::operator()(_A0 __a0, _A1 __a1, _A2 __a2)
 {
     return __invoke(__f_.first(), __a0, __a1, __a2);
 }
 
 #ifndef _LIBCPP_NO_RTTI
 
-template<class _F, class _Alloc, class _R, class _A0, class _A1, class _A2>
+template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1, class _A2>
 const void*
-__func<_F, _Alloc, _R(_A0, _A1, _A2)>::target(const type_info& __ti) const
+__func<_Fp, _Alloc, _Rp(_A0, _A1, _A2)>::target(const type_info& __ti) const
 {
-    if (__ti == typeid(_F))
+    if (__ti == typeid(_Fp))
         return &__f_.first();
     return (const void*)0;
 }
 
-template<class _F, class _Alloc, class _R, class _A0, class _A1, class _A2>
+template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1, class _A2>
 const std::type_info&
-__func<_F, _Alloc, _R(_A0, _A1, _A2)>::target_type() const
+__func<_Fp, _Alloc, _Rp(_A0, _A1, _A2)>::target_type() const
 {
-    return typeid(_F);
+    return typeid(_Fp);
 }
 
 #endif  // _LIBCPP_NO_RTTI
 
 }  // __function
 
-template<class _R>
-class _LIBCPP_VISIBLE function<_R()>
+template<class _Rp>
+class _LIBCPP_VISIBLE function<_Rp()>
 {
-    typedef __function::__base<_R()> __base;
+    typedef __function::__base<_Rp()> __base;
     aligned_storage<3*sizeof(void*)>::type __buf_;
     __base* __f_;
 
-    template <class _F>
-        static bool __not_null(const _F&) {return true;}
+    template <class _Fp>
+        static bool __not_null(const _Fp&) {return true;}
     template <class _R2>
-        static bool __not_null(const function<_R()>& __p) {return __p;}
+        static bool __not_null(const function<_Rp()>& __p) {return __p;}
 public:
-    typedef _R result_type;
+    typedef _Rp result_type;
 
     // 20.7.16.2.1, construct/copy/destroy:
     _LIBCPP_INLINE_VISIBILITY explicit function() : __f_(0) {}
     _LIBCPP_INLINE_VISIBILITY function(nullptr_t) : __f_(0) {}
     function(const function&);
-    template<class _F>
-      function(_F,
-               typename enable_if<!is_integral<_F>::value>::type* = 0);
+    template<class _Fp>
+      function(_Fp,
+               typename enable_if<!is_integral<_Fp>::value>::type* = 0);
 
     template<class _Alloc>
       _LIBCPP_INLINE_VISIBILITY
@@ -673,27 +673,27 @@ public:
       function(allocator_arg_t, const _Alloc&, nullptr_t) : __f_(0) {}
     template<class _Alloc>
       function(allocator_arg_t, const _Alloc&, const function&);
-    template<class _F, class _Alloc>
-      function(allocator_arg_t, const _Alloc& __a, _F __f,
-               typename enable_if<!is_integral<_F>::value>::type* = 0);
+    template<class _Fp, class _Alloc>
+      function(allocator_arg_t, const _Alloc& __a, _Fp __f,
+               typename enable_if<!is_integral<_Fp>::value>::type* = 0);
 
     function& operator=(const function&);
     function& operator=(nullptr_t);
-    template<class _F>
+    template<class _Fp>
       typename enable_if
       <
-        !is_integral<_F>::value,
+        !is_integral<_Fp>::value,
         function&
       >::type
-      operator=(_F);
+      operator=(_Fp);
 
     ~function();
 
     // 20.7.16.2.2, function modifiers:
     void swap(function&);
-    template<class _F, class _Alloc>
+    template<class _Fp, class _Alloc>
       _LIBCPP_INLINE_VISIBILITY
-      void assign(_F __f, const _Alloc& __a)
+      void assign(_Fp __f, const _Alloc& __a)
         {function(allocator_arg, __a, __f).swap(*this);}
 
     // 20.7.16.2.3, function capacity:
@@ -707,18 +707,18 @@ private:
       bool operator!=(const function<_R2()>&) const;// = delete;
 public:
     // 20.7.16.2.4, function invocation:
-    _R operator()() const;
+    _Rp operator()() const;
 
 #ifndef _LIBCPP_NO_RTTI
     // 20.7.16.2.5, function target access:
     const std::type_info& target_type() const;
-    template <typename _T> _T* target();
-    template <typename _T> const _T* target() const;
+    template <typename _Tp> _Tp* target();
+    template <typename _Tp> const _Tp* target() const;
 #endif  // _LIBCPP_NO_RTTI
 };
 
-template<class _R>
-function<_R()>::function(const function& __f)
+template<class _Rp>
+function<_Rp()>::function(const function& __f)
 {
     if (__f.__f_ == 0)
         __f_ = 0;
@@ -731,9 +731,9 @@ function<_R()>::function(const function& __f)
         __f_ = __f.__f_->__clone();
 }
 
-template<class _R>
+template<class _Rp>
 template<class _Alloc>
-function<_R()>::function(allocator_arg_t, const _Alloc&, const function& __f)
+function<_Rp()>::function(allocator_arg_t, const _Alloc&, const function& __f)
 {
     if (__f.__f_ == 0)
         __f_ = 0;
@@ -746,15 +746,15 @@ function<_R()>::function(allocator_arg_t, const _Alloc&, const function& __f)
         __f_ = __f.__f_->__clone();
 }
 
-template<class _R>
-template <class _F>
-function<_R()>::function(_F __f,
-                                     typename enable_if<!is_integral<_F>::value>::type*)
+template<class _Rp>
+template <class _Fp>
+function<_Rp()>::function(_Fp __f,
+                                     typename enable_if<!is_integral<_Fp>::value>::type*)
     : __f_(0)
 {
     if (__not_null(__f))
     {
-        typedef __function::__func<_F, allocator<_F>, _R()> _FF;
+        typedef __function::__func<_Fp, allocator<_Fp>, _Rp()> _FF;
         if (sizeof(_FF) <= sizeof(__buf_))
         {
             __f_ = (__base*)&__buf_;
@@ -762,26 +762,26 @@ function<_R()>::function(_F __f,
         }
         else
         {
-            typedef allocator<_FF> _A;
-            _A __a;
-            typedef __allocator_destructor<_A> _D;
-            unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
-            ::new (__hold.get()) _FF(__f, allocator<_F>(__a));
+            typedef allocator<_FF> _Ap;
+            _Ap __a;
+            typedef __allocator_destructor<_Ap> _Dp;
+            unique_ptr<__base, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
+            ::new (__hold.get()) _FF(__f, allocator<_Fp>(__a));
             __f_ = __hold.release();
         }
     }
 }
 
-template<class _R>
-template <class _F, class _Alloc>
-function<_R()>::function(allocator_arg_t, const _Alloc& __a0, _F __f,
-                                     typename enable_if<!is_integral<_F>::value>::type*)
+template<class _Rp>
+template <class _Fp, class _Alloc>
+function<_Rp()>::function(allocator_arg_t, const _Alloc& __a0, _Fp __f,
+                                     typename enable_if<!is_integral<_Fp>::value>::type*)
     : __f_(0)
 {
     typedef allocator_traits<_Alloc> __alloc_traits;
     if (__not_null(__f))
     {
-        typedef __function::__func<_F, _Alloc, _R()> _FF;
+        typedef __function::__func<_Fp, _Alloc, _Rp()> _FF;
         if (sizeof(_FF) <= sizeof(__buf_))
         {
             __f_ = (__base*)&__buf_;
@@ -795,27 +795,27 @@ function<_R()>::function(allocator_arg_t, const _Alloc& __a0, _F __f,
 #else
                 rebind_alloc<_FF>::other
 #endif
-                                                         _A;
-            _A __a(__a0);
-            typedef __allocator_destructor<_A> _D;
-            unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
+                                                         _Ap;
+            _Ap __a(__a0);
+            typedef __allocator_destructor<_Ap> _Dp;
+            unique_ptr<__base, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
             ::new (__hold.get()) _FF(__f, _Alloc(__a));
             __f_ = __hold.release();
         }
     }
 }
 
-template<class _R>
-function<_R()>&
-function<_R()>::operator=(const function& __f)
+template<class _Rp>
+function<_Rp()>&
+function<_Rp()>::operator=(const function& __f)
 {
     function(__f).swap(*this);
     return *this;
 }
 
-template<class _R>
-function<_R()>&
-function<_R()>::operator=(nullptr_t)
+template<class _Rp>
+function<_Rp()>&
+function<_Rp()>::operator=(nullptr_t)
 {
     if (__f_ == (__base*)&__buf_)
         __f_->destroy();
@@ -824,21 +824,21 @@ function<_R()>::operator=(nullptr_t)
     __f_ = 0;
 }
 
-template<class _R>
-template <class _F>
+template<class _Rp>
+template <class _Fp>
 typename enable_if
 <
-    !is_integral<_F>::value,
-    function<_R()>&
+    !is_integral<_Fp>::value,
+    function<_Rp()>&
 >::type
-function<_R()>::operator=(_F __f)
+function<_Rp()>::operator=(_Fp __f)
 {
     function(_VSTD::move(__f)).swap(*this);
     return *this;
 }
 
-template<class _R>
-function<_R()>::~function()
+template<class _Rp>
+function<_Rp()>::~function()
 {
     if (__f_ == (__base*)&__buf_)
         __f_->destroy();
@@ -846,9 +846,9 @@ function<_R()>::~function()
         __f_->destroy_deallocate();
 }
 
-template<class _R>
+template<class _Rp>
 void
-function<_R()>::swap(function& __f)
+function<_Rp()>::swap(function& __f)
 {
     if (__f_ == (__base*)&__buf_ && __f.__f_ == (__base*)&__f.__buf_)
     {
@@ -883,9 +883,9 @@ function<_R()>::swap(function& __f)
         _VSTD::swap(__f_, __f.__f_);
 }
 
-template<class _R>
-_R
-function<_R()>::operator()() const
+template<class _Rp>
+_Rp
+function<_Rp()>::operator()() const
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__f_ == 0)
@@ -896,76 +896,76 @@ function<_R()>::operator()() const
 
 #ifndef _LIBCPP_NO_RTTI
 
-template<class _R>
+template<class _Rp>
 const std::type_info&
-function<_R()>::target_type() const
+function<_Rp()>::target_type() const
 {
     if (__f_ == 0)
         return typeid(void);
     return __f_->target_type();
 }
 
-template<class _R>
-template <typename _T>
-_T*
-function<_R()>::target()
+template<class _Rp>
+template <typename _Tp>
+_Tp*
+function<_Rp()>::target()
 {
     if (__f_ == 0)
-        return (_T*)0;
-    return (_T*)__f_->target(typeid(_T));
+        return (_Tp*)0;
+    return (_Tp*)__f_->target(typeid(_Tp));
 }
 
-template<class _R>
-template <typename _T>
-const _T*
-function<_R()>::target() const
+template<class _Rp>
+template <typename _Tp>
+const _Tp*
+function<_Rp()>::target() const
 {
     if (__f_ == 0)
-        return (const _T*)0;
-    return (const _T*)__f_->target(typeid(_T));
+        return (const _Tp*)0;
+    return (const _Tp*)__f_->target(typeid(_Tp));
 }
 
 #endif  // _LIBCPP_NO_RTTI
 
-template<class _R, class _A0>
-class _LIBCPP_VISIBLE function<_R(_A0)>
-    : public unary_function<_A0, _R>
+template<class _Rp, class _A0>
+class _LIBCPP_VISIBLE function<_Rp(_A0)>
+    : public unary_function<_A0, _Rp>
 {
-    typedef __function::__base<_R(_A0)> __base;
+    typedef __function::__base<_Rp(_A0)> __base;
     aligned_storage<3*sizeof(void*)>::type __buf_;
     __base* __f_;
 
-    template <class _F>
+    template <class _Fp>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(const _F&) {return true;}
+        static bool __not_null(const _Fp&) {return true;}
     template <class _R2, class _B0>
         _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (*__p)(_B0)) {return __p;}
-    template <class _R2, class _C>
+    template <class _R2, class _Cp>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (_C::*__p)()) {return __p;}
-    template <class _R2, class _C>
+        static bool __not_null(_R2 (_Cp::*__p)()) {return __p;}
+    template <class _R2, class _Cp>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (_C::*__p)() const) {return __p;}
-    template <class _R2, class _C>
+        static bool __not_null(_R2 (_Cp::*__p)() const) {return __p;}
+    template <class _R2, class _Cp>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (_C::*__p)() volatile) {return __p;}
-    template <class _R2, class _C>
+        static bool __not_null(_R2 (_Cp::*__p)() volatile) {return __p;}
+    template <class _R2, class _Cp>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (_C::*__p)() const volatile) {return __p;}
+        static bool __not_null(_R2 (_Cp::*__p)() const volatile) {return __p;}
     template <class _R2, class _B0>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(const function<_R(_B0)>& __p) {return __p;}
+        static bool __not_null(const function<_Rp(_B0)>& __p) {return __p;}
 public:
-    typedef _R result_type;
+    typedef _Rp result_type;
 
     // 20.7.16.2.1, construct/copy/destroy:
     _LIBCPP_INLINE_VISIBILITY explicit function() : __f_(0) {}
     _LIBCPP_INLINE_VISIBILITY function(nullptr_t) : __f_(0) {}
     function(const function&);
-    template<class _F>
-      function(_F,
-               typename enable_if<!is_integral<_F>::value>::type* = 0);
+    template<class _Fp>
+      function(_Fp,
+               typename enable_if<!is_integral<_Fp>::value>::type* = 0);
 
     template<class _Alloc>
       _LIBCPP_INLINE_VISIBILITY
@@ -975,27 +975,27 @@ public:
       function(allocator_arg_t, const _Alloc&, nullptr_t) : __f_(0) {}
     template<class _Alloc>
       function(allocator_arg_t, const _Alloc&, const function&);
-    template<class _F, class _Alloc>
-      function(allocator_arg_t, const _Alloc& __a, _F __f,
-               typename enable_if<!is_integral<_F>::value>::type* = 0);
+    template<class _Fp, class _Alloc>
+      function(allocator_arg_t, const _Alloc& __a, _Fp __f,
+               typename enable_if<!is_integral<_Fp>::value>::type* = 0);
 
     function& operator=(const function&);
     function& operator=(nullptr_t);
-    template<class _F>
+    template<class _Fp>
       typename enable_if
       <
-        !is_integral<_F>::value,
+        !is_integral<_Fp>::value,
         function&
       >::type
-      operator=(_F);
+      operator=(_Fp);
 
     ~function();
 
     // 20.7.16.2.2, function modifiers:
     void swap(function&);
-    template<class _F, class _Alloc>
+    template<class _Fp, class _Alloc>
       _LIBCPP_INLINE_VISIBILITY
-      void assign(_F __f, const _Alloc& __a)
+      void assign(_Fp __f, const _Alloc& __a)
         {function(allocator_arg, __a, __f).swap(*this);}
 
     // 20.7.16.2.3, function capacity:
@@ -1009,18 +1009,18 @@ private:
       bool operator!=(const function<_R2(_B0)>&) const;// = delete;
 public:
     // 20.7.16.2.4, function invocation:
-    _R operator()(_A0) const;
+    _Rp operator()(_A0) const;
 
 #ifndef _LIBCPP_NO_RTTI
     // 20.7.16.2.5, function target access:
     const std::type_info& target_type() const;
-    template <typename _T> _T* target();
-    template <typename _T> const _T* target() const;
+    template <typename _Tp> _Tp* target();
+    template <typename _Tp> const _Tp* target() const;
 #endif  // _LIBCPP_NO_RTTI
 };
 
-template<class _R, class _A0>
-function<_R(_A0)>::function(const function& __f)
+template<class _Rp, class _A0>
+function<_Rp(_A0)>::function(const function& __f)
 {
     if (__f.__f_ == 0)
         __f_ = 0;
@@ -1033,9 +1033,9 @@ function<_R(_A0)>::function(const function& __f)
         __f_ = __f.__f_->__clone();
 }
 
-template<class _R, class _A0>
+template<class _Rp, class _A0>
 template<class _Alloc>
-function<_R(_A0)>::function(allocator_arg_t, const _Alloc&, const function& __f)
+function<_Rp(_A0)>::function(allocator_arg_t, const _Alloc&, const function& __f)
 {
     if (__f.__f_ == 0)
         __f_ = 0;
@@ -1048,15 +1048,15 @@ function<_R(_A0)>::function(allocator_arg_t, const _Alloc&, const function& __f)
         __f_ = __f.__f_->__clone();
 }
 
-template<class _R, class _A0>
-template <class _F>
-function<_R(_A0)>::function(_F __f,
-                                     typename enable_if<!is_integral<_F>::value>::type*)
+template<class _Rp, class _A0>
+template <class _Fp>
+function<_Rp(_A0)>::function(_Fp __f,
+                                     typename enable_if<!is_integral<_Fp>::value>::type*)
     : __f_(0)
 {
     if (__not_null(__f))
     {
-        typedef __function::__func<_F, allocator<_F>, _R(_A0)> _FF;
+        typedef __function::__func<_Fp, allocator<_Fp>, _Rp(_A0)> _FF;
         if (sizeof(_FF) <= sizeof(__buf_))
         {
             __f_ = (__base*)&__buf_;
@@ -1064,26 +1064,26 @@ function<_R(_A0)>::function(_F __f,
         }
         else
         {
-            typedef allocator<_FF> _A;
-            _A __a;
-            typedef __allocator_destructor<_A> _D;
-            unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
-            ::new (__hold.get()) _FF(__f, allocator<_F>(__a));
+            typedef allocator<_FF> _Ap;
+            _Ap __a;
+            typedef __allocator_destructor<_Ap> _Dp;
+            unique_ptr<__base, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
+            ::new (__hold.get()) _FF(__f, allocator<_Fp>(__a));
             __f_ = __hold.release();
         }
     }
 }
 
-template<class _R, class _A0>
-template <class _F, class _Alloc>
-function<_R(_A0)>::function(allocator_arg_t, const _Alloc& __a0, _F __f,
-                                     typename enable_if<!is_integral<_F>::value>::type*)
+template<class _Rp, class _A0>
+template <class _Fp, class _Alloc>
+function<_Rp(_A0)>::function(allocator_arg_t, const _Alloc& __a0, _Fp __f,
+                                     typename enable_if<!is_integral<_Fp>::value>::type*)
     : __f_(0)
 {
     typedef allocator_traits<_Alloc> __alloc_traits;
     if (__not_null(__f))
     {
-        typedef __function::__func<_F, _Alloc, _R(_A0)> _FF;
+        typedef __function::__func<_Fp, _Alloc, _Rp(_A0)> _FF;
         if (sizeof(_FF) <= sizeof(__buf_))
         {
             __f_ = (__base*)&__buf_;
@@ -1097,27 +1097,27 @@ function<_R(_A0)>::function(allocator_arg_t, const _Alloc& __a0, _F __f,
 #else
                 rebind_alloc<_FF>::other
 #endif
-                                                         _A;
-            _A __a(__a0);
-            typedef __allocator_destructor<_A> _D;
-            unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
+                                                         _Ap;
+            _Ap __a(__a0);
+            typedef __allocator_destructor<_Ap> _Dp;
+            unique_ptr<__base, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
             ::new (__hold.get()) _FF(__f, _Alloc(__a));
             __f_ = __hold.release();
         }
     }
 }
 
-template<class _R, class _A0>
-function<_R(_A0)>&
-function<_R(_A0)>::operator=(const function& __f)
+template<class _Rp, class _A0>
+function<_Rp(_A0)>&
+function<_Rp(_A0)>::operator=(const function& __f)
 {
     function(__f).swap(*this);
     return *this;
 }
 
-template<class _R, class _A0>
-function<_R(_A0)>&
-function<_R(_A0)>::operator=(nullptr_t)
+template<class _Rp, class _A0>
+function<_Rp(_A0)>&
+function<_Rp(_A0)>::operator=(nullptr_t)
 {
     if (__f_ == (__base*)&__buf_)
         __f_->destroy();
@@ -1126,21 +1126,21 @@ function<_R(_A0)>::operator=(nullptr_t)
     __f_ = 0;
 }
 
-template<class _R, class _A0>
-template <class _F>
+template<class _Rp, class _A0>
+template <class _Fp>
 typename enable_if
 <
-    !is_integral<_F>::value,
-    function<_R(_A0)>&
+    !is_integral<_Fp>::value,
+    function<_Rp(_A0)>&
 >::type
-function<_R(_A0)>::operator=(_F __f)
+function<_Rp(_A0)>::operator=(_Fp __f)
 {
     function(_VSTD::move(__f)).swap(*this);
     return *this;
 }
 
-template<class _R, class _A0>
-function<_R(_A0)>::~function()
+template<class _Rp, class _A0>
+function<_Rp(_A0)>::~function()
 {
     if (__f_ == (__base*)&__buf_)
         __f_->destroy();
@@ -1148,9 +1148,9 @@ function<_R(_A0)>::~function()
         __f_->destroy_deallocate();
 }
 
-template<class _R, class _A0>
+template<class _Rp, class _A0>
 void
-function<_R(_A0)>::swap(function& __f)
+function<_Rp(_A0)>::swap(function& __f)
 {
     if (__f_ == (__base*)&__buf_ && __f.__f_ == (__base*)&__f.__buf_)
     {
@@ -1185,9 +1185,9 @@ function<_R(_A0)>::swap(function& __f)
         _VSTD::swap(__f_, __f.__f_);
 }
 
-template<class _R, class _A0>
-_R
-function<_R(_A0)>::operator()(_A0 __a0) const
+template<class _Rp, class _A0>
+_Rp
+function<_Rp(_A0)>::operator()(_A0 __a0) const
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__f_ == 0)
@@ -1198,76 +1198,76 @@ function<_R(_A0)>::operator()(_A0 __a0) const
 
 #ifndef _LIBCPP_NO_RTTI
 
-template<class _R, class _A0>
+template<class _Rp, class _A0>
 const std::type_info&
-function<_R(_A0)>::target_type() const
+function<_Rp(_A0)>::target_type() const
 {
     if (__f_ == 0)
         return typeid(void);
     return __f_->target_type();
 }
 
-template<class _R, class _A0>
-template <typename _T>
-_T*
-function<_R(_A0)>::target()
+template<class _Rp, class _A0>
+template <typename _Tp>
+_Tp*
+function<_Rp(_A0)>::target()
 {
     if (__f_ == 0)
-        return (_T*)0;
-    return (_T*)__f_->target(typeid(_T));
+        return (_Tp*)0;
+    return (_Tp*)__f_->target(typeid(_Tp));
 }
 
-template<class _R, class _A0>
-template <typename _T>
-const _T*
-function<_R(_A0)>::target() const
+template<class _Rp, class _A0>
+template <typename _Tp>
+const _Tp*
+function<_Rp(_A0)>::target() const
 {
     if (__f_ == 0)
-        return (const _T*)0;
-    return (const _T*)__f_->target(typeid(_T));
+        return (const _Tp*)0;
+    return (const _Tp*)__f_->target(typeid(_Tp));
 }
 
 #endif  // _LIBCPP_NO_RTTI
 
-template<class _R, class _A0, class _A1>
-class _LIBCPP_VISIBLE function<_R(_A0, _A1)>
-    : public binary_function<_A0, _A1, _R>
+template<class _Rp, class _A0, class _A1>
+class _LIBCPP_VISIBLE function<_Rp(_A0, _A1)>
+    : public binary_function<_A0, _A1, _Rp>
 {
-    typedef __function::__base<_R(_A0, _A1)> __base;
+    typedef __function::__base<_Rp(_A0, _A1)> __base;
     aligned_storage<3*sizeof(void*)>::type __buf_;
     __base* __f_;
 
-    template <class _F>
+    template <class _Fp>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(const _F&) {return true;}
+        static bool __not_null(const _Fp&) {return true;}
     template <class _R2, class _B0, class _B1>
         _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (*__p)(_B0, _B1)) {return __p;}
-    template <class _R2, class _C, class _B1>
+    template <class _R2, class _Cp, class _B1>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (_C::*__p)(_B1)) {return __p;}
-    template <class _R2, class _C, class _B1>
+        static bool __not_null(_R2 (_Cp::*__p)(_B1)) {return __p;}
+    template <class _R2, class _Cp, class _B1>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (_C::*__p)(_B1) const) {return __p;}
-    template <class _R2, class _C, class _B1>
+        static bool __not_null(_R2 (_Cp::*__p)(_B1) const) {return __p;}
+    template <class _R2, class _Cp, class _B1>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (_C::*__p)(_B1) volatile) {return __p;}
-    template <class _R2, class _C, class _B1>
+        static bool __not_null(_R2 (_Cp::*__p)(_B1) volatile) {return __p;}
+    template <class _R2, class _Cp, class _B1>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (_C::*__p)(_B1) const volatile) {return __p;}
+        static bool __not_null(_R2 (_Cp::*__p)(_B1) const volatile) {return __p;}
     template <class _R2, class _B0, class _B1>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(const function<_R(_B0, _B1)>& __p) {return __p;}
+        static bool __not_null(const function<_Rp(_B0, _B1)>& __p) {return __p;}
 public:
-    typedef _R result_type;
+    typedef _Rp result_type;
 
     // 20.7.16.2.1, construct/copy/destroy:
     _LIBCPP_INLINE_VISIBILITY explicit function() : __f_(0) {}
     _LIBCPP_INLINE_VISIBILITY function(nullptr_t) : __f_(0) {}
     function(const function&);
-    template<class _F>
-      function(_F,
-               typename enable_if<!is_integral<_F>::value>::type* = 0);
+    template<class _Fp>
+      function(_Fp,
+               typename enable_if<!is_integral<_Fp>::value>::type* = 0);
 
     template<class _Alloc>
       _LIBCPP_INLINE_VISIBILITY
@@ -1277,27 +1277,27 @@ public:
       function(allocator_arg_t, const _Alloc&, nullptr_t) : __f_(0) {}
     template<class _Alloc>
       function(allocator_arg_t, const _Alloc&, const function&);
-    template<class _F, class _Alloc>
-      function(allocator_arg_t, const _Alloc& __a, _F __f,
-               typename enable_if<!is_integral<_F>::value>::type* = 0);
+    template<class _Fp, class _Alloc>
+      function(allocator_arg_t, const _Alloc& __a, _Fp __f,
+               typename enable_if<!is_integral<_Fp>::value>::type* = 0);
 
     function& operator=(const function&);
     function& operator=(nullptr_t);
-    template<class _F>
+    template<class _Fp>
       typename enable_if
       <
-        !is_integral<_F>::value,
+        !is_integral<_Fp>::value,
         function&
       >::type
-      operator=(_F);
+      operator=(_Fp);
 
     ~function();
 
     // 20.7.16.2.2, function modifiers:
     void swap(function&);
-    template<class _F, class _Alloc>
+    template<class _Fp, class _Alloc>
       _LIBCPP_INLINE_VISIBILITY
-      void assign(_F __f, const _Alloc& __a)
+      void assign(_Fp __f, const _Alloc& __a)
         {function(allocator_arg, __a, __f).swap(*this);}
 
     // 20.7.16.2.3, function capacity:
@@ -1311,18 +1311,18 @@ private:
       bool operator!=(const function<_R2(_B0, _B1)>&) const;// = delete;
 public:
     // 20.7.16.2.4, function invocation:
-    _R operator()(_A0, _A1) const;
+    _Rp operator()(_A0, _A1) const;
 
 #ifndef _LIBCPP_NO_RTTI
     // 20.7.16.2.5, function target access:
     const std::type_info& target_type() const;
-    template <typename _T> _T* target();
-    template <typename _T> const _T* target() const;
+    template <typename _Tp> _Tp* target();
+    template <typename _Tp> const _Tp* target() const;
 #endif  // _LIBCPP_NO_RTTI
 };
 
-template<class _R, class _A0, class _A1>
-function<_R(_A0, _A1)>::function(const function& __f)
+template<class _Rp, class _A0, class _A1>
+function<_Rp(_A0, _A1)>::function(const function& __f)
 {
     if (__f.__f_ == 0)
         __f_ = 0;
@@ -1335,9 +1335,9 @@ function<_R(_A0, _A1)>::function(const function& __f)
         __f_ = __f.__f_->__clone();
 }
 
-template<class _R, class _A0, class _A1>
+template<class _Rp, class _A0, class _A1>
 template<class _Alloc>
-function<_R(_A0, _A1)>::function(allocator_arg_t, const _Alloc&, const function& __f)
+function<_Rp(_A0, _A1)>::function(allocator_arg_t, const _Alloc&, const function& __f)
 {
     if (__f.__f_ == 0)
         __f_ = 0;
@@ -1350,15 +1350,15 @@ function<_R(_A0, _A1)>::function(allocator_arg_t, const _Alloc&, const function&
         __f_ = __f.__f_->__clone();
 }
 
-template<class _R, class _A0, class _A1>
-template <class _F>
-function<_R(_A0, _A1)>::function(_F __f,
-                                 typename enable_if<!is_integral<_F>::value>::type*)
+template<class _Rp, class _A0, class _A1>
+template <class _Fp>
+function<_Rp(_A0, _A1)>::function(_Fp __f,
+                                 typename enable_if<!is_integral<_Fp>::value>::type*)
     : __f_(0)
 {
     if (__not_null(__f))
     {
-        typedef __function::__func<_F, allocator<_F>, _R(_A0, _A1)> _FF;
+        typedef __function::__func<_Fp, allocator<_Fp>, _Rp(_A0, _A1)> _FF;
         if (sizeof(_FF) <= sizeof(__buf_))
         {
             __f_ = (__base*)&__buf_;
@@ -1366,26 +1366,26 @@ function<_R(_A0, _A1)>::function(_F __f,
         }
         else
         {
-            typedef allocator<_FF> _A;
-            _A __a;
-            typedef __allocator_destructor<_A> _D;
-            unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
-            ::new (__hold.get()) _FF(__f, allocator<_F>(__a));
+            typedef allocator<_FF> _Ap;
+            _Ap __a;
+            typedef __allocator_destructor<_Ap> _Dp;
+            unique_ptr<__base, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
+            ::new (__hold.get()) _FF(__f, allocator<_Fp>(__a));
             __f_ = __hold.release();
         }
     }
 }
 
-template<class _R, class _A0, class _A1>
-template <class _F, class _Alloc>
-function<_R(_A0, _A1)>::function(allocator_arg_t, const _Alloc& __a0, _F __f,
-                                 typename enable_if<!is_integral<_F>::value>::type*)
+template<class _Rp, class _A0, class _A1>
+template <class _Fp, class _Alloc>
+function<_Rp(_A0, _A1)>::function(allocator_arg_t, const _Alloc& __a0, _Fp __f,
+                                 typename enable_if<!is_integral<_Fp>::value>::type*)
     : __f_(0)
 {
     typedef allocator_traits<_Alloc> __alloc_traits;
     if (__not_null(__f))
     {
-        typedef __function::__func<_F, _Alloc, _R(_A0, _A1)> _FF;
+        typedef __function::__func<_Fp, _Alloc, _Rp(_A0, _A1)> _FF;
         if (sizeof(_FF) <= sizeof(__buf_))
         {
             __f_ = (__base*)&__buf_;
@@ -1399,27 +1399,27 @@ function<_R(_A0, _A1)>::function(allocator_arg_t, const _Alloc& __a0, _F __f,
 #else
                 rebind_alloc<_FF>::other
 #endif
-                                                         _A;
-            _A __a(__a0);
-            typedef __allocator_destructor<_A> _D;
-            unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
+                                                         _Ap;
+            _Ap __a(__a0);
+            typedef __allocator_destructor<_Ap> _Dp;
+            unique_ptr<__base, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
             ::new (__hold.get()) _FF(__f, _Alloc(__a));
             __f_ = __hold.release();
         }
     }
 }
 
-template<class _R, class _A0, class _A1>
-function<_R(_A0, _A1)>&
-function<_R(_A0, _A1)>::operator=(const function& __f)
+template<class _Rp, class _A0, class _A1>
+function<_Rp(_A0, _A1)>&
+function<_Rp(_A0, _A1)>::operator=(const function& __f)
 {
     function(__f).swap(*this);
     return *this;
 }
 
-template<class _R, class _A0, class _A1>
-function<_R(_A0, _A1)>&
-function<_R(_A0, _A1)>::operator=(nullptr_t)
+template<class _Rp, class _A0, class _A1>
+function<_Rp(_A0, _A1)>&
+function<_Rp(_A0, _A1)>::operator=(nullptr_t)
 {
     if (__f_ == (__base*)&__buf_)
         __f_->destroy();
@@ -1428,21 +1428,21 @@ function<_R(_A0, _A1)>::operator=(nullptr_t)
     __f_ = 0;
 }
 
-template<class _R, class _A0, class _A1>
-template <class _F>
+template<class _Rp, class _A0, class _A1>
+template <class _Fp>
 typename enable_if
 <
-    !is_integral<_F>::value,
-    function<_R(_A0, _A1)>&
+    !is_integral<_Fp>::value,
+    function<_Rp(_A0, _A1)>&
 >::type
-function<_R(_A0, _A1)>::operator=(_F __f)
+function<_Rp(_A0, _A1)>::operator=(_Fp __f)
 {
     function(_VSTD::move(__f)).swap(*this);
     return *this;
 }
 
-template<class _R, class _A0, class _A1>
-function<_R(_A0, _A1)>::~function()
+template<class _Rp, class _A0, class _A1>
+function<_Rp(_A0, _A1)>::~function()
 {
     if (__f_ == (__base*)&__buf_)
         __f_->destroy();
@@ -1450,9 +1450,9 @@ function<_R(_A0, _A1)>::~function()
         __f_->destroy_deallocate();
 }
 
-template<class _R, class _A0, class _A1>
+template<class _Rp, class _A0, class _A1>
 void
-function<_R(_A0, _A1)>::swap(function& __f)
+function<_Rp(_A0, _A1)>::swap(function& __f)
 {
     if (__f_ == (__base*)&__buf_ && __f.__f_ == (__base*)&__f.__buf_)
     {
@@ -1487,9 +1487,9 @@ function<_R(_A0, _A1)>::swap(function& __f)
         _VSTD::swap(__f_, __f.__f_);
 }
 
-template<class _R, class _A0, class _A1>
-_R
-function<_R(_A0, _A1)>::operator()(_A0 __a0, _A1 __a1) const
+template<class _Rp, class _A0, class _A1>
+_Rp
+function<_Rp(_A0, _A1)>::operator()(_A0 __a0, _A1 __a1) const
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__f_ == 0)
@@ -1500,75 +1500,75 @@ function<_R(_A0, _A1)>::operator()(_A0 __a0, _A1 __a1) const
 
 #ifndef _LIBCPP_NO_RTTI
 
-template<class _R, class _A0, class _A1>
+template<class _Rp, class _A0, class _A1>
 const std::type_info&
-function<_R(_A0, _A1)>::target_type() const
+function<_Rp(_A0, _A1)>::target_type() const
 {
     if (__f_ == 0)
         return typeid(void);
     return __f_->target_type();
 }
 
-template<class _R, class _A0, class _A1>
-template <typename _T>
-_T*
-function<_R(_A0, _A1)>::target()
+template<class _Rp, class _A0, class _A1>
+template <typename _Tp>
+_Tp*
+function<_Rp(_A0, _A1)>::target()
 {
     if (__f_ == 0)
-        return (_T*)0;
-    return (_T*)__f_->target(typeid(_T));
+        return (_Tp*)0;
+    return (_Tp*)__f_->target(typeid(_Tp));
 }
 
-template<class _R, class _A0, class _A1>
-template <typename _T>
-const _T*
-function<_R(_A0, _A1)>::target() const
+template<class _Rp, class _A0, class _A1>
+template <typename _Tp>
+const _Tp*
+function<_Rp(_A0, _A1)>::target() const
 {
     if (__f_ == 0)
-        return (const _T*)0;
-    return (const _T*)__f_->target(typeid(_T));
+        return (const _Tp*)0;
+    return (const _Tp*)__f_->target(typeid(_Tp));
 }
 
 #endif  // _LIBCPP_NO_RTTI
 
-template<class _R, class _A0, class _A1, class _A2>
-class _LIBCPP_VISIBLE function<_R(_A0, _A1, _A2)>
+template<class _Rp, class _A0, class _A1, class _A2>
+class _LIBCPP_VISIBLE function<_Rp(_A0, _A1, _A2)>
 {
-    typedef __function::__base<_R(_A0, _A1, _A2)> __base;
+    typedef __function::__base<_Rp(_A0, _A1, _A2)> __base;
     aligned_storage<3*sizeof(void*)>::type __buf_;
     __base* __f_;
 
-    template <class _F>
+    template <class _Fp>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(const _F&) {return true;}
+        static bool __not_null(const _Fp&) {return true;}
     template <class _R2, class _B0, class _B1, class _B2>
         _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(_R2 (*__p)(_B0, _B1, _B2)) {return __p;}
-    template <class _R2, class _C, class _B1, class _B2>
+    template <class _R2, class _Cp, class _B1, class _B2>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (_C::*__p)(_B1, _B2)) {return __p;}
-    template <class _R2, class _C, class _B1, class _B2>
+        static bool __not_null(_R2 (_Cp::*__p)(_B1, _B2)) {return __p;}
+    template <class _R2, class _Cp, class _B1, class _B2>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (_C::*__p)(_B1, _B2) const) {return __p;}
-    template <class _R2, class _C, class _B1, class _B2>
+        static bool __not_null(_R2 (_Cp::*__p)(_B1, _B2) const) {return __p;}
+    template <class _R2, class _Cp, class _B1, class _B2>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (_C::*__p)(_B1, _B2) volatile) {return __p;}
-    template <class _R2, class _C, class _B1, class _B2>
+        static bool __not_null(_R2 (_Cp::*__p)(_B1, _B2) volatile) {return __p;}
+    template <class _R2, class _Cp, class _B1, class _B2>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(_R2 (_C::*__p)(_B1, _B2) const volatile) {return __p;}
+        static bool __not_null(_R2 (_Cp::*__p)(_B1, _B2) const volatile) {return __p;}
     template <class _R2, class _B0, class _B1, class _B2>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(const function<_R(_B0, _B1, _B2)>& __p) {return __p;}
+        static bool __not_null(const function<_Rp(_B0, _B1, _B2)>& __p) {return __p;}
 public:
-    typedef _R result_type;
+    typedef _Rp result_type;
 
     // 20.7.16.2.1, construct/copy/destroy:
     _LIBCPP_INLINE_VISIBILITY explicit function() : __f_(0) {}
     _LIBCPP_INLINE_VISIBILITY function(nullptr_t) : __f_(0) {}
     function(const function&);
-    template<class _F>
-      function(_F,
-               typename enable_if<!is_integral<_F>::value>::type* = 0);
+    template<class _Fp>
+      function(_Fp,
+               typename enable_if<!is_integral<_Fp>::value>::type* = 0);
 
     template<class _Alloc>
       _LIBCPP_INLINE_VISIBILITY
@@ -1578,27 +1578,27 @@ public:
       function(allocator_arg_t, const _Alloc&, nullptr_t) : __f_(0) {}
     template<class _Alloc>
       function(allocator_arg_t, const _Alloc&, const function&);
-    template<class _F, class _Alloc>
-      function(allocator_arg_t, const _Alloc& __a, _F __f,
-               typename enable_if<!is_integral<_F>::value>::type* = 0);
+    template<class _Fp, class _Alloc>
+      function(allocator_arg_t, const _Alloc& __a, _Fp __f,
+               typename enable_if<!is_integral<_Fp>::value>::type* = 0);
 
     function& operator=(const function&);
     function& operator=(nullptr_t);
-    template<class _F>
+    template<class _Fp>
       typename enable_if
       <
-        !is_integral<_F>::value,
+        !is_integral<_Fp>::value,
         function&
       >::type
-      operator=(_F);
+      operator=(_Fp);
 
     ~function();
 
     // 20.7.16.2.2, function modifiers:
     void swap(function&);
-    template<class _F, class _Alloc>
+    template<class _Fp, class _Alloc>
       _LIBCPP_INLINE_VISIBILITY
-      void assign(_F __f, const _Alloc& __a)
+      void assign(_Fp __f, const _Alloc& __a)
         {function(allocator_arg, __a, __f).swap(*this);}
 
     // 20.7.16.2.3, function capacity:
@@ -1612,18 +1612,18 @@ private:
       bool operator!=(const function<_R2(_B0, _B1, _B2)>&) const;// = delete;
 public:
     // 20.7.16.2.4, function invocation:
-    _R operator()(_A0, _A1, _A2) const;
+    _Rp operator()(_A0, _A1, _A2) const;
 
 #ifndef _LIBCPP_NO_RTTI
     // 20.7.16.2.5, function target access:
     const std::type_info& target_type() const;
-    template <typename _T> _T* target();
-    template <typename _T> const _T* target() const;
+    template <typename _Tp> _Tp* target();
+    template <typename _Tp> const _Tp* target() const;
 #endif  // _LIBCPP_NO_RTTI
 };
 
-template<class _R, class _A0, class _A1, class _A2>
-function<_R(_A0, _A1, _A2)>::function(const function& __f)
+template<class _Rp, class _A0, class _A1, class _A2>
+function<_Rp(_A0, _A1, _A2)>::function(const function& __f)
 {
     if (__f.__f_ == 0)
         __f_ = 0;
@@ -1636,9 +1636,9 @@ function<_R(_A0, _A1, _A2)>::function(const function& __f)
         __f_ = __f.__f_->__clone();
 }
 
-template<class _R, class _A0, class _A1, class _A2>
+template<class _Rp, class _A0, class _A1, class _A2>
 template<class _Alloc>
-function<_R(_A0, _A1, _A2)>::function(allocator_arg_t, const _Alloc&,
+function<_Rp(_A0, _A1, _A2)>::function(allocator_arg_t, const _Alloc&,
                                       const function& __f)
 {
     if (__f.__f_ == 0)
@@ -1652,15 +1652,15 @@ function<_R(_A0, _A1, _A2)>::function(allocator_arg_t, const _Alloc&,
         __f_ = __f.__f_->__clone();
 }
 
-template<class _R, class _A0, class _A1, class _A2>
-template <class _F>
-function<_R(_A0, _A1, _A2)>::function(_F __f,
-                                     typename enable_if<!is_integral<_F>::value>::type*)
+template<class _Rp, class _A0, class _A1, class _A2>
+template <class _Fp>
+function<_Rp(_A0, _A1, _A2)>::function(_Fp __f,
+                                     typename enable_if<!is_integral<_Fp>::value>::type*)
     : __f_(0)
 {
     if (__not_null(__f))
     {
-        typedef __function::__func<_F, allocator<_F>, _R(_A0, _A1, _A2)> _FF;
+        typedef __function::__func<_Fp, allocator<_Fp>, _Rp(_A0, _A1, _A2)> _FF;
         if (sizeof(_FF) <= sizeof(__buf_))
         {
             __f_ = (__base*)&__buf_;
@@ -1668,26 +1668,26 @@ function<_R(_A0, _A1, _A2)>::function(_F __f,
         }
         else
         {
-            typedef allocator<_FF> _A;
-            _A __a;
-            typedef __allocator_destructor<_A> _D;
-            unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
-            ::new (__hold.get()) _FF(__f, allocator<_F>(__a));
+            typedef allocator<_FF> _Ap;
+            _Ap __a;
+            typedef __allocator_destructor<_Ap> _Dp;
+            unique_ptr<__base, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
+            ::new (__hold.get()) _FF(__f, allocator<_Fp>(__a));
             __f_ = __hold.release();
         }
     }
 }
 
-template<class _R, class _A0, class _A1, class _A2>
-template <class _F, class _Alloc>
-function<_R(_A0, _A1, _A2)>::function(allocator_arg_t, const _Alloc& __a0, _F __f,
-                                     typename enable_if<!is_integral<_F>::value>::type*)
+template<class _Rp, class _A0, class _A1, class _A2>
+template <class _Fp, class _Alloc>
+function<_Rp(_A0, _A1, _A2)>::function(allocator_arg_t, const _Alloc& __a0, _Fp __f,
+                                     typename enable_if<!is_integral<_Fp>::value>::type*)
     : __f_(0)
 {
     typedef allocator_traits<_Alloc> __alloc_traits;
     if (__not_null(__f))
     {
-        typedef __function::__func<_F, _Alloc, _R(_A0, _A1, _A2)> _FF;
+        typedef __function::__func<_Fp, _Alloc, _Rp(_A0, _A1, _A2)> _FF;
         if (sizeof(_FF) <= sizeof(__buf_))
         {
             __f_ = (__base*)&__buf_;
@@ -1701,27 +1701,27 @@ function<_R(_A0, _A1, _A2)>::function(allocator_arg_t, const _Alloc& __a0, _F __
 #else
                 rebind_alloc<_FF>::other
 #endif
-                                                         _A;
-            _A __a(__a0);
-            typedef __allocator_destructor<_A> _D;
-            unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
+                                                         _Ap;
+            _Ap __a(__a0);
+            typedef __allocator_destructor<_Ap> _Dp;
+            unique_ptr<__base, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
             ::new (__hold.get()) _FF(__f, _Alloc(__a));
             __f_ = __hold.release();
         }
     }
 }
 
-template<class _R, class _A0, class _A1, class _A2>
-function<_R(_A0, _A1, _A2)>&
-function<_R(_A0, _A1, _A2)>::operator=(const function& __f)
+template<class _Rp, class _A0, class _A1, class _A2>
+function<_Rp(_A0, _A1, _A2)>&
+function<_Rp(_A0, _A1, _A2)>::operator=(const function& __f)
 {
     function(__f).swap(*this);
     return *this;
 }
 
-template<class _R, class _A0, class _A1, class _A2>
-function<_R(_A0, _A1, _A2)>&
-function<_R(_A0, _A1, _A2)>::operator=(nullptr_t)
+template<class _Rp, class _A0, class _A1, class _A2>
+function<_Rp(_A0, _A1, _A2)>&
+function<_Rp(_A0, _A1, _A2)>::operator=(nullptr_t)
 {
     if (__f_ == (__base*)&__buf_)
         __f_->destroy();
@@ -1730,21 +1730,21 @@ function<_R(_A0, _A1, _A2)>::operator=(nullptr_t)
     __f_ = 0;
 }
 
-template<class _R, class _A0, class _A1, class _A2>
-template <class _F>
+template<class _Rp, class _A0, class _A1, class _A2>
+template <class _Fp>
 typename enable_if
 <
-    !is_integral<_F>::value,
-    function<_R(_A0, _A1, _A2)>&
+    !is_integral<_Fp>::value,
+    function<_Rp(_A0, _A1, _A2)>&
 >::type
-function<_R(_A0, _A1, _A2)>::operator=(_F __f)
+function<_Rp(_A0, _A1, _A2)>::operator=(_Fp __f)
 {
     function(_VSTD::move(__f)).swap(*this);
     return *this;
 }
 
-template<class _R, class _A0, class _A1, class _A2>
-function<_R(_A0, _A1, _A2)>::~function()
+template<class _Rp, class _A0, class _A1, class _A2>
+function<_Rp(_A0, _A1, _A2)>::~function()
 {
     if (__f_ == (__base*)&__buf_)
         __f_->destroy();
@@ -1752,9 +1752,9 @@ function<_R(_A0, _A1, _A2)>::~function()
         __f_->destroy_deallocate();
 }
 
-template<class _R, class _A0, class _A1, class _A2>
+template<class _Rp, class _A0, class _A1, class _A2>
 void
-function<_R(_A0, _A1, _A2)>::swap(function& __f)
+function<_Rp(_A0, _A1, _A2)>::swap(function& __f)
 {
     if (__f_ == (__base*)&__buf_ && __f.__f_ == (__base*)&__f.__buf_)
     {
@@ -1789,9 +1789,9 @@ function<_R(_A0, _A1, _A2)>::swap(function& __f)
         _VSTD::swap(__f_, __f.__f_);
 }
 
-template<class _R, class _A0, class _A1, class _A2>
-_R
-function<_R(_A0, _A1, _A2)>::operator()(_A0 __a0, _A1 __a1, _A2 __a2) const
+template<class _Rp, class _A0, class _A1, class _A2>
+_Rp
+function<_Rp(_A0, _A1, _A2)>::operator()(_A0 __a0, _A1 __a1, _A2 __a2) const
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__f_ == 0)
@@ -1802,61 +1802,61 @@ function<_R(_A0, _A1, _A2)>::operator()(_A0 __a0, _A1 __a1, _A2 __a2) const
 
 #ifndef _LIBCPP_NO_RTTI
 
-template<class _R, class _A0, class _A1, class _A2>
+template<class _Rp, class _A0, class _A1, class _A2>
 const std::type_info&
-function<_R(_A0, _A1, _A2)>::target_type() const
+function<_Rp(_A0, _A1, _A2)>::target_type() const
 {
     if (__f_ == 0)
         return typeid(void);
     return __f_->target_type();
 }
 
-template<class _R, class _A0, class _A1, class _A2>
-template <typename _T>
-_T*
-function<_R(_A0, _A1, _A2)>::target()
+template<class _Rp, class _A0, class _A1, class _A2>
+template <typename _Tp>
+_Tp*
+function<_Rp(_A0, _A1, _A2)>::target()
 {
     if (__f_ == 0)
-        return (_T*)0;
-    return (_T*)__f_->target(typeid(_T));
+        return (_Tp*)0;
+    return (_Tp*)__f_->target(typeid(_Tp));
 }
 
-template<class _R, class _A0, class _A1, class _A2>
-template <typename _T>
-const _T*
-function<_R(_A0, _A1, _A2)>::target() const
+template<class _Rp, class _A0, class _A1, class _A2>
+template <typename _Tp>
+const _Tp*
+function<_Rp(_A0, _A1, _A2)>::target() const
 {
     if (__f_ == 0)
-        return (const _T*)0;
-    return (const _T*)__f_->target(typeid(_T));
+        return (const _Tp*)0;
+    return (const _Tp*)__f_->target(typeid(_Tp));
 }
 
 #endif  // _LIBCPP_NO_RTTI
 
-template <class _F>
+template <class _Fp>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-operator==(const function<_F>& __f, nullptr_t) {return !__f;}
+operator==(const function<_Fp>& __f, nullptr_t) {return !__f;}
 
-template <class _F>
+template <class _Fp>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-operator==(nullptr_t, const function<_F>& __f) {return !__f;}
+operator==(nullptr_t, const function<_Fp>& __f) {return !__f;}
 
-template <class _F>
+template <class _Fp>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-operator!=(const function<_F>& __f, nullptr_t) {return (bool)__f;}
+operator!=(const function<_Fp>& __f, nullptr_t) {return (bool)__f;}
 
-template <class _F>
+template <class _Fp>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-operator!=(nullptr_t, const function<_F>& __f) {return (bool)__f;}
+operator!=(nullptr_t, const function<_Fp>& __f) {return (bool)__f;}
 
-template <class _F>
+template <class _Fp>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-swap(function<_F>& __x, function<_F>& __y)
+swap(function<_Fp>& __x, function<_Fp>& __y)
 {return __x.swap(__y);}
 
 template<class _Tp> struct __is_bind_expression : public false_type {};
@@ -1870,7 +1870,7 @@ template<class _Tp> struct _LIBCPP_VISIBLE is_placeholder
 namespace placeholders
 {
 
-template <int _N> struct __ph {};
+template <int _Np> struct __ph {};
 
 extern __ph<1>   _1;
 extern __ph<2>   _2;
@@ -1885,9 +1885,9 @@ extern __ph<10> _10;
 
 }  // placeholders
 
-template<int _N>
-struct __is_placeholder<placeholders::__ph<_N> >
-    : public integral_constant<int, _N> {};
+template<int _Np>
+struct __is_placeholder<placeholders::__ph<_Np> >
+    : public integral_constant<int, _Np> {};
 
 template <class _Tp, class _Uj>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -2003,15 +2003,15 @@ struct __mu_return<reference_wrapper<_Ti>, _TupleUj>
     typedef _Ti& type;
 };
 
-template <class _F, class _BoundArgs, class _TupleUj>
+template <class _Fp, class _BoundArgs, class _TupleUj>
 struct __bind_return;
 
-template <class _F, class ..._BoundArgs, class _TupleUj>
-struct __bind_return<_F, tuple<_BoundArgs...>, _TupleUj>
+template <class _Fp, class ..._BoundArgs, class _TupleUj>
+struct __bind_return<_Fp, tuple<_BoundArgs...>, _TupleUj>
 {
     typedef typename __ref_return
     <
-        _F&,
+        _Fp&,
         typename __mu_return
         <
             _BoundArgs,
@@ -2020,12 +2020,12 @@ struct __bind_return<_F, tuple<_BoundArgs...>, _TupleUj>
     >::type type;
 };
 
-template <class _F, class ..._BoundArgs, class _TupleUj>
-struct __bind_return<_F, const tuple<_BoundArgs...>, _TupleUj>
+template <class _Fp, class ..._BoundArgs, class _TupleUj>
+struct __bind_return<_Fp, const tuple<_BoundArgs...>, _TupleUj>
 {
     typedef typename __ref_return
     <
-        _F&,
+        _Fp&,
         typename __mu_return
         <
             const _BoundArgs,
@@ -2034,30 +2034,30 @@ struct __bind_return<_F, const tuple<_BoundArgs...>, _TupleUj>
     >::type type;
 };
 
-template <class _F, class _BoundArgs, size_t ..._Indx, class _Args>
+template <class _Fp, class _BoundArgs, size_t ..._Indx, class _Args>
 inline _LIBCPP_INLINE_VISIBILITY
-typename __bind_return<_F, _BoundArgs, _Args>::type
-__apply_functor(_F& __f, _BoundArgs& __bound_args, __tuple_indices<_Indx...>,
+typename __bind_return<_Fp, _BoundArgs, _Args>::type
+__apply_functor(_Fp& __f, _BoundArgs& __bound_args, __tuple_indices<_Indx...>,
                 _Args&& __args)
 {
     return __invoke(__f, __mu(get<_Indx>(__bound_args), __args)...);
 }
 
-template<class _F, class ..._BoundArgs>
+template<class _Fp, class ..._BoundArgs>
 class __bind
 {
-    _F __f_;
+    _Fp __f_;
     tuple<_BoundArgs...> __bound_args_;
 
     typedef typename __make_tuple_indices<sizeof...(_BoundArgs)>::type __indices;
 public:
-    template <class _G, class ..._BA>
-      explicit __bind(_G&& __f, _BA&& ...__bound_args)
-        : __f_(_VSTD::forward<_G>(__f)),
+    template <class _Gp, class ..._BA>
+      explicit __bind(_Gp&& __f, _BA&& ...__bound_args)
+        : __f_(_VSTD::forward<_Gp>(__f)),
           __bound_args_(_VSTD::forward<_BA>(__bound_args)...) {}
 
     template <class ..._Args>
-        typename __bind_return<_F, tuple<_BoundArgs...>, tuple<_Args&&...> >::type
+        typename __bind_return<_Fp, tuple<_BoundArgs...>, tuple<_Args&&...> >::type
         operator()(_Args&& ...__args)
         {
             // compiler bug workaround
@@ -2066,7 +2066,7 @@ public:
         }
 
     template <class ..._Args>
-        typename __bind_return<_F, tuple<_BoundArgs...>, tuple<_Args&&...> >::type
+        typename __bind_return<_Fp, tuple<_BoundArgs...>, tuple<_Args&&...> >::type
         operator()(_Args&& ...__args) const
         {
             return __apply_functor(__f_, __bound_args_, __indices(),
@@ -2074,20 +2074,20 @@ public:
         }
 };
 
-template<class _F, class ..._BoundArgs>
-struct __is_bind_expression<__bind<_F, _BoundArgs...> > : public true_type {};
+template<class _Fp, class ..._BoundArgs>
+struct __is_bind_expression<__bind<_Fp, _BoundArgs...> > : public true_type {};
 
-template<class _R, class _F, class ..._BoundArgs>
+template<class _Rp, class _Fp, class ..._BoundArgs>
 class __bind_r
-    : public __bind<_F, _BoundArgs...>
+    : public __bind<_Fp, _BoundArgs...>
 {
-    typedef __bind<_F, _BoundArgs...> base;
+    typedef __bind<_Fp, _BoundArgs...> base;
 public:
-    typedef _R result_type;
+    typedef _Rp result_type;
 
-    template <class _G, class ..._BA>
-      explicit __bind_r(_G&& __f, _BA&& ...__bound_args)
-        : base(_VSTD::forward<_G>(__f),
+    template <class _Gp, class ..._BA>
+      explicit __bind_r(_Gp&& __f, _BA&& ...__bound_args)
+        : base(_VSTD::forward<_Gp>(__f),
                _VSTD::forward<_BA>(__bound_args)...) {}
 
     template <class ..._Args>
@@ -2105,25 +2105,25 @@ public:
         }
 };
 
-template<class _R, class _F, class ..._BoundArgs>
-struct __is_bind_expression<__bind_r<_R, _F, _BoundArgs...> > : public true_type {};
+template<class _Rp, class _Fp, class ..._BoundArgs>
+struct __is_bind_expression<__bind_r<_Rp, _Fp, _BoundArgs...> > : public true_type {};
 
-template<class _F, class ..._BoundArgs>
+template<class _Fp, class ..._BoundArgs>
 inline _LIBCPP_INLINE_VISIBILITY
-__bind<typename decay<_F>::type, typename decay<_BoundArgs>::type...>
-bind(_F&& __f, _BoundArgs&&... __bound_args)
+__bind<typename decay<_Fp>::type, typename decay<_BoundArgs>::type...>
+bind(_Fp&& __f, _BoundArgs&&... __bound_args)
 {
-    typedef __bind<typename decay<_F>::type, typename decay<_BoundArgs>::type...> type;
-    return type(_VSTD::forward<_F>(__f), _VSTD::forward<_BoundArgs>(__bound_args)...);
+    typedef __bind<typename decay<_Fp>::type, typename decay<_BoundArgs>::type...> type;
+    return type(_VSTD::forward<_Fp>(__f), _VSTD::forward<_BoundArgs>(__bound_args)...);
 }
 
-template<class _R, class _F, class ..._BoundArgs>
+template<class _Rp, class _Fp, class ..._BoundArgs>
 inline _LIBCPP_INLINE_VISIBILITY
-__bind_r<_R, typename decay<_F>::type, typename decay<_BoundArgs>::type...>
-bind(_F&& __f, _BoundArgs&&... __bound_args)
+__bind_r<_Rp, typename decay<_Fp>::type, typename decay<_BoundArgs>::type...>
+bind(_Fp&& __f, _BoundArgs&&... __bound_args)
 {
-    typedef __bind_r<_R, typename decay<_F>::type, typename decay<_BoundArgs>::type...> type;
-    return type(_VSTD::forward<_F>(__f), _VSTD::forward<_BoundArgs>(__bound_args)...);
+    typedef __bind_r<_Rp, typename decay<_Fp>::type, typename decay<_BoundArgs>::type...> type;
+    return type(_VSTD::forward<_Fp>(__f), _VSTD::forward<_BoundArgs>(__bound_args)...);
 }
 */
 

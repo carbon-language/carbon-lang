@@ -414,27 +414,27 @@ struct __ratio_less1
     static const bool value = _Odd ? _Q2 < _Q1 : _Q1 < _Q2;
 };
 
-template <class _R1, class _R2, bool _Odd, intmax_t _Q>
-struct __ratio_less1<_R1, _R2, _Odd, _Q, 0, _Q, 0>
+template <class _R1, class _R2, bool _Odd, intmax_t _Qp>
+struct __ratio_less1<_R1, _R2, _Odd, _Qp, 0, _Qp, 0>
 {
     static const bool value = false;
 };
 
-template <class _R1, class _R2, bool _Odd, intmax_t _Q, intmax_t _M2>
-struct __ratio_less1<_R1, _R2, _Odd, _Q, 0, _Q, _M2>
+template <class _R1, class _R2, bool _Odd, intmax_t _Qp, intmax_t _M2>
+struct __ratio_less1<_R1, _R2, _Odd, _Qp, 0, _Qp, _M2>
 {
     static const bool value = !_Odd;
 };
 
-template <class _R1, class _R2, bool _Odd, intmax_t _Q, intmax_t _M1>
-struct __ratio_less1<_R1, _R2, _Odd, _Q, _M1, _Q, 0>
+template <class _R1, class _R2, bool _Odd, intmax_t _Qp, intmax_t _M1>
+struct __ratio_less1<_R1, _R2, _Odd, _Qp, _M1, _Qp, 0>
 {
     static const bool value = _Odd;
 };
 
-template <class _R1, class _R2, bool _Odd, intmax_t _Q, intmax_t _M1,
+template <class _R1, class _R2, bool _Odd, intmax_t _Qp, intmax_t _M1,
                                                         intmax_t _M2>
-struct __ratio_less1<_R1, _R2, _Odd, _Q, _M1, _Q, _M2>
+struct __ratio_less1<_R1, _R2, _Odd, _Qp, _M1, _Qp, _M2>
 {
     static const bool value = __ratio_less1<ratio<_R1::den, _M1>,
                                             ratio<_R2::den, _M2>, !_Odd>::value;

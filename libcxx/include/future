@@ -538,14 +538,14 @@ __assoc_sub_state::wait_for(const chrono::duration<_Rep, _Period>& __rel_time) c
     return wait_until(chrono::steady_clock::now() + __rel_time);
 }
 
-template <class _R>
+template <class _Rp>
 class __assoc_state
     : public __assoc_sub_state
 {
     typedef __assoc_sub_state base;
-    typedef typename aligned_storage<sizeof(_R), alignment_of<_R>::value>::type _U;
+    typedef typename aligned_storage<sizeof(_Rp), alignment_of<_Rp>::value>::type _Up;
 protected:
-    _U __value_;
+    _Up __value_;
 
     virtual void __on_zero_shared() _NOEXCEPT;
 public:
@@ -564,26 +564,26 @@ public:
         void set_value_at_thread_exit(_Arg& __arg);
 #endif
 
-    _R move();
-    typename add_lvalue_reference<_R>::type copy();
+    _Rp move();
+    typename add_lvalue_reference<_Rp>::type copy();
 };
 
-template <class _R>
+template <class _Rp>
 void
-__assoc_state<_R>::__on_zero_shared() _NOEXCEPT
+__assoc_state<_Rp>::__on_zero_shared() _NOEXCEPT
 {
     if (this->__state_ & base::__constructed)
-        reinterpret_cast<_R*>(&__value_)->~_R();
+        reinterpret_cast<_Rp*>(&__value_)->~_Rp();
     delete this;
 }
 
-template <class _R>
+template <class _Rp>
 template <class _Arg>
 void
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-__assoc_state<_R>::set_value(_Arg&& __arg)
+__assoc_state<_Rp>::set_value(_Arg&& __arg)
 #else
-__assoc_state<_R>::set_value(_Arg& __arg)
+__assoc_state<_Rp>::set_value(_Arg& __arg)
 #endif
 {
     unique_lock<mutex> __lk(this->__mut_);
@@ -591,19 +591,19 @@ __assoc_state<_R>::set_value(_Arg& __arg)
     if (this->__has_value())
         throw future_error(make_error_code(future_errc::promise_already_satisfied));
 #endif
-    ::new(&__value_) _R(_VSTD::forward<_Arg>(__arg));
+    ::new(&__value_) _Rp(_VSTD::forward<_Arg>(__arg));
     this->__state_ |= base::__constructed | base::ready;
     __lk.unlock();
     __cv_.notify_all();
 }
 
-template <class _R>
+template <class _Rp>
 template <class _Arg>
 void
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-__assoc_state<_R>::set_value_at_thread_exit(_Arg&& __arg)
+__assoc_state<_Rp>::set_value_at_thread_exit(_Arg&& __arg)
 #else
-__assoc_state<_R>::set_value_at_thread_exit(_Arg& __arg)
+__assoc_state<_Rp>::set_value_at_thread_exit(_Arg& __arg)
 #endif
 {
     unique_lock<mutex> __lk(this->__mut_);
@@ -611,62 +611,62 @@ __assoc_state<_R>::set_value_at_thread_exit(_Arg& __arg)
     if (this->__has_value())
         throw future_error(make_error_code(future_errc::promise_already_satisfied));
 #endif
-    ::new(&__value_) _R(_VSTD::forward<_Arg>(__arg));
+    ::new(&__value_) _Rp(_VSTD::forward<_Arg>(__arg));
     this->__state_ |= base::__constructed;
     __thread_local_data()->__make_ready_at_thread_exit(this);
     __lk.unlock();
 }
 
-template <class _R>
-_R
-__assoc_state<_R>::move()
+template <class _Rp>
+_Rp
+__assoc_state<_Rp>::move()
 {
     unique_lock<mutex> __lk(this->__mut_);
     this->__sub_wait(__lk);
     if (this->__exception_ != nullptr)
         rethrow_exception(this->__exception_);
-    return _VSTD::move(*reinterpret_cast<_R*>(&__value_));
+    return _VSTD::move(*reinterpret_cast<_Rp*>(&__value_));
 }
 
-template <class _R>
-typename add_lvalue_reference<_R>::type
-__assoc_state<_R>::copy()
+template <class _Rp>
+typename add_lvalue_reference<_Rp>::type
+__assoc_state<_Rp>::copy()
 {
     unique_lock<mutex> __lk(this->__mut_);
     this->__sub_wait(__lk);
     if (this->__exception_ != nullptr)
         rethrow_exception(this->__exception_);
-    return *reinterpret_cast<_R*>(&__value_);
+    return *reinterpret_cast<_Rp*>(&__value_);
 }
 
-template <class _R>
-class __assoc_state<_R&>
+template <class _Rp>
+class __assoc_state<_Rp&>
     : public __assoc_sub_state
 {
     typedef __assoc_sub_state base;
-    typedef _R* _U;
+    typedef _Rp* _Up;
 protected:
-    _U __value_;
+    _Up __value_;
 
     virtual void __on_zero_shared() _NOEXCEPT;
 public:
 
-    void set_value(_R& __arg);
-    void set_value_at_thread_exit(_R& __arg);
+    void set_value(_Rp& __arg);
+    void set_value_at_thread_exit(_Rp& __arg);
 
-    _R& copy();
+    _Rp& copy();
 };
 
-template <class _R>
+template <class _Rp>
 void
-__assoc_state<_R&>::__on_zero_shared() _NOEXCEPT
+__assoc_state<_Rp&>::__on_zero_shared() _NOEXCEPT
 {
     delete this;
 }
 
-template <class _R>
+template <class _Rp>
 void
-__assoc_state<_R&>::set_value(_R& __arg)
+__assoc_state<_Rp&>::set_value(_Rp& __arg)
 {
     unique_lock<mutex> __lk(this->__mut_);
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -679,9 +679,9 @@ __assoc_state<_R&>::set_value(_R& __arg)
     __cv_.notify_all();
 }
 
-template <class _R>
+template <class _Rp>
 void
-__assoc_state<_R&>::set_value_at_thread_exit(_R& __arg)
+__assoc_state<_Rp&>::set_value_at_thread_exit(_Rp& __arg)
 {
     unique_lock<mutex> __lk(this->__mut_);
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -694,9 +694,9 @@ __assoc_state<_R&>::set_value_at_thread_exit(_R& __arg)
     __lk.unlock();
 }
 
-template <class _R>
-_R&
-__assoc_state<_R&>::copy()
+template <class _Rp>
+_Rp&
+__assoc_state<_Rp&>::copy()
 {
     unique_lock<mutex> __lk(this->__mut_);
     this->__sub_wait(__lk);
@@ -705,11 +705,11 @@ __assoc_state<_R&>::copy()
     return *__value_;
 }
 
-template <class _R, class _Alloc>
+template <class _Rp, class _Alloc>
 class __assoc_state_alloc
-    : public __assoc_state<_R>
+    : public __assoc_state<_Rp>
 {
-    typedef __assoc_state<_R> base;
+    typedef __assoc_state<_Rp> base;
     _Alloc __alloc_;
 
     virtual void __on_zero_shared() _NOEXCEPT;
@@ -719,22 +719,22 @@ public:
         : __alloc_(__a) {}
 };
 
-template <class _R, class _Alloc>
+template <class _Rp, class _Alloc>
 void
-__assoc_state_alloc<_R, _Alloc>::__on_zero_shared() _NOEXCEPT
+__assoc_state_alloc<_Rp, _Alloc>::__on_zero_shared() _NOEXCEPT
 {
     if (this->__state_ & base::__constructed)
-        reinterpret_cast<_R*>(&this->__value_)->~_R();
+        reinterpret_cast<_Rp*>(&this->__value_)->~_Rp();
     typename _Alloc::template rebind<__assoc_state_alloc>::other __a(__alloc_);
     this->~__assoc_state_alloc();
     __a.deallocate(this, 1);
 }
 
-template <class _R, class _Alloc>
-class __assoc_state_alloc<_R&, _Alloc>
-    : public __assoc_state<_R&>
+template <class _Rp, class _Alloc>
+class __assoc_state_alloc<_Rp&, _Alloc>
+    : public __assoc_state<_Rp&>
 {
-    typedef __assoc_state<_R&> base;
+    typedef __assoc_state<_Rp&> base;
     _Alloc __alloc_;
 
     virtual void __on_zero_shared() _NOEXCEPT;
@@ -744,9 +744,9 @@ public:
         : __alloc_(__a) {}
 };
 
-template <class _R, class _Alloc>
+template <class _Rp, class _Alloc>
 void
-__assoc_state_alloc<_R&, _Alloc>::__on_zero_shared() _NOEXCEPT
+__assoc_state_alloc<_Rp&, _Alloc>::__on_zero_shared() _NOEXCEPT
 {
     typename _Alloc::template rebind<__assoc_state_alloc>::other __a(__alloc_);
     this->~__assoc_state_alloc();
@@ -777,17 +777,17 @@ __assoc_sub_state_alloc<_Alloc>::__on_zero_shared() _NOEXCEPT
     __a.deallocate(this, 1);
 }
 
-template <class _R, class _F>
+template <class _Rp, class _Fp>
 class __deferred_assoc_state
-    : public __assoc_state<_R>
+    : public __assoc_state<_Rp>
 {
-    typedef __assoc_state<_R> base;
+    typedef __assoc_state<_Rp> base;
 
-    _F __func_;
+    _Fp __func_;
 
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    explicit __deferred_assoc_state(_F&& __f);
+    explicit __deferred_assoc_state(_Fp&& __f);
 #endif
 
     virtual void __execute();
@@ -795,19 +795,19 @@ public:
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-template <class _R, class _F>
+template <class _Rp, class _Fp>
 inline _LIBCPP_INLINE_VISIBILITY
-__deferred_assoc_state<_R, _F>::__deferred_assoc_state(_F&& __f)
-    : __func_(_VSTD::forward<_F>(__f))
+__deferred_assoc_state<_Rp, _Fp>::__deferred_assoc_state(_Fp&& __f)
+    : __func_(_VSTD::forward<_Fp>(__f))
 {
     this->__set_deferred();
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-template <class _R, class _F>
+template <class _Rp, class _Fp>
 void
-__deferred_assoc_state<_R, _F>::__execute()
+__deferred_assoc_state<_Rp, _Fp>::__execute()
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
@@ -823,17 +823,17 @@ __deferred_assoc_state<_R, _F>::__execute()
 #endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
-template <class _F>
-class __deferred_assoc_state<void, _F>
+template <class _Fp>
+class __deferred_assoc_state<void, _Fp>
     : public __assoc_sub_state
 {
     typedef __assoc_sub_state base;
 
-    _F __func_;
+    _Fp __func_;
 
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    explicit __deferred_assoc_state(_F&& __f);
+    explicit __deferred_assoc_state(_Fp&& __f);
 #endif
 
     virtual void __execute();
@@ -841,19 +841,19 @@ public:
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-template <class _F>
+template <class _Fp>
 inline _LIBCPP_INLINE_VISIBILITY
-__deferred_assoc_state<void, _F>::__deferred_assoc_state(_F&& __f)
-    : __func_(_VSTD::forward<_F>(__f))
+__deferred_assoc_state<void, _Fp>::__deferred_assoc_state(_Fp&& __f)
+    : __func_(_VSTD::forward<_Fp>(__f))
 {
     this->__set_deferred();
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-template <class _F>
+template <class _Fp>
 void
-__deferred_assoc_state<void, _F>::__execute()
+__deferred_assoc_state<void, _Fp>::__execute()
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
@@ -870,18 +870,18 @@ __deferred_assoc_state<void, _F>::__execute()
 #endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
-template <class _R, class _F>
+template <class _Rp, class _Fp>
 class __async_assoc_state
-    : public __assoc_state<_R>
+    : public __assoc_state<_Rp>
 {
-    typedef __assoc_state<_R> base;
+    typedef __assoc_state<_Rp> base;
 
-    _F __func_;
+    _Fp __func_;
 
     virtual void __on_zero_shared() _NOEXCEPT;
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    explicit __async_assoc_state(_F&& __f);
+    explicit __async_assoc_state(_Fp&& __f);
 #endif
 
     virtual void __execute();
@@ -889,18 +889,18 @@ public:
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-template <class _R, class _F>
+template <class _Rp, class _Fp>
 inline _LIBCPP_INLINE_VISIBILITY
-__async_assoc_state<_R, _F>::__async_assoc_state(_F&& __f)
-    : __func_(_VSTD::forward<_F>(__f))
+__async_assoc_state<_Rp, _Fp>::__async_assoc_state(_Fp&& __f)
+    : __func_(_VSTD::forward<_Fp>(__f))
 {
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-template <class _R, class _F>
+template <class _Rp, class _Fp>
 void
-__async_assoc_state<_R, _F>::__execute()
+__async_assoc_state<_Rp, _Fp>::__execute()
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
@@ -916,26 +916,26 @@ __async_assoc_state<_R, _F>::__execute()
 #endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
-template <class _R, class _F>
+template <class _Rp, class _Fp>
 void
-__async_assoc_state<_R, _F>::__on_zero_shared() _NOEXCEPT
+__async_assoc_state<_Rp, _Fp>::__on_zero_shared() _NOEXCEPT
 {
     this->wait();
     base::__on_zero_shared();
 }
 
-template <class _F>
-class __async_assoc_state<void, _F>
+template <class _Fp>
+class __async_assoc_state<void, _Fp>
     : public __assoc_sub_state
 {
     typedef __assoc_sub_state base;
 
-    _F __func_;
+    _Fp __func_;
 
     virtual void __on_zero_shared() _NOEXCEPT;
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    explicit __async_assoc_state(_F&& __f);
+    explicit __async_assoc_state(_Fp&& __f);
 #endif
 
     virtual void __execute();
@@ -943,18 +943,18 @@ public:
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-template <class _F>
+template <class _Fp>
 inline _LIBCPP_INLINE_VISIBILITY
-__async_assoc_state<void, _F>::__async_assoc_state(_F&& __f)
-    : __func_(_VSTD::forward<_F>(__f))
+__async_assoc_state<void, _Fp>::__async_assoc_state(_Fp&& __f)
+    : __func_(_VSTD::forward<_Fp>(__f))
 {
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-template <class _F>
+template <class _Fp>
 void
-__async_assoc_state<void, _F>::__execute()
+__async_assoc_state<void, _Fp>::__execute()
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
@@ -971,57 +971,57 @@ __async_assoc_state<void, _F>::__execute()
 #endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
-template <class _F>
+template <class _Fp>
 void
-__async_assoc_state<void, _F>::__on_zero_shared() _NOEXCEPT
+__async_assoc_state<void, _Fp>::__on_zero_shared() _NOEXCEPT
 {
     this->wait();
     base::__on_zero_shared();
 }
 
-template <class _R> class promise;
-template <class _R> class shared_future;
+template <class _Rp> class promise;
+template <class _Rp> class shared_future;
 
 // future
 
-template <class _R> class future;
+template <class _Rp> class future;
 
-template <class _R, class _F>
-future<_R>
+template <class _Rp, class _Fp>
+future<_Rp>
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-__make_deferred_assoc_state(_F&& __f);
+__make_deferred_assoc_state(_Fp&& __f);
 #else
-__make_deferred_assoc_state(_F __f);
+__make_deferred_assoc_state(_Fp __f);
 #endif
 
-template <class _R, class _F>
-future<_R>
+template <class _Rp, class _Fp>
+future<_Rp>
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-__make_async_assoc_state(_F&& __f);
+__make_async_assoc_state(_Fp&& __f);
 #else
-__make_async_assoc_state(_F __f);
+__make_async_assoc_state(_Fp __f);
 #endif
 
-template <class _R>
+template <class _Rp>
 class _LIBCPP_VISIBLE future
 {
-    __assoc_state<_R>* __state_;
+    __assoc_state<_Rp>* __state_;
 
-    explicit future(__assoc_state<_R>* __state);
+    explicit future(__assoc_state<_Rp>* __state);
 
     template <class> friend class promise;
     template <class> friend class shared_future;
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template <class _R1, class _F>
-        friend future<_R1> __make_deferred_assoc_state(_F&& __f);
-    template <class _R1, class _F>
-        friend future<_R1> __make_async_assoc_state(_F&& __f);
+    template <class _R1, class _Fp>
+        friend future<_R1> __make_deferred_assoc_state(_Fp&& __f);
+    template <class _R1, class _Fp>
+        friend future<_R1> __make_async_assoc_state(_Fp&& __f);
 #else
-    template <class _R1, class _F>
-        friend future<_R1> __make_deferred_assoc_state(_F __f);
-    template <class _R1, class _F>
-        friend future<_R1> __make_async_assoc_state(_F __f);
+    template <class _R1, class _Fp>
+        friend future<_R1> __make_deferred_assoc_state(_Fp __f);
+    template <class _R1, class _Fp>
+        friend future<_R1> __make_async_assoc_state(_Fp __f);
 #endif
 
 public:
@@ -1046,10 +1046,10 @@ private:
 public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~future();
-    shared_future<_R> share();
+    shared_future<_Rp> share();
 
     // retrieving the value
-    _R get();
+    _Rp get();
 
     _LIBCPP_INLINE_VISIBILITY
     void swap(future& __rhs) {_VSTD::swap(__state_, __rhs.__state_);}
@@ -1072,8 +1072,8 @@ public:
             {return __state_->wait_until(__abs_time);}
 };
 
-template <class _R>
-future<_R>::future(__assoc_state<_R>* __state)
+template <class _Rp>
+future<_Rp>::future(__assoc_state<_Rp>* __state)
     : __state_(__state)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -1089,43 +1089,43 @@ struct __release_shared_count
     void operator()(__shared_count* p) {p->__release_shared();}
 };
 
-template <class _R>
-future<_R>::~future()
+template <class _Rp>
+future<_Rp>::~future()
 {
     if (__state_)
         __state_->__release_shared();
 }
 
-template <class _R>
-_R
-future<_R>::get()
+template <class _Rp>
+_Rp
+future<_Rp>::get()
 {
     unique_ptr<__shared_count, __release_shared_count> __(__state_);
-    __assoc_state<_R>* __s = __state_;
+    __assoc_state<_Rp>* __s = __state_;
     __state_ = nullptr;
     return __s->move();
 }
 
-template <class _R>
-class _LIBCPP_VISIBLE future<_R&>
+template <class _Rp>
+class _LIBCPP_VISIBLE future<_Rp&>
 {
-    __assoc_state<_R&>* __state_;
+    __assoc_state<_Rp&>* __state_;
 
-    explicit future(__assoc_state<_R&>* __state);
+    explicit future(__assoc_state<_Rp&>* __state);
 
     template <class> friend class promise;
     template <class> friend class shared_future;
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template <class _R1, class _F>
-        friend future<_R1> __make_deferred_assoc_state(_F&& __f);
-    template <class _R1, class _F>
-        friend future<_R1> __make_async_assoc_state(_F&& __f);
+    template <class _R1, class _Fp>
+        friend future<_R1> __make_deferred_assoc_state(_Fp&& __f);
+    template <class _R1, class _Fp>
+        friend future<_R1> __make_async_assoc_state(_Fp&& __f);
 #else
-    template <class _R1, class _F>
-        friend future<_R1> __make_deferred_assoc_state(_F __f);
-    template <class _R1, class _F>
-        friend future<_R1> __make_async_assoc_state(_F __f);
+    template <class _R1, class _Fp>
+        friend future<_R1> __make_deferred_assoc_state(_Fp __f);
+    template <class _R1, class _Fp>
+        friend future<_R1> __make_async_assoc_state(_Fp __f);
 #endif
 
 public:
@@ -1150,10 +1150,10 @@ private:
 public:
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~future();
-    shared_future<_R&> share();
+    shared_future<_Rp&> share();
 
     // retrieving the value
-    _R& get();
+    _Rp& get();
 
     _LIBCPP_INLINE_VISIBILITY
     void swap(future& __rhs) {_VSTD::swap(__state_, __rhs.__state_);}
@@ -1176,8 +1176,8 @@ public:
             {return __state_->wait_until(__abs_time);}
 };
 
-template <class _R>
-future<_R&>::future(__assoc_state<_R&>* __state)
+template <class _Rp>
+future<_Rp&>::future(__assoc_state<_Rp&>* __state)
     : __state_(__state)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -1188,19 +1188,19 @@ future<_R&>::future(__assoc_state<_R&>* __state)
     __state_->__set_future_attached();
 }
 
-template <class _R>
-future<_R&>::~future()
+template <class _Rp>
+future<_Rp&>::~future()
 {
     if (__state_)
         __state_->__release_shared();
 }
 
-template <class _R>
-_R&
-future<_R&>::get()
+template <class _Rp>
+_Rp&
+future<_Rp&>::get()
 {
     unique_ptr<__shared_count, __release_shared_count> __(__state_);
-    __assoc_state<_R&>* __s = __state_;
+    __assoc_state<_Rp&>* __s = __state_;
     __state_ = nullptr;
     return __s->copy();
 }
@@ -1216,15 +1216,15 @@ class _LIBCPP_VISIBLE future<void>
     template <class> friend class shared_future;
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template <class _R1, class _F>
-        friend future<_R1> __make_deferred_assoc_state(_F&& __f);
-    template <class _R1, class _F>
-        friend future<_R1> __make_async_assoc_state(_F&& __f);
+    template <class _R1, class _Fp>
+        friend future<_R1> __make_deferred_assoc_state(_Fp&& __f);
+    template <class _R1, class _Fp>
+        friend future<_R1> __make_async_assoc_state(_Fp&& __f);
 #else
-    template <class _R1, class _F>
-        friend future<_R1> __make_deferred_assoc_state(_F __f);
-    template <class _R1, class _F>
-        friend future<_R1> __make_async_assoc_state(_F __f);
+    template <class _R1, class _Fp>
+        friend future<_R1> __make_deferred_assoc_state(_Fp __f);
+    template <class _R1, class _Fp>
+        friend future<_R1> __make_async_assoc_state(_Fp __f);
 #endif
 
 public:
@@ -1275,10 +1275,10 @@ public:
             {return __state_->wait_until(__abs_time);}
 };
 
-template <class _R>
+template <class _Rp>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-swap(future<_R>& __x, future<_R>& __y)
+swap(future<_Rp>& __x, future<_Rp>& __y)
 {
     __x.swap(__y);
 }
@@ -1287,10 +1287,10 @@ swap(future<_R>& __x, future<_R>& __y)
 
 template <class _Callable> class packaged_task;
 
-template <class _R>
+template <class _Rp>
 class _LIBCPP_VISIBLE promise
 {
-    __assoc_state<_R>* __state_;
+    __assoc_state<_Rp>* __state_;
 
     _LIBCPP_INLINE_VISIBILITY
     explicit promise(nullptr_t) : __state_(nullptr) {}
@@ -1330,43 +1330,43 @@ public:
     void swap(promise& __rhs) {_VSTD::swap(__state_, __rhs.__state_);}
 
     // retrieving the result
-    future<_R> get_future();
+    future<_Rp> get_future();
 
     // setting the result
-    void set_value(const _R& __r);
+    void set_value(const _Rp& __r);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    void set_value(_R&& __r);
+    void set_value(_Rp&& __r);
 #endif
     void set_exception(exception_ptr __p);
 
     // setting the result with deferred notification
-    void set_value_at_thread_exit(const _R& __r);
+    void set_value_at_thread_exit(const _Rp& __r);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    void set_value_at_thread_exit(_R&& __r);
+    void set_value_at_thread_exit(_Rp&& __r);
 #endif
     void set_exception_at_thread_exit(exception_ptr __p);
 };
 
-template <class _R>
-promise<_R>::promise()
-    : __state_(new __assoc_state<_R>)
+template <class _Rp>
+promise<_Rp>::promise()
+    : __state_(new __assoc_state<_Rp>)
 {
 }
 
-template <class _R>
+template <class _Rp>
 template <class _Alloc>
-promise<_R>::promise(allocator_arg_t, const _Alloc& __a0)
+promise<_Rp>::promise(allocator_arg_t, const _Alloc& __a0)
 {
-    typedef typename _Alloc::template rebind<__assoc_state_alloc<_R, _Alloc> >::other _A2;
+    typedef typename _Alloc::template rebind<__assoc_state_alloc<_Rp, _Alloc> >::other _A2;
     typedef __allocator_destructor<_A2> _D2;
     _A2 __a(__a0);
-    unique_ptr<__assoc_state_alloc<_R, _Alloc>, _D2> __hold(__a.allocate(1), _D2(__a, 1));
-    ::new(__hold.get()) __assoc_state_alloc<_R, _Alloc>(__a0);
+    unique_ptr<__assoc_state_alloc<_Rp, _Alloc>, _D2> __hold(__a.allocate(1), _D2(__a, 1));
+    ::new(__hold.get()) __assoc_state_alloc<_Rp, _Alloc>(__a0);
     __state_ = __hold.release();
 }
 
-template <class _R>
-promise<_R>::~promise()
+template <class _Rp>
+promise<_Rp>::~promise()
 {
     if (__state_)
     {
@@ -1378,20 +1378,20 @@ promise<_R>::~promise()
     }
 }
 
-template <class _R>
-future<_R>
-promise<_R>::get_future()
+template <class _Rp>
+future<_Rp>
+promise<_Rp>::get_future()
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
         throw future_error(make_error_code(future_errc::no_state));
 #endif
-    return future<_R>(__state_);
+    return future<_Rp>(__state_);
 }
 
-template <class _R>
+template <class _Rp>
 void
-promise<_R>::set_value(const _R& __r)
+promise<_Rp>::set_value(const _Rp& __r)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
@@ -1402,9 +1402,9 @@ promise<_R>::set_value(const _R& __r)
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-template <class _R>
+template <class _Rp>
 void
-promise<_R>::set_value(_R&& __r)
+promise<_Rp>::set_value(_Rp&& __r)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
@@ -1415,9 +1415,9 @@ promise<_R>::set_value(_R&& __r)
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-template <class _R>
+template <class _Rp>
 void
-promise<_R>::set_exception(exception_ptr __p)
+promise<_Rp>::set_exception(exception_ptr __p)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
@@ -1426,9 +1426,9 @@ promise<_R>::set_exception(exception_ptr __p)
     __state_->set_exception(__p);
 }
 
-template <class _R>
+template <class _Rp>
 void
-promise<_R>::set_value_at_thread_exit(const _R& __r)
+promise<_Rp>::set_value_at_thread_exit(const _Rp& __r)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
@@ -1439,9 +1439,9 @@ promise<_R>::set_value_at_thread_exit(const _R& __r)
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-template <class _R>
+template <class _Rp>
 void
-promise<_R>::set_value_at_thread_exit(_R&& __r)
+promise<_Rp>::set_value_at_thread_exit(_Rp&& __r)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
@@ -1452,9 +1452,9 @@ promise<_R>::set_value_at_thread_exit(_R&& __r)
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-template <class _R>
+template <class _Rp>
 void
-promise<_R>::set_exception_at_thread_exit(exception_ptr __p)
+promise<_Rp>::set_exception_at_thread_exit(exception_ptr __p)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
@@ -1465,10 +1465,10 @@ promise<_R>::set_exception_at_thread_exit(exception_ptr __p)
 
 // promise<R&>
 
-template <class _R>
-class _LIBCPP_VISIBLE promise<_R&>
+template <class _Rp>
+class _LIBCPP_VISIBLE promise<_Rp&>
 {
-    __assoc_state<_R&>* __state_;
+    __assoc_state<_Rp&>* __state_;
 
     _LIBCPP_INLINE_VISIBILITY
     explicit promise(nullptr_t) : __state_(nullptr) {}
@@ -1509,37 +1509,37 @@ public:
     void swap(promise& __rhs) {_VSTD::swap(__state_, __rhs.__state_);}
 
     // retrieving the result
-    future<_R&> get_future();
+    future<_Rp&> get_future();
 
     // setting the result
-    void set_value(_R& __r);
+    void set_value(_Rp& __r);
     void set_exception(exception_ptr __p);
 
     // setting the result with deferred notification
-    void set_value_at_thread_exit(_R&);
+    void set_value_at_thread_exit(_Rp&);
     void set_exception_at_thread_exit(exception_ptr __p);
 };
 
-template <class _R>
-promise<_R&>::promise()
-    : __state_(new __assoc_state<_R&>)
+template <class _Rp>
+promise<_Rp&>::promise()
+    : __state_(new __assoc_state<_Rp&>)
 {
 }
 
-template <class _R>
+template <class _Rp>
 template <class _Alloc>
-promise<_R&>::promise(allocator_arg_t, const _Alloc& __a0)
+promise<_Rp&>::promise(allocator_arg_t, const _Alloc& __a0)
 {
-    typedef typename _Alloc::template rebind<__assoc_state_alloc<_R&, _Alloc> >::other _A2;
+    typedef typename _Alloc::template rebind<__assoc_state_alloc<_Rp&, _Alloc> >::other _A2;
     typedef __allocator_destructor<_A2> _D2;
     _A2 __a(__a0);
-    unique_ptr<__assoc_state_alloc<_R&, _Alloc>, _D2> __hold(__a.allocate(1), _D2(__a, 1));
-    ::new(__hold.get()) __assoc_state_alloc<_R&, _Alloc>(__a0);
+    unique_ptr<__assoc_state_alloc<_Rp&, _Alloc>, _D2> __hold(__a.allocate(1), _D2(__a, 1));
+    ::new(__hold.get()) __assoc_state_alloc<_Rp&, _Alloc>(__a0);
     __state_ = __hold.release();
 }
 
-template <class _R>
-promise<_R&>::~promise()
+template <class _Rp>
+promise<_Rp&>::~promise()
 {
     if (__state_)
     {
@@ -1551,20 +1551,20 @@ promise<_R&>::~promise()
     }
 }
 
-template <class _R>
-future<_R&>
-promise<_R&>::get_future()
+template <class _Rp>
+future<_Rp&>
+promise<_Rp&>::get_future()
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
         throw future_error(make_error_code(future_errc::no_state));
 #endif
-    return future<_R&>(__state_);
+    return future<_Rp&>(__state_);
 }
 
-template <class _R>
+template <class _Rp>
 void
-promise<_R&>::set_value(_R& __r)
+promise<_Rp&>::set_value(_Rp& __r)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
@@ -1573,9 +1573,9 @@ promise<_R&>::set_value(_R& __r)
     __state_->set_value(__r);
 }
 
-template <class _R>
+template <class _Rp>
 void
-promise<_R&>::set_exception(exception_ptr __p)
+promise<_Rp&>::set_exception(exception_ptr __p)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
@@ -1584,9 +1584,9 @@ promise<_R&>::set_exception(exception_ptr __p)
     __state_->set_exception(__p);
 }
 
-template <class _R>
+template <class _Rp>
 void
-promise<_R&>::set_value_at_thread_exit(_R& __r)
+promise<_Rp&>::set_value_at_thread_exit(_Rp& __r)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
@@ -1595,9 +1595,9 @@ promise<_R&>::set_value_at_thread_exit(_R& __r)
     __state_->set_value_at_thread_exit(__r);
 }
 
-template <class _R>
+template <class _Rp>
 void
-promise<_R&>::set_exception_at_thread_exit(exception_ptr __p)
+promise<_Rp&>::set_exception_at_thread_exit(exception_ptr __p)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__state_ == nullptr)
@@ -1674,16 +1674,16 @@ promise<void>::promise(allocator_arg_t, const _Alloc& __a0)
     __state_ = __hold.release();
 }
 
-template <class _R>
+template <class _Rp>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-swap(promise<_R>& __x, promise<_R>& __y)
+swap(promise<_Rp>& __x, promise<_Rp>& __y)
 {
     __x.swap(__y);
 }
 
-template <class _R, class _Alloc>
-    struct _LIBCPP_VISIBLE uses_allocator<promise<_R>, _Alloc>
+template <class _Rp, class _Alloc>
+    struct _LIBCPP_VISIBLE uses_allocator<promise<_Rp>, _Alloc>
         : public true_type {};
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
@@ -1692,8 +1692,8 @@ template <class _R, class _Alloc>
 
 template<class _Fp> class __packaged_task_base;
 
-template<class _R, class ..._ArgTypes>
-class __packaged_task_base<_R(_ArgTypes...)>
+template<class _Rp, class ..._ArgTypes>
+class __packaged_task_base<_Rp(_ArgTypes...)>
 {
     __packaged_task_base(const __packaged_task_base&);
     __packaged_task_base& operator=(const __packaged_task_base&);
@@ -1705,84 +1705,84 @@ public:
     virtual void __move_to(__packaged_task_base*) = 0;
     virtual void destroy() = 0;
     virtual void destroy_deallocate() = 0;
-    virtual _R operator()(_ArgTypes&& ...) = 0;
+    virtual _Rp operator()(_ArgTypes&& ...) = 0;
 };
 
 template<class _FD, class _Alloc, class _FB> class __packaged_task_func;
 
-template<class _F, class _Alloc, class _R, class ..._ArgTypes>
-class __packaged_task_func<_F, _Alloc, _R(_ArgTypes...)>
-    : public  __packaged_task_base<_R(_ArgTypes...)>
+template<class _Fp, class _Alloc, class _Rp, class ..._ArgTypes>
+class __packaged_task_func<_Fp, _Alloc, _Rp(_ArgTypes...)>
+    : public  __packaged_task_base<_Rp(_ArgTypes...)>
 {
-    __compressed_pair<_F, _Alloc> __f_;
+    __compressed_pair<_Fp, _Alloc> __f_;
 public:
     _LIBCPP_INLINE_VISIBILITY
-    explicit __packaged_task_func(const _F& __f) : __f_(__f) {}
+    explicit __packaged_task_func(const _Fp& __f) : __f_(__f) {}
     _LIBCPP_INLINE_VISIBILITY
-    explicit __packaged_task_func(_F&& __f) : __f_(_VSTD::move(__f)) {}
+    explicit __packaged_task_func(_Fp&& __f) : __f_(_VSTD::move(__f)) {}
     _LIBCPP_INLINE_VISIBILITY
-    __packaged_task_func(const _F& __f, const _Alloc& __a)
+    __packaged_task_func(const _Fp& __f, const _Alloc& __a)
         : __f_(__f, __a) {}
     _LIBCPP_INLINE_VISIBILITY
-    __packaged_task_func(_F&& __f, const _Alloc& __a)
+    __packaged_task_func(_Fp&& __f, const _Alloc& __a)
         : __f_(_VSTD::move(__f), __a) {}
-    virtual void __move_to(__packaged_task_base<_R(_ArgTypes...)>*);
+    virtual void __move_to(__packaged_task_base<_Rp(_ArgTypes...)>*);
     virtual void destroy();
     virtual void destroy_deallocate();
-    virtual _R operator()(_ArgTypes&& ... __args);
+    virtual _Rp operator()(_ArgTypes&& ... __args);
 };
 
-template<class _F, class _Alloc, class _R, class ..._ArgTypes>
+template<class _Fp, class _Alloc, class _Rp, class ..._ArgTypes>
 void
-__packaged_task_func<_F, _Alloc, _R(_ArgTypes...)>::__move_to(
-                              __packaged_task_base<_R(_ArgTypes...)>* __p)
+__packaged_task_func<_Fp, _Alloc, _Rp(_ArgTypes...)>::__move_to(
+                              __packaged_task_base<_Rp(_ArgTypes...)>* __p)
 {
     ::new (__p) __packaged_task_func(_VSTD::move(__f_.first()), _VSTD::move(__f_.second()));
 }
 
-template<class _F, class _Alloc, class _R, class ..._ArgTypes>
+template<class _Fp, class _Alloc, class _Rp, class ..._ArgTypes>
 void
-__packaged_task_func<_F, _Alloc, _R(_ArgTypes...)>::destroy()
+__packaged_task_func<_Fp, _Alloc, _Rp(_ArgTypes...)>::destroy()
 {
-    __f_.~__compressed_pair<_F, _Alloc>();
+    __f_.~__compressed_pair<_Fp, _Alloc>();
 }
 
-template<class _F, class _Alloc, class _R, class ..._ArgTypes>
+template<class _Fp, class _Alloc, class _Rp, class ..._ArgTypes>
 void
-__packaged_task_func<_F, _Alloc, _R(_ArgTypes...)>::destroy_deallocate()
+__packaged_task_func<_Fp, _Alloc, _Rp(_ArgTypes...)>::destroy_deallocate()
 {
-    typedef typename _Alloc::template rebind<__packaged_task_func>::other _A;
-    _A __a(__f_.second());
-    __f_.~__compressed_pair<_F, _Alloc>();
+    typedef typename _Alloc::template rebind<__packaged_task_func>::other _Ap;
+    _Ap __a(__f_.second());
+    __f_.~__compressed_pair<_Fp, _Alloc>();
     __a.deallocate(this, 1);
 }
 
-template<class _F, class _Alloc, class _R, class ..._ArgTypes>
-_R
-__packaged_task_func<_F, _Alloc, _R(_ArgTypes...)>::operator()(_ArgTypes&& ... __arg)
+template<class _Fp, class _Alloc, class _Rp, class ..._ArgTypes>
+_Rp
+__packaged_task_func<_Fp, _Alloc, _Rp(_ArgTypes...)>::operator()(_ArgTypes&& ... __arg)
 {
     return __invoke(__f_.first(), _VSTD::forward<_ArgTypes>(__arg)...);
 }
 
 template <class _Callable> class __packaged_task_function;
 
-template<class _R, class ..._ArgTypes>
-class __packaged_task_function<_R(_ArgTypes...)>
+template<class _Rp, class ..._ArgTypes>
+class __packaged_task_function<_Rp(_ArgTypes...)>
 {
-    typedef __packaged_task_base<_R(_ArgTypes...)> __base;
+    typedef __packaged_task_base<_Rp(_ArgTypes...)> __base;
     aligned_storage<3*sizeof(void*)>::type __buf_;
     __base* __f_;
 
 public:
-    typedef _R result_type;
+    typedef _Rp result_type;
 
     // construct/copy/destroy:
     _LIBCPP_INLINE_VISIBILITY
     __packaged_task_function() : __f_(nullptr) {}
-    template<class _F>
-      __packaged_task_function(_F&& __f);
-    template<class _F, class _Alloc>
-      __packaged_task_function(allocator_arg_t, const _Alloc& __a, _F&& __f);
+    template<class _Fp>
+      __packaged_task_function(_Fp&& __f);
+    template<class _Fp, class _Alloc>
+      __packaged_task_function(allocator_arg_t, const _Alloc& __a, _Fp&& __f);
 
     __packaged_task_function(__packaged_task_function&&);
     __packaged_task_function& operator=(__packaged_task_function&&);
@@ -1794,11 +1794,11 @@ public:
 
     void swap(__packaged_task_function&);
 
-    _R operator()(_ArgTypes...) const;
+    _Rp operator()(_ArgTypes...) const;
 };
 
-template<class _R, class ..._ArgTypes>
-__packaged_task_function<_R(_ArgTypes...)>::__packaged_task_function(__packaged_task_function&& __f)
+template<class _Rp, class ..._ArgTypes>
+__packaged_task_function<_Rp(_ArgTypes...)>::__packaged_task_function(__packaged_task_function&& __f)
 {
     if (__f.__f_ == nullptr)
         __f_ = nullptr;
@@ -1814,42 +1814,42 @@ __packaged_task_function<_R(_ArgTypes...)>::__packaged_task_function(__packaged_
     }
 }
 
-template<class _R, class ..._ArgTypes>
-template <class _F>
-__packaged_task_function<_R(_ArgTypes...)>::__packaged_task_function(_F&& __f)
+template<class _Rp, class ..._ArgTypes>
+template <class _Fp>
+__packaged_task_function<_Rp(_ArgTypes...)>::__packaged_task_function(_Fp&& __f)
     : __f_(nullptr)
 {
-    typedef typename remove_reference<_F>::type _FR;
-    typedef __packaged_task_func<_FR, allocator<_FR>, _R(_ArgTypes...)> _FF;
+    typedef typename remove_reference<_Fp>::type _FR;
+    typedef __packaged_task_func<_FR, allocator<_FR>, _Rp(_ArgTypes...)> _FF;
     if (sizeof(_FF) <= sizeof(__buf_))
     {
         __f_ = (__base*)&__buf_;
-        ::new (__f_) _FF(_VSTD::forward<_F>(__f));
+        ::new (__f_) _FF(_VSTD::forward<_Fp>(__f));
     }
     else
     {
-        typedef allocator<_FF> _A;
-        _A __a;
-        typedef __allocator_destructor<_A> _D;
-        unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
-        ::new (__hold.get()) _FF(_VSTD::forward<_F>(__f), allocator<_FR>(__a));
+        typedef allocator<_FF> _Ap;
+        _Ap __a;
+        typedef __allocator_destructor<_Ap> _Dp;
+        unique_ptr<__base, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
+        ::new (__hold.get()) _FF(_VSTD::forward<_Fp>(__f), allocator<_FR>(__a));
         __f_ = __hold.release();
     }
 }
 
-template<class _R, class ..._ArgTypes>
-template <class _F, class _Alloc>
-__packaged_task_function<_R(_ArgTypes...)>::__packaged_task_function(
-                                  allocator_arg_t, const _Alloc& __a0, _F&& __f)
+template<class _Rp, class ..._ArgTypes>
+template <class _Fp, class _Alloc>
+__packaged_task_function<_Rp(_ArgTypes...)>::__packaged_task_function(
+                                  allocator_arg_t, const _Alloc& __a0, _Fp&& __f)
     : __f_(nullptr)
 {
     typedef allocator_traits<_Alloc> __alloc_traits;
-    typedef typename remove_reference<_F>::type _FR;
-    typedef __packaged_task_func<_FR, _Alloc, _R(_ArgTypes...)> _FF;
+    typedef typename remove_reference<_Fp>::type _FR;
+    typedef __packaged_task_func<_FR, _Alloc, _Rp(_ArgTypes...)> _FF;
     if (sizeof(_FF) <= sizeof(__buf_))
     {
         __f_ = (__base*)&__buf_;
-        ::new (__f_) _FF(_VSTD::forward<_F>(__f));
+        ::new (__f_) _FF(_VSTD::forward<_Fp>(__f));
     }
     else
     {
@@ -1859,18 +1859,18 @@ __packaged_task_function<_R(_ArgTypes...)>::__packaged_task_function(
 #else
             rebind_alloc<_FF>::other
 #endif
-                                                     _A;
-        _A __a(__a0);
-        typedef __allocator_destructor<_A> _D;
-        unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
-        ::new (__hold.get()) _FF(_VSTD::forward<_F>(__f), _Alloc(__a));
+                                                     _Ap;
+        _Ap __a(__a0);
+        typedef __allocator_destructor<_Ap> _Dp;
+        unique_ptr<__base, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
+        ::new (__hold.get()) _FF(_VSTD::forward<_Fp>(__f), _Alloc(__a));
         __f_ = __hold.release();
     }
 }
 
-template<class _R, class ..._ArgTypes>
-__packaged_task_function<_R(_ArgTypes...)>&
-__packaged_task_function<_R(_ArgTypes...)>::operator=(__packaged_task_function&& __f)
+template<class _Rp, class ..._ArgTypes>
+__packaged_task_function<_Rp(_ArgTypes...)>&
+__packaged_task_function<_Rp(_ArgTypes...)>::operator=(__packaged_task_function&& __f)
 {
     if (__f_ == (__base*)&__buf_)
         __f_->destroy();
@@ -1891,8 +1891,8 @@ __packaged_task_function<_R(_ArgTypes...)>::operator=(__packaged_task_function&&
     }
 }
 
-template<class _R, class ..._ArgTypes>
-__packaged_task_function<_R(_ArgTypes...)>::~__packaged_task_function()
+template<class _Rp, class ..._ArgTypes>
+__packaged_task_function<_Rp(_ArgTypes...)>::~__packaged_task_function()
 {
     if (__f_ == (__base*)&__buf_)
         __f_->destroy();
@@ -1900,9 +1900,9 @@ __packaged_task_function<_R(_ArgTypes...)>::~__packaged_task_function()
         __f_->destroy_deallocate();
 }
 
-template<class _R, class ..._ArgTypes>
+template<class _Rp, class ..._ArgTypes>
 void
-__packaged_task_function<_R(_ArgTypes...)>::swap(__packaged_task_function& __f)
+__packaged_task_function<_Rp(_ArgTypes...)>::swap(__packaged_task_function& __f)
 {
     if (__f_ == (__base*)&__buf_ && __f.__f_ == (__base*)&__f.__buf_)
     {
@@ -1937,19 +1937,19 @@ __packaged_task_function<_R(_ArgTypes...)>::swap(__packaged_task_function& __f)
         _VSTD::swap(__f_, __f.__f_);
 }
 
-template<class _R, class ..._ArgTypes>
+template<class _Rp, class ..._ArgTypes>
 inline _LIBCPP_INLINE_VISIBILITY
-_R
-__packaged_task_function<_R(_ArgTypes...)>::operator()(_ArgTypes... __arg) const
+_Rp
+__packaged_task_function<_Rp(_ArgTypes...)>::operator()(_ArgTypes... __arg) const
 {
     return (*__f_)(_VSTD::forward<_ArgTypes>(__arg)...);
 }
 
-template<class _R, class ..._ArgTypes>
-class _LIBCPP_VISIBLE packaged_task<_R(_ArgTypes...)>
+template<class _Rp, class ..._ArgTypes>
+class _LIBCPP_VISIBLE packaged_task<_Rp(_ArgTypes...)>
 {
 public:
-    typedef _R result_type;
+    typedef _Rp result_type;
 
 private:
     __packaged_task_function<result_type(_ArgTypes...)> __f_;
@@ -1959,13 +1959,13 @@ public:
     // construction and destruction
     _LIBCPP_INLINE_VISIBILITY
     packaged_task() : __p_(nullptr) {}
-    template <class _F>
+    template <class _Fp>
         _LIBCPP_INLINE_VISIBILITY
-        explicit packaged_task(_F&& __f) : __f_(_VSTD::forward<_F>(__f)) {}
-    template <class _F, class _Allocator>
+        explicit packaged_task(_Fp&& __f) : __f_(_VSTD::forward<_Fp>(__f)) {}
+    template <class _Fp, class _Allocator>
         _LIBCPP_INLINE_VISIBILITY
-        explicit packaged_task(allocator_arg_t, const _Allocator& __a, _F&& __f)
-             : __f_(allocator_arg, __a, _VSTD::forward<_F>(__f)),
+        explicit packaged_task(allocator_arg_t, const _Allocator& __a, _Fp&& __f)
+             : __f_(allocator_arg, __a, _VSTD::forward<_Fp>(__f)),
                __p_(allocator_arg, __a) {}
     // ~packaged_task() = default;
 
@@ -2005,9 +2005,9 @@ public:
     void reset();
 };
 
-template<class _R, class ..._ArgTypes>
+template<class _Rp, class ..._ArgTypes>
 void
-packaged_task<_R(_ArgTypes...)>::operator()(_ArgTypes... __args)
+packaged_task<_Rp(_ArgTypes...)>::operator()(_ArgTypes... __args)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__p_.__state_ == nullptr)
@@ -2027,9 +2027,9 @@ packaged_task<_R(_ArgTypes...)>::operator()(_ArgTypes... __args)
 #endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
-template<class _R, class ..._ArgTypes>
+template<class _Rp, class ..._ArgTypes>
 void
-packaged_task<_R(_ArgTypes...)>::make_ready_at_thread_exit(_ArgTypes... __args)
+packaged_task<_Rp(_ArgTypes...)>::make_ready_at_thread_exit(_ArgTypes... __args)
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (__p_.__state_ == nullptr)
@@ -2049,9 +2049,9 @@ packaged_task<_R(_ArgTypes...)>::make_ready_at_thread_exit(_ArgTypes... __args)
 #endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
-template<class _R, class ..._ArgTypes>
+template<class _Rp, class ..._ArgTypes>
 void
-packaged_task<_R(_ArgTypes...)>::reset()
+packaged_task<_Rp(_ArgTypes...)>::reset()
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     if (!valid())
@@ -2074,13 +2074,13 @@ public:
     // construction and destruction
     _LIBCPP_INLINE_VISIBILITY
     packaged_task() : __p_(nullptr) {}
-    template <class _F>
+    template <class _Fp>
         _LIBCPP_INLINE_VISIBILITY
-        explicit packaged_task(_F&& __f) : __f_(_VSTD::forward<_F>(__f)) {}
-    template <class _F, class _Allocator>
+        explicit packaged_task(_Fp&& __f) : __f_(_VSTD::forward<_Fp>(__f)) {}
+    template <class _Fp, class _Allocator>
         _LIBCPP_INLINE_VISIBILITY
-        explicit packaged_task(allocator_arg_t, const _Allocator& __a, _F&& __f)
-             : __f_(allocator_arg, __a, _VSTD::forward<_F>(__f)),
+        explicit packaged_task(allocator_arg_t, const _Allocator& __a, _Fp&& __f)
+             : __f_(allocator_arg, __a, _VSTD::forward<_Fp>(__f)),
                __p_(allocator_arg, __a) {}
     // ~packaged_task() = default;
 
@@ -2189,84 +2189,84 @@ template <class _Callable, class _Alloc>
 struct _LIBCPP_VISIBLE uses_allocator<packaged_task<_Callable>, _Alloc>
     : public true_type {};
 
-template <class _R, class _F>
-future<_R>
+template <class _Rp, class _Fp>
+future<_Rp>
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-__make_deferred_assoc_state(_F&& __f)
+__make_deferred_assoc_state(_Fp&& __f)
 #else
-__make_deferred_assoc_state(_F __f)
+__make_deferred_assoc_state(_Fp __f)
 #endif
 {
-    unique_ptr<__deferred_assoc_state<_R, _F>, __release_shared_count>
-        __h(new __deferred_assoc_state<_R, _F>(_VSTD::forward<_F>(__f)));
-    return future<_R>(__h.get());
+    unique_ptr<__deferred_assoc_state<_Rp, _Fp>, __release_shared_count>
+        __h(new __deferred_assoc_state<_Rp, _Fp>(_VSTD::forward<_Fp>(__f)));
+    return future<_Rp>(__h.get());
 }
 
-template <class _R, class _F>
-future<_R>
+template <class _Rp, class _Fp>
+future<_Rp>
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-__make_async_assoc_state(_F&& __f)
+__make_async_assoc_state(_Fp&& __f)
 #else
-__make_async_assoc_state(_F __f)
+__make_async_assoc_state(_Fp __f)
 #endif
 {
-    unique_ptr<__async_assoc_state<_R, _F>, __release_shared_count>
-        __h(new __async_assoc_state<_R, _F>(_VSTD::forward<_F>(__f)));
-    _VSTD::thread(&__async_assoc_state<_R, _F>::__execute, __h.get()).detach();
-    return future<_R>(__h.get());
+    unique_ptr<__async_assoc_state<_Rp, _Fp>, __release_shared_count>
+        __h(new __async_assoc_state<_Rp, _Fp>(_VSTD::forward<_Fp>(__f)));
+    _VSTD::thread(&__async_assoc_state<_Rp, _Fp>::__execute, __h.get()).detach();
+    return future<_Rp>(__h.get());
 }
 
-template <class _F, class... _Args>
+template <class _Fp, class... _Args>
 class __async_func
 {
-    tuple<_F, _Args...> __f_;
+    tuple<_Fp, _Args...> __f_;
 
 public:
-    typedef typename __invoke_of<_F, _Args...>::type _R;
+    typedef typename __invoke_of<_Fp, _Args...>::type _Rp;
 
     _LIBCPP_INLINE_VISIBILITY
-    explicit __async_func(_F&& __f, _Args&&... __args)
+    explicit __async_func(_Fp&& __f, _Args&&... __args)
         : __f_(_VSTD::move(__f), _VSTD::move(__args)...) {}
 
     _LIBCPP_INLINE_VISIBILITY
     __async_func(__async_func&& __f) : __f_(_VSTD::move(__f.__f_)) {}
 
-    _R operator()()
+    _Rp operator()()
     {
         typedef typename __make_tuple_indices<1+sizeof...(_Args), 1>::type _Index;
         return __execute(_Index());
     }
 private:
     template <size_t ..._Indices>
-    _R
+    _Rp
     __execute(__tuple_indices<_Indices...>)
     {
         return __invoke(_VSTD::move(_VSTD::get<0>(__f_)), _VSTD::move(_VSTD::get<_Indices>(__f_))...);
     }
 };
 
-template <class _F, class... _Args>
-future<typename __invoke_of<typename decay<_F>::type, typename decay<_Args>::type...>::type>
-async(launch __policy, _F&& __f, _Args&&... __args)
+template <class _Fp, class... _Args>
+future<typename __invoke_of<typename decay<_Fp>::type, typename decay<_Args>::type...>::type>
+async(launch __policy, _Fp&& __f, _Args&&... __args)
 {
-    typedef __async_func<typename decay<_F>::type, typename decay<_Args>::type...> _BF;
-    typedef typename _BF::_R _R;
-    future<_R> __r;
+    typedef __async_func<typename decay<_Fp>::type, typename decay<_Args>::type...> _BF;
+    typedef typename _BF::_Rp _Rp;
+    future<_Rp> __r;
     if (__policy & launch::async)
-        __r = _VSTD::__make_async_assoc_state<_R>(_BF(__decay_copy(_VSTD::forward<_F>(__f)),
+        __r = _VSTD::__make_async_assoc_state<_Rp>(_BF(__decay_copy(_VSTD::forward<_Fp>(__f)),
                                                      __decay_copy(_VSTD::forward<_Args>(__args))...));
     else if (__policy & launch::deferred)
-        __r = _VSTD::__make_deferred_assoc_state<_R>(_BF(__decay_copy(_VSTD::forward<_F>(__f)),
+        __r = _VSTD::__make_deferred_assoc_state<_Rp>(_BF(__decay_copy(_VSTD::forward<_Fp>(__f)),
                                                         __decay_copy(_VSTD::forward<_Args>(__args))...));
     return __r;
 }
 
-template <class _F, class... _Args>
+template <class _Fp, class... _Args>
 inline _LIBCPP_INLINE_VISIBILITY
-future<typename __invoke_of<typename decay<_F>::type, typename decay<_Args>::type...>::type>
-async(_F&& __f, _Args&&... __args)
+future<typename __invoke_of<typename decay<_Fp>::type, typename decay<_Args>::type...>::type>
+async(_Fp&& __f, _Args&&... __args)
 {
-    return _VSTD::async(launch::any, _VSTD::forward<_F>(__f),
+    return _VSTD::async(launch::any, _VSTD::forward<_Fp>(__f),
                                     _VSTD::forward<_Args>(__args)...);
 }
 
@@ -2274,10 +2274,10 @@ async(_F&& __f, _Args&&... __args)
 
 // shared_future
 
-template <class _R>
+template <class _Rp>
 class _LIBCPP_VISIBLE shared_future
 {
-    __assoc_state<_R>* __state_;
+    __assoc_state<_Rp>* __state_;
 
 public:
     _LIBCPP_INLINE_VISIBILITY
@@ -2287,7 +2287,7 @@ public:
         {if (__state_) __state_->__add_shared();}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    shared_future(future<_R>&& __f) : __state_(__f.__state_)
+    shared_future(future<_Rp>&& __f) : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
     _LIBCPP_INLINE_VISIBILITY
     shared_future(shared_future&& __rhs) : __state_(__rhs.__state_)
@@ -2306,7 +2306,7 @@ public:
 
     // retrieving the value
     _LIBCPP_INLINE_VISIBILITY
-    const _R& get() const {return __state_->copy();}
+    const _Rp& get() const {return __state_->copy();}
 
     _LIBCPP_INLINE_VISIBILITY
     void swap(shared_future& __rhs) {_VSTD::swap(__state_, __rhs.__state_);}
@@ -2329,16 +2329,16 @@ public:
             {return __state_->wait_until(__abs_time);}
 };
 
-template <class _R>
-shared_future<_R>::~shared_future()
+template <class _Rp>
+shared_future<_Rp>::~shared_future()
 {
     if (__state_)
         __state_->__release_shared();
 }
 
-template <class _R>
-shared_future<_R>&
-shared_future<_R>::operator=(const shared_future& __rhs)
+template <class _Rp>
+shared_future<_Rp>&
+shared_future<_Rp>::operator=(const shared_future& __rhs)
 {
     if (__rhs.__state_)
         __rhs.__state_->__add_shared();
@@ -2348,10 +2348,10 @@ shared_future<_R>::operator=(const shared_future& __rhs)
     return *this;
 }
 
-template <class _R>
-class _LIBCPP_VISIBLE shared_future<_R&>
+template <class _Rp>
+class _LIBCPP_VISIBLE shared_future<_Rp&>
 {
-    __assoc_state<_R&>* __state_;
+    __assoc_state<_Rp&>* __state_;
 
 public:
     _LIBCPP_INLINE_VISIBILITY
@@ -2361,7 +2361,7 @@ public:
         {if (__state_) __state_->__add_shared();}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    shared_future(future<_R&>&& __f) : __state_(__f.__state_)
+    shared_future(future<_Rp&>&& __f) : __state_(__f.__state_)
         {__f.__state_ = nullptr;}
     _LIBCPP_INLINE_VISIBILITY
     shared_future(shared_future&& __rhs) : __state_(__rhs.__state_)
@@ -2380,7 +2380,7 @@ public:
 
     // retrieving the value
     _LIBCPP_INLINE_VISIBILITY
-    _R& get() const {return __state_->copy();}
+    _Rp& get() const {return __state_->copy();}
 
     _LIBCPP_INLINE_VISIBILITY
     void swap(shared_future& __rhs) {_VSTD::swap(__state_, __rhs.__state_);}
@@ -2403,16 +2403,16 @@ public:
             {return __state_->wait_until(__abs_time);}
 };
 
-template <class _R>
-shared_future<_R&>::~shared_future()
+template <class _Rp>
+shared_future<_Rp&>::~shared_future()
 {
     if (__state_)
         __state_->__release_shared();
 }
 
-template <class _R>
-shared_future<_R&>&
-shared_future<_R&>::operator=(const shared_future& __rhs)
+template <class _Rp>
+shared_future<_Rp&>&
+shared_future<_Rp&>::operator=(const shared_future& __rhs)
 {
     if (__rhs.__state_)
         __rhs.__state_->__add_shared();
@@ -2477,28 +2477,28 @@ public:
             {return __state_->wait_until(__abs_time);}
 };
 
-template <class _R>
+template <class _Rp>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-swap(shared_future<_R>& __x, shared_future<_R>& __y)
+swap(shared_future<_Rp>& __x, shared_future<_Rp>& __y)
 {
     __x.swap(__y);
 }
 
-template <class _R>
+template <class _Rp>
 inline _LIBCPP_INLINE_VISIBILITY
-shared_future<_R>
-future<_R>::share()
+shared_future<_Rp>
+future<_Rp>::share()
 {
-    return shared_future<_R>(_VSTD::move(*this));
+    return shared_future<_Rp>(_VSTD::move(*this));
 }
 
-template <class _R>
+template <class _Rp>
 inline _LIBCPP_INLINE_VISIBILITY
-shared_future<_R&>
-future<_R&>::share()
+shared_future<_Rp&>
+future<_Rp&>::share()
 {
-    return shared_future<_R&>(_VSTD::move(*this));
+    return shared_future<_Rp&>(_VSTD::move(*this));
 }
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES

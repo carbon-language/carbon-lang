@@ -64,9 +64,9 @@ struct __derives_from_unary_function
 private:
     struct __two {char _; char __;};
     static __two __test(...);
-    template <class _A, class _R>
-        static unary_function<_A, _R>
-        __test(const volatile unary_function<_A, _R>*);
+    template <class _Ap, class _Rp>
+        static unary_function<_Ap, _Rp>
+        __test(const volatile unary_function<_Ap, _Rp>*);
 public:
     static const bool value = !is_same<decltype(__test((_Tp*)0)), __two>::value;
     typedef decltype(__test((_Tp*)0)) type;
@@ -78,9 +78,9 @@ struct __derives_from_binary_function
 private:
     struct __two {char _; char __;};
     static __two __test(...);
-    template <class _A1, class _A2, class _R>
-        static binary_function<_A1, _A2, _R>
-        __test(const volatile binary_function<_A1, _A2, _R>*);
+    template <class _A1, class _A2, class _Rp>
+        static binary_function<_A1, _A2, _Rp>
+        __test(const volatile binary_function<_A1, _A2, _Rp>*);
 public:
     static const bool value = !is_same<decltype(__test((_Tp*)0)), __two>::value;
     typedef decltype(__test((_Tp*)0)) type;
@@ -131,173 +131,173 @@ struct __weak_result_type
 
 // 0 argument case
 
-template <class _R>
-struct __weak_result_type<_R ()>
+template <class _Rp>
+struct __weak_result_type<_Rp ()>
 {
-    typedef _R result_type;
+    typedef _Rp result_type;
 };
 
-template <class _R>
-struct __weak_result_type<_R (&)()>
+template <class _Rp>
+struct __weak_result_type<_Rp (&)()>
 {
-    typedef _R result_type;
+    typedef _Rp result_type;
 };
 
-template <class _R>
-struct __weak_result_type<_R (*)()>
+template <class _Rp>
+struct __weak_result_type<_Rp (*)()>
 {
-    typedef _R result_type;
+    typedef _Rp result_type;
 };
 
 // 1 argument case
 
-template <class _R, class _A1>
-struct __weak_result_type<_R (_A1)>
-    : public unary_function<_A1, _R>
+template <class _Rp, class _A1>
+struct __weak_result_type<_Rp (_A1)>
+    : public unary_function<_A1, _Rp>
 {
 };
 
-template <class _R, class _A1>
-struct __weak_result_type<_R (&)(_A1)>
-    : public unary_function<_A1, _R>
+template <class _Rp, class _A1>
+struct __weak_result_type<_Rp (&)(_A1)>
+    : public unary_function<_A1, _Rp>
 {
 };
 
-template <class _R, class _A1>
-struct __weak_result_type<_R (*)(_A1)>
-    : public unary_function<_A1, _R>
+template <class _Rp, class _A1>
+struct __weak_result_type<_Rp (*)(_A1)>
+    : public unary_function<_A1, _Rp>
 {
 };
 
-template <class _R, class _C>
-struct __weak_result_type<_R (_C::*)()>
-    : public unary_function<_C*, _R>
+template <class _Rp, class _Cp>
+struct __weak_result_type<_Rp (_Cp::*)()>
+    : public unary_function<_Cp*, _Rp>
 {
 };
 
-template <class _R, class _C>
-struct __weak_result_type<_R (_C::*)() const>
-    : public unary_function<const _C*, _R>
+template <class _Rp, class _Cp>
+struct __weak_result_type<_Rp (_Cp::*)() const>
+    : public unary_function<const _Cp*, _Rp>
 {
 };
 
-template <class _R, class _C>
-struct __weak_result_type<_R (_C::*)() volatile>
-    : public unary_function<volatile _C*, _R>
+template <class _Rp, class _Cp>
+struct __weak_result_type<_Rp (_Cp::*)() volatile>
+    : public unary_function<volatile _Cp*, _Rp>
 {
 };
 
-template <class _R, class _C>
-struct __weak_result_type<_R (_C::*)() const volatile>
-    : public unary_function<const volatile _C*, _R>
+template <class _Rp, class _Cp>
+struct __weak_result_type<_Rp (_Cp::*)() const volatile>
+    : public unary_function<const volatile _Cp*, _Rp>
 {
 };
 
 // 2 argument case
 
-template <class _R, class _A1, class _A2>
-struct __weak_result_type<_R (_A1, _A2)>
-    : public binary_function<_A1, _A2, _R>
+template <class _Rp, class _A1, class _A2>
+struct __weak_result_type<_Rp (_A1, _A2)>
+    : public binary_function<_A1, _A2, _Rp>
 {
 };
 
-template <class _R, class _A1, class _A2>
-struct __weak_result_type<_R (*)(_A1, _A2)>
-    : public binary_function<_A1, _A2, _R>
+template <class _Rp, class _A1, class _A2>
+struct __weak_result_type<_Rp (*)(_A1, _A2)>
+    : public binary_function<_A1, _A2, _Rp>
 {
 };
 
-template <class _R, class _A1, class _A2>
-struct __weak_result_type<_R (&)(_A1, _A2)>
-    : public binary_function<_A1, _A2, _R>
+template <class _Rp, class _A1, class _A2>
+struct __weak_result_type<_Rp (&)(_A1, _A2)>
+    : public binary_function<_A1, _A2, _Rp>
 {
 };
 
-template <class _R, class _C, class _A1>
-struct __weak_result_type<_R (_C::*)(_A1)>
-    : public binary_function<_C*, _A1, _R>
+template <class _Rp, class _Cp, class _A1>
+struct __weak_result_type<_Rp (_Cp::*)(_A1)>
+    : public binary_function<_Cp*, _A1, _Rp>
 {
 };
 
-template <class _R, class _C, class _A1>
-struct __weak_result_type<_R (_C::*)(_A1) const>
-    : public binary_function<const _C*, _A1, _R>
+template <class _Rp, class _Cp, class _A1>
+struct __weak_result_type<_Rp (_Cp::*)(_A1) const>
+    : public binary_function<const _Cp*, _A1, _Rp>
 {
 };
 
-template <class _R, class _C, class _A1>
-struct __weak_result_type<_R (_C::*)(_A1) volatile>
-    : public binary_function<volatile _C*, _A1, _R>
+template <class _Rp, class _Cp, class _A1>
+struct __weak_result_type<_Rp (_Cp::*)(_A1) volatile>
+    : public binary_function<volatile _Cp*, _A1, _Rp>
 {
 };
 
-template <class _R, class _C, class _A1>
-struct __weak_result_type<_R (_C::*)(_A1) const volatile>
-    : public binary_function<const volatile _C*, _A1, _R>
+template <class _Rp, class _Cp, class _A1>
+struct __weak_result_type<_Rp (_Cp::*)(_A1) const volatile>
+    : public binary_function<const volatile _Cp*, _A1, _Rp>
 {
 };
 
 // 3 or more arguments
 
-template <class _R, class _A1, class _A2, class _A3, class ..._A4>
-struct __weak_result_type<_R (_A1, _A2, _A3, _A4...)>
+template <class _Rp, class _A1, class _A2, class _A3, class ..._A4>
+struct __weak_result_type<_Rp (_A1, _A2, _A3, _A4...)>
 {
-    typedef _R result_type;
+    typedef _Rp result_type;
 };
 
-template <class _R, class _A1, class _A2, class _A3, class ..._A4>
-struct __weak_result_type<_R (&)(_A1, _A2, _A3, _A4...)>
+template <class _Rp, class _A1, class _A2, class _A3, class ..._A4>
+struct __weak_result_type<_Rp (&)(_A1, _A2, _A3, _A4...)>
 {
-    typedef _R result_type;
+    typedef _Rp result_type;
 };
 
-template <class _R, class _A1, class _A2, class _A3, class ..._A4>
-struct __weak_result_type<_R (*)(_A1, _A2, _A3, _A4...)>
+template <class _Rp, class _A1, class _A2, class _A3, class ..._A4>
+struct __weak_result_type<_Rp (*)(_A1, _A2, _A3, _A4...)>
 {
-    typedef _R result_type;
+    typedef _Rp result_type;
 };
 
-template <class _R, class _C, class _A1, class _A2, class ..._A3>
-struct __weak_result_type<_R (_C::*)(_A1, _A2, _A3...)>
+template <class _Rp, class _Cp, class _A1, class _A2, class ..._A3>
+struct __weak_result_type<_Rp (_Cp::*)(_A1, _A2, _A3...)>
 {
-    typedef _R result_type;
+    typedef _Rp result_type;
 };
 
-template <class _R, class _C, class _A1, class _A2, class ..._A3>
-struct __weak_result_type<_R (_C::*)(_A1, _A2, _A3...) const>
+template <class _Rp, class _Cp, class _A1, class _A2, class ..._A3>
+struct __weak_result_type<_Rp (_Cp::*)(_A1, _A2, _A3...) const>
 {
-    typedef _R result_type;
+    typedef _Rp result_type;
 };
 
-template <class _R, class _C, class _A1, class _A2, class ..._A3>
-struct __weak_result_type<_R (_C::*)(_A1, _A2, _A3...) volatile>
+template <class _Rp, class _Cp, class _A1, class _A2, class ..._A3>
+struct __weak_result_type<_Rp (_Cp::*)(_A1, _A2, _A3...) volatile>
 {
-    typedef _R result_type;
+    typedef _Rp result_type;
 };
 
-template <class _R, class _C, class _A1, class _A2, class ..._A3>
-struct __weak_result_type<_R (_C::*)(_A1, _A2, _A3...) const volatile>
+template <class _Rp, class _Cp, class _A1, class _A2, class ..._A3>
+struct __weak_result_type<_Rp (_Cp::*)(_A1, _A2, _A3...) const volatile>
 {
-    typedef _R result_type;
+    typedef _Rp result_type;
 };
 
 // __invoke
 
 // bullets 1 and 2
 
-template <class _F, class _A0, class ..._Args>
+template <class _Fp, class _A0, class ..._Args>
 inline _LIBCPP_INLINE_VISIBILITY
 auto
-__invoke(_F&& __f, _A0&& __a0, _Args&& ...__args)
+__invoke(_Fp&& __f, _A0&& __a0, _Args&& ...__args)
     -> decltype((_VSTD::forward<_A0>(__a0).*__f)(_VSTD::forward<_Args>(__args)...))
 {
     return (_VSTD::forward<_A0>(__a0).*__f)(_VSTD::forward<_Args>(__args)...);
 }
 
-template <class _F, class _A0, class ..._Args>
+template <class _Fp, class _A0, class ..._Args>
 inline _LIBCPP_INLINE_VISIBILITY
 auto
-__invoke(_F&& __f, _A0&& __a0, _Args&& ...__args)
+__invoke(_Fp&& __f, _A0&& __a0, _Args&& ...__args)
     -> decltype(((*_VSTD::forward<_A0>(__a0)).*__f)(_VSTD::forward<_Args>(__args)...))
 {
     return ((*_VSTD::forward<_A0>(__a0)).*__f)(_VSTD::forward<_Args>(__args)...);
@@ -305,19 +305,19 @@ __invoke(_F&& __f, _A0&& __a0, _Args&& ...__args)
 
 // bullets 3 and 4
 
-template <class _F, class _A0>
+template <class _Fp, class _A0>
 inline _LIBCPP_INLINE_VISIBILITY
 auto
-__invoke(_F&& __f, _A0&& __a0)
+__invoke(_Fp&& __f, _A0&& __a0)
     -> decltype(_VSTD::forward<_A0>(__a0).*__f)
 {
     return _VSTD::forward<_A0>(__a0).*__f;
 }
 
-template <class _F, class _A0>
+template <class _Fp, class _A0>
 inline _LIBCPP_INLINE_VISIBILITY
 auto
-__invoke(_F&& __f, _A0&& __a0)
+__invoke(_Fp&& __f, _A0&& __a0)
     -> decltype((*_VSTD::forward<_A0>(__a0)).*__f)
 {
     return (*_VSTD::forward<_A0>(__a0)).*__f;
@@ -325,13 +325,13 @@ __invoke(_F&& __f, _A0&& __a0)
 
 // bullet 5
 
-template <class _F, class ..._Args>
+template <class _Fp, class ..._Args>
 inline _LIBCPP_INLINE_VISIBILITY
 auto
-__invoke(_F&& __f, _Args&& ...__args)
-    -> decltype(_VSTD::forward<_F>(__f)(_VSTD::forward<_Args>(__args)...))
+__invoke(_Fp&& __f, _Args&& ...__args)
+    -> decltype(_VSTD::forward<_Fp>(__f)(_VSTD::forward<_Args>(__args)...))
 {
-    return _VSTD::forward<_F>(__f)(_VSTD::forward<_Args>(__args)...);
+    return _VSTD::forward<_Fp>(__f)(_VSTD::forward<_Args>(__args)...);
 }
 
 template <class _Tp, class ..._Args>

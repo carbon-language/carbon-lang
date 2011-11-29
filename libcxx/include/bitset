@@ -695,11 +695,11 @@ bitset<_Size>::bitset(const _CharT* __str,
 #else
             assert(!"bitset string ctor has invalid argument");
 #endif
-    size_t _M = _VSTD::min(__rlen, _Size);
+    size_t _Mp = _VSTD::min(__rlen, _Size);
     size_t __i = 0;
-    for (; __i < _M; ++__i)
+    for (; __i < _Mp; ++__i)
     {
-        _CharT __c = __str[_M - 1 - __i];
+        _CharT __c = __str[_Mp - 1 - __i];
         if (__c == __zero)
             (*this)[__i] = false;
         else
@@ -729,11 +729,11 @@ bitset<_Size>::bitset(const basic_string<_CharT,_Traits,_Allocator>& __str,
 #else
             assert(!"bitset string ctor has invalid argument");
 #endif
-    size_t _M = _VSTD::min(__rlen, _Size);
+    size_t _Mp = _VSTD::min(__rlen, _Size);
     size_t __i = 0;
-    for (; __i < _M; ++__i)
+    for (; __i < _Mp; ++__i)
     {
-        _CharT __c = __str[__pos + _M - 1 - __i];
+        _CharT __c = __str[__pos + _Mp - 1 - __i];
         if (_Traits::eq(__c, __zero))
             (*this)[__i] = false;
         else

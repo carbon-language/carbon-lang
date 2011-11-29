@@ -146,9 +146,9 @@ public:
     _ATTRIBUTE(noreturn) friend void rethrow_exception(exception_ptr);
 };
 
-template<class _E>
+template<class _Ep>
 exception_ptr
-make_exception_ptr(_E __e) _NOEXCEPT
+make_exception_ptr(_Ep __e) _NOEXCEPT
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
@@ -224,11 +224,11 @@ throw_with_nested (_Tp& __t, typename enable_if<
 #endif
 }
 
-template <class _E>
+template <class _Ep>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-rethrow_if_nested(const _E& __e, typename enable_if<
-                                   is_polymorphic<_E>::value
+rethrow_if_nested(const _Ep& __e, typename enable_if<
+                                   is_polymorphic<_Ep>::value
                                                    >::type* = 0)
 {
     const nested_exception* __nep = dynamic_cast<const nested_exception*>(&__e);
@@ -236,11 +236,11 @@ rethrow_if_nested(const _E& __e, typename enable_if<
         __nep->rethrow_nested();
 }
 
-template <class _E>
+template <class _Ep>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-rethrow_if_nested(const _E& __e, typename enable_if<
-                                   !is_polymorphic<_E>::value
+rethrow_if_nested(const _Ep& __e, typename enable_if<
+                                   !is_polymorphic<_Ep>::value
                                                    >::type* = 0)
 {
 }
