@@ -370,6 +370,8 @@ Parser::~Parser() {
       it != LateParsedTemplateMap.end(); ++it)
     delete it->second;
 
+  clearLateParsedObjCMethods();
+
   // Remove the pragma handlers we installed.
   PP.RemovePragmaHandler(AlignHandler.get());
   AlignHandler.reset();

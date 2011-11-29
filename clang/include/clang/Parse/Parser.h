@@ -402,6 +402,9 @@ private:
     Tok.setKind(tok::eof);
   }
 
+  /// \brief Clear and free the cached objc methods.
+  void clearLateParsedObjCMethods();
+
   /// \brief Handle the annotation token produced for #pragma unused(...)
   void HandlePragmaUnused();
 

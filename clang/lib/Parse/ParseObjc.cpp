@@ -1500,7 +1500,7 @@ Parser::ParseObjCAtEndDeclaration(SourceRange atEnd) {
     // missing @implementation
     Diag(atEnd.getBegin(), diag::err_expected_implementation);
     
-  LateParsedObjCMethods.clear();
+  clearLateParsedObjCMethods();
   ObjCImpDecl = 0;
   return Actions.BuildDeclaratorGroup(
            DeclsInGroup.data(), DeclsInGroup.size(), false);
@@ -1513,6 +1513,14 @@ Parser::DeclGroupPtrTy Parser::FinishPendingObjCActions() {
   Decl *ImpDecl = PendingObjCImpDecl.pop_back_val();
   Actions.ActOnAtEnd(getCurScope(), SourceRange());
   return Actions.ConvertDeclToDeclGroup(ImpDecl);
+}
+
+void Parser::clearLateParsedObjCMethods() {
+  for (LateParsedObjCMethodContainer::iterator
+         I = LateParsedObjCMethods.begin(),
+         E = LateParsedObjCMethods.end(); I != E; ++I)
+    delete *I;
+  LateParsedObjCMethods.clear();
 }
 
 ///   compatibility-alias-decl:
