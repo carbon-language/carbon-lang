@@ -3738,10 +3738,12 @@ def err_incomplete_type_objc_at_encode : Error<
 def warn_setter_getter_impl_required : Warning<
   "property %0 requires method %1 to be defined - "
   "use @synthesize, @dynamic or provide a method implementation "
-  "in this class implementation">;
+  "in this class implementation">,
+  InGroup<ObjCPropertyImpl>;
 def warn_setter_getter_impl_required_in_category : Warning<
   "property %0 requires method %1 to be defined - "
-  "use @dynamic or provide a method implementation in this category">;
+  "use @dynamic or provide a method implementation in this category">,
+  InGroup<ObjCPropertyImpl>;
 def note_property_impl_required : Note<
   "implementation is here">;
 def note_parameter_named_here : Note<
