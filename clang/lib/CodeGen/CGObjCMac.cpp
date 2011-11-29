@@ -516,7 +516,8 @@ public:
     llvm::Type *params[] = { CGM.Int32Ty->getPointerTo() };
     return CGM.CreateRuntimeFunction(llvm::FunctionType::get(CGM.Int32Ty,
                                                              params, false),
-                                     "_setjmp");
+                                     "_setjmp",
+                                     llvm::Attribute::ReturnsTwice);
   }
 
 public:
