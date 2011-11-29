@@ -2121,7 +2121,7 @@ unsigned X86FastISel::TargetMaterializeFloatZero(const ConstantFP *CF) {
     default: return false;
     case MVT::f32:
       if (X86ScalarSSEf32) {
-        Opc = Subtarget->hasAVX() ? X86::VFsFLD0SS : X86::FsFLD0SS;
+        Opc = X86::FsFLD0SS;
         RC  = X86::FR32RegisterClass;
       } else {
         Opc = X86::LD_Fp032;
@@ -2130,7 +2130,7 @@ unsigned X86FastISel::TargetMaterializeFloatZero(const ConstantFP *CF) {
       break;
     case MVT::f64:
       if (X86ScalarSSEf64) {
-        Opc = Subtarget->hasAVX() ? X86::VFsFLD0SD : X86::FsFLD0SD;
+        Opc = X86::FsFLD0SD;
         RC  = X86::FR64RegisterClass;
       } else {
         Opc = X86::LD_Fp064;

@@ -45,6 +45,7 @@ while.end:
 }
 
 ; CHECK: f2
+; CHECK: for.body
 ;
 ; This loop contains two cvtsi2ss instructions that update the same xmm
 ; register.  Verify that the execution dependency fix pass breaks those

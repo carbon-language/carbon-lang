@@ -240,21 +240,13 @@ let Predicates = [HasAVX] in {
 }
 
 // Alias instructions that map fld0 to pxor for sse.
-// FIXME: Set encoding to pseudo!
-let isReMaterializable = 1, isAsCheapAsAMove = 1, isCodeGenOnly = 1,
-    canFoldAsLoad = 1 in {
-  def FsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins), "",
-                   [(set FR32:$dst, fp32imm0)]>,
-                   Requires<[HasSSE1]>, TB, OpSize;
-  def FsFLD0SD : I<0xEF, MRMInitReg, (outs FR64:$dst), (ins), "",
-                   [(set FR64:$dst, fpimm0)]>,
-                 Requires<[HasSSE2]>, TB, OpSize;
-  def VFsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins), "",
-                    [(set FR32:$dst, fp32imm0)]>,
-                    Requires<[HasAVX]>, TB, OpSize, VEX_4V;
-  def VFsFLD0SD : I<0xEF, MRMInitReg, (outs FR64:$dst), (ins), "",
-                    [(set FR64:$dst, fpimm0)]>,
-                    Requires<[HasAVX]>, TB, OpSize, VEX_4V;
+// This is expanded by ExpandPostRAPseudos.
+let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
+    isPseudo = 1 in {
+  def FsFLD0SS : I<0, Pseudo, (outs FR32:$dst), (ins), "",
+                   [(set FR32:$dst, fp32imm0)]>, Requires<[HasXMM]>;
+  def FsFLD0SD : I<0, Pseudo, (outs FR64:$dst), (ins), "",
+                   [(set FR64:$dst, fpimm0)]>, Requires<[HasXMMInt]>;
 }
 
 //===----------------------------------------------------------------------===//

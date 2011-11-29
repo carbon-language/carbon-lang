@@ -2556,6 +2556,8 @@ bool X86InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
   switch (MI->getOpcode()) {
   case X86::V_SET0:
+  case X86::FsFLD0SS:
+  case X86::FsFLD0SD:
     return Expand2AddrUndef(MI, get(HasAVX ? X86::VXORPSrr : X86::XORPSrr));
   case X86::TEST8ri_NOREX:
     MI->setDesc(get(X86::TEST8ri));
@@ -2911,11 +2913,9 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       Alignment = 16;
       break;
     case X86::FsFLD0SD:
-    case X86::VFsFLD0SD:
       Alignment = 8;
       break;
     case X86::FsFLD0SS:
-    case X86::VFsFLD0SS:
       Alignment = 4;
       break;
     default:
@@ -2950,9 +2950,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   case X86::AVX_SETALLONES:
   case X86::AVX2_SETALLONES:
   case X86::FsFLD0SD:
-  case X86::FsFLD0SS:
-  case X86::VFsFLD0SD:
-  case X86::VFsFLD0SS: {
+  case X86::FsFLD0SS: {
     // Folding a V_SET0 or V_SETALLONES as a load, to ease register pressure.
     // Create a constant-pool entry and operands to load from it.
 
@@ -2978,9 +2976,9 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     MachineConstantPool &MCP = *MF.getConstantPool();
     Type *Ty;
     unsigned Opc = LoadMI->getOpcode();
-    if (Opc == X86::FsFLD0SS || Opc == X86::VFsFLD0SS)
+    if (Opc == X86::FsFLD0SS)
       Ty = Type::getFloatTy(MF.getFunction()->getContext());
-    else if (Opc == X86::FsFLD0SD || Opc == X86::VFsFLD0SD)
+    else if (Opc == X86::FsFLD0SD)
       Ty = Type::getDoubleTy(MF.getFunction()->getContext());
     else if (Opc == X86::AVX_SET0PSY || Opc == X86::AVX_SET0PDY)
       Ty = VectorType::get(Type::getFloatTy(MF.getFunction()->getContext()), 8);

@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 | grep {pxor	%xmm0, %xmm0} | count 2
+; RUN: llc < %s -march=x86-64 | grep {xorps	%xmm0, %xmm0} | count 2
 
 define float @foo(<4 x float> %a) {
   %b = insertelement <4 x float> %a, float 0.0, i32 3

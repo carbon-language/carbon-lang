@@ -11,7 +11,7 @@ entry:
 
 define float @extractFloat2() nounwind {
 entry:
-  ; CHECK: pxor	%xmm0, %xmm0
+  ; CHECK: xorps	%xmm0, %xmm0
   %tmp4 = bitcast <1 x double> <double 0x000000003F800000> to <2 x float>
   %tmp5 = extractelement <2 x float> %tmp4, i32 1
   ret float %tmp5

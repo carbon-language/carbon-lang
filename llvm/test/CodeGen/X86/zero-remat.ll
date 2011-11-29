@@ -16,9 +16,9 @@ define double @foo() nounwind {
 ;CHECK-32: ret
 
 ;CHECK-64: foo:
-;CHECK-64: pxor
+;CHECK-64: xorps
 ;CHECK-64: call
-;CHECK-64: pxor
+;CHECK-64: xorps
 ;CHECK-64: ret
 }
 
@@ -33,8 +33,8 @@ define float @foof() nounwind {
 ;CHECK-32: ret
 
 ;CHECK-64: foof:
-;CHECK-64: pxor
+;CHECK-64: xorps
 ;CHECK-64: call
-;CHECK-64: pxor
+;CHECK-64: xorps
 ;CHECK-64: ret
 }

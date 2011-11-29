@@ -225,18 +225,20 @@ if.else:                                          ; preds = %entry
 ; CHECK-NEXT: je 
 }
 
-; Check that 0.0 is materialized using pxor
+; Check that 0.0 is materialized using xorps
 define void @test18(float* %p1) {
   store float 0.0, float* %p1
   ret void
 ; CHECK: test18:
-; CHECK: pxor
+; CHECK: xorps
 }
+
+; Without any type hints, doubles use the smaller xorps instead of xorpd.
 define void @test19(double* %p1) {
   store double 0.0, double* %p1
   ret void
 ; CHECK: test19:
-; CHECK: pxor
+; CHECK: xorps
 }
 
 ; Check that we fast-isel sret
@@ -252,12 +254,12 @@ entry:
 }
 declare void @test20sret(%struct.a* sret)
 
-; Check that -0.0 is not materialized using pxor
+; Check that -0.0 is not materialized using xor
 define void @test21(double* %p1) {
   store double -0.0, double* %p1
   ret void
 ; CHECK: test21:
-; CHECK-NOT: pxor
+; CHECK-NOT: xor
 ; CHECK: movsd	LCPI
 }
 
