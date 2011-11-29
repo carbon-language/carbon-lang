@@ -125,3 +125,13 @@ AD oopsMoreCommas() {
   AD ad, // expected-error {{expected ';' at end of declaration}}
   return ad;
 }
+
+int extraSemi1(); // expected-error {{stray ';' in function definition}}
+{
+  return 0;
+}
+
+int extraSemi2(); // expected-error {{stray ';' in function definition}}
+try {
+} catch (...) {
+}

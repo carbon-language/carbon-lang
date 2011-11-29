@@ -58,3 +58,26 @@ namespace SemiCommaTypo {
   n [[]], // expected-error {{expected ';' at end of declaration}}
   int o;
 }
+
+int extraSemi(); // expected-error {{stray ';' in function definition}}
+  = delete;
+
+class ExtraSemi {
+public:
+  ExtraSemi();
+  ExtraSemi(const ExtraSemi &);
+  int n;
+};
+ExtraSemi::ExtraSemi(); // expected-error {{stray ';'}}
+ : n(0) {
+}
+ExtraSemi::ExtraSemi(const ExtraSemi &); // expected-error {{stray ';'}}
+  = default;
+
+template<typename T> T extraSemi(T t);
+
+template<typename T> T extraSemi(T t); // expected-error {{stray ';'}}
+{
+  return t;
+}
+template int extraSemi(int);

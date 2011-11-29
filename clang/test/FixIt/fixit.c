@@ -77,3 +77,11 @@ void oopsMoreCommas() {
   static int b[] = { 3, 4, 5 },
   &a == &b ? oopsMoreCommas() : removeUnusedLabels(a[0]);
 }
+
+void extraSemicolon();
+{
+  void extraSemicolon();
+  {
+    return;
+  }
+}

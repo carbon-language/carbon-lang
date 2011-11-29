@@ -54,3 +54,8 @@ namespace PR7462 {
   typedef int operator! (A); // expected-error{{typedef name must be an identifier}}
   int i = !A(); // expected-error{{invalid argument type}}
 }
+
+template<typename T>
+typedef T f(T t) { return t; } // expected-error {{function definition declared 'typedef'}}
+int k = f(0);
+int k2 = k;
