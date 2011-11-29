@@ -25,15 +25,17 @@ macro(add_llvm_library name)
       ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
   endif()
   set_target_properties(${name} PROPERTIES FOLDER "Libraries")
+
+  # Add the explicit dependency information for this library.
+  #
+  # It would be nice to verify that we have the dependencies for this library
+  # name, but using get_property(... SET) doesn't suffice to determine if a
+  # property has been set to an empty value.
+  get_property(lib_deps GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_${name})
+  target_link_libraries(${name} ${lib_deps})
 endmacro(add_llvm_library name)
 
 macro(add_llvm_library_dependencies name)
-  # Save the dependencies of the LLVM library in a variable so that we can
-  # query it when resolve llvm-config-style component -> library mappings.
-  set_property(GLOBAL PROPERTY LLVM_LIB_DEPS_${name} ${ARGN})
-
-  # Then add the actual dependencies to the library target.
-  target_link_libraries(${name} ${ARGN})
 endmacro(add_llvm_library_dependencies name)
 
 macro(add_llvm_loadable_module name)

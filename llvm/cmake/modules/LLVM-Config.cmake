@@ -152,7 +152,7 @@ function(explicit_map_components_to_libraries out_libs)
   set(processed)
   while( cursor LESS lst_size )
     list(GET expanded_components ${cursor} lib)
-    get_property(lib_deps GLOBAL PROPERTY LLVM_LIB_DEPS_${lib})
+    get_property(lib_deps GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_${lib})
     list(APPEND expanded_components ${lib_deps})
     # Remove duplicates at the front:
     list(REVERSE expanded_components)
