@@ -1579,6 +1579,7 @@ static unsigned getVLDSTRegisterUpdateOpcode(unsigned Opc) {
   case ARM::VST1q16PseudoWB_fixed: return ARM::VST1q16PseudoWB_register;
   case ARM::VST1q32PseudoWB_fixed: return ARM::VST1q32PseudoWB_register;
   case ARM::VST1q64PseudoWB_fixed: return ARM::VST1q64PseudoWB_register;
+  case ARM::VST1d64TPseudoWB_fixed: return ARM::VST1d64TPseudoWB_register;
   }
   return Opc; // If not one we handle, return it unchanged.
 }
@@ -2885,7 +2886,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
 
   case ARMISD::VST3_UPD: {
     unsigned DOpcodes[] = { ARM::VST3d8Pseudo_UPD, ARM::VST3d16Pseudo_UPD,
-                            ARM::VST3d32Pseudo_UPD, ARM::VST1d64TPseudo_UPD };
+                            ARM::VST3d32Pseudo_UPD,ARM::VST1d64TPseudoWB_fixed};
     unsigned QOpcodes0[] = { ARM::VST3q8Pseudo_UPD,
                              ARM::VST3q16Pseudo_UPD,
                              ARM::VST3q32Pseudo_UPD };

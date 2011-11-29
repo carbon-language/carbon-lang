@@ -2196,10 +2196,14 @@ static DecodeStatus DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VST1q16wb_register:
     case ARM::VST1q32wb_register:
     case ARM::VST1q64wb_register:
-    case ARM::VST1d8T_UPD:
-    case ARM::VST1d16T_UPD:
-    case ARM::VST1d32T_UPD:
-    case ARM::VST1d64T_UPD:
+    case ARM::VST1d8Twb_fixed:
+    case ARM::VST1d16Twb_fixed:
+    case ARM::VST1d32Twb_fixed:
+    case ARM::VST1d64Twb_fixed:
+    case ARM::VST1d8Twb_register:
+    case ARM::VST1d16Twb_register:
+    case ARM::VST1d32Twb_register:
+    case ARM::VST1d64Twb_register:
     case ARM::VST1d8Q_UPD:
     case ARM::VST1d16Q_UPD:
     case ARM::VST1d32Q_UPD:
@@ -2264,14 +2268,6 @@ static DecodeStatus DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
 
   // Second input register
   switch (Inst.getOpcode()) {
-    case ARM::VST1d8T:
-    case ARM::VST1d16T:
-    case ARM::VST1d32T:
-    case ARM::VST1d64T:
-    case ARM::VST1d8T_UPD:
-    case ARM::VST1d16T_UPD:
-    case ARM::VST1d32T_UPD:
-    case ARM::VST1d64T_UPD:
     case ARM::VST1d8Q:
     case ARM::VST1d16Q:
     case ARM::VST1d32Q:
@@ -2334,14 +2330,6 @@ static DecodeStatus DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
 
   // Third input register
   switch (Inst.getOpcode()) {
-    case ARM::VST1d8T:
-    case ARM::VST1d16T:
-    case ARM::VST1d32T:
-    case ARM::VST1d64T:
-    case ARM::VST1d8T_UPD:
-    case ARM::VST1d16T_UPD:
-    case ARM::VST1d32T_UPD:
-    case ARM::VST1d64T_UPD:
     case ARM::VST1d8Q:
     case ARM::VST1d16Q:
     case ARM::VST1d32Q:

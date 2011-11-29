@@ -269,8 +269,9 @@ static const NEONLdStTableEntry NEONLdStTable[] = {
 
 { ARM::VST1d64QPseudo,      ARM::VST1d64Q,     false, false, false, SingleSpc,  4, 1 ,true},
 { ARM::VST1d64QPseudo_UPD,  ARM::VST1d64Q_UPD, false, true, true,  SingleSpc,  4, 1 ,true},
-{ ARM::VST1d64TPseudo,      ARM::VST1d64T,     false, false, false, SingleSpc,  3, 1 ,true},
-{ ARM::VST1d64TPseudo_UPD,  ARM::VST1d64T_UPD, false, true, true,  SingleSpc,  3, 1 ,true},
+{ ARM::VST1d64TPseudo,      ARM::VST1d64T,     false, false, false, SingleSpc,  3, 1 ,false},
+{ ARM::VST1d64TPseudoWB_fixed,  ARM::VST1d64Twb_fixed, false, true, false,  SingleSpc,  3, 1 ,false},
+{ ARM::VST1d64TPseudoWB_register,  ARM::VST1d64Twb_register, false, true, true,  SingleSpc,  3, 1 ,false},
 
 { ARM::VST1q16Pseudo,       ARM::VST1q16,      false, false, false, SingleSpc,  2, 4 ,false},
 { ARM::VST1q16PseudoWB_fixed,   ARM::VST1q16wb_fixed, false, true, false,  SingleSpc,  2, 4 ,false},
@@ -1186,7 +1187,8 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::VST3d8Pseudo_UPD:
     case ARM::VST3d16Pseudo_UPD:
     case ARM::VST3d32Pseudo_UPD:
-    case ARM::VST1d64TPseudo_UPD:
+    case ARM::VST1d64TPseudoWB_fixed:
+    case ARM::VST1d64TPseudoWB_register:
     case ARM::VST3q8Pseudo_UPD:
     case ARM::VST3q16Pseudo_UPD:
     case ARM::VST3q32Pseudo_UPD:
