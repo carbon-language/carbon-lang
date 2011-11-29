@@ -46,7 +46,7 @@ entry:
 
 ; rdar://10119696
 ; CHECK: f
-define <4 x float> @f(<4 x float> %x, double* nocapture %y) nounwind uwtable readonly ssp {
+define <4 x float> @f(<4 x float> %x, double* nocapture %y) nounwind readonly ssp {
 entry:
   ; CHECK: movlps  (%{{rdi|rdx}}), %xmm0
   %u110.i = load double* %y, align 1
@@ -56,3 +56,22 @@ entry:
   ret <4 x float> %shuffle.i
 }
 
+define <4 x float> @loadhpi2(%struct.Float2* nocapture %vHiCoefPtr_0, %struct.Float2* nocapture %vLoCoefPtr_0, i32 %s) nounwind readonly ssp {
+entry:
+; CHECK: loadhpi2
+; CHECK: movhps (
+; CHECK-NOT: movlhps
+  %0 = bitcast %struct.Float2* %vHiCoefPtr_0 to <1 x i64>*
+  %idx.ext = sext i32 %s to i64
+  %add.ptr = getelementptr inbounds <1 x i64>* %0, i64 %idx.ext
+  %add.ptr.val = load <1 x i64>* %add.ptr, align 1
+  %1 = bitcast <1 x i64> %add.ptr.val to <2 x float>
+  %shuffle.i = shufflevector <2 x float> %1, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+  %2 = bitcast %struct.Float2* %vLoCoefPtr_0 to <1 x i64>*
+  %add.ptr2 = getelementptr inbounds <1 x i64>* %2, i64 %idx.ext
+  %add.ptr2.val = load <1 x i64>* %add.ptr2, align 1
+  %3 = bitcast <1 x i64> %add.ptr2.val to <2 x float>
+  %shuffle.i4 = shufflevector <2 x float> %3, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+  %shuffle1.i5 = shufflevector <4 x float> %shuffle.i, <4 x float> %shuffle.i4, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
+  ret <4 x float> %shuffle1.i5
+}
