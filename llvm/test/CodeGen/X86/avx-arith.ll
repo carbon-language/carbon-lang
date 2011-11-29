@@ -259,3 +259,14 @@ define <4 x i64> @mul-v4i64(<4 x i64> %i, <4 x i64> %j) nounwind readnone {
   ret <4 x i64> %x
 }
 
+declare <4 x float> @llvm.x86.sse.sqrt.ss(<4 x float>) nounwind readnone
+
+define <4 x float> @int_sqrt_ss() {
+; CHECK: int_sqrt_ss
+; CHECK: vsqrtss
+ %x0 = load float addrspace(1)* undef, align 8
+ %x1 = insertelement <4 x float> undef, float %x0, i32 0
+ %x2 = call <4 x float> @llvm.x86.sse.sqrt.ss(<4 x float> %x1) nounwind
+ ret <4 x float> %x2
+}
+

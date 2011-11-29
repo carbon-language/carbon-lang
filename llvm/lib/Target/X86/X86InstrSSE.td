@@ -2872,7 +2872,7 @@ multiclass sse1_fp_unop_s_avx<bits<8> opc, string OpcodeStr> {
                 !strconcat(OpcodeStr,
                            "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
   def SSm_Int : SSI<opc, MRMSrcMem, (outs VR128:$dst),
-                (ins ssmem:$src1, VR128:$src2),
+                (ins VR128:$src1, ssmem:$src2),
                 !strconcat(OpcodeStr,
                            "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
 }
