@@ -907,9 +907,13 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
       Instruction *U = dyn_cast<Instruction>(*UI);
       if (!U || !L->contains(U))
         continue;
-      U->replaceUsesOfWith(LIC, Replacement);
       Worklist.push_back(U);
     }
+    
+    for (std::vector<Instruction*>::iterator UI = Worklist.begin();
+         UI != Worklist.end(); ++UI)
+      (*UI)->replaceUsesOfWith(LIC, Replacement);        
+    
     SimplifyCode(Worklist, L);
     return;
   }
