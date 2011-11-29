@@ -38,8 +38,12 @@ namespace llvm {
     virtual const MCSection *getNonexecutableStackSection(MCContext &Ctx) const;
   };
 
-  struct X86MCAsmInfoCOFF : public MCAsmInfoCOFF {
-    explicit X86MCAsmInfoCOFF(const Triple &Triple);
+  struct X86MCAsmInfoMicrosoft : public MCAsmInfoMicrosoft {
+    explicit X86MCAsmInfoMicrosoft(const Triple &Triple);
+  };
+
+  struct X86MCAsmInfoGNUCOFF : public MCAsmInfoGNUCOFF {
+    explicit X86MCAsmInfoGNUCOFF(const Triple &Triple);
   };
 } // namespace llvm
 

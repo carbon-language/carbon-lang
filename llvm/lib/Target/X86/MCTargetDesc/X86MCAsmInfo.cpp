@@ -125,7 +125,19 @@ getNonexecutableStackSection(MCContext &Ctx) const {
                            0, SectionKind::getMetadata());
 }
 
-X86MCAsmInfoCOFF::X86MCAsmInfoCOFF(const Triple &Triple) {
+X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const Triple &Triple) {
+  if (Triple.getArch() == Triple::x86_64) {
+    GlobalPrefix = "";
+    PrivateGlobalPrefix = ".L";
+  }
+
+  AsmTransCBE = x86_asm_table;
+  AssemblerDialect = AsmWriterFlavor;
+
+  TextAlignFillValue = 0x90;
+}
+
+X86MCAsmInfoGNUCOFF::X86MCAsmInfoGNUCOFF(const Triple &Triple) {
   if (Triple.getArch() == Triple::x86_64) {
     GlobalPrefix = "";
     PrivateGlobalPrefix = ".L";

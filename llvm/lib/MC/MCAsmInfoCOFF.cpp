@@ -38,3 +38,11 @@ MCAsmInfoCOFF::MCAsmInfoCOFF() {
 
   SupportsDataRegions = false;
 }
+
+MCAsmInfoMicrosoft::MCAsmInfoMicrosoft() {
+  AllowQuotesInName = true;
+}
+
+MCAsmInfoGNUCOFF::MCAsmInfoGNUCOFF() {
+
+}

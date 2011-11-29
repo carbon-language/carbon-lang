@@ -361,8 +361,10 @@ static MCAsmInfo *createX86MCAsmInfo(const Target &T, StringRef TT) {
       MAI = new X86_64MCAsmInfoDarwin(TheTriple);
     else
       MAI = new X86MCAsmInfoDarwin(TheTriple);
-  } else if (TheTriple.isOSWindows()) {
-    MAI = new X86MCAsmInfoCOFF(TheTriple);
+  } else if (TheTriple.getOS() == Triple::Win32) {
+    MAI = new X86MCAsmInfoMicrosoft(TheTriple);
+  } else if (TheTriple.getOS() == Triple::MinGW32 || TheTriple.getOS() == Triple::Cygwin) {
+    MAI = new X86MCAsmInfoGNUCOFF(TheTriple);
   } else {
     MAI = new X86ELFMCAsmInfo(TheTriple);
   }

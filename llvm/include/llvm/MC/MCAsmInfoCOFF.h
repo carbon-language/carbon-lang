@@ -18,6 +18,16 @@ namespace llvm {
     explicit MCAsmInfoCOFF();
       
   };
+
+  class MCAsmInfoMicrosoft : public MCAsmInfoCOFF {
+  protected:
+    explicit MCAsmInfoMicrosoft();
+  };
+
+  class MCAsmInfoGNUCOFF : public MCAsmInfoCOFF {
+  protected:
+    explicit MCAsmInfoGNUCOFF();
+  };
 }
 
 
