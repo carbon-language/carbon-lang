@@ -277,6 +277,7 @@ public:
         {
             result.AppendErrorWithFormat("'%s' takes no arguments, only flags.\n", GetCommandName());
             result.SetStatus (eReturnStatusFailed);
+            return false;
         }
 
         ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
