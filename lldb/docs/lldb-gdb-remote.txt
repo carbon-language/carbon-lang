@@ -18,7 +18,13 @@ added above and beyond the standard GDB remote protocol packets.
 //----------------------------------------------------------------------
 // "QStartNoAckMode"
 //
-// Try to enable no ACK mode to skip sending ACKs and NACKs.
+// BRIEF
+//  Try to enable no ACK mode to skip sending ACKs and NACKs.
+//
+// PRIORITY TO IMPLEMENT
+//  High. Any GDB remote server that can implement this should if the
+//  connection is reliable. This improves packet throughput and increases
+//  the performance of the connection.
 //----------------------------------------------------------------------
 Having to send an ACK/NACK after every packet slows things down a bit, so we
 have a way to disable ACK packets to mimize the traffic for reliable
@@ -37,7 +43,13 @@ send packet: +
 //----------------------------------------------------------------------
 // "A" - launch args packet
 //
-// Launch a program using the supplied arguments
+// BRIEF
+//  Launch a program using the supplied arguments
+//
+// PRIORITY TO IMPLEMENT
+//  Low. Only needed if the remote target wants to launch a target after
+//  making a connection to a GDB server that isn't already connected to
+//  an inferior process.
 //----------------------------------------------------------------------
 
 We have added support for the "set program arguments" packet where we can
@@ -46,7 +58,7 @@ executable and the arguments to use when executing:
 
 GDB remote docs for this:
 
-set program arguments(reserved)	Aarglen,argnum,arg,...
+set program arguments(reserved) Aarglen,argnum,arg,...
 
 Where A is followed by the length in bytes of the hex encoded argument,
 followed by an argument integer, and followed by the ASCII characters
@@ -62,8 +74,14 @@ debugging.
 //----------------------------------------------------------------------
 // "QEnvironment:NAME=VALUE"
 //
-// Setup the environment up for a new child process that will soon be
-// launched using the "A" packet.
+// BRIEF
+//  Setup the environment up for a new child process that will soon be
+//  launched using the "A" packet.
+//
+// PRIORITY TO IMPLEMENT
+//  Low. Only needed if the remote target wants to launch a target after
+//  making a connection to a GDB server that isn't already connected to
+//  an inferior process.
 //----------------------------------------------------------------------
 
 Both GDB and LLDB support passing down environment variables. Is it ok to
@@ -79,8 +97,14 @@ This packet can be sent one or more times _prior_ to sending a "A" packet.
 // "QSetSTDOUT:<ascii-hex-path>"
 // "QSetSTDERR:<ascii-hex-path>"
 //
-// Setup where STDIN, STDOUT, and STDERR go prior to sending an "A" 
-// packet
+// BRIEF
+//  Setup where STDIN, STDOUT, and STDERR go prior to sending an "A" 
+//  packet.
+//
+// PRIORITY TO IMPLEMENT
+//  Low. Only needed if the remote target wants to launch a target after
+//  making a connection to a GDB server that isn't already connected to
+//  an inferior process.
 //----------------------------------------------------------------------
 
 When launching a program through the GDB remote protocol with the "A" packet,
@@ -95,7 +119,13 @@ These packets must be sent  _prior_ to sending a "A" packet.
 //----------------------------------------------------------------------
 // "QSetWorkingDir:<ascii-hex-path>"
 //
-// Set the working directory prior to sending an "A" packet.
+// BRIEF
+//  Set the working directory prior to sending an "A" packet.
+//
+// PRIORITY TO IMPLEMENT
+//  Low. Only needed if the remote target wants to launch a target after
+//  making a connection to a GDB server that isn't already connected to
+//  an inferior process.
 //----------------------------------------------------------------------
 
 Or specify the working directory:
@@ -107,7 +137,14 @@ This packet must be sent  _prior_ to sending a "A" packet.
 //----------------------------------------------------------------------
 // "QSetDisableASLR:<bool>"
 //
-/// Enable or disable ASLR on the next "A" packet.
+// BRIEF
+//  Enable or disable ASLR on the next "A" packet.
+//
+// PRIORITY TO IMPLEMENT
+//  Low. Only needed if the remote target wants to launch a target after
+//  making a connection to a GDB server that isn't already connected to
+//  an inferior process and if the target supports disabling ASLR
+//  (Address space layout randomization).
 //----------------------------------------------------------------------
 
 Or control if ASLR is enabled/disabled:
@@ -123,7 +160,14 @@ This packet must be sent  _prior_ to sending a "A" packet.
 //----------------------------------------------------------------------
 // "qRegisterInfo<hex-reg-id>"
 //
-// Discover register information from the remote GDB server.
+// BRIEF
+//  Discover register information from the remote GDB server.
+//
+// PRIORITY TO IMPLEMENT
+//  High. Any target that can self describe its registers, should do so.
+//  This means if new registers are ever added to a remote target, they
+//  will get picked up automatically, and allows registers to change
+//  depending on the actual CPU type that is used.
 //----------------------------------------------------------------------
 
 With LLDB, for register information, remote GDB servers can add support for
@@ -271,65 +315,71 @@ offset      The offset within the "g" and "G" packet of the register data for
 
 encoding    The encoding type of the register which must be one of: 
 
-		         uint (unsigned integer)
-		         sint (signed integer)
-		         ieee754 (IEEE 754 float)
-		         vector (vector regsiter)
+                 uint (unsigned integer)
+                 sint (signed integer)
+                 ieee754 (IEEE 754 float)
+                 vector (vector regsiter)
 
-format  	The preferred format for display of this register. The value must
-     		be one of:
+format      The preferred format for display of this register. The value must
+            be one of:
 
-				binary
-				decimal
-				hex
-				float
-				vector-sint8
-				vector-uint8 
-				vector-sint16
-				vector-uint16
-				vector-sint32
-				vector-uint32
-				vector-float32
-				vector-uint128
+                binary
+                decimal
+                hex
+                float
+                vector-sint8
+                vector-uint8 
+                vector-sint16
+                vector-uint16
+                vector-sint32
+                vector-uint32
+                vector-float32
+                vector-uint128
 
-set     	The regiter set name as a string that this register belongs to.
+set         The regiter set name as a string that this register belongs to.
 
-gcc     	The GCC compiler registers number for this register (used for
-     		EH frame and other compiler information that is encoded in the
-     		executable files). 
+gcc         The GCC compiler registers number for this register (used for
+            EH frame and other compiler information that is encoded in the
+            executable files). 
 
-     		NOTE: If the compiler doesn't have a register number for this 
-     		register, this key/value pair should be omitted.
+            NOTE: If the compiler doesn't have a register number for this 
+            register, this key/value pair should be omitted.
 
-dwarf  		The DWARF register number for this register that is used for this
-     		register in the debug information. 
+dwarf       The DWARF register number for this register that is used for this
+            register in the debug information. 
 
-     		NOTE: If the compiler doesn't have a register number for this 
-     		register, this key/value pair should be omitted.
+            NOTE: If the compiler doesn't have a register number for this 
+            register, this key/value pair should be omitted.
 
-generic 	If the register is a generic register that most CPUs have, classify
-     		it correctly so the debugger knows. Valid values are one of:
-	         pc  (a program counter register. for example "name=eip;" (i386), 
-	              "name=rip;" (x86_64), "name=r15;" (32 bit arm) would 
-	              include a "generic=pc;" key value pair)
-	         sp  (a stack pointer register. for example "name=esp;" (i386), 
-	              "name=rsp;" (x86_64), "name=r13;" (32 bit arm) would 
-	              include a "generic=sp;" key value pair)
-	         fp  (a frame pointer register. for example "name=ebp;" (i386), 
-	               "name=rbp;" (x86_64), "name=r7;" (32 bit arm with macosx 
-	               ABI) would include a "generic=fp;" key value pair)
-	         ra  (a return address register. for example "name=lr;" (32 bit ARM) 
-	              would include a "generic=ra;" key value pair)
-	         fp  (a CPU flags register. for example "name=eflags;" (i386), 
-	              "name=rflags;" (x86_64), "name=cpsr;" (32 bit ARM) 
-	              would include a "generic=flags;" key value pair)
-	         arg1 - arg8 (specified for registers that contain function 
-	                  arguments when the argument fits into a register)
+generic     If the register is a generic register that most CPUs have, classify
+            it correctly so the debugger knows. Valid values are one of:
+             pc  (a program counter register. for example "name=eip;" (i386), 
+                  "name=rip;" (x86_64), "name=r15;" (32 bit arm) would 
+                  include a "generic=pc;" key value pair)
+             sp  (a stack pointer register. for example "name=esp;" (i386), 
+                  "name=rsp;" (x86_64), "name=r13;" (32 bit arm) would 
+                  include a "generic=sp;" key value pair)
+             fp  (a frame pointer register. for example "name=ebp;" (i386), 
+                   "name=rbp;" (x86_64), "name=r7;" (32 bit arm with macosx 
+                   ABI) would include a "generic=fp;" key value pair)
+             ra  (a return address register. for example "name=lr;" (32 bit ARM) 
+                  would include a "generic=ra;" key value pair)
+             fp  (a CPU flags register. for example "name=eflags;" (i386), 
+                  "name=rflags;" (x86_64), "name=cpsr;" (32 bit ARM) 
+                  would include a "generic=flags;" key value pair)
+             arg1 - arg8 (specified for registers that contain function 
+                      arguments when the argument fits into a register)
 
 //----------------------------------------------------------------------
 // "qHostInfo"
 //
-// Get information about the host we are remotely connected to.
+// BRIEF
+//  Get information about the host we are remotely connected to.
+//
+// PRIORITY TO IMPLEMENT
+//  High. This packet is usually very easy to implement and can help
+//  LLDB select the correct plug-ins for the job based on the target
+//  triple information that is suppied.
 //----------------------------------------------------------------------
 
 LLDB supports a host info call that gets all sorts of details of the system
@@ -350,8 +400,19 @@ ptrsize: is a number that represents how big pointers are in bytes on the debug 
 //----------------------------------------------------------------------
 // "qShlibInfoAddr"
 //
-// Get an address where the dynamic linker stores information about 
-// where shared libraries are loaded.
+// BRIEF
+//  Get an address where the dynamic linker stores information about 
+//  where shared libraries are loaded.
+//
+// PRIORITY TO IMPLEMENT
+//  High if you have a dynamic loader plug-in in LLDB for your target
+//  triple (see the "qHostInfo" packet) that can use this information.
+//  Many times address load randomization can make it hard to detect 
+//  where the dynamic loader binary and data structures are located and
+//  some platforms know, or can find out where this information is.
+//
+//  Low if you have a debug target where all object and symbol files 
+//  contain static load addresses.
 //----------------------------------------------------------------------
 
 LLDB and GDB both support the "qShlibInfoAddr" packet which is a hint to each
@@ -369,9 +430,19 @@ read packet: $7fff5fc40040#00
 //----------------------------------------------------------------------
 // "qThreadStopInfo<tid>"
 //
-// Get information about why a thread, whose ID is "<tid>", is stopped.
+// BRIEF
+//  Get information about why a thread, whose ID is "<tid>", is stopped.
+//
+// PRIORITY TO IMPLEMENT
+//  High if you need to support multi-threaded or multi-core debugging.
+//  Many times one thread will hit a breakpoint and while the debugger
+//  is in the process of suspending the other threads, other threads
+//  will also hit a breakpoint. This packet allows LLDB to know why all
+//  threads (live system debug) / cores (JTAG) in your program have 
+//  stopped and allows LLDB to display and control your program 
+//  correctly.
 //----------------------------------------------------------------------
-	
+    
 LLDB tries to use the "qThreadStopInfo" packet which is formatted as
 "qThreadStopInfo%x" where %x is the hex thread ID. This requests information
 about why a thread is stopped. The response is the same as the stop reply
@@ -383,8 +454,18 @@ to implement better multi-threaded debugging support.
 //----------------------------------------------------------------------
 // "QThreadSuffixSupported"
 //
-// Try to enable thread suffix support for the 'g', 'G', 'p', and 'P'
-// packets.
+// BRIEF
+//  Try to enable thread suffix support for the 'g', 'G', 'p', and 'P'
+//  packets.
+//
+// PRIORITY TO IMPLEMENT
+//  High. Adding a thread suffix allows us to read and write registers
+//  more efficiently and stops us from having to select a thread with
+//  one packet and then read registers with a second packet. It also
+//  makes sure that no errors can occur where the debugger thinks it
+//  already has a thread selected (see the "Hg" packet from the standard
+//  GDB remote protocol documentation) yet the remote GDB server actually
+//  has another thread selected.
 //----------------------------------------------------------------------
 
 When reading thread registers, you currently need to set the current
@@ -425,8 +506,15 @@ allocate memory so we can run JITed code.
 //----------------------------------------------------------------------
 // "_M<size>,<permissions>"
 //
-// Allocate memory on the remote target with the specified size and
-// permissions.
+// BRIEF
+//  Allocate memory on the remote target with the specified size and
+//  permissions.
+//
+// PRIORITY TO IMPLEMENT
+//  High if you want LLDB to be able to JIT code and run that code. JIT
+//  code also needs data which is also allocated and tracked.
+//
+//  Low if you don't support running JIT'ed code.
 //----------------------------------------------------------------------
 
 The allocate memory packet starts with "_M<size>,<permissions>". It returns a
@@ -436,13 +524,13 @@ code. The packet is formatted as:
 char packet[256];
 int packet_len;
 packet_len = ::snprintf (
-	packet, 
-	sizeof(packet), 
-	"_M%zx,%s%s%s", 
-	(size_t)size,
-	permissions & lldb::ePermissionsReadable ? "r" : "",
-	permissions & lldb::ePermissionsWritable ? "w" : "",
-	permissions & lldb::ePermissionsExecutable ? "x" : "");
+    packet, 
+    sizeof(packet), 
+    "_M%zx,%s%s%s", 
+    (size_t)size,
+    permissions & lldb::ePermissionsReadable ? "r" : "",
+    permissions & lldb::ePermissionsWritable ? "w" : "",
+    permissions & lldb::ePermissionsExecutable ? "x" : "");
 
 You request a size and give the permissions. This packet does NOT need to be
 implemented if you don't want to support running JITed code. The return value
@@ -451,8 +539,15 @@ is just the address of the newly allocated memory as raw big endian hex bytes.
 //----------------------------------------------------------------------
 // "_m<addr>"
 //
-// Deallocate memory that was previously allocated using an allocate
-// memory pack.
+// BRIEF
+//  Deallocate memory that was previously allocated using an allocate
+//  memory pack.
+//
+// PRIORITY TO IMPLEMENT
+//  High if you want LLDB to be able to JIT code and run that code. JIT
+//  code also needs data which is also allocated and tracked.
+//
+//  Low if you don't support running JIT'ed code.
 //----------------------------------------------------------------------
 
 The deallocate memory packet is "_m<addr>" where you pass in the address you
@@ -463,29 +558,167 @@ not supported.
 //----------------------------------------------------------------------
 // "qMemoryRegionInfo:<addr>"
 //
-// Get information about the address the range that contains "<addr>"
+// BRIEF
+//  Get information about the address the range that contains "<addr>"
+//
+// PRIORITY TO IMPLEMENT
+//  Medium. This is nice to have, but it isn't necessary. It helps LLDB
+//  do stack unwinding when we branch into memory that isn't executable.
+//  If we can detect that the code we are stopped in isn't executable,
+//  then we can recover registers for stack frames above the current
+//  frame. Otherwise we must assume we are in some JIT'ed code (not JIT
+//  code that LLDB has made) and assume that no registers are available
+//  in higher stack frames.
 //----------------------------------------------------------------------
 
 We added a way to get information for a memory region. The packet is:
 
-	qMemoryRegionInfo:<addr>
-	
+    qMemoryRegionInfo:<addr>
+    
 Where <addr> is a big endian hex address. The response is returned in a series
 of tuples like the data returned in a stop reply packet. The currently valid
 tuples tp return are:
 
-	start:<start-addr>;	// <start-addr> is a big endian hex address that is 
-						// the start address of the range that contains <addr>
-	
-	size:<size>;	// <size> is a big endian hex byte size of the address
-					// of the range that contains <addr>
-	
-	permissions:<permissions>;	// <permissions> is a string that contains one
-								// or more of the characters from "rwx"
-								
-	error:<ascii-byte-error-string>; // where <ascii-byte-error-string> is
-									 // a hex encoded string value that 
-									 // contains an error string
-									
-									
-									
+    start:<start-addr>; // <start-addr> is a big endian hex address that is 
+                        // the start address of the range that contains <addr>
+    
+    size:<size>;    // <size> is a big endian hex byte size of the address
+                    // of the range that contains <addr>
+    
+    permissions:<permissions>;  // <permissions> is a string that contains one
+                                // or more of the characters from "rwx"
+                                
+    error:<ascii-byte-error-string>; // where <ascii-byte-error-string> is
+                                     // a hex encoded string value that 
+                                     // contains an error string
+                                    
+//----------------------------------------------------------------------
+// Stop reply packet extensions
+//
+// BRIEF
+//  This section describes some of the additional information you can
+//  specify in stop reply packets that help LLDB to know more detailed
+//  information about your threads.
+//
+// DESCRIPTION
+//  Standard GDB remote stop reply packets are reply packets sent in
+//  response to a packet  that made the program run. They come in the
+//  following forms:
+//
+//  "SAA"
+//  "S" means signal and "AA" is a hex signal number that describes why 
+//  the thread or stopped. It doesn't specify which thread, so the "T"
+//  packet is recommended to use instead of the "S" packet.
+//
+//  "TAAkey1:value1;key2:value2;..."
+//  "T" means a thread stopped due to a unix signal where "AA" is a hex 
+//  signal number that describes why the program stopped. This is 
+//  followed by a series of key/value pairs:
+//      - If key is a hex number, it is a register number and value is
+//        the hex value of the register in debuggee endian byte order.
+//      - If key == "thread", then the value is the big endian hex
+//        thread-id of the stopped thread.
+//      - If key == "core", then value is a hex nujber of the core on
+//        which the stop was detected.
+//      - If key == "watch" or key == "rwatch" or key == "awatch", then
+//        value is the data address in big endian hex
+//      - If key == "library", then value is ignore and "qXfer:libraries:read"
+//        packets should be used to detect any newly loaded shared libraries
+//
+//  "WAA"
+//  "W" means the process exited and "AA" is the exit status.
+//
+//  "XAA"
+//  "X" means the process exited and "AA" is signal that caused the program
+//  to exit.
+//
+//  "O<ascii-hex-string>"
+//  "O" means STDOUT has data that was written to its console and is
+//  being delivered to the debugger. This packet happens asynchronously
+//  and the debugger is expected to continue to way for another stop reply
+//  packet.
+//
+// LLDB EXTENSIONS
+//
+//  We have extended the "T" packet to be able to also understand the
+//  following keys and values:
+//
+//  KEY           VALUE     DESCRIPTION
+//  ===========   ========  ================================================
+//  "metype"      unsigned  mach exception type (the value of the EXC_XXX enumerations)
+//                          as an unsigned integer. For targets with mach 
+//                          kernels only.
+//
+//  "mecount"     unsigned  mach exception data count as an unsigned integer
+//                          For targets with mach kernels only.
+//
+//  "medata"      unsigned  There should be "mecount" of these and it is the data
+//                          that goes along with a mach exception (as an unsigned 
+//                          integer). For targets with mach kernels only.
+//
+//  "name"        string    The name of the thread as a plain string. The string
+//                          must not contain an special packet characters or
+//                          contain a ':' or a ';'. Use "hexname" if the thread
+//                          name has special characters.
+//
+//  "hexname"     ascii-hex An ASCII hex string that contains the name of the thread
+//
+//  "qaddr"       hex       Big endian hex value that contains the libdispatch
+//                          queue address for the queue of the thread.
+//
+//  "reason"      enum      The enumeration must be one of:
+//                          "trace" the program stopped after a single instruction
+//                              was executed on a core. Usually done when single
+//                              stepping past a breakpoint
+//                          "breakpoint" a breakpoint set using a 'z' packet was hit.
+//                          "trap" stopped due to user interruption
+//                          "signal" stopped due to an actual unix signal, not
+//                              just the debugger using a unix signal to keep
+//                              the GDB remote client happy.
+//                          "watchpoint". Should be used in conjunction with 
+//                              the "watch"/"rwatch"/"awatch" key value pairs.
+//                          "exception" an exception stop reason. Use with
+//                              the "description" key/value pair to describe the
+//                              exceptional event the user should see as the stop
+//                              reason.
+//  "description" ascii-hex An ASCII hex string that contains a more descriptive
+//                          reason that the thread stopped. This is only needed
+//                          if none of the key/value pairs are enough to
+//                          describe why something stopped.
+//
+// BEST PRACTICES:
+//  Since register values can be supplied with this packet, it is often useful
+//  to return the PC, SP, FP, LR (if any), and FLAGS regsiters so that separate
+//  packets don't need to be sent to read each of these registers from each
+//  thread.
+//
+//  If a thread is stopped for no reason (like just because another thread
+//  stopped, or because when one core stops all cores should stop), use a 
+//  "T" packet with "00" as the signal number and fill in as many key values 
+//  and registers as possible.
+//
+//  LLDB likes to know why a thread stopped since many thread contol 
+//  operations like stepping over a source line, actually are implemented
+//  by running the process multiple times. If a breakpoint is hit while
+//  trying to step over a source line and LLDB finds out that a breakpoint
+//  is hit in the "reason", we will know to stop trying to do the step
+//  over because something happened that should stop us from trying to
+//  do the step. If we are at a breakpoint and we disable the breakpoint
+//  at the current PC and do an instruction single step, knowing that
+//  we stopped due to a "trace" helps us know that we can continue
+//  running versus stopping due to a "breakpoint" (if we have two 
+//  breakpoint instruction on consucutive instructions). So the more info
+//  we can get about the reason a thread stops, the better job LLDB can
+//  do when controlling your process. A typical GDB server behavior is 
+//  to send a SIGTRAP for breakpoints _and_ also when instruction single
+//  stepping, in this case the debugger doesn't really know why we 
+//  stopped and it can make it hard for the debugger to control your
+//  program correctly. What if a real SIGTRAP was delivered to a thread
+//  while we were trying to single step? We woudn't know the difference
+//  with a standard GDB remote server and we could do the wrong thing.
+//
+// PRIORITY TO IMPLEMENT
+//  High. Having the extra information in your stop reply packets makes
+//  your debug session more reliable and informative.
+//----------------------------------------------------------------------
+ 
