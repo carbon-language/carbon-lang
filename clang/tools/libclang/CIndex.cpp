@@ -226,14 +226,13 @@ void CursorVisitor::visitFileRegion() {
   unsigned Offset = Begin.second;
   unsigned Length = End.second - Begin.second;
 
-  if (!VisitPreprocessorLast &&
-      Unit->getPreprocessor().getPreprocessingRecord())
-    visitPreprocessedEntitiesInRegion();
+  if (!VisitDeclsOnly && !VisitPreprocessorLast)
+    if (visitPreprocessedEntitiesInRegion())
+      return; // visitation break.
 
   visitDeclsFromFileRegion(File, Offset, Length);
 
-  if (VisitPreprocessorLast &&
-      Unit->getPreprocessor().getPreprocessingRecord())
+  if (!VisitDeclsOnly && VisitPreprocessorLast)
     visitPreprocessedEntitiesInRegion();
 }
 
@@ -354,6 +353,9 @@ void CursorVisitor::visitDeclsFromFileRegion(FileID File,
 }
 
 bool CursorVisitor::visitPreprocessedEntitiesInRegion() {
+  if (!AU->getPreprocessor().getPreprocessingRecord())
+    return false;
+
   PreprocessingRecord &PPRec
     = *AU->getPreprocessor().getPreprocessingRecord();
   SourceManager &SM = AU->getSourceManager();
