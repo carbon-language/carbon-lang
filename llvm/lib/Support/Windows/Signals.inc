@@ -446,7 +446,7 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
   }
 
   if (ExitOnUnhandledExceptions)
-    _exit(-3);
+    _exit(ep->ExceptionRecord->ExceptionCode);
 
   // Allow dialog box to pop up allowing choice to start debugger.
   if (OldFilter)

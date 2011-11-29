@@ -367,7 +367,17 @@ Program::Wait(const Path &path,
     return -2;
   }
 
-  return status & 0377;
+  if (!status)
+    return 0;
+
+  // Pass 10(Warning) and 11(Error) to the callee as negative value.
+  if ((status & 0xBFFF0000U) == 0x80000000U)
+    return (int)status;
+
+  if (status & 0xFF)
+    return status & 0x7FFFFFFF;
+
+  return 1;
 }
 
 bool

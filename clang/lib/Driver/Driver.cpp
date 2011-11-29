@@ -511,8 +511,14 @@ int Driver::ExecuteCompilation(const Compilation &C,
     C.CleanupFileList(C.getResultFiles(), true);
 
     // Failure result files are valid unless we crashed.
-    if (Res < 0)
+    if (Res < 0) {
       C.CleanupFileList(C.getFailureResultFiles(), true);
+#ifdef _WIN32
+      // Exit status should not be negative on Win32,
+      // unless abnormal termination.
+      Res = 1;
+#endif
+    }
   }
 
   // Print extra information about abnormal failures, if possible.
