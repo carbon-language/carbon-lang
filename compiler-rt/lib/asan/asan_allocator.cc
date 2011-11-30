@@ -119,25 +119,15 @@ static inline uint8_t SizeToSizeClass(size_t size) {
   return res;
 }
 
-static void PoisonShadow(uintptr_t mem, size_t size, uint8_t poison) {
-  CHECK(IsAligned(mem,        SHADOW_GRANULARITY));
-  CHECK(IsAligned(mem + size, SHADOW_GRANULARITY));
-  uintptr_t shadow_beg = MemToShadow(mem);
-  uintptr_t shadow_end = MemToShadow(mem + size);
-  real_memset((void*)shadow_beg, poison, shadow_end - shadow_beg);
-}
-
 // Given REDZONE bytes, we need to mark first size bytes
 // as addressable and the rest REDZONE-size bytes as unaddressable.
-static void PoisonMemoryPartialRightRedzone(uintptr_t mem, size_t size) {
+static void PoisonHeapPartialRightRedzone(uintptr_t mem, size_t size) {
   CHECK(size <= REDZONE);
   CHECK(IsAligned(mem, REDZONE));
   CHECK(IsPowerOfTwo(SHADOW_GRANULARITY));
   CHECK(IsPowerOfTwo(REDZONE));
   CHECK(REDZONE >= SHADOW_GRANULARITY);
-  uint8_t *shadow = (uint8_t*)MemToShadow(mem);
-  PoisonShadowPartialRightRedzone(shadow, size,
-                                  REDZONE, SHADOW_GRANULARITY,
+  PoisonShadowPartialRightRedzone(mem, size, REDZONE,
                                   kAsanHeapRightRedzoneMagic);
 }
 
@@ -687,8 +677,8 @@ static uint8_t *Allocate(size_t alignment, size_t size, AsanStackTrace *stack) {
                                 m->compressed_alloc_stack_size());
   PoisonShadow(addr, rounded_size, 0);
   if (size < rounded_size) {
-    PoisonMemoryPartialRightRedzone(addr + rounded_size - REDZONE,
-                                    size & (REDZONE - 1));
+    PoisonHeapPartialRightRedzone(addr + rounded_size - REDZONE,
+                                  size & (REDZONE - 1));
   }
   if (size <= FLAG_max_malloc_fill_size) {
     real_memset((void*)addr, 0, rounded_size);

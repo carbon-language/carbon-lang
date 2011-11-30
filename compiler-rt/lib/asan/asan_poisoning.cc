@@ -9,7 +9,7 @@
 //
 // This file is a part of AddressSanitizer, an address sanity checker.
 //
-// Memory poisoning that can be made by user application.
+// Shadow memory poisoning by ASan RTL and by user application.
 //===----------------------------------------------------------------------===//
 
 #include "asan_interceptors.h"
@@ -20,6 +20,33 @@
 #include <algorithm>
 
 namespace __asan {
+
+void PoisonShadow(uintptr_t addr, size_t size, uint8_t value) {
+  CHECK(AddrIsAlignedByGranularity(addr));
+  CHECK(AddrIsAlignedByGranularity(addr + size));
+  uintptr_t shadow_beg = MemToShadow(addr);
+  uintptr_t shadow_end = MemToShadow(addr + size);
+  real_memset((void*)shadow_beg, value, shadow_end - shadow_beg);
+}
+
+void PoisonShadowPartialRightRedzone(uintptr_t addr,
+                                     uintptr_t size,
+                                     uintptr_t redzone_size,
+                                     uint8_t value) {
+  CHECK(AddrIsAlignedByGranularity(addr));
+  uint8_t *shadow = (uint8_t*)MemToShadow(addr);
+  for (uintptr_t i = 0; i < redzone_size;
+       i += SHADOW_GRANULARITY, shadow++) {
+    if (i + SHADOW_GRANULARITY <= size) {
+      *shadow = 0;  // fully addressable
+    } else if (i >= size) {
+      *shadow = (SHADOW_GRANULARITY == 128) ? 0xff : value;  // unaddressable
+    } else {
+      *shadow = size - i;  // first size-i bytes are addressable
+    }
+  }
+}
+
 
 struct ShadowSegmentEndpoint {
   uint8_t *chunk;

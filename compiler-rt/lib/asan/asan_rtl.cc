@@ -469,9 +469,7 @@ static void UnpoisonStackFromHereToTop() {
   CHECK(curr_thread);
   uintptr_t top = curr_thread->stack_top();
   uintptr_t bottom = ((uintptr_t)&local_stack - kPageSize) & ~(kPageSize-1);
-  uintptr_t top_shadow = MemToShadow(top);
-  uintptr_t bot_shadow = MemToShadow(bottom);
-  real_memset((void*)bot_shadow, 0, top_shadow - bot_shadow);
+  PoisonShadow(bottom, top - bottom, 0);
 }
 
 extern "C" void WRAP(longjmp)(void *env, int val) {

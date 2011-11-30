@@ -36,27 +36,38 @@ namespace __asan {
 class AsanThread;
 struct AsanStackTrace;
 
-//  asan_rtl.cc
+// asan_rtl.cc
 void CheckFailed(const char *cond, const char *file, int line);
 void ShowStatsAndAbort();
 
-//  asan_globals.cc
+// asan_globals.cc
 bool DescribeAddrIfGlobal(uintptr_t addr);
 
-//  asan_malloc_linux.cc / asan_malloc_mac.cc
+// asan_malloc_linux.cc / asan_malloc_mac.cc
 void ReplaceSystemMalloc();
 
-//  asan_linux.cc / asan_mac.cc
+// asan_linux.cc / asan_mac.cc
 void *AsanDoesNotSupportStaticLinkage();
 void *asan_mmap(void *addr, size_t length, int prot, int flags,
                 int fd, uint64_t offset);
 ssize_t asan_write(int fd, const void *buf, size_t count);
 
-//  asan_printf.cc
+// asan_printf.cc
 void RawWrite(const char *buffer);
 int SNPrint(char *buffer, size_t length, const char *format, ...);
 void Printf(const char *format, ...);
 void Report(const char *format, ...);
+
+// asan_poisoning.cc
+// Poisons the shadow memory for "size" bytes starting from "addr".
+void PoisonShadow(uintptr_t addr, size_t size, uint8_t value);
+// Poisons the shadow memory for "redzone_size" bytes starting from
+// "addr + size".
+void PoisonShadowPartialRightRedzone(uintptr_t addr,
+                                     uintptr_t size,
+                                     uintptr_t redzone_size,
+                                     uint8_t value);
+
 
 extern size_t FLAG_quarantine_size;
 extern int    FLAG_demangle;
@@ -133,26 +144,6 @@ const int kAsanGlobalRedzoneMagic = 0xf9;
 
 static const uintptr_t kCurrentStackFrameMagic = 0x41B58AB3;
 static const uintptr_t kRetiredStackFrameMagic = 0x45E0360E;
-
-// Poison the shadow memory which corresponds to 'redzone_size' bytes
-// of the original memory, where first 'size' bytes are addressable.
-static inline void
-PoisonShadowPartialRightRedzone(unsigned char *shadow,
-                                uintptr_t size,
-                                uintptr_t redzone_size,
-                                uintptr_t shadow_granularity,
-                                unsigned char magic) {
-  for (uintptr_t i = 0; i < redzone_size;
-       i+= shadow_granularity, shadow++) {
-    if (i + shadow_granularity <= size) {
-      *shadow = 0;  // fully addressable
-    } else if (i >= size) {
-      *shadow = (shadow_granularity == 128) ? 0xff : magic;  // unaddressable
-    } else {
-      *shadow = size - i;  // first size-i bytes are addressable
-    }
-  }
-}
 
 // -------------------------- Atomic ---------------- {{{1
 static inline int AtomicInc(int *a) {

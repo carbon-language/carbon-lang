@@ -91,6 +91,10 @@ static inline bool AddrIsInShadow(uintptr_t a) {
   return AddrIsInLowShadow(a) || AddrIsInHighShadow(a);
 }
 
+static inline bool AddrIsAlignedByGranularity(uintptr_t a) {
+  return (a & (SHADOW_GRANULARITY - 1)) == 0;
+}
+
 }  // namespace __asan
 
 #endif  // ASAN_MAPPING_H

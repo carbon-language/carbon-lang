@@ -32,23 +32,21 @@ typedef std::map<uintptr_t, Global> MapOfGlobals;
 static MapOfGlobals *g_all_globals = NULL;
 
 void PoisonRedZones(const Global &g)  {
-  uintptr_t shadow = MemToShadow(g.beg);
-  size_t ShadowRZSize = kGlobalAndStackRedzone >> SHADOW_SCALE;
-  CHECK(ShadowRZSize == 1 || ShadowRZSize == 2 || ShadowRZSize == 4);
+  size_t shadow_rz_size = kGlobalAndStackRedzone >> SHADOW_SCALE;
+  CHECK(shadow_rz_size == 1 || shadow_rz_size == 2 || shadow_rz_size == 4);
   // full right redzone
-  uintptr_t right_rz2_offset = ShadowRZSize *
+  size_t g_aligned_size = kGlobalAndStackRedzone *
       ((g.size + kGlobalAndStackRedzone - 1) / kGlobalAndStackRedzone);
-  real_memset((uint8_t*)shadow + right_rz2_offset,
-              kAsanGlobalRedzoneMagic, ShadowRZSize);
+  PoisonShadow(g.beg + g_aligned_size,
+               kGlobalAndStackRedzone, kAsanGlobalRedzoneMagic);
   if ((g.size % kGlobalAndStackRedzone) != 0) {
     // partial right redzone
-    uint64_t right_rz1_offset =
-        ShadowRZSize * (g.size / kGlobalAndStackRedzone);
-    CHECK(right_rz1_offset == right_rz2_offset - ShadowRZSize);
-    PoisonShadowPartialRightRedzone((uint8_t*)(shadow + right_rz1_offset),
+    uint64_t g_aligned_down_size = kGlobalAndStackRedzone *
+        (g.size / kGlobalAndStackRedzone);
+    CHECK(g_aligned_down_size == g_aligned_size - kGlobalAndStackRedzone);
+    PoisonShadowPartialRightRedzone(g.beg + g_aligned_down_size,
                                     g.size % kGlobalAndStackRedzone,
                                     kGlobalAndStackRedzone,
-                                    SHADOW_GRANULARITY,
                                     kAsanGlobalRedzoneMagic);
   }
 }
@@ -116,6 +114,7 @@ static void RegisterGlobal(const Global *g) {
   if (FLAG_report_globals >= 2)
     Printf("Added Global: beg=%p size=%ld name=%s\n",
            g->beg, g->size, g->name);
+  CHECK(AddrIsAlignedByGranularity(g->beg));
   PoisonRedZones(*g);
   (*g_all_globals)[g->beg] = *g;
 }
