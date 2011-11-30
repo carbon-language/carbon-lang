@@ -249,8 +249,6 @@ namespace clang {
     void parseHeaderDecl();
     
   public:
-    typedef Module Module;
-    
     explicit ModuleMapParser(Lexer &L, SourceManager &SourceMgr, 
                              DiagnosticsEngine &Diags,
                              ModuleMap &Map,
