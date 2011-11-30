@@ -195,6 +195,15 @@ public:
     static lldb::clang_type_t
     GetVoidPtrType(clang::ASTContext *ast, bool is_const);
     
+    static clang::DeclContext *
+    GetTranslationUnitDecl (clang::ASTContext *ast);
+    
+    clang::DeclContext *
+    GetTranslationUnitDecl ()
+    {
+        return GetTranslationUnitDecl (getASTContext());
+    }
+    
     static lldb::clang_type_t
     CopyType(clang::ASTContext *dest_context, 
              clang::ASTContext *source_context,

@@ -233,10 +233,10 @@ class ObjCDataFormatterTestCase(TestBase):
         self.expect('frame variable dyn_test', matching=False,
                     substrs = ['Process Name:  a.out Process Id:'])
         self.expect('frame variable dyn_test -d run-target -T',
-                    substrs = ['(id, dynamic type:',
+                    substrs = ['(__NSCFString *, dynamic type:',
                                'Process Name:  a.out Process Id:'])
         self.expect('frame variable dyn_test -d run-target',
-                    substrs = ['(id)',
+                    substrs = ['(__NSCFString *)',
                                'Process Name:  a.out Process Id:'])
 
             

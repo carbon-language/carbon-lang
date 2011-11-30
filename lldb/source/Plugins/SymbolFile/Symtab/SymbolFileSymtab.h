@@ -119,12 +119,19 @@ public:
     GetPluginVersion();
 
 protected:
+    lldb_private::LazyBool  m_has_objc_symbols;
     std::vector<uint32_t>   m_source_indexes;
     std::vector<uint32_t>   m_func_indexes;
     std::vector<uint32_t>   m_code_indexes;
     std::vector<uint32_t>   m_data_indexes;
     std::vector<uint32_t>   m_addr_indexes; // Anything that needs to go into an search by address
 
+    bool
+    HasObjCSymbols ();
+    
+    lldb_private::ClangASTContext &
+    GetClangASTContext ();
+    
 private:
     DISALLOW_COPY_AND_ASSIGN (SymbolFileSymtab);
 };

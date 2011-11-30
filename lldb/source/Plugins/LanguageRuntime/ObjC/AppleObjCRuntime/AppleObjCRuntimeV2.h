@@ -96,6 +96,9 @@ public:
     virtual ObjCLanguageRuntime::ObjCISA
     GetParentClass(ObjCLanguageRuntime::ObjCISA isa);
     
+    virtual SymbolVendor *
+    GetSymbolVendor();
+    
 protected:
     
 private:
@@ -122,6 +125,8 @@ private:
     
     ISAToNameCache                      m_isa_to_name_cache;
     ISAToParentCache                    m_isa_to_parent_cache;
+    
+    std::auto_ptr<SymbolVendor>         m_symbol_vendor_ap;
     
     static const char *g_find_class_name_function_name;
     static const char *g_find_class_name_function_body;

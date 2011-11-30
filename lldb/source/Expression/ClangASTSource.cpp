@@ -17,6 +17,7 @@
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/SymbolVendor.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Target.h"
 
 using namespace clang;
@@ -460,11 +461,29 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
         SymbolContext null_sc;
         
         if (module_sp && namespace_decl)
+        {
             module_sp->FindTypes(null_sc, name, &namespace_decl, true, 1, types);
+        }
         else if(name != id_name && name != Class_name)
+        {
             m_target->GetImages().FindTypes (null_sc, name, true, 1, types);
+            
+            if (!types.GetSize())
+            {
+                lldb::ProcessSP process = m_target->GetProcessSP();
+                
+                if (process && process->GetObjCLanguageRuntime())
+                {
+                    SymbolVendor *objc_symbol_vendor = process->GetObjCLanguageRuntime()->GetSymbolVendor();
+                    
+                    objc_symbol_vendor->FindTypes(null_sc, name, NULL, true, 1, types);
+                }
+            }
+        }
         else
+        {
             break;
+        }
         
         if (types.GetSize())
         {
@@ -484,6 +503,7 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
             
             context.AddTypeDecl(copied_type);
         }
+        
     } while(0);
 }
 

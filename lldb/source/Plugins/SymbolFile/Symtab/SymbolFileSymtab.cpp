@@ -63,7 +63,8 @@ SymbolFileSymtab::SymbolFileSymtab(ObjectFile* obj_file) :
     m_func_indexes(),
     m_code_indexes(),
     m_data_indexes(),
-    m_addr_indexes()
+    m_addr_indexes(),
+    m_has_objc_symbols(eLazyBoolCalculate)
 {
 }
 
@@ -71,6 +72,27 @@ SymbolFileSymtab::~SymbolFileSymtab()
 {
 }
 
+ClangASTContext &       
+SymbolFileSymtab::GetClangASTContext ()
+{    
+    ClangASTContext &ast = m_obj_file->GetModule()->GetClangASTContext();
+    
+    return ast;
+}
+
+bool
+SymbolFileSymtab::HasObjCSymbols ()
+{
+    if (m_has_objc_symbols == eLazyBoolCalculate)
+    {
+        if (m_obj_file->GetSectionList()->FindSectionByName(ConstString("__objc_data")))
+            m_has_objc_symbols = eLazyBoolYes;
+        else
+            m_has_objc_symbols = eLazyBoolNo;
+    }
+    
+    return m_has_objc_symbols == eLazyBoolYes;
+}
 
 uint32_t
 SymbolFileSymtab::GetAbilities ()
@@ -112,6 +134,11 @@ SymbolFileSymtab::GetAbilities ()
             {
                 symtab->SortSymbolIndexesByValue(m_data_indexes, true);
                 abilities |= GlobalVariables;
+            }
+            
+            if (HasObjCSymbols())
+            {
+                abilities |= RuntimeTypes;
             }
         }
     }
@@ -352,6 +379,42 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, const lldb_p
 {
     if (!append)
         types.Clear();
+    
+    if (HasObjCSymbols())
+    {
+        std::string symbol_name("OBJC_CLASS_$_");
+        symbol_name.append(name.AsCString());
+        ConstString symbol_const_string(symbol_name.c_str());
+        
+        std::vector<uint32_t> indices;
+        
+        if (m_obj_file->GetSymtab()->FindAllSymbolsWithNameAndType(symbol_const_string, lldb::eSymbolTypeRuntime, indices) == 0)
+            return 0;
+        
+        const bool isForwardDecl = false;
+        const bool isInternal = true;
+        
+        ClangASTContext &clang_ast_ctx = GetClangASTContext();
+        
+        lldb::clang_type_t objc_object_type = clang_ast_ctx.CreateObjCClass(name.AsCString(), clang_ast_ctx.GetTranslationUnitDecl(), isForwardDecl, isInternal);
+        
+        Declaration decl;
+        
+        lldb::TypeSP type(new Type (indices[0],
+                                    this,
+                                    name,
+                                    0 /*byte_size*/,
+                                    NULL /*SymbolContextScope*/,
+                                    0 /*encoding_uid*/,
+                                    Type::eEncodingInvalid,
+                                    decl,
+                                    objc_object_type,
+                                    Type::eResolveStateForward));
+        
+        types.Insert(type);
+        
+        return 1;
+    }
 
     return 0;
 }

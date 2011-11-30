@@ -38,8 +38,8 @@
 #include "lldb/Target/Thread.h"
 
 #include "AppleObjCRuntimeV2.h"
+#include "AppleObjCSymbolVendor.h"
 #include "AppleObjCTrampolineHandler.h"
-
 
 #include <vector>
 
@@ -769,3 +769,11 @@ AppleObjCRuntimeV2::GetParentClass(ObjCLanguageRuntime::ObjCISA isa)
     return parent_isa;
 }
 
+SymbolVendor *
+AppleObjCRuntimeV2::GetSymbolVendor()
+{
+    if (!m_symbol_vendor_ap.get())
+        m_symbol_vendor_ap.reset(new AppleObjCSymbolVendor(m_process));
+    
+    return m_symbol_vendor_ap.get();
+}

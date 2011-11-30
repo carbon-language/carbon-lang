@@ -30,14 +30,15 @@ public:
         TypeAcceleratorTable                = (1 << 3),
         MacroInformation                    = (1 << 4),
         CallFrameInformation                = (1 << 5),
-        CompileUnits                        = (1 << 6),
-        LineTables                          = (1 << 7),
-        LineColumns                         = (1 << 8),
-        Functions                           = (1 << 9),
-        Blocks                              = (1 << 10),
-        GlobalVariables                     = (1 << 11),
-        LocalVariables                      = (1 << 12),
-        VariableTypes                       = (1 << 13)
+        RuntimeTypes                        = (1 << 6),
+        CompileUnits                        = (1 << 7),
+        LineTables                          = (1 << 8),
+        LineColumns                         = (1 << 9),
+        Functions                           = (1 << 10),
+        Blocks                              = (1 << 11),
+        GlobalVariables                     = (1 << 12),
+        LocalVariables                      = (1 << 13),
+        VariableTypes                       = (1 << 14),
     };
 
     static SymbolFile *

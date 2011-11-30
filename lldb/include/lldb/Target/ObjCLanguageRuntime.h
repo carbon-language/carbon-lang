@@ -87,6 +87,12 @@ public:
     virtual ObjCISA
     GetParentClass(ObjCISA isa) = 0;
     
+    virtual SymbolVendor *
+    GetSymbolVendor()
+    {
+        return NULL;
+    }
+    
     // Finds the byte offset of the child_type ivar in parent_type.  If it can't find the
     // offset, returns LLDB_INVALID_IVAR_OFFSET.
     

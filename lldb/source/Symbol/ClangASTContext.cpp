@@ -980,6 +980,12 @@ ClangASTContext::GetVoidPtrType (ASTContext *ast, bool is_const)
     return void_ptr_type.getAsOpaquePtr();
 }
 
+clang::DeclContext *
+ClangASTContext::GetTranslationUnitDecl (clang::ASTContext *ast)
+{
+    return ast->getTranslationUnitDecl();
+}
+
 clang_type_t
 ClangASTContext::CopyType (ASTContext *dst_ast, 
                            ASTContext *src_ast,
