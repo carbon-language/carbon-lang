@@ -21,7 +21,6 @@ class LoadUnloadTestCase(TestBase):
         self.line_d_function = line_number('d.c',
                                            '// Find this line number within d_dunction().')
 
-    @unittest2.expectedFailure
     def test_modules_search_paths(self):
         """Test target modules list after loading a different copy of the library libd.dylib, and verifies that it works with 'target modules search-paths add'."""
 
@@ -30,8 +29,9 @@ class LoadUnloadTestCase(TestBase):
 
         if sys.platform.startswith("darwin"):
             dylibName = 'libd.dylib'
+            dylibPath = 'DYLD_LIBRARY_PATH'
 
-        # The directory with the the dynamic library we did not link to.
+        # The directory with the dynamic library we did not link to.
         new_dir = os.path.join(os.getcwd(), "hidden")
 
         old_dylib = os.path.join(os.getcwd(), dylibName)
@@ -44,13 +44,33 @@ class LoadUnloadTestCase(TestBase):
             substrs = [old_dylib])
         self.expect("target modules list -t 3",
             patterns = ["%s-[^-]*-[^-]*" % self.getArchitecture()])
+        # Add an image search path substitution pair.
         self.runCmd("target modules search-paths add %s %s" % (os.getcwd(), new_dir))
+        # Add teardown hook to clear image-search-paths after the test.
+        # rdar://problem/10501020
+        # Uncomment the following to reproduce 10501020.
+        #self.addTearDownHook(lambda: self.runCmd("target modules search-paths clear"))
 
         self.expect("target modules search-paths list",
             substrs = [os.getcwd(), new_dir])
 
-        # Add teardown hook to clear image-search-paths after the test.
-        self.addTearDownHook(lambda: self.runCmd("target modules search-paths clear"))
+        self.expect("target modules search-paths query %s" % os.getcwd(), "Image search path successfully transformed",
+            substrs = [new_dir])
+
+        # Obliterate traces of libd from the old location.
+        os.remove(old_dylib)
+        # Inform dyld of the new path, too.
+        env_cmd_string = "settings set target.env-vars " + dylibPath + "=" + new_dir
+        if self.TraceOn():
+            print "Set environment to: ", env_cmd_string
+        self.runCmd(env_cmd_string)
+        self.runCmd("settings show target.env-vars")
+
+        remove_dyld_path_cmd = "settings remove target.env-vars " + dylibPath
+        self.addTearDownHook(lambda: self.runCmd(remove_dyld_path_cmd))
+
+        self.runCmd("run")
+
         self.expect("target modules list", "LLDB successfully locates the relocated dynamic library",
             substrs = [new_dylib])
 
