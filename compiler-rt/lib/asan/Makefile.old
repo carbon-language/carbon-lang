@@ -194,7 +194,7 @@ LIBASAN_OBJ_COMMON=$(BIN)/asan_rtl$(SUFF).o \
 	    $(BIN)/asan_thread_registry$(SUFF).o  \
 	    $(BIN)/sysinfo/sysinfo$(SUFF).o
 
-ifeq ($(OS),Darwin)
+ifeq ($(OS),darwin)
 RTL_HDR=$(RTL_HDR_COMMON) mach_override/mach_override.h asan_mac.h
 LIBASAN_OBJ=$(LIBASAN_OBJ_COMMON) \
 	    $(BIN)/asan_mac$(SUFF).o \
@@ -282,7 +282,7 @@ $(BIN)/%$(SUFF).o: %.c $(RTL_HDR) $(MAKEFILE)
 		-DASAN_USE_SYSINFO=1 \
 		$(ASAN_FLAGS)
 
-ifeq ($(OS),Darwin)
+ifeq ($(OS),darwin)
 LD_FLAGS=-framework Foundation
 else
 LD_FLAGS=
@@ -307,7 +307,7 @@ BENCHMARK_OBJECTS=\
 	     $(BIN)/asan_benchmarks_test$(SUFF).o \
 	     $(BIN)/asan_break_optimization$(SUFF).o
 
-ifeq ($(OS),Darwin)
+ifeq ($(OS),darwin)
 TEST_OBJECTS=$(TEST_OBJECTS_COMMON) \
 	     $(BIN)/asan_mac_test$(SUFF).o
 else

@@ -34,7 +34,7 @@
 // in allocateBranchIsland(). This should be ok for real-word
 // application, but slows down our tests which fork too many children.
 #ifdef __APPLE__
-#include "mach_override.h"
+#include "mach_override/mach_override.h"
 #define WRAP(x) wrap_##x
 #define WRAPPER_NAME(x) "wrap_"#x
 #define OVERRIDE_FUNCTION(oldfunc, newfunc)                             \
@@ -55,7 +55,7 @@
 void *WRAP(memcpy)(void *to, const void *from, size_t size);
 void *WRAP(memmove)(void *to, const void *from, size_t size);
 void *WRAP(memset)(void *block, int c, size_t size);
-const char *WRAP(strchr)(const char *string, int c);
+char *WRAP(strchr)(const char *string, int c);
 int WRAP(strcmp)(const char *s1, const char *s2);
 char *WRAP(strcpy)(char *to, const char *from);  // NOLINT
 char *WRAP(strdup)(const char *s);

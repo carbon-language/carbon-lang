@@ -21,7 +21,7 @@
 namespace __asan {
 
 static const size_t kNumberOfSizeClasses = 255;
-class AsanChunk;
+struct AsanChunk;
 
 class AsanChunkFifoList {
  public:
