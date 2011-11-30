@@ -1090,6 +1090,27 @@ static bool UseRelaxAll(Compilation &C, const ArgList &Args) {
     RelaxDefault);
 }
 
+/// If AddressSanitizer is enabled, add appropriate linker flags (Linux).
+/// This needs to be called before we add the C run-time (malloc, etc).
+static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
+                      ArgStringList &CmdArgs) {
+  // Add asan linker flags when linking an executable, but not a shared object.
+  if (Args.hasArg(options::OPT_shared) ||
+      !Args.hasFlag(options::OPT_faddress_sanitizer,
+                    options::OPT_fno_address_sanitizer, false))
+    return;
+  // LibAsan is "../lib/clang/linux/ArchName/libclang_rt.asan.a
+  llvm::SmallString<128> LibAsan =
+      llvm::sys::path::parent_path(StringRef(TC.getDriver().Dir));
+  llvm::sys::path::append(LibAsan, "lib", "clang", "linux", TC.getArchName());
+  llvm::sys::path::append(LibAsan, "libclang_rt.asan.a");
+  CmdArgs.push_back(Args.MakeArgString(LibAsan));
+  CmdArgs.push_back("-lpthread");
+  CmdArgs.push_back("-ldl");
+  CmdArgs.push_back("-export-dynamic");
+  TC.AddCXXStdlibLibArgs(Args, CmdArgs);
+}
+
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output,
                          const InputInfoList &Inputs,
@@ -4442,6 +4463,9 @@ void linuxtools::Link::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-Bdynamic");
     CmdArgs.push_back("-lm");
   }
+
+  // Call this before we add the C run-time.
+  addAsanRTLinux(getToolChain(), Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib)) {
     if (Args.hasArg(options::OPT_static))
