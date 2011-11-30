@@ -1065,32 +1065,63 @@ def VLD1DUPq16 : VLD1QDUP<{0,1,1,?}, "16">;
 def VLD1DUPq32 : VLD1QDUP<{1,0,1,?}, "32">;
 
 // ...with address register writeback:
-class VLD1DUPWB<bits<4> op7_4, string Dt>
-  : NLdSt<1, 0b10, 0b1100, op7_4, (outs DPR:$Vd, GPR:$wb),
-          (ins addrmode6dup:$Rn, am6offset:$Rm), IIC_VLD1dupu,
-          "vld1", Dt, "\\{$Vd[]\\}, $Rn$Rm", "$Rn.addr = $wb", []> {
-  let Inst{4} = Rn{4};
-  let DecoderMethod = "DecodeVLD1DupInstruction";
+multiclass VLD1DUPWB<bits<4> op7_4, string Dt> {
+  def _fixed : NLdSt<1, 0b10, 0b1100, op7_4,
+                     (outs VecListOneDAllLanes:$Vd, GPR:$wb),
+                     (ins addrmode6dup:$Rn), IIC_VLD1dupu,
+                     "vld1", Dt, "$Vd, $Rn!",
+                     "$Rn.addr = $wb", []> {
+    let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
+    let Inst{4} = Rn{4};
+    let DecoderMethod = "DecodeVLD1DupInstruction";
+    let AsmMatchConverter = "cvtVLDwbFixed";
+  }
+  def _register : NLdSt<1, 0b10, 0b1100, op7_4,
+                        (outs VecListOneDAllLanes:$Vd, GPR:$wb),
+                        (ins addrmode6dup:$Rn, rGPR:$Rm), IIC_VLD1dupu,
+                        "vld1", Dt, "$Vd, $Rn, $Rm",
+                        "$Rn.addr = $wb", []> {
+    let Inst{4} = Rn{4};
+    let DecoderMethod = "DecodeVLD1DupInstruction";
+    let AsmMatchConverter = "cvtVLDwbRegister";
+  }
 }
-class VLD1QDUPWB<bits<4> op7_4, string Dt>
-  : NLdSt<1, 0b10, 0b1100, op7_4, (outs DPR:$Vd, DPR:$dst2, GPR:$wb),
-          (ins addrmode6dup:$Rn, am6offset:$Rm), IIC_VLD1dupu,
-          "vld1", Dt, "\\{$Vd[], $dst2[]\\}, $Rn$Rm", "$Rn.addr = $wb", []> {
-  let Inst{4} = Rn{4};
-  let DecoderMethod = "DecodeVLD1DupInstruction";
+multiclass VLD1QDUPWB<bits<4> op7_4, string Dt> {
+  def _fixed : NLdSt<1, 0b10, 0b1100, op7_4,
+                     (outs VecListTwoDAllLanes:$Vd, GPR:$wb),
+                     (ins addrmode6dup:$Rn), IIC_VLD1dupu,
+                     "vld1", Dt, "$Vd, $Rn!",
+                     "$Rn.addr = $wb", []> {
+    let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
+    let Inst{4} = Rn{4};
+    let DecoderMethod = "DecodeVLD1DupInstruction";
+    let AsmMatchConverter = "cvtVLDwbFixed";
+  }
+  def _register : NLdSt<1, 0b10, 0b1100, op7_4,
+                        (outs VecListTwoDAllLanes:$Vd, GPR:$wb),
+                        (ins addrmode6dup:$Rn, rGPR:$Rm), IIC_VLD1dupu,
+                        "vld1", Dt, "$Vd, $Rn, $Rm",
+                        "$Rn.addr = $wb", []> {
+    let Inst{4} = Rn{4};
+    let DecoderMethod = "DecodeVLD1DupInstruction";
+    let AsmMatchConverter = "cvtVLDwbRegister";
+  }
 }
 
-def VLD1DUPd8_UPD  : VLD1DUPWB<{0,0,0,0}, "8">;
-def VLD1DUPd16_UPD : VLD1DUPWB<{0,1,0,?}, "16">;
-def VLD1DUPd32_UPD : VLD1DUPWB<{1,0,0,?}, "32">;
+defm VLD1DUPd8wb  : VLD1DUPWB<{0,0,0,0}, "8">;
+defm VLD1DUPd16wb : VLD1DUPWB<{0,1,0,?}, "16">;
+defm VLD1DUPd32wb : VLD1DUPWB<{1,0,0,?}, "32">;
 
-def VLD1DUPq8_UPD  : VLD1QDUPWB<{0,0,1,0}, "8">;
-def VLD1DUPq16_UPD : VLD1QDUPWB<{0,1,1,?}, "16">;
-def VLD1DUPq32_UPD : VLD1QDUPWB<{1,0,1,?}, "32">;
+defm VLD1DUPq8wb  : VLD1QDUPWB<{0,0,1,0}, "8">;
+defm VLD1DUPq16wb : VLD1QDUPWB<{0,1,1,?}, "16">;
+defm VLD1DUPq32wb : VLD1QDUPWB<{1,0,1,?}, "32">;
 
-def VLD1DUPq8Pseudo_UPD  : VLDQWBPseudo<IIC_VLD1dupu>;
-def VLD1DUPq16Pseudo_UPD : VLDQWBPseudo<IIC_VLD1dupu>;
-def VLD1DUPq32Pseudo_UPD : VLDQWBPseudo<IIC_VLD1dupu>;
+def VLD1DUPq8PseudoWB_fixed     : VLDQWBfixedPseudo<IIC_VLD1dupu>;
+def VLD1DUPq16PseudoWB_fixed    : VLDQWBfixedPseudo<IIC_VLD1dupu>;
+def VLD1DUPq32PseudoWB_fixed    : VLDQWBfixedPseudo<IIC_VLD1dupu>;
+def VLD1DUPq8PseudoWB_register  : VLDQWBregisterPseudo<IIC_VLD1dupu>;
+def VLD1DUPq16PseudoWB_register : VLDQWBregisterPseudo<IIC_VLD1dupu>;
+def VLD1DUPq32PseudoWB_register : VLDQWBregisterPseudo<IIC_VLD1dupu>;
 
 //   VLD2DUP  : Vector Load (single 2-element structure to all lanes)
 class VLD2DUP<bits<4> op7_4, string Dt>

@@ -2415,10 +2415,6 @@ static DecodeStatus DecodeVLD1DupInstruction(llvm::MCInst &Inst, unsigned Insn,
 
   if (!Check(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)))
     return MCDisassembler::Fail;
-  if (regs == 2) {
-    if (!Check(S, DecodeDPRRegisterClass(Inst, (Rd+1)%32, Address, Decoder)))
-      return MCDisassembler::Fail;
-  }
   if (Rm != 0xF) {
     if (!Check(S, DecodeGPRRegisterClass(Inst, Rn, Address, Decoder)))
       return MCDisassembler::Fail;
@@ -2428,12 +2424,12 @@ static DecodeStatus DecodeVLD1DupInstruction(llvm::MCInst &Inst, unsigned Insn,
     return MCDisassembler::Fail;
   Inst.addOperand(MCOperand::CreateImm(align));
 
-  if (Rm == 0xD)
-    Inst.addOperand(MCOperand::CreateReg(0));
-  else if (Rm != 0xF) {
-    if (!Check(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)))
-      return MCDisassembler::Fail;
-  }
+  // The fixed offset post-increment encodes Rm == 0xd. The no-writeback
+  // variant encodes Rm == 0xf. Anything else is a register offset post-
+  // increment and we need to add the register operand to the instruction.
+  if (Rm != 0xD && Rm != 0xF &&
+      !Check(S, DecodeGPRRegisterClass(Inst, Rm, Address, Decoder)))
+    return MCDisassembler::Fail;
 
   return S;
 }
