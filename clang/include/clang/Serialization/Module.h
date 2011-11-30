@@ -17,6 +17,7 @@
 
 #include "clang/Serialization/ASTBitCodes.h"
 #include "clang/Serialization/ContinuousRangeMap.h"
+#include "clang/Lex/ModuleMap.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SetVector.h"
@@ -200,6 +201,9 @@ public:
   /// search information.
   const char *HeaderFileFrameworkStrings;
 
+  // === Submodule information ===
+  llvm::SmallVector<ModuleMap::Module *, 2> Submodules;
+  
   // === Selectors ===
 
   /// \brief The number of selectors new to this file.

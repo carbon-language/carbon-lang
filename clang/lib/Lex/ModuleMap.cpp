@@ -177,6 +177,23 @@ ModuleMap::Module *ModuleMap::findModule(StringRef Name) {
   return 0;
 }
 
+std::pair<ModuleMap::Module *, bool> 
+ModuleMap::findOrCreateModule(StringRef Name, Module *Parent, bool IsFramework,
+                              bool IsExplicit) {
+  // Try to find an existing module with this name.
+  if (Module *Found = Parent? Parent->SubModules[Name] : Modules[Name])
+    return std::make_pair(Found, false);
+  
+  // Create a new module with this name.
+  Module *Result = new Module(Name, SourceLocation(), Parent, IsFramework, 
+                              IsExplicit);
+  if (Parent)
+    Parent->SubModules[Name] = Result;
+  else
+    Modules[Name] = Result;
+  return std::make_pair(Result, true);
+}
+
 ModuleMap::Module *
 ModuleMap::inferFrameworkModule(StringRef ModuleName, 
                                 const DirectoryEntry *FrameworkDir) {

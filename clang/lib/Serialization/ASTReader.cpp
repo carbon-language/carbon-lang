@@ -1705,6 +1705,26 @@ ASTReader::ReadASTBlock(Module &F) {
           return IgnorePCH;
         }
         break;
+
+      case SUBMODULE_BLOCK_ID:
+        switch (ReadSubmoduleBlock(F)) {
+        case Success:
+          break;
+          
+        case Failure:
+          Error("malformed submodule block in AST file");
+          return Failure;
+          
+        case IgnorePCH:
+          return IgnorePCH;            
+        }
+        break;
+
+      default:
+        if (!Stream.SkipBlock())
+          break;
+        Error("malformed block record in AST file");
+        return Failure;
       }
       continue;
     }
@@ -2798,6 +2818,110 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
   }
 
   return std::string();
+}
+
+ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(Module &F) {
+  // Enter the submodule block.
+  if (F.Stream.EnterSubBlock(SUBMODULE_BLOCK_ID)) {
+    Error("malformed submodule block record in AST file");
+    return Failure;
+  }
+
+  ModuleMap &ModMap = PP.getHeaderSearchInfo().getModuleMap();
+  ModuleMap::Module *CurrentModule = 0;
+  RecordData Record;
+  while (true) {
+    unsigned Code = F.Stream.ReadCode();
+    if (Code == llvm::bitc::END_BLOCK) {
+      if (F.Stream.ReadBlockEnd()) {
+        Error("error at end of submodule block in AST file");
+        return Failure;
+      }
+      return Success;
+    }
+    
+    if (Code == llvm::bitc::ENTER_SUBBLOCK) {
+      // No known subblocks, always skip them.
+      F.Stream.ReadSubBlockID();
+      if (F.Stream.SkipBlock()) {
+        Error("malformed block record in AST file");
+        return Failure;
+      }
+      continue;
+    }
+    
+    if (Code == llvm::bitc::DEFINE_ABBREV) {
+      F.Stream.ReadAbbrevRecord();
+      continue;
+    }
+    
+    // Read a record.
+    const char *BlobStart;
+    unsigned BlobLen;
+    Record.clear();
+    switch (F.Stream.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
+    default:  // Default behavior: ignore.
+      break;
+      
+    case SUBMODULE_DEFINITION: {
+      StringRef Name(BlobStart, BlobLen);
+      unsigned Parent = Record[0];
+      bool IsFramework = Record[1];
+      bool IsExplicit = Record[2];
+
+      ModuleMap::Module *ParentModule = 0;
+      if (Parent) {
+        if (Parent > F.Submodules.size()) {
+          Error("malformed submodule parent entry");
+          return Failure;
+        }
+        
+        ParentModule = F.Submodules[Parent - 1];
+      } 
+      
+      // Retrieve this (sub)module from the module map, creating it if
+      // necessary.
+      CurrentModule = ModMap.findOrCreateModule(Name, ParentModule, 
+                                                IsFramework, 
+                                                IsExplicit).first;
+      F.Submodules.push_back(CurrentModule);
+      break;
+    }
+        
+    case SUBMODULE_UMBRELLA: {
+      if (!CurrentModule)
+        break;
+      
+      StringRef FileName(BlobStart, BlobLen);
+      if (const FileEntry *Umbrella = PP.getFileManager().getFile(FileName)) {
+        if (!CurrentModule->UmbrellaHeader)
+          CurrentModule->UmbrellaHeader = Umbrella;
+        else if (CurrentModule->UmbrellaHeader != Umbrella) {
+          Error("mismatched umbrella headers in submodule");
+          return Failure;
+        }
+      }
+      break;
+    }
+        
+    case SUBMODULE_HEADER: {
+      if (!CurrentModule)
+        break;
+      
+      // FIXME: Be more lazy about this!
+      StringRef FileName(BlobStart, BlobLen);
+      if (const FileEntry *File = PP.getFileManager().getFile(FileName)) {
+        if (std::find(CurrentModule->Headers.begin(), 
+                      CurrentModule->Headers.end(), 
+                      File) == CurrentModule->Headers.end())
+          CurrentModule->Headers.push_back(File);
+      }
+      break;      
+    }
+    }
+  }
+
+  return Success;
 }
 
 /// \brief Parse the record that corresponds to a LangOptions data

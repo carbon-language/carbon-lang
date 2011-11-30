@@ -692,8 +692,9 @@ private:
   ASTReadResult ReadSLocEntryRecord(int ID);
   llvm::BitstreamCursor &SLocCursorForID(int ID);
   SourceLocation getImportLocation(Module *F);
+  ASTReadResult ReadSubmoduleBlock(Module &F);
   bool ParseLanguageOptions(const SmallVectorImpl<uint64_t> &Record);
-
+  
   struct RecordLocation {
     RecordLocation(Module *M, uint64_t O)
       : F(M), Offset(O) {}

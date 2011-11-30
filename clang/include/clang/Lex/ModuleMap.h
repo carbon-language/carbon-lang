@@ -162,6 +162,24 @@ public:
   /// \returns The named module, if known; otherwise, returns null.
   Module *findModule(StringRef Name);
   
+  /// \brief Find a new module or submodule, or create it if it does not already
+  /// exist.
+  ///
+  /// \param Name The name of the module to find or create.
+  ///
+  /// \param Parent The module that will act as the parent of this submodule,
+  /// or NULL to indicate that this is a top-level module.
+  ///
+  /// \param IsFramework Whether this is a framework module.
+  ///
+  /// \param IsExplicit Whether this is an explicit submodule.
+  ///
+  /// \returns The found or newly-created module, along with a boolean value
+  /// that will be true if the module is newly-created.
+  std::pair<Module *, bool> findOrCreateModule(StringRef Name, Module *Parent, 
+                                               bool IsFramework,
+                                               bool IsExplicit);
+                       
   /// \brief Infer the contents of a framework module map from the given
   /// framework directory.
   Module *inferFrameworkModule(StringRef ModuleName, 
