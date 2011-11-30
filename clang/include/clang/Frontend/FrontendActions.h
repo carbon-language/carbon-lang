@@ -94,7 +94,7 @@ public:
 };
 
 class GenerateModuleAction : public ASTFrontendAction {
-  Module *Module;
+  clang::Module *Module;
   
 protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
