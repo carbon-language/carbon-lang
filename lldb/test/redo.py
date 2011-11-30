@@ -102,6 +102,9 @@ def main():
 
     index = 1
     while index < len(sys.argv):
+        if sys.argv[index].startswith('-h'):
+            usage()
+
         if sys.argv[index].startswith('-'):
             # We should continue processing...
             pass
