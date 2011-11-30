@@ -101,6 +101,7 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
       MPM.add(Inliner);
       Inliner = 0;
     }
+    addExtensionsToPM(EP_EnabledOnOptLevel0, MPM);
     return;
   }
 
@@ -340,4 +341,3 @@ void LLVMPassManagerBuilderPopulateLTOPassManager(LLVMPassManagerBuilderRef PMB,
   PassManagerBase *LPM = unwrap(PM);
   Builder->populateLTOPassManager(*LPM, Internalize, RunInliner);
 }
-
