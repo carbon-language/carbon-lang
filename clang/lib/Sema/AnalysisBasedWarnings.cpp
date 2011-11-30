@@ -914,8 +914,14 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   }
 
   // Warning: check for unreachable code
-  if (P.enableCheckUnreachable)
-    CheckUnreachable(S, AC);
+  if (P.enableCheckUnreachable) {
+    // Only check for unreachable code on non-template instantiations.
+    // Different template instantiations can effectively change the control-flow
+    // and it is very difficult to prove that a snippet of code in a template
+    // is unreachable for all instantiations.
+    if (S.ActiveTemplateInstantiations.empty())
+      CheckUnreachable(S, AC);
+  }
 
   // Check for thread safety violations
   if (P.enableThreadSafetyAnalysis) {
