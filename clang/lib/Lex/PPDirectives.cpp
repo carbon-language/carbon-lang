@@ -1360,6 +1360,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
            "__import_module__ " + PathString.str().str() + ";");
     
     // Load the module.
+    // FIXME: Deal with __include_macros here.
     TheModuleLoader.loadModule(IncludeTok.getLocation(), Path);
     return;
   }
