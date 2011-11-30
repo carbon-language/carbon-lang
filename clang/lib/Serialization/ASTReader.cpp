@@ -4531,11 +4531,15 @@ void ASTReader::PassInterestingDeclsToConsumer() {
     Decl *D = InterestingDecls.front();
     InterestingDecls.pop_front();
 
-    if (ObjCImplDecl *ImplD = dyn_cast<ObjCImplDecl>(D))
-      PassObjCImplDeclToConsumer(ImplD, Consumer);
-    else
-      Consumer->HandleInterestingDecl(DeclGroupRef(D));
+    PassInterestingDeclToConsumer(D);
   }
+}
+
+void ASTReader::PassInterestingDeclToConsumer(Decl *D) {
+  if (ObjCImplDecl *ImplD = dyn_cast<ObjCImplDecl>(D))
+    PassObjCImplDeclToConsumer(ImplD, Consumer);
+  else
+    Consumer->HandleInterestingDecl(DeclGroupRef(D));
 }
 
 void ASTReader::StartTranslationUnit(ASTConsumer *Consumer) {
@@ -5693,33 +5697,43 @@ void ASTReader::FinishedDeserializing() {
   assert(NumCurrentElementsDeserializing &&
          "FinishedDeserializing not paired with StartedDeserializing");
   if (NumCurrentElementsDeserializing == 1) {
-    // If any identifiers with corresponding top-level declarations have
-    // been loaded, load those declarations now.
-    while (!PendingIdentifierInfos.empty()) {
-      SetGloballyVisibleDecls(PendingIdentifierInfos.front().II,
-                              PendingIdentifierInfos.front().DeclIDs, true);
-      PendingIdentifierInfos.pop_front();
-    }
+    do {
+      // If any identifiers with corresponding top-level declarations have
+      // been loaded, load those declarations now.
+      while (!PendingIdentifierInfos.empty()) {
+        SetGloballyVisibleDecls(PendingIdentifierInfos.front().II,
+                                PendingIdentifierInfos.front().DeclIDs, true);
+        PendingIdentifierInfos.pop_front();
+      }
+  
+      // Ready to load previous declarations of Decls that were delayed.
+      while (!PendingPreviousDecls.empty()) {
+        loadAndAttachPreviousDecl(PendingPreviousDecls.front().first,
+                                  PendingPreviousDecls.front().second);
+        PendingPreviousDecls.pop_front();
+      }
+  
+      for (std::vector<std::pair<ObjCInterfaceDecl *,
+                                 serialization::DeclID> >::iterator
+             I = PendingChainedObjCCategories.begin(),
+             E = PendingChainedObjCCategories.end(); I != E; ++I) {
+        loadObjCChainedCategories(I->second, I->first);
+      }
+      PendingChainedObjCCategories.clear();
+  
+      // We are not in recursive loading, so it's safe to pass the "interesting"
+      // decls to the consumer.
+      if (Consumer && !InterestingDecls.empty()) {
+        Decl *D = InterestingDecls.front();
+        InterestingDecls.pop_front();
 
-    // Ready to load previous declarations of Decls that were delayed.
-    while (!PendingPreviousDecls.empty()) {
-      loadAndAttachPreviousDecl(PendingPreviousDecls.front().first,
-                                PendingPreviousDecls.front().second);
-      PendingPreviousDecls.pop_front();
-    }
+        PassInterestingDeclToConsumer(D);
+      }
 
-    for (std::vector<std::pair<ObjCInterfaceDecl *,
-                               serialization::DeclID> >::iterator
-           I = PendingChainedObjCCategories.begin(),
-           E = PendingChainedObjCCategories.end(); I != E; ++I) {
-      loadObjCChainedCategories(I->second, I->first);
-    }
-    PendingChainedObjCCategories.clear();
-
-    // We are not in recursive loading, so it's safe to pass the "interesting"
-    // decls to the consumer.
-    if (Consumer)
-      PassInterestingDeclsToConsumer();
+    } while ((Consumer && !InterestingDecls.empty()) ||
+             !PendingIdentifierInfos.empty() ||
+             !PendingPreviousDecls.empty() ||
+             !PendingChainedObjCCategories.empty());
 
     assert(PendingForwardRefs.size() == 0 &&
            "Some forward refs did not get linked to the definition!");

@@ -738,6 +738,7 @@ private:
     getModulePreprocessedEntity(unsigned GlobalIndex);
 
   void PassInterestingDeclsToConsumer();
+  void PassInterestingDeclToConsumer(Decl *D);
 
   /// \brief Produce an error diagnostic and return true.
   ///
