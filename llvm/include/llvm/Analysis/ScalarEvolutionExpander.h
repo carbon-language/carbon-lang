@@ -244,6 +244,8 @@ namespace llvm {
                                        const Loop *L,
                                        Type *ExpandTy,
                                        Type *IntTy);
+    Value *expandIVInc(PHINode *PN, Value *StepV, const Loop *L,
+                       Type *ExpandTy, Type *IntTy, bool useSubtract);
   };
 }
 
