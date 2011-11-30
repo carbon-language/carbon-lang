@@ -138,8 +138,7 @@ def X86Punpckh : SDNode<"X86ISD::PUNPCKH", SDTShuff2Op>;
 
 def X86VPermilp  : SDNode<"X86ISD::VPERMILP", SDTShuff2OpI>;
 
-def X86VPerm2f128 : SDNode<"X86ISD::VPERM2F128", SDTShuff3OpI>;
-def X86VPerm2i128 : SDNode<"X86ISD::VPERM2I128", SDTShuff3OpI>;
+def X86VPerm2x128 : SDNode<"X86ISD::VPERM2X128", SDTShuff3OpI>;
 
 def X86VBroadcast : SDNode<"X86ISD::VBROADCAST", SDTVBroadcast>;
 

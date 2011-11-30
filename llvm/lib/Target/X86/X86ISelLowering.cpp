@@ -2848,8 +2848,7 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::UNPCKHP:
   case X86ISD::PUNPCKH:
   case X86ISD::VPERMILP:
-  case X86ISD::VPERM2F128:
-  case X86ISD::VPERM2I128:
+  case X86ISD::VPERM2X128:
     return true;
   }
   return false;
@@ -2889,8 +2888,7 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::PALIGN:
   case X86ISD::SHUFPD:
   case X86ISD::SHUFPS:
-  case X86ISD::VPERM2F128:
-  case X86ISD::VPERM2I128:
+  case X86ISD::VPERM2X128:
     return DAG.getNode(Opc, dl, VT, V1, V2,
                        DAG.getConstant(TargetMask, MVT::i8));
   }
@@ -4616,8 +4614,7 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
       DecodeVPERMILPMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(),
                         ShuffleMask);
       break;
-    case X86ISD::VPERM2F128:
-    case X86ISD::VPERM2I128:
+    case X86ISD::VPERM2X128:
       ImmN = N->getOperand(N->getNumOperands()-1);
       DecodeVPERM2F128Mask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(),
                            ShuffleMask);
@@ -6521,22 +6518,6 @@ static inline unsigned getUNPCKHOpcode(EVT VT, bool HasAVX2) {
   return 0;
 }
 
-static inline unsigned getVPERM2X128Opcode(EVT VT, bool HasAVX2) {
-  switch(VT.getSimpleVT().SimpleTy) {
-  case MVT::v32i8:
-  case MVT::v16i16:
-  case MVT::v8i32:
-  case MVT::v4i64:
-    if (HasAVX2)   return X86ISD::VPERM2I128;
-    // else use fp unit for int vperm
-  case MVT::v8f32:
-  case MVT::v4f64: return X86ISD::VPERM2F128;
-  default:
-    llvm_unreachable("Unknown type for vpermil");
-  }
-  return 0;
-}
-
 static
 SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
                                const TargetLowering &TLI,
@@ -6858,7 +6839,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   // Handle VPERM2F128/VPERM2I128 permutations
   if (isVPERM2X128Mask(M, VT, Subtarget->hasAVX()))
-    return getTargetShuffleNode(getVPERM2X128Opcode(VT, HasAVX2), dl, VT, V1,
+    return getTargetShuffleNode(X86ISD::VPERM2X128, dl, VT, V1,
                                 V2, getShuffleVPERM2X128Immediate(SVOp), DAG);
 
   // Handle VSHUFPS/DY permutations
@@ -11157,8 +11138,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PUNPCKH:            return "X86ISD::PUNPCKH";
   case X86ISD::VBROADCAST:         return "X86ISD::VBROADCAST";
   case X86ISD::VPERMILP:           return "X86ISD::VPERMILP";
-  case X86ISD::VPERM2F128:         return "X86ISD::VPERM2F128";
-  case X86ISD::VPERM2I128:         return "X86ISD::VPERM2I128";
+  case X86ISD::VPERM2X128:         return "X86ISD::VPERM2X128";
   case X86ISD::VASTART_SAVE_XMM_REGS: return "X86ISD::VASTART_SAVE_XMM_REGS";
   case X86ISD::VAARG_64:           return "X86ISD::VAARG_64";
   case X86ISD::WIN_ALLOCA:         return "X86ISD::WIN_ALLOCA";
@@ -14744,8 +14724,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::MOVSS:
   case X86ISD::MOVSD:
   case X86ISD::VPERMILP:
-  case X86ISD::VPERM2F128:
-  case X86ISD::VPERM2I128:
+  case X86ISD::VPERM2X128:
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, DCI,Subtarget);
   }
 
