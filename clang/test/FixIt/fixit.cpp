@@ -126,16 +126,6 @@ AD oopsMoreCommas() {
   return ad;
 }
 
-int extraSemi1(); // expected-error {{stray ';' in function definition}}
-{
-  return 0;
-}
-
-int extraSemi2(); // expected-error {{stray ';' in function definition}}
-try {
-} catch (...) {
-}
-
 template<class T> struct Mystery;
 template<class T> typedef Mystery<T>::type getMysteriousThing() { // \
   expected-error {{function definition declared 'typedef'}} \

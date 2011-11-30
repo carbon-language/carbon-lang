@@ -138,8 +138,6 @@ def ext_expected_semi_decl_list : ExtWarn<
   "expected ';' at end of declaration list">;
 def err_expected_member_name_or_semi : Error<
   "expected member name or ';' after declaration specifiers">;
-def err_stray_semi_function_definition : Error<
-  "stray ';' in function definition">;
 def err_function_declared_typedef : Error<
   "function definition declared 'typedef'">;
 def err_iboutletcollection_builtintype : Error<

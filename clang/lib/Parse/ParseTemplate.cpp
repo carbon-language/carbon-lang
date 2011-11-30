@@ -240,20 +240,6 @@ Parser::ParseSingleDeclarationAfterTemplate(
     return 0;
   }
 
-  // Check for a stray semicolon in a function definition.
-  if (DeclaratorInfo.isFunctionDeclarator() && Tok.is(tok::semi) &&
-      Context == Declarator::FileContext) {
-    const Token &Next = NextToken();
-    if (Next.is(tok::l_brace) || Next.is(tok::kw_try) ||
-        Next.is(tok::equal) || Next.is(tok::colon)) {
-      SourceLocation SemiLoc = ConsumeToken();
-      Diag(SemiLoc, diag::err_stray_semi_function_definition)
-        << FixItHint::CreateRemoval(SemiLoc);
-      assert(!isDeclarationAfterDeclarator() &&
-             isStartOfFunctionDefinition(DeclaratorInfo));
-    }
-  }
-
   // If we have a declaration or declarator list, handle it.
   if (isDeclarationAfterDeclarator()) {
     // Parse this declaration.

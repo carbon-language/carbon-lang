@@ -1041,28 +1041,13 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
     return DeclGroupPtrTy();
   }
 
-  // Do we have a stray semicolon in the middle of a function definition?
-  if (AllowFunctionDefinitions && D.isFunctionDeclarator() &&
-      Tok.is(tok::semi) && Context == Declarator::FileContext) {
-    const Token &Next = NextToken();
-    if (Next.is(tok::l_brace) || Next.is(tok::kw_try) ||
-        (getLang().CPlusPlus &&
-         (Next.is(tok::colon) || Next.is(tok::equal)))) {
-      // Pretend we didn't see the semicolon.
-      SourceLocation SemiLoc = ConsumeToken();
-      Diag(SemiLoc, diag::err_stray_semi_function_definition)
-        << FixItHint::CreateRemoval(SemiLoc);
-      assert(isStartOfFunctionDefinition(D) && "expected a function defn");
-    }
-  }
-
   // Check to see if we have a function *definition* which must have a body.
   if (AllowFunctionDefinitions && D.isFunctionDeclarator() &&
       // Look at the next token to make sure that this isn't a function
       // declaration.  We have to check this because __attribute__ might be the
       // start of a function definition in GCC-extended K&R C.
       !isDeclarationAfterDeclarator()) {
-
+    
     if (isStartOfFunctionDefinition(D)) {
       if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
         Diag(Tok, diag::err_function_declared_typedef);
