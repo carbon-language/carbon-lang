@@ -384,7 +384,7 @@ Disassembler::PrintInstructions
                             }
                         }
                     }
-                    else if (!(prev_sc.function == sc.function || prev_sc.symbol == sc.symbol))
+                    else if ((sc.function || sc.symbol) && (sc.function != prev_sc.function || sc.symbol != prev_sc.symbol))
                     {
                         if (prev_sc.function || prev_sc.symbol)
                             strm.EOL();
