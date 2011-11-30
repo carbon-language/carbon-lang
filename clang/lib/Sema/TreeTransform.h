@@ -6104,8 +6104,14 @@ TreeTransform<Derived>::TransformOpaqueValueExpr(OpaqueValueExpr *E) {
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformPseudoObjectExpr(PseudoObjectExpr *E) {
-  // Rebuild the syntactic form.
-  ExprResult result = getDerived().TransformExpr(E->getSyntacticForm());
+  // Rebuild the syntactic form.  The original syntactic form has
+  // opaque-value expressions in it, so strip those away and rebuild
+  // the result.  This is a really awful way of doing this, but the
+  // better solution (rebuilding the semantic expressions and
+  // rebinding OVEs as necessary) doesn't work; we'd need
+  // TreeTransform to not strip away implicit conversions.
+  Expr *newSyntacticForm = SemaRef.recreateSyntacticForm(E);
+  ExprResult result = getDerived().TransformExpr(newSyntacticForm);
   if (result.isInvalid()) return ExprError();
 
   // If that gives us a pseudo-object result back, the pseudo-object

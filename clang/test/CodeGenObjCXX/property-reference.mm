@@ -52,3 +52,45 @@ namespace test1 {
 // CHECK:      call [[A]]* @_ZN5test11AaSERKS0_(
 // CHECK-NEXT: ret void
 
+// rdar://problem/10497174
+@interface Test2
+@property int prop;
+@end
+
+// The fact that these are all non-dependent is critical.
+template <class T> void test2(Test2 *a) {
+  int x = a.prop;
+  a.prop = x;
+  a.prop += x;
+}
+template void test2<int>(Test2*);
+// CHECK: define weak_odr void @_Z5test2IiEvP5Test2(
+// CHECK: [[X:%.*]] = alloca i32,
+// CHECK:      @objc_msgSend
+// CHECK:      store i32 {{%.*}}, i32* [[X]],
+// CHECK:      load i32* [[X]],
+// CHECK:      @objc_msgSend
+// CHECK:      @objc_msgSend
+// CHECK:      load i32* [[X]],
+// CHECK-NEXT: add nsw
+// CHECK:      @objc_msgSend
+// CHECK-NEXT: ret void
+
+// Same as the previous test, but instantiation-dependent.
+template <class T> void test3(Test2 *a) {
+  int x = (sizeof(T), a).prop;
+  a.prop = (sizeof(T), x);
+  a.prop += (sizeof(T), x);
+}
+template void test3<int>(Test2*);
+// CHECK: define weak_odr void @_Z5test3IiEvP5Test2(
+// CHECK: [[X:%.*]] = alloca i32,
+// CHECK:      @objc_msgSend
+// CHECK:      store i32 {{%.*}}, i32* [[X]],
+// CHECK:      load i32* [[X]],
+// CHECK:      @objc_msgSend
+// CHECK:      @objc_msgSend
+// CHECK:      load i32* [[X]],
+// CHECK-NEXT: add nsw
+// CHECK:      @objc_msgSend
+// CHECK-NEXT: ret void

@@ -127,6 +127,7 @@ namespace clang {
   class ParmVarDecl;
   class Preprocessor;
   class PseudoDestructorTypeStorage;
+  class PseudoObjectExpr;
   class QualType;
   class StandardConversionSequence;
   class Stmt;
@@ -5803,6 +5804,7 @@ public:
                                          BinaryOperatorKind Opcode,
                                          Expr *LHS, Expr *RHS);
   ExprResult checkPseudoObjectRValue(Expr *E);
+  Expr *recreateSyntacticForm(PseudoObjectExpr *E);
 
   QualType CheckConditionalOperands( // C99 6.5.15
     ExprResult &Cond, ExprResult &LHS, ExprResult &RHS,

@@ -790,3 +790,54 @@ ExprResult Sema::checkPseudoObjectAssignment(Scope *S, SourceLocation opcLoc,
     llvm_unreachable("unknown pseudo-object kind!");
   }
 }
+
+/// Given a pseudo-object reference, rebuild it without the opaque
+/// values.  Basically, undo the behavior of rebuildAndCaptureObject.
+/// This should never operate in-place.
+static Expr *stripOpaqueValuesFromPseudoObjectRef(Sema &S, Expr *E) {
+  Expr *opaqueRef = E->IgnoreParens();
+  if (ObjCPropertyRefExpr *refExpr
+        = dyn_cast<ObjCPropertyRefExpr>(opaqueRef)) {
+    OpaqueValueExpr *baseOVE = cast<OpaqueValueExpr>(refExpr->getBase());
+    return ObjCPropertyRefRebuilder(S, baseOVE->getSourceExpr()).rebuild(E);
+  } else {
+    llvm_unreachable("unknown pseudo-object kind!");
+  }
+}
+
+/// Given a pseudo-object expression, recreate what it looks like
+/// syntactically without the attendant OpaqueValueExprs.
+///
+/// This is a hack which should be removed when TreeTransform is
+/// capable of rebuilding a tree without stripping implicit
+/// operations.
+Expr *Sema::recreateSyntacticForm(PseudoObjectExpr *E) {
+  Expr *syntax = E->getSyntacticForm();
+  if (UnaryOperator *uop = dyn_cast<UnaryOperator>(syntax)) {
+    Expr *op = stripOpaqueValuesFromPseudoObjectRef(*this, uop->getSubExpr());
+    return new (Context) UnaryOperator(op, uop->getOpcode(), uop->getType(),
+                                       uop->getValueKind(), uop->getObjectKind(),
+                                       uop->getOperatorLoc());
+  } else if (CompoundAssignOperator *cop
+               = dyn_cast<CompoundAssignOperator>(syntax)) {
+    Expr *lhs = stripOpaqueValuesFromPseudoObjectRef(*this, cop->getLHS());
+    Expr *rhs = cast<OpaqueValueExpr>(cop->getRHS())->getSourceExpr();
+    return new (Context) CompoundAssignOperator(lhs, rhs, cop->getOpcode(),
+                                                cop->getType(),
+                                                cop->getValueKind(),
+                                                cop->getObjectKind(),
+                                                cop->getComputationLHSType(),
+                                                cop->getComputationResultType(),
+                                                cop->getOperatorLoc());
+  } else if (BinaryOperator *bop = dyn_cast<BinaryOperator>(syntax)) {
+    Expr *lhs = stripOpaqueValuesFromPseudoObjectRef(*this, bop->getLHS());
+    Expr *rhs = cast<OpaqueValueExpr>(bop->getRHS())->getSourceExpr();
+    return new (Context) BinaryOperator(lhs, rhs, bop->getOpcode(),
+                                        bop->getType(), bop->getValueKind(),
+                                        bop->getObjectKind(),
+                                        bop->getOperatorLoc());
+  } else {
+    assert(syntax->hasPlaceholderType(BuiltinType::PseudoObject));
+    return stripOpaqueValuesFromPseudoObjectRef(*this, syntax);
+  }
+}
