@@ -18,43 +18,128 @@ namespace llvm {
 
   namespace LibFunc {
     enum Func {
+      /// double acos(double x);
+      acos,
+      /// long double acosl(long double x);
+      acosl,
+      /// float acosf(float x);
+      acosf,
+      /// double asin(double x);
+      asin,
+      /// long double asinl(long double x);
+      asinl,
+      /// float asinf(float x);
+      asinf,
+      /// double atan(double x);
+      atan,
+      /// long double atanl(long double x);
+      atanl,
+      /// float atanf(float x);
+      atanf,
+      /// double ceil(double x);
+      ceil,
+      /// long double ceill(long double x);
+      ceill,
+      /// float ceilf(float x);
+      ceilf,
+      /// double cos(double x);
+      cos,
+      /// long double cosl(long double x);
+      cosl,
+      /// float cosf(float x);
+      cosf,
+      /// double cosh(double x);
+      cosh,
+      /// long double coshl(long double x);
+      coshl,
+      /// float coshf(float x);
+      coshf,
+      /// double exp(double x);
+      exp,
+      /// long double expl(long double x);
+      expl,
+      /// float expf(float x);
+      expf,
+      /// double exp2(double x);
+      exp2,
+      /// long double exp2l(long double x);
+      exp2l,
+      /// float exp2f(float x);
+      exp2f,
+      /// double expm1(double x);
+      expm1,
+      /// long double expm1l(long double x);
+      expm1l,
+      /// float expm1f(float x);
+      expl1f,
+      /// double fabs(double x);
+      fabs,
+      /// long double fabsl(long double x);
+      fabsl,
+      /// float fabsf(float x);
+      fabsf,
+      /// double floor(double x);
+      floor,
+      /// long double floorl(long double x);
+      floorl,
+      /// float floorf(float x);
+      floorf,
       /// int fiprintf(FILE *stream, const char *format, ...);
       fiprintf,
-
       /// int fputs(const char *s, FILE *stream);
       fputs,
-
       /// size_t fwrite(const void *ptr, size_t size, size_t nitems,
       /// FILE *stream);
       fwrite,
-
       /// int iprintf(const char *format, ...);
       iprintf,
-
+      /// double log(double x);
+      log,
+      /// long double logl(long double x);
+      logl,
+      /// float logf(float x);
+      logf,
+      /// double log2(double x);
+      log2,
+      /// double long double log2l(long double x);
+      log2l,
+      /// float log2f(float x);
+      log2f,
+      /// double log10(double x);
+      log10,
+      /// long double log10l(long double x);
+      log10l,
+      /// float log10f(float x);
+      log10f,
+      /// double log1p(double x);
+      log1p,
+      /// long double log1pl(long double x);
+      log1pl,
+      /// float log1pf(float x);
+      log1pf,
       /// void *memcpy(void *s1, const void *s2, size_t n);
       memcpy,
-      
       /// void *memmove(void *s1, const void *s2, size_t n);
       memmove,
-      
       /// void *memset(void *b, int c, size_t len);
       memset,
-      
       /// void memset_pattern16(void *b, const void *pattern16, size_t len);
       memset_pattern16,
-      
+      /// double pow(double x, double y);
+      pow,
+      /// float powf(float x, float y);
+      powf,
+      /// long double powl(long double x, long double y);
+      powl,
       /// int siprintf(char *str, const char *format, ...);
       siprintf,
-
       /// double sqrt(double x);
       sqrt,
-
+      /// long double sqrtl(long double x);
+      sqrtl,
       /// float sqrtf(float x);
       sqrtf,
 
-      /// long double sqrtl(long double x);
-      sqrtl,
-      
       NumLibFuncs
     };
   }
