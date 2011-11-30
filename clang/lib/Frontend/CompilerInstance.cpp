@@ -1214,17 +1214,17 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
         llvm::SmallVector<StringRef, 2> Best;
         unsigned BestEditDistance = (std::numeric_limits<unsigned>::max)();
         
-        for (llvm::StringMap<ModuleMap::Module *>::iterator 
-                  I = Module->SubModules.begin(), 
-               IEnd = Module->SubModules.end();
-             I != IEnd; ++I) {
-          unsigned ED = Name.edit_distance(I->getValue()->Name,
+        for (llvm::StringMap<ModuleMap::Module *>::iterator
+                  J = Module->SubModules.begin(), 
+               JEnd = Module->SubModules.end();
+             J != JEnd; ++J) {
+          unsigned ED = Name.edit_distance(J->getValue()->Name,
                                            /*AllowReplacements=*/true,
                                            BestEditDistance);
           if (ED <= BestEditDistance) {
             if (ED < BestEditDistance)
               Best.clear();
-            Best.push_back(I->getValue()->Name);
+            Best.push_back(J->getValue()->Name);
           }
         }
         
@@ -1259,4 +1259,3 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
   LastModuleImportResult = Module;
   return Module;
 }
-
