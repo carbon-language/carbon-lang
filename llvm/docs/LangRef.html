@@ -2800,7 +2800,7 @@ second_end:
 <div>
 
 <p>LLVM supports inline assembler expressions (as opposed
-   to <a href="#moduleasm"> Module-Level Inline Assembly</a>) through the use of
+   to <a href="#moduleasm">Module-Level Inline Assembly</a>) through the use of
    a special value.  This value represents the inline assembler as a string
    (containing the instructions to emit), a list of operand constraints (stored
    as a string), a flag that indicates whether or not the inline asm
@@ -2842,23 +2842,27 @@ call void asm alignstack "eieio", ""()
 <p>If both keywords appear the '<tt>sideeffect</tt>' keyword must come
    first.</p>
 
+<!--
 <p>TODO: The format of the asm and constraints string still need to be
    documented here.  Constraints on what can be done (e.g. duplication, moving,
    etc need to be documented).  This is probably best done by reference to
    another document that covers inline asm from a holistic perspective.</p>
+  -->
 
+<!-- _______________________________________________________________________ -->
 <h4>
-<a name="inlineasm_md">Inline Asm Metadata</a>
+  <a name="inlineasm_md">Inline Asm Metadata</a>
 </h4>
 
 <div>
 
-<p>The call instructions that wrap inline asm nodes may have a "!srcloc" MDNode
-   attached to it that contains a list of constant integers.  If present, the
-  code generator will use the integer as the location cookie value when report
-   errors through the LLVMContext error reporting mechanisms.  This allows a
-   front-end to correlate backend errors that occur with inline asm back to the
-   source code that produced it.  For example:</p>
+<p>The call instructions that wrap inline asm nodes may have a
+   "<tt>!srcloc</tt>" MDNode attached to it that contains a list of constant
+   integers.  If present, the code generator will use the integer as the
+   location cookie value when report errors through the <tt>LLVMContext</tt>
+   error reporting mechanisms.  This allows a front-end to correlate backend
+   errors that occur with inline asm back to the source code that produced it.
+   For example:</p>
 
 <pre class="doc_code">
 call void asm sideeffect "something bad", ""()<b>, !srcloc !42</b>
@@ -2867,7 +2871,7 @@ call void asm sideeffect "something bad", ""()<b>, !srcloc !42</b>
 </pre>
 
 <p>It is up to the front-end to make sense of the magic numbers it places in the
-   IR.  If the MDNode contains multiple constants, the code generator will use
+   IR. If the MDNode contains multiple constants, the code generator will use
    the one that corresponds to the line of the asm that the error occurs on.</p>
 
 </div>
