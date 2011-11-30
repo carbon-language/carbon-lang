@@ -529,9 +529,7 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
 
       return ReplaceInstUsesWith(CI, In);
     }
-      
-      
-      
+
     // zext (X == 0) to i32 --> X^1      iff X has only the low bit set.
     // zext (X == 0) to i32 --> (X>>1)^1 iff X has only the 2nd bit set.
     // zext (X == 1) to i32 --> X        iff X has only the low bit set.
