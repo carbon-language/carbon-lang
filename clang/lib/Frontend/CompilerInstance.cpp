@@ -1080,99 +1080,167 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
 
   StringRef ModuleName = Path[0].first->getName();
   SourceLocation ModuleNameLoc = Path[0].second;
-  
-  // Search for a module with the given name.
+
   ModuleMap::Module *Module = 0;
-  std::string ModuleFileName;
-  const FileEntry *ModuleFile
-    = PP->getHeaderSearchInfo().lookupModule(ModuleName, Module,
-                                             &ModuleFileName);
-
-  // FIXME: Verify that the rest of the module path actually corresponds to
-  // a submodule, and pass that information through.
+  const FileEntry *ModuleFile = 0;
   
-  bool BuildingModule = false;
-  if (!ModuleFile && Module) {
-    // The module is not cached, but we have a module map from which we can
-    // build the module.
+  // If we don't already have information on this module, load the module now.
+  KnownModule &Known = KnownModules[Path[0].first];
+  if (Known.isNull()) {  
+    // Search for a module with the given name.
+    std::string ModuleFileName;
+    ModuleFile
+      = PP->getHeaderSearchInfo().lookupModule(ModuleName, Module,
+                                               &ModuleFileName);
 
-    // Check whether there is a cycle in the module graph.
-    SmallVectorImpl<std::string> &ModuleBuildPath
-      = getPreprocessorOpts().ModuleBuildPath;
-    SmallVectorImpl<std::string>::iterator Pos
-      = std::find(ModuleBuildPath.begin(), ModuleBuildPath.end(), ModuleName);
-    if (Pos != ModuleBuildPath.end()) {
-      llvm::SmallString<256> CyclePath;
-      for (; Pos != ModuleBuildPath.end(); ++Pos) {
-        CyclePath += *Pos;
-        CyclePath += " -> ";
+    bool BuildingModule = false;
+    if (!ModuleFile && Module) {
+      // The module is not cached, but we have a module map from which we can
+      // build the module.
+
+      // Check whether there is a cycle in the module graph.
+      SmallVectorImpl<std::string> &ModuleBuildPath
+        = getPreprocessorOpts().ModuleBuildPath;
+      SmallVectorImpl<std::string>::iterator Pos
+        = std::find(ModuleBuildPath.begin(), ModuleBuildPath.end(), ModuleName);
+      if (Pos != ModuleBuildPath.end()) {
+        llvm::SmallString<256> CyclePath;
+        for (; Pos != ModuleBuildPath.end(); ++Pos) {
+          CyclePath += *Pos;
+          CyclePath += " -> ";
+        }
+        CyclePath += ModuleName;
+
+        getDiagnostics().Report(ModuleNameLoc, diag::err_module_cycle)
+          << ModuleName << CyclePath;
+        return 0;
       }
-      CyclePath += ModuleName;
 
-      getDiagnostics().Report(ModuleNameLoc, diag::err_module_cycle)
-        << ModuleName << CyclePath;
+      getDiagnostics().Report(ModuleNameLoc, diag::warn_module_build)
+        << ModuleName;
+      BuildingModule = true;
+      compileModule(*this, Module, ModuleFileName);
+      ModuleFile = FileMgr->getFile(ModuleFileName);
+    }
+
+    if (!ModuleFile) {
+      getDiagnostics().Report(ModuleNameLoc,
+                              BuildingModule? diag::err_module_not_built
+                                            : diag::err_module_not_found)
+        << ModuleName
+        << SourceRange(ImportLoc, ModuleNameLoc);
       return 0;
     }
 
-    getDiagnostics().Report(ModuleNameLoc, diag::warn_module_build)
-      << ModuleName;
-    BuildingModule = true;
-    compileModule(*this, Module, ModuleFileName);
-    ModuleFile = FileMgr->getFile(ModuleFileName);
-  }
+    // If we don't already have an ASTReader, create one now.
+    if (!ModuleManager) {
+      if (!hasASTContext())
+        createASTContext();
 
-  if (!ModuleFile) {
-    getDiagnostics().Report(ModuleNameLoc,
-                            BuildingModule? diag::err_module_not_built
-                                          : diag::err_module_not_found)
-      << ModuleName
-      << SourceRange(ImportLoc, ModuleNameLoc);
-    return 0;
-  }
-
-  // If we don't already have an ASTReader, create one now.
-  if (!ModuleManager) {
-    if (!hasASTContext())
-      createASTContext();
-
-    std::string Sysroot = getHeaderSearchOpts().Sysroot;
-    const PreprocessorOptions &PPOpts = getPreprocessorOpts();
-    ModuleManager = new ASTReader(getPreprocessor(), *Context,
-                                  Sysroot.empty() ? "" : Sysroot.c_str(),
-                                  PPOpts.DisablePCHValidation,
-                                  PPOpts.DisableStatCache);
-    if (hasASTConsumer()) {
-      ModuleManager->setDeserializationListener(
-        getASTConsumer().GetASTDeserializationListener());
-      getASTContext().setASTMutationListener(
-        getASTConsumer().GetASTMutationListener());
+      std::string Sysroot = getHeaderSearchOpts().Sysroot;
+      const PreprocessorOptions &PPOpts = getPreprocessorOpts();
+      ModuleManager = new ASTReader(getPreprocessor(), *Context,
+                                    Sysroot.empty() ? "" : Sysroot.c_str(),
+                                    PPOpts.DisablePCHValidation,
+                                    PPOpts.DisableStatCache);
+      if (hasASTConsumer()) {
+        ModuleManager->setDeserializationListener(
+          getASTConsumer().GetASTDeserializationListener());
+        getASTContext().setASTMutationListener(
+          getASTConsumer().GetASTMutationListener());
+      }
+      llvm::OwningPtr<ExternalASTSource> Source;
+      Source.reset(ModuleManager);
+      getASTContext().setExternalSource(Source);
+      if (hasSema())
+        ModuleManager->InitializeSema(getSema());
+      if (hasASTConsumer())
+        ModuleManager->StartTranslationUnit(&getASTConsumer());
     }
-    llvm::OwningPtr<ExternalASTSource> Source;
-    Source.reset(ModuleManager);
-    getASTContext().setExternalSource(Source);
-    if (hasSema())
-      ModuleManager->InitializeSema(getSema());
-    if (hasASTConsumer())
-      ModuleManager->StartTranslationUnit(&getASTConsumer());
+
+    // Try to load the module we found.
+    switch (ModuleManager->ReadAST(ModuleFile->getName(),
+                                   serialization::MK_Module)) {
+    case ASTReader::Success:
+      break;
+
+    case ASTReader::IgnorePCH:
+      // FIXME: The ASTReader will already have complained, but can we showhorn
+      // that diagnostic information into a more useful form?
+      return 0;
+
+    case ASTReader::Failure:
+      // Already complained.
+      return 0;
+    }
+    
+    if (Module)
+      Known = Module;
+    else
+      Known = ModuleFile;
+  } else {
+    Module = Known.dyn_cast<ModuleMap::Module *>();
   }
-
-  // Try to load the module we found.
-  switch (ModuleManager->ReadAST(ModuleFile->getName(),
-                                 serialization::MK_Module)) {
-  case ASTReader::Success:
-    break;
-
-  case ASTReader::IgnorePCH:
-    // FIXME: The ASTReader will already have complained, but can we showhorn
-    // that diagnostic information into a more useful form?
-    return 0;
-
-  case ASTReader::Failure:
-    // Already complained.
-    return 0;
+  
+  // Verify that the rest of the module path actually corresponds to
+  // a submodule.
+  ModuleMap::Module *Sub = 0;
+  if (Module && Path.size() > 1) {
+    Sub = Module;
+    for (unsigned I = 1, N = Path.size(); I != N; ++I) {
+      StringRef Name = Path[I].first->getName();
+      llvm::StringMap<ModuleMap::Module *>::iterator Pos
+        = Sub->SubModules.find(Name);
+      
+      if (Pos == Sub->SubModules.end()) {
+        // Attempt to perform typo correction to find a module name that works.
+        llvm::SmallVector<StringRef, 2> Best;
+        unsigned BestEditDistance = (std::numeric_limits<unsigned>::max)();
+        
+        for (llvm::StringMap<ModuleMap::Module *>::iterator 
+                  I = Sub->SubModules.begin(), 
+               IEnd = Sub->SubModules.end();
+             I != IEnd; ++I) {
+          unsigned ED = Name.edit_distance(I->getValue()->Name,
+                                           /*AllowReplacements=*/true,
+                                           BestEditDistance);
+          if (ED <= BestEditDistance) {
+            if (ED < BestEditDistance)
+              Best.clear();
+            Best.push_back(I->getValue()->Name);
+          }
+        }
+        
+        // If there was a clear winner, user it.
+        if (Best.size() == 1) {
+          getDiagnostics().Report(Path[I].second, 
+                                  diag::err_no_submodule_suggest)
+            << Path[I].first << Sub->getFullModuleName() << Best[0]
+            << SourceRange(Path[0].second, Path[I-1].second)
+            << FixItHint::CreateReplacement(SourceRange(Path[I].second),
+                                            Best[0]);
+          Pos = Sub->SubModules.find(Best[0]);
+        }
+      }
+      
+      if (Pos == Sub->SubModules.end()) {
+        // No submodule by this name. Complain, and don't look for further
+        // submodules.
+        getDiagnostics().Report(Path[I].second, diag::err_no_submodule)
+          << Path[I].first << Sub->getFullModuleName()
+          << SourceRange(Path[0].second, Path[I-1].second);
+        break;
+      }
+      
+      Sub = Pos->getValue();
+    }
   }
-
-  // FIXME: The module file's FileEntry makes a poor key indeed!
-  return (ModuleKey)ModuleFile;
+  
+  // FIXME: Tell the AST reader to make the named submodule visible.
+  
+  // FIXME: The module file's FileEntry makes a poor key indeed! Once we 
+  // eliminate the need for FileEntry here, the module itself will become the
+  // key (which does make sense).
+  return Known.getOpaqueValue();
 }
 

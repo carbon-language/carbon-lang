@@ -12,7 +12,9 @@
 
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Lex/ModuleLoader.h"
+#include "clang/Lex/ModuleMap.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -34,6 +36,7 @@ class CodeCompleteConsumer;
 class DiagnosticsEngine;
 class DiagnosticConsumer;
 class ExternalASTSource;
+class FileEntry;
 class FileManager;
 class FrontendAction;
 class Preprocessor;
@@ -96,6 +99,16 @@ class CompilerInstance : public ModuleLoader {
   /// \brief Non-owning reference to the ASTReader, if one exists.
   ASTReader *ModuleManager;
 
+  /// \brief A module that we have already attempted to load, which is known
+  /// by either a file entry (FIXME: a temporary measure) or via its module
+  /// definition.
+  typedef llvm::PointerUnion<const FileEntry *, ModuleMap::Module *> 
+    KnownModule;
+  
+  /// \brief The set of top-level modules that has already been loaded,
+  /// along with the module map
+  llvm::DenseMap<const IdentifierInfo *, KnownModule> KnownModules;
+  
   /// \brief Holds information about the output file.
   ///
   /// If TempFilename is not empty we must rename it to Filename at the end.
