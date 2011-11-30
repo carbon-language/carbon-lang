@@ -133,6 +133,8 @@ public:
   void printVectorListTwo(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printVectorListThree(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printVectorListFour(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printVectorListOneAllLanes(const MCInst *MI, unsigned OpNum,
+                                  raw_ostream &O);
 };
 
 } // end namespace llvm

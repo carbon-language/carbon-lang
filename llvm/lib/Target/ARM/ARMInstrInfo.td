@@ -812,6 +812,9 @@ def addrmode6dup : Operand<i32>,
   let PrintMethod = "printAddrMode6Operand";
   let MIOperandInfo = (ops GPR:$addr, i32imm);
   let EncoderMethod = "getAddrMode6DupAddressOpValue";
+  // FIXME: This is close, but not quite right. The alignment specifier is
+  // different.
+  let ParserMatchClass = AddrMode6AsmOperand;
 }
 
 // addrmodepc := pc + reg

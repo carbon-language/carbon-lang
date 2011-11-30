@@ -120,6 +120,16 @@ def VecListTwoQ : RegisterOperand<DPR, "printVectorListTwo"> {
   let ParserMatchClass = VecListTwoQAsmOperand;
 }
 
+// Register list of one D register, with "all lanes" subscripting.
+def VecListOneDAllLanesAsmOperand : AsmOperandClass {
+  let Name = "VecListOneDAllLanes";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListOperands";
+}
+def VecListOneDAllLanes : RegisterOperand<DPR, "printVectorListOneAllLanes"> {
+  let ParserMatchClass = VecListOneDAllLanesAsmOperand;
+}
+
 //===----------------------------------------------------------------------===//
 // NEON-specific DAG Nodes.
 //===----------------------------------------------------------------------===//
@@ -1003,9 +1013,11 @@ def VLD4LNq32Pseudo_UPD : VLDQQQQLNWBPseudo<IIC_VLD4lnu>;
 
 //   VLD1DUP  : Vector Load (single element to all lanes)
 class VLD1DUP<bits<4> op7_4, string Dt, ValueType Ty, PatFrag LoadOp>
-  : NLdSt<1, 0b10, 0b1100, op7_4, (outs DPR:$Vd), (ins addrmode6dup:$Rn),
-          IIC_VLD1dup, "vld1", Dt, "\\{$Vd[]\\}, $Rn", "",
-          [(set DPR:$Vd, (Ty (NEONvdup (i32 (LoadOp addrmode6dup:$Rn)))))]> {
+  : NLdSt<1, 0b10, 0b1100, op7_4, (outs VecListOneDAllLanes:$Vd),
+          (ins addrmode6dup:$Rn),
+          IIC_VLD1dup, "vld1", Dt, "$Vd, $Rn", "",
+          [(set VecListOneDAllLanes:$Vd,
+                (Ty (NEONvdup (i32 (LoadOp addrmode6dup:$Rn)))))]> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
   let DecoderMethod = "DecodeVLD1DupInstruction";

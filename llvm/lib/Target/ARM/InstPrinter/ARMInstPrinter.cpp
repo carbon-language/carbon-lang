@@ -1029,3 +1029,10 @@ void ARMInstPrinter::printVectorListFour(const MCInst *MI, unsigned OpNum,
     << getRegisterName(MI->getOperand(OpNum).getReg() + 2) << ", "
     << getRegisterName(MI->getOperand(OpNum).getReg() + 3) << "}";
 }
+
+void ARMInstPrinter::printVectorListOneAllLanes(const MCInst *MI,
+                                                unsigned OpNum,
+                                                raw_ostream &O) {
+  O << "{" << getRegisterName(MI->getOperand(OpNum).getReg()) << "[]}";
+}
+
