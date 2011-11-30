@@ -109,6 +109,14 @@ class CompilerInstance : public ModuleLoader {
   /// along with the module map
   llvm::DenseMap<const IdentifierInfo *, KnownModule> KnownModules;
   
+  /// \brief The location of the module-import keyword for the last module
+  /// import. 
+  SourceLocation LastModuleImportLoc;
+  
+  /// \brief The result of the last module import.
+  ///
+  KnownModule LastModuleImportResult;
+  
   /// \brief Holds information about the output file.
   ///
   /// If TempFilename is not empty we must rename it to Filename at the end.

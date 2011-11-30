@@ -1070,6 +1070,12 @@ static void compileModule(CompilerInstance &ImportingInstance,
 
 ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc, 
                                        ModuleIdPath Path) {
+  // If we've already handled this import, just return the cached result.
+  // This one-element cache is important to eliminate redundant diagnostics
+  // when both the preprocessor and parser see the same import declaration.
+  if (!ImportLoc.isInvalid() && LastModuleImportLoc == ImportLoc)
+    return LastModuleImportResult.getOpaqueValue();
+  
   // Determine what file we're searching from.
   SourceManager &SourceMgr = getSourceManager();
   SourceLocation ExpandedImportLoc = SourceMgr.getExpansionLoc(ImportLoc);
@@ -1241,6 +1247,8 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
   // FIXME: The module file's FileEntry makes a poor key indeed! Once we 
   // eliminate the need for FileEntry here, the module itself will become the
   // key (which does make sense).
+  LastModuleImportLoc = ImportLoc;
+  LastModuleImportResult = Known;
   return Known.getOpaqueValue();
 }
 

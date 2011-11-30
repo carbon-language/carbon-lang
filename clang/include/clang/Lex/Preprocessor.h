@@ -167,6 +167,14 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   /// lexed, if any.
   SourceLocation ModuleImportLoc;
 
+  /// \brief The module import path that we're currently processing.
+  llvm::SmallVector<std::pair<IdentifierInfo *, SourceLocation>, 2> 
+    ModuleImportPath;
+  
+  /// \brief Whether the module import expectes an identifier next. Otherwise,
+  /// it expects a '.' or ';'.
+  bool ModuleImportExpectsIdentifier;
+  
   /// \brief The source location of the currently-active
   /// #pragma clang arc_cf_code_audited begin.
   SourceLocation PragmaARCCFCodeAuditedLoc;
