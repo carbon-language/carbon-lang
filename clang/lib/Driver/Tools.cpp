@@ -706,16 +706,23 @@ static const char* getMipsArchFromCPU(StringRef CPUName) {
   return "mips64";
 }
 
+// Check that ArchName is a known Mips architecture name.
+static bool checkMipsArchName(StringRef ArchName) {
+  return ArchName == "mips" ||
+         ArchName == "mipsel" ||
+         ArchName == "mips64" ||
+         ArchName == "mips64el";
+}
+
 // Get default target cpu.
-static const char* getMipsCPUFromArch(StringRef ArchName, const Driver &D) {
+static const char* getMipsCPUFromArch(StringRef ArchName) {
   if (ArchName == "mips" || ArchName == "mipsel")
     return "mips32";
-  else if (ArchName == "mips64" || ArchName == "mips64el")
-    return "mips64";
-  else
-    D.Diag(diag::err_drv_invalid_arch_name) << ArchName;
 
-  return 0;
+  assert((ArchName == "mips64" || ArchName == "mips64el") &&
+         "Unexpected arch name.");
+
+  return "mips64";
 }
 
 // Get default ABI.
@@ -742,7 +749,10 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
   }
   else {
     ArchName = Args.MakeArgString(getToolChain().getArchName());
-    CPUName = getMipsCPUFromArch(ArchName, D);
+    if (!checkMipsArchName(ArchName))
+      D.Diag(diag::err_drv_invalid_arch_name) << ArchName;
+    else
+      CPUName = getMipsCPUFromArch(ArchName);
   }
 
   CmdArgs.push_back("-target-cpu");
@@ -4282,6 +4292,21 @@ void linuxtools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     StringRef MArch = getToolChain().getArchName();
     if (MArch == "armv7" || MArch == "armv7a" || MArch == "armv7-a")
       CmdArgs.push_back("-mfpu=neon");
+  } else if (getToolChain().getArch() == llvm::Triple::mips ||
+             getToolChain().getArch() == llvm::Triple::mipsel ||
+             getToolChain().getArch() == llvm::Triple::mips64 ||
+             getToolChain().getArch() == llvm::Triple::mips64el) {
+    // Get Mips CPU name and pass it to 'as'.
+    const char *CPUName;
+    if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ))
+      CPUName = A->getValue(Args);
+    else
+      CPUName = getMipsCPUFromArch(getToolChain().getArchName());
+
+    if (CPUName) {
+      CmdArgs.push_back("-march");
+      CmdArgs.push_back(CPUName);
+    }
   }
 
   Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
