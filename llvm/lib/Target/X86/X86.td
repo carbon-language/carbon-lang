@@ -202,6 +202,12 @@ def : Proc<"barcelona",       [FeatureSSE3,   FeatureSSE4A,
 def : Proc<"istanbul",        [Feature3DNowA, FeatureCMPXCHG16B,
                                FeatureSSE4A]>;
 def : Proc<"shanghai",        [Feature3DNowA, FeatureCMPXCHG16B, FeatureSSE4A]>;
+// FIXME: Disabling AVX for now since it's not ready.
+def : Proc<"bdver1",          [FeatureSSE3, FeatureSSE4A, FeatureCMPXCHG16B,
+                               FeatureAES, FeatureCLMUL, FeatureFMA4]>;
+def : Proc<"bdver2",          [FeatureSSE3, FeatureSSE4A, FeatureCMPXCHG16B,
+                               FeatureAES, FeatureCLMUL, FeatureFMA4,
+                               FeatureF16C, FeatureBMI]>;
 
 def : Proc<"winchip-c6",      [FeatureMMX]>;
 def : Proc<"winchip2",        [Feature3DNow]>;
