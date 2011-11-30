@@ -182,7 +182,7 @@ bool GlobalMerge::doInitialization(Module &M) {
       continue;
 
     // Ignore fancy-aligned globals for now.
-    unsigned Alignment = I->getAlignment();
+    unsigned Alignment = TD->getPreferredAlignment(I);
     Type *Ty = I->getType()->getElementType();
     if (Alignment > TD->getABITypeAlignment(Ty))
       continue;
