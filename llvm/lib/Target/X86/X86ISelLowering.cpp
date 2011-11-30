@@ -13903,7 +13903,7 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
       X = DAG.getNode(ISD::BITCAST, DL, BlendVT, X);
       Y = DAG.getNode(ISD::BITCAST, DL, BlendVT, Y);
       Mask = DAG.getNode(ISD::BITCAST, DL, BlendVT, Mask);
-      Mask = DAG.getNode(ISD::VSELECT, DL, BlendVT, Mask, X, Y);
+      Mask = DAG.getNode(ISD::VSELECT, DL, BlendVT, Mask, Y, X);
       return DAG.getNode(ISD::BITCAST, DL, VT, Mask);
     }
   }
