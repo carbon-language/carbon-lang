@@ -168,6 +168,20 @@
 @ FIXME: vld4.32 {d17, d19, d21, d23}, [r0]! @ encoding: [0x8d,0x11,0x60,0xf4]
 
 
+	vld1.8 {d4[]}, [r1]
+	vld1.8 {d4[]}, [r1]!
+	vld1.8 {d4[]}, [r1], r3
+	vld1.8 {d4[], d5[]}, [r1]
+	vld1.8 {d4[], d5[]}, [r1]!
+	vld1.8 {d4[], d5[]}, [r1], r3
+
+@ CHECK: vld1.8	{d4[]}, [r1]            @ encoding: [0x0f,0x4c,0xa1,0xf4]
+@ CHECK: vld1.8	{d4[]}, [r1]!           @ encoding: [0x0d,0x4c,0xa1,0xf4]
+@ CHECK: vld1.8	{d4[]}, [r1], r3        @ encoding: [0x03,0x4c,0xa1,0xf4]
+@ CHECK: vld1.8	{d4[], d5[]}, [r1]      @ encoding: [0x2f,0x4c,0xa1,0xf4]
+@ CHECK: vld1.8	{d4[], d5[]}, [r1]!     @ encoding: [0x2d,0x4c,0xa1,0xf4]
+@ CHECK: vld1.8	{d4[], d5[]}, [r1], r3  @ encoding: [0x23,0x4c,0xa1,0xf4]
+
 @	vld1.8	{d16[3]}, [r0]
 @	vld1.16	{d16[2]}, [r0, :16]
 @	vld1.32	{d16[1]}, [r0, :32]
