@@ -1007,7 +1007,8 @@ public:
   ///
   /// \returns true if an error occurred (e.g., because one of the parameter
   /// types is incomplete), false otherwise.
-  bool getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl, std::string &S)
+  bool getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl, std::string &S,
+                                    bool Extended = false)
     const;
 
   /// getObjCEncodingForBlock - Return the encoded type for this block
@@ -1764,13 +1765,20 @@ private:
                                   const FieldDecl *Field,
                                   bool OutermostType = false,
                                   bool EncodingProperty = false,
-                                  bool StructField = false) const;
+                                  bool StructField = false,
+                                  bool EncodeBlockParameters = false,
+                                  bool EncodeClassNames = false) const;
 
   // Adds the encoding of the structure's members.
   void getObjCEncodingForStructureImpl(RecordDecl *RD, std::string &S,
                                        const FieldDecl *Field,
                                        bool includeVBases = true) const;
- 
+
+  // Adds the encoding of a method parameter or return type.
+  void getObjCEncodingForMethodParameter(Decl::ObjCDeclQualifier QT,
+                                         QualType T, std::string& S,
+                                         bool Extended) const;
+
   const ASTRecordLayout &
   getObjCLayout(const ObjCInterfaceDecl *D,
                 const ObjCImplementationDecl *Impl) const;
