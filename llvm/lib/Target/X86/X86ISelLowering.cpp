@@ -14329,7 +14329,9 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool isCommutative) {
     return false;
 
   EVT VT = LHS.getValueType();
-  unsigned N = VT.getVectorNumElements();
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned NumLanes = VT.getSizeInBits()/128;
+  unsigned NumLaneElts = NumElts / NumLanes;
 
   // View LHS in the form
   //   LHS = VECTOR_SHUFFLE A, B, LMask
@@ -14338,7 +14340,7 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool isCommutative) {
   // NOTE: in what follows a default initialized SDValue represents an UNDEF of
   // type VT.
   SDValue A, B;
-  SmallVector<int, 8> LMask(N);
+  SmallVector<int, 16> LMask(NumElts);
   if (LHS.getOpcode() == ISD::VECTOR_SHUFFLE) {
     if (LHS.getOperand(0).getOpcode() != ISD::UNDEF)
       A = LHS.getOperand(0);
@@ -14348,14 +14350,14 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool isCommutative) {
   } else {
     if (LHS.getOpcode() != ISD::UNDEF)
       A = LHS;
-    for (unsigned i = 0; i != N; ++i)
+    for (unsigned i = 0; i != NumElts; ++i)
       LMask[i] = i;
   }
 
   // Likewise, view RHS in the form
   //   RHS = VECTOR_SHUFFLE C, D, RMask
   SDValue C, D;
-  SmallVector<int, 8> RMask(N);
+  SmallVector<int, 16> RMask(NumElts);
   if (RHS.getOpcode() == ISD::VECTOR_SHUFFLE) {
     if (RHS.getOperand(0).getOpcode() != ISD::UNDEF)
       C = RHS.getOperand(0);
@@ -14365,7 +14367,7 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool isCommutative) {
   } else {
     if (RHS.getOpcode() != ISD::UNDEF)
       C = RHS;
-    for (unsigned i = 0; i != N; ++i)
+    for (unsigned i = 0; i != NumElts; ++i)
       RMask[i] = i;
   }
 
@@ -14380,31 +14382,52 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool isCommutative) {
   // If A and B occur in reverse order in RHS, then "swap" them (which means
   // rewriting the mask).
   if (A != C)
-    for (unsigned i = 0; i != N; ++i) {
+    for (unsigned i = 0; i != NumElts; ++i) {
       unsigned Idx = RMask[i];
-      if (Idx < N)
-        RMask[i] += N;
-      else if (Idx < 2*N)
-        RMask[i] -= N;
+      if (Idx < NumElts)
+        RMask[i] += NumElts;
+      else if (Idx < 2*NumElts)
+        RMask[i] -= NumElts;
     }
 
   // At this point LHS and RHS are equivalent to
   //   LHS = VECTOR_SHUFFLE A, B, LMask
   //   RHS = VECTOR_SHUFFLE A, B, RMask
   // Check that the masks correspond to performing a horizontal operation.
-  for (unsigned i = 0; i != N; ++i) {
-    unsigned LIdx = LMask[i], RIdx = RMask[i];
+  for (unsigned l = 0; l != NumLanes; ++l) {
+    unsigned LaneStart = l*NumLaneElts;
+    for (unsigned i = 0; i != NumLaneElts/2; ++i) {
+      unsigned LIdx = LMask[i+LaneStart];
+      unsigned RIdx = RMask[i+LaneStart];
 
-    // Ignore any UNDEF components.
-    if (LIdx >= 2*N || RIdx >= 2*N || (!A.getNode() && (LIdx < N || RIdx < N))
-        || (!B.getNode() && (LIdx >= N || RIdx >= N)))
-      continue;
+      // Ignore any UNDEF components.
+      if (LIdx >= 2*NumElts || RIdx >= 2*NumElts ||
+          (!A.getNode() && (LIdx < NumElts || RIdx < NumElts)) ||
+          (!B.getNode() && (LIdx >= NumElts || RIdx >= NumElts)))
+        continue;
 
-    // Check that successive elements are being operated on.  If not, this is
-    // not a horizontal operation.
-    if (!(LIdx == 2*i && RIdx == 2*i + 1) &&
-        !(isCommutative && LIdx == 2*i + 1 && RIdx == 2*i))
-      return false;
+      // Check that successive elements are being operated on.  If not, this is
+      // not a horizontal operation.
+      if (!(LIdx == 2*i + LaneStart && RIdx == 2*i + LaneStart + 1) &&
+          !(isCommutative && LIdx == 2*i + LaneStart + 1 && RIdx == 2*i + LaneStart))
+        return false;
+    }
+    for (unsigned i = 0; i != NumLaneElts/2; ++i) {
+      unsigned LIdx = LMask[i+(NumLaneElts/2)+LaneStart];
+      unsigned RIdx = RMask[i+(NumLaneElts/2)+LaneStart];
+
+      // Ignore any UNDEF components.
+      if (LIdx >= 2*NumElts || RIdx >= 2*NumElts ||
+          (!A.getNode() && (LIdx < NumElts || RIdx < NumElts)) ||
+          (!B.getNode() && (LIdx >= NumElts || RIdx >= NumElts)))
+        continue;
+
+      // Check that successive elements are being operated on.  If not, this is
+      // not a horizontal operation.
+      if (!(LIdx == 2*i + LaneStart + NumElts && RIdx == 2*i + LaneStart + NumElts + 1) &&
+          !(isCommutative && LIdx == 2*i + LaneStart + NumElts + 1 && RIdx == 2*i + LaneStart + NumElts))
+        return false;
+    }
   }
 
   LHS = A.getNode() ? A : B; // If A is 'UNDEF', use B for it.
@@ -14638,7 +14661,8 @@ static SDValue PerformAddCombine(SDNode *N, SelectionDAG &DAG,
   SDValue Op1 = N->getOperand(1);
 
   // Try to synthesize horizontal adds from adds of shuffles.
-  if ((Subtarget->hasSSSE3orAVX()) && (VT == MVT::v8i16 || VT == MVT::v4i32) &&
+  if (((Subtarget->hasSSSE3orAVX() && (VT == MVT::v8i16 || VT == MVT::v4i32)) ||
+       (Subtarget->hasAVX2() && (VT == MVT::v16i16 || MVT::v8i32))) &&
       isHorizontalBinOp(Op0, Op1, true))
     return DAG.getNode(X86ISD::HADD, N->getDebugLoc(), VT, Op0, Op1);
 
@@ -14670,8 +14694,9 @@ static SDValue PerformSubCombine(SDNode *N, SelectionDAG &DAG,
 
   // Try to synthesize horizontal adds from adds of shuffles.
   EVT VT = N->getValueType(0);
-  if ((Subtarget->hasSSSE3orAVX()) && (VT == MVT::v8i16 || VT == MVT::v4i32) &&
-      isHorizontalBinOp(Op0, Op1, false))
+  if (((Subtarget->hasSSSE3orAVX() && (VT == MVT::v8i16 || VT == MVT::v4i32)) ||
+       (Subtarget->hasAVX2() && (VT == MVT::v16i16 || VT == MVT::v8i32))) &&
+      isHorizontalBinOp(Op0, Op1, true))
     return DAG.getNode(X86ISD::HSUB, N->getDebugLoc(), VT, Op0, Op1);
 
   return OptimizeConditionalInDecrement(N, DAG);
