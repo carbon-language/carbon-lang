@@ -924,7 +924,7 @@ class PrecompilePreambleConsumer : public PCHGenerator {
 public:
   PrecompilePreambleConsumer(ASTUnit &Unit, const Preprocessor &PP, 
                              StringRef isysroot, raw_ostream *Out)
-    : PCHGenerator(PP, "", /*IsModule=*/false, isysroot, Out), Unit(Unit),
+    : PCHGenerator(PP, "", 0, isysroot, Out), Unit(Unit),
       Hash(Unit.getCurrentTopLevelHashValue()) {
     Hash = 0;
   }
@@ -2423,7 +2423,7 @@ bool ASTUnit::serialize(raw_ostream &OS) {
   llvm::BitstreamWriter Stream(Buffer);
   ASTWriter Writer(Stream);
   // FIXME: Handle modules
-  Writer.WriteAST(getSema(), 0, std::string(), /*IsModule=*/false, "");
+  Writer.WriteAST(getSema(), 0, std::string(), 0, "");
   
   // Write the generated bitstream to "Out".
   if (!Buffer.empty())

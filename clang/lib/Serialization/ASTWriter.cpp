@@ -2791,7 +2791,7 @@ ASTWriter::~ASTWriter() {
 
 void ASTWriter::WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                          const std::string &OutputFile,
-                         bool IsModule, StringRef isysroot) {
+                         ModuleMap::Module *WritingModule, StringRef isysroot) {
   WritingAST = true;
   
   // Emit the file header.
@@ -2803,7 +2803,7 @@ void ASTWriter::WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteBlockInfoBlock();
 
   Context = &SemaRef.Context;
-  WriteASTCore(SemaRef, StatCalls, isysroot, OutputFile, IsModule);
+  WriteASTCore(SemaRef, StatCalls, isysroot, OutputFile, WritingModule);
   Context = 0;
   
   WritingAST = false;
@@ -2820,7 +2820,8 @@ static void AddLazyVectorDecls(ASTWriter &Writer, Vector &Vec,
 
 void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                              StringRef isysroot,
-                             const std::string &OutputFile, bool IsModule) {
+                             const std::string &OutputFile, 
+                             ModuleMap::Module *WritingModule) {
   using namespace llvm;
 
   ASTContext &Context = SemaRef.Context;
@@ -3086,11 +3087,11 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                               Buffer.data(), Buffer.size());
   }
 
-  WritePreprocessor(PP, IsModule);
+  WritePreprocessor(PP, WritingModule != 0);
   WriteHeaderSearch(PP.getHeaderSearchInfo(), isysroot);
   WriteSelectors(SemaRef);
   WriteReferencedSelectorsPool(SemaRef);
-  WriteIdentifierTable(PP, SemaRef.IdResolver, IsModule);
+  WriteIdentifierTable(PP, SemaRef.IdResolver, WritingModule != 0);
   WriteFPPragmaOptions(SemaRef.getFPOptions());
   WriteOpenCLExtensions(SemaRef);
 

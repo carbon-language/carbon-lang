@@ -86,8 +86,7 @@ ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
 
   if (!CI.getFrontendOpts().RelocatablePCH)
     Sysroot.clear();
-  return new PCHGenerator(CI.getPreprocessor(), OutputFile, /*Module=*/false, 
-                          Sysroot, OS);
+  return new PCHGenerator(CI.getPreprocessor(), OutputFile, 0, Sysroot, OS);
 }
 
 bool GeneratePCHAction::ComputeASTConsumerArguments(CompilerInstance &CI,
@@ -122,7 +121,7 @@ ASTConsumer *GenerateModuleAction::CreateASTConsumer(CompilerInstance &CI,
   if (ComputeASTConsumerArguments(CI, InFile, Sysroot, OutputFile, OS))
     return 0;
   
-  return new PCHGenerator(CI.getPreprocessor(), OutputFile, /*MakeModule=*/true, 
+  return new PCHGenerator(CI.getPreprocessor(), OutputFile, Module, 
                           Sysroot, OS);
 }
 
@@ -184,8 +183,7 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
   }
   
   // Dig out the module definition.
-  ModuleMap::Module *Module = HS.getModule(CI.getLangOpts().CurrentModule,
-                                           /*AllowSearch=*/false);
+  Module = HS.getModule(CI.getLangOpts().CurrentModule, /*AllowSearch=*/false);
   if (!Module) {
     CI.getDiagnostics().Report(diag::err_missing_module)
       << CI.getLangOpts().CurrentModule << Filename;
