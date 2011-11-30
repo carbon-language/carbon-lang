@@ -68,12 +68,8 @@ StringRef ModuleMap::Module::getTopLevelModuleName() const {
   return Top->Name;
 }
 
-static void indent(llvm::raw_ostream &OS, unsigned Spaces) {
-  OS << std::string(Spaces, ' ');
-}
-
 void ModuleMap::Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
-  indent(OS, Indent);
+  OS.indent(Indent);
   if (IsFramework)
     OS << "framework ";
   if (IsExplicit)
@@ -81,14 +77,14 @@ void ModuleMap::Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
   OS << "module " << Name << " {\n";
   
   if (UmbrellaHeader) {
-    indent(OS, Indent + 2);
+    OS.indent(Indent + 2);
     OS << "umbrella \"";
     OS.write_escaped(UmbrellaHeader->getName());
     OS << "\"\n";
   }
   
   for (unsigned I = 0, N = Headers.size(); I != N; ++I) {
-    indent(OS, Indent + 2);
+    OS.indent(Indent + 2);
     OS << "header \"";
     OS.write_escaped(Headers[I]->getName());
     OS << "\"\n";
@@ -99,7 +95,7 @@ void ModuleMap::Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
        MI != MIEnd; ++MI)
     MI->getValue()->print(OS, Indent + 2);
   
-  indent(OS, Indent);
+  OS.indent(Indent);
   OS << "}\n";
 }
 
