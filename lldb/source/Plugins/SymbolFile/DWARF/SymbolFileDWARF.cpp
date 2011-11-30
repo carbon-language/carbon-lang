@@ -4156,6 +4156,24 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         tag_decl_kind = clang::TTK_Class;
                         default_accessibility = eAccessPrivate;
                     }
+                    
+                    if (byte_size_valid && byte_size == 0 && type_name_cstr &&
+                        die->HasChildren() == false && 
+                        sc.comp_unit->GetLanguage() == eLanguageTypeObjC)
+                    {
+                        // Work around an issue with clang at the moment where
+                        // forward declarations for objective C classes are emitted
+                        // as:
+                        //  DW_TAG_structure_type [2]  
+                        //  DW_AT_name( "ForwardObjcClass" )
+                        //  DW_AT_byte_size( 0x00 )
+                        //  DW_AT_decl_file( "..." )
+                        //  DW_AT_decl_line( 1 )
+                        //
+                        // Note that there is no DW_AT_declaration and there are
+                        // no children, and the byte size is zero.
+                        is_forward_declaration = true;
+                    }
 
                     bool look_for_complete_objc_type = false;
                     if (class_language == eLanguageTypeObjC)
