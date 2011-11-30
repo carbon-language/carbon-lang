@@ -22,6 +22,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -1208,6 +1209,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   llvm::SmallString<128> FilenameBuffer;
   StringRef Filename;
   SourceLocation End;
+  SourceLocation CharEnd; // the end of this directive, in characters
   
   switch (FilenameTok.getKind()) {
   case tok::eod:
@@ -1218,6 +1220,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   case tok::string_literal:
     Filename = getSpelling(FilenameTok, FilenameBuffer);
     End = FilenameTok.getLocation();
+    CharEnd = End.getLocWithOffset(Filename.size());
     break;
 
   case tok::less:
@@ -1227,6 +1230,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     if (ConcatenateIncludeName(FilenameBuffer, End))
       return;   // Found <eod> but no ">"?  Diagnostic already emitted.
     Filename = FilenameBuffer.str();
+    CharEnd = getLocForEndOfToken(End);
     break;
   default:
     Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
@@ -1288,6 +1292,44 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
                                     FilenameTok.getLocation()));
     std::reverse(Path.begin(), Path.end());
 
+    // Warn that we're replacing the include/import with a module import.
+    llvm::SmallString<128> PathString;
+    for (unsigned I = 0, N = Path.size(); I != N; ++I) {
+      if (I)
+        PathString += '.';
+      PathString += Path[I].first->getName();
+    }
+    int IncludeKind = 0;
+    
+    switch (IncludeTok.getIdentifierInfo()->getPPKeywordID()) {
+    case tok::pp_include:
+      IncludeKind = 0;
+      break;
+      
+    case tok::pp_import:
+      IncludeKind = 1;
+      break;        
+        
+      case tok::pp_include_next:
+        IncludeKind = 2;
+        break;
+        
+    case tok::pp___include_macros:
+      IncludeKind = 3;
+      break;
+        
+    default:
+      llvm_unreachable("unknown include directive kind");
+      break;
+    }
+
+    CharSourceRange ReplaceRange(SourceRange(HashLoc, CharEnd), 
+                                 /*IsTokenRange=*/false);
+    Diag(HashLoc, diag::warn_auto_module_import)
+      << IncludeKind << PathString 
+      << FixItHint::CreateReplacement(ReplaceRange,
+           "__import_module__ " + PathString.str().str() + ";");
+    
     // Load the module.
     TheModuleLoader.loadModule(IncludeTok.getLocation(), Path);
     return;

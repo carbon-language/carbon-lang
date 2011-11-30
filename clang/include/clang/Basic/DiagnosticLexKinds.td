@@ -400,4 +400,8 @@ def err_mmap_umbrella_header_submodule : Error<
 def err_mmap_umbrella_clash : Error<
   "umbrella header for module '%0' already covers this directory">;
 
+def warn_auto_module_import : Warning<
+  "treating #%select{include|import|include_next|__include_macros}0 as an "
+  "import of module '%1'">, InGroup<AutoImport>, DefaultIgnore;
+
 }
