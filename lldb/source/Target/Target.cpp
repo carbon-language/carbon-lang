@@ -1335,10 +1335,10 @@ Target::ImageSearchPathsChanged
 }
 
 ClangASTContext *
-Target::GetScratchClangASTContext()
+Target::GetScratchClangASTContext(bool create_on_demand)
 {
     // Now see if we know the target triple, and if so, create our scratch AST context:
-    if (m_scratch_ast_context_ap.get() == NULL && m_arch.IsValid())
+    if (m_scratch_ast_context_ap.get() == NULL && m_arch.IsValid() && create_on_demand)
     {
         m_scratch_ast_context_ap.reset (new ClangASTContext(m_arch.GetTriple().str().c_str()));
         m_scratch_ast_source_ap.reset (new ClangASTSource(GetSP()));

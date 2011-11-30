@@ -27,7 +27,9 @@ ClangASTSource::~ClangASTSource()
 {
     m_ast_importer->ForgetDestination(m_ast_context);
     
-    ClangASTContext *scratch_clang_ast_context = m_target->GetScratchClangASTContext();
+    // We are in the process of destruction, don't create clang ast context on demand
+    // by passing false to Target::GetScratchClangASTContext(create_on_demand).
+    ClangASTContext *scratch_clang_ast_context = m_target->GetScratchClangASTContext(false);
     
     if (!scratch_clang_ast_context)
         return;

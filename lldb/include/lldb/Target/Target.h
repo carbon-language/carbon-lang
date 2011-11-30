@@ -799,7 +799,7 @@ public:
     GetImageSearchPathList ();
     
     ClangASTContext *
-    GetScratchClangASTContext();
+    GetScratchClangASTContext(bool create_on_demand=true);
     
     ClangASTImporter *
     GetClangASTImporter();

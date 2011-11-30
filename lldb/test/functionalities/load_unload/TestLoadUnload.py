@@ -49,7 +49,7 @@ class LoadUnloadTestCase(TestBase):
         # Add teardown hook to clear image-search-paths after the test.
         # rdar://problem/10501020
         # Uncomment the following to reproduce 10501020.
-        #self.addTearDownHook(lambda: self.runCmd("target modules search-paths clear"))
+        self.addTearDownHook(lambda: self.runCmd("target modules search-paths clear"))
 
         self.expect("target modules search-paths list",
             substrs = [os.getcwd(), new_dir])
