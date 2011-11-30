@@ -12,12 +12,14 @@
 
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Lex/ModuleLoader.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <cassert>
 #include <list>
 #include <string>
+#include <utility>
 
 namespace llvm {
 class raw_fd_ostream;
@@ -624,9 +626,7 @@ public:
 
   /// }
   
-  virtual ModuleKey loadModule(SourceLocation ImportLoc, 
-                               IdentifierInfo &ModuleName,
-                               SourceLocation ModuleNameLoc);
+  virtual ModuleKey loadModule(SourceLocation ImportLoc, ModuleIdPath Path);
 };
 
 } // end namespace clang

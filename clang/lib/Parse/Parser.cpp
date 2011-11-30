@@ -1570,16 +1570,29 @@ Parser::DeclGroupPtrTy Parser::ParseModuleImport() {
          "Improper start to module import");
   SourceLocation ImportLoc = ConsumeToken();
   
-  // Parse the module name.
-  if (!Tok.is(tok::identifier)) {
-    Diag(Tok, diag::err_module_expected_ident);
-    SkipUntil(tok::semi);
-    return DeclGroupPtrTy();
-  }
+  llvm::SmallVector<std::pair<IdentifierInfo *, SourceLocation>, 2> Path;
   
-  IdentifierInfo &ModuleName = *Tok.getIdentifierInfo();
-  SourceLocation ModuleNameLoc = ConsumeToken();
-  DeclResult Import = Actions.ActOnModuleImport(ImportLoc, ModuleName, ModuleNameLoc);
+  // Parse the module path.
+  do {
+    if (!Tok.is(tok::identifier)) {
+      Diag(Tok, diag::err_module_expected_ident);
+      SkipUntil(tok::semi);
+      return DeclGroupPtrTy();
+    }
+    
+    // Record this part of the module path.
+    Path.push_back(std::make_pair(Tok.getIdentifierInfo(), Tok.getLocation()));
+    ConsumeToken();
+    
+    if (Tok.is(tok::period)) {
+      ConsumeToken();
+      continue;
+    }
+    
+    break;
+  } while (true);
+  
+  DeclResult Import = Actions.ActOnModuleImport(ImportLoc, Path);
   ExpectAndConsumeSemi(diag::err_module_expected_semi);
   if (Import.isInvalid())
     return DeclGroupPtrTy();

@@ -781,9 +781,7 @@ public:
   /// \returns True if an error occurred, false otherwise.
   bool serialize(raw_ostream &OS);
   
-  virtual ModuleKey loadModule(SourceLocation ImportLoc, 
-                               IdentifierInfo &ModuleName,
-                               SourceLocation ModuleNameLoc) {
+  virtual ModuleKey loadModule(SourceLocation ImportLoc, ModuleIdPath Path) {
     // ASTUnit doesn't know how to load modules (not that this matters).
     return 0;
   }

@@ -575,9 +575,11 @@ void Preprocessor::LexAfterModuleImport(Token &Result) {
     return;
   
   // Load the module.
-  (void)TheModuleLoader.loadModule(ModuleImportLoc,
-                                   *Result.getIdentifierInfo(), 
-                                   Result.getLocation());
+  llvm::SmallVector<std::pair<IdentifierInfo *, SourceLocation>, 2> Path;
+  Path.push_back(std::make_pair(Result.getIdentifierInfo(), 
+                                Result.getLocation()));
+  
+  (void)TheModuleLoader.loadModule(ModuleImportLoc, Path);
 }
 
 void Preprocessor::AddCommentHandler(CommentHandler *Handler) {

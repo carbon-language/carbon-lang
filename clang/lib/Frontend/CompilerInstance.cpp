@@ -1068,9 +1068,8 @@ static void compileModule(CompilerInstance &ImportingInstance,
     llvm::sys::Path(TempModuleMapFileName).eraseFromDisk();
 }
 
-ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
-                                       IdentifierInfo &ModuleName,
-                                       SourceLocation ModuleNameLoc) {
+ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc, 
+                                       ModuleIdPath Path) {
   // Determine what file we're searching from.
   SourceManager &SourceMgr = getSourceManager();
   SourceLocation ExpandedImportLoc = SourceMgr.getExpansionLoc(ImportLoc);
@@ -1079,13 +1078,19 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
   if (!CurFile)
     CurFile = SourceMgr.getFileEntryForID(SourceMgr.getMainFileID());
 
+  StringRef ModuleName = Path[0].first->getName();
+  SourceLocation ModuleNameLoc = Path[0].second;
+  
   // Search for a module with the given name.
   ModuleMap::Module *Module = 0;
   std::string ModuleFileName;
   const FileEntry *ModuleFile
-    = PP->getHeaderSearchInfo().lookupModule(ModuleName.getName(), Module,
+    = PP->getHeaderSearchInfo().lookupModule(ModuleName, Module,
                                              &ModuleFileName);
 
+  // FIXME: Verify that the rest of the module path actually corresponds to
+  // a submodule, and pass that information through.
+  
   bool BuildingModule = false;
   if (!ModuleFile && Module) {
     // The module is not cached, but we have a module map from which we can
@@ -1095,23 +1100,22 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
     SmallVectorImpl<std::string> &ModuleBuildPath
       = getPreprocessorOpts().ModuleBuildPath;
     SmallVectorImpl<std::string>::iterator Pos
-      = std::find(ModuleBuildPath.begin(), ModuleBuildPath.end(),
-                  ModuleName.getName());
+      = std::find(ModuleBuildPath.begin(), ModuleBuildPath.end(), ModuleName);
     if (Pos != ModuleBuildPath.end()) {
       llvm::SmallString<256> CyclePath;
       for (; Pos != ModuleBuildPath.end(); ++Pos) {
         CyclePath += *Pos;
         CyclePath += " -> ";
       }
-      CyclePath += ModuleName.getName();
+      CyclePath += ModuleName;
 
       getDiagnostics().Report(ModuleNameLoc, diag::err_module_cycle)
-        << ModuleName.getName() << CyclePath;
+        << ModuleName << CyclePath;
       return 0;
     }
 
     getDiagnostics().Report(ModuleNameLoc, diag::warn_module_build)
-      << ModuleName.getName();
+      << ModuleName;
     BuildingModule = true;
     compileModule(*this, Module, ModuleFileName);
     ModuleFile = FileMgr->getFile(ModuleFileName);
@@ -1121,7 +1125,7 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
     getDiagnostics().Report(ModuleNameLoc,
                             BuildingModule? diag::err_module_not_built
                                           : diag::err_module_not_found)
-      << ModuleName.getName()
+      << ModuleName
       << SourceRange(ImportLoc, ModuleNameLoc);
     return 0;
   }

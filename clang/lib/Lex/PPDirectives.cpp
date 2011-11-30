@@ -1279,13 +1279,17 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   // If we are supposed to import a module rather than including the header,
   // do so now.
   if (SuggestedModule) {
-    // FIXME: Actually load the submodule that we were given.
-    while (SuggestedModule->Parent)
-      SuggestedModule = SuggestedModule->Parent;
-    
-    TheModuleLoader.loadModule(IncludeTok.getLocation(),
-                               Identifiers.get(SuggestedModule->Name),
-                               FilenameTok.getLocation());
+    // Compute the module access path corresponding to this module.
+    // FIXME: Should we have a second loadModule() overload to avoid this
+    // extra lookup step?
+    llvm::SmallVector<std::pair<IdentifierInfo *, SourceLocation>, 2> Path;
+    for (ModuleMap::Module *Mod = SuggestedModule; Mod; Mod = Mod->Parent)
+      Path.push_back(std::make_pair(getIdentifierInfo(Mod->Name),
+                                    FilenameTok.getLocation()));
+    std::reverse(Path.begin(), Path.end());
+
+    // Load the module.
+    TheModuleLoader.loadModule(IncludeTok.getLocation(), Path);
     return;
   }
   
