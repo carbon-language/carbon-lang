@@ -737,7 +737,9 @@ void MatchableInfo::TokenizeAsmString(const AsmMatcherInfo &Info) {
 
   // The first token of the instruction is the mnemonic, which must be a
   // simple string, not a $foo variable or a singleton register.
-  assert(!AsmOperands.empty() && "Instruction has no tokens?");
+  if (AsmOperands.empty())
+    throw TGError(TheDef->getLoc(),
+                  "Instruction '" + TheDef->getName() + "' has no tokens");
   Mnemonic = AsmOperands[0].Token;
   if (Mnemonic[0] == '$' || getSingletonRegisterForAsmOperand(0, Info))
     throw TGError(TheDef->getLoc(),
