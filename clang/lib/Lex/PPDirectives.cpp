@@ -1280,6 +1280,35 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
       Callbacks ? &SearchPath : NULL, Callbacks ? &RelativePath : NULL,
       AutoModuleImport? &SuggestedModule : 0);
 
+  if (Callbacks) {
+    if (!File) {
+      // Give the clients a chance to recover.
+      llvm::SmallString<128> RecoveryPath;
+      if (Callbacks->FileNotFound(Filename, RecoveryPath)) {
+        if (const DirectoryEntry *DE = FileMgr.getDirectory(RecoveryPath)) {
+          // Add the recovery path to the list of search paths.
+          DirectoryLookup DL(DE, SrcMgr::C_User, true, false);
+          HeaderInfo.AddSearchPath(DL, isAngled);
+          
+          // Try the lookup again, skipping the cache.
+          File = LookupFile(Filename, isAngled, LookupFrom, CurDir, 0, 0,
+                            AutoModuleImport ? &SuggestedModule : 0,
+                            /*SkipCache*/true);
+        }
+      }
+    }
+    
+    // Notify the callback object that we've seen an inclusion directive.
+    Callbacks->InclusionDirective(HashLoc, IncludeTok, Filename, isAngled, File,
+                                  End, SearchPath, RelativePath);
+  }
+  
+  if (File == 0) {
+    if (!SuppressIncludeNotFoundError)
+      Diag(FilenameTok, diag::err_pp_file_not_found) << Filename;
+    return;
+  }
+
   // If we are supposed to import a module rather than including the header,
   // do so now.
   if (SuggestedModule) {
@@ -1335,35 +1364,6 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     return;
   }
   
-  if (Callbacks) {
-    if (!File) {
-      // Give the clients a chance to recover.
-      llvm::SmallString<128> RecoveryPath;
-      if (Callbacks->FileNotFound(Filename, RecoveryPath)) {
-        if (const DirectoryEntry *DE = FileMgr.getDirectory(RecoveryPath)) {
-          // Add the recovery path to the list of search paths.
-          DirectoryLookup DL(DE, SrcMgr::C_User, true, false);
-          HeaderInfo.AddSearchPath(DL, isAngled);
-
-          // Try the lookup again, skipping the cache.
-          File = LookupFile(Filename, isAngled, LookupFrom, CurDir, 0, 0,
-                            AutoModuleImport ? &SuggestedModule : 0,
-                            /*SkipCache*/true);
-        }
-      }
-    }
-
-    // Notify the callback object that we've seen an inclusion directive.
-    Callbacks->InclusionDirective(HashLoc, IncludeTok, Filename, isAngled, File,
-                                  End, SearchPath, RelativePath);
-  }
-
-  if (File == 0) {
-    if (!SuppressIncludeNotFoundError)
-      Diag(FilenameTok, diag::err_pp_file_not_found) << Filename;
-    return;
-  }
-
   // The #included file will be considered to be a system header if either it is
   // in a system include directory, or if the #includer is a system include
   // header.
