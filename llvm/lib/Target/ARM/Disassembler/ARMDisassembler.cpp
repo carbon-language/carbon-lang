@@ -2409,7 +2409,6 @@ static DecodeStatus DecodeVLD1DupInstruction(llvm::MCInst &Inst, unsigned Insn,
   unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
   unsigned align = fieldFromInstruction32(Insn, 4, 1);
   unsigned size = fieldFromInstruction32(Insn, 6, 2);
-  unsigned regs = fieldFromInstruction32(Insn, 5, 1) + 1;
 
   align *= (1 << size);
 
@@ -4102,4 +4101,3 @@ static DecodeStatus DecodeVCVTQ(llvm::MCInst &Inst, unsigned Insn,
 
   return S;
 }
-
