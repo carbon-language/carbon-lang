@@ -1,0 +1,3 @@
+WRITE of size 1 .* thread T0
+#0.*Func2.*stack-use-after-return.cc:18
+is located in frame <.*Func1.*> of T0's stack
