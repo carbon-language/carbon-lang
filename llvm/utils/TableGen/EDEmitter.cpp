@@ -747,7 +747,7 @@ static void ARMPopulateOperands(
       errs() << "Operand type: " << rec.getName() << '\n';
       errs() << "Operand name: " << operandInfo.Name << '\n';
       errs() << "Instruction name: " << inst.TheDef->getName() << '\n';
-      llvm_unreachable("Unhandled type");
+      throw("Unhandled type in EDEmitter");
     }
   }
 }
