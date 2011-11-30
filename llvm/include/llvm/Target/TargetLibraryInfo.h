@@ -18,20 +18,30 @@ namespace llvm {
 
   namespace LibFunc {
     enum Func {
+      /// int fiprintf(FILE *stream, const char *format, ...);
+      fiprintf,
+
+      /// int fputs(const char *s, FILE *stream);
+      fputs,
+
+      /// size_t fwrite(const void *ptr, size_t size, size_t nitems,
+      /// FILE *stream);
+      fwrite,
+
+      /// int iprintf(const char *format, ...);
+      iprintf,
+
+      /// void *memcpy(void *s1, const void *s2, size_t n);
+      memcpy,
+      
+      /// void *memmove(void *s1, const void *s2, size_t n);
+      memmove,
+      
       /// void *memset(void *b, int c, size_t len);
       memset,
       
-      // void *memcpy(void *s1, const void *s2, size_t n);
-      memcpy,
-      
-      // void *memmove(void *s1, const void *s2, size_t n);
-      memmove,
-      
       /// void memset_pattern16(void *b, const void *pattern16, size_t len);
       memset_pattern16,
-      
-      /// int iprintf(const char *format, ...);
-      iprintf,
       
       /// int siprintf(char *str, const char *format, ...);
       siprintf,
@@ -39,22 +49,12 @@ namespace llvm {
       /// double sqrt(double x);
       sqrt,
 
-      /// long double sqrtl(long double x);
-      sqrtl,
-
       /// float sqrtf(float x);
       sqrtf,
+
+      /// long double sqrtl(long double x);
+      sqrtl,
       
-      /// int fiprintf(FILE *stream, const char *format, ...);
-      fiprintf,
-
-      // size_t fwrite(const void *ptr, size_t size, size_t nitems,
-      //               FILE *stream);
-      fwrite,
-
-      // int fputs(const char *s, FILE *stream);
-      fputs,
-
       NumLibFuncs
     };
   }

@@ -22,18 +22,18 @@ char TargetLibraryInfo::ID = 0;
 
 const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
   {
-    "memset",
+    "fiprintf",
+    "fputs",
+    "fwrite",
+    "iprintf",
     "memcpy",
     "memmove",
+    "memset",
     "memset_pattern16",
-    "iprintf",
     "siprintf",
     "sqrt",
-    "sqrtl",
     "sqrtf",
-    "fiprintf",
-    "fwrite",
-    "fputs"
+    "sqrtl"
   };
 
 /// initialize - Initialize the set of available library functions based on the
