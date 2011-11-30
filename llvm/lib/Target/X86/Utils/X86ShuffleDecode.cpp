@@ -193,36 +193,23 @@ void DecodeUNPCKLPMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask) {
   }
 }
 
-// DecodeVPERMILPSMask - Decodes VPERMILPS permutes for any 128-bit 32-bit
-// elements. For 256-bit vectors, it's considered as two 128 lanes, the
-// referenced elements can't cross lanes and the mask of the first lane must
-// be the same of the second.
-void DecodeVPERMILPSMask(unsigned NumElts, unsigned Imm,
-                         SmallVectorImpl<unsigned> &ShuffleMask) {
-  unsigned NumLanes = (NumElts*32)/128;
-  unsigned LaneSize = NumElts/NumLanes;
+// DecodeVPERMILPMask - Decodes VPERMILPS/ VPERMILPD permutes for any 128-bit
+// 32-bit or 64-bit elements. For 256-bit vectors, it's considered as two 128
+// lanes. For VPERMILPS, referenced elements can't cross lanes and the mask of
+// the first lane must be the same of the second.
+void DecodeVPERMILPMask(EVT VT, unsigned Imm,
+                        SmallVectorImpl<unsigned> &ShuffleMask) {
+  unsigned NumElts = VT.getVectorNumElements();
+
+  unsigned NumLanes = VT.getSizeInBits() / 128;
+  unsigned NumLaneElts = NumElts / NumLanes;
 
   for (unsigned l = 0; l != NumLanes; ++l) {
-    for (unsigned i = 0; i != LaneSize; ++i) {
-      unsigned Idx = (Imm >> (i*2)) & 0x3 ;
-      ShuffleMask.push_back(Idx+(l*LaneSize));
-    }
-  }
-}
-
-// DecodeVPERMILPDMask - Decodes VPERMILPD permutes for any 128-bit 64-bit
-// elements. For 256-bit vectors, it's considered as two 128 lanes, the
-// referenced elements can't cross lanes but the mask of the first lane can
-// be the different of the second (not like VPERMILPS).
-void DecodeVPERMILPDMask(unsigned NumElts, unsigned Imm,
-                         SmallVectorImpl<unsigned> &ShuffleMask) {
-  unsigned NumLanes = (NumElts*64)/128;
-  unsigned LaneSize = NumElts/NumLanes;
-
-  for (unsigned l = 0; l < NumLanes; ++l) {
-    for (unsigned i = l*LaneSize; i < LaneSize*(l+1); ++i) {
-      unsigned Idx = (Imm >> i) & 0x1;
-      ShuffleMask.push_back(Idx+(l*LaneSize));
+    unsigned LaneStart = l*NumLaneElts;
+    for (unsigned i = 0; i != NumLaneElts; ++i) {
+      unsigned Idx = NumLaneElts == 4 ? (Imm >> (i*2)) & 0x3
+                                      : (Imm >> (i+LaneStart)) & 0x1;
+      ShuffleMask.push_back(Idx+LaneStart);
     }
   }
 }

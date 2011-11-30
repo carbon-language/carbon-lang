@@ -309,32 +309,32 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     Src1Name = getRegName(MI->getOperand(1).getReg());
     // FALL THROUGH.
   case X86::VPERMILPSmi:
-    DecodeVPERMILPSMask(4, MI->getOperand(MI->getNumOperands()-1).getImm(),
-                        ShuffleMask);
+    DecodeVPERMILPMask(MVT::v4f32, MI->getOperand(MI->getNumOperands()-1).getImm(),
+                       ShuffleMask);
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
   case X86::VPERMILPSYri:
     Src1Name = getRegName(MI->getOperand(1).getReg());
     // FALL THROUGH.
   case X86::VPERMILPSYmi:
-    DecodeVPERMILPSMask(8, MI->getOperand(MI->getNumOperands()-1).getImm(),
-                        ShuffleMask);
+    DecodeVPERMILPMask(MVT::v8f32, MI->getOperand(MI->getNumOperands()-1).getImm(),
+                       ShuffleMask);
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
   case X86::VPERMILPDri:
     Src1Name = getRegName(MI->getOperand(1).getReg());
     // FALL THROUGH.
   case X86::VPERMILPDmi:
-    DecodeVPERMILPDMask(2, MI->getOperand(MI->getNumOperands()-1).getImm(),
-                        ShuffleMask);
+    DecodeVPERMILPMask(MVT::v2f64, MI->getOperand(MI->getNumOperands()-1).getImm(),
+                       ShuffleMask);
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
   case X86::VPERMILPDYri:
     Src1Name = getRegName(MI->getOperand(1).getReg());
     // FALL THROUGH.
   case X86::VPERMILPDYmi:
-    DecodeVPERMILPDMask(4, MI->getOperand(MI->getNumOperands()-1).getImm(),
-                        ShuffleMask);
+    DecodeVPERMILPMask(MVT::v4f64, MI->getOperand(MI->getNumOperands()-1).getImm(),
+                       ShuffleMask);
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
   case X86::VPERM2F128rr:

@@ -78,18 +78,11 @@ void DecodeUNPCKHPMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask);
 void DecodeUNPCKLPMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask);
 
 
-// DecodeVPERMILPSMask - Decodes VPERMILPS permutes for any 128-bit 32-bit
-// elements. For 256-bit vectors, it's considered as two 128 lanes, the
-// referenced elements can't cross lanes and the mask of the first lane must
-// be the same of the second.
-void DecodeVPERMILPSMask(unsigned NElts, unsigned Imm,
-                        SmallVectorImpl<unsigned> &ShuffleMask);
-
-// DecodeVPERMILPDMask - Decodes VPERMILPD permutes for any 128-bit 64-bit
-// elements. For 256-bit vectors, it's considered as two 128 lanes, the
-// referenced elements can't cross lanes but the mask of the first lane can
-// be the different of the second (not like VPERMILPS).
-void DecodeVPERMILPDMask(unsigned NElts, unsigned Imm,
+// DecodeVPERMILPMask - Decodes VPERMILPS/ VPERMILPD permutes for any 128-bit
+// 32-bit or 64-bit elements. For 256-bit vectors, it's considered as two 128
+// lanes. For VPERMILPS, referenced elements can't cross lanes and the mask of
+// the first lane must be the same of the second.
+void DecodeVPERMILPMask(EVT VT, unsigned Imm,
                         SmallVectorImpl<unsigned> &ShuffleMask);
 
 void DecodeVPERM2F128Mask(unsigned Imm,

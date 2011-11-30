@@ -136,8 +136,7 @@ def X86Unpckhp : SDNode<"X86ISD::UNPCKHP", SDTShuff2Op>;
 def X86Punpckl : SDNode<"X86ISD::PUNPCKL", SDTShuff2Op>;
 def X86Punpckh : SDNode<"X86ISD::PUNPCKH", SDTShuff2Op>;
 
-def X86VPermilps  : SDNode<"X86ISD::VPERMILPS", SDTShuff2OpI>;
-def X86VPermilpd  : SDNode<"X86ISD::VPERMILPD", SDTShuff2OpI>;
+def X86VPermilp  : SDNode<"X86ISD::VPERMILP", SDTShuff2OpI>;
 
 def X86VPerm2f128 : SDNode<"X86ISD::VPERM2F128", SDTShuff3OpI>;
 def X86VPerm2i128 : SDNode<"X86ISD::VPERM2I128", SDTShuff3OpI>;
