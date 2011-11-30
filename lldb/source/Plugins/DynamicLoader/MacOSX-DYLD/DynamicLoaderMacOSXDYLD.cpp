@@ -1454,7 +1454,12 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
                 images.FindSymbolsWithNameAndType(trampoline_name, eSymbolTypeCode, target_symbols);
 
                 size_t num_original_symbols = target_symbols.GetSize();
-                bool orig_is_resolver = (current_symbol->GetFlags() & MACH_O_N_SYMBOL_RESOLVER) == MACH_O_N_SYMBOL_RESOLVER;
+                // FIXME: The resolver symbol is only valid in object files.  In binaries it is reused for the
+                // shared library slot number.  So we'll have to look this up in the dyld info.
+                // For now, just turn this off.
+                
+                // bool orig_is_resolver = (current_symbol->GetFlags() & MACH_O_N_SYMBOL_RESOLVER) == MACH_O_N_SYMBOL_RESOLVER;
+                bool orig_is_resolver = false;
                 
                 if (num_original_symbols > 0)
                 {
