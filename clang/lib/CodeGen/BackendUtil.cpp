@@ -150,6 +150,8 @@ void EmitAssemblyHelper::CreatePasses() {
   if (LangOpts.AddressSanitizer) {
     PMBuilder.addExtension(PassManagerBuilder::EP_ScalarOptimizerLate,
                            addAddressSanitizerPass);
+    PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,
+                           addAddressSanitizerPass);
   }
   
   // Figure out TargetLibraryInfo.
