@@ -174,7 +174,9 @@ For more details about the changes to Clang since the 2.9 release, see the
   <li>The <tt>-fplugin-arg-dragonegg-enable-gcc-optzns</tt> option, which runs
       GCC's optimizers as well as LLVM's, now works much better.  This is the
       option to use if you want ultimate performance! It is still experimental
-      though: it may cause the plugin to crash.</li>
+      though: it may cause the plugin to crash.  Setting the optimization level
+      to <tt>-O4</tt> when using this option will optimize even harder, though
+      this usually doesn't result in any improvement over <tt>-O3<tt>.</li>
 
   <li>The type and constant conversion logic has been almost entirely rewritten,
       fixing a multitude of obscure bugs.</li>
