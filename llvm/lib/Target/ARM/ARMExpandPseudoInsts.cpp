@@ -129,11 +129,11 @@ namespace {
 }
 
 static const NEONLdStTableEntry NEONLdStTable[] = {
-{ ARM::VLD1DUPq16Pseudo,     ARM::VLD1DUPq16,     true, false, false, SingleSpc, 2, 4,true},
+{ ARM::VLD1DUPq16Pseudo,     ARM::VLD1DUPq16,     true, false, false, SingleSpc, 2, 4,false},
 { ARM::VLD1DUPq16Pseudo_UPD, ARM::VLD1DUPq16_UPD, true, true, true,  SingleSpc, 2, 4,true},
-{ ARM::VLD1DUPq32Pseudo,     ARM::VLD1DUPq32,     true, false, false, SingleSpc, 2, 2,true},
+{ ARM::VLD1DUPq32Pseudo,     ARM::VLD1DUPq32,     true, false, false, SingleSpc, 2, 2,false},
 { ARM::VLD1DUPq32Pseudo_UPD, ARM::VLD1DUPq32_UPD, true, true, true,  SingleSpc, 2, 2,true},
-{ ARM::VLD1DUPq8Pseudo,      ARM::VLD1DUPq8,      true, false, false, SingleSpc, 2, 8,true},
+{ ARM::VLD1DUPq8Pseudo,      ARM::VLD1DUPq8,      true, false, false, SingleSpc, 2, 8,false},
 { ARM::VLD1DUPq8Pseudo_UPD,  ARM::VLD1DUPq8_UPD, true, true, true,  SingleSpc, 2, 8,true},
 
 { ARM::VLD1LNq16Pseudo,     ARM::VLD1LNd16,     true, false, false, EvenDblSpc, 1, 4 ,true},

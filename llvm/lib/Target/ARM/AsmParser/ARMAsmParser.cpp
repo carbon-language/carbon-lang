@@ -977,6 +977,11 @@ public:
     return VectorList.Count == 1;
   }
 
+  bool isVecListTwoDAllLanes() const {
+    if (Kind != k_VectorListAllLanes) return false;
+    return VectorList.Count == 2;
+  }
+
   bool isVectorIndex8() const {
     if (Kind != k_VectorIndex) return false;
     return VectorIndex.Val < 8;
