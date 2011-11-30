@@ -1310,9 +1310,9 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
       IncludeKind = 1;
       break;        
         
-      case tok::pp_include_next:
-        IncludeKind = 2;
-        break;
+    case tok::pp_include_next:
+      IncludeKind = 2;
+      break;
         
     case tok::pp___include_macros:
       IncludeKind = 3;
