@@ -4013,6 +4013,7 @@ public:
                 this_hook->GetDescription (&(result.GetOutputStream()), eDescriptionLevelFull);
             }
         }
+        result.SetStatus (eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
 };
