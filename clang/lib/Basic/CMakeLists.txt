@@ -9,6 +9,7 @@ add_clang_library(clangBasic
   FileSystemStatCache.cpp
   IdentifierTable.cpp
   LangOptions.cpp
+  Module.cpp
   SourceLocation.cpp
   SourceManager.cpp
   TargetInfo.cpp

@@ -23,7 +23,7 @@
 using namespace clang;
 using namespace serialization;
 
-Module *ModuleManager::lookup(StringRef Name) {
+ModuleFile *ModuleManager::lookup(StringRef Name) {
   const FileEntry *Entry = FileMgr.getFile(Name);
   return Modules[Entry];
 }
@@ -33,21 +33,21 @@ llvm::MemoryBuffer *ModuleManager::lookupBuffer(StringRef Name) {
   return InMemoryBuffers[Entry];
 }
 
-std::pair<Module *, bool>
+std::pair<ModuleFile *, bool>
 ModuleManager::addModule(StringRef FileName, ModuleKind Type, 
-                         Module *ImportedBy, std::string &ErrorStr) {
+                         ModuleFile *ImportedBy, std::string &ErrorStr) {
   const FileEntry *Entry = FileMgr.getFile(FileName);
   if (!Entry && FileName != "-") {
     ErrorStr = "file not found";
-    return std::make_pair(static_cast<Module*>(0), false);
+    return std::make_pair(static_cast<ModuleFile*>(0), false);
   }
   
   // Check whether we already loaded this module, before 
-  Module *&ModuleEntry = Modules[Entry];
+  ModuleFile *&ModuleEntry = Modules[Entry];
   bool NewModule = false;
   if (!ModuleEntry) {
     // Allocate a new module.
-    Module *New = new Module(Type);
+    ModuleFile *New = new ModuleFile(Type);
     New->FileName = FileName.str();
     Chain.push_back(New);
     NewModule = true;
@@ -69,7 +69,7 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
         New->Buffer.reset(FileMgr.getBufferForFile(FileName, &ErrorStr));
       
       if (!New->Buffer)
-        return std::make_pair(static_cast<Module*>(0), false);
+        return std::make_pair(static_cast<ModuleFile*>(0), false);
     }
     
     // Initialize the stream
@@ -101,16 +101,16 @@ ModuleManager::~ModuleManager() {
     delete Chain[e - i - 1];
 }
 
-void ModuleManager::visit(bool (*Visitor)(Module &M, void *UserData), 
+void ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData), 
                           void *UserData) {
   unsigned N = size();
   
   // Record the number of incoming edges for each module. When we
   // encounter a module with no incoming edges, push it into the queue
   // to seed the queue.
-  SmallVector<Module *, 4> Queue;
+  SmallVector<ModuleFile *, 4> Queue;
   Queue.reserve(N);
-  llvm::DenseMap<Module *, unsigned> UnusedIncomingEdges; 
+  llvm::DenseMap<ModuleFile *, unsigned> UnusedIncomingEdges; 
   for (ModuleIterator M = begin(), MEnd = end(); M != MEnd; ++M) {
     if (unsigned Size = (*M)->ImportedBy.size())
       UnusedIncomingEdges[*M] = Size;
@@ -118,10 +118,10 @@ void ModuleManager::visit(bool (*Visitor)(Module &M, void *UserData),
       Queue.push_back(*M);
   }
   
-  llvm::SmallPtrSet<Module *, 4> Skipped;
+  llvm::SmallPtrSet<ModuleFile *, 4> Skipped;
   unsigned QueueStart = 0;
   while (QueueStart < Queue.size()) {
-    Module *CurrentModule = Queue[QueueStart++];
+    ModuleFile *CurrentModule = Queue[QueueStart++];
     
     // Check whether this module should be skipped.
     if (Skipped.count(CurrentModule))
@@ -132,16 +132,16 @@ void ModuleManager::visit(bool (*Visitor)(Module &M, void *UserData),
       // module that the current module depends on. To indicate this
       // behavior, we mark all of the reachable modules as having N
       // incoming edges (which is impossible otherwise).
-      SmallVector<Module *, 4> Stack;
+      SmallVector<ModuleFile *, 4> Stack;
       Stack.push_back(CurrentModule);
       Skipped.insert(CurrentModule);
       while (!Stack.empty()) {
-        Module *NextModule = Stack.back();
+        ModuleFile *NextModule = Stack.back();
         Stack.pop_back();
         
         // For any module that this module depends on, push it on the
         // stack (if it hasn't already been marked as visited).
-        for (llvm::SetVector<Module *>::iterator 
+        for (llvm::SetVector<ModuleFile *>::iterator 
              M = NextModule->Imports.begin(),
              MEnd = NextModule->Imports.end();
              M != MEnd; ++M) {
@@ -154,7 +154,7 @@ void ModuleManager::visit(bool (*Visitor)(Module &M, void *UserData),
     
     // For any module that this module depends on, push it on the
     // stack (if it hasn't already been marked as visited).
-    for (llvm::SetVector<Module *>::iterator M = CurrentModule->Imports.begin(),
+    for (llvm::SetVector<ModuleFile *>::iterator M = CurrentModule->Imports.begin(),
          MEnd = CurrentModule->Imports.end();
          M != MEnd; ++M) {
       
@@ -170,17 +170,17 @@ void ModuleManager::visit(bool (*Visitor)(Module &M, void *UserData),
 }
 
 /// \brief Perform a depth-first visit of the current module.
-static bool visitDepthFirst(Module &M, 
-                            bool (*Visitor)(Module &M, bool Preorder, 
+static bool visitDepthFirst(ModuleFile &M, 
+                            bool (*Visitor)(ModuleFile &M, bool Preorder, 
                                             void *UserData), 
                             void *UserData,
-                            llvm::SmallPtrSet<Module *, 4> &Visited) {
+                            llvm::SmallPtrSet<ModuleFile *, 4> &Visited) {
   // Preorder visitation
   if (Visitor(M, /*Preorder=*/true, UserData))
     return true;
   
   // Visit children
-  for (llvm::SetVector<Module *>::iterator IM = M.Imports.begin(),
+  for (llvm::SetVector<ModuleFile *>::iterator IM = M.Imports.begin(),
        IMEnd = M.Imports.end();
        IM != IMEnd; ++IM) {
     if (!Visited.insert(*IM))
@@ -194,10 +194,10 @@ static bool visitDepthFirst(Module &M,
   return Visitor(M, /*Preorder=*/false, UserData);
 }
 
-void ModuleManager::visitDepthFirst(bool (*Visitor)(Module &M, bool Preorder, 
+void ModuleManager::visitDepthFirst(bool (*Visitor)(ModuleFile &M, bool Preorder, 
                                                     void *UserData), 
                                     void *UserData) {
-  llvm::SmallPtrSet<Module *, 4> Visited;
+  llvm::SmallPtrSet<ModuleFile *, 4> Visited;
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
     if (!Visited.insert(Chain[I]))
       continue;
@@ -211,8 +211,8 @@ void ModuleManager::visitDepthFirst(bool (*Visitor)(Module &M, bool Preorder,
 namespace llvm {
   template<>
   struct GraphTraits<ModuleManager> {
-    typedef Module NodeType;
-    typedef llvm::SetVector<Module *>::const_iterator ChildIteratorType;
+    typedef ModuleFile NodeType;
+    typedef llvm::SetVector<ModuleFile *>::const_iterator ChildIteratorType;
     typedef ModuleManager::ModuleConstIterator nodes_iterator;
     
     static ChildIteratorType child_begin(NodeType *Node) {
@@ -241,7 +241,7 @@ namespace llvm {
       return true;
     }
 
-    std::string getNodeLabel(Module *M, const ModuleManager&) {
+    std::string getNodeLabel(ModuleFile *M, const ModuleManager&) {
       return llvm::sys::path::stem(M->FileName);
     }
   };

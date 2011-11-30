@@ -1845,7 +1845,7 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
   }
 }
 
-void ASTWriter::WriteSubmodules(ModuleMap::Module *WritingModule) {
+void ASTWriter::WriteSubmodules(Module *WritingModule) {
   // Enter the submodule description block.
   Stream.EnterSubblock(SUBMODULE_BLOCK_ID, NUM_ALLOWED_ABBREVS_SIZE);
   
@@ -1871,11 +1871,11 @@ void ASTWriter::WriteSubmodules(ModuleMap::Module *WritingModule) {
 
   // Write all of the submodules.
   unsigned SubmoduleID = 1;
-  std::queue<ModuleMap::Module *> Q;
+  std::queue<Module *> Q;
   Q.push(WritingModule);
   RecordData Record;
   while (!Q.empty()) {
-    ModuleMap::Module *Mod = Q.front();
+    Module *Mod = Q.front();
     Q.pop();
     SubmoduleIDs[Mod] = SubmoduleID++;
     
@@ -1913,7 +1913,7 @@ void ASTWriter::WriteSubmodules(ModuleMap::Module *WritingModule) {
     
     // Sort the submodules first, so we get a predictable ordering in the AST
     // file.
-    for (llvm::StringMap<ModuleMap::Module *>::iterator 
+    for (llvm::StringMap<Module *>::iterator 
               Sub = Mod->SubModules.begin(),
            SubEnd = Mod->SubModules.end();
          Sub != SubEnd; ++Sub)
@@ -2873,7 +2873,7 @@ ASTWriter::~ASTWriter() {
 
 void ASTWriter::WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                          const std::string &OutputFile,
-                         ModuleMap::Module *WritingModule, StringRef isysroot) {
+                         Module *WritingModule, StringRef isysroot) {
   WritingAST = true;
   
   // Emit the file header.
@@ -2903,7 +2903,7 @@ static void AddLazyVectorDecls(ASTWriter &Writer, Vector &Vec,
 void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                              StringRef isysroot,
                              const std::string &OutputFile, 
-                             ModuleMap::Module *WritingModule) {
+                             Module *WritingModule) {
   using namespace llvm;
 
   ASTContext &Context = SemaRef.Context;

@@ -26,7 +26,7 @@ struct HeaderFileInfo;
   
 namespace serialization {
 
-class Module;
+class ModuleFile;
 
 namespace reader {
 
@@ -34,7 +34,7 @@ namespace reader {
 /// in an AST file.
 class ASTDeclContextNameLookupTrait {
   ASTReader &Reader;
-  Module &F;
+  ModuleFile &F;
   
 public:
   /// \brief Pair of begin/end iterators for DeclIDs.
@@ -56,7 +56,7 @@ public:
   typedef DeclNameKey internal_key_type;
 
   explicit ASTDeclContextNameLookupTrait(ASTReader &Reader, 
-                                         Module &F) 
+                                         ModuleFile &F) 
     : Reader(Reader), F(F) { }
 
   static bool EqualKey(const internal_key_type& a,
@@ -84,7 +84,7 @@ typedef OnDiskChainedHashTable<ASTDeclContextNameLookupTrait>
 /// \brief Class that performs lookup for an identifier stored in an AST file.
 class ASTIdentifierLookupTrait {
   ASTReader &Reader;
-  Module &F;
+  ModuleFile &F;
   
   // If we know the IdentifierInfo in advance, it is here and we will
   // not build a new one. Used when deserializing information about an
@@ -98,7 +98,7 @@ public:
   
   typedef external_key_type internal_key_type;
   
-  ASTIdentifierLookupTrait(ASTReader &Reader, Module &F,
+  ASTIdentifierLookupTrait(ASTReader &Reader, ModuleFile &F,
                            IdentifierInfo *II = 0)
     : Reader(Reader), F(F), KnownII(II) { }
   
@@ -138,7 +138,7 @@ typedef OnDiskChainedHashTable<ASTIdentifierLookupTrait>
 /// method pool stored in an AST file.
 class ASTSelectorLookupTrait {
   ASTReader &Reader;
-  Module &F;
+  ModuleFile &F;
   
 public:
   struct data_type {
@@ -150,7 +150,7 @@ public:
   typedef Selector external_key_type;
   typedef external_key_type internal_key_type;
   
-  ASTSelectorLookupTrait(ASTReader &Reader, Module &F) 
+  ASTSelectorLookupTrait(ASTReader &Reader, ModuleFile &F) 
     : Reader(Reader), F(F) { }
   
   static bool EqualKey(const internal_key_type& a,
@@ -185,7 +185,7 @@ typedef OnDiskChainedHashTable<ASTSelectorLookupTrait>
 /// and symlinks.
 class HeaderFileInfoTrait {
   ASTReader &Reader;
-  Module &M;
+  ModuleFile &M;
   HeaderSearch *HS;
   const char *FrameworkStrings;
   const char *SearchPath;
@@ -210,7 +210,7 @@ public:
   
   typedef HeaderFileInfo data_type;
   
-  HeaderFileInfoTrait(ASTReader &Reader, Module &M, HeaderSearch *HS,
+  HeaderFileInfoTrait(ASTReader &Reader, ModuleFile &M, HeaderSearch *HS,
                       const char *FrameworkStrings,
                       const char *SearchPath = 0) 
   : Reader(Reader), M(M), HS(HS), FrameworkStrings(FrameworkStrings), 

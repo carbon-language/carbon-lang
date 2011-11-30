@@ -27,10 +27,10 @@ namespace serialization {
 class ModuleManager {
   /// \brief The chain of AST files. The first entry is the one named by the
   /// user, the last one is the one that doesn't depend on anything further.
-  llvm::SmallVector<Module*, 2> Chain;
+  llvm::SmallVector<ModuleFile*, 2> Chain;
   
   /// \brief All loaded modules, indexed by name.
-  llvm::DenseMap<const FileEntry *, Module *> Modules;
+  llvm::DenseMap<const FileEntry *, ModuleFile *> Modules;
   
   /// \brief FileManager that handles translating between filenames and
   /// FileEntry *.
@@ -40,9 +40,9 @@ class ModuleManager {
   llvm::DenseMap<const FileEntry *, llvm::MemoryBuffer *> InMemoryBuffers;
   
 public:
-  typedef SmallVector<Module*, 2>::iterator ModuleIterator;
-  typedef SmallVector<Module*, 2>::const_iterator ModuleConstIterator;
-  typedef SmallVector<Module*, 2>::reverse_iterator ModuleReverseIterator;
+  typedef SmallVector<ModuleFile*, 2>::iterator ModuleIterator;
+  typedef SmallVector<ModuleFile*, 2>::const_iterator ModuleConstIterator;
+  typedef SmallVector<ModuleFile*, 2>::reverse_iterator ModuleReverseIterator;
   typedef std::pair<uint32_t, StringRef> ModuleOffset;
   
   ModuleManager(const FileSystemOptions &FSO);
@@ -68,17 +68,17 @@ public:
   
   /// \brief Returns the primary module associated with the manager, that is,
   /// the first module loaded
-  Module &getPrimaryModule() { return *Chain[0]; }
+  ModuleFile &getPrimaryModule() { return *Chain[0]; }
   
   /// \brief Returns the primary module associated with the manager, that is,
   /// the first module loaded.
-  Module &getPrimaryModule() const { return *Chain[0]; }
+  ModuleFile &getPrimaryModule() const { return *Chain[0]; }
   
   /// \brief Returns the module associated with the given index
-  Module &operator[](unsigned Index) const { return *Chain[Index]; }
+  ModuleFile &operator[](unsigned Index) const { return *Chain[Index]; }
   
   /// \brief Returns the module associated with the given name
-  Module *lookup(StringRef Name);
+  ModuleFile *lookup(StringRef Name);
   
   /// \brief Returns the in-memory (virtual file) buffer with the given name
   llvm::MemoryBuffer *lookupBuffer(StringRef Name);
@@ -100,8 +100,8 @@ public:
   ///
   /// \return A pointer to the module that corresponds to this file name,
   /// and a boolean indicating whether the module was newly added.
-  std::pair<Module *, bool> 
-  addModule(StringRef FileName, ModuleKind Type, Module *ImportedBy,
+  std::pair<ModuleFile *, bool> 
+  addModule(StringRef FileName, ModuleKind Type, ModuleFile *ImportedBy,
             std::string &ErrorStr);
   
   /// \brief Add an in-memory buffer the list of known buffers
@@ -125,7 +125,7 @@ public:
   ///
   /// \param UserData User data associated with the visitor object, which
   /// will be passed along to the visitor.
-  void visit(bool (*Visitor)(Module &M, void *UserData), void *UserData);
+  void visit(bool (*Visitor)(ModuleFile &M, void *UserData), void *UserData);
   
   /// \brief Visit each of the modules with a depth-first traversal.
   ///
@@ -143,7 +143,7 @@ public:
   ///
   /// \param UserData User data ssociated with the visitor object,
   /// which will be passed along to the user.
-  void visitDepthFirst(bool (*Visitor)(Module &M, bool Preorder, 
+  void visitDepthFirst(bool (*Visitor)(ModuleFile &M, bool Preorder, 
                                        void *UserData), 
                        void *UserData);
   

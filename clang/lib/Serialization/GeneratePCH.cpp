@@ -28,7 +28,7 @@ using namespace clang;
 
 PCHGenerator::PCHGenerator(const Preprocessor &PP,
                            StringRef OutputFile,
-                           ModuleMap::Module *Module,
+                           clang::Module *Module,
                            StringRef isysroot,
                            raw_ostream *OS)
   : PP(PP), OutputFile(OutputFile), Module(Module), 

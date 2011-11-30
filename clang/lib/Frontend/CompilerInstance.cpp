@@ -962,7 +962,7 @@ void LockFileManager::waitForUnlock() {
 /// \brief Compile a module file for the given module, using the options 
 /// provided by the importing compiler instance.
 static void compileModule(CompilerInstance &ImportingInstance,
-                          ModuleMap::Module *Module,
+                          Module *Module,
                           StringRef ModuleFileName) {
   LockFileManager Locked(ModuleFileName);
   switch (Locked) {
@@ -1068,8 +1068,8 @@ static void compileModule(CompilerInstance &ImportingInstance,
     llvm::sys::Path(TempModuleMapFileName).eraseFromDisk();
 }
 
-ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc, 
-                                       ModuleIdPath Path) {
+Module *CompilerInstance::loadModule(SourceLocation ImportLoc, 
+                                     ModuleIdPath Path) {
   // If we've already handled this import, just return the cached result.
   // This one-element cache is important to eliminate redundant diagnostics
   // when both the preprocessor and parser see the same import declaration.
@@ -1087,11 +1087,11 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
   StringRef ModuleName = Path[0].first->getName();
   SourceLocation ModuleNameLoc = Path[0].second;
 
-  ModuleMap::Module *Module = 0;
+  clang::Module *Module = 0;
   const FileEntry *ModuleFile = 0;
   
   // If we don't already have information on this module, load the module now.
-  llvm::DenseMap<const IdentifierInfo *, ModuleMap::Module *>::iterator Known
+  llvm::DenseMap<const IdentifierInfo *, clang::Module *>::iterator Known
     = KnownModules.find(Path[0].first);
   if (Known == KnownModules.end()) {  
     // Search for a module with the given name.
@@ -1206,7 +1206,7 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
   if (Path.size() > 1) {
     for (unsigned I = 1, N = Path.size(); I != N; ++I) {
       StringRef Name = Path[I].first->getName();
-      llvm::StringMap<ModuleMap::Module *>::iterator Pos
+      llvm::StringMap<clang::Module *>::iterator Pos
         = Module->SubModules.find(Name);
       
       if (Pos == Module->SubModules.end()) {
@@ -1214,7 +1214,7 @@ ModuleKey CompilerInstance::loadModule(SourceLocation ImportLoc,
         llvm::SmallVector<StringRef, 2> Best;
         unsigned BestEditDistance = (std::numeric_limits<unsigned>::max)();
         
-        for (llvm::StringMap<ModuleMap::Module *>::iterator
+        for (llvm::StringMap<clang::Module *>::iterator
                   J = Module->SubModules.begin(), 
                JEnd = Module->SubModules.end();
              J != JEnd; ++J) {

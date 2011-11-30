@@ -131,7 +131,7 @@ ASTConsumer *GenerateModuleAction::CreateASTConsumer(CompilerInstance &CI,
 /// \param Module The module we're collecting includes from.
 /// \param ExplicitOnly Whether we should only add headers from explicit 
 static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
-                                        ModuleMap::Module *Module,
+                                        clang::Module *Module,
                                         bool ExplicitOnly,
                                         llvm::SmallString<256> &Includes) {
   if (!ExplicitOnly || Module->IsExplicit) {
@@ -147,7 +147,7 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
   }
   
   // Recurse into submodules.
-  for (llvm::StringMap<ModuleMap::Module *>::iterator
+  for (llvm::StringMap<clang::Module *>::iterator
             Sub = Module->SubModules.begin(),
          SubEnd = Module->SubModules.end();
        Sub != SubEnd; ++Sub) {

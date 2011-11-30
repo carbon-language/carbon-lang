@@ -2456,7 +2456,7 @@ void ASTUnit::TranslateStoredDiagnostics(
   SmallVector<StoredDiagnostic, 4> Result;
   Result.reserve(Diags.size());
   assert(MMan && "Don't have a module manager");
-  serialization::Module *Mod = MMan->ModuleMgr.lookup(ModName);
+  serialization::ModuleFile *Mod = MMan->ModuleMgr.lookup(ModName);
   assert(Mod && "Don't have preamble module");
   SLocRemap &Remap = Mod->SLocRemap;
   for (unsigned I = 0, N = Diags.size(); I != N; ++I) {

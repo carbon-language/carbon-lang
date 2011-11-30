@@ -275,7 +275,7 @@ public:
                               const FileEntry *CurFileEnt,
                               SmallVectorImpl<char> *SearchPath,
                               SmallVectorImpl<char> *RelativePath,
-                              ModuleMap::Module **SuggestedModule,
+                              Module **SuggestedModule,
                               bool SkipCache = false);
 
   /// LookupSubframeworkHeader - Look up a subframework for the specified
@@ -359,7 +359,7 @@ public:
   /// \returns A file describing the named module, if already available in the
   /// cases, or NULL to indicate that the module could not be found.
   const FileEntry *lookupModule(StringRef ModuleName,
-                                ModuleMap::Module *&Module,
+                                Module *&Module,
                                 std::string *ModuleFileName = 0);
   
   void IncrementFrameworkLookupCount() { ++NumFrameworkLookups; }
@@ -374,7 +374,7 @@ public:
   bool hasModuleMap(StringRef Filename, const DirectoryEntry *Root);
   
   /// \brief Retrieve the module that corresponds to the given file, if any.
-  ModuleMap::Module *findModuleForHeader(const FileEntry *File);
+  Module *findModuleForHeader(const FileEntry *File);
   
   
   /// \brief Read the contents of the given module map file.
@@ -394,7 +394,7 @@ public:
   /// the header search path. Otherwise, the module must already be known.
   ///
   /// \returns The module, if found; otherwise, null.
-  ModuleMap::Module *getModule(StringRef Name, bool AllowSearch = true);
+  Module *getModule(StringRef Name, bool AllowSearch = true);
 
   /// \brief Retrieve a module with the given name, which may be part of the
   /// given framework.
@@ -404,7 +404,7 @@ public:
   /// \param Dir The framework directory (e.g., ModuleName.framework).
   ///
   /// \returns The module, if found; otherwise, null.
-  ModuleMap::Module *getFrameworkModule(StringRef Name, 
+  Module *getFrameworkModule(StringRef Name, 
                                         const DirectoryEntry *Dir);
 
   /// \brief Retrieve the module map.

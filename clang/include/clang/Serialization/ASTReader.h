@@ -206,7 +206,7 @@ public:
   friend class ASTUnit; // ASTUnit needs to remap source locations.
   friend class serialization::ReadMethodPoolVisitor;
 
-  typedef serialization::Module Module;
+  typedef serialization::ModuleFile ModuleFile;
   typedef serialization::ModuleKind ModuleKind;
   typedef serialization::ModuleManager ModuleManager;
 
@@ -243,12 +243,12 @@ private:
 
   /// \brief A map of global bit offsets to the module that stores entities
   /// at those bit offsets.
-  ContinuousRangeMap<uint64_t, Module*, 4> GlobalBitOffsetsMap;
+  ContinuousRangeMap<uint64_t, ModuleFile*, 4> GlobalBitOffsetsMap;
 
   /// \brief A map of negated SLocEntryIDs to the modules containing them.
-  ContinuousRangeMap<unsigned, Module*, 64> GlobalSLocEntryMap;
+  ContinuousRangeMap<unsigned, ModuleFile*, 64> GlobalSLocEntryMap;
 
-  typedef ContinuousRangeMap<unsigned, Module*, 64> GlobalSLocOffsetMapType;
+  typedef ContinuousRangeMap<unsigned, ModuleFile*, 64> GlobalSLocOffsetMapType;
 
   /// \brief A map of reversed (SourceManager::MaxLoadedOffset - SLocOffset)
   /// SourceLocation offsets to the modules containing them.
@@ -260,7 +260,7 @@ private:
   /// ID = (I + 1) << FastQual::Width has already been loaded
   std::vector<QualType> TypesLoaded;
 
-  typedef ContinuousRangeMap<serialization::TypeID, Module *, 4>
+  typedef ContinuousRangeMap<serialization::TypeID, ModuleFile *, 4>
     GlobalTypeMapType;
 
   /// \brief Mapping from global type IDs to the module in which the
@@ -274,14 +274,14 @@ private:
   /// = I + 1 has already been loaded.
   std::vector<Decl *> DeclsLoaded;
 
-  typedef ContinuousRangeMap<serialization::DeclID, Module *, 4>
+  typedef ContinuousRangeMap<serialization::DeclID, ModuleFile *, 4>
     GlobalDeclMapType;
 
   /// \brief Mapping from global declaration IDs to the module in which the
   /// declaration resides.
   GlobalDeclMapType GlobalDeclMap;
 
-  typedef std::pair<Module *, uint64_t> FileOffset;
+  typedef std::pair<ModuleFile *, uint64_t> FileOffset;
   typedef SmallVector<FileOffset, 2> FileOffsetsTy;
   typedef llvm::DenseMap<serialization::DeclID, FileOffsetsTy>
       DeclUpdateOffsetsMap;
@@ -291,12 +291,12 @@ private:
   DeclUpdateOffsetsMap DeclUpdateOffsets;
 
   struct ReplacedDeclInfo {
-    Module *Mod;
+    ModuleFile *Mod;
     uint64_t Offset;
     unsigned RawLoc;
 
     ReplacedDeclInfo() : Mod(0), Offset(0), RawLoc(0) {}
-    ReplacedDeclInfo(Module *Mod, uint64_t Offset, unsigned RawLoc)
+    ReplacedDeclInfo(ModuleFile *Mod, uint64_t Offset, unsigned RawLoc)
       : Mod(Mod), Offset(Offset), RawLoc(RawLoc) {}
   };
 
@@ -306,11 +306,11 @@ private:
   DeclReplacementMap ReplacedDecls;
 
   struct FileDeclsInfo {
-    Module *Mod;
+    ModuleFile *Mod;
     ArrayRef<serialization::LocalDeclID> Decls;
 
     FileDeclsInfo() : Mod(0) {}
-    FileDeclsInfo(Module *Mod, ArrayRef<serialization::LocalDeclID> Decls)
+    FileDeclsInfo(ModuleFile *Mod, ArrayRef<serialization::LocalDeclID> Decls)
       : Mod(Mod), Decls(Decls) {}
   };
 
@@ -321,7 +321,7 @@ private:
   // TU, and when we read those update records, the actual context will not
   // be available yet (unless it's the TU), so have this pending map using the
   // ID as a key. It will be realized when the context is actually loaded.
-  typedef SmallVector<std::pair<void *, Module*>, 1> DeclContextVisibleUpdates;
+  typedef SmallVector<std::pair<void *, ModuleFile*>, 1> DeclContextVisibleUpdates;
   typedef llvm::DenseMap<serialization::DeclID, DeclContextVisibleUpdates>
       DeclContextVisibleUpdatesPending;
 
@@ -348,7 +348,7 @@ private:
   llvm::DenseSet<serialization::GlobalDeclID> ObjCChainedCategoriesInterfaces;
 
   /// \brief Read the records that describe the contents of declcontexts.
-  bool ReadDeclContextStorage(Module &M,
+  bool ReadDeclContextStorage(ModuleFile &M,
                               llvm::BitstreamCursor &Cursor,
                               const std::pair<uint64_t, uint64_t> &Offsets,
                               serialization::DeclContextInfo &Info);
@@ -361,7 +361,7 @@ private:
   /// been loaded.
   std::vector<IdentifierInfo *> IdentifiersLoaded;
 
-  typedef ContinuousRangeMap<serialization::IdentID, Module *, 4>
+  typedef ContinuousRangeMap<serialization::IdentID, ModuleFile *, 4>
     GlobalIdentifierMapType;
 
   /// \brief Mapping from global identifer IDs to the module in which the
@@ -376,7 +376,7 @@ private:
   /// been loaded.
   SmallVector<Selector, 16> SelectorsLoaded;
 
-  typedef ContinuousRangeMap<serialization::SelectorID, Module *, 4>
+  typedef ContinuousRangeMap<serialization::SelectorID, ModuleFile *, 4>
     GlobalSelectorMapType;
 
   /// \brief Mapping from global selector IDs to the module in which the
@@ -389,7 +389,7 @@ private:
   /// record resides.
   llvm::DenseMap<IdentifierInfo *, uint64_t> UnreadMacroRecordOffsets;
 
-  typedef ContinuousRangeMap<unsigned, Module *, 4>
+  typedef ContinuousRangeMap<unsigned, ModuleFile *, 4>
     GlobalPreprocessedEntityMapType;
 
   /// \brief Mapping from global preprocessing entity IDs to the module in
@@ -675,7 +675,7 @@ private:
   std::string SuggestedPredefines;
 
   /// \brief Reads a statement from the specified cursor.
-  Stmt *ReadStmtFromStream(Module &F);
+  Stmt *ReadStmtFromStream(ModuleFile &F);
 
   /// \brief Get a FileEntry out of stored-in-PCH filename, making sure we take
   /// into account all the necessary relocations.
@@ -684,21 +684,21 @@ private:
   void MaybeAddSystemRootToFilename(std::string &Filename);
 
   ASTReadResult ReadASTCore(StringRef FileName, ModuleKind Type,
-                            Module *ImportedBy);
-  ASTReadResult ReadASTBlock(Module &F);
+                            ModuleFile *ImportedBy);
+  ASTReadResult ReadASTBlock(ModuleFile &F);
   bool CheckPredefinesBuffers();
-  bool ParseLineTable(Module &F, SmallVectorImpl<uint64_t> &Record);
-  ASTReadResult ReadSourceManagerBlock(Module &F);
+  bool ParseLineTable(ModuleFile &F, SmallVectorImpl<uint64_t> &Record);
+  ASTReadResult ReadSourceManagerBlock(ModuleFile &F);
   ASTReadResult ReadSLocEntryRecord(int ID);
   llvm::BitstreamCursor &SLocCursorForID(int ID);
-  SourceLocation getImportLocation(Module *F);
-  ASTReadResult ReadSubmoduleBlock(Module &F);
+  SourceLocation getImportLocation(ModuleFile *F);
+  ASTReadResult ReadSubmoduleBlock(ModuleFile &F);
   bool ParseLanguageOptions(const SmallVectorImpl<uint64_t> &Record);
   
   struct RecordLocation {
-    RecordLocation(Module *M, uint64_t O)
+    RecordLocation(ModuleFile *M, uint64_t O)
       : F(M), Offset(O) {}
-    Module *F;
+    ModuleFile *F;
     uint64_t Offset;
   };
 
@@ -713,7 +713,7 @@ private:
                                  ObjCInterfaceDecl *D);
 
   RecordLocation getLocalBitOffset(uint64_t GlobalOffset);
-  uint64_t getGlobalBitOffset(Module &M, uint32_t LocalOffset);
+  uint64_t getGlobalBitOffset(ModuleFile &M, uint32_t LocalOffset);
 
   /// \brief Returns the first preprocessed entity ID that ends after \arg BLoc.
   serialization::PreprocessedEntityID
@@ -732,9 +732,9 @@ private:
     findNextPreprocessedEntity(
                         GlobalSLocOffsetMapType::const_iterator SLocMapI) const;
 
-  /// \brief Returns (Module, Local index) pair for \arg GlobalIndex of a
+  /// \brief Returns (ModuleFile, Local index) pair for \arg GlobalIndex of a
   /// preprocessed entity.
-  std::pair<Module *, unsigned>
+  std::pair<ModuleFile *, unsigned>
     getModulePreprocessedEntity(unsigned GlobalIndex);
 
   void PassInterestingDeclsToConsumer();
@@ -787,7 +787,7 @@ public:
 
   /// \brief Checks that no file that is stored in PCH is out-of-sync with
   /// the actual file in the file system.
-  ASTReadResult validateFileEntries(Module &M);
+  ASTReadResult validateFileEntries(ModuleFile &M);
 
   /// \brief Set the AST callbacks listener.
   void setListener(ASTReaderListener *listener) {
@@ -891,16 +891,16 @@ public:
   /// \brief Reads a TemplateArgumentLocInfo appropriate for the
   /// given TemplateArgument kind.
   TemplateArgumentLocInfo
-  GetTemplateArgumentLocInfo(Module &F, TemplateArgument::ArgKind Kind,
+  GetTemplateArgumentLocInfo(ModuleFile &F, TemplateArgument::ArgKind Kind,
                              const RecordData &Record, unsigned &Idx);
 
   /// \brief Reads a TemplateArgumentLoc.
   TemplateArgumentLoc
-  ReadTemplateArgumentLoc(Module &F,
+  ReadTemplateArgumentLoc(ModuleFile &F,
                           const RecordData &Record, unsigned &Idx);
 
   /// \brief Reads a declarator info from the given record.
-  TypeSourceInfo *GetTypeSourceInfo(Module &F,
+  TypeSourceInfo *GetTypeSourceInfo(ModuleFile &F,
                                     const RecordData &Record, unsigned &Idx);
 
   /// \brief Resolve a type ID into a type, potentially building a new
@@ -908,14 +908,14 @@ public:
   QualType GetType(serialization::TypeID ID);
 
   /// \brief Resolve a local type ID within a given AST file into a type.
-  QualType getLocalType(Module &F, unsigned LocalID);
+  QualType getLocalType(ModuleFile &F, unsigned LocalID);
 
   /// \brief Map a local type ID within a given AST file into a global type ID.
-  serialization::TypeID getGlobalTypeID(Module &F, unsigned LocalID) const;
+  serialization::TypeID getGlobalTypeID(ModuleFile &F, unsigned LocalID) const;
 
   /// \brief Read a type from the current position in the given record, which
   /// was read from the given AST file.
-  QualType readType(Module &F, const RecordData &Record, unsigned &Idx) {
+  QualType readType(ModuleFile &F, const RecordData &Record, unsigned &Idx) {
     if (Idx >= Record.size())
       return QualType();
 
@@ -924,11 +924,11 @@ public:
 
   /// \brief Map from a local declaration ID within a given module to a
   /// global declaration ID.
-  serialization::DeclID getGlobalDeclID(Module &F, unsigned LocalID) const;
+  serialization::DeclID getGlobalDeclID(ModuleFile &F, unsigned LocalID) const;
 
   /// \brief Returns true if global DeclID \arg ID originated from module
   /// \arg M.
-  bool isDeclIDFromModule(serialization::GlobalDeclID ID, Module &M) const;
+  bool isDeclIDFromModule(serialization::GlobalDeclID ID, ModuleFile &M) const;
 
   /// \brief Returns the source location for the decl \arg ID.
   SourceLocation getSourceLocationForDeclID(serialization::GlobalDeclID ID);
@@ -939,7 +939,7 @@ public:
   virtual Decl *GetExternalDecl(uint32_t ID);
 
   /// \brief Reads a declaration with the given local ID in the given module.
-  Decl *GetLocalDecl(Module &F, uint32_t LocalID) {
+  Decl *GetLocalDecl(ModuleFile &F, uint32_t LocalID) {
     return GetDecl(getGlobalDeclID(F, LocalID));
   }
 
@@ -947,7 +947,7 @@ public:
   ///
   /// \returns The requested declaration, casted to the given return type.
   template<typename T>
-  T *GetLocalDeclAs(Module &F, uint32_t LocalID) {
+  T *GetLocalDeclAs(ModuleFile &F, uint32_t LocalID) {
     return cast_or_null<T>(GetLocalDecl(F, LocalID));
   }
 
@@ -955,12 +955,12 @@ public:
   /// given module.
   ///
   /// \returns The declaration ID read from the record, adjusted to a global ID.
-  serialization::DeclID ReadDeclID(Module &F, const RecordData &Record,
+  serialization::DeclID ReadDeclID(ModuleFile &F, const RecordData &Record,
                                    unsigned &Idx);
 
   /// \brief Reads a declaration from the given position in a record in the
   /// given module.
-  Decl *ReadDecl(Module &F, const RecordData &R, unsigned &I) {
+  Decl *ReadDecl(ModuleFile &F, const RecordData &R, unsigned &I) {
     return GetDecl(ReadDeclID(F, R, I));
   }
 
@@ -970,13 +970,13 @@ public:
   /// \returns The declaration read from this location, casted to the given
   /// result type.
   template<typename T>
-  T *ReadDeclAs(Module &F, const RecordData &R, unsigned &I) {
+  T *ReadDeclAs(ModuleFile &F, const RecordData &R, unsigned &I) {
     return cast_or_null<T>(GetDecl(ReadDeclID(F, R, I)));
   }
 
   /// \brief Read a CXXBaseSpecifiers ID form the given record and
   /// return its global bit offset.
-  uint64_t readCXXBaseSpecifiers(Module &M, const RecordData &Record,
+  uint64_t readCXXBaseSpecifiers(ModuleFile &M, const RecordData &Record,
                                  unsigned &Idx);
 
   virtual CXXBaseSpecifier *GetExternalCXXBaseSpecifiers(uint64_t Offset);
@@ -1129,7 +1129,7 @@ public:
 
   IdentifierInfo *DecodeIdentifierInfo(serialization::IdentifierID ID);
 
-  IdentifierInfo *GetIdentifierInfo(Module &M, const RecordData &Record,
+  IdentifierInfo *GetIdentifierInfo(ModuleFile &M, const RecordData &Record,
                                     unsigned &Idx) {
     return DecodeIdentifierInfo(getGlobalIdentifierID(M, Record[Idx++]));
   }
@@ -1138,9 +1138,9 @@ public:
     return DecodeIdentifierInfo(ID);
   }
 
-  IdentifierInfo *getLocalIdentifier(Module &M, unsigned LocalID);
+  IdentifierInfo *getLocalIdentifier(ModuleFile &M, unsigned LocalID);
 
-  serialization::IdentifierID getGlobalIdentifierID(Module &M,
+  serialization::IdentifierID getGlobalIdentifierID(ModuleFile &M,
                                                     unsigned LocalID);
 
   /// \brief Read the source location entry with index ID.
@@ -1148,91 +1148,91 @@ public:
 
   /// \brief Retrieve a selector from the given module with its local ID
   /// number.
-  Selector getLocalSelector(Module &M, unsigned LocalID);
+  Selector getLocalSelector(ModuleFile &M, unsigned LocalID);
 
   Selector DecodeSelector(serialization::SelectorID Idx);
 
   virtual Selector GetExternalSelector(serialization::SelectorID ID);
   uint32_t GetNumExternalSelectors();
 
-  Selector ReadSelector(Module &M, const RecordData &Record, unsigned &Idx) {
+  Selector ReadSelector(ModuleFile &M, const RecordData &Record, unsigned &Idx) {
     return getLocalSelector(M, Record[Idx++]);
   }
 
   /// \brief Retrieve the global selector ID that corresponds to this
   /// the local selector ID in a given module.
-  serialization::SelectorID getGlobalSelectorID(Module &F,
+  serialization::SelectorID getGlobalSelectorID(ModuleFile &F,
                                                 unsigned LocalID) const;
 
   /// \brief Read a declaration name.
-  DeclarationName ReadDeclarationName(Module &F,
+  DeclarationName ReadDeclarationName(ModuleFile &F,
                                       const RecordData &Record, unsigned &Idx);
-  void ReadDeclarationNameLoc(Module &F,
+  void ReadDeclarationNameLoc(ModuleFile &F,
                               DeclarationNameLoc &DNLoc, DeclarationName Name,
                               const RecordData &Record, unsigned &Idx);
-  void ReadDeclarationNameInfo(Module &F, DeclarationNameInfo &NameInfo,
+  void ReadDeclarationNameInfo(ModuleFile &F, DeclarationNameInfo &NameInfo,
                                const RecordData &Record, unsigned &Idx);
 
-  void ReadQualifierInfo(Module &F, QualifierInfo &Info,
+  void ReadQualifierInfo(ModuleFile &F, QualifierInfo &Info,
                          const RecordData &Record, unsigned &Idx);
 
-  NestedNameSpecifier *ReadNestedNameSpecifier(Module &F,
+  NestedNameSpecifier *ReadNestedNameSpecifier(ModuleFile &F,
                                                const RecordData &Record,
                                                unsigned &Idx);
 
-  NestedNameSpecifierLoc ReadNestedNameSpecifierLoc(Module &F,
+  NestedNameSpecifierLoc ReadNestedNameSpecifierLoc(ModuleFile &F,
                                                     const RecordData &Record,
                                                     unsigned &Idx);
 
   /// \brief Read a template name.
-  TemplateName ReadTemplateName(Module &F, const RecordData &Record,
+  TemplateName ReadTemplateName(ModuleFile &F, const RecordData &Record,
                                 unsigned &Idx);
 
   /// \brief Read a template argument.
-  TemplateArgument ReadTemplateArgument(Module &F,
+  TemplateArgument ReadTemplateArgument(ModuleFile &F,
                                         const RecordData &Record,unsigned &Idx);
 
   /// \brief Read a template parameter list.
-  TemplateParameterList *ReadTemplateParameterList(Module &F,
+  TemplateParameterList *ReadTemplateParameterList(ModuleFile &F,
                                                    const RecordData &Record,
                                                    unsigned &Idx);
 
   /// \brief Read a template argument array.
   void
   ReadTemplateArgumentList(SmallVector<TemplateArgument, 8> &TemplArgs,
-                           Module &F, const RecordData &Record,
+                           ModuleFile &F, const RecordData &Record,
                            unsigned &Idx);
 
   /// \brief Read a UnresolvedSet structure.
-  void ReadUnresolvedSet(Module &F, UnresolvedSetImpl &Set,
+  void ReadUnresolvedSet(ModuleFile &F, UnresolvedSetImpl &Set,
                          const RecordData &Record, unsigned &Idx);
 
   /// \brief Read a C++ base specifier.
-  CXXBaseSpecifier ReadCXXBaseSpecifier(Module &F,
+  CXXBaseSpecifier ReadCXXBaseSpecifier(ModuleFile &F,
                                         const RecordData &Record,unsigned &Idx);
 
   /// \brief Read a CXXCtorInitializer array.
   std::pair<CXXCtorInitializer **, unsigned>
-  ReadCXXCtorInitializers(Module &F, const RecordData &Record,
+  ReadCXXCtorInitializers(ModuleFile &F, const RecordData &Record,
                           unsigned &Idx);
 
   /// \brief Read a source location from raw form.
-  SourceLocation ReadSourceLocation(Module &Module, unsigned Raw) const {
+  SourceLocation ReadSourceLocation(ModuleFile &ModuleFile, unsigned Raw) const {
     SourceLocation Loc = SourceLocation::getFromRawEncoding(Raw);
-    assert(Module.SLocRemap.find(Loc.getOffset()) != Module.SLocRemap.end() &&
+    assert(ModuleFile.SLocRemap.find(Loc.getOffset()) != ModuleFile.SLocRemap.end() &&
            "Cannot find offset to remap.");
-    int Remap = Module.SLocRemap.find(Loc.getOffset())->second;
+    int Remap = ModuleFile.SLocRemap.find(Loc.getOffset())->second;
     return Loc.getLocWithOffset(Remap);
   }
 
   /// \brief Read a source location.
-  SourceLocation ReadSourceLocation(Module &Module,
+  SourceLocation ReadSourceLocation(ModuleFile &ModuleFile,
                                     const RecordData &Record, unsigned& Idx) {
-    return ReadSourceLocation(Module, Record[Idx++]);
+    return ReadSourceLocation(ModuleFile, Record[Idx++]);
   }
 
   /// \brief Read a source range.
-  SourceRange ReadSourceRange(Module &F,
+  SourceRange ReadSourceRange(ModuleFile &F,
                               const RecordData &Record, unsigned& Idx);
 
   /// \brief Read an integral value
@@ -1250,18 +1250,18 @@ public:
   /// \brief Read a version tuple.
   VersionTuple ReadVersionTuple(const RecordData &Record, unsigned &Idx);
 
-  CXXTemporary *ReadCXXTemporary(Module &F, const RecordData &Record,
+  CXXTemporary *ReadCXXTemporary(ModuleFile &F, const RecordData &Record,
                                  unsigned &Idx);
 
   /// \brief Reads attributes from the current stream position.
-  void ReadAttributes(Module &F, AttrVec &Attrs,
+  void ReadAttributes(ModuleFile &F, AttrVec &Attrs,
                       const RecordData &Record, unsigned &Idx);
 
   /// \brief Reads a statement.
-  Stmt *ReadStmt(Module &F);
+  Stmt *ReadStmt(ModuleFile &F);
 
   /// \brief Reads an expression.
-  Expr *ReadExpr(Module &F);
+  Expr *ReadExpr(ModuleFile &F);
 
   /// \brief Reads a sub-statement operand during statement reading.
   Stmt *ReadSubStmt() {
@@ -1277,16 +1277,16 @@ public:
   Expr *ReadSubExpr();
 
   /// \brief Reads the macro record located at the given offset.
-  void ReadMacroRecord(Module &F, uint64_t Offset);
+  void ReadMacroRecord(ModuleFile &F, uint64_t Offset);
 
   /// \brief Determine the global preprocessed entity ID that corresponds to
   /// the given local ID within the given module.
   serialization::PreprocessedEntityID
-  getGlobalPreprocessedEntityID(Module &M, unsigned LocalID) const;
+  getGlobalPreprocessedEntityID(ModuleFile &M, unsigned LocalID) const;
 
   /// \brief Note that the identifier is a macro whose record will be loaded
   /// from the given AST file at the given (file-local) offset.
-  void SetIdentifierIsMacro(IdentifierInfo *II, Module &F,
+  void SetIdentifierIsMacro(IdentifierInfo *II, ModuleFile &F,
                             uint64_t Offset);
 
   /// \brief Read the set of macros defined by this external macro source.

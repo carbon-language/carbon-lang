@@ -102,7 +102,7 @@ const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE) {
 }
 
 const FileEntry *HeaderSearch::lookupModule(StringRef ModuleName,
-                                            ModuleMap::Module *&Module,
+                                            Module *&Module,
                                             std::string *ModuleFileName) {
   Module = 0;
   
@@ -198,7 +198,7 @@ const FileEntry *DirectoryLookup::LookupFile(
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
     StringRef BuildingModule,
-    ModuleMap::Module **SuggestedModule) const {
+    Module **SuggestedModule) const {
   llvm::SmallString<1024> TmpDir;
   if (isNormalDir()) {
     // Concatenate the requested file onto the directory.
@@ -224,7 +224,7 @@ const FileEntry *DirectoryLookup::LookupFile(
       
       // If there is a module that corresponds to this header, 
       // suggest it.
-      ModuleMap::Module *Module = HS.findModuleForHeader(File);
+      Module *Module = HS.findModuleForHeader(File);
       if (Module && Module->getTopLevelModuleName() != BuildingModule)
         *SuggestedModule = Module;
       
@@ -264,7 +264,7 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
     StringRef BuildingModule,
-    ModuleMap::Module **SuggestedModule) const 
+    Module **SuggestedModule) const 
 {
   FileManager &FileMgr = HS.getFileMgr();
 
@@ -319,7 +319,7 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
 
   // If we're allowed to look for modules, try to load or create the module
   // corresponding to this framework.
-  ModuleMap::Module *Module = 0;
+  Module *Module = 0;
   if (SuggestedModule) {
     if (const DirectoryEntry *FrameworkDir
                                     = FileMgr.getDirectory(FrameworkName)) {
@@ -387,7 +387,7 @@ const FileEntry *HeaderSearch::LookupFile(
     const FileEntry *CurFileEnt,
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
-    ModuleMap::Module **SuggestedModule,
+    Module **SuggestedModule,
     bool SkipCache)
 {
   if (SuggestedModule)
@@ -786,8 +786,8 @@ bool HeaderSearch::hasModuleMap(StringRef FileName,
   return false;
 }
 
-ModuleMap::Module *HeaderSearch::findModuleForHeader(const FileEntry *File) {
-  if (ModuleMap::Module *Module = ModMap.findModuleForHeader(File))
+Module *HeaderSearch::findModuleForHeader(const FileEntry *File) {
+  if (Module *Module = ModMap.findModuleForHeader(File))
     return Module;
   
   return 0;
@@ -806,8 +806,8 @@ bool HeaderSearch::loadModuleMapFile(const FileEntry *File) {
   return Result;
 }
 
-ModuleMap::Module *HeaderSearch::getModule(StringRef Name, bool AllowSearch) {
-  if (ModuleMap::Module *Module = ModMap.findModule(Name))
+Module *HeaderSearch::getModule(StringRef Name, bool AllowSearch) {
+  if (Module *Module = ModMap.findModule(Name))
     return Module;
   
   if (!AllowSearch)
@@ -824,7 +824,7 @@ ModuleMap::Module *HeaderSearch::getModule(StringRef Name, bool AllowSearch) {
       break;
         
     case LMM_NewlyLoaded:
-      if (ModuleMap::Module *Module = ModMap.findModule(Name))
+      if (Module *Module = ModMap.findModule(Name))
         return Module;
       break;
     }
@@ -833,9 +833,9 @@ ModuleMap::Module *HeaderSearch::getModule(StringRef Name, bool AllowSearch) {
   return 0;
 }
   
-ModuleMap::Module *HeaderSearch::getFrameworkModule(StringRef Name, 
+Module *HeaderSearch::getFrameworkModule(StringRef Name, 
                                                     const DirectoryEntry *Dir) {
-  if (ModuleMap::Module *Module = ModMap.findModule(Name))
+  if (Module *Module = ModMap.findModule(Name))
     return Module;
   
   // Try to load a module map file.

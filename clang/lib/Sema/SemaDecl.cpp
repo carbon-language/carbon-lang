@@ -9892,12 +9892,12 @@ Decl *Sema::ActOnFileScopeAsmDecl(Expr *expr,
 }
 
 DeclResult Sema::ActOnModuleImport(SourceLocation ImportLoc, ModuleIdPath Path) {
-  ModuleKey Module = PP.getModuleLoader().loadModule(ImportLoc, Path);
-  if (!Module)
+  Module *Mod = PP.getModuleLoader().loadModule(ImportLoc, Path);
+  if (!Mod)
     return true;
   
   // FIXME: Actually create a declaration to describe the module import.
-  (void)Module;
+  (void)Mod;
   return DeclResult((Decl *)0);
 }
 

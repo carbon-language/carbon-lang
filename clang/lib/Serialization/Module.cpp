@@ -20,7 +20,7 @@ using namespace clang;
 using namespace serialization;
 using namespace reader;
 
-Module::Module(ModuleKind Kind)
+ModuleFile::ModuleFile(ModuleKind Kind)
   : Kind(Kind), DirectlyImported(false), SizeInBits(0), 
     LocalNumSLocEntries(0), SLocEntryBaseID(0),
     SLocEntryBaseOffset(0), SLocEntryOffsets(0),
@@ -39,7 +39,7 @@ Module::Module(ModuleKind Kind)
     LocalNumTypes(0), TypeOffsets(0), BaseTypeIndex(0), StatCache(0)
 {}
 
-Module::~Module() {
+ModuleFile::~ModuleFile() {
   for (DeclContextInfosMap::iterator I = DeclContextInfos.begin(),
        E = DeclContextInfos.end();
        I != E; ++I) {
@@ -68,7 +68,7 @@ dumpLocalRemap(StringRef Name,
   }
 }
 
-void Module::dump() {
+void ModuleFile::dump() {
   llvm::errs() << "\nModule: " << FileName << "\n";
   if (!Imports.empty()) {
     llvm::errs() << "  Imports: ";

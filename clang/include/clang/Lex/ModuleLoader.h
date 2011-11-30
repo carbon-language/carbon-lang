@@ -20,10 +20,7 @@
 namespace clang {
 
 class IdentifierInfo;
-  
-/// \brief An opaque key that is used to describe the module and can be 
-/// interpreted by the module loader itself.
-typedef void *ModuleKey;
+class Module;
   
 /// \brief A sequence of identifier/location pairs used to describe a particular
 /// module or submodule, e.g., std.vector.
@@ -47,10 +44,9 @@ public:
   /// \param Path The identifiers (and their locations) of the module
   /// "path", e.g., "std.vector" would be split into "std" and "vector".
   ///
-  /// \returns If successful, a non-NULL module key describing this module.
-  /// Otherwise, returns NULL to indicate that the module could not be
-  /// loaded.
-  virtual ModuleKey loadModule(SourceLocation ImportLoc, ModuleIdPath Path) = 0;
+  /// \returns If successful, returns the loaded module. Otherwise, returns 
+  /// NULL to indicate that the module could not be loaded.
+  virtual Module *loadModule(SourceLocation ImportLoc, ModuleIdPath Path) = 0;
 };
   
 }

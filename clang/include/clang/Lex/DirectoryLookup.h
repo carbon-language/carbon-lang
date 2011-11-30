@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_LEX_DIRECTORYLOOKUP_H
 #define LLVM_CLANG_LEX_DIRECTORYLOOKUP_H
 
-#include "clang/Lex/ModuleMap.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/SourceManager.h"
 
@@ -23,7 +22,8 @@ class HeaderMap;
 class DirectoryEntry;
 class FileEntry;
 class HeaderSearch;
-
+class Module;
+  
 /// DirectoryLookup - This class represents one entry in the search list that
 /// specifies the search order for directories in #include directives.  It
 /// represents either a directory, a framework, or a headermap.
@@ -151,7 +151,7 @@ public:
                               SmallVectorImpl<char> *SearchPath,
                               SmallVectorImpl<char> *RelativePath,
                               StringRef BuildingModule,
-                              ModuleMap::Module **SuggestedModule) const;
+                              Module **SuggestedModule) const;
 
 private:
   const FileEntry *DoFrameworkLookup(
@@ -159,7 +159,7 @@ private:
       SmallVectorImpl<char> *SearchPath,
       SmallVectorImpl<char> *RelativePath,
       StringRef BuildingModule,
-      ModuleMap::Module **SuggestedModule) const;
+      Module **SuggestedModule) const;
 
 };
 

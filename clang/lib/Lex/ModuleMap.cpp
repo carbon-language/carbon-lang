@@ -27,86 +27,6 @@
 #include "llvm/ADT/StringSwitch.h"
 using namespace clang;
 
-//----------------------------------------------------------------------------//
-// Module
-//----------------------------------------------------------------------------//
-
-ModuleMap::Module::~Module() {
-  for (llvm::StringMap<Module *>::iterator I = SubModules.begin(), 
-                                        IEnd = SubModules.end();
-       I != IEnd; ++I) {
-    delete I->getValue();
-  }
-
-}
-
-std::string ModuleMap::Module::getFullModuleName() const {
-  llvm::SmallVector<StringRef, 2> Names;
-  
-  // Build up the set of module names (from innermost to outermost).
-  for (const Module *M = this; M; M = M->Parent)
-    Names.push_back(M->Name);
-  
-  std::string Result;
-  for (llvm::SmallVector<StringRef, 2>::reverse_iterator I = Names.rbegin(),
-                                                      IEnd = Names.rend(); 
-       I != IEnd; ++I) {
-    if (!Result.empty())
-      Result += '.';
-    
-    Result += *I;
-  }
-  
-  return Result;
-}
-
-StringRef ModuleMap::Module::getTopLevelModuleName() const {
-  const Module *Top = this;
-  while (Top->Parent)
-    Top = Top->Parent;
-  
-  return Top->Name;
-}
-
-void ModuleMap::Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
-  OS.indent(Indent);
-  if (IsFramework)
-    OS << "framework ";
-  if (IsExplicit)
-    OS << "explicit ";
-  OS << "module " << Name << " {\n";
-  
-  if (UmbrellaHeader) {
-    OS.indent(Indent + 2);
-    OS << "umbrella \"";
-    OS.write_escaped(UmbrellaHeader->getName());
-    OS << "\"\n";
-  }
-  
-  for (unsigned I = 0, N = Headers.size(); I != N; ++I) {
-    OS.indent(Indent + 2);
-    OS << "header \"";
-    OS.write_escaped(Headers[I]->getName());
-    OS << "\"\n";
-  }
-  
-  for (llvm::StringMap<Module *>::const_iterator MI = SubModules.begin(), 
-                                              MIEnd = SubModules.end();
-       MI != MIEnd; ++MI)
-    MI->getValue()->print(OS, Indent + 2);
-  
-  OS.indent(Indent);
-  OS << "}\n";
-}
-
-void ModuleMap::Module::dump() const {
-  print(llvm::errs());
-}
-
-//----------------------------------------------------------------------------//
-// Module map
-//----------------------------------------------------------------------------//
-
 ModuleMap::ModuleMap(FileManager &FileMgr, const DiagnosticConsumer &DC) {
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagIDs(new DiagnosticIDs);
   Diags = llvm::IntrusiveRefCntPtr<DiagnosticsEngine>(
@@ -125,7 +45,7 @@ ModuleMap::~ModuleMap() {
   delete SourceMgr;
 }
 
-ModuleMap::Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
+Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
   llvm::DenseMap<const FileEntry *, Module *>::iterator Known
     = Headers.find(File);
   if (Known != Headers.end())
@@ -169,7 +89,7 @@ ModuleMap::Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
   return 0;
 }
 
-ModuleMap::Module *ModuleMap::findModule(StringRef Name) {
+Module *ModuleMap::findModule(StringRef Name) {
   llvm::StringMap<Module *>::iterator Known = Modules.find(Name);
   if (Known != Modules.end())
     return Known->getValue();
@@ -177,7 +97,7 @@ ModuleMap::Module *ModuleMap::findModule(StringRef Name) {
   return 0;
 }
 
-std::pair<ModuleMap::Module *, bool> 
+std::pair<Module *, bool> 
 ModuleMap::findOrCreateModule(StringRef Name, Module *Parent, bool IsFramework,
                               bool IsExplicit) {
   // Try to find an existing module with this name.
@@ -194,7 +114,7 @@ ModuleMap::findOrCreateModule(StringRef Name, Module *Parent, bool IsFramework,
   return std::make_pair(Result, true);
 }
 
-ModuleMap::Module *
+Module *
 ModuleMap::inferFrameworkModule(StringRef ModuleName, 
                                 const DirectoryEntry *FrameworkDir) {
   // Check whether we've already found this module.
@@ -224,7 +144,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
 }
 
 const FileEntry *
-ModuleMap::getContainingModuleMapFile(ModuleMap::Module *Module) {
+ModuleMap::getContainingModuleMapFile(Module *Module) {
   if (Module->DefinitionLoc.isInvalid() || !SourceMgr)
     return 0;
 
@@ -315,7 +235,7 @@ namespace clang {
     MMToken Tok;
     
     /// \brief The active module.
-    ModuleMap::Module *ActiveModule;
+    Module *ActiveModule;
     
     /// \brief Consume the current token and return its location.
     SourceLocation consumeToken();
@@ -329,7 +249,7 @@ namespace clang {
     void parseHeaderDecl();
     
   public:
-    typedef ModuleMap::Module Module;
+    typedef Module Module;
     
     explicit ModuleMapParser(Lexer &L, SourceManager &SourceMgr, 
                              DiagnosticsEngine &Diags,

@@ -17,7 +17,6 @@
 
 #include "clang/Serialization/ASTBitCodes.h"
 #include "clang/Serialization/ContinuousRangeMap.h"
-#include "clang/Lex/ModuleMap.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SetVector.h"
@@ -27,7 +26,8 @@
 namespace clang {
 
 class DeclContext;
-
+class Module;
+  
 namespace serialization {
 
 /// \brief Specifies the kind of module that has been loaded.
@@ -55,10 +55,10 @@ struct DeclContextInfo {
 /// of some sort loaded as the main file, all of which are specific formulations
 /// of the general notion of a "module". A module may depend on any number of
 /// other modules.
-class Module {
+class ModuleFile {
 public:
-  Module(ModuleKind Kind);
-  ~Module();
+  ModuleFile(ModuleKind Kind);
+  ~ModuleFile();
 
   // === General information ===
 
@@ -202,7 +202,7 @@ public:
   const char *HeaderFileFrameworkStrings;
 
   // === Submodule information ===
-  llvm::SmallVector<ModuleMap::Module *, 2> Submodules;
+  llvm::SmallVector<Module *, 2> Submodules;
   
   // === Selectors ===
 
@@ -306,10 +306,10 @@ public:
   void *StatCache;
 
   /// \brief List of modules which depend on this module
-  llvm::SetVector<Module *> ImportedBy;
+  llvm::SetVector<ModuleFile *> ImportedBy;
 
   /// \brief List of modules which this module depends on
-  llvm::SetVector<Module *> Imports;
+  llvm::SetVector<ModuleFile *> Imports;
 
   /// \brief Determine whether this module was directly imported at
   /// any point during translation.

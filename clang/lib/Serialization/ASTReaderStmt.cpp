@@ -25,7 +25,7 @@ namespace clang {
     typedef ASTReader::RecordData RecordData;
     
     ASTReader &Reader;
-    Module &F;
+    ModuleFile &F;
     llvm::BitstreamCursor &DeclsCursor;
     const ASTReader::RecordData &Record;
     unsigned &Idx;
@@ -66,7 +66,7 @@ namespace clang {
     }
 
   public:
-    ASTStmtReader(ASTReader &Reader, Module &F,
+    ASTStmtReader(ASTReader &Reader, ModuleFile &F,
                   llvm::BitstreamCursor &Cursor,
                   const ASTReader::RecordData &Record, unsigned &Idx)
       : Reader(Reader), F(F), DeclsCursor(Cursor), Record(Record), Idx(Idx) { }
@@ -1440,7 +1440,7 @@ void ASTStmtReader::VisitAsTypeExpr(AsTypeExpr *E) {
 // ASTReader Implementation
 //===----------------------------------------------------------------------===//
 
-Stmt *ASTReader::ReadStmt(Module &F) {
+Stmt *ASTReader::ReadStmt(ModuleFile &F) {
   switch (ReadingKind) {
   case Read_Decl:
   case Read_Type:
@@ -1453,7 +1453,7 @@ Stmt *ASTReader::ReadStmt(Module &F) {
   return 0;
 }
 
-Expr *ASTReader::ReadExpr(Module &F) {
+Expr *ASTReader::ReadExpr(ModuleFile &F) {
   return cast_or_null<Expr>(ReadStmt(F));
 }
 
@@ -1468,7 +1468,7 @@ Expr *ASTReader::ReadSubExpr() {
 // the stack, with expressions having operands removing those operands from the
 // stack. Evaluation terminates when we see a STMT_STOP record, and
 // the single remaining expression on the stack is our result.
-Stmt *ASTReader::ReadStmtFromStream(Module &F) {
+Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
   ReadingKindTracker ReadingKind(Read_Stmt, *this);
   llvm::BitstreamCursor &Cursor = F.DeclsCursor;

@@ -1016,7 +1016,7 @@ public:
                               const DirectoryLookup *&CurDir,
                               SmallVectorImpl<char> *SearchPath,
                               SmallVectorImpl<char> *RelativePath,
-                              ModuleMap::Module **SuggestedModule,
+                              Module **SuggestedModule,
                               bool SkipCache = false);
 
   /// GetCurLookup - The DirectoryLookup structure used to find the current

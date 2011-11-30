@@ -731,7 +731,7 @@ ASTDeclContextNameLookupTrait::ReadData(internal_key_type,
   return std::make_pair(Start, Start + NumDecls);
 }
 
-bool ASTReader::ReadDeclContextStorage(Module &M,
+bool ASTReader::ReadDeclContextStorage(ModuleFile &M,
                                        llvm::BitstreamCursor &Cursor,
                                    const std::pair<uint64_t, uint64_t> &Offsets,
                                        DeclContextInfo &Info) {
@@ -805,7 +805,7 @@ bool ASTReader::CheckPredefinesBuffers() {
 
 /// \brief Read the line table in the source manager block.
 /// \returns true if there was an error.
-bool ASTReader::ParseLineTable(Module &F,
+bool ASTReader::ParseLineTable(ModuleFile &F,
                                SmallVectorImpl<uint64_t> &Record) {
   unsigned Idx = 0;
   LineTableInfo &LineTable = SourceMgr.getLineTable();
@@ -949,7 +949,7 @@ public:
 
 
 /// \brief Read a source manager block
-ASTReader::ASTReadResult ASTReader::ReadSourceManagerBlock(Module &F) {
+ASTReader::ASTReadResult ASTReader::ReadSourceManagerBlock(ModuleFile &F) {
   using namespace SrcMgr;
 
   llvm::BitstreamCursor &SLocEntryCursor = F.SLocEntryCursor;
@@ -1058,7 +1058,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
     return Failure;
   }
 
-  Module *F = GlobalSLocEntryMap.find(-ID)->second;
+  ModuleFile *F = GlobalSLocEntryMap.find(-ID)->second;
   F->SLocEntryCursor.JumpToBit(F->SLocEntryOffsets[ID - F->SLocEntryBaseID]);
   llvm::BitstreamCursor &SLocEntryCursor = F->SLocEntryCursor;
   unsigned BaseOffset = F->SLocEntryBaseOffset;
@@ -1217,7 +1217,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
 }
 
 /// \brief Find the location where the module F is imported.
-SourceLocation ASTReader::getImportLocation(Module *F) {
+SourceLocation ASTReader::getImportLocation(ModuleFile *F) {
   if (F->ImportLoc.isValid())
     return F->ImportLoc;
   
@@ -1258,7 +1258,7 @@ bool ASTReader::ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor,
   }
 }
 
-void ASTReader::ReadMacroRecord(Module &F, uint64_t Offset) {
+void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
   llvm::BitstreamCursor &Stream = F.MacroCursor;
 
   // Keep track of where we are in the stream, then jump back there
@@ -1385,7 +1385,7 @@ void ASTReader::ReadMacroRecord(Module &F, uint64_t Offset) {
 }
 
 PreprocessedEntityID 
-ASTReader::getGlobalPreprocessedEntityID(Module &M, unsigned LocalID) const {
+ASTReader::getGlobalPreprocessedEntityID(ModuleFile &M, unsigned LocalID) const {
   ContinuousRangeMap<uint32_t, int, 2>::const_iterator 
     I = M.PreprocessedEntityRemap.find(LocalID - NUM_PREDEF_PP_ENTITY_IDS);
   assert(I != M.PreprocessedEntityRemap.end() 
@@ -1454,7 +1454,7 @@ HeaderFileInfoTrait::ReadData(const internal_key_type, const unsigned char *d,
   return HFI;
 }
 
-void ASTReader::SetIdentifierIsMacro(IdentifierInfo *II, Module &F,
+void ASTReader::SetIdentifierIsMacro(IdentifierInfo *II, ModuleFile &F,
                                      uint64_t LocalOffset) {
   // Note that this identifier has a macro definition.
   II->setHasMacroDefinition(true);
@@ -1545,7 +1545,7 @@ namespace {
   public:
     explicit IdentifierLookupVisitor(StringRef Name) : Name(Name), Found() { }
     
-    static bool visit(Module &M, void *UserData) {
+    static bool visit(ModuleFile &M, void *UserData) {
       IdentifierLookupVisitor *This
         = static_cast<IdentifierLookupVisitor *>(UserData);
       
@@ -1618,7 +1618,7 @@ void ASTReader::MaybeAddSystemRootToFilename(std::string &Filename) {
 }
 
 ASTReader::ASTReadResult
-ASTReader::ReadASTBlock(Module &F) {
+ASTReader::ReadASTBlock(ModuleFile &F) {
   llvm::BitstreamCursor &Stream = F.Stream;
 
   if (Stream.EnterSubBlock(AST_BLOCK_ID)) {
@@ -2070,7 +2070,7 @@ ASTReader::ReadASTBlock(Module &F) {
         uint16_t Len = io::ReadUnalignedLE16(Data);
         StringRef Name = StringRef((const char*)Data, Len);
         Data += Len;
-        Module *OM = ModuleMgr.lookup(Name);
+        ModuleFile *OM = ModuleMgr.lookup(Name);
         if (!OM) {
           Error("SourceLocation remap refers to unknown module");
           return Failure;
@@ -2364,7 +2364,7 @@ ASTReader::ReadASTBlock(Module &F) {
   return Failure;
 }
 
-ASTReader::ASTReadResult ASTReader::validateFileEntries(Module &M) {
+ASTReader::ASTReadResult ASTReader::validateFileEntries(ModuleFile &M) {
   llvm::BitstreamCursor &SLocEntryCursor = M.SLocEntryCursor;
 
   for (unsigned i = 0, e = M.LocalNumSLocFileEntries; i != e; ++i) {
@@ -2481,8 +2481,8 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
 
 ASTReader::ASTReadResult ASTReader::ReadASTCore(StringRef FileName,
                                                 ModuleKind Type,
-                                                Module *ImportedBy) {
-  Module *M;
+                                                ModuleFile *ImportedBy) {
+  ModuleFile *M;
   bool NewModule;
   std::string ErrorStr;
   llvm::tie(M, NewModule) = ModuleMgr.addModule(FileName, Type, ImportedBy,
@@ -2508,7 +2508,7 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(StringRef FileName,
     if (CurrentDir.empty()) CurrentDir = ".";
   }
 
-  Module &F = *M;
+  ModuleFile &F = *M;
   llvm::BitstreamCursor &Stream = F.Stream;
   Stream.init(F.StreamFile);
   F.SizeInBits = F.Buffer->getBufferSize() * 8;
@@ -2572,7 +2572,7 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(StringRef FileName,
     }
   }
   
-  // Once read, set the Module bit base offset and update the size in 
+  // Once read, set the ModuleFile bit base offset and update the size in 
   // bits of all files we've seen.
   F.GlobalBitOffset = TotalModulesSizeInBits;
   TotalModulesSizeInBits += F.SizeInBits;
@@ -2820,7 +2820,7 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
   return std::string();
 }
 
-ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(Module &F) {
+ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
   // Enter the submodule block.
   if (F.Stream.EnterSubBlock(SUBMODULE_BLOCK_ID)) {
     Error("malformed submodule block record in AST file");
@@ -2828,7 +2828,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(Module &F) {
   }
 
   ModuleMap &ModMap = PP.getHeaderSearchInfo().getModuleMap();
-  ModuleMap::Module *CurrentModule = 0;
+  Module *CurrentModule = 0;
   RecordData Record;
   while (true) {
     unsigned Code = F.Stream.ReadCode();
@@ -2869,7 +2869,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(Module &F) {
       bool IsFramework = Record[1];
       bool IsExplicit = Record[2];
 
-      ModuleMap::Module *ParentModule = 0;
+      Module *ParentModule = 0;
       if (Parent) {
         if (Parent > F.Submodules.size()) {
           Error("malformed submodule parent entry");
@@ -2952,21 +2952,21 @@ bool ASTReader::ParseLanguageOptions(
   return false;
 }
 
-std::pair<Module *, unsigned>
+std::pair<ModuleFile *, unsigned>
 ASTReader::getModulePreprocessedEntity(unsigned GlobalIndex) {
   GlobalPreprocessedEntityMapType::iterator
   I = GlobalPreprocessedEntityMap.find(GlobalIndex);
   assert(I != GlobalPreprocessedEntityMap.end() && 
          "Corrupted global preprocessed entity map");
-  Module *M = I->second;
+  ModuleFile *M = I->second;
   unsigned LocalIndex = GlobalIndex - M->BasePreprocessedEntityID;
   return std::make_pair(M, LocalIndex);
 }
 
 PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
   PreprocessedEntityID PPID = Index+1;
-  std::pair<Module *, unsigned> PPInfo = getModulePreprocessedEntity(Index);
-  Module &M = *PPInfo.first;
+  std::pair<ModuleFile *, unsigned> PPInfo = getModulePreprocessedEntity(Index);
+  ModuleFile &M = *PPInfo.first;
   unsigned LocalIndex = PPInfo.second;
   const PPEntityOffset &PPOffs = M.PreprocessedEntityOffsets[LocalIndex];
 
@@ -3072,7 +3072,7 @@ PreprocessedEntityID ASTReader::findNextPreprocessedEntity(
   ++SLocMapI;
   for (GlobalSLocOffsetMapType::const_iterator
          EndI = GlobalSLocOffsetMap.end(); SLocMapI != EndI; ++SLocMapI) {
-    Module &M = *SLocMapI->second;
+    ModuleFile &M = *SLocMapI->second;
     if (M.NumPreprocessedEntities)
       return getGlobalPreprocessedEntityID(M, M.BasePreprocessedEntityID);
   }
@@ -3085,9 +3085,9 @@ namespace {
 template <unsigned PPEntityOffset::*PPLoc>
 struct PPEntityComp {
   const ASTReader &Reader;
-  Module &M;
+  ModuleFile &M;
 
-  PPEntityComp(const ASTReader &Reader, Module &M) : Reader(Reader), M(M) { }
+  PPEntityComp(const ASTReader &Reader, ModuleFile &M) : Reader(Reader), M(M) { }
 
   bool operator()(const PPEntityOffset &L, const PPEntityOffset &R) const {
     SourceLocation LHS = getLoc(L);
@@ -3127,7 +3127,7 @@ ASTReader::findBeginPreprocessedEntity(SourceLocation BLoc) const {
   if (SLocMapI->second->NumPreprocessedEntities == 0)
     return findNextPreprocessedEntity(SLocMapI);
 
-  Module &M = *SLocMapI->second;
+  ModuleFile &M = *SLocMapI->second;
   typedef const PPEntityOffset *pp_iterator;
   pp_iterator pp_begin = M.PreprocessedEntityOffsets;
   pp_iterator pp_end = pp_begin + M.NumPreprocessedEntities;
@@ -3176,7 +3176,7 @@ ASTReader::findEndPreprocessedEntity(SourceLocation ELoc) const {
   if (SLocMapI->second->NumPreprocessedEntities == 0)
     return findNextPreprocessedEntity(SLocMapI);
 
-  Module &M = *SLocMapI->second;
+  ModuleFile &M = *SLocMapI->second;
   typedef const PPEntityOffset *pp_iterator;
   pp_iterator pp_begin = M.PreprocessedEntityOffsets;
   pp_iterator pp_end = pp_begin + M.NumPreprocessedEntities;
@@ -3211,8 +3211,8 @@ llvm::Optional<bool> ASTReader::isPreprocessedEntityInFileID(unsigned Index,
   if (FID.isInvalid())
     return false;
 
-  std::pair<Module *, unsigned> PPInfo = getModulePreprocessedEntity(Index);
-  Module &M = *PPInfo.first;
+  std::pair<ModuleFile *, unsigned> PPInfo = getModulePreprocessedEntity(Index);
+  ModuleFile &M = *PPInfo.first;
   unsigned LocalIndex = PPInfo.second;
   const PPEntityOffset &PPOffs = M.PreprocessedEntityOffsets[LocalIndex];
   
@@ -3238,7 +3238,7 @@ namespace {
     HeaderFileInfoVisitor(ASTReader &Reader, const FileEntry *FE)
       : Reader(Reader), FE(FE) { }
     
-    static bool visit(Module &M, void *UserData) {
+    static bool visit(ModuleFile &M, void *UserData) {
       HeaderFileInfoVisitor *This
         = static_cast<HeaderFileInfoVisitor *>(UserData);
       
@@ -3280,7 +3280,7 @@ HeaderFileInfo ASTReader::GetHeaderFileInfo(const FileEntry *FE) {
 
 void ASTReader::ReadPragmaDiagnosticMappings(DiagnosticsEngine &Diag) {
   for (ModuleIterator I = ModuleMgr.begin(), E = ModuleMgr.end(); I != E; ++I) {
-    Module &F = *(*I);
+    ModuleFile &F = *(*I);
     unsigned Idx = 0;
     while (Idx < F.PragmaDiagMappings.size()) {
       SourceLocation Loc = ReadSourceLocation(F, F.PragmaDiagMappings[Idx++]);
@@ -3311,7 +3311,7 @@ void ASTReader::ReadPragmaDiagnosticMappings(DiagnosticsEngine &Diag) {
 ASTReader::RecordLocation ASTReader::TypeCursorForIndex(unsigned Index) {
   GlobalTypeMapType::iterator I = GlobalTypeMap.find(Index);
   assert(I != GlobalTypeMap.end() && "Corrupted global type map");
-  Module *M = I->second;
+  ModuleFile *M = I->second;
   return RecordLocation(M, M->TypeOffsets[Index - M->BaseTypeIndex]);
 }
 
@@ -3752,7 +3752,7 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
 
 class clang::TypeLocReader : public TypeLocVisitor<TypeLocReader> {
   ASTReader &Reader;
-  Module &F;
+  ModuleFile &F;
   llvm::BitstreamCursor &DeclsCursor;
   const ASTReader::RecordData &Record;
   unsigned &Idx;
@@ -3768,7 +3768,7 @@ class clang::TypeLocReader : public TypeLocVisitor<TypeLocReader> {
   }
   
 public:
-  TypeLocReader(ASTReader &Reader, Module &F,
+  TypeLocReader(ASTReader &Reader, ModuleFile &F,
                 const ASTReader::RecordData &Record, unsigned &Idx)
     : Reader(Reader), F(F), DeclsCursor(F.DeclsCursor), Record(Record), Idx(Idx)
   { }
@@ -3985,7 +3985,7 @@ void TypeLocReader::VisitAtomicTypeLoc(AtomicTypeLoc TL) {
   TL.setRParenLoc(ReadSourceLocation(Record, Idx));
 }
 
-TypeSourceInfo *ASTReader::GetTypeSourceInfo(Module &F,
+TypeSourceInfo *ASTReader::GetTypeSourceInfo(ModuleFile &F,
                                              const RecordData &Record,
                                              unsigned &Idx) {
   QualType InfoTy = readType(F, Record, Idx);
@@ -4076,12 +4076,12 @@ QualType ASTReader::GetType(TypeID ID) {
   return TypesLoaded[Index].withFastQualifiers(FastQuals);
 }
 
-QualType ASTReader::getLocalType(Module &F, unsigned LocalID) {
+QualType ASTReader::getLocalType(ModuleFile &F, unsigned LocalID) {
   return GetType(getGlobalTypeID(F, LocalID));
 }
 
 serialization::TypeID 
-ASTReader::getGlobalTypeID(Module &F, unsigned LocalID) const {
+ASTReader::getGlobalTypeID(ModuleFile &F, unsigned LocalID) const {
   unsigned FastQuals = LocalID & Qualifiers::FastMask;
   unsigned LocalIndex = LocalID >> Qualifiers::FastWidth;
   
@@ -4097,7 +4097,7 @@ ASTReader::getGlobalTypeID(Module &F, unsigned LocalID) const {
 }
 
 TemplateArgumentLocInfo
-ASTReader::GetTemplateArgumentLocInfo(Module &F,
+ASTReader::GetTemplateArgumentLocInfo(ModuleFile &F,
                                       TemplateArgument::ArgKind Kind,
                                       const RecordData &Record,
                                       unsigned &Index) {
@@ -4132,7 +4132,7 @@ ASTReader::GetTemplateArgumentLocInfo(Module &F,
 }
 
 TemplateArgumentLoc
-ASTReader::ReadTemplateArgumentLoc(Module &F,
+ASTReader::ReadTemplateArgumentLoc(ModuleFile &F,
                                    const RecordData &Record, unsigned &Index) {
   TemplateArgument Arg = ReadTemplateArgument(F, Record, Index);
 
@@ -4148,7 +4148,7 @@ Decl *ASTReader::GetExternalDecl(uint32_t ID) {
   return GetDecl(ID);
 }
 
-uint64_t ASTReader::readCXXBaseSpecifiers(Module &M, const RecordData &Record, 
+uint64_t ASTReader::readCXXBaseSpecifiers(ModuleFile &M, const RecordData &Record, 
                                           unsigned &Idx){
   if (Idx >= Record.size())
     return 0;
@@ -4181,7 +4181,7 @@ CXXBaseSpecifier *ASTReader::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
 }
 
 serialization::DeclID 
-ASTReader::getGlobalDeclID(Module &F, unsigned LocalID) const {
+ASTReader::getGlobalDeclID(ModuleFile &F, unsigned LocalID) const {
   if (LocalID < NUM_PREDEF_DECL_IDS)
     return LocalID;
 
@@ -4193,7 +4193,7 @@ ASTReader::getGlobalDeclID(Module &F, unsigned LocalID) const {
 }
 
 bool ASTReader::isDeclIDFromModule(serialization::GlobalDeclID ID,
-                                   Module &M) const {
+                                   ModuleFile &M) const {
   GlobalDeclMapType::const_iterator I = GlobalDeclMap.find(ID);
   assert(I != GlobalDeclMap.end() && "Corrupted global declaration map");
   return &M == I->second;
@@ -4265,7 +4265,7 @@ if (!DeclsLoaded[Index]) {
   return DeclsLoaded[Index];
 }
 
-serialization::DeclID ASTReader::ReadDeclID(Module &F, 
+serialization::DeclID ASTReader::ReadDeclID(ModuleFile &F, 
                                             const RecordData &Record,
                                             unsigned &Idx) {
   if (Idx >= Record.size()) {
@@ -4310,14 +4310,14 @@ namespace {
         PredefsVisited[I] = false;
     }
 
-    static bool visit(Module &M, bool Preorder, void *UserData) {
+    static bool visit(ModuleFile &M, bool Preorder, void *UserData) {
       if (Preorder)
         return false;
 
       FindExternalLexicalDeclsVisitor *This
         = static_cast<FindExternalLexicalDeclsVisitor *>(UserData);
 
-      Module::DeclContextInfosMap::iterator Info
+      ModuleFile::DeclContextInfosMap::iterator Info
         = M.DeclContextInfos.find(This->DC);
       if (Info == M.DeclContextInfos.end() || !Info->second.LexicalDecls)
         return false;
@@ -4364,10 +4364,10 @@ namespace {
 
 class DeclIDComp {
   ASTReader &Reader;
-  Module &Mod;
+  ModuleFile &Mod;
 
 public:
-  DeclIDComp(ASTReader &Reader, Module &M) : Reader(Reader), Mod(M) {}
+  DeclIDComp(ASTReader &Reader, ModuleFile &M) : Reader(Reader), Mod(M) {}
 
   bool operator()(LocalDeclID L, LocalDeclID R) const {
     SourceLocation LHS = getLocation(L);
@@ -4437,7 +4437,7 @@ void ASTReader::FindFileRegionDecls(FileID File,
 }
 
 namespace {
-  /// \brief Module visitor used to perform name lookup into a
+  /// \brief ModuleFile visitor used to perform name lookup into a
   /// declaration context.
   class DeclContextNameLookupVisitor {
     ASTReader &Reader;
@@ -4451,13 +4451,13 @@ namespace {
                                  SmallVectorImpl<NamedDecl *> &Decls)
       : Reader(Reader), DC(DC), Name(Name), Decls(Decls) { }
 
-    static bool visit(Module &M, void *UserData) {
+    static bool visit(ModuleFile &M, void *UserData) {
       DeclContextNameLookupVisitor *This
         = static_cast<DeclContextNameLookupVisitor *>(UserData);
 
       // Check whether we have any visible declaration information for
       // this context in this module.
-      Module::DeclContextInfosMap::iterator Info
+      ModuleFile::DeclContextInfosMap::iterator Info
         = M.DeclContextInfos.find(This->DC);
       if (Info == M.DeclContextInfos.end() || !Info->second.NameLookupTableData)
         return false;
@@ -4628,15 +4628,15 @@ void ASTReader::PrintStats() {
   std::fprintf(stderr, "\n");
 }
 
-template<typename Key, typename Module, unsigned InitialCapacity>
+template<typename Key, typename ModuleFile, unsigned InitialCapacity>
 static void 
 dumpModuleIDMap(StringRef Name,
-                const ContinuousRangeMap<Key, Module *, 
+                const ContinuousRangeMap<Key, ModuleFile *, 
                                          InitialCapacity> &Map) {
   if (Map.begin() == Map.end())
     return;
   
-  typedef ContinuousRangeMap<Key, Module *, InitialCapacity> MapType;
+  typedef ContinuousRangeMap<Key, ModuleFile *, InitialCapacity> MapType;
   llvm::errs() << Name << ":\n";
   for (typename MapType::const_iterator I = Map.begin(), IEnd = Map.end(); 
        I != IEnd; ++I) {
@@ -4646,7 +4646,7 @@ dumpModuleIDMap(StringRef Name,
 }
 
 void ASTReader::dump() {
-  llvm::errs() << "*** PCH/Module Remappings:\n";
+  llvm::errs() << "*** PCH/ModuleFile Remappings:\n";
   dumpModuleIDMap("Global bit offset map", GlobalBitOffsetsMap);
   dumpModuleIDMap("Global source location entry map", GlobalSLocEntryMap);
   dumpModuleIDMap("Global type map", GlobalTypeMap);
@@ -4821,7 +4821,7 @@ namespace clang { namespace serialization {
     ReadMethodPoolVisitor(ASTReader &Reader, Selector Sel)
       : Reader(Reader), Sel(Sel) { }
     
-    static bool visit(Module &M, void *UserData) {
+    static bool visit(ModuleFile &M, void *UserData) {
       ReadMethodPoolVisitor *This
         = static_cast<ReadMethodPoolVisitor *>(UserData);
       
@@ -5079,7 +5079,7 @@ IdentifierInfo *ASTReader::DecodeIdentifierInfo(IdentifierID ID) {
   if (!IdentifiersLoaded[ID]) {
     GlobalIdentifierMapType::iterator I = GlobalIdentifierMap.find(ID + 1);
     assert(I != GlobalIdentifierMap.end() && "Corrupted global identifier map");
-    Module *M = I->second;
+    ModuleFile *M = I->second;
     unsigned Index = ID - M->BaseIdentifierID;
     const char *Str = M->IdentifierTableData + M->IdentifierOffsets[Index];
 
@@ -5100,11 +5100,11 @@ IdentifierInfo *ASTReader::DecodeIdentifierInfo(IdentifierID ID) {
   return IdentifiersLoaded[ID];
 }
 
-IdentifierInfo *ASTReader::getLocalIdentifier(Module &M, unsigned LocalID) {
+IdentifierInfo *ASTReader::getLocalIdentifier(ModuleFile &M, unsigned LocalID) {
   return DecodeIdentifierInfo(getGlobalIdentifierID(M, LocalID));
 }
 
-IdentifierID ASTReader::getGlobalIdentifierID(Module &M, unsigned LocalID) {
+IdentifierID ASTReader::getGlobalIdentifierID(ModuleFile &M, unsigned LocalID) {
   if (LocalID < NUM_PREDEF_IDENT_IDS)
     return LocalID;
   
@@ -5120,7 +5120,7 @@ bool ASTReader::ReadSLocEntry(int ID) {
   return ReadSLocEntryRecord(ID) != Success;
 }
 
-Selector ASTReader::getLocalSelector(Module &M, unsigned LocalID) {
+Selector ASTReader::getLocalSelector(ModuleFile &M, unsigned LocalID) {
   return DecodeSelector(getGlobalSelectorID(M, LocalID));
 }
 
@@ -5137,7 +5137,7 @@ Selector ASTReader::DecodeSelector(serialization::SelectorID ID) {
     // Load this selector from the selector table.
     GlobalSelectorMapType::iterator I = GlobalSelectorMap.find(ID);
     assert(I != GlobalSelectorMap.end() && "Corrupted global selector map");
-    Module &M = *I->second;
+    ModuleFile &M = *I->second;
     ASTSelectorLookupTrait Trait(*this, M);
     unsigned Idx = ID - M.BaseSelectorID - NUM_PREDEF_SELECTOR_IDS;
     SelectorsLoaded[ID - 1] =
@@ -5159,7 +5159,7 @@ uint32_t ASTReader::GetNumExternalSelectors() {
 }
 
 serialization::SelectorID
-ASTReader::getGlobalSelectorID(Module &M, unsigned LocalID) const {
+ASTReader::getGlobalSelectorID(ModuleFile &M, unsigned LocalID) const {
   if (LocalID < NUM_PREDEF_SELECTOR_IDS)
     return LocalID;
   
@@ -5172,7 +5172,7 @@ ASTReader::getGlobalSelectorID(Module &M, unsigned LocalID) const {
 }
 
 DeclarationName
-ASTReader::ReadDeclarationName(Module &F, 
+ASTReader::ReadDeclarationName(ModuleFile &F, 
                                const RecordData &Record, unsigned &Idx) {
   DeclarationName::NameKind Kind = (DeclarationName::NameKind)Record[Idx++];
   switch (Kind) {
@@ -5212,7 +5212,7 @@ ASTReader::ReadDeclarationName(Module &F,
   return DeclarationName();
 }
 
-void ASTReader::ReadDeclarationNameLoc(Module &F,
+void ASTReader::ReadDeclarationNameLoc(ModuleFile &F,
                                        DeclarationNameLoc &DNLoc,
                                        DeclarationName Name,
                                       const RecordData &Record, unsigned &Idx) {
@@ -5244,7 +5244,7 @@ void ASTReader::ReadDeclarationNameLoc(Module &F,
   }
 }
 
-void ASTReader::ReadDeclarationNameInfo(Module &F,
+void ASTReader::ReadDeclarationNameInfo(ModuleFile &F,
                                         DeclarationNameInfo &NameInfo,
                                       const RecordData &Record, unsigned &Idx) {
   NameInfo.setName(ReadDeclarationName(F, Record, Idx));
@@ -5254,7 +5254,7 @@ void ASTReader::ReadDeclarationNameInfo(Module &F,
   NameInfo.setInfo(DNLoc);
 }
 
-void ASTReader::ReadQualifierInfo(Module &F, QualifierInfo &Info,
+void ASTReader::ReadQualifierInfo(ModuleFile &F, QualifierInfo &Info,
                                   const RecordData &Record, unsigned &Idx) {
   Info.QualifierLoc = ReadNestedNameSpecifierLoc(F, Record, Idx);
   unsigned NumTPLists = Record[Idx++];
@@ -5267,7 +5267,7 @@ void ASTReader::ReadQualifierInfo(Module &F, QualifierInfo &Info,
 }
 
 TemplateName
-ASTReader::ReadTemplateName(Module &F, const RecordData &Record, 
+ASTReader::ReadTemplateName(ModuleFile &F, const RecordData &Record, 
                             unsigned &Idx) {
   TemplateName::NameKind Kind = (TemplateName::NameKind)Record[Idx++];
   switch (Kind) {
@@ -5326,7 +5326,7 @@ ASTReader::ReadTemplateName(Module &F, const RecordData &Record,
 }
 
 TemplateArgument
-ASTReader::ReadTemplateArgument(Module &F,
+ASTReader::ReadTemplateArgument(ModuleFile &F,
                                 const RecordData &Record, unsigned &Idx) {
   TemplateArgument::ArgKind Kind = (TemplateArgument::ArgKind)Record[Idx++];
   switch (Kind) {
@@ -5365,7 +5365,7 @@ ASTReader::ReadTemplateArgument(Module &F,
 }
 
 TemplateParameterList *
-ASTReader::ReadTemplateParameterList(Module &F,
+ASTReader::ReadTemplateParameterList(ModuleFile &F,
                                      const RecordData &Record, unsigned &Idx) {
   SourceLocation TemplateLoc = ReadSourceLocation(F, Record, Idx);
   SourceLocation LAngleLoc = ReadSourceLocation(F, Record, Idx);
@@ -5386,7 +5386,7 @@ ASTReader::ReadTemplateParameterList(Module &F,
 void
 ASTReader::
 ReadTemplateArgumentList(SmallVector<TemplateArgument, 8> &TemplArgs,
-                         Module &F, const RecordData &Record,
+                         ModuleFile &F, const RecordData &Record,
                          unsigned &Idx) {
   unsigned NumTemplateArgs = Record[Idx++];
   TemplArgs.reserve(NumTemplateArgs);
@@ -5395,7 +5395,7 @@ ReadTemplateArgumentList(SmallVector<TemplateArgument, 8> &TemplArgs,
 }
 
 /// \brief Read a UnresolvedSet structure.
-void ASTReader::ReadUnresolvedSet(Module &F, UnresolvedSetImpl &Set,
+void ASTReader::ReadUnresolvedSet(ModuleFile &F, UnresolvedSetImpl &Set,
                                   const RecordData &Record, unsigned &Idx) {
   unsigned NumDecls = Record[Idx++];
   while (NumDecls--) {
@@ -5406,7 +5406,7 @@ void ASTReader::ReadUnresolvedSet(Module &F, UnresolvedSetImpl &Set,
 }
 
 CXXBaseSpecifier
-ASTReader::ReadCXXBaseSpecifier(Module &F,
+ASTReader::ReadCXXBaseSpecifier(ModuleFile &F,
                                 const RecordData &Record, unsigned &Idx) {
   bool isVirtual = static_cast<bool>(Record[Idx++]);
   bool isBaseOfClass = static_cast<bool>(Record[Idx++]);
@@ -5422,7 +5422,7 @@ ASTReader::ReadCXXBaseSpecifier(Module &F,
 }
 
 std::pair<CXXCtorInitializer **, unsigned>
-ASTReader::ReadCXXCtorInitializers(Module &F, const RecordData &Record,
+ASTReader::ReadCXXCtorInitializers(ModuleFile &F, const RecordData &Record,
                                    unsigned &Idx) {
   CXXCtorInitializer **CtorInitializers = 0;
   unsigned NumInitializers = Record[Idx++];
@@ -5503,7 +5503,7 @@ ASTReader::ReadCXXCtorInitializers(Module &F, const RecordData &Record,
 }
 
 NestedNameSpecifier *
-ASTReader::ReadNestedNameSpecifier(Module &F,
+ASTReader::ReadNestedNameSpecifier(ModuleFile &F,
                                    const RecordData &Record, unsigned &Idx) {
   unsigned N = Record[Idx++];
   NestedNameSpecifier *NNS = 0, *Prev = 0;
@@ -5552,7 +5552,7 @@ ASTReader::ReadNestedNameSpecifier(Module &F,
 }
 
 NestedNameSpecifierLoc
-ASTReader::ReadNestedNameSpecifierLoc(Module &F, const RecordData &Record, 
+ASTReader::ReadNestedNameSpecifierLoc(ModuleFile &F, const RecordData &Record, 
                                       unsigned &Idx) {
   unsigned N = Record[Idx++];
   NestedNameSpecifierLocBuilder Builder;
@@ -5608,7 +5608,7 @@ ASTReader::ReadNestedNameSpecifierLoc(Module &F, const RecordData &Record,
 }
 
 SourceRange
-ASTReader::ReadSourceRange(Module &F, const RecordData &Record,
+ASTReader::ReadSourceRange(ModuleFile &F, const RecordData &Record,
                            unsigned &Idx) {
   SourceLocation beg = ReadSourceLocation(F, Record, Idx);
   SourceLocation end = ReadSourceLocation(F, Record, Idx);
@@ -5655,7 +5655,7 @@ VersionTuple ASTReader::ReadVersionTuple(const RecordData &Record,
   return VersionTuple(Major, Minor - 1, Subminor - 1);
 }
 
-CXXTemporary *ASTReader::ReadCXXTemporary(Module &F, 
+CXXTemporary *ASTReader::ReadCXXTemporary(ModuleFile &F, 
                                           const RecordData &Record,
                                           unsigned &Idx) {
   CXXDestructorDecl *Decl = ReadDeclAs<CXXDestructorDecl>(F, Record, Idx);
