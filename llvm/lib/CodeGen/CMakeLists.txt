@@ -9,6 +9,7 @@ add_llvm_library(LLVMCodeGen
   CodePlacementOpt.cpp
   CriticalAntiDepBreaker.cpp
   DeadMachineInstructionElim.cpp
+  DFAPacketizer.cpp
   DwarfEHPrepare.cpp
   EdgeBundles.cpp
   ELFCodeEmitter.cpp
