@@ -210,16 +210,15 @@ int main(int argc, char **argv) {
   std::string ActivePrefix, ActiveBinDir, ActiveIncludeDir, ActiveLibDir;
   std::string ActiveIncludeOption;
   if (IsInDevelopmentTree) {
+    ActiveIncludeDir = std::string(LLVM_SRC_ROOT) + "/include";
     ActivePrefix = CurrentExecPrefix;
 
     // CMake organizes the products differently than a normal prefix style
     // layout.
     if (DevelopmentTreeLayoutIsCMakeStyle) {
-      ActiveIncludeDir = ActiveObjRoot + "/include";
       ActiveBinDir = ActiveObjRoot + "/bin/" + LLVM_BUILDMODE;
       ActiveLibDir = ActiveObjRoot + "/lib/" + LLVM_BUILDMODE;
     } else {
-      ActiveIncludeDir = ActiveObjRoot + "/include";
       ActiveBinDir = ActiveObjRoot + "/" + LLVM_BUILDMODE + "/bin";
       ActiveLibDir = ActiveObjRoot + "/" + LLVM_BUILDMODE + "/lib";
     }
