@@ -201,6 +201,16 @@ ClangExpressionDeclMap::BuildIntegerVariable (const ConstString &name,
                                                     type.GetOpaqueQualType()),
                            context);
     
+    if (!user_type.GetOpaqueQualType())
+    {
+        lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+        if (log)
+            log->Printf("ClangExpressionDeclMap::BuildIntegerVariable - Couldn't export the type for a constant integer result");
+        
+        return lldb::ClangExpressionVariableSP();
+    }
+    
     if (!m_parser_vars->m_persistent_vars->CreatePersistentVariable (exe_ctx->GetBestExecutionContextScope (),
                                                                      name, 
                                                                      user_type, 
@@ -289,6 +299,16 @@ ClangExpressionDeclMap::BuildCastVariable (const ConstString &name,
                                                     type.GetASTContext(),
                                                     type.GetOpaqueQualType()),
                            context);
+    
+    if (!user_type.GetOpaqueQualType())
+    {
+        lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+        
+        if (log)
+            log->Printf("ClangExpressionDeclMap::BuildCastVariable - Couldn't export the type for a constant cast result");
+        
+        return lldb::ClangExpressionVariableSP();
+    }
     
     TypeFromUser var_type = var_sp->GetTypeFromUser();
     
@@ -2793,6 +2813,13 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
                                                 user_type.GetOpaqueQualType()),
                                 m_ast_context);
     
+    if (!parser_type.GetOpaqueQualType())
+    {
+        if (log)
+            log->Printf("  CEDM::FEVD[%u] Couldn't import type for pvar %s", current_id, pvar_sp->GetName().GetCString());
+        return;
+    }
+    
     NamedDecl *var_decl = context.AddVarDecl(ClangASTContext::CreateLValueReferenceType(parser_type.GetASTContext(), parser_type.GetOpaqueQualType()));
     
     pvar_sp->EnableParserVars();
@@ -2902,6 +2929,14 @@ ClangExpressionDeclMap::ResolveUnknownTypes()
             TypeFromParser parser_type(var_type.getAsOpaquePtr(), &var_decl->getASTContext());
             
             lldb::clang_type_t copied_type = m_ast_importer->CopyType(scratch_ast_context, &var_decl->getASTContext(), var_type.getAsOpaquePtr());
+            
+            if (!copied_type)
+            {                
+                if (log)
+                    log->Printf("ClangExpressionDeclMap::ResolveUnknownType - Couldn't import the type for a variable");
+                
+                return lldb::ClangExpressionVariableSP();
+            }
             
             TypeFromUser user_type(copied_type, scratch_ast_context);
                         
@@ -3075,6 +3110,16 @@ ClangExpressionDeclMap::AddOneType(NameSearchContext &context,
     ASTContext *user_ast_context = ut.GetASTContext();
     
     void *copied_type = GuardedCopyType(parser_ast_context, user_ast_context, ut.GetOpaqueQualType());
+    
+    if (!copied_type)
+    {
+        lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+        if (log)
+            log->Printf("ClangExpressionDeclMap::AddOneType - Couldn't import the type");
+        
+        return;
+    }
      
     if (add_method && ClangASTContext::IsAggregateType(copied_type))
     {

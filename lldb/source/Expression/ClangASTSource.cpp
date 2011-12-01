@@ -503,6 +503,14 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
             
             void *copied_type = GuardedCopyType(m_ast_context, type_sp->GetClangAST(), type_sp->GetClangFullType());
             
+            if (!copied_type)
+            {                
+                if (log)
+                    log->Printf("ClangExpressionDeclMap::BuildIntegerVariable - Couldn't export the type for a constant integer result");
+                
+                break;
+            }
+                
             context.AddTypeDecl(copied_type);
         }
         
@@ -845,7 +853,7 @@ NameSearchContext::AddFunDecl (void *type)
     // this, we raid the function's FunctionProtoType for types.
     
     QualType qual_type (QualType::getFromOpaquePtr(type));
-    const FunctionProtoType *func_proto_type = qual_type->getAs<FunctionProtoType>();
+    const FunctionProtoType *func_proto_type = dyn_cast<FunctionProtoType>(qual_type.getTypePtr());
     
     if (func_proto_type)
     {        
@@ -871,6 +879,12 @@ NameSearchContext::AddFunDecl (void *type)
         }
         
         func_decl->setParams(ArrayRef<ParmVarDecl*>(parm_var_decls));
+    }
+    else
+    {
+        lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+        log->Printf("Function type wasn't a FunctionProtoType");
     }
     
     m_decls.push_back(func_decl);
