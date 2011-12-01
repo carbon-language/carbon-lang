@@ -905,6 +905,7 @@ GetOpcodeDataSize (const DataExtractor &data, const uint32_t data_offset, const 
         case DW_OP_push_object_address: // 0x97 DWARF3
         case DW_OP_form_tls_address:    // 0x9b DWARF3
         case DW_OP_call_frame_cfa:      // 0x9c DWARF3
+        case DW_OP_stack_value: // 0x9f DWARF4
             return 0; 
 
         // Opcodes with a single 1 byte arguments
@@ -976,12 +977,20 @@ GetOpcodeDataSize (const DataExtractor &data, const uint32_t data_offset, const 
             data.Skip_LEB128(&offset); 
             return offset - data_offset;   
             
-        // All opcodes that have a 2 ULEB (signed or unsigned) arguments
+            // All opcodes that have a 2 ULEB (signed or unsigned) arguments
         case DW_OP_bregx:       // 0x92 2 ULEB128 register followed by SLEB128 offset
         case DW_OP_bit_piece:   // 0x9d ULEB128 bit size, ULEB128 bit offset (DWARF3);
             data.Skip_LEB128(&offset); 
             data.Skip_LEB128(&offset); 
             return offset - data_offset;   
+
+        case DW_OP_implicit_value: // 0x9e ULEB128 size followed by block of that size (DWARF4)
+            {
+                uint64_t block_len = data.Skip_LEB128(&offset); 
+                offset += block_len;
+                return offset - data_offset;   
+            }
+            
         default:
         {
             Host::SetCrashDescriptionWithFormat ("Unhandled DW_OP_XXX opcode: %d, add support for it.", op);
