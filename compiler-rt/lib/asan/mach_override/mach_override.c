@@ -401,7 +401,7 @@ allocateBranchIsland(
 		if( !err ) {
 			assert( sizeof( BranchIsland ) <= pageSize );
 #if defined(__x86_64__)
-			vm_address_t first = (uint64_t)originalFunctionAddress & ~(uint64_t)(((uint64_t)1 << 31) - 1) | ((uint64_t)1 << 31); // start in the middle of the page?
+			vm_address_t first = ((uint64_t)originalFunctionAddress & ~(uint64_t)(((uint64_t)1 << 31) - 1)) | ((uint64_t)1 << 31); // start in the middle of the page?
 			vm_address_t last = 0x0;
 #else
 			vm_address_t first = 0xfeffffff;
