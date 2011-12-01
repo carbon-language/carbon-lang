@@ -14952,7 +14952,10 @@ printf("\n");
 #endif
     const size_t bs = buf == NULL ? 0 : *n;
     ptrdiff_t sm = dmg_tree.__mangled_name_end_ - dmg_tree.__mangled_name_begin_;
-    ptrdiff_t est = sm + 50 * (dmg_tree.__node_end_ - dmg_tree.__node_begin_);
+    ptrdiff_t est = sm + 60 * (
+                                (dmg_tree.__node_end_ - dmg_tree.__node_begin_) +
+                                (dmg_tree.__sub_end_ - dmg_tree.__sub_begin_) +
+                                (dmg_tree.__t_end_ - dmg_tree.__t_begin_));
     const unsigned N = 4096;
     char tmp[N];
     ptrdiff_t s;
