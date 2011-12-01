@@ -434,6 +434,7 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
   IRBuilder<> IRB1(CheckTerm);
   Instruction *Crash = generateCrashCode(IRB1, AddrLong, IsWrite, TypeSize);
   Crash->setDebugLoc(OrigIns->getDebugLoc());
+  ReplaceInstWithInst(CheckTerm, new UnreachableInst(*C));
 }
 
 // This function replaces all global variables with new variables that have
@@ -951,8 +952,8 @@ BlackList::BlackList(const std::string &Path) {
 
   OwningPtr<MemoryBuffer> File;
   if (error_code EC = MemoryBuffer::getFile(ClBlackListFile.c_str(), File)) {
-    errs() << EC.message();
-    exit(1);
+    report_fatal_error("Can't open blacklist file " + ClBlackListFile + ": " +
+                       EC.message());
   }
   MemoryBuffer *Buff = File.take();
   const char *Data = Buff->getBufferStart();
