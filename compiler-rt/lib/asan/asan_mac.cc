@@ -12,9 +12,7 @@
 // Mac-specific details.
 //===----------------------------------------------------------------------===//
 
-#ifndef __APPLE__
-#error "This file should be used on Mac OS X only."
-#endif
+#ifdef __APPLE__
 
 #include "asan_mac.h"
 
@@ -254,3 +252,5 @@ int WRAP(pthread_workqueue_additem_np)(pthread_workqueue_t workq,
   return real_pthread_workqueue_additem_np(workq, wrap_workitem_func, asan_ctxt,
                                            itemhandlep, gencountp);
 }
+
+#endif  // __APPLE__

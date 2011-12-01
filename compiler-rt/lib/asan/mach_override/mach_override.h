@@ -42,6 +42,8 @@
 
 	***************************************************************************/
 
+#ifdef __APPLE__
+
 #ifndef		_mach_override_
 #define		_mach_override_
 
@@ -119,3 +121,5 @@ mach_override_ptr(
 	}
 #endif
 #endif	//	_mach_override_
+
+#endif  // __APPLE__

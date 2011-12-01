@@ -5,6 +5,8 @@
 
 	***************************************************************************/
 
+#ifdef __APPLE__
+
 #include "mach_override.h"
 
 #include <mach-o/dyld.h>
@@ -769,3 +771,5 @@ void atomic_mov64(
 }
 #endif
 #endif
+
+#endif  // __APPLE__

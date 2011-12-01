@@ -7,7 +7,6 @@
 #
 #===------------------------------------------------------------------------===#
 
-SVNVERSION=$(shell svnversion)
 OS=$(shell uname | tr '[A-Z]' '[a-z]')
 ROOT=$(shell pwd)
 MAKEFILE=Makefile.old  # this file.
@@ -169,43 +168,37 @@ ifeq ($(ASAN_COMPILER), gcc)
   ASAN_LD_TAIL=$(LIBASAN_A)
 endif
 
-RTL_HDR_COMMON=asan_allocator.h \
+RTL_HDR=asan_allocator.h \
 	asan_internal.h \
 	asan_interceptors.h \
 	asan_interface.h \
 	asan_lock.h \
+	asan_mac.h \
 	asan_mapping.h \
 	asan_stack.h \
 	asan_stats.h \
 	asan_thread.h \
 	asan_thread_registry.h \
+	mach_override/mach_override.h \
 	sysinfo/basictypes.h \
 	sysinfo/sysinfo.h
 
-LIBASAN_OBJ_COMMON=$(BIN)/asan_rtl$(SUFF).o \
+LIBASAN_OBJ=$(BIN)/asan_rtl$(SUFF).o \
 	    $(BIN)/asan_allocator$(SUFF).o  \
 	    $(BIN)/asan_globals$(SUFF).o  \
 	    $(BIN)/asan_interceptors$(SUFF).o  \
+	    $(BIN)/asan_linux$(SUFF).o \
+	    $(BIN)/asan_mac$(SUFF).o \
+	    $(BIN)/asan_malloc_linux$(SUFF).o \
+	    $(BIN)/asan_malloc_mac$(SUFF).o \
 	    $(BIN)/asan_poisoning$(SUFF).o  \
 	    $(BIN)/asan_printf$(SUFF).o  \
 	    $(BIN)/asan_stack$(SUFF).o  \
 	    $(BIN)/asan_stats$(SUFF).o  \
 	    $(BIN)/asan_thread$(SUFF).o  \
 	    $(BIN)/asan_thread_registry$(SUFF).o  \
+	    $(BIN)/mach_override/mach_override$(SUFF).o \
 	    $(BIN)/sysinfo/sysinfo$(SUFF).o
-
-ifeq ($(OS),darwin)
-RTL_HDR=$(RTL_HDR_COMMON) mach_override/mach_override.h asan_mac.h
-LIBASAN_OBJ=$(LIBASAN_OBJ_COMMON) \
-	    $(BIN)/asan_mac$(SUFF).o \
-	    $(BIN)/asan_malloc_mac$(SUFF).o \
-	    $(BIN)/mach_override/mach_override$(SUFF).o
-else
-RTL_HDR=$(RTL_HDR_COMMON)
-LIBASAN_OBJ=$(LIBASAN_OBJ_COMMON) \
-	    $(BIN)/asan_linux$(SUFF).o \
-	    $(BIN)/asan_malloc_linux$(SUFF).o
-endif
 
 GTEST_ROOT=third_party/googletest
 GTEST_INCLUDE=-I$(GTEST_ROOT)/include
@@ -269,7 +262,6 @@ $(BIN)/%_test$(SUFF).o: tests/%_test.mm $(RTL_HDR) $(MAKEFILE)
 
 $(BIN)/%$(SUFF).o: %.cc $(RTL_HDR) $(MAKEFILE)
 	$(CXX) $(PIE) $(CFLAGS) -fPIC -c -o $@ -g $< -Ithird_party \
-		-DASAN_REVISION=\"$(SVNVERSION)\" \
 		-DASAN_USE_SYSINFO=1 \
 		-DASAN_NEEDS_SEGV=$(ASAN_NEEDS_SEGV) \
 		-DASAN_HAS_EXCEPTIONS=$(ASAN_HAS_EXCEPTIONS) \
@@ -278,7 +270,6 @@ $(BIN)/%$(SUFF).o: %.cc $(RTL_HDR) $(MAKEFILE)
 
 $(BIN)/%$(SUFF).o: %.c $(RTL_HDR) $(MAKEFILE)
 	$(CC) $(PIE) $(CFLAGS) -fPIC -c -o $@ -g $< -Ithird_party \
-		-DASAN_REVISION=\"$(SVNVERSION)\" \
 		-DASAN_USE_SYSINFO=1 \
 		$(ASAN_FLAGS)
 

@@ -12,6 +12,8 @@
 // Mac-specific malloc interception.
 //===----------------------------------------------------------------------===//
 
+#ifdef __APPLE__
+
 #include <AvailabilityMacros.h>
 #include <CoreFoundation/CFBase.h>
 #include <malloc/malloc.h>
@@ -378,3 +380,5 @@ void ReplaceSystemMalloc() {
   }
 }
 }  // namespace __asan
+
+#endif  // __APPLE__

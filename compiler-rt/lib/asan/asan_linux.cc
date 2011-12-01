@@ -11,6 +11,7 @@
 //
 // Linux-specific details.
 //===----------------------------------------------------------------------===//
+#ifdef __linux__
 
 #include "asan_internal.h"
 
@@ -46,3 +47,5 @@ ssize_t asan_write(int fd, const void *buf, size_t count) {
 }
 
 }  // namespace __asan
+
+#endif  // __linux__

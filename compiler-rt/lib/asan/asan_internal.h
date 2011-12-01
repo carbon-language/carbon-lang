@@ -14,6 +14,10 @@
 #ifndef ASAN_INTERNAL_H
 #define ASAN_INTERNAL_H
 
+#if !defined(__linux__) && !defined(__APPLE__)
+# error "This operating system is not supported by AddressSanitizer"
+#endif
+
 #include <stdint.h>  // for __WORDSIZE
 #include <stdlib.h>  // for size_t
 #include <unistd.h>  // for _exit

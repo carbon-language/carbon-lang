@@ -11,6 +11,8 @@
 //
 // ASan-private header for asan_mac.cc
 //===----------------------------------------------------------------------===//
+#ifdef __APPLE__
+
 #ifndef ASAN_MAC_H
 #define ASAN_MAC_H
 
@@ -81,3 +83,5 @@ int WRAP(pthread_workqueue_additem_np)(pthread_workqueue_t workq,
 }
 
 #endif  // ASAN_MAC_H
+
+#endif  // __APPLE__

@@ -753,6 +753,6 @@ void __asan_init() {
   __asan_force_interface_symbols();  // no-op.
 
   if (FLAG_v) {
-    Report("AddressSanitizer r%s Init done ***\n", ASAN_REVISION);
+    Report("AddressSanitizer Init done\n");
   }
 }
