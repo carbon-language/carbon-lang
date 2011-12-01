@@ -30,7 +30,7 @@ ModuleFile::ModuleFile(ModuleKind Kind)
     PreprocessedEntityOffsets(0), NumPreprocessedEntities(0),
     LocalNumHeaderFileInfos(0), 
     HeaderFileInfoTableData(0), HeaderFileInfoTable(0),
-    HeaderFileFrameworkStrings(0),
+    HeaderFileFrameworkStrings(0), LocalNumSubmodules(0),
     LocalNumSelectors(0), SelectorOffsets(0), BaseSelectorID(0),
     SelectorLookupTableData(0), SelectorLookupTable(0), LocalNumDecls(0),
     DeclOffsets(0), BaseDeclID(0),
@@ -88,7 +88,11 @@ void ModuleFile::dump() {
   llvm::errs() << "  Base identifier ID: " << BaseIdentifierID << '\n'
                << "  Number of identifiers: " << LocalNumIdentifiers << '\n';
   dumpLocalRemap("Identifier ID local -> global map", IdentifierRemap);
-  
+
+  llvm::errs() << "  Base submodule ID: " << BaseSubmoduleID << '\n'
+               << "  Number of submodules: " << LocalNumSubmodules << '\n';
+  dumpLocalRemap("Submodule ID local -> global map", SubmoduleRemap);
+
   llvm::errs() << "  Base selector ID: " << BaseSelectorID << '\n'
                << "  Number of selectors: " << LocalNumSelectors << '\n';
   dumpLocalRemap("Selector ID local -> global map", SelectorRemap);

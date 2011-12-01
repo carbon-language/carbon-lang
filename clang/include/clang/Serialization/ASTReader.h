@@ -369,6 +369,20 @@ private:
   /// global identifier ID to produce a local ID.
   GlobalIdentifierMapType GlobalIdentifierMap;
 
+  /// \brief A vector containing submodules that have already been loaded.
+  ///
+  /// This vector is indexed by the Submodule ID (-1). NULL submodule entries
+  /// indicate that the particular submodule ID has not yet been loaded.
+  SmallVector<Module *, 2> SubmodulesLoaded;
+  
+  typedef ContinuousRangeMap<serialization::SubmoduleID, ModuleFile *, 4>
+    GlobalSubmoduleMapType;
+  
+  /// \brief Mapping from global submodule IDs to the module file in which the
+  /// submodule resides along with the offset that should be added to the
+  /// global submodule ID to produce a local ID.
+  GlobalSubmoduleMapType GlobalSubmoduleMap;
+
   /// \brief A vector containing selectors that have already been loaded.
   ///
   /// This vector is indexed by the Selector ID (-1). NULL selector
@@ -866,6 +880,11 @@ public:
     return static_cast<unsigned>(DeclsLoaded.size());
   }
 
+  /// \brief Returns the number of submodules known.
+  unsigned getTotalNumSubmodules() const {
+    return static_cast<unsigned>(SubmodulesLoaded.size());
+  }
+  
   /// \brief Returns the number of selectors found in the chain.
   unsigned getTotalNumSelectors() const {
     return static_cast<unsigned>(SelectorsLoaded.size());
@@ -1146,6 +1165,15 @@ public:
   /// \brief Read the source location entry with index ID.
   virtual bool ReadSLocEntry(int ID);
 
+  /// \brief Retrieve the global submodule ID given a module and its local ID
+  /// number.
+  serialization::SubmoduleID 
+  getGlobalSubmoduleID(ModuleFile &M, unsigned LocalID);
+  
+  /// \brief Retrieve the submodule that corresponds to a global submodule ID.
+  ///
+  Module *getSubmodule(serialization::SubmoduleID GlobalID);
+  
   /// \brief Retrieve a selector from the given module with its local ID
   /// number.
   Selector getLocalSelector(ModuleFile &M, unsigned LocalID);

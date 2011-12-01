@@ -2062,6 +2062,8 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
       ContinuousRangeMap<uint32_t, int, 2>::Builder 
         PreprocessedEntityRemap(F.PreprocessedEntityRemap);
       ContinuousRangeMap<uint32_t, int, 2>::Builder 
+        SubmoduleRemap(F.SubmoduleRemap);
+      ContinuousRangeMap<uint32_t, int, 2>::Builder 
         SelectorRemap(F.SelectorRemap);
       ContinuousRangeMap<uint32_t, int, 2>::Builder DeclRemap(F.DeclRemap);
       ContinuousRangeMap<uint32_t, int, 2>::Builder TypeRemap(F.TypeRemap);
@@ -2079,6 +2081,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         uint32_t SLocOffset = io::ReadUnalignedLE32(Data);
         uint32_t IdentifierIDOffset = io::ReadUnalignedLE32(Data);
         uint32_t PreprocessedEntityIDOffset = io::ReadUnalignedLE32(Data);
+        uint32_t SubmoduleIDOffset = io::ReadUnalignedLE32(Data);
         uint32_t SelectorIDOffset = io::ReadUnalignedLE32(Data);
         uint32_t DeclIDOffset = io::ReadUnalignedLE32(Data);
         uint32_t TypeIndexOffset = io::ReadUnalignedLE32(Data);
@@ -2092,6 +2095,8 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         PreprocessedEntityRemap.insert(
           std::make_pair(PreprocessedEntityIDOffset, 
             OM->BasePreprocessedEntityID - PreprocessedEntityIDOffset));
+        SubmoduleRemap.insert(std::make_pair(SubmoduleIDOffset, 
+                                      OM->BaseSubmoduleID - SubmoduleIDOffset));
         SelectorRemap.insert(std::make_pair(SelectorIDOffset, 
                                OM->BaseSelectorID - SelectorIDOffset));
         DeclRemap.insert(std::make_pair(DeclIDOffset, 
@@ -2828,8 +2833,10 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
   }
 
   ModuleMap &ModMap = PP.getHeaderSearchInfo().getModuleMap();
+  bool First = true;
   Module *CurrentModule = 0;
   RecordData Record;
+  SubmoduleID CurrentModuleGlobalIndex = 0;
   while (true) {
     unsigned Code = F.Stream.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
@@ -2864,31 +2871,41 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       break;
       
     case SUBMODULE_DEFINITION: {
+      if (First) {
+        Error("missing submodule metadata record at beginning of block");
+        return Failure;
+      }
+
       StringRef Name(BlobStart, BlobLen);
-      unsigned Parent = Record[0];
+      unsigned Parent = getGlobalSubmoduleID(F, Record[0]);
       bool IsFramework = Record[1];
       bool IsExplicit = Record[2];
 
       Module *ParentModule = 0;
-      if (Parent) {
-        if (Parent > F.Submodules.size()) {
-          Error("malformed submodule parent entry");
-          return Failure;
-        }
-        
-        ParentModule = F.Submodules[Parent - 1];
-      } 
+      if (Parent)
+        ParentModule = getSubmodule(Parent);
       
       // Retrieve this (sub)module from the module map, creating it if
       // necessary.
       CurrentModule = ModMap.findOrCreateModule(Name, ParentModule, 
                                                 IsFramework, 
                                                 IsExplicit).first;
-      F.Submodules.push_back(CurrentModule);
+      
+      if (CurrentModuleGlobalIndex >= SubmodulesLoaded.size() ||
+          SubmodulesLoaded[CurrentModuleGlobalIndex]) {
+        Error("too many submodules");
+        return Failure;
+      }
+      SubmodulesLoaded[CurrentModuleGlobalIndex++] = CurrentModule;
       break;
     }
         
     case SUBMODULE_UMBRELLA: {
+      if (First) {
+        Error("missing submodule metadata record at beginning of block");
+        return Failure;
+      }
+
       if (!CurrentModule)
         break;
       
@@ -2905,6 +2922,11 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
     }
         
     case SUBMODULE_HEADER: {
+      if (First) {
+        Error("missing submodule metadata record at beginning of block");
+        return Failure;
+      }
+
       if (!CurrentModule)
         break;
       
@@ -2917,6 +2939,33 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
           CurrentModule->Headers.push_back(File);
       }
       break;      
+    }
+        
+    case SUBMODULE_METADATA: {
+      if (!First) {
+        Error("submodule metadata record not at beginning of block");
+        return Failure;
+      }
+      First = false;
+      
+      F.BaseSubmoduleID = getTotalNumSubmodules();
+      CurrentModuleGlobalIndex = F.BaseSubmoduleID;
+      F.LocalNumSubmodules = Record[0];
+      unsigned LocalBaseSubmoduleID = Record[1];
+      if (F.LocalNumSubmodules > 0) {
+        // Introduce the global -> local mapping for submodules within this 
+        // module.
+        GlobalSubmoduleMap.insert(std::make_pair(getTotalNumSubmodules()+1,&F));
+        
+        // Introduce the local -> global mapping for submodules within this 
+        // module.
+        F.SubmoduleRemap.insert(
+          std::make_pair(LocalBaseSubmoduleID,
+                         F.BaseSubmoduleID - LocalBaseSubmoduleID));
+        
+        SubmodulesLoaded.resize(SubmodulesLoaded.size() + F.LocalNumSubmodules);
+      }      
+      break;
     }
     }
   }
@@ -4652,6 +4701,7 @@ void ASTReader::dump() {
   dumpModuleIDMap("Global type map", GlobalTypeMap);
   dumpModuleIDMap("Global declaration map", GlobalDeclMap);
   dumpModuleIDMap("Global identifier map", GlobalIdentifierMap);
+  dumpModuleIDMap("Global submodule map", GlobalSubmoduleMap);
   dumpModuleIDMap("Global selector map", GlobalSelectorMap);
   dumpModuleIDMap("Global preprocessed entity map", 
                   GlobalPreprocessedEntityMap);
@@ -5120,6 +5170,33 @@ bool ASTReader::ReadSLocEntry(int ID) {
   return ReadSLocEntryRecord(ID) != Success;
 }
 
+serialization::SubmoduleID
+ASTReader::getGlobalSubmoduleID(ModuleFile &M, unsigned LocalID) {
+  if (LocalID < NUM_PREDEF_SUBMODULE_IDS)
+    return LocalID;
+  
+  ContinuousRangeMap<uint32_t, int, 2>::iterator I
+    = M.SubmoduleRemap.find(LocalID - NUM_PREDEF_SUBMODULE_IDS);
+  assert(I != M.SubmoduleRemap.end() 
+         && "Invalid index into identifier index remap");
+  
+  return LocalID + I->second;
+}
+
+Module *ASTReader::getSubmodule(SubmoduleID GlobalID) {
+  if (GlobalID < NUM_PREDEF_SUBMODULE_IDS) {
+    assert(GlobalID == 0 && "Unhandled global submodule ID");
+    return 0;
+  }
+  
+  if (GlobalID > SubmodulesLoaded.size()) {
+    Error("submodule ID out of range in AST file");
+    return 0;
+  }
+  
+  return SubmodulesLoaded[GlobalID - NUM_PREDEF_SUBMODULE_IDS];
+}
+                               
 Selector ASTReader::getLocalSelector(ModuleFile &M, unsigned LocalID) {
   return DecodeSelector(getGlobalSelectorID(M, LocalID));
 }

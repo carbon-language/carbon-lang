@@ -201,8 +201,15 @@ public:
   /// search information.
   const char *HeaderFileFrameworkStrings;
 
-  // === Submodule information ===
-  llvm::SmallVector<Module *, 2> Submodules;
+  // === Submodule information ===  
+  /// \brief The number of submodules in this module.
+  unsigned LocalNumSubmodules;
+  
+  /// \brief Base submodule ID for submodules local to this module.
+  serialization::SubmoduleID BaseSubmoduleID;
+  
+  /// \brief Remapping table for submodule IDs in this module.
+  ContinuousRangeMap<uint32_t, int, 2> SubmoduleRemap;
   
   // === Selectors ===
 

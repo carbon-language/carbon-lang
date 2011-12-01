@@ -204,10 +204,16 @@ private:
   /// table.
   std::vector<uint32_t> IdentifierOffsets;
 
+  /// \brief The first ID number we can use for our own submodules.
+  serialization::SubmoduleID FirstSubmoduleID;
+  
+  /// \brief The submodule ID that will be assigned to the next new submodule.
+  serialization::SubmoduleID NextSubmoduleID;
+
   /// \brief The first ID number we can use for our own selectors.
   serialization::SelectorID FirstSelectorID;
 
-  /// \brief The selector ID that will be assigned to the next new identifier.
+  /// \brief The selector ID that will be assigned to the next new selector.
   serialization::SelectorID NextSelectorID;
 
   /// \brief Map that provides the ID numbers of each Selector.

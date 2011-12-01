@@ -1845,6 +1845,18 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
   }
 }
 
+/// \brief Compute the number of modules within the given tree (including the
+/// given module).
+static unsigned getNumberOfModules(Module *Mod) {
+  unsigned ChildModules = 0;
+  for (llvm::StringMap<Module *>::iterator Sub = Mod->SubModules.begin(),
+                                        SubEnd = Mod->SubModules.end();
+       Sub != SubEnd; ++Sub)
+    ChildModules += getNumberOfModules(Sub->getValue());
+  
+  return ChildModules + 1;
+}
+
 void ASTWriter::WriteSubmodules(Module *WritingModule) {
   // Enter the submodule description block.
   Stream.EnterSubblock(SUBMODULE_BLOCK_ID, NUM_ALLOWED_ABBREVS_SIZE);
@@ -1868,16 +1880,20 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
   Abbrev->Add(BitCodeAbbrevOp(SUBMODULE_HEADER));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Name
   unsigned HeaderAbbrev = Stream.EmitAbbrev(Abbrev);
-
+  
+  // Write the submodule metadata block.
+  RecordData Record;
+  Record.push_back(getNumberOfModules(WritingModule));
+  Record.push_back(FirstSubmoduleID - NUM_PREDEF_SUBMODULE_IDS);
+  Stream.EmitRecord(SUBMODULE_METADATA, Record);
+  
   // Write all of the submodules.
-  unsigned SubmoduleID = 1;
   std::queue<Module *> Q;
   Q.push(WritingModule);
-  RecordData Record;
   while (!Q.empty()) {
     Module *Mod = Q.front();
     Q.pop();
-    SubmoduleIDs[Mod] = SubmoduleID++;
+    SubmoduleIDs[Mod] = NextSubmoduleID++;
     
     // Emit the definition of the block.
     Record.clear();
@@ -2850,6 +2866,8 @@ ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
     FirstDeclID(NUM_PREDEF_DECL_IDS), NextDeclID(FirstDeclID),
     FirstTypeID(NUM_PREDEF_TYPE_IDS), NextTypeID(FirstTypeID),
     FirstIdentID(NUM_PREDEF_IDENT_IDS), NextIdentID(FirstIdentID), 
+    FirstSubmoduleID(NUM_PREDEF_SUBMODULE_IDS), 
+    NextSubmoduleID(FirstSubmoduleID),
     FirstSelectorID(NUM_PREDEF_SELECTOR_IDS), NextSelectorID(FirstSelectorID),
     CollectedStmts(&StmtsToEmit),
     NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
@@ -3137,6 +3155,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     //   identifier-id:i32
     //   preprocessed-entity-id:i32
     //   macro-definition-id:i32
+    //   submodule-id:i32
     //   selector-id:i32
     //   declaration-id:i32
     //   c++-base-specifiers-id:i32
@@ -3158,6 +3177,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
         io::Emit32(Out, (*M)->SLocEntryBaseOffset);
         io::Emit32(Out, (*M)->BaseIdentifierID);
         io::Emit32(Out, (*M)->BasePreprocessedEntityID);
+        io::Emit32(Out, (*M)->BaseSubmoduleID);
         io::Emit32(Out, (*M)->BaseSelectorID);
         io::Emit32(Out, (*M)->BaseDeclID);
         io::Emit32(Out, (*M)->BaseTypeIndex);
@@ -4055,6 +4075,7 @@ void ASTWriter::ReaderInitialized(ASTReader *Reader) {
   assert(FirstDeclID == NextDeclID &&
          FirstTypeID == NextTypeID &&
          FirstIdentID == NextIdentID &&
+         FirstSubmoduleID == NextSubmoduleID &&
          FirstSelectorID == NextSelectorID &&
          "Setting chain after writing has started.");
 
@@ -4063,11 +4084,13 @@ void ASTWriter::ReaderInitialized(ASTReader *Reader) {
   FirstDeclID = NUM_PREDEF_DECL_IDS + Chain->getTotalNumDecls();
   FirstTypeID = NUM_PREDEF_TYPE_IDS + Chain->getTotalNumTypes();
   FirstIdentID = NUM_PREDEF_IDENT_IDS + Chain->getTotalNumIdentifiers();
+  FirstSubmoduleID = NUM_PREDEF_SUBMODULE_IDS + Chain->getTotalNumSubmodules();
   FirstSelectorID = NUM_PREDEF_SELECTOR_IDS + Chain->getTotalNumSelectors();
   NextDeclID = FirstDeclID;
   NextTypeID = FirstTypeID;
   NextIdentID = FirstIdentID;
   NextSelectorID = FirstSelectorID;
+  NextSubmoduleID = FirstSubmoduleID;
 }
 
 void ASTWriter::IdentifierRead(IdentID ID, IdentifierInfo *II) {

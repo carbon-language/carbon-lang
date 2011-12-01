@@ -127,7 +127,7 @@ namespace clang {
     /// \brief The number of predefined identifier IDs.
     const unsigned int NUM_PREDEF_IDENT_IDS = 1;
     
-    /// \brief An ID number that refers to an ObjC selctor in an AST file.
+    /// \brief An ID number that refers to an ObjC selector in an AST file.
     typedef uint32_t SelectorID;
 
     /// \brief The number of predefined selector IDs.
@@ -140,6 +140,12 @@ namespace clang {
     /// \brief An ID number that refers to an entity in the detailed
     /// preprocessing record.
     typedef uint32_t PreprocessedEntityID;
+
+    /// \brief An ID number that refers to a submodule in a module file.
+    typedef uint32_t SubmoduleID;
+    
+    /// \brief The number of predefined submodule IDs.
+    const unsigned int NUM_PREDEF_SUBMODULE_IDS = 1;
 
     /// \brief Source range/offset of a preprocessed entity.
     struct PPEntityOffset {
@@ -504,7 +510,9 @@ namespace clang {
       /// if any.
       SUBMODULE_UMBRELLA = 1,
       /// \brief Specifies a header that falls into this (sub)module.
-      SUBMODULE_HEADER = 2
+      SUBMODULE_HEADER = 2,
+      /// \brief Metadata for submodules as a whole.
+      SUBMODULE_METADATA = 3
     };
     
     /// \defgroup ASTAST AST file AST constants
