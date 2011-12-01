@@ -17,6 +17,8 @@ namespace llvm {
 //                                 User Class
 //===----------------------------------------------------------------------===//
 
+void User::anchor() {}
+
 // replaceUsesOfWith - Replaces all references to the "From" definition with
 // references to the "To" definition.
 //

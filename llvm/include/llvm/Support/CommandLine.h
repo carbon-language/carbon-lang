@@ -326,6 +326,8 @@ LocationClass<Ty> location(Ty &L) { return LocationClass<Ty>(L); }
 struct GenericOptionValue {
   virtual ~GenericOptionValue() {}
   virtual bool compare(const GenericOptionValue &V) const = 0;
+private:
+  virtual void anchor();
 };
 
 template<class DataType> struct OptionValue;
@@ -416,6 +418,8 @@ struct OptionValue<cl::boolOrDefault> : OptionValueCopy<cl::boolOrDefault> {
     setValue(V);
     return *this;
   }
+private:
+  virtual void anchor();
 };
 
 template<>
@@ -431,6 +435,8 @@ struct OptionValue<std::string> : OptionValueCopy<std::string> {
     setValue(V);
     return *this;
   }
+private:
+  virtual void anchor();
 };
 
 //===----------------------------------------------------------------------===//

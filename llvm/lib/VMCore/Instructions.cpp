@@ -2005,6 +2005,8 @@ bool BinaryOperator::isExact() const {
 //                                CastInst Class
 //===----------------------------------------------------------------------===//
 
+void CastInst::anchor() {}
+
 // Just determine if this cast only deals with integral->integral conversion.
 bool CastInst::isIntegerCast() const {
   switch (getOpcode()) {

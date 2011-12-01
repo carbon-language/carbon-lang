@@ -57,6 +57,9 @@ TEMPLATE_INSTANTIATION(class opt<char>);
 TEMPLATE_INSTANTIATION(class opt<bool>);
 } } // end namespace llvm::cl
 
+void GenericOptionValue::anchor() {}
+void OptionValue<boolOrDefault>::anchor() {}
+void OptionValue<std::string>::anchor() {}
 void Option::anchor() {}
 void basic_parser_impl::anchor() {}
 void parser<bool>::anchor() {}
