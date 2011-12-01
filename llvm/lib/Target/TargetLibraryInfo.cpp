@@ -31,6 +31,9 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "atan",
     "atanl",
     "atanf",
+    "atan2",
+    "atan2l",
+    "atan2f",
     "ceil",
     "ceill",
     "ceilf",
@@ -56,6 +59,9 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "floorl",
     "floorf",
     "fiprintf",
+    "fmod",
+    "fmodl",
+    "fmodf",
     "fputs",
     "fwrite",
     "iprintf",
@@ -79,9 +85,18 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "powf",
     "powl",
     "siprintf",
+    "sin",
+    "sinl",
+    "sinf",
     "sqrt",
     "sqrtl",
-    "sqrtf"
+    "sqrtf",
+    "tan",
+    "tanl",
+    "tanf",
+    "tanh",
+    "tanhl",
+    "tanhf"
   };
 
 /// initialize - Initialize the set of available library functions based on the

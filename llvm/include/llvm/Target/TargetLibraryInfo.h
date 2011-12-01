@@ -36,6 +36,12 @@ namespace llvm {
       atanl,
       /// float atanf(float x);
       atanf,
+      /// double atan2(double y, double x);
+      atan2,
+      /// long double atan2l(long double y, long double x);
+      atan2l,
+      /// float atan2f(float y, float x);
+      atan2f,
       /// double ceil(double x);
       ceil,
       /// long double ceill(long double x);
@@ -86,6 +92,12 @@ namespace llvm {
       floorf,
       /// int fiprintf(FILE *stream, const char *format, ...);
       fiprintf,
+      /// double fmod(double x, double y);
+      fmod,
+      /// long double fmodl(long double x, long double y);
+      fmodl,
+      /// float fmodf(float x, float y);
+      fmodf,
       /// int fputs(const char *s, FILE *stream);
       fputs,
       /// size_t fwrite(const void *ptr, size_t size, size_t nitems,
@@ -131,6 +143,18 @@ namespace llvm {
       powf,
       /// long double powl(long double x, long double y);
       powl,
+      /// double sin(double x);
+      sin,
+      /// long double sinl(long double x);
+      sinl,
+      /// float sinf(float x);
+      sinf,
+      /// double sinh(double x);
+      sinh,
+      /// long double sinhl(long double x);
+      sinhl,
+      /// float sinhf(float x);
+      sinhf,
       /// int siprintf(char *str, const char *format, ...);
       siprintf,
       /// double sqrt(double x);
@@ -139,6 +163,18 @@ namespace llvm {
       sqrtl,
       /// float sqrtf(float x);
       sqrtf,
+      /// double tan(double x);
+      tan,
+      /// long double tanl(long double x);
+      tanl,
+      /// float tanf(float x);
+      tanf,
+      /// double tanh(double x);
+      tanh,
+      /// long double tanhl(long double x);
+      tanhl,
+      /// float tanhf(float x);
+      tanhf,
 
       NumLibFuncs
     };
