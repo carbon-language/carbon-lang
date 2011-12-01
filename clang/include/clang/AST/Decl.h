@@ -1909,6 +1909,10 @@ public:
   /// be implicitly instantiated.
   bool isImplicitlyInstantiable() const;
 
+  /// \brief Determines if the given function was instantiated from a
+  /// function template.
+  bool isTemplateInstantiation() const;
+
   /// \brief Retrieve the function declaration from which this function could
   /// be instantiated, if it is an instantiation (rather than a non-template
   /// or a specialization, for example).

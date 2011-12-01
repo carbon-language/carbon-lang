@@ -1951,7 +1951,20 @@ bool FunctionDecl::isImplicitlyInstantiable() const {
     return true;
 
   return PatternDecl->isInlined();
-}                      
+}
+
+bool FunctionDecl::isTemplateInstantiation() const {
+  switch (getTemplateSpecializationKind()) {
+    case TSK_Undeclared:
+    case TSK_ExplicitSpecialization:
+      return false;      
+    case TSK_ImplicitInstantiation:
+    case TSK_ExplicitInstantiationDeclaration:
+    case TSK_ExplicitInstantiationDefinition:
+      return true;
+  }
+  llvm_unreachable("All TSK values handled.");
+}
    
 FunctionDecl *FunctionDecl::getTemplateInstantiationPattern() const {
   // Handle class scope explicit specialization special case.

@@ -98,3 +98,12 @@ void test_unreachable_templates_harness() {
   test_unreachable_templates<TestUnreachableB>(); 
 }
 
+// Do warn about explict template specializations, as they represent
+// actual concrete functions that somebody wrote.
+
+template <typename T> void funcToSpecialize() {}
+template <> void funcToSpecialize<int>() {
+  halt();
+  dead(); // expected-warning {{will never be executed}}
+}
+

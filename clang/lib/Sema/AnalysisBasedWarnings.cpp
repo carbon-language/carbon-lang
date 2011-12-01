@@ -241,19 +241,8 @@ struct CheckFallThroughDiagnostics {
     
     // Don't suggest that template instantiations be marked "noreturn"
     bool isTemplateInstantiation = false;
-    if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(Func)) {
-      switch (Function->getTemplateSpecializationKind()) {
-      case TSK_Undeclared:
-      case TSK_ExplicitSpecialization:
-        break;
-        
-      case TSK_ImplicitInstantiation:
-      case TSK_ExplicitInstantiationDeclaration:
-      case TSK_ExplicitInstantiationDefinition:
-        isTemplateInstantiation = true;
-        break;
-      }
-    }
+    if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(Func))
+      isTemplateInstantiation = Function->isTemplateInstantiation();
         
     if (!isVirtualMethod && !isTemplateInstantiation)
       D.diag_NeverFallThroughOrReturn =
@@ -919,7 +908,10 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
     // Different template instantiations can effectively change the control-flow
     // and it is very difficult to prove that a snippet of code in a template
     // is unreachable for all instantiations.
-    if (S.ActiveTemplateInstantiations.empty())
+    bool isTemplateInstantiation = false;
+    if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D))
+      isTemplateInstantiation = Function->isTemplateInstantiation();
+    if (!isTemplateInstantiation)
       CheckUnreachable(S, AC);
   }
 
