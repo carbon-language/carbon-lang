@@ -312,6 +312,8 @@ public:
 
   bool shouldAbort();
 
+  bool hasDiagnosticCallback() const { return CB.diagnostic; }
+
   void enteredMainFile(const FileEntry *File);
 
   void ppIncludedFile(SourceLocation hashLoc,

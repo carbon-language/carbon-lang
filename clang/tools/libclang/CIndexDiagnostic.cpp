@@ -26,6 +26,7 @@
 using namespace clang;
 using namespace clang::cxloc;
 using namespace clang::cxstring;
+using namespace clang::cxdiag;
 using namespace llvm;
 
 
@@ -39,8 +40,8 @@ CXDiagnosticSetImpl::~CXDiagnosticSetImpl() {
 
 CXDiagnosticImpl::~CXDiagnosticImpl() {}
 
-static CXDiagnosticSetImpl *lazyCreateDiags(CXTranslationUnit TU,
-                                            bool checkIfChanged = false) {
+CXDiagnosticSetImpl *cxdiag::lazyCreateDiags(CXTranslationUnit TU,
+                                             bool checkIfChanged) {
   ASTUnit *AU = static_cast<ASTUnit *>(TU->TUData);
 
   if (TU->Diagnostics && checkIfChanged) {

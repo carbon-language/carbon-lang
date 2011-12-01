@@ -149,6 +149,11 @@ struct CXStoredDiagnostic : public CXDiagnosticImpl {
   }
 };
 
+namespace cxdiag {
+CXDiagnosticSetImpl *lazyCreateDiags(CXTranslationUnit TU,
+                                     bool checkIfChanged = false);
+} // end namespace cxdiag
+
 } // end namespace clang
 
 #endif // LLVM_CLANG_CINDEX_DIAGNOSTIC_H

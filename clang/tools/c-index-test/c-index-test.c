@@ -1702,21 +1702,27 @@ static void printProtocolList(const CXIdxObjCProtocolRefListInfo *ProtoInfo,
 }
 
 static void index_diagnostic(CXClientData client_data,
-                             CXDiagnostic diag, void *reserved) {
+                             CXDiagnosticSet diagSet, void *reserved) {
   CXString str;
   const char *cstr;
+  unsigned numDiags, i;
+  CXDiagnostic diag;
   IndexData *index_data;
   index_data = (IndexData *)client_data;
   printCheck(index_data);
 
-  str = clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions());
-  cstr = clang_getCString(str);
-  printf("[diagnostic]: %s\n", cstr);
-  clang_disposeString(str);  
-
-  if (getenv("CINDEXTEST_FAILONERROR") &&
-      clang_getDiagnosticSeverity(diag) >= CXDiagnostic_Error) {
-    index_data->fail_for_error = 1;
+  numDiags = clang_getNumDiagnosticsInSet(diagSet);
+  for (i = 0; i != numDiags; ++i) {
+    diag = clang_getDiagnosticInSet(diagSet, i);
+    str = clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions());
+    cstr = clang_getCString(str);
+    printf("[diagnostic]: %s\n", cstr);
+    clang_disposeString(str);  
+  
+    if (getenv("CINDEXTEST_FAILONERROR") &&
+        clang_getDiagnosticSeverity(diag) >= CXDiagnostic_Error) {
+      index_data->fail_for_error = 1;
+    }
   }
 }
 

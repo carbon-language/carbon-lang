@@ -12,6 +12,7 @@
 #include "CXSourceLocation.h"
 #include "CXTranslationUnit.h"
 #include "CXString.h"
+#include "CIndexDiagnostic.h"
 #include "CIndexer.h"
 
 #include "clang/Frontend/ASTUnit.h"
@@ -30,6 +31,8 @@ using namespace clang;
 using namespace cxstring;
 using namespace cxtu;
 using namespace cxindex;
+
+static void indexDiagnostics(CXTranslationUnit TU, IndexingContext &IdxCtx);
 
 namespace {
 
@@ -158,13 +161,15 @@ public:
 
 class IndexingFrontendAction : public ASTFrontendAction {
   IndexingContext IndexCtx;
+  CXTranslationUnit CXTU;
 
 public:
   IndexingFrontendAction(CXClientData clientData,
                          IndexerCallbacks &indexCallbacks,
                          unsigned indexOptions,
                          CXTranslationUnit cxTU)
-    : IndexCtx(clientData, indexCallbacks, indexOptions, cxTU) { }
+    : IndexCtx(clientData, indexCallbacks, indexOptions, cxTU),
+      CXTU(cxTU) { }
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          StringRef InFile) {
@@ -172,6 +177,10 @@ public:
     Preprocessor &PP = CI.getPreprocessor();
     PP.addPPCallbacks(new IndexPPCallbacks(PP, IndexCtx));
     return new IndexingConsumer(IndexCtx);
+  }
+
+  virtual void EndSourceFileAction() {
+    indexDiagnostics(CXTU, IndexCtx);
   }
 
   virtual TranslationUnitKind getTranslationUnitKind() { return TU_Prefix; }
@@ -334,7 +343,6 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   bool Persistent = requestedToGetTU;
   StringRef ResourceFilesPath = CXXIdx->getClangResourcesPath();
   bool OnlyLocalDecls = false;
-  bool CaptureDiagnostics = true;
   bool PrecompilePreamble = false;
   bool CacheCodeCompletionResults = false;
   PreprocessorOptions &PPOpts = CInvok->getPreprocessorOpts(); 
@@ -360,13 +368,12 @@ static void clang_indexSourceFile_Impl(void *UserData) {
                                                        Persistent,
                                                        ResourceFilesPath,
                                                        OnlyLocalDecls,
-                                                       CaptureDiagnostics,
+                                                    /*CaptureDiagnostics=*/true,
                                                        PrecompilePreamble,
                                                     CacheCodeCompletionResults);
   if (!Unit)
     return;
 
-  // FIXME: Set state of the ASTUnit according to the TU_options.
   if (out_TU)
     *out_TU = CXTU->takeTU();
 
@@ -450,8 +457,11 @@ static void indexTranslationUnit(ASTUnit &Unit, IndexingContext &IdxCtx) {
 }
 
 static void indexDiagnostics(CXTranslationUnit TU, IndexingContext &IdxCtx) {
-  // FIXME: Create a CXDiagnosticSet from TU;
-  // IdxCtx.handleDiagnosticSet(Set);
+  if (!IdxCtx.hasDiagnosticCallback())
+    return;
+
+  CXDiagnosticSetImpl *DiagSet = cxdiag::lazyCreateDiags(TU);
+  IdxCtx.handleDiagnosticSet(DiagSet);
 }
 
 static void clang_indexTranslationUnit_Impl(void *UserData) {
