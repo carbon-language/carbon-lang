@@ -561,12 +561,22 @@ define i1 @test57(i32 %a) {
 }
 
 ; rdar://problem/10482509
-; CHECK: @cmpabs
+; CHECK: @cmpabs1
 ; CHECK-NEXT: icmp ne
-define zeroext i1 @cmpabs(i64 %val) {
+define zeroext i1 @cmpabs1(i64 %val) {
   %sub = sub nsw i64 0, %val
   %cmp = icmp slt i64 %val, 0
   %sub.val = select i1 %cmp, i64 %sub, i64 %val
+  %tobool = icmp ne i64 %sub.val, 0
+  ret i1 %tobool
+}
+
+; CHECK: @cmpabs2
+; CHECK-NEXT: icmp ne
+define zeroext i1 @cmpabs2(i64 %val) {
+  %sub = sub nsw i64 0, %val
+  %cmp = icmp slt i64 %val, 0
+  %sub.val = select i1 %cmp, i64 %val, i64 %sub
   %tobool = icmp ne i64 %sub.val, 0
   ret i1 %tobool
 }

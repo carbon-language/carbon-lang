@@ -1796,15 +1796,19 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     return ReplaceInstUsesWith(I, V);
 
   // comparing -val or val with non-zero is the same as just comparing val
-  // ie, (val != 0) == (-val != 0)
+  // ie, abs(val) != 0 -> val != 0
   if (I.getPredicate() == ICmpInst::ICMP_NE && match(Op1, m_Zero()))
   {
-    Value *Cond, *SubSrc, *SelectFalse;
-    if (match(Op0, m_Select(m_Value(Cond), m_Sub(m_Zero(), m_Value(SubSrc)),
+    Value *Cond, *SelectTrue, *SelectFalse;
+    if (match(Op0, m_Select(m_Value(Cond), m_Value(SelectTrue),
                             m_Value(SelectFalse)))) {
-      if (SubSrc == SelectFalse) {
-        return CmpInst::Create(Instruction::ICmp, I.getPredicate(),
-                               SubSrc, Op1);
+      if (Value *V = dyn_castNegVal(SelectTrue)) {
+        if (V == SelectFalse)
+          return CmpInst::Create(Instruction::ICmp, I.getPredicate(), V, Op1);
+      }
+      else if (Value *V = dyn_castNegVal(SelectFalse)) {
+        if (V == SelectTrue)
+          return CmpInst::Create(Instruction::ICmp, I.getPredicate(), V, Op1);
       }
     }
   }
