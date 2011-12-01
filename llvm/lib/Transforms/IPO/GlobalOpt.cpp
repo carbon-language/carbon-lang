@@ -26,6 +26,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -61,6 +62,7 @@ namespace {
   struct GlobalStatus;
   struct GlobalOpt : public ModulePass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TargetLibraryInfo>();
     }
     static char ID; // Pass identification, replacement for typeid
     GlobalOpt() : ModulePass(ID) {
@@ -84,7 +86,10 @@ namespace {
 }
 
 char GlobalOpt::ID = 0;
-INITIALIZE_PASS(GlobalOpt, "globalopt",
+INITIALIZE_PASS_BEGIN(GlobalOpt, "globalopt",
+                "Global Variable Optimizer", false, false)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_END(GlobalOpt, "globalopt",
                 "Global Variable Optimizer", false, false)
 
 ModulePass *llvm::createGlobalOptimizerPass() { return new GlobalOpt(); }
@@ -2304,7 +2309,8 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
                              DenseMap<Constant*, Constant*> &MutatedMemory,
                              std::vector<GlobalVariable*> &AllocaTmps,
                              SmallPtrSet<Constant*, 8> &SimpleConstants,
-                             const TargetData *TD) {
+                             const TargetData *TD,
+                             const TargetLibraryInfo *TLI) {
   // Check to see if this function is already executing (recursion).  If so,
   // bail out.  TODO: we might want to accept limited recursion.
   if (std::find(CallStack.begin(), CallStack.end(), F) != CallStack.end())
@@ -2461,7 +2467,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
 
       if (Callee->isDeclaration()) {
         // If this is a function we can constant fold, do it.
-        if (Constant *C = ConstantFoldCall(Callee, Formals)) {
+        if (Constant *C = ConstantFoldCall(Callee, Formals, TLI)) {
           InstResult = C;
         } else {
           return false;
@@ -2473,7 +2479,8 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
         Constant *RetVal;
         // Execute the call, if successful, use the return value.
         if (!EvaluateFunction(Callee, RetVal, Formals, CallStack,
-                              MutatedMemory, AllocaTmps, SimpleConstants, TD))
+                              MutatedMemory, AllocaTmps, SimpleConstants, TD,
+                              TLI))
           return false;
         InstResult = RetVal;
       }
@@ -2547,7 +2554,8 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
 
 /// EvaluateStaticConstructor - Evaluate static constructors in the function, if
 /// we can.  Return true if we can, false otherwise.
-static bool EvaluateStaticConstructor(Function *F, const TargetData *TD) {
+static bool EvaluateStaticConstructor(Function *F, const TargetData *TD,
+                                      const TargetLibraryInfo *TLI) {
   /// MutatedMemory - For each store we execute, we update this map.  Loads
   /// check this to get the most up-to-date value.  If evaluation is successful,
   /// this state is committed to the process.
@@ -2572,7 +2580,7 @@ static bool EvaluateStaticConstructor(Function *F, const TargetData *TD) {
   bool EvalSuccess = EvaluateFunction(F, RetValDummy,
                                       SmallVector<Constant*, 0>(), CallStack,
                                       MutatedMemory, AllocaTmps,
-                                      SimpleConstants, TD);
+                                      SimpleConstants, TD, TLI);
   
   if (EvalSuccess) {
     // We succeeded at evaluation: commit the result.
@@ -2601,8 +2609,6 @@ static bool EvaluateStaticConstructor(Function *F, const TargetData *TD) {
   return EvalSuccess;
 }
 
-
-
 /// OptimizeGlobalCtorsList - Simplify and evaluation global ctors if possible.
 /// Return true if anything changed.
 bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
@@ -2611,6 +2617,8 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
   if (Ctors.empty()) return false;
 
   const TargetData *TD = getAnalysisIfAvailable<TargetData>();
+  const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
+
   // Loop over global ctors, optimizing them when we can.
   for (unsigned i = 0; i != Ctors.size(); ++i) {
     Function *F = Ctors[i];
@@ -2628,7 +2636,7 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
     if (F->empty()) continue;
 
     // If we can evaluate the ctor at compile time, do.
-    if (EvaluateStaticConstructor(F, TD)) {
+    if (EvaluateStaticConstructor(F, TD, TLI)) {
       Ctors.erase(Ctors.begin()+i);
       MadeChange = true;
       --i;

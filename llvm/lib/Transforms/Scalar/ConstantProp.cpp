@@ -24,6 +24,8 @@
 #include "llvm/Constant.h"
 #include "llvm/Instruction.h"
 #include "llvm/Pass.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include <set>
@@ -42,18 +44,21 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
+      AU.addRequired<TargetLibraryInfo>();
     }
   };
 }
 
 char ConstantPropagation::ID = 0;
-INITIALIZE_PASS(ConstantPropagation, "constprop",
+INITIALIZE_PASS_BEGIN(ConstantPropagation, "constprop",
+                "Simple constant propagation", false, false)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_END(ConstantPropagation, "constprop",
                 "Simple constant propagation", false, false)
 
 FunctionPass *llvm::createConstantPropagationPass() {
   return new ConstantPropagation();
 }
-
 
 bool ConstantPropagation::runOnFunction(Function &F) {
   // Initialize the worklist to all of the instructions ready to process...
@@ -62,13 +67,15 @@ bool ConstantPropagation::runOnFunction(Function &F) {
       WorkList.insert(&*i);
   }
   bool Changed = false;
+  TargetData *TD = getAnalysisIfAvailable<TargetData>();
+  TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
 
   while (!WorkList.empty()) {
     Instruction *I = *WorkList.begin();
     WorkList.erase(WorkList.begin());    // Get an element from the worklist...
 
     if (!I->use_empty())                 // Don't muck with dead instructions...
-      if (Constant *C = ConstantFoldInstruction(I)) {
+      if (Constant *C = ConstantFoldInstruction(I, TD, TLI)) {
         // Add all of the users of this instruction to the worklist, they might
         // be constant propagatable now...
         for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();

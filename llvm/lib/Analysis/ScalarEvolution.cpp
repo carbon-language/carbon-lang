@@ -4772,7 +4772,8 @@ static PHINode *getConstantEvolvingPHI(Value *V, const Loop *L) {
 /// reason, return null.
 static Constant *EvaluateExpression(Value *V, const Loop *L,
                                     DenseMap<Instruction *, Constant *> &Vals,
-                                    const TargetData *TD) {
+                                    const TargetData *TD,
+                                    const TargetLibraryInfo *TLI) {
   // Convenient constant check, but redundant for recursive calls.
   if (Constant *C = dyn_cast<Constant>(V)) return C;
   Instruction *I = dyn_cast<Instruction>(V);
@@ -4798,7 +4799,7 @@ static Constant *EvaluateExpression(Value *V, const Loop *L,
       if (!Operands[i]) return 0;
       continue;
     }
-    Constant *C = EvaluateExpression(Operand, L, Vals, TD);
+    Constant *C = EvaluateExpression(Operand, L, Vals, TD, TLI);
     Vals[Operand] = C;
     if (!C) return 0;
     Operands[i] = C;
@@ -4811,7 +4812,8 @@ static Constant *EvaluateExpression(Value *V, const Loop *L,
     if (!LI->isVolatile())
       return ConstantFoldLoadFromConstPtr(Operands[0], TD);
   }
-  return ConstantFoldInstOperands(I->getOpcode(), I->getType(), Operands, TD);
+  return ConstantFoldInstOperands(I->getOpcode(), I->getType(), Operands, TD,
+                                  TLI);
 }
 
 /// getConstantEvolutionLoopExitValue - If we know that the specified Phi is
@@ -4866,7 +4868,8 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
     // Compute the value of the PHIs for the next iteration.
     // EvaluateExpression adds non-phi values to the CurrentIterVals map.
     DenseMap<Instruction *, Constant *> NextIterVals;
-    Constant *NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, TD);
+    Constant *NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, TD,
+                                           TLI);
     if (NextPHI == 0)
       return 0;        // Couldn't evaluate!
     NextIterVals[PN] = NextPHI;
@@ -4891,7 +4894,7 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
       Constant *&NextPHI = NextIterVals[PHI];
       if (!NextPHI) {   // Not already computed.
         Value *BEValue = PHI->getIncomingValue(SecondIsBackedge);
-        NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, TD);
+        NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, TD, TLI);
       }
       if (NextPHI != I->second)
         StoppedEvolving = false;
@@ -4946,8 +4949,8 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
   unsigned MaxIterations = MaxBruteForceIterations;   // Limit analysis.
   for (unsigned IterationNum = 0; IterationNum != MaxIterations;++IterationNum){
     ConstantInt *CondVal =
-      dyn_cast_or_null<ConstantInt>(EvaluateExpression(Cond, L,
-                                                       CurrentIterVals, TD));
+      dyn_cast_or_null<ConstantInt>(EvaluateExpression(Cond, L, CurrentIterVals,
+                                                       TD, TLI));
 
     // Couldn't symbolically evaluate.
     if (!CondVal) return getCouldNotCompute();
@@ -4977,7 +4980,7 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
       if (NextPHI) continue;    // Already computed!
 
       Value *BEValue = PHI->getIncomingValue(SecondIsBackedge);
-      NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, TD);
+      NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, TD, TLI);
     }
     CurrentIterVals.swap(NextIterVals);
   }
@@ -5175,7 +5178,7 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
               C = ConstantFoldLoadFromConstPtr(Operands[0], TD);
           } else
             C = ConstantFoldInstOperands(I->getOpcode(), I->getType(),
-                                         Operands, TD);
+                                         Operands, TD, TLI);
           if (!C) return V;
           return getSCEV(C);
         }

@@ -28,6 +28,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -156,6 +157,7 @@ namespace {
 ///
 class SCCPSolver : public InstVisitor<SCCPSolver> {
   const TargetData *TD;
+  const TargetLibraryInfo *TLI;
   SmallPtrSet<BasicBlock*, 8> BBExecutable; // The BBs that are executable.
   DenseMap<Value*, LatticeVal> ValueState;  // The state each value is in.
 
@@ -206,7 +208,8 @@ class SCCPSolver : public InstVisitor<SCCPSolver> {
   typedef std::pair<BasicBlock*, BasicBlock*> Edge;
   DenseSet<Edge> KnownFeasibleEdges;
 public:
-  SCCPSolver(const TargetData *td) : TD(td) {}
+  SCCPSolver(const TargetData *td, const TargetLibraryInfo *tli)
+    : TD(td), TLI(tli) {}
 
   /// MarkBlockExecutable - This method can be used by clients to mark all of
   /// the blocks that are known to be intrinsically live in the processed unit.
@@ -1125,7 +1128,7 @@ CallOverdefined:
      
       // If we can constant fold this, mark the result of the call as a
       // constant.
-      if (Constant *C = ConstantFoldCall(F, Operands))
+      if (Constant *C = ConstantFoldCall(F, Operands, TLI))
         return markConstant(I, C);
     }
 
@@ -1517,6 +1520,9 @@ namespace {
   /// Sparse Conditional Constant Propagator.
   ///
   struct SCCP : public FunctionPass {
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TargetLibraryInfo>();
+    }
     static char ID; // Pass identification, replacement for typeid
     SCCP() : FunctionPass(ID) {
       initializeSCCPPass(*PassRegistry::getPassRegistry());
@@ -1569,7 +1575,9 @@ static void DeleteInstructionInBlock(BasicBlock *BB) {
 //
 bool SCCP::runOnFunction(Function &F) {
   DEBUG(dbgs() << "SCCP on function '" << F.getName() << "'\n");
-  SCCPSolver Solver(getAnalysisIfAvailable<TargetData>());
+  const TargetData *TD = getAnalysisIfAvailable<TargetData>();
+  const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
+  SCCPSolver Solver(TD, TLI);
 
   // Mark the first block of the function as being executable.
   Solver.MarkBlockExecutable(F.begin());
@@ -1641,6 +1649,9 @@ namespace {
   /// Constant Propagation.
   ///
   struct IPSCCP : public ModulePass {
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<TargetLibraryInfo>();
+    }
     static char ID;
     IPSCCP() : ModulePass(ID) {
       initializeIPSCCPPass(*PassRegistry::getPassRegistry());
@@ -1650,7 +1661,11 @@ namespace {
 } // end anonymous namespace
 
 char IPSCCP::ID = 0;
-INITIALIZE_PASS(IPSCCP, "ipsccp",
+INITIALIZE_PASS_BEGIN(IPSCCP, "ipsccp",
+                "Interprocedural Sparse Conditional Constant Propagation",
+                false, false)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_END(IPSCCP, "ipsccp",
                 "Interprocedural Sparse Conditional Constant Propagation",
                 false, false)
 
@@ -1689,7 +1704,9 @@ static bool AddressIsTaken(const GlobalValue *GV) {
 }
 
 bool IPSCCP::runOnModule(Module &M) {
-  SCCPSolver Solver(getAnalysisIfAvailable<TargetData>());
+  const TargetData *TD = getAnalysisIfAvailable<TargetData>();
+  const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
+  SCCPSolver Solver(TD, TLI);
 
   // AddressTakenFunctions - This set keeps track of the address-taken functions
   // that are in the input.  As IPSCCP runs through and simplifies code,

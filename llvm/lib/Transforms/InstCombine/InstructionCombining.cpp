@@ -75,7 +75,10 @@ void LLVMInitializeInstCombine(LLVMPassRegistryRef R) {
 }
 
 char InstCombiner::ID = 0;
-INITIALIZE_PASS(InstCombiner, "instcombine",
+INITIALIZE_PASS_BEGIN(InstCombiner, "instcombine",
+                "Combine redundant instructions", false, false)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_END(InstCombiner, "instcombine",
                 "Combine redundant instructions", false, false)
 
 void InstCombiner::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -1800,7 +1803,8 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
 static bool AddReachableCodeToWorklist(BasicBlock *BB, 
                                        SmallPtrSet<BasicBlock*, 64> &Visited,
                                        InstCombiner &IC,
-                                       const TargetData *TD) {
+                                       const TargetData *TD,
+                                       const TargetLibraryInfo *TLI) {
   bool MadeIRChange = false;
   SmallVector<BasicBlock*, 256> Worklist;
   Worklist.push_back(BB);
@@ -1827,7 +1831,7 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
       
       // ConstantProp instruction if trivially constant.
       if (!Inst->use_empty() && isa<Constant>(Inst->getOperand(0)))
-        if (Constant *C = ConstantFoldInstruction(Inst, TD)) {
+        if (Constant *C = ConstantFoldInstruction(Inst, TD, TLI)) {
           DEBUG(errs() << "IC: ConstFold to: " << *C << " from: "
                        << *Inst << '\n');
           Inst->replaceAllUsesWith(C);
@@ -1911,7 +1915,8 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
     // the reachable instructions.  Ignore blocks that are not reachable.  Keep
     // track of which blocks we visit.
     SmallPtrSet<BasicBlock*, 64> Visited;
-    MadeIRChange |= AddReachableCodeToWorklist(F.begin(), Visited, *this, TD);
+    MadeIRChange |= AddReachableCodeToWorklist(F.begin(), Visited, *this, TD,
+                                               TLI);
 
     // Do a quick scan over the function.  If we find any blocks that are
     // unreachable, remove any instructions inside of them.  This prevents
@@ -1956,7 +1961,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 
     // Instruction isn't dead, see if we can constant propagate it.
     if (!I->use_empty() && isa<Constant>(I->getOperand(0)))
-      if (Constant *C = ConstantFoldInstruction(I, TD)) {
+      if (Constant *C = ConstantFoldInstruction(I, TD, TLI)) {
         DEBUG(errs() << "IC: ConstFold to: " << *C << " from: " << *I << '\n');
 
         // Add operands to the worklist.
@@ -2064,7 +2069,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 
 bool InstCombiner::runOnFunction(Function &F) {
   TD = getAnalysisIfAvailable<TargetData>();
-
+  TLI = &getAnalysis<TargetLibraryInfo>();
   
   /// Builder - This is an IRBuilder that automatically inserts new
   /// instructions into the worklist when they are created.

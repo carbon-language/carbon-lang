@@ -148,8 +148,6 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   return ReplaceInstUsesWith(CI, New);
 }
 
-
-
 /// EvaluateInDifferentType - Given an expression that 
 /// CanEvaluateTruncated or CanEvaluateSExtd returns true for, actually
 /// insert the code to evaluate the expression.
@@ -159,7 +157,7 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, Type *Ty,
     C = ConstantExpr::getIntegerCast(C, Ty, isSigned /*Sext or ZExt*/);
     // If we got a constantexpr back, try to simplify it with TD info.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-      C = ConstantFoldConstantExpression(CE, TD);
+      C = ConstantFoldConstantExpression(CE, TD, TLI);
     return C;
   }
 
@@ -1212,10 +1210,9 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
   }
   
   // Fold (fptrunc (sqrt (fpext x))) -> (sqrtf x)
-  const TargetLibraryInfo &TLI = getAnalysis<TargetLibraryInfo>();
   CallInst *Call = dyn_cast<CallInst>(CI.getOperand(0));
-  if (Call && Call->getCalledFunction() && TLI.has(LibFunc::sqrtf) &&
-      Call->getCalledFunction()->getName() == TLI.getName(LibFunc::sqrt) &&
+  if (Call && Call->getCalledFunction() && TLI->has(LibFunc::sqrtf) &&
+      Call->getCalledFunction()->getName() == TLI->getName(LibFunc::sqrt) &&
       Call->getNumArgOperands() == 1 &&
       Call->hasOneUse()) {
     CastInst *Arg = dyn_cast<CastInst>(Call->getArgOperand(0));
