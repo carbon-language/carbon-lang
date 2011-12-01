@@ -210,7 +210,7 @@ static
 void mergeSPUpdatesDown(MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator &MBBI,
                         unsigned StackPtr, uint64_t *NumBytes = NULL) {
-  // FIXME: THIS ISN'T RUN!!!
+  // FIXME:  THIS ISN'T RUN!!!
   return;
 
   if (MBBI == MBB.end()) return;
