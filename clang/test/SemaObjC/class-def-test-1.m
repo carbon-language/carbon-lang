@@ -30,4 +30,6 @@ typedef NSObject TD_NSObject;
 @interface XCElementUnit : TD_NSObject {}
 @end
 
-
+// Make sure we don't typo-correct to ourselves.
+@interface SomeClassSub : SomeClassSup // expected-error{{cannot find interface declaration for 'SomeClassSup', superclass of 'SomeClassSub'}}
+@end

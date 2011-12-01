@@ -417,10 +417,15 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
           DeclarationNameInfo(SuperName, SuperLoc), LookupOrdinaryName, TUScope,
           NULL, NULL, false, CTC_NoKeywords);
       if ((PrevDecl = Corrected.getCorrectionDeclAs<ObjCInterfaceDecl>())) {
-        Diag(SuperLoc, diag::err_undef_superclass_suggest)
-          << SuperName << ClassName << PrevDecl->getDeclName();
-        Diag(PrevDecl->getLocation(), diag::note_previous_decl)
-          << PrevDecl->getDeclName();
+        if (PrevDecl == IDecl) {
+          // Don't correct to the class we're defining.
+          PrevDecl = 0;
+        } else {
+          Diag(SuperLoc, diag::err_undef_superclass_suggest)
+            << SuperName << ClassName << PrevDecl->getDeclName();
+          Diag(PrevDecl->getLocation(), diag::note_previous_decl)
+            << PrevDecl->getDeclName();
+        }
       }
     }
 
