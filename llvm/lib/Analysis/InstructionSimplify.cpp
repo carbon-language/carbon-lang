@@ -51,9 +51,7 @@ static Value *SimplifyXorInst(Value *, Value *, const TargetData *,
 /// getFalse - For a boolean type, or a vector of boolean type, return false, or
 /// a vector with every element false, as appropriate for the type.
 static Constant *getFalse(Type *Ty) {
-  assert((Ty->isIntegerTy(1) ||
-          (Ty->isVectorTy() &&
-           cast<VectorType>(Ty)->getElementType()->isIntegerTy(1))) &&
+  assert(Ty->getScalarType()->isIntegerTy(1) &&
          "Expected i1 type or a vector of i1!");
   return Constant::getNullValue(Ty);
 }
@@ -61,9 +59,7 @@ static Constant *getFalse(Type *Ty) {
 /// getTrue - For a boolean type, or a vector of boolean type, return true, or
 /// a vector with every element true, as appropriate for the type.
 static Constant *getTrue(Type *Ty) {
-  assert((Ty->isIntegerTy(1) ||
-          (Ty->isVectorTy() &&
-           cast<VectorType>(Ty)->getElementType()->isIntegerTy(1))) &&
+  assert(Ty->getScalarType()->isIntegerTy(1) &&
          "Expected i1 type or a vector of i1!");
   return Constant::getAllOnesValue(Ty);
 }
@@ -1489,8 +1485,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     return ConstantInt::get(ITy, CmpInst::isTrueWhenEqual(Pred));
 
   // Special case logic when the operands have i1 type.
-  if (OpTy->isIntegerTy(1) || (OpTy->isVectorTy() &&
-       cast<VectorType>(OpTy)->getElementType()->isIntegerTy(1))) {
+  if (OpTy->getScalarType()->isIntegerTy(1)) {
     switch (Pred) {
     default: break;
     case ICmpInst::ICMP_EQ:
