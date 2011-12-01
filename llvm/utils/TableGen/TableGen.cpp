@@ -16,6 +16,7 @@
 #include "CallingConvEmitter.h"
 #include "CodeEmitterGen.h"
 #include "DAGISelEmitter.h"
+#include "DFAPacketizerEmitter.h"
 #include "DisassemblerEmitter.h"
 #include "EDEmitter.h"
 #include "FastISelEmitter.h"
@@ -47,6 +48,7 @@ enum ActionType {
   GenPseudoLowering,
   GenCallingConv,
   GenDAGISel,
+  GenDFAPacketizer,
   GenFastISel,
   GenSubtarget,
   GenIntrinsic,
@@ -79,6 +81,8 @@ namespace {
                                "Generate assembly instruction matcher"),
                     clEnumValN(GenDAGISel, "gen-dag-isel",
                                "Generate a DAG instruction selector"),
+                    clEnumValN(GenDFAPacketizer, "gen-dfa-packetizer",
+                               "Generate DFA Packetizer for VLIW targets"),
                     clEnumValN(GenFastISel, "gen-fast-isel",
                                "Generate a \"fast\" instruction selector"),
                     clEnumValN(GenSubtarget, "gen-subtarget",
@@ -133,6 +137,9 @@ public:
       break;
     case GenDAGISel:
       DAGISelEmitter(Records).run(OS);
+      break;
+    case GenDFAPacketizer:
+      DFAGen(Records).run(OS);
       break;
     case GenFastISel:
       FastISelEmitter(Records).run(OS);

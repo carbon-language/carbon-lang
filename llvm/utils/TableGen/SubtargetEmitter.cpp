@@ -711,9 +711,13 @@ void SubtargetEmitter::run(raw_ostream &OS) {
 
   std::string ClassName = Target + "GenSubtargetInfo";
   OS << "namespace llvm {\n";
+  OS << "class DFAPacketizer;\n";
   OS << "struct " << ClassName << " : public TargetSubtargetInfo {\n"
      << "  explicit " << ClassName << "(StringRef TT, StringRef CPU, "
      << "StringRef FS);\n"
+     << "public:\n"
+     << "  DFAPacketizer* createDFAPacketizer(const InstrItineraryData* IID)"
+     << " const;\n"
      << "};\n";
   OS << "} // End llvm namespace \n";
 
