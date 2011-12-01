@@ -11,6 +11,8 @@ void bar(int y) {
 extern int n;
 static int wibble(int);
 
+void ena(int (*dio)(int tria));
+
 // CHECK: EnumDecl=Baz:3:6 (Definition)linkage=External
 // CHECK: EnumConstantDecl=Qux:3:12 (Definition)linkage=External
 // CHECK: VarDecl=x:4:5linkage=External
@@ -22,5 +24,7 @@ static int wibble(int);
 // CHECK: VarDecl=k:9:7 (Definition)linkage=NoLinkage
 // CHECK: VarDecl=n:11:12linkage=External
 // CHECK: FunctionDecl=wibble:12:12linkage=Internal
-// CHECL: ParmDecl=:12:22 (Definition)linkage=NoLinkage
-
+// CHECK: ParmDecl=:12:22 (Definition)linkage=NoLinkage
+// CHECK: FunctionDecl=ena:14:6linkage=External
+// CHECK: ParmDecl=dio:14:16 (Definition)linkage=NoLinkage
+// CHECK: ParmDecl=tria:14:25 (Definition)linkage=NoLinkage
