@@ -79,7 +79,7 @@ LLVMBuildTool	:= $(PROJ_SRC_ROOT)/utils/llvm-build/llvm-build
 # The files we are going to generate using llvm-build.
 LLVMBuildMakeFrag := $(PROJ_OBJ_ROOT)/Makefile.llvmbuild
 LLVMConfigLibraryDependenciesInc := \
-	$(PROJ_OBJ_ROOT)/tools/llvm-config-2/LibraryDependencies.inc
+	$(PROJ_OBJ_ROOT)/tools/llvm-config/LibraryDependencies.inc
 
 # This is for temporary backwards compatibility.
 ifndef TARGET_NATIVE_ARCH
@@ -528,9 +528,9 @@ ifndef LLVM_TBLGEN
   endif
 endif
 ifeq ($(LLVM_CROSS_COMPILING),1)
-  LLVM_CONFIG := $(BuildLLVMToolDir)/llvm-config-2$(BUILD_EXEEXT)
+  LLVM_CONFIG := $(BuildLLVMToolDir)/llvm-config$(BUILD_EXEEXT)
 else
-  LLVM_CONFIG := $(LLVMToolDir)/llvm-config-2$(EXEEXT)
+  LLVM_CONFIG := $(LLVMToolDir)/llvm-config$(EXEEXT)
 endif
 ifndef LLVMLD
 LLVMLD    := $(LLVMToolDir)/llvm-ld$(EXEEXT)

@@ -21100,7 +21100,7 @@ if test -f ${srcdir}/tools/clang/README.txt; then
 
 fi
 
-ac_config_files="$ac_config_files tools/llvm-config/llvm-config.in"
+
 
 
 ac_config_files="$ac_config_files bindings/ocaml/llvm/META.llvm"

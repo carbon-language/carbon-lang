@@ -230,7 +230,7 @@ endif()
 
 set(LLVMBUILDTOOL "${LLVM_MAIN_SRC_DIR}/utils/llvm-build/llvm-build")
 set(LLVMCONFIGLIBRARYDEPENDENCIESINC
-  "${LLVM_BINARY_DIR}/tools/llvm-config-2/LibraryDependencies.inc")
+  "${LLVM_BINARY_DIR}/tools/llvm-config/LibraryDependencies.inc")
 set(LLVMBUILDCMAKEFRAG
   "${LLVM_BINARY_DIR}/LLVMBuild.cmake")
 message(STATUS "Constructing LLVMBuild project information")

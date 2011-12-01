@@ -1578,9 +1578,6 @@ if test -f ${srcdir}/tools/clang/README.txt; then
   AC_CONFIG_FILES([tools/clang/docs/doxygen.cfg])
 fi
 
-dnl Do the first stage of configuration for llvm-config.in.
-AC_CONFIG_FILES([tools/llvm-config/llvm-config.in])
-
 dnl OCaml findlib META file
 AC_CONFIG_FILES([bindings/ocaml/llvm/META.llvm])
 
