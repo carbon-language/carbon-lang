@@ -241,10 +241,13 @@ void *mz_memalign(malloc_zone_t *zone, size_t align, size_t size) {
   return asan_memalign(align, size, &stack);
 }
 
+// This function is currently unused, and we build with -Werror.
+#if 0
 void mz_free_definite_size(malloc_zone_t* zone, void *ptr, size_t size) {
   // TODO(glider): check that |size| is valid.
   UNIMPLEMENTED();
 }
+#endif
 #endif
 
 // malloc_introspection callbacks.  I'm not clear on what all of these do.
@@ -283,6 +286,8 @@ void mi_force_unlock(malloc_zone_t *zone) {
   __asan_mz_force_unlock();
 }
 
+// This function is currently unused, and we build with -Werror.
+#if 0
 void mi_statistics(malloc_zone_t *zone, malloc_statistics_t *stats) {
   // TODO(csilvers): figure out how to fill these out
   // TODO(glider): port this from tcmalloc when ready.
@@ -291,6 +296,7 @@ void mi_statistics(malloc_zone_t *zone, malloc_statistics_t *stats) {
   stats->max_size_in_use = 0;
   stats->size_allocated = 0;
 }
+#endif
 
 boolean_t mi_zone_locked(malloc_zone_t *zone) {
   // UNIMPLEMENTED();
