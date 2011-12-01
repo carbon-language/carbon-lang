@@ -1,6 +1,6 @@
 Index: lib/Sema/SemaTemplateInstantiate.cpp
 ===================================================================
---- lib/Sema/SemaTemplateInstantiate.cpp	(revision 144982)
+--- lib/Sema/SemaTemplateInstantiate.cpp	(revision 145552)
 +++ lib/Sema/SemaTemplateInstantiate.cpp	(working copy)
 @@ -1683,6 +1683,10 @@
                         TemplateSpecializationKind TSK,

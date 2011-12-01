@@ -1,6 +1,6 @@
 Index: lib/AST/ASTImporter.cpp
 ===================================================================
---- lib/AST/ASTImporter.cpp	(revision 144982)
+--- lib/AST/ASTImporter.cpp	(revision 145552)
 +++ lib/AST/ASTImporter.cpp	(working copy)
 @@ -2300,7 +2300,8 @@
        
@@ -14,9 +14,9 @@ Index: lib/AST/ASTImporter.cpp
              // function.
 Index: lib/AST/Decl.cpp
 ===================================================================
---- lib/AST/Decl.cpp	(revision 144982)
+--- lib/AST/Decl.cpp	(revision 145552)
 +++ lib/AST/Decl.cpp	(working copy)
-@@ -2405,8 +2405,14 @@
+@@ -2420,8 +2420,14 @@
    ExternalASTSource::Deserializing TheFields(Source);
  
    SmallVector<Decl*, 64> Decls;
@@ -35,9 +35,9 @@ Index: lib/AST/Decl.cpp
      
 Index: include/clang/AST/DeclBase.h
 ===================================================================
---- include/clang/AST/DeclBase.h	(revision 144982)
+--- include/clang/AST/DeclBase.h	(revision 145552)
 +++ include/clang/AST/DeclBase.h	(working copy)
-@@ -807,6 +807,12 @@
+@@ -824,6 +824,12 @@
    /// storage that contains additional declarations that are visible
    /// in this context.
    mutable unsigned ExternalVisibleStorage : 1;
@@ -50,7 +50,7 @@ Index: include/clang/AST/DeclBase.h
  
    /// \brief Pointer to the data structure used to lookup declarations
    /// within this context (or a DependentStoredDeclsMap if this is a
-@@ -834,8 +840,8 @@
+@@ -851,8 +857,8 @@
  
     DeclContext(Decl::Kind K)
       : DeclKind(K), ExternalLexicalStorage(false),
@@ -61,7 +61,7 @@ Index: include/clang/AST/DeclBase.h
  
  public:
    ~DeclContext();
-@@ -1339,6 +1345,14 @@
+@@ -1356,6 +1362,14 @@
      ExternalVisibleStorage = ES;
    }
  

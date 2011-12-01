@@ -130,7 +130,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
         case EmitCodeGenOnly:        return new EmitCodeGenOnlyAction();
         case EmitObj:                return new EmitObjAction();
         case FixIt:                  return new FixItAction();
-        case GeneratePCH:            return new GeneratePCHAction(false);
+        case GeneratePCH:            return new GeneratePCHAction();
         case GeneratePTH:            return new GeneratePTHAction();
         case InitOnly:               return new InitOnlyAction();
         case ParseSyntaxOnly:        return new SyntaxOnlyAction();
@@ -196,6 +196,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
             llvm::InitializeAllTargets();
             llvm::InitializeAllAsmPrinters();
             llvm::InitializeAllTargetMCs();
+            llvm::InitializeAllDisassemblers();
         }
     } InitializeLLVM;
         

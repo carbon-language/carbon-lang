@@ -1,6 +1,6 @@
 Index: lib/Sema/SemaType.cpp
 ===================================================================
---- lib/Sema/SemaType.cpp	(revision 144982)
+--- lib/Sema/SemaType.cpp	(revision 145552)
 +++ lib/Sema/SemaType.cpp	(working copy)
 @@ -4065,6 +4065,34 @@
    if (!T->isIncompleteType())
