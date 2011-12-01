@@ -3231,7 +3231,8 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
             if (curr_thread_list.GetSize() != num_threads)
             {
                 lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP | LIBLLDB_LOG_PROCESS));
-                log->Printf("Number of threads changed from %d to %d while processing event.", num_threads, curr_thread_list.GetSize());
+                if (log)
+                    log->Printf("Number of threads changed from %d to %d while processing event.", num_threads, curr_thread_list.GetSize());
                 break;
             }
             
@@ -3240,10 +3241,11 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
             if (thread_sp->GetIndexID() != thread_index_array[idx])
             {
                 lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP | LIBLLDB_LOG_PROCESS));
-                log->Printf("The thread at position %d changed from %d  to %d while processing event.", 
-                            idx, 
-                            thread_index_array[idx],
-                            thread_sp->GetIndexID());
+                if (log)
+                    log->Printf("The thread at position %d changed from %d  to %d while processing event.", 
+                                idx, 
+                                thread_index_array[idx],
+                                thread_sp->GetIndexID());
                 break;
             }
             
