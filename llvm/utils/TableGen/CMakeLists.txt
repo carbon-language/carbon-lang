@@ -17,6 +17,7 @@ add_tablegen(llvm-tblgen LLVM
   DAGISelMatcherGen.cpp
   DAGISelMatcherOpt.cpp
   DAGISelMatcher.cpp
+  DFAPacketizerEmitter.cpp
   DisassemblerEmitter.cpp
   EDEmitter.cpp
   FastISelEmitter.cpp
