@@ -98,7 +98,8 @@ unsigned TargetCodeGenInfo::getSizeOfUnwindException() const {
   return 32;
 }
 
-bool TargetCodeGenInfo::isNoProtoCallVariadic(CallingConv CC) const {
+bool TargetCodeGenInfo::isNoProtoCallVariadic(
+                                       const CodeGen::CGFunctionInfo &) const {
   // The following conventions are known to require this to be false:
   //   x86_stdcall
   //   MIPS
@@ -978,13 +979,31 @@ public:
     return X86AdjustInlineAsmType(CGF, Constraint, Ty);
   }
 
-  bool isNoProtoCallVariadic(CallingConv CC) const {
+  bool isNoProtoCallVariadic(const CodeGen::CGFunctionInfo &FI) const {
     // The default CC on x86-64 sets %al to the number of SSA
     // registers used, and GCC sets this when calling an unprototyped
-    // function, so we override the default behavior.
-    if (CC == CC_Default || CC == CC_C) return true;
+    // function, so we override the default behavior.  However, don't do
+    // that when AVX types are involved.
+    if (FI.getCallingConvention() == llvm::CallingConv::C) {
+      bool HasAVXType = false;
+      for (CGFunctionInfo::const_arg_iterator it = FI.arg_begin(),
+                                              ie = FI.arg_end();
+           it != ie; ++it) {
+        if (it->info.isDirect()) {
+          llvm::Type *Ty = it->info.getCoerceToType();
+          if (llvm::VectorType *VTy = dyn_cast_or_null<llvm::VectorType>(Ty)) {
+            if (VTy->getBitWidth() > 128) {
+              HasAVXType = true;
+              break;
+            }
+          }
+        }
+      }
+      if (!HasAVXType)
+        return true;
+    }
 
-    return TargetCodeGenInfo::isNoProtoCallVariadic(CC);
+    return TargetCodeGenInfo::isNoProtoCallVariadic(FI);
   }
 
 };

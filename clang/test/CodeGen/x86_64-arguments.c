@@ -326,3 +326,11 @@ int foo(long3 X)
 {
   return 0;
 }
+
+// Make sure we don't use a varargs convention for a function without a
+// prototype where AVX types are involved.
+// CHECK: @test45
+// CHECK: call i32 bitcast (i32 (...)* @f45 to i32 (<8 x float>)*)
+int f45();
+__m256 x45;
+void test45() { f45(x45); }

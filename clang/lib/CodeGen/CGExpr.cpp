@@ -2458,7 +2458,7 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
   // call.  The way we make this work is to cast to the exact type
   // of the promoted arguments.
   if (isa<FunctionNoProtoType>(FnType) &&
-      !getTargetHooks().isNoProtoCallVariadic(FnType->getCallConv())) {
+      !getTargetHooks().isNoProtoCallVariadic(FnInfo)) {
     assert(cast<llvm::FunctionType>(Callee->getType()->getContainedType(0))
              ->isVarArg());
     llvm::Type *CalleeTy = getTypes().GetFunctionType(FnInfo, false);
