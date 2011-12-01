@@ -20,3 +20,10 @@ define void @test3(double %tmp) nounwind {
   call void asm sideeffect "$0", "q"(double %tmp) nounwind
   ret void
 }
+
+; rdar://10392864
+define void @test4(i8 signext %val, i8 signext %a, i8 signext %b, i8 signext %c, i8 signext %d) nounwind {
+entry:
+  %0 = tail call { i8, i8, i8, i8, i8 } asm "foo $1, $2, $3, $4, $1\0Axchgb ${0:b}, ${0:h}", "=q,={ax},={bx},={cx},={dx},0,1,2,3,4,~{dirflag},~{fpsr},~{flags}"(i8 %val, i8 %a, i8 %b, i8 %c, i8 %d) nounwind
+  ret void
+}
