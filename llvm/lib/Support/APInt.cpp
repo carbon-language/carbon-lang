@@ -1440,15 +1440,11 @@ APInt APInt::sqrt() const {
   APInt nextSquare((x_old + 1) * (x_old +1));
   if (this->ult(square))
     return x_old;
-  else if (this->ule(nextSquare)) {
-    APInt midpoint((nextSquare - square).udiv(two));
-    APInt offset(*this - square);
-    if (offset.ult(midpoint))
-      return x_old;
-    else
-      return x_old + 1;
-  } else
-    llvm_unreachable("Error in APInt::sqrt computation");
+  assert(this->ule(nextSquare) && "Error in APInt::sqrt computation");
+  APInt midpoint((nextSquare - square).udiv(two));
+  APInt offset(*this - square);
+  if (offset.ult(midpoint))
+    return x_old;
   return x_old + 1;
 }
 
