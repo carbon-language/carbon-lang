@@ -414,14 +414,16 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     return;
   }
 
-  // If the return status is undefined or is error, report a bad call to free.
-  if (!definitelyDidnotReturnError(AS->Region, State, C.getSValBuilder())) {
+  // If the buffer can be null and the return status can be an error,
+  // report a bad call to free.
+  if (State->assume(cast<DefinedSVal>(ArgSVal), false) &&
+      !definitelyDidnotReturnError(AS->Region, State, C.getSValBuilder())) {
     ExplodedNode *N = C.addTransition(State);
     if (!N)
       return;
     initBugType();
     BugReport *Report = new BugReport(*BT,
-        "Call to free data when error was returned during allocation.", N);
+        "Only call free if a valid (non-NULL) buffer was returned.", N);
     Report->addVisitor(new SecKeychainBugVisitor(ArgSM));
     Report->addRange(ArgExpr->getSourceRange());
     C.EmitReport(Report);

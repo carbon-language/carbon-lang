@@ -77,7 +77,7 @@ void errRetVal() {
   void *outData;
   st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &outData);
   if (st == GenericError) // expected-warning{{Allocated data is not released: missing a call to 'SecKeychainItemFreeContent'.}}
-    SecKeychainItemFreeContent(ptr, outData); // expected-warning{{Call to free data when error was returned during allocation.}}
+    SecKeychainItemFreeContent(ptr, outData); // expected-warning{{Only call free if a valid (non-NULL) buffer was returned}}
 }
 
 // If null is passed in, the data is not allocated, so no need for the matching free.
@@ -303,6 +303,22 @@ void DellocWithCFStringCreate4(CFAllocatorRef alloc) {
     CFStringRef userStr = CFStringCreateWithBytesNoCopy(alloc, bytes, length, 5, 0, 0); // expected-warning{{Deallocator doesn't match the allocator:}} 
     CFRelease(userStr);
   }
+}
+
+void radar10508828() {
+  UInt32 pwdLen = 0;
+  void*  pwdBytes = 0;
+  OSStatus rc = SecKeychainFindGenericPassword(0, 3, "foo", 3, "bar", &pwdLen, &pwdBytes, 0);
+#pragma unused(rc)
+  if (pwdBytes)
+    SecKeychainItemFreeContent(0, pwdBytes);
+}
+
+void radar10508828_2() {
+  UInt32 pwdLen = 0;
+  void*  pwdBytes = 0;
+  OSStatus rc = SecKeychainFindGenericPassword(0, 3, "foo", 3, "bar", &pwdLen, &pwdBytes, 0);
+  SecKeychainItemFreeContent(0, pwdBytes); // expected-warning {{Only call free if a valid (non-NULL) buffer was returned.}}
 }
 
 //Example from bug 10797.
