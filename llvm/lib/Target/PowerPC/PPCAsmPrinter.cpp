@@ -441,7 +441,7 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
     Directive = PPC::DIR_970;
   if (Subtarget.hasAltivec() && Directive < PPC::DIR_7400)
     Directive = PPC::DIR_7400;
-  if (Subtarget.isPPC64() && Directive < PPC::DIR_970)
+  if (Subtarget.isPPC64() && Directive < PPC::DIR_64)
     Directive = PPC::DIR_64;
   assert(Directive <= PPC::DIR_64 && "Directive out of range.");
   
