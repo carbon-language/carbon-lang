@@ -83,13 +83,13 @@ ExprEngine::~ExprEngine() {
 
 const ProgramState *ExprEngine::getInitialState(const LocationContext *InitLoc) {
   const ProgramState *state = StateMgr.getInitialState(InitLoc);
+  const Decl *D = InitLoc->getDecl();
 
   // Preconditions.
-
   // FIXME: It would be nice if we had a more general mechanism to add
   // such preconditions.  Some day.
   do {
-    const Decl *D = InitLoc->getDecl();
+
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
       // Precondition: the first argument of 'main' is an integer guaranteed
       //  to be > 0.
@@ -119,25 +119,42 @@ const ProgramState *ExprEngine::getInitialState(const LocationContext *InitLoc) 
 
       if (const ProgramState *newState = state->assume(*Constraint, true))
         state = newState;
-
-      break;
     }
+    break;
+  }
+  while (0);
 
-    if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
-      // Precondition: 'self' is always non-null upon entry to an Objective-C
-      // method.
-      const ImplicitParamDecl *SelfD = MD->getSelfDecl();
-      const MemRegion *R = state->getRegion(SelfD, InitLoc);
-      SVal V = state->getSVal(loc::MemRegionVal(R));
+  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+    // Precondition: 'self' is always non-null upon entry to an Objective-C
+    // method.
+    const ImplicitParamDecl *SelfD = MD->getSelfDecl();
+    const MemRegion *R = state->getRegion(SelfD, InitLoc);
+    SVal V = state->getSVal(loc::MemRegionVal(R));
 
-      if (const Loc *LV = dyn_cast<Loc>(&V)) {
-        // Assume that the pointer value in 'self' is non-null.
-        state = state->assume(*LV, true);
-        assert(state && "'self' cannot be null");
+    if (const Loc *LV = dyn_cast<Loc>(&V)) {
+      // Assume that the pointer value in 'self' is non-null.
+      state = state->assume(*LV, true);
+      assert(state && "'self' cannot be null");
+    }
+  }
+
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
+    if (!MD->isStatic()) {
+      // Precondition: 'this' is always non-null upon entry to the
+      // top-level function.  This is our starting assumption for
+      // analyzing an "open" program.
+      const StackFrameContext *SFC = InitLoc->getCurrentStackFrame();
+      if (SFC->getParent() == 0) {
+        loc::MemRegionVal L(getCXXThisRegion(MD, SFC));
+        SVal V = state->getSVal(L);
+        if (const Loc *LV = dyn_cast<Loc>(&V)) {
+          state = state->assume(*LV, true);
+          assert(state && "'this' cannot be null");
+        }
       }
     }
-  } while (0);
-
+  }
+    
   return state;
 }
 

@@ -492,3 +492,17 @@ double PR11450() {
   return NaN;
 }
 
+// Test that 'this' is assumed null upon analyzing the entry to a "top-level"
+// function (i.e., when not analyzing from a specific caller).
+struct TestNullThis {
+  int field;
+  void test();
+};
+
+void TestNullThis::test() {
+  int *p = &field;
+  if (p)
+    return;
+  field = 2; // no-warning
+}
+
