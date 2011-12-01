@@ -228,6 +228,9 @@ $(Tmp.ObjPath)/%.o: $(Tmp.SrcPath)/%.S $(Tmp.Dependencies) $(Tmp.ObjPath)/.dir
 $(Tmp.ObjPath)/%.o: $(Tmp.SrcPath)/%.c $(Tmp.Dependencies) $(Tmp.ObjPath)/.dir
 	$(Summary) "  COMPILE:   $(Tmp.Name)/$(Tmp.Config)/$(Tmp.Arch): $$<"
 	$(Verb) $(Tmp.CC) $(Tmp.CFLAGS) -c -o $$@ $$<
+$(Tmp.ObjPath)/%.o: $(Tmp.SrcPath)/%.cc $(Tmp.Dependencies) $(Tmp.ObjPath)/.dir
+	$(Summary) "  COMPILE:   $(Tmp.Name)/$(Tmp.Config)/$(Tmp.Arch): $$<"
+	$(Verb) $(Tmp.CC) $(Tmp.CFLAGS) -c -o $$@ $$<
 .PRECIOUS: $(Tmp.ObjPath)/.dir
 
 endef
