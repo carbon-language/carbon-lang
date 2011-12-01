@@ -60,6 +60,12 @@ UniversalArchs.profile_osx := $(call CheckArches,i386 x86_64)
 Configs += profile_ios
 UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64 armv6 armv7)
 
+# Configurations which define the ASAN support functions.
+#
+# Note that ASAN doesn't appear to currently support i386.
+Configs += asan_osx
+UniversalArchs.asan_osx := $(call CheckArches,x86_64)
+
 # If RC_SUPPORTED_ARCHS is defined, treat it as a list of the architectures we
 # are intended to support and limit what we try to build to that.
 #
@@ -96,6 +102,14 @@ IOSSIM_DEPLOYMENT_ARGS += -isysroot $(ProjSrcRoot)/SDKs/darwin
 
 CFLAGS.eprintf		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.10.4		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
+# FIXME: We can't build ASAN with our stub SDK yet.
+CFLAGS.asan_osx         := $(CFLAGS) -mmacosx-version-min=10.4
+CFLAGS.asan_osx         += \
+		-DASAN_USE_SYSINFO=1 \
+		-DASAN_NEEDS_SEGV=1 \
+		-DASAN_HAS_EXCEPTIONS=1 \
+		-DASAN_FLEXIBLE_MAPPING_AND_OFFSET=0 \
+
 CFLAGS.ios.i386		:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.ios.x86_64	:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.ios.armv6	:= $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
@@ -131,6 +145,8 @@ FUNCTIONS.osx	:= mulosi4 mulodi4 muloti4
 
 FUNCTIONS.profile_osx := GCDAProfiling
 FUNCTIONS.profile_ios := GCDAProfiling
+
+FUNCTIONS.asan_osx := $(AsanFunctions)
 
 CCKEXT_COMMON_FUNCTIONS := \
 	absvdi2 \
