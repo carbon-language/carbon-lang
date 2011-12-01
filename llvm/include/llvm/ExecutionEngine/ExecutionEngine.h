@@ -580,6 +580,7 @@ public:
                                      const SmallVectorImpl<std::string>& MAttrs,
                                      Reloc::Model RM,
                                      CodeModel::Model CM,
+                                     CodeGenOpt::Level OL,
                                      std::string *Err);
 
   ExecutionEngine *create();
