@@ -165,6 +165,11 @@ __interface MicrosoftInterface {
    virtual void foo2() = 0;
 };
 
+void interface_test() {
+  MicrosoftInterface* a;
+  a->foo1();
+}
+
 __int64 x7 = __int64(0);
 
 
