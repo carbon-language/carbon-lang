@@ -37,11 +37,11 @@ public:
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
 
   void CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
-                         const IdentifierInfo *FI) const;
+                         StringRef FName) const;
 
   typedef void (MacOSXAPIChecker::*SubChecker)(CheckerContext &,
                                                const CallExpr *,
-                                               const IdentifierInfo *) const;
+                                               StringRef FName) const;
 };
 } //end anonymous namespace
 
@@ -50,7 +50,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 void MacOSXAPIChecker::CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
-                                         const IdentifierInfo *FI) const {
+                                         StringRef FName) const {
   if (CE->getNumArgs() < 1)
     return;
 
@@ -71,7 +71,7 @@ void MacOSXAPIChecker::CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
 
   llvm::SmallString<256> S;
   llvm::raw_svector_ostream os(S);
-  os << "Call to '" << FI->getName() << "' uses";
+  os << "Call to '" << FName << "' uses";
   if (const VarRegion *VR = dyn_cast<VarRegion>(R))
     os << " the local variable '" << VR->getDecl()->getName() << '\'';
   else
@@ -92,27 +92,18 @@ void MacOSXAPIChecker::CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
 
 void MacOSXAPIChecker::checkPreStmt(const CallExpr *CE,
                                     CheckerContext &C) const {
-  // FIXME: This sort of logic is common to several checkers, including
-  // UnixAPIChecker, PthreadLockChecker, and CStringChecker.  Should refactor.
-  const ProgramState *state = C.getState();
-  const Expr *Callee = CE->getCallee();
-  const FunctionDecl *Fn = state->getSVal(Callee).getAsFunctionDecl();
-
-  if (!Fn)
-    return;
-
-  const IdentifierInfo *FI = Fn->getIdentifier();
-  if (!FI)
+  StringRef Name = C.getCalleeName(CE);
+  if (Name.empty())
     return;
 
   SubChecker SC =
-    llvm::StringSwitch<SubChecker>(FI->getName())
+    llvm::StringSwitch<SubChecker>(Name)
       .Cases("dispatch_once", "dispatch_once_f",
              &MacOSXAPIChecker::CheckDispatchOnce)
       .Default(NULL);
 
   if (SC)
-    (this->*SC)(C, CE, FI);
+    (this->*SC)(C, CE, Name);
 }
 
 //===----------------------------------------------------------------------===//

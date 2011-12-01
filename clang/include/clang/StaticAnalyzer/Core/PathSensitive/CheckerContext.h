@@ -142,6 +142,9 @@ public:
     Eng.getBugReporter().EmitReport(R);
   }
 
+  /// \brief Get the declaration of the called function (path-sensitive).
+  const FunctionDecl *getCalleeDecl(const CallExpr *CE) const;
+
   /// \brief Get the name of the called function (path-sensitive).
   StringRef getCalleeName(const CallExpr *CE) const;
 

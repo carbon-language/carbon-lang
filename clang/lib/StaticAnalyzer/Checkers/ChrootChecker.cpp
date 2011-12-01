@@ -62,10 +62,7 @@ private:
 } // end anonymous namespace
 
 bool ChrootChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
-  const ProgramState *state = C.getState();
-  const Expr *Callee = CE->getCallee();
-  SVal L = state->getSVal(Callee);
-  const FunctionDecl *FD = L.getAsFunctionDecl();
+  const FunctionDecl *FD = C.getCalleeDecl(CE);
   if (!FD)
     return false;
 
@@ -125,10 +122,7 @@ void ChrootChecker::Chdir(CheckerContext &C, const CallExpr *CE) const {
 
 // Check the jail state before any function call except chroot and chdir().
 void ChrootChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
-  const ProgramState *state = C.getState();
-  const Expr *Callee = CE->getCallee();
-  SVal L = state->getSVal(Callee);
-  const FunctionDecl *FD = L.getAsFunctionDecl();
+  const FunctionDecl *FD = C.getCalleeDecl(CE);
   if (!FD)
     return;
 
@@ -143,7 +137,7 @@ void ChrootChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
     return;
   
   // If jail state is ROOT_CHANGED, generate BugReport.
-  void *const* k = state->FindGDM(ChrootChecker::getTag());
+  void *const* k = C.getState()->FindGDM(ChrootChecker::getTag());
   if (k)
     if (isRootChanged((intptr_t) *k))
       if (ExplodedNode *N = C.addTransition()) {

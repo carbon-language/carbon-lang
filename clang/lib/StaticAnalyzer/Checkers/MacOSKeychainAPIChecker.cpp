@@ -281,18 +281,12 @@ void MacOSKeychainAPIChecker::
 
 void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
                                            CheckerContext &C) const {
-  const ProgramState *State = C.getState();
-  const Expr *Callee = CE->getCallee();
-  SVal L = State->getSVal(Callee);
   unsigned idx = InvalidIdx;
+  const ProgramState *State = C.getState();
 
-  const FunctionDecl *funDecl = L.getAsFunctionDecl();
-  if (!funDecl)
+  StringRef funName = C.getCalleeName(CE);
+  if (funName.empty())
     return;
-  IdentifierInfo *funI = funDecl->getIdentifier();
-  if (!funI)
-    return;
-  StringRef funName = funI->getName();
 
   // If it is a call to an allocator function, it could be a double allocation.
   idx = getTrackedFunctionIndex(funName, true);

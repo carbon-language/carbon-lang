@@ -30,12 +30,9 @@ public:
 }
 
 bool BuiltinFunctionChecker::evalCall(const CallExpr *CE,
-                                      CheckerContext &C) const{
+                                      CheckerContext &C) const {
   const ProgramState *state = C.getState();
-  const Expr *Callee = CE->getCallee();
-  SVal L = state->getSVal(Callee);
-  const FunctionDecl *FD = L.getAsFunctionDecl();
-
+  const FunctionDecl *FD = C.getCalleeDecl(CE);
   if (!FD)
     return false;
 

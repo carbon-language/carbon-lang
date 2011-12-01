@@ -249,11 +249,8 @@ static const char* GetCFNumberTypeStr(uint64_t i) {
 
 void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
                                          CheckerContext &C) const {
-  const Expr *Callee = CE->getCallee();
   const ProgramState *state = C.getState();
-  SVal CallV = state->getSVal(Callee);
-  const FunctionDecl *FD = CallV.getAsFunctionDecl();
-
+  const FunctionDecl *FD = C.getCalleeDecl(CE);
   if (!FD)
     return;
   
@@ -363,11 +360,8 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
   if (CE->getNumArgs() != 1)
     return;
 
-  // Get the function declaration of the callee.
   const ProgramState *state = C.getState();
-  SVal X = state->getSVal(CE->getCallee());
-  const FunctionDecl *FD = X.getAsFunctionDecl();
-
+  const FunctionDecl *FD = C.getCalleeDecl(CE);
   if (!FD)
     return;
   

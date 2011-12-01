@@ -35,23 +35,26 @@ private:
 };
 }
 
+static StringRef getCalleeName(const ProgramState *State,
+                               const CallExpr *CE) {
+  const Expr *Callee = CE->getCallee();
+  SVal L = State->getSVal(Callee);
+  const FunctionDecl *funDecl =  L.getAsFunctionDecl();
+  if (!funDecl)
+    return StringRef();
+  IdentifierInfo *funI = funDecl->getIdentifier();
+  if (!funI)
+    return StringRef();
+  return funI->getName();
+}
+
 bool OSAtomicChecker::inlineCall(const CallExpr *CE,
                                  ExprEngine &Eng,
                                  ExplodedNode *Pred,
                                  ExplodedNodeSet &Dst) const {
-  const ProgramState *state = Pred->getState();
-  const Expr *Callee = CE->getCallee();
-  SVal L = state->getSVal(Callee);
-
-  const FunctionDecl *FD = L.getAsFunctionDecl();
-  if (!FD)
+  StringRef FName = getCalleeName(Pred->getState(), CE);
+  if (FName.empty())
     return false;
-
-  const IdentifierInfo *II = FD->getIdentifier();
-  if (!II)
-    return false;
-  
-  StringRef FName(II->getName());
 
   // Check for compare and swap.
   if (FName.startswith("OSAtomicCompareAndSwap") ||

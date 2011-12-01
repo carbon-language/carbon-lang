@@ -57,17 +57,9 @@ template <> struct ProgramStateTrait<LockSet> :
 void PthreadLockChecker::checkPostStmt(const CallExpr *CE,
                                        CheckerContext &C) const {
   const ProgramState *state = C.getState();
-  const Expr *Callee = CE->getCallee();
-  const FunctionDecl *FD = state->getSVal(Callee).getAsFunctionDecl();
-
-  if (!FD)
+  StringRef FName = C.getCalleeName(CE);
+  if (FName.empty())
     return;
-
-  // Get the name of the callee.
-  IdentifierInfo *II = FD->getIdentifier();
-  if (!II)   // if no identifier, not a simple C function
-    return;
-  StringRef FName = II->getName();
 
   if (CE->getNumArgs() != 1)
     return;

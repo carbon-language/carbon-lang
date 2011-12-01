@@ -224,21 +224,12 @@ void UnixAPIChecker::CheckMallocZero(CheckerContext &C,
 //===----------------------------------------------------------------------===//
 
 void UnixAPIChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
-  // Get the callee.  All the functions we care about are C functions
-  // with simple identifiers.
-  const ProgramState *state = C.getState();
-  const Expr *Callee = CE->getCallee();
-  const FunctionDecl *Fn = state->getSVal(Callee).getAsFunctionDecl();
-
-  if (!Fn)
-    return;
-
-  const IdentifierInfo *FI = Fn->getIdentifier();
-  if (!FI)
+  StringRef FName = C.getCalleeName(CE);
+  if (FName.empty())
     return;
 
   SubChecker SC =
-    llvm::StringSwitch<SubChecker>(FI->getName())
+    llvm::StringSwitch<SubChecker>(FName)
       .Case("open", &UnixAPIChecker::CheckOpen)
       .Case("pthread_once", &UnixAPIChecker::CheckPthreadOnce)
       .Case("malloc", &UnixAPIChecker::CheckMallocZero)

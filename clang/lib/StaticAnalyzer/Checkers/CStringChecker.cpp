@@ -1664,20 +1664,9 @@ void CStringChecker::evalStrcmpCommon(CheckerContext &C, const CallExpr *CE,
 //===----------------------------------------------------------------------===//
 
 bool CStringChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
-  // Get the callee.  All the functions we care about are C functions
-  // with simple identifiers.
-  const ProgramState *state = C.getState();
-  const Expr *Callee = CE->getCallee();
-  const FunctionDecl *FD = state->getSVal(Callee).getAsFunctionDecl();
-
-  if (!FD)
+  StringRef Name = C.getCalleeName(CE);
+  if (Name.empty())
     return false;
-
-  // Get the name of the callee. If it's a builtin, strip off the prefix.
-  IdentifierInfo *II = FD->getIdentifier();
-  if (!II)   // if no identifier, not a simple C function
-    return false;
-  StringRef Name = II->getName();
   if (Name.startswith("__builtin_"))
     Name = Name.substr(10);
 
