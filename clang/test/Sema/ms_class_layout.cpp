@@ -95,6 +95,7 @@ struct P : public M, public virtual L {
   int p;
 };
 
+struct R {};
 
 #pragma pack(pop)
 
@@ -111,6 +112,7 @@ int main() {
   N* n;
   O* o;
   P* p;
+  R* r;
   return 0;
 }
 
@@ -325,3 +327,9 @@ int main() {
 // CHECK-NEXT: nvsize=12, nvalign=4
 
 //CHECK: %struct.P = type { %struct.M.base, i32, %struct.K, %struct.L }
+
+// CHECK:       0 | struct R (empty)
+// CHECK-NEXT:  sizeof=1, dsize=0, align=1
+// CHECK-NEXT:  nvsize=0, nvalign=1
+
+//CHECK: %struct.R = type { i8 }
