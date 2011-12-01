@@ -26,6 +26,7 @@
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Transforms/Utils/AddrModeMatcher.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -69,6 +70,7 @@ namespace {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// transformation profitability.
     const TargetLowering *TLI;
+    const TargetLibraryInfo *TLInfo;
     DominatorTree *DT;
     ProfileInfo *PFI;
     
@@ -97,6 +99,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<ProfileInfo>();
+      AU.addRequired<TargetLibraryInfo>();
     }
 
   private:
@@ -116,7 +119,10 @@ namespace {
 }
 
 char CodeGenPrepare::ID = 0;
-INITIALIZE_PASS(CodeGenPrepare, "codegenprepare",
+INITIALIZE_PASS_BEGIN(CodeGenPrepare, "codegenprepare",
+                "Optimize for code generation", false, false)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_END(CodeGenPrepare, "codegenprepare",
                 "Optimize for code generation", false, false)
 
 FunctionPass *llvm::createCodeGenPreparePass(const TargetLowering *TLI) {
@@ -127,6 +133,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   bool EverMadeChange = false;
 
   ModifiedDT = false;
+  TLInfo = &getAnalysis<TargetLibraryInfo>();
   DT = getAnalysisIfAvailable<DominatorTree>();
   PFI = getAnalysisIfAvailable<ProfileInfo>();
 
@@ -542,7 +549,7 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
     WeakVH IterHandle(CurInstIterator);
     
     ReplaceAndSimplifyAllUses(CI, RetVal, TLI ? TLI->getTargetData() : 0,
-                              ModifiedDT ? 0 : DT);
+                              TLInfo, ModifiedDT ? 0 : DT);
 
     // If the iterator instruction was recursively deleted, start over at the
     // start of the block.

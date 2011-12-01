@@ -19,6 +19,7 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/Statistic.h"
@@ -43,6 +44,7 @@ namespace {
       AU.addPreservedID(LoopSimplifyID);
       AU.addPreservedID(LCSSAID);
       AU.addPreserved("scalar-evolution");
+      AU.addRequired<TargetLibraryInfo>();
     }
   };
 }
@@ -50,6 +52,7 @@ namespace {
 char LoopInstSimplify::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopInstSimplify, "loop-instsimplify",
                 "Simplify instructions in loops", false, false)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
@@ -64,6 +67,7 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>();
   LoopInfo *LI = &getAnalysis<LoopInfo>();
   const TargetData *TD = getAnalysisIfAvailable<TargetData>();
+  const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
 
   SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getUniqueExitBlocks(ExitBlocks);
@@ -104,7 +108,7 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
         // Don't bother simplifying unused instructions.
         if (!I->use_empty()) {
-          Value *V = SimplifyInstruction(I, TD, DT);
+          Value *V = SimplifyInstruction(I, TD, TLI, DT);
           if (V && LI->replacementPreservesLCSSAForm(I, V)) {
             // Mark all uses for resimplification next time round the loop.
             for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();

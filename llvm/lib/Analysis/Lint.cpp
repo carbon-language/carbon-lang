@@ -44,6 +44,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/IntrinsicInst.h"
@@ -103,6 +104,7 @@ namespace {
     AliasAnalysis *AA;
     DominatorTree *DT;
     TargetData *TD;
+    TargetLibraryInfo *TLI;
 
     std::string Messages;
     raw_string_ostream MessagesStr;
@@ -117,6 +119,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       AU.addRequired<AliasAnalysis>();
+      AU.addRequired<TargetLibraryInfo>();
       AU.addRequired<DominatorTree>();
     }
     virtual void print(raw_ostream &O, const Module *M) const {}
@@ -149,6 +152,7 @@ namespace {
 char Lint::ID = 0;
 INITIALIZE_PASS_BEGIN(Lint, "lint", "Statically lint-checks LLVM IR",
                       false, true)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(Lint, "lint", "Statically lint-checks LLVM IR",
@@ -174,6 +178,7 @@ bool Lint::runOnFunction(Function &F) {
   AA = &getAnalysis<AliasAnalysis>();
   DT = &getAnalysis<DominatorTree>();
   TD = getAnalysisIfAvailable<TargetData>();
+  TLI = &getAnalysis<TargetLibraryInfo>();
   visit(F);
   dbgs() << MessagesStr.str();
   Messages.clear();
@@ -614,7 +619,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
 
   // As a last resort, try SimplifyInstruction or constant folding.
   if (Instruction *Inst = dyn_cast<Instruction>(V)) {
-    if (Value *W = SimplifyInstruction(Inst, TD, DT))
+    if (Value *W = SimplifyInstruction(Inst, TD, TLI, DT))
       return findValueImpl(W, OffsetOk, Visited);
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     if (Value *W = ConstantFoldConstantExpression(CE, TD))

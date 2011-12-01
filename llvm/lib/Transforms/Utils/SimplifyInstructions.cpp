@@ -24,6 +24,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
@@ -39,12 +40,14 @@ namespace {
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
+      AU.addRequired<TargetLibraryInfo>();
     }
 
     /// runOnFunction - Remove instructions that simplify.
     bool runOnFunction(Function &F) {
       const DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>();
       const TargetData *TD = getAnalysisIfAvailable<TargetData>();
+      const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
       SmallPtrSet<const Instruction*, 8> S1, S2, *ToSimplify = &S1, *Next = &S2;
       bool Changed = false;
 
@@ -60,7 +63,7 @@ namespace {
               continue;
             // Don't waste time simplifying unused instructions.
             if (!I->use_empty())
-              if (Value *V = SimplifyInstruction(I, TD, DT)) {
+              if (Value *V = SimplifyInstruction(I, TD, TLI, DT)) {
                 // Mark all uses for resimplification next time round the loop.
                 for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
                      UI != UE; ++UI)
@@ -84,8 +87,11 @@ namespace {
 }
 
 char InstSimplifier::ID = 0;
-INITIALIZE_PASS(InstSimplifier, "instsimplify", "Remove redundant instructions",
-                false, false)
+INITIALIZE_PASS_BEGIN(InstSimplifier, "instsimplify",
+                      "Remove redundant instructions", false, false)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
+INITIALIZE_PASS_END(InstSimplifier, "instsimplify",
+                    "Remove redundant instructions", false, false)
 char &llvm::InstructionSimplifierID = InstSimplifier::ID;
 
 // Public interface to the simplify instructions pass.

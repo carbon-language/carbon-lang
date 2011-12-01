@@ -19,6 +19,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/RecyclingAllocator.h"
@@ -215,6 +216,7 @@ namespace {
 class EarlyCSE : public FunctionPass {
 public:
   const TargetData *TD;
+  const TargetLibraryInfo *TLI;
   DominatorTree *DT;
   typedef RecyclingAllocator<BumpPtrAllocator,
                       ScopedHashTableVal<SimpleValue, Value*> > AllocatorTy;
@@ -263,6 +265,7 @@ private:
   // This transformation requires dominator postdominator info
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequired<DominatorTree>();
+    AU.addRequired<TargetLibraryInfo>();
     AU.setPreservesCFG();
   }
 };
@@ -277,6 +280,7 @@ FunctionPass *llvm::createEarlyCSEPass() {
 
 INITIALIZE_PASS_BEGIN(EarlyCSE, "early-cse", "Early CSE", false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTree)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_PASS_END(EarlyCSE, "early-cse", "Early CSE", false, false)
 
 bool EarlyCSE::processNode(DomTreeNode *Node) {
@@ -328,7 +332,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     
     // If the instruction can be simplified (e.g. X+0 = X) then replace it with
     // its simpler value.
-    if (Value *V = SimplifyInstruction(Inst, TD, DT)) {
+    if (Value *V = SimplifyInstruction(Inst, TD, TLI, DT)) {
       DEBUG(dbgs() << "EarlyCSE Simplify: " << *Inst << "  to: " << *V << '\n');
       Inst->replaceAllUsesWith(V);
       Inst->eraseFromParent();
@@ -455,6 +459,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
 
 bool EarlyCSE::runOnFunction(Function &F) {
   TD = getAnalysisIfAvailable<TargetData>();
+  TLI = &getAnalysis<TargetLibraryInfo>();
   DT = &getAnalysis<DominatorTree>();
   
   // Tables that the pass uses when walking the domtree.
