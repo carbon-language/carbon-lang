@@ -89,3 +89,37 @@ void test2_helper(id);
   };
 }
 @end
+
+
+@interface NSOperationQueue {}
+- (void)addOperationWithBlock:(void (^)(void))block;
+- (void)addSomethingElse:(void (^)(void))block;
+
+@end
+
+@interface Test3 {
+  NSOperationQueue *myOperationQueue;
+  unsigned count;
+}
+@end
+void doSomething(unsigned v);
+@implementation Test3
+- (void) test {
+  // 'addOperationWithBlock:' is specifically whitelisted.
+  [myOperationQueue addOperationWithBlock:^() { // no-warning
+    if (count > 20) {
+      doSomething(count);
+    }
+  }];
+}
+- (void) test_positive {
+  // Sanity check that we are really whitelisting 'addOperationWithBlock:' and not doing
+  // something funny.
+  [myOperationQueue addSomethingElse:^() { // expected-note {{block will be retained by an object strongly retained by the captured object}}
+    if (count > 20) { // expected-warning {{capturing 'self' strongly in this block is likely to lead to a retain cycle}}
+      doSomething(count);
+    }
+  }];
+}
+@end
+

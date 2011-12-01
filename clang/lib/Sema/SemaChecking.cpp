@@ -4533,8 +4533,14 @@ static bool isSetterLikeSelector(Selector sel) {
 
   StringRef str = sel.getNameForSlot(0);
   while (!str.empty() && str.front() == '_') str = str.substr(1);
-  if (str.startswith("set") || str.startswith("add"))
+  if (str.startswith("set"))
     str = str.substr(3);
+  else if (str.startswith("add")) {
+    // Specially whitelist 'addOperationWithBlock:'.
+    if (sel.getNumArgs() == 1 && str.startswith("addOperationWithBlock"))
+      return false;
+    str = str.substr(3);
+  }
   else
     return false;
 
