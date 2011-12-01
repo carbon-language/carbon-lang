@@ -27,11 +27,11 @@ LEVEL := .
 ifneq ($(findstring llvmCore, $(RC_ProjectName)),llvmCore)  # Normal build (not "Apple-style").
 
 ifeq ($(BUILD_DIRS_ONLY),1)
-  DIRS := lib/Support lib/TableGen utils tools/llvm-config
+  DIRS := lib/Support lib/TableGen utils tools/llvm-config-2
   OPTIONAL_DIRS := tools/clang/utils/TableGen
 else
   DIRS := lib/Support lib/TableGen utils lib/VMCore lib tools/llvm-shlib \
-          tools/llvm-config tools runtime docs unittests
+          tools/llvm-config tools/llvm-config-2 tools runtime docs unittests
   OPTIONAL_DIRS := projects bindings
 endif
 
