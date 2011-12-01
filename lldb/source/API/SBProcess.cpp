@@ -187,7 +187,7 @@ SBProcess::RemoteAttachToProcessWithID (lldb::pid_t pid, lldb::SBError& error)
     if (log) {
         SBStream sstr;
         error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::RemoteAttachToProcessWithID (%d) => SBError (%p): %s", m_opaque_sp.get(), pid, error.get(), sstr.GetData());
+        log->Printf ("SBProcess(%p)::RemoteAttachToProcessWithID (%llu) => SBError (%p): %s", m_opaque_sp.get(), pid, error.get(), sstr.GetData());
     }
 
     return error.Success();
@@ -459,7 +459,7 @@ SBProcess::GetProcessID ()
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBProcess(%p)::GetProcessID () => %d", m_opaque_sp.get(), ret_val);
+        log->Printf ("SBProcess(%p)::GetProcessID () => %llu", m_opaque_sp.get(), ret_val);
 
     return ret_val;
 }
@@ -662,7 +662,7 @@ SBProcess::GetThreadByID (tid_t tid)
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
-        log->Printf ("SBProcess(%p)::GetThreadByID (tid=0x%4.4x) => SBThread (%p)", 
+        log->Printf ("SBProcess(%p)::GetThreadByID (tid=0x%4.4llx) => SBThread (%p)", 
                      m_opaque_sp.get(), 
                      tid,
                      sb_thread.get());

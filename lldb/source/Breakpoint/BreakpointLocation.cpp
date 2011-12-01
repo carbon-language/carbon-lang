@@ -412,7 +412,7 @@ BreakpointLocation::Dump(Stream *s) const
     if (s == NULL)
         return;
 
-    s->Printf("BreakpointLocation %u: tid = %4.4x  load addr = 0x%8.8llx  state = %s  type = %s breakpoint  "
+    s->Printf("BreakpointLocation %u: tid = %4.4llx  load addr = 0x%8.8llx  state = %s  type = %s breakpoint  "
               "hw_index = %i  hit_count = %-4u  ignore_count = %-4u",
             GetID(),
             GetOptionsNoCreate()->GetThreadSpecNoCreate()->GetTID(),

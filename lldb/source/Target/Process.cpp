@@ -45,10 +45,10 @@ ProcessInstanceInfo::Dump (Stream &s, Platform *platform) const
 {
     const char *cstr;
     if (m_pid != LLDB_INVALID_PROCESS_ID)       
-        s.Printf ("    pid = %i\n", m_pid);
+        s.Printf ("    pid = %llu\n", m_pid);
 
     if (m_parent_pid != LLDB_INVALID_PROCESS_ID)
-        s.Printf (" parent = %i\n", m_parent_pid);
+        s.Printf (" parent = %llu\n", m_parent_pid);
 
     if (m_executable)
     {
@@ -135,7 +135,7 @@ ProcessInstanceInfo::DumpAsTableRow (Stream &s, Platform *platform, bool show_ar
     if (m_pid != LLDB_INVALID_PROCESS_ID)
     {
         const char *cstr;
-        s.Printf ("%-6u %-6u ", m_pid, m_parent_pid);
+        s.Printf ("%-6llu %-6llu ", m_pid, m_parent_pid);
 
     
         if (verbose)
@@ -1163,7 +1163,7 @@ Process::SetProcessExitStatus (void *callback_baton,
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
-        log->Printf ("Process::SetProcessExitStatus (baton=%p, pid=%i, exited=%i, signal=%i, exit_status=%i)\n", 
+        log->Printf ("Process::SetProcessExitStatus (baton=%p, pid=%llu, exited=%i, signal=%i, exit_status=%i)\n", 
                      callback_baton,
                      pid,
                      exited,
@@ -3208,8 +3208,8 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
     if (m_state == eStateStopped && ! m_restarted)
     {        
         ThreadList &curr_thread_list = m_process_sp->GetThreadList();
-        int num_threads = curr_thread_list.GetSize();
-        int idx;
+        uint32_t num_threads = curr_thread_list.GetSize();
+        uint32_t idx;
 
         // The actions might change one of the thread's stop_info's opinions about whether we should
         // stop the process, so we need to query that as we go.
@@ -3219,7 +3219,7 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
         // that would cause our iteration here to crash.  We could make a copy of the thread list, but we'd really like
         // to also know if it has changed at all, so we make up a vector of the thread ID's and check what we get back 
         // against this list & bag out if anything differs.
-        std::vector<lldb::tid_t> thread_index_array(num_threads);
+        std::vector<uint32_t> thread_index_array(num_threads);
         for (idx = 0; idx < num_threads; ++idx)
             thread_index_array[idx] = curr_thread_list.GetThreadAtIndex(idx)->GetIndexID();
         
@@ -3232,7 +3232,7 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
             {
                 lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP | LIBLLDB_LOG_PROCESS));
                 if (log)
-                    log->Printf("Number of threads changed from %d to %d while processing event.", num_threads, curr_thread_list.GetSize());
+                    log->Printf("Number of threads changed from %u to %u while processing event.", num_threads, curr_thread_list.GetSize());
                 break;
             }
             
@@ -3242,7 +3242,7 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
             {
                 lldb::LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STEP | LIBLLDB_LOG_PROCESS));
                 if (log)
-                    log->Printf("The thread at position %d changed from %d  to %d while processing event.", 
+                    log->Printf("The thread at position %u changed from %u to %u while processing event.", 
                                 idx, 
                                 thread_index_array[idx],
                                 thread_sp->GetIndexID());

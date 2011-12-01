@@ -1306,7 +1306,7 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
     }
     
 #endif
-    lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
+    ::pid_t pid = LLDB_INVALID_PROCESS_ID;
     const char *tmp_argv[2];
     char * const *argv = (char * const*)launch_info.GetArguments().GetConstArgumentVector();
     char * const *envp = (char * const*)launch_info.GetEnvironmentEntries().GetConstArgumentVector();
@@ -1493,7 +1493,7 @@ Host::StartMonitoringChildProcess (Host::MonitorChildProcessCallback callback,
                 }
 
                 if (log)
-                    log->Printf ("::waitpid (pid = %i, &status, 0) => pid = %i, status = 0x%8.8x (%s), signal = %i, exit_status = %i",
+                    log->Printf ("::waitpid (pid = %llu, &status, 0) => pid = %i, status = 0x%8.8x (%s), signal = %i, exit_status = %i",
                                  pid,
                                  wait_pid,
                                  status,

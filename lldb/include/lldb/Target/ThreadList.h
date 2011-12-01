@@ -69,7 +69,7 @@ public:
     FindThreadByID (lldb::tid_t tid, bool can_update = true);
 
     lldb::ThreadSP
-    FindThreadByIndexID (lldb::tid_t index_id, bool can_update = true);
+    FindThreadByIndexID (uint32_t index_id, bool can_update = true);
 
     lldb::ThreadSP
     GetThreadSPForThreadPtr (Thread *thread_ptr);

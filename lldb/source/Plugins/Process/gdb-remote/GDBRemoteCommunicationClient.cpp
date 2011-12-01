@@ -1019,7 +1019,7 @@ GDBRemoteCommunicationClient::SendAttach
     if (pid != LLDB_INVALID_PROCESS_ID)
     {
         char packet[64];
-        const int packet_len = ::snprintf (packet, sizeof(packet), "vAttach;%x", pid);
+        const int packet_len = ::snprintf (packet, sizeof(packet), "vAttach;%llx", pid);
         assert (packet_len < sizeof(packet));
         if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
         {
@@ -1334,7 +1334,7 @@ GDBRemoteCommunicationClient::GetProcessInfo (lldb::pid_t pid, ProcessInstanceIn
     if (m_supports_qProcessInfoPID)
     {
         char packet[32];
-        const int packet_len = ::snprintf (packet, sizeof (packet), "qProcessInfoPID:%i", pid);
+        const int packet_len = ::snprintf (packet, sizeof (packet), "qProcessInfoPID:%llu", pid);
         assert (packet_len < sizeof(packet));
         StringExtractorGDBRemote response;
         if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
@@ -1404,9 +1404,9 @@ GDBRemoteCommunicationClient::FindProcesses (const ProcessInstanceInfoMatch &mat
             }
             
             if (match_info.GetProcessInfo().ProcessIDIsValid())
-                packet.Printf("pid:%u;",match_info.GetProcessInfo().GetProcessID());
+                packet.Printf("pid:%llu;",match_info.GetProcessInfo().GetProcessID());
             if (match_info.GetProcessInfo().ParentProcessIDIsValid())
-                packet.Printf("parent_pid:%u;",match_info.GetProcessInfo().GetParentProcessID());
+                packet.Printf("parent_pid:%llu;",match_info.GetProcessInfo().GetParentProcessID());
             if (match_info.GetProcessInfo().UserIDIsValid())
                 packet.Printf("uid:%u;",match_info.GetProcessInfo().GetUserID());
             if (match_info.GetProcessInfo().GroupIDIsValid())

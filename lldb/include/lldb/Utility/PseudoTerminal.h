@@ -92,7 +92,7 @@ public:
     ///         than zero, or -1 if the fork fails.
     ///     @li \b Child process: zero.
     //------------------------------------------------------------------
-    pid_t
+    lldb::pid_t
     Fork (char *error_str, size_t error_len);
 
     //------------------------------------------------------------------

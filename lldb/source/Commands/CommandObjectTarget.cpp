@@ -85,7 +85,7 @@ DumpTargetInfo (uint32_t target_idx, Target *target, const char *prefix_cstr, bo
             show_process_status = StateIsStoppedState(state, true);
         const char *state_cstr = StateAsCString (state);
         if (pid != LLDB_INVALID_PROCESS_ID)
-            strm.Printf ("%spid=%i", properties++ > 0 ? ", " : " ( ", pid);
+            strm.Printf ("%spid=%llu", properties++ > 0 ? ", " : " ( ", pid);
         strm.Printf ("%sstate=%s", properties++ > 0 ? ", " : " ( ", state_cstr);
     }
     if (properties > 0)

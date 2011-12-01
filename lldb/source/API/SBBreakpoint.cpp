@@ -316,7 +316,7 @@ SBBreakpoint::SetThreadID (tid_t tid)
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBBreakpoint(%p)::SetThreadID (tid=0x%4.4x)", m_opaque_sp.get(), tid);
+        log->Printf ("SBBreakpoint(%p)::SetThreadID (tid=0x%4.4llx)", m_opaque_sp.get(), tid);
 
 }
 
@@ -332,7 +332,7 @@ SBBreakpoint::GetThreadID ()
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBBreakpoint(%p)::GetThreadID () => 0x%4.4x", m_opaque_sp.get(), tid);
+        log->Printf ("SBBreakpoint(%p)::GetThreadID () => 0x%4.4llx", m_opaque_sp.get(), tid);
     return tid;
 }
 

@@ -333,7 +333,7 @@ SBThread::GetThreadID () const
         tid = m_opaque_sp->GetID();
 
     if (log)
-        log->Printf ("SBThread(%p)::GetThreadID () => 0x%4.4x", m_opaque_sp.get(), tid);
+        log->Printf ("SBThread(%p)::GetThreadID () => 0x%4.4llx", m_opaque_sp.get(), tid);
 
     return tid;
 }

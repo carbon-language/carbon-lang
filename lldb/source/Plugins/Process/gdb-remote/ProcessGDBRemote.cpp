@@ -408,10 +408,10 @@ ProcessGDBRemote::DoConnectRemote (const char *remote_url)
                 SetPrivateState (state);
             }
             else
-                error.SetErrorStringWithFormat ("Process %i was reported after connecting to '%s', but state was not stopped: %s", pid, remote_url, StateAsCString (state));
+                error.SetErrorStringWithFormat ("Process %llu was reported after connecting to '%s', but state was not stopped: %s", pid, remote_url, StateAsCString (state));
         }
         else
-            error.SetErrorStringWithFormat ("Process %i was reported after connecting to '%s', but no stop reply packet was received", pid, remote_url);
+            error.SetErrorStringWithFormat ("Process %llu was reported after connecting to '%s', but no stop reply packet was received", pid, remote_url);
     }
     return error;
 }
@@ -772,7 +772,7 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
         if (error.Success())
         {
             char packet[64];
-            const int packet_len = ::snprintf (packet, sizeof(packet), "vAttach;%x", attach_pid);
+            const int packet_len = ::snprintf (packet, sizeof(packet), "vAttach;%llx", attach_pid);
             SetID (attach_pid);            
             m_async_broadcaster.BroadcastEvent (eBroadcastBitAsyncContinue, new EventDataBytes (packet, packet_len));
         }
@@ -890,7 +890,7 @@ ProcessGDBRemote::DoResume ()
                 if (m_gdb_comm.GetVContSupported ('c'))
                 {
                     for (tid_collection::const_iterator t_pos = m_continue_c_tids.begin(), t_end = m_continue_c_tids.end(); t_pos != t_end; ++t_pos)
-                        continue_packet.Printf(";c:%4.4x", *t_pos);
+                        continue_packet.Printf(";c:%4.4llx", *t_pos);
                 }
                 else 
                     continue_packet_error = true;
@@ -901,7 +901,7 @@ ProcessGDBRemote::DoResume ()
                 if (m_gdb_comm.GetVContSupported ('C'))
                 {
                     for (tid_sig_collection::const_iterator s_pos = m_continue_C_tids.begin(), s_end = m_continue_C_tids.end(); s_pos != s_end; ++s_pos)
-                        continue_packet.Printf(";C%2.2x:%4.4x", s_pos->second, s_pos->first);
+                        continue_packet.Printf(";C%2.2x:%4.4llx", s_pos->second, s_pos->first);
                 }
                 else 
                     continue_packet_error = true;
@@ -912,7 +912,7 @@ ProcessGDBRemote::DoResume ()
                 if (m_gdb_comm.GetVContSupported ('s'))
                 {
                     for (tid_collection::const_iterator t_pos = m_continue_s_tids.begin(), t_end = m_continue_s_tids.end(); t_pos != t_end; ++t_pos)
-                        continue_packet.Printf(";s:%4.4x", *t_pos);
+                        continue_packet.Printf(";s:%4.4llx", *t_pos);
                 }
                 else 
                     continue_packet_error = true;
@@ -923,7 +923,7 @@ ProcessGDBRemote::DoResume ()
                 if (m_gdb_comm.GetVContSupported ('S'))
                 {
                     for (tid_sig_collection::const_iterator s_pos = m_continue_S_tids.begin(), s_end = m_continue_S_tids.end(); s_pos != s_end; ++s_pos)
-                        continue_packet.Printf(";S%2.2x:%4.4x", s_pos->second, s_pos->first);
+                        continue_packet.Printf(";S%2.2x:%4.4llx", s_pos->second, s_pos->first);
                 }
                 else
                     continue_packet_error = true;
@@ -2131,7 +2131,7 @@ ProcessGDBRemote::StartDebugserverProcess (const char *debugserver_url)    // Th
                 m_debugserver_pid = LLDB_INVALID_PROCESS_ID;
 
             if (error.Fail() || log)
-                error.PutToLog(log.get(), "Host::LaunchProcess (launch_info) => pid=%i, path='%s'", m_debugserver_pid, debugserver_path);
+                error.PutToLog(log.get(), "Host::LaunchProcess (launch_info) => pid=%llu, path='%s'", m_debugserver_pid, debugserver_path);
         }
         else
         {
@@ -2176,7 +2176,7 @@ ProcessGDBRemote::MonitorDebugserverProcess
     TargetSP target_sp (Debugger::FindTargetWithProcess(process));
 
     if (log)
-        log->Printf ("ProcessGDBRemote::MonitorDebugserverProcess (baton=%p, pid=%i, signo=%i (0x%x), exit_status=%i)", callback_baton, debugserver_pid, signo, signo, exit_status);
+        log->Printf ("ProcessGDBRemote::MonitorDebugserverProcess (baton=%p, pid=%llu, signo=%i (0x%x), exit_status=%i)", callback_baton, debugserver_pid, signo, signo, exit_status);
 
     if (target_sp)
     {
