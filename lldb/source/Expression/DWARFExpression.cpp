@@ -24,6 +24,7 @@
 #include "lldb/Expression/ClangExpressionVariable.h"
 
 #include "lldb/Host/Endian.h"
+#include "lldb/Host/Host.h"
 
 #include "lldb/lldb-private-log.h"
 
@@ -982,8 +983,11 @@ GetOpcodeDataSize (const DataExtractor &data, const uint32_t data_offset, const 
             data.Skip_LEB128(&offset); 
             return offset - data_offset;   
         default:
-            assert (!"Unhandled DW_OP_XXX opcode, add support for it");
-            break;
+        {
+            Host::SetCrashDescriptionWithFormat ("Unhandled DW_OP_XXX opcode: %d, add support for it.", op);
+            assert (!"Unhandled DW_OP_XXX opcode: %d, add support for it.");
+        }
+        break;
     }
     return UINT32_MAX;
 }
