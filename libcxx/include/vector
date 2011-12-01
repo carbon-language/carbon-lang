@@ -406,7 +406,7 @@ private:
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    void __copy_assign_alloc(const __vector_base& __c, false_type)
+    void __copy_assign_alloc(const __vector_base&, false_type)
         {}
 
     _LIBCPP_INLINE_VISIBILITY
@@ -417,7 +417,7 @@ private:
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    void __move_assign_alloc(__vector_base& __c, false_type)
+    void __move_assign_alloc(__vector_base&, false_type)
         _NOEXCEPT
         {}
 
@@ -429,7 +429,7 @@ private:
             swap(__x, __y);
         }
     _LIBCPP_INLINE_VISIBILITY
-    static void __swap_alloc(allocator_type& __x, allocator_type& __y, false_type)
+    static void __swap_alloc(allocator_type&, allocator_type&, false_type)
         _NOEXCEPT
         {}
 };
@@ -2241,7 +2241,7 @@ private:
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    void __copy_assign_alloc(const vector& __c, false_type)
+    void __copy_assign_alloc(const vector&, false_type)
         {}
 
     void __move_assign(vector& __c, false_type);
@@ -2262,7 +2262,7 @@ private:
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    void __move_assign_alloc(vector& __c, false_type)
+    void __move_assign_alloc(vector&, false_type)
         _NOEXCEPT
         {}
 
@@ -2282,7 +2282,7 @@ private:
             swap(__x, __y);
         }
     _LIBCPP_INLINE_VISIBILITY
-    static void __swap_alloc(__storage_allocator& __x, __storage_allocator& __y, false_type)
+    static void __swap_alloc(__storage_allocator&, __storage_allocator&, false_type)
         _NOEXCEPT
         {}
 

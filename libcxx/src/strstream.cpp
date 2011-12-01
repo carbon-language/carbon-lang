@@ -34,7 +34,7 @@ void
 strstreambuf::__init(char* __gnext, streamsize __n, char* __pbeg)
 {
     if (__n == 0)
-        __n = strlen(__gnext);
+        __n = static_cast<streamsize>(strlen(__gnext));
     else if (__n < 0)
         __n = INT_MAX;
     if (__pbeg == nullptr)
@@ -160,12 +160,12 @@ strstreambuf::overflow(int_type __c)
         streamsize new_size = max<streamsize>(__alsize_, 2*old_size);
         char* buf = nullptr;
         if (__palloc_)
-            buf = static_cast<char*>(__palloc_(new_size));
+            buf = static_cast<char*>(__palloc_(static_cast<size_t>(new_size)));
         else
             buf = new char[new_size];
         if (buf == nullptr)
             return int_type(EOF);
-        memcpy(buf, eback(), old_size);
+        memcpy(buf, eback(), static_cast<size_t>(old_size));
         ptrdiff_t ninp = gptr()  - eback();
         ptrdiff_t einp = egptr() - eback();
         ptrdiff_t nout = pptr()  - pbase();
@@ -179,7 +179,7 @@ strstreambuf::overflow(int_type __c)
         }
         setg(buf, buf + ninp, buf + einp);
         setp(buf + einp, buf + einp + eout);
-        pbump(nout);
+        pbump(static_cast<int>(nout));
         __strmode_ |= __allocated;
     }
     *pptr() = static_cast<char>(__c);

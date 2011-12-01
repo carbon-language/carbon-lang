@@ -55,7 +55,7 @@ unsigned
 thread::hardware_concurrency()
 {
 #if defined(CTL_HW) && defined(HW_NCPU)
-    int n;
+    unsigned n;
     int mib[2] = {CTL_HW, HW_NCPU};
     std::size_t s = sizeof(n);
     sysctl(mib, 2, &n, &s, 0, 0);

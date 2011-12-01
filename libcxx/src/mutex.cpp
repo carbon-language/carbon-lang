@@ -20,8 +20,7 @@ const adopt_lock_t  adopt_lock = {};
 
 mutex::~mutex()
 {
-    int e = pthread_mutex_destroy(&__m_);
-//     assert(e == 0);
+    pthread_mutex_destroy(&__m_);
 }
 
 void

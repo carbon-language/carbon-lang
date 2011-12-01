@@ -213,7 +213,7 @@ __bitset<_N_words, _Size>::__bitset() _NOEXCEPT
 
 template <size_t _N_words, size_t _Size>
 void
-__bitset<_N_words, _Size>::__init(unsigned long long __v, false_type)
+__bitset<_N_words, _Size>::__init(unsigned long long __v, false_type) _NOEXCEPT
 {
     __storage_type __t[sizeof(unsigned long long) / sizeof(__storage_type)];
     for (size_t __i = 0; __i < sizeof(__t)/sizeof(__t[0]); ++__i, __v >>= __bits_per_word)
@@ -226,7 +226,7 @@ __bitset<_N_words, _Size>::__init(unsigned long long __v, false_type)
 template <size_t _N_words, size_t _Size>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-__bitset<_N_words, _Size>::__init(unsigned long long __v, true_type)
+__bitset<_N_words, _Size>::__init(unsigned long long __v, true_type) _NOEXCEPT
 {
     __first_[0] = __v;
     _VSTD::fill(__first_ + 1, __first_ + sizeof(__first_)/sizeof(__first_[0]), __storage_type(0));
@@ -560,7 +560,7 @@ protected:
     friend class __bit_const_reference<__bitset>;
     friend class __bit_iterator<__bitset, false>;
     friend class __bit_iterator<__bitset, true>;
-    friend class __bit_array<__bitset>;
+    friend struct __bit_array<__bitset>;
 
     typedef __bit_reference<__bitset>                  reference;
     typedef __bit_const_reference<__bitset>            const_reference;
@@ -574,9 +574,9 @@ protected:
         {return reference(0, 1);}
     _LIBCPP_INLINE_VISIBILITY const_reference __make_ref(size_t) const _NOEXCEPT
         {return const_reference(0, 1);}
-    _LIBCPP_INLINE_VISIBILITY iterator __make_iter(size_t __pos) _NOEXCEPT
+    _LIBCPP_INLINE_VISIBILITY iterator __make_iter(size_t) _NOEXCEPT
         {return iterator(0, 0);}
-    _LIBCPP_INLINE_VISIBILITY const_iterator __make_iter(size_t __pos) const _NOEXCEPT
+    _LIBCPP_INLINE_VISIBILITY const_iterator __make_iter(size_t) const _NOEXCEPT
         {return const_iterator(0, 0);}
 
     _LIBCPP_INLINE_VISIBILITY void operator&=(const __bitset&) _NOEXCEPT {}

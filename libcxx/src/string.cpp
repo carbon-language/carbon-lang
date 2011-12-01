@@ -346,7 +346,7 @@ string to_string(int val)
     s.resize(s.capacity());
     while (true)
     {
-        int n2 = snprintf(&s[0], s.size()+1, "%d", val);
+        size_t n2 = static_cast<size_t>(snprintf(&s[0], s.size()+1, "%d", val));
         if (n2 <= s.size())
         {
             s.resize(n2);
@@ -363,7 +363,7 @@ string to_string(unsigned val)
     s.resize(s.capacity());
     while (true)
     {
-        int n2 = snprintf(&s[0], s.size()+1, "%u", val);
+        size_t n2 = static_cast<size_t>(snprintf(&s[0], s.size()+1, "%u", val));
         if (n2 <= s.size())
         {
             s.resize(n2);
@@ -380,7 +380,7 @@ string to_string(long val)
     s.resize(s.capacity());
     while (true)
     {
-        int n2 = snprintf(&s[0], s.size()+1, "%ld", val);
+        size_t n2 = static_cast<size_t>(snprintf(&s[0], s.size()+1, "%ld", val));
         if (n2 <= s.size())
         {
             s.resize(n2);
@@ -397,7 +397,7 @@ string to_string(unsigned long val)
     s.resize(s.capacity());
     while (true)
     {
-        int n2 = snprintf(&s[0], s.size()+1, "%lu", val);
+        size_t n2 = static_cast<size_t>(snprintf(&s[0], s.size()+1, "%lu", val));
         if (n2 <= s.size())
         {
             s.resize(n2);
@@ -414,7 +414,7 @@ string to_string(long long val)
     s.resize(s.capacity());
     while (true)
     {
-        int n2 = snprintf(&s[0], s.size()+1, "%lld", val);
+        size_t n2 = static_cast<size_t>(snprintf(&s[0], s.size()+1, "%lld", val));
         if (n2 <= s.size())
         {
             s.resize(n2);
@@ -431,7 +431,7 @@ string to_string(unsigned long long val)
     s.resize(s.capacity());
     while (true)
     {
-        int n2 = snprintf(&s[0], s.size()+1, "%llu", val);
+        size_t n2 = static_cast<size_t>(snprintf(&s[0], s.size()+1, "%llu", val));
         if (n2 <= s.size())
         {
             s.resize(n2);
@@ -448,7 +448,7 @@ string to_string(float val)
     s.resize(s.capacity());
     while (true)
     {
-        int n2 = snprintf(&s[0], s.size()+1, "%f", val);
+        size_t n2 = static_cast<size_t>(snprintf(&s[0], s.size()+1, "%f", val));
         if (n2 <= s.size())
         {
             s.resize(n2);
@@ -465,7 +465,7 @@ string to_string(double val)
     s.resize(s.capacity());
     while (true)
     {
-        int n2 = snprintf(&s[0], s.size()+1, "%f", val);
+        size_t n2 = static_cast<size_t>(snprintf(&s[0], s.size()+1, "%f", val));
         if (n2 <= s.size())
         {
             s.resize(n2);
@@ -482,7 +482,7 @@ string to_string(long double val)
     s.resize(s.capacity());
     while (true)
     {
-        int n2 = snprintf(&s[0], s.size()+1, "%Lf", val);
+        size_t n2 = static_cast<size_t>(snprintf(&s[0], s.size()+1, "%Lf", val));
         if (n2 <= s.size())
         {
             s.resize(n2);
@@ -505,7 +505,7 @@ wstring to_wstring(int val)
         int n2 = swprintf(&s[0], s.size()+1, L"%d", val);
         if (n2 > 0)
         {
-            s.resize(n2);
+            s.resize(static_cast<size_t>(n2));
             break;
         }
         s.resize(2*s.size());
@@ -526,7 +526,7 @@ wstring to_wstring(unsigned val)
         int n2 = swprintf(&s[0], s.size()+1, L"%u", val);
         if (n2 > 0)
         {
-            s.resize(n2);
+            s.resize(static_cast<size_t>(n2));
             break;
         }
         s.resize(2*s.size());
@@ -547,7 +547,7 @@ wstring to_wstring(long val)
         int n2 = swprintf(&s[0], s.size()+1, L"%ld", val);
         if (n2 > 0)
         {
-            s.resize(n2);
+            s.resize(static_cast<size_t>(n2));
             break;
         }
         s.resize(2*s.size());
@@ -568,7 +568,7 @@ wstring to_wstring(unsigned long val)
         int n2 = swprintf(&s[0], s.size()+1, L"%lu", val);
         if (n2 > 0)
         {
-            s.resize(n2);
+            s.resize(static_cast<size_t>(n2));
             break;
         }
         s.resize(2*s.size());
@@ -589,7 +589,7 @@ wstring to_wstring(long long val)
         int n2 = swprintf(&s[0], s.size()+1, L"%lld", val);
         if (n2 > 0)
         {
-            s.resize(n2);
+            s.resize(static_cast<size_t>(n2));
             break;
         }
         s.resize(2*s.size());
@@ -610,7 +610,7 @@ wstring to_wstring(unsigned long long val)
         int n2 = swprintf(&s[0], s.size()+1, L"%llu", val);
         if (n2 > 0)
         {
-            s.resize(n2);
+            s.resize(static_cast<size_t>(n2));
             break;
         }
         s.resize(2*s.size());
@@ -629,7 +629,7 @@ wstring to_wstring(float val)
         int n2 = swprintf(&s[0], s.size()+1, L"%f", val);
         if (n2 > 0)
         {
-            s.resize(n2);
+            s.resize(static_cast<size_t>(n2));
             break;
         }
         s.resize(2*s.size());
@@ -648,7 +648,7 @@ wstring to_wstring(double val)
         int n2 = swprintf(&s[0], s.size()+1, L"%f", val);
         if (n2 > 0)
         {
-            s.resize(n2);
+            s.resize(static_cast<size_t>(n2));
             break;
         }
         s.resize(2*s.size());
@@ -667,7 +667,7 @@ wstring to_wstring(long double val)
         int n2 = swprintf(&s[0], s.size()+1, L"%Lf", val);
         if (n2 > 0)
         {
-            s.resize(n2);
+            s.resize(static_cast<size_t>(n2));
             break;
         }
         s.resize(2*s.size());

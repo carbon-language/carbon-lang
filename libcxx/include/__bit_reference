@@ -637,7 +637,7 @@ __copy_backward_unaligned(__bit_iterator<_Cp, _IsConst> __first, __bit_iterator<
         {
             __m = ~__storage_type(0) << (__bits_per_word - __n);
             __storage_type __b = *--__last.__seg_ & __m;
-            unsigned __clz_r = __bits_per_word - __result.__ctz_;
+            __clz_r = __bits_per_word - __result.__ctz_;
             __storage_type __dn = _VSTD::min(__n, static_cast<difference_type>(__result.__ctz_));
             __m = (~__storage_type(0) << (__result.__ctz_ - __dn)) & (~__storage_type(0) >> __clz_r);
             *__result.__seg_ &= ~__m;
@@ -881,7 +881,6 @@ rotate(__bit_iterator<_Cp, false> __first, __bit_iterator<_Cp, false> __middle, 
     typedef __bit_iterator<_Cp, false> _I1;
     typedef  typename _I1::difference_type difference_type;
     typedef typename _I1::__storage_type __storage_type;
-    static const unsigned __bits_per_word = _I1::__bits_per_word;
     difference_type __d1 = __middle - __first;
     difference_type __d2 = __last - __middle;
     _I1 __r = __first + __d2;

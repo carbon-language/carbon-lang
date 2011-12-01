@@ -708,7 +708,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     result_type operator[](size_t __j) const
         {
-            ptrdiff_t __i = static_cast<size_t>(__j);
+            ptrdiff_t __i = static_cast<ptrdiff_t>(__j);
             ptrdiff_t __m = (__sn_ * __i - __ul_) >> _Np;
             return (__expr_[(__i + __n_) & __m] & __m) | (value_type() & ~__m);
         }
@@ -959,7 +959,7 @@ public:
     void swap(valarray& __v);
 
     _LIBCPP_INLINE_VISIBILITY
-    size_t size() const {return __end_ - __begin_;}
+    size_t size() const {return static_cast<size_t>(__end_ - __begin_);}
 
     value_type sum() const;
     value_type min() const;
@@ -1897,7 +1897,7 @@ private:
     _LIBCPP_INLINE_VISIBILITY
     mask_array(const valarray<bool>& __vb, const valarray<value_type>& __v)
         : __vp_(const_cast<value_type*>(__v.__begin_)),
-          __1d_(count(__vb.__begin_, __vb.__end_, true))
+          __1d_(static_cast<size_t>(count(__vb.__begin_, __vb.__end_, true)))
           {
               size_t __j = 0;
               for (size_t __i = 0; __i < __vb.size(); ++__i)
@@ -2108,7 +2108,7 @@ private:
     _LIBCPP_INLINE_VISIBILITY
     __mask_expr(const valarray<bool>& __vb, const _RmExpr& __e)
         : __expr_(__e),
-          __1d_(count(__vb.__begin_, __vb.__end_, true))
+          __1d_(static_cast<size_t>(count(__vb.__begin_, __vb.__end_, true)))
           {
               size_t __j = 0;
               for (size_t __i = 0; __i < __vb.size(); ++__i)

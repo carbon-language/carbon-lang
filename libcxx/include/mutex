@@ -534,7 +534,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 call_once(once_flag& __flag, _Callable&& __func, _Args&&... __args)
 {
-    if (__builtin_expect(__flag.__state_ , ~0ul) != ~0ul)
+    if (__flag.__state_ != ~0ul)
     {
         typedef tuple<typename decay<_Callable>::type, typename decay<_Args>::type...> _Gp;
         __call_once_param<_Gp> __p(_Gp(__decay_copy(_VSTD::forward<_Callable>(__func)),

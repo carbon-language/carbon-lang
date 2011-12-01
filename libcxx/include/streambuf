@@ -461,15 +461,15 @@ basic_streambuf<_CharT, _Traits>::setbuf(char_type*, streamsize)
 
 template <class _CharT, class _Traits>
 typename basic_streambuf<_CharT, _Traits>::pos_type
-basic_streambuf<_CharT, _Traits>::seekoff(off_type __off, ios_base::seekdir __way,
-                                          ios_base::openmode __which)
+basic_streambuf<_CharT, _Traits>::seekoff(off_type, ios_base::seekdir,
+                                          ios_base::openmode)
 {
     return pos_type(off_type(-1));
 }
 
 template <class _CharT, class _Traits>
 typename basic_streambuf<_CharT, _Traits>::pos_type
-basic_streambuf<_CharT, _Traits>::seekpos(pos_type __sp, ios_base::openmode __which)
+basic_streambuf<_CharT, _Traits>::seekpos(pos_type, ios_base::openmode)
 {
     return pos_type(off_type(-1));
 }
@@ -548,7 +548,7 @@ basic_streambuf<_CharT, _Traits>::xsputn(const char_type* __s, streamsize __n)
 
 template <class _CharT, class _Traits>
 typename basic_streambuf<_CharT, _Traits>::int_type
-basic_streambuf<_CharT, _Traits>::overflow(int_type __c)
+basic_streambuf<_CharT, _Traits>::overflow(int_type)
 {
     return traits_type::eof();
 }

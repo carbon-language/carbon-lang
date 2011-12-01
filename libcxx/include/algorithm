@@ -697,14 +697,48 @@ struct __debug_less
 #endif  // _LIBCPP_DEBUG2
 
 // Precondition:  __x != 0
-inline _LIBCPP_INLINE_VISIBILITY unsigned           __ctz(unsigned           __x) {return __builtin_ctz  (__x);}
-inline _LIBCPP_INLINE_VISIBILITY unsigned      long __ctz(unsigned      long __x) {return __builtin_ctzl (__x);}
-inline _LIBCPP_INLINE_VISIBILITY unsigned long long __ctz(unsigned long long __x) {return __builtin_ctzll(__x);}
+inline _LIBCPP_INLINE_VISIBILITY
+unsigned
+__ctz(unsigned __x)
+{
+    return static_cast<unsigned>(__builtin_ctz(__x));
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+unsigned long
+__ctz(unsigned long __x)
+{
+    return static_cast<unsigned long>(__builtin_ctzl(__x));
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+unsigned long long
+__ctz(unsigned long long __x)
+{
+    return static_cast<unsigned long long>(__builtin_ctzll(__x));
+}
 
 // Precondition:  __x != 0
-inline _LIBCPP_INLINE_VISIBILITY unsigned           __clz(unsigned           __x) {return __builtin_clz  (__x);}
-inline _LIBCPP_INLINE_VISIBILITY unsigned      long __clz(unsigned      long __x) {return __builtin_clzl (__x);}
-inline _LIBCPP_INLINE_VISIBILITY unsigned long long __clz(unsigned long long __x) {return __builtin_clzll(__x);}
+inline _LIBCPP_INLINE_VISIBILITY
+unsigned
+__clz(unsigned __x)
+{
+    return static_cast<unsigned>(__builtin_clz(__x));
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+unsigned long
+__clz(unsigned long __x)
+{
+    return static_cast<unsigned long>(__builtin_clzl (__x));
+}
+
+inline _LIBCPP_INLINE_VISIBILITY
+unsigned long long
+__clz(unsigned long long __x)
+{
+    return static_cast<unsigned long long>(__builtin_clzll(__x));
+}
 
 inline _LIBCPP_INLINE_VISIBILITY int __pop_count(unsigned           __x) {return __builtin_popcount  (__x);}
 inline _LIBCPP_INLINE_VISIBILITY int __pop_count(unsigned      long __x) {return __builtin_popcountl (__x);}
@@ -2678,8 +2712,8 @@ public:
 
     result_type operator()();
 
-    static const/*expr*/ result_type min() {return _Min;}
-    static const/*expr*/ result_type max() {return _Max;}
+    static constexpr result_type min() {return _Min;}
+    static constexpr result_type max() {return _Max;}
 
     friend __rs_default __rs_get();
 };
@@ -3721,7 +3755,7 @@ extern template bool __insertion_sort_incomplete<__less<long double>&, long doub
 extern template unsigned __sort5<__less<long double>&, long double*>(long double*, long double*, long double*, long double*, long double*, __less<long double>&);
 #ifdef _MSC_VER
 #pragma warning( pop )
-#endif _MSC_VER
+#endif  // _MSC_VER
 
 // lower_bound
 

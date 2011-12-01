@@ -988,7 +988,7 @@ private:
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    void __move_assign_alloc(__deque_base& __c, false_type) _NOEXCEPT
+    void __move_assign_alloc(__deque_base&, false_type) _NOEXCEPT
         {}
 
     _LIBCPP_INLINE_VISIBILITY
@@ -1007,7 +1007,7 @@ private:
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    static void __swap_alloc(allocator_type& __x, allocator_type& __y, false_type)
+    static void __swap_alloc(allocator_type&, allocator_type&, false_type)
         _NOEXCEPT
         {}
 };
@@ -1403,7 +1403,7 @@ private:
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    void __copy_assign_alloc(const deque& __c, false_type)
+    void __copy_assign_alloc(const deque&, false_type)
         {}
 
     void __move_assign(deque& __c, true_type)

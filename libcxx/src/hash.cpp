@@ -181,7 +181,8 @@ __next_prime(size_t n)
     // Select first potential prime >= n
     //   Known a-priori n >= L
     size_t k0 = n / L;
-    size_t in = std::lower_bound(indices, indices + M, n - k0 * L) - indices;
+    size_t in = static_cast<size_t>(std::lower_bound(indices, indices + M, n - k0 * L)
+                                    - indices);
     n = L * k0 + indices[in];
     while (true)
     {

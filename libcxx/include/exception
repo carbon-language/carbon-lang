@@ -239,7 +239,7 @@ rethrow_if_nested(const _Ep& __e, typename enable_if<
 template <class _Ep>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-rethrow_if_nested(const _Ep& __e, typename enable_if<
+rethrow_if_nested(const _Ep&, typename enable_if<
                                    !is_polymorphic<_Ep>::value
                                                    >::type* = 0)
 {

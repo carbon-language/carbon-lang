@@ -433,7 +433,7 @@ __scan_keyword(_InputIterator& __b, _InputIterator __e,
                bool __case_sensitive = true)
 {
     typedef typename iterator_traits<_InputIterator>::value_type _CharT;
-    size_t __nkw = _VSTD::distance(__kb, __ke);
+    size_t __nkw = static_cast<size_t>(_VSTD::distance(__kb, __ke));
     const unsigned char __doesnt_match = '\0';
     const unsigned char __might_match = '\1';
     const unsigned char __does_match = '\2';
@@ -598,7 +598,7 @@ __num_get<_CharT>::__stage2_int_loop(_CharT __ct, int __base, char* __a, char*& 
         __dc = 0;
         return 0;
     }
-    if (__ct == __thousands_sep && __grouping.size() != 0)
+    if (__grouping.size() != 0 && __ct == __thousands_sep)
     {
         if (__g_end-__g < __num_get_buf_sz)
         {
@@ -681,8 +681,8 @@ __num_get<_CharT>::__stage2_float_loop(_CharT __ct, bool& __in_units, char& __ex
     return 0;
 }
 
-extern template class __num_get<char>;
-extern template class __num_get<wchar_t>;
+extern template struct __num_get<char>;
+extern template struct __num_get<wchar_t>;
 
 template <class _CharT, class _InputIterator = istreambuf_iterator<_CharT> >
 class _LIBCPP_VISIBLE num_get
@@ -1275,7 +1275,7 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
     int __base = 16;
     // Stage 2
     char_type __atoms[26];
-    char_type __thousands_sep;
+    char_type __thousands_sep = 0;
     string __grouping;
     use_facet<ctype<_CharT> >(__iob.getloc()).widen(__num_get_base::__src,
                                                     __num_get_base::__src + 26, __atoms);
@@ -1453,8 +1453,8 @@ __num_put<_CharT>::__widen_and_group_float(char* __nb, char* __np, char* __ne,
         __op = __ob + (__np - __nb);
 }
 
-extern template class __num_put<char>;
-extern template class __num_put<wchar_t>;
+extern template struct __num_put<char>;
+extern template struct __num_put<wchar_t>;
 
 template <class _CharT, class _OutputIterator = ostreambuf_iterator<_CharT> >
 class _LIBCPP_VISIBLE num_put
@@ -1766,7 +1766,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
     unique_ptr<char_type, void(*)(void*)> __obh(0, free);
     if (__nb != __nar)
     {
-        __ob = (char_type*)malloc((2*__nc)*sizeof(char_type));
+        __ob = (char_type*)malloc(2*static_cast<size_t>(__nc)*sizeof(char_type));
         if (__ob == 0)
             __throw_bad_alloc();
         __obh.reset(__ob);
@@ -1835,7 +1835,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
     unique_ptr<char_type, void(*)(void*)> __obh(0, free);
     if (__nb != __nar)
     {
-        __ob = (char_type*)malloc((2*__nc)*sizeof(char_type));
+        __ob = (char_type*)malloc(2*static_cast<size_t>(__nc)*sizeof(char_type));
         if (__ob == 0)
             __throw_bad_alloc();
         __obh.reset(__ob);
@@ -2102,7 +2102,7 @@ time_get<_CharT, _InputIterator>::__get_weekdayname(int& __w,
 {
     // Note:  ignoring case comes from the POSIX strptime spec
     const string_type* __wk = this->__weeks();
-    int __i = __scan_keyword(__b, __e, __wk, __wk+14, __ct, __err, false) - __wk;
+    ptrdiff_t __i = __scan_keyword(__b, __e, __wk, __wk+14, __ct, __err, false) - __wk;
     if (__i < 14)
         __w = __i % 7;
 }
@@ -2116,7 +2116,7 @@ time_get<_CharT, _InputIterator>::__get_monthname(int& __m,
 {
     // Note:  ignoring case comes from the POSIX strptime spec
     const string_type* __month = this->__months();
-    int __i = __scan_keyword(__b, __e, __month, __month+24, __ct, __err, false) - __month;
+    ptrdiff_t __i = __scan_keyword(__b, __e, __month, __month+24, __ct, __err, false) - __month;
     if (__i < 24)
         __m = __i % 12;
 }
@@ -2288,7 +2288,7 @@ time_get<_CharT, _InputIterator>::__get_am_pm(int& __h,
         __err |= ios_base::failbit;
         return;
     }
-    int __i = __scan_keyword(__b, __e, __ap, __ap+2, __ct, __err, false) - __ap;
+    ptrdiff_t __i = __scan_keyword(__b, __e, __ap, __ap+2, __ct, __err, false) - __ap;
     if (__i == 0 && __h == 12)
         __h = 0;
     else if (__i == 1 && __h < 12)
@@ -2397,7 +2397,6 @@ time_get<_CharT, _InputIterator>::do_get_date(iter_type __b, iter_type __e,
                                               ios_base::iostate& __err,
                                               tm* __tm) const
 {
-    const ctype<char_type>& __ct = use_facet<ctype<char_type> >(__iob.getloc());
     const string_type& __fmt = this->__x();
     return get(__b, __e, __iob, __err, __tm, __fmt.data(), __fmt.data() + __fmt.size());
 }
@@ -2460,8 +2459,8 @@ time_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
         break;
     case 'c':
         {
-        const string_type& __fmt = this->__c();
-        __b = get(__b, __e, __iob, __err, __tm, __fmt.data(), __fmt.data() + __fmt.size());
+        const string_type& __fm = this->__c();
+        __b = get(__b, __e, __iob, __err, __tm, __fm.data(), __fm.data() + __fm.size());
         }
         break;
     case 'd':
@@ -2470,14 +2469,14 @@ time_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
         break;
     case 'D':
         {
-        const char_type __fmt[] = {'%', 'm', '/', '%', 'd', '/', '%', 'y'};
-        __b = get(__b, __e, __iob, __err, __tm, __fmt, __fmt + sizeof(__fmt)/sizeof(__fmt[0]));
+        const char_type __fm[] = {'%', 'm', '/', '%', 'd', '/', '%', 'y'};
+        __b = get(__b, __e, __iob, __err, __tm, __fm, __fm + sizeof(__fm)/sizeof(__fm[0]));
         }
         break;
     case 'F':
         {
-        const char_type __fmt[] = {'%', 'Y', '-', '%', 'm', '-', '%', 'd'};
-        __b = get(__b, __e, __iob, __err, __tm, __fmt, __fmt + sizeof(__fmt)/sizeof(__fmt[0]));
+        const char_type __fm[] = {'%', 'Y', '-', '%', 'm', '-', '%', 'd'};
+        __b = get(__b, __e, __iob, __err, __tm, __fm, __fm + sizeof(__fm)/sizeof(__fm[0]));
         }
         break;
     case 'H':
@@ -2504,14 +2503,14 @@ time_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
         break;
     case 'r':
         {
-        const char_type __fmt[] = {'%', 'I', ':', '%', 'M', ':', '%', 'S', ' ', '%', 'p'};
-        __b = get(__b, __e, __iob, __err, __tm, __fmt, __fmt + sizeof(__fmt)/sizeof(__fmt[0]));
+        const char_type __fm[] = {'%', 'I', ':', '%', 'M', ':', '%', 'S', ' ', '%', 'p'};
+        __b = get(__b, __e, __iob, __err, __tm, __fm, __fm + sizeof(__fm)/sizeof(__fm[0]));
         }
         break;
     case 'R':
         {
-        const char_type __fmt[] = {'%', 'H', ':', '%', 'M'};
-        __b = get(__b, __e, __iob, __err, __tm, __fmt, __fmt + sizeof(__fmt)/sizeof(__fmt[0]));
+        const char_type __fm[] = {'%', 'H', ':', '%', 'M'};
+        __b = get(__b, __e, __iob, __err, __tm, __fm, __fm + sizeof(__fm)/sizeof(__fm[0]));
         }
         break;
     case 'S':
@@ -2519,8 +2518,8 @@ time_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
         break;
     case 'T':
         {
-        const char_type __fmt[] = {'%', 'H', ':', '%', 'M', ':', '%', 'S'};
-        __b = get(__b, __e, __iob, __err, __tm, __fmt, __fmt + sizeof(__fmt)/sizeof(__fmt[0]));
+        const char_type __fm[] = {'%', 'H', ':', '%', 'M', ':', '%', 'S'};
+        __b = get(__b, __e, __iob, __err, __tm, __fm, __fm + sizeof(__fm)/sizeof(__fm[0]));
         }
         break;
     case 'w':
@@ -2530,8 +2529,8 @@ time_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
         return do_get_date(__b, __e, __iob, __err, __tm);
     case 'X':
         {
-        const string_type& __fmt = this->__X();
-        __b = get(__b, __e, __iob, __err, __tm, __fmt.data(), __fmt.data() + __fmt.size());
+        const string_type& __fm = this->__X();
+        __b = get(__b, __e, __iob, __err, __tm, __fm.data(), __fm.data() + __fm.size());
         }
         break;
     case 'y':
@@ -2734,7 +2733,7 @@ time_put<_CharT, _OutputIterator>::put(iter_type __s, ios_base& __iob,
 
 template <class _CharT, class _OutputIterator>
 _OutputIterator
-time_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
+time_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base&,
                                           char_type, const tm* __tm,
                                           char __fmt, char __mod) const
 {
@@ -3011,10 +3010,10 @@ void
 __double_or_nothing(unique_ptr<_Tp, void(*)(void*)>& __b, _Tp*& __n, _Tp*& __e)
 {
     bool __owns = __b.get_deleter() != __do_nothing;
-    size_t __cur_cap = (__e-__b.get()) * sizeof(_Tp);
+    size_t __cur_cap = static_cast<size_t>(__e-__b.get()) * sizeof(_Tp);
     size_t __new_cap = __cur_cap < numeric_limits<size_t>::max() / 2 ?
                        2 * __cur_cap : numeric_limits<size_t>::max();
-    size_t __n_off = __n - __b.get();
+    size_t __n_off = static_cast<size_t>(__n - __b.get());
     _Tp* __t = (_Tp*)realloc(__owns ? __b.get() : 0, __new_cap);
     if (__t == 0)
         __throw_bad_alloc();
@@ -3232,7 +3231,7 @@ money_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
                                           ios_base::iostate& __err,
                                           long double& __v) const
 {
-    const unsigned __bz = 100;
+    const int __bz = 100;
     char_type __wbuf[__bz];
     unique_ptr<char_type, void(*)(void*)> __wb(__wbuf, __do_nothing);
     char_type* __wn;
@@ -3251,7 +3250,7 @@ money_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
         unique_ptr<char, void(*)(void*)> __h(0, free);
         if (__wn - __wb.get() > __bz-2)
         {
-            __h.reset((char*)malloc(__wn - __wb.get() + 2));
+            __h.reset((char*)malloc(static_cast<size_t>(__wn - __wb.get() + 2)));
             if (__h.get() == 0)
                 __throw_bad_alloc();
             __nc = __h.get();
@@ -3276,7 +3275,7 @@ money_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
                                           ios_base::iostate& __err,
                                           string_type& __v) const
 {
-    const unsigned __bz = 100;
+    const int __bz = 100;
     char_type __wbuf[__bz];
     unique_ptr<char_type, void(*)(void*)> __wb(__wbuf, __do_nothing);
     char_type* __wn;
@@ -3536,14 +3535,14 @@ money_put<_CharT, _OutputIterator>::do_put(iter_type __s, bool __intl,
     char* __bb = __buf;
     char_type __digits[__bs];
     char_type* __db = __digits;
-    size_t __n = snprintf(__bb, __bs, "%.0Lf", __units);
+    size_t __n = static_cast<size_t>(snprintf(__bb, __bs, "%.0Lf", __units));
     unique_ptr<char, void(*)(void*)> __hn(0, free);
     unique_ptr<char_type, void(*)(void*)> __hd(0, free);
     // secure memory for digit storage
     if (__n > __bs-1)
     {
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-        __n = asprintf_l(&__bb, _LIBCPP_GET_C_LOCALE, "%.0Lf", __units);
+        __n = static_cast<size_t>(asprintf_l(&__bb, _LIBCPP_GET_C_LOCALE, "%.0Lf", __units));
 #else
         __n = __asprintf_l(&__bb, __cloc(), "%.0Lf", __units);
 #endif
@@ -3573,8 +3572,9 @@ money_put<_CharT, _OutputIterator>::do_put(iter_type __s, bool __intl,
     char_type* __mb = __mbuf;
     unique_ptr<char_type, void(*)(void*)> __hw(0, free);
     size_t __exn = static_cast<int>(__n) > __fd ?
-                   (__n - __fd) * 2 + __sn.size() + __sym.size() + __fd + 1
-                 : __sn.size() + __sym.size() + __fd + 2;
+                   (__n - static_cast<size_t>(__fd)) * 2 + __sn.size() +
+                    __sym.size() + static_cast<size_t>(__fd) + 1
+                 : __sn.size() + __sym.size() + static_cast<size_t>(__fd) + 2;
     if (__exn > __bs)
     {
         __hw.reset((char_type*)malloc(__exn * sizeof(char_type)));
@@ -3613,9 +3613,10 @@ money_put<_CharT, _OutputIterator>::do_put(iter_type __s, bool __intl,
     char_type __mbuf[100];
     char_type* __mb = __mbuf;
     unique_ptr<char_type, void(*)(void*)> __h(0, free);
-    size_t __exn = __digits.size() > __fd ?
-                   (__digits.size() - __fd) * 2 + __sn.size() + __sym.size() + __fd + 1
-                 : __sn.size() + __sym.size() + __fd + 2;
+    size_t __exn = static_cast<int>(__digits.size()) > __fd ?
+                   (__digits.size() - static_cast<size_t>(__fd)) * 2 +
+                    __sn.size() + __sym.size() + static_cast<size_t>(__fd) + 1
+                 : __sn.size() + __sym.size() + static_cast<size_t>(__fd) + 2;
     if (__exn > 100)
     {
         __h.reset((char_type*)malloc(__exn * sizeof(char_type)));
@@ -4005,9 +4006,9 @@ wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
                 }
                 else if (__r == codecvt_base::partial)
                 {
-                    ptrdiff_t __s = __to_nxt - &__bs[0];
-                    __bs.resize(2 * __s);
-                    __to = &__bs[0] + __s;
+                    ptrdiff_t __sp = __to_nxt - &__bs[0];
+                    __bs.resize(2 * __sp);
+                    __to = &__bs[0] + __sp;
                     __to_end = &__bs[0] + __bs.size();
                 }
             } while (__r == codecvt_base::partial);

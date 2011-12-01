@@ -83,7 +83,7 @@ operator new[](size_t size)
 
 __attribute__((__weak__, __visibility__("default")))
 void*
-operator new[](size_t size, const std::nothrow_t& nothrow) _NOEXCEPT
+operator new[](size_t size, const std::nothrow_t&) _NOEXCEPT
 {
     void* p = 0;
 #ifndef _LIBCPP_NO_EXCEPTIONS

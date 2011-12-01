@@ -152,9 +152,9 @@ __assoc_sub_state::__sub_wait(unique_lock<mutex>& __lk)
 {
     if (!__is_ready())
     {
-        if (__state_ & deferred)
+        if (__state_ & static_cast<unsigned>(deferred))
         {
-            __state_ &= ~deferred;
+            __state_ &= ~static_cast<unsigned>(deferred);
             __lk.unlock();
             __execute();
         }

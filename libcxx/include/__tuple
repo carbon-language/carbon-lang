@@ -65,7 +65,7 @@ public:
 };
 
 template <class ..._Tp> class _LIBCPP_VISIBLE tuple;
-template <class _T1, class _T2> class _LIBCPP_VISIBLE pair;
+template <class _T1, class _T2> struct _LIBCPP_VISIBLE pair;
 template <class _Tp, size_t _Size> struct _LIBCPP_VISIBLE array;
 
 template <class _Tp> struct __tuple_like : false_type {};

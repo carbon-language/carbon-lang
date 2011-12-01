@@ -474,7 +474,7 @@ bool
 operator<(const error_condition& __x, const error_condition& __y) _NOEXCEPT
 {
     return __x.category() < __y.category()
-        || __x.category() == __y.category() && __x.value() < __y.value();
+        || (__x.category() == __y.category() && __x.value() < __y.value());
 }
 
 // error_code
@@ -551,7 +551,7 @@ bool
 operator<(const error_code& __x, const error_code& __y) _NOEXCEPT
 {
     return __x.category() < __y.category()
-        || __x.category() == __y.category() && __x.value() < __y.value();
+        || (__x.category() == __y.category() && __x.value() < __y.value());
 }
 
 inline _LIBCPP_INLINE_VISIBILITY

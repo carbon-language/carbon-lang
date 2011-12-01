@@ -1526,7 +1526,7 @@ private:
         {return __a.allocate(__n, __hint);}
     _LIBCPP_INLINE_VISIBILITY
     static pointer allocate(allocator_type& __a, size_type __n,
-        const_void_pointer __hint, false_type)
+        const_void_pointer, false_type)
         {return __a.allocate(__n);}
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
@@ -2181,7 +2181,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY _T2_reference       second() _NOEXCEPT       {return *this;}
     _LIBCPP_INLINE_VISIBILITY _T2_const_reference second() const _NOEXCEPT {return *this;}
 
-    _LIBCPP_INLINE_VISIBILITY void swap(__libcpp_compressed_pair_imp& __x)
+    _LIBCPP_INLINE_VISIBILITY void swap(__libcpp_compressed_pair_imp&)
         _NOEXCEPT_(__is_nothrow_swappable<_T1>::value &&
                    __is_nothrow_swappable<_T1>::value)
     {
@@ -3099,7 +3099,7 @@ public:
 
     void swap(shared_ptr& __r) _NOEXCEPT;
     void reset() _NOEXCEPT;
-    template<class _Yp> void reset(_Yp* __p) _NOEXCEPT;
+    template<class _Yp> void reset(_Yp* __p);
     template<class _Yp, class _Dp> void reset(_Yp* __p, _Dp __d);
     template<class _Yp, class _Dp, class _Alloc> void reset(_Yp* __p, _Dp __d, _Alloc __a);
 

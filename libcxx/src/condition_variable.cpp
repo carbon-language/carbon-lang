@@ -16,8 +16,7 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 condition_variable::~condition_variable()
 {
-    int e = pthread_cond_destroy(&__cv_);
-//     assert(e == 0);
+    pthread_cond_destroy(&__cv_);
 }
 
 void

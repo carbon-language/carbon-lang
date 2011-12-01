@@ -240,7 +240,7 @@ collate<_CharT>::do_hash(const char_type* __lo, const char_type* __hi) const
     const size_t __mask = size_t(0xF) << (__sr + 4);
     for(const char_type* __p = __lo; __p != __hi; ++__p)
     {
-        __h = (__h << 4) + *__p;
+        __h = (__h << 4) + static_cast<size_t>(*__p);
         size_t __g = __h & __mask;
         __h ^= __g | (__g >> __sr);
     }
@@ -485,14 +485,14 @@ public:
     _LIBCPP_ALWAYS_INLINE
     bool is(mask __m, char_type __c) const
     {
-        return isascii(__c) ? __tab_[__c] & __m : false;
+        return isascii(__c) ? __tab_[static_cast<int>(__c)] & __m : false;
     }
 
     _LIBCPP_ALWAYS_INLINE
     const char_type* is(const char_type* __low, const char_type* __high, mask* __vec) const
     {
         for (; __low != __high; ++__low, ++__vec)
-            *__vec = isascii(*__low) ? __tab_[*__low] : 0;
+            *__vec = isascii(*__low) ? __tab_[static_cast<int>(*__low)] : 0;
         return __low;
     }
 
@@ -500,7 +500,7 @@ public:
     const char_type* scan_is (mask __m, const char_type* __low, const char_type* __high) const
     {
         for (; __low != __high; ++__low)
-            if (isascii(*__low) && (__tab_[*__low] & __m))
+            if (isascii(*__low) && (__tab_[static_cast<int>(*__low)] & __m))
                 break;
         return __low;
     }
@@ -509,7 +509,7 @@ public:
     const char_type* scan_not(mask __m, const char_type* __low, const char_type* __high) const
     {
         for (; __low != __high; ++__low)
-            if (!(isascii(*__low) && (__tab_[*__low] & __m)))
+            if (!(isascii(*__low) && (__tab_[static_cast<int>(*__low)] & __m)))
                 break;
         return __low;
     }

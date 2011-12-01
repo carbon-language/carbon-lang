@@ -61,7 +61,7 @@ static
 steady_clock::rep
 steady_simplified()
 {
-    return mach_absolute_time();
+    return static_cast<steady_clock::rep>(mach_absolute_time());
 }
 
 static

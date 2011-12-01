@@ -125,7 +125,7 @@ __libcpp_db::__insert_ic(void* __i, const void* __c)
         " But it is being used in a translation unit with debug mode enabled."
         " Enable it in the other translation unit with #define _LIBCPP_DEBUG2 1";
     _LIBCPP_ASSERT(__cbeg_ != __cend_, errmsg);
-    size_t hc = hash<const void*>()(__c) % (__cend_ - __cbeg_);
+    size_t hc = hash<const void*>()(__c) % static_cast<size_t>(__cend_ - __cbeg_);
     __c_node* c = __cbeg_[hc];
     _LIBCPP_ASSERT(c != nullptr, errmsg);
     while (c->__c_ != __c)
@@ -141,9 +141,9 @@ __c_node*
 __libcpp_db::__insert_c(void* __c)
 {
     WLock _(mut());
-    if (__csz_ + 1 > __cend_ - __cbeg_)
+    if (__csz_ + 1 > static_cast<size_t>(__cend_ - __cbeg_))
     {
-        size_t nc = __next_prime(2*(__cend_ - __cbeg_) + 1);
+        size_t nc = __next_prime(2*static_cast<size_t>(__cend_ - __cbeg_) + 1);
         __c_node** cbeg = (__c_node**)calloc(nc, sizeof(void*));
         if (cbeg == nullptr)
             throw bad_alloc();
@@ -163,7 +163,7 @@ __libcpp_db::__insert_c(void* __c)
         __cbeg_ = cbeg;
         __cend_ = __cbeg_ + nc;
     }
-    size_t hc = hash<void*>()(__c) % (__cend_ - __cbeg_);
+    size_t hc = hash<void*>()(__c) % static_cast<size_t>(__cend_ - __cbeg_);
     __c_node* p = __cbeg_[hc];
     __c_node* r = __cbeg_[hc] = (__c_node*)malloc(sizeof(__c_node));
     if (__cbeg_[hc] == nullptr)
@@ -180,7 +180,7 @@ __libcpp_db::__erase_i(void* __i)
     WLock _(mut());
     if (__ibeg_ != __iend_)
     {
-        size_t hi = hash<void*>()(__i) % (__iend_ - __ibeg_);
+        size_t hi = hash<void*>()(__i) % static_cast<size_t>(__iend_ - __ibeg_);
         __i_node* p = __ibeg_[hi];
         if (p != nullptr)
         {
@@ -209,7 +209,7 @@ void
 __libcpp_db::__invalidate_all(void* __c)
 {
     WLock _(mut());
-    size_t hc = hash<void*>()(__c) % (__cend_ - __cbeg_);
+    size_t hc = hash<void*>()(__c) % static_cast<size_t>(__cend_ - __cbeg_);
     __c_node* p = __cbeg_[hc];
     _LIBCPP_ASSERT(p != nullptr, "debug mode internal logic error __invalidate_all A");
     while (p->__c_ != __c)
@@ -228,7 +228,7 @@ __c_node*
 __libcpp_db::__find_c_and_lock(void* __c) const
 {
     mut().lock();
-    size_t hc = hash<void*>()(__c) % (__cend_ - __cbeg_);
+    size_t hc = hash<void*>()(__c) % static_cast<size_t>(__cend_ - __cbeg_);
     __c_node* p = __cbeg_[hc];
     _LIBCPP_ASSERT(p != nullptr, "debug mode internal logic error __find_c_and_lock A");
     while (p->__c_ != __c)
@@ -242,7 +242,7 @@ __libcpp_db::__find_c_and_lock(void* __c) const
 __c_node*
 __libcpp_db::__find_c(void* __c) const
 {
-    size_t hc = hash<void*>()(__c) % (__cend_ - __cbeg_);
+    size_t hc = hash<void*>()(__c) % static_cast<size_t>(__cend_ - __cbeg_);
     __c_node* p = __cbeg_[hc];
     _LIBCPP_ASSERT(p != nullptr, "debug mode internal logic error __find_c A");
     while (p->__c_ != __c)
@@ -263,7 +263,7 @@ void
 __libcpp_db::__erase_c(void* __c)
 {
     WLock _(mut());
-    size_t hc = hash<void*>()(__c) % (__cend_ - __cbeg_);
+    size_t hc = hash<void*>()(__c) % static_cast<size_t>(__cend_ - __cbeg_);
     __c_node* p = __cbeg_[hc];
     __c_node* q = nullptr;
     _LIBCPP_ASSERT(p != nullptr, "debug mode internal logic error __erase_c A");
@@ -360,7 +360,7 @@ void
 __libcpp_db::swap(void* c1, void* c2)
 {
     WLock _(mut());
-    size_t hc = hash<void*>()(c1) % (__cend_ - __cbeg_);
+    size_t hc = hash<void*>()(c1) % static_cast<size_t>(__cend_ - __cbeg_);
     __c_node* p1 = __cbeg_[hc];
     _LIBCPP_ASSERT(p1 != nullptr, "debug mode internal logic error swap A");
     while (p1->__c_ != c1)
@@ -368,7 +368,7 @@ __libcpp_db::swap(void* c1, void* c2)
         p1 = p1->__next_;
         _LIBCPP_ASSERT(p1 != nullptr, "debug mode internal logic error swap B");
     }
-    hc = hash<void*>()(c2) % (__cend_ - __cbeg_);
+    hc = hash<void*>()(c2) % static_cast<size_t>(__cend_ - __cbeg_);
     __c_node* p2 = __cbeg_[hc];
     _LIBCPP_ASSERT(p2 != nullptr, "debug mode internal logic error swap C");
     while (p2->__c_ != c2)
@@ -397,7 +397,7 @@ __c_node::__add(__i_node* i)
 {
     if (end_ == cap_)
     {
-        size_t nc = 2*(cap_ - beg_);
+        size_t nc = 2*static_cast<size_t>(cap_ - beg_);
         if (nc == 0)
             nc = 1;
         __i_node** beg = (__i_node**)malloc(nc * sizeof(__i_node*));
@@ -419,9 +419,9 @@ _LIBCPP_HIDDEN
 __i_node*
 __libcpp_db::__insert_iterator(void* __i)
 {
-    if (__isz_ + 1 > __iend_ - __ibeg_)
+    if (__isz_ + 1 > static_cast<size_t>(__iend_ - __ibeg_))
     {
-        size_t nc = __next_prime(2*(__iend_ - __ibeg_) + 1);
+        size_t nc = __next_prime(2*static_cast<size_t>(__iend_ - __ibeg_) + 1);
         __i_node** ibeg = (__i_node**)calloc(nc, sizeof(void*));
         if (ibeg == nullptr)
             throw bad_alloc();
@@ -441,7 +441,7 @@ __libcpp_db::__insert_iterator(void* __i)
         __ibeg_ = ibeg;
         __iend_ = __ibeg_ + nc;
     }
-    size_t hi = hash<void*>()(__i) % (__iend_ - __ibeg_);
+    size_t hi = hash<void*>()(__i) % static_cast<size_t>(__iend_ - __ibeg_);
     __i_node* p = __ibeg_[hi];
     __i_node* r = __ibeg_[hi] = (__i_node*)malloc(sizeof(__i_node));
     if (r == nullptr)
@@ -458,7 +458,7 @@ __libcpp_db::__find_iterator(const void* __i) const
     __i_node* r = nullptr;
     if (__ibeg_ != __iend_)
     {
-        size_t h = hash<const void*>()(__i) % (__iend_ - __ibeg_);
+        size_t h = hash<const void*>()(__i) % static_cast<size_t>(__iend_ - __ibeg_);
         for (__i_node* nd = __ibeg_[h]; nd != nullptr; nd = nd->__next_)
         {
             if (nd->__i_ == __i)
@@ -478,7 +478,7 @@ __c_node::__remove(__i_node* p)
     __i_node** r = find(beg_, end_, p);
     _LIBCPP_ASSERT(r != end_, "debug mode internal logic error __c_node::__remove");
     if (--end_ != r)
-        memmove(r, r+1, (end_ - r)*sizeof(__i_node*));
+        memmove(r, r+1, static_cast<size_t>(end_ - r)*sizeof(__i_node*));
 }
 
 _LIBCPP_END_NAMESPACE_STD

@@ -1145,7 +1145,7 @@ basic_istream<_CharT, _Traits>::ignore(streamsize __n, int_type __dlm)
                     }
                     ++__gc_;
                     char_type __ch = traits_type::to_char_type(__i);
-                    if (traits_type::eq(__ch, __dlm))
+                    if (traits_type::eq(__ch, static_cast<char_type>(__dlm)))
                         break;
                 }
             }
@@ -1161,7 +1161,7 @@ basic_istream<_CharT, _Traits>::ignore(streamsize __n, int_type __dlm)
                     }
                     ++__gc_;
                     char_type __ch = traits_type::to_char_type(__i);
-                    if (traits_type::eq(__ch, __dlm))
+                    if (traits_type::eq(__ch, static_cast<char_type>(__dlm)))
                         break;
                 }
             }
@@ -1212,7 +1212,6 @@ basic_istream<_CharT, _Traits>::read(char_type* __s, streamsize __n)
         sentry __sen(*this, true);
         if (__sen)
         {
-            ios_base::iostate __err = ios_base::goodbit;
             for (; __gc_ < __n; ++__gc_)
             {
                 typename traits_type::int_type __i = this->rdbuf()->sbumpc();

@@ -195,13 +195,13 @@ public:
         explicit __tuple_leaf(_Tp&& __t)
             : value(_VSTD::forward<_Tp>(__t))
         {static_assert(!is_reference<_Hp>::value ||
-                        is_lvalue_reference<_Hp>::value &&
+                       (is_lvalue_reference<_Hp>::value &&
                         (is_lvalue_reference<_Tp>::value ||
                          is_same<typename remove_reference<_Tp>::type,
                                  reference_wrapper<
                                     typename remove_reference<_Hp>::type
                                  >
-                                >::value) ||
+                                >::value)) ||
                         (is_rvalue_reference<_Hp>::value &&
                          !is_lvalue_reference<_Tp>::value),
        "Attempted to construct a reference element in a tuple with an rvalue");}
@@ -211,13 +211,13 @@ public:
         explicit __tuple_leaf(integral_constant<int, 0>, const _Alloc&, _Tp&& __t)
             : value(_VSTD::forward<_Tp>(__t))
         {static_assert(!is_lvalue_reference<_Hp>::value ||
-                        is_lvalue_reference<_Hp>::value &&
+                       (is_lvalue_reference<_Hp>::value &&
                         (is_lvalue_reference<_Tp>::value ||
                          is_same<typename remove_reference<_Tp>::type,
                                  reference_wrapper<
                                     typename remove_reference<_Hp>::type
                                  >
-                                >::value),
+                                >::value)),
        "Attempted to construct a reference element in a tuple with an rvalue");}
 
     template <class _Tp, class _Alloc>
@@ -225,13 +225,13 @@ public:
         explicit __tuple_leaf(integral_constant<int, 1>, const _Alloc& __a, _Tp&& __t)
             : value(allocator_arg_t(), __a, _VSTD::forward<_Tp>(__t))
         {static_assert(!is_lvalue_reference<_Hp>::value ||
-                        is_lvalue_reference<_Hp>::value &&
+                       (is_lvalue_reference<_Hp>::value &&
                         (is_lvalue_reference<_Tp>::value ||
                          is_same<typename remove_reference<_Tp>::type,
                                  reference_wrapper<
                                     typename remove_reference<_Hp>::type
                                  >
-                                >::value),
+                                >::value)),
        "Attempted to construct a reference element in a tuple with an rvalue");}
 
     template <class _Tp, class _Alloc>
@@ -239,13 +239,13 @@ public:
         explicit __tuple_leaf(integral_constant<int, 2>, const _Alloc& __a, _Tp&& __t)
             : value(_VSTD::forward<_Tp>(__t), __a)
         {static_assert(!is_lvalue_reference<_Hp>::value ||
-                        is_lvalue_reference<_Hp>::value &&
+                       (is_lvalue_reference<_Hp>::value &&
                         (is_lvalue_reference<_Tp>::value ||
                          is_same<typename remove_reference<_Tp>::type,
                                  reference_wrapper<
                                     typename remove_reference<_Hp>::type
                                  >
-                                >::value),
+                                >::value)),
        "Attempted to construct a reference element in a tuple with an rvalue");}
 
     __tuple_leaf(const __tuple_leaf& __t)
@@ -453,11 +453,11 @@ class _LIBCPP_VISIBLE tuple
     base base_;
 
     template <size_t _Jp, class ..._Up> friend
-        typename tuple_element<_Jp, tuple<_Up...> >::type& get(tuple<_Up...>&);
+        typename tuple_element<_Jp, tuple<_Up...> >::type& get(tuple<_Up...>&) _NOEXCEPT;
     template <size_t _Jp, class ..._Up> friend
-        const typename tuple_element<_Jp, tuple<_Up...> >::type& get(const tuple<_Up...>&);
+        const typename tuple_element<_Jp, tuple<_Up...> >::type& get(const tuple<_Up...>&) _NOEXCEPT;
     template <size_t _Jp, class ..._Up> friend
-        typename tuple_element<_Jp, tuple<_Up...> >::type&& get(tuple<_Up...>&&);
+        typename tuple_element<_Jp, tuple<_Up...> >::type&& get(tuple<_Up...>&&) _NOEXCEPT;
 public:
 
     _LIBCPP_INLINE_VISIBILITY
@@ -603,7 +603,7 @@ swap(tuple<_Tp...>& __t, tuple<_Tp...>& __u)
 template <size_t _Ip, class ..._Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 typename tuple_element<_Ip, tuple<_Tp...> >::type&
-get(tuple<_Tp...>& __t)
+get(tuple<_Tp...>& __t) _NOEXCEPT
 {
     typedef typename tuple_element<_Ip, tuple<_Tp...> >::type type;
     return static_cast<__tuple_leaf<_Ip, type>&>(__t.base_).get();
@@ -612,7 +612,7 @@ get(tuple<_Tp...>& __t)
 template <size_t _Ip, class ..._Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 const typename tuple_element<_Ip, tuple<_Tp...> >::type&
-get(const tuple<_Tp...>& __t)
+get(const tuple<_Tp...>& __t) _NOEXCEPT
 {
     typedef typename tuple_element<_Ip, tuple<_Tp...> >::type type;
     return static_cast<const __tuple_leaf<_Ip, type>&>(__t.base_).get();
@@ -621,7 +621,7 @@ get(const tuple<_Tp...>& __t)
 template <size_t _Ip, class ..._Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 typename tuple_element<_Ip, tuple<_Tp...> >::type&&
-get(tuple<_Tp...>&& __t)
+get(tuple<_Tp...>&& __t) _NOEXCEPT
 {
     typedef typename tuple_element<_Ip, tuple<_Tp...> >::type type;
     return static_cast<type&&>(

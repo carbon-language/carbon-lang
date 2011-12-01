@@ -152,7 +152,7 @@ private:
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    void __move_assign_alloc(__split_buffer& __c, false_type) _NOEXCEPT
+    void __move_assign_alloc(__split_buffer&, false_type) _NOEXCEPT
         {}
 
     _LIBCPP_INLINE_VISIBILITY
@@ -171,7 +171,7 @@ private:
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    static void __swap_alloc(__alloc_rr& __x, __alloc_rr& __y, false_type) _NOEXCEPT
+    static void __swap_alloc(__alloc_rr&, __alloc_rr&, false_type) _NOEXCEPT
         {}
 };
 
@@ -490,7 +490,7 @@ __split_buffer<_Tp, _Allocator>::push_front(const_reference __x)
         }
         else
         {
-            size_type __c = max<size_type>(2 * (__end_cap() - __first_), 1);
+            size_type __c = max<size_type>(2 * static_cast<size_t>(__end_cap() - __first_), 1);
             __split_buffer<value_type, __alloc_rr&> __t(__c, (__c + 3) / 4, __alloc());
             __t.__construct_at_end(move_iterator<pointer>(__begin_),
                                    move_iterator<pointer>(__end_));
@@ -521,7 +521,7 @@ __split_buffer<_Tp, _Allocator>::push_front(value_type&& __x)
         }
         else
         {
-            size_type __c = max<size_type>(2 * (__end_cap() - __first_), 1);
+            size_type __c = max<size_type>(2 * static_cast<size_t>(__end_cap() - __first_), 1);
             __split_buffer<value_type, __alloc_rr&> __t(__c, (__c + 3) / 4, __alloc());
             __t.__construct_at_end(move_iterator<pointer>(__begin_),
                                    move_iterator<pointer>(__end_));
@@ -554,7 +554,7 @@ __split_buffer<_Tp, _Allocator>::push_back(const_reference __x)
         }
         else
         {
-            size_type __c = max<size_type>(2 * (__end_cap() - __first_), 1);
+            size_type __c = max<size_type>(2 * static_cast<size_t>(__end_cap() - __first_), 1);
             __split_buffer<value_type, __alloc_rr&> __t(__c, __c / 4, __alloc());
             __t.__construct_at_end(move_iterator<pointer>(__begin_),
                                    move_iterator<pointer>(__end_));
@@ -585,7 +585,7 @@ __split_buffer<_Tp, _Allocator>::push_back(value_type&& __x)
         }
         else
         {
-            size_type __c = max<size_type>(2 * (__end_cap() - __first_), 1);
+            size_type __c = max<size_type>(2 * static_cast<size_t>(__end_cap() - __first_), 1);
             __split_buffer<value_type, __alloc_rr&> __t(__c, __c / 4, __alloc());
             __t.__construct_at_end(move_iterator<pointer>(__begin_),
                                    move_iterator<pointer>(__end_));
@@ -618,7 +618,7 @@ __split_buffer<_Tp, _Allocator>::emplace_back(_Args&&... __args)
         }
         else
         {
-            size_type __c = max<size_type>(2 * (__end_cap() - __first_), 1);
+            size_type __c = max<size_type>(2 * static_cast<size_t>(__end_cap() - __first_), 1);
             __split_buffer<value_type, __alloc_rr&> __t(__c, __c / 4, __alloc());
             __t.__construct_at_end(move_iterator<pointer>(__begin_),
                                    move_iterator<pointer>(__end_));

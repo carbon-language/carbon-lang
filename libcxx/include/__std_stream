@@ -25,7 +25,7 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-static const unsigned __limit = 8;
+static const int __limit = 8;
 
 // __stdinbuf
 
@@ -104,7 +104,7 @@ __stdinbuf<_CharT>::__getchar(bool __consume)
     int __nread = _VSTD::max(1, __encoding_);
     for (int __i = 0; __i < __nread; ++__i)
     {
-        char __c = getc(__file_);
+        int __c = getc(__file_);
         if (__c == EOF)
             return traits_type::eof();
         __extbuf[__i] = static_cast<char>(__c);
@@ -131,7 +131,7 @@ __stdinbuf<_CharT>::__getchar(bool __consume)
                 if (__nread == sizeof(__extbuf))
                     return traits_type::eof();
                 {
-                    char __c = getc(__file_);
+                    int __c = getc(__file_);
                     if (__c == EOF)
                         return traits_type::eof();
                     __extbuf[__nread] = static_cast<char>(__c);
@@ -268,7 +268,7 @@ __stdoutbuf<_CharT>::overflow(int_type __c)
                     if (__r == codecvt_base::partial)
                     {
                         this->setp((char_type*)__e, this->pptr());
-                        this->pbump(this->epptr() - this->pbase());
+                        this->pbump(static_cast<int>(this->epptr() - this->pbase()));
                     }
                 }
                 else

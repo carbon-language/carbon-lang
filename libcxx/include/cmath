@@ -1600,7 +1600,7 @@ using ::acoshl;
 using ::asinhl;
 using ::atanhl;
 using ::cbrtl;
-#endif !_MSC_VER
+#endif  // !_MSC_VER
 using ::copysignl;
 #ifndef _MSC_VER
 using ::erfl;

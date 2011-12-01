@@ -35,7 +35,9 @@ then
   RC_ProjectSourceVersion=1
 fi
 
-EXTRA_FLAGS="-std=c++0x"
+EXTRA_FLAGS="-std=c++0x -fstrict-aliasing -Wall -Wextra -Wshadow -Wconversion \
+             -Wnewline-eof -Wpadded -Wmissing-prototypes -Wstrict-aliasing=2 \
+             -Wstrict-overflow=4"
 
 case $TRIPLE in
   *-apple-*)

@@ -823,7 +823,8 @@ public:
     _LIBCPP_INLINE_VISIBILITY istreambuf_iterator(const __proxy& __p) throw()
         : __sbuf_(__p.__sbuf_) {}
 
-    _LIBCPP_INLINE_VISIBILITY _CharT     operator*() const {return __sbuf_->sgetc();}
+    _LIBCPP_INLINE_VISIBILITY char_type  operator*() const
+        {return static_cast<char_type>(__sbuf_->sgetc());}
     _LIBCPP_INLINE_VISIBILITY char_type* operator->() const {return nullptr;}
     _LIBCPP_INLINE_VISIBILITY istreambuf_iterator& operator++()
         {

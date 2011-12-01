@@ -4404,7 +4404,7 @@ basic_regex<_CharT, _Traits>::__parse_character_escape(_ForwardIterator __first,
             if (__hd == -1)
                 throw regex_error(regex_constants::error_escape);
 #endif  // _LIBCPP_NO_EXCEPTIONS
-            __sum = 16 * __sum + __hd;
+            __sum = 16 * __sum + static_cast<unsigned>(__hd);
             ++__first;
 #ifndef _LIBCPP_NO_EXCEPTIONS
             if (__first == __last)
@@ -4415,7 +4415,7 @@ basic_regex<_CharT, _Traits>::__parse_character_escape(_ForwardIterator __first,
             if (__hd == -1)
                 throw regex_error(regex_constants::error_escape);
 #endif  // _LIBCPP_NO_EXCEPTIONS
-            __sum = 16 * __sum + __hd;
+            __sum = 16 * __sum + static_cast<unsigned>(__hd);
             // drop through
         case 'x':
             ++__first;
@@ -4428,7 +4428,7 @@ basic_regex<_CharT, _Traits>::__parse_character_escape(_ForwardIterator __first,
             if (__hd == -1)
                 throw regex_error(regex_constants::error_escape);
 #endif  // _LIBCPP_NO_EXCEPTIONS
-            __sum = 16 * __sum + __hd;
+            __sum = 16 * __sum + static_cast<unsigned>(__hd);
             ++__first;
 #ifndef _LIBCPP_NO_EXCEPTIONS
             if (__first == __last)
@@ -4439,7 +4439,7 @@ basic_regex<_CharT, _Traits>::__parse_character_escape(_ForwardIterator __first,
             if (__hd == -1)
                 throw regex_error(regex_constants::error_escape);
 #endif  // _LIBCPP_NO_EXCEPTIONS
-            __sum = 16 * __sum + __hd;
+            __sum = 16 * __sum + static_cast<unsigned>(__hd);
             if (__str)
                 *__str = _CharT(__sum);
             else
@@ -5496,8 +5496,6 @@ basic_regex<_CharT, _Traits>::__match_at_start_ecma(
         regex_constants::match_flag_type __flags, bool __at_first) const
 {
     vector<__state> __states;
-    ptrdiff_t __j = 0;
-    ptrdiff_t _Np = _VSTD::distance(__first, __last);
     __node* __st = __start_.get();
     if (__st)
     {
@@ -5511,7 +5509,6 @@ basic_regex<_CharT, _Traits>::__match_at_start_ecma(
         __states.back().__node_ = __st;
         __states.back().__flags_ = __flags;
         __states.back().__at_first_ = __at_first;
-        bool __matched = false;
         do
         {
             __state& __s = __states.back();

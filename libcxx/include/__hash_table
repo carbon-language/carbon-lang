@@ -723,7 +723,7 @@ private:
              __node_traits::propagate_on_container_copy_assignment::value>());}
     void __copy_assign_alloc(const __hash_table& __u, true_type);
     _LIBCPP_INLINE_VISIBILITY
-        void __copy_assign_alloc(const __hash_table& __u, false_type) {}
+        void __copy_assign_alloc(const __hash_table&, false_type) {}
 
     void __move_assign(__hash_table& __u, false_type);
     void __move_assign(__hash_table& __u, true_type)
@@ -782,7 +782,7 @@ private:
     _LIBCPP_INLINE_VISIBILITY
     static
     void
-    __swap_alloc(_Ap& __x, _Ap& __y, false_type) _NOEXCEPT {}
+    __swap_alloc(_Ap&, _Ap&, false_type) _NOEXCEPT {}
 
     void __deallocate(__node_pointer __np) _NOEXCEPT;
     __node_pointer __detach() _NOEXCEPT;
