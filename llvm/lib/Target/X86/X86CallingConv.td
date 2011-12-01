@@ -158,10 +158,15 @@ def CC_X86_64_C : CallingConv<[
             CCIfSubtarget<"hasXMM()",
             CCAssignToReg<[XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>>>,
 
-  // The first 8 256-bit vector arguments are passed in YMM registers.
-  CCIfType<[v32i8, v16i16, v8i32, v4i64, v8f32, v4f64],
-            CCIfSubtarget<"hasAVX()",
-            CCAssignToReg<[YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7]>>>,
+  // The first 8 256-bit vector arguments are passed in YMM registers, unless
+  // this is a vararg function.
+  // FIXME: This isn't precisely correct; the x86-64 ABI document says that
+  // fixed arguments to vararg functions are supposed to be passed in
+  // registers.  Actually modeling that would be a lot of work, though.
+  CCIfNotVarArg<CCIfType<[v32i8, v16i16, v8i32, v4i64, v8f32, v4f64],
+                          CCIfSubtarget<"hasAVX()",
+                          CCAssignToReg<[YMM0, YMM1, YMM2, YMM3,
+                                         YMM4, YMM5, YMM6, YMM7]>>>>,
 
   // Integer/FP values get stored in stack slots that are 8 bytes in size and
   // 8-byte aligned if there are no more registers to hold them.
