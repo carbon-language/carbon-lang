@@ -467,6 +467,22 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
     }
   }
 
+  // Add ASAN runtime library, if required.
+  if (Args.hasFlag(options::OPT_faddress_sanitizer,
+                   options::OPT_fno_address_sanitizer, false)) {
+    if (isTargetIPhoneOS()) {
+      getDriver().Diag(diag::err_drv_clang_unsupported_per_platform)
+        << "-faddress-sanitizer";
+    } else {
+      AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.asan_osx.a");
+
+      // The ASAN runtime library requires C++ and CoreFoundation.
+      AddCXXStdlibLibArgs(Args, CmdArgs);
+      CmdArgs.push_back("-framework");
+      CmdArgs.push_back("CoreFoundation");
+    }
+  }
+
   // Otherwise link libSystem, then the dynamic runtime library, and finally any
   // target specific static runtime library.
   CmdArgs.push_back("-lSystem");
