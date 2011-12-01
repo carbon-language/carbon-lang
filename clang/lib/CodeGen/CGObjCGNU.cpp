@@ -1196,6 +1196,8 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
       }
   }
 
+  // Reset the receiver in case the lookup modified it
+  ActualArgs[0] = CallArg(RValue::get(Receiver), ASTIdTy, false);
 
   llvm::FunctionType *impType =
     Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
