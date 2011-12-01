@@ -13,6 +13,7 @@ SubDirs :=
 SubDirs += i386 ppc x86_64 arm
 
 # Add other submodules.
+SubDirs += asan
 SubDirs += profile
 
 # Define the variables for this specific directory.
