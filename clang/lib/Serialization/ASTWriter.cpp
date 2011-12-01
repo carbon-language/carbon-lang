@@ -1943,6 +1943,38 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
   Stream.ExitBlock();
 }
 
+serialization::SubmoduleID 
+ASTWriter::inferSubmoduleIDFromLocation(SourceLocation Loc) {
+  if (Loc.isInvalid() || SubmoduleIDs.empty())
+    return 0; // No submodule
+  
+  // Use the expansion location to determine which module we're in.
+  SourceManager &SrcMgr = PP->getSourceManager();
+  SourceLocation ExpansionLoc = SrcMgr.getExpansionLoc(Loc);
+  if (!ExpansionLoc.isFileID())
+    return 0;  
+
+  
+  FileID ExpansionFileID = SrcMgr.getFileID(ExpansionLoc);
+  const FileEntry *ExpansionFile = SrcMgr.getFileEntryForID(ExpansionFileID);
+  if (!ExpansionFile)
+    return 0;
+  
+  // Find the module that owns this header.
+  ModuleMap &ModMap = PP->getHeaderSearchInfo().getModuleMap();
+  Module *OwningMod = ModMap.findModuleForHeader(ExpansionFile);
+  if (!OwningMod)
+    return 0;
+  
+  // Check whether we known about this submodule.
+  llvm::DenseMap<Module *, unsigned>::iterator Known
+    = SubmoduleIDs.find(OwningMod);
+  if (Known == SubmoduleIDs.end())
+    return 0;
+  
+  return Known->second;
+}
+
 void ASTWriter::WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag) {
   RecordData Record;
   for (DiagnosticsEngine::DiagStatePointsTy::const_iterator
@@ -2862,7 +2894,7 @@ void ASTWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
 }
 
 ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
-  : Stream(Stream), Context(0), Chain(0), WritingAST(false),
+  : Stream(Stream), Context(0), PP(0), Chain(0), WritingAST(false),
     FirstDeclID(NUM_PREDEF_DECL_IDS), NextDeclID(FirstDeclID),
     FirstTypeID(NUM_PREDEF_TYPE_IDS), NextTypeID(FirstTypeID),
     FirstIdentID(NUM_PREDEF_IDENT_IDS), NextIdentID(FirstIdentID), 
@@ -2903,8 +2935,10 @@ void ASTWriter::WriteAST(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteBlockInfoBlock();
 
   Context = &SemaRef.Context;
+  PP = &SemaRef.PP;
   WriteASTCore(SemaRef, StatCalls, isysroot, OutputFile, WritingModule);
   Context = 0;
+  PP = 0;
   
   WritingAST = false;
 }
@@ -3123,7 +3157,11 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   AddTypeRef(Context.ObjCClassRedefinitionType, SpecialTypes);
   AddTypeRef(Context.ObjCSelRedefinitionType, SpecialTypes);
   AddTypeRef(Context.getucontext_tType(), SpecialTypes);
-  
+
+  // If we're emitting a module, write out the submodule information.  
+  if (WritingModule)
+    WriteSubmodules(WritingModule);
+
   // Keep writing types and declarations until all types and
   // declarations have been written.
   Stream.EnterSubblock(DECLTYPES_BLOCK_ID, NUM_ALLOWED_ABBREVS_SIZE);
@@ -3188,8 +3226,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     Stream.EmitRecordWithBlob(ModuleOffsetMapAbbrev, Record,
                               Buffer.data(), Buffer.size());
   }
-  if (WritingModule)
-    WriteSubmodules(WritingModule);
   WritePreprocessor(PP, WritingModule != 0);
   WriteHeaderSearch(PP.getHeaderSearchInfo(), isysroot);
   WriteSelectors(SemaRef);

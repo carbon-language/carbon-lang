@@ -95,6 +95,9 @@ private:
   /// \brief The ASTContext we're writing.
   ASTContext *Context;
 
+  /// \brief The preprocessor we're writing.
+  Preprocessor *PP;
+
   /// \brief The reader of existing AST files, if we're chaining.
   ASTReader *Chain;
 
@@ -385,6 +388,11 @@ private:
   void WriteHeaderSearch(const HeaderSearch &HS, StringRef isysroot);
   void WritePreprocessorDetail(PreprocessingRecord &PPRec);
   void WriteSubmodules(Module *WritingModule);
+                    
+  /// \brief Infer the submodule ID that contains an entity at the given
+  /// source location.
+  serialization::SubmoduleID inferSubmoduleIDFromLocation(SourceLocation Loc);
+                    
   void WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag);
   void WriteCXXBaseSpecifiersOffsets();
   void WriteType(QualType T);

@@ -253,6 +253,10 @@ void ASTDeclReader::VisitDecl(Decl *D) {
   D->setAccess((AccessSpecifier)Record[Idx++]);
   D->FromASTFile = true;
   D->ModulePrivate = Record[Idx++];
+  
+  unsigned SubmoduleID = Record[Idx++];
+  // FIXME: Actual use the submodule ID to determine visibility.
+  (void)SubmoduleID;
 }
 
 void ASTDeclReader::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
