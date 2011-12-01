@@ -28,7 +28,18 @@ protected:
 public:
   static const volatile char f;
   int operator+(int a);
-};
+  foo(){}
+//CHECK: @"\01??0foo@@QAE@XZ"
+
+  ~foo(){}
+//CHECK: @"\01??1foo@@QAE@XZ"
+
+  foo(int i){}
+//CHECK: @"\01??0foo@@QAE@H@Z"
+
+  foo(char *q){}
+//CHECK: @"\01??0foo@@QAE@PAD@Z"
+}f,s1(1),s2((char*)0);
 
 struct bar {
   static int g;
