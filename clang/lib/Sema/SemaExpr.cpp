@@ -3691,6 +3691,11 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
   }
 
   // If we're directly calling a function, get the appropriate declaration.
+  if (Fn->getType() == Context.UnknownAnyTy) {
+    ExprResult result = rebuildUnknownAnyFunction(*this, Fn);
+    if (result.isInvalid()) return ExprError();
+    Fn = result.take();
+  }
 
   Expr *NakedFn = Fn->IgnoreParens();
 
@@ -10108,6 +10113,10 @@ ExprResult Sema::checkUnknownAnyCast(SourceRange TypeRange, QualType CastType,
   CastKind = CK_NoOp;
 
   return CastExpr;
+}
+
+ExprResult Sema::forceUnknownAnyToType(Expr *E, QualType ToType) {
+  return RebuildUnknownAnyExpr(*this, ToType).Visit(E);
 }
 
 static ExprResult diagnoseUnknownAnyExpr(Sema &S, Expr *E) {

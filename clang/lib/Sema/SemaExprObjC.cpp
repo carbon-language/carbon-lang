@@ -1211,9 +1211,13 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
   // and determine receiver type.
   if (Receiver) {
     if (Receiver->hasPlaceholderType()) {
-      ExprResult result = CheckPlaceholderExpr(Receiver);
-      if (result.isInvalid()) return ExprError();
-      Receiver = result.take();
+      ExprResult Result;
+      if (Receiver->getType() == Context.UnknownAnyTy)
+        Result = forceUnknownAnyToType(Receiver, Context.getObjCIdType());
+      else
+        Result = CheckPlaceholderExpr(Receiver);
+      if (Result.isInvalid()) return ExprError();
+      Receiver = Result.take();
     }
 
     if (Receiver->isTypeDependent()) {

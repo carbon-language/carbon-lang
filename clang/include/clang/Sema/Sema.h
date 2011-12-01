@@ -5873,6 +5873,10 @@ public:
                                  Expr *CastExpr, CastKind &CastKind,
                                  ExprValueKind &VK, CXXCastPath &Path);
 
+  /// \brief Force an expression with unknown-type to an expression of the
+  /// given type.
+  ExprResult forceUnknownAnyToType(Expr *E, QualType ToType);
+                             
   // CheckVectorCast - check type constraints for vectors.
   // Since vectors are an extension, there are no C standard reference for this.
   // We allow casting between vectors and integer datatypes of the same size.
