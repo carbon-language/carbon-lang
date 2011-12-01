@@ -383,6 +383,15 @@ private:
   /// global submodule ID to produce a local ID.
   GlobalSubmoduleMapType GlobalSubmoduleMap;
 
+  /// \brief A set of hidden declarations.
+  typedef llvm::SmallVector<Decl *, 2> HiddenNames;
+  
+  typedef llvm::DenseMap<Module *, HiddenNames> HiddenNamesMapType;
+
+  /// \brief A mapping from each of the hidden submodules to the deserialized
+  /// declarations in that submodule that could be made visible.
+  HiddenNamesMapType HiddenNamesMap;
+  
   /// \brief A vector containing selectors that have already been loaded.
   ///
   /// This vector is indexed by the Selector ID (-1). NULL selector
@@ -813,6 +822,9 @@ public:
   void makeModuleVisible(Module *Mod, 
                          Module::NameVisibilityKind NameVisibility);
   
+  /// \brief Make the names within this set of hidden names visible.
+  void makeNamesVisible(const HiddenNames &Names);
+  
   /// \brief Set the AST callbacks listener.
   void setListener(ASTReaderListener *listener) {
     Listener.reset(listener);
@@ -828,6 +840,13 @@ public:
   void addInMemoryBuffer(StringRef &FileName, llvm::MemoryBuffer *Buffer) {
     ModuleMgr.addInMemoryBuffer(FileName, Buffer);
   }
+
+  /// \brief Finalizes the AST reader's state before writing an AST file to
+  /// disk.
+  ///
+  /// This operation may undo temporary state in the AST that should not be
+  /// emitted.
+  void finalizeForWriting();
 
   /// \brief Retrieve the module manager.
   ModuleManager &getModuleManager() { return ModuleMgr; }

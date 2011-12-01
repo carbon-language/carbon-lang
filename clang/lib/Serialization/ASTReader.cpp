@@ -2439,6 +2439,11 @@ ASTReader::ASTReadResult ASTReader::validateFileEntries(ModuleFile &M) {
   return Success;
 }
 
+void ASTReader::makeNamesVisible(const HiddenNames &Names) {
+  for (unsigned I = 0, N = Names.size(); I != N; ++I)
+    Names[I]->ModulePrivate = false;    
+}
+
 void ASTReader::makeModuleVisible(Module *Mod, 
                                   Module::NameVisibilityKind NameVisibility) {
   llvm::SmallPtrSet<Module *, 4> Visited;
@@ -2457,8 +2462,13 @@ void ASTReader::makeModuleVisible(Module *Mod,
     // Update the module's name visibility.
     Mod->NameVisibility = NameVisibility;
     
-    // FIXME: If we've already deserialized any names from this module,
+    // If we've already deserialized any names from this module,
     // mark them as visible.
+    HiddenNamesMapType::iterator Hidden = HiddenNamesMap.find(Mod);
+    if (Hidden != HiddenNamesMap.end()) {
+      makeNamesVisible(Hidden->second);
+      HiddenNamesMap.erase(Hidden);
+    }
     
     // Push any non-explicit submodules onto the stack to be marked as
     // visible.
@@ -2774,6 +2784,15 @@ void ASTReader::InitializeContext() {
     Context.setcudaConfigureCallDecl(
                            cast<FunctionDecl>(GetDecl(CUDASpecialDeclRefs[0])));
   }
+}
+
+void ASTReader::finalizeForWriting() {
+  for (HiddenNamesMapType::iterator Hidden = HiddenNamesMap.begin(),
+                                 HiddenEnd = HiddenNamesMap.end();
+       Hidden != HiddenEnd; ++Hidden) {
+    makeNamesVisible(Hidden->second);
+  }
+  HiddenNamesMap.clear();
 }
 
 /// \brief Retrieve the name of the original source file name

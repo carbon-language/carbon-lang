@@ -2958,6 +2958,10 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
                              Module *WritingModule) {
   using namespace llvm;
 
+  // Make sure that the AST reader knows to finalize itself.
+  if (Chain)
+    Chain->finalizeForWriting();
+  
   ASTContext &Context = SemaRef.Context;
   Preprocessor &PP = SemaRef.PP;
 

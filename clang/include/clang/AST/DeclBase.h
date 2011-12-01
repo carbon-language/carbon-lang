@@ -278,6 +278,7 @@ protected:
 
   friend class ASTDeclWriter;
   friend class ASTDeclReader;
+  friend class ASTReader;
 
 private:
   void CheckAccessDeclContext() const;

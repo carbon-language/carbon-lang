@@ -1,1 +1,1 @@
-template<typename T> class vector;
+template<typename T> class vector { };

@@ -86,6 +86,14 @@ namespace clang {
       Reader.ReadDeclarationNameInfo(F, NameInfo, R, I);
     }
 
+    serialization::SubmoduleID readSubmoduleID(const RecordData &R, 
+                                               unsigned &I) {
+      if (I >= R.size())
+        return 0;
+      
+      return Reader.getGlobalSubmoduleID(F, R[I++]);
+    }
+    
     void ReadCXXDefinitionData(struct CXXRecordDecl::DefinitionData &Data,
                                const RecordData &R, unsigned &I);
 
@@ -253,10 +261,25 @@ void ASTDeclReader::VisitDecl(Decl *D) {
   D->setAccess((AccessSpecifier)Record[Idx++]);
   D->FromASTFile = true;
   D->ModulePrivate = Record[Idx++];
-  
-  unsigned SubmoduleID = Record[Idx++];
-  // FIXME: Actual use the submodule ID to determine visibility.
-  (void)SubmoduleID;
+
+  // Determine whether this declaration is part of a (sub)module. If so, it
+  // may not yet be visible.
+  if (unsigned SubmoduleID = readSubmoduleID(Record, Idx)) {
+    // Module-private declarations are never visible, so there is no work to do.
+    if (!D->ModulePrivate) {
+      if (Module *Owner = Reader.getSubmodule(SubmoduleID)) {
+        if (Owner->NameVisibility != Module::AllVisible) {
+          // The owning module is not visible. Mark this declaration as
+          // module-private, 
+          D->ModulePrivate = true;
+          
+          // Note that this declaration was hidden because its owning module is 
+          // not yet visible.
+          Reader.HiddenNamesMap[Owner].push_back(D);
+        }
+      }
+    }
+  }
 }
 
 void ASTDeclReader::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
