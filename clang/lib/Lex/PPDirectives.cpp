@@ -1360,8 +1360,10 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
            "__import_module__ " + PathString.str().str() + ";");
     
     // Load the module.
-    // FIXME: Deal with __include_macros here.
-    TheModuleLoader.loadModule(IncludeTok.getLocation(), Path);
+    // If this was an #__include_macros directive, only make macros visible.
+    Module::NameVisibilityKind Visibility 
+      = (IncludeKind == 3)? Module::MacrosVisible : Module::AllVisible;
+    TheModuleLoader.loadModule(IncludeTok.getLocation(), Path, Visibility);
     return;
   }
   

@@ -2439,6 +2439,38 @@ ASTReader::ASTReadResult ASTReader::validateFileEntries(ModuleFile &M) {
   return Success;
 }
 
+void ASTReader::makeModuleVisible(Module *Mod, 
+                                  Module::NameVisibilityKind NameVisibility) {
+  llvm::SmallPtrSet<Module *, 4> Visited;
+  llvm::SmallVector<Module *, 4> Stack;
+  Stack.push_back(Mod);  
+  while (!Stack.empty()) {
+    Mod = Stack.back();
+    Stack.pop_back();
+
+    if (NameVisibility <= Mod->NameVisibility) {
+      // This module already has this level of visibility (or greater), so 
+      // there is nothing more to do.
+      continue;
+    }
+    
+    // Update the module's name visibility.
+    Mod->NameVisibility = NameVisibility;
+    
+    // FIXME: If we've already deserialized any names from this module,
+    // mark them as visible.
+    
+    // Push any non-explicit submodules onto the stack to be marked as
+    // visible.
+    for (llvm::StringMap<Module *>::iterator Sub = Mod->SubModules.begin(),
+                                          SubEnd = Mod->SubModules.end();
+         Sub != SubEnd; ++Sub) {
+      if (!Sub->getValue()->IsExplicit && Visited.insert(Sub->getValue()))
+        Stack.push_back(Sub->getValue());
+    }
+  }
+}
+
 ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
                                             ModuleKind Type) {
   switch(ReadASTCore(FileName, Type, /*ImportedBy=*/0)) {

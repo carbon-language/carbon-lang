@@ -58,17 +58,33 @@ public:
   /// \brief Whether this is an explicit submodule.
   bool IsExplicit;
   
+  /// \brief Describes the visibility of the various names within a
+  /// particular module.
+  enum NameVisibilityKind {
+    /// \brief All of the names in this module are hidden.
+    ///
+    Hidden,
+    /// \brief Only the macro names in this module are visible.
+    MacrosVisible,
+    /// \brief All of the names in this module are visible.
+    AllVisible
+  };  
+  
+  ///\ brief The visibility of names within this particular module.
+  NameVisibilityKind NameVisibility;
+  
   /// \brief Construct a top-level module.
   explicit Module(StringRef Name, SourceLocation DefinitionLoc,
                   bool IsFramework)
     : Name(Name), DefinitionLoc(DefinitionLoc), Parent(0), UmbrellaHeader(0),
-      IsFramework(IsFramework), IsExplicit(false) { }
+      IsFramework(IsFramework), IsExplicit(false), NameVisibility(Hidden) { }
   
   /// \brief Construct  a new module or submodule.
   Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent, 
          bool IsFramework, bool IsExplicit)
     : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent), 
-      UmbrellaHeader(0), IsFramework(IsFramework), IsExplicit(IsExplicit) { }
+      UmbrellaHeader(0), IsFramework(IsFramework), IsExplicit(IsExplicit), 
+      NameVisibility(Hidden) { }
   
   ~Module();
   

@@ -9892,7 +9892,8 @@ Decl *Sema::ActOnFileScopeAsmDecl(Expr *expr,
 }
 
 DeclResult Sema::ActOnModuleImport(SourceLocation ImportLoc, ModuleIdPath Path) {
-  Module *Mod = PP.getModuleLoader().loadModule(ImportLoc, Path);
+  Module *Mod = PP.getModuleLoader().loadModule(ImportLoc, Path, 
+                                                Module::AllVisible);
   if (!Mod)
     return true;
   

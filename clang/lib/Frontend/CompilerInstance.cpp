@@ -1069,12 +1069,17 @@ static void compileModule(CompilerInstance &ImportingInstance,
 }
 
 Module *CompilerInstance::loadModule(SourceLocation ImportLoc, 
-                                     ModuleIdPath Path) {
+                                     ModuleIdPath Path,
+                                     Module::NameVisibilityKind Visibility) {
   // If we've already handled this import, just return the cached result.
   // This one-element cache is important to eliminate redundant diagnostics
   // when both the preprocessor and parser see the same import declaration.
-  if (!ImportLoc.isInvalid() && LastModuleImportLoc == ImportLoc)
+  if (!ImportLoc.isInvalid() && LastModuleImportLoc == ImportLoc) {
+    // Make the named module visible.
+    if (LastModuleImportResult)
+      ModuleManager->makeModuleVisible(LastModuleImportResult, Visibility);
     return LastModuleImportResult;
+  }
   
   // Determine what file we're searching from.
   SourceManager &SourceMgr = getSourceManager();
@@ -1253,7 +1258,9 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
     }
   }
   
-  // FIXME: Tell the AST reader to make the named submodule visible.
+  // Make the named module visible.
+  if (Module)
+    ModuleManager->makeModuleVisible(Module, Visibility);
   
   LastModuleImportLoc = ImportLoc;
   LastModuleImportResult = Module;

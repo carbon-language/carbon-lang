@@ -14,13 +14,13 @@
 #ifndef LLVM_CLANG_LEX_MODULE_LOADER_H
 #define LLVM_CLANG_LEX_MODULE_LOADER_H
 
+#include "clang/Basic/Module.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/ArrayRef.h"
 
 namespace clang {
 
 class IdentifierInfo;
-class Module;
   
 /// \brief A sequence of identifier/location pairs used to describe a particular
 /// module or submodule, e.g., std.vector.
@@ -41,12 +41,17 @@ public:
   /// parameters.
   ///
   /// \param ImportLoc The location of the 'import' keyword.
+  ///
   /// \param Path The identifiers (and their locations) of the module
   /// "path", e.g., "std.vector" would be split into "std" and "vector".
+  /// 
+  /// \param Visibility The visibility provided for the names in the loaded
+  /// module.
   ///
   /// \returns If successful, returns the loaded module. Otherwise, returns 
   /// NULL to indicate that the module could not be loaded.
-  virtual Module *loadModule(SourceLocation ImportLoc, ModuleIdPath Path) = 0;
+  virtual Module *loadModule(SourceLocation ImportLoc, ModuleIdPath Path,
+                             Module::NameVisibilityKind Visibility) = 0;
 };
   
 }

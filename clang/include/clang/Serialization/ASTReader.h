@@ -803,6 +803,16 @@ public:
   /// the actual file in the file system.
   ASTReadResult validateFileEntries(ModuleFile &M);
 
+  /// \brief Make the entities in the given module and any of its (non-explicit)
+  /// submodules visible to name lookup.
+  ///
+  /// \param Mod The module whose names should be made visible.
+  ///
+  /// \param Visibility The level of visibility to give the names in the module.
+  /// Visibility can only be increased over time.
+  void makeModuleVisible(Module *Mod, 
+                         Module::NameVisibilityKind NameVisibility);
+  
   /// \brief Set the AST callbacks listener.
   void setListener(ASTReaderListener *listener) {
     Listener.reset(listener);
