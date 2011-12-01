@@ -1795,6 +1795,20 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   if (Value *V = SimplifyICmpInst(I.getPredicate(), Op0, Op1, TD))
     return ReplaceInstUsesWith(I, V);
 
+  // comparing -val or val with non-zero is the same as just comparing val
+  // ie, (val != 0) == (-val != 0)
+  if (I.getPredicate() == ICmpInst::ICMP_NE && match(Op1, m_Zero()))
+  {
+    Value *Cond, *SubSrc, *SelectFalse;
+    if (match(Op0, m_Select(m_Value(Cond), m_Sub(m_Zero(), m_Value(SubSrc)),
+                            m_Value(SelectFalse)))) {
+      if (SubSrc == SelectFalse) {
+        return CmpInst::Create(Instruction::ICmp, I.getPredicate(),
+                               SubSrc, Op1);
+      }
+    }
+  }
+
   Type *Ty = Op0->getType();
 
   // icmp's with boolean values can always be turned into bitwise operations
