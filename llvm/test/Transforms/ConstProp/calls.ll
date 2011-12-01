@@ -1,4 +1,5 @@
 ; RUN: opt < %s -constprop -S | FileCheck %s
+; RUN: opt < %s -constprop -disable-simplify-libcalls -S | FileCheck %s --check-prefix=FNOBUILTIN
 
 declare double @cos(double)
 
@@ -59,3 +60,81 @@ declare i32 @llvm.x86.sse2.cvtsd2si(<2 x double>) nounwind readnone
 declare i32 @llvm.x86.sse2.cvttsd2si(<2 x double>) nounwind readnone
 declare i64 @llvm.x86.sse2.cvtsd2si64(<2 x double>) nounwind readnone
 declare i64 @llvm.x86.sse2.cvttsd2si64(<2 x double>) nounwind readnone
+
+; Shouldn't fold because of -fno-builtin
+define double @sin_() nounwind uwtable ssp {
+; FNOBUILTIN: @sin_
+; FNOBUILTIN: %1 = call double @sin(double 3.000000e+00)
+  %1 = call double @sin(double 3.000000e+00)
+  ret double %1
+}
+
+; Shouldn't fold because of -fno-builtin
+define double @sqrt_() nounwind uwtable ssp {
+; FNOBUILTIN: @sqrt_
+; FNOBUILTIN: %1 = call double @sqrt(double 3.000000e+00)
+  %1 = call double @sqrt(double 3.000000e+00)
+  ret double %1
+}
+
+; Shouldn't fold because of -fno-builtin
+define float @sqrtf_() nounwind uwtable ssp {
+; FNOBUILTIN: @sqrtf_
+; FNOBUILTIN: %1 = call float @sqrtf(float 3.000000e+00)
+  %1 = call float @sqrtf(float 3.000000e+00)
+  ret float %1
+}
+declare float @sqrtf(float)
+
+; Shouldn't fold because of -fno-builtin
+define float @sinf_() nounwind uwtable ssp {
+; FNOBUILTIN: @sinf_
+; FNOBUILTIN: %1 = call float @sinf(float 3.000000e+00)
+  %1 = call float @sinf(float 3.000000e+00)
+  ret float %1
+}
+declare float @sinf(float)
+
+; Shouldn't fold because of -fno-builtin
+define double @tan_() nounwind uwtable ssp {
+; FNOBUILTIN: @tan_
+; FNOBUILTIN: %1 = call double @tan(double 3.000000e+00)
+  %1 = call double @tan(double 3.000000e+00)
+  ret double %1
+}
+
+; Shouldn't fold because of -fno-builtin
+define double @tanh_() nounwind uwtable ssp {
+; FNOBUILTIN: @tanh_
+; FNOBUILTIN: %1 = call double @tanh(double 3.000000e+00)
+  %1 = call double @tanh(double 3.000000e+00)
+  ret double %1
+}
+declare double @tanh(double)
+
+; Shouldn't fold because of -fno-builtin
+define double @pow_() nounwind uwtable ssp {
+; FNOBUILTIN: @pow_
+; FNOBUILTIN: %1 = call double @pow(double 3.000000e+00, double 3.000000e+00)
+  %1 = call double @pow(double 3.000000e+00, double 3.000000e+00)
+  ret double %1
+}
+declare double @pow(double, double)
+
+; Shouldn't fold because of -fno-builtin
+define double @fmod_() nounwind uwtable ssp {
+; FNOBUILTIN: @fmod_
+; FNOBUILTIN: %1 = call double @fmod(double 3.000000e+00, double 3.000000e+00)
+  %1 = call double @fmod(double 3.000000e+00, double 3.000000e+00)
+  ret double %1
+}
+declare double @fmod(double, double)
+
+; Shouldn't fold because of -fno-builtin
+define double @atan2_() nounwind uwtable ssp {
+; FNOBUILTIN: @atan2_
+; FNOBUILTIN: %1 = call double @atan2(double 3.000000e+00, double 3.000000e+00)
+  %1 = call double @atan2(double 3.000000e+00, double 3.000000e+00)
+  ret double %1
+}
+declare double @atan2(double, double)
