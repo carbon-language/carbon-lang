@@ -718,16 +718,16 @@ ClangExpressionDeclMap::GetFunctionAddress
 }
 
 addr_t
-ClangExpressionDeclMap::GetSymbolAddress (Target &target, const ConstString &name)
+ClangExpressionDeclMap::GetSymbolAddress (Target &target, const ConstString &name, lldb::SymbolType symbol_type)
 {
     SymbolContextList sc_list;
     
-    target.GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeAny, sc_list);
+    target.GetImages().FindSymbolsWithNameAndType(name, symbol_type, sc_list);
     
     const uint32_t num_matches = sc_list.GetSize();
     addr_t symbol_load_addr = LLDB_INVALID_ADDRESS;
 
-    for (uint32_t i=0; i<num_matches && symbol_load_addr == LLDB_INVALID_ADDRESS; i++)
+    for (uint32_t i=0; i<num_matches && (symbol_load_addr == 0 || symbol_load_addr == LLDB_INVALID_ADDRESS); i++)
     {
         SymbolContext sym_ctx;
         sc_list.GetContextAtIndex(i, sym_ctx);
@@ -778,7 +778,7 @@ ClangExpressionDeclMap::GetSymbolAddress (Target &target, const ConstString &nam
 }
 
 addr_t
-ClangExpressionDeclMap::GetSymbolAddress (const ConstString &name)
+ClangExpressionDeclMap::GetSymbolAddress (const ConstString &name, lldb::SymbolType symbol_type)
 {
     assert (m_parser_vars.get());
     
@@ -786,7 +786,7 @@ ClangExpressionDeclMap::GetSymbolAddress (const ConstString &name)
         !m_parser_vars->m_exe_ctx->GetTargetPtr())
         return false;
     
-    return GetSymbolAddress(m_parser_vars->m_exe_ctx->GetTargetRef(), name);
+    return GetSymbolAddress(m_parser_vars->m_exe_ctx->GetTargetRef(), name, symbol_type);
 }
 
 // Interface for IRInterpreter
@@ -1741,7 +1741,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     }
     else if (sym)
     {
-        addr_t location_load_addr = GetSymbolAddress(*target, name);
+        addr_t location_load_addr = GetSymbolAddress(*target, name, lldb::eSymbolTypeAny);
         
         if (location_load_addr == LLDB_INVALID_ADDRESS)
         {

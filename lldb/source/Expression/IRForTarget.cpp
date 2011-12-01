@@ -1676,7 +1676,7 @@ IRForTarget::HandleSymbol (Value *symbol)
     
     lldb_private::ConstString name(symbol->getName().str().c_str());
     
-    lldb::addr_t symbol_addr = m_decl_map->GetSymbolAddress (name);
+    lldb::addr_t symbol_addr = m_decl_map->GetSymbolAddress (name, lldb::eSymbolTypeAny);
     
     if (symbol_addr == LLDB_INVALID_ADDRESS)
     {
@@ -1748,7 +1748,7 @@ IRForTarget::HandleObjCClass(Value *classlist_reference)
     
     StringRef name(initializer->getName());
     lldb_private::ConstString name_cstr(name.str().c_str());
-    lldb::addr_t class_ptr = m_decl_map->GetSymbolAddress(name_cstr);
+    lldb::addr_t class_ptr = m_decl_map->GetSymbolAddress(name_cstr, lldb::eSymbolTypeRuntime);
     
     if (log)
         log->Printf("Found reference to Objective-C class %s (0x%llx)", name_cstr.AsCString(), (unsigned long long)class_ptr);

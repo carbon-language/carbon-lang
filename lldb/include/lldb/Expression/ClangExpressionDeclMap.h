@@ -336,10 +336,12 @@ public:
     //------------------------------------------------------------------
     lldb::addr_t 
     GetSymbolAddress (Target &target,
-                      const ConstString &name);
+                      const ConstString &name,
+                      lldb::SymbolType symbol_type);
     
     lldb::addr_t
-    GetSymbolAddress (const ConstString &name);
+    GetSymbolAddress (const ConstString &name,
+                      lldb::SymbolType symbol_type);
     
     //------------------------------------------------------------------
     /// [Used by IRInterpreter] Get basic target information.
