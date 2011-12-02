@@ -374,6 +374,20 @@ SymbolFileSymtab::FindFunctions(const RegularExpression& regex, bool append, Sym
     return 0;
 }
 
+static int CountMethodArgs(const char *method_signature)
+{
+    int num_args = 0;
+    
+    for (const char *colon_pos = strchr(method_signature, ':');
+         colon_pos != NULL;
+         colon_pos = strchr(colon_pos + 1, ':'))
+    {
+        num_args++;
+    }
+    
+    return num_args;
+}
+
 uint32_t
 SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, const lldb_private::ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, lldb_private::TypeList& types)
 {
@@ -382,6 +396,14 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, const lldb_p
     
     if (HasObjCSymbols())
     {
+        TypeMap::iterator iter = m_objc_class_types.find(name.AsCString());
+        
+        if (iter != m_objc_class_types.end())
+        {
+            types.Insert(iter->second);
+            return 1;
+        }
+            
         std::string symbol_name("OBJC_CLASS_$_");
         symbol_name.append(name.AsCString());
         ConstString symbol_const_string(symbol_name.c_str());
@@ -397,6 +419,83 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, const lldb_p
         ClangASTContext &clang_ast_ctx = GetClangASTContext();
         
         lldb::clang_type_t objc_object_type = clang_ast_ctx.CreateObjCClass(name.AsCString(), clang_ast_ctx.GetTranslationUnitDecl(), isForwardDecl, isInternal);
+                
+        const char *class_method_prefix = "^\\+\\[";
+        const char *instance_method_prefix = "^\\-\\[";
+        const char *method_suffix = " [a-zA-Z0-9:]+\\]$";
+        
+        std::string class_method_regexp_str(class_method_prefix);
+        class_method_regexp_str.append(name.AsCString());
+        class_method_regexp_str.append(method_suffix);
+        
+        RegularExpression class_method_regexp(class_method_regexp_str.c_str());
+        
+        indices.clear();
+        
+        lldb::clang_type_t unknown_type = clang_ast_ctx.GetUnknownAnyType();
+        std::vector<lldb::clang_type_t> arg_types;
+
+        if (m_obj_file->GetSymtab()->FindAllSymbolsMatchingRexExAndType(class_method_regexp, eSymbolTypeCode, Symtab::eDebugNo, Symtab::eVisibilityAny, indices) != 0)
+        {
+            for (std::vector<uint32_t>::iterator ii = indices.begin(), ie = indices.end();
+                 ii != ie;
+                 ++ii)
+            {
+                Symbol *symbol = m_obj_file->GetSymtab()->SymbolAtIndex(*ii);
+                
+                if (!symbol)
+                    continue;
+                
+                const char *signature = symbol->GetName().AsCString();
+                
+                int num_args = CountMethodArgs(signature);
+                
+                while (arg_types.size() < num_args)
+                    arg_types.push_back(unknown_type);
+                
+                bool is_variadic = false;
+                unsigned type_quals = 0;
+                
+                lldb::clang_type_t method_type = clang_ast_ctx.CreateFunctionType(unknown_type, arg_types.data(), num_args, is_variadic, type_quals);
+                
+                clang_ast_ctx.AddMethodToObjCObjectType(objc_object_type, signature, method_type, eAccessPublic);
+            }
+        }
+        
+        std::string instance_method_regexp_str(instance_method_prefix);
+        instance_method_regexp_str.append(name.AsCString());
+        instance_method_regexp_str.append(method_suffix);
+        
+        RegularExpression instance_method_regexp(instance_method_regexp_str.c_str());
+        
+        indices.clear();
+        
+        if (m_obj_file->GetSymtab()->FindAllSymbolsMatchingRexExAndType(instance_method_regexp, eSymbolTypeCode, Symtab::eDebugNo, Symtab::eVisibilityAny, indices) != 0)
+        {
+            for (std::vector<uint32_t>::iterator ii = indices.begin(), ie = indices.end();
+                 ii != ie;
+                 ++ii)
+            {
+                Symbol *symbol = m_obj_file->GetSymtab()->SymbolAtIndex(*ii);
+                
+                if (!symbol)
+                    continue;
+                
+                const char *signature = symbol->GetName().AsCString();
+                
+                int num_args = CountMethodArgs(signature);
+                
+                while (arg_types.size() < num_args)
+                    arg_types.push_back(unknown_type);
+                
+                bool is_variadic = false;
+                unsigned type_quals = 0;
+                
+                lldb::clang_type_t method_type = clang_ast_ctx.CreateFunctionType(unknown_type, arg_types.data(), num_args, is_variadic, type_quals);
+                
+                clang_ast_ctx.AddMethodToObjCObjectType(objc_object_type, signature, method_type, eAccessPublic);
+            }
+        }
         
         Declaration decl;
         
@@ -409,7 +508,9 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, const lldb_p
                                     Type::eEncodingInvalid,
                                     decl,
                                     objc_object_type,
-                                    Type::eResolveStateForward));
+                                    Type::eResolveStateFull));
+        
+        m_objc_class_types[name.AsCString()] = type;
         
         types.Insert(type);
         

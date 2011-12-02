@@ -125,6 +125,10 @@ protected:
     std::vector<uint32_t>   m_code_indexes;
     std::vector<uint32_t>   m_data_indexes;
     std::vector<uint32_t>   m_addr_indexes; // Anything that needs to go into an search by address
+    
+    typedef std::map<const char *, lldb::TypeSP> TypeMap;
+    
+    TypeMap                 m_objc_class_types;
 
     bool
     HasObjCSymbols ();
