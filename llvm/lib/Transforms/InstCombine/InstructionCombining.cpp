@@ -1849,7 +1849,7 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
 
           Constant*& FoldRes = FoldedConstants[CE];
           if (!FoldRes)
-            FoldRes = ConstantFoldConstantExpression(CE, TD);
+            FoldRes = ConstantFoldConstantExpression(CE, TD, TLI);
           if (!FoldRes)
             FoldRes = CE;
 

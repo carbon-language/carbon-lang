@@ -2591,7 +2591,7 @@ const SCEV *ScalarEvolution::getSizeOfExpr(Type *AllocTy) {
 
   Constant *C = ConstantExpr::getSizeOf(AllocTy);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-    if (Constant *Folded = ConstantFoldConstantExpression(CE, TD))
+    if (Constant *Folded = ConstantFoldConstantExpression(CE, TD, TLI))
       C = Folded;
   Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(AllocTy));
   return getTruncateOrZeroExtend(getSCEV(C), Ty);
@@ -2600,7 +2600,7 @@ const SCEV *ScalarEvolution::getSizeOfExpr(Type *AllocTy) {
 const SCEV *ScalarEvolution::getAlignOfExpr(Type *AllocTy) {
   Constant *C = ConstantExpr::getAlignOf(AllocTy);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-    if (Constant *Folded = ConstantFoldConstantExpression(CE, TD))
+    if (Constant *Folded = ConstantFoldConstantExpression(CE, TD, TLI))
       C = Folded;
   Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(AllocTy));
   return getTruncateOrZeroExtend(getSCEV(C), Ty);
@@ -2617,7 +2617,7 @@ const SCEV *ScalarEvolution::getOffsetOfExpr(StructType *STy,
 
   Constant *C = ConstantExpr::getOffsetOf(STy, FieldNo);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-    if (Constant *Folded = ConstantFoldConstantExpression(CE, TD))
+    if (Constant *Folded = ConstantFoldConstantExpression(CE, TD, TLI))
       C = Folded;
   Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(STy));
   return getTruncateOrZeroExtend(getSCEV(C), Ty);
@@ -2627,7 +2627,7 @@ const SCEV *ScalarEvolution::getOffsetOfExpr(Type *CTy,
                                              Constant *FieldNo) {
   Constant *C = ConstantExpr::getOffsetOf(CTy, FieldNo);
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-    if (Constant *Folded = ConstantFoldConstantExpression(CE, TD))
+    if (Constant *Folded = ConstantFoldConstantExpression(CE, TD, TLI))
       C = Folded;
   Type *Ty = getEffectiveSCEVType(PointerType::getUnqual(CTy));
   return getTruncateOrZeroExtend(getSCEV(C), Ty);
@@ -4807,7 +4807,7 @@ static Constant *EvaluateExpression(Value *V, const Loop *L,
 
   if (CmpInst *CI = dyn_cast<CmpInst>(I))
     return ConstantFoldCompareInstOperands(CI->getPredicate(), Operands[0],
-                                           Operands[1], TD);
+                                           Operands[1], TD, TLI);
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
     if (!LI->isVolatile())
       return ConstantFoldLoadFromConstPtr(Operands[0], TD);
@@ -5172,7 +5172,8 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
           Constant *C = 0;
           if (const CmpInst *CI = dyn_cast<CmpInst>(I))
             C = ConstantFoldCompareInstOperands(CI->getPredicate(),
-                                                Operands[0], Operands[1], TD);
+                                                Operands[0], Operands[1], TD,
+                                                TLI);
           else if (const LoadInst *LI = dyn_cast<LoadInst>(I)) {
             if (!LI->isVolatile())
               C = ConstantFoldLoadFromConstPtr(Operands[0], TD);

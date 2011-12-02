@@ -45,6 +45,8 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
@@ -84,6 +86,7 @@ namespace {
       AU.addPreserved<AliasAnalysis>();
       AU.addPreserved("scalar-evolution");
       AU.addPreservedID(LoopSimplifyID);
+      AU.addRequired<TargetLibraryInfo>();
     }
 
     bool doFinalization() {
@@ -95,6 +98,9 @@ namespace {
     AliasAnalysis *AA;       // Current AliasAnalysis information
     LoopInfo      *LI;       // Current LoopInfo
     DominatorTree *DT;       // Dominator Tree for the current Loop.
+
+    TargetData *TD;          // TargetData for constant folding.
+    TargetLibraryInfo *TLI;  // TargetLibraryInfo for constant folding.
 
     // State that is updated as we process loops.
     bool Changed;            // Set to true when we change anything.
@@ -177,6 +183,7 @@ INITIALIZE_PASS_BEGIN(LICM, "licm", "Loop Invariant Code Motion", false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTree)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(LICM, "licm", "Loop Invariant Code Motion", false, false)
 
@@ -193,6 +200,9 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
   AA = &getAnalysis<AliasAnalysis>();
   DT = &getAnalysis<DominatorTree>();
+
+  TD = getAnalysisIfAvailable<TargetData>();
+  TLI = &getAnalysis<TargetLibraryInfo>();
 
   CurAST = new AliasSetTracker(*AA);
   // Collect Alias info from subloops.
@@ -333,7 +343,7 @@ void LICM::HoistRegion(DomTreeNode *N) {
       // Try constant folding this instruction.  If all the operands are
       // constants, it is technically hoistable, but it would be better to just
       // fold it.
-      if (Constant *C = ConstantFoldInstruction(&I)) {
+      if (Constant *C = ConstantFoldInstruction(&I, TD, TLI)) {
         DEBUG(dbgs() << "LICM folding inst: " << I << "  --> " << *C << '\n');
         CurAST->copyValue(&I, C);
         CurAST->deleteValue(&I);

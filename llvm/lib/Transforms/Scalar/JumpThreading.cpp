@@ -24,6 +24,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -75,6 +76,7 @@ namespace {
   ///
   class JumpThreading : public FunctionPass {
     TargetData *TD;
+    TargetLibraryInfo *TLI;
     LazyValueInfo *LVI;
 #ifdef NDEBUG
     SmallPtrSet<BasicBlock*, 16> LoopHeaders;
@@ -107,6 +109,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<LazyValueInfo>();
       AU.addPreserved<LazyValueInfo>();
+      AU.addRequired<TargetLibraryInfo>();
     }
 
     void FindLoopHeaders(Function &F);
@@ -133,6 +136,7 @@ char JumpThreading::ID = 0;
 INITIALIZE_PASS_BEGIN(JumpThreading, "jump-threading",
                 "Jump Threading", false, false)
 INITIALIZE_PASS_DEPENDENCY(LazyValueInfo)
+INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_PASS_END(JumpThreading, "jump-threading",
                 "Jump Threading", false, false)
 
@@ -144,6 +148,7 @@ FunctionPass *llvm::createJumpThreadingPass() { return new JumpThreading(); }
 bool JumpThreading::runOnFunction(Function &F) {
   DEBUG(dbgs() << "Jump threading on function '" << F.getName() << "'\n");
   TD = getAnalysisIfAvailable<TargetData>();
+  TLI = &getAnalysis<TargetLibraryInfo>();
   LVI = &getAnalysis<LazyValueInfo>();
 
   FindLoopHeaders(F);
@@ -674,7 +679,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
   // Run constant folding to see if we can reduce the condition to a simple
   // constant.
   if (Instruction *I = dyn_cast<Instruction>(Condition)) {
-    Value *SimpleVal = ConstantFoldInstruction(I, TD);
+    Value *SimpleVal = ConstantFoldInstruction(I, TD, TLI);
     if (SimpleVal) {
       I->replaceAllUsesWith(SimpleVal);
       I->eraseFromParent();

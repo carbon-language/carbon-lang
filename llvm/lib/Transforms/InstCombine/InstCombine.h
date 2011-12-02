@@ -97,6 +97,8 @@ public:
 
   TargetData *getTargetData() const { return TD; }
 
+  TargetLibraryInfo *getTargetLibraryInfo() const { return TLI; }
+
   // Visitation implementation - Implement instruction combining for different
   // instruction types.  The semantics are as follows:
   // Return Value:

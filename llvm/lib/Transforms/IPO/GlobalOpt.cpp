@@ -350,6 +350,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
       // and will invalidate our notion of what Init is.
       Constant *SubInit = 0;
       if (!isa<ConstantExpr>(GEP->getOperand(0))) {
+        // FIXME: use TargetData/TargetLibraryInfo for smarter constant folding.
         ConstantExpr *CE =
           dyn_cast_or_null<ConstantExpr>(ConstantFoldInstruction(GEP));
         if (Init && CE && CE->getOpcode() == Instruction::GetElementPtr)
@@ -833,6 +834,7 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV) {
 static void ConstantPropUsersOf(Value *V) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; )
     if (Instruction *I = dyn_cast<Instruction>(*UI++))
+      // FIXME: use TargetData/TargetLibraryInfo for smarter constant folding.
       if (Constant *NewC = ConstantFoldInstruction(I)) {
         I->replaceAllUsesWith(NewC);
 
@@ -1936,7 +1938,8 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
     if (GV->hasInitializer())
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(GV->getInitializer())) {
         TargetData *TD = getAnalysisIfAvailable<TargetData>();
-        Constant *New = ConstantFoldConstantExpression(CE, TD);
+        TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
+        Constant *New = ConstantFoldConstantExpression(CE, TD, TLI);
         if (New && New != CE)
           GV->setInitializer(New);
       }
@@ -2542,7 +2545,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
 
     if (!CurInst->use_empty()) {
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(InstResult))
-        InstResult = ConstantFoldConstantExpression(CE, TD);
+        InstResult = ConstantFoldConstantExpression(CE, TD, TLI);
       
       Values[CurInst] = InstResult;
     }

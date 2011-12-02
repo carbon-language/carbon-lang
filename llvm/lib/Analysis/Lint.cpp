@@ -622,7 +622,7 @@ Value *Lint::findValueImpl(Value *V, bool OffsetOk,
     if (Value *W = SimplifyInstruction(Inst, TD, TLI, DT))
       return findValueImpl(W, OffsetOk, Visited);
   } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    if (Value *W = ConstantFoldConstantExpression(CE, TD))
+    if (Value *W = ConstantFoldConstantExpression(CE, TD, TLI))
       if (W != V)
         return findValueImpl(W, OffsetOk, Visited);
   }
