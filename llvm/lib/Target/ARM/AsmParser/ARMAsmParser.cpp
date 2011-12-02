@@ -570,6 +570,22 @@ public:
     int64_t Value = CE->getValue();
     return Value >= 0 && Value < 256;
   }
+  bool isImm0_1() const {
+    if (Kind != k_Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return Value >= 0 && Value < 2;
+  }
+  bool isImm0_3() const {
+    if (Kind != k_Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return Value >= 0 && Value < 4;
+  }
   bool isImm0_7() const {
     if (Kind != k_Immediate)
       return false;

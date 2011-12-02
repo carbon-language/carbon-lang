@@ -5025,34 +5025,34 @@ def : AlignedVEXTq<v2f32, v4f32, DSubReg_i32_reg>;
 
 //   VEXT     : Vector Extract
 
-class VEXTd<string OpcodeStr, string Dt, ValueType Ty>
+class VEXTd<string OpcodeStr, string Dt, ValueType Ty, Operand immTy>
   : N3V<0,1,0b11,{?,?,?,?},0,0, (outs DPR:$Vd),
-        (ins DPR:$Vn, DPR:$Vm, imm0_7:$index), NVExtFrm,
+        (ins DPR:$Vn, DPR:$Vm, immTy:$index), NVExtFrm,
         IIC_VEXTD, OpcodeStr, Dt, "$Vd, $Vn, $Vm, $index", "",
         [(set DPR:$Vd, (Ty (NEONvext (Ty DPR:$Vn),
-                                      (Ty DPR:$Vm), imm:$index)))]> {
+                                     (Ty DPR:$Vm), imm:$index)))]> {
   bits<4> index;
   let Inst{11-8} = index{3-0};
 }
 
-class VEXTq<string OpcodeStr, string Dt, ValueType Ty>
+class VEXTq<string OpcodeStr, string Dt, ValueType Ty, Operand immTy>
   : N3V<0,1,0b11,{?,?,?,?},1,0, (outs QPR:$Vd),
         (ins QPR:$Vn, QPR:$Vm, imm0_15:$index), NVExtFrm,
         IIC_VEXTQ, OpcodeStr, Dt, "$Vd, $Vn, $Vm, $index", "",
         [(set QPR:$Vd, (Ty (NEONvext (Ty QPR:$Vn),
-                                      (Ty QPR:$Vm), imm:$index)))]> {
+                                     (Ty QPR:$Vm), imm:$index)))]> {
   bits<4> index;
   let Inst{11-8} = index{3-0};
 }
 
-def VEXTd8  : VEXTd<"vext", "8",  v8i8> {
+def VEXTd8  : VEXTd<"vext", "8",  v8i8, imm0_7> {
   let Inst{11-8} = index{3-0};
 }
-def VEXTd16 : VEXTd<"vext", "16", v4i16> {
+def VEXTd16 : VEXTd<"vext", "16", v4i16, imm0_3> {
   let Inst{11-9} = index{2-0};
   let Inst{8}    = 0b0;
 }
-def VEXTd32 : VEXTd<"vext", "32", v2i32> {
+def VEXTd32 : VEXTd<"vext", "32", v2i32, imm0_1> {
   let Inst{11-10} = index{1-0};
   let Inst{9-8}    = 0b00;
 }
@@ -5061,16 +5061,20 @@ def : Pat<(v2f32 (NEONvext (v2f32 DPR:$Vn),
                            (i32 imm:$index))),
           (VEXTd32 DPR:$Vn, DPR:$Vm, imm:$index)>;
 
-def VEXTq8  : VEXTq<"vext", "8",  v16i8> {
+def VEXTq8  : VEXTq<"vext", "8",  v16i8, imm0_15> {
   let Inst{11-8} = index{3-0};
 }
-def VEXTq16 : VEXTq<"vext", "16", v8i16> {
+def VEXTq16 : VEXTq<"vext", "16", v8i16, imm0_7> {
   let Inst{11-9} = index{2-0};
   let Inst{8}    = 0b0;
 }
-def VEXTq32 : VEXTq<"vext", "32", v4i32> {
+def VEXTq32 : VEXTq<"vext", "32", v4i32, imm0_3> {
   let Inst{11-10} = index{1-0};
   let Inst{9-8}    = 0b00;
+}
+def VEXTq64 : VEXTq<"vext", "32", v2i64, imm0_1> {
+  let Inst{11} = index{0};
+  let Inst{10-8}    = 0b000;
 }
 def : Pat<(v4f32 (NEONvext (v4f32 QPR:$Vn),
                            (v4f32 QPR:$Vm),
@@ -5592,6 +5596,23 @@ defm : VFPDT16ReqInstAlias<"vtrn${p}", "$Qd, $Qm",
                           (VTRNq16 QPR:$Qd, QPR:$Qm, pred:$p)>;
 defm : VFPDT32ReqInstAlias<"vtrn${p}", "$Qd, $Qm",
                           (VTRNq32 QPR:$Qd, QPR:$Qm, pred:$p)>;
+
+// VEXT instructions data type suffix aliases for more-specific types.
+defm VEXTd : VFPDT8ReqInstAlias <"vext${p}", "$Vd, $Vn, $Vm, $index",
+                  (VEXTd8  DPR:$Vd, DPR:$Vn, DPR:$Vm, imm0_7:$index, pred:$p)>;
+defm VEXTd : VFPDT16ReqInstAlias<"vext${p}", "$Vd, $Vn, $Vm, $index",
+                  (VEXTd16 DPR:$Vd, DPR:$Vn, DPR:$Vm, imm0_3:$index, pred:$p)>;
+defm VEXTd : VFPDT32ReqInstAlias<"vext${p}", "$Vd, $Vn, $Vm, $index",
+                  (VEXTd32 DPR:$Vd, DPR:$Vn, DPR:$Vm, imm0_1:$index, pred:$p)>;
+
+defm VEXTq : VFPDT8ReqInstAlias <"vext${p}", "$Vd, $Vn, $Vm, $index",
+                  (VEXTq8  QPR:$Vd, QPR:$Vn, QPR:$Vm, imm0_15:$index, pred:$p)>;
+defm VEXTq : VFPDT16ReqInstAlias<"vext${p}", "$Vd, $Vn, $Vm, $index",
+                  (VEXTq16 QPR:$Vd, QPR:$Vn, QPR:$Vm, imm0_7:$index, pred:$p)>;
+defm VEXTq : VFPDT32ReqInstAlias<"vext${p}", "$Vd, $Vn, $Vm, $index",
+                  (VEXTq32 QPR:$Vd, QPR:$Vn, QPR:$Vm, imm0_3:$index, pred:$p)>;
+defm VEXTq : VFPDT64ReqInstAlias<"vext${p}", "$Vd, $Vn, $Vm, $index",
+                  (VEXTq64 QPR:$Vd, QPR:$Vn, QPR:$Vm, imm0_1:$index, pred:$p)>;
 
 // VLD1 single-lane pseudo-instructions. These need special handling for
 // the lane index that an InstAlias can't handle, so we use these instead.

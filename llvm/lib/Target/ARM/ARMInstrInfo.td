@@ -512,6 +512,14 @@ def arm_i32imm : PatLeaf<(imm), [{
   return ARM_AM::isSOImmTwoPartVal((unsigned)N->getZExtValue());
 }]>;
 
+/// imm0_1 predicate - Immediate in the range [0,1].
+def Imm0_1AsmOperand: ImmAsmOperand { let Name = "Imm0_1"; }
+def imm0_1 : Operand<i32> { let ParserMatchClass = Imm0_1AsmOperand; }
+
+/// imm0_3 predicate - Immediate in the range [0,3].
+def Imm0_3AsmOperand: ImmAsmOperand { let Name = "Imm0_3"; }
+def imm0_3 : Operand<i32> { let ParserMatchClass = Imm0_3AsmOperand; }
+
 /// imm0_7 predicate - Immediate in the range [0,7].
 def Imm0_7AsmOperand: ImmAsmOperand { let Name = "Imm0_7"; }
 def imm0_7 : Operand<i32>, ImmLeaf<i32, [{
