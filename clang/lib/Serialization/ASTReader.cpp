@@ -1210,7 +1210,7 @@ ASTReader::ASTReadResult ASTReader::ReadSLocEntryRecord(int ID) {
     FileID BufferID = SourceMgr.createFileIDForMemBuffer(Buffer, ID,
                                                          BaseOffset + Offset);
 
-    if (strcmp(Name, "<built-in>") == 0) {
+    if (strcmp(Name, "<built-in>") == 0 && F->Kind == MK_PCH) {
       PCHPredefinesBlock Block = {
         BufferID,
         StringRef(BlobStart, BlobLen - 1)
@@ -2530,7 +2530,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   // Here comes stuff that we only do once the entire chain is loaded.
   
   // Check the predefines buffers.
-  if (!DisableValidation && Type != MK_Module && Type != MK_Preamble &&
+  if (!DisableValidation && Type == MK_PCH &&
       // FIXME: CheckPredefinesBuffers also sets the SuggestedPredefines;
       // if DisableValidation is true, defines that were set on command-line
       // but not in the PCH file will not be added to SuggestedPredefines.
