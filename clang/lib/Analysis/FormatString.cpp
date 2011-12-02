@@ -230,8 +230,7 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
       
     case SpecificTy: {
       argTy = C.getCanonicalType(argTy).getUnqualifiedType();
-      QualType U = C.getCanonicalType(T);
-      if (U == argTy)
+      if (T == argTy)
         return true;
       // Check for "compatible types".
       if (const BuiltinType *BT = argTy->getAs<BuiltinType>())
@@ -240,26 +239,26 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
             break;
           case BuiltinType::Char_S:
           case BuiltinType::SChar:
-            return U == C.UnsignedCharTy;
+            return T == C.UnsignedCharTy;
           case BuiltinType::Char_U:
           case BuiltinType::UChar:                    
-            return U == C.SignedCharTy;
+            return T == C.SignedCharTy;
           case BuiltinType::Short:
-            return U == C.UnsignedShortTy;
+            return T == C.UnsignedShortTy;
           case BuiltinType::UShort:
-            return U == C.ShortTy;
+            return T == C.ShortTy;
           case BuiltinType::Int:
-            return U == C.UnsignedIntTy;
+            return T == C.UnsignedIntTy;
           case BuiltinType::UInt:
-            return U == C.IntTy;
+            return T == C.IntTy;
           case BuiltinType::Long:
-            return U == C.UnsignedLongTy;
+            return T == C.UnsignedLongTy;
           case BuiltinType::ULong:
-            return U == C.LongTy;
+            return T == C.LongTy;
           case BuiltinType::LongLong:
-            return U == C.UnsignedLongLongTy;
+            return T == C.UnsignedLongLongTy;
           case BuiltinType::ULongLong:
-            return U == C.LongLongTy;
+            return T == C.LongLongTy;
         }
       return false;
     }
@@ -486,3 +485,5 @@ bool FormatSpecifier::hasValidLengthModifier() const {
   }
   return false;
 }
+
+

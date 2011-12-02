@@ -23,8 +23,6 @@
 
 namespace clang {
 
-class Sema;
-
 //===----------------------------------------------------------------------===//
 /// Common components of both fprintf and fscanf format strings.
 namespace analyze_format_string {
@@ -450,7 +448,7 @@ public:
   /// will return null if the format specifier does not have
   /// a matching data argument or the matching argument matches
   /// more than one type.
-  ArgTypeResult getArgType(Sema &S) const;
+  ArgTypeResult getArgType(ASTContext &Ctx) const;
 
   const OptionalFlag &hasThousandsGrouping() const {
       return HasThousandsGrouping;

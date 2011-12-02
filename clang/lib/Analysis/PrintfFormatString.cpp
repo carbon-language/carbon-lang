@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/Analyses/FormatString.h"
-#include "clang/Sema/Sema.h"
 #include "FormatStringParsing.h"
 
 using clang::analyze_format_string::ArgTypeResult;
@@ -279,27 +278,8 @@ const char *ConversionSpecifier::toString() const {
 // Methods on PrintfSpecifier.
 //===----------------------------------------------------------------------===//
 
-/// \brief Try to find and return a typedef type named Name whose actual type
-/// is Underlying. Return Underlying if such a typedef cannot be found.
-static QualType FindTypedef(Sema &S, const char *Name, QualType Underlying) {
-  ASTContext &Ctx = S.getASTContext();
-  IdentifierInfo &II = Ctx.Idents.get(Name);
-
-  NamedDecl *D = S.LookupSingleName(S.getCurScope(), DeclarationName(&II),
-                                    SourceLocation(), Sema::LookupOrdinaryName);
-
-  if (TypedefDecl *TD = dyn_cast_or_null<TypedefDecl>(D)) {
-    QualType TypedefType = Ctx.getTypedefType(TD, QualType());
-    if (Ctx.getCanonicalType(TypedefType) == Underlying)
-      return TypedefType;
-  }
-
-  return Underlying;
-}
-
-ArgTypeResult PrintfSpecifier::getArgType(Sema &S) const {
+ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
   const PrintfConversionSpecifier &CS = getConversionSpecifier();
-  ASTContext &Ctx = S.getASTContext();
 
   if (!CS.consumesDataArgument())
     return ArgTypeResult::Invalid();
@@ -321,13 +301,11 @@ ArgTypeResult PrintfSpecifier::getArgType(Sema &S) const {
       case LengthModifier::AsShort: return Ctx.ShortTy;
       case LengthModifier::AsLong: return Ctx.LongTy;
       case LengthModifier::AsLongLong: return Ctx.LongLongTy;
-      case LengthModifier::AsIntMax:
-        return FindTypedef(S, "intmax_t", Ctx.getIntMaxType());
+      case LengthModifier::AsIntMax: return Ctx.getIntMaxType();
       case LengthModifier::AsSizeT:
         // FIXME: How to get the corresponding signed version of size_t?
         return ArgTypeResult();
-      case LengthModifier::AsPtrDiff:
-        return FindTypedef(S, "ptrdiff_t", Ctx.getPointerDiffType());
+      case LengthModifier::AsPtrDiff: return Ctx.getPointerDiffType();
     }
 
   if (CS.isUIntArg())
@@ -339,10 +317,9 @@ ArgTypeResult PrintfSpecifier::getArgType(Sema &S) const {
       case LengthModifier::AsShort: return Ctx.UnsignedShortTy;
       case LengthModifier::AsLong: return Ctx.UnsignedLongTy;
       case LengthModifier::AsLongLong: return Ctx.UnsignedLongLongTy;
-      case LengthModifier::AsIntMax:
-        return FindTypedef(S, "uintmax_t", Ctx.getUIntMaxType());
+      case LengthModifier::AsIntMax: return Ctx.getUIntMaxType();
       case LengthModifier::AsSizeT:
-        return FindTypedef(S, "size_t", Ctx.getSizeType());
+        return Ctx.getSizeType();
       case LengthModifier::AsPtrDiff:
         // FIXME: How to get the corresponding unsigned
         // version of ptrdiff_t?
