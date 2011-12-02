@@ -139,6 +139,17 @@ def VecListTwoDAllLanes : RegisterOperand<DPR, "printVectorListTwoAllLanes"> {
   let ParserMatchClass = VecListTwoDAllLanesAsmOperand;
 }
 
+// Register list of one D register, with byte lane subscripting.
+def VecListOneDByteIndexAsmOperand : AsmOperandClass {
+  let Name = "VecListOneDByteIndexed";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListIndexedOperands";
+}
+def VecListOneDByteIndexed : Operand<i32> {
+  let ParserMatchClass = VecListOneDByteIndexAsmOperand;
+  let MIOperandInfo = (ops DPR:$Vd, i32imm:$idx);
+}
+
 //===----------------------------------------------------------------------===//
 // NEON-specific DAG Nodes.
 //===----------------------------------------------------------------------===//
@@ -753,6 +764,13 @@ def VLD1LNd32 : VLD1LN32<0b1000, {?,0,?,?}, "32", v2i32, load> {
   let Inst{5} = Rn{4};
   let Inst{4} = Rn{4};
 }
+
+// FIXME: Proof of concept pseudos. We want to parameterize these for all
+// the suffices we have to support.
+def VLD1LNd8asm : NEONAsmPseudo<"vld1${p}.8 $list, $addr",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VLD1LNdf32asm : NEONAsmPseudo<"vld1${p}.f32 $list, $addr",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 
 def VLD1LNq8Pseudo  : VLD1QLNPseudo<v16i8, extloadi8>;
 def VLD1LNq16Pseudo : VLD1QLNPseudo<v8i16, extloadi16>;

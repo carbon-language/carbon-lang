@@ -39,7 +39,7 @@ namespace {
 
 class ARMOperand;
 
-enum VectorLaneTy { NoLanes, AllLanes };
+enum VectorLaneTy { NoLanes, AllLanes, IndexedLane };
 
 class ARMAsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
@@ -163,7 +163,7 @@ class ARMAsmParser : public MCTargetAsmParser {
   OperandMatchResultTy parseAM3Offset(SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parseFPImm(SmallVectorImpl<MCParsedAsmOperand*>&);
   OperandMatchResultTy parseVectorList(SmallVectorImpl<MCParsedAsmOperand*>&);
-  OperandMatchResultTy parseVectorLane(VectorLaneTy &LaneKind);
+  OperandMatchResultTy parseVectorLane(VectorLaneTy &LaneKind, unsigned &Index);
 
   // Asm Match Converter Methods
   bool cvtT2LdrdPre(MCInst &Inst, unsigned Opcode,
@@ -275,6 +275,7 @@ class ARMOperand : public MCParsedAsmOperand {
     k_SPRRegisterList,
     k_VectorList,
     k_VectorListAllLanes,
+    k_VectorListIndexed,
     k_ShiftedRegister,
     k_ShiftedImmediate,
     k_ShifterImmediate,
@@ -328,6 +329,7 @@ class ARMOperand : public MCParsedAsmOperand {
     struct {
       unsigned RegNum;
       unsigned Count;
+      unsigned LaneIndex;
     } VectorList;
 
     struct {
@@ -414,6 +416,7 @@ public:
       break;
     case k_VectorList:
     case k_VectorListAllLanes:
+    case k_VectorListIndexed:
       VectorList = o.VectorList;
       break;
     case k_CoprocNum:
@@ -982,6 +985,11 @@ public:
     return VectorList.Count == 2;
   }
 
+  bool isVecListOneDByteIndexed() const {
+    if (Kind != k_VectorListIndexed) return false;
+    return VectorList.Count == 1 && VectorList.LaneIndex <= 7;
+  }
+
   bool isVectorIndex8() const {
     if (Kind != k_VectorIndex) return false;
     return VectorIndex.Val < 8;
@@ -1547,6 +1555,12 @@ public:
     Inst.addOperand(MCOperand::CreateReg(VectorList.RegNum));
   }
 
+  void addVecListIndexedOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(VectorList.RegNum));
+    Inst.addOperand(MCOperand::CreateImm(VectorList.LaneIndex));
+  }
+
   void addVectorIndex8Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateImm(getVectorIndex()));
@@ -1786,6 +1800,17 @@ public:
     return Op;
   }
 
+  static ARMOperand *CreateVectorListIndexed(unsigned RegNum, unsigned Count,
+                                             unsigned Index, SMLoc S, SMLoc E) {
+    ARMOperand *Op = new ARMOperand(k_VectorListIndexed);
+    Op->VectorList.RegNum = RegNum;
+    Op->VectorList.Count = Count;
+    Op->VectorList.LaneIndex = Index;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    return Op;
+  }
+
   static ARMOperand *CreateVectorIndex(unsigned Idx, SMLoc S, SMLoc E,
                                        MCContext &Ctx) {
     ARMOperand *Op = new ARMOperand(k_VectorIndex);
@@ -1982,6 +2007,10 @@ void ARMOperand::print(raw_ostream &OS) const {
   case k_VectorListAllLanes:
     OS << "<vector_list(all lanes) " << VectorList.Count << " * "
        << VectorList.RegNum << ">";
+    break;
+  case k_VectorListIndexed:
+    OS << "<vector_list(lane " << VectorList.LaneIndex << ") "
+       << VectorList.Count << " * " << VectorList.RegNum << ">";
     break;
   case k_Token:
     OS << "'" << getToken() << "'";
@@ -2484,7 +2513,8 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
 // Helper function to parse the lane index for vector lists.
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
-parseVectorLane(VectorLaneTy &LaneKind) {
+parseVectorLane(VectorLaneTy &LaneKind, unsigned &Index) {
+  Index = 0; // Always return a defined index value.
   if (Parser.getTok().is(AsmToken::LBrac)) {
     Parser.Lex(); // Eat the '['.
     if (Parser.getTok().is(AsmToken::RBrac)) {
@@ -2493,8 +2523,20 @@ parseVectorLane(VectorLaneTy &LaneKind) {
       Parser.Lex(); // Eat the ']'.
       return MatchOperand_Success;
     }
-    // FIXME: Other lane kinds as we add them.
-    Error(Parser.getTok().getLoc(), "FIXME: Unexpected lane kind.");
+    if (Parser.getTok().is(AsmToken::Integer)) {
+      int64_t Val = Parser.getTok().getIntVal();
+      // Make this range check context sensitive for .8, .16, .32.
+      if (Val < 0 && Val > 7)
+        Error(Parser.getTok().getLoc(), "lane index out of range");
+      Index = Val;
+      LaneKind = IndexedLane;
+      Parser.Lex(); // Eat the token;
+      if (Parser.getTok().isNot(AsmToken::RBrac))
+        Error(Parser.getTok().getLoc(), "']' expected");
+      Parser.Lex(); // Eat the ']'.
+      return MatchOperand_Success;
+    }
+    Error(Parser.getTok().getLoc(), "lane index must be empty or an integer");
     return MatchOperand_ParseFail;
   }
   LaneKind = NoLanes;
@@ -2505,6 +2547,7 @@ parseVectorLane(VectorLaneTy &LaneKind) {
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   VectorLaneTy LaneKind;
+  unsigned LaneIndex;
   SMLoc S = Parser.getTok().getLoc();
   // As an extension (to match gas), support a plain D register or Q register
   // (without encosing curly braces) as a single or double entry list,
@@ -2515,7 +2558,7 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       return MatchOperand_NoMatch;
     SMLoc E = Parser.getTok().getLoc();
     if (ARMMCRegisterClasses[ARM::DPRRegClassID].contains(Reg)) {
-      OperandMatchResultTy Res = parseVectorLane(LaneKind);
+      OperandMatchResultTy Res = parseVectorLane(LaneKind, LaneIndex);
       if (Res != MatchOperand_Success)
         return Res;
       switch (LaneKind) {
@@ -2529,12 +2572,16 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
         E = Parser.getTok().getLoc();
         Operands.push_back(ARMOperand::CreateVectorListAllLanes(Reg, 1, S, E));
         break;
+      case IndexedLane:
+        Operands.push_back(ARMOperand::CreateVectorListIndexed(Reg, 1,
+                                                               LaneIndex, S,E));
+        break;
       }
       return MatchOperand_Success;
     }
     if (ARMMCRegisterClasses[ARM::QPRRegClassID].contains(Reg)) {
       Reg = getDRegFromQReg(Reg);
-      OperandMatchResultTy Res = parseVectorLane(LaneKind);
+      OperandMatchResultTy Res = parseVectorLane(LaneKind, LaneIndex);
       if (Res != MatchOperand_Success)
         return Res;
       switch (LaneKind) {
@@ -2547,6 +2594,10 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       case AllLanes:
         E = Parser.getTok().getLoc();
         Operands.push_back(ARMOperand::CreateVectorListAllLanes(Reg, 2, S, E));
+        break;
+      case IndexedLane:
+        Operands.push_back(ARMOperand::CreateVectorListIndexed(Reg, 2,
+                                                               LaneIndex, S,E));
         break;
       }
       return MatchOperand_Success;
@@ -2575,7 +2626,7 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     ++Reg;
     ++Count;
   }
-  if (parseVectorLane(LaneKind) != MatchOperand_Success)
+  if (parseVectorLane(LaneKind, LaneIndex) != MatchOperand_Success)
     return MatchOperand_ParseFail;
 
   while (Parser.getTok().is(AsmToken::Comma) ||
@@ -2607,9 +2658,10 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       }
       // Parse the lane specifier if present.
       VectorLaneTy NextLaneKind;
-      if (parseVectorLane(NextLaneKind) != MatchOperand_Success)
+      unsigned NextLaneIndex;
+      if (parseVectorLane(NextLaneKind, NextLaneIndex) != MatchOperand_Success)
         return MatchOperand_ParseFail;
-      if (NextLaneKind != LaneKind) {
+      if (NextLaneKind != LaneKind || LaneIndex != NextLaneIndex) {
         Error(EndLoc, "mismatched lane index in register list");
         return MatchOperand_ParseFail;
       }
@@ -2644,10 +2696,11 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       Count += 2;
       // Parse the lane specifier if present.
       VectorLaneTy NextLaneKind;
+      unsigned NextLaneIndex;
       SMLoc EndLoc = Parser.getTok().getLoc();
-      if (parseVectorLane(NextLaneKind) != MatchOperand_Success)
+      if (parseVectorLane(NextLaneKind, NextLaneIndex) != MatchOperand_Success)
         return MatchOperand_ParseFail;
-      if (NextLaneKind != LaneKind) {
+      if (NextLaneKind != LaneKind || LaneIndex != NextLaneIndex) {
         Error(EndLoc, "mismatched lane index in register list");
         return MatchOperand_ParseFail;
       }
@@ -2661,10 +2714,11 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     ++Count;
     // Parse the lane specifier if present.
     VectorLaneTy NextLaneKind;
+    unsigned NextLaneIndex;
     SMLoc EndLoc = Parser.getTok().getLoc();
-    if (parseVectorLane(NextLaneKind) != MatchOperand_Success)
+    if (parseVectorLane(NextLaneKind, NextLaneIndex) != MatchOperand_Success)
       return MatchOperand_ParseFail;
-    if (NextLaneKind != LaneKind) {
+    if (NextLaneKind != LaneKind || LaneIndex != NextLaneIndex) {
       Error(EndLoc, "mismatched lane index in register list");
       return MatchOperand_ParseFail;
     }
@@ -2686,6 +2740,10 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   case AllLanes:
     Operands.push_back(ARMOperand::CreateVectorListAllLanes(FirstReg, Count,
                                                             S, E));
+    break;
+  case IndexedLane:
+    Operands.push_back(ARMOperand::CreateVectorListIndexed(FirstReg, Count,
+                                                           LaneIndex, S, E));
     break;
   }
   return MatchOperand_Success;
@@ -4693,10 +4751,35 @@ validateInstruction(MCInst &Inst,
   return false;
 }
 
+static unsigned getRealVLDNOpcode(unsigned Opc) {
+  switch(Opc) {
+  default: assert(0 && "unexpected opcode!");
+  case ARM::VLD1LNd8asm:   return ARM::VLD1LNd8;
+  case ARM::VLD1LNdf32asm: return ARM::VLD1LNd32;
+  }
+}
+
 bool ARMAsmParser::
 processInstruction(MCInst &Inst,
                    const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   switch (Inst.getOpcode()) {
+  // Handle NEON VLD1 complex aliases.
+  case ARM::VLD1LNd8asm:
+  case ARM::VLD1LNdf32asm: {
+    MCInst TmpInst;
+    // Shuffle the operands around so the lane index operand is in the
+    // right place.
+    TmpInst.setOpcode(getRealVLDNOpcode(Inst.getOpcode()));
+    TmpInst.addOperand(Inst.getOperand(0)); // Vd
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn
+    TmpInst.addOperand(Inst.getOperand(3)); // alignment
+    TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
+    TmpInst.addOperand(Inst.getOperand(1)); // lane
+    TmpInst.addOperand(Inst.getOperand(4)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(5));
+    Inst = TmpInst;
+    return true;
+  }
   // Handle the MOV complex aliases.
   case ARM::ASRr:
   case ARM::LSRr:
