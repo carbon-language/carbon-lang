@@ -1690,18 +1690,20 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   UnpackedFieldAlign = std::max(UnpackedFieldAlign, D->getMaxAlignment());
 
   // The maximum field alignment overrides the aligned attribute.
-  if (!MaxFieldAlignment.isZero()) {
+  if (!MaxFieldAlignment.isZero() && FieldSize != 0) {
     unsigned MaxFieldAlignmentInBits = Context.toBits(MaxFieldAlignment);
     FieldAlign = std::min(FieldAlign, MaxFieldAlignmentInBits);
     UnpackedFieldAlign = std::min(UnpackedFieldAlign, MaxFieldAlignmentInBits);
   }
 
   // Check if we need to add padding to give the field the correct alignment.
-  if (FieldSize == 0 || (FieldOffset & (FieldAlign-1)) + FieldSize > TypeSize)
+  if (FieldSize == 0 || (MaxFieldAlignment.isZero() &&
+                         (FieldOffset & (FieldAlign-1)) + FieldSize > TypeSize))
     FieldOffset = llvm::RoundUpToAlignment(FieldOffset, FieldAlign);
 
   if (FieldSize == 0 ||
-      (UnpackedFieldOffset & (UnpackedFieldAlign-1)) + FieldSize > TypeSize)
+      (MaxFieldAlignment.isZero() &&
+       (UnpackedFieldOffset & (UnpackedFieldAlign-1)) + FieldSize > TypeSize))
     UnpackedFieldOffset = llvm::RoundUpToAlignment(UnpackedFieldOffset,
                                                    UnpackedFieldAlign);
 
