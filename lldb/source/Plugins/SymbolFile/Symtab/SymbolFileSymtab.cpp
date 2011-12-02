@@ -396,7 +396,7 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, const lldb_p
     
     if (HasObjCSymbols())
     {
-        TypeMap::iterator iter = m_objc_class_types.find(name.AsCString());
+        TypeMap::iterator iter = m_objc_class_types.find(name);
         
         if (iter != m_objc_class_types.end())
         {
@@ -510,7 +510,7 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, const lldb_p
                                     objc_object_type,
                                     Type::eResolveStateFull));
         
-        m_objc_class_types[name.AsCString()] = type;
+        m_objc_class_types[name] = type;
         
         types.Insert(type);
         
