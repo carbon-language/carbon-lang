@@ -677,12 +677,12 @@ MachineBasicBlock *ScheduleDAGInstrs::EmitSchedule() {
     else
       // Null SUnit* is a noop.
       EmitNoop();
-  }
 
-  // Update the Begin iterator, as the first instruction in the block
-  // may have been scheduled later.
-  if (!Sequence.empty())
-    Begin = Sequence[0]->getInstr();
+    // Update the Begin iterator, as the first instruction in the block
+    // may have been scheduled later.
+    if (i == 0)
+      Begin = prior(InsertPos);
+  }
 
   // Reinsert any remaining debug_values.
   for (std::vector<std::pair<MachineInstr *, MachineInstr *> >::iterator
