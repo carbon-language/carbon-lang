@@ -24,6 +24,8 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include <new.h>
+
 namespace __asan {
 
 extern dispatch_async_f_f real_dispatch_async_f;
