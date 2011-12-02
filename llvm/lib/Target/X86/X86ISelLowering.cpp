@@ -14443,7 +14443,8 @@ static SDValue PerformFADDCombine(SDNode *N, SelectionDAG &DAG,
   SDValue RHS = N->getOperand(1);
 
   // Try to synthesize horizontal adds from adds of shuffles.
-  if (Subtarget->hasSSE3orAVX() && (VT == MVT::v4f32 || VT == MVT::v2f64) &&
+  if (((Subtarget->hasSSE3orAVX() && (VT == MVT::v4f32 || VT == MVT::v2f64)) ||
+       (Subtarget->hasAVX() && (VT == MVT::v8f32 || VT == MVT::v4f64))) &&
       isHorizontalBinOp(LHS, RHS, true))
     return DAG.getNode(X86ISD::FHADD, N->getDebugLoc(), VT, LHS, RHS);
   return SDValue();
@@ -14457,7 +14458,8 @@ static SDValue PerformFSUBCombine(SDNode *N, SelectionDAG &DAG,
   SDValue RHS = N->getOperand(1);
 
   // Try to synthesize horizontal subs from subs of shuffles.
-  if (Subtarget->hasSSE3orAVX() && (VT == MVT::v4f32 || VT == MVT::v2f64) &&
+  if (((Subtarget->hasSSE3orAVX() && (VT == MVT::v4f32 || VT == MVT::v2f64)) ||
+       (Subtarget->hasAVX() && (VT == MVT::v8f32 || VT == MVT::v4f64))) &&
       isHorizontalBinOp(LHS, RHS, false))
     return DAG.getNode(X86ISD::FHSUB, N->getDebugLoc(), VT, LHS, RHS);
   return SDValue();

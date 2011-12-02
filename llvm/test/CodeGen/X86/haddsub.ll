@@ -192,3 +192,94 @@ define <4 x float> @hsubps4(<4 x float> %x) {
   %r = fsub <4 x float> %a, %b
   ret <4 x float> %r
 }
+
+; SSE3: vhaddps1:
+; SSE3-NOT: vhaddps
+; SSE3: haddps
+; SSE3: haddps
+; AVX: vhaddps1:
+; AVX: vhaddps
+define <8 x float> @vhaddps1(<8 x float> %x, <8 x float> %y) {
+  %a = shufflevector <8 x float> %x, <8 x float> %y, <8 x i32> <i32 0, i32 2, i32 8, i32 10, i32 4, i32 6, i32 12, i32 14>
+  %b = shufflevector <8 x float> %x, <8 x float> %y, <8 x i32> <i32 1, i32 3, i32 9, i32 11, i32 5, i32 7, i32 13, i32 15>
+  %r = fadd <8 x float> %a, %b
+  ret <8 x float> %r
+}
+
+; SSE3: vhaddps2:
+; SSE3-NOT: vhaddps
+; SSE3: haddps
+; SSE3: haddps
+; AVX: vhaddps2:
+; AVX: vhaddps
+define <8 x float> @vhaddps2(<8 x float> %x, <8 x float> %y) {
+  %a = shufflevector <8 x float> %x, <8 x float> %y, <8 x i32> <i32 1, i32 2, i32 9, i32 10, i32 5, i32 6, i32 13, i32 14>
+  %b = shufflevector <8 x float> %y, <8 x float> %x, <8 x i32> <i32 8, i32 11, i32 0, i32 3, i32 12, i32 15, i32 4, i32 7>
+  %r = fadd <8 x float> %a, %b
+  ret <8 x float> %r
+}
+
+; SSE3: vhaddps3:
+; SSE3-NOT: vhaddps
+; SSE3: haddps
+; SSE3: haddps
+; AVX: vhaddps3:
+; AVX: vhaddps
+define <8 x float> @vhaddps3(<8 x float> %x) {
+  %a = shufflevector <8 x float> %x, <8 x float> undef, <8 x i32> <i32 undef, i32 2, i32 8, i32 10, i32 4, i32 6, i32 undef, i32 14>
+  %b = shufflevector <8 x float> %x, <8 x float> undef, <8 x i32> <i32 1, i32 3, i32 9, i32 undef, i32 5, i32 7, i32 13, i32 15>
+  %r = fadd <8 x float> %a, %b
+  ret <8 x float> %r
+}
+
+; SSE3: vhsubps1:
+; SSE3-NOT: vhsubps
+; SSE3: hsubps
+; SSE3: hsubps
+; AVX: vhsubps1:
+; AVX: vhsubps
+define <8 x float> @vhsubps1(<8 x float> %x, <8 x float> %y) {
+  %a = shufflevector <8 x float> %x, <8 x float> %y, <8 x i32> <i32 0, i32 2, i32 8, i32 10, i32 4, i32 6, i32 12, i32 14>
+  %b = shufflevector <8 x float> %x, <8 x float> %y, <8 x i32> <i32 1, i32 3, i32 9, i32 11, i32 5, i32 7, i32 13, i32 15>
+  %r = fsub <8 x float> %a, %b
+  ret <8 x float> %r
+}
+
+; SSE3: vhsubps3:
+; SSE3-NOT: vhsubps
+; SSE3: hsubps
+; SSE3: hsubps
+; AVX: vhsubps3:
+; AVX: vhsubps
+define <8 x float> @vhsubps3(<8 x float> %x) {
+  %a = shufflevector <8 x float> %x, <8 x float> undef, <8 x i32> <i32 undef, i32 2, i32 8, i32 10, i32 4, i32 6, i32 undef, i32 14>
+  %b = shufflevector <8 x float> %x, <8 x float> undef, <8 x i32> <i32 1, i32 3, i32 9, i32 undef, i32 5, i32 7, i32 13, i32 15>
+  %r = fsub <8 x float> %a, %b
+  ret <8 x float> %r
+}
+
+; SSE3: vhaddpd1:
+; SSE3-NOT: vhaddpd
+; SSE3: haddpd
+; SSE3: haddpd
+; AVX: vhaddpd1:
+; AVX: vhaddpd
+define <4 x double> @vhaddpd1(<4 x double> %x, <4 x double> %y) {
+  %a = shufflevector <4 x double> %x, <4 x double> %y, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
+  %b = shufflevector <4 x double> %x, <4 x double> %y, <4 x i32> <i32 1, i32 5, i32 3, i32 7>
+  %r = fadd <4 x double> %a, %b
+  ret <4 x double> %r
+}
+
+; SSE3: vhsubpd1:
+; SSE3-NOT: vhsubpd
+; SSE3: hsubpd
+; SSE3: hsubpd
+; AVX: vhsubpd1:
+; AVX: vhsubpd
+define <4 x double> @vhsubpd1(<4 x double> %x, <4 x double> %y) {
+  %a = shufflevector <4 x double> %x, <4 x double> %y, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
+  %b = shufflevector <4 x double> %x, <4 x double> %y, <4 x i32> <i32 1, i32 5, i32 3, i32 7>
+  %r = fsub <4 x double> %a, %b
+  ret <4 x double> %r
+}
