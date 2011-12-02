@@ -1921,11 +1921,19 @@ struct _LIBCPP_VISIBLE hash<long long>
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(long long __v) const _NOEXCEPT
     {
-        size_t __r = 0;
-        const size_t* const __p = reinterpret_cast<const size_t*>(&__v);
-        for (unsigned __i = 0; __i < sizeof(argument_type)/sizeof(size_t); ++__i)
-            __r ^= __p[__i];
-        return __r;
+#ifdef __LP64__
+        return __v;
+#else
+        union {
+            long long __l;
+            struct {
+                int __a;
+                int __b;
+            } __s;
+        } __u;
+        __u.__l = __v;
+        return __u.__s.__a ^ __u.__s.__b;
+#endif
     }
 };
 
@@ -1936,11 +1944,19 @@ struct _LIBCPP_VISIBLE hash<unsigned long long>
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(unsigned long long __v) const _NOEXCEPT
     {
-        size_t __r = 0;
-        const size_t* const __p = reinterpret_cast<const size_t*>(&__v);
-        for (unsigned __i = 0; __i < sizeof(argument_type)/sizeof(size_t); ++__i)
-            __r ^= __p[__i];
-        return __r;
+#ifdef __LP64__
+        return __v;
+#else
+        union {
+            unsigned long long __ul;
+            struct {
+                int __a;
+                int __b;
+            } __s;
+        } __u;
+        __u.__ul = __v;
+        return __u.__s.__a ^ __u.__s.__b;
+#endif
     }
 };
 
@@ -1951,10 +1967,18 @@ struct _LIBCPP_VISIBLE hash<float>
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(float __v) const _NOEXCEPT
     {
+        union {
+#ifdef __LP64__
+            double __f;
+#else
+            float __f;
+#endif
+            size_t __d;
+        } __u;
         if (__v == 0)
             return 0;
-        const size_t* const __p = reinterpret_cast<const size_t*>(&__v);
-        return *__p;
+        __u.__f = __v;
+        return __u.__d;
     }
 };
 
@@ -1965,13 +1989,18 @@ struct _LIBCPP_VISIBLE hash<double>
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(double __v) const _NOEXCEPT
     {
+        union {
+#ifdef __LP64__
+            double __f;
+#else
+            float __f;
+#endif
+            size_t __d;
+        } __u;
         if (__v == 0)
             return 0;
-        size_t __r = 0;
-        const size_t* const __p = reinterpret_cast<const size_t*>(&__v);
-        for (unsigned __i = 0; __i < sizeof(argument_type)/sizeof(size_t); ++__i)
-            __r ^= __p[__i];
-        return __r;
+        __u.__f = __v;
+        return __u.__d;
     }
 };
 
@@ -1982,13 +2011,18 @@ struct _LIBCPP_VISIBLE hash<long double>
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(long double __v) const _NOEXCEPT
     {
+        union {
+#ifdef __LP64__
+            double __f;
+#else
+            float __f;
+#endif
+            size_t __d;
+        } __u;
         if (__v == 0)
             return 0;
-        size_t __r = 0;
-        const size_t* const __p = reinterpret_cast<const size_t*>(&__v);
-        for (unsigned __i = 0; __i < sizeof(argument_type)/sizeof(size_t); ++__i)
-            __r ^= __p[__i];
-        return __r;
+        __u.__f = __v;
+        return __u.__d;
     }
 };
 
