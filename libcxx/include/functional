@@ -1921,19 +1921,19 @@ struct _LIBCPP_VISIBLE hash<long long>
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(long long __v) const _NOEXCEPT
     {
-#ifdef __LP64__
-        return __v;
-#else
-        union {
+        if (sizeof(long long) == sizeof(size_t))
+            return __v;
+        union
+        {
             long long __l;
-            struct {
-                int __a;
-                int __b;
+            struct
+            {
+                size_t __a;
+                size_t __b;
             } __s;
         } __u;
         __u.__l = __v;
         return __u.__s.__a ^ __u.__s.__b;
-#endif
     }
 };
 
@@ -1944,19 +1944,19 @@ struct _LIBCPP_VISIBLE hash<unsigned long long>
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(unsigned long long __v) const _NOEXCEPT
     {
-#ifdef __LP64__
-        return __v;
-#else
-        union {
-            unsigned long long __ul;
-            struct {
-                int __a;
-                int __b;
+        if (sizeof(unsigned long long) == sizeof(size_t))
+            return __v;
+        union
+        {
+            unsigned long long __l;
+            struct
+            {
+                size_t __a;
+                size_t __b;
             } __s;
         } __u;
-        __u.__ul = __v;
+        __u.__l = __v;
         return __u.__s.__a ^ __u.__s.__b;
-#endif
     }
 };
 
@@ -1967,16 +1967,13 @@ struct _LIBCPP_VISIBLE hash<float>
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(float __v) const _NOEXCEPT
     {
-        union {
-#ifdef __LP64__
-            double __f;
-#else
-            float __f;
-#endif
+       if (__v == 0)
+           return 0;
+        union
+        {
             size_t __d;
+            float __f;
         } __u;
-        if (__v == 0)
-            return 0;
         __u.__f = __v;
         return __u.__d;
     }
@@ -1989,16 +1986,23 @@ struct _LIBCPP_VISIBLE hash<double>
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(double __v) const _NOEXCEPT
     {
-        union {
-#ifdef __LP64__
-            double __f;
-#else
-            float __f;
-#endif
-            size_t __d;
-        } __u;
         if (__v == 0)
             return 0;
+        if (sizeof(double) == sizeof(size_t))
+        {
+            union
+            {
+                double __f;
+                size_t __d;
+            } __u;
+            __u.__f = __v;
+            return __u.__d;
+        }
+        union
+        {
+            float __f;
+            size_t __d;
+        } __u;
         __u.__f = __v;
         return __u.__d;
     }
@@ -2011,16 +2015,22 @@ struct _LIBCPP_VISIBLE hash<long double>
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(long double __v) const _NOEXCEPT
     {
-        union {
-#ifdef __LP64__
-            double __f;
-#else
-            float __f;
-#endif
-            size_t __d;
-        } __u;
         if (__v == 0)
             return 0;
+        if (sizeof(double) == sizeof(size_t))
+        {
+            union
+            {
+                double __f;
+                size_t __d;
+            } __u;
+            __u.__f = __v;
+            return __u.__d;
+        }
+        union {
+            float __f;
+            size_t __d;
+        } __u;
         __u.__f = __v;
         return __u.__d;
     }
