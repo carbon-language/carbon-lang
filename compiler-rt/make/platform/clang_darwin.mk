@@ -103,12 +103,12 @@ IOSSIM_DEPLOYMENT_ARGS += -isysroot $(ProjSrcRoot)/SDKs/darwin
 CFLAGS.eprintf		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.10.4		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 # FIXME: We can't build ASAN with our stub SDK yet.
-CFLAGS.asan_osx         := $(CFLAGS) -mmacosx-version-min=10.4
+CFLAGS.asan_osx         := $(CFLAGS) -mmacosx-version-min=10.5
 CFLAGS.asan_osx         += \
 		-DASAN_USE_SYSINFO=1 \
 		-DASAN_NEEDS_SEGV=1 \
 		-DASAN_HAS_EXCEPTIONS=1 \
-		-DASAN_FLEXIBLE_MAPPING_AND_OFFSET=0 \
+		-DASAN_FLEXIBLE_MAPPING_AND_OFFSET=0
 
 CFLAGS.ios.i386		:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
 CFLAGS.ios.x86_64	:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
