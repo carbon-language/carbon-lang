@@ -1765,21 +1765,23 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
     switch (VA.getLocInfo()) {
       case CCValAssign::Full: break;
       case CCValAssign::SExt: {
-        EVT DestVT = VA.getLocVT();
+        MVT DestVT = VA.getLocVT();
         unsigned ResultReg = ARMEmitIntExt(ArgVT, Arg, DestVT,
                                            /*isZExt*/false);
         assert (ResultReg != 0 && "Failed to emit a sext");
         Arg = ResultReg;
+        ArgVT = DestVT;
         break;
       }
       case CCValAssign::AExt:
         // Intentional fall-through.  Handle AExt and ZExt.
       case CCValAssign::ZExt: {
-        EVT DestVT = VA.getLocVT();
+        MVT DestVT = VA.getLocVT();
         unsigned ResultReg = ARMEmitIntExt(ArgVT, Arg, DestVT,
                                            /*isZExt*/true);
         assert (ResultReg != 0 && "Failed to emit a sext");
         Arg = ResultReg;
+        ArgVT = DestVT;
         break;
       }
       case CCValAssign::BCvt: {

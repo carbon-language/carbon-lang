@@ -80,3 +80,49 @@ declare zeroext i16 @t6();
 declare signext i8 @t7();
 declare zeroext i8 @t8();
 declare zeroext i1 @t9();
+
+define i32 @t10(i32 %argc, i8** nocapture %argv) {
+entry:
+; ARM: @t10
+; ARM: movw r0, #0
+; ARM: movw r1, #248
+; ARM: movw r2, #187
+; ARM: movw r3, #28
+; ARM: movw r9, #40
+; ARM: movw r12, #186
+; ARM: uxtb r0, r0
+; ARM: uxtb r1, r1
+; ARM: uxtb r2, r2
+; ARM: uxtb r3, r3
+; ARM: uxtb r9, r9
+; ARM: str r9, [sp]
+; ARM: uxtb r9, r12
+; ARM: str r9, [sp, #4]
+; ARM: bl _bar
+; THUMB: @t10
+; THUMB: movs r0, #0
+; THUMB: movt r0, #0
+; THUMB: movs r1, #248
+; THUMB: movt r1, #0
+; THUMB: movs r2, #187
+; THUMB: movt r2, #0
+; THUMB: movs r3, #28
+; THUMB: movt r3, #0
+; THUMB: movw r9, #40
+; THUMB: movt r9, #0
+; THUMB: movw r12, #186
+; THUMB: movt r12, #0
+; THUMB: uxtb r0, r0
+; THUMB: uxtb r1, r1
+; THUMB: uxtb r2, r2
+; THUMB: uxtb r3, r3
+; THUMB: uxtb.w r9, r9
+; THUMB: str.w r9, [sp]
+; THUMB: uxtb.w r9, r12
+; THUMB: str.w r9, [sp, #4]
+; THUMB: bl _bar
+  %call = call i32 @bar(i8 zeroext 0, i8 zeroext -8, i8 zeroext -69, i8 zeroext 28, i8 zeroext 40, i8 zeroext -70)
+  ret i32 0
+}
+
+declare i32 @bar(i8 zeroext, i8 zeroext, i8 zeroext, i8 zeroext, i8 zeroext, i8 zeroext)
