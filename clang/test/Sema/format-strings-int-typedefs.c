@@ -10,7 +10,7 @@ void test(void) {
   printf("%zu", 42.0); // expected-warning {{conversion specifies type 'unsigned long'}}
   printf("%td", 42.0); // expected-warning {{conversion specifies type 'int'}}
 
-  typedef __SIZE_TYPE__ size_t;
+  typedef __typeof(sizeof(int)) size_t;
   typedef __INTMAX_TYPE__ intmax_t;
   typedef __UINTMAX_TYPE__ uintmax_t;
   typedef __PTRDIFF_TYPE__ ptrdiff_t;

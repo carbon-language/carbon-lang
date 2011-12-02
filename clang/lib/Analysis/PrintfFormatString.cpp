@@ -290,7 +290,7 @@ static QualType FindTypedef(Sema &S, const char *Name, QualType Underlying) {
 
   if (TypedefDecl *TD = dyn_cast_or_null<TypedefDecl>(D)) {
     QualType TypedefType = Ctx.getTypedefType(TD, QualType());
-    if (TD->getUnderlyingType() == Underlying)
+    if (Ctx.getCanonicalType(TypedefType) == Underlying)
       return TypedefType;
   }
 
