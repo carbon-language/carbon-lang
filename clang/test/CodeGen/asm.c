@@ -211,7 +211,7 @@ void *t24(char c) {
 
 
 // PR10299 - fpsr, fpcr
-void test(void)
+void t25(void)
 {
   __asm__ __volatile__(					   \
 		       "finit"				   \
