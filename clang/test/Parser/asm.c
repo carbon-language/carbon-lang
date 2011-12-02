@@ -14,3 +14,6 @@ void f2() {
 // rdar://5952468
 __asm ; // expected-error {{expected '(' after 'asm'}}
 
+// <rdar://problem/10465079> - Don't crash on wide string literals in 'asm'.
+int foo asm (L"bar"); // expected-error {{cannot use wide string literal in 'asm'}}
+

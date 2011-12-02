@@ -1104,15 +1104,22 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
 ///         string-literal
 ///
 Parser::ExprResult Parser::ParseAsmStringLiteral() {
-  if (!isTokenStringLiteral()) {
-    Diag(Tok, diag::err_expected_string_literal);
-    return ExprError();
+  switch (Tok.getKind()) {
+    case tok::string_literal:
+      break;
+    case tok::wide_string_literal: {
+      SourceLocation L = Tok.getLocation();
+      Diag(Tok, diag::err_asm_operand_wide_string_literal)
+        << SourceRange(L, L);
+      return ExprError();
+    }
+    default:
+      Diag(Tok, diag::err_expected_string_literal);
+      return ExprError();
   }
 
   ExprResult Res(ParseStringLiteralExpression());
   if (Res.isInvalid()) return move(Res);
-
-  // TODO: Diagnose: wide string literal in 'asm'
 
   return move(Res);
 }

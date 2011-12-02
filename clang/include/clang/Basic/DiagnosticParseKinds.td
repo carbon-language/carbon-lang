@@ -191,6 +191,8 @@ def err_label_end_of_compound_statement : Error<
 def err_address_of_label_outside_fn : Error<
   "use of address-of-label extension outside of a function body">;
 def err_expected_string_literal : Error<"expected string literal">;
+def err_asm_operand_wide_string_literal : Error<
+  "cannot use wide string literal in 'asm'">;
 def err_expected_asm_operand : Error<
   "expected string literal or '[' for asm operand">, CatInlineAsm;
 def err_expected_selector_for_method : Error<
