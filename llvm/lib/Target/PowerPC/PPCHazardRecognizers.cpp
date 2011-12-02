@@ -27,7 +27,6 @@ void PPCHazardRecognizer440::EmitInstruction(SUnit *SU) {
   const MCInstrDesc *MCID = DAG->getInstrDesc(SU);
   if (!MCID) {
     // This is a PPC pseudo-instruction.
-    // FIXME: Should something else be done?
     return;
   }
 
