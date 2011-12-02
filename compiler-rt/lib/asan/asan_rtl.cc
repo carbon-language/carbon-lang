@@ -250,10 +250,10 @@ void GetPcSpBpAx(void *context,
   *sp = ucontext->uc_mcontext->__ss.__rsp;
   *ax = ucontext->uc_mcontext->__ss.__rax;
 # else
-  *pc = ucontext->uc_mcontext->__ss.__eip;
-  *bp = ucontext->uc_mcontext->__ss.__ebp;
-  *sp = ucontext->uc_mcontext->__ss.__esp;
-  *ax = ucontext->uc_mcontext->__ss.__eax;
+  *pc = ucontext->uc_mcontext->ss.eip;
+  *bp = ucontext->uc_mcontext->ss.ebp;
+  *sp = ucontext->uc_mcontext->ss.esp;
+  *ax = ucontext->uc_mcontext->ss.eax;
 # endif  // __WORDSIZE
 #else  // assume linux
 # if defined(__arm__)

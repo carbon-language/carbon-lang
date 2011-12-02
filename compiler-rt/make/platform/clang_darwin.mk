@@ -64,7 +64,7 @@ UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64 armv6 armv7)
 #
 # Note that ASAN doesn't appear to currently support i386.
 Configs += asan_osx
-UniversalArchs.asan_osx := $(call CheckArches,x86_64)
+UniversalArchs.asan_osx := $(call CheckArches,i386 x86_64)
 
 # If RC_SUPPORTED_ARCHS is defined, treat it as a list of the architectures we
 # are intended to support and limit what we try to build to that.
