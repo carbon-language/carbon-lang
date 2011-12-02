@@ -765,13 +765,6 @@ def VLD1LNd32 : VLD1LN32<0b1000, {?,0,?,?}, "32", v2i32, load> {
   let Inst{4} = Rn{4};
 }
 
-// FIXME: Proof of concept pseudos. We want to parameterize these for all
-// the suffices we have to support.
-def VLD1LNd8asm : NEONAsmPseudo<"vld1${p}.8 $list, $addr",
-                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
-def VLD1LNdf32asm : NEONAsmPseudo<"vld1${p}.f32 $list, $addr",
-                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
-
 def VLD1LNq8Pseudo  : VLD1QLNPseudo<v16i8, extloadi8>;
 def VLD1LNq16Pseudo : VLD1QLNPseudo<v8i16, extloadi16>;
 def VLD1LNq32Pseudo : VLD1QLNPseudo<v4i32, load>;
@@ -5599,3 +5592,12 @@ defm : VFPDT16ReqInstAlias<"vtrn${p}", "$Qd, $Qm",
                           (VTRNq16 QPR:$Qd, QPR:$Qm, pred:$p)>;
 defm : VFPDT32ReqInstAlias<"vtrn${p}", "$Qd, $Qm",
                           (VTRNq32 QPR:$Qd, QPR:$Qm, pred:$p)>;
+
+// FIXME: Proof of concept pseudos. We want to parameterize these for all
+// the suffices we have to support.
+defm VLD1LNdAsm : NEONDT8AsmPseudoInst<"vld1${p}", "$list, $addr",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VLD1LNdAsm : NEONDT16AsmPseudoInst<"vld1${p}", "$list, $addr",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VLD1LNdAsm : NEONDT32AsmPseudoInst<"vld1${p}", "$list, $addr",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;

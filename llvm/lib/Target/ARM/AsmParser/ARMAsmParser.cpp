@@ -4754,8 +4754,22 @@ validateInstruction(MCInst &Inst,
 static unsigned getRealVLDNOpcode(unsigned Opc) {
   switch(Opc) {
   default: assert(0 && "unexpected opcode!");
-  case ARM::VLD1LNd8asm:   return ARM::VLD1LNd8;
-  case ARM::VLD1LNdf32asm: return ARM::VLD1LNd32;
+  case ARM::VLD1LNdAsm_8:   return ARM::VLD1LNd8;
+  case ARM::VLD1LNdAsm_P8:  return ARM::VLD1LNd8;
+  case ARM::VLD1LNdAsm_I8:  return ARM::VLD1LNd8;
+  case ARM::VLD1LNdAsm_S8:  return ARM::VLD1LNd8;
+  case ARM::VLD1LNdAsm_U8:  return ARM::VLD1LNd8;
+  case ARM::VLD1LNdAsm_16:   return ARM::VLD1LNd16;
+  case ARM::VLD1LNdAsm_P16:  return ARM::VLD1LNd16;
+  case ARM::VLD1LNdAsm_I16:  return ARM::VLD1LNd16;
+  case ARM::VLD1LNdAsm_S16:  return ARM::VLD1LNd16;
+  case ARM::VLD1LNdAsm_U16:  return ARM::VLD1LNd16;
+  case ARM::VLD1LNdAsm_32:  return ARM::VLD1LNd32;
+  case ARM::VLD1LNdAsm_F:   return ARM::VLD1LNd32;
+  case ARM::VLD1LNdAsm_F32: return ARM::VLD1LNd32;
+  case ARM::VLD1LNdAsm_I32: return ARM::VLD1LNd32;
+  case ARM::VLD1LNdAsm_S32: return ARM::VLD1LNd32;
+  case ARM::VLD1LNdAsm_U32: return ARM::VLD1LNd32;
   }
 }
 
@@ -4764,8 +4778,22 @@ processInstruction(MCInst &Inst,
                    const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   switch (Inst.getOpcode()) {
   // Handle NEON VLD1 complex aliases.
-  case ARM::VLD1LNd8asm:
-  case ARM::VLD1LNdf32asm: {
+  case ARM::VLD1LNdAsm_8:
+  case ARM::VLD1LNdAsm_P8:
+  case ARM::VLD1LNdAsm_I8:
+  case ARM::VLD1LNdAsm_S8:
+  case ARM::VLD1LNdAsm_U8:
+  case ARM::VLD1LNdAsm_16:
+  case ARM::VLD1LNdAsm_P16:
+  case ARM::VLD1LNdAsm_I16:
+  case ARM::VLD1LNdAsm_S16:
+  case ARM::VLD1LNdAsm_U16:
+  case ARM::VLD1LNdAsm_32:
+  case ARM::VLD1LNdAsm_F:
+  case ARM::VLD1LNdAsm_F32:
+  case ARM::VLD1LNdAsm_I32:
+  case ARM::VLD1LNdAsm_S32:
+  case ARM::VLD1LNdAsm_U32: {
     MCInst TmpInst;
     // Shuffle the operands around so the lane index operand is in the
     // right place.

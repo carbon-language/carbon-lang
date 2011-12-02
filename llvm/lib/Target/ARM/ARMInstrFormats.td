@@ -1999,23 +1999,23 @@ multiclass VFPDT8ReqInstAlias<string opc, string asm, dag Result> {
   def I8 : VFPDataTypeInstAlias<opc, ".i8", asm, Result>;
   def S8 : VFPDataTypeInstAlias<opc, ".s8", asm, Result>;
   def U8 : VFPDataTypeInstAlias<opc, ".u8", asm, Result>;
-  def F8 : VFPDataTypeInstAlias<opc, ".p8", asm, Result>;
+  def P8 : VFPDataTypeInstAlias<opc, ".p8", asm, Result>;
 }
 // VFPDT8ReqInstAlias plus plain ".8"
 multiclass VFPDT8InstAlias<string opc, string asm, dag Result> {
   def _8 : VFPDataTypeInstAlias<opc, ".8", asm, Result>;
-  defm : VFPDT8ReqInstAlias<opc, asm, Result>;
+  defm _ : VFPDT8ReqInstAlias<opc, asm, Result>;
 }
 multiclass VFPDT16ReqInstAlias<string opc, string asm, dag Result> {
   def I16 : VFPDataTypeInstAlias<opc, ".i16", asm, Result>;
   def S16 : VFPDataTypeInstAlias<opc, ".s16", asm, Result>;
   def U16 : VFPDataTypeInstAlias<opc, ".u16", asm, Result>;
-  def F16 : VFPDataTypeInstAlias<opc, ".p16", asm, Result>;
+  def P16 : VFPDataTypeInstAlias<opc, ".p16", asm, Result>;
 }
 // VFPDT16ReqInstAlias plus plain ".16"
 multiclass VFPDT16InstAlias<string opc, string asm, dag Result> {
   def _16 : VFPDataTypeInstAlias<opc, ".16", asm, Result>;
-  defm : VFPDT16ReqInstAlias<opc, asm, Result>;
+  defm _ : VFPDT16ReqInstAlias<opc, asm, Result>;
 }
 multiclass VFPDT32ReqInstAlias<string opc, string asm, dag Result> {
   def I32 : VFPDataTypeInstAlias<opc, ".i32", asm, Result>;
@@ -2027,7 +2027,7 @@ multiclass VFPDT32ReqInstAlias<string opc, string asm, dag Result> {
 // VFPDT32ReqInstAlias plus plain ".32"
 multiclass VFPDT32InstAlias<string opc, string asm, dag Result> {
   def _32 : VFPDataTypeInstAlias<opc, ".32", asm, Result>;
-  defm : VFPDT32ReqInstAlias<opc, asm, Result>;
+  defm _ : VFPDT32ReqInstAlias<opc, asm, Result>;
 }
 multiclass VFPDT64ReqInstAlias<string opc, string asm, dag Result> {
   def I64 : VFPDataTypeInstAlias<opc, ".i64", asm, Result>;
@@ -2039,7 +2039,7 @@ multiclass VFPDT64ReqInstAlias<string opc, string asm, dag Result> {
 // VFPDT64ReqInstAlias plus plain ".64"
 multiclass VFPDT64InstAlias<string opc, string asm, dag Result> {
   def _64 : VFPDataTypeInstAlias<opc, ".64", asm, Result>;
-  defm : VFPDT64ReqInstAlias<opc, asm, Result>;
+  defm _ : VFPDT64ReqInstAlias<opc, asm, Result>;
 }
 multiclass VFPDT64NoF64ReqInstAlias<string opc, string asm, dag Result> {
   def I64 : VFPDataTypeInstAlias<opc, ".i64", asm, Result>;
@@ -2050,17 +2050,94 @@ multiclass VFPDT64NoF64ReqInstAlias<string opc, string asm, dag Result> {
 // VFPDT64ReqInstAlias plus plain ".64"
 multiclass VFPDT64NoF64InstAlias<string opc, string asm, dag Result> {
   def _64 : VFPDataTypeInstAlias<opc, ".64", asm, Result>;
-  defm : VFPDT64ReqInstAlias<opc, asm, Result>;
+  defm _ : VFPDT64ReqInstAlias<opc, asm, Result>;
 }
 multiclass VFPDTAnyInstAlias<string opc, string asm, dag Result> {
-  defm : VFPDT8InstAlias<opc, asm, Result>;
-  defm : VFPDT16InstAlias<opc, asm, Result>;
-  defm : VFPDT32InstAlias<opc, asm, Result>;
-  defm : VFPDT64InstAlias<opc, asm, Result>;
+  defm _ : VFPDT8InstAlias<opc, asm, Result>;
+  defm _ : VFPDT16InstAlias<opc, asm, Result>;
+  defm _ : VFPDT32InstAlias<opc, asm, Result>;
+  defm _ : VFPDT64InstAlias<opc, asm, Result>;
 }
 multiclass VFPDTAnyNoF64InstAlias<string opc, string asm, dag Result> {
-  defm : VFPDT8InstAlias<opc, asm, Result>;
-  defm : VFPDT16InstAlias<opc, asm, Result>;
-  defm : VFPDT32InstAlias<opc, asm, Result>;
-  defm : VFPDT64NoF64InstAlias<opc, asm, Result>;
+  defm _ : VFPDT8InstAlias<opc, asm, Result>;
+  defm _ : VFPDT16InstAlias<opc, asm, Result>;
+  defm _ : VFPDT32InstAlias<opc, asm, Result>;
+  defm _ : VFPDT64NoF64InstAlias<opc, asm, Result>;
+}
+
+// The same alias classes using AsmPseudo instead, for the more complex
+// stuff in NEON that InstAlias can't quite handle.
+// Note that we can't use anonymous defm references here like we can
+// above, as we care about the ultimate instruction enum names generated, unlike
+// for instalias defs.
+class NEONDataTypeAsmPseudoInst<string opc, string dt, string asm, dag iops> :
+  AsmPseudoInst<!strconcat(opc, dt, asm), iops>, Requires<[HasNEON]>;
+multiclass NEONDT8ReqAsmPseudoInst<string opc, string asm, dag iops> {
+  def I8 : NEONDataTypeAsmPseudoInst<opc, ".i8", asm, iops>;
+  def S8 : NEONDataTypeAsmPseudoInst<opc, ".s8", asm, iops>;
+  def U8 : NEONDataTypeAsmPseudoInst<opc, ".u8", asm, iops>;
+  def P8 : NEONDataTypeAsmPseudoInst<opc, ".p8", asm, iops>;
+}
+// NEONDT8ReqAsmPseudoInst plus plain ".8"
+multiclass NEONDT8AsmPseudoInst<string opc, string asm, dag iops> {
+  def _8 : NEONDataTypeAsmPseudoInst<opc, ".8", asm, iops>;
+  defm _ : NEONDT8ReqAsmPseudoInst<opc, asm, iops>;
+}
+multiclass NEONDT16ReqAsmPseudoInst<string opc, string asm, dag iops> {
+  def I16 : NEONDataTypeAsmPseudoInst<opc, ".i16", asm, iops>;
+  def S16 : NEONDataTypeAsmPseudoInst<opc, ".s16", asm, iops>;
+  def U16 : NEONDataTypeAsmPseudoInst<opc, ".u16", asm, iops>;
+  def P16 : NEONDataTypeAsmPseudoInst<opc, ".p16", asm, iops>;
+}
+// NEONDT16ReqAsmPseudoInst plus plain ".16"
+multiclass NEONDT16AsmPseudoInst<string opc, string asm, dag iops> {
+  def _16 : NEONDataTypeAsmPseudoInst<opc, ".16", asm, iops>;
+  defm _ : NEONDT16ReqAsmPseudoInst<opc, asm, iops>;
+}
+multiclass NEONDT32ReqAsmPseudoInst<string opc, string asm, dag iops> {
+  def I32 : NEONDataTypeAsmPseudoInst<opc, ".i32", asm, iops>;
+  def S32 : NEONDataTypeAsmPseudoInst<opc, ".s32", asm, iops>;
+  def U32 : NEONDataTypeAsmPseudoInst<opc, ".u32", asm, iops>;
+  def F32 : NEONDataTypeAsmPseudoInst<opc, ".f32", asm, iops>;
+  def F   : NEONDataTypeAsmPseudoInst<opc, ".f",   asm, iops>;
+}
+// NEONDT32ReqAsmPseudoInst plus plain ".32"
+multiclass NEONDT32AsmPseudoInst<string opc, string asm, dag iops> {
+  def _32 : NEONDataTypeAsmPseudoInst<opc, ".32", asm, iops>;
+  defm _ : NEONDT32ReqAsmPseudoInst<opc, asm, iops>;
+}
+multiclass NEONDT64ReqAsmPseudoInst<string opc, string asm, dag iops> {
+  def I64 : NEONDataTypeAsmPseudoInst<opc, ".i64", asm, iops>;
+  def S64 : NEONDataTypeAsmPseudoInst<opc, ".s64", asm, iops>;
+  def U64 : NEONDataTypeAsmPseudoInst<opc, ".u64", asm, iops>;
+  def F64 : NEONDataTypeAsmPseudoInst<opc, ".f64", asm, iops>;
+  def D   : NEONDataTypeAsmPseudoInst<opc, ".d",   asm, iops>;
+}
+// NEONDT64ReqAsmPseudoInst plus plain ".64"
+multiclass NEONDT64AsmPseudoInst<string opc, string asm, dag iops> {
+  def _64 : NEONDataTypeAsmPseudoInst<opc, ".64", asm, iops>;
+  defm _ : NEONDT64ReqAsmPseudoInst<opc, asm, iops>;
+}
+multiclass NEONDT64NoF64ReqAsmPseudoInst<string opc, string asm, dag iops> {
+  def I64 : NEONDataTypeAsmPseudoInst<opc, ".i64", asm, iops>;
+  def S64 : NEONDataTypeAsmPseudoInst<opc, ".s64", asm, iops>;
+  def U64 : NEONDataTypeAsmPseudoInst<opc, ".u64", asm, iops>;
+  def D   : NEONDataTypeAsmPseudoInst<opc, ".d",   asm, iops>;
+}
+// NEONDT64ReqAsmPseudoInst plus plain ".64"
+multiclass NEONDT64NoF64AsmPseudoInst<string opc, string asm, dag iops> {
+  def _64 : NEONDataTypeAsmPseudoInst<opc, ".64", asm, iops>;
+  defm _ : NEONDT64ReqAsmPseudoInst<opc, asm, iops>;
+}
+multiclass NEONDTAnyAsmPseudoInst<string opc, string asm, dag iops> {
+  defm _ : NEONDT8AsmPseudoInst<opc, asm, iops>;
+  defm _ : NEONDT16AsmPseudoInst<opc, asm, iops>;
+  defm _ : NEONDT32AsmPseudoInst<opc, asm, iops>;
+  defm _ : NEONDT64AsmPseudoInst<opc, asm, iops>;
+}
+multiclass NEONDTAnyNoF64AsmPseudoInst<string opc, string asm, dag iops> {
+  defm _ : NEONDT8AsmPseudoInst<opc, asm, iops>;
+  defm _ : NEONDT16AsmPseudoInst<opc, asm, iops>;
+  defm _ : NEONDT32AsmPseudoInst<opc, asm, iops>;
+  defm _ : NEONDT64NoF64AsmPseudoInst<opc, asm, iops>;
 }

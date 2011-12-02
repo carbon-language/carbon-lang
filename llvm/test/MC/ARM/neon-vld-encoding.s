@@ -182,11 +182,11 @@
 @ CHECK: vld1.8	{d4[], d5[]}, [r1]!     @ encoding: [0x2d,0x4c,0xa1,0xf4]
 @ CHECK: vld1.8	{d4[], d5[]}, [r1], r3  @ encoding: [0x23,0x4c,0xa1,0xf4]
 
-@	vld1.8	{d16[3]}, [r0]
+	vld1.8	{d16[3]}, [r0]
 @	vld1.16	{d16[2]}, [r0, :16]
 @	vld1.32	{d16[1]}, [r0, :32]
 
-@ FIXME: vld1.8	{d16[3]}, [r0]          @ encoding: [0x6f,0x00,0xe0,0xf4]
+@ CHECK: vld1.8	{d16[3]}, [r0]          @ encoding: [0x6f,0x00,0xe0,0xf4]
 @ FIXME: vld1.16 {d16[2]}, [r0, :16]    @ encoding: [0x9f,0x04,0xe0,0xf4]
 @ FIXME: vld1.32 {d16[1]}, [r0, :32]    @ encoding: [0xbf,0x08,0xe0,0xf4]
 
