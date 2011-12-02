@@ -151,8 +151,13 @@ CommandInterpreter::Initialize ()
     cmd_obj_sp = GetCommandSPExact ("thread step-out", false);
     if (cmd_obj_sp)
     {
-        AddAlias ("f", cmd_obj_sp);
         AddAlias ("finish", cmd_obj_sp);
+    }
+
+    cmd_obj_sp = GetCommandSPExact ("frame select", false);
+    if (cmd_obj_sp)
+    {
+        AddAlias ("f", cmd_obj_sp);
     }
 
     cmd_obj_sp = GetCommandSPExact ("source list", false);
