@@ -7,6 +7,7 @@
 #
 #===------------------------------------------------------------------------===#
 
+ModuleName := builtins
 SubDirs := 
 OnlyArchs := armv5 armv6 armv7
 

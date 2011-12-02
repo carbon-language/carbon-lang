@@ -7,6 +7,7 @@
 #
 #===------------------------------------------------------------------------===#
 
+ModuleName := builtins
 SubDirs :=
 
 # Add arch specific optimized implementations.

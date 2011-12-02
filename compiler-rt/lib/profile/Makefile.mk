@@ -7,6 +7,7 @@
 #
 #===------------------------------------------------------------------------===#
 
+ModuleName := profile
 SubDirs :=
 
 Sources := $(foreach file,$(wildcard $(Dir)/*.c),$(notdir $(file)))

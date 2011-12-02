@@ -7,6 +7,7 @@
 #
 #===------------------------------------------------------------------------===#
 
+ModuleName := asan
 SubDirs := mach_override sysinfo
 
 Sources := $(foreach file,$(wildcard $(Dir)/*.cc),$(notdir $(file)))

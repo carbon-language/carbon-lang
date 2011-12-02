@@ -14,6 +14,14 @@
 #   AvailableIn.<function> - The list of subdir keys where 'function' is
 #                            defined.
 
+# Determine the set of available modules.
+AvailableModules := $(sort $(foreach key,$(SubDirKeys),\
+	$($(key).ModuleName)))
+
+# Build a per-module map of subdir keys.
+$(foreach key,$(SubDirKeys),\
+	$(call Append,ModuleSubDirKeys.$($(key).ModuleName),$(key)))
+
 AvailableArchs := $(sort $(foreach key,$(SubDirKeys),\
 	$($(key).OnlyArchs)))
 
@@ -21,12 +29,12 @@ AvailableFunctions := $(sort $(foreach key,$(SubDirKeys),\
 	$(basename $($(key).ObjNames))))
 
 CommonFunctions := $(sort\
-  $(foreach key,$(SubDirKeys),\
+  $(foreach key,$(ModuleSubDirKeys.builtins),\
     $(if $(call strneq,,$(strip $($(key).OnlyArchs) $($(key).OnlyConfigs))),,\
          $(basename $($(key).ObjNames)))))
 
 # Compute common arch functions.
-$(foreach key,$(SubDirKeys),\
+$(foreach key,$(ModuleSubDirKeys.builtins),\
   $(if $(call strneq,,$($(key).OnlyConfigs)),,\
     $(foreach arch,$($(key).OnlyArchs),\
       $(call Append,ArchFunctions.$(arch),$(sort \

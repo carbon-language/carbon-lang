@@ -7,6 +7,7 @@
 #
 #===------------------------------------------------------------------------===#
 
+ModuleName := asan
 SubDirs :=
 
 Sources := $(foreach file,$(wildcard $(Dir)/*.cc),$(notdir $(file)))

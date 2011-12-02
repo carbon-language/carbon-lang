@@ -20,7 +20,8 @@ endif
 
 # The list of variables which are intended to be overridden in a subdirectory
 # makefile.
-RequiredSubdirVariables := SubDirs ObjNames Implementation Dependencies
+RequiredSubdirVariables := \
+	ModuleName SubDirs ObjNames Implementation Dependencies
 OptionalSubdirVariables := OnlyArchs OnlyConfigs
 
 # Template: subdir_traverse_template subdir
