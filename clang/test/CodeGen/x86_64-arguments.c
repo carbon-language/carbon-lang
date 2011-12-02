@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s| FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s -target-feature +avx | FileCheck %s -check-prefix=AVX
 #include <stdarg.h>
 
 // CHECK: define signext i8 @f0()
@@ -263,8 +264,10 @@ void f9122143()
 typedef unsigned v2i32 __attribute((__vector_size__(8)));
 v2i32 f36(v2i32 arg) { return arg; }
 
-// CHECK: declare void @f38(<8 x float>)
-// CHECK: declare void @f37(<8 x float>)
+// AVX: declare void @f38(<8 x float>)
+// AVX: declare void @f37(<8 x float>)
+// CHECK: declare void @f38(%struct.s256* byval align 32)
+// CHECK: declare void @f37(<8 x float>* byval align 32)
 typedef float __m256 __attribute__ ((__vector_size__ (32)));
 typedef struct {
   __m256 m;
@@ -320,7 +323,7 @@ int f44(int i, ...) {
 }
 
 // Text that vec3 returns the correct LLVM IR type.
-// CHECK: define i32 @foo(<3 x i64> %X)
+// AVX: define i32 @foo(<3 x i64> %X)
 typedef long long3 __attribute((ext_vector_type(3)));
 int foo(long3 X)
 {
@@ -329,8 +332,16 @@ int foo(long3 X)
 
 // Make sure we don't use a varargs convention for a function without a
 // prototype where AVX types are involved.
-// CHECK: @test45
-// CHECK: call i32 bitcast (i32 (...)* @f45 to i32 (<8 x float>)*)
+// AVX: @test45
+// AVX: call i32 bitcast (i32 (...)* @f45 to i32 (<8 x float>)*)
 int f45();
 __m256 x45;
 void test45() { f45(x45); }
+
+// Make sure we use byval to pass 64-bit vectors in memory; the LLVM call
+// lowering can't handle this case correctly because it runs after legalization.
+// CHECK: @test46
+// CHECK: call void @f46({{.*}}<2 x float>* byval align 8 {{.*}}, <2 x float>* byval align 8 {{.*}})
+typedef float v46 __attribute((vector_size(8)));
+void f46(v46,v46,v46,v46,v46,v46,v46,v46,v46,v46);
+void test46() { v46 x = {1,2}; f46(x,x,x,x,x,x,x,x,x,x); }

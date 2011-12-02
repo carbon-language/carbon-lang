@@ -917,6 +917,8 @@ class X86_64ABIInfo : public ABIInfo {
                                   unsigned &neededInt,
                                   unsigned &neededSSE) const;
 
+  bool IsIllegalVectorType(QualType Ty) const;
+
   /// The 0.98 ABI revision clarified a lot of ambiguities,
   /// unfortunately in ways that were not always consistent with
   /// certain previous compilers.  In particular, platforms which
@@ -926,8 +928,11 @@ class X86_64ABIInfo : public ABIInfo {
     return !getContext().getTargetInfo().getTriple().isOSDarwin();
   }
 
+  bool HasAVX;
+
 public:
-  X86_64ABIInfo(CodeGen::CodeGenTypes &CGT) : ABIInfo(CGT) {}
+  X86_64ABIInfo(CodeGen::CodeGenTypes &CGT, bool hasavx) :
+      ABIInfo(CGT), HasAVX(hasavx) {}
 
   virtual void computeInfo(CGFunctionInfo &FI) const;
 
@@ -951,8 +956,8 @@ public:
 
 class X86_64TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  X86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT)
-    : TargetCodeGenInfo(new X86_64ABIInfo(CGT)) {}
+  X86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, bool HasAVX)
+    : TargetCodeGenInfo(new X86_64ABIInfo(CGT, HasAVX)) {}
 
   int getDwarfEHStackPointer(CodeGen::CodeGenModule &CGM) const {
     return 7;
@@ -1194,7 +1199,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
       // split.
       if (OffsetBase && OffsetBase != 64)
         Hi = Lo;
-    } else if (Size == 128 || Size == 256) {
+    } else if (Size == 128 || (HasAVX && Size == 256)) {
       // Arguments of 256-bits are split into four eightbyte chunks. The
       // least significant one belongs to class SSE and all the others to class
       // SSEUP. The original Lo and Hi design considers that types can't be
@@ -1407,10 +1412,21 @@ ABIArgInfo X86_64ABIInfo::getIndirectReturnResult(QualType Ty) const {
   return ABIArgInfo::getIndirect(0);
 }
 
+bool X86_64ABIInfo::IsIllegalVectorType(QualType Ty) const {
+  if (const VectorType *VecTy = Ty->getAs<VectorType>()) {
+    uint64_t Size = getContext().getTypeSize(VecTy);
+    unsigned LargestVector = HasAVX ? 256 : 128;
+    if (Size <= 64 || Size > LargestVector)
+      return true;
+  }
+
+  return false;
+}
+
 ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty) const {
   // If this is a scalar LLVM value then assume LLVM will pass it in the right
   // place naturally.
-  if (!isAggregateTypeForABI(Ty)) {
+  if (!isAggregateTypeForABI(Ty) && !IsIllegalVectorType(Ty)) {
     // Treat an enum type as its underlying type.
     if (const EnumType *EnumTy = Ty->getAs<EnumType>())
       Ty = EnumTy->getDecl()->getIntegerType();
@@ -3373,14 +3389,18 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     }
   }
 
-  case llvm::Triple::x86_64:
+  case llvm::Triple::x86_64: {
+    bool HasAVX = strcmp(getContext().getTargetInfo().getABI(), "avx") == 0;
+
     switch (Triple.getOS()) {
     case llvm::Triple::Win32:
     case llvm::Triple::MinGW32:
     case llvm::Triple::Cygwin:
       return *(TheTargetCodeGenInfo = new WinX86_64TargetCodeGenInfo(Types));
     default:
-      return *(TheTargetCodeGenInfo = new X86_64TargetCodeGenInfo(Types));
+      return *(TheTargetCodeGenInfo = new X86_64TargetCodeGenInfo(Types,
+                                                                  HasAVX));
     }
+  }
   }
 }
