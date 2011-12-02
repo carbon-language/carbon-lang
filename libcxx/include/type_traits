@@ -741,6 +741,14 @@ struct _LIBCPP_VISIBLE is_base_of
 
 // is_empty
 
+#if __has_feature(is_empty)
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_empty
+    : public integral_constant<bool, __is_empty(_Tp)> {};
+
+#else  // __has_feature(is_empty)
+
 template <class _Tp>
 struct __is_empty1
     : public _Tp
@@ -759,6 +767,8 @@ struct __libcpp_empty : public integral_constant<bool, sizeof(__is_empty1<_Tp>) 
 template <class _Tp> struct __libcpp_empty<_Tp, false> : public false_type {};
 
 template <class _Tp> struct _LIBCPP_VISIBLE is_empty : public __libcpp_empty<_Tp> {};
+
+#endif  // __has_feature(is_empty)
 
 // is_polymorphic
 
