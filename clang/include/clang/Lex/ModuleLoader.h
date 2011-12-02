@@ -48,10 +48,15 @@ public:
   /// \param Visibility The visibility provided for the names in the loaded
   /// module.
   ///
+  /// \param IsInclusionDirective Indicates that this module is being loaded
+  /// implicitly, due to the presence of an inclusion directive. Otherwise,
+  /// it is being loaded due to an import declaration.
+  ///
   /// \returns If successful, returns the loaded module. Otherwise, returns 
   /// NULL to indicate that the module could not be loaded.
   virtual Module *loadModule(SourceLocation ImportLoc, ModuleIdPath Path,
-                             Module::NameVisibilityKind Visibility) = 0;
+                             Module::NameVisibilityKind Visibility,
+                             bool IsInclusionDirective) = 0;
 };
   
 }

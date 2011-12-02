@@ -11,6 +11,7 @@
 #include "clang/Sema/Sema.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -1070,7 +1071,8 @@ static void compileModule(CompilerInstance &ImportingInstance,
 
 Module *CompilerInstance::loadModule(SourceLocation ImportLoc, 
                                      ModuleIdPath Path,
-                                     Module::NameVisibilityKind Visibility) {
+                                     Module::NameVisibilityKind Visibility,
+                                     bool IsInclusionDirective) {
   // If we've already handled this import, just return the cached result.
   // This one-element cache is important to eliminate redundant diagnostics
   // when both the preprocessor and parser see the same import declaration.
@@ -1259,8 +1261,16 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
   }
   
   // Make the named module visible.
-  if (Module)
-    ModuleManager->makeModuleVisible(Module, Visibility);
+  ModuleManager->makeModuleVisible(Module, Visibility);
+
+  // If this module import was due to an inclusion directive, create an 
+  // implicit import declaration to capture it in the AST.
+  if (IsInclusionDirective && hasASTContext()) {
+    TranslationUnitDecl *TU = getASTContext().getTranslationUnitDecl();
+    TU->addDecl(ImportDecl::CreateImplicit(getASTContext(), TU,
+                                           ImportLoc, Module, 
+                                           Path.back().second));
+  }
   
   LastModuleImportLoc = ImportLoc;
   LastModuleImportResult = Module;

@@ -599,7 +599,8 @@ void Preprocessor::LexAfterModuleImport(Token &Result) {
   // If we have a non-empty module path, load the named module.
   if (!ModuleImportPath.empty())
     (void)TheModuleLoader.loadModule(ModuleImportLoc, ModuleImportPath,
-                                     Module::MacrosVisible);
+                                     Module::MacrosVisible,
+                                     /*IsIncludeDirective=*/false);
 }
 
 void Preprocessor::AddCommentHandler(CommentHandler *Handler) {

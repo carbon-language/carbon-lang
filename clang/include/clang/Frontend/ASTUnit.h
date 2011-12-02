@@ -782,7 +782,8 @@ public:
   bool serialize(raw_ostream &OS);
   
   virtual Module *loadModule(SourceLocation ImportLoc, ModuleIdPath Path,
-                             Module::NameVisibilityKind Visibility) {
+                             Module::NameVisibilityKind Visibility,
+                             bool IsInclusionDirective) {
     // ASTUnit doesn't know how to load modules (not that this matters).
     return 0;
   }

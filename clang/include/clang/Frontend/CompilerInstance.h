@@ -642,7 +642,8 @@ public:
   /// }
   
   virtual Module *loadModule(SourceLocation ImportLoc, ModuleIdPath Path,
-                             Module::NameVisibilityKind Visibility);
+                             Module::NameVisibilityKind Visibility,
+                             bool IsInclusionDirective);
 };
 
 } // end namespace clang

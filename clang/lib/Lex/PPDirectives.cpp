@@ -1363,7 +1363,8 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     // If this was an #__include_macros directive, only make macros visible.
     Module::NameVisibilityKind Visibility 
       = (IncludeKind == 3)? Module::MacrosVisible : Module::AllVisible;
-    TheModuleLoader.loadModule(IncludeTok.getLocation(), Path, Visibility);
+    TheModuleLoader.loadModule(IncludeTok.getLocation(), Path, Visibility,
+                               /*IsIncludeDirective=*/true);
     return;
   }
   

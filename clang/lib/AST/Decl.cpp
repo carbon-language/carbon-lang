@@ -2657,9 +2657,7 @@ ImportDecl *ImportDecl::CreateImplicit(ASTContext &C, DeclContext *DC,
                                        Module *Imported, 
                                        SourceLocation EndLoc) {
   void *Mem = C.Allocate(sizeof(ImportDecl) + sizeof(SourceLocation));
-  ImportDecl *Import
-    = new (Mem) ImportDecl(DC, ImportLoc, Imported, 
-                           ArrayRef<SourceLocation>(&EndLoc, 1));
+  ImportDecl *Import = new (Mem) ImportDecl(DC, ImportLoc, Imported, EndLoc);
   Import->setImplicit();
   return Import;
 }
