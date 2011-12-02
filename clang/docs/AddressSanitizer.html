@@ -41,10 +41,11 @@ The tool can detect the following types of bugs:
 Typical slowdown introduced by AddressSanitizer is <b>2x</b>.
 
 <h2 id="intro">Usage</h2>
-In order to use AddressSanitizer simply compile and link your program with 
-<tt>-faddress-sanitizer</tt> flag and optimization level <tt>-O1</tt> or higher
-and then run it. If a bug is detected, the program will print an error message
-and exit.
+In order to use AddressSanitizer simply compile and link your program with
+<tt>-faddress-sanitizer</tt> flag.
+To get a reasonable performance add <tt>-O1</tt> or higher.
+If a bug is detected, the program will print an error message and exit with a
+non-zero exit code.
 
 <h3 id="has_feature">__has_feature(address_sanitizer)</h3>
 In some cases one may need to execute different code depending on whether
