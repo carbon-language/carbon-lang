@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPCSubtarget.h"
+#include "PPCRegisterInfo.h"
 #include "PPC.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Target/TargetMachine.h"
@@ -140,3 +141,22 @@ bool PPCSubtarget::hasLazyResolverStub(const GlobalValue *GV,
   return GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
          GV->hasCommonLinkage() || isDecl;
 }
+
+bool PPCSubtarget::enablePostRAScheduler(
+           CodeGenOpt::Level OptLevel,
+           TargetSubtargetInfo::AntiDepBreakMode& Mode,
+           RegClassVector& CriticalPathRCs) const {
+  if (DarwinDirective == PPC::DIR_440)
+    return false;
+
+  Mode = TargetSubtargetInfo::ANTIDEP_CRITICAL;
+  CriticalPathRCs.clear();
+
+  if (isPPC64())
+    CriticalPathRCs.push_back(&PPC::G8RCRegClass);
+  else
+    CriticalPathRCs.push_back(&PPC::GPRCRegClass);
+
+  return OptLevel >= CodeGenOpt::Default;
+}
+

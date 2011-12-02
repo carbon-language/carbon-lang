@@ -88,6 +88,9 @@ public:
   ScheduleHazardRecognizer *
   CreateTargetHazardRecognizer(const TargetMachine *TM,
                                const ScheduleDAG *DAG) const;
+  ScheduleHazardRecognizer *
+  CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II,
+                                     const ScheduleDAG *DAG) const;
 
   unsigned isLoadFromStackSlot(const MachineInstr *MI,
                                int &FrameIndex) const;

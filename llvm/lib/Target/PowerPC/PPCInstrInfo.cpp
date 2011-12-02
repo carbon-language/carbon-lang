@@ -48,25 +48,32 @@ PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)
 ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetHazardRecognizer(
   const TargetMachine *TM,
   const ScheduleDAG *DAG) const {
-  // Should use subtarget info to pick the right hazard recognizer.  For
-  // now, always return a PPC970 recognizer.
-  const TargetInstrInfo *TII = TM->getInstrInfo();
-  (void)TII;
-  assert(TII && "No InstrInfo?");
-
   unsigned Directive = TM->getSubtarget<PPCSubtarget>().getDarwinDirective();
   if (Directive == PPC::DIR_440) {
     const InstrItineraryData *II = TM->getInstrItineraryData();
     return new PPCHazardRecognizer440(II, DAG);
   }
-  else {
-    // Disable the hazard recognizer for now, as it doesn't support
-    // bottom-up scheduling.
-    //return new PPCHazardRecognizer970(*TII);
-    return new ScheduleHazardRecognizer();
-  }
+
+  return TargetInstrInfoImpl::CreateTargetHazardRecognizer(TM, DAG);
 }
 
+/// CreateTargetPostRAHazardRecognizer - Return the postRA hazard recognizer
+/// to use for this target when scheduling the DAG.
+ScheduleHazardRecognizer *PPCInstrInfo::CreateTargetPostRAHazardRecognizer(
+  const InstrItineraryData *II,
+  const ScheduleDAG *DAG) const {
+  unsigned Directive = TM.getSubtarget<PPCSubtarget>().getDarwinDirective();
+
+  // Most subtargets use a PPC970 recognizer.
+  if (Directive != PPC::DIR_440) {
+    const TargetInstrInfo *TII = TM.getInstrInfo();
+    assert(TII && "No InstrInfo?");
+
+    return new PPCHazardRecognizer970(*TII);
+  }
+
+  return TargetInstrInfoImpl::CreateTargetPostRAHazardRecognizer(II, DAG);
+}
 unsigned PPCInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                            int &FrameIndex) const {
   switch (MI->getOpcode()) {

@@ -80,12 +80,6 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode,
                                      bool &isFirst, bool &isSingle,
                                      bool &isCracked,
                                      bool &isLoad, bool &isStore) {
-  if ((int)Opcode >= 0) {
-    isFirst = isSingle = isCracked = isLoad = isStore = false;
-    return PPCII::PPC970_Pseudo;
-  }
-  Opcode = ~Opcode;
-
   const MCInstrDesc &MCID = TII.get(Opcode);
 
   isLoad  = MCID.mayLoad();
@@ -102,29 +96,23 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode,
 /// isLoadOfStoredAddress - If we have a load from the previously stored pointer
 /// as indicated by StorePtr1/StorePtr2/StoreSize, return true.
 bool PPCHazardRecognizer970::
-isLoadOfStoredAddress(unsigned LoadSize, SDValue Ptr1, SDValue Ptr2) const {
+isLoadOfStoredAddress(uint64_t LoadSize, int64_t LoadOffset,
+  const Value *LoadValue) const {
   for (unsigned i = 0, e = NumStores; i != e; ++i) {
     // Handle exact and commuted addresses.
-    if (Ptr1 == StorePtr1[i] && Ptr2 == StorePtr2[i])
-      return true;
-    if (Ptr2 == StorePtr1[i] && Ptr1 == StorePtr2[i])
+    if (LoadValue == StoreValue[i] && LoadOffset == StoreOffset[i])
       return true;
 
     // Okay, we don't have an exact match, if this is an indexed offset, see if
     // we have overlap (which happens during fp->int conversion for example).
-    if (StorePtr2[i] == Ptr2) {
-      if (ConstantSDNode *StoreOffset = dyn_cast<ConstantSDNode>(StorePtr1[i]))
-        if (ConstantSDNode *LoadOffset = dyn_cast<ConstantSDNode>(Ptr1)) {
-          // Okay the base pointers match, so we have [c1+r] vs [c2+r].  Check
-          // to see if the load and store actually overlap.
-          int StoreOffs = StoreOffset->getZExtValue();
-          int LoadOffs  = LoadOffset->getZExtValue();
-          if (StoreOffs < LoadOffs) {
-            if (int(StoreOffs+StoreSize[i]) > LoadOffs) return true;
-          } else {
-            if (int(LoadOffs+LoadSize) > StoreOffs) return true;
-          }
-        }
+    if (StoreValue[i] == LoadValue) {
+      // Okay the base pointers match, so we have [c1+r] vs [c2+r].  Check
+      // to see if the load and store actually overlap.
+      if (StoreOffset[i] < LoadOffset) {
+        if (int64_t(StoreOffset[i]+StoreSize[i]) > LoadOffset) return true;
+      } else {
+        if (int64_t(LoadOffset+LoadSize) > StoreOffset[i]) return true;
+      }
     }
   }
   return false;
@@ -138,13 +126,18 @@ ScheduleHazardRecognizer::HazardType PPCHazardRecognizer970::
 getHazardType(SUnit *SU, int Stalls) {
   assert(Stalls == 0 && "PPC hazards don't support scoreboard lookahead");
 
-  const SDNode *Node = SU->getNode()->getGluedMachineNode();
+  MachineInstr *MI = SU->getInstr();
+
+  if (MI->isDebugValue())
+    return NoHazard;
+
+  unsigned Opcode = MI->getOpcode();
+
   bool isFirst, isSingle, isCracked, isLoad, isStore;
   PPCII::PPC970_Unit InstrType =
-    GetInstrType(Node->getOpcode(), isFirst, isSingle, isCracked,
+    GetInstrType(Opcode, isFirst, isSingle, isCracked,
                  isLoad, isStore);
   if (InstrType == PPCII::PPC970_Pseudo) return NoHazard;
-  unsigned Opcode = Node->getMachineOpcode();
 
   // We can only issue a PPC970_First/PPC970_Single instruction (such as
   // crand/mtspr/etc) if this is the first cycle of the dispatch group.
@@ -181,55 +174,10 @@ getHazardType(SUnit *SU, int Stalls) {
 
   // If this is a load following a store, make sure it's not to the same or
   // overlapping address.
-  if (isLoad && NumStores) {
-    unsigned LoadSize;
-    switch (Opcode) {
-    default: llvm_unreachable("Unknown load!");
-    case PPC::LBZ:   case PPC::LBZU:
-    case PPC::LBZX:
-    case PPC::LBZ8:  case PPC::LBZU8:
-    case PPC::LBZX8:
-    case PPC::LVEBX:
-      LoadSize = 1;
-      break;
-    case PPC::LHA:   case PPC::LHAU:
-    case PPC::LHAX:
-    case PPC::LHZ:   case PPC::LHZU:
-    case PPC::LHZX:
-    case PPC::LVEHX:
-    case PPC::LHBRX:
-    case PPC::LHA8:   case PPC::LHAU8:
-    case PPC::LHAX8:
-    case PPC::LHZ8:   case PPC::LHZU8:
-    case PPC::LHZX8:
-      LoadSize = 2;
-      break;
-    case PPC::LFS:    case PPC::LFSU:
-    case PPC::LFSX:
-    case PPC::LWZ:    case PPC::LWZU:
-    case PPC::LWZX:
-    case PPC::LWA:
-    case PPC::LWAX:
-    case PPC::LVEWX:
-    case PPC::LWBRX:
-    case PPC::LWZ8:
-    case PPC::LWZX8:
-      LoadSize = 4;
-      break;
-    case PPC::LFD:    case PPC::LFDU:
-    case PPC::LFDX:
-    case PPC::LD:     case PPC::LDU:
-    case PPC::LDX:
-      LoadSize = 8;
-      break;
-    case PPC::LVX:
-    case PPC::LVXL:
-      LoadSize = 16;
-      break;
-    }
-
-    if (isLoadOfStoredAddress(LoadSize,
-                              Node->getOperand(0), Node->getOperand(1)))
+  if (isLoad && NumStores && !MI->memoperands_empty()) {
+    MachineMemOperand *MO = *MI->memoperands_begin();
+    if (isLoadOfStoredAddress(MO->getSize(),
+                              MO->getOffset(), MO->getValue()))
       return NoopHazard;
   }
 
@@ -237,66 +185,28 @@ getHazardType(SUnit *SU, int Stalls) {
 }
 
 void PPCHazardRecognizer970::EmitInstruction(SUnit *SU) {
-  const SDNode *Node = SU->getNode()->getGluedMachineNode();
+  MachineInstr *MI = SU->getInstr();
+
+  if (MI->isDebugValue())
+    return;
+
+  unsigned Opcode = MI->getOpcode();
+
   bool isFirst, isSingle, isCracked, isLoad, isStore;
   PPCII::PPC970_Unit InstrType =
-    GetInstrType(Node->getOpcode(), isFirst, isSingle, isCracked,
+    GetInstrType(Opcode, isFirst, isSingle, isCracked,
                  isLoad, isStore);
   if (InstrType == PPCII::PPC970_Pseudo) return;
-  unsigned Opcode = Node->getMachineOpcode();
 
   // Update structural hazard information.
   if (Opcode == PPC::MTCTR || Opcode == PPC::MTCTR8) HasCTRSet = true;
 
   // Track the address stored to.
-  if (isStore) {
-    unsigned ThisStoreSize;
-    switch (Opcode) {
-    default: llvm_unreachable("Unknown store instruction!");
-    case PPC::STB:    case PPC::STB8:
-    case PPC::STBU:   case PPC::STBU8:
-    case PPC::STBX:   case PPC::STBX8:
-    case PPC::STVEBX:
-      ThisStoreSize = 1;
-      break;
-    case PPC::STH:    case PPC::STH8:
-    case PPC::STHU:   case PPC::STHU8:
-    case PPC::STHX:   case PPC::STHX8:
-    case PPC::STVEHX:
-    case PPC::STHBRX:
-      ThisStoreSize = 2;
-      break;
-    case PPC::STFS:
-    case PPC::STFSU:
-    case PPC::STFSX:
-    case PPC::STWX:   case PPC::STWX8:
-    case PPC::STWUX:
-    case PPC::STW:    case PPC::STW8:
-    case PPC::STWU:
-    case PPC::STVEWX:
-    case PPC::STFIWX:
-    case PPC::STWBRX:
-      ThisStoreSize = 4;
-      break;
-    case PPC::STD_32:
-    case PPC::STDX_32:
-    case PPC::STD:
-    case PPC::STDU:
-    case PPC::STFD:
-    case PPC::STFDX:
-    case PPC::STDX:
-    case PPC::STDUX:
-      ThisStoreSize = 8;
-      break;
-    case PPC::STVX:
-    case PPC::STVXL:
-      ThisStoreSize = 16;
-      break;
-    }
-
-    StoreSize[NumStores] = ThisStoreSize;
-    StorePtr1[NumStores] = Node->getOperand(1);
-    StorePtr2[NumStores] = Node->getOperand(2);
+  if (isStore && NumStores < 4 && !MI->memoperands_empty()) {
+    MachineMemOperand *MO = *MI->memoperands_begin();
+    StoreSize[NumStores] = MO->getSize();
+    StoreOffset[NumStores] = MO->getOffset();
+    StoreValue[NumStores] = MO->getValue();
     ++NumStores;
   }
 
@@ -319,3 +229,8 @@ void PPCHazardRecognizer970::AdvanceCycle() {
   if (NumIssued == 5)
     EndDispatchGroup();
 }
+
+void PPCHazardRecognizer970::Reset() {
+  EndDispatchGroup();
+}
+

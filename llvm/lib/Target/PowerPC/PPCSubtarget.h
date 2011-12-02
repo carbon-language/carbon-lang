@@ -148,6 +148,10 @@ public:
   bool isDarwinABI() const { return isDarwin(); }
   bool isSVR4ABI() const { return !isDarwin(); }
 
+  /// enablePostRAScheduler - True at 'More' optimization.
+  bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
+                             TargetSubtargetInfo::AntiDepBreakMode& Mode,
+                             RegClassVector& CriticalPathRCs) const;
 };
 } // End llvm namespace
 

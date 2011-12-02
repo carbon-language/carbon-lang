@@ -55,8 +55,9 @@ class PPCHazardRecognizer970 : public ScheduleHazardRecognizer {
   //
   // This is null if we haven't seen a store yet.  We keep track of both
   // operands of the store here, since we support [r+r] and [r+i] addressing.
-  SDValue StorePtr1[4], StorePtr2[4];
-  unsigned  StoreSize[4];
+  const Value *StoreValue[4];
+  int64_t StoreOffset[4];
+  uint64_t StoreSize[4];
   unsigned NumStores;
 
 public:
@@ -64,6 +65,7 @@ public:
   virtual HazardType getHazardType(SUnit *SU, int Stalls);
   virtual void EmitInstruction(SUnit *SU);
   virtual void AdvanceCycle();
+  virtual void Reset();
 
 private:
   /// EndDispatchGroup - Called when we are finishing a new dispatch group.
@@ -76,8 +78,8 @@ private:
                                   bool &isFirst, bool &isSingle,bool &isCracked,
                                   bool &isLoad, bool &isStore);
 
-  bool isLoadOfStoredAddress(unsigned LoadSize,
-                             SDValue Ptr1, SDValue Ptr2) const;
+  bool isLoadOfStoredAddress(uint64_t LoadSize, int64_t LoadOffset,
+                             const Value *LoadValue) const;
 };
 
 } // end namespace llvm
