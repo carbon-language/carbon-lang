@@ -667,7 +667,8 @@ public:
   void SelectorRead(serialization::SelectorID ID, Selector Sel);
   void MacroDefinitionRead(serialization::PreprocessedEntityID ID,
                            MacroDefinition *MD);
-
+  void ModuleRead(serialization::SubmoduleID ID, Module *Mod);
+                    
   // ASTMutationListener implementation.
   virtual void CompletedTagDefinition(const TagDecl *D);
   virtual void AddedVisibleDecl(const DeclContext *DC, const Decl *D);

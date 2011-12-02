@@ -2973,6 +2973,12 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         Error("too many submodules");
         return Failure;
       }
+      
+      if (DeserializationListener)
+        DeserializationListener->ModuleRead(
+          CurrentModuleGlobalIndex + NUM_PREDEF_SUBMODULE_IDS, 
+          CurrentModule);
+      
       SubmodulesLoaded[CurrentModuleGlobalIndex++] = CurrentModule;
       break;
     }

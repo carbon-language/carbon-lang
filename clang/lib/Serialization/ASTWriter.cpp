@@ -4167,6 +4167,11 @@ void ASTWriter::MacroDefinitionRead(serialization::PreprocessedEntityID ID,
   MacroDefinitions[MD] = ID;
 }
 
+void ASTWriter::ModuleRead(serialization::SubmoduleID ID, Module *Mod) {
+  assert(SubmoduleIDs.find(Mod) == SubmoduleIDs.end());
+  SubmoduleIDs[Mod] = ID;
+}
+
 void ASTWriter::CompletedTagDefinition(const TagDecl *D) {
   assert(D->isCompleteDefinition());
   assert(!WritingAST && "Already writing the AST!");
