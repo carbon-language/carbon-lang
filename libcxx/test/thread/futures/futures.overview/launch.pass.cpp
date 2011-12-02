@@ -20,7 +20,8 @@
 
 int main()
 {
-    static_assert(std::launch::any == (std::launch::async | std::launch::deferred), "");
-    static_assert(std::launch::async == 1, "");
-    static_assert(std::launch::deferred == 2, "");
+    static_assert(static_cast<int>(std::launch::any) ==
+                 (static_cast<int>(std::launch::async) | static_cast<int>(std::launch::deferred)), "");
+    static_assert(static_cast<int>(std::launch::async) == 1, "");
+    static_assert(static_cast<int>(std::launch::deferred) == 2, "");
 }

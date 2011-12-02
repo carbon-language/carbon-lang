@@ -373,21 +373,19 @@ private:
 };
 
 //enum class io_errc
-struct _LIBCPP_VISIBLE io_errc
+_LIBCPP_DECLARE_STRONG_ENUM(io_errc)
 {
-enum _ {
     stream = 1
 };
-    _ __v_;
-
-    _LIBCPP_ALWAYS_INLINE io_errc(_ __v) : __v_(__v) {}
-    _LIBCPP_ALWAYS_INLINE operator int() const {return __v_;}
-};
+_LIBCPP_DECLARE_STRONG_ENUM_EPILOG(io_errc)
 
 template <>
 struct _LIBCPP_VISIBLE is_error_code_enum<io_errc> : public true_type { };
+
+#ifdef _LIBCPP_HAS_NO_STRONG_ENUMS
 template <>
 struct _LIBCPP_VISIBLE is_error_code_enum<io_errc::_> : public true_type { };
+#endif
 
 _LIBCPP_VISIBLE
 const error_category& iostream_category();

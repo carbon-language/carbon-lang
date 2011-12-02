@@ -31,7 +31,7 @@ size_t mbsnrtowcs( wchar_t *__restrict dst, const char **__restrict src,
                    size_t nmc, size_t len, mbstate_t *__restrict ps );
 size_t wcsnrtombs( char *__restrict dst, const wchar_t **__restrict src,
                    size_t nwc, size_t len, mbstate_t *__restrict ps );
-				   
+
 #if defined(_MSC_VER)
 #define snprintf _snprintf
 
@@ -91,8 +91,8 @@ _LIBCPP_ALWAYS_INLINE int __builtin_ctzl( unsigned long x )
 _LIBCPP_ALWAYS_INLINE int __builtin_ctzll( unsigned long long x )
 {
     DWORD r = 0;
-	_BitScanReverse64(&r, x);
-	return static_cast<int>(r);
+    _BitScanReverse64(&r, x);
+    return static_cast<int>(r);
 }
 _LIBCPP_ALWAYS_INLINE int __builtin_clz( unsigned int x )
 {
@@ -106,8 +106,8 @@ _LIBCPP_ALWAYS_INLINE int __builtin_clzl( unsigned long x )
 _LIBCPP_ALWAYS_INLINE int __builtin_clzll( unsigned long long x )
 {
     DWORD r = 0;
-	_BitScanForward64(&r, x);
-	return static_cast<int>(r);
+    _BitScanForward64(&r, x);
+    return static_cast<int>(r);
 }
 #endif // !__clang__
 #endif // _MSC_VER

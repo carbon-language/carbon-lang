@@ -20,7 +20,7 @@
 
 int main()
 {
-    static_assert(std::future_status::ready == 0, "");
-    static_assert(std::future_status::timeout == 1, "");
-    static_assert(std::future_status::deferred == 2, "");
+    static_assert(static_cast<int>(std::future_status::ready) == 0, "");
+    static_assert(static_cast<int>(std::future_status::timeout) == 1, "");
+    static_assert(static_cast<int>(std::future_status::deferred) == 2, "");
 }

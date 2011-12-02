@@ -377,56 +377,40 @@ template <class R, class Alloc> struct uses_allocator<packaged_task<R>, Alloc>;
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 //enum class future_errc
-struct _LIBCPP_VISIBLE future_errc
+_LIBCPP_DECLARE_STRONG_ENUM(future_errc)
 {
-enum _ {
     broken_promise,
     future_already_retrieved,
     promise_already_satisfied,
     no_state
 };
-
-    _ __v_;
-
-    _LIBCPP_INLINE_VISIBILITY future_errc(_ __v) : __v_(__v) {}
-    _LIBCPP_INLINE_VISIBILITY operator int() const {return __v_;}
-
-};
+_LIBCPP_DECLARE_STRONG_ENUM_EPILOG(future_errc)
 
 template <>
 struct _LIBCPP_VISIBLE is_error_code_enum<future_errc> : public true_type {};
 
+#ifdef _LIBCPP_HAS_NO_STRONG_ENUMS
+template <>
+struct _LIBCPP_VISIBLE is_error_code_enum<future_errc::_> : public true_type { };
+#endif
+
 //enum class launch
-struct _LIBCPP_VISIBLE launch
+_LIBCPP_DECLARE_STRONG_ENUM(launch)
 {
-enum _ {
     async = 1,
     deferred = 2,
     any = async | deferred
 };
-
-    _ __v_;
-
-    _LIBCPP_INLINE_VISIBILITY launch(_ __v) : __v_(__v) {}
-    _LIBCPP_INLINE_VISIBILITY operator int() const {return __v_;}
-
-};
+_LIBCPP_DECLARE_STRONG_ENUM_EPILOG(launch)
 
 //enum class future_status
-struct _LIBCPP_VISIBLE future_status
+_LIBCPP_DECLARE_STRONG_ENUM(future_status)
 {
-enum _ {
     ready,
     timeout,
     deferred
 };
-
-    _ __v_;
-
-    _LIBCPP_INLINE_VISIBILITY future_status(_ __v) : __v_(__v) {}
-    _LIBCPP_INLINE_VISIBILITY operator int() const {return __v_;}
-
-};
+_LIBCPP_DECLARE_STRONG_ENUM_EPILOG(future_status)
 
 _LIBCPP_VISIBLE
 const error_category& future_category();
@@ -2252,10 +2236,10 @@ async(launch __policy, _Fp&& __f, _Args&&... __args)
     typedef __async_func<typename decay<_Fp>::type, typename decay<_Args>::type...> _BF;
     typedef typename _BF::_Rp _Rp;
     future<_Rp> __r;
-    if (__policy & launch::async)
+    if (int(__policy) & int(launch::async))
         __r = _VSTD::__make_async_assoc_state<_Rp>(_BF(__decay_copy(_VSTD::forward<_Fp>(__f)),
                                                      __decay_copy(_VSTD::forward<_Args>(__args))...));
-    else if (__policy & launch::deferred)
+    else if (int(__policy) & int(launch::deferred))
         __r = _VSTD::__make_deferred_assoc_state<_Rp>(_BF(__decay_copy(_VSTD::forward<_Fp>(__f)),
                                                         __decay_copy(_VSTD::forward<_Args>(__args))...));
     return __r;

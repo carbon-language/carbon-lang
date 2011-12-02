@@ -160,6 +160,10 @@ typedef __char32_t char32_t;
 #define _LIBCPP_NO_RTTI
 #endif
 
+#if !(__has_feature(cxx_strong_enums))
+#define _LIBCPP_HAS_NO_STRONG_ENUMS
+#endif
+
 #if !(__has_feature(cxx_decltype))
 #define _LIBCPP_HAS_NO_DECLTYPE
 #endif
@@ -223,6 +227,7 @@ typedef __char32_t char32_t;
 
 #if __has_feature(objc_arc_weak)
 #define _LIBCPP_HAS_OBJC_ARC_WEAK
+#define _LIBCPP_HAS_NO_STRONG_ENUMS
 #endif
 
 #if !(__has_feature(cxx_constexpr))
@@ -370,6 +375,18 @@ template <unsigned> struct __static_assert_check {};
 #ifndef __has_feature
 #define __has_feature(__x) 0
 #endif
+
+#ifdef _LIBCPP_HAS_NO_STRONG_ENUMS
+#define _LIBCPP_DECLARE_STRONG_ENUM(x) struct _LIBCPP_VISIBLE x { enum _
+#define _LIBCPP_DECLARE_STRONG_ENUM_EPILOG(x) \
+    _ __v_; \
+    _LIBCPP_ALWAYS_INLINE x(_ __v) : __v_(__v) {} \
+    _LIBCPP_ALWAYS_INLINE operator int() const {return __v_;} \
+    };
+#else  // _LIBCPP_HAS_NO_STRONG_ENUMS
+#define _LIBCPP_DECLARE_STRONG_ENUM(x) enum class _LIBCPP_VISIBLE x
+#define _LIBCPP_DECLARE_STRONG_ENUM_EPILOG(x)
+#endif  // _LIBCPP_HAS_NO_STRONG_ENUMS
 
 #if __APPLE__ || __FreeBSD__ || _WIN32
 #define _LIBCPP_LOCALE__L_EXTENSIONS 1

@@ -245,9 +245,8 @@ struct _LIBCPP_VISIBLE is_error_condition_enum
 // for them:
 
 //enum class errc
-struct errc
+_LIBCPP_DECLARE_STRONG_ENUM(errc)
 {
-enum _ {
     address_family_not_supported        = EAFNOSUPPORT,
     address_in_use                      = EADDRINUSE,
     address_not_available               = EADDRNOTAVAIL,
@@ -343,23 +342,17 @@ enum _ {
     value_too_large                     = EOVERFLOW,
     wrong_protocol_type                 = EPROTOTYPE
 };
-
-    _ __v_;
-
-    _LIBCPP_ALWAYS_INLINE
-    errc(_ __v) : __v_(__v) {}
-    _LIBCPP_ALWAYS_INLINE
-    operator int() const {return __v_;}
-
-};
+_LIBCPP_DECLARE_STRONG_ENUM_EPILOG(errc)
 
 template <>
 struct _LIBCPP_VISIBLE is_error_condition_enum<errc>
     : true_type { };
 
+#ifdef _LIBCPP_HAS_NO_STRONG_ENUMS
 template <>
 struct _LIBCPP_VISIBLE is_error_condition_enum<errc::_>
     : true_type { };
+#endif
 
 class error_condition;
 class error_code;
