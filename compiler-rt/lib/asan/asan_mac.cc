@@ -24,7 +24,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#include <new.h>
+#include <new>
 
 namespace __asan {
 
