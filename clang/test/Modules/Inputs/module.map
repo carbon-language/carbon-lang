@@ -21,9 +21,19 @@ module module_private_left { header "module_private_left.h" }
 module module_private_right { header "module_private_right.h" }
 module macros { header "macros.h" }
 module category_top { header "category_top.h" }
-module category_left { header "category_left.h" }
-module category_right { header "category_right.h" }
-module category_bottom { header "category_bottom.h" }
+module category_left { 
+  header "category_left.h" 
+  export category_top
+}
+module category_right { 
+  header "category_right.h" 
+  export category_top
+}
+module category_bottom { 
+  header "category_bottom.h" 
+  export category_left
+  export category_right
+}
 module redeclarations_left { header "redeclarations_left.h" }
 module redeclarations_right { header "redeclarations_right.h" }
 module load_failure { header "load_failure.h" }

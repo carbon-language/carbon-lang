@@ -1123,6 +1123,11 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
                  !isa<ImplicitParamDecl>(*I))
           continue;
         
+        // If this declaration is module-private and it came from an AST
+        // file, we can't see it.
+        if ((*I)->isModulePrivate() && (*I)->isFromASTFile())
+          continue;
+            
         R.addDecl(*I);
 
         if ((*I)->getAttr<OverloadableAttr>()) {
