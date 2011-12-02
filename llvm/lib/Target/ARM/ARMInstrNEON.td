@@ -5027,7 +5027,7 @@ def : AlignedVEXTq<v2f32, v4f32, DSubReg_i32_reg>;
 
 class VEXTd<string OpcodeStr, string Dt, ValueType Ty>
   : N3V<0,1,0b11,{?,?,?,?},0,0, (outs DPR:$Vd),
-        (ins DPR:$Vn, DPR:$Vm, i32imm:$index), NVExtFrm,
+        (ins DPR:$Vn, DPR:$Vm, imm0_7:$index), NVExtFrm,
         IIC_VEXTD, OpcodeStr, Dt, "$Vd, $Vn, $Vm, $index", "",
         [(set DPR:$Vd, (Ty (NEONvext (Ty DPR:$Vn),
                                       (Ty DPR:$Vm), imm:$index)))]> {
@@ -5037,7 +5037,7 @@ class VEXTd<string OpcodeStr, string Dt, ValueType Ty>
 
 class VEXTq<string OpcodeStr, string Dt, ValueType Ty>
   : N3V<0,1,0b11,{?,?,?,?},1,0, (outs QPR:$Vd),
-        (ins QPR:$Vn, QPR:$Vm, i32imm:$index), NVExtFrm,
+        (ins QPR:$Vn, QPR:$Vm, imm0_15:$index), NVExtFrm,
         IIC_VEXTQ, OpcodeStr, Dt, "$Vd, $Vn, $Vm, $index", "",
         [(set QPR:$Vd, (Ty (NEONvext (Ty QPR:$Vn),
                                       (Ty QPR:$Vm), imm:$index)))]> {
