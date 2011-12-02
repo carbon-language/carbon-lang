@@ -17,10 +17,22 @@ entry:
 bb2:                                              ; preds = %entry, %bb3
   %gotovar.4.0 = phi i8* [ %gotovar.4.0.pre, %bb3 ], [ %0, %entry ] ; <i8*> [#uses=1]
 ; PIC: mtctr
+; PIC-NEXT: li
+; PIC-NEXT: li
+; PIC-NEXT: li
+; PIC-NEXT: li
 ; PIC-NEXT: bctr
 ; STATIC: mtctr
+; STATIC-NEXT: li
+; STATIC-NEXT: li
+; STATIC-NEXT: li
+; STATIC-NEXT: li
 ; STATIC-NEXT: bctr
 ; PPC64: mtctr
+; PPC64-NEXT: li
+; PPC64-NEXT: li
+; PPC64-NEXT: li
+; PPC64-NEXT: li
 ; PPC64-NEXT: bctr
   indirectbr i8* %gotovar.4.0, [label %L5, label %L4, label %L3, label %L2, label %L1]
 

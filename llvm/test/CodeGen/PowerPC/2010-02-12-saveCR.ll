@@ -7,8 +7,8 @@ target triple = "powerpc-apple-darwin9.6"
 define void @foo() nounwind {
 entry:
 ;CHECK:  mfcr r2
-;CHECK:  rlwinm r2, r2, 8, 0, 31
 ;CHECK:  lis r0, 1
+;CHECK:  rlwinm r2, r2, 8, 0, 31
 ;CHECK:  ori r0, r0, 34540
 ;CHECK:  stwx r2, r1, r0
   %x = alloca [100000 x i8]                       ; <[100000 x i8]*> [#uses=1]
