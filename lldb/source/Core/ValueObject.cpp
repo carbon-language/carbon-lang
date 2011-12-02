@@ -2307,7 +2307,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     }
                     else if (options.m_no_synthetic_children == false) // let's try with synthetic children
                     {
-                        child_valobj_sp = root->GetSyntheticValue(eUseSyntheticFilter)->GetChildMemberWithName(child_name, true);
+                        child_valobj_sp = root->GetSyntheticValue(eNoSyntheticFilter)->GetChildMemberWithName(child_name, true);
                     }
                     
                     // if we are here and options.m_no_synthetic_children is true, child_valobj_sp is going to be a NULL SP,
