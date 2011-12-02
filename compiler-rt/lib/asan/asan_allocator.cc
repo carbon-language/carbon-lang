@@ -39,7 +39,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
-#include <algorithm>
 
 namespace __asan {
 
@@ -506,7 +505,7 @@ class MallocInfo {
     size_t size = SizeClassToSize(size_class);
     CHECK(IsPowerOfTwo(kMinMmapSize));
     CHECK(size < kMinMmapSize || (size % kMinMmapSize) == 0);
-    size_t mmap_size = std::max(size, kMinMmapSize);
+    size_t mmap_size = Max(size, kMinMmapSize);
     size_t n_chunks = mmap_size / size;
     CHECK(n_chunks * size == mmap_size);
     if (size < kPageSize) {
@@ -643,7 +642,6 @@ static uint8_t *Allocate(size_t alignment, size_t size, AsanStackTrace *stack) {
     AsanChunk **fl = &t->malloc_storage().free_lists_[size_class];
     if (!*fl) {
       size_t n_new_chunks = kMaxSizeForThreadLocalFreeList / size_to_allocate;
-      // n_new_chunks = std::min((size_t)32, n_new_chunks);
       *fl = malloc_info.AllocateChunks(size_class, n_new_chunks);
       if (FLAG_stats) {
         thread_stats.malloc_small_slow++;
@@ -749,7 +747,7 @@ static uint8_t *Reallocate(uint8_t *old_ptr, size_t new_size,
   AsanChunk *m = PtrToChunk((uintptr_t)old_ptr);
   CHECK(m->chunk_state == CHUNK_ALLOCATED);
   size_t old_size = m->used_size;
-  size_t memcpy_size = std::min(new_size, old_size);
+  size_t memcpy_size = Min(new_size, old_size);
   uint8_t *new_ptr = Allocate(0, new_size, stack);
   if (new_ptr) {
     real_memcpy(new_ptr, old_ptr, memcpy_size);
@@ -1034,7 +1032,7 @@ void __asan_stack_free(size_t ptr, size_t size, size_t real_stack) {
 // just return "size".
 size_t __asan_get_estimated_allocated_size(size_t size) {
   if (size == 0) return 1;
-  return std::min(size, kMaxAllowedMallocSize);
+  return Min(size, kMaxAllowedMallocSize);
 }
 
 bool __asan_get_ownership(const void *p) {

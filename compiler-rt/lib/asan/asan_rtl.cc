@@ -25,8 +25,7 @@
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 
-#include <algorithm>
-#include <map>
+#include <new>
 #include <dlfcn.h>
 #include <execinfo.h>
 #include <fcntl.h>
@@ -192,7 +191,7 @@ static bool DescribeStackAddress(uintptr_t addr, uintptr_t access_size) {
   CHECK(name_end);
   buf[0] = 0;
   strncat(buf, frame_descr,
-          std::min(kBufSize, static_cast<intptr_t>(name_end - frame_descr)));
+          Min(kBufSize, static_cast<intptr_t>(name_end - frame_descr)));
   Printf("Address %p is located at offset %ld "
          "in frame <%s> of T%d's stack:\n",
          addr, offset, buf, t->tid());
@@ -215,7 +214,7 @@ static bool DescribeStackAddress(uintptr_t addr, uintptr_t access_size) {
     }
     p++;
     buf[0] = 0;
-    strncat(buf, p, std::min(kBufSize, len));
+    strncat(buf, p, Min(kBufSize, len));
     p += len;
     Printf("    [%ld, %ld) '%s'\n", beg, beg + size, buf);
   }

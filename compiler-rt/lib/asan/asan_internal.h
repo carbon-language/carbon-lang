@@ -72,6 +72,10 @@ int SNPrint(char *buffer, size_t length, const char *format, ...);
 void Printf(const char *format, ...);
 void Report(const char *format, ...);
 
+// Don't use std::min and std::max, to minimize dependency on libstdc++.
+template<class T> T Min(T a, T b) { return a < b ? a : b; }
+template<class T> T Max(T a, T b) { return a > b ? a : b; }
+
 // asan_poisoning.cc
 // Poisons the shadow memory for "size" bytes starting from "addr".
 void PoisonShadow(uintptr_t addr, size_t size, uint8_t value);

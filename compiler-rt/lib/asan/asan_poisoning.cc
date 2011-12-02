@@ -17,8 +17,6 @@
 #include "asan_internal.h"
 #include "asan_mapping.h"
 
-#include <algorithm>
-
 namespace __asan {
 
 void PoisonShadow(uintptr_t addr, size_t size, uint8_t value) {
@@ -92,7 +90,7 @@ void __asan_poison_memory_region(void const volatile *addr, size_t size) {
     // No need to re-poison memory if it is poisoned already.
     if (value > 0 && value <= end.offset) {
       if (beg.offset > 0) {
-        *beg.chunk = std::min(value, beg.offset);
+        *beg.chunk = Min(value, beg.offset);
       } else {
         *beg.chunk = kAsanUserPoisonedMemoryMagic;
       }
@@ -105,7 +103,7 @@ void __asan_poison_memory_region(void const volatile *addr, size_t size) {
     if (beg.value == 0) {
       *beg.chunk = beg.offset;
     } else {
-      *beg.chunk = std::min(beg.value, beg.offset);
+      *beg.chunk = Min(beg.value, beg.offset);
     }
     beg.chunk++;
   }
@@ -132,7 +130,7 @@ void __asan_unpoison_memory_region(void const volatile *addr, size_t size) {
     // We unpoison memory bytes up to enbytes up to end.offset if it is not
     // unpoisoned already.
     if (value != 0) {
-      *beg.chunk = std::max(value, end.offset);
+      *beg.chunk = Max(value, end.offset);
     }
     return;
   }
@@ -143,7 +141,7 @@ void __asan_unpoison_memory_region(void const volatile *addr, size_t size) {
   }
   real_memset(beg.chunk, 0, end.chunk - beg.chunk);
   if (end.offset > 0 && end.value != 0) {
-    *end.chunk = std::max(end.value, end.offset);
+    *end.chunk = Max(end.value, end.offset);
   }
 }
 

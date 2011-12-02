@@ -20,7 +20,6 @@
 #include "asan_stack.h"
 #include "asan_stats.h"
 
-#include <algorithm>
 #include <dlfcn.h>
 #include <string.h>
 
@@ -276,15 +275,15 @@ int WRAP(strncmp)(const char *s1, const char *s2, size_t size) {
     c2 = (unsigned char)s2[i];
     if (c1 != c2 || c1 == '\0') break;
   }
-  ASAN_READ_RANGE(s1, std::min(i + 1, size));
-  ASAN_READ_RANGE(s2, std::min(i + 1, size));
+  ASAN_READ_RANGE(s1, Min(i + 1, size));
+  ASAN_READ_RANGE(s2, Min(i + 1, size));
   return CharCmp(c1, c2);
 }
 
 char *WRAP(strncpy)(char *to, const char *from, size_t size) {
   ensure_asan_inited();
   if (FLAG_replace_str) {
-    size_t from_size = std::min(size, internal_strnlen(from, size) + 1);
+    size_t from_size = Min(size, internal_strnlen(from, size) + 1);
     CHECK_RANGES_OVERLAP(to, from, from_size);
     ASAN_READ_RANGE(from, from_size);
     ASAN_WRITE_RANGE(to, size);
@@ -297,7 +296,7 @@ size_t WRAP(strnlen)(const char *s, size_t maxlen) {
   ensure_asan_inited();
   size_t length = real_strnlen(s, maxlen);
   if (FLAG_replace_str) {
-    ASAN_READ_RANGE(s, std::min(length + 1, maxlen));
+    ASAN_READ_RANGE(s, Min(length + 1, maxlen));
   }
   return length;
 }

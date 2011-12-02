@@ -21,8 +21,6 @@
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 
-#include <algorithm>
-
 #include <sys/mman.h>
 #include <unistd.h>
 
