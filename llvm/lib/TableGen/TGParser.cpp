@@ -2219,6 +2219,8 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
       Record *DefProto = MC->DefPrototypes[i];
 
       Record *CurRec = InstantiateMulticlassDef(*MC, DefProto, DefmPrefix, DefmPrefixLoc);
+      if (!CurRec)
+        return true;
 
       if (ResolveMulticlassDefArgs(*MC, CurRec, DefmPrefixLoc, SubClassLoc,
                                    TArgs, TemplateVals, true/*Delete args*/))
