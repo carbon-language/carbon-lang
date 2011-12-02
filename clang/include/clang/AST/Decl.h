@@ -40,7 +40,8 @@ class DependentFunctionTemplateSpecializationInfo;
 class TypeLoc;
 class UnresolvedSetImpl;
 class LabelStmt;
-
+class Module;
+  
 /// \brief A container of type source information.
 ///
 /// A client can read the relevant info using TypeLoc wrappers, e.g:
@@ -3074,6 +3075,69 @@ public:
     return static_cast<BlockDecl *>(const_cast<DeclContext*>(DC));
   }
 };
+
+/// \brief Describes a module import declaration, which makes the contents
+/// of the named module visible in the current translation unit.
+///
+/// An import declaration imports the named module (or submodule). For example:
+/// \code
+///   __import_module__ std.vector;
+/// \endcode
+///
+/// Import declarations can also be implicitly generated from #include/#import 
+/// directives.
+class ImportDecl : public Decl {
+  /// \brief The imported module, along with a bit that indicates whether
+  /// we have source-location information for each identifier in the module
+  /// name. 
+  ///
+  /// When the bit is false, we only have a single source location for the
+  /// end of the import declaration.
+  llvm::PointerIntPair<Module *, 1, bool> ImportedAndComplete;
+  
+  friend class ASTReader;
+  friend class ASTDeclReader;
+  
+  ImportDecl(DeclContext *DC, SourceLocation ImportLoc, Module *Imported,
+             ArrayRef<SourceLocation> IdentifierLocs);
+
+  ImportDecl(DeclContext *DC, SourceLocation ImportLoc, Module *Imported,
+             SourceLocation EndLoc);
+
+  ImportDecl(EmptyShell Empty) : Decl(Import, Empty) { }
+  
+public:
+  /// \brief Create a new module import declaration.
+  static ImportDecl *Create(ASTContext &C, DeclContext *DC, 
+                            SourceLocation ImportLoc, Module *Imported,
+                            ArrayRef<SourceLocation> IdentifierLocs);
+  
+  /// \brief Create a new module import declaration for an implicitly-generated
+  /// import.
+  static ImportDecl *CreateImplicit(ASTContext &C, DeclContext *DC, 
+                                    SourceLocation ImportLoc, Module *Imported, 
+                                    SourceLocation EndLoc);
+  
+  /// \brief Create a new module import declaration.
+  static ImportDecl *CreateEmpty(ASTContext &C, unsigned NumLocations);
+  
+  /// \brief Retrieve the module that was imported by the import declaration.
+  Module *getImportedModule() const { return ImportedAndComplete.getPointer(); }
+  
+  /// \brief Retrieves the locations of each of the identifiers that make up
+  /// the complete module name in the import declaration.
+  ///
+  /// This will return an empty array if the locations of the individual
+  /// identifiers aren't available.
+  ArrayRef<SourceLocation> getIdentifierLocs() const;
+  
+  virtual SourceRange getSourceRange() const;
+  
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classof(const ImportDecl *D) { return true; }
+  static bool classofKind(Kind K) { return K == Import; }
+};
+  
 
 /// Insertion operator for diagnostics.  This allows sending NamedDecl's
 /// into a diagnostic with <<.

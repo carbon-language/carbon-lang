@@ -75,3 +75,5 @@ def FriendTemplate : Decl;
 def StaticAssert : Decl;
 def Block : Decl, DeclContext;
 def ClassScopeFunctionSpecialization : Decl;
+def Import : Decl;
+

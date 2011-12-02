@@ -909,7 +909,9 @@ namespace clang {
       DECL_EXPANDED_NON_TYPE_TEMPLATE_PARM_PACK,
       /// \brief A ClassScopeFunctionSpecializationDecl record a class scope
       /// function specialization. (Microsoft extension).
-      DECL_CLASS_SCOPE_FUNCTION_SPECIALIZATION
+      DECL_CLASS_SCOPE_FUNCTION_SPECIALIZATION,
+      /// \brief An ImportDecl recording a module import.
+      DECL_IMPORT
     };
 
     /// \brief Record codes for each kind of statement or expression.

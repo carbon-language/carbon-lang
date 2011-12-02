@@ -94,6 +94,10 @@ namespace clang {
       return Reader.getGlobalSubmoduleID(F, R[I++]);
     }
     
+    Module *readModule(const RecordData &R, unsigned &I) {
+      return Reader.getSubmodule(readSubmoduleID(R, I));
+    }
+    
     void ReadCXXDefinitionData(struct CXXRecordDecl::DefinitionData &Data,
                                const RecordData &R, unsigned &I);
 
@@ -168,6 +172,7 @@ namespace clang {
     void VisitUsingShadowDecl(UsingShadowDecl *D);
     void VisitLinkageSpecDecl(LinkageSpecDecl *D);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *AD);
+    void VisitImportDecl(ImportDecl *D);
     void VisitAccessSpecDecl(AccessSpecDecl *D);
     void VisitFriendDecl(FriendDecl *D);
     void VisitFriendTemplateDecl(FriendTemplateDecl *D);
@@ -1054,6 +1059,16 @@ void ASTDeclReader::VisitCXXConversionDecl(CXXConversionDecl *D) {
   D->IsExplicitSpecified = Record[Idx++];
 }
 
+void ASTDeclReader::VisitImportDecl(ImportDecl *D) {
+  VisitDecl(D);
+  D->ImportedAndComplete.setPointer(readModule(Record, Idx));
+  D->ImportedAndComplete.setInt(Record[Idx++]);
+  SourceLocation *StoredLocs = reinterpret_cast<SourceLocation *>(D + 1);
+  for (unsigned I = 0, N = Record.back(); I != N; ++I)
+    StoredLocs[I] = ReadSourceLocation(Record, Idx);
+  ++Idx;
+}
+
 void ASTDeclReader::VisitAccessSpecDecl(AccessSpecDecl *D) {
   VisitDecl(D);
   D->setColonLoc(ReadSourceLocation(Record, Idx));
@@ -1760,6 +1775,11 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   case DECL_CXX_BASE_SPECIFIERS:
     Error("attempt to read a C++ base-specifier record as a declaration");
     return 0;
+  case DECL_IMPORT:
+    // Note: last entry of the ImportDecl record is the number of stored source 
+    // locations.
+    D = ImportDecl::CreateEmpty(Context, Record.back());
+    break;
   }
 
   assert(D && "Unknown declaration reading AST file");

@@ -24,6 +24,7 @@
 #include "clang/AST/ASTMutationListener.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "clang/Basic/Module.h"
 #include "clang/Basic/Specifiers.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -2609,3 +2610,81 @@ FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation RParenLoc) {
   return new (C) FileScopeAsmDecl(DC, Str, AsmLoc, RParenLoc);
 }
+
+//===----------------------------------------------------------------------===//
+// ImportDecl Implementation
+//===----------------------------------------------------------------------===//
+
+/// \brief Retrieve the number of module identifiers needed to name the given
+/// module.
+static unsigned getNumModuleIdentifiers(Module *Mod) {
+  unsigned Result = 1;
+  while (Mod->Parent) {
+    Mod = Mod->Parent;
+    ++Result;
+  }
+  return Result;
+}
+
+ImportDecl::ImportDecl(DeclContext *DC, SourceLocation ImportLoc, 
+                       Module *Imported,
+                       ArrayRef<SourceLocation> IdentifierLocs)
+  : Decl(Import, DC, ImportLoc), ImportedAndComplete(Imported, true)
+{
+  assert(getNumModuleIdentifiers(Imported) == IdentifierLocs.size());
+  SourceLocation *StoredLocs = reinterpret_cast<SourceLocation *>(this + 1);
+  memcpy(StoredLocs, IdentifierLocs.data(), 
+         IdentifierLocs.size() * sizeof(SourceLocation));
+}
+
+ImportDecl::ImportDecl(DeclContext *DC, SourceLocation ImportLoc, 
+                       Module *Imported, SourceLocation EndLoc)
+  : Decl(Import, DC, ImportLoc), ImportedAndComplete(Imported, false)
+{
+  *reinterpret_cast<SourceLocation *>(this + 1) = EndLoc;
+}
+
+ImportDecl *ImportDecl::Create(ASTContext &C, DeclContext *DC, 
+                               SourceLocation ImportLoc, Module *Imported,
+                               ArrayRef<SourceLocation> IdentifierLocs) {
+  void *Mem = C.Allocate(sizeof(ImportDecl) + 
+                         IdentifierLocs.size() * sizeof(SourceLocation));
+  return new (Mem) ImportDecl(DC, ImportLoc, Imported, IdentifierLocs);
+}
+
+ImportDecl *ImportDecl::CreateImplicit(ASTContext &C, DeclContext *DC, 
+                                       SourceLocation ImportLoc,
+                                       Module *Imported, 
+                                       SourceLocation EndLoc) {
+  void *Mem = C.Allocate(sizeof(ImportDecl) + sizeof(SourceLocation));
+  ImportDecl *Import
+    = new (Mem) ImportDecl(DC, ImportLoc, Imported, 
+                           ArrayRef<SourceLocation>(&EndLoc, 1));
+  Import->setImplicit();
+  return Import;
+}
+
+ImportDecl *ImportDecl::CreateEmpty(ASTContext &C, unsigned NumLocations) {
+  void *Mem = C.Allocate(sizeof(ImportDecl) + 
+                         NumLocations * sizeof(SourceLocation));
+  return new (Mem) ImportDecl(EmptyShell());  
+}
+
+ArrayRef<SourceLocation> ImportDecl::getIdentifierLocs() const {
+  if (!ImportedAndComplete.getInt())
+    return ArrayRef<SourceLocation>();
+
+  const SourceLocation *StoredLocs
+    = reinterpret_cast<const SourceLocation *>(this + 1);
+  return ArrayRef<SourceLocation>(StoredLocs, 
+                                  getNumModuleIdentifiers(getImportedModule()));
+}
+
+SourceRange ImportDecl::getSourceRange() const {
+  if (!ImportedAndComplete.getInt())
+    return SourceRange(getLocation(), 
+                       *reinterpret_cast<const SourceLocation *>(this + 1));
+  
+  return SourceRange(getLocation(), getIdentifierLocs().back());
+}
+

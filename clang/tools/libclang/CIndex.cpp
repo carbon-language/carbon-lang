@@ -4000,6 +4000,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::Block:
   case Decl::Label:  // FIXME: Is this right??
   case Decl::ClassScopeFunctionSpecialization:
+  case Decl::Import:
     return C;
 
   // Declaration kinds that don't make any sense here, but are

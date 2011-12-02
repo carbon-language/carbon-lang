@@ -1131,6 +1131,8 @@ DEF_TRAVERSE_DECL(FileScopeAsmDecl, {
     TRY_TO(TraverseStmt(D->getAsmString()));
   })
 
+DEF_TRAVERSE_DECL(ImportDecl, { })
+
 DEF_TRAVERSE_DECL(FriendDecl, {
     // Friend is either decl or a type.
     if (D->getFriendType())

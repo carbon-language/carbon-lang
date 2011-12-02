@@ -501,6 +501,7 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case ObjCImplementation:
     case ObjCCategory:
     case ObjCCategoryImpl:
+    case Import:
       // Never looked up by name.
       return 0;
   }

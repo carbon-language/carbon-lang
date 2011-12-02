@@ -84,6 +84,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::NamespaceAlias:
   case Decl::StaticAssert: // static_assert(X, ""); [C++0x]
   case Decl::Label:        // __label__ x;
+  case Decl::Import:
     // None of these decls require codegen support.
     return;
 

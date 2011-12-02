@@ -94,6 +94,7 @@ namespace clang {
     void VisitUsingShadowDecl(UsingShadowDecl *D);
     void VisitLinkageSpecDecl(LinkageSpecDecl *D);
     void VisitFileScopeAsmDecl(FileScopeAsmDecl *D);
+    void VisitImportDecl(ImportDecl *D);
     void VisitAccessSpecDecl(AccessSpecDecl *D);
     void VisitFriendDecl(FriendDecl *D);
     void VisitFriendTemplateDecl(FriendTemplateDecl *D);
@@ -970,6 +971,24 @@ void ASTDeclWriter::VisitCXXConversionDecl(CXXConversionDecl *D) {
   VisitCXXMethodDecl(D);
   Record.push_back(D->IsExplicitSpecified);
   Code = serialization::DECL_CXX_CONVERSION;
+}
+
+void ASTDeclWriter::VisitImportDecl(ImportDecl *D) {
+  VisitDecl(D);
+  Writer.SubmoduleIDs[D->getImportedModule()];
+  ArrayRef<SourceLocation> IdentifierLocs = D->getIdentifierLocs();
+  Record.push_back(!IdentifierLocs.empty());
+  if (IdentifierLocs.empty()) {
+    Writer.AddSourceLocation(D->getLocEnd(), Record);
+    Record.push_back(1);
+  } else {
+    for (unsigned I = 0, N = IdentifierLocs.size(); I != N; ++I)
+      Writer.AddSourceLocation(IdentifierLocs[I], Record);
+    Record.push_back(IdentifierLocs.size());
+  }
+  // Note: the number of source locations must always be the last element in
+  // the record.
+  Code = serialization::DECL_IMPORT;
 }
 
 void ASTDeclWriter::VisitAccessSpecDecl(AccessSpecDecl *D) {
