@@ -1759,8 +1759,13 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   T.consumeOpen();
 
   ExprResult AsmString(ParseAsmStringLiteral());
-  if (AsmString.isInvalid())
+  if (AsmString.isInvalid()) {
+    // If the reason we are recovering is because of an improper string
+    // literal, it makes the most sense just to consume to the ')'.
+    if (isTokenStringLiteral())
+      T.skipToEnd();
     return StmtError();
+  }
 
   SmallVector<IdentifierInfo *, 4> Names;
   ExprVector Constraints(Actions);
