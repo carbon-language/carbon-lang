@@ -437,7 +437,7 @@ class MallocInfo {
         left_chunk->chunk_state != CHUNK_AVAILABLE)
       return left_chunk;
     // Choose based on offset.
-    uintptr_t l_offset = 0, r_offset = 0;
+    size_t l_offset = 0, r_offset = 0;
     CHECK(left_chunk->AddrIsAtRight(addr, 1, &l_offset));
     CHECK(right_chunk->AddrIsAtLeft(addr, 1, &r_offset));
     if (l_offset < r_offset)
@@ -457,7 +457,7 @@ class MallocInfo {
     CHECK(m->chunk_state == CHUNK_ALLOCATED ||
           m->chunk_state == CHUNK_AVAILABLE ||
           m->chunk_state == CHUNK_QUARANTINE);
-    uintptr_t offset = 0;
+    size_t offset = 0;
     if (m->AddrIsInside(addr, 1, &offset))
       return m;
 
