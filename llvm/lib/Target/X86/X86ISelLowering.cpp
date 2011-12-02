@@ -14329,9 +14329,18 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool isCommutative) {
     return false;
 
   EVT VT = LHS.getValueType();
+
+  assert((VT.is128BitVector() || VT.is256BitVector()) &&
+         "Unsupported vector type for horizontal add/sub");
+
+  // Handle 128 and 256-bit vector lengths. AVX defines horizontal add/sub to
+  // operate independently on 128-bit lanes.
   unsigned NumElts = VT.getVectorNumElements();
   unsigned NumLanes = VT.getSizeInBits()/128;
   unsigned NumLaneElts = NumElts / NumLanes;
+  assert((NumLaneElts % 2 == 0) &&
+         "Vector type should have an even number of elements in each lane");
+  unsigned HalfLaneElts = NumLaneElts/2;
 
   // View LHS in the form
   //   LHS = VECTOR_SHUFFLE A, B, LMask
@@ -14394,40 +14403,23 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool isCommutative) {
   //   LHS = VECTOR_SHUFFLE A, B, LMask
   //   RHS = VECTOR_SHUFFLE A, B, RMask
   // Check that the masks correspond to performing a horizontal operation.
-  for (unsigned l = 0; l != NumLanes; ++l) {
-    unsigned LaneStart = l*NumLaneElts;
-    for (unsigned i = 0; i != NumLaneElts/2; ++i) {
-      unsigned LIdx = LMask[i+LaneStart];
-      unsigned RIdx = RMask[i+LaneStart];
+  for (unsigned i = 0; i != NumElts; ++i) {
+    unsigned LIdx = LMask[i], RIdx = RMask[i];
 
-      // Ignore any UNDEF components.
-      if (LIdx >= 2*NumElts || RIdx >= 2*NumElts ||
-          (!A.getNode() && (LIdx < NumElts || RIdx < NumElts)) ||
-          (!B.getNode() && (LIdx >= NumElts || RIdx >= NumElts)))
-        continue;
+    // Ignore any UNDEF components.
+    if (LIdx >= 2*NumElts || RIdx >= 2*NumElts ||
+        (!A.getNode() && (LIdx < NumElts || RIdx < NumElts)) ||
+        (!B.getNode() && (LIdx >= NumElts || RIdx >= NumElts)))
+      continue;
 
-      // Check that successive elements are being operated on.  If not, this is
-      // not a horizontal operation.
-      if (!(LIdx == 2*i + LaneStart && RIdx == 2*i + LaneStart + 1) &&
-          !(isCommutative && LIdx == 2*i + LaneStart + 1 && RIdx == 2*i + LaneStart))
-        return false;
-    }
-    for (unsigned i = 0; i != NumLaneElts/2; ++i) {
-      unsigned LIdx = LMask[i+(NumLaneElts/2)+LaneStart];
-      unsigned RIdx = RMask[i+(NumLaneElts/2)+LaneStart];
-
-      // Ignore any UNDEF components.
-      if (LIdx >= 2*NumElts || RIdx >= 2*NumElts ||
-          (!A.getNode() && (LIdx < NumElts || RIdx < NumElts)) ||
-          (!B.getNode() && (LIdx >= NumElts || RIdx >= NumElts)))
-        continue;
-
-      // Check that successive elements are being operated on.  If not, this is
-      // not a horizontal operation.
-      if (!(LIdx == 2*i + LaneStart + NumElts && RIdx == 2*i + LaneStart + NumElts + 1) &&
-          !(isCommutative && LIdx == 2*i + LaneStart + NumElts + 1 && RIdx == 2*i + LaneStart + NumElts))
-        return false;
-    }
+    // Check that successive elements are being operated on.  If not, this is
+    // not a horizontal operation.
+    unsigned Src = (i/HalfLaneElts) % 2; // each lane is split between srcs
+    unsigned LaneStart = (i/NumLaneElts) * NumLaneElts;
+    unsigned Index = 2*(i%HalfLaneElts) + NumElts*Src + LaneStart;
+    if (!(LIdx == Index && RIdx == Index + 1) &&
+        !(isCommutative && LIdx == Index + 1 && RIdx == Index))
+      return false;
   }
 
   LHS = A.getNode() ? A : B; // If A is 'UNDEF', use B for it.
