@@ -53,6 +53,14 @@ StringRef Module::getTopLevelModuleName() const {
   return Top->Name;
 }
 
+static void printModuleId(llvm::raw_ostream &OS, const ModuleId &Id) {
+  for (unsigned I = 0, N = Id.size(); I != N; ++I) {
+    if (I)
+      OS << ".";
+    OS << Id[I].first;
+  }
+}
+
 void Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
   OS.indent(Indent);
   if (IsFramework)
@@ -80,6 +88,23 @@ void Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
        MI != MIEnd; ++MI)
     MI->getValue()->print(OS, Indent + 2);
   
+  for (unsigned I = 0, N = Exports.size(); I != N; ++I) {
+    OS.indent(Indent + 2);
+    OS << "export " << Exports[I].getPointer()->getFullModuleName();
+    if (Exports[I].getInt())
+      OS << ".*";
+    OS << "\n";
+  }
+
+  for (unsigned I = 0, N = UnresolvedExports.size(); I != N; ++I) {
+    OS.indent(Indent + 2);
+    OS << "export ";
+    printModuleId(OS, UnresolvedExports[I].Id);
+    if (UnresolvedExports[I].Wildcard)
+      OS << ".*";
+    OS << "\n";
+  }
+
   OS.indent(Indent);
   OS << "}\n";
 }
