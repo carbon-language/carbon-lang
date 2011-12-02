@@ -1169,7 +1169,7 @@ ClangASTContext::CreateClassTemplateDecl (DeclContext *decl_ctx,
                                                                              depth, 
                                                                              i,
                                                                              &ast->Idents.get(name), 
-                                                                             template_param_infos.args[i].getAsType(), 
+                                                                             template_param_infos.args[i].getIntegralType(), 
                                                                              parameter_pack, 
                                                                              NULL));
                                             
@@ -1202,7 +1202,14 @@ ClangASTContext::CreateClassTemplateDecl (DeclContext *decl_ctx,
                                                               SourceLocation(),
                                                               SourceLocation(),
                                                               &identifier_info);
-    
+
+    for (size_t i=0, template_param_decl_count = template_param_decls.size();
+         i < template_param_decl_count;
+         ++i)
+    {
+        template_param_decls[i]->setDeclContext (template_cxx_decl);
+    }
+
     // With templated classes, we say that a class is templated with
     // specializations, but that the bare class has no functions.
     template_cxx_decl->startDefinition();
