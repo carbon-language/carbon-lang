@@ -5,12 +5,6 @@
 
 __import_module__ diamond_bottom;
 
-// FIXME: We want 'bottom' to re-export left and right, and both of those to
-// re-export 'top'.
-__import_module__ diamond_top;
-__import_module__ diamond_left;
-__import_module__ diamond_right;
-
 void test_diamond(int i, float f, double d, char c) {
   top(&i);
   left(&f);

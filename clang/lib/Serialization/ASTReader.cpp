@@ -2504,6 +2504,18 @@ void ASTReader::makeModuleVisible(Module *Mod,
       if (!Sub->getValue()->IsExplicit && Visited.insert(Sub->getValue()))
         Stack.push_back(Sub->getValue());
     }
+    
+    // Push any exported modules onto the stack to be marked as visible.
+    for (unsigned I = 0, N = Mod->Exports.size(); I != N; ++I) {
+      Module *Exported = Mod->Exports[I].getPointer();
+      if (Visited.insert(Exported)) {
+        // FIXME: The intent of wildcards is to re-export any imported modules.
+        // However, we don't yet have the module-dependency information to do
+        // this, so we ignore wildcards for now.
+        if (!Mod->Exports[I].getInt())
+          Stack.push_back(Exported);
+      }
+    }
   }
 }
 
