@@ -1,7 +1,17 @@
 module diamond_top { header "diamond_top.h" }
-module diamond_left { header "diamond_left.h" }
-module diamond_right { header "diamond_right.h" }
-module diamond_bottom { header "diamond_bottom.h" }
+module diamond_left { 
+  header "diamond_left.h" 
+  export diamond_top
+}
+module diamond_right { 
+  header "diamond_right.h" 
+  export diamond_top
+}
+module diamond_bottom { 
+  header "diamond_bottom.h" 
+  export diamond_left
+  export diamond_right
+}
 module irgen { header "irgen.h" }
 module lookup_left_objc { header "lookup_left.h" }
 module lookup_right_objc { header "lookup_right.h" }

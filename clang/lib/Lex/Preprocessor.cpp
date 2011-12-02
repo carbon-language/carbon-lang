@@ -369,7 +369,12 @@ void Preprocessor::CreateString(const char *Buf, unsigned Len, Token &Tok,
     Tok.setLiteralData(DestPtr);
 }
 
-
+Module *Preprocessor::getCurrentModule() {
+  if (getLangOptions().CurrentModule.empty())
+    return 0;
+  
+  return getHeaderSearchInfo().getModule(getLangOptions().CurrentModule);
+}
 
 //===----------------------------------------------------------------------===//
 // Preprocessor Initialization Methods

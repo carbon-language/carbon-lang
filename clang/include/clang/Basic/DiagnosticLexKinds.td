@@ -399,6 +399,12 @@ def err_mmap_umbrella_header_submodule : Error<
   "submodule '%0' can not have an umbrella header">;
 def err_mmap_umbrella_clash : Error<
   "umbrella header for module '%0' already covers this directory">;
+def err_mmap_export_module_id : Error<
+  "expected an exported module name or '*'">;
+def err_mmap_missing_module_unqualified : Error<
+  "no module named '%0' visible from '%1'">;
+def err_mmap_missing_module_qualified : Error<
+  "no module named '%0' in '%1'">;
 
 def warn_auto_module_import : Warning<
   "treating #%select{include|import|include_next|__include_macros}0 as an "

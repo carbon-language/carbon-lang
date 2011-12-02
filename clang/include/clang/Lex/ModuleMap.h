@@ -57,6 +57,22 @@ class ModuleMap {
   
   friend class ModuleMapParser;
   
+  /// \brief Resolve the given export declaration into an actual export
+  /// declaration.
+  ///
+  /// \param Mod The module in which we're resolving the export declaration.
+  ///
+  /// \param Unresolved The export declaration to resolve.
+  ///
+  /// \param Complain Whether this routine should complain about unresolvable
+  /// exports.
+  ///
+  /// \returns The resolved export declaration, which will have a NULL pointer
+  /// if the export could not be resolved.
+  Module::ExportDecl 
+  resolveExport(Module *Mod, const Module::UnresolvedExportDecl &Unresolved,
+                bool Complain);
+  
 public:
   /// \brief Construct a new module map.
   ///
@@ -86,6 +102,28 @@ public:
   ///
   /// \returns The named module, if known; otherwise, returns null.
   Module *findModule(StringRef Name);
+
+  /// \brief Retrieve a module with the given name using lexical name lookup,
+  /// starting at the given context.
+  ///
+  /// \param The name of the module to look up.
+  ///
+  /// \param Context The module context, from which we will perform lexical
+  /// name lookup.
+  ///
+  /// \returns The named module, if known; otherwise, returns null.
+  Module *lookupModuleUnqualified(StringRef Name, Module *Context);
+
+  /// \brief Retrieve a module with the given name within the given context,
+  /// using direct (qualified) name lookup.
+  ///
+  /// \param The name of the module to look up.
+  /// 
+  /// \param Context The module for which we will look for a submodule. If
+  /// null, we will look for a top-level module.
+  ///
+  /// \returns The named submodule, if known; otherwose, returns null.
+  Module *lookupModuleQualified(StringRef Name, Module *Context);
   
   /// \brief Find a new module or submodule, or create it if it does not already
   /// exist.
@@ -118,7 +156,17 @@ public:
   /// \returns The file entry for the module map file containing the given
   /// module, or NULL if the module definition was inferred.
   const FileEntry *getContainingModuleMapFile(Module *Module);
-  
+
+  /// \brief Resolve all of the unresolved exports in the given module.
+  ///
+  /// \param Mod The module whose exports should be resolved.
+  ///
+  /// \param Complain Whether to emit diagnostics for failures.
+  ///
+  /// \returns true if any errors were encountered while resolving exports,
+  /// false otherwise.
+  bool resolveExports(Module *Mod, bool Complain);
+
   /// \brief Parse the given module map file, and record any modules we 
   /// encounter.
   ///

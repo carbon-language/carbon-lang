@@ -27,6 +27,41 @@
 #include "llvm/ADT/StringSwitch.h"
 using namespace clang;
 
+Module::ExportDecl 
+ModuleMap::resolveExport(Module *Mod, 
+                         const Module::UnresolvedExportDecl &Unresolved,
+                         bool Complain) {
+  // Find the starting module.
+  Module *Context = lookupModuleUnqualified(Unresolved.Id[0].first, Mod);
+  if (!Context) {
+    if (Complain)
+      Diags->Report(Unresolved.Id[0].second, 
+                    diag::err_mmap_missing_module_unqualified)
+        << Unresolved.Id[0].first << Mod->getFullModuleName();
+    
+    return Module::ExportDecl();
+  }
+
+  // Dig into the module path.
+  for (unsigned I = 1, N = Unresolved.Id.size(); I != N; ++I) {
+    Module *Sub = lookupModuleQualified(Unresolved.Id[I].first,
+                                        Context);
+    if (!Sub) {
+      if (Complain)
+        Diags->Report(Unresolved.Id[I].second, 
+                      diag::err_mmap_missing_module_qualified)
+          << Unresolved.Id[I].first << Context->getFullModuleName()
+          << SourceRange(Unresolved.Id[0].second, Unresolved.Id[I-1].second);
+      
+      return Module::ExportDecl();      
+    }
+    
+    Context = Sub;
+  }
+  
+  return Module::ExportDecl(Context, Unresolved.Wildcard);
+}
+
 ModuleMap::ModuleMap(FileManager &FileMgr, const DiagnosticConsumer &DC) {
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagIDs(new DiagnosticIDs);
   Diags = llvm::IntrusiveRefCntPtr<DiagnosticsEngine>(
@@ -94,6 +129,26 @@ Module *ModuleMap::findModule(StringRef Name) {
   if (Known != Modules.end())
     return Known->getValue();
   
+  return 0;
+}
+
+Module *ModuleMap::lookupModuleUnqualified(StringRef Name, Module *Context) {
+  for(; Context; Context = Context->Parent) {
+    if (Module *Sub = lookupModuleQualified(Name, Context))
+      return Sub;
+  }
+  
+  return findModule(Name);
+}
+
+Module *ModuleMap::lookupModuleQualified(StringRef Name, Module *Context) {
+  if (!Context)
+    return findModule(Name);
+  
+  llvm::StringMap<Module *>::iterator Sub = Context->SubModules.find(Name);
+  if (Sub != Context->SubModules.end())
+    return Sub->getValue();
+
   return 0;
 }
 
@@ -169,6 +224,20 @@ void ModuleMap::dump() {
   }
 }
 
+bool ModuleMap::resolveExports(Module *Mod, bool Complain) {
+  bool HadError = false;
+  for (unsigned I = 0, N = Mod->UnresolvedExports.size(); I != N; ++I) {
+    Module::ExportDecl Export = resolveExport(Mod, Mod->UnresolvedExports[I], 
+                                              Complain);
+    if (Export.getPointer())
+      Mod->Exports.push_back(Export);
+    else
+      HadError = true;
+  }
+  Mod->UnresolvedExports.clear();
+  return HadError;
+}
+
 //----------------------------------------------------------------------------//
 // Module map file parser
 //----------------------------------------------------------------------------//
@@ -181,9 +250,12 @@ namespace clang {
       HeaderKeyword,
       Identifier,
       ExplicitKeyword,
+      ExportKeyword,
       FrameworkKeyword,
       ModuleKeyword,
+      Period,
       UmbrellaKeyword,
+      Star,
       StringLiteral,
       LBrace,
       RBrace
@@ -247,6 +319,7 @@ namespace clang {
     void parseModuleDecl();
     void parseUmbrellaDecl();
     void parseHeaderDecl();
+    void parseExportDecl();
     
   public:
     explicit ModuleMapParser(Lexer &L, SourceManager &SourceMgr, 
@@ -283,6 +356,7 @@ retry:
     Tok.Kind = llvm::StringSwitch<MMToken::TokenKind>(Tok.getString())
                  .Case("header", MMToken::HeaderKeyword)
                  .Case("explicit", MMToken::ExplicitKeyword)
+                 .Case("export", MMToken::ExportKeyword)
                  .Case("framework", MMToken::FrameworkKeyword)
                  .Case("module", MMToken::ModuleKeyword)
                  .Case("umbrella", MMToken::UmbrellaKeyword)
@@ -297,8 +371,16 @@ retry:
     Tok.Kind = MMToken::LBrace;
     break;
 
+  case tok::period:
+    Tok.Kind = MMToken::Period;
+    break;
+      
   case tok::r_brace:
     Tok.Kind = MMToken::RBrace;
+    break;
+      
+  case tok::star:
+    Tok.Kind = MMToken::Star;
     break;
       
   case tok::string_literal: {
@@ -373,6 +455,7 @@ void ModuleMapParser::skipUntil(MMToken::TokenKind K) {
 ///     umbrella-declaration
 ///     header-declaration
 ///     'explicit'[opt] module-declaration
+///     export-declaration
 void ModuleMapParser::parseModuleDecl() {
   assert(Tok.is(MMToken::ExplicitKeyword) || Tok.is(MMToken::ModuleKeyword) ||
          Tok.is(MMToken::FrameworkKeyword));
@@ -457,6 +540,10 @@ void ModuleMapParser::parseModuleDecl() {
       parseModuleDecl();
       break;
         
+    case MMToken::ExportKeyword:
+      parseExportDecl();
+      break;
+        
     case MMToken::HeaderKeyword:
       parseHeaderDecl();
       break;
@@ -464,7 +551,7 @@ void ModuleMapParser::parseModuleDecl() {
     case MMToken::UmbrellaKeyword:
       parseUmbrellaDecl();
       break;
-        
+
     default:
       Diags.Report(Tok.getLocation(), diag::err_mmap_expected_member);
       consumeToken();
@@ -625,6 +712,52 @@ void ModuleMapParser::parseHeaderDecl() {
   }
 }
 
+/// \brief Parse a module export declaration.
+///
+///   export-declaration:
+///     'export' wildcard-module-id
+///
+///   wildcard-module-id:
+///     identifier
+///     '*'
+///     identifier '.' wildcard-module-id
+void ModuleMapParser::parseExportDecl() {
+  assert(Tok.is(MMToken::ExportKeyword));
+  SourceLocation ExportLoc = consumeToken();
+  
+  // Parse the module-id with an optional wildcard at the end.
+  ModuleId ParsedModuleId;
+  bool Wildcard = false;
+  do {
+    if (Tok.is(MMToken::Identifier)) {
+      ParsedModuleId.push_back(std::make_pair(Tok.getString(), 
+                                              Tok.getLocation()));
+      consumeToken();
+      
+      if (Tok.is(MMToken::Period)) {
+        consumeToken();
+        continue;
+      } 
+      
+      break;
+    }
+    
+    if(Tok.is(MMToken::Star)) {
+      Wildcard = true;
+      break;
+    }
+    
+    Diags.Report(Tok.getLocation(), diag::err_mmap_export_module_id);
+    HadError = true;
+    return;
+  } while (true);
+  
+  Module::UnresolvedExportDecl Unresolved = { 
+    ExportLoc, ParsedModuleId, Wildcard 
+  };
+  ActiveModule->UnresolvedExports.push_back(Unresolved);
+}
+
 /// \brief Parse a module map file.
 ///
 ///   module-map-file:
@@ -641,10 +774,13 @@ bool ModuleMapParser::parseModuleMapFile() {
       break;
       
     case MMToken::ExplicitKeyword:
+    case MMToken::ExportKeyword:
     case MMToken::HeaderKeyword:
     case MMToken::Identifier:
     case MMToken::LBrace:
+    case MMToken::Period:
     case MMToken::RBrace:
+    case MMToken::Star:
     case MMToken::StringLiteral:
     case MMToken::UmbrellaKeyword:
       Diags.Report(Tok.getLocation(), diag::err_mmap_expected_module);

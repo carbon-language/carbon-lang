@@ -993,6 +993,9 @@ public:
   unsigned getCounterValue() const { return CounterValue; }
   void setCounterValue(unsigned V) { CounterValue = V; }
 
+  /// \brief Retrieves the module that we're currently building, if any.
+  Module *getCurrentModule();
+  
   /// AllocateMacroInfo - Allocate a new MacroInfo object with the provide
   ///  SourceLocation.
   MacroInfo *AllocateMacroInfo(SourceLocation L);
