@@ -5620,3 +5620,32 @@ defm VLD1LNdWB_register_Asm :
         NEONDT32AsmPseudoInst<"vld1${p}", "$list, $addr, $Rm",
                   (ins VecListOneDByteIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
+
+
+// VST1 single-lane pseudo-instructions. These need special handling for
+// the lane index that an InstAlias can't handle, so we use these instead.
+defm VST1LNdAsm : NEONDT8AsmPseudoInst<"vst1${p}", "$list, $addr",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VST1LNdAsm : NEONDT16AsmPseudoInst<"vst1${p}", "$list, $addr",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VST1LNdAsm : NEONDT32AsmPseudoInst<"vst1${p}", "$list, $addr",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+
+defm VST1LNdWB_fixed_Asm : NEONDT8AsmPseudoInst<"vst1${p}", "$list, $addr!",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VST1LNdWB_fixed_Asm : NEONDT16AsmPseudoInst<"vst1${p}", "$list, $addr!",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VST1LNdWB_fixed_Asm : NEONDT32AsmPseudoInst<"vst1${p}", "$list, $addr!",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VST1LNdWB_register_Asm :
+        NEONDT8AsmPseudoInst<"vst1${p}", "$list, $addr, $Rm",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+defm VST1LNdWB_register_Asm :
+        NEONDT16AsmPseudoInst<"vst1${p}", "$list, $addr, $Rm",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+defm VST1LNdWB_register_Asm :
+        NEONDT32AsmPseudoInst<"vst1${p}", "$list, $addr, $Rm",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
