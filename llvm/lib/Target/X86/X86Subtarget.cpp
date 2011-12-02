@@ -390,9 +390,6 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   assert((!In64BitMode || HasX86_64) &&
          "64-bit code requested on a subtarget that doesn't support it!");
 
-  if(EnableSegmentedStacks && !isTargetELF())
-    report_fatal_error("Segmented stacks are only implemented on ELF.");
-
   // Stack alignment is 16 bytes on Darwin, FreeBSD, Linux and Solaris (both
   // 32 and 64 bit) and for all 64-bit targets.
   if (StackAlignOverride)

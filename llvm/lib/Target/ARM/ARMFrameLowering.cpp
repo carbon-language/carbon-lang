@@ -37,7 +37,8 @@ bool ARMFrameLowering::hasFP(const MachineFunction &MF) const {
 
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   // Always eliminate non-leaf frame pointers.
-  return ((DisableFramePointerElim(MF) && MFI->hasCalls()) ||
+  return ((MF.getTarget().Options.DisableFramePointerElim(MF) &&
+           MFI->hasCalls()) ||
           RegInfo->needsStackRealignment(MF) ||
           MFI->hasVarSizedObjects() ||
           MFI->isFrameAddressTaken());

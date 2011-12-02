@@ -35,7 +35,7 @@ class PTXTargetMachine : public LLVMTargetMachine {
 
   public:
     PTXTargetMachine(const Target &T, StringRef TT,
-                     StringRef CPU, StringRef FS,
+                     StringRef CPU, StringRef FS, const TargetOptions &Options,
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL,
                      bool is64Bit);
@@ -94,7 +94,7 @@ class PTX32TargetMachine : public PTXTargetMachine {
 public:
 
   PTX32TargetMachine(const Target &T, StringRef TT,
-                     StringRef CPU, StringRef FS,
+                     StringRef CPU, StringRef FS, const TargetOptions &Options,
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL);
 }; // class PTX32TargetMachine
@@ -103,7 +103,7 @@ class PTX64TargetMachine : public PTXTargetMachine {
 public:
 
   PTX64TargetMachine(const Target &T, StringRef TT,
-                     StringRef CPU, StringRef FS,
+                     StringRef CPU, StringRef FS, const TargetOptions &Options,
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL);
 }; // class PTX32TargetMachine

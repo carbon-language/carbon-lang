@@ -67,30 +67,16 @@ namespace {
     "e-p:32:32-i64:32:32-f64:32:32-v128:32:128-v64:32:64-n32:64";
   const char* DataLayout64 =
     "e-p:64:64-i64:32:32-f64:32:32-v128:32:128-v64:32:64-n32:64";
-
-  // Copied from LLVMTargetMachine.cpp
-  void printNoVerify(PassManagerBase &PM, const char *Banner) {
-    if (PrintMachineCode)
-      PM.add(createMachineFunctionPrinterPass(dbgs(), Banner));
-  }
-
-  void printAndVerify(PassManagerBase &PM,
-                      const char *Banner) {
-    if (PrintMachineCode)
-      PM.add(createMachineFunctionPrinterPass(dbgs(), Banner));
-
-    //if (VerifyMachineCode)
-    //  PM.add(createMachineVerifierPass(Banner));
-  }
 }
 
 // DataLayout and FrameLowering are filled with dummy data
 PTXTargetMachine::PTXTargetMachine(const Target &T,
                                    StringRef TT, StringRef CPU, StringRef FS,
+                                   const TargetOptions &Options,
                                    Reloc::Model RM, CodeModel::Model CM,
                                    CodeGenOpt::Level OL,
                                    bool is64Bit)
-  : LLVMTargetMachine(T, TT, CPU, FS, RM, CM, OL),
+  : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
     DataLayout(is64Bit ? DataLayout64 : DataLayout32),
     Subtarget(TT, CPU, FS, is64Bit),
     FrameLowering(Subtarget),
@@ -101,16 +87,18 @@ PTXTargetMachine::PTXTargetMachine(const Target &T,
 
 PTX32TargetMachine::PTX32TargetMachine(const Target &T, StringRef TT,
                                        StringRef CPU, StringRef FS,
+                                       const TargetOptions &Options,
                                        Reloc::Model RM, CodeModel::Model CM,
                                        CodeGenOpt::Level OL)
-  : PTXTargetMachine(T, TT, CPU, FS, RM, CM, OL, false) {
+  : PTXTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {
 }
 
 PTX64TargetMachine::PTX64TargetMachine(const Target &T, StringRef TT,
                                        StringRef CPU, StringRef FS,
+                                       const TargetOptions &Options,
                                        Reloc::Model RM, CodeModel::Model CM,
                                        CodeGenOpt::Level OL)
-  : PTXTargetMachine(T, TT, CPU, FS, RM, CM, OL, true) {
+  : PTXTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {
 }
 
 bool PTXTargetMachine::addInstSelector(PassManagerBase &PM) {

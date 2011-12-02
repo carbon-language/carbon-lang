@@ -728,7 +728,7 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
 
   // fastcc with -tailcallopt is intended to provide a guaranteed
   // tail call optimization. Fastisel doesn't know how to do that.
-  if (CC == CallingConv::Fast && GuaranteedTailCallOpt)
+  if (CC == CallingConv::Fast && TM.Options.GuaranteedTailCallOpt)
     return false;
 
   // Let SDISel handle vararg functions.
@@ -1529,7 +1529,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
 
   // fastcc with -tailcallopt is intended to provide a guaranteed
   // tail call optimization. Fastisel doesn't know how to do that.
-  if (CC == CallingConv::Fast && GuaranteedTailCallOpt)
+  if (CC == CallingConv::Fast && TM.Options.GuaranteedTailCallOpt)
     return false;
 
   PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
@@ -1543,7 +1543,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
 
   // Fast-isel doesn't know about callee-pop yet.
   if (X86::isCalleePop(CC, Subtarget->is64Bit(), isVarArg,
-                       GuaranteedTailCallOpt))
+                       TM.Options.GuaranteedTailCallOpt))
     return false;
 
   // Check whether the function can return without sret-demotion.

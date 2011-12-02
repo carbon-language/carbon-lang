@@ -244,8 +244,10 @@ bool PPCFrameLowering::needsFP(const MachineFunction &MF) const {
   if (MF.getFunction()->hasFnAttr(Attribute::Naked))
     return false;
 
-  return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects() ||
-    (GuaranteedTailCallOpt && MF.getInfo<PPCFunctionInfo>()->hasFastCall());
+  return MF.getTarget().Options.DisableFramePointerElim(MF) ||
+    MFI->hasVarSizedObjects() ||
+    (MF.getTarget().Options.GuaranteedTailCallOpt &&
+     MF.getInfo<PPCFunctionInfo>()->hasFastCall());
 }
 
 
@@ -655,7 +657,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
 
   // Callee pop calling convention. Pop parameter/linkage area. Used for tail
   // call optimization
-  if (GuaranteedTailCallOpt && RetOpcode == PPC::BLR &&
+  if (MF.getTarget().Options.GuaranteedTailCallOpt && RetOpcode == PPC::BLR &&
       MF.getFunction()->getCallingConv() == CallingConv::Fast) {
      PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
      unsigned CallerAllocatedAmt = FI->getMinReservedArea();
@@ -758,7 +760,8 @@ PPCFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   // Reserve stack space to move the linkage area to in case of a tail call.
   int TCSPDelta = 0;
-  if (GuaranteedTailCallOpt && (TCSPDelta = FI->getTailCallSPDelta()) < 0) {
+  if (MF.getTarget().Options.GuaranteedTailCallOpt &&
+      (TCSPDelta = FI->getTailCallSPDelta()) < 0) {
     MFI->CreateFixedObject(-1 * TCSPDelta, TCSPDelta, true);
   }
 
@@ -863,7 +866,8 @@ void PPCFrameLowering::processFunctionBeforeFrameFinalized(MachineFunction &MF)
 
   // Take into account stack space reserved for tail calls.
   int TCSPDelta = 0;
-  if (GuaranteedTailCallOpt && (TCSPDelta = PFI->getTailCallSPDelta()) < 0) {
+  if (MF.getTarget().Options.GuaranteedTailCallOpt &&
+      (TCSPDelta = PFI->getTailCallSPDelta()) < 0) {
     LowerBound = TCSPDelta;
   }
 

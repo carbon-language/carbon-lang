@@ -41,10 +41,6 @@
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
-namespace llvm {
-  bool EnableFastISel;
-}
-
 static cl::opt<bool> DisablePostRA("disable-post-ra", cl::Hidden,
     cl::desc("Disable Post Regalloc"));
 static cl::opt<bool> DisableBranchFold("disable-branch-fold", cl::Hidden,
@@ -114,9 +110,10 @@ EnableFastISelOption("fast-isel", cl::Hidden,
 
 LLVMTargetMachine::LLVMTargetMachine(const Target &T, StringRef Triple,
                                      StringRef CPU, StringRef FS,
+                                     TargetOptions Options,
                                      Reloc::Model RM, CodeModel::Model CM,
                                      CodeGenOpt::Level OL)
-  : TargetMachine(T, Triple, CPU, FS) {
+  : TargetMachine(T, Triple, CPU, FS, Options) {
   CodeGenInfo = T.createMCCodeGenInfo(Triple, RM, CM, OL);
   AsmInfo = T.createMCAsmInfo(Triple);
   // TargetSelect.h moved to a different directory between LLVM 2.9 and 3.0,
@@ -275,14 +272,15 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
   return false; // success!
 }
 
-static void printNoVerify(PassManagerBase &PM, const char *Banner) {
-  if (PrintMachineCode)
+void LLVMTargetMachine::printNoVerify(PassManagerBase &PM,
+                                      const char *Banner) const {
+  if (Options.PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(dbgs(), Banner));
 }
 
-static void printAndVerify(PassManagerBase &PM,
-                           const char *Banner) {
-  if (PrintMachineCode)
+void LLVMTargetMachine::printAndVerify(PassManagerBase &PM,
+                                       const char *Banner) const {
+  if (Options.PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(dbgs(), Banner));
 
   if (VerifyMachineCode)
@@ -380,7 +378,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   if (EnableFastISelOption == cl::BOU_TRUE ||
       (getOptLevel() == CodeGenOpt::None &&
        EnableFastISelOption != cl::BOU_FALSE))
-    EnableFastISel = true;
+    Options.EnableFastISel = true;
 
   // Ask the target for an isel.
   if (addInstSelector(PM))

@@ -334,7 +334,8 @@ int MBlazeFrameLowering::getFrameIndexOffset(const MachineFunction &MF, int FI)
 // if frame pointer elimination is disabled.
 bool MBlazeFrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects();
+  return MF.getTarget().Options.DisableFramePointerElim(MF) ||
+         MFI->hasVarSizedObjects();
 }
 
 void MBlazeFrameLowering::emitPrologue(MachineFunction &MF) const {

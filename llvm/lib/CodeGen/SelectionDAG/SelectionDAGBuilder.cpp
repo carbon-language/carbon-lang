@@ -1335,6 +1335,8 @@ SelectionDAGBuilder::EmitBranchForMergedCondition(const Value *Cond,
         Condition = getICmpCondCode(IC->getPredicate());
       } else if (const FCmpInst *FC = dyn_cast<FCmpInst>(Cond)) {
         Condition = getFCmpCondCode(FC->getPredicate());
+        if (TM.Options.NoNaNsFPMath)
+          Condition = getFCmpCodeWithoutNaN(Condition);
       } else {
         Condition = ISD::SETEQ; // silence warning.
         llvm_unreachable("Unknown compare instruction");
@@ -2002,7 +2004,7 @@ bool SelectionDAGBuilder::handleSmallSwitchRange(CaseRec& CR,
 }
 
 static inline bool areJTsAllowed(const TargetLowering &TLI) {
-  return !DisableJumpTables &&
+  return !TLI.getTargetMachine().Options.DisableJumpTables &&
           (TLI.isOperationLegalOrCustom(ISD::BR_JT, MVT::Other) ||
            TLI.isOperationLegalOrCustom(ISD::BRIND, MVT::Other));
 }
@@ -2625,6 +2627,8 @@ void SelectionDAGBuilder::visitFCmp(const User &I) {
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
   ISD::CondCode Condition = getFCmpCondCode(predicate);
+  if (TM.Options.NoNaNsFPMath)
+    Condition = getFCmpCodeWithoutNaN(Condition);
   EVT DestVT = TLI.getValueType(I.getType());
   setValue(&I, DAG.getSetCC(getCurDebugLoc(), DestVT, Op1, Op2, Condition));
 }
@@ -5059,7 +5063,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   }
 
   case Intrinsic::trap: {
-    StringRef TrapFuncName = getTrapFunctionName();
+    StringRef TrapFuncName = TM.Options.getTrapFunctionName();
     if (TrapFuncName.empty()) {
       DAG.setRoot(DAG.getNode(ISD::TRAP, dl,MVT::Other, getRoot()));
       return 0;
@@ -5221,7 +5225,7 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
 
   // If there's a possibility that fast-isel has already selected some amount
   // of the current basic block, don't emit a tail call.
-  if (isTailCall && EnableFastISel)
+  if (isTailCall && TM.Options.EnableFastISel)
     isTailCall = false;
 
   std::pair<SDValue,SDValue> Result =
@@ -6511,10 +6515,10 @@ SelectionDAGBuilder::CopyValueToVirtualRegister(const Value *V, unsigned Reg) {
 /// isOnlyUsedInEntryBlock - If the specified argument is only used in the
 /// entry block, return true.  This includes arguments used by switches, since
 /// the switch may expand into multiple basic blocks.
-static bool isOnlyUsedInEntryBlock(const Argument *A) {
+static bool isOnlyUsedInEntryBlock(const Argument *A, bool FastISel) {
   // With FastISel active, we may be splitting blocks, so force creation
   // of virtual registers for all non-dead arguments.
-  if (EnableFastISel)
+  if (FastISel)
     return A->use_empty();
 
   const BasicBlock *Entry = A->getParent()->begin();
@@ -6704,7 +6708,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
                                      SDB->getCurDebugLoc());
 
     SDB->setValue(I, Res);
-    if (!EnableFastISel && Res.getOpcode() == ISD::BUILD_PAIR) {
+    if (!TM.Options.EnableFastISel && Res.getOpcode() == ISD::BUILD_PAIR) {
       if (LoadSDNode *LNode = 
           dyn_cast<LoadSDNode>(Res.getOperand(0).getNode()))
         if (FrameIndexSDNode *FI =
@@ -6714,7 +6718,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
 
     // If this argument is live outside of the entry block, insert a copy from
     // wherever we got it to the vreg that other BB's will reference it as.
-    if (!EnableFastISel && Res.getOpcode() == ISD::CopyFromReg) {
+    if (!TM.Options.EnableFastISel && Res.getOpcode() == ISD::CopyFromReg) {
       // If we can, though, try to skip creating an unnecessary vreg.
       // FIXME: This isn't very clean... it would be nice to make this more
       // general.  It's also subtly incompatible with the hacks FastISel
@@ -6725,7 +6729,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
         continue;
       }
     }
-    if (!isOnlyUsedInEntryBlock(I)) {
+    if (!isOnlyUsedInEntryBlock(I, TM.Options.EnableFastISel)) {
       FuncInfo->InitializeRegForValue(I);
       SDB->CopyToExportRegsIfNeeded(I);
     }

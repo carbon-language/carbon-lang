@@ -301,7 +301,8 @@ PPCRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
 void PPCRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  if (GuaranteedTailCallOpt && I->getOpcode() == PPC::ADJCALLSTACKUP) {
+  if (MF.getTarget().Options.GuaranteedTailCallOpt &&
+      I->getOpcode() == PPC::ADJCALLSTACKUP) {
     // Add (actually subtract) back the amount the callee popped on return.
     if (int CalleeAmt =  I->getOperand(1).getImm()) {
       bool is64Bit = Subtarget.isPPC64();

@@ -256,9 +256,9 @@ static void SplitCriticalSideEffectEdges(Function &Fn, Pass *SDISel) {
 
 bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   // Do some sanity-checking on the command-line options.
-  assert((!EnableFastISelVerbose || EnableFastISel) &&
+  assert((!EnableFastISelVerbose || TM.Options.EnableFastISel) &&
          "-fast-isel-verbose requires -fast-isel");
-  assert((!EnableFastISelAbort || EnableFastISel) &&
+  assert((!EnableFastISelAbort || TM.Options.EnableFastISel) &&
          "-fast-isel-abort requires -fast-isel");
 
   const Function &Fn = *mf.getFunction();
@@ -823,7 +823,7 @@ static bool isFoldedOrDeadInstruction(const Instruction *I,
 void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
   // Initialize the Fast-ISel state, if needed.
   FastISel *FastIS = 0;
-  if (EnableFastISel)
+  if (TM.Options.EnableFastISel)
     FastIS = TLI.createFastISel(*FuncInfo);
 
   // Iterate over all basic blocks in the function.

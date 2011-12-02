@@ -44,6 +44,7 @@ namespace llvm {
   class MCTargetAsmLexer;
   class MCTargetAsmParser;
   class TargetMachine;
+  class TargetOptions;
   class raw_ostream;
   class formatted_raw_ostream;
 
@@ -86,6 +87,7 @@ namespace llvm {
                                                   StringRef TT,
                                                   StringRef CPU,
                                                   StringRef Features,
+                                                  const TargetOptions &Options,
                                                   Reloc::Model RM,
                                                   CodeModel::Model CM,
                                                   CodeGenOpt::Level OL);
@@ -334,13 +336,14 @@ namespace llvm {
     /// either the target triple from the module, or the target triple of the
     /// host if that does not exist.
     TargetMachine *createTargetMachine(StringRef Triple, StringRef CPU,
-                             StringRef Features,
+                             StringRef Features, const TargetOptions &Options,
                              Reloc::Model RM = Reloc::Default,
                              CodeModel::Model CM = CodeModel::Default,
                              CodeGenOpt::Level OL = CodeGenOpt::Default) const {
       if (!TargetMachineCtorFn)
         return 0;
-      return TargetMachineCtorFn(*this, Triple, CPU, Features, RM, CM, OL);
+      return TargetMachineCtorFn(*this, Triple, CPU, Features, Options,
+                                 RM, CM, OL);
     }
 
     /// createMCAsmBackend - Create a target specific assembly parser.
@@ -1017,10 +1020,11 @@ namespace llvm {
   private:
     static TargetMachine *Allocator(const Target &T, StringRef TT,
                                     StringRef CPU, StringRef FS,
+                                    const TargetOptions &Options,
                                     Reloc::Model RM,
                                     CodeModel::Model CM,
                                     CodeGenOpt::Level OL) {
-      return new TargetMachineImpl(T, TT, CPU, FS, RM, CM, OL);
+      return new TargetMachineImpl(T, TT, CPU, FS, Options, RM, CM, OL);
     }
   };
 

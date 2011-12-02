@@ -47,7 +47,7 @@ bool X86FrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineModuleInfo &MMI = MF.getMMI();
   const TargetRegisterInfo *RI = TM.getRegisterInfo();
 
-  return (DisableFramePointerElim(MF) ||
+  return (MF.getTarget().Options.DisableFramePointerElim(MF) ||
           RI->needsStackRealignment(MF) ||
           MFI->hasVarSizedObjects() ||
           MFI->isFrameAddressTaken() ||
@@ -638,10 +638,10 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   // stack pointer (we fit in the Red Zone).
   if (Is64Bit && !Fn->hasFnAttr(Attribute::NoRedZone) &&
       !RegInfo->needsStackRealignment(MF) &&
-      !MFI->hasVarSizedObjects() &&                // No dynamic alloca.
-      !MFI->adjustsStack() &&                      // No calls.
-      !IsWin64 &&                                  // Win64 has no Red Zone
-      !EnableSegmentedStacks) {                    // Regular stack
+      !MFI->hasVarSizedObjects() &&                     // No dynamic alloca.
+      !MFI->adjustsStack() &&                           // No calls.
+      !IsWin64 &&                                       // Win64 has no Red Zone
+      !MF.getTarget().Options.EnableSegmentedStacks) {  // Regular stack
     uint64_t MinSize = X86FI->getCalleeSavedFrameSize();
     if (HasFP) MinSize += SlotSize;
     StackSize = std::max(MinSize, StackSize > 128 ? StackSize - 128 : 0);

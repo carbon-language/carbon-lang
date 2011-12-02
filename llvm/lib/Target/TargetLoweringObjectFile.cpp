@@ -48,7 +48,7 @@ void TargetLoweringObjectFile::Initialize(MCContext &ctx,
 TargetLoweringObjectFile::~TargetLoweringObjectFile() {
 }
 
-static bool isSuitableForBSS(const GlobalVariable *GV) {
+static bool isSuitableForBSS(const GlobalVariable *GV, bool NoZerosInBSS) {
   const Constant *C = GV->getInitializer();
 
   // Must have zero initializer.
@@ -133,7 +133,7 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
 
   // Handle thread-local data first.
   if (GVar->isThreadLocal()) {
-    if (isSuitableForBSS(GVar))
+    if (isSuitableForBSS(GVar, TM.Options.NoZerosInBSS))
       return SectionKind::getThreadBSS();
     return SectionKind::getThreadData();
   }
@@ -143,7 +143,7 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
     return SectionKind::getCommon();
 
   // Variable can be easily put to BSS section.
-  if (isSuitableForBSS(GVar)) {
+  if (isSuitableForBSS(GVar, TM.Options.NoZerosInBSS)) {
     if (GVar->hasLocalLinkage())
       return SectionKind::getBSSLocal();
     else if (GVar->hasExternalLinkage())

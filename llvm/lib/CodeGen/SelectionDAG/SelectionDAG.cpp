@@ -2334,7 +2334,7 @@ bool SelectionDAG::isBaseWithConstantOffset(SDValue Op) const {
 
 bool SelectionDAG::isKnownNeverNaN(SDValue Op) const {
   // If we're told that NaNs won't happen, assume they won't.
-  if (NoNaNsFPMath)
+  if (getTarget().Options.NoNaNsFPMath)
     return true;
 
   // If the value is a constant, we can obviously see if it is a NaN or not.
@@ -2607,7 +2607,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
     break;
   case ISD::FNEG:
     // -(X-Y) -> (Y-X) is unsafe because when X==Y, -0.0 != +0.0
-    if (UnsafeFPMath && OpOpcode == ISD::FSUB)
+    if (getTarget().Options.UnsafeFPMath && OpOpcode == ISD::FSUB)
       return getNode(ISD::FSUB, DL, VT, Operand.getNode()->getOperand(1),
                      Operand.getNode()->getOperand(0));
     if (OpOpcode == ISD::FNEG)  // --X -> X
@@ -2742,7 +2742,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
   case ISD::FMUL:
   case ISD::FDIV:
   case ISD::FREM:
-    if (UnsafeFPMath) {
+    if (getTarget().Options.UnsafeFPMath) {
       if (Opcode == ISD::FADD) {
         // 0+x --> x
         if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N1))
@@ -3065,7 +3065,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT,
     case ISD::FMUL:
     case ISD::FDIV:
     case ISD::FREM:
-      if (UnsafeFPMath)
+      if (getTarget().Options.UnsafeFPMath)
         return N2;
       break;
     case ISD::MUL:

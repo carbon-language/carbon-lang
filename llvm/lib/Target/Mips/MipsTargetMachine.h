@@ -38,7 +38,7 @@ namespace llvm {
 
   public:
     MipsTargetMachine(const Target &T, StringRef TT,
-                      StringRef CPU, StringRef FS,
+                      StringRef CPU, StringRef FS, const TargetOptions &Options,
                       Reloc::Model RM, CodeModel::Model CM,
                       CodeGenOpt::Level OL,
                       bool isLittle);
@@ -82,7 +82,7 @@ namespace llvm {
 class MipsebTargetMachine : public MipsTargetMachine {
 public:
   MipsebTargetMachine(const Target &T, StringRef TT,
-                      StringRef CPU, StringRef FS,
+                      StringRef CPU, StringRef FS, const TargetOptions &Options,
                       Reloc::Model RM, CodeModel::Model CM,
                       CodeGenOpt::Level OL);
 };
@@ -92,7 +92,7 @@ public:
 class MipselTargetMachine : public MipsTargetMachine {
 public:
   MipselTargetMachine(const Target &T, StringRef TT,
-                      StringRef CPU, StringRef FS,
+                      StringRef CPU, StringRef FS, const TargetOptions &Options,
                       Reloc::Model RM, CodeModel::Model CM,
                       CodeGenOpt::Level OL);
 };
@@ -103,6 +103,7 @@ class Mips64ebTargetMachine : public MipsTargetMachine {
 public:
   Mips64ebTargetMachine(const Target &T, StringRef TT,
                         StringRef CPU, StringRef FS,
+                        const TargetOptions &Options,
                         Reloc::Model RM, CodeModel::Model CM,
                         CodeGenOpt::Level OL);
 };
@@ -113,6 +114,7 @@ class Mips64elTargetMachine : public MipsTargetMachine {
 public:
   Mips64elTargetMachine(const Target &T, StringRef TT,
                         StringRef CPU, StringRef FS,
+                        const TargetOptions &Options,
                         Reloc::Model RM, CodeModel::Model CM,
                         CodeGenOpt::Level OL);
 };

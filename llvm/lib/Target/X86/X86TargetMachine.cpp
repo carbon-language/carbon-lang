@@ -31,9 +31,10 @@ extern "C" void LLVMInitializeX86Target() {
 
 X86_32TargetMachine::X86_32TargetMachine(const Target &T, StringRef TT,
                                          StringRef CPU, StringRef FS,
+                                         const TargetOptions &Options,
                                          Reloc::Model RM, CodeModel::Model CM,
                                          CodeGenOpt::Level OL)
-  : X86TargetMachine(T, TT, CPU, FS, RM, CM, OL, false),
+  : X86TargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false),
     DataLayout(getSubtargetImpl()->isTargetDarwin() ?
                "e-p:32:32-f64:32:64-i64:32:64-f80:128:128-f128:128:128-"
                "n8:16:32-S128" :
@@ -52,9 +53,10 @@ X86_32TargetMachine::X86_32TargetMachine(const Target &T, StringRef TT,
 
 X86_64TargetMachine::X86_64TargetMachine(const Target &T, StringRef TT,
                                          StringRef CPU, StringRef FS,
+                                         const TargetOptions &Options,
                                          Reloc::Model RM, CodeModel::Model CM,
                                          CodeGenOpt::Level OL)
-  : X86TargetMachine(T, TT, CPU, FS, RM, CM, OL, true),
+  : X86TargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true),
     DataLayout("e-p:64:64-s:64-f64:64:64-i64:64:64-f80:128:128-f128:128:128-"
                "n8:16:32:64-S128"),
     InstrInfo(*this),
@@ -67,11 +69,12 @@ X86_64TargetMachine::X86_64TargetMachine(const Target &T, StringRef TT,
 ///
 X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT,
                                    StringRef CPU, StringRef FS,
+                                   const TargetOptions &Options,
                                    Reloc::Model RM, CodeModel::Model CM,
                                    CodeGenOpt::Level OL,
                                    bool is64Bit)
-  : LLVMTargetMachine(T, TT, CPU, FS, RM, CM, OL),
-    Subtarget(TT, CPU, FS, StackAlignmentOverride, is64Bit),
+  : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+    Subtarget(TT, CPU, FS, Options.StackAlignmentOverride, is64Bit),
     FrameLowering(*this, Subtarget),
     ELFWriterInfo(is64Bit, true) {
   // Determine the PICStyle based on the target selected.
@@ -95,8 +98,11 @@ X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT,
   }
 
   // default to hard float ABI
-  if (FloatABIType == FloatABI::Default)
-    FloatABIType = FloatABI::Hard;    
+  if (Options.FloatABIType == FloatABI::Default)
+    this->Options.FloatABIType = FloatABI::Hard;   
+
+  if (Options.EnableSegmentedStacks && !Subtarget.isTargetELF())
+    report_fatal_error("Segmented stacks are only implemented on ELF.");
 }
 
 //===----------------------------------------------------------------------===//

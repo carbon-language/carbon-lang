@@ -70,6 +70,10 @@ bool hasInlineAsmMemConstraint(InlineAsm::ConstraintInfoVector &CInfos,
 ///
 ISD::CondCode getFCmpCondCode(FCmpInst::Predicate Pred);
 
+/// getFCmpCodeWithoutNaN - Given an ISD condition code comparing floats,
+/// return the equivalent code if we're allowed to assume that NaNs won't occur.
+ISD::CondCode getFCmpCodeWithoutNaN(ISD::CondCode CC);
+
 /// getICmpCondCode - Return the ISD condition code corresponding to
 /// the given LLVM IR integer condition code.
 ///

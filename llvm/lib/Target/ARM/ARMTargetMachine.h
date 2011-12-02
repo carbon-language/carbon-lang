@@ -41,6 +41,7 @@ private:
 public:
   ARMBaseTargetMachine(const Target &T, StringRef TT,
                        StringRef CPU, StringRef FS,
+                       const TargetOptions &Options,
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL);
 
@@ -71,6 +72,7 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
  public:
   ARMTargetMachine(const Target &T, StringRef TT,
                    StringRef CPU, StringRef FS,
+                   const TargetOptions &Options,
                    Reloc::Model RM, CodeModel::Model CM,
                    CodeGenOpt::Level OL);
 
@@ -112,6 +114,7 @@ class ThumbTargetMachine : public ARMBaseTargetMachine {
 public:
   ThumbTargetMachine(const Target &T, StringRef TT,
                      StringRef CPU, StringRef FS,
+                     const TargetOptions &Options,
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL);
 

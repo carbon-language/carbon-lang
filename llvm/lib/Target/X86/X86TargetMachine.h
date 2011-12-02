@@ -38,7 +38,7 @@ class X86TargetMachine : public LLVMTargetMachine {
 
 public:
   X86TargetMachine(const Target &T, StringRef TT, 
-                   StringRef CPU, StringRef FS,
+                   StringRef CPU, StringRef FS, const TargetOptions &Options,
                    Reloc::Model RM, CodeModel::Model CM,
                    CodeGenOpt::Level OL,
                    bool is64Bit);
@@ -85,7 +85,7 @@ class X86_32TargetMachine : public X86TargetMachine {
   X86JITInfo        JITInfo;
 public:
   X86_32TargetMachine(const Target &T, StringRef TT,
-                      StringRef CPU, StringRef FS,
+                      StringRef CPU, StringRef FS, const TargetOptions &Options,
                       Reloc::Model RM, CodeModel::Model CM,
                       CodeGenOpt::Level OL);
   virtual const TargetData *getTargetData() const { return &DataLayout; }
@@ -113,7 +113,7 @@ class X86_64TargetMachine : public X86TargetMachine {
   X86JITInfo        JITInfo;
 public:
   X86_64TargetMachine(const Target &T, StringRef TT,
-                      StringRef CPU, StringRef FS,
+                      StringRef CPU, StringRef FS, const TargetOptions &Options,
                       Reloc::Model RM, CodeModel::Model CM,
                       CodeGenOpt::Level OL);
   virtual const TargetData *getTargetData() const { return &DataLayout; }

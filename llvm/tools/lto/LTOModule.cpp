@@ -159,7 +159,9 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
   Features.getDefaultSubtargetFeatures(llvm::Triple(Triple));
   std::string FeatureStr = Features.getString();
   std::string CPU;
-  TargetMachine *target = march->createTargetMachine(Triple, CPU, FeatureStr);
+  TargetOptions Options;
+  TargetMachine *target = march->createTargetMachine(Triple, CPU, FeatureStr,
+                                                     Options);
   LTOModule *Ret = new LTOModule(m.take(), target);
   if (Ret->ParseSymbols(errMsg)) {
     delete Ret;

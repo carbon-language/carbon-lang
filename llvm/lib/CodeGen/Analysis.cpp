@@ -1,4 +1,4 @@
-//===-- Analysis.cpp - CodeGen LLVM IR Analysis Utilities --*- C++ ------*-===//
+//===-- Analysis.cpp - CodeGen LLVM IR Analysis Utilities -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -149,33 +149,40 @@ llvm::hasInlineAsmMemConstraint(InlineAsm::ConstraintInfoVector &CInfos,
 /// consideration of global floating-point math flags.
 ///
 ISD::CondCode llvm::getFCmpCondCode(FCmpInst::Predicate Pred) {
-  ISD::CondCode FPC, FOC;
   switch (Pred) {
-  case FCmpInst::FCMP_FALSE: FOC = FPC = ISD::SETFALSE; break;
-  case FCmpInst::FCMP_OEQ:   FOC = ISD::SETEQ; FPC = ISD::SETOEQ; break;
-  case FCmpInst::FCMP_OGT:   FOC = ISD::SETGT; FPC = ISD::SETOGT; break;
-  case FCmpInst::FCMP_OGE:   FOC = ISD::SETGE; FPC = ISD::SETOGE; break;
-  case FCmpInst::FCMP_OLT:   FOC = ISD::SETLT; FPC = ISD::SETOLT; break;
-  case FCmpInst::FCMP_OLE:   FOC = ISD::SETLE; FPC = ISD::SETOLE; break;
-  case FCmpInst::FCMP_ONE:   FOC = ISD::SETNE; FPC = ISD::SETONE; break;
-  case FCmpInst::FCMP_ORD:   FOC = FPC = ISD::SETO;   break;
-  case FCmpInst::FCMP_UNO:   FOC = FPC = ISD::SETUO;  break;
-  case FCmpInst::FCMP_UEQ:   FOC = ISD::SETEQ; FPC = ISD::SETUEQ; break;
-  case FCmpInst::FCMP_UGT:   FOC = ISD::SETGT; FPC = ISD::SETUGT; break;
-  case FCmpInst::FCMP_UGE:   FOC = ISD::SETGE; FPC = ISD::SETUGE; break;
-  case FCmpInst::FCMP_ULT:   FOC = ISD::SETLT; FPC = ISD::SETULT; break;
-  case FCmpInst::FCMP_ULE:   FOC = ISD::SETLE; FPC = ISD::SETULE; break;
-  case FCmpInst::FCMP_UNE:   FOC = ISD::SETNE; FPC = ISD::SETUNE; break;
-  case FCmpInst::FCMP_TRUE:  FOC = FPC = ISD::SETTRUE; break;
-  default:
-    llvm_unreachable("Invalid FCmp predicate opcode!");
-    FOC = FPC = ISD::SETFALSE;
-    break;
+  case FCmpInst::FCMP_FALSE: return ISD::SETFALSE;
+  case FCmpInst::FCMP_OEQ:   return ISD::SETOEQ;
+  case FCmpInst::FCMP_OGT:   return ISD::SETOGT;
+  case FCmpInst::FCMP_OGE:   return ISD::SETOGE;
+  case FCmpInst::FCMP_OLT:   return ISD::SETOLT;
+  case FCmpInst::FCMP_OLE:   return ISD::SETOLE;
+  case FCmpInst::FCMP_ONE:   return ISD::SETONE;
+  case FCmpInst::FCMP_ORD:   return ISD::SETO;
+  case FCmpInst::FCMP_UNO:   return ISD::SETUO;
+  case FCmpInst::FCMP_UEQ:   return ISD::SETUEQ;
+  case FCmpInst::FCMP_UGT:   return ISD::SETUGT;
+  case FCmpInst::FCMP_UGE:   return ISD::SETUGE;
+  case FCmpInst::FCMP_ULT:   return ISD::SETULT;
+  case FCmpInst::FCMP_ULE:   return ISD::SETULE;
+  case FCmpInst::FCMP_UNE:   return ISD::SETUNE;
+  case FCmpInst::FCMP_TRUE:  return ISD::SETTRUE;
+  default: break;
   }
-  if (NoNaNsFPMath)
-    return FOC;
-  else
-    return FPC;
+  llvm_unreachable("Invalid FCmp predicate opcode!");
+  return ISD::SETFALSE;
+}
+
+ISD::CondCode llvm::getFCmpCodeWithoutNaN(ISD::CondCode CC) {
+  switch (CC) {
+    case ISD::SETOEQ: case ISD::SETUEQ: return ISD::SETEQ;
+    case ISD::SETONE: case ISD::SETUNE: return ISD::SETNE;
+    case ISD::SETOLT: case ISD::SETULT: return ISD::SETLT;
+    case ISD::SETOLE: case ISD::SETULE: return ISD::SETLE;
+    case ISD::SETOGT: case ISD::SETUGT: return ISD::SETGT;
+    case ISD::SETOGE: case ISD::SETUGE: return ISD::SETGE;
+    default: break;
+  }
+  return CC;
 }
 
 /// getICmpCondCode - Return the ISD condition code corresponding to
@@ -221,7 +228,8 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
   // longjmp on x86), it can end up causing miscompilation that has not
   // been fully understood.
   if (!Ret &&
-      (!GuaranteedTailCallOpt || !isa<UnreachableInst>(Term))) return false;
+      (!TLI.getTargetMachine().Options.GuaranteedTailCallOpt ||
+       !isa<UnreachableInst>(Term))) return false;
 
   // If I will have a chain, make sure no other instruction that will have a
   // chain interposes between I and the return.

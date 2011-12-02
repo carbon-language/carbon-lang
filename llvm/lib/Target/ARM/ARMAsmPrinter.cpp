@@ -739,14 +739,14 @@ void ARMAsmPrinter::emitAttributes() {
   }
 
   // Signal various FP modes.
-  if (!UnsafeFPMath) {
+  if (!TM.Options.UnsafeFPMath) {
     AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_denormal,
                                ARMBuildAttrs::Allowed);
     AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_exceptions,
                                ARMBuildAttrs::Allowed);
   }
 
-  if (NoInfsFPMath && NoNaNsFPMath)
+  if (TM.Options.NoInfsFPMath && TM.Options.NoNaNsFPMath)
     AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_FP_number_model,
                                ARMBuildAttrs::Allowed);
   else
@@ -759,7 +759,7 @@ void ARMAsmPrinter::emitAttributes() {
   AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_align8_preserved, 1);
 
   // Hard float.  Use both S and D registers and conform to AAPCS-VFP.
-  if (Subtarget->isAAPCS_ABI() && FloatABIType == FloatABI::Hard) {
+  if (Subtarget->isAAPCS_ABI() && TM.Options.FloatABIType == FloatABI::Hard) {
     AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_HardFP_use, 3);
     AttrEmitter->EmitAttribute(ARMBuildAttrs::ABI_VFP_args, 1);
   }
@@ -1934,4 +1934,3 @@ extern "C" void LLVMInitializeARMAsmPrinter() {
   RegisterAsmPrinter<ARMAsmPrinter> X(TheARMTarget);
   RegisterAsmPrinter<ARMAsmPrinter> Y(TheThumbTarget);
 }
-

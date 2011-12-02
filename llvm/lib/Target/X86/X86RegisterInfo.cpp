@@ -452,7 +452,7 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
 bool X86RegisterInfo::canRealignStack(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return (RealignStack &&
+  return (MF.getTarget().Options.RealignStack &&
           !MFI->hasVarSizedObjects());
 }
 

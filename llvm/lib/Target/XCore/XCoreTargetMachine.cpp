@@ -21,9 +21,10 @@ using namespace llvm;
 ///
 XCoreTargetMachine::XCoreTargetMachine(const Target &T, StringRef TT,
                                        StringRef CPU, StringRef FS,
+                                       const TargetOptions &Options,
                                        Reloc::Model RM, CodeModel::Model CM,
                                        CodeGenOpt::Level OL)
-  : LLVMTargetMachine(T, TT, CPU, FS, RM, CM, OL),
+  : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
     Subtarget(TT, CPU, FS),
     DataLayout("e-p:32:32:32-a0:0:32-f32:32:32-f64:32:32-i1:8:32-i8:8:32-"
                "i16:16:32-i32:32:32-i64:32:32-n32"),

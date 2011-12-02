@@ -85,8 +85,8 @@ using namespace llvm;
 // if frame pointer elimination is disabled.
 bool MipsFrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
-  return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects()
-      || MFI->isFrameAddressTaken();
+  return MF.getTarget().Options.DisableFramePointerElim(MF) ||
+      MFI->hasVarSizedObjects() || MFI->isFrameAddressTaken();
 }
 
 bool MipsFrameLowering::targetHandlesStackFrameRounding() const {

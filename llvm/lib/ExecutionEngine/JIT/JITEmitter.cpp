@@ -362,10 +362,16 @@ namespace {
     /// Instance of the JIT
     JIT *TheJIT;
 
+    bool JITExceptionHandling;
+
+    bool JITEmitDebugInfo;
+
   public:
     JITEmitter(JIT &jit, JITMemoryManager *JMM, TargetMachine &TM)
       : SizeEstimate(0), Resolver(jit, *this), MMI(0), CurFn(0),
-        EmittedFunctions(this), TheJIT(&jit) {
+        EmittedFunctions(this), TheJIT(&jit),
+        JITExceptionHandling(TM.Options.JITExceptionHandling),
+        JITEmitDebugInfo(TM.Options.JITEmitDebugInfo) {
       MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
       if (jit.getJITInfo().needsGOT()) {
         MemMgr->AllocateGOT();
@@ -1037,7 +1043,7 @@ void JITEmitter::deallocateMemForFunction(const Function *F) {
     EmittedFunctions.erase(Emitted);
   }
 
-  if(JITExceptionHandling) {
+  if (JITExceptionHandling) {
     TheJIT->DeregisterTable(F);
   }
 
@@ -1047,7 +1053,7 @@ void JITEmitter::deallocateMemForFunction(const Function *F) {
 }
 
 
-void* JITEmitter::allocateSpace(uintptr_t Size, unsigned Alignment) {
+void *JITEmitter::allocateSpace(uintptr_t Size, unsigned Alignment) {
   if (BufferBegin)
     return JITCodeEmitter::allocateSpace(Size, Alignment);
 
@@ -1059,7 +1065,7 @@ void* JITEmitter::allocateSpace(uintptr_t Size, unsigned Alignment) {
   return CurBufferPtr;
 }
 
-void* JITEmitter::allocateGlobal(uintptr_t Size, unsigned Alignment) {
+void *JITEmitter::allocateGlobal(uintptr_t Size, unsigned Alignment) {
   // Delegate this call through the memory manager.
   return MemMgr->allocateGlobal(Size, Alignment);
 }

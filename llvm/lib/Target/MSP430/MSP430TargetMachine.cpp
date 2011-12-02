@@ -28,9 +28,10 @@ MSP430TargetMachine::MSP430TargetMachine(const Target &T,
                                          StringRef TT,
                                          StringRef CPU,
                                          StringRef FS,
+                                         const TargetOptions &Options,
                                          Reloc::Model RM, CodeModel::Model CM,
                                          CodeGenOpt::Level OL)
-  : LLVMTargetMachine(T, TT, CPU, FS, RM, CM, OL),
+  : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
     Subtarget(TT, CPU, FS),
     // FIXME: Check TargetData string.
     DataLayout("e-p:16:16:16-i8:8:8-i16:16:16-i32:16:32-n8:16"),

@@ -256,7 +256,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::UINT_TO_FP     , MVT::i32  , Promote);
     setOperationAction(ISD::UINT_TO_FP     , MVT::i64  , Expand);
-  } else if (!UseSoftFloat) {
+  } else if (!TM.Options.UseSoftFloat) {
     // We have an algorithm for SSE2->double, and we turn this into a
     // 64-bit FILD followed by conditional FADD for other targets.
     setOperationAction(ISD::UINT_TO_FP     , MVT::i64  , Custom);
@@ -270,7 +270,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
   setOperationAction(ISD::SINT_TO_FP       , MVT::i8   , Promote);
 
-  if (!UseSoftFloat) {
+  if (!TM.Options.UseSoftFloat) {
     // SSE has no i16 to fp conversion, only i32
     if (X86ScalarSSEf32) {
       setOperationAction(ISD::SINT_TO_FP     , MVT::i16  , Promote);
@@ -313,7 +313,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::FP_TO_UINT     , MVT::i64  , Expand);
     setOperationAction(ISD::FP_TO_UINT     , MVT::i32  , Promote);
-  } else if (!UseSoftFloat) {
+  } else if (!TM.Options.UseSoftFloat) {
     // Since AVX is a superset of SSE3, only check for SSE here.
     if (Subtarget->hasSSE1() && !Subtarget->hasSSE3())
       // Expand FP_TO_UINT into a select.
@@ -537,14 +537,14 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   if (Subtarget->isTargetCOFF() && !Subtarget->isTargetEnvMacho())
     setOperationAction(ISD::DYNAMIC_STACKALLOC, Subtarget->is64Bit() ?
                        MVT::i64 : MVT::i32, Custom);
-  else if (EnableSegmentedStacks)
+  else if (TM.Options.EnableSegmentedStacks)
     setOperationAction(ISD::DYNAMIC_STACKALLOC, Subtarget->is64Bit() ?
                        MVT::i64 : MVT::i32, Custom);
   else
     setOperationAction(ISD::DYNAMIC_STACKALLOC, Subtarget->is64Bit() ?
                        MVT::i64 : MVT::i32, Expand);
 
-  if (!UseSoftFloat && X86ScalarSSEf64) {
+  if (!TM.Options.UseSoftFloat && X86ScalarSSEf64) {
     // f32 and f64 use SSE.
     // Set up the FP register classes.
     addRegisterClass(MVT::f32, X86::FR32RegisterClass);
@@ -576,7 +576,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     // cases we handle.
     addLegalFPImmediate(APFloat(+0.0)); // xorpd
     addLegalFPImmediate(APFloat(+0.0f)); // xorps
-  } else if (!UseSoftFloat && X86ScalarSSEf32) {
+  } else if (!TM.Options.UseSoftFloat && X86ScalarSSEf32) {
     // Use SSE for f32, x87 for f64.
     // Set up the FP register classes.
     addRegisterClass(MVT::f32, X86::FR32RegisterClass);
@@ -605,11 +605,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     addLegalFPImmediate(APFloat(-0.0)); // FLD0/FCHS
     addLegalFPImmediate(APFloat(-1.0)); // FLD1/FCHS
 
-    if (!UnsafeFPMath) {
+    if (!TM.Options.UnsafeFPMath) {
       setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
       setOperationAction(ISD::FCOS           , MVT::f64  , Expand);
     }
-  } else if (!UseSoftFloat) {
+  } else if (!TM.Options.UseSoftFloat) {
     // f32 and f64 in x87.
     // Set up the FP register classes.
     addRegisterClass(MVT::f64, X86::RFP64RegisterClass);
@@ -620,7 +620,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
     setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
 
-    if (!UnsafeFPMath) {
+    if (!TM.Options.UnsafeFPMath) {
       setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
       setOperationAction(ISD::FCOS           , MVT::f64  , Expand);
     }
@@ -639,7 +639,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::FMA, MVT::f32, Expand);
 
   // Long double always uses X87.
-  if (!UseSoftFloat) {
+  if (!TM.Options.UseSoftFloat) {
     addRegisterClass(MVT::f80, X86::RFP80RegisterClass);
     setOperationAction(ISD::UNDEF,     MVT::f80, Expand);
     setOperationAction(ISD::FCOPYSIGN, MVT::f80, Expand);
@@ -658,7 +658,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       addLegalFPImmediate(TmpFlt2);  // FLD1/FCHS
     }
 
-    if (!UnsafeFPMath) {
+    if (!TM.Options.UnsafeFPMath) {
       setOperationAction(ISD::FSIN           , MVT::f80  , Expand);
       setOperationAction(ISD::FCOS           , MVT::f80  , Expand);
     }
@@ -748,7 +748,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   // FIXME: In order to prevent SSE instructions being expanded to MMX ones
   // with -msoft-float, disable use of MMX as well.
-  if (!UseSoftFloat && Subtarget->hasMMX()) {
+  if (!TM.Options.UseSoftFloat && Subtarget->hasMMX()) {
     addRegisterClass(MVT::x86mmx, X86::VR64RegisterClass);
     // No operations on x86mmx supported, everything uses intrinsics.
   }
@@ -785,7 +785,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::BITCAST,            MVT::v2i32, Expand);
   setOperationAction(ISD::BITCAST,            MVT::v1i64, Expand);
 
-  if (!UseSoftFloat && Subtarget->hasXMM()) {
+  if (!TM.Options.UseSoftFloat && Subtarget->hasXMM()) {
     addRegisterClass(MVT::v4f32, X86::VR128RegisterClass);
 
     setOperationAction(ISD::FADD,               MVT::v4f32, Legal);
@@ -802,7 +802,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SETCC,              MVT::v4f32, Custom);
   }
 
-  if (!UseSoftFloat && Subtarget->hasXMMInt()) {
+  if (!TM.Options.UseSoftFloat && Subtarget->hasXMMInt()) {
     addRegisterClass(MVT::v2f64, X86::VR128RegisterClass);
 
     // FIXME: Unfortunately -soft-float and -no-implicit-float means XMM
@@ -983,7 +983,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   if (Subtarget->hasSSE42orAVX())
     setOperationAction(ISD::SETCC,             MVT::v2i64, Custom);
 
-  if (!UseSoftFloat && Subtarget->hasAVX()) {
+  if (!TM.Options.UseSoftFloat && Subtarget->hasAVX()) {
     addRegisterClass(MVT::v32i8,  X86::VR256RegisterClass);
     addRegisterClass(MVT::v16i16, X86::VR256RegisterClass);
     addRegisterClass(MVT::v8i32,  X86::VR256RegisterClass);
@@ -1709,7 +1709,8 @@ bool X86TargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {
 
 /// FuncIsMadeTailCallSafe - Return true if the function is being made into
 /// a tailcall target by changing its ABI.
-static bool FuncIsMadeTailCallSafe(CallingConv::ID CC) {
+static bool FuncIsMadeTailCallSafe(CallingConv::ID CC,
+                                   bool GuaranteedTailCallOpt) {
   return GuaranteedTailCallOpt && IsTailCallConvention(CC);
 }
 
@@ -1723,7 +1724,8 @@ X86TargetLowering::LowerMemArgument(SDValue Chain,
                                     unsigned i) const {
   // Create the nodes corresponding to a load from this parameter slot.
   ISD::ArgFlagsTy Flags = Ins[i].Flags;
-  bool AlwaysUseMutable = FuncIsMadeTailCallSafe(CallConv);
+  bool AlwaysUseMutable = FuncIsMadeTailCallSafe(CallConv,
+                              getTargetMachine().Options.GuaranteedTailCallOpt);
   bool isImmutable = !AlwaysUseMutable && !Flags.isByVal();
   EVT ValVT;
 
@@ -1873,7 +1875,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
 
   unsigned StackSize = CCInfo.getNextStackOffset();
   // Align stack specially for tail calls.
-  if (FuncIsMadeTailCallSafe(CallConv))
+  if (FuncIsMadeTailCallSafe(CallConv,
+                             MF.getTarget().Options.GuaranteedTailCallOpt))
     StackSize = GetAlignedArgumentStackSize(StackSize, DAG);
 
   // If the function takes variable number of arguments, make a frame index for
@@ -1918,9 +1921,11 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
       bool NoImplicitFloatOps = Fn->hasFnAttr(Attribute::NoImplicitFloat);
       assert(!(NumXMMRegs && !Subtarget->hasXMM()) &&
              "SSE register cannot be used when SSE is disabled!");
-      assert(!(NumXMMRegs && UseSoftFloat && NoImplicitFloatOps) &&
+      assert(!(NumXMMRegs && MF.getTarget().Options.UseSoftFloat &&
+               NoImplicitFloatOps) &&
              "SSE register cannot be used when SSE is disabled!");
-      if (UseSoftFloat || NoImplicitFloatOps || !Subtarget->hasXMM())
+      if (MF.getTarget().Options.UseSoftFloat || NoImplicitFloatOps ||
+          !Subtarget->hasXMM())
         // Kernel mode asks for SSE to be disabled, so don't push them
         // on the stack.
         TotalNumXMMRegs = 0;
@@ -1998,7 +2003,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   }
 
   // Some CCs need callee pop.
-  if (X86::isCalleePop(CallConv, Is64Bit, isVarArg, GuaranteedTailCallOpt)) {
+  if (X86::isCalleePop(CallConv, Is64Bit, isVarArg,
+                       MF.getTarget().Options.GuaranteedTailCallOpt)) {
     FuncInfo->setBytesToPopOnReturn(StackSize); // Callee pops everything.
   } else {
     FuncInfo->setBytesToPopOnReturn(0); // Callee pops nothing.
@@ -2098,7 +2104,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
     // Sibcalls are automatically detected tailcalls which do not require
     // ABI changes.
-    if (!GuaranteedTailCallOpt && isTailCall)
+    if (!MF.getTarget().Options.GuaranteedTailCallOpt && isTailCall)
       IsSibcall = true;
 
     if (isTailCall)
@@ -2126,7 +2132,8 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // This is a sibcall. The memory operands are available in caller's
     // own caller's stack.
     NumBytes = 0;
-  else if (GuaranteedTailCallOpt && IsTailCallConvention(CallConv))
+  else if (getTargetMachine().Options.GuaranteedTailCallOpt &&
+           IsTailCallConvention(CallConv))
     NumBytes = GetAlignedArgumentStackSize(NumBytes, DAG);
 
   int FPDiff = 0;
@@ -2305,7 +2312,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     int FI = 0;
     // Do not flag preceding copytoreg stuff together with the following stuff.
     InFlag = SDValue();
-    if (GuaranteedTailCallOpt) {
+    if (getTargetMachine().Options.GuaranteedTailCallOpt) {
       for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
         CCValAssign &VA = ArgLocs[i];
         if (VA.isRegLoc())
@@ -2485,7 +2492,8 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Create the CALLSEQ_END node.
   unsigned NumBytesForCalleeToPush;
-  if (X86::isCalleePop(CallConv, Is64Bit, isVarArg, GuaranteedTailCallOpt))
+  if (X86::isCalleePop(CallConv, Is64Bit, isVarArg,
+                       getTargetMachine().Options.GuaranteedTailCallOpt))
     NumBytesForCalleeToPush = NumBytes;    // Callee pops everything
   else if (!Is64Bit && !IsTailCallConvention(CallConv) && IsStructRet)
     // If this is a call to a struct-return function, the callee
@@ -2643,7 +2651,7 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   CallingConv::ID CallerCC = CallerF->getCallingConv();
   bool CCMatch = CallerCC == CalleeCC;
 
-  if (GuaranteedTailCallOpt) {
+  if (getTargetMachine().Options.GuaranteedTailCallOpt) {
     if (IsTailCallConvention(CalleeCC) && CCMatch)
       return true;
     return false;
@@ -9119,7 +9127,7 @@ SDValue
 X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
                                            SelectionDAG &DAG) const {
   assert((Subtarget->isTargetCygMing() || Subtarget->isTargetWindows() ||
-          EnableSegmentedStacks) &&
+          getTargetMachine().Options.EnableSegmentedStacks) &&
          "This should be used only on Windows targets or when segmented stacks "
          "are being used");
   assert(!Subtarget->isTargetEnvMacho() && "Not implemented");
@@ -9133,7 +9141,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   bool Is64Bit = Subtarget->is64Bit();
   EVT SPTy = Is64Bit ? MVT::i64 : MVT::i32;
 
-  if (EnableSegmentedStacks) {
+  if (getTargetMachine().Options.EnableSegmentedStacks) {
     MachineFunction &MF = DAG.getMachineFunction();
     MachineRegisterInfo &MRI = MF.getRegInfo();
 
@@ -9269,7 +9277,7 @@ SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
 
   if (ArgMode == 2) {
     // Sanity Check: Make sure using fp_offset makes sense.
-    assert(!UseSoftFloat &&
+    assert(!getTargetMachine().Options.UseSoftFloat &&
            !(DAG.getMachineFunction()
                 .getFunction()->hasFnAttr(Attribute::NoImplicitFloat)) &&
            Subtarget->hasXMM());
@@ -12144,7 +12152,7 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI, MachineBasicBlock *BB,
   MachineFunction *MF = BB->getParent();
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
 
-  assert(EnableSegmentedStacks);
+  assert(getTargetMachine().Options.EnableSegmentedStacks);
 
   unsigned TlsReg = Is64Bit ? X86::FS : X86::GS;
   unsigned TlsOffset = Is64Bit ? 0x70 : 0x30;
@@ -13024,7 +13032,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
         // the operands would cause it to handle comparisons between positive
         // and negative zero incorrectly.
         if (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS)) {
-          if (!UnsafeFPMath &&
+          if (!DAG.getTarget().Options.UnsafeFPMath &&
               !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS)))
             break;
           std::swap(LHS, RHS);
@@ -13034,7 +13042,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
       case ISD::SETOLE:
         // Converting this to a min would handle comparisons between positive
         // and negative zero incorrectly.
-        if (!UnsafeFPMath &&
+        if (!DAG.getTarget().Options.UnsafeFPMath &&
             !DAG.isKnownNeverZero(LHS) && !DAG.isKnownNeverZero(RHS))
           break;
         Opcode = X86ISD::FMIN;
@@ -13052,7 +13060,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
       case ISD::SETOGE:
         // Converting this to a max would handle comparisons between positive
         // and negative zero incorrectly.
-        if (!UnsafeFPMath &&
+        if (!DAG.getTarget().Options.UnsafeFPMath &&
             !DAG.isKnownNeverZero(LHS) && !DAG.isKnownNeverZero(RHS))
           break;
         Opcode = X86ISD::FMAX;
@@ -13062,7 +13070,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
         // the operands would cause it to handle comparisons between positive
         // and negative zero incorrectly.
         if (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS)) {
-          if (!UnsafeFPMath &&
+          if (!DAG.getTarget().Options.UnsafeFPMath &&
               !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS)))
             break;
           std::swap(LHS, RHS);
@@ -13088,7 +13096,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
         // Converting this to a min would handle comparisons between positive
         // and negative zero incorrectly, and swapping the operands would
         // cause it to handle NaNs incorrectly.
-        if (!UnsafeFPMath &&
+        if (!DAG.getTarget().Options.UnsafeFPMath &&
             !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS))) {
           if (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS))
             break;
@@ -13098,7 +13106,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
         break;
       case ISD::SETUGT:
         // Converting this to a min would handle NaNs incorrectly.
-        if (!UnsafeFPMath &&
+        if (!DAG.getTarget().Options.UnsafeFPMath &&
             (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS)))
           break;
         Opcode = X86ISD::FMIN;
@@ -13123,7 +13131,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
         // Converting this to a max would handle comparisons between positive
         // and negative zero incorrectly, and swapping the operands would
         // cause it to handle NaNs incorrectly.
-        if (!UnsafeFPMath &&
+        if (!DAG.getTarget().Options.UnsafeFPMath &&
             !DAG.isKnownNeverZero(LHS) && !DAG.isKnownNeverZero(RHS)) {
           if (!DAG.isKnownNeverNaN(LHS) || !DAG.isKnownNeverNaN(RHS))
             break;
@@ -14087,7 +14095,7 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
   SDValue StoredVal = St->getOperand(1);
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
-  // If we are saving a concatination of two XMM registers, perform two stores.
+  // If we are saving a concatenation of two XMM registers, perform two stores.
   // This is better in Sandy Bridge cause one 256-bit mem op is done via two
   // 128-bit ones. If in the future the cost becomes only one memory access the
   // first version would be better.
@@ -14197,7 +14205,7 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
 
   const Function *F = DAG.getMachineFunction().getFunction();
   bool NoImplicitFloatOps = F->hasFnAttr(Attribute::NoImplicitFloat);
-  bool F64IsLegal = !UseSoftFloat && !NoImplicitFloatOps
+  bool F64IsLegal = !DAG.getTarget().Options.UseSoftFloat && !NoImplicitFloatOps
                      && Subtarget->hasXMMInt();
   if ((VT.isVector() ||
        (VT == MVT::i64 && F64IsLegal && !Subtarget->is64Bit())) &&

@@ -47,7 +47,8 @@ bool SPUFrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
 
   return MFI->getStackSize() &&
-    (DisableFramePointerElim(MF) || MFI->hasVarSizedObjects());
+    (MF.getTarget().Options.DisableFramePointerElim(MF) ||
+     MFI->hasVarSizedObjects());
 }
 
 

@@ -1414,7 +1414,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   
   DIE *CurFnDIE = constructScopeDIE(TheCU, FnScope);
   
-  if (!DisableFramePointerElim(*MF))
+  if (!MF->getTarget().Options.DisableFramePointerElim(*MF))
     TheCU->addUInt(CurFnDIE, dwarf::DW_AT_APPLE_omit_frame_ptr,
                    dwarf::DW_FORM_flag, 1);
 

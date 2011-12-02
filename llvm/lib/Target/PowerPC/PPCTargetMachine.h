@@ -41,7 +41,7 @@ class PPCTargetMachine : public LLVMTargetMachine {
 
 public:
   PPCTargetMachine(const Target &T, StringRef TT,
-                   StringRef CPU, StringRef FS,
+                   StringRef CPU, StringRef FS, const TargetOptions &Options,
                    Reloc::Model RM, CodeModel::Model CM,
                    CodeGenOpt::Level OL, bool is64Bit);
 
@@ -79,7 +79,7 @@ public:
 class PPC32TargetMachine : public PPCTargetMachine {
 public:
   PPC32TargetMachine(const Target &T, StringRef TT,
-                     StringRef CPU, StringRef FS,
+                     StringRef CPU, StringRef FS, const TargetOptions &Options,
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL);
 };
@@ -89,7 +89,7 @@ public:
 class PPC64TargetMachine : public PPCTargetMachine {
 public:
   PPC64TargetMachine(const Target &T, StringRef TT,
-                     StringRef CPU, StringRef FS,
+                     StringRef CPU, StringRef FS, const TargetOptions &Options,
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL);
 };

@@ -86,8 +86,10 @@ TargetMachine *EngineBuilder::selectTarget(Module *Mod,
   }
 
   // Allocate a target...
+  TargetOptions Options;
   TargetMachine *Target = TheTarget->createTargetMachine(TheTriple.getTriple(),
                                                          MCPU, FeaturesStr,
+                                                         Options,
                                                          RM, CM, OL);
   assert(Target && "Could not allocate target machine!");
   return Target;

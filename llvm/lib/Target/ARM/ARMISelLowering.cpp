@@ -432,7 +432,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     addRegisterClass(MVT::i32, ARM::tGPRRegisterClass);
   else
     addRegisterClass(MVT::i32, ARM::GPRRegisterClass);
-  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb1Only()) {
+  if (!TM.Options.UseSoftFloat && Subtarget->hasVFP2() &&
+      !Subtarget->isThumb1Only()) {
     addRegisterClass(MVT::f32, ARM::SPRRegisterClass);
     if (!Subtarget->isFPOnlySP())
       addRegisterClass(MVT::f64, ARM::DPRRegisterClass);
@@ -674,7 +675,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   }
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
-  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb1Only()) {
+  if (!TM.Options.UseSoftFloat && Subtarget->hasVFP2() &&
+      !Subtarget->isThumb1Only()) {
     // Turn f64->i64 into VMOVRRD, i64 -> f64 to VMOVDRR
     // iff target supports vfp2.
     setOperationAction(ISD::BITCAST, MVT::i64, Custom);
@@ -712,7 +714,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FCOS,      MVT::f64, Expand);
   setOperationAction(ISD::FREM,      MVT::f64, Expand);
   setOperationAction(ISD::FREM,      MVT::f32, Expand);
-  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb1Only()) {
+  if (!TM.Options.UseSoftFloat && Subtarget->hasVFP2() &&
+      !Subtarget->isThumb1Only()) {
     setOperationAction(ISD::FCOPYSIGN, MVT::f64, Custom);
     setOperationAction(ISD::FCOPYSIGN, MVT::f32, Custom);
   }
@@ -723,7 +726,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FMA, MVT::f32, Expand);
 
   // Various VFP goodness
-  if (!UseSoftFloat && !Subtarget->isThumb1Only()) {
+  if (!TM.Options.UseSoftFloat && !Subtarget->isThumb1Only()) {
     // int <-> fp are custom expanded into bit_convert + ARMISD ops.
     if (Subtarget->hasVFP2()) {
       setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
@@ -751,7 +754,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   setStackPointerRegisterToSaveRestore(ARM::SP);
 
-  if (UseSoftFloat || Subtarget->isThumb1Only() || !Subtarget->hasVFP2())
+  if (TM.Options.UseSoftFloat || Subtarget->isThumb1Only() ||
+      !Subtarget->hasVFP2())
     setSchedulingPreference(Sched::RegPressure);
   else
     setSchedulingPreference(Sched::Hybrid);
@@ -1092,7 +1096,8 @@ CCAssignFn *ARMTargetLowering::CCAssignFnForNode(CallingConv::ID CC,
     if (!Subtarget->isAAPCS_ABI())
       return (Return ? RetCC_ARM_APCS : CC_ARM_APCS);
     else if (Subtarget->hasVFP2() &&
-             FloatABIType == FloatABI::Hard && !isVarArg)
+             getTargetMachine().Options.FloatABIType == FloatABI::Hard &&
+             !isVarArg)
       return (Return ? RetCC_ARM_AAPCS_VFP : CC_ARM_AAPCS_VFP);
     return (Return ? RetCC_ARM_AAPCS : CC_ARM_AAPCS);
   }
@@ -2951,7 +2956,7 @@ SDValue ARMTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
 
   assert(LHS.getValueType() == MVT::f32 || LHS.getValueType() == MVT::f64);
 
-  if (UnsafeFPMath &&
+  if (getTargetMachine().Options.UnsafeFPMath &&
       (CC == ISD::SETEQ || CC == ISD::SETOEQ ||
        CC == ISD::SETNE || CC == ISD::SETUNE)) {
     SDValue Result = OptimizeVFPBrcond(Op, DAG);
@@ -7948,7 +7953,7 @@ static SDValue PerformSELECT_CCCombine(SDNode *N, SelectionDAG &DAG,
     // will return -0, so vmin can only be used for unsafe math or if one of
     // the operands is known to be nonzero.
     if ((CC == ISD::SETLE || CC == ISD::SETOLE || CC == ISD::SETULE) &&
-        !UnsafeFPMath &&
+        !DAG.getTarget().Options.UnsafeFPMath &&
         !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS)))
       break;
     Opcode = IsReversed ? ARMISD::FMAX : ARMISD::FMIN;
@@ -7970,7 +7975,7 @@ static SDValue PerformSELECT_CCCombine(SDNode *N, SelectionDAG &DAG,
     // will return +0, so vmax can only be used for unsafe math or if one of
     // the operands is known to be nonzero.
     if ((CC == ISD::SETGE || CC == ISD::SETOGE || CC == ISD::SETUGE) &&
-        !UnsafeFPMath &&
+        !DAG.getTarget().Options.UnsafeFPMath &&
         !(DAG.isKnownNeverZero(LHS) || DAG.isKnownNeverZero(RHS)))
       break;
     Opcode = IsReversed ? ARMISD::FMIN : ARMISD::FMAX;

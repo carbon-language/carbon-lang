@@ -34,9 +34,10 @@ SPUFrameLowering::getCalleeSaveSpillSlots(unsigned &NumEntries) const {
 
 SPUTargetMachine::SPUTargetMachine(const Target &T, StringRef TT,
                                    StringRef CPU, StringRef FS,
+                                   const TargetOptions &Options,
                                    Reloc::Model RM, CodeModel::Model CM,
                                    CodeGenOpt::Level OL)
-  : LLVMTargetMachine(T, TT, CPU, FS, RM, CM, OL),
+  : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
     Subtarget(TT, CPU, FS),
     DataLayout(Subtarget.getTargetDataString()),
     InstrInfo(*this),

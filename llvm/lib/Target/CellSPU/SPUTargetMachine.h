@@ -39,7 +39,7 @@ class SPUTargetMachine : public LLVMTargetMachine {
   InstrItineraryData  InstrItins;
 public:
   SPUTargetMachine(const Target &T, StringRef TT,
-                   StringRef CPU, StringRef FS,
+                   StringRef CPU, StringRef FS, const TargetOptions &Options,
                    Reloc::Model RM, CodeModel::Model CM,
                    CodeGenOpt::Level OL);
 
