@@ -1994,7 +1994,7 @@ class NEONFPPat<dag pattern, dag result> : Pat<pattern, result> {
 
 // VFP/NEON Instruction aliases for type suffices.
 class VFPDataTypeInstAlias<string opc, string dt, string asm, dag Result> :
-  InstAlias<!strconcat(opc, dt, asm), Result>;
+  InstAlias<!strconcat(opc, dt, "\t", asm), Result>;
 multiclass VFPDT8ReqInstAlias<string opc, string asm, dag Result> {
   def I8 : VFPDataTypeInstAlias<opc, ".i8", asm, Result>;
   def S8 : VFPDataTypeInstAlias<opc, ".s8", asm, Result>;
@@ -2071,7 +2071,7 @@ multiclass VFPDTAnyNoF64InstAlias<string opc, string asm, dag Result> {
 // above, as we care about the ultimate instruction enum names generated, unlike
 // for instalias defs.
 class NEONDataTypeAsmPseudoInst<string opc, string dt, string asm, dag iops> :
-  AsmPseudoInst<!strconcat(opc, dt, asm), iops>, Requires<[HasNEON]>;
+  AsmPseudoInst<!strconcat(opc, dt, "\t", asm), iops>, Requires<[HasNEON]>;
 multiclass NEONDT8ReqAsmPseudoInst<string opc, string asm, dag iops> {
   def I8 : NEONDataTypeAsmPseudoInst<opc, ".i8", asm, iops>;
   def S8 : NEONDataTypeAsmPseudoInst<opc, ".s8", asm, iops>;

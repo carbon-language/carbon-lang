@@ -4754,16 +4754,48 @@ validateInstruction(MCInst &Inst,
 static unsigned getRealVLDNOpcode(unsigned Opc) {
   switch(Opc) {
   default: assert(0 && "unexpected opcode!");
+  case ARM::VLD1LNdWB_fixed_Asm_8:   return ARM::VLD1LNd8_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_P8:  return ARM::VLD1LNd8_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_I8:  return ARM::VLD1LNd8_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_S8:  return ARM::VLD1LNd8_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_U8:  return ARM::VLD1LNd8_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_16:  return ARM::VLD1LNd16_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_P16: return ARM::VLD1LNd16_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_I16: return ARM::VLD1LNd16_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_S16: return ARM::VLD1LNd16_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_U16: return ARM::VLD1LNd16_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_32:  return ARM::VLD1LNd32_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_F:   return ARM::VLD1LNd32_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_F32: return ARM::VLD1LNd32_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_I32: return ARM::VLD1LNd32_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_S32: return ARM::VLD1LNd32_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_U32: return ARM::VLD1LNd32_UPD;
+  case ARM::VLD1LNdWB_register_Asm_8:   return ARM::VLD1LNd8_UPD;
+  case ARM::VLD1LNdWB_register_Asm_P8:  return ARM::VLD1LNd8_UPD;
+  case ARM::VLD1LNdWB_register_Asm_I8:  return ARM::VLD1LNd8_UPD;
+  case ARM::VLD1LNdWB_register_Asm_S8:  return ARM::VLD1LNd8_UPD;
+  case ARM::VLD1LNdWB_register_Asm_U8:  return ARM::VLD1LNd8_UPD;
+  case ARM::VLD1LNdWB_register_Asm_16:  return ARM::VLD1LNd16_UPD;
+  case ARM::VLD1LNdWB_register_Asm_P16: return ARM::VLD1LNd16_UPD;
+  case ARM::VLD1LNdWB_register_Asm_I16: return ARM::VLD1LNd16_UPD;
+  case ARM::VLD1LNdWB_register_Asm_S16: return ARM::VLD1LNd16_UPD;
+  case ARM::VLD1LNdWB_register_Asm_U16: return ARM::VLD1LNd16_UPD;
+  case ARM::VLD1LNdWB_register_Asm_32:  return ARM::VLD1LNd32_UPD;
+  case ARM::VLD1LNdWB_register_Asm_F:   return ARM::VLD1LNd32_UPD;
+  case ARM::VLD1LNdWB_register_Asm_F32: return ARM::VLD1LNd32_UPD;
+  case ARM::VLD1LNdWB_register_Asm_I32: return ARM::VLD1LNd32_UPD;
+  case ARM::VLD1LNdWB_register_Asm_S32: return ARM::VLD1LNd32_UPD;
+  case ARM::VLD1LNdWB_register_Asm_U32: return ARM::VLD1LNd32_UPD;
   case ARM::VLD1LNdAsm_8:   return ARM::VLD1LNd8;
   case ARM::VLD1LNdAsm_P8:  return ARM::VLD1LNd8;
   case ARM::VLD1LNdAsm_I8:  return ARM::VLD1LNd8;
   case ARM::VLD1LNdAsm_S8:  return ARM::VLD1LNd8;
   case ARM::VLD1LNdAsm_U8:  return ARM::VLD1LNd8;
-  case ARM::VLD1LNdAsm_16:   return ARM::VLD1LNd16;
-  case ARM::VLD1LNdAsm_P16:  return ARM::VLD1LNd16;
-  case ARM::VLD1LNdAsm_I16:  return ARM::VLD1LNd16;
-  case ARM::VLD1LNdAsm_S16:  return ARM::VLD1LNd16;
-  case ARM::VLD1LNdAsm_U16:  return ARM::VLD1LNd16;
+  case ARM::VLD1LNdAsm_16:  return ARM::VLD1LNd16;
+  case ARM::VLD1LNdAsm_P16: return ARM::VLD1LNd16;
+  case ARM::VLD1LNdAsm_I16: return ARM::VLD1LNd16;
+  case ARM::VLD1LNdAsm_S16: return ARM::VLD1LNd16;
+  case ARM::VLD1LNdAsm_U16: return ARM::VLD1LNd16;
   case ARM::VLD1LNdAsm_32:  return ARM::VLD1LNd32;
   case ARM::VLD1LNdAsm_F:   return ARM::VLD1LNd32;
   case ARM::VLD1LNdAsm_F32: return ARM::VLD1LNd32;
@@ -4778,6 +4810,70 @@ processInstruction(MCInst &Inst,
                    const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   switch (Inst.getOpcode()) {
   // Handle NEON VLD1 complex aliases.
+  case ARM::VLD1LNdWB_register_Asm_8:
+  case ARM::VLD1LNdWB_register_Asm_P8:
+  case ARM::VLD1LNdWB_register_Asm_I8:
+  case ARM::VLD1LNdWB_register_Asm_S8:
+  case ARM::VLD1LNdWB_register_Asm_U8:
+  case ARM::VLD1LNdWB_register_Asm_16:
+  case ARM::VLD1LNdWB_register_Asm_P16:
+  case ARM::VLD1LNdWB_register_Asm_I16:
+  case ARM::VLD1LNdWB_register_Asm_S16:
+  case ARM::VLD1LNdWB_register_Asm_U16:
+  case ARM::VLD1LNdWB_register_Asm_32:
+  case ARM::VLD1LNdWB_register_Asm_F:
+  case ARM::VLD1LNdWB_register_Asm_F32:
+  case ARM::VLD1LNdWB_register_Asm_I32:
+  case ARM::VLD1LNdWB_register_Asm_S32:
+  case ARM::VLD1LNdWB_register_Asm_U32: {
+    MCInst TmpInst;
+    // Shuffle the operands around so the lane index operand is in the
+    // right place.
+    TmpInst.setOpcode(getRealVLDNOpcode(Inst.getOpcode()));
+    TmpInst.addOperand(Inst.getOperand(0)); // Vd
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn
+    TmpInst.addOperand(Inst.getOperand(3)); // alignment
+    TmpInst.addOperand(Inst.getOperand(4)); // Rm
+    TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
+    TmpInst.addOperand(Inst.getOperand(1)); // lane
+    TmpInst.addOperand(Inst.getOperand(5)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(6));
+    Inst = TmpInst;
+    return true;
+  }
+  case ARM::VLD1LNdWB_fixed_Asm_8:
+  case ARM::VLD1LNdWB_fixed_Asm_P8:
+  case ARM::VLD1LNdWB_fixed_Asm_I8:
+  case ARM::VLD1LNdWB_fixed_Asm_S8:
+  case ARM::VLD1LNdWB_fixed_Asm_U8:
+  case ARM::VLD1LNdWB_fixed_Asm_16:
+  case ARM::VLD1LNdWB_fixed_Asm_P16:
+  case ARM::VLD1LNdWB_fixed_Asm_I16:
+  case ARM::VLD1LNdWB_fixed_Asm_S16:
+  case ARM::VLD1LNdWB_fixed_Asm_U16:
+  case ARM::VLD1LNdWB_fixed_Asm_32:
+  case ARM::VLD1LNdWB_fixed_Asm_F:
+  case ARM::VLD1LNdWB_fixed_Asm_F32:
+  case ARM::VLD1LNdWB_fixed_Asm_I32:
+  case ARM::VLD1LNdWB_fixed_Asm_S32:
+  case ARM::VLD1LNdWB_fixed_Asm_U32: {
+    MCInst TmpInst;
+    // Shuffle the operands around so the lane index operand is in the
+    // right place.
+    TmpInst.setOpcode(getRealVLDNOpcode(Inst.getOpcode()));
+    TmpInst.addOperand(Inst.getOperand(0)); // Vd
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn
+    TmpInst.addOperand(Inst.getOperand(3)); // alignment
+    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
+    TmpInst.addOperand(Inst.getOperand(1)); // lane
+    TmpInst.addOperand(Inst.getOperand(4)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(5));
+    Inst = TmpInst;
+    return true;
+  }
   case ARM::VLD1LNdAsm_8:
   case ARM::VLD1LNdAsm_P8:
   case ARM::VLD1LNdAsm_I8:

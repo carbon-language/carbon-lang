@@ -5593,11 +5593,30 @@ defm : VFPDT16ReqInstAlias<"vtrn${p}", "$Qd, $Qm",
 defm : VFPDT32ReqInstAlias<"vtrn${p}", "$Qd, $Qm",
                           (VTRNq32 QPR:$Qd, QPR:$Qm, pred:$p)>;
 
-// FIXME: Proof of concept pseudos. We want to parameterize these for all
-// the suffices we have to support.
+// VLD1 single-lane pseudo-instructions. These need special handling for
+// the lane index that an InstAlias can't handle, so we use these instead.
 defm VLD1LNdAsm : NEONDT8AsmPseudoInst<"vld1${p}", "$list, $addr",
                   (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 defm VLD1LNdAsm : NEONDT16AsmPseudoInst<"vld1${p}", "$list, $addr",
                   (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 defm VLD1LNdAsm : NEONDT32AsmPseudoInst<"vld1${p}", "$list, $addr",
                   (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+
+defm VLD1LNdWB_fixed_Asm : NEONDT8AsmPseudoInst<"vld1${p}", "$list, $addr!",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VLD1LNdWB_fixed_Asm : NEONDT16AsmPseudoInst<"vld1${p}", "$list, $addr!",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VLD1LNdWB_fixed_Asm : NEONDT32AsmPseudoInst<"vld1${p}", "$list, $addr!",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VLD1LNdWB_register_Asm :
+        NEONDT8AsmPseudoInst<"vld1${p}", "$list, $addr, $Rm",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+defm VLD1LNdWB_register_Asm :
+        NEONDT16AsmPseudoInst<"vld1${p}", "$list, $addr, $Rm",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+defm VLD1LNdWB_register_Asm :
+        NEONDT32AsmPseudoInst<"vld1${p}", "$list, $addr, $Rm",
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
