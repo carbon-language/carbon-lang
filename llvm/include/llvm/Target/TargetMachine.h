@@ -249,7 +249,7 @@ public:
   virtual bool addPassesToEmitFile(PassManagerBase &,
                                    formatted_raw_ostream &,
                                    CodeGenFileType,
-                                   bool = true) {
+                                   bool /*DisableVerify*/ = true) {
     return true;
   }
 
@@ -261,7 +261,7 @@ public:
   ///
   virtual bool addPassesToEmitMachineCode(PassManagerBase &,
                                           JITCodeEmitter &,
-                                          bool = true) {
+                                          bool /*DisableVerify*/ = true) {
     return true;
   }
 
@@ -273,7 +273,7 @@ public:
   virtual bool addPassesToEmitMC(PassManagerBase &,
                                  MCContext *&,
                                  raw_ostream &,
-                                 bool = true) {
+                                 bool /*DisableVerify*/ = true) {
     return true;
   }
 };
