@@ -45,3 +45,14 @@ namespace test2 {
 // We don't expect to fold this in the frontend, but make sure it doesn't crash.
 // CHECK: @PR9558 = global float 0.000000e+0
 float PR9558 = reinterpret_cast<const float&>("asd");
+
+// An initialized const automatic variable cannot be promoted to a constant
+// global if it has a mutable member.
+struct MutableMember {
+  mutable int n;
+};
+int writeToMutable() {
+  // CHECK-NOT: {{.*}}MM{{.*}} = {{.*}}constant
+  const MutableMember MM = { 0 };
+  return ++MM.n;
+}
