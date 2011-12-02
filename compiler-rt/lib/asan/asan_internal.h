@@ -22,6 +22,16 @@
 #include <stdlib.h>  // for size_t
 #include <unistd.h>  // for _exit
 
+// If __WORDSIZE was undefined by the platform, define it in terms of the
+// compiler built-in __LP64__.
+#ifndef __WORDSIZE
+#if __LP64__
+#define __WORDSIZE 64
+#else
+#define __WORDSIZE 32
+#endif
+#endif
+
 #ifdef ANDROID
 #include <sys/atomics.h>
 #endif
