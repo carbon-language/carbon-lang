@@ -388,11 +388,7 @@ private:
   void WriteHeaderSearch(const HeaderSearch &HS, StringRef isysroot);
   void WritePreprocessorDetail(PreprocessingRecord &PPRec);
   void WriteSubmodules(Module *WritingModule);
-                    
-  /// \brief Infer the submodule ID that contains an entity at the given
-  /// source location.
-  serialization::SubmoduleID inferSubmoduleIDFromLocation(SourceLocation Loc);
-                    
+                                        
   void WritePragmaDiagnosticMappings(const DiagnosticsEngine &Diag);
   void WriteCXXBaseSpecifiersOffsets();
   void WriteType(QualType T);
@@ -606,6 +602,10 @@ public:
   bool isRewritten(const Decl *D) const {
     return DeclsToRewrite.count(D);
   }
+
+  /// \brief Infer the submodule ID that contains an entity at the given
+  /// source location.
+  serialization::SubmoduleID inferSubmoduleIDFromLocation(SourceLocation Loc);
 
   /// \brief Note that the identifier II occurs at the given offset
   /// within the identifier table.

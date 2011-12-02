@@ -2423,7 +2423,7 @@ public:
     if (isInterestingIdentifier(II, Macro)) {
       DataLen += 2; // 2 bytes for builtin ID, flags
       if (hasMacroDefinition(II, Macro))
-        DataLen += 4;
+        DataLen += 8;
       
       for (IdentifierResolver::iterator D = IdResolver.begin(II),
                                      DEnd = IdResolver.end();
@@ -2465,9 +2465,12 @@ public:
     Bits = (Bits << 1) | unsigned(II->isCPlusPlusOperatorKeyword());
     clang::io::Emit16(Out, Bits);
 
-    if (HasMacroDefinition)
+    if (HasMacroDefinition) {
       clang::io::Emit32(Out, Writer.getMacroOffset(II));
-
+      clang::io::Emit32(Out, 
+        Writer.inferSubmoduleIDFromLocation(Macro->getDefinitionLoc()));
+    }
+    
     // Emit the declaration IDs in reverse order, because the
     // IdentifierResolver provides the declarations as they would be
     // visible (e.g., the function "stat" would come before the struct

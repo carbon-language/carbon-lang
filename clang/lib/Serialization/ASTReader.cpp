@@ -562,8 +562,28 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
   if (hasMacroDefinition) {
     // FIXME: Check for conflicts?
     uint32_t Offset = ReadUnalignedLE32(d);
-    Reader.SetIdentifierIsMacro(II, F, Offset);
-    DataLen -= 4;
+    unsigned LocalSubmoduleID = ReadUnalignedLE32(d);
+    
+    // Determine whether this macro definition should be visible now, or
+    // whether it is in a hidden submodule.
+    bool Visible = true;
+    if (SubmoduleID GlobalSubmoduleID
+          = Reader.getGlobalSubmoduleID(F, LocalSubmoduleID)) {
+      if (Module *Owner = Reader.getSubmodule(GlobalSubmoduleID)) {
+        if (Owner->NameVisibility == Module::Hidden) {
+          // The owning module is not visible, and this macro definition should
+          // not be, either.
+          Visible = false;
+          
+          // Note that this macro definition was hidden because its owning 
+          // module is not yet visible.
+          Reader.HiddenNamesMap[Owner].push_back(II);
+        }
+      } 
+    }
+    
+    Reader.setIdentifierIsMacro(II, F, Offset, Visible);
+    DataLen -= 8;
   }
 
   Reader.SetIdentifierInfo(ID, II);
@@ -1454,10 +1474,12 @@ HeaderFileInfoTrait::ReadData(const internal_key_type, const unsigned char *d,
   return HFI;
 }
 
-void ASTReader::SetIdentifierIsMacro(IdentifierInfo *II, ModuleFile &F,
-                                     uint64_t LocalOffset) {
-  // Note that this identifier has a macro definition.
-  II->setHasMacroDefinition(true);
+void ASTReader::setIdentifierIsMacro(IdentifierInfo *II, ModuleFile &F,
+                                     uint64_t LocalOffset, bool Visible) {
+  if (Visible) {
+    // Note that this identifier has a macro definition.
+    II->setHasMacroDefinition(true);
+  }
   
   // Adjust the offset to a global offset.
   UnreadMacroRecordOffsets[II] = F.GlobalBitOffset + LocalOffset;
@@ -2440,8 +2462,12 @@ ASTReader::ASTReadResult ASTReader::validateFileEntries(ModuleFile &M) {
 }
 
 void ASTReader::makeNamesVisible(const HiddenNames &Names) {
-  for (unsigned I = 0, N = Names.size(); I != N; ++I)
-    Names[I]->ModulePrivate = false;    
+  for (unsigned I = 0, N = Names.size(); I != N; ++I) {
+    if (Decl *D = Names[I].dyn_cast<Decl *>())
+      D->ModulePrivate = false;
+    else
+      Names[I].get<IdentifierInfo *>()->setHasMacroDefinition(true);
+  }
 }
 
 void ASTReader::makeModuleVisible(Module *Mod, 

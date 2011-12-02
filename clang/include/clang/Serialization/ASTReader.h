@@ -384,7 +384,8 @@ private:
   GlobalSubmoduleMapType GlobalSubmoduleMap;
 
   /// \brief A set of hidden declarations.
-  typedef llvm::SmallVector<Decl *, 2> HiddenNames;
+  typedef llvm::SmallVector<llvm::PointerUnion<Decl *, IdentifierInfo *>, 2>
+    HiddenNames;
   
   typedef llvm::DenseMap<Module *, HiddenNames> HiddenNamesMapType;
 
@@ -1343,8 +1344,17 @@ public:
 
   /// \brief Note that the identifier is a macro whose record will be loaded
   /// from the given AST file at the given (file-local) offset.
-  void SetIdentifierIsMacro(IdentifierInfo *II, ModuleFile &F,
-                            uint64_t Offset);
+  ///
+  /// \param II The name of the macro.
+  ///
+  /// \param F The module file from which the macro definition was deserialized.
+  ///
+  /// \param Offset The offset into the module file at which the macro 
+  /// definition is located.
+  ///
+  /// \param Visible Whether the macro should be made visible.
+  void setIdentifierIsMacro(IdentifierInfo *II, ModuleFile &F,
+                            uint64_t Offset, bool Visible);
 
   /// \brief Read the set of macros defined by this external macro source.
   virtual void ReadDefinedMacros();
