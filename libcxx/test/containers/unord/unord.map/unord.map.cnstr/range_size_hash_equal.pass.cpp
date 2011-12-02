@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <string>
 #include <cassert>
+#include <cfloat>
 
 #include "../../../iterators.h"
 #include "../../../NotConstructible.h"
@@ -63,7 +64,7 @@ int main()
         assert(!c.empty());
         assert(std::distance(c.begin(), c.end()) == c.size());
         assert(std::distance(c.cbegin(), c.cend()) == c.size());
-        assert(c.load_factor() == (float)c.size()/c.bucket_count());
+        assert(fabs(c.load_factor() - (float)c.size()/c.bucket_count()) < FLT_EPSILON);
         assert(c.max_load_factor() == 1);
     }
 }

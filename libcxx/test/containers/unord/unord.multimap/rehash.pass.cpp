@@ -18,6 +18,7 @@
 #include <unordered_map>
 #include <string>
 #include <cassert>
+#include <cfloat>
 
 void test(const std::unordered_multimap<int, std::string>& c)
 {
@@ -53,7 +54,7 @@ void test(const std::unordered_multimap<int, std::string>& c)
     assert(i->second == "four");
     assert(std::distance(c.begin(), c.end()) == c.size());
     assert(std::distance(c.cbegin(), c.cend()) == c.size());
-    assert(c.load_factor() == (float)c.size()/c.bucket_count());
+    assert(fabs(c.load_factor() - (float)c.size()/c.bucket_count()) < FLT_EPSILON);
 }
 
 int main()

@@ -18,6 +18,7 @@
 #include <unordered_map>
 #include <string>
 #include <cassert>
+#include <cfloat>
 
 int main()
 {
@@ -36,7 +37,7 @@ int main()
             P(80, "eighty"),
         };
         const C c(std::begin(a), std::end(a));
-        assert(c.load_factor() == (float)c.size() / c.bucket_count());
+        assert(fabs(c.load_factor() - (float)c.size()/c.bucket_count()) < FLT_EPSILON);
     }
     {
         typedef std::unordered_multimap<int, std::string> C;

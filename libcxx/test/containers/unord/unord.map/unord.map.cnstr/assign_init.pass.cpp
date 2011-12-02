@@ -18,6 +18,7 @@
 #include <unordered_map>
 #include <string>
 #include <cassert>
+#include <cfloat>
 
 #include "../../../test_compare.h"
 #include "../../../test_hash.h"
@@ -54,7 +55,7 @@ int main()
         assert(c.at(4) == "four");
         assert(std::distance(c.begin(), c.end()) == c.size());
         assert(std::distance(c.cbegin(), c.cend()) == c.size());
-        assert(c.load_factor() == (float)c.size()/c.bucket_count());
+        assert(fabs(c.load_factor() - (float)c.size()/c.bucket_count()) < FLT_EPSILON);
         assert(c.max_load_factor() == 1);
     }
 #endif  // _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
