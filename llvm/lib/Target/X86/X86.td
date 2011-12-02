@@ -91,6 +91,8 @@ def FeatureFMA3    : SubtargetFeature<"fma3", "HasFMA3", "true",
                                      "Enable three-operand fused multiple-add">;
 def FeatureFMA4    : SubtargetFeature<"fma4", "HasFMA4", "true",
                                       "Enable four-operand fused multiple-add">;
+def FeatureXOP    : SubtargetFeature<"xop", "HasXOP", "true",
+                                      "Enable XOP instructions">;
 def FeatureVectorUAMem : SubtargetFeature<"vector-unaligned-mem",
                                           "HasVectorUAMem", "true",
                  "Allow unaligned memory operands on vector/SIMD instructions">;
@@ -199,10 +201,11 @@ def : Proc<"amdfam10",        [FeatureSSE3,   FeatureSSE4A,
 // FIXME: Disabling AVX for now since it's not ready.
 def : Proc<"bdver1",          [FeatureSSE42, FeatureSSE4A, FeatureCMPXCHG16B,
                                FeatureAES, FeatureCLMUL, FeatureFMA4,
-                               FeatureLZCNT]>;
+                               FeatureXOP, FeatureLZCNT]>;
 def : Proc<"bdver2",          [FeatureSSE42, FeatureSSE4A, FeatureCMPXCHG16B,
                                FeatureAES, FeatureCLMUL, FeatureFMA4,
-                               FeatureF16C, FeatureLZCNT, FeatureBMI]>;
+                                FeatureXOP, FeatureF16C, FeatureLZCNT,
+                                 FeatureBMI]>;
 
 def : Proc<"winchip-c6",      [FeatureMMX]>;
 def : Proc<"winchip2",        [Feature3DNow]>;

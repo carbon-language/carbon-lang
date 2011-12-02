@@ -273,6 +273,8 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
       if (IsAMD && ((ECX >> 16) & 0x1)) {
         HasFMA4 = true;
         ToggleFeature(X86::FeatureFMA4);
+        HasXOP = true;
+        ToggleFeature(X86::FeatureXOP);
       }
     }
   }
@@ -317,6 +319,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   , HasCLMUL(false)
   , HasFMA3(false)
   , HasFMA4(false)
+  , HasXOP(false)
   , HasMOVBE(false)
   , HasRDRAND(false)
   , HasF16C(false)
