@@ -214,3 +214,9 @@ void t25(void)
 			"fpsr","fpcr"			   \
 							   );
 }
+
+// rdar://10510405 - AVX registers
+typedef long long __m256i __attribute__((__vector_size__(32)));
+void t26 (__m256i *p) {
+  __asm__ volatile("vmovaps  %0, %%ymm0" :: "m" (*(__m256i*)p) : "ymm0");
+}

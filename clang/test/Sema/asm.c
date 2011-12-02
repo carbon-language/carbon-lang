@@ -21,7 +21,7 @@ void clobbers() {
   asm ("nop" : : : "0", "%0", "#0");
   asm ("nop" : : : "foo"); // expected-error {{unknown register name 'foo' in asm}}
   asm ("nop" : : : "52");
-  asm ("nop" : : : "54"); // expected-error {{unknown register name '54' in asm}}
+  asm ("nop" : : : "104"); // expected-error {{unknown register name '104' in asm}}
   asm ("nop" : : : "-1"); // expected-error {{unknown register name '-1' in asm}}
   asm ("nop" : : : "+1"); // expected-error {{unknown register name '+1' in asm}}
 }
