@@ -21,15 +21,19 @@
 #include "asan_thread.h"
 
 #include <ctype.h>
-#include <map>
 
 namespace __asan {
 
 typedef __asan_global Global;
 
+struct ListOfGlobals {
+  const Global *g;
+  ListOfGlobals *next;
+};
+
 static AsanLock mu_for_globals(LINKER_INITIALIZED);
-typedef std::map<uintptr_t, Global> MapOfGlobals;
-static MapOfGlobals *g_all_globals = NULL;
+static ListOfGlobals *list_of_globals;
+static LowLevelAllocator allocator_for_globals(LINKER_INITIALIZED);
 
 void PoisonRedZones(const Global &g)  {
   size_t shadow_rz_size = kGlobalAndStackRedzone >> SHADOW_SCALE;
@@ -86,13 +90,9 @@ bool DescribeAddrIfMyRedZone(const Global &g, uintptr_t addr) {
 bool DescribeAddrIfGlobal(uintptr_t addr) {
   if (!FLAG_report_globals) return false;
   ScopedLock lock(&mu_for_globals);
-  if (!g_all_globals) return false;
   bool res = false;
-  // Just iterate. May want to use binary search instead.
-  for (MapOfGlobals::iterator i = g_all_globals->begin(),
-       end = g_all_globals->end(); i != end; ++i) {
-    Global &g = i->second;
-    CHECK(i->first == g.beg);
+  for (ListOfGlobals *l = list_of_globals; l; l = l->next) {
+    const Global &g = *l->g;
     if (FLAG_report_globals >= 2)
       Printf("Search Global: beg=%p size=%ld name=%s\n",
              g.beg, g.size, g.name);
@@ -108,15 +108,17 @@ static void RegisterGlobal(const Global *g) {
   CHECK(asan_inited);
   if (!FLAG_report_globals) return;
   ScopedLock lock(&mu_for_globals);
-  if (!g_all_globals)
-    g_all_globals = new MapOfGlobals;
   CHECK(AddrIsInMem(g->beg));
+  CHECK(AddrIsAlignedByGranularity(g->beg));
+  PoisonRedZones(*g);
+  ListOfGlobals *l =
+      (ListOfGlobals*)allocator_for_globals.Allocate(sizeof(ListOfGlobals));
+  l->g = g;
+  l->next = list_of_globals;
+  list_of_globals = l;
   if (FLAG_report_globals >= 2)
     Printf("Added Global: beg=%p size=%ld name=%s\n",
            g->beg, g->size, g->name);
-  CHECK(AddrIsAlignedByGranularity(g->beg));
-  PoisonRedZones(*g);
-  (*g_all_globals)[g->beg] = *g;
 }
 
 }  // namespace __asan

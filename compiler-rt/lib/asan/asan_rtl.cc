@@ -174,6 +174,23 @@ static void protect_range(uintptr_t beg, uintptr_t end) {
   CHECK(res == (void*)beg);
 }
 
+// ---------------------- LowLevelAllocator ------------- {{{1
+void *LowLevelAllocator::Allocate(size_t size) {
+  CHECK((size & (size - 1)) == 0 && "size must be a power of two");
+  if (allocated_end_ - allocated_current_ < size) {
+    size_t size_to_allocate = Max(size, kPageSize);
+    allocated_current_ = (char*)asan_mmap(0, size_to_allocate,
+                                          PROT_READ | PROT_WRITE,
+                                          MAP_PRIVATE | MAP_ANON, -1, 0);
+    CHECK((allocated_current_ != (char*)-1) && "Can't mmap");
+    allocated_end_ = allocated_current_ + size_to_allocate;
+  }
+  CHECK(allocated_end_ - allocated_current_ >= size);
+  void *res = allocated_current_;
+  allocated_current_ += size;
+  return res;
+}
+
 // ---------------------- DescribeAddress -------------------- {{{1
 static bool DescribeStackAddress(uintptr_t addr, uintptr_t access_size) {
   AsanThread *t = asanThreadRegistry().FindThreadByStackAddress(addr);

@@ -163,6 +163,19 @@ const int kAsanGlobalRedzoneMagic = 0xf9;
 static const uintptr_t kCurrentStackFrameMagic = 0x41B58AB3;
 static const uintptr_t kRetiredStackFrameMagic = 0x45E0360E;
 
+// -------------------------- LowLevelAllocator ----- {{{1
+// A simple low-level memory allocator for internal use.
+class LowLevelAllocator {
+ public:
+  explicit LowLevelAllocator(LinkerInitialized) {}
+  // 'size' must be a power of two.
+  // Requires an external lock.
+  void *Allocate(size_t size);
+ private:
+  char *allocated_end_;
+  char *allocated_current_;
+};
+
 // -------------------------- Atomic ---------------- {{{1
 static inline int AtomicInc(int *a) {
   if (!FLAG_mt) return ++(*a);
