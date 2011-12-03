@@ -263,9 +263,7 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore) {
 void AggExprEmitter::EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore) {
   assert(Src.isSimple() && "Can't have aggregate bitfield, vector, etc");
 
-  EmitFinalDestCopy(E, RValue::getAggregate(Src.getAddress(),
-                                            Src.isVolatileQualified()),
-                    Ignore);
+  EmitFinalDestCopy(E, Src.asAggregateRValue(), Ignore);
 }
 
 //===----------------------------------------------------------------------===//

@@ -1463,8 +1463,7 @@ void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
       cast<CastExpr>(E)->getCastKind() == CK_LValueToRValue) {
     LValue L = EmitLValue(cast<CastExpr>(E)->getSubExpr());
     assert(L.isSimple());
-    args.add(RValue::getAggregate(L.getAddress(), L.isVolatileQualified()),
-             type, /*NeedsCopy*/true);
+    args.add(L.asAggregateRValue(), type, /*NeedsCopy*/true);
     return;
   }
 
@@ -1518,7 +1517,7 @@ void CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
         // FIXME: Volatile?
         EltRV = RValue::getComplex(LoadComplexFromAddr(LV.getAddress(), false));
       else if (CodeGenFunction::hasAggregateLLVMType(EltTy))
-        EltRV = RValue::getAggregate(LV.getAddress());
+        EltRV = LV.asAggregateRValue();
       else
         EltRV = EmitLoadOfLValue(LV);
       ExpandTypeToArgs(EltTy, EltRV, Args, IRFuncTy);
@@ -1539,7 +1538,7 @@ void CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
         // FIXME: Volatile?
         FldRV = RValue::getComplex(LoadComplexFromAddr(LV.getAddress(), false));
       else if (CodeGenFunction::hasAggregateLLVMType(FT))
-        FldRV = RValue::getAggregate(LV.getAddress());
+        FldRV = LV.asAggregateRValue();
       else
         FldRV = EmitLoadOfLValue(LV);
       ExpandTypeToArgs(FT, FldRV, Args, IRFuncTy);

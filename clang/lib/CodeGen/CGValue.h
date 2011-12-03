@@ -300,6 +300,11 @@ public:
     R.Initialize(type, type.getQualifiers());
     return R;
   }
+
+  RValue asAggregateRValue() const {
+    // FIMXE: Alignment
+    return RValue::getAggregate(getAddress(), isVolatileQualified());
+  }
 };
 
 /// An aggregate value slot.
