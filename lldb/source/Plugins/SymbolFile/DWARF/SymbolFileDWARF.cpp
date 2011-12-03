@@ -3804,7 +3804,7 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
     
     const size_t num_matches = die_offsets.size();
 
-    const dw_tag_t type_tag = die->Tag();
+    const dw_tag_t die_tag = die->Tag();
     
     DWARFCompileUnit* type_cu = NULL;
     const DWARFDebugInfoEntry* type_die = NULL;
@@ -3818,29 +3818,57 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
             
             if (type_die)
             {
-                if (type_die != die && type_die->Tag() == type_tag)
+                bool try_resolving_type = false;
+
+                // Don't try and resolve the DIE we are looking for with the DIE itself!
+                if (type_die != die)
                 {
-                    // Hold off on comparing parent DIE tags until
-                    // we know what happens with stuff in namespaces
-                    // for gcc and clang...
-                    //DWARFDebugInfoEntry *parent_die = die->GetParent();
-                    //DWARFDebugInfoEntry *parent_type_die = type_die->GetParent();
-                    //if (parent_die->Tag() == parent_type_die->Tag())
+                    const dw_tag_t type_die_tag = type_die->Tag();
+                    // Make sure the tags match
+                    if (type_die_tag == die_tag)
                     {
-                        Type *resolved_type = ResolveType (type_cu, type_die, false);
-                        if (resolved_type && resolved_type != DIE_IS_BEING_PARSED)
+                        // The tags match, lets try resolving this type
+                        try_resolving_type = true;
+                    }
+                    else
+                    {
+                        // The tags don't match, but we need to watch our for a
+                        // forward declaration for a struct and ("struct foo")
+                        // ends up being a class ("class foo { ... };") or
+                        // vice versa.
+                        switch (type_die_tag)
                         {
-                            DEBUG_PRINTF ("resolved 0x%8.8llx (cu 0x%8.8llx) from %s to 0x%8.8llx (cu 0x%8.8llx)\n",
-                                          MakeUserID(die->GetOffset()), 
-                                          MakeUserID(curr_cu->GetOffset()), 
-                                          m_obj_file->GetFileSpec().GetFilename().AsCString(),
-                                          MakeUserID(type_die->GetOffset()), 
-                                          MakeUserID(type_cu->GetOffset()));
-                            
-                            m_die_to_type[die] = resolved_type;
-                            type_sp = resolved_type;
+                        case DW_TAG_class_type:
+                            // We had a "class foo", see if we ended up with a "struct foo { ... };"
+                            try_resolving_type = (die_tag == DW_TAG_structure_type);
+                            break;
+                        case DW_TAG_structure_type:
+                            // We had a "struct foo", see if we ended up with a "class foo { ... };"
+                            try_resolving_type = (die_tag == DW_TAG_class_type);
+                            break;
+                        default:
+                            // Tags don't match, don't event try to resolve
+                            // using this type whose name matches....
                             break;
                         }
+                    }
+                }
+                        
+                if (try_resolving_type)
+                {
+                    Type *resolved_type = ResolveType (type_cu, type_die, false);
+                    if (resolved_type && resolved_type != DIE_IS_BEING_PARSED)
+                    {
+                        DEBUG_PRINTF ("resolved 0x%8.8llx (cu 0x%8.8llx) from %s to 0x%8.8llx (cu 0x%8.8llx)\n",
+                                      MakeUserID(die->GetOffset()), 
+                                      MakeUserID(curr_cu->GetOffset()), 
+                                      m_obj_file->GetFileSpec().GetFilename().AsCString(),
+                                      MakeUserID(type_die->GetOffset()), 
+                                      MakeUserID(type_cu->GetOffset()));
+                        
+                        m_die_to_type[die] = resolved_type;
+                        type_sp = resolved_type;
+                        break;
                     }
                 }
             }
