@@ -262,9 +262,6 @@ Symtab::InitNameIndexes()
         Timer scoped_timer (__PRETTY_FUNCTION__, "%s", __PRETTY_FUNCTION__);
         // Create the name index vector to be able to quickly search by name
         const size_t count = m_symbols.size();
-        assert(m_objfile != NULL);
-        assert(m_objfile->GetModule() != NULL);
-
 #if 1
         m_name_to_index.Reserve (count);
 #else
@@ -287,7 +284,7 @@ Symtab::InitNameIndexes()
         m_name_to_index.Reserve (actual_count);
 #endif
 
-        UniqueCStringMap<uint32_t>::Entry entry;
+        NameToIndexMap::Entry entry;
 
         for (entry.value = 0; entry.value < count; ++entry.value)
         {
@@ -325,6 +322,44 @@ Symtab::InitNameIndexes()
                                                         
         }
         m_name_to_index.Sort();
+    }
+}
+
+void
+Symtab::AppendSymbolNamesToMap (const IndexCollection &indexes, 
+                                bool add_demangled,
+                                bool add_mangled,
+                                NameToIndexMap &name_to_index_map) const
+{
+    if (add_demangled || add_mangled)
+    {
+        Timer scoped_timer (__PRETTY_FUNCTION__, "%s", __PRETTY_FUNCTION__);
+        Mutex::Locker locker (m_mutex);
+
+        // Create the name index vector to be able to quickly search by name
+        NameToIndexMap::Entry entry;
+        const size_t num_indexes = indexes.size();
+        for (size_t i=0; i<num_indexes; ++i)
+        {
+            entry.value = indexes[i];
+            assert (i < m_symbols.size());
+            const Symbol *symbol = &m_symbols[entry.value];
+
+            const Mangled &mangled = symbol->GetMangled();
+            if (add_demangled)
+            {
+                entry.cstring = mangled.GetDemangledName().GetCString();
+                if (entry.cstring && entry.cstring[0])
+                    name_to_index_map.Append (entry);
+            }
+                
+            if (add_mangled)
+            {
+                entry.cstring = mangled.GetMangledName().GetCString();
+                if (entry.cstring && entry.cstring[0])
+                    name_to_index_map.Append (entry);
+            }
+        }
     }
 }
 

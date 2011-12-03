@@ -11,6 +11,7 @@
 #define liblldb_SymbolFileSymtab_h_
 
 #include "lldb/Symbol/SymbolFile.h"
+#include "lldb/Symbol/Symtab.h"
 #include <vector>
 
 class SymbolFileSymtab : public lldb_private::SymbolFile
@@ -119,22 +120,15 @@ public:
     GetPluginVersion();
 
 protected:
-    std::vector<uint32_t>   m_source_indexes;
-    std::vector<uint32_t>   m_func_indexes;
-    std::vector<uint32_t>   m_code_indexes;
-    std::vector<uint32_t>   m_data_indexes;
-    std::vector<uint32_t>   m_addr_indexes; // Anything that needs to go into an search by address
-    std::vector<uint32_t>   m_objc_class_indexes;
-    
-    lldb_private::LazyBool  m_has_objc_symbols;
-    
     typedef std::map<lldb_private::ConstString, lldb::TypeSP> TypeMap;
-    
-    TypeMap                 m_objc_class_types;
 
-    bool
-    HasObjCSymbols ();
-    
+    lldb_private::Symtab::IndexCollection m_source_indexes;
+    lldb_private::Symtab::IndexCollection m_func_indexes;
+    lldb_private::Symtab::IndexCollection m_code_indexes;
+    lldb_private::Symtab::IndexCollection m_data_indexes;
+    lldb_private::Symtab::NameToIndexMap m_objc_class_name_to_index;
+    TypeMap m_objc_class_types;
+
     lldb_private::ClangASTContext &
     GetClangASTContext ();
     

@@ -1748,7 +1748,7 @@ IRForTarget::HandleObjCClass(Value *classlist_reference)
     
     StringRef name(initializer->getName());
     lldb_private::ConstString name_cstr(name.str().c_str());
-    lldb::addr_t class_ptr = m_decl_map->GetSymbolAddress(name_cstr, lldb::eSymbolTypeRuntime);
+    lldb::addr_t class_ptr = m_decl_map->GetSymbolAddress(name_cstr, lldb::eSymbolTypeObjCClass);
     
     if (log)
         log->Printf("Found reference to Objective-C class %s (0x%llx)", name_cstr.AsCString(), (unsigned long long)class_ptr);

@@ -62,9 +62,7 @@ SymbolFileSymtab::SymbolFileSymtab(ObjectFile* obj_file) :
     m_source_indexes(),
     m_func_indexes(),
     m_code_indexes(),
-    m_data_indexes(),
-    m_addr_indexes(),
-    m_has_objc_symbols(eLazyBoolCalculate)
+    m_objc_class_name_to_index ()
 {
 }
 
@@ -80,12 +78,6 @@ SymbolFileSymtab::GetClangASTContext ()
     return ast;
 }
 
-bool
-SymbolFileSymtab::HasObjCSymbols ()
-{
-    return (m_abilities & RuntimeTypes) != 0;
-}
-
 uint32_t
 SymbolFileSymtab::CalculateAbilities ()
 {
@@ -95,45 +87,43 @@ SymbolFileSymtab::CalculateAbilities ()
         const Symtab *symtab = m_obj_file->GetSymtab();
         if (symtab)
         {
-
             //----------------------------------------------------------------------
             // The snippet of code below will get the indexes the module symbol
             // table entries that are code, data, or function related (debug info),
             // sort them by value (address) and dump the sorted symbols.
             //----------------------------------------------------------------------
-            symtab->AppendSymbolIndexesWithType(eSymbolTypeSourceFile, m_source_indexes);
-            if (!m_source_indexes.empty())
+            if (symtab->AppendSymbolIndexesWithType(eSymbolTypeSourceFile, m_source_indexes))
             {
                 abilities |= CompileUnits;
             }
-            symtab->AppendSymbolIndexesWithType(eSymbolTypeCode, Symtab::eDebugYes, Symtab::eVisibilityAny, m_func_indexes);
-            if (!m_func_indexes.empty())
+
+            if (symtab->AppendSymbolIndexesWithType(eSymbolTypeCode, Symtab::eDebugYes, Symtab::eVisibilityAny, m_func_indexes))
             {
                 symtab->SortSymbolIndexesByValue(m_func_indexes, true);
                 abilities |= Functions;
             }
 
-            symtab->AppendSymbolIndexesWithType(eSymbolTypeCode, Symtab::eDebugNo, Symtab::eVisibilityAny, m_code_indexes);
-            if (!m_code_indexes.empty())
+            if (symtab->AppendSymbolIndexesWithType(eSymbolTypeCode, Symtab::eDebugNo, Symtab::eVisibilityAny, m_code_indexes))
             {
                 symtab->SortSymbolIndexesByValue(m_code_indexes, true);
                 abilities |= Labels;
             }
 
-            symtab->AppendSymbolIndexesWithType(eSymbolTypeData, m_data_indexes);
-
-            if (!m_data_indexes.empty())
+            if (symtab->AppendSymbolIndexesWithType(eSymbolTypeData, m_data_indexes))
             {
                 symtab->SortSymbolIndexesByValue(m_data_indexes, true);
                 abilities |= GlobalVariables;
             }
             
-            symtab->AppendSymbolIndexesWithType(eSymbolTypeObjCClass, m_objc_class_indexes);
-            
-            if (!m_objc_class_indexes.empty())
+            lldb_private::Symtab::IndexCollection objc_class_indexes;
+            if (symtab->AppendSymbolIndexesWithType (eSymbolTypeObjCClass, objc_class_indexes))
             {
-                symtab->SortSymbolIndexesByValue(m_objc_class_indexes, true);
                 abilities |= RuntimeTypes;
+                symtab->AppendSymbolNamesToMap (objc_class_indexes,
+                                                true,
+                                                true,
+                                                m_objc_class_name_to_index);
+                m_objc_class_name_to_index.Sort();
             }
         }
     }
@@ -384,12 +374,17 @@ static int CountMethodArgs(const char *method_signature)
 }
 
 uint32_t
-SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, const lldb_private::ConstString &name, const ClangNamespaceDecl *namespace_decl, bool append, uint32_t max_matches, lldb_private::TypeList& types)
+SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, 
+                             const lldb_private::ConstString &name, 
+                             const ClangNamespaceDecl *namespace_decl, 
+                             bool append, 
+                             uint32_t max_matches, 
+                             lldb_private::TypeList& types)
 {
     if (!append)
         types.Clear();
     
-    if (HasObjCSymbols())
+    if (!m_objc_class_name_to_index.IsEmpty())
     {
         TypeMap::iterator iter = m_objc_class_types.find(name);
         
@@ -398,47 +393,48 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, const lldb_p
             types.Insert(iter->second);
             return 1;
         }
-                    
-        std::vector<uint32_t> indices;
-        /*const ConstString &name, SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& symbol_indexes*/
-        if (m_obj_file->GetSymtab()->FindAllSymbolsWithNameAndType(name, lldb::eSymbolTypeAny, Symtab::eDebugNo, Symtab::eVisibilityAny, m_objc_class_indexes) == 0)
-            return 0;
         
+        const Symtab::NameToIndexMap::Entry *match = m_objc_class_name_to_index.FindFirstValueForName(name.GetCString());
+        
+        if (match == NULL)
+            return 0;
+                    
         const bool isForwardDecl = false;
         const bool isInternal = true;
         
-        ClangASTContext &clang_ast_ctx = GetClangASTContext();
+        ClangASTContext &ast = GetClangASTContext();
         
-        lldb::clang_type_t objc_object_type = clang_ast_ctx.CreateObjCClass(name.AsCString(), clang_ast_ctx.GetTranslationUnitDecl(), isForwardDecl, isInternal);
-                
-        const char *class_method_prefix = "^\\+\\[";
-        const char *instance_method_prefix = "^\\-\\[";
-        const char *method_suffix = " [a-zA-Z0-9:]+\\]$";
+        lldb::clang_type_t objc_object_type = ast.CreateObjCClass (name.AsCString(), 
+                                                                   ast.GetTranslationUnitDecl(), 
+                                                                   isForwardDecl, 
+                                                                   isInternal);
+
+        ast.StartTagDeclarationDefinition (objc_object_type);
+
+        std::string regex_str("^[-+]\\[");     // Make sure it starts with "+[" or "-["
+        regex_str.append(name.AsCString());    // Followed by the class name
+        regex_str.append("[ \\(]");            // Followed by a space or '(' (for a category)    
+        RegularExpression regex(regex_str.c_str());
         
-        std::string class_method_regexp_str(class_method_prefix);
-        class_method_regexp_str.append(name.AsCString());
-        class_method_regexp_str.append(method_suffix);
+        Symtab::IndexCollection indices;
         
-        RegularExpression class_method_regexp(class_method_regexp_str.c_str());
-        
-        indices.clear();
-        
-        lldb::clang_type_t unknown_type = clang_ast_ctx.GetUnknownAnyType();
+        lldb::clang_type_t unknown_type = ast.GetUnknownAnyType();
         std::vector<lldb::clang_type_t> arg_types;
 
-        if (m_obj_file->GetSymtab()->FindAllSymbolsMatchingRexExAndType(class_method_regexp, eSymbolTypeCode, Symtab::eDebugNo, Symtab::eVisibilityAny, indices) != 0)
+        if (m_obj_file->GetSymtab()->FindAllSymbolsMatchingRexExAndType (regex, eSymbolTypeCode, Symtab::eDebugNo, Symtab::eVisibilityAny, indices) != 0)
         {
-            for (std::vector<uint32_t>::iterator ii = indices.begin(), ie = indices.end();
-                 ii != ie;
-                 ++ii)
+            for (Symtab::IndexCollection::iterator pos = indices.begin(), end = indices.end();
+                 pos != end;
+                 ++pos)
             {
-                Symbol *symbol = m_obj_file->GetSymtab()->SymbolAtIndex(*ii);
+                Symbol *symbol = m_obj_file->GetSymtab()->SymbolAtIndex(*pos);
                 
                 if (!symbol)
                     continue;
                 
                 const char *signature = symbol->GetName().AsCString();
                 
+                //printf ("%s: adding '%s'\n", name.GetCString(), signature);
                 int num_args = CountMethodArgs(signature);
                 
                 while (arg_types.size() < num_args)
@@ -447,55 +443,29 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, const lldb_p
                 bool is_variadic = false;
                 unsigned type_quals = 0;
                 
-                lldb::clang_type_t method_type = clang_ast_ctx.CreateFunctionType(unknown_type, arg_types.data(), num_args, is_variadic, type_quals);
+                lldb::clang_type_t method_type = ast.CreateFunctionType (unknown_type, 
+                                                                         arg_types.data(), 
+                                                                         num_args, 
+                                                                         is_variadic, 
+                                                                         type_quals);
                 
-                clang_ast_ctx.AddMethodToObjCObjectType(objc_object_type, signature, method_type, eAccessPublic);
+                ast.AddMethodToObjCObjectType (objc_object_type, 
+                                               signature, 
+                                               method_type, 
+                                               eAccessPublic);
             }
         }
         
-        std::string instance_method_regexp_str(instance_method_prefix);
-        instance_method_regexp_str.append(name.AsCString());
-        instance_method_regexp_str.append(method_suffix);
-        
-        RegularExpression instance_method_regexp(instance_method_regexp_str.c_str());
-        
-        indices.clear();
-        
-        if (m_obj_file->GetSymtab()->FindAllSymbolsMatchingRexExAndType(instance_method_regexp, eSymbolTypeCode, Symtab::eDebugNo, Symtab::eVisibilityAny, indices) != 0)
-        {
-            for (std::vector<uint32_t>::iterator ii = indices.begin(), ie = indices.end();
-                 ii != ie;
-                 ++ii)
-            {
-                Symbol *symbol = m_obj_file->GetSymtab()->SymbolAtIndex(*ii);
-                
-                if (!symbol)
-                    continue;
-                
-                const char *signature = symbol->GetName().AsCString();
-                
-                int num_args = CountMethodArgs(signature);
-                
-                while (arg_types.size() < num_args)
-                    arg_types.push_back(unknown_type);
-                
-                bool is_variadic = false;
-                unsigned type_quals = 0;
-                
-                lldb::clang_type_t method_type = clang_ast_ctx.CreateFunctionType(unknown_type, arg_types.data(), num_args, is_variadic, type_quals);
-                
-                clang_ast_ctx.AddMethodToObjCObjectType(objc_object_type, signature, method_type, eAccessPublic);
-            }
-        }
-        
+        ast.CompleteTagDeclarationDefinition (objc_object_type);
+
         Declaration decl;
         
         lldb::TypeSP type(new Type (indices[0],
                                     this,
                                     name,
-                                    0 /*byte_size*/,
-                                    NULL /*SymbolContextScope*/,
-                                    0 /*encoding_uid*/,
+                                    0,      // byte_size
+                                    NULL,   // SymbolContextScope*
+                                    0,      // encoding_uid
                                     Type::eEncodingInvalid,
                                     decl,
                                     objc_object_type,
