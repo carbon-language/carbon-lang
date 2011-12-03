@@ -424,7 +424,9 @@ X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr) {
 
 TargetJITInfo::LazyResolverFn
 X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
+  TsanIgnoreWritesBegin();
   JITCompilerFunction = F;
+  TsanIgnoreWritesEnd();
 
 #if defined (X86_32_JIT) && !defined (_MSC_VER)
   if (Subtarget->hasSSE1())
