@@ -33,6 +33,11 @@ struct YDerived : Y {
 
 void test() {
   X foo;
+
+  try {
+  } catch (X e) {
+    X x;
+  }
 }
 
 // RUN: c-index-test -cursor-at=%s:6:4 %s | FileCheck -check-prefix=CHECK-COMPLETION-1 %s
@@ -80,3 +85,7 @@ void test() {
 // RUN: c-index-test -cursor-at=%s:21:3 %s | FileCheck -check-prefix=CHECK-MEMBER %s
 // CHECK-MEMBER: FieldDecl=member:21:7 (Definition)
 // CHECK-MEMBER-NEXT: Completion string: {ResultType int}{TypedText member}
+
+// RUN: c-index-test -cursor-at=%s:38:12 -cursor-at=%s:39:5 %s | FileCheck -check-prefix=CHECK-CXXCATCH %s
+// CHECK-CXXCATCH: TypeRef=struct X:3:8
+// CHECK-CXXCATCH-NEXT: TypeRef=struct X:3:8
