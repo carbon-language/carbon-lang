@@ -397,8 +397,7 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
     CGF.GetAddressOfDirectBaseInCompleteClass(ThisPtr, ClassDecl,
                                               BaseClassDecl,
                                               isBaseVirtual);
-  unsigned Alignment =
-    CGF.getContext().getTypeAlignInChars(BaseType).getQuantity();
+  CharUnits Alignment = CGF.getContext().getTypeAlignInChars(BaseType);
   AggValueSlot AggSlot =
     AggValueSlot::forAddr(V, Alignment, Qualifiers(),
                           AggValueSlot::IsDestructed,
@@ -1345,7 +1344,7 @@ CodeGenFunction::EmitDelegatingCXXConstructorCall(const CXXConstructorDecl *Ctor
   llvm::Value *ThisPtr = LoadCXXThis();
 
   QualType Ty = getContext().getTagDeclType(Ctor->getParent());
-  unsigned Alignment = getContext().getTypeAlignInChars(Ty).getQuantity();
+  CharUnits Alignment = getContext().getTypeAlignInChars(Ty);
   AggValueSlot AggSlot =
     AggValueSlot::forAddr(ThisPtr, Alignment, Qualifiers(),
                           AggValueSlot::IsDestructed,

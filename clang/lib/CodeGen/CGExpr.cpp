@@ -139,8 +139,7 @@ void CodeGenFunction::EmitAnyExprToMem(const Expr *E,
   if (E->getType()->isAnyComplexType()) {
     EmitComplexExprIntoAddr(E, Location, Quals.hasVolatile());
   } else if (hasAggregateLLVMType(E->getType())) {
-    unsigned Alignment =
-        getContext().getTypeAlignInChars(E->getType()).getQuantity();
+    CharUnits Alignment = getContext().getTypeAlignInChars(E->getType());
     EmitAggExpr(E, AggValueSlot::forAddr(Location, Alignment, Quals,
                                          AggValueSlot::IsDestructed_t(IsInit),
                                          AggValueSlot::DoesNotNeedGCBarriers,
@@ -361,8 +360,7 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
         !E->getType()->isAnyComplexType()) {
       ReferenceTemporary = CreateReferenceTemporary(CGF, E->getType(), 
                                                     InitializedDecl);
-      unsigned Alignment =
-        CGF.getContext().getTypeAlignInChars(E->getType()).getQuantity();
+      CharUnits Alignment = CGF.getContext().getTypeAlignInChars(E->getType());
       AggValueSlot::IsDestructed_t isDestructed
         = AggValueSlot::IsDestructed_t(InitializedDecl != 0);
       AggSlot = AggValueSlot::forAddr(ReferenceTemporary, Alignment,

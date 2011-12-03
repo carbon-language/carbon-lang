@@ -1574,7 +1574,7 @@ public:
   /// CreateAggTemp - Create a temporary memory object for the given
   /// aggregate type.
   AggValueSlot CreateAggTemp(QualType T, const Twine &Name = "tmp") {
-    unsigned Alignment = getContext().getTypeAlignInChars(T).getQuantity();
+    CharUnits Alignment = getContext().getTypeAlignInChars(T);
     return AggValueSlot::forAddr(CreateMemTemp(T, Name), Alignment,
                                  T.getQualifiers(),
                                  AggValueSlot::IsNotDestructed,

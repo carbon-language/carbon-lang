@@ -1039,7 +1039,7 @@ static void InitCatchParam(CodeGenFunction &CGF,
   CGF.EHStack.pushTerminate();
 
   // Perform the copy construction.
-  unsigned Alignment = CGF.getContext().getDeclAlign(&CatchParam).getQuantity();
+  CharUnits Alignment = CGF.getContext().getDeclAlign(&CatchParam);
   CGF.EmitAggExpr(copyExpr,
                   AggValueSlot::forAddr(ParamAddr, Alignment, Qualifiers(),
                                         AggValueSlot::IsNotDestructed,
