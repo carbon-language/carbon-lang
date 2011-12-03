@@ -1271,19 +1271,19 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                                 static const llvm::StringRef g_objc_v2_prefix_ivar ("_OBJC_IVAR_$_");
                                                 if (symbol_name_ref.startswith(g_objc_v2_prefix_class))
                                                 {
-                                                    symbol_name_non_abi_mangled = symbol_name;
+                                                    symbol_name_non_abi_mangled = symbol_name + 1;
                                                     symbol_name = symbol_name + g_objc_v2_prefix_class.size();
                                                     type = eSymbolTypeObjCClass;
                                                 }
                                                 else if (symbol_name_ref.startswith(g_objc_v2_prefix_metaclass))
                                                 {
-                                                    symbol_name_non_abi_mangled = symbol_name;
+                                                    symbol_name_non_abi_mangled = symbol_name + 1;
                                                     symbol_name = symbol_name + g_objc_v2_prefix_metaclass.size();
                                                     type = eSymbolTypeObjCMetaClass;
                                                 }
                                                 else if (symbol_name_ref.startswith(g_objc_v2_prefix_ivar))
                                                 {
-                                                    symbol_name_non_abi_mangled = symbol_name;
+                                                    symbol_name_non_abi_mangled = symbol_name + 1;
                                                     symbol_name = symbol_name + g_objc_v2_prefix_ivar.size();
                                                     type = eSymbolTypeObjCIVar;
                                                 }

@@ -83,19 +83,11 @@ SymbolFileSymtab::GetClangASTContext ()
 bool
 SymbolFileSymtab::HasObjCSymbols ()
 {
-    if (m_has_objc_symbols == eLazyBoolCalculate)
-    {
-        if (m_obj_file->GetSectionList()->FindSectionByName(ConstString("__objc_data")))
-            m_has_objc_symbols = eLazyBoolYes;
-        else
-            m_has_objc_symbols = eLazyBoolNo;
-    }
-    
-    return m_has_objc_symbols == eLazyBoolYes;
+    return (m_abilities & RuntimeTypes) != 0;
 }
 
 uint32_t
-SymbolFileSymtab::GetAbilities ()
+SymbolFileSymtab::CalculateAbilities ()
 {
     uint32_t abilities = 0;
     if (m_obj_file)
@@ -136,8 +128,11 @@ SymbolFileSymtab::GetAbilities ()
                 abilities |= GlobalVariables;
             }
             
-            if (HasObjCSymbols())
+            symtab->AppendSymbolIndexesWithType(eSymbolTypeObjCClass, m_objc_class_indexes);
+            
+            if (!m_objc_class_indexes.empty())
             {
+                symtab->SortSymbolIndexesByValue(m_objc_class_indexes, true);
                 abilities |= RuntimeTypes;
             }
         }
@@ -403,14 +398,10 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc, const lldb_p
             types.Insert(iter->second);
             return 1;
         }
-            
-        std::string symbol_name("OBJC_CLASS_$_");
-        symbol_name.append(name.AsCString());
-        ConstString symbol_const_string(symbol_name.c_str());
-        
+                    
         std::vector<uint32_t> indices;
-        
-        if (m_obj_file->GetSymtab()->FindAllSymbolsWithNameAndType(symbol_const_string, lldb::eSymbolTypeRuntime, indices) == 0)
+        /*const ConstString &name, SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& symbol_indexes*/
+        if (m_obj_file->GetSymtab()->FindAllSymbolsWithNameAndType(name, lldb::eSymbolTypeAny, Symtab::eDebugNo, Symtab::eVisibilityAny, m_objc_class_indexes) == 0)
             return 0;
         
         const bool isForwardDecl = false;

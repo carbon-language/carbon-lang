@@ -84,7 +84,7 @@ public:
                             SymbolFileDWARF(lldb_private::ObjectFile* ofile);
     virtual                 ~SymbolFileDWARF();
 
-    virtual uint32_t        GetAbilities ();
+    virtual uint32_t        CalculateAbilities ();
     virtual void            InitializeObject();
 
     //------------------------------------------------------------------

@@ -48,7 +48,7 @@ public:
                             SymbolFileDWARFDebugMap (lldb_private::ObjectFile* ofile);
     virtual               ~ SymbolFileDWARFDebugMap ();
 
-    virtual uint32_t        GetAbilities ();
+    virtual uint32_t        CalculateAbilities ();
 
     virtual void            InitializeObject();
 

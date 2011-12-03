@@ -307,7 +307,7 @@ SymbolFileDWARF::SupportedVersion(uint16_t version)
 }
 
 uint32_t
-SymbolFileDWARF::GetAbilities ()
+SymbolFileDWARF::CalculateAbilities ()
 {
     uint32_t abilities = 0;
     if (m_obj_file != NULL)

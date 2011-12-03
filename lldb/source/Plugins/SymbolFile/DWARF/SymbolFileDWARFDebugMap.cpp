@@ -419,7 +419,7 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
 }
 
 uint32_t
-SymbolFileDWARFDebugMap::GetAbilities ()
+SymbolFileDWARFDebugMap::CalculateAbilities ()
 {
     // In order to get the abilities of this plug-in, we look at the list of
     // N_OSO entries (object files) from the symbol table and make sure that

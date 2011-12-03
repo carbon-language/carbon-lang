@@ -42,7 +42,7 @@ public:
     virtual
     ~SymbolFileSymtab();
 
-    virtual uint32_t        GetAbilities ();
+    virtual uint32_t        CalculateAbilities ();
 
     //------------------------------------------------------------------
     // Compile Unit function calls
@@ -119,12 +119,14 @@ public:
     GetPluginVersion();
 
 protected:
-    lldb_private::LazyBool  m_has_objc_symbols;
     std::vector<uint32_t>   m_source_indexes;
     std::vector<uint32_t>   m_func_indexes;
     std::vector<uint32_t>   m_code_indexes;
     std::vector<uint32_t>   m_data_indexes;
     std::vector<uint32_t>   m_addr_indexes; // Anything that needs to go into an search by address
+    std::vector<uint32_t>   m_objc_class_indexes;
+    
+    lldb_private::LazyBool  m_has_objc_symbols;
     
     typedef std::map<lldb_private::ConstString, lldb::TypeSP> TypeMap;
     

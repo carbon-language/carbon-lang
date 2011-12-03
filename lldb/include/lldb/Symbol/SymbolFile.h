@@ -48,7 +48,9 @@ public:
     // Constructors and Destructors
     //------------------------------------------------------------------
     SymbolFile(ObjectFile* obj_file) :
-        m_obj_file(obj_file)
+        m_obj_file(obj_file),
+        m_abilities(0),
+        m_calculated_abilities(false)
     {
     }
 
@@ -86,7 +88,18 @@ public:
     ///     enumeration. Any bits that are set represent an ability that
     ///     this symbol plug-in can parse from the object file.
     ///------------------------------------------------------------------
-    virtual uint32_t        GetAbilities () = 0;
+    uint32_t                GetAbilities ()
+    {
+        if (!m_calculated_abilities)
+        {
+            m_abilities = CalculateAbilities();
+            m_calculated_abilities = true;
+        }
+            
+        return m_abilities;
+    }
+    
+    virtual uint32_t        CalculateAbilities() = 0;
     
     //------------------------------------------------------------------
     /// Initialize the SymbolFile object.
@@ -144,7 +157,8 @@ public:
     void                    ReportError (const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 protected:
     ObjectFile*             m_obj_file; // The object file that symbols can be extracted from.
-
+    uint32_t                m_abilities;
+    bool                    m_calculated_abilities;
 private:
     DISALLOW_COPY_AND_ASSIGN (SymbolFile);
 };
