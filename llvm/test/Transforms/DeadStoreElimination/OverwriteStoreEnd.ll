@@ -76,3 +76,20 @@ entry:
 
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
+
+%struct.trapframe = type { i64, i64, i64 }
+
+; bugzilla 11455 - make sure negative GEP's don't break this optimisation
+; CHECK: @cpu_lwp_fork
+define void @cpu_lwp_fork(%struct.trapframe* %md_regs, i64 %pcb_rsp0) nounwind uwtable noinline ssp {
+entry:
+  %0 = inttoptr i64 %pcb_rsp0 to %struct.trapframe*
+  %add.ptr = getelementptr inbounds %struct.trapframe* %0, i64 -1
+  %1 = bitcast %struct.trapframe* %add.ptr to i8*
+  %2 = bitcast %struct.trapframe* %md_regs to i8*
+; CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %2, i64 24, i32 1, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %2, i64 24, i32 1, i1 false)
+  %tf_trapno = getelementptr inbounds %struct.trapframe* %0, i64 -1, i32 1
+  store i64 3, i64* %tf_trapno, align 8
+  ret void
+}

@@ -416,7 +416,7 @@ static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
   // writes to addresses which will definitely be overwritten later
   if (LaterOff > EarlierOff &&
       LaterOff < int64_t(EarlierOff + Earlier.Size) &&
-      LaterOff + Later.Size >= EarlierOff + Earlier.Size)
+      int64_t(LaterOff + Later.Size) >= int64_t(EarlierOff + Earlier.Size))
     return OverwriteEnd;
 
   // Otherwise, they don't completely overlap.
