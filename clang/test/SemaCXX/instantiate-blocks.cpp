@@ -19,7 +19,7 @@ template <typename T, typename T1> void noret(T t, T1 r)
     if (1)
       return t;
     else if (2)
-      return r;  // expected-error {{return type 'const double' must match previous return type 'float' when block literal has unspecified explicit return type}}
+      return r;  // expected-error {{return type 'double' must match previous return type 'float' when block literal has unspecified explicit return type}}
   };
 }
 

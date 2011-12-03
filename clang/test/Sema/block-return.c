@@ -9,14 +9,14 @@ CL foo() {
   CL X = ^{
     if (2)
       return;
-    return 1;  // expected-error {{void block should not return a value}}
+    return 1;  // expected-error {{return type 'int' must match previous return type 'void' when block literal has unspecified explicit return type}}
   };
 
   int (^Y) (void)  = ^{
     if (3)
       return 1;
     else
-      return; // expected-error {{non-void block should return a value}}
+      return; // expected-error {{return type 'void' must match previous return type 'int' when block literal has unspecified explicit return type}}
   };
 
   char *(^Z)(void) = ^{

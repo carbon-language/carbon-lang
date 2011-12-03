@@ -1760,7 +1760,8 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   // If this is the first return we've seen in the block, infer the type of
   // the block from it.
   BlockScopeInfo *CurBlock = getCurBlock();
-  if (CurBlock->ReturnType.isNull()) {
+  if (CurBlock->TheDecl->blockMissingReturnType()) {
+    QualType BlockReturnT;
     if (RetValExp) {
       // Don't call UsualUnaryConversions(), since we don't want to do
       // integer promotions here.
@@ -1770,7 +1771,7 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       RetValExp = Result.take();
 
       if (!RetValExp->isTypeDependent()) {
-        CurBlock->ReturnType = RetValExp->getType();
+        BlockReturnT = RetValExp->getType();
         if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(RetValExp)) {
           // We have to remove a 'const' added to copied-in variable which was
           // part of the implementation spec. and not the actual qualifier for
@@ -1779,9 +1780,19 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
             CurBlock->ReturnType.removeLocalConst(); // FIXME: local???
         }
       } else
-        CurBlock->ReturnType = Context.DependentTy;
+        BlockReturnT = Context.DependentTy;
     } else
-      CurBlock->ReturnType = Context.VoidTy;
+        BlockReturnT = Context.VoidTy;
+    if (!CurBlock->ReturnType.isNull() && !CurBlock->ReturnType->isDependentType()
+        && !BlockReturnT->isDependentType() 
+        // when block's return type is not specified, all return types
+        // must strictly match.
+        && !Context.hasSameType(BlockReturnT, CurBlock->ReturnType)) { 
+        Diag(ReturnLoc, diag::err_typecheck_missing_return_type_incompatible) 
+            << BlockReturnT << CurBlock->ReturnType;
+        return StmtError();
+    }
+    CurBlock->ReturnType = BlockReturnT;
   }
   QualType FnRetType = CurBlock->ReturnType;
 
@@ -1809,16 +1820,6 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   } else if (!RetValExp) {
     return StmtError(Diag(ReturnLoc, diag::err_block_return_missing_expr));
   } else if (!RetValExp->isTypeDependent()) {
-    if (CurBlock->TheDecl->blockMissingReturnType()) {
-      // when block's return type is not specified, all return types
-      // must strictly match.
-      if (Context.getCanonicalType(FnRetType) != 
-          Context.getCanonicalType(RetValExp->getType())) {
-          Diag(ReturnLoc, diag::err_typecheck_missing_return_type_incompatible) 
-            << RetValExp->getType() << FnRetType;
-          return StmtError();
-      }
-    }
     // we have a non-void block with an expression, continue checking
 
     // C99 6.8.6.4p3(136): The return statement is not an assignment. The
