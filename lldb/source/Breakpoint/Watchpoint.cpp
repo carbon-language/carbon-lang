@@ -112,7 +112,7 @@ Watchpoint::DumpWithLevel(Stream *s, lldb::DescriptionLevel description_level) c
     assert(description_level >= lldb::eDescriptionLevelBrief &&
            description_level <= lldb::eDescriptionLevelVerbose);
 
-    s->Printf("Watchpoint %u: addr = 0x%8.8llx size = %zu state = %s type = %s%s",
+    s->Printf("Watchpoint %u: addr = 0x%8.8llx size = %u state = %s type = %s%s",
               GetID(),
               (uint64_t)m_addr,
               m_byte_size,

@@ -109,7 +109,7 @@ Type::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_name)
 
     // Call the get byte size accesor so we resolve our byte size
     if (GetByteSize())
-        s->Printf(", byte-size = %zu", m_byte_size);
+        s->Printf(", byte-size = %u", m_byte_size);
     bool show_fullpaths = (level == lldb::eDescriptionLevelVerbose);
     m_decl.Dump(s, show_fullpaths);
 
@@ -149,7 +149,7 @@ Type::Dump (Stream *s, bool show_context)
         *s << ", name = \"" << m_name << "\"";
 
     if (m_byte_size != 0)
-        s->Printf(", size = %zu", m_byte_size);
+        s->Printf(", size = %u", m_byte_size);
 
     if (show_context && m_context != NULL)
     {

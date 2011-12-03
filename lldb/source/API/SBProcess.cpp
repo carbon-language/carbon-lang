@@ -732,7 +732,7 @@ SBProcess::ReadMemory (addr_t addr, void *dst, size_t dst_len, SBError &sb_error
                      m_opaque_sp.get(), 
                      addr, 
                      dst, 
-                     (uint32_t) dst_len, 
+                     dst_len, 
                      sb_error.get());
     }
 
@@ -752,14 +752,14 @@ SBProcess::ReadMemory (addr_t addr, void *dst, size_t dst_len, SBError &sb_error
     {
         SBStream sstr;
         sb_error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::ReadMemory (addr=0x%llx, dst=%p, dst_len=%zu, SBError (%p): %s) => %d", 
+        log->Printf ("SBProcess(%p)::ReadMemory (addr=0x%llx, dst=%p, dst_len=%zu, SBError (%p): %s) => %zu", 
                      m_opaque_sp.get(), 
                      addr, 
                      dst, 
-                     (uint32_t) dst_len, 
+                     dst_len, 
                      sb_error.get(), 
                      sstr.GetData(),
-                     (uint32_t) bytes_read);
+                     bytes_read);
     }
 
     return bytes_read;
@@ -777,7 +777,7 @@ SBProcess::WriteMemory (addr_t addr, const void *src, size_t src_len, SBError &s
                      m_opaque_sp.get(), 
                      addr, 
                      src, 
-                     (uint32_t) src_len, 
+                     src_len, 
                      sb_error.get());
     }
 
@@ -793,14 +793,14 @@ SBProcess::WriteMemory (addr_t addr, const void *src, size_t src_len, SBError &s
     {
         SBStream sstr;
         sb_error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::WriteMemory (addr=0x%llx, src=%p, dst_len=%zu, SBError (%p): %s) => %d", 
+        log->Printf ("SBProcess(%p)::WriteMemory (addr=0x%llx, src=%p, dst_len=%zu, SBError (%p): %s) => %zu", 
                      m_opaque_sp.get(), 
                      addr, 
                      src, 
-                     (uint32_t) src_len, 
+                     src_len, 
                      sb_error.get(), 
                      sstr.GetData(),
-                     (uint32_t) bytes_written);
+                     bytes_written);
     }
 
     return bytes_written;

@@ -32,7 +32,7 @@ public:
 
     StoppointLocation (lldb::break_id_t bid,
                        lldb::addr_t m_addr,
-                       size_t size,
+                       uint32_t byte_size,
                        bool hardware);
 
     virtual
@@ -57,7 +57,7 @@ public:
         return m_addr;
     }
 
-    size_t
+    uint32_t
     GetByteSize () const
     {
         return m_byte_size;
