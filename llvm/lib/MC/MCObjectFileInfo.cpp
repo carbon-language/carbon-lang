@@ -31,6 +31,8 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
   if (T.isMacOSX() && T.isMacOSXVersionLT(10, 5))
     CommDirectiveSupportsAlignment = false;
 
+  StructorOutputOrder = Structors::PriorityOrder;
+
   TextSection // .text
     = Ctx->getMachOSection("__TEXT", "__text",
                            MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
@@ -258,6 +260,8 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
     }
   }
 
+  StructorOutputOrder = Structors::ReversePriorityOrder;
+
   // ELF
   BSSSection =
     Ctx->getELFSection(".bss", ELF::SHT_NOBITS,
@@ -385,6 +389,8 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
 
 void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
   // COFF
+  StructorOutputOrder = Structors::ReversePriorityOrder;
+
   TextSection =
     Ctx->getCOFFSection(".text",
                         COFF::IMAGE_SCN_CNT_CODE |

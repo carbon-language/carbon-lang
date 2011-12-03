@@ -36,10 +36,6 @@ namespace llvm {
     enum LCOMMType { None, NoAlignment, ByteAlignment };
   }
 
-  namespace Structors {
-    enum OutputOrder { None, PriorityOrder, ReversePriorityOrder };
-  }
-
   /// MCAsmInfo - This class is intended to be used as a base class for asm
   /// properties and features specific to the target.
   class MCAsmInfo {
@@ -71,11 +67,6 @@ namespace llvm {
     /// HasMachoTBSSDirective - True if this is a MachO target that supports
     /// the macho-specific .tbss directive for emitting thread local BSS Symbols
     bool HasMachoTBSSDirective;                 // Default is false.
-
-    /// StructorOutputOrder - Whether the static ctor/dtor list should be output
-    /// in no particular order, in order of increasing priority or the reverse:
-    /// in order of decreasing priority (the default).
-    Structors::OutputOrder StructorOutputOrder; // Default is reverse order.
 
     /// HasStaticCtorDtorReferenceInStaticMode - True if the compiler should
     /// emit a ".reference .constructors_used" or ".reference .destructors_used"
@@ -428,9 +419,6 @@ namespace llvm {
     //
     bool hasMachoZeroFillDirective() const { return HasMachoZeroFillDirective; }
     bool hasMachoTBSSDirective() const { return HasMachoTBSSDirective; }
-    Structors::OutputOrder getStructorOutputOrder() const {
-      return StructorOutputOrder;
-    }
     bool hasStaticCtorDtorReferenceInStaticMode() const {
       return HasStaticCtorDtorReferenceInStaticMode;
     }

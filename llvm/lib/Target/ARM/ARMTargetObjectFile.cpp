@@ -36,6 +36,7 @@ void ARMElfTargetObjectFile::Initialize(MCContext &Ctx,
                                  ELF::SHF_WRITE |
                                  ELF::SHF_ALLOC,
                                  SectionKind::getDataRel());
+    StructorOutputOrder = Structors::PriorityOrder;
     LSDASection = NULL;
   }
 

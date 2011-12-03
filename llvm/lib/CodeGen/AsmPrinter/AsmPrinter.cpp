@@ -1291,7 +1291,7 @@ void AsmPrinter::EmitXXStructorList(const Constant *List) {
   }
 
   // Emit the function pointers in reverse priority order.
-  switch (MAI->getStructorOutputOrder()) {
+  switch (getObjFileLowering().getStructorOutputOrder()) {
   case Structors::None:
     break;
   case Structors::PriorityOrder:

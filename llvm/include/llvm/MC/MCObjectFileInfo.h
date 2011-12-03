@@ -19,10 +19,14 @@
 #include "llvm/MC/SectionKind.h"
 
 namespace llvm {
-class MCContext;
-class MCSection;
-class Triple;
+  class MCContext;
+  class MCSection;
+  class Triple;
   
+  namespace Structors {
+    enum OutputOrder { None, PriorityOrder, ReversePriorityOrder };
+  }
+
 class MCObjectFileInfo {  
 protected:
   /// CommDirectiveSupportsAlignment - True if .comm supports alignment.  This
@@ -164,6 +168,11 @@ protected:
   const MCSection *PDataSection;
   const MCSection *XDataSection;
   
+  /// StructorOutputOrder - Whether the static ctor/dtor list should be output
+  /// in no particular order, in order of increasing priority or the reverse:
+  /// in order of decreasing priority (the default).
+  Structors::OutputOrder StructorOutputOrder; // Default is reverse order.
+
 public:
   void InitMCObjectFileInfo(StringRef TT, Reloc::Model RM, CodeModel::Model CM,
                             MCContext &ctx);
@@ -289,6 +298,10 @@ public:
     if (!EHFrameSection)
       InitEHFrameSection();
     return EHFrameSection;
+  }
+
+  Structors::OutputOrder getStructorOutputOrder() const {
+    return StructorOutputOrder;
   }
 
 private:
