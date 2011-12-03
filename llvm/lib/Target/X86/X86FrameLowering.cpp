@@ -1394,9 +1394,6 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
     MF.getRegInfo().setPhysRegUsed(X86::R10);
     MF.getRegInfo().setPhysRegUsed(X86::R11);
   } else {
-    // Since we'll call __morestack, stack alignment needs to be preserved.
-    BuildMI(allocMBB, DL, TII.get(X86::SUB32ri), X86::ESP).addReg(X86::ESP)
-      .addImm(8);
     BuildMI(allocMBB, DL, TII.get(X86::PUSHi32))
       .addImm(X86FI->getArgumentStackSize());
     BuildMI(allocMBB, DL, TII.get(X86::PUSHi32))
@@ -1411,11 +1408,6 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
     BuildMI(allocMBB, DL, TII.get(X86::CALLpcrel32))
       .addExternalSymbol("__morestack");
 
-  // __morestack only seems to remove 8 bytes off the stack. Add back the
-  // additional 8 bytes we added before pushing the arguments.
-  if (!Is64Bit)
-    BuildMI(allocMBB, DL, TII.get(X86::ADD32ri), X86::ESP).addReg(X86::ESP)
-      .addImm(8);
   if (IsNested)
     BuildMI(allocMBB, DL, TII.get(X86::MORESTACK_RET_RESTORE_R10));
   else

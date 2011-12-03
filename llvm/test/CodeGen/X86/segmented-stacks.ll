@@ -23,11 +23,9 @@ false:
 ; X32:      leal -12(%esp), %ecx
 ; X32-NEXT: cmpl %gs:48, %ecx
 
-; X32:      subl $8, %esp
-; X32-NEXT: pushl $4
+; X32:      pushl $4
 ; X32-NEXT: pushl $12
 ; X32-NEXT: calll __morestack
-; X32-NEXT: addl $8, %esp
 ; X32-NEXT: ret 
 
 ; X32:      movl %esp, %eax
@@ -72,11 +70,9 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) {
 ; X32-NEXT: cmpl %gs:48, %edx
 
 
-; X32:      subl $8, %esp
-; X32-NEXT: pushl $4
+; X32:      pushl $4
 ; X32-NEXT: pushl $0
 ; X32-NEXT: calll __morestack
-; X32-NEXT: addl $8, %esp
 ; X32-NEXT: ret
 
 ; X64:      leaq (%rsp), %r11
