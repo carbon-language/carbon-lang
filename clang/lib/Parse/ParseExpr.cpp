@@ -565,6 +565,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 ///                   '__is_class'
 ///                   '__is_empty'                            [TODO]
 ///                   '__is_enum'
+///                   '__is_final'
 ///                   '__is_pod'
 ///                   '__is_polymorphic'
 ///                   '__is_trivial'
@@ -1087,6 +1088,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___is_trivial:
   case tok::kw___is_trivially_copyable:
   case tok::kw___is_union:
+  case tok::kw___is_final:
   case tok::kw___has_trivial_constructor:
   case tok::kw___has_trivial_copy:
   case tok::kw___has_trivial_assign:

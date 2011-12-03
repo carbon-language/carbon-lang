@@ -35,6 +35,7 @@ namespace clang {
     UTT_IsConst,
     UTT_IsEmpty,
     UTT_IsEnum,
+    UTT_IsFinal,
     UTT_IsFloatingPoint,
     UTT_IsFunction,
     UTT_IsFundamental,

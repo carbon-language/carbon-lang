@@ -235,6 +235,37 @@ void is_enum()
   { int arr[F(__is_enum(HasAnonymousUnion))]; }
 }
 
+struct FinalClass final {
+};
+
+template<typename T> 
+struct PotentiallyFinal { };
+
+template<typename T>
+struct PotentiallyFinal<T*> final { };
+
+template<>
+struct PotentiallyFinal<int> final { };
+
+void is_final()
+{
+	{ int arr[T(__is_final(FinalClass))]; }
+	{ int arr[T(__is_final(PotentiallyFinal<float*>))]; }
+	{ int arr[T(__is_final(PotentiallyFinal<int>))]; }
+
+	{ int arr[F(__is_final(int))]; }
+	{ int arr[F(__is_final(Union))]; }
+	{ int arr[F(__is_final(Int))]; }
+	{ int arr[F(__is_final(IntAr))]; }
+	{ int arr[F(__is_final(UnionAr))]; }
+	{ int arr[F(__is_final(Derives))]; }
+	{ int arr[F(__is_final(ClassType))]; }
+	{ int arr[F(__is_final(cvoid))]; }
+	{ int arr[F(__is_final(IntArNB))]; }
+	{ int arr[F(__is_final(HasAnonymousUnion))]; }
+	{ int arr[F(__is_final(PotentiallyFinal<float>))]; }
+}
+
 typedef HasVirt Polymorph;
 struct InheritPolymorph : Polymorph {};
 

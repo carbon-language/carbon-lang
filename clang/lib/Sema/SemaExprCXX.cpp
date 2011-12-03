@@ -2650,6 +2650,9 @@ static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
   case UTT_IsAbstract:
     // Fall-through
 
+  // These traits require a complete type.
+  case UTT_IsFinal:
+
     // These trait expressions are designed to help implement predicates in
     // [meta.unary.prop] despite not being named the same. They are specified
     // by both GCC and the Embarcadero C++ compiler, and require the complete
@@ -2774,6 +2777,10 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
   case UTT_IsAbstract:
     if (const CXXRecordDecl *RD = T->getAsCXXRecordDecl())
       return RD->isAbstract();
+    return false;
+  case UTT_IsFinal:
+    if (const CXXRecordDecl *RD = T->getAsCXXRecordDecl())
+      return RD->hasAttr<FinalAttr>();
     return false;
   case UTT_IsSigned:
     return T->isSignedIntegerType();

@@ -1409,6 +1409,7 @@ static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   case UTT_IsConst:                 return "__is_const";
   case UTT_IsEmpty:               return "__is_empty";
   case UTT_IsEnum:                return "__is_enum";
+  case UTT_IsFinal:                 return "__is_final";
   case UTT_IsFloatingPoint:         return "__is_floating_point";
   case UTT_IsFunction:              return "__is_function";
   case UTT_IsFundamental:           return "__is_fundamental";

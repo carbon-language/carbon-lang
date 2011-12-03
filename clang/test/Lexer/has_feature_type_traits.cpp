@@ -70,6 +70,11 @@ int is_enum();
 #endif
 // CHECK: int is_enum();
 
+#if __has_feature(is_final)
+int is_final();
+#endif
+// CHECK: int is_final();
+
 #if __has_feature(is_pod)
 int is_pod();
 #endif

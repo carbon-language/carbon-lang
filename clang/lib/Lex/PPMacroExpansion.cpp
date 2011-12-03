@@ -675,6 +675,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
                  PP.getIdentifierInfo("__is_empty")->getTokenID()
                                                             != tok::identifier)
            .Case("is_enum", LangOpts.CPlusPlus)
+           .Case("is_final", LangOpts.CPlusPlus)
            .Case("is_literal", LangOpts.CPlusPlus)
            .Case("is_standard_layout", LangOpts.CPlusPlus)
            // __is_pod is available only if the horrible

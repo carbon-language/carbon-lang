@@ -2241,6 +2241,7 @@ static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
   case tok::kw___is_const:                   return UTT_IsConst;
   case tok::kw___is_empty:                return UTT_IsEmpty;
   case tok::kw___is_enum:                 return UTT_IsEnum;
+  case tok::kw___is_final:                 return UTT_IsFinal;
   case tok::kw___is_floating_point:          return UTT_IsFloatingPoint;
   case tok::kw___is_function:                return UTT_IsFunction;
   case tok::kw___is_fundamental:             return UTT_IsFundamental;
