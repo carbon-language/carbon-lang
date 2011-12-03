@@ -135,14 +135,17 @@ void CodeGenFunction::EmitAnyExprToMem(const Expr *E,
                                        llvm::Value *Location,
                                        Qualifiers Quals,
                                        bool IsInit) {
-  if (E->getType()->isAnyComplexType())
+  // FIXME: This function should take an LValue as an argument.
+  if (E->getType()->isAnyComplexType()) {
     EmitComplexExprIntoAddr(E, Location, Quals.hasVolatile());
-  else if (hasAggregateLLVMType(E->getType()))
-    EmitAggExpr(E, AggValueSlot::forAddr(Location, Quals,
+  } else if (hasAggregateLLVMType(E->getType())) {
+    unsigned Alignment =
+        getContext().getTypeAlignInChars(E->getType()).getQuantity();
+    EmitAggExpr(E, AggValueSlot::forAddr(Location, Alignment, Quals,
                                          AggValueSlot::IsDestructed_t(IsInit),
                                          AggValueSlot::DoesNotNeedGCBarriers,
                                          AggValueSlot::IsAliased_t(!IsInit)));
-  else {
+  } else {
     RValue RV = RValue::get(EmitScalarExpr(E, /*Ignore*/ false));
     LValue LV = MakeAddrLValue(Location, E->getType());
     EmitStoreThroughLValue(RV, LV);
@@ -358,10 +361,12 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
         !E->getType()->isAnyComplexType()) {
       ReferenceTemporary = CreateReferenceTemporary(CGF, E->getType(), 
                                                     InitializedDecl);
+      unsigned Alignment =
+        CGF.getContext().getTypeAlignInChars(E->getType()).getQuantity();
       AggValueSlot::IsDestructed_t isDestructed
         = AggValueSlot::IsDestructed_t(InitializedDecl != 0);
-      AggSlot = AggValueSlot::forAddr(ReferenceTemporary, Qualifiers(),
-                                      isDestructed,
+      AggSlot = AggValueSlot::forAddr(ReferenceTemporary, Alignment,
+                                      Qualifiers(), isDestructed,
                                       AggValueSlot::DoesNotNeedGCBarriers,
                                       AggValueSlot::IsNotAliased);
     }

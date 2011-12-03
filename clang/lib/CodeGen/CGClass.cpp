@@ -397,9 +397,10 @@ static void EmitBaseInitializer(CodeGenFunction &CGF,
     CGF.GetAddressOfDirectBaseInCompleteClass(ThisPtr, ClassDecl,
                                               BaseClassDecl,
                                               isBaseVirtual);
-
+  unsigned Alignment =
+    CGF.getContext().getTypeAlignInChars(BaseType).getQuantity();
   AggValueSlot AggSlot =
-    AggValueSlot::forAddr(V, Qualifiers(),
+    AggValueSlot::forAddr(V, Alignment, Qualifiers(),
                           AggValueSlot::IsDestructed,
                           AggValueSlot::DoesNotNeedGCBarriers,
                           AggValueSlot::IsNotAliased);
@@ -420,30 +421,35 @@ static void EmitAggMemberInitializer(CodeGenFunction &CGF,
                                      unsigned Index) {
   if (Index == MemberInit->getNumArrayIndices()) {
     CodeGenFunction::RunCleanupsScope Cleanups(CGF);
-    
-    llvm::Value *Dest = LHS.getAddress();
+
+    LValue LV = LHS;
     if (ArrayIndexVar) {
       // If we have an array index variable, load it and use it as an offset.
       // Then, increment the value.
+      llvm::Value *Dest = LHS.getAddress();
       llvm::Value *ArrayIndex = CGF.Builder.CreateLoad(ArrayIndexVar);
       Dest = CGF.Builder.CreateInBoundsGEP(Dest, ArrayIndex, "destaddress");
       llvm::Value *Next = llvm::ConstantInt::get(ArrayIndex->getType(), 1);
       Next = CGF.Builder.CreateAdd(ArrayIndex, Next, "inc");
-      CGF.Builder.CreateStore(Next, ArrayIndexVar);      
+      CGF.Builder.CreateStore(Next, ArrayIndexVar);    
+
+      // Update the LValue.
+      LV.setAddress(Dest);
+      unsigned Align = CGF.getContext().getTypeAlignInChars(T).getQuantity();
+      LV.setAlignment(std::min(Align, LV.getAlignment()));
     }
 
     if (!CGF.hasAggregateLLVMType(T)) {
-      LValue lvalue = CGF.MakeAddrLValue(Dest, T);
-      CGF.EmitScalarInit(MemberInit->getInit(), /*decl*/ 0, lvalue, false);
+      CGF.EmitScalarInit(MemberInit->getInit(), /*decl*/ 0, LV, false);
     } else if (T->isAnyComplexType()) {
-      CGF.EmitComplexExprIntoAddr(MemberInit->getInit(), Dest, 
-                                  LHS.isVolatileQualified());
-    } else {    
+      CGF.EmitComplexExprIntoAddr(MemberInit->getInit(), LV.getAddress(),
+                                  LV.isVolatileQualified());
+    } else {
       AggValueSlot Slot =
-        AggValueSlot::forAddr(Dest, LHS.getQuals(),
-                              AggValueSlot::IsDestructed,
-                              AggValueSlot::DoesNotNeedGCBarriers,
-                              AggValueSlot::IsNotAliased);
+        AggValueSlot::forLValue(LV,
+                                AggValueSlot::IsDestructed,
+                                AggValueSlot::DoesNotNeedGCBarriers,
+                                AggValueSlot::IsNotAliased);
       
       CGF.EmitAggExpr(MemberInit->getInit(), Slot);
     }
@@ -1338,8 +1344,10 @@ CodeGenFunction::EmitDelegatingCXXConstructorCall(const CXXConstructorDecl *Ctor
 
   llvm::Value *ThisPtr = LoadCXXThis();
 
+  QualType Ty = getContext().getTagDeclType(Ctor->getParent());
+  unsigned Alignment = getContext().getTypeAlignInChars(Ty).getQuantity();
   AggValueSlot AggSlot =
-    AggValueSlot::forAddr(ThisPtr, Qualifiers(),
+    AggValueSlot::forAddr(ThisPtr, Alignment, Qualifiers(),
                           AggValueSlot::IsDestructed,
                           AggValueSlot::DoesNotNeedGCBarriers,
                           AggValueSlot::IsNotAliased);

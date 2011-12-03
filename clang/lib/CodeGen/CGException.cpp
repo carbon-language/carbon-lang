@@ -1039,10 +1039,12 @@ static void InitCatchParam(CodeGenFunction &CGF,
   CGF.EHStack.pushTerminate();
 
   // Perform the copy construction.
-  CGF.EmitAggExpr(copyExpr, AggValueSlot::forAddr(ParamAddr, Qualifiers(),
-                                                  AggValueSlot::IsNotDestructed,
-                                          AggValueSlot::DoesNotNeedGCBarriers,
-                                                  AggValueSlot::IsNotAliased));
+  unsigned Alignment = CGF.getContext().getDeclAlign(&CatchParam).getQuantity();
+  CGF.EmitAggExpr(copyExpr,
+                  AggValueSlot::forAddr(ParamAddr, Alignment, Qualifiers(),
+                                        AggValueSlot::IsNotDestructed,
+                                        AggValueSlot::DoesNotNeedGCBarriers,
+                                        AggValueSlot::IsNotAliased));
 
   // Leave the terminate scope.
   CGF.EHStack.popTerminate();

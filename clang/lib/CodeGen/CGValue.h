@@ -220,6 +220,7 @@ public:
   unsigned getAddressSpace() const { return Quals.getAddressSpace(); }
 
   unsigned getAlignment() const { return Alignment; }
+  void setAlignment(unsigned A) { Alignment = A; }
 
   // simple lvalue
   llvm::Value *getAddress() const { assert(isSimple()); return V; }
@@ -308,6 +309,8 @@ class AggValueSlot {
   // Qualifiers
   Qualifiers Quals;
 
+  unsigned short Alignment;
+
   /// DestructedFlag - This is set to true if some external code is
   /// responsible for setting up a destructor for the slot.  Otherwise
   /// the code which constructs it should push the appropriate cleanup.
@@ -363,13 +366,15 @@ public:
   ///   for calling destructors on this object
   /// \param needsGC - true if the slot is potentially located
   ///   somewhere that ObjC GC calls should be emitted for
-  static AggValueSlot forAddr(llvm::Value *addr, Qualifiers quals,
+  static AggValueSlot forAddr(llvm::Value *addr, unsigned align,
+                              Qualifiers quals,
                               IsDestructed_t isDestructed,
                               NeedsGCBarriers_t needsGC,
                               IsAliased_t isAliased,
                               IsZeroed_t isZeroed = IsNotZeroed) {
     AggValueSlot AV;
     AV.Addr = addr;
+    AV.Alignment = align;
     AV.Quals = quals;
     AV.DestructedFlag = isDestructed;
     AV.ObjCGCFlag = needsGC;
@@ -382,7 +387,7 @@ public:
                                 NeedsGCBarriers_t needsGC,
                                 IsAliased_t isAliased,
                                 IsZeroed_t isZeroed = IsNotZeroed) {
-    return forAddr(LV.getAddress(), LV.getQuals(),
+    return forAddr(LV.getAddress(), LV.getAlignment(), LV.getQuals(),
                    isDestructed, needsGC, isAliased, isZeroed);
   }
 
@@ -415,10 +420,15 @@ public:
     return Addr == 0;
   }
 
+  unsigned getAlignment() const {
+    return Alignment;
+  }
+
   IsAliased_t isPotentiallyAliased() const {
     return IsAliased_t(AliasedFlag);
   }
 
+  // FIXME: Alignment?
   RValue asRValue() const {
     return RValue::getAggregate(getAddr(), isVolatile());
   }

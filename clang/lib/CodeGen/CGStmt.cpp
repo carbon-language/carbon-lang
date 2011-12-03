@@ -772,7 +772,9 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   } else if (RV->getType()->isAnyComplexType()) {
     EmitComplexExprIntoAddr(RV, ReturnValue, false);
   } else {
-    EmitAggExpr(RV, AggValueSlot::forAddr(ReturnValue, Qualifiers(),
+    unsigned Alignment =
+        getContext().getTypeAlignInChars(RV->getType()).getQuantity();
+    EmitAggExpr(RV, AggValueSlot::forAddr(ReturnValue, Alignment, Qualifiers(),
                                           AggValueSlot::IsDestructed,
                                           AggValueSlot::DoesNotNeedGCBarriers,
                                           AggValueSlot::IsNotAliased));
