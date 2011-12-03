@@ -158,3 +158,25 @@ define void @test4() {
 ; ARM: ldr r1, [r1]
 ; ARM: str r0, [r1]
 }
+
+; Check unaligned stores
+%struct.anon = type <{ float }>
+
+@a = common global %struct.anon* null, align 4
+
+define void @unaligned_store(float %x, float %y) nounwind {
+entry:
+; ARM: @unaligned_store
+; ARM: vmov r1, s0
+; ARM: str r1, [r0]
+
+; THUMB: @unaligned_store
+; THUMB: vmov r1, s0
+; THUMB: str r1, [r0]
+
+  %add = fadd float %x, %y
+  %0 = load %struct.anon** @a, align 4
+  %x1 = getelementptr inbounds %struct.anon* %0, i32 0, i32 0
+  store float %add, float* %x1, align 1
+  ret void
+}

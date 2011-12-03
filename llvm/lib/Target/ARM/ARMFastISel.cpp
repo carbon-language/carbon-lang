@@ -181,7 +181,7 @@ class ARMFastISel : public FastISel {
     bool ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr, bool isZExt,
                      bool allocReg);
                      
-    bool ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr);
+    bool ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr, unsigned Alignment = 0);
     bool ARMComputeAddress(const Value *Obj, Address &Addr);
     void ARMSimplifyAddress(Address &Addr, EVT VT, bool useAM3);
     bool ARMIsMemCpySmall(uint64_t Len);
@@ -1053,7 +1053,7 @@ bool ARMFastISel::SelectLoad(const Instruction *I) {
   return true;
 }
 
-bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr) {
+bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr, unsigned Alignment) {
   unsigned StrOpc;
   bool useAM3 = false;
   switch (VT.getSimpleVT().SimpleTy) {
@@ -1102,9 +1102,23 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr) {
     case MVT::f32:
       if (!Subtarget->hasVFP2()) return false;
       StrOpc = ARM::VSTRS;
+      // Unaligned stores need special handling.
+      if (Alignment && Alignment < 4) {
+        unsigned MoveReg = createResultReg(TLI.getRegClassFor(MVT::i32));
+        AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                                TII.get(ARM::VMOVRS), MoveReg)
+                        .addReg(SrcReg));
+        SrcReg = MoveReg;
+        VT = MVT::i32;
+        StrOpc = isThumb2 ? ARM::t2STRi12 : ARM::STRi12;
+      }
       break;
     case MVT::f64:
       if (!Subtarget->hasVFP2()) return false;
+      // FIXME: Unaligned stores need special handling.
+      if (Alignment && Alignment < 8) {
+          return false;
+      }
       StrOpc = ARM::VSTRD;
       break;
   }
@@ -1141,7 +1155,8 @@ bool ARMFastISel::SelectStore(const Instruction *I) {
   if (!ARMComputeAddress(I->getOperand(1), Addr))
     return false;
 
-  if (!ARMEmitStore(VT, SrcReg, Addr)) return false;
+  if (!ARMEmitStore(VT, SrcReg, Addr, cast<StoreInst>(I)->getAlignment()))
+    return false;
   return true;
 }
 
