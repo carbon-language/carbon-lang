@@ -1809,6 +1809,16 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   } else if (!RetValExp) {
     return StmtError(Diag(ReturnLoc, diag::err_block_return_missing_expr));
   } else if (!RetValExp->isTypeDependent()) {
+    if (CurBlock->TheDecl->blockMissingReturnType()) {
+      // when block's return type is not specified, all return types
+      // must strictly match.
+      if (Context.getCanonicalType(FnRetType) != 
+          Context.getCanonicalType(RetValExp->getType())) {
+          Diag(ReturnLoc, diag::err_typecheck_missing_return_type_incompatible) 
+            << RetValExp->getType() << FnRetType;
+          return StmtError();
+      }
+    }
     // we have a non-void block with an expression, continue checking
 
     // C99 6.8.6.4p3(136): The return statement is not an assignment. The
@@ -1820,7 +1830,7 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     NRVOCandidate = getCopyElisionCandidate(FnRetType, RetValExp, false);
     InitializedEntity Entity = InitializedEntity::InitializeResult(ReturnLoc,
                                                                    FnRetType,
-                                                           NRVOCandidate != 0);
+                                                          NRVOCandidate != 0);
     ExprResult Res = PerformMoveOrCopyInitialization(Entity, NRVOCandidate,
                                                      FnRetType, RetValExp);
     if (Res.isInvalid()) {

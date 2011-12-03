@@ -8715,8 +8715,10 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   // return type.  TODO:  what should we do with declarators like:
   //   ^ * { ... }
   // If the answer is "apply template argument deduction"....
-  if (RetTy != Context.DependentTy)
+  if (RetTy != Context.DependentTy) {
     CurBlock->ReturnType = RetTy;
+    CurBlock->TheDecl->setBlockMissingReturnType(false);
+  }
 
   // Push block parameters from the declarator if we had them.
   SmallVector<ParmVarDecl*, 8> Params;

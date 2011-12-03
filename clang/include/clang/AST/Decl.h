@@ -2981,6 +2981,7 @@ private:
   // FIXME: This can be packed into the bitfields in Decl.
   bool IsVariadic : 1;
   bool CapturesCXXThis : 1;
+  bool BlockMissingReturnType : 1;
   /// ParamInfo - new[]'d array of pointers to ParmVarDecls for the formal
   /// parameters of this function.  This is null if a prototype or if there are
   /// no formals.
@@ -2997,6 +2998,7 @@ protected:
   BlockDecl(DeclContext *DC, SourceLocation CaretLoc)
     : Decl(Block, DC, CaretLoc), DeclContext(Block),
       IsVariadic(false), CapturesCXXThis(false),
+      BlockMissingReturnType(true),
       ParamInfo(0), NumParams(0), Body(0),
       SignatureAsWritten(0), Captures(0), NumCaptures(0) {}
 
@@ -3054,6 +3056,8 @@ public:
   capture_const_iterator capture_end() const { return Captures + NumCaptures; }
 
   bool capturesCXXThis() const { return CapturesCXXThis; }
+  bool blockMissingReturnType() const { return BlockMissingReturnType; }
+  void setBlockMissingReturnType(bool val) { BlockMissingReturnType = val; }
 
   bool capturesVariable(const VarDecl *var) const;
 
