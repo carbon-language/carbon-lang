@@ -89,3 +89,7 @@ void test() {
 // RUN: c-index-test -cursor-at=%s:38:12 -cursor-at=%s:39:5 %s | FileCheck -check-prefix=CHECK-CXXCATCH %s
 // CHECK-CXXCATCH: TypeRef=struct X:3:8
 // CHECK-CXXCATCH-NEXT: TypeRef=struct X:3:8
+
+// RUN: c-index-test -test-load-source-usrs local %s | FileCheck -check-prefix=CHECK-USR %s
+// CHECK-USR: get-cursor.cpp c:get-cursor.cpp@472@F@test#@e Extent=[38:12 - 38:15]
+// CHECK-USR: get-cursor.cpp c:get-cursor.cpp@483@F@test#@x Extent=[39:5 - 39:8]
