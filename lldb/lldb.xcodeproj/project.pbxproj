@@ -387,6 +387,7 @@
 		26F5C32D10F3DFDD009D5894 /* libtermcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */; };
 		26F73062139D8FDB00FD51C7 /* History.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F73061139D8FDB00FD51C7 /* History.cpp */; };
 		494260DA14579144003C1C78 /* VerifyDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 494260D914579144003C1C78 /* VerifyDecl.cpp */; };
+		4966DCC4148978A10028481B /* ClangExternalASTSourceCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4966DCC3148978A10028481B /* ClangExternalASTSourceCommon.cpp */; };
 		496B015B1406DEB100F830D5 /* IRInterpreter.h in Headers */ = {isa = PBXBuildFile; fileRef = 496B015A1406DEB100F830D5 /* IRInterpreter.h */; };
 		49A1CAC51430E8DE00306AC9 /* ExpressionSourceCode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49A1CAC31430E8BD00306AC9 /* ExpressionSourceCode.cpp */; };
 		49A71FE7141FFA5C00D59478 /* IRInterpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 496B01581406DE8900F830D5 /* IRInterpreter.cpp */; };
@@ -1147,8 +1148,10 @@
 		49445C2512245E3600C11A81 /* ClangExpressionParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExpressionParser.cpp; path = source/Expression/ClangExpressionParser.cpp; sourceTree = "<group>"; };
 		49445C2912245E5500C11A81 /* ClangExpressionParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangExpressionParser.h; path = include/lldb/Expression/ClangExpressionParser.h; sourceTree = "<group>"; };
 		49445E341225AB6A00C11A81 /* ClangUserExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangUserExpression.h; path = include/lldb/Expression/ClangUserExpression.h; sourceTree = "<group>"; };
+		495B38431489714C002708C5 /* ClangExternalASTSourceCommon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ClangExternalASTSourceCommon.h; path = include/lldb/Symbol/ClangExternalASTSourceCommon.h; sourceTree = "<group>"; };
 		495BBACB119A0DBE00418BEA /* PathMappingList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PathMappingList.cpp; path = source/Target/PathMappingList.cpp; sourceTree = "<group>"; };
 		495BBACF119A0DE700418BEA /* PathMappingList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PathMappingList.h; path = include/lldb/Target/PathMappingList.h; sourceTree = "<group>"; };
+		4966DCC3148978A10028481B /* ClangExternalASTSourceCommon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExternalASTSourceCommon.cpp; path = source/Symbol/ClangExternalASTSourceCommon.cpp; sourceTree = "<group>"; };
 		496B01581406DE8900F830D5 /* IRInterpreter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IRInterpreter.cpp; path = source/Expression/IRInterpreter.cpp; sourceTree = "<group>"; };
 		496B015A1406DEB100F830D5 /* IRInterpreter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IRInterpreter.h; path = include/lldb/Expression/IRInterpreter.h; sourceTree = "<group>"; };
 		497C86BD122823D800B54702 /* ClangUtilityFunction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangUtilityFunction.cpp; path = source/Expression/ClangUtilityFunction.cpp; sourceTree = "<group>"; };
@@ -2199,6 +2202,8 @@
 				49D8FB3513B558DE00411094 /* ClangASTImporter.cpp */,
 				49E45FA911F660DC008F7B28 /* ClangASTType.h */,
 				49E45FAD11F660FE008F7B28 /* ClangASTType.cpp */,
+				495B38431489714C002708C5 /* ClangExternalASTSourceCommon.h */,
+				4966DCC3148978A10028481B /* ClangExternalASTSourceCommon.cpp */,
 				26E6902E129C6BD500DDECD9 /* ClangExternalASTSourceCallbacks.h */,
 				26E69030129C6BEF00DDECD9 /* ClangExternalASTSourceCallbacks.cpp */,
 				266A42D7128E40040090CF7C /* ClangNamespaceDecl.h */,
@@ -3521,6 +3526,7 @@
 				49A1CAC51430E8DE00306AC9 /* ExpressionSourceCode.cpp in Sources */,
 				494260DA14579144003C1C78 /* VerifyDecl.cpp in Sources */,
 				49DA65031485C92A005FF180 /* AppleObjCSymbolVendor.cpp in Sources */,
+				4966DCC4148978A10028481B /* ClangExternalASTSourceCommon.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

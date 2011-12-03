@@ -849,6 +849,15 @@ public:
     //------------------------------------------------------------------
     static unsigned
     GetTypeQualifiers(lldb::clang_type_t clang_type);
+    
+    //------------------------------------------------------------------
+    // Flags
+    //------------------------------------------------------------------
+    static uint64_t
+    GetTypeFlags(clang::ASTContext *ast, lldb::clang_type_t clang_type);
+    
+    static void
+    SetTypeFlags(clang::ASTContext *ast, lldb::clang_type_t clang_type, uint64_t flags);
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ClangASTContext can see and modify these

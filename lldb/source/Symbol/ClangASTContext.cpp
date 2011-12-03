@@ -61,6 +61,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Expression/ASTDumper.h"
+#include "lldb/Symbol/ClangExternalASTSourceCommon.h"
 #include "lldb/Symbol/VerifyDecl.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
@@ -5765,6 +5766,36 @@ ClangASTContext::GetTypeQualifiers(clang_type_t clang_type)
     QualType qual_type (QualType::getFromOpaquePtr(clang_type));
     
     return qual_type.getQualifiers().getCVRQualifiers();
+}
+
+uint64_t
+GetTypeFlags(clang::ASTContext *ast, lldb::clang_type_t clang_type)
+{
+    assert (clang_type);
+    
+    clang::ExternalASTSource *external_ast_source = ast->getExternalSource();
+    
+    if (!external_ast_source)
+        return 0;
+    
+    ClangExternalASTSourceCommon *common_ast_source = static_cast<ClangExternalASTSourceCommon*>(external_ast_source);
+    
+    return common_ast_source->GetMetadata((uintptr_t)clang_type);
+}
+
+void
+SetTypeFlags(clang::ASTContext *ast, lldb::clang_type_t clang_type, uint64_t flags)
+{
+    assert (clang_type);
+    
+    clang::ExternalASTSource *external_ast_source = ast->getExternalSource();
+    
+    if (!external_ast_source)
+        return;
+    
+    ClangExternalASTSourceCommon *common_ast_source = static_cast<ClangExternalASTSourceCommon*>(external_ast_source);
+    
+    return common_ast_source->SetMetadata((uintptr_t)clang_type, flags);
 }
 
 bool

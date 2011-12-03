@@ -13,7 +13,7 @@
 #include <set>
 
 #include "clang/Basic/IdentifierTable.h"
-#include "clang/AST/ExternalASTSource.h"
+#include "lldb/Symbol/ClangExternalASTSourceCommon.h"
 #include "lldb/Symbol/ClangASTImporter.h"
 #include "lldb/Target/Target.h"
 
@@ -31,7 +31,7 @@ namespace lldb_private {
 /// the actual lookups.
 //----------------------------------------------------------------------
 class ClangASTSource : 
-    public clang::ExternalASTSource,
+    public ClangExternalASTSourceCommon,
     public ClangASTImporter::NamespaceMapCompleter
 {
 public:
@@ -198,7 +198,7 @@ public:
     /// Clang AST contexts like to own their AST sources, so this is a
     /// state-free proxy object.
     //----------------------------------------------------------------------
-    class ClangASTSourceProxy : public clang::ExternalASTSource
+    class ClangASTSourceProxy : public ClangExternalASTSourceCommon
     {
     public:
         ClangASTSourceProxy (ClangASTSource &original) :
@@ -213,7 +213,7 @@ public:
             return m_original.FindExternalVisibleDeclsByName(DC, Name);
         }
         
-        virtual clang::ExternalLoadResult 
+        clang::ExternalLoadResult 
         FindExternalLexicalDecls (const clang::DeclContext *DC,
                                   bool (*isKindWeWant)(clang::Decl::Kind),
                                   llvm::SmallVectorImpl<clang::Decl*> &Decls)
@@ -221,13 +221,13 @@ public:
             return m_original.FindExternalLexicalDecls(DC, isKindWeWant, Decls);
         }
         
-        virtual void
+        void
         CompleteType (clang::TagDecl *Tag)
         {
             return m_original.CompleteType(Tag);
         }
         
-        virtual void 
+        void 
         CompleteType (clang::ObjCInterfaceDecl *Class)
         {
             return m_original.CompleteType(Class);
@@ -236,6 +236,21 @@ public:
         void StartTranslationUnit (clang::ASTConsumer *Consumer)
         {
             return m_original.StartTranslationUnit(Consumer);
+        }
+        
+        uint64_t GetMetadata(uintptr_t object)
+        {
+            return m_original.GetMetadata(object);
+        }
+        
+        void SetMetadata(uintptr_t object, uint64_t metadata)
+        {
+            return m_original.SetMetadata(object, metadata);
+        }
+        
+        bool HasMetadata(uintptr_t object)
+        {
+            return m_original.HasMetadata(object);
         }
     private:
         ClangASTSource &m_original;
