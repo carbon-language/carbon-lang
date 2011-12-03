@@ -61,6 +61,15 @@ declare i32 @llvm.x86.sse2.cvttsd2si(<2 x double>) nounwind readnone
 declare i64 @llvm.x86.sse2.cvtsd2si64(<2 x double>) nounwind readnone
 declare i64 @llvm.x86.sse2.cvttsd2si64(<2 x double>) nounwind readnone
 
+define double @test_intrinsic_pow() nounwind uwtable ssp {
+entry:
+; CHECK: @test_intrinsic_pow
+; CHECK-NOT: call
+  %0 = call double @llvm.pow.f64(double 1.500000e+00, double 3.000000e+00)
+  ret double %0
+}
+declare double @llvm.pow.f64(double, double) nounwind readonly
+
 ; Shouldn't fold because of -fno-builtin
 define double @sin_() nounwind uwtable ssp {
 ; FNOBUILTIN: @sin_

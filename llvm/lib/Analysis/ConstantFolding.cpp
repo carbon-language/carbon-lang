@@ -1053,6 +1053,7 @@ bool
 llvm::canConstantFoldCallTo(const Function *F) {
   switch (F->getIntrinsicID()) {
   case Intrinsic::sqrt:
+  case Intrinsic::pow:
   case Intrinsic::powi:
   case Intrinsic::bswap:
   case Intrinsic::ctpop:
@@ -1346,9 +1347,6 @@ llvm::ConstantFoldCall(Function *F, ArrayRef<Constant *> Operands,
                       (double)Op1->getValueAPF().convertToFloat() :
                       Op1->getValueAPF().convertToDouble();
       if (ConstantFP *Op2 = dyn_cast<ConstantFP>(Operands[1])) {
-        if (!TLI)
-          return 0;
-
         if (Op2->getType() != Op1->getType())
           return 0;
 
@@ -1356,6 +1354,11 @@ llvm::ConstantFoldCall(Function *F, ArrayRef<Constant *> Operands,
                       (double)Op2->getValueAPF().convertToFloat():
                       Op2->getValueAPF().convertToDouble();
 
+        if (F->getIntrinsicID() == Intrinsic::pow) {
+          return ConstantFoldBinaryFP(pow, Op1V, Op2V, Ty);
+        }
+        if (!TLI)
+          return 0;
         if (Name == "pow" && TLI->has(LibFunc::pow))
           return ConstantFoldBinaryFP(pow, Op1V, Op2V, Ty);
         if (Name == "fmod" && TLI->has(LibFunc::fmod))
