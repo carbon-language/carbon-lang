@@ -448,7 +448,11 @@ namespace clang {
       OBJC_CHAINED_CATEGORIES,
 
       /// \brief Record code for a file sorted array of DeclIDs in a module.
-      FILE_SORTED_DECLS
+      FILE_SORTED_DECLS,
+      
+      /// \brief Record code for an array of all of the (sub)modules that were
+      /// imported by the AST file.
+      IMPORTED_MODULES
     };
 
     /// \brief Record types used within a source manager block.

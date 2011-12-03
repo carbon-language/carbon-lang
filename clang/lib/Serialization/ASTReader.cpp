@@ -2385,6 +2385,20 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
       for (unsigned I = 0, N = Record.size(); I != N; ++I)
         KnownNamespaces.push_back(getGlobalDeclID(F, Record[I]));
       break;
+        
+    case IMPORTED_MODULES: {
+      if (F.Kind != MK_Module) {
+        // If we aren't loading a module (which has its own exports), make
+        // all of the imported modules visible.
+        // FIXME: Deal with macros-only imports.
+        for (unsigned I = 0, N = Record.size(); I != N; ++I) {
+          if (unsigned GlobalID = getGlobalSubmoduleID(F, Record[I]))
+            ImportedModules.push_back(GlobalID);
+        }
+      }
+      break;
+      
+    }
     }
   }
   Error("premature end of bitstream in AST file");
@@ -2835,6 +2849,13 @@ void ASTReader::InitializeContext() {
     Context.setcudaConfigureCallDecl(
                            cast<FunctionDecl>(GetDecl(CUDASpecialDeclRefs[0])));
   }
+  
+  // Re-export any modules that were imported by a non-module AST file.
+  for (unsigned I = 0, N = ImportedModules.size(); I != N; ++I) {
+    if (Module *Imported = getSubmodule(ImportedModules[I]))
+      makeModuleVisible(Imported, Module::AllVisible);
+  }
+  ImportedModules.clear();
 }
 
 void ASTReader::finalizeForWriting() {

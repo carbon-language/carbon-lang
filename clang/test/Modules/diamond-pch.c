@@ -3,11 +3,6 @@
 
 // in diamond-bottom.h: expected-note{{passing argument to parameter 'x' here}}
 
-// FIXME: The module import below shouldn't be necessary, because importing the
-// precompiled header should make all of the modules visible that were
-// visible when the PCH file was built.
-__import_module__ diamond_bottom;
-
 void test_diamond(int i, float f, double d, char c) {
   top(&i);
   left(&f);
