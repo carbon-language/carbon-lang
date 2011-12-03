@@ -230,7 +230,8 @@ ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
     jmp_bufDecl(0), sigjmp_bufDecl(0), ucontext_tDecl(0),
     BlockDescriptorType(0), BlockDescriptorExtendedType(0),
     cudaConfigureCallDecl(0),
-    NullTypeSourceInfo(QualType()),
+    NullTypeSourceInfo(QualType()), 
+    FirstLocalImport(), LastLocalImport(),
     SourceMgr(SM), LangOpts(LOpts), 
     AddrSpaceMap(0), Target(t), PrintingPolicy(LOpts),
     Idents(idents), Selectors(sels),
@@ -680,6 +681,19 @@ ASTContext::overridden_methods_size(const CXXMethodDecl *Method) const {
 void ASTContext::addOverriddenMethod(const CXXMethodDecl *Method, 
                                      const CXXMethodDecl *Overridden) {
   OverriddenMethods[Method].push_back(Overridden);
+}
+
+void ASTContext::addedLocalImportDecl(ImportDecl *Import) {
+  assert(!Import->NextLocalImport && "Import declaration already in the chain");
+  assert(!Import->isFromASTFile() && "Non-local import declaration");
+  if (!FirstLocalImport) {
+    FirstLocalImport = Import;
+    LastLocalImport = Import;
+    return;
+  }
+  
+  LastLocalImport->NextLocalImport = Import;
+  LastLocalImport = Import;
 }
 
 //===----------------------------------------------------------------------===//

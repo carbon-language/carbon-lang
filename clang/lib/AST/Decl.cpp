@@ -2629,7 +2629,8 @@ static unsigned getNumModuleIdentifiers(Module *Mod) {
 ImportDecl::ImportDecl(DeclContext *DC, SourceLocation ImportLoc, 
                        Module *Imported,
                        ArrayRef<SourceLocation> IdentifierLocs)
-  : Decl(Import, DC, ImportLoc), ImportedAndComplete(Imported, true)
+  : Decl(Import, DC, ImportLoc), ImportedAndComplete(Imported, true),
+    NextLocalImport()
 {
   assert(getNumModuleIdentifiers(Imported) == IdentifierLocs.size());
   SourceLocation *StoredLocs = reinterpret_cast<SourceLocation *>(this + 1);
@@ -2639,7 +2640,8 @@ ImportDecl::ImportDecl(DeclContext *DC, SourceLocation ImportLoc,
 
 ImportDecl::ImportDecl(DeclContext *DC, SourceLocation ImportLoc, 
                        Module *Imported, SourceLocation EndLoc)
-  : Decl(Import, DC, ImportLoc), ImportedAndComplete(Imported, false)
+  : Decl(Import, DC, ImportLoc), ImportedAndComplete(Imported, false),
+    NextLocalImport()
 {
   *reinterpret_cast<SourceLocation *>(this + 1) = EndLoc;
 }

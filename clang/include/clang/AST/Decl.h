@@ -3095,8 +3095,13 @@ class ImportDecl : public Decl {
   /// end of the import declaration.
   llvm::PointerIntPair<Module *, 1, bool> ImportedAndComplete;
   
+  /// \brief The next import in the list of imports local to the translation
+  /// unit being parsed (not loaded from an AST file).
+  ImportDecl *NextLocalImport;
+  
   friend class ASTReader;
   friend class ASTDeclReader;
+  friend class ASTContext;
   
   ImportDecl(DeclContext *DC, SourceLocation ImportLoc, Module *Imported,
              ArrayRef<SourceLocation> IdentifierLocs);
@@ -3104,7 +3109,7 @@ class ImportDecl : public Decl {
   ImportDecl(DeclContext *DC, SourceLocation ImportLoc, Module *Imported,
              SourceLocation EndLoc);
 
-  ImportDecl(EmptyShell Empty) : Decl(Import, Empty) { }
+  ImportDecl(EmptyShell Empty) : Decl(Import, Empty), NextLocalImport() { }
   
 public:
   /// \brief Create a new module import declaration.
