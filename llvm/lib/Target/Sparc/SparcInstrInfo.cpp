@@ -195,7 +195,7 @@ bool SparcInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
           .addMBB(UnCondBrIter->getOperand(0).getMBB()).addImm(BranchCode);
         BuildMI(MBB, UnCondBrIter, MBB.findDebugLoc(I), get(SP::BA))
           .addMBB(TargetBB);
-        MBB.addSuccessor(TargetBB);
+
         OldInst->eraseFromParent();
         UnCondBrIter->eraseFromParent();
 
