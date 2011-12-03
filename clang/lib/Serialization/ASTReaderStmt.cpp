@@ -568,8 +568,6 @@ ASTStmtReader::VisitBinaryConditionalOperator(BinaryConditionalOperator *E) {
   E->SubExprs[BinaryConditionalOperator::RHS] = Reader.ReadSubExpr();
   E->QuestionLoc = ReadSourceLocation(Record, Idx);
   E->ColonLoc = ReadSourceLocation(Record, Idx);
-
-  E->getOpaqueValue()->setSourceExpr(E->getCommon());
 }
 
 void ASTStmtReader::VisitImplicitCastExpr(ImplicitCastExpr *E) {
@@ -787,8 +785,6 @@ void ASTStmtReader::VisitPseudoObjectExpr(PseudoObjectExpr *E) {
   // Read all the semantic expressions.
   for (unsigned i = 0; i != numSemanticExprs; ++i) {
     Expr *subExpr = Reader.ReadSubExpr();
-    if (isa<OpaqueValueExpr>(subExpr))
-      cast<OpaqueValueExpr>(subExpr)->setSourceExpr(Reader.ReadSubExpr());
     E->getSubExprsBuffer()[i+1] = subExpr;
   }
 }
@@ -1376,7 +1372,7 @@ void ASTStmtReader::VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E) {
 
 void ASTStmtReader::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
   VisitExpr(E);
-  Idx++; // skip ID
+  E->SourceExpr = Reader.ReadSubExpr();
   E->Loc = ReadSourceLocation(Record, Idx);
 }
 
@@ -2055,20 +2051,9 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       S = new (Context) MaterializeTemporaryExpr(Empty);
       break;
         
-    case EXPR_OPAQUE_VALUE: {
-      unsigned key = Record[ASTStmtReader::NumExprFields];
-      OpaqueValueExpr *&expr = OpaqueValueExprs[key];
-
-      // If we already have an entry for this opaque value expression,
-      // don't bother reading it again.
-      if (expr) {
-        StmtStack.push_back(expr);
-        continue;
-      }
-
-      S = expr = new (Context) OpaqueValueExpr(Empty);
+    case EXPR_OPAQUE_VALUE:
+      S = new (Context) OpaqueValueExpr(Empty);
       break;
-    }
 
     case EXPR_CUDA_KERNEL_CALL:
       S = new (Context) CUDAKernelCallExpr(Context, Empty);

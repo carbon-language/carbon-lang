@@ -750,8 +750,6 @@ void ASTStmtWriter::VisitPseudoObjectExpr(PseudoObjectExpr *E) {
   for (PseudoObjectExpr::semantics_iterator
          i = E->semantics_begin(), e = E->semantics_end(); i != e; ++i) {
     Writer.AddStmt(*i);
-    if (OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(*i))
-      Writer.AddStmt(OVE->getSourceExpr());
   }
 
   Code = serialization::EXPR_PSEUDO_OBJECT;
@@ -1381,7 +1379,7 @@ void ASTStmtWriter::VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E) {
 
 void ASTStmtWriter::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
   VisitExpr(E);
-  Record.push_back(Writer.getOpaqueValueID(E));
+  Writer.AddStmt(E->getSourceExpr());
   Writer.AddSourceLocation(E->getLocation(), Record);
   Code = serialization::EXPR_OPAQUE_VALUE;
 }
@@ -1466,12 +1464,6 @@ unsigned ASTWriter::getSwitchCaseID(SwitchCase *S) {
 
 void ASTWriter::ClearSwitchCaseIDs() {
   SwitchCaseIDs.clear();
-}
-
-unsigned ASTWriter::getOpaqueValueID(OpaqueValueExpr *e) {
-  unsigned &entry = OpaqueValues[e];
-  if (!entry) entry = OpaqueValues.size();
-  return entry;
 }
 
 /// \brief Write the given substatement or subexpression to the

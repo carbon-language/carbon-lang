@@ -585,9 +585,6 @@ private:
   /// switch statement can refer to them.
   std::map<unsigned, SwitchCase *> SwitchCaseStmts;
 
-  /// \brief Mapping from opaque value IDs to OpaqueValueExprs.
-  std::map<unsigned, OpaqueValueExpr*> OpaqueValueExprs;
-
   /// \brief The number of stat() calls that hit/missed the stat
   /// cache.
   unsigned NumStatHits, NumStatMisses;
