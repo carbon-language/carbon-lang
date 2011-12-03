@@ -36,7 +36,6 @@ public:
 
     virtual void GetDescription (Stream *s, lldb::DescriptionLevel level) = 0;
     virtual bool ValidatePlan (Stream *error);
-    virtual bool PlanExplainsStop ();
     virtual bool ShouldStop (Event *event_ptr) = 0;
     virtual Vote ShouldReportStop (Event *event_ptr);
     virtual bool StopOthers ();

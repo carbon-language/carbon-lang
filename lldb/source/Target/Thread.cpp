@@ -272,7 +272,59 @@ Thread::ShouldStop (Event* event_ptr)
     // The top most plan always gets to do the trace log...
     current_plan->DoTraceLog ();
 
-    if (current_plan->PlanExplainsStop())
+    // If the base plan doesn't understand why we stopped, then we have to find a plan that does.
+    // If that plan is still working, then we don't need to do any more work.  If the plan that explains 
+    // the stop is done, then we should pop all the plans below it, and pop it, and then let the plans above it decide
+    // whether they still need to do more work.
+    
+    bool done_processing_current_plan = false;
+    
+    if (!current_plan->PlanExplainsStop())
+    {
+        if (current_plan->TracerExplainsStop())
+        {
+            done_processing_current_plan = true;
+            should_stop = false;
+        }
+        else
+        {
+            // If the current plan doesn't explain the stop, then, find one that
+            // does and let it handle the situation.
+            ThreadPlan *plan_ptr = current_plan;
+            while ((plan_ptr = GetPreviousPlan(plan_ptr)) != NULL)
+            {
+                if (plan_ptr->PlanExplainsStop())
+                {
+                    should_stop = plan_ptr->ShouldStop (event_ptr);
+                    
+                    // plan_ptr explains the stop, next check whether plan_ptr is done, if so, then we should take it 
+                    // and all the plans below it off the stack.
+                    
+                    if (plan_ptr->MischiefManaged())
+                    {
+                        // We're going to pop the plans up to AND INCLUDING the plan that explains the stop.
+                        plan_ptr = GetPreviousPlan(plan_ptr);
+                        
+                        do 
+                        {
+                            if (should_stop)
+                                current_plan->WillStop();
+                            PopPlan();
+                        }
+                        while ((current_plan = GetCurrentPlan()) != plan_ptr);
+                        done_processing_current_plan = false;
+                    }
+                    else
+                        done_processing_current_plan = true;
+                        
+                    break;
+                }
+
+            }
+        }
+    }
+    
+    if (!done_processing_current_plan)
     {
         bool over_ride_stop = current_plan->ShouldAutoContinue(event_ptr);
         
@@ -332,25 +384,6 @@ Thread::ShouldStop (Event* event_ptr)
         }
         if (over_ride_stop)
             should_stop = false;
-    }
-    else if (current_plan->TracerExplainsStop())
-    {
-        should_stop = false;
-    }
-    else
-    {
-        // If the current plan doesn't explain the stop, then, find one that
-        // does and let it handle the situation.
-        ThreadPlan *plan_ptr = current_plan;
-        while ((plan_ptr = GetPreviousPlan(plan_ptr)) != NULL)
-        {
-            if (plan_ptr->PlanExplainsStop())
-            {
-                should_stop = plan_ptr->ShouldStop (event_ptr);
-                break;
-            }
-
-        }
     }
 
     if (log)
@@ -797,22 +830,10 @@ Thread::QueueThreadPlanForStepOut
 ThreadPlan *
 Thread::QueueThreadPlanForStepThrough (bool abort_other_plans, bool stop_other_threads)
 {
-    // Try the dynamic loader first:
-    ThreadPlanSP thread_plan_sp(GetProcess().GetDynamicLoader()->GetStepThroughTrampolinePlan (*this, stop_other_threads));
-    // If that didn't come up with anything, try the ObjC runtime plugin:
-    if (thread_plan_sp.get() == NULL)
-    {
-        ObjCLanguageRuntime *objc_runtime = GetProcess().GetObjCLanguageRuntime();
-        if (objc_runtime)
-            thread_plan_sp = objc_runtime->GetStepThroughTrampolinePlan (*this, stop_other_threads);
-    }
-    
-    if (thread_plan_sp.get() == NULL)
-    {
-        thread_plan_sp.reset(new ThreadPlanStepThrough (*this, stop_other_threads));
-        if (thread_plan_sp && !thread_plan_sp->ValidatePlan (NULL))
-            return NULL;
-    }
+    ThreadPlanSP thread_plan_sp(new ThreadPlanStepThrough (*this, stop_other_threads));
+    if (!thread_plan_sp || !thread_plan_sp->ValidatePlan (NULL))
+        return NULL;
+
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
     return thread_plan_sp.get();
 }

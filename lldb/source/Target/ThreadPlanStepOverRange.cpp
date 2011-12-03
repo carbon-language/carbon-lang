@@ -63,6 +63,31 @@ ThreadPlanStepOverRange::GetDescription (Stream *s, lldb::DescriptionLevel level
 }
 
 bool
+ThreadPlanStepOverRange::PlanExplainsStop ()
+{
+    // We don't explain signals or breakpoints (breakpoints that handle stepping in or
+    // out will be handled by a child plan.
+    StopInfoSP stop_info_sp = GetPrivateStopReason();
+    if (stop_info_sp)
+    {
+        StopReason reason = stop_info_sp->GetStopReason();
+
+        switch (reason)
+        {
+        case eStopReasonBreakpoint:
+        case eStopReasonWatchpoint:
+        case eStopReasonSignal:
+        case eStopReasonException:
+            return false;
+        default:
+            return true;
+        }
+    }
+    return true;
+}
+
+
+bool
 ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));

@@ -68,6 +68,37 @@ ThreadPlanStepInRange::GetDescription (Stream *s, lldb::DescriptionLevel level)
 }
 
 bool
+ThreadPlanStepInRange::PlanExplainsStop ()
+{
+    // We always explain a stop.  Either we've just done a single step, in which
+    // case we'll do our ordinary processing, or we stopped for some
+    // reason that isn't handled by our sub-plans, in which case we want to just stop right
+    // away.
+    
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    StopInfoSP stop_info_sp = GetPrivateStopReason();
+    if (stop_info_sp)
+    {
+        StopReason reason = stop_info_sp->GetStopReason();
+
+        switch (reason)
+        {
+        case eStopReasonBreakpoint:
+        case eStopReasonWatchpoint:
+        case eStopReasonSignal:
+        case eStopReasonException:
+            if (log)
+                log->PutCString ("ThreadPlanStepInRange got asked if it explains the stop for some reason other than step.");
+            SetPlanComplete();
+            break;
+        default:
+            break;
+        }
+    }
+    return true;
+}
+
+bool
 ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
@@ -81,6 +112,9 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
         log->Printf("ThreadPlanStepInRange reached %s.", s.GetData());
     }
 
+    if (IsPlanComplete())
+        return true;
+        
     // If we're still in the range, keep going.
     if (InRange())
         return false;

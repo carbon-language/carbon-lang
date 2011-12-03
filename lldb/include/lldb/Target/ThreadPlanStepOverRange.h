@@ -33,6 +33,7 @@ public:
                              
     virtual ~ThreadPlanStepOverRange ();
 
+    virtual bool PlanExplainsStop ();
     virtual void GetDescription (Stream *s, lldb::DescriptionLevel level);
     virtual bool ShouldStop (Event *event_ptr);
     virtual bool

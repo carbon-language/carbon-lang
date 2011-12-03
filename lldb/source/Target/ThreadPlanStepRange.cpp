@@ -63,30 +63,6 @@ ThreadPlanStepRange::ValidatePlan (Stream *error)
     return true;
 }
 
-bool
-ThreadPlanStepRange::PlanExplainsStop ()
-{
-    // We don't explain signals or breakpoints (breakpoints that handle stepping in or
-    // out will be handled by a child plan.
-    StopInfoSP stop_info_sp = GetPrivateStopReason();
-    if (stop_info_sp)
-    {
-        StopReason reason = stop_info_sp->GetStopReason();
-
-        switch (reason)
-        {
-        case eStopReasonBreakpoint:
-        case eStopReasonWatchpoint:
-        case eStopReasonSignal:
-        case eStopReasonException:
-            return false;
-        default:
-            return true;
-        }
-    }
-    return true;
-}
-
 Vote
 ThreadPlanStepRange::ShouldReportStop (Event *event_ptr)
 {

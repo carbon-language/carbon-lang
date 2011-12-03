@@ -33,21 +33,29 @@ public:
     virtual bool WillResume (lldb::StateType resume_state, bool current_plan);
     virtual bool WillStop ();
     virtual bool MischiefManaged ();
+    virtual void DidPush();
 
 protected:
     ThreadPlanStepThrough (Thread &thread,
                            bool stop_others);
 
-    bool
-    HappyToStopHere ();
+    void
+    LookForPlanToStepThroughFromCurrentPC ();
+    
+    bool 
+    HitOurBackstopBreakpoint();
 
 private:
     friend ThreadPlan *
     Thread::QueueThreadPlanForStepThrough (bool abort_other_plans,
                                            bool stop_others);
 
-    lldb::addr_t m_start_address;
-    bool m_stop_others;
+    lldb::ThreadPlanSP m_sub_plan_sp;
+    lldb::addr_t      m_start_address;
+    lldb::break_id_t  m_backstop_bkpt_id;
+    lldb::addr_t      m_backstop_addr;
+    size_t            m_stack_depth;
+    bool              m_stop_others;
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepThrough);
 

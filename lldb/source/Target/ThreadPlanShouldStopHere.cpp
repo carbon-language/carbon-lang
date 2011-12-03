@@ -7,8 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/ThreadPlanShouldStopHere.h"
+#include "lldb/Core/Log.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -47,7 +49,26 @@ ThreadPlan *
 ThreadPlanShouldStopHere::InvokeShouldStopHereCallback ()
 {
     if (m_callback)
-        return m_callback (m_owner, m_flags, m_baton);
+    {
+        ThreadPlan *return_plan = m_callback (m_owner, m_flags, m_baton);
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+        if (log)
+        {
+            lldb::addr_t current_addr = m_owner->GetThread().GetRegisterContext()->GetPC(0);
+
+            if (return_plan)
+            {
+                StreamString s;
+                return_plan->GetDescription (&s, lldb::eDescriptionLevelFull);
+                log->Printf ("ShouldStopHere callback found a step out plan from 0x%llx: %s.", current_addr, s.GetData()); 
+            }
+            else
+            {
+                log->Printf ("ShouldStopHere callback didn't find a step out plan from: 0x%llx.", current_addr);
+            }
+        }
+        return return_plan;
+    }
     else
         return NULL;
 }

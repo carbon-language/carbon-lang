@@ -19,8 +19,6 @@
 
 namespace lldb_private {
 
-class ThreadPlanStepOverRange;
-
 class ThreadPlanStepOut : public ThreadPlan
 {
 public:

@@ -42,6 +42,9 @@ public:
     ShouldStop (Event *event_ptr);
 
     void SetAvoidRegexp(const char *name);
+    
+    virtual bool
+    PlanExplainsStop ();
 
     static ThreadPlan *
     DefaultShouldStopHereCallback (ThreadPlan *current_plan, Flags &flags, void *baton);
