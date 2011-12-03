@@ -3619,7 +3619,7 @@ FindConversionForRefInit(Sema &S, ImplicitConversionSequence &ICS,
 /// \brief Compute an implicit conversion sequence for reference
 /// initialization.
 static ImplicitConversionSequence
-TryReferenceInit(Sema &S, Expr *&Init, QualType DeclType,
+TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
                  SourceLocation DeclLoc,
                  bool SuppressUserConversions,
                  bool AllowExplicit) {
@@ -3950,9 +3950,71 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
 
   // C++11 [over.ics.list]p5:
   //   Otherwise, if the parameter is a reference, see 13.3.3.1.4.
-  // FIXME: Implement this.
-  if (ToType->isReferenceType())
+  if (ToType->isReferenceType()) {
+    // The standard is notoriously unclear here, since 13.3.3.1.4 doesn't
+    // mention initializer lists in any way. So we go by what list-
+    // initialization would do and try to extrapolate from that.
+
+    QualType T1 = ToType->getAs<ReferenceType>()->getPointeeType();
+
+    // If the initializer list has a single element that is reference-related
+    // to the parameter type, we initialize the reference from that.
+    if (From->getNumInits() == 1) {
+      Expr *Init = From->getInit(0);
+
+      QualType T2 = Init->getType();
+
+      // If the initializer is the address of an overloaded function, try
+      // to resolve the overloaded function. If all goes well, T2 is the
+      // type of the resulting function.
+      if (S.Context.getCanonicalType(T2) == S.Context.OverloadTy) {
+        DeclAccessPair Found;
+        if (FunctionDecl *Fn = S.ResolveAddressOfOverloadedFunction(
+                                   Init, ToType, false, Found))
+          T2 = Fn->getType();
+      }
+
+      // Compute some basic properties of the types and the initializer.
+      bool dummy1 = false;
+      bool dummy2 = false;
+      bool dummy3 = false;
+      Sema::ReferenceCompareResult RefRelationship
+        = S.CompareReferenceRelationship(From->getLocStart(), T1, T2, dummy1,
+                                         dummy2, dummy3);
+
+      if (RefRelationship >= Sema::Ref_Related)
+        return TryReferenceInit(S, Init, ToType,
+                                /*FIXME:*/From->getLocStart(),
+                                SuppressUserConversions,
+                                /*AllowExplicit=*/false);
+    }
+
+    // Otherwise, we bind the reference to a temporary created from the
+    // initializer list.
+    Result = TryListConversion(S, From, T1, SuppressUserConversions,
+                               InOverloadResolution,
+                               AllowObjCWritebackConversion);
+    if (Result.isFailure())
+      return Result;
+    assert(!Result.isEllipsis() &&
+           "Sub-initialization cannot result in ellipsis conversion.");
+
+    // Can we even bind to a temporary?
+    if (ToType->isRValueReferenceType() ||
+        (T1.isConstQualified() && !T1.isVolatileQualified())) {
+      StandardConversionSequence &SCS = Result.isStandard() ? Result.Standard :
+                                            Result.UserDefined.After;
+      SCS.ReferenceBinding = true;
+      SCS.IsLvalueReference = ToType->isLValueReferenceType();
+      SCS.BindsToRvalue = true;
+      SCS.BindsToFunctionLvalue = false;
+      SCS.BindsImplicitObjectArgumentWithoutRefQualifier = false;
+      SCS.ObjCLifetimeConversionBinding = false;
+    } else
+      Result.setBad(BadConversionSequence::lvalue_ref_to_rvalue,
+                    From, ToType);
     return Result;
+  }
 
   // C++11 [over.ics.list]p6:
   //   Otherwise, if the parameter type is not a class:
