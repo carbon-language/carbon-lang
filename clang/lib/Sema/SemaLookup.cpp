@@ -3556,6 +3556,13 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   if (Diags.hasFatalErrorOccurred() || !getLangOptions().SpellChecking)
     return TypoCorrection();
 
+  // In Microsoft mode, don't perform typo correction in a template member
+  // function dependent context because it interferes with the "lookup into
+  // dependent bases of class templates" feature.
+  if (getLangOptions().MicrosoftMode && CurContext->isDependentContext() &&
+      isa<CXXMethodDecl>(CurContext))
+    return TypoCorrection();
+
   // We only attempt to correct typos for identifiers.
   IdentifierInfo *Typo = TypoName.getName().getAsIdentifierInfo();
   if (!Typo)

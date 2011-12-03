@@ -123,3 +123,23 @@ int main2()
 }
 
 }
+
+
+namespace lookup_dependent_base_no_typo_correction {
+
+class C {
+public:
+  int m_hWnd;
+};
+
+template <class T>
+class A : public T {
+public:
+  void f(int hWnd) {
+    m_hWnd = 1;
+  }
+};
+
+template class A<C>;
+
+}
