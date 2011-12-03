@@ -151,12 +151,14 @@ class LValue {
   llvm::MDNode *TBAAInfo;
 
 private:
-  void Initialize(QualType Type, Qualifiers Quals, unsigned Alignment = 0,
+  void Initialize(QualType Type, Qualifiers Quals,
+                  CharUnits Alignment = CharUnits(),
                   llvm::MDNode *TBAAInfo = 0) {
     this->Type = Type;
     this->Quals = Quals;
-    this->Alignment = Alignment;
-    assert(this->Alignment == Alignment && "Alignment exceeds allowed max!");
+    this->Alignment = Alignment.getQuantity();
+    assert(this->Alignment == Alignment.getQuantity() &&
+           "Alignment exceeds allowed max!");
 
     // Initialize Objective-C flags.
     this->Ivar = this->ObjIsArray = this->NonGC = this->GlobalObjCRef = false;
@@ -220,8 +222,8 @@ public:
 
   unsigned getAddressSpace() const { return Quals.getAddressSpace(); }
 
-  unsigned getAlignment() const { return Alignment; }
-  void setAlignment(unsigned A) { Alignment = A; }
+  CharUnits getAlignment() const { return CharUnits::fromQuantity(Alignment); }
+  void setAlignment(CharUnits A) { Alignment = A.getQuantity(); }
 
   // simple lvalue
   llvm::Value *getAddress() const { assert(isSimple()); return V; }
@@ -252,7 +254,7 @@ public:
   }
 
   static LValue MakeAddr(llvm::Value *address, QualType type,
-                         unsigned alignment, ASTContext &Context,
+                         CharUnits alignment, ASTContext &Context,
                          llvm::MDNode *TBAAInfo = 0) {
     Qualifiers qs = type.getQualifiers();
     qs.setObjCGCAttr(Context.getObjCGCAttrKind(type));
@@ -393,7 +395,7 @@ public:
                                 NeedsGCBarriers_t needsGC,
                                 IsAliased_t isAliased,
                                 IsZeroed_t isZeroed = IsNotZeroed) {
-    return forAddr(LV.getAddress(), CharUnits::fromQuantity(LV.getAlignment()),
+    return forAddr(LV.getAddress(), LV.getAlignment(),
                    LV.getQuals(), isDestructed, needsGC, isAliased, isZeroed);
   }
 

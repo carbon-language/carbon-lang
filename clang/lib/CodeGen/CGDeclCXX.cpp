@@ -28,7 +28,7 @@ static void EmitDeclInit(CodeGenFunction &CGF, const VarDecl &D,
   
   ASTContext &Context = CGF.getContext();
 
-  unsigned alignment = Context.getDeclAlign(&D).getQuantity();
+  CharUnits alignment = Context.getDeclAlign(&D);
   QualType type = D.getType();
   LValue lv = CGF.MakeAddrLValue(DeclPtr, type, alignment);
 

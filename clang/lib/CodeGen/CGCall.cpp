@@ -1060,8 +1060,9 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // we need to create a temporary and reconstruct it from the
       // arguments.
       llvm::AllocaInst *Alloca = CreateMemTemp(Ty);
-      Alloca->setAlignment(getContext().getDeclAlign(Arg).getQuantity());
-      LValue LV = MakeAddrLValue(Alloca, Ty, Alloca->getAlignment());
+      CharUnits Align = getContext().getDeclAlign(Arg);
+      Alloca->setAlignment(Align.getQuantity());
+      LValue LV = MakeAddrLValue(Alloca, Ty, Align);
       llvm::Function::arg_iterator End = ExpandTypeFromArgs(Ty, LV, AI);
       EmitParmDecl(*Arg, Alloca, ArgNo);
 

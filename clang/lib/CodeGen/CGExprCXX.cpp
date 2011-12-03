@@ -753,7 +753,7 @@ static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const CXXNewExpr *E,
   CharUnits Alignment = CGF.getContext().getTypeAlignInChars(AllocType);
   if (!CGF.hasAggregateLLVMType(AllocType))
     CGF.EmitScalarInit(Init, 0, CGF.MakeAddrLValue(NewPtr, AllocType,
-                                                   Alignment.getQuantity()),
+                                                   Alignment),
                        false);
   else if (AllocType->isAnyComplexType())
     CGF.EmitComplexExprIntoAddr(Init, NewPtr, 

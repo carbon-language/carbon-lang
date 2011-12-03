@@ -972,7 +972,7 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
     capturedByInit ? emission.Address : emission.getObjectAddress(*this);
 
   if (!emission.IsConstantAggregate) {
-    LValue lv = MakeAddrLValue(Loc, type, alignment.getQuantity());
+    LValue lv = MakeAddrLValue(Loc, type, alignment);
     lv.setNonGC(true);
     return EmitExprAsInit(Init, &D, lv, capturedByInit);
   }
@@ -1505,7 +1505,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
     // Store the initial value into the alloca.
     if (doStore) {
       LValue lv = MakeAddrLValue(DeclPtr, Ty,
-                                 getContext().getDeclAlign(&D).getQuantity());
+                                 getContext().getDeclAlign(&D));
       EmitStoreOfScalar(Arg, lv);
     }
   }

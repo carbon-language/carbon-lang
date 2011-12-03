@@ -434,7 +434,7 @@ static void EmitAggMemberInitializer(CodeGenFunction &CGF,
 
       // Update the LValue.
       LV.setAddress(Dest);
-      unsigned Align = CGF.getContext().getTypeAlignInChars(T).getQuantity();
+      CharUnits Align = CGF.getContext().getTypeAlignInChars(T);
       LV.setAlignment(std::min(Align, LV.getAlignment()));
     }
 

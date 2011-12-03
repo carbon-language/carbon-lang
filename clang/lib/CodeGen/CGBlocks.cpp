@@ -745,8 +745,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
                            declRef, VK_RValue);
       EmitExprAsInit(&l2r, &blockFieldPseudoVar,
                      MakeAddrLValue(blockField, type,
-                                    getContext().getDeclAlign(variable)
-                                                .getQuantity()),
+                                    getContext().getDeclAlign(variable)),
                      /*captured by init*/ false);
     }
 

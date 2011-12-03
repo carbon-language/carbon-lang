@@ -750,8 +750,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
 
 llvm::Value *CodeGenFunction::EmitLoadOfScalar(LValue lvalue) {
   return EmitLoadOfScalar(lvalue.getAddress(), lvalue.isVolatile(),
-                          lvalue.getAlignment(), lvalue.getType(),
-                          lvalue.getTBAAInfo());
+                          lvalue.getAlignment().getQuantity(),
+                          lvalue.getType(), lvalue.getTBAAInfo());
 }
 
 llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
@@ -812,7 +812,7 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
 
 void CodeGenFunction::EmitStoreOfScalar(llvm::Value *value, LValue lvalue) {
   EmitStoreOfScalar(value, lvalue.getAddress(), lvalue.isVolatile(),
-                    lvalue.getAlignment(), lvalue.getType(),
+                    lvalue.getAlignment().getQuantity(), lvalue.getType(),
                     lvalue.getTBAAInfo());
 }
 
@@ -1335,12 +1335,12 @@ static LValue EmitGlobalVarDeclLValue(CodeGenFunction &CGF,
   llvm::Value *V = CGF.CGM.GetAddrOfGlobalVar(VD);
   llvm::Type *RealVarTy = CGF.getTypes().ConvertTypeForMem(VD->getType());
   V = EmitBitCastOfLValueToProperType(CGF, V, RealVarTy);
-  unsigned Alignment = CGF.getContext().getDeclAlign(VD).getQuantity();
+  CharUnits Alignment = CGF.getContext().getDeclAlign(VD);
   QualType T = E->getType();
   LValue LV;
   if (VD->getType()->isReferenceType()) {
     llvm::LoadInst *LI = CGF.Builder.CreateLoad(V);
-    LI->setAlignment(Alignment);
+    LI->setAlignment(Alignment.getQuantity());
     V = LI;
     LV = CGF.MakeNaturalAlignAddrLValue(V, T);
   } else {
@@ -1365,13 +1365,13 @@ static LValue EmitFunctionDeclLValue(CodeGenFunction &CGF,
       V = CGF.Builder.CreateBitCast(V, CGF.ConvertType(NoProtoType));
     }
   }
-  unsigned Alignment = CGF.getContext().getDeclAlign(FD).getQuantity();
+  CharUnits Alignment = CGF.getContext().getDeclAlign(FD);
   return CGF.MakeAddrLValue(V, E->getType(), Alignment);
 }
 
 LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   const NamedDecl *ND = E->getDecl();
-  unsigned Alignment = getContext().getDeclAlign(ND).getQuantity();
+  CharUnits Alignment = getContext().getDeclAlign(ND);
   QualType T = E->getType();
 
   if (ND->hasAttr<WeakRefAttr>()) {
@@ -1401,7 +1401,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     LValue LV;
     if (VD->getType()->isReferenceType()) {
       llvm::LoadInst *LI = Builder.CreateLoad(V);
-      LI->setAlignment(Alignment);
+      LI->setAlignment(Alignment.getQuantity());
       V = LI;
       LV = MakeNaturalAlignAddrLValue(V, T);
     } else {
@@ -1427,8 +1427,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
 }
 
 LValue CodeGenFunction::EmitBlockDeclRefLValue(const BlockDeclRefExpr *E) {
-  unsigned Alignment =
-    getContext().getDeclAlign(E->getDecl()).getQuantity();
+  CharUnits Alignment = getContext().getDeclAlign(E->getDecl());
   return MakeAddrLValue(GetAddrOfBlockDecl(E), E->getType(), Alignment);
 }
 
@@ -1636,7 +1635,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   // We know that the pointer points to a type of the correct size, unless the
   // size is a VLA or Objective-C interface.
   llvm::Value *Address = 0;
-  unsigned ArrayAlignment = 0;
+  CharUnits ArrayAlignment;
   if (const VariableArrayType *vla =
         getContext().getAsVariableArrayType(E->getType())) {
     // The base must be a pointer, which is not an aggregate.  Emit
@@ -1704,8 +1703,8 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
          "CodeGenFunction::EmitArraySubscriptExpr(): Illegal base type");
 
   // Limit the alignment to that of the result type.
-  if (ArrayAlignment) {
-    unsigned Align = getContext().getTypeAlignInChars(T).getQuantity();
+  if (!ArrayAlignment.isZero()) {
+    CharUnits Align = getContext().getTypeAlignInChars(T);
     ArrayAlignment = std::min(Align, ArrayAlignment);
   }
 
@@ -1866,7 +1865,7 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value *baseAddr,
 
   const RecordDecl *rec = field->getParent();
   QualType type = field->getType();
-  unsigned alignment = getContext().getDeclAlign(field).getQuantity();
+  CharUnits alignment = getContext().getDeclAlign(field);
 
   bool mayAlias = rec->hasAttr<MayAliasAttr>();
 
@@ -1883,7 +1882,7 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value *baseAddr,
     if (const ReferenceType *refType = type->getAs<ReferenceType>()) {
       llvm::LoadInst *load = Builder.CreateLoad(addr, "ref");
       if (cvr & Qualifiers::Volatile) load->setVolatile(true);
-      load->setAlignment(alignment);
+      load->setAlignment(alignment.getQuantity());
 
       if (CGM.shouldUseTBAA()) {
         llvm::MDNode *tbaa;
@@ -1898,9 +1897,9 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value *baseAddr,
       mayAlias = false;
       type = refType->getPointeeType();
       if (type->isIncompleteType())
-        alignment = 0;
+        alignment = CharUnits();
       else
-        alignment = getContext().getTypeAlignInChars(type).getQuantity();
+        alignment = getContext().getTypeAlignInChars(type);
       cvr = 0; // qualifiers don't recursively apply to referencee
     }
   }
@@ -1956,7 +1955,7 @@ CodeGenFunction::EmitLValueForFieldInitialization(llvm::Value *BaseValue,
   unsigned AS = cast<llvm::PointerType>(V->getType())->getAddressSpace();
   V = Builder.CreateBitCast(V, llvmType->getPointerTo(AS));
   
-  unsigned Alignment = getContext().getDeclAlign(Field).getQuantity();
+  CharUnits Alignment = getContext().getDeclAlign(Field);
   return MakeAddrLValue(V, FieldType, Alignment);
 }
 
