@@ -2719,16 +2719,114 @@ operator>=(const unique_ptr<_T1, _D1>& __x, const unique_ptr<_T2, _D2>& __y) {re
 
 template <class _Tp> struct hash;
 
-template<class _Tp>
-struct _LIBCPP_VISIBLE hash<_Tp*>
-    : public unary_function<_Tp*, size_t>
+template <class _Tp, size_t = sizeof(_Tp) / sizeof(size_t)>
+struct __scalar_hash;
+
+template <class _Tp>
+struct __scalar_hash<_Tp, 0>
+    : public unary_function<_Tp, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(_Tp* __v) const _NOEXCEPT
+    size_t operator()(_Tp __v) const _NOEXCEPT
     {
-        const size_t* const __p = reinterpret_cast<const size_t*>(&__v);
-        return *__p;
+        union
+        {
+            _Tp    __t;
+            size_t __a;
+        } __u;
+        __u.__a = 0;
+        __u.__t = __v;
+        return __u.__a;
     }
+};
+
+template <class _Tp>
+struct __scalar_hash<_Tp, 1>
+    : public unary_function<_Tp, size_t>
+{
+    _LIBCPP_INLINE_VISIBILITY
+    size_t operator()(_Tp __v) const _NOEXCEPT
+    {
+        union
+        {
+            _Tp    __t;
+            size_t __a;
+        } __u;
+        __u.__t = __v;
+        return __u.__a;
+    }
+};
+
+template <class _Tp>
+struct __scalar_hash<_Tp, 2>
+    : public unary_function<_Tp, size_t>
+{
+    _LIBCPP_INLINE_VISIBILITY
+    size_t operator()(_Tp __v) const _NOEXCEPT
+    {
+        union
+        {
+            _Tp __t;
+            struct
+            {
+                size_t __a;
+                size_t __b;
+            };
+        } __u;
+        __u.__t = __v;
+        return __u.__a ^ __u.__b;
+    }
+};
+
+template <class _Tp>
+struct __scalar_hash<_Tp, 3>
+    : public unary_function<_Tp, size_t>
+{
+    _LIBCPP_INLINE_VISIBILITY
+    size_t operator()(_Tp __v) const _NOEXCEPT
+    {
+        union
+        {
+            _Tp __t;
+            struct
+            {
+                size_t __a;
+                size_t __b;
+                size_t __c;
+            };
+        } __u;
+        __u.__t = __v;
+        return __u.__a ^ __u.__b ^ __u.__c;
+    }
+};
+
+template <class _Tp>
+struct __scalar_hash<_Tp, 4>
+    : public unary_function<_Tp, size_t>
+{
+    _LIBCPP_INLINE_VISIBILITY
+    size_t operator()(_Tp __v) const _NOEXCEPT
+    {
+        union
+        {
+            _Tp __t;
+            struct
+            {
+                size_t __a;
+                size_t __b;
+                size_t __c;
+                size_t __d;
+            };
+        } __u;
+        __u.__t = __v;
+        return __u.__a ^ __u.__b ^ __u.__c ^ __u.__d;
+    }
+};
+
+template<class _Tp>
+struct _LIBCPP_VISIBLE hash<_Tp*>
+    : public __scalar_hash<_Tp*>
+{
 };
 
 template <class _Tp, class _Dp>

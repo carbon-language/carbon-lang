@@ -1916,123 +1916,91 @@ struct _LIBCPP_VISIBLE hash<unsigned long>
 
 template <>
 struct _LIBCPP_VISIBLE hash<long long>
-    : public unary_function<long long, size_t>
+    : public __scalar_hash<long long>
 {
-    _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(long long __v) const _NOEXCEPT
-    {
-        if (sizeof(long long) == sizeof(size_t))
-            return __v;
-        union
-        {
-            long long __l;
-            struct
-            {
-                size_t __a;
-                size_t __b;
-            } __s;
-        } __u;
-        __u.__l = __v;
-        return __u.__s.__a ^ __u.__s.__b;
-    }
 };
 
 template <>
 struct _LIBCPP_VISIBLE hash<unsigned long long>
-    : public unary_function<unsigned long long, size_t>
+    : public __scalar_hash<unsigned long long>
 {
-    _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(unsigned long long __v) const _NOEXCEPT
-    {
-        if (sizeof(unsigned long long) == sizeof(size_t))
-            return __v;
-        union
-        {
-            unsigned long long __l;
-            struct
-            {
-                size_t __a;
-                size_t __b;
-            } __s;
-        } __u;
-        __u.__l = __v;
-        return __u.__s.__a ^ __u.__s.__b;
-    }
 };
 
 template <>
 struct _LIBCPP_VISIBLE hash<float>
-    : public unary_function<float, size_t>
+    : public __scalar_hash<float>
 {
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(float __v) const _NOEXCEPT
     {
+        // -0.0 and 0.0 should return same hash
        if (__v == 0)
            return 0;
-        union
-        {
-            size_t __d;
-            float __f;
-        } __u;
-        __u.__f = __v;
-        return __u.__d;
+        return __scalar_hash<float>::operator()(__v);
     }
 };
 
 template <>
 struct _LIBCPP_VISIBLE hash<double>
-    : public unary_function<double, size_t>
+    : public __scalar_hash<double>
 {
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(double __v) const _NOEXCEPT
     {
-        if (__v == 0)
-            return 0;
-        if (sizeof(double) == sizeof(size_t))
-        {
-            union
-            {
-                double __f;
-                size_t __d;
-            } __u;
-            __u.__f = __v;
-            return __u.__d;
-        }
-        union
-        {
-            float __f;
-            size_t __d;
-        } __u;
-        __u.__f = __v;
-        return __u.__d;
+        // -0.0 and 0.0 should return same hash
+       if (__v == 0)
+           return 0;
+        return __scalar_hash<double>::operator()(__v);
     }
 };
 
 template <>
 struct _LIBCPP_VISIBLE hash<long double>
-    : public unary_function<long double, size_t>
+    : public __scalar_hash<long double>
 {
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(long double __v) const _NOEXCEPT
     {
+        // -0.0 and 0.0 should return same hash
         if (__v == 0)
             return 0;
-        if (sizeof(double) == sizeof(size_t))
+#if defined(__i386__)
+        // Zero out padding bits
+        union
         {
-            union
+            long double __t;
+            struct
             {
-                double __f;
+                size_t __a;
+                size_t __b;
+                size_t __c;
                 size_t __d;
-            } __u;
-            __u.__f = __v;
-            return __u.__d;
-        }
-        union {
-            float __f;
-            size_t __d;
+            };
         } __u;
-        __u.__f = __v;
-        return __u.__d;
+        __u.__a = 0;
+        __u.__b = 0;
+        __u.__c = 0;
+        __u.__d = 0;
+        __u.__t = __v;
+        return __u.__a ^ __u.__b ^ __u.__c ^ __u.__d;
+#elif defined(__x86_64__)
+        // Zero out padding bits
+        union
+        {
+            long double __t;
+            struct
+            {
+                size_t __a;
+                size_t __b;
+            };
+        } __u;
+        __u.__a = 0;
+        __u.__b = 0;
+        __u.__t = __v;
+        return __u.__a ^ __u.__b;
+#else
+        return __scalar_hash<long double>::operator()(__v);
+#endif
     }
 };
 
