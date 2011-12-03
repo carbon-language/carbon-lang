@@ -3335,25 +3335,26 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
        I != E; ++I)
     WriteDeclContextVisibleUpdate(*I);
 
-  // Write the submodules that were imported, if any.
-  RecordData ImportedModules;
-  for (ASTContext::import_iterator I = Context.local_import_begin(),
-                                IEnd = Context.local_import_end();
-       I != IEnd; ++I) {
-    assert(SubmoduleIDs.find(I->getImportedModule()) != SubmoduleIDs.end());
-    ImportedModules.push_back(SubmoduleIDs[I->getImportedModule()]);
-  }
-  if (!ImportedModules.empty()) {
-    // Sort module IDs.
-    llvm::array_pod_sort(ImportedModules.begin(), ImportedModules.end());
-    
-    // Unique module IDs.
-    ImportedModules.erase(std::unique(ImportedModules.begin(), 
-                                      ImportedModules.end()),
-                          ImportedModules.end());
-    
-    Stream.EmitRecord(IMPORTED_MODULES, ImportedModules);
-    ImportedModules.clear();
+  if (!WritingModule) {
+    // Write the submodules that were imported, if any.
+    RecordData ImportedModules;
+    for (ASTContext::import_iterator I = Context.local_import_begin(),
+                                  IEnd = Context.local_import_end();
+         I != IEnd; ++I) {
+      assert(SubmoduleIDs.find(I->getImportedModule()) != SubmoduleIDs.end());
+      ImportedModules.push_back(SubmoduleIDs[I->getImportedModule()]);
+    }
+    if (!ImportedModules.empty()) {
+      // Sort module IDs.
+      llvm::array_pod_sort(ImportedModules.begin(), ImportedModules.end());
+      
+      // Unique module IDs.
+      ImportedModules.erase(std::unique(ImportedModules.begin(), 
+                                        ImportedModules.end()),
+                            ImportedModules.end());
+      
+      Stream.EmitRecord(IMPORTED_MODULES, ImportedModules);
+    }
   }
   
   WriteDeclUpdatesBlocks();
