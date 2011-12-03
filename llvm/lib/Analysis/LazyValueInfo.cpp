@@ -446,6 +446,7 @@ namespace {
     
     /// clear - Empty the cache.
     void clear() {
+      SeenBlocks.clear();
       ValueCache.clear();
       OverDefinedCache.clear();
     }
