@@ -1306,6 +1306,10 @@ GetScratchRegister(bool Is64Bit, const MachineFunction &MF) {
   }
 }
 
+// The stack limit in the TCB is set to this many bytes above the actual stack
+// limit.
+static const uint64_t kSplitStackAvailable = 256;
+
 void
 X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   MachineBasicBlock &prologueMBB = MF.front();
@@ -1360,16 +1364,24 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
     TlsReg = X86::FS;
     TlsOffset = 0x70;
 
-    BuildMI(checkMBB, DL, TII.get(X86::LEA64r), ScratchReg).addReg(X86::RSP)
-      .addImm(0).addReg(0).addImm(-StackSize).addReg(0);
+    if (StackSize < kSplitStackAvailable)
+      ScratchReg = X86::RSP;
+    else
+      BuildMI(checkMBB, DL, TII.get(X86::LEA64r), ScratchReg).addReg(X86::RSP)
+        .addImm(0).addReg(0).addImm(-StackSize).addReg(0);
+
     BuildMI(checkMBB, DL, TII.get(X86::CMP64rm)).addReg(ScratchReg)
       .addReg(0).addImm(0).addReg(0).addImm(TlsOffset).addReg(TlsReg);
   } else {
     TlsReg = X86::GS;
     TlsOffset = 0x30;
 
-    BuildMI(checkMBB, DL, TII.get(X86::LEA32r), ScratchReg).addReg(X86::ESP)
-      .addImm(0).addReg(0).addImm(-StackSize).addReg(0);
+    if (StackSize < kSplitStackAvailable)
+      ScratchReg = X86::ESP;
+    else
+      BuildMI(checkMBB, DL, TII.get(X86::LEA32r), ScratchReg).addReg(X86::ESP)
+        .addImm(0).addReg(0).addImm(-StackSize).addReg(0);
+
     BuildMI(checkMBB, DL, TII.get(X86::CMP32rm)).addReg(ScratchReg)
       .addReg(0).addImm(0).addReg(0).addImm(TlsOffset).addReg(TlsReg);
   }

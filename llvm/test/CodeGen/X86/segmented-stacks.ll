@@ -20,8 +20,7 @@ false:
 
 ; X32:      test_basic:
 
-; X32:      leal -12(%esp), %ecx
-; X32-NEXT: cmpl %gs:48, %ecx
+; X32:      cmpl %gs:48, %esp
 
 ; X32:      pushl $4
 ; X32-NEXT: pushl $12
@@ -41,8 +40,7 @@ false:
 
 ; X64:      test_basic:
 
-; X64:      leaq -24(%rsp), %r11
-; X64-NEXT: cmpq %fs:112, %r11
+; X64:      cmpq %fs:112, %rsp
 
 ; X64:      movabsq $24, %r10
 ; X64-NEXT: movabsq $0, %r11
@@ -66,17 +64,14 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) {
        %result = add i32 %other, %addend
        ret i32 %result
 
-; X32:      leal (%esp), %edx
-; X32-NEXT: cmpl %gs:48, %edx
-
+; X32:      cmpl %gs:48, %esp
 
 ; X32:      pushl $4
 ; X32-NEXT: pushl $0
 ; X32-NEXT: calll __morestack
 ; X32-NEXT: ret
 
-; X64:      leaq (%rsp), %r11
-; X64-NEXT: cmpq %fs:112, %r11
+; X64:      cmpq %fs:112, %rsp
 
 ; X64:      movq %r10, %rax
 ; X64-NEXT: movabsq $0, %r10
@@ -84,5 +79,28 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) {
 ; X64-NEXT: callq __morestack
 ; X64-NEXT: ret
 ; X64-NEXT: movq %rax, %r10
+
+}
+
+define void @test_large() {
+        %mem = alloca i32, i32 10000
+        call void @dummy_use (i32* %mem, i32 0)
+        ret void
+
+; X32:      leal -40012(%esp), %ecx
+; X32-NEXT: cmpl %gs:48, %ecx
+
+; X32:      pushl $0
+; X32-NEXT: pushl $40012
+; X32-NEXT: calll __morestack
+; X32-NEXT: ret
+
+; X64:      leaq -40008(%rsp), %r11
+; X64-NEXT: cmpq %fs:112, %r11
+
+; X64:      movabsq $40008, %r10
+; X64-NEXT: movabsq $0, %r11
+; X64-NEXT: callq __morestack
+; X64-NEXT: ret
 
 }
