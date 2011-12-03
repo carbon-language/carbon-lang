@@ -779,6 +779,9 @@ class Base(unittest2.TestCase):
         else:
             benchmarks = False
 
+        # This records the compiler version used for the test.
+        system([self.getCompiler(), "-v"], sender=self)
+
         dname = os.path.join(os.environ["LLDB_TEST"],
                              os.environ["LLDB_SESSION_DIRNAME"])
         if not os.path.isdir(dname):
