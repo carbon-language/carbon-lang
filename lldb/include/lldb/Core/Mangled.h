@@ -400,6 +400,18 @@ public:
     const ConstString&
     GetDemangledName () const;
 
+    void
+    SetDemangledName (const char *name)
+    {
+        m_demangled.SetCString (name);
+    }
+
+    void
+    SetMangledName (const char *name)
+    {
+        m_mangled.SetCString (name);
+    }
+
     //----------------------------------------------------------------------
     /// Mangled name get accessor.
     ///
@@ -407,7 +419,10 @@ public:
     ///     A reference to the mangled name string object.
     //----------------------------------------------------------------------
     ConstString&
-    GetMangledName ();
+    GetMangledName ()
+    {
+        return m_mangled;
+    }
 
     //----------------------------------------------------------------------
     /// Mangled name get accessor.
@@ -416,7 +431,10 @@ public:
     ///     A const reference to the mangled name string object.
     //----------------------------------------------------------------------
     const ConstString&
-    GetMangledName () const;
+    GetMangledName () const
+    {
+        return m_mangled;
+    }
 
     //----------------------------------------------------------------------
     /// Best name get accessor.

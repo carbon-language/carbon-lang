@@ -260,6 +260,9 @@ ObjectFile::GetAddressClass (addr_t file_addr)
             case eSymbolTypeCompiler:       return eAddressClassDebug;
             case eSymbolTypeInstrumentation:return eAddressClassDebug;
             case eSymbolTypeUndefined:      return eAddressClassUnknown;
+            case eSymbolTypeObjCClass:      return eAddressClassRuntime;
+            case eSymbolTypeObjCMetaClass:  return eAddressClassRuntime;
+            case eSymbolTypeObjCIVar:       return eAddressClassRuntime;
             }
         }
     }

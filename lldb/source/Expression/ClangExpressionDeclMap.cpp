@@ -788,6 +788,9 @@ ClangExpressionDeclMap::GetSymbolAddress (Target &target, const ConstString &nam
                 case eSymbolTypeCompiler:
                 case eSymbolTypeInstrumentation:
                 case eSymbolTypeUndefined:
+                case eSymbolTypeObjCClass:
+                case eSymbolTypeObjCMetaClass:
+                case eSymbolTypeObjCIVar:
                     symbol_load_addr = sym_address->GetLoadAddress (&target);
                     break;
             }

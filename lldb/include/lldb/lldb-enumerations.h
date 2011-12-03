@@ -449,7 +449,10 @@ namespace lldb {
         eSymbolTypeAdditional, // When symbols take more than one entry, the extra entries get this type
         eSymbolTypeCompiler,
         eSymbolTypeInstrumentation,
-        eSymbolTypeUndefined
+        eSymbolTypeUndefined,
+        eSymbolTypeObjCClass,
+        eSymbolTypeObjCMetaClass,
+        eSymbolTypeObjCIVar
     } SymbolType;
     
     typedef enum SectionType

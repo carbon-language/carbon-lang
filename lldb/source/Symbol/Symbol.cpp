@@ -339,6 +339,9 @@ Symbol::GetTypeAsString() const
     ENUM_TO_CSTRING(Compiler);
     ENUM_TO_CSTRING(Instrumentation);
     ENUM_TO_CSTRING(Undefined);
+    ENUM_TO_CSTRING(ObjCClass);
+    ENUM_TO_CSTRING(ObjCMetaClass);
+    ENUM_TO_CSTRING(ObjCIVar);
     default:
         break;
     }

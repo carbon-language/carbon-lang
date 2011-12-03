@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MachO.h"
 
 #include "ObjectFileMachO.h"
@@ -305,6 +306,9 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
             case eSymbolTypeCompiler:       return eAddressClassDebug;
             case eSymbolTypeInstrumentation:return eAddressClassDebug;
             case eSymbolTypeUndefined:      return eAddressClassUnknown;
+            case eSymbolTypeObjCClass:      return eAddressClassRuntime;
+            case eSymbolTypeObjCMetaClass:  return eAddressClassRuntime;
+            case eSymbolTypeObjCIVar:       return eAddressClassRuntime;
             }
         }
     }
@@ -852,7 +856,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                  m_module->GetFileSpec().GetFilename().GetCString());
                         continue;
                     }
-                    const char* symbol_name = &strtab_data[nlist.n_strx];
+                    const char *symbol_name = &strtab_data[nlist.n_strx];
+                    const char *symbol_name_non_abi_mangled = NULL;
 
                     if (symbol_name[0] == '\0')
                         symbol_name = NULL;
@@ -1184,121 +1189,167 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         uint8_t n_type  = NlistMaskType & nlist.n_type;
                         sym[sym_idx].SetExternal((NlistMaskExternal & nlist.n_type) != 0);
 
-                        if (symbol_name && ::strstr (symbol_name, ".objc") == symbol_name)
+                        switch (n_type)
                         {
-                            type = eSymbolTypeRuntime;
+                        case NListTypeIndirect:         // N_INDR - Fall through
+                        case NListTypePreboundUndefined:// N_PBUD - Fall through
+                        case NListTypeUndefined:        // N_UNDF
+                            type = eSymbolTypeUndefined;
+                            break;
+
+                        case NListTypeAbsolute:         // N_ABS
+                            type = eSymbolTypeAbsolute;
+                            break;
+
+                        case NListTypeSection:          // N_SECT
+                            symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
+
+                            if (symbol_section == NULL)
+                            {
+                                // TODO: warn about this?
+                                add_nlist = false;
+                                break;
+                            }
+
+                            if (TEXT_eh_frame_sectID == nlist.n_sect)
+                            {
+                                type = eSymbolTypeException;
+                            }
+                            else
+                            {
+                                uint32_t section_type = symbol_section->Get() & SectionFlagMaskSectionType;
+
+                                switch (section_type)
+                                {
+                                case SectionTypeRegular:                     break; // regular section
+                                //case SectionTypeZeroFill:                 type = eSymbolTypeData;    break; // zero fill on demand section
+                                case SectionTypeCStringLiterals:            type = eSymbolTypeData;    break; // section with only literal C strings
+                                case SectionType4ByteLiterals:              type = eSymbolTypeData;    break; // section with only 4 byte literals
+                                case SectionType8ByteLiterals:              type = eSymbolTypeData;    break; // section with only 8 byte literals
+                                case SectionTypeLiteralPointers:            type = eSymbolTypeTrampoline; break; // section with only pointers to literals
+                                case SectionTypeNonLazySymbolPointers:      type = eSymbolTypeTrampoline; break; // section with only non-lazy symbol pointers
+                                case SectionTypeLazySymbolPointers:         type = eSymbolTypeTrampoline; break; // section with only lazy symbol pointers
+                                case SectionTypeSymbolStubs:                type = eSymbolTypeTrampoline; break; // section with only symbol stubs, byte size of stub in the reserved2 field
+                                case SectionTypeModuleInitFunctionPointers: type = eSymbolTypeCode;    break; // section with only function pointers for initialization
+                                case SectionTypeModuleTermFunctionPointers: type = eSymbolTypeCode;    break; // section with only function pointers for termination
+                                //case SectionTypeCoalesced:                type = eSymbolType;    break; // section contains symbols that are to be coalesced
+                                //case SectionTypeZeroFillLarge:            type = eSymbolTypeData;    break; // zero fill on demand section (that can be larger than 4 gigabytes)
+                                case SectionTypeInterposing:                type = eSymbolTypeTrampoline;  break; // section with only pairs of function pointers for interposing
+                                case SectionType16ByteLiterals:             type = eSymbolTypeData;    break; // section with only 16 byte literals
+                                case SectionTypeDTraceObjectFormat:         type = eSymbolTypeInstrumentation; break;
+                                case SectionTypeLazyDylibSymbolPointers:    type = eSymbolTypeTrampoline; break;
+                                default: break;
+                                }
+
+                                if (type == eSymbolTypeInvalid)
+                                {
+                                    const char *symbol_sect_name = symbol_section->GetName().AsCString();
+                                    if (symbol_section->IsDescendant (text_section_sp.get()))
+                                    {
+                                        if (symbol_section->IsClear(SectionAttrUserPureInstructions | 
+                                                                    SectionAttrUserSelfModifyingCode | 
+                                                                    SectionAttrSytemSomeInstructions))
+                                            type = eSymbolTypeData;
+                                        else
+                                            type = eSymbolTypeCode;
+                                    }
+                                    else
+                                    if (symbol_section->IsDescendant(data_section_sp.get()))
+                                    {
+                                        if (symbol_sect_name && ::strstr (symbol_sect_name, "__objc") == symbol_sect_name)
+                                        {
+                                            type = eSymbolTypeRuntime;
+
+                                            if (symbol_name && 
+                                                symbol_name[0] == '_' && 
+                                                symbol_name[1] == 'O' && 
+                                                symbol_name[2] == 'B')
+                                            {
+                                                llvm::StringRef symbol_name_ref(symbol_name);
+                                                static const llvm::StringRef g_objc_v2_prefix_class ("_OBJC_CLASS_$_");
+                                                static const llvm::StringRef g_objc_v2_prefix_metaclass ("_OBJC_METACLASS_$_");
+                                                static const llvm::StringRef g_objc_v2_prefix_ivar ("_OBJC_IVAR_$_");
+                                                if (symbol_name_ref.startswith(g_objc_v2_prefix_class))
+                                                {
+                                                    symbol_name_non_abi_mangled = symbol_name;
+                                                    symbol_name = symbol_name + g_objc_v2_prefix_class.size();
+                                                    type = eSymbolTypeObjCClass;
+                                                }
+                                                else if (symbol_name_ref.startswith(g_objc_v2_prefix_metaclass))
+                                                {
+                                                    symbol_name_non_abi_mangled = symbol_name;
+                                                    symbol_name = symbol_name + g_objc_v2_prefix_metaclass.size();
+                                                    type = eSymbolTypeObjCMetaClass;
+                                                }
+                                                else if (symbol_name_ref.startswith(g_objc_v2_prefix_ivar))
+                                                {
+                                                    symbol_name_non_abi_mangled = symbol_name;
+                                                    symbol_name = symbol_name + g_objc_v2_prefix_ivar.size();
+                                                    type = eSymbolTypeObjCIVar;
+                                                }
+                                            }
+                                        }
+                                        else
+                                        if (symbol_sect_name && ::strstr (symbol_sect_name, "__gcc_except_tab") == symbol_sect_name)
+                                        {
+                                            type = eSymbolTypeException;
+                                        }
+                                        else
+                                        {
+                                            type = eSymbolTypeData;
+                                        }
+                                    }
+                                    else
+                                    if (symbol_sect_name && ::strstr (symbol_sect_name, "__IMPORT") == symbol_sect_name)
+                                    {
+                                        type = eSymbolTypeTrampoline;
+                                    }
+                                    else
+                                    if (symbol_section->IsDescendant(objc_section_sp.get()))
+                                    {
+                                        type = eSymbolTypeRuntime;
+                                        if (symbol_name && symbol_name[0] == '.')
+                                        {
+                                            llvm::StringRef symbol_name_ref(symbol_name);
+                                            static const llvm::StringRef g_objc_v1_prefix_class (".objc_class_name_");
+                                            if (symbol_name_ref.startswith(g_objc_v1_prefix_class))
+                                            {
+                                                symbol_name_non_abi_mangled = symbol_name;
+                                                symbol_name = symbol_name + g_objc_v1_prefix_class.size();
+                                                type = eSymbolTypeObjCClass;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            break;
+                        }                            
+                    }
+
+                    if (add_nlist)
+                    {
+                        uint64_t symbol_value = nlist.n_value;
+                        bool symbol_name_is_mangled = false;
+
+                        if (symbol_name_non_abi_mangled)
+                        {
+                            sym[sym_idx].GetMangled().SetMangledName (symbol_name_non_abi_mangled);
+                            sym[sym_idx].GetMangled().SetDemangledName (symbol_name);
                         }
                         else
                         {
-                            switch (n_type)
+                            if (symbol_name && symbol_name[0] == '_')
                             {
-                            case NListTypeIndirect:         // N_INDR - Fall through
-                            case NListTypePreboundUndefined:// N_PBUD - Fall through
-                            case NListTypeUndefined:        // N_UNDF
-                                type = eSymbolTypeUndefined;
-                                break;
+                                symbol_name_is_mangled = symbol_name[1] == '_';
+                                symbol_name++;  // Skip the leading underscore
+                            }
 
-                            case NListTypeAbsolute:         // N_ABS
-                                type = eSymbolTypeAbsolute;
-                                break;
-
-                            case NListTypeSection:          // N_SECT
-                                symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
-
-                                if (symbol_section == NULL)
-                                {
-                                    // TODO: warn about this?
-                                    add_nlist = false;
-                                    break;
-                                }
-
-                                if (TEXT_eh_frame_sectID == nlist.n_sect)
-                                {
-                                    type = eSymbolTypeException;
-                                }
-                                else
-                                {
-                                    uint32_t section_type = symbol_section->Get() & SectionFlagMaskSectionType;
-
-                                    switch (section_type)
-                                    {
-                                    case SectionTypeRegular:                     break; // regular section
-                                    //case SectionTypeZeroFill:                 type = eSymbolTypeData;    break; // zero fill on demand section
-                                    case SectionTypeCStringLiterals:            type = eSymbolTypeData;    break; // section with only literal C strings
-                                    case SectionType4ByteLiterals:              type = eSymbolTypeData;    break; // section with only 4 byte literals
-                                    case SectionType8ByteLiterals:              type = eSymbolTypeData;    break; // section with only 8 byte literals
-                                    case SectionTypeLiteralPointers:            type = eSymbolTypeTrampoline; break; // section with only pointers to literals
-                                    case SectionTypeNonLazySymbolPointers:      type = eSymbolTypeTrampoline; break; // section with only non-lazy symbol pointers
-                                    case SectionTypeLazySymbolPointers:         type = eSymbolTypeTrampoline; break; // section with only lazy symbol pointers
-                                    case SectionTypeSymbolStubs:                type = eSymbolTypeTrampoline; break; // section with only symbol stubs, byte size of stub in the reserved2 field
-                                    case SectionTypeModuleInitFunctionPointers: type = eSymbolTypeCode;    break; // section with only function pointers for initialization
-                                    case SectionTypeModuleTermFunctionPointers: type = eSymbolTypeCode;    break; // section with only function pointers for termination
-                                    //case SectionTypeCoalesced:                type = eSymbolType;    break; // section contains symbols that are to be coalesced
-                                    //case SectionTypeZeroFillLarge:            type = eSymbolTypeData;    break; // zero fill on demand section (that can be larger than 4 gigabytes)
-                                    case SectionTypeInterposing:                type = eSymbolTypeTrampoline;  break; // section with only pairs of function pointers for interposing
-                                    case SectionType16ByteLiterals:             type = eSymbolTypeData;    break; // section with only 16 byte literals
-                                    case SectionTypeDTraceObjectFormat:         type = eSymbolTypeInstrumentation; break;
-                                    case SectionTypeLazyDylibSymbolPointers:    type = eSymbolTypeTrampoline; break;
-                                    default: break;
-                                    }
-
-                                    if (type == eSymbolTypeInvalid)
-                                    {
-                                        const char *symbol_sect_name = symbol_section->GetName().AsCString();
-                                        if (symbol_section->IsDescendant (text_section_sp.get()))
-                                        {
-                                            if (symbol_section->IsClear(SectionAttrUserPureInstructions | 
-                                                                        SectionAttrUserSelfModifyingCode | 
-                                                                        SectionAttrSytemSomeInstructions))
-                                                type = eSymbolTypeData;
-                                            else
-                                                type = eSymbolTypeCode;
-                                        }
-                                        else
-                                        if (symbol_section->IsDescendant(data_section_sp.get()))
-                                        {
-                                            if (symbol_sect_name && ::strstr (symbol_sect_name, "__objc") == symbol_sect_name)
-                                            {
-                                                type = eSymbolTypeRuntime;
-                                            }
-                                            else
-                                            if (symbol_sect_name && ::strstr (symbol_sect_name, "__gcc_except_tab") == symbol_sect_name)
-                                            {
-                                                type = eSymbolTypeException;
-                                            }
-                                            else
-                                            {
-                                                type = eSymbolTypeData;
-                                            }
-                                        }
-                                        else
-                                        if (symbol_sect_name && ::strstr (symbol_sect_name, "__IMPORT") == symbol_sect_name)
-                                        {
-                                            type = eSymbolTypeTrampoline;
-                                        }
-                                        else
-                                        if (symbol_section->IsDescendant(objc_section_sp.get()))
-                                        {
-                                            type = eSymbolTypeRuntime;
-                                        }
-                                    }
-                                }
-                                break;
-                            }                            
+                            else if (symbol_name)
+                            {
+                                sym[sym_idx].GetMangled().SetValue(symbol_name, symbol_name_is_mangled);
+                            }
                         }
-                    }
-                    if (add_nlist)
-                    {
-                        bool symbol_name_is_mangled = false;
-                        if (symbol_name && symbol_name[0] == '_')
-                        {
-                            symbol_name_is_mangled = symbol_name[1] == '_';
-                            symbol_name++;  // Skip the leading underscore
-                        }
-                        uint64_t symbol_value = nlist.n_value;
 
-                        if (symbol_name)
-                            sym[sym_idx].GetMangled().SetValue(symbol_name, symbol_name_is_mangled);
                         if (is_debug == false)
                         {
                             if (type == eSymbolTypeCode)

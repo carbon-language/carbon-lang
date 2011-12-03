@@ -190,25 +190,6 @@ Mangled::NameMatches (const RegularExpression& regex) const
     return false;
 }
 
-
-//----------------------------------------------------------------------
-// Mangled name get accessor
-//----------------------------------------------------------------------
-ConstString&
-Mangled::GetMangledName ()
-{
-    return m_mangled;
-}
-
-//----------------------------------------------------------------------
-// Mangled name const get accessor
-//----------------------------------------------------------------------
-const ConstString&
-Mangled::GetMangledName () const
-{
-    return m_mangled;
-}
-
 //----------------------------------------------------------------------
 // Get the demangled name if there is one, else return the mangled name.
 //----------------------------------------------------------------------
