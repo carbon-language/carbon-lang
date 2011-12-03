@@ -498,8 +498,7 @@ MachineInstr *findLocalKill(unsigned Reg, MachineBasicBlock *MBB,
     MachineInstr *UseMI = &*UI;
     if (UseMI == MI || UseMI->getParent() != MBB)
       continue;
-    DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(UseMI);
-    if (DI != DistanceMap.end())
+    if (DistanceMap.count(UseMI))
       continue;
     if (!UI.getOperand().isKill())
       return 0;
