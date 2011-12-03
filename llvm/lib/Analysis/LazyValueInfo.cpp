@@ -371,7 +371,11 @@ namespace {
     /// for cache updating.
     typedef std::pair<AssertingVH<BasicBlock>, Value*> OverDefinedPairTy;
     DenseSet<OverDefinedPairTy> OverDefinedCache;
-    
+
+    /// SeenBlocks - Keep track of all blocks that we have ever seen, so we
+    /// don't spend time removing unused blocks from our caches.
+    DenseSet<AssertingVH<BasicBlock> > SeenBlocks;
+
     /// BlockValueStack - This stack holds the state of the value solver
     /// during a query.  It basically emulates the callstack of the naive
     /// recursive value lookup process.
@@ -470,6 +474,12 @@ void LVIValueHandle::deleted() {
 }
 
 void LazyValueInfoCache::eraseBlock(BasicBlock *BB) {
+  // Shortcut if we have never seen this block.
+  DenseSet<AssertingVH<BasicBlock> >::iterator I = SeenBlocks.find(BB);
+  if (I == SeenBlocks.end())
+    return;
+  SeenBlocks.erase(I);
+
   SmallVector<OverDefinedPairTy, 4> ToErase;
   for (DenseSet<OverDefinedPairTy>::iterator  I = OverDefinedCache.begin(),
        E = OverDefinedCache.end(); I != E; ++I) {
@@ -509,6 +519,7 @@ LVILatticeVal LazyValueInfoCache::getBlockValue(Value *Val, BasicBlock *BB) {
   if (Constant *VC = dyn_cast<Constant>(Val))
     return LVILatticeVal::get(VC);
 
+  SeenBlocks.insert(BB);
   return lookup(Val)[BB];
 }
 
@@ -517,6 +528,7 @@ bool LazyValueInfoCache::solveBlockValue(Value *Val, BasicBlock *BB) {
     return true;
 
   ValueCacheEntryTy &Cache = lookup(Val);
+  SeenBlocks.insert(BB);
   LVILatticeVal &BBLV = Cache[BB];
   
   // OverDefinedCacheUpdater is a helper object that will update
