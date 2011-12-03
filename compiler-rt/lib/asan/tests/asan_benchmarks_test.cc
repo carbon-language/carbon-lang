@@ -70,6 +70,15 @@ TEST(AddressSanitizer, BorderAccessBenchmark) {
   delete [] char_7_array;
 }
 
+static void FunctionWithLargeStack() {
+  int stack[1000];
+  Ident(stack);
+}
+
+TEST(AddressSanitizer, FakeStackBenchmark) {
+  for (int i = 0; i < 10000000; i++)
+    Ident(&FunctionWithLargeStack)();
+}
 
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
