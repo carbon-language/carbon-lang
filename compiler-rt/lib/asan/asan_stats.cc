@@ -53,11 +53,12 @@ void AsanStats::Print() {
          malloc_large, malloc_small_slow);
 }
 
+static AsanLock print_lock(LINKER_INITIALIZED);
+
 static void PrintAccumulatedStats() {
   if (!FLAG_stats) return;
   AsanStats stats = asanThreadRegistry().GetAccumulatedStats();
   // Use lock to keep reports from mixing up.
-  static AsanLock print_lock(LINKER_INITIALIZED);
   ScopedLock lock(&print_lock);
   stats.Print();
 }
