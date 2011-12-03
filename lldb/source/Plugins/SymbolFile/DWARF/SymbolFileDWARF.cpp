@@ -3770,6 +3770,146 @@ SymbolFileDWARF::GetDeclContextDIEContainingDIE (DWARFCompileUnit *cu, const DWA
 }
 
 
+Symbol *
+SymbolFileDWARF::GetObjCClassSymbol (const ConstString &objc_class_name)
+{
+    Symbol *objc_class_symbol = NULL;
+    if (m_obj_file)
+    {
+        Symtab *symtab = m_obj_file->GetSymtab();
+        if (symtab)
+        {
+            objc_class_symbol = symtab->FindFirstSymbolWithNameAndType (objc_class_name, 
+                                                                        eSymbolTypeObjCClass, 
+                                                                        Symtab::eDebugNo, 
+                                                                        Symtab::eVisibilityAny);
+        }
+    }
+    return objc_class_symbol;
+}
+
+
+// This function can be used when a DIE is found that is a forward declaration
+// DIE and we want to try and find a type that has the complete definition.
+TypeSP
+SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (DWARFCompileUnit* cu, 
+                                                       const DWARFDebugInfoEntry *die, 
+                                                       const ConstString &type_name)
+{
+    
+    TypeSP type_sp;
+    
+    if (cu == NULL || die == NULL || !type_name || !GetObjCClassSymbol (type_name))
+        return type_sp;
+    
+    DIEArray die_offsets;
+    
+    if (m_using_apple_tables)
+    {
+        if (m_apple_types_ap.get())
+        {
+            const char *name_cstr = type_name.GetCString();
+            m_apple_types_ap->FindByName (name_cstr, die_offsets);
+        }
+    }
+    else
+    {
+        if (!m_indexed)
+            Index ();
+        
+        m_type_index.Find (type_name, die_offsets);
+    }
+    
+    
+    const size_t num_matches = die_offsets.size();
+    
+    const dw_tag_t die_tag = die->Tag();
+    
+    DWARFCompileUnit* type_cu = NULL;
+    const DWARFDebugInfoEntry* type_die = NULL;
+    if (num_matches)
+    {
+        DWARFDebugInfo* debug_info = DebugInfo();
+        for (size_t i=0; i<num_matches; ++i)
+        {
+            const dw_offset_t die_offset = die_offsets[i];
+            type_die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &type_cu);
+            
+            if (type_die)
+            {
+                bool try_resolving_type = false;
+                
+                // Don't try and resolve the DIE we are looking for with the DIE itself!
+                if (type_die != die)
+                {
+                    const dw_tag_t type_die_tag = type_die->Tag();
+                    // Make sure the tags match
+                    if (type_die_tag == die_tag)
+                    {
+                        // The tags match, lets try resolving this type
+                        try_resolving_type = true;
+                    }
+                    else
+                    {
+                        // The tags don't match, but we need to watch our for a
+                        // forward declaration for a struct and ("struct foo")
+                        // ends up being a class ("class foo { ... };") or
+                        // vice versa.
+                        switch (type_die_tag)
+                        {
+                            case DW_TAG_class_type:
+                                // We had a "class foo", see if we ended up with a "struct foo { ... };"
+                                try_resolving_type = (die_tag == DW_TAG_structure_type);
+                                break;
+                            case DW_TAG_structure_type:
+                                // We had a "struct foo", see if we ended up with a "class foo { ... };"
+                                try_resolving_type = (die_tag == DW_TAG_class_type);
+                                break;
+                            default:
+                                // Tags don't match, don't event try to resolve
+                                // using this type whose name matches....
+                                break;
+                        }
+                    }
+                }
+                
+                if (try_resolving_type)
+                {
+                    try_resolving_type = type_die->GetAttributeValueAsUnsigned (this, type_cu, DW_AT_APPLE_objc_complete_type, 0);
+                    
+                    if (try_resolving_type)
+                    {
+                        Type *resolved_type = ResolveType (type_cu, type_die, false);
+                        if (resolved_type && resolved_type != DIE_IS_BEING_PARSED)
+                        {
+                            DEBUG_PRINTF ("resolved 0x%8.8llx (cu 0x%8.8llx) from %s to 0x%8.8llx (cu 0x%8.8llx)\n",
+                                          MakeUserID(die->GetOffset()), 
+                                          MakeUserID(curr_cu->GetOffset()), 
+                                          m_obj_file->GetFileSpec().GetFilename().AsCString(),
+                                          MakeUserID(type_die->GetOffset()), 
+                                          MakeUserID(type_cu->GetOffset()));
+                            
+                            m_die_to_type[die] = resolved_type;
+                            type_sp = resolved_type;
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (m_using_apple_tables)
+                {
+                    ReportError (".apple_types accelerator table had bad die 0x%8.8x for '%s'\n",
+                                 die_offset, type_name.GetCString());
+                }
+            }            
+            
+        }
+    }
+    return type_sp;
+}
+
 
 // This function can be used when a DIE is found that is a forward declaration
 // DIE and we want to try and find a type that has the complete definition.
@@ -4203,13 +4343,49 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         is_forward_declaration = true;
                     }
 
-                    bool look_for_complete_objc_type = false;
                     if (class_language == eLanguageTypeObjC)
                     {
-                        look_for_complete_objc_type = !is_complete_objc_class;
-                    }
+                        if (!is_complete_objc_class)
+                        {
+                            // We have a valid eSymbolTypeObjCClass class symbol whose
+                            // name matches the current objective C class that we
+                            // are trying to find and this DIE isn't the complete
+                            // definition (we checked is_complete_objc_class above and
+                            // know it is false), so the real definition is in here somewhere
+                            type_sp = FindCompleteObjCDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
 
-                    if (is_forward_declaration || look_for_complete_objc_type)
+                            if (!type_sp && m_debug_map_symfile)
+                            {
+                                // We weren't able to find a full declaration in
+                                // this DWARF, see if we have a declaration anywhere    
+                                // else...
+                                type_sp = m_debug_map_symfile->FindCompleteObjCDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
+                            }
+                            
+                            if (type_sp)
+                            {
+                                if (log)
+                                {
+                                    LogMessage (log.get(),
+                                                "SymbolFileDWARF(%p) - 0x%8.8x: %s type \"%s\" is an incomplete objc type, complete type is 0x%8.8llx", 
+                                                this,
+                                                die->GetOffset(), 
+                                                DW_TAG_value_to_name(tag),
+                                                type_name_cstr,
+                                                type_sp->GetID());
+                                }
+                                
+                                // We found a real definition for this type elsewhere
+                                // so lets use it and cache the fact that we found
+                                // a complete type for this die
+                                m_die_to_type[die] = type_sp.get();
+                                return type_sp;
+                            }
+                        }
+                    }
+                    
+
+                    if (is_forward_declaration)
                     {
                         // We have a forward declaration to a type and we need
                         // to try and find a full declaration. We look in the
@@ -4219,12 +4395,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         if (log)
                         {
                             LogMessage (log.get(), 
-                                        "SymbolFileDWARF(%p) - 0x%8.8x: %s type \"%s\" is %s, trying to find complete type", 
+                                        "SymbolFileDWARF(%p) - 0x%8.8x: %s type \"%s\" is a forward declaration, trying to find complete type", 
                                         this,
                                         die->GetOffset(), 
                                         DW_TAG_value_to_name(tag),
-                                        type_name_cstr,
-                                        look_for_complete_objc_type ? "an incomplete objective C type" : "a forward declaration");
+                                        type_name_cstr);
                         }
                     
                         type_sp = FindDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
@@ -4242,12 +4417,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             if (log)
                             {
                                 LogMessage (log.get(),
-                                            "SymbolFileDWARF(%p) - 0x%8.8x: %s type \"%s\" is %s, complete type is 0x%8.8llx", 
+                                            "SymbolFileDWARF(%p) - 0x%8.8x: %s type \"%s\" is a forward declaration, complete type is 0x%8.8llx", 
                                             this,
                                             die->GetOffset(), 
                                             DW_TAG_value_to_name(tag),
                                             type_name_cstr,
-                                            look_for_complete_objc_type ? "an incomplete objective C type" : "a forward declaration",
                                             type_sp->GetID());
                             }
 

@@ -216,6 +216,12 @@ protected:
                               const DWARFDebugInfoEntry *die, 
                               const lldb_private::ConstString &type_name);    
 
+    lldb::TypeSP
+    FindCompleteObjCDefinitionTypeForDIE (DWARFCompileUnit* cu, 
+                                          const DWARFDebugInfoEntry *die, 
+                                          const lldb_private::ConstString &type_name);
+    
+
     UniqueDWARFASTTypeMap &
     GetUniqueDWARFASTTypeMap ()
     {

@@ -372,7 +372,14 @@ protected:
                                 DWARFCompileUnit* cu, 
                                 const DWARFDebugInfoEntry *die, 
                                 const lldb_private::ConstString &type_name);
-    
+
+    lldb::TypeSP            FindCompleteObjCDefinitionTypeForDIE (
+                                DWARFCompileUnit* cu, 
+                                const DWARFDebugInfoEntry *die, 
+                                const lldb_private::ConstString &type_name);
+
+    lldb_private::Symbol *  GetObjCClassSymbol (const lldb_private::ConstString &objc_class_name);
+
     void                    ParseFunctions (const DIEArray &die_offsets,
                                             lldb_private::SymbolContextList& sc_list);
     lldb::TypeSP            GetTypeForDIE (DWARFCompileUnit *cu, 
