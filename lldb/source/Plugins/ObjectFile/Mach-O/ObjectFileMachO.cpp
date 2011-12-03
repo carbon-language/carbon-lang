@@ -1344,7 +1344,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                 symbol_name++;  // Skip the leading underscore
                             }
 
-                            else if (symbol_name)
+                            if (symbol_name)
                             {
                                 sym[sym_idx].GetMangled().SetValue(symbol_name, symbol_name_is_mangled);
                             }
