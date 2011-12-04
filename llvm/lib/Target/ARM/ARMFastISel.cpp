@@ -181,7 +181,8 @@ class ARMFastISel : public FastISel {
     bool ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr, bool isZExt,
                      bool allocReg);
                      
-    bool ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr, unsigned Alignment = 0);
+    bool ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr,
+                      unsigned Alignment = 0);
     bool ARMComputeAddress(const Value *Obj, Address &Addr);
     void ARMSimplifyAddress(Address &Addr, EVT VT, bool useAM3);
     bool ARMIsMemCpySmall(uint64_t Len);
@@ -937,7 +938,8 @@ void ARMFastISel::AddLoadStoreOperands(EVT VT, Address &Addr,
     // Now add the rest of the operands.
     MIB.addFrameIndex(FI);
 
-    // ARM halfword load/stores and signed byte loads need an additional operand.
+    // ARM halfword load/stores and signed byte loads need an additional
+    // operand.
     if (useAM3) {
       signed Imm = (Addr.Offset < 0) ? (0x100 | -Addr.Offset) : Addr.Offset;
       MIB.addReg(0);
@@ -950,7 +952,8 @@ void ARMFastISel::AddLoadStoreOperands(EVT VT, Address &Addr,
     // Now add the rest of the operands.
     MIB.addReg(Addr.Base.Reg);
 
-    // ARM halfword load/stores and signed byte loads need an additional operand.
+    // ARM halfword load/stores and signed byte loads need an additional
+    // operand.
     if (useAM3) {
       signed Imm = (Addr.Offset < 0) ? (0x100 | -Addr.Offset) : Addr.Offset;
       MIB.addReg(0);
@@ -1053,7 +1056,8 @@ bool ARMFastISel::SelectLoad(const Instruction *I) {
   return true;
 }
 
-bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr, unsigned Alignment) {
+bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr,
+                               unsigned Alignment) {
   unsigned StrOpc;
   bool useAM3 = false;
   switch (VT.getSimpleVT().SimpleTy) {
