@@ -306,6 +306,8 @@
             '<tt>llvm.stackprotector</tt>' Intrinsic</a></li>
 	  <li><a href="#int_objectsize">
             '<tt>llvm.objectsize</tt>' Intrinsic</a></li>
+	  <li><a href="#int_expect">
+            '<tt>llvm.expect</tt>' Intrinsic</a></li>
         </ol>
       </li>
     </ol>
@@ -8205,11 +8207,35 @@ LLVM</a>.</p>
    compile time.</p>
 
 </div>
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="int_expect">'<tt>llvm.expect</tt>' Intrinsic</a>
+</h4>
 
+<div>
+
+<h5>Syntax:</h5>
+<pre>
+  declare i32 @llvm.expect.i32(i32 &lt;val&gt;, i32 &lt;expected_val&gt;)
+  declare i64 @llvm.expect.i64(i64 &lt;val&gt;, i64 &lt;expected_val&gt;)
+</pre>
+
+<h5>Overview:</h5>
+<p>The <tt>llvm.expect</tt> intrinsic provides information about expected (the
+   most probable) value of <tt>val</tt>, which can be used by optimizers.</p>
+
+<h5>Arguments:</h5>
+<p>The <tt>llvm.expect</tt> intrinsic takes two arguments. The first
+   argument is a value. The second argument is an expected value, this needs to
+   be a constant value, variables are not allowed.</p>
+
+<h5>Semantics:</h5>
+<p>This intrinsic is lowered to the <tt>val</tt>.</p>
 </div>
 
 </div>
 
+</div>
 <!-- *********************************************************************** -->
 <hr>
 <address>
