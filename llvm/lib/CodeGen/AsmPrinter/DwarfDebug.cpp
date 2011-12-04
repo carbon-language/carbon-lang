@@ -442,6 +442,10 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
   TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_file, 0, TheCU->getID());
   TheCU->addUInt(ScopeDIE, dwarf::DW_AT_call_line, 0, DL.getLineNumber());
 
+  // Add name to the name table, we do this here because we're guaranteed
+  // to have concrete versions of our DW_TAG_inlined_subprogram nodes.
+  addSubprogramNames(TheCU, InlinedSP, ScopeDIE);
+  
   return ScopeDIE;
 }
 
