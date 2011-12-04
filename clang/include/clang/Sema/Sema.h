@@ -3326,6 +3326,10 @@ public:
                                    bool EnteringContext,
                                    CXXScopeSpec &SS);
 
+  bool ActOnCXXNestedNameSpecifierDecltype(CXXScopeSpec &SS,
+                                           const DeclSpec &DS, 
+                                           SourceLocation ColonColonLoc);
+
   bool IsInvalidUnlessNestedName(Scope *S, CXXScopeSpec &SS,
                                  IdentifierInfo &Identifier,
                                  SourceLocation IdentifierLoc,

@@ -706,7 +706,6 @@ Parser::isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind) {
   case tok::kw_wchar_t:
   case tok::kw_char16_t:
   case tok::kw_char32_t:
-  case tok::kw_decltype:
   case tok::kw___underlying_type:
   case tok::kw_thread_local:
   case tok::kw__Decimal32:
@@ -848,13 +847,14 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
     if (Next.is(tok::kw_new) ||    // ::new
         Next.is(tok::kw_delete))   // ::delete
       return TPResult::False();
-
+  }
+    // Fall through.
+  case tok::kw_decltype:
     // Annotate typenames and C++ scope specifiers.  If we get one, just
     // recurse to handle whatever we get.
     if (TryAnnotateTypeOrScopeToken())
       return TPResult::Error();
     return isCXXDeclarationSpecifier();
-  }
       
     // decl-specifier:
     //   storage-class-specifier
@@ -1030,7 +1030,7 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   }
 
   // C++0x decltype support.
-  case tok::kw_decltype:
+  case tok::annot_decltype:
     return TPResult::True();
 
   // C++0x type traits support

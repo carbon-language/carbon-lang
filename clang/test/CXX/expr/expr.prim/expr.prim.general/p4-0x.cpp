@@ -2,8 +2,7 @@
 
 struct S {
   S *p = this; // ok
-  decltype(this) q; // expected-error {{invalid use of 'this' outside of a nonstatic member function}} \
-                       expected-error {{C++ requires a type specifier for all declarations}}
+  decltype(this) q; // expected-error {{invalid use of 'this' outside of a nonstatic member function}}
 
   int arr[sizeof(this)]; // expected-error {{invalid use of 'this' outside of a nonstatic member function}}
   int sz = sizeof(this); // ok

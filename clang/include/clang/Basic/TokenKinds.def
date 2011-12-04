@@ -560,6 +560,8 @@ ANNOTATION(template_id)  // annotation for a C++ template-id that names a
                          // function template specialization (not a type),
                          // e.g., "std::swap<int>"
 ANNOTATION(primary_expr) // annotation for a primary expression
+ANNOTATION(decltype)     // annotation for a decltype expression,
+                         // e.g., "decltype(foo.bar())"
 
 // Annotation for #pragma unused(...)
 // For each argument inside the parentheses the pragma handler will produce

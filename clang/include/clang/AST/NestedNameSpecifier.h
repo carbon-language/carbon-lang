@@ -36,8 +36,9 @@ class LangOptions;
 /// namespaces. For example, "foo::" in "foo::x" is a nested name
 /// specifier. Nested name specifiers are made up of a sequence of
 /// specifiers, each of which can be a namespace, type, identifier
-/// (for dependent names), or the global specifier ('::', must be the
-/// first specifier).
+/// (for dependent names), decltype specifier, or the global specifier ('::').
+/// The last two specifiers can only appear at the start of a 
+/// nested-namespace-specifier.
 class NestedNameSpecifier : public llvm::FoldingSetNode {
 
   /// \brief Enumeration describing

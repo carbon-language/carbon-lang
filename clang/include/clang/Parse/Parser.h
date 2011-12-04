@@ -1901,7 +1901,10 @@ private:
 
 
   void ParseTypeofSpecifier(DeclSpec &DS);
-  void ParseDecltypeSpecifier(DeclSpec &DS);
+  SourceLocation ParseDecltypeSpecifier(DeclSpec &DS);
+  void AnnotateExistingDecltypeSpecifier(const DeclSpec &DS, 
+                                         SourceLocation StartLoc,
+                                         SourceLocation EndLoc);
   void ParseUnderlyingTypeSpecifier(DeclSpec &DS);
   void ParseAtomicSpecifier(DeclSpec &DS);
 

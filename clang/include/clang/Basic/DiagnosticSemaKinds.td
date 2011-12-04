@@ -3993,6 +3993,8 @@ def err_typecheck_deleted_function : Error<
   "conversion function from %0 to %1 invokes a deleted function">;
   
 def err_expected_class_or_namespace : Error<"expected a class or namespace">;
+def err_expected_class : Error<"%0 is not a class%select{ or namespace|, "
+  "namespace, or scoped enumeration}1">;
 def err_missing_qualified_for_redecl : Error<
   "must qualify the name %0 to declare %q1 in this scope">;
 def err_invalid_declarator_scope : Error<

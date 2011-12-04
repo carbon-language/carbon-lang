@@ -632,39 +632,85 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
 ///
 /// 'decltype' ( expression )
 ///
-void Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
-  assert(Tok.is(tok::kw_decltype) && "Not a decltype specifier");
+SourceLocation Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
+  assert((Tok.is(tok::kw_decltype) || Tok.is(tok::annot_decltype))
+           && "Not a decltype specifier");
+  
 
-  SourceLocation StartLoc = ConsumeToken();
-  BalancedDelimiterTracker T(*this, tok::l_paren);
-  if (T.expectAndConsume(diag::err_expected_lparen_after,
-                       "decltype", tok::r_paren)) {
-    return;
+  ExprResult Result;
+  SourceLocation StartLoc = Tok.getLocation();
+  SourceLocation EndLoc;
+
+  if (Tok.is(tok::annot_decltype)) {
+    Result = getExprAnnotation(Tok);
+    EndLoc = Tok.getAnnotationEndLoc();
+    ConsumeToken();
+    if (Result.isInvalid()) {
+      DS.SetTypeSpecError();
+      return EndLoc;
+    }
+  } else {
+    ConsumeToken();
+
+    BalancedDelimiterTracker T(*this, tok::l_paren);
+    if (T.expectAndConsume(diag::err_expected_lparen_after,
+                           "decltype", tok::r_paren)) {
+      DS.SetTypeSpecError();
+      return T.getOpenLocation() == Tok.getLocation() ?
+             StartLoc : T.getOpenLocation();
+    }
+
+    // Parse the expression
+
+    // C++0x [dcl.type.simple]p4:
+    //   The operand of the decltype specifier is an unevaluated operand.
+    EnterExpressionEvaluationContext Unevaluated(Actions,
+                                                 Sema::Unevaluated);
+    Result = ParseExpression();
+    if (Result.isInvalid()) {
+      SkipUntil(tok::r_paren, true, true);
+      DS.SetTypeSpecError();
+      return Tok.is(tok::eof) ? Tok.getLocation() : ConsumeParen();
+    }
+
+    // Match the ')'
+    T.consumeClose();
+    if (T.getCloseLocation().isInvalid()) {
+      DS.SetTypeSpecError();
+      // FIXME: this should return the location of the last token
+      //        that was consumed (by "consumeClose()")
+      return T.getCloseLocation();
+    }
+
+    EndLoc = T.getCloseLocation();
   }
-
-  // Parse the expression
-
-  // C++0x [dcl.type.simple]p4:
-  //   The operand of the decltype specifier is an unevaluated operand.
-  EnterExpressionEvaluationContext Unevaluated(Actions,
-                                               Sema::Unevaluated);
-  ExprResult Result = ParseExpression();
-  if (Result.isInvalid()) {
-    SkipUntil(tok::r_paren);
-    return;
-  }
-
-  // Match the ')'
-  T.consumeClose();
-  if (T.getCloseLocation().isInvalid())
-    return;
 
   const char *PrevSpec = 0;
   unsigned DiagID;
   // Check for duplicate type specifiers (e.g. "int decltype(a)").
   if (DS.SetTypeSpecType(DeclSpec::TST_decltype, StartLoc, PrevSpec,
-                         DiagID, Result.release()))
+                         DiagID, Result.release())) {
     Diag(StartLoc, DiagID) << PrevSpec;
+    DS.SetTypeSpecError();
+  }
+  return EndLoc;
+}
+
+void Parser::AnnotateExistingDecltypeSpecifier(const DeclSpec& DS, 
+                                               SourceLocation StartLoc,
+                                               SourceLocation EndLoc) {
+  // make sure we have a token we can turn into an annotation token
+  if (PP.isBacktrackEnabled())
+    PP.RevertCachedTokens(1);
+  else
+    PP.EnterToken(Tok);
+
+  Tok.setKind(tok::annot_decltype);
+  setExprAnnotation(Tok, DS.getTypeSpecType() == TST_decltype ? 
+                         DS.getRepAsExpr() : ExprResult());
+  Tok.setAnnotationEndLoc(EndLoc);
+  Tok.setLocation(StartLoc);
+  PP.AnnotateCachedTokens(Tok);
 }
 
 void Parser::ParseUnderlyingTypeSpecifier(DeclSpec &DS) {
@@ -727,14 +773,16 @@ Parser::TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &BaseLoc,
   BaseLoc = Tok.getLocation();
 
   // Parse decltype-specifier
-  if (Tok.is(tok::kw_decltype)) {
+  // tok == kw_decltype is just error recovery, it can only happen when SS 
+  // isn't empty
+  if (Tok.is(tok::kw_decltype) || Tok.is(tok::annot_decltype)) {
     if (SS.isNotEmpty())
       Diag(SS.getBeginLoc(), diag::err_unexpected_scope_on_base_decltype)
         << FixItHint::CreateRemoval(SS.getRange());
     // Fake up a Declarator to use with ActOnTypeName.
     DeclSpec DS(AttrFactory);
 
-    ParseDecltypeSpecifier(DS);    
+    ParseDecltypeSpecifier(DS);
     EndLocation = DS.getSourceRange().getEnd();
 
     Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
