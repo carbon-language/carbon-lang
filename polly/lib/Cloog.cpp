@@ -34,6 +34,8 @@
 #include "cloog/isl/domain.h"
 #include "cloog/isl/cloog.h"
 
+#include <unistd.h>
+
 using namespace llvm;
 using namespace polly;
 
