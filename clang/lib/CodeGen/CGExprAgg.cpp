@@ -74,7 +74,8 @@ public:
 
   /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
   void EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore = false);
-  void EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore = false);
+  void EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore = false,
+                         unsigned Alignment = 0);
 
   void EmitMoveFromReturnSlot(const Expr *E, RValue Src);
 
@@ -221,7 +222,8 @@ void AggExprEmitter::EmitMoveFromReturnSlot(const Expr *E, RValue Src) {
 }
 
 /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
-void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore) {
+void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore,
+                                       unsigned Alignment) {
   assert(Src.isAggregate() && "value must be aggregate value!");
 
   // If Dest is ignored, then we're evaluating an aggregate expression
@@ -256,14 +258,16 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, RValue Src, bool Ignore) {
   // from the source as well, as we can't eliminate it if either operand
   // is volatile, unless copy has volatile for both source and destination..
   CGF.EmitAggregateCopy(Dest.getAddr(), Src.getAggregateAddr(), E->getType(),
-                        Dest.isVolatile()|Src.isVolatileQualified());
+                        Dest.isVolatile()|Src.isVolatileQualified(),
+                        Alignment);
 }
 
 /// EmitFinalDestCopy - Perform the final copy to DestPtr, if desired.
 void AggExprEmitter::EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore) {
   assert(Src.isSimple() && "Can't have aggregate bitfield, vector, etc");
 
-  EmitFinalDestCopy(E, Src.asAggregateRValue(), Ignore);
+  CharUnits Alignment = std::min(Src.getAlignment(), Dest.getAlignment());
+  EmitFinalDestCopy(E, Src.asAggregateRValue(), Ignore, Alignment.getQuantity());
 }
 
 //===----------------------------------------------------------------------===//
@@ -1054,7 +1058,7 @@ LValue CodeGenFunction::EmitAggExprToLValue(const Expr *E) {
 
 void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
                                         llvm::Value *SrcPtr, QualType Ty,
-                                        bool isVolatile) {
+                                        bool isVolatile, unsigned Alignment) {
   assert(!Ty->isAnyComplexType() && "Shouldn't happen for complex");
 
   if (getContext().getLangOptions().CPlusPlus) {
@@ -1086,6 +1090,9 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   // Get size and alignment info for this aggregate.
   std::pair<CharUnits, CharUnits> TypeInfo = 
     getContext().getTypeInfoInChars(Ty);
+
+  if (!Alignment)
+    Alignment = TypeInfo.second.getQuantity();
 
   // FIXME: Handle variable sized types.
 
@@ -1143,5 +1150,5 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   Builder.CreateMemCpy(DestPtr, SrcPtr,
                        llvm::ConstantInt::get(IntPtrTy, 
                                               TypeInfo.first.getQuantity()),
-                       TypeInfo.second.getQuantity(), isVolatile);
+                       Alignment, isVolatile);
 }

@@ -1624,7 +1624,8 @@ public:
   /// \param isVolatile - True iff either the source or the destination is
   /// volatile.
   void EmitAggregateCopy(llvm::Value *DestPtr, llvm::Value *SrcPtr,
-                         QualType EltTy, bool isVolatile=false);
+                         QualType EltTy, bool isVolatile=false,
+                         unsigned Alignment = 0);
 
   /// StartBlock - Start new block named N. If insert block is a dummy block
   /// then reuse it.
