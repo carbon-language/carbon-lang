@@ -98,8 +98,8 @@ SymbolRef SVal::getAsSymbol() const {
   if (const nonloc::SymbolVal *X = dyn_cast<nonloc::SymbolVal>(this))
     return X->getSymbol();
 
-  if (const nonloc::SymExprVal *X = dyn_cast<nonloc::SymExprVal>(this))
-    if (SymbolRef Y = X->getSymbolicExpression())
+  if (const nonloc::SymbolVal *X = dyn_cast<nonloc::SymbolVal>(this))
+    if (SymbolRef Y = X->getSymbol())
       return Y;
 
   return getAsLocSymbol();
@@ -108,8 +108,8 @@ SymbolRef SVal::getAsSymbol() const {
 /// getAsSymbolicExpression - If this Sval wraps a symbolic expression then
 ///  return that expression.  Otherwise return NULL.
 const SymExpr *SVal::getAsSymbolicExpression() const {
-  if (const nonloc::SymExprVal *X = dyn_cast<nonloc::SymExprVal>(this))
-    return X->getSymbolicExpression();
+  if (const nonloc::SymbolVal *X = dyn_cast<nonloc::SymbolVal>(this))
+    return X->getSymbol();
 
   return getAsSymbol();
 }
@@ -305,13 +305,8 @@ void NonLoc::dumpToStream(raw_ostream &os) const {
          << C.getValue().getBitWidth() << 'b';
       break;
     }
-    case nonloc::SymbolValKind:
-      os << '$' << cast<nonloc::SymbolVal>(this)->getSymbol();
-      break;
-    case nonloc::SymExprValKind: {
-      const nonloc::SymExprVal& C = *cast<nonloc::SymExprVal>(this);
-      const SymExpr *SE = C.getSymbolicExpression();
-      os << SE;
+    case nonloc::SymbolValKind: {
+      os << cast<nonloc::SymbolVal>(this)->getSymbol();
       break;
     }
     case nonloc::LocAsIntegerKind: {

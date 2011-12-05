@@ -23,11 +23,9 @@ namespace ento {
 SimpleConstraintManager::~SimpleConstraintManager() {}
 
 bool SimpleConstraintManager::canReasonAbout(SVal X) const {
-  if (nonloc::SymExprVal *SymVal = dyn_cast<nonloc::SymExprVal>(&X)) {
-    const SymExpr *SE = SymVal->getSymbolicExpression();
-
-    if (isa<SymbolData>(SE))
-      return true;
+  nonloc::SymbolVal *SymVal = dyn_cast<nonloc::SymbolVal>(&X);
+  if (SymVal && SymVal->isExpression()) {
+    const SymExpr *SE = SymVal->getSymbol();
 
     if (const SymIntExpr *SIE = dyn_cast<SymIntExpr>(SE)) {
       switch (SIE->getOpcode()) {
@@ -170,34 +168,33 @@ const ProgramState *SimpleConstraintManager::assumeAux(const ProgramState *state
   case nonloc::SymbolValKind: {
     nonloc::SymbolVal& SV = cast<nonloc::SymbolVal>(Cond);
     SymbolRef sym = SV.getSymbol();
-    return assumeAuxForSymbol(state, sym, Assumption);
-  }
-
-  case nonloc::SymExprValKind: {
-    nonloc::SymExprVal V = cast<nonloc::SymExprVal>(Cond);
-
-    SymbolRef sym = V.getSymbolicExpression();
     assert(sym);
 
-    // We can only simplify expressions whose RHS is an integer.
-    const SymIntExpr *SE = dyn_cast<SymIntExpr>(sym);
-    if (!SE)
+    // Handle SymbolData.
+    if (!SV.isExpression()) {
       return assumeAuxForSymbol(state, sym, Assumption);
 
-    BinaryOperator::Opcode op = SE->getOpcode();
-    // Implicitly compare non-comparison expressions to 0.
-    if (!BinaryOperator::isComparisonOp(op)) {
-      QualType T = SymMgr.getType(SE);
-      const llvm::APSInt &zero = BasicVals.getValue(0, T);
-      op = (Assumption ? BO_NE : BO_EQ);
-      return assumeSymRel(state, SE, op, zero);
-    }
+    // Handle symbolic expression.
+    } else {
+      // We can only simplify expressions whose RHS is an integer.
+      const SymIntExpr *SE = dyn_cast<SymIntExpr>(sym);
+      if (!SE)
+        return assumeAuxForSymbol(state, sym, Assumption);
 
-    // From here on out, op is the real comparison we'll be testing.
-    if (!Assumption)
-      op = NegateComparison(op);
-  
-    return assumeSymRel(state, SE->getLHS(), op, SE->getRHS());
+      BinaryOperator::Opcode op = SE->getOpcode();
+      // Implicitly compare non-comparison expressions to 0.
+      if (!BinaryOperator::isComparisonOp(op)) {
+        QualType T = SymMgr.getType(SE);
+        const llvm::APSInt &zero = BasicVals.getValue(0, T);
+        op = (Assumption ? BO_NE : BO_EQ);
+        return assumeSymRel(state, SE, op, zero);
+      }
+      // From here on out, op is the real comparison we'll be testing.
+      if (!Assumption)
+        op = NegateComparison(op);
+
+      return assumeSymRel(state, SE->getLHS(), op, SE->getRHS());
+    }
   }
 
   case nonloc::ConcreteIntKind: {

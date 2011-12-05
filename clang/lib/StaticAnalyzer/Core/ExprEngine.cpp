@@ -1665,7 +1665,8 @@ void ExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
 
     const ProgramState *state = Pred->getState();
     SVal V = state->getSVal(Ex);
-    if (nonloc::SymExprVal *SEV = dyn_cast<nonloc::SymExprVal>(&V)) {
+    nonloc::SymbolVal *SEV = dyn_cast<nonloc::SymbolVal>(&V);
+    if (SEV && SEV->isExpression()) {
       const std::pair<const ProgramPointTag *, const ProgramPointTag*> &tags =
         getEagerlyAssumeTags();
 

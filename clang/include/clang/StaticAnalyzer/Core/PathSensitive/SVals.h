@@ -276,13 +276,17 @@ namespace nonloc {
 enum Kind { ConcreteIntKind, SymbolValKind, SymExprValKind,
             LocAsIntegerKind, CompoundValKind, LazyCompoundValKind };
 
-// TODO: Change to contain symbol data.
+/// \brief Represents symbolic expression.
 class SymbolVal : public NonLoc {
 public:
   SymbolVal(SymbolRef sym) : NonLoc(SymbolValKind, sym) {}
 
   SymbolRef getSymbol() const {
     return (const SymExpr*) Data;
+  }
+
+  bool isExpression() {
+    return !isa<SymbolData>(getSymbol());
   }
 
   static inline bool classof(const SVal* V) {
@@ -292,25 +296,6 @@ public:
 
   static inline bool classof(const NonLoc* V) {
     return V->getSubKind() == SymbolValKind;
-  }
-};
-
-class SymExprVal : public NonLoc {
-public:
-  explicit SymExprVal(const SymExpr *SE)
-    : NonLoc(SymExprValKind, reinterpret_cast<const void*>(SE)) {}
-
-  const SymExpr *getSymbolicExpression() const {
-    return reinterpret_cast<const SymExpr*>(Data);
-  }
-
-  static inline bool classof(const SVal* V) {
-    return V->getBaseKind() == NonLocKind &&
-           V->getSubKind() == SymExprValKind;
-  }
-
-  static inline bool classof(const NonLoc* V) {
-    return V->getSubKind() == SymExprValKind;
   }
 };
 

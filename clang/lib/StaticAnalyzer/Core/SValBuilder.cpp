@@ -45,7 +45,7 @@ NonLoc SValBuilder::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
   // BasicValueFactory again.
   assert(lhs);
   assert(!Loc::isLocType(type));
-  return nonloc::SymExprVal(SymMgr.getSymIntExpr(lhs, op, rhs, type));
+  return nonloc::SymbolVal(SymMgr.getSymIntExpr(lhs, op, rhs, type));
 }
 
 NonLoc SValBuilder::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
@@ -53,7 +53,7 @@ NonLoc SValBuilder::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
   assert(lhs && rhs);
   assert(SymMgr.getType(lhs) == SymMgr.getType(rhs));
   assert(!Loc::isLocType(type));
-  return nonloc::SymExprVal(SymMgr.getSymSymExpr(lhs, op, rhs, type));
+  return nonloc::SymbolVal(SymMgr.getSymSymExpr(lhs, op, rhs, type));
 }
 
 
