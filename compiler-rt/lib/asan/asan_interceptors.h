@@ -37,18 +37,33 @@
 #include "mach_override/mach_override.h"
 #define WRAP(x) wrap_##x
 #define WRAPPER_NAME(x) "wrap_"#x
+
 #define OVERRIDE_FUNCTION(oldfunc, newfunc)                             \
   CHECK(0 == mach_override_ptr((void*)(oldfunc),                        \
                                (void*)(newfunc),                        \
                                (void**)&real_##oldfunc));               \
   CHECK(real_##oldfunc != NULL);
+
+#define OVERRIDE_FUNCTION_IF_EXISTS(oldfunc, newfunc)                   \
+  do { mach_override_ptr((void*)(oldfunc),                              \
+                         (void*)(newfunc),                              \
+                         (void**)&real_##oldfunc); } while (0)
+
 #define INTERCEPT_FUNCTION(func)                                        \
   OVERRIDE_FUNCTION(func, WRAP(func))
-#else
+
+#define INTERCEPT_FUNCTION_IF_EXISTS(func)                              \
+  OVERRIDE_FUNCTION_IF_EXISTS(func, WRAP(func))
+
+#else  // __linux__
 #define WRAP(x) x
 #define WRAPPER_NAME(x) #x
+
 #define INTERCEPT_FUNCTION(func)                                        \
   CHECK((real_##func = (func##_f)dlsym(RTLD_NEXT, #func)));
+
+#define INTERCEPT_FUNCTION_IF_EXISTS(func)                              \
+  do { real_##func = (func##_f)dlsym(RTLD_NEXT, #func); } while (0)
 #endif
 
 #ifdef __APPLE__

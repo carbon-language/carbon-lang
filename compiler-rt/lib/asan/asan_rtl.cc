@@ -507,6 +507,7 @@ extern "C" void __cxa_throw(void *a, void *b, void *c);
 
 #if ASAN_HAS_EXCEPTIONS
 extern "C" void WRAP(__cxa_throw)(void *a, void *b, void *c) {
+  CHECK(&real___cxa_throw);
   UnpoisonStackFromHereToTop();
   real___cxa_throw(a, b, c);
 }
@@ -690,7 +691,7 @@ void __asan_init() {
   INTERCEPT_FUNCTION(signal);
   INTERCEPT_FUNCTION(longjmp);
   INTERCEPT_FUNCTION(_longjmp);
-  INTERCEPT_FUNCTION(__cxa_throw);
+  INTERCEPT_FUNCTION_IF_EXISTS(__cxa_throw);
   INTERCEPT_FUNCTION(pthread_create);
 #ifdef __APPLE__
   INTERCEPT_FUNCTION(dispatch_async_f);
