@@ -1216,6 +1216,12 @@ define void @f() optsize { ... }
       exception by calling the <tt>C++</tt> exception throwing methods, but may
       use the <tt>unwind</tt> instruction.</dd>
 
+  <dt><tt><b><a name="returns_twice">returns_twice</a></b></tt></dt>
+  <dd>This attribute indicates that this function can return twice. The
+      C <code>setjmp</code> is an example of such a function.  The compiler
+      disables some optimizations (like tail calls) in the caller of these
+      functions.</dd>
+
   <dt><tt><b><a name="ssp">ssp</a></b></tt></dt>
   <dd>This attribute indicates that the function should emit a stack smashing
       protector. It is in the form of a "canary"&mdash;a random value placed on
@@ -1243,12 +1249,6 @@ define void @f() optsize { ... }
       show that no exceptions passes by it. This is normally the case for
       the ELF x86-64 abi, but it can be disabled for some compilation
       units.</dd>
-
-  <dt><tt><b><a name="returns_twice">returns_twice</a></b></tt></dt>
-  <dd>This attribute indicates that this function can return
-  twice. The C <code>setjmp</code> is an example of such a function.
-  The compiler disables some optimizations (like tail calls) in the caller of
-  these functions.</dd>
 </dl>
 
 </div>
