@@ -12,3 +12,8 @@
 #  error DEPENDS_ON_MODULE should have been hidden
 #endif
 
+Module *mod; // expected-error{{unknown type name 'Module'}}
+
+#import <AlsoDependsOnModule/AlsoDependsOnModule.h> // expected-warning{{treating #import as an import of module 'AlsoDependsOnModule'}}
+Module *mod2;
+

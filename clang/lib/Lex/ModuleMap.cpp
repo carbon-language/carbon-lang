@@ -197,9 +197,14 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   
   Module *Result = new Module(ModuleName, SourceLocation(), 
                               /*IsFramework=*/true);
+  // umbrella "umbrella-header-name"
   Result->UmbrellaHeader = UmbrellaHeader;
   Headers[UmbrellaHeader] = Result;
   UmbrellaDirs[FrameworkDir] = Result;
+  
+  // export *
+  Result->Exports.push_back(Module::ExportDecl(0, true));
+  
   Modules[ModuleName] = Result;
   return Result;
 }
