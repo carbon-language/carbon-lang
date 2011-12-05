@@ -5245,8 +5245,8 @@ processInstruction(MCInst &Inst,
     // 'as' behaviour. Make sure the wide encoding wasn't explicit.
     if (Inst.getOperand(0).getReg() != Inst.getOperand(1).getReg() ||
         Inst.getOperand(5).getReg() != 0 ||
-        (static_cast<ARMOperand*>(Operands[2])->isToken() &&
-         static_cast<ARMOperand*>(Operands[2])->getToken() == ".w"))
+        (static_cast<ARMOperand*>(Operands[3])->isToken() &&
+         static_cast<ARMOperand*>(Operands[3])->getToken() == ".w"))
       break;
     MCInst TmpInst;
     TmpInst.setOpcode(ARM::tADDhirr);

@@ -4,7 +4,7 @@
 
 .code 16
 	add.w	r0, r0, r1
-@ CHECK: add  r0, r1                  @ encoding: [0x08,0x44]
+@ CHECK: add.w	r0, r0, r1              @ encoding: [0x00,0xeb,0x01,0x00]
 
 .code 32
 	add	r0, r0, r1
