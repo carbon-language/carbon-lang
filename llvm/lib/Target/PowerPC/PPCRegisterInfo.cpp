@@ -120,10 +120,6 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     PPC::V24, PPC::V25, PPC::V26, PPC::V27,
     PPC::V28, PPC::V29, PPC::V30, PPC::V31,
     
-    PPC::CR2LT, PPC::CR2GT, PPC::CR2EQ, PPC::CR2UN,
-    PPC::CR3LT, PPC::CR3GT, PPC::CR3EQ, PPC::CR3UN,
-    PPC::CR4LT, PPC::CR4GT, PPC::CR4EQ, PPC::CR4UN,
-    
     PPC::LR,  0
   };
 
@@ -149,10 +145,6 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     PPC::V24, PPC::V25, PPC::V26, PPC::V27,
     PPC::V28, PPC::V29, PPC::V30, PPC::V31,
     
-    PPC::CR2LT, PPC::CR2GT, PPC::CR2EQ, PPC::CR2UN,
-    PPC::CR3LT, PPC::CR3GT, PPC::CR3EQ, PPC::CR3UN,
-    PPC::CR4LT, PPC::CR4GT, PPC::CR4EQ, PPC::CR4UN,
-    
     0
   };
   // 64-bit Darwin calling convention. 
@@ -173,10 +165,6 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     PPC::V20, PPC::V21, PPC::V22, PPC::V23,
     PPC::V24, PPC::V25, PPC::V26, PPC::V27,
     PPC::V28, PPC::V29, PPC::V30, PPC::V31,
-    
-    PPC::CR2LT, PPC::CR2GT, PPC::CR2EQ, PPC::CR2UN,
-    PPC::CR3LT, PPC::CR3GT, PPC::CR3EQ, PPC::CR3UN,
-    PPC::CR4LT, PPC::CR4GT, PPC::CR4EQ, PPC::CR4UN,
     
     PPC::LR8,  0
   };
@@ -202,10 +190,6 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     PPC::V20, PPC::V21, PPC::V22, PPC::V23,
     PPC::V24, PPC::V25, PPC::V26, PPC::V27,
     PPC::V28, PPC::V29, PPC::V30, PPC::V31,
-
-    PPC::CR2LT, PPC::CR2GT, PPC::CR2EQ, PPC::CR2UN,
-    PPC::CR3LT, PPC::CR3GT, PPC::CR3EQ, PPC::CR3UN,
-    PPC::CR4LT, PPC::CR4GT, PPC::CR4EQ, PPC::CR4UN,
 
     0
   };
