@@ -3217,7 +3217,7 @@ bool X86::isPSHUFLWMask(ShuffleVectorSDNode *N) {
 static bool isPALIGNRMask(const SmallVectorImpl<int> &Mask, EVT VT,
                           bool hasSSSE3OrAVX) {
   int i, e = VT.getVectorNumElements();
-  if (VT.getSizeInBits() != 128 && VT.getSizeInBits() != 64)
+  if (VT.getSizeInBits() != 128)
     return false;
 
   // Do not handle v2i64 / v2f64 shuffles with palignr.
@@ -11244,7 +11244,7 @@ X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
                                       EVT VT) const {
   // Very little shuffling can be done for 64-bit vectors right now.
   if (VT.getSizeInBits() == 64)
-    return isPALIGNRMask(M, VT, Subtarget->hasSSSE3orAVX());
+    return false;
 
   // FIXME: pshufb, blends, shifts.
   return (VT.getVectorNumElements() == 2 ||
