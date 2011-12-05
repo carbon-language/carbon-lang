@@ -289,6 +289,11 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
 
   llvm::TargetOptions Options;
 
+  if (CodeGenOpts.RealignStack)
+    Options.RealignStack = true;
+  if (CodeGenOpts.StackAlignment)
+    Options.StackAlignmentOverride = CodeGenOpts.StackAlignment;
+
   // Set frame pointer elimination mode.
   if (!CodeGenOpts.DisableFPElim) {
     Options.NoFramePointerElim = false;

@@ -105,6 +105,11 @@ public:
   unsigned VerifyModule      : 1; /// Control whether the module should be run
                                   /// through the LLVM Verifier.
 
+  unsigned RealignStack       : 1; /// Controls whether stack frame should be
+                                  /// readjusted to the desired alignment.
+  unsigned StackAlignment;        /// Overrides default stack alignment,
+                                  /// if not 0.
+
   /// The code model to use (-mcmodel).
   std::string CodeModel;
 

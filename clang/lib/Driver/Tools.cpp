@@ -1796,10 +1796,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(Twine(StackProtectorLevel)));
   }
 
-  // Translate -mstackrealign
-  if (Args.hasArg(options::OPT_mstackrealign)) {
-    CmdArgs.push_back("-backend-option");
-    CmdArgs.push_back("-force-align-stack");
+  if (Args.hasArg(options::OPT_mstackrealign))
+    CmdArgs.push_back("-mstackrealign");
+  if (Args.hasArg(options::OPT_mstack_alignment)) {
+    StringRef alignment = Args.getLastArgValue(options::OPT_mstack_alignment);
+    CmdArgs.push_back(Args.MakeArgString("-mstack-alignment=" + alignment));
   }
 
   // Forward -f options with positive and negative forms; we translate

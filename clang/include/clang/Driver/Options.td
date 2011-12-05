@@ -571,6 +571,7 @@ def mllvm : Separate<"-mllvm">;
 def mmacosx_version_min_EQ : Joined<"-mmacosx-version-min=">, Group<m_Group>;
 def mms_bitfields : Flag<"-mms-bitfields">, Group<m_Group>;
 def mstackrealign : Flag<"-mstackrealign">, Group<m_Group>;
+def mstack_alignment : Joined<"-mstack-alignment=">, Group<m_Group>;
 def mmmx : Flag<"-mmmx">, Group<m_x86_Features_Group>;
 def mno_3dnowa : Flag<"-mno-3dnowa">, Group<m_x86_Features_Group>;
 def mno_3dnow : Flag<"-mno-3dnow">, Group<m_x86_Features_Group>;
