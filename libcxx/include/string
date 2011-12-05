@@ -3915,16 +3915,8 @@ template<class _CharT, class _Traits, class _Allocator>
 template<class _Ptr>
 size_t _LIBCPP_INLINE_VISIBILITY __do_string_hash(_Ptr __p, _Ptr __e)
 {
-    size_t __r = 0;
-    const size_t __sr = __CHAR_BIT__ * sizeof(size_t) - 8;
-    const size_t __m = size_t(0xF) << (__sr + 4);
-    for (; __p != __e; ++__p)
-    {
-        __r = (__r << 4) + *__p;
-        size_t __g = __r & __m;
-        __r ^= __g | (__g >> __sr);
-    }
-    return __r;
+    typedef typename iterator_traits<_Ptr>::value_type value_type;
+    return __murmur2<size_t>()(__p, (__e-__p)*sizeof(value_type));
 }
 
 template<class _CharT, class _Traits, class _Allocator>

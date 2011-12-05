@@ -2719,6 +2719,95 @@ operator>=(const unique_ptr<_T1, _D1>& __x, const unique_ptr<_T2, _D2>& __y) {re
 
 template <class _Tp> struct hash;
 
+template <class _Size, size_t = sizeof(_Size)*__CHAR_BIT__>
+struct __murmur2;
+
+template <class _Size>
+struct __murmur2<_Size, 32>
+{
+    _Size operator()(const void* __key, _Size __len);
+};
+
+template <class _Size>
+_Size
+__murmur2<_Size, 32>::operator()(const void* __key, _Size __len)
+{
+    const _Size __m = 0x5bd1e995;
+    const _Size __r = 24;
+    _Size __h = __len;
+    const unsigned char* __data = static_cast<const unsigned char*>(__key);
+    for (; __len >= 4; __data += 4, __len -= 4)
+    {
+        _Size __k = *(const _Size*)__data;
+        __k *= __m;
+        __k ^= __k >> __r;
+        __k *= __m;
+        __h *= __m;
+        __h ^= __k;
+    }
+    switch (__len)
+    {
+    case 3:
+        __h ^= __data[2] << 16;
+    case 2:
+        __h ^= __data[1] << 8;
+    case 1:
+        __h ^= __data[0];
+        __h *= __m;
+    }
+    __h ^= __h >> 13;
+    __h *= __m;
+    __h ^= __h >> 15;
+    return __h;
+}
+
+template <class _Size>
+struct __murmur2<_Size, 64>
+{
+    _Size operator()(const void* __key, _Size __len);
+};
+
+template <class _Size>
+_Size
+__murmur2<_Size, 64>::operator()(const void* __key, _Size __len)
+{
+    const _Size __m = 0xc6a4a7935bd1e995ull;
+    const _Size __r = 47;
+    _Size __h = __len * __m;
+    const unsigned char* __data = static_cast<const unsigned char*>(__key);
+    for (; __len >= 8; __data += 8, __len -= 8)
+    {
+        _Size __k = *(const _Size*)__data;
+        __k *= __m;
+        __k ^= __k >> __r;
+        __k *= __m;
+        __h ^= __k;
+        __h *= __m;
+    }
+    switch (__len)
+    {
+    case 7:
+        __h ^= __data[6] << 48;
+    case 6:
+        __h ^= __data[5] << 40;
+    case 5:
+        __h ^= __data[4] << 32;
+    case 4:
+        __h ^= __data[3] << 24;
+    case 3:
+        __h ^= __data[2] << 16;
+    case 2:
+        __h ^= __data[1] << 8;
+    case 1:
+        __h ^= __data[0];
+        __h *= __m;
+    }
+    __h ^= __h >> __r;
+    __h *= __m;
+    __h ^= __h >> __r;
+    return __h;
+}
+
 template <class _Tp, size_t = sizeof(_Tp) / sizeof(size_t)>
 struct __scalar_hash;
 
@@ -2774,7 +2863,7 @@ struct __scalar_hash<_Tp, 2>
             };
         } __u;
         __u.__t = __v;
-        return __u.__a ^ __u.__b;
+        return __murmur2<size_t>()(&__u, sizeof(__u));
     }
 };
 
@@ -2796,7 +2885,7 @@ struct __scalar_hash<_Tp, 3>
             };
         } __u;
         __u.__t = __v;
-        return __u.__a ^ __u.__b ^ __u.__c;
+        return __murmur2<size_t>()(&__u, sizeof(__u));
     }
 };
 
@@ -2819,7 +2908,7 @@ struct __scalar_hash<_Tp, 4>
             };
         } __u;
         __u.__t = __v;
-        return __u.__a ^ __u.__b ^ __u.__c ^ __u.__d;
+        return __murmur2<size_t>()(&__u, sizeof(__u));
     }
 };
 

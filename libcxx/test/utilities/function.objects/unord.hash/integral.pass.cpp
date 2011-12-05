@@ -33,7 +33,8 @@ test()
     for (int i = 0; i <= 5; ++i)
     {
         T t(i);
-        assert(h(t) == t);
+        if (sizeof(T) <= sizeof(std::size_t))
+            assert(h(t) == t);
     }
 }
 

@@ -183,6 +183,9 @@ __thread_id get_id();
 
 }  // this_thread
 
+class _LIBCPP_VISIBLE __thread_id;
+template<> struct _LIBCPP_VISIBLE hash<__thread_id>;
+
 class _LIBCPP_VISIBLE __thread_id
 {
     // FIXME: pthread_t is a pointer on Darwin but a long on Linux.
@@ -226,9 +229,8 @@ private:
 
     friend __thread_id this_thread::get_id();
     friend class _LIBCPP_VISIBLE thread;
+    friend struct _LIBCPP_VISIBLE hash<__thread_id>;
 };
-
-template<class _Tp> struct hash;
 
 template<>
 struct _LIBCPP_VISIBLE hash<__thread_id>
@@ -237,8 +239,7 @@ struct _LIBCPP_VISIBLE hash<__thread_id>
     _LIBCPP_INLINE_VISIBILITY
     size_t operator()(__thread_id __v) const
     {
-        const size_t* const __p = reinterpret_cast<const size_t*>(&__v);
-        return *__p;
+        return hash<pthread_t>()(__v.__id_);
     }
 };
 
