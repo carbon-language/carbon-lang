@@ -40,6 +40,8 @@ namespace ento {
   class TypedValueRegion;
   class VarRegion;
 
+/// \brief Symbolic value. These values used to capture symbolic execution of
+/// the program.
 class SymExpr : public llvm::FoldingSetNode {
 public:
   enum Kind { RegionValueKind, ConjuredKind, DerivedKind, ExtentKind,
@@ -69,8 +71,12 @@ public:
   static inline bool classof(const SymExpr*) { return true; }
 };
 
-typedef unsigned SymbolID;
+typedef const SymExpr* SymbolRef;
+typedef llvm::SmallVector<SymbolRef, 2> SymbolRefSmallVectorTy;
 
+typedef unsigned SymbolID;
+/// \brief A symbol representing data which can be stored in a memory location
+/// (region).
 class SymbolData : public SymExpr {
 private:
   const SymbolID Sym;
@@ -89,9 +95,6 @@ public:
     return k >= BEGIN_SYMBOLS && k <= END_SYMBOLS;
   }
 };
-
-typedef const SymbolData* SymbolRef;
-typedef llvm::SmallVector<SymbolRef, 2> SymbolRefSmallVectorTy;
 
 /// A symbol representing the value of a MemRegion.
 class SymbolRegionValue : public SymbolData {
@@ -122,7 +125,8 @@ public:
   }
 };
 
-/// A symbol representing the result of an expression.
+/// A symbol representing the result of an expression in the case when we do
+/// not know anything about what the expression is.
 class SymbolConjured : public SymbolData {
   const Stmt *S;
   QualType T;

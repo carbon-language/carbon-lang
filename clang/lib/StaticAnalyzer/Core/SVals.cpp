@@ -99,7 +99,7 @@ SymbolRef SVal::getAsSymbol() const {
     return X->getSymbol();
 
   if (const nonloc::SymExprVal *X = dyn_cast<nonloc::SymExprVal>(this))
-    if (SymbolRef Y = dyn_cast<SymbolData>(X->getSymbolicExpression()))
+    if (SymbolRef Y = X->getSymbolicExpression())
       return Y;
 
   return getAsLocSymbol();

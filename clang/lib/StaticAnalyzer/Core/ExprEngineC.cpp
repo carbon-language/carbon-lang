@@ -43,8 +43,7 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
     if (Op == BO_Assign) {
       // EXPERIMENTAL: "Conjured" symbols.
       // FIXME: Handle structs.
-      if (RightV.isUnknown() ||
-          !getConstraintManager().canReasonAbout(RightV)) {
+      if (RightV.isUnknown()) {
         unsigned Count = currentBuilderContext->getCurrentBlockCount();
         RightV = svalBuilder.getConjuredSymbolVal(NULL, B->getRHS(), Count);
       }

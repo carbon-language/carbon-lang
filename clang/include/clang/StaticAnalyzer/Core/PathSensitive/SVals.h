@@ -281,7 +281,7 @@ public:
   SymbolVal(SymbolRef sym) : NonLoc(SymbolValKind, sym) {}
 
   SymbolRef getSymbol() const {
-    return (const SymbolData*) Data;
+    return (const SymExpr*) Data;
   }
 
   static inline bool classof(const SVal* V) {

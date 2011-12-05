@@ -135,16 +135,29 @@ static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {
   }
 }
 
+
+const ProgramState *SimpleConstraintManager::assumeAuxForSymbol(
+                                              const ProgramState *State,
+                                              SymbolRef Sym,
+                                              bool Assumption) {
+  QualType T =  State->getSymbolManager().getType(Sym);
+  const llvm::APSInt &zero = State->getBasicVals().getValue(0, T);
+  if (Assumption)
+    return assumeSymNE(State, Sym, zero, zero);
+  else
+    return assumeSymEQ(State, Sym, zero, zero);
+}
+
 const ProgramState *SimpleConstraintManager::assumeAux(const ProgramState *state,
                                                   NonLoc Cond,
                                                   bool Assumption) {
 
-  // We cannot reason about SymSymExprs,
-  // and can only reason about some SymIntExprs.
+  // We cannot reason about SymSymExprs, and can only reason about some
+  // SymIntExprs.
   if (!canReasonAbout(Cond)) {
-    // Just return the current state indicating that the path is feasible.
-    // This may be an over-approximation of what is possible.
-    return state;
+    // Just add the constraint to the expression without trying to simplify.
+    SymbolRef sym = Cond.getAsSymExpr();
+    return assumeAuxForSymbol(state, sym, Assumption);
   }
 
   BasicValueFactory &BasicVals = state->getBasicVals();
@@ -157,22 +170,19 @@ const ProgramState *SimpleConstraintManager::assumeAux(const ProgramState *state
   case nonloc::SymbolValKind: {
     nonloc::SymbolVal& SV = cast<nonloc::SymbolVal>(Cond);
     SymbolRef sym = SV.getSymbol();
-    QualType T =  SymMgr.getType(sym);
-    const llvm::APSInt &zero = BasicVals.getValue(0, T);
-    if (Assumption)
-      return assumeSymNE(state, sym, zero, zero);
-    else
-      return assumeSymEQ(state, sym, zero, zero);
+    return assumeAuxForSymbol(state, sym, Assumption);
   }
 
   case nonloc::SymExprValKind: {
     nonloc::SymExprVal V = cast<nonloc::SymExprVal>(Cond);
 
-    // For now, we only handle expressions whose RHS is an integer.
-    // All other expressions are assumed to be feasible.
-    const SymIntExpr *SE = dyn_cast<SymIntExpr>(V.getSymbolicExpression());
+    SymbolRef sym = V.getSymbolicExpression();
+    assert(sym);
+
+    // We can only simplify expressions whose RHS is an integer.
+    const SymIntExpr *SE = dyn_cast<SymIntExpr>(sym);
     if (!SE)
-      return state;
+      return assumeAuxForSymbol(state, sym, Assumption);
 
     BinaryOperator::Opcode op = SE->getOpcode();
     // Implicitly compare non-comparison expressions to 0.
