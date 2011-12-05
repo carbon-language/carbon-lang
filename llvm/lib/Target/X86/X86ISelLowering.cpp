@@ -3323,11 +3323,9 @@ static bool isVSHUFPYMask(const SmallVectorImpl<int> &Mask, EVT VT,
 /// the reverse of what x86 shuffles want. x86 shuffles requires the lower
 /// half elements to come from vector 1 (which would equal the dest.) and
 /// the upper half to come from vector 2.
-static bool isCommutedVSHUFPY(ShuffleVectorSDNode *N, bool HasAVX) {
-  EVT VT = N->getValueType(0);
+static bool isCommutedVSHUFPYMask(const SmallVectorImpl<int> &Mask, EVT VT,
+                                  bool HasAVX) {
   int NumElems = VT.getVectorNumElements();
-  SmallVector<int, 8> Mask;
-  N->getMask(Mask);
 
   if (!HasAVX || VT.getSizeInBits() != 256)
     return false;
@@ -3423,8 +3421,8 @@ static unsigned getShuffleVSHUFPYImmediate(SDNode *N) {
 
 /// CommuteVectorShuffleMask - Change values in a shuffle permute mask assuming
 /// the two vector operands have swapped position.
-static void CommuteVectorShuffleMask(SmallVectorImpl<int> &Mask, EVT VT) {
-  unsigned NumElems = VT.getVectorNumElements();
+static void CommuteVectorShuffleMask(SmallVectorImpl<int> &Mask,
+                                     unsigned NumElems) {
   for (unsigned i = 0; i != NumElems; ++i) {
     int idx = Mask[i];
     if (idx < 0)
@@ -3483,12 +3481,6 @@ static bool isCommutedSHUFPMask(const SmallVectorImpl<int> &Mask, EVT VT) {
     if (!isUndefOrInRange(Mask[i], 0, NumElems))
       return false;
   return true;
-}
-
-static bool isCommutedSHUFP(ShuffleVectorSDNode *N) {
-  SmallVector<int, 8> M;
-  N->getMask(M);
-  return isCommutedSHUFPMask(M, N->getValueType(0));
 }
 
 /// isMOVHLPSMask - Return true if the specified VECTOR_SHUFFLE operand
@@ -3975,21 +3967,18 @@ bool X86::isMOVSLDUPMask(ShuffleVectorSDNode *N,
 /// isMOVDDUPYMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to 256-bit
 /// version of MOVDDUP.
-static bool isMOVDDUPYMask(ShuffleVectorSDNode *N,
-                           const X86Subtarget *Subtarget) {
-  EVT VT = N->getValueType(0);
+static bool isMOVDDUPYMask(const SmallVectorImpl<int> &Mask, EVT VT,
+                           bool HasAVX) {
   int NumElts = VT.getVectorNumElements();
-  bool V2IsUndef = N->getOperand(1).getOpcode() == ISD::UNDEF;
 
-  if (!Subtarget->hasAVX() || VT.getSizeInBits() != 256 ||
-      !V2IsUndef || NumElts != 4)
+  if (!HasAVX || VT.getSizeInBits() != 256 || NumElts != 4)
     return false;
 
   for (int i = 0; i != NumElts/2; ++i)
-    if (!isUndefOrEqual(N->getMaskElt(i), 0))
+    if (!isUndefOrEqual(Mask[i], 0))
       return false;
   for (int i = NumElts/2; i != NumElts; ++i)
-    if (!isUndefOrEqual(N->getMaskElt(i), NumElts/2))
+    if (!isUndefOrEqual(Mask[i], NumElts/2))
       return false;
   return true;
 }
@@ -6172,7 +6161,7 @@ LowerVECTOR_SHUFFLE_128v4(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
     // from X.
     if (NumHi == 3) {
       // Normalize it so the 3 elements come from V1.
-      CommuteVectorShuffleMask(PermMask, VT);
+      CommuteVectorShuffleMask(PermMask, 4);
       std::swap(V1, V2);
     }
 
@@ -6603,6 +6592,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   bool V1IsSplat = false;
   bool V2IsSplat = false;
   bool HasXMMInt = Subtarget->hasXMMInt();
+  bool HasAVX    = Subtarget->hasAVX();
   bool HasAVX2   = Subtarget->hasAVX2();
   MachineFunction &MF = DAG.getMachineFunction();
   bool OptForSize = MF.getFunction()->hasFnAttr(Attribute::OptimizeForSize);
@@ -6738,7 +6728,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     Commuted = true;
   }
 
-  if (isCommutedMOVL(SVOp, V2IsSplat, V2IsUndef)) {
+  SmallVector<int, 32> M;
+  SVOp->getMask(M);
+
+  if (isCommutedMOVLMask(M, VT, V2IsSplat, V2IsUndef)) {
     // Shuffling low element of v1 into undef, just return v1.
     if (V2IsUndef)
       return V1;
@@ -6748,11 +6741,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getMOVL(DAG, dl, VT, V2, V1);
   }
 
-  if (X86::isUNPCKLMask(SVOp, HasAVX2))
+  if (isUNPCKLMask(M, VT, HasAVX2))
     return getTargetShuffleNode(getUNPCKLOpcode(VT, HasAVX2), dl, VT, V1, V2,
                                 DAG);
 
-  if (X86::isUNPCKHMask(SVOp, HasAVX2))
+  if (isUNPCKHMask(M, VT, HasAVX2))
     return getTargetShuffleNode(getUNPCKHOpcode(VT, HasAVX2), dl, VT, V1, V2,
                                 DAG);
 
@@ -6787,15 +6780,13 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // Normalize the node to match x86 shuffle ops if needed
-  if (!V2IsUndef && (isCommutedSHUFP(SVOp) ||
-                     isCommutedVSHUFPY(SVOp, Subtarget->hasAVX())))
+  if (!V2IsUndef && (isCommutedSHUFPMask(M, VT) ||
+                     isCommutedVSHUFPYMask(M, VT, HasAVX)))
     return CommuteVectorShuffle(SVOp, DAG);
 
   // The checks below are all present in isShuffleMaskLegal, but they are
   // inlined here right now to enable us to directly emit target specific
   // nodes, and remove one by one until they don't return Op anymore.
-  SmallVector<int, 16> M;
-  SVOp->getMask(M);
 
   if (isPALIGNRMask(M, VT, Subtarget->hasSSSE3orAVX()))
     return getTargetShuffleNode(X86ISD::PALIGN, dl, VT, V1, V2,
@@ -6804,10 +6795,9 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   if (ShuffleVectorSDNode::isSplatMask(&M[0], VT) &&
       SVOp->getSplatIndex() == 0 && V2IsUndef) {
-    if (VT == MVT::v2f64)
-      return getTargetShuffleNode(X86ISD::UNPCKLP, dl, VT, V1, V1, DAG);
-    if (VT == MVT::v2i64)
-      return getTargetShuffleNode(X86ISD::PUNPCKL, dl, VT, V1, V1, DAG);
+    if (VT == MVT::v2f64 || VT == MVT::v2i64)
+      return getTargetShuffleNode(getUNPCKLOpcode(VT, HasAVX2), dl, VT, V1, V1,
+                                  DAG);
   }
 
   if (isPSHUFHWMask(M, VT))
@@ -6824,10 +6814,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getTargetShuffleNode(getSHUFPOpcode(VT), dl, VT, V1, V2,
                                 X86::getShuffleSHUFImmediate(SVOp), DAG);
 
-  if (X86::isUNPCKL_v_undef_Mask(SVOp))
+  if (isUNPCKL_v_undef_Mask(M, VT))
     return getTargetShuffleNode(getUNPCKLOpcode(VT, HasAVX2), dl, VT, V1, V1,
                                 DAG);
-  if (X86::isUNPCKH_v_undef_Mask(SVOp))
+  if (isUNPCKH_v_undef_Mask(M, VT))
     return getTargetShuffleNode(getUNPCKHOpcode(VT, HasAVX2), dl, VT, V1, V1,
                                 DAG);
 
@@ -6837,21 +6827,21 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   //
 
   // Handle VMOVDDUPY permutations
-  if (isMOVDDUPYMask(SVOp, Subtarget))
+  if (V2IsUndef && isMOVDDUPYMask(M, VT, HasAVX))
     return getTargetShuffleNode(X86ISD::MOVDDUP, dl, VT, V1, DAG);
 
   // Handle VPERMILPS/D* permutations
-  if (isVPERMILPMask(M, VT, Subtarget->hasAVX()))
+  if (isVPERMILPMask(M, VT, HasAVX))
     return getTargetShuffleNode(X86ISD::VPERMILP, dl, VT, V1,
                                 getShuffleVPERMILPImmediate(SVOp), DAG);
 
   // Handle VPERM2F128/VPERM2I128 permutations
-  if (isVPERM2X128Mask(M, VT, Subtarget->hasAVX()))
+  if (isVPERM2X128Mask(M, VT, HasAVX))
     return getTargetShuffleNode(X86ISD::VPERM2X128, dl, VT, V1,
                                 V2, getShuffleVPERM2X128Immediate(SVOp), DAG);
 
   // Handle VSHUFPS/DY permutations
-  if (isVSHUFPYMask(M, VT, Subtarget->hasAVX()))
+  if (isVSHUFPYMask(M, VT, HasAVX))
     return getTargetShuffleNode(getSHUFPOpcode(VT), dl, VT, V1, V2,
                                 getShuffleVSHUFPYImmediate(SVOp), DAG);
 
@@ -14321,7 +14311,7 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
 /// set to A, RHS to B, and the routine returns 'true'.
 /// Note that the binary operation should have the property that if one of the
 /// operands is UNDEF then the result is UNDEF.
-static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool isCommutative) {
+static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool IsCommutative) {
   // Look for the following pattern: if
   //   A = < float a0, float a1, float a2, float a3 >
   //   B = < float b0, float b1, float b2, float b3 >
@@ -14399,34 +14389,28 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool isCommutative) {
   // If A and B occur in reverse order in RHS, then "swap" them (which means
   // rewriting the mask).
   if (A != C)
-    for (unsigned i = 0; i != NumElts; ++i) {
-      unsigned Idx = RMask[i];
-      if (Idx < NumElts)
-        RMask[i] += NumElts;
-      else if (Idx < 2*NumElts)
-        RMask[i] -= NumElts;
-    }
+    CommuteVectorShuffleMask(RMask, NumElts);
 
   // At this point LHS and RHS are equivalent to
   //   LHS = VECTOR_SHUFFLE A, B, LMask
   //   RHS = VECTOR_SHUFFLE A, B, RMask
   // Check that the masks correspond to performing a horizontal operation.
   for (unsigned i = 0; i != NumElts; ++i) {
-    unsigned LIdx = LMask[i], RIdx = RMask[i];
+    int LIdx = LMask[i], RIdx = RMask[i];
 
     // Ignore any UNDEF components.
-    if (LIdx >= 2*NumElts || RIdx >= 2*NumElts ||
-        (!A.getNode() && (LIdx < NumElts || RIdx < NumElts)) ||
-        (!B.getNode() && (LIdx >= NumElts || RIdx >= NumElts)))
+    if (LIdx < 0 || RIdx < 0 ||
+        (!A.getNode() && (LIdx < (int)NumElts || RIdx < (int)NumElts)) ||
+        (!B.getNode() && (LIdx >= (int)NumElts || RIdx >= (int)NumElts)))
       continue;
 
     // Check that successive elements are being operated on.  If not, this is
     // not a horizontal operation.
     unsigned Src = (i/HalfLaneElts) % 2; // each lane is split between srcs
     unsigned LaneStart = (i/NumLaneElts) * NumLaneElts;
-    unsigned Index = 2*(i%HalfLaneElts) + NumElts*Src + LaneStart;
+    int Index = 2*(i%HalfLaneElts) + NumElts*Src + LaneStart;
     if (!(LIdx == Index && RIdx == Index + 1) &&
-        !(isCommutative && LIdx == Index + 1 && RIdx == Index))
+        !(IsCommutative && LIdx == Index + 1 && RIdx == Index))
       return false;
   }
 
