@@ -1858,7 +1858,7 @@ static unsigned getNumberOfModules(Module *Mod) {
 }
 
 void ASTWriter::WriteSubmodules(Module *WritingModule) {
-  // 
+  // Determine the dependencies of our module and each of it's submodules.
   // FIXME: This feels like it belongs somewhere else, but there are no
   // other consumers of this information.
   SourceManager &SrcMgr = PP->getSourceManager();
