@@ -130,6 +130,7 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::BlockAddress,       MVT::i64,   Custom);
   setOperationAction(ISD::GlobalTLSAddress,   MVT::i32,   Custom);
   setOperationAction(ISD::JumpTable,          MVT::i32,   Custom);
+  setOperationAction(ISD::JumpTable,          MVT::i64,   Custom);
   setOperationAction(ISD::ConstantPool,       MVT::i32,   Custom);
   setOperationAction(ISD::ConstantPool,       MVT::i64,   Custom);
   setOperationAction(ISD::SELECT,             MVT::f32,   Custom);
@@ -1594,34 +1595,29 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
 SDValue MipsTargetLowering::
 LowerJumpTable(SDValue Op, SelectionDAG &DAG) const
 {
-  SDValue ResNode;
-  SDValue HiPart;
+  SDValue HiPart, JTI, JTILo;
   // FIXME there isn't actually debug info here
   DebugLoc dl = Op.getDebugLoc();
   bool IsPIC = getTargetMachine().getRelocationModel() == Reloc::PIC_;
-  unsigned char OpFlag = IsPIC ? MipsII::MO_GOT : MipsII::MO_ABS_HI;
-
   EVT PtrVT = Op.getValueType();
-  JumpTableSDNode *JT  = cast<JumpTableSDNode>(Op);
+  JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
 
-  SDValue JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, OpFlag);
-
-  if (!IsPIC) {
-    SDValue Ops[] = { JTI };
-    HiPart = DAG.getNode(MipsISD::Hi, dl, DAG.getVTList(MVT::i32), Ops, 1);
+  if (!IsPIC && !IsN64) {
+    JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, MipsII::MO_ABS_HI);
+    HiPart = DAG.getNode(MipsISD::Hi, dl, PtrVT, JTI);
+    JTILo = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, MipsII::MO_ABS_LO);
   } else {// Emit Load from Global Pointer
-    JTI = DAG.getNode(MipsISD::WrapperPIC, dl, MVT::i32, JTI);
-    HiPart = DAG.getLoad(MVT::i32, dl, DAG.getEntryNode(), JTI,
-                         MachinePointerInfo(),
-                         false, false, false, 0);
+    unsigned GOTFlag = IsN64 ? MipsII::MO_GOT_PAGE : MipsII::MO_GOT;
+    unsigned OfstFlag = IsN64 ? MipsII::MO_GOT_OFST : MipsII::MO_ABS_LO;
+    JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, GOTFlag);
+    JTI = DAG.getNode(MipsISD::WrapperPIC, dl, PtrVT, JTI);
+    HiPart = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), JTI,
+                         MachinePointerInfo(), false, false, false, 0);
+    JTILo = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, OfstFlag);
   }
 
-  SDValue JTILo = DAG.getTargetJumpTable(JT->getIndex(), PtrVT,
-                                         MipsII::MO_ABS_LO);
-  SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, JTILo);
-  ResNode = DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
-
-  return ResNode;
+  SDValue Lo = DAG.getNode(MipsISD::Lo, dl, PtrVT, JTILo);
+  return DAG.getNode(ISD::ADD, dl, PtrVT, HiPart, Lo);
 }
 
 SDValue MipsTargetLowering::
