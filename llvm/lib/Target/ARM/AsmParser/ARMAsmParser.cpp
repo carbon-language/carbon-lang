@@ -5200,6 +5200,24 @@ processInstruction(MCInst &Inst,
       Inst = TmpInst;
     }
     break;
+  case ARM::t2ADDri12:
+    // If the immediate fits for encoding T3 (t2ADDri) and the generic "add"
+    // mnemonic was used (not "addw"), encoding T3 is preferred.
+    if (static_cast<ARMOperand*>(Operands[0])->getToken() != "add" ||
+        ARM_AM::getT2SOImmVal(Inst.getOperand(2).getImm()) == -1)
+      break;
+    Inst.setOpcode(ARM::t2ADDri);
+    Inst.addOperand(MCOperand::CreateReg(0)); // cc_out
+    break;
+  case ARM::t2SUBri12:
+    // If the immediate fits for encoding T3 (t2SUBri) and the generic "sub"
+    // mnemonic was used (not "subw"), encoding T3 is preferred.
+    if (static_cast<ARMOperand*>(Operands[0])->getToken() != "sub" ||
+        ARM_AM::getT2SOImmVal(Inst.getOperand(2).getImm()) == -1)
+      break;
+    Inst.setOpcode(ARM::t2SUBri);
+    Inst.addOperand(MCOperand::CreateReg(0)); // cc_out
+    break;
   case ARM::tADDi8:
     // If the immediate is in the range 0-7, we want tADDi3 iff Rd was
     // explicitly specified. From the ARM ARM: "Encoding T1 is preferred
