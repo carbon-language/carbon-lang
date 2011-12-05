@@ -56,7 +56,6 @@ void AsanStats::Print() {
 static AsanLock print_lock(LINKER_INITIALIZED);
 
 static void PrintAccumulatedStats() {
-  if (!FLAG_stats) return;
   AsanStats stats = asanThreadRegistry().GetAccumulatedStats();
   // Use lock to keep reports from mixing up.
   ScopedLock lock(&print_lock);
@@ -82,12 +81,6 @@ size_t __asan_get_free_bytes() {
 
 size_t __asan_get_unmapped_bytes() {
   return 0;
-}
-
-bool __asan_enable_statistics(bool enable) {
-  bool old_flag = FLAG_stats;
-  FLAG_stats = enable;
-  return old_flag;
 }
 
 void __asan_print_accumulated_stats() {

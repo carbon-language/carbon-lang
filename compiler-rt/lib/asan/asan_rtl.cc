@@ -73,7 +73,6 @@ bool   FLAG_handle_sigill;
 bool   FLAG_replace_str;
 bool   FLAG_replace_intrin;
 bool   FLAG_replace_cfallocator;  // Used on Mac only.
-bool   FLAG_stats;
 size_t FLAG_max_malloc_fill_size = 0;
 bool   FLAG_use_fake_stack;
 int    FLAG_exitcode = EXIT_FAILURE;
@@ -661,7 +660,6 @@ void __asan_init() {
   FLAG_handle_segv = IntFlagValue(options, "handle_segv=",
                                          ASAN_NEEDS_SEGV);
   FLAG_handle_sigill = IntFlagValue(options, "handle_sigill=", 0);
-  FLAG_stats = IntFlagValue(options, "stats=", 0);
   FLAG_symbolize = IntFlagValue(options, "symbolize=", 1);
   FLAG_demangle = IntFlagValue(options, "demangle=", 1);
   FLAG_debug = IntFlagValue(options, "debug=", 0);

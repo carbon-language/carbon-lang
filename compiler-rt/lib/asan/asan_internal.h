@@ -97,7 +97,6 @@ extern int    FLAG_debug;
 extern bool   FLAG_poison_shadow;
 extern int    FLAG_report_globals;
 extern size_t FLAG_malloc_context_size;
-extern bool   FLAG_stats;
 extern bool   FLAG_replace_str;
 extern bool   FLAG_replace_intrin;
 extern bool   FLAG_replace_cfallocator;

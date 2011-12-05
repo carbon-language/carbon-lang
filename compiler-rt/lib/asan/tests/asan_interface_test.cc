@@ -63,17 +63,10 @@ TEST(AddressSanitizerInterface, GetAllocatedSizeAndOwnershipTest) {
   delete int_ptr;
 }
 
-TEST(AddressSanitizerInterface, EnableStatisticsTest) {
-  bool old_stats_value = __asan_enable_statistics(true);
-  EXPECT_EQ(true, __asan_enable_statistics(false));
-  EXPECT_EQ(false, __asan_enable_statistics(old_stats_value));
-}
-
 TEST(AddressSanitizerInterface, GetCurrentAllocatedBytesTest) {
   size_t before_malloc, after_malloc, after_free;
   char *array;
   const size_t kMallocSize = 100;
-  bool old_stats_value = __asan_enable_statistics(true);
   before_malloc = __asan_get_current_allocated_bytes();
 
   array = Ident((char*)malloc(kMallocSize));
@@ -83,14 +76,6 @@ TEST(AddressSanitizerInterface, GetCurrentAllocatedBytesTest) {
   free(array);
   after_free = __asan_get_current_allocated_bytes();
   EXPECT_EQ(before_malloc, after_free);
-
-  __asan_enable_statistics(false);
-  array = Ident((char*)malloc(kMallocSize));
-  after_malloc = __asan_get_current_allocated_bytes();
-  EXPECT_EQ(before_malloc, after_malloc);
-
-  free(array);
-  __asan_enable_statistics(old_stats_value);
 }
 
 static void DoDoubleFree() {
@@ -106,7 +91,6 @@ static void RunGetHeapSizeTestAndDie() {
   size_t old_heap_size, new_heap_size, heap_growth;
   // We unlikely have have chunk of this size in free list.
   static const size_t kLargeMallocSize = 1 << 29;  // 512M
-  __asan_enable_statistics(true);
   old_heap_size = __asan_get_heap_size();
   fprintf(stderr, "allocating %zu bytes:\n", kLargeMallocSize);
   free(Ident(malloc(kLargeMallocSize)));
@@ -136,7 +120,6 @@ TEST(AddressSanitizerInterface, GetHeapSizeTest) {
 static void DoLargeMallocForGetFreeBytesTestAndDie() {
   size_t old_free_bytes, new_free_bytes;
   static const size_t kLargeMallocSize = 1 << 29;  // 512M
-  __asan_enable_statistics(true);
   // If we malloc and free a large memory chunk, it will not fall
   // into quarantine and will be available for future requests.
   old_free_bytes = __asan_get_free_bytes();
@@ -156,7 +139,6 @@ TEST(AddressSanitizerInterface, GetFreeBytesTest) {
   char *chunks[kNumOfChunks];
   size_t i;
   size_t old_free_bytes, new_free_bytes;
-  bool old_stats_value = __asan_enable_statistics(true);
   // Allocate a small chunk. Now allocator probably has a lot of these
   // chunks to fulfill future requests. So, future requests will decrease
   // the number of free bytes.
@@ -175,7 +157,6 @@ TEST(AddressSanitizerInterface, GetFreeBytesTest) {
     EXPECT_EQ(old_free_bytes, __asan_get_free_bytes());
   }
   EXPECT_DEATH(DoLargeMallocForGetFreeBytesTestAndDie(), "double-free");
-  __asan_enable_statistics(old_stats_value);
 }
 
 static const size_t kManyThreadsMallocSizes[] = {5, 1UL<<10, 1UL<<20, 357};
@@ -194,7 +175,6 @@ void *ManyThreadsWithStatsWorker(void *arg) {
 TEST(AddressSanitizerInterface, ManyThreadsWithStatsStressTest) {
   size_t before_test, after_test, i;
   pthread_t threads[kManyThreadsNumThreads];
-  bool old_stats_value = __asan_enable_statistics(true);
   before_test = __asan_get_current_allocated_bytes();
   for (i = 0; i < kManyThreadsNumThreads; i++) {
     pthread_create(&threads[i], 0,
@@ -207,7 +187,6 @@ TEST(AddressSanitizerInterface, ManyThreadsWithStatsStressTest) {
   // ASan stats also reflect memory usage of internal ASan RTL structs,
   // so we can't check for equality here.
   EXPECT_LT(after_test, before_test + (1UL<<20));
-  __asan_enable_statistics(old_stats_value);
 }
 
 TEST(AddressSanitizerInterface, ExitCode) {

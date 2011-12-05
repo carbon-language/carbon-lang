@@ -126,8 +126,6 @@ extern "C" {
   // Number of bytes in unmapped pages, that are released to OS. Currently,
   // always returns 0.
   size_t __asan_get_unmapped_bytes();
-  // Turns on/off statistics update. Returns the previous value.
-  bool __asan_enable_statistics(bool enable);
   // Prints accumulated stats to stderr. Used for debugging.
   void __asan_print_accumulated_stats();
 }  // namespace
