@@ -1957,7 +1957,8 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
       Record.clear();
       for (unsigned I = 0, N = Mod->Exports.size(); I != N; ++I) {
         unsigned ExportedID = SubmoduleIDs[Mod->Exports[I].getPointer()];
-        assert(ExportedID && "Unknown submodule!");                                           
+        assert((ExportedID || !Mod->Exports[I].getPointer()) &&
+               "Unknown submodule!");                                           
         Record.push_back(ExportedID);
         Record.push_back(Mod->Exports[I].getInt());
       }

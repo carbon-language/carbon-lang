@@ -31,6 +31,12 @@ Module::ExportDecl
 ModuleMap::resolveExport(Module *Mod, 
                          const Module::UnresolvedExportDecl &Unresolved,
                          bool Complain) {
+  // We may have just a wildcard.
+  if (Unresolved.Id.empty()) {
+    assert(Unresolved.Wildcard && "Invalid unresolved export");
+    return Module::ExportDecl(0, true);
+  }
+  
   // Find the starting module.
   Module *Context = lookupModuleUnqualified(Unresolved.Id[0].first, Mod);
   if (!Context) {
@@ -229,7 +235,7 @@ bool ModuleMap::resolveExports(Module *Mod, bool Complain) {
   for (unsigned I = 0, N = Mod->UnresolvedExports.size(); I != N; ++I) {
     Module::ExportDecl Export = resolveExport(Mod, Mod->UnresolvedExports[I], 
                                               Complain);
-    if (Export.getPointer())
+    if (Export.getPointer() || Export.getInt())
       Mod->Exports.push_back(Export);
     else
       HadError = true;
@@ -764,6 +770,7 @@ void ModuleMapParser::parseExportDecl() {
     
     if(Tok.is(MMToken::Star)) {
       Wildcard = true;
+      consumeToken();
       break;
     }
     

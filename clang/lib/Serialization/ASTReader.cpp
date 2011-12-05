@@ -2520,15 +2520,60 @@ void ASTReader::makeModuleVisible(Module *Mod,
     }
     
     // Push any exported modules onto the stack to be marked as visible.
+    bool AnyWildcard = false;
+    bool UnrestrictedWildcard = false;
+    llvm::SmallVector<Module *, 4> WildcardRestrictions;
     for (unsigned I = 0, N = Mod->Exports.size(); I != N; ++I) {
       Module *Exported = Mod->Exports[I].getPointer();
-      if (Visited.insert(Exported)) {
-        // FIXME: The intent of wildcards is to re-export any imported modules.
-        // However, we don't yet have the module-dependency information to do
-        // this, so we ignore wildcards for now.
-        if (!Mod->Exports[I].getInt())
+      if (!Mod->Exports[I].getInt()) {
+        // Export a named module directly; no wildcards involved.
+        if (Visited.insert(Exported))
           Stack.push_back(Exported);
+        
+        continue;
       }
+      
+      // Wildcard export: export all of the imported modules that match
+      // the given pattern.
+      AnyWildcard = true;
+      if (UnrestrictedWildcard)
+        continue;
+
+      if (Module *Restriction = Mod->Exports[I].getPointer())
+        WildcardRestrictions.push_back(Restriction);
+      else {
+        WildcardRestrictions.clear();
+        UnrestrictedWildcard = true;
+      }
+    }
+    
+    // If there were any wildcards, push any imported modules that were
+    // re-exported by the wildcard restriction.
+    if (!AnyWildcard)
+      continue;
+    
+    for (unsigned I = 0, N = Mod->Imports.size(); I != N; ++I) {
+      Module *Imported = Mod->Imports[I];
+      if (Visited.count(Imported))
+        continue;
+      
+      bool Acceptable = UnrestrictedWildcard;
+      if (!Acceptable) {
+        // Check whether this module meets one of the restrictions.
+        for (unsigned R = 0, NR = WildcardRestrictions.size(); R != NR; ++R) {
+          Module *Restriction = WildcardRestrictions[R];
+          if (Imported == Restriction || Imported->isSubModuleOf(Restriction)) {
+            Acceptable = true;
+            break;
+          }
+        }
+      }
+      
+      if (!Acceptable)
+        continue;
+      
+      Visited.insert(Imported);
+      Stack.push_back(Imported);
     }
   }
 }
@@ -2563,13 +2608,17 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   for (unsigned I = 0, N = UnresolvedModuleImportExports.size(); I != N; ++I) {
     UnresolvedModuleImportExport &Unresolved = UnresolvedModuleImportExports[I];
     SubmoduleID GlobalID = getGlobalSubmoduleID(*Unresolved.File,Unresolved.ID);
-    if (Module *ResolvedMod = getSubmodule(GlobalID)) {
-      if (Unresolved.IsImport)
+    Module *ResolvedMod = getSubmodule(GlobalID);
+    
+    if (Unresolved.IsImport) {
+      if (ResolvedMod)
         Unresolved.Mod->Imports.push_back(ResolvedMod);
-      else
-        Unresolved.Mod->Exports.push_back(
-          Module::ExportDecl(ResolvedMod, Unresolved.IsWildcard));
+      continue;
     }
+
+    if (ResolvedMod || Unresolved.IsWildcard)
+      Unresolved.Mod->Exports.push_back(
+        Module::ExportDecl(ResolvedMod, Unresolved.IsWildcard));
   }
   UnresolvedModuleImportExports.clear();
   

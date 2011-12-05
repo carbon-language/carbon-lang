@@ -9,8 +9,7 @@ module diamond_right {
 }
 module diamond_bottom { 
   header "diamond_bottom.h" 
-  export diamond_left
-  export diamond_right
+  export *
 }
 module irgen { header "irgen.h" }
 module lookup_left_objc { header "lookup_left.h" }

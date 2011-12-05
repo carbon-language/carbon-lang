@@ -25,6 +25,18 @@ Module::~Module() {
   
 }
 
+bool Module::isSubModuleOf(Module *Other) const {
+  const Module *This = this;
+  do {
+    if (This == Other)
+      return true;
+    
+    This = This->Parent;
+  } while (This);
+  
+  return false;
+}
+
 std::string Module::getFullModuleName() const {
   llvm::SmallVector<StringRef, 2> Names;
   
