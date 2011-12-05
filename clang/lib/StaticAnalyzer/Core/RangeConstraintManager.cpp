@@ -428,13 +428,15 @@ void RangeConstraintManager::print(const ProgramState *St, raw_ostream &Out,
 
   ConstraintRangeTy Ranges = St->get<ConstraintRange>();
 
-  if (Ranges.isEmpty())
+  if (Ranges.isEmpty()) {
+    Out << nl << sep << "Ranges are empty." << nl;
     return;
+  }
 
-  Out << nl << sep << "ranges of symbol values:";
-
+  Out << nl << sep << "Ranges of symbol values:";
   for (ConstraintRangeTy::iterator I=Ranges.begin(), E=Ranges.end(); I!=E; ++I){
     Out << nl << ' ' << I.getKey() << " : ";
     I.getData().print(Out);
   }
+  Out << nl;
 }
