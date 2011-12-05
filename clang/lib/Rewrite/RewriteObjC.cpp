@@ -53,6 +53,7 @@ namespace {
       BLOCK_IS_GLOBAL =         (1 << 28),
       BLOCK_HAS_DESCRIPTOR =    (1 << 29)
     };
+    static const int OBJC_ABI_VERSION = 7;
     
     Rewriter Rewrite;
     DiagnosticsEngine &Diags;
@@ -65,6 +66,9 @@ namespace {
     TranslationUnitDecl *TUDecl;
     FileID MainFileID;
     const char *MainFileStart, *MainFileEnd;
+    Stmt *CurrentBody;
+    ParentMap *PropParentMap; // created lazily.
+
     SourceLocation LastIncLoc;
 
     SmallVector<ObjCImplementationDecl *, 8> ClassImplementation;
@@ -151,7 +155,7 @@ namespace {
     class DisableReplaceStmtScope {
       RewriteObjC &R;
       bool SavedValue;
-
+    
     public:
       DisableReplaceStmtScope(RewriteObjC &R)
         : R(R), SavedValue(R.DisableReplaceStmt) {
@@ -162,7 +166,6 @@ namespace {
       }
     };
 
-    static const int OBJC_ABI_VERSION = 7;
   public:
     virtual void Initialize(ASTContext &context);
 
@@ -256,12 +259,13 @@ namespace {
     }
 
     // Syntactic Rewriting.
+    void RewriteRecordBody(RecordDecl *RD);
     void RewriteInclude();
     void RewriteForwardClassDecl(DeclGroupRef D);
     void RewriteForwardClassDecl(const llvm::SmallVector<Decl*, 8> &DG);
     void RewriteForwardClassEpilogue(ObjCClassDecl *ClassDecl, 
                                      const std::string &typedefString);
-      
+    void RewriteImplementations();
     void RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
                                  ObjCImplementationDecl *IMD,
                                  ObjCCategoryImplDecl *CID);
@@ -285,18 +289,9 @@ namespace {
     void RewriteObjCQualifiedInterfaceTypes(Decl *Dcl);
     void RewriteTypeOfDecl(VarDecl *VD);
     void RewriteObjCQualifiedInterfaceTypes(Expr *E);
-    bool needToScanForQualifiers(QualType T);
-    QualType getSuperStructType();
-    QualType getConstantStringStructType();
-    QualType convertFunctionTypeOfBlocks(const FunctionType *FT);
-    bool BufferContainsPPDirectives(const char *startBuf, const char *endBuf);
-
+  
     // Expression Rewriting.
     Stmt *RewriteFunctionBodyOrGlobalInitializer(Stmt *S);
-
-    Stmt *CurrentBody;
-    ParentMap *PropParentMap; // created lazily.
-
     Stmt *RewriteAtEncode(ObjCEncodeExpr *Exp);
     Stmt *RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV);
     Stmt *RewritePropertyOrImplicitGetter(PseudoObjectExpr *Pseudo);
@@ -305,8 +300,6 @@ namespace {
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
     Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
     Stmt *RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp);
-    void WarnAboutReturnGotoStmts(Stmt *S);
-    void HasReturnStmts(Stmt *S, bool &hasReturns);
     void RewriteTryReturnStmts(Stmt *S);
     void RewriteSyncReturnStmts(Stmt *S, std::string buf);
     Stmt *RewriteObjCTryStmt(ObjCAtTryStmt *S);
@@ -314,30 +307,12 @@ namespace {
     Stmt *RewriteObjCThrowStmt(ObjCAtThrowStmt *S);
     Stmt *RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S,
                                        SourceLocation OrigEnd);
-    bool IsDeclStmtInForeachHeader(DeclStmt *DS);
-    CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD,
-                                      Expr **args, unsigned nargs,
-                                      SourceLocation StartLoc=SourceLocation(),
-                                      SourceLocation EndLoc=SourceLocation());
-    Stmt *SynthMessageExpr(ObjCMessageExpr *Exp,
-                           SourceLocation StartLoc=SourceLocation(),
-                           SourceLocation EndLoc=SourceLocation());
     Stmt *RewriteBreakStmt(BreakStmt *S);
     Stmt *RewriteContinueStmt(ContinueStmt *S);
-    void SynthCountByEnumWithState(std::string &buf);
+    void RewriteCastExpr(CStyleCastExpr *CE);
 
-    void SynthMsgSendFunctionDecl();
-    void SynthMsgSendSuperFunctionDecl();
-    void SynthMsgSendStretFunctionDecl();
-    void SynthMsgSendFpretFunctionDecl();
-    void SynthMsgSendSuperStretFunctionDecl();
-    void SynthGetClassFunctionDecl();
-    void SynthGetMetaClassFunctionDecl();
-    void SynthGetSuperClassFunctionDecl();
-    void SynthSelGetUidFunctionDecl();
-    void SynthSuperContructorFunctionDecl();
-
-    // Metadata emission.
+    // Metadata Rewriting.
+    void RewriteMetaDataIntoBuffer(std::string &Result);
     void RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
                                   std::string &Result);
 
@@ -360,28 +335,45 @@ namespace {
                                          StringRef prefix,
                                          StringRef ClassName,
                                          std::string &Result);
-    void SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
-                                      std::string &Result);
-    void SynthesizeIvarOffsetComputation(ObjCIvarDecl *ivar,
-                                         std::string &Result);
-    void RewriteImplementations();
-    void SynthesizeMetaDataIntoBuffer(std::string &Result);
-
     // Block rewriting.
     void RewriteBlocksInFunctionProtoType(QualType funcType, NamedDecl *D);
-    void CheckFunctionPointerDecl(QualType dType, NamedDecl *ND);
-
-    void InsertBlockLiteralsWithinFunction(FunctionDecl *FD);
-    void InsertBlockLiteralsWithinMethod(ObjCMethodDecl *MD);
-
+    
     // Block specific rewrite rules.
     void RewriteBlockPointerDecl(NamedDecl *VD);
     void RewriteByRefVar(VarDecl *VD);
-    std::string SynthesizeByrefCopyDestroyHelper(VarDecl *VD, int flag);
     Stmt *RewriteBlockDeclRefExpr(Expr *VD);
     Stmt *RewriteLocalVariableExternalStorage(DeclRefExpr *DRE);
     void RewriteBlockPointerFunctionArgs(FunctionDecl *FD);
+    
+    void RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
+                                      std::string &Result);
+    void RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
+                                         std::string &Result);
+    
+    // Misc. AST transformation routines. Somtimes they end up calling
+    // rewriting routines on the new ASTs.
+    CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD,
+                                           Expr **args, unsigned nargs,
+                                           SourceLocation StartLoc=SourceLocation(),
+                                           SourceLocation EndLoc=SourceLocation());
 
+    Stmt *SynthMessageExpr(ObjCMessageExpr *Exp,
+                           SourceLocation StartLoc=SourceLocation(),
+                           SourceLocation EndLoc=SourceLocation());
+    
+    void SynthCountByEnumWithState(std::string &buf);
+    void SynthMsgSendFunctionDecl();
+    void SynthMsgSendSuperFunctionDecl();
+    void SynthMsgSendStretFunctionDecl();
+    void SynthMsgSendFpretFunctionDecl();
+    void SynthMsgSendSuperStretFunctionDecl();
+    void SynthGetClassFunctionDecl();
+    void SynthGetMetaClassFunctionDecl();
+    void SynthGetSuperClassFunctionDecl();
+    void SynthSelGetUidFunctionDecl();
+    void SynthSuperContructorFunctionDecl();
+    
+    std::string SynthesizeByrefCopyDestroyHelper(VarDecl *VD, int flag);
     std::string SynthesizeBlockHelperFuncs(BlockExpr *CE, int i,
                                       StringRef funcName, std::string Tag);
     std::string SynthesizeBlockFunc(BlockExpr *CE, int i,
@@ -395,8 +387,18 @@ namespace {
     Stmt *SynthesizeBlockCall(CallExpr *Exp, const Expr* BlockExp);
     void SynthesizeBlockLiterals(SourceLocation FunLocStart,
                                  StringRef FunName);
-    void RewriteRecordBody(RecordDecl *RD);
+    FunctionDecl *SynthBlockInitFunctionDecl(StringRef name);
+    Stmt *SynthBlockInitExpr(BlockExpr *Exp,
+            const SmallVector<BlockDeclRefExpr *, 8> &InnerBlockDeclRefs);
 
+    // Misc. helper routines.
+    void WarnAboutReturnGotoStmts(Stmt *S);
+    void HasReturnStmts(Stmt *S, bool &hasReturns);
+    void CheckFunctionPointerDecl(QualType dType, NamedDecl *ND);
+    void InsertBlockLiteralsWithinFunction(FunctionDecl *FD);
+    void InsertBlockLiteralsWithinMethod(ObjCMethodDecl *MD);
+
+    bool IsDeclStmtInForeachHeader(DeclStmt *DS);
     void CollectBlockDeclRefInfo(BlockExpr *Exp);
     void GetBlockDeclRefExprs(Stmt *S);
     void GetInnerBlockDeclRefExprs(Stmt *S, 
@@ -420,6 +422,12 @@ namespace {
       }
       return false;
     }
+    
+    bool needToScanForQualifiers(QualType T);
+    QualType getSuperStructType();
+    QualType getConstantStringStructType();
+    QualType convertFunctionTypeOfBlocks(const FunctionType *FT);
+    bool BufferContainsPPDirectives(const char *startBuf, const char *endBuf);
     
     void convertToUnqualifiedObjCType(QualType &T) {
       if (T->isObjCQualifiedIdType())
@@ -459,12 +467,7 @@ namespace {
     bool PointerTypeTakesAnyObjCQualifiedType(QualType QT);
     void GetExtentOfArgList(const char *Name, const char *&LParen,
                             const char *&RParen);
-    void RewriteCastExpr(CStyleCastExpr *CE);
-
-    FunctionDecl *SynthBlockInitFunctionDecl(StringRef name);
-    Stmt *SynthBlockInitExpr(BlockExpr *Exp,
-            const SmallVector<BlockDeclRefExpr *, 8> &InnerBlockDeclRefs);
-
+    
     void QuoteDoublequotes(std::string &From, std::string &To) {
       for (unsigned i = 0; i < From.length(); i++) {
         if (From[i] == '"')
@@ -484,15 +487,15 @@ namespace {
       fpi.Variadic = variadic;
       return Context->getFunctionType(result, args, numArgs, fpi);
     }
-  };
 
-  // Helper function: create a CStyleCastExpr with trivial type source info.
-  CStyleCastExpr* NoTypeInfoCStyleCastExpr(ASTContext *Ctx, QualType Ty,
-                                           CastKind Kind, Expr *E) {
-    TypeSourceInfo *TInfo = Ctx->getTrivialTypeSourceInfo(Ty, SourceLocation());
-    return CStyleCastExpr::Create(*Ctx, Ty, VK_RValue, Kind, E, 0, TInfo,
-                                  SourceLocation(), SourceLocation());
-  }
+    // Helper function: create a CStyleCastExpr with trivial type source info.
+    CStyleCastExpr* NoTypeInfoCStyleCastExpr(ASTContext *Ctx, QualType Ty,
+                                             CastKind Kind, Expr *E) {
+      TypeSourceInfo *TInfo = Ctx->getTrivialTypeSourceInfo(Ty, SourceLocation());
+      return CStyleCastExpr::Create(*Ctx, Ty, VK_RValue, Kind, E, 0, TInfo,
+                                    SourceLocation(), SourceLocation());
+    }
+  };
 }
 
 void RewriteObjC::RewriteBlocksInFunctionProtoType(QualType funcType,
@@ -875,7 +878,7 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
       Getr += ";\n";
       Getr += "return (_TYPE)";
       Getr += "objc_getProperty(self, _cmd, ";
-      SynthesizeIvarOffsetComputation(OID, Getr);
+      RewriteIvarOffsetComputation(OID, Getr);
       Getr += ", 1)";
     }
     else
@@ -905,7 +908,7 @@ void RewriteObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
   // See objc-act.c:objc_synthesize_new_setter() for details.
   if (GenSetProperty) {
     Setr += "objc_setProperty (self, _cmd, ";
-    SynthesizeIvarOffsetComputation(OID, Setr);
+    RewriteIvarOffsetComputation(OID, Setr);
     Setr += ", (id)";
     Setr += PD->getName();
     Setr += ", ";
@@ -1269,7 +1272,7 @@ void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
     // Mark this typedef as having been generated.
     ObjCForwardDecls.insert(ClassDecl);
   }
-  SynthesizeObjCInternalStruct(ClassDecl, ResultStr);
+  RewriteObjCInternalStruct(ClassDecl, ResultStr);
 
   for (ObjCInterfaceDecl::prop_iterator I = ClassDecl->prop_begin(),
          E = ClassDecl->prop_end(); I != E; ++I)
@@ -3278,9 +3281,9 @@ bool RewriteObjC::BufferContainsPPDirectives(const char *startBuf,
   return false;
 }
 
-/// SynthesizeObjCInternalStruct - Rewrite one internal struct corresponding to
+/// RewriteObjCInternalStruct - Rewrite one internal struct corresponding to
 /// an objective-c class with ivars.
-void RewriteObjC::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
+void RewriteObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
                                                std::string &Result) {
   assert(CDecl && "Class missing in SynthesizeObjCInternalStruct");
   assert(CDecl->getName() != "" &&
@@ -3789,9 +3792,9 @@ void RewriteObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
   Result += "\t, sizeof(struct _objc_category), 0\n};\n";
 }
 
-/// SynthesizeIvarOffsetComputation - This rutine synthesizes computation of
+/// RewriteIvarOffsetComputation - This rutine synthesizes computation of
 /// ivar offset.
-void RewriteObjC::SynthesizeIvarOffsetComputation(ObjCIvarDecl *ivar,
+void RewriteObjC::RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
                                                   std::string &Result) {
   if (ivar->isBitField()) {
     // FIXME: The hack below doesn't work for bitfields. For now, we simply
@@ -3820,7 +3823,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   if (CDecl->isImplicitInterfaceDecl()) {
     // FIXME: Implementation of a class with no @interface (legacy) doese not
     // produce correct synthesis as yet.
-    SynthesizeObjCInternalStruct(CDecl, Result);
+    RewriteObjCInternalStruct(CDecl, Result);
   }
 
   // Build _objc_ivar_list metadata for classes ivars if needed
@@ -3882,7 +3885,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
     QuoteDoublequotes(TmpString, StrEncoding);
     Result += StrEncoding;
     Result += "\", ";
-    SynthesizeIvarOffsetComputation(*IVI, Result);
+    RewriteIvarOffsetComputation(*IVI, Result);
     Result += "}\n";
     for (++IVI; IVI != IVE; ++IVI) {
       Result += "\t  ,{\"";
@@ -3893,7 +3896,7 @@ void RewriteObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
       QuoteDoublequotes(TmpString, StrEncoding);
       Result += StrEncoding;
       Result += "\", ";
-      SynthesizeIvarOffsetComputation((*IVI), Result);
+      RewriteIvarOffsetComputation((*IVI), Result);
       Result += "}\n";
     }
 
@@ -4087,7 +4090,7 @@ void RewriteObjC::RewriteImplementations() {
     RewriteImplementationDecl(CategoryImplementation[i]);
 }
 
-void RewriteObjC::SynthesizeMetaDataIntoBuffer(std::string &Result) {
+void RewriteObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
   int ClsDefCount = ClassImplementation.size();
   int CatDefCount = CategoryImplementation.size();
   
@@ -5922,7 +5925,7 @@ void RewriteObjC::HandleTranslationUnit(ASTContext &C) {
       ProtocolExprDecls.size()) {
     // Rewrite Objective-c meta data*
     std::string ResultStr;
-    SynthesizeMetaDataIntoBuffer(ResultStr);
+    RewriteMetaDataIntoBuffer(ResultStr);
     // Emit metadata.
     *OutFile << ResultStr;
   }
