@@ -1118,7 +1118,6 @@ static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
   CmdArgs.push_back("-lpthread");
   CmdArgs.push_back("-ldl");
   CmdArgs.push_back("-export-dynamic");
-  TC.AddCXXStdlibLibArgs(Args, CmdArgs);
 }
 
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
