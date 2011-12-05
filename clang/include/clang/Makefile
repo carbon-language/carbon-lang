@@ -6,8 +6,8 @@ include $(CLANG_LEVEL)/Makefile
 install-local::
 	$(Echo) Installing Clang include files
 	$(Verb) $(MKDIR) $(DESTDIR)$(PROJ_includedir)
-	$(Verb) if test -d "$(PROJ_SRC_ROOT)/tools/clang/include/clang" ; then \
-	  cd $(PROJ_SRC_ROOT)/tools/clang/include && \
+	$(Verb) if test -d "$(PROJ_SRC_DIR)" ; then \
+	  cd $(PROJ_SRC_DIR)/.. && \
 	  for  hdr in `find clang -type f \
 	      '(' -name LICENSE.TXT \
 	       -o -name '*.def' \
