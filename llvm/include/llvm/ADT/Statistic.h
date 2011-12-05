@@ -27,6 +27,7 @@
 #define LLVM_ADT_STATISTIC_H
 
 #include "llvm/Support/Atomic.h"
+#include "llvm/Support/Valgrind.h"
 
 namespace llvm {
 class raw_ostream;
@@ -110,6 +111,7 @@ protected:
     bool tmp = Initialized;
     sys::MemoryFence();
     if (!tmp) RegisterStatistic();
+    TsanHappensAfter(this);
     return *this;
   }
   void RegisterStatistic();

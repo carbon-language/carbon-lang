@@ -73,9 +73,12 @@ void Statistic::RegisterStatistic() {
     if (Enabled)
       StatInfo->addStatistic(this);
 
+    TsanHappensBefore(this);
     sys::MemoryFence();
     // Remember we have been registered.
+    TsanIgnoreWritesBegin();
     Initialized = true;
+    TsanIgnoreWritesEnd();
   }
 }
 
