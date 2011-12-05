@@ -356,12 +356,14 @@ public:
   }
 
   // Pretty-printing.
-  void print(raw_ostream &Out, CFG &C, const char *nl = "\n",
+  void print(raw_ostream &Out, CFG *C, const char *nl = "\n",
              const char *sep = "") const;
 
-  void printStdErr(CFG &C) const;
+  void dump(CFG &C) const;
 
   void printDOT(raw_ostream &Out, CFG &C) const;
+
+  void dump() const;
 
 private:
   /// Increments the number of times this state is referenced by ExplodeNodes.

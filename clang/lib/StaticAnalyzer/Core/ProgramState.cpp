@@ -385,53 +385,71 @@ static bool IsEnvLoc(const Stmt *S) {
   return (bool) (((uintptr_t) S) & 0x1);
 }
 
-void ProgramState::print(raw_ostream &Out, CFG &C,
+void ProgramState::print(raw_ostream &Out, CFG *C,
                          const char *NL, const char *Sep) const {
   // Print the store.
   ProgramStateManager &Mgr = getStateManager();
   Mgr.getStoreManager().print(getStore(), Out, NL, Sep);
-
-  // Print Subexpression bindings.
   bool isFirst = true;
 
   // FIXME: All environment printing should be moved inside Environment.
-  for (Environment::iterator I = Env.begin(), E = Env.end(); I != E; ++I) {
-    if (C.isBlkExpr(I.getKey()) || IsEnvLoc(I.getKey()))
-      continue;
+  if (C) {
+    // Print Subexpression bindings.
+    for (Environment::iterator I = Env.begin(), E = Env.end(); I != E; ++I) {
+      if (C->isBlkExpr(I.getKey()) || IsEnvLoc(I.getKey()))
+        continue;
 
-    if (isFirst) {
-      Out << NL << NL << "Sub-Expressions:" << NL;
-      isFirst = false;
-    } else {
-      Out << NL;
+      if (isFirst) {
+        Out << NL << NL << "Sub-Expressions:" << NL;
+        isFirst = false;
+      } else {
+        Out << NL;
+      }
+
+      Out << " (" << (void*) I.getKey() << ") ";
+      LangOptions LO; // FIXME.
+      I.getKey()->printPretty(Out, 0, PrintingPolicy(LO));
+      Out << " : " << I.getData();
     }
 
-    Out << " (" << (void*) I.getKey() << ") ";
-    LangOptions LO; // FIXME.
-    I.getKey()->printPretty(Out, 0, PrintingPolicy(LO));
-    Out << " : " << I.getData();
-  }
+    // Print block-expression bindings.
+    isFirst = true;
+    for (Environment::iterator I = Env.begin(), E = Env.end(); I != E; ++I) {
+      if (!C->isBlkExpr(I.getKey()))
+        continue;
 
-  // Print block-expression bindings.
-  isFirst = true;
+      if (isFirst) {
+        Out << NL << NL << "Block-level Expressions:" << NL;
+        isFirst = false;
+      } else {
+        Out << NL;
+      }
 
-  for (Environment::iterator I = Env.begin(), E = Env.end(); I != E; ++I) {
-    if (!C.isBlkExpr(I.getKey()))
-      continue;
-
-    if (isFirst) {
-      Out << NL << NL << "Block-level Expressions:" << NL;
-      isFirst = false;
-    } else {
-      Out << NL;
+      Out << " (" << (void*) I.getKey() << ") ";
+      LangOptions LO; // FIXME.
+      I.getKey()->printPretty(Out, 0, PrintingPolicy(LO));
+      Out << " : " << I.getData();
     }
+  } else {
+    // Print All bindings - no info to differentiate block from subexpressions.
+    for (Environment::iterator I = Env.begin(), E = Env.end(); I != E; ++I) {
+      if (IsEnvLoc(I.getKey()))
+        continue;
 
-    Out << " (" << (void*) I.getKey() << ") ";
-    LangOptions LO; // FIXME.
-    I.getKey()->printPretty(Out, 0, PrintingPolicy(LO));
-    Out << " : " << I.getData();
+      if (isFirst) {
+        Out << NL << NL << "Expressions:" << NL;
+        isFirst = false;
+      } else {
+        Out << NL;
+      }
+
+      Out << " (" << (void*) I.getKey() << ") ";
+      LangOptions LO; // FIXME.
+      I.getKey()->printPretty(Out, 0, PrintingPolicy(LO));
+      Out << " : " << I.getData();
+    }
   }
-  
+
   // Print locations.
   isFirst = true;
   
@@ -461,11 +479,15 @@ void ProgramState::print(raw_ostream &Out, CFG &C,
 }
 
 void ProgramState::printDOT(raw_ostream &Out, CFG &C) const {
-  print(Out, C, "\\l", "\\|");
+  print(Out, &C, "\\l", "\\|");
 }
 
-void ProgramState::printStdErr(CFG &C) const {
-  print(llvm::errs(), C);
+void ProgramState::dump(CFG &C) const {
+  print(llvm::errs(), &C);
+}
+
+void ProgramState::dump() const {
+  print(llvm::errs(), 0);
 }
 
 //===----------------------------------------------------------------------===//
