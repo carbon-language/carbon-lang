@@ -2898,14 +2898,11 @@ multiclass N3V_QHS<bit op24, bit op23, bits<4> op11_8, bit op4,
                    v4i32, v4i32, OpNode, Commutable>;
 }
 
-multiclass N3VSL_HS<bits<4> op11_8, string OpcodeStr, string Dt, SDNode ShOp> {
-  def v4i16 : N3VDSL16<0b01, op11_8, OpcodeStr, !strconcat(Dt, "16"),
-                       v4i16, ShOp>;
-  def v2i32 : N3VDSL<0b10, op11_8, IIC_VMULi32D, OpcodeStr, !strconcat(Dt,"32"),
-                     v2i32, ShOp>;
-  def v8i16 : N3VQSL16<0b01, op11_8, OpcodeStr, !strconcat(Dt, "16"),
-                       v8i16, v4i16, ShOp>;
-  def v4i32 : N3VQSL<0b10, op11_8, IIC_VMULi32Q, OpcodeStr, !strconcat(Dt,"32"),
+multiclass N3VSL_HS<bits<4> op11_8, string OpcodeStr, SDNode ShOp> {
+  def v4i16 : N3VDSL16<0b01, op11_8, OpcodeStr, "16", v4i16, ShOp>;
+  def v2i32 : N3VDSL<0b10, op11_8, IIC_VMULi32D, OpcodeStr, "32", v2i32, ShOp>;
+  def v8i16 : N3VQSL16<0b01, op11_8, OpcodeStr, "i16", v8i16, v4i16, ShOp>;
+  def v4i32 : N3VQSL<0b10, op11_8, IIC_VMULi32Q, OpcodeStr, "32",
                      v4i32, v2i32, ShOp>;
 }
 
@@ -3667,7 +3664,7 @@ def  VMULfd   : N3VD<1, 0, 0b00, 0b1101, 1, IIC_VFMULD, "vmul", "f32",
                      v2f32, v2f32, fmul, 1>;
 def  VMULfq   : N3VQ<1, 0, 0b00, 0b1101, 1, IIC_VFMULQ, "vmul", "f32",
                      v4f32, v4f32, fmul, 1>;
-defm VMULsl   : N3VSL_HS<0b1000, "vmul", "i", mul>;
+defm VMULsl   : N3VSL_HS<0b1000, "vmul", mul>;
 def  VMULslfd : N3VDSL<0b10, 0b1001, IIC_VBIND, "vmul", "f32", v2f32, fmul>;
 def  VMULslfq : N3VQSL<0b10, 0b1001, IIC_VBINQ, "vmul", "f32", v4f32,
                        v2f32, fmul>;
