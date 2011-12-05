@@ -418,7 +418,7 @@ static int AssembleInput(const char *ProgName) {
                                            /*useCFI*/ true,
                                            /*useDwarfDirectory*/ true,
                                            IP, CE, MAB, ShowInst));
-                                           
+
   } else if (FileType == OFT_Null) {
     Str.reset(createNullStreamer(Ctx));
   } else {
