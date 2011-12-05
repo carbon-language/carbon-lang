@@ -11,5 +11,5 @@ void bufferScanfAssignment(int x) {
   int *addr = &Buffer[0];
   scanf("%d", &n);
   addr += n;// expected-warning {{tainted}}
-  *addr = n; // expected-warning {{tainted}}
+  *addr = n; // expected-warning {{tainted}} expected-warning {{tainted}}
 }
