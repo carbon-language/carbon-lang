@@ -9,7 +9,7 @@ entry:
 ;CHECK:  mfcr r2
 ;CHECK:  lis r0, 1
 ;CHECK:  rlwinm r2, r2, 8, 0, 31
-;CHECK:  ori r0, r0, 34540
+;CHECK:  ori r0, r0, 34524
 ;CHECK:  stwx r2, r1, r0
   %x = alloca [100000 x i8]                       ; <[100000 x i8]*> [#uses=1]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
@@ -20,7 +20,7 @@ entry:
 
 return:                                           ; preds = %entry
 ;CHECK:  lis r0, 1
-;CHECK:  ori r0, r0, 34540
+;CHECK:  ori r0, r0, 34524
 ;CHECK:  lwzx r2, r1, r0
 ;CHECK:  rlwinm r2, r2, 24, 0, 31
 ;CHECK:  mtcrf 32, r2
