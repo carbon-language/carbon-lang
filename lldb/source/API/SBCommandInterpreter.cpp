@@ -124,6 +124,19 @@ SBCommandInterpreter::HandleCompletion (const char *current_line,
                                         SBStringList &matches)
 {
     int num_completions = 0;
+    
+    // Sanity check the arguments that are passed in:
+    // cursor & last_char have to be within the current_line.
+    if (current_line == NULL || cursor == NULL || last_char == NULL)
+        return 0;
+    
+    if (cursor < current_line || last_char < current_line)
+        return 0;
+        
+    size_t current_line_size = strlen (current_line);
+    if (cursor - current_line > current_line_size || last_char - current_line > current_line_size)
+        return 0;
+        
     if (m_opaque_ptr)
     {
         lldb_private::StringList lldb_matches;
