@@ -9,7 +9,7 @@ class Action {
     fprintf(stderr, "%s\n", msg.c_str());
   }
   void Throw(const char& arg) const {
-    PrintString("PrintString called!"); // this line is important
+    PrintString("PrintString called!");  // this line is important
     throw arg;
   }
 };
@@ -19,7 +19,7 @@ int main() {
   fprintf(stderr, "&a before = %p\n", &a);
   try {
     a.Throw('c');
-  } catch (const char&) {
+  } catch(const char&) {
     fprintf(stderr, "&a in catch = %p\n", &a);
   }
   fprintf(stderr, "&a final = %p\n", &a);

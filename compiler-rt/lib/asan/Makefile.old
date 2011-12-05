@@ -210,7 +210,7 @@ all: b64 b32
 test: t64 t32 output_tests lint
 
 output_tests: b32 b64
-	cd tests && ./test_output.sh $(CLANG_CXX)
+	cd tests && ./test_output.sh $(CLANG_CXX) $(CLANG_CC)
 
 t64: b64
 	$(BIN)/asan_test64

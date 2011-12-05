@@ -2,8 +2,15 @@
 
 OS=`uname`
 CXX=$1
+CC=$2
 CXXFLAGS="-mno-omit-leaf-frame-pointer"
 SYMBOLIZER=../scripts/asan_symbolize.py
+
+C_TEST=use-after-free
+$CC -g -faddress-sanitizer -O2 $C_TEST.c  || exit 1
+echo "Sanity checking a test in pure C"
+./a.out 2>&1 | grep "heap-use-after-free" > /dev/null || exit 1
+rm ./a.out
 
 for t in  *.tmpl; do
   for b in 32 64; do
@@ -29,4 +36,5 @@ for t in  *.tmpl; do
     done
   done
 done
+
 exit 0
