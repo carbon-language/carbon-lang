@@ -3467,7 +3467,8 @@ RetainCountChecker::getDeadSymbolTag(SymbolRef sym) const {
   if (!tag) {
     llvm::SmallString<64> buf;
     llvm::raw_svector_ostream out(buf);
-    out << "RetainCountChecker : Dead Symbol : " << sym->getSymbolID();
+    out << "RetainCountChecker : Dead Symbol : ";
+    sym->dumpToStream(out);
     tag = new SimpleProgramPointTag(out.str());
   }
   return tag;  
@@ -3532,7 +3533,7 @@ static void PrintPool(raw_ostream &Out, SymbolRef Sym,
                       const ProgramState *State) {
   Out << ' ';
   if (Sym)
-    Out << Sym->getSymbolID();
+    Sym->dumpToStream(Out);
   else
     Out << "<pool>";
   Out << ":{";
