@@ -508,6 +508,12 @@ public:
   QualType getType() const { return DeclType; }
   void setType(QualType newType) { DeclType = newType; }
 
+  /// \brief Determine whether this symbol is weakly-imported,
+  ///        or declared with the weak or weak-ref attr.
+  bool isWeak() const {
+    return hasAttr<WeakAttr>() || hasAttr<WeakRefAttr>() || isWeakImported();
+  }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ValueDecl *D) { return true; }

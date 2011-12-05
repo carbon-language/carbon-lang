@@ -580,15 +580,9 @@ static bool IsLiteralLValue(const LValue &Value) {
   return Value.Base.dyn_cast<const Expr*>() && !Value.Frame;
 }
 
-static bool IsWeakDecl(const ValueDecl *Decl) {
-  return Decl->hasAttr<WeakAttr>() ||
-         Decl->hasAttr<WeakRefAttr>() ||
-         Decl->isWeakImported();
-}
-
 static bool IsWeakLValue(const LValue &Value) {
   const ValueDecl *Decl = GetLValueBaseDecl(Value);
-  return Decl && IsWeakDecl(Decl);
+  return Decl && Decl->isWeak();
 }
 
 static bool EvalPointerValueAsBool(const CCValue &Value, bool &Result) {
@@ -607,7 +601,7 @@ static bool EvalPointerValueAsBool(const CCValue &Value, bool &Result) {
   // a weak declaration it can be null at runtime.
   Result = true;
   const ValueDecl *Decl = Value.getLValueBase().dyn_cast<const ValueDecl*>();
-  return !Decl || !IsWeakDecl(Decl);
+  return !Decl || !Decl->isWeak();
 }
 
 static bool HandleConversionToBool(const CCValue &Val, bool &Result) {
@@ -866,7 +860,7 @@ static bool EvaluateVarDeclInit(EvalInfo &Info, const VarDecl *VD,
 
   // Never evaluate the initializer of a weak variable. We can't be sure that
   // this is the definition which will be used.
-  if (IsWeakDecl(VD))
+  if (VD->isWeak())
     return false;
 
   const Expr *Init = VD->getAnyInitializer();
