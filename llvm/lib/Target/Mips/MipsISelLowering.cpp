@@ -40,11 +40,11 @@ using namespace llvm;
 // mask (Pos), and return true.
 // For example, if I is 0x003ff800, (Pos, Size) = (11, 11).  
 static bool IsShiftedMask(uint64_t I, uint64_t &Pos, uint64_t &Size) {
-  if (!isUInt<32>(I) || !isShiftedMask_32(I))
+  if (!isShiftedMask_64(I))
      return false;
 
-  Size = CountPopulation_32(I);
-  Pos = CountTrailingZeros_32(I);
+  Size = CountPopulation_64(I);
+  Pos = CountTrailingZeros_64(I);
   return true;
 }
 
@@ -556,20 +556,20 @@ static SDValue PerformANDCombine(SDNode *N, SelectionDAG& DAG,
     return SDValue();
 
   SDValue ShiftRight = N->getOperand(0), Mask = N->getOperand(1);
-  
+  unsigned ShiftRightOpc = ShiftRight.getOpcode();
+
   // Op's first operand must be a shift right.
-  if (ShiftRight.getOpcode() != ISD::SRA && ShiftRight.getOpcode() != ISD::SRL)
+  if (ShiftRightOpc != ISD::SRA && ShiftRightOpc != ISD::SRL)
     return SDValue();
 
   // The second operand of the shift must be an immediate.
-  uint64_t Pos;
   ConstantSDNode *CN;
   if (!(CN = dyn_cast<ConstantSDNode>(ShiftRight.getOperand(1))))
     return SDValue();
   
-  Pos = CN->getZExtValue();
-
+  uint64_t Pos = CN->getZExtValue();
   uint64_t SMPos, SMSize;
+
   // Op's second operand must be a shifted mask.
   if (!(CN = dyn_cast<ConstantSDNode>(Mask)) ||
       !IsShiftedMask(CN->getZExtValue(), SMPos, SMSize))
@@ -577,10 +577,11 @@ static SDValue PerformANDCombine(SDNode *N, SelectionDAG& DAG,
 
   // Return if the shifted mask does not start at bit 0 or the sum of its size
   // and Pos exceeds the word's size.
-  if (SMPos != 0 || Pos + SMSize > 32)
+  EVT ValTy = N->getValueType(0);
+  if (SMPos != 0 || Pos + SMSize > ValTy.getSizeInBits())
     return SDValue();
 
-  return DAG.getNode(MipsISD::Ext, N->getDebugLoc(), MVT::i32,
+  return DAG.getNode(MipsISD::Ext, N->getDebugLoc(), ValTy,
                      ShiftRight.getOperand(0),
                      DAG.getConstant(Pos, MVT::i32),
                      DAG.getConstant(SMSize, MVT::i32));
@@ -631,10 +632,11 @@ static SDValue PerformORCombine(SDNode *N, SelectionDAG& DAG,
 
   // Return if the shift amount and the first bit position of mask are not the
   // same.  
-  if (Shamt != SMPos0)
+  EVT ValTy = N->getValueType(0);
+  if ((Shamt != SMPos0) || (SMPos0 + SMSize0 > ValTy.getSizeInBits()))
     return SDValue();
   
-  return DAG.getNode(MipsISD::Ins, N->getDebugLoc(), MVT::i32,
+  return DAG.getNode(MipsISD::Ins, N->getDebugLoc(), ValTy,
                      Shl.getOperand(0),
                      DAG.getConstant(SMPos0, MVT::i32),
                      DAG.getConstant(SMSize0, MVT::i32),
