@@ -736,7 +736,12 @@ void IndexingContext::getEntityInfo(const NamedDecl *D,
         EntityInfo.kind = CXIdxEntity_CXXStaticVariable;
       break;
     case Decl::Field:
-      EntityInfo.kind = CXIdxEntity_Field; break;
+      EntityInfo.kind = CXIdxEntity_Field;
+      if (const CXXRecordDecl *
+            CXXRec = dyn_cast<CXXRecordDecl>(D->getDeclContext()))
+        if (!CXXRec->isPOD())
+          EntityInfo.kind = CXIdxEntity_CXXInstanceVariable;
+      break;
     case Decl::EnumConstant:
       EntityInfo.kind = CXIdxEntity_EnumConstant; break;
     case Decl::ObjCInterface:

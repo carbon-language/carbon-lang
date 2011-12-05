@@ -1641,6 +1641,7 @@ static const char *getEntityKindString(CXIdxEntityKind kind) {
   case CXIdxEntity_CXXNamespace: return "namespace";
   case CXIdxEntity_CXXNamespaceAlias: return "namespace-alias";
   case CXIdxEntity_CXXStaticVariable: return "c++-static-var";
+  case CXIdxEntity_CXXInstanceVariable: return "c++-instance-var";
   case CXIdxEntity_CXXStaticMethod: return "c++-static-method";
   case CXIdxEntity_CXXInstanceMethod: return "c++-instance-method";
   case CXIdxEntity_CXXConstructor: return "constructor";
