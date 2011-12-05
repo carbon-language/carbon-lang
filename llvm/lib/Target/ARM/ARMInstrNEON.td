@@ -3672,6 +3672,15 @@ def  VMULslfd : N3VDSL<0b10, 0b1001, IIC_VBIND, "vmul", "f32", v2f32, fmul>;
 def  VMULslfq : N3VQSL<0b10, 0b1001, IIC_VBINQ, "vmul", "f32", v4f32,
                        v2f32, fmul>;
 
+// Two-operand aliases.
+def : NEONInstAlias<"vmul${p}.f32 $Ddn $Dm$lane",
+                    (VMULslfd DPR:$Ddn, DPR:$Ddn, DPR_VFP2:$Dm,
+                              VectorIndex32:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.f32 $Qdn $Dm$lane",
+                    (VMULslfq QPR:$Qdn, QPR:$Qdn, DPR_VFP2:$Dm,
+                              VectorIndex32:$lane, pred:$p)>;
+
+
 def : Pat<(v8i16 (mul (v8i16 QPR:$src1),
                       (v8i16 (NEONvduplane (v8i16 QPR:$src2), imm:$lane)))),
           (v8i16 (VMULslv8i16 (v8i16 QPR:$src1),
