@@ -108,6 +108,19 @@ bool Value::hasNUsesOrMore(unsigned N) const {
 /// isUsedInBasicBlock - Return true if this value is used in the specified
 /// basic block.
 bool Value::isUsedInBasicBlock(const BasicBlock *BB) const {
+  // Start by scanning over the instructions looking for a use before we start
+  // the expensive use iteration.
+  unsigned MaxBlockSize = 3;
+  for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+    if (std::find(I->op_begin(), I->op_end(), this) != I->op_end())
+      return true;
+    if (MaxBlockSize-- == 0) // If the block is larger fall back to use_iterator
+      break;
+  }
+
+  if (MaxBlockSize != 0) // We scanned the entire block and found no use.
+    return false;
+
   for (const_use_iterator I = use_begin(), E = use_end(); I != E; ++I) {
     const Instruction *User = dyn_cast<Instruction>(*I);
     if (User && User->getParent() == BB)

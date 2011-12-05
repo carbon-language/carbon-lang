@@ -473,14 +473,7 @@ bool AddressingModeMatcher::ValueAlreadyLiveAtInst(Value *Val,Value *KnownLive1,
   // Check to see if this value is already used in the memory instruction's
   // block.  If so, it's already live into the block at the very least, so we
   // can reasonably fold it.
-  BasicBlock *MemBB = MemoryInst->getParent();
-  for (Value::use_iterator UI = Val->use_begin(), E = Val->use_end();
-       UI != E; ++UI)
-    // We know that uses of arguments and instructions have to be instructions.
-    if (cast<Instruction>(*UI)->getParent() == MemBB)
-      return true;
-  
-  return false;
+  return Val->isUsedInBasicBlock(MemoryInst->getParent());
 }
 
 
