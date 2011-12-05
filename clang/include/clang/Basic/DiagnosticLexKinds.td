@@ -384,7 +384,7 @@ def err_mmap_expected_lbrace : Error<"expected '{' to start module '%0'">;
 def err_mmap_expected_rbrace : Error<"expected '}'">;
 def note_mmap_lbrace_match : Note<"to match this '{'">;
 def err_mmap_expected_member : Error<
-  "expected umbrella header, header, or submodule">;
+  "expected umbrella header, header, submodule, or module export">;
 def err_mmap_expected_header : Error<"expected a header name after '%0'">;
 def err_mmap_module_redefinition : Error<
   "redefinition of module '%0'">;
@@ -405,6 +405,18 @@ def err_mmap_missing_module_unqualified : Error<
   "no module named '%0' visible from '%1'">;
 def err_mmap_missing_module_qualified : Error<
   "no module named '%0' in '%1'">;
+def err_mmap_top_level_inferred_submodule : Error<
+  "only submodules may be inferred with wildcard syntax">;
+def err_mmap_inferred_no_umbrella : Error<
+  "inferred submodules require a module with an umbrella header">;
+def err_mmap_inferred_redef : Error<
+  "redefinition of inferred submodule">;
+def err_mmap_expected_lbrace_wildcard : Error<
+  "expected '{' to start inferred submodule">;
+def err_mmap_expected_wildcard_member : Error<
+  "expected module export wildcard">;
+def err_mmap_expected_export_wildcard : Error<
+  "only '*' can be exported from an inferred submodule">;
 
 def warn_auto_module_import : Warning<
   "treating #%select{include|import|include_next|__include_macros}0 as an "

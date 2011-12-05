@@ -351,6 +351,7 @@ namespace clang {
     void parseUmbrellaDecl();
     void parseHeaderDecl();
     void parseExportDecl();
+    void parseInferredSubmoduleDecl(bool Explicit);
     
   public:
     explicit ModuleMapParser(Lexer &L, SourceManager &SourceMgr, 
@@ -485,8 +486,12 @@ void ModuleMapParser::skipUntil(MMToken::TokenKind K) {
 ///   module-member:
 ///     umbrella-declaration
 ///     header-declaration
-///     'explicit'[opt] module-declaration
+///     'explicit'[opt] submodule-declaration
 ///     export-declaration
+///
+///   submodule-declaration:
+///     module-declaration
+///     inferred-submodule-declaration
 void ModuleMapParser::parseModuleDecl() {
   assert(Tok.is(MMToken::ExplicitKeyword) || Tok.is(MMToken::ModuleKeyword) ||
          Tok.is(MMToken::FrameworkKeyword));
@@ -514,6 +519,11 @@ void ModuleMapParser::parseModuleDecl() {
     return;
   }
   consumeToken(); // 'module' keyword
+
+  // If we have a wildcard for the module name, this is an inferred submodule.
+  // Parse it. 
+  if (Tok.is(MMToken::Star))
+    return parseInferredSubmoduleDecl(Explicit);
   
   // Parse the module name.
   if (!Tok.is(MMToken::Identifier)) {
@@ -788,6 +798,98 @@ void ModuleMapParser::parseExportDecl() {
     ExportLoc, ParsedModuleId, Wildcard 
   };
   ActiveModule->UnresolvedExports.push_back(Unresolved);
+}
+
+void ModuleMapParser::parseInferredSubmoduleDecl(bool Explicit) {
+  assert(Tok.is(MMToken::Star));
+  SourceLocation StarLoc = consumeToken();
+  bool Failed = false;
+  
+  // Inferred modules must be submodules.
+  if (!ActiveModule) {
+    Diags.Report(StarLoc, diag::err_mmap_top_level_inferred_submodule);
+    Failed = true;
+  }
+  
+  // Inferred modules must have umbrella headers.
+  if (!Failed && !ActiveModule->getTopLevelModule()->UmbrellaHeader) {
+    Diags.Report(StarLoc, diag::err_mmap_inferred_no_umbrella);
+    Failed = true;
+  }
+  
+  // Check for redefinition of an inferred module.
+  if (!Failed && ActiveModule->getTopLevelModule()->InferSubmodules) {
+    Diags.Report(StarLoc, diag::err_mmap_inferred_redef);
+    if (ActiveModule->getTopLevelModule()->InferredSubmoduleLoc.isValid())
+      Diags.Report(ActiveModule->getTopLevelModule()->InferredSubmoduleLoc,
+                   diag::note_mmap_prev_definition);
+    Failed = true;
+  }
+  
+  // If there were any problems with this inferred submodule, skip its body.
+  if (Failed) {
+    if (Tok.is(MMToken::LBrace)) {
+      consumeToken();
+      skipUntil(MMToken::RBrace);
+      if (Tok.is(MMToken::RBrace))
+        consumeToken();
+    }
+    HadError = true;
+    return;
+  }
+  
+  // Note that we have an inferred submodule.
+  Module *TopModule = ActiveModule->getTopLevelModule();
+  TopModule->InferSubmodules = true;
+  TopModule->InferredSubmoduleLoc = StarLoc;
+  TopModule->InferExplicitSubmodules = Explicit;
+  
+  // Parse the opening brace.
+  if (!Tok.is(MMToken::LBrace)) {
+    Diags.Report(Tok.getLocation(), diag::err_mmap_expected_lbrace_wildcard);
+    HadError = true;
+    return;
+  }  
+  SourceLocation LBraceLoc = consumeToken();
+
+  // Parse the body of the inferred submodule.
+  bool Done = false;
+  do {
+    switch (Tok.Kind) {
+    case MMToken::EndOfFile:
+    case MMToken::RBrace:
+      Done = true;
+      break;
+      
+    case MMToken::ExportKeyword: {
+      consumeToken();
+      if (Tok.is(MMToken::Star)) 
+        TopModule->InferExportWildcard = true;
+      else
+        Diags.Report(Tok.getLocation(), 
+                     diag::err_mmap_expected_export_wildcard);
+      consumeToken();
+      break;
+    }
+      
+    case MMToken::ExplicitKeyword:
+    case MMToken::ModuleKeyword:
+    case MMToken::HeaderKeyword:
+    case MMToken::UmbrellaKeyword:
+    default:
+      Diags.Report(Tok.getLocation(), diag::err_mmap_expected_wildcard_member);
+      consumeToken();
+      break;        
+    }
+  } while (!Done);
+  
+  if (Tok.is(MMToken::RBrace))
+    consumeToken();
+  else {
+    Diags.Report(Tok.getLocation(), diag::err_mmap_expected_rbrace);
+    Diags.Report(LBraceLoc, diag::note_mmap_lbrace_match);
+    HadError = true;
+  }
 }
 
 /// \brief Parse a module map file.

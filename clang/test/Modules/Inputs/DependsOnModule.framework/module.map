@@ -1,4 +1,7 @@
 framework module DependsOnModule {
   umbrella "DependsOnModule.h"
   header "other.h"
+  module * {
+    export *
+  }
 }

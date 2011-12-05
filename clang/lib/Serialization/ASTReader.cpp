@@ -3049,11 +3049,19 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         return Failure;
       }
 
+      if (Record.size() < 6) {
+        Error("malformed module definition");
+        return Failure;
+      }
+      
       StringRef Name(BlobStart, BlobLen);
       unsigned Parent = getGlobalSubmoduleID(F, Record[0]);
       bool IsFramework = Record[1];
       bool IsExplicit = Record[2];
-
+      bool InferSubmodules = Record[3];
+      bool InferExplicitSubmodules = Record[4];
+      bool InferExportWildcard = Record[5];
+      
       Module *ParentModule = 0;
       if (Parent)
         ParentModule = getSubmodule(Parent);
@@ -3070,6 +3078,9 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         return Failure;
       }
       
+      CurrentModule->InferSubmodules = InferSubmodules;
+      CurrentModule->InferExplicitSubmodules = InferExplicitSubmodules;
+      CurrentModule->InferExportWildcard = InferExportWildcard;
       if (DeserializationListener)
         DeserializationListener->ModuleRead(
           CurrentModuleGlobalIndex + NUM_PREDEF_SUBMODULE_IDS, 

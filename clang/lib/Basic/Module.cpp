@@ -37,6 +37,14 @@ bool Module::isSubModuleOf(Module *Other) const {
   return false;
 }
 
+const Module *Module::getTopLevelModule() const {
+  const Module *Result = this;
+  while (Result->Parent)
+    Result = Result->Parent;
+  
+  return Result;
+}
+
 std::string Module::getFullModuleName() const {
   llvm::SmallVector<StringRef, 2> Names;
   
@@ -55,14 +63,6 @@ std::string Module::getFullModuleName() const {
   }
   
   return Result;
-}
-
-StringRef Module::getTopLevelModuleName() const {
-  const Module *Top = this;
-  while (Top->Parent)
-    Top = Top->Parent;
-  
-  return Top->Name;
 }
 
 static void printModuleId(llvm::raw_ostream &OS, const ModuleId &Id) {
@@ -96,7 +96,7 @@ void Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
   }
   
   for (llvm::StringMap<Module *>::const_iterator MI = SubModules.begin(), 
-       MIEnd = SubModules.end();
+                                              MIEnd = SubModules.end();
        MI != MIEnd; ++MI)
     MI->getValue()->print(OS, Indent + 2);
   
@@ -126,6 +126,19 @@ void Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
     OS << "\n";
   }
 
+  if (InferSubmodules) {
+    OS.indent(Indent + 2);
+    if (InferExplicitSubmodules)
+      OS << "explicit ";
+    OS << "module * {\n";
+    if (InferExportWildcard) {
+      OS.indent(Indent + 4);
+      OS << "export *\n";
+    }
+    OS.indent(Indent + 2);
+    OS << "}\n";
+  }
+  
   OS.indent(Indent);
   OS << "}\n";
 }

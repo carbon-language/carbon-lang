@@ -59,10 +59,24 @@ public:
   llvm::SmallVector<const FileEntry *, 2> Headers;
   
   /// \brief Whether this is a framework module.
-  bool IsFramework;
+  unsigned IsFramework : 1;
   
   /// \brief Whether this is an explicit submodule.
-  bool IsExplicit;
+  unsigned IsExplicit : 1;
+  
+  /// \brief Whether we should infer submodules for this module based on 
+  /// the headers.
+  ///
+  /// Submodules can only be inferred for modules with an umbrella header.
+  unsigned InferSubmodules : 1;
+  
+  /// \brief Whether, when inferring submodules, the inferred submodules
+  /// should be explicit.
+  unsigned InferExplicitSubmodules : 1;
+  
+  /// \brief Whether, when inferring submodules, the inferr submodules should
+  /// export all modules they import (e.g., the equivalent of "export *").
+  unsigned InferExportWildcard : 1;
   
   /// \brief Describes the visibility of the various names within a
   /// particular module.
@@ -78,6 +92,9 @@ public:
   
   ///\ brief The visibility of names within this particular module.
   NameVisibilityKind NameVisibility;
+
+  /// \brief The location of the inferred submodule.
+  SourceLocation InferredSubmoduleLoc;
 
   /// \brief The set of modules imported by this module, and on which this
   /// module depends.
@@ -114,14 +131,17 @@ public:
   explicit Module(StringRef Name, SourceLocation DefinitionLoc,
                   bool IsFramework)
     : Name(Name), DefinitionLoc(DefinitionLoc), Parent(0), UmbrellaHeader(0),
-      IsFramework(IsFramework), IsExplicit(false), NameVisibility(Hidden) { }
+      IsFramework(IsFramework), IsExplicit(false), InferSubmodules(false),
+      InferExplicitSubmodules(false), InferExportWildcard(false),
+      NameVisibility(Hidden) { }
   
   /// \brief Construct  a new module or submodule.
   Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent, 
          bool IsFramework, bool IsExplicit)
     : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent), 
       UmbrellaHeader(0), IsFramework(IsFramework), IsExplicit(IsExplicit), 
-      NameVisibility(Hidden) { }
+      InferSubmodules(false), InferExplicitSubmodules(false), 
+      InferExportWildcard(false),NameVisibility(Hidden) { }
   
   ~Module();
   
@@ -146,10 +166,23 @@ public:
   /// \brief Retrieve the full name of this module, including the path from
   /// its top-level module.
   std::string getFullModuleName() const;
+
+  /// \brief Retrieve the top-level module for this (sub)module, which may
+  /// be this module.
+  Module *getTopLevelModule() {
+    return const_cast<Module *>(
+             const_cast<const Module *>(this)->getTopLevelModule());
+  }
+
+  /// \brief Retrieve the top-level module for this (sub)module, which may
+  /// be this module.
+  const Module *getTopLevelModule() const;
   
   /// \brief Retrieve the name of the top-level module.
   ///
-  StringRef getTopLevelModuleName() const;
+  StringRef getTopLevelModuleName() const {
+    return getTopLevelModule()->Name;
+  }
   
   /// \brief Print the module map for this module to the given stream. 
   ///
