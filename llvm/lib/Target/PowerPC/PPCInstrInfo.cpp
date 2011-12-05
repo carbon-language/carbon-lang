@@ -33,8 +33,8 @@
 #include "PPCGenInstrInfo.inc"
 
 namespace llvm {
-extern cl::opt<bool> EnablePPC32RS;  // FIXME (64-bit): See PPCRegisterInfo.cpp.
-extern cl::opt<bool> EnablePPC64RS;  // FIXME (64-bit): See PPCRegisterInfo.cpp.
+extern cl::opt<bool> DisablePPC32RS;
+extern cl::opt<bool> DisablePPC64RS;
 }
 
 using namespace llvm;
@@ -345,6 +345,7 @@ void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     BuildMI(MBB, I, DL, MCID, DestReg).addReg(SrcReg, getKillRegState(KillSrc));
 }
 
+// This function returns true if a CR spill is necessary and false otherwise.
 bool
 PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                                   unsigned SrcReg, bool isKill,
@@ -395,9 +396,8 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                                                getKillRegState(isKill)),
                                        FrameIdx));
   } else if (PPC::CRRCRegisterClass->hasSubClassEq(RC)) {
-    if ((EnablePPC32RS && !TM.getSubtargetImpl()->isPPC64()) ||
-        (EnablePPC64RS && TM.getSubtargetImpl()->isPPC64())) {
-      // FIXME (64-bit): Enable
+    if ((!DisablePPC32RS && !TM.getSubtargetImpl()->isPPC64()) ||
+        (!DisablePPC64RS && TM.getSubtargetImpl()->isPPC64())) {
       NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::SPILL_CR))
                                          .addReg(SrcReg,
                                                  getKillRegState(isKill)),

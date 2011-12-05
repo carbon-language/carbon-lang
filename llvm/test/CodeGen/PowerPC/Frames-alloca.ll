@@ -2,9 +2,9 @@
 ; RUN: llc < %s -march=ppc64 -mtriple=powerpc-apple-darwin8 | FileCheck %s -check-prefix=PPC64
 ; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 -disable-fp-elim | FileCheck %s -check-prefix=PPC32-NOFP
 ; RUN: llc < %s -march=ppc64 -mtriple=powerpc-apple-darwin8 -disable-fp-elim | FileCheck %s -check-prefix=PPC64-NOFP
-; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 -enable-ppc32-regscavenger | FileCheck %s -check-prefix=PPC32
-; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 -enable-ppc32-regscavenger | FileCheck %s -check-prefix=PPC32-RS
-; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 -disable-fp-elim -enable-ppc32-regscavenger | FileCheck %s -check-prefix=PPC32-RS-NOFP
+; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 | FileCheck %s -check-prefix=PPC32
+; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 | FileCheck %s -check-prefix=PPC32-RS
+; RUN: llc < %s -march=ppc32 -mtriple=powerpc-apple-darwin8 -disable-fp-elim | FileCheck %s -check-prefix=PPC32-RS-NOFP
 
 ; CHECK-PPC32: stw r31, -4(r1)
 ; CHECK-PPC32: lwz r1, 0(r1)

@@ -46,15 +46,14 @@
 #define GET_REGINFO_TARGET_DESC
 #include "PPCGenRegisterInfo.inc"
 
-// FIXME (64-bit): Eventually enable by default.
 namespace llvm {
-cl::opt<bool> EnablePPC32RS("enable-ppc32-regscavenger",
+cl::opt<bool> DisablePPC32RS("disable-ppc32-regscavenger",
                                    cl::init(false),
-                                   cl::desc("Enable PPC32 register scavenger"),
+                                   cl::desc("Disable PPC32 register scavenger"),
                                    cl::Hidden);
-cl::opt<bool> EnablePPC64RS("enable-ppc64-regscavenger",
+cl::opt<bool> DisablePPC64RS("disable-ppc64-regscavenger",
                                    cl::init(false),
-                                   cl::desc("Enable PPC64 register scavenger"),
+                                   cl::desc("Disable PPC64 register scavenger"),
                                    cl::Hidden);
 }
 
@@ -63,8 +62,8 @@ using namespace llvm;
 // FIXME (64-bit): Should be inlined.
 bool
 PPCRegisterInfo::requiresRegisterScavenging(const MachineFunction &) const {
-  return ((EnablePPC32RS && !Subtarget.isPPC64()) ||
-          (EnablePPC64RS && Subtarget.isPPC64()));
+  return ((!DisablePPC32RS && !Subtarget.isPPC64()) ||
+          (!DisablePPC64RS && Subtarget.isPPC64()));
 }
 
 PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
@@ -230,9 +229,6 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   if (Subtarget.isPPC64()) {
     Reserved.set(PPC::R13);
     Reserved.set(PPC::R31);
-
-    if (!requiresRegisterScavenging(MF))
-      Reserved.set(PPC::R0);    // FIXME (64-bit): Remove
 
     Reserved.set(PPC::X0);
     Reserved.set(PPC::X1);
@@ -544,7 +540,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 
   // Special case for pseudo-op SPILL_CR.
-  if (requiresRegisterScavenging(MF)) // FIXME (64-bit): Enable by default.
+  if (requiresRegisterScavenging(MF))
     if (OpC == PPC::SPILL_CR) {
       lowerCRSpilling(II, FrameIndex, SPAdj, RS);
       return;

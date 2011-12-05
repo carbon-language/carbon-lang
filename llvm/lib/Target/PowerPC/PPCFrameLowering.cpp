@@ -772,7 +772,7 @@ PPCFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // FIXME: doesn't detect whether or not we need to spill vXX, which requires
   //        r0 for now.
 
-  if (RegInfo->requiresRegisterScavenging(MF)) // FIXME (64-bit): Enable.
+  if (RegInfo->requiresRegisterScavenging(MF))
     if (needsFP(MF) || spillsCR(MF)) {
       const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
       const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
