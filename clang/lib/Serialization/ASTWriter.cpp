@@ -1858,6 +1858,22 @@ static unsigned getNumberOfModules(Module *Mod) {
 }
 
 void ASTWriter::WriteSubmodules(Module *WritingModule) {
+  // 
+  // FIXME: This feels like it belongs somewhere else, but there are no
+  // other consumers of this information.
+  SourceManager &SrcMgr = PP->getSourceManager();
+  ModuleMap &ModMap = PP->getHeaderSearchInfo().getModuleMap();
+  for (ASTContext::import_iterator I = Context->local_import_begin(),
+                                IEnd = Context->local_import_end();
+       I != IEnd; ++I) {
+    assert(SubmoduleIDs.find(I->getImportedModule()) != SubmoduleIDs.end());
+    if (Module *ImportedFrom
+          = ModMap.inferModuleFromLocation(FullSourceLoc(I->getLocation(), 
+                                                         SrcMgr))) {
+      ImportedFrom->Imports.push_back(I->getImportedModule());
+    }
+  }
+  
   // Enter the submodule description block.
   Stream.EnterSubblock(SUBMODULE_BLOCK_ID, NUM_ALLOWED_ABBREVS_SIZE);
   
@@ -1924,7 +1940,18 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
       Stream.EmitRecordWithBlob(HeaderAbbrev, Record, 
                                 Mod->Headers[I]->getName());
     }
-    
+
+    // Emit the imports. 
+    if (!Mod->Imports.empty()) {
+      Record.clear();
+      for (unsigned I = 0, N = Mod->Imports.size(); I != N; ++I) {
+        unsigned ImportedID = SubmoduleIDs[Mod->Imports[I]];
+        assert(ImportedID && "Unknown submodule!");                                           
+        Record.push_back(ImportedID);
+      }
+      Stream.EmitRecord(SUBMODULE_IMPORTS, Record);
+    }
+
     // Emit the exports. 
     if (!Mod->Exports.empty()) {
       Record.clear();
@@ -1960,22 +1987,11 @@ serialization::SubmoduleID
 ASTWriter::inferSubmoduleIDFromLocation(SourceLocation Loc) {
   if (Loc.isInvalid() || SubmoduleIDs.empty())
     return 0; // No submodule
-  
-  // Use the expansion location to determine which module we're in.
-  SourceManager &SrcMgr = PP->getSourceManager();
-  SourceLocation ExpansionLoc = SrcMgr.getExpansionLoc(Loc);
-  if (!ExpansionLoc.isFileID())
-    return 0;  
-
-  
-  FileID ExpansionFileID = SrcMgr.getFileID(ExpansionLoc);
-  const FileEntry *ExpansionFile = SrcMgr.getFileEntryForID(ExpansionFileID);
-  if (!ExpansionFile)
-    return 0;
-  
-  // Find the module that owns this header.
+    
+  // Find the module that owns this location.
   ModuleMap &ModMap = PP->getHeaderSearchInfo().getModuleMap();
-  Module *OwningMod = ModMap.findModuleForHeader(ExpansionFile);
+  Module *OwningMod 
+    = ModMap.inferModuleFromLocation(FullSourceLoc(Loc,PP->getSourceManager()));
   if (!OwningMod)
     return 0;
   

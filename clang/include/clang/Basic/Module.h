@@ -78,6 +78,10 @@ public:
   
   ///\ brief The visibility of names within this particular module.
   NameVisibilityKind NameVisibility;
+
+  /// \brief The set of modules imported by this module, and on which this
+  /// module depends.
+  llvm::SmallVector<Module *, 2> Imports;
   
   /// \brief Describes an exported module.
   ///
@@ -89,7 +93,7 @@ public:
   llvm::SmallVector<ExportDecl, 2> Exports;
   
   /// \brief Describes an exported module that has not yet been resolved
-  /// (perhaps because the module it refers to has not yet been loaded).
+  /// (perhaps because tASThe module it refers to has not yet been loaded).
   struct UnresolvedExportDecl {
     /// \brief The location of the 'export' keyword in the module map file.
     SourceLocation ExportLoc;

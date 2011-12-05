@@ -393,21 +393,29 @@ private:
   /// declarations in that submodule that could be made visible.
   HiddenNamesMapType HiddenNamesMap;
   
-  /// \brief A module export that hasn't yet been resolved.
-  struct UnresolvedModuleExport {
+  
+  /// \brief A module import or export that hasn't yet been resolved.
+  struct UnresolvedModuleImportExport {
     /// \brief The file in which this module resides.
     ModuleFile *File;
     
-    /// \brief The module that is exporting, along with a bit that specifies
-    /// whether this is a wildcard export.
-    llvm::PointerIntPair<Module *, 1, bool> ModuleAndWildcard;
+    /// \brief The module that is importing or exporting.
+    Module *Mod;
     
     /// \brief The local ID of the module that is being exported.
-    unsigned ExportedID;
+    unsigned ID;
+    
+    /// \brief Whether this is an import (vs. an export).
+    unsigned IsImport : 1;
+    
+    /// \brief Whether this is a wildcard export.
+    unsigned IsWildcard : 1;
   };
   
-  /// \brief The set of module exports that still need to be resolved.
-  llvm::SmallVector<UnresolvedModuleExport, 2> UnresolvedModuleExports;
+  /// \brief The set of module imports and exports that still need to be 
+  /// resolved.
+  llvm::SmallVector<UnresolvedModuleImportExport, 2> 
+    UnresolvedModuleImportExports;
   
   /// \brief A vector containing selectors that have already been loaded.
   ///

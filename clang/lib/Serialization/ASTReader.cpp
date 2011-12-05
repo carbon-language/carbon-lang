@@ -2560,17 +2560,18 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
     Id->second->setOutOfDate(true);
 
   // Resolve any unresolved module exports.
-  for (unsigned I = 0, N = UnresolvedModuleExports.size(); I != N; ++I) {
-    UnresolvedModuleExport &Unresolved = UnresolvedModuleExports[I];
-    SubmoduleID GlobalID = getGlobalSubmoduleID(*Unresolved.File,
-                                                Unresolved.ExportedID);
-    if (Module *Exported = getSubmodule(GlobalID)) {
-      Module *Exportee = Unresolved.ModuleAndWildcard.getPointer();
-      bool Wildcard = Unresolved.ModuleAndWildcard.getInt();
-      Exportee->Exports.push_back(Module::ExportDecl(Exported, Wildcard));
+  for (unsigned I = 0, N = UnresolvedModuleImportExports.size(); I != N; ++I) {
+    UnresolvedModuleImportExport &Unresolved = UnresolvedModuleImportExports[I];
+    SubmoduleID GlobalID = getGlobalSubmoduleID(*Unresolved.File,Unresolved.ID);
+    if (Module *ResolvedMod = getSubmodule(GlobalID)) {
+      if (Unresolved.IsImport)
+        Unresolved.Mod->Imports.push_back(ResolvedMod);
+      else
+        Unresolved.Mod->Exports.push_back(
+          Module::ExportDecl(ResolvedMod, Unresolved.IsWildcard));
     }
   }
-  UnresolvedModuleExports.clear();
+  UnresolvedModuleImportExports.clear();
   
   InitializeContext();
 
@@ -3097,6 +3098,27 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       break;
     }
         
+    case SUBMODULE_IMPORTS: {
+      if (First) {
+        Error("missing submodule metadata record at beginning of block");
+        return Failure;
+      }
+      
+      if (!CurrentModule)
+        break;
+      
+      for (unsigned Idx = 0; Idx != Record.size(); ++Idx) {
+        UnresolvedModuleImportExport Unresolved;
+        Unresolved.File = &F;
+        Unresolved.Mod = CurrentModule;
+        Unresolved.ID = Record[Idx];
+        Unresolved.IsImport = true;
+        Unresolved.IsWildcard = false;
+        UnresolvedModuleImportExports.push_back(Unresolved);
+      }
+      break;
+    }
+
     case SUBMODULE_EXPORTS: {
       if (First) {
         Error("missing submodule metadata record at beginning of block");
@@ -3107,12 +3129,13 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         break;
       
       for (unsigned Idx = 0; Idx + 1 < Record.size(); Idx += 2) {
-        UnresolvedModuleExport Unresolved;
+        UnresolvedModuleImportExport Unresolved;
         Unresolved.File = &F;
-        Unresolved.ModuleAndWildcard.setPointer(CurrentModule);
-        Unresolved.ModuleAndWildcard.setInt(Record[Idx + 1]);
-        Unresolved.ExportedID = Record[Idx];
-        UnresolvedModuleExports.push_back(Unresolved);
+        Unresolved.Mod = CurrentModule;
+        Unresolved.ID = Record[Idx];
+        Unresolved.IsImport = false;
+        Unresolved.IsWildcard = Record[Idx + 1];
+        UnresolvedModuleImportExports.push_back(Unresolved);
       }
       
       // Once we've loaded the set of exports, there's no reason to keep 

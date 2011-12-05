@@ -517,9 +517,12 @@ namespace clang {
       SUBMODULE_HEADER = 2,
       /// \brief Metadata for submodules as a whole.
       SUBMODULE_METADATA = 3,
+      /// \brief Specifies the submodules that are imported by this 
+      /// submodule.
+      SUBMODULE_IMPORTS = 4,
       /// \brief Specifies the submodules that are re-exported from this 
       /// submodule.
-      SUBMODULE_EXPORTS = 4
+      SUBMODULE_EXPORTS = 5
     };
     
     /// \defgroup ASTAST AST file AST constants

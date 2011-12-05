@@ -238,6 +238,26 @@ bool ModuleMap::resolveExports(Module *Mod, bool Complain) {
   return HadError;
 }
 
+Module *ModuleMap::inferModuleFromLocation(FullSourceLoc Loc) {
+  if (Loc.isInvalid())
+    return 0;
+  
+  // Use the expansion location to determine which module we're in.
+  FullSourceLoc ExpansionLoc = Loc.getExpansionLoc();
+  if (!ExpansionLoc.isFileID())
+    return 0;  
+  
+  
+  const SourceManager &SrcMgr = Loc.getManager();
+  FileID ExpansionFileID = ExpansionLoc.getFileID();
+  const FileEntry *ExpansionFile = SrcMgr.getFileEntryForID(ExpansionFileID);
+  if (!ExpansionFile)
+    return 0;
+  
+  // Find the module that owns this header.
+  return findModuleForHeader(ExpansionFile);
+}
+
 //----------------------------------------------------------------------------//
 // Module map file parser
 //----------------------------------------------------------------------------//

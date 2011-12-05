@@ -167,6 +167,16 @@ public:
   /// false otherwise.
   bool resolveExports(Module *Mod, bool Complain);
 
+  /// \brief Infers the (sub)module based on the given source location and 
+  /// source manager.
+  ///
+  /// \param Loc The location within the source that we are querying, along
+  /// with its source manager.
+  ///
+  /// \returns The module that owns this source location, or null if no
+  /// module owns this source location.
+  Module *inferModuleFromLocation(FullSourceLoc Loc);
+  
   /// \brief Parse the given module map file, and record any modules we 
   /// encounter.
   ///
