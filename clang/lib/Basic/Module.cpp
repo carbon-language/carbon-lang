@@ -102,9 +102,14 @@ void Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
   
   for (unsigned I = 0, N = Exports.size(); I != N; ++I) {
     OS.indent(Indent + 2);
-    OS << "export " << Exports[I].getPointer()->getFullModuleName();
-    if (Exports[I].getInt())
-      OS << ".*";
+    OS << "export ";
+    if (Module *Restriction = Exports[I].getPointer()) {
+      OS << Restriction->getFullModuleName();
+      if (Exports[I].getInt())
+        OS << ".*";
+    } else {
+      OS << "*";
+    }
     OS << "\n";
   }
 
@@ -112,8 +117,12 @@ void Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
     OS.indent(Indent + 2);
     OS << "export ";
     printModuleId(OS, UnresolvedExports[I].Id);
-    if (UnresolvedExports[I].Wildcard)
-      OS << ".*";
+    if (UnresolvedExports[I].Wildcard) {
+      if (UnresolvedExports[I].Id.empty())
+        OS << "*";
+      else
+        OS << ".*";
+    }
     OS << "\n";
   }
 
