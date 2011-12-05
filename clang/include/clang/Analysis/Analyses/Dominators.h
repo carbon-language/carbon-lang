@@ -1,4 +1,4 @@
-//==- Dominators.h - Construct the Dominance Tree Given CFG -----*- C++ --*-==//
+//==- Dominators.h - Implementation of dominators tree for Clang CFG C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,74 +7,205 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements a simple, fast dominance algorithm for source-level
-// CFGs.
+// This file implements the dominators tree functionality for Clang CFGs.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CLANG_DOMINATORS_H
 #define LLVM_CLANG_DOMINATORS_H
 
-#include "clang/Analysis/CFG.h"
 #include "clang/Analysis/AnalysisContext.h"
-#include "llvm/ADT/DenseMap.h"
+
+#include "llvm/Module.h"
+#include "llvm/ADT/GraphTraits.h"
+#include "clang/Analysis/CFG.h"
+#include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/DominatorInternals.h"
 
 namespace clang {
 
-class CFG;
 class CFGBlock;
+typedef llvm::DomTreeNodeBase<CFGBlock> DomTreeNode;
 
+/// \brief Concrete subclass of DominatorTreeBase for Clang
+/// This class implements the dominators tree functionality given a Clang CFG.
+///
 class DominatorTree : public ManagedAnalysis {
-  typedef llvm::DenseMap<const CFGBlock *, CFGBlock*> CFGBlockMapTy;
-
 public:
-  DominatorTree(AnalysisDeclContext &ac)
-      : AC(ac) {}
+  llvm::DominatorTreeBase<CFGBlock>* DT;
 
-  virtual ~DominatorTree();
+  DominatorTree() {
+    DT = new llvm::DominatorTreeBase<CFGBlock>(false);
+  }
 
-  /// Return the immediate dominator node given a CFGBlock.
-  /// For entry block, the dominator is itself.
-  /// This is the same as using operator[] on this class.
-  CFGBlock *getNode(const CFGBlock *B) const;
+  ~DominatorTree() {
+    delete DT;
+  }
 
-  /// This returns the Entry Block for the given CFG
-  CFGBlock *getRootNode() { return RootNode; }
-  const CFGBlock *getRootNode() const { return RootNode; }
+  llvm::DominatorTreeBase<CFGBlock>& getBase() { return *DT; }
 
-  /// Returns true iff A dominates B and A != B.
-  /// Note that this is not a constant time operation.
-  bool properlyDominates(const CFGBlock *A, const CFGBlock *B) const;
-
-  /// Returns true iff A dominates B.
-  bool dominates(const CFGBlock *A, const CFGBlock *B) const;
-
-  /// Find nearest common dominator for blocks A and B.
-  /// Common dominator always exists, ex: entry block.
-  const CFGBlock *findNearestCommonDominator(const CFGBlock *A,
-                                       const CFGBlock *B) const;
-
-  /// Constructs immediate dominator tree for a given CFG based on the algorithm
-  /// described in this paper:
+  /// \brief This method returns the root CFGBlock of the dominators tree.
   ///
-  ///  A Simple, Fast Dominance Algorithm
-  ///  Keith D. Cooper, Timothy J. Harvey and Ken Kennedy
-  ///  Software-Practice and Expreience, 2001;4:1-10.
-  ///
-  /// This implementation is simple and runs faster in practice than the classis
-  /// Lengauer-Tarjan algorithm. For detailed discussions, refer to the paper.
-  void BuildDominatorTree();
+  inline CFGBlock *getRoot() const {
+    return DT->getRoot();
+  }
 
-  /// Dump the immediate dominance tree
-  void dump();
+  /// \brief This method returns the root DomTreeNode, which is the wrapper
+  /// for CFGBlock.
+  inline DomTreeNode *getRootNode() const {
+    return DT->getRootNode();
+  }
+
+  /// \brief This method compares two dominator trees.
+  /// The method returns false if the other dominator tree matches this
+  /// dominator tree, otherwise returns true.
+  ///
+  inline bool compare(DominatorTree &Other) const {
+    DomTreeNode *R = getRootNode();
+    DomTreeNode *OtherR = Other.getRootNode();
+
+    if (!R || !OtherR || R->getBlock() != OtherR->getBlock())
+      return true;
+
+    if (DT->compare(Other.getBase()))
+      return true;
+
+    return false;
+  }
+
+  /// \brief This method builds the dominator tree for a given CFG
+  /// The CFG information is passed via AnalysisDeclContext
+  ///
+  void buildDominatorTree(AnalysisDeclContext &AC) {
+    cfg = AC.getCFG();
+    DT->recalculate(*cfg);
+  }
+
+  /// \brief This method dumps immediate dominators for each block,
+  /// mainly used for debug purposes.
+  ///
+  void dump() {
+    llvm::errs() << "Immediate dominance tree (Node#,IDom#):\n";
+    for (CFG::const_iterator I = cfg->begin(),
+        E = cfg->end(); I != E; ++I) {
+      if(DT->getNode(*I)->getIDom())
+        llvm::errs() << "(" << (*I)->getBlockID()
+                     << ","
+                     << DT->getNode(*I)->getIDom()->getBlock()->getBlockID()
+                     << ")\n";
+      else llvm::errs() << "(" << (*I)->getBlockID()
+                        << "," << (*I)->getBlockID() << ")\n";
+    }
+  }
+
+  /// \brief This method tests if one CFGBlock dominates the other.
+  /// The method return true if A dominates B, false otherwise.
+  /// Note a block always dominates itself.
+  ///
+  inline bool dominates(const CFGBlock* A, const CFGBlock* B) const {
+    return DT->dominates(A, B);
+  }
+
+  /// \brief This method tests if one CFGBlock properly dominates the other.
+  /// The method return true if A properly dominates B, false otherwise.
+  ///
+  bool properlyDominates(const CFGBlock*A, const CFGBlock*B) const {
+    return DT->properlyDominates(A, B);
+  }
+
+  /// \brief This method finds the nearest common dominator CFG block
+  /// for CFG block A and B. If there is no such block then return NULL.
+  ///
+  inline CFGBlock *findNearestCommonDominator(CFGBlock *A, CFGBlock *B) {
+    return DT->findNearestCommonDominator(A, B);
+  }
+
+  inline const CFGBlock *findNearestCommonDominator(const CFGBlock *A,
+                                                      const CFGBlock *B) {
+    return DT->findNearestCommonDominator(A, B);
+  }
+
+  /// \brief This method is used to update the dominator
+  /// tree information when a node's immediate dominator changes.
+  ///
+  inline void changeImmediateDominator(CFGBlock *N, CFGBlock *NewIDom) {
+    DT->changeImmediateDominator(N, NewIDom);
+  }
+
+  /// \brief This method tests if the given CFGBlock can be reachable from root.
+  /// Returns true if reachable, false otherwise.
+  ///
+  bool isReachableFromEntry(const CFGBlock *A) {
+    return DT->isReachableFromEntry(A);
+  }
+
+  /// \brief This method releases the memory held by the dominator tree.
+  ///
+  virtual void releaseMemory() {
+    DT->releaseMemory();
+  }
+
+  /// \brief This method converts the dominator tree to human readable form.
+  ///
+  virtual void print(raw_ostream &OS, const llvm::Module* M= 0) const {
+    DT->print(OS);
+  }
 
 private:
-  AnalysisDeclContext &AC;
-  CFGBlock *RootNode;
-  CFGBlockMapTy IDoms;
+  CFG *cfg;
 };
+
+void WriteAsOperand(raw_ostream &OS, const CFGBlock *BB,
+                          bool t) {
+  OS << "BB#" << BB->getBlockID();
+}
 
 } // end namespace clang
 
-#endif
+//===-------------------------------------
+/// DominatorTree GraphTraits specialization so the DominatorTree can be
+/// iterable by generic graph iterators.
+///
+namespace llvm {
+template <> struct GraphTraits< ::clang::DomTreeNode* > {
+  typedef ::clang::DomTreeNode NodeType;
+  typedef NodeType::iterator  ChildIteratorType;
 
+  static NodeType *getEntryNode(NodeType *N) {
+    return N;
+  }
+  static inline ChildIteratorType child_begin(NodeType *N) {
+    return N->begin();
+  }
+  static inline ChildIteratorType child_end(NodeType *N) {
+    return N->end();
+  }
+
+  typedef df_iterator< ::clang::DomTreeNode* > nodes_iterator;
+
+  static nodes_iterator nodes_begin(::clang::DomTreeNode *N) {
+    return df_begin(getEntryNode(N));
+  }
+
+  static nodes_iterator nodes_end(::clang::DomTreeNode *N) {
+    return df_end(getEntryNode(N));
+  }
+};
+
+template <> struct GraphTraits< ::clang::DominatorTree* >
+  : public GraphTraits< ::clang::DomTreeNode* > {
+  static NodeType *getEntryNode(::clang::DominatorTree *DT) {
+    return DT->getRootNode();
+  }
+
+  static nodes_iterator nodes_begin(::clang::DominatorTree *N) {
+    return df_begin(getEntryNode(N));
+  }
+
+  static nodes_iterator nodes_end(::clang::DominatorTree *N) {
+    return df_end(getEntryNode(N));
+  }
+};
+} // end namespace llvm
+
+#endif

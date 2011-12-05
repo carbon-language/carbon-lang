@@ -344,10 +344,14 @@ class CFGBlock {
   /// storage if the memory usage of CFGBlock becomes an issue.
   unsigned HasNoReturnElement : 1;
 
+  /// Parent - The parent CFG that owns this CFGBlock.
+  CFG *Parent;
+
 public:
-  explicit CFGBlock(unsigned blockid, BumpVectorContext &C)
-    : Elements(C), Label(NULL), Terminator(NULL), LoopTarget(NULL),
-      BlockID(blockid), Preds(C, 1), Succs(C, 1), HasNoReturnElement(false) {}
+  explicit CFGBlock(unsigned blockid, BumpVectorContext &C, CFG *parent)
+    : Elements(C), Label(NULL), Terminator(NULL), LoopTarget(NULL), 
+      BlockID(blockid), Preds(C, 1), Succs(C, 1), HasNoReturnElement(false),
+      Parent(parent) {}
   ~CFGBlock() {}
 
   // Statement iterators
@@ -489,6 +493,8 @@ public:
 
   unsigned getBlockID() const { return BlockID; }
 
+  CFG *getParent() const { return Parent; }
+
   void dump(const CFG *cfg, const LangOptions &LO) const;
   void print(raw_ostream &OS, const CFG* cfg, const LangOptions &LO) const;
   void printTerminator(raw_ostream &OS, const LangOptions &LO) const;
@@ -583,6 +589,55 @@ public:
       ,AddImplicitDtors(false) {}
   };
 
+  /// \brief Provides a custom implementation of the iterator class to have the
+  /// same interface as Function::iterator - iterator returns CFGBlock
+  /// (not a pointer to CFGBlock).
+  class graph_iterator {
+  public:
+    typedef const CFGBlock                  value_type;
+    typedef value_type&                     reference;
+    typedef value_type*                     pointer;
+    typedef BumpVector<CFGBlock*>::iterator ImplTy;
+
+    graph_iterator(const ImplTy &i) : I(i) {}
+
+    bool operator==(const graph_iterator &X) const { return I == X.I; }
+    bool operator!=(const graph_iterator &X) const { return I != X.I; }
+
+    reference operator*()    const { return **I; }
+    pointer operator->()     const { return  *I; }
+    operator CFGBlock* ()          { return  *I; }
+
+    graph_iterator &operator++() { ++I; return *this; }
+    graph_iterator &operator--() { --I; return *this; }
+
+  private:
+    ImplTy I;
+  };
+
+  class const_graph_iterator {
+  public:
+    typedef const CFGBlock                  value_type;
+    typedef value_type&                     reference;
+    typedef value_type*                     pointer;
+    typedef BumpVector<CFGBlock*>::const_iterator ImplTy;
+
+    const_graph_iterator(const ImplTy &i) : I(i) {}
+
+    bool operator==(const const_graph_iterator &X) const { return I == X.I; }
+    bool operator!=(const const_graph_iterator &X) const { return I != X.I; }
+
+    reference operator*() const { return **I; }
+    pointer operator->()  const { return  *I; }
+    operator CFGBlock* () const { return  *I; }
+
+    const_graph_iterator &operator++() { ++I; return *this; }
+    const_graph_iterator &operator--() { --I; return *this; }
+
+  private:
+    ImplTy I;
+  };
+
   /// buildCFG - Builds a CFG from an AST.  The responsibility to free the
   ///   constructed CFG belongs to the caller.
   static CFG* buildCFG(const Decl *D, Stmt *AST, ASTContext *C,
@@ -618,6 +673,15 @@ public:
   iterator                  end()                  { return Blocks.end(); }
   const_iterator            begin()       const    { return Blocks.begin(); }
   const_iterator            end()         const    { return Blocks.end(); }
+
+  graph_iterator nodes_begin() { return graph_iterator(Blocks.begin()); }
+  graph_iterator nodes_end() { return graph_iterator(Blocks.end()); }
+  const_graph_iterator nodes_begin() const {
+    return const_graph_iterator(Blocks.begin());
+  }
+  const_graph_iterator nodes_end() const {
+    return const_graph_iterator(Blocks.end());
+  }
 
   reverse_iterator          rbegin()               { return Blocks.rbegin(); }
   reverse_iterator          rend()                 { return Blocks.rend(); }
@@ -680,6 +744,11 @@ public:
   /// getNumBlockIDs - Returns the total number of BlockIDs allocated (which
   /// start at 0).
   unsigned getNumBlockIDs() const { return NumBlockIDs; }
+
+  /// size - Return the total number of CFGBlocks within the CFG
+  /// This is simply a renaming of the getNumBlockIDs(). This is necessary 
+  /// because the dominator implementation needs such an interface.
+  unsigned size() const { return NumBlockIDs; }
 
   //===--------------------------------------------------------------------===//
   // CFG Debugging: Pretty-Printing and Visualization.
@@ -781,6 +850,20 @@ template <> struct GraphTraits< const ::clang::CFGBlock *> {
   { return N->succ_end(); }
 };
 
+template <> struct GraphTraits<Inverse< ::clang::CFGBlock*> > {
+  typedef ::clang::CFGBlock NodeType;
+  typedef ::clang::CFGBlock::const_pred_iterator ChildIteratorType;
+
+  static NodeType *getEntryNode(Inverse< ::clang::CFGBlock*> G)
+  { return G.Graph; }
+
+  static inline ChildIteratorType child_begin(NodeType* N)
+  { return N->pred_begin(); }
+
+  static inline ChildIteratorType child_end(NodeType* N)
+  { return N->pred_end(); }
+};
+
 template <> struct GraphTraits<Inverse<const ::clang::CFGBlock*> > {
   typedef const ::clang::CFGBlock NodeType;
   typedef ::clang::CFGBlock::const_pred_iterator ChildIteratorType;
@@ -800,37 +883,55 @@ template <> struct GraphTraits<Inverse<const ::clang::CFGBlock*> > {
 template <> struct GraphTraits< ::clang::CFG* >
     : public GraphTraits< ::clang::CFGBlock *>  {
 
-  typedef ::clang::CFG::iterator nodes_iterator;
+  typedef ::clang::CFG::graph_iterator nodes_iterator;
 
-  static NodeType *getEntryNode(::clang::CFG* F) { return &F->getEntry(); }
-  static nodes_iterator nodes_begin(::clang::CFG* F) { return F->begin(); }
-  static nodes_iterator nodes_end(::clang::CFG* F) { return F->end(); }
+  static NodeType     *getEntryNode(::clang::CFG* F) { return &F->getEntry(); }
+  static nodes_iterator nodes_begin(::clang::CFG* F) { return F->nodes_begin();}
+  static nodes_iterator   nodes_end(::clang::CFG* F) { return F->nodes_end(); }
+  static unsigned              size(::clang::CFG* F) { return F->size(); }
 };
 
 template <> struct GraphTraits<const ::clang::CFG* >
     : public GraphTraits<const ::clang::CFGBlock *>  {
 
-  typedef ::clang::CFG::const_iterator nodes_iterator;
+  typedef ::clang::CFG::const_graph_iterator nodes_iterator;
 
   static NodeType *getEntryNode( const ::clang::CFG* F) {
     return &F->getEntry();
   }
   static nodes_iterator nodes_begin( const ::clang::CFG* F) {
-    return F->begin();
+    return F->nodes_begin();
   }
   static nodes_iterator nodes_end( const ::clang::CFG* F) {
-    return F->end();
+    return F->nodes_end();
   }
+  static unsigned size(const ::clang::CFG* F) {
+    return F->size();
+  }
+};
+
+template <> struct GraphTraits<Inverse< ::clang::CFG*> >
+  : public GraphTraits<Inverse< ::clang::CFGBlock*> > {
+
+  typedef ::clang::CFG::graph_iterator nodes_iterator;
+
+  static NodeType *getEntryNode( ::clang::CFG* F) { return &F->getExit(); }
+  static nodes_iterator nodes_begin( ::clang::CFG* F) {return F->nodes_begin();}
+  static nodes_iterator nodes_end( ::clang::CFG* F) { return F->nodes_end(); }
 };
 
 template <> struct GraphTraits<Inverse<const ::clang::CFG*> >
   : public GraphTraits<Inverse<const ::clang::CFGBlock*> > {
 
-  typedef ::clang::CFG::const_iterator nodes_iterator;
+  typedef ::clang::CFG::const_graph_iterator nodes_iterator;
 
   static NodeType *getEntryNode(const ::clang::CFG* F) { return &F->getExit(); }
-  static nodes_iterator nodes_begin(const ::clang::CFG* F) { return F->begin();}
-  static nodes_iterator nodes_end(const ::clang::CFG* F) { return F->end(); }
+  static nodes_iterator nodes_begin(const ::clang::CFG* F) {
+    return F->nodes_begin();
+  }
+  static nodes_iterator nodes_end(const ::clang::CFG* F) {
+    return F->nodes_end();
+  }
 };
 } // end llvm namespace
 #endif

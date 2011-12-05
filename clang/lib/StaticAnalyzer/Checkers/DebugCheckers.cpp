@@ -30,8 +30,8 @@ public:
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
                         BugReporter &BR) const {
     if (AnalysisDeclContext *AC = mgr.getAnalysisDeclContext(D)) {
-      DominatorTree dom(*AC);
-      dom.BuildDominatorTree();
+      DominatorTree dom;
+      dom.buildDominatorTree(*AC);
       dom.dump();
     }
   }

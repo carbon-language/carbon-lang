@@ -3039,7 +3039,7 @@ CFGBlock *CFG::createBlock() {
 
   // Create the block.
   CFGBlock *Mem = getAllocator().Allocate<CFGBlock>();
-  new (Mem) CFGBlock(NumBlockIDs++, BlkBVC);
+  new (Mem) CFGBlock(NumBlockIDs++, BlkBVC, this);
   Blocks.push_back(Mem, BlkBVC);
 
   // If this is the first block, set it as the Entry and Exit.
