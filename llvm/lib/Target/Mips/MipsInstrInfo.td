@@ -623,14 +623,29 @@ class ReadHardware: FR<0x1f, 0x3b, (outs CPURegs:$rt), (ins HWRegs:$rd),
 }
 
 // Ext and Ins
-class ExtIns<bits<6> _funct, string instr_asm, dag outs, dag ins,
-             list<dag> pattern, InstrItinClass itin>:
-  FR<0x1f, _funct, outs, ins, !strconcat(instr_asm, " $rt, $rs, $pos, $sz"),
-     pattern, itin>, Requires<[HasMips32r2]> {
+class ExtBase<bits<6> _funct, string instr_asm, RegisterClass RC>:
+  FR<0x1f, _funct, (outs RC:$rt), (ins RC:$rs, uimm16:$pos, size_ext:$sz), 
+     !strconcat(instr_asm, " $rt, $rs, $pos, $sz"),
+     [(set RC:$rt, (MipsExt RC:$rs, imm:$pos, imm:$sz))], NoItinerary> {
   bits<5> pos;
   bits<5> sz;
   let rd = sz;
   let shamt = pos;
+  let Predicates = [HasMips32r2];
+}
+
+class InsBase<bits<6> _funct, string instr_asm, RegisterClass RC>:
+  FR<0x1f, _funct, (outs RC:$rt),
+     (ins RC:$rs, uimm16:$pos, size_ins:$sz, RC:$src),
+     !strconcat(instr_asm, " $rt, $rs, $pos, $sz"),
+     [(set RC:$rt, (MipsIns RC:$rs, imm:$pos, imm:$sz, RC:$src))],
+     NoItinerary> {
+  bits<5> pos;
+  bits<5> sz;
+  let rd = sz;
+  let shamt = pos;
+  let Predicates = [HasMips32r2];
+  let Constraints = "$src = $rt";
 }
 
 // Atomic instructions with 2 source operands (ATOMIC_SWAP & ATOMIC_LOAD_*).
@@ -890,19 +905,8 @@ def MUL   : ArithLogicR<0x1c, 0x02, "mul", mul, IIImul, CPURegs, 1>,
 
 def RDHWR : ReadHardware;
 
-def EXT : ExtIns<0, "ext", (outs CPURegs:$rt),
-                 (ins CPURegs:$rs, uimm16:$pos, size_ext:$sz),
-                 [(set CPURegs:$rt,
-                   (MipsExt CPURegs:$rs, immZExt5:$pos, immZExt5:$sz))],
-                 NoItinerary>;
-
-let Constraints = "$src = $rt" in
-def INS : ExtIns<4, "ins", (outs CPURegs:$rt),
-                 (ins CPURegs:$rs, uimm16:$pos, size_ins:$sz, CPURegs:$src),
-                 [(set CPURegs:$rt,
-                   (MipsIns CPURegs:$rs, immZExt5:$pos, immZExt5:$sz,
-                    CPURegs:$src))],
-                 NoItinerary>;
+def EXT : ExtBase<0, "ext", CPURegs>;
+def INS : InsBase<4, "ins", CPURegs>;
 
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
