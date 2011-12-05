@@ -399,7 +399,7 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc,
         if (match == NULL)
             return 0;
                     
-        const bool isForwardDecl = false;
+        const bool isForwardDecl = true;
         const bool isInternal = true;
         
         ClangASTContext &ast = GetClangASTContext();
