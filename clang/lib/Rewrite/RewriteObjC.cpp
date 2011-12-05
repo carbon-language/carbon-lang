@@ -54,13 +54,10 @@ namespace {
       BLOCK_HAS_DESCRIPTOR =    (1 << 29)
     };
     static const int OBJC_ABI_VERSION = 7;
-    
+
     Rewriter Rewrite;
     DiagnosticsEngine &Diags;
     const LangOptions &LangOpts;
-    unsigned RewriteFailedDiag;
-    unsigned TryFinallyContainsReturnDiag;
-
     ASTContext *Context;
     SourceManager *SM;
     TranslationUnitDecl *TUDecl;
@@ -68,9 +65,42 @@ namespace {
     const char *MainFileStart, *MainFileEnd;
     Stmt *CurrentBody;
     ParentMap *PropParentMap; // created lazily.
+    std::string InFileName;
+    raw_ostream* OutFile;
+    std::string Preamble;
+    
+    TypeDecl *ProtocolTypeDecl;
+    VarDecl *GlobalVarDecl;
+    unsigned RewriteFailedDiag;
+    unsigned TryFinallyContainsReturnDiag;
+    // ObjC string constant support.
+    unsigned NumObjCStringLiterals;
+    VarDecl *ConstantStringClassReference;
+    RecordDecl *NSStringRecord;
 
-    SourceLocation LastIncLoc;
+    // ObjC foreach break/continue generation support.
+    int BcLabelCount;
+    
+    // Needed for super.
+    ObjCMethodDecl *CurMethodDef;
+    RecordDecl *SuperStructDecl;
+    RecordDecl *ConstantStringDecl;
+    
+    FunctionDecl *MsgSendFunctionDecl;
+    FunctionDecl *MsgSendSuperFunctionDecl;
+    FunctionDecl *MsgSendStretFunctionDecl;
+    FunctionDecl *MsgSendSuperStretFunctionDecl;
+    FunctionDecl *MsgSendFpretFunctionDecl;
+    FunctionDecl *GetClassFunctionDecl;
+    FunctionDecl *GetMetaClassFunctionDecl;
+    FunctionDecl *GetSuperClassFunctionDecl;
+    FunctionDecl *SelGetUidFunctionDecl;
+    FunctionDecl *CFStringFunctionDecl;
+    FunctionDecl *SuperContructorFunctionDecl;
+    FunctionDecl *CurFunctionDef;
+    FunctionDecl *CurFunctionDeclToDeclareForBlock;
 
+    /* Misc. containers needed for meta-data rewrite. */
     SmallVector<ObjCImplementationDecl *, 8> ClassImplementation;
     SmallVector<ObjCCategoryImplDecl *, 8> CategoryImplementation;
     llvm::SmallPtrSet<ObjCInterfaceDecl*, 8> ObjCSynthesizedStructs;
@@ -83,46 +113,6 @@ namespace {
     llvm::SmallPtrSet<ObjCProtocolDecl *, 32> ProtocolExprDecls;
     
     llvm::DenseSet<uint64_t> CopyDestroyCache;
-    
-    unsigned NumObjCStringLiterals;
-
-    FunctionDecl *MsgSendFunctionDecl;
-    FunctionDecl *MsgSendSuperFunctionDecl;
-    FunctionDecl *MsgSendStretFunctionDecl;
-    FunctionDecl *MsgSendSuperStretFunctionDecl;
-    FunctionDecl *MsgSendFpretFunctionDecl;
-    FunctionDecl *GetClassFunctionDecl;
-    FunctionDecl *GetMetaClassFunctionDecl;
-    FunctionDecl *GetSuperClassFunctionDecl;
-    FunctionDecl *SelGetUidFunctionDecl;
-    FunctionDecl *CFStringFunctionDecl;
-    FunctionDecl *SuperContructorFunctionDecl;
-
-    // ObjC string constant support.
-    VarDecl *ConstantStringClassReference;
-    RecordDecl *NSStringRecord;
-
-    // ObjC foreach break/continue generation support.
-    int BcLabelCount;
-
-    // Needed for super.
-    ObjCMethodDecl *CurMethodDef;
-    RecordDecl *SuperStructDecl;
-    RecordDecl *ConstantStringDecl;
-
-    TypeDecl *ProtocolTypeDecl;
-    QualType getProtocolType();
-
-    // Needed for header files being rewritten
-    bool IsHeader;
-
-    std::string InFileName;
-    raw_ostream* OutFile;
-
-    bool SilenceRewriteMacroWarning;
-    bool objc_impl_method;
-
-    std::string Preamble;
 
     // Block expressions.
     SmallVector<BlockExpr *, 32> Blocks;
@@ -147,10 +137,11 @@ namespace {
     // This is needed to support some of the exotic property rewriting.
     llvm::DenseMap<Stmt *, Stmt *> ReplacedNodes;
 
-    FunctionDecl *CurFunctionDef;
-    FunctionDecl *CurFunctionDeclToDeclareForBlock;
-    VarDecl *GlobalVarDecl;
-
+    // Needed for header files being rewritten
+    bool IsHeader;
+    bool SilenceRewriteMacroWarning;
+    bool objc_impl_method;
+    
     bool DisableReplaceStmt;
     class DisableReplaceStmtScope {
       RewriteObjC &R;
@@ -392,6 +383,7 @@ namespace {
             const SmallVector<BlockDeclRefExpr *, 8> &InnerBlockDeclRefs);
 
     // Misc. helper routines.
+    QualType getProtocolType();
     void WarnAboutReturnGotoStmts(Stmt *S);
     void HasReturnStmts(Stmt *S, bool &hasReturns);
     void CheckFunctionPointerDecl(QualType dType, NamedDecl *ND);
