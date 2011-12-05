@@ -3669,15 +3669,6 @@ def  VMULslfd : N3VDSL<0b10, 0b1001, IIC_VBIND, "vmul", "f32", v2f32, fmul>;
 def  VMULslfq : N3VQSL<0b10, 0b1001, IIC_VBINQ, "vmul", "f32", v4f32,
                        v2f32, fmul>;
 
-// Two-operand aliases.
-def : NEONInstAlias<"vmul${p}.f32 $Ddn $Dm$lane",
-                    (VMULslfd DPR:$Ddn, DPR:$Ddn, DPR_VFP2:$Dm,
-                              VectorIndex32:$lane, pred:$p)>;
-def : NEONInstAlias<"vmul${p}.f32 $Qdn $Dm$lane",
-                    (VMULslfq QPR:$Qdn, QPR:$Qdn, DPR_VFP2:$Dm,
-                              VectorIndex32:$lane, pred:$p)>;
-
-
 def : Pat<(v8i16 (mul (v8i16 QPR:$src1),
                       (v8i16 (NEONvduplane (v8i16 QPR:$src2), imm:$lane)))),
           (v8i16 (VMULslv8i16 (v8i16 QPR:$src1),
@@ -5619,6 +5610,79 @@ defm VEXTq : VFPDT32ReqInstAlias<"vext${p}", "$Vd, $Vn, $Vm, $index",
                   (VEXTq32 QPR:$Vd, QPR:$Vn, QPR:$Vm, imm0_3:$index, pred:$p)>;
 defm VEXTq : VFPDT64ReqInstAlias<"vext${p}", "$Vd, $Vn, $Vm, $index",
                   (VEXTq64 QPR:$Vd, QPR:$Vn, QPR:$Vm, imm0_1:$index, pred:$p)>;
+
+// VMUL instructions data type suffix aliases for more-specific types.
+def : NEONInstAlias<"vmul${p}.s16 $Dd, $Dn $Dm$lane",
+                    (VMULslv4i16 DPR:$Dd, DPR:$Dn, DPR_8:$Dm,
+                                 VectorIndex16:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.s16 $Qd, $Qn, $Dm$lane",
+                    (VMULslv8i16 QPR:$Qd, QPR:$Qn, DPR_8:$Dm,
+                                 VectorIndex16:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.u16 $Dd, $Dn $Dm$lane",
+                    (VMULslv4i16 DPR:$Dd, DPR:$Dn, DPR_8:$Dm,
+                                 VectorIndex16:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.u16 $Qd, $Qn, $Dm$lane",
+                    (VMULslv8i16 QPR:$Qd, QPR:$Qn, DPR_8:$Dm,
+                                 VectorIndex16:$lane, pred:$p)>;
+
+def : NEONInstAlias<"vmul${p}.s32 $Dd, $Dn $Dm$lane",
+                    (VMULslv2i32 DPR:$Dd, DPR:$Dn, DPR_VFP2:$Dm,
+                                 VectorIndex32:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.s32 $Qd, $Qn, $Dm$lane",
+                    (VMULslv4i32 QPR:$Qd, QPR:$Qn, DPR_VFP2:$Dm,
+                                 VectorIndex32:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.u32 $Dd, $Dn $Dm$lane",
+                    (VMULslv2i32 DPR:$Dd, DPR:$Dn, DPR_VFP2:$Dm,
+                                 VectorIndex32:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.u32 $Qd, $Qn, $Dm$lane",
+                    (VMULslv4i32 QPR:$Qd, QPR:$Qn, DPR_VFP2:$Dm,
+                                 VectorIndex32:$lane, pred:$p)>;
+
+// VMUL two-operand aliases.
+def : NEONInstAlias<"vmul${p}.i16 $Ddn, $Dm$lane",
+                    (VMULslv4i16 DPR:$Ddn, DPR:$Ddn, DPR_8:$Dm,
+                                 VectorIndex16:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.i16 $Qdn, $Dm$lane",
+                    (VMULslv8i16 QPR:$Qdn, QPR:$Qdn, DPR_8:$Dm,
+                                 VectorIndex16:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.s16 $Ddn, $Dm$lane",
+                    (VMULslv4i16 DPR:$Ddn, DPR:$Ddn, DPR_8:$Dm,
+                                 VectorIndex16:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.s16 $Qdn, $Dm$lane",
+                    (VMULslv8i16 QPR:$Qdn, QPR:$Qdn, DPR_8:$Dm,
+                                 VectorIndex16:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.u16 $Ddn, $Dm$lane",
+                    (VMULslv4i16 DPR:$Ddn, DPR:$Ddn, DPR_8:$Dm,
+                                 VectorIndex16:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.u16 $Qdn, $Dm$lane",
+                    (VMULslv8i16 QPR:$Qdn, QPR:$Qdn, DPR_8:$Dm,
+                                 VectorIndex16:$lane, pred:$p)>;
+
+def : NEONInstAlias<"vmul${p}.i32 $Ddn, $Dm$lane",
+                    (VMULslv2i32 DPR:$Ddn, DPR:$Ddn, DPR_VFP2:$Dm,
+                                 VectorIndex32:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.i32 $Qdn, $Dm$lane",
+                    (VMULslv4i32 QPR:$Qdn, QPR:$Qdn, DPR_VFP2:$Dm,
+                                 VectorIndex32:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.s32 $Ddn, $Dm$lane",
+                    (VMULslv2i32 DPR:$Ddn, DPR:$Ddn, DPR_VFP2:$Dm,
+                                 VectorIndex32:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.s32 $Qdn, $Dm$lane",
+                    (VMULslv4i32 QPR:$Qdn, QPR:$Qdn, DPR_VFP2:$Dm,
+                                 VectorIndex32:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.u32 $Ddn, $Dm$lane",
+                    (VMULslv2i32 DPR:$Ddn, DPR:$Ddn, DPR_VFP2:$Dm,
+                                 VectorIndex32:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.u32 $Qdn, $Dm$lane",
+                    (VMULslv4i32 QPR:$Qdn, QPR:$Qdn, DPR_VFP2:$Dm,
+                                 VectorIndex32:$lane, pred:$p)>;
+
+def : NEONInstAlias<"vmul${p}.f32 $Ddn, $Dm$lane",
+                    (VMULslfd DPR:$Ddn, DPR:$Ddn, DPR_VFP2:$Dm,
+                              VectorIndex32:$lane, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.f32 $Qdn, $Dm$lane",
+                    (VMULslfq QPR:$Qdn, QPR:$Qdn, DPR_VFP2:$Dm,
+                              VectorIndex32:$lane, pred:$p)>;
 
 // VLD1 single-lane pseudo-instructions. These need special handling for
 // the lane index that an InstAlias can't handle, so we use these instead.

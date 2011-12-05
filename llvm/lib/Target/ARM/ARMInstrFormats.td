@@ -1996,7 +1996,7 @@ class NEONFPPat<dag pattern, dag result> : Pat<pattern, result> {
 
 // VFP/NEON Instruction aliases for type suffices.
 class VFPDataTypeInstAlias<string opc, string dt, string asm, dag Result> :
-  InstAlias<!strconcat(opc, dt, "\t", asm), Result>;
+  InstAlias<!strconcat(opc, dt, "\t", asm), Result>, Requires<[HasVFP2]>;
 multiclass VFPDT8ReqInstAlias<string opc, string asm, dag Result> {
   def I8 : VFPDataTypeInstAlias<opc, ".i8", asm, Result>;
   def S8 : VFPDataTypeInstAlias<opc, ".s8", asm, Result>;
