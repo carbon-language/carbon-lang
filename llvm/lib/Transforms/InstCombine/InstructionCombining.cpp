@@ -831,7 +831,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           MadeChange = true;
         }
 
-      if ((*I)->getType() != IntPtrTy) {
+      Type *IndexTy = (*I)->getType();
+      if (IndexTy != IntPtrTy && !IndexTy->isVectorTy()) {
         // If we are using a wider index than needed for this platform, shrink
         // it to what we need.  If narrower, sign-extend it to what we need.
         // This explicit cast can make subsequent optimizations more obvious.
@@ -914,7 +915,11 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
 
   // Handle gep(bitcast x) and gep(gep x, 0, 0, 0).
   Value *StrippedPtr = PtrOp->stripPointerCasts();
-  PointerType *StrippedPtrTy =cast<PointerType>(StrippedPtr->getType());
+  PointerType *StrippedPtrTy = dyn_cast<PointerType>(StrippedPtr->getType());
+  // We do not handle pointer-vector geps here
+  if (!StrippedPtr)
+    return 0;
+
   if (StrippedPtr != PtrOp &&
     StrippedPtrTy->getAddressSpace() == GEP.getPointerAddressSpace()) {
 

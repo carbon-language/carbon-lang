@@ -1359,6 +1359,15 @@ GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
 ///
 template <typename IndexTy>
 static Type *getIndexedTypeInternal(Type *Ptr, ArrayRef<IndexTy> IdxList) {
+  if (Ptr->isVectorTy()) {
+    assert(IdxList.size() == 1 &&
+      "GEP with vector pointers must have a single index");
+    PointerType *PTy = dyn_cast<PointerType>(
+        cast<VectorType>(Ptr)->getElementType());
+    assert(PTy && "Gep with invalid vector pointer found");
+    return PTy->getElementType();
+  }
+
   PointerType *PTy = dyn_cast<PointerType>(Ptr);
   if (!PTy) return 0;   // Type isn't a pointer type!
   Type *Agg = PTy->getElementType();
@@ -1366,7 +1375,7 @@ static Type *getIndexedTypeInternal(Type *Ptr, ArrayRef<IndexTy> IdxList) {
   // Handle the special case of the empty set index set, which is always valid.
   if (IdxList.empty())
     return Agg;
-  
+
   // If there is at least one index, the top level type must be sized, otherwise
   // it cannot be 'stepped over'.
   if (!Agg->isSized())
@@ -1394,6 +1403,19 @@ Type *GetElementPtrInst::getIndexedType(Type *Ptr,
 
 Type *GetElementPtrInst::getIndexedType(Type *Ptr, ArrayRef<uint64_t> IdxList) {
   return getIndexedTypeInternal(Ptr, IdxList);
+}
+
+unsigned GetElementPtrInst::getAddressSpace(Value *Ptr) {
+  Type *Ty = Ptr->getType();
+
+  if (VectorType *VTy = dyn_cast<VectorType>(Ty))
+    Ty = VTy->getElementType();
+
+  if (PointerType *PTy = dyn_cast<PointerType>(Ty))
+    return PTy->getAddressSpace();
+
+  assert(false && "Invalid GEP pointer type");
+  return 0;
 }
 
 /// hasAllZeroIndices - Return true if all of the indices of this GEP are
@@ -2654,9 +2676,15 @@ CastInst::castIsValid(Instruction::CastOps op, Value *S, Type *DstTy) {
     return SrcTy->isFPOrFPVectorTy() && DstTy->isIntOrIntVectorTy() &&
       SrcLength == DstLength;
   case Instruction::PtrToInt:
-    return SrcTy->isPointerTy() && DstTy->isIntegerTy();
+    if (SrcTy->getNumElements() != DstTy->getNumElements())
+      return false;
+    return SrcTy->getScalarType()->isPointerTy() &&
+           DstTy->getScalarType()->isIntegerTy();
   case Instruction::IntToPtr:
-    return SrcTy->isIntegerTy() && DstTy->isPointerTy();
+    if (SrcTy->getNumElements() != DstTy->getNumElements())
+      return false;
+    return SrcTy->getScalarType()->isIntegerTy() &&
+           DstTy->getScalarType()->isPointerTy();
   case Instruction::BitCast:
     // BitCast implies a no-op cast of type only. No bits change.
     // However, you can't cast pointers to anything but pointers.

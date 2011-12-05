@@ -580,7 +580,8 @@ static Constant *SymbolicallyEvaluateGEP(ArrayRef<Constant *> Ops,
                                          Type *ResultTy, const TargetData *TD,
                                          const TargetLibraryInfo *TLI) {
   Constant *Ptr = Ops[0];
-  if (!TD || !cast<PointerType>(Ptr->getType())->getElementType()->isSized())
+  if (!TD || !cast<PointerType>(Ptr->getType())->getElementType()->isSized() ||
+      !Ptr->getType()->isPointerTy())
     return 0;
   
   Type *IntPtrTy = TD->getIntPtrType(Ptr->getContext());

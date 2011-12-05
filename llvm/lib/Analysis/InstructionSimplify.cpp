@@ -1764,7 +1764,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
         // also a case of comparing two zero-extended values.
         if (RExt == CI && MaxRecurse)
           if (Value *V = SimplifyICmpInst(ICmpInst::getUnsignedPredicate(Pred),
-                                          SrcOp, Trunc, TD, TLI, DT, MaxRecurse-1))
+                                        SrcOp, Trunc, TD, TLI, DT, MaxRecurse-1))
             return V;
 
         // Otherwise the upper bits of LHS are zero while RHS has a non-zero bit
@@ -2359,7 +2359,10 @@ Value *llvm::SimplifySelectInst(Value *CondVal, Value *TrueVal, Value *FalseVal,
 Value *llvm::SimplifyGEPInst(ArrayRef<Value *> Ops, const TargetData *TD,
                              const DominatorTree *) {
   // The type of the GEP pointer operand.
-  PointerType *PtrTy = cast<PointerType>(Ops[0]->getType());
+  PointerType *PtrTy = dyn_cast<PointerType>(Ops[0]->getType());
+  // The GEP pointer operand is not a pointer, it's a vector of pointers.
+  if (!PtrTy)
+    return 0;
 
   // getelementptr P -> P.
   if (Ops.size() == 1)

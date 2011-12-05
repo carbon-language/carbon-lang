@@ -2189,8 +2189,8 @@ in signal handlers).</p>
 </pre>
 
 <p>The number of elements is a constant integer value larger than 0; elementtype
-   may be any integer or floating point type.  Vectors of size zero are not
-   allowed, and pointers are not allowed as the element type.</p>
+   may be any integer or floating point type, or a pointer to these types.
+   Vectors of size zero are not allowed. </p>
 
 <h5>Examples:</h5>
 <table class="layout">
@@ -2205,6 +2205,10 @@ in signal handlers).</p>
   <tr class="layout">
     <td class="left"><tt>&lt;2 x i64&gt;</tt></td>
     <td class="left">Vector of 2 64-bit integer values.</td>
+  </tr>
+  <tr class="layout">
+    <td class="left"><tt>&lt;4 x i64*&gt;</tt></td>
+    <td class="left">Vector of 4 pointers to 64-bit integer values.</td>
   </tr>
 </table>
 
@@ -5069,6 +5073,7 @@ specified by the <var>operation</var> argument:</p>
 <pre>
   &lt;result&gt; = getelementptr &lt;pty&gt;* &lt;ptrval&gt;{, &lt;ty&gt; &lt;idx&gt;}*
   &lt;result&gt; = getelementptr inbounds &lt;pty&gt;* &lt;ptrval&gt;{, &lt;ty&gt; &lt;idx&gt;}*
+  &lt;result&gt; = getelementptr &lt;ptr vector&gt; ptrval, &lt;vector index type&gt; idx 
 </pre>
 
 <h5>Overview:</h5>
@@ -5077,7 +5082,8 @@ specified by the <var>operation</var> argument:</p>
    It performs address calculation only and does not access memory.</p>
 
 <h5>Arguments:</h5>
-<p>The first argument is always a pointer, and forms the basis of the
+<p>The first argument is always a pointer or a vector of pointers,
+   and forms the basis of the
    calculation. The remaining arguments are indices that indicate which of the
    elements of the aggregate object are indexed. The interpretation of each
    index is dependent on the type being indexed into. The first index always
@@ -5162,7 +5168,9 @@ entry:
    precise signed arithmetic are not an <i>in bounds</i> address of that
    allocated object. The <i>in bounds</i> addresses for an allocated object
    are all the addresses that point into the object, plus the address one
-   byte past the end.</p>
+   byte past the end.
+   In cases where the base is a vector of pointers the <tt>inbounds</tt> keyword
+   applies to each of the computations element-wise. </p>
 
 <p>If the <tt>inbounds</tt> keyword is not present, the offsets are added to
    the base address with silently-wrapping two's complement arithmetic. If the
@@ -5187,6 +5195,13 @@ entry:
     %eptr = getelementptr [12 x i8]* %aptr, i64 0, i32 1
     <i>; yields i32*:iptr</i>
     %iptr = getelementptr [10 x i32]* @arr, i16 0, i16 0
+</pre>
+
+<p>In cases where the pointer argument is a vector of pointers, only a
+   single index may be used, and the number of vector elements has to be
+   the same.  For example: </p>
+<pre class="doc_code">
+ %A = getelementptr <4 x i8*> %ptrs, <4 x i64> %offsets,
 </pre>
 
 </div>
@@ -5561,13 +5576,16 @@ entry:
 </pre>
 
 <h5>Overview:</h5>
-<p>The '<tt>ptrtoint</tt>' instruction converts the pointer <tt>value</tt> to
-   the integer type <tt>ty2</tt>.</p>
+<p>The '<tt>ptrtoint</tt>' instruction converts the pointer or a vector of
+   pointers <tt>value</tt> to
+   the integer (or vector of integers) type <tt>ty2</tt>.</p>
 
 <h5>Arguments:</h5>
 <p>The '<tt>ptrtoint</tt>' instruction takes a <tt>value</tt> to cast, which
-   must be a <a href="#t_pointer">pointer</a> value, and a type to cast it to
-   <tt>ty2</tt>, which must be an <a href="#t_integer">integer</a> type.</p>
+   must be a a value of type <a href="#t_pointer">pointer</a> or a vector of
+    pointers, and a type to cast it to
+   <tt>ty2</tt>, which must be an <a href="#t_integer">integer</a> or a vector
+   of integers type.</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>ptrtoint</tt>' instruction converts <tt>value</tt> to integer type
@@ -5580,8 +5598,9 @@ entry:
 
 <h5>Example:</h5>
 <pre>
-  %X = ptrtoint i32* %X to i8           <i>; yields truncation on 32-bit architecture</i>
-  %Y = ptrtoint i32* %x to i64          <i>; yields zero extension on 32-bit architecture</i>
+  %X = ptrtoint i32* %P to i8                         <i>; yields truncation on 32-bit architecture</i>
+  %Y = ptrtoint i32* %P to i64                        <i>; yields zero extension on 32-bit architecture</i>
+  %Z = ptrtoint &lt;4 x i32*&gt; %P to &lt;4 x i64&gt;<i>; yields vector zero extension for a vector of addresses on 32-bit architecture</i>
 </pre>
 
 </div>
@@ -5620,6 +5639,7 @@ entry:
   %X = inttoptr i32 255 to i32*          <i>; yields zero extension on 64-bit architecture</i>
   %Y = inttoptr i32 255 to i32*          <i>; yields no-op on 32-bit architecture</i>
   %Z = inttoptr i64 0 to i32*            <i>; yields truncation on 32-bit architecture</i>
+  %Z = inttoptr &lt;4 x i32&gt; %G to &lt;4 x i8*&gt;<i>; yields truncation of vector G to four pointers</i>
 </pre>
 
 </div>
@@ -5654,8 +5674,9 @@ entry:
 <p>The '<tt>bitcast</tt>' instruction converts <tt>value</tt> to type
    <tt>ty2</tt>. It is always a <i>no-op cast</i> because no bits change with
    this conversion.  The conversion is done as if the <tt>value</tt> had been
-   stored to memory and read back as type <tt>ty2</tt>. Pointer types may only
-   be converted to other pointer types with this instruction. To convert
+   stored to memory and read back as type <tt>ty2</tt>.
+   Pointer (or vector of pointers) types may only be converted to other pointer
+   (or vector of pointers) types with this instruction. To convert
    pointers to other types, use the <a href="#i_inttoptr">inttoptr</a> or
    <a href="#i_ptrtoint">ptrtoint</a> instructions first.</p>
 
@@ -5663,7 +5684,8 @@ entry:
 <pre>
   %X = bitcast i8 255 to i8              <i>; yields i8 :-1</i>
   %Y = bitcast i32* %x to sint*          <i>; yields sint*:%x</i>
-  %Z = bitcast &lt;2 x int&gt; %V to i64;      <i>; yields i64: %V</i>
+  %Z = bitcast &lt;2 x int&gt; %V to i64;        <i>; yields i64: %V</i>
+  %Z = bitcast &lt;2 x i32*&gt; %V to &lt;2 x i64*&gt; <i>; yields &lt;2 x i64*&gt;</i>
 </pre>
 
 </div>
@@ -5694,8 +5716,8 @@ entry:
 
 <h5>Overview:</h5>
 <p>The '<tt>icmp</tt>' instruction returns a boolean value or a vector of
-   boolean values based on comparison of its two integer, integer vector, or
-   pointer operands.</p>
+   boolean values based on comparison of its two integer, integer vector,
+   pointer, or pointer vector operands.</p>
 
 <h5>Arguments:</h5>
 <p>The '<tt>icmp</tt>' instruction takes three operands. The first operand is

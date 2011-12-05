@@ -374,6 +374,7 @@ public:
   ///
   static VectorType *getInteger(VectorType *VTy) {
     unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
+    assert(EltBits && "Element size must be of a non-zero size");
     Type *EltTy = IntegerType::get(VTy->getContext(), EltBits);
     return VectorType::get(EltTy, VTy->getNumElements());
   }
@@ -408,6 +409,7 @@ public:
   unsigned getNumElements() const { return NumElements; }
 
   /// @brief Return the number of bits in the Vector type.
+  /// Returns zero when the vector is a vector of pointers.
   unsigned getBitWidth() const {
     return NumElements * getElementType()->getPrimitiveSizeInBits();
   }

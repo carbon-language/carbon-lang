@@ -13,6 +13,8 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Target/TargetData.h"
 #include "gtest/gtest.h"
 
 namespace llvm {
@@ -127,6 +129,101 @@ TEST(InstructionsTest, CastInst) {
   EXPECT_TRUE(CastInst::isCastable(V8x8Ty, V8x64Ty));
   EXPECT_EQ(CastInst::Trunc, CastInst::getCastOpcode(c64, true, V8x8Ty, true));
   EXPECT_EQ(CastInst::SExt, CastInst::getCastOpcode(c8, true, V8x64Ty, true));
+}
+
+
+
+TEST(InstructionsTest, VectorGep) {
+  LLVMContext &C(getGlobalContext());
+
+  // Type Definitions
+  PointerType *Ptri8Ty = PointerType::get(IntegerType::get(C, 8), 0);
+  PointerType *Ptri32Ty = PointerType::get(IntegerType::get(C, 8), 0);
+
+  VectorType *V2xi8PTy = VectorType::get(Ptri8Ty, 2);
+  VectorType *V2xi32PTy = VectorType::get(Ptri32Ty, 2);
+
+  // Test different aspects of the vector-of-pointers type
+  // and GEPs which use this type.
+  ConstantInt *Ci32a = ConstantInt::get(C, APInt(32, 1492));
+  ConstantInt *Ci32b = ConstantInt::get(C, APInt(32, 1948));
+  std::vector<Constant*> ConstVa(2, Ci32a);
+  std::vector<Constant*> ConstVb(2, Ci32b);
+  Constant *C2xi32a = ConstantVector::get(ConstVa);
+  Constant *C2xi32b = ConstantVector::get(ConstVb);
+
+  CastInst *PtrVecA = new IntToPtrInst(C2xi32a, V2xi32PTy);
+  CastInst *PtrVecB = new IntToPtrInst(C2xi32b, V2xi32PTy);
+
+  ICmpInst *ICmp0 = new ICmpInst(ICmpInst::ICMP_SGT, PtrVecA, PtrVecB);
+  ICmpInst *ICmp1 = new ICmpInst(ICmpInst::ICMP_ULT, PtrVecA, PtrVecB);
+  EXPECT_NE(ICmp0, ICmp1); // suppress warning.
+
+  GetElementPtrInst *Gep0 = GetElementPtrInst::Create(PtrVecA, C2xi32a);
+  GetElementPtrInst *Gep1 = GetElementPtrInst::Create(PtrVecA, C2xi32b);
+  GetElementPtrInst *Gep2 = GetElementPtrInst::Create(PtrVecB, C2xi32a);
+  GetElementPtrInst *Gep3 = GetElementPtrInst::Create(PtrVecB, C2xi32b);
+
+  CastInst *BTC0 = new BitCastInst(Gep0, V2xi8PTy);
+  CastInst *BTC1 = new BitCastInst(Gep1, V2xi8PTy);
+  CastInst *BTC2 = new BitCastInst(Gep2, V2xi8PTy);
+  CastInst *BTC3 = new BitCastInst(Gep3, V2xi8PTy);
+
+  Value *S0 = BTC0->stripPointerCasts();
+  Value *S1 = BTC1->stripPointerCasts();
+  Value *S2 = BTC2->stripPointerCasts();
+  Value *S3 = BTC3->stripPointerCasts();
+
+  EXPECT_NE(S0, Gep0);
+  EXPECT_NE(S1, Gep1);
+  EXPECT_NE(S2, Gep2);
+  EXPECT_NE(S3, Gep3);
+
+  int64_t Offset;
+  TargetData TD("e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3"
+                "2:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80"
+                ":128:128-n8:16:32:64-S128");
+  // Make sure we don't crash
+  GetPointerBaseWithConstantOffset(Gep0, Offset, TD);
+  GetPointerBaseWithConstantOffset(Gep1, Offset, TD);
+  GetPointerBaseWithConstantOffset(Gep2, Offset, TD);
+  GetPointerBaseWithConstantOffset(Gep3, Offset, TD);
+
+  // Gep of Geps
+  GetElementPtrInst *GepII0 = GetElementPtrInst::Create(Gep0, C2xi32b);
+  GetElementPtrInst *GepII1 = GetElementPtrInst::Create(Gep1, C2xi32a);
+  GetElementPtrInst *GepII2 = GetElementPtrInst::Create(Gep2, C2xi32b);
+  GetElementPtrInst *GepII3 = GetElementPtrInst::Create(Gep3, C2xi32a);
+
+  EXPECT_EQ(GepII0->getNumIndices(), 1u);
+  EXPECT_EQ(GepII1->getNumIndices(), 1u);
+  EXPECT_EQ(GepII2->getNumIndices(), 1u);
+  EXPECT_EQ(GepII3->getNumIndices(), 1u);
+
+  EXPECT_FALSE(GepII0->hasAllZeroIndices());
+  EXPECT_FALSE(GepII1->hasAllZeroIndices());
+  EXPECT_FALSE(GepII2->hasAllZeroIndices());
+  EXPECT_FALSE(GepII3->hasAllZeroIndices());
+
+  delete GepII0;
+  delete GepII1;
+  delete GepII2;
+  delete GepII3;
+
+  delete BTC0;
+  delete BTC1;
+  delete BTC2;
+  delete BTC3;
+
+  delete Gep0;
+  delete Gep1;
+  delete Gep2;
+  delete Gep3;
+
+  delete ICmp0;
+  delete ICmp1;
+  delete PtrVecA;
+  delete PtrVecB;
 }
 
 }  // end anonymous namespace

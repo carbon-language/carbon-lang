@@ -1398,14 +1398,22 @@ Constant *ConstantExpr::getFPToSI(Constant *C, Type *Ty) {
 }
 
 Constant *ConstantExpr::getPtrToInt(Constant *C, Type *DstTy) {
-  assert(C->getType()->isPointerTy() && "PtrToInt source must be pointer");
-  assert(DstTy->isIntegerTy() && "PtrToInt destination must be integral");
+  assert(C->getType()->getScalarType()->isPointerTy() &&
+         "PtrToInt source must be pointer or pointer vector");
+  assert(DstTy->getScalarType()->isIntegerTy() && 
+         "PtrToInt destination must be integer or integer vector");
+  assert(C->getType()->getNumElements() == DstTy->getNumElements() &&
+    "Invalid cast between a different number of vector elements");
   return getFoldedCast(Instruction::PtrToInt, C, DstTy);
 }
 
 Constant *ConstantExpr::getIntToPtr(Constant *C, Type *DstTy) {
-  assert(C->getType()->isIntegerTy() && "IntToPtr source must be integral");
-  assert(DstTy->isPointerTy() && "IntToPtr destination must be a pointer");
+  assert(C->getType()->getScalarType()->isIntegerTy() &&
+         "IntToPtr source must be integer or integer vector");
+  assert(DstTy->getScalarType()->isPointerTy() &&
+         "IntToPtr destination must be a pointer or pointer vector");
+  assert(C->getType()->getNumElements() == DstTy->getNumElements() &&
+    "Invalid cast between a different number of vector elements");
   return getFoldedCast(Instruction::IntToPtr, C, DstTy);
 }
 
