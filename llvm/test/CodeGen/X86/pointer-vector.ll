@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mcpu=corei7 | FileCheck %s
+; RUN: llc < %s -mtriple=i686-linux -mcpu=corei7 | FileCheck %s
 ; RUN: opt -instsimplify %s -disable-output
 
 ;CHECK: SHUFF0
