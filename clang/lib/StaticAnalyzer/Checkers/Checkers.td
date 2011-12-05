@@ -392,5 +392,9 @@ def AnalyzerStatsChecker : Checker<"Stats">,
   HelpText<"Emit warnings with analyzer statistics">,
   DescFile<"AnalyzerStatsChecker.cpp">;
 
+def TaintTesterChecker : Checker<"TaintTest">,
+  HelpText<"Mark tainted symbols as such.">,
+  DescFile<"TaintTesterChecker.cpp">;
+
 } // end "debug"
 

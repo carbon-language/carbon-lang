@@ -52,6 +52,7 @@ add_clang_library(clangStaticAnalyzerCheckers
   ReturnUndefChecker.cpp
   StackAddrEscapeChecker.cpp
   StreamChecker.cpp
+  TaintTesterChecker.cpp
   UndefBranchChecker.cpp
   UndefCapturedBlockVarChecker.cpp
   UndefResultChecker.cpp
