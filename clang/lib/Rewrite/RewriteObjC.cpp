@@ -5784,105 +5784,125 @@ void RewriteObjC::RewriteRecordBody(RecordDecl *RD) {
 /// HandleDeclInMainFile - This is called for each top-level decl defined in the
 /// main file of the input.
 void RewriteObjC::HandleDeclInMainFile(Decl *D) {
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    if (FD->isOverloadedOperator())
-      return;
+  switch (D->getKind()) {
+    case Decl::Function: {
+      FunctionDecl *FD = cast<FunctionDecl>(D);
+      if (FD->isOverloadedOperator())
+        return;
 
-    // Since function prototypes don't have ParmDecl's, we check the function
-    // prototype. This enables us to rewrite function declarations and
-    // definitions using the same code.
-    RewriteBlocksInFunctionProtoType(FD->getType(), FD);
+      // Since function prototypes don't have ParmDecl's, we check the function
+      // prototype. This enables us to rewrite function declarations and
+      // definitions using the same code.
+      RewriteBlocksInFunctionProtoType(FD->getType(), FD);
 
-    // FIXME: If this should support Obj-C++, support CXXTryStmt
-    if (CompoundStmt *Body = dyn_cast_or_null<CompoundStmt>(FD->getBody())) {
-      CurFunctionDef = FD;
-      CurFunctionDeclToDeclareForBlock = FD;
-      CurrentBody = Body;
-      Body =
-       cast_or_null<CompoundStmt>(RewriteFunctionBodyOrGlobalInitializer(Body));
-      FD->setBody(Body);
-      CurrentBody = 0;
-      if (PropParentMap) {
-        delete PropParentMap;
-        PropParentMap = 0;
+      // FIXME: If this should support Obj-C++, support CXXTryStmt
+      if (CompoundStmt *Body = dyn_cast_or_null<CompoundStmt>(FD->getBody())) {
+        CurFunctionDef = FD;
+        CurFunctionDeclToDeclareForBlock = FD;
+        CurrentBody = Body;
+        Body =
+        cast_or_null<CompoundStmt>(RewriteFunctionBodyOrGlobalInitializer(Body));
+        FD->setBody(Body);
+        CurrentBody = 0;
+        if (PropParentMap) {
+          delete PropParentMap;
+          PropParentMap = 0;
+        }
+        // This synthesizes and inserts the block "impl" struct, invoke function,
+        // and any copy/dispose helper functions.
+        InsertBlockLiteralsWithinFunction(FD);
+        CurFunctionDef = 0;
+        CurFunctionDeclToDeclareForBlock = 0;
       }
-      // This synthesizes and inserts the block "impl" struct, invoke function,
-      // and any copy/dispose helper functions.
-      InsertBlockLiteralsWithinFunction(FD);
-      CurFunctionDef = 0;
-      CurFunctionDeclToDeclareForBlock = 0;
+      break;
     }
-    return;
-  }
-  if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
-    if (CompoundStmt *Body = MD->getCompoundBody()) {
-      CurMethodDef = MD;
-      CurrentBody = Body;
-      Body =
-       cast_or_null<CompoundStmt>(RewriteFunctionBodyOrGlobalInitializer(Body));
-      MD->setBody(Body);
-      CurrentBody = 0;
-      if (PropParentMap) {
-        delete PropParentMap;
-        PropParentMap = 0;
+    case Decl::ObjCMethod: {
+      ObjCMethodDecl *MD = cast<ObjCMethodDecl>(D);
+      if (CompoundStmt *Body = MD->getCompoundBody()) {
+        CurMethodDef = MD;
+        CurrentBody = Body;
+        Body =
+          cast_or_null<CompoundStmt>(RewriteFunctionBodyOrGlobalInitializer(Body));
+        MD->setBody(Body);
+        CurrentBody = 0;
+        if (PropParentMap) {
+          delete PropParentMap;
+          PropParentMap = 0;
+        }
+        InsertBlockLiteralsWithinMethod(MD);
+        CurMethodDef = 0;
       }
-      InsertBlockLiteralsWithinMethod(MD);
-      CurMethodDef = 0;
+      break;
     }
-  }
-  if (ObjCImplementationDecl *CI = dyn_cast<ObjCImplementationDecl>(D))
-    ClassImplementation.push_back(CI);
-  else if (ObjCCategoryImplDecl *CI = dyn_cast<ObjCCategoryImplDecl>(D))
-    CategoryImplementation.push_back(CI);
-  else if (isa<ObjCClassDecl>(D))
-    llvm_unreachable("RewriteObjC::HandleDeclInMainFile - ObjCClassDecl");
-  else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    RewriteObjCQualifiedInterfaceTypes(VD);
-    if (isTopLevelBlockPointerType(VD->getType()))
-      RewriteBlockPointerDecl(VD);
-    else if (VD->getType()->isFunctionPointerType()) {
-      CheckFunctionPointerDecl(VD->getType(), VD);
+    case Decl::ObjCImplementation: {
+      ObjCImplementationDecl *CI = cast<ObjCImplementationDecl>(D);
+      ClassImplementation.push_back(CI);
+      break;
+    }
+    case Decl::ObjCCategoryImpl: {
+      ObjCCategoryImplDecl *CI = cast<ObjCCategoryImplDecl>(D);
+      CategoryImplementation.push_back(CI);
+      break;
+    }
+    case Decl::Var: {
+      VarDecl *VD = cast<VarDecl>(D);
+      RewriteObjCQualifiedInterfaceTypes(VD);
+      if (isTopLevelBlockPointerType(VD->getType()))
+        RewriteBlockPointerDecl(VD);
+      else if (VD->getType()->isFunctionPointerType()) {
+        CheckFunctionPointerDecl(VD->getType(), VD);
+        if (VD->getInit()) {
+          if (CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(VD->getInit())) {
+            RewriteCastExpr(CE);
+          }
+        }
+      } else if (VD->getType()->isRecordType()) {
+        RecordDecl *RD = VD->getType()->getAs<RecordType>()->getDecl();
+        if (RD->isCompleteDefinition())
+          RewriteRecordBody(RD);
+      }
       if (VD->getInit()) {
+        GlobalVarDecl = VD;
+        CurrentBody = VD->getInit();
+        RewriteFunctionBodyOrGlobalInitializer(VD->getInit());
+        CurrentBody = 0;
+        if (PropParentMap) {
+          delete PropParentMap;
+          PropParentMap = 0;
+        }
+        SynthesizeBlockLiterals(VD->getTypeSpecStartLoc(), VD->getName());
+        GlobalVarDecl = 0;
+          
+        // This is needed for blocks.
         if (CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(VD->getInit())) {
-          RewriteCastExpr(CE);
+            RewriteCastExpr(CE);
         }
       }
-    } else if (VD->getType()->isRecordType()) {
-      RecordDecl *RD = VD->getType()->getAs<RecordType>()->getDecl();
-      if (RD->isCompleteDefinition())
+      break;
+    }
+    case Decl::TypeAlias:
+    case Decl::Typedef: {
+      if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
+        if (isTopLevelBlockPointerType(TD->getUnderlyingType()))
+          RewriteBlockPointerDecl(TD);
+        else if (TD->getUnderlyingType()->isFunctionPointerType())
+          CheckFunctionPointerDecl(TD->getUnderlyingType(), TD);
+      }
+      break;
+    }
+    case Decl::CXXRecord:
+    case Decl::Record: {
+      RecordDecl *RD = cast<RecordDecl>(D);
+      if (RD->isCompleteDefinition()) 
         RewriteRecordBody(RD);
+      break;
     }
-    if (VD->getInit()) {
-      GlobalVarDecl = VD;
-      CurrentBody = VD->getInit();
-      RewriteFunctionBodyOrGlobalInitializer(VD->getInit());
-      CurrentBody = 0;
-      if (PropParentMap) {
-        delete PropParentMap;
-        PropParentMap = 0;
-      }
-      SynthesizeBlockLiterals(VD->getTypeSpecStartLoc(),
-                              VD->getName());
-      GlobalVarDecl = 0;
-
-      // This is needed for blocks.
-      if (CStyleCastExpr *CE = dyn_cast<CStyleCastExpr>(VD->getInit())) {
-        RewriteCastExpr(CE);
-      }
+    case Decl::ObjCClass: {
+      llvm_unreachable("RewriteObjC::HandleDeclInMainFile - ObjCClassDecl");
+      break;
     }
-    return;
-  }
-  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
-    if (isTopLevelBlockPointerType(TD->getUnderlyingType()))
-      RewriteBlockPointerDecl(TD);
-    else if (TD->getUnderlyingType()->isFunctionPointerType())
-      CheckFunctionPointerDecl(TD->getUnderlyingType(), TD);
-    return;
-  }
-  if (RecordDecl *RD = dyn_cast<RecordDecl>(D)) {
-    if (RD->isCompleteDefinition()) 
-      RewriteRecordBody(RD);
-    return;
+    default:
+      break;
   }
   // Nothing yet.
 }
