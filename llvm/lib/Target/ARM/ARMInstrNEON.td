@@ -2899,10 +2899,10 @@ multiclass N3V_QHS<bit op24, bit op23, bits<4> op11_8, bit op4,
 }
 
 multiclass N3VSL_HS<bits<4> op11_8, string OpcodeStr, SDNode ShOp> {
-  def v4i16 : N3VDSL16<0b01, op11_8, OpcodeStr, "16", v4i16, ShOp>;
-  def v2i32 : N3VDSL<0b10, op11_8, IIC_VMULi32D, OpcodeStr, "32", v2i32, ShOp>;
+  def v4i16 : N3VDSL16<0b01, op11_8, OpcodeStr, "i16", v4i16, ShOp>;
+  def v2i32 : N3VDSL<0b10, op11_8, IIC_VMULi32D, OpcodeStr, "i32", v2i32, ShOp>;
   def v8i16 : N3VQSL16<0b01, op11_8, OpcodeStr, "i16", v8i16, v4i16, ShOp>;
-  def v4i32 : N3VQSL<0b10, op11_8, IIC_VMULi32Q, OpcodeStr, "32",
+  def v4i32 : N3VQSL<0b10, op11_8, IIC_VMULi32Q, OpcodeStr, "i32",
                      v4i32, v2i32, ShOp>;
 }
 
