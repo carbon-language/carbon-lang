@@ -653,21 +653,24 @@ public:
   /// recalculate - compute a dominator tree for the given function
   template<class FT>
   void recalculate(FT& F) {
+    typedef GraphTraits<FT*> TraitsTy;
     reset();
     this->Vertex.push_back(0);
 
     if (!this->IsPostDominators) {
       // Initialize root
-      this->Roots.push_back(&F.front());
-      this->IDoms[&F.front()] = 0;
-      this->DomTreeNodes[&F.front()] = 0;
+      NodeT *entry = TraitsTy::getEntryNode(&F);
+      this->Roots.push_back(entry);
+      this->IDoms[entry] = 0;
+      this->DomTreeNodes[entry] = 0;
 
       Calculate<FT, NodeT*>(*this, F);
     } else {
       // Initialize the roots list
-      for (typename FT::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-        if (std::distance(GraphTraits<FT*>::child_begin(I),
-                          GraphTraits<FT*>::child_end(I)) == 0)
+      for (typename TraitsTy::nodes_iterator I = TraitsTy::nodes_begin(&F),
+                                        E = TraitsTy::nodes_end(&F); I != E; ++I) {
+        if (std::distance(TraitsTy::child_begin(I),
+                          TraitsTy::child_end(I)) == 0)
           addRoot(I);
 
         // Prepopulate maps so that we don't get iterator invalidation issues later.

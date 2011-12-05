@@ -437,6 +437,7 @@ template <> struct GraphTraits<MachineFunction*> :
   typedef MachineFunction::iterator nodes_iterator;
   static nodes_iterator nodes_begin(MachineFunction *F) { return F->begin(); }
   static nodes_iterator nodes_end  (MachineFunction *F) { return F->end(); }
+  static unsigned       size       (MachineFunction *F) { return F->size(); }
 };
 template <> struct GraphTraits<const MachineFunction*> :
   public GraphTraits<const MachineBasicBlock*> {
@@ -451,6 +452,9 @@ template <> struct GraphTraits<const MachineFunction*> :
   }
   static nodes_iterator nodes_end  (const MachineFunction *F) {
     return F->end();
+  }
+  static unsigned       size       (const MachineFunction *F)  {
+    return F->size();
   }
 };
 

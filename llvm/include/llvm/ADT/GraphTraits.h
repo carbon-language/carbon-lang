@@ -43,8 +43,11 @@ struct GraphTraits {
   // typedef  ...iterator nodes_iterator;
   // static nodes_iterator nodes_begin(GraphType *G)
   // static nodes_iterator nodes_end  (GraphType *G)
-  //
   //    nodes_iterator/begin/end - Allow iteration over all nodes in the graph
+
+  // static unsigned       size       (GraphType *G)
+  //    Return total number of nodes in the graph
+  //
 
 
   // If anyone tries to use this class without having an appropriate
