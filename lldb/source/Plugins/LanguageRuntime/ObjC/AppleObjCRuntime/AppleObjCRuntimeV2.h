@@ -130,8 +130,6 @@ private:
     
     static const char *g_find_class_name_function_name;
     static const char *g_find_class_name_function_body;
-    static const char *g_objc_class_symbol_prefix;
-    static const char *g_objc_class_data_section_name;
 };
     
 } // namespace lldb_private
