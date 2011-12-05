@@ -260,9 +260,10 @@ SVal SimpleSValBuilder::MakeSymIntVal(const SymExpr *LHS,
   // Wrap the LHS up in a NonLoc again and let evalCastFromNonLoc do the
   // dirty work.
   if (isIdempotent) {
-    if (SymbolRef LHSSym = dyn_cast<SymbolData>(LHS))
-      return evalCastFromNonLoc(nonloc::SymbolVal(LHSSym), resultTy);
-    return evalCastFromNonLoc(nonloc::SymExprVal(LHS), resultTy);
+    if (isa<SymbolData>(LHS))
+      return evalCastFromNonLoc(nonloc::SymbolVal(LHS), resultTy);
+    else
+      return evalCastFromNonLoc(nonloc::SymExprVal(LHS), resultTy);
   }
 
   // If we reach this point, the expression cannot be simplified.

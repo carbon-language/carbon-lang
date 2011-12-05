@@ -550,9 +550,8 @@ bool ScanReachableSymbols::scan(const SymExpr *sym) {
     return true;
   isVisited = 1;
   
-  if (const SymbolData *sData = dyn_cast<SymbolData>(sym))
-    if (!visitor.VisitSymbol(sData))
-      return false;
+  if (!visitor.VisitSymbol(sym))
+    return false;
   
   switch (sym->getKind()) {
     case SymExpr::RegionValueKind:

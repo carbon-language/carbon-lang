@@ -212,6 +212,40 @@ const ProgramState *SimpleConstraintManager::assumeAux(const ProgramState *state
   } // end switch
 }
 
+static llvm::APSInt computeAdjustment(const SymExpr *LHS,
+                                      SymbolRef &Sym) {
+  llvm::APSInt DefaultAdjustment;
+  DefaultAdjustment = 0;
+
+  // First check if the LHS is a simple symbol reference.
+  if (isa<SymbolData>(LHS))
+    return DefaultAdjustment;
+
+  // Next, see if it's a "($sym+constant1)" expression.
+  const SymIntExpr *SE = dyn_cast<SymIntExpr>(LHS);
+
+  // We cannot simplify "($sym1+$sym2)".
+  if (!SE)
+    return DefaultAdjustment;
+
+  // Get the constant out of the expression "($sym+constant1)" or
+  // "<expr>+constant1".
+  Sym = SE->getLHS();
+  switch (SE->getOpcode()) {
+  case BO_Add:
+    return SE->getRHS();
+    break;
+  case BO_Sub:
+    return -SE->getRHS();
+    break;
+  default:
+    // We cannot simplify non-additive operators.
+    return DefaultAdjustment;
+  }
+
+  return DefaultAdjustment;
+}
+
 const ProgramState *SimpleConstraintManager::assumeSymRel(const ProgramState *state,
                                                      const SymExpr *LHS,
                                                      BinaryOperator::Opcode op,
@@ -219,48 +253,15 @@ const ProgramState *SimpleConstraintManager::assumeSymRel(const ProgramState *st
   assert(BinaryOperator::isComparisonOp(op) &&
          "Non-comparison ops should be rewritten as comparisons to zero.");
 
-   // We only handle simple comparisons of the form "$sym == constant"
-   // or "($sym+constant1) == constant2".
-   // The adjustment is "constant1" in the above expression. It's used to
-   // "slide" the solution range around for modular arithmetic. For example,
-   // x < 4 has the solution [0, 3]. x+2 < 4 has the solution [0-2, 3-2], which
-   // in modular arithmetic is [0, 1] U [UINT_MAX-1, UINT_MAX]. It's up to
-   // the subclasses of SimpleConstraintManager to handle the adjustment.
-   llvm::APSInt Adjustment;
-
-  // First check if the LHS is a simple symbol reference.
-  SymbolRef Sym = dyn_cast<SymbolData>(LHS);
-  if (Sym) {
-    Adjustment = 0;
-  } else {
-    // Next, see if it's a "($sym+constant1)" expression.
-    const SymIntExpr *SE = dyn_cast<SymIntExpr>(LHS);
-
-    // We don't handle "($sym1+$sym2)".
-    // Give up and assume the constraint is feasible.
-    if (!SE)
-      return state;
-
-    // We don't handle "(<expr>+constant1)".
-    // Give up and assume the constraint is feasible.
-    Sym = dyn_cast<SymbolData>(SE->getLHS());
-    if (!Sym)
-      return state;
-
-    // Get the constant out of the expression "($sym+constant1)".
-    switch (SE->getOpcode()) {
-    case BO_Add:
-      Adjustment = SE->getRHS();
-      break;
-    case BO_Sub:
-      Adjustment = -SE->getRHS();
-      break;
-    default:
-      // We don't handle non-additive operators.
-      // Give up and assume the constraint is feasible.
-      return state;
-    }
-  }
+  // We only handle simple comparisons of the form "$sym == constant"
+  // or "($sym+constant1) == constant2".
+  // The adjustment is "constant1" in the above expression. It's used to
+  // "slide" the solution range around for modular arithmetic. For example,
+  // x < 4 has the solution [0, 3]. x+2 < 4 has the solution [0-2, 3-2], which
+  // in modular arithmetic is [0, 1] U [UINT_MAX-1, UINT_MAX]. It's up to
+  // the subclasses of SimpleConstraintManager to handle the adjustment.
+  SymbolRef Sym = LHS;
+  llvm::APSInt Adjustment = computeAdjustment(LHS, Sym);
 
   // FIXME: This next section is a hack. It silently converts the integers to
   // be of the same type as the symbol, which is not always correct. Really the

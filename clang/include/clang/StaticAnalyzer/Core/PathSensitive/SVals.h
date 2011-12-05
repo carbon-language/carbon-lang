@@ -276,6 +276,7 @@ namespace nonloc {
 enum Kind { ConcreteIntKind, SymbolValKind, SymExprValKind,
             LocAsIntegerKind, CompoundValKind, LazyCompoundValKind };
 
+// TODO: Change to contain symbol data.
 class SymbolVal : public NonLoc {
 public:
   SymbolVal(SymbolRef sym) : NonLoc(SymbolValKind, sym) {}
