@@ -100,8 +100,8 @@ int main()
   { (void) reinterpret_cast<int>(two); } //expected-error {{reinterpret_cast}}
   { (void) reinterpret_cast<int (*)(char, double)>(two); } //expected-error {{reinterpret_cast}}
 
-  { bool b = (twoT<int>); } // ok
-  { bool b = (twoT<int, int>); } //ok
+  { bool b = (twoT<int>); } // expected-warning {{address of function 'twoT<int>' will always evaluate to 'true'}}
+  { bool b = (twoT<int, int>); } // expected-warning {{address of function 'twoT<int, int>' will always evaluate to 'true'}}
 
   { bool b = &twoT<int>; //&foo<int>; }
     b = &(twoT<int>); }
@@ -142,20 +142,20 @@ namespace member_pointers {
     if (&s.f<char>) return; // expected-error {{cannot create a non-constant pointer to member function}}
     if (&s.f<int>) return; // expected-error {{cannot create a non-constant pointer to member function}}
 
-    if (S::g<char>) return;
-    if (S::g<int>) return;
+    if (S::g<char>) return; // expected-warning {{address of function 'member_pointers::S::g<char>' will always evaluate to 'true'}}
+    if (S::g<int>) return; // expected-warning {{address of function 'member_pointers::S::g<int>' will always evaluate to 'true'}}
     if (&S::g<char>) return;
     if (&S::g<int>) return;
-    if (s.g<char>) return;
-    if (s.g<int>) return;
+    if (s.g<char>) return; // expected-warning {{address of function 'member_pointers::S::g<char>' will always evaluate to 'true'}}
+    if (s.g<int>) return; // expected-warning {{address of function 'member_pointers::S::g<int>' will always evaluate to 'true'}}
     if (&s.g<char>) return;
     if (&s.g<int>) return;
 
-    if (S::h<42>) return;
+    if (S::h<42>) return; // expected-warning {{address of function 'member_pointers::S::h<42>' will always evaluate to 'true'}}
     if (S::h<int>) return; // expected-error {{reference to overloaded function could not be resolved; did you mean to call it?}}
     if (&S::h<42>) return;
     if (&S::h<int>) return;
-    if (s.h<42>) return;
+    if (s.h<42>) return;  // expected-warning {{address of function 'member_pointers::S::h<42>' will always evaluate to 'true'}}
     if (s.h<int>) return; // expected-error {{reference to overloaded function could not be resolved; did you mean to call it?}}
     if (&s.h<42>) return;
     if (&s.h<int>) return; // expected-error {{reference to overloaded function could not be resolved; did you mean to call it?}}
@@ -170,20 +170,20 @@ namespace member_pointers {
     { bool b = &s.f<char>; } // expected-error {{cannot create a non-constant pointer to member function}}
     { bool b = &s.f<int>; } // expected-error {{cannot create a non-constant pointer to member function}}
 
-    { bool b = S::g<char>; }
-    { bool b = S::g<int>; }
+    { bool b = S::g<char>; } // expected-warning {{address of function 'member_pointers::S::g<char>' will always evaluate to 'true'}}
+    { bool b = S::g<int>; } // expected-warning {{address of function 'member_pointers::S::g<int>' will always evaluate to 'true'}}
     { bool b = &S::g<char>; }
     { bool b = &S::g<int>; }
-    { bool b = s.g<char>; }
-    { bool b = s.g<int>; }
+    { bool b = s.g<char>; }  // expected-warning {{address of function 'member_pointers::S::g<char>' will always evaluate to 'true'}}
+    { bool b = s.g<int>; } // expected-warning {{address of function 'member_pointers::S::g<int>' will always evaluate to 'true'}}
     { bool b = &s.g<char>; }
     { bool b = &s.g<int>; }
 
-    { bool b = S::h<42>; }
+    { bool b = S::h<42>; } // expected-warning {{address of function 'member_pointers::S::h<42>' will always evaluate to 'true'}}
     { bool b = S::h<int>; } // expected-error {{can't form member pointer of type 'bool' without '&' and class name}}
     { bool b = &S::h<42>; }
     { bool b = &S::h<int>; }
-    { bool b = s.h<42>; }
+    { bool b = s.h<42>; }  // expected-warning {{address of function 'member_pointers::S::h<42>' will always evaluate to 'true'}}
     { bool b = s.h<int>; } // expected-error {{can't form member pointer of type 'bool' without '&' and class name}}
     { bool b = &s.h<42>; }
     { bool b = &s.h<int>; } // expected-error {{can't form member pointer of type 'bool' without '&' and class name}}

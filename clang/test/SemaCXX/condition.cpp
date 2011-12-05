@@ -49,6 +49,6 @@ void test3() {
   if ("help")
     (void) 0;
 
-  if (test3)
+  if (test3) // expected-warning {{address of function 'test3' will always evaluate to 'true'}}
     (void) 0;
 }

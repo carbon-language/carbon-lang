@@ -41,7 +41,7 @@ int main()
   *oneT<int>;   // expected-warning {{expression result unused}}
   *two;  //expected-error {{reference to overloaded function could not be resolved; did you mean to call it with no arguments?}} expected-error {{indirection requires pointer operand}}
   *twoT<int>; //expected-error {{reference to overloaded function could not be resolved; did you mean to call it?}}
-  !oneT<int>;  // expected-warning {{expression result unused}}
+  !oneT<int>;  // expected-warning {{expression result unused}} expected-warning {{address of function 'oneT<int>' will always evaluate to 'true'}}
   +oneT<int>;  // expected-warning {{expression result unused}}
   -oneT<int>;  //expected-error {{invalid argument type}}
   oneT<int> == 0;   // expected-warning {{equality comparison result unused}} \
@@ -53,7 +53,7 @@ int main()
   
   int i = (int) (false ? (void (*)(int))twoT<int> : oneT<int>); //expected-error {{incompatible operand}}
   (twoT<int>) == oneT<int>; //expected-error {{reference to overloaded function could not be resolved; did you mean to call it?}} {{cannot resolve overloaded function 'twoT' from context}}
-  bool b = oneT<int>;
+  bool b = oneT<int>; // expected-warning {{address of function 'oneT<int>' will always evaluate to 'true'}}
   void (*p)() = oneT<int>;
   test<oneT<int> > ti;
   void (*u)(int) = oneT<int>;

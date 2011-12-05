@@ -3758,6 +3758,25 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
       // by a check in AnalyzeImplicitConversions().
       return DiagnoseImpCast(S, E, T, CC,
                              diag::warn_impcast_string_literal_to_bool);
+    if (Source->isFunctionType()) {
+      // Warn on function to bool. Checks free functions and static member
+      // functions. Weakly imported functions are excluded from the check,
+      // since it's common to test their value to check whether the linker
+      // found a definition for them.
+      ValueDecl *D = 0;
+      if (DeclRefExpr* R = dyn_cast<DeclRefExpr>(E)) {
+        D = R->getDecl();
+      } else if (MemberExpr *M = dyn_cast<MemberExpr>(E)) {
+        D = M->getMemberDecl();
+      }
+
+      if (D && !D->isWeak()) {
+        FunctionDecl* F = cast<FunctionDecl>(D);
+        S.Diag(E->getExprLoc(), diag::warn_impcast_function_to_bool)
+          << F << E->getSourceRange() << SourceRange(CC);
+        return;
+      }
+    }
     return; // Other casts to bool are not checked.
   }
 
