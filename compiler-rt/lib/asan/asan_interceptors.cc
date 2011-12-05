@@ -62,15 +62,15 @@ static void AccessAddress(uintptr_t address, bool isWrite) {
     AccessAddress(ptr, isWrite); \
     AccessAddress(ptr + (size) - 1, isWrite); \
   } \
-} while (0);
+} while (0)
 
 #define ASAN_READ_RANGE(offset, size) do { \
   ACCESS_MEMORY_RANGE(offset, size, false); \
-} while (0);
+} while (0)
 
 #define ASAN_WRITE_RANGE(offset, size) do { \
   ACCESS_MEMORY_RANGE(offset, size, true); \
-} while (0);
+} while (0)
 
 // Behavior of functions like "memcpy" or "strcpy" is undefined
 // if memory intervals overlap. We report error in this case.
@@ -90,15 +90,14 @@ static inline bool RangesOverlap(const char *offset1, const char *offset2,
     PRINT_CURRENT_STACK(); \
     ShowStatsAndAbort(); \
   } \
-} while (0);
+} while (0)
 
-static inline void ensure_asan_inited() {
-  CHECK(!asan_init_is_running);
-  if (!asan_inited) {
-    __asan_init();
-  }
-}
-
+#define ENSURE_ASAN_INITED() do { \
+  CHECK(!asan_init_is_running); \
+  if (!asan_inited) { \
+    __asan_init(); \
+  } \
+} while (0)
 
 size_t internal_strlen(const char *s) {
   size_t i = 0;
@@ -121,15 +120,9 @@ void InitializeAsanInterceptors() {
 #else
   OVERRIDE_FUNCTION(index, WRAP(strchr));
 #endif
-#ifndef __APPLE__
   INTERCEPT_FUNCTION(memcpy);
   INTERCEPT_FUNCTION(memmove);
   INTERCEPT_FUNCTION(memset);
-#else
-  real_memcpy = memcpy;
-  real_memmove = memmove;
-  real_memset = memset;
-#endif
   INTERCEPT_FUNCTION(strchr);
   INTERCEPT_FUNCTION(strcmp);
   INTERCEPT_FUNCTION(strcpy);  // NOLINT
@@ -156,7 +149,7 @@ void *WRAP(memcpy)(void *to, const void *from, size_t size) {
   if (asan_init_is_running) {
     return real_memcpy(to, from, size);
   }
-  ensure_asan_inited();
+  ENSURE_ASAN_INITED();
   if (FLAG_replace_intrin) {
     CHECK_RANGES_OVERLAP(to, from, size);
     ASAN_WRITE_RANGE(from, size);
@@ -166,7 +159,7 @@ void *WRAP(memcpy)(void *to, const void *from, size_t size) {
 }
 
 void *WRAP(memmove)(void *to, const void *from, size_t size) {
-  ensure_asan_inited();
+  ENSURE_ASAN_INITED();
   if (FLAG_replace_intrin) {
     ASAN_WRITE_RANGE(from, size);
     ASAN_READ_RANGE(to, size);
@@ -175,7 +168,11 @@ void *WRAP(memmove)(void *to, const void *from, size_t size) {
 }
 
 void *WRAP(memset)(void *block, int c, size_t size) {
-  ensure_asan_inited();
+  // memset is called inside INTERCEPT_FUNCTION on Mac.
+  if (asan_init_is_running) {
+    return real_memset(block, c, size);
+  }
+  ENSURE_ASAN_INITED();
   if (FLAG_replace_intrin) {
     ASAN_WRITE_RANGE(block, size);
   }
@@ -192,7 +189,7 @@ char *WRAP(index)(const char *str, int c)
 #endif
 
 char *WRAP(strchr)(const char *str, int c) {
-  ensure_asan_inited();
+  ENSURE_ASAN_INITED();
   char *result = real_strchr(str, c);
   if (FLAG_replace_str) {
     size_t bytes_read = (result ? result - str : real_strlen(str)) + 1;
@@ -229,7 +226,7 @@ char *WRAP(strcpy)(char *to, const char *from) {  // NOLINT
   if (asan_init_is_running) {
     return real_strcpy(to, from);
   }
-  ensure_asan_inited();
+  ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
     size_t from_size = real_strlen(from) + 1;
     CHECK_RANGES_OVERLAP(to, from, from_size);
@@ -240,7 +237,7 @@ char *WRAP(strcpy)(char *to, const char *from) {  // NOLINT
 }
 
 char *WRAP(strdup)(const char *s) {
-  ensure_asan_inited();
+  ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
     size_t length = real_strlen(s);
     ASAN_READ_RANGE(s, length + 1);
@@ -254,7 +251,7 @@ size_t WRAP(strlen)(const char *s) {
   if (asan_init_is_running) {
     return real_strlen(s);
   }
-  ensure_asan_inited();
+  ENSURE_ASAN_INITED();
   size_t length = real_strlen(s);
   if (FLAG_replace_str) {
     ASAN_READ_RANGE(s, length + 1);
@@ -281,7 +278,7 @@ int WRAP(strncmp)(const char *s1, const char *s2, size_t size) {
 }
 
 char *WRAP(strncpy)(char *to, const char *from, size_t size) {
-  ensure_asan_inited();
+  ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
     size_t from_size = Min(size, internal_strnlen(from, size) + 1);
     CHECK_RANGES_OVERLAP(to, from, from_size);
@@ -293,7 +290,7 @@ char *WRAP(strncpy)(char *to, const char *from, size_t size) {
 
 #ifndef __APPLE__
 size_t WRAP(strnlen)(const char *s, size_t maxlen) {
-  ensure_asan_inited();
+  ENSURE_ASAN_INITED();
   size_t length = real_strnlen(s, maxlen);
   if (FLAG_replace_str) {
     ASAN_READ_RANGE(s, Min(length + 1, maxlen));
