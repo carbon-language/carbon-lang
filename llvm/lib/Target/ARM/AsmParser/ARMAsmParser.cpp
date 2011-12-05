@@ -5238,6 +5238,26 @@ processInstruction(MCInst &Inst,
       return true;
     }
     break;
+  case ARM::t2ADDrr: {
+    // If the destination and first source operand are the same, and
+    // there's no setting of the flags, use encoding T2 instead of T3.
+    // Note that this is only for ADD, not SUB. This mirrors the system
+    // 'as' behaviour. Make sure the wide encoding wasn't explicit.
+    if (Inst.getOperand(0).getReg() != Inst.getOperand(1).getReg() ||
+        Inst.getOperand(5).getReg() != 0 ||
+        (static_cast<ARMOperand*>(Operands[2])->isToken() &&
+         static_cast<ARMOperand*>(Operands[2])->getToken() == ".w"))
+      break;
+    MCInst TmpInst;
+    TmpInst.setOpcode(ARM::tADDhirr);
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(Inst.getOperand(2));
+    TmpInst.addOperand(Inst.getOperand(3));
+    TmpInst.addOperand(Inst.getOperand(4));
+    Inst = TmpInst;
+    return true;
+  }
   case ARM::tB:
     // A Thumb conditional branch outside of an IT block is a tBcc.
     if (Inst.getOperand(1).getImm() != ARMCC::AL && !inITBlock()) {
