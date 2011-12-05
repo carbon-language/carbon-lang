@@ -31,8 +31,6 @@ public:
   // Common implementation for the interface provided by ConstraintManager.
   //===------------------------------------------------------------------===//
 
-  bool canReasonAbout(SVal X) const;
-
   const ProgramState *assume(const ProgramState *state, DefinedSVal Cond,
                         bool Assumption);
 
@@ -80,6 +78,8 @@ protected:
   //===------------------------------------------------------------------===//
   // Internal implementation.
   //===------------------------------------------------------------------===//
+
+  bool canReasonAbout(SVal X) const;
 
   const ProgramState *assumeAux(const ProgramState *state,
                                 Loc Cond,

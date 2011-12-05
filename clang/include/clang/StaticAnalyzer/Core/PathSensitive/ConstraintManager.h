@@ -63,6 +63,7 @@ public:
 
   virtual void EndPath(const ProgramState *state) {}
 
+protected:
   /// canReasonAbout - Not all ConstraintManagers can accurately reason about
   ///  all SVal values.  This method returns true if the ConstraintManager can
   ///  reasonably handle a given SVal value.  This is typically queried by
