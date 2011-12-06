@@ -37,6 +37,15 @@ public:
       delete V;
   }
   
+  // implicit conversion operator to ArrayRef.
+  operator ArrayRef<EltTy>() const {
+    if (Val.isNull())
+      return ArrayRef<EltTy>();
+    if (Val.template is<EltTy>())
+      return *Val.template getAddrOf<EltTy>();
+    return *Val.template get<VecTy*>();
+  }
+  
   bool empty() const {
     // This vector can be empty if it contains no element, or if it
     // contains a pointer to an empty vector.
