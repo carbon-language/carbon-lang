@@ -3012,6 +3012,11 @@ CXString clang_getCursorSpelling(CXCursor C) {
     return createCXString(AA->getAnnotation());
   }
 
+  if (C.kind == CXCursor_AsmLabelAttr) {
+    AsmLabelAttr *AA = cast<AsmLabelAttr>(cxcursor::getCursorAttr(C));
+    return createCXString(AA->getLabel());
+  }
+
   return createCXString("");
 }
 
@@ -3335,6 +3340,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return createCXString("attribute(override)");
   case CXCursor_AnnotateAttr:
     return createCXString("attribute(annotate)");
+  case CXCursor_AsmLabelAttr:
+    return createCXString("asm label");
   case CXCursor_PreprocessingDirective:
     return createCXString("preprocessing directive");
   case CXCursor_MacroDefinition:

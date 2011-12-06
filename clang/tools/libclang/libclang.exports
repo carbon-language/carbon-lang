@@ -47,6 +47,7 @@ clang_executeOnThread
 clang_findReferencesInFile
 clang_findReferencesInFileWithBlock
 clang_formatDiagnostic
+clang_getArgType
 clang_getArrayElementType
 clang_getArraySize
 clang_getCString
@@ -96,10 +97,15 @@ clang_getDiagnosticOption
 clang_getDiagnosticRange
 clang_getDiagnosticSeverity
 clang_getDiagnosticSpelling
+clang_getElementType
+clang_getEnumConstantDeclValue
+clang_getEnumConstantDeclUnsignedValue
+clang_getEnumDeclIntegerType
 clang_getExpansionLocation
 clang_getFile
 clang_getFileName
 clang_getFileTime
+clang_getFunctionTypeCallingConv
 clang_getIBOutletCollectionType
 clang_getIncludedFile
 clang_getInclusions
@@ -109,9 +115,11 @@ clang_getLocationForOffset
 clang_getNullCursor
 clang_getNullLocation
 clang_getNullRange
+clang_getNumArgTypes
 clang_getNumCompletionChunks
 clang_getNumDiagnostics
 clang_getNumDiagnosticsInSet
+clang_getNumElements
 clang_getNumOverloadedDecls
 clang_getOverloadedDecl
 clang_getOverriddenCursors
@@ -134,6 +142,7 @@ clang_getTranslationUnitCursor
 clang_getTranslationUnitSpelling
 clang_getTypeDeclaration
 clang_getTypeKindSpelling
+clang_getTypedefDeclUnderlyingType
 clang_hashCursor
 clang_IndexAction_create
 clang_IndexAction_dispose
@@ -158,6 +167,7 @@ clang_isCursorDefinition
 clang_isDeclaration
 clang_isExpression
 clang_isFileMultipleIncludeGuarded
+clang_isFunctionTypeVariadic
 clang_isInvalid
 clang_isPODType
 clang_isPreprocessing

@@ -85,6 +85,7 @@ static CXTypeKind GetTypeKind(QualType T) {
     TKCASE(FunctionNoProto);
     TKCASE(FunctionProto);
     TKCASE(ConstantArray);
+    TKCASE(Vector);
     default:
       return CXType_Unexposed;
   }
@@ -171,6 +172,74 @@ CXType clang_getCursorType(CXCursor C) {
   }
 
   return MakeCXType(QualType(), TU);
+}
+
+CXType clang_getTypedefDeclUnderlyingType(CXCursor C) {
+  using namespace cxcursor;
+  CXTranslationUnit TU = cxcursor::getCursorTU(C);
+
+  if (clang_isDeclaration(C.kind)) {
+    Decl *D = cxcursor::getCursorDecl(C);
+
+    if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
+      QualType T = TD->getUnderlyingType();
+      return MakeCXType(T, TU);
+    }
+
+    return MakeCXType(QualType(), TU);
+  }
+
+  return MakeCXType(QualType(), TU);
+}
+
+CXType clang_getEnumDeclIntegerType(CXCursor C) {
+  using namespace cxcursor;
+  CXTranslationUnit TU = cxcursor::getCursorTU(C);
+
+  if (clang_isDeclaration(C.kind)) {
+    Decl *D = cxcursor::getCursorDecl(C);
+
+    if (EnumDecl *TD = dyn_cast<EnumDecl>(D)) {
+      QualType T = TD->getIntegerType();
+      return MakeCXType(T, TU);
+    }
+
+    return MakeCXType(QualType(), TU);
+  }
+
+  return MakeCXType(QualType(), TU);
+}
+
+long long clang_getEnumConstantDeclValue(CXCursor C) {
+  using namespace cxcursor;
+
+  if (clang_isDeclaration(C.kind)) {
+    Decl *D = cxcursor::getCursorDecl(C);
+
+    if (EnumConstantDecl *TD = dyn_cast<EnumConstantDecl>(D)) {
+      return TD->getInitVal().getSExtValue();
+    }
+
+    return LLONG_MIN;
+  }
+
+  return LLONG_MIN;
+}
+
+unsigned long long clang_getEnumConstantDeclUnsignedValue(CXCursor C) {
+  using namespace cxcursor;
+
+  if (clang_isDeclaration(C.kind)) {
+    Decl *D = cxcursor::getCursorDecl(C);
+
+    if (EnumConstantDecl *TD = dyn_cast<EnumConstantDecl>(D)) {
+      return TD->getInitVal().getZExtValue();
+    }
+
+    return ULLONG_MAX;
+  }
+
+  return ULLONG_MAX;
 }
 
 CXType clang_getCanonicalType(CXType CT) {
@@ -332,6 +401,7 @@ CXString clang_getTypeKindSpelling(enum CXTypeKind K) {
     TKIND(FunctionNoProto);
     TKIND(FunctionProto);
     TKIND(ConstantArray);
+    TKIND(Vector);
   }
 #undef TKIND
   return cxstring::createCXString(s);
@@ -341,9 +411,80 @@ unsigned clang_equalTypes(CXType A, CXType B) {
   return A.data[0] == B.data[0] && A.data[1] == B.data[1];;
 }
 
+unsigned clang_isFunctionTypeVariadic(CXType X) {
+  QualType T = GetQualType(X);
+  if (T.isNull())
+    return 0;
+
+  if (const FunctionProtoType *FD = T->getAs<FunctionProtoType>())
+    return (unsigned)FD->isVariadic();
+
+  if (T->getAs<FunctionNoProtoType>())
+    return 1;
+  
+  return 0;
+}
+
+CXCallingConv clang_getFunctionTypeCallingConv(CXType X) {
+  QualType T = GetQualType(X);
+  if (T.isNull())
+    return CXCallingConv_Invalid;
+  
+  if (const FunctionType *FD = T->getAs<FunctionType>()) {
+#define TCALLINGCONV(X) case CC_##X: return CXCallingConv_##X
+    switch (FD->getCallConv()) {
+      TCALLINGCONV(Default);
+      TCALLINGCONV(C);
+      TCALLINGCONV(X86StdCall);
+      TCALLINGCONV(X86FastCall);
+      TCALLINGCONV(X86ThisCall);
+      TCALLINGCONV(X86Pascal);
+      TCALLINGCONV(AAPCS);
+      TCALLINGCONV(AAPCS_VFP);
+    default:
+      return CXCallingConv_Unexposed;
+    }
+#undef TCALLINGCONV
+  }
+  
+  return CXCallingConv_Invalid;
+}
+
+unsigned clang_getNumArgTypes(CXType X) {
+  QualType T = GetQualType(X);
+  if (T.isNull())
+    return UINT_MAX;
+  
+  if (const FunctionProtoType *FD = T->getAs<FunctionProtoType>()) {
+    return FD->getNumArgs();
+  }
+  
+  if (T->getAs<FunctionNoProtoType>()) {
+    return 0;
+  }
+  
+  return UINT_MAX;
+}
+
+CXType clang_getArgType(CXType X, unsigned i) {
+  QualType T = GetQualType(X);
+  if (T.isNull())
+    return MakeCXType(QualType(), GetTU(X));
+
+  if (const FunctionProtoType *FD = T->getAs<FunctionProtoType>()) {
+    unsigned numArgs = FD->getNumArgs();
+    if (i >= numArgs)
+      return MakeCXType(QualType(), GetTU(X));
+    
+    return MakeCXType(FD->getArgType(i), GetTU(X));
+  }
+  
+  return MakeCXType(QualType(), GetTU(X));
+}
+
 CXType clang_getResultType(CXType X) {
   QualType T = GetQualType(X);
-  if (!T.getTypePtrOrNull())
+  if (T.isNull())
     return MakeCXType(QualType(), GetTU(X));
   
   if (const FunctionType *FD = T->getAs<FunctionType>())
@@ -366,13 +507,56 @@ CXType clang_getCursorResultType(CXCursor C) {
 
 unsigned clang_isPODType(CXType X) {
   QualType T = GetQualType(X);
-  if (!T.getTypePtrOrNull())
+  if (T.isNull())
     return 0;
   
   CXTranslationUnit TU = GetTU(X);
   ASTUnit *AU = static_cast<ASTUnit*>(TU->TUData);
 
   return T.isPODType(AU->getASTContext()) ? 1 : 0;
+}
+
+CXType clang_getElementType(CXType CT) {
+  QualType ET = QualType();
+  QualType T = GetQualType(CT);
+  const Type *TP = T.getTypePtrOrNull();
+
+  if (TP) {
+    switch (TP->getTypeClass()) {
+    case Type::ConstantArray:
+      ET = cast<ConstantArrayType> (TP)->getElementType();
+      break;
+    case Type::Vector:
+      ET = cast<VectorType> (TP)->getElementType();
+      break;
+    case Type::Complex:
+      ET = cast<ComplexType> (TP)->getElementType();
+      break;
+    default:
+      break;
+    }
+  }
+  return MakeCXType(ET, GetTU(CT));
+}
+
+long long clang_getNumElements(CXType CT) {
+  long long result = -1;
+  QualType T = GetQualType(CT);
+  const Type *TP = T.getTypePtrOrNull();
+
+  if (TP) {
+    switch (TP->getTypeClass()) {
+    case Type::ConstantArray:
+      result = cast<ConstantArrayType> (TP)->getSize().getSExtValue();
+      break;
+    case Type::Vector:
+      result = cast<VectorType> (TP)->getNumElements();
+      break;
+    default:
+      break;
+    }
+  }
+  return result;
 }
 
 CXType clang_getArrayElementType(CXType CT) {
