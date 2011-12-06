@@ -445,6 +445,12 @@ class ELFObjectWriter : public MCObjectWriter {
     virtual void WriteEFlags();
 
   protected:
+    virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
+                                           const MCValue &Target,
+                                           const MCFragment &F,
+                                           const MCFixup &Fixup,
+                                           bool IsPCRel) const;
+
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
                                   int64_t Addend);

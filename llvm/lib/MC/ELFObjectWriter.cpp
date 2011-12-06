@@ -1831,6 +1831,20 @@ void MipsELFObjectWriter::WriteEFlags() {
           ELF::EF_MIPS_ARCH_32R2);
 }
 
+const MCSymbol *MipsELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
+                                                    const MCValue &Target,
+                                                    const MCFragment &F,
+                                                    const MCFixup &Fixup,
+                                                    bool IsPCRel) const {
+  assert(Target.getSymA() && "SymA cannot be 0.");
+  const MCSymbol &Sym = Target.getSymA()->getSymbol();
+  
+  if (Sym.getSection().getKind().isMergeable1ByteCString())
+    return &Sym;
+
+  return NULL;
+}
+
 unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
                                            const MCFixup &Fixup,
                                            bool IsPCRel,
