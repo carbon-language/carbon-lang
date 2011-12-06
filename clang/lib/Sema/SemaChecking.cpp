@@ -3771,10 +3771,11 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
       }
 
       if (D && !D->isWeak()) {
-        FunctionDecl* F = cast<FunctionDecl>(D);
-        S.Diag(E->getExprLoc(), diag::warn_impcast_function_to_bool)
-          << F << E->getSourceRange() << SourceRange(CC);
-        return;
+        if (FunctionDecl* F = dyn_cast<FunctionDecl>(D)) {
+          S.Diag(E->getExprLoc(), diag::warn_impcast_function_to_bool)
+            << F << E->getSourceRange() << SourceRange(CC);
+          return;
+        }
       }
     }
     return; // Other casts to bool are not checked.
