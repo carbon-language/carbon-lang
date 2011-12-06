@@ -603,8 +603,7 @@ void ModuleMapParser::parseModuleDecl() {
   
   // Parse 'module' keyword.
   if (!Tok.is(MMToken::ModuleKeyword)) {
-    Diags.Report(Tok.getLocation(), 
-                 diag::err_mmap_expected_module_after_explicit);
+    Diags.Report(Tok.getLocation(), diag::err_mmap_expected_module);
     consumeToken();
     HadError = true;
     return;

@@ -377,8 +377,6 @@ def err_pp_eof_in_arc_cf_code_audited : Error<
 // Module map parsing
 def err_mmap_unknown_token : Error<"skipping stray token">;
 def err_mmap_expected_module : Error<"expected module declaration">;
-def err_mmap_expected_module_after_explicit : Error<
-  "expected 'module' keyword after 'explicit'">;
 def err_mmap_expected_module_name : Error<"expected module name">;
 def err_mmap_expected_lbrace : Error<"expected '{' to start module '%0'">;
 def err_mmap_expected_rbrace : Error<"expected '}'">;
