@@ -28,7 +28,7 @@
 # error "AES instructions not enabled"
 #else
 
-#include <smmintrin.h>
+#include <xmmintrin.h>
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_aesenc_si128(__m128i __V, __m128i __R)
