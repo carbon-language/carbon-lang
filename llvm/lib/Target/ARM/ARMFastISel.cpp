@@ -1106,7 +1106,7 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr,
     case MVT::f32:
       if (!Subtarget->hasVFP2()) return false;
       StrOpc = ARM::VSTRS;
-      // Unaligned stores need special handling.
+      // Unaligned stores need special handling. Floats require word-alignment.
       if (Alignment && Alignment < 4) {
         unsigned MoveReg = createResultReg(TLI.getRegClassFor(MVT::i32));
         AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
@@ -1119,8 +1119,9 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr,
       break;
     case MVT::f64:
       if (!Subtarget->hasVFP2()) return false;
-      // FIXME: Unaligned stores need special handling.
-      if (Alignment && Alignment < 8) {
+      // FIXME: Unaligned stores need special handling.  Doublewords require
+      // word-alignment.
+      if (Alignment && Alignment < 4) {
           return false;
       }
       StrOpc = ARM::VSTRD;

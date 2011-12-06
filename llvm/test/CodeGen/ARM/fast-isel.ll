@@ -180,3 +180,21 @@ entry:
   store float %add, float* %x1, align 1
   ret void
 }
+
+; Doublewords require only word-alignment.
+; rdar://10528060
+%struct.anon.0 = type { double }
+
+@foo_unpacked = common global %struct.anon.0 zeroinitializer, align 4
+
+define void @test5(double %a, double %b) nounwind {
+entry:
+; ARM: @test5
+; THUMB: @test5
+  %add = fadd double %a, %b
+  store double %add, double* getelementptr inbounds (%struct.anon.0* @foo_unpacked, i32 0, i32 0), align 4
+; ARM: vstr d16, [r0]
+; THUMB: vstr d16, [r0]
+  ret void
+}
+
