@@ -203,8 +203,6 @@ void MachineBasicBlock::print(raw_ostream &OS, SlotIndexes *Indexes) const {
     return;
   }
 
-  if (Alignment) { OS << "Alignment " << Alignment << "\n"; }
-
   if (Indexes)
     OS << Indexes->getMBBStartIdx(this) << '\t';
 
@@ -218,6 +216,12 @@ void MachineBasicBlock::print(raw_ostream &OS, SlotIndexes *Indexes) const {
   }
   if (isLandingPad()) { OS << Comma << "EH LANDING PAD"; Comma = ", "; }
   if (hasAddressTaken()) { OS << Comma << "ADDRESS TAKEN"; Comma = ", "; }
+  if (Alignment) {
+    OS << Comma << "Align " << Alignment << " (" << (1u << Alignment)
+       << " bytes)";
+    Comma = ", ";
+  }
+
   OS << '\n';
 
   const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
