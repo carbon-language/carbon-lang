@@ -21,9 +21,9 @@ entry:
 return:                                           ; preds = %entry
 ;CHECK:  lis r3, 1
 ;CHECK:  ori r3, r3, 34524
-;CHECK:  lwzx r2, r1, r3
-;CHECK:  rlwinm r2, r2, 24, 0, 31
-;CHECK:  mtcrf 32, r2
+;CHECK:  lwzx r3, r1, r3
+;CHECK:  rlwinm r3, r3, 24, 0, 31
+;CHECK:  mtcrf 32, r3
   ret void
 }
 
