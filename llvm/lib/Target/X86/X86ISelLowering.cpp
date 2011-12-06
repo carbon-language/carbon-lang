@@ -1211,10 +1211,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   maxStoresPerMemcpyOptSize = Subtarget->isTargetDarwin() ? 8 : 4;
   maxStoresPerMemmove = 8; // For @llvm.memmove -> sequence of stores
   maxStoresPerMemmoveOptSize = Subtarget->isTargetDarwin() ? 8 : 4;
-  setPrefLoopAlignment(16);
+  setPrefLoopAlignment(4); // 2^4 bytes.
   benefitFromCodePlacementOpt = true;
 
-  setPrefFunctionAlignment(4);
+  setPrefFunctionAlignment(4); // 2^4 bytes.
 }
 
 

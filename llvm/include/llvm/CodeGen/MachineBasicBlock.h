@@ -84,8 +84,9 @@ class MachineBasicBlock : public ilist_node<MachineBasicBlock> {
 
   /// Alignment - Alignment of the basic block. Zero if the basic block does
   /// not need to be aligned.
+  /// The alignment is specified as log2(bytes).
   unsigned Alignment;
-  
+
   /// IsLandingPad - Indicate that this basic block is entered via an
   /// exception handler.
   bool IsLandingPad;
@@ -219,10 +220,12 @@ public:
   bool            livein_empty() const { return LiveIns.empty(); }
 
   /// getAlignment - Return alignment of the basic block.
+  /// The alignment is specified as log2(bytes).
   ///
   unsigned getAlignment() const { return Alignment; }
 
   /// setAlignment - Set alignment of the basic block.
+  /// The alignment is specified as log2(bytes).
   ///
   void setAlignment(unsigned Align) { Alignment = Align; }
 
