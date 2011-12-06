@@ -421,8 +421,9 @@ public:
     llvm::APSInt X;
     return isIntegerConstantExpr(X, Ctx, Loc);
   }
-  /// isConstantInitializer - Returns true if this expression is a constant
-  /// initializer, which can be emitted at compile-time.
+
+  /// isConstantInitializer - Returns true if this expression can be emitted to
+  /// IR as a constant, and thus can be used as a constant initializer in C.
   bool isConstantInitializer(ASTContext &Ctx, bool ForRef) const;
 
   /// EvalStatus is a struct with detailed info about an evaluation in progress.
