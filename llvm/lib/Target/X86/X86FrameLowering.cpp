@@ -385,12 +385,14 @@ static uint32_t encodeCompactUnwindRegistersWithoutFrame(unsigned SavedRegs[6],
   };
   const unsigned *CURegs = (Is64Bit ? CU64BitRegs : CU32BitRegs);
 
-  uint32_t RenumRegs[6];
   for (unsigned i = 6 - RegCount; i < 6; ++i) {
     int CUReg = getCompactUnwindRegNum(CURegs, SavedRegs[i]);
     if (CUReg == -1) return ~0U;
     SavedRegs[i] = CUReg;
+  }
 
+  uint32_t RenumRegs[6];
+  for (unsigned i = 6 - RegCount; i < 6; ++i) {
     unsigned Countless = 0;
     for (unsigned j = 6 - RegCount; j < i; ++j)
       if (SavedRegs[j] < SavedRegs[i])
@@ -454,7 +456,7 @@ static uint32_t encodeCompactUnwindRegistersWithFrame(unsigned SavedRegs[6],
     int CURegNum = getCompactUnwindRegNum(CURegs, Reg);
     if (CURegNum == -1)
       return ~0U;
-    RegEnc |= (CURegNum & 0x7) << (5 - I);
+    RegEnc |= (CURegNum & 0x7) << ((5 - I) * 3);
   }
 
   assert((RegEnc & 0x7FFF) == RegEnc && "Invalid compact register encoding!");
