@@ -1025,9 +1025,10 @@ static void compileModule(CompilerInstance &ImportingInstance,
     if (llvm::sys::fs::unique_file(TempModuleMapFileName.str(), FD, 
                                    TempModuleMapFileName,
                                    /*makeAbsolute=*/true)
-          != llvm::errc::success)
+          != llvm::errc::success) {
+      // FIXME: Give a sensible error message here.
       return;
-
+    }
     // Print the module map to this file.
     llvm::raw_fd_ostream OS(FD, /*shouldClose=*/true);
     Module->print(OS);
