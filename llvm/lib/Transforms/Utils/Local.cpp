@@ -494,22 +494,8 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   if (Succ->getSinglePredecessor()) return true;
 
   // Make a list of the predecessors of BB
-  typedef SmallPtrSet<BasicBlock*, 16> BlockSet;
-  BlockSet BBPreds(pred_begin(BB), pred_end(BB));
+  SmallPtrSet<BasicBlock*, 16> BBPreds(pred_begin(BB), pred_end(BB));
 
-  // Use that list to make another list of common predecessors of BB and Succ
-  BlockSet CommonPreds;
-  for (pred_iterator PI = pred_begin(Succ), PE = pred_end(Succ);
-       PI != PE; ++PI) {
-    BasicBlock *P = *PI;
-    if (BBPreds.count(P))
-      CommonPreds.insert(P);
-  }
-
-  // Shortcut, if there are no common predecessors, merging is always safe
-  if (CommonPreds.empty())
-    return true;
-  
   // Look at all the phi nodes in Succ, to see if they present a conflict when
   // merging these blocks
   for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
@@ -520,28 +506,28 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
     // merge the phi nodes and then the blocks can still be merged
     PHINode *BBPN = dyn_cast<PHINode>(PN->getIncomingValueForBlock(BB));
     if (BBPN && BBPN->getParent() == BB) {
-      for (BlockSet::iterator PI = CommonPreds.begin(), PE = CommonPreds.end();
-            PI != PE; PI++) {
-        if (BBPN->getIncomingValueForBlock(*PI) 
-              != PN->getIncomingValueForBlock(*PI)) {
+      for (unsigned PI = 0, PE = PN->getNumIncomingValues(); PI != PE; ++PI) {
+        BasicBlock *IBB = PN->getIncomingBlock(PI);
+        if (BBPreds.count(IBB) &&
+            BBPN->getIncomingValueForBlock(IBB) != PN->getIncomingValue(PI)) {
           DEBUG(dbgs() << "Can't fold, phi node " << PN->getName() << " in " 
                 << Succ->getName() << " is conflicting with " 
                 << BBPN->getName() << " with regard to common predecessor "
-                << (*PI)->getName() << "\n");
+                << IBB->getName() << "\n");
           return false;
         }
       }
     } else {
       Value* Val = PN->getIncomingValueForBlock(BB);
-      for (BlockSet::iterator PI = CommonPreds.begin(), PE = CommonPreds.end();
-            PI != PE; PI++) {
+      for (unsigned PI = 0, PE = PN->getNumIncomingValues(); PI != PE; ++PI) {
         // See if the incoming value for the common predecessor is equal to the
         // one for BB, in which case this phi node will not prevent the merging
         // of the block.
-        if (Val != PN->getIncomingValueForBlock(*PI)) {
+        BasicBlock *IBB = PN->getIncomingBlock(PI);
+        if (BBPreds.count(IBB) && Val != PN->getIncomingValue(PI)) {
           DEBUG(dbgs() << "Can't fold, phi node " << PN->getName() << " in " 
                 << Succ->getName() << " is conflicting with regard to common "
-                << "predecessor " << (*PI)->getName() << "\n");
+                << "predecessor " << IBB->getName() << "\n");
           return false;
         }
       }
