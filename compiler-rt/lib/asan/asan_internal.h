@@ -91,7 +91,6 @@ extern size_t FLAG_quarantine_size;
 extern int    FLAG_demangle;
 extern bool   FLAG_symbolize;
 extern int    FLAG_v;
-extern bool   FLAG_mt;
 extern size_t FLAG_redzone;
 extern int    FLAG_debug;
 extern bool   FLAG_poison_shadow;
@@ -177,7 +176,6 @@ class LowLevelAllocator {
 
 // -------------------------- Atomic ---------------- {{{1
 static inline int AtomicInc(int *a) {
-  if (!FLAG_mt) return ++(*a);
 #ifdef ANDROID
   return __atomic_inc(a) + 1;
 #else
@@ -186,7 +184,6 @@ static inline int AtomicInc(int *a) {
 }
 
 static inline int AtomicDec(int *a) {
-  if (!FLAG_mt) return --(*a);
 #ifdef ANDROID
   return __atomic_dec(a) - 1;
 #else

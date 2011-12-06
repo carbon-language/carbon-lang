@@ -57,7 +57,6 @@ static int    FLAG_atexit;
 bool   FLAG_fast_unwind = true;
 
 size_t FLAG_redzone;  // power of two, >= 32
-bool   FLAG_mt;  // set to 0 if you have only one thread.
 size_t FLAG_quarantine_size;
 int    FLAG_demangle;
 bool   FLAG_symbolize;
@@ -665,7 +664,6 @@ void __asan_init() {
   FLAG_debug = IntFlagValue(options, "debug=", 0);
   FLAG_replace_cfallocator = IntFlagValue(options, "replace_cfallocator=", 1);
   FLAG_fast_unwind = IntFlagValue(options, "fast_unwind=", 1);
-  FLAG_mt = IntFlagValue(options, "mt=", 1);
   FLAG_replace_str = IntFlagValue(options, "replace_str=", 1);
   FLAG_replace_intrin = IntFlagValue(options, "replace_intrin=", 0);
   FLAG_use_fake_stack = IntFlagValue(options, "use_fake_stack=", 1);
