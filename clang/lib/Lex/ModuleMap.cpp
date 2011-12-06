@@ -900,16 +900,16 @@ void ModuleMapParser::parseInferredSubmoduleDecl(bool Explicit) {
   }
   
   // Inferred modules must have umbrella headers.
-  if (!Failed && !ActiveModule->getTopLevelModule()->UmbrellaHeader) {
+  if (!Failed && !ActiveModule->UmbrellaHeader) {
     Diags.Report(StarLoc, diag::err_mmap_inferred_no_umbrella);
     Failed = true;
   }
   
   // Check for redefinition of an inferred module.
-  if (!Failed && ActiveModule->getTopLevelModule()->InferSubmodules) {
+  if (!Failed && ActiveModule->InferSubmodules) {
     Diags.Report(StarLoc, diag::err_mmap_inferred_redef);
-    if (ActiveModule->getTopLevelModule()->InferredSubmoduleLoc.isValid())
-      Diags.Report(ActiveModule->getTopLevelModule()->InferredSubmoduleLoc,
+    if (ActiveModule->InferredSubmoduleLoc.isValid())
+      Diags.Report(ActiveModule->InferredSubmoduleLoc,
                    diag::note_mmap_prev_definition);
     Failed = true;
   }
@@ -927,10 +927,9 @@ void ModuleMapParser::parseInferredSubmoduleDecl(bool Explicit) {
   }
   
   // Note that we have an inferred submodule.
-  Module *TopModule = ActiveModule->getTopLevelModule();
-  TopModule->InferSubmodules = true;
-  TopModule->InferredSubmoduleLoc = StarLoc;
-  TopModule->InferExplicitSubmodules = Explicit;
+  ActiveModule->InferSubmodules = true;
+  ActiveModule->InferredSubmoduleLoc = StarLoc;
+  ActiveModule->InferExplicitSubmodules = Explicit;
   
   // Parse the opening brace.
   if (!Tok.is(MMToken::LBrace)) {
@@ -952,7 +951,7 @@ void ModuleMapParser::parseInferredSubmoduleDecl(bool Explicit) {
     case MMToken::ExportKeyword: {
       consumeToken();
       if (Tok.is(MMToken::Star)) 
-        TopModule->InferExportWildcard = true;
+        ActiveModule->InferExportWildcard = true;
       else
         Diags.Report(Tok.getLocation(), 
                      diag::err_mmap_expected_export_wildcard);

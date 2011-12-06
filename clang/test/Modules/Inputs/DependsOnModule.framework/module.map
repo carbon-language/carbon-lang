@@ -6,5 +6,9 @@ framework module DependsOnModule {
   }
   explicit framework module SubFramework {
     umbrella "SubFramework.h"
+
+    module * {
+      export *
+    }
   }
 }

@@ -24,7 +24,7 @@ void testSubframeworkOther() {
 }
 
 // Test header cross-subframework include pattern.
-#include <DependsOnModule/../Frameworks/SubFramework.framework/Headers/Other.h> // expected-warning{{treating #include as an import of module 'DependsOnModule.SubFramework'}}
+#include <DependsOnModule/../Frameworks/SubFramework.framework/Headers/Other.h> // expected-warning{{treating #include as an import of module 'DependsOnModule.SubFramework.Other'}}
 
 void testSubframeworkOtherAgain() {
   double *sfo1 = sub_framework_other;
