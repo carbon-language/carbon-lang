@@ -81,7 +81,7 @@ unsigned LookForIdenticalPHI(MachineBasicBlock *BB,
   if (BB->empty())
     return 0;
 
-  MachineBasicBlock::iterator I = BB->front();
+  MachineBasicBlock::iterator I = BB->begin();
   if (!I->isPHI())
     return 0;
 
@@ -182,7 +182,7 @@ unsigned MachineSSAUpdater::GetValueInMiddleOfBlock(MachineBasicBlock *BB) {
     return DupPHI;
 
   // Otherwise, we do need a PHI: insert one now.
-  MachineBasicBlock::iterator Loc = BB->empty() ? BB->end() : BB->front();
+  MachineBasicBlock::iterator Loc = BB->empty() ? BB->end() : BB->begin();
   MachineInstr *InsertedPHI = InsertNewDef(TargetOpcode::PHI, BB,
                                            Loc, VRC, MRI, TII);
 
@@ -311,7 +311,7 @@ public:
   /// Add it into the specified block and return the register.
   static unsigned CreateEmptyPHI(MachineBasicBlock *BB, unsigned NumPreds,
                                  MachineSSAUpdater *Updater) {
-    MachineBasicBlock::iterator Loc = BB->empty() ? BB->end() : BB->front();
+    MachineBasicBlock::iterator Loc = BB->empty() ? BB->end() : BB->begin();
     MachineInstr *PHI = InsertNewDef(TargetOpcode::PHI, BB, Loc,
                                      Updater->VRC, Updater->MRI,
                                      Updater->TII);
