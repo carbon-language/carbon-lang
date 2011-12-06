@@ -57,6 +57,8 @@ public:
                          int SPAdj, RegScavenger *RS) const;
   void lowerCRSpilling(MachineBasicBlock::iterator II, unsigned FrameIndex,
                        int SPAdj, RegScavenger *RS) const;
+  void lowerCRRestore(MachineBasicBlock::iterator II, unsigned FrameIndex,
+                       int SPAdj, RegScavenger *RS) const;
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, RegScavenger *RS = NULL) const;
 

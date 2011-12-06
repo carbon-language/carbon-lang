@@ -511,7 +511,7 @@ PPCInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   NewMIs.back()->addMemOperand(MF, MMO);
 }
 
-void
+bool
 PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
                                    unsigned DestReg, int FrameIdx,
                                    const TargetRegisterClass *RC,
@@ -541,28 +541,36 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LFS), DestReg),
                                        FrameIdx));
   } else if (PPC::CRRCRegisterClass->hasSubClassEq(RC)) {
-    // FIXME: We need a scatch reg here.  The trouble with using R0 is that
-    // it's possible for the stack frame to be so big the save location is
-    // out of range of immediate offsets, necessitating another register.
-    // We hack this on Darwin by reserving R2.  It's probably broken on Linux
-    // at the moment.
-    unsigned ScratchReg = TM.getSubtargetImpl()->isDarwinABI() ?
-                                                          PPC::R2 : PPC::R0;
-    NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LWZ),
-                                       ScratchReg), FrameIdx));
-
-    // If the reloaded register isn't CR0, shift the bits right so that they are
-    // in the right CR's slot.
-    if (DestReg != PPC::CR0) {
-      unsigned ShiftBits = getPPCRegisterNumbering(DestReg)*4;
-      // rlwinm r11, r11, 32-ShiftBits, 0, 31.
-      NewMIs.push_back(BuildMI(MF, DL, get(PPC::RLWINM), ScratchReg)
-                    .addReg(ScratchReg).addImm(32-ShiftBits).addImm(0)
-                    .addImm(31));
+    if ((!DisablePPC32RS && !TM.getSubtargetImpl()->isPPC64()) ||
+        (!DisablePPC64RS && TM.getSubtargetImpl()->isPPC64())) {
+      NewMIs.push_back(addFrameReference(BuildMI(MF, DL,
+                                                 get(PPC::RESTORE_CR), DestReg)
+                                         , FrameIdx));
+      return true;
+    } else {
+      // FIXME: We need a scatch reg here.  The trouble with using R0 is that
+      // it's possible for the stack frame to be so big the save location is
+      // out of range of immediate offsets, necessitating another register.
+      // We hack this on Darwin by reserving R2.  It's probably broken on Linux
+      // at the moment.
+      unsigned ScratchReg = TM.getSubtargetImpl()->isDarwinABI() ?
+                                                            PPC::R2 : PPC::R0;
+      NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LWZ),
+                                         ScratchReg), FrameIdx));
+  
+      // If the reloaded register isn't CR0, shift the bits right so that they are
+      // in the right CR's slot.
+      if (DestReg != PPC::CR0) {
+        unsigned ShiftBits = getPPCRegisterNumbering(DestReg)*4;
+        // rlwinm r11, r11, 32-ShiftBits, 0, 31.
+        NewMIs.push_back(BuildMI(MF, DL, get(PPC::RLWINM), ScratchReg)
+                      .addReg(ScratchReg).addImm(32-ShiftBits).addImm(0)
+                      .addImm(31));
+      }
+  
+      NewMIs.push_back(BuildMI(MF, DL, get(PPC::MTCRF), DestReg)
+                       .addReg(ScratchReg));
     }
-
-    NewMIs.push_back(BuildMI(MF, DL, get(PPC::MTCRF), DestReg)
-                     .addReg(ScratchReg));
   } else if (PPC::CRBITRCRegisterClass->hasSubClassEq(RC)) {
 
     unsigned Reg = 0;
@@ -607,6 +615,8 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
   } else {
     llvm_unreachable("Unknown regclass!");
   }
+
+  return false;
 }
 
 void
@@ -619,7 +629,10 @@ PPCInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   SmallVector<MachineInstr*, 4> NewMIs;
   DebugLoc DL;
   if (MI != MBB.end()) DL = MI->getDebugLoc();
-  LoadRegFromStackSlot(MF, DL, DestReg, FrameIdx, RC, NewMIs);
+  if (LoadRegFromStackSlot(MF, DL, DestReg, FrameIdx, RC, NewMIs)) {
+    PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
+    FuncInfo->setSpillsCR();
+  }
   for (unsigned i = 0, e = NewMIs.size(); i != e; ++i)
     MBB.insert(MI, NewMIs[i]);
 

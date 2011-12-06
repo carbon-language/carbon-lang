@@ -459,7 +459,7 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
                                       unsigned FrameIndex, int SPAdj,
                                       RegScavenger *RS) const {
   // Get the instruction.
-  MachineInstr &MI = *II;       // ; SPILL_CR <SrcReg>, <offset>, <FI>
+  MachineInstr &MI = *II;       // ; SPILL_CR <SrcReg>, <offset>
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc dl = MI.getDebugLoc();
@@ -489,6 +489,44 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
   addFrameReference(BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::STW8 : PPC::STW))
                     .addReg(Reg, getKillRegState(MI.getOperand(1).getImm())),
                     FrameIndex);
+
+  // Discard the pseudo instruction.
+  MBB.erase(II);
+}
+
+void PPCRegisterInfo::lowerCRRestore(MachineBasicBlock::iterator II,
+                                      unsigned FrameIndex, int SPAdj,
+                                      RegScavenger *RS) const {
+  // Get the instruction.
+  MachineInstr &MI = *II;       // ; <DestReg> = RESTORE_CR <offset>
+  // Get the instruction's basic block.
+  MachineBasicBlock &MBB = *MI.getParent();
+  DebugLoc dl = MI.getDebugLoc();
+
+  const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
+  const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
+  const TargetRegisterClass *RC = Subtarget.isPPC64() ? G8RC : GPRC;
+  unsigned Reg = findScratchRegister(II, RS, RC, SPAdj);
+  unsigned DestReg = MI.getOperand(0).getReg();
+  assert(MI.definesRegister(DestReg) &&
+    "RESTORE_CR does not define its destination");
+  bool LP64 = Subtarget.isPPC64();
+
+  addFrameReference(BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::LWZ8 : PPC::LWZ),
+                              Reg), FrameIndex);
+
+  // If the reloaded register isn't CR0, shift the bits right so that they are
+  // in the right CR's slot.
+  if (DestReg != PPC::CR0) {
+    unsigned ShiftBits = getPPCRegisterNumbering(DestReg)*4;
+    // rlwinm r11, r11, 32-ShiftBits, 0, 31.
+    BuildMI(MBB, II, dl, TII.get(PPC::RLWINM), Reg)
+             .addReg(Reg).addImm(32-ShiftBits).addImm(0)
+             .addImm(31);
+  }
+
+  BuildMI(MBB, II, dl, TII.get(PPC::MTCRF), DestReg)
+             .addReg(Reg);
 
   // Discard the pseudo instruction.
   MBB.erase(II);
@@ -539,12 +577,16 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     return;
   }
 
-  // Special case for pseudo-op SPILL_CR.
-  if (requiresRegisterScavenging(MF))
+  // Special case for pseudo-ops SPILL_CR and RESTORE_CR.
+  if (requiresRegisterScavenging(MF)) {
     if (OpC == PPC::SPILL_CR) {
       lowerCRSpilling(II, FrameIndex, SPAdj, RS);
       return;
+    } else if (OpC == PPC::RESTORE_CR) {
+      lowerCRRestore(II, FrameIndex, SPAdj, RS);
+      return;
     }
+  }
 
   // Replace the FrameIndex with base register with GPR1 (SP) or GPR31 (FP).
   MI.getOperand(FIOperandNo).ChangeToRegister(TFI->hasFP(MF) ?
@@ -594,7 +636,6 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   // The offset doesn't fit into a single register, scavenge one to build the
   // offset in.
-  // FIXME: figure out what SPAdj is doing here.
 
   unsigned SReg;
   if (requiresRegisterScavenging(MF))

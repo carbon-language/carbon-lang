@@ -402,6 +402,11 @@ let usesCustomInserter = 1,    // Expanded after instruction selection.
 def SPILL_CR : Pseudo<(outs), (ins GPRC:$cond, memri:$F),
                      "", []>;
 
+// RESTORE_CR - Indicate that we're restoring the CR register (previously
+// spilled), so we'll need to scavenge a register for it.
+def RESTORE_CR : Pseudo<(outs GPRC:$cond), (ins memri:$F),
+                     "", []>;
+
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
   let isReturn = 1, Uses = [LR, RM] in
     def BLR : XLForm_2_br<19, 16, 0, (outs), (ins pred:$p),
