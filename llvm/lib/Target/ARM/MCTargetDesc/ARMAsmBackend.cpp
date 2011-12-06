@@ -152,7 +152,8 @@ bool ARMAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
   // encodable.
   //
   // Relax if the value is too big for a (signed) i8.
-  return int64_t((Value - 4)>>1) != int64_t(int8_t((Value - 4)>>1));
+  int64_t Offset = int64_t(Value) - 4;
+  return Offset > 254 || Offset < -256;
 }
 
 void ARMAsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
