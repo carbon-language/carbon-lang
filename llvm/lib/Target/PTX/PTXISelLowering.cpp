@@ -243,6 +243,30 @@ SDValue PTXTargetLowering::
     for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
       EVT                  RegVT = Ins[i].VT;
       TargetRegisterClass* TRC   = getRegClassFor(RegVT);
+      unsigned             RegType;
+
+      // Determine which register class we need
+      if (RegVT == MVT::i1) {
+        RegType = PTXRegisterType::Pred;
+      }
+      else if (RegVT == MVT::i16) {
+        RegType = PTXRegisterType::B16;
+      }
+      else if (RegVT == MVT::i32) {
+        RegType = PTXRegisterType::B32;
+      }
+      else if (RegVT == MVT::i64) {
+        RegType = PTXRegisterType::B64;
+      }
+      else if (RegVT == MVT::f32) {
+        RegType = PTXRegisterType::F32;
+      }
+      else if (RegVT == MVT::f64) {
+        RegType = PTXRegisterType::F64;
+      }
+      else {
+        llvm_unreachable("Unknown parameter type");
+      }
 
       // Use a unique index in the instruction to prevent instruction folding.
       // Yes, this is a hack.
@@ -253,7 +277,7 @@ SDValue PTXTargetLowering::
 
       InVals.push_back(ArgValue);
 
-      MFI->addArgReg(Reg);
+      MFI->addRegister(Reg, RegType, PTXRegisterSpace::Argument);
     }
   }
 
@@ -304,25 +328,32 @@ SDValue PTXTargetLowering::
     for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
       EVT                  RegVT = Outs[i].VT;
       TargetRegisterClass* TRC = 0;
+      unsigned             RegType;
 
       // Determine which register class we need
       if (RegVT == MVT::i1) {
         TRC = PTX::RegPredRegisterClass;
+        RegType = PTXRegisterType::Pred;
       }
       else if (RegVT == MVT::i16) {
         TRC = PTX::RegI16RegisterClass;
+        RegType = PTXRegisterType::B16;
       }
       else if (RegVT == MVT::i32) {
         TRC = PTX::RegI32RegisterClass;
+        RegType = PTXRegisterType::B32;
       }
       else if (RegVT == MVT::i64) {
         TRC = PTX::RegI64RegisterClass;
+        RegType = PTXRegisterType::B64;
       }
       else if (RegVT == MVT::f32) {
         TRC = PTX::RegF32RegisterClass;
+        RegType = PTXRegisterType::F32;
       }
       else if (RegVT == MVT::f64) {
         TRC = PTX::RegF64RegisterClass;
+        RegType = PTXRegisterType::F64;
       }
       else {
         llvm_unreachable("Unknown parameter type");
@@ -335,7 +366,7 @@ SDValue PTXTargetLowering::
 
       Chain = DAG.getNode(PTXISD::WRITE_PARAM, dl, MVT::Other, Copy, OutReg);
 
-      MFI->addRetReg(Reg);
+      MFI->addRegister(Reg, RegType, PTXRegisterSpace::Return);
     }
   }
 

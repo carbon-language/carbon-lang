@@ -39,32 +39,45 @@ StringRef PTXInstPrinter::getOpcodeName(unsigned Opcode) const {
 
 void PTXInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
   // Decode the register number into type and offset
-  unsigned RegType   = RegNo & 0xF;
-  unsigned RegOffset = RegNo >> 4;
+  unsigned RegSpace  = RegNo & 0x7;
+  unsigned RegType   = (RegNo >> 3) & 0x7;
+  unsigned RegOffset = RegNo >> 6;
 
   // Print the register
   OS << "%";
 
-  switch (RegType) {
+  switch (RegSpace) {
   default:
-    llvm_unreachable("Unknown register type!");
-  case PTXRegisterType::Pred:
-    OS << "p";
+    llvm_unreachable("Unknown register space!");
+  case PTXRegisterSpace::Reg:
+    switch (RegType) {
+    default:
+      llvm_unreachable("Unknown register type!");
+    case PTXRegisterType::Pred:
+      OS << "p";
+      break;
+    case PTXRegisterType::B16:
+      OS << "rh";
+      break;
+    case PTXRegisterType::B32:
+      OS << "r";
+      break;
+    case PTXRegisterType::B64:
+      OS << "rd";
+      break;
+    case PTXRegisterType::F32:
+      OS << "f";
+      break;
+    case PTXRegisterType::F64:
+      OS << "fd";
+      break;
+    }
     break;
-  case PTXRegisterType::B16:
-    OS << "rh";
+  case PTXRegisterSpace::Return:
+    OS << "ret";
     break;
-  case PTXRegisterType::B32:
-    OS << "r";
-    break;
-  case PTXRegisterType::B64:
-    OS << "rd";
-    break;
-  case PTXRegisterType::F32:
-    OS << "f";
-    break;
-  case PTXRegisterType::F64:
-    OS << "fd";
+  case PTXRegisterSpace::Argument:
+    OS << "arg";
     break;
   }
 

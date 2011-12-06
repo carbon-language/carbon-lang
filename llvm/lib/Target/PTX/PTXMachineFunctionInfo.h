@@ -35,14 +35,21 @@ private:
   DenseSet<unsigned> RegArgs;
   DenseSet<unsigned> RegRets;
 
-  typedef std::vector<unsigned> RegisterList;
-  typedef DenseMap<const TargetRegisterClass*, RegisterList> RegisterMap;
-  typedef DenseMap<unsigned, std::string> RegisterNameMap;
   typedef DenseMap<int, std::string> FrameMap;
 
-  RegisterMap UsedRegs;
-  RegisterNameMap RegNames;
   FrameMap FrameSymbols;
+
+  struct RegisterInfo {
+    unsigned Reg;
+    unsigned Type;
+    unsigned Space;
+    unsigned Offset;
+    unsigned Encoded;
+  };
+
+  typedef DenseMap<unsigned, RegisterInfo> RegisterInfoMap;
+
+  RegisterInfoMap RegInfo;
 
   PTXParamManager ParamManager;
 
@@ -51,13 +58,7 @@ public:
 
   PTXMachineFunctionInfo(MachineFunction &MF)
     : IsKernel(false) {
-      UsedRegs[PTX::RegPredRegisterClass] = RegisterList();
-      UsedRegs[PTX::RegI16RegisterClass] = RegisterList();
-      UsedRegs[PTX::RegI32RegisterClass] = RegisterList();
-      UsedRegs[PTX::RegI64RegisterClass] = RegisterList();
-      UsedRegs[PTX::RegF32RegisterClass] = RegisterList();
-      UsedRegs[PTX::RegF64RegisterClass] = RegisterList();
-    }
+  }
 
   /// getParamManager - Returns the PTXParamManager instance for this function.
   PTXParamManager& getParamManager() { return ParamManager; }
@@ -78,81 +79,106 @@ public:
   reg_iterator retreg_begin() const { return RegRets.begin(); }
   reg_iterator retreg_end()   const { return RegRets.end(); }
 
+  /// addRegister - Adds a virtual register to the set of all used registers
+  void addRegister(unsigned Reg, unsigned RegType, unsigned RegSpace) {
+    if (!RegInfo.count(Reg)) {
+      RegisterInfo Info;
+      Info.Reg = Reg;
+      Info.Type = RegType;
+      Info.Space = RegSpace;
+
+      // Determine register offset
+      Info.Offset = 0;
+      for(RegisterInfoMap::const_iterator i = RegInfo.begin(),
+          e = RegInfo.end(); i != e; ++i) {
+        const RegisterInfo& RI = i->second;
+        if (RI.Space == RegSpace)
+          if (RI.Space != PTXRegisterSpace::Reg || RI.Type == Info.Type)
+            Info.Offset++;
+      }
+
+      // Encode the register data into a single register number
+      Info.Encoded = (Info.Offset << 6) | (Info.Type << 3) | Info.Space;
+
+      RegInfo[Reg] = Info;
+
+      if (RegSpace == PTXRegisterSpace::Argument)
+        RegArgs.insert(Reg);
+      else if (RegSpace == PTXRegisterSpace::Return)
+        RegRets.insert(Reg);
+    }
+  }
+
+  /// countRegisters - Returns the number of registers of the given type and
+  /// space.
+  unsigned countRegisters(unsigned RegType, unsigned RegSpace) const {
+    unsigned Count = 0;
+    for(RegisterInfoMap::const_iterator i = RegInfo.begin(), e = RegInfo.end();
+        i != e; ++i) {
+      const RegisterInfo& RI = i->second;
+      if (RI.Type == RegType && RI.Space == RegSpace)
+        Count++;
+    }
+    return Count;
+  }
+
+  /// getEncodedRegister - Returns the encoded value of the register.
+  unsigned getEncodedRegister(unsigned Reg) const {
+    return RegInfo.lookup(Reg).Encoded;
+  }
+
   /// addRetReg - Adds a register to the set of return-value registers.
   void addRetReg(unsigned Reg) {
     if (!RegRets.count(Reg)) {
       RegRets.insert(Reg);
-      std::string name;
-      name = "%ret";
-      name += utostr(RegRets.size() - 1);
-      RegNames[Reg] = name;
     }
   }
 
   /// addArgReg - Adds a register to the set of function argument registers.
   void addArgReg(unsigned Reg) {
     RegArgs.insert(Reg);
-    std::string name;
-    name = "%param";
-    name += utostr(RegArgs.size() - 1);
-    RegNames[Reg] = name;
-  }
-
-  /// addVirtualRegister - Adds a virtual register to the set of all used
-  /// registers in the function.
-  void addVirtualRegister(const TargetRegisterClass *TRC, unsigned Reg) {
-    std::string name;
-
-    // Do not count registers that are argument/return registers.
-    if (!RegRets.count(Reg) && !RegArgs.count(Reg)) {
-      UsedRegs[TRC].push_back(Reg);
-      if (TRC == PTX::RegPredRegisterClass)
-        name = "%p";
-      else if (TRC == PTX::RegI16RegisterClass)
-        name = "%rh";
-      else if (TRC == PTX::RegI32RegisterClass)
-        name = "%r";
-      else if (TRC == PTX::RegI64RegisterClass)
-        name = "%rd";
-      else if (TRC == PTX::RegF32RegisterClass)
-        name = "%f";
-      else if (TRC == PTX::RegF64RegisterClass)
-        name = "%fd";
-      else
-        llvm_unreachable("Invalid register class");
-
-      name += utostr(UsedRegs[TRC].size() - 1);
-      RegNames[Reg] = name;
-    }
   }
 
   /// getRegisterName - Returns the name of the specified virtual register. This
   /// name is used during PTX emission.
-  const char *getRegisterName(unsigned Reg) const {
-    if (RegNames.count(Reg))
-      return RegNames.find(Reg)->second.c_str();
+  std::string getRegisterName(unsigned Reg) const {
+    if (RegInfo.count(Reg)) {
+      const RegisterInfo& RI = RegInfo.lookup(Reg);
+      std::string Name;
+      raw_string_ostream NameStr(Name);
+      decodeRegisterName(NameStr, RI.Encoded);
+      NameStr.flush();
+      return Name;
+    }
     else if (Reg == PTX::NoRegister)
       return "%noreg";
     else
       llvm_unreachable("Register not in register name map");
   }
 
-  /// getNumRegistersForClass - Returns the number of virtual registers that are
-  /// used for the specified register class.
-  unsigned getNumRegistersForClass(const TargetRegisterClass *TRC) const {
-    return UsedRegs.lookup(TRC).size();
+  /// getEncodedRegisterName - Returns the name of the encoded register.
+  std::string getEncodedRegisterName(unsigned EncodedReg) const {
+    std::string Name;
+    raw_string_ostream NameStr(Name);
+    decodeRegisterName(NameStr, EncodedReg);
+    NameStr.flush();
+    return Name;
+  }
+
+  /// getRegisterType - Returns the type of the specified virtual register.
+  unsigned getRegisterType(unsigned Reg) const {
+    if (RegInfo.count(Reg))
+      return RegInfo.lookup(Reg).Type;
+    else
+      llvm_unreachable("Unknown register");
   }
 
   /// getOffsetForRegister - Returns the offset of the virtual register
-  unsigned getOffsetForRegister(const TargetRegisterClass *TRC,
-                                unsigned Reg) const {
-    const RegisterList &RegList = UsedRegs.lookup(TRC);
-    for (unsigned i = 0, e = RegList.size(); i != e; ++i) {
-      if (RegList[i] == Reg)
-        return i;
-    }
-    //llvm_unreachable("Unknown virtual register");
-    return 0;
+  unsigned getOffsetForRegister(unsigned Reg) const {
+    if (RegInfo.count(Reg))
+      return RegInfo.lookup(Reg).Offset;
+    else
+      return 0;
   }
 
   /// getFrameSymbol - Returns the symbol name for the given FrameIndex.

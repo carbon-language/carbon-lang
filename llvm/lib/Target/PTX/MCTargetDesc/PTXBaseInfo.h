@@ -17,6 +17,8 @@
 #ifndef PTXBASEINFO_H
 #define PTXBASEINFO_H
 
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "PTXMCTargetDesc.h"
 
 namespace llvm {
@@ -69,6 +71,63 @@ namespace llvm {
       F64
     };
   } // namespace PTXRegisterType
+
+  namespace PTXRegisterSpace {
+    // Register space encoded in MCOperands
+    enum {
+      Reg = 0,
+      Local,
+      Param,
+      Argument,
+      Return
+    };
+  }
+
+  inline static void decodeRegisterName(raw_ostream &OS,
+                                        unsigned EncodedReg) {
+    OS << "%";
+
+    unsigned RegSpace  = EncodedReg & 0x7;
+    unsigned RegType   = (EncodedReg >> 3) & 0x7;
+    unsigned RegOffset = EncodedReg >> 6;
+
+    switch (RegSpace) {
+    default:
+      llvm_unreachable("Unknown register space!");
+    case PTXRegisterSpace::Reg:
+      switch (RegType) {
+      default:
+        llvm_unreachable("Unknown register type!");
+      case PTXRegisterType::Pred:
+        OS << "p";
+        break;
+      case PTXRegisterType::B16:
+        OS << "rh";
+        break;
+      case PTXRegisterType::B32:
+        OS << "r";
+        break;
+      case PTXRegisterType::B64:
+        OS << "rd";
+        break;
+      case PTXRegisterType::F32:
+        OS << "f";
+        break;
+      case PTXRegisterType::F64:
+        OS << "fd";
+        break;
+      }
+      break;
+    case PTXRegisterSpace::Return:
+      OS << "ret";
+      break;
+    case PTXRegisterSpace::Argument:
+      OS << "arg";
+      break;
+    }
+
+    OS << RegOffset;
+  }
 } // namespace llvm
 
 #endif

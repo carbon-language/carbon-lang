@@ -51,23 +51,23 @@ using namespace llvm;
 static const char PARAM_PREFIX[] = "__param_";
 static const char RETURN_PREFIX[] = "__ret_";
 
-static const char *getRegisterTypeName(unsigned RegNo,
-                                       const MachineRegisterInfo& MRI) {
-  const TargetRegisterClass *TRC = MRI.getRegClass(RegNo);
-
-#define TEST_REGCLS(cls, clsstr) \
-  if (PTX::cls ## RegisterClass == TRC) return # clsstr;
-
-  TEST_REGCLS(RegPred, pred);
-  TEST_REGCLS(RegI16, b16);
-  TEST_REGCLS(RegI32, b32);
-  TEST_REGCLS(RegI64, b64);
-  TEST_REGCLS(RegF32, b32);
-  TEST_REGCLS(RegF64, b64);
-#undef TEST_REGCLS
-
-  llvm_unreachable("Not in any register class!");
-  return NULL;
+static const char *getRegisterTypeName(unsigned RegType) {
+  switch (RegType) {
+  default:
+    llvm_unreachable("Unknown register type");
+  case PTXRegisterType::Pred:
+    return ".pred";
+  case PTXRegisterType::B16:
+    return ".b16";
+  case PTXRegisterType::B32:
+    return ".b32";
+  case PTXRegisterType::B64:
+    return ".b64";
+  case PTXRegisterType::F32:
+    return ".f32";
+  case PTXRegisterType::F64:
+    return ".f64";
+  }
 }
 
 static const char *getStateSpaceName(unsigned addressSpace) {
@@ -188,32 +188,32 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
   unsigned numRegs;
 
   // pred
-  numRegs = MFI->getNumRegistersForClass(PTX::RegPredRegisterClass);
+  numRegs = MFI->countRegisters(PTXRegisterType::Pred, PTXRegisterSpace::Reg);
   if(numRegs > 0)
     os << "\t.reg .pred %p<" << numRegs << ">;\n";
 
   // i16
-  numRegs = MFI->getNumRegistersForClass(PTX::RegI16RegisterClass);
+  numRegs = MFI->countRegisters(PTXRegisterType::B16, PTXRegisterSpace::Reg);
   if(numRegs > 0)
     os << "\t.reg .b16 %rh<" << numRegs << ">;\n";
 
   // i32
-  numRegs = MFI->getNumRegistersForClass(PTX::RegI32RegisterClass);
+  numRegs = MFI->countRegisters(PTXRegisterType::B32, PTXRegisterSpace::Reg);
   if(numRegs > 0)
     os << "\t.reg .b32 %r<" << numRegs << ">;\n";
 
   // i64
-  numRegs = MFI->getNumRegistersForClass(PTX::RegI64RegisterClass);
+  numRegs = MFI->countRegisters(PTXRegisterType::B64, PTXRegisterSpace::Reg);
   if(numRegs > 0)
     os << "\t.reg .b64 %rd<" << numRegs << ">;\n";
 
   // f32
-  numRegs = MFI->getNumRegistersForClass(PTX::RegF32RegisterClass);
+  numRegs = MFI->countRegisters(PTXRegisterType::F32, PTXRegisterSpace::Reg);
   if(numRegs > 0)
     os << "\t.reg .f32 %f<" << numRegs << ">;\n";
 
   // f64
-  numRegs = MFI->getNumRegistersForClass(PTX::RegF64RegisterClass);
+  numRegs = MFI->countRegisters(PTXRegisterType::F64, PTXRegisterSpace::Reg);
   if(numRegs > 0)
     os << "\t.reg .f64 %fd<" << numRegs << ">;\n";
 
@@ -368,7 +368,6 @@ void PTXAsmPrinter::EmitFunctionEntryLabel() {
   const PTXParamManager &PM = MFI->getParamManager();
   const bool isKernel = MFI->isKernel();
   const PTXSubtarget& ST = TM.getSubtarget<PTXSubtarget>();
-  const MachineRegisterInfo& MRI = MF->getRegInfo();
 
   SmallString<128> decl;
   raw_svector_ostream os(decl);
@@ -391,7 +390,7 @@ void PTXAsmPrinter::EmitFunctionEntryLabel() {
         if (i != b)
           os << ", ";
 
-        os << ".reg ." << getRegisterTypeName(*i, MRI) << ' '
+        os << ".reg " << getRegisterTypeName(MFI->getRegisterType(*i)) << ' '
            << MFI->getRegisterName(*i);
       }
     }
@@ -450,7 +449,7 @@ void PTXAsmPrinter::EmitFunctionEntryLabel() {
       if (i != b)
         os << ", ";
 
-      os << ".reg ." << getRegisterTypeName(*i, MRI) << ' '
+      os << ".reg " << getRegisterTypeName(MFI->getRegisterType(*i)) << ' '
          << MFI->getRegisterName(*i);
     }
   }
@@ -521,34 +520,14 @@ MCOperand PTXAsmPrinter::GetSymbolRef(const MachineOperand &MO,
 MCOperand PTXAsmPrinter::lowerOperand(const MachineOperand &MO) {
   MCOperand MCOp;
   const PTXMachineFunctionInfo *MFI = MF->getInfo<PTXMachineFunctionInfo>();
-  const MachineRegisterInfo& MRI = MF->getRegInfo();
-  const TargetRegisterClass* TRC;
-  unsigned RegType;
-  unsigned RegOffset;
   unsigned EncodedReg;
   switch (MO.getType()) {
   default:
     llvm_unreachable("Unknown operand type");
   case MachineOperand::MO_Register:
     if (MO.getReg() > 0) {
-      TRC = MRI.getRegClass(MO.getReg());
-      // Determine which PTX register type to use
-      if (TRC == PTX::RegPredRegisterClass)
-        RegType = PTXRegisterType::Pred;
-      else if (TRC == PTX::RegI16RegisterClass)
-        RegType = PTXRegisterType::B16;
-      else if (TRC == PTX::RegI32RegisterClass)
-        RegType = PTXRegisterType::B32;
-      else if (TRC == PTX::RegI64RegisterClass)
-        RegType = PTXRegisterType::B64;
-      else if (TRC == PTX::RegF32RegisterClass)
-        RegType = PTXRegisterType::F32;
-      else if (TRC == PTX::RegF64RegisterClass)
-        RegType = PTXRegisterType::F64;
-      // Determine our virtual register offset
-      RegOffset = MFI->getOffsetForRegister(TRC, MO.getReg());
       // Encode the register
-      EncodedReg = (RegOffset << 4) | RegType;
+      EncodedReg = MFI->getEncodedRegister(MO.getReg());
     } else {
       EncodedReg = 0;
     }
