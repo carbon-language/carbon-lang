@@ -525,8 +525,13 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
           // A Thumb1 table jump may involve padding; for the offsets to
           // be right, functions containing these must be 4-byte aligned.
           // tBR_JTr expands to a mov pc followed by .align 2 and then the jump
-          // table entries. GetInstSizeInBytes returns the worst case size.
+          // table entries. So this code checks whether offset of tBR_JTr + 2
+          // is aligned.  That is held in Offset+MBBSize, which already has
+          // 2 added in for the size of the mov pc instruction.
           MF.EnsureAlignment(2U);
+          if ((Offset+MBBSize)%4 != 0 || HasInlineAsm)
+            // FIXME: Add a pseudo ALIGN instruction instead.
+            MBBSize += 2;           // padding
           continue;   // Does not get an entry in ImmBranches
         case ARM::t2BR_JT:
           T2JumpTables.push_back(I);
@@ -803,6 +808,23 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
     NewBBSize += TII->GetInstSizeInBytes(I);
   // Set the size of NewBB in BBSizes.  It does not include any padding now.
   BBSizes[NewBBI] = NewBBSize;
+
+  MachineInstr* ThumbJTMI = prior(NewBB->end());
+  if (ThumbJTMI->getOpcode() == ARM::tBR_JTr) {
+    // We've added another 2-byte instruction before this tablejump, which
+    // means we will always need padding if we didn't before, and vice versa.
+
+    // The original offset of the jump instruction was:
+    unsigned OrigOffset = BBOffsets[OrigBBI] + BBSizes[OrigBBI] - delta;
+    if (OrigOffset%4 == 0) {
+      // We had padding before and now we don't.  No net change in code size.
+      delta = 0;
+    } else {
+      // We didn't have padding before and now we do.
+      BBSizes[NewBBI] += 2;
+      delta = 4;
+    }
+  }
 
   // All BBOffsets following these blocks must be modified.
   if (delta)
