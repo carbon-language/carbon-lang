@@ -822,8 +822,9 @@ be used to verify some algorithms.
     represents floating point multiply accumulate operations without an
     intermediate rounding stage.</li>
   <li>A new <a href="LangRef.html#int_expect">llvm.expect intrinsic</a> allows a
-     frontend to express expected control flow (and the __builtin_expect builtin
-     from GNU C).</li>
+     frontend to express expected control flow (and the
+     <a href="BranchWeightMetadata.html#builtin_expect">
+     <code>__builtin_expect</code></a> from GNU C).</li>
   <li>The <a href="LangRef.html#int_prefetch">llvm.prefetch intrinsic</a> now
     takes a 4th argument that specifies whether the prefetch happens from the
     icache or dcache.</li>
