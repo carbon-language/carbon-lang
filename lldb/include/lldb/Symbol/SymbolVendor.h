@@ -58,7 +58,7 @@ public:
     ~SymbolVendor();
 
     void
-    AddSymbolFileRepresendation(const lldb::ObjectFileSP &objfile_sp);
+    AddSymbolFileRepresentation(const lldb::ObjectFileSP &objfile_sp);
 
     virtual void
     Dump(Stream *s);

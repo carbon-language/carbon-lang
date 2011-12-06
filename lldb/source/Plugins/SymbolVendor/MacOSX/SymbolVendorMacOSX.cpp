@@ -152,7 +152,7 @@ SymbolVendorMacOSX::CreateInstance(Module* module)
                     if (UUIDsMatch(module, dsym_objfile_sp.get()))
                     {
                         ReplaceDSYMSectionsWithExecutableSections (obj_file, dsym_objfile_sp.get());
-                        symbol_vendor->AddSymbolFileRepresendation(dsym_objfile_sp);
+                        symbol_vendor->AddSymbolFileRepresentation(dsym_objfile_sp);
                         return symbol_vendor;
                     }
                 }
@@ -161,7 +161,7 @@ SymbolVendorMacOSX::CreateInstance(Module* module)
             // Just create our symbol vendor using the current objfile as this is either
             // an executable with no dSYM (that we could locate), an executable with
             // a dSYM that has a UUID that doesn't match.
-            symbol_vendor->AddSymbolFileRepresendation(obj_file->GetSP());
+            symbol_vendor->AddSymbolFileRepresentation(obj_file->GetSP());
         }
     }
     return symbol_vendor;
