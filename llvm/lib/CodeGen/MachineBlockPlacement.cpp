@@ -36,10 +36,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/PostOrderIterator.h"
-#include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -54,22 +51,6 @@ STATISTIC(CondBranchTakenFreq,
           "Potential frequency of taking conditional branches");
 STATISTIC(UncondBranchTakenFreq,
           "Potential frequency of taking unconditional branches");
-
-namespace {
-/// \brief A structure for storing a weighted edge.
-///
-/// This stores an edge and its weight, computed as the product of the
-/// frequency that the starting block is entered with the probability of
-/// a particular exit block.
-struct WeightedEdge {
-  BlockFrequency EdgeFrequency;
-  MachineBasicBlock *From, *To;
-
-  bool operator<(const WeightedEdge &RHS) const {
-    return EdgeFrequency < RHS.EdgeFrequency;
-  }
-};
-}
 
 namespace {
 class BlockChain;
@@ -121,17 +102,15 @@ public:
   }
 
   /// \brief Iterator over blocks within the chain.
-  typedef SmallVectorImpl<MachineBasicBlock *>::iterator iterator;
-  typedef SmallVectorImpl<MachineBasicBlock *>::reverse_iterator
+  typedef SmallVectorImpl<MachineBasicBlock *>::const_iterator iterator;
+  typedef SmallVectorImpl<MachineBasicBlock *>::const_reverse_iterator
       reverse_iterator;
 
   /// \brief Beginning of blocks within the chain.
-  iterator begin() { return Blocks.begin(); }
-  reverse_iterator rbegin() { return Blocks.rbegin(); }
+  iterator begin() const { return Blocks.begin(); }
 
   /// \brief End of blocks within the chain.
-  iterator end() { return Blocks.end(); }
-  reverse_iterator rend() { return Blocks.rend(); }
+  iterator end() const { return Blocks.end(); }
 
   /// \brief Merge a block chain into this one.
   ///
