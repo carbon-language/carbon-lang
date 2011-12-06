@@ -916,9 +916,9 @@ public:
     if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)
       return false;
     // Immediate offset in range [-255, -1].
-    if (!Memory.OffsetImm) return true;
+    if (!Memory.OffsetImm) return false;
     int64_t Val = Memory.OffsetImm->getValue();
-    return Val > -256 && Val < 0;
+    return (Val == INT32_MIN) || (Val > -256 && Val < 0);
   }
   bool isMemUImm12Offset() const {
     if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)

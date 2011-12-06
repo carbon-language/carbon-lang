@@ -1371,12 +1371,16 @@ _func:
         pld [r6, #33]
         pld [r6, #257]
         pld [r7, #257]
+        pld [r1, #0]
+        pld [r1, #-0]
 
 @ CHECK: pld	[r5, #-4]               @ encoding: [0x15,0xf8,0x04,0xfc]
 @ CHECK: pld	[r6, #32]               @ encoding: [0x96,0xf8,0x20,0xf0]
 @ CHECK: pld	[r6, #33]               @ encoding: [0x96,0xf8,0x21,0xf0]
 @ CHECK: pld	[r6, #257]              @ encoding: [0x96,0xf8,0x01,0xf1]
 @ CHECK: pld	[r7, #257]              @ encoding: [0x97,0xf8,0x01,0xf1]
+@ CHECK: pld	[r1]                    @ encoding: [0x91,0xf8,0x00,0xf0]
+@ CHECK: pld	[r1, #-0]               @ encoding: [0x11,0xf8,0x00,0xfc]
 
 
 @------------------------------------------------------------------------------
