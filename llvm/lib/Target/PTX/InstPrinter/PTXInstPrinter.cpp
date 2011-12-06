@@ -38,7 +38,37 @@ StringRef PTXInstPrinter::getOpcodeName(unsigned Opcode) const {
 }
 
 void PTXInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
-  OS << getRegisterName(RegNo);
+  // Decode the register number into type and offset
+  unsigned RegType   = RegNo & 0xF;
+  unsigned RegOffset = RegNo >> 4;
+
+  // Print the register
+  OS << "%";
+
+  switch (RegType) {
+  default:
+    llvm_unreachable("Unknown register type!");
+  case PTXRegisterType::Pred:
+    OS << "p";
+    break;
+  case PTXRegisterType::B16:
+    OS << "rh";
+    break;
+  case PTXRegisterType::B32:
+    OS << "r";
+    break;
+  case PTXRegisterType::B64:
+    OS << "rd";
+    break;
+  case PTXRegisterType::F32:
+    OS << "f";
+    break;
+  case PTXRegisterType::F64:
+    OS << "fd";
+    break;
+  }
+
+  OS << RegOffset;
 }
 
 void PTXInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
@@ -139,6 +169,8 @@ void PTXInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     } else {
       O << "0000000000000000";
     }
+  } else if (Op.isReg()) {
+    printRegName(O, Op.getReg());
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
     const MCExpr *Expr = Op.getExpr();

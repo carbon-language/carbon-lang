@@ -143,18 +143,30 @@ public:
     return UsedRegs.lookup(TRC).size();
   }
 
+  /// getOffsetForRegister - Returns the offset of the virtual register
+  unsigned getOffsetForRegister(const TargetRegisterClass *TRC,
+                                unsigned Reg) const {
+    const RegisterList &RegList = UsedRegs.lookup(TRC);
+    for (unsigned i = 0, e = RegList.size(); i != e; ++i) {
+      if (RegList[i] == Reg)
+        return i;
+    }
+    //llvm_unreachable("Unknown virtual register");
+    return 0;
+  }
+
   /// getFrameSymbol - Returns the symbol name for the given FrameIndex.
   const char* getFrameSymbol(int FrameIndex) {
     if (FrameSymbols.count(FrameIndex)) {
       return FrameSymbols.lookup(FrameIndex).c_str();
     } else {
-      std::string Name = "__local";
-      Name += utostr(FrameIndex);
+      std::string Name          = "__local";
+      Name                     += utostr(FrameIndex);
       // The whole point of caching this name is to ensure the pointer we pass
       // to any getExternalSymbol() calls will remain valid for the lifetime of
       // the back-end instance. This is to work around an issue in SelectionDAG
       // where symbol names are expected to be life-long strings.
-      FrameSymbols[FrameIndex] = Name;
+      FrameSymbols[FrameIndex]  = Name;
       return FrameSymbols[FrameIndex].c_str();
     }
   }

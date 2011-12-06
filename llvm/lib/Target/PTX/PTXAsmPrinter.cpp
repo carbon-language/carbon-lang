@@ -521,20 +521,38 @@ MCOperand PTXAsmPrinter::GetSymbolRef(const MachineOperand &MO,
 MCOperand PTXAsmPrinter::lowerOperand(const MachineOperand &MO) {
   MCOperand MCOp;
   const PTXMachineFunctionInfo *MFI = MF->getInfo<PTXMachineFunctionInfo>();
-  const MCExpr *Expr;
-  const char *RegSymbolName;
+  const MachineRegisterInfo& MRI = MF->getRegInfo();
+  const TargetRegisterClass* TRC;
+  unsigned RegType;
+  unsigned RegOffset;
+  unsigned EncodedReg;
   switch (MO.getType()) {
   default:
     llvm_unreachable("Unknown operand type");
   case MachineOperand::MO_Register:
-    // We create register operands as symbols, since the PTXInstPrinter class
-    // has no way to map virtual registers back to a name without some ugly
-    // hacks.
-    // FIXME: Figure out a better way to handle virtual register naming.
-    RegSymbolName = MFI->getRegisterName(MO.getReg());
-    Expr = MCSymbolRefExpr::Create(RegSymbolName, MCSymbolRefExpr::VK_None,
-                                   OutContext);
-    MCOp = MCOperand::CreateExpr(Expr);
+    if (MO.getReg() > 0) {
+      TRC = MRI.getRegClass(MO.getReg());
+      // Determine which PTX register type to use
+      if (TRC == PTX::RegPredRegisterClass)
+        RegType = PTXRegisterType::Pred;
+      else if (TRC == PTX::RegI16RegisterClass)
+        RegType = PTXRegisterType::B16;
+      else if (TRC == PTX::RegI32RegisterClass)
+        RegType = PTXRegisterType::B32;
+      else if (TRC == PTX::RegI64RegisterClass)
+        RegType = PTXRegisterType::B64;
+      else if (TRC == PTX::RegF32RegisterClass)
+        RegType = PTXRegisterType::F32;
+      else if (TRC == PTX::RegF64RegisterClass)
+        RegType = PTXRegisterType::F64;
+      // Determine our virtual register offset
+      RegOffset = MFI->getOffsetForRegister(TRC, MO.getReg());
+      // Encode the register
+      EncodedReg = (RegOffset << 4) | RegType;
+    } else {
+      EncodedReg = 0;
+    }
+    MCOp = MCOperand::CreateReg(EncodedReg);
     break;
   case MachineOperand::MO_Immediate:
     MCOp = MCOperand::CreateImm(MO.getImm());

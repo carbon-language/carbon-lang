@@ -57,6 +57,18 @@ namespace llvm {
       RndPosInfInt        = 10  // .rpi
     };
   } // namespace PTXII
+
+  namespace PTXRegisterType {
+    // Register type encoded in MCOperands
+    enum {
+      Pred  = 0,
+      B16,
+      B32,
+      B64,
+      F32,
+      F64
+    };
+  } // namespace PTXRegisterType
 } // namespace llvm
 
 #endif
