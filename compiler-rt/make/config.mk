@@ -39,3 +39,7 @@ Echo := @echo
 ifndef Summary
   Summary = $(Echo)
 endif
+
+###
+# Common compiler options
+COMMON_CXXFLAGS=-fno-exceptions
