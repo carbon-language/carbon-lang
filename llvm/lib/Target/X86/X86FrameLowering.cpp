@@ -475,9 +475,6 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
   unsigned StackPtr = RegInfo->getStackRegister();
 
-  X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
-  int TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
-
   bool Is64Bit = STI.is64Bit();
   bool HasFP = hasFP(MF);
 
@@ -490,7 +487,6 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
   unsigned PushInstrSize = 1;
   unsigned MoveInstr = (Is64Bit ? X86::MOV64rr : X86::MOV32rr);
   unsigned MoveInstrSize = (Is64Bit ? 3 : 2);
-  unsigned SubtractInstr = getSUBriOpcode(Is64Bit, -TailCallReturnAddrDelta);
   unsigned SubtractInstrIdx = (Is64Bit ? 3 : 2);
 
   unsigned StackDivide = (Is64Bit ? 8 : 4);
@@ -529,7 +525,8 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
       memset(SavedRegs, 0, sizeof(SavedRegs));
       SavedRegIdx = CU_NUM_SAVED_REGS;
       InstrOffset += MoveInstrSize;
-    } else if (Opc == SubtractInstr) {
+    } else if (Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
+               Opc == X86::SUB32ri || Opc == X86::SUB32ri8) {
       if (StackSize)
         // We already have a stack size.
         return 0;
