@@ -1013,7 +1013,6 @@ Lforward:
 @ CHECK: muls	r5, r6, r7              @ encoding: [0x96,0x07,0x15,0xe0]
 @ CHECK: mulgt	r5, r6, r7              @ encoding: [0x96,0x07,0x05,0xc0]
 @ CHECK: mulsle	r5, r6, r7              @ encoding: [0x96,0x07,0x15,0xd0]
-@ CHECK: mul	r11, r11, r5            @ encoding: [0x9b,0x05,0x0b,0xe0]
 
 
 @------------------------------------------------------------------------------

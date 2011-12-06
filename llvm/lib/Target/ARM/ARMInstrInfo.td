@@ -5067,4 +5067,4 @@ def : ARMInstAlias<"ror${s}${p} $Rn, $Rm",
 
 // 'mul' instruction can be specified with only two operands.
 def : ARMInstAlias<"mul${s}${p} $Rn, $Rm",
-                   (MUL rGPR:$Rn, rGPR:$Rn, rGPR:$Rm, pred:$p, cc_out:$s)>;
+                   (MUL rGPR:$Rn, rGPR:$Rm, rGPR:$Rn, pred:$p, cc_out:$s)>;
