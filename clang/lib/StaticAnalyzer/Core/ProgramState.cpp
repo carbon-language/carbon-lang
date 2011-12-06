@@ -560,6 +560,8 @@ bool ScanReachableSymbols::scan(const SymExpr *sym) {
     case SymExpr::ExtentKind:
     case SymExpr::MetadataKind:
       break;
+    case SymExpr::CastSymbolKind:
+      return scan(cast<SymbolCast>(sym)->getOperand());
     case SymExpr::SymIntKind:
       return scan(cast<SymIntExpr>(sym)->getLHS());
     case SymExpr::SymSymKind: {
@@ -672,9 +674,14 @@ bool ProgramState::isTainted(const SymExpr* Sym, TaintTagType Kind) const {
   if (!Sym)
     return false;
 
+  // TODO: Can we use symbol_iterator (like removeDeadBindingsWorker) here?
+
   // Check taint on derived symbols.
   if (const SymbolDerived *SD = dyn_cast<SymbolDerived>(Sym))
     return isTainted(SD->getParentSymbol(), Kind);
+
+  if (const SymbolCast *SC = dyn_cast<SymbolCast>(Sym))
+    return (isTainted(SC->getOperand(), Kind));
 
   if (const SymIntExpr *SIE = dyn_cast<SymIntExpr>(Sym))
     return isTainted(SIE->getLHS(), Kind);

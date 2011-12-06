@@ -66,6 +66,12 @@ void SymSymExpr::dumpToStream(raw_ostream &os) const {
   os << ')';
 }
 
+void SymbolCast::dumpToStream(raw_ostream &os) const {
+  os << '(' << ToTy.getAsString() << ") (";
+  Operand->dumpToStream(os);
+  os << ')';
+}
+
 void SymbolConjured::dumpToStream(raw_ostream &os) const {
   os << "conj_$" << getSymbolID() << '{' << T.getAsString() << '}';
 }
@@ -172,6 +178,22 @@ SymbolManager::getMetadataSymbol(const MemRegion* R, const Stmt *S, QualType T,
   }
 
   return cast<SymbolMetadata>(SD);
+}
+
+const SymbolCast*
+SymbolManager::getCastSymbol(const SymExpr *Op,
+                             QualType From, QualType To) {
+  llvm::FoldingSetNodeID ID;
+  SymbolCast::Profile(ID, Op, From, To);
+  void *InsertPos;
+  SymExpr *data = DataSet.FindNodeOrInsertPos(ID, InsertPos);
+  if (!data) {
+    data = (SymbolCast*) BPAlloc.Allocate<SymbolCast>();
+    new (data) SymbolCast(Op, From, To);
+    DataSet.InsertNode(data, InsertPos);
+  }
+
+  return cast<SymbolCast>(data);
 }
 
 const SymIntExpr *SymbolManager::getSymIntExpr(const SymExpr *lhs,

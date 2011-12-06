@@ -56,6 +56,12 @@ NonLoc SValBuilder::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
   return nonloc::SymbolVal(SymMgr.getSymSymExpr(lhs, op, rhs, type));
 }
 
+NonLoc SValBuilder::makeNonLoc(const SymExpr *operand,
+                               QualType fromTy, QualType toTy) {
+  assert(operand);
+  assert(!Loc::isLocType(toTy));
+  return nonloc::SymbolVal(SymMgr.getCastSymbol(operand, fromTy, toTy));
+}
 
 SVal SValBuilder::convertToArrayIndex(SVal val) {
   if (val.isUnknownOrUndef())
@@ -220,21 +226,7 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
   if (!castTy->isVariableArrayType() && !originalTy->isVariableArrayType())
     if (Context.hasSameUnqualifiedType(castTy, originalTy))
       return val;
-
-  // Check for casts to real or complex numbers.  We don't handle these at all
-  // right now.
-  if (castTy->isFloatingType() || castTy->isAnyComplexType())
-    return UnknownVal();
   
-  // Check for casts from integers to integers.
-  if (castTy->isIntegerType() && originalTy->isIntegerType()) {
-    if (isa<Loc>(val))
-      // This can be a cast to ObjC property of type int.
-      return evalCastFromLoc(cast<Loc>(val), castTy);
-    else
-      return evalCastFromNonLoc(cast<NonLoc>(val), castTy);
-  }
-
   // Check for casts from pointers to integers.
   if (castTy->isIntegerType() && Loc::isLocType(originalTy))
     return evalCastFromLoc(cast<Loc>(val), castTy);
@@ -249,7 +241,7 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
       }
       return LV->getLoc();
     }
-    goto DispatchCast;
+    return dispatchCast(val, castTy);
   }
 
   // Just pass through function and block pointers.
@@ -323,8 +315,9 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
     return R ? SVal(loc::MemRegionVal(R)) : UnknownVal();
   }
 
-DispatchCast:
-  // All other cases.
-  return isa<Loc>(val) ? evalCastFromLoc(cast<Loc>(val), castTy)
-                       : evalCastFromNonLoc(cast<NonLoc>(val), castTy);
+  // Check for casts from integers to integers.
+  if (castTy->isIntegerType() && originalTy->isIntegerType())
+    return dispatchCast(val, castTy);
+
+  return dispatchCast(val, castTy);
 }

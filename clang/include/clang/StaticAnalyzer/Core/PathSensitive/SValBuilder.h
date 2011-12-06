@@ -48,11 +48,13 @@ protected:
   /// The width of the scalar type used for array indices.
   const unsigned ArrayIndexWidth;
 
+  virtual SVal evalCastFromNonLoc(NonLoc val, QualType castTy) = 0;
+  virtual SVal evalCastFromLoc(Loc val, QualType castTy) = 0;
+
 public:
   // FIXME: Make these protected again once RegionStoreManager correctly
   // handles loads from different bound value types.
-  virtual SVal evalCastFromNonLoc(NonLoc val, QualType castTy) = 0;
-  virtual SVal evalCastFromLoc(Loc val, QualType castTy) = 0;
+  virtual SVal dispatchCast(SVal val, QualType castTy) = 0;
 
 public:
   SValBuilder(llvm::BumpPtrAllocator &alloc, ASTContext &context,
@@ -242,6 +244,9 @@ public:
 
   NonLoc makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
                     const SymExpr *rhs, QualType type);
+
+  /// \brief Create a NonLoc value for cast.
+  NonLoc makeNonLoc(const SymExpr *operand, QualType fromTy, QualType toTy);
 
   nonloc::ConcreteInt makeTruthVal(bool b, QualType type) {
     return nonloc::ConcreteInt(BasicVals.getTruthValue(b, type));

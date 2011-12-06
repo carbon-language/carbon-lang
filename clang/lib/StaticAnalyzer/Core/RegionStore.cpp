@@ -1720,7 +1720,7 @@ void removeDeadBindingsWorker::VisitBinding(SVal V) {
   if (const MemRegion *R = V.getAsRegion())
     AddToWorkList(R);
 
-    // Update the set of live symbols.
+  // Update the set of live symbols.
   for (SVal::symbol_iterator SI=V.symbol_begin(), SE=V.symbol_end();
        SI!=SE;++SI)
     SymReaper.markLive(*SI);

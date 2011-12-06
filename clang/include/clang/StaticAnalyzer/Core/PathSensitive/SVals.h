@@ -299,6 +299,7 @@ public:
   }
 };
 
+/// \brief Value representing integer constant.
 class ConcreteInt : public NonLoc {
 public:
   explicit ConcreteInt(const llvm::APSInt& V) : NonLoc(ConcreteIntKind, &V) {}

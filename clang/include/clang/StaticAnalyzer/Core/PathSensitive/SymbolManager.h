@@ -48,7 +48,7 @@ public:
               MetadataKind,
               BEGIN_SYMBOLS = RegionValueKind,
               END_SYMBOLS = MetadataKind,
-              SymIntKind, SymSymKind };
+              SymIntKind, SymSymKind, CastSymbolKind };
 private:
   Kind K;
 
@@ -276,6 +276,42 @@ public:
   }
 };
 
+/// \brief Represents a cast expression.
+class SymbolCast : public SymExpr {
+  const SymExpr *Operand;
+  /// Type of the operand.
+  QualType FromTy;
+  /// The type of the result.
+  QualType ToTy;
+
+public:
+  SymbolCast(const SymExpr *In, QualType From, QualType To) :
+    SymExpr(CastSymbolKind), Operand(In), FromTy(From), ToTy(To) { }
+
+  QualType getType(ASTContext &C) const { return ToTy; }
+
+  const SymExpr *getOperand() const { return Operand; };
+
+  void dumpToStream(raw_ostream &os) const;
+
+  static void Profile(llvm::FoldingSetNodeID& ID,
+                      const SymExpr *In, QualType From, QualType To) {
+    ID.AddInteger((unsigned) CastSymbolKind);
+    ID.AddPointer(In);
+    ID.Add(From);
+    ID.Add(To);
+  }
+
+  void Profile(llvm::FoldingSetNodeID& ID) {
+    Profile(ID, Operand, FromTy, ToTy);
+  }
+
+  // Implement isa<T> support.
+  static inline bool classof(const SymExpr *SE) {
+    return SE->getKind() == CastSymbolKind;
+  }
+};
+
 /// SymIntExpr - Represents symbolic expression like 'x' + 3.
 class SymIntExpr : public SymExpr {
   const SymExpr *LHS;
@@ -407,6 +443,9 @@ public:
   const SymbolMetadata* getMetadataSymbol(const MemRegion* R, const Stmt *S,
                                           QualType T, unsigned VisitCount,
                                           const void *SymbolTag = 0);
+
+  const SymbolCast* getCastSymbol(const SymExpr *Operand,
+                                  QualType From, QualType To);
 
   const SymIntExpr *getSymIntExpr(const SymExpr *lhs, BinaryOperator::Opcode op,
                                   const llvm::APSInt& rhs, QualType t);

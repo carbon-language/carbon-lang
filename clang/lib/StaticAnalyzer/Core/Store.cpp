@@ -212,7 +212,7 @@ const MemRegion *StoreManager::castRegion(const MemRegion *R, QualType CastToTy)
 SVal StoreManager::CastRetrievedVal(SVal V, const TypedValueRegion *R,
                                     QualType castTy, bool performTestOnly) {
   
-  if (castTy.isNull())
+  if (castTy.isNull() || V.isUnknownOrUndef())
     return V;
   
   ASTContext &Ctx = svalBuilder.getContext();
@@ -227,12 +227,8 @@ SVal StoreManager::CastRetrievedVal(SVal V, const TypedValueRegion *R,
     return V;
   }
   
-  if (const Loc *L = dyn_cast<Loc>(&V))
-    return svalBuilder.evalCastFromLoc(*L, castTy);
-  else if (const NonLoc *NL = dyn_cast<NonLoc>(&V))
-    return svalBuilder.evalCastFromNonLoc(*NL, castTy);
-  
-  return V;
+  assert(isa<Loc>(&V) || isa<NonLoc>(&V));
+  return svalBuilder.dispatchCast(V, castTy);
 }
 
 SVal StoreManager::getLValueFieldOrIvar(const Decl *D, SVal Base) {

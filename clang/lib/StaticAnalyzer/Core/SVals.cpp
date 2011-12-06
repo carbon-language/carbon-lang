@@ -91,6 +91,7 @@ SymbolRef SVal::getLocSymbolInBase() const {
   return 0;
 }
 
+// TODO: The next 3 functions have to be simplified.
 /// getAsSymbol - If this Sval wraps a symbol return that SymbolRef.
 ///  Otherwise return 0.
 // FIXME: should we consider SymbolRef wrapped in CodeTextRegion?
@@ -168,6 +169,10 @@ void SVal::symbol_iterator::expand() {
   const SymExpr *SE = itr.back();
   itr.pop_back();
 
+  if (const SymbolCast *SC = dyn_cast<SymbolCast>(SE)) {
+    itr.push_back(SC->getOperand());
+    return;
+  }
   if (const SymIntExpr *SIE = dyn_cast<SymIntExpr>(SE)) {
     itr.push_back(SIE->getLHS());
     return;

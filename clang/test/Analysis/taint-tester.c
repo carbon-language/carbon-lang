@@ -12,4 +12,12 @@ void bufferScanfAssignment(int x) {
   scanf("%d", &n);
   addr += n;// expected-warning {{tainted}}
   *addr = n; // expected-warning 2 {{tainted}}
+
+  double tdiv = n / 30; // expected-warning 3 {{tainted}}
+  char *loc_cast = (char *) n; // expected-warning {{tainted}}
+  char tinc = tdiv++; // expected-warning {{tainted}}
+  int tincdec = (char)tinc--; // expected-warning 2 {{tainted}}
+  int tprtarithmetic1 = *(addr+1);
+
+
 }

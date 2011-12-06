@@ -20,6 +20,7 @@ using namespace ento;
 namespace {
 class SimpleSValBuilder : public SValBuilder {
 protected:
+  virtual SVal dispatchCast(SVal val, QualType castTy);
   virtual SVal evalCastFromNonLoc(NonLoc val, QualType castTy);
   virtual SVal evalCastFromLoc(Loc val, QualType castTy);
 
@@ -57,6 +58,11 @@ SValBuilder *ento::createSimpleSValBuilder(llvm::BumpPtrAllocator &alloc,
 // Transfer function for Casts.
 //===----------------------------------------------------------------------===//
 
+SVal SimpleSValBuilder::dispatchCast(SVal val, QualType castTy) {
+  return isa<Loc>(val) ? evalCastFromLoc(cast<Loc>(val), castTy)
+                       : evalCastFromNonLoc(cast<NonLoc>(val), castTy);
+}
+
 SVal SimpleSValBuilder::evalCastFromNonLoc(NonLoc val, QualType castTy) {
 
   bool isLocType = Loc::isLocType(castTy);
@@ -86,6 +92,8 @@ SVal SimpleSValBuilder::evalCastFromNonLoc(NonLoc val, QualType castTy) {
     if (T->isIntegerType() && castTy->isIntegerType())
       return val;
 
+    if (!isLocType)
+      return makeNonLoc(se, T, castTy);
     return UnknownVal();
   }
 
