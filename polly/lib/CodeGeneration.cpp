@@ -873,24 +873,28 @@ public:
   }
 
   /// @brief Create a classical sequential loop.
-  void codegenForSequential(const clast_for *f, Value *lowerBound = 0,
-                                                Value *upperBound = 0) {
-    APInt Stride = APInt_from_MPZ(f->stride);
+  void codegenForSequential(const clast_for *f, Value *LowerBound = 0,
+                                                Value *UpperBound = 0) {
+    APInt Stride;
     PHINode *IV;
     Value *IncrementedIV;
-    BasicBlock *AfterBB;
+    BasicBlock *AfterBB, *HeaderBB, *LastBodyBB;
+    Type *IntPtrTy;
+
+    Stride = APInt_from_MPZ(f->stride);
+    IntPtrTy = TD->getIntPtrType(Builder.getContext());
+
     // The value of lowerbound and upperbound will be supplied, if this
     // function is called while generating OpenMP code. Otherwise get
     // the values.
-    assert(((lowerBound && upperBound) || (!lowerBound && !upperBound))
-                                && "Either give both bounds or none");
-    if (lowerBound == 0 || upperBound == 0) {
-        lowerBound = ExpGen.codegen(f->LB,
-                                    TD->getIntPtrType(Builder.getContext()));
-        upperBound = ExpGen.codegen(f->UB,
-                                    TD->getIntPtrType(Builder.getContext()));
+    assert(!!LowerBound == !!UpperBound && "Either give both bounds or none");
+
+    if (LowerBound == 0) {
+        LowerBound = ExpGen.codegen(f->LB, IntPtrTy);
+        UpperBound = ExpGen.codegen(f->UB, IntPtrTy);
     }
-    createLoop(&Builder, lowerBound, upperBound, Stride, IV, AfterBB,
+
+    createLoop(&Builder, LowerBound, UpperBound, Stride, IV, AfterBB,
                IncrementedIV, DT);
 
     // Add loop iv to symbols.
@@ -902,8 +906,8 @@ public:
     // Loop is finished, so remove its iv from the live symbols.
     clastVars->erase(f->iterator);
 
-    BasicBlock *HeaderBB = *pred_begin(AfterBB);
-    BasicBlock *LastBodyBB = Builder.GetInsertBlock();
+    HeaderBB = *pred_begin(AfterBB);
+    LastBodyBB = Builder.GetInsertBlock();
     Builder.CreateBr(HeaderBB);
     IV->addIncoming(IncrementedIV, LastBodyBB);
     Builder.SetInsertPoint(AfterBB);
