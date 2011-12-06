@@ -1355,6 +1355,9 @@ void ARMConstantIslands::RemoveDeadCPEMI(MachineInstr *CPEMI) {
       Size += BBSizes[CPEBB->getNumber()];
       BBSizes[CPEBB->getNumber()] = 0;
     }
+
+    // This block no longer needs to be aligned. <rdar://problem/10534709>.
+    CPEBB->setAlignment(0);
   }
   AdjustBBOffsetsAfter(CPEBB, -Size);
   // An island has only one predecessor BB and one successor BB. Check if
