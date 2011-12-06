@@ -747,7 +747,8 @@ private:
 public:
   /// Compute the effective fragment size assuming it is laid out at the given
   /// \arg SectionAddress and \arg FragmentOffset.
-  uint64_t computeFragmentSize(const MCAsmLayout &Layout, const MCFragment &F) const;
+  uint64_t computeFragmentSize(const MCAsmLayout &Layout,
+                               const MCFragment &F) const;
 
   /// Find the symbol which defines the atom containing the given symbol, or
   /// null if there is no such symbol.
