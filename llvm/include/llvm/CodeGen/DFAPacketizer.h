@@ -42,35 +42,35 @@ private:
   const int (*DFAStateInputTable)[2];
   const unsigned *DFAStateEntryTable;
 
-  // CachedTable is a map from <FromState, Input> to ToState
+  // CachedTable is a map from <FromState, Input> to ToState.
   DenseMap<UnsignPair, unsigned> CachedTable;
 
-  // ReadTable - Read the DFA transition table and update CachedTable
+  // ReadTable - Read the DFA transition table and update CachedTable.
   void ReadTable(unsigned int state);
 
 public:
   DFAPacketizer(const InstrItineraryData* I, const int (*SIT)[2],
                 const unsigned* SET);
 
-  // Reset the current state to make all resources available
+  // Reset the current state to make all resources available.
   void clearResources() {
     CurrentState = 0;
   }
 
   // canReserveResources - Check if the resources occupied by a MCInstrDesc
-  // are available in the current state
+  // are available in the current state.
   bool canReserveResources(const llvm::MCInstrDesc* MID);
 
   // reserveResources - Reserve the resources occupied by a MCInstrDesc and
-  // change the current state to reflect that change
+  // change the current state to reflect that change.
   void reserveResources(const llvm::MCInstrDesc* MID);
 
   // canReserveResources - Check if the resources occupied by a machine
-  // instruction are available in the current state
+  // instruction are available in the current state.
   bool canReserveResources(llvm::MachineInstr* MI);
 
   // reserveResources - Reserve the resources occupied by a machine
-  // instruction and change the current state to reflect that change
+  // instruction and change the current state to reflect that change.
   void reserveResources(llvm::MachineInstr* MI);
 };
 }

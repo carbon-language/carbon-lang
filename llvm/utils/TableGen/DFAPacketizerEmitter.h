@@ -25,14 +25,14 @@
 namespace llvm {
 //
 // class DFAGen: class that generates and prints out the DFA for resource
-// tracking
+// tracking.
 //
 class DFAGen : public TableGenBackend {
 private:
   std::string TargetName;
   //
   // allInsnClasses is the set of all possible resources consumed by an
-  // InstrStage
+  // InstrStage.
   //
   DenseSet<unsigned> allInsnClasses;
   RecordKeeper &Records;
