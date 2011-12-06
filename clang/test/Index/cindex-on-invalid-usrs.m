@@ -4,4 +4,4 @@
 @interface Rdar8452791 () - (void)rdar8452791;
 
 // CHECK: error: cannot find interface declaration for 'Rdar8452791'
-// CHECK: missing @end
+// CHECK: missing '@end'

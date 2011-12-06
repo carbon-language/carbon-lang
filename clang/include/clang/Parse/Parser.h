@@ -716,6 +716,7 @@ public:
 private:
   void SuggestParentheses(SourceLocation Loc, unsigned DK,
                           SourceRange ParenRange);
+  void CheckNestedObjCContexts(SourceLocation AtLoc);
 
   /// SkipUntil - Read tokens until we get to the specified token, then consume
   /// it (unless DontConsume is true).  Because we cannot guarantee that the
@@ -1204,7 +1205,7 @@ private:
   // Objective-C External Declarations
   Parser::DeclGroupPtrTy ParseObjCAtDirectives();
   Parser::DeclGroupPtrTy ParseObjCAtClassDeclaration(SourceLocation atLoc);
-  Decl *ParseObjCAtInterfaceDeclaration(SourceLocation atLoc,
+  Decl *ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
                                         ParsedAttributes &prefixAttrs);
   void ParseObjCClassInstanceVariables(Decl *interfaceDecl,
                                        tok::ObjCKeywordKind visibility,
@@ -1225,7 +1226,7 @@ private:
   typedef SmallVector<LexedMethod*, 2> LateParsedObjCMethodContainer;
   LateParsedObjCMethodContainer LateParsedObjCMethods;
 
-  Decl *ParseObjCAtImplementationDeclaration(SourceLocation atLoc);
+  Decl *ParseObjCAtImplementationDeclaration(SourceLocation AtLoc);
   DeclGroupPtrTy ParseObjCAtEndDeclaration(SourceRange atEnd);
   Decl *ParseObjCAtAliasDeclaration(SourceLocation atLoc);
   Decl *ParseObjCPropertySynthesize(SourceLocation atLoc);

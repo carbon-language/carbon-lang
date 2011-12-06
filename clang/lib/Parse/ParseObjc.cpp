@@ -113,6 +113,23 @@ Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
                                               ClassNames.size());
 }
 
+void Parser::CheckNestedObjCContexts(SourceLocation AtLoc)
+{
+  Sema::ObjCContainerKind ock = Actions.getObjCContainerKind();
+  if (ock == Sema::OCK_None)
+    return;
+
+  Decl *Decl = Actions.ActOnAtEnd(getCurScope(), AtLoc);
+  Diag(AtLoc, diag::err_objc_missing_end)
+      << FixItHint::CreateInsertion(AtLoc, "@end\n");
+  if (Decl)
+    Diag(Decl->getLocStart(), diag::note_objc_container_start)
+        << (int) ock;
+  if (!PendingObjCImpDecl.empty())
+    PendingObjCImpDecl.pop_back();
+  ObjCImpDecl = 0;
+}
+
 ///
 ///   objc-interface:
 ///     objc-class-interface-attributes[opt] objc-class-interface
@@ -141,10 +158,11 @@ Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
 ///     __attribute__((unavailable))
 ///     __attribute__((objc_exception)) - used by NSException on 64-bit
 ///
-Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation atLoc,
+Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
                                               ParsedAttributes &attrs) {
   assert(Tok.isObjCAtKeyword(tok::objc_interface) &&
          "ParseObjCAtInterfaceDeclaration(): Expected @interface");
+  CheckNestedObjCContexts(AtLoc);
   ConsumeToken(); // the "interface" identifier
 
   // Code completion after '@interface'.
@@ -205,7 +223,7 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation atLoc,
       return 0;
 
     Decl *CategoryType =
-    Actions.ActOnStartCategoryInterface(atLoc,
+    Actions.ActOnStartCategoryInterface(AtLoc,
                                         nameId, nameLoc,
                                         categoryId, categoryLoc,
                                         ProtocolRefs.data(),
@@ -214,7 +232,7 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation atLoc,
                                         EndProtoLoc);
     
     if (Tok.is(tok::l_brace))
-      ParseObjCClassInstanceVariables(CategoryType, tok::objc_private, atLoc);
+      ParseObjCClassInstanceVariables(CategoryType, tok::objc_private, AtLoc);
       
     ParseObjCInterfaceDeclList(tok::objc_not_keyword, CategoryType);
     return CategoryType;
@@ -250,14 +268,14 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation atLoc,
     return 0;
 
   Decl *ClsType =
-    Actions.ActOnStartClassInterface(atLoc, nameId, nameLoc,
+    Actions.ActOnStartClassInterface(AtLoc, nameId, nameLoc,
                                      superClassId, superClassLoc,
                                      ProtocolRefs.data(), ProtocolRefs.size(),
                                      ProtocolLocs.data(),
                                      EndProtoLoc, attrs.getList());
 
   if (Tok.is(tok::l_brace))
-    ParseObjCClassInstanceVariables(ClsType, tok::objc_protected, atLoc);
+    ParseObjCClassInstanceVariables(ClsType, tok::objc_protected, AtLoc);
 
   ParseObjCInterfaceDeclList(tok::objc_interface, ClsType);
   return ClsType;
@@ -425,7 +443,10 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
         
     case tok::objc_implementation:
     case tok::objc_interface:
-      Diag(Tok, diag::err_objc_missing_end);
+      Diag(AtLoc, diag::err_objc_missing_end)
+          << FixItHint::CreateInsertion(AtLoc, "@end\n");
+      Diag(CDecl->getLocStart(), diag::note_objc_container_start)
+          << (int) Actions.getObjCContainerKind();
       ConsumeToken();
       break;
         
@@ -465,10 +486,16 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCAtDirective(getCurScope());
     return cutOffParsing();
-  } else if (Tok.isObjCAtKeyword(tok::objc_end))
+  } else if (Tok.isObjCAtKeyword(tok::objc_end)) {
     ConsumeToken(); // the "end" identifier
-  else
-    Diag(Tok, diag::err_objc_missing_end);
+  } else {
+    Diag(Tok, diag::err_objc_missing_end)
+        << FixItHint::CreateInsertion(Tok.getLocation(), "\n@end\n");
+    Diag(CDecl->getLocStart(), diag::note_objc_container_start)
+        << (int) Actions.getObjCContainerKind();
+    AtEnd.setBegin(Tok.getLocation());
+    AtEnd.setEnd(Tok.getLocation());
+  }
 
   // Insert collected methods declarations into the @interface object.
   // This passes in an invalid SourceLocation for AtEndLoc when EOF is hit.
@@ -1316,6 +1343,7 @@ Decl *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
                                              ParsedAttributes &attrs) {
   assert(Tok.isObjCAtKeyword(tok::objc_protocol) &&
          "ParseObjCAtProtocolDeclaration(): Expected @protocol");
+  CheckNestedObjCContexts(AtLoc);
   ConsumeToken(); // the "protocol" identifier
 
   if (Tok.is(tok::code_completion)) {
@@ -1399,10 +1427,10 @@ Decl *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
 ///
 ///   objc-category-implementation-prologue:
 ///     @implementation identifier ( identifier )
-Decl *Parser::ParseObjCAtImplementationDeclaration(
-  SourceLocation atLoc) {
+Decl *Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_implementation) &&
          "ParseObjCAtImplementationDeclaration(): Expected @implementation");
+  CheckNestedObjCContexts(AtLoc);
   ConsumeToken(); // the "implementation" identifier
 
   // Code completion after '@implementation'.
@@ -1446,7 +1474,7 @@ Decl *Parser::ParseObjCAtImplementationDeclaration(
     }
     rparenLoc = ConsumeParen();
     Decl *ImplCatType = Actions.ActOnStartCategoryImplementation(
-                                    atLoc, nameId, nameLoc, categoryId,
+                                    AtLoc, nameId, nameLoc, categoryId,
                                     categoryLoc);
 
     ObjCImpDecl = ImplCatType;
@@ -1467,11 +1495,11 @@ Decl *Parser::ParseObjCAtImplementationDeclaration(
     superClassLoc = ConsumeToken(); // Consume super class name
   }
   Decl *ImplClsType = Actions.ActOnStartClassImplementation(
-                                  atLoc, nameId, nameLoc,
+                                  AtLoc, nameId, nameLoc,
                                   superClassId, superClassLoc);
 
   if (Tok.is(tok::l_brace)) // we have ivars
-    ParseObjCClassInstanceVariables(ImplClsType, tok::objc_private, atLoc);
+    ParseObjCClassInstanceVariables(ImplClsType, tok::objc_private, AtLoc);
 
   ObjCImpDecl = ImplClsType;
   PendingObjCImpDecl.push_back(ObjCImpDecl);
@@ -1498,7 +1526,7 @@ Parser::ParseObjCAtEndDeclaration(SourceRange atEnd) {
   }
   else
     // missing @implementation
-    Diag(atEnd.getBegin(), diag::err_expected_implementation);
+    Diag(atEnd.getBegin(), diag::err_expected_objc_container);
     
   clearLateParsedObjCMethods();
   ObjCImpDecl = 0;
@@ -1510,8 +1538,15 @@ Parser::DeclGroupPtrTy Parser::FinishPendingObjCActions() {
   Actions.DiagnoseUseOfUnimplementedSelectors();
   if (PendingObjCImpDecl.empty())
     return Actions.ConvertDeclToDeclGroup(0);
+
   Decl *ImpDecl = PendingObjCImpDecl.pop_back_val();
-  Actions.ActOnAtEnd(getCurScope(), SourceRange());
+  Actions.ActOnAtEnd(getCurScope(), SourceRange(Tok.getLocation()));
+  Diag(Tok, diag::err_objc_missing_end)
+      << FixItHint::CreateInsertion(Tok.getLocation(), "\n@end\n");
+  if (ImpDecl)
+    Diag(ImpDecl->getLocStart(), diag::note_objc_container_start)
+        << Sema::OCK_Implementation;
+
   return Actions.ConvertDeclToDeclGroup(ImpDecl);
 }
 

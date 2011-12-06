@@ -313,7 +313,10 @@ def err_expected_minus_or_plus : Error<
   "method type specifier must start with '-' or '+'">;
 def err_objc_no_attributes_on_category : Error<
   "attributes may not be specified on a category">;
-def err_objc_missing_end : Error<"missing @end">;
+def err_objc_missing_end : Error<"missing '@end'">;
+def note_objc_container_start : Note<
+  "%select{class|protocol|category|class extension|implementation"
+  "|category implementation}0 started here">;
 def warn_objc_protocol_qualifier_missing_id : Warning<
   "protocol qualifiers without 'id' is archaic">;
 def err_objc_unknown_at : Error<"expected an Objective-C directive after '@'">;
@@ -352,8 +355,8 @@ def err_missing_id_definition : Error<"cannot find definition of 'id'">;
 def err_missing_proto_definition : Error<
   "cannot find definition of 'Protocol'">;
 def err_missing_class_definition : Error<"cannot find definition of 'Class'">;
-def err_expected_implementation : Error<
-  "@end must appear in an @implementation context">;
+def err_expected_objc_container : Error<
+  "'@end' must appear in an Objective-C context">;
 def error_property_ivar_decl : Error<
   "property synthesize requires specification of an ivar">;
 def err_synthesized_property_name : Error<
