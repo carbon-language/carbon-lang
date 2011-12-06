@@ -29,3 +29,13 @@ void testSubframeworkOther() {
 void testSubframeworkOtherAgain() {
   double *sfo1 = sub_framework_other;
 }
+
+void testModuleSubFramework() {
+  char *msf = module_subframework;
+}
+
+#include <Module/../Frameworks/SubFramework.framework/Headers/SubFramework.h> // expected-warning{{treating #include as an import of module 'Module.SubFramework'}}
+
+void testModuleSubFrameworkAgain() {
+  char *msf = module_subframework;
+}

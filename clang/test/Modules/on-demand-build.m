@@ -16,7 +16,7 @@ void test_getModuleVersion() {
   OtherClass *other = [Module alloc]; // expected-error{{init}}
 }
 
-#ifdef MODULE_H
-#  error MODULE_H should not be hidden
+#ifdef MODULE_SUBFRAMEWORK_H
+#  error MODULE_SUBFRAMEWORK_H should be hidden
 #endif
 

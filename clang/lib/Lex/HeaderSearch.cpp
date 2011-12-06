@@ -849,7 +849,7 @@ Module *HeaderSearch::getFrameworkModule(StringRef Name,
   }
   
   // Try to infer a module map.
-  return ModMap.inferFrameworkModule(Name, Dir);
+  return ModMap.inferFrameworkModule(Name, Dir, /*Parent=*/0);
 }
 
 

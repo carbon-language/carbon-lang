@@ -20,6 +20,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TargetOptions.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/PathV2.h"
 #include "llvm/Support/raw_ostream.h"
@@ -219,17 +220,19 @@ ModuleMap::findOrCreateModule(StringRef Name, Module *Parent, bool IsFramework,
 
 Module *
 ModuleMap::inferFrameworkModule(StringRef ModuleName, 
-                                const DirectoryEntry *FrameworkDir) {
+                                const DirectoryEntry *FrameworkDir,
+                                Module *Parent) {
   // Check whether we've already found this module.
-  if (Module *Module = findModule(ModuleName))
-    return Module;
+  if (Module *Mod = lookupModuleQualified(ModuleName, Parent))
+    return Mod;
+  
+  FileManager &FileMgr = SourceMgr->getFileManager();
   
   // Look for an umbrella header.
   llvm::SmallString<128> UmbrellaName = StringRef(FrameworkDir->getName());
   llvm::sys::path::append(UmbrellaName, "Headers");
   llvm::sys::path::append(UmbrellaName, ModuleName + ".h");
-  const FileEntry *UmbrellaHeader
-    = SourceMgr->getFileManager().getFile(UmbrellaName);
+  const FileEntry *UmbrellaHeader = FileMgr.getFile(UmbrellaName);
   
   // FIXME: If there's no umbrella header, we could probably scan the
   // framework to load *everything*. But, it's not clear that this is a good
@@ -237,8 +240,14 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   if (!UmbrellaHeader)
     return 0;
   
-  Module *Result = new Module(ModuleName, SourceLocation(), 
-                              /*IsFramework=*/true);
+  Module *Result = new Module(ModuleName, SourceLocation(), Parent,
+                              /*IsFramework=*/true, /*IsExplicit=*/false);
+  
+  if (Parent)
+    Parent->SubModules[ModuleName] = Result;
+  else
+    Modules[ModuleName] = Result;
+
   // umbrella "umbrella-header-name"
   Result->UmbrellaHeader = UmbrellaHeader;
   Headers[UmbrellaHeader] = Result;
@@ -251,9 +260,24 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   Result->InferSubmodules = true;
   Result->InferExportWildcard = true;
   
-  // FIXME: Look for subframeworks.
+  // Look for subframeworks.
+  llvm::error_code EC;
+  llvm::SmallString<128> SubframeworksDirName = StringRef(FrameworkDir->getName());
+  llvm::sys::path::append(SubframeworksDirName, "Frameworks");
+  for (llvm::sys::fs::directory_iterator Dir(SubframeworksDirName.str(), EC),
+                                         DirEnd;
+       Dir != DirEnd && !EC; Dir.increment(EC)) {
+    if (!StringRef(Dir->path()).endswith(".framework"))
+      continue;
+    
+    if (const DirectoryEntry *SubframeworkDir
+          = FileMgr.getDirectory(Dir->path())) {
+      // FIXME: Do we want to warn about subframeworks without umbrella headers?
+      inferFrameworkModule(llvm::sys::path::stem(Dir->path()), SubframeworkDir,
+                           Result);
+    }
+  }
   
-  Modules[ModuleName] = Result;
   return Result;
 }
 
