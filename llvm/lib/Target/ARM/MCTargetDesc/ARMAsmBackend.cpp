@@ -146,11 +146,13 @@ bool ARMAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
                                          uint64_t Value,
                                          const MCInstFragment *DF,
                                          const MCAsmLayout &Layout) const {
-  // FIXME:  This isn't correct for ARM. Just moving the "generic" logic
-  // into the targets for now.
+  // Relaxing tBcc to t2Bcc. tBcc has a signed 9-bit displacement with the
+  // low bit being an implied zero. There's an implied +4 offset for the
+  // branch, so we adjust the other way here to determine what's
+  // encodable.
   //
   // Relax if the value is too big for a (signed) i8.
-  return int64_t(Value) != int64_t(int8_t(Value));
+  return int64_t((Value - 4)>>1) != int64_t(int8_t((Value - 4)>>1));
 }
 
 void ARMAsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
