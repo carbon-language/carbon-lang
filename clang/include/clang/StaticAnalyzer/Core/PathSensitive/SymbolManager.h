@@ -70,6 +70,11 @@ public:
   // Implement isa<T> support.
   static inline bool classof(const SymExpr*) { return true; }
 
+  /// \brief Iterator over symbols that the current symbol depends on.
+  ///
+  /// For SymbolData, it's the symbol itself; for expressions, it's the
+  /// expression symbol and all the operands in it. Note, SymbolDerived is
+  /// treated as SymbolData - the iterator will NOT visit the parent region.
   class symbol_iterator {
     SmallVector<const SymExpr*, 5> itr;
     void expand();
@@ -87,7 +92,6 @@ public:
   symbol_iterator symbol_begin() const {
     return symbol_iterator(this);
   }
-
   static symbol_iterator symbol_end() { return symbol_iterator(); }
 };
 

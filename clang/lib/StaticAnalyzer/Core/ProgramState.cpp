@@ -553,6 +553,7 @@ bool ScanReachableSymbols::scan(const SymExpr *sym) {
   if (!visitor.VisitSymbol(sym))
     return false;
   
+  // TODO: should be rewritten using SymExpr::symbol_iterator.
   switch (sym->getKind()) {
     case SymExpr::RegionValueKind:
     case SymExpr::ConjuredKind:
