@@ -194,8 +194,8 @@ __cxa_throw(void * thrown_exception, std::type_info * tinfo, void (*dest)(void *
     __cxa_eh_globals *globals = __cxa_get_globals();
     __cxa_exception *exception = exception_from_thrown_object(thrown_exception);
     
-    exception->unexpectedHandler = __cxxabiapple::__cxa_unexpected_handler;
-    exception->terminateHandler  = __cxxabiapple::__cxa_terminate_handler;
+    exception->unexpectedHandler = std::get_unexpected();
+    exception->terminateHandler  = std::get_terminate();
     exception->exceptionType = tinfo;
     exception->exceptionDestructor = dest;
     setExceptionClass(&exception->unwindHeader);
