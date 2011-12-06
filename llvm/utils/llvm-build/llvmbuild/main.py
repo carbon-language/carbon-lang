@@ -397,9 +397,15 @@ class LLVMProjectInfo(object):
         # Construct a list of all the dependencies of the Makefile fragment
         # itself. These include all the LLVMBuild files themselves, as well as
         # all of our own sources.
+        #
+        # Many components may come from the same file, so we make sure to unique
+        # these.
+        build_paths = set()
         for ci in self.component_infos:
-            yield os.path.join(self.source_root, ci.subpath[1:],
-                               'LLVMBuild.txt')
+            p = os.path.join(self.source_root, ci.subpath[1:], 'LLVMBuild.txt')
+            if p not in build_paths:
+                yield p
+                build_paths.add(p)
 
         # Gather the list of necessary sources by just finding all loaded
         # modules that are inside the LLVM source tree.
