@@ -988,7 +988,9 @@ public:
     // The default CC on x86-64 sets %al to the number of SSA
     // registers used, and GCC sets this when calling an unprototyped
     // function, so we override the default behavior.  However, don't do
-    // that when AVX types are involved.
+    // that when AVX types are involved: the ABI explicitly states it is
+    // undefined, and it doesn't work in practice because of how the ABI
+    // defines varargs anyway.
     if (FI.getCallingConvention() == llvm::CallingConv::C) {
       bool HasAVXType = false;
       for (CGFunctionInfo::const_arg_iterator it = FI.arg_begin(),
