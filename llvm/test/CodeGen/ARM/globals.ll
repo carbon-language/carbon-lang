@@ -70,6 +70,5 @@ define i32 @test1() {
 ; LinuxPIC: .align 2
 ; LinuxPIC: .LCPI0_0:
 ; LinuxPIC:     .long _GLOBAL_OFFSET_TABLE_-(.LPC0_0+8)
-; LinuxPIC: .align 2
 ; LinuxPIC: .LCPI0_1:
 ; LinuxPIC:     .long	G(GOT)

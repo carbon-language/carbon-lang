@@ -1481,10 +1481,9 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     /// in the function.  The first operand is the ID# for this instruction, the
     /// second is the index into the MachineConstantPool that this is, the third
     /// is the size in bytes of this constant pool entry.
+    /// The required alignment is specified on the basic block holding this MI.
     unsigned LabelId = (unsigned)MI->getOperand(0).getImm();
     unsigned CPIdx   = (unsigned)MI->getOperand(1).getIndex();
-
-    EmitAlignment(2);
 
     // Mark the constant pool entry as data if we're not already in a data
     // region.

@@ -398,6 +398,9 @@ void ARMConstantIslands::DoInitialPlacement(MachineFunction &MF,
   MachineBasicBlock *BB = MF.CreateMachineBasicBlock();
   MF.push_back(BB);
 
+  // Mark the basic block as 4-byte aligned as required by the const-pool.
+  BB->setAlignment(2);
+
   // Add all of the constants from the constant pool to the end block, use an
   // identity mapping of CPI's to CPE's.
   const std::vector<MachineConstantPoolEntry> &CPs =
@@ -1310,6 +1313,9 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &MF,
                 .addImm(ID).addConstantPoolIndex(CPI).addImm(Size);
   CPEntries[CPI].push_back(CPEntry(U.CPEMI, ID, 1));
   ++NumCPEs;
+
+  // Mark the basic block as 4-byte aligned as required by the const-pool entry.
+  NewIsland->setAlignment(2);
 
   BBOffsets[NewIsland->getNumber()] = BBOffsets[NewMBB->getNumber()];
   // Compensate for .align 2 in thumb mode.
