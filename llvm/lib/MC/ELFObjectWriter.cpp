@@ -1072,7 +1072,7 @@ void ELFObjectWriter::WriteDataSectionData(MCAssembler &Asm,
       WriteBytes(cast<MCDataFragment>(F).getContents().str());
     }
   } else {
-    Asm.WriteSectionData(&SD, Layout);
+    Asm.writeSectionData(&SD, Layout);
   }
 }
 

@@ -731,7 +731,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
   // Write the actual section data.
   for (MCAssembler::const_iterator it = Asm.begin(),
          ie = Asm.end(); it != ie; ++it) {
-    Asm.WriteSectionData(it, Layout);
+    Asm.writeSectionData(it, Layout);
 
     uint64_t Pad = getPaddingSize(it, Layout);
     for (unsigned int i = 0; i < Pad; ++i)
