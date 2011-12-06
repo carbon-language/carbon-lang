@@ -554,17 +554,17 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
 
     // Get the encoding of the saved registers when we have a frame pointer.
     uint32_t RegEnc = encodeCompactUnwindRegistersWithFrame(SavedRegs, Is64Bit);
-    if (RegEnc == ~0U)
-      return 0;
+    if (RegEnc == ~0U) return 0;
 
     CompactUnwindEncoding |= 0x01000000;
     CompactUnwindEncoding |= (CFAOffset & 0xFF) << 16;
     CompactUnwindEncoding |= RegEnc & 0x7FFF;
   } else {
-    unsigned FullOffset = CFAOffset + StackAdjust;
-    if ((FullOffset & 0xFF) == FullOffset) {
-      // Frameless stack.
+    if ((CFAOffset & 0xFF) == CFAOffset) {
+      // Frameless stack with a small stack size.
       CompactUnwindEncoding |= 0x02000000;
+
+      // Encode the stack size.
       CompactUnwindEncoding |= (CFAOffset & 0xFF) << 16;
     } else {
       if ((CFAOffset & 0x7) != CFAOffset)
@@ -582,6 +582,7 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
       CompactUnwindEncoding |= (CFAOffset & 0x7) << 13;
     }
 
+    // Encode the number of registers saved.
     CompactUnwindEncoding |= ((6 - SavedRegIdx) & 0x7) << 10;
 
     // Get the encoding of the saved registers when we don't have a frame
@@ -590,6 +591,8 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
                                                                6 - SavedRegIdx,
                                                                Is64Bit);
     if (RegEnc == ~0U) return 0;
+
+    // Encode the register encoding.
     CompactUnwindEncoding |= RegEnc & 0x3FF;
   }
 
