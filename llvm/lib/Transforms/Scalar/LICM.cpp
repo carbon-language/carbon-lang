@@ -379,7 +379,7 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
     // in the same alias set as something that ends up being modified.
     if (AA->pointsToConstantMemory(LI->getOperand(0)))
       return true;
-    if (LI->getMetadata(LI->getContext().getMDKindID("invariant.load")))
+    if (LI->getMetadata("invariant.load"))
       return true;
 
     // Don't hoist loads which have may-aliased stores in loop.

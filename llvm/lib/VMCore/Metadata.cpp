@@ -425,12 +425,12 @@ StringRef NamedMDNode::getName() const {
 // Instruction Metadata method implementations.
 //
 
-void Instruction::setMetadata(const char *Kind, MDNode *Node) {
+void Instruction::setMetadata(StringRef Kind, MDNode *Node) {
   if (Node == 0 && !hasMetadata()) return;
   setMetadata(getContext().getMDKindID(Kind), Node);
 }
 
-MDNode *Instruction::getMetadataImpl(const char *Kind) const {
+MDNode *Instruction::getMetadataImpl(StringRef Kind) const {
   return getMetadataImpl(getContext().getMDKindID(Kind));
 }
 

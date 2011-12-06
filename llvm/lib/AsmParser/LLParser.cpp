@@ -1064,7 +1064,7 @@ bool LLParser::ParseInstructionMetadata(Instruction *Inst,
       return TokError("expected metadata after comma");
 
     std::string Name = Lex.getStrVal();
-    unsigned MDK = M->getMDKindID(Name.c_str());
+    unsigned MDK = M->getMDKindID(Name);
     Lex.Lex();
 
     MDNode *Node;

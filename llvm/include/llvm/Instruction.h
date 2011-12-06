@@ -143,7 +143,7 @@ public:
   
   /// getMetadata - Get the metadata of given kind attached to this Instruction.
   /// If the metadata is not found then return null.
-  MDNode *getMetadata(const char *Kind) const {
+  MDNode *getMetadata(StringRef Kind) const {
     if (!hasMetadata()) return 0;
     return getMetadataImpl(Kind);
   }
@@ -168,7 +168,7 @@ public:
   /// node.  This updates/replaces metadata if already present, or removes it if
   /// Node is null.
   void setMetadata(unsigned KindID, MDNode *Node);
-  void setMetadata(const char *Kind, MDNode *Node);
+  void setMetadata(StringRef Kind, MDNode *Node);
 
   /// setDebugLoc - Set the debug location information for this instruction.
   void setDebugLoc(const DebugLoc &Loc) { DbgLoc = Loc; }
@@ -185,7 +185,7 @@ private:
   
   // These are all implemented in Metadata.cpp.
   MDNode *getMetadataImpl(unsigned KindID) const;
-  MDNode *getMetadataImpl(const char *Kind) const;
+  MDNode *getMetadataImpl(StringRef Kind) const;
   void getAllMetadataImpl(SmallVectorImpl<std::pair<unsigned,MDNode*> > &)const;
   void getAllMetadataOtherThanDebugLocImpl(SmallVectorImpl<std::pair<unsigned,
                                            MDNode*> > &) const;
