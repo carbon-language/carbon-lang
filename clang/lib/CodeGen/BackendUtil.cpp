@@ -289,11 +289,6 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
 
   llvm::TargetOptions Options;
 
-  if (CodeGenOpts.RealignStack)
-    Options.RealignStack = true;
-  if (CodeGenOpts.StackAlignment)
-    Options.StackAlignmentOverride = CodeGenOpts.StackAlignment;
-
   // Set frame pointer elimination mode.
   if (!CodeGenOpts.DisableFPElim) {
     Options.NoFramePointerElim = false;
@@ -322,6 +317,8 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
   Options.NoZerosInBSS = CodeGenOpts.NoZeroInitializedInBSS;
   Options.UnsafeFPMath = CodeGenOpts.UnsafeFPMath;
   Options.UseSoftFloat = CodeGenOpts.SoftFloat;
+  Options.StackAlignmentOverride = CodeGenOpts.StackAlignment;
+  Options.RealignStack = CodeGenOpts.StackRealignment;
 
   TargetMachine *TM = TheTarget->createTargetMachine(Triple, TargetOpts.CPU,
                                                      FeaturesStr, Options,

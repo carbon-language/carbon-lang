@@ -105,8 +105,8 @@ public:
   unsigned VerifyModule      : 1; /// Control whether the module should be run
                                   /// through the LLVM Verifier.
 
-  unsigned RealignStack       : 1; /// Controls whether stack frame should be
-                                  /// readjusted to the desired alignment.
+  unsigned StackRealignment  : 1; /// Control whether to permit stack
+                                  /// realignment.
   unsigned StackAlignment;        /// Overrides default stack alignment,
                                   /// if not 0.
 

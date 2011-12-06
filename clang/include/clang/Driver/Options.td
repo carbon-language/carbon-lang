@@ -583,6 +583,7 @@ def mno_red_zone : Flag<"-mno-red-zone">, Group<m_Group>;
 def mno_relax_all : Flag<"-mno-relax-all">, Group<m_Group>;
 def mno_rtd: Flag<"-mno-rtd">, Group<m_Group>;
 def mno_soft_float : Flag<"-mno-soft-float">, Group<m_Group>;
+def mno_stackrealign : Flag<"-mno-stackrealign">, Group<m_Group>;
 def mno_sse2 : Flag<"-mno-sse2">, Group<m_x86_Features_Group>;
 def mno_sse3 : Flag<"-mno-sse3">, Group<m_x86_Features_Group>;
 def mno_sse4a : Flag<"-mno-sse4a">, Group<m_x86_Features_Group>;
