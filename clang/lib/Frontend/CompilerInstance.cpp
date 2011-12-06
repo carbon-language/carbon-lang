@@ -1024,7 +1024,7 @@ static void compileModule(CompilerInstance &ImportingInstance,
     int FD;
     if (llvm::sys::fs::unique_file(TempModuleMapFileName.str(), FD, 
                                    TempModuleMapFileName,
-                                   /*makeAbsolute=*/false)
+                                   /*makeAbsolute=*/true)
           != llvm::errc::success)
       return;
 
