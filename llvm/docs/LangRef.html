@@ -92,7 +92,7 @@
       <li><a href="#complexconstants">Complex Constants</a></li>
       <li><a href="#globalconstants">Global Variable and Function Addresses</a></li>
       <li><a href="#undefvalues">Undefined Values</a></li>
-      <li><a href="#trapvalues">Trap Values</a></li>
+      <li><a href="#poisonvalues">Poison Values</a></li>
       <li><a href="#blockaddress">Addresses of Basic Blocks</a></li>
       <li><a href="#constantexprs">Constant Expressions</a></li>
     </ol>
@@ -2506,22 +2506,22 @@ b: unreachable
 
 <!-- ======================================================================= -->
 <h3>
-  <a name="trapvalues">Trap Values</a>
+  <a name="poisonvalues">Poison Values</a>
 </h3>
 
 <div>
 
-<p>Trap values are similar to <a href="#undefvalues">undef values</a>, however
+<p>Poison values are similar to <a href="#undefvalues">undef values</a>, however
    instead of representing an unspecified bit pattern, they represent the
    fact that an instruction or constant expression which cannot evoke side
    effects has nevertheless detected a condition which results in undefined
    behavior.</p>
 
-<p>There is currently no way of representing a trap value in the IR; they
+<p>There is currently no way of representing a poison value in the IR; they
    only exist when produced by operations such as
    <a href="#i_add"><tt>add</tt></a> with the <tt>nsw</tt> flag.</p>
 
-<p>Trap value behavior is defined in terms of value <i>dependence</i>:</p>
+<p>Poison value behavior is defined in terms of value <i>dependence</i>:</p>
 
 <ul>
 <li>Values other than <a href="#i_phi"><tt>phi</tt></a> nodes depend on
@@ -2572,31 +2572,31 @@ b: unreachable
 
 </ul>
 
-<p>Whenever a trap value is generated, all values which depend on it evaluate
-   to trap. If they have side effects, they evoke their side effects as if each
-   operand with a trap value were undef. If they have externally-visible side
+<p>Whenever a poison value is generated, all values which depend on it evaluate
+   to poison. If they have side effects, they evoke their side effects as if each
+   operand with a poison value were undef. If they have externally-visible side
    effects, the behavior is undefined.</p>
 
 <p>Here are some examples:</p>
 
 <pre class="doc_code">
 entry:
-  %trap = sub nuw i32 0, 1           ; Results in a trap value.
-  %still_trap = and i32 %trap, 0     ; Whereas (and i32 undef, 0) would return 0.
-  %trap_yet_again = getelementptr i32* @h, i32 %still_trap
-  store i32 0, i32* %trap_yet_again  ; undefined behavior
+  %poison = sub nuw i32 0, 1           ; Results in a poison value.
+  %still_poison = and i32 %poison, 0     ; Whereas (and i32 undef, 0) would return 0.
+  %poison_yet_again = getelementptr i32* @h, i32 %still_poison
+  store i32 0, i32* %poison_yet_again  ; undefined behavior
 
-  store i32 %trap, i32* @g           ; Trap value conceptually stored to memory.
-  %trap2 = load i32* @g              ; Returns a trap value, not just undef.
+  store i32 %poison, i32* @g         ; Poison value conceptually stored to memory.
+  %poison2 = load i32* @g              ; Returns a poison value, not just undef.
 
-  store volatile i32 %trap, i32* @g  ; External observation; undefined behavior.
+  store volatile i32 %poison, i32* @g  ; External observation; undefined behavior.
 
   %narrowaddr = bitcast i32* @g to i16*
   %wideaddr = bitcast i32* @g to i64*
-  %trap3 = load i16* %narrowaddr     ; Returns a trap value.
-  %trap4 = load i64* %wideaddr       ; Returns a trap value.
+  %poison3 = load i16* %narrowaddr     ; Returns a poison value.
+  %poison4 = load i64* %wideaddr       ; Returns a poison value.
 
-  %cmp = icmp slt i32 %trap, 0       ; Returns a trap value.
+  %cmp = icmp slt i32 %poison, 0      ; Returns a poison value.
   br i1 %cmp, label %true, label %end ; Branch to either destination.
 
 true:
@@ -2608,7 +2608,7 @@ end:
   %p = phi i32 [ 0, %entry ], [ 1, %true ]
                                      ; Both edges into this PHI are
                                      ; control-dependent on %cmp, so this
-                                     ; always results in a trap value.
+                                     ; always results in a poison value.
 
   store volatile i32 0, i32* @g      ; This would depend on the store in %true
                                      ; if %cmp is true, or the store in %entry
@@ -3619,7 +3619,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 <p><tt>nuw</tt> and <tt>nsw</tt> stand for &quot;No Unsigned Wrap&quot;
    and &quot;No Signed Wrap&quot;, respectively. If the <tt>nuw</tt> and/or
    <tt>nsw</tt> keywords are present, the result value of the <tt>add</tt>
-   is a <a href="#trapvalues">trap value</a> if unsigned and/or signed overflow,
+   is a <a href="#poisonvalues">poison value</a> if unsigned and/or signed overflow,
    respectively, occurs.</p>
 
 <h5>Example:</h5>
@@ -3700,7 +3700,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 <p><tt>nuw</tt> and <tt>nsw</tt> stand for &quot;No Unsigned Wrap&quot;
    and &quot;No Signed Wrap&quot;, respectively. If the <tt>nuw</tt> and/or
    <tt>nsw</tt> keywords are present, the result value of the <tt>sub</tt>
-   is a <a href="#trapvalues">trap value</a> if unsigned and/or signed overflow,
+   is a <a href="#poisonvalues">poison value</a> if unsigned and/or signed overflow,
    respectively, occurs.</p>
 
 <h5>Example:</h5>
@@ -3787,7 +3787,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 <p><tt>nuw</tt> and <tt>nsw</tt> stand for &quot;No Unsigned Wrap&quot;
    and &quot;No Signed Wrap&quot;, respectively. If the <tt>nuw</tt> and/or
    <tt>nsw</tt> keywords are present, the result value of the <tt>mul</tt>
-   is a <a href="#trapvalues">trap value</a> if unsigned and/or signed overflow,
+   is a <a href="#poisonvalues">poison value</a> if unsigned and/or signed overflow,
    respectively, occurs.</p>
 
 <h5>Example:</h5>
@@ -3857,7 +3857,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 <p>Division by zero leads to undefined behavior.</p>
 
 <p>If the <tt>exact</tt> keyword is present, the result value of the
-   <tt>udiv</tt> is a <a href="#trapvalues">trap value</a> if %op1 is not a
+   <tt>udiv</tt> is a <a href="#poisonvalues">poison value</a> if %op1 is not a
   multiple of %op2 (as such, "((a udiv exact b) mul b) == a").</p>
 
 
@@ -3901,7 +3901,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
    a 32-bit division of -2147483648 by -1.</p>
 
 <p>If the <tt>exact</tt> keyword is present, the result value of the
-   <tt>sdiv</tt> is a <a href="#trapvalues">trap value</a> if the result would
+   <tt>sdiv</tt> is a <a href="#poisonvalues">poison value</a> if the result would
    be rounded.</p>
 
 <h5>Example:</h5>
@@ -4110,9 +4110,9 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
    shift amount in <tt>op2</tt>.</p>
 
 <p>If the <tt>nuw</tt> keyword is present, then the shift produces a 
-   <a href="#trapvalues">trap value</a> if it shifts out any non-zero bits.  If
+   <a href="#poisonvalues">poison value</a> if it shifts out any non-zero bits.  If
    the <tt>nsw</tt> keyword is present, then the shift produces a
-   <a href="#trapvalues">trap value</a> if it shifts out any bits that disagree
+   <a href="#poisonvalues">poison value</a> if it shifts out any bits that disagree
    with the resultant sign bit.  As such, NUW/NSW have the same semantics as
    they would if the shift were expressed as a mul instruction with the same
    nsw/nuw bits in (mul %op1, (shl 1, %op2)).</p>
@@ -4159,7 +4159,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
    shift amount in <tt>op2</tt>.</p>
 
 <p>If the <tt>exact</tt> keyword is present, the result value of the
-   <tt>lshr</tt> is a <a href="#trapvalues">trap value</a> if any of the bits
+   <tt>lshr</tt> is a <a href="#poisonvalues">poison value</a> if any of the bits
    shifted out are non-zero.</p>
 
 
@@ -4207,7 +4207,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
    the corresponding shift amount in <tt>op2</tt>.</p>
 
 <p>If the <tt>exact</tt> keyword is present, the result value of the
-   <tt>ashr</tt> is a <a href="#trapvalues">trap value</a> if any of the bits
+   <tt>ashr</tt> is a <a href="#poisonvalues">poison value</a> if any of the bits
    shifted out are non-zero.</p>
 
 <h5>Example:</h5>
@@ -5161,7 +5161,7 @@ entry:
 </pre>
 
 <p>If the <tt>inbounds</tt> keyword is present, the result value of the
-   <tt>getelementptr</tt> is a <a href="#trapvalues">trap value</a> if the
+   <tt>getelementptr</tt> is a <a href="#poisonvalues">poison value</a> if the
    base pointer is not an <i>in bounds</i> address of an allocated object,
    or if any of the addresses that would be formed by successive addition of
    the offsets implied by the indices to the base address with infinitely
