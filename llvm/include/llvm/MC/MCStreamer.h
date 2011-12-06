@@ -641,8 +641,8 @@ namespace llvm {
   /// createELFStreamer - Create a machine code streamer which will generate
   /// ELF format object files.
   MCStreamer *createELFStreamer(MCContext &Ctx, MCAsmBackend &TAB,
-				raw_ostream &OS, MCCodeEmitter *CE,
-				bool RelaxAll, bool NoExecStack);
+                                raw_ostream &OS, MCCodeEmitter *CE,
+                                bool RelaxAll, bool NoExecStack);
 
   /// createLoggingStreamer - Create a machine code streamer which just logs the
   /// API calls and then dispatches to another streamer.
