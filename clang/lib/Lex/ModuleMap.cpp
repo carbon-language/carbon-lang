@@ -103,8 +103,14 @@ Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
       = UmbrellaDirs.find(Dir);
     if (KnownDir != UmbrellaDirs.end()) {
       Module *Result = KnownDir->second;
-      Module *TopModule = Result->getTopLevelModule();
-      if (TopModule->InferSubmodules) {
+      
+      // Search up the module stack until we find a module with an umbrella
+      // header.
+      Module *UmbrellaModule = Result;
+      while (!UmbrellaModule->UmbrellaHeader && UmbrellaModule->Parent)
+        UmbrellaModule = UmbrellaModule->Parent;
+      
+      if (UmbrellaModule->InferSubmodules) {
         // Infer submodules for each of the directories we found between
         // the directory of the umbrella header and the directory where 
         // the actual header is located.
@@ -114,32 +120,32 @@ Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
         // FIXME: Should we tack on an "explicit" for PrivateHeaders? That
         // might be what we want, but it feels like a hack.
         unsigned LastSkippedDir = SkippedDirs.size();
-        if (LastSkippedDir && TopModule->IsFramework)
+        if (LastSkippedDir && UmbrellaModule->IsFramework)
           --LastSkippedDir;
         
         for (unsigned I = LastSkippedDir; I != 0; --I) {
           // Find or create the module that corresponds to this directory name.
           StringRef Name = llvm::sys::path::stem(SkippedDirs[I-1]->getName());
           Result = findOrCreateModule(Name, Result, /*IsFramework=*/false,
-                                      TopModule->InferExplicitSubmodules).first;
+                                      UmbrellaModule->InferExplicitSubmodules).first;
           
           // Associate the module and the directory.
           UmbrellaDirs[SkippedDirs[I-1]] = Result;
 
           // If inferred submodules export everything they import, add a 
           // wildcard to the set of exports.
-          if (TopModule->InferExportWildcard && Result->Exports.empty())
+          if (UmbrellaModule->InferExportWildcard && Result->Exports.empty())
             Result->Exports.push_back(Module::ExportDecl(0, true));
         }
         
         // Infer a submodule with the same name as this header file.
         StringRef Name = llvm::sys::path::stem(File->getName());
         Result = findOrCreateModule(Name, Result, /*IsFramework=*/false,
-                                    TopModule->InferExplicitSubmodules).first;
+                                    UmbrellaModule->InferExplicitSubmodules).first;
         
         // If inferred submodules export everything they import, add a 
         // wildcard to the set of exports.
-        if (TopModule->InferExportWildcard && Result->Exports.empty())
+        if (UmbrellaModule->InferExportWildcard && Result->Exports.empty())
           Result->Exports.push_back(Module::ExportDecl(0, true));
       } else {
         // Record each of the directories we stepped through as being part of
