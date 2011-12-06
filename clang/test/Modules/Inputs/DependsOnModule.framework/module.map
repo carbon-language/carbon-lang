@@ -4,4 +4,7 @@ framework module DependsOnModule {
   module * {
     export *
   }
+  explicit framework module SubFramework {
+    umbrella "SubFramework.h"
+  }
 }

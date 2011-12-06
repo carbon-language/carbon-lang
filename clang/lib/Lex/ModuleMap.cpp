@@ -251,6 +251,8 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   Result->InferSubmodules = true;
   Result->InferExportWildcard = true;
   
+  // FIXME: Look for subframeworks.
+  
   Modules[ModuleName] = Result;
   return Result;
 }
@@ -559,19 +561,21 @@ void ModuleMapParser::parseModuleDecl() {
   assert(Tok.is(MMToken::ExplicitKeyword) || Tok.is(MMToken::ModuleKeyword) ||
          Tok.is(MMToken::FrameworkKeyword));
 
-  // Parse 'framework' or 'explicit' keyword, if present.
-  bool Framework = false;
+  // Parse 'explicit' or 'framework' keyword, if present.
   bool Explicit = false;
+  bool Framework = false;
 
+  // Parse 'explicit' keyword, if present.
+  if (Tok.is(MMToken::ExplicitKeyword)) {
+    consumeToken();
+    Explicit = true;
+  }
+
+  // Parse 'framework' keyword, if present.
   if (Tok.is(MMToken::FrameworkKeyword)) {
     consumeToken();
     Framework = true;
   } 
-  // Parse 'explicit' keyword, if present.
-  else if (Tok.is(MMToken::ExplicitKeyword)) {
-    consumeToken();
-    Explicit = true;
-  }
   
   // Parse 'module' keyword.
   if (!Tok.is(MMToken::ModuleKeyword)) {
@@ -640,6 +644,7 @@ void ModuleMapParser::parseModuleDecl() {
       break;
         
     case MMToken::ExplicitKeyword:
+    case MMToken::FrameworkKeyword:
     case MMToken::ModuleKeyword:
       parseModuleDecl();
       break;
@@ -674,7 +679,27 @@ void ModuleMapParser::parseModuleDecl() {
   // We're done parsing this module. Pop back to our parent scope.
   ActiveModule = ActiveModule->Parent;
 }
- 
+
+/// \brief Append to \p Paths the set of paths needed to get to the 
+/// subframework in which the given module lives.
+void appendSubframeworkPaths(Module *Mod, llvm::SmallVectorImpl<char> &Path) {
+  // Collect the framework names from the given module to the top-level module.
+  llvm::SmallVector<StringRef, 2> Paths;
+  for (; Mod; Mod = Mod->Parent) {
+    if (Mod->IsFramework)
+      Paths.push_back(Mod->Name);
+  }
+  
+  if (Paths.empty())
+    return;
+  
+  // Add Frameworks/Name.framework for each subframework.
+  for (unsigned I = Paths.size() - 1; I != 0; --I) {
+    llvm::sys::path::append(Path, "Frameworks");
+    llvm::sys::path::append(Path, Paths[I-1] + ".framework");
+  }
+}
+
 /// \brief Parse an umbrella header declaration.
 ///
 ///   umbrella-declaration:
@@ -702,14 +727,6 @@ void ModuleMapParser::parseUmbrellaDecl() {
     return;
   }
   
-  // Only top-level modules can have umbrella headers.
-  if (ActiveModule->Parent) {
-    Diags.Report(UmbrellaLoc, diag::err_mmap_umbrella_header_submodule)
-      << ActiveModule->getFullModuleName();
-    HadError = true;
-    return;
-  }
-  
   // Look for this file.
   llvm::SmallString<128> PathName;
   const FileEntry *File = 0;
@@ -721,7 +738,10 @@ void ModuleMapParser::parseUmbrellaDecl() {
     // Search for the header file within the search directory.
     PathName += Directory->getName();
     unsigned PathLength = PathName.size();
+    
     if (ActiveModule->isPartOfFramework()) {
+      appendSubframeworkPaths(ActiveModule, PathName);
+      
       // Check whether this file is in the public headers.
       llvm::sys::path::append(PathName, "Headers");
       llvm::sys::path::append(PathName, FileName);
@@ -734,8 +754,6 @@ void ModuleMapParser::parseUmbrellaDecl() {
         llvm::sys::path::append(PathName, FileName);
         File = SourceMgr.getFileManager().getFile(PathName);
       }
-      
-      // FIXME: Deal with subframeworks.
     } else {
       // Lookup for normal headers.
       llvm::sys::path::append(PathName, FileName);
@@ -797,8 +815,10 @@ void ModuleMapParser::parseHeaderDecl() {
     // FIXME: Change this search to also look for private headers!
     PathName += Directory->getName();
     
-    if (ActiveModule->isPartOfFramework())
+    if (ActiveModule->isPartOfFramework()) {
+      appendSubframeworkPaths(ActiveModule, PathName);
       llvm::sys::path::append(PathName, "Headers");
+    }
   }
   
   llvm::sys::path::append(PathName, FileName);
