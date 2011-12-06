@@ -115,7 +115,7 @@ class FI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
   let Inst{15-0}  = imm16;
 }
 
-class CBranchBase<bits<6> op, dag outs, dag ins, string asmstr,
+class BranchBase<bits<6> op, dag outs, dag ins, string asmstr,
                   list<dag> pattern, InstrItinClass itin>:
   MipsInst<outs, ins, asmstr, pattern, itin, FrmI>
 {

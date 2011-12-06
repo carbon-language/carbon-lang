@@ -236,7 +236,7 @@ static unsigned GetAnalyzableBrOpc(unsigned Opc) {
           Opc == Mips::BGEZ   || Opc == Mips::BLTZ   || Opc == Mips::BLEZ   ||
           Opc == Mips::BEQ64  || Opc == Mips::BNE64  || Opc == Mips::BGTZ64 ||
           Opc == Mips::BGEZ64 || Opc == Mips::BLTZ64 || Opc == Mips::BLEZ64 ||
-          Opc == Mips::BC1T   || Opc == Mips::BC1F   || Opc == Mips::J) ?
+          Opc == Mips::BC1T   || Opc == Mips::BC1F   || Opc == Mips::B) ?
          Opc : 0;
 }
 
@@ -320,7 +320,7 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   // If there is only one terminator instruction, process it.
   if (!SecondLastOpc) {
     // Unconditional branch
-    if (LastOpc == Mips::J) {
+    if (LastOpc == Mips::B) {
       TBB = LastInst->getOperand(0).getMBB();
       return false;
     }
@@ -337,7 +337,7 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
   // If second to last instruction is an unconditional branch,
   // analyze it and remove the last instruction.
-  if (SecondLastOpc == Mips::J) {
+  if (SecondLastOpc == Mips::B) {
     // Return if the last instruction cannot be removed.
     if (!AllowModify)
       return true;
@@ -349,7 +349,7 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
   // Conditional branch followed by an unconditional branch.
   // The last one must be unconditional.
-  if (LastOpc != Mips::J)
+  if (LastOpc != Mips::B)
     return true;
 
   AnalyzeCondBr(SecondLastInst, SecondLastOpc, TBB, Cond);
@@ -391,14 +391,14 @@ InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   // Two-way Conditional branch.
   if (FBB) {
     BuildCondBr(MBB, TBB, DL, Cond);
-    BuildMI(&MBB, DL, get(Mips::J)).addMBB(FBB);
+    BuildMI(&MBB, DL, get(Mips::B)).addMBB(FBB);
     return 2;
   }
 
   // One way branch.
   // Unconditional branch.
   if (Cond.empty())
-    BuildMI(&MBB, DL, get(Mips::J)).addMBB(TBB);
+    BuildMI(&MBB, DL, get(Mips::B)).addMBB(TBB);
   else // Conditional branch.
     BuildCondBr(MBB, TBB, DL, Cond);
   return 1;

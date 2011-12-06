@@ -380,21 +380,13 @@ class StoreM<bits<6> op, string instr_asm, PatFrag OpNode, RegisterClass RC,
   let isPseudo = Pseudo;
 }
 
-// Memory Load/Store
+// Unaligned Memory Load/Store
 let canFoldAsLoad = 1 in
-class LoadX<bits<6> op, RegisterClass RC,
-            Operand MemOpnd>:
-  FMem<op, (outs RC:$rt), (ins MemOpnd:$addr),
-     "",
-     [], IILoad> {
-}
+class LoadUnAlign<bits<6> op, RegisterClass RC, Operand MemOpnd>:
+  FMem<op, (outs RC:$rt), (ins MemOpnd:$addr), "", [], IILoad> {}
 
-class StoreX<bits<6> op, RegisterClass RC,
-             Operand MemOpnd>:
-  FMem<op, (outs), (ins RC:$rt, MemOpnd:$addr),
-     "",
-     [], IIStore> {
-}
+class StoreUnAlign<bits<6> op, RegisterClass RC, Operand MemOpnd>:
+  FMem<op, (outs), (ins RC:$rt, MemOpnd:$addr), "", [], IIStore> {}
 
 // 32-bit load.
 multiclass LoadM32<bits<6> op, string instr_asm, PatFrag OpNode,
@@ -415,10 +407,10 @@ multiclass LoadM64<bits<6> op, string instr_asm, PatFrag OpNode,
 } 
 
 // 32-bit load.
-multiclass LoadX32<bits<6> op> {
-  def #NAME# : LoadX<op, CPURegs, mem>,
+multiclass LoadUnAlign32<bits<6> op> {
+  def #NAME# : LoadUnAlign<op, CPURegs, mem>,
                Requires<[NotN64]>;
-  def _P8    : LoadX<op, CPURegs, mem64>,
+  def _P8    : LoadUnAlign<op, CPURegs, mem64>,
                Requires<[IsN64]>;
 }
 // 32-bit store.
@@ -440,18 +432,18 @@ multiclass StoreM64<bits<6> op, string instr_asm, PatFrag OpNode,
 }
 
 // 32-bit store.
-multiclass StoreX32<bits<6> op> {
-  def #NAME# : StoreX<op, CPURegs, mem>,
+multiclass StoreUnAlign32<bits<6> op> {
+  def #NAME# : StoreUnAlign<op, CPURegs, mem>,
                Requires<[NotN64]>;
-  def _P8    : StoreX<op, CPURegs, mem64>,
+  def _P8    : StoreUnAlign<op, CPURegs, mem64>,
                Requires<[IsN64]>;
 }
 
 // Conditional Branch
 class CBranch<bits<6> op, string instr_asm, PatFrag cond_op, RegisterClass RC>:
-  CBranchBase<op, (outs), (ins RC:$rs, RC:$rt, brtarget:$imm16),
-              !strconcat(instr_asm, "\t$rs, $rt, $imm16"),
-              [(brcond (i32 (cond_op RC:$rs, RC:$rt)), bb:$imm16)], IIBranch> {
+  BranchBase<op, (outs), (ins RC:$rs, RC:$rt, brtarget:$imm16),
+             !strconcat(instr_asm, "\t$rs, $rt, $imm16"),
+             [(brcond (i32 (cond_op RC:$rs, RC:$rt)), bb:$imm16)], IIBranch> {
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
@@ -459,9 +451,9 @@ class CBranch<bits<6> op, string instr_asm, PatFrag cond_op, RegisterClass RC>:
 
 class CBranchZero<bits<6> op, bits<5> _rt, string instr_asm, PatFrag cond_op,
                   RegisterClass RC>:
-  CBranchBase<op, (outs), (ins RC:$rs, brtarget:$imm16),
-              !strconcat(instr_asm, "\t$rs, $imm16"),
-              [(brcond (i32 (cond_op RC:$rs, 0)), bb:$imm16)], IIBranch> {
+  BranchBase<op, (outs), (ins RC:$rs, brtarget:$imm16),
+             !strconcat(instr_asm, "\t$rs, $imm16"),
+             [(brcond (i32 (cond_op RC:$rs, 0)), bb:$imm16)], IIBranch> {
   let rt = _rt;
   let isBranch = 1;
   let isTerminator = 1;
@@ -486,10 +478,16 @@ class SetCC_I<bits<6> op, string instr_asm, PatFrag cond_op, Operand Od,
      IIAlu>;
 
 // Unconditional branch
-let isBranch=1, isTerminator=1, isBarrier=1, hasDelaySlot = 1 in
-class JumpFJ<bits<6> op, string instr_asm>:
-  FJ<op, (outs), (ins jmptarget:$target),
-     !strconcat(instr_asm, "\t$target"), [(br bb:$target)], IIBranch>;
+class UncondBranch<bits<6> op, string instr_asm>:
+  BranchBase<op, (outs), (ins brtarget:$imm16),
+             !strconcat(instr_asm, "\t$imm16"), [(br bb:$imm16)], IIBranch> {
+  let rs = 0;
+  let rt = 0;
+  let isBranch = 1;
+  let isTerminator = 1;
+  let isBarrier = 1;
+  let hasDelaySlot = 1;
+}
 
 let isBranch=1, isTerminator=1, isBarrier=1, rd=0, hasDelaySlot = 1,
     isIndirectBranch = 1 in
@@ -810,10 +808,10 @@ defm USH     : StoreM32<0x29, "ush", truncstorei16_u, 1>;
 defm USW     : StoreM32<0x2b, "usw", store_u, 1>;
 
 /// Primitives for unaligned
-defm LWL     : LoadX32<0x22>;
-defm LWR     : LoadX32<0x26>;
-defm SWL     : StoreX32<0x2A>;
-defm SWR     : StoreX32<0x2E>;
+defm LWL     : LoadUnAlign32<0x22>;
+defm LWR     : LoadUnAlign32<0x26>;
+defm SWL     : StoreUnAlign32<0x2A>;
+defm SWR     : StoreUnAlign32<0x2E>;
 
 let hasSideEffects = 1 in
 def SYNC : MipsInst<(outs), (ins i32imm:$stype), "sync $stype",
@@ -833,10 +831,10 @@ def SC    : SCBase<0x38, "sc", CPURegs, mem>, Requires<[NotN64]>;
 def SC_P8 : SCBase<0x38, "sc", CPURegs, mem64>, Requires<[IsN64]>;
 
 /// Jump and Branch Instructions
-def J       : JumpFJ<0x02, "j">;
 def JR      : JumpFR<0x00, 0x08, "jr", CPURegs>;
 def JAL     : JumpLink<0x03, "jal">;
 def JALR    : JumpLinkReg<0x00, 0x09, "jalr">;
+def B       : UncondBranch<0x04, "b">;
 def BEQ     : CBranch<0x04, "beq", seteq, CPURegs>;
 def BNE     : CBranch<0x05, "bne", setne, CPURegs>;
 def BGEZ    : CBranchZero<0x01, 1, "bgez", setge, CPURegs>;
