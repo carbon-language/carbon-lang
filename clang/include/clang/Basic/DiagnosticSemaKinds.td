@@ -5025,7 +5025,7 @@ def error_protected_ivar_access : Error<"instance variable %0 is protected">,
   AccessControl;
 def warn_maynot_respond : Warning<"%0 may not respond to %1">;
 def warn_attribute_method_def : Warning<
-  "method attribute can only be specified on method declarations">,
+  "attributes on method implementation and its declaration must match">,
   InGroup<DiagGroup<"mismatched-method-attributes">>;
 def ext_typecheck_base_super : Warning<
   "method parameter type %0 does not match "

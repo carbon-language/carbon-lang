@@ -2712,8 +2712,10 @@ Decl *Sema::ActOnMethodDeclaration(
       IMD = IDecl->lookupMethod(ObjCMethod->getSelector(), 
                                 ObjCMethod->isInstanceMethod());
     if (ObjCMethod->hasAttrs() &&
-        containsInvalidMethodImplAttribute(IMD, ObjCMethod->getAttrs()))
+        containsInvalidMethodImplAttribute(IMD, ObjCMethod->getAttrs())) {
       Diag(EndLoc, diag::warn_attribute_method_def);
+      Diag(IMD->getLocation(), diag::note_method_declared_at);
+    }
   } else {
     cast<DeclContext>(ClassDecl)->addDecl(ObjCMethod);
   }
