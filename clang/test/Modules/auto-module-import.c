@@ -18,3 +18,14 @@ Module *mod; // expected-error{{unknown type name 'Module'}}
 Module *mod2;
 
 int getDependsOther() { return depends_on_module_other; }
+
+void testSubframeworkOther() {
+  double *sfo1 = sub_framework_other; // expected-error{{use of undeclared identifier 'sub_framework_other'}}
+}
+
+// Test header cross-subframework include pattern.
+#include <DependsOnModule/../Frameworks/SubFramework.framework/Headers/Other.h> // expected-warning{{treating #include as an import of module 'DependsOnModule.SubFramework'}}
+
+void testSubframeworkOtherAgain() {
+  double *sfo1 = sub_framework_other;
+}

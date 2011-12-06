@@ -341,15 +341,12 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
   }
 
   // Determine whether this is the module we're building or not.
-  // FIXME: Do we still need the ".." hack?
-  bool AutomaticImport = Module &&
-    !Filename.substr(SlashPos + 1).startswith("..");
-  
+  bool AutomaticImport = Module;  
   FrameworkName.append(Filename.begin()+SlashPos+1, Filename.end());
   if (const FileEntry *FE = FileMgr.getFile(FrameworkName.str(),
                                             /*openFile=*/!AutomaticImport)) {
     if (AutomaticImport)
-      *SuggestedModule = Module;
+      *SuggestedModule = HS.findModuleForHeader(FE);
     return FE;
   }
 
@@ -364,7 +361,7 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
   const FileEntry *FE = FileMgr.getFile(FrameworkName.str(), 
                                         /*openFile=*/!AutomaticImport);
   if (FE && AutomaticImport)
-    *SuggestedModule = Module;
+    *SuggestedModule = HS.findModuleForHeader(FE);
   return FE;
 }
 
