@@ -346,7 +346,8 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
                   TII.get(TargetOpcode::DBG_VALUE))
           .addReg(CopyUseMI->getOperand(0).getReg(), RegState::Debug)
           .addImm(Offset).addMetadata(Variable);
-        EntryMBB->insertAfter(CopyUseMI, NewMI);
+        MachineBasicBlock::iterator Pos = CopyUseMI;
+        EntryMBB->insertAfter(Pos, NewMI);
       }
     }
   }

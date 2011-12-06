@@ -688,6 +688,11 @@ def COPY : Instruction {
   let neverHasSideEffects = 1;
   let isAsCheapAsAMove = 1;
 }
+def BUNDLE : Instruction {
+  let OutOperandList = (outs);
+  let InOperandList = (ins variable_ops);
+  let AsmString = "BUNDLE";
+}
 }
 
 //===----------------------------------------------------------------------===//

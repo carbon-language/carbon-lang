@@ -754,7 +754,7 @@ void LiveVariables::addNewBlock(MachineBasicBlock *BB,
   const unsigned NumNew = BB->getNumber();
 
   // All registers used by PHI nodes in SuccBB must be live through BB.
-  for (MachineBasicBlock::const_iterator BBI = SuccBB->begin(),
+  for (MachineBasicBlock::iterator BBI = SuccBB->begin(),
          BBE = SuccBB->end(); BBI != BBE && BBI->isPHI(); ++BBI)
     for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
       if (BBI->getOperand(i+1).getMBB() == BB)

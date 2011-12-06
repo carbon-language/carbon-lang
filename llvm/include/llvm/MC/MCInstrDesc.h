@@ -184,6 +184,10 @@ public:
     return NumDefs;
   }
 
+  /// getFlags - Return flags of this instruction.
+  ///
+  unsigned short getFlags() const { return Flags; }
+
   /// isVariadic - Return true if this instruction can have a variable number of
   /// operands.  In this case, the variable operands will be after the normal
   /// operands but before the implicit definitions and uses (if any are

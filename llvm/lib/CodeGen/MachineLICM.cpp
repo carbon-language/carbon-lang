@@ -1141,8 +1141,9 @@ MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
   assert(NewMIs.size() == 2 &&
          "Unfolded a load into multiple instructions!");
   MachineBasicBlock *MBB = MI->getParent();
-  MBB->insert(MI, NewMIs[0]);
-  MBB->insert(MI, NewMIs[1]);
+  MachineBasicBlock::iterator Pos = MI;
+  MBB->insert(Pos, NewMIs[0]);
+  MBB->insert(Pos, NewMIs[1]);
   // If unfolding produced a load that wasn't loop-invariant or profitable to
   // hoist, discard the new instructions and bail.
   if (!IsLoopInvariantInst(*NewMIs[0]) || !IsProfitableToHoist(*NewMIs[0])) {

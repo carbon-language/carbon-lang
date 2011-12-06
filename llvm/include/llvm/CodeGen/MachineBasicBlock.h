@@ -129,10 +129,89 @@ public:
   const MachineFunction *getParent() const { return xParent; }
   MachineFunction *getParent() { return xParent; }
 
-  typedef Instructions::iterator                              iterator;
-  typedef Instructions::const_iterator                  const_iterator;
-  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
-  typedef std::reverse_iterator<iterator>             reverse_iterator;
+
+  /// bundle_iterator - MachineBasicBlock iterator that automatically skips over
+  /// MIs that are inside bundles (i.e. walk top level MIs only).
+  template<typename Ty, typename IterTy>
+  class bundle_iterator
+    : public std::iterator<std::bidirectional_iterator_tag, Ty, ptrdiff_t> {
+    IterTy MII;
+
+  public:
+    bundle_iterator(IterTy mii) : MII(mii) {
+      assert(!MII->isInsideBundle() &&
+             "It's not legal to initialize bundle_iterator with a bundled MI");
+    }
+
+    bundle_iterator(Ty &mi) : MII(mi) {
+      assert(!mi.isInsideBundle() &&
+             "It's not legal to initialize bundle_iterator with a bundled MI");
+    }
+    bundle_iterator(Ty *mi) : MII(mi) {
+      assert((!mi || !mi->isInsideBundle()) &&
+             "It's not legal to initialize bundle_iterator with a bundled MI");
+    }
+    bundle_iterator(const bundle_iterator &I) : MII(I.MII) {}
+    bundle_iterator() : MII(0) {}
+
+    Ty &operator*() const { return *MII; }
+    Ty *operator->() const { return &operator*(); }
+
+    operator Ty*() const { return MII; }
+
+    bool operator==(const bundle_iterator &x) const {
+      return MII == x.MII;
+    }
+    bool operator!=(const bundle_iterator &x) const {
+      return !operator==(x);
+    }
+    
+    // Increment and decrement operators...
+    bundle_iterator &operator--() {      // predecrement - Back up
+      do {
+        --MII;
+      } while (MII->isInsideBundle());
+      return *this;
+    }
+    bundle_iterator &operator++() {      // preincrement - Advance
+      do {
+        ++MII;
+      } while (MII->isInsideBundle());
+      return *this;
+    }
+    bundle_iterator operator--(int) {    // postdecrement operators...
+      bundle_iterator tmp = *this;
+      do {
+        --MII;
+      } while (MII->isInsideBundle());
+      return tmp;
+    }
+    bundle_iterator operator++(int) {    // postincrement operators...
+      bundle_iterator tmp = *this;
+      do {
+        ++MII;
+      } while (MII->isInsideBundle());
+      return tmp;
+    }
+
+    IterTy getInsnIterator() const {
+      return MII;
+    }    
+  };
+
+  typedef Instructions::iterator                                  insn_iterator;
+  typedef Instructions::const_iterator                      const_insn_iterator;
+  typedef std::reverse_iterator<insn_iterator>            reverse_insn_iterator;
+  typedef
+  std::reverse_iterator<const_insn_iterator>        const_reverse_insn_iterator;
+
+  typedef
+  bundle_iterator<MachineInstr,insn_iterator>                          iterator;
+  typedef
+  bundle_iterator<const MachineInstr,const_insn_iterator>        const_iterator;
+  typedef std::reverse_iterator<const_iterator>          const_reverse_iterator;
+  typedef std::reverse_iterator<iterator>                      reverse_iterator;
+
 
   unsigned size() const { return (unsigned)Insts.size(); }
   bool empty() const { return Insts.empty(); }
@@ -142,14 +221,52 @@ public:
   const MachineInstr& front() const { return Insts.front(); }
   const MachineInstr& back()  const { return Insts.back(); }
 
+  insn_iterator                insn_begin()       { return Insts.begin();  }
+  const_insn_iterator          insn_begin() const { return Insts.begin();  }
+  insn_iterator                  insn_end()       { return Insts.end();    }
+  const_insn_iterator            insn_end() const { return Insts.end();    }
+  reverse_insn_iterator       insn_rbegin()       { return Insts.rbegin(); }
+  const_reverse_insn_iterator insn_rbegin() const { return Insts.rbegin(); }
+  reverse_insn_iterator       insn_rend  ()       { return Insts.rend();   }
+  const_reverse_insn_iterator insn_rend  () const { return Insts.rend();   }
+
   iterator                begin()       { return Insts.begin();  }
   const_iterator          begin() const { return Insts.begin();  }
-  iterator                  end()       { return Insts.end();    }
-  const_iterator            end() const { return Insts.end();    }
-  reverse_iterator       rbegin()       { return Insts.rbegin(); }
-  const_reverse_iterator rbegin() const { return Insts.rbegin(); }
+  iterator                  end()       {
+    insn_iterator II = insn_end();
+    if (II != insn_begin()) {
+      while (II->isInsideBundle())
+        --II;
+    }
+    return II;
+  }
+  const_iterator            end() const {
+    const_insn_iterator II = insn_end();
+    if (II != insn_begin()) {
+      while (II->isInsideBundle())
+        --II;
+    }
+    return II;
+  }
+  reverse_iterator       rbegin()       {
+    reverse_insn_iterator II = insn_rbegin();
+    if (II != insn_rend()) {
+      while (II->isInsideBundle())
+        ++II;
+    }
+    return II;
+  }
+  const_reverse_iterator rbegin() const {
+    const_reverse_insn_iterator II = insn_rbegin();
+    if (II != insn_rend()) {
+      while (II->isInsideBundle())
+        ++II;
+    }
+    return II;
+  }
   reverse_iterator       rend  ()       { return Insts.rend();   }
   const_reverse_iterator rend  () const { return Insts.rend();   }
+
 
   // Machine-CFG iterators
   typedef std::vector<MachineBasicBlock *>::iterator       pred_iterator;
@@ -323,18 +440,16 @@ public:
   /// instruction of this basic block. If a terminator does not exist,
   /// it returns end()
   iterator getFirstTerminator();
+  const_iterator getFirstTerminator() const;
 
-  const_iterator getFirstTerminator() const {
-    return const_cast<MachineBasicBlock*>(this)->getFirstTerminator();
-  }
+  /// getFirstInsnTerminator - Same getFirstTerminator but it ignores bundles
+  /// and return an insn_iterator instead.
+  insn_iterator getFirstInsnTerminator();
 
   /// getLastNonDebugInstr - returns an iterator to the last non-debug
   /// instruction in the basic block, or end()
   iterator getLastNonDebugInstr();
-
-  const_iterator getLastNonDebugInstr() const {
-    return const_cast<MachineBasicBlock*>(this)->getLastNonDebugInstr();
-  }
+  const_iterator getLastNonDebugInstr() const;
 
   /// SplitCriticalEdge - Split the critical edge from this block to the
   /// given successor block, and return the newly created block, or null
@@ -347,32 +462,70 @@ public:
   void pop_front() { Insts.pop_front(); }
   void pop_back() { Insts.pop_back(); }
   void push_back(MachineInstr *MI) { Insts.push_back(MI); }
+
   template<typename IT>
-  void insert(iterator I, IT S, IT E) { Insts.insert(I, S, E); }
-  iterator insert(iterator I, MachineInstr *M) { return Insts.insert(I, M); }
-  iterator insertAfter(iterator I, MachineInstr *M) { 
+  void insert(insn_iterator I, IT S, IT E) {
+    Insts.insert(I, S, E);
+  }
+  insn_iterator insert(insn_iterator I, MachineInstr *M) {
+    return Insts.insert(I, M);
+  }
+  insn_iterator insertAfter(insn_iterator I, MachineInstr *M) { 
     return Insts.insertAfter(I, M); 
+  }
+
+  template<typename IT>
+  void insert(iterator I, IT S, IT E) {
+    Insts.insert(I.getInsnIterator(), S, E);
+  }
+  iterator insert(iterator I, MachineInstr *M) {
+    return Insts.insert(I.getInsnIterator(), M);
+  }
+  iterator insertAfter(iterator I, MachineInstr *M) { 
+    return Insts.insertAfter(I.getInsnIterator(), M); 
   }
 
   // erase - Remove the specified element or range from the instruction list.
   // These functions delete any instructions removed.
   //
-  iterator erase(iterator I)             { return Insts.erase(I); }
-  iterator erase(iterator I, iterator E) { return Insts.erase(I, E); }
+  insn_iterator erase(insn_iterator I) {
+    return Insts.erase(I);
+  }
+  insn_iterator erase(insn_iterator I, insn_iterator E) {
+    return Insts.erase(I, E);
+  }
+
+  iterator erase(iterator I)             {
+    return Insts.erase(I.getInsnIterator());
+  }
+  iterator erase(iterator I, iterator E) {
+    return Insts.erase(I.getInsnIterator(), E.getInsnIterator());
+  }
+
+  iterator erase(MachineInstr *I)        { iterator MII(I); return erase(MII); }
   MachineInstr *remove(MachineInstr *I)  { return Insts.remove(I); }
   void clear()                           { Insts.clear(); }
 
   /// splice - Take an instruction from MBB 'Other' at the position From,
   /// and insert it into this MBB right before 'where'.
-  void splice(iterator where, MachineBasicBlock *Other, iterator From) {
+  void splice(insn_iterator where, MachineBasicBlock *Other,
+              insn_iterator From) {
     Insts.splice(where, Other->Insts, From);
+  }
+  void splice(iterator where, MachineBasicBlock *Other, iterator From) {
+    Insts.splice(where.getInsnIterator(), Other->Insts, From.getInsnIterator());
   }
 
   /// splice - Take a block of instructions from MBB 'Other' in the range [From,
   /// To), and insert them into this MBB right before 'where'.
+  void splice(insn_iterator where, MachineBasicBlock *Other, insn_iterator From,
+              insn_iterator To) {
+    Insts.splice(where, Other->Insts, From, To);
+  }
   void splice(iterator where, MachineBasicBlock *Other, iterator From,
               iterator To) {
-    Insts.splice(where, Other->Insts, From, To);
+    Insts.splice(where.getInsnIterator(), Other->Insts,
+                 From.getInsnIterator(), To.getInsnIterator());
   }
 
   /// removeFromParent - This method unlinks 'this' from the containing
@@ -399,7 +552,10 @@ public:
 
   /// findDebugLoc - find the next valid DebugLoc starting at MBBI, skipping
   /// any DBG_VALUE instructions.  Return UnknownLoc if there is none.
-  DebugLoc findDebugLoc(MachineBasicBlock::iterator &MBBI);
+  DebugLoc findDebugLoc(insn_iterator MBBI);
+  DebugLoc findDebugLoc(iterator MBBI) {
+    return findDebugLoc(MBBI.getInsnIterator());
+  }
 
   // Debugging methods.
   void dump() const;

@@ -710,7 +710,8 @@ bool RegisterCoalescer::RemoveCopyByCommutingDef(const CoalescerPair &CP,
     return false;
   if (NewMI != DefMI) {
     LIS->ReplaceMachineInstrInMaps(DefMI, NewMI);
-    MBB->insert(DefMI, NewMI);
+    MachineBasicBlock::iterator Pos = DefMI;
+    MBB->insert(Pos, NewMI);
     MBB->erase(DefMI);
   }
   unsigned OpIdx = NewMI->findRegisterUseOperandIdx(IntA.reg, false);

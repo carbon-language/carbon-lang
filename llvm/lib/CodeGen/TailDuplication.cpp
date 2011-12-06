@@ -561,8 +561,7 @@ TailDuplicatePass::shouldTailDuplicate(const MachineFunction &MF,
   // Check the instructions in the block to determine whether tail-duplication
   // is invalid or unlikely to be profitable.
   unsigned InstrCount = 0;
-  for (MachineBasicBlock::const_iterator I = TailBB.begin(); I != TailBB.end();
-       ++I) {
+  for (MachineBasicBlock::iterator I = TailBB.begin(); I != TailBB.end(); ++I) {
     // Non-duplicable things shouldn't be tail-duplicated.
     if (I->getDesc().isNotDuplicable())
       return false;

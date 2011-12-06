@@ -410,7 +410,7 @@ bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
     return false;   // Quick exit for basic blocks without PHIs.
 
   bool Changed = false;
-  for (MachineBasicBlock::const_iterator BBI = MBB.begin(), BBE = MBB.end();
+  for (MachineBasicBlock::iterator BBI = MBB.begin(), BBE = MBB.end();
        BBI != BBE && BBI->isPHI(); ++BBI) {
     for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2) {
       unsigned Reg = BBI->getOperand(i).getReg();

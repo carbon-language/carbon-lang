@@ -689,7 +689,7 @@ MachineBasicBlock *ScheduleDAGInstrs::EmitSchedule() {
          DI = DbgValues.end(), DE = DbgValues.begin(); DI != DE; --DI) {
     std::pair<MachineInstr *, MachineInstr *> P = *prior(DI);
     MachineInstr *DbgValue = P.first;
-    MachineInstr *OrigPrivMI = P.second;
+    MachineBasicBlock::iterator OrigPrivMI = P.second;
     BB->insertAfter(OrigPrivMI, DbgValue);
   }
   DbgValues.clear();

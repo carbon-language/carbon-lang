@@ -73,7 +73,8 @@ void ilist_traits<MachineBasicBlock>::addNodeToList(MachineBasicBlock *N) {
 
   // Make sure the instructions have their operands in the reginfo lists.
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
-  for (MachineBasicBlock::iterator I = N->begin(), E = N->end(); I != E; ++I)
+  for (MachineBasicBlock::insn_iterator I = N->insn_begin(), E = N->insn_end();
+       I != E; ++I)
     I->AddRegOperandsToUseLists(RegInfo);
 
   LeakDetector::removeGarbageObject(N);
@@ -120,8 +121,8 @@ void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr *N) {
 /// lists.
 void ilist_traits<MachineInstr>::
 transferNodesFromList(ilist_traits<MachineInstr> &fromList,
-                      MachineBasicBlock::iterator first,
-                      MachineBasicBlock::iterator last) {
+                      ilist_iterator<MachineInstr> first,
+                      ilist_iterator<MachineInstr> last) {
   assert(Parent->getParent() == fromList.Parent->getParent() &&
         "MachineInstr parent mismatch!");
 
@@ -140,9 +141,10 @@ void ilist_traits<MachineInstr>::deleteNode(MachineInstr* MI) {
 }
 
 MachineBasicBlock::iterator MachineBasicBlock::getFirstNonPHI() {
-  iterator I = begin();
+  insn_iterator I = insn_begin();
   while (I != end() && I->isPHI())
     ++I;
+  assert(!I->isInsideBundle() && "First non-phi MI cannot be inside a bundle!");
   return I;
 }
 
@@ -150,23 +152,63 @@ MachineBasicBlock::iterator
 MachineBasicBlock::SkipPHIsAndLabels(MachineBasicBlock::iterator I) {
   while (I != end() && (I->isPHI() || I->isLabel() || I->isDebugValue()))
     ++I;
+  // FIXME: This needs to change if we wish to bundle labels / dbg_values
+  // inside the bundle.
+  assert(!I->isInsideBundle() &&
+         "First non-phi / non-label instruction is inside a bundle!");
   return I;
 }
 
 MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
   iterator I = end();
-  while (I != begin() && ((--I)->getDesc().isTerminator() || I->isDebugValue()))
+  while (I != begin() && ((--I)->isTerminator() || I->isDebugValue()))
     ; /*noop */
-  while (I != end() && !I->getDesc().isTerminator())
+  while (I != end() && !I->isTerminator())
+    ++I;
+  return I;
+}
+
+MachineBasicBlock::const_iterator
+MachineBasicBlock::getFirstTerminator() const {
+  const_iterator I = end();
+  while (I != begin() && ((--I)->isTerminator() || I->isDebugValue()))
+    ; /*noop */
+  while (I != end() && !I->isTerminator())
+    ++I;
+  return I;
+}
+
+MachineBasicBlock::insn_iterator MachineBasicBlock::getFirstInsnTerminator() {
+  insn_iterator I = insn_end();
+  while (I != insn_begin() && ((--I)->isTerminator() || I->isDebugValue()))
+    ; /*noop */
+  while (I != insn_end() && !I->isTerminator())
     ++I;
   return I;
 }
 
 MachineBasicBlock::iterator MachineBasicBlock::getLastNonDebugInstr() {
-  iterator B = begin(), I = end();
+  // Skip over end-of-block dbg_value instructions.
+  insn_iterator B = insn_begin(), I = insn_end();
   while (I != B) {
     --I;
-    if (I->isDebugValue())
+    // Return instruction that starts a bundle.
+    if (I->isDebugValue() || I->isInsideBundle())
+      continue;
+    return I;
+  }
+  // The block is all debug values.
+  return end();
+}
+
+MachineBasicBlock::const_iterator
+MachineBasicBlock::getLastNonDebugInstr() const {
+  // Skip over end-of-block dbg_value instructions.
+  const_insn_iterator B = insn_begin(), I = insn_end();
+  while (I != B) {
+    --I;
+    // Return instruction that starts a bundle.
+    if (I->isDebugValue() || I->isInsideBundle())
       continue;
     return I;
   }
@@ -453,8 +495,8 @@ MachineBasicBlock::transferSuccessorsAndUpdatePHIs(MachineBasicBlock *fromMBB) {
     fromMBB->removeSuccessor(Succ);
 
     // Fix up any PHI nodes in the successor.
-    for (MachineBasicBlock::iterator MI = Succ->begin(), ME = Succ->end();
-         MI != ME && MI->isPHI(); ++MI)
+    for (MachineBasicBlock::insn_iterator MI = Succ->insn_begin(),
+           ME = Succ->insn_end(); MI != ME && MI->isPHI(); ++MI)
       for (unsigned i = 2, e = MI->getNumOperands()+1; i != e; i += 2) {
         MachineOperand &MO = MI->getOperand(i);
         if (MO.getMBB() == fromMBB)
@@ -556,7 +598,8 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
   // Collect a list of virtual registers killed by the terminators.
   SmallVector<unsigned, 4> KilledRegs;
   if (LV)
-    for (iterator I = getFirstTerminator(), E = end(); I != E; ++I) {
+    for (insn_iterator I = getFirstInsnTerminator(), E = insn_end();
+         I != E; ++I) {
       MachineInstr *MI = I;
       for (MachineInstr::mop_iterator OI = MI->operands_begin(),
            OE = MI->operands_end(); OI != OE; ++OI) {
@@ -583,8 +626,8 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
   }
 
   // Fix PHI nodes in Succ so they refer to NMBB instead of this
-  for (MachineBasicBlock::iterator i = Succ->begin(), e = Succ->end();
-       i != e && i->isPHI(); ++i)
+  for (MachineBasicBlock::insn_iterator
+         i = Succ->insn_begin(),e = Succ->insn_end(); i != e && i->isPHI(); ++i)
     for (unsigned ni = 1, ne = i->getNumOperands(); ni != ne; ni += 2)
       if (i->getOperand(ni+1).getMBB() == this)
         i->getOperand(ni+1).setMBB(NMBB);
@@ -599,7 +642,7 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
     // Restore kills of virtual registers that were killed by the terminators.
     while (!KilledRegs.empty()) {
       unsigned Reg = KilledRegs.pop_back_val();
-      for (iterator I = end(), E = begin(); I != E;) {
+      for (insn_iterator I = insn_end(), E = insn_begin(); I != E;) {
         if (!(--I)->addRegisterKilled(Reg, NULL, /* addIfNotFound= */ false))
           continue;
         LV->getVarInfo(Reg).Kills.push_back(I);
@@ -691,8 +734,8 @@ void MachineBasicBlock::ReplaceUsesOfBlockWith(MachineBasicBlock *Old,
                                                MachineBasicBlock *New) {
   assert(Old != New && "Cannot replace self with self!");
 
-  MachineBasicBlock::iterator I = end();
-  while (I != begin()) {
+  MachineBasicBlock::insn_iterator I = insn_end();
+  while (I != insn_begin()) {
     --I;
     if (!I->getDesc().isTerminator()) break;
 
@@ -773,17 +816,17 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
 /// findDebugLoc - find the next valid DebugLoc starting at MBBI, skipping
 /// any DBG_VALUE instructions.  Return UnknownLoc if there is none.
 DebugLoc
-MachineBasicBlock::findDebugLoc(MachineBasicBlock::iterator &MBBI) {
+MachineBasicBlock::findDebugLoc(insn_iterator MBBI) {
   DebugLoc DL;
-  MachineBasicBlock::iterator E = end();
-  if (MBBI != E) {
-    // Skip debug declarations, we don't want a DebugLoc from them.
-    MachineBasicBlock::iterator MBBI2 = MBBI;
-    while (MBBI2 != E && MBBI2->isDebugValue())
-      MBBI2++;
-    if (MBBI2 != E)
-      DL = MBBI2->getDebugLoc();
-  }
+  insn_iterator E = insn_end();
+  if (MBBI == E)
+    return DL;
+
+  // Skip debug declarations, we don't want a DebugLoc from them.
+  while (MBBI != E && MBBI->isDebugValue())
+    MBBI++;
+  if (MBBI != E)
+    DL = MBBI->getDebugLoc();
   return DL;
 }
 

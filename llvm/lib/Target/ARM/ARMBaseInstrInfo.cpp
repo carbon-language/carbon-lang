@@ -1762,8 +1762,7 @@ OptimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, int CmpMask,
 
   // Check that CPSR isn't set between the comparison instruction and the one we
   // want to change.
-  MachineBasicBlock::const_iterator I = CmpInstr, E = MI,
-    B = MI->getParent()->begin();
+  MachineBasicBlock::iterator I = CmpInstr,E = MI, B = MI->getParent()->begin();
 
   // Early exit if CmpInstr is at the beginning of the BB.
   if (I == B) return false;

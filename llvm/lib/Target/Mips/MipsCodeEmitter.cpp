@@ -144,7 +144,7 @@ bool MipsCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
     for (MachineFunction::iterator MBB = MF.begin(), E = MF.end();
         MBB != E; ++MBB){
       MCE.StartMachineBasicBlock(MBB);
-      for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
+      for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
           I != E; ++I)
         emitInstruction(*I);
     }

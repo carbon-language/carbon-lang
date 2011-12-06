@@ -735,6 +735,20 @@ void MachineInstr::addMemOperand(MachineFunction &MF,
   MemRefsEnd = NewMemRefsEnd;
 }
 
+bool MachineInstr::hasProperty(unsigned short MCFlag) const {
+  if (getOpcode() != TargetOpcode::BUNDLE)
+    return getDesc().getFlags() & (1 << MCFlag);
+
+  const MachineBasicBlock *MBB = getParent();
+  MachineBasicBlock::const_insn_iterator MII = *this; ++MII;
+  while (MII != MBB->end() && MII->isInsideBundle()) {
+    if (MII->getDesc().getFlags() & (1 << MCFlag))
+      return true;
+    ++MII;
+  }
+  return false;
+}
+
 bool MachineInstr::isIdenticalTo(const MachineInstr *Other,
                                  MICheckType Check) const {
   // If opcodes or number of operands are not the same then the two
@@ -789,6 +803,17 @@ bool MachineInstr::isIdenticalTo(const MachineInstr *Other,
 /// block, and returns it, but does not delete it.
 MachineInstr *MachineInstr::removeFromParent() {
   assert(getParent() && "Not embedded in a basic block!");
+
+  // If it's a bundle then remove the MIs inside the bundle as well.
+  if (getOpcode() == TargetOpcode::BUNDLE) {
+    MachineBasicBlock *MBB = getParent();
+    MachineBasicBlock::insn_iterator MII = *this; ++MII;
+    while (MII != MBB->end() && MII->isInsideBundle()) {
+      MachineInstr *MI = &*MII;
+      ++MII;
+      MBB->remove(MI);
+    }
+  }
   getParent()->remove(this);
   return this;
 }
@@ -798,6 +823,16 @@ MachineInstr *MachineInstr::removeFromParent() {
 /// block, and deletes it.
 void MachineInstr::eraseFromParent() {
   assert(getParent() && "Not embedded in a basic block!");
+  // If it's a bundle then remove the MIs inside the bundle as well.
+  if (getOpcode() == TargetOpcode::BUNDLE) {
+    MachineBasicBlock *MBB = getParent();
+    MachineBasicBlock::insn_iterator MII = *this; ++MII;
+    while (MII != MBB->end() && MII->isInsideBundle()) {
+      MachineInstr *MI = &*MII;
+      ++MII;
+      MBB->erase(MI);
+    }
+  }
   getParent()->erase(this);
 }
 

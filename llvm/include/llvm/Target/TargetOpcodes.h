@@ -82,7 +82,12 @@ namespace TargetOpcode {
 
     /// COPY - Target-independent register copy. This instruction can also be
     /// used to copy between subregisters of virtual registers.
-    COPY = 13
+    COPY = 13,
+
+    /// BUNDLE - This instruction represents an instruction bundle. Instructions
+    /// which immediately follow a BUNDLE instruction which are marked with
+    /// 'InsideBundle' flag are inside the bundle.
+    BUNDLE
   };
 } // end namespace TargetOpcode
 } // end namespace llvm

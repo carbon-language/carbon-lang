@@ -184,7 +184,7 @@ AnalyzeBranch(MachineBasicBlock &MBB,
   if (MBB.empty())
     return true;
 
-  MachineBasicBlock::const_iterator iter = MBB.end();
+  MachineBasicBlock::iterator iter = MBB.end();
   const MachineInstr& instLast1 = *--iter;
   const MCInstrDesc &desc1 = instLast1.getDesc();
   // for special case that MBB has only 1 instruction

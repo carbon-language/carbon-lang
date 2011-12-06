@@ -53,9 +53,11 @@ public:
   };
 
   enum MIFlag {
-    NoFlags    = 0,
-    FrameSetup = 1 << 0                 // Instruction is used as a part of
+    NoFlags      = 0,
+    FrameSetup   = 1 << 0,              // Instruction is used as a part of
                                         // function frame setup code.
+    InsideBundle = 1 << 1               // Instruction is inside a bundle (not
+                                        // the first MI in a bundle)
   };
 private:
   const MCInstrDesc *MCID;              // Instruction descriptor.
@@ -148,6 +150,12 @@ public:
     AsmPrinterFlags |= (uint8_t)Flag;
   }
 
+  /// clearAsmPrinterFlag - clear specific AsmPrinter flags
+  ///
+  void clearAsmPrinterFlag(CommentFlag Flag) {
+    AsmPrinterFlags &= ~Flag;
+  }
+
   /// getFlags - Return the MI flags bitvector.
   uint8_t getFlags() const {
     return Flags;
@@ -167,10 +175,44 @@ public:
     Flags = flags;
   }
 
-  /// clearAsmPrinterFlag - clear specific AsmPrinter flags
+  /// isInsideBundle - Return true if MI is in a bundle (but not the first MI
+  /// in a bundle).
   ///
-  void clearAsmPrinterFlag(CommentFlag Flag) {
-    AsmPrinterFlags &= ~Flag;
+  /// A bundle looks like this before it's finalized:
+  ///   ----------------
+  ///   |      MI      |
+  ///   ----------------
+  ///          |
+  ///   ----------------
+  ///   |      MI    * | 
+  ///   ----------------
+  ///          |
+  ///   ----------------
+  ///   |      MI    * | 
+  ///   ----------------
+  /// In this case, the first MI starts a bundle but is not inside a bundle, the
+  /// next 2 MIs are considered "inside" the bundle.
+  ///
+  /// After a bundle is finalized, it looks like this:
+  ///   ----------------
+  ///   |    Bundle    |
+  ///   ----------------
+  ///          |
+  ///   ----------------
+  ///   |      MI    * |
+  ///   ----------------
+  ///          |
+  ///   ----------------
+  ///   |      MI    * | 
+  ///   ----------------
+  ///          |
+  ///   ----------------
+  ///   |      MI    * | 
+  ///   ----------------
+  /// The first instruction has the special opcode "BUNDLE". It's not "inside"
+  /// a bundle, but the next three MIs are.
+  bool isInsideBundle() const {
+    return getFlag(InsideBundle);
   }
 
   /// getDebugLoc - Returns the debug location id of this MachineInstr.
@@ -230,6 +272,14 @@ public:
   /// MachineMemOperand.
   bool hasOneMemOperand() const {
     return MemRefsEnd - MemRefs == 1;
+  }
+
+  /// API for querying MachineInstr properties. These are bundle aware.
+  ///
+  bool hasProperty(unsigned short Flag) const;
+
+  bool isTerminator() const {
+    return hasProperty(MCID::Terminator);
   }
 
   enum MICheckType {
