@@ -37,10 +37,12 @@
 #include "Splitter.h"
 #include "VirtRegMap.h"
 #include "RegisterCoalescer.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/CodeGen/RegAllocPBQP.h"
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -444,6 +446,9 @@ void PBQPBuilderWithCoalescing::addVirtRegCoalesce(
 
 
 void RegAllocPBQP::getAnalysisUsage(AnalysisUsage &au) const {
+  au.setPreservesCFG();
+  au.addRequired<AliasAnalysis>();
+  au.addPreserved<AliasAnalysis>();
   au.addRequired<SlotIndexes>();
   au.addPreserved<SlotIndexes>();
   au.addRequired<LiveIntervals>();
@@ -454,6 +459,8 @@ void RegAllocPBQP::getAnalysisUsage(AnalysisUsage &au) const {
   au.addRequired<CalculateSpillWeights>();
   au.addRequired<LiveStacks>();
   au.addPreserved<LiveStacks>();
+  au.addRequired<MachineDominatorTree>();
+  au.addPreserved<MachineDominatorTree>();
   au.addRequired<MachineLoopInfo>();
   au.addPreserved<MachineLoopInfo>();
   if (pbqpPreSplitting)
