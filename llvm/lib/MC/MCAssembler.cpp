@@ -733,7 +733,7 @@ bool MCAssembler::relaxLEB(MCAsmLayout &Layout, MCLEBFragment &LF) {
 }
 
 bool MCAssembler::relaxDwarfLineAddr(MCAsmLayout &Layout,
-				     MCDwarfLineAddrFragment &DF) {
+                                     MCDwarfLineAddrFragment &DF) {
   int64_t AddrDelta = 0;
   uint64_t OldSize = DF.getContents().size();
   bool IsAbs = DF.getAddrDelta().EvaluateAsAbsolute(AddrDelta, Layout);

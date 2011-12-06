@@ -182,7 +182,7 @@ uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &Data,
     if (const MCExpr *Value = Symbol.getVariableValue()) {
       int64_t IntValue;
       if (Value->EvaluateAsAbsolute(IntValue, Layout))
-	return (uint64_t)IntValue;
+        return (uint64_t)IntValue;
     }
   }
 

@@ -628,7 +628,7 @@ IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
 }
 
 void MachObjectWriter::WriteObject(MCAssembler &Asm,
-				   const MCAsmLayout &Layout) {
+                                   const MCAsmLayout &Layout) {
   unsigned NumSections = Asm.size();
 
   // The section data starts after the header, the segment load command (and
