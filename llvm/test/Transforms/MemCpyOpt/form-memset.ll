@@ -236,3 +236,15 @@ define void @test7(i32* nocapture %c) nounwind optsize {
 ; CHECK: call void @llvm.memset.p0i8.i64(i8* %5, i8 -1, i64 20, i32 4, i1 false)
   ret void
 }
+
+%struct.test8 = type { [4 x i32] }
+
+define void @test8() {
+entry:
+  %memtmp = alloca %struct.test8, align 16
+  %0 = bitcast %struct.test8* %memtmp to <4 x i32>*
+  store <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, <4 x i32>* %0, align 16
+  ret void
+; CHECK: @test8
+; CHECK: store <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, <4 x i32>* %0, align 16
+}

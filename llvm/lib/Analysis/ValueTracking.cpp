@@ -1370,6 +1370,8 @@ Value *llvm::isBytewiseValue(Value *V) {
     
     return Val;
   }
+
+  // FIXME: Vector types (e.g., <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>).
   
   // Conceptually, we could handle things like:
   //   %a = zext i8 %X to i16
