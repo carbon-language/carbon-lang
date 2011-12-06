@@ -2512,10 +2512,9 @@ b: unreachable
 <div>
 
 <p>Poison values are similar to <a href="#undefvalues">undef values</a>, however
-   instead of representing an unspecified bit pattern, they represent the
-   fact that an instruction or constant expression which cannot evoke side
-   effects has nevertheless detected a condition which results in undefined
-   behavior.</p>
+   they also represent the fact that an instruction or constant expression which
+   cannot evoke side effects has nevertheless detected a condition which results
+   in undefined behavior.</p>
 
 <p>There is currently no way of representing a poison value in the IR; they
    only exist when produced by operations such as
@@ -2572,22 +2571,21 @@ b: unreachable
 
 </ul>
 
-<p>Whenever a poison value is generated, all values which depend on it evaluate
-   to poison. If they have side effects, they evoke their side effects as if each
-   operand with a poison value were undef. If they have externally-visible side
-   effects, the behavior is undefined.</p>
+<p>Poison Values have the same behavior as <a href="#undefvalues">undef values</a>,
+   with the additional affect that any instruction which has a <i>dependence</i>
+   on a poison value has undefined behavior.</p>
 
 <p>Here are some examples:</p>
 
 <pre class="doc_code">
 entry:
   %poison = sub nuw i32 0, 1           ; Results in a poison value.
-  %still_poison = and i32 %poison, 0   ; Whereas (and i32 undef, 0) would return 0.
+  %still_poison = and i32 %poison, 0   ; 0, but also poison.
   %poison_yet_again = getelementptr i32* @h, i32 %still_poison
-  store i32 0, i32* %poison_yet_again  ; undefined behavior
+  store i32 0, i32* %poison_yet_again  ; memory at @h[0] is poisoned
 
-  store i32 %poison, i32* @g           ; Poison value conceptually stored to memory.
-  %poison2 = load i32* @g              ; Returns a poison value, not just undef.
+  store i32 %poison, i32* @g           ; Poison value stored to memory.
+  %poison2 = load i32* @g              ; Poison value loaded back from memory.
 
   store volatile i32 %poison, i32* @g  ; External observation; undefined behavior.
 
@@ -2626,8 +2624,8 @@ second_end:
   store volatile i32 0, i32* @g        ; This time, the instruction always depends
                                        ; on the store in %end. Also, it is
                                        ; control-equivalent to %end, so this is
-                                       ; well-defined (again, ignoring earlier
-                                       ; undefined behavior in this example).
+                                       ; well-defined (ignoring earlier undefined
+                                       ; behavior in this example).
 </pre>
 
 </div>
