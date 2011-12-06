@@ -129,32 +129,38 @@ ASTConsumer *GenerateModuleAction::CreateASTConsumer(CompilerInstance &CI,
 /// module.
 ///
 /// \param Module The module we're collecting includes from.
-/// \param ExplicitOnly Whether we should only add headers from explicit 
+///
+/// \param Includes Will be augmented with the set of #includes or #imports
+/// needed to load all of the named headers.
 static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
                                         clang::Module *Module,
-                                        bool ExplicitOnly,
                                         llvm::SmallString<256> &Includes) {
-  if (!ExplicitOnly || Module->IsExplicit) {
-    // Add includes for each of these headers.
-    for (unsigned I = 0, N = Module->Headers.size(); I != N; ++I) {
-      if (LangOpts.ObjC1)
-        Includes += "#import \"";
-      else
-        Includes += "#include \"";
-      Includes += Module->Headers[I]->getName();
-      Includes += "\"\n";
-    }
+  // Add includes for each of these headers.
+  for (unsigned I = 0, N = Module->Headers.size(); I != N; ++I) {
+    if (LangOpts.ObjC1)
+      Includes += "#import \"";
+    else
+      Includes += "#include \"";
+    Includes += Module->Headers[I]->getName();
+    Includes += "\"\n";
+  }
+
+  if (Module->UmbrellaHeader && Module->Parent) {
+    // Include the umbrella header for submodules.
+    if (LangOpts.ObjC1)
+      Includes += "#import \"";
+    else
+      Includes += "#include \"";
+    Includes += Module->UmbrellaHeader->getName();
+    Includes += "\"\n";    
   }
   
   // Recurse into submodules.
   for (llvm::StringMap<clang::Module *>::iterator
             Sub = Module->SubModules.begin(),
          SubEnd = Module->SubModules.end();
-       Sub != SubEnd; ++Sub) {
-    collectModuleHeaderIncludes(LangOpts, Sub->getValue(), 
-                                ExplicitOnly && !Module->IsExplicit,
-                                Includes);
-  }
+       Sub != SubEnd; ++Sub)
+    collectModuleHeaderIncludes(LangOpts, Sub->getValue(), Includes);
 }
 
 bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI, 
@@ -193,8 +199,7 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
   
   // Collect the set of #includes we need to build the module.
   llvm::SmallString<256> HeaderContents;
-  collectModuleHeaderIncludes(CI.getLangOpts(), Module, 
-                              Module->UmbrellaHeader != 0, HeaderContents);
+  collectModuleHeaderIncludes(CI.getLangOpts(), Module, HeaderContents);
   if (Module->UmbrellaHeader && HeaderContents.empty()) {
     // Simple case: we have an umbrella header and there are no additional
     // includes, we can just parse the umbrella header directly.

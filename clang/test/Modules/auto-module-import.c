@@ -17,3 +17,4 @@ Module *mod; // expected-error{{unknown type name 'Module'}}
 #import <AlsoDependsOnModule/AlsoDependsOnModule.h> // expected-warning{{treating #import as an import of module 'AlsoDependsOnModule'}}
 Module *mod2;
 
+int getDependsOther() { return depends_on_module_other; }
