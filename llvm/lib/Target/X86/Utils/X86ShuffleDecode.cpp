@@ -95,39 +95,6 @@ void DecodePSHUFLWMask(unsigned Imm,
   ShuffleMask.push_back(7);
 }
 
-void DecodePUNPCKLBWMask(unsigned NElts,
-                         SmallVectorImpl<unsigned> &ShuffleMask) {
-  DecodeUNPCKLPMask(MVT::getVectorVT(MVT::i8, NElts), ShuffleMask);
-}
-
-void DecodePUNPCKLWDMask(unsigned NElts,
-                         SmallVectorImpl<unsigned> &ShuffleMask) {
-  DecodeUNPCKLPMask(MVT::getVectorVT(MVT::i16, NElts), ShuffleMask);
-}
-
-void DecodePUNPCKLDQMask(unsigned NElts,
-                         SmallVectorImpl<unsigned> &ShuffleMask) {
-  DecodeUNPCKLPMask(MVT::getVectorVT(MVT::i32, NElts), ShuffleMask);
-}
-
-void DecodePUNPCKLQDQMask(unsigned NElts,
-                          SmallVectorImpl<unsigned> &ShuffleMask) {
-  DecodeUNPCKLPMask(MVT::getVectorVT(MVT::i64, NElts), ShuffleMask);
-}
-
-void DecodePUNPCKLMask(EVT VT,
-                       SmallVectorImpl<unsigned> &ShuffleMask) {
-  DecodeUNPCKLPMask(VT, ShuffleMask);
-}
-
-void DecodePUNPCKHMask(unsigned NElts,
-                       SmallVectorImpl<unsigned> &ShuffleMask) {
-  for (unsigned i = 0; i != NElts/2; ++i) {
-    ShuffleMask.push_back(i+NElts/2);
-    ShuffleMask.push_back(i+NElts+NElts/2);
-  }
-}
-
 void DecodeSHUFPMask(EVT VT, unsigned Imm,
                      SmallVectorImpl<unsigned> &ShuffleMask) {
   unsigned NumElts = VT.getVectorNumElements();
@@ -152,7 +119,7 @@ void DecodeSHUFPMask(EVT VT, unsigned Imm,
   }
 }
 
-void DecodeUNPCKHPMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodeUNPCKHMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask) {
   unsigned NumElts = VT.getVectorNumElements();
 
   // Handle 128 and 256-bit vector lengths. AVX defines UNPCK* to operate
@@ -171,10 +138,10 @@ void DecodeUNPCKHPMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask) {
   }
 }
 
-/// DecodeUNPCKLPMask - This decodes the shuffle masks for unpcklps/unpcklpd
+/// DecodeUNPCKLMask - This decodes the shuffle masks for unpcklps/unpcklpd
 /// etc.  VT indicates the type of the vector allowing it to handle different
 /// datatypes and vector widths.
-void DecodeUNPCKLPMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask) {
+void DecodeUNPCKLMask(EVT VT, SmallVectorImpl<unsigned> &ShuffleMask) {
   unsigned NumElts = VT.getVectorNumElements();
 
   // Handle 128 and 256-bit vector lengths. AVX defines UNPCK* to operate
