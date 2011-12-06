@@ -2756,8 +2756,8 @@ public:
   }
   static Opcode getOpForCompoundAssignment(Opcode Opc) {
     assert(isCompoundAssignmentOp(Opc));
-    if (Opc >= BO_XorAssign)
-      return Opcode(unsigned(Opc) - BO_XorAssign + BO_Xor);
+    if (Opc >= BO_AndAssign)
+      return Opcode(unsigned(Opc) - BO_AndAssign + BO_And);
     else
       return Opcode(unsigned(Opc) - BO_MulAssign + BO_Mul);
   }
