@@ -47,7 +47,7 @@ void TaintTesterChecker::checkPostStmt(const Expr *E,
   if (!State)
     return;
 
-  if (E && State->isTainted(E)) {
+  if (State->isTainted(E)) {
     if (ExplodedNode *N = C.addTransition()) {
       initBugType();
       BugReport *report = new BugReport(*BT, "tainted",N);
