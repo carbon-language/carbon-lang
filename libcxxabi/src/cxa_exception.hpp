@@ -1,3 +1,16 @@
+//===------------------------- cxa_exception.hpp --------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//  
+//  This file implements the "Exception Handling APIs"
+//  http://www.codesourcery.com/public/cxx-abi/abi-eh.html
+//  
+//===----------------------------------------------------------------------===//
+
 #include <exception> // for std::unexpected_handler and std::terminate_handler
 #include <cxxabi.h>
 #include "unwind.h"
