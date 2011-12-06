@@ -536,9 +536,10 @@ int ProcMapsIterator::FormatLine(char* buffer, int bufsize,
 
   const int rc = snprintf(buffer, bufsize,
                           "%08"PRIx64"-%08"PRIx64" %c%c%c%c %08"PRIx64" %02x:%02x %-11"PRId64" %s\n",
-                          start, end, r,w,x,p, offset,
+                          (unsigned long long)start, (unsigned long long)end, r,w,x,p,
+                          (unsigned long long)offset,
                           static_cast<int>(dev/256), static_cast<int>(dev%256),
-                          inode, filename);
+                          (unsigned long long)inode, filename);
   return (rc < 0 || rc >= bufsize) ? 0 : rc;
 }
 
@@ -609,4 +610,3 @@ void RawWrite(RawFD fd, const char* buf, size_t len) {
 void RawClose(RawFD fd) {
   NO_INTR(close(fd));
 }
-
