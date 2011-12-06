@@ -596,7 +596,6 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // offset in.
   // FIXME: figure out what SPAdj is doing here.
 
-  // FIXME (64-bit): Use "findScratchRegister".
   unsigned SReg;
   if (requiresRegisterScavenging(MF))
     SReg = findScratchRegister(II, RS, &PPC::GPRCRegClass, SPAdj);
