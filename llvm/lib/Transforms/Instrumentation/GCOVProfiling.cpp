@@ -108,8 +108,9 @@ INITIALIZE_PASS(GCOVProfiler, "insert-gcov-profiling",
                 "Insert instrumentation for GCOV profiling", false, false)
 
 ModulePass *llvm::createGCOVProfilerPass(bool EmitNotes, bool EmitData,
-                                         bool Use402Format) {
-  return new GCOVProfiler(EmitNotes, EmitData, Use402Format);
+                                         bool Use402Format,
+                                         bool UseExtraChecksum) {
+  return new GCOVProfiler(EmitNotes, EmitData, Use402Format, UseExtraChecksum);
 }
 
 namespace {
