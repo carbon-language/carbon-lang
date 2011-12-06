@@ -49,8 +49,8 @@ private:
   void ReadTable(unsigned int state);
 
 public:
-  DFAPacketizer(const InstrItineraryData* I, const int (*SIT)[2],
-                const unsigned* SET);
+  DFAPacketizer(const InstrItineraryData *I, const int (*SIT)[2],
+                const unsigned *SET);
 
   // Reset the current state to make all resources available.
   void clearResources() {
@@ -59,19 +59,19 @@ public:
 
   // canReserveResources - Check if the resources occupied by a MCInstrDesc
   // are available in the current state.
-  bool canReserveResources(const llvm::MCInstrDesc* MID);
+  bool canReserveResources(const llvm::MCInstrDesc *MID);
 
   // reserveResources - Reserve the resources occupied by a MCInstrDesc and
   // change the current state to reflect that change.
-  void reserveResources(const llvm::MCInstrDesc* MID);
+  void reserveResources(const llvm::MCInstrDesc *MID);
 
   // canReserveResources - Check if the resources occupied by a machine
   // instruction are available in the current state.
-  bool canReserveResources(llvm::MachineInstr* MI);
+  bool canReserveResources(llvm::MachineInstr *MI);
 
   // reserveResources - Reserve the resources occupied by a machine
   // instruction and change the current state to reflect that change.
-  void reserveResources(llvm::MachineInstr* MI);
+  void reserveResources(llvm::MachineInstr *MI);
 };
 }
 

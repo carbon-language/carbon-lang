@@ -38,7 +38,7 @@ private:
   RecordKeeper &Records;
 
 public:
-  DFAGen(RecordKeeper& R);
+  DFAGen(RecordKeeper &R);
 
   //
   // collectAllInsnClasses: Populate allInsnClasses which is a set of units

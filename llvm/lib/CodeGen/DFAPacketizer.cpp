@@ -29,7 +29,7 @@
 using namespace llvm;
 
 DFAPacketizer::DFAPacketizer(const InstrItineraryData *I, const int (*SIT)[2],
-                             const unsigned* SET):
+                             const unsigned *SET):
   InstrItins(I), CurrentState(0), DFAStateInputTable(SIT),
   DFAStateEntryTable(SET) {}
 
@@ -60,9 +60,9 @@ void DFAPacketizer::ReadTable(unsigned int state) {
 
 // canReserveResources - Check if the resources occupied by a MCInstrDesc
 // are available in the current state.
-bool DFAPacketizer::canReserveResources(const llvm::MCInstrDesc* MID) {
+bool DFAPacketizer::canReserveResources(const llvm::MCInstrDesc *MID) {
   unsigned InsnClass = MID->getSchedClass();
-  const llvm::InstrStage* IS = InstrItins->beginStage(InsnClass);
+  const llvm::InstrStage *IS = InstrItins->beginStage(InsnClass);
   unsigned FuncUnits = IS->getUnits();
   UnsignPair StateTrans = UnsignPair(CurrentState, FuncUnits);
   ReadTable(CurrentState);
@@ -72,9 +72,9 @@ bool DFAPacketizer::canReserveResources(const llvm::MCInstrDesc* MID) {
 
 // reserveResources - Reserve the resources occupied by a MCInstrDesc and
 // change the current state to reflect that change.
-void DFAPacketizer::reserveResources(const llvm::MCInstrDesc* MID) {
+void DFAPacketizer::reserveResources(const llvm::MCInstrDesc *MID) {
   unsigned InsnClass = MID->getSchedClass();
-  const llvm::InstrStage* IS = InstrItins->beginStage(InsnClass);
+  const llvm::InstrStage *IS = InstrItins->beginStage(InsnClass);
   unsigned FuncUnits = IS->getUnits();
   UnsignPair StateTrans = UnsignPair(CurrentState, FuncUnits);
   ReadTable(CurrentState);
@@ -85,14 +85,14 @@ void DFAPacketizer::reserveResources(const llvm::MCInstrDesc* MID) {
 
 // canReserveResources - Check if the resources occupied by a machine
 // instruction are available in the current state.
-bool DFAPacketizer::canReserveResources(llvm::MachineInstr* MI) {
-  const llvm::MCInstrDesc& MID = MI->getDesc();
+bool DFAPacketizer::canReserveResources(llvm::MachineInstr *MI) {
+  const llvm::MCInstrDesc &MID = MI->getDesc();
   return canReserveResources(&MID);
 }
 
 // reserveResources - Reserve the resources occupied by a machine
 // instruction and change the current state to reflect that change.
-void DFAPacketizer::reserveResources(llvm::MachineInstr* MI) {
-  const llvm::MCInstrDesc& MID = MI->getDesc();
+void DFAPacketizer::reserveResources(llvm::MachineInstr *MI) {
+  const llvm::MCInstrDesc &MID = MI->getDesc();
   reserveResources(&MID);
 }

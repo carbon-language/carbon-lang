@@ -53,7 +53,7 @@ class State {
   std::set<unsigned> stateInfo;
 
   State();
-  State(const State& S);
+  State(const State &S);
 
   //
   // canAddInsnClass - Returns true if an instruction of type InsnClass is a
@@ -63,7 +63,7 @@ class State {
   // PossibleStates is the set of valid resource states that ensue from valid
   // transitions.
   //
-  bool canAddInsnClass(unsigned InsnClass, std::set<unsigned>& PossibleStates);
+  bool canAddInsnClass(unsigned InsnClass, std::set<unsigned> &PossibleStates);
 };
 } // End anonymous namespace.
 
@@ -73,11 +73,11 @@ struct Transition {
  public:
   static int currentTransitionNum;
   int transitionNum;
-  State* from;
+  State *from;
   unsigned input;
-  State* to;
+  State *to;
 
-  Transition(State* from_, unsigned input_, State* to_);
+  Transition(State *from_, unsigned input_, State *to_);
 };
 } // End anonymous namespace.
 
@@ -87,7 +87,7 @@ struct Transition {
 //
 namespace {
 struct ltState {
-  bool operator()(const State* s1, const State* s2) const;
+  bool operator()(const State *s1, const State *s2) const;
 };
 } // End anonymous namespace.
 
@@ -105,7 +105,7 @@ public:
 
   // Map from a state to the list of transitions with that state as source.
   std::map<State*, SmallVector<Transition*, 16>, ltState> stateTransitions;
-  State* currentState;
+  State *currentState;
 
   // Highest valued Input seen.
   unsigned LargestInput;
@@ -114,25 +114,25 @@ public:
   // Modify the DFA.
   //
   void initialize();
-  void addState(State*);
-  void addTransition(Transition*);
+  void addState(State *);
+  void addTransition(Transition *);
 
   //
   // getTransition -  Return the state when a transition is made from
   // State From with Input I. If a transition is not found, return NULL.
   //
-  State* getTransition(State*, unsigned);
+  State *getTransition(State *, unsigned);
 
   //
   // isValidTransition: Predicate that checks if there is a valid transition
   // from state From on input InsnClass.
   //
-  bool isValidTransition(State* From, unsigned InsnClass);
+  bool isValidTransition(State *From, unsigned InsnClass);
 
   //
   // writeTable: Print out a table representing the DFA.
   //
-  void writeTableAndAPI(raw_ostream &OS, const std::string& ClassName);
+  void writeTableAndAPI(raw_ostream &OS, const std::string &ClassName);
 };
 } // End anonymous namespace.
 
@@ -144,12 +144,12 @@ State::State() :
   stateNum(currentStateNum++), isInitial(false) {}
 
 
-State::State(const State& S) :
+State::State(const State &S) :
   stateNum(currentStateNum++), isInitial(S.isInitial),
   stateInfo(S.stateInfo) {}
 
 
-Transition::Transition(State* from_, unsigned input_, State* to_) :
+Transition::Transition(State *from_, unsigned input_, State *to_) :
   transitionNum(currentTransitionNum++), from(from_), input(input_),
   to(to_) {}
 
@@ -158,7 +158,7 @@ DFA::DFA() :
   LargestInput(0) {}
 
 
-bool ltState::operator()(const State* s1, const State* s2) const {
+bool ltState::operator()(const State *s1, const State *s2) const {
     return (s1->stateNum < s2->stateNum);
 }
 
@@ -172,7 +172,7 @@ bool ltState::operator()(const State* s1, const State* s2) const {
 // transitions.
 //
 bool State::canAddInsnClass(unsigned InsnClass,
-                            std::set<unsigned>& PossibleStates) {
+                            std::set<unsigned> &PossibleStates) {
   //
   // Iterate over all resource states in currentState.
   //
@@ -224,13 +224,13 @@ void DFA::initialize() {
 }
 
 
-void DFA::addState(State* S) {
+void DFA::addState(State *S) {
   assert(!states.count(S) && "State already exists");
   states.insert(S);
 }
 
 
-void DFA::addTransition(Transition* T) {
+void DFA::addTransition(Transition *T) {
   // Update LargestInput.
   if (T->input > LargestInput)
     LargestInput = T->input;
@@ -244,7 +244,7 @@ void DFA::addTransition(Transition* T) {
 // getTransition - Return the state when a transition is made from
 // State From with Input I. If a transition is not found, return NULL.
 //
-State* DFA::getTransition(State* From, unsigned I) {
+State *DFA::getTransition(State *From, unsigned I) {
   // Do we have a transition from state From?
   if (!stateTransitions.count(From))
     return NULL;
@@ -260,7 +260,7 @@ State* DFA::getTransition(State* From, unsigned I) {
 }
 
 
-bool DFA::isValidTransition(State* From, unsigned InsnClass) {
+bool DFA::isValidTransition(State *From, unsigned InsnClass) {
   return (getTransition(From, InsnClass) != NULL);
 }
 
@@ -268,7 +268,7 @@ bool DFA::isValidTransition(State* From, unsigned InsnClass) {
 int State::currentStateNum = 0;
 int Transition::currentTransitionNum = 0;
 
-DFAGen::DFAGen(RecordKeeper& R):
+DFAGen::DFAGen(RecordKeeper &R):
   TargetName(CodeGenTarget(R).getName()),
   allInsnClasses(), Records(R) {}
 
@@ -284,7 +284,7 @@ DFAGen::DFAGen(RecordKeeper& R):
 //                         the ith state.
 //
 //
-void DFA::writeTableAndAPI(raw_ostream &OS, const std::string& TargetName) {
+void DFA::writeTableAndAPI(raw_ostream &OS, const std::string &TargetName) {
   std::set<State*, ltState>::iterator SI = states.begin();
   // This table provides a map to the beginning of the transitions for State s
   // in DFAStateInputTable.
@@ -334,7 +334,7 @@ void DFA::writeTableAndAPI(raw_ostream &OS, const std::string& TargetName) {
   std::string SubTargetClassName = TargetName + "GenSubtargetInfo";
   OS << "\n" << "#include \"llvm/CodeGen/DFAPacketizer.h\"\n";
   OS << "namespace llvm {\n";
-  OS << "DFAPacketizer* " << SubTargetClassName << "::"
+  OS << "DFAPacketizer *" << SubTargetClassName << "::"
      << "createDFAPacketizer(const InstrItineraryData *IID) const {\n"
      << "   return new DFAPacketizer(IID, " << TargetName
      << "DFAStateInputTable, " << TargetName << "DFAStateEntryTable);\n}\n\n";
@@ -444,7 +444,7 @@ void DFAGen::run(raw_ostream &OS) {
   // Run a worklist algorithm to generate the DFA.
   //
   DFA D;
-  State* Initial = new State;
+  State *Initial = new State;
   Initial->isInitial = true;
   Initial->stateInfo.insert(0x0);
   D.addState(Initial);
@@ -471,7 +471,7 @@ void DFAGen::run(raw_ostream &OS) {
   //             Add S' to Visited
   //
   while (!WorkList.empty()) {
-    State* current = WorkList.pop_back_val();
+    State *current = WorkList.pop_back_val();
     for (DenseSet<unsigned>::iterator CI = allInsnClasses.begin(),
            CE = allInsnClasses.end(); CI != CE; ++CI) {
       unsigned InsnClass = *CI;
@@ -483,7 +483,7 @@ void DFAGen::run(raw_ostream &OS) {
       //
       if (!D.getTransition(current, InsnClass) &&
           current->canAddInsnClass(InsnClass, NewStateResources)) {
-        State* NewState = NULL;
+        State *NewState = NULL;
 
         //
         // If we have seen this state before, then do not create a new state.
@@ -500,7 +500,7 @@ void DFAGen::run(raw_ostream &OS) {
           WorkList.push_back(NewState);
         }
 
-        Transition* NewTransition = new Transition(current, InsnClass,
+        Transition *NewTransition = new Transition(current, InsnClass,
                                                    NewState);
         D.addTransition(NewTransition);
       }
