@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -mattr=+avx | FileCheck %s
 
+; CHECK: _A
 ; CHECK: vperm2f128 $1
 define <8 x float> @A(<8 x float> %a, <8 x float> %b) nounwind uwtable readnone ssp {
 entry:
@@ -7,6 +8,7 @@ entry:
   ret <8 x float> %shuffle
 }
 
+; CHECK: _B
 ; CHECK: vperm2f128 $48
 define <8 x float> @B(<8 x float> %a, <8 x float> %b) nounwind uwtable readnone ssp {
 entry:
@@ -14,6 +16,7 @@ entry:
   ret <8 x float> %shuffle
 }
 
+; CHECK: _C
 ; CHECK: vperm2f128 $0
 define <8 x float> @C(<8 x float> %a, <8 x float> %b) nounwind uwtable readnone ssp {
 entry:
@@ -21,6 +24,7 @@ entry:
   ret <8 x float> %shuffle
 }
 
+; CHECK: _D
 ; CHECK: vperm2f128 $17
 define <8 x float> @D(<8 x float> %a, <8 x float> %b) nounwind uwtable readnone ssp {
 entry:
@@ -28,6 +32,7 @@ entry:
   ret <8 x float> %shuffle
 }
 
+; CHECK: _E
 ; CHECK: vperm2f128 $17
 define <32 x i8> @E(<32 x i8> %a, <32 x i8> %b) nounwind uwtable readnone ssp {
 entry:
@@ -35,7 +40,8 @@ entry:
   ret <32 x i8> %shuffle
 }
 
-; CHECK: vperm2f128 $33
+; CHECK: _E2
+; CHECK: vperm2f128 $3
 define <4 x i64> @E2(<4 x i64> %a, <4 x i64> %b) nounwind uwtable readnone ssp {
 entry:
   %shuffle = shufflevector <4 x i64> %a, <4 x i64> %b, <4 x i32> <i32 6, i32 7, i32 0, i32 1>
@@ -44,6 +50,7 @@ entry:
 
 ;;;; Cases with undef indicies mixed in the mask
 
+; CHECK: _F
 ; CHECK: vperm2f128 $33
 define <8 x float> @F(<8 x float> %a, <8 x float> %b) nounwind uwtable readnone ssp {
 entry:

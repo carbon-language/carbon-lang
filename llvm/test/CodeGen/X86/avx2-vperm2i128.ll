@@ -9,7 +9,7 @@ entry:
   ret <32 x i8> %shuffle
 }
 
-; CHECK: vperm2i128 $33
+; CHECK: vperm2i128 $3
 define <4 x i64> @E2(<4 x i64> %a, <4 x i64> %b) nounwind uwtable readnone ssp {
 entry:
   ; add forces execution domain
