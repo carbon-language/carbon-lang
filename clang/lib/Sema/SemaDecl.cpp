@@ -9449,6 +9449,9 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
   if (Val && DiagnoseUnexpandedParameterPack(Val, UPPC_EnumeratorValue))
     Val = 0;
 
+  if (Val)
+    Val = DefaultLvalueConversion(Val).take();
+
   if (Val) {
     if (Enum->isDependentType() || Val->isTypeDependent())
       EltTy = Context.DependentTy;

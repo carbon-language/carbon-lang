@@ -142,3 +142,8 @@ namespace test6 {
     (void) A::e; // expected-error {{incomplete type 'test6::A' named in nested name specifier}}
   }
 }
+
+namespace PR11484 {
+  const int val = 104;
+  enum class test1 { owner_dead = val, };
+}
