@@ -102,6 +102,11 @@ public:
 
   bool MayNeedRelaxation(const MCInst &Inst) const;
 
+  bool fixupNeedsRelaxation(const MCFixup &Fixup,
+                            uint64_t Value,
+                            const MCInstFragment *DF,
+                            const MCAsmLayout &Layout) const;
+
   void RelaxInstruction(const MCInst &Inst, MCInst &Res) const;
 
   bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const;
@@ -135,6 +140,17 @@ bool ARMAsmBackend::MayNeedRelaxation(const MCInst &Inst) const {
   if (getRelaxedOpcode(Inst.getOpcode()) != Inst.getOpcode())
     return true;
   return false;
+}
+
+bool ARMAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
+                                         uint64_t Value,
+                                         const MCInstFragment *DF,
+                                         const MCAsmLayout &Layout) const {
+  // FIXME:  This isn't correct for ARM. Just moving the "generic" logic
+  // into the targets for now.
+  //
+  // Relax if the value is too big for a (signed) i8.
+  return int64_t(Value) != int64_t(int8_t(Value));
 }
 
 void ARMAsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const {

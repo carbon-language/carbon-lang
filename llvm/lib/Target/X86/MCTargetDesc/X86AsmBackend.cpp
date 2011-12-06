@@ -107,6 +107,11 @@ public:
 
   bool MayNeedRelaxation(const MCInst &Inst) const;
 
+  bool fixupNeedsRelaxation(const MCFixup &Fixup,
+                            uint64_t Value,
+                            const MCInstFragment *DF,
+                            const MCAsmLayout &Layout) const;
+
   void RelaxInstruction(const MCInst &Inst, MCInst &Res) const;
 
   bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const;
@@ -242,6 +247,14 @@ bool X86AsmBackend::MayNeedRelaxation(const MCInst &Inst) const {
   // FIXME: Why exactly do we need the !hasRIP? Is it just a limitation on
   // how we do relaxations?
   return hasExp && !hasRIP;
+}
+
+bool X86AsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
+                                         uint64_t Value,
+                                         const MCInstFragment *DF,
+                                         const MCAsmLayout &Layout) const {
+  // Relax if the value is too big for a (signed) i8.
+  return int64_t(Value) != int64_t(int8_t(Value));
 }
 
 // FIXME: Can tblgen help at all here to verify there aren't other instructions

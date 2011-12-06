@@ -173,6 +173,16 @@ public:
     return false;
   }
 
+  /// fixupNeedsRelaxation - Target specific predicate for whether a given
+  /// fixup requires the associated instruction to be relaxed.
+  bool fixupNeedsRelaxation(const MCFixup &Fixup,
+                            uint64_t Value,
+                            const MCInstFragment *DF,
+                            const MCAsmLayout &Layout) const {
+    // FIXME.
+    assert(0 && "RelaxInstruction() unimplemented");
+  }
+
   /// RelaxInstruction - Relax the instruction in the given fragment
   /// to the next wider instruction.
   ///

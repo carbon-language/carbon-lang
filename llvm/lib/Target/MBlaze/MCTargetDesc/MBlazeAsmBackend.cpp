@@ -58,6 +58,11 @@ public:
 
   bool MayNeedRelaxation(const MCInst &Inst) const;
 
+  bool fixupNeedsRelaxation(const MCFixup &Fixup,
+                            uint64_t Value,
+                            const MCInstFragment *DF,
+                            const MCAsmLayout &Layout) const;
+
   void RelaxInstruction(const MCInst &Inst, MCInst &Res) const;
 
   bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const;
@@ -85,6 +90,18 @@ bool MBlazeAsmBackend::MayNeedRelaxation(const MCInst &Inst) const {
     hasExprOrImm |= Inst.getOperand(i).isExpr();
 
   return hasExprOrImm;
+}
+
+bool MBlazeAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
+                                            uint64_t Value,
+                                            const MCInstFragment *DF,
+                                            const MCAsmLayout &Layout) const {
+  // FIXME: Is this right? It's what the "generic" code was doing before,
+  // but is X86 specific. Is it actually true for MBlaze also, or was it
+  // just close enough to not be a big deal?
+  //
+  // Relax if the value is too big for a (signed) i8.
+  return int64_t(Value) != int64_t(int8_t(Value));
 }
 
 void MBlazeAsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const {

@@ -646,7 +646,7 @@ void MCAssembler::Finish() {
 }
 
 bool MCAssembler::fixupNeedsRelaxation(const MCFixup &Fixup,
-                                       const MCFragment *DF,
+                                       const MCInstFragment *DF,
                                        const MCAsmLayout &Layout) const {
   if (getRelaxAll())
     return true;
@@ -657,10 +657,7 @@ bool MCAssembler::fixupNeedsRelaxation(const MCFixup &Fixup,
   if (!evaluateFixup(Layout, Fixup, DF, Target, Value))
     return true;
 
-  // Otherwise, relax if the value is too big for a (signed) i8.
-  //
-  // FIXME: This is target dependent!
-  return int64_t(Value) != int64_t(int8_t(Value));
+  return getBackend().fixupNeedsRelaxation(Fixup, Value, DF, Layout);
 }
 
 bool MCAssembler::fragmentNeedsRelaxation(const MCInstFragment *IF,

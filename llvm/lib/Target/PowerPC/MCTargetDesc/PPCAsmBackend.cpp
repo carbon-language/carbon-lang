@@ -93,6 +93,15 @@ public:
     // FIXME.
     return false;
   }
+
+  bool fixupNeedsRelaxation(const MCFixup &Fixup,
+                            uint64_t Value,
+                            const MCInstFragment *DF,
+                            const MCAsmLayout &Layout) const {
+    // FIXME.
+    assert(0 && "RelaxInstruction() unimplemented");
+  }
+
   
   void RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
     // FIXME.

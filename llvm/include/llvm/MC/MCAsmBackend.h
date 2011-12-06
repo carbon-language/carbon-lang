@@ -16,9 +16,11 @@
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
+class MCAsmLayout;
 class MCELFObjectTargetWriter;
 class MCFixup;
 class MCInst;
+class MCInstFragment;
 class MCObjectWriter;
 class MCSection;
 template<typename T>
@@ -103,6 +105,13 @@ public:
   ///
   /// \param Inst - The instruction to test.
   virtual bool MayNeedRelaxation(const MCInst &Inst) const = 0;
+
+  /// fixupNeedsRelaxation - Target specific predicate for whether a given
+  /// fixup requires the associated instruction to be relaxed.
+  virtual bool fixupNeedsRelaxation(const MCFixup &Fixup,
+                                    uint64_t Value,
+                                    const MCInstFragment *DF,
+                                    const MCAsmLayout &Layout) const = 0;
 
   /// RelaxInstruction - Relax the instruction in the given fragment to the next
   /// wider instruction.

@@ -717,7 +717,7 @@ private:
 
   /// Check whether a fixup can be satisfied, or whether it needs to be relaxed
   /// (increased in size, in order to hold its value correctly).
-  bool fixupNeedsRelaxation(const MCFixup &Fixup, const MCFragment *DF,
+  bool fixupNeedsRelaxation(const MCFixup &Fixup, const MCInstFragment *DF,
                             const MCAsmLayout &Layout) const;
 
   /// Check whether the given fragment needs relaxation.
