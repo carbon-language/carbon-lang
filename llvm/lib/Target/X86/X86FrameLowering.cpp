@@ -456,6 +456,9 @@ static uint32_t encodeCompactUnwindRegistersWithFrame(unsigned SavedRegs[6],
     int CURegNum = getCompactUnwindRegNum(CURegs, Reg);
     if (CURegNum == -1)
       return ~0U;
+
+    // Encode the 3-bit register number in order, skipping over 3-bits for each
+    // register.
     RegEnc |= (CURegNum & 0x7) << ((5 - I) * 3);
   }
 
