@@ -747,16 +747,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   ++NumSplit;
 
   // Update the CFG.  All succs of OrigBB are now succs of NewBB.
-  while (!OrigBB->succ_empty()) {
-    MachineBasicBlock *Succ = *OrigBB->succ_begin();
-    OrigBB->removeSuccessor(Succ);
-    NewBB->addSuccessor(Succ);
-
-    // This pass should be run after register allocation, so there should be no
-    // PHI nodes to update.
-    assert((Succ->empty() || !Succ->begin()->isPHI())
-           && "PHI nodes should be eliminated by now!");
-  }
+  NewBB->transferSuccessors(OrigBB);
 
   // OrigBB branches to NewBB.
   OrigBB->addSuccessor(NewBB);
