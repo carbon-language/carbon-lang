@@ -252,11 +252,6 @@ public:
     switch (Kind) {
     case Invalid:
       assert(0 && "Invalid kind!");
-    case Token:
-      // Tokens are comparable by value.
-      //
-      // FIXME: Compare by enum value.
-      return ValueName < RHS.ValueName;
 
     default:
       // This class precedes the RHS if it is a proper subset of the RHS.
@@ -1304,6 +1299,17 @@ void AsmMatcherInfo::BuildInfo() {
       II->BuildAliasResultOperands();
   }
 
+  // Process token alias definitions and set up the associated superclass
+  // information.
+  std::vector<Record*> AllTokenAliases =
+    Records.getAllDerivedDefinitions("TokenAlias");
+  for (unsigned i = 0, e = AllTokenAliases.size(); i != e; ++i) {
+    Record *Rec = AllTokenAliases[i];
+    ClassInfo *FromClass = getTokenClass(Rec->getValueAsString("FromToken"));
+    ClassInfo *ToClass = getTokenClass(Rec->getValueAsString("ToToken"));
+    FromClass->SuperClasses.push_back(ToClass);
+  }
+
   // Reorder classes so that classes precede super classes.
   std::sort(Classes.begin(), Classes.end(), less_ptr<ClassInfo>());
 }
@@ -1676,7 +1682,8 @@ static void EmitValidateOperandClass(AsmMatcherInfo &Info,
 
   // Check for Token operands first.
   OS << "  if (Operand.isToken())\n";
-  OS << "    return matchTokenString(Operand.getToken()) == Kind;\n\n";
+  OS << "    return isSubclass(matchTokenString(Operand.getToken()), Kind);"
+     << "\n\n";
 
   // Check for register operands, including sub-classes.
   OS << "  if (Operand.isReg()) {\n";
@@ -1729,32 +1736,30 @@ static void EmitIsSubclass(CodeGenTarget &Target,
          ie = Infos.end(); it != ie; ++it) {
     ClassInfo &A = **it;
 
-    if (A.Kind != ClassInfo::Token) {
-      std::vector<StringRef> SuperClasses;
-      for (std::vector<ClassInfo*>::iterator it = Infos.begin(),
-             ie = Infos.end(); it != ie; ++it) {
-        ClassInfo &B = **it;
+    std::vector<StringRef> SuperClasses;
+    for (std::vector<ClassInfo*>::iterator it = Infos.begin(),
+         ie = Infos.end(); it != ie; ++it) {
+      ClassInfo &B = **it;
 
-        if (&A != &B && A.isSubsetOf(B))
-          SuperClasses.push_back(B.Name);
-      }
-
-      if (SuperClasses.empty())
-        continue;
-
-      OS << "\n  case " << A.Name << ":\n";
-
-      if (SuperClasses.size() == 1) {
-        OS << "    return B == " << SuperClasses.back() << ";\n";
-        continue;
-      }
-
-      OS << "    switch (B) {\n";
-      OS << "    default: return false;\n";
-      for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
-        OS << "    case " << SuperClasses[i] << ": return true;\n";
-      OS << "    }\n";
+      if (&A != &B && A.isSubsetOf(B))
+        SuperClasses.push_back(B.Name);
     }
+
+    if (SuperClasses.empty())
+      continue;
+
+    OS << "\n  case " << A.Name << ":\n";
+
+    if (SuperClasses.size() == 1) {
+      OS << "    return B == " << SuperClasses.back() << ";\n";
+      continue;
+    }
+
+    OS << "    switch (B) {\n";
+    OS << "    default: return false;\n";
+    for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
+      OS << "    case " << SuperClasses[i] << ": return true;\n";
+    OS << "    }\n";
   }
   OS << "  }\n";
   OS << "}\n\n";

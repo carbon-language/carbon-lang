@@ -738,7 +738,20 @@ class AssemblerPredicate<string cond> {
   string AssemblerCondString = cond;
 }
 
-
+/// TokenAlias - This class allows targets to define assembler token
+/// operand aliases. That is, a token literal operand which is equivalent
+/// to another, canonical, token literal. For example, ARM allows:
+///   vmov.u32 s4, #0  -> vmov.i32, #0
+/// 'u32' is a more specific designator for the 32-bit integer type specifier
+/// and is legal for any instruction which accepts 'i32' as a datatype suffix.
+///   def : TokenAlias<".u32", ".i32">;
+///
+/// This works by marking the match class of 'From' as a subclass of the
+/// match class of 'To'.
+class TokenAlias<string From, string To> {
+  string FromToken = From;
+  string ToToken = To;
+}
 
 /// MnemonicAlias - This class allows targets to define assembler mnemonic
 /// aliases.  This should be used when all forms of one mnemonic are accepted
