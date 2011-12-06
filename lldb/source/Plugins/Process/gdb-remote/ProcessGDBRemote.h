@@ -271,6 +271,12 @@ protected:
         return m_gdb_comm;
     }
 
+    void
+    SetLastStopPacket (const StringExtractorGDBRemote &response)
+    {
+        lldb_private::Mutex::Locker locker (m_last_stop_packet_mutex);
+        m_last_stop_packet = response;
+    }
     //------------------------------------------------------------------
     /// Broadcaster event bits definitions.
     //------------------------------------------------------------------
@@ -284,6 +290,7 @@ protected:
     GDBRemoteCommunicationClient m_gdb_comm;
     lldb::pid_t m_debugserver_pid;
     StringExtractorGDBRemote m_last_stop_packet;
+    lldb_private::Mutex m_last_stop_packet_mutex;
     GDBRemoteDynamicRegisterInfo m_register_info;
     lldb_private::Broadcaster m_async_broadcaster;
     lldb::thread_t m_async_thread;

@@ -123,6 +123,7 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_gdb_comm(false),
     m_debugserver_pid (LLDB_INVALID_PROCESS_ID),
     m_last_stop_packet (),
+    m_last_stop_packet_mutex (Mutex::eMutexTypeNormal),
     m_register_info (),
     m_async_broadcaster ("lldb.process.gdb-remote.async-broadcaster"),
     m_async_thread (LLDB_INVALID_HOST_THREAD),
@@ -1548,7 +1549,7 @@ ProcessGDBRemote::DoDestroy ()
 
                 if (packet_cmd == 'W' || packet_cmd == 'X')
                 {
-                    m_last_stop_packet = response;
+                    SetLastStopPacket (response);
                     SetExitStatus(response.GetHexU8(), NULL);
                 }
             }
@@ -2353,12 +2354,12 @@ ProcessGDBRemote::AsyncThread (void *arg)
                                     case eStateStopped:
                                     case eStateCrashed:
                                     case eStateSuspended:
-                                        process->m_last_stop_packet = response;
+                                        process->SetLastStopPacket (response);
                                         process->SetPrivateState (stop_state);
                                         break;
 
                                     case eStateExited:
-                                        process->m_last_stop_packet = response;
+                                        process->SetLastStopPacket (response);
                                         response.SetFilePos(1);
                                         process->SetExitStatus(response.GetHexU8(), NULL);
                                         done = true;
