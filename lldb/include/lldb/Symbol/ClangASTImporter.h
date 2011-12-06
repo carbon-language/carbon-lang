@@ -47,6 +47,11 @@ public:
     CopyDecl (clang::ASTContext *dst_ctx,
               clang::ASTContext *src_ctx,
               clang::Decl *decl);
+    
+    clang::Decl *
+    DeportDecl (clang::ASTContext *dst_ctx,
+                clang::ASTContext *src_ctx,
+                clang::Decl *decl);
         
     void
     CompleteTagDecl (clang::TagDecl *decl);
@@ -68,23 +73,49 @@ public:
         return origin.Valid();
     }
     
+    //
+    // Namespace maps
+    //
+    
     typedef std::vector < std::pair<lldb::ModuleSP, ClangNamespaceDecl> > NamespaceMap;
     typedef lldb::SharedPtr<NamespaceMap>::Type NamespaceMapSP;
     
     void RegisterNamespaceMap (const clang::NamespaceDecl *decl, 
                                NamespaceMapSP &namespace_map);
+                           
+    NamespaceMapSP GetNamespaceMap (const clang::NamespaceDecl *decl);
     
-    class NamespaceMapCompleter 
+    void BuildNamespaceMap (const clang::NamespaceDecl *decl);
+    
+    //
+    // Objective-C interface maps
+    //
+    
+    typedef std::vector <ClangASTType> ObjCInterfaceMap;
+    typedef lldb::SharedPtr<ObjCInterfaceMap>::Type ObjCInterfaceMapSP;
+    
+    void BuildObjCInterfaceMap (const clang::ObjCInterfaceDecl *decl);
+    
+    ObjCInterfaceMapSP GetObjCInterfaceMap (const clang::ObjCInterfaceDecl *decl);
+    
+    //
+    // Completers for the namespace and Objective-C interface maps
+    //
+    
+    class MapCompleter 
     {
     public:
-        virtual ~NamespaceMapCompleter ();
+        virtual ~MapCompleter ();
         
         virtual void CompleteNamespaceMap (NamespaceMapSP &namespace_map,
                                            const ConstString &name,
                                            NamespaceMapSP &parent_map) const = 0;
+        
+        virtual void CompleteObjCInterfaceMap (ObjCInterfaceMapSP &objc_interface_map,
+                                               const ConstString &name) const = 0;
     };
     
-    void InstallMapCompleter (clang::ASTContext *dst_ctx, NamespaceMapCompleter &completer)
+    void InstallMapCompleter (clang::ASTContext *dst_ctx, MapCompleter &completer)
     {
         ASTContextMetadataSP context_md;
         ContextMetadataMap::iterator context_md_iter = m_metadata_map.find(dst_ctx);
@@ -98,13 +129,9 @@ public:
         {
             context_md = context_md_iter->second;
         }
-        
+                
         context_md->m_map_completer = &completer;
     }
-                           
-    NamespaceMapSP GetNamespaceMap (const clang::NamespaceDecl *decl);
-    
-    void BuildNamespaceMap (const clang::NamespaceDecl *decl);
     
     void ForgetDestination (clang::ASTContext *dst_ctx);
     void ForgetSource (clang::ASTContext *dst_ctx, clang::ASTContext *src_ctx);
@@ -170,11 +197,10 @@ private:
         clang::ASTContext  *m_source_ctx;
     };
     
-    typedef lldb::SharedPtr<Minion>::Type                           MinionSP;
-    
-    typedef std::map<clang::ASTContext *, MinionSP>                 MinionMap;
-    
-    typedef std::map<const clang::NamespaceDecl *, NamespaceMapSP>  NamespaceMetaMap;
+    typedef lldb::SharedPtr<Minion>::Type                                   MinionSP;
+    typedef std::map<clang::ASTContext *, MinionSP>                         MinionMap;
+    typedef std::map<const clang::NamespaceDecl *, NamespaceMapSP>          NamespaceMetaMap;
+    typedef std::map<const clang::ObjCInterfaceDecl *, ObjCInterfaceMapSP>  ObjCInterfaceMetaMap;
     
     struct ASTContextMetadata
     {
@@ -183,16 +209,19 @@ private:
             m_minions (),
             m_origins (),
             m_namespace_maps (),
+            m_objc_interface_maps (),
             m_map_completer (NULL)
         {
         }
         
-        clang::ASTContext       *m_dst_ctx;
-        MinionMap                m_minions;
-        OriginMap                m_origins;
+        clang::ASTContext      *m_dst_ctx;
+        MinionMap               m_minions;
+        OriginMap               m_origins;
         
-        NamespaceMetaMap         m_namespace_maps;
-        NamespaceMapCompleter   *m_map_completer;
+        NamespaceMetaMap        m_namespace_maps;
+        MapCompleter           *m_map_completer;
+        
+        ObjCInterfaceMetaMap    m_objc_interface_maps;
     };
     
     typedef lldb::SharedPtr<ASTContextMetadata>::Type               ASTContextMetadataSP;

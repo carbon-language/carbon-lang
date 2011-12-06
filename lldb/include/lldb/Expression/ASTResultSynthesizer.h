@@ -45,14 +45,13 @@ public:
     ///     The type that the result should have.  May be initialized with a
     ///     NULL type, in which case the type is inferred.
     ///
-    /// @param[in] scratch_ast_context
-    ///     If non-NULL, an AST context to populate with the persistent types
-    ///     found in the expression.
+    /// @param[in] target
+    ///     The target, which contains the persistent variable store and the
+    ///     AST importer.
     //----------------------------------------------------------------------
     ASTResultSynthesizer(clang::ASTConsumer *passthrough,
                          TypeFromUser desired_type,
-                         clang::ASTContext &scratch_ast_context,
-                         ClangPersistentVariables &persistent_vars);
+                         Target &target);
     
     //----------------------------------------------------------------------
     /// Destructor
@@ -181,8 +180,7 @@ private:
     clang::ASTContext *m_ast_context;           ///< The AST context to use for identifiers and types.
     clang::ASTConsumer *m_passthrough;          ///< The ASTConsumer down the chain, for passthrough.  NULL if it's a SemaConsumer.
     clang::SemaConsumer *m_passthrough_sema;    ///< The SemaConsumer down the chain, for passthrough.  NULL if it's an ASTConsumer.
-    clang::ASTContext &m_scratch_ast_context;   ///< The AST context to install persistent types into.
-    ClangPersistentVariables &m_persistent_vars;///< The persistent variable manager to register persistent types with.
+    Target &m_target;                           ///< The target, which contains the persistent variable store and the
     clang::Sema *m_sema;                        ///< The Sema to use.
     TypeFromUser m_desired_type;                ///< If non-NULL, the type to coerce the result to.
 };

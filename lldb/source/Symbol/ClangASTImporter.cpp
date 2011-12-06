@@ -71,6 +71,30 @@ ClangASTImporter::CopyDecl (clang::ASTContext *dst_ast,
     return NULL;
 }
 
+clang::Decl *
+ClangASTImporter::DeportDecl (clang::ASTContext *dst_ctx,
+                              clang::ASTContext *src_ctx,
+                              clang::Decl *decl)
+{
+    clang::Decl *result = CopyDecl(dst_ctx, src_ctx, decl);
+    
+    if (!result)
+        return NULL;
+    
+    ClangASTContext::GetCompleteDecl (src_ctx, decl);
+
+    MinionSP minion_sp (GetMinion (dst_ctx, src_ctx));
+    
+    if (minion_sp && isa<TagDecl>(decl))
+        minion_sp->ImportDefinition(decl);
+    
+    ASTContextMetadataSP to_context_md = GetContextMetadata(dst_ctx);
+
+    to_context_md->m_origins.erase(result);
+    
+    return result;
+}
+
 void
 ClangASTImporter::CompleteTagDecl (clang::TagDecl *decl)
 {
@@ -175,7 +199,7 @@ ClangASTImporter::BuildNamespaceMap(const clang::NamespaceDecl *decl)
         context_md->m_map_completer->CompleteNamespaceMap (new_map, ConstString(namespace_string.c_str()), parent_map);
     }
     
-    RegisterNamespaceMap (decl, new_map);
+    context_md->m_namespace_maps[decl] = new_map;
 }
 
 void 
@@ -205,9 +229,41 @@ ClangASTImporter::ForgetSource (clang::ASTContext *dst_ast, clang::ASTContext *s
     }
 }
 
-ClangASTImporter::NamespaceMapCompleter::~NamespaceMapCompleter ()
+ClangASTImporter::MapCompleter::~MapCompleter ()
 {
     return;
+}
+
+ClangASTImporter::ObjCInterfaceMapSP 
+ClangASTImporter::GetObjCInterfaceMap (const clang::ObjCInterfaceDecl *decl)
+{
+    ASTContextMetadataSP context_md = GetContextMetadata(&decl->getASTContext());
+    
+    ObjCInterfaceMetaMap &objc_interface_maps = context_md->m_objc_interface_maps;
+    
+    ObjCInterfaceMetaMap::iterator iter = objc_interface_maps.find(decl);
+    
+    if (iter != objc_interface_maps.end())
+        return iter->second;
+    else
+        return ObjCInterfaceMapSP();
+}
+
+void
+ClangASTImporter::BuildObjCInterfaceMap (const clang::ObjCInterfaceDecl *decl)
+{
+    ASTContextMetadataSP context_md = GetContextMetadata(&decl->getASTContext());
+    
+    ObjCInterfaceMapSP new_map(new ObjCInterfaceMap);
+    
+    if (context_md->m_map_completer)
+    {
+        std::string namespace_string = decl->getDeclName().getAsString();
+        
+        context_md->m_map_completer->CompleteObjCInterfaceMap(new_map, ConstString(namespace_string.c_str()));
+    }
+    
+    context_md->m_objc_interface_maps[decl] = new_map;
 }
 
 clang::Decl 
@@ -256,6 +312,8 @@ clang::Decl
         }
         else
         {
+            to_context_md->m_origins[to] = DeclOrigin(m_source_ctx, from);
+            
             if (log)
                 log->Printf("    [ClangASTImporter] Decl has no origin information in (ASTContext*)%p",
                             &from->getASTContext());
@@ -313,6 +371,8 @@ clang::Decl
     {
         ObjCInterfaceDecl *to_interface_decl = dyn_cast<ObjCInterfaceDecl>(to);
         
+        m_master.BuildObjCInterfaceMap(to_interface_decl);
+        
         to_interface_decl->setHasExternalLexicalStorage();
         to_interface_decl->setHasExternalVisibleStorage();
         
@@ -320,7 +380,7 @@ clang::Decl
             to_interface_decl->completedForwardDecl();
         
         to_interface_decl->setExternallyCompleted();
-        
+                
         if (log)
             log->Printf("    [ClangASTImporter] To is an ObjCInterfaceDecl - attributes %s%s%s",
                         (to_interface_decl->hasExternalLexicalStorage() ? " Lexical" : ""),

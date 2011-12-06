@@ -22,6 +22,8 @@
 #include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Expression/ASTResultSynthesizer.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/ClangASTImporter.h"
+#include "lldb/Target/Target.h"
 
 using namespace llvm;
 using namespace clang;
@@ -29,13 +31,11 @@ using namespace lldb_private;
 
 ASTResultSynthesizer::ASTResultSynthesizer(ASTConsumer *passthrough,
                                            TypeFromUser desired_type,
-                                           ASTContext &scratch_ast_context,
-                                           ClangPersistentVariables &persistent_vars) :
+                                           Target &target) :
     m_ast_context (NULL),
     m_passthrough (passthrough),
     m_passthrough_sema (NULL),
-    m_scratch_ast_context (scratch_ast_context),
-    m_persistent_vars (persistent_vars),
+    m_target (target),
     m_sema (NULL),
     m_desired_type (desired_type)
 {
@@ -442,14 +442,12 @@ ASTResultSynthesizer::MaybeRecordPersistentType(TypeDecl *D)
     if (log)
         log->Printf ("Recording persistent type %s\n", name_cs.GetCString());
     
-    Decl *D_scratch = ClangASTContext::CopyDecl(&m_scratch_ast_context, 
-                                                m_ast_context,
-                                                D);
+    Decl *D_scratch = m_target.GetClangASTImporter()->DeportDecl(m_target.GetScratchClangASTContext()->getASTContext(), 
+                                                                 m_ast_context,
+                                                                 D);
     
-    TypeDecl *TD_scratch = dyn_cast<TypeDecl>(D_scratch);
-    
-    if (TD_scratch)
-        m_persistent_vars.RegisterPersistentType(name_cs, TD_scratch);
+    if (TypeDecl *TypeDecl_scratch = dyn_cast<TypeDecl>(D_scratch))
+        m_target.GetPersistentVariables().RegisterPersistentType(name_cs, TypeDecl_scratch);
 }
 
 void 

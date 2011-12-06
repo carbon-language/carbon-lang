@@ -895,8 +895,12 @@ ClangExpressionDeclMap::WriteTarget (lldb_private::Value &value,
                 return err.Success();
             }
         case Value::eValueTypeHostAddress:
-            memcpy ((void *)value.GetScalar().ULongLong(), data, length);
-            return true;
+            {
+                if (value.GetScalar().ULongLong() == 0 || data == NULL)
+                    return false;
+                memcpy ((void *)value.GetScalar().ULongLong(), data, length);
+                return true;
+            }
         case Value::eValueTypeScalar:
             return false;
         }
@@ -2474,7 +2478,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             if (!ptype_type_decl)
                 break;
             
-            Decl *parser_ptype_decl = ClangASTContext::CopyDecl(m_ast_context, scratch_ast_context, ptype_type_decl);
+            Decl *parser_ptype_decl = m_ast_importer->CopyDecl(m_ast_context, scratch_ast_context, ptype_type_decl);
             
             if (!parser_ptype_decl)
                 break;
