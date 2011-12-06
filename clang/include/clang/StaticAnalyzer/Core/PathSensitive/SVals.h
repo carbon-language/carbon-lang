@@ -143,30 +143,17 @@ public:
   void dumpToStream(raw_ostream &OS) const;
   void dump() const;
 
-  // Iterators.
-  class symbol_iterator {
-    SmallVector<const SymExpr*, 5> itr;
-    void expand();
-  public:
-    symbol_iterator() {}
-    symbol_iterator(const SymExpr *SE);
-
-    symbol_iterator &operator++();
-    SymbolRef operator*();
-
-    bool operator==(const symbol_iterator &X) const;
-    bool operator!=(const symbol_iterator &X) const;
-  };
-
-  symbol_iterator symbol_begin() const {
+  SymExpr::symbol_iterator symbol_begin() const {
     const SymExpr *SE = getAsSymbolicExpression();
     if (SE)
-      return symbol_iterator(SE);
+      return SE->symbol_begin();
     else
-      return symbol_iterator();
+      return SymExpr::symbol_iterator();
   }
 
-  symbol_iterator symbol_end() const { return symbol_iterator(); }
+  SymExpr::symbol_iterator symbol_end() const { 
+    return SymExpr::symbol_end();
+  }
 
   // Implement isa<T> support.
   static inline bool classof(const SVal*) { return true; }

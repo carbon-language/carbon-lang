@@ -138,54 +138,6 @@ const MemRegion *loc::MemRegionVal::stripCasts() const {
   return R ?  R->StripCasts() : NULL;
 }
 
-bool SVal::symbol_iterator::operator==(const symbol_iterator &X) const {
-  return itr == X.itr;
-}
-
-bool SVal::symbol_iterator::operator!=(const symbol_iterator &X) const {
-  return itr != X.itr;
-}
-
-SVal::symbol_iterator::symbol_iterator(const SymExpr *SE) {
-  itr.push_back(SE);
-  while (!isa<SymbolData>(itr.back())) expand();
-}
-
-SVal::symbol_iterator &SVal::symbol_iterator::operator++() {
-  assert(!itr.empty() && "attempting to iterate on an 'end' iterator");
-  assert(isa<SymbolData>(itr.back()));
-  itr.pop_back();
-  if (!itr.empty())
-    while (!isa<SymbolData>(itr.back())) expand();
-  return *this;
-}
-
-SymbolRef SVal::symbol_iterator::operator*() {
-  assert(!itr.empty() && "attempting to dereference an 'end' iterator");
-  return cast<SymbolData>(itr.back());
-}
-
-void SVal::symbol_iterator::expand() {
-  const SymExpr *SE = itr.back();
-  itr.pop_back();
-
-  if (const SymbolCast *SC = dyn_cast<SymbolCast>(SE)) {
-    itr.push_back(SC->getOperand());
-    return;
-  }
-  if (const SymIntExpr *SIE = dyn_cast<SymIntExpr>(SE)) {
-    itr.push_back(SIE->getLHS());
-    return;
-  }
-  else if (const SymSymExpr *SSE = dyn_cast<SymSymExpr>(SE)) {
-    itr.push_back(SSE->getLHS());
-    itr.push_back(SSE->getRHS());
-    return;
-  }
-
-  llvm_unreachable("unhandled expansion case");
-}
-
 const void *nonloc::LazyCompoundVal::getStore() const {
   return static_cast<const LazyCompoundValData*>(Data)->getStore();
 }

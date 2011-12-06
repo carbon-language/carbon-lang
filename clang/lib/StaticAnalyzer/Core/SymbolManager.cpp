@@ -94,6 +94,54 @@ void SymbolRegionValue::dumpToStream(raw_ostream &os) const {
   os << "reg_$" << getSymbolID() << "<" << R << ">";
 }
 
+bool SymExpr::symbol_iterator::operator==(const symbol_iterator &X) const {
+  return itr == X.itr;
+}
+
+bool SymExpr::symbol_iterator::operator!=(const symbol_iterator &X) const {
+  return itr != X.itr;
+}
+
+SymExpr::symbol_iterator::symbol_iterator(const SymExpr *SE) {
+  itr.push_back(SE);
+  while (!isa<SymbolData>(itr.back())) expand();
+}
+
+SymExpr::symbol_iterator &SymExpr::symbol_iterator::operator++() {
+  assert(!itr.empty() && "attempting to iterate on an 'end' iterator");
+  assert(isa<SymbolData>(itr.back()));
+  itr.pop_back();
+  if (!itr.empty())
+    while (!isa<SymbolData>(itr.back())) expand();
+  return *this;
+}
+
+SymbolRef SymExpr::symbol_iterator::operator*() {
+  assert(!itr.empty() && "attempting to dereference an 'end' iterator");
+  return cast<SymbolData>(itr.back());
+}
+
+void SymExpr::symbol_iterator::expand() {
+  const SymExpr *SE = itr.back();
+  itr.pop_back();
+
+  if (const SymbolCast *SC = dyn_cast<SymbolCast>(SE)) {
+    itr.push_back(SC->getOperand());
+    return;
+  }
+  if (const SymIntExpr *SIE = dyn_cast<SymIntExpr>(SE)) {
+    itr.push_back(SIE->getLHS());
+    return;
+  }
+  else if (const SymSymExpr *SSE = dyn_cast<SymSymExpr>(SE)) {
+    itr.push_back(SSE->getLHS());
+    itr.push_back(SSE->getRHS());
+    return;
+  }
+
+  llvm_unreachable("unhandled expansion case");
+}
+
 const SymbolRegionValue*
 SymbolManager::getRegionValueSymbol(const TypedValueRegion* R) {
   llvm::FoldingSetNodeID profile;

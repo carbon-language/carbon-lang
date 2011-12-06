@@ -1804,8 +1804,8 @@ void CStringChecker::checkLiveSymbols(const ProgramState *state,
        I != E; ++I) {
     SVal Len = I.getData();
 
-    for (SVal::symbol_iterator si = Len.symbol_begin(), se = Len.symbol_end();
-         si != se; ++si)
+    for (SymExpr::symbol_iterator si = Len.symbol_begin(),
+                                  se = Len.symbol_end(); si != se; ++si)
       SR.markInUse(*si);
   }
 }

@@ -673,29 +673,21 @@ bool ProgramState::isTainted(SVal V, TaintTagType Kind) const {
 bool ProgramState::isTainted(const SymExpr* Sym, TaintTagType Kind) const {
   if (!Sym)
     return false;
+  
+  // Travese all the symbols this symbol depends on to see if any are tainted.
+  bool Tainted = false;
+  for (SymExpr::symbol_iterator SI = Sym->symbol_begin(), SE =Sym->symbol_end();
+       SI != SE; ++SI) {
+    assert(isa<SymbolData>(*SI));
+    const TaintTagType *Tag = get<TaintMap>(*SI);
+    Tainted = (Tag && *Tag == Kind);
 
-  // TODO: Can we use symbol_iterator (like removeDeadBindingsWorker) here?
-
-  // Check taint on derived symbols.
-  if (const SymbolDerived *SD = dyn_cast<SymbolDerived>(Sym))
-    return isTainted(SD->getParentSymbol(), Kind);
-
-  if (const SymbolCast *SC = dyn_cast<SymbolCast>(Sym))
-    return (isTainted(SC->getOperand(), Kind));
-
-  if (const SymIntExpr *SIE = dyn_cast<SymIntExpr>(Sym))
-    return isTainted(SIE->getLHS(), Kind);
-
-  if (const SymSymExpr *SSE = dyn_cast<SymSymExpr>(Sym))
-    return (isTainted(SSE->getLHS(), Kind) || isTainted(SSE->getRHS(), Kind));
-
-  // Check taint on the current symbol.
-  if (const SymbolData *SymR = dyn_cast<SymbolData>(Sym)) {
-    const TaintTagType *Tag = get<TaintMap>(SymR);
-    return (Tag && *Tag == Kind);
+    // If this is a SymbolDerived with a tainted parent, it's also tainted.
+    if (const SymbolDerived *SD = dyn_cast<SymbolDerived>(*SI))
+      Tainted = Tainted || isTainted(SD->getParentSymbol(), Kind);
+    if (Tainted)
+      return true;
   }
-
-  // TODO: Remove llvm unreachable.
-  llvm_unreachable("We do not know show to check taint on this symbol.");
-  return false;
+  
+  return Tainted;
 }

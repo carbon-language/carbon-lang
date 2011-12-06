@@ -69,6 +69,26 @@ public:
 
   // Implement isa<T> support.
   static inline bool classof(const SymExpr*) { return true; }
+
+  class symbol_iterator {
+    SmallVector<const SymExpr*, 5> itr;
+    void expand();
+  public:
+    symbol_iterator() {}
+    symbol_iterator(const SymExpr *SE);
+
+    symbol_iterator &operator++();
+    const SymExpr* operator*();
+
+    bool operator==(const symbol_iterator &X) const;
+    bool operator!=(const symbol_iterator &X) const;
+  };
+
+  symbol_iterator symbol_begin() const {
+    return symbol_iterator(this);
+  }
+
+  static symbol_iterator symbol_end() { return symbol_iterator(); }
 };
 
 typedef const SymExpr* SymbolRef;
