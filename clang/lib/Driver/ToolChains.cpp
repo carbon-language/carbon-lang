@@ -467,9 +467,12 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
     }
   }
 
-  // Add ASAN runtime library, if required.
+  // Add ASAN runtime library, if required. Dynamic libraries and bundles
+  // should not be linked with the runtime library.
   if (Args.hasFlag(options::OPT_faddress_sanitizer,
                    options::OPT_fno_address_sanitizer, false)) {
+    if (Args.hasArg(options::OPT_dynamiclib) ||
+        Args.hasArg(options::OPT_bundle)) return;
     if (isTargetIPhoneOS()) {
       getDriver().Diag(diag::err_drv_clang_unsupported_per_platform)
         << "-faddress-sanitizer";

@@ -1103,13 +1103,13 @@ static bool UseRelaxAll(Compilation &C, const ArgList &Args) {
 /// If AddressSanitizer is enabled, add appropriate linker flags (Linux).
 /// This needs to be called before we add the C run-time (malloc, etc).
 static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
-                      ArgStringList &CmdArgs) {
+                           ArgStringList &CmdArgs) {
   // Add asan linker flags when linking an executable, but not a shared object.
   if (Args.hasArg(options::OPT_shared) ||
       !Args.hasFlag(options::OPT_faddress_sanitizer,
                     options::OPT_fno_address_sanitizer, false))
     return;
-  // LibAsan is "../lib/clang/linux/ArchName/libclang_rt.asan.a
+  // LibAsan is "../lib/clang/linux/ArchName/libclang_rt.asan.a"
   llvm::SmallString<128> LibAsan =
       llvm::sys::path::parent_path(StringRef(TC.getDriver().Dir));
   llvm::sys::path::append(LibAsan, "lib", "clang", "linux", TC.getArchName());
@@ -3585,6 +3585,18 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
+
+  // If we're building a dynamic lib with -faddress-sanitizer, unresolved
+  // symbols may appear. Mark all of them as dynamic_lookup.
+  // Linking executables is handled in lib/Driver/ToolChains.cpp.
+  if (Args.hasFlag(options::OPT_faddress_sanitizer,
+                   options::OPT_fno_address_sanitizer, false)) {
+    if (Args.hasArg(options::OPT_dynamiclib) ||
+        Args.hasArg(options::OPT_bundle)) {
+      CmdArgs.push_back("-undefined");
+      CmdArgs.push_back("dynamic_lookup");
+    }
+  }
 
   if (Args.hasArg(options::OPT_fopenmp))
     // This is more complicated in gcc...
