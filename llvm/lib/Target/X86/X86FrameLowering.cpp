@@ -565,7 +565,7 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
     if ((FullOffset & 0xFF) == FullOffset) {
       // Frameless stack.
       CompactUnwindEncoding |= 0x02000000;
-      CompactUnwindEncoding |= (FullOffset & 0xFF) << 16;
+      CompactUnwindEncoding |= (CFAOffset & 0xFF) << 16;
     } else {
       if ((CFAOffset & 0x7) != CFAOffset)
         // The extra stack adjustments are too big for us to handle.
@@ -581,6 +581,8 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
       // Encode any extra stack stack changes (done via push instructions).
       CompactUnwindEncoding |= (CFAOffset & 0x7) << 13;
     }
+
+    CompactUnwindEncoding |= ((6 - SavedRegIdx) & 0x7) << 10;
 
     // Get the encoding of the saved registers when we don't have a frame
     // pointer.
