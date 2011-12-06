@@ -252,7 +252,7 @@ DNBArchMachARM::GetEXCState(bool force)
 }
 
 static void
-DumpDBGState(const arm_debug_state_t& dbg)
+DumpDBGState(const DBG& dbg)
 {
     uint32_t i = 0;
     for (i=0; i<16; i++)
@@ -2284,9 +2284,8 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
         return INVALID_NUB_HW_INDEX;
 
     // We can only watch up to four bytes that follow a 4 byte aligned address
-    // per watchpoint register pair. Since we have at most so we can only watch
-    // until the next 4 byte boundary and we need to make sure we can properly
-    // encode this.
+    // per watchpoint register pair. Since we can only watch until the next 4
+    // byte boundary, we need to make sure we can properly encode this.
     uint32_t addr_word_offset = addr % 4;
     DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint() - addr_word_offset = 0x%8.8x", addr_word_offset);
 
@@ -2315,8 +2314,8 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
             // Make the byte_mask into a valid Byte Address Select mask
             uint32_t byte_address_select = byte_mask << 5;
             // Make sure bits 1:0 are clear in our address
-            m_state.dbg.__wvr[i] = addr & ~((nub_addr_t)3);
-            m_state.dbg.__wcr[i] =  byte_address_select |       // Which bytes that follow the IMVA that we will watch
+            m_state.dbg.__wvr[i] = addr & ~((nub_addr_t)3);     // DVA (Data Virtual Address)
+            m_state.dbg.__wcr[i] =  byte_address_select |       // Which bytes that follow the DVA that we will watch
                                     S_USER |                    // Stop only in user mode
                                     (read ? WCR_LOAD : 0) |     // Stop on read access?
                                     (write ? WCR_STORE : 0) |   // Stop on write access?

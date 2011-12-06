@@ -109,6 +109,7 @@ protected:
     typedef arm_thread_state_t GPR;
     typedef arm_vfp_state_t FPU;
     typedef arm_exception_state_t EXC;
+    typedef arm_debug_state_t DBG;
 
     static const DNBRegisterInfo g_gpr_registers[];
     static const DNBRegisterInfo g_vfp_registers[];
@@ -131,7 +132,7 @@ protected:
     struct State
     {
         Context                 context;
-        arm_debug_state_t       dbg;
+        DBG                     dbg;
         kern_return_t           gpr_errs[2];    // Read/Write errors
         kern_return_t           vfp_errs[2];    // Read/Write errors
         kern_return_t           exc_errs[2];    // Read/Write errors
