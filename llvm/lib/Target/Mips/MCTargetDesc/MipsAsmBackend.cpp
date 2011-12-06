@@ -181,6 +181,7 @@ public:
                             const MCAsmLayout &Layout) const {
     // FIXME.
     assert(0 && "RelaxInstruction() unimplemented");
+    return false;
   }
 
   /// RelaxInstruction - Relax the instruction in the given fragment

@@ -100,6 +100,7 @@ public:
                             const MCAsmLayout &Layout) const {
     // FIXME.
     assert(0 && "RelaxInstruction() unimplemented");
+    return false;
   }
 
   
