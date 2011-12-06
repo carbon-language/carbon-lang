@@ -2502,11 +2502,9 @@ static bool EvaluateVector(const Expr* E, APValue& Result, EvalInfo &Info) {
 
 bool VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
   const VectorType *VTy = E->getType()->castAs<VectorType>();
-  QualType EltTy = VTy->getElementType();
   unsigned NElts = VTy->getNumElements();
-  unsigned EltWidth = Info.Ctx.getTypeSize(EltTy);
 
-  const Expr* SE = E->getSubExpr();
+  const Expr *SE = E->getSubExpr();
   QualType SETy = SE->getType();
 
   switch (E->getCastKind()) {
@@ -2528,34 +2526,6 @@ bool VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
 
     // Splat and create vector APValue.
     SmallVector<APValue, 4> Elts(NElts, Val);
-    return Success(Elts, E);
-  }
-  case CK_BitCast: {
-    // FIXME: this is wrong for any cast other than a no-op cast.
-    if (SETy->isVectorType())
-      return Visit(SE);
-
-    if (!SETy->isIntegerType())
-      return Error(E);
-
-    APSInt Init;
-    if (!EvaluateInteger(SE, Init, Info))
-      return Error(E);
-
-    assert((EltTy->isIntegerType() || EltTy->isRealFloatingType()) &&
-           "Vectors must be composed of ints or floats");
-
-    SmallVector<APValue, 4> Elts;
-    for (unsigned i = 0; i != NElts; ++i) {
-      APSInt Tmp = Init.extOrTrunc(EltWidth);
-
-      if (EltTy->isIntegerType())
-        Elts.push_back(APValue(Tmp));
-      else
-        Elts.push_back(APValue(APFloat(Tmp)));
-
-      Init >>= EltWidth;
-    }
     return Success(Elts, E);
   }
   default:

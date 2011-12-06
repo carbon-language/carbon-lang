@@ -2541,23 +2541,27 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
   case CXXFunctionalCastExprClass:
   case CXXStaticCastExprClass:
   case ImplicitCastExprClass:
-  case CStyleCastExprClass:
+  case CStyleCastExprClass: {
+    const CastExpr *CE = cast<CastExpr>(this);
+
+    // Handle bitcasts of vector constants.
+    if (getType()->isVectorType() && CE->getCastKind() == CK_BitCast)
+      return CE->getSubExpr()->isConstantInitializer(Ctx, false);
+
     // Handle casts with a destination that's a struct or union; this
     // deals with both the gcc no-op struct cast extension and the
     // cast-to-union extension.
     if (getType()->isRecordType())
-      return cast<CastExpr>(this)->getSubExpr()
-        ->isConstantInitializer(Ctx, false);
-      
+      return CE->getSubExpr()->isConstantInitializer(Ctx, false);
+
     // Integer->integer casts can be handled here, which is important for
     // things like (int)(&&x-&&y).  Scary but true.
     if (getType()->isIntegerType() &&
-        cast<CastExpr>(this)->getSubExpr()->getType()->isIntegerType())
-      return cast<CastExpr>(this)->getSubExpr()
-        ->isConstantInitializer(Ctx, false);
-      
+        CE->getSubExpr()->getType()->isIntegerType())
+      return CE->getSubExpr()->isConstantInitializer(Ctx, false);
+
     break;
-      
+  }
   case MaterializeTemporaryExprClass:
     return cast<MaterializeTemporaryExpr>(this)->GetTemporaryExpr()
                                             ->isConstantInitializer(Ctx, false);
