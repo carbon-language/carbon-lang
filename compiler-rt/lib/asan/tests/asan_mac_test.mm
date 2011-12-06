@@ -59,13 +59,13 @@ char kStartupStr[] =
 @end
 
 void worker_do_alloc(int size) {
-  char *mem = malloc(size);
+  char * volatile mem = malloc(size);
   mem[0] = 0; // Ok
   free(mem);
 }
 
 void worker_do_crash(int size) {
-  char *mem = malloc(size);
+  char * volatile mem = malloc(size);
   mem[size] = 0;  // BOOM
   free(mem);
 }
@@ -160,7 +160,7 @@ void TestGCDSourceEvent() {
       dispatch_time(DISPATCH_TIME_NOW, 1LL * NSEC_PER_SEC);
 
   dispatch_source_set_timer(timer, milestone, DISPATCH_TIME_FOREVER, 0);
-  char *mem = malloc(10);
+  char * volatile mem = malloc(10);
   dispatch_source_set_event_handler(timer, ^{
     mem[10] = 1;
   });
@@ -177,7 +177,7 @@ void TestGCDSourceCancel() {
       dispatch_time(DISPATCH_TIME_NOW, 1LL * NSEC_PER_SEC);
 
   dispatch_source_set_timer(timer, milestone, DISPATCH_TIME_FOREVER, 0);
-  char *mem = malloc(10);
+  char * volatile mem = malloc(10);
   // Both dispatch_source_set_cancel_handler() and
   // dispatch_source_set_event_handler() use dispatch_barrier_async_f().
   // It's tricky to test dispatch_source_set_cancel_handler() separately,
@@ -195,7 +195,7 @@ void TestGCDSourceCancel() {
 void TestGCDGroupAsync() {
   dispatch_queue_t queue = dispatch_get_global_queue(0, 0);
   dispatch_group_t group = dispatch_group_create(); 
-  char *mem = malloc(10);
+  char * volatile mem = malloc(10);
   dispatch_group_async(group, queue, ^{
     mem[10] = 1;
   });

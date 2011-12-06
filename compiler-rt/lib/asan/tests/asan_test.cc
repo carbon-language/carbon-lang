@@ -1771,50 +1771,50 @@ TEST(AddressSanitizerMac, DISABLED_CFAllocatorMallocZoneDoubleFree) {
   EXPECT_DEATH(CFAllocatorMallocZoneDoubleFree(), "attempting double-free");
 }
 
-TEST(AddressSanitizerMac, DISABLED_GCDDispatchAsync) {
+TEST(AddressSanitizerMac, GCDDispatchAsync) {
   // Make sure the whole ASan report is printed, i.e. that we don't die
   // on a CHECK.
   EXPECT_DEATH(TestGCDDispatchAsync(), "Shadow byte and word");
 }
 
-TEST(AddressSanitizerMac, DISABLED_GCDDispatchSync) {
+TEST(AddressSanitizerMac, GCDDispatchSync) {
   // Make sure the whole ASan report is printed, i.e. that we don't die
   // on a CHECK.
   EXPECT_DEATH(TestGCDDispatchSync(), "Shadow byte and word");
 }
 
 
-TEST(AddressSanitizerMac, DISABLED_GCDReuseWqthreadsAsync) {
+TEST(AddressSanitizerMac, GCDReuseWqthreadsAsync) {
   // Make sure the whole ASan report is printed, i.e. that we don't die
   // on a CHECK.
   EXPECT_DEATH(TestGCDReuseWqthreadsAsync(), "Shadow byte and word");
 }
 
-TEST(AddressSanitizerMac, DISABLED_GCDReuseWqthreadsSync) {
+TEST(AddressSanitizerMac, GCDReuseWqthreadsSync) {
   // Make sure the whole ASan report is printed, i.e. that we don't die
   // on a CHECK.
   EXPECT_DEATH(TestGCDReuseWqthreadsSync(), "Shadow byte and word");
 }
 
-TEST(AddressSanitizerMac, DISABLED_GCDDispatchAfter) {
+TEST(AddressSanitizerMac, GCDDispatchAfter) {
   // Make sure the whole ASan report is printed, i.e. that we don't die
   // on a CHECK.
   EXPECT_DEATH(TestGCDDispatchAfter(), "Shadow byte and word");
 }
 
-TEST(AddressSanitizerMac, DISABLED_GCDSourceEvent) {
+TEST(AddressSanitizerMac, GCDSourceEvent) {
   // Make sure the whole ASan report is printed, i.e. that we don't die
   // on a CHECK.
   EXPECT_DEATH(TestGCDSourceEvent(), "Shadow byte and word");
 }
 
-TEST(AddressSanitizerMac, DISABLED_GCDSourceCancel) {
+TEST(AddressSanitizerMac, GCDSourceCancel) {
   // Make sure the whole ASan report is printed, i.e. that we don't die
   // on a CHECK.
   EXPECT_DEATH(TestGCDSourceCancel(), "Shadow byte and word");
 }
 
-TEST(AddressSanitizerMac, DISABLED_GCDGroupAsync) {
+TEST(AddressSanitizerMac, GCDGroupAsync) {
   // Make sure the whole ASan report is printed, i.e. that we don't die
   // on a CHECK.
   EXPECT_DEATH(TestGCDGroupAsync(), "Shadow byte and word");
