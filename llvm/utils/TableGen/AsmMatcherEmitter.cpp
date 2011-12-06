@@ -1665,7 +1665,7 @@ static void EmitMatchClassEnumeration(CodeGenTarget &Target,
 /// EmitValidateOperandClass - Emit the function to validate an operand class.
 static void EmitValidateOperandClass(AsmMatcherInfo &Info,
                                      raw_ostream &OS) {
-  OS << "static bool ValidateOperandClass(MCParsedAsmOperand *GOp, "
+  OS << "static bool validateOperandClass(MCParsedAsmOperand *GOp, "
      << "MatchClassKind Kind) {\n";
   OS << "  " << Info.Target.getName() << "Operand &Operand = *("
      << Info.Target.getName() << "Operand*)GOp;\n";
@@ -1676,7 +1676,7 @@ static void EmitValidateOperandClass(AsmMatcherInfo &Info,
 
   // Check for Token operands first.
   OS << "  if (Operand.isToken())\n";
-  OS << "    return MatchTokenString(Operand.getToken()) == Kind;\n\n";
+  OS << "    return matchTokenString(Operand.getToken()) == Kind;\n\n";
 
   // Check for register operands, including sub-classes.
   OS << "  if (Operand.isReg()) {\n";
@@ -1690,7 +1690,7 @@ static void EmitValidateOperandClass(AsmMatcherInfo &Info,
        << it->first->getName() << ": OpKind = " << it->second->Name
        << "; break;\n";
   OS << "    }\n";
-  OS << "    return IsSubclass(OpKind, Kind);\n";
+  OS << "    return isSubclass(OpKind, Kind);\n";
   OS << "  }\n\n";
 
   // Check the user classes. We don't care what order since we're only
@@ -1717,8 +1717,8 @@ static void EmitValidateOperandClass(AsmMatcherInfo &Info,
 static void EmitIsSubclass(CodeGenTarget &Target,
                            std::vector<ClassInfo*> &Infos,
                            raw_ostream &OS) {
-  OS << "/// IsSubclass - Compute whether \\arg A is a subclass of \\arg B.\n";
-  OS << "static bool IsSubclass(MatchClassKind A, MatchClassKind B) {\n";
+  OS << "/// isSubclass - Compute whether \\arg A is a subclass of \\arg B.\n";
+  OS << "static bool isSubclass(MatchClassKind A, MatchClassKind B) {\n";
   OS << "  if (A == B)\n";
   OS << "    return true;\n\n";
 
@@ -1776,7 +1776,7 @@ static void EmitMatchTokenString(CodeGenTarget &Target,
                                                   "return " + CI.Name + ";"));
   }
 
-  OS << "static MatchClassKind MatchTokenString(StringRef Name) {\n";
+  OS << "static MatchClassKind matchTokenString(StringRef Name) {\n";
 
   StringMatcher("Name", Matches, OS).Emit();
 
@@ -1914,7 +1914,7 @@ static bool EmitMnemonicAliases(raw_ostream &OS, const AsmMatcherInfo &Info) {
     Info.getRecords().getAllDerivedDefinitions("MnemonicAlias");
   if (Aliases.empty()) return false;
 
-  OS << "static void ApplyMnemonicAliases(StringRef &Mnemonic, "
+  OS << "static void applyMnemonicAliases(StringRef &Mnemonic, "
         "unsigned Features) {\n";
 
   // Keep track of all the aliases from a mnemonic.  Use an std::map so that the
@@ -2063,7 +2063,7 @@ static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
   // the found operand class.
   OS << Target.getName() << ClassName << "::OperandMatchResultTy "
      << Target.getName() << ClassName << "::\n"
-     << "TryCustomParseOperand(SmallVectorImpl<MCParsedAsmOperand*>"
+     << "tryCustomParseOperand(SmallVectorImpl<MCParsedAsmOperand*>"
      << " &Operands,\n                      unsigned MCK) {\n\n"
      << "  switch(MCK) {\n";
 
@@ -2129,7 +2129,7 @@ static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
   // Emit call to the custom parser method
   OS << "    // call custom parse method to handle the operand\n";
   OS << "    OperandMatchResultTy Result = ";
-  OS << "TryCustomParseOperand(Operands, it->Class);\n";
+  OS << "tryCustomParseOperand(Operands, it->Class);\n";
   OS << "    if (Result != MatchOperand_NoMatch)\n";
   OS << "      return Result;\n";
   OS << "  }\n\n";
@@ -2216,7 +2216,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
     OS << "    SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n";
     OS << "    StringRef Mnemonic);\n";
 
-    OS << "  OperandMatchResultTy TryCustomParseOperand(\n";
+    OS << "  OperandMatchResultTy tryCustomParseOperand(\n";
     OS << "    SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n";
     OS << "    unsigned MCK);\n\n";
   }
@@ -2363,7 +2363,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   if (HasMnemonicAliases) {
     OS << "  // Process all MnemonicAliases to remap the mnemonic.\n";
-    OS << "  ApplyMnemonicAliases(Mnemonic, AvailableFeatures);\n\n";
+    OS << "  applyMnemonicAliases(Mnemonic, AvailableFeatures);\n\n";
   }
 
   // Emit code to compute the class list for this operand vector.
@@ -2405,7 +2405,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "        OperandsValid = (it->Classes[i] == " <<"InvalidMatchClass);\n";
   OS << "        break;\n";
   OS << "      }\n";
-  OS << "      if (ValidateOperandClass(Operands[i+1], "
+  OS << "      if (validateOperandClass(Operands[i+1], "
                                        "(MatchClassKind)it->Classes[i]))\n";
   OS << "        continue;\n";
   OS << "      // If this operand is broken for all of the instances of this\n";
