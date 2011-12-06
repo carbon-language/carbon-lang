@@ -601,12 +601,12 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       assert(JTI < JT.size());
       // Thumb instructions are 2 byte aligned, but JT entries are 4 byte
       // 4 aligned. The assembler / linker may add 2 byte padding just before
-      // the JT entries.  The size does not include this padding; the
-      // constant islands pass does separate bookkeeping for it.
+      // the JT entries. The size includes the worst case size of this padding.
       // FIXME: If we know the size of the function is less than (1 << 16) *2
       // bytes, we can use 16-bit entries instead. Then there won't be an
       // alignment issue.
-      unsigned InstSize = (Opc == ARM::tBR_JTr || Opc == ARM::t2BR_JT) ? 2 : 4;
+      // tBR_JT is 2 bytes + 2 bytes worst case padding for table alignment.
+      unsigned InstSize = (Opc == ARM::t2BR_JT) ? 2 : 4;
       unsigned NumEntries = getNumJTEntries(JT, JTI);
       if (Opc == ARM::t2TBB_JT && (NumEntries & 1))
         // Make sure the instruction that follows TBB is 2-byte aligned.
