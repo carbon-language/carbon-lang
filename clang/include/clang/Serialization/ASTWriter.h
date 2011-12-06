@@ -101,6 +101,9 @@ private:
   /// \brief The reader of existing AST files, if we're chaining.
   ASTReader *Chain;
 
+  /// \brief The module we're currently writing, if any.
+  Module *WritingModule;
+                    
   /// \brief Indicates when the AST writing is actively performing
   /// serialization, rather than just queueing updates.
   bool WritingAST;
@@ -367,6 +370,9 @@ private:
   /// \brief A mapping from each known submodule to its ID number, which will
   /// be a positive integer.
   llvm::DenseMap<Module *, unsigned> SubmoduleIDs;
+                    
+  /// \brief Retrieve or create a submodule ID for this module.
+  unsigned getSubmoduleID(Module *Mod);
                     
   /// \brief Write the given subexpression to the bitstream.
   void WriteSubStmt(Stmt *S,

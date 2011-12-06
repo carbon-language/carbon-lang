@@ -3049,18 +3049,19 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         return Failure;
       }
 
-      if (Record.size() < 6) {
+      if (Record.size() < 7) {
         Error("malformed module definition");
         return Failure;
       }
       
       StringRef Name(BlobStart, BlobLen);
-      unsigned Parent = getGlobalSubmoduleID(F, Record[0]);
-      bool IsFramework = Record[1];
-      bool IsExplicit = Record[2];
-      bool InferSubmodules = Record[3];
-      bool InferExplicitSubmodules = Record[4];
-      bool InferExportWildcard = Record[5];
+      SubmoduleID GlobalID = getGlobalSubmoduleID(F, Record[0]);
+      SubmoduleID Parent = getGlobalSubmoduleID(F, Record[1]);
+      bool IsFramework = Record[2];
+      bool IsExplicit = Record[3];
+      bool InferSubmodules = Record[4];
+      bool InferExplicitSubmodules = Record[5];
+      bool InferExportWildcard = Record[6];
       
       Module *ParentModule = 0;
       if (Parent)
@@ -3071,9 +3072,9 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       CurrentModule = ModMap.findOrCreateModule(Name, ParentModule, 
                                                 IsFramework, 
                                                 IsExplicit).first;
-      
-      if (CurrentModuleGlobalIndex >= SubmodulesLoaded.size() ||
-          SubmodulesLoaded[CurrentModuleGlobalIndex]) {
+      SubmoduleID GlobalIndex = GlobalID - NUM_PREDEF_SUBMODULE_IDS;
+      if (GlobalIndex >= SubmodulesLoaded.size() ||
+          SubmodulesLoaded[GlobalIndex]) {
         Error("too many submodules");
         return Failure;
       }
@@ -3082,11 +3083,9 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       CurrentModule->InferExplicitSubmodules = InferExplicitSubmodules;
       CurrentModule->InferExportWildcard = InferExportWildcard;
       if (DeserializationListener)
-        DeserializationListener->ModuleRead(
-          CurrentModuleGlobalIndex + NUM_PREDEF_SUBMODULE_IDS, 
-          CurrentModule);
+        DeserializationListener->ModuleRead(GlobalID, CurrentModule);
       
-      SubmodulesLoaded[CurrentModuleGlobalIndex++] = CurrentModule;
+      SubmodulesLoaded[GlobalIndex] = CurrentModule;
       break;
     }
         
@@ -3102,7 +3101,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       StringRef FileName(BlobStart, BlobLen);
       if (const FileEntry *Umbrella = PP.getFileManager().getFile(FileName)) {
         if (!CurrentModule->UmbrellaHeader)
-          CurrentModule->UmbrellaHeader = Umbrella;
+          ModMap.setUmbrellaHeader(CurrentModule, Umbrella);
         else if (CurrentModule->UmbrellaHeader != Umbrella) {
           Error("mismatched umbrella headers in submodule");
           return Failure;
@@ -3126,7 +3125,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         if (std::find(CurrentModule->Headers.begin(), 
                       CurrentModule->Headers.end(), 
                       File) == CurrentModule->Headers.end())
-          CurrentModule->Headers.push_back(File);
+          ModMap.addHeader(CurrentModule, File);
       }
       break;      
     }

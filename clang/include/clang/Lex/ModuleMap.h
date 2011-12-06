@@ -177,6 +177,13 @@ public:
   /// module owns this source location.
   Module *inferModuleFromLocation(FullSourceLoc Loc);
   
+  /// \brief Sets the umbrella header of the given module to the given
+  /// header.
+  void setUmbrellaHeader(Module *Mod, const FileEntry *UmbrellaHeader);
+  
+  /// \brief Adds this header to the given module.
+  void addHeader(Module *Mod, const FileEntry *Header);
+  
   /// \brief Parse the given module map file, and record any modules we 
   /// encounter.
   ///
