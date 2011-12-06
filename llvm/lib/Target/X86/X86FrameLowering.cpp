@@ -564,12 +564,13 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
     CompactUnwindEncoding |= (StackAdjust & 0xFF) << 16;
     CompactUnwindEncoding |= RegEnc & 0x7FFF;
   } else {
-    if ((StackSize & 0xFF) == StackSize) {
+    uint32_t TotalStackSize = StackAdjust + StackSize;
+    if ((TotalStackSize & 0xFF) == TotalStackSize) {
       // Frameless stack with a small stack size.
       CompactUnwindEncoding |= 0x02000000;
 
       // Encode the stack size.
-      CompactUnwindEncoding |= (StackSize & 0xFF) << 16;
+      CompactUnwindEncoding |= (TotalStackSize & 0xFF) << 16;
     } else {
       if ((StackAdjust & 0x7) != StackAdjust)
         // The extra stack adjustments are too big for us to handle.
