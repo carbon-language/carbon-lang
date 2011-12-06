@@ -1,4 +1,4 @@
-/* RUN: %clang_cc1 %s -std=c89 -pedantic -fsyntax-only -verify
+/* RUN: %clang_cc1 %s -std=c89 -pedantic -fsyntax-only -verify -Wimplicit-function-declaration
  */
 void test1() {
   {
@@ -82,3 +82,10 @@ void test13b() {
 int test14() { return (&*test14)(); }
 
 int test15[5] = { [2] = 1 }; /* expected-warning {{designated initializers are a C99 feature}} */
+
+extern int printf(__const char *__restrict __format, ...); /* expected-note{{'printf' declared here}} */
+
+void test16() {
+  printg("Hello, world!\n"); /* expected-warning {{implicit declaration of function 'printg'}}
+                                expected-note {{did you mean 'printf'?}} */
+}

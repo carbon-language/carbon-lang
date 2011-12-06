@@ -78,7 +78,8 @@ void test12(void) {
 }
 
 void test_unknown_builtin(int a, int b) {
-  __builtin_foo(a, b); // expected-error{{use of unknown builtin}}
+  __builtin_isles(a, b); // expected-error{{use of unknown builtin}} \
+                         // expected-note{{did you mean '__builtin_isless'?}}
 }
 
 int test13() {
@@ -101,4 +102,3 @@ int test16() {
   return __builtin_constant_p() + // expected-error{{too few arguments}}
          __builtin_constant_p(1, 2); // expected-error {{too many arguments}}
 }
-

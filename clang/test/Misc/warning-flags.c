@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (272):
+CHECK: Warnings without flags (271):
 CHECK-NEXT:   ext_anon_param_requires_type_specifier
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_array_init_copy
@@ -128,7 +128,6 @@ CHECK-NEXT:   warn_bad_receiver_type
 CHECK-NEXT:   warn_bitfield_width_exceeds_type_size
 CHECK-NEXT:   warn_bool_switch_condition
 CHECK-NEXT:   warn_braces_around_scalar_init
-CHECK-NEXT:   warn_builtin_unknown
 CHECK-NEXT:   warn_c_kext
 CHECK-NEXT:   warn_call_to_pure_virtual_member_function_from_ctor_dtor
 CHECK-NEXT:   warn_call_wrong_number_of_arguments
