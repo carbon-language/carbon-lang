@@ -34,7 +34,6 @@
 #include "LiveRangeEdit.h"
 #include "RenderMachineFunction.h"
 #include "Spiller.h"
-#include "Splitter.h"
 #include "VirtRegMap.h"
 #include "RegisterCoalescer.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -70,11 +69,6 @@ pbqpCoalescing("pbqp-coalescing",
                 cl::desc("Attempt coalescing during PBQP register allocation."),
                 cl::init(false), cl::Hidden);
 
-static cl::opt<bool>
-pbqpPreSplitting("pbqp-pre-splitting",
-                 cl::desc("Pre-split before PBQP register allocation."),
-                 cl::init(false), cl::Hidden);
-
 namespace {
 
 ///
@@ -95,7 +89,6 @@ public:
     initializeCalculateSpillWeightsPass(*PassRegistry::getPassRegistry());
     initializeLiveStacksPass(*PassRegistry::getPassRegistry());
     initializeMachineLoopInfoPass(*PassRegistry::getPassRegistry());
-    initializeLoopSplitterPass(*PassRegistry::getPassRegistry());
     initializeVirtRegMapPass(*PassRegistry::getPassRegistry());
     initializeRenderMachineFunctionPass(*PassRegistry::getPassRegistry());
   }
@@ -463,8 +456,6 @@ void RegAllocPBQP::getAnalysisUsage(AnalysisUsage &au) const {
   au.addPreserved<MachineDominatorTree>();
   au.addRequired<MachineLoopInfo>();
   au.addPreserved<MachineLoopInfo>();
-  if (pbqpPreSplitting)
-    au.addRequired<LoopSplitter>();
   au.addRequired<VirtRegMap>();
   au.addRequired<RenderMachineFunction>();
   MachineFunctionPass::getAnalysisUsage(au);

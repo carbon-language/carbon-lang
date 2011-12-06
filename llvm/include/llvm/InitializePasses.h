@@ -135,7 +135,6 @@ void initializeLoopInfoPass(PassRegistry&);
 void initializeLoopInstSimplifyPass(PassRegistry&);
 void initializeLoopRotatePass(PassRegistry&);
 void initializeLoopSimplifyPass(PassRegistry&);
-void initializeLoopSplitterPass(PassRegistry&);
 void initializeLoopStrengthReducePass(PassRegistry&);
 void initializeGlobalMergePass(PassRegistry&);
 void initializeLoopUnrollPass(PassRegistry&);

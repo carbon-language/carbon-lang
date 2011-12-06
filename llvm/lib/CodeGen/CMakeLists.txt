@@ -88,7 +88,6 @@ add_llvm_library(LLVMCodeGen
   Spiller.cpp
   SpillPlacement.cpp
   SplitKit.cpp
-  Splitter.cpp
   StackProtector.cpp
   StackSlotColoring.cpp
   StrongPHIElimination.cpp

@@ -45,7 +45,6 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeRegisterCoalescerPass(Registry);
   initializeRenderMachineFunctionPass(Registry);
   initializeSlotIndexesPass(Registry);
-  initializeLoopSplitterPass(Registry);
   initializeStackProtectorPass(Registry);
   initializeStackSlotColoringPass(Registry);
   initializeStrongPHIEliminationPass(Registry);
