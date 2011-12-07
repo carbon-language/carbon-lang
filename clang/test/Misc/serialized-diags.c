@@ -16,7 +16,7 @@ void qux(int x) {
 }
 
 // RUN: rm -f %t
-// RUN: %clang -Wall -fsyntax-only %s --serialize-diagnostics %t 2>&1 /dev/null || true
+// RUN: %clang -Wall -fsyntax-only %s --serialize-diagnostics %t > /dev/null 2>&1 || true
 // RUN: c-index-test -read-diagnostics %t 2>&1 | FileCheck %s
 
 // This test case tests that we can handle multiple diagnostics which contain

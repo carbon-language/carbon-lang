@@ -595,7 +595,8 @@ LoadResult DiagLoader::readDiagnosticBlock(llvm::BitstreamCursor &Stream,
         continue;
       case serialized_diags::RECORD_CATEGORY:
         if (readString(TopDiags, TopDiags.Categories, "category", Record,
-                       BlobStart, BlobLen))
+                       BlobStart, BlobLen,
+                       /* allowEmptyString */ true))
           return Failure;
         continue;
       
