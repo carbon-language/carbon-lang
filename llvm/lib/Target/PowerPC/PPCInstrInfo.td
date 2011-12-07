@@ -399,12 +399,14 @@ let usesCustomInserter = 1,    // Expanded after instruction selection.
 
 // SPILL_CR - Indicate that we're dumping the CR register, so we'll need to
 // scavenge a register for it.
-def SPILL_CR : Pseudo<(outs), (ins GPRC:$cond, memri:$F),
+let mayStore = 1 in
+def SPILL_CR : Pseudo<(outs), (ins CRRC:$cond, memri:$F),
                      "", []>;
 
 // RESTORE_CR - Indicate that we're restoring the CR register (previously
 // spilled), so we'll need to scavenge a register for it.
-def RESTORE_CR : Pseudo<(outs GPRC:$cond), (ins memri:$F),
+let mayLoad = 1 in
+def RESTORE_CR : Pseudo<(outs CRRC:$cond), (ins memri:$F),
                      "", []>;
 
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
