@@ -4333,6 +4333,37 @@ bool ComplexExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
 }
 
 //===----------------------------------------------------------------------===//
+// Void expression evaluation, primarily for a cast to void on the LHS of a
+// comma operator
+//===----------------------------------------------------------------------===//
+
+namespace {
+class VoidExprEvaluator
+  : public ExprEvaluatorBase<VoidExprEvaluator, bool> {
+public:
+  VoidExprEvaluator(EvalInfo &Info) : ExprEvaluatorBaseTy(Info) {}
+
+  bool Success(const CCValue &V, const Expr *e) { return true; }
+  bool Error(const Expr *E) { return false; }
+
+  bool VisitCastExpr(const CastExpr *E) {
+    switch (E->getCastKind()) {
+    default:
+      return ExprEvaluatorBaseTy::VisitCastExpr(E);
+    case CK_ToVoid:
+      VisitIgnoredValue(E->getSubExpr());
+      return true;
+    }
+  }
+};
+} // end anonymous namespace
+
+static bool EvaluateVoid(const Expr *E, EvalInfo &Info) {
+  assert(E->isRValue() && E->getType()->isVoidType());
+  return VoidExprEvaluator(Info).Visit(E);
+}
+
+//===----------------------------------------------------------------------===//
 // Top level Expr::EvaluateAsRValue method.
 //===----------------------------------------------------------------------===//
 
@@ -4383,6 +4414,9 @@ static bool Evaluate(CCValue &Result, EvalInfo &Info, const Expr *E) {
     if (!EvaluateRecord(E, LV, Info.CurrentCall->Temporaries[E], Info))
       return false;
     Result = Info.CurrentCall->Temporaries[E];
+  } else if (E->getType()->isVoidType()) {
+    if (!EvaluateVoid(E, Info))
+      return false;
   } else
     return false;
 

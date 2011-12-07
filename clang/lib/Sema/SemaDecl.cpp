@@ -18,7 +18,6 @@
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ScopeInfo.h"
 #include "TypeLocBuilder.h"
-#include "clang/AST/APValue.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
@@ -3465,14 +3464,12 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
   if (VLATy->getElementType()->isVariablyModifiedType())
     return QualType();
 
-  Expr::EvalResult EvalResult;
+  llvm::APSInt Res;
   if (!VLATy->getSizeExpr() ||
-      !VLATy->getSizeExpr()->EvaluateAsRValue(EvalResult, Context) ||
-      !EvalResult.Val.isInt())
+      !VLATy->getSizeExpr()->EvaluateAsInt(Res, Context))
     return QualType();
 
   // Check whether the array size is negative.
-  llvm::APSInt &Res = EvalResult.Val.getInt();
   if (Res.isSigned() && Res.isNegative()) {
     SizeIsNegative = true;
     return QualType();
