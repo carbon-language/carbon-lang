@@ -228,6 +228,7 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
       return false;
     }
       
+    case TypedefTy:
     case SpecificTy: {
       argTy = C.getCanonicalType(argTy).getUnqualifiedType();
       if (T == argTy)
@@ -331,6 +332,7 @@ QualType ArgTypeResult::getRepresentativeType(ASTContext &C) const {
     case AnyCharTy:
       return C.CharTy;
     case SpecificTy:
+    case TypedefTy:
       return T;
     case CStrTy:
       return C.getPointerType(C.CharTy);
@@ -350,6 +352,13 @@ QualType ArgTypeResult::getRepresentativeType(ASTContext &C) const {
   // a warning.
   return QualType();
 }
+
+std::string ArgTypeResult::getRepresentativeTypeName(ASTContext &C) const {
+  if (K != TypedefTy)
+    return std::string("'") + getRepresentativeType(C).getAsString() + "'";
+  return std::string("'") + Name + "' (aka '" + T.getAsString() + "')";
+}
+
 
 //===----------------------------------------------------------------------===//
 // Methods on OptionalAmount.
@@ -485,5 +494,3 @@ bool FormatSpecifier::hasValidLengthModifier() const {
   }
   return false;
 }
-
-

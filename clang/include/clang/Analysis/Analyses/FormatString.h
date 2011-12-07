@@ -199,15 +199,17 @@ protected:
 class ArgTypeResult {
 public:
   enum Kind { UnknownTy, InvalidTy, SpecificTy, ObjCPointerTy, CPointerTy,
-              AnyCharTy, CStrTy, WCStrTy, WIntTy };
+              AnyCharTy, CStrTy, WCStrTy, WIntTy, TypedefTy };
 private:
   const Kind K;
   QualType T;
-  ArgTypeResult(bool) : K(InvalidTy) {}
+  const char *Name;
+  ArgTypeResult(bool) : K(InvalidTy), Name(0) {}
 public:
-  ArgTypeResult(Kind k = UnknownTy) : K(k) {}
-  ArgTypeResult(QualType t) : K(SpecificTy), T(t) {}
-  ArgTypeResult(CanQualType t) : K(SpecificTy), T(t) {}
+  ArgTypeResult(Kind k = UnknownTy) : K(k), Name(0) {}
+  ArgTypeResult(QualType t) : K(SpecificTy), T(t), Name(0) {}
+  ArgTypeResult(QualType t, const char *n) : K(TypedefTy), T(t), Name(n)  {}
+  ArgTypeResult(CanQualType t) : K(SpecificTy), T(t), Name(0) {}
 
   static ArgTypeResult Invalid() { return ArgTypeResult(true); }
 
@@ -222,6 +224,8 @@ public:
   bool matchesAnyObjCObjectRef() const { return K == ObjCPointerTy; }
 
   QualType getRepresentativeType(ASTContext &C) const;
+
+  std::string getRepresentativeTypeName(ASTContext &C) const;
 };
 
 class OptionalAmount {

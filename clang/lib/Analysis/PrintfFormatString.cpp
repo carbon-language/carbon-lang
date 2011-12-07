@@ -301,11 +301,13 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
       case LengthModifier::AsShort: return Ctx.ShortTy;
       case LengthModifier::AsLong: return Ctx.LongTy;
       case LengthModifier::AsLongLong: return Ctx.LongLongTy;
-      case LengthModifier::AsIntMax: return Ctx.getIntMaxType();
+      case LengthModifier::AsIntMax:
+        return ArgTypeResult(Ctx.getIntMaxType(), "intmax_t");
       case LengthModifier::AsSizeT:
         // FIXME: How to get the corresponding signed version of size_t?
         return ArgTypeResult();
-      case LengthModifier::AsPtrDiff: return Ctx.getPointerDiffType();
+      case LengthModifier::AsPtrDiff:
+        return ArgTypeResult(Ctx.getPointerDiffType(), "ptrdiff_t");
     }
 
   if (CS.isUIntArg())
@@ -317,9 +319,10 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
       case LengthModifier::AsShort: return Ctx.UnsignedShortTy;
       case LengthModifier::AsLong: return Ctx.UnsignedLongTy;
       case LengthModifier::AsLongLong: return Ctx.UnsignedLongLongTy;
-      case LengthModifier::AsIntMax: return Ctx.getUIntMaxType();
+      case LengthModifier::AsIntMax:
+        return ArgTypeResult(Ctx.getUIntMaxType(), "uintmax_t");
       case LengthModifier::AsSizeT:
-        return Ctx.getSizeType();
+        return ArgTypeResult(Ctx.getSizeType(), "size_t");
       case LengthModifier::AsPtrDiff:
         // FIXME: How to get the corresponding unsigned
         // version of ptrdiff_t?

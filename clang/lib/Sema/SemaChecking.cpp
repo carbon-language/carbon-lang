@@ -2014,7 +2014,7 @@ bool CheckPrintfHandler::HandleAmount(
 
       if (!ATR.matchesType(S.Context, T)) {
         EmitFormatDiagnostic(S.PDiag(diag::warn_printf_asterisk_wrong_type)
-                               << k << ATR.getRepresentativeType(S.Context)
+                               << k << ATR.getRepresentativeTypeName(S.Context)
                                << T << Arg->getSourceRange(),
                              getLocationOfByte(Amt.getStart()),
                              /*IsStringLocation*/true,
@@ -2234,7 +2234,7 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
       // type is 'wint_t' (which is defined in the system headers).
       EmitFormatDiagnostic(
         S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
-          << ATR.getRepresentativeType(S.Context) << Ex->getType()
+          << ATR.getRepresentativeTypeName(S.Context) << Ex->getType()
           << Ex->getSourceRange(),
         getLocationOfByte(CS.getStart()),
         /*IsStringLocation*/true,
@@ -2246,7 +2246,7 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
     else {
       S.Diag(getLocationOfByte(CS.getStart()),
              diag::warn_printf_conversion_argument_type_mismatch)
-        << ATR.getRepresentativeType(S.Context) << Ex->getType()
+        << ATR.getRepresentativeTypeName(S.Context) << Ex->getType()
         << getSpecifierRange(startSpecifier, specifierLen)
         << Ex->getSourceRange();
     }
