@@ -401,6 +401,13 @@ bool IndexingContext::handleObjCProperty(const ObjCPropertyDecl *D) {
   return handleDecl(D, D->getLocation(), getCursor(D), DInfo);
 }
 
+bool IndexingContext::handleNamespace(const NamespaceDecl *D) {
+  DeclInfo DInfo(/*isRedeclaration=*/!D->isOriginalNamespace(),
+                 /*isDefinition=*/true,
+                 /*isContainer=*/true);
+  return handleDecl(D, D->getLocation(), getCursor(D), DInfo);
+}
+
 bool IndexingContext::handleClassTemplate(const ClassTemplateDecl *D) {
   return handleCXXRecordDecl(D->getTemplatedDecl(), D);
 }

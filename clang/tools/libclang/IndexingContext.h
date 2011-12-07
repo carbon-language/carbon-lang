@@ -370,6 +370,8 @@ public:
 
   bool handleObjCProperty(const ObjCPropertyDecl *D);
 
+  bool handleNamespace(const NamespaceDecl *D);
+
   bool handleClassTemplate(const ClassTemplateDecl *D);
   bool handleFunctionTemplate(const FunctionTemplateDecl *D);
   bool handleTypeAliasTemplate(const TypeAliasTemplateDecl *D);

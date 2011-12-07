@@ -189,6 +189,12 @@ public:
     return true;
   }
 
+  bool VisitNamespaceDecl(NamespaceDecl *D) {
+    IndexCtx.handleNamespace(D);
+    IndexCtx.indexDeclContext(D);
+    return true;
+  }
+
   bool VisitClassTemplateDecl(ClassTemplateDecl *D) {
     IndexCtx.handleClassTemplate(D);
     if (D->isThisDeclarationADefinition())
