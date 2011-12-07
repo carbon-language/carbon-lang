@@ -799,7 +799,16 @@ bool HeaderSearch::loadModuleMapFile(const FileEntry *File) {
     return !KnownDir->second;
   
   bool Result = ModMap.parseModuleMapFile(File);
-  DirectoryHasModuleMap[Dir] = !Result;
+  if (!Result && llvm::sys::path::filename(File->getName()) == "module.map") {
+    // If the file we loaded was a module.map, look for the corresponding
+    // module_private.map.
+    llvm::SmallString<128> PrivateFilename(Dir->getName());
+    llvm::sys::path::append(PrivateFilename, "module_private.map");
+    if (const FileEntry *PrivateFile = FileMgr.getFile(PrivateFilename))
+      Result = ModMap.parseModuleMapFile(PrivateFile);
+  }
+  
+  DirectoryHasModuleMap[Dir] = !Result;  
   return Result;
 }
 
