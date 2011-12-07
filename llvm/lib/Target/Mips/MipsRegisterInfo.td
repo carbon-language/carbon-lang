@@ -303,3 +303,4 @@ def HILO64 : RegisterClass<"Mips", [i64], 64, (add HI64, LO64)> {
 // Hardware registers
 def HWRegs : RegisterClass<"Mips", [i32], 32, (add HWR29)>;
 def HWRegs64 : RegisterClass<"Mips", [i64], 32, (add HWR29_64)>;
+
