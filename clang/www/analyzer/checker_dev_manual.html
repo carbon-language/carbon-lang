@@ -103,7 +103,7 @@ for general developer guidelines and information. </p>
     <li><tt>GenericDataMap</tt> - constraints on symbolic values
   </ul>
   
-  <p>
+  <h3>Interaction with Checkers</h3>
   Checkers are not merely passive receivers of the analyzer core changes - they 
   actively participate in the <tt>ProgramState</tt> construction through the
   <tt>GenericDataMap</tt> which can be used to store the checker-defined part 
@@ -113,6 +113,67 @@ for general developer guidelines and information. </p>
   the checker itself should be stateless.) The checkers are called one after another 
   in the predefined order; thus, calling all the checkers adds a chain to the 
   <tt>ExplodedGraph</tt>. 
+  
+  <h3>Representing Values</h3>
+  During symbolic execution, <a href="http://clang.llvm.org/doxygen/classclang_1_1ento_1_1SVal.html">SVal</a> 
+  objects are used to represent the semantic evaluation of expressions. They can 
+  represent things like concrete integers, symbolic values, or memory locations 
+  (which are memory regions). They are a discriminated union of "values", 
+  symbolic and otherwise.
+  <p>
+  <a href="http://clang.llvm.org/doxygen/classclang_1_1ento_1_1SymExpr.html">SymExpr</a> (symbol) 
+  is meant to represent abstract, but named, symbolic value. 
+  Symbolic values can have constraints associated with them. Symbols represent 
+  an actual (immutable) value. We might not know what its specific value is, but 
+  we can associate constraints with that value as we analyze a path. 
+  <p>
+  
+  <a href="http://clang.llvm.org/doxygen/classclang_1_1ento_1_1MemRegion.html">MemRegion</a> is similar to a symbol.  
+  It is used to provide a lexicon of how to describe abstract memory. Regions can 
+  layer on top of other regions, providing a layered approach to representing memory. 
+  For example, a struct object on the stack might be represented by a <tt>VarRegion</tt>, 
+  but a <tt>FieldRegion</tt> which is a subregion of the <tt>VarRegion</tt> could 
+  be used to represent the memory associated with a specific field of that object.
+  So how do we represent symbolic memory regions? That's what <a href="http://clang.llvm.org/doxygen/classclang_1_1ento_1_1SymbolicRegion.html">SymbolicRegion</a> 
+  is for.  It is a <tt>MemRegion</tt> that has an associated symbol. Since the 
+  symbol is unique and has a unique name; that symbol names the region.
+  <p>
+  Let's see how the analyzer processes the expressions in the following example:
+  <p>
+  <pre class="code_example">
+  int foo(int x) {
+     int y = x * 2;
+     int z = x;
+     ...
+  }
+  </pre>
+  <p>
+Let's look at how <tt>x*2</tt> gets evaluated. When <tt>x</tt> is evaluated, 
+we first construct an <tt>SVal</tt> that represents the lvalue of <tt>x</tt>, in 
+this case it is an <tt>SVal</tt> that references the <tt>MemRegion</tt> for <tt>x</tt>. 
+Afterwards, when we do the lvalue-to-rvalue conversion, we get a new <tt>SVal</tt>, 
+which references the value <b>currently bound</b> to <tt>x</tt>. That value is 
+symbolic; it's whatever <tt>x</tt> was bound to at the start of the function. 
+Let's call that symbol <tt>$0</tt>. Similarly, we evaluate the expression for <tt>2</tt>, 
+and get an <tt>SVal</tt> that references the concrete number <tt>2</tt>. When 
+we evaluate <tt>x*2</tt>, we take the two <tt>SVals</tt> of the subexpressions, 
+and create a new <tt>SVal</tt> that represents their multiplication (which in 
+this case is a new symbolic expression, which we might call <tt>$1</tt>). When we 
+evaluate the assignment to <tt>y</tt>, we again compute its lvalue (a <tt>MemRegion</tt>), 
+and then bind the <tt>SVal</tt> for the RHS (which references the symbolic value <tt>$1</tt>) 
+to the <tt>MemRegion</tt> in the symbolic store.
+<br>
+The second line is similar. When we evaluate <tt>x</tt> again, we do the same 
+dance, and create an <tt>SVal</tt> that references the symbol <tt>$0</tt>. Note, two <tt>SVals</tt> 
+might reference the same underlying values.
+
+<p>
+To summarize, MemRegions are unique names for blocks of memory. Symbols are 
+unique names for abstract symbolic values. Some MemRegions represents abstract 
+symbolic chunks of memory, and thus are also based on symbols. SVals are just 
+references to values, and can reference either MemRegions, Symbols, or concrete 
+values (e.g., the number 1).
+
   <!-- 
   TODO: Add a picture.
   <br>
@@ -186,7 +247,9 @@ def NewChecker : Checker<"NewChecker">,
 <h2 id=skeleton>Checker Skeleton</h2>
   There are two main decisions you need to make:
   <ul>
-    <li> Which events the checker should be tracking.</li>
+    <li> Which events the checker should be tracking. 
+    See <a href="http://clang.llvm.org/doxygen/classento_1_1CheckerDocumentation.html">CheckerDocumentation</a> 
+    for the list of available checker callbacks.</li>
     <li> What data you want to store as part of the checker-specific program 
     state. Try to minimize the checker state as much as possible. </li>
   </ul>
