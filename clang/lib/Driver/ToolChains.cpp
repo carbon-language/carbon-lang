@@ -1894,8 +1894,15 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
                          getArch() == llvm::Triple::mipsel ||
                          getArch() == llvm::Triple::ppc);
 
-  const std::string Suffix32 = Arch == llvm::Triple::x86_64 ? "/32" : "";
-  const std::string Suffix64 = Arch == llvm::Triple::x86_64 ? "" : "/64";
+  StringRef Suffix32;
+  StringRef Suffix64;
+  if (Arch == llvm::Triple::x86_64 || Arch == llvm::Triple::ppc64) {
+    Suffix32 = "/32";
+    Suffix64 = "";
+  } else {
+    Suffix32 = "";
+    Suffix64 = "/64";
+  }
   const std::string Suffix = Is32Bits ? Suffix32 : Suffix64;
   const std::string Multilib = Is32Bits ? "lib32" : "lib64";
   const std::string MultiarchTriple = getMultiarchTriple(Triple, SysRoot);
