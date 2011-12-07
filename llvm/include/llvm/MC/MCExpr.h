@@ -179,6 +179,7 @@ public:
     VK_Mips_None,
     VK_Mips_GPREL,
     VK_Mips_GOT_CALL,
+    VK_Mips_GOT16,
     VK_Mips_GOT,
     VK_Mips_ABS_HI,
     VK_Mips_ABS_LO,

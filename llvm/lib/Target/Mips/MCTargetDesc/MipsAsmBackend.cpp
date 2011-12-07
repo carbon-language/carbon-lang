@@ -29,13 +29,19 @@
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+
 using namespace llvm;
 
+// Prepare value for the target space for it
 static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
 
   // Add/subtract and shift
   switch (Kind) {
   default:
+    return 0;
+  case FK_GPRel_4:
+  case FK_Data_4:
+  case Mips::fixup_Mips_LO16:
     break;
   case Mips::fixup_Mips_PC16:
     // So far we are only using this type for branches.
@@ -52,25 +58,10 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // address range.
     Value >>= 2;
     break;
-  }
-
-  // Mask off value for placement as an operand
-  switch (Kind) {
-  default:
-    break;
-  case FK_GPRel_4:
-  case FK_Data_4:
-    Value &= 0xffffffff;
-    break;
-  case Mips::fixup_Mips_26:
-    Value &= 0x03ffffff;
-    break;
-  case Mips::fixup_Mips_LO16:
-  case Mips::fixup_Mips_PC16:
-    Value &= 0x0000ffff;
-    break;
   case Mips::fixup_Mips_HI16:
-    Value >>= 16;
+  case Mips::fixup_Mips_GOT_Local:
+    // Get the higher 16-bits. Also add 1 if bit 15 is 1.
+    Value = (Value >> 16) + ((Value & 0x8000) != 0);
     break;
   }
 
@@ -96,42 +87,40 @@ public:
   /// fixup kind as appropriate.
   void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value) const {
-    unsigned Kind = (unsigned)Fixup.getKind();
-    Value = adjustFixupValue(Kind, Value);
+    MCFixupKind Kind = Fixup.getKind();
+    Value = adjustFixupValue((unsigned)Kind, Value);
 
     if (!Value)
-      return;           // Doesn't change encoding.
+      return; // Doesn't change encoding.
 
     unsigned Offset = Fixup.getOffset();
-    switch (Kind) {
-    default:
-      llvm_unreachable("Unknown fixup kind!");
-    case Mips::fixup_Mips_GOT16: // This will be fixed up at link time
-     break;
-    case FK_GPRel_4:
-    case FK_Data_4:
-    case Mips::fixup_Mips_26:
-    case Mips::fixup_Mips_LO16:
-    case Mips::fixup_Mips_PC16:
-    case Mips::fixup_Mips_HI16:
-      // For each byte of the fragment that the fixup touches, mask i
-      // the fixup value. The Value has been "split up" into the appr
-      // bitfields above.
-      for (unsigned i = 0; i != 4; ++i) // FIXME - Need to support 2 and 8 bytes
-        Data[Offset + i] += uint8_t((Value >> (i * 8)) & 0xff);
-      break;
+    // FIXME: The below code will not work across endian models
+    // How many bytes/bits are we fixing up?
+    unsigned NumBytes = ((getFixupKindInfo(Kind).TargetSize-1)/8)+1;
+    uint64_t Mask = ((uint64_t)1 << getFixupKindInfo(Kind).TargetSize) - 1;
+
+    // Grab current value, if any, from bits.
+    uint64_t CurVal = 0;
+    for (unsigned i = 0; i != NumBytes; ++i)
+      CurVal |= ((uint8_t)Data[Offset + i]) << (i * 8);
+
+    CurVal = (CurVal & ~Mask) | ((CurVal + Value) & Mask);
+
+    // Write out the bytes back to the code/data bits.
+    // First the unaffected bits and then the fixup.
+    for (unsigned i = 0; i != NumBytes; ++i) {
+      Data[Offset + i] = uint8_t((CurVal >> (i * 8)) & 0xff);
     }
-  }
+}
 
   unsigned getNumFixupKinds() const { return Mips::NumTargetFixupKinds; }
 
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
     const static MCFixupKindInfo Infos[Mips::NumTargetFixupKinds] = {
-      // This table *must* be in the order that the fixup_* kinds a
+      // This table *must* be in same the order of fixup_* kinds in
       // MipsFixupKinds.h.
       //
       // name                    offset  bits  flags
-      { "fixup_Mips_NONE",         0,      0,   0 },
       { "fixup_Mips_16",           0,     16,   0 },
       { "fixup_Mips_32",           0,     32,   0 },
       { "fixup_Mips_REL32",        0,     32,   0 },
@@ -140,7 +129,8 @@ public:
       { "fixup_Mips_LO16",         0,     16,   0 },
       { "fixup_Mips_GPREL16",      0,     16,   0 },
       { "fixup_Mips_LITERAL",      0,     16,   0 },
-      { "fixup_Mips_GOT16",        0,     16,   0 },
+      { "fixup_Mips_GOT_Global",   0,     16,   0 },
+      { "fixup_Mips_GOT_Local",    0,     16,   0 },
       { "fixup_Mips_PC16",         0,     16,  MCFixupKindInfo::FKF_IsPCRel },
       { "fixup_Mips_CALL16",       0,     16,   0 },
       { "fixup_Mips_GPREL32",      0,     32,   0 },

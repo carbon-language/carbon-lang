@@ -42,8 +42,11 @@ namespace Mips {
         // fixup_Mips_xxx - R_MIPS_LITERAL.
         fixup_Mips_LITERAL,
 
-        // fixup_Mips_xxx - R_MIPS_GOT16.
-        fixup_Mips_GOT16,
+        // Global symbol fixup resulting in - R_MIPS_GOT16.
+        fixup_Mips_GOT_Global,
+
+        // Local symbol fixup resulting in - R_MIPS_GOT16.
+        fixup_Mips_GOT_Local,
 
         // fixup_Mips_xxx - R_MIPS_PC16.
         fixup_Mips_PC16,

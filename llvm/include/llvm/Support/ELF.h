@@ -627,6 +627,7 @@ enum {
   R_MIPS_GPREL16           =  7,
   R_MIPS_LITERAL           =  8,
   R_MIPS_GOT16             =  9,
+  R_MIPS_GOT               =  9,
   R_MIPS_PC16              = 10,
   R_MIPS_CALL16            = 11,
   R_MIPS_GPREL32           = 12,

@@ -41,6 +41,7 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   case MipsII::MO_NO_FLAG:  Kind = MCSymbolRefExpr::VK_None; break;
   case MipsII::MO_GPREL:    Kind = MCSymbolRefExpr::VK_Mips_GPREL; break;
   case MipsII::MO_GOT_CALL: Kind = MCSymbolRefExpr::VK_Mips_GOT_CALL; break;
+  case MipsII::MO_GOT16:    Kind = MCSymbolRefExpr::VK_Mips_GOT16; break;
   case MipsII::MO_GOT:      Kind = MCSymbolRefExpr::VK_Mips_GOT; break;
   case MipsII::MO_ABS_HI:   Kind = MCSymbolRefExpr::VK_Mips_ABS_HI; break;
   case MipsII::MO_ABS_LO:   Kind = MCSymbolRefExpr::VK_Mips_ABS_LO; break;

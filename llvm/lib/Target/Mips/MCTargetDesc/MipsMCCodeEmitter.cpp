@@ -194,8 +194,11 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
       case MCSymbolRefExpr::VK_Mips_GOT_CALL:
         FixupKind = Mips::fixup_Mips_CALL16;
         break;
+      case MCSymbolRefExpr::VK_Mips_GOT16:
+        FixupKind = Mips::fixup_Mips_GOT_Global;
+        break;
       case MCSymbolRefExpr::VK_Mips_GOT:
-        FixupKind = Mips::fixup_Mips_GOT16;
+        FixupKind = Mips::fixup_Mips_GOT_Local;
         break;
       case MCSymbolRefExpr::VK_Mips_ABS_HI:
         FixupKind = Mips::fixup_Mips_HI16;
