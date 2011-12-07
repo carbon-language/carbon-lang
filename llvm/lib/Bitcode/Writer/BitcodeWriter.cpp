@@ -504,8 +504,8 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
 
   // Emit the function proto information.
   for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F) {
-    // FUNCTION:  [type, callingconv, isproto, paramattr,
-    //             linkage, alignment, section, visibility, gc, unnamed_addr]
+    // FUNCTION:  [type, callingconv, isproto, linkage, paramattrs, alignment,
+    //             section, visibility, gc, unnamed_addr]
     Vals.push_back(VE.getTypeID(F->getType()));
     Vals.push_back(F->getCallingConv());
     Vals.push_back(F->isDeclaration());

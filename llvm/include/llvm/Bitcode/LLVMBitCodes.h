@@ -61,7 +61,7 @@ namespace bitc {
     MODULE_CODE_GLOBALVAR   = 7,
 
     // FUNCTION:  [type, callingconv, isproto, linkage, paramattrs, alignment,
-    //             section, visibility]
+    //             section, visibility, gc, unnamed_addr]
     MODULE_CODE_FUNCTION    = 8,
 
     // ALIAS: [alias type, aliasee val#, linkage]
