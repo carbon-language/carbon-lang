@@ -18,6 +18,10 @@ def err_drv_unknown_stdin_type : Error<
 def err_drv_unknown_language : Error<"language not recognized: '%0'">;
 def err_drv_invalid_arch_name : Error<
   "invalid arch name '%0'">;
+def err_drv_invalid_rtlib_name : Error<
+  "invalid runtime library name in argument '%0'">;
+def err_drv_unsupported_rtlib_for_platform : Error<
+  "unsupported runtime library '%0' for platform '%1'">;
 def err_drv_invalid_stdlib_name : Error<
   "invalid library name in argument '%0'">;
 def err_drv_invalid_opt_with_multiple_archs : Error<

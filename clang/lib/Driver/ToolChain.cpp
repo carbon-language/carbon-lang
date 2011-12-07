@@ -216,6 +216,22 @@ void ToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   // Each toolchain should provide the appropriate include flags.
 }
 
+ToolChain::RuntimeLibType ToolChain::GetRuntimeLibType(
+  const ArgList &Args) const
+{
+  if (Arg *A = Args.getLastArg(options::OPT_rtlib_EQ)) {
+    StringRef Value = A->getValue(Args);
+    if (Value == "compiler-rt")
+      return ToolChain::RLT_CompilerRT;
+    if (Value == "libgcc")
+      return ToolChain::RLT_Libgcc;
+    getDriver().Diag(diag::err_drv_invalid_rtlib_name)
+      << A->getAsString(Args);
+  }
+
+  return GetDefaultRuntimeLibType();
+}
+
 ToolChain::CXXStdlibType ToolChain::GetCXXStdlibType(const ArgList &Args) const{
   if (Arg *A = Args.getLastArg(options::OPT_stdlib_EQ)) {
     StringRef Value = A->getValue(Args);

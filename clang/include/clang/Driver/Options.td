@@ -679,6 +679,7 @@ def rewrite_objc : Flag<"-rewrite-objc">, Flags<[DriverOption]>,
   HelpText<"Rewrite Objective-C source to C++">;
 def rdynamic : Flag<"-rdynamic">;
 def rpath : Separate<"-rpath">, Flags<[LinkerInput]>;
+def rtlib_EQ : Joined<"-rtlib=">;
 def r : Flag<"-r">;
 def save_temps : Flag<"-save-temps">, Flags<[DriverOption]>,
   HelpText<"Save intermediate compilation results">;
@@ -851,6 +852,8 @@ def _relocatable_pch : Flag<"--relocatable-pch">,
   HelpText<"Build a relocatable precompiled header">;
 def _resource_EQ : Joined<"--resource=">, Alias<fcompile_resource_EQ>;
 def _resource : Separate<"--resource">, Alias<fcompile_resource_EQ>;
+def _rtlib_EQ : Joined<"--rtlib=">, Alias<rtlib_EQ>;
+def _rtlib : Separate<"--rtlib">, Alias<rtlib_EQ>;
 def _save_temps : Flag<"--save-temps">, Alias<save_temps>;
 def _serialize_diags : Separate<"--serialize-diagnostics">, Flags<[DriverOption]>,
   HelpText<"Serialize compiler diagnostics to a file">;
