@@ -1699,6 +1699,15 @@ static void printEntityInfo(const char *cb,
   printf(" | USR: %s", info->USR);
 }
 
+static void printBaseClassInfo(CXClientData client_data,
+                               const CXIdxBaseClassInfo *info) {
+  printEntityInfo("     <base>", client_data, info->base);
+  printf(" | cursor: ");
+  PrintCursor(info->cursor);
+  printf(" | loc: ");
+  printCXIndexLoc(info->loc);
+}
+
 static void printProtocolList(const CXIdxObjCProtocolRefListInfo *ProtoInfo,
                               CXClientData client_data) {
   unsigned i;
@@ -1783,6 +1792,7 @@ static void index_indexDeclaration(CXClientData client_data,
   const CXIdxObjCCategoryDeclInfo *CatInfo;
   const CXIdxObjCInterfaceDeclInfo *InterInfo;
   const CXIdxObjCProtocolRefListInfo *ProtoInfo;
+  const CXIdxCXXClassDeclInfo *CXXClassInfo;
   unsigned i;
   index_data = (IndexData *)client_data;
 
@@ -1832,18 +1842,20 @@ static void index_indexDeclaration(CXClientData client_data,
 
   if ((InterInfo = clang_index_getObjCInterfaceDeclInfo(info))) {
     if (InterInfo->superInfo) {
-      printEntityInfo("     <base>", client_data,
-                      InterInfo->superInfo->base);
-      printf(" | cursor: ");
-      PrintCursor(InterInfo->superInfo->cursor);
-      printf(" | loc: ");
-      printCXIndexLoc(InterInfo->superInfo->loc);
+      printBaseClassInfo(client_data, InterInfo->superInfo);
       printf("\n");
     }
   }
 
   if ((ProtoInfo = clang_index_getObjCProtocolRefListInfo(info))) {
     printProtocolList(ProtoInfo, client_data);
+  }
+
+  if ((CXXClassInfo = clang_index_getCXXClassDeclInfo(info))) {
+    for (i = 0; i != CXXClassInfo->numBases; ++i) {
+      printBaseClassInfo(client_data, CXXClassInfo->bases[i]);
+      printf("\n");
+    }
   }
 
   if (info->declAsContainer)

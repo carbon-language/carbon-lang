@@ -293,6 +293,9 @@ class IndexingContext {
 
     CXXBasesListInfo(const CXXRecordDecl *D,
                      IndexingContext &IdxCtx, IndexingContext::StrAdapter &SA);
+
+  private:
+    SourceLocation getBaseLoc(const CXXBaseSpecifier &Base) const;
   };
 
 public:

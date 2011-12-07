@@ -100,15 +100,23 @@ IndexingContext::CXXBasesListInfo::CXXBasesListInfo(const CXXRecordDecl *D,
     const CXXBaseSpecifier &Base = *I;
     BaseEntities.push_back(EntityInfo());
     const NamedDecl *BaseD = 0;
-    if (const RecordType *RT = Base.getType()->getAs<RecordType>())
-      BaseD = RT->getDecl();
-    else if (const TypedefType *TDT = Base.getType()->getAs<TypedefType>())
+    QualType T = Base.getType();
+    SourceLocation Loc = getBaseLoc(Base);
+
+    if (const TypedefType *TDT = T->getAs<TypedefType>()) {
       BaseD = TDT->getDecl();
+    } else if (const TemplateSpecializationType *
+          TST = T->getAs<TemplateSpecializationType>()) {
+      BaseD = TST->getTemplateName().getAsTemplateDecl();
+    } else if (const RecordType *RT = T->getAs<RecordType>()) {
+      BaseD = RT->getDecl();
+    }
+
     if (BaseD)
       IdxCtx.getEntityInfo(BaseD, BaseEntities.back(), SA);
     CXIdxBaseClassInfo BaseInfo = { 0,
                          MakeCursorCXXBaseSpecifier(&Base, IdxCtx.CXTU),
-                         IdxCtx.getIndexLoc(Base.getSourceRange().getBegin()) };
+                         IdxCtx.getIndexLoc(Loc) };
     BaseInfos.push_back(BaseInfo);
   }
 
@@ -119,6 +127,29 @@ IndexingContext::CXXBasesListInfo::CXXBasesListInfo(const CXXRecordDecl *D,
 
   for (unsigned i = 0, e = BaseInfos.size(); i != e; ++i)
     CXBases.push_back(&BaseInfos[i]);
+}
+
+SourceLocation IndexingContext::CXXBasesListInfo::getBaseLoc(
+                                           const CXXBaseSpecifier &Base) const {
+  SourceLocation Loc = Base.getSourceRange().getBegin();
+  TypeLoc TL;
+  if (Base.getTypeSourceInfo())
+    TL = Base.getTypeSourceInfo()->getTypeLoc();
+  if (TL.isNull())
+    return Loc;
+
+  if (const QualifiedTypeLoc *QL = dyn_cast<QualifiedTypeLoc>(&TL))
+    TL = QL->getUnqualifiedLoc();
+
+  if (const ElaboratedTypeLoc *EL = dyn_cast<ElaboratedTypeLoc>(&TL))
+    return EL->getNamedTypeLoc().getBeginLoc();
+  if (const DependentNameTypeLoc *DL = dyn_cast<DependentNameTypeLoc>(&TL))
+    return DL->getNameLoc();
+  if (const DependentTemplateSpecializationTypeLoc *
+        DTL = dyn_cast<DependentTemplateSpecializationTypeLoc>(&TL))
+    return DTL->getNameLoc();
+
+  return Loc;
 }
 
 const char *IndexingContext::StrAdapter::toCStr(StringRef Str) {
