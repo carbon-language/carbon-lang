@@ -26,6 +26,7 @@
 #include "polly/Dependences.h"
 #include "polly/ScopInfo.h"
 
+#include "isl/aff.h"
 #include "isl/space.h"
 #include "isl/map.h"
 #include "isl/constraint.h"
@@ -223,68 +224,107 @@ isl_union_map *getScheduleForBand(isl_band *Band) {
   return isl_union_map_apply_range(PartialSchedule, TileUMap);
 }
 
-static isl_map *getPrevectorMap(isl_ctx *ctx, int vectorDimension,
-				int scheduleDimensions,
-				int parameterDimensions,
-				int vectorWidth = 4) {
-  assert (0 <= vectorDimension && vectorDimension < scheduleDimensions);
-
-  isl_space *Space = isl_space_alloc(ctx, parameterDimensions,
-                                     scheduleDimensions, scheduleDimensions + 2);
-  isl_basic_map *tilingMap = isl_basic_map_universe(isl_space_copy(Space));
-
+// Create a map that pre-vectorizes one scheduling dimension.
+//
+// getPrevectorMap creates a map that maps each input dimension to the same
+// output dimension, except for the dimension DimToVectorize. DimToVectorize is
+// strip mined by 'VectorWidth' and the newly created point loop of
+// DimToVectorize is moved to the innermost level.
+//
+// Example (DimToVectorize=0, ScheduleDimensions=2, VectorWidth=4):
+//
+// | Before transformation
+// |
+// | A[i,j] -> [i,j]
+// |
+// | for (i = 0; i < 128; i++)
+// |    for (j = 0; j < 128; j++)
+// |      A(i,j);
+//
+//   Prevector map:
+//   [i,j] -> [it,j,ip] : it % 4 = 0 and it <= ip <= it + 3 and i = ip
+//
+// | After transformation:
+// |
+// | A[i,j] -> [it,j,ip] : it % 4 = 0 and it <= ip <= it + 3 and i = ip
+// |
+// | for (it = 0; it < 128; it+=4)
+// |    for (j = 0; j < 128; j++)
+// |      for (ip = max(0,it); ip < min(128, it + 3); ip++)
+// |        A(ip,j);
+//
+// The goal of this transformation is to create a trivially vectorizable loop.
+// This means a parallel loop at the innermost level that has a constant number
+// of iterations corresponding to the target vector width.
+//
+// This transformation creates a loop at the innermost level. The loop has a
+// constant number of iterations, if the number of loop iterations at
+// DimToVectorize can be devided by VectorWidth. The default VectorWidth is
+// currently constant and not yet target specific. This function does not reason
+// about parallelism.
+static isl_map *getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
+				int ScheduleDimensions,
+				int VectorWidth = 4) {
+  isl_space *Space;
+  isl_local_space *LocalSpace, *LocalSpaceRange;
+  isl_set *Modulo;
+  isl_map *TilingMap;
   isl_constraint *c;
+  isl_aff *Aff;
+  int PointDimension; /* ip */
+  int TileDimension;  /* it */
+  isl_int VectorWidthMP;
 
-  isl_local_space *LocalSpace = isl_local_space_from_space(Space);
+  assert (0 <= DimToVectorize && DimToVectorize < ScheduleDimensions);
 
-  for (int i = 0; i < vectorDimension; i++) {
+  Space = isl_space_alloc(ctx, 0, ScheduleDimensions, ScheduleDimensions + 1);
+  TilingMap = isl_map_universe(isl_space_copy(Space));
+  LocalSpace = isl_local_space_from_space(Space);
+  PointDimension = ScheduleDimensions;
+  TileDimension = DimToVectorize;
+
+  // Create an identity map for everything except DimToVectorize and map
+  // DimToVectorize to the point loop at the innermost dimension.
+  for (int i = 0; i < ScheduleDimensions; i++) {
     c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
     isl_constraint_set_coefficient_si(c, isl_dim_in, i, -1);
-    isl_constraint_set_coefficient_si(c, isl_dim_out, i, 1);
-    tilingMap = isl_basic_map_add_constraint(tilingMap, c);
+
+    if (i == DimToVectorize)
+      isl_constraint_set_coefficient_si(c, isl_dim_out, PointDimension, 1);
+    else
+      isl_constraint_set_coefficient_si(c, isl_dim_out, i, 1);
+
+    TilingMap = isl_map_add_constraint(TilingMap, c);
   }
 
-  for (int i = vectorDimension + 1; i < scheduleDimensions; i++) {
-    c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
-    isl_constraint_set_coefficient_si(c, isl_dim_in, i, -1);
-    isl_constraint_set_coefficient_si(c, isl_dim_out, i, 1);
-    tilingMap = isl_basic_map_add_constraint(tilingMap, c);
-  }
+  // it % 'VectorWidth' = 0
+  LocalSpaceRange = isl_local_space_range(isl_local_space_copy(LocalSpace));
+  Aff = isl_aff_zero_on_domain(LocalSpaceRange);
+  Aff = isl_aff_set_constant_si(Aff, VectorWidth);
+  Aff = isl_aff_set_coefficient_si(Aff, isl_dim_in, TileDimension, 1);
+  isl_int_init(VectorWidthMP);
+  isl_int_set_si(VectorWidthMP, VectorWidth);
+  Aff = isl_aff_mod(Aff, VectorWidthMP);
+  isl_int_clear(VectorWidthMP);
+  Modulo = isl_pw_aff_zero_set(isl_pw_aff_from_aff(Aff));
+  TilingMap = isl_map_intersect_range(TilingMap, Modulo);
 
-  int stepDimension = scheduleDimensions;
-  int auxilaryDimension = scheduleDimensions + 1;
-
-  c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
-  isl_constraint_set_coefficient_si(c, isl_dim_out, vectorDimension, 1);
-  isl_constraint_set_coefficient_si(c, isl_dim_out, auxilaryDimension,
-				    -vectorWidth);
-  tilingMap = isl_basic_map_add_constraint(tilingMap, c);
-
-  c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
-  isl_constraint_set_coefficient_si(c, isl_dim_in, vectorDimension, -1);
-  isl_constraint_set_coefficient_si(c, isl_dim_out, stepDimension, 1);
-  tilingMap = isl_basic_map_add_constraint(tilingMap, c);
-
+  // it <= ip
   c = isl_inequality_alloc(isl_local_space_copy(LocalSpace));
-  isl_constraint_set_coefficient_si(c, isl_dim_out, vectorDimension, -1);
-  isl_constraint_set_coefficient_si(c, isl_dim_out, stepDimension, 1);
-  tilingMap = isl_basic_map_add_constraint(tilingMap, c);
+  isl_constraint_set_coefficient_si(c, isl_dim_out, TileDimension, -1);
+  isl_constraint_set_coefficient_si(c, isl_dim_out, PointDimension, 1);
+  TilingMap = isl_map_add_constraint(TilingMap, c);
 
+  // ip <= it + ('VectorWidth' - 1)
   c = isl_inequality_alloc(LocalSpace);
-  isl_constraint_set_coefficient_si(c, isl_dim_out, vectorDimension, 1);
-  isl_constraint_set_coefficient_si(c, isl_dim_out, stepDimension, -1);
-  isl_constraint_set_constant_si(c, vectorWidth- 1);
-  tilingMap = isl_basic_map_add_constraint(tilingMap, c);
+  isl_constraint_set_coefficient_si(c, isl_dim_out, TileDimension, 1);
+  isl_constraint_set_coefficient_si(c, isl_dim_out, PointDimension, -1);
+  isl_constraint_set_constant_si(c, VectorWidth - 1);
+  TilingMap = isl_map_add_constraint(TilingMap, c);
 
-  // Project out auxilary dimensions (introduced to ensure 'ii % tileSize = 0')
-  //
-  // The real dimensions are transformed into existentially quantified ones.
-  // This reduces the number of visible scattering dimensions.  Also, Cloog
-  // produces better code, if auxilary dimensions are existentially quantified.
-  tilingMap = isl_basic_map_project_out(tilingMap, isl_dim_out,
-					scheduleDimensions + 1, 1);
+  isl_map_dump(TilingMap);
 
-  return isl_map_from_basic_map(tilingMap);
+  return TilingMap;
 }
 
 // getScheduleForBandList - Get the scheduling map for a list of bands.
@@ -328,7 +368,7 @@ static isl_union_map *getScheduleForBandList(isl_band_list *BandList) {
           isl_union_map *TileUMap;
 
 	  TileMap = getPrevectorMap(ctx, ScheduleDimensions + i,
-				    ScheduleDimensions * 2, 0);
+				    ScheduleDimensions * 2);
 	  TileUMap = isl_union_map_from_map(TileMap);
           TileUMap = isl_union_map_align_params(TileUMap,
                                                 isl_space_copy(Space));
