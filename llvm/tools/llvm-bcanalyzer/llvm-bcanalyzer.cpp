@@ -108,6 +108,7 @@ static const char *GetBlockName(unsigned BlockID,
   case bitc::VALUE_SYMTAB_BLOCK_ID:  return "VALUE_SYMTAB";
   case bitc::METADATA_BLOCK_ID:      return "METADATA_BLOCK";
   case bitc::METADATA_ATTACHMENT_ID: return "METADATA_ATTACHMENT_BLOCK";
+  case bitc::USELIST_BLOCK_ID:       return "USELIST_BLOCK_ID";
   }
 }
 
@@ -263,6 +264,11 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     case bitc::METADATA_NODE:        return "METADATA_NODE";
     case bitc::METADATA_FN_NODE:     return "METADATA_FN_NODE";
     case bitc::METADATA_NAMED_NODE:  return "METADATA_NAMED_NODE";
+    }
+  case bitc::USELIST_BLOCK_ID:
+    switch(CodeID) {
+    default:return 0;
+    case bitc::USELIST_CODE_ENTRY:   return "USELIST_CODE_ENTRY";
     }
   }
 }
