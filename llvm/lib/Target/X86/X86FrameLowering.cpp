@@ -561,7 +561,7 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
     CompactUnwindEncoding |= (StackAdjust & 0xFF) << 16;
     CompactUnwindEncoding |= RegEnc & 0x7FFF;
   } else {
-    uint32_t TotalStackSize = StackAdjust + StackSize;
+    uint32_t TotalStackSize = StackAdjust + StackSize + 1;
     if ((TotalStackSize & 0xFF) == TotalStackSize) {
       // Frameless stack with a small stack size.
       CompactUnwindEncoding |= 0x02000000;
