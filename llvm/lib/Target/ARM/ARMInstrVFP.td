@@ -1164,14 +1164,14 @@ def FCONSTS : VFPAI<(outs SPR:$Sd), (ins vfp_f32imm:$imm),
 def : VFP2InstAlias<"fmstat${p}", (FMSTAT pred:$p)>;
 
 // VLDR/VSTR accept an optional type suffix.
-defm : VFPDT32InstAlias<"vldr${p}", "$Sd, $addr",
-                        (VLDRS SPR:$Sd, addrmode5:$addr, pred:$p)>;
-defm : VFPDT32InstAlias<"vstr${p}", "$Sd, $addr",
-                        (VSTRS SPR:$Sd, addrmode5:$addr, pred:$p)>;
-defm : VFPDT64InstAlias<"vldr${p}", "$Dd, $addr",
-                        (VLDRD DPR:$Dd, addrmode5:$addr, pred:$p)>;
-defm : VFPDT64InstAlias<"vstr${p}", "$Dd, $addr",
-                        (VSTRD DPR:$Dd, addrmode5:$addr, pred:$p)>;
+def : VFP2InstAlias<"vldr${p}.32 $Sd, $addr",
+                    (VLDRS SPR:$Sd, addrmode5:$addr, pred:$p)>;
+def : VFP2InstAlias<"vstr${p}.32 $Sd, $addr",
+                    (VSTRS SPR:$Sd, addrmode5:$addr, pred:$p)>;
+def : VFP2InstAlias<"vldr${p}.64 $Dd, $addr",
+                    (VLDRD DPR:$Dd, addrmode5:$addr, pred:$p)>;
+def : VFP2InstAlias<"vstr${p}.64 $Dd, $addr",
+                    (VSTRD DPR:$Dd, addrmode5:$addr, pred:$p)>;
 
 // VMUL has a two-operand form (implied destination operand)
 def : VFP2InstAlias<"vmul${p}.f64 $Dn, $Dm",
