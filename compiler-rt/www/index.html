@@ -26,6 +26,22 @@
   <p>All of the code in the compiler-rt project is <a 
      href="http://llvm.org/docs/DeveloperPolicy.html#license">dual licensed</a>
      under the MIT license and the UIUC License (a BSD-like license).</p>
+
+  <!--=====================================================================-->
+  <h2 id="users">Clients</h2>
+  <!--=====================================================================-->
+
+  <p>Currently compiler-rt is primarily used by
+    the <a href="http://clang.llvm.org">Clang</a>
+    and <a href="http://llvm.org">LLVM</a> projects as the implementation for
+    the runtime compiler support libraries. The library currently provides both
+    the low-level target-specific hooks required by code generation, as well as
+    additional modules for supporting the runtime requirements of features like
+    code coverage, profiling, or address sanitizer (ASAN) instrumentation.</p>
+
+  <p>For more information on using compiler-rt with Clang, please see the Clang
+    <a href="http://clang.llvm.org/get_started.html">Getting Started</a>
+    page.</p>
   
   <!--=====================================================================-->
   <h2 id="goals">Goals</h2>
