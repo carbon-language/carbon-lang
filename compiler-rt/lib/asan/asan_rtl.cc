@@ -556,12 +556,13 @@ void __asan_report_error(uintptr_t pc, uintptr_t bp, uintptr_t sp,
   const char *bug_descr = "unknown-crash";
   if (AddrIsInMem(addr)) {
     uint8_t *shadow_addr = (uint8_t*)MemToShadow(addr);
-    uint8_t shadow_byte = shadow_addr[0];
-    if (shadow_byte > 0 && shadow_byte < 128) {
-      // we are in the partial right redzone, look at the next shadow byte.
-      shadow_byte = shadow_addr[1];
-    }
-    switch (shadow_byte) {
+    // If we are accessing 16 bytes, look at the second shadow byte.
+    if (*shadow_addr == 0 && access_size > SHADOW_GRANULARITY)
+      shadow_addr++;
+    // If we are in the partial right redzone, look at the next shadow byte.
+    if (*shadow_addr > 0 && *shadow_addr < 128)
+      shadow_addr++;
+    switch (*shadow_addr) {
       case kAsanHeapLeftRedzoneMagic:
       case kAsanHeapRightRedzoneMagic:
         bug_descr = "heap-buffer-overflow";

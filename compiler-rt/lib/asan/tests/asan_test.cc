@@ -833,6 +833,8 @@ TEST(AddressSanitizer, Store128Test) {
   assert(((uintptr_t)p % 16) == 0);
   __m128i value_wide = _mm_set1_epi16(0x1234);
   EXPECT_DEATH(_mm_store_si128((__m128i*)p, value_wide),
+               "AddressSanitizer heap-buffer-overflow");
+  EXPECT_DEATH(_mm_store_si128((__m128i*)p, value_wide),
                "WRITE of size 16");
   EXPECT_DEATH(_mm_store_si128((__m128i*)p, value_wide),
                "located 0 bytes to the right of 12-byte");
