@@ -153,6 +153,7 @@ Lforward:
         add r4, r5, r6, asr #5
         add r4, r5, r6, ror #5
         add r6, r7, r8, lsl r9
+        add r4, r4, r3, asl r9
         add r6, r7, r8, lsr r9
         add r6, r7, r8, asr r9
         add r6, r7, r8, ror r9
@@ -180,6 +181,7 @@ Lforward:
 @ CHECK: add	r4, r5, r6, asr #5      @ encoding: [0xc6,0x42,0x85,0xe0]
 @ CHECK: add	r4, r5, r6, ror #5      @ encoding: [0xe6,0x42,0x85,0xe0]
 @ CHECK: add	r6, r7, r8, lsl r9      @ encoding: [0x18,0x69,0x87,0xe0]
+@ CHECK: add	r4, r4, r3, lsl r9      @ encoding: [0x13,0x49,0x84,0xe0]
 @ CHECK: add	r6, r7, r8, lsr r9      @ encoding: [0x38,0x69,0x87,0xe0]
 @ CHECK: add	r6, r7, r8, asr r9      @ encoding: [0x58,0x69,0x87,0xe0]
 @ CHECK: add	r6, r7, r8, ror r9      @ encoding: [0x78,0x69,0x87,0xe0]

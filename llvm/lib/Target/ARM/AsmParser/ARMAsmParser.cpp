@@ -2140,6 +2140,7 @@ int ARMAsmParser::tryParseShiftRegister(
 
   std::string lowerCase = Tok.getString().lower();
   ARM_AM::ShiftOpc ShiftTy = StringSwitch<ARM_AM::ShiftOpc>(lowerCase)
+      .Case("asl", ARM_AM::lsl)
       .Case("lsl", ARM_AM::lsl)
       .Case("lsr", ARM_AM::lsr)
       .Case("asr", ARM_AM::asr)
@@ -3901,7 +3902,8 @@ bool ARMAsmParser::parseMemRegOffsetShift(ARM_AM::ShiftOpc &St,
   if (Tok.isNot(AsmToken::Identifier))
     return true;
   StringRef ShiftName = Tok.getString();
-  if (ShiftName == "lsl" || ShiftName == "LSL")
+  if (ShiftName == "lsl" || ShiftName == "LSL" ||
+      ShiftName == "asl" || ShiftName == "ASL")
     St = ARM_AM::lsl;
   else if (ShiftName == "lsr" || ShiftName == "LSR")
     St = ARM_AM::lsr;
