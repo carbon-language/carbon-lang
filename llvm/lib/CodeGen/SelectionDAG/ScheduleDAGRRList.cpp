@@ -102,17 +102,6 @@ static cl::opt<unsigned> AvgIPC(
   "sched-avg-ipc", cl::Hidden, cl::init(1),
   cl::desc("Average inst/cycle whan no target itinerary exists."));
 
-#ifndef NDEBUG
-namespace {
-  // For sched=list-ilp, Count the number of times each factor comes into play.
-  enum { FactPressureDiff, FactRegUses, FactStall, FactHeight, FactDepth,
-         FactStatic, FactOther, NumFactors };
-}
-static const char *FactorName[NumFactors] =
-{"PressureDiff", "RegUses", "Stall", "Height", "Depth","Static", "Other"};
-static int FactorCount[NumFactors];
-#endif //!NDEBUG
-
 namespace {
 //===----------------------------------------------------------------------===//
 /// ScheduleDAGRRList - The actual register reduction list scheduler
@@ -308,11 +297,6 @@ void ScheduleDAGRRList::Schedule() {
   DEBUG(dbgs()
         << "********** List Scheduling BB#" << BB->getNumber()
         << " '" << BB->getName() << "' **********\n");
-#ifndef NDEBUG
-  for (int i = 0; i < NumFactors; ++i) {
-    FactorCount[i] = 0;
-  }
-#endif //!NDEBUG
 
   CurCycle = 0;
   IssueCount = 0;
@@ -337,11 +321,6 @@ void ScheduleDAGRRList::Schedule() {
   // Execute the actual scheduling loop.
   ListScheduleBottomUp();
 
-#ifndef NDEBUG
-  for (int i = 0; i < NumFactors; ++i) {
-    DEBUG(dbgs() << FactorName[i] << "\t" << FactorCount[i] << "\n");
-  }
-#endif // !NDEBUG
   AvailableQueue->releaseState();
 }
 
@@ -2296,28 +2275,20 @@ static int BUCompareLatency(SUnit *left, SUnit *right, bool checkPref,
   // If scheduling either one of the node will cause a pipeline stall, sort
   // them according to their height.
   if (LStall) {
-    if (!RStall) {
-      DEBUG(++FactorCount[FactStall]);
+    if (!RStall)
       return 1;
-    }
-    if (LHeight != RHeight) {
-      DEBUG(++FactorCount[FactStall]);
+    if (LHeight != RHeight)
       return LHeight > RHeight ? 1 : -1;
-    }
-  } else if (RStall) {
-    DEBUG(++FactorCount[FactStall]);
+  } else if (RStall)
     return -1;
-  }
 
   // If either node is scheduling for latency, sort them by height/depth
   // and latency.
   if (!checkPref || (left->SchedulingPref == Sched::ILP ||
                      right->SchedulingPref == Sched::ILP)) {
     if (DisableSchedCycles) {
-      if (LHeight != RHeight) {
-        DEBUG(++FactorCount[FactHeight]);
+      if (LHeight != RHeight)
         return LHeight > RHeight ? 1 : -1;
-      }
     }
     else {
       // If neither instruction stalls (!LStall && !RStall) then
@@ -2326,17 +2297,14 @@ static int BUCompareLatency(SUnit *left, SUnit *right, bool checkPref,
       int LDepth = left->getDepth() - LPenalty;
       int RDepth = right->getDepth() - RPenalty;
       if (LDepth != RDepth) {
-        DEBUG(++FactorCount[FactDepth]);
         DEBUG(dbgs() << "  Comparing latency of SU (" << left->NodeNum
               << ") depth " << LDepth << " vs SU (" << right->NodeNum
               << ") depth " << RDepth << "\n");
         return LDepth < RDepth ? 1 : -1;
       }
     }
-    if (left->Latency != right->Latency) {
-      DEBUG(++FactorCount[FactOther]);
+    if (left->Latency != right->Latency)
       return left->Latency > right->Latency ? 1 : -1;
-    }
   }
   return 0;
 }
@@ -2350,7 +2318,6 @@ static bool BURRSort(SUnit *left, SUnit *right, RegReductionPQBase *SPQ) {
     bool LHasPhysReg = left->hasPhysRegDefs;
     bool RHasPhysReg = right->hasPhysRegDefs;
     if (LHasPhysReg != RHasPhysReg) {
-      DEBUG(++FactorCount[FactRegUses]);
       #ifndef NDEBUG
       const char *PhysRegMsg[] = {" has no physreg", " defines a physreg"};
       #endif
@@ -2376,10 +2343,8 @@ static bool BURRSort(SUnit *left, SUnit *right, RegReductionPQBase *SPQ) {
     LPriority = (LPriority > LNumVals) ? (LPriority - LNumVals) : 0;
   }
 
-  if (LPriority != RPriority) {
-    DEBUG(++FactorCount[FactStatic]);
+  if (LPriority != RPriority)
     return LPriority > RPriority;
-  }
 
   // One or both of the nodes are calls and their sethi-ullman numbers are the
   // same, then keep source order.
@@ -2412,18 +2377,14 @@ static bool BURRSort(SUnit *left, SUnit *right, RegReductionPQBase *SPQ) {
   // This creates more short live intervals.
   unsigned LDist = closestSucc(left);
   unsigned RDist = closestSucc(right);
-  if (LDist != RDist) {
-    DEBUG(++FactorCount[FactOther]);
+  if (LDist != RDist)
     return LDist < RDist;
-  }
 
   // How many registers becomes live when the node is scheduled.
   unsigned LScratch = calcMaxScratches(left);
   unsigned RScratch = calcMaxScratches(right);
-  if (LScratch != RScratch) {
-    DEBUG(++FactorCount[FactOther]);
+  if (LScratch != RScratch)
     return LScratch > RScratch;
-  }
 
   // Comparing latency against a call makes little sense unless the node
   // is register pressure-neutral.
@@ -2438,20 +2399,15 @@ static bool BURRSort(SUnit *left, SUnit *right, RegReductionPQBase *SPQ) {
       return result > 0;
   }
   else {
-    if (left->getHeight() != right->getHeight()) {
-      DEBUG(++FactorCount[FactHeight]);
+    if (left->getHeight() != right->getHeight())
       return left->getHeight() > right->getHeight();
-    }
 
-    if (left->getDepth() != right->getDepth()) {
-      DEBUG(++FactorCount[FactDepth]);
+    if (left->getDepth() != right->getDepth())
       return left->getDepth() < right->getDepth();
-    }
   }
 
   assert(left->NodeQueueId && right->NodeQueueId &&
          "NodeQueueId cannot be zero");
-  DEBUG(++FactorCount[FactOther]);
   return (left->NodeQueueId > right->NodeQueueId);
 }
 
@@ -2511,13 +2467,11 @@ bool hybrid_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
   // Avoid causing spills. If register pressure is high, schedule for
   // register pressure reduction.
   if (LHigh && !RHigh) {
-    DEBUG(++FactorCount[FactPressureDiff]);
     DEBUG(dbgs() << "  pressure SU(" << left->NodeNum << ") > SU("
           << right->NodeNum << ")\n");
     return true;
   }
   else if (!LHigh && RHigh) {
-    DEBUG(++FactorCount[FactPressureDiff]);
     DEBUG(dbgs() << "  pressure SU(" << right->NodeNum << ") > SU("
           << left->NodeNum << ")\n");
     return false;
@@ -2581,7 +2535,6 @@ bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
     RPDiff = SPQ->RegPressureDiff(right, RLiveUses);
   }
   if (!DisableSchedRegPressure && LPDiff != RPDiff) {
-    DEBUG(++FactorCount[FactPressureDiff]);
     DEBUG(dbgs() << "RegPressureDiff SU(" << left->NodeNum << "): " << LPDiff
           << " != SU(" << right->NodeNum << "): " << RPDiff << "\n");
     return LPDiff > RPDiff;
@@ -2590,7 +2543,6 @@ bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
   if (!DisableSchedRegPressure && (LPDiff > 0 || RPDiff > 0)) {
     bool LReduce = canEnableCoalescing(left);
     bool RReduce = canEnableCoalescing(right);
-    DEBUG(if (LReduce != RReduce) ++FactorCount[FactPressureDiff]);
     if (LReduce && !RReduce) return false;
     if (RReduce && !LReduce) return true;
   }
@@ -2598,17 +2550,14 @@ bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
   if (!DisableSchedLiveUses && (LLiveUses != RLiveUses)) {
     DEBUG(dbgs() << "Live uses SU(" << left->NodeNum << "): " << LLiveUses
           << " != SU(" << right->NodeNum << "): " << RLiveUses << "\n");
-    DEBUG(++FactorCount[FactRegUses]);
     return LLiveUses < RLiveUses;
   }
 
   if (!DisableSchedStalls) {
     bool LStall = BUHasStall(left, left->getHeight(), SPQ);
     bool RStall = BUHasStall(right, right->getHeight(), SPQ);
-    if (LStall != RStall) {
-      DEBUG(++FactorCount[FactHeight]);
+    if (LStall != RStall)
       return left->getHeight() > right->getHeight();
-    }
   }
 
   if (!DisableSchedCriticalPath) {
@@ -2617,17 +2566,14 @@ bool ilp_ls_rr_sort::operator()(SUnit *left, SUnit *right) const {
       DEBUG(dbgs() << "Depth of SU(" << left->NodeNum << "): "
             << left->getDepth() << " != SU(" << right->NodeNum << "): "
             << right->getDepth() << "\n");
-      DEBUG(++FactorCount[FactDepth]);
       return left->getDepth() < right->getDepth();
     }
   }
 
   if (!DisableSchedHeight && left->getHeight() != right->getHeight()) {
     int spread = (int)left->getHeight() - (int)right->getHeight();
-    if (std::abs(spread) > MaxReorderWindow) {
-      DEBUG(++FactorCount[FactHeight]);
+    if (std::abs(spread) > MaxReorderWindow)
       return left->getHeight() > right->getHeight();
-    }
   }
 
   return BURRSort(left, right, SPQ);
