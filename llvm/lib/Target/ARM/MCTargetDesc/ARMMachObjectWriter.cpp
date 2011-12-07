@@ -62,9 +62,6 @@ static bool getARMFixupKindMachOInfo(unsigned Kind, unsigned &RelocType,
   default:
     return false;
 
-  case ARM::fixup_t2_condbranch:
-    assert(0);
-    return false;
   case FK_Data_1:
     Log2Size = llvm::Log2_32(1);
     return true;
