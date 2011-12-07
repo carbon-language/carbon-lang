@@ -5396,3 +5396,34 @@ defm : VFPDTAnyInstAlias<"vmov${p}", "$Vd, $Vm",
 defm : VFPDTAnyInstAlias<"vmov${p}", "$Vd, $Vm",
                          (VORRq QPR:$Vd, QPR:$Vm, QPR:$Vm, pred:$p)>;
 
+// VCLT (register) is an assembler alias for VCGT w/ the operands reversed.
+// D-register versions.
+def : NEONInstAlias<"vclt${p}.s8 $Dd, $Dn, $Dm",
+                    (VCGTsv8i8 DPR:$Dd, DPR:$Dm, DPR:$Dn, pred:$p)>;
+def : NEONInstAlias<"vclt${p}.s16 $Dd, $Dn, $Dm",
+                    (VCGTsv4i16 DPR:$Dd, DPR:$Dm, DPR:$Dn, pred:$p)>;
+def : NEONInstAlias<"vclt${p}.s32 $Dd, $Dn, $Dm",
+                    (VCGTsv2i32 DPR:$Dd, DPR:$Dm, DPR:$Dn, pred:$p)>;
+def : NEONInstAlias<"vclt${p}.u8 $Dd, $Dn, $Dm",
+                    (VCGTuv8i8 DPR:$Dd, DPR:$Dm, DPR:$Dn, pred:$p)>;
+def : NEONInstAlias<"vclt${p}.u16 $Dd, $Dn, $Dm",
+                    (VCGTuv4i16 DPR:$Dd, DPR:$Dm, DPR:$Dn, pred:$p)>;
+def : NEONInstAlias<"vclt${p}.u32 $Dd, $Dn, $Dm",
+                    (VCGTuv2i32 DPR:$Dd, DPR:$Dm, DPR:$Dn, pred:$p)>;
+def : NEONInstAlias<"vclt${p}.f32 $Dd, $Dn, $Dm",
+                    (VCGTfd DPR:$Dd, DPR:$Dm, DPR:$Dn, pred:$p)>;
+// Q-register versions.
+def : NEONInstAlias<"vclt${p}.s8 $Qd, $Qn, $Qm",
+                    (VCGTsv16i8 QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
+def : NEONInstAlias<"vclt${p}.s16 $Qd, $Qn, $Qm",
+                    (VCGTsv8i16 QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
+def : NEONInstAlias<"vclt${p}.s32 $Qd, $Qn, $Qm",
+                    (VCGTsv4i32 QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
+def : NEONInstAlias<"vclt${p}.u8 $Qd, $Qn, $Qm",
+                    (VCGTuv16i8 QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
+def : NEONInstAlias<"vclt${p}.u16 $Qd, $Qn, $Qm",
+                    (VCGTuv8i16 QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
+def : NEONInstAlias<"vclt${p}.u32 $Qd, $Qn, $Qm",
+                    (VCGTuv4i32 QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
+def : NEONInstAlias<"vclt${p}.f32 $Qd, $Qn, $Qm",
+                    (VCGTfq QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;

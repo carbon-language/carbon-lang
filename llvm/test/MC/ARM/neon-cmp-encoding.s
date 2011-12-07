@@ -111,3 +111,36 @@
 @ CHECK: vcle.s8	d16, d16, #0    @ encoding: [0xa0,0x01,0xf1,0xf3]
 @ CHECK: vcgt.s8	d16, d16, #0    @ encoding: [0x20,0x00,0xf1,0xf3]
 @ CHECK: vclt.s8	d16, d16, #0    @ encoding: [0x20,0x02,0xf1,0xf3]
+
+
+        vclt.s8 q12, q13, q3
+        vclt.s16 q12, q13, q3
+        vclt.s32 q12, q13, q3
+        vclt.u8 q12, q13, q3
+        vclt.u16 q12, q13, q3
+        vclt.u32 q12, q13, q3
+        vclt.f32 q12, q13, q3
+
+        vclt.s8 d12, d13, d3
+        vclt.s16 d12, d13, d3
+        vclt.s32 d12, d13, d3
+        vclt.u8 d12, d13, d3
+        vclt.u16 d12, d13, d3
+        vclt.u32 d12, d13, d3
+        vclt.f32 d12, d13, d3
+
+@ CHECK: vcgt.s8	q12, q3, q13    @ encoding: [0x6a,0x83,0x46,0xf2]
+@ CHECK: vcgt.s16	q12, q3, q13    @ encoding: [0x6a,0x83,0x56,0xf2]
+@ CHECK: vcgt.s32	q12, q3, q13    @ encoding: [0x6a,0x83,0x66,0xf2]
+@ CHECK: vcgt.u8	q12, q3, q13    @ encoding: [0x6a,0x83,0x46,0xf3]
+@ CHECK: vcgt.u16	q12, q3, q13    @ encoding: [0x6a,0x83,0x56,0xf3]
+@ CHECK: vcgt.u32	q12, q3, q13    @ encoding: [0x6a,0x83,0x66,0xf3]
+@ CHECK: vcgt.f32	q12, q3, q13    @ encoding: [0x6a,0x8e,0x66,0xf3]
+
+@ CHECK: vcgt.s8	d12, d3, d13    @ encoding: [0x0d,0xc3,0x03,0xf2]
+@ CHECK: vcgt.s16	d12, d3, d13    @ encoding: [0x0d,0xc3,0x13,0xf2]
+@ CHECK: vcgt.s32	d12, d3, d13    @ encoding: [0x0d,0xc3,0x23,0xf2]
+@ CHECK: vcgt.u8	d12, d3, d13    @ encoding: [0x0d,0xc3,0x03,0xf3]
+@ CHECK: vcgt.u16	d12, d3, d13    @ encoding: [0x0d,0xc3,0x13,0xf3]
+@ CHECK: vcgt.u32	d12, d3, d13    @ encoding: [0x0d,0xc3,0x23,0xf3]
+@ CHECK: vcgt.f32	d12, d3, d13    @ encoding: [0x0d,0xce,0x23,0xf3]
