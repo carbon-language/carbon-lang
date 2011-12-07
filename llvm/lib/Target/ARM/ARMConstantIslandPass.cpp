@@ -84,6 +84,9 @@ namespace {
 
       BasicBlockInfo() : Offset(0), Size(0) {}
       BasicBlockInfo(unsigned o, unsigned s) : Offset(o), Size(s) {}
+
+      /// Compute the offset immediately following this block.
+      unsigned postOffset() const { return Offset + Size; }
     };
 
     std::vector<BasicBlockInfo> BBInfo;
@@ -241,7 +244,7 @@ namespace {
 /// verify - check BBOffsets, BBSizes, alignment of islands
 void ARMConstantIslands::verify(MachineFunction &MF) {
   for (unsigned i = 1, e = BBInfo.size(); i != e; ++i)
-    assert(BBInfo[i-1].Offset + BBInfo[i-1].Size == BBInfo[i].Offset);
+    assert(BBInfo[i-1].postOffset() == BBInfo[i].Offset);
   if (!isThumb)
     return;
 #ifndef NDEBUG
@@ -802,7 +805,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   BBInfo[OrigBBI].Size = OrigBBSize;
 
   // ...and adjust BBOffsets for NewBB accordingly.
-  BBInfo[NewBBI].Offset = BBInfo[OrigBBI].Offset + BBInfo[OrigBBI].Size;
+  BBInfo[NewBBI].Offset = BBInfo[OrigBBI].postOffset();
 
   // Figure out how large the NewMBB is.  As the second half of the original
   // block, it may contain a tablejump.
@@ -819,7 +822,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
     // means we will always need padding if we didn't before, and vice versa.
 
     // The original offset of the jump instruction was:
-    unsigned OrigOffset = BBInfo[OrigBBI].Offset + BBInfo[OrigBBI].Size - delta;
+    unsigned OrigOffset = BBInfo[OrigBBI].postOffset() - delta;
     if (OrigOffset%4 == 0) {
       // We had padding before and now we don't.  No net change in code size.
       delta = 0;
@@ -884,8 +887,7 @@ bool ARMConstantIslands::OffsetIsInRange(unsigned UserOffset,
 bool ARMConstantIslands::WaterIsInRange(unsigned UserOffset,
                                         MachineBasicBlock* Water, CPUser &U) {
   unsigned MaxDisp = U.MaxDisp;
-  unsigned CPEOffset = BBInfo[Water->getNumber()].Offset +
-                       BBInfo[Water->getNumber()].Size;
+  unsigned CPEOffset = BBInfo[Water->getNumber()].postOffset();
 
   // If the CPE is to be inserted before the instruction, that will raise
   // the offset of the instruction.
@@ -1094,8 +1096,7 @@ bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
         (WaterBB->getNumber() < U.HighWaterMark->getNumber() ||
          NewWaterList.count(WaterBB))) {
       unsigned WBBId = WaterBB->getNumber();
-      if (isThumb &&
-          (BBInfo[WBBId].Offset + BBInfo[WBBId].Size)%4 != 0) {
+      if (isThumb && BBInfo[WBBId].postOffset()%4 != 0) {
         // This is valid Water, but would introduce padding.  Remember
         // it in case we don't find any Water that doesn't do this.
         if (!FoundWaterThatWouldPad) {
@@ -1131,9 +1132,8 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
   MachineInstr *UserMI = U.MI;
   MachineInstr *CPEMI  = U.CPEMI;
   MachineBasicBlock *UserMBB = UserMI->getParent();
-  unsigned OffsetOfNextBlock = BBInfo[UserMBB->getNumber()].Offset +
-                               BBInfo[UserMBB->getNumber()].Size;
-  assert(OffsetOfNextBlock== BBInfo[UserMBB->getNumber()+1].Offset);
+  unsigned OffsetOfNextBlock = BBInfo[UserMBB->getNumber()].postOffset();
+  assert(OffsetOfNextBlock == BBInfo[UserMBB->getNumber()+1].Offset);
 
   // If the block does not end in an unconditional branch already, and if the
   // end of the block is within range, make new water there.  (The addition
