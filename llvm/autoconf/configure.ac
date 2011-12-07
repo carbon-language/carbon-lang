@@ -114,6 +114,7 @@ do
       llvm-tv)      AC_CONFIG_SUBDIRS([projects/llvm-tv])   ;;
       safecode)     AC_CONFIG_SUBDIRS([projects/safecode]) ;;
       llvm-kernel)  AC_CONFIG_SUBDIRS([projects/llvm-kernel]) ;;
+      compiler-rt)       ;;
       llvm-gcc)       ;;
       test-suite)     ;;
       llvm-test)      ;;

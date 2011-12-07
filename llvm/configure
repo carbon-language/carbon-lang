@@ -3493,6 +3493,7 @@ do
  ;;
       llvm-kernel)  subdirs="$subdirs projects/llvm-kernel"
  ;;
+      compiler-rt)       ;;
       llvm-gcc)       ;;
       test-suite)     ;;
       llvm-test)      ;;
@@ -10489,7 +10490,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10492 "configure"
+#line 10493 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -21100,9 +21101,6 @@ if test -f ${srcdir}/tools/clang/README.txt; then
 
 fi
 
-
-
-
 ac_config_files="$ac_config_files bindings/ocaml/llvm/META.llvm"
 
 
@@ -21722,7 +21720,6 @@ do
     "llvm.spec") CONFIG_FILES="$CONFIG_FILES llvm.spec" ;;
     "docs/doxygen.cfg") CONFIG_FILES="$CONFIG_FILES docs/doxygen.cfg" ;;
     "tools/clang/docs/doxygen.cfg") CONFIG_FILES="$CONFIG_FILES tools/clang/docs/doxygen.cfg" ;;
-    "tools/llvm-config/llvm-config.in") CONFIG_FILES="$CONFIG_FILES tools/llvm-config/llvm-config.in" ;;
     "bindings/ocaml/llvm/META.llvm") CONFIG_FILES="$CONFIG_FILES bindings/ocaml/llvm/META.llvm" ;;
     "setup") CONFIG_COMMANDS="$CONFIG_COMMANDS setup" ;;
     "Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
