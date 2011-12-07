@@ -62,7 +62,8 @@ bool Sema::CanUseDecl(NamedDecl *D) {
   return true;
 }
 
-static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
+AvailabilityResult 
+Sema::DiagnoseAvailabilityOfDecl(
                               NamedDecl *D, SourceLocation Loc,
                               const ObjCInterfaceDecl *UnknownObjCClass) {
   // See if this declaration is unavailable or deprecated.
@@ -81,22 +82,22 @@ static AvailabilityResult DiagnoseAvailabilityOfDecl(Sema &S,
       break;
             
     case AR_Deprecated:
-      S.EmitDeprecationWarning(D, Message, Loc, UnknownObjCClass);
+      EmitDeprecationWarning(D, Message, Loc, UnknownObjCClass);
       break;
             
     case AR_Unavailable:
-      if (S.getCurContextAvailability() != AR_Unavailable) {
+      if (getCurContextAvailability() != AR_Unavailable) {
         if (Message.empty()) {
           if (!UnknownObjCClass)
-            S.Diag(Loc, diag::err_unavailable) << D->getDeclName();
+            Diag(Loc, diag::err_unavailable) << D->getDeclName();
           else
-            S.Diag(Loc, diag::warn_unavailable_fwdclass_message) 
+            Diag(Loc, diag::warn_unavailable_fwdclass_message) 
               << D->getDeclName();
         }
         else 
-          S.Diag(Loc, diag::err_unavailable_message) 
+          Diag(Loc, diag::err_unavailable_message) 
             << D->getDeclName() << Message;
-          S.Diag(D->getLocation(), diag::note_unavailable_here) 
+          Diag(D->getLocation(), diag::note_unavailable_here) 
           << isa<FunctionDecl>(D) << false;
       }
       break;
@@ -151,7 +152,7 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
       return true;
     }
   }
-  DiagnoseAvailabilityOfDecl(*this, D, Loc, UnknownObjCClass);
+  DiagnoseAvailabilityOfDecl(D, Loc, UnknownObjCClass);
 
   // Warn if this is used but marked unused.
   if (D->hasAttr<UnusedAttr>())

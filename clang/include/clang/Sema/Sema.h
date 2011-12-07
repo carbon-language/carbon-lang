@@ -2276,6 +2276,9 @@ public:
   bool CanUseDecl(NamedDecl *D);
   bool DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
                          const ObjCInterfaceDecl *UnknownObjCClass=0);
+  AvailabilityResult DiagnoseAvailabilityOfDecl(NamedDecl *D, 
+                              SourceLocation Loc,
+                              const ObjCInterfaceDecl *UnknownObjCClass);
   std::string getDeletedOrUnavailableSuffix(const FunctionDecl *FD);
   bool DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *PD,
                                         ObjCMethodDecl *Getter,
