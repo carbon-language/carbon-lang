@@ -146,6 +146,10 @@ private:
   /// and similar queries.
   ScheduleDAGTopologicalSort Topo;
 
+  // Hack to keep track of the inverse of FindCallSeqStart without more crazy
+  // DAG crawling.
+  DenseMap<SUnit*, SUnit*> CallSeqEndForStart;
+
 public:
   ScheduleDAGRRList(MachineFunction &mf, bool needlatency,
                     SchedulingPriorityQueue *availqueue,
@@ -306,6 +310,7 @@ void ScheduleDAGRRList::Schedule() {
   // to track the virtual resource of a calling sequence.
   LiveRegDefs.resize(TRI->getNumRegs() + 1, NULL);
   LiveRegGens.resize(TRI->getNumRegs() + 1, NULL);
+  CallSeqEndForStart.clear();
 
   // Build the scheduling graph.
   BuildSchedGraph(NULL);
@@ -524,6 +529,8 @@ void ScheduleDAGRRList::ReleasePredecessors(SUnit *SU) {
         SDNode *N = FindCallSeqStart(Node, NestLevel, MaxNest, TII);
 
         SUnit *Def = &SUnits[N->getNodeId()];
+        CallSeqEndForStart[Def] = SU;
+
         ++NumLiveRegs;
         LiveRegDefs[CallResource] = Def;
         LiveRegGens[CallResource] = SU;
@@ -790,7 +797,7 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
         SUNode->getMachineOpcode() == (unsigned)TII->getCallFrameSetupOpcode()) {
       ++NumLiveRegs;
       LiveRegDefs[CallResource] = SU;
-      LiveRegGens[CallResource] = NULL;
+      LiveRegGens[CallResource] = CallSeqEndForStart[SU];
     }
   }
 
