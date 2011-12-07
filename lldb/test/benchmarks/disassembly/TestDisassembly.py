@@ -6,12 +6,33 @@ import lldb
 import pexpect
 from lldbbench import *
 
+def is_exe(fpath):
+    """Returns true if fpath is an executable."""
+    return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
 class DisassembleDriverMainLoop(BenchBase):
 
     mydir = os.path.join("benchmarks", "disassembly")
 
     def setUp(self):
+        """
+        Note that lldbExec can be specified with the LLDB_EXEC env variable (see
+        dotest.py), and gdbExec can be specified with the GDB_EXEC env variable.
+        This provides a flexibility in specifying different versions of gdb for
+        comparison purposes.
+        """
         BenchBase.setUp(self)
+        # If env var GDB_EXEC is specified, use it; otherwise, use gdb in your
+        # PATH env var.
+        if "GDB_EXEC" in os.environ and is_exe(os.environ["GDB_EXEC"]):
+            self.gdbExec = os.environ["GDB_EXEC"]
+        else:
+            self.gdbExec = "gdb"
+
+        print
+        print "lldb path: %s" % self.lldbExec
+        print "gdb path: %s" % self.gdbExec
+
         self.exe = self.lldbHere
         self.function = 'Driver::MainLoop()'
         self.lldb_avg = None
@@ -86,7 +107,7 @@ class DisassembleDriverMainLoop(BenchBase):
         prompt = self.child_prompt
 
         # So that the child gets torn down after the test.
-        self.child = pexpect.spawn('gdb --nx %s' % exe)
+        self.child = pexpect.spawn('%s --nx %s' % (self.gdbExec, exe))
         child = self.child
 
         # Turn on logging for what the child sends back.
