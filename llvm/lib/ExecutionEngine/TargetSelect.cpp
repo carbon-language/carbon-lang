@@ -30,6 +30,7 @@ TargetMachine *EngineBuilder::selectTarget(Module *Mod,
                               StringRef MArch,
                               StringRef MCPU,
                               const SmallVectorImpl<std::string>& MAttrs,
+                              const TargetOptions &Options,
                               Reloc::Model RM,
                               CodeModel::Model CM,
                               CodeGenOpt::Level OL,
@@ -86,7 +87,6 @@ TargetMachine *EngineBuilder::selectTarget(Module *Mod,
   }
 
   // Allocate a target...
-  TargetOptions Options;
   TargetMachine *Target = TheTarget->createTargetMachine(TheTriple.getTriple(),
                                                          MCPU, FeaturesStr,
                                                          Options,

@@ -2005,7 +2005,8 @@ int main(int argc, char *argv[]) {
   }
   
   // If not set, exception handling will not be turned on
-  llvm::JITExceptionHandling = true;
+  llvm::TargetOptions Opts;
+  Opts.JITExceptionHandling = true;
   
   llvm::InitializeNativeTarget();
   llvm::LLVMContext &context = llvm::getGlobalContext();
@@ -2018,6 +2019,7 @@ int main(int argc, char *argv[]) {
   llvm::EngineBuilder factory(module);
   factory.setEngineKind(llvm::EngineKind::JIT);
   factory.setAllocateGVsWithCode(false);
+  factory.setTargetOptions(Opts);
   llvm::ExecutionEngine *executionEngine = factory.create();
   
   {

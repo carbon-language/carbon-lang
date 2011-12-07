@@ -26,6 +26,7 @@
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 
 namespace llvm {
 
@@ -462,6 +463,7 @@ private:
   CodeGenOpt::Level OptLevel;
   JITMemoryManager *JMM;
   bool AllocateGVsWithCode;
+  TargetOptions Options;
   Reloc::Model RelocModel;
   CodeModel::Model CMModel;
   std::string MArch;
@@ -475,6 +477,7 @@ private:
     ErrorStr = NULL;
     OptLevel = CodeGenOpt::Default;
     JMM = NULL;
+    Options = TargetOptions();
     AllocateGVsWithCode = false;
     RelocModel = Reloc::Default;
     CMModel = CodeModel::JITDefault;
@@ -515,6 +518,13 @@ public:
   /// defaults to CodeGenOpt::Default.
   EngineBuilder &setOptLevel(CodeGenOpt::Level l) {
     OptLevel = l;
+    return *this;
+  }
+
+  /// setTargetOptions - Set the target options that the ExecutionEngine
+  /// target is using. Defaults to TargetOptions().
+  EngineBuilder &setTargetOptions(const TargetOptions &Opts) {
+    Options = Opts;
     return *this;
   }
 
@@ -578,6 +588,7 @@ public:
                                      StringRef MArch,
                                      StringRef MCPU,
                                      const SmallVectorImpl<std::string>& MAttrs,
+                                     const TargetOptions &Options,
                                      Reloc::Model RM,
                                      CodeModel::Model CM,
                                      CodeGenOpt::Level OL,

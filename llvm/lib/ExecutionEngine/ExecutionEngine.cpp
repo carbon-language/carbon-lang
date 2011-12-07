@@ -436,8 +436,10 @@ ExecutionEngine *ExecutionEngine::createJIT(Module *M,
   StringRef MCPU = "";
   SmallVector<std::string, 1> MAttrs;
 
+  // TODO: permit custom TargetOptions here
   TargetMachine *TM =
-    EngineBuilder::selectTarget(M, MArch, MCPU, MAttrs, RM, CMM, OL, ErrorStr);
+    EngineBuilder::selectTarget(M, MArch, MCPU, MAttrs, TargetOptions(), RM,
+                                CMM, OL, ErrorStr);
   if (!TM || (ErrorStr && ErrorStr->length() > 0)) return 0;
 
   return ExecutionEngine::JITCtor(M, ErrorStr, JMM, OL, GVsWithCode, TM);
@@ -466,6 +468,7 @@ ExecutionEngine *EngineBuilder::create() {
   // try making a JIT.
   if (WhichEngine & EngineKind::JIT) {
     if (TargetMachine *TM = EngineBuilder::selectTarget(M, MArch, MCPU, MAttrs,
+                                                        Options,
                                                         RelocModel, CMModel,
                                                         OptLevel, ErrorStr)) {
       if (UseMCJIT && ExecutionEngine::MCJITCtor) {
