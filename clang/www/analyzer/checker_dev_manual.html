@@ -317,6 +317,12 @@ execute:
 </tt>
 </li>
 <li>
+To see the <tt>ProgramState</tt> while debugging use the following command. 
+<br><tt>
+(gdb) <b>p State->dump()</b>
+</tt> 
+</li>
+<li>
 To see <tt>clang::Expr</tt> while debugging use the following command. If you 
 pass in a SourceManager object, it will also dump the corresponding line in the 
 source code.
