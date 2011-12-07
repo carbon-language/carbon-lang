@@ -3009,7 +3009,6 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
   bool First = true;
   Module *CurrentModule = 0;
   RecordData Record;
-  SubmoduleID CurrentModuleGlobalIndex = 0;
   while (true) {
     unsigned Code = F.Stream.ReadCode();
     if (Code == llvm::bitc::END_BLOCK) {
@@ -3138,7 +3137,6 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       First = false;
       
       F.BaseSubmoduleID = getTotalNumSubmodules();
-      CurrentModuleGlobalIndex = F.BaseSubmoduleID;
       F.LocalNumSubmodules = Record[0];
       unsigned LocalBaseSubmoduleID = Record[1];
       if (F.LocalNumSubmodules > 0) {
