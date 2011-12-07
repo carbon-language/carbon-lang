@@ -7181,19 +7181,23 @@ SDValue DAGCombiner::visitEXTRACT_SUBVECTOR(SDNode* N) {
     if (NVT != SmallVT || NVT.getSizeInBits()*2 != BigVT.getSizeInBits())
       return SDValue();
 
-    // Combine:
-    //    (extract_subvec (insert_subvec V1, V2, InsIdx), ExtIdx)
-    // Into:
-    //    indicies are equal => V1
-    //    otherwise => (extract_subvec V1, ExtIdx)
-    //
-    SDValue InsIdx = N->getOperand(1);
-    SDValue ExtIdx = V->getOperand(2);
+    // Only handle cases where both indexes are constants with the same type.
+    ConstantSDNode *InsIdx = dyn_cast<ConstantSDNode>(N->getOperand(1));
+    ConstantSDNode *ExtIdx = dyn_cast<ConstantSDNode>(V->getOperand(2));
 
-    if (InsIdx == ExtIdx)
-      return V->getOperand(1);
-    return DAG.getNode(ISD::EXTRACT_SUBVECTOR, N->getDebugLoc(), NVT,
-                       V->getOperand(0), N->getOperand(1));
+    if (InsIdx && ExtIdx &&
+        InsIdx->getValueType(0).getSizeInBits() <= 64 &&
+        ExtIdx->getValueType(0).getSizeInBits() <= 64) {
+      // Combine:
+      //    (extract_subvec (insert_subvec V1, V2, InsIdx), ExtIdx)
+      // Into:
+      //    indices are equal => V1
+      //    otherwise => (extract_subvec V1, ExtIdx)
+      if (InsIdx->getZExtValue() == ExtIdx->getZExtValue())
+        return V->getOperand(1);
+      return DAG.getNode(ISD::EXTRACT_SUBVECTOR, N->getDebugLoc(), NVT,
+                         V->getOperand(0), N->getOperand(1));
+    }
   }
 
   return SDValue();
