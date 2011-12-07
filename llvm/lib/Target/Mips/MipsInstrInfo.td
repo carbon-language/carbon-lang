@@ -194,12 +194,12 @@ def size_ins : Operand<i32> {
 
 // Transformation Function - get the lower 16 bits.
 def LO16 : SDNodeXForm<imm, [{
-  return getI32Imm((unsigned)N->getZExtValue() & 0xFFFF);
+  return getImm(N, N->getZExtValue() & 0xFFFF);
 }]>;
 
 // Transformation Function - get the higher 16 bits.
 def HI16 : SDNodeXForm<imm, [{
-  return getI32Imm((unsigned)N->getZExtValue() >> 16);
+  return getImm(N, (N->getZExtValue() >> 16) & 0xFFFF);
 }]>;
 
 // Node immediate fits as 16-bit sign extended on target immediate.

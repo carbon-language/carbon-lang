@@ -25,7 +25,7 @@ def uimm16_64      : Operand<i64> {
 
 // Transformation Function - get Imm - 32.
 def Subtract32 : SDNodeXForm<imm, [{
-  return getI32Imm((unsigned)N->getZExtValue() - 32);
+  return getImm(N, (unsigned)N->getZExtValue() - 32);
 }]>;
 
 // shamt field must fit in 5 bits.
@@ -35,6 +35,19 @@ def immZExt5_64 : ImmLeaf<i64, [{return Imm == (Imm & 0x1f);}]>;
 def imm32_63 : ImmLeaf<i32,
                        [{return (int32_t)Imm >= 32 && (int32_t)Imm < 64;}],
                        Subtract32>;
+
+// Is a 32-bit int.
+def immSExt32 : ImmLeaf<i64, [{return isInt<32>(Imm);}]>;
+
+// Transformation Function - get the higher 16 bits.
+def HIGHER : SDNodeXForm<imm, [{
+  return getImm(N, (N->getZExtValue() >> 32) & 0xFFFF);
+}]>;
+
+// Transformation Function - get the highest 16 bits.
+def HIGHEST : SDNodeXForm<imm, [{
+  return getImm(N, (N->getZExtValue() >> 48) & 0xFFFF);
+}]>;
 
 //===----------------------------------------------------------------------===//
 // Instructions specific format
@@ -219,9 +232,15 @@ def : Pat<(i64 immSExt16:$in),
 def : Pat<(i64 immZExt16:$in),
           (ORi64 ZERO_64, imm:$in)>;
 
+// 32-bit immediates
+def : Pat<(i64 immSExt32:$imm),
+          (ORi64 (LUi64 (HI16 imm:$imm)), (LO16 imm:$imm))>;
+
 // Arbitrary immediates
 def : Pat<(i64 imm:$imm),
-          (ORi64 (LUi64 (HI16 imm:$imm)), (LO16 imm:$imm))>;
+          (ORi64 (DSLL (ORi64 (DSLL (ORi64 (LUi64 (HIGHEST imm:$imm)),
+           (HIGHER imm:$imm)), 16), (HI16 imm:$imm)), 16),
+           (LO16 imm:$imm))>;
 
 // extended loads
 let Predicates = [NotN64] in {
