@@ -2539,7 +2539,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 return;
             }
         }
-        else if (target)
+        else if (frame && target)
         {
             var = FindGlobalVariable (*target,
                                       module_sp,
