@@ -32,6 +32,7 @@ class NamedMDNode;
 class AttrListPtr;
 class ValueSymbolTable;
 class MDSymbolTable;
+class raw_ostream;
 
 class ValueEnumerator {
 public:
@@ -82,6 +83,9 @@ private:
   void operator=(const ValueEnumerator &);   // DO NOT IMPLEMENT
 public:
   ValueEnumerator(const Module *M);
+
+  void dump() const;
+  void print(raw_ostream &OS, const ValueMapType &Map, const char *Name) const;
 
   unsigned getValueID(const Value *V) const;
 
