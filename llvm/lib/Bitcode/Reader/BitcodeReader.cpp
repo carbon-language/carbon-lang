@@ -1287,6 +1287,50 @@ bool BitcodeReader::ParseConstants() {
   return false;
 }
 
+bool BitcodeReader::ParseUseLists() {
+  if (Stream.EnterSubBlock(bitc::USELIST_BLOCK_ID))
+    return Error("Malformed block record");
+
+  SmallVector<uint64_t, 64> Record;
+  
+  // Read all the records.
+  while (1) {
+    unsigned Code = Stream.ReadCode();
+    if (Code == bitc::END_BLOCK) {
+      if (Stream.ReadBlockEnd())
+        return Error("Error at end of use-list table block");
+      return false;
+    }
+    
+    if (Code == bitc::ENTER_SUBBLOCK) {
+      // No known subblocks, always skip them.
+      Stream.ReadSubBlockID();
+      if (Stream.SkipBlock())
+        return Error("Malformed block record");
+      continue;
+    }
+    
+    if (Code == bitc::DEFINE_ABBREV) {
+      Stream.ReadAbbrevRecord();
+      continue;
+    }
+    
+    // Read a use list record.
+    Record.clear();
+    switch (Stream.ReadRecord(Code, Record)) {
+    default:  // Default behavior: unknown type.
+      break;
+    case bitc::USELIST_CODE_ENTRY: { // USELIST_CODE_ENTRY: TBD.
+      unsigned RecordLength = Record.size();
+      if (RecordLength < 1)
+        return Error ("Invalid UseList reader!");
+      UseListRecords.push_back(Record);
+      break;
+    }
+    }
+  }
+}
+
 /// RememberAndSkipFunctionBody - When we see the block for a function body,
 /// remember where it is and then skip it.  This lets us lazily deserialize the
 /// functions.
@@ -1391,6 +1435,10 @@ bool BitcodeReader::ParseModule() {
         }
 
         if (RememberAndSkipFunctionBody())
+          return true;
+        break;
+      case bitc::USELIST_BLOCK_ID:
+        if (ParseUseLists())
           return true;
         break;
       }
@@ -2745,6 +2793,9 @@ Module *llvm::ParseBitcodeFile(MemoryBuffer *Buffer, LLVMContext& Context,
     delete M;
     return 0;
   }
+
+  // TODO: Restore the use-lists to the in-memory state when the bitcode was
+  // written.  We must defer until the Module has been fully materialized.
 
   return M;
 }

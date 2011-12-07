@@ -135,6 +135,7 @@ class BitcodeReader : public GVMaterializer {
   BitcodeReaderValueList ValueList;
   BitcodeReaderMDValueList MDValueList;
   SmallVector<Instruction *, 64> InstructionList;
+  SmallVector<SmallVector<uint64_t, 64>, 64> UseListRecords;
 
   std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInits;
   std::vector<std::pair<GlobalAlias*, unsigned> > AliasInits;
@@ -268,6 +269,7 @@ private:
   bool ParseMetadata();
   bool ParseMetadataAttachment();
   bool ParseModuleTriple(std::string &Triple);
+  bool ParseUseLists();
 };
   
 } // End llvm namespace

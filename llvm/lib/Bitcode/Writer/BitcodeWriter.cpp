@@ -23,6 +23,7 @@
 #include "llvm/Operator.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -30,6 +31,12 @@
 #include <cctype>
 #include <map>
 using namespace llvm;
+
+static cl::opt<bool>
+EnablePreserveUseListOrdering("enable-bc-uselist-preserve",
+                              cl::desc("Turn on experimental support for "
+                                       "use-list order preservation."),
+                              cl::init(false), cl::Hidden);
 
 /// These are manifest constants used by the bitcode writer. They do not need to
 /// be kept in sync with the reader, but need to be consistent within this file.
@@ -1571,6 +1578,20 @@ static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
   Stream.ExitBlock();
 }
 
+// Emit use-lists.
+static void WriteModuleUseLists(const Module *M, ValueEnumerator &VE,
+                                BitstreamWriter &Stream) {
+  Stream.EnterSubblock(bitc::USELIST_BLOCK_ID, 3);
+
+  // Emit a bogus record for testing purposes.
+  SmallVector<uint64_t, 64> Record;
+  Record.push_back(0);
+  Stream.EmitRecord(bitc::USELIST_CODE_ENTRY, Record);
+
+  // TODO: Tons.
+
+  Stream.ExitBlock();
+}
 
 /// WriteModule - Emit the specified module to the bitstream.
 static void WriteModule(const Module *M, BitstreamWriter &Stream) {
@@ -1615,6 +1636,10 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
 
   // Emit names for globals/functions etc.
   WriteValueSymbolTable(M->getValueSymbolTable(), VE, Stream);
+
+  // Emit use-lists.
+  if (EnablePreserveUseListOrdering)
+    WriteModuleUseLists(M, VE, Stream);
 
   Stream.ExitBlock();
 }

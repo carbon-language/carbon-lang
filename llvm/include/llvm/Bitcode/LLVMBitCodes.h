@@ -41,7 +41,9 @@ namespace bitc {
     METADATA_BLOCK_ID,
     METADATA_ATTACHMENT_ID,
     
-    TYPE_BLOCK_ID_NEW
+    TYPE_BLOCK_ID_NEW,
+
+    USELIST_BLOCK_ID
   };
 
 
@@ -310,6 +312,10 @@ namespace bitc {
                                      //        ordering, synchscope]
     FUNC_CODE_INST_STOREATOMIC = 42  // STORE: [ptrty,ptr,val, align, vol
                                      //         ordering, synchscope]
+  };
+
+  enum UseListCodes {
+    USELIST_CODE_ENTRY = 1   // USELIST_CODE_ENTRY: TBD.
   };
 } // End bitc namespace
 } // End llvm namespace
