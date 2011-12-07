@@ -5348,6 +5348,32 @@ defm : VFPDTAnyInstAlias<"vorr${p}", "$Vd, $Vn, $Vm",
                          (VORRd DPR:$Vd, DPR:$Vn, DPR:$Vm, pred:$p)>;
 defm : VFPDTAnyInstAlias<"vorr${p}", "$Vd, $Vn, $Vm",
                          (VORRq QPR:$Vd, QPR:$Vn, QPR:$Vm, pred:$p)>;
+// ... two-operand aliases
+def : NEONInstAlias<"vand${p} $Vdn, $Vm",
+                    (VANDd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vand${p} $Vdn, $Vm",
+                    (VANDq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"veor${p} $Vdn, $Vm",
+                    (VEORd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"veor${p} $Vdn, $Vm",
+                    (VEORq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vand${p} $Vdn, $Vm",
+                    (VORRd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vand${p} $Vdn, $Vm",
+                    (VORRq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+
+defm : VFPDTAnyInstAlias<"vand${p}", "$Vdn, $Vm",
+                         (VANDd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+defm : VFPDTAnyInstAlias<"vand${p}", "$Vdn, $Vm",
+                         (VANDq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+defm : VFPDTAnyInstAlias<"veor${p}", "$Vdn, $Vm",
+                         (VEORd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+defm : VFPDTAnyInstAlias<"veor${p}", "$Vdn, $Vm",
+                         (VEORq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+defm : VFPDTAnyInstAlias<"vorr${p}", "$Vdn, $Vm",
+                         (VORRd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+defm : VFPDTAnyInstAlias<"vorr${p}", "$Vdn, $Vm",
+                         (VORRq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
 
 // VMUL two-operand aliases.
 def : NEONInstAlias<"vmul${p}.i16 $Ddn, $Dm$lane",
