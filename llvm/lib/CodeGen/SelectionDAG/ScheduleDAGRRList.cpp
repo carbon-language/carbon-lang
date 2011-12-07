@@ -811,12 +811,11 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
     if (I->isAssignedRegDep()) {
+      if (!LiveRegDefs[I->getReg()])
+        ++NumLiveRegs;
       // This becomes the nearest def. Note that an earlier def may still be
       // pending if this is a two-address node.
       LiveRegDefs[I->getReg()] = SU;
-      if (!LiveRegDefs[I->getReg()]) {
-        ++NumLiveRegs;
-      }
       if (LiveRegGens[I->getReg()] == NULL ||
           I->getSUnit()->getHeight() < LiveRegGens[I->getReg()]->getHeight())
         LiveRegGens[I->getReg()] = I->getSUnit();
