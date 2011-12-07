@@ -664,18 +664,41 @@ const ProgramState* ProgramState::addTaint(SymbolRef Sym,
 }
 
 bool ProgramState::isTainted(const Stmt *S, TaintTagType Kind) const {
+  SVal val = getSVal(S);
   return isTainted(getSVal(S), Kind);
 }
 
 bool ProgramState::isTainted(SVal V, TaintTagType Kind) const {
-  return isTainted(V.getAsSymExpr(), Kind);
+  if (const SymExpr *Sym = V.getAsSymExpr())
+    return isTainted(Sym, Kind);
+  if (loc::MemRegionVal *RegVal = dyn_cast<loc::MemRegionVal>(&V))
+    return isTainted(RegVal->getRegion(), Kind);
+  return false;
+}
+
+bool ProgramState::isTainted(const MemRegion *Reg, TaintTagType K) const {
+  if (!Reg)
+    return false;
+
+  // Element region (array element) is tainted if either the base or the offset
+  // are tainted.
+  if (const ElementRegion *ER = dyn_cast<ElementRegion>(Reg))
+    return isTainted(ER->getSuperRegion(), K) || isTainted(ER->getIndex(), K);
+
+  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(Reg))
+    return isTainted(SR->getSymbol(), K);
+
+  if (const SubRegion *ER = dyn_cast<SubRegion>(Reg))
+    return isTainted(ER->getSuperRegion(), K);
+
+  return false;
 }
 
 bool ProgramState::isTainted(const SymExpr* Sym, TaintTagType Kind) const {
   if (!Sym)
     return false;
   
-  // Travese all the symbols this symbol depends on to see if any are tainted.
+  // Traverse all the symbols this symbol depends on to see if any are tainted.
   bool Tainted = false;
   for (SymExpr::symbol_iterator SI = Sym->symbol_begin(), SE =Sym->symbol_end();
        SI != SE; ++SI) {

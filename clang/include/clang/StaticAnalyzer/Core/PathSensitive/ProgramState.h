@@ -301,6 +301,7 @@ public:
   bool isTainted(const Stmt *S, TaintTagType Kind = TaintTagGeneric) const;
   bool isTainted(SVal V, TaintTagType Kind = TaintTagGeneric) const;
   bool isTainted(const SymExpr* Sym, TaintTagType Kind = TaintTagGeneric) const;
+  bool isTainted(const MemRegion *Reg, TaintTagType Kind=TaintTagGeneric) const;
 
   //==---------------------------------------------------------------------==//
   // Accessing the Generic Data Map (GDM).
