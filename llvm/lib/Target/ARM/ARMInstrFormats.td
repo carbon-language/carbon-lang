@@ -2143,3 +2143,23 @@ multiclass NEONDTAnyNoF64AsmPseudoInst<string opc, string asm, dag iops> {
   defm _ : NEONDT32AsmPseudoInst<opc, asm, iops>;
   defm _ : NEONDT64NoF64AsmPseudoInst<opc, asm, iops>;
 }
+
+// Data type suffix token aliases. Implements Table A7-3 in the ARM ARM.
+def : TokenAlias<".s8", ".i8">;
+def : TokenAlias<".u8", ".i8">;
+def : TokenAlias<".s16", ".i16">;
+def : TokenAlias<".u16", ".i16">;
+def : TokenAlias<".s32", ".i32">;
+def : TokenAlias<".u32", ".i32">;
+
+def : TokenAlias<".i8", ".8">;
+def : TokenAlias<".i16", ".16">;
+def : TokenAlias<".i32", ".32">;
+
+def : TokenAlias<".p8", ".8">;
+def : TokenAlias<".p16", ".16">;
+
+def : TokenAlias<".f32", ".32">;
+def : TokenAlias<".f64", ".64">;
+def : TokenAlias<".f", ".f32">;
+def : TokenAlias<".d", ".f64">;
