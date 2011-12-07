@@ -60,3 +60,5 @@ L1:
         call _c + 1
 //        call _a - L0
         call _b - L0
+
+        .subsections_via_symbols

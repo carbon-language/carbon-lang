@@ -584,9 +584,14 @@ IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
     // requires the compiler to use .set to absolutize the differences between
     // symbols which the compiler knows to be assembly time constants, so we
     // don't need to worry about considering symbol differences fully resolved.
+    //
+    // If the file isn't using sub-sections-via-symbols, we can make the
+    // same assumptions about any symbol that we normally make about
+    // assembler locals.
 
     if (!Asm.getBackend().hasReliableSymbolDifference()) {
-      if (!SA.isTemporary() || !SA.isInSection() || &SecA != &SecB)
+      if ((!SA.isTemporary() && Asm.getSubsectionsViaSymbols()) ||
+           !SA.isInSection() || &SecA != &SecB)
         return false;
       return true;
     }

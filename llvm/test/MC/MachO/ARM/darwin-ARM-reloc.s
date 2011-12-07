@@ -19,12 +19,14 @@ Ld0_0:
 Lsc0_0:
         .long 0
 
+        .subsections_via_symbols
+
 @ CHECK: ('cputype', 12)
 @ CHECK: ('cpusubtype', 9)
 @ CHECK: ('filetype', 1)
 @ CHECK: ('num_load_commands', 3)
 @ CHECK: ('load_commands_size', 364)
-@ CHECK: ('flag', 0)
+@ CHECK: ('flag', 8192)
 @ CHECK: ('load_commands', [
 @ CHECK:   # Load Command 0
 @ CHECK:  (('command', 1)

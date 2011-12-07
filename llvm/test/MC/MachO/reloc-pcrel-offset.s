@@ -12,3 +12,5 @@
         .text
 _a:
         call _a
+
+        .subsections_via_symbols
