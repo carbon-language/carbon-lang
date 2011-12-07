@@ -1683,21 +1683,29 @@ SDValue MipsTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
                       MachinePointerInfo(SV),
                       false, false, 0);
 }
-
-static SDValue LowerFCOPYSIGN32(SDValue Op, SelectionDAG &DAG) {
+ 
+// Called if the size of integer registers is large enough to hold the whole
+// floating point number.
+static SDValue LowerFCOPYSIGNLargeIntReg(SDValue Op, SelectionDAG &DAG) {
   // FIXME: Use ext/ins instructions if target architecture is Mips32r2.
+  EVT ValTy = Op.getValueType();
+  EVT IntValTy = MVT::getIntegerVT(ValTy.getSizeInBits());
+  uint64_t Mask = (uint64_t)1 << (ValTy.getSizeInBits() - 1);
   DebugLoc dl = Op.getDebugLoc();
-  SDValue Op0 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Op.getOperand(0));
-  SDValue Op1 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Op.getOperand(1));
-  SDValue And0 = DAG.getNode(ISD::AND, dl, MVT::i32, Op0,
-                             DAG.getConstant(0x7fffffff, MVT::i32));
-  SDValue And1 = DAG.getNode(ISD::AND, dl, MVT::i32, Op1,
-                             DAG.getConstant(0x80000000, MVT::i32));
-  SDValue Result = DAG.getNode(ISD::OR, dl, MVT::i32, And0, And1);
-  return DAG.getNode(ISD::BITCAST, dl, MVT::f32, Result);
+  SDValue Op0 = DAG.getNode(ISD::BITCAST, dl, IntValTy, Op.getOperand(0));
+  SDValue Op1 = DAG.getNode(ISD::BITCAST, dl, IntValTy, Op.getOperand(1));
+  SDValue And0 = DAG.getNode(ISD::AND, dl, IntValTy, Op0,
+                             DAG.getConstant(Mask - 1, IntValTy));
+  SDValue And1 = DAG.getNode(ISD::AND, dl, IntValTy, Op1,
+                             DAG.getConstant(Mask, IntValTy));
+  SDValue Result = DAG.getNode(ISD::OR, dl, IntValTy, And0, And1);
+  return DAG.getNode(ISD::BITCAST, dl, ValTy, Result);
 }
 
-static SDValue LowerFCOPYSIGN64(SDValue Op, SelectionDAG &DAG, bool isLittle) {
+// Called if the size of integer registers is not large enough to hold the whole
+// floating point number (e.g. f64 & 32-bit integer register).
+static SDValue
+LowerFCOPYSIGNSmallIntReg(SDValue Op, SelectionDAG &DAG, bool isLittle) {
   // FIXME:
   //  Use ext/ins instructions if target architecture is Mips32r2.
   //  Eliminate redundant mfc1 and mtc1 instructions.
@@ -1732,10 +1740,10 @@ SDValue MipsTargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG)
 
   assert(Ty == MVT::f32 || Ty == MVT::f64);
 
-  if (Ty == MVT::f32)
-    return LowerFCOPYSIGN32(Op, DAG);
+  if (Ty == MVT::f32 || HasMips64)
+    return LowerFCOPYSIGNLargeIntReg(Op, DAG);
   else
-    return LowerFCOPYSIGN64(Op, DAG, Subtarget->isLittle());
+    return LowerFCOPYSIGNSmallIntReg(Op, DAG, Subtarget->isLittle());
 }
 
 SDValue MipsTargetLowering::
