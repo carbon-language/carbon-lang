@@ -92,6 +92,7 @@ class ARMAsmParser : public MCTargetAsmParser {
                               unsigned &ShiftAmount);
   bool parseDirectiveWord(unsigned Size, SMLoc L);
   bool parseDirectiveThumb(SMLoc L);
+  bool parseDirectiveARM(SMLoc L);
   bool parseDirectiveThumbFunc(SMLoc L);
   bool parseDirectiveCode(SMLoc L);
   bool parseDirectiveSyntax(SMLoc L);
@@ -5622,6 +5623,8 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveWord(4, DirectiveID.getLoc());
   else if (IDVal == ".thumb")
     return parseDirectiveThumb(DirectiveID.getLoc());
+  else if (IDVal == ".arm")
+    return parseDirectiveARM(DirectiveID.getLoc());
   else if (IDVal == ".thumb_func")
     return parseDirectiveThumbFunc(DirectiveID.getLoc());
   else if (IDVal == ".code")
@@ -5663,9 +5666,22 @@ bool ARMAsmParser::parseDirectiveThumb(SMLoc L) {
     return Error(L, "unexpected token in directive");
   Parser.Lex();
 
-  // TODO: set thumb mode
-  // TODO: tell the MC streamer the mode
-  // getParser().getStreamer().Emit???();
+  if (!isThumb())
+    SwitchMode();
+  getParser().getStreamer().EmitAssemblerFlag(MCAF_Code16);
+  return false;
+}
+
+/// parseDirectiveARM
+///  ::= .arm
+bool ARMAsmParser::parseDirectiveARM(SMLoc L) {
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return Error(L, "unexpected token in directive");
+  Parser.Lex();
+
+  if (isThumb())
+    SwitchMode();
+  getParser().getStreamer().EmitAssemblerFlag(MCAF_Code32);
   return false;
 }
 
