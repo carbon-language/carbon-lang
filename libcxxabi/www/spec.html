@@ -59,6 +59,44 @@ additional memory to hold private data. If memory can not be allocated, call
 </tr>
 
 <tr>
+<td>
+<p>
+<code>void* __cxa_allocate_dependent_exception() throw();</code>
+</p>
+<blockquote>
+<p>
+<i>Effects:</i> Allocates memory to hold a "dependent" exception to be thrown.
+<tt>thrown_size</tt> is the size of the exception object. Can allocate
+additional memory to hold private data. If memory can not be allocated, call
+<tt>std::terminate()</tt>.
+</p>
+<p>
+<i>Returns:</i> A pointer to the memory allocated for the exception object.
+</p>
+</blockquote>
+</td>
+<td>&#10003;</td>
+<td>&#10003;</td>
+<td>&#10003;</td>
+</tr>
+
+<tr>
+<td>
+<p>
+<code>void __cxa_free_dependent_exception (void* dependent_exception) throw();</code>
+</p>
+<blockquote>
+<p>
+<i>Effects:</i> Frees memory allocated by <tt>__cxa_allocate_dependent_exception</tt>.
+</p>
+</blockquote>
+</td>
+<td>&#10003;</td>
+<td>&#10003;</td>
+<td>&#10003;</td>
+</tr>
+
+<tr>
 <td  colspan=4 align="center">Exception Handling</td>
 </tr>
 
