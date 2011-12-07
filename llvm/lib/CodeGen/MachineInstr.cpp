@@ -178,6 +178,7 @@ void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
   IsKill = isKill;
   IsDead = isDead;
   IsUndef = isUndef;
+  IsInternalRead = false;
   IsEarlyClobber = false;
   IsDebug = isDebug;
   SubReg = 0;
@@ -256,14 +257,26 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
           NeedComma = true;
       }
 
-      if (isKill() || isDead() || isUndef()) {
+      if (isKill() || isDead() || isUndef() || isInternalRead()) {
         if (NeedComma) OS << ',';
-        if (isKill())  OS << "kill";
-        if (isDead())  OS << "dead";
+        NeedComma = false;
+        if (isKill()) {
+          OS << "kill";
+          NeedComma = true;
+        }
+        if (isDead()) {
+          OS << "dead";
+          NeedComma = true;
+        }
         if (isUndef()) {
-          if (isKill() || isDead())
-            OS << ',';
+          if (NeedComma) OS << ',';
           OS << "undef";
+          NeedComma = true;
+        }
+        if (isInternalRead()) {
+          if (NeedComma) OS << ',';
+          OS << "internal";
+          NeedComma = true;
         }
       }
       OS << '>';

@@ -102,6 +102,17 @@ private:
   ///
   bool IsUndef : 1;
 
+  /// IsInternalRead - True if this operand reads a value that was defined
+  /// inside the same instruction or bundle.  This flag can be set on both use
+  /// and def operands.  On a sub-register def operand, it refers to the part
+  /// of the register that isn't written.  On a full-register def operand, it
+  /// is a noop.
+  ///
+  /// When this flag is set, the instruction bundle must contain at least one
+  /// other def of the register.  If multiple instructions in the bundle define
+  /// the register, the meaning is target-defined.
+  bool IsInternalRead : 1;
+
   /// IsEarlyClobber - True if this MO_Register 'def' operand is written to
   /// by the MachineInstr before all input registers are read.  This is used to
   /// model the GCC inline asm '&' constraint modifier.
@@ -258,6 +269,11 @@ public:
     return IsUndef;
   }
 
+  bool isInternalRead() const {
+    assert(isReg() && "Wrong MachineOperand accessor");
+    return IsInternalRead;
+  }
+
   bool isEarlyClobber() const {
     assert(isReg() && "Wrong MachineOperand accessor");
     return IsEarlyClobber;
@@ -272,9 +288,12 @@ public:
   /// register.  A use operand with the <undef> flag set doesn't read its
   /// register.  A sub-register def implicitly reads the other parts of the
   /// register being redefined unless the <undef> flag is set.
+  ///
+  /// This refers to reading the register value from before the current
+  /// instruction or bundle. Internal bundle reads are not included.
   bool readsReg() const {
     assert(isReg() && "Wrong MachineOperand accessor");
-    return !isUndef() && (isUse() || getSubReg());
+    return !isUndef() && !isInternalRead() && (isUse() || getSubReg());
   }
 
   /// getNextOperandForReg - Return the next MachineOperand in the function that
@@ -341,6 +360,11 @@ public:
   void setIsUndef(bool Val = true) {
     assert(isReg() && "Wrong MachineOperand accessor");
     IsUndef = Val;
+  }
+
+  void setIsInternalRead(bool Val = true) {
+    assert(isReg() && "Wrong MachineOperand accessor");
+    IsInternalRead = Val;
   }
 
   void setIsEarlyClobber(bool Val = true) {
@@ -498,6 +522,7 @@ public:
     Op.IsKill = isKill;
     Op.IsDead = isDead;
     Op.IsUndef = isUndef;
+    Op.IsInternalRead = false;
     Op.IsEarlyClobber = isEarlyClobber;
     Op.IsDebug = isDebug;
     Op.SmallContents.RegNo = Reg;
