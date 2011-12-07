@@ -82,8 +82,17 @@ namespace {
       /// will both be ==2 mod 4).
       unsigned Size;
 
-      BasicBlockInfo() : Offset(0), Size(0) {}
-      BasicBlockInfo(unsigned o, unsigned s) : Offset(o), Size(s) {}
+      /// Unalign - When non-zero, the block contains instructions (inline asm)
+      /// of unknown size.  The real size may be smaller than Size bytes by a
+      /// multiple of 1 << Unalign.
+      uint8_t Unalign;
+
+      /// PostAlign - When non-zero, the block terminator contains a .align
+      /// directive, so the end of the block is aligned to 1 << PostAlign
+      /// bytes.
+      uint8_t PostAlign;
+
+      BasicBlockInfo() : Offset(0), Size(0), Unalign(0), PostAlign(0) {}
 
       /// Compute the offset immediately following this block.
       unsigned postOffset() const { return Offset + Size; }
@@ -234,6 +243,7 @@ namespace {
     MachineBasicBlock *AdjustJTTargetBlockForward(MachineBasicBlock *BB,
                                                   MachineBasicBlock *JTBB);
 
+    void ComputeBlockSize(const MachineBasicBlock *MBB);
     unsigned GetOffsetOf(MachineInstr *MI) const;
     void dumpBBs();
     void verify(MachineFunction &MF);
@@ -507,11 +517,16 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
         HasInlineAsm = true;
   }
 
+  BBInfo.clear();
+  BBInfo.resize(MF.getNumBlockIDs());
+
   // Now go back through the instructions and build up our data structures.
   unsigned Offset = 0;
   for (MachineFunction::iterator MBBI = MF.begin(), E = MF.end();
        MBBI != E; ++MBBI) {
     MachineBasicBlock &MBB = *MBBI;
+    BasicBlockInfo &BBI = BBInfo[MBB.getNumber()];
+    BBI.Offset = Offset;
 
     // If this block doesn't fall through into the next MBB, then this is
     // 'water' that a constant pool island could be placed.
@@ -525,6 +540,11 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
         continue;
       // Add instruction size to MBBSize.
       MBBSize += TII->GetInstSizeInBytes(I);
+
+      // For inline asm, GetInstSizeInBytes returns a conservative estimate.
+      // The actual size may be smaller, but still a multiple of the instr size.
+      if (I->isInlineAsm())
+        BBI.Unalign = isThumb ? 1 : 2;
 
       int Opc = I->getOpcode();
       if (I->getDesc().isBranch()) {
@@ -543,6 +563,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
           // is aligned.  That is held in Offset+MBBSize, which already has
           // 2 added in for the size of the mov pc instruction.
           MF.EnsureAlignment(2U);
+          BBI.PostAlign = 2;
           if ((Offset+MBBSize)%4 != 0 || HasInlineAsm)
             // FIXME: Add a pseudo ALIGN instruction instead.
             MBBSize += 2;           // padding
@@ -673,9 +694,31 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
         ((Offset%4) != 0 || HasInlineAsm))
       MBBSize += 2;
 
-    BBInfo.push_back(BasicBlockInfo(Offset, MBBSize));
+    BBI.Size = MBBSize;
     Offset += MBBSize;
   }
+}
+
+/// ComputeBlockSize - Compute the size and some alignment information for MBB.
+/// This function updates BBInfo directly.
+void ARMConstantIslands::ComputeBlockSize(const MachineBasicBlock *MBB) {
+  BasicBlockInfo &BBI = BBInfo[MBB->getNumber()];
+  BBI.Size = 0;
+  BBI.Unalign = 0;
+  BBI.PostAlign = 0;
+
+  for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
+       I != E; ++I) {
+    BBI.Size += TII->GetInstSizeInBytes(I);
+    // For inline asm, GetInstSizeInBytes returns a conservative estimate.
+    // The actual size may be smaller, but still a multiple of the instr size.
+    if (I->isInlineAsm())
+      BBI.Unalign = isThumb ? 1 : 2;
+  }
+
+  // tBR_JTr contains a .align 2 directive.
+  if (!MBB->empty() && MBB->back().getOpcode() == ARM::tBR_JTr)
+    BBI.PostAlign = 2;
 }
 
 /// GetOffsetOf - Return the current offset of the specified machine instruction
@@ -798,23 +841,14 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   // the new jump we added.  (It should be possible to do this without
   // recounting everything, but it's very confusing, and this is rarely
   // executed.)
-  unsigned OrigBBSize = 0;
-  for (MachineBasicBlock::iterator I = OrigBB->begin(), E = OrigBB->end();
-       I != E; ++I)
-    OrigBBSize += TII->GetInstSizeInBytes(I);
-  BBInfo[OrigBBI].Size = OrigBBSize;
+  ComputeBlockSize(OrigBB);
 
   // ...and adjust BBOffsets for NewBB accordingly.
   BBInfo[NewBBI].Offset = BBInfo[OrigBBI].postOffset();
 
   // Figure out how large the NewMBB is.  As the second half of the original
   // block, it may contain a tablejump.
-  unsigned NewBBSize = 0;
-  for (MachineBasicBlock::iterator I = NewBB->begin(), E = NewBB->end();
-       I != E; ++I)
-    NewBBSize += TII->GetInstSizeInBytes(I);
-  // Set the size of NewBB in BBSizes.  It does not include any padding now.
-  BBInfo[NewBBI].Size = NewBBSize;
+  ComputeBlockSize(NewBB);
 
   MachineInstr* ThumbJTMI = prior(NewBB->end());
   if (ThumbJTMI->getOpcode() == ARM::tBR_JTr) {
