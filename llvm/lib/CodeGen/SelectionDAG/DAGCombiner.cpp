@@ -1777,7 +1777,7 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
                          N0, N1);
   }
   // fold (sdiv X, pow2) -> simple ops after legalize
-  if (N1C && !N1C->isNullValue() && !TLI.isIntDivCheap() &&
+  if (N1C && !N1C->isNullValue() &&
       (N1C->getAPIntValue().isPowerOf2() ||
        (-N1C->getAPIntValue()).isPowerOf2())) {
     // If dividing by powers of two is cheap, then don't perform the following
