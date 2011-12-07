@@ -273,6 +273,12 @@ def : Pat<(add CPU64Regs:$hi, (MipsLo tjumptable:$lo)),
 def : Pat<(add CPU64Regs:$hi, (MipsLo tconstpool:$lo)),
           (DADDiu CPU64Regs:$hi, tconstpool:$lo)>;
 
+def : WrapperPICPat<tglobaladdr, DADDiu, GP_64>;
+def : WrapperPICPat<tconstpool, DADDiu, GP_64>;
+def : WrapperPICPat<texternalsym, DADDiu, GP_64>;
+def : WrapperPICPat<tblockaddress, DADDiu, GP_64>;
+def : WrapperPICPat<tjumptable, DADDiu, GP_64>;
+
 defm : BrcondPats<CPU64Regs, BEQ64, BNE64, SLT64, SLTu64, SLTi64, SLTiu64,
                   ZERO_64>;
 
