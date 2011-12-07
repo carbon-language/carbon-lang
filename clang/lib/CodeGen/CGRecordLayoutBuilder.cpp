@@ -531,6 +531,7 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
   CharUnits unionAlign = CharUnits::Zero();
 
   bool hasOnlyZeroSizedBitFields = true;
+  bool checkedFirstFieldZeroInit = false;
 
   unsigned fieldNo = 0;
   for (RecordDecl::field_iterator field = D->field_begin(),
@@ -541,6 +542,11 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
 
     if (!fieldType)
       continue;
+
+    if (field->getDeclName() && !checkedFirstFieldZeroInit) {
+      CheckZeroInitializable(field->getType());
+      checkedFirstFieldZeroInit = true;
+    }
 
     hasOnlyZeroSizedBitFields = false;
 

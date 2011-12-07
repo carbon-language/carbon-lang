@@ -1243,13 +1243,17 @@ static llvm::Constant *EmitNullConstant(CodeGenModule &CGM,
   for (RecordDecl::field_iterator I = record->field_begin(),
          E = record->field_end(); I != E; ++I) {
     const FieldDecl *field = *I;
-    
-    // Ignore bit fields.
-    if (field->isBitField())
-      continue;
-    
-    unsigned fieldIndex = layout.getLLVMFieldNo(field);
-    elements[fieldIndex] = CGM.EmitNullConstant(field->getType());
+
+    // Fill in non-bitfields. (Bitfields always use a zero pattern, which we
+    // will fill in later.)
+    if (!field->isBitField()) {
+      unsigned fieldIndex = layout.getLLVMFieldNo(field);
+      elements[fieldIndex] = CGM.EmitNullConstant(field->getType());
+    }
+
+    // For unions, stop after the first named field.
+    if (record->isUnion() && field->getDeclName())
+      break;
   }
 
   // Fill in the virtual bases, if we're working with the complete object.

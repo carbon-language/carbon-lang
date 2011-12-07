@@ -230,3 +230,13 @@ namespace test4 {
   // CHECK-GLOBAL: @_ZN5test41dE = global %"struct.test4::D" { %"struct.test4::C.base" zeroinitializer, i32* null, %"struct.test4::B.base" { i32 (...)** null, i64 -1 }, %"struct.test4::A" zeroinitializer }, align 8
   D d;
 }
+
+namespace PR11487 {
+  union U
+  {
+    int U::* mptr;
+    char x[16];
+  } x;
+  // CHECK-GLOBAL: @_ZN7PR114871xE = global %"union.PR11487::U" { i64 -1, [8 x i8] zeroinitializer }, align 8
+  
+}
