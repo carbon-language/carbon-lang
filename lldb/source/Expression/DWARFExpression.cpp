@@ -994,7 +994,7 @@ GetOpcodeDataSize (const DataExtractor &data, const uint32_t data_offset, const 
         default:
         {
             Host::SetCrashDescriptionWithFormat ("Unhandled DW_OP_XXX opcode: %d, add support for it.", op);
-            assert (!"Unhandled DW_OP_XXX opcode: %d, add support for it.");
+            assert (!"Unhandled DW_OP_XXX opcode - look for actual value in Crash Description string.");
         }
         break;
     }
