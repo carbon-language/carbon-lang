@@ -203,6 +203,8 @@ public:
     UnwindTables = 0;
     UseRegisterSizedBitfieldAccess = 0;
     VerifyModule = 1;
+    StackRealignment = 0;
+    StackAlignment = 0;
 
     Inlining = NoInlining;
     RelocationModel = "pic";
