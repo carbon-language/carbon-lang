@@ -135,3 +135,26 @@
 	vraddhn.i32	d16, q8, q9
 @ CHECK: vraddhn.i64	d16, q8, q9     @ encoding: [0xa2,0x04,0xe0,0xf3]
 	vraddhn.i64	d16, q8, q9
+
+
+@ Two-operand variants
+
+	vadd.i8  d6, d5
+	vadd.i16 d7, d1
+	vadd.i32 d8, d2
+	vadd.i64 d9, d3
+
+	vadd.i8  q6, q5
+	vadd.i16 q7, q1
+	vadd.i32 q8, q2
+	vadd.i64 q9, q3
+
+@ CHECK: vadd.i8	d6, d6, d5      @ encoding: [0x05,0x68,0x06,0xf2]
+@ CHECK: vadd.i16	d7, d7, d1      @ encoding: [0x01,0x78,0x17,0xf2]
+@ CHECK: vadd.i32	d8, d8, d2      @ encoding: [0x02,0x88,0x28,0xf2]
+@ CHECK: vadd.i64	d9, d9, d3      @ encoding: [0x03,0x98,0x39,0xf2]
+
+@ CHECK: vadd.i8	q6, q6, q5      @ encoding: [0x4a,0xc8,0x0c,0xf2]
+@ CHECK: vadd.i16	q7, q7, q1      @ encoding: [0x42,0xe8,0x1e,0xf2]
+@ CHECK: vadd.i32	q8, q8, q2      @ encoding: [0xc4,0x08,0x60,0xf2]
+@ CHECK: vadd.i64	q9, q9, q3      @ encoding: [0xc6,0x28,0x72,0xf2]
