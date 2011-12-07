@@ -118,17 +118,28 @@ Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
         
         // For a framework module, the umbrella directory is the framework 
         // directory, so strip off the "Headers" or "PrivateHeaders".
-        // FIXME: Should we tack on an "explicit" for PrivateHeaders? That
-        // might be what we want, but it feels like a hack.
+        bool Explicit = UmbrellaModule->InferExplicitSubmodules;
         unsigned LastSkippedDir = SkippedDirs.size();
-        if (LastSkippedDir && UmbrellaModule->IsFramework)
+        if (LastSkippedDir && UmbrellaModule->IsFramework) {
+          if (llvm::sys::path::filename(SkippedDirs.back()->getName())
+                == "PrivateHeaders") {
+            // For private headers, add an explicit "Private" module.
+            // FIXME: This feels somewhat hackish. Do we want to introduce
+            // some kind of "umbrella directory" here?
+            Result = findOrCreateModule("Private", Result, 
+                                        /*IsFramework=*/false,
+                                        /*IsExplicit=*/true).first;
+            Explicit = true;
+          }
+          
           --LastSkippedDir;
+        }
         
         for (unsigned I = LastSkippedDir; I != 0; --I) {
           // Find or create the module that corresponds to this directory name.
           StringRef Name = llvm::sys::path::stem(SkippedDirs[I-1]->getName());
           Result = findOrCreateModule(Name, Result, /*IsFramework=*/false,
-                                      UmbrellaModule->InferExplicitSubmodules).first;
+                                      Explicit).first;
           
           // Associate the module and the directory.
           UmbrellaDirs[SkippedDirs[I-1]] = Result;
@@ -142,7 +153,7 @@ Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
         // Infer a submodule with the same name as this header file.
         StringRef Name = llvm::sys::path::stem(File->getName());
         Result = findOrCreateModule(Name, Result, /*IsFramework=*/false,
-                                    UmbrellaModule->InferExplicitSubmodules).first;
+                                    Explicit).first;
         
         // If inferred submodules export everything they import, add a 
         // wildcard to the set of exports.
@@ -275,6 +286,41 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
       // FIXME: Do we want to warn about subframeworks without umbrella headers?
       inferFrameworkModule(llvm::sys::path::stem(Dir->path()), SubframeworkDir,
                            Result);
+    }
+  }
+  
+  // Look for private headers.
+  Module *ModulePrivate = 0;
+  llvm::SmallString<128> PrivateHeadersDirName(FrameworkDir->getName());
+  llvm::sys::path::append(PrivateHeadersDirName, "PrivateHeaders");
+  for (llvm::sys::fs::directory_iterator Dir(PrivateHeadersDirName.str(), EC),
+       DirEnd;
+       Dir != DirEnd && !EC; Dir.increment(EC)) {
+    // Check whether this entry has an extension typically associated with 
+    // headers.
+    if (!llvm::StringSwitch<bool>(llvm::sys::path::extension(Dir->path()))
+           .Cases(".h", ".H", ".hh", ".hpp", true)
+           .Default(false))
+      continue;
+
+    if (const FileEntry *PrivateHeader = FileMgr.getFile(Dir->path())) {
+      // Create the "private" submodule, if we haven't done so already.
+      if (!ModulePrivate) {
+        ModulePrivate = findOrCreateModule("Private", Result, 
+                                           /*IsFramework=*/false, 
+                                           /*IsExplicit=*/true).first;
+      }
+      
+      Module *Sub = findOrCreateModule(llvm::sys::path::stem(Dir->path()),
+                                       ModulePrivate, /*IsFramework=*/false,
+                                       /*IsExplicit=*/true).first;
+      // header "the private header"
+      Sub->Headers.push_back(PrivateHeader);
+      
+      // export *
+      Sub->Exports.push_back(Module::ExportDecl(0, true));
+      
+      Headers[PrivateHeader] = Sub;
     }
   }
   
