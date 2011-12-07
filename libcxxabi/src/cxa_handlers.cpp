@@ -14,6 +14,7 @@
 #include <new>
 #include <exception>
 #include "abort_message.h"
+#include "cxa_handlers.hpp"
 
 namespace std
 {

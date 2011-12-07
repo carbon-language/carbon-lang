@@ -19,21 +19,22 @@
 #include <pthread.h>
 
 #include "cxa_exception.hpp"
+#include "cxa_handlers.hpp"
 
 namespace __cxxabiv1 {
 static const uint64_t kOurExceptionClass          = 0x434C4E47432B2B00; // CLNGC++\0
 static const uint64_t kOurDependentExceptionClass = 0x434C4E47432B2B01; // CLNGC++\1
                                                     
 //  Utility routines
-static __cxa_exception *exception_from_thrown_object(void *p) throw() {
+static inline __cxa_exception *exception_from_thrown_object(void *p) throw() {
     return ((__cxa_exception *) p) - 1;
 }
     
-static void * thrown_object_from_exception(void *p) throw() {
+static inline void * thrown_object_from_exception(void *p) throw() {
     return (void *) (((__cxa_exception *) p) + 1 );
 }
 
-static size_t object_size_from_exception_size(size_t size) throw() {
+static inline size_t object_size_from_exception_size(size_t size) throw() {
     return size + sizeof (__cxa_exception);
 }
 
@@ -90,7 +91,7 @@ static void do_free(void *ptr) throw() {
     return is_fallback_ptr(ptr) ? fallback_free(ptr) : std::free(ptr);
 }
 
-/*  Howard says:
+/*
     If reason isn't _URC_FOREIGN_EXCEPTION_CAUGHT, then the terminateHandler
     stored in exc is called.  Otherwise the exceptionDestructor stored in 
     exc is called, and then the memory for the exception is deallocated.
@@ -98,7 +99,7 @@ static void do_free(void *ptr) throw() {
 static void exception_cleanup_func(_Unwind_Reason_Code reason, struct _Unwind_Exception* exc) {
     __cxa_exception *exception = exception_from_exception_object(exc);
     if (_URC_FOREIGN_EXCEPTION_CAUGHT != reason)
-        exception->terminateHandler ();
+        std::__terminate(exception->terminateHandler);
         
     void * thrown_object = thrown_object_from_exception(exception);
     if (NULL != exception->exceptionDestructor)
@@ -115,7 +116,7 @@ static LIBCXXABI_NORETURN void failed_throw(__cxa_exception *exception) throw() 
 //          a handler must call:
 //      * void *__cxa_begin_catch(void *exceptionObject );
     (void) __cxa_begin_catch(&exception->unwindHeader);
-    std::terminate();
+    std::__terminate(exception->terminateHandler);
 }
 
 extern "C" {
@@ -150,7 +151,6 @@ void * __cxa_allocate_dependent_exception () throw() {
     if (NULL == ptr)
         std::terminate();
     std::memset(ptr, 0, actual_size);
-//  bookkeeping here ?
     return ptr;
 }
 
@@ -158,7 +158,6 @@ void * __cxa_allocate_dependent_exception () throw() {
 //  This function shall free a dependent_exception.
 //  It does not affect the reference count of the primary exception.
 void __cxa_free_dependent_exception (void * dependent_exception) throw() {
-//  I'm pretty sure there's no bookkeeping here
     do_free(dependent_exception);
 }
 
@@ -228,11 +227,7 @@ void * __cxa_begin_catch(void * exceptionObject) throw() {
     __cxa_eh_globals *globals = __cxa_get_globals();
     __cxa_exception *exception = exception_from_exception_object(exceptionObject);
 
-//  TODO add stuff for dependent exceptions.
-
-//  TODO - should this be atomic?
 //  Increment the handler count, removing the flag about being rethrown
-//  assert(exception->handlerCount != 0);
     exception->handlerCount = exception->handlerCount < 0 ?
         -exception->handlerCount + 1 : exception->handlerCount + 1;
 
