@@ -14,3 +14,20 @@ void foo() {
 // CHECK: Range: {{.*}}serialized-diags-single-issue.c:3:12 {{.*}}serialized-diags-single-issue.c:3:18
 // CHECK: +-{{.*}}serialized-diags-single-issue.c:2:13: note: initialize the variable 'voodoo' to silence this warning []
 // CHECK: +-FIXIT: {{.*}}serialized-diags-single-issue.c:2:13 - {{.*}}serialized-diags-single-issue.c:2:13): " = 0"
+
+// Test that we handle serializing diagnostics for multiple source files
+// RUN: %clang_cc1 -Wall -fsyntax-only %s %s -serialize-diagnostic-file %t
+// RUN: c-index-test -read-diagnostics %t 2>&1 | FileCheck -check-prefix=CHECK-MULT %s
+// RUN: rm -f %t
+
+// CHECK-MULT: {{.*}}serialized-diags-single-issue.c:3:12: warning: variable 'voodoo' is uninitialized when used here [-Wuninitialized]
+// CHECK-MULT: Range: {{.*}}serialized-diags-single-issue.c:3:12 {{.*}}serialized-diags-single-issue.c:3:18
+// CHECK-MULT: +-{{.*}}serialized-diags-single-issue.c:2:13: note: initialize the variable 'voodoo' to silence this warning []
+// CHECK-MULT: +-FIXIT: {{.*}}serialized-diags-single-issue.c:2:13 - {{.*}}serialized-diags-single-issue.c:2:13): " = 0"
+
+// CHECK-MULT: {{.*}}serialized-diags-single-issue.c:3:12: warning: variable 'voodoo' is uninitialized when used here [-Wuninitialized]
+// CHECK-MULT: Range: {{.*}}serialized-diags-single-issue.c:3:12 {{.*}}serialized-diags-single-issue.c:3:18
+// CHECK-MULT: +-{{.*}}serialized-diags-single-issue.c:2:13: note: initialize the variable 'voodoo' to silence this warning []
+// CHECK-MULT: +-FIXIT: {{.*}}serialized-diags-single-issue.c:2:13 - {{.*}}serialized-diags-single-issue.c:2:13): " = 0"
+
+// CHECK-MULT: Number of diagnostics: 2

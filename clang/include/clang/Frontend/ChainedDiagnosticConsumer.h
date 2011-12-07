@@ -42,6 +42,11 @@ public:
     Primary->EndSourceFile();
   }
 
+  virtual void finish() {
+    Secondary->finish();
+    Primary->finish();
+  }
+
   virtual bool IncludeInDiagnosticCounts() const {
     return Primary->IncludeInDiagnosticCounts();
   }

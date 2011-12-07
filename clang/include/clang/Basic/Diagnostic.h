@@ -1078,6 +1078,10 @@ public:
   /// objects made available via \see BeginSourceFile() are inaccessible.
   virtual void EndSourceFile() {}
 
+  /// \brief Callback to inform the diagnostic client that processing of all
+  /// source files has ended.
+  virtual void finish() {}
+
   /// IncludeInDiagnosticCounts - This method (whose default implementation
   /// returns true) indicates whether the diagnostics handled by this
   /// DiagnosticConsumer should be included in the number of diagnostics

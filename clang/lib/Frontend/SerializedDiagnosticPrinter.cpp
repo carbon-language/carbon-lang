@@ -47,9 +47,8 @@ typedef llvm::SmallVectorImpl<uint64_t> RecordDataImpl;
   
 class SDiagsWriter : public DiagnosticConsumer {
 public:  
-  SDiagsWriter(DiagnosticsEngine &diags, llvm::raw_ostream *os) 
-    : LangOpts(0), Stream(Buffer), OS(os), Diags(diags),
-      inNonNoteDiagnostic(false)
+  explicit SDiagsWriter(llvm::raw_ostream *os) 
+    : LangOpts(0), Stream(Buffer), OS(os), inNonNoteDiagnostic(false)
   { 
     EmitPreamble();
   }
@@ -59,13 +58,13 @@ public:
   void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                         const Diagnostic &Info);
   
-  void EndSourceFile();
-  
   void BeginSourceFile(const LangOptions &LO,
                        const Preprocessor *PP) {
     LangOpts = &LO;
   }
-  
+
+  virtual void finish();
+
   DiagnosticConsumer *clone(DiagnosticsEngine &Diags) const {
     // It makes no sense to clone this.
     return 0;
@@ -82,7 +81,7 @@ private:
   void EmitMetaBlock();
   
   /// \brief Emit a record for a CharSourceRange.
-  void EmitCharSourceRange(CharSourceRange R);
+  void EmitCharSourceRange(CharSourceRange R, SourceManager &SM);
   
   /// \brief Emit the string information for the category for a diagnostic.
   unsigned getEmitCategory(unsigned DiagID);
@@ -92,14 +91,16 @@ private:
                                  const Diagnostic &Info);
   
   /// \brief Emit (lazily) the file string and retrieved the file identifier.
-  unsigned getEmitFile(SourceLocation Loc);
+  unsigned getEmitFile(SourceLocation Loc, SourceManager &SM);
   
   /// \brief Add SourceLocation information the specified record.
   void AddLocToRecord(SourceLocation Loc, RecordDataImpl &Record,
+                      SourceManager &SM,
                       unsigned TokSize = 0);
 
   /// \brief Add CharSourceRange information the specified record.
-  void AddCharSourceRangeToRecord(CharSourceRange R, RecordDataImpl &Record);
+  void AddCharSourceRangeToRecord(CharSourceRange R, RecordDataImpl &Record,
+                                  SourceManager &SM);
 
   /// \brief The version of the diagnostics file.
   enum { Version = 1 };
@@ -114,9 +115,6 @@ private:
 
   /// \brief The name of the diagnostics file.
   llvm::OwningPtr<llvm::raw_ostream> OS;
-  
-  /// \brief The DiagnosticsEngine tied to all diagnostic locations.
-  DiagnosticsEngine &Diags;
   
   /// \brief The set of constructed record abbreviations.
   AbbreviationMap Abbrevs;
@@ -147,8 +145,8 @@ private:
 
 namespace clang {
 namespace serialized_diags {
-DiagnosticConsumer *create(llvm::raw_ostream *OS, DiagnosticsEngine &Diags) {
-  return new SDiagsWriter(Diags, OS);
+DiagnosticConsumer *create(llvm::raw_ostream *OS) {
+  return new SDiagsWriter(OS);
 }
 } // end namespace serialized_diags
 } // end namespace clang
@@ -192,6 +190,7 @@ static void EmitRecordID(unsigned ID, const char *Name,
 
 void SDiagsWriter::AddLocToRecord(SourceLocation Loc,
                                   RecordDataImpl &Record,
+                                  SourceManager &SM,
                                   unsigned TokSize) {
   if (Loc.isInvalid()) {
     // Emit a "sentinel" location.
@@ -202,28 +201,26 @@ void SDiagsWriter::AddLocToRecord(SourceLocation Loc,
     return;
   }
 
-  SourceManager &SM = Diags.getSourceManager();
   Loc = SM.getSpellingLoc(Loc);
-  Record.push_back(getEmitFile(Loc));
+  Record.push_back(getEmitFile(Loc, SM));
   Record.push_back(SM.getSpellingLineNumber(Loc));
   Record.push_back(SM.getSpellingColumnNumber(Loc)+TokSize);
   Record.push_back(SM.getFileOffset(Loc));
 }
 
 void SDiagsWriter::AddCharSourceRangeToRecord(CharSourceRange Range,
-                                              RecordDataImpl &Record) {
-  AddLocToRecord(Range.getBegin(), Record);
+                                              RecordDataImpl &Record,
+                                              SourceManager &SM) {
+  AddLocToRecord(Range.getBegin(), Record, SM);
   unsigned TokSize = 0;
   if (Range.isTokenRange())
     TokSize = Lexer::MeasureTokenLength(Range.getEnd(),
-                                        Diags.getSourceManager(),
-                                        *LangOpts);
+                                        SM, *LangOpts);
   
-  AddLocToRecord(Range.getEnd(), Record, TokSize);
+  AddLocToRecord(Range.getEnd(), Record, SM, TokSize);
 }
 
-unsigned SDiagsWriter::getEmitFile(SourceLocation Loc) {
-  SourceManager &SM = Diags.getSourceManager();
+unsigned SDiagsWriter::getEmitFile(SourceLocation Loc, SourceManager &SM) {
   assert(Loc.isValid());
   const std::pair<FileID, unsigned> &LocInfo = SM.getDecomposedLoc(Loc);
   const FileEntry *FE = SM.getFileEntryForID(LocInfo.first);
@@ -248,10 +245,11 @@ unsigned SDiagsWriter::getEmitFile(SourceLocation Loc) {
   return entry;
 }
 
-void SDiagsWriter::EmitCharSourceRange(CharSourceRange R) {
+void SDiagsWriter::EmitCharSourceRange(CharSourceRange R,
+                                       SourceManager &SM) {
   Record.clear();
   Record.push_back(RECORD_SOURCE_RANGE);
-  AddCharSourceRangeToRecord(R, Record);
+  AddCharSourceRangeToRecord(R, Record, SM);
   Stream.EmitRecordWithAbbrev(Abbrevs.get(RECORD_SOURCE_RANGE), Record);
 }
 
@@ -426,6 +424,7 @@ unsigned SDiagsWriter::getEmitDiagnosticFlag(DiagnosticsEngine::Level DiagLevel,
 
 void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                                     const Diagnostic &Info) {
+  SourceManager &SM = Info.getSourceManager();
 
   if (DiagLevel != DiagnosticsEngine::Note) {
     if (inNonNoteDiagnostic) {
@@ -442,7 +441,7 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
   Record.clear();
   Record.push_back(RECORD_DIAG);
   Record.push_back(DiagLevel);
-  AddLocToRecord(Info.getLocation(), Record);    
+  AddLocToRecord(Info.getLocation(), Record, SM);
   // Emit the category string lazily and get the category ID.
   Record.push_back(getEmitCategory(Info.getID()));
   // Emit the diagnostic flag string lazily and get the mapped ID.
@@ -457,7 +456,8 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
   ArrayRef<CharSourceRange> Ranges = Info.getRanges();
   for (ArrayRef<CharSourceRange>::iterator it=Ranges.begin(), ei=Ranges.end();
        it != ei; ++it) {
-    EmitCharSourceRange(*it);    
+    if (it->isValid())
+      EmitCharSourceRange(*it, SM);
   }
 
   // Emit FixIts.
@@ -467,7 +467,7 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
       continue;
     Record.clear();
     Record.push_back(RECORD_FIXIT);
-    AddCharSourceRangeToRecord(fix.RemoveRange, Record);
+    AddCharSourceRangeToRecord(fix.RemoveRange, Record, SM);
     Record.push_back(fix.CodeToInsert.size());
     Stream.EmitRecordWithBlob(Abbrevs.get(RECORD_FIXIT), Record,
                               fix.CodeToInsert);    
@@ -480,7 +480,7 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
   }
 }
 
-void SDiagsWriter::EndSourceFile() {
+void SDiagsWriter::finish() {
   if (inNonNoteDiagnostic) {
     // Finish off any diagnostics we were in the process of emitting.
     Stream.ExitBlock();

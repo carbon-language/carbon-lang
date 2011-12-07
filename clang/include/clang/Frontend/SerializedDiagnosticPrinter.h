@@ -52,8 +52,7 @@ enum RecordIDs {
 /// This allows wrapper tools for Clang to get diagnostics from Clang
 /// (via libclang) without needing to parse Clang's command line output.
 ///
-DiagnosticConsumer *create(llvm::raw_ostream *OS,
-                           DiagnosticsEngine &Diags);
+DiagnosticConsumer *create(llvm::raw_ostream *OS);
 
 } // end serialized_diags namespace
 } // end clang namespace
