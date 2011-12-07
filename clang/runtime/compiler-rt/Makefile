@@ -93,10 +93,12 @@ RuntimeLibrary.linux.Configs :=
 
 # We currently only try to generate runtime libraries on x86.
 ifeq ($(ARCH),x86)
-RuntimeLibrary.linux.Configs += full-i386
+RuntimeLibrary.linux.Configs += \
+	full-i386 profile-i386 asan-i386
 endif
 ifeq ($(ARCH),x86_64)
-RuntimeLibrary.linux.Configs += full-x86_64
+RuntimeLibrary.linux.Configs += \
+	full-x86_64 profile-x86_64 asan-x86_64
 endif
 
 endif
