@@ -222,6 +222,9 @@ def DynAlloc64 : EffectiveAddress<"daddiu\t$rt, $addr", CPU64Regs, mem_ea_64>,
 def DEXT : ExtBase<3, "dext", CPU64Regs>;
 def DINS : InsBase<7, "dins", CPU64Regs>;
 
+def DSLL64_32 : FR<0x3c, 0x00, (outs CPU64Regs:$rd), (ins CPURegs:$rt),
+                   "dsll32\t$rd, $rt, 0", [], IIAlu>;
+
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
 //===----------------------------------------------------------------------===//
@@ -296,3 +299,5 @@ def : Pat<(MipsDynAlloc addr:$f), (DynAlloc64 addr:$f)>, Requires<[IsN64]>;
 def : Pat<(i32 (trunc CPU64Regs:$src)),
           (SLL (EXTRACT_SUBREG CPU64Regs:$src, sub_32), 0)>, Requires<[IsN64]>;
  
+// 32-to-64-bit extension
+def : Pat<(i64 (zext CPURegs:$src)), (DSRL32 (DSLL64_32 CPURegs:$src), 0)>;
