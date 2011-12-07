@@ -39,3 +39,6 @@ void testModuleSubFramework() {
 void testModuleSubFrameworkAgain() {
   char *msf = module_subframework;
 }
+
+// Test inclusion of private headers.
+#include <DependsOnModule/DependsOnModulePrivate.h> // expected-warning{{treating #include as an import of module 'DependsOnModule.Private.DependsOnModule'}}
