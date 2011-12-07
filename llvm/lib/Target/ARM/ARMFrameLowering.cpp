@@ -310,8 +310,7 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
 void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
                                     MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
-  assert(MBBI->getDesc().isReturn() &&
-         "Can only insert epilog into returning blocks");
+  assert(MBBI->isReturn() && "Can only insert epilog into returning blocks");
   unsigned RetOpcode = MBBI->getOpcode();
   DebugLoc dl = MBBI->getDebugLoc();
   MachineFrameInfo *MFI = MF.getFrameInfo();

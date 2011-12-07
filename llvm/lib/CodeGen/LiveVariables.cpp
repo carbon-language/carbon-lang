@@ -590,8 +590,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
     // them.  The tail callee need not take the same registers as input
     // that it produces as output, and there are dependencies for its input
     // registers elsewhere.
-    if (!MBB->empty() && MBB->back().getDesc().isReturn()
-        && !MBB->back().getDesc().isCall()) {
+    if (!MBB->empty() && MBB->back().isReturn()
+        && !MBB->back().isCall()) {
       MachineInstr *Ret = &MBB->back();
 
       for (MachineRegisterInfo::liveout_iterator

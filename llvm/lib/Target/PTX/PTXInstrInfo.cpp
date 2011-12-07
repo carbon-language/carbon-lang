@@ -116,7 +116,7 @@ bool PTXInstrInfo::isPredicated(const MachineInstr *MI) const {
 }
 
 bool PTXInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
-  return !isPredicated(MI) && get(MI->getOpcode()).isTerminator();
+  return !isPredicated(MI) && MI->isTerminator();
 }
 
 bool PTXInstrInfo::
@@ -186,13 +186,11 @@ AnalyzeBranch(MachineBasicBlock &MBB,
 
   MachineBasicBlock::iterator iter = MBB.end();
   const MachineInstr& instLast1 = *--iter;
-  const MCInstrDesc &desc1 = instLast1.getDesc();
   // for special case that MBB has only 1 instruction
   const bool IsSizeOne = MBB.size() == 1;
   // if IsSizeOne is true, *--iter and instLast2 are invalid
   // we put a dummy value in instLast2 and desc2 since they are used
   const MachineInstr& instLast2 = IsSizeOne ? instLast1 : *--iter;
-  const MCInstrDesc &desc2 = IsSizeOne ? desc1 : instLast2.getDesc();
 
   DEBUG(dbgs() << "\n");
   DEBUG(dbgs() << "AnalyzeBranch: opcode: " << instLast1.getOpcode() << "\n");
@@ -207,7 +205,7 @@ AnalyzeBranch(MachineBasicBlock &MBB,
   }
 
   // this block ends with only an unconditional branch
-  if (desc1.isUnconditionalBranch() &&
+  if (instLast1.isUnconditionalBranch() &&
       // when IsSizeOne is true, it "absorbs" the evaluation of instLast2
       (IsSizeOne || !IsAnyKindOfBranch(instLast2))) {
     DEBUG(dbgs() << "AnalyzeBranch: ends with only uncond branch\n");
@@ -217,7 +215,7 @@ AnalyzeBranch(MachineBasicBlock &MBB,
 
   // this block ends with a conditional branch and
   // it falls through to a successor block
-  if (desc1.isConditionalBranch() &&
+  if (instLast1.isConditionalBranch() &&
       IsAnySuccessorAlsoLayoutSuccessor(MBB)) {
     DEBUG(dbgs() << "AnalyzeBranch: ends with cond branch and fall through\n");
     TBB = GetBranchTarget(instLast1);
@@ -233,8 +231,8 @@ AnalyzeBranch(MachineBasicBlock &MBB,
 
   // this block ends with a conditional branch
   // followed by an unconditional branch
-  if (desc2.isConditionalBranch() &&
-      desc1.isUnconditionalBranch()) {
+  if (instLast2.isConditionalBranch() &&
+      instLast1.isUnconditionalBranch()) {
     DEBUG(dbgs() << "AnalyzeBranch: ends with cond and uncond branch\n");
     TBB = GetBranchTarget(instLast2);
     FBB = GetBranchTarget(instLast1);
@@ -341,8 +339,7 @@ void PTXInstrInfo::AddDefaultPredicate(MachineInstr *MI) {
 }
 
 bool PTXInstrInfo::IsAnyKindOfBranch(const MachineInstr& inst) {
-  const MCInstrDesc &desc = inst.getDesc();
-  return desc.isTerminator() || desc.isBranch() || desc.isIndirectBranch();
+  return inst.isTerminator() || inst.isBranch() || inst.isIndirectBranch();
 }
 
 bool PTXInstrInfo::

@@ -121,6 +121,9 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
 bool TargetInstrInfoImpl::findCommutedOpIndices(MachineInstr *MI,
                                                 unsigned &SrcOpIdx1,
                                                 unsigned &SrcOpIdx2) const {
+  assert(MI->getOpcode() != TargetOpcode::BUNDLE &&
+         "TargetInstrInfoImpl::findCommutedOpIndices() can't handle bundles");
+
   const MCInstrDesc &MCID = MI->getDesc();
   if (!MCID.isCommutable())
     return false;
@@ -139,8 +142,12 @@ bool TargetInstrInfoImpl::findCommutedOpIndices(MachineInstr *MI,
 bool TargetInstrInfoImpl::PredicateInstruction(MachineInstr *MI,
                             const SmallVectorImpl<MachineOperand> &Pred) const {
   bool MadeChange = false;
+
+  assert(MI->getOpcode() != TargetOpcode::BUNDLE &&
+         "TargetInstrInfoImpl::PredicateInstruction() can't handle bundles");
+
   const MCInstrDesc &MCID = MI->getDesc();
-  if (!MCID.isPredicable())
+  if (!MI->isPredicable())
     return false;
 
   for (unsigned j = 0, i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -218,7 +225,7 @@ TargetInstrInfoImpl::produceSameValue(const MachineInstr *MI0,
 
 MachineInstr *TargetInstrInfoImpl::duplicate(MachineInstr *Orig,
                                              MachineFunction &MF) const {
-  assert(!Orig->getDesc().isNotDuplicable() &&
+  assert(!Orig->isNotDuplicable() &&
          "Instruction cannot be duplicated");
   return MF.CloneMachineInstr(Orig);
 }
@@ -288,10 +295,10 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
   if (MachineInstr *NewMI = foldMemoryOperandImpl(MF, MI, Ops, FI)) {
     // Add a memory operand, foldMemoryOperandImpl doesn't do that.
     assert((!(Flags & MachineMemOperand::MOStore) ||
-            NewMI->getDesc().mayStore()) &&
+            NewMI->mayStore()) &&
            "Folded a def to a non-store!");
     assert((!(Flags & MachineMemOperand::MOLoad) ||
-            NewMI->getDesc().mayLoad()) &&
+            NewMI->mayLoad()) &&
            "Folded a use to a non-load!");
     const MachineFrameInfo &MFI = *MF.getFrameInfo();
     assert(MFI.getObjectOffset(FI) != -1);
@@ -331,7 +338,7 @@ MachineInstr*
 TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
                                    const SmallVectorImpl<unsigned> &Ops,
                                    MachineInstr* LoadMI) const {
-  assert(LoadMI->getDesc().canFoldAsLoad() && "LoadMI isn't foldable!");
+  assert(LoadMI->canFoldAsLoad() && "LoadMI isn't foldable!");
 #ifndef NDEBUG
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     assert(MI->getOperand(Ops[i]).isUse() && "Folding load into def!");
@@ -382,10 +389,8 @@ isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
       MF.getFrameInfo()->isImmutableObjectIndex(FrameIdx))
     return true;
 
-  const MCInstrDesc &MCID = MI->getDesc();
-
   // Avoid instructions obviously unsafe for remat.
-  if (MCID.isNotDuplicable() || MCID.mayStore() ||
+  if (MI->isNotDuplicable() || MI->mayStore() ||
       MI->hasUnmodeledSideEffects())
     return false;
 
@@ -395,7 +400,7 @@ isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
     return false;
 
   // Avoid instructions which load from potentially varying memory.
-  if (MCID.mayLoad() && !MI->isInvariantLoad(AA))
+  if (MI->mayLoad() && !MI->isInvariantLoad(AA))
     return false;
 
   // If any of the registers accessed are non-constant, conservatively assume
@@ -456,7 +461,7 @@ bool TargetInstrInfoImpl::isSchedulingBoundary(const MachineInstr *MI,
                                                const MachineBasicBlock *MBB,
                                                const MachineFunction &MF) const{
   // Terminators and labels can't be scheduled around.
-  if (MI->getDesc().isTerminator() || MI->isLabel())
+  if (MI->isTerminator() || MI->isLabel())
     return true;
 
   // Don't attempt to schedule around any instruction that defines

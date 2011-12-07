@@ -920,8 +920,8 @@ findInsertLocation(MachineBasicBlock *MBB, SlotIndex Idx,
   }
 
   // Don't insert anything after the first terminator, though.
-  return MI->getDesc().isTerminator() ? MBB->getFirstTerminator() :
-                                    llvm::next(MachineBasicBlock::iterator(MI));
+  return MI->isTerminator() ? MBB->getFirstTerminator() :
+                              llvm::next(MachineBasicBlock::iterator(MI));
 }
 
 DebugLoc UserValue::findDebugLoc() {

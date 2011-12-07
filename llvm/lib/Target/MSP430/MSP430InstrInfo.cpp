@@ -158,13 +158,12 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
 }
 
 bool MSP430InstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
-  const MCInstrDesc &MCID = MI->getDesc();
-  if (!MCID.isTerminator()) return false;
+  if (!MI->isTerminator()) return false;
 
   // Conditional branch is a special case.
-  if (MCID.isBranch() && !MCID.isBarrier())
+  if (MI->isBranch() && !MI->isBarrier())
     return true;
-  if (!MCID.isPredicable())
+  if (!MI->isPredicable())
     return true;
   return !isPredicated(MI);
 }
@@ -189,7 +188,7 @@ bool MSP430InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
     // A terminator that isn't a branch can't easily be handled
     // by this analysis.
-    if (!I->getDesc().isBranch())
+    if (!I->isBranch())
       return true;
 
     // Cannot handle indirect branches.

@@ -583,7 +583,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // sure we restore the stack pointer immediately after the call, there may
     // be spill code inserted between the CALL and ADJCALLSTACKUP instructions.
     MachineBasicBlock::iterator B = MBB.begin();
-    while (I != B && !llvm::prior(I)->getDesc().isCall())
+    while (I != B && !llvm::prior(I)->isCall())
       --I;
     MBB.insert(I, New);
   }

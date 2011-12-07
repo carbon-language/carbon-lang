@@ -133,7 +133,7 @@ bool SparcInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       break;
 
     //Terminator is not a branch
-    if (!I->getDesc().isBranch())
+    if (!I->isBranch())
       return true;
 
     //Handle Unconditional branches

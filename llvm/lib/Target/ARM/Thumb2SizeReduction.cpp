@@ -533,8 +533,7 @@ Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
   if (Entry.LowRegs1 && !VerifyLowRegs(MI))
     return false;
 
-  const MCInstrDesc &MCID = MI->getDesc();
-  if (MCID.mayLoad() || MCID.mayStore())
+  if (MI->mayLoad() || MI->mayStore())
     return ReduceLoadStore(MBB, MI, Entry);
 
   switch (Opc) {
@@ -877,7 +876,7 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
   ProcessNext:
     bool DefCPSR = false;
     LiveCPSR = UpdateCPSRDef(*MI, LiveCPSR, DefCPSR);
-    if (MI->getDesc().isCall()) {
+    if (MI->isCall()) {
       // Calls don't really set CPSR.
       CPSRDef = 0;
       IsSelfLoop = false;

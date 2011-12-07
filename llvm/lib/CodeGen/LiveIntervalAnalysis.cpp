@@ -794,7 +794,7 @@ LiveIntervals::getLastSplitPoint(const LiveInterval &li,
   MachineBasicBlock::iterator I = mbb->end(), B = mbb->begin();
   while (I != B) {
     --I;
-    if (I->getDesc().isCall())
+    if (I->isCall())
       return I;
   }
   // The block contains no calls that can throw, so use the first terminator.

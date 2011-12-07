@@ -748,18 +748,25 @@ void MachineInstr::addMemOperand(MachineFunction &MF,
   MemRefsEnd = NewMemRefsEnd;
 }
 
-bool MachineInstr::hasProperty(unsigned short MCFlag) const {
-  if (getOpcode() != TargetOpcode::BUNDLE)
+bool
+MachineInstr::hasProperty(unsigned MCFlag, bool PeekInBundle, bool IsOr) const {
+  if (!PeekInBundle || getOpcode() != TargetOpcode::BUNDLE)
     return getDesc().getFlags() & (1 << MCFlag);
 
   const MachineBasicBlock *MBB = getParent();
   MachineBasicBlock::const_insn_iterator MII = *this; ++MII;
   while (MII != MBB->end() && MII->isInsideBundle()) {
-    if (MII->getDesc().getFlags() & (1 << MCFlag))
-      return true;
+    if (MII->getDesc().getFlags() & (1 << MCFlag)) {
+      if (IsOr)
+        return true;
+    } else {
+      if (!IsOr)
+        return false;
+    }
     ++MII;
   }
-  return false;
+
+  return !IsOr;
 }
 
 bool MachineInstr::isIdenticalTo(const MachineInstr *Other,
@@ -1017,6 +1024,9 @@ MachineInstr::findRegisterDefOperandIdx(unsigned Reg, bool isDead, bool Overlap,
 /// operand list that is used to represent the predicate. It returns -1 if
 /// none is found.
 int MachineInstr::findFirstPredOperandIdx() const {
+  assert(getOpcode() != TargetOpcode::BUNDLE &&
+         "MachineInstr::findFirstPredOperandIdx() can't handle bundles");
+
   // Don't call MCID.findFirstPredOperandIdx() because this variant
   // is sometimes called on an instruction that's not yet complete, and
   // so the number of operands is less than the MCID indicates. In
@@ -1166,6 +1176,9 @@ void MachineInstr::copyKillDeadInfo(const MachineInstr *MI) {
 
 /// copyPredicates - Copies predicate operand(s) from MI.
 void MachineInstr::copyPredicates(const MachineInstr *MI) {
+  assert(getOpcode() != TargetOpcode::BUNDLE &&
+         "MachineInstr::copyPredicates() can't handle bundles");
+
   const MCInstrDesc &MCID = MI->getDesc();
   if (!MCID.isPredicable())
     return;
@@ -1207,13 +1220,13 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
                                 AliasAnalysis *AA,
                                 bool &SawStore) const {
   // Ignore stuff that we obviously can't move.
-  if (MCID->mayStore() || MCID->isCall()) {
+  if (mayStore() || isCall()) {
     SawStore = true;
     return false;
   }
 
   if (isLabel() || isDebugValue() ||
-      MCID->isTerminator() || hasUnmodeledSideEffects())
+      isTerminator() || hasUnmodeledSideEffects())
     return false;
 
   // See if this instruction does a load.  If so, we have to guarantee that the
@@ -1221,7 +1234,7 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
   // destination. The check for isInvariantLoad gives the targe the chance to
   // classify the load as always returning a constant, e.g. a constant pool
   // load.
-  if (MCID->mayLoad() && !isInvariantLoad(AA))
+  if (mayLoad() && !isInvariantLoad(AA))
     // Otherwise, this is a real load.  If there is a store between the load and
     // end of block, or if the load is volatile, we can't move it.
     return !SawStore && !hasVolatileMemoryRef();
@@ -1261,9 +1274,9 @@ bool MachineInstr::isSafeToReMat(const TargetInstrInfo *TII,
 /// have no volatile memory references.
 bool MachineInstr::hasVolatileMemoryRef() const {
   // An instruction known never to access memory won't have a volatile access.
-  if (!MCID->mayStore() &&
-      !MCID->mayLoad() &&
-      !MCID->isCall() &&
+  if (!mayStore() &&
+      !mayLoad() &&
+      !isCall() &&
       !hasUnmodeledSideEffects())
     return false;
 
@@ -1287,7 +1300,7 @@ bool MachineInstr::hasVolatileMemoryRef() const {
 /// *all* loads the instruction does are invariant (if it does multiple loads).
 bool MachineInstr::isInvariantLoad(AliasAnalysis *AA) const {
   // If the instruction doesn't load at all, it isn't an invariant load.
-  if (!MCID->mayLoad())
+  if (!mayLoad())
     return false;
 
   // If the instruction has lost its memoperands, conservatively assume that
@@ -1340,7 +1353,7 @@ unsigned MachineInstr::isConstantValuePHI() const {
 }
 
 bool MachineInstr::hasUnmodeledSideEffects() const {
-  if (getDesc().hasUnmodeledSideEffects())
+  if (hasProperty(MCID::UnmodeledSideEffects))
     return true;
   if (isInlineAsm()) {
     unsigned ExtraInfo = getOperand(InlineAsm::MIOp_ExtraInfo).getImm();
@@ -1468,7 +1481,7 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
     // call instructions much less noisy on targets where calls clobber lots
     // of registers. Don't rely on MO.isDead() because we may be called before
     // LiveVariables is run, or we may be looking at a non-allocatable reg.
-    if (MF && getDesc().isCall() &&
+    if (MF && isCall() &&
         MO.isReg() && MO.isImplicit() && MO.isDef()) {
       unsigned Reg = MO.getReg();
       if (TargetRegisterInfo::isPhysicalRegister(Reg)) {

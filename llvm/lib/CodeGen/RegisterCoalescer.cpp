@@ -643,8 +643,7 @@ bool RegisterCoalescer::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   MachineInstr *DefMI = LIS->getInstructionFromIndex(AValNo->def);
   if (!DefMI)
     return false;
-  const MCInstrDesc &MCID = DefMI->getDesc();
-  if (!MCID.isCommutable())
+  if (!DefMI->isCommutable())
     return false;
   // If DefMI is a two-address instruction then commuting it will change the
   // destination register.
@@ -802,14 +801,14 @@ bool RegisterCoalescer::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   if (!DefMI)
     return false;
   assert(DefMI && "Defining instruction disappeared");
-  const MCInstrDesc &MCID = DefMI->getDesc();
-  if (!MCID.isAsCheapAsAMove())
+  if (!DefMI->isAsCheapAsAMove())
     return false;
   if (!TII->isTriviallyReMaterializable(DefMI, AA))
     return false;
   bool SawStore = false;
   if (!DefMI->isSafeToMove(TII, AA, SawStore))
     return false;
+  const MCInstrDesc &MCID = DefMI->getDesc();
   if (MCID.getNumDefs() != 1)
     return false;
   if (!DefMI->isImplicitDef()) {

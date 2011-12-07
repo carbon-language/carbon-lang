@@ -313,7 +313,7 @@ unsigned char* JITDwarfEmitter::EmitExceptionTable(MachineFunction* MF,
     for (MachineBasicBlock::const_iterator MI = I->begin(), E = I->end();
           MI != E; ++MI) {
       if (!MI->isLabel()) {
-        MayThrow |= MI->getDesc().isCall();
+        MayThrow |= MI->isCall();
         continue;
       }
 

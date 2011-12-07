@@ -177,7 +177,7 @@ TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
 void TargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
                                                    SDNode *Node) const {
-  assert(!MI->getDesc().hasPostISelHook() &&
+  assert(!MI->hasPostISelHook() &&
          "If a target marks an instruction with 'hasPostISelHook', "
          "it must implement TargetLowering::AdjustInstrPostInstrSelection!");
 }

@@ -141,7 +141,7 @@ Thumb2ITBlockPass::MoveCopyOutOfITBlock(MachineInstr *MI,
   //   rsb   r2, 0
   //
   const MCInstrDesc &MCID = MI->getDesc();
-  if (MCID.hasOptionalDef() &&
+  if (MI->hasOptionalDef() &&
       MI->getOperand(MCID.getNumOperands() - 1).getReg() == ARM::CPSR)
     return false;
 
@@ -198,7 +198,7 @@ bool Thumb2ITBlockPass::InsertITInstructions(MachineBasicBlock &MBB) {
     // Branches, including tricky ones like LDM_RET, need to end an IT
     // block so check the instruction we just put in the block.
     for (; MBBI != E && Pos &&
-           (!MI->getDesc().isBranch() && !MI->getDesc().isReturn()) ; ++MBBI) {
+           (!MI->isBranch() && !MI->isReturn()) ; ++MBBI) {
       if (MBBI->isDebugValue())
         continue;
 

@@ -184,7 +184,7 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
 /// CallToNoUnwindFunction - Return `true' if this is a call to a function
 /// marked `nounwind'. Return `false' otherwise.
 bool DwarfException::CallToNoUnwindFunction(const MachineInstr *MI) {
-  assert(MI->getDesc().isCall() && "This should be a call instruction!");
+  assert(MI->isCall() && "This should be a call instruction!");
 
   bool MarkedNoUnwind = false;
   bool SawFunc = false;
@@ -243,7 +243,7 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
     for (MachineBasicBlock::const_iterator MI = I->begin(), E = I->end();
          MI != E; ++MI) {
       if (!MI->isLabel()) {
-        if (MI->getDesc().isCall())
+        if (MI->isCall())
           SawPotentiallyThrowing |= !CallToNoUnwindFunction(MI);
         continue;
       }

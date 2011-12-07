@@ -107,7 +107,6 @@ static bool delayHasHazard(MachineBasicBlock::iterator &candidate,
   // Hazard check
   MachineBasicBlock::iterator a = candidate;
   MachineBasicBlock::iterator b = slot;
-  MCInstrDesc desc = candidate->getDesc();
 
   // MBB layout:-
   //    candidate := a0 = operation(a1, a2)
@@ -121,7 +120,7 @@ static bool delayHasHazard(MachineBasicBlock::iterator &candidate,
   // 4. b0 is one or more of {a1, a2}
   // 5. a accesses memory, and the middle bit
   //    contains a store operation.
-  bool a_is_memory = desc.mayLoad() || desc.mayStore();
+  bool a_is_memory = candidate->mayLoad() || candidate->mayStore();
 
   // Determine the number of operands in the slot instruction and in the
   // candidate instruction.
@@ -154,7 +153,7 @@ static bool delayHasHazard(MachineBasicBlock::iterator &candidate,
     }
 
     // Check hazard type 5
-    if (a_is_memory && m->getDesc().mayStore())
+    if (a_is_memory && m->mayStore())
       return true;
   }
 
@@ -181,8 +180,8 @@ static bool isDelayFiller(MachineBasicBlock &MBB,
   if (candidate == MBB.begin())
     return false;
 
-  MCInstrDesc brdesc = (--candidate)->getDesc();
-  return (brdesc.hasDelaySlot());
+  --candidate;
+  return (candidate->hasDelaySlot());
 }
 
 static bool hasUnknownSideEffects(MachineBasicBlock::iterator &I) {
@@ -209,9 +208,8 @@ findDelayInstr(MachineBasicBlock &MBB,MachineBasicBlock::iterator slot) {
       break;
 
     --I;
-    MCInstrDesc desc = I->getDesc();
-    if (desc.hasDelaySlot() || desc.isBranch() || isDelayFiller(MBB,I) ||
-        desc.isCall() || desc.isReturn() || desc.isBarrier() ||
+    if (I->hasDelaySlot() || I->isBranch() || isDelayFiller(MBB,I) ||
+        I->isCall() || I->isReturn() || I->isBarrier() ||
         hasUnknownSideEffects(I))
       break;
 
@@ -230,7 +228,7 @@ findDelayInstr(MachineBasicBlock &MBB,MachineBasicBlock::iterator slot) {
 bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I)
-    if (I->getDesc().hasDelaySlot()) {
+    if (I->hasDelaySlot()) {
       MachineBasicBlock::iterator D = MBB.end();
       MachineBasicBlock::iterator J = I;
 

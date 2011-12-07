@@ -124,7 +124,7 @@ MachineLoop* PEI::getTopLevelLoopParent(MachineLoop *LP) {
 }
 
 bool PEI::isReturnBlock(MachineBasicBlock* MBB) {
-  return (MBB && !MBB->empty() && MBB->back().getDesc().isReturn());
+  return (MBB && !MBB->empty() && MBB->back().isReturn());
 }
 
 // Initialize shrink wrapping DFA sets, called before iterations.

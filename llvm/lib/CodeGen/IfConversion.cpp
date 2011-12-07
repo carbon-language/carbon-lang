@@ -573,12 +573,12 @@ bool IfConverter::ValidDiamond(BBInfo &TrueBBI, BBInfo &FalseBBI,
   // blocks, move the end iterators up past any branch instructions.
   while (TIE != TIB) {
     --TIE;
-    if (!TIE->getDesc().isBranch())
+    if (!TIE->isBranch())
       break;
   }
   while (FIE != FIB) {
     --FIE;
-    if (!FIE->getDesc().isBranch())
+    if (!FIE->isBranch())
       break;
   }
 
@@ -651,12 +651,11 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
     if (I->isDebugValue())
       continue;
 
-    const MCInstrDesc &MCID = I->getDesc();
-    if (MCID.isNotDuplicable())
+    if (I->isNotDuplicable())
       BBI.CannotBeCopied = true;
 
     bool isPredicated = TII->isPredicated(I);
-    bool isCondBr = BBI.IsBrAnalyzable && MCID.isConditionalBranch();
+    bool isCondBr = BBI.IsBrAnalyzable && I->isConditionalBranch();
 
     if (!isCondBr) {
       if (!isPredicated) {
@@ -1395,9 +1394,8 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
 
   for (MachineBasicBlock::iterator I = FromBBI.BB->begin(),
          E = FromBBI.BB->end(); I != E; ++I) {
-    const MCInstrDesc &MCID = I->getDesc();
     // Do not copy the end of the block branches.
-    if (IgnoreBr && MCID.isBranch())
+    if (IgnoreBr && I->isBranch())
       break;
 
     MachineInstr *MI = MF.CloneMachineInstr(I);

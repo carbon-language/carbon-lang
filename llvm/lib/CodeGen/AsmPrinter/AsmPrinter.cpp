@@ -2087,7 +2087,7 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
     MachineInstr &MI = *II;
 
     // If it is not a simple branch, we are in a table somewhere.
-    if (!MI.getDesc().isBranch() || MI.getDesc().isIndirectBranch())
+    if (!MI.isBranch() || MI.isIndirectBranch())
       return false;
 
     // If we are the operands of one of the branches, this is not

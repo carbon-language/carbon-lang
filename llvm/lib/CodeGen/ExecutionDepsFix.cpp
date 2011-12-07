@@ -454,7 +454,7 @@ void ExeDepsFix::processDefs(MachineInstr *MI, bool Kill) {
   assert(!MI->isDebugValue() && "Won't process debug values");
   const MCInstrDesc &MCID = MI->getDesc();
   for (unsigned i = 0,
-         e = MCID.isVariadic() ? MI->getNumOperands() : MCID.getNumDefs();
+         e = MI->isVariadic() ? MI->getNumOperands() : MCID.getNumDefs();
          i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg())

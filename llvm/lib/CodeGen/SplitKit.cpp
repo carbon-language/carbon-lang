@@ -80,7 +80,7 @@ SlotIndex SplitAnalysis::computeLastSplitPoint(unsigned Num) {
     for (MachineBasicBlock::const_iterator I = MBB->end(), E = MBB->begin();
          I != E;) {
       --I;
-      if (I->getDesc().isCall()) {
+      if (I->isCall()) {
         LSP.second = LIS.getInstructionIndex(I);
         break;
       }

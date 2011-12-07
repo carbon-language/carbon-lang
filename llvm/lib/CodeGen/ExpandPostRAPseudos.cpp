@@ -207,7 +207,7 @@ bool ExpandPostRA::runOnMachineFunction(MachineFunction &MF) {
       ++mi;
 
       // Only expand pseudos.
-      if (!MI->getDesc().isPseudo())
+      if (!MI->isPseudo())
         continue;
 
       // Give targets a chance to expand even standard pseudos.

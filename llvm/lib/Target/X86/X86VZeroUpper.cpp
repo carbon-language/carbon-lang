@@ -220,7 +220,7 @@ bool VZeroUpperInserter::processBasicBlock(MachineFunction &MF,
   for (MachineBasicBlock::iterator I = BB.begin(); I != BB.end(); ++I) {
     MachineInstr *MI = I;
     DebugLoc dl = I->getDebugLoc();
-    bool isControlFlow = MI->getDesc().isCall() || MI->getDesc().isReturn();
+    bool isControlFlow = MI->isCall() || MI->isReturn();
 
     // Shortcut: don't need to check regular instructions in dirty state. 
     if (!isControlFlow && CurState == ST_DIRTY)

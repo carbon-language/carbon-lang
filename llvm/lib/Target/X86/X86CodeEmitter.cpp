@@ -1004,7 +1004,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     break;
   }
 
-  if (!Desc->isVariadic() && CurOp != NumOps) {
+  if (!MI.isVariadic() && CurOp != NumOps) {
 #ifndef NDEBUG
     dbgs() << "Cannot encode all operands of: " << MI << "\n";
 #endif

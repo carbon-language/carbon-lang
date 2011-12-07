@@ -146,7 +146,7 @@ ARMBaseInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   unsigned AddrMode = (TSFlags & ARMII::AddrModeMask);
   const MCInstrDesc &MCID = MI->getDesc();
   unsigned NumOps = MCID.getNumOperands();
-  bool isLoad = !MCID.mayStore();
+  bool isLoad = !MI->mayStore();
   const MachineOperand &WB = isLoad ? MI->getOperand(1) : MI->getOperand(0);
   const MachineOperand &Base = MI->getOperand(2);
   const MachineOperand &Offset = MI->getOperand(NumOps-3);
@@ -491,7 +491,7 @@ bool ARMBaseInstrInfo::DefinesPredicate(MachineInstr *MI,
                                     std::vector<MachineOperand> &Pred) const {
   // FIXME: This confuses implicit_def with optional CPSR def.
   const MCInstrDesc &MCID = MI->getDesc();
-  if (!MCID.getImplicitDefs() && !MCID.hasOptionalDef())
+  if (!MCID.getImplicitDefs() && !MI->hasOptionalDef())
     return false;
 
   bool Found = false;
@@ -510,11 +510,10 @@ bool ARMBaseInstrInfo::DefinesPredicate(MachineInstr *MI,
 /// By default, this returns true for every instruction with a
 /// PredicateOperand.
 bool ARMBaseInstrInfo::isPredicable(MachineInstr *MI) const {
-  const MCInstrDesc &MCID = MI->getDesc();
-  if (!MCID.isPredicable())
+  if (!MI->isPredicable())
     return false;
 
-  if ((MCID.TSFlags & ARMII::DomainMask) == ARMII::DomainNEON) {
+  if ((MI->getDesc().TSFlags & ARMII::DomainMask) == ARMII::DomainNEON) {
     ARMFunctionInfo *AFI =
       MI->getParent()->getParent()->getInfo<ARMFunctionInfo>();
     return AFI->isThumb2Function();
@@ -593,7 +592,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
         ? 1 : ((Opc == ARM::t2TBH_JT) ? 2 : 4);
       unsigned NumOps = MCID.getNumOperands();
       MachineOperand JTOP =
-        MI->getOperand(NumOps - (MCID.isPredicable() ? 3 : 2));
+        MI->getOperand(NumOps - (MI->isPredicable() ? 3 : 2));
       unsigned JTI = JTOP.getIndex();
       const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
       assert(MJTI != 0);
@@ -845,7 +844,7 @@ ARMBaseInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
 unsigned ARMBaseInstrInfo::isStoreToStackSlotPostFE(const MachineInstr *MI,
                                                     int &FrameIndex) const {
   const MachineMemOperand *Dummy;
-  return MI->getDesc().mayStore() && hasStoreToStackSlot(MI, Dummy, FrameIndex);
+  return MI->mayStore() && hasStoreToStackSlot(MI, Dummy, FrameIndex);
 }
 
 void ARMBaseInstrInfo::
@@ -991,7 +990,7 @@ ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
 unsigned ARMBaseInstrInfo::isLoadFromStackSlotPostFE(const MachineInstr *MI,
                                              int &FrameIndex) const {
   const MachineMemOperand *Dummy;
-  return MI->getDesc().mayLoad() && hasLoadFromStackSlot(MI, Dummy, FrameIndex);
+  return MI->mayLoad() && hasLoadFromStackSlot(MI, Dummy, FrameIndex);
 }
 
 bool ARMBaseInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const{
@@ -1357,7 +1356,7 @@ bool ARMBaseInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
     return false;
 
   // Terminators and labels can't be scheduled around.
-  if (MI->getDesc().isTerminator() || MI->isLabel())
+  if (MI->isTerminator() || MI->isLabel())
     return true;
 
   // Treat the start of the IT block as a scheduling boundary, but schedule
@@ -2339,10 +2338,10 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
       DefMI->isRegSequence() || DefMI->isImplicitDef())
     return 1;
 
-  const MCInstrDesc &DefMCID = DefMI->getDesc();
   if (!ItinData || ItinData->isEmpty())
-    return DefMCID.mayLoad() ? 3 : 1;
+    return DefMI->mayLoad() ? 3 : 1;
 
+  const MCInstrDesc &DefMCID = DefMI->getDesc();
   const MCInstrDesc &UseMCID = UseMI->getDesc();
   const MachineOperand &DefMO = DefMI->getOperand(DefIdx);
   if (DefMO.getReg() == ARM::CPSR) {
@@ -2352,7 +2351,7 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     }
 
     // CPSR set and branch can be paired in the same cycle.
-    if (UseMCID.isBranch())
+    if (UseMI->isBranch())
       return 0;
   }
 

@@ -6015,7 +6015,7 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
     // executed.
     for (MachineBasicBlock::reverse_iterator
            II = BB->rbegin(), IE = BB->rend(); II != IE; ++II) {
-      if (!II->getDesc().isCall()) continue;
+      if (!II->isCall()) continue;
 
       DenseMap<unsigned, bool> DefRegs;
       for (MachineInstr::mop_iterator
@@ -6426,13 +6426,13 @@ ARMTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
 void ARMTargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
                                                       SDNode *Node) const {
-  const MCInstrDesc *MCID = &MI->getDesc();
-  if (!MCID->hasPostISelHook()) {
+  if (!MI->hasPostISelHook()) {
     assert(!convertAddSubFlagsOpcode(MI->getOpcode()) &&
            "Pseudo flag-setting opcodes must be marked with 'hasPostISelHook'");
     return;
   }
 
+  const MCInstrDesc *MCID = &MI->getDesc();
   // Adjust potentially 's' setting instructions after isel, i.e. ADC, SBC, RSB,
   // RSC. Coming out of isel, they have an implicit CPSR def, but the optional
   // operand is still set to noreg. If needed, set the optional operand's
@@ -6459,7 +6459,7 @@ void ARMTargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
 
   // Any ARM instruction that sets the 's' bit should specify an optional
   // "cc_out" operand in the last operand position.
-  if (!MCID->hasOptionalDef() || !MCID->OpInfo[ccOutIdx].isOptionalDef()) {
+  if (!MI->hasOptionalDef() || !MCID->OpInfo[ccOutIdx].isOptionalDef()) {
     assert(!NewOpc && "Optional cc_out operand required");
     return;
   }

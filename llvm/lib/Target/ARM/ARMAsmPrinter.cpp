@@ -1069,7 +1069,7 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
   }
 
   // Try to figure out the unwinding opcode out of src / dst regs.
-  if (MI->getDesc().mayStore()) {
+  if (MI->mayStore()) {
     // Register saves.
     assert(DstReg == ARM::SP &&
            "Only stack pointer as a destination reg is supported");

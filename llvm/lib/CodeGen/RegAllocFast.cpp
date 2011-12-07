@@ -748,8 +748,8 @@ void RAFast::AllocateBasicBlock() {
   // and return are tail calls; do not do this for them.  The tail callee need
   // not take the same registers as input that it produces as output, and there
   // are dependencies for its input registers elsewhere.
-  if (!MBB->empty() && MBB->back().getDesc().isReturn() &&
-      !MBB->back().getDesc().isCall()) {
+  if (!MBB->empty() && MBB->back().isReturn() &&
+      !MBB->back().isCall()) {
     MachineInstr *Ret = &MBB->back();
 
     for (MachineRegisterInfo::liveout_iterator
@@ -968,7 +968,7 @@ void RAFast::AllocateBasicBlock() {
     }
 
     unsigned DefOpEnd = MI->getNumOperands();
-    if (MCID.isCall()) {
+    if (MI->isCall()) {
       // Spill all virtregs before a call. This serves two purposes: 1. If an
       // exception is thrown, the landing pad is going to expect to find
       // registers in their spill slots, and 2. we don't have to wade through

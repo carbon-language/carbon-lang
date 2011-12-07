@@ -553,7 +553,7 @@ TailDuplicatePass::shouldTailDuplicate(const MachineFunction &MF,
 
   bool HasIndirectbr = false;
   if (!TailBB.empty())
-    HasIndirectbr = TailBB.back().getDesc().isIndirectBranch();
+    HasIndirectbr = TailBB.back().isIndirectBranch();
 
   if (HasIndirectbr && PreRegAlloc)
     MaxDuplicateCount = 20;
@@ -563,19 +563,19 @@ TailDuplicatePass::shouldTailDuplicate(const MachineFunction &MF,
   unsigned InstrCount = 0;
   for (MachineBasicBlock::iterator I = TailBB.begin(); I != TailBB.end(); ++I) {
     // Non-duplicable things shouldn't be tail-duplicated.
-    if (I->getDesc().isNotDuplicable())
+    if (I->isNotDuplicable())
       return false;
 
     // Do not duplicate 'return' instructions if this is a pre-regalloc run.
     // A return may expand into a lot more instructions (e.g. reload of callee
     // saved registers) after PEI.
-    if (PreRegAlloc && I->getDesc().isReturn())
+    if (PreRegAlloc && I->isReturn())
       return false;
 
     // Avoid duplicating calls before register allocation. Calls presents a
     // barrier to register allocation so duplicating them may end up increasing
     // spills.
-    if (PreRegAlloc && I->getDesc().isCall())
+    if (PreRegAlloc && I->isCall())
       return false;
 
     if (!I->isPHI() && !I->isDebugValue())
@@ -610,7 +610,7 @@ TailDuplicatePass::isSimpleBB(MachineBasicBlock *TailBB) {
     ++I;
   if (I == E)
     return true;
-  return I->getDesc().isUnconditionalBranch();
+  return I->isUnconditionalBranch();
 }
 
 static bool

@@ -317,9 +317,9 @@ bool MipsAsmPrinter::isBlockOnlyReachableByFallthrough(const MachineBasicBlock*
   // Otherwise, check the last instruction.
   // Check if the last terminator is an unconditional branch.
   MachineBasicBlock::const_iterator I = Pred->end();
-  while (I != Pred->begin() && !(--I)->getDesc().isTerminator()) ;
+  while (I != Pred->begin() && !(--I)->isTerminator()) ;
 
-  return !I->getDesc().isBarrier();
+  return !I->isBarrier();
 }
 
 // Print out an operand for an inline asm expression.

@@ -495,7 +495,7 @@ void ARMConstantIslands::JumpTableFunctionScan(MachineFunction &MF) {
 
     for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
          I != E; ++I)
-      if (I->getDesc().isBranch() && I->getOpcode() == ARM::t2BR_JT)
+      if (I->isBranch() && I->getOpcode() == ARM::t2BR_JT)
         T2JumpTables.push_back(I);
   }
 }
@@ -547,7 +547,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &MF,
         BBI.Unalign = isThumb ? 1 : 2;
 
       int Opc = I->getOpcode();
-      if (I->getDesc().isBranch()) {
+      if (I->isBranch()) {
         bool isCond = false;
         unsigned Bits = 0;
         unsigned Scale = 1;
@@ -1738,7 +1738,7 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
     MachineInstr *MI = T2JumpTables[i];
     const MCInstrDesc &MCID = MI->getDesc();
     unsigned NumOps = MCID.getNumOperands();
-    unsigned JTOpIdx = NumOps - (MCID.isPredicable() ? 3 : 2);
+    unsigned JTOpIdx = NumOps - (MI->isPredicable() ? 3 : 2);
     MachineOperand JTOP = MI->getOperand(JTOpIdx);
     unsigned JTI = JTOP.getIndex();
     assert(JTI < JT.size());
@@ -1861,7 +1861,7 @@ bool ARMConstantIslands::ReorderThumb2JumpTables(MachineFunction &MF) {
     MachineInstr *MI = T2JumpTables[i];
     const MCInstrDesc &MCID = MI->getDesc();
     unsigned NumOps = MCID.getNumOperands();
-    unsigned JTOpIdx = NumOps - (MCID.isPredicable() ? 3 : 2);
+    unsigned JTOpIdx = NumOps - (MI->isPredicable() ? 3 : 2);
     MachineOperand JTOP = MI->getOperand(JTOpIdx);
     unsigned JTI = JTOP.getIndex();
     assert(JTI < JT.size());

@@ -294,7 +294,7 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
     const TargetRegisterClass *DstRC = 0;
     if (IIOpNum < II->getNumOperands())
       DstRC = TII->getRegClass(*II, IIOpNum, TRI);
-    assert((DstRC || (MCID.isVariadic() && IIOpNum >= MCID.getNumOperands())) &&
+    assert((DstRC || (MI->isVariadic() && IIOpNum >= MCID.getNumOperands())) &&
            "Don't have operand info for this instruction!");
     if (DstRC && !MRI->constrainRegClass(VReg, DstRC, MinRCSize)) {
       unsigned NewVReg = MRI->createVirtualRegister(DstRC);

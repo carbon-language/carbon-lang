@@ -435,7 +435,7 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
         report("MBB exits via unconditional fall-through but its successor "
                "differs from its CFG successor!", MBB);
       }
-      if (!MBB->empty() && MBB->back().getDesc().isBarrier() &&
+      if (!MBB->empty() && MBB->back().isBarrier() &&
           !TII->isPredicated(&MBB->back())) {
         report("MBB exits via unconditional fall-through but ends with a "
                "barrier instruction!", MBB);
@@ -456,10 +456,10 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
       if (MBB->empty()) {
         report("MBB exits via unconditional branch but doesn't contain "
                "any instructions!", MBB);
-      } else if (!MBB->back().getDesc().isBarrier()) {
+      } else if (!MBB->back().isBarrier()) {
         report("MBB exits via unconditional branch but doesn't end with a "
                "barrier instruction!", MBB);
-      } else if (!MBB->back().getDesc().isTerminator()) {
+      } else if (!MBB->back().isTerminator()) {
         report("MBB exits via unconditional branch but the branch isn't a "
                "terminator instruction!", MBB);
       }
@@ -479,10 +479,10 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
       if (MBB->empty()) {
         report("MBB exits via conditional branch/fall-through but doesn't "
                "contain any instructions!", MBB);
-      } else if (MBB->back().getDesc().isBarrier()) {
+      } else if (MBB->back().isBarrier()) {
         report("MBB exits via conditional branch/fall-through but ends with a "
                "barrier instruction!", MBB);
-      } else if (!MBB->back().getDesc().isTerminator()) {
+      } else if (!MBB->back().isTerminator()) {
         report("MBB exits via conditional branch/fall-through but the branch "
                "isn't a terminator instruction!", MBB);
       }
@@ -499,10 +499,10 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
       if (MBB->empty()) {
         report("MBB exits via conditional branch/branch but doesn't "
                "contain any instructions!", MBB);
-      } else if (!MBB->back().getDesc().isBarrier()) {
+      } else if (!MBB->back().isBarrier()) {
         report("MBB exits via conditional branch/branch but doesn't end with a "
                "barrier instruction!", MBB);
-      } else if (!MBB->back().getDesc().isTerminator()) {
+      } else if (!MBB->back().isTerminator()) {
         report("MBB exits via conditional branch/branch but the branch "
                "isn't a terminator instruction!", MBB);
       }
@@ -555,9 +555,9 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
   // Check the MachineMemOperands for basic consistency.
   for (MachineInstr::mmo_iterator I = MI->memoperands_begin(),
        E = MI->memoperands_end(); I != E; ++I) {
-    if ((*I)->isLoad() && !MCID.mayLoad())
+    if ((*I)->isLoad() && !MI->mayLoad())
       report("Missing mayLoad flag", MI);
-    if ((*I)->isStore() && !MCID.mayStore())
+    if ((*I)->isStore() && !MI->mayStore())
       report("Missing mayStore flag", MI);
   }
 
@@ -575,7 +575,7 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
   }
 
   // Ensure non-terminators don't follow terminators.
-  if (MCID.isTerminator()) {
+  if (MI->isTerminator()) {
     if (!FirstTerminator)
       FirstTerminator = MI;
   } else if (FirstTerminator) {
@@ -606,7 +606,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
     // Don't check if it's the last operand in a variadic instruction. See,
     // e.g., LDM_RET in the arm back end.
     if (MO->isReg() &&
-        !(MCID.isVariadic() && MONum == MCID.getNumOperands()-1)) {
+        !(MI->isVariadic() && MONum == MCID.getNumOperands()-1)) {
       if (MO->isDef() && !MCOI.isOptionalDef())
           report("Explicit operand marked as def", MO, MONum);
       if (MO->isImplicit())
@@ -614,7 +614,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
     }
   } else {
     // ARM adds %reg0 operands to indicate predicates. We'll allow that.
-    if (MO->isReg() && !MO->isImplicit() && !MCID.isVariadic() && MO->getReg())
+    if (MO->isReg() && !MO->isImplicit() && !MI->isVariadic() && MO->getReg())
       report("Extra explicit operand on non-variadic instruction", MO, MONum);
   }
 
@@ -800,11 +800,11 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
         LiveInts && !LiveInts->isNotInMIMap(MI)) {
       LiveInterval &LI = LiveStks->getInterval(MO->getIndex());
       SlotIndex Idx = LiveInts->getInstructionIndex(MI);
-      if (MCID.mayLoad() && !LI.liveAt(Idx.getRegSlot(true))) {
+      if (MI->mayLoad() && !LI.liveAt(Idx.getRegSlot(true))) {
         report("Instruction loads from dead spill slot", MO, MONum);
         *OS << "Live stack: " << LI << '\n';
       }
-      if (MCID.mayStore() && !LI.liveAt(Idx.getRegSlot())) {
+      if (MI->mayStore() && !LI.liveAt(Idx.getRegSlot())) {
         report("Instruction stores to dead spill slot", MO, MONum);
         *OS << "Live stack: " << LI << '\n';
       }

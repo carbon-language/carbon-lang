@@ -139,7 +139,7 @@ bool MLxExpansion::hasRAWHazard(unsigned Reg, MachineInstr *MI) const {
   // FIXME: Detect integer instructions properly.
   const MCInstrDesc &MCID = MI->getDesc();
   unsigned Domain = MCID.TSFlags & ARMII::DomainMask;
-  if (MCID.mayStore())
+  if (MI->mayStore())
     return false;
   unsigned Opcode = MCID.getOpcode();
   if (Opcode == ARM::VMOVRS || Opcode == ARM::VMOVRRD)
@@ -274,7 +274,7 @@ bool MLxExpansion::ExpandFPMLxInstructions(MachineBasicBlock &MBB) {
     }
 
     const MCInstrDesc &MCID = MI->getDesc();
-    if (MCID.isBarrier()) {
+    if (MI->isBarrier()) {
       clearStack();
       Skip = 0;
       ++MII;

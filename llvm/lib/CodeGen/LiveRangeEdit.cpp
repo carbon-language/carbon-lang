@@ -129,7 +129,7 @@ bool LiveRangeEdit::canRematerializeAt(Remat &RM,
   }
 
   // If only cheap remats were requested, bail out early.
-  if (cheapAsAMove && !RM.OrigMI->getDesc().isAsCheapAsAMove())
+  if (cheapAsAMove && !RM.OrigMI->isAsCheapAsAMove())
     return false;
 
   // Verify that all used registers are available with the same values.
@@ -174,7 +174,7 @@ bool LiveRangeEdit::foldAsLoad(LiveInterval *LI,
     if (MO.isDef()) {
       if (DefMI && DefMI != MI)
         return false;
-      if (!MI->getDesc().canFoldAsLoad())
+      if (!MI->canFoldAsLoad())
         return false;
       DefMI = MI;
     } else if (!MO.isUndef()) {

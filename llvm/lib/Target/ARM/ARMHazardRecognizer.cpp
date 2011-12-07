@@ -21,7 +21,7 @@ static bool hasRAWHazard(MachineInstr *DefMI, MachineInstr *MI,
   // FIXME: Detect integer instructions properly.
   const MCInstrDesc &MCID = MI->getDesc();
   unsigned Domain = MCID.TSFlags & ARMII::DomainMask;
-  if (MCID.mayStore())
+  if (MI->mayStore())
     return false;
   unsigned Opcode = MCID.getOpcode();
   if (Opcode == ARM::VMOVRS || Opcode == ARM::VMOVRRD)
@@ -48,9 +48,9 @@ ARMHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
       MachineInstr *DefMI = LastMI;
       const MCInstrDesc &LastMCID = LastMI->getDesc();
       // Skip over one non-VFP / NEON instruction.
-      if (!LastMCID.isBarrier() &&
+      if (!LastMI->isBarrier() &&
           // On A9, AGU and NEON/FPU are muxed.
-          !(STI.isCortexA9() && (LastMCID.mayLoad() || LastMCID.mayStore())) &&
+          !(STI.isCortexA9() && (LastMI->mayLoad() || LastMI->mayStore())) &&
           (LastMCID.TSFlags & ARMII::DomainMask) == ARMII::DomainGeneral) {
         MachineBasicBlock::iterator I = LastMI;
         if (I != LastMI->getParent()->begin()) {

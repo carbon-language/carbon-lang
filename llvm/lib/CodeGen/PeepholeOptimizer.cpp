@@ -292,7 +292,7 @@ bool PeepholeOptimizer::OptimizeBitcastInstr(MachineInstr *MI,
   assert(Def && Src && "Malformed bitcast instruction!");
 
   MachineInstr *DefMI = MRI->getVRegDef(Src);
-  if (!DefMI || !DefMI->getDesc().isBitcast())
+  if (!DefMI || !DefMI->isBitcast())
     return false;
 
   unsigned SrcSrc = 0;
@@ -353,7 +353,7 @@ bool PeepholeOptimizer::isMoveImmediate(MachineInstr *MI,
                                         SmallSet<unsigned, 4> &ImmDefRegs,
                                  DenseMap<unsigned, MachineInstr*> &ImmDefMIs) {
   const MCInstrDesc &MCID = MI->getDesc();
-  if (!MCID.isMoveImmediate())
+  if (!MI->isMoveImmediate())
     return false;
   if (MCID.getNumDefs() != 1)
     return false;
@@ -428,9 +428,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
         continue;
       }
 
-      const MCInstrDesc &MCID = MI->getDesc();
-
-      if (MCID.isBitcast()) {
+      if (MI->isBitcast()) {
         if (OptimizeBitcastInstr(MI, MBB)) {
           // MI is deleted.
           LocalMIs.erase(MI);
@@ -438,7 +436,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
           MII = First ? I->begin() : llvm::next(PMII);
           continue;
         }        
-      } else if (MCID.isCompare()) {
+      } else if (MI->isCompare()) {
         if (OptimizeCmpInstr(MI, MBB)) {
           // MI is deleted.
           LocalMIs.erase(MI);

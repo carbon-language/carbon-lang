@@ -236,9 +236,9 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
   
   // Check if the last terminator is an unconditional branch.
   MachineBasicBlock::const_iterator I = Pred->end();
-  while (I != Pred->begin() && !(--I)->getDesc().isTerminator())
+  while (I != Pred->begin() && !(--I)->isTerminator())
     ; // Noop
-  return I == Pred->end() || !I->getDesc().isBarrier();
+  return I == Pred->end() || !I->isBarrier();
 }
 
 

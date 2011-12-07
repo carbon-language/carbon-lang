@@ -242,7 +242,7 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
   // appropriate location, we can try to sink the current instruction
   // past it.
   if (!KillMI || KillMI->getParent() != MBB || KillMI == MI ||
-      KillMI->getDesc().isTerminator())
+      KillMI->isTerminator())
     return false;
 
   // If any of the definitions are used by another instruction between the
@@ -816,10 +816,9 @@ void TwoAddressInstructionPass::ProcessCopy(MachineInstr *MI,
 static bool isSafeToDelete(MachineInstr *MI,
                            const TargetInstrInfo *TII,
                            SmallVector<unsigned, 4> &Kills) {
-  const MCInstrDesc &MCID = MI->getDesc();
-  if (MCID.mayStore() || MCID.isCall())
+  if (MI->mayStore() || MI->isCall())
     return false;
-  if (MCID.isTerminator() || MI->hasUnmodeledSideEffects())
+  if (MI->isTerminator() || MI->hasUnmodeledSideEffects())
     return false;
 
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -917,9 +916,8 @@ TwoAddressInstructionPass::RescheduleMIBelowKill(MachineBasicBlock *MBB,
     // Don't mess with copies, they may be coalesced later.
     return false;
 
-  const MCInstrDesc &MCID = KillMI->getDesc();
-  if (MCID.hasUnmodeledSideEffects() || MCID.isCall() || MCID.isBranch() ||
-      MCID.isTerminator())
+  if (KillMI->hasUnmodeledSideEffects() || KillMI->isCall() ||
+      KillMI->isBranch() || KillMI->isTerminator())
     // Don't move pass calls, etc.
     return false;
 
@@ -974,9 +972,8 @@ TwoAddressInstructionPass::RescheduleMIBelowKill(MachineBasicBlock *MBB,
     if (NumVisited > 10)  // FIXME: Arbitrary limit to reduce compile time cost.
       return false;
     ++NumVisited;
-    const MCInstrDesc &OMCID = OtherMI->getDesc();
-    if (OMCID.hasUnmodeledSideEffects() || OMCID.isCall() || OMCID.isBranch() ||
-        OMCID.isTerminator())
+    if (OtherMI->hasUnmodeledSideEffects() || OtherMI->isCall() ||
+        OtherMI->isBranch() || OtherMI->isTerminator())
       // Don't move pass calls, etc.
       return false;
     for (unsigned i = 0, e = OtherMI->getNumOperands(); i != e; ++i) {
@@ -1118,9 +1115,8 @@ TwoAddressInstructionPass::RescheduleKillAboveMI(MachineBasicBlock *MBB,
     if (NumVisited > 10)  // FIXME: Arbitrary limit to reduce compile time cost.
       return false;
     ++NumVisited;
-    const MCInstrDesc &MCID = OtherMI->getDesc();
-    if (MCID.hasUnmodeledSideEffects() || MCID.isCall() || MCID.isBranch() ||
-        MCID.isTerminator())
+    if (OtherMI->hasUnmodeledSideEffects() || OtherMI->isCall() ||
+        OtherMI->isBranch() || OtherMI->isTerminator())
       // Don't move pass calls, etc.
       return false;
     SmallVector<unsigned, 2> OtherDefs;
@@ -1200,7 +1196,6 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
     return false;
 
   MachineInstr &MI = *mi;
-  const MCInstrDesc &MCID = MI.getDesc();
   unsigned regA = MI.getOperand(DstIdx).getReg();
   unsigned regB = MI.getOperand(SrcIdx).getReg();
 
@@ -1222,7 +1217,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
   unsigned regCIdx = ~0U;
   bool TryCommute = false;
   bool AggressiveCommute = false;
-  if (MCID.isCommutable() && MI.getNumOperands() >= 3 &&
+  if (MI.isCommutable() && MI.getNumOperands() >= 3 &&
       TII->findCommutedOpIndices(&MI, SrcOp1, SrcOp2)) {
     if (SrcIdx == SrcOp1)
       regCIdx = SrcOp2;
@@ -1260,7 +1255,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
   if (TargetRegisterInfo::isVirtualRegister(regA))
     ScanUses(regA, &*mbbi, Processed);
 
-  if (MCID.isConvertibleTo3Addr()) {
+  if (MI.isConvertibleTo3Addr()) {
     // This instruction is potentially convertible to a true
     // three-address instruction.  Check if it is profitable.
     if (!regBKilled || isProfitableToConv3Addr(regA, regB)) {
@@ -1287,7 +1282,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
   //   movq (%rax), %rcx
   //   addq %rdx, %rcx
   // because it's preferable to schedule a load than a register copy.
-  if (MCID.mayLoad() && !regBKilled) {
+  if (MI.mayLoad() && !regBKilled) {
     // Determine if a load can be unfolded.
     unsigned LoadRegIndex;
     unsigned NewOpc =
@@ -1530,7 +1525,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           // If it's safe and profitable, remat the definition instead of
           // copying it.
           if (DefMI &&
-              DefMI->getDesc().isAsCheapAsAMove() &&
+              DefMI->isAsCheapAsAMove() &&
               DefMI->isSafeToReMat(TII, AA, regB) &&
               isProfitableToReMat(regB, rc, mi, DefMI, mbbi, Dist)){
             DEBUG(dbgs() << "2addr: REMATTING : " << *DefMI << "\n");

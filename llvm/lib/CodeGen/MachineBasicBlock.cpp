@@ -538,8 +538,8 @@ bool MachineBasicBlock::canFallThrough() {
     // Barrier is predicated and thus no longer an actual control barrier. This
     // is over-conservative though, because if an instruction isn't actually
     // predicated we could still treat it like a barrier.
-    return empty() || !back().getDesc().isBarrier() ||
-           back().getDesc().isPredicable();
+    return empty() || !back().isBarrier() ||
+           back().isPredicable();
   }
 
   // If there is no branch, control always falls through.
@@ -737,7 +737,7 @@ void MachineBasicBlock::ReplaceUsesOfBlockWith(MachineBasicBlock *Old,
   MachineBasicBlock::insn_iterator I = insn_end();
   while (I != insn_begin()) {
     --I;
-    if (!I->getDesc().isTerminator()) break;
+    if (!I->isTerminator()) break;
 
     // Scan the operands of this machine instruction, replacing any uses of Old
     // with New.

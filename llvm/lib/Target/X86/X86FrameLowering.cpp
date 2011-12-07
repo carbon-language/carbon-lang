@@ -991,7 +991,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     unsigned Opc = PI->getOpcode();
 
     if (Opc != X86::POP32r && Opc != X86::POP64r && Opc != X86::DBG_VALUE &&
-        !PI->getDesc().isTerminator())
+        !PI->isTerminator())
       break;
 
     --MBBI;

@@ -54,7 +54,7 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
   // Clear "do not change" set.
   KeepRegs.clear();
 
-  bool IsReturnBlock = (!BB->empty() && BB->back().getDesc().isReturn());
+  bool IsReturnBlock = (!BB->empty() && BB->back().isReturn());
 
   // Determine the live-out physregs for this block.
   if (IsReturnBlock) {
@@ -193,8 +193,8 @@ void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
   // instruction which may not be executed. The second R6 def may or may not
   // re-define R6 so it's not safe to change it since the last R6 use cannot be
   // changed.
-  bool Special = MI->getDesc().isCall() ||
-    MI->getDesc().hasExtraSrcRegAllocReq() ||
+  bool Special = MI->isCall() ||
+    MI->hasExtraSrcRegAllocReq() ||
     TII->isPredicated(MI);
 
   // Scan the register operands for this instruction and update
@@ -572,7 +572,7 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
     // If MI's defs have a special allocation requirement, don't allow
     // any def registers to be changed. Also assume all registers
     // defined in a call must not be changed (ABI).
-    if (MI->getDesc().isCall() || MI->getDesc().hasExtraDefRegAllocReq() ||
+    if (MI->isCall() || MI->hasExtraDefRegAllocReq() ||
         TII->isPredicated(MI))
       // If this instruction's defs have special allocation requirement, don't
       // break this anti-dependency.

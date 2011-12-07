@@ -102,7 +102,7 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
     LivePhysRegs = ReservedRegs;
 
     // Also add any explicit live-out physregs for this block.
-    if (!MBB->empty() && MBB->back().getDesc().isReturn())
+    if (!MBB->empty() && MBB->back().isReturn())
       for (MachineRegisterInfo::liveout_iterator LOI = MRI->liveout_begin(),
            LOE = MRI->liveout_end(); LOI != LOE; ++LOI) {
         unsigned Reg = *LOI;

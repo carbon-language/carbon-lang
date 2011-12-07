@@ -186,7 +186,7 @@ public:
 
   /// getFlags - Return flags of this instruction.
   ///
-  unsigned short getFlags() const { return Flags; }
+  unsigned getFlags() const { return Flags; }
 
   /// isVariadic - Return true if this instruction can have a variable number of
   /// operands.  In this case, the variable operands will be after the normal
@@ -200,84 +200,6 @@ public:
   /// ARM instructions which can set condition code if 's' bit is set.
   bool hasOptionalDef() const {
     return Flags & (1 << MCID::HasOptionalDef);
-  }
-
-  /// getImplicitUses - Return a list of registers that are potentially
-  /// read by any instance of this machine instruction.  For example, on X86,
-  /// the "adc" instruction adds two register operands and adds the carry bit in
-  /// from the flags register.  In this case, the instruction is marked as
-  /// implicitly reading the flags.  Likewise, the variable shift instruction on
-  /// X86 is marked as implicitly reading the 'CL' register, which it always
-  /// does.
-  ///
-  /// This method returns null if the instruction has no implicit uses.
-  const unsigned *getImplicitUses() const {
-    return ImplicitUses;
-  }
-
-  /// getNumImplicitUses - Return the number of implicit uses this instruction
-  /// has.
-  unsigned getNumImplicitUses() const {
-    if (ImplicitUses == 0) return 0;
-    unsigned i = 0;
-    for (; ImplicitUses[i]; ++i) /*empty*/;
-    return i;
-  }
-
-  /// getImplicitDefs - Return a list of registers that are potentially
-  /// written by any instance of this machine instruction.  For example, on X86,
-  /// many instructions implicitly set the flags register.  In this case, they
-  /// are marked as setting the FLAGS.  Likewise, many instructions always
-  /// deposit their result in a physical register.  For example, the X86 divide
-  /// instruction always deposits the quotient and remainder in the EAX/EDX
-  /// registers.  For that instruction, this will return a list containing the
-  /// EAX/EDX/EFLAGS registers.
-  ///
-  /// This method returns null if the instruction has no implicit defs.
-  const unsigned *getImplicitDefs() const {
-    return ImplicitDefs;
-  }
-
-  /// getNumImplicitDefs - Return the number of implicit defs this instruction
-  /// has.
-  unsigned getNumImplicitDefs() const {
-    if (ImplicitDefs == 0) return 0;
-    unsigned i = 0;
-    for (; ImplicitDefs[i]; ++i) /*empty*/;
-    return i;
-  }
-
-  /// hasImplicitUseOfPhysReg - Return true if this instruction implicitly
-  /// uses the specified physical register.
-  bool hasImplicitUseOfPhysReg(unsigned Reg) const {
-    if (const unsigned *ImpUses = ImplicitUses)
-      for (; *ImpUses; ++ImpUses)
-        if (*ImpUses == Reg) return true;
-    return false;
-  }
-
-  /// hasImplicitDefOfPhysReg - Return true if this instruction implicitly
-  /// defines the specified physical register.
-  bool hasImplicitDefOfPhysReg(unsigned Reg) const {
-    if (const unsigned *ImpDefs = ImplicitDefs)
-      for (; *ImpDefs; ++ImpDefs)
-        if (*ImpDefs == Reg) return true;
-    return false;
-  }
-
-  /// getSchedClass - Return the scheduling class for this instruction.  The
-  /// scheduling class is an index into the InstrItineraryData table.  This
-  /// returns zero if there is no known scheduling information for the
-  /// instruction.
-  ///
-  unsigned getSchedClass() const {
-    return SchedClass;
-  }
-
-  /// getSize - Return the number of bytes in the encoding of this instruction,
-  /// or zero if the encoding size cannot be known from the opcode.
-  unsigned getSize() const {
-    return Size;
   }
 
   /// isPseudo - Return true if this is a pseudo instruction that doesn't
@@ -300,18 +222,6 @@ public:
   /// unconditional branches and return instructions.
   bool isBarrier() const {
     return Flags & (1 << MCID::Barrier);
-  }
-
-  /// findFirstPredOperandIdx() - Find the index of the first operand in the
-  /// operand list that is used to represent the predicate. It returns -1 if
-  /// none is found.
-  int findFirstPredOperandIdx() const {
-    if (isPredicable()) {
-      for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-        if (OpInfo[i].isPredicate())
-          return i;
-    }
-    return -1;
   }
 
   /// isTerminator - Returns true if this instruction part of the terminator for
@@ -533,6 +443,97 @@ public:
   /// for definitions of instructions with this flag.
   bool hasExtraDefRegAllocReq() const {
     return Flags & (1 << MCID::ExtraDefRegAllocReq);
+  }
+
+
+  /// getImplicitUses - Return a list of registers that are potentially
+  /// read by any instance of this machine instruction.  For example, on X86,
+  /// the "adc" instruction adds two register operands and adds the carry bit in
+  /// from the flags register.  In this case, the instruction is marked as
+  /// implicitly reading the flags.  Likewise, the variable shift instruction on
+  /// X86 is marked as implicitly reading the 'CL' register, which it always
+  /// does.
+  ///
+  /// This method returns null if the instruction has no implicit uses.
+  const unsigned *getImplicitUses() const {
+    return ImplicitUses;
+  }
+
+  /// getNumImplicitUses - Return the number of implicit uses this instruction
+  /// has.
+  unsigned getNumImplicitUses() const {
+    if (ImplicitUses == 0) return 0;
+    unsigned i = 0;
+    for (; ImplicitUses[i]; ++i) /*empty*/;
+    return i;
+  }
+
+  /// getImplicitDefs - Return a list of registers that are potentially
+  /// written by any instance of this machine instruction.  For example, on X86,
+  /// many instructions implicitly set the flags register.  In this case, they
+  /// are marked as setting the FLAGS.  Likewise, many instructions always
+  /// deposit their result in a physical register.  For example, the X86 divide
+  /// instruction always deposits the quotient and remainder in the EAX/EDX
+  /// registers.  For that instruction, this will return a list containing the
+  /// EAX/EDX/EFLAGS registers.
+  ///
+  /// This method returns null if the instruction has no implicit defs.
+  const unsigned *getImplicitDefs() const {
+    return ImplicitDefs;
+  }
+
+  /// getNumImplicitDefs - Return the number of implicit defs this instruction
+  /// has.
+  unsigned getNumImplicitDefs() const {
+    if (ImplicitDefs == 0) return 0;
+    unsigned i = 0;
+    for (; ImplicitDefs[i]; ++i) /*empty*/;
+    return i;
+  }
+
+  /// hasImplicitUseOfPhysReg - Return true if this instruction implicitly
+  /// uses the specified physical register.
+  bool hasImplicitUseOfPhysReg(unsigned Reg) const {
+    if (const unsigned *ImpUses = ImplicitUses)
+      for (; *ImpUses; ++ImpUses)
+        if (*ImpUses == Reg) return true;
+    return false;
+  }
+
+  /// hasImplicitDefOfPhysReg - Return true if this instruction implicitly
+  /// defines the specified physical register.
+  bool hasImplicitDefOfPhysReg(unsigned Reg) const {
+    if (const unsigned *ImpDefs = ImplicitDefs)
+      for (; *ImpDefs; ++ImpDefs)
+        if (*ImpDefs == Reg) return true;
+    return false;
+  }
+
+  /// getSchedClass - Return the scheduling class for this instruction.  The
+  /// scheduling class is an index into the InstrItineraryData table.  This
+  /// returns zero if there is no known scheduling information for the
+  /// instruction.
+  ///
+  unsigned getSchedClass() const {
+    return SchedClass;
+  }
+
+  /// getSize - Return the number of bytes in the encoding of this instruction,
+  /// or zero if the encoding size cannot be known from the opcode.
+  unsigned getSize() const {
+    return Size;
+  }
+
+  /// findFirstPredOperandIdx() - Find the index of the first operand in the
+  /// operand list that is used to represent the predicate. It returns -1 if
+  /// none is found.
+  int findFirstPredOperandIdx() const {
+    if (isPredicable()) {
+      for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+        if (OpInfo[i].isPredicate())
+          return i;
+    }
+    return -1;
   }
 };
 

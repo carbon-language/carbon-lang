@@ -1472,19 +1472,18 @@ static bool IsSafeAndProfitableToMove(bool isLd, unsigned Base,
   while (++I != E) {
     if (I->isDebugValue() || MemOps.count(&*I))
       continue;
-    const MCInstrDesc &MCID = I->getDesc();
-    if (MCID.isCall() || MCID.isTerminator() || I->hasUnmodeledSideEffects())
+    if (I->isCall() || I->isTerminator() || I->hasUnmodeledSideEffects())
       return false;
-    if (isLd && MCID.mayStore())
+    if (isLd && I->mayStore())
       return false;
     if (!isLd) {
-      if (MCID.mayLoad())
+      if (I->mayLoad())
         return false;
       // It's not safe to move the first 'str' down.
       // str r1, [r0]
       // strh r5, [r0]
       // str r4, [r0, #+4]
-      if (MCID.mayStore())
+      if (I->mayStore())
         return false;
     }
     for (unsigned j = 0, NumOps = I->getNumOperands(); j != NumOps; ++j) {
@@ -1774,8 +1773,7 @@ ARMPreAllocLoadStoreOpt::RescheduleLoadStoreInstrs(MachineBasicBlock *MBB) {
   while (MBBI != E) {
     for (; MBBI != E; ++MBBI) {
       MachineInstr *MI = MBBI;
-      const MCInstrDesc &MCID = MI->getDesc();
-      if (MCID.isCall() || MCID.isTerminator()) {
+      if (MI->isCall() || MI->isTerminator()) {
         // Stop at barriers.
         ++MBBI;
         break;

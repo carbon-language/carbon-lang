@@ -228,8 +228,7 @@ class ARMFastISel : public FastISel {
 // we don't care about implicit defs here, just places we'll need to add a
 // default CCReg argument. Sets CPSR if we're setting CPSR instead of CCR.
 bool ARMFastISel::DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR) {
-  const MCInstrDesc &MCID = MI->getDesc();
-  if (!MCID.hasOptionalDef())
+  if (!MI->hasOptionalDef())
     return false;
 
   // Look to see if our OptionalDef is defining CPSR or CCR.

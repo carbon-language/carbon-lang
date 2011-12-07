@@ -274,13 +274,266 @@ public:
     return MemRefsEnd - MemRefs == 1;
   }
 
-  /// API for querying MachineInstr properties. These are bundle aware.
-  ///
-  bool hasProperty(unsigned short Flag) const;
+  /// API for querying MachineInstr properties. They are the same as MCInstrDesc
+  /// queries but they are bundle aware.
 
+  /// hasProperty - Return true if the instruction (or in the case of a bundle,
+  /// the instructions inside the bundle) has the specified property.
+  /// The first argument is the property being queried.
+  /// The second argument indicates whether the query should look inside
+  /// instruction bundles.
+  /// If the third argument is true, than the query can return true when *any*
+  /// of the bundled instructions has the queried property. If it's false, then
+  /// this can return true iff *all* of the instructions have the property.
+  bool hasProperty(unsigned Flag,
+                   bool PeekInBundle = true, bool IsOr = true) const;
+
+  /// isVariadic - Return true if this instruction can have a variable number of
+  /// operands.  In this case, the variable operands will be after the normal
+  /// operands but before the implicit definitions and uses (if any are
+  /// present).
+  bool isVariadic() const {
+    return hasProperty(MCID::Variadic, false);
+  }
+
+  /// hasOptionalDef - Set if this instruction has an optional definition, e.g.
+  /// ARM instructions which can set condition code if 's' bit is set.
+  bool hasOptionalDef() const {
+    return hasProperty(MCID::HasOptionalDef, false);
+  }
+
+  /// isPseudo - Return true if this is a pseudo instruction that doesn't
+  /// correspond to a real machine instruction.
+  ///
+  bool isPseudo() const {
+    return hasProperty(MCID::Pseudo, false);
+  }
+
+  bool isReturn() const {
+    return hasProperty(MCID::Return);
+  }
+
+  bool isCall() const {
+    return hasProperty(MCID::Call);
+  }
+
+  /// isBarrier - Returns true if the specified instruction stops control flow
+  /// from executing the instruction immediately following it.  Examples include
+  /// unconditional branches and return instructions.
+  bool isBarrier() const {
+    return hasProperty(MCID::Barrier);
+  }
+
+  /// isTerminator - Returns true if this instruction part of the terminator for
+  /// a basic block.  Typically this is things like return and branch
+  /// instructions.
+  ///
+  /// Various passes use this to insert code into the bottom of a basic block,
+  /// but before control flow occurs.
   bool isTerminator() const {
     return hasProperty(MCID::Terminator);
   }
+
+  /// isBranch - Returns true if this is a conditional, unconditional, or
+  /// indirect branch.  Predicates below can be used to discriminate between
+  /// these cases, and the TargetInstrInfo::AnalyzeBranch method can be used to
+  /// get more information.
+  bool isBranch() const {
+    return hasProperty(MCID::Branch);
+  }
+
+  /// isIndirectBranch - Return true if this is an indirect branch, such as a
+  /// branch through a register.
+  bool isIndirectBranch() const {
+    return hasProperty(MCID::IndirectBranch);
+  }
+
+  /// isConditionalBranch - Return true if this is a branch which may fall
+  /// through to the next instruction or may transfer control flow to some other
+  /// block.  The TargetInstrInfo::AnalyzeBranch method can be used to get more
+  /// information about this branch.
+  bool isConditionalBranch() const {
+    return isBranch() & !isBarrier() & !isIndirectBranch();
+  }
+
+  /// isUnconditionalBranch - Return true if this is a branch which always
+  /// transfers control flow to some other block.  The
+  /// TargetInstrInfo::AnalyzeBranch method can be used to get more information
+  /// about this branch.
+  bool isUnconditionalBranch() const {
+    return isBranch() & isBarrier() & !isIndirectBranch();
+  }
+
+  // isPredicable - Return true if this instruction has a predicate operand that
+  // controls execution.  It may be set to 'always', or may be set to other
+  /// values.   There are various methods in TargetInstrInfo that can be used to
+  /// control and modify the predicate in this instruction.
+  bool isPredicable() const {
+    // If it's a bundle than all bundled instructions must be predicable for this
+    // to return true.
+    return hasProperty(MCID::Predicable, true, false);
+  }
+
+  /// isCompare - Return true if this instruction is a comparison.
+  bool isCompare() const {
+    return hasProperty(MCID::Compare, false);
+  }
+
+  /// isMoveImmediate - Return true if this instruction is a move immediate
+  /// (including conditional moves) instruction.
+  bool isMoveImmediate() const {
+    return hasProperty(MCID::MoveImm, false);
+  }
+
+  /// isBitcast - Return true if this instruction is a bitcast instruction.
+  ///
+  bool isBitcast() const {
+    return hasProperty(MCID::Bitcast, false);
+  }
+
+  /// isNotDuplicable - Return true if this instruction cannot be safely
+  /// duplicated.  For example, if the instruction has a unique labels attached
+  /// to it, duplicating it would cause multiple definition errors.
+  bool isNotDuplicable() const {
+    return hasProperty(MCID::NotDuplicable);
+  }
+
+  /// hasDelaySlot - Returns true if the specified instruction has a delay slot
+  /// which must be filled by the code generator.
+  bool hasDelaySlot() const {
+    return hasProperty(MCID::DelaySlot);
+  }
+
+  /// canFoldAsLoad - Return true for instructions that can be folded as
+  /// memory operands in other instructions. The most common use for this
+  /// is instructions that are simple loads from memory that don't modify
+  /// the loaded value in any way, but it can also be used for instructions
+  /// that can be expressed as constant-pool loads, such as V_SETALLONES
+  /// on x86, to allow them to be folded when it is beneficial.
+  /// This should only be set on instructions that return a value in their
+  /// only virtual register definition.
+  bool canFoldAsLoad() const {
+    return hasProperty(MCID::FoldableAsLoad, false);
+  }
+
+  //===--------------------------------------------------------------------===//
+  // Side Effect Analysis
+  //===--------------------------------------------------------------------===//
+
+  /// mayLoad - Return true if this instruction could possibly read memory.
+  /// Instructions with this flag set are not necessarily simple load
+  /// instructions, they may load a value and modify it, for example.
+  bool mayLoad() const {
+    return hasProperty(MCID::MayLoad);
+  }
+
+
+  /// mayStore - Return true if this instruction could possibly modify memory.
+  /// Instructions with this flag set are not necessarily simple store
+  /// instructions, they may store a modified value based on their operands, or
+  /// may not actually modify anything, for example.
+  bool mayStore() const {
+    return hasProperty(MCID::MayStore);
+  }
+
+  //===--------------------------------------------------------------------===//
+  // Flags that indicate whether an instruction can be modified by a method.
+  //===--------------------------------------------------------------------===//
+
+  /// isCommutable - Return true if this may be a 2- or 3-address
+  /// instruction (of the form "X = op Y, Z, ..."), which produces the same
+  /// result if Y and Z are exchanged.  If this flag is set, then the
+  /// TargetInstrInfo::commuteInstruction method may be used to hack on the
+  /// instruction.
+  ///
+  /// Note that this flag may be set on instructions that are only commutable
+  /// sometimes.  In these cases, the call to commuteInstruction will fail.
+  /// Also note that some instructions require non-trivial modification to
+  /// commute them.
+  bool isCommutable() const {
+    return hasProperty(MCID::Commutable, false);
+  }
+
+  /// isConvertibleTo3Addr - Return true if this is a 2-address instruction
+  /// which can be changed into a 3-address instruction if needed.  Doing this
+  /// transformation can be profitable in the register allocator, because it
+  /// means that the instruction can use a 2-address form if possible, but
+  /// degrade into a less efficient form if the source and dest register cannot
+  /// be assigned to the same register.  For example, this allows the x86
+  /// backend to turn a "shl reg, 3" instruction into an LEA instruction, which
+  /// is the same speed as the shift but has bigger code size.
+  ///
+  /// If this returns true, then the target must implement the
+  /// TargetInstrInfo::convertToThreeAddress method for this instruction, which
+  /// is allowed to fail if the transformation isn't valid for this specific
+  /// instruction (e.g. shl reg, 4 on x86).
+  ///
+  bool isConvertibleTo3Addr() const {
+    return hasProperty(MCID::ConvertibleTo3Addr, false);
+  }
+
+  /// usesCustomInsertionHook - Return true if this instruction requires
+  /// custom insertion support when the DAG scheduler is inserting it into a
+  /// machine basic block.  If this is true for the instruction, it basically
+  /// means that it is a pseudo instruction used at SelectionDAG time that is
+  /// expanded out into magic code by the target when MachineInstrs are formed.
+  ///
+  /// If this is true, the TargetLoweringInfo::InsertAtEndOfBasicBlock method
+  /// is used to insert this into the MachineBasicBlock.
+  bool usesCustomInsertionHook() const {
+    return hasProperty(MCID::UsesCustomInserter, false);
+  }
+
+  /// hasPostISelHook - Return true if this instruction requires *adjustment*
+  /// after instruction selection by calling a target hook. For example, this
+  /// can be used to fill in ARM 's' optional operand depending on whether
+  /// the conditional flag register is used.
+  bool hasPostISelHook() const {
+    return hasProperty(MCID::HasPostISelHook, false);
+  }
+
+  /// isRematerializable - Returns true if this instruction is a candidate for
+  /// remat.  This flag is deprecated, please don't use it anymore.  If this
+  /// flag is set, the isReallyTriviallyReMaterializable() method is called to
+  /// verify the instruction is really rematable.
+  bool isRematerializable() const {
+    // It's only possible to re-mat a bundle if all bundled instructions are
+    // re-materializable.
+    return hasProperty(MCID::Rematerializable, true, false);
+  }
+
+  /// isAsCheapAsAMove - Returns true if this instruction has the same cost (or
+  /// less) than a move instruction. This is useful during certain types of
+  /// optimizations (e.g., remat during two-address conversion or machine licm)
+  /// where we would like to remat or hoist the instruction, but not if it costs
+  /// more than moving the instruction into the appropriate register. Note, we
+  /// are not marking copies from and to the same register class with this flag.
+  bool isAsCheapAsAMove() const {
+    // Only returns true for a bundle if all bundled instructions are cheap.
+    // FIXME: This probably requires a target hook.
+    return hasProperty(MCID::CheapAsAMove, true, true);
+  }
+
+  /// hasExtraSrcRegAllocReq - Returns true if this instruction source operands
+  /// have special register allocation requirements that are not captured by the
+  /// operand register classes. e.g. ARM::STRD's two source registers must be an
+  /// even / odd pair, ARM::STM registers have to be in ascending order.
+  /// Post-register allocation passes should not attempt to change allocations
+  /// for sources of instructions with this flag.
+  bool hasExtraSrcRegAllocReq() const {
+    return hasProperty(MCID::ExtraSrcRegAllocReq);
+  }
+
+  /// hasExtraDefRegAllocReq - Returns true if this instruction def operands
+  /// have special register allocation requirements that are not captured by the
+  /// operand register classes. e.g. ARM::LDRD's two def registers must be an
+  /// even / odd pair, ARM::LDM registers have to be in ascending order.
+  /// Post-register allocation passes should not attempt to change allocations
+  /// for definitions of instructions with this flag.
+  bool hasExtraDefRegAllocReq() const {
+    return hasProperty(MCID::ExtraDefRegAllocReq);
+  }
+
 
   enum MICheckType {
     CheckDefs,      // Check all operands for equality

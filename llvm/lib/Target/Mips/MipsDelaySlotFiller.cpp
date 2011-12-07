@@ -96,7 +96,7 @@ runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   LastFiller = MBB.end();
 
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I)
-    if (I->getDesc().hasDelaySlot()) {
+    if (I->hasDelaySlot()) {
       ++FilledSlots;
       Changed = true;
 
@@ -146,7 +146,7 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB,
         || I->isInlineAsm()
         || I->isLabel()
         || FI == LastFiller
-        || I->getDesc().isPseudo()
+        || I->isPseudo()
         //
         // Should not allow:
         // ERET, DERET or WAIT, PAUSE. Need to add these to instruction
@@ -174,16 +174,15 @@ bool Filler::delayHasHazard(MachineBasicBlock::iterator candidate,
   if (candidate->isImplicitDef() || candidate->isKill())
     return true;
 
-  MCInstrDesc MCID = candidate->getDesc();
   // Loads or stores cannot be moved past a store to the delay slot
   // and stores cannot be moved past a load. 
-  if (MCID.mayLoad()) {
+  if (candidate->mayLoad()) {
     if (sawStore)
       return true;
     sawLoad = true;
   }
 
-  if (MCID.mayStore()) {
+  if (candidate->mayStore()) {
     if (sawStore)
       return true;
     sawStore = true;
@@ -191,7 +190,7 @@ bool Filler::delayHasHazard(MachineBasicBlock::iterator candidate,
       return true;
   }
 
-  assert((!MCID.isCall() && !MCID.isReturn()) &&
+  assert((!candidate->isCall() && !candidate->isReturn()) &&
          "Cannot put calls or returns in delay slot.");
 
   for (unsigned i = 0, e = candidate->getNumOperands(); i!= e; ++i) {
@@ -221,11 +220,11 @@ void Filler::insertDefsUses(MachineBasicBlock::iterator MI,
                             SmallSet<unsigned, 32>& RegUses) {
   // If MI is a call or return, just examine the explicit non-variadic operands.
   MCInstrDesc MCID = MI->getDesc();
-  unsigned e = MCID.isCall() || MCID.isReturn() ? MCID.getNumOperands() :
-                                                  MI->getNumOperands();
+  unsigned e = MI->isCall() || MI->isReturn() ? MCID.getNumOperands() :
+                                                MI->getNumOperands();
   
   // Add RA to RegDefs to prevent users of RA from going into delay slot. 
-  if (MCID.isCall())
+  if (MI->isCall())
     RegDefs.insert(Mips::RA);
 
   for (unsigned i = 0; i != e; ++i) {

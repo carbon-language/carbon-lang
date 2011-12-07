@@ -140,7 +140,7 @@ void MSP430FrameLowering::emitEpilogue(MachineFunction &MF,
   while (MBBI != MBB.begin()) {
     MachineBasicBlock::iterator PI = prior(MBBI);
     unsigned Opc = PI->getOpcode();
-    if (Opc != MSP430::POP16r && !PI->getDesc().isTerminator())
+    if (Opc != MSP430::POP16r && !PI->isTerminator())
       break;
     --MBBI;
   }
