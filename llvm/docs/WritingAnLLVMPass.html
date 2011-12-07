@@ -347,7 +347,7 @@ supplied as the fourth argument.</p>
   <b>struct Hello</b> : <b>public</b> <a href="#FunctionPass">FunctionPass</a> {
     
     static char ID;
-    Hello() : FunctionPass(ID) {}
+    Hello() : FunctionPass(&amp;ID) {}
 
     <b>virtual bool</b> <a href="#runOnFunction">runOnFunction</a>(Function &amp;F) {
       errs() &lt;&lt; "<i>Hello: </i>";
