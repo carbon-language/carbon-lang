@@ -215,7 +215,7 @@ namespace {
                              const std::vector<MachineInstr*> &CPEMIs);
     MachineBasicBlock *SplitBlockBeforeInstr(MachineInstr *MI);
     void UpdateForInsertedWaterBlock(MachineBasicBlock *NewBB);
-    void AdjustBBOffsetsAfter(MachineBasicBlock *BB, int delta);
+    void AdjustBBOffsetsAfter(MachineBasicBlock *BB);
     bool DecrementOldEntry(unsigned CPI, MachineInstr* CPEMI);
     int LookForExistingCPEntry(CPUser& U, unsigned UserOffset);
     bool LookForWater(CPUser&U, unsigned UserOffset, water_iterator &WaterIter);
@@ -869,7 +869,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
 
   // All BBOffsets following these blocks must be modified.
   if (delta)
-    AdjustBBOffsetsAfter(NewBB, delta);
+    AdjustBBOffsetsAfter(NewBB);
 
   return NewBB;
 }
@@ -967,12 +967,13 @@ static bool BBIsJumpedOver(MachineBasicBlock *MBB) {
 }
 #endif // NDEBUG
 
-void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB,
-                                              int delta) {
+void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB) {
   MachineFunction::iterator MBBI = BB; MBBI = llvm::next(MBBI);
   for(unsigned i = BB->getNumber()+1, e = BB->getParent()->getNumBlockIDs();
       i < e; ++i) {
-    BBInfo[i].Offset += delta;
+    unsigned OldOffset = BBInfo[i].Offset;
+    BBInfo[i].Offset = BBInfo[i-1].postOffset();
+    int delta = BBInfo[i].Offset - OldOffset;
     // If some existing blocks have padding, adjust the padding as needed, a
     // bit tricky.  delta can be negative so don't use % on that.
     if (!isThumb)
@@ -981,7 +982,6 @@ void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB,
     if (!MBB->empty() && !HasInlineAsm) {
       // Constant pool entries require padding.
       if (MBB->begin()->getOpcode() == ARM::CONSTPOOL_ENTRY) {
-        unsigned OldOffset = BBInfo[i].Offset - delta;
         if ((OldOffset%4) == 0 && (BBInfo[i].Offset%4) != 0) {
           // add new padding
           BBInfo[i].Size += 2;
@@ -1005,15 +1005,11 @@ void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB,
         if ((OldMIOffset%4) == 0 && (NewMIOffset%4) != 0) {
           // remove existing padding
           BBInfo[i].Size -= 2;
-          delta -= 2;
         } else if ((OldMIOffset%4) != 0 && (NewMIOffset%4) == 0) {
           // add new padding
           BBInfo[i].Size += 2;
-          delta += 2;
         }
       }
-      if (delta==0)
-        return;
     }
     MBBI = llvm::next(MBBI);
   }
@@ -1197,7 +1193,7 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
                           MaxDisp, false, UncondBr));
     int delta = isThumb1 ? 2 : 4;
     BBInfo[UserMBB->getNumber()].Size += delta;
-    AdjustBBOffsetsAfter(UserMBB, delta);
+    AdjustBBOffsetsAfter(UserMBB);
   } else {
     // What a big block.  Find a place within the block to split it.
     // This is a little tricky on Thumb1 since instructions are 2 bytes
@@ -1361,7 +1357,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &MF,
     Size += 2;
   // Increase the size of the island block to account for the new entry.
   BBInfo[NewIsland->getNumber()].Size += Size;
-  AdjustBBOffsetsAfter(NewIsland, Size);
+  AdjustBBOffsetsAfter(NewIsland);
 
   // Finally, change the CPI in the instruction operand to be ID.
   for (unsigned i = 0, e = UserMI->getNumOperands(); i != e; ++i)
@@ -1397,7 +1393,7 @@ void ARMConstantIslands::RemoveDeadCPEMI(MachineInstr *CPEMI) {
     // This block no longer needs to be aligned. <rdar://problem/10534709>.
     CPEBB->setAlignment(0);
   }
-  AdjustBBOffsetsAfter(CPEBB, -Size);
+  AdjustBBOffsetsAfter(CPEBB);
   // An island has only one predecessor BB and one successor BB. Check if
   // this BB's predecessor jumps directly to this BB's successor. This
   // shouldn't happen currently.
@@ -1477,7 +1473,7 @@ ARMConstantIslands::FixUpUnconditionalBr(MachineFunction &MF, ImmBranch &Br) {
   Br.MaxDisp = (1 << 21) * 2;
   MI->setDesc(TII->get(ARM::tBfar));
   BBInfo[MBB->getNumber()].Size += 2;
-  AdjustBBOffsetsAfter(MBB, 2);
+  AdjustBBOffsetsAfter(MBB);
   HasFarJump = true;
   ++NumUBrFixed;
 
@@ -1541,8 +1537,6 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &MF, ImmBranch &Br) {
     // branch to the destination.
     int delta = TII->GetInstSizeInBytes(&MBB->back());
     BBInfo[MBB->getNumber()].Size -= delta;
-    MachineBasicBlock* SplitBB = llvm::next(MachineFunction::iterator(MBB));
-    AdjustBBOffsetsAfter(SplitBB, -delta);
     MBB->back().eraseFromParent();
     // BBInfo[SplitBB].Offset is wrong temporarily, fixed below
   }
@@ -1570,10 +1564,7 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &MF, ImmBranch &Br) {
   // Remove the old conditional branch.  It may or may not still be in MBB.
   BBInfo[MI->getParent()->getNumber()].Size -= TII->GetInstSizeInBytes(MI);
   MI->eraseFromParent();
-
-  // The net size change is an addition of one unconditional branch.
-  int delta = TII->GetInstSizeInBytes(&MBB->back());
-  AdjustBBOffsetsAfter(MBB, delta);
+  AdjustBBOffsetsAfter(MBB);
   return true;
 }
 
@@ -1637,7 +1628,7 @@ bool ARMConstantIslands::OptimizeThumb2Instructions(MachineFunction &MF) {
       U.MI->setDesc(TII->get(NewOpc));
       MachineBasicBlock *MBB = U.MI->getParent();
       BBInfo[MBB->getNumber()].Size -= 2;
-      AdjustBBOffsetsAfter(MBB, -2);
+      AdjustBBOffsetsAfter(MBB);
       ++NumT2CPShrunk;
       MadeChange = true;
     }
@@ -1678,7 +1669,7 @@ bool ARMConstantIslands::OptimizeThumb2Branches(MachineFunction &MF) {
         Br.MI->setDesc(TII->get(NewOpc));
         MachineBasicBlock *MBB = Br.MI->getParent();
         BBInfo[MBB->getNumber()].Size -= 2;
-        AdjustBBOffsetsAfter(MBB, -2);
+        AdjustBBOffsetsAfter(MBB);
         ++NumT2BrShrunk;
         MadeChange = true;
       }
@@ -1720,7 +1711,7 @@ bool ARMConstantIslands::OptimizeThumb2Branches(MachineFunction &MF) {
             Br.MI->eraseFromParent();
             Br.MI = NewBR;
             BBInfo[MBB->getNumber()].Size -= 2;
-            AdjustBBOffsetsAfter(MBB, -2);
+            AdjustBBOffsetsAfter(MBB);
             ++NumCBZ;
             MadeChange = true;
           }
@@ -1847,7 +1838,7 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
 
       int delta = OrigSize - NewSize;
       BBInfo[MBB->getNumber()].Size -= delta;
-      AdjustBBOffsetsAfter(MBB, -delta);
+      AdjustBBOffsetsAfter(MBB);
 
       ++NumTBs;
       MadeChange = true;
