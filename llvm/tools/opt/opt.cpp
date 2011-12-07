@@ -407,6 +407,8 @@ static inline void addPass(PassManagerBase &PM, Pass *P) {
 /// OptLevel - Optimization Level
 static void AddOptimizationPasses(PassManagerBase &MPM,FunctionPassManager &FPM,
                                   unsigned OptLevel) {
+  FPM.add(createVerifierPass());                  // Verify that input is correct
+
   PassManagerBuilder Builder;
   Builder.OptLevel = OptLevel;
 
