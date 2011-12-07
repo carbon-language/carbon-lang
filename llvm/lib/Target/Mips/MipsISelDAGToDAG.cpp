@@ -87,7 +87,7 @@ private:
   bool SelectAddr(SDValue N, SDValue &Base, SDValue &Offset);
 
   // getI32Imm - Return a target constant with the specified
-  // value, of type i32.
+  // value.
   inline SDValue getImm(const SDNode *Node, unsigned Imm) {
     return CurDAG->getTargetConstant(Imm, Node->getValueType(0));
   }
