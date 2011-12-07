@@ -973,15 +973,15 @@ def : Pat<(add CPURegs:$hi, (MipsTprelLo tglobaltlsaddr:$lo)),
           (ADDiu CPURegs:$hi, tglobaltlsaddr:$lo)>;
 
 // wrapper_pic
-class WrapperPICPat<SDNode node>:
+class WrapperPICPat<SDNode node, Instruction ADDiuOp, Register GPReg>:
       Pat<(MipsWrapperPIC node:$in),
-          (ADDiu GP, node:$in)>;
+          (ADDiuOp GPReg, node:$in)>;
 
-def : WrapperPICPat<tglobaladdr>;
-def : WrapperPICPat<tconstpool>;
-def : WrapperPICPat<texternalsym>;
-def : WrapperPICPat<tblockaddress>;
-def : WrapperPICPat<tjumptable>;
+def : WrapperPICPat<tglobaladdr, ADDiu, GP>;
+def : WrapperPICPat<tconstpool, ADDiu, GP>;
+def : WrapperPICPat<texternalsym, ADDiu, GP>;
+def : WrapperPICPat<tblockaddress, ADDiu, GP>;
+def : WrapperPICPat<tjumptable, ADDiu, GP>;
 
 // Mips does not have "not", so we expand our way
 def : Pat<(not CPURegs:$in),
