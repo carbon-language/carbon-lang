@@ -3971,6 +3971,18 @@ def : t2InstAlias<"push${p} $regs", (t2STMDB_UPD SP, pred:$p, reglist:$regs)>;
 def : t2InstAlias<"pop${p}.w $regs", (t2LDMIA_UPD SP, pred:$p, reglist:$regs)>;
 def : t2InstAlias<"pop${p} $regs", (t2LDMIA_UPD SP, pred:$p, reglist:$regs)>;
 
+// STMIA/STMIA_UPD aliases w/o the optional .w suffix
+def : t2InstAlias<"stm${p} $Rn, $regs",
+                  (t2STMIA GPR:$Rn, pred:$p, reglist:$regs)>;
+def : t2InstAlias<"stm${p} $Rn!, $regs",
+                  (t2STMIA_UPD GPR:$Rn, pred:$p, reglist:$regs)>;
+
+// LDMIA/LDMIA_UPD aliases w/o the optional .w suffix
+def : t2InstAlias<"ldm${p} $Rn, $regs",
+                  (t2LDMIA GPR:$Rn, pred:$p, reglist:$regs)>;
+def : t2InstAlias<"ldm${p} $Rn!, $regs",
+                  (t2LDMIA_UPD GPR:$Rn, pred:$p, reglist:$regs)>;
+
 // STMDB/STMDB_UPD aliases w/ the optional .w suffix
 def : t2InstAlias<"stmdb${p}.w $Rn, $regs",
                   (t2STMDB GPR:$Rn, pred:$p, reglist:$regs)>;
