@@ -4199,7 +4199,12 @@ typedef struct {
   const CXIdxEntityInfo *entityInfo;
   CXCursor cursor;
   CXIdxLoc loc;
-  const CXIdxContainerInfo *container;
+  const CXIdxContainerInfo *semanticContainer;
+  /**
+   * \brief Generally same as \see semanticContainer but can be different in
+   * cases like out-of-line C++ member functions.
+   */
+  const CXIdxContainerInfo *lexicalContainer;
   int isRedeclaration;
   int isDefinition;
   int isContainer;
@@ -4279,6 +4284,7 @@ typedef enum {
  * \brief Data for \see indexEntityReference callback.
  */
 typedef struct {
+  CXIdxEntityRefKind kind;
   /**
    * \brief Reference cursor.
    */
@@ -4303,7 +4309,6 @@ typedef struct {
    * \brief Container context of the reference.
    */
   const CXIdxContainerInfo *container;
-  CXIdxEntityRefKind kind;
 } CXIdxEntityRefInfo;
 
 typedef struct {

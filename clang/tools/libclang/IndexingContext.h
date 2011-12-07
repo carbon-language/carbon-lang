@@ -54,7 +54,8 @@ struct DeclInfo : public CXIdxDeclInfo {
   DInfoKind Kind;
 
   EntityInfo EntInfo;
-  ContainerInfo Container;
+  ContainerInfo SemanticContainer;
+  ContainerInfo LexicalContainer;
   ContainerInfo DeclAsContainer;
 
   DeclInfo(bool isRedeclaration, bool isDefinition, bool isContainer)
@@ -64,7 +65,7 @@ struct DeclInfo : public CXIdxDeclInfo {
     this->isContainer = isContainer;
     attributes = 0;
     numAttributes = 0;
-    declAsContainer = container = 0;
+    declAsContainer = semanticContainer = lexicalContainer = 0;
   }
   DeclInfo(DInfoKind K,
            bool isRedeclaration, bool isDefinition, bool isContainer)
@@ -74,7 +75,7 @@ struct DeclInfo : public CXIdxDeclInfo {
     this->isContainer = isContainer;
     attributes = 0;
     numAttributes = 0;
-    declAsContainer = container = 0;
+    declAsContainer = semanticContainer = lexicalContainer = 0;
   }
 
   static bool classof(const DeclInfo *) { return true; }

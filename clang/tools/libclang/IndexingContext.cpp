@@ -239,8 +239,10 @@ bool IndexingContext::handleDecl(const NamedDecl *D,
   DInfo.attributes = AttrList.getAttrs();
   DInfo.numAttributes = AttrList.getNumAttrs();
 
-  getContainerInfo(D->getDeclContext(), DInfo.Container);
-  DInfo.container = &DInfo.Container;
+  getContainerInfo(D->getDeclContext(), DInfo.SemanticContainer);
+  getContainerInfo(D->getLexicalDeclContext(), DInfo.LexicalContainer);
+  DInfo.semanticContainer = &DInfo.SemanticContainer;
+  DInfo.lexicalContainer = &DInfo.LexicalContainer;
   if (DInfo.isContainer) {
     getContainerInfo(getEntityContainer(D), DInfo.DeclAsContainer);
     DInfo.declAsContainer = &DInfo.DeclAsContainer;
@@ -506,12 +508,12 @@ bool IndexingContext::handleReference(const NamedDecl *D, SourceLocation Loc,
   ContainerInfo Container;
   getContainerInfo(DC, Container);
 
-  CXIdxEntityRefInfo Info = { Cursor,
+  CXIdxEntityRefInfo Info = { Kind,
+                              Cursor,
                               getIndexLoc(Loc),
                               &RefEntity,
                               Parent ? &ParentEntity : 0,
-                              &Container,
-                              Kind };
+                              &Container };
   CB.indexEntityReference(ClientData, &Info);
   return true;
 }

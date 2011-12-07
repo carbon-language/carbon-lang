@@ -1801,8 +1801,10 @@ static void index_indexDeclaration(CXClientData client_data,
   PrintCursor(info->cursor);
   printf(" | loc: ");
   printCXIndexLoc(info->loc);
-  printf(" | container: ");
-  printCXIndexContainer(info->container);
+  printf(" | semantic-container: ");
+  printCXIndexContainer(info->semanticContainer);
+  printf(" | lexical-container: ");
+  printCXIndexContainer(info->lexicalContainer);
   printf(" | isRedecl: %d", info->isRedeclaration);
   printf(" | isDef: %d", info->isDefinition);
   printf(" | isContainer: %d", info->isContainer);
