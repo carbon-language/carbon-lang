@@ -377,7 +377,7 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                                          FrameIdx));
     } else {
       // FIXME: this spills LR immediately to memory in one step.  To do this,
-      // we use R11, which we know cannot be used in the prolog/epilog.  This is
+      // we use X11, which we know cannot be used in the prolog/epilog.  This is
       // a hack.
       NewMIs.push_back(BuildMI(MF, DL, get(PPC::MFLR8), PPC::X11));
       NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STD))
@@ -531,8 +531,8 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
                                          FrameIdx));
     } else {
       NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LD),
-                                                 PPC::R11), FrameIdx));
-      NewMIs.push_back(BuildMI(MF, DL, get(PPC::MTLR8)).addReg(PPC::R11));
+                                                 PPC::X11), FrameIdx));
+      NewMIs.push_back(BuildMI(MF, DL, get(PPC::MTLR8)).addReg(PPC::X11));
     }
   } else if (PPC::F8RCRegisterClass->hasSubClassEq(RC)) {
     NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::LFD), DestReg),
