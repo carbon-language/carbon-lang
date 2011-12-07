@@ -5321,6 +5321,20 @@ def : NEONInstAlias<"vadd${p}.f32 $Vdn, $Vm",
 def : NEONInstAlias<"vadd${p}.f32 $Vdn, $Vm",
                     (VADDfq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
 
+// VADDW two-operand aliases.
+def : NEONInstAlias<"vaddw${p}.s8 $Vdn, $Vm",
+                    (VADDWsv8i16 QPR:$Vdn, QPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vaddw${p}.s16 $Vdn, $Vm",
+                    (VADDWsv4i32 QPR:$Vdn, QPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vaddw${p}.s32 $Vdn, $Vm",
+                    (VADDWsv2i64 QPR:$Vdn, QPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vaddw${p}.u8 $Vdn, $Vm",
+                    (VADDWuv8i16 QPR:$Vdn, QPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vaddw${p}.u16 $Vdn, $Vm",
+                    (VADDWuv4i32 QPR:$Vdn, QPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vaddw${p}.u32 $Vdn, $Vm",
+                    (VADDWuv2i64 QPR:$Vdn, QPR:$Vdn, DPR:$Vm, pred:$p)>;
+
 // VAND/VEOR/VORR accept but do not require a type suffix.
 defm : VFPDTAnyInstAlias<"vand${p}", "$Vd, $Vn, $Vm",
                          (VANDd DPR:$Vd, DPR:$Vn, DPR:$Vm, pred:$p)>;

@@ -158,3 +158,20 @@
 @ CHECK: vadd.i16	q7, q7, q1      @ encoding: [0x42,0xe8,0x1e,0xf2]
 @ CHECK: vadd.i32	q8, q8, q2      @ encoding: [0xc4,0x08,0x60,0xf2]
 @ CHECK: vadd.i64	q9, q9, q3      @ encoding: [0xc6,0x28,0x72,0xf2]
+
+
+	vaddw.s8  q6, d5
+	vaddw.s16 q7, d1
+	vaddw.s32 q8, d2
+
+	vaddw.u8  q6, d5
+	vaddw.u16 q7, d1
+	vaddw.u32 q8, d2
+
+@ CHECK: vaddw.s8	q6, q6, d5      @ encoding: [0x05,0xc1,0x8c,0xf2]
+@ CHECK: vaddw.s16	q7, q7, d1      @ encoding: [0x01,0xe1,0x9e,0xf2]
+@ CHECK: vaddw.s32	q8, q8, d2      @ encoding: [0x82,0x01,0xe0,0xf2]
+
+@ CHECK: vaddw.u8	q6, q6, d5      @ encoding: [0x05,0xc1,0x8c,0xf3]
+@ CHECK: vaddw.u16	q7, q7, d1      @ encoding: [0x01,0xe1,0x9e,0xf3]
+@ CHECK: vaddw.u32	q8, q8, d2      @ encoding: [0x82,0x01,0xe0,0xf3]
