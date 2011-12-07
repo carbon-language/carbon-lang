@@ -103,8 +103,6 @@ public:
 
   /// \brief Iterator over blocks within the chain.
   typedef SmallVectorImpl<MachineBasicBlock *>::const_iterator iterator;
-  typedef SmallVectorImpl<MachineBasicBlock *>::const_reverse_iterator
-      reverse_iterator;
 
   /// \brief Beginning of blocks within the chain.
   iterator begin() const { return Blocks.begin(); }
