@@ -42,6 +42,7 @@
 #include "isl/aff.h"
 #include "isl/printer.h"
 #include "isl/local_space.h"
+#include "isl/options.h"
 #include <sstream>
 #include <string>
 #include <vector>
@@ -1055,6 +1056,7 @@ void Scop::buildScop(TempScop &tempScop,
 //===----------------------------------------------------------------------===//
 ScopInfo::ScopInfo() : RegionPass(ID), scop(0) {
   ctx = isl_ctx_alloc();
+  isl_options_set_on_error(ctx, ISL_ON_ERROR_ABORT);
 }
 
 ScopInfo::~ScopInfo() {
