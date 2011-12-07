@@ -238,11 +238,6 @@ def so_imm_not_XFORM : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(~(int)N->getZExtValue(), MVT::i32);
 }]>;
 
-/// imm1_15 predicate - True if the 32-bit immediate is in the range [1,15].
-def imm1_15 : ImmLeaf<i32, [{
-  return (int32_t)Imm >= 1 && (int32_t)Imm < 16;
-}]>;
-
 /// imm16_31 predicate - True if the 32-bit immediate is in the range [16,31].
 def imm16_31 : ImmLeaf<i32, [{
   return (int32_t)Imm >= 16 && (int32_t)Imm < 32;
@@ -526,6 +521,42 @@ def imm0_7 : Operand<i32>, ImmLeaf<i32, [{
   return Imm >= 0 && Imm < 8;
 }]> {
   let ParserMatchClass = Imm0_7AsmOperand;
+}
+
+/// imm8 predicate - Immediate is exactly 8.
+def Imm8AsmOperand: ImmAsmOperand { let Name = "Imm8"; }
+def imm8 : Operand<i32>, ImmLeaf<i32, [{ return Imm == 8; }]> {
+  let ParserMatchClass = Imm8AsmOperand;
+}
+
+/// imm16 predicate - Immediate is exactly 16.
+def Imm16AsmOperand: ImmAsmOperand { let Name = "Imm16"; }
+def imm16 : Operand<i32>, ImmLeaf<i32, [{ return Imm == 16; }]> {
+  let ParserMatchClass = Imm16AsmOperand;
+}
+
+/// imm32 predicate - Immediate is exactly 32.
+def Imm32AsmOperand: ImmAsmOperand { let Name = "Imm32"; }
+def imm32 : Operand<i32>, ImmLeaf<i32, [{ return Imm == 32; }]> {
+  let ParserMatchClass = Imm32AsmOperand;
+}
+
+/// imm1_7 predicate - Immediate in the range [1,7].
+def Imm1_7AsmOperand: ImmAsmOperand { let Name = "Imm1_7"; }
+def imm1_7 : Operand<i32>, ImmLeaf<i32, [{ return Imm > 0 && Imm < 8; }]> {
+  let ParserMatchClass = Imm1_7AsmOperand;
+}
+
+/// imm1_15 predicate - Immediate in the range [1,15].
+def Imm1_15AsmOperand: ImmAsmOperand { let Name = "Imm1_15"; }
+def imm1_15 : Operand<i32>, ImmLeaf<i32, [{ return Imm > 0 && Imm < 16; }]> {
+  let ParserMatchClass = Imm1_15AsmOperand;
+}
+
+/// imm1_31 predicate - Immediate in the range [1,31].
+def Imm1_31AsmOperand: ImmAsmOperand { let Name = "Imm1_31"; }
+def imm1_31 : Operand<i32>, ImmLeaf<i32, [{ return Imm > 0 && Imm < 32; }]> {
+  let ParserMatchClass = Imm1_31AsmOperand;
 }
 
 /// imm0_15 predicate - Immediate in the range [0,15].

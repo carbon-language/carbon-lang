@@ -3567,15 +3567,15 @@ multiclass N2VShInsR_QHSD<bit op24, bit op23, bits<4> op11_8, bit op4,
 multiclass N2VLSh_QHS<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6,
                       bit op4, string OpcodeStr, string Dt, SDNode OpNode> {
   def v8i16 : N2VLSh<op24, op23, op11_8, op7, op6, op4,
-               OpcodeStr, !strconcat(Dt, "8"), v8i16, v8i8, i32imm, OpNode> {
+              OpcodeStr, !strconcat(Dt, "8"), v8i16, v8i8, imm1_7, OpNode> {
     let Inst{21-19} = 0b001; // imm6 = 001xxx
   }
   def v4i32 : N2VLSh<op24, op23, op11_8, op7, op6, op4,
-                OpcodeStr, !strconcat(Dt, "16"), v4i32, v4i16, i32imm, OpNode> {
+               OpcodeStr, !strconcat(Dt, "16"), v4i32, v4i16, imm1_15, OpNode> {
     let Inst{21-20} = 0b01;  // imm6 = 01xxxx
   }
   def v2i64 : N2VLSh<op24, op23, op11_8, op7, op6, op4,
-                OpcodeStr, !strconcat(Dt, "32"), v2i64, v2i32, i32imm, OpNode> {
+               OpcodeStr, !strconcat(Dt, "32"), v2i64, v2i32, imm1_31, OpNode> {
     let Inst{21} = 0b1;      // imm6 = 1xxxxx
   }
 }
@@ -4382,11 +4382,11 @@ class N2VLShMax<bit op24, bit op23, bits<6> op21_16, bits<4> op11_8, bit op7,
   let DecoderMethod = "DecodeVSHLMaxInstruction";
 }
 def  VSHLLi8  : N2VLShMax<1, 1, 0b110010, 0b0011, 0, 0, 0, "vshll", "i8",
-                          v8i16, v8i8, i32imm, NEONvshlli>;
+                          v8i16, v8i8, imm8, NEONvshlli>;
 def  VSHLLi16 : N2VLShMax<1, 1, 0b110110, 0b0011, 0, 0, 0, "vshll", "i16",
-                          v4i32, v4i16, i32imm, NEONvshlli>;
+                          v4i32, v4i16, imm16, NEONvshlli>;
 def  VSHLLi32 : N2VLShMax<1, 1, 0b111010, 0b0011, 0, 0, 0, "vshll", "i32",
-                          v2i64, v2i32, i32imm, NEONvshlli>;
+                          v2i64, v2i32, imm32, NEONvshlli>;
 
 //   VSHRN    : Vector Shift Right and Narrow
 defm VSHRN    : N2VNSh_HSD<0,1,0b1000,0,0,1, IIC_VSHLiD, "vshrn", "i",
