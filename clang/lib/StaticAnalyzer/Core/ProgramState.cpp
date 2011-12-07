@@ -665,7 +665,7 @@ const ProgramState* ProgramState::addTaint(SymbolRef Sym,
 
 bool ProgramState::isTainted(const Stmt *S, TaintTagType Kind) const {
   SVal val = getSVal(S);
-  return isTainted(getSVal(S), Kind);
+  return isTainted(val, Kind);
 }
 
 bool ProgramState::isTainted(SVal V, TaintTagType Kind) const {
