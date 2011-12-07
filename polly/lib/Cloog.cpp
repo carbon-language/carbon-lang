@@ -152,6 +152,15 @@ void Cloog::buildCloogOptions() {
   Options->strides = 1;
   Options->save_domains = 1;
   Options->noscalars = 1;
+
+  // The last loop depth to optimize should be the last scattering dimension.
+  // CLooG by default will continue to split the loops even after the last
+  // scattering dimension. This splitting is problematic for the schedules
+  // calculated by the PoCC/isl/Pluto optimizer. Such schedules contain may
+  // not be fully defined, but statements without dependences may be mapped
+  // to the same exeuction time. For such schedules, continuing to split
+  // may lead to a larger set of if-conditions in the innermost loop.
+  Options->l = 0;
 }
 
 CloogUnionDomain *Cloog::buildCloogUnionDomain() {
