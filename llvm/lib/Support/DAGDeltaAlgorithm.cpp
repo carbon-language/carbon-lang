@@ -350,6 +350,9 @@ DAGDeltaAlgorithmImpl::Run() {
   return Required;
 }
 
+void DAGDeltaAlgorithm::anchor() {
+}
+
 DAGDeltaAlgorithm::changeset_ty
 DAGDeltaAlgorithm::Run(const changeset_ty &Changes,
                        const std::vector<edge_ty> &Dependencies) {
