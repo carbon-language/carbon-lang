@@ -530,7 +530,7 @@ void MachineBlockPlacement::buildChain(
     markChainSuccessors(SuccChain, LoopHeaderBB, BlockWorkList, BlockFilter);
     Chain.merge(BestSucc, &SuccChain);
     BB = *llvm::prior(Chain.end());
-  };
+  }
 
   DEBUG(dbgs() << "Finished forming chain for header block "
                << getBlockNum(*Chain.begin()) << "\n");
@@ -681,8 +681,8 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
   // walk the blocks, and use a set to prevent visiting a particular chain
   // twice.
   SmallPtrSet<BlockChain *, 4> UpdatedPreds;
-  assert(BlockToChain[LayoutTop]->LoopPredecessors == 0);
-  UpdatedPreds.insert(BlockToChain[LayoutTop]);
+  assert(LoopChain.LoopPredecessors == 0);
+  UpdatedPreds.insert(&LoopChain);
   for (MachineLoop::block_iterator BI = L.block_begin(),
                                    BE = L.block_end();
        BI != BE; ++BI) {
