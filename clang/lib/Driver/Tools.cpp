@@ -1109,11 +1109,13 @@ static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
       !Args.hasFlag(options::OPT_faddress_sanitizer,
                     options::OPT_fno_address_sanitizer, false))
     return;
-  // LibAsan is "../lib/clang/linux/ArchName/libclang_rt.asan.a"
-  llvm::SmallString<128> LibAsan =
-      llvm::sys::path::parent_path(StringRef(TC.getDriver().Dir));
-  llvm::sys::path::append(LibAsan, "lib", "clang", "linux", TC.getArchName());
-  llvm::sys::path::append(LibAsan, "libclang_rt.asan.a");
+
+  // LibAsan is "libclang_rt.asan-<ArchName>.a" in the Linux library resource
+  // directory.
+  llvm::SmallString<128> LibAsan(TC.getDriver().ResourceDir);
+  llvm::sys::path::append(LibAsan, "lib", "linux",
+                          (Twine("libclang_rt.asan-") +
+                           TC.getArchName() + ".a"));
   CmdArgs.push_back(Args.MakeArgString(LibAsan));
   CmdArgs.push_back("-lpthread");
   CmdArgs.push_back("-ldl");
