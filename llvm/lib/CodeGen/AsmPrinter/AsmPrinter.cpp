@@ -1642,6 +1642,28 @@ static void EmitGlobalConstantVector(const ConstantVector *CV,
     AP.OutStreamer.EmitZeros(Padding, AddrSpace);
 }
 
+static void LowerVectorConstant(const Constant *CV, unsigned AddrSpace,
+                                AsmPrinter &AP) {
+  // Look through bitcasts
+  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV))
+    if (CE->getOpcode() == Instruction::BitCast)
+      CV = CE->getOperand(0);
+
+  if (const ConstantVector *V = dyn_cast<ConstantVector>(CV))
+    return EmitGlobalConstantVector(V, AddrSpace, AP);
+
+  // If we get here, we're stuck; report the problem to the user.
+  // FIXME: Are there any other useful tricks for vectors?
+  {
+    std::string S;
+    raw_string_ostream OS(S);
+    OS << "Unsupported vector expression in static initializer: ";
+    WriteAsOperand(OS, CV, /*PrintType=*/false,
+                   !AP.MF ? 0 : AP.MF->getFunction()->getParent());
+    report_fatal_error(OS.str());
+  }
+}
+
 static void EmitGlobalConstantStruct(const ConstantStruct *CS,
                                      unsigned AddrSpace, AsmPrinter &AP) {
   // Print the fields in successive locations. Pad to align if needed!
@@ -1796,8 +1818,8 @@ static void EmitGlobalConstantImpl(const Constant *CV, unsigned AddrSpace,
     return;
   }
 
-  if (const ConstantVector *V = dyn_cast<ConstantVector>(CV))
-    return EmitGlobalConstantVector(V, AddrSpace, AP);
+  if (CV->getType()->isVectorTy())
+    return LowerVectorConstant(CV, AddrSpace, AP);
 
   // Otherwise, it must be a ConstantExpr.  Lower it to an MCExpr, then emit it
   // thread the streamer with EmitValue.
