@@ -138,7 +138,8 @@ void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
 unsigned PPCCodeEmitter::get_crbitm_encoding(const MachineInstr &MI,
                                              unsigned OpNo) const {
   const MachineOperand &MO = MI.getOperand(OpNo);
-  assert((MI.getOpcode() == PPC::MTCRF || MI.getOpcode() == PPC::MFOCRF) &&
+  assert((MI.getOpcode() == PPC::MTCRF || MI.getOpcode() == PPC::MTCRF8 ||
+            MI.getOpcode() == PPC::MFOCRF) &&
          (MO.getReg() >= PPC::CR0 && MO.getReg() <= PPC::CR7));
   return 0x80 >> getPPCRegisterNumbering(MO.getReg());
 }
@@ -248,7 +249,8 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
   if (MO.isReg()) {
     // MTCRF/MFOCRF should go through get_crbitm_encoding for the CR operand.
     // The GPR operand should come through here though.
-    assert((MI.getOpcode() != PPC::MTCRF && MI.getOpcode() != PPC::MFOCRF) ||
+    assert((MI.getOpcode() != PPC::MTCRF && MI.getOpcode() != PPC::MTCRF8 &&
+             MI.getOpcode() != PPC::MFOCRF) ||
            MO.getReg() < PPC::CR0 || MO.getReg() > PPC::CR7);
     return getPPCRegisterNumbering(MO.getReg());
   }

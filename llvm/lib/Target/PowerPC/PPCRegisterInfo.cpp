@@ -473,14 +473,14 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
 
   // We need to store the CR in the low 4-bits of the saved value. First, issue
   // an MFCRpsued to save all of the CRBits and, if needed, kill the SrcReg.
-  BuildMI(MBB, II, dl, TII.get(PPC::MFCRpseud), Reg)
+  BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::MFCR8pseud : PPC::MFCRpseud), Reg)
           .addReg(SrcReg, getKillRegState(MI.getOperand(0).isKill()));
     
   // If the saved register wasn't CR0, shift the bits left so that they are in
   // CR0's slot.
   if (SrcReg != PPC::CR0)
     // rlwinm rA, rA, ShiftBits, 0, 31.
-    BuildMI(MBB, II, dl, TII.get(PPC::RLWINM), Reg)
+    BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::RLWINM8 : PPC::RLWINM), Reg)
       .addReg(Reg, RegState::Kill)
       .addImm(getPPCRegisterNumbering(SrcReg) * 4)
       .addImm(0)
@@ -525,7 +525,7 @@ void PPCRegisterInfo::lowerCRRestore(MachineBasicBlock::iterator II,
              .addImm(31);
   }
 
-  BuildMI(MBB, II, dl, TII.get(PPC::MTCRF), DestReg)
+  BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::MTCRF8 : PPC::MTCRF), DestReg)
              .addReg(Reg);
 
   // Discard the pseudo instruction.

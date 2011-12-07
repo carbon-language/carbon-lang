@@ -365,11 +365,12 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
       
   case PPC::MFCRpseud:
+  case PPC::MFCR8pseud:
     // Transform: %R3 = MFCRpseud %CR7
     // Into:      %R3 = MFCR      ;; cr7
     OutStreamer.AddComment(PPCInstPrinter::
                            getRegisterName(MI->getOperand(1).getReg()));
-    TmpInst.setOpcode(PPC::MFCR);
+    TmpInst.setOpcode(Subtarget.isPPC64() ? PPC::MFCR8 : PPC::MFCR);
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
     OutStreamer.EmitInstruction(TmpInst);
     return;

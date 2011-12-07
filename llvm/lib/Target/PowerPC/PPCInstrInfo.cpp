@@ -410,11 +410,14 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
       // We hack this on Darwin by reserving R2.  It's probably broken on Linux
       // at the moment.
 
+      bool is64Bit = TM.getSubtargetImpl()->isPPC64();
       // We need to store the CR in the low 4-bits of the saved value.  First,
       // issue a MFCR to save all of the CRBits.
       unsigned ScratchReg = TM.getSubtargetImpl()->isDarwinABI() ?
-                                                           PPC::R2 : PPC::R0;
-      NewMIs.push_back(BuildMI(MF, DL, get(PPC::MFCRpseud), ScratchReg)
+                              (is64Bit ? PPC::X2 : PPC::R2) :
+                              (is64Bit ? PPC::X0 : PPC::R0);
+      NewMIs.push_back(BuildMI(MF, DL, get(is64Bit ? PPC::MFCR8pseud :
+                                             PPC::MFCRpseud), ScratchReg)
                                .addReg(SrcReg, getKillRegState(isKill)));
 
       // If the saved register wasn't CR0, shift the bits left so that they are
@@ -422,12 +425,14 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
       if (SrcReg != PPC::CR0) {
         unsigned ShiftBits = getPPCRegisterNumbering(SrcReg)*4;
         // rlwinm scratch, scratch, ShiftBits, 0, 31.
-        NewMIs.push_back(BuildMI(MF, DL, get(PPC::RLWINM), ScratchReg)
+        NewMIs.push_back(BuildMI(MF, DL, get(is64Bit ? PPC::RLWINM8 :
+                           PPC::RLWINM), ScratchReg)
                        .addReg(ScratchReg).addImm(ShiftBits)
                        .addImm(0).addImm(31));
       }
 
-      NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(PPC::STW))
+      NewMIs.push_back(addFrameReference(BuildMI(MF, DL, get(is64Bit ?
+                                           PPC::STW8 : PPC::STW))
                                          .addReg(ScratchReg,
                                                  getKillRegState(isKill)),
                                          FrameIdx));
@@ -568,7 +573,8 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
                       .addImm(31));
       }
   
-      NewMIs.push_back(BuildMI(MF, DL, get(PPC::MTCRF), DestReg)
+      NewMIs.push_back(BuildMI(MF, DL, get(TM.getSubtargetImpl()->isPPC64() ?
+                         PPC::MTCRF8 : PPC::MTCRF), DestReg)
                        .addReg(ScratchReg));
     }
   } else if (PPC::CRBITRCRegisterClass->hasSubClassEq(RC)) {
