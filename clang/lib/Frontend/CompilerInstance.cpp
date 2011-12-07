@@ -1026,7 +1026,8 @@ static void compileModule(CompilerInstance &ImportingInstance,
                                    TempModuleMapFileName,
                                    /*makeAbsolute=*/true)
           != llvm::errc::success) {
-      // FIXME: Give a sensible error message here.
+      ImportingInstance.getDiagnostics().Report(diag::err_module_map_temp_file)
+        << TempModuleMapFileName;
       return;
     }
     // Print the module map to this file.

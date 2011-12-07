@@ -183,5 +183,6 @@ def err_missing_umbrella_header : Error<
 def err_no_submodule : Error<"no submodule named %0 in module '%1'">;
 def err_no_submodule_suggest : Error<
   "no submodule named %0 in module '%1'; did you mean '%2'?">;
-
+def err_module_map_temp_file : Error<
+  "unable to write temporary module map file '%0'">, DefaultFatal;
 }
