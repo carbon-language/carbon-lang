@@ -614,8 +614,9 @@ class ByteSwap<bits<6> func, bits<5> sa, string instr_asm>:
 }
 
 // Read Hardware
-class ReadHardware: FR<0x1f, 0x3b, (outs CPURegs:$rt), (ins HWRegs:$rd),
-    "rdhwr\t$rt, $rd", [], IIAlu> {
+class ReadHardware<RegisterClass CPURegClass, RegisterClass HWRegClass>
+  : FR<0x1f, 0x3b, (outs CPURegClass:$rt), (ins HWRegClass:$rd),
+       "rdhwr\t$rt, $rd", [], IIAlu> {
   let rs = 0;
   let shamt = 0;
 }
@@ -901,7 +902,7 @@ def MSUBU : MArithR<5, "msubu", MipsMSubu>;
 def MUL   : ArithLogicR<0x1c, 0x02, "mul", mul, IIImul, CPURegs, 1>,
             Requires<[HasMips32]>;
 
-def RDHWR : ReadHardware;
+def RDHWR : ReadHardware<CPURegs, HWRegs>;
 
 def EXT : ExtBase<0, "ext", CPURegs>;
 def INS : InsBase<4, "ins", CPURegs>;

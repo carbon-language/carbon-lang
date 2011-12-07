@@ -219,6 +219,8 @@ let Uses = [SP_64] in
 def DynAlloc64 : EffectiveAddress<"daddiu\t$rt, $addr", CPU64Regs, mem_ea_64>,
                  Requires<[IsN64]>;
 
+def RDHWR64 : ReadHardware<CPU64Regs, HWRegs64>;
+
 def DEXT : ExtBase<3, "dext", CPU64Regs>;
 def DINS : InsBase<7, "dins", CPU64Regs>;
 
