@@ -86,8 +86,7 @@ private:
   // Complex Pattern.
   bool SelectAddr(SDValue N, SDValue &Base, SDValue &Offset);
 
-  // getI32Imm - Return a target constant with the specified
-  // value.
+  // getImm - Return a target constant with the specified value.
   inline SDValue getImm(const SDNode *Node, unsigned Imm) {
     return CurDAG->getTargetConstant(Imm, Node->getValueType(0));
   }
