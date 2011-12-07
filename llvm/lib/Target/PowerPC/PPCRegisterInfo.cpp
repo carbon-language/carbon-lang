@@ -239,7 +239,7 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     if (Subtarget.isSVR4ABI()) {
       Reserved.set(PPC::X2);
     }
-    // Reserve R2 on Darwin to hack around the problem of save/restore of CR
+    // Reserve X2 on Darwin to hack around the problem of save/restore of CR
     // when the stack frame is too big to address directly; we need two regs.
     // This is a hack.
     if (Subtarget.isDarwinABI()) {
@@ -589,8 +589,11 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 
   // Replace the FrameIndex with base register with GPR1 (SP) or GPR31 (FP).
+
+  bool is64Bit = Subtarget.isPPC64();
   MI.getOperand(FIOperandNo).ChangeToRegister(TFI->hasFP(MF) ?
-                                              PPC::R31 : PPC::R1,
+                                              (is64Bit ? PPC::X31 : PPC::R31) :
+                                                (is64Bit ? PPC::X1 : PPC::R1),
                                               false);
 
   // Figure out if the offset in the instruction is shifted right two bits. This
@@ -638,15 +641,17 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // offset in.
 
   unsigned SReg;
-  if (requiresRegisterScavenging(MF))
-    SReg = findScratchRegister(II, RS, &PPC::GPRCRegClass, SPAdj);
-  else
-    SReg = PPC::R0;
+  if (requiresRegisterScavenging(MF)) {
+    const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
+    const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
+    SReg = findScratchRegister(II, RS, is64Bit ? G8RC : GPRC, SPAdj);
+  } else
+    SReg = is64Bit ? PPC::X0 : PPC::R0;
 
   // Insert a set of rA with the full offset value before the ld, st, or add
-  BuildMI(MBB, II, dl, TII.get(PPC::LIS), SReg)
+  BuildMI(MBB, II, dl, TII.get(is64Bit ? PPC::LIS8 : PPC::LIS), SReg)
     .addImm(Offset >> 16);
-  BuildMI(MBB, II, dl, TII.get(PPC::ORI), SReg)
+  BuildMI(MBB, II, dl, TII.get(is64Bit ? PPC::ORI8 : PPC::ORI), SReg)
     .addReg(SReg, RegState::Kill)
     .addImm(Offset);
 
