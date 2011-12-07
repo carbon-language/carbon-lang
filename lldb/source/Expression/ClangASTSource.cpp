@@ -581,6 +581,7 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
             clang::ASTContext &backing_ast_context = backing_interface_decl->getASTContext();
             
             llvm::SmallVector<clang::IdentifierInfo *, 3> selector_components;
+            int num_arguments = 0;
 
             if (decl_name.isObjCZeroArgSelector())
             {
@@ -589,6 +590,7 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
             else if (decl_name.isObjCOneArgSelector())
             {
                 selector_components.push_back (&backing_ast_context.Idents.get(decl_name.getAsString().c_str()));
+                num_arguments = 1;
             }
             else
             {    
@@ -601,10 +603,11 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
                     llvm::StringRef r = sel.getNameForSlot(i);
 
                     selector_components.push_back (&backing_ast_context.Idents.get(r.str().c_str()));
+                    num_arguments++;
                 }
             }     
             
-            Selector backing_selector = backing_interface_decl->getASTContext().Selectors.getSelector(selector_components.size(), selector_components.data());
+            Selector backing_selector = backing_interface_decl->getASTContext().Selectors.getSelector(num_arguments, selector_components.data());
             DeclarationName backing_decl_name = DeclarationName(backing_selector);
             
             DeclContext::lookup_const_result lookup_result = backing_interface_decl->lookup(backing_decl_name);
@@ -618,6 +621,12 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
                 continue;
             
             Decl *copied_decl = m_ast_importer->CopyDecl(m_ast_context, &backing_ast_context, *lookup_result.first);
+            
+            if (!copied_decl)
+            {
+                log->Printf("  CAS::FOMD[%d] couldn't import method from symbols", current_id);
+                continue;
+            }
             
             ObjCMethodDecl *copied_method_decl = dyn_cast<ObjCMethodDecl> (copied_decl);
             
