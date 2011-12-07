@@ -1641,7 +1641,6 @@ static const char *getEntityKindString(CXIdxEntityKind kind) {
   case CXIdxEntity_CXXNamespace: return "namespace";
   case CXIdxEntity_CXXNamespaceAlias: return "namespace-alias";
   case CXIdxEntity_CXXStaticVariable: return "c++-static-var";
-  case CXIdxEntity_CXXInstanceVariable: return "c++-instance-var";
   case CXIdxEntity_CXXStaticMethod: return "c++-static-method";
   case CXIdxEntity_CXXInstanceMethod: return "c++-instance-method";
   case CXIdxEntity_CXXConstructor: return "constructor";
@@ -1665,6 +1664,17 @@ static const char *getEntityTemplateKindString(CXIdxEntityCXXTemplateKind kind) 
   return 0;
 }
 
+static const char *getEntityLanguageString(CXIdxEntityLanguage kind) {
+  switch (kind) {
+  case CXIdxEntityLang_None: return "<none>";
+  case CXIdxEntityLang_C: return "C";
+  case CXIdxEntityLang_ObjC: return "ObjC";
+  case CXIdxEntityLang_CXX: return "C++";
+  }
+  assert(0 && "Garbage language kind");
+  return 0;
+}
+
 static void printEntityInfo(const char *cb,
                             CXClientData client_data,
                             const CXIdxEntityInfo *info) {
@@ -1684,6 +1694,7 @@ static void printEntityInfo(const char *cb,
 
   printf("%s: kind: %s%s", cb, getEntityKindString(info->kind),
          getEntityTemplateKindString(info->templateKind));
+  printf(" | lang: %s", getEntityLanguageString(info->lang));
   printf(" | name: %s", name);
   printf(" | USR: %s", info->USR);
 }

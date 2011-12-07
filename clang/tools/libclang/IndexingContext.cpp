@@ -705,6 +705,7 @@ void IndexingContext::getEntityInfo(const NamedDecl *D,
   EntityInfo.IndexCtx = this;
   EntityInfo.kind = CXIdxEntity_Unexposed;
   EntityInfo.templateKind = CXIdxEntity_NonTemplate;
+  EntityInfo.lang = CXIdxEntityLang_C;
 
   if (const TagDecl *TD = dyn_cast<TagDecl>(D)) {
     switch (TD->getTagKind()) {
@@ -713,15 +714,18 @@ void IndexingContext::getEntityInfo(const NamedDecl *D,
     case TTK_Union:
       EntityInfo.kind = CXIdxEntity_Union; break;
     case TTK_Class:
-      EntityInfo.kind = CXIdxEntity_CXXClass; break;
+      EntityInfo.kind = CXIdxEntity_CXXClass;
+      EntityInfo.lang = CXIdxEntityLang_CXX;
+      break;
     case TTK_Enum:
       EntityInfo.kind = CXIdxEntity_Enum; break;
     }
 
     if (const CXXRecordDecl *CXXRec = dyn_cast<CXXRecordDecl>(D)) {
-      if (TD->getTagKind() == TTK_Struct &&
-          CXXRec->hasDefinition() && !CXXRec->isPOD())
-        EntityInfo.kind = CXIdxEntity_CXXClass;
+      // FIXME: isPOD check is not sufficient, a POD can contain methods,
+      // we want a isCStructLike check.
+      if (CXXRec->hasDefinition() && !CXXRec->isPOD())
+        EntityInfo.lang = CXIdxEntityLang_CXX;
     }
 
     if (isa<ClassTemplatePartialSpecializationDecl>(D)) {
@@ -739,50 +743,77 @@ void IndexingContext::getEntityInfo(const NamedDecl *D,
       break;
     case Decl::Var:
       EntityInfo.kind = CXIdxEntity_Variable;
-      if (isa<CXXRecordDecl>(D->getDeclContext()))
+      if (isa<CXXRecordDecl>(D->getDeclContext())) {
         EntityInfo.kind = CXIdxEntity_CXXStaticVariable;
+        EntityInfo.lang = CXIdxEntityLang_CXX;
+      }
       break;
     case Decl::Field:
       EntityInfo.kind = CXIdxEntity_Field;
       if (const CXXRecordDecl *
-            CXXRec = dyn_cast<CXXRecordDecl>(D->getDeclContext()))
+            CXXRec = dyn_cast<CXXRecordDecl>(D->getDeclContext())) {
+        // FIXME: isPOD check is not sufficient, a POD can contain methods,
+        // we want a isCStructLike check.
         if (!CXXRec->isPOD())
-          EntityInfo.kind = CXIdxEntity_CXXInstanceVariable;
+          EntityInfo.lang = CXIdxEntityLang_CXX;
+      }
       break;
     case Decl::EnumConstant:
       EntityInfo.kind = CXIdxEntity_EnumConstant; break;
     case Decl::ObjCInterface:
-      EntityInfo.kind = CXIdxEntity_ObjCClass; break;
+      EntityInfo.kind = CXIdxEntity_ObjCClass;
+      EntityInfo.lang = CXIdxEntityLang_ObjC;
+      break;
     case Decl::ObjCProtocol:
-      EntityInfo.kind = CXIdxEntity_ObjCProtocol; break;
+      EntityInfo.kind = CXIdxEntity_ObjCProtocol;
+      EntityInfo.lang = CXIdxEntityLang_ObjC;
+      break;
     case Decl::ObjCCategory:
-      EntityInfo.kind = CXIdxEntity_ObjCCategory; break;
+      EntityInfo.kind = CXIdxEntity_ObjCCategory;
+      EntityInfo.lang = CXIdxEntityLang_ObjC;
+      break;
     case Decl::ObjCMethod:
       if (cast<ObjCMethodDecl>(D)->isInstanceMethod())
         EntityInfo.kind = CXIdxEntity_ObjCInstanceMethod;
       else
         EntityInfo.kind = CXIdxEntity_ObjCClassMethod;
+      EntityInfo.lang = CXIdxEntityLang_ObjC;
       break;
     case Decl::ObjCProperty:
-      EntityInfo.kind = CXIdxEntity_ObjCProperty; break;
+      EntityInfo.kind = CXIdxEntity_ObjCProperty;
+      EntityInfo.lang = CXIdxEntityLang_ObjC;
+      break;
     case Decl::ObjCIvar:
-      EntityInfo.kind = CXIdxEntity_ObjCIvar; break;
+      EntityInfo.kind = CXIdxEntity_ObjCIvar;
+      EntityInfo.lang = CXIdxEntityLang_ObjC;
+      break;
     case Decl::Namespace:
-      EntityInfo.kind = CXIdxEntity_CXXNamespace; break;
+      EntityInfo.kind = CXIdxEntity_CXXNamespace;
+      EntityInfo.lang = CXIdxEntityLang_CXX;
+      break;
     case Decl::NamespaceAlias:
-      EntityInfo.kind = CXIdxEntity_CXXNamespaceAlias; break;
+      EntityInfo.kind = CXIdxEntity_CXXNamespaceAlias;
+      EntityInfo.lang = CXIdxEntityLang_CXX;
+      break;
     case Decl::CXXConstructor:
-      EntityInfo.kind = CXIdxEntity_CXXConstructor; break;
+      EntityInfo.kind = CXIdxEntity_CXXConstructor;
+      EntityInfo.lang = CXIdxEntityLang_CXX;
+      break;
     case Decl::CXXDestructor:
-      EntityInfo.kind = CXIdxEntity_CXXDestructor; break;
+      EntityInfo.kind = CXIdxEntity_CXXDestructor;
+      EntityInfo.lang = CXIdxEntityLang_CXX;
+      break;
     case Decl::CXXConversion:
-      EntityInfo.kind = CXIdxEntity_CXXConversionFunction; break;
+      EntityInfo.kind = CXIdxEntity_CXXConversionFunction;
+      EntityInfo.lang = CXIdxEntityLang_CXX;
+      break;
     case Decl::CXXMethod: {
       const CXXMethodDecl *MD = cast<CXXMethodDecl>(D);
       if (MD->isStatic())
         EntityInfo.kind = CXIdxEntity_CXXStaticMethod;
       else
         EntityInfo.kind = CXIdxEntity_CXXInstanceMethod;
+      EntityInfo.lang = CXIdxEntityLang_CXX;
       break;
     }
     case Decl::ClassTemplate:
@@ -813,7 +844,9 @@ void IndexingContext::getEntityInfo(const NamedDecl *D,
       EntityInfo.templateKind = CXIdxEntity_Template;
       break;
     case Decl::TypeAlias:
-      EntityInfo.kind = CXIdxEntity_CXXTypeAlias; break;
+      EntityInfo.kind = CXIdxEntity_CXXTypeAlias;
+      EntityInfo.lang = CXIdxEntityLang_CXX;
+      break;
     default:
       break;
     }
@@ -827,6 +860,9 @@ void IndexingContext::getEntityInfo(const NamedDecl *D,
           FunctionDecl::TK_FunctionTemplateSpecialization)
       EntityInfo.templateKind = CXIdxEntity_TemplateSpecialization;
   }
+
+  if (EntityInfo.templateKind != CXIdxEntity_NonTemplate)
+    EntityInfo.lang = CXIdxEntityLang_CXX;
 
   if (IdentifierInfo *II = D->getIdentifier()) {
     EntityInfo.name = SA.toCStr(II->getName());

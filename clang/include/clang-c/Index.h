@@ -4134,10 +4134,16 @@ typedef enum {
   CXIdxEntity_CXXConstructor        = 22,
   CXIdxEntity_CXXDestructor         = 23,
   CXIdxEntity_CXXConversionFunction = 24,
-  CXIdxEntity_CXXTypeAlias          = 25,
-  CXIdxEntity_CXXInstanceVariable   = 26
+  CXIdxEntity_CXXTypeAlias          = 25
 
 } CXIdxEntityKind;
+
+typedef enum {
+  CXIdxEntityLang_None = 0,
+  CXIdxEntityLang_C    = 1,
+  CXIdxEntityLang_ObjC = 2,
+  CXIdxEntityLang_CXX  = 3
+} CXIdxEntityLanguage;
 
 /**
  * \brief Extra C++ template information for an entity. This can apply to:
@@ -4159,6 +4165,7 @@ typedef enum {
 typedef struct {
   CXIdxEntityKind kind;
   CXIdxEntityCXXTemplateKind templateKind;
+  CXIdxEntityLanguage lang;
   const char *name;
   const char *USR;
   CXCursor cursor;
