@@ -241,7 +241,7 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     OS << PrintReg(getReg(), TRI, getSubReg());
 
     if (isDef() || isKill() || isDead() || isImplicit() || isUndef() ||
-        isEarlyClobber()) {
+        isInternalRead() || isEarlyClobber()) {
       OS << '<';
       bool NeedComma = false;
       if (isDef()) {
