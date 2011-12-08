@@ -3458,7 +3458,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                             {
                                 if (child_idx == idx)
                                 {
-                                    const ObjCIvarDecl* ivar_decl = *ivar_pos;
+                                    ObjCIvarDecl* ivar_decl = *ivar_pos;
                                     
                                     QualType ivar_qual_type(ivar_decl->getType());
 
@@ -3487,12 +3487,26 @@ ClangASTContext::GetChildClangTypeAtIndex
                                         }
                                     }
                                     
+                                    // Setting this to UINT32_MAX to make sure we don't compute it twice...
+                                    bit_offset = UINT32_MAX;
+                                    
                                     if (child_byte_offset == LLDB_INVALID_IVAR_OFFSET)
                                     {
                                         bit_offset = interface_layout.getFieldOffset (child_idx - superclass_idx);
                                         child_byte_offset = bit_offset / 8;
                                     }
-
+                                    
+                                    // Note, the ObjC Ivar Byte offset is just that, it doesn't account for the bit offset
+                                    // of a bitfield within its containing object.  So regardless of where we get the byte
+                                    // offset from, we still need to get the bit offset for bitfields from the layout.
+                                    
+                                    if (ClangASTContext::FieldIsBitfield (ast, ivar_decl, child_bitfield_bit_size))
+                                    {
+                                        if (bit_offset == UINT32_MAX)
+                                            bit_offset = interface_layout.getFieldOffset (child_idx - superclass_idx);
+                                            
+                                        child_bitfield_bit_offset = bit_offset % 8;
+                                    }
                                     return ivar_qual_type.getAsOpaquePtr();
                                 }
                                 ++child_idx;

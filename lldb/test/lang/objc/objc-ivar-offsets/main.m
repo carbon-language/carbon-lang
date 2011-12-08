@@ -8,6 +8,8 @@ main ()
   mine.unbacked_int = 2222;
   mine.derived_backed_int = 3333;
   mine.derived_unbacked_int = 4444;
+  mine->flag1 = 1;
+  mine->flag2 = 7;
 
   return 0;  // Set breakpoint here.
 }

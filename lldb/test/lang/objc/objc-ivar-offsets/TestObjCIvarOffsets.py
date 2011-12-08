@@ -56,18 +56,34 @@ class TestObjCIvarOffsets(TestBase):
         
         # Test the value object value for BaseClass->_backed_int
 
+        error = lldb.SBError()
+
         mine_backed_int = mine.GetChildMemberWithName ("_backed_int")
         self.assertTrue(mine_backed_int, "Found mine->backed_int local variable.")
-        backed_value = int (mine_backed_int.GetValue (), 0)
+        backed_value = mine_backed_int.GetValueAsSigned (error)
+        self.assertTrue (error.Success())
         self.assertTrue (backed_value == 1111)
         
         # Test the value object value for DerivedClass->_derived_backed_int
 
         mine_derived_backed_int = mine.GetChildMemberWithName ("_derived_backed_int")
         self.assertTrue(mine_derived_backed_int, "Found mine->derived_backed_int local variable.")
-        derived_backed_value = int (mine_derived_backed_int.GetValue (), 0)
+        derived_backed_value = mine_derived_backed_int.GetValueAsSigned (error)
+        self.assertTrue (error.Success())
         self.assertTrue (derived_backed_value == 3333)
-                                    
+
+        # Make sure we also get bit-field offsets correct:
+
+        mine_flag2 = mine.GetChildMemberWithName ("flag2")
+        self.assertTrue(mine_flag2, "Found mine->flag2 local variable.")
+        flag2_value = int (mine_flag2.GetValue (), 0)
+        self.assertTrue (flag2_value == 7)
+
+        # GetValueAsUnsigned fails for bit-fields:
+#        flag2_value = mine_flag2.GetValueAsUnsigned (error)
+#        self.assertTrue (error.Success())
+#        self.assertTrue (flag2_value == 7)
+        
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()
