@@ -226,9 +226,6 @@ namespace {
     /// the branch fix up pass.
     bool HasFarJump;
 
-    /// HasInlineAsm - True if the function contains inline assembly.
-    bool HasInlineAsm;
-
     const ARMInstrInfo *TII;
     const ARMSubtarget *STI;
     ARMFunctionInfo *AFI;
@@ -338,7 +335,6 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   isThumb2 = AFI->isThumb2Function();
 
   HasFarJump = false;
-  HasInlineAsm = false;
 
   // Renumber all of the machine basic blocks in the function, guaranteeing that
   // the numbers agree with the position of the block in the function.
@@ -711,10 +707,8 @@ void ARMConstantIslands::ComputeBlockSize(MachineBasicBlock *MBB) {
     BBI.Size += TII->GetInstSizeInBytes(I);
     // For inline asm, GetInstSizeInBytes returns a conservative estimate.
     // The actual size may be smaller, but still a multiple of the instr size.
-    if (I->isInlineAsm()) {
+    if (I->isInlineAsm())
       BBI.Unalign = isThumb ? 1 : 2;
-      HasInlineAsm = true;
-    }
   }
 
   // tBR_JTr contains a .align 2 directive.
@@ -907,7 +901,7 @@ bool ARMConstantIslands::CPEIsInRange(MachineInstr *MI, unsigned UserOffset,
                                       MachineInstr *CPEMI, unsigned MaxDisp,
                                       bool NegOk, bool DoDump) {
   unsigned CPEOffset  = GetOffsetOf(CPEMI);
-  assert((CPEOffset%4 == 0 || HasInlineAsm) && "Misaligned CPE");
+  assert(CPEOffset % 4 == 0 && "Misaligned CPE");
 
   if (DoDump) {
     DEBUG(errs() << "User of CPE#" << CPEMI->getOperand(0).getImm()
