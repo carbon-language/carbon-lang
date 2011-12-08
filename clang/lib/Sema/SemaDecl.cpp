@@ -7259,36 +7259,36 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
     return Pos->second;
   }
 
-  // See if we can find a typo correction.
-  TypoCorrection Corrected;
-  FunctionDecl *Func = 0;
-  std::string CorrectedStr;
-  std::string CorrectedQuotedStr;
-  if (S && (Corrected = CorrectTypo(DeclarationNameInfo(&II, Loc),
-                                    LookupOrdinaryName, S, 0))) {
-    // Since this is an implicit function declaration, we are only
-    // interested in a potential typo for a function name.
-    if ((Func = dyn_cast_or_null<FunctionDecl>(
-            Corrected.getCorrectionDecl()))) {
-      CorrectedStr = Corrected.getAsString(getLangOptions());
-      CorrectedQuotedStr = Corrected.getQuoted(getLangOptions());
-    }
-  }
-
   // Extension in C99.  Legal in C90, but warn about it.
+  unsigned diag_id;
   if (II.getName().startswith("__builtin_"))
-    Diag(Loc, diag::err_builtin_unknown) << &II;
+    diag_id = diag::err_builtin_unknown;
   else if (getLangOptions().C99)
-    Diag(Loc, diag::ext_implicit_function_decl) << &II;
+    diag_id = diag::ext_implicit_function_decl;
   else
-    Diag(Loc, diag::warn_implicit_function_decl) << &II;
+    diag_id = diag::warn_implicit_function_decl;
+  Diag(Loc, diag_id) << &II;
 
-  if (Func) {
-    // If we found a typo correction, then suggest that.
-    Diag(Loc, diag::note_function_suggestion) << CorrectedQuotedStr
-        << FixItHint::CreateReplacement(Loc, CorrectedStr);
-    if (Func->getLocation().isValid() && !II.getName().startswith("__builtin_"))
-      Diag(Func->getLocation(), diag::note_previous_decl) << CorrectedQuotedStr;
+  // Because typo correction is expensive, only do it if the implicit
+  // function declaration is going to be treated as an error.
+  if (Diags.getDiagnosticLevel(diag_id, Loc) >= DiagnosticsEngine::Error) {
+    TypoCorrection Corrected;
+    if (S && (Corrected = CorrectTypo(DeclarationNameInfo(&II, Loc),
+                                      LookupOrdinaryName, S, 0))) {
+      NamedDecl *Decl = Corrected.getCorrectionDecl();
+      if (FunctionDecl *Func = dyn_cast_or_null<FunctionDecl>(Decl)) {
+        std::string CorrectedStr = Corrected.getAsString(getLangOptions());
+        std::string CorrectedQuotedStr = Corrected.getQuoted(getLangOptions());
+
+        Diag(Loc, diag::note_function_suggestion) << CorrectedQuotedStr
+            << FixItHint::CreateReplacement(Loc, CorrectedStr);
+
+        if (Func->getLocation().isValid()
+            && !II.getName().startswith("__builtin_"))
+          Diag(Func->getLocation(), diag::note_previous_decl)
+              << CorrectedQuotedStr;
+      }
+    }
   }
 
   // Set a Declarator for the implicit definition: int foo();

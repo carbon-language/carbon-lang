@@ -83,9 +83,9 @@ int test14() { return (&*test14)(); }
 
 int test15[5] = { [2] = 1 }; /* expected-warning {{designated initializers are a C99 feature}} */
 
-extern int printf(__const char *__restrict __format, ...); /* expected-note{{'printf' declared here}} */
+extern int printf(__const char *__restrict __format, ...);
 
+/* Warn, but don't suggest typo correction. */
 void test16() {
-  printg("Hello, world!\n"); /* expected-warning {{implicit declaration of function 'printg'}}
-                                expected-note {{did you mean 'printf'?}} */
+  printg("Hello, world!\n"); /* expected-warning {{implicit declaration of function 'printg'}} */
 }

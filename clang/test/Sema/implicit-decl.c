@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -verify -fsyntax-only
+// RUN: %clang_cc1 %s -verify -fsyntax-only -Werror
 
 typedef int int32_t;
 typedef unsigned char Boolean;
@@ -10,10 +10,10 @@ void func() {
    const char compDesc[16 + 1];
    int32_t compCount = 0;
    if (_CFCalendarDecomposeAbsoluteTimeV(compDesc, vector, compCount)) { // expected-note {{previous implicit declaration is here}} \
-         expected-warning {{implicit declaration of function '_CFCalendarDecomposeAbsoluteTimeV' is invalid in C99}}
+         expected-error {{implicit declaration of function '_CFCalendarDecomposeAbsoluteTimeV' is invalid in C99}}
    }
 
-   printg("Hello, World!\n"); // expected-warning{{implicit declaration of function 'printg' is invalid in C99}} \
+   printg("Hello, World!\n"); // expected-error{{implicit declaration of function 'printg' is invalid in C99}} \
                               // expected-note{{did you mean 'printf'?}}
 
   __builtin_is_les(1, 3); // expected-error{{use of unknown builtin '__builtin_is_les'}} \
