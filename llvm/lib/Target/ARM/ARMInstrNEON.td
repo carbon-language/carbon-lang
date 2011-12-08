@@ -5321,6 +5321,30 @@ def : NEONInstAlias<"vadd${p}.f32 $Vdn, $Vm",
 def : NEONInstAlias<"vadd${p}.f32 $Vdn, $Vm",
                     (VADDfq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
 
+// VSUB two-operand aliases.
+def : NEONInstAlias<"vsub${p}.i8 $Vdn, $Vm",
+                    (VSUBv16i8 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vsub${p}.i16 $Vdn, $Vm",
+                    (VSUBv8i16 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vsub${p}.i32 $Vdn, $Vm",
+                    (VSUBv4i32 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vsub${p}.i64 $Vdn, $Vm",
+                    (VSUBv2i64 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+
+def : NEONInstAlias<"vsub${p}.i8 $Vdn, $Vm",
+                    (VSUBv8i8 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vsub${p}.i16 $Vdn, $Vm",
+                    (VSUBv4i16 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vsub${p}.i32 $Vdn, $Vm",
+                    (VSUBv2i32 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vsub${p}.i64 $Vdn, $Vm",
+                    (VSUBv1i64 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+
+def : NEONInstAlias<"vsub${p}.f32 $Vdn, $Vm",
+                    (VSUBfd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vsub${p}.f32 $Vdn, $Vm",
+                    (VSUBfq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+
 // VADDW two-operand aliases.
 def : NEONInstAlias<"vaddw${p}.s8 $Vdn, $Vm",
                     (VADDWsv8i16 QPR:$Vdn, QPR:$Vdn, DPR:$Vm, pred:$p)>;
