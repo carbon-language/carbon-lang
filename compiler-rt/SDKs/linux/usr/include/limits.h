@@ -1,0 +1,23 @@
+/* ===-- limits.h - stub SDK header for compiler-rt -------------------------===
+ *
+ *                     The LLVM Compiler Infrastructure
+ *
+ * This file is dual licensed under the MIT and the University of Illinois Open
+ * Source Licenses. See LICENSE.TXT for details.
+ *
+ * ===-----------------------------------------------------------------------===
+ *
+ * This is a stub SDK header file. This file is not part of the interface of
+ * this library nor an official version of the appropriate SDK header. It is
+ * intended only to stub the features of this header required by compiler-rt.
+ *
+ * ===-----------------------------------------------------------------------===
+ */
+
+#ifndef __LIMITS_H__
+#define __LIMITS_H__
+
+/* This is only here as a landing pad for the include_next from the compiler's
+   built-in limits.h. */
+
+#endif /* __LIMITS_H__ */
