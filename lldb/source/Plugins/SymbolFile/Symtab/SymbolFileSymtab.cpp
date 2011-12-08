@@ -383,7 +383,7 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc,
 {
     if (!append)
         types.Clear();
-    
+        
     if (!m_objc_class_name_to_index.IsEmpty())
     {
         TypeMap::iterator iter = m_objc_class_types.find(name);
@@ -399,7 +399,7 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc,
         if (match == NULL)
             return 0;
                     
-        const bool isForwardDecl = true;
+        const bool isForwardDecl = false;
         const bool isInternal = true;
         
         ClangASTContext &ast = GetClangASTContext();
@@ -408,59 +408,10 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc,
                                                                    ast.GetTranslationUnitDecl(), 
                                                                    isForwardDecl, 
                                                                    isInternal);
-
-        ast.StartTagDeclarationDefinition (objc_object_type);
-
-        std::string regex_str("^[-+]\\[");     // Make sure it starts with "+[" or "-["
-        regex_str.append(name.AsCString());    // Followed by the class name
-        regex_str.append("[ \\(]");            // Followed by a space or '(' (for a category)    
-        RegularExpression regex(regex_str.c_str());
         
-        Symtab::IndexCollection indices;
-        
-        lldb::clang_type_t unknown_type = ast.GetUnknownAnyType();
-        std::vector<lldb::clang_type_t> arg_types;
-
-        if (m_obj_file->GetSymtab()->FindAllSymbolsMatchingRexExAndType (regex, eSymbolTypeCode, Symtab::eDebugNo, Symtab::eVisibilityAny, indices) != 0)
-        {
-            for (Symtab::IndexCollection::iterator pos = indices.begin(), end = indices.end();
-                 pos != end;
-                 ++pos)
-            {
-                Symbol *symbol = m_obj_file->GetSymtab()->SymbolAtIndex(*pos);
-                
-                if (!symbol)
-                    continue;
-                
-                const char *signature = symbol->GetName().AsCString();
-                
-                //printf ("%s: adding '%s'\n", name.GetCString(), signature);
-                int num_args = CountMethodArgs(signature);
-                
-                while (arg_types.size() < num_args)
-                    arg_types.push_back(unknown_type);
-                
-                bool is_variadic = false;
-                unsigned type_quals = 0;
-                
-                lldb::clang_type_t method_type = ast.CreateFunctionType (unknown_type, 
-                                                                         arg_types.data(), 
-                                                                         num_args, 
-                                                                         is_variadic, 
-                                                                         type_quals);
-                
-                ast.AddMethodToObjCObjectType (objc_object_type, 
-                                               signature, 
-                                               method_type, 
-                                               eAccessPublic);
-            }
-        }
-        
-        ast.CompleteTagDeclarationDefinition (objc_object_type);
-
         Declaration decl;
         
-        lldb::TypeSP type(new Type (indices[0],
+        lldb::TypeSP type(new Type (iter->second,
                                     this,
                                     name,
                                     0,      // byte_size
