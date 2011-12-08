@@ -24,22 +24,16 @@ CompilerTargetArch := $(firstword $(subst -, ,$(CompilerTargetTriple)))
 ifneq ($(findstring -linux-,$(CompilerTargetTriple)),)
 
 # Configurations which just include all the runtime functions.
-ifeq ($(CompilerTargetArch),i386)
-Configs += full-i386
+ifeq ($(call contains,i386 x86_64,$(CompilerTargetArch)),true)
+Configs += full-i386 full-x86_64
 Arch.full-i386 := i386
-endif
-ifeq ($(CompilerTargetArch),x86_64)
-Configs += full-x86_64
 Arch.full-x86_64 := x86_64
 endif
 
 # Configuration for profile runtime.
-ifeq ($(CompilerTargetArch),i386)
-Configs += profile-i386
+ifeq ($(call contains,i386 x86_64,$(CompilerTargetArch)),true)
+Configs += profile-i386 profile-x86_64
 Arch.profile-i386 := i386
-endif
-ifeq ($(CompilerTargetArch),x86_64)
-Configs += profile-x86_64
 Arch.profile-x86_64 := x86_64
 endif
 
@@ -65,6 +59,14 @@ CFLAGS.profile-i386 := $(CFLAGS) -m32
 CFLAGS.profile-x86_64 := $(CFLAGS) -m64
 CFLAGS.asan-i386 := $(CFLAGS) -m32
 CFLAGS.asan-x86_64 := $(CFLAGS) -m64
+
+# Use our stub SDK as the sysroot to support more portable building. For now we
+# just do this for the non-ASAN modules, because the stub SDK doesn't have
+# enough support to build ASAN.
+CFLAGS.full-i386 += --sysroot=$(ProjSrcRoot)/SDKs/linux
+CFLAGS.full-x86_64 += --sysroot=$(ProjSrcRoot)/SDKs/linux
+CFLAGS.profile-i386 += --sysroot=$(ProjSrcRoot)/SDKs/linux
+CFLAGS.profile-x86_64 += --sysroot=$(ProjSrcRoot)/SDKs/linux
 
 FUNCTIONS.full-i386 := $(CommonFunctions) $(ArchFunctions.i386)
 FUNCTIONS.full-x86_64 := $(CommonFunctions) $(ArchFunctions.x86_64)
