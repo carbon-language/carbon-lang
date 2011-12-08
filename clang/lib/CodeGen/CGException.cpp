@@ -1523,14 +1523,13 @@ llvm::BasicBlock *CodeGenFunction::getEHResumeBlock() {
                        getExceptionFromSlot())
       ->setDoesNotReturn();
   } else {
-    llvm::Value *Exn = getExceptionFromSlot();
-
     switch (CleanupHackLevel) {
     case CHL_MandatoryCatchall:
       // In mandatory-catchall mode, we need to use
       // _Unwind_Resume_or_Rethrow, or whatever the personality's
       // equivalent is.
-      Builder.CreateCall(getUnwindResumeOrRethrowFn(), Exn)
+      Builder.CreateCall(getUnwindResumeOrRethrowFn(),
+                         getExceptionFromSlot())
         ->setDoesNotReturn();
       break;
     case CHL_MandatoryCleanup: {
@@ -1554,7 +1553,7 @@ llvm::BasicBlock *CodeGenFunction::getEHResumeBlock() {
       // In an idealized mode where we don't have to worry about the
       // optimizer combining landing pads, we should just use
       // _Unwind_Resume (or the personality's equivalent).
-      Builder.CreateCall(getUnwindResumeFn(), Exn)
+      Builder.CreateCall(getUnwindResumeFn(), getExceptionFromSlot())
         ->setDoesNotReturn();
       break;
     }
