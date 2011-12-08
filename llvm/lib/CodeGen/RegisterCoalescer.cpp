@@ -149,6 +149,14 @@ namespace {
     /// shouldJoinPhys - Return true if a physreg copy should be joined.
     bool shouldJoinPhys(CoalescerPair &CP);
 
+    /// isWinToJoinCrossClass - Return true if it's profitable to coalesce
+    /// two virtual registers from different register classes.
+    bool isWinToJoinCrossClass(unsigned SrcReg,
+                               unsigned DstReg,
+                               const TargetRegisterClass *SrcRC,
+                               const TargetRegisterClass *DstRC,
+                               const TargetRegisterClass *NewRC);
+
     /// UpdateRegDefsUses - Replace all defs and uses of SrcReg to DstReg and
     /// update the subregister number if it is not zero. If DstReg is a
     /// physical register and the existing subregister number of the def / use
@@ -1087,6 +1095,56 @@ bool RegisterCoalescer::shouldJoinPhys(CoalescerPair &CP) {
   return true;
 }
 
+/// isWinToJoinCrossClass - Return true if it's profitable to coalesce
+/// two virtual registers from different register classes.
+bool
+RegisterCoalescer::isWinToJoinCrossClass(unsigned SrcReg,
+                                             unsigned DstReg,
+                                             const TargetRegisterClass *SrcRC,
+                                             const TargetRegisterClass *DstRC,
+                                             const TargetRegisterClass *NewRC) {
+  unsigned NewRCCount = RegClassInfo.getNumAllocatableRegs(NewRC);
+  // This heuristics is good enough in practice, but it's obviously not *right*.
+  // 4 is a magic number that works well enough for x86, ARM, etc. It filter
+  // out all but the most restrictive register classes.
+  if (NewRCCount > 4 ||
+      // Early exit if the function is fairly small, coalesce aggressively if
+      // that's the case. For really special register classes with 3 or
+      // fewer registers, be a bit more careful.
+      (LIS->getFuncInstructionCount() / NewRCCount) < 8)
+    return true;
+  LiveInterval &SrcInt = LIS->getInterval(SrcReg);
+  LiveInterval &DstInt = LIS->getInterval(DstReg);
+  unsigned SrcSize = LIS->getApproximateInstructionCount(SrcInt);
+  unsigned DstSize = LIS->getApproximateInstructionCount(DstInt);
+
+  // Coalesce aggressively if the intervals are small compared to the number of
+  // registers in the new class. The number 4 is fairly arbitrary, chosen to be
+  // less aggressive than the 8 used for the whole function size.
+  const unsigned ThresSize = 4 * NewRCCount;
+  if (SrcSize <= ThresSize && DstSize <= ThresSize)
+    return true;
+
+  // Estimate *register use density*. If it doubles or more, abort.
+  unsigned SrcUses = std::distance(MRI->use_nodbg_begin(SrcReg),
+                                   MRI->use_nodbg_end());
+  unsigned DstUses = std::distance(MRI->use_nodbg_begin(DstReg),
+                                   MRI->use_nodbg_end());
+  unsigned NewUses = SrcUses + DstUses;
+  unsigned NewSize = SrcSize + DstSize;
+  if (SrcRC != NewRC && SrcSize > ThresSize) {
+    unsigned SrcRCCount = RegClassInfo.getNumAllocatableRegs(SrcRC);
+    if (NewUses*SrcSize*SrcRCCount > 2*SrcUses*NewSize*NewRCCount)
+      return false;
+  }
+  if (DstRC != NewRC && DstSize > ThresSize) {
+    unsigned DstRCCount = RegClassInfo.getNumAllocatableRegs(DstRC);
+    if (NewUses*DstSize*DstRCCount > 2*DstUses*NewSize*NewRCCount)
+      return false;
+  }
+  return true;
+}
+
 
 /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
 /// which are the src/dst of the copy instruction CopyMI.  This returns true
@@ -1142,6 +1200,14 @@ bool RegisterCoalescer::JoinCopy(MachineInstr *CopyMI, bool &Again) {
       DEBUG(dbgs() << "\tCross-class to " << CP.getNewRC()->getName() << ".\n");
       if (DisableCrossClassJoin) {
         DEBUG(dbgs() << "\tCross-class joins disabled.\n");
+        return false;
+      }
+      if (!isWinToJoinCrossClass(CP.getSrcReg(), CP.getDstReg(),
+                                 MRI->getRegClass(CP.getSrcReg()),
+                                 MRI->getRegClass(CP.getDstReg()),
+                                 CP.getNewRC())) {
+        DEBUG(dbgs() << "\tAvoid coalescing to constrained register class.\n");
+        Again = true;  // May be possible to coalesce later.
         return false;
       }
     }
