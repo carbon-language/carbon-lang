@@ -561,6 +561,16 @@ let Predicates = [HasAVX] in {
                       (EXTRACT_SUBREG (v4i32 VR128:$src), sub_ss))>;
   def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64:$src)))),
             (VMOVSDrr (v2f64 (V_SET0)), FR64:$src)>;
+
+  // Move low f32 and clear high bits.
+  def : Pat<(v8f32 (X86vzmovl (v8f32 VR256:$src))),
+            (SUBREG_TO_REG (i32 0),
+              (VMOVSSrr (v4f32 (V_SET0)),
+                        (EXTRACT_SUBREG (v8f32 VR256:$src), sub_ss)), sub_xmm)>;
+  def : Pat<(v8i32 (X86vzmovl (v8i32 VR256:$src))),
+            (SUBREG_TO_REG (i32 0),
+              (VMOVSSrr (v4i32 (V_SET0)),
+                        (EXTRACT_SUBREG (v8i32 VR256:$src), sub_ss)), sub_xmm)>;
   }
 
   let AddedComplexity = 20 in {
@@ -588,6 +598,9 @@ let Predicates = [HasAVX] in {
 
   // Represent the same patterns above but in the form they appear for
   // 256-bit types
+  def : Pat<(v8i32 (X86vzmovl (insert_subvector undef,
+                   (v4i32 (scalar_to_vector (loadi32 addr:$src))), (i32 0)))),
+            (SUBREG_TO_REG (i32 0), (VMOVSSrm addr:$src), sub_ss)>;
   def : Pat<(v8f32 (X86vzmovl (insert_subvector undef,
                    (v4f32 (scalar_to_vector (loadf32 addr:$src))), (i32 0)))),
             (SUBREG_TO_REG (i32 0), (VMOVSSrm addr:$src), sub_ss)>;
@@ -605,6 +618,12 @@ let Predicates = [HasAVX] in {
             (SUBREG_TO_REG (i64 0),
                            (v2f64 (VMOVSDrr (v2f64 (V_SET0)), FR64:$src)),
                            sub_xmm)>;
+
+  // Move low f64 and clear high bits.
+  def : Pat<(v4f64 (X86vzmovl (v4f64 VR256:$src))),
+            (SUBREG_TO_REG (i32 0),
+              (VMOVSDrr (v2f64 (V_SET0)),
+                        (EXTRACT_SUBREG (v4f64 VR256:$src), sub_sd)), sub_xmm)>;
 
   // Extract and store.
   def : Pat<(store (f32 (vector_extract (v4f32 VR128:$src), (iPTR 0))),
@@ -755,6 +774,19 @@ let isCodeGenOnly = 1 in {
                             (ins VR256:$src),
                             "movupd\t{$src, $dst|$dst, $src}", []>, VEX;
 }
+
+let Predicates = [HasAVX] in {
+def : Pat<(v8i32 (X86vzmovl
+                        (insert_subvector undef, (v4i32 VR128:$src), (i32 0)))),
+          (SUBREG_TO_REG (i32 0), (VMOVAPSrr VR128:$src), sub_xmm)>;
+def : Pat<(v8f32 (X86vzmovl
+                        (insert_subvector undef, (v4f32 VR128:$src), (i32 0)))),
+          (SUBREG_TO_REG (i32 0), (VMOVAPSrr VR128:$src), sub_xmm)>;
+def : Pat<(v4f64 (X86vzmovl
+                        (insert_subvector undef, (v2f64 VR128:$src), (i32 0)))),
+          (SUBREG_TO_REG (i32 0), (VMOVAPSrr VR128:$src), sub_xmm)>;
+}
+
 
 def : Pat<(int_x86_avx_loadu_ps_256 addr:$src), (VMOVUPSYrm addr:$src)>;
 def : Pat<(int_x86_avx_storeu_ps_256 addr:$dst, VR256:$src),
