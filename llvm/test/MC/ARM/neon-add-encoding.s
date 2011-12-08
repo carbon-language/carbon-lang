@@ -90,38 +90,80 @@
 @ CHECK: vrhadd.u32	q8, q8, q9      @ encoding: [0xe2,0x01,0x60,0xf3]
 	vrhadd.u32	q8, q8, q9
 
-@ CHECK: vqadd.s8	d16, d16, d17   @ encoding: [0xb1,0x00,0x40,0xf2]
 	vqadd.s8	d16, d16, d17
-@ CHECK: vqadd.s16	d16, d16, d17   @ encoding: [0xb1,0x00,0x50,0xf2]
 	vqadd.s16	d16, d16, d17
-@ CHECK: vqadd.s32	d16, d16, d17   @ encoding: [0xb1,0x00,0x60,0xf2]
 	vqadd.s32	d16, d16, d17
-@ CHECK: vqadd.s64	d16, d16, d17   @ encoding: [0xb1,0x00,0x70,0xf2]
 	vqadd.s64	d16, d16, d17
-@ CHECK: vqadd.u8	d16, d16, d17   @ encoding: [0xb1,0x00,0x40,0xf3]
 	vqadd.u8	d16, d16, d17
-@ CHECK: vqadd.u16	d16, d16, d17   @ encoding: [0xb1,0x00,0x50,0xf3]
 	vqadd.u16	d16, d16, d17
-@ CHECK: vqadd.u32	d16, d16, d17   @ encoding: [0xb1,0x00,0x60,0xf3]
 	vqadd.u32	d16, d16, d17
-@ CHECK: vqadd.u64	d16, d16, d17   @ encoding: [0xb1,0x00,0x70,0xf3]
 	vqadd.u64	d16, d16, d17
-@ CHECK: vqadd.s8	q8, q8, q9      @ encoding: [0xf2,0x00,0x40,0xf2]
+
+@ CHECK: vqadd.s8	d16, d16, d17   @ encoding: [0xb1,0x00,0x40,0xf2]
+@ CHECK: vqadd.s16	d16, d16, d17   @ encoding: [0xb1,0x00,0x50,0xf2]
+@ CHECK: vqadd.s32	d16, d16, d17   @ encoding: [0xb1,0x00,0x60,0xf2]
+@ CHECK: vqadd.s64	d16, d16, d17   @ encoding: [0xb1,0x00,0x70,0xf2]
+@ CHECK: vqadd.u8	d16, d16, d17   @ encoding: [0xb1,0x00,0x40,0xf3]
+@ CHECK: vqadd.u16	d16, d16, d17   @ encoding: [0xb1,0x00,0x50,0xf3]
+@ CHECK: vqadd.u32	d16, d16, d17   @ encoding: [0xb1,0x00,0x60,0xf3]
+@ CHECK: vqadd.u64	d16, d16, d17   @ encoding: [0xb1,0x00,0x70,0xf3]
+
 	vqadd.s8	q8, q8, q9
-@ CHECK: vqadd.s16	q8, q8, q9      @ encoding: [0xf2,0x00,0x50,0xf2]
 	vqadd.s16	q8, q8, q9
-@ CHECK: vqadd.s32	q8, q8, q9      @ encoding: [0xf2,0x00,0x60,0xf2]
 	vqadd.s32	q8, q8, q9
-@ CHECK: vqadd.s64	q8, q8, q9      @ encoding: [0xf2,0x00,0x70,0xf2]
 	vqadd.s64	q8, q8, q9
-@ CHECK: vqadd.u8	q8, q8, q9      @ encoding: [0xf2,0x00,0x40,0xf3]
 	vqadd.u8	q8, q8, q9
-@ CHECK: vqadd.u16	q8, q8, q9      @ encoding: [0xf2,0x00,0x50,0xf3]
 	vqadd.u16	q8, q8, q9
-@ CHECK: vqadd.u32	q8, q8, q9      @ encoding: [0xf2,0x00,0x60,0xf3]
 	vqadd.u32	q8, q8, q9
-@ CHECK: vqadd.u64	q8, q8, q9      @ encoding: [0xf2,0x00,0x70,0xf3]
 	vqadd.u64	q8, q8, q9
+
+@ CHECK: vqadd.s8	q8, q8, q9      @ encoding: [0xf2,0x00,0x40,0xf2]
+@ CHECK: vqadd.s16	q8, q8, q9      @ encoding: [0xf2,0x00,0x50,0xf2]
+@ CHECK: vqadd.s32	q8, q8, q9      @ encoding: [0xf2,0x00,0x60,0xf2]
+@ CHECK: vqadd.s64	q8, q8, q9      @ encoding: [0xf2,0x00,0x70,0xf2]
+@ CHECK: vqadd.u8	q8, q8, q9      @ encoding: [0xf2,0x00,0x40,0xf3]
+@ CHECK: vqadd.u16	q8, q8, q9      @ encoding: [0xf2,0x00,0x50,0xf3]
+@ CHECK: vqadd.u32	q8, q8, q9      @ encoding: [0xf2,0x00,0x60,0xf3]
+@ CHECK: vqadd.u64	q8, q8, q9      @ encoding: [0xf2,0x00,0x70,0xf3]
+
+
+@ two-operand variants.
+	vqadd.s8	d16, d17
+	vqadd.s16	d16, d17
+	vqadd.s32	d16, d17
+	vqadd.s64	d16, d17
+	vqadd.u8	d16, d17
+	vqadd.u16	d16, d17
+	vqadd.u32	d16, d17
+	vqadd.u64	d16, d17
+
+@ CHECK: vqadd.s8	d16, d16, d17   @ encoding: [0xb1,0x00,0x40,0xf2]
+@ CHECK: vqadd.s16	d16, d16, d17   @ encoding: [0xb1,0x00,0x50,0xf2]
+@ CHECK: vqadd.s32	d16, d16, d17   @ encoding: [0xb1,0x00,0x60,0xf2]
+@ CHECK: vqadd.s64	d16, d16, d17   @ encoding: [0xb1,0x00,0x70,0xf2]
+@ CHECK: vqadd.u8	d16, d16, d17   @ encoding: [0xb1,0x00,0x40,0xf3]
+@ CHECK: vqadd.u16	d16, d16, d17   @ encoding: [0xb1,0x00,0x50,0xf3]
+@ CHECK: vqadd.u32	d16, d16, d17   @ encoding: [0xb1,0x00,0x60,0xf3]
+@ CHECK: vqadd.u64	d16, d16, d17   @ encoding: [0xb1,0x00,0x70,0xf3]
+
+	vqadd.s8	q8, q9
+	vqadd.s16	q8, q9
+	vqadd.s32	q8, q9
+	vqadd.s64	q8, q9
+	vqadd.u8	q8, q9
+	vqadd.u16	q8, q9
+	vqadd.u32	q8, q9
+	vqadd.u64	q8, q9
+
+@ CHECK: vqadd.s8	q8, q8, q9      @ encoding: [0xf2,0x00,0x40,0xf2]
+@ CHECK: vqadd.s16	q8, q8, q9      @ encoding: [0xf2,0x00,0x50,0xf2]
+@ CHECK: vqadd.s32	q8, q8, q9      @ encoding: [0xf2,0x00,0x60,0xf2]
+@ CHECK: vqadd.s64	q8, q8, q9      @ encoding: [0xf2,0x00,0x70,0xf2]
+@ CHECK: vqadd.u8	q8, q8, q9      @ encoding: [0xf2,0x00,0x40,0xf3]
+@ CHECK: vqadd.u16	q8, q8, q9      @ encoding: [0xf2,0x00,0x50,0xf3]
+@ CHECK: vqadd.u32	q8, q8, q9      @ encoding: [0xf2,0x00,0x60,0xf3]
+@ CHECK: vqadd.u64	q8, q8, q9      @ encoding: [0xf2,0x00,0x70,0xf3]
+
 
 @ CHECK: vaddhn.i16	d16, q8, q9     @ encoding: [0xa2,0x04,0xc0,0xf2]
 	vaddhn.i16	d16, q8, q9

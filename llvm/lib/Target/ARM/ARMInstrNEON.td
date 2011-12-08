@@ -5420,6 +5420,41 @@ def : NEONInstAlias<"vmul${p}.f32 $Qdn, $Dm$lane",
                     (VMULslfq QPR:$Qdn, QPR:$Qdn, DPR_VFP2:$Dm,
                               VectorIndex32:$lane, pred:$p)>;
 
+// VQADD (register) two-operand aliases.
+def : NEONInstAlias<"vqadd${p}.s8 $Vdn, $Vm",
+                    (VQADDsv8i8 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vqadd${p}.s16 $Vdn, $Vm",
+                    (VQADDsv4i16 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vqadd${p}.s32 $Vdn, $Vm",
+                    (VQADDsv2i32 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vqadd${p}.s64 $Vdn, $Vm",
+                    (VQADDsv1i64 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vqadd${p}.u8 $Vdn, $Vm",
+                    (VQADDuv8i8 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vqadd${p}.u16 $Vdn, $Vm",
+                    (VQADDuv4i16 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vqadd${p}.u32 $Vdn, $Vm",
+                    (VQADDuv2i32 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vqadd${p}.u64 $Vdn, $Vm",
+                    (VQADDuv1i64 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+
+def : NEONInstAlias<"vqadd${p}.s8 $Vdn, $Vm",
+                    (VQADDsv16i8 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vqadd${p}.s16 $Vdn, $Vm",
+                    (VQADDsv8i16 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vqadd${p}.s32 $Vdn, $Vm",
+                    (VQADDsv4i32 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vqadd${p}.s64 $Vdn, $Vm",
+                    (VQADDsv2i64 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vqadd${p}.u8 $Vdn, $Vm",
+                    (VQADDuv16i8 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vqadd${p}.u16 $Vdn, $Vm",
+                    (VQADDuv8i16 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vqadd${p}.u32 $Vdn, $Vm",
+                    (VQADDuv4i32 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vqadd${p}.u64 $Vdn, $Vm",
+                    (VQADDuv2i64 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+
 // VSHL (immediate) two-operand aliases.
 def : NEONInstAlias<"vshl${p}.i8 $Vdn, $imm",
                     (VSHLiv8i8 DPR:$Vdn, DPR:$Vdn, imm0_7:$imm, pred:$p)>;
