@@ -76,6 +76,8 @@ public:
     virtual bool            DisableHardwareWatchpoint (uint32_t hw_break_index);
     virtual bool            StepNotComplete ();
 
+    typedef arm_debug_state_t DBG;
+
 protected:
 
 
@@ -109,7 +111,6 @@ protected:
     typedef arm_thread_state_t GPR;
     typedef arm_vfp_state_t FPU;
     typedef arm_exception_state_t EXC;
-    typedef arm_debug_state_t DBG;
 
     static const DNBRegisterInfo g_gpr_registers[];
     static const DNBRegisterInfo g_vfp_registers[];

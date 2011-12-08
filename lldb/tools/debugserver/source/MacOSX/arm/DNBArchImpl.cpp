@@ -252,7 +252,7 @@ DNBArchMachARM::GetEXCState(bool force)
 }
 
 static void
-DumpDBGState(const DBG& dbg)
+DumpDBGState(const DNBArchMachARM::DBG& dbg)
 {
     uint32_t i = 0;
     for (i=0; i<16; i++)
