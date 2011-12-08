@@ -4,7 +4,6 @@
 		Some rights reserved: <http://opensource.org/licenses/mit-license.php>
 
 	***************************************************************************/
-
 #ifdef __APPLE__
 
 #include "mach_override.h"
@@ -139,7 +138,17 @@ eatKnownInstructions(
 	unsigned char	*code, 
 	uint64_t		*newInstruction,
 	int				*howManyEaten, 
-	char			*originalInstructions );
+	char			*originalInstructions,
+	int				*originalInstructionCount, 
+	uint8_t			*originalInstructionSizes );
+
+	static void
+fixupInstructions(
+    void		*originalFunction,
+    void		*escapeIsland,
+    void		*instructionsToFix,
+	int			instructionCount,
+	uint8_t		*instructionSizes );
 #endif
 
 /*******************************************************************************
@@ -150,12 +159,12 @@ eatKnownInstructions(
 #pragma mark	-
 #pragma mark	(Interface)
 
-#if defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__)
 mach_error_t makeIslandExecutable(void *address) {
 	mach_error_t err = err_none;
     vm_size_t pageSize;
     host_page_size( mach_host_self(), &pageSize );
-    uint64_t page = (uint64_t)address & ~(uint64_t)(pageSize-1);
+    uintptr_t page = (uintptr_t)address & ~(uintptr_t)(pageSize-1);
     int e = err_none;
     e |= mprotect((void *)page, pageSize, PROT_EXEC | PROT_READ | PROT_WRITE);
     e |= msync((void *)page, pageSize, MS_INVALIDATE );
@@ -174,8 +183,22 @@ mach_override_ptr(
 {
 	assert( originalFunctionAddress );
 	assert( overrideFunctionAddress );
-
-	long	*originalFunctionPtr = (long*) originalFunctionAddress;
+	
+	// this addresses overriding such functions as AudioOutputUnitStart()
+	// test with modified DefaultOutputUnit project
+#if defined(__x86_64__)
+    for(;;){
+        if(*(uint16_t*)originalFunctionAddress==0x25FF)    // jmp qword near [rip+0x????????]
+            originalFunctionAddress=*(void**)((char*)originalFunctionAddress+6+*(int32_t *)((uint16_t*)originalFunctionAddress+1));
+        else break;
+    }
+#elif defined(__i386__)
+    for(;;){
+        if(*(uint16_t*)originalFunctionAddress==0x25FF)    // jmp *0x????????
+            originalFunctionAddress=**(void***)((uint16_t*)originalFunctionAddress+1);
+        else break;
+    }
+#endif
 #ifdef DEBUG_DISASM
   {
     fprintf(stderr, "Replacing function at %p\n", originalFunctionAddress);
@@ -186,7 +209,7 @@ mach_override_ptr(
        fprintf(stderr, "%x ", (unsigned int) orig[i]);
     }
     fprintf(stderr, "\n");
-    fprintf(stderr,
+    fprintf(stderr, 
             "To disassemble, save the following function as disas.c"
             " and run:\n  gcc -c disas.c && gobjdump -d disas.o\n"
             "The first 16 bytes of the original function will start"
@@ -204,6 +227,7 @@ mach_override_ptr(
   }
 #endif
 
+	long	*originalFunctionPtr = (long*) originalFunctionAddress;
 	mach_error_t	err = err_none;
 	
 #if defined(__ppc__) || defined(__POWERPC__)
@@ -216,11 +240,15 @@ mach_override_ptr(
 		err = err_cannot_override;
 #elif defined(__i386__) || defined(__x86_64__)
 	int eatenCount = 0;
+	int originalInstructionCount = 0;
 	char originalInstructions[kOriginalInstructionsSize];
+	uint8_t originalInstructionSizes[kOriginalInstructionsSize];
 	uint64_t jumpRelativeInstruction = 0; // JMP
 
 	Boolean overridePossible = eatKnownInstructions ((unsigned char *)originalFunctionPtr, 
-										&jumpRelativeInstruction, &eatenCount, originalInstructions);
+										&jumpRelativeInstruction, &eatenCount, 
+										originalInstructions, &originalInstructionCount, 
+										originalInstructionSizes );
 #ifdef DEBUG_DISASM
   if (!overridePossible) fprintf(stderr, "overridePossible = false @%d\n", __LINE__);
 #endif
@@ -231,26 +259,26 @@ mach_override_ptr(
 		overridePossible = false;
 	}
 	if (!overridePossible) err = err_cannot_override;
-	if (err) printf("err = %x %d\n", err, __LINE__);
+	if (err) fprintf(stderr, "err = %x %s:%d\n", err, __FILE__, __LINE__);
 #endif
 	
 	//	Make the original function implementation writable.
 	if( !err ) {
 		err = vm_protect( mach_task_self(),
-				(vm_address_t) originalFunctionPtr,
-				sizeof(long), false, (VM_PROT_ALL | VM_PROT_COPY) );
+				(vm_address_t) originalFunctionPtr, 8, false,
+				(VM_PROT_ALL | VM_PROT_COPY) );
 		if( err )
 			err = vm_protect( mach_task_self(),
-					(vm_address_t) originalFunctionPtr, sizeof(long), false,
+					(vm_address_t) originalFunctionPtr, 8, false,
 					(VM_PROT_DEFAULT | VM_PROT_COPY) );
 	}
-	if (err) printf("err = %x %d\n", err, __LINE__);
+	if (err) fprintf(stderr, "err = %x %s:%d\n", err, __FILE__, __LINE__);
 	
 	//	Allocate and target the escape island to the overriding function.
 	BranchIsland	*escapeIsland = NULL;
 	if( !err )	
 		err = allocateBranchIsland( &escapeIsland, kAllocateHigh, originalFunctionAddress );
-		if (err) printf("err = %x %d\n", err, __LINE__);
+		if (err) fprintf(stderr, "err = %x %s:%d\n", err, __FILE__, __LINE__);
 
 	
 #if defined(__ppc__) || defined(__POWERPC__)
@@ -264,12 +292,12 @@ mach_override_ptr(
 		branchAbsoluteInstruction = 0x48000002 | escapeIslandAddress;
 	}
 #elif defined(__i386__) || defined(__x86_64__)
-        if (err) printf("err = %x %d\n", err, __LINE__);
+        if (err) fprintf(stderr, "err = %x %s:%d\n", err, __FILE__, __LINE__);
 
 	if( !err )
 		err = setBranchIslandTarget_i386( escapeIsland, overrideFunctionAddress, 0 );
  
-	if (err) printf("err = %x %d\n", err, __LINE__);
+	if (err) fprintf(stderr, "err = %x %s:%d\n", err, __FILE__, __LINE__);
 	// Build the jump relative instruction to the escape island
 #endif
 
@@ -285,10 +313,13 @@ mach_override_ptr(
 	}
 #endif
 	
-	//	Optionally allocate & return the reentry island.
+	//	Optionally allocate & return the reentry island. This may contain relocated
+	//  jmp instructions and so has all the same addressing reachability requirements
+	//  the escape island has to the original function, except the escape island is
+	//  technically our original function.
 	BranchIsland	*reentryIsland = NULL;
 	if( !err && originalFunctionReentryIsland ) {
-		err = allocateBranchIsland( &reentryIsland, kAllocateNormal, NULL);
+		err = allocateBranchIsland( &reentryIsland, kAllocateHigh, escapeIsland);
 		if( !err )
 			*originalFunctionReentryIsland = reentryIsland;
 	}
@@ -331,9 +362,19 @@ mach_override_ptr(
 	//
 	// Note that on i386, we do not support someone else changing the code under our feet
 	if ( !err ) {
+		fixupInstructions(originalFunctionPtr, reentryIsland, originalInstructions,
+					originalInstructionCount, originalInstructionSizes );
+	
 		if( reentryIsland )
 			err = setBranchIslandTarget_i386( reentryIsland,
 										 (void*) ((char *)originalFunctionPtr+eatenCount), originalInstructions );
+		// try making islands executable before planting the jmp
+#if defined(__x86_64__) || defined(__i386__)
+        if( !err )
+            err = makeIslandExecutable(escapeIsland);
+        if( !err && reentryIsland )
+            err = makeIslandExecutable(reentryIsland);
+#endif
 		if ( !err )
 			atomic_mov64((uint64_t *)originalFunctionPtr, jumpRelativeInstruction);
 	}
@@ -347,10 +388,6 @@ mach_override_ptr(
 			freeBranchIsland( escapeIsland );
 	}
 
-#if defined(__x86_64__)
-        err = makeIslandExecutable(escapeIsland);
-        err = makeIslandExecutable(reentryIsland);
-#endif
 #ifdef DEBUG_DISASM
   {
     fprintf(stderr, "First 16 bytes of the function after slicing: ");
@@ -362,7 +399,6 @@ mach_override_ptr(
     fprintf(stderr, "\n");
   }
 #endif
-
 	return err;
 }
 
@@ -400,12 +436,15 @@ allocateBranchIsland(
 		err = host_page_size( mach_host_self(), &pageSize );
 		if( !err ) {
 			assert( sizeof( BranchIsland ) <= pageSize );
-#if defined(__x86_64__)
+#if defined(__ppc__) || defined(__POWERPC__)
+			vm_address_t first = 0xfeffffff;
+			vm_address_t last = 0xfe000000 + pageSize;
+#elif defined(__x86_64__)
 			vm_address_t first = ((uint64_t)originalFunctionAddress & ~(uint64_t)(((uint64_t)1 << 31) - 1)) | ((uint64_t)1 << 31); // start in the middle of the page?
 			vm_address_t last = 0x0;
 #else
-			vm_address_t first = 0xfeffffff;
-			vm_address_t last = 0xfe000000 + pageSize;
+			vm_address_t first = 0xffc00000;
+			vm_address_t last = 0xfffe0000;
 #endif
 
 			vm_address_t page = first;
@@ -434,7 +473,7 @@ allocateBranchIsland(
 	} else {
 		void *block = malloc( sizeof( BranchIsland ) );
 		if( block )
-			*island = (BranchIsland*)block;
+			*island = block;
 		else
 			err = KERN_NO_SPACE;
 	}
@@ -577,23 +616,25 @@ typedef struct {
 
 #if defined(__i386__)
 static AsmInstructionMatch possibleInstructions[] = {
+	{ 0x5, {0xFF, 0x00, 0x00, 0x00, 0x00}, {0xE9, 0x00, 0x00, 0x00, 0x00} },	// jmp 0x????????
+	{ 0x5, {0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, {0x55, 0x89, 0xe5, 0xc9, 0xc3} },	// push %esp; mov %esp,%ebp; leave; ret
 	{ 0x1, {0xFF}, {0x90} },							// nop
-	{ 0x1, {0xFF}, {0x55} },							// push %esp
+	{ 0x1, {0xF8}, {0x50} },							// push %reg
 	{ 0x2, {0xFF, 0xFF}, {0x89, 0xE5} },				                // mov %esp,%ebp
 	{ 0x3, {0xFF, 0xFF, 0xFF}, {0x89, 0x1C, 0x24} },				                // mov %ebx,(%esp)
-	{ 0x1, {0xFF}, {0x53} },							// push %ebx
 	{ 0x3, {0xFF, 0xFF, 0x00}, {0x83, 0xEC, 0x00} },	                        // sub 0x??, %esp
 	{ 0x6, {0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00}, {0x81, 0xEC, 0x00, 0x00, 0x00, 0x00} },	// sub 0x??, %esp with 32bit immediate
-	{ 0x1, {0xFF}, {0x57} },							// push %edi
-	{ 0x1, {0xFF}, {0x56} },							// push %esi
 	{ 0x2, {0xFF, 0xFF}, {0x31, 0xC0} },						// xor %eax, %eax
 	{ 0x3, {0xFF, 0x4F, 0x00}, {0x8B, 0x45, 0x00} },  // mov $imm(%ebp), %reg
 	{ 0x3, {0xFF, 0x4C, 0x00}, {0x8B, 0x40, 0x00} },  // mov $imm(%eax-%edx), %reg
-        { 0x4, {0xFF, 0x00, 0x00, 0x00}, {0x8B, 0x00, 0x00, 0x00} },  // mov r16,r/m16 or r32,r/m32
-        { 0x5, {0xFF, 0x00, 0x00, 0x00, 0x00}, {0xB9, 0x00, 0x00, 0x00, 0x00} }, // mov $imm, %ecx
-  { 0x5, {0xFF, 0x00, 0x00, 0x00, 0x00}, {0xB8, 0x00, 0x00, 0x00, 0x00} }, // mov $imm, %eax
-        { 0x4, {0xFF, 0xFF, 0xFF, 0x00}, {0x66, 0x0F, 0xEF, 0x00} },             // pxor xmm2/128, xmm1
-        { 0x2, {0xFF, 0xFF}, {0xDB, 0xE3} }, // fninit
+	{ 0x3, {0xFF, 0x4F, 0x00}, {0x8A, 0x4D, 0x00} },  // mov $imm(%ebp), %cl
+	{ 0x4, {0xFF, 0xFF, 0xFF, 0x00}, {0x8B, 0x4C, 0x24, 0x00} },  			// mov $imm(%esp), %ecx
+	{ 0x4, {0xFF, 0x00, 0x00, 0x00}, {0x8B, 0x00, 0x00, 0x00} },  			// mov r16,r/m16 or r32,r/m32
+	{ 0x5, {0xFF, 0x00, 0x00, 0x00, 0x00}, {0xB9, 0x00, 0x00, 0x00, 0x00} }, 	// mov $imm, %ecx
+	{ 0x5, {0xFF, 0x00, 0x00, 0x00, 0x00}, {0xB8, 0x00, 0x00, 0x00, 0x00} }, 	// mov $imm, %eax
+	{ 0x4, {0xFF, 0xFF, 0xFF, 0x00}, {0x66, 0x0F, 0xEF, 0x00} },             	// pxor xmm2/128, xmm1
+	{ 0x2, {0xFF, 0xFF}, {0xDB, 0xE3} }, 						// fninit
+	{ 0x5, {0xFF, 0x00, 0x00, 0x00, 0x00}, {0xE8, 0x00, 0x00, 0x00, 0x00} },	// call $imm
 	{ 0x0 }
 };
 #elif defined(__x86_64__)
@@ -601,26 +642,34 @@ static AsmInstructionMatch possibleInstructions[] = {
 // If it stops working, refer to http://ref.x86asm.net/geek.html#modrm_byte_32_64 to do it
 // more accurately.
 static AsmInstructionMatch possibleInstructions[] = {
+	{ 0x5, {0xFF, 0x00, 0x00, 0x00, 0x00}, {0xE9, 0x00, 0x00, 0x00, 0x00} },	// jmp 0x????????
 	{ 0x1, {0xFF}, {0x90} },							// nop
 	{ 0x1, {0xF8}, {0x50} },							// push %rX
-  { 0x1, {0xFF}, {0x65} },              // GS prefix
+	{ 0x1, {0xFF}, {0x65} },							// GS prefix
 	{ 0x3, {0xFF, 0xFF, 0xFF}, {0x48, 0x89, 0xE5} },				// mov %rsp,%rbp
 	{ 0x4, {0xFF, 0xFF, 0xFF, 0x00}, {0x48, 0x83, 0xEC, 0x00} },	                // sub 0x??, %rsp
 	{ 0x4, {0xFB, 0xFF, 0x07, 0x00}, {0x48, 0x89, 0x05, 0x00} },	                // move onto rbp
 	{ 0x3, {0xFB, 0xFF, 0x00}, {0x48, 0x89, 0x00} },	                            // mov %reg, %reg
+	{ 0x3, {0xFB, 0xFF, 0x00}, {0x49, 0x89, 0x00} },	                            // mov %reg, %reg (REX.WB)
 	{ 0x2, {0xFF, 0x00}, {0x41, 0x00} },						// push %rXX
 	{ 0x2, {0xFF, 0x00}, {0x85, 0x00} },						// test %rX,%rX
 	{ 0x2, {0xFF, 0x00}, {0x77, 0x00} },						// ja $i8
-	{ 0x5, {0xF8, 0x00, 0x00, 0x00, 0x00}, {0xB8, 0x00, 0x00, 0x00, 0x00} },        // mov $imm, %reg
-  { 0x5, {0xFF, 0x00, 0x00, 0x00, 0x00}, {0x25, 0x00, 0x00, 0x00, 0x00} },  // and $imm, %eax
+	{ 0x2, {0xFF, 0x00}, {0x74, 0x00} },						// je $i8
+	{ 0x5, {0xF8, 0x00, 0x00, 0x00, 0x00}, {0xB8, 0x00, 0x00, 0x00, 0x00} },	// mov $imm, %reg
+	{ 0x3, {0xFF, 0xFF, 0x00}, {0xFF, 0x77, 0x00} },				// pushq $imm(%rdi)
+	{ 0x2, {0xFF, 0xFF}, {0x31, 0xC0} },						// xor %eax, %eax
+	{ 0x5, {0xFF, 0x00, 0x00, 0x00, 0x00}, {0x25, 0x00, 0x00, 0x00, 0x00} },	// and $imm, %eax
 
-  { 0x8, {0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00},
-         {0x48, 0x8B, 0x34, 0x25, 0x00, 0x00, 0x00, 0x00}, },                     // mov $imm, %rsi
+  { 0x8, {0xFF, 0xFF, 0x3F, 0xFF, 0x00, 0x00, 0x00, 0x00},
+         {0x48, 0x8B, 0x04, 0x25, 0x00, 0x00, 0x00, 0x00}, },                     // mov $imm, %{rax,rdx,rsp,rsi}
   { 0x4, {0xFF, 0xFF, 0xFF, 0x00}, {0x48, 0x83, 0xFA, 0x00}, },   // cmp $i8, %rdx
+	{ 0x4, {0xFF, 0xFF, 0x00, 0x00}, {0x83, 0x7f, 0x00, 0x00}, },			// cmpl $imm, $imm(%rdi)
 	{ 0xa, {0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
                {0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00} },    // mov $imm, %rax
         { 0x6, {0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00},
                {0x81, 0xE6, 0x00, 0x00, 0x00, 0x00} },                            // and $imm, %esi
+        { 0x6, {0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00},
+               {0xFF, 0x25, 0x00, 0x00, 0x00, 0x00} },                            // jmpq *(%rip)
         { 0x4, {0xFF, 0xFF, 0xFF, 0x00}, {0x66, 0x0F, 0xEF, 0x00} },              // pxor xmm2/128, xmm1
         { 0x2, {0xFF, 0x00}, {0x89, 0x00} },                               // mov r/m32,r32 or r/m16,r16
         { 0x3, {0xFF, 0xFF, 0xFF}, {0x49, 0x89, 0xF8} },                   // mov %rdi,%r8        
@@ -630,30 +679,31 @@ static AsmInstructionMatch possibleInstructions[] = {
 };
 #endif
 
-static Boolean codeMatchesInstruction(unsigned char *code, AsmInstructionMatch* instruction)
+static Boolean codeMatchesInstruction(unsigned char *code, AsmInstructionMatch* instruction) 
 {
 	Boolean match = true;
+	
 	size_t i;
   assert(instruction);
 #ifdef DEBUG_DISASM
-  fprintf(stderr, "Matching: ");
+	fprintf(stderr, "Matching: ");
 #endif  
 	for (i=0; i<instruction->length; i++) {
 		unsigned char mask = instruction->mask[i];
 		unsigned char constraint = instruction->constraint[i];
 		unsigned char codeValue = code[i];
 #ifdef DEBUG_DISASM
-    fprintf(stderr, "%x ", (unsigned)codeValue);
+		fprintf(stderr, "%x ", (unsigned)codeValue);
 #endif    
 		match = ((codeValue & mask) == constraint);
 		if (!match) break;
 	}
 #ifdef DEBUG_DISASM
-  if (match) {
-    fprintf(stderr, " OK\n");
-  } else {
-    fprintf(stderr, " FAIL\n");
-  }
+	if (match) {
+		fprintf(stderr, " OK\n");
+	} else {
+		fprintf(stderr, " FAIL\n");
+	}
 #endif  
 	return match;
 }
@@ -661,17 +711,21 @@ static Boolean codeMatchesInstruction(unsigned char *code, AsmInstructionMatch* 
 #if defined(__i386__) || defined(__x86_64__)
 	static Boolean 
 eatKnownInstructions( 
-	unsigned char *code, 
-	uint64_t* newInstruction,
-	int* howManyEaten, 
-	char* originalInstructions )
+	unsigned char	*code, 
+	uint64_t		*newInstruction,
+	int				*howManyEaten, 
+	char			*originalInstructions,
+	int				*originalInstructionCount, 
+	uint8_t			*originalInstructionSizes )
 {
 	Boolean allInstructionsKnown = true;
 	int totalEaten = 0;
 	unsigned char* ptr = code;
 	int remainsToEat = 5; // a JMP instruction takes 5 bytes
+	int instructionIndex = 0;
 	
 	if (howManyEaten) *howManyEaten = 0;
+	if (originalInstructionCount) *originalInstructionCount = 0;
 	while (remainsToEat > 0) {
 		Boolean curInstructionKnown = false;
 		
@@ -685,6 +739,7 @@ eatKnownInstructions(
 		// if all instruction matches failed, we don't know current instruction then, stop here
 		if (!curInstructionKnown) { 
 			allInstructionsKnown = false;
+			fprintf(stderr, "mach_override: some instructions unknown! Need to update mach_override.c\n");
 			break;
 		}
 		
@@ -693,6 +748,10 @@ eatKnownInstructions(
 		ptr += eaten;
 		remainsToEat -= eaten;
 		totalEaten += eaten;
+		
+		if (originalInstructionSizes) originalInstructionSizes[instructionIndex] = eaten;
+		instructionIndex += 1;
+		if (originalInstructionCount) *originalInstructionCount = instructionIndex;
 	}
 
 
@@ -705,8 +764,8 @@ eatKnownInstructions(
 			memset(originalInstructions, 0x90 /* NOP */, kOriginalInstructionsSize); // fill instructions with NOP
 			bcopy(code, originalInstructions, totalEaten);
 		} else {
-#ifdef DEBUG_DISASM    
-			fprintf (stderr, "Not enough space in island to store original instructions. Adapt the island definition and kOriginalInstructionsSize\n");
+#ifdef DEBUG_DISASM
+			fprintf(stderr, "Not enough space in island to store original instructions. Adapt the island definition and kOriginalInstructionsSize\n");
 #endif      
 			return false;
 		}
@@ -724,6 +783,32 @@ eatKnownInstructions(
 	}
 
 	return allInstructionsKnown;
+}
+
+	static void
+fixupInstructions(
+    void		*originalFunction,
+    void		*escapeIsland,
+    void		*instructionsToFix,
+	int			instructionCount,
+	uint8_t		*instructionSizes )
+{
+	int	index;
+	for (index = 0;index < instructionCount;index += 1)
+	{
+		if ((*(uint8_t*)instructionsToFix == 0xE9) || // 32-bit jump relative
+		    (*(uint8_t*)instructionsToFix == 0xE8))   // 32-bit call relative
+		{
+			uint32_t offset = (uintptr_t)originalFunction - (uintptr_t)escapeIsland;
+			uint32_t *jumpOffsetPtr = (uint32_t*)((uintptr_t)instructionsToFix + 1);
+			*jumpOffsetPtr += offset;
+		}
+
+		
+		originalFunction = (void*)((uintptr_t)originalFunction + instructionSizes[index]);
+		escapeIsland = (void*)((uintptr_t)escapeIsland + instructionSizes[index]);
+		instructionsToFix = (void*)((uintptr_t)instructionsToFix + instructionSizes[index]);
+    }
 }
 #endif
 
@@ -771,5 +856,4 @@ void atomic_mov64(
 }
 #endif
 #endif
-
 #endif  // __APPLE__
