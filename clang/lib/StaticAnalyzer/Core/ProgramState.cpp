@@ -709,6 +709,11 @@ bool ProgramState::isTainted(const SymExpr* Sym, TaintTagType Kind) const {
     // If this is a SymbolDerived with a tainted parent, it's also tainted.
     if (const SymbolDerived *SD = dyn_cast<SymbolDerived>(*SI))
       Tainted = Tainted || isTainted(SD->getParentSymbol(), Kind);
+
+    // If memory region is tainted, data is also tainted.
+    if (const SymbolRegionValue *SRV = dyn_cast<SymbolRegionValue>(*SI))
+      Tainted = Tainted || isTainted(SRV->getRegion(), Kind);
+
     if (Tainted)
       return true;
   }

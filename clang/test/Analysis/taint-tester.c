@@ -8,7 +8,8 @@ int Buffer[BUFSIZE];
 
 struct XYStruct {
   int x;
-  float y;
+  int y;
+  char z;
 };
 
 void taintTracking(int x) {
@@ -26,9 +27,31 @@ void taintTracking(int x) {
   // Tainted ptr arithmetic/array element address.
   int tprtarithmetic1 = *(addr+1); // expected-warning 2 {{tainted}}
 
+  // Dereference.
+  int *ptr;
+  scanf("%p", &ptr);
+  int ptrDeref = *ptr; // expected-warning 2 {{tainted}}
+  int _ptrDeref = ptrDeref + 13; // expected-warning 2 {{tainted}}
+
+  // Pointer arithmetic + dereferencing.
+  // FIXME: We fail to propagate the taint here because RegionStore does not
+  // handle ElementRegions with symbolic indexes.
+  int addrDeref = *addr; // expected-warning {{tainted}}
+  int _addrDeref = addrDeref;
+
   // Tainted struct address, casts.
   struct XYStruct *xyPtr = 0;
   scanf("%p", &xyPtr);
   void *tXYStructPtr = xyPtr; // expected-warning 2 {{tainted}}
   struct XYStruct *xyPtrCopy = tXYStructPtr; // expected-warning 2 {{tainted}}
+  int ptrtx = xyPtr->x;// expected-warning 2 {{tainted}}
+  int ptrty = xyPtr->y;// expected-warning 2 {{tainted}}
+
+  // Taint on fields of a struct.
+  struct XYStruct xy = {2, 3, 11};
+  scanf("%f", &xy.y);
+  scanf("%f", &xy.x);
+  int tx = xy.x; // expected-warning {{tainted}}
+  int ty = xy.y; // FIXME: This should be tainted as well.
+  char ntz = xy.z;// no warning
 }

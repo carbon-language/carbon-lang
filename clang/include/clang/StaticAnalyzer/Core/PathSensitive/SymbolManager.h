@@ -120,7 +120,7 @@ public:
   }
 };
 
-/// A symbol representing the value of a MemRegion.
+///\brief A symbol representing the value stored at a MemRegion.
 class SymbolRegionValue : public SymbolData {
   const TypedValueRegion *R;
 

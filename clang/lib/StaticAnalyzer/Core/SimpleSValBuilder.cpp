@@ -97,10 +97,12 @@ SVal SimpleSValBuilder::evalCastFromNonLoc(NonLoc val, QualType castTy) {
     return UnknownVal();
   }
 
+  // If value is a non integer constant, produce unknown.
   if (!isa<nonloc::ConcreteInt>(val))
     return UnknownVal();
 
-  // Only handle casts from integers to integers.
+  // Only handle casts from integers to integers - if val is an integer constant
+  // being cast to a non integer type, produce unknown.
   if (!isLocType && !castTy->isIntegerType())
     return UnknownVal();
 
