@@ -584,6 +584,14 @@ def imm0_32 : Operand<i32>, ImmLeaf<i32, [{
   let ParserMatchClass = Imm0_32AsmOperand;
 }
 
+/// imm0_63 predicate - True if the 32-bit immediate is in the range [0,63].
+def Imm0_63AsmOperand: ImmAsmOperand { let Name = "Imm0_63"; }
+def imm0_63 : Operand<i32>, ImmLeaf<i32, [{
+  return Imm >= 0 && Imm < 64;
+}]> {
+  let ParserMatchClass = Imm0_63AsmOperand;
+}
+
 /// imm0_255 predicate - Immediate in the range [0,255].
 def Imm0_255AsmOperand : ImmAsmOperand { let Name = "Imm0_255"; }
 def imm0_255 : Operand<i32>, ImmLeaf<i32, [{ return Imm >= 0 && Imm < 256; }]> {

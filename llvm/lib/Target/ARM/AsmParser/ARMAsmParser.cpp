@@ -611,6 +611,14 @@ public:
     int64_t Value = CE->getValue();
     return Value >= 0 && Value < 32;
   }
+  bool isImm0_63() const {
+    if (Kind != k_Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return Value >= 0 && Value < 64;
+  }
   bool isImm8() const {
     if (Kind != k_Immediate)
       return false;

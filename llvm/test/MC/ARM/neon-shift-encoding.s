@@ -276,3 +276,23 @@ _foo:
 @ CHECK: vshl.u16	d4, d4, d5      @ encoding: [0x04,0x44,0x15,0xf3]
 @ CHECK: vshl.u32	d4, d4, d5      @ encoding: [0x04,0x44,0x25,0xf3]
 @ CHECK: vshl.u64	d4, d4, d5      @ encoding: [0x04,0x44,0x35,0xf3]
+
+        vshl.s8 q4, #2
+        vshl.s16 q4, #14
+        vshl.s32 q4, #27
+        vshl.s64 q4, #35
+
+        vshl.s8 d4, #6
+        vshl.u16 d4, #10
+        vshl.s32 d4, #17
+        vshl.u64 d4, #43
+
+@ CHECK: vshl.i8	q4, q4, #2      @ encoding: [0x58,0x85,0x8a,0xf2]
+@ CHECK: vshl.i16	q4, q4, #14     @ encoding: [0x58,0x85,0x9e,0xf2]
+@ CHECK: vshl.i32	q4, q4, #27     @ encoding: [0x58,0x85,0xbb,0xf2]
+@ CHECK: vshl.i64	q4, q4, #35     @ encoding: [0xd8,0x85,0xa3,0xf2]
+
+@ CHECK: vshl.i8	d4, d4, #6      @ encoding: [0x14,0x45,0x8e,0xf2]
+@ CHECK: vshl.i16	d4, d4, #10     @ encoding: [0x14,0x45,0x9a,0xf2]
+@ CHECK: vshl.i32	d4, d4, #17     @ encoding: [0x14,0x45,0xb1,0xf2]
+@ CHECK: vshl.i64	d4, d4, #43     @ encoding: [0x94,0x45,0xab,0xf2]
