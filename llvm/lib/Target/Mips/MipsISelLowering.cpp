@@ -1550,19 +1550,26 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
     SDValue TGA = DAG.getTargetGlobalAddress(GV, dl, PtrVT,
                                              0, MipsII::MO_TLSGD);
     SDValue Argument = DAG.getNode(MipsISD::WrapperPIC, dl, PtrVT, TGA);
+    unsigned PtrSize = PtrVT.getSizeInBits();
+    IntegerType *PtrTy = Type::getIntNTy(*DAG.getContext(), PtrSize);
+
+    SmallVector<Type*, 1> Params;
+    Params.push_back(PtrTy);
+    FunctionType *FuncTy = FunctionType::get(PtrTy, Params, false);
+    Function *Func = Function::Create(FuncTy, GlobalValue::ExternalLinkage,
+                                      "__tls_get_addr");
+    SDValue TlsGetAddr = DAG.getGlobalAddress(Func, dl, PtrVT);
 
     ArgListTy Args;
     ArgListEntry Entry;
     Entry.Node = Argument;
-    unsigned PtrSize = PtrVT.getSizeInBits();
-    IntegerType *PtrTy = Type::getIntNTy(*DAG.getContext(), PtrSize);
     Entry.Ty = PtrTy;
     Args.push_back(Entry);
+    
     std::pair<SDValue, SDValue> CallResult =
       LowerCallTo(DAG.getEntryNode(), PtrTy,
                   false, false, false, false, 0, CallingConv::C, false, true,
-                  DAG.getExternalSymbol("__tls_get_addr", PtrVT), Args, DAG,
-                  dl);
+                  TlsGetAddr, Args, DAG, dl);
 
     return CallResult.first;
   }
