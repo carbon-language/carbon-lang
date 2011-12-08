@@ -315,6 +315,8 @@ public:
             {
                 var_sp = GetVariableAtIndex(index);
                 const char *var_name_cstr = var_sp->GetName().GetCString();
+                if (!var_name_cstr || !name)
+                    continue;
                 if (::strcmp (var_name_cstr, name) == 0)
                     return var_sp;
             }
