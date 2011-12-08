@@ -1,4 +1,7 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+avx | FileCheck %s
+
+; rdar://10538297
 
 define void @t(i8* %ptr) nounwind  {
 entry:
