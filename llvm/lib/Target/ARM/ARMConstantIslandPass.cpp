@@ -292,19 +292,14 @@ namespace {
 
 /// verify - check BBOffsets, BBSizes, alignment of islands
 void ARMConstantIslands::verify(MachineFunction &MF) {
-  if (!isThumb)
-    return;
 #ifndef NDEBUG
   for (MachineFunction::iterator MBBI = MF.begin(), E = MF.end();
        MBBI != E; ++MBBI) {
     MachineBasicBlock *MBB = MBBI;
-    if (!MBB->empty() &&
-        MBB->begin()->getOpcode() == ARM::CONSTPOOL_ENTRY) {
-      unsigned MBBId = MBB->getNumber();
-      assert(HasInlineAsm ||
-             (BBInfo[MBBId].Offset%4 == 0 && BBInfo[MBBId].Size%4 == 0) ||
-             (BBInfo[MBBId].Offset%4 != 0 && BBInfo[MBBId].Size%4 != 0));
-    }
+    unsigned Align = MBB->getAlignment();
+    unsigned MBBId = MBB->getNumber();
+    assert(BBInfo[MBBId].Offset % (1u << Align) == 0);
+    assert(!MBBId || BBInfo[MBBId - 1].postOffset() <= BBInfo[MBBId].Offset);
   }
   for (unsigned i = 0, e = CPUsers.size(); i != e; ++i) {
     CPUser &U = CPUsers[i];
