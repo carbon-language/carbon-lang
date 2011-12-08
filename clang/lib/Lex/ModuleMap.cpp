@@ -273,10 +273,14 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   
   // Look for subframeworks.
   llvm::error_code EC;
-  llvm::SmallString<128> SubframeworksDirName = StringRef(FrameworkDir->getName());
+  llvm::SmallString<128> SubframeworksDirName
+    = StringRef(FrameworkDir->getName());
   llvm::sys::path::append(SubframeworksDirName, "Frameworks");
-  for (llvm::sys::fs::directory_iterator Dir(SubframeworksDirName.str(), EC),
-                                         DirEnd;
+  llvm::SmallString<128> SubframeworksDirNameNative;
+  llvm::sys::path::native(SubframeworksDirName.str(),
+                          SubframeworksDirNameNative);
+  for (llvm::sys::fs::directory_iterator 
+         Dir(SubframeworksDirNameNative.str(), EC), DirEnd;
        Dir != DirEnd && !EC; Dir.increment(EC)) {
     if (!StringRef(Dir->path()).endswith(".framework"))
       continue;
@@ -293,8 +297,11 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   Module *ModulePrivate = 0;
   llvm::SmallString<128> PrivateHeadersDirName(FrameworkDir->getName());
   llvm::sys::path::append(PrivateHeadersDirName, "PrivateHeaders");
-  for (llvm::sys::fs::directory_iterator Dir(PrivateHeadersDirName.str(), EC),
-       DirEnd;
+  llvm::SmallString<128> PrivateHeadersDirNameNative;
+  llvm::sys::path::native(PrivateHeadersDirName.str(),
+                          PrivateHeadersDirNameNative);
+  for (llvm::sys::fs::directory_iterator 
+         Dir(PrivateHeadersDirNameNative.str(), EC), DirEnd;
        Dir != DirEnd && !EC; Dir.increment(EC)) {
     // Check whether this entry has an extension typically associated with 
     // headers.
