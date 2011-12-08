@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mcpu=penryn | FileCheck %s
+; RUN: llc < %s -mtriple=i686-linux -mcpu=penryn | FileCheck %s
 
 declare <4 x float> @llvm.x86.sse41.blendvps(<4 x float>, <4 x float>, <4 x float>) nounwind readnone
 
