@@ -532,7 +532,6 @@ void IndexingContext::addContainerInMap(const DeclContext *DC,
   if (!DC)
     return;
 
-  assert(getScopedContext(DC) == DC);
   ContainerMapTy::iterator I = ContainerMap.find(DC);
   if (I == ContainerMap.end()) {
     if (container)
@@ -642,32 +641,11 @@ IndexingContext::getEntityContainer(const Decl *D) const {
   return DC;
 }
 
-const DeclContext *
-IndexingContext::getScopedContext(const DeclContext *DC) const {
-  // Local contexts are ignored for indexing.
-  const DeclContext *FuncCtx = cast<Decl>(DC)->getParentFunctionOrMethod();
-  if (FuncCtx)
-    return FuncCtx;
-
-  // We consider enums always scoped for indexing.
-  if (isa<TagDecl>(DC))
-    return DC;
-
-  if (const NamespaceDecl *NS = dyn_cast<NamespaceDecl>(DC)) {
-    if (NS->isAnonymousNamespace())
-      return getScopedContext(NS->getParent());
-    return NS;
-  }
-
-  return DC->getRedeclContext();
-}
-
 CXIdxClientContainer
 IndexingContext::getClientContainerForDC(const DeclContext *DC) const {
   if (!DC)
     return 0;
 
-  DC = getScopedContext(DC);
   ContainerMapTy::const_iterator I = ContainerMap.find(DC);
   if (I == ContainerMap.end())
     return 0;

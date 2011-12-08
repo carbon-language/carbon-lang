@@ -428,12 +428,6 @@ private:
 
   const DeclContext *getEntityContainer(const Decl *D) const;
 
-  CXIdxClientContainer getClientContainer(const NamedDecl *D) const {
-    return getClientContainerForDC(D->getDeclContext());
-  }
-
-  const DeclContext *getScopedContext(const DeclContext *DC) const;
-
   CXIdxClientFile getIndexFile(const FileEntry *File);
   
   CXIdxLoc getIndexLoc(SourceLocation Loc) const;
