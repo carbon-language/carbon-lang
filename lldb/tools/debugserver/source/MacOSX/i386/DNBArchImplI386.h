@@ -223,15 +223,6 @@ protected:
     static const DNBRegisterSetInfo *
     GetRegisterSetInfo(nub_size_t *num_reg_sets);
     
-    static bool
-    CPUHasAVX()
-    {
-        if (s_has_avx == kAVXUnknown)
-            s_has_avx = (::HasAVX() ? kAVXPresent : kAVXNotPresent);
-        
-        return (s_has_avx == kAVXPresent);
-    }
-
     // Helper functions for watchpoint manipulations.
     static void SetWatchpoint(DBG &debug_state, uint32_t hw_index, nub_addr_t addr, nub_size_t size, bool read, bool write);
     static void ClearWatchpoint(DBG &debug_state, uint32_t hw_index);
@@ -242,12 +233,6 @@ protected:
 
     MachThread *m_thread;
     State       m_state;
-            
-    static enum AVXPresence {
-        kAVXPresent,
-        kAVXNotPresent,
-        kAVXUnknown
-    } s_has_avx;
 };
 
 #endif    // #if defined (__i386__) || defined (__x86_64__)

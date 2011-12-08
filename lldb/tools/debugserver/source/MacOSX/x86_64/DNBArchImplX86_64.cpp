@@ -14,6 +14,8 @@
 #if defined (__i386__) || defined (__x86_64__)
 
 #include <sys/cdefs.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
 
 #include "MacOSX/x86_64/DNBArchImplX86_64.h"
 #include "DNBLog.h"
@@ -65,7 +67,54 @@ static bool ForceAVXRegs ()
 #define FORCE_AVX_REGS (0)
 #endif
 
-enum DNBArchImplX86_64::AVXPresence DNBArchImplX86_64::s_has_avx = DNBArchImplX86_64::kAVXNotPresent;
+
+extern "C" bool
+CPUHasAVX()
+{
+    enum AVXPresence
+    {
+        eAVXUnknown     = -1,
+        eAVXNotPresent  =  0,
+        eAVXPresent     =  1
+    };
+
+    static AVXPresence g_has_avx = eAVXUnknown;
+    if (g_has_avx == eAVXUnknown)
+    {
+        g_has_avx = eAVXNotPresent;
+
+        // Only xnu-2020 or later has AVX support, any versions before
+        // this have a busted thread_get_state RPC where it would truncate
+        // the thread state buffer (<rdar://problem/10122874>). So we need to
+        // verify the kernel version number manually or disable AVX support.
+        int mib[2];
+        char buffer[1024];
+        size_t length = sizeof(buffer);
+        uint64_t xnu_version = 0;
+        mib[0] = CTL_KERN;
+        mib[1] = KERN_VERSION;
+        int err = ::sysctl(mib, 2, &buffer, &length, NULL, 0);
+        if (err == 0)
+        {
+            const char *xnu = strstr (buffer, "xnu-");
+            if (xnu)
+            {
+                const char *xnu_version_cstr = xnu + 4;
+                xnu_version = strtoull (xnu_version_cstr, NULL, 0);
+                if (xnu_version >= 2020 && xnu_version != ULLONG_MAX)
+                {
+                    if (::HasAVX())
+                    {
+                        g_has_avx = eAVXPresent;
+                    }
+                }
+            }
+        }
+        DNBLogThreadedIf (LOG_THREAD, "CPUHasAVX(): g_has_avx = %i (err = %i, errno = %i, xnu_version = %llu)\n", g_has_avx, err, errno, xnu_version);
+    }
+    
+    return (g_has_avx == eAVXPresent);
+}
 
 uint64_t
 DNBArchImplX86_64::GetPC(uint64_t failValue)
