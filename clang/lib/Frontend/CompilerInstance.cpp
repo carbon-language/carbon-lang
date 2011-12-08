@@ -278,8 +278,7 @@ void CompilerInstance::createPreprocessor() {
   if (!getHeaderSearchOpts().DisableModuleHash)
     llvm::sys::path::append(SpecificModuleCache,
                             getInvocation().getModuleHash());
-  PP->getHeaderSearchInfo().configureModules(SpecificModuleCache,
-                                             getLangOpts().CurrentModule);
+  PP->getHeaderSearchInfo().setModuleCachePath(SpecificModuleCache);
 
   // Handle generating dependencies, if requested.
   const DependencyOutputOptions &DepOpts = getDependencyOutputOpts();
@@ -1105,7 +1104,14 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
   // If we don't already have information on this module, load the module now.
   llvm::DenseMap<const IdentifierInfo *, clang::Module *>::iterator Known
     = KnownModules.find(Path[0].first);
-  if (Known == KnownModules.end()) {  
+  if (Known != KnownModules.end()) {
+    // Retrieve the cached top-level module.
+    Module = Known->second;    
+  } else if (ModuleName == getLangOpts().CurrentModule) {
+    // This is the module we're building. 
+    Module = PP->getHeaderSearchInfo().getModuleMap().findModule(ModuleName);
+    Known = KnownModules.insert(std::make_pair(Path[0].first, Module)).first;
+  } else {
     // Search for a module with the given name.
     std::string ModuleFileName;
     ModuleFile
@@ -1204,9 +1210,6 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
     
     // Cache the result of this top-level module lookup for later.
     Known = KnownModules.insert(std::make_pair(Path[0].first, Module)).first;
-  } else {
-    // Retrieve the cached top-level module.
-    Module = Known->second;
   }
   
   // If we never found the module, fail.
@@ -1265,8 +1268,10 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
     }
   }
   
-  // Make the named module visible.
-  ModuleManager->makeModuleVisible(Module, Visibility);
+  // Make the named module visible, if it's not already part of the module
+  // we are parsing.
+  if (ModuleName != getLangOpts().CurrentModule)
+    ModuleManager->makeModuleVisible(Module, Visibility);
 
   // If this module import was due to an inclusion directive, create an 
   // implicit import declaration to capture it in the AST.

@@ -142,15 +142,12 @@ public:
   /// SearchPath at which the file was found. This only differs from the
   /// Filename for framework includes.
   ///
-  /// \param BuildingModule The name of the module we're currently building.
-  ///
   /// \param SuggestedModule If non-null, and the file found is semantically
   /// part of a known module, this will be set to the module that should
   /// be imported instead of preprocessing/parsing the file found.
   const FileEntry *LookupFile(StringRef Filename, HeaderSearch &HS,
                               SmallVectorImpl<char> *SearchPath,
                               SmallVectorImpl<char> *RelativePath,
-                              StringRef BuildingModule,
                               Module **SuggestedModule) const;
 
 private:
@@ -158,7 +155,6 @@ private:
       StringRef Filename, HeaderSearch &HS,
       SmallVectorImpl<char> *SearchPath,
       SmallVectorImpl<char> *RelativePath,
-      StringRef BuildingModule,
       Module **SuggestedModule) const;
 
 };

@@ -1352,12 +1352,21 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
       break;
     }
 
-    CharSourceRange ReplaceRange(SourceRange(HashLoc, CharEnd), 
-                                 /*IsTokenRange=*/false);
-    Diag(HashLoc, diag::warn_auto_module_import)
-      << IncludeKind << PathString 
-      << FixItHint::CreateReplacement(ReplaceRange,
-           "__import_module__ " + PathString.str().str() + ";");
+    // Determine whether we are actually building the module that this
+    // include directive maps to.
+    bool BuildingImportedModule
+      = Path[0].first->getName() == getLangOptions().CurrentModule;
+    
+    if (!BuildingImportedModule) {
+      // If we're not building the imported module, warn that we're going
+      // to automatically turn this inclusion directive into a module import.
+      CharSourceRange ReplaceRange(SourceRange(HashLoc, CharEnd), 
+                                   /*IsTokenRange=*/false);
+      Diag(HashLoc, diag::warn_auto_module_import)
+        << IncludeKind << PathString 
+        << FixItHint::CreateReplacement(ReplaceRange,
+             "__import_module__ " + PathString.str().str() + ";");
+    }
     
     // Load the module.
     // If this was an #__include_macros directive, only make macros visible.
@@ -1365,7 +1374,10 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
       = (IncludeKind == 3)? Module::MacrosVisible : Module::AllVisible;
     TheModuleLoader.loadModule(IncludeTok.getLocation(), Path, Visibility,
                                /*IsIncludeDirective=*/true);
-    return;
+    
+    // If this header isn't part of the module we're building, we're done.
+    if (!BuildingImportedModule)
+      return;
   }
   
   // The #included file will be considered to be a system header if either it is

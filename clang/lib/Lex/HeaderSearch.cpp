@@ -197,7 +197,6 @@ const FileEntry *DirectoryLookup::LookupFile(
     HeaderSearch &HS,
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
-    StringRef BuildingModule,
     Module **SuggestedModule) const {
   llvm::SmallString<1024> TmpDir;
   if (isNormalDir()) {
@@ -224,10 +223,7 @@ const FileEntry *DirectoryLookup::LookupFile(
       
       // If there is a module that corresponds to this header, 
       // suggest it.
-      Module *Module = HS.findModuleForHeader(File);
-      if (Module && Module->getTopLevelModuleName() != BuildingModule)
-        *SuggestedModule = Module;
-      
+      *SuggestedModule = HS.findModuleForHeader(File);
       return File;
     }
     
@@ -236,7 +232,7 @@ const FileEntry *DirectoryLookup::LookupFile(
 
   if (isFramework())
     return DoFrameworkLookup(Filename, HS, SearchPath, RelativePath,
-                             BuildingModule, SuggestedModule);
+                             SuggestedModule);
 
   assert(isHeaderMap() && "Unknown directory lookup");
   const FileEntry * const Result = getHeaderMap()->LookupFile(
@@ -263,7 +259,6 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
     HeaderSearch &HS,
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
-    StringRef BuildingModule,
     Module **SuggestedModule) const 
 {
   FileManager &FileMgr = HS.getFileMgr();
@@ -322,11 +317,8 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
   Module *Module = 0;
   if (SuggestedModule) {
     if (const DirectoryEntry *FrameworkDir
-                                    = FileMgr.getDirectory(FrameworkName)) {
-      if ((Module = HS.getFrameworkModule(ModuleName, FrameworkDir)) &&
-          Module->Name == BuildingModule)
-        Module = 0;
-    }
+                                    = FileMgr.getDirectory(FrameworkName))
+      Module = HS.getFrameworkModule(ModuleName, FrameworkDir);
   }
   
   // Check "/System/Library/Frameworks/Cocoa.framework/Headers/file.h"
@@ -475,7 +467,7 @@ const FileEntry *HeaderSearch::LookupFile(
   for (; i != SearchDirs.size(); ++i) {
     const FileEntry *FE =
       SearchDirs[i].LookupFile(Filename, *this, SearchPath, RelativePath,
-                               BuildingModule, SuggestedModule);
+                               SuggestedModule);
     if (!FE) continue;
 
     CurDir = &SearchDirs[i];

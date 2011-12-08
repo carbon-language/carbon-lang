@@ -135,9 +135,6 @@ class HeaderSearch {
   /// \brief The path to the module cache.
   std::string ModuleCachePath;
   
-  /// \brief The name of the module we're building.
-  std::string BuildingModule;
-  
   /// FileInfo - This contains all of the preprocessor-specific data about files
   /// that are included.  The vector is indexed by the FileEntry's UID.
   ///
@@ -216,11 +213,9 @@ public:
     SystemDirIdx++;
   }
 
-  /// \brief Set the path to the module cache and the name of the module
-  /// we're building
-  void configureModules(StringRef CachePath, StringRef BuildingModule) {
+  /// \brief Set the path to the module cache.
+  void setModuleCachePath(StringRef CachePath) {
     ModuleCachePath = CachePath;
-    this->BuildingModule = BuildingModule;
   }
   
   /// \brief Retrieve the path to the module cache.
