@@ -1,6 +1,5 @@
 @ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown -show-encoding < %s | FileCheck %s
 
-
 	vmul.i8	d16, d16, d17
 	vmul.i16	d16, d16, d17
 	vmul.i32	d16, d16, d17
@@ -13,6 +12,17 @@
 	vmul.p8	q8, q8, q9
 	vmul.i16	d18, d8, d0[3]
 
+	vmul.i8	d16, d17
+	vmul.i16	d16, d17
+	vmul.i32	d16, d17
+	vmul.f32	d16, d17
+	vmul.i8	q8, q9
+	vmul.i16	q8, q9
+	vmul.i32	q8, q9
+	vmul.f32	q8, q9
+	vmul.p8	d16, d17
+	vmul.p8	q8, q9
+
 @ CHECK: vmul.i8	d16, d16, d17   @ encoding: [0xb1,0x09,0x40,0xf2]
 @ CHECK: vmul.i16	d16, d16, d17   @ encoding: [0xb1,0x09,0x50,0xf2]
 @ CHECK: vmul.i32	d16, d16, d17   @ encoding: [0xb1,0x09,0x60,0xf2]
@@ -24,6 +34,17 @@
 @ CHECK: vmul.p8	d16, d16, d17   @ encoding: [0xb1,0x09,0x40,0xf3]
 @ CHECK: vmul.p8	q8, q8, q9      @ encoding: [0xf2,0x09,0x40,0xf3]
 @ CHECK: vmul.i16	d18, d8, d0[3]  @ encoding: [0x68,0x28,0xd8,0xf2]
+
+@ CHECK: vmul.i8	d16, d16, d17   @ encoding: [0xb1,0x09,0x40,0xf2]
+@ CHECK: vmul.i16	d16, d16, d17   @ encoding: [0xb1,0x09,0x50,0xf2]
+@ CHECK: vmul.i32	d16, d16, d17   @ encoding: [0xb1,0x09,0x60,0xf2]
+@ CHECK: vmul.f32	d16, d16, d17   @ encoding: [0xb1,0x0d,0x40,0xf3]
+@ CHECK: vmul.i8	q8, q8, q9      @ encoding: [0xf2,0x09,0x40,0xf2]
+@ CHECK: vmul.i16	q8, q8, q9      @ encoding: [0xf2,0x09,0x50,0xf2]
+@ CHECK: vmul.i32	q8, q8, q9      @ encoding: [0xf2,0x09,0x60,0xf2]
+@ CHECK: vmul.f32	q8, q8, q9      @ encoding: [0xf2,0x0d,0x40,0xf3]
+@ CHECK: vmul.p8	d16, d16, d17   @ encoding: [0xb1,0x09,0x40,0xf3]
+@ CHECK: vmul.p8	q8, q8, q9      @ encoding: [0xf2,0x09,0x40,0xf3]
 
 
 	vqdmulh.s16	d16, d16, d17

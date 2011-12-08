@@ -5376,6 +5376,24 @@ defm : VFPDTAnyInstAlias<"vorr${p}", "$Vdn, $Vm",
                          (VORRq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
 
 // VMUL two-operand aliases.
+def : NEONInstAlias<"vmul${p}.p8 $Qdn, $Qm",
+                    (VMULpq QPR:$Qdn, QPR:$Qdn, QPR:$Qm, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.i8 $Qdn, $Qm",
+                    (VMULv16i8 QPR:$Qdn, QPR:$Qdn, QPR:$Qm, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.i16 $Qdn, $Qm",
+                    (VMULv8i16 QPR:$Qdn, QPR:$Qdn, QPR:$Qm, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.i32 $Qdn, $Qm",
+                    (VMULv4i32 QPR:$Qdn, QPR:$Qdn, QPR:$Qm, pred:$p)>;
+
+def : NEONInstAlias<"vmul${p}.p8 $Ddn, $Dm",
+                    (VMULpd DPR:$Ddn, DPR:$Ddn, DPR:$Dm, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.i8 $Ddn, $Dm",
+                    (VMULv8i8 DPR:$Ddn, DPR:$Ddn, DPR:$Dm, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.i16 $Ddn, $Dm",
+                    (VMULv4i16 DPR:$Ddn, DPR:$Ddn, DPR:$Dm, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.i32 $Ddn, $Dm",
+                    (VMULv2i32 DPR:$Ddn, DPR:$Ddn, DPR:$Dm, pred:$p)>;
+
 def : NEONInstAlias<"vmul${p}.f32 $Qdn, $Qm",
                     (VMULfq QPR:$Qdn, QPR:$Qdn, QPR:$Qm, pred:$p)>;
 def : NEONInstAlias<"vmul${p}.f32 $Ddn, $Dm",
