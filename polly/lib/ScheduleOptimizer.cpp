@@ -200,27 +200,34 @@ static isl_basic_map *getTileMap(isl_ctx *ctx, int scheduleDimensions,
 
 // getScheduleForBand - Get the schedule for this band.
 //
-// In case tiling is enabled, the schedule of the band is tiled.
-isl_union_map *getScheduleForBand(isl_band *Band) {
+// Polly applies transformations like tiling on top of the isl calculated value.
+// This can influence the number of scheduling dimension. The number of
+// schedule dimensions is returned in the parameter 'Dimension'.
+isl_union_map *getScheduleForBand(isl_band *Band, int *Dimensions) {
   isl_union_map *PartialSchedule;
-  int Dimensions;
   isl_ctx *ctx;
   isl_space *Space;
   isl_basic_map *TileMap;
   isl_union_map *TileUMap;
 
   PartialSchedule = isl_band_get_partial_schedule(Band);
+  *Dimensions = isl_band_n_member(Band);
 
   if (DisableTiling)
     return PartialSchedule;
 
+  // It does not make any sense to tile a band with just one dimension.
+  if (*Dimensions == 1)
+    return PartialSchedule;
+
   ctx = isl_union_map_get_ctx(PartialSchedule);
   Space = isl_union_map_get_space(PartialSchedule);
-  Dimensions = isl_band_n_member(Band);
 
-  TileMap = getTileMap(ctx, Dimensions, Space);
+  TileMap = getTileMap(ctx, *Dimensions, Space);
   TileUMap = isl_union_map_from_map(isl_map_from_basic_map(TileMap));
   TileUMap = isl_union_map_align_params(TileUMap, Space);
+  *Dimensions = 2 * *Dimensions;
+
   return isl_union_map_apply_range(PartialSchedule, TileUMap);
 }
 
@@ -348,8 +355,7 @@ static isl_union_map *getScheduleForBandList(isl_band_list *BandList) {
     isl_space *Space;
 
     Band = isl_band_list_get_band(BandList, i);
-    PartialSchedule = getScheduleForBand(Band);
-    ScheduleDimensions = isl_band_n_member(Band);
+    PartialSchedule = getScheduleForBand(Band, &ScheduleDimensions);
     Space = isl_union_map_get_space(PartialSchedule);
 
     if (isl_band_has_children(Band)) {
@@ -367,8 +373,7 @@ static isl_union_map *getScheduleForBandList(isl_band_list *BandList) {
           isl_map *TileMap;
           isl_union_map *TileUMap;
 
-	  TileMap = getPrevectorMap(ctx, ScheduleDimensions + i,
-				    ScheduleDimensions * 2);
+	  TileMap = getPrevectorMap(ctx, i, ScheduleDimensions);
 	  TileUMap = isl_union_map_from_map(TileMap);
           TileUMap = isl_union_map_align_params(TileUMap,
                                                 isl_space_copy(Space));
