@@ -5357,9 +5357,9 @@ def : NEONInstAlias<"veor${p} $Vdn, $Vm",
                     (VEORd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
 def : NEONInstAlias<"veor${p} $Vdn, $Vm",
                     (VEORq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
-def : NEONInstAlias<"vand${p} $Vdn, $Vm",
+def : NEONInstAlias<"vorr${p} $Vdn, $Vm",
                     (VORRd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
-def : NEONInstAlias<"vand${p} $Vdn, $Vm",
+def : NEONInstAlias<"vorr${p} $Vdn, $Vm",
                     (VORRq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
 
 defm : VFPDTAnyInstAlias<"vand${p}", "$Vdn, $Vm",
