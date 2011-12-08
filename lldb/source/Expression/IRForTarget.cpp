@@ -631,9 +631,25 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
     {
         clang::QualType pointer_qual_type = result_var->getType();
         const clang::Type *pointer_type = pointer_qual_type.getTypePtr();
-        const clang::PointerType *pointer_pointertype = dyn_cast<clang::PointerType>(pointer_type);
         
-        if (!pointer_pointertype)
+        const clang::PointerType *pointer_pointertype = dyn_cast<clang::PointerType>(pointer_type);
+        const clang::ObjCObjectPointerType *pointer_objcobjpointertype = dyn_cast<clang::ObjCObjectPointerType>(pointer_type);
+        
+        if (pointer_pointertype)
+        {
+            clang::QualType element_qual_type = pointer_pointertype->getPointeeType();
+            
+            m_result_type = lldb_private::TypeFromParser(element_qual_type.getAsOpaquePtr(),
+                                                         &result_decl->getASTContext());
+        }
+        else if (pointer_objcobjpointertype)
+        {
+            clang::QualType element_qual_type = clang::QualType(pointer_objcobjpointertype->getObjectType(), 0);
+            
+            m_result_type = lldb_private::TypeFromParser(element_qual_type.getAsOpaquePtr(),
+                                                         &result_decl->getASTContext());
+        }
+        else
         {
             if (log)
                 log->PutCString("Expected result to have pointer type, but it did not");
@@ -643,11 +659,6 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
             
             return false;
         }
-        
-        clang::QualType element_qual_type = pointer_pointertype->getPointeeType();
-        
-        m_result_type = lldb_private::TypeFromParser(element_qual_type.getAsOpaquePtr(),
-                                                     &result_decl->getASTContext());
     }
     else
     {

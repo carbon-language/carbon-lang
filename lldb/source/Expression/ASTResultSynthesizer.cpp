@@ -331,7 +331,12 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
         else
             result_ptr_id = &Ctx.Idents.get("$__lldb_expr_result_ptr");
         
-        QualType ptr_qual_type = Ctx.getPointerType(expr_qual_type);
+        QualType ptr_qual_type;
+        
+        if (isa<ObjCObjectType>(expr_qual_type))
+            ptr_qual_type = Ctx.getObjCObjectPointerType(expr_qual_type);
+        else
+            ptr_qual_type = Ctx.getPointerType(expr_qual_type);
         
         result_decl = VarDecl::Create(Ctx,
                                       DC,

@@ -42,6 +42,16 @@ class FoundationTestCase2(TestBase):
         self.buildDwarf()
         self.NSString_expr()
 
+    def test_MyString_dump_with_dsym(self):
+        """Test dump of a known Objective-C object by dereferencing it."""
+        self.buildDsym()
+        self.MyString_dump()
+
+    def test_MyString_dump_with_dwarf(self):
+        """Test dump of a known Objective-C object by dereferencing it."""
+        self.buildDwarf()
+        self.MyString_dump()
+
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -51,7 +61,8 @@ class FoundationTestCase2(TestBase):
         self.lines.append(line_number('main.m', '// Expressions to test here for NSArray:'))
         self.lines.append(line_number('main.m', '// Expressions to test here for NSString:'))
         self.lines.append(line_number('main.m', "// Set a breakpoint on '-[MyString description]' and test expressions:"))
-
+        self.lines.append(line_number('main.m', '// Set break point at this line'))
+    
     def more_expr_objc(self):
         """More expression commands for objective-c."""
         exe = os.path.join(os.getcwd(), "a.out")
@@ -149,6 +160,22 @@ class FoundationTestCase2(TestBase):
         self.expect('expression str = [NSString stringWithFormat: @"%cew", \'N\']')
         self.runCmd("process continue")
 
+    def MyString_dump(self):
+        """Test dump of a known Objective-C object by dereferencing it."""
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+        
+        line = self.lines[4]
+
+        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
+                    substrs = ["Breakpoint created:",
+                               "file ='main.m', line = %d, locations = 1" % line])
+        
+        self.runCmd("run", RUN_SUCCEEDED)
+        
+        self.expect("expression *my",
+            patterns = ["\(MyString\) \$.* = ", "\(MyBase\)", "\(NSObject\)", "\(Class\)"])
+        self.runCmd("process continue")
 
 if __name__ == '__main__':
     import atexit
