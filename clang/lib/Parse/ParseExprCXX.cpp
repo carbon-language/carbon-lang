@@ -1966,6 +1966,16 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
     
     // Parse the '~'.
     SourceLocation TildeLoc = ConsumeToken();
+
+    if (SS.isEmpty() && Tok.is(tok::kw_decltype)) {
+      DeclSpec DS(AttrFactory);
+      SourceLocation EndLoc = ParseDecltypeSpecifier(DS);
+      if (ParsedType Type = Actions.getDestructorType(DS, ObjectType)) {
+        Result.setDestructorName(TildeLoc, Type, EndLoc);
+        return false;
+      }
+      return true;
+    }
     
     // Parse the class-name.
     if (Tok.isNot(tok::identifier)) {

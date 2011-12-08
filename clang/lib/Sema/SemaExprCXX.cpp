@@ -265,6 +265,22 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
   return ParsedType();
 }
 
+ParsedType Sema::getDestructorType(const DeclSpec& DS, ParsedType ObjectType) {
+    if (DS.getTypeSpecType() == DeclSpec::TST_error)
+      return ParsedType();
+    assert(DS.getTypeSpecType() == DeclSpec::TST_decltype 
+           && "only get destructor types from declspecs");
+    QualType T = BuildDecltypeType(DS.getRepAsExpr(), DS.getTypeSpecTypeLoc());
+    QualType SearchType = GetTypeFromParser(ObjectType);
+    if (SearchType->isDependentType() || Context.hasSameUnqualifiedType(SearchType, T)) {
+      return ParsedType::make(T);
+    }
+      
+    Diag(DS.getTypeSpecTypeLoc(), diag::err_destructor_expr_type_mismatch)
+      << T << SearchType;
+    return ParsedType();
+}
+
 /// \brief Build a C++ typeid expression with a type operand.
 ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
                                 SourceLocation TypeidLoc,
