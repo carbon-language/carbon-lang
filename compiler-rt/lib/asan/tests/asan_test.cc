@@ -577,7 +577,7 @@ void *ManyThreadsWorker(void *a) {
 }
 
 TEST(AddressSanitizer, ManyThreadsTest) {
-  const size_t kNumThreads = __WORDSIZE == 32 ? 150 : 1000;
+  const size_t kNumThreads = __WORDSIZE == 32 ? 30 : 1000;
   pthread_t t[kNumThreads];
   for (size_t i = 0; i < kNumThreads; i++) {
     pthread_create(&t[i], 0, (void* (*)(void *x))ManyThreadsWorker, (void*)i);
@@ -1581,17 +1581,17 @@ int *ReturnsPointerToALocalObject() {
   return Ident(&a);
 }
 
+#if ASAN_UAR == 1
 TEST(AddressSanitizer, LocalReferenceReturnTest) {
   int *(*f)() = Ident(ReturnsPointerToALocalObject);
-  // Call f several times, only the first time should be reported.
-  f();
-  f();
-  f();
-  f();
-  if (ASAN_UAR) {
-    EXPECT_DEATH(*f() = 1, "is located.*in frame .*ReturnsPointerToALocal");
-  }
+  int *p = f();
+  // Call 'f' a few more times, 'p' should still be poisoned.
+  for (int i = 0; i < 32; i++)
+    f();
+  EXPECT_DEATH(*p = 1, "AddressSanitizer stack-use-after-return");
+  EXPECT_DEATH(*p = 1, "is located.*in frame .*ReturnsPointerToALocal");
 }
+#endif
 
 template <int kSize>
 __attribute__((noinline))
