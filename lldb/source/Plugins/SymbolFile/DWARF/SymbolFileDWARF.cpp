@@ -4548,22 +4548,25 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     GetUniqueDWARFASTTypeMap().Insert (type_name_const_str, 
                                                        unique_ast_entry);
                     
-                    if (die->HasChildren() == false && is_forward_declaration == false)
-                    {
-                        // No children for this struct/union/class, lets finish it
-                        ast.StartTagDeclarationDefinition (clang_type);
-                        ast.CompleteTagDeclarationDefinition (clang_type);
-                    }
-                    else if (clang_type_was_created)
-                    {
-                        // Leave this as a forward declaration until we need
-                        // to know the details of the type. lldb_private::Type
-                        // will automatically call the SymbolFile virtual function
-                        // "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition(Type *)"
-                        // When the definition needs to be defined.
-                        m_forward_decl_die_to_clang_type[die] = clang_type;
-                        m_forward_decl_clang_type_to_die[ClangASTType::RemoveFastQualifiers (clang_type)] = die;
-                        ClangASTContext::SetHasExternalStorage (clang_type, true);
+                    if (!is_forward_declaration)
+                    {                    
+                        if (die->HasChildren() == false)
+                        {
+                            // No children for this struct/union/class, lets finish it
+                            ast.StartTagDeclarationDefinition (clang_type);
+                            ast.CompleteTagDeclarationDefinition (clang_type);
+                        }
+                        else if (clang_type_was_created)
+                        {
+                            // Leave this as a forward declaration until we need
+                            // to know the details of the type. lldb_private::Type
+                            // will automatically call the SymbolFile virtual function
+                            // "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition(Type *)"
+                            // When the definition needs to be defined.
+                            m_forward_decl_die_to_clang_type[die] = clang_type;
+                            m_forward_decl_clang_type_to_die[ClangASTType::RemoveFastQualifiers (clang_type)] = die;
+                            ClangASTContext::SetHasExternalStorage (clang_type, true);
+                        }
                     }
                     
                 }

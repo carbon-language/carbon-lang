@@ -95,28 +95,48 @@ ClangASTImporter::DeportDecl (clang::ASTContext *dst_ctx,
     return result;
 }
 
-void
+bool
 ClangASTImporter::CompleteTagDecl (clang::TagDecl *decl)
-{
-    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-    
+{   
     DeclOrigin decl_origin = GetDeclOrigin(decl);
     
     if (!decl_origin.Valid())
-        return;
+        return false;
     
     if (!ClangASTContext::GetCompleteDecl(decl_origin.ctx, decl_origin.decl))
-        return;
+        return false;
     
     MinionSP minion_sp (GetMinion(&decl->getASTContext(), decl_origin.ctx));
     
     if (minion_sp)
         minion_sp->ImportDefinition(decl_origin.decl);
     
-    return;
+    return true;
 }
 
-void
+bool
+ClangASTImporter::CompleteTagDeclWithOrigin(clang::TagDecl *decl, clang::TagDecl *origin_decl)
+{
+    clang::ASTContext *origin_ast_ctx = &origin_decl->getASTContext();
+        
+    if (!ClangASTContext::GetCompleteDecl(origin_ast_ctx, origin_decl))
+        return false;
+    
+    MinionSP minion_sp (GetMinion(&decl->getASTContext(), origin_ast_ctx));
+    
+    if (minion_sp)
+        minion_sp->ImportDefinition(origin_decl);
+    
+    ASTContextMetadataSP context_md = GetContextMetadata(&decl->getASTContext());
+
+    OriginMap &origins = context_md->m_origins;
+
+    origins[decl] = DeclOrigin(origin_ast_ctx, origin_decl);
+    
+    return true;
+}
+
+bool
 ClangASTImporter::CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface_decl)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
@@ -124,17 +144,17 @@ ClangASTImporter::CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface
     DeclOrigin decl_origin = GetDeclOrigin(interface_decl);
     
     if (!decl_origin.Valid())
-        return;
+        return false;
     
     if (!ClangASTContext::GetCompleteDecl(decl_origin.ctx, decl_origin.decl))
-        return;
+        return false;
     
     MinionSP minion_sp (GetMinion(&interface_decl->getASTContext(), decl_origin.ctx));
     
     if (minion_sp)
         minion_sp->ImportDefinition(decl_origin.decl);
     
-    return;
+    return true;
 }
 
 ClangASTImporter::DeclOrigin

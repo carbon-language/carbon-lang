@@ -149,15 +149,127 @@ ClangASTSource::CompleteType (TagDecl *tag_decl)
 {    
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
+    static unsigned int invocation_id = 0;
+    unsigned int current_id = invocation_id++;
+    
     if (log)
     {
-        log->Printf("    [CompleteTagDecl] on (ASTContext*)%p Completing a TagDecl named %s", m_ast_context, tag_decl->getName().str().c_str());
-        log->Printf("      [CTD] Before:");
+        log->Printf("    CompleteTagDecl[%u] on (ASTContext*)%p Completing a TagDecl named %s", 
+                    invocation_id, 
+                    m_ast_context, 
+                    tag_decl->getName().str().c_str());
+        
+        log->Printf("      CTD[%u] Before:", current_id);
         ASTDumper dumper((Decl*)tag_decl);
         dumper.ToLog(log, "      [CTD] ");
     }
     
-    m_ast_importer->CompleteTagDecl (tag_decl);
+    if (!m_ast_importer->CompleteTagDecl (tag_decl))
+    {
+        // We couldn't complete the type.  Maybe there's a definition
+        // somewhere else that can be completed.
+        
+        if (log)
+            log->Printf("      CTD[%u] Type could not be completed in the module in which it was first found.", current_id);
+        
+        bool found = false;
+
+        DeclContext *decl_ctx = tag_decl->getDeclContext();
+                
+        if (const NamespaceDecl *namespace_context = dyn_cast<NamespaceDecl>(decl_ctx))
+        {
+            ClangASTImporter::NamespaceMapSP namespace_map = m_ast_importer->GetNamespaceMap(namespace_context);
+            
+            if (log && log->GetVerbose())
+                log->Printf("      CTD[%u] Inspecting namespace map %p (%d entries)", 
+                            current_id, 
+                            namespace_map.get(), 
+                            (int)namespace_map->size());
+            
+            if (!namespace_map)
+                return;
+            
+            for (ClangASTImporter::NamespaceMap::iterator i = namespace_map->begin(), e = namespace_map->end();
+                 i != e && !found;
+                 ++i)
+            {
+                if (log)
+                    log->Printf("      CTD[%u] Searching namespace %s in module %s",
+                                current_id,
+                                i->second.GetNamespaceDecl()->getNameAsString().c_str(),
+                                i->first->GetFileSpec().GetFilename().GetCString());
+                
+                TypeList types;
+                
+                SymbolContext null_sc;
+                ConstString name(tag_decl->getName().str().c_str());
+                
+                i->first->FindTypes(null_sc, name, &i->second, true, UINT32_MAX, types);
+                
+                for (uint32_t ti = 0, te = types.GetSize();
+                     ti != te && !found;
+                     ++ti)
+                {
+                    lldb::TypeSP type = types.GetTypeAtIndex(ti);
+                    
+                    if (!type)
+                        continue;
+                    
+                    lldb::clang_type_t opaque_type = type->GetClangFullType();
+                    
+                    if (!opaque_type)
+                        continue;
+                    
+                    const TagType *tag_type = dyn_cast<TagType>(QualType::getFromOpaquePtr(opaque_type).getTypePtr());
+                    
+                    if (!tag_type)
+                        continue;
+                    
+                    TagDecl *candidate_tag_decl = const_cast<TagDecl*>(tag_type->getDecl());
+                    
+                    if (m_ast_importer->CompleteTagDeclWithOrigin (tag_decl, candidate_tag_decl))
+                        found = true;
+                }
+            }
+        }
+        else 
+        {
+            TypeList types;
+            
+            SymbolContext null_sc;
+            ConstString name(tag_decl->getName().str().c_str());
+            ClangNamespaceDecl namespace_decl;
+            
+            ModuleList &module_list = m_target->GetImages();
+
+            module_list.FindTypes(null_sc, name, true, UINT32_MAX, types);
+            
+            for (uint32_t ti = 0, te = types.GetSize();
+                 ti != te && !found;
+                 ++ti)
+            {
+                lldb::TypeSP type = types.GetTypeAtIndex(ti);
+                
+                if (!type)
+                    continue;
+                
+                lldb::clang_type_t opaque_type = type->GetClangFullType();
+                
+                if (!opaque_type)
+                    continue;
+                
+                const TagType *tag_type = dyn_cast<TagType>(QualType::getFromOpaquePtr(opaque_type).getTypePtr());
+                
+                if (!tag_type)
+                    continue;
+                
+                TagDecl *candidate_tag_decl = const_cast<TagDecl*>(tag_type->getDecl());
+                
+                if (m_ast_importer->CompleteTagDeclWithOrigin (tag_decl, candidate_tag_decl))
+                    found = true;
+            }
+        }
+    }
     
     if (log)
     {
@@ -249,7 +361,7 @@ ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
             external_source->CompleteType (original_tag_decl);
     }
     
-    DeclContext *original_decl_context = dyn_cast<DeclContext>(original_decl);
+    const DeclContext *original_decl_context = dyn_cast<DeclContext>(original_decl);
     
     if (!original_decl_context)
         return ELR_Failure;

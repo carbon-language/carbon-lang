@@ -53,10 +53,13 @@ public:
                 clang::ASTContext *src_ctx,
                 clang::Decl *decl);
         
-    void
+    bool
     CompleteTagDecl (clang::TagDecl *decl);
     
-    void
+    bool
+    CompleteTagDeclWithOrigin (clang::TagDecl *decl, clang::TagDecl *origin);
+    
+    bool
     CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface_decl);
     
     bool
