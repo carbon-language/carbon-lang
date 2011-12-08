@@ -485,16 +485,6 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
       for (MachineBasicBlock::succ_iterator SI = ParentBlock->succ_begin(),
            E = ParentBlock->succ_end(); SI != E; ++SI) {
 	MachineBasicBlock *SuccBlock = *SI;
-	// It is not possible to sink an instruction into its own block.  This can
-	// happen with loops.
-	if (ParentBlock == SuccBlock)
-	  continue;
-
-	// It's not safe to sink instructions to EH landing pad. Control flow into
-	// landing pad is implicitly defined.
-	if (SuccBlock->isLandingPad())
-	  continue;
-
         bool LocalUse = false;
         if (AllUsesDominatedByBlock(Reg, SuccBlock, ParentBlock,
                                     BreakPHIEdge, LocalUse)) {
@@ -511,6 +501,17 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
         return NULL;
     }
   }
+
+  // It is not possible to sink an instruction into its own block.  This can
+  // happen with loops.
+  if (ParentBlock == SuccToSinkTo)
+    return NULL;
+
+  // It's not safe to sink instructions to EH landing pad. Control flow into
+  // landing pad is implicitly defined.
+  if (SuccToSinkTo && SuccToSinkTo->isLandingPad())
+    return NULL;
+
   return SuccToSinkTo;
 }
 
