@@ -499,10 +499,21 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
       // we should sink to.
       for (MachineBasicBlock::succ_iterator SI = ParentBlock->succ_begin(),
            E = ParentBlock->succ_end(); SI != E; ++SI) {
+	MachineBasicBlock *SuccBlock = *SI;
+	// It is not possible to sink an instruction into its own block.  This can
+	// happen with loops.
+	if (ParentBlock == SuccBlock)
+	  continue;
+
+	// It's not safe to sink instructions to EH landing pad. Control flow into
+	// landing pad is implicitly defined.
+	if (SuccBlock->isLandingPad())
+	  continue;
+
         bool LocalUse = false;
-        if (AllUsesDominatedByBlock(Reg, *SI, ParentBlock,
+        if (AllUsesDominatedByBlock(Reg, SuccBlock, ParentBlock,
                                     BreakPHIEdge, LocalUse)) {
-          SuccToSinkTo = *SI;
+          SuccToSinkTo = SuccBlock;
           break;
         }
         if (LocalUse)
@@ -520,15 +531,6 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   if (SuccToSinkTo == 0)
     return false;
 
-  // It's not safe to sink instructions to EH landing pad. Control flow into
-  // landing pad is implicitly defined.
-  if (SuccToSinkTo->isLandingPad())
-    return false;
-
-  // It is not possible to sink an instruction into its own block.  This can
-  // happen with loops.
-  if (MI->getParent() == SuccToSinkTo)
-    return false;
 
   // If the instruction to move defines a dead physical register which is live
   // when leaving the basic block, don't move it because it could turn into a
