@@ -73,17 +73,26 @@ struct FindFileIdRefVisitData {
   /// we consider the canonical decl of the constructor decl to be the class
   /// itself, so both 'C' can be highlighted.
   Decl *getCanonical(Decl *D) const {
+    if (!D)
+      return 0;
+
     D = D->getCanonicalDecl();
 
-    if (ObjCImplDecl *ImplD = dyn_cast<ObjCImplDecl>(D))
-      return getCanonical(ImplD->getClassInterface());
-    if (CXXConstructorDecl *CXXCtorD = dyn_cast<CXXConstructorDecl>(D))
+    if (ObjCImplDecl *ImplD = dyn_cast<ObjCImplDecl>(D)) {
+      if (ImplD->getClassInterface())
+        return getCanonical(ImplD->getClassInterface());
+
+    } else if (CXXConstructorDecl *CXXCtorD = dyn_cast<CXXConstructorDecl>(D)) {
       return getCanonical(CXXCtorD->getParent());
+    }
     
     return D;
   }
 
   bool isHit(Decl *D) const {
+    if (!D)
+      return false;
+
     D = getCanonical(D);
     if (D == Dcl)
       return true;
@@ -203,6 +212,9 @@ static void findIdRefsInFile(CXTranslationUnit TU, CXCursor declCursor,
 
   FileID FID = SM.translateFile(File);
   Decl *Dcl = cxcursor::getCursorDecl(declCursor);
+  if (!Dcl)
+    return;
+
   FindFileIdRefVisitData data(TU, FID, Dcl,
                               cxcursor::getSelectorIdentifierIndex(declCursor),
                               Visitor);
