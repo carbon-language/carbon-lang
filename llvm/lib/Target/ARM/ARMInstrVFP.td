@@ -1168,8 +1168,14 @@ def : MnemonicAlias<"flds", "vldr">;
 def : MnemonicAlias<"fldd", "vldr">;
 def : MnemonicAlias<"fmrs", "vmov">;
 def : MnemonicAlias<"fmsr", "vmov">;
+def : MnemonicAlias<"fsqrts", "vsqrt">;
+def : MnemonicAlias<"fsqrtd", "vsqrt">;
 
 def : VFP2InstAlias<"fmstat${p}", (FMSTAT pred:$p)>;
+
+// No need for the size suffix on VSQRT. It's implied by the register classes.
+def : VFP2InstAlias<"vsqrt${p} $Sd, $Sm", (VSQRTS SPR:$Sd, SPR:$Sm, pred:$p)>;
+def : VFP2InstAlias<"vsqrt${p} $Dd, $Dm", (VSQRTD DPR:$Dd, DPR:$Dm, pred:$p)>;
 
 // VLDR/VSTR accept an optional type suffix.
 def : VFP2InstAlias<"vldr${p}.32 $Sd, $addr",

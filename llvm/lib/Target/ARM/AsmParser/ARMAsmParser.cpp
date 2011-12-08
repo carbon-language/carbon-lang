@@ -4296,7 +4296,7 @@ StringRef ARMAsmParser::splitMnemonic(StringRef Mnemonic,
         Mnemonic == "vcls" || Mnemonic == "vmls" || Mnemonic == "vmrs" ||
         Mnemonic == "vnmls" || Mnemonic == "vqabs" || Mnemonic == "vrecps" ||
         Mnemonic == "vrsqrts" || Mnemonic == "srs" || Mnemonic == "flds" ||
-        Mnemonic == "fmrs" ||
+        Mnemonic == "fmrs" || Mnemonic == "fsqrts" ||
         (Mnemonic == "movs" && isThumb()))) {
     Mnemonic = Mnemonic.slice(0, Mnemonic.size() - 1);
     CarrySetting = true;
