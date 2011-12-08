@@ -159,3 +159,15 @@
 // CHECK-UBUNTU-11-04: "-L[[SYSROOT]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/../../../.."
 // CHECK-UBUNTU-11-04: "-L[[SYSROOT]]/lib"
 // CHECK-UBUNTU-11-04: "-L[[SYSROOT]]/usr/lib"
+//
+// Test the setup that shipped in SUSE 10.3 on ppc64.
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -ccc-host-triple powerpc64-suse-linux \
+// RUN:     --sysroot=%S/Inputs/suse_10.3_ppc64_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-SUSE-10-3-PPC64 %s
+// CHECK-SUSE-10-3-PPC64: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-SUSE-10-3-PPC64: "{{.*}}/usr/lib/gcc/powerpc64-suse-linux/4.1.2/64/crtbegin.o"
+// CHECK-SUSE-10-3-PPC64: "-L[[SYSROOT]]/usr/lib/gcc/powerpc64-suse-linux/4.1.2/64"
+// CHECK-SUSE-10-3-PPC64: "-L[[SYSROOT]]/usr/lib/gcc/powerpc64-suse-linux/4.1.2/../../../../lib64"
+// CHECK-SUSE-10-3-PPC64: "-L[[SYSROOT]]/lib/../lib64"
+// CHECK-SUSE-10-3-PPC64: "-L[[SYSROOT]]/usr/lib/../lib64"
