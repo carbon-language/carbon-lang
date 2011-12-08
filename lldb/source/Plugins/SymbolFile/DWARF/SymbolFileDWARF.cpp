@@ -1614,23 +1614,42 @@ SymbolFileDWARF::ResolveTypeUID (lldb::user_id_t type_uid)
         {
             DWARFCompileUnitSP cu_sp;
             const DWARFDebugInfoEntry* type_die = debug_info->GetDIEPtr(type_uid, &cu_sp);
-            if (type_die != NULL)
-            {
-                // We might be coming in in the middle of a type tree (a class
-                // withing a class, an enum within a class), so parse any needed
-                // parent DIEs before we get to this one...
-                const DWARFDebugInfoEntry *decl_ctx_die = GetDeclContextDIEContainingDIE (cu_sp.get(), type_die);
-                switch (decl_ctx_die->Tag())
-                {
-                case DW_TAG_structure_type:
-                case DW_TAG_union_type:
-                case DW_TAG_class_type:
-                    ResolveType(cu_sp.get(), decl_ctx_die);
-                    break;
-                }
-                return ResolveType (cu_sp.get(), type_die);
-            }
+            const bool assert_not_being_parsed = true;
+            return ResolveTypeUID (cu_sp.get(), type_die, assert_not_being_parsed);
         }
+    }
+    return NULL;
+}
+
+Type*
+SymbolFileDWARF::ResolveTypeUID (DWARFCompileUnit* cu, const DWARFDebugInfoEntry* die, bool assert_not_being_parsed)
+{
+    if (die != NULL)
+    {
+        // We might be coming in in the middle of a type tree (a class
+        // withing a class, an enum within a class), so parse any needed
+        // parent DIEs before we get to this one...
+        const DWARFDebugInfoEntry *decl_ctx_die = GetDeclContextDIEContainingDIE (cu, die);
+        switch (decl_ctx_die->Tag())
+        {
+            case DW_TAG_structure_type:
+            case DW_TAG_union_type:
+            case DW_TAG_class_type:
+            {
+                // Get the type, which could be a forward declaration
+                Type *parent_type = ResolveTypeUID (cu, decl_ctx_die, assert_not_being_parsed);
+                // Now ask the type to complete itself if it already hasn't.
+                // This will make the call to ResolveType below just use the
+                // cached value that is already parsed for "die"
+                if (parent_type)
+                    parent_type->GetClangFullType();
+            }
+            break;
+
+            default:
+                break;
+        }
+        return ResolveType (cu, die);
     }
     return NULL;
 }
@@ -1858,8 +1877,10 @@ SymbolFileDWARF::ResolveType (DWARFCompileUnit* curr_cu, const DWARFDebugInfoEnt
     if (type_die != NULL)
     {
         Type *type = m_die_to_type.lookup (type_die);
+
         if (type == NULL)
             type = GetTypeForDIE (curr_cu, type_die).get();
+
         if (assert_not_being_parsed)
             assert (type != DIE_IS_BEING_PARSED);
         return type;
@@ -3650,25 +3671,25 @@ SymbolFileDWARF::ResolveNamespaceDIE (DWARFCompileUnit *curr_cu, const DWARFDebu
 }
 
 clang::DeclContext *
-SymbolFileDWARF::GetClangDeclContextForDIE (const SymbolContext &sc, DWARFCompileUnit *curr_cu, const DWARFDebugInfoEntry *die)
+SymbolFileDWARF::GetClangDeclContextForDIE (const SymbolContext &sc, DWARFCompileUnit *cu, const DWARFDebugInfoEntry *die)
 {
     clang::DeclContext *clang_decl_ctx = GetCachedClangDeclContextForDIE (die);
     if (clang_decl_ctx)
         return clang_decl_ctx;
     // If this DIE has a specification, or an abstract origin, then trace to those.
         
-    dw_offset_t die_offset = die->GetAttributeValueAsReference(this, curr_cu, DW_AT_specification, DW_INVALID_OFFSET);
+    dw_offset_t die_offset = die->GetAttributeValueAsReference(this, cu, DW_AT_specification, DW_INVALID_OFFSET);
     if (die_offset != DW_INVALID_OFFSET)
         return GetClangDeclContextForDIEOffset (sc, die_offset);
     
-    die_offset = die->GetAttributeValueAsReference(this, curr_cu, DW_AT_abstract_origin, DW_INVALID_OFFSET);
+    die_offset = die->GetAttributeValueAsReference(this, cu, DW_AT_abstract_origin, DW_INVALID_OFFSET);
     if (die_offset != DW_INVALID_OFFSET)
         return GetClangDeclContextForDIEOffset (sc, die_offset);
     
     // This is the DIE we want.  Parse it, then query our map.
-        
-    ParseType(sc, curr_cu, die, NULL);
-    
+    bool assert_not_being_parsed = true;
+    ResolveTypeUID (cu, die, assert_not_being_parsed);    
+
     clang_decl_ctx = GetCachedClangDeclContextForDIE (die);
 
     return clang_decl_ctx;
@@ -4544,6 +4565,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         m_forward_decl_clang_type_to_die[ClangASTType::RemoveFastQualifiers (clang_type)] = die;
                         ClangASTContext::SetHasExternalStorage (clang_type, true);
                     }
+                    
                 }
                 break;
 

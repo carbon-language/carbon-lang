@@ -279,6 +279,7 @@ protected:
                                                  uint32_t depth);
     size_t                  ParseTypes (const lldb_private::SymbolContext& sc, DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die, bool parse_siblings, bool parse_children);
     lldb::TypeSP            ParseType (const lldb_private::SymbolContext& sc, DWARFCompileUnit* dwarf_cu, const DWARFDebugInfoEntry *die, bool *type_is_new);
+    lldb_private::Type*     ResolveTypeUID (DWARFCompileUnit* cu, const DWARFDebugInfoEntry* die, bool assert_not_being_parsed);
 
     lldb::VariableSP        ParseVariableDIE(
                                 const lldb_private::SymbolContext& sc,
