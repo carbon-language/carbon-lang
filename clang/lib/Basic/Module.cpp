@@ -90,9 +90,14 @@ void Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
   
   if (const FileEntry *UmbrellaHeader = getUmbrellaHeader()) {
     OS.indent(Indent + 2);
-    OS << "umbrella \"";
+    OS << "umbrella header \"";
     OS.write_escaped(UmbrellaHeader->getName());
     OS << "\"\n";
+  } else if (const DirectoryEntry *UmbrellaDir = getUmbrellaDir()) {
+    OS.indent(Indent + 2);
+    OS << "umbrella \"";
+    OS.write_escaped(UmbrellaDir->getName());
+    OS << "\"\n";    
   }
   
   for (unsigned I = 0, N = Headers.size(); I != N; ++I) {

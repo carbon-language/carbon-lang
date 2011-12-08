@@ -259,7 +259,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   else
     Modules[ModuleName] = Result;
 
-  // umbrella "umbrella-header-name"
+  // umbrella header "umbrella-header-name"
   Result->Umbrella = UmbrellaHeader;
   Headers[UmbrellaHeader] = Result;
   UmbrellaDirs[FrameworkDir] = Result;
@@ -493,8 +493,7 @@ namespace clang {
       ModuleId;
     bool parseModuleId(ModuleId &Id);
     void parseModuleDecl();
-    void parseUmbrellaDecl();
-    void parseHeaderDecl();
+    void parseHeaderDecl(SourceLocation UmbrellaLoc);
     void parseExportDecl();
     void parseInferredSubmoduleDecl(bool Explicit);
     
@@ -656,7 +655,6 @@ bool ModuleMapParser::parseModuleId(ModuleId &Id) {
 ///     'explicit'[opt] 'framework'[opt] 'module' module-id { module-member* }
 ///
 ///   module-member:
-///     umbrella-declaration
 ///     header-declaration
 ///     submodule-declaration
 ///     export-declaration
@@ -798,14 +796,14 @@ void ModuleMapParser::parseModuleDecl() {
       parseExportDecl();
       break;
         
-    case MMToken::HeaderKeyword:
-      parseHeaderDecl();
+    case MMToken::UmbrellaKeyword:
+      parseHeaderDecl(consumeToken());
       break;
         
-    case MMToken::UmbrellaKeyword:
-      parseUmbrellaDecl();
+    case MMToken::HeaderKeyword:
+      parseHeaderDecl(SourceLocation());
       break;
-
+        
     default:
       Diags.Report(Tok.getLocation(), diag::err_mmap_expected_member);
       consumeToken();
@@ -845,105 +843,16 @@ void appendSubframeworkPaths(Module *Mod, llvm::SmallVectorImpl<char> &Path) {
   }
 }
 
-/// \brief Parse an umbrella header declaration.
-///
-///   umbrella-declaration:
-///     'umbrella' string-literal
-void ModuleMapParser::parseUmbrellaDecl() {
-  assert(Tok.is(MMToken::UmbrellaKeyword));
-  SourceLocation UmbrellaLoc = consumeToken();
-  
-  // Parse the header name.
-  if (!Tok.is(MMToken::StringLiteral)) {
-    Diags.Report(Tok.getLocation(), diag::err_mmap_expected_header) 
-      << "umbrella";
-    HadError = true;
-    return;
-  }
-  std::string FileName = Tok.getString();
-  SourceLocation FileNameLoc = consumeToken();
-
-  // Check whether we already have an umbrella header.
-  if (ActiveModule->getUmbrellaHeader()) {
-    Diags.Report(FileNameLoc, diag::err_mmap_umbrella_header_conflict)
-      << ActiveModule->getFullModuleName() 
-      << ActiveModule->getUmbrellaHeader()->getName();
-    HadError = true;
-    return;
-  }
-  
-  // Look for this file.
-  llvm::SmallString<128> PathName;
-  const FileEntry *File = 0;
-  
-  if (llvm::sys::path::is_absolute(FileName)) {
-    PathName = FileName;
-    File = SourceMgr.getFileManager().getFile(PathName);
-  } else {
-    // Search for the header file within the search directory.
-    PathName += Directory->getName();
-    unsigned PathLength = PathName.size();
-    
-    if (ActiveModule->isPartOfFramework()) {
-      appendSubframeworkPaths(ActiveModule, PathName);
-      
-      // Check whether this file is in the public headers.
-      llvm::sys::path::append(PathName, "Headers");
-      llvm::sys::path::append(PathName, FileName);
-      File = SourceMgr.getFileManager().getFile(PathName);
-
-      if (!File) {
-        // Check whether this file is in the private headers.
-        PathName.resize(PathLength);
-        llvm::sys::path::append(PathName, "PrivateHeaders");
-        llvm::sys::path::append(PathName, FileName);
-        File = SourceMgr.getFileManager().getFile(PathName);
-      }
-    } else {
-      // Lookup for normal headers.
-      llvm::sys::path::append(PathName, FileName);
-      File = SourceMgr.getFileManager().getFile(PathName);
-    }
-  }
-  
-  // FIXME: We shouldn't be eagerly stat'ing every file named in a module map.
-  // Come up with a lazy way to do this.
-  if (File) {
-    const DirectoryEntry *UmbrellaDir = File->getDir();
-    if (ActiveModule->IsFramework) {
-      // For framework modules, use the framework directory as the umbrella
-      // directory.
-      UmbrellaDir = SourceMgr.getFileManager().getDirectory(
-                      llvm::sys::path::parent_path(UmbrellaDir->getName()));
-    }
-    
-    if (const Module *OwningModule = Map.Headers[File]) {
-      Diags.Report(FileNameLoc, diag::err_mmap_header_conflict)
-        << FileName << OwningModule->getFullModuleName();
-      HadError = true;
-    } else if ((OwningModule = Map.UmbrellaDirs[UmbrellaDir])) {
-      Diags.Report(UmbrellaLoc, diag::err_mmap_umbrella_clash)
-        << OwningModule->getFullModuleName();
-      HadError = true;
-    } else {
-      // Record this umbrella header.
-      Map.setUmbrellaHeader(ActiveModule, File);
-    }
-  } else {
-    Diags.Report(FileNameLoc, diag::err_mmap_header_not_found)
-      << true << FileName;
-    HadError = true;    
-  }
-}
-
 /// \brief Parse a header declaration.
 ///
 ///   header-declaration:
-///     'header' string-literal
-void ModuleMapParser::parseHeaderDecl() {
+///     'umbrella'[opt] 'header' string-literal
+void ModuleMapParser::parseHeaderDecl(SourceLocation UmbrellaLoc) {
   assert(Tok.is(MMToken::HeaderKeyword));
   consumeToken();
 
+  bool Umbrella = UmbrellaLoc.isValid();
+  
   // Parse the header name.
   if (!Tok.is(MMToken::StringLiteral)) {
     Diags.Report(Tok.getLocation(), diag::err_mmap_expected_header) 
@@ -954,6 +863,15 @@ void ModuleMapParser::parseHeaderDecl() {
   std::string FileName = Tok.getString();
   SourceLocation FileNameLoc = consumeToken();
   
+  // Check whether we already have an umbrella header.
+  if (Umbrella && ActiveModule->getUmbrellaHeader()) {
+    Diags.Report(FileNameLoc, diag::err_mmap_umbrella_header_conflict)
+      << ActiveModule->getFullModuleName() 
+      << ActiveModule->getUmbrellaHeader()->getName();
+    HadError = true;
+    return;
+  }
+
   // Look for this file.
   const FileEntry *File = 0;
   llvm::SmallString<128> PathName;
@@ -994,8 +912,25 @@ void ModuleMapParser::parseHeaderDecl() {
       Diags.Report(FileNameLoc, diag::err_mmap_header_conflict)
         << FileName << OwningModule->getFullModuleName();
       HadError = true;
+    } else if (Umbrella) {
+      const DirectoryEntry *UmbrellaDir = File->getDir();
+      if (ActiveModule->IsFramework) {
+        // For framework modules, use the framework directory as the umbrella
+        // directory.
+        UmbrellaDir = SourceMgr.getFileManager().getDirectory(
+                        llvm::sys::path::parent_path(UmbrellaDir->getName()));
+      } 
+      
+      if ((OwningModule = Map.UmbrellaDirs[UmbrellaDir])) {
+        Diags.Report(UmbrellaLoc, diag::err_mmap_umbrella_clash)
+          << OwningModule->getFullModuleName();
+        HadError = true;
+      } else {
+        // Record this umbrella header.
+        Map.setUmbrellaHeader(ActiveModule, File);
+      }
     } else {
-      // Record this file.
+      // Record this header.
       Map.addHeader(ActiveModule, File);
     }
   } else {
