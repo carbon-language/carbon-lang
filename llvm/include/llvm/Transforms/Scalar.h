@@ -309,12 +309,6 @@ extern char &InstructionNamerID;
   
 //===----------------------------------------------------------------------===//
 //
-// GEPSplitter - Split complex GEPs into simple ones
-//
-FunctionPass *createGEPSplitterPass();
-
-//===----------------------------------------------------------------------===//
-//
 // Sink - Code Sinking
 //
 FunctionPass *createSinkingPass();
