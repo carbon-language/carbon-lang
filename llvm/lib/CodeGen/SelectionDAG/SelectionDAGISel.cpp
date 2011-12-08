@@ -41,6 +41,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetIntrinsicInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -269,6 +270,7 @@ SelectionDAGISel::SelectionDAGISel(const TargetMachine &tm,
     initializeGCModuleInfoPass(*PassRegistry::getPassRegistry());
     initializeAliasAnalysisAnalysisGroup(*PassRegistry::getPassRegistry());
     initializeBranchProbabilityInfoPass(*PassRegistry::getPassRegistry());
+    initializeTargetLibraryInfoPass(*PassRegistry::getPassRegistry());
   }
 
 SelectionDAGISel::~SelectionDAGISel() {
@@ -282,6 +284,7 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<AliasAnalysis>();
   AU.addRequired<GCModuleInfo>();
   AU.addPreserved<GCModuleInfo>();
+  AU.addRequired<TargetLibraryInfo>();
   if (UseMBPI && OptLevel != CodeGenOpt::None)
     AU.addRequired<BranchProbabilityInfo>();
   MachineFunctionPass::getAnalysisUsage(AU);
@@ -339,6 +342,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
   RegInfo = &MF->getRegInfo();
   AA = &getAnalysis<AliasAnalysis>();
+  LibInfo = &getAnalysis<TargetLibraryInfo>();
   GFI = Fn.hasGC() ? &getAnalysis<GCModuleInfo>().getFunctionInfo(Fn) : 0;
 
   DEBUG(dbgs() << "\n\n\n=== " << Fn.getName() << "\n");
@@ -353,7 +357,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   else
     FuncInfo->BPI = 0;
 
-  SDB->init(GFI, *AA);
+  SDB->init(GFI, *AA, LibInfo);
 
   SelectAllBasicBlocks(Fn);
 

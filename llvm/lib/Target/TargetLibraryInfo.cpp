@@ -37,6 +37,9 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "ceil",
     "ceill",
     "ceilf",
+    "copysign",
+    "copysignf",
+    "copysignl",
     "cos",
     "cosl",
     "cosf",
@@ -81,9 +84,15 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "memmove",
     "memset",
     "memset_pattern16",
+    "nearbyint",
+    "nearbyintf",
+    "nearbyintl",
     "pow",
     "powf",
     "powl",
+    "rint",
+    "rintf",
+    "rintl",
     "sin",
     "sinl",
     "sinf",
@@ -99,7 +108,10 @@ const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
     "tanf",
     "tanh",
     "tanhl",
-    "tanhf"
+    "tanhf",
+    "trunc",
+    "truncf",
+    "truncl"
   };
 
 /// initialize - Initialize the set of available library functions based on the

@@ -67,6 +67,7 @@ class SIToFPInst;
 class StoreInst;
 class SwitchInst;
 class TargetData;
+class TargetLibraryInfo;
 class TargetLowering;
 class TruncInst;
 class UIToFPInst;
@@ -294,6 +295,7 @@ public:
   SelectionDAG &DAG;
   const TargetData *TD;
   AliasAnalysis *AA;
+  const TargetLibraryInfo *LibInfo;
 
   /// SwitchCases - Vector of CaseBlock structures used to communicate
   /// SwitchInst code generation information.
@@ -338,7 +340,8 @@ public:
       HasTailCall(false), Context(dag.getContext()) {
   }
 
-  void init(GCFunctionInfo *gfi, AliasAnalysis &aa);
+  void init(GCFunctionInfo *gfi, AliasAnalysis &aa,
+            const TargetLibraryInfo *li);
 
   /// clear - Clear out the current SelectionDAG and the associated
   /// state and prepare this SelectionDAGBuilder object to be used

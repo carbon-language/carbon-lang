@@ -48,6 +48,12 @@ namespace llvm {
       ceill,
       /// float ceilf(float x);
       ceilf,
+      /// double copysign(double x, double y);
+      copysign,
+      /// float copysignf(float x, float y);
+      copysignf,
+      /// long double copysignl(long double x, long double y);
+      copysignl,
       /// double cos(double x);
       cos,
       /// long double cosl(long double x);
@@ -137,12 +143,24 @@ namespace llvm {
       memset,
       /// void memset_pattern16(void *b, const void *pattern16, size_t len);
       memset_pattern16,
+      /// double nearbyint(double x);
+      nearbyint,
+      /// float nearbyintf(float x);
+      nearbyintf,
+      /// long double nearbyintl(long double x);
+      nearbyintl,
       /// double pow(double x, double y);
       pow,
       /// float powf(float x, float y);
       powf,
       /// long double powl(long double x, long double y);
       powl,
+      /// double rint(double x);
+      rint,
+      /// float rintf(float x);
+      rintf,
+      /// long dobule rintl(long double x);
+      rintl,
       /// double sin(double x);
       sin,
       /// long double sinl(long double x);
@@ -175,6 +193,12 @@ namespace llvm {
       tanhl,
       /// float tanhf(float x);
       tanhf,
+      /// double trunc(double x);
+      trunc,
+      /// float truncf(float x);
+      truncf,
+      /// long double truncl(long double x);
+      truncl,
 
       NumLibFuncs
     };
