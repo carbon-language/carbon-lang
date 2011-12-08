@@ -1343,7 +1343,6 @@ Decl *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
                                              ParsedAttributes &attrs) {
   assert(Tok.isObjCAtKeyword(tok::objc_protocol) &&
          "ParseObjCAtProtocolDeclaration(): Expected @protocol");
-  CheckNestedObjCContexts(AtLoc);
   ConsumeToken(); // the "protocol" identifier
 
   if (Tok.is(tok::code_completion)) {
@@ -1366,6 +1365,8 @@ Decl *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
     return Actions.ActOnForwardProtocolDeclaration(AtLoc, &ProtoInfo, 1,
                                                    attrs.getList());
   }
+
+  CheckNestedObjCContexts(AtLoc);
 
   if (Tok.is(tok::comma)) { // list of forward declarations.
     SmallVector<IdentifierLocPair, 8> ProtocolRefs;
