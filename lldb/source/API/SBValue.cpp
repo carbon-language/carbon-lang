@@ -597,6 +597,50 @@ SBValue::GetChildMemberWithName (const char *name, lldb::DynamicValueType use_dy
 }
 
 lldb::SBValue
+SBValue::GetDynamicValue (lldb::DynamicValueType use_dynamic)
+{
+    if (m_opaque_sp)
+    {
+        if (m_opaque_sp->GetUpdatePoint().GetTargetSP())
+        {
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTargetSP()->GetAPIMutex());
+            return SBValue (m_opaque_sp->GetDynamicValue(use_dynamic));
+        }
+    }
+    
+    return SBValue();
+}
+
+lldb::SBValue
+SBValue::GetStaticValue ()
+{
+    if (m_opaque_sp)
+    {
+        if (m_opaque_sp->GetUpdatePoint().GetTargetSP())
+        {
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTargetSP()->GetAPIMutex());
+            return SBValue(m_opaque_sp->GetStaticValue());
+        }
+    }
+    
+    return SBValue();
+}
+
+bool
+SBValue::IsDynamic()
+{
+    if (m_opaque_sp)
+    {
+        if (m_opaque_sp->GetUpdatePoint().GetTargetSP())
+        {
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTargetSP()->GetAPIMutex());
+            return m_opaque_sp->IsDynamic();
+        }
+    }
+    return false;
+}
+
+lldb::SBValue
 SBValue::GetValueForExpressionPath(const char* expr_path)
 {
     lldb::ValueObjectSP child_sp;

@@ -153,6 +153,15 @@ class DynamicValueTestCase(TestBase):
         this_dynamic = frame.FindVariable ('this', use_dynamic)
         self.examine_value_object_of_this_ptr (this_static, this_dynamic, myB_loc)
         
+        # Now make sure that the "GetDynamicValue" works:
+        # This doesn't work currently because we can't get dynamic values from ConstResult objects.
+        fetched_dynamic_value = this_static.GetDynamicValue(use_dynamic)
+        self.examine_value_object_of_this_ptr (this_static, fetched_dynamic_value, myB_loc)
+
+        # And conversely that the GetDynamicValue() interface also works:
+        fetched_static_value = this_dynamic.GetStaticValue()
+        self.examine_value_object_of_this_ptr (fetched_static_value, this_dynamic, myB_loc)
+
         # Get "this" using FindValue, make sure that works too:
         this_static = frame.FindValue ('this', lldb.eValueTypeVariableArgument, no_dynamic)
         this_dynamic = frame.FindValue ('this', lldb.eValueTypeVariableArgument, use_dynamic)

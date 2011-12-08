@@ -73,6 +73,12 @@ public:
             return NULL;
     }
 
+    virtual lldb::ValueObjectSP
+    GetStaticValue ()
+    {
+        return m_parent->GetSP();
+    }
+    
     void
     SetOwningSP (lldb::ValueObjectSP &owning_sp)
     {

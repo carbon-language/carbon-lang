@@ -1920,6 +1920,12 @@ ValueObject::GetDynamicValue (DynamicValueType use_dynamic)
         return ValueObjectSP();
 }
 
+ValueObjectSP
+ValueObject::GetStaticValue()
+{
+    return GetSP();
+}
+
 // GetDynamicValue() returns a NULL SharedPointer if the object is not dynamic
 // or we do not really want a dynamic VO. this method instead returns this object
 // itself when making it synthetic has no meaning. this makes it much simpler

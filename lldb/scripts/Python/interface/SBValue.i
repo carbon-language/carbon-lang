@@ -118,6 +118,15 @@ public:
     const char *
     GetObjectDescription ();
 
+    lldb::SBValue
+    GetDynamicValue (lldb::DynamicValueType use_dynamic);
+    
+    lldb::SBValue
+    GetStaticValue ();
+    
+    bool
+    IsDynamic();
+
     const char *
     GetLocation ();
 

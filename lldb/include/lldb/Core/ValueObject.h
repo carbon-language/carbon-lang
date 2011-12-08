@@ -725,6 +725,9 @@ public:
     lldb::ValueObjectSP
     GetDynamicValue (lldb::DynamicValueType valueType);
     
+    virtual lldb::ValueObjectSP
+    GetStaticValue ();
+    
     lldb::ValueObjectSP
     GetSyntheticValue (lldb::SyntheticValueType use_synthetic);
     
