@@ -914,17 +914,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   }
 
   if (Subtarget->hasSSE41orAVX()) {
-    setOperationAction(ISD::FFLOOR,             MVT::f32,   Legal);
-    setOperationAction(ISD::FCEIL,              MVT::f32,   Legal);
-    setOperationAction(ISD::FTRUNC,             MVT::f32,   Legal);
-    setOperationAction(ISD::FRINT,              MVT::f32,   Legal);
-    setOperationAction(ISD::FNEARBYINT,         MVT::f32,   Legal);
-    setOperationAction(ISD::FFLOOR,             MVT::f64,   Legal);
-    setOperationAction(ISD::FCEIL,              MVT::f64,   Legal);
-    setOperationAction(ISD::FTRUNC,             MVT::f64,   Legal);
-    setOperationAction(ISD::FRINT,              MVT::f64,   Legal);
-    setOperationAction(ISD::FNEARBYINT,         MVT::f64,   Legal);
-
     // FIXME: Do we need to handle scalar-to-vector here?
     setOperationAction(ISD::MUL,                MVT::v4i32, Legal);
 
