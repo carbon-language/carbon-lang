@@ -298,6 +298,7 @@ protected:
     Builder.defineMacro("_EM_LSIZE", "4");
     Builder.defineMacro("_EM_FSIZE", "4");
     Builder.defineMacro("_EM_DSIZE", "8");
+    Builder.defineMacro("__ELF__");
     DefineStd(Builder, "unix", Opts);
   }
 public:

@@ -4575,7 +4575,7 @@ void minix::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath("gas"));
+    Args.MakeArgString(getToolChain().GetProgramPath("as"));
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
@@ -4595,9 +4595,12 @@ void minix::Link::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
-      !Args.hasArg(options::OPT_nostartfiles))
-    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(
-                                                      "/usr/gnu/lib/crtso.o")));
+      !Args.hasArg(options::OPT_nostartfiles)) {
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath("crt1.o")));
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath("crti.o")));
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath("crtbegin.o")));
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath("crtn.o")));
+  }
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
@@ -4605,33 +4608,28 @@ void minix::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 
+  addProfileRT(getToolChain(), Args, CmdArgs, getToolChain().getTriple());
+
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     if (D.CCCIsCXX) {
       getToolChain().AddCXXStdlibLibArgs(Args, CmdArgs);
       CmdArgs.push_back("-lm");
     }
-
-    if (Args.hasArg(options::OPT_pthread))
-      CmdArgs.push_back("-lpthread");
-    CmdArgs.push_back("-lc");
-    CmdArgs.push_back("-lgcc");
-    CmdArgs.push_back("-L/usr/gnu/lib");
-    // FIXME: fill in the correct search path for the final
-    // support libraries.
-    CmdArgs.push_back("-L/usr/gnu/lib/gcc/i686-pc-minix/4.4.3");
   }
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
-    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(
-                                              "/usr/gnu/lib/libend.a")));
+    if (Args.hasArg(options::OPT_pthread))
+      CmdArgs.push_back("-lpthread");
+    CmdArgs.push_back("-lc");
+    CmdArgs.push_back("-lCompilerRT-Generic");
+    CmdArgs.push_back("-L/usr/pkg/compiler-rt/lib");
+    CmdArgs.push_back(
+	 Args.MakeArgString(getToolChain().GetFilePath("crtend.o")));
   }
 
-  addProfileRT(getToolChain(), Args, CmdArgs, getToolChain().getTriple());
-
-  const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath("/usr/gnu/bin/gld"));
+  const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("ld"));
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
