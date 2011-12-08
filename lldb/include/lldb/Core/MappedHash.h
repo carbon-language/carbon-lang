@@ -508,6 +508,12 @@ public:
                             uint32_t* hash_data_offset_ptr, 
                             Pair &pair) const = 0;
 
+        const HeaderType &
+        GetHeader()
+        {
+            return m_header;
+        }
+
     protected:
         // Implementation agnostic information
         HeaderType m_header;

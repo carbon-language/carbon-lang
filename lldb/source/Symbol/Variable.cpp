@@ -36,7 +36,7 @@ Variable::Variable
     lldb::user_id_t uid,
     const char *name, 
     const char *mangled,   // The mangled variable name for variables in namespaces
-    Type *type,
+    const lldb::SymbolFileTypeSP &symfile_type_sp,
     ValueType scope,
     SymbolContextScope *context,
     Declaration* decl_ptr,
@@ -47,7 +47,7 @@ Variable::Variable
     UserID(uid),
     m_name(name),
     m_mangled (mangled, true),
-    m_type(type),
+    m_symfile_type_sp(symfile_type_sp),
     m_scope(scope),
     m_owner_scope(context),
     m_declaration(decl_ptr),
@@ -81,6 +81,14 @@ Variable::NameMatches (const RegularExpression& regex) const
     return m_mangled.NameMatches (regex);
 }
 
+Type *
+Variable::GetType()
+{
+    if (m_symfile_type_sp)
+        return m_symfile_type_sp->GetType();
+    return NULL;
+}
+
 void
 Variable::Dump(Stream *s, bool show_context) const
 {
@@ -91,11 +99,15 @@ Variable::Dump(Stream *s, bool show_context) const
     if (m_name)
         *s << ", name = \"" << m_name << "\"";
 
-    if (m_type != NULL)
+    if (m_symfile_type_sp)
     {
-        *s << ", type = {" << m_type->GetID() << "} " << (void*)m_type << " (";
-        m_type->DumpTypeName(s);
-        s->PutChar(')');
+        Type *type = m_symfile_type_sp->GetType();
+        if (type)
+        {
+            *s << ", type = {" << type->GetID() << "} " << (void*)type << " (";
+            type->DumpTypeName(s);
+            s->PutChar(')');
+        }
     }
 
     if (m_scope != eValueTypeInvalid)

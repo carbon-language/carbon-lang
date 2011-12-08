@@ -472,6 +472,27 @@ DWARFFormValue::Reference(const DWARFCompileUnit* cu) const
     return die_offset;
 }
 
+uint64_t
+DWARFFormValue::Reference (dw_offset_t base_offset) const
+{
+    uint64_t die_offset = m_value.value.uval;
+    switch (m_form)
+    {
+        case DW_FORM_ref1:
+        case DW_FORM_ref2:
+        case DW_FORM_ref4:
+        case DW_FORM_ref8:
+        case DW_FORM_ref_udata:
+            die_offset += base_offset;
+            break;
+            
+        default:
+            break;
+    }
+    
+    return die_offset;
+}
+
 //----------------------------------------------------------------------
 // Resolve any compile unit specific references so that we don't need
 // the compile unit at a later time in order to work with the form

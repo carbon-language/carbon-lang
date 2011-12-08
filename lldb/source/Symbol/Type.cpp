@@ -30,6 +30,15 @@
 using namespace lldb;
 using namespace lldb_private;
 
+Type *
+SymbolFileType::GetType ()
+{
+    if (!m_type_sp)
+        m_type_sp = m_symbol_file.ResolveTypeUID (GetID());
+    return m_type_sp.get();
+}
+
+
 Type::Type
 (
     lldb::user_id_t uid,

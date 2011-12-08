@@ -1471,13 +1471,19 @@ Target::EvaluateExpression
     ExecutionResults execution_results = eExecutionSetupError;
 
     result_valobj_sp.reset();
-    
+
+    if (expr_cstr == NULL || expr_cstr[0] == '\0')
+        return execution_results;
+
     // We shouldn't run stop hooks in expressions.
     // Be sure to reset this if you return anywhere within this function.
     bool old_suppress_value = m_suppress_stop_hooks;
     m_suppress_stop_hooks = true;
 
     ExecutionContext exe_ctx;
+
+    const size_t expr_cstr_len = ::strlen (expr_cstr);
+
     if (frame)
     {
         frame->CalculateExecutionContext(exe_ctx);
@@ -1486,11 +1492,17 @@ Target::EvaluateExpression
                                            StackFrame::eExpressionPathOptionsNoFragileObjcIvar |
                                            StackFrame::eExpressionPathOptionsNoSyntheticChildren;
         lldb::VariableSP var_sp;
-        result_valobj_sp = frame->GetValueForVariableExpressionPath (expr_cstr, 
-                                                                     use_dynamic, 
-                                                                     expr_path_options, 
-                                                                     var_sp, 
-                                                                     error);
+        
+        // Make sure we don't have any things that we know a variable expression
+        // won't be able to deal with before calling into it
+        if (::strcspn (expr_cstr, "()+*&|!~<=/^%,?") == expr_cstr_len)
+        {
+            result_valobj_sp = frame->GetValueForVariableExpressionPath (expr_cstr, 
+                                                                         use_dynamic, 
+                                                                         expr_path_options, 
+                                                                         var_sp, 
+                                                                         error);
+        }
     }
     else if (m_process_sp)
     {

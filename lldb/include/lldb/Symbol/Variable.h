@@ -30,7 +30,7 @@ public:
     Variable (lldb::user_id_t uid,
               const char *name, 
               const char *mangled,   // The mangled variable name for variables in namespaces
-              Type *type,
+              const lldb::SymbolFileTypeSP &symfile_type_sp,
               lldb::ValueType scope,
               SymbolContextScope *owner_scope,
               Declaration* decl,
@@ -81,16 +81,7 @@ public:
     NameMatches (const RegularExpression& regex) const;
 
     Type *
-    GetType()
-    {
-        return m_type;
-    }
-
-    const Type *
-    GetType() const
-    {
-        return m_type;
-    }
+    GetType();
 
     lldb::ValueType
     GetScope() const
@@ -169,7 +160,7 @@ public:
 protected:
     ConstString m_name;                 // The basename of the variable (no namespaces)
     Mangled m_mangled;                  // The mangled name of hte variable
-    Type *m_type;                       // The type pointer of the variable (int, struct, class, etc)
+    lldb::SymbolFileTypeSP m_symfile_type_sp;   // The type pointer of the variable (int, struct, class, etc)
     lldb::ValueType m_scope;            // global, parameter, local
     SymbolContextScope *m_owner_scope;  // The symbol file scope that this variable was defined in
     Declaration m_declaration;          // Declaration location for this item.

@@ -158,6 +158,7 @@ class   SymbolContextList;
 class   SymbolContextScope;
 class   SymbolContextSpecifier;
 class   SymbolFile;
+class   SymbolFileType;
 class   SymbolVendor;
 class   Symtab;
 class   SyntheticChildren;

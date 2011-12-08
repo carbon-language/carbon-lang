@@ -19,6 +19,35 @@
 #include <set>
 
 namespace lldb_private {
+
+class SymbolFileType :
+    public ReferenceCountedBaseVirtual<SymbolFileType>,
+    public UserID
+    {
+    public:
+        SymbolFileType (SymbolFile &symbol_file, lldb::user_id_t uid) :
+            UserID (uid),
+            m_symbol_file (symbol_file)
+        {
+        }
+
+        ~SymbolFileType ()
+        {
+        }
+
+        Type *
+        operator->()
+        {
+            return GetType ();
+        }
+
+        Type *
+        GetType ();
+
+    protected:
+        SymbolFile &m_symbol_file;
+        lldb::TypeSP m_type_sp;
+    };
     
 class Type :
     public ReferenceCountedBaseVirtual<Type>,

@@ -70,6 +70,7 @@ namespace lldb {
     typedef SharedPtr<lldb_private::StringSummaryFormat>::Type StringSummaryFormatSP;
     typedef SharedPtr<lldb_private::SummaryFormat>::Type SummaryFormatSP;
     typedef SharedPtr<lldb_private::SymbolFile>::Type SymbolFileSP;
+    typedef IntrusiveSharedPtr<lldb_private::SymbolFileType>::Type SymbolFileTypeSP;
     typedef SharedPtr<lldb_private::SymbolContextSpecifier>::Type SymbolContextSpecifierSP;
     typedef SharedPtr<lldb_private::SyntheticChildren>::Type SyntheticChildrenSP;
     typedef SharedPtr<lldb_private::SyntheticChildrenFrontEnd>::Type SyntheticChildrenFrontEndSP;

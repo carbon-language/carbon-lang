@@ -11,17 +11,55 @@
 #define SymbolFileDWARF_HashedNameToDIE_h_
 
 #include <vector>
+
+#include "DWARFFormValue.h"
+
 #include "lldb/lldb-defines.h"
 #include "lldb/Core/dwarf.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/MappedHash.h"
 
+
 class SymbolFileDWARF;
+class DWARFCompileUnit;
+class DWARFDebugInfoEntry;
 
 struct DWARFMappedHash
 {
+    struct DIEInfo
+    {
+        dw_offset_t offset;  // The DIE offset
+        uint32_t type_flags; // Any flags for this DIEInfo
+        
+        DIEInfo (dw_offset_t _offset = DW_INVALID_OFFSET, 
+                  uint32_t _type_flags = 0) :
+            offset(_offset),
+            type_flags (_type_flags)
+        {
+        }
+        
+        void
+        Clear()
+        {
+            offset = DW_INVALID_OFFSET;
+            type_flags = 0;
+        }            
+    };
+    
+    typedef std::vector<DIEInfo> DIEInfoArray;
     typedef std::vector<uint32_t> DIEArray;
     
+    static void
+    ExtractDIEArray (const DIEInfoArray &die_info_array,
+                     DIEArray &die_offsets)
+    {
+        const size_t count = die_info_array.size();
+        for (size_t i=0; i<count; ++i)
+        {
+            die_offsets.push_back (die_info_array[i].offset);
+        }
+    }
+
     enum AtomType
     {
         eAtomTypeNULL       = 0u,
@@ -30,6 +68,37 @@ struct DWARFMappedHash
         eAtomTypeTag        = 3u,   // DW_TAG_xxx value, should be encoded as DW_FORM_data1 (if no tags exceed 255) or DW_FORM_data2
         eAtomTypeNameFlags  = 4u,   // Flags from enum NameFlags
         eAtomTypeTypeFlags  = 5u    // Flags from enum TypeFlags
+    };
+    
+    // Held in bits[3:0] of the eAtomTypeTypeFlags value to help us know what kind of type
+    // the name is describing
+    enum TypeFlagsTypeClass
+    {
+        eTypeClassInvalid       = 0u,   // An invalid type class, this might happend when type flags were not correctly set
+        eTypeClassOther         = 1u,   // A type other than any listed below
+        eTypeClassBuiltIn       = 2u,   // Language built in type
+        eTypeClassClassOrStruct = 3u,   // A class or structure, just not an objective C class
+        eTypeClassClassOBJC     = 4u,
+        eTypeClassEnum          = 5u,
+        eTypeClassTypedef       = 7u,
+        eTypeClassUnion         = 8u
+    };
+    
+    // Other type bits for the eAtomTypeTypeFlags flags
+    
+    enum TypeFlags
+    {
+        // Make bits [3:0] of the eAtomTypeTypeFlags value and see TypeFlagsTypeClass
+        eTypeFlagClassMask = 0x0000000fu,
+        
+        // If the name contains the namespace and class scope or the type 
+        // exists in the global namespace, then this bits should be set
+        eTypeFlagNameIsFullyQualified   = ( 1u << 4 ),
+        
+        // Always set for C++, only set for ObjC if this is the 
+        // @implementation for class
+        eTypeFlagClassIsImplementation  = ( 1u << 5 ),
+        
     };
 
     struct Atom
@@ -46,7 +115,12 @@ struct DWARFMappedHash
     
     typedef std::vector<Atom> AtomArray;
     
+    static uint32_t 
+    GetTypeFlags (SymbolFileDWARF *dwarf2Data,
+                  const DWARFCompileUnit* cu,
+                  const DWARFDebugInfoEntry* die);
     
+
     static const char *
     GetAtomTypeName (uint16_t atom)
     {
@@ -66,14 +140,18 @@ struct DWARFMappedHash
         // DIE offset base so die offsets in hash_data can be CU relative
         dw_offset_t die_base_offset;
         AtomArray atoms;
+        size_t min_hash_data_byte_size;
         
         Prologue (dw_offset_t _die_base_offset = 0) :
-            die_base_offset (_die_base_offset)
+            die_base_offset (_die_base_offset),
+            atoms(),
+            min_hash_data_byte_size(0)
         {
             // Define an array of DIE offsets by first defining an array, 
             // and then define the atom type for the array, in this case
             // we have an array of DIE offsets
-            atoms.push_back (Atom(eAtomTypeDIEOffset, DW_FORM_data4));
+            AppendAtom (eAtomTypeDIEOffset, DW_FORM_data4);
+            min_hash_data_byte_size = 4;
         }
         
         virtual ~Prologue()
@@ -87,12 +165,60 @@ struct DWARFMappedHash
             atoms.clear();
         }
         
+        void
+        AppendAtom (AtomType type, dw_form_t form)
+        {
+            atoms.push_back (Atom(type, form));
+            switch (form)
+            {
+                case DW_FORM_indirect:
+                case DW_FORM_exprloc:
+                case DW_FORM_flag_present:
+                case DW_FORM_ref_sig8:
+                    assert (!"Unhandled atom form");
+                    break;
+
+                case DW_FORM_string:
+                case DW_FORM_block:
+                case DW_FORM_block1:
+                case DW_FORM_flag:
+                case DW_FORM_data1:
+                case DW_FORM_ref1:
+                case DW_FORM_sdata:
+                case DW_FORM_udata:
+                case DW_FORM_sec_offset:
+                case DW_FORM_ref_udata:
+                    min_hash_data_byte_size += 1; 
+                    break;
+                case DW_FORM_block2:
+                case DW_FORM_data2: 
+                case DW_FORM_ref2:
+                    min_hash_data_byte_size += 2; 
+                    break;
+                case DW_FORM_block4: 
+                case DW_FORM_data4:
+                case DW_FORM_ref4:
+                case DW_FORM_addr:
+                case DW_FORM_ref_addr:
+                case DW_FORM_strp:
+                    min_hash_data_byte_size += 4; 
+                    break;
+                case DW_FORM_data8:
+                case DW_FORM_ref8:
+                    min_hash_data_byte_size += 8; 
+                    break;
+                    
+            }
+        }
+        
 //        void
 //        Dump (std::ostream* ostrm_ptr);        
         
         uint32_t
         Read (const lldb_private::DataExtractor &data, uint32_t offset)
         {
+            atoms.clear();
+            
             die_base_offset = data.GetU32 (&offset);
             
             const uint32_t atom_count = data.GetU32 (&offset);
@@ -103,16 +229,15 @@ struct DWARFMappedHash
                     /* do nothing */;
 
                 // Hardcode to the only know value for now.
-                atoms.push_back (Atom(eAtomTypeDIEOffset, DW_FORM_data4));
+                AppendAtom (eAtomTypeDIEOffset, DW_FORM_data4);
             }
             else
             {
-                Atom atom;
                 for (uint32_t i=0; i<atom_count; ++i)
                 {
-                    atom.type = data.GetU16 (&offset);
-                    atom.form = data.GetU16 (&offset);
-                    atoms.push_back(atom);
+                    AtomType type = (AtomType)data.GetU16 (&offset);
+                    dw_form_t form = (dw_form_t)data.GetU16 (&offset);                    
+                    AppendAtom (type, form);
                 }
             }
             return offset;
@@ -128,6 +253,13 @@ struct DWARFMappedHash
             // written to disk
             return sizeof(die_base_offset) + sizeof(uint32_t) + atoms.size() * sizeof(Atom);
         }
+        
+        size_t
+        GetHashDataByteSize () const
+        {
+            return min_hash_data_byte_size;
+        }
+
     };
     
     struct Header : public MappedHash::Header<Prologue>
@@ -147,6 +279,11 @@ struct DWARFMappedHash
             return header_data.GetByteSize();
         }
         
+        size_t
+        GetHashDataByteSize ()
+        {
+            return header_data.GetHashDataByteSize();
+        }
         
         //        virtual void
         //        Dump (std::ostream* ostrm_ptr);        
@@ -161,9 +298,89 @@ struct DWARFMappedHash
             }
             return offset;
         }
-        //        
-        //        virtual void
-        //        Write (BinaryStreamBuf &s);
+        
+        bool
+        Read (const lldb_private::DataExtractor &data, 
+              uint32_t *offset_ptr, 
+              DIEInfo &hash_data) const
+        {
+            const size_t num_atoms = header_data.atoms.size();
+            if (num_atoms == 0)
+                return false;
+            
+            for (size_t i=0; i<num_atoms; ++i)
+            {
+                DWARFFormValue form_value (header_data.atoms[i].form);
+                
+                if (!form_value.ExtractValue(data, offset_ptr, NULL))
+                    return false;
+                
+                switch (header_data.atoms[i].type)
+                {
+                    case eAtomTypeDIEOffset:    // DIE offset, check form for encoding
+                        hash_data.offset = form_value.Reference (header_data.die_base_offset);
+                        break;
+                    case eAtomTypeTypeFlags:    // Flags from enum TypeFlags
+                        hash_data.type_flags = form_value.Unsigned ();
+                        break;
+                    default:
+                        return false;
+                        break;
+                }
+            }
+            return true;
+        }
+        
+        void
+        Dump (lldb_private::Stream& strm, const DIEInfo &hash_data) const
+        {
+            const size_t num_atoms = header_data.atoms.size();
+            for (size_t i=0; i<num_atoms; ++i)
+            {
+                if (i > 0)
+                    strm.PutCString (", ");
+                
+                DWARFFormValue form_value (header_data.atoms[i].form);
+                switch (header_data.atoms[i].type)
+                {
+                    case eAtomTypeDIEOffset:    // DIE offset, check form for encoding
+                        strm.Printf ("0x%8.8x", hash_data.offset);
+                        break;
+                        
+                    case eAtomTypeTypeFlags:    // Flags from enum TypeFlags
+                        strm.Printf ("0x%2.2x ( type = ", hash_data.type_flags);
+                        switch (hash_data.type_flags & eTypeFlagClassMask)
+                    {
+                        case eTypeClassInvalid:         strm.PutCString ("invalid");        break;
+                        case eTypeClassOther:           strm.PutCString ("other");          break;
+                        case eTypeClassBuiltIn:         strm.PutCString ("built-in");       break;
+                        case eTypeClassClassOrStruct:   strm.PutCString ("class-struct");   break;
+                        case eTypeClassClassOBJC:       strm.PutCString ("class-objc");     break;
+                        case eTypeClassEnum:            strm.PutCString ("enum");           break;
+                        case eTypeClassTypedef:         strm.PutCString ("typedef");        break;
+                        case eTypeClassUnion:           strm.PutCString ("union");          break;
+                        default:                        strm.PutCString ("???");            break;
+                    }
+                        
+                        if (hash_data.type_flags & ~eTypeFlagClassMask)
+                        {
+                            strm.PutCString (", flags =");
+                            if (hash_data.type_flags & eTypeFlagNameIsFullyQualified)
+                                strm.PutCString (" qualified");
+                            
+                            if (hash_data.type_flags & eTypeFlagClassIsImplementation)
+                                strm.PutCString (" implementation");
+                        }
+                        strm.PutCString (" )");
+                        break;
+                        
+                    default:
+                        strm.Printf ("AtomType(0x%x)", header_data.atoms[i].type);
+                        break;
+                }
+            }
+        }
+
     };
     
 //    class ExportTable
@@ -210,7 +427,7 @@ struct DWARFMappedHash
 //        };
 //        
 //        // Map uniqued .debug_str offset to the corresponding DIE offsets
-//        typedef std::map<uint32_t, DIEArray> NameInfo;
+//        typedef std::map<uint32_t, DIEInfoArray> NameInfo;
 //        // Map a name hash to one or more name infos
 //        typedef std::map<uint32_t, NameInfo> BucketEntry;
 //        
@@ -226,14 +443,14 @@ struct DWARFMappedHash
     
     // A class for reading and using a saved hash table from a block of data
     // in memory
-    class MemoryTable : public MappedHash::MemoryTable<uint32_t, DWARFMappedHash::Header, DIEArray>
+    class MemoryTable : public MappedHash::MemoryTable<uint32_t, DWARFMappedHash::Header, DIEInfoArray>
     {
     public:
         
         MemoryTable (lldb_private::DataExtractor &table_data, 
                      const lldb_private::DataExtractor &string_table,
                      const char *name) :
-            MappedHash::MemoryTable<uint32_t, Header, DIEArray> (table_data),
+            MappedHash::MemoryTable<uint32_t, Header, DIEInfoArray> (table_data),
             m_data (table_data),
             m_string_table (string_table),
             m_name (name)
@@ -270,14 +487,18 @@ struct DWARFMappedHash
                 return eResultError;
 
             const uint32_t count = m_data.GetU32 (hash_data_offset_ptr);
-            const uint32_t data_size = count * sizeof(uint32_t);
+            const uint32_t data_size = count * m_header.header_data.GetHashDataByteSize();
             if (count > 0 && m_data.ValidOffsetForDataOfSize (*hash_data_offset_ptr, data_size))
             {
                 if (strcmp (name, strp_cstr) == 0)
                 {
                     pair.value.clear();
                     for (uint32_t i=0; i<count; ++i)
-                        pair.value.push_back (m_data.GetU32 (hash_data_offset_ptr));
+                    {
+                        DIEInfo die_info;
+                        if (m_header.Read(m_data, hash_data_offset_ptr, die_info))
+                            pair.value.push_back (die_info);
+                    }
                     return eResultKeyMatch;
                 }
                 else
@@ -314,13 +535,17 @@ struct DWARFMappedHash
                 return eResultError;
             
             const uint32_t count = m_data.GetU32 (hash_data_offset_ptr);
-            const uint32_t data_size = count * sizeof(uint32_t);
+            const uint32_t data_size = count * m_header.header_data.GetHashDataByteSize();
             if (count > 0 && m_data.ValidOffsetForDataOfSize (*hash_data_offset_ptr, data_size))
             {
                 if (regex.Execute(strp_cstr))
                 {
                     for (uint32_t i=0; i<count; ++i)
-                        pair.value.push_back (m_data.GetU32 (hash_data_offset_ptr));
+                    {
+                        DIEInfo die_info;
+                        if (m_header.Read(m_data, hash_data_offset_ptr, die_info))
+                            pair.value.push_back (die_info);
+                    }
                     return eResultKeyMatch;
                 }
                 else
@@ -341,7 +566,7 @@ struct DWARFMappedHash
 
         size_t
         AppendAllDIEsThatMatchingRegex (const lldb_private::RegularExpression& regex, 
-                                        DIEArray &die_offsets) const
+                                        DIEInfoArray &die_info_array) const
         {
             const uint32_t hash_count = m_header.hashes_count;
             Pair pair;
@@ -371,14 +596,14 @@ struct DWARFMappedHash
                     }
                 }
             }
-            die_offsets.swap (pair.value);
-            return die_offsets.size();
+            die_info_array.swap (pair.value);
+            return die_info_array.size();
         }
         
         size_t
         AppendAllDIEsInRange (const uint32_t die_offset_start, 
                               const uint32_t die_offset_end, 
-                              DIEArray &die_offsets) const
+                              DIEInfoArray &die_info_array) const
         {
             const uint32_t hash_count = m_header.hashes_count;
             for (uint32_t offset_idx=0; offset_idx<hash_count; ++offset_idx)
@@ -396,26 +621,38 @@ struct DWARFMappedHash
                     const uint32_t count = m_data.GetU32 (&hash_data_offset);
                     for (uint32_t i=0; i<count; ++i)
                     {
-                        uint32_t die_offset = m_data.GetU32 (&hash_data_offset);
-                        if (die_offset == 0)
-                            done = true;
-                        if (die_offset_start <= die_offset && die_offset < die_offset_end)
-                            die_offsets.push_back(die_offset);
+                        DIEInfo die_info;
+                        if (m_header.Read(m_data, &hash_data_offset, die_info))
+                        {
+                            if (die_info.offset == 0)
+                                done = true;
+                            if (die_offset_start <= die_info.offset && die_info.offset < die_offset_end)
+                                die_info_array.push_back(die_info);
+                        }
                     }
                 }
             }
-            return die_offsets.size();
+            return die_info_array.size();
+        }
+
+        size_t
+        FindByName (const char *name, DIEArray &die_offsets)
+        {
+            DIEInfoArray die_info_array;
+            if (FindByName(name, die_info_array))
+                DWARFMappedHash::ExtractDIEArray (die_info_array, die_offsets);
+            return die_info_array.size();
         }
 
         size_t 
-        FindByName (const char *name, DIEArray &die_offsets)
+        FindByName (const char *name, DIEInfoArray &die_info_array)
         {
             Pair kv_pair;
-            size_t old_size = die_offsets.size();
+            size_t old_size = die_info_array.size();
             if (Find (name, kv_pair))
             {
-                die_offsets.swap(kv_pair.value);
-                return die_offsets.size() - old_size;
+                die_info_array.swap(kv_pair.value);
+                return die_info_array.size() - old_size;
             }
             return 0;
         }

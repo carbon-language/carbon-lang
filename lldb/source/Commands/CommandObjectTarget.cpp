@@ -1524,47 +1524,35 @@ LookupTypeInModule (CommandInterpreter &interpreter,
 {
     if (module && name_cstr && name_cstr[0])
     {
-        /*SymbolContextList sc_list;
-        
-        SymbolVendor *symbol_vendor = module->GetSymbolVendor();
-        if (symbol_vendor)
-        {*/
-            TypeList type_list;
-            uint32_t num_matches = 0;
-            SymbolContext sc;
-            //            if (name_is_regex)
-            //            {
-            //                RegularExpression name_regex (name_cstr);
-            //                num_matches = symbol_vendor->FindFunctions(sc, name_regex, true, UINT32_MAX, type_list);
-            //            }
-            //            else
-            //            {
-            ConstString name(name_cstr);
-            num_matches = module->FindTypes(sc, name, NULL, true, UINT32_MAX, type_list);
-            //            }
+        TypeList type_list;
+        const uint32_t max_num_matches = 1;
+        uint32_t num_matches = 0;
+        SymbolContext sc;
+
+        ConstString name(name_cstr);
+        num_matches = module->FindTypes(sc, name, NULL, true, max_num_matches, type_list);
             
-            if (num_matches)
+        if (num_matches)
+        {
+            strm.Indent ();
+            strm.Printf("%u match%s found in ", num_matches, num_matches > 1 ? "es" : "");
+            DumpFullpath (strm, &module->GetFileSpec(), 0);
+            strm.PutCString(":\n");
+            const uint32_t num_types = type_list.GetSize();
+            for (uint32_t i=0; i<num_types; ++i)
             {
-                strm.Indent ();
-                strm.Printf("%u match%s found in ", num_matches, num_matches > 1 ? "es" : "");
-                DumpFullpath (strm, &module->GetFileSpec(), 0);
-                strm.PutCString(":\n");
-                const uint32_t num_types = type_list.GetSize();
-                for (uint32_t i=0; i<num_types; ++i)
+                TypeSP type_sp (type_list.GetTypeAtIndex(i));
+                if (type_sp)
                 {
-                    TypeSP type_sp (type_list.GetTypeAtIndex(i));
-                    if (type_sp)
-                    {
-                        // Resolve the clang type so that any forward references
-                        // to types that haven't yet been parsed will get parsed.
-                        type_sp->GetClangFullType ();
-                        type_sp->GetDescription (&strm, eDescriptionLevelFull, true);
-                    }
-                    strm.EOL();
+                    // Resolve the clang type so that any forward references
+                    // to types that haven't yet been parsed will get parsed.
+                    type_sp->GetClangFullType ();
+                    type_sp->GetDescription (&strm, eDescriptionLevelFull, true);
                 }
+                strm.EOL();
             }
-            return num_matches;
-        //}
+        }
+        return num_matches;
     }
     return 0;
 }

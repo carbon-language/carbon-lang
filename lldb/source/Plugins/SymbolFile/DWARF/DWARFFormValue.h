@@ -10,8 +10,9 @@
 #ifndef SymbolFileDWARF_DWARFFormValue_h_
 #define SymbolFileDWARF_DWARFFormValue_h_
 
-#include "SymbolFileDWARF.h"
 #include <stddef.h> // for NULL
+
+class DWARFCompileUnit;
 
 class DWARFFormValue
 {
@@ -52,6 +53,7 @@ public:
     bool                IsInlinedCStr() const { return (m_value.data != NULL) && m_value.data == (uint8_t*)m_value.value.cstr; }
     const uint8_t*      BlockData() const;
     uint64_t            Reference(const DWARFCompileUnit* cu) const;
+    uint64_t            Reference (dw_offset_t offset) const;
     bool                ResolveCompileUnitReferences(const DWARFCompileUnit* cu);
     uint64_t            Unsigned() const { return m_value.value.uval; }
     void                SetUnsigned(uint64_t uval) { m_value.value.uval = uval; }
