@@ -243,17 +243,18 @@ def imm16_31 : ImmLeaf<i32, [{
   return (int32_t)Imm >= 16 && (int32_t)Imm < 32;
 }]>;
 
-def so_imm_neg :
-  PatLeaf<(imm), [{
+def so_imm_neg_asmoperand : AsmOperandClass { let Name = "ARMSOImmNeg"; }
+def so_imm_neg : Operand<i32>, PatLeaf<(imm), [{
     return ARM_AM::getSOImmVal(-(uint32_t)N->getZExtValue()) != -1;
-  }], so_imm_neg_XFORM>;
+  }], so_imm_neg_XFORM> {
+  let ParserMatchClass = so_imm_neg_asmoperand;
+}
 
 // Note: this pattern doesn't require an encoder method and such, as it's
 // only used on aliases (Pat<> and InstAlias<>). The actual encoding
 // is handled by the destination instructions, which use t2_so_imm.
 def so_imm_not_asmoperand : AsmOperandClass { let Name = "ARMSOImmNot"; }
-def so_imm_not :
-  Operand<i32>, PatLeaf<(imm), [{
+def so_imm_not : Operand<i32>, PatLeaf<(imm), [{
     return ARM_AM::getSOImmVal(~(uint32_t)N->getZExtValue()) != -1;
   }], so_imm_not_XFORM> {
   let ParserMatchClass = so_imm_not_asmoperand;
@@ -5041,6 +5042,11 @@ def : MnemonicAlias<"usubaddx", "usax">;
 // for isel.
 def : ARMInstAlias<"mov${s}${p} $Rd, $imm",
                    (MVNi rGPR:$Rd, so_imm_not:$imm, pred:$p, cc_out:$s)>;
+// Likewise, "add Rd, so_imm_neg" -> sub
+def : ARMInstAlias<"add${s}${p} $Rd, $Rn, $imm",
+                 (SUBri GPR:$Rd, GPR:$Rn, so_imm_neg:$imm, pred:$p, cc_out:$s)>;
+def : ARMInstAlias<"add${s}${p} $Rd, $imm",
+                 (SUBri GPR:$Rd, GPR:$Rd, so_imm_neg:$imm, pred:$p, cc_out:$s)>;
 
 // The shifter forms of the MOV instruction are aliased to the ASR, LSL,
 // LSR, ROR, and RRX instructions.

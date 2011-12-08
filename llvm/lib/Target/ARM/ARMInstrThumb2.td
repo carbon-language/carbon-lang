@@ -80,18 +80,19 @@ def t2_so_imm : Operand<i32>, ImmLeaf<i32, [{
 // only used on aliases (Pat<> and InstAlias<>). The actual encoding
 // is handled by the destination instructions, which use t2_so_imm.
 def t2_so_imm_not_asmoperand : AsmOperandClass { let Name = "T2SOImmNot"; }
-def t2_so_imm_not : Operand<i32>,
-                    PatLeaf<(imm), [{
+def t2_so_imm_not : Operand<i32>, PatLeaf<(imm), [{
   return ARM_AM::getT2SOImmVal(~((uint32_t)N->getZExtValue())) != -1;
 }], t2_so_imm_not_XFORM> {
   let ParserMatchClass = t2_so_imm_not_asmoperand;
 }
 
 // t2_so_imm_neg - Match an immediate that is a negation of a t2_so_imm.
-def t2_so_imm_neg : Operand<i32>,
-                    PatLeaf<(imm), [{
+def t2_so_imm_neg_asmoperand : AsmOperandClass { let Name = "T2SOImmNeg"; }
+def t2_so_imm_neg : Operand<i32>, PatLeaf<(imm), [{
   return ARM_AM::getT2SOImmVal(-((uint32_t)N->getZExtValue())) != -1;
-}], t2_so_imm_neg_XFORM>;
+}], t2_so_imm_neg_XFORM> {
+  let ParserMatchClass = t2_so_imm_neg_asmoperand;
+}
 
 /// imm0_4095 predicate - True if the 32-bit immediate is in the range [0.4095].
 def imm0_4095 : Operand<i32>,
@@ -4096,6 +4097,13 @@ def : t2InstAlias<"sxth${p} $Rd, $Rm$rot",
 // for isel.
 def : t2InstAlias<"mov${p} $Rd, $imm",
                   (t2MVNi rGPR:$Rd, t2_so_imm_not:$imm, pred:$p, zero_reg)>;
+// Likewise, "add Rd, so_imm_neg" -> sub
+def : t2InstAlias<"add${s}${p} $Rd, $Rn, $imm",
+                  (t2SUBri GPRnopc:$Rd, GPRnopc:$Rn, t2_so_imm_neg:$imm,
+                           pred:$p, cc_out:$s)>;
+def : t2InstAlias<"add${s}${p} $Rd, $imm",
+                  (t2SUBri GPRnopc:$Rd, GPRnopc:$Rd, t2_so_imm_neg:$imm,
+                           pred:$p, cc_out:$s)>;
 
 
 // Wide 'mul' encoding can be specified with only two operands.

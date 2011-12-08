@@ -749,6 +749,14 @@ public:
     int64_t Value = CE->getValue();
     return ARM_AM::getSOImmVal(~Value) != -1;
   }
+  bool isARMSOImmNeg() const {
+    if (Kind != k_Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return ARM_AM::getSOImmVal(-Value) != -1;
+  }
   bool isT2SOImm() const {
     if (Kind != k_Immediate)
       return false;
@@ -764,6 +772,14 @@ public:
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return ARM_AM::getT2SOImmVal(~Value) != -1;
+  }
+  bool isT2SOImmNeg() const {
+    if (Kind != k_Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return ARM_AM::getT2SOImmVal(-Value) != -1;
   }
   bool isSetEndImm() const {
     if (Kind != k_Immediate)
@@ -1321,12 +1337,28 @@ public:
     Inst.addOperand(MCOperand::CreateImm(~CE->getValue()));
   }
 
+  void addT2SOImmNegOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // The operand is actually a t2_so_imm, but we have its
+    // negation in the assembly source, so twiddle it here.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    Inst.addOperand(MCOperand::CreateImm(-CE->getValue()));
+  }
+
   void addARMSOImmNotOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     // The operand is actually a so_imm, but we have its bitwise
     // negation in the assembly source, so twiddle it here.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(~CE->getValue()));
+  }
+
+  void addARMSOImmNegOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // The operand is actually a so_imm, but we have its
+    // negation in the assembly source, so twiddle it here.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    Inst.addOperand(MCOperand::CreateImm(-CE->getValue()));
   }
 
   void addMemBarrierOptOperands(MCInst &Inst, unsigned N) const {
