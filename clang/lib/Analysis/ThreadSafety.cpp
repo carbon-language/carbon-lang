@@ -172,6 +172,10 @@ class MutexID {
   }
 
 public:
+  explicit MutexID(clang::Decl::EmptyShell e) {
+    DeclSeq.clear();
+  }
+
   /// \param MutexExp The original mutex expression within an attribute
   /// \param DeclExp An expression involving the Decl on which the attribute
   ///        occurs.
@@ -249,9 +253,14 @@ struct LockData {
   ///
   /// FIXME: add support for re-entrant locking and lock up/downgrading
   LockKind LKind;
+  MutexID UnderlyingMutex;  // for ScopedLockable objects
 
   LockData(SourceLocation AcquireLoc, LockKind LKind)
-    : AcquireLoc(AcquireLoc), LKind(LKind) {}
+    : AcquireLoc(AcquireLoc), LKind(LKind), UnderlyingMutex(Decl::EmptyShell())
+  {}
+
+  LockData(SourceLocation AcquireLoc, LockKind LKind, const MutexID &Mu)
+    : AcquireLoc(AcquireLoc), LKind(LKind), UnderlyingMutex(Mu) {}
 
   bool operator==(const LockData &other) const {
     return AcquireLoc == other.AcquireLoc && LKind == other.LKind;
@@ -285,11 +294,12 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
   Lockset::Factory &LocksetFactory;
 
   // Helper functions
-  void removeLock(SourceLocation UnlockLoc, MutexID &Mutex);
-  void addLock(SourceLocation LockLoc, MutexID &Mutex, LockKind LK);
+  void addLock(const MutexID &Mutex, const LockData &LDat);
+  void removeLock(const MutexID &Mutex, SourceLocation UnlockLoc);
 
   template <class AttrType>
-  void addLocksToSet(LockKind LK, AttrType *Attr, Expr *Exp, NamedDecl *D);
+  void addLocksToSet(LockKind LK, AttrType *Attr,
+                     Expr *Exp, NamedDecl *D, VarDecl *VD = 0);
   void removeLocksFromSet(UnlockFunctionAttr *Attr,
                           Expr *Exp, NamedDecl* FunDecl);
 
@@ -298,7 +308,7 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
                            Expr *MutexExp, ProtectedOperationKind POK);
   void checkAccess(Expr *Exp, AccessKind AK);
   void checkDereference(Expr *Exp, AccessKind AK);
-  void handleCall(Expr *Exp, NamedDecl *D);
+  void handleCall(Expr *Exp, NamedDecl *D, VarDecl *VD = 0);
 
   /// \brief Returns true if the lockset contains a lock, regardless of whether
   /// the lock is held exclusively or shared.
@@ -342,43 +352,54 @@ public:
   void VisitCastExpr(CastExpr *CE);
   void VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp);
   void VisitCXXConstructExpr(CXXConstructExpr *Exp);
+  void VisitDeclStmt(DeclStmt *S);
 };
 
 /// \brief Add a new lock to the lockset, warning if the lock is already there.
-/// \param LockLoc The source location of the acquire
-/// \param LockExp The lock expression corresponding to the lock to be added
-void BuildLockset::addLock(SourceLocation LockLoc, MutexID &Mutex,
-                           LockKind LK) {
-  // FIXME: deal with acquired before/after annotations. We can write a first
-  // pass that does the transitive lookup lazily, and refine afterwards.
-  LockData NewLock(LockLoc, LK);
-
+/// \param Mutex -- the Mutex expression for the lock
+/// \param LDat  -- the LockData for the lock
+void BuildLockset::addLock(const MutexID &Mutex, const LockData& LDat) {
+  // FIXME: deal with acquired before/after annotations.
   // FIXME: Don't always warn when we have support for reentrant locks.
   if (locksetContains(Mutex))
-    Handler.handleDoubleLock(Mutex.getName(), LockLoc);
+    Handler.handleDoubleLock(Mutex.getName(), LDat.AcquireLoc);
   else
-    LSet = LocksetFactory.add(LSet, Mutex, NewLock);
+    LSet = LocksetFactory.add(LSet, Mutex, LDat);
 }
 
 /// \brief Remove a lock from the lockset, warning if the lock is not there.
 /// \param LockExp The lock expression corresponding to the lock to be removed
 /// \param UnlockLoc The source location of the unlock (only used in error msg)
-void BuildLockset::removeLock(SourceLocation UnlockLoc, MutexID &Mutex) {
-  Lockset NewLSet = LocksetFactory.remove(LSet, Mutex);
-  if(NewLSet == LSet)
+void BuildLockset::removeLock(const MutexID &Mutex, SourceLocation UnlockLoc) {
+  const LockData *LDat = LSet.lookup(Mutex);
+  if (!LDat)
     Handler.handleUnmatchedUnlock(Mutex.getName(), UnlockLoc);
-  else
-    LSet = NewLSet;
+  else {
+    // For scoped-lockable vars, remove the mutex associated with this var.
+    if (LDat->UnderlyingMutex.isValid())
+      removeLock(LDat->UnderlyingMutex, UnlockLoc);
+    LSet = LocksetFactory.remove(LSet, Mutex);
+  }
 }
 
 /// \brief This function, parameterized by an attribute type, is used to add a
 /// set of locks specified as attribute arguments to the lockset.
 template <typename AttrType>
 void BuildLockset::addLocksToSet(LockKind LK, AttrType *Attr,
-                                 Expr *Exp, NamedDecl* FunDecl) {
+                                 Expr *Exp, NamedDecl* FunDecl, VarDecl *VD) {
   typedef typename AttrType::args_iterator iterator_type;
 
   SourceLocation ExpLocation = Exp->getExprLoc();
+
+  // Figure out if we're calling the constructor of scoped lockable class
+  bool isScopedVar = false;
+  if (VD) {
+    if (CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FunDecl)) {
+      CXXRecordDecl* PD = CD->getParent();
+      if (PD && PD->getAttr<ScopedLockableAttr>())
+        isScopedVar = true;
+    }
+  }
 
   if (Attr->args_size() == 0) {
     // The mutex held is the "this" object.
@@ -386,7 +407,7 @@ void BuildLockset::addLocksToSet(LockKind LK, AttrType *Attr,
     if (!Mutex.isValid())
       MutexID::warnInvalidLock(Handler, 0, Exp, FunDecl);
     else
-      addLock(ExpLocation, Mutex, LK);
+      addLock(Mutex, LockData(ExpLocation, LK));
     return;
   }
 
@@ -394,8 +415,15 @@ void BuildLockset::addLocksToSet(LockKind LK, AttrType *Attr,
     MutexID Mutex(*I, Exp, FunDecl);
     if (!Mutex.isValid())
       MutexID::warnInvalidLock(Handler, *I, Exp, FunDecl);
-    else
-      addLock(ExpLocation, Mutex, LK);
+    else {
+      addLock(Mutex, LockData(ExpLocation, LK));
+      if (isScopedVar) {
+        // For scoped lockable vars, map this var to its underlying mutex.
+        DeclRefExpr DRE(VD, VD->getType(), VK_LValue, VD->getLocation());
+        MutexID SMutex(&DRE, 0, 0);
+        addLock(SMutex, LockData(VD->getLocation(), LK, Mutex));
+      }
+    }
   }
 }
 
@@ -412,7 +440,7 @@ void BuildLockset::removeLocksFromSet(UnlockFunctionAttr *Attr,
     if (!Mu.isValid())
       MutexID::warnInvalidLock(Handler, 0, Exp, FunDecl);
     else
-      removeLock(ExpLocation, Mu);
+      removeLock(Mu, ExpLocation);
     return;
   }
 
@@ -422,7 +450,7 @@ void BuildLockset::removeLocksFromSet(UnlockFunctionAttr *Attr,
     if (!Mutex.isValid())
       MutexID::warnInvalidLock(Handler, *I, Exp, FunDecl);
     else
-      removeLock(ExpLocation, Mutex);
+      removeLock(Mutex, ExpLocation);
   }
 }
 
@@ -508,7 +536,7 @@ void BuildLockset::checkAccess(Expr *Exp, AccessKind AK) {
 ///
 /// FIXME: Do not flag an error for member variables accessed in constructors/
 /// destructors
-void BuildLockset::handleCall(Expr *Exp, NamedDecl *D) {
+void BuildLockset::handleCall(Expr *Exp, NamedDecl *D, VarDecl *VD) {
   AttrVec &ArgAttrs = D->getAttrs();
   for(unsigned i = 0; i < ArgAttrs.size(); ++i) {
     Attr *Attr = ArgAttrs[i];
@@ -517,7 +545,7 @@ void BuildLockset::handleCall(Expr *Exp, NamedDecl *D) {
       // to our lockset with kind exclusive.
       case attr::ExclusiveLockFunction: {
         ExclusiveLockFunctionAttr *A = cast<ExclusiveLockFunctionAttr>(Attr);
-        addLocksToSet(LK_Exclusive, A, Exp, D);
+        addLocksToSet(LK_Exclusive, A, Exp, D, VD);
         break;
       }
 
@@ -525,7 +553,7 @@ void BuildLockset::handleCall(Expr *Exp, NamedDecl *D) {
       // to our lockset with kind shared.
       case attr::SharedLockFunction: {
         SharedLockFunctionAttr *A = cast<SharedLockFunctionAttr>(Attr);
-        addLocksToSet(LK_Shared, A, Exp, D);
+        addLocksToSet(LK_Shared, A, Exp, D, VD);
         break;
       }
 
@@ -627,10 +655,23 @@ void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
 }
 
 void BuildLockset::VisitCXXConstructExpr(CXXConstructExpr *Exp) {
-  NamedDecl *D = cast<NamedDecl>(Exp->getConstructor());
-  if(!D || !D->hasAttrs())
-    return;
-  handleCall(Exp, D);
+  // FIXME -- only handles constructors in DeclStmt below.
+}
+
+void BuildLockset::VisitDeclStmt(DeclStmt *S) {
+  DeclGroupRef DGrp = S->getDeclGroup();
+  for (DeclGroupRef::iterator I = DGrp.begin(), E = DGrp.end(); I != E; ++I) {
+    Decl *D = *I;
+    if (VarDecl *VD = dyn_cast_or_null<VarDecl>(D)) {
+      Expr *E = VD->getInit();
+      if (CXXConstructExpr *CE = dyn_cast_or_null<CXXConstructExpr>(E)) {
+        NamedDecl *CtorD = dyn_cast_or_null<NamedDecl>(CE->getConstructor());
+        if (!CtorD || !CtorD->hasAttrs())
+          return;
+        handleCall(CE, CtorD, VD);
+      }
+    }
+  }
 }
 
 

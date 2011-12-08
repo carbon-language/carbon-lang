@@ -834,8 +834,8 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   // prototyping, but we need a way for analyses to say what expressions they
   // expect to always be CFGElements and then fill in the BuildOptions
   // appropriately.  This is essentially a layering violation.
-  if (P.enableCheckUnreachable) {
-    // Unreachable code analysis requires a linearized CFG.
+  if (P.enableCheckUnreachable || P.enableThreadSafetyAnalysis) {
+    // Unreachable code analysis and thread safety require a linearized CFG.
     AC.getCFGBuildOptions().setAllAlwaysAdd();
   }
   else {

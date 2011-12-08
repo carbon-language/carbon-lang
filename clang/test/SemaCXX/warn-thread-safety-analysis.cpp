@@ -36,6 +36,18 @@ class  __attribute__((lockable)) Mutex {
   void LockWhen(const int &cond) __attribute__((exclusive_lock_function));
 };
 
+class __attribute__((scoped_lockable)) MutexLock {
+ public:
+  MutexLock(Mutex *mu) __attribute__((exclusive_lock_function(mu)));
+  ~MutexLock() __attribute__((unlock_function));
+};
+
+class __attribute__((scoped_lockable)) ReaderMutexLock {
+ public:
+  ReaderMutexLock(Mutex *mu) __attribute__((exclusive_lock_function(mu)));
+  ~ReaderMutexLock() __attribute__((unlock_function));
+};
+
 
 Mutex sls_mu;
 
@@ -1549,3 +1561,47 @@ namespace template_member_test {
   template struct W<int>; // expected-note {{here}}
 
 }
+
+namespace test_scoped_lockable {
+
+struct TestScopedLockable {
+  Mutex mu1;
+  Mutex mu2;
+  int a __attribute__((guarded_by(mu1)));
+  int b __attribute__((guarded_by(mu2)));
+
+  bool getBool();
+
+  void foo1() {
+    MutexLock mulock(&mu1);
+    a = 5;
+  }
+
+  void foo2() {
+    ReaderMutexLock mulock1(&mu1);
+    if (getBool()) {
+      MutexLock mulock2a(&mu2);
+      b = a + 1;
+    }
+    else {
+      MutexLock mulock2b(&mu2);
+      b = a + 2;
+    }
+  }
+
+  void foo3() {
+    MutexLock mulock_a(&mu1);
+    MutexLock mulock_b(&mu1); // \
+      // expected-warning {{locking 'mu1' that is already locked}}
+  }   // expected-warning {{unlocking 'mu1' that was not locked}}
+
+  void foo4() {
+    MutexLock mulock1(&mu1), mulock2(&mu2);
+    a = b+1;
+    b = a+1;
+  }
+};
+
+} // end namespace test_scoped_lockable
+
+
