@@ -37,6 +37,7 @@ add_clang_library(clangStaticAnalyzerCheckers
   MacOSXAPIChecker.cpp
   MallocChecker.cpp
   MallocOverflowSecurityChecker.cpp
+  MallocSizeofChecker.cpp
   NSAutoreleasePoolChecker.cpp
   NSErrorChecker.cpp
   NoReturnFunctionChecker.cpp
