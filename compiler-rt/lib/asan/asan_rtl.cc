@@ -45,10 +45,6 @@
 #include <unistd.h>
 // must not include <setjmp.h> on Linux
 
-#ifndef ASAN_NEEDS_SEGV
-# define ASAN_NEEDS_SEGV 1
-#endif
-
 namespace __asan {
 
 // -------------------------- Flags ------------------------- {{{1
@@ -503,7 +499,7 @@ extern "C" void WRAP(siglongjmp)(void *env, int val) {
 
 extern "C" void __cxa_throw(void *a, void *b, void *c);
 
-#if ASAN_HAS_EXCEPTIONS
+#if ASAN_HAS_EXCEPTIONS == 1
 extern "C" void WRAP(__cxa_throw)(void *a, void *b, void *c) {
   CHECK(&real___cxa_throw);
   UnpoisonStackFromHereToTop();
@@ -657,8 +653,7 @@ void __asan_init() {
   FLAG_poison_shadow = IntFlagValue(options, "poison_shadow=", 1);
   FLAG_report_globals = IntFlagValue(options, "report_globals=", 1);
   FLAG_lazy_shadow = IntFlagValue(options, "lazy_shadow=", 0);
-  FLAG_handle_segv = IntFlagValue(options, "handle_segv=",
-                                         ASAN_NEEDS_SEGV);
+  FLAG_handle_segv = IntFlagValue(options, "handle_segv=", ASAN_NEEDS_SEGV);
   FLAG_handle_sigill = IntFlagValue(options, "handle_sigill=", 0);
   FLAG_symbolize = IntFlagValue(options, "symbolize=", 1);
   FLAG_demangle = IntFlagValue(options, "demangle=", 1);

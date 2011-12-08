@@ -41,6 +41,29 @@
         " instrumented by AddressSanitizer"
 #endif
 
+// Build-time configuration options.
+
+// If set, sysinfo/sysinfo.h will be used to iterate over /proc/maps.
+#ifndef ASAN_USE_SYSINFO
+# define ASAN_USE_SYSINFO 1
+#endif
+
+// If set, asan will install its own SEGV signal handler.
+#ifndef ASAN_NEEDS_SEGV
+# define ASAN_NEEDS_SEGV 1
+#endif
+
+// If set, asan will intercept C++ exception api call(s).
+#ifndef ASAN_HAS_EXCEPTIONS
+# define ASAN_HAS_EXCEPTIONS 1
+#endif
+
+// If set, asan uses the values of SHADOW_SCALE and SHADOW_OFFSET
+// provided by the instrumented objects. Otherwise constants are used.
+#ifndef ASAN_FLEXIBLE_MAPPING_AND_OFFSET
+# define ASAN_FLEXIBLE_MAPPING_AND_OFFSET 0
+#endif
+
 // All internal functions in asan reside inside the __asan namespace
 // to avoid namespace collisions with the user programs.
 // Seperate namespace also makes it simpler to distinguish the asan run-time

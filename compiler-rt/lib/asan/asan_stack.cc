@@ -19,7 +19,7 @@
 
 #include <string.h>
 
-#ifdef ASAN_USE_SYSINFO
+#if ASAN_USE_SYSINFO == 1
 #include "sysinfo/sysinfo.h"
 #endif
 
@@ -31,7 +31,7 @@ ASAN_USE_EXTERNAL_SYMBOLIZER(const void *pc, char *out, int out_size);
 namespace __asan {
 
 // ----------------------- ProcSelfMaps ----------------------------- {{{1
-#ifdef ASAN_USE_SYSINFO
+#if ASAN_USE_SYSINFO == 1
 class ProcSelfMaps {
  public:
   void Init() {
