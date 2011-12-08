@@ -5491,3 +5491,20 @@ def : NEONInstAlias<"vclt${p}.u32 $Qd, $Qn, $Qm",
                     (VCGTuv4i32 QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
 def : NEONInstAlias<"vclt${p}.f32 $Qd, $Qn, $Qm",
                     (VCGTfq QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
+
+// Two-operand variants for VEXT
+def : NEONInstAlias<"vext${p}.8 $Vdn, $Vm, $imm",
+                  (VEXTd8 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, imm0_7:$imm, pred:$p)>;
+def : NEONInstAlias<"vext${p}.16 $Vdn, $Vm, $imm",
+                  (VEXTd16 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, imm0_3:$imm, pred:$p)>;
+def : NEONInstAlias<"vext${p}.32 $Vdn, $Vm, $imm",
+                  (VEXTd32 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, imm0_1:$imm, pred:$p)>;
+
+def : NEONInstAlias<"vext${p}.8 $Vdn, $Vm, $imm",
+                  (VEXTq8 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, imm0_15:$imm, pred:$p)>;
+def : NEONInstAlias<"vext${p}.16 $Vdn, $Vm, $imm",
+                  (VEXTq16 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, imm0_7:$imm, pred:$p)>;
+def : NEONInstAlias<"vext${p}.32 $Vdn, $Vm, $imm",
+                  (VEXTq32 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, imm0_3:$imm, pred:$p)>;
+def : NEONInstAlias<"vext${p}.64 $Vdn, $Vm, $imm",
+                  (VEXTq64 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, imm0_1:$imm, pred:$p)>;
