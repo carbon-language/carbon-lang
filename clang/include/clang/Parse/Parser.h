@@ -1125,7 +1125,7 @@ private:
   /// \brief Contains a late templated function.
   /// Will be parsed at the end of the translation unit.
   struct LateParsedTemplatedFunction {
-    explicit LateParsedTemplatedFunction(Parser* P, Decl *MD)
+    explicit LateParsedTemplatedFunction(Decl *MD)
       : D(MD) {}
 
     CachedTokens Toks;

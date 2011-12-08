@@ -113,8 +113,7 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
         !Actions.IsInsideALocalClassWithinATemplateFunction())) {
 
     if (FnD) {
-      LateParsedTemplatedFunction *LPT =
-        new LateParsedTemplatedFunction(this, FnD);
+      LateParsedTemplatedFunction *LPT = new LateParsedTemplatedFunction(FnD);
 
       FunctionDecl *FD = 0;
       if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(FnD))

@@ -885,7 +885,7 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
     D.getMutableDeclSpec().abort();
 
     if (DP) {
-      LateParsedTemplatedFunction *LPT = new LateParsedTemplatedFunction(this, DP);
+      LateParsedTemplatedFunction *LPT = new LateParsedTemplatedFunction(DP);
 
       FunctionDecl *FnD = 0;
       if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(DP))
