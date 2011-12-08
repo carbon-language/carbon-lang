@@ -1166,6 +1166,8 @@ def FCONSTS : VFPAI<(outs SPR:$Sd), (ins vfp_f32imm:$imm),
 // good to be friendly.
 def : MnemonicAlias<"flds", "vldr">;
 def : MnemonicAlias<"fldd", "vldr">;
+def : MnemonicAlias<"fmrs", "vmov">;
+def : MnemonicAlias<"fmsr", "vmov">;
 
 def : VFP2InstAlias<"fmstat${p}", (FMSTAT pred:$p)>;
 
