@@ -624,7 +624,8 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
             
             if (!copied_decl)
             {
-                log->Printf("  CAS::FOMD[%d] couldn't import method from symbols", current_id);
+                if (log)
+                    log->Printf("  CAS::FOMD[%d] couldn't import method from symbols", current_id);
                 continue;
             }
             
