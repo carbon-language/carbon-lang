@@ -20,14 +20,14 @@
 #include "MachThread.h"
 #include "MachProcess.h"
 
+extern "C" bool CPUHasAVX(); // Defined over in DNBArchImplX86_64.cpp
+
 #if defined (LLDB_DEBUGSERVER_RELEASE) || defined (LLDB_DEBUGSERVER_DEBUG)
 enum debugState {
     debugStateUnknown,
     debugStateOff,
     debugStateOn
 };
-
-extern "C" bool CPUHasAVX(); // Defined over in DNBArchImplX86_64.cpp
 
 static debugState sFPUDebugState = debugStateUnknown;
 static debugState sAVXForceState = debugStateUnknown;
