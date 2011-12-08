@@ -6,6 +6,7 @@
 	vext.8	q8, q9, q8, #7
 	vext.16	d16, d17, d16, #3
 	vext.32	q8, q9, q8, #3
+	vext.64	q8, q9, q8, #1
 
 	vext.8	d17, d16, #3
 	vext.8	d7, d11, #5
@@ -13,6 +14,7 @@
 	vext.8	q9, q4, #7
 	vext.16	d1, d26, #3
 	vext.32	q5, q8, #3
+	vext.64	q5, q8, #1
 
 
 @ CHECK: vext.8	d16, d17, d16, #3       @ encoding: [0xa0,0x03,0xf1,0xf2]
@@ -21,6 +23,7 @@
 @ CHECK: vext.8	q8, q9, q8, #7          @ encoding: [0xe0,0x07,0xf2,0xf2]
 @ CHECK: vext.16 d16, d17, d16, #3      @ encoding: [0xa0,0x06,0xf1,0xf2]
 @ CHECK: vext.32 q8, q9, q8, #3         @ encoding: [0xe0,0x0c,0xf2,0xf2]
+@ CHECK: vext.64 q8, q9, q8, #1         @ encoding: [0xe0,0x08,0xf2,0xf2]
 
 @ CHECK: vext.8	d17, d17, d16, #3       @ encoding: [0xa0,0x13,0xf1,0xf2]
 @ CHECK: vext.8	d7, d7, d11, #5         @ encoding: [0x0b,0x75,0xb7,0xf2]
@@ -28,6 +31,7 @@
 @ CHECK: vext.8	q9, q9, q4, #7          @ encoding: [0xc8,0x27,0xf2,0xf2]
 @ CHECK: vext.16 d1, d1, d26, #3        @ encoding: [0x2a,0x16,0xb1,0xf2]
 @ CHECK: vext.32 q5, q5, q8, #3         @ encoding: [0x60,0xac,0xba,0xf2]
+@ CHECK: vext.64 q5, q5, q8, #1         @ encoding: [0x60,0xa8,0xba,0xf2]
 
 
 	vtrn.8	d17, d16
