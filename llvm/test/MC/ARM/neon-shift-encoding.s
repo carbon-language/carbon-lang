@@ -70,6 +70,41 @@ _foo:
 @ CHECK: vshr.s32	q8, q8, #31  @ encoding: [0x70,0x00,0xe1,0xf2]
 @ CHECK: vshr.s64	q8, q8, #63  @ encoding: [0xf0,0x00,0xc1,0xf2]
 
+@ implied destination operand variants.
+	vshr.u8	d16, #7
+	vshr.u16	d16, #15
+	vshr.u32	d16, #31
+	vshr.u64	d16, #63
+	vshr.u8	q8, #7
+	vshr.u16	q8, #15
+	vshr.u32	q8, #31
+	vshr.u64	q8, #63
+	vshr.s8	d16, #7
+	vshr.s16	d16, #15
+	vshr.s32	d16, #31
+	vshr.s64	d16, #63
+	vshr.s8	q8, #7
+	vshr.s16	q8, #15
+	vshr.s32	q8, #31
+	vshr.s64	q8, #63
+
+@ CHECK: vshr.u8	d16, d16, #7  @ encoding: [0x30,0x00,0xc9,0xf3]
+@ CHECK: vshr.u16	d16, d16, #15  @ encoding: [0x30,0x00,0xd1,0xf3]
+@ CHECK: vshr.u32	d16, d16, #31  @ encoding: [0x30,0x00,0xe1,0xf3]
+@ CHECK: vshr.u64	d16, d16, #63  @ encoding: [0xb0,0x00,0xc1,0xf3]
+@ CHECK: vshr.u8	q8, q8, #7  @ encoding: [0x70,0x00,0xc9,0xf3]
+@ CHECK: vshr.u16	q8, q8, #15  @ encoding: [0x70,0x00,0xd1,0xf3]
+@ CHECK: vshr.u32	q8, q8, #31  @ encoding: [0x70,0x00,0xe1,0xf3]
+@ CHECK: vshr.u64	q8, q8, #63  @ encoding: [0xf0,0x00,0xc1,0xf3]
+@ CHECK: vshr.s8	d16, d16, #7  @ encoding: [0x30,0x00,0xc9,0xf2]
+@ CHECK: vshr.s16	d16, d16, #15  @ encoding: [0x30,0x00,0xd1,0xf2]
+@ CHECK: vshr.s32	d16, d16, #31  @ encoding: [0x30,0x00,0xe1,0xf2]
+@ CHECK: vshr.s64	d16, d16, #63  @ encoding: [0xb0,0x00,0xc1,0xf2]
+@ CHECK: vshr.s8	q8, q8, #7  @ encoding: [0x70,0x00,0xc9,0xf2]
+@ CHECK: vshr.s16	q8, q8, #15  @ encoding: [0x70,0x00,0xd1,0xf2]
+@ CHECK: vshr.s32	q8, q8, #31  @ encoding: [0x70,0x00,0xe1,0xf2]
+@ CHECK: vshr.s64	q8, q8, #63  @ encoding: [0xf0,0x00,0xc1,0xf2]
+
 @ CHECK: vsra.u8  d16, d16, #7   @ encoding: [0x30,0x01,0xc9,0xf3]
 	vsra.u8   d16, d16, #7
 @ CHECK: vsra.u16 d16, d16, #15  @ encoding: [0x30,0x01,0xd1,0xf3]

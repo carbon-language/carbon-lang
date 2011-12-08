@@ -5533,6 +5533,43 @@ def : NEONInstAlias<"vshl${p}.u32 $Vdn, $Vm",
 def : NEONInstAlias<"vshl${p}.u64 $Vdn, $Vm",
                     (VSHLuv2i64 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
 
+// VSHL (immediate) two-operand aliases.
+def : NEONInstAlias<"vshr${p}.s8 $Vdn, $imm",
+                    (VSHRsv8i8 DPR:$Vdn, DPR:$Vdn, shr_imm8:$imm, pred:$p)>;
+def : NEONInstAlias<"vshr${p}.s16 $Vdn, $imm",
+                    (VSHRsv4i16 DPR:$Vdn, DPR:$Vdn, shr_imm16:$imm, pred:$p)>;
+def : NEONInstAlias<"vshr${p}.s32 $Vdn, $imm",
+                    (VSHRsv2i32 DPR:$Vdn, DPR:$Vdn, shr_imm32:$imm, pred:$p)>;
+def : NEONInstAlias<"vshr${p}.s64 $Vdn, $imm",
+                    (VSHRsv1i64 DPR:$Vdn, DPR:$Vdn, shr_imm64:$imm, pred:$p)>;
+
+def : NEONInstAlias<"vshr${p}.s8 $Vdn, $imm",
+                    (VSHRsv16i8 QPR:$Vdn, QPR:$Vdn, shr_imm8:$imm, pred:$p)>;
+def : NEONInstAlias<"vshr${p}.s16 $Vdn, $imm",
+                    (VSHRsv8i16 QPR:$Vdn, QPR:$Vdn, shr_imm16:$imm, pred:$p)>;
+def : NEONInstAlias<"vshr${p}.s32 $Vdn, $imm",
+                    (VSHRsv4i32 QPR:$Vdn, QPR:$Vdn, shr_imm32:$imm, pred:$p)>;
+def : NEONInstAlias<"vshr${p}.s64 $Vdn, $imm",
+                    (VSHRsv2i64 QPR:$Vdn, QPR:$Vdn, shr_imm64:$imm, pred:$p)>;
+
+def : NEONInstAlias<"vshr${p}.u8 $Vdn, $imm",
+                    (VSHRuv8i8 DPR:$Vdn, DPR:$Vdn, shr_imm8:$imm, pred:$p)>;
+def : NEONInstAlias<"vshr${p}.u16 $Vdn, $imm",
+                    (VSHRuv4i16 DPR:$Vdn, DPR:$Vdn, shr_imm16:$imm, pred:$p)>;
+def : NEONInstAlias<"vshr${p}.u32 $Vdn, $imm",
+                    (VSHRuv2i32 DPR:$Vdn, DPR:$Vdn, shr_imm32:$imm, pred:$p)>;
+def : NEONInstAlias<"vshr${p}.u64 $Vdn, $imm",
+                    (VSHRuv1i64 DPR:$Vdn, DPR:$Vdn, shr_imm64:$imm, pred:$p)>;
+
+def : NEONInstAlias<"vshr${p}.u8 $Vdn, $imm",
+                    (VSHRuv16i8 QPR:$Vdn, QPR:$Vdn, shr_imm8:$imm, pred:$p)>;
+def : NEONInstAlias<"vshr${p}.u16 $Vdn, $imm",
+                    (VSHRuv8i16 QPR:$Vdn, QPR:$Vdn, shr_imm16:$imm, pred:$p)>;
+def : NEONInstAlias<"vshr${p}.u32 $Vdn, $imm",
+                    (VSHRuv4i32 QPR:$Vdn, QPR:$Vdn, shr_imm32:$imm, pred:$p)>;
+def : NEONInstAlias<"vshr${p}.u64 $Vdn, $imm",
+                    (VSHRuv2i64 QPR:$Vdn, QPR:$Vdn, shr_imm64:$imm, pred:$p)>;
+
 // VLD1 single-lane pseudo-instructions. These need special handling for
 // the lane index that an InstAlias can't handle, so we use these instead.
 defm VLD1LNdAsm : NEONDT8AsmPseudoInst<"vld1${p}", "$list, $addr",
