@@ -2566,6 +2566,11 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
     llvm::Value *CondV = CGF.EvaluateExprAsBool(condExpr);
     llvm::Value *LHS = Visit(lhsExpr);
     llvm::Value *RHS = Visit(rhsExpr);
+    if (!LHS) {
+      // If the conditional has void type, make sure we return a null Value*.
+      assert(!RHS && "LHS and RHS types must match");
+      return 0;
+    }
     return Builder.CreateSelect(CondV, LHS, RHS, "cond");
   }
 

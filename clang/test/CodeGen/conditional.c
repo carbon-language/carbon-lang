@@ -66,3 +66,9 @@ int test11(int c) {
 double test12(int c) {
   return c ? 4.0 : 2.0;
 }
+// CHECK: @test13
+// CHECK: call {{.*}} @f2(
+int f2(void);
+void test13() {
+  f2() ? (void)0 : (void)0;
+}
