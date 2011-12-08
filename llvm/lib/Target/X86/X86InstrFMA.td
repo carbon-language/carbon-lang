@@ -68,7 +68,7 @@ multiclass fma4s<bits<8> opc, string OpcodeStr> {
   def rr : FMA4<opc, MRMSrcReg, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, VR128:$src3),
            !strconcat(OpcodeStr,
-           "\t{$src2, $src3, $src1, $dst|$dst, $src1, $src3, $src2}"),
+           "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            []>, XOP_W;
   def rm : FMA4<opc, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, f128mem:$src3),
@@ -87,7 +87,7 @@ multiclass fma4p<bits<8> opc, string OpcodeStr> {
   def rr : FMA4<opc, MRMSrcReg, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, VR128:$src3),
            !strconcat(OpcodeStr,
-           "\t{$src2, $src3, $src1, $dst|$dst, $src1, $src3, $src2}"),
+           "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            []>, XOP_W;
   def rm : FMA4<opc, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, f128mem:$src3),
@@ -102,7 +102,7 @@ multiclass fma4p<bits<8> opc, string OpcodeStr> {
   def rrY : FMA4<opc, MRMSrcReg, (outs VR256:$dst),
            (ins VR256:$src1, VR256:$src2, VR256:$src3),
            !strconcat(OpcodeStr,
-           "\t{$src2, $src3, $src1, $dst|$dst, $src1, $src3, $src2}"),
+           "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            []>, XOP_W;
   def rmY : FMA4<opc, MRMSrcMem, (outs VR256:$dst),
            (ins VR256:$src1, VR256:$src2, f256mem:$src3),

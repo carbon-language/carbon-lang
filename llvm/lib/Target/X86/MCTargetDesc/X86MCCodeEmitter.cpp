@@ -973,13 +973,14 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     if (HasVEX_4V) // Skip 1st src (which is encoded in VEX_VVVV)
       SrcRegNum++;
 
-    // GAS sets the XOP_W even with register operands, we want to match this.
-    // XOP_W is ignored, so there is no swapping of the operands
-    XOP_W_I8IMMOperand = 3;
+    if(HasXOP_W) // Skip 2nd src (which is encoded in I8IMM)
+      SrcRegNum++;
 
     EmitRegModRMByte(MI.getOperand(SrcRegNum),
                      GetX86RegNum(MI.getOperand(CurOp)), CurByte, OS);
-    CurOp = SrcRegNum + 1;
+
+    // 2 operands skipped with HasXOP_W, comensate accordingly
+    CurOp = HasXOP_W ? SrcRegNum : SrcRegNum + 1;
     if (HasVEX_4VOp3)
       ++CurOp;
     break;
@@ -998,13 +999,9 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
 
     EmitMemModRMByte(MI, FirstMemOp, GetX86RegNum(MI.getOperand(CurOp)),
                      TSFlags, CurByte, OS, Fixups);
-    if(HasXOP_W) {
-      CurOp = NumOps - 1; // We have consumed all except one operand (third)
-    } else {
-      CurOp += AddrOperands + 1;
-      if (HasVEX_4VOp3)
-        ++CurOp;
-    }
+    CurOp += AddrOperands + 1;
+    if (HasVEX_4VOp3)
+      ++CurOp;
     break;
   }
 
