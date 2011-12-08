@@ -90,7 +90,9 @@ namespace bitc {
     TYPE_CODE_OPAQUE   =  6,    // OPAQUE
     TYPE_CODE_INTEGER  =  7,    // INTEGER: [width]
     TYPE_CODE_POINTER  =  8,    // POINTER: [pointee type]
-    TYPE_CODE_FUNCTION_OLD = 9, // FUNCTION: [vararg, attrid, retty, paramty x N]
+
+    TYPE_CODE_FUNCTION_OLD = 9, // FUNCTION: [vararg, attrid, retty,
+                                //            paramty x N]
     
     // Code #10 is unused.
     
