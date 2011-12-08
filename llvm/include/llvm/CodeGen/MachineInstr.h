@@ -277,6 +277,12 @@ public:
   /// API for querying MachineInstr properties. They are the same as MCInstrDesc
   /// queries but they are bundle aware.
 
+  enum QueryType {
+    IgnoreBundle,    // Ignore bundles
+    AnyInBundle,     // Return true if any instruction in bundle has property
+    AllInBundle      // Return true if all instructions in bundle have property
+  };
+
   /// hasProperty - Return true if the instruction (or in the case of a bundle,
   /// the instructions inside the bundle) has the specified property.
   /// The first argument is the property being queried.
@@ -285,43 +291,42 @@ public:
   /// If the third argument is true, than the query can return true when *any*
   /// of the bundled instructions has the queried property. If it's false, then
   /// this can return true iff *all* of the instructions have the property.
-  bool hasProperty(unsigned Flag,
-                   bool PeekInBundle = true, bool IsOr = true) const;
+  bool hasProperty(unsigned Flag, QueryType Type = AnyInBundle) const;
 
   /// isVariadic - Return true if this instruction can have a variable number of
   /// operands.  In this case, the variable operands will be after the normal
   /// operands but before the implicit definitions and uses (if any are
   /// present).
-  bool isVariadic() const {
-    return hasProperty(MCID::Variadic, false);
+  bool isVariadic(QueryType Type = IgnoreBundle) const {
+    return hasProperty(MCID::Variadic, Type);
   }
 
   /// hasOptionalDef - Set if this instruction has an optional definition, e.g.
   /// ARM instructions which can set condition code if 's' bit is set.
-  bool hasOptionalDef() const {
-    return hasProperty(MCID::HasOptionalDef, false);
+  bool hasOptionalDef(QueryType Type = IgnoreBundle) const {
+    return hasProperty(MCID::HasOptionalDef, Type);
   }
 
   /// isPseudo - Return true if this is a pseudo instruction that doesn't
   /// correspond to a real machine instruction.
   ///
-  bool isPseudo() const {
-    return hasProperty(MCID::Pseudo, false);
+  bool isPseudo(QueryType Type = IgnoreBundle) const {
+    return hasProperty(MCID::Pseudo, Type);
   }
 
-  bool isReturn() const {
-    return hasProperty(MCID::Return);
+  bool isReturn(QueryType Type = AnyInBundle) const {
+    return hasProperty(MCID::Return, Type);
   }
 
-  bool isCall() const {
-    return hasProperty(MCID::Call);
+  bool isCall(QueryType Type = AnyInBundle) const {
+    return hasProperty(MCID::Call, Type);
   }
 
   /// isBarrier - Returns true if the specified instruction stops control flow
   /// from executing the instruction immediately following it.  Examples include
   /// unconditional branches and return instructions.
-  bool isBarrier() const {
-    return hasProperty(MCID::Barrier);
+  bool isBarrier(QueryType Type = AnyInBundle) const {
+    return hasProperty(MCID::Barrier, Type);
   }
 
   /// isTerminator - Returns true if this instruction part of the terminator for
@@ -330,78 +335,78 @@ public:
   ///
   /// Various passes use this to insert code into the bottom of a basic block,
   /// but before control flow occurs.
-  bool isTerminator() const {
-    return hasProperty(MCID::Terminator);
+  bool isTerminator(QueryType Type = AnyInBundle) const {
+    return hasProperty(MCID::Terminator, Type);
   }
 
   /// isBranch - Returns true if this is a conditional, unconditional, or
   /// indirect branch.  Predicates below can be used to discriminate between
   /// these cases, and the TargetInstrInfo::AnalyzeBranch method can be used to
   /// get more information.
-  bool isBranch() const {
-    return hasProperty(MCID::Branch);
+  bool isBranch(QueryType Type = AnyInBundle) const {
+    return hasProperty(MCID::Branch, Type);
   }
 
   /// isIndirectBranch - Return true if this is an indirect branch, such as a
   /// branch through a register.
-  bool isIndirectBranch() const {
-    return hasProperty(MCID::IndirectBranch);
+  bool isIndirectBranch(QueryType Type = AnyInBundle) const {
+    return hasProperty(MCID::IndirectBranch, Type);
   }
 
   /// isConditionalBranch - Return true if this is a branch which may fall
   /// through to the next instruction or may transfer control flow to some other
   /// block.  The TargetInstrInfo::AnalyzeBranch method can be used to get more
   /// information about this branch.
-  bool isConditionalBranch() const {
-    return isBranch() & !isBarrier() & !isIndirectBranch();
+  bool isConditionalBranch(QueryType Type = AnyInBundle) const {
+    return isBranch(Type) & !isBarrier(Type) & !isIndirectBranch(Type);
   }
 
   /// isUnconditionalBranch - Return true if this is a branch which always
   /// transfers control flow to some other block.  The
   /// TargetInstrInfo::AnalyzeBranch method can be used to get more information
   /// about this branch.
-  bool isUnconditionalBranch() const {
-    return isBranch() & isBarrier() & !isIndirectBranch();
+  bool isUnconditionalBranch(QueryType Type = AnyInBundle) const {
+    return isBranch(Type) & isBarrier(Type) & !isIndirectBranch(Type);
   }
 
   // isPredicable - Return true if this instruction has a predicate operand that
   // controls execution.  It may be set to 'always', or may be set to other
   /// values.   There are various methods in TargetInstrInfo that can be used to
   /// control and modify the predicate in this instruction.
-  bool isPredicable() const {
+  bool isPredicable(QueryType Type = AllInBundle) const {
     // If it's a bundle than all bundled instructions must be predicable for this
     // to return true.
-    return hasProperty(MCID::Predicable, true, false);
+    return hasProperty(MCID::Predicable, Type);
   }
 
   /// isCompare - Return true if this instruction is a comparison.
-  bool isCompare() const {
-    return hasProperty(MCID::Compare, false);
+  bool isCompare(QueryType Type = IgnoreBundle) const {
+    return hasProperty(MCID::Compare, Type);
   }
 
   /// isMoveImmediate - Return true if this instruction is a move immediate
   /// (including conditional moves) instruction.
-  bool isMoveImmediate() const {
-    return hasProperty(MCID::MoveImm, false);
+  bool isMoveImmediate(QueryType Type = IgnoreBundle) const {
+    return hasProperty(MCID::MoveImm, Type);
   }
 
   /// isBitcast - Return true if this instruction is a bitcast instruction.
   ///
-  bool isBitcast() const {
-    return hasProperty(MCID::Bitcast, false);
+  bool isBitcast(QueryType Type = IgnoreBundle) const {
+    return hasProperty(MCID::Bitcast, Type);
   }
 
   /// isNotDuplicable - Return true if this instruction cannot be safely
   /// duplicated.  For example, if the instruction has a unique labels attached
   /// to it, duplicating it would cause multiple definition errors.
-  bool isNotDuplicable() const {
-    return hasProperty(MCID::NotDuplicable);
+  bool isNotDuplicable(QueryType Type = AnyInBundle) const {
+    return hasProperty(MCID::NotDuplicable, Type);
   }
 
   /// hasDelaySlot - Returns true if the specified instruction has a delay slot
   /// which must be filled by the code generator.
-  bool hasDelaySlot() const {
-    return hasProperty(MCID::DelaySlot);
+  bool hasDelaySlot(QueryType Type = AnyInBundle) const {
+    return hasProperty(MCID::DelaySlot, Type);
   }
 
   /// canFoldAsLoad - Return true for instructions that can be folded as
@@ -412,8 +417,8 @@ public:
   /// on x86, to allow them to be folded when it is beneficial.
   /// This should only be set on instructions that return a value in their
   /// only virtual register definition.
-  bool canFoldAsLoad() const {
-    return hasProperty(MCID::FoldableAsLoad, false);
+  bool canFoldAsLoad(QueryType Type = IgnoreBundle) const {
+    return hasProperty(MCID::FoldableAsLoad, Type);
   }
 
   //===--------------------------------------------------------------------===//
@@ -423,8 +428,8 @@ public:
   /// mayLoad - Return true if this instruction could possibly read memory.
   /// Instructions with this flag set are not necessarily simple load
   /// instructions, they may load a value and modify it, for example.
-  bool mayLoad() const {
-    return hasProperty(MCID::MayLoad);
+  bool mayLoad(QueryType Type = AnyInBundle) const {
+    return hasProperty(MCID::MayLoad, Type);
   }
 
 
@@ -432,8 +437,8 @@ public:
   /// Instructions with this flag set are not necessarily simple store
   /// instructions, they may store a modified value based on their operands, or
   /// may not actually modify anything, for example.
-  bool mayStore() const {
-    return hasProperty(MCID::MayStore);
+  bool mayStore(QueryType Type = AnyInBundle) const {
+    return hasProperty(MCID::MayStore, Type);
   }
 
   //===--------------------------------------------------------------------===//
@@ -450,8 +455,8 @@ public:
   /// sometimes.  In these cases, the call to commuteInstruction will fail.
   /// Also note that some instructions require non-trivial modification to
   /// commute them.
-  bool isCommutable() const {
-    return hasProperty(MCID::Commutable, false);
+  bool isCommutable(QueryType Type = IgnoreBundle) const {
+    return hasProperty(MCID::Commutable, Type);
   }
 
   /// isConvertibleTo3Addr - Return true if this is a 2-address instruction
@@ -468,8 +473,8 @@ public:
   /// is allowed to fail if the transformation isn't valid for this specific
   /// instruction (e.g. shl reg, 4 on x86).
   ///
-  bool isConvertibleTo3Addr() const {
-    return hasProperty(MCID::ConvertibleTo3Addr, false);
+  bool isConvertibleTo3Addr(QueryType Type = IgnoreBundle) const {
+    return hasProperty(MCID::ConvertibleTo3Addr, Type);
   }
 
   /// usesCustomInsertionHook - Return true if this instruction requires
@@ -480,26 +485,26 @@ public:
   ///
   /// If this is true, the TargetLoweringInfo::InsertAtEndOfBasicBlock method
   /// is used to insert this into the MachineBasicBlock.
-  bool usesCustomInsertionHook() const {
-    return hasProperty(MCID::UsesCustomInserter, false);
+  bool usesCustomInsertionHook(QueryType Type = IgnoreBundle) const {
+    return hasProperty(MCID::UsesCustomInserter, Type);
   }
 
   /// hasPostISelHook - Return true if this instruction requires *adjustment*
   /// after instruction selection by calling a target hook. For example, this
   /// can be used to fill in ARM 's' optional operand depending on whether
   /// the conditional flag register is used.
-  bool hasPostISelHook() const {
-    return hasProperty(MCID::HasPostISelHook, false);
+  bool hasPostISelHook(QueryType Type = IgnoreBundle) const {
+    return hasProperty(MCID::HasPostISelHook, Type);
   }
 
   /// isRematerializable - Returns true if this instruction is a candidate for
   /// remat.  This flag is deprecated, please don't use it anymore.  If this
   /// flag is set, the isReallyTriviallyReMaterializable() method is called to
   /// verify the instruction is really rematable.
-  bool isRematerializable() const {
+  bool isRematerializable(QueryType Type = AllInBundle) const {
     // It's only possible to re-mat a bundle if all bundled instructions are
     // re-materializable.
-    return hasProperty(MCID::Rematerializable, true, false);
+    return hasProperty(MCID::Rematerializable, Type);
   }
 
   /// isAsCheapAsAMove - Returns true if this instruction has the same cost (or
@@ -508,10 +513,10 @@ public:
   /// where we would like to remat or hoist the instruction, but not if it costs
   /// more than moving the instruction into the appropriate register. Note, we
   /// are not marking copies from and to the same register class with this flag.
-  bool isAsCheapAsAMove() const {
+  bool isAsCheapAsAMove(QueryType Type = AllInBundle) const {
     // Only returns true for a bundle if all bundled instructions are cheap.
     // FIXME: This probably requires a target hook.
-    return hasProperty(MCID::CheapAsAMove, true, true);
+    return hasProperty(MCID::CheapAsAMove, Type);
   }
 
   /// hasExtraSrcRegAllocReq - Returns true if this instruction source operands
@@ -520,8 +525,8 @@ public:
   /// even / odd pair, ARM::STM registers have to be in ascending order.
   /// Post-register allocation passes should not attempt to change allocations
   /// for sources of instructions with this flag.
-  bool hasExtraSrcRegAllocReq() const {
-    return hasProperty(MCID::ExtraSrcRegAllocReq);
+  bool hasExtraSrcRegAllocReq(QueryType Type = AnyInBundle) const {
+    return hasProperty(MCID::ExtraSrcRegAllocReq, Type);
   }
 
   /// hasExtraDefRegAllocReq - Returns true if this instruction def operands
@@ -530,8 +535,8 @@ public:
   /// even / odd pair, ARM::LDM registers have to be in ascending order.
   /// Post-register allocation passes should not attempt to change allocations
   /// for definitions of instructions with this flag.
-  bool hasExtraDefRegAllocReq() const {
-    return hasProperty(MCID::ExtraDefRegAllocReq);
+  bool hasExtraDefRegAllocReq(QueryType Type = AnyInBundle) const {
+    return hasProperty(MCID::ExtraDefRegAllocReq, Type);
   }
 
 

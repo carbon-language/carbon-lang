@@ -749,24 +749,24 @@ void MachineInstr::addMemOperand(MachineFunction &MF,
 }
 
 bool
-MachineInstr::hasProperty(unsigned MCFlag, bool PeekInBundle, bool IsOr) const {
-  if (!PeekInBundle || getOpcode() != TargetOpcode::BUNDLE)
+MachineInstr::hasProperty(unsigned MCFlag, QueryType Type) const {
+  if (Type == IgnoreBundle || getOpcode() != TargetOpcode::BUNDLE)
     return getDesc().getFlags() & (1 << MCFlag);
 
   const MachineBasicBlock *MBB = getParent();
   MachineBasicBlock::const_insn_iterator MII = *this; ++MII;
   while (MII != MBB->end() && MII->isInsideBundle()) {
     if (MII->getDesc().getFlags() & (1 << MCFlag)) {
-      if (IsOr)
+      if (Type == AnyInBundle)
         return true;
     } else {
-      if (!IsOr)
+      if (Type == AllInBundle)
         return false;
     }
     ++MII;
   }
 
-  return !IsOr;
+  return Type == AllInBundle;
 }
 
 bool MachineInstr::isIdenticalTo(const MachineInstr *Other,
