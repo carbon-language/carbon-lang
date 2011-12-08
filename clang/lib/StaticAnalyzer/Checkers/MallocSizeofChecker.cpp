@@ -93,7 +93,7 @@ public:
     if (FD) {
       IdentifierInfo *II = FD->getIdentifier();
       if (II == II_malloc || II == II_calloc || II == II_realloc)
-        return TypeCallPair(0, E);
+        return TypeCallPair((const TypeSourceInfo *)0, E);
     }
     return TypeCallPair();
   }
