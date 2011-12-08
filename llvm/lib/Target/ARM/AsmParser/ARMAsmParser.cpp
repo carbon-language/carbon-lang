@@ -2596,6 +2596,7 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     Parser.Lex(); // Eat the comma.
     RegLoc = Parser.getTok().getLoc();
     int OldReg = Reg;
+    const AsmToken RegTok = Parser.getTok();
     Reg = tryParseRegister();
     if (Reg == -1)
       return Error(RegLoc, "register expected");
@@ -2609,8 +2610,13 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     if (!RC->contains(Reg))
       return Error(RegLoc, "invalid register in register list");
     // List must be monotonically increasing.
-    if (getARMRegisterNumbering(Reg) <= getARMRegisterNumbering(OldReg))
+    if (getARMRegisterNumbering(Reg) < getARMRegisterNumbering(OldReg))
       return Error(RegLoc, "register list not in ascending order");
+    if (getARMRegisterNumbering(Reg) == getARMRegisterNumbering(OldReg)) {
+      Warning(RegLoc, "duplicated register (" + RegTok.getString() +
+              ") in register list");
+      continue;
+    }
     // VFP register lists must also be contiguous.
     // It's OK to use the enumeration values directly here rather, as the
     // VFP register classes have the enum sorted properly.
