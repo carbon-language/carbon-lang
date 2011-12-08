@@ -64,7 +64,7 @@ namespace bitc {
     //             section, visibility, gc, unnamed_addr]
     MODULE_CODE_FUNCTION    = 8,
 
-    // ALIAS: [alias type, aliasee val#, linkage]
+    // ALIAS: [alias type, aliasee val#, linkage, visibility]
     MODULE_CODE_ALIAS       = 9,
 
     /// MODULE_CODE_PURGEVALS: [numvals]

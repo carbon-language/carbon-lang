@@ -525,6 +525,7 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
   // Emit the alias information.
   for (Module::const_alias_iterator AI = M->alias_begin(), E = M->alias_end();
        AI != E; ++AI) {
+    // ALIAS: [alias type, aliasee val#, linkage, visibility]
     Vals.push_back(VE.getTypeID(AI->getType()));
     Vals.push_back(VE.getValueID(AI->getAliasee()));
     Vals.push_back(getEncodedLinkage(AI));
