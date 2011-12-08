@@ -1,26 +1,29 @@
 @ RUN: llvm-mc -mcpu=cortex-a8 -triple arm-unknown-unknown -show-encoding < %s | FileCheck %s
 
-@ CHECK: vsub.i8	d16, d17, d16           @ encoding: [0xa0,0x08,0x41,0xf3]
 	vsub.i8	d16, d17, d16
-@ CHECK: vsub.i16	d16, d17, d16   @ encoding: [0xa0,0x08,0x51,0xf3]
 	vsub.i16	d16, d17, d16
-@ CHECK: vsub.i32	d16, d17, d16   @ encoding: [0xa0,0x08,0x61,0xf3]
 	vsub.i32	d16, d17, d16
-@ CHECK: vsub.i64	d16, d17, d16   @ encoding: [0xa0,0x08,0x71,0xf3]
 	vsub.i64	d16, d17, d16
-@ CHECK: vsub.f32	d16, d16, d17   @ encoding: [0xa1,0x0d,0x60,0xf2]
 	vsub.f32	d16, d16, d17
-@ CHECK: vsub.i8	q8, q8, q9              @ encoding: [0xe2,0x08,0x40,0xf3]
 	vsub.i8	q8, q8, q9
-@ CHECK: vsub.i16	q8, q8, q9      @ encoding: [0xe2,0x08,0x50,0xf3]
 	vsub.i16	q8, q8, q9
-@ CHECK: vsub.i32	q8, q8, q9      @ encoding: [0xe2,0x08,0x60,0xf3]
 	vsub.i32	q8, q8, q9
-@ CHECK: vsub.i64	q8, q8, q9      @ encoding: [0xe2,0x08,0x70,0xf3]
 	vsub.i64	q8, q8, q9
-@ CHECK: vsub.f32	q8, q8, q9      @ encoding: [0xe2,0x0d,0x60,0xf2]
 	vsub.f32	q8, q8, q9
+
+@ CHECK: vsub.i8	d16, d17, d16   @ encoding: [0xa0,0x08,0x41,0xf3]
+@ CHECK: vsub.i16	d16, d17, d16   @ encoding: [0xa0,0x08,0x51,0xf3]
+@ CHECK: vsub.i32	d16, d17, d16   @ encoding: [0xa0,0x08,0x61,0xf3]
+@ CHECK: vsub.i64	d16, d17, d16   @ encoding: [0xa0,0x08,0x71,0xf3]
+@ CHECK: vsub.f32	d16, d16, d17   @ encoding: [0xa1,0x0d,0x60,0xf2]
+@ CHECK: vsub.i8	q8, q8, q9      @ encoding: [0xe2,0x08,0x40,0xf3]
+@ CHECK: vsub.i16	q8, q8, q9      @ encoding: [0xe2,0x08,0x50,0xf3]
+@ CHECK: vsub.i32	q8, q8, q9      @ encoding: [0xe2,0x08,0x60,0xf3]
+@ CHECK: vsub.i64	q8, q8, q9      @ encoding: [0xe2,0x08,0x70,0xf3]
+@ CHECK: vsub.f32	q8, q8, q9      @ encoding: [0xe2,0x0d,0x60,0xf2]
 @ CHECK: vsubl.s8	q8, d17, d16    @ encoding: [0xa0,0x02,0xc1,0xf2]
+
+
 	vsubl.s8	q8, d17, d16
 @ CHECK: vsubl.s16	q8, d17, d16    @ encoding: [0xa0,0x02,0xd1,0xf2]
 	vsubl.s16	q8, d17, d16
