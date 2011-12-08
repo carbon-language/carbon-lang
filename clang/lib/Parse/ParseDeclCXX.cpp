@@ -782,8 +782,7 @@ Parser::TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &BaseLoc,
     // Fake up a Declarator to use with ActOnTypeName.
     DeclSpec DS(AttrFactory);
 
-    ParseDecltypeSpecifier(DS);
-    EndLocation = DS.getSourceRange().getEnd();
+    EndLocation = ParseDecltypeSpecifier(DS);
 
     Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
     return Actions.ActOnTypeName(getCurScope(), DeclaratorInfo);
