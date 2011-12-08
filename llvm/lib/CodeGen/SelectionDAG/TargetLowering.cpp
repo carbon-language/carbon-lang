@@ -577,16 +577,26 @@ TargetLowering::TargetLowering(const TargetMachine &tm,
   setOperationAction(ISD::ConstantFP, MVT::f80, Expand);
 
   // These library functions default to expand.
-  setOperationAction(ISD::FLOG , MVT::f64, Expand);
-  setOperationAction(ISD::FLOG2, MVT::f64, Expand);
-  setOperationAction(ISD::FLOG10,MVT::f64, Expand);
-  setOperationAction(ISD::FEXP , MVT::f64, Expand);
-  setOperationAction(ISD::FEXP2, MVT::f64, Expand);
-  setOperationAction(ISD::FLOG , MVT::f32, Expand);
-  setOperationAction(ISD::FLOG2, MVT::f32, Expand);
-  setOperationAction(ISD::FLOG10,MVT::f32, Expand);
-  setOperationAction(ISD::FEXP , MVT::f32, Expand);
-  setOperationAction(ISD::FEXP2, MVT::f32, Expand);
+  setOperationAction(ISD::FLOG ,  MVT::f64, Expand);
+  setOperationAction(ISD::FLOG2,  MVT::f64, Expand);
+  setOperationAction(ISD::FLOG10, MVT::f64, Expand);
+  setOperationAction(ISD::FEXP ,  MVT::f64, Expand);
+  setOperationAction(ISD::FEXP2,  MVT::f64, Expand);
+  setOperationAction(ISD::FFLOOR, MVT::f64, Expand);
+  setOperationAction(ISD::FNEARBYINT, MVT::f64, Expand);
+  setOperationAction(ISD::FCEIL,  MVT::f64, Expand);
+  setOperationAction(ISD::FRINT,  MVT::f64, Expand);
+  setOperationAction(ISD::FTRUNC, MVT::f64, Expand);
+  setOperationAction(ISD::FLOG ,  MVT::f32, Expand);
+  setOperationAction(ISD::FLOG2,  MVT::f32, Expand);
+  setOperationAction(ISD::FLOG10, MVT::f32, Expand);
+  setOperationAction(ISD::FEXP ,  MVT::f32, Expand);
+  setOperationAction(ISD::FEXP2,  MVT::f32, Expand);
+  setOperationAction(ISD::FFLOOR, MVT::f32, Expand);
+  setOperationAction(ISD::FNEARBYINT, MVT::f32, Expand);
+  setOperationAction(ISD::FCEIL,  MVT::f32, Expand);
+  setOperationAction(ISD::FRINT,  MVT::f32, Expand);
+  setOperationAction(ISD::FTRUNC, MVT::f32, Expand);
 
   // Default ISD::TRAP to expand (which turns it into abort).
   setOperationAction(ISD::TRAP, MVT::Other, Expand);

@@ -663,6 +663,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setOperationAction(ISD::FCOS           , MVT::f80  , Expand);
     }
 
+    setOperationAction(ISD::FFLOOR, MVT::f80, Expand);
+    setOperationAction(ISD::FCEIL,  MVT::f80, Expand);
+    setOperationAction(ISD::FTRUNC, MVT::f80, Expand);
+    setOperationAction(ISD::FRINT,  MVT::f80, Expand);
+    setOperationAction(ISD::FNEARBYINT, MVT::f80, Expand);
     setOperationAction(ISD::FMA, MVT::f80, Expand);
   }
 

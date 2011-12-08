@@ -103,6 +103,13 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   // from FP_ROUND:  that rounds to nearest, this rounds to zero.
   setOperationAction(ISD::FP_ROUND_INREG, MVT::ppcf128, Custom);
 
+  // We do not currently implment this libm ops for PowerPC.
+  setOperationAction(ISD::FFLOOR, MVT::ppcf128, Expand);
+  setOperationAction(ISD::FCEIL,  MVT::ppcf128, Expand);
+  setOperationAction(ISD::FTRUNC, MVT::ppcf128, Expand);
+  setOperationAction(ISD::FRINT,  MVT::ppcf128, Expand);
+  setOperationAction(ISD::FNEARBYINT, MVT::ppcf128, Expand);
+
   // PowerPC has no SREM/UREM instructions
   setOperationAction(ISD::SREM, MVT::i32, Expand);
   setOperationAction(ISD::UREM, MVT::i32, Expand);

@@ -5559,6 +5559,53 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
+      } else if (Name == "floor" || Name == "floorf" || Name == "floorl") {
+        if (I.getNumArgOperands() == 1 && // Basic sanity checks.
+            I.getArgOperand(0)->getType()->isFloatingPointTy() &&
+            I.getType() == I.getArgOperand(0)->getType()) {
+          SDValue Tmp = getValue(I.getArgOperand(0));
+          setValue(&I, DAG.getNode(ISD::FFLOOR, getCurDebugLoc(),
+                                   Tmp.getValueType(), Tmp));
+          return;
+        }
+      } else if (Name == "nearbyint" || Name == "nearbyintf" ||
+                 Name == "nearbyintl") {
+        if (I.getNumArgOperands() == 1 && // Basic sanity checks.
+            I.getArgOperand(0)->getType()->isFloatingPointTy() &&
+            I.getType() == I.getArgOperand(0)->getType()) {
+          SDValue Tmp = getValue(I.getArgOperand(0));
+          setValue(&I, DAG.getNode(ISD::FNEARBYINT, getCurDebugLoc(),
+                                   Tmp.getValueType(), Tmp));
+          return;
+        }
+      } else if (Name == "ceil" || Name == "ceilf" || Name == "ceill") {
+        if (I.getNumArgOperands() == 1 && // Basic sanity checks.
+            I.getArgOperand(0)->getType()->isFloatingPointTy() &&
+            I.getType() == I.getArgOperand(0)->getType()) {
+          SDValue Tmp = getValue(I.getArgOperand(0));
+          setValue(&I, DAG.getNode(ISD::FCEIL, getCurDebugLoc(),
+                                   Tmp.getValueType(), Tmp));
+          return;
+        }
+      } else if (Name == "rint" || Name == "rintf" || Name == "rintl") {
+        if (I.getNumArgOperands() == 1 && // Basic sanity checks.
+            I.getArgOperand(0)->getType()->isFloatingPointTy() &&
+            I.getType() == I.getArgOperand(0)->getType()) {
+          SDValue Tmp = getValue(I.getArgOperand(0));
+          setValue(&I, DAG.getNode(ISD::FRINT, getCurDebugLoc(),
+                                   Tmp.getValueType(), Tmp));
+          return;
+        }
+      } else if (Name == "trunc" || Name == "truncf" || Name == "truncl") {
+        if (I.getNumArgOperands() == 1 && // Basic sanity checks.
+            I.getArgOperand(0)->getType()->isFloatingPointTy() &&
+            I.getType() == I.getArgOperand(0)->getType()) {
+          SDValue Tmp = getValue(I.getArgOperand(0));
+          setValue(&I, DAG.getNode(ISD::FTRUNC, getCurDebugLoc(),
+                                   Tmp.getValueType(), Tmp));
+          return;
+        }
+
       } else if (Name == "memcmp") {
         if (visitMemCmpCall(I))
           return;
