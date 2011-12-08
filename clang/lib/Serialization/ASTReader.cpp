@@ -3088,7 +3088,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       break;
     }
         
-    case SUBMODULE_UMBRELLA: {
+    case SUBMODULE_UMBRELLA_HEADER: {
       if (First) {
         Error("missing submodule metadata record at beginning of block");
         return Failure;
@@ -3127,6 +3127,28 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
           ModMap.addHeader(CurrentModule, File);
       }
       break;      
+    }
+        
+    case SUBMODULE_UMBRELLA_DIR: {
+      if (First) {
+        Error("missing submodule metadata record at beginning of block");
+        return Failure;
+      }
+      
+      if (!CurrentModule)
+        break;
+      
+      StringRef DirName(BlobStart, BlobLen);
+      if (const DirectoryEntry *Umbrella
+                                  = PP.getFileManager().getDirectory(DirName)) {
+        if (!CurrentModule->getUmbrellaDir())
+          ModMap.setUmbrellaDir(CurrentModule, Umbrella);
+        else if (CurrentModule->getUmbrellaDir() != Umbrella) {
+          Error("mismatched umbrella directories in submodule");
+          return Failure;
+        }
+      }
+      break;
     }
         
     case SUBMODULE_METADATA: {

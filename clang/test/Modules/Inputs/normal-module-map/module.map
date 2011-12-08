@@ -6,3 +6,8 @@ module libA {
 module libB {
   header "b1.h"
 }
+
+module nested_umbrella {
+  umbrella "nested_umbrella"
+  module * { }
+}

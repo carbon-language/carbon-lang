@@ -346,6 +346,11 @@ void ModuleMap::setUmbrellaHeader(Module *Mod, const FileEntry *UmbrellaHeader){
   UmbrellaDirs[UmbrellaDir] = Mod;
 }
 
+void ModuleMap::setUmbrellaDir(Module *Mod, const DirectoryEntry *UmbrellaDir) {
+  Mod->Umbrella = UmbrellaDir;
+  UmbrellaDirs[UmbrellaDir] = Mod;
+}
+
 void ModuleMap::addHeader(Module *Mod, const FileEntry *Header) {
   Mod->Headers.push_back(Header);
   Headers[Header] = Mod;
@@ -494,6 +499,7 @@ namespace clang {
     bool parseModuleId(ModuleId &Id);
     void parseModuleDecl();
     void parseHeaderDecl(SourceLocation UmbrellaLoc);
+    void parseUmbrellaDirDecl(SourceLocation UmbrellaLoc);
     void parseExportDecl();
     void parseInferredSubmoduleDecl(bool Explicit);
     
@@ -796,9 +802,14 @@ void ModuleMapParser::parseModuleDecl() {
       parseExportDecl();
       break;
         
-    case MMToken::UmbrellaKeyword:
-      parseHeaderDecl(consumeToken());
+    case MMToken::UmbrellaKeyword: {
+      SourceLocation UmbrellaLoc = consumeToken();
+      if (Tok.is(MMToken::HeaderKeyword))
+        parseHeaderDecl(UmbrellaLoc);
+      else
+        parseUmbrellaDirDecl(UmbrellaLoc);
       break;
+    }
         
     case MMToken::HeaderKeyword:
       parseHeaderDecl(SourceLocation());
@@ -863,11 +874,10 @@ void ModuleMapParser::parseHeaderDecl(SourceLocation UmbrellaLoc) {
   std::string FileName = Tok.getString();
   SourceLocation FileNameLoc = consumeToken();
   
-  // Check whether we already have an umbrella header.
-  if (Umbrella && ActiveModule->getUmbrellaHeader()) {
-    Diags.Report(FileNameLoc, diag::err_mmap_umbrella_header_conflict)
-      << ActiveModule->getFullModuleName() 
-      << ActiveModule->getUmbrellaHeader()->getName();
+  // Check whether we already have an umbrella.
+  if (Umbrella && ActiveModule->Umbrella) {
+    Diags.Report(FileNameLoc, diag::err_mmap_umbrella_clash)
+      << ActiveModule->getFullModuleName();
     HadError = true;
     return;
   }
@@ -935,9 +945,62 @@ void ModuleMapParser::parseHeaderDecl(SourceLocation UmbrellaLoc) {
     }
   } else {
     Diags.Report(FileNameLoc, diag::err_mmap_header_not_found)
-      << false << FileName;
+      << Umbrella << FileName;
     HadError = true;
   }
+}
+
+/// \brief Parse an umbrella directory declaration.
+///
+///   umbrella-dir-declaration:
+///     umbrella string-literal
+void ModuleMapParser::parseUmbrellaDirDecl(SourceLocation UmbrellaLoc) {
+  // Parse the directory name.
+  if (!Tok.is(MMToken::StringLiteral)) {
+    Diags.Report(Tok.getLocation(), diag::err_mmap_expected_header) 
+      << "umbrella";
+    HadError = true;
+    return;
+  }
+
+  std::string DirName = Tok.getString();
+  SourceLocation DirNameLoc = consumeToken();
+  
+  // Check whether we already have an umbrella.
+  if (ActiveModule->Umbrella) {
+    Diags.Report(DirNameLoc, diag::err_mmap_umbrella_clash)
+      << ActiveModule->getFullModuleName();
+    HadError = true;
+    return;
+  }
+
+  // Look for this file.
+  const DirectoryEntry *Dir = 0;
+  if (llvm::sys::path::is_absolute(DirName))
+    Dir = SourceMgr.getFileManager().getDirectory(DirName);
+  else {
+    llvm::SmallString<128> PathName;
+    PathName = Directory->getName();
+    llvm::sys::path::append(PathName, DirName);
+    Dir = SourceMgr.getFileManager().getDirectory(PathName);
+  }
+  
+  if (!Dir) {
+    Diags.Report(DirNameLoc, diag::err_mmap_umbrella_dir_not_found)
+      << DirName;
+    HadError = true;
+    return;
+  }
+  
+  if (Module *OwningModule = Map.UmbrellaDirs[Dir]) {
+    Diags.Report(UmbrellaLoc, diag::err_mmap_umbrella_clash)
+      << OwningModule->getFullModuleName();
+    HadError = true;
+    return;
+  } 
+  
+  // Record this umbrella directory.
+  Map.setUmbrellaDir(ActiveModule, Dir);
 }
 
 /// \brief Parse a module export declaration.
@@ -998,8 +1061,8 @@ void ModuleMapParser::parseInferredSubmoduleDecl(bool Explicit) {
     Failed = true;
   }
   
-  // Inferred modules must have umbrella headers.
-  if (!Failed && !ActiveModule->getUmbrellaHeader()) {
+  // Inferred modules must have umbrella directories.
+  if (!Failed && !ActiveModule->getUmbrellaDir()) {
     Diags.Report(StarLoc, diag::err_mmap_inferred_no_umbrella);
     Failed = true;
   }

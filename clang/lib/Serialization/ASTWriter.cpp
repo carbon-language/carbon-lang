@@ -1900,7 +1900,7 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
   unsigned DefinitionAbbrev = Stream.EmitAbbrev(Abbrev);
 
   Abbrev = new BitCodeAbbrev();
-  Abbrev->Add(BitCodeAbbrevOp(SUBMODULE_UMBRELLA));
+  Abbrev->Add(BitCodeAbbrevOp(SUBMODULE_UMBRELLA_HEADER));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Name
   unsigned UmbrellaAbbrev = Stream.EmitAbbrev(Abbrev);
 
@@ -1908,7 +1908,12 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
   Abbrev->Add(BitCodeAbbrevOp(SUBMODULE_HEADER));
   Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Name
   unsigned HeaderAbbrev = Stream.EmitAbbrev(Abbrev);
-  
+
+  Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(SUBMODULE_UMBRELLA_DIR));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Name
+  unsigned UmbrellaDirAbbrev = Stream.EmitAbbrev(Abbrev);
+
   // Write the submodule metadata block.
   RecordData Record;
   Record.push_back(getNumberOfModules(WritingModule));
@@ -1943,9 +1948,14 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
     // Emit the umbrella header, if there is one.
     if (const FileEntry *UmbrellaHeader = Mod->getUmbrellaHeader()) {
       Record.clear();
-      Record.push_back(SUBMODULE_UMBRELLA);
+      Record.push_back(SUBMODULE_UMBRELLA_HEADER);
       Stream.EmitRecordWithBlob(UmbrellaAbbrev, Record, 
                                 UmbrellaHeader->getName());
+    } else if (const DirectoryEntry *UmbrellaDir = Mod->getUmbrellaDir()) {
+      Record.clear();
+      Record.push_back(SUBMODULE_UMBRELLA_DIR);
+      Stream.EmitRecordWithBlob(UmbrellaDirAbbrev, Record, 
+                                UmbrellaDir->getName());      
     }
     
     // Emit the headers.

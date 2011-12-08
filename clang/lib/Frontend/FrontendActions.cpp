@@ -21,6 +21,7 @@
 #include "clang/Frontend/Utils.h"
 #include "clang/Serialization/ASTWriter.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
@@ -153,6 +154,28 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
       else
         Includes += "#include \"";
       Includes += UmbrellaHeader->getName();
+      Includes += "\"\n";
+    }
+  } else if (const DirectoryEntry *UmbrellaDir = Module->getUmbrellaDir()) {
+    // Add all of the headers we find in this subdirectory (FIXME: recursively!).
+    llvm::error_code EC;
+    llvm::SmallString<128> DirNative;
+    llvm::sys::path::native(UmbrellaDir->getName(), DirNative);
+    for (llvm::sys::fs::directory_iterator Dir(DirNative.str(), EC), DirEnd;
+         Dir != DirEnd && !EC; Dir.increment(EC)) {
+      // Check whether this entry has an extension typically associated with 
+      // headers.
+      if (!llvm::StringSwitch<bool>(llvm::sys::path::extension(Dir->path()))
+          .Cases(".h", ".H", ".hh", ".hpp", true)
+          .Default(false))
+        continue;
+      
+      // Include this header umbrella header for submodules.
+      if (LangOpts.ObjC1)
+        Includes += "#import \"";
+      else
+        Includes += "#include \"";
+      Includes += Dir->path();
       Includes += "\"\n";
     }
   }

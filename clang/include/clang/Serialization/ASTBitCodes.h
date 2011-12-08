@@ -507,22 +507,24 @@ namespace clang {
     
     /// \brief Record types used within a submodule description block.
     enum SubmoduleRecordTypes {
+      /// \brief Metadata for submodules as a whole.
+      SUBMODULE_METADATA = 0,
       /// \brief Defines the major attributes of a submodule, including its
       /// name and parent.
-      SUBMODULE_DEFINITION = 0,
+      SUBMODULE_DEFINITION = 1,
       /// \brief Specifies the umbrella header used to create this module,
       /// if any.
-      SUBMODULE_UMBRELLA = 1,
+      SUBMODULE_UMBRELLA_HEADER = 2,
       /// \brief Specifies a header that falls into this (sub)module.
-      SUBMODULE_HEADER = 2,
-      /// \brief Metadata for submodules as a whole.
-      SUBMODULE_METADATA = 3,
+      SUBMODULE_HEADER = 3,
+      /// \brief Specifies an umbrella directory.
+      SUBMODULE_UMBRELLA_DIR = 4,
       /// \brief Specifies the submodules that are imported by this 
       /// submodule.
-      SUBMODULE_IMPORTS = 4,
+      SUBMODULE_IMPORTS = 5,
       /// \brief Specifies the submodules that are re-exported from this 
       /// submodule.
-      SUBMODULE_EXPORTS = 5
+      SUBMODULE_EXPORTS = 6
     };
     
     /// \defgroup ASTAST AST file AST constants

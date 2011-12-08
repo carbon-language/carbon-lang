@@ -181,7 +181,11 @@ public:
   /// \brief Sets the umbrella header of the given module to the given
   /// header.
   void setUmbrellaHeader(Module *Mod, const FileEntry *UmbrellaHeader);
-  
+
+  /// \brief Sets the umbrella directory of the given module to the given
+  /// directory.
+  void setUmbrellaDir(Module *Mod, const DirectoryEntry *UmbrellaDir);
+
   /// \brief Adds this header to the given module.
   void addHeader(Module *Mod, const FileEntry *Header);
   

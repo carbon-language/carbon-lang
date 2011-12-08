@@ -382,8 +382,9 @@ def err_mmap_expected_lbrace : Error<"expected '{' to start module '%0'">;
 def err_mmap_expected_rbrace : Error<"expected '}'">;
 def note_mmap_lbrace_match : Note<"to match this '{'">;
 def err_mmap_expected_member : Error<
-  "expected umbrella header, header, submodule, or module export">;
+  "expected umbrella, header, submodule, or module export">;
 def err_mmap_expected_header : Error<"expected a header name after '%0'">;
+def err_mmap_expected_dir : Error<"expected a directory name after '%0'">;
 def err_mmap_module_redefinition : Error<
   "redefinition of module '%0'">;
 def note_mmap_prev_definition : Note<"previously defined here">;
@@ -391,10 +392,10 @@ def err_mmap_header_conflict : Error<
   "header '%0' is already part of module '%1'">;
 def err_mmap_header_not_found : Error<
   "%select{|umbrella }0header '%1' not found">;
-def err_mmap_umbrella_header_conflict : Error<
-  "module '%0' already has an umbrella header ('%1')">;
+def err_mmap_umbrella_dir_not_found : Error<
+  "umbrella directory '%0' not found">;
 def err_mmap_umbrella_clash : Error<
-  "umbrella header for module '%0' already covers this directory">;
+  "umbrella for module '%0' already covers this directory">;
 def err_mmap_export_module_id : Error<
   "expected an exported module name or '*'">;
 def err_mmap_missing_module_unqualified : Error<
@@ -404,7 +405,7 @@ def err_mmap_missing_module_qualified : Error<
 def err_mmap_top_level_inferred_submodule : Error<
   "only submodules may be inferred with wildcard syntax">;
 def err_mmap_inferred_no_umbrella : Error<
-  "inferred submodules require a module with an umbrella header">;
+  "inferred submodules require a module with an umbrella">;
 def err_mmap_inferred_redef : Error<
   "redefinition of inferred submodule">;
 def err_mmap_expected_lbrace_wildcard : Error<
