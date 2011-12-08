@@ -56,6 +56,8 @@ namespace __cxxabiv1 {
     
         _Unwind_Exception unwindHeader;
         };
+
+// http://sourcery.mentor.com/archives/cxx-abi-dev/msg01924.html
     
     struct __cxa_dependent_exception {
 #if __LP64__

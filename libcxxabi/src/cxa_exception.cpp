@@ -65,14 +65,14 @@ static bool isDependentException(_Unwind_Exception *unwind) throw() {
     return (unwind->exception_class & 0xFF) == 0x01;
 }
 
-//	TODO: This needs to be atomic
-static int incrementHandlerCount(__cxa_exception *exception) throw() {
-	return ++exception->handlerCount;
+//  This does not need to be atomic
+static inline int incrementHandlerCount(__cxa_exception *exception) throw() {
+    return ++exception->handlerCount;
 }
 
-//	TODO: This needs to be atomic
-static int decrementHandlerCount(__cxa_exception *exception) throw() {
-	return --exception->handlerCount;
+//  This does not need to be atomic
+static inline  int decrementHandlerCount(__cxa_exception *exception) throw() {
+    return --exception->handlerCount;
 }
 
 #include "fallback_malloc.cpp"
@@ -192,7 +192,7 @@ LIBCXXABI_NORETURN void
 __cxa_throw(void * thrown_exception, std::type_info * tinfo, void (*dest)(void *)) {
     __cxa_eh_globals *globals = __cxa_get_globals();
     __cxa_exception *exception = exception_from_thrown_object(thrown_exception);
-    
+
     exception->unexpectedHandler = std::get_unexpected();
     exception->terminateHandler  = std::get_terminate();
     exception->exceptionType = tinfo;
@@ -202,8 +202,11 @@ __cxa_throw(void * thrown_exception, std::type_info * tinfo, void (*dest)(void *
     globals->uncaughtExceptions += 1;   // Not atomically, since globals are thread-local
 
     exception->unwindHeader.exception_cleanup = exception_cleanup_func;
+#if __arm__
+    _Unwind_SjLj_RaiseException(&exception->unwindHeader);
+#else
     _Unwind_RaiseException(&exception->unwindHeader);
-    
+#endif
 //  If we get here, some kind of unwinding error has occurred.
     failed_throw(exception);
 }
@@ -227,6 +230,8 @@ void * __cxa_begin_catch(void * exceptionObject) throw() {
     __cxa_eh_globals *globals = __cxa_get_globals();
     __cxa_exception *exception = exception_from_exception_object(exceptionObject);
 
+// TODO:  Handle foreign exceptions?  How?
+
 //  Increment the handler count, removing the flag about being rethrown
     exception->handlerCount = exception->handlerCount < 0 ?
         -exception->handlerCount + 1 : exception->handlerCount + 1;
@@ -249,28 +254,44 @@ Upon exit for any reason, a handler must call:
 This routine:
 * Locates the most recently caught exception and decrements its handler count.
 * Removes the exception from the caught exception stack, if the handler count goes to zero.
-* Destroys the exception if the handler count goes to zero, and the exception was not re-thrown by throw.
+* If the handler count goes down to zero, and the exception was not re-thrown
+  by throw, it locates the primary exception (which may be the same as the one
+  it's handling) and decrements its reference count. If that reference count
+  goes to zero, the function destroys the exception. In any case, if the current
+  exception is a dependent exception, it destroys that.
 */
 void __cxa_end_catch() {
-    __cxa_eh_globals *globals = __cxa_get_globals();
+    __cxa_eh_globals *globals = __cxa_get_globals_fast(); // __cxa_get_globals called in __cxa_begin_catch
     __cxa_exception *current_exception = globals->caughtExceptions;
     
     if (NULL != current_exception) {
         if (current_exception->handlerCount < 0) {
         //  The exception has been rethrown
             if (0 == incrementHandlerCount(current_exception)) {
+                //  Remove from the chain of uncaught exceptions
                 globals->caughtExceptions = current_exception->nextException;
-            //	Howard says: If the exception has been rethrown, don't destroy.
-        	}
+                // but don't destroy
+            }
         }
-        else {
+        else {  // The exception has not been rethrown
             if (0 == decrementHandlerCount(current_exception)) {
-            //  Remove from the chain of uncaught exceptions
+                //  Remove from the chain of uncaught exceptions
                 globals->caughtExceptions = current_exception->nextException;
-                if (!isDependentException(&current_exception->unwindHeader))
-                    _Unwind_DeleteException(&current_exception->unwindHeader);
-                else {
-                //  TODO: deal with a dependent exception
+                if (isDependentException(&current_exception->unwindHeader)) {
+                    // Reset current_exception to primaryException and deallocate the dependent exception
+                    __cxa_dependent_exception* deh =
+                        reinterpret_cast<__cxa_dependent_exception*>(current_exception + 1) - 1;
+                    current_exception = static_cast<__cxa_exception*>(deh->primaryException) - 1;
+                    __cxa_free_dependent_exception(deh);
+                }
+                // Destroy the primary exception only if its referenceCount goes to 0
+                //    (this decrement must be atomic)
+                if (__sync_sub_and_fetch(&current_exception->referenceCount, size_t(1)) == 0)
+                {
+                    void* thrown_object = thrown_object_from_exception(current_exception);
+                    if (NULL != current_exception->exceptionDestructor)
+                        current_exception->exceptionDestructor(thrown_object);
+                    __cxa_free_exception(thrown_object);
                 }
             }
         }       
@@ -306,7 +327,7 @@ extern LIBCXXABI_NORETURN void __cxa_rethrow() {
         std::terminate ();
 
 //  Mark the exception as being rethrown
-    exception->handlerCount = -exception->handlerCount ;	// TODO: Atomic
+    exception->handlerCount = -exception->handlerCount ;  // TODO: Atomic
     
 #if __arm__
     (void) _Unwind_SjLj_Resume_or_Rethrow(&exception->unwindHeader);
