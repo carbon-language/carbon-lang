@@ -5376,6 +5376,11 @@ defm : VFPDTAnyInstAlias<"vorr${p}", "$Vdn, $Vm",
                          (VORRq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
 
 // VMUL two-operand aliases.
+def : NEONInstAlias<"vmul${p}.f32 $Qdn, $Qm",
+                    (VMULfq QPR:$Qdn, QPR:$Qdn, QPR:$Qm, pred:$p)>;
+def : NEONInstAlias<"vmul${p}.f32 $Ddn, $Dm",
+                    (VMULfd DPR:$Ddn, DPR:$Ddn, DPR:$Dm, pred:$p)>;
+
 def : NEONInstAlias<"vmul${p}.i16 $Ddn, $Dm$lane",
                     (VMULslv4i16 DPR:$Ddn, DPR:$Ddn, DPR_8:$Dm,
                                  VectorIndex16:$lane, pred:$p)>;
