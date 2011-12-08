@@ -624,6 +624,7 @@ static void FindUnconditionalPreds(SmallVectorImpl<BasicBlock *> &Blocks,
                                    BasicBlock *BB, DominatorTree *DT) {
   for (pred_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I) {
     BasicBlock *Pred = *I;
+    if (Pred == BB) continue;
     TerminatorInst *PredTI = Pred->getTerminator();
     if (PredTI->getNumSuccessors() != 1)
       continue;
@@ -853,4 +854,3 @@ void DSE::RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
        I != E; ++I)
     DeadStackObjects.erase(*I);
 }
-

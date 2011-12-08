@@ -58,3 +58,13 @@ skipinit1:
   tail call void @free(i8* %alloc1) nounwind
   ret void
 }
+
+; CHECK: @test5
+define void @test5() {
+  br label %bb
+
+bb:
+  tail call void @free(i8* undef) nounwind
+  br label %bb
+}
+
