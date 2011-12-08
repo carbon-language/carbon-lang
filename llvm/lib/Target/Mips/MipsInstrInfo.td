@@ -942,11 +942,13 @@ def : Pat<(MipsHi tglobaladdr:$in), (LUi tglobaladdr:$in)>;
 def : Pat<(MipsHi tblockaddress:$in), (LUi tblockaddress:$in)>;
 def : Pat<(MipsHi tjumptable:$in), (LUi tjumptable:$in)>;
 def : Pat<(MipsHi tconstpool:$in), (LUi tconstpool:$in)>;
+def : Pat<(MipsHi tglobaltlsaddr:$in), (LUi tglobaltlsaddr:$in)>;
 
 def : Pat<(MipsLo tglobaladdr:$in), (ADDiu ZERO, tglobaladdr:$in)>;
 def : Pat<(MipsLo tblockaddress:$in), (ADDiu ZERO, tblockaddress:$in)>;
 def : Pat<(MipsLo tjumptable:$in), (ADDiu ZERO, tjumptable:$in)>;
 def : Pat<(MipsLo tconstpool:$in), (ADDiu ZERO, tconstpool:$in)>;
+def : Pat<(MipsLo tglobaltlsaddr:$in), (ADDiu ZERO, tglobaltlsaddr:$in)>;
 
 def : Pat<(add CPURegs:$hi, (MipsLo tglobaladdr:$lo)),
           (ADDiu CPURegs:$hi, tglobaladdr:$lo)>;
@@ -956,22 +958,14 @@ def : Pat<(add CPURegs:$hi, (MipsLo tjumptable:$lo)),
           (ADDiu CPURegs:$hi, tjumptable:$lo)>;
 def : Pat<(add CPURegs:$hi, (MipsLo tconstpool:$lo)),
           (ADDiu CPURegs:$hi, tconstpool:$lo)>;
+def : Pat<(add CPURegs:$hi, (MipsLo tglobaltlsaddr:$lo)),
+          (ADDiu CPURegs:$hi, tglobaltlsaddr:$lo)>;
 
 // gp_rel relocs
 def : Pat<(add CPURegs:$gp, (MipsGPRel tglobaladdr:$in)),
           (ADDiu CPURegs:$gp, tglobaladdr:$in)>;
 def : Pat<(add CPURegs:$gp, (MipsGPRel tconstpool:$in)),
           (ADDiu CPURegs:$gp, tconstpool:$in)>;
-
-// tlsgd
-def : Pat<(add CPURegs:$gp, (MipsTlsGd tglobaltlsaddr:$in)),
-          (ADDiu CPURegs:$gp, tglobaltlsaddr:$in)>;
-
-// tprel hi/lo
-def : Pat<(MipsTprelHi tglobaltlsaddr:$in), (LUi tglobaltlsaddr:$in)>;
-def : Pat<(MipsTprelLo tglobaltlsaddr:$in), (ADDiu ZERO, tglobaltlsaddr:$in)>;
-def : Pat<(add CPURegs:$hi, (MipsTprelLo tglobaltlsaddr:$lo)),
-          (ADDiu CPURegs:$hi, tglobaltlsaddr:$lo)>;
 
 // wrapper_pic
 class WrapperPICPat<SDNode node, Instruction ADDiuOp, Register GPReg>:
@@ -983,6 +977,7 @@ def : WrapperPICPat<tconstpool, ADDiu, GP>;
 def : WrapperPICPat<texternalsym, ADDiu, GP>;
 def : WrapperPICPat<tblockaddress, ADDiu, GP>;
 def : WrapperPICPat<tjumptable, ADDiu, GP>;
+def : WrapperPICPat<tglobaltlsaddr, ADDiu, GP>;
 
 // Mips does not have "not", so we expand our way
 def : Pat<(not CPURegs:$in),

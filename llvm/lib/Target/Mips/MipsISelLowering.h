@@ -40,13 +40,6 @@ namespace llvm {
       // Handle gp_rel (small data/bss sections) relocation.
       GPRel,
 
-      // General Dynamic TLS
-      TlsGd,
-
-      // Local Exec TLS
-      TprelHi,
-      TprelLo,
-
       // Thread Pointer
       ThreadPointer,
 
