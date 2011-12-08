@@ -3099,9 +3099,9 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       
       StringRef FileName(BlobStart, BlobLen);
       if (const FileEntry *Umbrella = PP.getFileManager().getFile(FileName)) {
-        if (!CurrentModule->UmbrellaHeader)
+        if (!CurrentModule->getUmbrellaHeader())
           ModMap.setUmbrellaHeader(CurrentModule, Umbrella);
-        else if (CurrentModule->UmbrellaHeader != Umbrella) {
+        else if (CurrentModule->getUmbrellaHeader() != Umbrella) {
           Error("mismatched umbrella headers in submodule");
           return Failure;
         }

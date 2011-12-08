@@ -145,14 +145,16 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
     Includes += "\"\n";
   }
 
-  if (Module->UmbrellaHeader && Module->Parent) {
-    // Include the umbrella header for submodules.
-    if (LangOpts.ObjC1)
-      Includes += "#import \"";
-    else
-      Includes += "#include \"";
-    Includes += Module->UmbrellaHeader->getName();
-    Includes += "\"\n";    
+  if (const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader()) {
+    if (Module->Parent) {
+      // Include the umbrella header for submodules.
+      if (LangOpts.ObjC1)
+        Includes += "#import \"";
+      else
+        Includes += "#include \"";
+      Includes += UmbrellaHeader->getName();
+      Includes += "\"\n";
+    }
   }
   
   // Recurse into submodules.
@@ -197,29 +199,32 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
     return false;
   }
   
+  // Do we have an umbrella header for this module?
+  const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader();
+  
   // Collect the set of #includes we need to build the module.
   llvm::SmallString<256> HeaderContents;
   collectModuleHeaderIncludes(CI.getLangOpts(), Module, HeaderContents);
-  if (Module->UmbrellaHeader && HeaderContents.empty()) {
+  if (UmbrellaHeader && HeaderContents.empty()) {
     // Simple case: we have an umbrella header and there are no additional
     // includes, we can just parse the umbrella header directly.
-    setCurrentFile(Module->UmbrellaHeader->getName(), getCurrentFileKind());
+    setCurrentFile(UmbrellaHeader->getName(), getCurrentFileKind());
     return true;
   }
   
   FileManager &FileMgr = CI.getFileManager();
   llvm::SmallString<128> HeaderName;
   time_t ModTime;
-  if (Module->UmbrellaHeader) {
+  if (UmbrellaHeader) {
     // Read in the umbrella header.
     // FIXME: Go through the source manager; the umbrella header may have
     // been overridden.
     std::string ErrorStr;
     llvm::MemoryBuffer *UmbrellaContents
-      = FileMgr.getBufferForFile(Module->UmbrellaHeader, &ErrorStr);
+      = FileMgr.getBufferForFile(UmbrellaHeader, &ErrorStr);
     if (!UmbrellaContents) {
       CI.getDiagnostics().Report(diag::err_missing_umbrella_header)
-        << Module->UmbrellaHeader->getName() << ErrorStr;
+        << UmbrellaHeader->getName() << ErrorStr;
       return false;
     }
     
@@ -232,8 +237,8 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
     HeaderContents += OldContents;
 
     // Pretend that we're parsing the umbrella header.
-    HeaderName = Module->UmbrellaHeader->getName();
-    ModTime = Module->UmbrellaHeader->getModificationTime();
+    HeaderName = UmbrellaHeader->getName();
+    ModTime = UmbrellaHeader->getModificationTime();
     
     delete UmbrellaContents;
   } else {

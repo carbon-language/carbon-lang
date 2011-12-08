@@ -16,6 +16,7 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
@@ -29,7 +30,8 @@ namespace llvm {
 namespace clang {
   
 class FileEntry;
-
+class DirectoryEntry;
+  
 /// \brief Describes the name of a module.
 typedef llvm::SmallVector<std::pair<std::string, SourceLocation>, 2>
   ModuleId;
@@ -47,10 +49,8 @@ public:
   /// module.
   Module *Parent;
   
-  /// \brief The umbrella header, if any.
-  ///
-  /// Only the top-level module can have an umbrella header.
-  const FileEntry *UmbrellaHeader;
+  /// \brief The umbrella header or directory.
+  llvm::PointerUnion<const DirectoryEntry *, const FileEntry *> Umbrella;
   
   /// \brief The submodules of this module, indexed by name.
   llvm::StringMap<Module *> SubModules;
@@ -130,7 +130,7 @@ public:
   /// \brief Construct a top-level module.
   explicit Module(StringRef Name, SourceLocation DefinitionLoc,
                   bool IsFramework)
-    : Name(Name), DefinitionLoc(DefinitionLoc), Parent(0), UmbrellaHeader(0),
+    : Name(Name), DefinitionLoc(DefinitionLoc), Parent(0), Umbrella(),
       IsFramework(IsFramework), IsExplicit(false), InferSubmodules(false),
       InferExplicitSubmodules(false), InferExportWildcard(false),
       NameVisibility(Hidden) { }
@@ -139,7 +139,7 @@ public:
   Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent, 
          bool IsFramework, bool IsExplicit)
     : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent), 
-      UmbrellaHeader(0), IsFramework(IsFramework), IsExplicit(IsExplicit), 
+      Umbrella(), IsFramework(IsFramework), IsExplicit(IsExplicit), 
       InferSubmodules(false), InferExplicitSubmodules(false), 
       InferExportWildcard(false),NameVisibility(Hidden) { }
   
@@ -184,6 +184,16 @@ public:
     return getTopLevelModule()->Name;
   }
   
+  /// \brief Retrieve the directory for which this module serves as the
+  /// umbrella.
+  const DirectoryEntry *getUmbrellaDir() const;
+
+  /// \brief Retrieve the header that serves as the umbrella header for this
+  /// module.
+  const FileEntry *getUmbrellaHeader() const {
+    return Umbrella.dyn_cast<const FileEntry *>();
+  }
+
   /// \brief Print the module map for this module to the given stream. 
   ///
   void print(llvm::raw_ostream &OS, unsigned Indent = 0) const;

@@ -106,9 +106,9 @@ Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
       Module *Result = KnownDir->second;
       
       // Search up the module stack until we find a module with an umbrella
-      // header.
+      // directory.
       Module *UmbrellaModule = Result;
-      while (!UmbrellaModule->UmbrellaHeader && UmbrellaModule->Parent)
+      while (!UmbrellaModule->getUmbrellaDir() && UmbrellaModule->Parent)
         UmbrellaModule = UmbrellaModule->Parent;
       
       if (UmbrellaModule->InferSubmodules) {
@@ -260,7 +260,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
     Modules[ModuleName] = Result;
 
   // umbrella "umbrella-header-name"
-  Result->UmbrellaHeader = UmbrellaHeader;
+  Result->Umbrella = UmbrellaHeader;
   Headers[UmbrellaHeader] = Result;
   UmbrellaDirs[FrameworkDir] = Result;
   
@@ -336,7 +336,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
 
 void ModuleMap::setUmbrellaHeader(Module *Mod, const FileEntry *UmbrellaHeader){
   Headers[UmbrellaHeader] = Mod;
-  Mod->UmbrellaHeader = UmbrellaHeader;
+  Mod->Umbrella = UmbrellaHeader;
   
   const DirectoryEntry *UmbrellaDir = UmbrellaHeader->getDir();
   if (Mod->IsFramework)
@@ -864,10 +864,10 @@ void ModuleMapParser::parseUmbrellaDecl() {
   SourceLocation FileNameLoc = consumeToken();
 
   // Check whether we already have an umbrella header.
-  if (ActiveModule->UmbrellaHeader) {
+  if (ActiveModule->getUmbrellaHeader()) {
     Diags.Report(FileNameLoc, diag::err_mmap_umbrella_header_conflict)
       << ActiveModule->getFullModuleName() 
-      << ActiveModule->UmbrellaHeader->getName();
+      << ActiveModule->getUmbrellaHeader()->getName();
     HadError = true;
     return;
   }
@@ -1064,7 +1064,7 @@ void ModuleMapParser::parseInferredSubmoduleDecl(bool Explicit) {
   }
   
   // Inferred modules must have umbrella headers.
-  if (!Failed && !ActiveModule->UmbrellaHeader) {
+  if (!Failed && !ActiveModule->getUmbrellaHeader()) {
     Diags.Report(StarLoc, diag::err_mmap_inferred_no_umbrella);
     Failed = true;
   }

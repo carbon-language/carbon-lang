@@ -1941,11 +1941,11 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
     Stream.EmitRecordWithBlob(DefinitionAbbrev, Record, Mod->Name);
     
     // Emit the umbrella header, if there is one.
-    if (Mod->UmbrellaHeader) {
+    if (const FileEntry *UmbrellaHeader = Mod->getUmbrellaHeader()) {
       Record.clear();
       Record.push_back(SUBMODULE_UMBRELLA);
       Stream.EmitRecordWithBlob(UmbrellaAbbrev, Record, 
-                                Mod->UmbrellaHeader->getName());
+                                UmbrellaHeader->getName());
     }
     
     // Emit the headers.
