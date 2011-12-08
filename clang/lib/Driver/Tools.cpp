@@ -558,7 +558,6 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 
   // If unspecified, choose the default based on the platform.
   if (FloatABI.empty()) {
-    const llvm::Triple &Triple = getToolChain().getTriple();
     switch (Triple.getOS()) {
     case llvm::Triple::Darwin:
     case llvm::Triple::MacOSX:
@@ -576,7 +575,7 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     }
 
     case llvm::Triple::Linux: {
-      if (getToolChain().getTriple().getEnvironment() == llvm::Triple::GNUEABI) {
+      if (Triple.getEnvironment() == llvm::Triple::GNUEABI) {
         FloatABI = "softfp";
         break;
       }
