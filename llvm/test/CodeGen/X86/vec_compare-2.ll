@@ -8,6 +8,7 @@ declare <4 x i32> @llvm.x86.sse41.pmaxsd(<4 x i32>, <4 x i32>) nounwind readnone
 
 define void @blackDespeckle_wrapper(i8** %args_list, i64* %gtid, i64 %xend) {
 entry:
+; CHECK: cfi_def_cfa_offset
 ; CHECK-NOT: set
 ; CHECK: pcmpgt
 ; CHECK: blendvps

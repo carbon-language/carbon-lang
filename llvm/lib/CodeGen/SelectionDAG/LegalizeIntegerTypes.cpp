@@ -216,7 +216,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BITCAST(SDNode *N) {
   case TargetLowering::TypeLegal:
     break;
   case TargetLowering::TypePromoteInteger:
-    if (NOutVT.bitsEq(NInVT))
+    if (NOutVT.bitsEq(NInVT) && !NOutVT.isVector() && !NInVT.isVector())
       // The input promotes to the same size.  Convert the promoted value.
       return DAG.getNode(ISD::BITCAST, dl, NOutVT, GetPromotedInteger(InOp));
     break;

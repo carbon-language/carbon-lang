@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse42 -post-RA-scheduler=true | FileCheck %s
-; CHECK: incw
+; CHECK: incl
 ; CHECK: incl
 ; CHECK: incl
 ; CHECK: addl
