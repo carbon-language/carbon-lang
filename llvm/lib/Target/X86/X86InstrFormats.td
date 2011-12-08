@@ -334,6 +334,10 @@ class VPSI<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag> pattern>
       : I<o, F, outs, ins, !strconcat("v", asm), pattern, SSEPackedSingle>, TB,
         Requires<[HasAVX]>;
+class VoPSI<bits<8> o, Format F, dag outs, dag ins, string asm,
+            list<dag> pattern>
+      : I<o, F, outs, ins, asm, pattern, SSEPackedSingle>, TB,
+        Requires<[HasSSE1orAVX]>;
 
 // SSE2 Instruction Templates:
 // 

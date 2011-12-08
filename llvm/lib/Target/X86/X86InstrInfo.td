@@ -476,6 +476,8 @@ def HasAVX2      : Predicate<"Subtarget->hasAVX2()">;
 def HasXMM       : Predicate<"Subtarget->hasXMM()">;
 def HasXMMInt    : Predicate<"Subtarget->hasXMMInt()">;
 
+def HasSSE1orAVX : Predicate<"Subtarget->hasSSE1orAVX()">;
+
 def HasPOPCNT    : Predicate<"Subtarget->hasPOPCNT()">;
 def HasAES       : Predicate<"Subtarget->hasAES()">;
 def HasCLMUL     : Predicate<"Subtarget->hasCLMUL()">;
