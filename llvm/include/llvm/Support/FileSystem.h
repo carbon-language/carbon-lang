@@ -27,13 +27,16 @@
 #ifndef LLVM_SUPPORT_FILE_SYSTEM_H
 #define LLVM_SUPPORT_FILE_SYSTEM_H
 
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/PathV1.h"
 #include "llvm/Support/system_error.h"
 #include <ctime>
 #include <iterator>
+#include <stack>
 #include <string>
 
 namespace llvm {
@@ -479,76 +482,171 @@ public:
   bool operator>=(const directory_entry& rhs) const;
 };
 
+namespace detail {
+  struct DirIterState;
+
+  error_code directory_iterator_construct(DirIterState&, StringRef);
+  error_code directory_iterator_increment(DirIterState&);
+  error_code directory_iterator_destruct(DirIterState&);
+
+  /// DirIterState - Keeps state for the directory_iterator. It is reference
+  /// counted in order to preserve InputIterator semantics on copy.
+  struct DirIterState : public RefCountedBase<DirIterState> {
+    DirIterState()
+      : IterationHandle(0) {}
+
+    ~DirIterState() {
+      directory_iterator_destruct(*this);
+    }
+
+    intptr_t IterationHandle;
+    directory_entry CurrentEntry;
+  };
+}
+
 /// directory_iterator - Iterates through the entries in path. There is no
 /// operator++ because we need an error_code. If it's really needed we can make
 /// it call report_fatal_error on error.
 class directory_iterator {
-  intptr_t IterationHandle;
-  directory_entry CurrentEntry;
-
-  // Platform implementations implement these functions to handle iteration.
-  friend error_code directory_iterator_construct(directory_iterator &it,
-                                                 StringRef path);
-  friend error_code directory_iterator_increment(directory_iterator &it);
-  friend error_code directory_iterator_destruct(directory_iterator &it);
+  IntrusiveRefCntPtr<detail::DirIterState> State;
 
 public:
-  explicit directory_iterator(const Twine &path, error_code &ec)
-  : IterationHandle(0) {
+  explicit directory_iterator(const Twine &path, error_code &ec) {
+    State = new detail::DirIterState;
     SmallString<128> path_storage;
-    ec = directory_iterator_construct(*this, path.toStringRef(path_storage));
+    ec = detail::directory_iterator_construct(*State,
+            path.toStringRef(path_storage));
+  }
+
+  explicit directory_iterator(const directory_entry &de, error_code &ec) {
+    State = new detail::DirIterState;
+    ec = detail::directory_iterator_construct(*State, de.path());
   }
 
   /// Construct end iterator.
-  directory_iterator() : IterationHandle(0) {}
-
-  ~directory_iterator() {
-    directory_iterator_destruct(*this);
-  }
+  directory_iterator() : State(new detail::DirIterState) {}
 
   // No operator++ because we need error_code.
   directory_iterator &increment(error_code &ec) {
-    ec = directory_iterator_increment(*this);
+    ec = directory_iterator_increment(*State);
     return *this;
   }
 
-  const directory_entry &operator*() const { return CurrentEntry; }
-  const directory_entry *operator->() const { return &CurrentEntry; }
+  const directory_entry &operator*() const { return State->CurrentEntry; }
+  const directory_entry *operator->() const { return &State->CurrentEntry; }
+
+  bool operator==(const directory_iterator &RHS) const {
+    return State->CurrentEntry == RHS.State->CurrentEntry;
+  }
 
   bool operator!=(const directory_iterator &RHS) const {
-    return CurrentEntry != RHS.CurrentEntry;
+    return !(*this == RHS);
   }
   // Other members as required by
   // C++ Std, 24.1.1 Input iterators [input.iterators]
 };
 
+namespace detail {
+  /// RecDirIterState - Keeps state for the recursive_directory_iterator. It is
+  /// reference counted in order to preserve InputIterator semantics on copy.
+  struct RecDirIterState : public RefCountedBase<RecDirIterState> {
+    RecDirIterState()
+      : Level(0)
+      , HasNoPushRequest(false) {}
+
+    std::stack<directory_iterator, std::vector<directory_iterator> > Stack;
+    uint16_t Level;
+    bool HasNoPushRequest;
+  };
+}
+
 /// recursive_directory_iterator - Same as directory_iterator except for it
 /// recurses down into child directories.
 class recursive_directory_iterator {
-  uint16_t  Level;
-  bool HasNoPushRequest;
-  // implementation directory iterator status
+  IntrusiveRefCntPtr<detail::RecDirIterState> State;
 
 public:
-  explicit recursive_directory_iterator(const Twine &path, error_code &ec);
+  recursive_directory_iterator() {}
+  explicit recursive_directory_iterator(const Twine &path, error_code &ec)
+    : State(new detail::RecDirIterState) {
+    State->Stack.push(directory_iterator(path, ec));
+    if (State->Stack.top() == directory_iterator())
+      State.reset();
+  }
   // No operator++ because we need error_code.
-  directory_iterator &increment(error_code &ec);
+  recursive_directory_iterator &increment(error_code &ec) {
+    static const directory_iterator end_itr;
 
-  const directory_entry &operator*() const;
-  const directory_entry *operator->() const;
+    if (State->HasNoPushRequest)
+      State->HasNoPushRequest = false;
+    else {
+      file_status st;
+      if ((ec = State->Stack.top()->status(st))) return *this;
+      if (is_directory(st)) {
+        State->Stack.push(directory_iterator(*State->Stack.top(), ec));
+        if (ec) return *this;
+        if (State->Stack.top() != end_itr) {
+          ++State->Level;
+          return *this;
+        }
+        State->Stack.pop();
+      }
+    }
+
+    while (!State->Stack.empty()
+           && State->Stack.top().increment(ec) == end_itr) {
+      State->Stack.pop();
+      --State->Level;
+    }
+
+    // Check if we are done. If so, create an end iterator.
+    if (State->Stack.empty())
+      State.reset();
+
+    return *this;
+  }
+
+  const directory_entry &operator*() const { return *State->Stack.top(); };
+  const directory_entry *operator->() const { return &*State->Stack.top(); };
 
   // observers
-  /// Gets the current level. path is at level 0.
-  int level() const;
+  /// Gets the current level. Starting path is at level 0.
+  int level() const { return State->Level; }
+
   /// Returns true if no_push has been called for this directory_entry.
-  bool no_push_request() const;
+  bool no_push_request() const { return State->HasNoPushRequest; }
 
   // modifiers
   /// Goes up one level if Level > 0.
-  void pop();
-  /// Does not go down into the current directory_entry.
-  void no_push();
+  void pop() {
+    assert(State && "Cannot pop and end itertor!");
+    assert(State->Level > 0 && "Cannot pop an iterator with level < 1");
 
+    static const directory_iterator end_itr;
+    error_code ec;
+    do {
+      if (ec)
+        report_fatal_error("Error incrementing directory iterator.");
+      State->Stack.pop();
+      --State->Level;
+    } while (!State->Stack.empty()
+             && State->Stack.top().increment(ec) == end_itr);
+
+    // Check if we are done. If so, create an end iterator.
+    if (State->Stack.empty())
+      State.reset();
+  }
+
+  /// Does not go down into the current directory_entry.
+  void no_push() { State->HasNoPushRequest = true; }
+
+  bool operator==(const recursive_directory_iterator &RHS) const {
+    return State == RHS.State;
+  }
+
+  bool operator!=(const recursive_directory_iterator &RHS) const {
+    return !(*this == RHS);
+  }
   // Other members as required by
   // C++ Std, 24.1.1 Input iterators [input.iterators]
 };

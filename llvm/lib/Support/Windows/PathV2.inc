@@ -535,7 +535,7 @@ error_code unique_file(const Twine &model, int &result_fd,
   if (makeAbsolute) {
     // Make model absolute by prepending a temp directory if it's not already.
     bool absolute = path::is_absolute(m);
-  
+
     if (!absolute) {
       SmallVector<wchar_t, 64> temp_dir;
       if (error_code ec = TempDir(temp_dir)) return ec;
@@ -691,7 +691,8 @@ error_code get_magic(const Twine &path, uint32_t len,
   return success;
 }
 
-error_code directory_iterator_construct(directory_iterator &it, StringRef path){
+error_code detail::directory_iterator_construct(detail::DirIterState &it,
+                                                StringRef path){
   SmallVector<wchar_t, 128> path_utf16;
 
   if (error_code ec = UTF8ToUTF16(path,
@@ -722,7 +723,7 @@ error_code directory_iterator_construct(directory_iterator &it, StringRef path){
       error_code ec = windows_error(::GetLastError());
       // Check for end.
       if (ec == windows_error::no_more_files)
-        return directory_iterator_destruct(it);
+        return detail::directory_iterator_destruct(it);
       return ec;
     } else
       FilenameLen = ::wcslen(FirstFind.cFileName);
@@ -742,7 +743,7 @@ error_code directory_iterator_construct(directory_iterator &it, StringRef path){
   return success;
 }
 
-error_code directory_iterator_destruct(directory_iterator& it) {
+error_code detail::directory_iterator_destruct(detail::DirIterState &it) {
   if (it.IterationHandle != 0)
     // Closes the handle if it's valid.
     ScopedFindHandle close(HANDLE(it.IterationHandle));
@@ -751,13 +752,13 @@ error_code directory_iterator_destruct(directory_iterator& it) {
   return success;
 }
 
-error_code directory_iterator_increment(directory_iterator& it) {
+error_code detail::directory_iterator_increment(detail::DirIterState &it) {
   WIN32_FIND_DATAW FindData;
   if (!::FindNextFileW(HANDLE(it.IterationHandle), &FindData)) {
     error_code ec = windows_error(::GetLastError());
     // Check for end.
     if (ec == windows_error::no_more_files)
-      return directory_iterator_destruct(it);
+      return detail::directory_iterator_destruct(it);
     return ec;
   }
 

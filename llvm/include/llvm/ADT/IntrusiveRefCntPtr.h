@@ -156,7 +156,12 @@ namespace llvm {
       other.Obj = Obj;
       Obj = tmp;
     }
-    
+
+    void reset() {
+      release();
+      Obj = 0;
+    }
+
     void resetWithoutRelease() {
       Obj = 0;
     }

@@ -439,7 +439,8 @@ rety_open_create:
   return success;
 }
 
-error_code directory_iterator_construct(directory_iterator &it, StringRef path){
+error_code detail::directory_iterator_construct(detail::DirIterState &it,
+                                                StringRef path){
   SmallString<128> path_null(path);
   DIR *directory = ::opendir(path_null.c_str());
   if (directory == 0)
@@ -452,7 +453,7 @@ error_code directory_iterator_construct(directory_iterator &it, StringRef path){
   return directory_iterator_increment(it);
 }
 
-error_code directory_iterator_destruct(directory_iterator& it) {
+error_code detail::directory_iterator_destruct(detail::DirIterState &it) {
   if (it.IterationHandle)
     ::closedir(reinterpret_cast<DIR *>(it.IterationHandle));
   it.IterationHandle = 0;
@@ -460,7 +461,7 @@ error_code directory_iterator_destruct(directory_iterator& it) {
   return success;
 }
 
-error_code directory_iterator_increment(directory_iterator& it) {
+error_code detail::directory_iterator_increment(detail::DirIterState &it) {
   errno = 0;
   dirent *cur_dir = ::readdir(reinterpret_cast<DIR *>(it.IterationHandle));
   if (cur_dir == 0 && errno != 0) {
