@@ -22,8 +22,11 @@ class Loop;
 class LoopInfo;
 class LPPassManager;
 
-bool UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
+bool UnrollLoop(Loop *L, unsigned Count, unsigned TripCount, bool AllowRuntime,
                 unsigned TripMultiple, LoopInfo* LI, LPPassManager* LPM);
+
+bool UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
+                             LPPassManager* LPM);
 
 }
 
