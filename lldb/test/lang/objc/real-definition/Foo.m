@@ -8,7 +8,7 @@
     if (self) {
         _bar = [[Bar alloc] init];
     }
-    return self;    
+    return self; // Set breakpoint where Bar is an interface
 }
 
 - (void)dealloc

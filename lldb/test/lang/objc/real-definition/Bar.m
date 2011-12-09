@@ -25,7 +25,7 @@
     if (self) {
         _hidden_ivar = [NSString stringWithFormat:@"%p: @Bar", self];
     }
-    return self;    
+    return self; // Set breakpoint where Bar is an implementation
 }
 
 - (void)dealloc
