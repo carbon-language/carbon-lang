@@ -15,3 +15,17 @@ void test() {
   f4(0); // expected-error{{f4' is unavailable: obsoleted in Mac OS X 10.5}}
   f5(0); // expected-error{{'f5' is unavailable: not available on Mac OS X}}
 }
+
+// rdar://10535640
+
+enum {
+    foo __attribute__((availability(macosx,introduced=8.0,deprecated=9.0)))
+};
+
+enum {
+    bar __attribute__((availability(macosx,introduced=8.0,deprecated=9.0))) = foo
+};
+
+enum __attribute__((availability(macosx,introduced=8.0,deprecated=9.0))) {
+    bar1 = foo
+};

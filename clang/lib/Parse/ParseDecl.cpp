@@ -3099,6 +3099,8 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
 
     SourceLocation EqualLoc;
     ExprResult AssignedVal;
+    ParsingDeclRAIIObject PD(*this);
+    
     if (Tok.is(tok::equal)) {
       EqualLoc = ConsumeToken();
       AssignedVal = ParseConstantExpression();
@@ -3112,6 +3114,8 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
                                                     IdentLoc, Ident,
                                                     attrs.getList(), EqualLoc,
                                                     AssignedVal.release());
+    PD.complete(EnumConstDecl);
+    
     EnumConstantDecls.push_back(EnumConstDecl);
     LastEnumConstDecl = EnumConstDecl;
 
