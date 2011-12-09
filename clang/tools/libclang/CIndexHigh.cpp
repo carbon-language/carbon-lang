@@ -344,6 +344,11 @@ void clang_findReferencesInFile(CXCursor cursor, CXFile file,
       llvm::errs() << "clang_findReferencesInFile: Null cursor\n";
     return;
   }
+  if (cursor.kind == CXCursor_NoDeclFound) {
+    if (Logging)
+      llvm::errs() << "clang_findReferencesInFile: Got CXCursor_NoDeclFound\n";
+    return;
+  }
   if (!file) {
     if (Logging)
       llvm::errs() << "clang_findReferencesInFile: Null file\n";

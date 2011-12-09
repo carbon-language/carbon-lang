@@ -746,8 +746,10 @@ ASTContext &cxcursor::getCursorContext(CXCursor Cursor) {
 }
 
 ASTUnit *cxcursor::getCursorASTUnit(CXCursor Cursor) {
-  return static_cast<ASTUnit *>(static_cast<CXTranslationUnit>(Cursor.data[2])
-                                  ->TUData);
+  CXTranslationUnit TU = static_cast<CXTranslationUnit>(Cursor.data[2]);
+  if (!TU)
+    return 0;
+  return static_cast<ASTUnit *>(TU->TUData);
 }
 
 CXTranslationUnit cxcursor::getCursorTU(CXCursor Cursor) {
