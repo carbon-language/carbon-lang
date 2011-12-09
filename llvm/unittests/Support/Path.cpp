@@ -243,8 +243,11 @@ TEST_F(FileSystemTest, DirectoryIteration) {
     ASSERT_NO_ERROR(ec);
     if (path::filename(i->path()) == "dontlookhere")
       i.no_push();
+    outs() << "pre-pop: " << path::filename(i->path()) << "\n";
     if (path::filename(i->path()) == "p1")
       i.pop();
+    outs() << "post-pop: " << path::filename(i->path()) << "\n";
+    outs().flush();
     visited.push_back(path::filename(i->path()));
   }
   v_t::const_iterator a0 = std::find(visited.begin(), visited.end(), "a0");
