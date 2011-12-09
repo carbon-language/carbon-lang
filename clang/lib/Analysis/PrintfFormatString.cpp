@@ -235,46 +235,6 @@ bool clang::analyze_format_string::ParsePrintfString(FormatStringHandler &H,
 }
 
 //===----------------------------------------------------------------------===//
-// Methods on ConversionSpecifier.
-//===----------------------------------------------------------------------===//
-const char *ConversionSpecifier::toString() const {
-  switch (kind) {
-  case dArg: return "d";
-  case iArg: return "i";
-  case oArg: return "o";
-  case uArg: return "u";
-  case xArg: return "x";
-  case XArg: return "X";
-  case fArg: return "f";
-  case FArg: return "F";
-  case eArg: return "e";
-  case EArg: return "E";
-  case gArg: return "g";
-  case GArg: return "G";
-  case aArg: return "a";
-  case AArg: return "A";
-  case cArg: return "c";
-  case sArg: return "s";
-  case pArg: return "p";
-  case nArg: return "n";
-  case PercentArg:  return "%";
-  case ScanListArg: return "[";
-  case InvalidSpecifier: return NULL;
-
-  // MacOS X unicode extensions.
-  case CArg: return "C";
-  case SArg: return "S";
-
-  // Objective-C specific specifiers.
-  case ObjCObjArg: return "@";
-
-  // GlibC specific specifiers.
-  case PrintErrno: return "m";
-  }
-  return NULL;
-}
-
-//===----------------------------------------------------------------------===//
 // Methods on PrintfSpecifier.
 //===----------------------------------------------------------------------===//
 
