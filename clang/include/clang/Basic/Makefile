@@ -4,6 +4,7 @@ BUILT_SOURCES = \
 	DiagnosticCommonKinds.inc DiagnosticDriverKinds.inc \
 	DiagnosticFrontendKinds.inc DiagnosticLexKinds.inc \
 	DiagnosticParseKinds.inc DiagnosticSemaKinds.inc \
+	DiagnosticSerializationKinds.inc \
 	DiagnosticIndexName.inc DiagnosticGroups.inc AttrList.inc arm_neon.inc \
 	Version.inc
 
