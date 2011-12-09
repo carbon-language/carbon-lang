@@ -194,6 +194,12 @@ public:
     return Umbrella.dyn_cast<const FileEntry *>();
   }
 
+  /// \brief Determine whether this module has an umbrella directory that is
+  /// not based on an umbrella header.
+  bool hasUmbrellaDir() const {
+    return Umbrella && Umbrella.is<const DirectoryEntry *>();
+  }
+  
   /// \brief Print the module map for this module to the given stream. 
   ///
   void print(llvm::raw_ostream &OS, unsigned Indent = 0) const;

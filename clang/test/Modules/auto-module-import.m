@@ -1,3 +1,4 @@
+// other file: expected-note{{'no_umbrella_A_private' declared here}}
 
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -Wauto-import -fmodule-cache-path %t -fauto-module-import -F %S/Inputs %s -verify
@@ -22,6 +23,10 @@ int getDependsOther() { return depends_on_module_other; }
 void testSubframeworkOther() {
   double *sfo1 = sub_framework_other; // expected-error{{use of undeclared identifier 'sub_framework_other'}}
 }
+
+// Test umbrella-less submodule includes
+#include <NoUmbrella/A.h> // expected-warning{{treating #include as an import of module 'NoUmbrella.A'}}
+int getNoUmbrellaA() { return no_umbrella_A; } 
 
 // Test header cross-subframework include pattern.
 #include <DependsOnModule/../Frameworks/SubFramework.framework/Headers/Other.h> // expected-warning{{treating #include as an import of module 'DependsOnModule.SubFramework.Other'}}
@@ -48,3 +53,8 @@ int getDependsOnModulePrivate() { return depends_on_module_private; }
 #include <Module/ModulePrivate.h> // expected-warning{{treating #include as an import of module 'Module.Private.ModulePrivate'}}
 
 int getModulePrivate() { return module_private; }
+
+#include <NoUmbrella/A_Private.h> // expected-warning{{treating #include as an import of module 'NoUmbrella.Private.A_Private'}}
+int getNoUmbrellaAPrivate() { return no_umbrella_A_private; }
+
+int getNoUmbrellaBPrivateFail() { return no_umbrella_B_private; } // expected-error{{use of undeclared identifier 'no_umbrella_B_private'; did you mean 'no_umbrella_A_private'?}}
