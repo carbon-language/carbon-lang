@@ -535,6 +535,7 @@ LookupSubframeworkHeader(StringRef Filename,
   assert(ContextFileEnt && "No context file?");
 
   // Framework names must have a '/' in the filename.  Find it.
+  // FIXME: Should we permit '\' on Windows?
   size_t SlashPos = Filename.find('/');
   if (SlashPos == StringRef::npos) return 0;
 
@@ -542,12 +543,15 @@ LookupSubframeworkHeader(StringRef Filename,
   const char *ContextName = ContextFileEnt->getName();
 
   // If the context info wasn't a framework, couldn't be a subframework.
-  const char *FrameworkPos = strstr(ContextName, ".framework/");
-  if (FrameworkPos == 0)
+  const unsigned DotFrameworkLen = 10;
+  const char *FrameworkPos = strstr(ContextName, ".framework");
+  if (FrameworkPos == 0 || 
+      (FrameworkPos[DotFrameworkLen] != '/' && 
+       FrameworkPos[DotFrameworkLen] != '\\'))
     return 0;
 
   llvm::SmallString<1024> FrameworkName(ContextName,
-                                        FrameworkPos+strlen(".framework/"));
+                                        FrameworkPos+DotFrameworkLen+1);
 
   // Append Frameworks/HIToolbox.framework/
   FrameworkName += "Frameworks/";
