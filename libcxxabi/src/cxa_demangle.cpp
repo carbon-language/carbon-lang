@@ -264,6 +264,71 @@ public:
     }
 };
 
+class __construction_vtable
+    : public __node
+{
+    static const ptrdiff_t n = sizeof("construction vtable for ") - 1 + 4;
+public:
+    __construction_vtable(__node* left, __node* right)
+    {
+        __left_ = left;
+        __right_ = right;
+    }
+
+    virtual size_t first_size() const
+    {
+        if (__cached_size_ == -1)
+            const_cast<long&>(__cached_size_) = n + __left_->size()
+                                                  + __right_->size();
+        return __cached_size_;
+    }
+    virtual char* first_demangled_name(char* buf) const
+    {
+        strncpy(buf, "construction vtable for ", n-4);
+        buf =  __left_->get_demangled_name(buf+n-4);
+        *buf++ = '-';
+        *buf++ = 'i';
+        *buf++ = 'n';
+        *buf++ = '-';
+        return __right_->get_demangled_name(buf);
+    }
+    virtual ptrdiff_t print_first(char* f, char* l) const
+    {
+        const ptrdiff_t r = l - f;
+        if (r < n)
+            return n + __left_->print(l, l) + __right_->print(l, l);
+        ptrdiff_t lsz = __left_->print(f+n-4, l);
+        ptrdiff_t sz = lsz + n;
+        if (r >= sz)
+        {
+            sz += __right_->print(f+sz, l);
+            if (r >= sz)
+            {
+                strncpy(f, "construction vtable for ", n-4);
+                f += n-4 + lsz;
+                *f++ = '-';
+                *f++ = 'i';
+                *f++ = 'n';
+                *f++ = '-';
+            }
+        }
+        else
+            return sz + __right_->print(l, l);
+        return sz;
+    }
+    virtual __node* base_name() const
+    {
+        return __right_->base_name();
+    }
+    virtual bool fix_forward_references(__node** t_begin, __node** t_end)
+    {
+        bool r = true;
+        if (__left_)
+            r = __left_->fix_forward_references(t_begin, t_end);
+        return r && __right_->fix_forward_references(t_begin, t_end);
+    }
+};
+
 class __typeinfo
     : public __node
 {
@@ -618,6 +683,43 @@ public:
             *f++ = 'r';
             *f   = ' ';
         }
+        return sz;
+    }
+    virtual bool fix_forward_references(__node** t_begin, __node** t_end)
+    {
+        return __right_->fix_forward_references(t_begin, t_end);
+    }
+};
+
+class __reference_temporary
+    : public __node
+{
+    static const size_t n = sizeof("reference temporary for ") - 1;
+public:
+    __reference_temporary(__node* type)
+    {
+        __right_ = type;
+    }
+
+    virtual size_t first_size() const
+    {
+        if (__cached_size_ == -1)
+            const_cast<long&>(__cached_size_) = n + __right_->size();
+        return __cached_size_;
+    }
+    virtual char* first_demangled_name(char* buf) const
+    {
+        strncpy(buf, "reference temporary for ", n);
+        return __right_->get_demangled_name(buf+n);
+    }
+    virtual ptrdiff_t print_first(char* f, char* l) const
+    {
+        const ptrdiff_t r = l - f;
+        if (r < n)
+            return n + __right_->print(l, l);
+        ptrdiff_t sz = __right_->print(f+n, l) + n;
+        if (r >= sz)
+            strncpy(f, "reference temporary for ", n);
         return sz;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
@@ -12846,6 +12948,8 @@ __demangle_tree::__parse_call_offset(const char* first, const char* last)
 //                    # base is the nominal target function of thunk
 //                ::= GV <object name> # Guard variable for one-time initialization
 //                                     # No <type>
+//      extension ::= TC <first type> <number> _ <second type> # construction vtable for second-in-first
+//      extension ::= GR <object name> # reference temporary for object
 
 const char*
 __demangle_tree::__parse_special_name(const char* first, const char* last)
@@ -12896,6 +13000,24 @@ __demangle_tree::__parse_special_name(const char* first, const char* last)
                     first = t;
                 }
                 break;
+            case 'C':
+                // extension ::= TC <first type> <number> _ <second type> # construction vtable for second-in-first
+                t = __parse_type(first+2, last);
+                if (t != first+2)
+                {
+                    __node* op1 = __root_;
+                    const char* t0 = __parse_number(t, last);
+                    if (t0 != t && t0 != last && *t0 == '_')
+                    {
+                        const char* t1 = __parse_type(++t0, last);
+                        if (t1 != t0)
+                        {
+                            if (__make<__construction_vtable>(__root_, op1))
+                                first = t1;
+                        }
+                    }
+                }
+                break;
             default:
                 // T <call-offset> <base encoding>
                 {
@@ -12921,12 +13043,20 @@ __demangle_tree::__parse_special_name(const char* first, const char* last)
             }
             break;
         case 'G':
-            if (first[1] == 'V')
+            switch (first[1])
             {
+            case 'V':
                 // GV <object name> # Guard variable for one-time initialization
                 t = __parse_name(first+2, last);
                 if (t != first+2 && __make<__guard_variable>(__root_))
                     first = t;
+                break;
+            case 'R':
+                // extension ::= GR <object name> # reference temporary for object
+                t = __parse_name(first+2, last);
+                if (t != first+2 && __make<__reference_temporary>(__root_))
+                    first = t;
+                break;
             }
             break;
         }
