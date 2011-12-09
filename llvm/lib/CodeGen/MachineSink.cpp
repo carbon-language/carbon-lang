@@ -152,10 +152,7 @@ MachineSinking::AllUsesDominatedByBlock(unsigned Reg,
   if (MRI->use_nodbg_empty(Reg))
     return true;
 
-  // Ignoring debug uses is necessary so debug info doesn't affect the code.
-  // This may leave a referencing dbg_value in the original block, before
-  // the definition of the vreg.  Dwarf generator handles this although the
-  // user might not get the right info at runtime.
+  // Ignoring debug uses because debug info doesn't affect the code.
 
   // BreakPHIEdge is true if all the uses are in the successor MBB being sunken
   // into and they are all PHI nodes. In this case, machine-sink must break
