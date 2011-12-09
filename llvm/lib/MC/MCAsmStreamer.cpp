@@ -1284,6 +1284,10 @@ void MCAsmStreamer::Finish() {
   if (getContext().hasDwarfFiles() && !UseLoc)
     MCDwarfFileTable::Emit(this);
 
+  // If we are generating dwarf for assembly source files dump out the sections.
+  if (getContext().getGenDwarfForAssembly())
+    MCGenDwarfInfo::Emit(this);
+
   if (!UseCFI)
     EmitFrames(false);
 }

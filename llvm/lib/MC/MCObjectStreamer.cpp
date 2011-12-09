@@ -260,5 +260,9 @@ void MCObjectStreamer::Finish() {
   if (getContext().hasDwarfFiles())
     MCDwarfFileTable::Emit(this);
 
+  // If we are generating dwarf for assembly source files dump out the sections.
+  if (getContext().getGenDwarfForAssembly())
+    MCGenDwarfInfo::Emit(this);
+
   getAssembler().Finish();
 }

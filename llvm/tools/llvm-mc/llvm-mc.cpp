@@ -234,6 +234,17 @@ static tool_output_file *GetOutputStream() {
   return Out;
 }
 
+static std::string DwarfDebugFlags;
+static void setDwarfDebugFlags(int argc, char **argv) {
+  if (!getenv("RC_DEBUG_OPTIONS"))
+    return;
+  for (int i = 0; i < argc; i++) {
+    DwarfDebugFlags += argv[i];
+    if (i + 1 < argc)
+      DwarfDebugFlags += " ";
+  }
+}
+
 static int AsLexInput(const char *ProgName) {
   OwningPtr<MemoryBuffer> BufferPtr;
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr)) {
@@ -382,6 +393,8 @@ static int AssembleInput(const char *ProgName) {
     Ctx.setAllowTemporaryLabels(false);
 
   Ctx.setGenDwarfForAssembly(GenDwarfForAssembly);
+  if (!DwarfDebugFlags.empty()) 
+    Ctx.setDwarfDebugFlags(StringRef(DwarfDebugFlags));
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
@@ -508,6 +521,7 @@ int main(int argc, char **argv) {
 
   cl::ParseCommandLineOptions(argc, argv, "llvm machine code playground\n");
   TripleName = Triple::normalize(TripleName);
+  setDwarfDebugFlags(argc, argv);
 
   switch (Action) {
   default:

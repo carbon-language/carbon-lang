@@ -526,6 +526,7 @@ enum dwarf_constants {
   DW_LANG_D = 0x0013,
   DW_LANG_Python = 0x0014,
   DW_LANG_lo_user = 0x8000,
+  DW_LANG_Mips_Assembler = 0x8001,
   DW_LANG_hi_user = 0xffff,
 
   // Identifier case codes

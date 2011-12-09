@@ -31,6 +31,8 @@ namespace llvm {
   class MCSymbol;
   class MCObjectStreamer;
   class raw_ostream;
+  class SourceMgr;
+  class SMLoc;
 
   /// MCDwarfFile - Instances of this class represent the name of the dwarf
   /// .file directive and its associated dwarf file number in the MC file,
@@ -225,6 +227,46 @@ namespace llvm {
     /// Utility function to write the encoding to an object writer.
     static void Write(MCObjectWriter *OW,
                       int64_t LineDelta, uint64_t AddrDelta);
+  };
+
+  class MCGenDwarfInfo {
+  public:
+    //
+    // When generating dwarf for assembly source files this emits the Dwarf
+    // sections.
+    //
+    static void Emit(MCStreamer *MCOS);
+  };
+
+  // When generating dwarf for assembly source files this is the info that is
+  // needed to be gathered for each symbol that will have a dwarf2_subprogram.
+  class MCGenDwarfSubprogramEntry {
+  private:
+    // Name of the symbol without a leading underbar, if any.
+    StringRef Name;
+    // The dwarf file number this symbol is in.
+    unsigned FileNumber;
+    // The line number this symbol is at.
+    unsigned LineNumber;
+    // The low_pc for the dwarf2_subprogram is taken from this symbol.  The
+    // high_pc is taken from the next symbol's value or the end of the section
+    // for the last symbol
+    MCSymbol *Label;
+
+  public:
+    MCGenDwarfSubprogramEntry(StringRef name, unsigned fileNumber,
+                              unsigned lineNumber, MCSymbol *label) :
+      Name(name), FileNumber(fileNumber), LineNumber(lineNumber), Label(label){}
+
+    StringRef getName() const { return Name; }
+    unsigned getFileNumber() const { return FileNumber; }
+    unsigned getLineNumber() const { return LineNumber; }
+    MCSymbol *getLabel() const { return Label; }
+
+    // This is called when label is created when we are generating dwarf for
+    // assembly source files.
+    static void Make(MCSymbol *Symbol, MCStreamer *MCOS, SourceMgr &SrcMgr,
+                     SMLoc &Loc);
   };
 
   class MCCFIInstruction {

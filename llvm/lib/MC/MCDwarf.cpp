@@ -19,9 +19,12 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Path.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Config/config.h"
 using namespace llvm;
 
 // Given a special op, return the address skip amount (in units of
@@ -421,6 +424,342 @@ void MCDwarfFile::print(raw_ostream &OS) const {
 
 void MCDwarfFile::dump() const {
   print(dbgs());
+}
+
+// Utility function to write a tuple for .debug_abbrev.
+static void EmitAbbrev(MCStreamer *MCOS, uint64_t Name, uint64_t Form) {
+  MCOS->EmitULEB128IntValue(Name);
+  MCOS->EmitULEB128IntValue(Form);
+}
+
+// When generating dwarf for assembly source files this emits
+// the data for .debug_abbrev section which contains three DIEs.
+static void EmitGenDwarfAbbrev(MCStreamer *MCOS) {
+  MCContext &context = MCOS->getContext();
+  MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfAbbrevSection());
+
+  // DW_TAG_compile_unit DIE abbrev (1).
+  MCOS->EmitULEB128IntValue(1);
+  MCOS->EmitULEB128IntValue(dwarf::DW_TAG_compile_unit);
+  MCOS->EmitIntValue(dwarf::DW_CHILDREN_yes, 1);
+  EmitAbbrev(MCOS, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4);
+  EmitAbbrev(MCOS, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr);
+  EmitAbbrev(MCOS, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr);
+  EmitAbbrev(MCOS, dwarf::DW_AT_name, dwarf::DW_FORM_string);
+  EmitAbbrev(MCOS, dwarf::DW_AT_comp_dir, dwarf::DW_FORM_string);
+  StringRef DwarfDebugFlags = context.getDwarfDebugFlags();
+  if (!DwarfDebugFlags.empty())
+    EmitAbbrev(MCOS, dwarf::DW_AT_APPLE_flags, dwarf::DW_FORM_string);
+  EmitAbbrev(MCOS, dwarf::DW_AT_producer, dwarf::DW_FORM_string);
+  EmitAbbrev(MCOS, dwarf::DW_AT_language, dwarf::DW_FORM_data2);
+  EmitAbbrev(MCOS, 0, 0);
+
+  // DW_TAG_subprogram DIE abbrev (2).
+  MCOS->EmitULEB128IntValue(2);
+  MCOS->EmitULEB128IntValue(dwarf::DW_TAG_subprogram);
+  MCOS->EmitIntValue(dwarf::DW_CHILDREN_yes, 1);
+  EmitAbbrev(MCOS, dwarf::DW_AT_name, dwarf::DW_FORM_string);
+  EmitAbbrev(MCOS, dwarf::DW_AT_decl_file, dwarf::DW_FORM_data4);
+  EmitAbbrev(MCOS, dwarf::DW_AT_decl_line, dwarf::DW_FORM_data4);
+  EmitAbbrev(MCOS, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr);
+  EmitAbbrev(MCOS, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr);
+  EmitAbbrev(MCOS, dwarf::DW_AT_prototyped, dwarf::DW_FORM_flag);
+  EmitAbbrev(MCOS, 0, 0);
+
+  // DW_TAG_unspecified_parameters DIE abbrev (3).
+  MCOS->EmitULEB128IntValue(3);
+  MCOS->EmitULEB128IntValue(dwarf::DW_TAG_unspecified_parameters);
+  MCOS->EmitIntValue(dwarf::DW_CHILDREN_no, 1);
+  EmitAbbrev(MCOS, 0, 0);
+
+  // Terminate the abbreviations for this compilation unit.
+  MCOS->EmitIntValue(0, 1);
+}
+
+// When generating dwarf for assembly source files this emits the data for
+// .debug_aranges section.  Which contains a header and a table of pairs of
+// PointerSize'ed values for the address and size of section(s) with line table
+// entries (just the default .text in our case) and a terminating pair of zeros.
+static void EmitGenDwarfAranges(MCStreamer *MCOS) {
+  MCContext &context = MCOS->getContext();
+
+  // Create a symbol at the end of the section that we are creating the dwarf
+  // debugging info to use later in here as part of the expression to calculate
+  // the size of the section for the table.
+  MCOS->SwitchSection(context.getGenDwarfSection());
+  MCSymbol *SectionEndSym = context.CreateTempSymbol();
+  MCOS->EmitLabel(SectionEndSym);
+  context.setGenDwarfSectionEndSym(SectionEndSym);
+
+  MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfARangesSection());
+
+  // This will be the length of the .debug_aranges section, first account for
+  // the size of each item in the header (see below where we emit these items).
+  int Length = 4 + 2 + 4 + 1 + 1;
+
+  // Figure the padding after the header before the table of address and size
+  // pairs who's values are PointerSize'ed.
+  const MCAsmInfo &asmInfo = context.getAsmInfo();
+  int AddrSize = asmInfo.getPointerSize();
+  int Pad = 2 * AddrSize - (Length & (2 * AddrSize - 1));
+  if (Pad == 2 * AddrSize)
+    Pad = 0;
+  Length += Pad;
+
+  // Add the size of the pair of PointerSize'ed values for the address and size
+  // of the one default .text section we have in the table.
+  Length += 2 * AddrSize;
+  // And the pair of terminating zeros.
+  Length += 2 * AddrSize;
+
+
+  // Emit the header for this section.
+  // The 4 byte length not including the 4 byte value for the length.
+  MCOS->EmitIntValue(Length - 4, 4);
+  // The 2 byte version, which is 2.
+  MCOS->EmitIntValue(2, 2);
+  // The 4 byte offset to the compile unit in the .debug_info from the start
+  // of the .debug_info, it is at the start of that section so this is zero.
+  MCOS->EmitIntValue(0, 4);
+  // The 1 byte size of an address.
+  MCOS->EmitIntValue(AddrSize, 1);
+  // The 1 byte size of a segment descriptor, we use a value of zero.
+  MCOS->EmitIntValue(0, 1);
+  // Align the header with the padding if needed, before we put out the table.
+  for(int i = 0; i < Pad; i++)
+    MCOS->EmitIntValue(0, 1);
+
+  // Now emit the table of pairs of PointerSize'ed values for the section(s)
+  // address and size, in our case just the one default .text section.
+  const MCExpr *Addr = MCSymbolRefExpr::Create(
+    context.getGenDwarfSectionStartSym(), MCSymbolRefExpr::VK_None, context);
+  const MCExpr *Size = MakeStartMinusEndExpr(*MCOS,
+    *context.getGenDwarfSectionStartSym(), *SectionEndSym, 0);
+  MCOS->EmitAbsValue(Addr, AddrSize);
+  MCOS->EmitAbsValue(Size, AddrSize);
+
+  // And finally the pair of terminating zeros.
+  MCOS->EmitIntValue(0, AddrSize);
+  MCOS->EmitIntValue(0, AddrSize);
+}
+
+// When generating dwarf for assembly source files this emits the data for
+// .debug_info section which contains three parts.  The header, the compile_unit
+// DIE and a list of subprogram DIEs.
+static void EmitGenDwarfInfo(MCStreamer *MCOS) {
+  MCContext &context = MCOS->getContext();
+
+  MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfInfoSection()); 
+
+  // Create a symbol at the start and end of this section used in here for the
+  // expression to calculate the length in the header.
+  MCSymbol *InfoStart = context.CreateTempSymbol();
+  MCOS->EmitLabel(InfoStart);
+  MCSymbol *InfoEnd = context.CreateTempSymbol();
+
+  // First part: the header.
+
+  // The 4 byte total length of the information for this compilation unit, not
+  // including these 4 bytes.
+  const MCExpr *Length = MakeStartMinusEndExpr(*MCOS, *InfoStart, *InfoEnd, 4);
+  MCOS->EmitAbsValue(Length, 4);
+
+  // The 2 byte DWARF version, which is 2.
+  MCOS->EmitIntValue(2, 2);
+
+  // The 4 byte offset to the debug abbrevs from the start of the .debug_abbrev,
+  // it is at the start of that section so this is zero.
+  MCOS->EmitIntValue(0, 4);
+
+  const MCAsmInfo &asmInfo = context.getAsmInfo();
+  int AddrSize = asmInfo.getPointerSize();
+  // The 1 byte size of an address.
+  MCOS->EmitIntValue(AddrSize, 1);
+
+  // Second part: the compile_unit DIE.
+
+  // The DW_TAG_compile_unit DIE abbrev (1).
+  MCOS->EmitULEB128IntValue(1);
+
+  // DW_AT_stmt_list, a 4 byte offset from the start of the .debug_line section,
+  // which is at the start of that section so this is zero.
+  MCOS->EmitIntValue(0, 4);
+
+  // AT_low_pc, the first address of the default .text section.
+  const MCExpr *Start = MCSymbolRefExpr::Create(
+    context.getGenDwarfSectionStartSym(), MCSymbolRefExpr::VK_None, context);
+  MCOS->EmitAbsValue(Start, AddrSize);
+
+  // AT_high_pc, the last address of the default .text section.
+  const MCExpr *End = MCSymbolRefExpr::Create(
+    context.getGenDwarfSectionEndSym(), MCSymbolRefExpr::VK_None, context);
+  MCOS->EmitAbsValue(End, AddrSize);
+
+  // AT_name, the name of the source file.  Reconstruct from the first directory
+  // and file table entries.
+  const std::vector<StringRef> &MCDwarfDirs =
+    context.getMCDwarfDirs();
+  if (MCDwarfDirs.size() > 0) {
+    MCOS->EmitBytes(MCDwarfDirs[0], 0);
+    MCOS->EmitBytes("/", 0);
+  }
+  const std::vector<MCDwarfFile *> &MCDwarfFiles =
+    MCOS->getContext().getMCDwarfFiles();
+  MCOS->EmitBytes(MCDwarfFiles[1]->getName(), 0);
+  MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
+
+  // AT_comp_dir, the working directory the assembly was done in.
+  llvm::sys::Path CWD = llvm::sys::Path::GetCurrentDirectory();
+  MCOS->EmitBytes(StringRef(CWD.c_str()), 0);
+  MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
+
+  // AT_APPLE_flags, the command line arguments of the assembler tool.
+  StringRef DwarfDebugFlags = context.getDwarfDebugFlags();
+  if (!DwarfDebugFlags.empty()){
+    MCOS->EmitBytes(DwarfDebugFlags, 0);
+    MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
+  }
+
+  // AT_producer, the version of the assembler tool.
+  MCOS->EmitBytes(StringRef("llvm-mc (based on LLVM "), 0);
+  MCOS->EmitBytes(StringRef(PACKAGE_VERSION), 0);
+  MCOS->EmitBytes(StringRef(")"), 0);
+  MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
+
+  // AT_language, a 4 byte value.  We use DW_LANG_Mips_Assembler as the dwarf2
+  // draft has no standard code for assembler.
+  MCOS->EmitIntValue(dwarf::DW_LANG_Mips_Assembler, 2);
+
+  // Third part: the list of subprogram DIEs.
+
+  // Loop on saved info for dwarf subprograms and create the DIEs for them.
+  const std::vector<const MCGenDwarfSubprogramEntry *> &Entries =
+    MCOS->getContext().getMCGenDwarfSubprogramEntries();
+  for (std::vector<const MCGenDwarfSubprogramEntry *>::const_iterator it =
+       Entries.begin(), ie = Entries.end(); it != ie;
+       ++it) {
+    const MCGenDwarfSubprogramEntry *Entry = *it;
+
+    // The DW_TAG_subprogram DIE abbrev (2).
+    MCOS->EmitULEB128IntValue(2);
+
+    // AT_name, of the label without any leading underbar.
+    MCOS->EmitBytes(Entry->getName(), 0);
+    MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
+
+    // AT_decl_file, index into the file table.
+    MCOS->EmitIntValue(Entry->getFileNumber(), 4);
+
+    // AT_decl_line, source line number.
+    MCOS->EmitIntValue(Entry->getLineNumber(), 4);
+
+    // AT_low_pc, start address of the label.
+    const MCExpr *AT_low_pc = MCSymbolRefExpr::Create(Entry->getLabel(),
+                                             MCSymbolRefExpr::VK_None, context);
+    MCOS->EmitAbsValue(AT_low_pc, AddrSize);
+
+    // AT_high_pc, end address which is the next label or end of the section.
+    std::vector<const MCGenDwarfSubprogramEntry *>::const_iterator next = it+1;
+    if (next != Entries.end()){
+      const MCGenDwarfSubprogramEntry *NextEntry = *next;
+      const MCExpr *AT_high_pc = MCSymbolRefExpr::Create(NextEntry->getLabel(),
+                                             MCSymbolRefExpr::VK_None, context);
+      MCOS->EmitAbsValue(AT_high_pc, AddrSize);
+    } else {
+      MCOS->EmitAbsValue(End, AddrSize);
+    }
+
+    // DW_AT_prototyped, a one byte flag value of 0 saying we have no prototype.
+    MCOS->EmitIntValue(0, 1);
+
+    // The DW_TAG_unspecified_parameters DIE abbrev (3).
+    MCOS->EmitULEB128IntValue(3);
+
+    // Add the NULL DIE terminating the DW_TAG_unspecified_parameters DIE's.
+    MCOS->EmitIntValue(0, 1);
+  }
+  // Deallocate the MCGenDwarfSubprogramEntry classes that saved away the info
+  // for the dwarf subprograms.
+  for (std::vector<const MCGenDwarfSubprogramEntry *>::const_iterator it =
+       Entries.begin(), ie = Entries.end(); it != ie;
+       ++it) {
+    const MCGenDwarfSubprogramEntry *Entry = *it;
+    delete Entry;
+  }
+
+  // Add the NULL DIE terminating the Compile Unit DIE's.
+  MCOS->EmitIntValue(0, 1);
+
+  // Now set the value of the symbol at the end of the info section.
+  MCOS->EmitLabel(InfoEnd);
+}
+
+//
+// When generating dwarf for assembly source files this emits the Dwarf
+// sections.
+//
+void MCGenDwarfInfo::Emit(MCStreamer *MCOS) {
+  // Create the dwarf sections in this order (.debug_line already created).
+  MCContext &context = MCOS->getContext();
+  MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfInfoSection());
+  MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfAbbrevSection());
+  MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfARangesSection());
+
+  // If there are no line table entries then do not emit any section contents.
+  if (context.getMCLineSections().empty())
+    return;
+
+  // Output the data for .debug_aranges section.
+  EmitGenDwarfAranges(MCOS);
+
+  // Output the data for .debug_abbrev section.
+  EmitGenDwarfAbbrev(MCOS);
+
+  // Output the data for .debug_info section.
+  EmitGenDwarfInfo(MCOS);
+}
+
+//
+// When generating dwarf for assembly source files this is called when symbol
+// for a label is created.  If this symbol is not a temporary and is in the
+// section that dwarf is being generated for, save the needed info to create
+// a dwarf subprogram.
+//
+void MCGenDwarfSubprogramEntry::Make(MCSymbol *Symbol, MCStreamer *MCOS,
+                                     SourceMgr &SrcMgr, SMLoc &Loc) {
+  // We won't create dwarf subprogram's for temporary symbols or symbols not in
+  // the default text.
+  if (Symbol->isTemporary())
+    return;
+  MCContext &context = MCOS->getContext();
+  if (context.getGenDwarfSection() != MCOS->getCurrentSection())
+    return;
+
+  // The dwarf subprogram's name does not have the symbol name's leading
+  // underbar if any.
+  StringRef Name = Symbol->getName();
+  if (Name.startswith("_"))
+    Name = Name.substr(1, Name.size()-1);
+
+  // Get the dwarf file number to be used for the dwarf subprogram.
+  unsigned FileNumber = context.getGenDwarfFileNumber();
+
+  // Finding the line number is the expensive part which is why we just don't
+  // pass it in as for some symbols we won't create a dwarf subprogram.
+  int CurBuffer = SrcMgr.FindBufferContainingLoc(Loc);
+  unsigned LineNumber = SrcMgr.FindLineNumber(Loc, CurBuffer);
+
+  // We create a temporary symbol for use for the AT_high_pc and AT_low_pc
+  // values so that they don't have things like an ARM thumb bit from the
+  // original symbol. So when used they won't get a low bit set after
+  // relocation.
+  MCSymbol *Label = context.CreateTempSymbol();
+  MCOS->EmitLabel(Label);
+
+  // Create and entry for the info and add it to the other entries.
+  MCGenDwarfSubprogramEntry *Entry = 
+    new MCGenDwarfSubprogramEntry(Name, FileNumber, LineNumber, Label);
+  MCOS->getContext().addMCGenDwarfSubprogramEntry(Entry);
 }
 
 static int getDataAlignmentFactor(MCStreamer &streamer) {
