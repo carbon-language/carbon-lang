@@ -430,6 +430,10 @@ protected:
             return high_uid == GetID();
         return true;
     }
+    
+//    void
+//    OptimizeDIEOffsetsOrder (DWARFCompileUnit* cu, 
+//                             DIEArray &die_offsets);
 
     lldb::user_id_t
     MakeUserID (dw_offset_t die_offset) const

@@ -3039,6 +3039,7 @@ SymbolFileDWARF::FindTypes (const SymbolContext& sc,
         m_type_index.Find (name, die_offsets);
     }
     
+    //OptimizeDIEOffsetsOrder (sc.comp_unit ? GetDWARFCompileUnitForUID(sc.comp_unit->GetID()) : NULL, die_offsets);
     
     const size_t num_matches = die_offsets.size();
 
@@ -3124,6 +3125,8 @@ SymbolFileDWARF::FindNamespace (const SymbolContext& sc,
             m_namespace_index.Find (name, die_offsets);
         }
         
+        //OptimizeDIEOffsetsOrder (sc.comp_unit ? GetDWARFCompileUnitForUID(sc.comp_unit->GetID()) : NULL, die_offsets);
+
         DWARFCompileUnit* dwarf_cu = NULL;
         const DWARFDebugInfoEntry* die = NULL;
         const size_t num_matches = die_offsets.size();
@@ -3842,7 +3845,7 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (DWARFCompileUnit* cu,
         if (m_apple_types_ap.get())
         {
             const char *name_cstr = type_name.GetCString();
-            m_apple_types_ap->FindByName (name_cstr, die_offsets);
+            m_apple_types_ap->FindCompleteObjCClassByName (name_cstr, die_offsets);
         }
     }
     else
@@ -3853,6 +3856,7 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (DWARFCompileUnit* cu,
         m_type_index.Find (type_name, die_offsets);
     }
     
+    //OptimizeDIEOffsetsOrder (cu, die_offsets);
     
     const size_t num_matches = die_offsets.size();
     
@@ -3943,7 +3947,101 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (DWARFCompileUnit* cu,
     return type_sp;
 }
 
-
+//void
+//SymbolFileDWARF::OptimizeDIEOffsetsOrder (DWARFCompileUnit* cu, DIEArray &die_offsets)
+//{
+//    // Make sure we at least have a few matches before we do anthing
+//    const size_t num_die_offsets = die_offsets.size();
+//    if (num_die_offsets > 1)
+//    {        
+//        // Make sure we at least have more than one compie unit
+//        DWARFDebugInfo* debug_info = DebugInfo();
+//        if (debug_info->GetNumCompileUnits() > 1)
+//        {
+//            DIEArray optimized_die_offsets;
+//            optimized_die_offsets.reserve (num_die_offsets);
+//            dw_offset_t cu_lo_offset, cu_hi_offset;
+//            size_t i;
+//            
+//            // Since we might find many types in many compile units,
+//            // we should prefer ones that are in the current compile unit
+//            // first if one is supplied
+//            if (cu)
+//            {
+//                cu_lo_offset = cu->GetOffset();
+//                cu_hi_offset = cu->GetNextCompileUnitOffset();
+//            
+//                // Use matches from the current compile unit first
+//                for (i=0; i<num_die_offsets; ++i)
+//                {
+//                    const dw_offset_t die_offset = die_offsets[i];
+//                    // The compile unit lo offset is the offset of the compile
+//                    // unit header, so the first less than below is the right
+//                    // thing to do.
+//                    if (cu_lo_offset < die_offset && die_offset < cu_hi_offset)
+//                    {
+//                        optimized_die_offsets.push_back (die_offset);
+//                        // Set the DIE offset to an invalid value so
+//                        // we know it has already been put into the list
+//                        die_offsets[i] = 0; 
+//                    }
+//                }
+//            }
+//
+//            // Then use matches from compile units that already
+//            // have their DIEs parsed. This can help us from pulling
+//            // in different compile units for no reason
+//            bool cu_has_dies = false;
+//            cu_lo_offset = DW_INVALID_OFFSET;
+//            cu_hi_offset = 0;
+//            
+//            for (i=0; i<num_die_offsets; ++i)
+//            {
+//                const dw_offset_t die_offset = die_offsets[i];
+//                if (die_offset > 0)
+//                {
+//                    if (die_offset >= cu_hi_offset || die_offset <= cu_lo_offset)
+//                    {
+//                        DWARFCompileUnit* curr_cu = debug_info->GetCompileUnitContainingDIE(die_offset).get();
+//                        if (curr_cu)
+//                        {
+//                            cu_lo_offset = curr_cu->GetOffset();
+//                            cu_hi_offset = curr_cu->GetNextCompileUnitOffset();
+//                            cu_has_dies = curr_cu->HasDIEsParsed ();
+//                        }                    
+//                        else
+//                            continue;
+//                    }
+//                    
+//                    if (cu_has_dies)
+//                    {
+//                        optimized_die_offsets.push_back (die_offset);
+//                        die_offsets[i] = 0;                        
+//                    }
+//                }
+//            }
+//
+//            // We didn't re-order anything...
+//            if (optimized_die_offsets.empty())
+//                return;
+//            
+//            // We did re-order some DIEs, so copy any remaining
+//            // die offsets
+//            if (optimized_die_offsets.size() < die_offsets.size())
+//            {
+//                for (i=0; i<num_die_offsets; ++i)
+//                {
+//                    const dw_offset_t die_offset = die_offsets[i];
+//                    if (die_offset)
+//                        optimized_die_offsets.push_back (die_offset);
+//                }
+//            }
+//            // Swap our newer optimized list into "die_offsets"
+//            die_offsets.swap (optimized_die_offsets);
+//        }
+//    }
+//}
+                                          
 // This function can be used when a DIE is found that is a forward declaration
 // DIE and we want to try and find a type that has the complete definition.
 TypeSP
@@ -3983,8 +4081,9 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
         
         m_type_index.Find (type_name, die_offsets);
     }
-
     
+    //OptimizeDIEOffsetsOrder (cu, die_offsets);
+
     const size_t num_matches = die_offsets.size();
 
     const dw_tag_t die_tag = die->Tag();
@@ -5953,7 +6052,23 @@ SymbolFileDWARF::SearchDeclContext (const clang::DeclContext *decl_context,
         
         DWARFCompileUnit* dwarf_cu = NULL;
         const DWARFDebugInfoEntry* die = NULL;
-        size_t num_matches = m_type_index.Find (ConstString(name), die_offsets);
+        
+        if (m_using_apple_tables)
+        {
+            if (m_apple_types_ap.get())
+                m_apple_types_ap->FindByName (name, die_offsets);
+        }
+        else
+        {
+            if (!m_indexed)
+                Index ();
+            
+            m_type_index.Find (ConstString(name), die_offsets);
+        }
+        
+        //OptimizeDIEOffsetsOrder (NULL, die_offsets);
+
+        const size_t num_matches = die_offsets.size();
         
         if (num_matches)
         {

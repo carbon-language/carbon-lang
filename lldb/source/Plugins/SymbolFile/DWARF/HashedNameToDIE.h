@@ -60,6 +60,20 @@ struct DWARFMappedHash
         }
     }
 
+    static void
+    ExtractTypesFromDIEArray (const DIEInfoArray &die_info_array,
+                              uint32_t type_flag_mask,
+                              uint32_t type_flag_value,
+                              DIEArray &die_offsets)
+    {
+        const size_t count = die_info_array.size();
+        for (size_t i=0; i<count; ++i)
+        {
+            if ((die_info_array[i].type_flags & type_flag_mask) == type_flag_value)
+                die_offsets.push_back (die_info_array[i].offset);
+        }
+    }
+
     enum AtomType
     {
         eAtomTypeNULL       = 0u,
@@ -642,6 +656,31 @@ struct DWARFMappedHash
             if (FindByName(name, die_info_array))
                 DWARFMappedHash::ExtractDIEArray (die_info_array, die_offsets);
             return die_info_array.size();
+        }
+
+        size_t
+        FindCompleteObjCClassByName (const char *name, DIEArray &die_offsets)
+        {
+            DIEInfoArray die_info_array;
+            if (FindByName(name, die_info_array))
+            {
+                if (GetHeader().header_data.atoms.size() == 2)
+                {
+                    // If we have two atoms, then we have the DIE offset and
+                    // the type flags so we can find the objective C class
+                    // efficiently.
+                    DWARFMappedHash::ExtractTypesFromDIEArray (die_info_array, 
+                                                               UINT32_MAX,
+                                                               eTypeFlagNameIsFullyQualified | eTypeFlagClassIsImplementation  | eTypeClassClassOBJC,
+                                                               die_offsets);
+                }
+                else
+                {
+                    // WE don't have the type flags, just return everything
+                    DWARFMappedHash::ExtractDIEArray (die_info_array, die_offsets);
+                }
+            }
+            return die_offsets.size();
         }
 
         size_t 

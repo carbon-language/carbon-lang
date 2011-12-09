@@ -90,6 +90,12 @@ public:
         m_die_array.push_back(die);
     }
 
+    bool
+    HasDIEsParsed () const
+    {
+        return m_die_array.size() > 1;
+    }
+
     DWARFDebugInfoEntry*
     GetDIEAtIndexUnchecked (uint32_t idx)
     {
