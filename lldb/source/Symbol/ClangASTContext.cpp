@@ -2148,7 +2148,7 @@ ClangASTContext::AddObjCClassProperty
     uint32_t property_attributes
 )
 {
-    if (class_opaque_type == NULL)
+    if (class_opaque_type == NULL || property_name == NULL || property_name[0] == '\0')
         return false;
 
     IdentifierTable *identifier_table = &ast->Idents;
@@ -2166,8 +2166,15 @@ ClangASTContext::AddObjCClassProperty
         {
             ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
             
+            clang_type_t property_opaque_type_to_access;
+            
+            if (property_opaque_type)
+                property_opaque_type_to_access = property_opaque_type;
+            else if (ivar_decl)
+                property_opaque_type_to_access = ivar_decl->getType().getAsOpaquePtr();
+                        
             // FIXME: For now, we don't know how to add properties if we don't have their associated ivar.
-            if (class_interface_decl && ivar_decl)
+            if (class_interface_decl && property_opaque_type_to_access)
             {
                 clang::TypeSourceInfo *prop_type_source;
                 if (ivar_decl)
@@ -2182,25 +2189,40 @@ ClangASTContext::AddObjCClassProperty
                                                                            SourceLocation(), //Source Location for AT
                                                                            prop_type_source
                                                                            );
-                 if (property_decl)
-                 {
+                if (property_decl)
+                {
                     class_interface_decl->addDecl (property_decl);
+                    
+                    Selector setter_sel, getter_sel;
+                    
                     if (property_setter_name != NULL)
                     {
                         std::string property_setter_no_colon(property_setter_name, strlen(property_setter_name) - 1);
                         clang::IdentifierInfo *setter_ident = &identifier_table->get(property_setter_no_colon.c_str());
-                        Selector setter_sel = ast->Selectors.getSelector(1, &setter_ident);
+                        setter_sel = ast->Selectors.getSelector(1, &setter_ident);
                         property_decl->setSetterName(setter_sel);
                         property_decl->setPropertyAttributes (clang::ObjCPropertyDecl::OBJC_PR_setter);
+                    }
+                    else if (!(property_attributes & DW_APPLE_PROPERTY_readonly))
+                    {
+                        std::string setter_sel_string("set");
+                        setter_sel_string.push_back(::toupper(property_name[0]));
+                        setter_sel_string.append(&property_name[1]);
+                        clang::IdentifierInfo *setter_ident = &identifier_table->get(setter_sel_string.c_str());
+                        setter_sel = ast->Selectors.getSelector(1, &setter_ident);
                     }
                     
                     if (property_getter_name != NULL)
                     {
                         clang::IdentifierInfo *getter_ident = &identifier_table->get(property_getter_name);
-                        Selector getter_sel = ast->Selectors.getSelector(0, &getter_ident);
+                        getter_sel = ast->Selectors.getSelector(0, &getter_ident);
                         property_decl->setGetterName(getter_sel);
                         property_decl->setPropertyAttributes (clang::ObjCPropertyDecl::OBJC_PR_getter);
-
+                    }
+                    else
+                    {
+                        clang::IdentifierInfo *getter_ident = &identifier_table->get(property_name);
+                        getter_sel = ast->Selectors.getSelector(0, &getter_ident);
                     }
                         
                     if (ivar_decl)
@@ -2218,9 +2240,86 @@ ClangASTContext::AddObjCClassProperty
                         property_decl->setPropertyAttributes (clang::ObjCPropertyDecl::OBJC_PR_copy);
                     if (property_attributes & DW_APPLE_PROPERTY_nonatomic) 
                         property_decl->setPropertyAttributes (clang::ObjCPropertyDecl::OBJC_PR_nonatomic);
+                        
+                    if (!getter_sel.isNull() && !class_interface_decl->lookupInstanceMethod(getter_sel))
+                    {
+                        QualType result_type = QualType::getFromOpaquePtr(property_opaque_type_to_access);
+                        
+                        const bool isInstance = true;
+                        const bool isVariadic = false;
+                        const bool isSynthesized = false;
+                        const bool isImplicitlyDeclared = true;
+                        const bool isDefined = false;
+                        const ObjCMethodDecl::ImplementationControl impControl = ObjCMethodDecl::None;
+                        const bool HasRelatedResultType = false;
+                        
+                        ObjCMethodDecl *getter = ObjCMethodDecl::Create(*ast, 
+                                                                        SourceLocation(), 
+                                                                        SourceLocation(), 
+                                                                        getter_sel, 
+                                                                        result_type,
+                                                                        NULL, 
+                                                                        class_interface_decl,
+                                                                        isInstance,
+                                                                        isVariadic,
+                                                                        isSynthesized,
+                                                                        isImplicitlyDeclared,
+                                                                        isDefined,
+                                                                        impControl,
+                                                                        HasRelatedResultType);
+                                                
+                        getter->setMethodParams(*ast, ArrayRef<ParmVarDecl*>(), ArrayRef<SourceLocation>());
+                        
+                        class_interface_decl->addDecl(getter);
+                    }
+                    
+                    if (!setter_sel.isNull() && !class_interface_decl->lookupInstanceMethod(setter_sel))
+                    {
+                        QualType result_type = ast->VoidTy;
+                        
+                        const bool isInstance = true;
+                        const bool isVariadic = false;
+                        const bool isSynthesized = false;
+                        const bool isImplicitlyDeclared = true;
+                        const bool isDefined = false;
+                        const ObjCMethodDecl::ImplementationControl impControl = ObjCMethodDecl::None;
+                        const bool HasRelatedResultType = false;
+                        
+                        ObjCMethodDecl *setter = ObjCMethodDecl::Create(*ast, 
+                                                                        SourceLocation(), 
+                                                                        SourceLocation(), 
+                                                                        setter_sel, 
+                                                                        result_type,
+                                                                        NULL, 
+                                                                        class_interface_decl,
+                                                                        isInstance,
+                                                                        isVariadic,
+                                                                        isSynthesized,
+                                                                        isImplicitlyDeclared,
+                                                                        isDefined,
+                                                                        impControl,
+                                                                        HasRelatedResultType);
+                        
+                        llvm::SmallVector<ParmVarDecl *, 1> params;
+
+                        params.push_back (ParmVarDecl::Create (*ast,
+                                                               setter,
+                                                               SourceLocation(),
+                                                               SourceLocation(),
+                                                               NULL, // anonymous
+                                                               QualType::getFromOpaquePtr(property_opaque_type_to_access), 
+                                                               NULL,
+                                                               SC_Auto, 
+                                                               SC_Auto,
+                                                               NULL));
+                        
+                        setter->setMethodParams(*ast, ArrayRef<ParmVarDecl*>(params), ArrayRef<SourceLocation>());
+                        
+                        class_interface_decl->addDecl(setter);
+                    }
 
                     return true;
-                 }
+                }
             }
         }
     }
