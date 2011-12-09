@@ -1161,15 +1161,26 @@ def FCONSTS : VFPAI<(outs SPR:$Sd), (ins vfp_f32imm:$imm),
 // Assembler aliases.
 //
 
+class VFP2MnemonicAlias<string src, string dst> : MnemonicAlias<src, dst>,
+          Requires<[HasVFP2]>;
 // A few mnemnoic aliases for pre-unifixed syntax. We don't guarantee to
 // support them all, but supporting at least some of the basics is
 // good to be friendly.
-def : MnemonicAlias<"flds", "vldr">;
-def : MnemonicAlias<"fldd", "vldr">;
-def : MnemonicAlias<"fmrs", "vmov">;
-def : MnemonicAlias<"fmsr", "vmov">;
-def : MnemonicAlias<"fsqrts", "vsqrt">;
-def : MnemonicAlias<"fsqrtd", "vsqrt">;
+def : VFP2MnemonicAlias<"flds", "vldr">;
+def : VFP2MnemonicAlias<"fldd", "vldr">;
+def : VFP2MnemonicAlias<"fmrs", "vmov">;
+def : VFP2MnemonicAlias<"fmsr", "vmov">;
+def : VFP2MnemonicAlias<"fsqrts", "vsqrt">;
+def : VFP2MnemonicAlias<"fsqrtd", "vsqrt">;
+def : VFP2MnemonicAlias<"fadds", "vadd.f32">;
+def : VFP2MnemonicAlias<"faddd", "vadd.f64">;
+def : VFP2MnemonicAlias<"fmrdd", "vmov">;
+def : VFP2MnemonicAlias<"fmrds", "vmov">;
+def : VFP2MnemonicAlias<"fmrrd", "vmov">;
+def : VFP2MnemonicAlias<"fmdrr", "vmov">;
+def : VFP2MnemonicAlias<"fmuld", "vmul.f64">;
+def : VFP2MnemonicAlias<"fnegs", "vneg.f32">;
+def : VFP2MnemonicAlias<"fnegd", "vneg.f64">;
 
 def : VFP2InstAlias<"fmstat${p}", (FMSTAT pred:$p)>;
 

@@ -5308,6 +5308,11 @@ def : Pat<(v2f64 (bitconvert (v4f32 QPR:$src))), (v2f64 QPR:$src)>;
 //===----------------------------------------------------------------------===//
 // Assembler aliases
 //
+def : VFP2InstAlias<"fmdhr${p} $Dd, $Rn",
+                    (VSETLNi32 DPR:$Dd, GPR:$Rn, 1, pred:$p)>;
+def : VFP2InstAlias<"fmdlr${p} $Dd, $Rn",
+                    (VSETLNi32 DPR:$Dd, GPR:$Rn, 0, pred:$p)>;
+
 
 // VADD two-operand aliases.
 def : NEONInstAlias<"vadd${p}.i8 $Vdn, $Vm",

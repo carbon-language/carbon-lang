@@ -4523,9 +4523,18 @@ static bool doesIgnoreDataTypeSuffix(StringRef Mnemonic, StringRef DT) {
   return Mnemonic.startswith("vldm") || Mnemonic.startswith("vstm");
 }
 
+static void applyMnemonicAliases(StringRef &Mnemonic, unsigned Features);
 /// Parse an arm instruction mnemonic followed by its operands.
 bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Apply mnemonic aliases before doing anything else, as the destination
+  // mnemnonic may include suffices and we want to handle them normally.
+  // The generic tblgen'erated code does this later, at the start of
+  // MatchInstructionImpl(), but that's too late for aliases that include
+  // any sort of suffix.
+  unsigned AvailableFeatures = getAvailableFeatures();
+  applyMnemonicAliases(Name, AvailableFeatures);
+
   // Create the leading tokens for the mnemonic, split by '.' characters.
   size_t Start = 0, Next = Name.find('.');
   StringRef Mnemonic = Name.slice(Start, Next);
