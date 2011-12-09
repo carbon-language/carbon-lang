@@ -2255,7 +2255,8 @@ int ARMAsmParser::tryParseShiftRegister(
     ShiftReg = SrcReg;
   } else {
     // Figure out if this is shifted by a constant or a register (for non-RRX).
-    if (Parser.getTok().is(AsmToken::Hash)) {
+    if (Parser.getTok().is(AsmToken::Hash) ||
+        Parser.getTok().is(AsmToken::Dollar)) {
       Parser.Lex(); // Eat hash.
       SMLoc ImmLoc = Parser.getTok().getLoc();
       const MCExpr *ShiftExpr = 0;
@@ -3090,7 +3091,8 @@ parsePKHImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands, StringRef Op,
   Parser.Lex(); // Eat shift type token.
 
   // There must be a '#' and a shift amount.
-  if (Parser.getTok().isNot(AsmToken::Hash)) {
+  if (Parser.getTok().isNot(AsmToken::Hash) &&
+      Parser.getTok().isNot(AsmToken::Dollar)) {
     Error(Parser.getTok().getLoc(), "'#' expected");
     return MatchOperand_ParseFail;
   }
@@ -3168,7 +3170,8 @@ parseShifterImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   Parser.Lex(); // Eat the operator.
 
   // A '#' and a shift amount.
-  if (Parser.getTok().isNot(AsmToken::Hash)) {
+  if (Parser.getTok().isNot(AsmToken::Hash) &&
+      Parser.getTok().isNot(AsmToken::Dollar)) {
     Error(Parser.getTok().getLoc(), "'#' expected");
     return MatchOperand_ParseFail;
   }
@@ -3228,7 +3231,8 @@ parseRotImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   Parser.Lex(); // Eat the operator.
 
   // A '#' and a rotate amount.
-  if (Parser.getTok().isNot(AsmToken::Hash)) {
+  if (Parser.getTok().isNot(AsmToken::Hash) &&
+      Parser.getTok().isNot(AsmToken::Dollar)) {
     Error(Parser.getTok().getLoc(), "'#' expected");
     return MatchOperand_ParseFail;
   }
@@ -3265,7 +3269,8 @@ ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parseBitfield(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
   // The bitfield descriptor is really two operands, the LSB and the width.
-  if (Parser.getTok().isNot(AsmToken::Hash)) {
+  if (Parser.getTok().isNot(AsmToken::Hash) &&
+      Parser.getTok().isNot(AsmToken::Dollar)) {
     Error(Parser.getTok().getLoc(), "'#' expected");
     return MatchOperand_ParseFail;
   }
@@ -3297,7 +3302,8 @@ parseBitfield(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     return MatchOperand_ParseFail;
   }
   Parser.Lex(); // Eat hash token.
-  if (Parser.getTok().isNot(AsmToken::Hash)) {
+  if (Parser.getTok().isNot(AsmToken::Hash) &&
+      Parser.getTok().isNot(AsmToken::Dollar)) {
     Error(Parser.getTok().getLoc(), "'#' expected");
     return MatchOperand_ParseFail;
   }
@@ -3391,7 +3397,8 @@ parseAM3Offset(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Tok.getLoc();
 
   // Do immediates first, as we always parse those if we have a '#'.
-  if (Parser.getTok().is(AsmToken::Hash)) {
+  if (Parser.getTok().is(AsmToken::Hash) ||
+      Parser.getTok().is(AsmToken::Dollar)) {
     Parser.Lex(); // Eat the '#'.
     // Explicitly look for a '-', as we need to encode negative zero
     // differently.
@@ -3895,8 +3902,9 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   // offset. Be friendly and also accept a plain integer (without a leading
   // hash) for gas compatibility.
   if (Parser.getTok().is(AsmToken::Hash) ||
+      Parser.getTok().is(AsmToken::Dollar) ||
       Parser.getTok().is(AsmToken::Integer)) {
-    if (Parser.getTok().is(AsmToken::Hash))
+    if (Parser.getTok().isNot(AsmToken::Integer))
       Parser.Lex(); // Eat the '#'.
     E = Parser.getTok().getLoc();
 
@@ -4015,7 +4023,8 @@ bool ARMAsmParser::parseMemRegOffsetShift(ARM_AM::ShiftOpc &St,
     Loc = Parser.getTok().getLoc();
     // A '#' and a shift amount.
     const AsmToken &HashTok = Parser.getTok();
-    if (HashTok.isNot(AsmToken::Hash))
+    if (HashTok.isNot(AsmToken::Hash) &&
+        HashTok.isNot(AsmToken::Dollar))
       return Error(HashTok.getLoc(), "'#' expected");
     Parser.Lex(); // Eat hash token.
 
@@ -4044,7 +4053,8 @@ ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parseFPImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   SMLoc S = Parser.getTok().getLoc();
 
-  if (Parser.getTok().isNot(AsmToken::Hash))
+  if (Parser.getTok().isNot(AsmToken::Hash) &&
+      Parser.getTok().isNot(AsmToken::Dollar))
     return MatchOperand_NoMatch;
 
   // Disambiguate the VMOV forms that can accept an FP immediate.
@@ -4157,6 +4167,7 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
     return parseMemory(Operands);
   case AsmToken::LCurly:
     return parseRegisterList(Operands);
+  case AsmToken::Dollar:
   case AsmToken::Hash: {
     // #42 -> immediate.
     // TODO: ":lower16:" and ":upper16:" modifiers after # before immediate
