@@ -2772,7 +2772,9 @@ static bool hasPartialRegUpdate(unsigned Opcode) {
   case X86::RCPSSr:
   case X86::RCPSSr_Int:
   case X86::ROUNDSDr:
+  case X86::ROUNDSDr_Int:
   case X86::ROUNDSSr:
+  case X86::ROUNDSSr_Int:
   case X86::RSQRTSSr:
   case X86::RSQRTSSr_Int:
   case X86::SQRTSSr:
@@ -2784,7 +2786,9 @@ static bool hasPartialRegUpdate(unsigned Opcode) {
   case X86::Int_VCVTSS2SDrr:
   case X86::VRCPSSr:
   case X86::VROUNDSDr:
+  case X86::VROUNDSDr_Int:
   case X86::VROUNDSSr:
+  case X86::VROUNDSSr_Int:
   case X86::VRSQRTSSr:
   case X86::VSQRTSSr:
     return true;

@@ -6052,8 +6052,18 @@ multiclass sse41_fp_binop_rm<bits<8> opcss, bits<8> opcsd,
                             Intrinsic F32Int,
                             Intrinsic F64Int, bit Is2Addr = 1> {
 let ExeDomain = GenericDomain in {
-  // Intrinsic operation, reg.
+  // Operation, reg.
   def SSr : SS4AIi8<opcss, MRMSrcReg,
+      (outs FR32:$dst), (ins FR32:$src1, FR32:$src2, i32i8imm:$src3),
+      !if(Is2Addr,
+          !strconcat(OpcodeStr,
+              "ss\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+          !strconcat(OpcodeStr,
+              "ss\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
+      []>, OpSize;
+
+  // Intrinsic operation, reg.
+  def SSr_Int : SS4AIi8<opcss, MRMSrcReg,
         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
         !if(Is2Addr,
             !strconcat(OpcodeStr,
@@ -6075,8 +6085,18 @@ let ExeDomain = GenericDomain in {
              (F32Int VR128:$src1, sse_load_f32:$src2, imm:$src3))]>,
         OpSize;
 
-  // Intrinsic operation, reg.
+  // Operation, reg.
   def SDr : SS4AIi8<opcsd, MRMSrcReg,
+        (outs FR64:$dst), (ins FR64:$src1, FR64:$src2, i32i8imm:$src3),
+        !if(Is2Addr,
+            !strconcat(OpcodeStr,
+                "sd\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
+            !strconcat(OpcodeStr,
+                "sd\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
+        []>, OpSize;
+
+  // Intrinsic operation, reg.
+  def SDr_Int : SS4AIi8<opcsd, MRMSrcReg,
         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
         !if(Is2Addr,
             !strconcat(OpcodeStr,
