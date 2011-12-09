@@ -80,16 +80,14 @@ SVal SimpleSValBuilder::evalCastFromNonLoc(NonLoc val, QualType castTy) {
 
   if (const SymExpr *se = val.getAsSymbolicExpression()) {
     QualType T = Context.getCanonicalType(se->getType(Context));
-    if (T == Context.getCanonicalType(castTy))
-      return val;
-    
+    // If types are the same or both are integers, ignore the cast.
     // FIXME: Remove this hack when we support symbolic truncation/extension.
     // HACK: If both castTy and T are integers, ignore the cast.  This is
     // not a permanent solution.  Eventually we want to precisely handle
     // extension/truncation of symbolic integers.  This prevents us from losing
     // precision when we assign 'x = y' and 'y' is symbolic and x and y are
     // different integer types.
-    if (T->isIntegerType() && castTy->isIntegerType())
+   if (haveSameType(T, castTy))
       return val;
 
     if (!isLocType)
@@ -483,7 +481,7 @@ SVal SimpleSValBuilder::evalBinOpNN(const ProgramState *state,
         // Otherwise, make a SymbolVal out of the expression.
         return MakeSymIntVal(symIntExpr, op, rhsInt->getValue(), resultTy);
 
-      // LHS is a simple symbol.
+      // LHS is a simple symbol (not a symbolic expression).
       } else {
         nonloc::SymbolVal *slhs = cast<nonloc::SymbolVal>(&lhs);
         SymbolRef Sym = slhs->getSymbol();

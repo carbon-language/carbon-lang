@@ -55,3 +55,18 @@ void taintTracking(int x) {
   int ty = xy.y; // FIXME: This should be tainted as well.
   char ntz = xy.z;// no warning
 }
+
+void BitwiseOp(int in, char inn) {
+  // Taint on bitwise operations, integer to integer cast.
+  int m;
+  int x = 0;
+  scanf("%d", &x);
+  int y = (in << (x << in)) * 5;// expected-warning 4 {{tainted}}
+  // The next line tests integer to integer cast.
+  int z = y & inn; // expected-warning 2 {{tainted}}
+  if (y == 5) // expected-warning 2 {{tainted}}
+    m = z | z;// expected-warning 4 {{tainted}}
+  else
+    m = inn;
+  int mm = m; // expected-warning   {{tainted}}
+}
