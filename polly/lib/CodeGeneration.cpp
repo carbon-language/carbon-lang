@@ -316,49 +316,51 @@ public:
   }
 
   /// @brief Get the memory access offset to be added to the base address
-  std::vector <Value*> getMemoryAccessIndex(isl_map *accessRelation,
-                                            Value *baseAddr) {
-    isl_int offsetMPZ;
-    isl_int_init(offsetMPZ);
+  std::vector <Value*> getMemoryAccessIndex(__isl_keep isl_map *AccessRelation,
+                                            Value *BaseAddress) {
+    isl_int OffsetMPZ;
+    isl_int_init(OffsetMPZ);
 
-    assert((isl_map_dim(accessRelation, isl_dim_out) == 1)
+    assert((isl_map_dim(AccessRelation, isl_dim_out) == 1)
            && "Only single dimensional access functions supported");
 
-    if (isl_map_plain_is_fixed(accessRelation, isl_dim_out,
-                               0, &offsetMPZ) == -1)
+    if (isl_map_plain_is_fixed(AccessRelation, isl_dim_out,
+                               0, &OffsetMPZ) == -1)
       errs() << "Only fixed value access functions supported\n";
 
     // Convert the offset from MPZ to Value*.
-    APInt offset = APInt_from_MPZ(offsetMPZ);
-    Value *offsetValue = ConstantInt::get(Builder.getContext(), offset);
-    PointerType *baseAddrType = dyn_cast<PointerType>(baseAddr->getType());
-    Type *arrayType = baseAddrType->getElementType();
-    Type *arrayElementType = dyn_cast<ArrayType>(arrayType)->getElementType();
-    offsetValue = Builder.CreateSExtOrBitCast(offsetValue, arrayElementType);
+    APInt Offset = APInt_from_MPZ(OffsetMPZ);
+    Value *OffsetValue = ConstantInt::get(Builder.getContext(), Offset);
+    PointerType *BaseAddressType = dyn_cast<PointerType>(
+                                   BaseAddress->getType());
+    Type *ArrayTy = BaseAddressType->getElementType();
+    Type *ArrayElementType = dyn_cast<ArrayType>(ArrayTy)->getElementType();
+    OffsetValue = Builder.CreateSExtOrBitCast(OffsetValue, ArrayElementType);
 
-    std::vector<Value*> indexArray;
-    Value *nullValue = Constant::getNullValue(arrayElementType);
-    indexArray.push_back(nullValue);
-    indexArray.push_back(offsetValue);
+    std::vector<Value*> IndexArray;
+    Value *NullValue = Constant::getNullValue(ArrayElementType);
+    IndexArray.push_back(NullValue);
+    IndexArray.push_back(OffsetValue);
 
-    isl_int_clear(offsetMPZ);
-    return indexArray;
+    isl_int_clear(OffsetMPZ);
+    return IndexArray;
   }
 
   /// @brief Get the new operand address according to the changed access in
   ///        JSCOP file.
-  Value *getNewAccessOperand(isl_map *newAccessRelation, Value *baseAddr,
-                             const Value *oldOperand, ValueMapT &BBMap) {
-    std::vector<Value*> indexArray = getMemoryAccessIndex(newAccessRelation,
-                                                          baseAddr);
-    Value *newOperand = Builder.CreateGEP(baseAddr, indexArray,
+  Value *getNewAccessOperand(__isl_keep isl_map *NewAccessRelation,
+                             Value *BaseAddress, const Value *OldOperand,
+                             ValueMapT &BBMap) {
+    std::vector<Value*> IndexArray = getMemoryAccessIndex(NewAccessRelation,
+                                                          BaseAddress);
+    Value *NewOperand = Builder.CreateGEP(BaseAddress, IndexArray,
                                           "p_newarrayidx_");
-    return newOperand;
+    return NewOperand;
   }
 
   /// @brief Generate the operand address
   Value *generateLocationAccessed(const Instruction *Inst,
-                                  const Value *pointer, ValueMapT &BBMap ) {
+                                  const Value *Pointer, ValueMapT &BBMap ) {
     MemoryAccess &Access = statement.getAccessFor(Inst);
     isl_map *CurrentAccessRelation = Access.getAccessRelation();
     isl_map *NewAccessRelation = Access.getNewAccessRelation();
@@ -369,10 +371,10 @@ public:
     Value *NewPointer;
 
     if (!NewAccessRelation) {
-      NewPointer = getOperand(pointer, BBMap);
+      NewPointer = getOperand(Pointer, BBMap);
     } else {
-      Value *BaseAddr = const_cast<Value*>(Access.getBaseAddr());
-      NewPointer = getNewAccessOperand(NewAccessRelation, BaseAddr, pointer,
+      Value *BaseAddress = const_cast<Value*>(Access.getBaseAddr());
+      NewPointer = getNewAccessOperand(NewAccessRelation, BaseAddress, Pointer,
                                        BBMap);
     }
 
