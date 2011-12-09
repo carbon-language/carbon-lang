@@ -241,8 +241,11 @@ TEST_F(FileSystemTest, DirectoryIteration) {
   for (fs::recursive_directory_iterator i(Twine(TestDirectory)
          + "/recursive", ec), e; i != e; i.increment(ec)){
     ASSERT_NO_ERROR(ec);
-    if (path::filename(i->path()) == "p1")
+    if (path::filename(i->path()) == "p1") {
       i.pop();
+      // FIXME: recursive_directory_iterator should be more robust.
+      if (i == e) break;
+    }
     if (path::filename(i->path()) == "dontlookhere")
       i.no_push();
     visited.push_back(path::filename(i->path()));
