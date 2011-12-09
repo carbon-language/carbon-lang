@@ -199,7 +199,7 @@ protected:
 class ArgTypeResult {
 public:
   enum Kind { UnknownTy, InvalidTy, SpecificTy, ObjCPointerTy, CPointerTy,
-              AnyCharTy, CStrTy, WCStrTy, WIntTy, TypedefTy };
+              AnyCharTy, CStrTy, WCStrTy, WIntTy };
 private:
   const Kind K;
   QualType T;
@@ -207,8 +207,9 @@ private:
   ArgTypeResult(bool) : K(InvalidTy), Name(0) {}
 public:
   ArgTypeResult(Kind k = UnknownTy) : K(k), Name(0) {}
+  ArgTypeResult(Kind k, const char *n) : K(k), Name(n) {}
   ArgTypeResult(QualType t) : K(SpecificTy), T(t), Name(0) {}
-  ArgTypeResult(QualType t, const char *n) : K(TypedefTy), T(t), Name(n)  {}
+  ArgTypeResult(QualType t, const char *n) : K(SpecificTy), T(t), Name(n)  {}
   ArgTypeResult(CanQualType t) : K(SpecificTy), T(t), Name(0) {}
 
   static ArgTypeResult Invalid() { return ArgTypeResult(true); }

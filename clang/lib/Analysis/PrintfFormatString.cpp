@@ -247,7 +247,8 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
   if (CS.getKind() == ConversionSpecifier::cArg)
     switch (LM.getKind()) {
       case LengthModifier::None: return Ctx.IntTy;
-      case LengthModifier::AsLong: return ArgTypeResult::WIntTy;
+      case LengthModifier::AsLong:
+        return ArgTypeResult(ArgTypeResult::WIntTy, "wint_t");
       default:
         return ArgTypeResult::Invalid();
     }
@@ -296,14 +297,16 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
   }
 
   switch (CS.getKind()) {
-    case ConversionSpecifier::sArg:
-      return ArgTypeResult(LM.getKind() == LengthModifier::AsWideChar ?
-          ArgTypeResult::WCStrTy : ArgTypeResult::CStrTy);
+    case ConversionSpecifier::sArg: {
+      if (LM.getKind() == LengthModifier::AsWideChar)
+        return ArgTypeResult(ArgTypeResult::WCStrTy, "wchar_t *");
+      return ArgTypeResult::CStrTy;
+    }
     case ConversionSpecifier::SArg:
       // FIXME: This appears to be Mac OS X specific.
-      return ArgTypeResult::WCStrTy;
+      return ArgTypeResult(ArgTypeResult::WCStrTy, "wchar_t *");
     case ConversionSpecifier::CArg:
-      return Ctx.WCharTy;
+      return ArgTypeResult(Ctx.WCharTy, "wchar_t");
     case ConversionSpecifier::pArg:
       return ArgTypeResult::CPointerTy;
     default:

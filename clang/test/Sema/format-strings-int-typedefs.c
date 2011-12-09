@@ -7,6 +7,11 @@ void test(void) {
   printf("%ju", 42.0); // expected-warning {{conversion specifies type 'uintmax_t' (aka 'unsigned long long')}}
   printf("%zu", 42.0); // expected-warning {{conversion specifies type 'size_t' (aka 'unsigned long')}}
   printf("%td", 42.0); // expected-warning {{conversion specifies type 'ptrdiff_t' (aka 'int')}}
+  printf("%lc", 42.0); // expected-warning {{conversion specifies type 'wint_t' (aka 'int')}}
+  printf("%ls", 42.0); // expected-warning {{conversion specifies type 'wchar_t *' (aka 'int *')}}
+  printf("%S", 42.0);  // expected-warning {{conversion specifies type 'wchar_t *' (aka 'int *')}}
+  printf("%C", 42.0);  // expected-warning {{conversion specifies type 'wchar_t' (aka 'int')}}
+
 
   // typedef size_t et al. to something crazy.
   typedef void *size_t;
