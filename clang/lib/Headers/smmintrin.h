@@ -368,7 +368,7 @@ _mm_packus_epi32(__m128i __V1, __m128i __V2)
 
 #define _mm_cmpestrm(A, LA, B, LB, M) \
      __builtin_ia32_pcmpestrm128((A), (LA), (B), (LB), (M))
-#define _mm_cmpestri(X, LX, Y, LY, M) \
+#define _mm_cmpestri(A, LA, B, LB, M) \
      __builtin_ia32_pcmpestri128((A), (LA), (B), (LB), (M))
      
 /* SSE4.2 Packed Comparison Intrinsics and EFlag Reading.  */
