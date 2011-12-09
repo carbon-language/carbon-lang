@@ -648,13 +648,21 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
           Qualifiers::ObjCLifetime lifetime =
             getImpliedARCOwnership(kind, PropertyIvarType);
           assert(lifetime && "no lifetime for property?");
-
-          if (lifetime == Qualifiers::OCL_Weak &&
-              !getLangOptions().ObjCRuntimeHasWeak) {
-            Diag(PropertyLoc, diag::err_arc_weak_no_runtime);
-            Diag(property->getLocation(), diag::note_property_declare);
+          if (lifetime == Qualifiers::OCL_Weak) {
+            bool err = false;
+            if (const ObjCObjectPointerType *ObjT =
+                PropertyIvarType->getAs<ObjCObjectPointerType>())
+              if (ObjT->getInterfaceDecl()->isArcWeakrefUnavailable()) {
+                Diag(PropertyLoc, diag::err_arc_weak_unavailable_property);
+                Diag(property->getLocation(), diag::note_property_declare);
+                err = true;
+              }
+            if (!err && !getLangOptions().ObjCRuntimeHasWeak) {
+              Diag(PropertyLoc, diag::err_arc_weak_no_runtime);
+              Diag(property->getLocation(), diag::note_property_declare);
+            }
           }
-
+          
           Qualifiers qs;
           qs.addObjCLifetime(lifetime);
           PropertyIvarType = Context.getQualifiedType(PropertyIvarType, qs);   

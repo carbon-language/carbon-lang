@@ -3066,6 +3066,9 @@ def err_arc_unsupported_weak_class : Error<
   "class is incompatible with __weak references">;
 def err_arc_weak_unavailable_assign : Error<
   "assignment of a weak-unavailable object to a __weak object">;
+def err_arc_weak_unavailable_property : Error<
+  "synthesis of a weak-unavailable property is disallowed "
+  "because it requires synthesis of an ivar of the __weak object">;
 def err_arc_convesion_of_weak_unavailable : Error<
   "%select{implicit conversion|cast}0 of weak-unavailable object of type %1 to"
   " a __weak object of type %2">;
