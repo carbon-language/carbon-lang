@@ -1742,14 +1742,25 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
     }
   } else {
     if (IsPCRel) {
-      switch (Modifier) {
-      default:
-        llvm_unreachable("Unimplemented");
-      case MCSymbolRefExpr::VK_None:
-        Type = ELF::R_386_PC32;
+      switch ((unsigned)Fixup.getKind()) {
+      default: llvm_unreachable("invalid fixup kind!");
+
+      case X86::reloc_global_offset_table:
+        Type = ELF::R_386_GOTPC;
         break;
-      case MCSymbolRefExpr::VK_PLT:
-        Type = ELF::R_386_PLT32;
+
+      case FK_PCRel_4:
+      case FK_Data_4:
+        switch (Modifier) {
+        default:
+          llvm_unreachable("Unimplemented");
+        case MCSymbolRefExpr::VK_None:
+          Type = ELF::R_386_PC32;
+          break;
+        case MCSymbolRefExpr::VK_PLT:
+          Type = ELF::R_386_PLT32;
+          break;
+        }
         break;
       }
     } else {
