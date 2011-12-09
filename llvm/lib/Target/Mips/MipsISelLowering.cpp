@@ -69,7 +69,7 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::DivRemU:           return "MipsISD::DivRemU";
   case MipsISD::BuildPairF64:      return "MipsISD::BuildPairF64";
   case MipsISD::ExtractElementF64: return "MipsISD::ExtractElementF64";
-  case MipsISD::WrapperPIC:        return "MipsISD::WrapperPIC";
+  case MipsISD::Wrapper:        return "MipsISD::Wrapper";
   case MipsISD::DynAlloc:          return "MipsISD::DynAlloc";
   case MipsISD::Sync:              return "MipsISD::Sync";
   case MipsISD::Ext:               return "MipsISD::Ext";
@@ -1488,7 +1488,7 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
                      (HasGotOfst ? MipsII::MO_GOT_PAGE : MipsII::MO_GOT_DISP) :
                      (HasGotOfst ? MipsII::MO_GOT : MipsII::MO_GOT16);
   SDValue GA = DAG.getTargetGlobalAddress(GV, dl, ValTy, 0, GotFlag);
-  GA = DAG.getNode(MipsISD::WrapperPIC, dl, ValTy, GA);
+  GA = DAG.getNode(MipsISD::Wrapper, dl, ValTy, GA);
   SDValue ResNode = DAG.getLoad(ValTy, dl,
                                 DAG.getEntryNode(), GA, MachinePointerInfo(),
                                 false, false, false, 0);
@@ -1524,7 +1524,7 @@ SDValue MipsTargetLowering::LowerBlockAddress(SDValue Op,
   unsigned GOTFlag = IsN64 ? MipsII::MO_GOT_PAGE : MipsII::MO_GOT;
   unsigned OFSTFlag = IsN64 ? MipsII::MO_GOT_OFST : MipsII::MO_ABS_LO;
   SDValue BAGOTOffset = DAG.getBlockAddress(BA, ValTy, true, GOTFlag);
-  BAGOTOffset = DAG.getNode(MipsISD::WrapperPIC, dl, ValTy, BAGOTOffset);
+  BAGOTOffset = DAG.getNode(MipsISD::Wrapper, dl, ValTy, BAGOTOffset);
   SDValue BALOOffset = DAG.getBlockAddress(BA, ValTy, true, OFSTFlag);
   SDValue Load = DAG.getLoad(ValTy, dl,
                              DAG.getEntryNode(), BAGOTOffset,
@@ -1549,7 +1549,7 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
     // General Dynamic TLS Model
     SDValue TGA = DAG.getTargetGlobalAddress(GV, dl, PtrVT,
                                              0, MipsII::MO_TLSGD);
-    SDValue Argument = DAG.getNode(MipsISD::WrapperPIC, dl, PtrVT, TGA);
+    SDValue Argument = DAG.getNode(MipsISD::Wrapper, dl, PtrVT, TGA);
     unsigned PtrSize = PtrVT.getSizeInBits();
     IntegerType *PtrTy = Type::getIntNTy(*DAG.getContext(), PtrSize);
 
@@ -1579,7 +1579,7 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
     // Initial Exec TLS Model
     SDValue TGA = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
                                              MipsII::MO_GOTTPREL);
-    TGA = DAG.getNode(MipsISD::WrapperPIC, dl, PtrVT, TGA);
+    TGA = DAG.getNode(MipsISD::Wrapper, dl, PtrVT, TGA);
     Offset = DAG.getLoad(PtrVT, dl,
                          DAG.getEntryNode(), TGA, MachinePointerInfo(),
                          false, false, false, 0);
@@ -1616,7 +1616,7 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG) const
     unsigned GOTFlag = IsN64 ? MipsII::MO_GOT_PAGE : MipsII::MO_GOT;
     unsigned OfstFlag = IsN64 ? MipsII::MO_GOT_OFST : MipsII::MO_ABS_LO;
     JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, GOTFlag);
-    JTI = DAG.getNode(MipsISD::WrapperPIC, dl, PtrVT, JTI);
+    JTI = DAG.getNode(MipsISD::Wrapper, dl, PtrVT, JTI);
     HiPart = DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), JTI,
                          MachinePointerInfo(), false, false, false, 0);
     JTILo = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, OfstFlag);
@@ -1659,7 +1659,7 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG) const
     unsigned OFSTFlag = IsN64 ? MipsII::MO_GOT_OFST : MipsII::MO_ABS_LO;
     SDValue CP = DAG.getTargetConstantPool(C, ValTy, N->getAlignment(),
                                            N->getOffset(), GOTFlag);
-    CP = DAG.getNode(MipsISD::WrapperPIC, dl, ValTy, CP);
+    CP = DAG.getNode(MipsISD::Wrapper, dl, ValTy, CP);
     SDValue Load = DAG.getLoad(ValTy, dl, DAG.getEntryNode(),
                                CP, MachinePointerInfo::getConstantPool(),
                                false, false, false, 0);
@@ -2375,7 +2375,7 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
   if (IsPICCall) {
     if (GlobalOrExternal) {
       // Load callee address
-      Callee = DAG.getNode(MipsISD::WrapperPIC, dl, getPointerTy(), Callee);
+      Callee = DAG.getNode(MipsISD::Wrapper, dl, getPointerTy(), Callee);
       SDValue LoadValue = DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
                                       Callee, MachinePointerInfo::getGOT(),
                                       false, false, false, 0);

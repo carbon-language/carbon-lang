@@ -121,7 +121,7 @@ SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset) {
   }
 
   // on PIC code Load GA
-  if (Addr.getOpcode() == MipsISD::WrapperPIC) {
+  if (Addr.getOpcode() == MipsISD::Wrapper) {
     Base   = CurDAG->getRegister(GPReg, ValTy);
     Offset = Addr.getOperand(0);
     return true;

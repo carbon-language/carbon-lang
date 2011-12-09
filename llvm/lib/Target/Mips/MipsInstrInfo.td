@@ -107,7 +107,7 @@ def MipsDivRemU   : SDNode<"MipsISD::DivRemU", SDT_MipsDivRem,
 //  movn  %got(d)($gp), %got(c)($gp), $4
 // This instruction is illegal since movn can take only register operands.
 
-def MipsWrapperPIC    : SDNode<"MipsISD::WrapperPIC",  SDTIntUnaryOp>;
+def MipsWrapper    : SDNode<"MipsISD::Wrapper",  SDTIntUnaryOp>;
 
 // Pointer to dynamically allocated stack area.
 def MipsDynAlloc  : SDNode<"MipsISD::DynAlloc", SDT_MipsDynAlloc,
@@ -968,16 +968,16 @@ def : Pat<(add CPURegs:$gp, (MipsGPRel tconstpool:$in)),
           (ADDiu CPURegs:$gp, tconstpool:$in)>;
 
 // wrapper_pic
-class WrapperPICPat<SDNode node, Instruction ADDiuOp, Register GPReg>:
-      Pat<(MipsWrapperPIC node:$in),
+class WrapperPat<SDNode node, Instruction ADDiuOp, Register GPReg>:
+      Pat<(MipsWrapper node:$in),
           (ADDiuOp GPReg, node:$in)>;
 
-def : WrapperPICPat<tglobaladdr, ADDiu, GP>;
-def : WrapperPICPat<tconstpool, ADDiu, GP>;
-def : WrapperPICPat<texternalsym, ADDiu, GP>;
-def : WrapperPICPat<tblockaddress, ADDiu, GP>;
-def : WrapperPICPat<tjumptable, ADDiu, GP>;
-def : WrapperPICPat<tglobaltlsaddr, ADDiu, GP>;
+def : WrapperPat<tglobaladdr, ADDiu, GP>;
+def : WrapperPat<tconstpool, ADDiu, GP>;
+def : WrapperPat<texternalsym, ADDiu, GP>;
+def : WrapperPat<tblockaddress, ADDiu, GP>;
+def : WrapperPat<tjumptable, ADDiu, GP>;
+def : WrapperPat<tglobaltlsaddr, ADDiu, GP>;
 
 // Mips does not have "not", so we expand our way
 def : Pat<(not CPURegs:$in),

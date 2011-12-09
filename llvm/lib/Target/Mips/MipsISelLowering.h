@@ -72,7 +72,7 @@ namespace llvm {
       BuildPairF64,
       ExtractElementF64,
 
-      WrapperPIC,
+      Wrapper,
 
       DynAlloc,
 
