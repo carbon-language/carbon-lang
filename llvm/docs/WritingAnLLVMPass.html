@@ -284,7 +284,7 @@ time.</p>
 <div class="doc_code">
 <pre>
     static char ID;
-    Hello() : FunctionPass(&amp;ID) {}
+    Hello() : FunctionPass(ID) {}
 </pre>
 </div>
 
@@ -347,7 +347,7 @@ supplied as the fourth argument.</p>
   <b>struct Hello</b> : <b>public</b> <a href="#FunctionPass">FunctionPass</a> {
     
     static char ID;
-    Hello() : FunctionPass(&amp;ID) {}
+    Hello() : FunctionPass(ID) {}
 
     <b>virtual bool</b> <a href="#runOnFunction">runOnFunction</a>(Function &amp;F) {
       errs() &lt;&lt; "<i>Hello: </i>";
