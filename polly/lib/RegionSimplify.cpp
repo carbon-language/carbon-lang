@@ -112,8 +112,7 @@ void RegionSimplify::createSingleEntryEdge(Region *R) {
 
   assert(Preds.size() && "This region has already a single entry edge");
 
-  BasicBlock *newEntry = SplitBlockPredecessors(oldEntry,
-                                                Preds.data(), Preds.size(),
+  BasicBlock *newEntry = SplitBlockPredecessors(oldEntry, Preds,
                                                 ".single_entry", this);
 
   RegionInfo *RI = &getAnalysis<RegionInfo> ();
@@ -164,8 +163,7 @@ void RegionSimplify::createSingleExitEdge(Region *R) {
 
   DEBUG(dbgs() << "Going to create single exit for:\n");
   DEBUG(R->print(dbgs(), true, 0, Region::PrintRN));
-  BasicBlock *newExit =  SplitBlockPredecessors(oldExit,
-                                                Preds.data(), Preds.size(),
+  BasicBlock *newExit =  SplitBlockPredecessors(oldExit, Preds,
                                                 ".single_exit", this);
   RegionInfo *RI = &getAnalysis<RegionInfo>();
 
