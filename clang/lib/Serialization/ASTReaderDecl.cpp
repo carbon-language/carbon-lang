@@ -700,6 +700,7 @@ void ASTDeclReader::VisitObjCImplDecl(ObjCImplDecl *D) {
 void ASTDeclReader::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
   VisitObjCImplDecl(D);
   D->setIdentifier(Reader.GetIdentifierInfo(F, Record, Idx));
+  D->CategoryNameLoc = ReadSourceLocation(Record, Idx);
 }
 
 void ASTDeclReader::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
@@ -1725,7 +1726,7 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
     break;
   case DECL_OBJC_CATEGORY_IMPL:
     D = ObjCCategoryImplDecl::Create(Context, 0, 0, 0, SourceLocation(),
-                                     SourceLocation());
+                                     SourceLocation(), SourceLocation());
     break;
   case DECL_OBJC_IMPLEMENTATION:
     D = ObjCImplementationDecl::Create(Context, 0, 0, 0, SourceLocation(),

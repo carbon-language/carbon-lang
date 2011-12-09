@@ -3303,11 +3303,13 @@ Decl *ASTNodeImporter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
     if (!DC)
       return 0;
     
+    SourceLocation CategoryNameLoc = Importer.Import(D->getCategoryNameLoc());
     ToImpl = ObjCCategoryImplDecl::Create(Importer.getToContext(), DC,
                                           Importer.Import(D->getIdentifier()),
                                           Category->getClassInterface(),
                                           Importer.Import(D->getLocation()),
-                                          Importer.Import(D->getAtStartLoc()));
+                                          Importer.Import(D->getAtStartLoc()),
+                                          CategoryNameLoc);
     
     DeclContext *LexicalDC = DC;
     if (D->getDeclContext() != D->getLexicalDeclContext()) {

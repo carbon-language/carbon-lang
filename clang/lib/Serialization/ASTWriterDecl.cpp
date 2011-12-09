@@ -593,6 +593,7 @@ void ASTDeclWriter::VisitObjCImplDecl(ObjCImplDecl *D) {
 void ASTDeclWriter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
   VisitObjCImplDecl(D);
   Writer.AddIdentifierRef(D->getIdentifier(), Record);
+  Writer.AddSourceLocation(D->getCategoryNameLoc(), Record);
   Code = serialization::DECL_OBJC_CATEGORY_IMPL;
 }
 

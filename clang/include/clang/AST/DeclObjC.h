@@ -1283,17 +1283,22 @@ class ObjCCategoryImplDecl : public ObjCImplDecl {
   // Category name
   IdentifierInfo *Id;
 
+  // Category name location
+  SourceLocation CategoryNameLoc;
+
   ObjCCategoryImplDecl(DeclContext *DC, IdentifierInfo *Id,
                        ObjCInterfaceDecl *classInterface,
-                       SourceLocation nameLoc, SourceLocation atStartLoc)
+                       SourceLocation nameLoc, SourceLocation atStartLoc,
+                       SourceLocation CategoryNameLoc)
     : ObjCImplDecl(ObjCCategoryImpl, DC, classInterface, nameLoc, atStartLoc),
-      Id(Id) {}
+      Id(Id), CategoryNameLoc(CategoryNameLoc) {}
 public:
   static ObjCCategoryImplDecl *Create(ASTContext &C, DeclContext *DC,
                                       IdentifierInfo *Id,
                                       ObjCInterfaceDecl *classInterface,
                                       SourceLocation nameLoc,
-                                      SourceLocation atStartLoc);
+                                      SourceLocation atStartLoc,
+                                      SourceLocation CategoryNameLoc);
 
   /// getIdentifier - Get the identifier that names the category
   /// interface associated with this implementation.
@@ -1309,6 +1314,8 @@ public:
   void setIdentifier(IdentifierInfo *II) { Id = II; }
 
   ObjCCategoryDecl *getCategoryDecl() const;
+
+  SourceLocation getCategoryNameLoc() const { return CategoryNameLoc; }
 
   /// getName - Get the name of identifier for the class interface associated
   /// with this implementation as a StringRef.
@@ -1338,6 +1345,9 @@ public:
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCCategoryImplDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCCategoryImpl;}
+
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
 };
 
 raw_ostream &operator<<(raw_ostream &OS,

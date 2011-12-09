@@ -393,7 +393,7 @@ bool IndexingContext::handleObjCCategoryImpl(const ObjCCategoryImplDecl *D) {
   StrAdapter SA(*this);
   const ObjCInterfaceDecl *IFaceD = CatD->getClassInterface();
   SourceLocation ClassLoc = D->getLocation();
-  SourceLocation CategoryLoc = ClassLoc; //FIXME: D->getCategoryNameLoc();
+  SourceLocation CategoryLoc = D->getCategoryNameLoc();
   getEntityInfo(IFaceD, ClassEntity, SA);
 
   CatDInfo.ObjCCatDeclInfo.containerInfo = &CatDInfo.ObjCContDeclInfo;

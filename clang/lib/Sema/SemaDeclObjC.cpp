@@ -831,7 +831,7 @@ Decl *Sema::ActOnStartCategoryImplementation(
 
   ObjCCategoryImplDecl *CDecl =
     ObjCCategoryImplDecl::Create(Context, CurContext, CatName, IDecl,
-                                 ClassLoc, AtCatImplLoc);
+                                 ClassLoc, AtCatImplLoc, CatLoc);
   /// Check that class of this category is already completely declared.
   if (!IDecl) {
     Diag(ClassLoc, diag::err_undef_interface) << ClassName;

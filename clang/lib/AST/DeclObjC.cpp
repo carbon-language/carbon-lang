@@ -1039,9 +1039,10 @@ ObjCCategoryImplDecl::Create(ASTContext &C, DeclContext *DC,
                              IdentifierInfo *Id,
                              ObjCInterfaceDecl *ClassInterface,
                              SourceLocation nameLoc,
-                             SourceLocation atStartLoc) {
+                             SourceLocation atStartLoc,
+                             SourceLocation CategoryNameLoc) {
   return new (C) ObjCCategoryImplDecl(DC, Id, ClassInterface,
-                                      nameLoc, atStartLoc);
+                                      nameLoc, atStartLoc, CategoryNameLoc);
 }
 
 ObjCCategoryDecl *ObjCCategoryImplDecl::getCategoryDecl() const {
