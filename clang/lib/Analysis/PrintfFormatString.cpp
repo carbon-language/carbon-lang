@@ -297,11 +297,10 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
   }
 
   switch (CS.getKind()) {
-    case ConversionSpecifier::sArg: {
+    case ConversionSpecifier::sArg:
       if (LM.getKind() == LengthModifier::AsWideChar)
         return ArgTypeResult(ArgTypeResult::WCStrTy, "wchar_t *");
       return ArgTypeResult::CStrTy;
-    }
     case ConversionSpecifier::SArg:
       // FIXME: This appears to be Mac OS X specific.
       return ArgTypeResult(ArgTypeResult::WCStrTy, "wchar_t *");
