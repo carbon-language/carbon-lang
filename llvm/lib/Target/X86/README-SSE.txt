@@ -922,16 +922,3 @@ _test2:                                 ## @test2
 The insertps's of $0 are pointless complex copies.
 
 //===---------------------------------------------------------------------===//
-
-If SSE4.1 is available we should inline rounding functions instead of emitting
-a libcall.
-
-floor: roundsd $0x01, %xmm, %xmm
-ceil:  roundsd $0x02, %xmm, %xmm
-
-and likewise for the single precision versions.
-
-Currently, SelectionDAGBuilder doesn't turn calls to these functions into the
-corresponding nodes and some targets (including X86) aren't ready for them.
-
-//===---------------------------------------------------------------------===//
