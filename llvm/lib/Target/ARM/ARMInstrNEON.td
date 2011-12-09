@@ -5371,11 +5371,15 @@ def : NEONInstAlias<"vaddw${p}.u16 $Vdn, $Vm",
 def : NEONInstAlias<"vaddw${p}.u32 $Vdn, $Vm",
                     (VADDWuv2i64 QPR:$Vdn, QPR:$Vdn, DPR:$Vm, pred:$p)>;
 
-// VAND/VEOR/VORR accept but do not require a type suffix.
+// VAND/VBIC/VEOR/VORR accept but do not require a type suffix.
 defm : VFPDTAnyInstAlias<"vand${p}", "$Vd, $Vn, $Vm",
                          (VANDd DPR:$Vd, DPR:$Vn, DPR:$Vm, pred:$p)>;
 defm : VFPDTAnyInstAlias<"vand${p}", "$Vd, $Vn, $Vm",
                          (VANDq QPR:$Vd, QPR:$Vn, QPR:$Vm, pred:$p)>;
+defm : VFPDTAnyInstAlias<"vbic${p}", "$Vd, $Vn, $Vm",
+                         (VBICd DPR:$Vd, DPR:$Vn, DPR:$Vm, pred:$p)>;
+defm : VFPDTAnyInstAlias<"vbic${p}", "$Vd, $Vn, $Vm",
+                         (VBICq QPR:$Vd, QPR:$Vn, QPR:$Vm, pred:$p)>;
 defm : VFPDTAnyInstAlias<"veor${p}", "$Vd, $Vn, $Vm",
                          (VEORd DPR:$Vd, DPR:$Vn, DPR:$Vm, pred:$p)>;
 defm : VFPDTAnyInstAlias<"veor${p}", "$Vd, $Vn, $Vm",
@@ -5389,6 +5393,10 @@ def : NEONInstAlias<"vand${p} $Vdn, $Vm",
                     (VANDd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
 def : NEONInstAlias<"vand${p} $Vdn, $Vm",
                     (VANDq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vbic${p} $Vdn, $Vm",
+                    (VBICd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vbic${p} $Vdn, $Vm",
+                    (VBICq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
 def : NEONInstAlias<"veor${p} $Vdn, $Vm",
                     (VEORd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
 def : NEONInstAlias<"veor${p} $Vdn, $Vm",
