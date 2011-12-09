@@ -1692,7 +1692,10 @@ interacts with constant evaluation:</p>
     any evaluatable subexpression to be accepted as an integer constant
     expression.</li>
 <li><b><tt>__builtin_constant_p</tt></b>: This returns true (as a integer
-    constant expression) if the operand is any evaluatable constant.  As a
+    constant expression) if the operand evaluates to either a numeric value
+    (that is, not a pointer cast to integral type) of integral, enumeration,
+    floating or complex type, or if it evaluates to the address of the first
+    character of a string literal (possibly cast to some other type). As a
     special case, if <tt>__builtin_constant_p</tt> is the (potentially
     parenthesized) condition of a conditional operator expression ("?:"), only
     the true side of the conditional operator is considered, and it is evaluated
@@ -1707,7 +1710,9 @@ interacts with constant evaluation:</p>
     floating-point literal.</li>
 <li><b><tt>__builtin_abs,copysign,..</tt></b>: These are constant folded as
     general constant expressions.</li>
-<li><b><tt>__builtin_strlen</tt></b> and <b><tt>strlen</tt></b>: These are constant folded as integer constant expressions if the argument is a string literal.</li>
+<li><b><tt>__builtin_strlen</tt></b> and <b><tt>strlen</tt></b>: These are
+    constant folded as integer constant expressions if the argument is a string
+    literal.</li>
 </ul>
 
 
