@@ -763,7 +763,7 @@ public:
   StringRef getBufferData(FileID FID, bool *Invalid = 0) const;
 
   /// \brief Get the number of FileIDs (files and macros) that were created
-  /// during preprocessing of \arg FID, including it.
+  /// during preprocessing of \p FID, including it.
   unsigned getNumCreatedFIDsForFileID(FileID FID) const {
     bool Invalid = false;
     const SrcMgr::SLocEntry &Entry = getSLocEntry(FID, &Invalid);
@@ -774,7 +774,7 @@ public:
   }
 
   /// \brief Set the number of FileIDs (files and macros) that were created
-  /// during preprocessing of \arg FID, including it.
+  /// during preprocessing of \p FID, including it.
   void setNumCreatedFIDsForFileID(FileID FID, unsigned NumFIDs) const {
     bool Invalid = false;
     const SrcMgr::SLocEntry &Entry = getSLocEntry(FID, &Invalid);
@@ -828,7 +828,7 @@ public:
     return SourceLocation::getFileLoc(FileOffset + getFileIDSize(FID) - 1);
   }
 
-  /// \brief Returns the include location if \arg FID is a #include'd file
+  /// \brief Returns the include location if \p FID is a #include'd file
   /// otherwise it returns an invalid location.
   SourceLocation getIncludeLoc(FileID FID) const {
     bool Invalid = false;
@@ -848,7 +848,7 @@ public:
     return getExpansionLocSlowCase(Loc);
   }
 
-  /// \brief Given \arg Loc, if it is a macro location return the expansion
+  /// \brief Given \p Loc, if it is a macro location return the expansion
   /// location or the spelling location, depending on if it comes from a
   /// macro argument or not.
   SourceLocation getFileLoc(SourceLocation Loc) const {
@@ -944,10 +944,10 @@ public:
   /// expanded.
   bool isMacroArgExpansion(SourceLocation Loc) const;
 
-  /// \brief Returns true if \arg Loc is inside the [\arg Start, +\arg Length)
+  /// \brief Returns true if \p Loc is inside the [\p Start, +\p Length)
   /// chunk of the source location address space.
-  /// If it's true and \arg RelativeOffset is non-null, it will be set to the
-  /// relative offset of \arg Loc inside the chunk.
+  /// If it's true and \p RelativeOffset is non-null, it will be set to the
+  /// relative offset of \p Loc inside the chunk.
   bool isInSLocAddrSpace(SourceLocation Loc,
                          SourceLocation Start, unsigned Length,
                          unsigned *RelativeOffset = 0) const {
@@ -968,10 +968,10 @@ public:
     return false;
   }
 
-  /// \brief Return true if both \arg LHS and \arg RHS are in the local source
-  /// location address space or the loaded one. If it's true and
-  /// \arg RelativeOffset is non-null, it will be set to the offset of \arg RHS
-  /// relative to \arg LHS.
+  /// \brief Return true if both \p LHS and \p RHS are in the local source
+  /// location address space or the loaded one. If it's true and \p
+  /// RelativeOffset is non-null, it will be set to the offset of \p RHS
+  /// relative to \p LHS.
   bool isInSameSLocAddrSpace(SourceLocation LHS, SourceLocation RHS,
                              int *RelativeOffset) const {
     unsigned LHSOffs = LHS.getOffset(), RHSOffs = RHS.getOffset();
@@ -1071,12 +1071,12 @@ public:
     return getFileCharacteristic(Loc) == SrcMgr::C_ExternCSystem;
   }
 
-  /// \brief The size of the SLocEnty that \arg FID represents.
+  /// \brief The size of the SLocEnty that \p FID represents.
   unsigned getFileIDSize(FileID FID) const;
 
-  /// \brief Given a specific FileID, returns true if \arg Loc is inside that
-  /// FileID chunk and sets relative offset (offset of \arg Loc from beginning
-  /// of FileID) to \arg relativeOffset.
+  /// \brief Given a specific FileID, returns true if \p Loc is inside that
+  /// FileID chunk and sets relative offset (offset of \p Loc from beginning
+  /// of FileID) to \p relativeOffset.
   bool isInFileID(SourceLocation Loc, FileID FID,
                   unsigned *RelativeOffset = 0) const {
     unsigned Offs = Loc.getOffset();
@@ -1154,12 +1154,12 @@ public:
   /// first inclusion.
   FileID translateFile(const FileEntry *SourceFile) const;
 
-  /// \brief Get the source location in \arg FID for the given line:col.
-  /// Returns null location if \arg FID is not a file SLocEntry.
+  /// \brief Get the source location in \p FID for the given line:col.
+  /// Returns null location if \p FID is not a file SLocEntry.
   SourceLocation translateLineCol(FileID FID,
                                   unsigned Line, unsigned Col) const;
 
-  /// \brief If \arg Loc points inside a function macro argument, the returned
+  /// \brief If \p Loc points inside a function macro argument, the returned
   /// location will be the macro location in which the argument was expanded.
   /// If a macro argument is used multiple times, the expanded location will
   /// be at the first expansion of the argument.
@@ -1268,23 +1268,23 @@ public:
   std::pair<int, unsigned>
   AllocateLoadedSLocEntries(unsigned NumSLocEntries, unsigned TotalSize);
 
-  /// \brief Returns true if \arg Loc came from a PCH/Module.
+  /// \brief Returns true if \p Loc came from a PCH/Module.
   bool isLoadedSourceLocation(SourceLocation Loc) const {
     return Loc.getOffset() >= CurrentLoadedOffset;
   }
 
-  /// \brief Returns true if \arg Loc did not come from a PCH/Module.
+  /// \brief Returns true if \p Loc did not come from a PCH/Module.
   bool isLocalSourceLocation(SourceLocation Loc) const {
     return Loc.getOffset() < NextLocalOffset;
   }
 
-  /// \brief Returns true if \arg FID came from a PCH/Module.
+  /// \brief Returns true if \p FID came from a PCH/Module.
   bool isLoadedFileID(FileID FID) const {
     assert(FID.ID != -1 && "Using FileID sentinel value");
     return FID.ID < 0;
   }
 
-  /// \brief Returns true if \arg FID did not come from a PCH/Module.
+  /// \brief Returns true if \p FID did not come from a PCH/Module.
   bool isLocalFileID(FileID FID) const {
     return !isLoadedFileID(FID);
   }
