@@ -18,6 +18,7 @@
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/FrontendOptions.h"
 #include "clang/Frontend/PreprocessorOptions.h"
+#include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -48,39 +49,19 @@ static void DefineBuiltinMacro(MacroBuilder &Builder, StringRef Macro,
   }
 }
 
-std::string clang::NormalizeDashIncludePath(StringRef File,
-                                            FileManager &FileMgr) {
-  // Implicit include paths should be resolved relative to the current
-  // working directory first, and then use the regular header search
-  // mechanism. The proper way to handle this is to have the
-  // predefines buffer located at the current working directory, but
-  // it has no file entry. For now, workaround this by using an
-  // absolute path if we find the file here, and otherwise letting
-  // header search handle it.
-  llvm::SmallString<128> Path(File);
-  llvm::sys::fs::make_absolute(Path);
-  bool exists;
-  if (llvm::sys::fs::exists(Path.str(), exists) || !exists)
-    Path = File;
-  else if (exists)
-    FileMgr.getFile(File);
-
-  return Lexer::Stringify(Path.str());
-}
-
 /// AddImplicitInclude - Add an implicit #include of the specified file to the
 /// predefines buffer.
 static void AddImplicitInclude(MacroBuilder &Builder, StringRef File,
                                FileManager &FileMgr) {
-  Builder.append("#include \"" +
-                 Twine(NormalizeDashIncludePath(File, FileMgr)) + "\"");
+  Builder.append(Twine("#include \"") +
+                 HeaderSearch::NormalizeDashIncludePath(File, FileMgr) + "\"");
 }
 
 static void AddImplicitIncludeMacros(MacroBuilder &Builder,
                                      StringRef File,
                                      FileManager &FileMgr) {
-  Builder.append("#__include_macros \"" +
-                 Twine(NormalizeDashIncludePath(File, FileMgr)) + "\"");
+  Builder.append(Twine("#__include_macros \"") +
+                 HeaderSearch::NormalizeDashIncludePath(File, FileMgr) + "\"");
   // Marker token to stop the __include_macros fetch loop.
   Builder.append("##"); // ##?
 }

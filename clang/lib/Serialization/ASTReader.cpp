@@ -17,7 +17,6 @@
 #include "clang/Serialization/SerializationDiagnostic.h"
 #include "ASTCommon.h"
 #include "ASTReaderInternals.h"
-#include "clang/Frontend/Utils.h"
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/Scope.h"
 #include "clang/AST/ASTConsumer.h"
@@ -195,7 +194,8 @@ bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
   // below.
   llvm::SmallString<256> PCHInclude;
   PCHInclude += "#include \"";
-  PCHInclude += NormalizeDashIncludePath(OriginalFileName, FileMgr);
+  PCHInclude += HeaderSearch::NormalizeDashIncludePath(OriginalFileName,
+                                                       FileMgr);
   PCHInclude += "\"\n";
   std::pair<StringRef,StringRef> Split =
     StringRef(PP.getPredefines()).split(PCHInclude.str());

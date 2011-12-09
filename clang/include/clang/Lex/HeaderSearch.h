@@ -448,6 +448,9 @@ public:
   
   size_t getTotalMemory() const;
 
+  static std::string NormalizeDashIncludePath(StringRef File,
+                                              FileManager &FileMgr);
+
 private:
   /// \brief Describes what happened when we tried to load a module map file.
   enum LoadModuleMapResult {

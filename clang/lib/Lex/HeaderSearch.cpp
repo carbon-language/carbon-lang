@@ -13,6 +13,7 @@
 
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/HeaderMap.h"
+#include "clang/Lex/Lexer.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/IdentifierTable.h"
@@ -617,6 +618,28 @@ LookupSubframeworkHeader(StringRef Filename,
   unsigned DirInfo = getFileInfo(ContextFileEnt).DirInfo;
   getFileInfo(FE).DirInfo = DirInfo;
   return FE;
+}
+
+/// \brief Helper static function to normalize a path for injection into
+/// a synthetic header.
+/*static*/ std::string
+HeaderSearch::NormalizeDashIncludePath(StringRef File, FileManager &FileMgr) {
+  // Implicit include paths should be resolved relative to the current
+  // working directory first, and then use the regular header search
+  // mechanism. The proper way to handle this is to have the
+  // predefines buffer located at the current working directory, but
+  // it has no file entry. For now, workaround this by using an
+  // absolute path if we find the file here, and otherwise letting
+  // header search handle it.
+  llvm::SmallString<128> Path(File);
+  llvm::sys::fs::make_absolute(Path);
+  bool exists;
+  if (llvm::sys::fs::exists(Path.str(), exists) || !exists)
+    Path = File;
+  else if (exists)
+    FileMgr.getFile(File);
+
+  return Lexer::Stringify(Path.str());
 }
 
 //===----------------------------------------------------------------------===//
