@@ -453,9 +453,8 @@ static void UpdatePHINodes(BasicBlock *OrigBB, BasicBlock *NewBB,
 /// of the edges being split is an exit of a loop with other exits).
 ///
 BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB, 
-                                         BasicBlock *const *Preds,
-                                         unsigned NumPreds, const char *Suffix,
-                                         Pass *P) {
+                                         ArrayRef<BasicBlock*> Preds,
+                                         const char *Suffix, Pass *P) {
   // Create new basic block, insert right before the original block.
   BasicBlock *NewBB = BasicBlock::Create(BB->getContext(), BB->getName()+Suffix,
                                          BB->getParent(), BB);
@@ -464,7 +463,7 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
   BranchInst *BI = BranchInst::Create(BB, NewBB);
   
   // Move the edges from Preds to point to NewBB instead of BB.
-  for (unsigned i = 0; i != NumPreds; ++i) {
+  for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
     // This is slightly more strict than necessary; the minimum requirement
     // is that there be no more than one indirectbr branching to BB. And
     // all BlockAddress uses would need to be updated.
@@ -477,7 +476,7 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
   // node becomes an incoming value for BB's phi node.  However, if the Preds
   // list is empty, we need to insert dummy entries into the PHI nodes in BB to
   // account for the newly created predecessor.
-  if (NumPreds == 0) {
+  if (Preds.size() == 0) {
     // Insert dummy values as the incoming value.
     for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ++I)
       cast<PHINode>(I)->addIncoming(UndefValue::get(I->getType()), NewBB);
@@ -486,12 +485,10 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
 
   // Update DominatorTree, LoopInfo, and LCCSA analysis information.
   bool HasLoopExit = false;
-  UpdateAnalysisInformation(BB, NewBB, ArrayRef<BasicBlock*>(Preds, NumPreds),
-                            P, HasLoopExit);
+  UpdateAnalysisInformation(BB, NewBB, Preds, P, HasLoopExit);
 
   // Update the PHI nodes in BB with the values coming from NewBB.
-  UpdatePHINodes(BB, NewBB, ArrayRef<BasicBlock*>(Preds, NumPreds), BI,
-                 P, HasLoopExit);
+  UpdatePHINodes(BB, NewBB, Preds, BI, P, HasLoopExit);
   return NewBB;
 }
 

@@ -380,8 +380,7 @@ BasicBlock *LoopSimplify::InsertPreheaderForLoop(Loop *L) {
 
   // Split out the loop pre-header.
   BasicBlock *NewBB =
-    SplitBlockPredecessors(Header, &OutsideBlocks[0], OutsideBlocks.size(),
-                           ".preheader", this);
+    SplitBlockPredecessors(Header, OutsideBlocks, ".preheader", this);
 
   NewBB->getTerminator()->setDebugLoc(Header->getFirstNonPHI()->getDebugLoc());
   DEBUG(dbgs() << "LoopSimplify: Creating pre-header " << NewBB->getName()
@@ -420,9 +419,7 @@ BasicBlock *LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
                                 this, NewBBs);
     NewExitBB = NewBBs[0];
   } else {
-    NewExitBB = SplitBlockPredecessors(Exit, &LoopBlocks[0],
-                                       LoopBlocks.size(), ".loopexit",
-                                       this);
+    NewExitBB = SplitBlockPredecessors(Exit, LoopBlocks, ".loopexit", this);
   }
 
   DEBUG(dbgs() << "LoopSimplify: Creating dedicated exit block "
@@ -556,9 +553,8 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L, LPPassManager &LPM) {
     SE->forgetLoop(L);
 
   BasicBlock *Header = L->getHeader();
-  BasicBlock *NewBB = SplitBlockPredecessors(Header, &OuterLoopPreds[0],
-                                             OuterLoopPreds.size(),
-                                             ".outer", this);
+  BasicBlock *NewBB =
+    SplitBlockPredecessors(Header, OuterLoopPreds,  ".outer", this);
 
   // Make sure that NewBB is put someplace intelligent, which doesn't mess up
   // code layout too horribly.

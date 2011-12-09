@@ -565,8 +565,7 @@ void LoopUnswitch::SplitExitEdges(Loop *L,
     // Although SplitBlockPredecessors doesn't preserve loop-simplify in
     // general, if we call it on all predecessors of all exits then it does.
     if (!ExitBlock->isLandingPad()) {
-      SplitBlockPredecessors(ExitBlock, Preds.data(), Preds.size(),
-                             ".us-lcssa", this);
+      SplitBlockPredecessors(ExitBlock, Preds, ".us-lcssa", this);
     } else {
       SmallVector<BasicBlock*, 2> NewBBs;
       SplitLandingPadPredecessors(ExitBlock, Preds, ".us-lcssa", ".us-lcssa",

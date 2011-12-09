@@ -372,8 +372,7 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
           // form, which we're in the process of restoring!
           if (!Preds.empty() && HasPredOutsideOfLoop) {
             BasicBlock *NewExitBB =
-              SplitBlockPredecessors(Exit, Preds.data(), Preds.size(),
-                                     "split", P);
+              SplitBlockPredecessors(Exit, Preds, "split", P);
             if (P->mustPreserveAnalysisID(LCSSAID))
               CreatePHIsForSplitLoopExit(Preds, NewExitBB, Exit);
           }

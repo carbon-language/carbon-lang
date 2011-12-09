@@ -114,8 +114,7 @@ static void ConnectProlog(Loop *L, Value *TripCount, unsigned Count,
   // Split the exit to maintain loop canonicalization guarantees
   SmallVector<BasicBlock*, 4> Preds(pred_begin(Exit), pred_end(Exit));
   if (!Exit->isLandingPad()) {
-    SplitBlockPredecessors(Exit, Preds.data(), Preds.size(),
-                           ".unr-lcssa", P);
+    SplitBlockPredecessors(Exit, Preds, ".unr-lcssa", P);
   } else {
     SmallVector<BasicBlock*, 2> NewBBs;
     SplitLandingPadPredecessors(Exit, Preds, ".unr1-lcssa", ".unr2-lcssa",

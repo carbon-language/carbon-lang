@@ -926,8 +926,7 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
 
     // Split them out to their own block.
     UnavailablePred =
-      SplitBlockPredecessors(LoadBB, &PredsToSplit[0], PredsToSplit.size(),
-                             "thread-pre-split", this);
+      SplitBlockPredecessors(LoadBB, PredsToSplit, "thread-pre-split", this);
   }
 
   // If the value isn't available in all predecessors, then there will be
@@ -1339,8 +1338,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB,
   else {
     DEBUG(dbgs() << "  Factoring out " << PredBBs.size()
           << " common predecessors.\n");
-    PredBB = SplitBlockPredecessors(BB, &PredBBs[0], PredBBs.size(),
-                                    ".thr_comm", this);
+    PredBB = SplitBlockPredecessors(BB, PredBBs, ".thr_comm", this);
   }
 
   // And finally, do it!
@@ -1484,8 +1482,7 @@ bool JumpThreading::DuplicateCondBranchOnPHIIntoPred(BasicBlock *BB,
   else {
     DEBUG(dbgs() << "  Factoring out " << PredBBs.size()
           << " common predecessors.\n");
-    PredBB = SplitBlockPredecessors(BB, &PredBBs[0], PredBBs.size(),
-                                    ".thr_comm", this);
+    PredBB = SplitBlockPredecessors(BB, PredBBs, ".thr_comm", this);
   }
 
   // Okay, we decided to do this!  Clone all the instructions in BB onto the end
