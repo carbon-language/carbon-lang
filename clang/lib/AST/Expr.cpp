@@ -2466,6 +2466,8 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
 
   switch (getStmtClass()) {
   default: break;
+  case IntegerLiteralClass:
+  case FloatingLiteralClass:
   case StringLiteralClass:
   case ObjCStringLiteralClass:
   case ObjCEncodeExprClass:
