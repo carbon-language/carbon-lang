@@ -586,13 +586,22 @@ void __asan_report_error(uintptr_t pc, uintptr_t bp, uintptr_t sp,
     }
   }
 
+  AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
+  int curr_tid = asanThreadRegistry().GetCurrentTidOrMinusOne();
+
+  if (curr_thread) {
+    // We started reporting an error message. Stop using the fake stack
+    // in case we will call an instrumented function from a symbolizer.
+    curr_thread->fake_stack().StopUsingFakeStack();
+  }
+
   Report("ERROR: AddressSanitizer %s on address "
          "%p at pc 0x%lx bp 0x%lx sp 0x%lx\n",
          bug_descr, addr, pc, bp, sp);
 
   Printf("%s of size %d at %p thread T%d\n",
          access_size ? (is_write ? "WRITE" : "READ") : "ACCESS",
-         access_size, addr, asanThreadRegistry().GetCurrentTidOrMinusOne());
+         access_size, addr, curr_tid);
 
   if (FLAG_debug) {
     PrintBytes("PC: ", (uintptr_t*)pc);

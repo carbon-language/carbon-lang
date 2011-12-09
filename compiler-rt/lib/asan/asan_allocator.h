@@ -101,6 +101,7 @@ class FakeStack {
   FakeStack();
   explicit FakeStack(LinkerInitialized) {}
   void Init(size_t stack_size);
+  void StopUsingFakeStack() { alive_ = false; }
   void Cleanup();
   uintptr_t AllocateStack(size_t size, size_t real_stack);
   static void OnFree(size_t ptr, size_t size, size_t real_stack);

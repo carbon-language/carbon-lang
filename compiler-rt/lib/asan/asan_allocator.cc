@@ -869,7 +869,6 @@ bool FakeStack::AddrIsInSizeClass(uintptr_t addr, size_t size_class) {
 }
 
 uintptr_t FakeStack::AddrIsInFakeStack(uintptr_t addr) {
-  if (!alive_) return 0;
   for (size_t i = 0; i < kNumberOfSizeClasses; i++) {
     if (AddrIsInSizeClass(addr, i)) return allocated_size_classes_[i];
   }
@@ -959,7 +958,7 @@ void FakeStack::AllocateOneSizeClass(size_t size_class) {
 }
 
 uintptr_t FakeStack::AllocateStack(size_t size, size_t real_stack) {
-  CHECK(alive_);
+  if (!alive_) return real_stack;
   CHECK(size <= kMaxStackMallocSize && size > 1);
   size_t size_class = ComputeSizeClass(size);
   if (!allocated_size_classes_[size_class]) {
