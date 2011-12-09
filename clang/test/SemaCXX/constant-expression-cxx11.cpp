@@ -1,12 +1,6 @@
 // RUN: %clang_cc1 -triple i686-linux -fsyntax-only -verify -std=c++11 %s
 
-// This version of static_assert just requires a foldable value as the
-// expression, not an ICE.
-// FIXME: Once we implement the C++11 ICE rules, most uses of this here should
-// be converted to static_assert.
-#define static_assert_fold(expr, str) \
-    static_assert(__builtin_constant_p(expr), "not an integral constant expression"); \
-    static_assert(__builtin_constant_p(expr) ? expr : true, str)
+#define static_assert_fold static_assert
 
 namespace StaticAssertFoldTest {
 

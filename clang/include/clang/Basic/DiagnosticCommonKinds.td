@@ -83,8 +83,8 @@ def warn_integer_too_large_for_signed : Warning<
   "integer constant is so large that it is unsigned">;
 
 // Sema && AST
-def note_invalid_subexpr_in_ice : Note<
-  "subexpression not valid in an integer constant expression">;
+def note_invalid_subexpr_in_const_expr : Note<
+  "subexpression not valid in a constant expression">;
 
 // Targets
 

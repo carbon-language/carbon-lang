@@ -9206,7 +9206,7 @@ bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result){
     if (EvalResult.Diag) {
       // We only show the note if it's not the usual "invalid subexpression"
       // or if it's actually in a subexpression.
-      if (EvalResult.Diag != diag::note_invalid_subexpr_in_ice ||
+      if (EvalResult.Diag != diag::note_invalid_subexpr_in_const_expr ||
           E->IgnoreParens() != EvalResult.DiagExpr->IgnoreParens())
         Diag(EvalResult.DiagLoc, EvalResult.Diag);
     }
