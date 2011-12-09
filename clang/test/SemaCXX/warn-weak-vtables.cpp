@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify -Wweak-vtables
+// RUN: %clang_cc1 %s -fsyntax-only -verify -Wweak-vtables -Wweak-template-vtables
 
 struct A { // expected-warning {{'A' has no out-of-line virtual method definitions; its vtable will be emitted in every translation unit}}
   virtual void f() { } 
@@ -55,4 +55,24 @@ void uses(Parent &p, Derived &d, VeryDerived &vd) {
   p.getFoo();
   d.getFoo();
   vd.getFoo();
+}
+
+template<typename T> struct TemplVirt {
+  virtual void f();
+};
+
+template class TemplVirt<float>; // expected-warning{{explicit template instantiation 'TemplVirt<float>' will emit a vtable in every translation unit}}
+
+template<> struct TemplVirt<bool> {
+  virtual void f();
+};
+
+template<> struct TemplVirt<long> { // expected-warning{{'TemplVirt<long>' has no out-of-line virtual method definitions; its vtable will be emitted in every translation unit}}
+  virtual void f() {}
+};
+
+void uses(TemplVirt<float>& f, TemplVirt<bool>& b, TemplVirt<long>& l) {
+  f.f();
+  b.f();
+  l.f();
 }
