@@ -172,79 +172,50 @@ public:
         m_should_perform_action = false;
         
         LogSP log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
-        // We're going to calculate whether we should stop or not in some way during the course of
-        // this code.  So set the valid flag here.  Also by default we're going to stop, so 
-        // set that here too.
-        // m_should_stop_is_valid = true;
-        m_should_stop = true;
         
         BreakpointSiteSP bp_site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (m_value));
+        
         if (bp_site_sp)
         {
             size_t num_owners = bp_site_sp->GetNumberOfOwners();
-            
-            // We only continue from the callbacks if ALL the callbacks want us to continue.  
-            // However we want to run all the callbacks, except of course if one of them actually
-            // resumes the target.
-            // So we use stop_requested to track what we're were asked to do.
-            bool stop_requested = false;
-            for (size_t j = 0; j < num_owners; j++)
+                
+            if (num_owners == 0)
             {
-                lldb::BreakpointLocationSP bp_loc_sp = bp_site_sp->GetOwnerAtIndex(j);
+                m_should_stop = true;
+            }
+            else
+            {
+                // We go through each location, and test first its condition.  If the condition says to stop,
+                // then we run the callback for that location.  If that callback says to stop as well, then 
+                // we set m_should_stop to true; we are going to stop.
+                // But we still want to give all the breakpoints whose conditions say we are going to stop a
+                // chance to run their callbacks.
+                // Of course if any callback restarts the target by putting "continue" in the callback, then 
+                // we're going to restart, without running the rest of the callbacks.  And in this case we will
+                // end up not stopping even if another location said we should stop.  But that's better than not
+                // running all the callbacks.
+                
+                m_should_stop = false;
+
                 StoppointCallbackContext context (event_ptr, 
                                                   &m_thread.GetProcess(), 
                                                   &m_thread, 
                                                   m_thread.GetStackFrameAtIndex(0).get(),
                                                   false);
-                bool callback_return;
-                
-                // FIXME: For now the callbacks have to run in async mode - the first time we restart we need
-                // to get out of there.  So set it here.
-                // When we figure out how to stack breakpoint hits then this will change.
-                
-                Debugger &debugger = m_thread.GetProcess().GetTarget().GetDebugger();
-                bool old_async = debugger.GetAsyncExecution();
-                debugger.SetAsyncExecution (true);
-                
-                callback_return = bp_loc_sp->InvokeCallback (&context);
-                
-                debugger.SetAsyncExecution (old_async);
-                
-                if (callback_return)
-                    stop_requested = true;
-                    
-                // Also make sure that the callback hasn't continued the target.  
-                // If it did, when we'll set m_should_start to false and get out of here.
-                if (HasTargetRunSinceMe ())
-                {
-                    m_should_stop = false;
-                    break;
-                }
-            }
-            
-            if (m_should_stop && !stop_requested)
-            {
-                m_should_stop_is_valid = true;
-                m_should_stop = false;
-            }
 
-            // Okay, so now if all the callbacks say we should stop, let's try the Conditions:
-            if (m_should_stop)
-            {
-                size_t num_owners = bp_site_sp->GetNumberOfOwners();
                 for (size_t j = 0; j < num_owners; j++)
                 {
                     lldb::BreakpointLocationSP bp_loc_sp = bp_site_sp->GetOwnerAtIndex(j);
+                                                      
+                    // First run the condition for the breakpoint.  If that says we should stop, then we'll run
+                    // the callback for the breakpoint.  If the callback says we shouldn't stop that will win.
+                    
+                    bool condition_says_stop = true;
                     if (bp_loc_sp->GetConditionText() != NULL)
                     {
                         // We need to make sure the user sees any parse errors in their condition, so we'll hook the
                         // constructor errors up to the debugger's Async I/O.
                         
-                        StoppointCallbackContext context (event_ptr, 
-                                                          &m_thread.GetProcess(), 
-                                                          &m_thread, 
-                                                          m_thread.GetStackFrameAtIndex(0).get(),
-                                                          false);
                         ValueObjectSP result_valobj_sp;
                         
                         ExecutionResults result_code;
@@ -267,16 +238,16 @@ public:
                                 if (result_value_sp->ResolveValue (scalar_value))
                                 {
                                     if (scalar_value.ULongLong(1) == 0)
-                                        m_should_stop = false;
+                                        condition_says_stop = false;
                                     else
-                                        m_should_stop = true;
+                                        condition_says_stop = true;
                                     if (log)
                                         log->Printf("Condition successfully evaluated, result is %s.\n", 
                                                     m_should_stop ? "true" : "false");
                                 }
                                 else
                                 {
-                                    m_should_stop = true;
+                                    condition_says_stop = true;
                                     if (log)
                                         log->Printf("Failed to get an integer result from the expression.");
                                 }
@@ -299,19 +270,49 @@ public:
                             error_sp->EOL();                       
                             error_sp->Flush();
                             // If the condition fails to be parsed or run, we should stop.
-                            m_should_stop = true;
+                            condition_says_stop = true;
                         }
                     }
                                             
-                    // If any condition says we should stop, then we're going to stop, so we don't need
-                    // to evaluate the others.
-                    if (m_should_stop)
+                    // If this location's condition says we should aren't going to stop, 
+                    // then don't run the callback for this location.
+                    if (!condition_says_stop)
+                        continue;
+                                
+                    bool callback_says_stop;
+                    
+                    // FIXME: For now the callbacks have to run in async mode - the first time we restart we need
+                    // to get out of there.  So set it here.
+                    // When we figure out how to nest breakpoint hits then this will change.
+                    
+                    Debugger &debugger = m_thread.GetProcess().GetTarget().GetDebugger();
+                    bool old_async = debugger.GetAsyncExecution();
+                    debugger.SetAsyncExecution (true);
+                    
+                    callback_says_stop = bp_loc_sp->InvokeCallback (&context);
+                    
+                    debugger.SetAsyncExecution (old_async);
+                    
+                    if (callback_says_stop)
+                        m_should_stop = true;
+                        
+                    // Also make sure that the callback hasn't continued the target.  
+                    // If it did, when we'll set m_should_start to false and get out of here.
+                    if (HasTargetRunSinceMe ())
+                    {
+                        m_should_stop = false;
                         break;
+                    }
                 }
             }
+            // We've figured out what this stop wants to do, so mark it as valid so we don't compute it again.
+            m_should_stop_is_valid = true;
+
         }
         else
         {
+            m_should_stop = true;
+            m_should_stop_is_valid = true;
             LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
             if (log)
