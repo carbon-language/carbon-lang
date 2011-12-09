@@ -2692,6 +2692,7 @@ public:
   explicit BinaryOperator(EmptyShell Empty)
     : Expr(BinaryOperatorClass, Empty), Opc(BO_Comma) { }
 
+  SourceLocation getExprLoc() const { return OpLoc; }
   SourceLocation getOperatorLoc() const { return OpLoc; }
   void setOperatorLoc(SourceLocation L) { OpLoc = L; }
 

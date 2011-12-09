@@ -49,7 +49,8 @@ void test3() {
   if ("help")
     (void) 0;
 
-  if (test3) // expected-warning {{address of function 'test3' will always evaluate to 'true'}}
+  if (test3) // expected-warning {{address of function 'test3' will always evaluate to 'true'}} \
+                expected-note {{prefix with the address-of operator to silence this warning}}
     (void) 0;
 }
 

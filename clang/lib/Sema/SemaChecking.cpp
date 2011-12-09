@@ -3771,6 +3771,16 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
         if (FunctionDecl* F = dyn_cast<FunctionDecl>(D)) {
           S.Diag(E->getExprLoc(), diag::warn_impcast_function_to_bool)
             << F << E->getSourceRange() << SourceRange(CC);
+          S.Diag(E->getExprLoc(), diag::note_function_to_bool_silence)
+            << FixItHint::CreateInsertion(E->getExprLoc(), "&");
+          QualType ReturnType;
+          UnresolvedSet<4> NonTemplateOverloads;
+          S.isExprCallable(*E, ReturnType, NonTemplateOverloads);
+          if (!ReturnType.isNull() 
+              && ReturnType->isSpecificBuiltinType(BuiltinType::Bool))
+            S.Diag(E->getExprLoc(), diag::note_function_to_bool_call)
+              << FixItHint::CreateInsertion(
+                 S.getPreprocessor().getLocForEndOfToken(E->getLocEnd()), "()");
           return;
         }
       }
