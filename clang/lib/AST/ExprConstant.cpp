@@ -1557,9 +1557,16 @@ public:
 
   RetTy VisitOpaqueValueExpr(const OpaqueValueExpr *E) {
     const CCValue *Value = Info.getOpaqueValue(E);
-    if (!Value)
-      return (E->getSourceExpr() ? StmtVisitorTy::Visit(E->getSourceExpr())
-                                 : DerivedError(E));
+    if (!Value) {
+      const Expr *Source = E->getSourceExpr();
+      if (!Source)
+        return DerivedError(E);
+      if (Source == E) { // sanity checking.
+        assert(0 && "OpaqueValueExpr recursively refers to itself");
+        return DerivedError(E);
+      }
+      return StmtVisitorTy::Visit(Source);
+    }
     return DerivedSuccess(*Value, E);
   }
 
