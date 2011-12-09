@@ -533,31 +533,23 @@ def  VLD2q16Pseudo : VLDQQPseudo<IIC_VLD2x2>;
 def  VLD2q32Pseudo : VLDQQPseudo<IIC_VLD2x2>;
 
 // ...with address register writeback:
-class VLD2DWB<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy>
+class VLD2WB<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy,
+              InstrItinClass itin>
   : NLdSt<0, 0b10, op11_8, op7_4, (outs VdTy:$Vd, GPR:$wb),
-          (ins addrmode6:$Rn, am6offset:$Rm), IIC_VLD2u,
-          "vld2", Dt, "$Vd, $Rn$Rm",
-          "$Rn.addr = $wb", []> {
-  let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVLDInstruction";
-}
-class VLD2QWB<bits<4> op7_4, string Dt, RegisterOperand VdTy>
-  : NLdSt<0, 0b10, 0b0011, op7_4,
-          (outs VdTy:$Vd, GPR:$wb),
-          (ins addrmode6:$Rn, am6offset:$Rm), IIC_VLD2x2u,
+          (ins addrmode6:$Rn, am6offset:$Rm), itin,
           "vld2", Dt, "$Vd, $Rn$Rm",
           "$Rn.addr = $wb", []> {
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVLDInstruction";
 }
 
-def VLD2d8_UPD  : VLD2DWB<0b1000, {0,0,?,?}, "8", VecListTwoD>;
-def VLD2d16_UPD : VLD2DWB<0b1000, {0,1,?,?}, "16", VecListTwoD>;
-def VLD2d32_UPD : VLD2DWB<0b1000, {1,0,?,?}, "32", VecListTwoD>;
+def VLD2d8_UPD  : VLD2WB<0b1000, {0,0,?,?}, "8", VecListTwoD, IIC_VLD2u>;
+def VLD2d16_UPD : VLD2WB<0b1000, {0,1,?,?}, "16", VecListTwoD, IIC_VLD2u>;
+def VLD2d32_UPD : VLD2WB<0b1000, {1,0,?,?}, "32", VecListTwoD, IIC_VLD2u>;
 
-def VLD2q8_UPD  : VLD2QWB<{0,0,?,?}, "8", VecListFourD>;
-def VLD2q16_UPD : VLD2QWB<{0,1,?,?}, "16", VecListFourD>;
-def VLD2q32_UPD : VLD2QWB<{1,0,?,?}, "32", VecListFourD>;
+def VLD2q8_UPD  : VLD2WB<0b0011, {0,0,?,?}, "8", VecListFourD, IIC_VLD2x2u>;
+def VLD2q16_UPD : VLD2WB<0b0011, {0,1,?,?}, "16", VecListFourD, IIC_VLD2x2u>;
+def VLD2q32_UPD : VLD2WB<0b0011, {1,0,?,?}, "32", VecListFourD, IIC_VLD2x2u>;
 
 def VLD2d8Pseudo_UPD  : VLDQWBPseudo<IIC_VLD2u>;
 def VLD2d16Pseudo_UPD : VLDQWBPseudo<IIC_VLD2u>;
@@ -571,9 +563,9 @@ def VLD2q32Pseudo_UPD : VLDQQWBPseudo<IIC_VLD2x2u>;
 def VLD2b8      : VLD2D<0b1001, {0,0,?,?}, "8", VecListTwoQ>;
 def VLD2b16     : VLD2D<0b1001, {0,1,?,?}, "16", VecListTwoQ>;
 def VLD2b32     : VLD2D<0b1001, {1,0,?,?}, "32", VecListTwoQ>;
-def VLD2b8_UPD  : VLD2DWB<0b1001, {0,0,?,?}, "8", VecListTwoQ>;
-def VLD2b16_UPD : VLD2DWB<0b1001, {0,1,?,?}, "16", VecListTwoQ>;
-def VLD2b32_UPD : VLD2DWB<0b1001, {1,0,?,?}, "32", VecListTwoQ>;
+def VLD2b8_UPD  : VLD2WB<0b1001, {0,0,?,?}, "8", VecListTwoQ, IIC_VLD2u>;
+def VLD2b16_UPD : VLD2WB<0b1001, {0,1,?,?}, "16", VecListTwoQ, IIC_VLD2u>;
+def VLD2b32_UPD : VLD2WB<0b1001, {1,0,?,?}, "32", VecListTwoQ, IIC_VLD2u>;
 
 //   VLD3     : Vector Load (multiple 3-element structures)
 class VLD3D<bits<4> op11_8, bits<4> op7_4, string Dt>
