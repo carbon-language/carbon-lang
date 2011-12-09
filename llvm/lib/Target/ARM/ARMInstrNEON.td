@@ -498,31 +498,23 @@ defm VLD1d64Qwb  : VLD1D4WB<{1,1,?,?}, "64">;
 def VLD1d64QPseudo : VLDQQPseudo<IIC_VLD1x4>;
 
 //   VLD2     : Vector Load (multiple 2-element structures)
-class VLD2D<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy>
+class VLD2<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy,
+           InstrItinClass itin>
   : NLdSt<0, 0b10, op11_8, op7_4, (outs VdTy:$Vd),
-          (ins addrmode6:$Rn), IIC_VLD2,
-          "vld2", Dt, "$Vd, $Rn", "", []> {
-  let Rm = 0b1111;
-  let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVLDInstruction";
-}
-class VLD2Q<bits<4> op7_4, string Dt, RegisterOperand VdTy>
-  : NLdSt<0, 0b10, 0b0011, op7_4,
-          (outs VdTy:$Vd),
-          (ins addrmode6:$Rn), IIC_VLD2x2,
+          (ins addrmode6:$Rn), itin,
           "vld2", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVLDInstruction";
 }
 
-def  VLD2d8   : VLD2D<0b1000, {0,0,?,?}, "8", VecListTwoD>;
-def  VLD2d16  : VLD2D<0b1000, {0,1,?,?}, "16", VecListTwoD>;
-def  VLD2d32  : VLD2D<0b1000, {1,0,?,?}, "32", VecListTwoD>;
+def  VLD2d8   : VLD2<0b1000, {0,0,?,?}, "8", VecListTwoD, IIC_VLD2>;
+def  VLD2d16  : VLD2<0b1000, {0,1,?,?}, "16", VecListTwoD, IIC_VLD2>;
+def  VLD2d32  : VLD2<0b1000, {1,0,?,?}, "32", VecListTwoD, IIC_VLD2>;
 
-def  VLD2q8   : VLD2Q<{0,0,?,?}, "8", VecListFourD>;
-def  VLD2q16  : VLD2Q<{0,1,?,?}, "16", VecListFourD>;
-def  VLD2q32  : VLD2Q<{1,0,?,?}, "32", VecListFourD>;
+def  VLD2q8   : VLD2<0b0011, {0,0,?,?}, "8", VecListFourD, IIC_VLD2x2>;
+def  VLD2q16  : VLD2<0b0011, {0,1,?,?}, "16", VecListFourD, IIC_VLD2x2>;
+def  VLD2q32  : VLD2<0b0011, {1,0,?,?}, "32", VecListFourD, IIC_VLD2x2>;
 
 def  VLD2d8Pseudo  : VLDQPseudo<IIC_VLD2>;
 def  VLD2d16Pseudo : VLDQPseudo<IIC_VLD2>;
@@ -534,7 +526,7 @@ def  VLD2q32Pseudo : VLDQQPseudo<IIC_VLD2x2>;
 
 // ...with address register writeback:
 class VLD2WB<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy,
-              InstrItinClass itin>
+             InstrItinClass itin>
   : NLdSt<0, 0b10, op11_8, op7_4, (outs VdTy:$Vd, GPR:$wb),
           (ins addrmode6:$Rn, am6offset:$Rm), itin,
           "vld2", Dt, "$Vd, $Rn$Rm",
@@ -560,9 +552,9 @@ def VLD2q16Pseudo_UPD : VLDQQWBPseudo<IIC_VLD2x2u>;
 def VLD2q32Pseudo_UPD : VLDQQWBPseudo<IIC_VLD2x2u>;
 
 // ...with double-spaced registers
-def VLD2b8      : VLD2D<0b1001, {0,0,?,?}, "8", VecListTwoQ>;
-def VLD2b16     : VLD2D<0b1001, {0,1,?,?}, "16", VecListTwoQ>;
-def VLD2b32     : VLD2D<0b1001, {1,0,?,?}, "32", VecListTwoQ>;
+def VLD2b8      : VLD2<0b1001, {0,0,?,?}, "8", VecListTwoQ, IIC_VLD2>;
+def VLD2b16     : VLD2<0b1001, {0,1,?,?}, "16", VecListTwoQ, IIC_VLD2>;
+def VLD2b32     : VLD2<0b1001, {1,0,?,?}, "32", VecListTwoQ, IIC_VLD2>;
 def VLD2b8_UPD  : VLD2WB<0b1001, {0,0,?,?}, "8", VecListTwoQ, IIC_VLD2u>;
 def VLD2b16_UPD : VLD2WB<0b1001, {0,1,?,?}, "16", VecListTwoQ, IIC_VLD2u>;
 def VLD2b32_UPD : VLD2WB<0b1001, {1,0,?,?}, "32", VecListTwoQ, IIC_VLD2u>;
