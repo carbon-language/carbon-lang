@@ -11,7 +11,6 @@ add_clang_library(clangSerialization
   ASTWriter.cpp
   ASTWriterDecl.cpp
   ASTWriterStmt.cpp
-  ChainedIncludesSource.cpp
   GeneratePCH.cpp
   Module.cpp
   ModuleManager.cpp

@@ -13,6 +13,7 @@ add_clang_library(clangFrontend
   ASTMerge.cpp
   ASTUnit.cpp
   CacheTokens.cpp
+  ChainedIncludesSource.cpp
   CompilerInstance.cpp
   CompilerInvocation.cpp
   CreateInvocationFromCommandLine.cpp
