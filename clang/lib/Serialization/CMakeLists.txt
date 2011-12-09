@@ -22,8 +22,8 @@ add_dependencies(clangSerialization
   ClangAttrList
   ClangAttrPCHRead
   ClangAttrPCHWrite
-  ClangDiagnosticFrontend
   ClangDiagnosticLex
   ClangDiagnosticSema
+  ClangDiagnosticSerialization
   ClangDeclNodes
   ClangStmtNodes)
