@@ -2085,15 +2085,24 @@ static DecodeStatus DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VLD1d32Qwb_register:
     case ARM::VLD1d64Qwb_fixed:
     case ARM::VLD1d64Qwb_register:
-    case ARM::VLD2d8_UPD:
-    case ARM::VLD2d16_UPD:
-    case ARM::VLD2d32_UPD:
-    case ARM::VLD2q8_UPD:
-    case ARM::VLD2q16_UPD:
-    case ARM::VLD2q32_UPD:
-    case ARM::VLD2b8_UPD:
-    case ARM::VLD2b16_UPD:
-    case ARM::VLD2b32_UPD:
+    case ARM::VLD2d8wb_fixed:
+    case ARM::VLD2d16wb_fixed:
+    case ARM::VLD2d32wb_fixed:
+    case ARM::VLD2q8wb_fixed:
+    case ARM::VLD2q16wb_fixed:
+    case ARM::VLD2q32wb_fixed:
+    case ARM::VLD2d8wb_register:
+    case ARM::VLD2d16wb_register:
+    case ARM::VLD2d32wb_register:
+    case ARM::VLD2q8wb_register:
+    case ARM::VLD2q16wb_register:
+    case ARM::VLD2q32wb_register:
+    case ARM::VLD2b8wb_fixed:
+    case ARM::VLD2b16wb_fixed:
+    case ARM::VLD2b32wb_fixed:
+    case ARM::VLD2b8wb_register:
+    case ARM::VLD2b16wb_register:
+    case ARM::VLD2b32wb_register:
     case ARM::VLD3d8_UPD:
     case ARM::VLD3d16_UPD:
     case ARM::VLD3d32_UPD:

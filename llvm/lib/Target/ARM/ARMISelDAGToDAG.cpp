@@ -1581,6 +1581,14 @@ static unsigned getVLDSTRegisterUpdateOpcode(unsigned Opc) {
   case ARM::VST1q64PseudoWB_fixed: return ARM::VST1q64PseudoWB_register;
   case ARM::VST1d64TPseudoWB_fixed: return ARM::VST1d64TPseudoWB_register;
   case ARM::VST1d64QPseudoWB_fixed: return ARM::VST1d64QPseudoWB_register;
+
+  case ARM::VLD2d8PseudoWB_fixed: return ARM::VLD2d8PseudoWB_register;
+  case ARM::VLD2d16PseudoWB_fixed: return ARM::VLD2d16PseudoWB_register;
+  case ARM::VLD2d32PseudoWB_fixed: return ARM::VLD2d32PseudoWB_register;
+  case ARM::VLD2q8PseudoWB_fixed: return ARM::VLD2q8PseudoWB_register;
+  case ARM::VLD2q16PseudoWB_fixed: return ARM::VLD2q16PseudoWB_register;
+  case ARM::VLD2q32PseudoWB_fixed: return ARM::VLD2q32PseudoWB_register;
+
   }
   return Opc; // If not one we handle, return it unchanged.
 }
@@ -1648,13 +1656,13 @@ SDNode *ARMDAGToDAGISel::SelectVLD(SDNode *N, bool isUpdating, unsigned NumVecs,
     Ops.push_back(Align);
     if (isUpdating) {
       SDValue Inc = N->getOperand(AddrOpIdx + 1);
-      // FIXME: VLD1 fixed increment doesn't need Reg0. Remove the reg0
+      // FIXME: VLD1/VLD2 fixed increment doesn't need Reg0. Remove the reg0
       // case entirely when the rest are updated to that form, too.
-      if (NumVecs == 1 && !isa<ConstantSDNode>(Inc.getNode()))
+      if ((NumVecs == 1 || NumVecs == 2) && !isa<ConstantSDNode>(Inc.getNode()))
         Opc = getVLDSTRegisterUpdateOpcode(Opc);
-      // We use a VST1 for v1i64 even if the pseudo says vld2/3/4, so
+      // We use a VLD1 for v1i64 even if the pseudo says vld2/3/4, so
       // check for that explicitly too. Horribly hacky, but temporary.
-      if ((NumVecs != 1 && Opc != ARM::VLD1q64PseudoWB_fixed) ||
+      if ((NumVecs != 1 && NumVecs != 2 && Opc != ARM::VLD1q64PseudoWB_fixed) ||
           !isa<ConstantSDNode>(Inc.getNode()))
         Ops.push_back(isa<ConstantSDNode>(Inc.getNode()) ? Reg0 : Inc);
     }
@@ -2812,10 +2820,13 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
   }
 
   case ARMISD::VLD2_UPD: {
-    unsigned DOpcodes[] = { ARM::VLD2d8Pseudo_UPD, ARM::VLD2d16Pseudo_UPD,
-                            ARM::VLD2d32Pseudo_UPD, ARM::VLD1q64PseudoWB_fixed};
-    unsigned QOpcodes[] = { ARM::VLD2q8Pseudo_UPD, ARM::VLD2q16Pseudo_UPD,
-                            ARM::VLD2q32Pseudo_UPD };
+    unsigned DOpcodes[] = { ARM::VLD2d8PseudoWB_fixed,
+                            ARM::VLD2d16PseudoWB_fixed,
+                            ARM::VLD2d32PseudoWB_fixed,
+                            ARM::VLD1q64PseudoWB_fixed};
+    unsigned QOpcodes[] = { ARM::VLD2q8PseudoWB_fixed,
+                            ARM::VLD2q16PseudoWB_fixed,
+                            ARM::VLD2q32PseudoWB_fixed };
     return SelectVLD(N, true, 2, DOpcodes, QOpcodes, 0);
   }
 

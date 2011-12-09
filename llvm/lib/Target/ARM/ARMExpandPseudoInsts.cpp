@@ -180,18 +180,24 @@ static const NEONLdStTableEntry NEONLdStTable[] = {
 { ARM::VLD2LNq32Pseudo_UPD, ARM::VLD2LNq32_UPD, true, true, true,  EvenDblSpc, 2, 2 ,true},
 
 { ARM::VLD2d16Pseudo,       ARM::VLD2d16,      true,  false, false, SingleSpc,  2, 4 ,false},
-{ ARM::VLD2d16Pseudo_UPD,   ARM::VLD2d16_UPD, true, true, true,  SingleSpc,  2, 4 ,false},
+{ ARM::VLD2d16PseudoWB_fixed,   ARM::VLD2d16wb_fixed, true, true, false,  SingleSpc,  2, 4 ,false},
+{ ARM::VLD2d16PseudoWB_register,   ARM::VLD2d16wb_register, true, true, true,  SingleSpc,  2, 4 ,false},
 { ARM::VLD2d32Pseudo,       ARM::VLD2d32,      true,  false, false, SingleSpc,  2, 2 ,false},
-{ ARM::VLD2d32Pseudo_UPD,   ARM::VLD2d32_UPD, true, true, true,  SingleSpc,  2, 2 ,false},
+{ ARM::VLD2d32PseudoWB_fixed,   ARM::VLD2d32wb_fixed, true, true, false,  SingleSpc,  2, 2 ,false},
+{ ARM::VLD2d32PseudoWB_register,   ARM::VLD2d32wb_register, true, true, true,  SingleSpc,  2, 2 ,false},
 { ARM::VLD2d8Pseudo,        ARM::VLD2d8,       true,  false, false, SingleSpc,  2, 8 ,false},
-{ ARM::VLD2d8Pseudo_UPD,    ARM::VLD2d8_UPD, true, true, true,  SingleSpc,  2, 8 ,false},
+{ ARM::VLD2d8PseudoWB_fixed,    ARM::VLD2d8wb_fixed, true, true, false,  SingleSpc,  2, 8 ,false},
+{ ARM::VLD2d8PseudoWB_register,    ARM::VLD2d8wb_register, true, true, true,  SingleSpc,  2, 8 ,false},
 
 { ARM::VLD2q16Pseudo,       ARM::VLD2q16,      true,  false, false, SingleSpc,  4, 4 ,false},
-{ ARM::VLD2q16Pseudo_UPD,   ARM::VLD2q16_UPD, true, true, true,  SingleSpc,  4, 4 ,false},
+{ ARM::VLD2q16PseudoWB_fixed,   ARM::VLD2q16wb_fixed, true, true, false,  SingleSpc,  4, 4 ,false},
+{ ARM::VLD2q16PseudoWB_register,   ARM::VLD2q16wb_register, true, true, true,  SingleSpc,  4, 4 ,false},
 { ARM::VLD2q32Pseudo,       ARM::VLD2q32,      true,  false, false, SingleSpc,  4, 2 ,false},
-{ ARM::VLD2q32Pseudo_UPD,   ARM::VLD2q32_UPD, true, true, true,  SingleSpc,  4, 2 ,false},
+{ ARM::VLD2q32PseudoWB_fixed,   ARM::VLD2q32wb_fixed, true, true, false,  SingleSpc,  4, 2 ,false},
+{ ARM::VLD2q32PseudoWB_register,   ARM::VLD2q32wb_register, true, true, true,  SingleSpc,  4, 2 ,false},
 { ARM::VLD2q8Pseudo,        ARM::VLD2q8,       true,  false, false, SingleSpc,  4, 8 ,false},
-{ ARM::VLD2q8Pseudo_UPD,    ARM::VLD2q8_UPD, true, true, true,  SingleSpc,  4, 8 ,false},
+{ ARM::VLD2q8PseudoWB_fixed,    ARM::VLD2q8wb_fixed, true, true, false,  SingleSpc,  4, 8 ,false},
+{ ARM::VLD2q8PseudoWB_register,    ARM::VLD2q8wb_register, true, true, true,  SingleSpc,  4, 8 ,false},
 
 { ARM::VLD3DUPd16Pseudo,     ARM::VLD3DUPd16,     true, false, false, SingleSpc, 3, 4,true},
 { ARM::VLD3DUPd16Pseudo_UPD, ARM::VLD3DUPd16_UPD, true, true, true,  SingleSpc, 3, 4,true},
@@ -1095,12 +1101,18 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::VLD2q8Pseudo:
     case ARM::VLD2q16Pseudo:
     case ARM::VLD2q32Pseudo:
-    case ARM::VLD2d8Pseudo_UPD:
-    case ARM::VLD2d16Pseudo_UPD:
-    case ARM::VLD2d32Pseudo_UPD:
-    case ARM::VLD2q8Pseudo_UPD:
-    case ARM::VLD2q16Pseudo_UPD:
-    case ARM::VLD2q32Pseudo_UPD:
+    case ARM::VLD2d8PseudoWB_fixed:
+    case ARM::VLD2d16PseudoWB_fixed:
+    case ARM::VLD2d32PseudoWB_fixed:
+    case ARM::VLD2q8PseudoWB_fixed:
+    case ARM::VLD2q16PseudoWB_fixed:
+    case ARM::VLD2q32PseudoWB_fixed:
+    case ARM::VLD2d8PseudoWB_register:
+    case ARM::VLD2d16PseudoWB_register:
+    case ARM::VLD2d32PseudoWB_register:
+    case ARM::VLD2q8PseudoWB_register:
+    case ARM::VLD2q16PseudoWB_register:
+    case ARM::VLD2q32PseudoWB_register:
     case ARM::VLD3d8Pseudo:
     case ARM::VLD3d16Pseudo:
     case ARM::VLD3d32Pseudo:
