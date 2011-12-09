@@ -42,7 +42,7 @@ void test() {
   // Bad length modifiers
   printf("%hhs", "foo");
   printf("%1$zp", (void *)0);
-  
+
   // Perserve the original formatting for unsigned integers.
   unsigned long val = 42;
   printf("%X", val);
@@ -57,6 +57,9 @@ void test() {
   printf("%f", (intmax_t) 42);
   printf("%f", (uintmax_t) 42);
   printf("%f", (ptrdiff_t) 42);
+
+  // string
+  printf("%ld", "foo");
 }
 
 // Validate the fixes...
@@ -83,3 +86,4 @@ void test() {
 // CHECK: printf("%jd", (intmax_t) 42);
 // CHECK: printf("%ju", (uintmax_t) 42);
 // CHECK: printf("%td", (ptrdiff_t) 42);
+// CHECK: printf("%s", "foo");

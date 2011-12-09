@@ -366,6 +366,8 @@ bool PrintfSpecifier::fixType(QualType QT, const LangOptions &LangOpt) {
     // Set the long length modifier for wide characters
     if (QT->getPointeeType()->isWideCharType())
       LM.setKind(LengthModifier::AsWideChar);
+    else
+      LM.setKind(LengthModifier::None);
 
     return true;
   }
