@@ -2110,3 +2110,6 @@ void Type::dump() const { print(dbgs()); }
 
 // Module::dump() - Allow printing of Modules from the debugger.
 void Module::dump() const { print(dbgs(), 0); }
+
+// NamedMDNode::dump() - Allow printing of NamedMDNodes from the debugger.
+void NamedMDNode::dump() const { print(dbgs(), 0); }
