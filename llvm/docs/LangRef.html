@@ -4247,9 +4247,9 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 <table border="1" cellspacing="0" cellpadding="4">
   <tbody>
     <tr>
-      <td>In0</td>
-      <td>In1</td>
-      <td>Out</td>
+      <th>In0</th>
+      <th>In1</th>
+      <th>Out</th>
     </tr>
     <tr>
       <td>0</td>
@@ -4308,9 +4308,9 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 <table border="1" cellspacing="0" cellpadding="4">
   <tbody>
     <tr>
-      <td>In0</td>
-      <td>In1</td>
-      <td>Out</td>
+      <th>In0</th>
+      <th>In1</th>
+      <th>Out</th>
     </tr>
     <tr>
       <td>0</td>
@@ -4372,9 +4372,9 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 <table border="1" cellspacing="0" cellpadding="4">
   <tbody>
     <tr>
-      <td>In0</td>
-      <td>In1</td>
-      <td>Out</td>
+      <th>In0</th>
+      <th>In1</th>
+      <th>Out</th>
     </tr>
     <tr>
       <td>0</td>
@@ -4785,8 +4785,8 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  store [volatile] &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !&lt;index&gt;]                   <i>; yields {void}</i>
-  store atomic [volatile] &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt; [singlethread] &lt;ordering&gt;, align &lt;alignment&gt;             <i>; yields {void}</i>
+  store [volatile] &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !&lt;index&gt;]        <i>; yields {void}</i>
+  store atomic [volatile] &lt;ty&gt; &lt;value&gt;, &lt;ty&gt;* &lt;pointer&gt; [singlethread] &lt;ordering&gt;, align &lt;alignment&gt;  <i>; yields {void}</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -4915,7 +4915,7 @@ thread.  (This is useful for interacting with signal handlers.)</p>
 
 <h5>Syntax:</h5>
 <pre>
-  cmpxchg [volatile] &lt;ty&gt;* &lt;pointer&gt;, &lt;ty&gt; &lt;cmp&gt;, &lt;ty&gt; &lt;new&gt; [singlethread] &lt;ordering&gt;                   <i>; yields {ty}</i>
+  cmpxchg [volatile] &lt;ty&gt;* &lt;pointer&gt;, &lt;ty&gt; &lt;cmp&gt;, &lt;ty&gt; &lt;new&gt; [singlethread] &lt;ordering&gt;  <i>; yields {ty}</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -4973,13 +4973,13 @@ FIXME: Is a weaker ordering constraint on failure helpful in practice?
 <h5>Example:</h5>
 <pre>
 entry:
-  %orig = atomic <a href="#i_load">load</a> i32* %ptr unordered                       <i>; yields {i32}</i>
+  %orig = atomic <a href="#i_load">load</a> i32* %ptr unordered                   <i>; yields {i32}</i>
   <a href="#i_br">br</a> label %loop
 
 loop:
   %cmp = <a href="#i_phi">phi</a> i32 [ %orig, %entry ], [%old, %loop]
   %squared = <a href="#i_mul">mul</a> i32 %cmp, %cmp
-  %old = cmpxchg i32* %ptr, i32 %cmp, i32 %squared                       <i>; yields {i32}</i>
+  %old = cmpxchg i32* %ptr, i32 %cmp, i32 %squared          <i>; yields {i32}</i>
   %success = <a href="#i_icmp">icmp</a> eq i32 %cmp, %old
   <a href="#i_br">br</a> i1 %success, label %done, label %loop
 
