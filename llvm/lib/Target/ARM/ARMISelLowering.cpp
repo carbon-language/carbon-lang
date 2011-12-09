@@ -3984,8 +3984,7 @@ SDValue ARMTargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG,
 
       // Use vmov.f32 to materialize other v2f32 and v4f32 splats.
       if (VT == MVT::v2f32 || VT == MVT::v4f32) {
-        ConstantFPSDNode *C = cast<ConstantFPSDNode>(Op.getOperand(0));
-        int ImmVal = ARM_AM::getFP32Imm(C->getValueAPF());
+        int ImmVal = ARM_AM::getFP32Imm(SplatBits);
         if (ImmVal != -1) {
           SDValue Val = DAG.getTargetConstant(ImmVal, MVT::i32);
           return DAG.getNode(ARMISD::VMOVFPIMM, dl, VT, Val);

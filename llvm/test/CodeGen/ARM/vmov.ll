@@ -371,3 +371,13 @@ entry:
   store <4 x float> <float 3.100000e+01, float 3.100000e+01, float 3.100000e+01, float 3.100000e+01>, <4 x float>* %p, align 4
   ret void
 }
+
+define void @v_mov_v4f32_undef(<4 x float> * nocapture %p) nounwind {
+entry:
+;CHECK: v_mov_v4f32_undef:
+;CHECK: vmov.f32 q{{.*}}, #1.000000e+00
+  %a = load <4 x float> *%p
+  %b = fadd <4 x float> %a, <float undef, float 1.0, float 1.0, float 1.0>
+  store <4 x float> %b, <4 x float> *%p
+  ret void
+}
