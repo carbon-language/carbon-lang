@@ -312,7 +312,7 @@ void ARMConstantIslands::verify(MachineFunction &MF) {
 /// print block size and offset information - debugging
 void ARMConstantIslands::dumpBBs() {
   for (unsigned J = 0, E = BBInfo.size(); J !=E; ++J) {
-    DEBUG(errs() << "block " << J << " offset " << BBInfo[J].Offset
+    DEBUG(dbgs() << "block " << J << " offset " << BBInfo[J].Offset
                  << " size " << BBInfo[J].Size << "\n");
   }
 }
@@ -386,6 +386,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   // is no change.
   unsigned NoCPIters = 0, NoBRIters = 0;
   while (true) {
+    DEBUG(dbgs() << "Beginning CP iteration #" << NoCPIters << '\n');
     bool CPChange = false;
     for (unsigned i = 0, e = CPUsers.size(); i != e; ++i)
       CPChange |= HandleConstantPoolUser(MF, i);
@@ -397,6 +398,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
     // appear as "new water" for the next iteration of constant pool placement.
     NewWaterList.clear();
 
+    DEBUG(dbgs() << "Beginning BR iteration #" << NoBRIters << '\n');
     bool BRChange = false;
     for (unsigned i = 0, e = ImmBranches.size(); i != e; ++i)
       BRChange |= FixUpImmediateBr(MF, ImmBranches[i]);
@@ -429,7 +431,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  DEBUG(errs() << '\n'; dumpBBs());
+  DEBUG(dbgs() << '\n'; dumpBBs());
 
   BBInfo.clear();
   WaterList.clear();
@@ -475,7 +477,7 @@ void ARMConstantIslands::DoInitialPlacement(MachineFunction &MF,
     CPEs.push_back(CPEntry(CPEMI, i));
     CPEntries.push_back(CPEs);
     ++NumCPEs;
-    DEBUG(errs() << "Moved CPI#" << i << " to end of function as #" << i
+    DEBUG(dbgs() << "Moved CPI#" << i << " to end of function as #" << i
                  << "\n");
   }
 }
@@ -904,11 +906,17 @@ bool ARMConstantIslands::CPEIsInRange(MachineInstr *MI, unsigned UserOffset,
   assert(CPEOffset % 4 == 0 && "Misaligned CPE");
 
   if (DoDump) {
-    DEBUG(errs() << "User of CPE#" << CPEMI->getOperand(0).getImm()
-                 << " max delta=" << MaxDisp
-                 << " insn address=" << UserOffset
-                 << " CPE address=" << CPEOffset
-                 << " offset=" << int(CPEOffset-UserOffset) << "\t" << *MI);
+    DEBUG({
+      unsigned Block = MI->getParent()->getNumber();
+      const BasicBlockInfo &BBI = BBInfo[Block];
+      dbgs() << "User of CPE#" << CPEMI->getOperand(0).getImm()
+             << " max delta=" << MaxDisp
+             << " insn address=" << UserOffset
+             << " in BB#" << Block << ": "
+             << BBI.Offset << " - " << BBI.postOffset() << "\t" << *MI
+             << "CPE address=" << CPEOffset
+             << " offset=" << int(CPEOffset-UserOffset) << ": ";
+    });
   }
 
   return OffsetIsInRange(UserOffset, CPEOffset, MaxDisp, NegOk);
@@ -981,7 +989,7 @@ int ARMConstantIslands::LookForExistingCPEntry(CPUser& U, unsigned UserOffset)
 
   // Check to see if the CPE is already in-range.
   if (CPEIsInRange(UserMI, UserOffset, CPEMI, U.MaxDisp, U.NegOk, true)) {
-    DEBUG(errs() << "In range\n");
+    DEBUG(dbgs() << "In range\n");
     return 1;
   }
 
@@ -996,7 +1004,7 @@ int ARMConstantIslands::LookForExistingCPEntry(CPUser& U, unsigned UserOffset)
     if (CPEs[i].CPEMI == NULL)
       continue;
     if (CPEIsInRange(UserMI, UserOffset, CPEs[i].CPEMI, U.MaxDisp, U.NegOk)) {
-      DEBUG(errs() << "Replacing CPE#" << CPI << " with CPE#"
+      DEBUG(dbgs() << "Replacing CPE#" << CPI << " with CPE#"
                    << CPEs[i].CPI << "\n");
       // Point the CPUser node to the replacement
       U.CPEMI = CPEs[i].CPEMI;
@@ -1107,7 +1115,7 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
   if (BBHasFallthrough(UserMBB) &&
       OffsetIsInRange(UserOffset, OffsetOfNextBlock + (isThumb1 ? 2: 4),
                       U.MaxDisp, U.NegOk, U.IsSoImm)) {
-    DEBUG(errs() << "Split at end of block\n");
+    DEBUG(dbgs() << "Split at end of block\n");
     if (&UserMBB->back() == UserMI)
       assert(BBHasFallthrough(UserMBB) && "Expected a fallthrough BB!");
     NewMBB = llvm::next(MachineFunction::iterator(UserMBB));
@@ -1182,7 +1190,7 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
         LastIT = MI;
     }
 
-    DEBUG(errs() << "Split in middle of big block\n");
+    DEBUG(dbgs() << "Split in middle of big block\n");
     --MI;
 
     // Avoid splitting an IT block.
@@ -1226,7 +1234,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &MF,
   MachineBasicBlock *NewMBB;
   water_iterator IP;
   if (LookForWater(U, UserOffset, IP)) {
-    DEBUG(errs() << "found water in range\n");
+    DEBUG(dbgs() << "Found water in range\n");
     MachineBasicBlock *WaterBB = *IP;
 
     // If the original WaterList entry was "new water" on this iteration,
@@ -1241,7 +1249,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &MF,
 
   } else {
     // No water found.
-    DEBUG(errs() << "No water found\n");
+    DEBUG(dbgs() << "No water found\n");
     CreateNewWater(CPUserIndex, UserOffset, NewMBB);
 
     // SplitBlockBeforeInstr adds to WaterList, which is important when it is
@@ -1296,8 +1304,8 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &MF,
       break;
     }
 
-  DEBUG(errs() << "  Moved CPE to #" << ID << " CPI=" << CPI
-           << '\t' << *UserMI);
+  DEBUG(dbgs() << "  Moved CPE to #" << ID << " CPI=" << CPI
+               << '\t' << *UserMI);
 
   return true;
 }
@@ -1356,7 +1364,7 @@ bool ARMConstantIslands::BBIsInRange(MachineInstr *MI,MachineBasicBlock *DestBB,
   unsigned BrOffset   = GetOffsetOf(MI) + PCAdj;
   unsigned DestOffset = BBInfo[DestBB->getNumber()].Offset;
 
-  DEBUG(errs() << "Branch of destination BB#" << DestBB->getNumber()
+  DEBUG(dbgs() << "Branch of destination BB#" << DestBB->getNumber()
                << " from BB#" << MI->getParent()->getNumber()
                << " max delta=" << MaxDisp
                << " from " << GetOffsetOf(MI) << " to " << DestOffset
@@ -1407,7 +1415,7 @@ ARMConstantIslands::FixUpUnconditionalBr(MachineFunction &MF, ImmBranch &Br) {
   HasFarJump = true;
   ++NumUBrFixed;
 
-  DEBUG(errs() << "  Changed B to long jump " << *MI);
+  DEBUG(dbgs() << "  Changed B to long jump " << *MI);
 
   return true;
 }
@@ -1451,7 +1459,7 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &MF, ImmBranch &Br) {
       // b   L1
       MachineBasicBlock *NewDest = BMI->getOperand(0).getMBB();
       if (BBIsInRange(MI, NewDest, Br.MaxDisp)) {
-        DEBUG(errs() << "  Invert Bcc condition and swap its destination with "
+        DEBUG(dbgs() << "  Invert Bcc condition and swap its destination with "
                      << *BMI);
         BMI->getOperand(0).setMBB(DestBB);
         MI->getOperand(0).setMBB(NewDest);
@@ -1472,7 +1480,7 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &MF, ImmBranch &Br) {
   }
   MachineBasicBlock *NextBB = llvm::next(MachineFunction::iterator(MBB));
 
-  DEBUG(errs() << "  Insert B to BB#" << DestBB->getNumber()
+  DEBUG(dbgs() << "  Insert B to BB#" << DestBB->getNumber()
                << " also invert condition and change dest. to BB#"
                << NextBB->getNumber() << "\n");
 
