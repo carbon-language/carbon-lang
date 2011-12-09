@@ -34,6 +34,11 @@
 extern "C" {
 #endif
 
+/* It is a bit strange for a header to play with the visibility of the
+   symbols it declares, but this matches gcc's behavior and some programs
+   depend on it */
+#pragma GCC visibility push(default)
+
 struct _Unwind_Context;
 typedef enum {
   _URC_NO_REASON = 0,
@@ -52,6 +57,8 @@ typedef enum {
 uintptr_t _Unwind_GetIP(struct _Unwind_Context* context);
 typedef _Unwind_Reason_Code (*_Unwind_Trace_Fn)(struct _Unwind_Context*, void*);
 _Unwind_Reason_Code _Unwind_Backtrace(_Unwind_Trace_Fn, void*);
+
+#pragma GCC visibility pop
 
 #ifdef __cplusplus
 }
