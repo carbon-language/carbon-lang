@@ -265,8 +265,6 @@ namespace {
                       bool DoDump = false);
     bool WaterIsInRange(unsigned UserOffset, MachineBasicBlock *Water,
                         CPUser &U);
-    bool OffsetIsInRange(unsigned UserOffset, unsigned TrialOffset,
-                         unsigned Disp, bool NegativeOK, bool IsSoImm = false);
     bool BBIsInRange(MachineInstr *MI, MachineBasicBlock *BB, unsigned Disp);
     bool FixUpImmediateBr(MachineFunction &MF, ImmBranch &Br);
     bool FixUpConditionalBr(MachineFunction &MF, ImmBranch &Br);
@@ -283,6 +281,14 @@ namespace {
     unsigned GetOffsetOf(MachineInstr *MI) const;
     void dumpBBs();
     void verify(MachineFunction &MF);
+
+    bool OffsetIsInRange(unsigned UserOffset, unsigned TrialOffset,
+                         unsigned Disp, bool NegativeOK, bool IsSoImm = false);
+    bool OffsetIsInRange(unsigned UserOffset, unsigned TrialOffset,
+                         const CPUser &U) {
+      return OffsetIsInRange(UserOffset, TrialOffset,
+                             U.MaxDisp, U.NegOk, U.IsSoImm);
+    }
   };
   char ARMConstantIslands::ID = 0;
 }
@@ -886,7 +892,6 @@ bool ARMConstantIslands::OffsetIsInRange(unsigned UserOffset,
 
 bool ARMConstantIslands::WaterIsInRange(unsigned UserOffset,
                                         MachineBasicBlock* Water, CPUser &U) {
-  unsigned MaxDisp = U.MaxDisp;
   unsigned CPEOffset = BBInfo[Water->getNumber()].postOffset();
 
   // If the CPE is to be inserted before the instruction, that will raise
@@ -894,7 +899,7 @@ bool ARMConstantIslands::WaterIsInRange(unsigned UserOffset,
   if (CPEOffset < UserOffset)
     UserOffset += U.CPEMI->getOperand(2).getImm();
 
-  return OffsetIsInRange(UserOffset, CPEOffset, MaxDisp, U.NegOk, U.IsSoImm);
+  return OffsetIsInRange(UserOffset, CPEOffset, U);
 }
 
 /// CPEIsInRange - Returns true if the distance between specific MI and
@@ -1113,8 +1118,7 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
   // Thumb2, 2 on Thumb1.  Possible Thumb1 alignment padding is allowed for
   // inside OffsetIsInRange.
   if (BBHasFallthrough(UserMBB) &&
-      OffsetIsInRange(UserOffset, OffsetOfNextBlock + (isThumb1 ? 2: 4),
-                      U.MaxDisp, U.NegOk, U.IsSoImm)) {
+      OffsetIsInRange(UserOffset, OffsetOfNextBlock + (isThumb1 ? 2: 4), U)) {
     DEBUG(dbgs() << "Split at end of block\n");
     if (&UserMBB->back() == UserMI)
       assert(BBHasFallthrough(UserMBB) && "Expected a fallthrough BB!");
@@ -1174,8 +1178,7 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
            MI = llvm::next(MI)) {
       if (CPUIndex < NumCPUsers && CPUsers[CPUIndex].MI == MI) {
         CPUser &U = CPUsers[CPUIndex];
-        if (!OffsetIsInRange(Offset, EndInsertOffset,
-                             U.MaxDisp, U.NegOk, U.IsSoImm)) {
+        if (!OffsetIsInRange(Offset, EndInsertOffset, U)) {
           BaseInsertOffset -= (isThumb1 ? 2 : 4);
           EndInsertOffset  -= (isThumb1 ? 2 : 4);
         }
