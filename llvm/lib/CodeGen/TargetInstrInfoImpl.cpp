@@ -139,6 +139,19 @@ bool TargetInstrInfoImpl::findCommutedOpIndices(MachineInstr *MI,
 }
 
 
+bool
+TargetInstrInfoImpl::isUnpredicatedTerminator(const MachineInstr *MI) const {
+  if (!MI->isTerminator()) return false;
+
+  // Conditional branch is a special case.
+  if (MI->isBranch() && !MI->isBarrier())
+    return true;
+  if (!MI->isPredicable())
+    return true;
+  return !isPredicated(MI);
+}
+
+
 bool TargetInstrInfoImpl::PredicateInstruction(MachineInstr *MI,
                             const SmallVectorImpl<MachineOperand> &Pred) const {
   bool MadeChange = false;
