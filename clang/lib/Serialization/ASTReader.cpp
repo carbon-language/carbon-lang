@@ -1427,14 +1427,13 @@ bool HeaderFileInfoTrait::EqualKey(internal_key_type a, internal_key_type b) {
   
   if (llvm::sys::path::filename(a) != llvm::sys::path::filename(b))
     return false;
-  
-  // The file names match, but the path names don't. stat() the files to
-  // see if they are the same.      
-  struct stat StatBufA, StatBufB;
-  if (StatSimpleCache(a, &StatBufA) || StatSimpleCache(b, &StatBufB))
+
+  // Determine whether the actual files are equivalent.
+  bool Result = false;
+  if (llvm::sys::fs::equivalent(a, b, Result))
     return false;
   
-  return StatBufA.st_ino == StatBufB.st_ino;
+  return Result;
 }
     
 std::pair<unsigned, unsigned>
