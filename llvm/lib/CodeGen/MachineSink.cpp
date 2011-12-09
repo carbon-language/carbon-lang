@@ -149,10 +149,9 @@ MachineSinking::AllUsesDominatedByBlock(unsigned Reg,
   assert(TargetRegisterInfo::isVirtualRegister(Reg) &&
          "Only makes sense for vregs");
 
+  // Ignore debug uses because debug info doesn't affect the code.
   if (MRI->use_nodbg_empty(Reg))
     return true;
-
-  // Ignoring debug uses because debug info doesn't affect the code.
 
   // BreakPHIEdge is true if all the uses are in the successor MBB being sunken
   // into and they are all PHI nodes. In this case, machine-sink must break
