@@ -166,6 +166,10 @@ def mdebug_pass : Separate<"-mdebug-pass">,
   HelpText<"Enable additional debug output">;
 def mdisable_fp_elim : Flag<"-mdisable-fp-elim">,
   HelpText<"Disable frame pointer elimination optimization">;
+def menable_no_infinities : Flag<"-menable-no-infs">,
+  HelpText<"Allow optimization to assume there are no infinities.">;
+def menable_no_nans : Flag<"-menable-no-nans">,
+  HelpText<"Allow optimization to assume there are no NaNs.">;
 def mfloat_abi : Separate<"-mfloat-abi">,
   HelpText<"The float ABI to use">;
 def mno_global_merge : Flag<"-mno-global-merge">,

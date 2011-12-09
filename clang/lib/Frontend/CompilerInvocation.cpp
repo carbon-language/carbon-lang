@@ -183,6 +183,10 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
     Res.push_back("-main-file-name");
     Res.push_back(Opts.MainFileName);
   }
+  if (Opts.NoInfsFPMath)
+    Res.push_back("-menable-no-infinities");
+  if (Opts.NoNaNsFPMath)
+    Res.push_back("-menable-no-nans");
   // SimplifyLibCalls is only derived.
   // TimePasses is only derived.
   // UnitAtATime is unused.
@@ -1083,8 +1087,12 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.HiddenWeakVTables = Args.hasArg(OPT_fhidden_weak_vtables);
   Opts.LessPreciseFPMAD = Args.hasArg(OPT_cl_mad_enable);
   Opts.LimitFloatPrecision = Args.getLastArgValue(OPT_mlimit_float_precision);
-  Opts.NoInfsFPMath = Opts.NoNaNsFPMath = Args.hasArg(OPT_cl_finite_math_only)||
-                                          Args.hasArg(OPT_cl_fast_relaxed_math);
+  Opts.NoInfsFPMath = (Args.hasArg(OPT_menable_no_infinities) ||
+                       Args.hasArg(OPT_cl_finite_math_only)||
+                       Args.hasArg(OPT_cl_fast_relaxed_math));
+  Opts.NoNaNsFPMath = (Args.hasArg(OPT_menable_no_nans) ||
+                       Args.hasArg(OPT_cl_finite_math_only)||
+                       Args.hasArg(OPT_cl_fast_relaxed_math));
   Opts.NoZeroInitializedInBSS = Args.hasArg(OPT_mno_zero_initialized_in_bss);
   Opts.BackendOptions = Args.getAllArgValues(OPT_backend_option);
   Opts.NumRegisterParameters = Args.getLastArgIntValue(OPT_mregparm, 0, Diags);

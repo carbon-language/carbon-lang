@@ -315,7 +315,16 @@ def fexceptions : Flag<"-fexceptions">, Group<f_Group>;
 def fextdirs_EQ : Joined<"-fextdirs=">, Group<f_Group>;
 def fhosted : Flag<"-fhosted">, Group<f_Group>;
 def ffast_math : Flag<"-ffast-math">, Group<clang_ignored_f_Group>;
-def ffinite_math_only : Flag<"-ffinite-math-only">, Group<clang_ignored_f_Group>;
+def ffinite_math_only : Flag<"-ffinite-math-only">, Group<f_Group>;
+def fhonor_nans : Flag<"-fhonor-nans">, Group<f_Group>;
+def fno_honor_nans : Flag<"-fno-honor-nans">, Group<f_Group>;
+def fhonor_infinities : Flag<"-fhonor-infinities">, Group<f_Group>;
+def fno_honor_infinities : Flag<"-fno-honor-infinities">, Group<f_Group>;
+// Sic. This option was misspelled originally.
+def fhonor_infinites : Flag<"-fhonor-infinites">, Group<f_Group>,
+    Alias<fhonor_infinities>;
+def fno_honor_infinites : Flag<"-fno-honor-infinites">, Group<f_Group>,
+    Alias<fno_honor_infinities>;
 
 def ffor_scope : Flag<"-ffor-scope">, Group<f_Group>;
 def fno_for_scope : Flag<"-fno-for-scope">, Group<f_Group>;

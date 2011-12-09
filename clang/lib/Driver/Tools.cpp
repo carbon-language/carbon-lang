@@ -1345,6 +1345,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     getToolChain().IsStrictAliasingDefault()))
     CmdArgs.push_back("-relaxed-aliasing");
 
+  // Handle -f{no-}honor-infinities, -f{no-}honor-nans, and -ffinite-math-only.
+  bool HonorInfinities = Args.hasFlag(options::OPT_fhonor_infinities,
+                                      options::OPT_fno_honor_infinities);
+  bool HonorNaNs = Args.hasFlag(options::OPT_fhonor_nans,
+                                options::OPT_fno_honor_nans);
+  if (Args.hasArg(options::OPT_ffinite_math_only))
+    HonorInfinities = HonorNaNs = false;
+  if (!HonorInfinities)
+    CmdArgs.push_back("-menable-no-infs");
+  if (!HonorNaNs)
+    CmdArgs.push_back("-menable-no-nans");
+    
   // Decide whether to use verbose asm. Verbose assembly is the default on
   // toolchains which have the integrated assembler on by default.
   bool IsVerboseAsmDefault = getToolChain().IsIntegratedAssemblerDefault();
