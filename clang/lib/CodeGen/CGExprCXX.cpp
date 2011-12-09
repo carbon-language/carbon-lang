@@ -828,7 +828,7 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
   StoreAnyExprIntoOneUnit(*this, E, curPtr);
 
   // Leave the cleanup if we entered one.
-  if (cleanup != EHStack.stable_end()) {
+  if (cleanupDominator) {
     DeactivateCleanupBlock(cleanup, cleanupDominator);
     cleanupDominator->eraseFromParent();
   }
@@ -883,7 +883,8 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
                                      RequiresZeroInitialization);
       return;
     } else if (E->getNumConstructorArgs() == 1 &&
-               isa<ImplicitValueInitExpr>(E->getConstructorArg(0))) {
+               isa<ImplicitValueInitExpr>(E->getConstructorArg(0)) &&
+               CGF.CGM.getTypes().isZeroInitializable(ElementType)) {
       // Optimization: since zero initialization will just set the memory
       // to all zeroes, generate a single memset to do it in one shot.
       EmitZeroMemSet(CGF, ElementType, NewPtr, AllocSizeWithoutCookie);

@@ -231,3 +231,11 @@ namespace PR10197 {
 
   template void f<int>();
 }
+
+namespace PR11523 {
+  class MyClass;
+  typedef int MyClass::* NewTy;
+  // CHECK: define i64* @_ZN7PR115231fEv
+  // CHECK: store i64 -1
+  NewTy* f() { return new NewTy[2](); }
+}
