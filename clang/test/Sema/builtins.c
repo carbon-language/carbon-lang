@@ -102,3 +102,63 @@ int test16() {
   return __builtin_constant_p() + // expected-error{{too few arguments}}
          __builtin_constant_p(1, 2); // expected-error {{too many arguments}}
 }
+
+const int test17_n = 0;
+const char test17_c[] = {1, 2, 3, 0};
+const char test17_d[] = {1, 2, 3, 4};
+typedef int __attribute__((vector_size(16))) IntVector;
+struct Aggregate { int n; char c; };
+enum Enum { EnumValue1, EnumValue2 };
+
+typedef __typeof(sizeof(int)) size_t;
+size_t strlen(const char *);
+
+void test17() {
+#define ASSERT(...) { int arr[(__VA_ARGS__) ? 1 : -1]; }
+#define T(...) ASSERT(__builtin_constant_p(__VA_ARGS__))
+#define F(...) ASSERT(!__builtin_constant_p(__VA_ARGS__))
+
+  // __builtin_constant_p returns 1 if the argument folds to:
+  //  - an arithmetic constant with value which is known at compile time
+  T(test17_n);
+  T(&test17_c[3] - test17_c);
+  T(3i + 5); // expected-warning {{imaginary constant}}
+  T(4.2 * 7.6);
+  T(EnumValue1);
+  T((enum Enum)(int)EnumValue2);
+
+  //  - the address of the first character of a string literal, losslessly cast
+  //    to any type
+  T("string literal");
+  T((double*)"string literal");
+  T("string literal" + 0);
+  T((long)"string literal");
+
+  // ... and otherwise returns 0.
+  F("string literal" + 1);
+  F(&test17_n);
+  F(test17_c);
+  F(&test17_c);
+  F(&test17_d);
+  F((struct Aggregate){0, 1});
+  F((IntVector){0, 1, 2, 3});
+
+  // Ensure that a technique used in glibc is handled correctly.
+#define OPT(...) (__builtin_constant_p(__VA_ARGS__) && strlen(__VA_ARGS__) < 4)
+  // FIXME: These are incorrectly treated as ICEs because strlen is treated as
+  // a builtin.
+  ASSERT(OPT("abc"));
+  ASSERT(!OPT("abcd"));
+  // In these cases, the strlen is non-constant, but the __builtin_constant_p
+  // is 0: the array size is not an ICE but is foldable.
+  ASSERT(!OPT(test17_c));        // expected-warning {{folded}}
+  ASSERT(!OPT(&test17_c[0]));    // expected-warning {{folded}}
+  ASSERT(!OPT((char*)test17_c)); // expected-warning {{folded}}
+  ASSERT(!OPT(test17_d));        // expected-warning {{folded}}
+  ASSERT(!OPT(&test17_d[0]));    // expected-warning {{folded}}
+  ASSERT(!OPT((char*)test17_d)); // expected-warning {{folded}}
+
+#undef OPT
+#undef T
+#undef F
+}

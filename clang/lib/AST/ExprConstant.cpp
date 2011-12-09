@@ -3035,11 +3035,53 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
   case Builtin::BI__builtin_classify_type:
     return Success(EvaluateBuiltinClassifyType(E), E);
 
-  case Builtin::BI__builtin_constant_p:
-    // __builtin_constant_p always has one operand: it returns true if that
-    // operand can be folded, false otherwise.
-    return Success(E->getArg(0)->isEvaluatable(Info.Ctx), E);
-      
+  case Builtin::BI__builtin_constant_p: {
+    const Expr *Arg = E->getArg(0);
+    QualType ArgType = Arg->getType();
+    // __builtin_constant_p always has one operand. The rules which gcc follows
+    // are not precisely documented, but are as follows:
+    //
+    //  - If the operand is of integral, floating, complex or enumeration type,
+    //    and can be folded to a known value of that type, it returns 1.
+    //  - If the operand and can be folded to a pointer to the first character
+    //    of a string literal (or such a pointer cast to an integral type), it
+    //    returns 1.
+    //
+    // Otherwise, it returns 0.
+    //
+    // FIXME: GCC also intends to return 1 for literals of aggregate types, but
+    // its support for this does not currently work.
+    int IsConstant = 0;
+    if (ArgType->isIntegralOrEnumerationType()) {
+      // Note, a pointer cast to an integral type is only a constant if it is
+      // a pointer to the first character of a string literal.
+      Expr::EvalResult Result;
+      if (Arg->EvaluateAsRValue(Result, Info.Ctx) && !Result.HasSideEffects) {
+        APValue &V = Result.Val;
+        if (V.getKind() == APValue::LValue) {
+          if (const Expr *E = V.getLValueBase().dyn_cast<const Expr*>())
+            IsConstant = isa<StringLiteral>(E) && V.getLValueOffset().isZero();
+        } else {
+          IsConstant = 1;
+        }
+      }
+    } else if (ArgType->isFloatingType() || ArgType->isAnyComplexType()) {
+      IsConstant = Arg->isEvaluatable(Info.Ctx);
+    } else if (ArgType->isPointerType() || Arg->isGLValue()) {
+      LValue LV;
+      // Use a separate EvalInfo: ignore constexpr parameter and 'this' bindings
+      // during the check.
+      Expr::EvalStatus Status;
+      EvalInfo SubInfo(Info.Ctx, Status);
+      if ((Arg->isGLValue() ? EvaluateLValue(Arg, LV, SubInfo)
+                            : EvaluatePointer(Arg, LV, SubInfo)) &&
+          !Status.HasSideEffects)
+        if (const Expr *E = LV.getLValueBase().dyn_cast<const Expr*>())
+          IsConstant = isa<StringLiteral>(E) && LV.getLValueOffset().isZero();
+    }
+
+    return Success(IsConstant, E);
+  }
   case Builtin::BI__builtin_eh_return_data_regno: {
     int Operand = E->getArg(0)->EvaluateKnownConstInt(Info.Ctx).getZExtValue();
     Operand = Info.Ctx.getTargetInfo().getEHDataRegisterNumber(Operand);
