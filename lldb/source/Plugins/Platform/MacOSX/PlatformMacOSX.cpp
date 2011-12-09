@@ -178,6 +178,10 @@ PlatformMacOSX::GetSharedModule (const FileSpec &platform_file,
 bool
 PlatformMacOSX::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {
+#if defined (__arm__)
+    return ARMGetSupportedArchitectureAtIndex (idx, arch);
+#endif
+
     if (idx == 0)
     {
         arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
@@ -198,5 +202,4 @@ PlatformMacOSX::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
     }
     return false;
 }
-
 

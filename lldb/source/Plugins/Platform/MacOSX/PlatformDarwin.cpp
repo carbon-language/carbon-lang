@@ -501,3 +501,114 @@ PlatformDarwin::ModuleIsExcludedForNonModuleSpecificSearches (lldb_private::Targ
     else
         return false;
 }
+
+
+// The architecture selection rules for arm processors
+// These cpu subtypes have distinct names (e.g. armv7f) but armv7 binaries run fine on an armv7f processor.
+
+bool
+PlatformDarwin::ARMGetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
+{
+    ArchSpec system_arch (GetSystemArchitecture());
+    const ArchSpec::Core system_core = system_arch.GetCore();
+    switch (system_core)
+    {
+    default:
+        switch (idx)
+        {
+        case 0: arch.SetTriple ("armv7-apple-darwin", NULL);  return true;
+        case 1: arch.SetTriple ("armv7f-apple-darwin", NULL); return true;
+        case 2: arch.SetTriple ("armv7k-apple-darwin", NULL); return true;
+        case 3: arch.SetTriple ("armv7s-apple-darwin", NULL); return true;
+        case 4: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
+        case 5: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
+        case 6: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
+        case 7: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
+        default: break;
+        }
+        break;
+
+    case ArchSpec::eCore_arm_armv7f:
+        switch (idx)
+        {
+        case 0: arch.SetTriple ("armv7f-apple-darwin", NULL); return true;
+        case 1: arch.SetTriple ("armv7-apple-darwin", NULL);  return true;
+        case 2: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
+        case 3: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
+        case 4: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
+        case 5: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
+        default: break;
+        }
+        break;
+
+    case ArchSpec::eCore_arm_armv7k:
+        switch (idx)
+        {
+        case 0: arch.SetTriple ("armv7k-apple-darwin", NULL); return true;
+        case 1: arch.SetTriple ("armv7-apple-darwin", NULL);  return true;
+        case 2: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
+        case 3: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
+        case 4: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
+        case 5: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
+        default: break;
+        }
+        break;
+
+    case ArchSpec::eCore_arm_armv7s:
+        switch (idx)
+        {
+        case 0: arch.SetTriple ("armv7s-apple-darwin", NULL); return true;
+        case 1: arch.SetTriple ("armv7-apple-darwin", NULL);  return true;
+        case 2: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
+        case 3: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
+        case 4: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
+        case 5: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
+        default: break;
+        }
+        break;
+
+    case ArchSpec::eCore_arm_armv7:
+        switch (idx)
+        {
+        case 0: arch.SetTriple ("armv7-apple-darwin", NULL);  return true;
+        case 1: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
+        case 2: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
+        case 3: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
+        case 4: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
+        default: break;
+        }
+        break;
+
+    case ArchSpec::eCore_arm_armv6:
+        switch (idx)
+        {
+        case 0: arch.SetTriple ("armv6-apple-darwin", NULL);  return true;
+        case 1: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
+        case 2: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
+        case 3: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
+        default: break;
+        }
+        break;
+
+    case ArchSpec::eCore_arm_armv5:
+        switch (idx)
+        {
+        case 0: arch.SetTriple ("armv5-apple-darwin", NULL);  return true;
+        case 1: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
+        case 2: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
+        default: break;
+        }
+        break;
+
+    case ArchSpec::eCore_arm_armv4:
+        switch (idx)
+        {
+        case 0: arch.SetTriple ("armv4-apple-darwin", NULL);  return true;
+        case 1: arch.SetTriple ("arm-apple-darwin", NULL);    return true;
+        default: break;
+        }
+        break;
+    }
+    arch.Clear();
+    return false;
+}

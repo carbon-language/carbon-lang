@@ -88,6 +88,8 @@ public:
     virtual bool
     ModuleIsExcludedForNonModuleSpecificSearches (lldb_private::Target &target, const lldb::ModuleSP &module_sp);
                 
+    bool ARMGetSupportedArchitectureAtIndex (uint32_t idx, lldb_private::ArchSpec &arch);
+
 protected:
     lldb::PlatformSP m_remote_platform_sp; // Allow multiple ways to connect to a remote darwin OS
 
