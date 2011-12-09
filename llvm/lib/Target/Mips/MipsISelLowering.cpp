@@ -2338,7 +2338,7 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
   // node so that legalize doesn't hack it.
   unsigned char OpFlag;
   bool IsPICCall = (IsN64 || IsPIC); // true if calls are translated to jalr $25
-  bool LoadSymAddr = false;
+  bool GlobalOrExternal = false;
   SDValue CalleeLo;
 
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
@@ -2355,7 +2355,7 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
                                           getPointerTy(), 0, OpFlag);
     }
 
-    LoadSymAddr = true;
+    GlobalOrExternal = true;
   }
   else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     if (IsN64 || (!IsO32 && IsPIC))
@@ -2366,14 +2366,14 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
       OpFlag = MipsII::MO_GOT_CALL;
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(),
                                          getPointerTy(), OpFlag);
-    LoadSymAddr = true;
+    GlobalOrExternal = true;
   }
 
   SDValue InFlag;
 
   // Create nodes that load address of callee and copy it to T9
   if (IsPICCall) {
-    if (LoadSymAddr) {
+    if (GlobalOrExternal) {
       // Load callee address
       Callee = DAG.getNode(MipsISD::WrapperPIC, dl, getPointerTy(), Callee);
       SDValue LoadValue = DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
@@ -2387,7 +2387,11 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
       } else
         Callee = LoadValue;
     }
+  }
 
+  // T9 should contain the address of the callee function if 
+  // -reloction-model=pic or it is an indirect call.
+  if (IsPICCall || !GlobalOrExternal) {
     // copy to T9
     unsigned T9Reg = IsN64 ? Mips::T9_64 : Mips::T9;
     Chain = DAG.getCopyToReg(Chain, dl, T9Reg, Callee, SDValue(0, 0));
