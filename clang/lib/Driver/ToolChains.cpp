@@ -1882,13 +1882,24 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   if (Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb)
     ExtraOpts.push_back("-X");
 
-  if (IsRedhat(Distro) || IsOpenSuse(Distro) || Distro == UbuntuMaverick ||
-      Distro == UbuntuNatty || Distro == UbuntuOneiric)
-    ExtraOpts.push_back("--hash-style=gnu");
+  const bool IsMips = Arch == llvm::Triple::mips ||
+                      Arch == llvm::Triple::mipsel ||
+                      Arch == llvm::Triple::mips64 ||
+                      Arch == llvm::Triple::mips64el;
 
-  if (IsDebian(Distro) || IsOpenSuse(Distro) || Distro == UbuntuLucid ||
-      Distro == UbuntuJaunty || Distro == UbuntuKarmic)
-    ExtraOpts.push_back("--hash-style=both");
+  // Do not use 'gnu' hash style for Mips targets because .gnu.hash
+  // and the MIPS ABI require .dynsym to be sorted in different ways.
+  // .gnu.hash needs symbols to be grouped by hash code whereas the MIPS
+  // ABI requires a mapping between the GOT and the symbol table.
+  if (!IsMips) {
+    if (IsRedhat(Distro) || IsOpenSuse(Distro) || Distro == UbuntuMaverick ||
+        Distro == UbuntuNatty || Distro == UbuntuOneiric)
+      ExtraOpts.push_back("--hash-style=gnu");
+
+    if (IsDebian(Distro) || IsOpenSuse(Distro) || Distro == UbuntuLucid ||
+        Distro == UbuntuJaunty || Distro == UbuntuKarmic)
+      ExtraOpts.push_back("--hash-style=both");
+  }
 
   if (IsRedhat(Distro))
     ExtraOpts.push_back("--no-add-needed");
