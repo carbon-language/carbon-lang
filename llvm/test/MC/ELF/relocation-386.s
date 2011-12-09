@@ -165,6 +165,13 @@
 // CHECK-NEXT: (('r_offset', 0x00000094)
 // CHECK-NEXT:  ('r_sym', 0x00000b)
 // CHECK-NEXT:  ('r_type', 0x0a)
+// CHECK-NEXT: ),
+// Relocation 26 (und_symbol-bar2) is of type R_386_PC32
+// CHECK-NEXT: Relocation 26
+// CHECK-NEXT: (('r_offset', 0x0000009a)
+// CHECK-NEXT:  ('r_sym', 0x00000e)
+// CHECK-NEXT:  ('r_type', 0x02)
+// CHECK-NEXT: ),
 
 // Section 4 is bss
 // CHECK:      # Section 4
@@ -231,6 +238,7 @@ bar2:
         pushl $bar
         addl foo@GOTTPOFF(%edx), %eax
         subl    _GLOBAL_OFFSET_TABLE_-bar2, %ebx
+        leal und_symbol-bar2(%edx),%ecx
 
         .section        zedsec,"awT",@progbits
 zed:

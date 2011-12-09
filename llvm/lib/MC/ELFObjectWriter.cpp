@@ -1749,6 +1749,7 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         Type = ELF::R_386_GOTPC;
         break;
 
+      case X86::reloc_signed_4byte:
       case FK_PCRel_4:
       case FK_Data_4:
         switch (Modifier) {
