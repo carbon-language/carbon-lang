@@ -98,14 +98,21 @@ unsigned clang_getNumDiagnostics(CXTranslationUnit Unit) {
 }
 
 CXDiagnostic clang_getDiagnostic(CXTranslationUnit Unit, unsigned Index) {
-  if (!Unit->TUData)
+  CXDiagnosticSet D = clang_getDiagnosticSetFromTU(Unit);
+  if (!D)
     return 0;
 
-  CXDiagnosticSetImpl *Diags = lazyCreateDiags(Unit);
+  CXDiagnosticSetImpl *Diags = static_cast<CXDiagnosticSetImpl*>(D);
   if (Index >= Diags->getNumDiagnostics())
     return 0;
 
   return Diags->getDiagnostic(Index);
+}
+  
+CXDiagnosticSet clang_getDiagnosticSetFromTU(CXTranslationUnit Unit) {
+  if (!Unit->TUData)
+    return 0;
+  return static_cast<CXDiagnostic>(lazyCreateDiags(Unit));
 }
 
 void clang_disposeDiagnostic(CXDiagnostic Diagnostic) {

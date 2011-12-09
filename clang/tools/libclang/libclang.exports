@@ -97,6 +97,7 @@ clang_getDiagnosticNumFixIts
 clang_getDiagnosticNumRanges
 clang_getDiagnosticOption
 clang_getDiagnosticRange
+clang_getDiagnosticSetFromTU
 clang_getDiagnosticSeverity
 clang_getDiagnosticSpelling
 clang_getElementType
