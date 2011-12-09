@@ -942,6 +942,105 @@ FastISel::SelectExtractValue(const User *U) {
 }
 
 bool
+FastISel::SelectInsertValue(const User *U) {
+  const InsertValueInst *IVI = dyn_cast<InsertValueInst>(U);
+  if (!IVI)
+    return false;
+
+  // Only try to handle inserts of legal types.  But also allow i16/i8/i1 because
+  // they're easy.
+  const Value *Val = IVI->getOperand(1);
+  Type *ValTy = Val->getType();
+  EVT ValVT = TLI.getValueType(ValTy, /*AllowUnknown=*/true);
+  if (!ValVT.isSimple())
+    return false;
+  MVT VT = ValVT.getSimpleVT();
+  if (!TLI.isTypeLegal(VT) && VT != MVT::i16 && VT != MVT::i8 && VT != MVT::i1)
+    return false;
+
+  // Get the Val register.
+  unsigned ValReg = getRegForValue(Val);
+  if (ValReg == 0) return false;
+
+  const Value *Agg = IVI->getOperand(0);
+  Type *AggTy = Agg->getType();
+
+  // TODO: Is there a better way to do this?  For each insertvalue we allocate
+  // a new set of virtual registers, which results in a large number of 
+  // loads/stores from/to the stack that copies the aggregate all over the place
+  // and results in lots of spill code.  I believe this is necessary to preserve
+  // SSA form, but maybe there's something we coul do to improve this.
+
+  // Get the Aggregate base register.
+  unsigned AggBaseReg;
+  DenseMap<const Value *, unsigned>::iterator I = FuncInfo.ValueMap.find(Agg);
+  if (I != FuncInfo.ValueMap.end())
+    AggBaseReg = I->second;
+  else if (isa<Instruction>(Agg))
+    AggBaseReg = FuncInfo.InitializeRegForValue(Agg);
+  else if (isa<UndefValue>(Agg))
+    // In this case we don't need to allocate a new set of register that will
+    // never be defined.  Just copy Val into the proper result registers.
+    AggBaseReg = 0;
+  else
+    return false; // fast-isel can't handle aggregate constants at the moment
+
+  // Create result register(s).
+  unsigned ResultBaseReg = FuncInfo.CreateRegs(AggTy);
+
+  // Get the actual result register, which is an offset from the base register.
+  unsigned LinearIndex = ComputeLinearIndex(Agg->getType(), IVI->getIndices());
+
+  SmallVector<EVT, 4> AggValueVTs;
+  ComputeValueVTs(TLI, AggTy, AggValueVTs);
+
+  // Copy the beginning value(s) from the original aggregate.
+  unsigned SrcReg;
+  unsigned DestReg;
+  unsigned BaseRegOff = 0;
+  unsigned i = 0;
+  for (; i != LinearIndex; ++i) {
+    unsigned NRE = TLI.getNumRegisters(FuncInfo.Fn->getContext(),
+                                       AggValueVTs[i]);
+    for (unsigned NRI = 0; NRI != NRE; NRI++) {
+      if (AggBaseReg) {
+        SrcReg = AggBaseReg + BaseRegOff + NRI;
+        DestReg = ResultBaseReg + BaseRegOff + NRI;
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+                DestReg).addReg(SrcReg);
+      }
+    }
+    BaseRegOff += NRE;
+  }
+
+  // FIXME: Handle aggregate inserts.  Haven't seen these in practice, but..
+  // Copy value(s) from the inserted value(s).
+  DestReg = ResultBaseReg + BaseRegOff;
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+          DestReg).addReg(ValReg);
+  ++BaseRegOff;
+  ++i;
+
+  // Copy remaining value(s) from the original aggregate.
+  if (AggBaseReg) {
+    for (unsigned NumAggValues = AggValueVTs.size(); i != NumAggValues; ++i) {
+      unsigned NRE = TLI.getNumRegisters(FuncInfo.Fn->getContext(),
+                                         AggValueVTs[i]);
+      for (unsigned NRI = 0; NRI != NRE; NRI++) {
+        SrcReg = AggBaseReg + BaseRegOff + NRI;
+        DestReg = ResultBaseReg + BaseRegOff + NRI;
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+                DestReg).addReg(SrcReg);
+        
+      }
+      BaseRegOff += NRE;
+    }
+  }
+  UpdateValueMap(IVI, ResultBaseReg);
+  return true;
+}
+
+bool
 FastISel::SelectOperator(const User *I, unsigned Opcode) {
   switch (Opcode) {
   case Instruction::Add:
@@ -1047,6 +1146,9 @@ FastISel::SelectOperator(const User *I, unsigned Opcode) {
 
   case Instruction::ExtractValue:
     return SelectExtractValue(I);
+
+  case Instruction::InsertValue:
+    return SelectInsertValue(I);
 
   case Instruction::PHI:
     llvm_unreachable("FastISel shouldn't visit PHI nodes!");
