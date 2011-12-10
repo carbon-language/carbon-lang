@@ -2061,7 +2061,8 @@ void LSRInstance::CollectInterestingTypesAndFactors() {
     do {
       const SCEV *S = Worklist.pop_back_val();
       if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
-        Strides.insert(AR->getStepRecurrence(SE));
+        if (EnableNested || AR->getLoop() == L)
+          Strides.insert(AR->getStepRecurrence(SE));
         Worklist.push_back(AR->getStart());
       } else if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
         Worklist.append(Add->op_begin(), Add->op_end());
