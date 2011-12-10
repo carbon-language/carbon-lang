@@ -1997,11 +1997,6 @@ SymbolFileDWARF::ResolveSymbolContext (const Address& so_addr, uint32_t resolve_
                     if (resolve_scope & eSymbolContextLineEntry)
                     {
                         LineTable *line_table = sc.comp_unit->GetLineTable();
-                        if (line_table == NULL)
-                        {
-                            if (ParseCompileUnitLineTable(sc))
-                                line_table = sc.comp_unit->GetLineTable();
-                        }
                         if (line_table != NULL)
                         {
                             if (so_addr.IsLinkedAddress())
@@ -2560,18 +2555,6 @@ SymbolFileDWARF::ResolveFunction (DWARFCompileUnit *cu,
 
         if (addr.IsValid())
         {
-        
-            // We found the function, so we should find the line table
-            // and line table entry as well
-            LineTable *line_table = sc.comp_unit->GetLineTable();
-            if (line_table == NULL)
-            {
-                if (ParseCompileUnitLineTable(sc))
-                    line_table = sc.comp_unit->GetLineTable();
-            }
-            if (line_table != NULL)
-                line_table->FindLineEntryByAddress (addr, sc.line_entry);
-
             sc_list.Append(sc);
             return true;
         }

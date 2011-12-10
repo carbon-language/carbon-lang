@@ -250,19 +250,22 @@ SourceManager::GetDefaultFileAndLine (FileSpec &file_spec, uint32_t &line)
             {
                 SymbolContext sc;
                 sc_list.GetContextAtIndex(idx, sc);
-                if (sc.line_entry.file)
+                if (sc.function)
                 {
-                    SetDefaultFileAndLine(sc.line_entry.file, sc.line_entry.line);
-                    break;
+                    lldb_private::LineEntry line_entry;
+                    if (sc.function->GetAddressRange().GetBaseAddress().CalculateSymbolContextLineEntry (line_entry))
+                    {
+                        SetDefaultFileAndLine (line_entry.file, 
+                                               line_entry.line);
+                        file_spec = m_last_file_sp->GetFileSpec();
+                        line = m_last_file_line;
+                        return true;
+                    }
                 }
             }
-            return GetDefaultFileAndLine (file_spec, line);
         }
-        else
-            return false;
     }
-    else
-        return false;
+    return false;
 }
 
 void

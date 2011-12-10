@@ -729,7 +729,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
 }
 
 uint32_t
-Address::CalculateSymbolContext (SymbolContext *sc, uint32_t resolve_scope)
+Address::CalculateSymbolContext (SymbolContext *sc, uint32_t resolve_scope) const
 {
     sc->Clear();
     // Absolute addresses don't have enough information to reconstruct even their target.
@@ -747,7 +747,7 @@ Address::CalculateSymbolContext (SymbolContext *sc, uint32_t resolve_scope)
 }
 
 Module *
-Address::CalculateSymbolContextModule ()
+Address::CalculateSymbolContextModule () const
 {
     if (m_section)
         return m_section->GetModule();
@@ -755,7 +755,7 @@ Address::CalculateSymbolContextModule ()
 }
 
 CompileUnit *
-Address::CalculateSymbolContextCompileUnit ()
+Address::CalculateSymbolContextCompileUnit () const
 {
     if (m_section)
     {
@@ -771,7 +771,7 @@ Address::CalculateSymbolContextCompileUnit ()
 }
 
 Function *
-Address::CalculateSymbolContextFunction ()
+Address::CalculateSymbolContextFunction () const
 {
     if (m_section)
     {
@@ -787,7 +787,7 @@ Address::CalculateSymbolContextFunction ()
 }
 
 Block *
-Address::CalculateSymbolContextBlock ()
+Address::CalculateSymbolContextBlock () const
 {
     if (m_section)
     {
@@ -803,7 +803,7 @@ Address::CalculateSymbolContextBlock ()
 }
 
 Symbol *
-Address::CalculateSymbolContextSymbol ()
+Address::CalculateSymbolContextSymbol () const
 {
     if (m_section)
     {
@@ -819,7 +819,7 @@ Address::CalculateSymbolContextSymbol ()
 }
 
 bool
-Address::CalculateSymbolContextLineEntry (LineEntry &line_entry)
+Address::CalculateSymbolContextLineEntry (LineEntry &line_entry) const
 {
     if (m_section)
     {
