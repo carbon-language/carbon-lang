@@ -71,7 +71,11 @@ unsigned ContentCache::getSize() const {
 
 void ContentCache::replaceBuffer(const llvm::MemoryBuffer *B,
                                  bool DoNotFree) {
-  assert(B != Buffer.getPointer());
+  if (B == Buffer.getPointer()) {
+    assert(0 && "Replacing with the same buffer");
+    Buffer.setInt(DoNotFree? DoNotFreeFlag : 0);
+    return;
+  }
   
   if (shouldFreeBuffer())
     delete Buffer.getPointer();
