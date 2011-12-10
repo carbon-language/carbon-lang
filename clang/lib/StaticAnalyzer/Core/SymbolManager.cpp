@@ -57,6 +57,15 @@ void SymIntExpr::dumpToStream(raw_ostream &os) const {
   if (getRHS().isUnsigned()) os << 'U';
 }
 
+void IntSymExpr::dumpToStream(raw_ostream &os) const {
+  os << ' ' << getLHS().getZExtValue();
+  if (getLHS().isUnsigned()) os << 'U';
+  print(os, getOpcode());
+  os << '(';
+  getRHS()->dumpToStream(os);
+  os << ") ";
+}
+
 void SymSymExpr::dumpToStream(raw_ostream &os) const {
   os << '(';
   getLHS()->dumpToStream(os);
@@ -125,20 +134,29 @@ void SymExpr::symbol_iterator::expand() {
   const SymExpr *SE = itr.back();
   itr.pop_back();
 
-  if (const SymbolCast *SC = dyn_cast<SymbolCast>(SE)) {
-    itr.push_back(SC->getOperand());
-    return;
+  switch (SE->getKind()) {
+    case SymExpr::RegionValueKind:
+    case SymExpr::ConjuredKind:
+    case SymExpr::DerivedKind:
+    case SymExpr::ExtentKind:
+    case SymExpr::MetadataKind:
+      return;
+    case SymExpr::CastSymbolKind:
+      itr.push_back(cast<SymbolCast>(SE)->getOperand());
+      return;
+    case SymExpr::SymIntKind:
+      itr.push_back(cast<SymIntExpr>(SE)->getLHS());
+      return;
+    case SymExpr::IntSymKind:
+      itr.push_back(cast<IntSymExpr>(SE)->getRHS());
+      return;
+    case SymExpr::SymSymKind: {
+      const SymSymExpr *x = cast<SymSymExpr>(SE);
+      itr.push_back(x->getLHS());
+      itr.push_back(x->getRHS());
+      return;
+    }
   }
-  if (const SymIntExpr *SIE = dyn_cast<SymIntExpr>(SE)) {
-    itr.push_back(SIE->getLHS());
-    return;
-  }
-  else if (const SymSymExpr *SSE = dyn_cast<SymSymExpr>(SE)) {
-    itr.push_back(SSE->getLHS());
-    itr.push_back(SSE->getRHS());
-    return;
-  }
-
   llvm_unreachable("unhandled expansion case");
 }
 
@@ -260,6 +278,24 @@ const SymIntExpr *SymbolManager::getSymIntExpr(const SymExpr *lhs,
   }
 
   return cast<SymIntExpr>(data);
+}
+
+const IntSymExpr *SymbolManager::getIntSymExpr(const llvm::APSInt& lhs,
+                                               BinaryOperator::Opcode op,
+                                               const SymExpr *rhs,
+                                               QualType t) {
+  llvm::FoldingSetNodeID ID;
+  IntSymExpr::Profile(ID, lhs, op, rhs, t);
+  void *InsertPos;
+  SymExpr *data = DataSet.FindNodeOrInsertPos(ID, InsertPos);
+
+  if (!data) {
+    data = (IntSymExpr*) BPAlloc.Allocate<IntSymExpr>();
+    new (data) IntSymExpr(lhs, op, rhs, t);
+    DataSet.InsertNode(data, InsertPos);
+  }
+
+  return cast<IntSymExpr>(data);
 }
 
 const SymSymExpr *SymbolManager::getSymSymExpr(const SymExpr *lhs,

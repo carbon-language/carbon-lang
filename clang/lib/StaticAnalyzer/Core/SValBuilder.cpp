@@ -47,6 +47,14 @@ NonLoc SValBuilder::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
   return nonloc::SymbolVal(SymMgr.getSymIntExpr(lhs, op, rhs, type));
 }
 
+NonLoc SValBuilder::makeNonLoc(const llvm::APSInt& lhs,
+                               BinaryOperator::Opcode op, const SymExpr *rhs,
+                               QualType type) {
+  assert(rhs);
+  assert(!Loc::isLocType(type));
+  return nonloc::SymbolVal(SymMgr.getIntSymExpr(lhs, op, rhs, type));
+}
+
 NonLoc SValBuilder::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
                                const SymExpr *rhs, QualType type) {
   assert(lhs && rhs);
@@ -171,6 +179,11 @@ SVal SValBuilder::generateUnknownVal(const ProgramState *State,
     if (const nonloc::ConcreteInt *rInt = dyn_cast<nonloc::ConcreteInt>(&RHS)) {
       symLHS = LHS.getAsSymExpr();
       return makeNonLoc(symLHS, Op, rInt->getValue(), ResultTy);
+    }
+
+    if (const nonloc::ConcreteInt *lInt = dyn_cast<nonloc::ConcreteInt>(&LHS)) {
+      symRHS = RHS.getAsSymExpr();
+      return makeNonLoc(symRHS, Op, lInt->getValue(), ResultTy);
     }
 
     symLHS = LHS.getAsSymExpr();

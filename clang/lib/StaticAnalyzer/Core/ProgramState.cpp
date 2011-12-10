@@ -565,6 +565,8 @@ bool ScanReachableSymbols::scan(const SymExpr *sym) {
       return scan(cast<SymbolCast>(sym)->getOperand());
     case SymExpr::SymIntKind:
       return scan(cast<SymIntExpr>(sym)->getLHS());
+    case SymExpr::IntSymKind:
+      return scan(cast<IntSymExpr>(sym)->getRHS());
     case SymExpr::SymSymKind: {
       const SymSymExpr *x = cast<SymSymExpr>(sym);
       return scan(x->getLHS()) && scan(x->getRHS());

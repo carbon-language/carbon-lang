@@ -388,9 +388,9 @@ SVal SimpleSValBuilder::evalBinOpNN(const ProgramState *state,
             if (lhsValue == 0)
               // At this point lhs and rhs have been swapped.
               return rhs;
-            return generateUnknownVal(state, op, lhs, rhs, resultTy);
+            return generateUnknownVal(state, op, rhs, lhs, resultTy);
           default:
-            return generateUnknownVal(state, op, lhs, rhs, resultTy);
+            return generateUnknownVal(state, op, rhs, lhs, resultTy);
         }
       }
     }
