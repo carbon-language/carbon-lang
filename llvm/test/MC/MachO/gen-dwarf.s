@@ -45,7 +45,7 @@ _x:	.long 1
 // We don't check the file name as it is a temp directory
 // CHECK:    DW_AT_name [DW_FORM_string]
 // We don't check the DW_AT_comp_dir which is the current working directory
-// CHECK:    DW_AT_producer [DW_FORM_string]	("llvm-mc (based on LLVM 3.1svn)")
+// CHECK:    DW_AT_producer [DW_FORM_string]	("llvm-mc (based on LLVM 3.1{{.*}})")
 // CHECK:    DW_AT_language [DW_FORM_data2]	(0x8001)
 
 // CHECK:    DW_TAG_subprogram [2] *
