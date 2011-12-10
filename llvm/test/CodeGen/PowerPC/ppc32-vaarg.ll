@@ -37,8 +37,8 @@ define void @ppcvaargtest(%struct.__va_list_tag* %ap) nounwind {
 ; CHECK-NEXT: stw 3, -24(1)
 ; CHECK-NEXT: stw 8, -28(1)
 ; CHECK-NEXT: stw 6, -32(1)
-; CHECK-NEXT: mfcr 3                          # cr0
-; CHECK-NEXT: stw 3, -36(1)
+; CHECK-NEXT: mfcr 0                          # cr0
+; CHECK-NEXT: stw 0, -36(1)
 ; CHECK-NEXT: blt 0, .LBB0_4
 ; CHECK-NEXT: # BB#3:                                 # %entry
 ; CHECK-NEXT: lwz 3, -20(1)
@@ -52,8 +52,8 @@ define void @ppcvaargtest(%struct.__va_list_tag* %ap) nounwind {
 ; CHECK-NEXT: slwi 5, 3, 2
 ; CHECK-NEXT: lwz 6, -16(1)
 ; CHECK-NEXT: add 5, 6, 5
-; CHECK-NEXT: lwz 3, -36(1)
-; CHECK-NEXT: mtcrf 128, 3
+; CHECK-NEXT: lwz 0, -36(1)
+; CHECK-NEXT: mtcrf 128, 0
 ; CHECK-NEXT: stw 5, -40(1)
 ; CHECK-NEXT: blt 0, .LBB0_6
 ; CHECK-NEXT: # BB#5:                                 # %entry
@@ -82,8 +82,8 @@ define void @ppcvaargtest(%struct.__va_list_tag* %ap) nounwind {
 ; CHECK-NEXT: stw 4, -52(1)
 ; CHECK-NEXT: stw 6, -56(1)
 ; CHECK-NEXT: stw 8, -60(1)
-; CHECK-NEXT: mfcr 3                          # cr0
-; CHECK-NEXT: stw 3, -64(1)
+; CHECK-NEXT: mfcr 0                          # cr0
+; CHECK-NEXT: stw 0, -64(1)
 ; CHECK-NEXT: blt 0, .LBB0_8
 ; CHECK-NEXT: # BB#7:                                 # %entry
 ; CHECK-NEXT: lwz 3, -48(1)
@@ -97,8 +97,8 @@ define void @ppcvaargtest(%struct.__va_list_tag* %ap) nounwind {
 ; CHECK-NEXT: lwz 6, -56(1)
 ; CHECK-NEXT: add 5, 6, 5
 ; CHECK-NEXT: addi 5, 5, 32
-; CHECK-NEXT: lwz 3, -64(1)
-; CHECK-NEXT: mtcrf 128, 3
+; CHECK-NEXT: lwz 0, -64(1)
+; CHECK-NEXT: mtcrf 128, 0
 ; CHECK-NEXT: stw 5, -68(1)
 ; CHECK-NEXT: blt 0, .LBB0_10
 ; CHECK-NEXT: # BB#9:                                 # %entry
@@ -122,8 +122,8 @@ define void @ppcvaargtest(%struct.__va_list_tag* %ap) nounwind {
 ; CHECK-NEXT: mr 8, 5
 ; CHECK-NEXT: stw 4, -72(1)
 ; CHECK-NEXT: stw 6, -76(1)
-; CHECK-NEXT: mfcr 3                          # cr0
-; CHECK-NEXT: stw 3, -80(1)
+; CHECK-NEXT: mfcr 0                          # cr0
+; CHECK-NEXT: stw 0, -80(1)
 ; CHECK-NEXT: stw 5, -84(1)
 ; CHECK-NEXT: stw 8, -88(1)
 ; CHECK-NEXT: stw 7, -92(1)
@@ -139,8 +139,8 @@ define void @ppcvaargtest(%struct.__va_list_tag* %ap) nounwind {
 ; CHECK-NEXT: slwi 5, 3, 2
 ; CHECK-NEXT: lwz 6, -76(1)
 ; CHECK-NEXT: add 5, 6, 5
-; CHECK-NEXT: lwz 3, -80(1)
-; CHECK-NEXT: mtcrf 128, 3
+; CHECK-NEXT: lwz 0, -80(1)
+; CHECK-NEXT: mtcrf 128, 0
 ; CHECK-NEXT: stw 5, -96(1)
 ; CHECK-NEXT: blt 0, .LBB0_14
 ; CHECK-NEXT: # BB#13:                                # %entry

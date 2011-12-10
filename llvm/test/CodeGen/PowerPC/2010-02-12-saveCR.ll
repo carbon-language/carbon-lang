@@ -6,11 +6,11 @@ target triple = "powerpc-apple-darwin9.6"
 
 define void @foo() nounwind {
 entry:
-;CHECK:  lis r4, 1
-;CHECK:  ori r4, r4, 34524
-;CHECK:  mfcr r3
-;CHECK:  rlwinm r3, r3, 8, 0, 31
-;CHECK:  stwx r3, r1, r4
+;CHECK:  lis r3, 1
+;CHECK:  ori r3, r3, 34524
+;CHECK:  mfcr r2
+;CHECK:  rlwinm r2, r2, 8, 0, 31
+;CHECK:  stwx r2, r1, r3
   %x = alloca [100000 x i8]                       ; <[100000 x i8]*> [#uses=1]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   %x1 = bitcast [100000 x i8]* %x to i8*          ; <i8*> [#uses=1]
@@ -21,9 +21,9 @@ entry:
 return:                                           ; preds = %entry
 ;CHECK:  lis r3, 1
 ;CHECK:  ori r3, r3, 34524
-;CHECK:  lwzx r3, r1, r3
-;CHECK:  rlwinm r3, r3, 24, 0, 31
-;CHECK:  mtcrf 32, r3
+;CHECK:  lwzx r2, r1, r3
+;CHECK:  rlwinm r2, r2, 24, 0, 31
+;CHECK:  mtcrf 32, r2
   ret void
 }
 

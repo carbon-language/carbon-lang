@@ -464,12 +464,16 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc dl = MI.getDebugLoc();
 
-  const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
-  const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
-  const TargetRegisterClass *RC = Subtarget.isPPC64() ? G8RC : GPRC;
-  unsigned Reg = findScratchRegister(II, RS, RC, SPAdj);
-  unsigned SrcReg = MI.getOperand(0).getReg();
+  // FIXME: Once LLVM supports creating virtual registers here, or the register
+  // scavenger can return multiple registers, stop using reserved registers
+  // here.
+  (void) SPAdj;
+  (void) RS;
+
   bool LP64 = Subtarget.isPPC64();
+  unsigned Reg = Subtarget.isDarwinABI() ?  (LP64 ? PPC::X2 : PPC::R2) :
+                                            (LP64 ? PPC::X0 : PPC::R0);
+  unsigned SrcReg = MI.getOperand(0).getReg();
 
   // We need to store the CR in the low 4-bits of the saved value. First, issue
   // an MFCRpsued to save all of the CRBits and, if needed, kill the SrcReg.
@@ -503,14 +507,18 @@ void PPCRegisterInfo::lowerCRRestore(MachineBasicBlock::iterator II,
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc dl = MI.getDebugLoc();
 
-  const TargetRegisterClass *G8RC = &PPC::G8RCRegClass;
-  const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
-  const TargetRegisterClass *RC = Subtarget.isPPC64() ? G8RC : GPRC;
-  unsigned Reg = findScratchRegister(II, RS, RC, SPAdj);
+  // FIXME: Once LLVM supports creating virtual registers here, or the register
+  // scavenger can return multiple registers, stop using reserved registers
+  // here.
+  (void) SPAdj;
+  (void) RS;
+
+  bool LP64 = Subtarget.isPPC64();
+  unsigned Reg = Subtarget.isDarwinABI() ?  (LP64 ? PPC::X2 : PPC::R2) :
+                                            (LP64 ? PPC::X0 : PPC::R0);
   unsigned DestReg = MI.getOperand(0).getReg();
   assert(MI.definesRegister(DestReg) &&
     "RESTORE_CR does not define its destination");
-  bool LP64 = Subtarget.isPPC64();
 
   addFrameReference(BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::LWZ8 : PPC::LWZ),
                               Reg), FrameIndex);
