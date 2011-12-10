@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -317,10 +318,16 @@ void ARMConstantIslands::verify(MachineFunction &MF) {
 
 /// print block size and offset information - debugging
 void ARMConstantIslands::dumpBBs() {
-  for (unsigned J = 0, E = BBInfo.size(); J !=E; ++J) {
-    DEBUG(dbgs() << "block " << J << " offset " << BBInfo[J].Offset
-                 << " size " << BBInfo[J].Size << "\n");
-  }
+  DEBUG({
+    for (unsigned J = 0, E = BBInfo.size(); J !=E; ++J) {
+      const BasicBlockInfo &BBI = BBInfo[J];
+      dbgs() << format("%08x BB#%u\t", BBI.Offset, J)
+             << " kb=" << unsigned(BBI.KnownBits)
+             << " ua=" << unsigned(BBI.Unalign)
+             << " pa=" << unsigned(BBI.PostAlign)
+             << format(" size=%#x\n", BBInfo[J].Size);
+    }
+  });
 }
 
 /// createARMConstantIslandPass - returns an instance of the constpool
@@ -331,6 +338,10 @@ FunctionPass *llvm::createARMConstantIslandPass() {
 
 bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   MachineConstantPool &MCP = *MF.getConstantPool();
+
+  DEBUG(dbgs() << "***** ARMConstantIslands: "
+               << MCP.getConstants().size() << " CP entries, aligned to "
+               << MCP.getConstantPoolAlignment() << " bytes *****\n");
 
   TII = (const ARMInstrInfo*)MF.getTarget().getInstrInfo();
   AFI = MF.getInfo<ARMFunctionInfo>();
@@ -916,11 +927,11 @@ bool ARMConstantIslands::CPEIsInRange(MachineInstr *MI, unsigned UserOffset,
       const BasicBlockInfo &BBI = BBInfo[Block];
       dbgs() << "User of CPE#" << CPEMI->getOperand(0).getImm()
              << " max delta=" << MaxDisp
-             << " insn address=" << UserOffset
+             << format(" insn address=%#x", UserOffset)
              << " in BB#" << Block << ": "
-             << BBI.Offset << " - " << BBI.postOffset() << "\t" << *MI
-             << "CPE address=" << CPEOffset
-             << " offset=" << int(CPEOffset-UserOffset) << ": ";
+             << format("%#x-%x\t", BBI.Offset, BBI.postOffset()) << *MI
+             << format("CPE address=%#x offset=%+d: ", CPEOffset,
+                       int(CPEOffset-UserOffset));
     });
   }
 
@@ -1308,7 +1319,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &MF,
     }
 
   DEBUG(dbgs() << "  Moved CPE to #" << ID << " CPI=" << CPI
-               << '\t' << *UserMI);
+        << format(" offset=%#x\n", BBInfo[NewIsland->getNumber()].Offset));
 
   return true;
 }
