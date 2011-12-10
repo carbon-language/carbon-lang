@@ -468,23 +468,13 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
     // v2f64 is legal so that QR subregs can be extracted as f64 elements, but
     // neither Neon nor VFP support any arithmetic operations on it.
-    // The same with v4f32. But keep in mind that vadd, vsub, vmul are natively
-    // supported for v4f32.
     setOperationAction(ISD::FADD, MVT::v2f64, Expand);
     setOperationAction(ISD::FSUB, MVT::v2f64, Expand);
     setOperationAction(ISD::FMUL, MVT::v2f64, Expand);
-    // FIXME: Code duplication: FDIV and FREM are expanded always, see
-    // ARMTargetLowering::addTypeForNEON method for details.
     setOperationAction(ISD::FDIV, MVT::v2f64, Expand);
     setOperationAction(ISD::FREM, MVT::v2f64, Expand);
-    // FIXME: Create unittest.
-    // In another words, find a way when "copysign" appears in DAG with vector
-    // operands.
     setOperationAction(ISD::FCOPYSIGN, MVT::v2f64, Expand);
-    // FIXME: Code duplication: SETCC has custom operation action, see
-    // ARMTargetLowering::addTypeForNEON method for details.
     setOperationAction(ISD::SETCC, MVT::v2f64, Expand);
-    // FIXME: Create unittest for FNEG and for FABS.
     setOperationAction(ISD::FNEG, MVT::v2f64, Expand);
     setOperationAction(ISD::FABS, MVT::v2f64, Expand);
     setOperationAction(ISD::FSQRT, MVT::v2f64, Expand);
@@ -497,23 +487,11 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FLOG10, MVT::v2f64, Expand);
     setOperationAction(ISD::FEXP, MVT::v2f64, Expand);
     setOperationAction(ISD::FEXP2, MVT::v2f64, Expand);
-    // FIXME: Create unittest for FCEIL, FTRUNC, FRINT, FNEARBYINT, FFLOOR.
     setOperationAction(ISD::FCEIL, MVT::v2f64, Expand);
     setOperationAction(ISD::FTRUNC, MVT::v2f64, Expand);
     setOperationAction(ISD::FRINT, MVT::v2f64, Expand);
     setOperationAction(ISD::FNEARBYINT, MVT::v2f64, Expand);
     setOperationAction(ISD::FFLOOR, MVT::v2f64, Expand);
-    
-    setOperationAction(ISD::FSQRT, MVT::v4f32, Expand);
-    setOperationAction(ISD::FSIN, MVT::v4f32, Expand);
-    setOperationAction(ISD::FCOS, MVT::v4f32, Expand);
-    setOperationAction(ISD::FPOWI, MVT::v4f32, Expand);
-    setOperationAction(ISD::FPOW, MVT::v4f32, Expand);
-    setOperationAction(ISD::FLOG, MVT::v4f32, Expand);
-    setOperationAction(ISD::FLOG2, MVT::v4f32, Expand);
-    setOperationAction(ISD::FLOG10, MVT::v4f32, Expand);
-    setOperationAction(ISD::FEXP, MVT::v4f32, Expand);
-    setOperationAction(ISD::FEXP2, MVT::v4f32, Expand);
 
     // Neon does not support some operations on v1i64 and v2i64 types.
     setOperationAction(ISD::MUL, MVT::v1i64, Expand);
