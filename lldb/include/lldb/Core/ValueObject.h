@@ -445,10 +445,15 @@ public:
         
     private:
         bool
-        SyncWithProcessState ();
+        SyncWithProcessState ()
+        {
+            ExecutionContextScope *exe_scope;
+            return SyncWithProcessState(exe_scope);
+        }
+        
+        bool
+        SyncWithProcessState (ExecutionContextScope *&exe_scope);
                 
-        ExecutionContextScope *m_exe_scope;   // This is not the way to store the evaluation point state, it is just
-                                            // a cache of the lookup, and gets thrown away when we update.
         bool             m_needs_update;
         bool             m_first_update;
 

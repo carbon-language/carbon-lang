@@ -3441,8 +3441,7 @@ ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope,
     
 {
     ExecutionContext exe_ctx;
-    ExecutionContextScope *computed_exe_scope = exe_scope;  // If use_selected is true, we may find a better scope,
-                                                            // and if so we want to cache that not the original.
+
     if (exe_scope)                                            
         exe_scope->CalculateExecutionContext(exe_ctx);
     Target *target = exe_ctx.GetTargetPtr();
@@ -3462,11 +3461,7 @@ ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope,
             if (thread == NULL)
             {
                 if (use_selected)
-                {
                     thread = m_process_sp->GetThreadList().GetSelectedThread().get();
-                    if (thread)
-                        computed_exe_scope = thread;
-                }
             }
                 
             if (thread != NULL)
@@ -3480,10 +3475,7 @@ ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope,
                     {
                         frame = thread->GetSelectedFrame().get();
                         if (frame)
-                        {
                             m_stack_id = frame->GetStackID();
-                            computed_exe_scope = frame;
-                        }
                     }
                 }
                 else
@@ -3491,11 +3483,9 @@ ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope,
             }
         }
     }
-    m_exe_scope = computed_exe_scope;
 }
 
 ValueObject::EvaluationPoint::EvaluationPoint (const ValueObject::EvaluationPoint &rhs) :
-    m_exe_scope (rhs.m_exe_scope),
     m_needs_update(true),
     m_first_update(true),
     m_target_sp (rhs.m_target_sp),
@@ -3513,10 +3503,11 @@ ValueObject::EvaluationPoint::~EvaluationPoint ()
 ExecutionContextScope *
 ValueObject::EvaluationPoint::GetExecutionContextScope ()
 {
-    // We have to update before giving out the scope, or we could be handing out stale pointers.    
-    SyncWithProcessState();
+    // We have to update before giving out the scope, or we could be handing out stale pointers.
+    ExecutionContextScope *exe_scope;    
+    SyncWithProcessState(exe_scope);
     
-    return m_exe_scope;
+    return exe_scope;
 }
 
 // This function checks the EvaluationPoint against the current process state.  If the current
@@ -3524,14 +3515,15 @@ ValueObject::EvaluationPoint::GetExecutionContextScope ()
 // false, meaning "no change".  If the current state is different, we update our state, and return
 // true meaning "yes, change".  If we did see a change, we also set m_needs_update to true, so 
 // future calls to NeedsUpdate will return true.
+// exe_scope will be set to the current execution context scope.
 
 bool
-ValueObject::EvaluationPoint::SyncWithProcessState()
+ValueObject::EvaluationPoint::SyncWithProcessState(ExecutionContextScope *&exe_scope)
 {
     // If we don't have a process nothing can change.
     if (!m_process_sp)
     {
-        m_exe_scope = m_target_sp.get();
+        exe_scope = m_target_sp.get();
         return false;
     }
         
@@ -3542,22 +3534,28 @@ ValueObject::EvaluationPoint::SyncWithProcessState()
     // In either case, we aren't going to be able to sync with the process state.
     if (current_mod_id.GetStopID() == 0)
     {
-        m_exe_scope = m_target_sp.get();
+        exe_scope = m_target_sp.get();
         return false;
     }
-        
+    
+    bool changed;
+    
     if (m_mod_id.IsValid())
     {
         if (m_mod_id == current_mod_id)
         {
             // Everything is already up to date in this object, no need do 
             // update the execution context scope.
-            return false;
+            changed = false;
         }
-        m_mod_id = current_mod_id;
-        m_needs_update = true;        
+        else
+        {
+            m_mod_id = current_mod_id;
+            m_needs_update = true;
+            changed = true;
+        }       
     }
-    m_exe_scope = m_process_sp.get();
+    exe_scope = m_process_sp.get();
     
     // Something has changed, so we will return true.  Now make sure the thread & frame still exist, and if either
     // doesn't, mark ourselves as invalid.
@@ -3571,7 +3569,7 @@ ValueObject::EvaluationPoint::SyncWithProcessState()
         }
         else
         {
-            m_exe_scope = our_thread;
+            exe_scope = our_thread;
             
             if (m_stack_id.IsValid())
             {
@@ -3579,18 +3577,18 @@ ValueObject::EvaluationPoint::SyncWithProcessState()
                 if (our_frame == NULL)
                     SetInvalid();
                 else
-                    m_exe_scope = our_frame;
+                    exe_scope = our_frame;
             }
         }
     }
-    return true;
+    return changed;
 }
 
 void
 ValueObject::EvaluationPoint::SetUpdated ()
 {
-    // this will update the execution context scope and the m_mod_id
-    SyncWithProcessState();
+    if (m_process_sp)
+        m_mod_id = m_process_sp->GetModID();
     m_first_update = false;
     m_needs_update = false;
 }
@@ -3603,7 +3601,6 @@ ValueObject::EvaluationPoint::SetContext (ExecutionContextScope *exe_scope)
         return false;
     
     bool needs_update = false;
-    m_exe_scope = NULL;
     
     // The target has to be non-null, and the 
     Target *target = exe_scope->CalculateTarget();
