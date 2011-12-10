@@ -3,7 +3,7 @@
 # existence of certain subdirectories under CMAKE_CURRENT_SOURCE_DIR.
 
 function(add_version_info_from_vcs VERS)
-  set(result ${${VERS}})
+  string(REPLACE "svn" "" result "${${VERS}}")
   if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.svn" )
     set(result "${result}svn")
     # FindSubversion does not work with symlinks. See PR 8437
@@ -21,24 +21,43 @@ function(add_version_info_from_vcs VERS)
     # Try to get a ref-id
     find_program(git_executable NAMES git git.exe git.cmd)
     if( git_executable )
-      execute_process(COMMAND ${git_executable} show-ref HEAD
+      set(is_git_svn_rev_exact false)
+      execute_process(COMMAND ${git_executable} svn log --limit=1 --oneline
                       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                       TIMEOUT 5
                       RESULT_VARIABLE git_result
                       OUTPUT_VARIABLE git_output)
       if( git_result EQUAL 0 )
-        string(SUBSTRING ${git_output} 0 7 git_ref_id)
-        set(result "${result}-${git_ref_id}")
-      else()
-        execute_process(COMMAND ${git_executable} svn log --limit=1 --oneline
+        string(REGEX MATCH r[0-9]+ git_svn_rev ${git_output})
+        string(SUBSTRING "${git_svn_rev}" 1 -1 git_svn_rev_number)
+        set(git_svn_rev "-svn-${git_svn_rev}")
+
+        # Determine if the HEAD points directly at a subversion revision.
+        execute_process(COMMAND ${git_executable} svn find-rev HEAD
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         TIMEOUT 5
                         RESULT_VARIABLE git_result
                         OUTPUT_VARIABLE git_output)
         if( git_result EQUAL 0 )
-          string(REGEX MATCH r[0-9]+ git_svn_rev ${git_output})
-          set(result "${result}-svn-${git_svn_rev}")
+          string(STRIP "${git_output}" git_head_svn_rev_number)
+          if( git_head_svn_rev_number EQUAL git_svn_rev_number )
+            set(is_git_svn_rev_exact true)
+          endif()
         endif()
+      else()
+        set(git_svn_rev "")
+      endif()
+      execute_process(COMMAND
+                      ${git_executable} show-ref --abbrev --hash --head HEAD
+                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                      TIMEOUT 5
+                      RESULT_VARIABLE git_result
+                      OUTPUT_VARIABLE git_output)
+      if( git_result EQUAL 0 AND NOT is_git_svn_rev_exact )
+        string(STRIP "${git_output}" git_ref_id)
+        set(result "${result}${git_svn_rev}-${git_ref_id}")
+      else()
+        set(result "${result}${git_svn_rev}")
       endif()
     endif()
   endif()
