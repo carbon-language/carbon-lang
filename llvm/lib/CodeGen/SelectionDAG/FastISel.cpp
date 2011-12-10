@@ -943,6 +943,7 @@ FastISel::SelectExtractValue(const User *U) {
 
 bool
 FastISel::SelectInsertValue(const User *U) {
+  return false;
   const InsertValueInst *IVI = dyn_cast<InsertValueInst>(U);
   if (!IVI)
     return false;
