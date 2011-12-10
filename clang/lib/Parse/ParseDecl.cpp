@@ -522,7 +522,7 @@ VersionTuple Parser::ParseVersionTuple(SourceRange &Range) {
 /// \brief Parse the contents of the "availability" attribute.
 ///
 /// availability-attribute:
-///   'availability' '(' platform ',' version-arg-list ')'
+///   'availability' '(' platform ',' version-arg-list, opt-message')'
 ///
 /// platform:
 ///   identifier
@@ -536,6 +536,8 @@ VersionTuple Parser::ParseVersionTuple(SourceRange &Range) {
 ///   'deprecated' '=' version
 ///   'removed' = version
 ///   'unavailable'
+/// opt-message:
+///   'message' '=' <string>
 void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
                                         SourceLocation AvailabilityLoc,
                                         ParsedAttributes &attrs,
@@ -545,6 +547,7 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
 
   enum { Introduced, Deprecated, Obsoleted, Unknown };
   AvailabilityChange Changes[Unknown];
+  ExprResult MessageExpr;
 
   // Opening '('.
   BalancedDelimiterTracker T(*this, tok::l_paren);
@@ -573,6 +576,7 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
     Ident_deprecated = PP.getIdentifierInfo("deprecated");
     Ident_obsoleted = PP.getIdentifierInfo("obsoleted");
     Ident_unavailable = PP.getIdentifierInfo("unavailable");
+    Ident_message = PP.getIdentifierInfo("message");
   }
 
   // Parse the set of introductions/deprecations/removals.
@@ -599,7 +603,7 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
       ConsumeToken();
       continue;
     } 
-
+    
     if (Tok.isNot(tok::equal)) {
       Diag(Tok, diag::err_expected_equal_after)
         << Keyword;
@@ -607,6 +611,15 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
       return;
     }
     ConsumeToken();
+    if (Keyword == Ident_message) {
+      if (!isTokenStringLiteral()) {
+        Diag(Tok, diag::err_expected_string_literal);
+        SkipUntil(tok::r_paren);
+        return;
+      }
+      MessageExpr = ParseStringLiteralExpression();
+      break;
+    }
     
     SourceRange VersionRange;
     VersionTuple Version = ParseVersionTuple(VersionRange);
@@ -682,7 +695,8 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
                Changes[Introduced],
                Changes[Deprecated],
                Changes[Obsoleted], 
-               UnavailableLoc, false, false);
+               UnavailableLoc, MessageExpr.take(),
+               false, false);
 }
 
 

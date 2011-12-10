@@ -85,6 +85,8 @@ private:
   /// \brief The location of the 'unavailable' keyword in an
   /// availability attribute.
   SourceLocation UnavailableLoc;
+  
+  const Expr *MessageExpr;
 
   /// The next attribute in the current position.
   AttributeList *NextInPosition;
@@ -138,13 +140,15 @@ private:
                 const AvailabilityChange &introduced,
                 const AvailabilityChange &deprecated,
                 const AvailabilityChange &obsoleted,
-                SourceLocation unavailable,
+                SourceLocation unavailable, 
+                const Expr *messageExpr,
                 bool declspec, bool cxx0x)
     : AttrName(attrName), ScopeName(scopeName), ParmName(parmName),
       AttrRange(attrRange), ScopeLoc(scopeLoc), ParmLoc(parmLoc),
       NumArgs(0), DeclspecAttribute(declspec), CXX0XAttribute(cxx0x),
       Invalid(false), UsedAsTypeAttr(false), IsAvailability(true),
-      UnavailableLoc(unavailable), NextInPosition(0), NextInPool(0) {
+      UnavailableLoc(unavailable), MessageExpr(messageExpr),
+      NextInPosition(0), NextInPool(0) {
     new (&getAvailabilitySlot(IntroducedSlot)) AvailabilityChange(introduced);
     new (&getAvailabilitySlot(DeprecatedSlot)) AvailabilityChange(deprecated);
     new (&getAvailabilitySlot(ObsoletedSlot)) AvailabilityChange(obsoleted);
@@ -371,6 +375,11 @@ public:
     assert(getKind() == AT_availability && "Not an availability attribute");
     return UnavailableLoc;
   }
+  
+  const Expr * getMessageExpr() const {
+    assert(getKind() == AT_availability && "Not an availability attribute");
+    return MessageExpr;
+  }
 };
 
 /// A factory, from which one makes pools, from which one creates
@@ -492,13 +501,14 @@ public:
                         const AvailabilityChange &deprecated,
                         const AvailabilityChange &obsoleted,
                         SourceLocation unavailable,
+                        const Expr *MessageExpr,
                         bool declspec = false, bool cxx0x = false) {
     void *memory = allocate(AttributeFactory::AvailabilityAllocSize);
     return add(new (memory) AttributeList(attrName, attrRange,
                                           scopeName, scopeLoc,
                                           parmName, parmLoc,
                                           introduced, deprecated, obsoleted,
-                                          unavailable,
+                                          unavailable, MessageExpr,
                                           declspec, cxx0x));
   }
 
@@ -616,10 +626,12 @@ public:
                         const AvailabilityChange &deprecated,
                         const AvailabilityChange &obsoleted,
                         SourceLocation unavailable,
+                        const Expr *MessageExpr,
                         bool declspec = false, bool cxx0x = false) {
     AttributeList *attr =
       pool.create(attrName, attrRange, scopeName, scopeLoc, parmName, parmLoc,
                   introduced, deprecated, obsoleted, unavailable,
+                  MessageExpr,
                   declspec, cxx0x);
     add(attr);
     return attr;

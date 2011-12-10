@@ -146,7 +146,7 @@ def Availability : InheritableAttr {
   let Spellings = ["availability"];
   let Args = [IdentifierArgument<"platform">, VersionArgument<"introduced">,
               VersionArgument<"deprecated">, VersionArgument<"obsoleted">,
-              BoolArgument<"unavailable">];
+              BoolArgument<"unavailable">, StringArgument<"message">];
   let AdditionalMembers =
 [{static llvm::StringRef getPrettyPlatformName(llvm::StringRef Platform) {
     return llvm::StringSwitch<llvm::StringRef>(Platform)

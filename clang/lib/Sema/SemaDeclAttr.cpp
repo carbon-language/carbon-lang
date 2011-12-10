@@ -1624,12 +1624,19 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
     return;
   }
 
+  StringRef Str;
+  const StringLiteral *SE = 
+    dyn_cast_or_null<const StringLiteral>(Attr.getMessageExpr());
+  if (SE)
+    Str = SE->getString();
+  
   D->addAttr(::new (S.Context) AvailabilityAttr(Attr.getRange(), S.Context,
                                                 Platform,
                                                 Introduced.Version,
                                                 Deprecated.Version,
                                                 Obsoleted.Version,
-                                                IsUnavailable));
+                                                IsUnavailable, 
+                                                Str));
 }
 
 static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
