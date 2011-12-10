@@ -2541,7 +2541,8 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 return;
             }
         }
-        else if (target)
+        
+        if (target)
         {
             var = FindGlobalVariable (*target,
                                       module_sp,
@@ -2554,6 +2555,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 valobj = ValueObjectVariable::Create(target, var);
                 AddOneVariable(context, var, valobj, current_id);
                 context.m_found.variable = true;
+                return;
             }
         }
         
