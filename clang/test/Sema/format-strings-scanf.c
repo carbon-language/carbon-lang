@@ -28,7 +28,7 @@ void test(const char *s, int *i) {
 
 void bad_length_modifiers(char *s, void *p, wchar_t *ws, long double *ld) {
   scanf("%hhs", "foo"); // expected-warning{{length modifier 'hh' results in undefined behavior or no effect with 's' conversion specifier}}
-  scanf("%1$zp", p); // expected-warning{{length modifier 'z' results in undefined behavior or no effect with 'p' conversion specifier}}
+  scanf("%1$zp", &p); // expected-warning{{length modifier 'z' results in undefined behavior or no effect with 'p' conversion specifier}}
   scanf("%ls", ws); // no-warning
   scanf("%#.2Lf", ld); // expected-warning{{invalid conversion specifier '#'}}
 }
@@ -37,10 +37,11 @@ void bad_length_modifiers(char *s, void *p, wchar_t *ws, long double *ld) {
 // format string is somewhere else, point to it in a note.
 void pr9751() {
   int *i;
+  char str[100];
   const char kFormat1[] = "%00d"; // expected-note{{format string is defined here}}}
   scanf(kFormat1, i); // expected-warning{{zero field width in scanf format string is unused}}
   scanf("%00d", i); // expected-warning{{zero field width in scanf format string is unused}}
   const char kFormat2[] = "%["; // expected-note{{format string is defined here}}}
-  scanf(kFormat2, &i); // expected-warning{{no closing ']' for '%[' in scanf format string}}
-  scanf("%[", &i); // expected-warning{{no closing ']' for '%[' in scanf format string}}
+  scanf(kFormat2, str); // expected-warning{{no closing ']' for '%[' in scanf format string}}
+  scanf("%[", str); // expected-warning{{no closing ']' for '%[' in scanf format string}}
 }

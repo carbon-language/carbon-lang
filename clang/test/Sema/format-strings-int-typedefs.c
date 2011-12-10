@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -triple i386-apple-darwin9 -fsyntax-only -verify %s
 
 int printf(char const *, ...);
+int scanf(char const *, ...);
 
 void test(void) {
   printf("%jd", 42.0); // expected-warning {{conversion specifies type 'intmax_t' (aka 'long long')}}
@@ -11,6 +12,15 @@ void test(void) {
   printf("%ls", 42.0); // expected-warning {{conversion specifies type 'wchar_t *' (aka 'int *')}}
   printf("%S", 42.0);  // expected-warning {{conversion specifies type 'wchar_t *' (aka 'int *')}}
   printf("%C", 42.0);  // expected-warning {{conversion specifies type 'wchar_t' (aka 'int')}}
+
+  scanf("%jd", 0); // expected-warning {{conversion specifies type 'intmax_t *' (aka 'long long *')}}
+  scanf("%ju", 0); // expected-warning {{conversion specifies type 'uintmax_t *' (aka 'unsigned long long *')}}
+  scanf("%zu", 0); // expected-warning {{conversion specifies type 'size_t *' (aka 'unsigned long *')}}
+  scanf("%td", 0); // expected-warning {{conversion specifies type 'ptrdiff_t *' (aka 'int *')}}
+  scanf("%lc", 0); // expected-warning {{conversion specifies type 'wchar_t *' (aka 'int *')}}
+  scanf("%ls", 0); // expected-warning {{conversion specifies type 'wchar_t *' (aka 'int *')}}
+  scanf("%S",  0);  // expected-warning {{conversion specifies type 'wchar_t *' (aka 'int *')}}
+  scanf("%C",  0);  // expected-warning {{conversion specifies type 'wchar_t *' (aka 'int *')}}
 
 
   // typedef size_t et al. to something crazy.

@@ -49,8 +49,8 @@ void taintTracking(int x) {
 
   // Taint on fields of a struct.
   struct XYStruct xy = {2, 3, 11};
-  scanf("%f", &xy.y);
-  scanf("%f", &xy.x);
+  scanf("%d", &xy.y);
+  scanf("%d", &xy.x);
   int tx = xy.x; // expected-warning {{tainted}}
   int ty = xy.y; // FIXME: This should be tainted as well.
   char ntz = xy.z;// no warning
