@@ -969,7 +969,7 @@ FastISel::SelectInsertValue(const User *U) {
   // a new set of virtual registers, which results in a large number of 
   // loads/stores from/to the stack that copies the aggregate all over the place
   // and results in lots of spill code.  I believe this is necessary to preserve
-  // SSA form, but maybe there's something we coul do to improve this.
+  // SSA form, but maybe there's something we could do to improve this.
 
   // Get the Aggregate base register.
   unsigned AggBaseReg;
