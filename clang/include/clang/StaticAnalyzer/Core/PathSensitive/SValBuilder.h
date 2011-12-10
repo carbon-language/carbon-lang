@@ -109,7 +109,7 @@ public:
   /// handle the given binary expression. Depending on the state, decides to
   /// either keep the expression or forget the history and generate an
   /// UnknownVal.
-  SVal generateUnknownVal(const ProgramState *state, BinaryOperator::Opcode op,
+  SVal makeGenericVal(const ProgramState *state, BinaryOperator::Opcode op,
                           NonLoc lhs, NonLoc rhs, QualType resultTy);
 
   SVal evalBinOp(const ProgramState *state, BinaryOperator::Opcode op,
@@ -252,6 +252,9 @@ public:
 
   NonLoc makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
                     const llvm::APSInt& rhs, QualType type);
+
+  NonLoc makeNonLoc(const llvm::APSInt& rhs, BinaryOperator::Opcode op,
+                    const SymExpr *lhs, QualType type);
 
   NonLoc makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
                     const SymExpr *rhs, QualType type);

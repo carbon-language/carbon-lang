@@ -303,7 +303,7 @@ SVal SimpleSValBuilder::evalBinOpNN(const ProgramState *state,
   while (1) {
     switch (lhs.getSubKind()) {
     default:
-      return generateUnknownVal(state, op, lhs, rhs, resultTy);
+      return makeGenericVal(state, op, lhs, rhs, resultTy);
     case nonloc::LocAsIntegerKind: {
       Loc lhsL = cast<nonloc::LocAsInteger>(lhs).getLoc();
       switch (rhs.getSubKind()) {
@@ -326,7 +326,7 @@ SVal SimpleSValBuilder::evalBinOpNN(const ProgramState *state,
               return makeTruthVal(true, resultTy);
             default:
               // This case also handles pointer arithmetic.
-              return generateUnknownVal(state, op, lhs, rhs, resultTy);
+              return makeGenericVal(state, op, lhs, rhs, resultTy);
           }
       }
     }
@@ -388,9 +388,9 @@ SVal SimpleSValBuilder::evalBinOpNN(const ProgramState *state,
             if (lhsValue == 0)
               // At this point lhs and rhs have been swapped.
               return rhs;
-            return generateUnknownVal(state, op, rhs, lhs, resultTy);
+            return makeGenericVal(state, op, rhs, lhs, resultTy);
           default:
-            return generateUnknownVal(state, op, rhs, lhs, resultTy);
+            return makeGenericVal(state, op, rhs, lhs, resultTy);
         }
       }
     }
@@ -405,7 +405,7 @@ SVal SimpleSValBuilder::evalBinOpNN(const ProgramState *state,
             dyn_cast<SymIntExpr>(selhs->getSymbol());
 
         if (!symIntExpr)
-          return generateUnknownVal(state, op, lhs, rhs, resultTy);
+          return makeGenericVal(state, op, lhs, rhs, resultTy);
 
         // Is this a logical not? (!x is represented as x == 0.)
         if (op == BO_EQ && rhs.isZeroConstant()) {
@@ -453,7 +453,7 @@ SVal SimpleSValBuilder::evalBinOpNN(const ProgramState *state,
         // For now, only handle expressions whose RHS is a constant.
         const nonloc::ConcreteInt *rhsInt = dyn_cast<nonloc::ConcreteInt>(&rhs);
         if (!rhsInt)
-          return generateUnknownVal(state, op, lhs, rhs, resultTy);
+          return makeGenericVal(state, op, lhs, rhs, resultTy);
 
         // If both the LHS and the current expression are additive,
         // fold their constants.
@@ -538,7 +538,7 @@ SVal SimpleSValBuilder::evalBinOpNN(const ProgramState *state,
               resultTy);
         }
 
-        return generateUnknownVal(state, op, lhs, rhs, resultTy);
+        return makeGenericVal(state, op, lhs, rhs, resultTy);
       }
     }
     }

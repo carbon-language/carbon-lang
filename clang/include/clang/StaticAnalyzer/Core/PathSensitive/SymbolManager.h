@@ -48,7 +48,7 @@ public:
               MetadataKind,
               BEGIN_SYMBOLS = RegionValueKind,
               END_SYMBOLS = MetadataKind,
-              SymIntKind, SymSymKind, CastSymbolKind };
+              SymIntKind, IntSymKind, SymSymKind, CastSymbolKind };
 private:
   Kind K;
 
@@ -379,6 +379,47 @@ public:
   }
 };
 
+/// IntSymExpr - Represents symbolic expression like 3 - 'x'.
+class IntSymExpr : public SymExpr {
+  const llvm::APSInt& LHS;
+  BinaryOperator::Opcode Op;
+  const SymExpr *RHS;
+  QualType T;
+
+public:
+  IntSymExpr(const llvm::APSInt& lhs, BinaryOperator::Opcode op,
+             const SymExpr *rhs, QualType t)
+    : SymExpr(IntSymKind), LHS(lhs), Op(op), RHS(rhs), T(t) {}
+
+  QualType getType(ASTContext &C) const { return T; }
+
+  BinaryOperator::Opcode getOpcode() const { return Op; }
+
+  void dumpToStream(raw_ostream &os) const;
+
+  const SymExpr *getRHS() const { return RHS; }
+  const llvm::APSInt &getLHS() const { return LHS; }
+
+  static void Profile(llvm::FoldingSetNodeID& ID, const llvm::APSInt& lhs,
+                      BinaryOperator::Opcode op, const SymExpr *rhs,
+                      QualType t) {
+    ID.AddInteger((unsigned) IntSymKind);
+    ID.AddPointer(&lhs);
+    ID.AddInteger(op);
+    ID.AddPointer(rhs);
+    ID.Add(t);
+  }
+
+  void Profile(llvm::FoldingSetNodeID& ID) {
+    Profile(ID, LHS, Op, RHS, T);
+  }
+
+  // Implement isa<T> support.
+  static inline bool classof(const SymExpr *SE) {
+    return SE->getKind() == IntSymKind;
+  }
+};
+
 /// SymSymExpr - Represents symbolic expression like 'x' + 'y'.
 class SymSymExpr : public SymExpr {
   const SymExpr *LHS;
@@ -478,6 +519,10 @@ public:
                                   const llvm::APSInt& rhs, QualType t) {
     return getSymIntExpr(&lhs, op, rhs, t);
   }
+
+  const IntSymExpr *getIntSymExpr(const llvm::APSInt& lhs,
+                                  BinaryOperator::Opcode op,
+                                  const SymExpr *rhs, QualType t);
 
   const SymSymExpr *getSymSymExpr(const SymExpr *lhs, BinaryOperator::Opcode op,
                                   const SymExpr *rhs, QualType t);

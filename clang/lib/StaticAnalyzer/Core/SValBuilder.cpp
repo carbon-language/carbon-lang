@@ -167,7 +167,7 @@ DefinedSVal SValBuilder::getBlockPointer(const BlockDecl *block,
 
 //===----------------------------------------------------------------------===//
 
-SVal SValBuilder::generateUnknownVal(const ProgramState *State,
+SVal SValBuilder::makeGenericVal(const ProgramState *State,
                                      BinaryOperator::Opcode Op,
                                      NonLoc LHS, NonLoc RHS,
                                      QualType ResultTy) {
