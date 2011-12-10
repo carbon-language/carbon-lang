@@ -29,10 +29,6 @@ class DisassembleDriverMainLoop(BenchBase):
         else:
             self.gdbExec = "gdb"
 
-        print
-        print "lldb path: %s" % self.lldbExec
-        print "gdb path: %s" % self.gdbExec
-
         self.exe = self.lldbHere
         self.function = 'Driver::MainLoop()'
         self.lldb_avg = None
@@ -45,6 +41,10 @@ class DisassembleDriverMainLoop(BenchBase):
     def test_run_lldb_then_gdb(self):
         """Test disassembly on a large function with lldb vs. gdb."""
         print
+        print "lldb path: %s" % self.lldbExec
+        print "gdb path: %s" % self.gdbExec
+
+        print
         self.run_lldb_disassembly(self.exe, self.function, self.count)
         print "lldb benchmark:", self.stopwatch
         self.run_gdb_disassembly(self.exe, self.function, self.count)
@@ -54,6 +54,10 @@ class DisassembleDriverMainLoop(BenchBase):
     @benchmarks_test
     def test_run_gdb_then_lldb(self):
         """Test disassembly on a large function with lldb vs. gdb."""
+        print
+        print "lldb path: %s" % self.lldbExec
+        print "gdb path: %s" % self.gdbExec
+
         print
         self.run_gdb_disassembly(self.exe, self.function, self.count)
         print "gdb benchmark:", self.stopwatch
