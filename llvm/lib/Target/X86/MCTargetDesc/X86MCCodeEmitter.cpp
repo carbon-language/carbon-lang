@@ -169,23 +169,36 @@ static bool Is32BitMemOperand(const MCInst &MI, unsigned Op) {
   return false;
 }
 
-/// StartsWithGlobalOffsetTable - Return true for the simple cases where this
-/// expression starts with _GLOBAL_OFFSET_TABLE_. This is a needed to support
-/// PIC on ELF i386 as that symbol is magic. We check only simple case that
+/// StartsWithGlobalOffsetTable - Check if this expression starts with
+///  _GLOBAL_OFFSET_TABLE_ and if it is of the form
+///  _GLOBAL_OFFSET_TABLE_-symbol. This is needed to support PIC on ELF
+/// i386 as _GLOBAL_OFFSET_TABLE_ is magical. We check only simple case that
 /// are know to be used: _GLOBAL_OFFSET_TABLE_ by itself or at the start
 /// of a binary expression.
-static bool StartsWithGlobalOffsetTable(const MCExpr *Expr) {
+enum GlobalOffsetTableExprKind {
+  GOT_None,
+  GOT_Normal,
+  GOT_SymDiff
+};
+static GlobalOffsetTableExprKind
+StartsWithGlobalOffsetTable(const MCExpr *Expr) {
+  const MCExpr *RHS = 0;
   if (Expr->getKind() == MCExpr::Binary) {
     const MCBinaryExpr *BE = static_cast<const MCBinaryExpr *>(Expr);
     Expr = BE->getLHS();
+    RHS = BE->getRHS();
   }
 
   if (Expr->getKind() != MCExpr::SymbolRef)
-    return false;
+    return GOT_None;
 
   const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Expr);
   const MCSymbol &S = Ref->getSymbol();
-  return S.getName() == "_GLOBAL_OFFSET_TABLE_";
+  if (S.getName() != "_GLOBAL_OFFSET_TABLE_")
+    return GOT_None;
+  if (RHS && RHS->getKind() == MCExpr::SymbolRef)
+    return GOT_SymDiff;
+  return GOT_Normal;
 }
 
 void X86MCCodeEmitter::
@@ -209,12 +222,15 @@ EmitImmediate(const MCOperand &DispOp, unsigned Size, MCFixupKind FixupKind,
 
   // If we have an immoffset, add it to the expression.
   if ((FixupKind == FK_Data_4 ||
-       FixupKind == MCFixupKind(X86::reloc_signed_4byte)) &&
-      StartsWithGlobalOffsetTable(Expr)) {
-    assert(ImmOffset == 0);
+       FixupKind == MCFixupKind(X86::reloc_signed_4byte))) {
+    GlobalOffsetTableExprKind Kind = StartsWithGlobalOffsetTable(Expr);
+    if (Kind != GOT_None) {
+      assert(ImmOffset == 0);
 
-    FixupKind = MCFixupKind(X86::reloc_global_offset_table);
-    ImmOffset = CurByte;
+      FixupKind = MCFixupKind(X86::reloc_global_offset_table);
+      if (Kind == GOT_Normal)
+        ImmOffset = CurByte;
+    }
   }
 
   // If the fixup is pc-relative, we need to bias the value to be relative to

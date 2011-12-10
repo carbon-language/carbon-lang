@@ -6,6 +6,10 @@
         addl    $_GLOBAL_OFFSET_TABLE_, %ebx
         leal    _GLOBAL_OFFSET_TABLE_(%ebx), %ebx
 
+// But not in this case
+foo:
+        addl    _GLOBAL_OFFSET_TABLE_-foo,%ebx
+
 // CHECK:      ('sh_name', 0x00000005) # '.text'
 // CHECK-NEXT: ('sh_type',
 // CHECK-NEXT: ('sh_flags',
@@ -16,4 +20,4 @@
 // CHECK-NEXT: ('sh_info',
 // CHECK-NEXT: ('sh_addralign',
 // CHECK-NEXT: ('sh_entsize',
-// CHECK-NEXT: ('_section_data', '81c30200 00008d9b 02000000')
+// CHECK-NEXT: ('_section_data', '81c30200 00008d9b 02000000 031d0200 0000')
