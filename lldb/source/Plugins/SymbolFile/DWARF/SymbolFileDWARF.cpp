@@ -78,6 +78,11 @@
 using namespace lldb;
 using namespace lldb_private;
 
+static inline bool
+DW_TAG_is_function_tag (dw_tag_t tag)
+{
+    return tag == DW_TAG_subprogram || tag == DW_TAG_inlined_subroutine;
+}
 
 static AccessType
 DW_ACCESS_to_AccessType (uint32_t dwarf_accessibility)
@@ -1626,6 +1631,13 @@ SymbolFileDWARF::ResolveTypeUID (DWARFCompileUnit* cu, const DWARFDebugInfoEntry
 {
     if (die != NULL)
     {
+        LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
+        if (log)
+            LogMessage (log.get(), "SymbolFileDWARF::ResolveTypeUID (die = 0x%8.8x) %s '%s'", 
+                        die->GetOffset(), 
+                        DW_TAG_value_to_name(die->Tag()), 
+                        die->GetName(this, cu));
+
         // We might be coming in in the middle of a type tree (a class
         // withing a class, an enum within a class), so parse any needed
         // parent DIEs before we get to this one...
@@ -1637,12 +1649,28 @@ SymbolFileDWARF::ResolveTypeUID (DWARFCompileUnit* cu, const DWARFDebugInfoEntry
             case DW_TAG_class_type:
             {
                 // Get the type, which could be a forward declaration
+                if (log)
+                    LogMessage (log.get(), "SymbolFileDWARF::ResolveTypeUID (die = 0x%8.8x) %s '%s' resolve parent forward type for 0x%8.8x", 
+                                die->GetOffset(), 
+                                DW_TAG_value_to_name(die->Tag()), 
+                                die->GetName(this, cu), 
+                                decl_ctx_die->GetOffset());
+
                 Type *parent_type = ResolveTypeUID (cu, decl_ctx_die, assert_not_being_parsed);
-                // Now ask the type to complete itself if it already hasn't.
-                // This will make the call to ResolveType below just use the
-                // cached value that is already parsed for "die"
-                if (parent_type)
-                    parent_type->GetClangFullType();
+                if (DW_TAG_is_function_tag(die->Tag()))
+                {
+                    if (log)
+                        LogMessage (log.get(), "SymbolFileDWARF::ResolveTypeUID (die = 0x%8.8x) %s '%s' resolve parent full type for 0x%8.8x since die is a function", 
+                                    die->GetOffset(), 
+                                    DW_TAG_value_to_name(die->Tag()), 
+                                    die->GetName(this, cu), 
+                                    decl_ctx_die->GetOffset());
+                    // Ask the type to complete itself if it already hasn't since if we
+                    // want a function (method or static) from a class, the class must 
+                    // create itself and add it's own methods and class functions.
+                    if (parent_type)
+                        parent_type->GetClangFullType();
+                }
             }
             break;
 
@@ -1695,10 +1723,13 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
 
     const dw_tag_t tag = die->Tag();
 
-    DEBUG_PRINTF ("0x%8.8llx: %s (\"%s\") - resolve forward declaration...\n", 
-                  MakeUserID(die->GetOffset()), 
-                  DW_TAG_value_to_name(tag), 
-                  type->GetName().AsCString());
+    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
+    if (log)
+        LogMessage (log.get(),
+                    "0x%8.8llx: %s '%s' resolving forward declaration...\n", 
+                    MakeUserID(die->GetOffset()), 
+                    DW_TAG_value_to_name(tag), 
+                    type->GetName().AsCString());
     assert (clang_type);
     DWARFDebugInfoEntry::Attributes attributes;
 
@@ -3039,8 +3070,6 @@ SymbolFileDWARF::FindTypes (const SymbolContext& sc,
         m_type_index.Find (name, die_offsets);
     }
     
-    //OptimizeDIEOffsetsOrder (sc.comp_unit ? GetDWARFCompileUnitForUID(sc.comp_unit->GetID()) : NULL, die_offsets);
-    
     const size_t num_matches = die_offsets.size();
 
     if (num_matches)
@@ -3125,8 +3154,6 @@ SymbolFileDWARF::FindNamespace (const SymbolContext& sc,
             m_namespace_index.Find (name, die_offsets);
         }
         
-        //OptimizeDIEOffsetsOrder (sc.comp_unit ? GetDWARFCompileUnitForUID(sc.comp_unit->GetID()) : NULL, die_offsets);
-
         DWARFCompileUnit* dwarf_cu = NULL;
         const DWARFDebugInfoEntry* die = NULL;
         const size_t num_matches = die_offsets.size();
@@ -3689,6 +3716,9 @@ SymbolFileDWARF::GetClangDeclContextForDIE (const SymbolContext &sc, DWARFCompil
     if (die_offset != DW_INVALID_OFFSET)
         return GetClangDeclContextForDIEOffset (sc, die_offset);
     
+    LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
+    if (log)
+        LogMessage(log.get(), "SymbolFileDWARF::GetClangDeclContextForDIE (die = 0x%8.8x) %s '%s'", die->GetOffset(), DW_TAG_value_to_name(die->Tag()), die->GetName(this, cu));
     // This is the DIE we want.  Parse it, then query our map.
     bool assert_not_being_parsed = true;
     ResolveTypeUID (cu, die, assert_not_being_parsed);    
@@ -3856,8 +3886,6 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (DWARFCompileUnit* cu,
         m_type_index.Find (type_name, die_offsets);
     }
     
-    //OptimizeDIEOffsetsOrder (cu, die_offsets);
-    
     const size_t num_matches = die_offsets.size();
     
     const dw_tag_t die_tag = die->Tag();
@@ -3947,100 +3975,6 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (DWARFCompileUnit* cu,
     return type_sp;
 }
 
-//void
-//SymbolFileDWARF::OptimizeDIEOffsetsOrder (DWARFCompileUnit* cu, DIEArray &die_offsets)
-//{
-//    // Make sure we at least have a few matches before we do anthing
-//    const size_t num_die_offsets = die_offsets.size();
-//    if (num_die_offsets > 1)
-//    {        
-//        // Make sure we at least have more than one compie unit
-//        DWARFDebugInfo* debug_info = DebugInfo();
-//        if (debug_info->GetNumCompileUnits() > 1)
-//        {
-//            DIEArray optimized_die_offsets;
-//            optimized_die_offsets.reserve (num_die_offsets);
-//            dw_offset_t cu_lo_offset, cu_hi_offset;
-//            size_t i;
-//            
-//            // Since we might find many types in many compile units,
-//            // we should prefer ones that are in the current compile unit
-//            // first if one is supplied
-//            if (cu)
-//            {
-//                cu_lo_offset = cu->GetOffset();
-//                cu_hi_offset = cu->GetNextCompileUnitOffset();
-//            
-//                // Use matches from the current compile unit first
-//                for (i=0; i<num_die_offsets; ++i)
-//                {
-//                    const dw_offset_t die_offset = die_offsets[i];
-//                    // The compile unit lo offset is the offset of the compile
-//                    // unit header, so the first less than below is the right
-//                    // thing to do.
-//                    if (cu_lo_offset < die_offset && die_offset < cu_hi_offset)
-//                    {
-//                        optimized_die_offsets.push_back (die_offset);
-//                        // Set the DIE offset to an invalid value so
-//                        // we know it has already been put into the list
-//                        die_offsets[i] = 0; 
-//                    }
-//                }
-//            }
-//
-//            // Then use matches from compile units that already
-//            // have their DIEs parsed. This can help us from pulling
-//            // in different compile units for no reason
-//            bool cu_has_dies = false;
-//            cu_lo_offset = DW_INVALID_OFFSET;
-//            cu_hi_offset = 0;
-//            
-//            for (i=0; i<num_die_offsets; ++i)
-//            {
-//                const dw_offset_t die_offset = die_offsets[i];
-//                if (die_offset > 0)
-//                {
-//                    if (die_offset >= cu_hi_offset || die_offset <= cu_lo_offset)
-//                    {
-//                        DWARFCompileUnit* curr_cu = debug_info->GetCompileUnitContainingDIE(die_offset).get();
-//                        if (curr_cu)
-//                        {
-//                            cu_lo_offset = curr_cu->GetOffset();
-//                            cu_hi_offset = curr_cu->GetNextCompileUnitOffset();
-//                            cu_has_dies = curr_cu->HasDIEsParsed ();
-//                        }                    
-//                        else
-//                            continue;
-//                    }
-//                    
-//                    if (cu_has_dies)
-//                    {
-//                        optimized_die_offsets.push_back (die_offset);
-//                        die_offsets[i] = 0;                        
-//                    }
-//                }
-//            }
-//
-//            // We didn't re-order anything...
-//            if (optimized_die_offsets.empty())
-//                return;
-//            
-//            // We did re-order some DIEs, so copy any remaining
-//            // die offsets
-//            if (optimized_die_offsets.size() < die_offsets.size())
-//            {
-//                for (i=0; i<num_die_offsets; ++i)
-//                {
-//                    const dw_offset_t die_offset = die_offsets[i];
-//                    if (die_offset)
-//                        optimized_die_offsets.push_back (die_offset);
-//                }
-//            }
-//            // Swap our newer optimized list into "die_offsets"
-//            die_offsets.swap (optimized_die_offsets);
-//        }
-//    }
-//}
                                           
 // This function can be used when a DIE is found that is a forward declaration
 // DIE and we want to try and find a type that has the complete definition.
@@ -4082,8 +4016,6 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
         m_type_index.Find (type_name, die_offsets);
     }
     
-    //OptimizeDIEOffsetsOrder (cu, die_offsets);
-
     const size_t num_matches = die_offsets.size();
 
     const dw_tag_t die_tag = die->Tag();
@@ -4180,13 +4112,20 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
     if (die != NULL)
     {
         LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
-        if (log && dwarf_cu)
-        {
-            StreamString s;
-            die->DumpLocation (this, dwarf_cu, s);
-            LogMessage (log.get(), "SymbolFileDwarf::%s %s", __FUNCTION__, s.GetData());
-            
-        }
+        if (log)
+            LogMessage (log.get(), "SymbolFileDWARF::ParseType (die = 0x%8.8x) %s '%s'", 
+                        die->GetOffset(), 
+                        DW_TAG_value_to_name(die->Tag()), 
+                        die->GetName(this, dwarf_cu));
+//
+//        LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
+//        if (log && dwarf_cu)
+//        {
+//            StreamString s;
+//            die->DumpLocation (this, dwarf_cu, s);
+//            LogMessage (log.get(), "SymbolFileDwarf::%s %s", __FUNCTION__, s.GetData());
+//            
+//        }
         
         Type *type_ptr = m_die_to_type.lookup (die);
         TypeList* type_list = GetTypeList();
@@ -6066,8 +6005,6 @@ SymbolFileDWARF::SearchDeclContext (const clang::DeclContext *decl_context,
             m_type_index.Find (ConstString(name), die_offsets);
         }
         
-        //OptimizeDIEOffsetsOrder (NULL, die_offsets);
-
         const size_t num_matches = die_offsets.size();
         
         if (num_matches)

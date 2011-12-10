@@ -45,7 +45,7 @@ CFLAGS ?= -gdwarf-2 -O0
 CFLAGS += $(FRAMEWORK_INCLUDES)
 ifeq "$(OS)" "Darwin"
 	CFLAGS += -arch $(ARCH)
-	DS := /usr/bin/dsymutil
+	DS := dsymutil
 	DSFLAGS =
 	DSYM = $(EXE).dSYM
 endif
