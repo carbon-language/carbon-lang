@@ -178,6 +178,8 @@ id test36(id z) {
 
 // Template instantiation side of rdar://problem/9817306
 @interface Test37
++ alloc;
+- init;
 - (NSArray *) array;
 @end
 template <class T> void test37(T *a) {
@@ -224,3 +226,18 @@ void send_release() {
 // CHECK-NEXT: call void @objc_release
 // CHECK-NEXT: ret void
 template void send_release<int>();
+
+template<typename T>
+Test37 *instantiate_init() {
+  Test37 *result = [[Test37 alloc] init];
+  return result;
+}
+
+// CHECK: define weak_odr %2* @_Z16instantiate_initIiEP6Test37v
+// CHECK: call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
+// CHECK: call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
+// CHECK: call i8* @objc_retain
+// CHECK: call void @objc_release
+// CHECK: call i8* @objc_autoreleaseReturnValue
+template Test37* instantiate_init<int>();
+

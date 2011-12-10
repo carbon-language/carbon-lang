@@ -9528,6 +9528,10 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S,
                                     ExDeclType, TInfo, SC_None, SC_None);
   ExDecl->setExceptionVariable(true);
   
+  // In ARC, infer 'retaining' for variables of retainable type.
+  if (getLangOptions().ObjCAutoRefCount && inferObjCARCLifetime(ExDecl))
+    Invalid = true;
+
   if (!Invalid && !ExDeclType->isDependentType()) {
     if (const RecordType *recordType = ExDeclType->getAs<RecordType>()) {
       // C++ [except.handle]p16:

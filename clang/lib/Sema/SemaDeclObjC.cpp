@@ -2911,6 +2911,10 @@ VarDecl *Sema::BuildObjCExceptionDecl(TypeSourceInfo *TInfo, QualType T,
                                  T, TInfo, SC_None, SC_None);
   New->setExceptionVariable(true);
   
+  // In ARC, infer 'retaining' for variables of retainable type.
+  if (getLangOptions().ObjCAutoRefCount && inferObjCARCLifetime(New))
+    Invalid = true;
+
   if (Invalid)
     New->setInvalidDecl();
   return New;
