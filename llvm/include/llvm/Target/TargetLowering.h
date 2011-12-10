@@ -36,27 +36,19 @@
 #include <vector>
 
 namespace llvm {
-  class AllocaInst;
-  class APFloat;
   class CallInst;
   class CCState;
-  class Function;
   class FastISel;
   class FunctionLoweringInfo;
   class ImmutableCallSite;
   class MachineBasicBlock;
   class MachineFunction;
-  class MachineFrameInfo;
   class MachineInstr;
   class MachineJumpTableInfo;
   class MCContext;
   class MCExpr;
-  class SDNode;
-  class SDValue;
-  class SelectionDAG;
   template<typename T> class SmallVectorImpl;
   class TargetData;
-  class TargetMachine;
   class TargetRegisterClass;
   class TargetLoweringObjectFile;
   class Value;
