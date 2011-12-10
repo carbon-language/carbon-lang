@@ -845,6 +845,9 @@ CXString clang_getCursorUSR(CXCursor C) {
 
   if (clang_isDeclaration(K)) {
     Decl *D = cxcursor::getCursorDecl(C);
+    if (!D)
+      return createCXString("");
+
     CXTranslationUnit TU = cxcursor::getCursorTU(C);
     if (!TU)
       return createCXString("");

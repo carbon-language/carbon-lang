@@ -1019,8 +1019,7 @@ CXCompletionString clang_getCursorCompletionString(CXCursor cursor) {
   enum CXCursorKind kind = clang_getCursorKind(cursor);
   if (clang_isDeclaration(kind)) {
     Decl *decl = getCursorDecl(cursor);
-    if (isa<NamedDecl>(decl)) {
-      NamedDecl *namedDecl = (NamedDecl *)decl;
+    if (NamedDecl *namedDecl = dyn_cast_or_null<NamedDecl>(decl)) {
       ASTUnit *unit = getCursorASTUnit(cursor);
       if (unit->hasSema()) {
         Sema &S = unit->getSema();

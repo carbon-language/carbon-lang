@@ -151,7 +151,11 @@ bool CursorVisitor::Visit(CXCursor Cursor, bool CheckedRegionOfInterest) {
 
   if (clang_isDeclaration(Cursor.kind)) {
     Decl *D = getCursorDecl(Cursor);
-    assert(D && "Invalid declaration cursor");
+    if (!D) {
+      assert(0 && "Invalid declaration cursor");
+      return true; // abort.
+    }
+    
     // Ignore implicit declarations, unless it's an objc method because
     // currently we should report implicit methods for properties when indexing.
     if (D->isImplicit() && !isa<ObjCMethodDecl>(D))
@@ -2870,7 +2874,10 @@ unsigned clang_visitChildrenWithBlock(CXCursor parent,
 }
 
 static CXString getDeclSpelling(Decl *D) {
-  NamedDecl *ND = dyn_cast_or_null<NamedDecl>(D);
+  if (!D)
+    return createCXString("");
+
+  NamedDecl *ND = dyn_cast<NamedDecl>(D);
   if (!ND) {
     if (ObjCPropertyImplDecl *PropImpl =dyn_cast<ObjCPropertyImplDecl>(D))
       if (ObjCPropertyDecl *Property = PropImpl->getPropertyDecl())
@@ -3420,23 +3427,23 @@ static enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
   
   if (clang_isDeclaration(cursor.kind)) {
     // Avoid having the implicit methods override the property decls.
-    if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(getCursorDecl(cursor)))
+    if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(getCursorDecl(cursor)))
       if (MD->isImplicit())
         return CXChildVisit_Break;
   }
 
   if (clang_isExpression(cursor.kind) &&
       clang_isDeclaration(BestCursor->kind)) {
-    Decl *D = getCursorDecl(*BestCursor);
-
-    // Avoid having the cursor of an expression replace the declaration cursor
-    // when the expression source range overlaps the declaration range.
-    // This can happen for C++ constructor expressions whose range generally
-    // include the variable declaration, e.g.:
-    //  MyCXXClass foo; // Make sure pointing at 'foo' returns a VarDecl cursor.
-    if (D->getLocation().isValid() && Data->TokenBeginLoc.isValid() &&
-        D->getLocation() == Data->TokenBeginLoc)
-      return CXChildVisit_Break;
+    if (Decl *D = getCursorDecl(*BestCursor)) {
+      // Avoid having the cursor of an expression replace the declaration cursor
+      // when the expression source range overlaps the declaration range.
+      // This can happen for C++ constructor expressions whose range generally
+      // include the variable declaration, e.g.:
+      //  MyCXXClass foo; // Make sure pointing at 'foo' returns a VarDecl cursor.
+      if (D->getLocation().isValid() && Data->TokenBeginLoc.isValid() &&
+          D->getLocation() == Data->TokenBeginLoc)
+        return CXChildVisit_Break;
+    }
   }
 
   // If our current best cursor is the construction of a temporary object, 
@@ -3682,6 +3689,9 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
     return clang_getNullLocation();
 
   Decl *D = getCursorDecl(C);
+  if (!D)
+    return clang_getNullLocation();
+
   SourceLocation Loc = D->getLocation();
   // FIXME: Multiple variables declared in a single declaration
   // currently lack the information needed to correctly determine their
@@ -3797,6 +3807,9 @@ static SourceRange getRawCursorExtent(CXCursor C) {
 
   if (C.kind >= CXCursor_FirstDecl && C.kind <= CXCursor_LastDecl) {
     Decl *D = cxcursor::getCursorDecl(C);
+    if (!D)
+      return SourceRange();
+
     SourceRange R = D->getSourceRange();
     // FIXME: Multiple variables declared in a single declaration
     // currently lack the information needed to correctly determine their
@@ -3817,6 +3830,9 @@ static SourceRange getRawCursorExtent(CXCursor C) {
 static SourceRange getFullCursorExtent(CXCursor C, SourceManager &SrcMgr) {
   if (C.kind >= CXCursor_FirstDecl && C.kind <= CXCursor_LastDecl) {
     Decl *D = cxcursor::getCursorDecl(C);
+    if (!D)
+      return SourceRange();
+
     SourceRange R = D->getSourceRange();
 
     // Adjust the start of the location for declarations preceded by
@@ -3867,6 +3883,8 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
   CXTranslationUnit tu = getCursorTU(C);
   if (clang_isDeclaration(C.kind)) {
     Decl *D = getCursorDecl(C);
+    if (!D)
+      return clang_getNullCursor();
     if (UsingDecl *Using = dyn_cast<UsingDecl>(D))
       return MakeCursorOverloadedDeclRef(Using, D->getLocation(), tu);
     if (ObjCClassDecl *Classes = dyn_cast<ObjCClassDecl>(D))
@@ -4768,10 +4786,10 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
     Decl *D = cxcursor::getCursorDecl(cursor);
     
     SourceLocation StartLoc;
-    if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D)) {
+    if (const DeclaratorDecl *DD = dyn_cast_or_null<DeclaratorDecl>(D)) {
       if (TypeSourceInfo *TI = DD->getTypeSourceInfo())
         StartLoc = TI->getTypeLoc().getSourceRange().getBegin();
-    } else if (TypedefDecl *Typedef = dyn_cast<TypedefDecl>(D)) {
+    } else if (TypedefDecl *Typedef = dyn_cast_or_null<TypedefDecl>(D)) {
       if (TypeSourceInfo *TI = Typedef->getTypeSourceInfo())
         StartLoc = TI->getTypeLoc().getSourceRange().getBegin();
     }
@@ -5155,6 +5173,9 @@ CXLinkageKind clang_getCursorLinkage(CXCursor cursor) {
 //===----------------------------------------------------------------------===//
 
 static CXLanguageKind getDeclLanguage(const Decl *D) {
+  if (!D)
+    return CXLanguage_C;
+
   switch (D->getKind()) {
     default:
       break;

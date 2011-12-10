@@ -123,6 +123,8 @@ CXType clang_getCursorType(CXCursor C) {
 
   if (clang_isDeclaration(C.kind)) {
     Decl *D = cxcursor::getCursorDecl(C);
+    if (!D)
+      return MakeCXType(QualType(), TU);
 
     if (TypeDecl *TD = dyn_cast<TypeDecl>(D))
       return MakeCXType(Context.getTypeDeclType(TD), TU);
@@ -181,7 +183,7 @@ CXType clang_getTypedefDeclUnderlyingType(CXCursor C) {
   if (clang_isDeclaration(C.kind)) {
     Decl *D = cxcursor::getCursorDecl(C);
 
-    if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
+    if (TypedefNameDecl *TD = dyn_cast_or_null<TypedefNameDecl>(D)) {
       QualType T = TD->getUnderlyingType();
       return MakeCXType(T, TU);
     }
@@ -199,7 +201,7 @@ CXType clang_getEnumDeclIntegerType(CXCursor C) {
   if (clang_isDeclaration(C.kind)) {
     Decl *D = cxcursor::getCursorDecl(C);
 
-    if (EnumDecl *TD = dyn_cast<EnumDecl>(D)) {
+    if (EnumDecl *TD = dyn_cast_or_null<EnumDecl>(D)) {
       QualType T = TD->getIntegerType();
       return MakeCXType(T, TU);
     }
@@ -216,7 +218,7 @@ long long clang_getEnumConstantDeclValue(CXCursor C) {
   if (clang_isDeclaration(C.kind)) {
     Decl *D = cxcursor::getCursorDecl(C);
 
-    if (EnumConstantDecl *TD = dyn_cast<EnumConstantDecl>(D)) {
+    if (EnumConstantDecl *TD = dyn_cast_or_null<EnumConstantDecl>(D)) {
       return TD->getInitVal().getSExtValue();
     }
 
@@ -232,7 +234,7 @@ unsigned long long clang_getEnumConstantDeclUnsignedValue(CXCursor C) {
   if (clang_isDeclaration(C.kind)) {
     Decl *D = cxcursor::getCursorDecl(C);
 
-    if (EnumConstantDecl *TD = dyn_cast<EnumConstantDecl>(D)) {
+    if (EnumConstantDecl *TD = dyn_cast_or_null<EnumConstantDecl>(D)) {
       return TD->getInitVal().getZExtValue();
     }
 
@@ -496,7 +498,7 @@ CXType clang_getResultType(CXType X) {
 CXType clang_getCursorResultType(CXCursor C) {
   if (clang_isDeclaration(C.kind)) {
     Decl *D = cxcursor::getCursorDecl(C);
-    if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
+    if (const ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(D))
       return MakeCXType(MD->getResultType(), cxcursor::getCursorTU(C));
 
     return clang_getResultType(clang_getCursorType(C));

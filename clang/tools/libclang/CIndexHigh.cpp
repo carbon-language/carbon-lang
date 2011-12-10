@@ -21,6 +21,8 @@ using namespace cxcursor;
 static void getTopOverriddenMethods(CXTranslationUnit TU,
                                     Decl *D,
                                     SmallVectorImpl<Decl *> &Methods) {
+  if (!D)
+    return;
   if (!isa<ObjCMethodDecl>(D) && !isa<CXXMethodDecl>(D))
     return;
 
@@ -147,6 +149,9 @@ static enum CXChildVisitResult findFileIdRefVisit(CXCursor cursor,
     return CXChildVisit_Recurse;
 
   Decl *D = cxcursor::getCursorDecl(declCursor);
+  if (!D)
+    return CXChildVisit_Continue;
+
   FindFileIdRefVisitData *data = (FindFileIdRefVisitData *)client_data;
   if (data->isHit(D)) {
     cursor = cxcursor::getSelectorIdentifierCursor(data->SelectorIdIdx, cursor);
