@@ -465,7 +465,7 @@ public:
   bool isSpillSlotObjectIndex(int ObjectIdx) const {
     assert(unsigned(ObjectIdx+NumFixedObjects) < Objects.size() &&
            "Invalid Object Idx!");
-    return Objects[ObjectIdx+NumFixedObjects].isSpillSlot;;
+    return Objects[ObjectIdx+NumFixedObjects].isSpillSlot;
   }
 
   /// isDeadObjectIndex - Returns true if the specified index corresponds to
