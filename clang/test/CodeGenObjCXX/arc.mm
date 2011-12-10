@@ -188,27 +188,27 @@ template <class T> void test37(T *a) {
 extern template void test37<Test37>(Test37 *a);
 template void test37<Test37>(Test37 *a);
 // CHECK: define weak_odr void @_Z6test37I6Test37EvPT_(
-// CHECK-LP64:      [[T0:%.*]] = call [[NSARRAY]]* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to [[NSARRAY]]* (i8*, i8*)*)(
-// CHECK-LP64-NEXT: [[T1:%.*]] = bitcast [[NSARRAY]]* [[T0]] to i8*
-// CHECK-LP64-NEXT: [[T2:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T1]])
-// CHECK-LP64-NEXT: [[COLL:%.*]] = bitcast i8* [[T2]] to [[NSARRAY]]*
+// CHECK:      [[T0:%.*]] = call [[NSARRAY]]* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to [[NSARRAY]]* (i8*, i8*)*)(
+// CHECK-NEXT: [[T1:%.*]] = bitcast [[NSARRAY]]* [[T0]] to i8*
+// CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T1]])
+// CHECK-NEXT: [[COLL:%.*]] = bitcast i8* [[T2]] to [[NSARRAY]]*
 
 // Make sure it's not immediately released before starting the iteration.
-// CHECK-LP64-NEXT: load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
-// CHECK-LP64-NEXT: [[T0:%.*]] = bitcast [[NSARRAY]]* [[COLL]] to i8*
-// CHECK-LP64-NEXT: @objc_msgSend
+// CHECK-NEXT: load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+// CHECK-NEXT: [[T0:%.*]] = bitcast [[NSARRAY]]* [[COLL]] to i8*
+// CHECK-NEXT: @objc_msgSend
 
 // This bitcast is for the mutation check.
-// CHECK-LP64:      [[T0:%.*]] = bitcast [[NSARRAY]]* [[COLL]] to i8*
-// CHECK-LP64-NEXT: @objc_enumerationMutation
+// CHECK:      [[T0:%.*]] = bitcast [[NSARRAY]]* [[COLL]] to i8*
+// CHECK-NEXT: @objc_enumerationMutation
 
 // This bitcast is for the 'next' message send.
-// CHECK-LP64:      [[T0:%.*]] = bitcast [[NSARRAY]]* [[COLL]] to i8*
-// CHECK-LP64-NEXT: @objc_msgSend
+// CHECK:      [[T0:%.*]] = bitcast [[NSARRAY]]* [[COLL]] to i8*
+// CHECK-NEXT: @objc_msgSend
 
 // This bitcast is for the final release.
-// CHECK-LP64:      [[T0:%.*]] = bitcast [[NSARRAY]]* [[COLL]] to i8*
-// CHECK-LP64-NEXT: call void @objc_release(i8* [[T0]])
+// CHECK:      [[T0:%.*]] = bitcast [[NSARRAY]]* [[COLL]] to i8*
+// CHECK-NEXT: call void @objc_release(i8* [[T0]])
 
 template<typename T>
 void send_release() {
