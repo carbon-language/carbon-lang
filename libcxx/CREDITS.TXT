@@ -32,3 +32,10 @@ D: Initial Windows patches.
 N: Arvid Picciani
 E: aep at exys dot org
 D: Minor patches and musl port.
+
+N: Craig Silverstein
+E: csilvers@google.com
+D: Implemented Cityhash as the string hash function on 64-bit machines
+
+N: Google Inc.
+D: Copyright owner and contributor of the CityHash algorithm
