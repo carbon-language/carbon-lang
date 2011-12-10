@@ -4602,6 +4602,14 @@ static bool EvaluateAsRValue(EvalInfo &Info, const Expr *E, APValue &Result) {
 /// in Result. If this expression is a glvalue, an lvalue-to-rvalue conversion
 /// will be applied to the result.
 bool Expr::EvaluateAsRValue(EvalResult &Result, const ASTContext &Ctx) const {
+  // Fast-path evaluations of integer literals, since we sometimes see files
+  // containing vast quantities of these.
+  if (const IntegerLiteral *L = dyn_cast<IntegerLiteral>(this)) {
+    Result.Val = APValue(APSInt(L->getValue(),
+                                L->getType()->isUnsignedIntegerType()));
+    return true;
+  }
+
   // FIXME: Evaluating initializers for large arrays can cause performance
   // problems, and we don't use such values yet. Once we have a more efficient
   // array representation, this should be reinstated, and used by CodeGen.
