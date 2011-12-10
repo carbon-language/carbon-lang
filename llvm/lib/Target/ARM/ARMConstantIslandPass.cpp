@@ -52,6 +52,18 @@ static cl::opt<bool>
 AdjustJumpTableBlocks("arm-adjust-jump-tables", cl::Hidden, cl::init(true),
           cl::desc("Adjust basic block layout to better use TB[BH]"));
 
+/// UnknownPadding - Return the worst case padding that could result from
+/// unknown offset bits.  This does not include alignment padding caused by
+/// known offset bits.
+///
+/// @param LogAlign log2(alignment)
+/// @param KnownBits Number of known low offset bits.
+static inline unsigned UnknownPadding(unsigned LogAlign, unsigned KnownBits) {
+  if (KnownBits < LogAlign)
+    return (1u << LogAlign) - (1u << KnownBits);
+  return 0;
+}
+
 /// WorstCaseAlign - Assuming only the low KnownBits bits in Offset are exact,
 /// add padding such that:
 ///
@@ -67,8 +79,7 @@ AdjustJumpTableBlocks("arm-adjust-jump-tables", cl::Hidden, cl::init(true),
 static inline unsigned WorstCaseAlign(unsigned Offset, unsigned LogAlign,
                                       unsigned KnownBits) {
   // Add the worst possible padding that the unknown bits could cause.
-  if (KnownBits < LogAlign)
-    Offset += (1u << LogAlign) - (1u << KnownBits);
+  Offset += UnknownPadding(LogAlign, KnownBits);
 
   // Then align the result.
   return RoundUpToAlignment(Offset, 1u << LogAlign);
@@ -120,13 +131,20 @@ namespace {
       BasicBlockInfo() : Offset(0), Size(0), KnownBits(0), Unalign(0),
         PostAlign(0) {}
 
+      /// Compute the number of known offset bits internally to this block.
+      /// This number should be used to predict worst case padding when
+      /// splitting the block.
+      unsigned internalKnownBits() const {
+        return Unalign ? Unalign : KnownBits;
+      }
+
       /// Compute the offset immediately following this block.
       unsigned postOffset() const {
         unsigned PO = Offset + Size;
         if (!PostAlign)
           return PO;
         // Add alignment padding from the terminator.
-        return WorstCaseAlign(PO, PostAlign, Unalign ? Unalign : KnownBits);
+        return WorstCaseAlign(PO, PostAlign, internalKnownBits());
       }
 
       /// Compute the number of known low bits of postOffset.  If this block
@@ -134,7 +152,7 @@ namespace {
       /// instruction alignment.  An aligned terminator may increase the number
       /// of know bits.
       unsigned postKnownBits() const {
-        return std::max(PostAlign, Unalign ? Unalign : KnownBits);
+        return std::max(unsigned(PostAlign), internalKnownBits());
       }
     };
 
@@ -1121,7 +1139,8 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
   MachineInstr *UserMI = U.MI;
   MachineInstr *CPEMI  = U.CPEMI;
   MachineBasicBlock *UserMBB = UserMI->getParent();
-  unsigned OffsetOfNextBlock = BBInfo[UserMBB->getNumber()].postOffset();
+  const BasicBlockInfo &UserBBI = BBInfo[UserMBB->getNumber()];
+  unsigned OffsetOfNextBlock = UserBBI.postOffset();
 
   // If the block does not end in an unconditional branch already, and if the
   // end of the block is within range, make new water there.  (The addition
@@ -1165,10 +1184,30 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
     // that reference CPEs will be able to use the same island area;
     // if not, we back up the insertion point.
 
+    // Try to split the block so it's fully aligned.  Compute the latest split
+    // point where we can add a 4-byte branch instruction, and then
+    // WorstCaseAlign to LogAlign.
+    unsigned LogAlign = UserMBB->getParent()->getAlignment();
+    unsigned KnownBits = UserBBI.internalKnownBits();
+    unsigned UPad = UnknownPadding(LogAlign, KnownBits);
+    unsigned BaseInsertOffset = UserOffset + U.MaxDisp;
+    DEBUG(dbgs() << format("Split in middle of big block before %#x",
+                           BaseInsertOffset));
+
+    // Account for alignment and unknown padding.
+    BaseInsertOffset &= ~((1u << LogAlign) - 1);
+    BaseInsertOffset -= UPad;
+
     // The 4 in the following is for the unconditional branch we'll be
     // inserting (allows for long branch on Thumb1).  Alignment of the
     // island is handled inside OffsetIsInRange.
-    unsigned BaseInsertOffset = UserOffset + U.MaxDisp -4;
+    BaseInsertOffset -= 4;
+
+    DEBUG(dbgs() << format(", adjusted to %#x", BaseInsertOffset)
+                 << " la=" << LogAlign
+                 << " kb=" << KnownBits
+                 << " up=" << UPad << '\n');
+
     // This could point off the end of the block if we've already got
     // constant pool entries following this block; only the last one is
     // in the water list.  Back past any possible branches (allow for a
@@ -1176,8 +1215,9 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
     if (BaseInsertOffset >= BBInfo[UserMBB->getNumber()+1].Offset)
       BaseInsertOffset = BBInfo[UserMBB->getNumber()+1].Offset -
                               (isThumb1 ? 6 : 8);
-    unsigned EndInsertOffset = BaseInsertOffset +
-           CPEMI->getOperand(2).getImm();
+    unsigned EndInsertOffset =
+      WorstCaseAlign(BaseInsertOffset + 4, LogAlign, KnownBits) +
+      CPEMI->getOperand(2).getImm();
     MachineBasicBlock::iterator MI = UserMI;
     ++MI;
     unsigned CPUIndex = CPUserIndex+1;
@@ -1190,8 +1230,8 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
       if (CPUIndex < NumCPUsers && CPUsers[CPUIndex].MI == MI) {
         CPUser &U = CPUsers[CPUIndex];
         if (!OffsetIsInRange(Offset, EndInsertOffset, U)) {
-          BaseInsertOffset -= (isThumb1 ? 2 : 4);
-          EndInsertOffset  -= (isThumb1 ? 2 : 4);
+          BaseInsertOffset -= 1u << LogAlign;
+          EndInsertOffset  -= 1u << LogAlign;
         }
         // This is overly conservative, as we don't account for CPEMIs
         // being reused within the block, but it doesn't matter much.
@@ -1204,7 +1244,6 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
         LastIT = MI;
     }
 
-    DEBUG(dbgs() << "Split in middle of big block\n");
     --MI;
 
     // Avoid splitting an IT block.
