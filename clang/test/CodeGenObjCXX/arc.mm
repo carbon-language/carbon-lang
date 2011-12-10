@@ -209,3 +209,18 @@ template void test37<Test37>(Test37 *a);
 // This bitcast is for the final release.
 // CHECK-LP64:      [[T0:%.*]] = bitcast [[NSARRAY]]* [[COLL]] to i8*
 // CHECK-LP64-NEXT: call void @objc_release(i8* [[T0]])
+
+template<typename T>
+void send_release() {
+  [Test37 array];
+}
+
+// CHECK: define weak_odr void @_Z12send_releaseIiEvv(
+// CHECK: call %0* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
+// CHECK-NEXT: bitcast
+// CHECK-NEXT: call i8* @objc_retainAutoreleasedReturnValue
+// CHECK-NEXT: bitcast
+// CHECK-NEXT: bitcast
+// CHECK-NEXT: call void @objc_release
+// CHECK-NEXT: ret void
+template void send_release<int>();

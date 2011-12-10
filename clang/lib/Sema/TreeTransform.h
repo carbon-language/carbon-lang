@@ -6204,7 +6204,7 @@ TreeTransform<Derived>::TransformCallExpr(CallExpr *E) {
   if (!getDerived().AlwaysRebuild() &&
       Callee.get() == E->getCallee() &&
       !ArgChanged)
-    return SemaRef.Owned(E);
+    return SemaRef.MaybeBindToTemporary(E);;
 
   // FIXME: Wrong source location information for the '('.
   SourceLocation FakeLParenLoc
@@ -6417,7 +6417,7 @@ TreeTransform<Derived>::TransformCompoundLiteralExpr(CompoundLiteralExpr *E) {
   if (!getDerived().AlwaysRebuild() &&
       OldT == NewT &&
       Init.get() == E->getInitializer())
-    return SemaRef.Owned(E);
+    return SemaRef.MaybeBindToTemporary(E);
 
   // Note: the expression type doesn't necessarily match the
   // type-as-written, but that's okay, because it should always be
@@ -6612,7 +6612,7 @@ TreeTransform<Derived>::TransformStmtExpr(StmtExpr *E) {
 
   if (!getDerived().AlwaysRebuild() &&
       SubStmt.get() == E->getSubStmt())
-    return SemaRef.Owned(E);
+    return SemaRef.MaybeBindToTemporary(E);
 
   return getDerived().RebuildStmtExpr(E->getLParenLoc(),
                                       SubStmt.get(),
@@ -6724,7 +6724,7 @@ TreeTransform<Derived>::TransformCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
       Callee.get() == E->getCallee() &&
       First.get() == E->getArg(0) &&
       (E->getNumArgs() != 2 || Second.get() == E->getArg(1)))
-    return SemaRef.Owned(E);
+    return SemaRef.MaybeBindToTemporary(E);
 
   return getDerived().RebuildCXXOperatorCallExpr(E->getOperator(),
                                                  E->getOperatorLoc(),
@@ -6762,7 +6762,7 @@ TreeTransform<Derived>::TransformCUDAKernelCallExpr(CUDAKernelCallExpr *E) {
   if (!getDerived().AlwaysRebuild() &&
       Callee.get() == E->getCallee() &&
       !ArgChanged)
-    return SemaRef.Owned(E);
+    return SemaRef.MaybeBindToTemporary(E);
 
   // FIXME: Wrong source location information for the '('.
   SourceLocation FakeLParenLoc
@@ -7966,7 +7966,7 @@ TreeTransform<Derived>::TransformObjCMessageExpr(ObjCMessageExpr *E) {
     // If nothing changed, just retain the existing message send.
     if (!getDerived().AlwaysRebuild() &&
         ReceiverTypeInfo == E->getClassReceiverTypeInfo() && !ArgChanged)
-      return SemaRef.Owned(E);
+      return SemaRef.MaybeBindToTemporary(E);
 
     // Build a new class message send.
     SmallVector<SourceLocation, 16> SelLocs;
@@ -7991,7 +7991,7 @@ TreeTransform<Derived>::TransformObjCMessageExpr(ObjCMessageExpr *E) {
   // If nothing changed, just retain the existing message send.
   if (!getDerived().AlwaysRebuild() &&
       Receiver.get() == E->getInstanceReceiver() && !ArgChanged)
-    return SemaRef.Owned(E);
+    return SemaRef.MaybeBindToTemporary(E);
   
   // Build a new instance message send.
   SmallVector<SourceLocation, 16> SelLocs;
@@ -8129,7 +8129,7 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
                                                oldBlock->param_begin(),
                                                oldBlock->param_size(),
                                                0, paramTypes, &params))
-    return true;
+    return ExprError();
 
   const FunctionType *exprFunctionType = E->getFunctionType();
   QualType exprResultType = exprFunctionType->getResultType();
