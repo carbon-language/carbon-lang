@@ -22,6 +22,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/ValueObjectConstResult.h"
+#include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Expression/ASTDumper.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
@@ -411,8 +412,7 @@ ClangExpressionDeclMap::CompleteResultVariable (lldb::ClangExpressionVariableSP 
         const size_t pvar_byte_size = pvar_sp->GetByteSize();
         uint8_t *pvar_data = pvar_sp->GetValueBytes();
         
-        if (!ReadTarget(pvar_data, value, pvar_byte_size))
-            return false;
+        ReadTarget(pvar_data, value, pvar_byte_size);
         
         pvar_sp->m_flags &= ~(ClangExpressionVariable::EVNeedsFreezeDry);
     }
@@ -1031,8 +1031,10 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl)
         if ((persistent_var_sp->m_flags & ClangExpressionVariable::EVIsProgramReference ||
              persistent_var_sp->m_flags & ClangExpressionVariable::EVIsLLDBAllocated) &&
             persistent_var_sp->m_live_sp &&
-            m_parser_vars->m_exe_ctx->GetProcessSP() &&
-            m_parser_vars->m_exe_ctx->GetProcessSP()->IsAlive())
+            ((persistent_var_sp->m_live_sp->GetValue().GetValueType() == Value::eValueTypeLoadAddress &&
+              m_parser_vars->m_exe_ctx->GetProcessSP() &&
+              m_parser_vars->m_exe_ctx->GetProcessSP()->IsAlive()) ||
+             (persistent_var_sp->m_live_sp->GetValue().GetValueType() == Value::eValueTypeFileAddress)))
         {
             return persistent_var_sp->m_live_sp->GetValue();
         }
@@ -2539,7 +2541,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 return;
             }
         }
-        else if (frame && target)
+        else if (target)
         {
             var = FindGlobalVariable (*target,
                                       module_sp,
@@ -2549,7 +2551,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             if (var)
             {
-                valobj = frame->TrackGlobalVariable(var, eNoDynamicValues);
+                valobj = ValueObjectVariable::Create(target, var);
                 AddOneVariable(context, var, valobj, current_id);
                 context.m_found.variable = true;
             }
