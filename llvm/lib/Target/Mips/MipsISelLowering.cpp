@@ -1553,12 +1553,7 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
     unsigned PtrSize = PtrVT.getSizeInBits();
     IntegerType *PtrTy = Type::getIntNTy(*DAG.getContext(), PtrSize);
 
-    SmallVector<Type*, 1> Params;
-    Params.push_back(PtrTy);
-    FunctionType *FuncTy = FunctionType::get(PtrTy, Params, false);
-    Function *Func = Function::Create(FuncTy, GlobalValue::ExternalLinkage,
-                                      "__tls_get_addr");
-    SDValue TlsGetAddr = DAG.getGlobalAddress(Func, dl, PtrVT);
+    SDValue TlsGetAddr = DAG.getExternalSymbol("__tls_get_addr", PtrVT);
 
     ArgListTy Args;
     ArgListEntry Entry;
