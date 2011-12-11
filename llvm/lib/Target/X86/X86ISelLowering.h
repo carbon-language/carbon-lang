@@ -455,10 +455,6 @@ namespace llvm {
     /// the specified VECTOR_SHUFFLE mask with PSHUFLW instruction.
     unsigned getShufflePSHUFLWImmediate(SDNode *N);
 
-    /// getShufflePALIGNRImmediate - Return the appropriate immediate to shuffle
-    /// the specified VECTOR_SHUFFLE mask with the PALIGNR instruction.
-    unsigned getShufflePALIGNRImmediate(SDNode *N);
-
     /// getExtractVEXTRACTF128Immediate - Return the appropriate
     /// immediate to extract the specified EXTRACT_SUBVECTOR index
     /// with VEXTRACTF128 instructions.

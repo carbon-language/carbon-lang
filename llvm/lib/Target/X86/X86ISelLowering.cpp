@@ -3687,8 +3687,7 @@ static bool isVPERM2X128Mask(const SmallVectorImpl<int> &Mask, EVT VT,
 
 /// getShuffleVPERM2X128Immediate - Return the appropriate immediate to shuffle
 /// the specified VECTOR_MASK mask with VPERM2F128/VPERM2I128 instructions.
-static unsigned getShuffleVPERM2X128Immediate(SDNode *N) {
-  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
+static unsigned getShuffleVPERM2X128Immediate(ShuffleVectorSDNode *SVOp) {
   EVT VT = SVOp->getValueType(0);
 
   int HalfSize = VT.getVectorNumElements()/2;
@@ -3750,8 +3749,7 @@ static bool isVPERMILPMask(const SmallVectorImpl<int> &Mask, EVT VT,
 
 /// getShuffleVPERMILPImmediate - Return the appropriate immediate to shuffle
 /// the specified VECTOR_MASK mask with VPERMILPS/D* instructions.
-static unsigned getShuffleVPERMILPImmediate(SDNode *N) {
-  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
+static unsigned getShuffleVPERMILPImmediate(ShuffleVectorSDNode *SVOp) {
   EVT VT = SVOp->getValueType(0);
 
   int NumElts = VT.getVectorNumElements();
@@ -3991,14 +3989,13 @@ unsigned X86::getShufflePSHUFLWImmediate(SDNode *N) {
 
 /// getShufflePALIGNRImmediate - Return the appropriate immediate to shuffle
 /// the specified VECTOR_SHUFFLE mask with the PALIGNR instruction.
-unsigned X86::getShufflePALIGNRImmediate(SDNode *N) {
-  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
-  EVT VVT = N->getValueType(0);
-  unsigned EltSize = VVT.getVectorElementType().getSizeInBits() >> 3;
+static unsigned getShufflePALIGNRImmediate(ShuffleVectorSDNode *SVOp) {
+  EVT VT = SVOp->getValueType(0);
+  unsigned EltSize = VT.getVectorElementType().getSizeInBits() >> 3;
   int Val = 0;
 
   unsigned i, e;
-  for (i = 0, e = VVT.getVectorNumElements(); i != e; ++i) {
+  for (i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
     Val = SVOp->getMaskElt(i);
     if (Val >= 0)
       break;
@@ -6631,7 +6628,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   if (isPALIGNRMask(M, VT, Subtarget->hasSSSE3orAVX()))
     return getTargetShuffleNode(X86ISD::PALIGN, dl, VT, V1, V2,
-                                X86::getShufflePALIGNRImmediate(SVOp),
+                                getShufflePALIGNRImmediate(SVOp),
                                 DAG);
 
   if (ShuffleVectorSDNode::isSplatMask(&M[0], VT) &&

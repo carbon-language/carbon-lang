@@ -347,12 +347,6 @@ def SHUFFLE_get_pshuflw_imm : SDNodeXForm<vector_shuffle, [{
   return getI8Imm(X86::getShufflePSHUFLWImmediate(N));
 }]>;
 
-// SHUFFLE_get_palign_imm xform function: convert vector_shuffle mask to
-// a PALIGNR imm.
-def SHUFFLE_get_palign_imm : SDNodeXForm<vector_shuffle, [{
-  return getI8Imm(X86::getShufflePALIGNRImmediate(N));
-}]>;
-
 // EXTRACT_get_vextractf128_imm xform function: convert extract_subvector index
 // to VEXTRACTF128 imm.
 def EXTRACT_get_vextractf128_imm : SDNodeXForm<extract_subvector, [{
