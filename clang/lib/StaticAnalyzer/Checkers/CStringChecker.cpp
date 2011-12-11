@@ -532,10 +532,11 @@ const ProgramState *CStringChecker::checkAdditionOverflow(CheckerContext &C,
   const llvm::APSInt &maxValInt = BVF.getMaxValue(sizeTy);
   NonLoc maxVal = svalBuilder.makeIntVal(maxValInt);
 
-  SVal maxMinusRight = svalBuilder.evalBinOpNN(state, BO_Sub, maxVal, right,
-                                               sizeTy);
-
-  if (maxMinusRight.isUnknownOrUndef()) {
+  SVal maxMinusRight;
+  if (isa<nonloc::ConcreteInt>(right)) {
+    maxMinusRight = svalBuilder.evalBinOpNN(state, BO_Sub, maxVal, right,
+                                                 sizeTy);
+  } else {
     // Try switching the operands. (The order of these two assignments is
     // important!)
     maxMinusRight = svalBuilder.evalBinOpNN(state, BO_Sub, maxVal, left, 

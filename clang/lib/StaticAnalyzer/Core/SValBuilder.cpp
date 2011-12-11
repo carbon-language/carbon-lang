@@ -183,7 +183,7 @@ SVal SValBuilder::makeGenericVal(const ProgramState *State,
 
     if (const nonloc::ConcreteInt *lInt = dyn_cast<nonloc::ConcreteInt>(&LHS)) {
       symRHS = RHS.getAsSymExpr();
-      return makeNonLoc(symRHS, Op, lInt->getValue(), ResultTy);
+      return makeNonLoc(lInt->getValue(), Op, symRHS, ResultTy);
     }
 
     symLHS = LHS.getAsSymExpr();

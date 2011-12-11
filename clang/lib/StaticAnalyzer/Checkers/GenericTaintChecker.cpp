@@ -77,6 +77,11 @@ SymbolRef GenericTaintChecker::getPointedToSymbol(CheckerContext &C,
                                                   bool IssueWarning) const {
   const ProgramState *State = C.getState();
   SVal AddrVal = State->getSVal(Arg->IgnoreParenCasts());
+
+  // TODO: Taint is not going to propagate?
+  if (AddrVal.isUnknownOrUndef())
+    return 0;
+
   Loc *AddrLoc = dyn_cast<Loc>(&AddrVal);
 
   if (!AddrLoc && !IssueWarning)
