@@ -357,11 +357,8 @@ public:
   /// ignored - Returns an aggregate value slot indicating that the
   /// aggregate value is being ignored.
   static AggValueSlot ignored() {
-    AggValueSlot AV;
-    AV.Addr = 0;
-    AV.Quals = Qualifiers();
-    AV.DestructedFlag = AV.ObjCGCFlag = AV.ZeroedFlag = AV.AliasedFlag = false;
-    return AV;
+    return forAddr(0, CharUnits(), Qualifiers(), IsNotDestructed,
+                   DoesNotNeedGCBarriers, IsNotAliased);
   }
 
   /// forAddr - Make a slot for an aggregate value.
