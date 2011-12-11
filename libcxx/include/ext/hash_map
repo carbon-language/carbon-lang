@@ -215,7 +215,11 @@ namespace __gnu_cxx {
 
 using namespace std;
 
-template <class _Tp, class _Hash, bool = is_empty<_Hash>::value>
+template <class _Tp, class _Hash, bool = is_empty<_Hash>::value
+#if __has_feature(is_final)
+                                         && !__is_final(_Hash)
+#endif
+        >
 class __hash_map_hasher
     : private _Hash
 {
@@ -247,7 +251,11 @@ public:
         {return __hash_(__x);}
 };
 
-template <class _Tp, class _Pred, bool = is_empty<_Pred>::value>
+template <class _Tp, class _Pred, bool = is_empty<_Pred>::value
+#if __has_feature(is_final)
+                                         && !__is_final(_Pred)
+#endif
+         >
 class __hash_map_equal
     : private _Pred
 {
