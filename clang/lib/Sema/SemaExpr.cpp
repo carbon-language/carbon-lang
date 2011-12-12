@@ -9190,6 +9190,8 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
 }
 
 bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result){
+  // FIXME: In C++11, this evaluates the expression even if it's not an ICE.
+  //        Don't evaluate it a second time below just to get the diagnostics.
   llvm::APSInt ICEResult;
   if (E->isIntegerConstantExpr(ICEResult, Context)) {
     if (Result)
@@ -9198,29 +9200,33 @@ bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result){
   }
 
   Expr::EvalResult EvalResult;
+  llvm::SmallVector<PartialDiagnosticAt, 8> Notes;
+  EvalResult.Diag = &Notes;
 
   if (!E->EvaluateAsRValue(EvalResult, Context) || !EvalResult.Val.isInt() ||
       EvalResult.HasSideEffects) {
     Diag(E->getExprLoc(), diag::err_expr_not_ice) << E->getSourceRange();
 
-    if (EvalResult.Diag) {
-      // We only show the note if it's not the usual "invalid subexpression"
-      // or if it's actually in a subexpression.
-      if (EvalResult.Diag != diag::note_invalid_subexpr_in_const_expr ||
-          E->IgnoreParens() != EvalResult.DiagExpr->IgnoreParens())
-        Diag(EvalResult.DiagLoc, EvalResult.Diag);
+    // We only show the notes if they're not the usual "invalid subexpression"
+    // or if they are actually in a subexpression.
+    if (!Notes.empty() &&
+        (Notes.size() != 1 ||
+         Notes[0].second.getDiagID() != diag::note_invalid_subexpr_in_const_expr
+         || Notes[0].first != E->IgnoreParens()->getExprLoc())) {
+      for (unsigned I = 0, N = Notes.size(); I != N; ++I)
+        Diag(Notes[I].first, Notes[I].second);
     }
 
     return true;
   }
 
-  Diag(E->getExprLoc(), diag::ext_expr_not_ice) <<
-    E->getSourceRange();
+  Diag(E->getExprLoc(), diag::ext_expr_not_ice) << E->getSourceRange();
 
-  if (EvalResult.Diag &&
-      Diags.getDiagnosticLevel(diag::ext_expr_not_ice, EvalResult.DiagLoc)
+  if (Notes.size() &&
+      Diags.getDiagnosticLevel(diag::ext_expr_not_ice, E->getExprLoc())
           != DiagnosticsEngine::Ignored)
-    Diag(EvalResult.DiagLoc, EvalResult.Diag);
+    for (unsigned I = 0, N = Notes.size(); I != N; ++I)
+      Diag(Notes[I].first, Notes[I].second);
 
   if (Result)
     *Result = EvalResult.Val.getInt();
