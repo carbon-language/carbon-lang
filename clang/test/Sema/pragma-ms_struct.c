@@ -32,3 +32,24 @@ struct S {
 } __attribute__((ms_struct)) t2;
 
 
+// rdar://10513599
+#pragma ms_struct on
+
+typedef struct
+{
+void *pv;
+int l;
+} Foo;
+
+typedef struct
+{
+void *pv1;
+Foo foo;
+unsigned short fInited : 1;
+void *pv2;		
+} PackOddity;		
+
+#pragma ms_struct off
+
+static int arr[sizeof(PackOddity) == 40 ? 1 : -1];
+
