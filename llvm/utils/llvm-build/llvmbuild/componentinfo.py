@@ -381,6 +381,16 @@ def load_from_path(path, subpath):
     parser = ConfigParser.RawConfigParser()
     parser.read(path)
 
+    # Extract the common section.
+    if parser.has_section("common"):
+        common = IniFormatParser(parser.items("common"))
+        parser.remove_section("common")
+    else:
+        common = IniFormatParser({})
+
+    return common, _read_components_from_parser(parser, path, subpath)
+
+def _read_components_from_parser(parser, path, subpath):
     # We load each section which starts with 'component' as a distinct component
     # description (so multiple components can be described in one file).
     for section in parser.sections():

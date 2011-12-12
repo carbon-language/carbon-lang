@@ -147,7 +147,7 @@ $ROOT of project trees for things which can be checked out separately. -->
 <i>; Comments start with a semi-colon.</i>
 
 <i>; Sections are declared using square brackets.</i>
-[component 0]
+[component_0]
 
 <i>; Properties are declared using '=' and are contained in the previous section.
 ;
@@ -160,7 +160,7 @@ boolean_property_name = 1 <em>(or 0)</em>
 </pre>
   </div>
 
-  <p>LLVMBuild files are expected to define a strict set of section and
+  <p>LLVMBuild files are expected to define a strict set of sections and
   properties. An typical component description file for a library
   component would look typically look like the following example:</p>
   <div class="doc_code">
@@ -176,14 +176,22 @@ required_libraries = Archive BitReader Core Support TransformUtils
   <p>A full description of the exact sections and properties which are allowed
  follows.</p>
 
+  <p>Each file may define exactly one common component, named "common". The
+  common component may define the following properties:</p>
+  <ul>
+    <li><i>subdirectories</i> <b>[optional]</b>
+      <p>If given, a list of the names of the subdirectories from the current
+        subpath to search for additional LLVMBuild files.</p></li>
+  </ul>
+
   <p>Each file may define multiple components. Each component is described by a
   section who name starts with "component". The remainder of the section name is
   ignored, but each section name must be unique. Typically components are just
   number in order for files with multiple components ("component_0",
   "component_1", and so on).<p>
 
-  <p><b>Section names not matches this format are currently
-  unused and are disallowed.</b></p>
+  <p><b>Section names not matches this format (or the "common" section) are
+  currently unused and are disallowed.</b></p>
 
   <p>Every component is defined by the properties in the section. The exact list
   of properties that are allowed depends on the component

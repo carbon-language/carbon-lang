@@ -64,31 +64,25 @@ def make_install_dir(path):
 class LLVMProjectInfo(object):
     @staticmethod
     def load_infos_from_path(llvmbuild_source_root):
-        # FIXME: Implement a simple subpath file list cache, so we don't restat
-        # directories we have already traversed.
+        def recurse(subpath):
+            # Load the LLVMBuild file.
+            llvmbuild_path = os.path.join(llvmbuild_source_root + subpath,
+                                          'LLVMBuild.txt')
+            if not os.path.exists(llvmbuild_path):
+                fatal("missing LLVMBuild.txt file at: %r" % (llvmbuild_path,))
 
-        # First, discover all the LLVMBuild.txt files.
-        #
-        # FIXME: We would like to use followlinks=True here, but that isn't
-        # compatible with Python 2.4. Instead, we will either have to special
-        # case projects we would expect to possibly be linked to, or implement
-        # our own walk that can follow links. For now, it doesn't matter since
-        # we haven't picked up the LLVMBuild system in any other LLVM projects.
-        for dirpath,dirnames,filenames in os.walk(llvmbuild_source_root):
-            # If there is no LLVMBuild.txt file in a directory, we don't recurse
-            # past it. This is a simple way to prune our search, although it
-            # makes it easy for users to add LLVMBuild.txt files in places they
-            # won't be seen.
-            if 'LLVMBuild.txt' not in filenames:
-                del dirnames[:]
-                continue
-
-            # Otherwise, load the LLVMBuild file in this directory.
-            assert dirpath.startswith(llvmbuild_source_root)
-            subpath = '/' + dirpath[len(llvmbuild_source_root)+1:]
-            llvmbuild_path = os.path.join(dirpath, 'LLVMBuild.txt')
-            for info in componentinfo.load_from_path(llvmbuild_path, subpath):
+            # Parse the components from it.
+            common,info_iter = componentinfo.load_from_path(llvmbuild_path,
+                                                            subpath)
+            for info in info_iter:
                 yield info
+
+            # Recurse into the specified subdirectories.
+            for subdir in common.get_list("subdirectories"):
+                for item in recurse(os.path.join(subpath, subdir)):
+                    yield item
+
+        return recurse("/")
 
     @staticmethod
     def load_from_path(source_root, llvmbuild_source_root):
