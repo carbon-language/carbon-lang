@@ -72,6 +72,7 @@ set(LLVM_ALL_TARGETS
   CBackend
   CellSPU
   CppBackend
+  Hexagon
   Mips
   MBlaze
   MSP430

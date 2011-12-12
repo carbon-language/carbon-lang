@@ -1,0 +1,56 @@
+//=-HexagonScheduleV4.td - HexagonV4 Scheduling Definitions --*- tablegen -*-=//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+// There are four SLOTS (four parallel pipelines) in Hexagon V4 machine.
+// This file describes that machine information.
+
+//
+//    |===========|==================================================|
+//    | PIPELINE  |              Instruction Classes                 |
+//    |===========|==================================================|
+//    | SLOT0     |  LD       ST    ALU32     MEMOP     NV    SYSTEM |
+//    |-----------|--------------------------------------------------|
+//    | SLOT1     |  LD       ST    ALU32                            |
+//    |-----------|--------------------------------------------------|
+//    | SLOT2     |  XTYPE          ALU32     J         JR           |
+//    |-----------|--------------------------------------------------|
+//    | SLOT3     |  XTYPE          ALU32     J         CR           |
+//    |===========|==================================================|
+
+
+// Functional Units.
+def SLOT0       : FuncUnit;
+def SLOT1       : FuncUnit;
+def SLOT2       : FuncUnit;
+def SLOT3       : FuncUnit;
+
+// Itinerary classes.
+def NV_V4       : InstrItinClass;
+def MEM_V4      : InstrItinClass;
+// ALU64/M/S Instruction classes of V2 are collectively knownn as XTYPE in V4.
+
+def HexagonItinerariesV4 : ProcessorItineraries<
+                    [SLOT0, SLOT1, SLOT2, SLOT3], [], [
+  InstrItinData<LD            , [InstrStage<1,  [SLOT0, SLOT1]>]>,
+  InstrItinData<ST            , [InstrStage<1,  [SLOT0, SLOT1]>]>,
+  InstrItinData<ALU32         , [InstrStage<1,  [SLOT0, SLOT1, SLOT2, SLOT3]>]>,
+  InstrItinData<NV_V4         , [InstrStage<1,  [SLOT0]>]>,
+  InstrItinData<MEM_V4        , [InstrStage<1,  [SLOT0]>]>,
+  InstrItinData<J             , [InstrStage<1,  [SLOT2, SLOT3]>]>,
+  InstrItinData<JR            , [InstrStage<1,  [SLOT2]>]>,
+  InstrItinData<CR            , [InstrStage<1,  [SLOT3]>]>,
+  InstrItinData<PSEUDO        , [InstrStage<1,  [SLOT0, SLOT1, SLOT2, SLOT3]>]>,
+  InstrItinData<ALU64         , [InstrStage<1,  [SLOT2, SLOT3]>]>,
+  InstrItinData<M             , [InstrStage<1,  [SLOT2, SLOT3]>]>,
+  InstrItinData<S             , [InstrStage<1,  [SLOT2, SLOT3]>]>
+]>;
+
+//===----------------------------------------------------------------------===//
+// Hexagon V4 Resource Definitions -
+//===----------------------------------------------------------------------===//

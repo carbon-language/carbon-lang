@@ -51,6 +51,13 @@ inline bool isInt<32>(int64_t x) {
   return static_cast<int32_t>(x) == x;
 }
 
+/// isShiftedInt<N,S> - Checks if a signed integer is an N bit number shifted
+///                     left by S.
+template<unsigned N, unsigned S>
+inline bool isShiftedInt(int64_t x) {
+  return isInt<N+S>(x) && (x % (1<<S) == 0);
+}
+
 /// isUInt - Checks if an unsigned integer fits into the given bit width.
 template<unsigned N>
 inline bool isUInt(uint64_t x) {
@@ -68,6 +75,13 @@ inline bool isUInt<16>(uint64_t x) {
 template<>
 inline bool isUInt<32>(uint64_t x) {
   return static_cast<uint32_t>(x) == x;
+}
+
+/// isShiftedUInt<N,S> - Checks if a unsigned integer is an N bit number shifted
+///                     left by S.
+template<unsigned N, unsigned S>
+inline bool isShiftedUInt(uint64_t x) {
+  return isUInt<N+S>(x) && (x % (1<<S) == 0);
 }
 
 /// isUIntN - Checks if an unsigned integer fits into the given (dynamic)
