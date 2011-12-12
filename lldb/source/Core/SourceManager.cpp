@@ -86,7 +86,8 @@ SourceManager::GetFile (const FileSpec &file_spec)
 {
     FileSP file_sp;
     file_sp = m_debugger->GetSourceFileCache().FindSourceFile (file_spec);
-    if (!file_sp)
+    // If file_sp is no good or it points to a non-existent file, reset it.
+    if (!file_sp || !file_sp->GetFileSpec().Exists())
     {
         file_sp.reset (new File (file_spec, m_target));
 
@@ -336,10 +337,17 @@ SourceManager::File::File(const FileSpec &file_spec, Target *target) :
                     }
                 }
             }
-            else
+            // Try remapping if m_file_spec does not correspond to an existing file.
+            if (!m_file_spec.Exists())
             {
-                if (target->GetSourcePathMap().RemapPath(file_spec.GetDirectory(), m_file_spec.GetDirectory()))
-                   m_mod_time = file_spec.GetModificationTime();
+                ConstString new_path;
+                if (target->GetSourcePathMap().RemapPath(m_file_spec.GetDirectory(), new_path))
+                {
+                    char resolved_path[PATH_MAX];
+                    ::snprintf(resolved_path, PATH_MAX, "%s/%s", new_path.AsCString(), m_file_spec.GetFilename().AsCString());
+                    m_file_spec = new FileSpec(resolved_path, true);
+                    m_mod_time = m_file_spec.GetModificationTime();
+                }
             }
         }
     }
@@ -387,12 +395,17 @@ SourceManager::File::DisplaySourceLines (uint32_t line, uint32_t context_before,
     // source cache and only update when we determine a file has been updated.
     // For now we check each time we want to display info for the file.
     TimeValue curr_mod_time (m_file_spec.GetModificationTime());
-    if (m_mod_time != curr_mod_time)
+
+    if (curr_mod_time.IsValid() && m_mod_time != curr_mod_time)
     {
         m_mod_time = curr_mod_time;
         m_data_sp = m_file_spec.ReadFileContents ();
         m_offsets.clear();
     }
+
+    // Sanity check m_data_sp before proceeding.
+    if (!m_data_sp)
+        return 0;
 
     const uint32_t start_line = line <= context_before ? 1 : line - context_before;
     const uint32_t start_line_offset = GetLineOffset (start_line);

@@ -2486,6 +2486,15 @@ TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
     }
     else if (var_name == GetSettingNameForSourcePathMap ())
     {
+        if (m_source_map.GetSize())
+        {
+            size_t i;
+            for (i = 0; i < m_source_map.GetSize(); ++i) {
+                StreamString sstr;
+                m_source_map.Dump(&sstr, i);
+                value.AppendString(sstr.GetData());
+            }
+        }
     }
     else if (var_name == GetSettingNameForMaxChildren())
     {

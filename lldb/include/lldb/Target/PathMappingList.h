@@ -48,8 +48,9 @@ public:
     void
     Clear (bool notify);
 
+    // By default, dump all pairs.
     void
-    Dump (Stream *s);
+    Dump (Stream *s, int pair_index=-1);
 
     size_t
     GetSize ();

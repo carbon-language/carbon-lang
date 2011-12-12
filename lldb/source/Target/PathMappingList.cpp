@@ -101,16 +101,25 @@ PathMappingList::Remove (off_t index, bool notify)
     return true;
 }
 
+// For clients which do not need the pair index dumped, pass a pair_index >= 0
+// to only dump the indicated pair.
 void
-PathMappingList::Dump (Stream *s)
+PathMappingList::Dump (Stream *s, int pair_index)
 {
     unsigned int numPairs = m_pairs.size();
-    unsigned int index;
 
-    for (index = 0; index < numPairs; ++index)
+    if (pair_index < 0)
     {
-        s->Printf("[%d] \"%s\" -> \"%s\"\n",
-                  index, m_pairs[index].first.GetCString(), m_pairs[index].second.GetCString());
+        unsigned int index;
+        for (index = 0; index < numPairs; ++index)
+            s->Printf("[%d] \"%s\" -> \"%s\"\n",
+                      index, m_pairs[index].first.GetCString(), m_pairs[index].second.GetCString());
+    }
+    else
+    {
+        if (pair_index < numPairs)
+            s->Printf("%s -> %s",
+                      m_pairs[pair_index].first.GetCString(), m_pairs[pair_index].second.GetCString());
     }
 }
 

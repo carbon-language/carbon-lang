@@ -22,12 +22,18 @@ class SourceManagerTestCase(TestBase):
         TestBase.setUp(self)
         # Find the line number to break inside main().
         self.line = line_number('main.c', '// Set break point at this line.')
+        lldb.skip_build_and_cleanup = False
 
     @python_api_test
     def test_display_source_python(self):
         """Test display of source using the SBSourceManager API."""
         self.buildDefault()
         self.display_source_python()
+
+    def test_move_and_then_display_source(self):
+        """Test that target.source-map settings work by moving main.c to hidden/main.c."""
+        self.buildDefault()
+        self.move_and_then_display_source()
 
     def test_modify_source_file_while_debugging(self):
         """Modify a source file while debugging the executable."""
@@ -69,6 +75,33 @@ class SourceManagerTestCase(TestBase):
         self.expect(stream.GetData(), "Source code displayed correctly",
                     exe=False,
             patterns = ['=> %d.*Hello world' % self.line])        
+
+    def move_and_then_display_source(self):
+        """Test that target.source-map settings work by moving main.c to hidden/main.c."""
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        # Move main.c to hidden/main.c.
+        main_c = "main.c"
+        main_c_hidden = os.path.join("hidden", main_c)
+        os.rename(main_c, main_c_hidden)
+
+        if self.TraceOn():
+            system(["ls"])
+            system(["ls", "hidden"])
+
+        # Restore main.c after the test.
+        self.addTearDownHook(lambda: os.rename(main_c_hidden, main_c))
+
+        # Set target.source-map settings.
+        self.runCmd("settings set target.source-map %s %s" % (os.getcwd(), os.path.join(os.getcwd(), "hidden")))
+        # And verify that the settings work.
+        self.expect("settings show target.source-map",
+            substrs = [os.getcwd(), os.path.join(os.getcwd(), "hidden")])
+
+        # Display main() and verify that the source mapping has been kicked in.
+        self.expect("list -n main", SOURCE_DISPLAYED_CORRECTLY,
+            substrs = ['Hello world'])
 
     def modify_source_file_while_debugging(self):
         """Modify a source file while debugging the executable."""
