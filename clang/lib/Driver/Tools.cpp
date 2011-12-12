@@ -990,8 +990,7 @@ static const char *getHexagonTargetCPU(const ArgList &Args)
         assert(0 && "Unknown -m argument.");
     }
   }
-  else
-    return "hexagonv2";
+  return "hexagonv2";
 }
 
 void Clang::AddHexagonTargetArgs(const ArgList &Args,
