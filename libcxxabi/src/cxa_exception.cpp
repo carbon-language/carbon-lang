@@ -305,7 +305,11 @@ std::type_info * __cxa_current_exception_type() {
     __cxa_exception *current_exception = globals->caughtExceptions;
     if (NULL == current_exception)
         return NULL;        //  No current exception
-//  TODO add stuff for dependent exceptions.
+    if (isDependentException(&current_exception->unwindHeader)) {
+        __cxa_dependent_exception* deh =
+            reinterpret_cast<__cxa_dependent_exception*>(current_exception + 1) - 1;
+        current_exception = static_cast<__cxa_exception*>(deh->primaryException) - 1;
+    }
     return current_exception->exceptionType;
 }
 
