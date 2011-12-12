@@ -1238,7 +1238,11 @@ void IndVarSimplify::SimplifyAndExtend(Loop *L,
 /// BackedgeTakenInfo. If these expressions have not been reduced, then
 /// expanding them may incur additional cost (albeit in the loop preheader).
 static bool isHighCostExpansion(const SCEV *S, BranchInst *BI,
+                                SmallPtrSet<const SCEV*, 8> &Processed,
                                 ScalarEvolution *SE) {
+  if (!Processed.insert(S))
+    return false;
+
   // If the backedge-taken count is a UDiv, it's very likely a UDiv that
   // ScalarEvolution's HowFarToZero or HowManyLessThans produced to compute a
   // precise expression, rather than a UDiv from the user's code. If we can't
@@ -1266,7 +1270,7 @@ static bool isHighCostExpansion(const SCEV *S, BranchInst *BI,
   if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
     for (SCEVAddExpr::op_iterator I = Add->op_begin(), E = Add->op_end();
          I != E; ++I) {
-      if (isHighCostExpansion(*I, BI, SE))
+      if (isHighCostExpansion(*I, BI, Processed, SE))
         return true;
     }
     return false;
@@ -1309,7 +1313,8 @@ static bool canExpandBackedgeTakenCount(Loop *L, ScalarEvolution *SE) {
   if (!BI)
     return false;
 
-  if (isHighCostExpansion(BackedgeTakenCount, BI, SE))
+  SmallPtrSet<const SCEV*, 8> Processed;
+  if (isHighCostExpansion(BackedgeTakenCount, BI, Processed, SE))
     return false;
 
   return true;
