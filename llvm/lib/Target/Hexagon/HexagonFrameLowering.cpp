@@ -142,7 +142,7 @@ void HexagonFrameLowering::emitPrologue(MachineFunction &MF) const {
   if (hasFP(MF)) {
     // Check for overflow.
     // Hexagon_TODO: Ugh! hardcoding. Is there an API that can be used?
-    const unsigned int ALLOCFRAME_MAX = 16384;
+    const int ALLOCFRAME_MAX = 16384;
     const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
 
     if (NumBytes >= ALLOCFRAME_MAX) {
