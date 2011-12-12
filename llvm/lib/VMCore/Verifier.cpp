@@ -1688,6 +1688,12 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   switch (ID) {
   default:
     break;
+  case Intrinsic::ctlz:  // llvm.ctlz
+  case Intrinsic::cttz:  // llvm.cttz
+    Assert1(isa<ConstantInt>(CI.getArgOperand(1)),
+            "is_zero_undef argument of bit counting intrinsics must be a "
+            "constant int", &CI);
+    break;
   case Intrinsic::dbg_declare: {  // llvm.dbg.declare
     Assert1(CI.getArgOperand(0) && isa<MDNode>(CI.getArgOperand(0)),
                 "invalid llvm.dbg.declare intrinsic call 1", &CI);
