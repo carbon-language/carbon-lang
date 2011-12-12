@@ -265,6 +265,7 @@ void __cxa_end_catch() {
     __cxa_exception *current_exception = globals->caughtExceptions;
     
     if (NULL != current_exception) {
+        // TODO:  Handle foreign exceptions?  How?
         if (current_exception->handlerCount < 0) {
         //  The exception has been rethrown
             if (0 == incrementHandlerCount(current_exception)) {
@@ -319,19 +320,22 @@ std::type_info * __cxa_current_exception_type() {
   (in an implementation-defined way) as being rethrown. 
 * If the caughtExceptions stack is empty, it calls terminate() 
   (see [C++FDIS] [except.throw], 15.1.8). 
-* It then returns to the handler that called it, which must call 
-  __cxa_end_catch(), perform any necessary cleanup, and finally 
-  call _Unwind_Resume() to continue unwinding.
+* It then calls _Unwind_Resume_or_Rethrow which should not return
+   (terminate if it does).
 */
 extern LIBCXXABI_NORETURN void __cxa_rethrow() {
     __cxa_eh_globals *globals = __cxa_get_globals();
-    __cxa_exception *exception = exception_from_exception_object(globals->caughtExceptions );
+    __cxa_exception *exception = globals->caughtExceptions;
 
     if (NULL == exception)   // there's no current exception!
         std::terminate ();
 
-//  Mark the exception as being rethrown
-    exception->handlerCount = -exception->handlerCount ;  // TODO: Atomic
+// TODO:  Handle foreign exceptions?  How?
+
+//  Mark the exception as being rethrown (reverse the effects of __cxa_begin_catch)
+    exception->handlerCount = -exception->handlerCount;
+    globals->uncaughtExceptions += 1;
+//  __cxa_end_catch will remove this exception from the caughtExceptions stack if necessary
     
 #if __arm__
     (void) _Unwind_SjLj_Resume_or_Rethrow(&exception->unwindHeader);
