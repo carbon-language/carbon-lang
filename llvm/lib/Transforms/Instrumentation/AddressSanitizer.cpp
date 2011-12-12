@@ -567,7 +567,6 @@ bool AddressSanitizer::insertGlobalRedzones(Module &M) {
 
 // .preinit_array is something that hapens before all other inits.
 // On systems where .preinit_array is honored, we will call __asan_init early.
-// On other systems this will make no effect.
 void AddressSanitizer::appendToPreinitArray(Module &M, Function *F) {
   IRBuilder<> IRB(M.getContext());
   GlobalVariable *Var =
@@ -647,7 +646,9 @@ bool AddressSanitizer::runOnModule(Module &M) {
   }
 
   appendToGlobalCtors(M, AsanCtorFunction, 1 /*high priority*/);
-  appendToPreinitArray(M, AsanInitFunction);
+
+  if (M.getTargetTriple().find("linux") != std::string::npos)
+    appendToPreinitArray(M, AsanInitFunction);
 
   return Res;
 }
