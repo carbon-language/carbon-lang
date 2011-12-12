@@ -128,66 +128,59 @@ MachVMRegion::GetRegionForAddress(nub_addr_t addr)
 {
     // Restore any original protections and clear our vars
     Clear();
+    m_err.Clear();
     m_addr = addr;
     m_start = addr;
     m_depth = 1024;
     mach_msg_type_number_t info_size = kRegionInfoSize;
     assert(sizeof(info_size) == 4);
     m_err = ::mach_vm_region_recurse (m_task, &m_start, &m_size, &m_depth, (vm_region_recurse_info_t)&m_data, &info_size);
-    const bool log_protections = DNBLogCheckLogBit(LOG_MEMORY_PROTECTIONS);
-    if (m_err.Success())
-    {
-        if ((addr < m_start) || (addr >= (m_start + m_size)))
-        {
-            m_err.SetErrorString("no region for address");
-            m_err.SetError(-1, DNBError::Generic);
-            if (log_protections)
-                m_err.LogThreaded("::mach_vm_region_recurse ( task = 0x%4.4x, address => 0x%8.8llx, size => %llu, nesting_depth => %d, info => %p, infoCnt => %d) addr = 0x%8.8llx not in range [0x%8.8llx - 0x%8.8llx)", 
-                                  m_task, (uint64_t)m_start, (uint64_t)m_size, m_depth, &m_data, info_size, (uint64_t)addr, (uint64_t)m_start, (uint64_t)m_start + m_size);
-            return false;
-        }
-    }
     
-    if (log_protections || m_err.Fail())
-        m_err.LogThreaded("::mach_vm_region_recurse ( task = 0x%4.4x, address => 0x%8.8llx, size => %llu, nesting_depth => %d, info => %p, infoCnt => %d) addr = 0x%8.8llx ", m_task, (uint64_t)m_start, (uint64_t)m_size, m_depth, &m_data, info_size, (uint64_t)addr);
-    if (m_err.Fail())
-    {
-        return false;
-    }
-    else
-    {
-        if (log_protections)
-        {
-            DNBLogThreaded("info = { prot = %u, "
-                             "max_prot = %u, "
-                             "inheritance = 0x%8.8x, "
-                             "offset = 0x%8.8llx, "
-                             "user_tag = 0x%8.8x, "
-                             "ref_count = %u, "
-                             "shadow_depth = %u, "
-                             "ext_pager = %u, "
-                             "share_mode = %u, "
-                             "is_submap = %d, "
-                             "behavior = %d, "
-                             "object_id = 0x%8.8x, "
-                             "user_wired_count = 0x%4.4x }",
-                             m_data.protection,
-                             m_data.max_protection,
-                             m_data.inheritance,
-                             (uint64_t)m_data.offset,
-                             m_data.user_tag,
-                             m_data.ref_count,
-                             m_data.shadow_depth,
-                             m_data.external_pager,
-                             m_data.share_mode,
-                             m_data.is_submap,
-                             m_data.behavior,
-                             m_data.object_id,
-                             m_data.user_wired_count);
-        }
-    }
+    const bool failed = m_err.Fail();
+    const bool log_protections = DNBLogCheckLogBit(LOG_MEMORY_PROTECTIONS);
 
+    if (log_protections || failed)
+        m_err.LogThreaded("::mach_vm_region_recurse ( task = 0x%4.4x, address => 0x%8.8llx, size => %llu, nesting_depth => %d, info => %p, infoCnt => %d) addr = 0x%8.8llx ", m_task, (uint64_t)m_start, (uint64_t)m_size, m_depth, &m_data, info_size, (uint64_t)addr);
+
+    if (failed)
+        return false;
+    if (log_protections)
+    {
+        DNBLogThreaded("info = { prot = %u, "
+                         "max_prot = %u, "
+                         "inheritance = 0x%8.8x, "
+                         "offset = 0x%8.8llx, "
+                         "user_tag = 0x%8.8x, "
+                         "ref_count = %u, "
+                         "shadow_depth = %u, "
+                         "ext_pager = %u, "
+                         "share_mode = %u, "
+                         "is_submap = %d, "
+                         "behavior = %d, "
+                         "object_id = 0x%8.8x, "
+                         "user_wired_count = 0x%4.4x }",
+                         m_data.protection,
+                         m_data.max_protection,
+                         m_data.inheritance,
+                         (uint64_t)m_data.offset,
+                         m_data.user_tag,
+                         m_data.ref_count,
+                         m_data.shadow_depth,
+                         m_data.external_pager,
+                         m_data.share_mode,
+                         m_data.is_submap,
+                         m_data.behavior,
+                         m_data.object_id,
+                         m_data.user_wired_count);
+    }
     m_curr_protection = m_data.protection;
+    
+    // We make a request for an address and got no error back, but this
+    // doesn't mean that "addr" is in the range. The data in this object will 
+    // be valid though, so you could see where the next region begins. So we
+    // return false, yet leave "m_err" with a successfull return code.
+    if ((addr < m_start) || (addr >= (m_start + m_size)))
+        return false;
 
     return true;
 }

@@ -52,7 +52,7 @@ MachVMMemory::MaxBytesLeftInPage(nub_addr_t addr, nub_size_t count)
     return count;
 }
 
-int
+nub_bool_t
 MachVMMemory::GetMemoryRegionInfo(task_t task, nub_addr_t address, DNBRegionInfo *region_info)
 {
     MachVMRegion vmRegion(task);
@@ -62,12 +62,30 @@ MachVMMemory::GetMemoryRegionInfo(task_t task, nub_addr_t address, DNBRegionInfo
         region_info->addr = vmRegion.StartAddress();
         region_info->size = vmRegion.GetByteSize();
         region_info->permissions = vmRegion.GetDNBPermissions();
-        return 1;
     }
-    region_info->addr = 0;
-    region_info->size = 0;
-    region_info->permissions = 0;
-    return 0;
+    else
+    {
+        region_info->addr = address;
+        region_info->size = 0;
+        if (vmRegion.GetError().Success())
+        {
+            // vmRegion.GetRegionForAddress() return false, indicating that "address"
+            // wasn't in a valid region, but the "vmRegion" info was successfully 
+            // read from the task which means the info describes the next valid
+            // region from which we can infer the size of this invalid region
+            mach_vm_address_t start_addr = vmRegion.StartAddress();
+            if (address < start_addr)
+                region_info->size = start_addr - address;
+        }
+        // If we can't get any infor about the size from the next region, just fill
+        // 1 in as the byte size
+        if (region_info->size == 0)
+            region_info->size = 1;
+
+        // Not readable, writeable or executable
+        region_info->permissions = 0;
+    }
+    return true;
 }
 
 nub_size_t

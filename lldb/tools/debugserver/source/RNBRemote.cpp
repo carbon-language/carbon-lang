@@ -3283,52 +3283,28 @@ RNBRemote::HandlePacket_MemoryRegionInfo (const char *p)
     }
 
     DNBRegionInfo region_info = { 0, 0, 0 };
-    int ret = DNBMemoryRegionInfo (m_ctx.ProcessID(), address, &region_info);
+    DNBProcessMemoryRegionInfo (m_ctx.ProcessID(), address, &region_info);
     std::ostringstream ostrm;
 
-    if (ret == 1 && region_info.size > 0)
-    {
         // start:3a50000,size:100000,permissions:rwx
-        ostrm << "start:" << std::hex << region_info.addr << ';'
-              << "size:"  << std::hex << region_info.size << ';';
-        
-        if (region_info.permissions)
-        {
-            ostrm << "permissions:";
-            
-            if (region_info.permissions & eMemoryPermissionsReadable)
-                ostrm << 'r';
-            if (region_info.permissions & eMemoryPermissionsWritable)
-                ostrm << 'w';
-            if (region_info.permissions & eMemoryPermissionsExecutable)
-                ostrm << 'x';
-            ostrm << ';';
-        }
-        return SendPacket (ostrm.str());
-    }
-    else
-    {
-        ostrm << std::hex << "error:";
-        const char *error_message = NULL;
-        if (ret == -1)
-        {
-            error_message = "region lookup cannot be performed";
-        }
-        else
-        {
-            error_message = "address in unmapped region";
-        }
-        // hex encode the error message so we can send any characters we want in
-        // the future since this is text
-        const int error_message_len = strlen (error_message);
-        const uint8_t *u_error_message = (const uint8_t *)error_message;
-        for (int i = 0; i < error_message_len; i++)
-            ostrm << RAWHEX8(u_error_message[i]);
-        ostrm << ';';
-        return SendPacket (ostrm.str());
-    }
+    ostrm << "start:" << std::hex << region_info.addr << ';';
 
-    return SendPacket ("E68");
+    if (region_info.size > 0)
+        ostrm << "size:"  << std::hex << region_info.size << ';';
+        
+    if (region_info.permissions)
+    {
+        ostrm << "permissions:";
+        
+        if (region_info.permissions & eMemoryPermissionsReadable)
+            ostrm << 'r';
+        if (region_info.permissions & eMemoryPermissionsWritable)
+            ostrm << 'w';
+        if (region_info.permissions & eMemoryPermissionsExecutable)
+            ostrm << 'x';
+        ostrm << ';';
+    }
+    return SendPacket (ostrm.str());
 }
 
 

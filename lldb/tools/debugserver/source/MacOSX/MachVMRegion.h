@@ -47,6 +47,11 @@ public:
     uint32_t
     GetDNBPermissions () const;
 
+    const DNBError &
+    GetError ()
+    {
+        return m_err;
+    }
 protected:
 #if defined (VM_REGION_SUBMAP_SHORT_INFO_COUNT_64)
     typedef vm_region_submap_short_info_data_64_t RegionInfo;
