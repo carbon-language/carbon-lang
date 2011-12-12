@@ -1,12 +1,18 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wformat-nonliteral %s
 
+#include <stdarg.h>
 typedef __typeof(sizeof(int)) size_t;
 typedef struct _FILE FILE;
 typedef __WCHAR_TYPE__ wchar_t;
 
 int fscanf(FILE * restrict, const char * restrict, ...) ;
 int scanf(const char * restrict, ...) ;
-int sscanf(const char * restrict, const char * restrict, ...) ;
+int sscanf(char * restrict, const char * restrict, ...) ;
+int my_scanf(const char * restrict, ...) __attribute__((__format__(__scanf__, 1, 2)));
+
+int vscanf(const char * restrict, va_list);
+int vfscanf(FILE * restrict, const char * restrict, va_list);
+int vsscanf(char * restrict, const char * restrict, va_list);
 
 void test(const char *s, int *i) {
   scanf(s, i); // expected-warning{{ormat string is not a string literal}}
@@ -44,4 +50,20 @@ void pr9751() {
   const char kFormat2[] = "%["; // expected-note{{format string is defined here}}}
   scanf(kFormat2, str); // expected-warning{{no closing ']' for '%[' in scanf format string}}
   scanf("%[", str); // expected-warning{{no closing ']' for '%[' in scanf format string}}
+}
+
+void test_variants(int *i, const char *s, ...) {
+  FILE *f = 0;
+  char buf[100];
+
+  fscanf(f, "%ld", i); // expected-warning{{conversion specifies type 'long *' but the argument has type 'int *'}}
+  sscanf(buf, "%ld", i); // expected-warning{{conversion specifies type 'long *' but the argument has type 'int *'}}
+  my_scanf("%ld", i); // expected-warning{{conversion specifies type 'long *' but the argument has type 'int *'}}
+
+  va_list ap;
+  va_start(ap, s);
+
+  vscanf("%[abc", ap); // expected-warning{{no closing ']' for '%[' in scanf format string}}
+  vfscanf(f, "%[abc", ap); // expected-warning{{no closing ']' for '%[' in scanf format string}}
+  vsscanf(buf, "%[abc", ap); // expected-warning{{no closing ']' for '%[' in scanf format string}}
 }

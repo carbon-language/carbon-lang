@@ -656,7 +656,12 @@ LIBBUILTIN(vprintf, "icC*a",      "fP:0:", "stdio.h", ALL_LANGUAGES)
 LIBBUILTIN(vfprintf, "i.",        "fP:1:", "stdio.h", ALL_LANGUAGES)
 LIBBUILTIN(vsnprintf, "ic*zcC*a", "fP:2:", "stdio.h", ALL_LANGUAGES)
 LIBBUILTIN(vsprintf, "ic*cC*a",   "fP:1:", "stdio.h", ALL_LANGUAGES)
-LIBBUILTIN(scanf, "icC*.",       "fs:0:", "stdio.h", ALL_LANGUAGES)
+LIBBUILTIN(scanf, "icC*.",        "fs:0:", "stdio.h", ALL_LANGUAGES)
+LIBBUILTIN(fscanf, "iP*cC*.",     "fs:1:", "stdio.h", ALL_LANGUAGES)
+LIBBUILTIN(sscanf, "ic*cC*.",     "fs:1:", "stdio.h", ALL_LANGUAGES)
+LIBBUILTIN(vscanf, "icC*a",       "fS:0:", "stdio.h", ALL_LANGUAGES)
+LIBBUILTIN(vfscanf, "iP*cC*a",    "fS:1:", "stdio.h", ALL_LANGUAGES)
+LIBBUILTIN(vsscanf, "ic*cC*a",    "fS:1:", "stdio.h", ALL_LANGUAGES)
 // C99
 LIBBUILTIN(longjmp, "vJi",        "fr",    "setjmp.h", ALL_LANGUAGES)
 
