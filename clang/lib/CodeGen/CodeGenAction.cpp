@@ -301,6 +301,7 @@ static raw_ostream *GetOutputStream(CompilerInstance &CI,
   case Backend_EmitLL:
     return CI.createDefaultOutputFile(false, InFile, "ll");
   case Backend_EmitBC:
+  case Backend_EmitBCVerify:
     return CI.createDefaultOutputFile(true, InFile, "bc");
   case Backend_EmitNothing:
     return 0;
@@ -411,6 +412,9 @@ EmitAssemblyAction::EmitAssemblyAction(llvm::LLVMContext *_VMContext)
 
 EmitBCAction::EmitBCAction(llvm::LLVMContext *_VMContext)
   : CodeGenAction(Backend_EmitBC, _VMContext) {}
+
+EmitBCVerifyAction::EmitBCVerifyAction(llvm::LLVMContext *_VMContext)
+  : CodeGenAction(Backend_EmitBCVerify, _VMContext) {}
 
 EmitLLVMAction::EmitLLVMAction(llvm::LLVMContext *_VMContext)
   : CodeGenAction(Backend_EmitLL, _VMContext) {}

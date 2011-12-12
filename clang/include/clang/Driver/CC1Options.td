@@ -395,6 +395,9 @@ def emit_llvm : Flag<"-emit-llvm">,
   HelpText<"Build ASTs then convert to LLVM, emit .ll file">;
 def emit_llvm_bc : Flag<"-emit-llvm-bc">,
   HelpText<"Build ASTs then convert to LLVM, emit .bc file">;
+def emit_llvm_bc_verify : Flag<"-emit-llvm-bc-verify">,
+  HelpText<"Build ASTs then convert to LLVM, emit .bc file"
+           " and finally verify bitcode serialization/deserialization">;
 def emit_llvm_only : Flag<"-emit-llvm-only">,
   HelpText<"Build ASTs and convert to LLVM, discarding output">;
 def emit_codegen_only : Flag<"-emit-codegen-only">,

@@ -43,6 +43,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   case DumpTokens:             return new DumpTokensAction();
   case EmitAssembly:           return new EmitAssemblyAction();
   case EmitBC:                 return new EmitBCAction();
+  case EmitBCVerify:           return new EmitBCVerifyAction();
   case EmitHTML:               return new HTMLPrintAction();
   case EmitLLVM:               return new EmitLLVMAction();
   case EmitLLVMOnly:           return new EmitLLVMOnlyAction();
