@@ -304,4 +304,32 @@ TEST_F(FileSystemTest, Magic) {
   }
 }
 
+TEST_F(FileSystemTest, Canonicalize) {
+  SmallString<128> file_pathname(TestDirectory);
+  path::append(file_pathname, "canonicalize", "a0", "aa1");
+
+  bool existed;
+  ASSERT_NO_ERROR(fs::create_directories(Twine(TestDirectory)
+                  + "/canonicalize/a0/aa1", existed));
+
+  {
+    path::append(file_pathname, "file.txt");
+    std::string ErrMsg;
+    raw_fd_ostream file(file_pathname.c_str(), ErrMsg);
+    file << "hello\n";
+  }
+
+  SmallString<0> res;
+  ASSERT_NO_ERROR(fs::canonicalize(Twine(TestDirectory)
+                                   + "/cAnOnIcAlIzE/A0/aA1/fIlE.TxT", res));
+  // Only check if we actually found the file. As we won't find it on case
+  // sensitive file systems.
+  if (fs::exists(res.str())) {
+    ASSERT_TRUE(res.str().find("canonicalize") != StringRef::npos);
+    ASSERT_TRUE(res.str().find("a0") != StringRef::npos);
+    ASSERT_TRUE(res.str().find("aa1") != StringRef::npos);
+    ASSERT_TRUE(res.str().find("file.txt") != StringRef::npos);
+  }
+}
+
 } // anonymous namespace
