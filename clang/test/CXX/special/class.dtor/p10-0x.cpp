@@ -22,4 +22,5 @@ void a(const A *x) {
   x->~decltype(x)(); // expected-error{{destructor type 'decltype(x)' (aka 'const A *') in object destruction expression does not match the type 'const A' of the object being destroyed}}
   // this last one could be better, mentioning that the nested-name-specifier could be removed or a type name after the ~
   x->::A::~decltype(*x)(); // expected-error{{expected a class name after '~' to name a destructor}}
+  y->~decltype(A())(); // expected-error{{use of undeclared identifier 'y'}}
 }

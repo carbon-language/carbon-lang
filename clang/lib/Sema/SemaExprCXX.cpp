@@ -266,7 +266,7 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
 }
 
 ParsedType Sema::getDestructorType(const DeclSpec& DS, ParsedType ObjectType) {
-    if (DS.getTypeSpecType() == DeclSpec::TST_error)
+    if (DS.getTypeSpecType() == DeclSpec::TST_error || !ObjectType)
       return ParsedType();
     assert(DS.getTypeSpecType() == DeclSpec::TST_decltype 
            && "only get destructor types from declspecs");
