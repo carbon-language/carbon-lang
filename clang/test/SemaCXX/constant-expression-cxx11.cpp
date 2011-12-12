@@ -301,25 +301,25 @@ struct Str {
   // FIXME: In C++ mode, we should say 'integral' not 'integer'
   int a : dynamic_cast<S*>(sptr) == dynamic_cast<S*>(sptr); // \
     expected-warning {{not integer constant expression}} \
-    expected-note {{dynamic_cast not allowed in a constant expression}}
+    expected-note {{dynamic_cast is not allowed in a constant expression}}
   int b : reinterpret_cast<S*>(sptr) == reinterpret_cast<S*>(sptr); // \
     expected-warning {{not integer constant expression}} \
-    expected-note {{reinterpret_cast not allowed in a constant expression}}
+    expected-note {{reinterpret_cast is not allowed in a constant expression}}
   int c : (S*)(long)(sptr) == (S*)(long)(sptr); // \
     expected-warning {{not integer constant expression}} \
-    expected-note {{reinterpreting cast not allowed in a constant expression}}
+    expected-note {{cast interpreted as a reinterpret_cast is not allowed in a constant expression}}
   int d : (S*)(42) == (S*)(42); // \
     expected-warning {{not integer constant expression}} \
-    expected-note {{reinterpreting cast not allowed in a constant expression}}
+    expected-note {{cast interpreted as a reinterpret_cast is not allowed in a constant expression}}
   int e : (Str*)(sptr) == (Str*)(sptr); // \
     expected-warning {{not integer constant expression}} \
-    expected-note {{reinterpreting cast not allowed in a constant expression}}
+    expected-note {{cast interpreted as a reinterpret_cast is not allowed in a constant expression}}
   int f : &(Str&)(*sptr) == &(Str&)(*sptr); // \
     expected-warning {{not integer constant expression}} \
-    expected-note {{reinterpreting cast not allowed in a constant expression}}
+    expected-note {{cast interpreted as a reinterpret_cast is not allowed in a constant expression}}
   int g : (S*)(void*)(sptr) == sptr; // \
     expected-warning {{not integer constant expression}} \
-    expected-note {{reinterpreting cast not allowed in a constant expression}}
+    expected-note {{cast from 'void *' is not allowed in a constant expression}}
 };
 
 extern char externalvar[];
