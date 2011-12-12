@@ -1251,16 +1251,6 @@ namespace {
       Seq = NewSeq;
     }
 
-    void SetSeqToRelease(MDNode *M) {
-      if (Seq == S_None || Seq == S_Use) {
-        Seq = M ? S_MovableRelease : S_Release;
-        RRI.ReleaseMetadata = M;
-      } else if (Seq != S_MovableRelease || RRI.ReleaseMetadata != M) {
-        Seq = S_Release;
-        RRI.ReleaseMetadata = 0;
-      }
-    }
-
     Sequence GetSeq() const {
       return Seq;
     }
@@ -2352,8 +2342,11 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
       if (S.GetSeq() == S_Release || S.GetSeq() == S_MovableRelease)
         NestingDetected = true;
 
-      S.SetSeqToRelease(Inst->getMetadata(ImpreciseReleaseMDKind));
       S.RRI.clear();
+
+      MDNode *ReleaseMetadata = Inst->getMetadata(ImpreciseReleaseMDKind);
+      S.SetSeq(ReleaseMetadata ? S_MovableRelease : S_Release);
+      S.RRI.ReleaseMetadata = ReleaseMetadata;
       S.RRI.KnownSafe = S.IsKnownNested() || S.IsKnownIncremented();
       S.RRI.IsTailCallRelease = cast<CallInst>(Inst)->isTailCall();
       S.RRI.Calls.insert(Inst);
