@@ -29,8 +29,8 @@ using namespace llvm;
 MipsInstrInfo::MipsInstrInfo(MipsTargetMachine &tm)
   : MipsGenInstrInfo(Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
     TM(tm), IsN64(TM.getSubtarget<MipsSubtarget>().isABI_N64()),
-    RI(*TM.getSubtargetImpl(), *this) {}
-
+    RI(*TM.getSubtargetImpl(), *this),
+    UncondBrOpc(TM.getRelocationModel() == Reloc::PIC_ ? Mips::B : Mips::J) {}
 
 const MipsRegisterInfo &MipsInstrInfo::getRegisterInfo() const { 
   return RI;
@@ -236,7 +236,8 @@ static unsigned GetAnalyzableBrOpc(unsigned Opc) {
           Opc == Mips::BGEZ   || Opc == Mips::BLTZ   || Opc == Mips::BLEZ   ||
           Opc == Mips::BEQ64  || Opc == Mips::BNE64  || Opc == Mips::BGTZ64 ||
           Opc == Mips::BGEZ64 || Opc == Mips::BLTZ64 || Opc == Mips::BLEZ64 ||
-          Opc == Mips::BC1T   || Opc == Mips::BC1F   || Opc == Mips::B) ?
+          Opc == Mips::BC1T   || Opc == Mips::BC1F   || Opc == Mips::B      ||
+          Opc == Mips::J) ?
          Opc : 0;
 }
 
@@ -320,7 +321,7 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   // If there is only one terminator instruction, process it.
   if (!SecondLastOpc) {
     // Unconditional branch
-    if (LastOpc == Mips::B) {
+    if (LastOpc == UncondBrOpc) {
       TBB = LastInst->getOperand(0).getMBB();
       return false;
     }
@@ -337,7 +338,7 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
   // If second to last instruction is an unconditional branch,
   // analyze it and remove the last instruction.
-  if (SecondLastOpc == Mips::B) {
+  if (SecondLastOpc == UncondBrOpc) {
     // Return if the last instruction cannot be removed.
     if (!AllowModify)
       return true;
@@ -349,7 +350,7 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
   // Conditional branch followed by an unconditional branch.
   // The last one must be unconditional.
-  if (LastOpc != Mips::B)
+  if (LastOpc != UncondBrOpc)
     return true;
 
   AnalyzeCondBr(SecondLastInst, SecondLastOpc, TBB, Cond);
@@ -391,14 +392,14 @@ InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   // Two-way Conditional branch.
   if (FBB) {
     BuildCondBr(MBB, TBB, DL, Cond);
-    BuildMI(&MBB, DL, get(Mips::B)).addMBB(FBB);
+    BuildMI(&MBB, DL, get(UncondBrOpc)).addMBB(FBB);
     return 2;
   }
 
   // One way branch.
   // Unconditional branch.
   if (Cond.empty())
-    BuildMI(&MBB, DL, get(Mips::B)).addMBB(TBB);
+    BuildMI(&MBB, DL, get(UncondBrOpc)).addMBB(TBB);
   else // Conditional branch.
     BuildCondBr(MBB, TBB, DL, Cond);
   return 1;

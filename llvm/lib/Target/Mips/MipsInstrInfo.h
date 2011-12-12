@@ -34,6 +34,7 @@ class MipsInstrInfo : public MipsGenInstrInfo {
   MipsTargetMachine &TM;
   bool IsN64;
   const MipsRegisterInfo RI;
+  unsigned UncondBrOpc;
 public:
   explicit MipsInstrInfo(MipsTargetMachine &TM);
 

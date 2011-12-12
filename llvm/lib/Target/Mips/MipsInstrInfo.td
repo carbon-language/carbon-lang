@@ -132,6 +132,8 @@ def NotMips64    : Predicate<"!Subtarget.hasMips64()">;
 def HasMips64r2  : Predicate<"Subtarget.hasMips64r2()">;
 def IsN64       : Predicate<"Subtarget.isABI_N64()">;
 def NotN64      : Predicate<"!Subtarget.isABI_N64()">;
+def RelocStatic : Predicate<"TM.getRelocationModel() == Reloc::Static">;
+def RelocPIC    : Predicate<"TM.getRelocationModel() == Reloc::PIC_">;
 
 //===----------------------------------------------------------------------===//
 // Mips Operand, Complex Patterns and Transformations Definitions.
@@ -477,6 +479,17 @@ class SetCC_I<bits<6> op, string instr_asm, PatFrag cond_op, Operand Od,
      [(set CPURegs:$rt, (cond_op RC:$rs, imm_type:$imm16))],
      IIAlu>;
 
+// Jump
+class JumpFJ<bits<6> op, string instr_asm>:
+  FJ<op, (outs), (ins jmptarget:$target),
+     !strconcat(instr_asm, "\t$target"), [(br bb:$target)], IIBranch> {
+  let isBranch=1;
+  let isTerminator=1;
+  let isBarrier=1;
+  let hasDelaySlot = 1;
+  let Predicates = [RelocStatic];  
+}
+
 // Unconditional branch
 class UncondBranch<bits<6> op, string instr_asm>:
   BranchBase<op, (outs), (ins brtarget:$imm16),
@@ -487,6 +500,7 @@ class UncondBranch<bits<6> op, string instr_asm>:
   let isTerminator = 1;
   let isBarrier = 1;
   let hasDelaySlot = 1;
+  let Predicates = [RelocPIC];  
 }
 
 let isBranch=1, isTerminator=1, isBarrier=1, rd=0, hasDelaySlot = 1,
@@ -832,6 +846,7 @@ def SC    : SCBase<0x38, "sc", CPURegs, mem>, Requires<[NotN64]>;
 def SC_P8 : SCBase<0x38, "sc", CPURegs, mem64>, Requires<[IsN64]>;
 
 /// Jump and Branch Instructions
+def J       : JumpFJ<0x02, "j">;
 def JR      : JumpFR<0x00, 0x08, "jr", CPURegs>;
 def JAL     : JumpLink<0x03, "jal">;
 def JALR    : JumpLinkReg<0x00, 0x09, "jalr">;
