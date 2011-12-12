@@ -21,4 +21,3 @@ name = MipsDesc
 parent = Mips
 required_libraries = MC MipsAsmPrinter MipsInfo Support
 add_to_library_groups = Mips
-

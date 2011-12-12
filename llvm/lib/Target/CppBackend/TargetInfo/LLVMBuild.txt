@@ -21,4 +21,3 @@ name = CppBackendInfo
 parent = CppBackend
 required_libraries = MC Support Target
 add_to_library_groups = CppBackend
-

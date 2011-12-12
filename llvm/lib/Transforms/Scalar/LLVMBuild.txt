@@ -21,4 +21,3 @@ name = Scalar
 parent = Transforms
 library_name = ScalarOpts
 required_libraries = Analysis Core InstCombine Support Target TransformUtils
-

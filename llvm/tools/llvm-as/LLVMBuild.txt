@@ -20,4 +20,3 @@ type = Tool
 name = llvm-as
 parent = Tools
 required_libraries = AsmParser BitWriter
-

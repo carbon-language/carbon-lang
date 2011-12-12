@@ -20,4 +20,3 @@ type = Library
 name = SelectionDAG
 parent = CodeGen
 required_libraries = Analysis CodeGen Core MC Support Target TransformUtils
-

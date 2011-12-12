@@ -19,4 +19,3 @@
 type = Library
 name = Support
 parent = Libraries
-

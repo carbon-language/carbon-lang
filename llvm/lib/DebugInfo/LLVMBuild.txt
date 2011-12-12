@@ -20,4 +20,3 @@ type = Library
 name = DebugInfo
 parent = Libraries
 required_libraries = Support
-

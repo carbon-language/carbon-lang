@@ -21,4 +21,3 @@ name = PowerPCDesc
 parent = PowerPC
 required_libraries = MC PowerPCAsmPrinter PowerPCInfo Support
 add_to_library_groups = PowerPC
-

@@ -20,4 +20,3 @@ type = Library
 name = AsmParser
 parent = Libraries
 required_libraries = Core Support
-

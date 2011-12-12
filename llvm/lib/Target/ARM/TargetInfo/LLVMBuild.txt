@@ -21,4 +21,3 @@ name = ARMInfo
 parent = ARM
 required_libraries = MC Support Target
 add_to_library_groups = ARM
-

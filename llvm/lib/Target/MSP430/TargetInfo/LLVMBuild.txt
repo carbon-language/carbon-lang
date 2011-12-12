@@ -21,4 +21,3 @@ name = MSP430Info
 parent = MSP430
 required_libraries = MC Support Target
 add_to_library_groups = MSP430
-

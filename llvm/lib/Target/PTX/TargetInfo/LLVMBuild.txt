@@ -21,4 +21,3 @@ name = PTXInfo
 parent = PTX
 required_libraries = MC Support Target
 add_to_library_groups = PTX
-

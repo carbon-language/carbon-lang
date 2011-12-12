@@ -28,4 +28,3 @@ name = MipsCodeGen
 parent = Mips
 required_libraries = AsmPrinter CodeGen Core MC MipsAsmPrinter MipsDesc MipsInfo SelectionDAG Support Target
 add_to_library_groups = Mips
-

@@ -20,4 +20,3 @@ type = Tool
 name = llvm-nm
 parent = Tools
 required_libraries = Archive BitReader Object
-

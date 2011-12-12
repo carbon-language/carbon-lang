@@ -20,4 +20,3 @@ type = Library
 name = Object
 parent = Libraries
 required_libraries = Core Support
-

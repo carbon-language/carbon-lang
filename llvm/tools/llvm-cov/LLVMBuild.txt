@@ -20,4 +20,3 @@ type = Tool
 name = llvm-cov
 parent = Tools
 required_libraries = Instrumentation
-

@@ -20,4 +20,3 @@ type = Library
 name = InstCombine
 parent = Transforms
 required_libraries = Analysis Core Support Target TransformUtils
-

@@ -20,4 +20,3 @@ type = Tool
 name = opt
 parent = Tools
 required_libraries = AsmParser BitReader BitWriter IPO Instrumentation Scalar
-

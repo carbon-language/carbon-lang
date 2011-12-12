@@ -27,4 +27,3 @@ name = PTXCodeGen
 parent = PTX
 required_libraries = Analysis AsmPrinter CodeGen Core MC PTXDesc PTXInfo SelectionDAG Support Target TransformUtils
 add_to_library_groups = PTX
-

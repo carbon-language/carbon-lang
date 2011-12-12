@@ -20,4 +20,3 @@ type = Library
 name = MC
 parent = Libraries
 required_libraries = Object Support
-

@@ -20,4 +20,3 @@ type = Tool
 name = llc
 parent = Tools
 required_libraries = AsmParser BitReader all-targets
-

@@ -20,4 +20,3 @@ type = Tool
 name = llvm-ld
 parent = Tools
 required_libraries = Archive BitWriter IPO Linker Scalar
-

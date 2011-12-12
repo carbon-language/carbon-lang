@@ -20,4 +20,3 @@ type = Library
 name = Archive
 parent = Libraries
 required_libraries = BitReader Core Support
-

@@ -21,4 +21,3 @@ name = XCoreDesc
 parent = XCore
 required_libraries = MC XCoreInfo
 add_to_library_groups = XCore
-

@@ -21,4 +21,3 @@ name = MSP430Desc
 parent = MSP430
 required_libraries = MC MSP430AsmPrinter MSP430Info Support Target
 add_to_library_groups = MSP430
-

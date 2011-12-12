@@ -20,4 +20,3 @@ type = Tool
 name = llvm-rtdyld
 parent = Tools
 required_libraries = JIT MC Object RuntimeDyld Support all-targets
-

@@ -30,4 +30,3 @@ name = ARMCodeGen
 parent = ARM
 required_libraries = ARMAsmPrinter ARMDesc ARMInfo Analysis AsmPrinter CodeGen Core MC SelectionDAG Support Target
 add_to_library_groups = ARM
-

@@ -20,4 +20,3 @@ type = Tool
 name = llvm-size
 parent = Tools
 required_libraries = Object
-

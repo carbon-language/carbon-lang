@@ -20,4 +20,3 @@ type = Library
 name = AsmPrinter
 parent = Libraries
 required_libraries = Analysis CodeGen Core MC MCParser Support Target
-

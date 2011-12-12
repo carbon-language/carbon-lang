@@ -24,4 +24,3 @@ parent = $ROOT
 type = Group
 name = UtilityTools
 parent = $ROOT
-

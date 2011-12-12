@@ -29,4 +29,3 @@ name = MBlazeCodeGen
 parent = MBlaze
 required_libraries = AsmPrinter CodeGen Core MBlazeAsmPrinter MBlazeDesc MBlazeInfo MC SelectionDAG Support Target
 add_to_library_groups = MBlaze
-

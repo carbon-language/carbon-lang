@@ -21,4 +21,3 @@ name = CellSPUDesc
 parent = CellSPU
 required_libraries = CellSPUInfo MC
 add_to_library_groups = CellSPU
-

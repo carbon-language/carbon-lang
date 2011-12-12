@@ -27,4 +27,3 @@ name = MSP430CodeGen
 parent = MSP430
 required_libraries = AsmPrinter CodeGen Core MC MSP430AsmPrinter MSP430Desc MSP430Info SelectionDAG Support Target
 add_to_library_groups = MSP430
-

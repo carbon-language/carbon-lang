@@ -21,4 +21,3 @@ name = ARMDesc
 parent = ARM
 required_libraries = ARMAsmPrinter ARMInfo MC Support
 add_to_library_groups = ARM
-

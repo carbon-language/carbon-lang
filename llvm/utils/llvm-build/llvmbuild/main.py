@@ -262,7 +262,8 @@ class LLVMProjectInfo(object):
             for i,fragment in enumerate(fragments):
                 print >>f, '[component_%d]' % i
                 f.write(fragment)
-                print >>f
+                if fragment is not fragments[-1]:
+                    print >>f
             f.close()
 
     def write_library_table(self, output_path):

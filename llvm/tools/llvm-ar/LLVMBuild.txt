@@ -20,4 +20,3 @@ type = Tool
 name = llvm-ar
 parent = Tools
 required_libraries = Archive
-

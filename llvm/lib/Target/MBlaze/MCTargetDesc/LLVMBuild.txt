@@ -21,4 +21,3 @@ name = MBlazeDesc
 parent = MBlaze
 required_libraries = MBlazeAsmPrinter MBlazeInfo MC Support
 add_to_library_groups = MBlaze
-
