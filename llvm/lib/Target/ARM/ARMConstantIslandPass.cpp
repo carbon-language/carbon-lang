@@ -52,6 +52,10 @@ static cl::opt<bool>
 AdjustJumpTableBlocks("arm-adjust-jump-tables", cl::Hidden, cl::init(true),
           cl::desc("Adjust basic block layout to better use TB[BH]"));
 
+static cl::opt<bool>
+AlignConstantIslands("arm-align-constant-island", cl::Hidden,
+          cl::desc("Align constant islands in code"));
+
 /// UnknownPadding - Return the worst case padding that could result from
 /// unknown offset bits.  This does not include alignment padding caused by
 /// known offset bits.
@@ -487,8 +491,18 @@ void ARMConstantIslands::DoInitialPlacement(MachineFunction &MF,
   MachineBasicBlock *BB = MF.CreateMachineBasicBlock();
   MF.push_back(BB);
 
-  // Mark the basic block as 4-byte aligned as required by the const-pool.
-  BB->setAlignment(2);
+  // MachineConstantPool measures alignment in bytes. We measure in log2(bytes).
+  unsigned MaxAlign = Log2_32(MF.getConstantPool()->getConstantPoolAlignment());
+
+  // Mark the basic block as required by the const-pool.
+  // If AlignConstantIslands isn't set, use 4-byte alignment for everything.
+  BB->setAlignment(AlignConstantIslands ? MaxAlign : 2);
+
+  // Order the entries in BB by descending alignment.  That ensures correct
+  // alignment of all entries as long as BB is sufficiently aligned.  Keep
+  // track of the insertion point for each alignment.  We are going to bucket
+  // sort the entries as they are created.
+  SmallVector<MachineBasicBlock::iterator, 8> InsPoint(MaxAlign + 1, BB->end());
 
   // Add all of the constants from the constant pool to the end block, use an
   // identity mapping of CPI's to CPE's.
@@ -498,23 +512,35 @@ void ARMConstantIslands::DoInitialPlacement(MachineFunction &MF,
   const TargetData &TD = *MF.getTarget().getTargetData();
   for (unsigned i = 0, e = CPs.size(); i != e; ++i) {
     unsigned Size = TD.getTypeAllocSize(CPs[i].getType());
-    // Verify that all constant pool entries are a multiple of 4 bytes.  If not,
-    // we would have to pad them out or something so that instructions stay
-    // aligned.
-    assert((Size & 3) == 0 && "CP Entry not multiple of 4 bytes!");
+    assert(Size >= 4 && "Too small constant pool entry");
+    unsigned Align = CPs[i].getAlignment();
+    assert(isPowerOf2_32(Align) && "Invalid alignment");
+    // Verify that all constant pool entries are a multiple of their alignment.
+    // If not, we would have to pad them out so that instructions stay aligned.
+    assert((Size % Align) == 0 && "CP Entry not multiple of 4 bytes!");
+
+    // Insert CONSTPOOL_ENTRY before entries with a smaller alignment.
+    unsigned LogAlign = Log2_32(Align);
+    MachineBasicBlock::iterator InsAt = InsPoint[LogAlign];
     MachineInstr *CPEMI =
-      BuildMI(BB, DebugLoc(), TII->get(ARM::CONSTPOOL_ENTRY))
+      BuildMI(*BB, InsAt, DebugLoc(), TII->get(ARM::CONSTPOOL_ENTRY))
         .addImm(i).addConstantPoolIndex(i).addImm(Size);
     CPEMIs.push_back(CPEMI);
+
+    // Ensure that future entries with higher alignment get inserted before
+    // CPEMI. This is bucket sort with iterators.
+    for (unsigned a = LogAlign + 1; a < MaxAlign; ++a)
+      if (InsPoint[a] == InsAt)
+        InsPoint[a] = CPEMI;
 
     // Add a new CPEntry, but no corresponding CPUser yet.
     std::vector<CPEntry> CPEs;
     CPEs.push_back(CPEntry(CPEMI, i));
     CPEntries.push_back(CPEs);
     ++NumCPEs;
-    DEBUG(dbgs() << "Moved CPI#" << i << " to end of function as #" << i
-                 << "\n");
+    DEBUG(dbgs() << "Moved CPI#" << i << " to end of function\n");
   }
+  DEBUG(BB->dump());
 }
 
 /// BBHasFallthrough - Return true if the specified basic block can fallthrough
