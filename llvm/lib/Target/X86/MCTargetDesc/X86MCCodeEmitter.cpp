@@ -435,6 +435,9 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   // swap operand 3 and 4 for FMA4 and XOP instructions
   unsigned char XOP_W = 0;
 
+  // XOP: Use XOP prefix byte 0x8f instead of VEX.
+  unsigned char XOP = 0;
+
   // VEX_5M (VEX m-mmmmm field):
   //
   //  0b00000: Reserved for future use
@@ -442,7 +445,8 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   //  0b00010: implied 0F 38 leading opcode bytes
   //  0b00011: implied 0F 3A leading opcode bytes
   //  0b00100-0b11111: Reserved for future use
-  //
+  //  0b01000: XOP map select - 08h instructions with imm byte
+  //  0b10001: XOP map select - 09h instructions with no imm byte
   unsigned char VEX_5M = 0x1;
 
   // VEX_4V (VEX vvvv field): a register specifier
@@ -476,6 +480,9 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   if ((TSFlags >> X86II::VEXShift) & X86II::XOP_W)
     XOP_W = 1;
 
+  if ((TSFlags >> X86II::VEXShift) & X86II::XOP)
+    XOP = 1;
+
   if ((TSFlags >> X86II::VEXShift) & X86II::VEX_L)
     VEX_L = 1;
 
@@ -505,12 +512,19 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   case X86II::XD:  // F2 0F
     VEX_PP = 0x3;
     break;
+  case X86II::XOP8:
+    VEX_5M = 0x8;
+    break;
+  case X86II::XOP9:
+    VEX_5M = 0x9;
+    break;
   case X86II::A6:  // Bypass: Not used by VEX
   case X86II::A7:  // Bypass: Not used by VEX
   case X86II::TB:  // Bypass: Not used by VEX
   case 0:
     break;  // No prefix!
   }
+
 
   // Set the vector length to 256-bit if YMM0-YMM15 is used
   for (unsigned i = 0; i != MI.getNumOperands(); ++i) {
@@ -646,14 +660,14 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   //
   unsigned char LastByte = VEX_PP | (VEX_L << 2) | (VEX_4V << 3);
 
-  if (VEX_B && VEX_X && !VEX_W && (VEX_5M == 1)) { // 2 byte VEX prefix
+  if (VEX_B && VEX_X && !VEX_W && !XOP && (VEX_5M == 1)) { // 2 byte VEX prefix
     EmitByte(0xC5, CurByte, OS);
     EmitByte(LastByte | (VEX_R << 7), CurByte, OS);
     return;
   }
 
   // 3 byte VEX prefix
-  EmitByte(0xC4, CurByte, OS);
+  EmitByte(XOP ? 0x8F : 0xC4, CurByte, OS);
   EmitByte(VEX_R << 7 | VEX_X << 6 | VEX_B << 5 | VEX_5M, CurByte, OS);
   EmitByte(LastByte | ((VEX_W | XOP_W) << 7), CurByte, OS);
 }
@@ -1097,7 +1111,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   // according to the right size for the instruction.
   if (CurOp != NumOps) {
     // The last source register of a 4 operand instruction in AVX is encoded
-    // in bits[7:4] of a immediate byte, and bits[3:0] are ignored.
+    // in bits[7:4] of a immediate byte.
     if ((TSFlags >> X86II::VEXShift) & X86II::VEX_I8IMM) {
       const MCOperand &MO = MI.getOperand(HasXOP_W ? XOP_W_I8IMMOperand
                                                    : CurOp);
@@ -1105,6 +1119,16 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       bool IsExtReg = X86II::isX86_64ExtendedReg(MO.getReg());
       unsigned RegNum = (IsExtReg ? (1 << 7) : 0);
       RegNum |= GetX86RegNum(MO) << 4;
+      // If there is an additional 5th operand it must be an immediate, which
+      // is encoded in bits[3:0]
+      if(CurOp != NumOps) {
+        const MCOperand &MIMM = MI.getOperand(CurOp++);
+        if(MIMM.isImm()) {
+          unsigned Val = MIMM.getImm();
+          assert(Val < 16 && "Immediate operand value out of range");
+          RegNum |= Val;
+        }
+      }
       EmitImmediate(MCOperand::CreateImm(RegNum), 1, FK_Data_1, CurByte, OS,
                     Fixups);
     } else {

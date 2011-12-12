@@ -304,6 +304,12 @@ namespace X86II {
     // TAXD - Prefix before and after 0x0F. Combination of TA and XD.
     TAXD = 19 << Op0Shift,
 
+    // XOP8 - Prefix to include use of imm byte.
+    XOP8 = 20 << Op0Shift,
+
+    // XOP9 - Prefix to exclude use of imm byte.
+    XOP9 = 21 << Op0Shift,
+
     //===------------------------------------------------------------------===//
     // REX_W - REX prefixes are instruction prefixes used in 64-bit mode.
     // They are used to specify GPRs and SSE registers, 64-bit operand size,
@@ -423,7 +429,11 @@ namespace X86II {
     /// XOP_W - Same bit as VEX_W. Used to indicate swapping of
     /// operand 3 and 4 to be encoded in ModRM or I8IMM. This is used
     /// for FMA4 and XOP instructions.
-    XOP_W = 1U << 8
+    XOP_W = 1U << 8,
+
+    /// XOP - Opcode prefix used by XOP instructions.
+    XOP = 1U << 9
+
   };
 
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
