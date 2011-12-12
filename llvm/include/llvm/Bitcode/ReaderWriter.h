@@ -60,8 +60,12 @@ namespace llvm {
   /// createBitcodeWriterPass - Create and return a pass that writes the module
   /// to the specified ostream.
   ModulePass *createBitcodeWriterPass(raw_ostream &Str);
-  
-  
+
+  /// createBitcodeVerifierPass - Create a pass that writes a module to disk and
+  /// then reads the module back in to verify bitcode serialization and
+  /// deserialization.
+  ModulePass *createBitcodeVerifierPass(raw_ostream &Str);
+
   /// isBitcodeWrapper - Return true if the given bytes are the magic bytes
   /// for an LLVM IR bitcode wrapper.
   ///
