@@ -1576,7 +1576,7 @@ protected:
   typedef ExprEvaluatorBase ExprEvaluatorBaseTy;
 
   OptionalDiagnostic CCEDiag(const Expr *E, diag::kind D) {
-    Info.CCEDiag(E, E->getExprLoc(), D);
+    return Info.CCEDiag(E->getExprLoc(), D);
   }
 
   /// Report an evaluation error. This should only be called when an error is
