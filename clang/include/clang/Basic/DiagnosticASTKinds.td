@@ -13,8 +13,8 @@ let Component = "AST" in {
 //  "C does not permit evaluated commas in an integer constant expression">;
 def note_expr_divide_by_zero : Note<"division by zero">;
 def note_constexpr_invalid_cast : Note<
-  "%select{reinterpret_cast|dynamic_cast|cast interpreted as a "
-  "reinterpret_cast|cast from %1}0 is not allowed in a constant expression">;
+  "%select{reinterpret_cast|dynamic_cast|cast which performs the conversions of"
+  " a reinterpret_cast|cast from %1}0 is not allowed in a constant expression">;
 
 // inline asm related.
 let CategoryName = "Inline Assembly Issue" in {
