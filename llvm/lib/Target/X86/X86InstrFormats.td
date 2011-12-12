@@ -513,6 +513,24 @@ class FMA4<bits<8> o, Format F, dag outs, dag ins, string asm,
       : I<o, F, outs, ins, asm, pattern, SSEPackedInt>, TA,
         OpSize, VEX_4V, VEX_I8IMM, Requires<[HasFMA4]>;
 
+// XOP 2, 3 and 4 Operand Instruction Template
+class IXOP<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag> pattern>
+      : I<o, F, outs, ins, asm, pattern, SSEPackedDouble>,
+         XOP, XOP9, Requires<[HasXOP]>;
+
+// XOP 2, 3 and 4 Operand Instruction Templates with imm byte
+class IXOPi8<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag> pattern>
+      : Ii8<o, F, outs, ins, asm, pattern, SSEPackedDouble>,
+         XOP, XOP8, Requires<[HasXOP]>;
+
+//  XOP 5 operand instruction (VEX encoding!)
+class IXOP5<bits<8> o, Format F, dag outs, dag ins, string asm,
+           list<dag>pattern>
+      : Ii8<o, F, outs, ins, asm, pattern, SSEPackedInt>, TA,
+        OpSize, VEX_4V, VEX_I8IMM, Requires<[HasXOP]>;
+
 // X86-64 Instruction templates...
 //
 
