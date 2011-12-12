@@ -475,7 +475,6 @@ public:
 public:
     // Create __node
     typedef __hash_node<value_type, typename __alloc_traits::void_pointer> __node;
-    typedef typename __node::__first_node                            __first_node;
     typedef typename __alloc_traits::template
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
             rebind_alloc<__node>
@@ -486,6 +485,7 @@ public:
     typedef allocator_traits<__node_allocator>       __node_traits;
     typedef typename __node_traits::pointer          __node_pointer;
     typedef typename __node_traits::const_pointer    __node_const_pointer;
+    typedef __hash_node_base<__node_pointer>         __first_node;
 
 private:
 
