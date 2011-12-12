@@ -15,6 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
+[common]
+subdirectories = MCDisassembler MCParser
+
 [component_0]
 type = Library
 name = MC

@@ -15,6 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
+[common]
+subdirectories = bindings docs examples lib projects runtime tools utils
+
 [component_0]
 type = Group
 name = Miscellaneous

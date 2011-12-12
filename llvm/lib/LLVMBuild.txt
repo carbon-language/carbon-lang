@@ -15,6 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
+[common]
+subdirectories = Analysis Archive AsmParser Bitcode CodeGen DebugInfo ExecutionEngine Linker MC Object Support TableGen Target Transforms VMCore
+
 [component_0]
 type = Group
 name = Libraries

@@ -21,4 +21,3 @@ name = HexagonInfo
 parent = Hexagon
 required_libraries = MC Support
 add_to_library_groups = Hexagon
-

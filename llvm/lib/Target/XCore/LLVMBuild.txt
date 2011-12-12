@@ -15,6 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
+[common]
+subdirectories = MCTargetDesc TargetInfo
+
 [component_0]
 type = TargetGroup
 name = XCore

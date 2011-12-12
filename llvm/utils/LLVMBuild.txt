@@ -15,6 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
+[common]
+subdirectories = TableGen unittest
+
 [component_0]
 type = Group
 name = BuildTools

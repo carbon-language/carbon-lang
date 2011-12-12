@@ -15,6 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
+[common]
+subdirectories = AsmPrinter SelectionDAG
+
 [component_0]
 type = Library
 name = CodeGen

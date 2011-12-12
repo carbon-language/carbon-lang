@@ -15,6 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
+[common]
+subdirectories = AsmParser Disassembler InstPrinter MCTargetDesc TargetInfo
+
 [component_0]
 type = TargetGroup
 name = ARM

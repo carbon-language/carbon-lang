@@ -214,14 +214,45 @@ class LLVMProjectInfo(object):
 
             info_basedir[ci.subpath] = info_basedir.get(ci.subpath, []) + [ci]
 
+        # Compute the list of subdirectories to scan.
+        subpath_subdirs = {}
+        for ci in self.component_infos:
+            # Ignore root components.
+            if ci.subpath == '/':
+                continue
+
+            # Otherwise, append this subpath to the parent list.
+            parent_path = os.path.dirname(ci.subpath)
+            subpath_subdirs[parent_path] = parent_list = subpath_subdirs.get(
+                parent_path, set())
+            parent_list.add(os.path.basename(ci.subpath))
+
         # Generate the build files.
         for subpath, infos in info_basedir.items():
             # Order the components by name to have a canonical ordering.
             infos.sort(key = lambda ci: ci.name)
 
             # Format the components into llvmbuild fragments.
-            fragments = filter(None, [ci.get_llvmbuild_fragment()
-                                      for ci in infos])
+            fragments = []
+
+            # Add the common fragments.
+            subdirectories = subpath_subdirs.get(subpath)
+            if subdirectories:
+                fragment = """\
+subdirectories = %s
+""" % (" ".join(sorted(subdirectories)),)
+                fragments.append(("common", fragment))
+
+            # Add the component fragments.
+            num_common_fragments = len(fragments)
+            for ci in infos:
+                fragment = ci.get_llvmbuild_fragment()
+                if fragment is None:
+                    continue
+
+                name = "component_%d" % (len(fragments) - num_common_fragments)
+                fragments.append((name, fragment))
+
             if not fragments:
                 continue
 
@@ -242,7 +273,7 @@ class LLVMProjectInfo(object):
                 if ln.startswith(';'):
                     comment_block += ln
                 elif ln.startswith('[') and ln.endswith(']\n'):
-                    comments_map[ln[:-1]] = comment_block
+                    comments_map[ln[1:-2]] = comment_block
                 else:
                     comment_block = ""
             f.close()
@@ -275,15 +306,16 @@ class LLVMProjectInfo(object):
 ;===------------------------------------------------------------------------===;
 """ % header_string
 
-            for i,fragment in enumerate(fragments):
-                name = '[component_%d]' % i
+            # Write out each fragment.each component fragment.
+            for name,fragment in fragments:
                 comment = comments_map.get(name)
                 if comment is not None:
                     f.write(comment)
-                print >>f, name
+                print >>f, "[%s]" % name
                 f.write(fragment)
-                if fragment is not fragments[-1]:
+                if fragment is not fragments[-1][1]:
                     print >>f
+
             f.close()
 
     def write_library_table(self, output_path):

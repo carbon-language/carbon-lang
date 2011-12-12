@@ -15,6 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
+[common]
+subdirectories = Interpreter JIT MCJIT RuntimeDyld
+
 [component_0]
 type = Library
 name = ExecutionEngine

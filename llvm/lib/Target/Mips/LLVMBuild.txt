@@ -15,6 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
+[common]
+subdirectories = InstPrinter MCTargetDesc TargetInfo
+
 [component_0]
 type = TargetGroup
 name = Mips
