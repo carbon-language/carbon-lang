@@ -999,7 +999,7 @@ struct FFSOpt : public LibCallOptimization {
     Type *ArgType = Op->getType();
     Value *F = Intrinsic::getDeclaration(Callee->getParent(),
                                          Intrinsic::cttz, ArgType);
-    Value *V = B.CreateCall(F, Op, "cttz");
+    Value *V = B.CreateCall2(F, Op, B.getFalse(), "cttz");
     V = B.CreateAdd(V, ConstantInt::get(V->getType(), 1));
     V = B.CreateIntCast(V, B.getInt32Ty(), false);
 

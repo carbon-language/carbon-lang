@@ -1290,10 +1290,6 @@ llvm::ConstantFoldCall(Function *F, ArrayRef<Constant *> Operands,
         return ConstantInt::get(F->getContext(), Op->getValue().byteSwap());
       case Intrinsic::ctpop:
         return ConstantInt::get(Ty, Op->getValue().countPopulation());
-      case Intrinsic::cttz:
-        return ConstantInt::get(Ty, Op->getValue().countTrailingZeros());
-      case Intrinsic::ctlz:
-        return ConstantInt::get(Ty, Op->getValue().countLeadingZeros());
       case Intrinsic::convert_from_fp16: {
         APFloat Val(Op->getValue());
 
@@ -1418,6 +1414,14 @@ llvm::ConstantFoldCall(Function *F, ArrayRef<Constant *> Operands,
           };
           return ConstantStruct::get(cast<StructType>(F->getReturnType()), Ops);
         }
+        case Intrinsic::cttz:
+          // FIXME: This should check for Op2 == 1, and become unreachable if
+          // Op1 == 0.
+          return ConstantInt::get(Ty, Op1->getValue().countTrailingZeros());
+        case Intrinsic::ctlz:
+          // FIXME: This should check for Op2 == 1, and become unreachable if
+          // Op1 == 0.
+          return ConstantInt::get(Ty, Op1->getValue().countLeadingZeros());
         }
       }
       

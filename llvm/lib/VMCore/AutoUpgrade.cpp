@@ -40,7 +40,20 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
 
   switch (Name[0]) {
   default: break;
-  // SOMEDAY: Add some.
+  case 'c': {
+    Type *Tys[] = { F->arg_begin()->getType() };
+    if (Name.startswith("ctlz.") && F->arg_size() == 1) {
+      F->setName(Name + ".old");
+      NewFn = Intrinsic::getDeclaration(F->getParent(), Intrinsic::ctlz, Tys);
+      return true;
+    }
+    if (Name.startswith("cttz.") && F->arg_size() == 1) {
+      F->setName(Name + ".old");
+      NewFn = Intrinsic::getDeclaration(F->getParent(), Intrinsic::cttz, Tys);
+      return true;
+    }
+    break;
+  }
   }
 
   //  This may not belong here. This function is effectively being overloaded 
@@ -72,15 +85,29 @@ bool llvm::UpgradeGlobalVariable(GlobalVariable *GV) {
 // order to seamlessly integrate with existing context.
 void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   Function *F = CI->getCalledFunction();
+  LLVMContext &C = CI->getContext();
 
   assert(F && "CallInst has no function associated with it.");
 
-  if (NewFn) return;
-  
-  if (F->getName() == "llvm.something eventually") {
-    // UPGRADE HERE.
-  } else {
+  if (!NewFn) return;
+
+  IRBuilder<> Builder(C);
+  Builder.SetInsertPoint(CI->getParent(), CI);
+
+  switch (NewFn->getIntrinsicID()) {
+  default:
     llvm_unreachable("Unknown function for CallInst upgrade.");
+
+  case Intrinsic::ctlz:
+  case Intrinsic::cttz:
+    assert(CI->getNumArgOperands() == 1 &&
+           "Mismatch between function args and call args");
+    StringRef Name = CI->getName();
+    CI->setName(Name + ".old");
+    CI->replaceAllUsesWith(Builder.CreateCall2(NewFn, CI->getArgOperand(0),
+                                               Builder.getFalse(), Name));
+    CI->eraseFromParent();
+    return;
   }
 }
 
