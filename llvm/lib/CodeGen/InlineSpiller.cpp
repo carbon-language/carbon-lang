@@ -957,7 +957,7 @@ void InlineSpiller::reMaterializeAll() {
   if (DeadDefs.empty())
     return;
   DEBUG(dbgs() << "Remat created " << DeadDefs.size() << " dead defs.\n");
-  Edit->eliminateDeadDefs(DeadDefs, LIS, VRM, TII);
+  Edit->eliminateDeadDefs(DeadDefs, LIS, VRM, TII, RegsToSpill);
 
   // Get rid of deleted and empty intervals.
   for (unsigned i = RegsToSpill.size(); i != 0; --i) {
@@ -1240,7 +1240,7 @@ void InlineSpiller::spillAll() {
   // Hoisted spills may cause dead code.
   if (!DeadDefs.empty()) {
     DEBUG(dbgs() << "Eliminating " << DeadDefs.size() << " dead defs\n");
-    Edit->eliminateDeadDefs(DeadDefs, LIS, VRM, TII);
+    Edit->eliminateDeadDefs(DeadDefs, LIS, VRM, TII, RegsToSpill);
   }
 
   // Finally delete the SnippetCopies.

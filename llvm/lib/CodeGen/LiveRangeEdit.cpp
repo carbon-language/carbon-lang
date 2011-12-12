@@ -210,7 +210,8 @@ bool LiveRangeEdit::foldAsLoad(LiveInterval *LI,
 
 void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
                                       LiveIntervals &LIS, VirtRegMap &VRM,
-                                      const TargetInstrInfo &TII) {
+                                      const TargetInstrInfo &TII,
+                                      ArrayRef<unsigned> RegsBeingSpilled) {
   SetVector<LiveInterval*,
             SmallVector<LiveInterval*, 8>,
             SmallPtrSet<LiveInterval*, 8> > ToShrink;
@@ -290,6 +291,21 @@ void LiveRangeEdit::eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
       delegate_->LRE_WillShrinkVirtReg(LI->reg);
     if (!LIS.shrinkToUses(LI, &Dead))
       continue;
+    
+    // Don't create new intervals for a register being spilled.
+    // The new intervals would have to be spilled anyway so its not worth it.
+    // Also they currently aren't spilled so creating them and not spilling
+    // them results in incorrect code.
+    bool BeingSpilled = false;
+    for (unsigned i = 0, e = RegsBeingSpilled.size(); i != e; ++i) {
+      if (LI->reg == RegsBeingSpilled[i]) {
+        BeingSpilled = true;
+        break;
+      }
+    }
+    
+    if (BeingSpilled) continue;
+    
 
     // LI may have been separated, create new intervals.
     LI->RenumberValues(LIS);

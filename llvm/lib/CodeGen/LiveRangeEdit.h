@@ -191,9 +191,14 @@ public:
   /// eliminateDeadDefs - Try to delete machine instructions that are now dead
   /// (allDefsAreDead returns true). This may cause live intervals to be trimmed
   /// and further dead efs to be eliminated.
+  /// RegsBeingSpilled lists registers currently being spilled by the register
+  /// allocator.  These registers should not be split into new intervals
+  /// as currently those new intervals are not guaranteed to spill.
   void eliminateDeadDefs(SmallVectorImpl<MachineInstr*> &Dead,
                          LiveIntervals&, VirtRegMap&,
-                         const TargetInstrInfo&);
+                         const TargetInstrInfo&,
+                         ArrayRef<unsigned> RegsBeingSpilled 
+                          = ArrayRef<unsigned>());
 
   /// calculateRegClassAndHint - Recompute register class and hint for each new
   /// register.
