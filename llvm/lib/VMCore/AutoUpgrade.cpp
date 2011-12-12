@@ -41,15 +41,16 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
   switch (Name[0]) {
   default: break;
   case 'c': {
-    Type *Tys[] = { F->arg_begin()->getType() };
     if (Name.startswith("ctlz.") && F->arg_size() == 1) {
       F->setName(Name + ".old");
-      NewFn = Intrinsic::getDeclaration(F->getParent(), Intrinsic::ctlz, Tys);
+      NewFn = Intrinsic::getDeclaration(F->getParent(), Intrinsic::ctlz,
+                                        F->arg_begin()->getType());
       return true;
     }
     if (Name.startswith("cttz.") && F->arg_size() == 1) {
       F->setName(Name + ".old");
-      NewFn = Intrinsic::getDeclaration(F->getParent(), Intrinsic::cttz, Tys);
+      NewFn = Intrinsic::getDeclaration(F->getParent(), Intrinsic::cttz,
+                                        F->arg_begin()->getType());
       return true;
     }
     break;
