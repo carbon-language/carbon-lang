@@ -85,13 +85,10 @@ bool llvm::UpgradeGlobalVariable(GlobalVariable *GV) {
 // upgraded intrinsic. All argument and return casting must be provided in 
 // order to seamlessly integrate with existing context.
 void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
-  Function *F = CI->getCalledFunction();
-  LLVMContext &C = CI->getContext();
-
-  assert(F && "CallInst has no function associated with it.");
-
+  assert(CI->getCalledFunction() && "Intrinsic call is not direct?");
   if (!NewFn) return;
 
+  LLVMContext &C = CI->getContext();
   IRBuilder<> Builder(C);
   Builder.SetInsertPoint(CI->getParent(), CI);
 
