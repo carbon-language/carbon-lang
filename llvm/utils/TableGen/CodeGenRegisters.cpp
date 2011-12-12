@@ -582,6 +582,23 @@ void CodeGenRegBank::addToMaps(CodeGenRegisterClass *RC) {
   Key2RC.insert(std::make_pair(K, RC));
 }
 
+// Create a synthetic sub-class if it is missing.
+CodeGenRegisterClass*
+CodeGenRegBank::getOrCreateSubClass(const CodeGenRegisterClass *RC,
+                                    const CodeGenRegister::Set *Members,
+                                    StringRef Name) {
+  // Synthetic sub-class has the same size and alignment as RC.
+  CodeGenRegisterClass::Key K(Members, RC->SpillSize, RC->SpillAlignment);
+  RCKeyMap::const_iterator FoundI = Key2RC.find(K);
+  if (FoundI != Key2RC.end())
+    return FoundI->second;
+
+  // Sub-class doesn't exist, create a new one.
+  CodeGenRegisterClass *NewRC = new CodeGenRegisterClass(Name, K);
+  addToMaps(NewRC);
+  return NewRC;
+}
+
 CodeGenRegisterClass *CodeGenRegBank::getRegClass(Record *Def) {
   if (CodeGenRegisterClass *RC = Def2RC[Def])
     return RC;
@@ -778,21 +795,11 @@ void CodeGenRegBank::computeInferredRegisterClasses() {
         RC.setSubClassWithSubReg(SubIdx, &RC);
         continue;
       }
-
       // This is a real subset.  See if we have a matching class.
-      CodeGenRegisterClass::Key K(&I->second, RC.SpillSize, RC.SpillAlignment);
-      RCKeyMap::const_iterator FoundI = Key2RC.find(K);
-      if (FoundI != Key2RC.end()) {
-        RC.setSubClassWithSubReg(SubIdx, FoundI->second);
-        continue;
-      }
-
-      // Class doesn't exist.
-      CodeGenRegisterClass *NewRC =
-        new CodeGenRegisterClass(RC.getName() + "_with_" +
-                                 I->first->getName(), K);
-      addToMaps(NewRC);
-      RC.setSubClassWithSubReg(SubIdx, NewRC);
+      CodeGenRegisterClass *SubRC =
+        getOrCreateSubClass(&RC, &I->second,
+                            RC.getName() + "_with_" + I->first->getName());
+      RC.setSubClassWithSubReg(SubIdx, SubRC);
     }
   }
 }
