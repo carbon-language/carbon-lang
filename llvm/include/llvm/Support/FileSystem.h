@@ -389,12 +389,8 @@ error_code unique_file(const Twine &model, int &result_fd,
 
 /// @brief Canonicalize path.
 ///
-/// Sets result to the file system's idea of what path is. Path must be
-/// absolute. The result has the same case as the file system.
-///
-/// Example: Give a file system with "C:\a\b\c\file.txt".
-///
-/// C:\A\b\C\fIlE.TxT => C:\a\b\c\file.txt
+/// Sets result to the file system's idea of what path is. The result is always
+/// absolute and has the same capitalization as the file system.
 ///
 /// @param path Input path.
 /// @param result Set to the canonicalized version of \a path.

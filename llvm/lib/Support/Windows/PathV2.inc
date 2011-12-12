@@ -614,44 +614,6 @@ retry_create_file:
   return success;
 }
 
-error_code canonicalize(const Twine &path, SmallVectorImpl<char> &result) {
-  assert(path::is_absolute(path) && "path must be absolute!");
-  SmallString<128> path_storage;
-  StringRef p = path.toStringRef(path_storage);
-  SmallVector<wchar_t, 128> path_utf16;
-  result.set_size(0);
-
-  // Convert path to UTF-16.
-  if (error_code ec = UTF8ToUTF16(p, path_utf16))
-    return ec;
-
-  DWORD size = ::GetShortPathNameW(c_str(path_utf16), NULL, 0);
-  SmallVector<wchar_t, 128> short_path;
-  short_path.reserve(size + 1);
-  size = ::GetShortPathNameW( c_str(path_utf16)
-                            , short_path.data()
-                            , short_path.capacity());
-  if (!size)
-    return windows_error(::GetLastError());
-
-  short_path.set_size(size);
-
-  size = ::GetLongPathNameW(c_str(short_path), NULL, 0);
-  path_utf16.reserve(size + 1);
-  size = ::GetLongPathNameW( c_str(short_path)
-                           , path_utf16.data()
-                           , path_utf16.capacity());
-  if (!size)
-    return windows_error(::GetLastError());
-
-  path_utf16.set_size(size);
-
-  if (error_code ec = UTF16ToUTF8(path_utf16.data(), path_utf16.size(), result))
-    return ec;
-
-  return success;
-}
-
 error_code get_magic(const Twine &path, uint32_t len,
                      SmallVectorImpl<char> &result) {
   SmallString<128> path_storage;

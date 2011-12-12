@@ -128,24 +128,6 @@ struct FindHandleTraits : CommonHandleTraits {
   }
 };
 
-struct FileMappingHandleTraits : CommonHandleTraits {
-  static handle_type GetInvalid() {
-    return 0;
-  }
-};
-
-struct MappedViewOfFileHandleTraits : CommonHandleTraits {
-  typedef LPVOID handle_type;
-
-  static handle_type GetInvalid() {
-    return 0;
-  }
-
-  static void Close(handle_type h) {
-    ::UnmapViewOfFile(h);
-  }
-};
-
 struct FileHandleTraits : CommonHandleTraits {};
 
 typedef ScopedHandle<CommonHandleTraits> ScopedCommonHandle;
@@ -153,8 +135,6 @@ typedef ScopedHandle<FileHandleTraits>   ScopedFileHandle;
 typedef ScopedHandle<CryptContextTraits> ScopedCryptContext;
 typedef ScopedHandle<FindHandleTraits>   ScopedFindHandle;
 typedef ScopedHandle<JobHandleTraits>    ScopedJobHandle;
-typedef ScopedHandle<FileMappingHandleTraits> ScopedFileMappingHandle;
-typedef ScopedHandle<MappedViewOfFileHandleTraits> ScopedMappedViewOfFileHandle;
 
 namespace llvm {
 template <class T>

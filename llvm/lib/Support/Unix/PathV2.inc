@@ -431,13 +431,6 @@ rety_open_create:
   return success;
 }
 
-error_code canonicalize(const Twine &path, SmallVectorImpl<char> &result) {
-  // Paths are already canonicalized on posix systems.
-  assert(path::is_absolute(path) && "path must be absolute!");
-  path.toVector(result);
-  return success;
-}
-
 error_code detail::directory_iterator_construct(detail::DirIterState &it,
                                                 StringRef path){
   SmallString<128> path_null(path);
