@@ -212,28 +212,8 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
           CurPPLexer->MIOpt.GetControllingMacroAtEndOfFile()) {
       // Okay, this has a controlling macro, remember in HeaderFileInfo.
       if (const FileEntry *FE =
-            SourceMgr.getFileEntryForID(CurPPLexer->getFileID())) {
+            SourceMgr.getFileEntryForID(CurPPLexer->getFileID()))
         HeaderInfo.SetFileControllingMacro(FE, ControllingMacro);
-        
-        // Controlling macros are implicitly private.
-        if (MacroInfo *MI = getMacroInfo(
-                             const_cast<IdentifierInfo *>(ControllingMacro))) {
-          if (MI->getVisibilityLocation().isInvalid()) {
-            // FIXME: HACK! Mark controlling macros from system headers as
-            // exported, along with our own Clang headers. This is a gross
-            // hack to deal with the fact that system headers are included in
-            // many places within module headers, but are not themselves
-            // modularized.
-            if ((StringRef(FE->getName()).find("lib/clang") 
-                   == StringRef::npos) &&
-                (StringRef(FE->getName()).find("usr/include") 
-                   == StringRef::npos) &&
-                (StringRef(FE->getName()).find("usr/local/include") 
-                   == StringRef::npos))            
-              MI->setVisibility(false, SourceLocation());
-          }
-        }
-      }
     }
   }
 
