@@ -37,7 +37,7 @@ void MCELF::SetType(MCSymbolData &SD, unsigned Type) {
   assert(Type == ELF::STT_NOTYPE || Type == ELF::STT_OBJECT ||
          Type == ELF::STT_FUNC || Type == ELF::STT_SECTION ||
          Type == ELF::STT_FILE || Type == ELF::STT_COMMON ||
-         Type == ELF::STT_TLS);
+         Type == ELF::STT_TLS || Type == ELF::STT_GNU_IFUNC);
 
   uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STT_Shift);
   SD.setFlags(OtherFlags | (Type << ELF_STT_Shift));
@@ -48,7 +48,7 @@ unsigned MCELF::GetType(const MCSymbolData &SD) {
   assert(Type == ELF::STT_NOTYPE || Type == ELF::STT_OBJECT ||
          Type == ELF::STT_FUNC || Type == ELF::STT_SECTION ||
          Type == ELF::STT_FILE || Type == ELF::STT_COMMON ||
-         Type == ELF::STT_TLS);
+         Type == ELF::STT_TLS || Type == ELF::STT_GNU_IFUNC);
   return Type;
 }
 

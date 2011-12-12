@@ -130,7 +130,6 @@ void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_WeakDefinition:
   case MCSA_WeakDefAutoPrivate:
   case MCSA_Invalid:
-  case MCSA_ELF_TypeIndFunction:
   case MCSA_IndirectSymbol:
     assert(0 && "Invalid symbol attribute for ELF!");
     break;
@@ -160,6 +159,10 @@ void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
 
   case MCSA_ELF_TypeFunction:
     MCELF::SetType(SD, ELF::STT_FUNC);
+    break;
+
+  case MCSA_ELF_TypeIndFunction:
+    MCELF::SetType(SD, ELF::STT_GNU_IFUNC);
     break;
 
   case MCSA_ELF_TypeObject:

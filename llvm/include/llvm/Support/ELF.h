@@ -888,6 +888,7 @@ enum {
   STT_TLS     = 6,   // Thread local data object
   STT_LOOS    = 7,   // Lowest operating system-specific symbol type
   STT_HIOS    = 8,   // Highest operating system-specific symbol type
+  STT_GNU_IFUNC = 10, // GNU indirect function
   STT_LOPROC  = 13,  // Lowest processor-specific symbol type
   STT_HIPROC  = 15   // Highest processor-specific symbol type
 };
