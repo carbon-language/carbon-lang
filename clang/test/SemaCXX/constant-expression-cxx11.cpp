@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple i686-linux -fsyntax-only -verify -std=c++11 %s
+// RUN: %clang_cc1 -triple i686-linux -fsyntax-only -verify -std=c++11 -pedantic %s -Wno-comment
 
 namespace StaticAssertFoldTest {
 
@@ -165,7 +165,7 @@ namespace FunctionCast {
   constexpr int f() { return 1; }
   typedef double (*DoubleFn)();
   typedef int (*IntFn)();
-  int a[(int)DoubleFn(f)()]; // expected-error {{variable length array}}
+  int a[(int)DoubleFn(f)()]; // expected-error {{variable length array}} expected-warning{{extension}}
   int b[(int)IntFn(f)()];    // ok
 }
 
@@ -297,6 +297,31 @@ constexpr S* sptr = &s;
 // test elsewhere.
 constexpr bool dyncast = sptr == dynamic_cast<S*>(sptr);
 
+struct Str {
+  // FIXME: In C++ mode, we should say 'integral' not 'integer'
+  int a : dynamic_cast<S*>(sptr) == dynamic_cast<S*>(sptr); // \
+    expected-warning {{not integer constant expression}} \
+    expected-note {{dynamic_cast not allowed in a constant expression}}
+  int b : reinterpret_cast<S*>(sptr) == reinterpret_cast<S*>(sptr); // \
+    expected-warning {{not integer constant expression}} \
+    expected-note {{reinterpret_cast not allowed in a constant expression}}
+  int c : (S*)(long)(sptr) == (S*)(long)(sptr); // \
+    expected-warning {{not integer constant expression}} \
+    expected-note {{reinterpreting cast not allowed in a constant expression}}
+  int d : (S*)(42) == (S*)(42); // \
+    expected-warning {{not integer constant expression}} \
+    expected-note {{reinterpreting cast not allowed in a constant expression}}
+  int e : (Str*)(sptr) == (Str*)(sptr); // \
+    expected-warning {{not integer constant expression}} \
+    expected-note {{reinterpreting cast not allowed in a constant expression}}
+  int f : &(Str&)(*sptr) == &(Str&)(*sptr); // \
+    expected-warning {{not integer constant expression}} \
+    expected-note {{reinterpreting cast not allowed in a constant expression}}
+  int g : (S*)(void*)(sptr) == sptr; // \
+    expected-warning {{not integer constant expression}} \
+    expected-note {{reinterpreting cast not allowed in a constant expression}}
+};
+
 extern char externalvar[];
 // FIXME: This is not a constant expression; check we reject this and move this
 // test elsewhere.
@@ -414,7 +439,7 @@ static_assert((&zs[0][0][0][2])[-1] == 2, "");
 static_assert(**(**(zs + 1) + 1) == 11, "");
 static_assert(*(&(&(*(*&(&zs[2] - 1)[0] + 2 - 2))[2])[-1][-1] + 1) == 11, "");
 
-constexpr int arr[40] = { 1, 2, 3, [8] = 4 };
+constexpr int arr[40] = { 1, 2, 3, [8] = 4 }; // expected-warning {{extension}}
 constexpr int SumNonzero(const int *p) {
   return *p + (*p ? SumNonzero(p+1) : 0);
 }
@@ -677,7 +702,7 @@ union U {
   int b;
 };
 
-constexpr U u[4] = { { .a = 0 }, { .b = 1 }, { .a = 2 }, { .b = 3 } };
+constexpr U u[4] = { { .a = 0 }, { .b = 1 }, { .a = 2 }, { .b = 3 } }; // expected-warning 4{{extension}}
 static_assert(u[0].a == 0, "");
 static_assert(u[0].b, ""); // expected-error {{constant expression}}
 static_assert(u[1].b == 1, "");

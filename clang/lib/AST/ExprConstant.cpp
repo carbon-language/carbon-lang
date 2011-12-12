@@ -1616,6 +1616,15 @@ public:
   RetTy VisitCXXDefaultArgExpr(const CXXDefaultArgExpr *E)
     { return StmtVisitorTy::Visit(E->getExpr()); }
 
+  RetTy VisitCXXReinterpretCastExpr(const CXXReinterpretCastExpr *E) {
+    CCEDiag(E, diag::note_constexpr_invalid_cast) << 0;
+    return static_cast<Derived*>(this)->VisitCastExpr(E);
+  }
+  RetTy VisitCXXDynamicCastExpr(const CXXDynamicCastExpr *E) {
+    CCEDiag(E, diag::note_constexpr_invalid_cast) << 1;
+    return static_cast<Derived*>(this)->VisitCastExpr(E);
+  }
+
   RetTy VisitBinaryOperator(const BinaryOperator *E) {
     switch (E->getOpcode()) {
     default:
@@ -1988,6 +1997,7 @@ public:
       return LValueExprEvaluatorBaseTy::VisitCastExpr(E);
 
     case CK_LValueBitCast:
+      this->CCEDiag(E, diag::note_constexpr_invalid_cast) << 2;
       if (!Visit(E->getSubExpr()))
         return false;
       Result.Designator.setInvalid();
@@ -2213,6 +2223,11 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
   case CK_CPointerToObjCPointerCast:
   case CK_BlockPointerToObjCPointerCast:
   case CK_AnyPointerToBlockPointerCast:
+    // Bitcasts to cv void* are static_casts, not reinterpret_casts, so are
+    // permitted in constant expressions in C++11. Bitcasts from cv void* are
+    // also static_casts, but we disallow them as a resolution to DR1312.
+    if (!E->getType()->isVoidPointerType())
+      CCEDiag(E, diag::note_constexpr_invalid_cast) << 2;
     if (!Visit(SubExpr))
       return false;
     Result.Designator.setInvalid();
@@ -2251,6 +2266,8 @@ bool PointerExprEvaluator::VisitCastExpr(const CastExpr* E) {
     return ValueInitialization(E);
 
   case CK_IntegralToPointer: {
+    CCEDiag(E, diag::note_constexpr_invalid_cast) << 2;
+
     CCValue Value;
     if (!EvaluateIntegerOrLValue(SubExpr, Value, Info))
       break;
@@ -3826,6 +3843,8 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
   }
 
   case CK_PointerToIntegral: {
+    CCEDiag(E, diag::note_constexpr_invalid_cast) << 2;
+
     LValue LV;
     if (!EvaluatePointer(SubExpr, LV, Info))
       return false;
