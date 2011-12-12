@@ -1548,6 +1548,8 @@ private:
   void ParseMicrosoftIfExistsExternalDeclaration();
   void ParseMicrosoftIfExistsClassDeclaration(DeclSpec::TST TagType,
                                               AccessSpecifier& CurAS);
+  bool ParseMicrosoftIfExistsBraceInitializer(ExprVector &InitExprs,
+                                              bool &InitExprsOk);
   bool ParseAsmOperandsOpt(SmallVectorImpl<IdentifierInfo *> &Names,
                            SmallVectorImpl<Expr *> &Constraints,
                            SmallVectorImpl<Expr *> &Exprs);

@@ -47,6 +47,12 @@ void f(T t) {
     int *i = t; // expected-error{{no viable conversion from 'HasFoo' to 'int *'}}
     { }
   }
+
+  int array2[] = {
+    0, 
+    __if_exists(T::bar) {2, }// expected-warning{{dependent __if_exists declarations are ignored}}
+    3
+  };
 }
 
 template void f(HasFoo); // expected-note{{in instantiation of function template specialization 'f<HasFoo>' requested here}}

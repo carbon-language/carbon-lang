@@ -340,6 +340,17 @@ ExprResult Parser::ParseBraceInitializer() {
   bool InitExprsOk = true;
 
   while (1) {
+    // Handle Microsoft __if_exists/if_not_exists if necessary.
+    if (getLang().MicrosoftExt && (Tok.is(tok::kw___if_exists) ||
+        Tok.is(tok::kw___if_not_exists))) {
+      if (ParseMicrosoftIfExistsBraceInitializer(InitExprs, InitExprsOk)) {
+        if (Tok.isNot(tok::comma)) break;
+        ConsumeToken();
+      }
+      if (Tok.is(tok::r_brace)) break;
+      continue;
+    }
+
     // Parse: designation[opt] initializer
 
     // If we know that this cannot be a designation, just parse the nested
@@ -392,3 +403,66 @@ ExprResult Parser::ParseBraceInitializer() {
   return ExprError(); // an error occurred.
 }
 
+
+// Return true if a comma (or closing brace) is necessary after the
+// __if_exists/if_not_exists statement.
+bool Parser::ParseMicrosoftIfExistsBraceInitializer(ExprVector &InitExprs,
+                                                    bool &InitExprsOk) {
+  bool trailingComma = false;
+  IfExistsCondition Result;
+  if (ParseMicrosoftIfExistsCondition(Result))
+    return false;
+  
+  BalancedDelimiterTracker Braces(*this, tok::l_brace);
+  if (Braces.consumeOpen()) {
+    Diag(Tok, diag::err_expected_lbrace);
+    return false;
+  }
+
+  switch (Result.Behavior) {
+  case IEB_Parse:
+    // Parse the declarations below.
+    break;
+        
+  case IEB_Dependent:
+    Diag(Result.KeywordLoc, diag::warn_microsoft_dependent_exists)
+      << Result.IsIfExists;
+    // Fall through to skip.
+      
+  case IEB_Skip:
+    Braces.skipToEnd();
+    return false;
+  }
+
+  while (Tok.isNot(tok::eof)) {
+    trailingComma = false;
+    // If we know that this cannot be a designation, just parse the nested
+    // initializer directly.
+    ExprResult SubElt;
+    if (MayBeDesignationStart(Tok.getKind(), PP))
+      SubElt = ParseInitializerWithPotentialDesignator();
+    else
+      SubElt = ParseInitializer();
+
+    if (Tok.is(tok::ellipsis))
+      SubElt = Actions.ActOnPackExpansion(SubElt.get(), ConsumeToken());
+    
+    // If we couldn't parse the subelement, bail out.
+    if (!SubElt.isInvalid())
+      InitExprs.push_back(SubElt.release());
+    else
+      InitExprsOk = false;
+
+    if (Tok.is(tok::comma)) {
+      ConsumeToken();
+      trailingComma = true;
+    }
+
+    if (Tok.is(tok::r_brace))
+      break;
+  }
+
+  Braces.consumeClose();
+
+  return !trailingComma;
+}
