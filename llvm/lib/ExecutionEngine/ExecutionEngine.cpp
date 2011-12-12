@@ -28,6 +28,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include <cmath>
@@ -41,14 +42,12 @@ ExecutionEngine *(*ExecutionEngine::JITCtor)(
   Module *M,
   std::string *ErrorStr,
   JITMemoryManager *JMM,
-  CodeGenOpt::Level OptLevel,
   bool GVsWithCode,
   TargetMachine *TM) = 0;
 ExecutionEngine *(*ExecutionEngine::MCJITCtor)(
   Module *M,
   std::string *ErrorStr,
   JITMemoryManager *JMM,
-  CodeGenOpt::Level OptLevel,
   bool GVsWithCode,
   TargetMachine *TM) = 0;
 ExecutionEngine *(*ExecutionEngine::InterpCtor)(Module *M,
@@ -436,13 +435,14 @@ ExecutionEngine *ExecutionEngine::createJIT(Module *M,
   StringRef MCPU = "";
   SmallVector<std::string, 1> MAttrs;
 
+  Triple TT(M->getTargetTriple());
   // TODO: permit custom TargetOptions here
   TargetMachine *TM =
-    EngineBuilder::selectTarget(M, MArch, MCPU, MAttrs, TargetOptions(), RM,
+    EngineBuilder::selectTarget(TT, MArch, MCPU, MAttrs, TargetOptions(), RM,
                                 CMM, OL, ErrorStr);
   if (!TM || (ErrorStr && ErrorStr->length() > 0)) return 0;
 
-  return ExecutionEngine::JITCtor(M, ErrorStr, JMM, OL, GVsWithCode, TM);
+  return ExecutionEngine::JITCtor(M, ErrorStr, JMM, GVsWithCode, TM);
 }
 
 ExecutionEngine *EngineBuilder::create() {
@@ -467,18 +467,25 @@ ExecutionEngine *EngineBuilder::create() {
   // Unless the interpreter was explicitly selected or the JIT is not linked,
   // try making a JIT.
   if (WhichEngine & EngineKind::JIT) {
-    if (TargetMachine *TM = EngineBuilder::selectTarget(M, MArch, MCPU, MAttrs,
+    Triple TT(M->getTargetTriple());
+    if (TargetMachine *TM = EngineBuilder::selectTarget(TT, MArch, MCPU, MAttrs,
                                                         Options,
                                                         RelocModel, CMModel,
                                                         OptLevel, ErrorStr)) {
+      if (!TM->getTarget().hasJIT()) {
+        errs() << "WARNING: This target JIT is not designed for the host"
+               << " you are running.  If bad things happen, please choose"
+               << " a different -march switch.\n";
+      }
+
       if (UseMCJIT && ExecutionEngine::MCJITCtor) {
         ExecutionEngine *EE =
-          ExecutionEngine::MCJITCtor(M, ErrorStr, JMM, OptLevel,
+          ExecutionEngine::MCJITCtor(M, ErrorStr, JMM,
                                      AllocateGVsWithCode, TM);
         if (EE) return EE;
       } else if (ExecutionEngine::JITCtor) {
         ExecutionEngine *EE =
-          ExecutionEngine::JITCtor(M, ErrorStr, JMM, OptLevel,
+          ExecutionEngine::JITCtor(M, ErrorStr, JMM,
                                    AllocateGVsWithCode, TM);
         if (EE) return EE;
       }

@@ -42,6 +42,7 @@ class MachineCodeInfo;
 class Module;
 class MutexGuard;
 class TargetData;
+class Triple;
 class Type;
 
 /// \brief Helper class for helping synchronize access to the global address map
@@ -133,14 +134,12 @@ protected:
     Module *M,
     std::string *ErrorStr,
     JITMemoryManager *JMM,
-    CodeGenOpt::Level OptLevel,
     bool GVsWithCode,
     TargetMachine *TM);
   static ExecutionEngine *(*MCJITCtor)(
     Module *M,
     std::string *ErrorStr,
     JITMemoryManager *JMM,
-    CodeGenOpt::Level OptLevel,
     bool GVsWithCode,
     TargetMachine *TM);
   static ExecutionEngine *(*InterpCtor)(Module *M, std::string *ErrorStr);
@@ -584,7 +583,7 @@ public:
 
   /// selectTarget - Pick a target either via -march or by guessing the native
   /// arch.  Add any CPU features specified via -mcpu or -mattr.
-  static TargetMachine *selectTarget(Module *M,
+  static TargetMachine *selectTarget(const Triple &TargetTriple,
                                      StringRef MArch,
                                      StringRef MCPU,
                                      const SmallVectorImpl<std::string>& MAttrs,

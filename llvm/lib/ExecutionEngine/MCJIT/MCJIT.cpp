@@ -36,7 +36,6 @@ extern "C" void LLVMLinkInMCJIT() {
 ExecutionEngine *MCJIT::createJIT(Module *M,
                                   std::string *ErrorStr,
                                   JITMemoryManager *JMM,
-                                  CodeGenOpt::Level OptLevel,
                                   bool GVsWithCode,
                                   TargetMachine *TM) {
   // Try to register the program as a source of symbols to resolve against.
@@ -46,8 +45,7 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
 
   // If the target supports JIT code generation, create the JIT.
   if (TargetJITInfo *TJ = TM->getJITInfo())
-    return new MCJIT(M, TM, *TJ, new MCJITMemoryManager(JMM, M), OptLevel,
-                     GVsWithCode);
+    return new MCJIT(M, TM, *TJ, new MCJITMemoryManager(JMM, M), GVsWithCode);
 
   if (ErrorStr)
     *ErrorStr = "target does not support JIT code generation";
@@ -55,8 +53,7 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
 }
 
 MCJIT::MCJIT(Module *m, TargetMachine *tm, TargetJITInfo &tji,
-             RTDyldMemoryManager *MM, CodeGenOpt::Level OptLevel,
-             bool AllocateGVsWithCode)
+             RTDyldMemoryManager *MM, bool AllocateGVsWithCode)
   : ExecutionEngine(m), TM(tm), MemMgr(MM), M(m), OS(Buffer), Dyld(MM) {
 
   setTargetData(TM->getTargetData());

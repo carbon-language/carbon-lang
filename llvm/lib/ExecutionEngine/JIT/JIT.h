@@ -78,8 +78,7 @@ class JIT : public ExecutionEngine {
 
 
   JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
-      JITMemoryManager *JMM, CodeGenOpt::Level OptLevel,
-      bool AllocateGVsWithCode);
+      JITMemoryManager *JMM, bool AllocateGVsWithCode);
 public:
   ~JIT();
 
@@ -185,7 +184,6 @@ public:
   static ExecutionEngine *createJIT(Module *M,
                                     std::string *ErrorStr,
                                     JITMemoryManager *JMM,
-                                    CodeGenOpt::Level OptLevel,
                                     bool GVsWithCode,
                                     TargetMachine *TM);
 

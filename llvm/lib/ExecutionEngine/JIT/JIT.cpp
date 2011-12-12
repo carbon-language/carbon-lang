@@ -206,7 +206,6 @@ void DarwinRegisterFrame(void* FrameBegin) {
 ExecutionEngine *JIT::createJIT(Module *M,
                                 std::string *ErrorStr,
                                 JITMemoryManager *JMM,
-                                CodeGenOpt::Level OptLevel,
                                 bool GVsWithCode,
                                 TargetMachine *TM) {
   // Try to register the program as a source of symbols to resolve against.
@@ -216,7 +215,7 @@ ExecutionEngine *JIT::createJIT(Module *M,
 
   // If the target supports JIT code generation, create the JIT.
   if (TargetJITInfo *TJ = TM->getJITInfo()) {
-    return new JIT(M, *TM, *TJ, JMM, OptLevel, GVsWithCode);
+    return new JIT(M, *TM, *TJ, JMM, GVsWithCode);
   } else {
     if (ErrorStr)
       *ErrorStr = "target does not support JIT code generation";
@@ -268,7 +267,7 @@ extern "C" {
 }
 
 JIT::JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
-         JITMemoryManager *JMM, CodeGenOpt::Level OptLevel, bool GVsWithCode)
+         JITMemoryManager *JMM, bool GVsWithCode)
   : ExecutionEngine(M), TM(tm), TJI(tji), AllocateGVsWithCode(GVsWithCode),
     isAlreadyCodeGenerating(false) {
   setTargetData(TM.getTargetData());

@@ -24,8 +24,7 @@ namespace llvm {
 
 class MCJIT : public ExecutionEngine {
   MCJIT(Module *M, TargetMachine *tm, TargetJITInfo &tji,
-        RTDyldMemoryManager *MemMgr, CodeGenOpt::Level OptLevel,
-        bool AllocateGVsWithCode);
+        RTDyldMemoryManager *MemMgr, bool AllocateGVsWithCode);
 
   TargetMachine *TM;
   MCContext *Ctx;
@@ -79,7 +78,6 @@ public:
   static ExecutionEngine *createJIT(Module *M,
                                     std::string *ErrorStr,
                                     JITMemoryManager *JMM,
-                                    CodeGenOpt::Level OptLevel,
                                     bool GVsWithCode,
                                     TargetMachine *TM);
 
