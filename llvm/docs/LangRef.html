@@ -7335,12 +7335,12 @@ LLVM</a>.</p>
    targets support all bit widths or vector types, however.</p>
 
 <pre>
-  declare i8 @llvm.ctlz.i8 (i8  &lt;src&gt;)
-  declare i16 @llvm.ctlz.i16(i16 &lt;src&gt;)
-  declare i32 @llvm.ctlz.i32(i32 &lt;src&gt;)
-  declare i64 @llvm.ctlz.i64(i64 &lt;src&gt;)
-  declare i256 @llvm.ctlz.i256(i256 &lt;src&gt;)
-  declare &lt;2 x i32&gt; @llvm.ctlz.v2i32(&lt;2 x i32&gt; &lt;src;gt)
+  declare i8   @llvm.ctlz.i8  (i8   &lt;src&gt;, i1 &lt;is_zero_undef&gt;)
+  declare i16  @llvm.ctlz.i16 (i16  &lt;src&gt;, i1 &lt;is_zero_undef&gt;)
+  declare i32  @llvm.ctlz.i32 (i32  &lt;src&gt;, i1 &lt;is_zero_undef&gt;)
+  declare i64  @llvm.ctlz.i64 (i64  &lt;src&gt;, i1 &lt;is_zero_undef&gt;)
+  declare i256 @llvm.ctlz.i256(i256 &lt;src&gt;, i1 &lt;is_zero_undef&gt;)
+  declase &lt;2 x i32&gt; @llvm.ctlz.v2i32(&lt;2 x i32&gt; &lt;src&gt;, i1 &lt;is_zero_undef&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -7348,15 +7348,22 @@ LLVM</a>.</p>
    leading zeros in a variable.</p>
 
 <h5>Arguments:</h5>
-<p>The only argument is the value to be counted.  The argument may be of any
-   integer type, or any vector type with integer element type.
-   The return type must match the argument type.</p>
+<p>The first argument is the value to be counted. This argument may be of any
+   integer type, or a vectory with integer element type. The return type
+   must match the first argument type.</p>
+
+<p>The second argument must be a constant and is a flag to indicate whether the
+   intrinsic should ensure that a zero as the first argument produces a defined
+   result. Historically some architectures did not provide a defined result for
+   zero values as efficiently, and many algorithms are now predicated on
+   avoiding zero-value inputs.</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>llvm.ctlz</tt>' intrinsic counts the leading (most significant)
-   zeros in a variable, or within each element of the vector if the operation
-   is of vector type.  If the src == 0 then the result is the size in bits of
-   the type of src. For example, <tt>llvm.ctlz(i32 2) = 30</tt>.</p>
+   zeros in a variable, or within each element of the vector.
+   If <tt>src == 0</tt> then the result is the size in bits of the type of
+   <tt>src</tt> if <tt>is_zero_undef == 0</tt> and <tt>undef</tt> otherwise.
+   For example, <tt>llvm.ctlz(i32 2) = 30</tt>.</p>
 
 </div>
 
@@ -7373,12 +7380,12 @@ LLVM</a>.</p>
    support all bit widths or vector types, however.</p>
 
 <pre>
-  declare i8 @llvm.cttz.i8 (i8  &lt;src&gt;)
-  declare i16 @llvm.cttz.i16(i16 &lt;src&gt;)
-  declare i32 @llvm.cttz.i32(i32 &lt;src&gt;)
-  declare i64 @llvm.cttz.i64(i64 &lt;src&gt;)
-  declare i256 @llvm.cttz.i256(i256 &lt;src&gt;)
-  declase &lt;2 x i32&gt; @llvm.cttz.v2i32(&lt;2 x i32&gt; &lt;src&gt;)
+  declare i8   @llvm.cttz.i8  (i8   &lt;src&gt;, i1 &lt;is_zero_undef&gt;)
+  declare i16  @llvm.cttz.i16 (i16  &lt;src&gt;, i1 &lt;is_zero_undef&gt;)
+  declare i32  @llvm.cttz.i32 (i32  &lt;src&gt;, i1 &lt;is_zero_undef&gt;)
+  declare i64  @llvm.cttz.i64 (i64  &lt;src&gt;, i1 &lt;is_zero_undef&gt;)
+  declare i256 @llvm.cttz.i256(i256 &lt;src&gt;, i1 &lt;is_zero_undef&gt;)
+  declase &lt;2 x i32&gt; @llvm.cttz.v2i32(&lt;2 x i32&gt; &lt;src&gt;, i1 &lt;is_zero_undef&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -7386,15 +7393,22 @@ LLVM</a>.</p>
    trailing zeros.</p>
 
 <h5>Arguments:</h5>
-<p>The only argument is the value to be counted.  The argument may be of any
-   integer type, or a vectory with integer element type..  The return type
-   must match the argument type.</p>
+<p>The first argument is the value to be counted. This argument may be of any
+   integer type, or a vectory with integer element type. The return type
+   must match the first argument type.</p>
+
+<p>The second argument must be a constant and is a flag to indicate whether the
+   intrinsic should ensure that a zero as the first argument produces a defined
+   result. Historically some architectures did not provide a defined result for
+   zero values as efficiently, and many algorithms are now predicated on
+   avoiding zero-value inputs.</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>llvm.cttz</tt>' intrinsic counts the trailing (least significant)
    zeros in a variable, or within each element of a vector.
-   If the src == 0 then the result is the size in bits of
-   the type of src.  For example, <tt>llvm.cttz(2) = 1</tt>.</p>
+   If <tt>src == 0</tt> then the result is the size in bits of the type of
+   <tt>src</tt> if <tt>is_zero_undef == 0</tt> and <tt>undef</tt> otherwise.
+   For example, <tt>llvm.cttz(2) = 1</tt>.</p>
 
 </div>
 
