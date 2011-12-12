@@ -1444,10 +1444,10 @@ SymbolFileDWARF::ParseChildMembers
                             member_accessibilities.push_back(accessibility);
 
                             field_decl = GetClangASTContext().AddFieldToRecordType (class_clang_type, 
-                                                                       name, 
-                                                                       member_type->GetClangLayoutType(), 
-                                                                       accessibility, 
-                                                                       bit_size);
+                                                                                    name, 
+                                                                                    member_type->GetClangLayoutType(), 
+                                                                                    accessibility, 
+                                                                                    bit_size);
                         }
                         else
                         {
@@ -3341,7 +3341,9 @@ SymbolFileDWARF::ParseChildParameters (const SymbolContext& sc,
                         {
                             function_param_types.push_back (type->GetClangForwardType());
 
-                            clang::ParmVarDecl *param_var_decl = GetClangASTContext().CreateParameterDeclaration (name, type->GetClangForwardType(), storage);
+                            clang::ParmVarDecl *param_var_decl = GetClangASTContext().CreateParameterDeclaration (name, 
+                                                                                                                  type->GetClangForwardType(), 
+                                                                                                                  storage);
                             assert(param_var_decl);
                             function_param_decls.push_back(param_var_decl);
                         }
@@ -4793,7 +4795,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         func_type = ResolveTypeUID(type_die_offset);
 
                     if (func_type)
-                        return_clang_type = func_type->GetClangLayoutType();
+                        return_clang_type = func_type->GetClangForwardType();
                     else
                         return_clang_type = ast.GetBuiltInType_void();
 
@@ -5116,7 +5118,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 element_orders.push_back (1);
                             if (byte_stride == 0 && bit_stride == 0)
                                 byte_stride = element_type->GetByteSize();
-                            clang_type_t array_element_type = element_type->GetClangFullType();
+                            clang_type_t array_element_type = element_type->GetClangForwardType();
                             uint64_t array_element_bit_stride = byte_stride * 8 + bit_stride;
                             uint64_t num_elements = 0;
                             std::vector<uint64_t>::const_reverse_iterator pos;
@@ -6002,7 +6004,7 @@ SymbolFileDWARF::SearchDeclContext (const clang::DeclContext *decl_context,
                 
                 Type *matching_type = ResolveType (dwarf_cu, die);
                 
-                lldb::clang_type_t type = matching_type->GetClangFullType();
+                lldb::clang_type_t type = matching_type->GetClangForwardType();
                 clang::QualType qual_type = clang::QualType::getFromOpaquePtr(type);
                 
                 if (const clang::TagType *tag_type = llvm::dyn_cast<clang::TagType>(qual_type.getTypePtr()))
