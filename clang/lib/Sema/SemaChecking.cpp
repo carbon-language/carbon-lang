@@ -4275,7 +4275,7 @@ static bool IsTailPaddedMemberArray(Sema &S, llvm::APInt Size,
 
 void Sema::CheckArrayAccess(const Expr *BaseExpr, const Expr *IndexExpr,
                             bool isSubscript, bool AllowOnePastEnd) {
-  const Type* EffectiveType = getElementType(BaseExpr);
+  const Type *EffectiveType = getElementType(BaseExpr);
   BaseExpr = BaseExpr->IgnoreParenCasts();
   IndexExpr = IndexExpr->IgnoreParenCasts();
 
@@ -4381,6 +4381,16 @@ void Sema::CheckArrayAccess(const Expr *expr) {
     switch (expr->getStmtClass()) {
       case Stmt::ArraySubscriptExprClass: {
         const ArraySubscriptExpr *ASE = cast<ArraySubscriptExpr>(expr);
+        // Suppress the warning if the subscript expression (as identified by
+        // the ']' location) and the index expression are both from macro
+        // expansions within a system header.
+        SourceLocation RBracketLoc = SourceMgr.getSpellingLoc(
+            ASE->getRBracketLoc());
+        SourceLocation IndexLoc = SourceMgr.getSpellingLoc(
+            ASE->getIdx()->IgnoreParens()->getLocStart());
+        if (SourceMgr.isFromSameFile(RBracketLoc, IndexLoc) &&
+            SourceMgr.isInSystemHeader(RBracketLoc))
+          return;
         CheckArrayAccess(ASE->getBase(), ASE->getIdx(), true,
                          AllowOnePastEnd > 0);
         return;
