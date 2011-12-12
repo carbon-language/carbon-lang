@@ -2255,6 +2255,7 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       // guards against loops in the middle of a sequence.
       if (SomeSuccHasSame && !AllSuccsHaveSame)
         S.ClearSequenceProgress();
+      break;
     }
     case S_CanRelease: {
       const Value *Arg = I->first;
@@ -2289,6 +2290,7 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       // guards against loops in the middle of a sequence.
       if (SomeSuccHasSame && !AllSuccsHaveSame)
         S.ClearSequenceProgress();
+      break;
     }
     }
 }
