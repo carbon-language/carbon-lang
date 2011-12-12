@@ -1478,7 +1478,7 @@ namespace {
     /// metadata.
     unsigned ImpreciseReleaseMDKind;
 
-    /// CopyOnEscape - The Metadata Kind for clang.arc.copy_on_escape
+    /// CopyOnEscapeMDKind - The Metadata Kind for clang.arc.copy_on_escape
     /// metadata.
     unsigned CopyOnEscapeMDKind;
 
