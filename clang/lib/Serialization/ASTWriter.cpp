@@ -1970,7 +1970,7 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
     if (!Mod->Imports.empty()) {
       Record.clear();
       for (unsigned I = 0, N = Mod->Imports.size(); I != N; ++I) {
-        unsigned ImportedID = SubmoduleIDs[Mod->Imports[I]];
+        unsigned ImportedID = getSubmoduleID(Mod->Imports[I]);
         assert(ImportedID && "Unknown submodule!");                                           
         Record.push_back(ImportedID);
       }
@@ -1981,10 +1981,14 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
     if (!Mod->Exports.empty()) {
       Record.clear();
       for (unsigned I = 0, N = Mod->Exports.size(); I != N; ++I) {
-        unsigned ExportedID = SubmoduleIDs[Mod->Exports[I].getPointer()];
-        assert((ExportedID || !Mod->Exports[I].getPointer()) &&
-               "Unknown submodule!");                                           
-        Record.push_back(ExportedID);
+        if (Module *Exported = Mod->Exports[I].getPointer()) {
+          unsigned ExportedID = SubmoduleIDs[Exported];
+          assert(ExportedID > 0 && "Unknown submodule ID?");
+          Record.push_back(ExportedID);
+        } else {
+          Record.push_back(0);
+        }
+        
         Record.push_back(Mod->Exports[I].getInt());
       }
       Stream.EmitRecord(SUBMODULE_EXPORTS, Record);
