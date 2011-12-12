@@ -3134,7 +3134,7 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
            UE = Alloca->use_end(); UI != UE; ) {
         CallInst *UserInst = cast<CallInst>(*UI++);
         if (!UserInst->use_empty())
-          UserInst->replaceAllUsesWith(UserInst->getOperand(1));
+          UserInst->replaceAllUsesWith(UserInst->getArgOperand(0));
         UserInst->eraseFromParent();
       }
       Alloca->eraseFromParent();
