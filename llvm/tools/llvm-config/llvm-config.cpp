@@ -300,6 +300,10 @@ int main(int argc, char **argv) {
     usage();
 
   if (PrintLibs || PrintLibNames || PrintLibFiles) {
+    // If no components were specified, default to "all".
+    if (Components.empty())
+      Components.push_back("all");
+
     // Construct the list of all the required libraries.
     std::vector<StringRef> RequiredLibs;
     ComputeLibsForComponents(Components, RequiredLibs);
