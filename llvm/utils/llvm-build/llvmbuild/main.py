@@ -1,3 +1,4 @@
+import StringIO
 import os
 import sys
 
@@ -231,7 +232,22 @@ class LLVMProjectInfo(object):
             if not os.path.exists(directory_path):
                 os.makedirs(directory_path)
 
-            # Create the LLVMBuild file.
+            # In an effort to preserve comments (which aren't parsed), read in
+            # the original file and extract the comments. We only know how to
+            # associate comments that prefix a section name.
+            f = open(infos[0]._source_path)
+            comments_map = {}
+            comment_block = ""
+            for ln in f:
+                if ln.startswith(';'):
+                    comment_block += ln
+                elif ln.startswith('[') and ln.endswith(']\n'):
+                    comments_map[ln[:-1]] = comment_block
+                else:
+                    comment_block = ""
+            f.close()
+
+            # Create the LLVMBuild fil[e.
             file_path = os.path.join(directory_path, 'LLVMBuild.txt')
             f = open(file_path, "w")
 
@@ -260,7 +276,11 @@ class LLVMProjectInfo(object):
 """ % header_string
 
             for i,fragment in enumerate(fragments):
-                print >>f, '[component_%d]' % i
+                name = '[component_%d]' % i
+                comment = comments_map.get(name)
+                if comment is not None:
+                    f.write(comment)
+                print >>f, name
                 f.write(fragment)
                 if fragment is not fragments[-1]:
                     print >>f

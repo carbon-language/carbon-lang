@@ -42,6 +42,9 @@ class ComponentInfo(object):
         self.parent_instance = None
         self.children = []
 
+        # The original source path.
+        self._source_path = None
+
     def set_parent_instance(self, parent):
         assert parent.name == self.parent, "Unexpected parent!"
         self.parent_instance = parent
@@ -407,4 +410,5 @@ def load_from_path(path, subpath):
             fatal("unable to load component %r in %r: %s" % (
                     section, path, e.message))
 
+        info._source_path = path
         yield info
