@@ -161,7 +161,8 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
     llvm::error_code EC;
     llvm::SmallString<128> DirNative;
     llvm::sys::path::native(UmbrellaDir->getName(), DirNative);
-    for (llvm::sys::fs::directory_iterator Dir(DirNative.str(), EC), DirEnd;
+    for (llvm::sys::fs::recursive_directory_iterator Dir(DirNative.str(), EC), 
+                                                     DirEnd;
          Dir != DirEnd && !EC; Dir.increment(EC)) {
       // Check whether this entry has an extension typically associated with 
       // headers.

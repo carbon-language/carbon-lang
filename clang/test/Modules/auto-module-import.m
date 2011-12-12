@@ -28,6 +28,10 @@ void testSubframeworkOther() {
 #include <NoUmbrella/A.h> // expected-warning{{treating #include as an import of module 'NoUmbrella.A'}}
 int getNoUmbrellaA() { return no_umbrella_A; } 
 
+// Test umbrella-less submodule includes
+#include <NoUmbrella/SubDir/C.h> // expected-warning{{treating #include as an import of module 'NoUmbrella.SubDir.C'}}
+int getNoUmbrellaC() { return no_umbrella_C; } 
+
 // Test header cross-subframework include pattern.
 #include <DependsOnModule/../Frameworks/SubFramework.framework/Headers/Other.h> // expected-warning{{treating #include as an import of module 'DependsOnModule.SubFramework.Other'}}
 
