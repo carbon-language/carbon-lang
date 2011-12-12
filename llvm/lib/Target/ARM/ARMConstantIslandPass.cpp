@@ -270,6 +270,7 @@ namespace {
   private:
     void DoInitialPlacement(std::vector<MachineInstr*> &CPEMIs);
     CPEntry *findConstPoolEntry(unsigned CPI, const MachineInstr *CPEMI);
+    unsigned getCPELogAlign(const MachineInstr *CPEMI);
     void JumpTableFunctionScan();
     void InitialFunctionScan(const std::vector<MachineInstr*> &CPEMIs);
     MachineBasicBlock *SplitBlockBeforeInstr(MachineInstr *MI);
@@ -402,11 +403,8 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &mf) {
   // Perform the initial placement of the constant pool entries.  To start with,
   // we put them all at the end of the function.
   std::vector<MachineInstr*> CPEMIs;
-  if (!MCP->isEmpty()) {
+  if (!MCP->isEmpty())
     DoInitialPlacement(CPEMIs);
-    if (isThumb1)
-      MF->EnsureAlignment(2);  // 2 = log2(4)
-  }
 
   /// The next UID to take is the first unused one.
   AFI->initPICLabelUId(CPEMIs.size());
@@ -499,6 +497,10 @@ ARMConstantIslands::DoInitialPlacement(std::vector<MachineInstr*> &CPEMIs) {
   // If AlignConstantIslands isn't set, use 4-byte alignment for everything.
   BB->setAlignment(AlignConstantIslands ? MaxAlign : 2);
 
+  // The function needs to be as aligned as the basic blocks. The linker may
+  // move functions around based on their alignment.
+  MF->EnsureAlignment(BB->getAlignment());
+
   // Order the entries in BB by descending alignment.  That ensures correct
   // alignment of all entries as long as BB is sufficiently aligned.  Keep
   // track of the insertion point for each alignment.  We are going to bucket
@@ -575,6 +577,22 @@ ARMConstantIslands::CPEntry
       return &CPEs[i];
   }
   return NULL;
+}
+
+/// getCPELogAlign - Returns the required alignment of the constant pool entry
+/// represented by CPEMI.  ALignment is measured in log2(bytes) units.
+unsigned ARMConstantIslands::getCPELogAlign(const MachineInstr *CPEMI) {
+  assert(CPEMI && CPEMI->getOpcode() == ARM::CONSTPOOL_ENTRY);
+
+  // Everything is 4-byte aligned unless AlignConstantIslands is set.
+  if (!AlignConstantIslands)
+    return 2;
+
+  unsigned CPI = CPEMI->getOperand(1).getIndex();
+  assert(CPI < MCP->getConstants().size() && "Invalid constant pool index.");
+  unsigned Align = MCP->getConstants()[CPI].getAlignment();
+  assert(isPowerOf2_32(Align) && "Invalid CPE alignment");
+  return Log2_32(Align);
 }
 
 /// JumpTableFunctionScan - Do a scan of the function, building up
@@ -1367,8 +1385,8 @@ bool ARMConstantIslands::HandleConstantPoolUser(unsigned CPUserIndex) {
   CPEntries[CPI].push_back(CPEntry(U.CPEMI, ID, 1));
   ++NumCPEs;
 
-  // Mark the basic block as 4-byte aligned as required by the const-pool entry.
-  NewIsland->setAlignment(2);
+  // Mark the basic block as aligned as required by the const-pool entry.
+  NewIsland->setAlignment(getCPELogAlign(U.CPEMI));
 
   // Increase the size of the island block to account for the new entry.
   BBInfo[NewIsland->getNumber()].Size += Size;
@@ -1396,18 +1414,14 @@ void ARMConstantIslands::RemoveDeadCPEMI(MachineInstr *CPEMI) {
   BBInfo[CPEBB->getNumber()].Size -= Size;
   // All succeeding offsets have the current size value added in, fix this.
   if (CPEBB->empty()) {
-    // In thumb1 mode, the size of island may be padded by two to compensate for
-    // the alignment requirement.  Then it will now be 2 when the block is
-    // empty, so fix this.
-    // All succeeding offsets have the current size value added in, fix this.
-    if (BBInfo[CPEBB->getNumber()].Size != 0) {
-      Size += BBInfo[CPEBB->getNumber()].Size;
-      BBInfo[CPEBB->getNumber()].Size = 0;
-    }
+    BBInfo[CPEBB->getNumber()].Size = 0;
 
     // This block no longer needs to be aligned. <rdar://problem/10534709>.
     CPEBB->setAlignment(0);
-  }
+  } else
+    // Entries are sorted by descending alignment, so realign from the front.
+    CPEBB->setAlignment(getCPELogAlign(CPEBB->begin()));
+
   AdjustBBOffsetsAfter(CPEBB);
   // An island has only one predecessor BB and one successor BB. Check if
   // this BB's predecessor jumps directly to this BB's successor. This
