@@ -183,6 +183,11 @@ TEST_F(FileSystemTest, TempFiles) {
   ASSERT_NO_ERROR(fs::unique_file("%%-%%-%%-%%.temp", FD2, TempPath2));
   ASSERT_NE(TempPath.str(), TempPath2.str());
 
+  fs::file_status A, B;
+  ASSERT_NO_ERROR(fs::status(Twine(TempPath), A));
+  ASSERT_NO_ERROR(fs::status(Twine(TempPath2), B));
+  EXPECT_FALSE(fs::equivalent(A, B));
+
   // Try to copy the first to the second.
   EXPECT_EQ(
     fs::copy_file(Twine(TempPath), Twine(TempPath2)), errc::file_exists);
@@ -204,6 +209,9 @@ TEST_F(FileSystemTest, TempFiles) {
   bool equal;
   ASSERT_NO_ERROR(fs::equivalent(Twine(TempPath), Twine(TempPath2), equal));
   EXPECT_TRUE(equal);
+  ASSERT_NO_ERROR(fs::status(Twine(TempPath), A));
+  ASSERT_NO_ERROR(fs::status(Twine(TempPath2), B));
+  EXPECT_TRUE(fs::equivalent(A, B));
 
   // Remove Temp1.
   ::close(FileDescriptor);

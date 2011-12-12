@@ -39,6 +39,10 @@
 #include <stack>
 #include <string>
 
+#if HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+
 namespace llvm {
 namespace sys {
 namespace fs {
@@ -94,7 +98,20 @@ struct space_info {
 ///               a platform specific member to store the result.
 class file_status
 {
-  // implementation defined status field.
+  #if defined(LLVM_ON_UNIX)
+  dev_t st_dev;
+  ino_t st_ino;
+  #elif defined (LLVM_ON_WIN32)
+  uint32_t LastWriteTimeHigh;
+  uint32_t LastWriteTimeLow;
+  uint32_t VolumeSerialNumber;
+  uint32_t FileSizeHigh;
+  uint32_t FileSizeLow;
+  uint32_t FileIndexHigh;
+  uint32_t FileIndexLow;
+  #endif
+  friend bool equivalent(file_status A, file_status B);
+  friend error_code status(const Twine &path, file_status &result);
   file_type Type;
 public:
   explicit file_status(file_type v=file_type::status_error)
@@ -243,6 +260,8 @@ inline bool exists(const Twine &path) {
 bool equivalent(file_status A, file_status B);
 
 /// @brief Do paths represent the same thing?
+///
+/// assert(status_known(A) || status_known(B));
 ///
 /// @param A Input path A.
 /// @param B Input path B.
