@@ -580,7 +580,7 @@ ARMConstantIslands::CPEntry
 }
 
 /// getCPELogAlign - Returns the required alignment of the constant pool entry
-/// represented by CPEMI.  ALignment is measured in log2(bytes) units.
+/// represented by CPEMI.  Alignment is measured in log2(bytes) units.
 unsigned ARMConstantIslands::getCPELogAlign(const MachineInstr *CPEMI) {
   assert(CPEMI && CPEMI->getOpcode() == ARM::CONSTPOOL_ENTRY);
 
