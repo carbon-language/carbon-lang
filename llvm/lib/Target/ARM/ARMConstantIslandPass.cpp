@@ -142,21 +142,26 @@ namespace {
         return Unalign ? Unalign : KnownBits;
       }
 
-      /// Compute the offset immediately following this block.
-      unsigned postOffset() const {
+      /// Compute the offset immediately following this block.  If LogAlign is
+      /// specified, return the offset the successor block will get if it has
+      /// this alignment.
+      unsigned postOffset(unsigned LogAlign = 0) const {
         unsigned PO = Offset + Size;
-        if (!PostAlign)
+        unsigned LA = std::max(unsigned(PostAlign), LogAlign);
+        if (!LA)
           return PO;
         // Add alignment padding from the terminator.
-        return WorstCaseAlign(PO, PostAlign, internalKnownBits());
+        return WorstCaseAlign(PO, LA, internalKnownBits());
       }
 
       /// Compute the number of known low bits of postOffset.  If this block
       /// contains inline asm, the number of known bits drops to the
       /// instruction alignment.  An aligned terminator may increase the number
       /// of know bits.
-      unsigned postKnownBits() const {
-        return std::max(unsigned(PostAlign), internalKnownBits());
+      /// If LogAlign is given, also consider the alignment of the next block.
+      unsigned postKnownBits(unsigned LogAlign = 0) const {
+        return std::max(std::max(unsigned(PostAlign), LogAlign),
+                        internalKnownBits());
       }
     };
 
@@ -1020,14 +1025,10 @@ static bool BBIsJumpedOver(MachineBasicBlock *MBB) {
 void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB) {
   for(unsigned i = BB->getNumber() + 1, e = MF->getNumBlockIDs(); i < e; ++i) {
     // Get the offset and known bits at the end of the layout predecessor.
-    unsigned Offset = BBInfo[i - 1].postOffset();
-    unsigned KnownBits = BBInfo[i - 1].postKnownBits();
-
-    // Add padding before an aligned block. This may teach us more bits.
-    if (unsigned Align = MF->getBlockNumbered(i)->getAlignment()) {
-      Offset = WorstCaseAlign(Offset, Align, KnownBits);
-      KnownBits = std::max(KnownBits, Align);
-    }
+    // Include the alignment of the current block.
+    unsigned LogAlign = MF->getBlockNumbered(i)->getAlignment();
+    unsigned Offset = BBInfo[i - 1].postOffset(LogAlign);
+    unsigned KnownBits = BBInfo[i - 1].postKnownBits(LogAlign);
 
     // This is where block i begins.
     BBInfo[i].Offset = Offset;
