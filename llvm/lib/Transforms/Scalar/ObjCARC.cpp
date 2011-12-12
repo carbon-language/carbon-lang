@@ -1165,6 +1165,7 @@ namespace {
     /// Partial - True of we've seen an opportunity for partial RR elimination,
     /// such as pushing calls into a CFG triangle or into one side of a
     /// CFG diamond.
+    /// TODO: Consider moving this to PtrState.
     bool Partial;
 
     /// ReleaseMetadata - If the Calls are objc_release calls and they all have
