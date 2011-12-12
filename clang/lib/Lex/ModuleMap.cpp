@@ -244,7 +244,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   // umbrella header "umbrella-header-name"
   Result->Umbrella = UmbrellaHeader;
   Headers[UmbrellaHeader] = Result;
-  UmbrellaDirs[FrameworkDir] = Result;
+  UmbrellaDirs[UmbrellaHeader->getDir()] = Result;
   
   // export *
   Result->Exports.push_back(Module::ExportDecl(0, true));
