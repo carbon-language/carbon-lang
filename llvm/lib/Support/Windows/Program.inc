@@ -299,14 +299,14 @@ Program::Execute(const Path& path,
   Data_ = wpi;
 
   // Make sure these get closed no matter what.
-  AutoHandle hThread(pi.hThread);
+  ScopedCommonHandle hThread(pi.hThread);
 
   // Assign the process to a job if a memory limit is defined.
-  AutoHandle hJob(0);
+  ScopedJobHandle hJob;
   if (memoryLimit != 0) {
     hJob = CreateJobObject(0, 0);
     bool success = false;
-    if (hJob != 0) {
+    if (hJob) {
       JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli;
       memset(&jeli, 0, sizeof(jeli));
       jeli.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_PROCESS_MEMORY;

@@ -753,7 +753,9 @@ error_code remove_all_r(StringRef path, file_type ft, uint32_t &count) {
   if (ft == file_type::directory_file) {
     // This code would be a lot better with exceptions ;/.
     error_code ec;
-    for (directory_iterator i(path, ec), e; i != e; i.increment(ec)) {
+    directory_iterator i(path, ec);
+    if (ec) return ec;
+    for (directory_iterator e; i != e; i.increment(ec)) {
       if (ec) return ec;
       file_status st;
       if (error_code ec = i->status(st)) return ec;

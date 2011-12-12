@@ -26,6 +26,7 @@
 
 #include "llvm/Config/config.h" // Get build system configuration settings
 #include <windows.h>
+#include <wincrypt.h>
 #include <shlobj.h>
 #include <cassert>
 #include <string>
@@ -41,70 +42,99 @@ inline bool MakeErrMsg(std::string* ErrMsg, const std::string& prefix) {
   return true;
 }
 
-class AutoHandle {
-  HANDLE handle;
-
-public:
-  AutoHandle(HANDLE h) : handle(h) {}
-
-  ~AutoHandle() {
-    if (handle)
-      CloseHandle(handle);
-  }
-
-  operator HANDLE() {
-    return handle;
-  }
-
-  AutoHandle &operator=(HANDLE h) {
-    handle = h;
-    return *this;
-  }
-};
-
-template <class HandleType, uintptr_t InvalidHandle,
-          class DeleterType, DeleterType D>
+template <typename HandleTraits>
 class ScopedHandle {
-  HandleType Handle;
+  typedef typename HandleTraits::handle_type handle_type;
+  handle_type Handle;
 
+  ScopedHandle(const ScopedHandle &other); // = delete;
+  void operator=(const ScopedHandle &other); // = delete;
 public:
-  ScopedHandle() : Handle(InvalidHandle) {}
-  ScopedHandle(HandleType handle) : Handle(handle) {}
+  ScopedHandle()
+    : Handle(HandleTraits::GetInvalid()) {}
+
+  explicit ScopedHandle(handle_type h)
+    : Handle(h) {}
 
   ~ScopedHandle() {
-    if (Handle != HandleType(InvalidHandle))
-      D(Handle);
+    if (HandleTraits::IsValid(Handle))
+      HandleTraits::Close(Handle);
   }
 
-  HandleType take() {
-    HandleType temp = Handle;
-    Handle = HandleType(InvalidHandle);
-    return temp;
+  handle_type take() {
+    handle_type t = Handle;
+    Handle = HandleTraits::GetInvalid();
+    return t;
   }
 
-  operator HandleType() const { return Handle; }
-
-  ScopedHandle &operator=(HandleType handle) {
-    Handle = handle;
+  ScopedHandle &operator=(handle_type h) {
+    if (HandleTraits::IsValid(Handle))
+      HandleTraits::Close(Handle);
+    Handle = h;
     return *this;
   }
 
-  typedef void (*unspecified_bool_type)();
-  static void unspecified_bool_true() {}
-
   // True if Handle is valid.
-  operator unspecified_bool_type() const {
-    return Handle == HandleType(InvalidHandle) ? 0 : unspecified_bool_true;
+  operator bool() const {
+    return HandleTraits::IsValid(Handle) ? true : false;
   }
 
-  bool operator!() const {
-    return Handle == HandleType(InvalidHandle);
+  operator handle_type() const {
+    return Handle;
   }
 };
 
-typedef ScopedHandle<HANDLE, uintptr_t(-1),
-                      BOOL (WINAPI*)(HANDLE), ::FindClose>
-  ScopedFindHandle;
+struct CommonHandleTraits {
+  typedef HANDLE handle_type;
+
+  static handle_type GetInvalid() {
+    return INVALID_HANDLE_VALUE;
+  }
+
+  static void Close(handle_type h) {
+    ::CloseHandle(h);
+  }
+
+  static bool IsValid(handle_type h) {
+    return h != GetInvalid();
+  }
+};
+
+struct JobHandleTraits : CommonHandleTraits {
+  static handle_type GetInvalid() {
+    return NULL;
+  }
+};
+
+struct CryptContextTraits : CommonHandleTraits {
+  typedef HCRYPTPROV handle_type;
+
+  static handle_type GetInvalid() {
+    return 0;
+  }
+
+  static void Close(handle_type h) {
+    ::CryptReleaseContext(h, 0);
+  }
+
+  static bool IsValid(handle_type h) {
+    return h != GetInvalid();
+  }
+};
+
+struct FindHandleTraits : CommonHandleTraits {
+  static void Close(handle_type h) {
+    ::FindClose(h);
+  }
+};
+
+struct FileHandleTraits : CommonHandleTraits {};
+
+typedef ScopedHandle<CommonHandleTraits> ScopedCommonHandle;
+typedef ScopedHandle<FileHandleTraits>   ScopedFileHandle;
+typedef ScopedHandle<CryptContextTraits> ScopedCryptContext;
+typedef ScopedHandle<FindHandleTraits>   ScopedFindHandle;
+typedef ScopedHandle<JobHandleTraits>    ScopedJobHandle;
 
 namespace llvm {
 template <class T>

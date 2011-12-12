@@ -17,7 +17,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Windows.h"
-#include <wincrypt.h>
 #include <fcntl.h>
 #include <io.h>
 #include <sys/stat.h>
@@ -112,14 +111,6 @@ namespace {
     return success;
   }
 
-  // Forwarder for ScopedHandle.
-  BOOL WINAPI CryptReleaseContext(HCRYPTPROV Provider) {
-    return ::CryptReleaseContext(Provider, 0);
-  }
-
-  typedef ScopedHandle<HCRYPTPROV, uintptr_t(-1),
-                       BOOL (WINAPI*)(HCRYPTPROV), CryptReleaseContext>
-    ScopedCryptContext;
   bool is_separator(const wchar_t value) {
     switch (value) {
     case L'\\':
@@ -372,7 +363,7 @@ error_code equivalent(const Twine &A, const Twine &B, bool &result) {
   if (error_code ec = UTF8ToUTF16(a, wide_a)) return ec;
   if (error_code ec = UTF8ToUTF16(b, wide_b)) return ec;
 
-  AutoHandle HandleB(
+  ScopedFileHandle HandleB(
     ::CreateFileW(wide_b.begin(),
                   0,
                   FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -381,7 +372,7 @@ error_code equivalent(const Twine &A, const Twine &B, bool &result) {
                   FILE_FLAG_BACKUP_SEMANTICS,
                   0));
 
-  AutoHandle HandleA(
+  ScopedFileHandle HandleA(
     ::CreateFileW(wide_a.begin(),
                   0,
                   FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -391,13 +382,11 @@ error_code equivalent(const Twine &A, const Twine &B, bool &result) {
                   0));
 
   // If both handles are invalid, it's an error.
-  if (HandleA == INVALID_HANDLE_VALUE &&
-      HandleB == INVALID_HANDLE_VALUE)
+  if (!HandleA && !HandleB)
     return windows_error(::GetLastError());
 
   // If only one is invalid, it's false.
-  if (HandleA == INVALID_HANDLE_VALUE &&
-      HandleB == INVALID_HANDLE_VALUE) {
+  if (!HandleA || !HandleB) {
     result = false;
     return success;
   }
@@ -488,7 +477,7 @@ error_code status(const Twine &path, file_status &result) {
 
   // Handle reparse points.
   if (attr & FILE_ATTRIBUTE_REPARSE_POINT) {
-    AutoHandle h(
+    ScopedFileHandle h(
       ::CreateFileW(path_utf16.begin(),
                     0, // Attributes only.
                     FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -496,7 +485,7 @@ error_code status(const Twine &path, file_status &result) {
                     OPEN_EXISTING,
                     FILE_FLAG_BACKUP_SEMANTICS,
                     0));
-    if (h == INVALID_HANDLE_VALUE)
+    if (!h)
       goto handle_status_error;
   }
 
