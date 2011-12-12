@@ -666,6 +666,7 @@ def add_magic_target_components(parser, project, opts):
             fatal("special component %r must have empty %r list" % (
                     name, 'add_to_library_groups'))
 
+        info._is_special_group = True
         return info
 
     info_map = dict((ci.name, ci) for ci in project.component_infos)

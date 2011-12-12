@@ -45,6 +45,10 @@ class ComponentInfo(object):
         # The original source path.
         self._source_path = None
 
+        # A flag to mark "special" components which have some amount of magic
+        # handling (generally based on command line options).
+        self._is_special_group = False
+
     def set_parent_instance(self, parent):
         assert parent.name == self.parent, "Unexpected parent!"
         self.parent_instance = parent
@@ -197,7 +201,7 @@ class LibraryGroupComponentInfo(ComponentInfo):
         print >>result, 'type = %s' % self.type_name
         print >>result, 'name = %s' % self.name
         print >>result, 'parent = %s' % self.parent
-        if self.required_libraries:
+        if self.required_libraries and not self._is_special_group:
             print >>result, 'required_libraries = %s' % ' '.join(
                 self.required_libraries)
         if self.add_to_library_groups:
