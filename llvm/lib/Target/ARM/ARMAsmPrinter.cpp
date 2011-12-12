@@ -493,11 +493,21 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       return false;
     }
 
-    // These modifiers are not yet supported.
-    case 'p': // The high single-precision register of a VFP double-precision
-              // register.
     case 'e': // The low doubleword register of a NEON quad register.
-    case 'f': // The high doubleword register of a NEON quad register.
+    case 'f': { // The high doubleword register of a NEON quad register.
+      if (!MI->getOperand(OpNum).isReg())
+        return true;
+      unsigned Reg = MI->getOperand(OpNum).getReg();
+      if (!ARM::QPRRegClass.contains(Reg))
+        return true;
+      const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
+      unsigned SubReg = TRI->getSubReg(Reg, ExtraCode[0] == 'e' ?
+                                       ARM::dsub_0 : ARM::dsub_1);
+      O << ARMInstPrinter::getRegisterName(SubReg);
+      return false;
+    }
+
+    // These modifiers are not yet supported.
     case 'h': // A range of VFP/NEON registers suitable for VLD1/VST1.
     case 'H': // The highest-numbered register of a pair.
       return true;

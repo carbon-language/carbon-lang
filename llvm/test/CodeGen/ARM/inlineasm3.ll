@@ -110,3 +110,13 @@ entry:
   call void asm "str $1, $0", "=*Q,r"(i8** %f.addr, i32 %g) nounwind
   ret void
 }
+
+; Radar 10551006
+
+define <4 x i32> @t11(i32* %p) nounwind {
+entry:
+; CHECK: t11
+; CHECK: vld1.s32 {d16[], d17[]}, [r0]
+  %0 = tail call <4 x i32> asm "vld1.s32 {${0:e}[], ${0:f}[]}, [$1]", "=w,r"(i32* %p) nounwind
+  ret <4 x i32> %0
+}
