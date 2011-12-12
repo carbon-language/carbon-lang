@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fblocks -fobjc-arc -verify %s
 
 // rdar://8843524
 
@@ -20,6 +20,11 @@ union u {
    union u c; 
 };
 @end
+
+// rdar://10260525
+struct r10260525 {
+  id (^block) (); // expected-error {{ARC forbids blocks in structs or unions}}
+};
 
 struct S { 
     id __attribute__((objc_ownership(none))) i;

@@ -9206,7 +9206,8 @@ void Sema::ActOnFields(Scope* S,
                                 "this system field has retaining ownership"));
             }
           } else {
-            Diag(FD->getLocation(), diag::err_arc_objc_object_in_struct);
+            Diag(FD->getLocation(), diag::err_arc_objc_object_in_struct) 
+              << T->isBlockPointerType();
           }
           ARCErrReported = true;
         }
