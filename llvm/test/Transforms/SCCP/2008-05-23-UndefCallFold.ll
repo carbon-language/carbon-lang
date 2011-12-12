@@ -6,9 +6,9 @@ target triple = "i686-pc-linux-gnu"
 
 define i32 @x(i32 %b) {
 entry:
- %val = call i32 @llvm.cttz.i32(i32 undef)
+ %val = call i32 @llvm.cttz.i32(i32 undef, i1 true)
  ret i32 %val
 }
 
-declare i32 @llvm.cttz.i32(i32)
+declare i32 @llvm.cttz.i32(i32, i1)
 

@@ -4,8 +4,8 @@
 
 define i32 @main(i64 %arg) nounwind  {
 entry:
-	%tmp37 = tail call i64 @llvm.ctlz.i64( i64 %arg )		; <i64> [#uses=1]
-	%tmp47 = tail call i64 @llvm.cttz.i64( i64 %arg )		; <i64> [#uses=1]
+	%tmp37 = tail call i64 @llvm.ctlz.i64( i64 %arg, i1 true )		; <i64> [#uses=1]
+	%tmp47 = tail call i64 @llvm.cttz.i64( i64 %arg, i1 true )		; <i64> [#uses=1]
 	%tmp57 = tail call i64 @llvm.ctpop.i64( i64 %arg )		; <i64> [#uses=1]
 	%tmp38 = trunc i64 %tmp37 to i32		; <i32>:0 [#uses=1]
 	%tmp48 = trunc i64 %tmp47 to i32		; <i32>:0 [#uses=1]
@@ -16,6 +16,6 @@ entry:
 
 declare i32 @printf(i8* noalias , ...) nounwind 
 
-declare i64 @llvm.ctlz.i64(i64) nounwind readnone 
-declare i64 @llvm.cttz.i64(i64) nounwind readnone 
+declare i64 @llvm.ctlz.i64(i64, i1) nounwind readnone 
+declare i64 @llvm.cttz.i64(i64, i1) nounwind readnone 
 declare i64 @llvm.ctpop.i64(i64) nounwind readnone 

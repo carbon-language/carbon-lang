@@ -3,8 +3,8 @@
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128"
 
 declare i32 @llvm.ctpop.i32(i32)
-declare i32 @llvm.ctlz.i32(i32)
-declare i32 @llvm.cttz.i32(i32)
+declare i32 @llvm.ctlz.i32(i32, i1)
+declare i32 @llvm.cttz.i32(i32, i1)
 
 define i64 @test1(i32 %x) {
   %t = call i32 @llvm.ctpop.i32(i32 %x)
@@ -16,7 +16,7 @@ define i64 @test1(i32 %x) {
 }
 
 define i64 @test2(i32 %x) {
-  %t = call i32 @llvm.ctlz.i32(i32 %x)
+  %t = call i32 @llvm.ctlz.i32(i32 %x, i1 true)
   %s = sext i32 %t to i64
   ret i64 %s
 
@@ -25,7 +25,7 @@ define i64 @test2(i32 %x) {
 }
 
 define i64 @test3(i32 %x) {
-  %t = call i32 @llvm.cttz.i32(i32 %x)
+  %t = call i32 @llvm.cttz.i32(i32 %x, i1 true)
   %s = sext i32 %t to i64
   ret i64 %s
 

@@ -15,21 +15,21 @@ declare i32 @llvm.ctpop.i32(i32)
 
 declare i64 @llvm.ctpop.i64(i64)
 
-declare i8 @llvm.cttz.i8(i8)
+declare i8 @llvm.cttz.i8(i8, i1)
 
-declare i16 @llvm.cttz.i16(i16)
+declare i16 @llvm.cttz.i16(i16, i1)
 
-declare i32 @llvm.cttz.i32(i32)
+declare i32 @llvm.cttz.i32(i32, i1)
 
-declare i64 @llvm.cttz.i64(i64)
+declare i64 @llvm.cttz.i64(i64, i1)
 
-declare i8 @llvm.ctlz.i8(i8)
+declare i8 @llvm.ctlz.i8(i8, i1)
 
-declare i16 @llvm.ctlz.i16(i16)
+declare i16 @llvm.ctlz.i16(i16, i1)
 
-declare i32 @llvm.ctlz.i32(i32)
+declare i32 @llvm.ctlz.i32(i32, i1)
 
-declare i64 @llvm.ctlz.i64(i64)
+declare i64 @llvm.ctlz.i64(i64, i1)
 
 declare float @llvm.sqrt.f32(float)
 
@@ -46,14 +46,14 @@ define void @libm() {
         call i16 @llvm.ctpop.i16( i16 11 )              ; <i32>:6 [#uses=0]
         call i32 @llvm.ctpop.i32( i32 12 )              ; <i32>:7 [#uses=0]
         call i64 @llvm.ctpop.i64( i64 13 )              ; <i32>:8 [#uses=0]
-        call i8  @llvm.ctlz.i8( i8 14 )         ; <i32>:9 [#uses=0]
-        call i16 @llvm.ctlz.i16( i16 15 )               ; <i32>:10 [#uses=0]
-        call i32 @llvm.ctlz.i32( i32 16 )               ; <i32>:11 [#uses=0]
-        call i64 @llvm.ctlz.i64( i64 17 )               ; <i32>:12 [#uses=0]
-        call i8  @llvm.cttz.i8( i8 18 )         ; <i32>:13 [#uses=0]
-        call i16 @llvm.cttz.i16( i16 19 )               ; <i32>:14 [#uses=0]
-        call i32 @llvm.cttz.i32( i32 20 )               ; <i32>:15 [#uses=0]
-        call i64 @llvm.cttz.i64( i64 21 )               ; <i32>:16 [#uses=0]
+        call i8  @llvm.ctlz.i8( i8 14, i1 true )         ; <i32>:9 [#uses=0]
+        call i16 @llvm.ctlz.i16( i16 15, i1 true )               ; <i32>:10 [#uses=0]
+        call i32 @llvm.ctlz.i32( i32 16, i1 true )               ; <i32>:11 [#uses=0]
+        call i64 @llvm.ctlz.i64( i64 17, i1 true )               ; <i32>:12 [#uses=0]
+        call i8  @llvm.cttz.i8( i8 18, i1 true )         ; <i32>:13 [#uses=0]
+        call i16 @llvm.cttz.i16( i16 19, i1 true )               ; <i32>:14 [#uses=0]
+        call i32 @llvm.cttz.i32( i32 20, i1 true )               ; <i32>:15 [#uses=0]
+        call i64 @llvm.cttz.i64( i64 21, i1 true )               ; <i32>:16 [#uses=0]
         ret void
 }
 
