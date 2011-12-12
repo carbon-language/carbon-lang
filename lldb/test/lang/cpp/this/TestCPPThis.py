@@ -10,14 +10,14 @@ class CPPThisTestCase(TestBase):
     
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     #rdar://problem/9962849
-    @expectedFailureClang
+    #@expectedFailureClang
     def test_with_dsym_and_run_command(self):
         """Test that the appropriate member variables are available when stopped in C++ static, inline, and const methods"""
         self.buildDsym()
         self.static_method_commands()
 
     #rdar://problem/9962849
-    @expectedFailureClang
+    #@expectedFailureClang
     def test_with_dwarf_and_run_command(self):
         """Test that the appropriate member variables are available when stopped in C++ static, inline, and const methods"""
         self.buildDwarf()
