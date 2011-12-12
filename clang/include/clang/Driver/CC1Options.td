@@ -721,6 +721,8 @@ def undef : Flag<"-undef">, MetaVarName<"<macro>">,
   HelpText<"undef all system defines">;
 def detailed_preprocessing_record : Flag<"-detailed-preprocessing-record">,
   HelpText<"include a detailed record of preprocessing actions">;
+def mqdsp6_compat : Flag<"-mqdsp6-compat">,
+  HelpText<"Enable hexagon-qdsp6 backward compatibility">;
 
 //===----------------------------------------------------------------------===//
 // Preprocessed Output Options

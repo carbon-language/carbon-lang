@@ -128,6 +128,7 @@ LANGOPT(SinglePrecisionConstants , 1, 0, "treating double-precision floating poi
 LANGOPT(FastRelaxedMath , 1, 0, "OpenCL fast relaxed math")
 LANGOPT(DefaultFPContract , 1, 0, "FP_CONTRACT")
 LANGOPT(NoBitFieldTypeAlign , 1, 0, "bit-field type alignment")
+LANGOPT(HexagonQdsp6Compat , 1, 0, "hexagon-qdsp6 backward compatibility")
 LANGOPT(ObjCAutoRefCount , 1, 0, "Objective-C automated reference counting")
 LANGOPT(ObjCRuntimeHasWeak , 1, 0, "__weak support in the ARC runtime")
 LANGOPT(FakeAddressSpaceMap , 1, 0, "OpenCL fake address space map")

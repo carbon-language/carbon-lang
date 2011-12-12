@@ -575,6 +575,11 @@ ToolChain *LinuxHostInfo::CreateToolChain(const ArgList &Args,
 
   ToolChain *&TC = ToolChains[ArchName];
 
+  if (!TC && !Arch.compare ("hexagon")) {
+    llvm::Triple TCTriple (getTriple());
+    TC = new toolchains::Hexagon_TC (*this, TCTriple);
+  }
+
   if (!TC) {
     llvm::Triple TCTriple(getTriple());
     TCTriple.setArchName(ArchName);

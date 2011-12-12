@@ -1406,6 +1406,73 @@ const char *Generic_GCC::GetDefaultRelocationModel() const {
 const char *Generic_GCC::GetForcedPicModel() const {
   return 0;
 }
+/// Hexagon Toolchain
+
+Hexagon_TC::Hexagon_TC(const HostInfo &Host, const llvm::Triple& Triple)
+  : ToolChain(Host, Triple) {
+  getProgramPaths().push_back(getDriver().getInstalledDir());
+  if (getDriver().getInstalledDir() != getDriver().Dir.c_str())
+    getProgramPaths().push_back(getDriver().Dir);
+}
+
+Hexagon_TC::~Hexagon_TC() {
+  // Free tool implementations.
+  for (llvm::DenseMap<unsigned, Tool*>::iterator
+         it = Tools.begin(), ie = Tools.end(); it != ie; ++it)
+    delete it->second;
+}
+
+Tool &Hexagon_TC::SelectTool(const Compilation &C,
+                             const JobAction &JA,
+                             const ActionList &Inputs) const {
+  Action::ActionClass Key;
+  //   if (JA.getKind () == Action::CompileJobClass)
+  //     Key = JA.getKind ();
+  //     else
+
+  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+    Key = Action::AnalyzeJobClass;
+  else
+    Key = JA.getKind();
+  //   if ((JA.getKind () == Action::CompileJobClass)
+  //     && (JA.getType () != types::TY_LTO_BC)) {
+  //     Key = JA.getKind ();
+  //   }
+
+  Tool *&T = Tools[Key];
+  if (!T) {
+    switch (Key) {
+    case Action::InputClass:
+    case Action::BindArchClass:
+      assert(0 && "Invalid tool kind.");
+    case Action::AnalyzeJobClass:
+      T = new tools::Clang(*this); break;
+    case Action::AssembleJobClass:
+      T = new tools::hexagon::Assemble(*this); break;
+    case Action::LinkJobClass:
+      T = new tools::hexagon::Link(*this); break;
+    default:
+      assert(false && "Unsupported action for Hexagon target.");
+    }
+  }
+
+  return *T;
+}
+
+bool Hexagon_TC::IsUnwindTablesDefault() const {
+  // FIXME: Gross; we should probably have some separate target
+  // definition, possibly even reusing the one in clang.
+  return getArchName() == "x86_64";
+}
+
+const char *Hexagon_TC::GetDefaultRelocationModel() const {
+  return "static";
+}
+
+const char *Hexagon_TC::GetForcedPicModel() const {
+  return 0;
+} // End Hexagon
+
 
 /// TCEToolChain - A tool chain using the llvm bitcode tools to perform
 /// all subcommands. See http://tce.cs.tut.fi for our peculiar target.

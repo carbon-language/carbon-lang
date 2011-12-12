@@ -2774,7 +2774,6 @@ const Builtin::Info ARMTargetInfo::BuiltinInfo[] = {
 };
 } // end anonymous namespace.
 
-
 namespace {
 class DarwinARMTargetInfo :
   public DarwinTargetInfo<ARMTargetInfo> {
@@ -2794,6 +2793,137 @@ public:
   }
 };
 } // end anonymous namespace.
+
+
+namespace {
+// Hexagon abstract base class
+class HexagonTargetInfo : public TargetInfo {
+  static const Builtin::Info BuiltinInfo[];
+  static const char * const GCCRegNames[];
+  static const TargetInfo::GCCRegAlias GCCRegAliases[];
+  std::string CPU;
+public:
+  HexagonTargetInfo(const std::string& triple) : TargetInfo(triple)  {
+    DescriptionString = ("e-p:32:32:32-"
+                         "i64:64:64-i32:32:32-"
+                         "i16:16:16-i1:32:32-a:0:0");
+
+    // {} in inline assembly are packet specifiers, not assembly variant
+    // specifiers.
+    NoAsmVariants = true;
+  }
+
+  virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                 unsigned &NumRecords) const {
+    Records = BuiltinInfo;
+    NumRecords = clang::Hexagon::LastTSBuiltin-Builtin::FirstTSBuiltin;
+  }
+
+  virtual bool validateAsmConstraint(const char *&Name,
+                                     TargetInfo::ConstraintInfo &Info) const {
+    return true;
+  }
+
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const;
+
+  virtual const char *getVAListDeclaration() const {
+    return "typedef char* __builtin_va_list;";
+  }
+  virtual void getGCCRegNames(const char * const *&Names,
+                              unsigned &NumNames) const;
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                unsigned &NumAliases) const;
+  virtual const char *getClobbers() const {
+    return "";
+  }
+  virtual bool setCPU(const std::string &Name) {
+    CPU = Name;
+    return true;
+  }
+};
+
+void HexagonTargetInfo::getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+  Builder.defineMacro("qdsp6");
+  Builder.defineMacro("__qdsp6", "1");
+  Builder.defineMacro("__qdsp6__", "1");
+
+  Builder.defineMacro("hexagon");
+  Builder.defineMacro("__hexagon", "1");
+  Builder.defineMacro("__hexagon__", "1");
+
+  if(CPU == "hexagonv1") {
+    Builder.defineMacro("__HEXAGON_V1__");
+    Builder.defineMacro("__HEXAGON_ARCH__", "1");
+    if(Opts.HexagonQdsp6Compat) {
+      Builder.defineMacro("__QDSP6_V1__");
+      Builder.defineMacro("__QDSP6_ARCH__", "1");
+    }
+  }
+  else if(CPU == "hexagonv2") {
+    Builder.defineMacro("__HEXAGON_V2__");
+    Builder.defineMacro("__HEXAGON_ARCH__", "2");
+    if(Opts.HexagonQdsp6Compat) {
+      Builder.defineMacro("__QDSP6_V2__");
+      Builder.defineMacro("__QDSP6_ARCH__", "2");
+    }
+  }
+  else if(CPU == "hexagonv3") {
+    Builder.defineMacro("__HEXAGON_V3__");
+    Builder.defineMacro("__HEXAGON_ARCH__", "3");
+    if(Opts.HexagonQdsp6Compat) {
+      Builder.defineMacro("__QDSP6_V3__");
+      Builder.defineMacro("__QDSP6_ARCH__", "3");
+    }
+  }
+  else if(CPU == "hexagonv4") {
+    Builder.defineMacro("__HEXAGON_V4__");
+    Builder.defineMacro("__HEXAGON_ARCH__", "4");
+    if(Opts.HexagonQdsp6Compat) {
+      Builder.defineMacro("__QDSP6_V4__");
+      Builder.defineMacro("__QDSP6_ARCH__", "4");
+    }
+  }
+}
+
+const char * const HexagonTargetInfo::GCCRegNames[] = {
+  "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+  "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+  "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
+  "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31",
+  "p0", "p1", "p2", "p3",
+  "sa0", "lc0", "sa1", "lc1", "m0", "m1", "usr", "ugp"
+};
+
+void HexagonTargetInfo::getGCCRegNames(const char * const *&Names,
+                                   unsigned &NumNames) const {
+  Names = GCCRegNames;
+  NumNames = llvm::array_lengthof(GCCRegNames);
+}
+
+
+const TargetInfo::GCCRegAlias HexagonTargetInfo::GCCRegAliases[] = {
+  { { "sp" }, "r29" },
+  { { "fp" }, "r30" },
+  { { "lr" }, "r31" },
+ };
+
+void HexagonTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                     unsigned &NumAliases) const {
+  Aliases = GCCRegAliases;
+  NumAliases = llvm::array_lengthof(GCCRegAliases);
+}
+
+
+const Builtin::Info HexagonTargetInfo::BuiltinInfo[] = {
+#define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
+#define LIBBUILTIN(ID, TYPE, ATTRS, HEADER) { #ID, TYPE, ATTRS, HEADER,\
+                                              ALL_LANGUAGES },
+#include "clang/Basic/BuiltinsHexagon.def"
+};
+}
+
 
 namespace {
 class SparcV8TargetInfo : public TargetInfo {
@@ -3458,6 +3588,9 @@ static TargetInfo *AllocateTarget(const std::string &T) {
   switch (Triple.getArch()) {
   default:
     return NULL;
+
+  case llvm::Triple::hexagon:
+    return new HexagonTargetInfo(T);
 
   case llvm::Triple::arm:
   case llvm::Triple::thumb:

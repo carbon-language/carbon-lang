@@ -944,6 +944,81 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
   }
 }
 
+static Arg* getLastHexagonArchArg (const ArgList &Args)
+{
+  Arg * A = NULL;
+
+  for (ArgList::const_iterator it = Args.begin(), ie = Args.end(); it != ie; ++it) {
+    if ((*it)->getOption().matches(options::OPT_mv2) ||
+        (*it)->getOption().matches(options::OPT_mv3) ||
+        (*it)->getOption().matches(options::OPT_mv4) ||
+        (*it)->getOption().matches(options::OPT_march_EQ) ||
+        (*it)->getOption().matches(options::OPT_mcpu_EQ)) {
+      A = *it;
+      A->claim();
+    }
+  }
+  return A;
+}
+
+static const char *getHexagonTargetCPU(const ArgList &Args)
+{
+  Arg *A;
+  llvm::StringRef WhichHexagon;
+
+  if ((A = getLastHexagonArchArg (Args))) {
+    if ((A->getOption().matches(options::OPT_march_EQ)) ||
+        (A->getOption().matches(options::OPT_mcpu_EQ))) {
+      WhichHexagon = A->getValue(Args);
+      if (WhichHexagon == "v2")
+        return "hexagonv2";
+      else if (WhichHexagon == "v3")
+        return "hexagonv3";
+      else if (WhichHexagon == "v4")
+        return "hexagonv4";
+      else
+        assert (0 && "Unknown -march or -mcpu value");
+    }
+    else {
+      if (A->getOption().matches(options::OPT_mv2))
+        return "hexagonv2";
+      else if (A->getOption().matches(options::OPT_mv3))
+        return "hexagonv3";
+      else if (A->getOption().matches(options::OPT_mv4))
+        return "hexagonv4";
+      else
+        assert(0 && "Unknown -m argument.");
+    }
+  }
+  else
+    return "hexagonv2";
+}
+
+void Clang::AddHexagonTargetArgs(const ArgList &Args,
+                                 ArgStringList &CmdArgs) const {
+  llvm::Triple Triple = getToolChain().getTriple();
+
+  CmdArgs.push_back("-target-cpu");
+  CmdArgs.push_back(getHexagonTargetCPU(Args));
+  CmdArgs.push_back("-fno-signed-char");
+  CmdArgs.push_back("-nobuiltininc");
+
+  if (Args.hasArg(options::OPT_mqdsp6_compat))  
+    CmdArgs.push_back("-mqdsp6-compat");
+
+  if (Arg *A = Args.getLastArg(options::OPT_G,
+                               options::OPT_msmall_data_threshold_EQ)) {
+    std::string SmallDataThreshold="-small-data-threshold=";
+    SmallDataThreshold += A->getValue(Args);
+    CmdArgs.push_back ("-mllvm");
+    CmdArgs.push_back(Args.MakeArgString(SmallDataThreshold));
+    A->claim();
+  }
+
+  CmdArgs.push_back ("-mllvm");
+  CmdArgs.push_back ("-machine-sink-split=0");
+}
+
 static bool
 shouldUseExceptionTablesForObjCExceptions(unsigned objcABIVersion,
                                           const llvm::Triple &Triple) {
@@ -1438,7 +1513,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   case llvm::Triple::x86_64:
     AddX86TargetArgs(Args, CmdArgs);
     break;
+
+  case llvm::Triple::hexagon:
+    AddHexagonTargetArgs(Args, CmdArgs);
+    break;
   }
+
+
 
   // Pass the linker version in use.
   if (Arg *A = Args.getLastArg(options::OPT_mlinker_version_EQ)) {
@@ -1872,10 +1953,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       !Args.hasFlag(options::OPT_frtti, options::OPT_fno_rtti))
     CmdArgs.push_back("-fno-rtti");
 
-  // -fshort-enums=0 is default.
-  // FIXME: Are there targers where -fshort-enums is on by default ?
+  // -fshort-enums=0 is default for all architectures except Hexagon.
   if (Args.hasFlag(options::OPT_fshort_enums,
-                   options::OPT_fno_short_enums, false))
+                   options::OPT_fno_short_enums,
+                   getToolChain().getTriple().getArch() ==
+                   llvm::Triple::hexagon))
     CmdArgs.push_back("-fshort-enums");
 
   // -fsigned-char is default.
@@ -1892,7 +1974,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (KernelOrKext ||
     !Args.hasFlag(options::OPT_fuse_cxa_atexit, options::OPT_fno_use_cxa_atexit,
                   getToolChain().getTriple().getOS() != llvm::Triple::Cygwin &&
-                  getToolChain().getTriple().getOS() != llvm::Triple::MinGW32))
+                  getToolChain().getTriple().getOS() != llvm::Triple::MinGW32 &&
+                  getToolChain().getTriple().getArch() !=
+                  llvm::Triple::hexagon))
     CmdArgs.push_back("-fno-use-cxa-atexit");
 
   // -fms-extensions=0 is default.
@@ -2475,6 +2559,8 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fsyntax-only");
   }
 
+  Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
+                       options::OPT_Xassembler);
 
   // Only pass -x if gcc will understand it; otherwise hope gcc
   // understands the suffix correctly. The main use case this would go
@@ -2573,6 +2659,168 @@ void gcc::Link::RenderExtraToolArgs(const JobAction &JA,
                                     ArgStringList &CmdArgs) const {
   // The types are (hopefully) good enough.
 }
+
+// Hexagon tools start.
+void hexagon::Assemble::RenderExtraToolArgs(const JobAction &JA,
+                                        ArgStringList &CmdArgs) const {
+
+}
+void hexagon::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
+                               const InputInfo &Output,
+                               const InputInfoList &Inputs,
+                               const ArgList &Args,
+                               const char *LinkingOutput) const {
+
+  const Driver &D = getToolChain().getDriver();
+  ArgStringList CmdArgs;
+
+  std::string MarchString = "-march=";
+  MarchString += getHexagonTargetCPU(Args);
+  CmdArgs.push_back(Args.MakeArgString(MarchString));
+
+  RenderExtraToolArgs(JA, CmdArgs);
+
+  if (Output.isFilename()) {
+    CmdArgs.push_back("-o");
+    CmdArgs.push_back(Output.getFilename());
+  } else {
+    assert(Output.isNothing() && "Unexpected output");
+    CmdArgs.push_back("-fsyntax-only");
+  }
+
+
+  // Only pass -x if gcc will understand it; otherwise hope gcc
+  // understands the suffix correctly. The main use case this would go
+  // wrong in is for linker inputs if they happened to have an odd
+  // suffix; really the only way to get this to happen is a command
+  // like '-x foobar a.c' which will treat a.c like a linker input.
+  //
+  // FIXME: For the linker case specifically, can we safely convert
+  // inputs into '-Wl,' options?
+  for (InputInfoList::const_iterator
+         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+    const InputInfo &II = *it;
+
+    // Don't try to pass LLVM or AST inputs to a generic gcc.
+    if (II.getType() == types::TY_LLVM_IR || II.getType() == types::TY_LTO_IR ||
+        II.getType() == types::TY_LLVM_BC || II.getType() == types::TY_LTO_BC)
+      D.Diag(clang::diag::err_drv_no_linker_llvm_support)
+        << getToolChain().getTripleString();
+    else if (II.getType() == types::TY_AST)
+      D.Diag(clang::diag::err_drv_no_ast_support)
+        << getToolChain().getTripleString();
+
+    if (II.isFilename())
+      CmdArgs.push_back(II.getFilename());
+    else
+      // Don't render as input, we need gcc to do the translations. FIXME: Pranav: What is this ?
+      II.getInputArg().render(Args, CmdArgs);
+  }
+
+  const char *GCCName = "hexagon-as";
+  const char *Exec =
+    Args.MakeArgString(getToolChain().GetProgramPath(GCCName));
+  C.addCommand(new Command(JA, *this, Exec, CmdArgs));
+
+}
+void hexagon::Link::RenderExtraToolArgs(const JobAction &JA,
+                                    ArgStringList &CmdArgs) const {
+  // The types are (hopefully) good enough.
+}
+
+void hexagon::Link::ConstructJob(Compilation &C, const JobAction &JA,
+                               const InputInfo &Output,
+                               const InputInfoList &Inputs,
+                               const ArgList &Args,
+                               const char *LinkingOutput) const {
+
+  const Driver &D = getToolChain().getDriver();
+  ArgStringList CmdArgs;
+
+  for (ArgList::const_iterator
+         it = Args.begin(), ie = Args.end(); it != ie; ++it) {
+    Arg *A = *it;
+    if (A->getOption().hasForwardToGCC()) {
+      // Don't forward any -g arguments to assembly steps.
+      if (isa<AssembleJobAction>(JA) &&
+          A->getOption().matches(options::OPT_g_Group))
+        continue;
+
+      // It is unfortunate that we have to claim here, as this means
+      // we will basically never report anything interesting for
+      // platforms using a generic gcc, even if we are just using gcc
+      // to get to the assembler.
+      A->claim();
+      A->render(Args, CmdArgs);
+    }
+  }
+
+  RenderExtraToolArgs(JA, CmdArgs);
+
+  // Add Arch Information
+  Arg *A;
+  if ((A = getLastHexagonArchArg (Args))) {
+    if ((A->getOption().matches(options::OPT_march_EQ)) ||
+        (A->getOption().matches(options::OPT_mcpu_EQ))) {
+    llvm::StringRef WhichHexagon = A->getValue(Args);
+    if (WhichHexagon == "v2")
+      CmdArgs.push_back("-mv2");
+    else if (WhichHexagon == "v3")
+      CmdArgs.push_back ("-mv3");
+    else if (WhichHexagon == "v4")
+      CmdArgs.push_back ("-mv4");
+    else
+      assert (0 && "Unknown -march or -mcpu value");
+    }
+    else {
+      if (A->getOption().matches(options::OPT_mv2) ||
+          A->getOption().matches(options::OPT_mv3) ||
+          A->getOption().matches(options::OPT_mv4))
+        A->render(Args, CmdArgs);
+      else
+        assert(0 && "Unknown -m argument.");
+    }
+
+  }
+  CmdArgs.push_back("-mqdsp6-compat");
+
+  const char *GCCName;
+  if (C.getDriver().CCCIsCXX)
+    GCCName = "hexagon-g++";
+  else
+    GCCName = "hexagon-gcc";
+  const char *Exec =
+    Args.MakeArgString(getToolChain().GetProgramPath(GCCName));
+
+  if (Output.isFilename()) {
+    CmdArgs.push_back("-o");
+    CmdArgs.push_back(Output.getFilename());
+  }
+
+  for (InputInfoList::const_iterator
+         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+    const InputInfo &II = *it;
+
+    // Don't try to pass LLVM or AST inputs to a generic gcc.
+    if (II.getType() == types::TY_LLVM_IR || II.getType() == types::TY_LTO_IR ||
+        II.getType() == types::TY_LLVM_BC || II.getType() == types::TY_LTO_BC)
+      D.Diag(clang::diag::err_drv_no_linker_llvm_support)
+        << getToolChain().getTripleString();
+    else if (II.getType() == types::TY_AST)
+      D.Diag(clang::diag::err_drv_no_ast_support)
+        << getToolChain().getTripleString();
+
+    if (II.isFilename())
+      CmdArgs.push_back(II.getFilename());
+    else
+      // Don't render as input, we need gcc to do the translations. FIXME: Pranav: What is this ?
+      II.getInputArg().render(Args, CmdArgs);
+  }
+  C.addCommand(new Command(JA, *this, Exec, CmdArgs));
+
+}
+// Hexagon tools end.
+
 
 const char *darwin::CC1::getCC1Name(types::ID Type) const {
   switch (Type) {

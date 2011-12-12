@@ -136,7 +136,23 @@ protected:
   /// @}
 };
 
-/// Darwin - The base Darwin tool chain.
+class LLVM_LIBRARY_VISIBILITY Hexagon_TC : public ToolChain {
+protected:
+  mutable llvm::DenseMap<unsigned, Tool*> Tools;
+
+public:
+  Hexagon_TC(const HostInfo &Host, const llvm::Triple& Triple);
+  ~Hexagon_TC();
+
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
+                           const ActionList &Inputs) const;
+
+  virtual bool IsUnwindTablesDefault() const;
+  virtual const char *GetDefaultRelocationModel() const;
+  virtual const char *GetForcedPicModel() const;
+};
+
+  /// Darwin - The base Darwin tool chain.
 class LLVM_LIBRARY_VISIBILITY Darwin : public ToolChain {
 public:
   /// The host version.

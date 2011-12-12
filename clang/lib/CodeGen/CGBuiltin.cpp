@@ -1182,6 +1182,8 @@ Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
   case llvm::Triple::ppc:
   case llvm::Triple::ppc64:
     return EmitPPCBuiltinExpr(BuiltinID, E);
+  case llvm::Triple::hexagon:
+    return EmitHexagonBuiltinExpr(BuiltinID, E);
   default:
     return 0;
   }
@@ -2435,6 +2437,1993 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return Builder.CreateCall(F, Ops, name);
   }
   }
+}
+
+
+Value *CodeGenFunction::EmitHexagonBuiltinExpr(unsigned BuiltinID,
+                                             const CallExpr *E) {
+  llvm::SmallVector<Value*, 4> Ops;
+
+  for (unsigned i = 0, e = E->getNumArgs(); i != e; i++)
+    Ops.push_back(EmitScalarExpr(E->getArg(i)));
+
+  Intrinsic::ID ID = Intrinsic::not_intrinsic;
+
+  switch (BuiltinID) {
+  default: return 0;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_cmpeq:
+    ID = Intrinsic::hexagon_C2_cmpeq; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_cmpgt:
+    ID = Intrinsic::hexagon_C2_cmpgt; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_cmpgtu:
+    ID = Intrinsic::hexagon_C2_cmpgtu; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_cmpeqp:
+    ID = Intrinsic::hexagon_C2_cmpeqp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_cmpgtp:
+    ID = Intrinsic::hexagon_C2_cmpgtp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_cmpgtup:
+    ID = Intrinsic::hexagon_C2_cmpgtup; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_bitsset:
+    ID = Intrinsic::hexagon_C2_bitsset; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_bitsclr:
+    ID = Intrinsic::hexagon_C2_bitsclr; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_cmpeqi:
+    ID = Intrinsic::hexagon_C2_cmpeqi; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_cmpgti:
+    ID = Intrinsic::hexagon_C2_cmpgti; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_cmpgtui:
+    ID = Intrinsic::hexagon_C2_cmpgtui; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_cmpgei:
+    ID = Intrinsic::hexagon_C2_cmpgei; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_cmpgeui:
+    ID = Intrinsic::hexagon_C2_cmpgeui; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_cmplt:
+    ID = Intrinsic::hexagon_C2_cmplt; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_cmpltu:
+    ID = Intrinsic::hexagon_C2_cmpltu; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_bitsclri:
+    ID = Intrinsic::hexagon_C2_bitsclri; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_and:
+    ID = Intrinsic::hexagon_C2_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_or:
+    ID = Intrinsic::hexagon_C2_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_xor:
+    ID = Intrinsic::hexagon_C2_xor; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_andn:
+    ID = Intrinsic::hexagon_C2_andn; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_not:
+    ID = Intrinsic::hexagon_C2_not; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_orn:
+    ID = Intrinsic::hexagon_C2_orn; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_pxfer_map:
+    ID = Intrinsic::hexagon_C2_pxfer_map; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_any8:
+    ID = Intrinsic::hexagon_C2_any8; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_all8:
+    ID = Intrinsic::hexagon_C2_all8; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_vitpack:
+    ID = Intrinsic::hexagon_C2_vitpack; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_mux:
+    ID = Intrinsic::hexagon_C2_mux; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_muxii:
+    ID = Intrinsic::hexagon_C2_muxii; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_muxir:
+    ID = Intrinsic::hexagon_C2_muxir; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_muxri:
+    ID = Intrinsic::hexagon_C2_muxri; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_vmux:
+    ID = Intrinsic::hexagon_C2_vmux; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_mask:
+    ID = Intrinsic::hexagon_C2_mask; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vcmpbeq:
+    ID = Intrinsic::hexagon_A2_vcmpbeq; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vcmpbgtu:
+    ID = Intrinsic::hexagon_A2_vcmpbgtu; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vcmpheq:
+    ID = Intrinsic::hexagon_A2_vcmpheq; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vcmphgt:
+    ID = Intrinsic::hexagon_A2_vcmphgt; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vcmphgtu:
+    ID = Intrinsic::hexagon_A2_vcmphgtu; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vcmpweq:
+    ID = Intrinsic::hexagon_A2_vcmpweq; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vcmpwgt:
+    ID = Intrinsic::hexagon_A2_vcmpwgt; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vcmpwgtu:
+    ID = Intrinsic::hexagon_A2_vcmpwgtu; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_tfrpr:
+    ID = Intrinsic::hexagon_C2_tfrpr; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C2_tfrrp:
+    ID = Intrinsic::hexagon_C2_tfrrp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_acc_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpy_acc_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_acc_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpy_acc_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_acc_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpy_acc_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_acc_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpy_acc_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_acc_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpy_acc_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_acc_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpy_acc_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_acc_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpy_acc_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_acc_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpy_acc_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_nac_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpy_nac_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_nac_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpy_nac_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_nac_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpy_nac_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_nac_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpy_nac_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_nac_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpy_nac_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_nac_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpy_nac_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_nac_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpy_nac_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_nac_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpy_nac_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_acc_sat_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpy_acc_sat_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_acc_sat_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpy_acc_sat_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_acc_sat_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpy_acc_sat_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_acc_sat_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpy_acc_sat_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_acc_sat_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpy_acc_sat_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_acc_sat_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpy_acc_sat_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_acc_sat_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpy_acc_sat_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_acc_sat_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpy_acc_sat_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_nac_sat_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpy_nac_sat_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_nac_sat_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpy_nac_sat_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_nac_sat_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpy_nac_sat_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_nac_sat_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpy_nac_sat_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_nac_sat_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpy_nac_sat_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_nac_sat_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpy_nac_sat_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_nac_sat_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpy_nac_sat_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_nac_sat_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpy_nac_sat_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpy_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpy_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpy_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpy_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpy_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpy_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpy_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpy_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_sat_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpy_sat_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_sat_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpy_sat_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_sat_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpy_sat_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_sat_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpy_sat_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_sat_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpy_sat_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_sat_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpy_sat_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_sat_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpy_sat_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_sat_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpy_sat_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_rnd_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpy_rnd_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_rnd_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpy_rnd_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_rnd_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpy_rnd_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_rnd_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpy_rnd_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_rnd_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpy_rnd_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_rnd_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpy_rnd_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_rnd_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpy_rnd_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_rnd_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpy_rnd_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_sat_rnd_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpy_sat_rnd_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_sat_rnd_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpy_sat_rnd_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_sat_rnd_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpy_sat_rnd_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_sat_rnd_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpy_sat_rnd_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_sat_rnd_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpy_sat_rnd_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_sat_rnd_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpy_sat_rnd_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_sat_rnd_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpy_sat_rnd_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_sat_rnd_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpy_sat_rnd_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_acc_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpyd_acc_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_acc_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpyd_acc_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_acc_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpyd_acc_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_acc_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpyd_acc_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_acc_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpyd_acc_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_acc_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpyd_acc_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_acc_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpyd_acc_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_acc_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpyd_acc_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_nac_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpyd_nac_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_nac_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpyd_nac_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_nac_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpyd_nac_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_nac_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpyd_nac_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_nac_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpyd_nac_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_nac_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpyd_nac_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_nac_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpyd_nac_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_nac_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpyd_nac_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpyd_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpyd_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpyd_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpyd_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpyd_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpyd_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpyd_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpyd_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_rnd_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpyd_rnd_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_rnd_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpyd_rnd_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_rnd_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpyd_rnd_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_rnd_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpyd_rnd_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_rnd_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpyd_rnd_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_rnd_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpyd_rnd_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_rnd_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpyd_rnd_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyd_rnd_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpyd_rnd_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_acc_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpyu_acc_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_acc_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpyu_acc_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_acc_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpyu_acc_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_acc_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpyu_acc_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_acc_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpyu_acc_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_acc_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpyu_acc_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_acc_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpyu_acc_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_acc_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpyu_acc_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_nac_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpyu_nac_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_nac_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpyu_nac_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_nac_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpyu_nac_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_nac_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpyu_nac_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_nac_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpyu_nac_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_nac_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpyu_nac_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_nac_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpyu_nac_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_nac_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpyu_nac_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpyu_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpyu_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpyu_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpyu_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpyu_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpyu_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpyu_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpyu_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_acc_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpyud_acc_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_acc_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpyud_acc_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_acc_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpyud_acc_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_acc_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpyud_acc_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_acc_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpyud_acc_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_acc_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpyud_acc_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_acc_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpyud_acc_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_acc_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpyud_acc_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_nac_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpyud_nac_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_nac_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpyud_nac_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_nac_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpyud_nac_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_nac_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpyud_nac_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_nac_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpyud_nac_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_nac_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpyud_nac_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_nac_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpyud_nac_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_nac_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpyud_nac_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_hh_s0:
+    ID = Intrinsic::hexagon_M2_mpyud_hh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_hh_s1:
+    ID = Intrinsic::hexagon_M2_mpyud_hh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_hl_s0:
+    ID = Intrinsic::hexagon_M2_mpyud_hl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_hl_s1:
+    ID = Intrinsic::hexagon_M2_mpyud_hl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_lh_s0:
+    ID = Intrinsic::hexagon_M2_mpyud_lh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_lh_s1:
+    ID = Intrinsic::hexagon_M2_mpyud_lh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_ll_s0:
+    ID = Intrinsic::hexagon_M2_mpyud_ll_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyud_ll_s1:
+    ID = Intrinsic::hexagon_M2_mpyud_ll_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpysmi:
+    ID = Intrinsic::hexagon_M2_mpysmi; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_macsip:
+    ID = Intrinsic::hexagon_M2_macsip; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_macsin:
+    ID = Intrinsic::hexagon_M2_macsin; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_dpmpyss_s0:
+    ID = Intrinsic::hexagon_M2_dpmpyss_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_dpmpyss_acc_s0:
+    ID = Intrinsic::hexagon_M2_dpmpyss_acc_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_dpmpyss_nac_s0:
+    ID = Intrinsic::hexagon_M2_dpmpyss_nac_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_dpmpyuu_s0:
+    ID = Intrinsic::hexagon_M2_dpmpyuu_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_dpmpyuu_acc_s0:
+    ID = Intrinsic::hexagon_M2_dpmpyuu_acc_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_dpmpyuu_nac_s0:
+    ID = Intrinsic::hexagon_M2_dpmpyuu_nac_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpy_up:
+    ID = Intrinsic::hexagon_M2_mpy_up; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyu_up:
+    ID = Intrinsic::hexagon_M2_mpyu_up; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_dpmpyss_rnd_s0:
+    ID = Intrinsic::hexagon_M2_dpmpyss_rnd_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyi:
+    ID = Intrinsic::hexagon_M2_mpyi; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mpyui:
+    ID = Intrinsic::hexagon_M2_mpyui; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_maci:
+    ID = Intrinsic::hexagon_M2_maci; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_acci:
+    ID = Intrinsic::hexagon_M2_acci; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_accii:
+    ID = Intrinsic::hexagon_M2_accii; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_nacci:
+    ID = Intrinsic::hexagon_M2_nacci; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_naccii:
+    ID = Intrinsic::hexagon_M2_naccii; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_subacc:
+    ID = Intrinsic::hexagon_M2_subacc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vmpy2s_s0:
+    ID = Intrinsic::hexagon_M2_vmpy2s_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vmpy2s_s1:
+    ID = Intrinsic::hexagon_M2_vmpy2s_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vmac2s_s0:
+    ID = Intrinsic::hexagon_M2_vmac2s_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vmac2s_s1:
+    ID = Intrinsic::hexagon_M2_vmac2s_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vmpy2s_s0pack:
+    ID = Intrinsic::hexagon_M2_vmpy2s_s0pack; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vmpy2s_s1pack:
+    ID = Intrinsic::hexagon_M2_vmpy2s_s1pack; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vmac2:
+    ID = Intrinsic::hexagon_M2_vmac2; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vmpy2es_s0:
+    ID = Intrinsic::hexagon_M2_vmpy2es_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vmpy2es_s1:
+    ID = Intrinsic::hexagon_M2_vmpy2es_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vmac2es_s0:
+    ID = Intrinsic::hexagon_M2_vmac2es_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vmac2es_s1:
+    ID = Intrinsic::hexagon_M2_vmac2es_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vmac2es:
+    ID = Intrinsic::hexagon_M2_vmac2es; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vrmac_s0:
+    ID = Intrinsic::hexagon_M2_vrmac_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vrmpy_s0:
+    ID = Intrinsic::hexagon_M2_vrmpy_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vdmpyrs_s0:
+    ID = Intrinsic::hexagon_M2_vdmpyrs_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vdmpyrs_s1:
+    ID = Intrinsic::hexagon_M2_vdmpyrs_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vdmacs_s0:
+    ID = Intrinsic::hexagon_M2_vdmacs_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vdmacs_s1:
+    ID = Intrinsic::hexagon_M2_vdmacs_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vdmpys_s0:
+    ID = Intrinsic::hexagon_M2_vdmpys_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vdmpys_s1:
+    ID = Intrinsic::hexagon_M2_vdmpys_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cmpyrs_s0:
+    ID = Intrinsic::hexagon_M2_cmpyrs_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cmpyrs_s1:
+    ID = Intrinsic::hexagon_M2_cmpyrs_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cmpyrsc_s0:
+    ID = Intrinsic::hexagon_M2_cmpyrsc_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cmpyrsc_s1:
+    ID = Intrinsic::hexagon_M2_cmpyrsc_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cmacs_s0:
+    ID = Intrinsic::hexagon_M2_cmacs_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cmacs_s1:
+    ID = Intrinsic::hexagon_M2_cmacs_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cmacsc_s0:
+    ID = Intrinsic::hexagon_M2_cmacsc_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cmacsc_s1:
+    ID = Intrinsic::hexagon_M2_cmacsc_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cmpys_s0:
+    ID = Intrinsic::hexagon_M2_cmpys_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cmpys_s1:
+    ID = Intrinsic::hexagon_M2_cmpys_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cmpysc_s0:
+    ID = Intrinsic::hexagon_M2_cmpysc_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cmpysc_s1:
+    ID = Intrinsic::hexagon_M2_cmpysc_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cnacs_s0:
+    ID = Intrinsic::hexagon_M2_cnacs_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cnacs_s1:
+    ID = Intrinsic::hexagon_M2_cnacs_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cnacsc_s0:
+    ID = Intrinsic::hexagon_M2_cnacsc_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cnacsc_s1:
+    ID = Intrinsic::hexagon_M2_cnacsc_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vrcmpys_s1:
+    ID = Intrinsic::hexagon_M2_vrcmpys_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vrcmpys_acc_s1:
+    ID = Intrinsic::hexagon_M2_vrcmpys_acc_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vrcmpys_s1rp:
+    ID = Intrinsic::hexagon_M2_vrcmpys_s1rp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmacls_s0:
+    ID = Intrinsic::hexagon_M2_mmacls_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmacls_s1:
+    ID = Intrinsic::hexagon_M2_mmacls_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmachs_s0:
+    ID = Intrinsic::hexagon_M2_mmachs_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmachs_s1:
+    ID = Intrinsic::hexagon_M2_mmachs_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmpyl_s0:
+    ID = Intrinsic::hexagon_M2_mmpyl_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmpyl_s1:
+    ID = Intrinsic::hexagon_M2_mmpyl_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmpyh_s0:
+    ID = Intrinsic::hexagon_M2_mmpyh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmpyh_s1:
+    ID = Intrinsic::hexagon_M2_mmpyh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmacls_rs0:
+    ID = Intrinsic::hexagon_M2_mmacls_rs0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmacls_rs1:
+    ID = Intrinsic::hexagon_M2_mmacls_rs1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmachs_rs0:
+    ID = Intrinsic::hexagon_M2_mmachs_rs0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmachs_rs1:
+    ID = Intrinsic::hexagon_M2_mmachs_rs1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmpyl_rs0:
+    ID = Intrinsic::hexagon_M2_mmpyl_rs0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmpyl_rs1:
+    ID = Intrinsic::hexagon_M2_mmpyl_rs1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmpyh_rs0:
+    ID = Intrinsic::hexagon_M2_mmpyh_rs0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmpyh_rs1:
+    ID = Intrinsic::hexagon_M2_mmpyh_rs1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_hmmpyl_rs1:
+    ID = Intrinsic::hexagon_M2_hmmpyl_rs1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_hmmpyh_rs1:
+    ID = Intrinsic::hexagon_M2_hmmpyh_rs1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmaculs_s0:
+    ID = Intrinsic::hexagon_M2_mmaculs_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmaculs_s1:
+    ID = Intrinsic::hexagon_M2_mmaculs_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmacuhs_s0:
+    ID = Intrinsic::hexagon_M2_mmacuhs_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmacuhs_s1:
+    ID = Intrinsic::hexagon_M2_mmacuhs_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmpyul_s0:
+    ID = Intrinsic::hexagon_M2_mmpyul_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmpyul_s1:
+    ID = Intrinsic::hexagon_M2_mmpyul_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmpyuh_s0:
+    ID = Intrinsic::hexagon_M2_mmpyuh_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmpyuh_s1:
+    ID = Intrinsic::hexagon_M2_mmpyuh_s1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmaculs_rs0:
+    ID = Intrinsic::hexagon_M2_mmaculs_rs0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmaculs_rs1:
+    ID = Intrinsic::hexagon_M2_mmaculs_rs1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmacuhs_rs0:
+    ID = Intrinsic::hexagon_M2_mmacuhs_rs0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmacuhs_rs1:
+    ID = Intrinsic::hexagon_M2_mmacuhs_rs1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmpyul_rs0:
+    ID = Intrinsic::hexagon_M2_mmpyul_rs0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmpyul_rs1:
+    ID = Intrinsic::hexagon_M2_mmpyul_rs1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmpyuh_rs0:
+    ID = Intrinsic::hexagon_M2_mmpyuh_rs0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_mmpyuh_rs1:
+    ID = Intrinsic::hexagon_M2_mmpyuh_rs1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vrcmaci_s0:
+    ID = Intrinsic::hexagon_M2_vrcmaci_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vrcmacr_s0:
+    ID = Intrinsic::hexagon_M2_vrcmacr_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vrcmaci_s0c:
+    ID = Intrinsic::hexagon_M2_vrcmaci_s0c; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vrcmacr_s0c:
+    ID = Intrinsic::hexagon_M2_vrcmacr_s0c; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cmaci_s0:
+    ID = Intrinsic::hexagon_M2_cmaci_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cmacr_s0:
+    ID = Intrinsic::hexagon_M2_cmacr_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vrcmpyi_s0:
+    ID = Intrinsic::hexagon_M2_vrcmpyi_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vrcmpyr_s0:
+    ID = Intrinsic::hexagon_M2_vrcmpyr_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vrcmpyi_s0c:
+    ID = Intrinsic::hexagon_M2_vrcmpyi_s0c; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vrcmpyr_s0c:
+    ID = Intrinsic::hexagon_M2_vrcmpyr_s0c; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cmpyi_s0:
+    ID = Intrinsic::hexagon_M2_cmpyi_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_cmpyr_s0:
+    ID = Intrinsic::hexagon_M2_cmpyr_s0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vcmpy_s0_sat_i:
+    ID = Intrinsic::hexagon_M2_vcmpy_s0_sat_i; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vcmpy_s0_sat_r:
+    ID = Intrinsic::hexagon_M2_vcmpy_s0_sat_r; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vcmpy_s1_sat_i:
+    ID = Intrinsic::hexagon_M2_vcmpy_s1_sat_i; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vcmpy_s1_sat_r:
+    ID = Intrinsic::hexagon_M2_vcmpy_s1_sat_r; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vcmac_s0_sat_i:
+    ID = Intrinsic::hexagon_M2_vcmac_s0_sat_i; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vcmac_s0_sat_r:
+    ID = Intrinsic::hexagon_M2_vcmac_s0_sat_r; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vcrotate:
+    ID = Intrinsic::hexagon_S2_vcrotate; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_add:
+    ID = Intrinsic::hexagon_A2_add; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_sub:
+    ID = Intrinsic::hexagon_A2_sub; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addsat:
+    ID = Intrinsic::hexagon_A2_addsat; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_subsat:
+    ID = Intrinsic::hexagon_A2_subsat; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addi:
+    ID = Intrinsic::hexagon_A2_addi; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addh_l16_ll:
+    ID = Intrinsic::hexagon_A2_addh_l16_ll; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addh_l16_hl:
+    ID = Intrinsic::hexagon_A2_addh_l16_hl; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addh_l16_sat_ll:
+    ID = Intrinsic::hexagon_A2_addh_l16_sat_ll; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addh_l16_sat_hl:
+    ID = Intrinsic::hexagon_A2_addh_l16_sat_hl; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_subh_l16_ll:
+    ID = Intrinsic::hexagon_A2_subh_l16_ll; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_subh_l16_hl:
+    ID = Intrinsic::hexagon_A2_subh_l16_hl; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_subh_l16_sat_ll:
+    ID = Intrinsic::hexagon_A2_subh_l16_sat_ll; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_subh_l16_sat_hl:
+    ID = Intrinsic::hexagon_A2_subh_l16_sat_hl; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addh_h16_ll:
+    ID = Intrinsic::hexagon_A2_addh_h16_ll; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addh_h16_lh:
+    ID = Intrinsic::hexagon_A2_addh_h16_lh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addh_h16_hl:
+    ID = Intrinsic::hexagon_A2_addh_h16_hl; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addh_h16_hh:
+    ID = Intrinsic::hexagon_A2_addh_h16_hh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addh_h16_sat_ll:
+    ID = Intrinsic::hexagon_A2_addh_h16_sat_ll; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addh_h16_sat_lh:
+    ID = Intrinsic::hexagon_A2_addh_h16_sat_lh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addh_h16_sat_hl:
+    ID = Intrinsic::hexagon_A2_addh_h16_sat_hl; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addh_h16_sat_hh:
+    ID = Intrinsic::hexagon_A2_addh_h16_sat_hh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_subh_h16_ll:
+    ID = Intrinsic::hexagon_A2_subh_h16_ll; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_subh_h16_lh:
+    ID = Intrinsic::hexagon_A2_subh_h16_lh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_subh_h16_hl:
+    ID = Intrinsic::hexagon_A2_subh_h16_hl; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_subh_h16_hh:
+    ID = Intrinsic::hexagon_A2_subh_h16_hh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_subh_h16_sat_ll:
+    ID = Intrinsic::hexagon_A2_subh_h16_sat_ll; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_subh_h16_sat_lh:
+    ID = Intrinsic::hexagon_A2_subh_h16_sat_lh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_subh_h16_sat_hl:
+    ID = Intrinsic::hexagon_A2_subh_h16_sat_hl; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_subh_h16_sat_hh:
+    ID = Intrinsic::hexagon_A2_subh_h16_sat_hh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_aslh:
+    ID = Intrinsic::hexagon_A2_aslh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_asrh:
+    ID = Intrinsic::hexagon_A2_asrh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addp:
+    ID = Intrinsic::hexagon_A2_addp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addpsat:
+    ID = Intrinsic::hexagon_A2_addpsat; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_addsp:
+    ID = Intrinsic::hexagon_A2_addsp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_subp:
+    ID = Intrinsic::hexagon_A2_subp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_neg:
+    ID = Intrinsic::hexagon_A2_neg; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_negsat:
+    ID = Intrinsic::hexagon_A2_negsat; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_abs:
+    ID = Intrinsic::hexagon_A2_abs; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_abssat:
+    ID = Intrinsic::hexagon_A2_abssat; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vconj:
+    ID = Intrinsic::hexagon_A2_vconj; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_negp:
+    ID = Intrinsic::hexagon_A2_negp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_absp:
+    ID = Intrinsic::hexagon_A2_absp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_max:
+    ID = Intrinsic::hexagon_A2_max; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_maxu:
+    ID = Intrinsic::hexagon_A2_maxu; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_min:
+    ID = Intrinsic::hexagon_A2_min; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_minu:
+    ID = Intrinsic::hexagon_A2_minu; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_maxp:
+    ID = Intrinsic::hexagon_A2_maxp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_maxup:
+    ID = Intrinsic::hexagon_A2_maxup; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_minp:
+    ID = Intrinsic::hexagon_A2_minp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_minup:
+    ID = Intrinsic::hexagon_A2_minup; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_tfr:
+    ID = Intrinsic::hexagon_A2_tfr; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_tfrsi:
+    ID = Intrinsic::hexagon_A2_tfrsi; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_tfrp:
+    ID = Intrinsic::hexagon_A2_tfrp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_tfrpi:
+    ID = Intrinsic::hexagon_A2_tfrpi; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_zxtb:
+    ID = Intrinsic::hexagon_A2_zxtb; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_sxtb:
+    ID = Intrinsic::hexagon_A2_sxtb; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_zxth:
+    ID = Intrinsic::hexagon_A2_zxth; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_sxth:
+    ID = Intrinsic::hexagon_A2_sxth; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_combinew:
+    ID = Intrinsic::hexagon_A2_combinew; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_combineii:
+    ID = Intrinsic::hexagon_A2_combineii; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_combine_hh:
+    ID = Intrinsic::hexagon_A2_combine_hh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_combine_hl:
+    ID = Intrinsic::hexagon_A2_combine_hl; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_combine_lh:
+    ID = Intrinsic::hexagon_A2_combine_lh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_combine_ll:
+    ID = Intrinsic::hexagon_A2_combine_ll; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_tfril:
+    ID = Intrinsic::hexagon_A2_tfril; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_tfrih:
+    ID = Intrinsic::hexagon_A2_tfrih; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_and:
+    ID = Intrinsic::hexagon_A2_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_or:
+    ID = Intrinsic::hexagon_A2_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_xor:
+    ID = Intrinsic::hexagon_A2_xor; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_not:
+    ID = Intrinsic::hexagon_A2_not; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_xor_xacc:
+    ID = Intrinsic::hexagon_M2_xor_xacc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_subri:
+    ID = Intrinsic::hexagon_A2_subri; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_andir:
+    ID = Intrinsic::hexagon_A2_andir; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_orir:
+    ID = Intrinsic::hexagon_A2_orir; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_andp:
+    ID = Intrinsic::hexagon_A2_andp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_orp:
+    ID = Intrinsic::hexagon_A2_orp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_xorp:
+    ID = Intrinsic::hexagon_A2_xorp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_notp:
+    ID = Intrinsic::hexagon_A2_notp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_sxtw:
+    ID = Intrinsic::hexagon_A2_sxtw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_sat:
+    ID = Intrinsic::hexagon_A2_sat; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_sath:
+    ID = Intrinsic::hexagon_A2_sath; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_satuh:
+    ID = Intrinsic::hexagon_A2_satuh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_satub:
+    ID = Intrinsic::hexagon_A2_satub; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_satb:
+    ID = Intrinsic::hexagon_A2_satb; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vaddub:
+    ID = Intrinsic::hexagon_A2_vaddub; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vaddubs:
+    ID = Intrinsic::hexagon_A2_vaddubs; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vaddh:
+    ID = Intrinsic::hexagon_A2_vaddh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vaddhs:
+    ID = Intrinsic::hexagon_A2_vaddhs; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vadduhs:
+    ID = Intrinsic::hexagon_A2_vadduhs; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vaddw:
+    ID = Intrinsic::hexagon_A2_vaddw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vaddws:
+    ID = Intrinsic::hexagon_A2_vaddws; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_svavgh:
+    ID = Intrinsic::hexagon_A2_svavgh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_svavghs:
+    ID = Intrinsic::hexagon_A2_svavghs; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_svnavgh:
+    ID = Intrinsic::hexagon_A2_svnavgh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_svaddh:
+    ID = Intrinsic::hexagon_A2_svaddh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_svaddhs:
+    ID = Intrinsic::hexagon_A2_svaddhs; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_svadduhs:
+    ID = Intrinsic::hexagon_A2_svadduhs; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_svsubh:
+    ID = Intrinsic::hexagon_A2_svsubh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_svsubhs:
+    ID = Intrinsic::hexagon_A2_svsubhs; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_svsubuhs:
+    ID = Intrinsic::hexagon_A2_svsubuhs; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vraddub:
+    ID = Intrinsic::hexagon_A2_vraddub; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vraddub_acc:
+    ID = Intrinsic::hexagon_A2_vraddub_acc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vradduh:
+    ID = Intrinsic::hexagon_M2_vradduh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vsubub:
+    ID = Intrinsic::hexagon_A2_vsubub; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vsububs:
+    ID = Intrinsic::hexagon_A2_vsububs; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vsubh:
+    ID = Intrinsic::hexagon_A2_vsubh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vsubhs:
+    ID = Intrinsic::hexagon_A2_vsubhs; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vsubuhs:
+    ID = Intrinsic::hexagon_A2_vsubuhs; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vsubw:
+    ID = Intrinsic::hexagon_A2_vsubw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vsubws:
+    ID = Intrinsic::hexagon_A2_vsubws; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vabsh:
+    ID = Intrinsic::hexagon_A2_vabsh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vabshsat:
+    ID = Intrinsic::hexagon_A2_vabshsat; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vabsw:
+    ID = Intrinsic::hexagon_A2_vabsw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vabswsat:
+    ID = Intrinsic::hexagon_A2_vabswsat; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vabsdiffw:
+    ID = Intrinsic::hexagon_M2_vabsdiffw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M2_vabsdiffh:
+    ID = Intrinsic::hexagon_M2_vabsdiffh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vrsadub:
+    ID = Intrinsic::hexagon_A2_vrsadub; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vrsadub_acc:
+    ID = Intrinsic::hexagon_A2_vrsadub_acc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vavgub:
+    ID = Intrinsic::hexagon_A2_vavgub; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vavguh:
+    ID = Intrinsic::hexagon_A2_vavguh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vavgh:
+    ID = Intrinsic::hexagon_A2_vavgh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vnavgh:
+    ID = Intrinsic::hexagon_A2_vnavgh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vavgw:
+    ID = Intrinsic::hexagon_A2_vavgw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vnavgw:
+    ID = Intrinsic::hexagon_A2_vnavgw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vavgwr:
+    ID = Intrinsic::hexagon_A2_vavgwr; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vnavgwr:
+    ID = Intrinsic::hexagon_A2_vnavgwr; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vavgwcr:
+    ID = Intrinsic::hexagon_A2_vavgwcr; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vnavgwcr:
+    ID = Intrinsic::hexagon_A2_vnavgwcr; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vavghcr:
+    ID = Intrinsic::hexagon_A2_vavghcr; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vnavghcr:
+    ID = Intrinsic::hexagon_A2_vnavghcr; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vavguw:
+    ID = Intrinsic::hexagon_A2_vavguw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vavguwr:
+    ID = Intrinsic::hexagon_A2_vavguwr; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vavgubr:
+    ID = Intrinsic::hexagon_A2_vavgubr; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vavguhr:
+    ID = Intrinsic::hexagon_A2_vavguhr; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vavghr:
+    ID = Intrinsic::hexagon_A2_vavghr; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vnavghr:
+    ID = Intrinsic::hexagon_A2_vnavghr; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vminh:
+    ID = Intrinsic::hexagon_A2_vminh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vmaxh:
+    ID = Intrinsic::hexagon_A2_vmaxh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vminub:
+    ID = Intrinsic::hexagon_A2_vminub; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vmaxub:
+    ID = Intrinsic::hexagon_A2_vmaxub; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vminuh:
+    ID = Intrinsic::hexagon_A2_vminuh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vmaxuh:
+    ID = Intrinsic::hexagon_A2_vmaxuh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vminw:
+    ID = Intrinsic::hexagon_A2_vminw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vmaxw:
+    ID = Intrinsic::hexagon_A2_vmaxw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vminuw:
+    ID = Intrinsic::hexagon_A2_vminuw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_vmaxuw:
+    ID = Intrinsic::hexagon_A2_vmaxuw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_r_r:
+    ID = Intrinsic::hexagon_S2_asr_r_r; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_r_r:
+    ID = Intrinsic::hexagon_S2_asl_r_r; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_r_r:
+    ID = Intrinsic::hexagon_S2_lsr_r_r; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsl_r_r:
+    ID = Intrinsic::hexagon_S2_lsl_r_r; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_r_p:
+    ID = Intrinsic::hexagon_S2_asr_r_p; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_r_p:
+    ID = Intrinsic::hexagon_S2_asl_r_p; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_r_p:
+    ID = Intrinsic::hexagon_S2_lsr_r_p; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsl_r_p:
+    ID = Intrinsic::hexagon_S2_lsl_r_p; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_r_r_acc:
+    ID = Intrinsic::hexagon_S2_asr_r_r_acc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_r_r_acc:
+    ID = Intrinsic::hexagon_S2_asl_r_r_acc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_r_r_acc:
+    ID = Intrinsic::hexagon_S2_lsr_r_r_acc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsl_r_r_acc:
+    ID = Intrinsic::hexagon_S2_lsl_r_r_acc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_r_p_acc:
+    ID = Intrinsic::hexagon_S2_asr_r_p_acc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_r_p_acc:
+    ID = Intrinsic::hexagon_S2_asl_r_p_acc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_r_p_acc:
+    ID = Intrinsic::hexagon_S2_lsr_r_p_acc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsl_r_p_acc:
+    ID = Intrinsic::hexagon_S2_lsl_r_p_acc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_r_r_nac:
+    ID = Intrinsic::hexagon_S2_asr_r_r_nac; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_r_r_nac:
+    ID = Intrinsic::hexagon_S2_asl_r_r_nac; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_r_r_nac:
+    ID = Intrinsic::hexagon_S2_lsr_r_r_nac; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsl_r_r_nac:
+    ID = Intrinsic::hexagon_S2_lsl_r_r_nac; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_r_p_nac:
+    ID = Intrinsic::hexagon_S2_asr_r_p_nac; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_r_p_nac:
+    ID = Intrinsic::hexagon_S2_asl_r_p_nac; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_r_p_nac:
+    ID = Intrinsic::hexagon_S2_lsr_r_p_nac; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsl_r_p_nac:
+    ID = Intrinsic::hexagon_S2_lsl_r_p_nac; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_r_r_and:
+    ID = Intrinsic::hexagon_S2_asr_r_r_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_r_r_and:
+    ID = Intrinsic::hexagon_S2_asl_r_r_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_r_r_and:
+    ID = Intrinsic::hexagon_S2_lsr_r_r_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsl_r_r_and:
+    ID = Intrinsic::hexagon_S2_lsl_r_r_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_r_r_or:
+    ID = Intrinsic::hexagon_S2_asr_r_r_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_r_r_or:
+    ID = Intrinsic::hexagon_S2_asl_r_r_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_r_r_or:
+    ID = Intrinsic::hexagon_S2_lsr_r_r_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsl_r_r_or:
+    ID = Intrinsic::hexagon_S2_lsl_r_r_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_r_p_and:
+    ID = Intrinsic::hexagon_S2_asr_r_p_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_r_p_and:
+    ID = Intrinsic::hexagon_S2_asl_r_p_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_r_p_and:
+    ID = Intrinsic::hexagon_S2_lsr_r_p_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsl_r_p_and:
+    ID = Intrinsic::hexagon_S2_lsl_r_p_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_r_p_or:
+    ID = Intrinsic::hexagon_S2_asr_r_p_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_r_p_or:
+    ID = Intrinsic::hexagon_S2_asl_r_p_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_r_p_or:
+    ID = Intrinsic::hexagon_S2_lsr_r_p_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsl_r_p_or:
+    ID = Intrinsic::hexagon_S2_lsl_r_p_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_r_r_sat:
+    ID = Intrinsic::hexagon_S2_asr_r_r_sat; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_r_r_sat:
+    ID = Intrinsic::hexagon_S2_asl_r_r_sat; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_i_r:
+    ID = Intrinsic::hexagon_S2_asr_i_r; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_i_r:
+    ID = Intrinsic::hexagon_S2_lsr_i_r; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_i_r:
+    ID = Intrinsic::hexagon_S2_asl_i_r; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_i_p:
+    ID = Intrinsic::hexagon_S2_asr_i_p; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_i_p:
+    ID = Intrinsic::hexagon_S2_lsr_i_p; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_i_p:
+    ID = Intrinsic::hexagon_S2_asl_i_p; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_i_r_acc:
+    ID = Intrinsic::hexagon_S2_asr_i_r_acc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_i_r_acc:
+    ID = Intrinsic::hexagon_S2_lsr_i_r_acc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_i_r_acc:
+    ID = Intrinsic::hexagon_S2_asl_i_r_acc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_i_p_acc:
+    ID = Intrinsic::hexagon_S2_asr_i_p_acc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_i_p_acc:
+    ID = Intrinsic::hexagon_S2_lsr_i_p_acc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_i_p_acc:
+    ID = Intrinsic::hexagon_S2_asl_i_p_acc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_i_r_nac:
+    ID = Intrinsic::hexagon_S2_asr_i_r_nac; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_i_r_nac:
+    ID = Intrinsic::hexagon_S2_lsr_i_r_nac; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_i_r_nac:
+    ID = Intrinsic::hexagon_S2_asl_i_r_nac; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_i_p_nac:
+    ID = Intrinsic::hexagon_S2_asr_i_p_nac; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_i_p_nac:
+    ID = Intrinsic::hexagon_S2_lsr_i_p_nac; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_i_p_nac:
+    ID = Intrinsic::hexagon_S2_asl_i_p_nac; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_i_r_xacc:
+    ID = Intrinsic::hexagon_S2_lsr_i_r_xacc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_i_r_xacc:
+    ID = Intrinsic::hexagon_S2_asl_i_r_xacc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_i_p_xacc:
+    ID = Intrinsic::hexagon_S2_lsr_i_p_xacc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_i_p_xacc:
+    ID = Intrinsic::hexagon_S2_asl_i_p_xacc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_i_r_and:
+    ID = Intrinsic::hexagon_S2_asr_i_r_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_i_r_and:
+    ID = Intrinsic::hexagon_S2_lsr_i_r_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_i_r_and:
+    ID = Intrinsic::hexagon_S2_asl_i_r_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_i_r_or:
+    ID = Intrinsic::hexagon_S2_asr_i_r_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_i_r_or:
+    ID = Intrinsic::hexagon_S2_lsr_i_r_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_i_r_or:
+    ID = Intrinsic::hexagon_S2_asl_i_r_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_i_p_and:
+    ID = Intrinsic::hexagon_S2_asr_i_p_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_i_p_and:
+    ID = Intrinsic::hexagon_S2_lsr_i_p_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_i_p_and:
+    ID = Intrinsic::hexagon_S2_asl_i_p_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_i_p_or:
+    ID = Intrinsic::hexagon_S2_asr_i_p_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_i_p_or:
+    ID = Intrinsic::hexagon_S2_lsr_i_p_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_i_p_or:
+    ID = Intrinsic::hexagon_S2_asl_i_p_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_i_r_sat:
+    ID = Intrinsic::hexagon_S2_asl_i_r_sat; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_i_r_rnd:
+    ID = Intrinsic::hexagon_S2_asr_i_r_rnd; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_i_r_rnd_goodsyntax:
+    ID = Intrinsic::hexagon_S2_asr_i_r_rnd_goodsyntax; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_addasl_rrri:
+    ID = Intrinsic::hexagon_S2_addasl_rrri; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_valignib:
+    ID = Intrinsic::hexagon_S2_valignib; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_valignrb:
+    ID = Intrinsic::hexagon_S2_valignrb; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vspliceib:
+    ID = Intrinsic::hexagon_S2_vspliceib; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vsplicerb:
+    ID = Intrinsic::hexagon_S2_vsplicerb; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vsplatrh:
+    ID = Intrinsic::hexagon_S2_vsplatrh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vsplatrb:
+    ID = Intrinsic::hexagon_S2_vsplatrb; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_insert:
+    ID = Intrinsic::hexagon_S2_insert; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_tableidxb_goodsyntax:
+    ID = Intrinsic::hexagon_S2_tableidxb_goodsyntax; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_tableidxh_goodsyntax:
+    ID = Intrinsic::hexagon_S2_tableidxh_goodsyntax; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_tableidxw_goodsyntax:
+    ID = Intrinsic::hexagon_S2_tableidxw_goodsyntax; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_tableidxd_goodsyntax:
+    ID = Intrinsic::hexagon_S2_tableidxd_goodsyntax; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_extractu:
+    ID = Intrinsic::hexagon_S2_extractu; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_insertp:
+    ID = Intrinsic::hexagon_S2_insertp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_extractup:
+    ID = Intrinsic::hexagon_S2_extractup; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_insert_rp:
+    ID = Intrinsic::hexagon_S2_insert_rp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_extractu_rp:
+    ID = Intrinsic::hexagon_S2_extractu_rp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_insertp_rp:
+    ID = Intrinsic::hexagon_S2_insertp_rp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_extractup_rp:
+    ID = Intrinsic::hexagon_S2_extractup_rp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_tstbit_i:
+    ID = Intrinsic::hexagon_S2_tstbit_i; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_setbit_i:
+    ID = Intrinsic::hexagon_S2_setbit_i; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_togglebit_i:
+    ID = Intrinsic::hexagon_S2_togglebit_i; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_clrbit_i:
+    ID = Intrinsic::hexagon_S2_clrbit_i; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_tstbit_r:
+    ID = Intrinsic::hexagon_S2_tstbit_r; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_setbit_r:
+    ID = Intrinsic::hexagon_S2_setbit_r; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_togglebit_r:
+    ID = Intrinsic::hexagon_S2_togglebit_r; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_clrbit_r:
+    ID = Intrinsic::hexagon_S2_clrbit_r; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_i_vh:
+    ID = Intrinsic::hexagon_S2_asr_i_vh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_i_vh:
+    ID = Intrinsic::hexagon_S2_lsr_i_vh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_i_vh:
+    ID = Intrinsic::hexagon_S2_asl_i_vh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_r_vh:
+    ID = Intrinsic::hexagon_S2_asr_r_vh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_r_vh:
+    ID = Intrinsic::hexagon_S2_asl_r_vh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_r_vh:
+    ID = Intrinsic::hexagon_S2_lsr_r_vh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsl_r_vh:
+    ID = Intrinsic::hexagon_S2_lsl_r_vh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_i_vw:
+    ID = Intrinsic::hexagon_S2_asr_i_vw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_i_svw_trun:
+    ID = Intrinsic::hexagon_S2_asr_i_svw_trun; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_r_svw_trun:
+    ID = Intrinsic::hexagon_S2_asr_r_svw_trun; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_i_vw:
+    ID = Intrinsic::hexagon_S2_lsr_i_vw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_i_vw:
+    ID = Intrinsic::hexagon_S2_asl_i_vw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asr_r_vw:
+    ID = Intrinsic::hexagon_S2_asr_r_vw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_asl_r_vw:
+    ID = Intrinsic::hexagon_S2_asl_r_vw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsr_r_vw:
+    ID = Intrinsic::hexagon_S2_lsr_r_vw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lsl_r_vw:
+    ID = Intrinsic::hexagon_S2_lsl_r_vw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vrndpackwh:
+    ID = Intrinsic::hexagon_S2_vrndpackwh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vrndpackwhs:
+    ID = Intrinsic::hexagon_S2_vrndpackwhs; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vsxtbh:
+    ID = Intrinsic::hexagon_S2_vsxtbh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vzxtbh:
+    ID = Intrinsic::hexagon_S2_vzxtbh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vsathub:
+    ID = Intrinsic::hexagon_S2_vsathub; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_svsathub:
+    ID = Intrinsic::hexagon_S2_svsathub; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_svsathb:
+    ID = Intrinsic::hexagon_S2_svsathb; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vsathb:
+    ID = Intrinsic::hexagon_S2_vsathb; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vtrunohb:
+    ID = Intrinsic::hexagon_S2_vtrunohb; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vtrunewh:
+    ID = Intrinsic::hexagon_S2_vtrunewh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vtrunowh:
+    ID = Intrinsic::hexagon_S2_vtrunowh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vtrunehb:
+    ID = Intrinsic::hexagon_S2_vtrunehb; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vsxthw:
+    ID = Intrinsic::hexagon_S2_vsxthw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vzxthw:
+    ID = Intrinsic::hexagon_S2_vzxthw; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vsatwh:
+    ID = Intrinsic::hexagon_S2_vsatwh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vsatwuh:
+    ID = Intrinsic::hexagon_S2_vsatwuh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_packhl:
+    ID = Intrinsic::hexagon_S2_packhl; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A2_swiz:
+    ID = Intrinsic::hexagon_A2_swiz; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vsathub_nopack:
+    ID = Intrinsic::hexagon_S2_vsathub_nopack; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vsathb_nopack:
+    ID = Intrinsic::hexagon_S2_vsathb_nopack; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vsatwh_nopack:
+    ID = Intrinsic::hexagon_S2_vsatwh_nopack; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_vsatwuh_nopack:
+    ID = Intrinsic::hexagon_S2_vsatwuh_nopack; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_shuffob:
+    ID = Intrinsic::hexagon_S2_shuffob; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_shuffeb:
+    ID = Intrinsic::hexagon_S2_shuffeb; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_shuffoh:
+    ID = Intrinsic::hexagon_S2_shuffoh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_shuffeh:
+    ID = Intrinsic::hexagon_S2_shuffeh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_parityp:
+    ID = Intrinsic::hexagon_S2_parityp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_lfsp:
+    ID = Intrinsic::hexagon_S2_lfsp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_clbnorm:
+    ID = Intrinsic::hexagon_S2_clbnorm; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_clb:
+    ID = Intrinsic::hexagon_S2_clb; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_cl0:
+    ID = Intrinsic::hexagon_S2_cl0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_cl1:
+    ID = Intrinsic::hexagon_S2_cl1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_clbp:
+    ID = Intrinsic::hexagon_S2_clbp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_cl0p:
+    ID = Intrinsic::hexagon_S2_cl0p; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_cl1p:
+    ID = Intrinsic::hexagon_S2_cl1p; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_brev:
+    ID = Intrinsic::hexagon_S2_brev; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_ct0:
+    ID = Intrinsic::hexagon_S2_ct0; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_ct1:
+    ID = Intrinsic::hexagon_S2_ct1; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_interleave:
+    ID = Intrinsic::hexagon_S2_interleave; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S2_deinterleave:
+    ID = Intrinsic::hexagon_S2_deinterleave; break;
+
+  case Hexagon::BI__builtin_SI_to_SXTHI_asrh:
+    ID = Intrinsic::hexagon_SI_to_SXTHI_asrh; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A4_orn:
+    ID = Intrinsic::hexagon_A4_orn; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A4_andn:
+    ID = Intrinsic::hexagon_A4_andn; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A4_ornp:
+    ID = Intrinsic::hexagon_A4_ornp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A4_andnp:
+    ID = Intrinsic::hexagon_A4_andnp; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A4_combineir:
+    ID = Intrinsic::hexagon_A4_combineir; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A4_combineri:
+    ID = Intrinsic::hexagon_A4_combineri; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C4_cmpneqi:
+    ID = Intrinsic::hexagon_C4_cmpneqi; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C4_cmpneq:
+    ID = Intrinsic::hexagon_C4_cmpneq; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C4_cmpltei:
+    ID = Intrinsic::hexagon_C4_cmpltei; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C4_cmplte:
+    ID = Intrinsic::hexagon_C4_cmplte; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C4_cmplteui:
+    ID = Intrinsic::hexagon_C4_cmplteui; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C4_cmplteu:
+    ID = Intrinsic::hexagon_C4_cmplteu; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A4_rcmpneq:
+    ID = Intrinsic::hexagon_A4_rcmpneq; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A4_rcmpneqi:
+    ID = Intrinsic::hexagon_A4_rcmpneqi; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A4_rcmpeq:
+    ID = Intrinsic::hexagon_A4_rcmpeq; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A4_rcmpeqi:
+    ID = Intrinsic::hexagon_A4_rcmpeqi; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C4_fastcorner9:
+    ID = Intrinsic::hexagon_C4_fastcorner9; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C4_fastcorner9_not:
+    ID = Intrinsic::hexagon_C4_fastcorner9_not; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C4_and_andn:
+    ID = Intrinsic::hexagon_C4_and_andn; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C4_and_and:
+    ID = Intrinsic::hexagon_C4_and_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C4_and_orn:
+    ID = Intrinsic::hexagon_C4_and_orn; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C4_and_or:
+    ID = Intrinsic::hexagon_C4_and_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C4_or_andn:
+    ID = Intrinsic::hexagon_C4_or_andn; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C4_or_and:
+    ID = Intrinsic::hexagon_C4_or_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C4_or_orn:
+    ID = Intrinsic::hexagon_C4_or_orn; break;
+
+  case Hexagon::BI__builtin_HEXAGON_C4_or_or:
+    ID = Intrinsic::hexagon_C4_or_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S4_addaddi:
+    ID = Intrinsic::hexagon_S4_addaddi; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S4_subaddi:
+    ID = Intrinsic::hexagon_S4_subaddi; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M4_xor_xacc:
+    ID = Intrinsic::hexagon_M4_xor_xacc; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M4_and_and:
+    ID = Intrinsic::hexagon_M4_and_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M4_and_or:
+    ID = Intrinsic::hexagon_M4_and_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M4_and_xor:
+    ID = Intrinsic::hexagon_M4_and_xor; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M4_and_andn:
+    ID = Intrinsic::hexagon_M4_and_andn; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M4_xor_and:
+    ID = Intrinsic::hexagon_M4_xor_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M4_xor_or:
+    ID = Intrinsic::hexagon_M4_xor_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M4_xor_andn:
+    ID = Intrinsic::hexagon_M4_xor_andn; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M4_or_and:
+    ID = Intrinsic::hexagon_M4_or_and; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M4_or_or:
+    ID = Intrinsic::hexagon_M4_or_or; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M4_or_xor:
+    ID = Intrinsic::hexagon_M4_or_xor; break;
+
+  case Hexagon::BI__builtin_HEXAGON_M4_or_andn:
+    ID = Intrinsic::hexagon_M4_or_andn; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S4_or_andix:
+    ID = Intrinsic::hexagon_S4_or_andix; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S4_or_andi:
+    ID = Intrinsic::hexagon_S4_or_andi; break;
+
+  case Hexagon::BI__builtin_HEXAGON_S4_or_ori:
+    ID = Intrinsic::hexagon_S4_or_ori; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A4_modwrapu:
+    ID = Intrinsic::hexagon_A4_modwrapu; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A4_cround_rr:
+    ID = Intrinsic::hexagon_A4_cround_rr; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A4_round_ri:
+    ID = Intrinsic::hexagon_A4_round_ri; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A4_round_rr:
+    ID = Intrinsic::hexagon_A4_round_rr; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A4_round_ri_sat:
+    ID = Intrinsic::hexagon_A4_round_ri_sat; break;
+
+  case Hexagon::BI__builtin_HEXAGON_A4_round_rr_sat:
+    ID = Intrinsic::hexagon_A4_round_rr_sat; break;
+
+  }
+
+  llvm::Function *F = CGM.getIntrinsic(ID);
+  return Builder.CreateCall(F, Ops, "");
 }
 
 Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
