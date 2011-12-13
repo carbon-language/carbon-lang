@@ -7,6 +7,13 @@
   <title>Polly - Polyhedral optimizations for LLVM</title>
   <link type="text/css" rel="stylesheet" href="menu.css">
   <link type="text/css" rel="stylesheet" href="content.css">
+  <script src="video-js/video.js" type="text/javascript" charset="utf-8"></script>
+  <script type="text/javascript">
+    VideoJS.setupAllWhenReady();
+  </script>
+
+  <!-- Include the VideoJS Stylesheet -->
+  <link rel="stylesheet" href="video-js/video-js.css" type="text/css" media="screen" title="Video JS">
 </head>
 <body>
 <!--#include virtual="menu.html.incl"-->
@@ -24,6 +31,34 @@
       vector instructions as well as dedicated accelerators.</p>
 
   <p>
+  <div class="video-js-box" style="margin:auto; margin-top: 1em; margin-bottom: 1em">
+    <video id="example_video_2" class="video-js" width="640" height="360"
+           controls="controls" preload="auto"
+           poster="images/video-summit-2011.png">
+      <!-- <source
+           src="http://www.grosser.es/publications/grosser-2011--Polly-First-successful-optimizations--LLVM-Developer-Meeting.mp4"
+           type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"'> -->
+      <source
+           src="http://www.grosser.es/publications/grosser-2011--Polly-First-successful-optimizations--LLVM-Developer-Meeting.webm"
+           type='video/webm; codecs="vp8, vorbis"'>
+           <!--
+      <object id="flash_fallback_2" class="vjs-flash-fallback" width="640"
+      height="360" type="application/x-shockwave-flash"
+        data="http://releases.flowplayer.org/swf/flowplayer-3.2.1.swf">
+        <param name="movie" value="http://releases.flowplayer.org/swf/flowplayer-3.2.1.swf" />
+        <param name="allowfullscreen" value="true" />
+        <param name="flashvars"
+        value='config={"playlist":["publications/images/video-summit-2011.png",
+        {"url":
+        "http://www.grosser.es/publications/grosser-2011--Polly-First-successful-optimizations--LLVM-Developer-Meeting.mp4","autoPlay":false,"autoBuffering":true}]}'
+        /> -->
+        <img src="images/video-summit-2011.png" width="640" height="360" alt="Poster Image"
+          title="No video playback capabilities." />
+          <!--
+      </object>
+      -->
+    </video>
+  </div>
   <b>WARNING:</b> Polly started as a research project and larger parts of it are
   still open research projects. Even though we aim for a robust, production
   quality implementation, not all parts of Polly are there yet. We invite
