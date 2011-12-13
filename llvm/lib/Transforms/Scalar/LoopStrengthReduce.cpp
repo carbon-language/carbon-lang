@@ -1405,7 +1405,6 @@ class LSRInstance {
 
   LSRUse *FindUseWithSimilarFormula(const Formula &F, const LSRUse &OrigLU);
 
-public:
   void InsertInitialFormula(const SCEV *S, LSRUse &LU, size_t LUIdx);
   void InsertSupplementalFormula(const SCEV *S, LSRUse &LU, size_t LUIdx);
   void CountRegisters(const Formula &F, size_t LUIdx);
@@ -1466,6 +1465,7 @@ public:
   void ImplementSolution(const SmallVectorImpl<const Formula *> &Solution,
                          Pass *P);
 
+public:
   LSRInstance(const TargetLowering *tli, Loop *l, Pass *P);
 
   bool getChanged() const { return Changed; }
