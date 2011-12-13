@@ -59,7 +59,8 @@ ClangUserExpression::ClangUserExpression (const char *expr,
     m_static_method(false),
     m_target (NULL),
     m_evaluated_statically (false),
-    m_const_result ()
+    m_const_result (),
+    m_enforce_valid_object (false)
 {
     switch (m_language)
     {
@@ -128,26 +129,29 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
     {
         if (m_allow_cxx && method_decl->isInstance())
         {
-            VariableList *vars = frame->GetVariableList(false);
-            
-            const char *thisErrorString = "Stopped in a C++ method, but 'this' isn't available; pretending we are in a generic context";
-            
-            if (!vars)
+            if (m_enforce_valid_object)
             {
-                err.SetErrorToGenericError();
-                err.SetErrorString(thisErrorString);
-                return;
-            }
-            
-            lldb::VariableSP this_var = vars->FindVariable(ConstString("this"));
-            
-            if (!this_var ||
-                !this_var->IsInScope(frame) || 
-                !this_var->LocationIsValidForFrame (frame))
-            {
-                err.SetErrorToGenericError();
-                err.SetErrorString(thisErrorString);
-                return;
+                VariableList *vars = frame->GetVariableList(false);
+                
+                const char *thisErrorString = "Stopped in a C++ method, but 'this' isn't available; pretending we are in a generic context";
+                
+                if (!vars)
+                {
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(thisErrorString);
+                    return;
+                }
+                
+                lldb::VariableSP this_var = vars->FindVariable(ConstString("this"));
+                
+                if (!this_var ||
+                    !this_var->IsInScope(frame) || 
+                    !this_var->LocationIsValidForFrame (frame))
+                {
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(thisErrorString);
+                    return;
+                }
             }
             
             m_cplusplus = true;
@@ -169,26 +173,29 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
     {        
         if (m_allow_objc)
         {
-            VariableList *vars = frame->GetVariableList(false);
-            
-            const char *selfErrorString = "Stopped in an Objective-C method, but 'self' isn't available; pretending we are in a generic context";
-            
-            if (!vars)
+            if (m_enforce_valid_object)
             {
-                err.SetErrorToGenericError();
-                err.SetErrorString(selfErrorString);
-                return;
-            }
-            
-            lldb::VariableSP self_var = vars->FindVariable(ConstString("self"));
-            
-            if (!self_var || 
-                !self_var->IsInScope(frame) || 
-                !self_var->LocationIsValidForFrame (frame))
-            {
-                err.SetErrorToGenericError();
-                err.SetErrorString(selfErrorString);
-                return;
+                VariableList *vars = frame->GetVariableList(false);
+                
+                const char *selfErrorString = "Stopped in an Objective-C method, but 'self' isn't available; pretending we are in a generic context";
+                
+                if (!vars)
+                {
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(selfErrorString);
+                    return;
+                }
+                
+                lldb::VariableSP self_var = vars->FindVariable(ConstString("self"));
+                
+                if (!self_var || 
+                    !self_var->IsInScope(frame) || 
+                    !self_var->LocationIsValidForFrame (frame))
+                {
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(selfErrorString);
+                    return;
+                }
             }
             
             m_objectivec = true;
@@ -400,8 +407,8 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
             
             if (!(m_expr_decl_map->GetObjectPointer(object_ptr, object_name, exe_ctx, materialize_error)))
             {
-                error_stream.Printf("Couldn't get required object pointer: %s\n", materialize_error.AsCString());
-                return false;
+                error_stream.Printf("warning: couldn't get required object pointer (substituting NULL): %s\n", materialize_error.AsCString());
+                object_ptr = 0;
             }
             
             if (m_objectivec)
@@ -410,8 +417,8 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
                 
                 if (!(m_expr_decl_map->GetObjectPointer(cmd_ptr, cmd_name, exe_ctx, materialize_error, true)))
                 {
-                    error_stream.Printf("Couldn't get required object pointer: %s\n", materialize_error.AsCString());
-                    return false;
+                    error_stream.Printf("warning: couldn't get object pointer (substituting NULL): %s\n", materialize_error.AsCString());
+                    cmd_ptr = 0;
                 }
             }
         }
