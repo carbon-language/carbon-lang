@@ -15,21 +15,22 @@
   <h1>Polly: Polyhedral optimizations for LLVM</h1>
   <!--*********************************************************************-->
 
-  <p>Polly is a project that works on advanced optimizations for data-locality
-  and parallelism. It uses the polyhedral model, a high-level mathematical
-  abstraction, to analyse and optimize the memory access pattern of a program.
-  Due to the use of a polyhedral representation Polly can easily calculate
-  detailed data dependency information which it uses to derive an optimized loop
-  structure. Polly can speed up sequential code by improving memory locality and
-  consequently the cache use.  Furthermore, Polly is able to expose different
-  kinds of parallelism which it exploits by introducing (basic) OpenMP and SIMD
-  code.  The automatic use of vector accelerators is planned and will take
-  avantage of the ongoing work on the LLVM PTX backend.
-  </p>
+  <p> Polly is a polyhedral optimizer for LLVM. Using an abstract mathematical
+      representation it analyzes and optimizes the memory access pattern of a
+      program. This includes data-locality optimizations for cache locality as
+      well as automatic parallelization for thread-level and SIMD parallelism.
+      Our overall goal is an integrated optimizer for data-locality and
+      parallelism that takes advantage of multi-cores, cache hierarchies, short
+      vector instructions as well as dedicated accelerators.</p>
 
-  <em> Polly is still a research project, that is not production quality. We are
-  working on a robust implementation of Polly's core. You are invited to join us
-  by directly contributing to Polly or by using it for your own research.</em>
+  <p>
+  <b>WARNING:</b> Polly started as a research project and larger parts of it are
+  still open research projects. Even though we aim for a robust, production
+  quality implementation, not all parts of Polly are there yet. We invite
+  you to contribute - both as industry collaborator, who may want to use parts
+  of Polly in production, as well as researcher, who is more interested in using
+  his expertise to work on some of the open research projects.
+  </p>
 
   <!--=====================================================================-->
   <h2>Major changes in Polly</h2>
