@@ -236,6 +236,17 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         m_frame_type = eNotAValidFrame;
         return;
     }
+
+    // Test the pc value to see if we know it's in an unmapped/non-executable region of memory.
+    // If so, our unwind has made a mistake somewhere and we should stop.
+    uint32_t permissions;
+    if (m_thread.GetProcess().GetLoadAddressPermissions(pc, permissions)
+        && (permissions & ePermissionsExecutable) == 0)
+    {
+        m_frame_type = eNotAValidFrame;
+        return;
+    }
+
     m_thread.GetProcess().GetTarget().GetSectionLoadList().ResolveLoadAddress (pc, m_current_pc);
 
     // If we don't have a Module for some reason, we're not going to find symbol/function information - just
@@ -284,6 +295,15 @@ RegisterContextLLDB::InitializeNonZerothFrame()
                         log->Printf("%*sFrame %u could not find a valid cfa address",
                                     m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
                     }
+                    m_frame_type = eNotAValidFrame;
+                    return;
+                }
+
+                // cfa_regval should point into the stack memory; if we can query memory region permissions,
+                // see if the memory is allocated & readable.
+                if (m_thread.GetProcess().GetLoadAddressPermissions(cfa_regval, permissions)
+                    && (permissions & ePermissionsReadable) == 0)
+                {
                     m_frame_type = eNotAValidFrame;
                     return;
                 }
