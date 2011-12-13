@@ -592,6 +592,18 @@ tuples tp return are:
                                      // a hex encoded string value that 
                                      // contains an error string
                                     
+If the address requested is not in a mapped region (e.g. we've jumped through
+a NULL pointer and are at 0x0) currently lldb expects to get back the size 
+of the unmapped region -- that is, the distance to the next valid region.
+For instance, with a Mac OS X process which has nothing mapped in the first
+4GB of its address space, if we're asking about address 0x2,
+
+  qMemoryRegionInfo:2
+  start:2;size:fffffffe;
+
+The lack of 'permissions:' indicates that none of read/write/execute are valid
+for this region.
+
 //----------------------------------------------------------------------
 // Stop reply packet extensions
 //

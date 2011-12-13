@@ -1108,6 +1108,7 @@ GDBRemoteCommunicationClient::GetMemoryRegionInfo (lldb::addr_t addr,
             std::string value;
             addr_t addr_value;
             bool success = true;
+            bool saw_permissions = false;
             while (success && response.GetNameColonValue(name, value))
             {
                 if (name.compare ("start") == 0)
@@ -1122,14 +1123,33 @@ GDBRemoteCommunicationClient::GetMemoryRegionInfo (lldb::addr_t addr,
                     if (success)
                         region_info.GetRange().SetByteSize (addr_value);
                 }
-                else if (name.compare ("permissions") == 0)
+                else if (name.compare ("permissions") == 0 && region_info.GetRange().IsValid())
                 {
-                    if (value.find('r') != std::string::npos)
-                        region_info.AddPermissions (ePermissionsReadable);
-                    if (value.find('w') != std::string::npos)
-                        region_info.AddPermissions (ePermissionsWritable);
-                    if (value.find('x') != std::string::npos)
-                        region_info.AddPermissions (ePermissionsExecutable);
+                    saw_permissions = true;
+                    if (region_info.GetRange().Contains (addr))
+                    {
+                        if (value.find('r') != std::string::npos)
+                            region_info.SetReadable (MemoryRegionInfo::eYes);
+                        else
+                            region_info.SetReadable (MemoryRegionInfo::eNo);
+
+                        if (value.find('w') != std::string::npos)
+                            region_info.SetWritable (MemoryRegionInfo::eYes);
+                        else
+                            region_info.SetWritable (MemoryRegionInfo::eNo);
+
+                        if (value.find('x') != std::string::npos)
+                            region_info.SetExecutable (MemoryRegionInfo::eYes);
+                        else
+                            region_info.SetExecutable (MemoryRegionInfo::eNo);
+                    }
+                    else
+                    {
+                        // The reported region does not contain this address -- we're looking at an unmapped page
+                        region_info.SetReadable (MemoryRegionInfo::eNo);
+                        region_info.SetWritable (MemoryRegionInfo::eNo);
+                        region_info.SetExecutable (MemoryRegionInfo::eNo);
+                    }
                 }
                 else if (name.compare ("error") == 0)
                 {
@@ -1140,6 +1160,14 @@ GDBRemoteCommunicationClient::GetMemoryRegionInfo (lldb::addr_t addr,
                     name_extractor.GetHexByteString (value);
                     error.SetErrorString(value.c_str());
                 }
+            }
+
+            // We got a valid address range back but no permissions -- which means this is an unmapped page
+            if (region_info.GetRange().IsValid() && saw_permissions == false)
+            {
+                region_info.SetReadable (MemoryRegionInfo::eNo);
+                region_info.SetWritable (MemoryRegionInfo::eNo);
+                region_info.SetExecutable (MemoryRegionInfo::eNo);
             }
         }
         else

@@ -562,8 +562,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     UnwindPlanSP unwind_plan_sp;
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     UnwindPlanSP arch_default_unwind_plan_sp;
-    
-    
+
     ABI *abi = m_thread.GetProcess().GetABI().get();
     if (abi)
     {
@@ -584,14 +583,22 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
 
     // If we've done a jmp 0x0 / bl 0x0 (called through a null function pointer) so the pc is 0x0
     // in the zeroth frame, we need to use the "unwind at first instruction" arch default UnwindPlan
-    if (behaves_like_zeroth_frame 
-        && m_current_pc.IsValid() 
-        && m_current_pc.GetLoadAddress (&m_thread.GetProcess().GetTarget()) == 0)
+    // Also, if this Process can report on memory region attributes, any non-executable region means
+    // we jumped through a bad function pointer - handle the same way as 0x0.
+
+    if (behaves_like_zeroth_frame && m_current_pc.IsValid())
     {
-        unwind_plan_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
-        abi->CreateFunctionEntryUnwindPlan(*unwind_plan_sp);
-        m_frame_type = eNormalFrame;
-        return unwind_plan_sp;
+        uint32_t permissions;
+        addr_t current_pc_addr = m_current_pc.GetLoadAddress (&m_thread.GetProcess().GetTarget());
+        if (current_pc_addr == 0
+            || (m_thread.GetProcess().GetLoadAddressPermissions(current_pc_addr, permissions)
+                && (permissions & ePermissionsExecutable) == 0))
+        {
+            unwind_plan_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
+            abi->CreateFunctionEntryUnwindPlan(*unwind_plan_sp);
+            m_frame_type = eNormalFrame;
+            return unwind_plan_sp;
+        }
     }
 
     // No Module fm_current_pc.GetLoadAddress (&m_thread.GetProcess().GetTarget()or the current pc, try using the architecture default unwind.

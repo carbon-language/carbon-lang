@@ -1177,10 +1177,18 @@ class MemoryRegionInfo
 {
 public:
     typedef Range<lldb::addr_t, lldb::addr_t> RangeType;
-    
+
+    enum OptionalBool {
+        eDontKnow  = -1,
+        eNo         = 0,
+        eYes        = 1
+    };
+
     MemoryRegionInfo () :
         m_range (),
-        m_permissions (0)
+        m_read (eDontKnow),
+        m_write (eDontKnow),
+        m_execute (eDontKnow)
     {
     }
 
@@ -1198,7 +1206,7 @@ public:
     Clear()
     {
         m_range.Clear();
-        m_permissions = 0;
+        m_read = m_write = m_execute = eDontKnow;
     }
 
     const RangeType &
@@ -1206,42 +1214,48 @@ public:
     {
         return m_range;
     }
-    
-    // Pass in a uint32_t permissions with one or more lldb::Permissions 
-    // enumeration values logical OR'ed together.
-    bool
-    TestPermissions (uint32_t permissions) const
+
+    OptionalBool
+    GetReadable () const
     {
-        return m_permissions.AllSet(permissions);
+        return m_read;
     }
-    
-    const Flags &
-    GetPermissions () const
+
+    OptionalBool
+    GetWritable () const
     {
-        return m_permissions;
+        return m_write;
+    }
+
+    OptionalBool
+    GetExecutable () const
+    {
+        return m_execute;
     }
 
     void
-    SetPermissions (uint32_t permissions)
+    SetReadable (OptionalBool val)
     {
-        m_permissions.Reset(permissions);
-    }
-    
-    void
-    AddPermissions (uint32_t permissions)
-    {
-        m_permissions.Set (permissions);
+        m_read = val;
     }
 
     void
-    RemovePermissions (uint32_t permissions)
+    SetWritable (OptionalBool val)
     {
-        m_permissions.Clear (permissions);
+        m_write = val;
+    }
+
+    void
+    SetExecutable (OptionalBool val)
+    {
+        m_execute = val;
     }
 
 protected:
     RangeType m_range;
-    Flags m_permissions; // Uses lldb::Permissions enumeration values logical OR'ed together
+    OptionalBool m_read;
+    OptionalBool m_write;
+    OptionalBool m_execute;
 };
 
 //----------------------------------------------------------------------
@@ -2558,17 +2572,56 @@ public:
         error.SetErrorString ("Process::GetMemoryRegionInfo() not supported");
         return error;
     }
-    
-    virtual uint32_t
-    GetLoadAddressPermissions (lldb::addr_t load_addr)
+
+    //------------------------------------------------------------------
+    /// Attempt to get the attributes for a region of memory in the process.
+    ///
+    /// It may be possible for the remote debug server to inspect attributes
+    /// for a region of memory in the process, such as whether there is a
+    /// valid page of memory at a given address or whether that page is 
+    /// readable/writable/executable by the process.
+    ///
+    /// @param[in] load_addr
+    ///     The address of interest in the process.
+    ///
+    /// @param[out] permissions
+    ///     If this call returns successfully, this bitmask will have
+    ///     its Permissions bits set to indicate whether the region is
+    ///     readable/writable/executable.  If this call fails, the
+    ///     bitmask values are undefined.
+    ///
+    /// @return
+    ///     Returns true if it was able to determine the attributes of the
+    ///     memory region.  False if not.
+    //------------------------------------------------------------------
+
+    virtual bool
+    GetLoadAddressPermissions (lldb::addr_t load_addr, uint32_t &permissions)
     {
         MemoryRegionInfo range_info;
+        permissions = 0;
         Error error (GetMemoryRegionInfo (load_addr, range_info));
-        if (error.Success())
-            return range_info.GetPermissions().Get();
-        return 0;
+        if (!error.Success())
+            return false;
+        if (range_info.GetReadable() == MemoryRegionInfo::eDontKnow 
+            || range_info.GetWritable() == MemoryRegionInfo::eDontKnow 
+            || range_info.GetExecutable() == MemoryRegionInfo::eDontKnow)
+        {
+            return false;
+        }
+
+        if (range_info.GetReadable() == MemoryRegionInfo::eYes)
+            permissions |= lldb::ePermissionsReadable;
+
+        if (range_info.GetWritable() == MemoryRegionInfo::eYes)
+            permissions |= lldb::ePermissionsWritable;
+
+        if (range_info.GetExecutable() == MemoryRegionInfo::eYes)
+            permissions |= lldb::ePermissionsExecutable;
+
+        return true;
     }
-                  
+
     //------------------------------------------------------------------
     /// Determines whether executing JIT-compiled code in this process 
     /// is possible.
