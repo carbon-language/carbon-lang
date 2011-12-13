@@ -1131,9 +1131,6 @@ def tRSB :                      // A8.6.141
                "rsb", "\t$Rd, $Rn, #0",
                [(set tGPR:$Rd, (ineg tGPR:$Rn))]>;
 
-def : tInstAlias<"neg${s}${p} $Rd, $Rm",
-                 (tRSB tGPR:$Rd, s_cc_out:$s, tGPR:$Rm, pred:$p)>;
-
 // Subtract with carry register
 let Uses = [CPSR] in
 def tSBC :                      // A8.6.151
@@ -1435,3 +1432,8 @@ def : InstAlias<"nop", (tMOVr R8, R8, 14, 0)>,Requires<[IsThumb, IsThumb1Only]>;
 // nothing).
 def : tInstAlias<"cps$imod", (tCPS imod_op:$imod, 0)>;
 def : tInstAlias<"cps$imod", (tCPS imod_op:$imod, 0)>;
+
+// "neg" is and alias for "rsb rd, rn, #0"
+def : tInstAlias<"neg${s}${p} $Rd, $Rm",
+                 (tRSB tGPR:$Rd, s_cc_out:$s, tGPR:$Rm, pred:$p)>;
+

@@ -5127,3 +5127,7 @@ def : ARMInstAlias<"ror${s}${p} $Rn, $Rm",
 // 'mul' instruction can be specified with only two operands.
 def : ARMInstAlias<"mul${s}${p} $Rn, $Rm",
                    (MUL rGPR:$Rn, rGPR:$Rm, rGPR:$Rn, pred:$p, cc_out:$s)>;
+
+// "neg" is and alias for "rsb rd, rn, #0"
+def : ARMInstAlias<"neg${s}${p} $Rd, $Rm",
+                   (RSBri GPR:$Rd, GPR:$Rm, 0, pred:$p, cc_out:$s)>;

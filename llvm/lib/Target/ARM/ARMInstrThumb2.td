@@ -4122,3 +4122,7 @@ def : t2InstAlias<"add${s}${p} $Rd, $imm",
 // Wide 'mul' encoding can be specified with only two operands.
 def : t2InstAlias<"mul${p} $Rn, $Rm",
                   (t2MUL rGPR:$Rn, rGPR:$Rm, rGPR:$Rn, pred:$p)>;
+
+// "neg" is and alias for "rsb rd, rn, #0"
+def : t2InstAlias<"neg${s}${p} $Rd, $Rm",
+                  (t2RSBri rGPR:$Rd, rGPR:$Rm, 0, pred:$p, cc_out:$s)>;
