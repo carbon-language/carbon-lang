@@ -32,12 +32,12 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/PathV1.h"
 #include "llvm/Support/system_error.h"
 #include <ctime>
 #include <iterator>
 #include <stack>
 #include <string>
+#include <vector>
 
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -119,6 +119,44 @@ public:
 
   file_type type() const { return Type; }
   void type(file_type v) { Type = v; }
+};
+
+/// file_magic - An "enum class" enumeration of file types based on magic (the first
+///         N bytes of the file).
+struct file_magic {
+  enum _ {
+    unknown = 0,              ///< Unrecognized file
+    bitcode,                  ///< Bitcode file
+    archive,                  ///< ar style archive file
+    elf_relocatable,          ///< ELF Relocatable object file
+    elf_executable,           ///< ELF Executable image
+    elf_shared_object,        ///< ELF dynamically linked shared lib
+    elf_core,                 ///< ELF core image
+    macho_object,             ///< Mach-O Object file
+    macho_executable,         ///< Mach-O Executable
+    macho_fixed_virtual_memory_shared_lib, ///< Mach-O Shared Lib, FVM
+    macho_core,               ///< Mach-O Core File
+    macho_preload_executabl,  ///< Mach-O Preloaded Executable
+    macho_dynamically_linked_shared_lib, ///< Mach-O dynlinked shared lib
+    macho_dynamic_linker,     ///< The Mach-O dynamic linker
+    macho_bundle,             ///< Mach-O Bundle file
+    macho_dynamically_linked_shared_lib_stub, ///< Mach-O Shared lib stub
+    macho_dsym_companion,     ///< Mach-O dSYM companion file
+    coff_object,              ///< COFF object file
+    pecoff_executable         ///< PECOFF executable file
+  };
+
+  bool is_object() const {
+    return v_ == unknown ? false : true;
+  }
+
+  file_magic() : v_(unknown) {}
+  file_magic(_ v) : v_(v) {}
+  explicit file_magic(int v) : v_(_(v)) {}
+  operator int() const {return v_;}
+
+private:
+  int v_;
 };
 
 /// @}
@@ -419,13 +457,16 @@ error_code has_magic(const Twine &path, const Twine &magic, bool &result);
 error_code get_magic(const Twine &path, uint32_t len,
                      SmallVectorImpl<char> &result);
 
+/// @brief Identify the type of a binary file based on how magical it is.
+file_magic identify_magic(StringRef magic);
+
 /// @brief Get and identify \a path's type based on its content.
 ///
 /// @param path Input path.
 /// @param result Set to the type of file, or LLVMFileType::Unknown_FileType.
 /// @results errc::success if result has been successfully set, otherwise a
 ///          platform specific error_code.
-error_code identify_magic(const Twine &path, LLVMFileType &result);
+error_code identify_magic(const Twine &path, file_magic &result);
 
 /// @brief Get library paths the system linker uses.
 ///

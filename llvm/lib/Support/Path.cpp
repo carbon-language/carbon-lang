@@ -152,31 +152,31 @@ sys::IdentifyFileType(const char *magic, unsigned length) {
 
 bool
 Path::isArchive() const {
-  LLVMFileType type;
+  fs::file_magic type;
   if (fs::identify_magic(str(), type))
     return false;
-  return type == Archive_FileType;
+  return type == fs::file_magic::archive;
 }
 
 bool
 Path::isDynamicLibrary() const {
-  LLVMFileType type;
+  fs::file_magic type;
   if (fs::identify_magic(str(), type))
     return false;
   switch (type) {
     default: return false;
-    case Mach_O_FixedVirtualMemorySharedLib_FileType:
-    case Mach_O_DynamicallyLinkedSharedLib_FileType:
-    case Mach_O_DynamicallyLinkedSharedLibStub_FileType:
-    case ELF_SharedObject_FileType:
-    case COFF_FileType:  return true;
+    case fs::file_magic::macho_fixed_virtual_memory_shared_lib:
+    case fs::file_magic::macho_dynamically_linked_shared_lib:
+    case fs::file_magic::macho_dynamically_linked_shared_lib_stub:
+    case fs::file_magic::elf_shared_object:
+    case fs::file_magic::pecoff_executable:  return true;
   }
 }
 
 bool
 Path::isObjectFile() const {
-  LLVMFileType type;
-  if (fs::identify_magic(str(), type) || type == Unknown_FileType)
+  fs::file_magic type;
+  if (fs::identify_magic(str(), type) || type == fs::file_magic::unknown)
     return false;
   return true;
 }
@@ -212,10 +212,10 @@ Path::appendSuffix(StringRef suffix) {
 
 bool
 Path::isBitcodeFile() const {
-  LLVMFileType type;
+  fs::file_magic type;
   if (fs::identify_magic(str(), type))
     return false;
-  return type == Bitcode_FileType;
+  return type == fs::file_magic::bitcode;
 }
 
 bool Path::hasMagicNumber(StringRef Magic) const {
