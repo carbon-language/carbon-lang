@@ -242,6 +242,12 @@ class VFP3InstAlias<string Asm, dag Result, bit Emit = 0b1>
 class NEONInstAlias<string Asm, dag Result, bit Emit = 0b1>
       : InstAlias<Asm, Result, Emit>, Requires<[HasNEON]>;
 
+
+class VFP2MnemonicAlias<string src, string dst> : MnemonicAlias<src, dst>,
+          Requires<[HasVFP2]>;
+class NEONMnemonicAlias<string src, string dst> : MnemonicAlias<src, dst>,
+          Requires<[HasNEON]>;
+
 //===----------------------------------------------------------------------===//
 // ARM Instruction templates.
 //

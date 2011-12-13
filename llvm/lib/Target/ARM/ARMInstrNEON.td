@@ -5308,6 +5308,7 @@ def : Pat<(v2f64 (bitconvert (v4f32 QPR:$src))), (v2f64 QPR:$src)>;
 //===----------------------------------------------------------------------===//
 // Assembler aliases
 //
+
 def : VFP2InstAlias<"fmdhr${p} $Dd, $Rn",
                     (VSETLNi32 DPR:$Dd, GPR:$Rn, 1, pred:$p)>;
 def : VFP2InstAlias<"fmdlr${p} $Dd, $Rn",
@@ -5706,3 +5707,33 @@ def : NEONInstAlias<"vext${p}.32 $Vdn, $Vm, $imm",
                   (VEXTq32 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, imm0_3:$imm, pred:$p)>;
 def : NEONInstAlias<"vext${p}.64 $Vdn, $Vm, $imm",
                   (VEXTq64 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, imm0_1:$imm, pred:$p)>;
+
+// 'gas' compatibility aliases for quad-word instructions. Strictly speaking,
+// these should restrict to just the Q register variants, but the register
+// classes are enough to match correctly regardless, so we keep it simple
+// and just use MnemonicAlias.
+def : NEONMnemonicAlias<"vbicq", "vbic">;
+def : NEONMnemonicAlias<"vandq", "vand">;
+def : NEONMnemonicAlias<"veorq", "veor">;
+def : NEONMnemonicAlias<"vorrq", "vorr">;
+
+def : NEONMnemonicAlias<"vmovq", "vmov">;
+def : NEONMnemonicAlias<"vmvnq", "vmvn">;
+
+def : NEONMnemonicAlias<"vaddq", "vadd">;
+def : NEONMnemonicAlias<"vsubq", "vsub">;
+
+def : NEONMnemonicAlias<"vminq", "vmin">;
+def : NEONMnemonicAlias<"vmaxq", "vmax">;
+
+def : NEONMnemonicAlias<"vmulq", "vmul">;
+
+def : NEONMnemonicAlias<"vabsq", "vabs">;
+
+def : NEONMnemonicAlias<"vshlq", "vshl">;
+def : NEONMnemonicAlias<"vshrq", "vshr">;
+
+def : NEONMnemonicAlias<"vcvtq", "vcvt">;
+
+def : NEONMnemonicAlias<"vcleq", "vcle">;
+def : NEONMnemonicAlias<"vceqq", "vceq">;
