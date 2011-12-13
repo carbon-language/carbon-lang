@@ -51,8 +51,16 @@
 	vqdmulh.s32	d16, d16, d17
 	vqdmulh.s16	q8, q8, q9
 	vqdmulh.s32	q8, q8, q9
+	vqdmulh.s16	d16, d17
+	vqdmulh.s32	d16, d17
+	vqdmulh.s16	q8, q9
+	vqdmulh.s32	q8, q9
 	vqdmulh.s16	d11, d2, d3[0]
 
+@ CHECK: vqdmulh.s16	d16, d16, d17   @ encoding: [0xa1,0x0b,0x50,0xf2]
+@ CHECK: vqdmulh.s32	d16, d16, d17   @ encoding: [0xa1,0x0b,0x60,0xf2]
+@ CHECK: vqdmulh.s16	q8, q8, q9      @ encoding: [0xe2,0x0b,0x50,0xf2]
+@ CHECK: vqdmulh.s32	q8, q8, q9      @ encoding: [0xe2,0x0b,0x60,0xf2]
 @ CHECK: vqdmulh.s16	d16, d16, d17   @ encoding: [0xa1,0x0b,0x50,0xf2]
 @ CHECK: vqdmulh.s32	d16, d16, d17   @ encoding: [0xa1,0x0b,0x60,0xf2]
 @ CHECK: vqdmulh.s16	q8, q8, q9      @ encoding: [0xe2,0x0b,0x50,0xf2]

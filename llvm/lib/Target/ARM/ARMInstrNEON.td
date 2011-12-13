@@ -5708,6 +5708,17 @@ def : NEONInstAlias<"vext${p}.32 $Vdn, $Vm, $imm",
 def : NEONInstAlias<"vext${p}.64 $Vdn, $Vm, $imm",
                   (VEXTq64 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, imm0_1:$imm, pred:$p)>;
 
+// Two-operand variants for VQDMULH
+def : NEONInstAlias<"vqdmulh${p}.s16 $Vdn, $Vm",
+                    (VQDMULHv4i16 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vqdmulh${p}.s32 $Vdn, $Vm",
+                    (VQDMULHv2i32 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+
+def : NEONInstAlias<"vqdmulh${p}.s16 $Vdn, $Vm",
+                    (VQDMULHv8i16 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vqdmulh${p}.s32 $Vdn, $Vm",
+                    (VQDMULHv4i32 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+
 // 'gas' compatibility aliases for quad-word instructions. Strictly speaking,
 // these should restrict to just the Q register variants, but the register
 // classes are enough to match correctly regardless, so we keep it simple

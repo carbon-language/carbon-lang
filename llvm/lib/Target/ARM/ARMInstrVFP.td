@@ -1192,6 +1192,8 @@ def : VFP2MnemonicAlias<"fuitod", "vcvt.f64.u32">;
 def : VFP2MnemonicAlias<"fuitos", "vcvt.f32.u32">;
 def : VFP2MnemonicAlias<"fsts", "vstr">;
 def : VFP2MnemonicAlias<"fstd", "vstr">;
+def : VFP2MnemonicAlias<"fmacd", "vmla.f64">;
+def : VFP2MnemonicAlias<"fmacs", "vmla.f32">;
 
 def : VFP2InstAlias<"fmstat${p}", (FMSTAT pred:$p)>;
 def : VFP2InstAlias<"fadds${p} $Sd, $Sn, $Sm",
