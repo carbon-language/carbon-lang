@@ -27,6 +27,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/Format.h"
@@ -110,6 +111,19 @@ namespace {
   std::string ToolName;
 }
 
+
+static void error(Twine message, Twine path = Twine()) {
+  errs() << ToolName << ": " << path << ": " << message << ".\n";
+}
+
+static bool error(error_code ec, Twine path = Twine()) {
+  if (ec) {
+    error(ec.message(), path);
+    return true;
+  }
+  return false;
+}
+
 namespace {
   struct NMSymbol {
     uint64_t  Address;
@@ -144,14 +158,6 @@ namespace {
   StringRef CurrentFilename;
   typedef std::vector<NMSymbol> SymbolListT;
   SymbolListT SymbolList;
-
-  bool error(error_code ec) {
-    if (!ec) return false;
-
-    outs() << ToolName << ": error reading file: " << ec.message() << ".\n";
-    outs().flush();
-    return true;
-  }
 }
 
 static void SortAndPrintSymbolList() {
@@ -297,33 +303,34 @@ static void DumpSymbolNamesFromObject(ObjectFile *obj) {
 }
 
 static void DumpSymbolNamesFromFile(std::string &Filename) {
+  if (Filename != "-" && !sys::fs::exists(Filename)) {
+    errs() << ToolName << ": '" << Filename << "': " << "No such file\n";
+    return;
+  }
+
+  OwningPtr<MemoryBuffer> Buffer;
+  if (error(MemoryBuffer::getFileOrSTDIN(Filename, Buffer), Filename))
+    return;
+
+  sys::fs::file_magic magic = sys::fs::identify_magic(Buffer->getBuffer());
+
   LLVMContext &Context = getGlobalContext();
   std::string ErrorMessage;
-  sys::Path aPath(Filename);
-  bool exists;
-  if (sys::fs::exists(aPath.str(), exists) || !exists)
-    errs() << ToolName << ": '" << Filename << "': " << "No such file\n";
-  // Note: Currently we do not support reading an archive from stdin.
-  if (Filename == "-" || aPath.isBitcodeFile()) {
-    OwningPtr<MemoryBuffer> Buffer;
-    if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buffer))
-      ErrorMessage = ec.message();
+  if (magic == sys::fs::file_magic::bitcode) {
     Module *Result = 0;
-    if (Buffer.get())
-      Result = ParseBitcodeFile(Buffer.get(), Context, &ErrorMessage);
-
+    Result = ParseBitcodeFile(Buffer.get(), Context, &ErrorMessage);
     if (Result) {
       DumpSymbolNamesFromModule(Result);
       delete Result;
-    } else
-      errs() << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
-
-  } else if (aPath.isArchive()) {
-    OwningPtr<Binary> arch;
-    if (error_code ec = object::createBinary(aPath.str(), arch)) {
-      errs() << ToolName << ": " << Filename << ": " << ec.message() << ".\n";
+    } else {
+      error(ErrorMessage, Filename);
       return;
     }
+  } else if (magic == sys::fs::file_magic::archive) {
+    OwningPtr<Binary> arch;
+    if (error(object::createBinary(Buffer.take(), arch), Filename))
+      return;
+
     if (object::Archive *a = dyn_cast<object::Archive>(arch.get())) {
       for (object::Archive::child_iterator i = a->begin_children(),
                                            e = a->end_children(); i != e; ++i) {
@@ -347,12 +354,10 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
         }
       }
     }
-  } else if (aPath.isObjectFile()) {
+  } else if (magic.is_object()) {
     OwningPtr<Binary> obj;
-    if (error_code ec = object::createBinary(aPath.str(), obj)) {
-      errs() << ToolName << ": " << Filename << ": " << ec.message() << ".\n";
+    if (error(object::createBinary(Buffer.take(), obj), Filename))
       return;
-    }
     if (object::ObjectFile *o = dyn_cast<ObjectFile>(obj.get()))
       DumpSymbolNamesFromObject(o);
   } else {
@@ -369,6 +374,10 @@ int main(int argc, char **argv) {
 
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv, "llvm symbol table dumper\n");
+
+  // llvm-nm only reads binary files.
+  if (error(sys::Program::ChangeStdinToBinary()))
+    return 1;
 
   ToolName = argv[0];
   if (BSDFormat) OutputFormat = bsd;
