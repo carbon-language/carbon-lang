@@ -11,7 +11,6 @@
 		260E07C8136FAB9200CF21D3 /* OptionGroupFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E07C7136FAB9200CF21D3 /* OptionGroupFile.cpp */; };
 		261744781168585B005ADD65 /* SBType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261744771168585B005ADD65 /* SBType.cpp */; };
 		2617447A11685869005ADD65 /* SBType.h in Headers */ = {isa = PBXBuildFile; fileRef = 2617447911685869005ADD65 /* SBType.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		2626B6AE143E1BEA00EF935C /* RangeMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 2626B6AD143E1BEA00EF935C /* RangeMap.h */; };
 		26274FA214030EEF006BA130 /* OperatingSystemDarwinKernel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26274FA014030EEF006BA130 /* OperatingSystemDarwinKernel.cpp */; };
 		26274FA714030F79006BA130 /* DynamicLoaderDarwinKernel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26274FA514030F79006BA130 /* DynamicLoaderDarwinKernel.cpp */; };
 		2628A4D513D4977900F5487A /* ThreadKDP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2628A4D313D4977900F5487A /* ThreadKDP.cpp */; };
@@ -77,7 +76,6 @@
 		26744EF31338317700EF765A /* GDBRemoteCommunicationServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26744EEF1338317700EF765A /* GDBRemoteCommunicationServer.cpp */; };
 		267C012B136880DF006E963E /* OptionGroupValueObjectDisplay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 267C012A136880DF006E963E /* OptionGroupValueObjectDisplay.cpp */; };
 		267C01371368C49C006E963E /* OptionGroupOutputFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BCFC531368B3E4006DC050 /* OptionGroupOutputFile.cpp */; };
-		2682100D143A59AE004BCF2D /* MappedHash.h in Headers */ = {isa = PBXBuildFile; fileRef = 2682100C143A59AE004BCF2D /* MappedHash.h */; };
 		2686536C1370ACB200D186A3 /* OptionGroupBoolean.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2686536B1370ACB200D186A3 /* OptionGroupBoolean.cpp */; };
 		268653701370AE7200D186A3 /* OptionGroupUInt64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2686536F1370AE7200D186A3 /* OptionGroupUInt64.cpp */; };
 		2689000113353DB600698AC0 /* BreakpointResolverAddress.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D0DD5310FE555900271C65 /* BreakpointResolverAddress.cpp */; };
@@ -348,7 +346,6 @@
 		26BD407F135D2AE000237D80 /* FileLineResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BD407E135D2ADF00237D80 /* FileLineResolver.cpp */; };
 		26C72C94124322890068DC16 /* SBStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 26C72C93124322890068DC16 /* SBStream.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26C72C961243229A0068DC16 /* SBStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C72C951243229A0068DC16 /* SBStream.cpp */; };
-		26CF992514428766001E4138 /* AnsiTerminal.h in Headers */ = {isa = PBXBuildFile; fileRef = 26CF992414428766001E4138 /* AnsiTerminal.h */; };
 		26D265A2136B40EE002EEE45 /* SharingPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 261B5A5311C3F2AD00AABD0A /* SharingPtr.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26D265BC136B4269002EEE45 /* lldb-public.h in Headers */ = {isa = PBXBuildFile; fileRef = 26651A14133BEC76005B64B7 /* lldb-public.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26D5E15F135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E15E135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp */; };
@@ -388,7 +385,6 @@
 		26F73062139D8FDB00FD51C7 /* History.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F73061139D8FDB00FD51C7 /* History.cpp */; };
 		494260DA14579144003C1C78 /* VerifyDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 494260D914579144003C1C78 /* VerifyDecl.cpp */; };
 		4966DCC4148978A10028481B /* ClangExternalASTSourceCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4966DCC3148978A10028481B /* ClangExternalASTSourceCommon.cpp */; };
-		496B015B1406DEB100F830D5 /* IRInterpreter.h in Headers */ = {isa = PBXBuildFile; fileRef = 496B015A1406DEB100F830D5 /* IRInterpreter.h */; };
 		49A1CAC51430E8DE00306AC9 /* ExpressionSourceCode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49A1CAC31430E8BD00306AC9 /* ExpressionSourceCode.cpp */; };
 		49A71FE7141FFA5C00D59478 /* IRInterpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 496B01581406DE8900F830D5 /* IRInterpreter.cpp */; };
 		49A71FE8141FFACF00D59478 /* DataEncoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268ED0A4140FF54200DE830F /* DataEncoder.cpp */; };
@@ -2879,10 +2875,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				496B015B1406DEB100F830D5 /* IRInterpreter.h in Headers */,
-				2682100D143A59AE004BCF2D /* MappedHash.h in Headers */,
-				2626B6AE143E1BEA00EF935C /* RangeMap.h in Headers */,
-				26CF992514428766001E4138 /* AnsiTerminal.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3056,7 +3048,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
-			shellScript = "xcode_dir=\"${DSTROOT}/Applications/Xcode.app/Contents/Developer/usr/bin\"\n\nif [ ! -d \"${xcode_dir}\" ]; then\n    mkdir -p \"${xcode_dir}\"\nfi\n\nditto \"$TARGET_BUILD_DIR/$EXECUTABLE_PATH\" \"${xcode_dir}\"\n";
+			shellScript = "xcode_dir=\"${DSTROOT}/Applications/Xcode.app/Contents/Developer/usr/bin\"\n\nif [ ! -d \"${xcode_dir}\" ]; then\n    mkdir -p \"${xcode_dir}\"\nfi\n\nditto \"$TARGET_BUILD_DIR/$EXECUTABLE_PATH\" \"${xcode_dir}\"\nstrip -S \"${xcode_dir}/${EXECUTABLE_PATH}\"";
 		};
 		2613F2F2146880EE00BFE551 /* Copy to Xcode.app */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -3070,7 +3062,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = "/bin/sh -x";
-			shellScript = "xcode_dir=\"${DSTROOT}/Applications/Xcode.app/Contents/SharedFrameworks\"\n\nif [ ! -d \"${xcode_dir}\" ]; then\n    mkdir -p \"${xcode_dir}\"\nfi\n\nditto \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\" \"${xcode_dir}/${WRAPPER_NAME}\"\n";
+			shellScript = "xcode_dir=\"${DSTROOT}/Applications/Xcode.app/Contents/SharedFrameworks\"\n\nif [ ! -d \"${xcode_dir}\" ]; then\n    mkdir -p \"${xcode_dir}\"\nfi\n\nditto \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\" \"${xcode_dir}/${WRAPPER_NAME}\"\nstrip -S \"${xcode_dir}/${EXECUTABLE_PATH}\"";
 		};
 		261B5A7511C3FA6F00AABD0A /* Fixup Framework Headers */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -3604,6 +3596,7 @@
 					x86_64,
 					i386,
 				);
+				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -3640,6 +3633,8 @@
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
+				STRIP_INSTALLED_PRODUCT = NO;
+				STRIP_STYLE = debugging;
 				VALID_ARCHS = "armv4t armv5 armv6 armv7 i386 ppc ppc64 ppc7400 ppc970 x86_64";
 			};
 			name = Debug;
@@ -3654,6 +3649,7 @@
 					x86_64,
 					i386,
 				);
+				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -3688,6 +3684,8 @@
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
+				STRIP_INSTALLED_PRODUCT = NO;
+				STRIP_STYLE = debugging;
 				VALID_ARCHS = "armv4t armv5 armv6 armv7 i386 ppc ppc64 ppc7400 ppc970 x86_64";
 			};
 			name = Release;
@@ -3695,7 +3693,6 @@
 		26579F6A126A25920007C5CB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
 				FRAMEWORK_SEARCH_PATHS = /System/Library/PrivateFrameworks;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -3710,7 +3707,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = /System/Library/PrivateFrameworks;
 				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
 				ONLY_ACTIVE_ARCH = NO;
@@ -3723,11 +3719,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = /System/Library/PrivateFrameworks;
 				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = "darwin-debug";
 				SKIP_INSTALL = YES;
+				STRIP_INSTALLED_PRODUCT = YES;
 			};
 			name = BuildAndIntegration;
 		};
@@ -3735,7 +3733,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 94;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 94;
@@ -3796,7 +3793,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 94;
 				DEAD_CODE_STRIPPING = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -3856,7 +3852,6 @@
 		2689FFD513353D7A00698AC0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 94;
 				DYLIB_CURRENT_VERSION = 94;
 				EXECUTABLE_EXTENSION = a;
@@ -3886,7 +3881,6 @@
 		2689FFD613353D7A00698AC0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 94;
 				DYLIB_CURRENT_VERSION = 94;
 				EXECUTABLE_EXTENSION = a;
@@ -3916,7 +3910,6 @@
 		2689FFD713353D7A00698AC0 /* BuildAndIntegration */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 94;
 				DYLIB_CURRENT_VERSION = 94;
 				EXECUTABLE_EXTENSION = a;
@@ -3953,6 +3946,7 @@
 					x86_64,
 					i386,
 				);
+				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -3987,6 +3981,8 @@
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
+				STRIP_INSTALLED_PRODUCT = NO;
+				STRIP_STYLE = debugging;
 				VALID_ARCHS = "armv4t armv5 armv6 armv7 i386 ppc ppc64 ppc7400 ppc970 x86_64";
 			};
 			name = BuildAndIntegration;
@@ -4015,6 +4011,7 @@
 					"-Wl,-rpath,@loader_path/../../System/Library/PrivateFrameworks",
 				);
 				PRODUCT_NAME = lldb;
+				STRIP_INSTALLED_PRODUCT = YES;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
@@ -4076,6 +4073,7 @@
 					Foundation,
 				);
 				PRODUCT_NAME = LLDB;
+				STRIP_INSTALLED_PRODUCT = YES;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
@@ -4086,7 +4084,6 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = lldb_codesign;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
-				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -4151,7 +4148,6 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = lldb_codesign;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
-				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -4212,6 +4208,7 @@
 		26DC6A141337FE6A00FF7998 /* BuildAndIntegration */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -4264,6 +4261,7 @@
 				);
 				PRODUCT_NAME = "lldb-platform";
 				SKIP_INSTALL = YES;
+				STRIP_INSTALLED_PRODUCT = YES;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 			};
 			name = BuildAndIntegration;
@@ -4271,7 +4269,6 @@
 		26F5C26C10F3D9A5009D5894 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 94;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -4302,7 +4299,6 @@
 		26F5C26D10F3D9A5009D5894 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 94;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
