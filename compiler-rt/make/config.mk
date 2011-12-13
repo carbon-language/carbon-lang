@@ -42,4 +42,5 @@ endif
 
 ###
 # Common compiler options
-COMMON_CXXFLAGS=-fno-exceptions
+COMMON_CXXFLAGS=-fno-exceptions -fPIC
+COMMON_CFLAGS=-fPIC
