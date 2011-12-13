@@ -36,7 +36,7 @@ public:
                   MipsAsmPrinter &asmprinter);  
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
   void LowerCPLOAD(const MachineInstr *MI, SmallVector<MCInst, 4>& MCInsts);
-  void LowerCPRESTORE(const MachineInstr *MI, MCInst &OutMI);
+  void LowerCPRESTORE(const MachineInstr *MI, SmallVector<MCInst, 4>& MCInsts); 
   void LowerUnalignedLoadStore(const MachineInstr *MI,
 		                           SmallVector<MCInst, 4>& MCInsts);
 private:

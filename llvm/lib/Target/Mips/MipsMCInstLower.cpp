@@ -137,14 +137,35 @@ void MipsMCInstLower::LowerCPLOAD(const MachineInstr *MI,
 }
 
 // Lower ".cprestore offset" to "sw $gp, offset($sp)".
-void MipsMCInstLower::LowerCPRESTORE(const MachineInstr *MI, MCInst &OutMI) {
-  OutMI.clear();
-  OutMI.setOpcode(Mips::SW);
-  OutMI.addOperand(MCOperand::CreateReg(Mips::GP));
-  OutMI.addOperand(MCOperand::CreateReg(Mips::SP));
+void MipsMCInstLower::LowerCPRESTORE(const MachineInstr *MI,
+                                     SmallVector<MCInst, 4>& MCInsts) {
   const MachineOperand &MO = MI->getOperand(0);
   assert(MO.isImm() && "CPRESTORE's operand must be an immediate.");
-  OutMI.addOperand(MCOperand::CreateImm(MO.getImm()));
+  unsigned Offset = MO.getImm(), Reg = Mips::SP;
+  MCInst Sw;
+
+  if (Offset >= 0x8000) {
+    unsigned Hi = (Offset >> 16) + ((Offset & 0x8000) != 0); 
+    Offset &= 0xffff;
+    Reg = Mips::AT;
+
+    // lui   at,hi
+    // addu  at,at,sp
+    MCInsts.resize(2);
+    MCInsts[0].setOpcode(Mips::LUi);
+    MCInsts[0].addOperand(MCOperand::CreateReg(Mips::AT));
+    MCInsts[0].addOperand(MCOperand::CreateImm(Hi));
+    MCInsts[1].setOpcode(Mips::ADDu);
+    MCInsts[1].addOperand(MCOperand::CreateReg(Mips::AT));
+    MCInsts[1].addOperand(MCOperand::CreateReg(Mips::AT));
+    MCInsts[1].addOperand(MCOperand::CreateReg(Mips::SP));
+  }
+  
+  Sw.setOpcode(Mips::SW);
+  Sw.addOperand(MCOperand::CreateReg(Mips::GP));
+  Sw.addOperand(MCOperand::CreateReg(Reg));
+  Sw.addOperand(MCOperand::CreateImm(Offset));
+  MCInsts.push_back(Sw);
 }
 
 MCOperand MipsMCInstLower::LowerOperand(const MachineOperand& MO,

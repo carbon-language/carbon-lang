@@ -96,17 +96,15 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
   if (!OutStreamer.hasRawTextSupport()) {
     // Lower CPLOAD and CPRESTORE
-    if (Opc == Mips::CPLOAD) {
+    if (Opc == Mips::CPLOAD)
       MCInstLowering.LowerCPLOAD(MI, MCInsts);
-      for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin(); I
-          != MCInsts.end(); ++I)
+    else if (Opc == Mips::CPRESTORE)
+      MCInstLowering.LowerCPRESTORE(MI, MCInsts);
+    
+    if (!MCInsts.empty()) {
+      for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin();
+           I != MCInsts.end(); ++I)
         OutStreamer.EmitInstruction(*I);
-      return;
-    }
-
-    if (Opc == Mips::CPRESTORE) {
-      MCInstLowering.LowerCPRESTORE(MI, TmpInst0);
-      OutStreamer.EmitInstruction(TmpInst0);
       return;
     }
   }
