@@ -293,7 +293,7 @@ namespace {
                       MachineInstr *CPEMI, unsigned Disp, bool NegOk,
                       bool DoDump = false);
     bool WaterIsInRange(unsigned UserOffset, MachineBasicBlock *Water,
-                        CPUser &U);
+                        CPUser &U, unsigned &Growth);
     bool BBIsInRange(MachineInstr *MI, MachineBasicBlock *BB, unsigned Disp);
     bool FixUpImmediateBr(ImmBranch &Br);
     bool FixUpConditionalBr(ImmBranch &Br);
@@ -967,15 +967,42 @@ bool ARMConstantIslands::OffsetIsInRange(unsigned UserOffset,
 
 /// WaterIsInRange - Returns true if a CPE placed after the specified
 /// Water (a basic block) will be in range for the specific MI.
-
+///
+/// Compute how much the function will grow by inserting a CPE after Water.
 bool ARMConstantIslands::WaterIsInRange(unsigned UserOffset,
-                                        MachineBasicBlock* Water, CPUser &U) {
-  unsigned CPEOffset = BBInfo[Water->getNumber()].postOffset();
+                                        MachineBasicBlock* Water, CPUser &U,
+                                        unsigned &Growth) {
+  unsigned CPELogAlign = getCPELogAlign(U.CPEMI);
+  unsigned CPEOffset = BBInfo[Water->getNumber()].postOffset(CPELogAlign);
+  unsigned NextBlockOffset, NextBlockAlignment;
+  MachineFunction::const_iterator NextBlock = Water;
+  if (++NextBlock == MF->end()) {
+    NextBlockOffset = BBInfo[Water->getNumber()].postOffset();
+    NextBlockAlignment = 0;
+  } else {
+    NextBlockOffset = BBInfo[NextBlock->getNumber()].Offset;
+    NextBlockAlignment = NextBlock->getAlignment();
+  }
+  unsigned Size = U.CPEMI->getOperand(2).getImm();
+  unsigned CPEEnd = CPEOffset + Size;
 
-  // If the CPE is to be inserted before the instruction, that will raise
-  // the offset of the instruction.
-  if (CPEOffset < UserOffset)
-    UserOffset += U.CPEMI->getOperand(2).getImm();
+  // The CPE may be able to hide in the alignment padding before the next
+  // block. It may also cause more padding to be required if it is more aligned
+  // that the next block.
+  if (CPEEnd > NextBlockOffset) {
+    Growth = CPEEnd - NextBlockOffset;
+    // Compute the padding that would go at the end of the CPE to align the next
+    // block.
+    Growth += OffsetToAlignment(CPEEnd, 1u << NextBlockAlignment);
+
+    // If the CPE is to be inserted before the instruction, that will raise
+    // the offset of the instruction.  Also account for unknown alignment padding
+    // in blocks between CPE and the user.
+    if (CPEOffset < UserOffset)
+      UserOffset += Growth + UnknownPadding(MF->getAlignment(), CPELogAlign);
+  } else
+    // CPE fits in existing padding.
+    Growth = 0;
 
   return OffsetIsInRange(UserOffset, CPEOffset, U);
 }
@@ -1130,10 +1157,9 @@ bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
   if (WaterList.empty())
     return false;
 
-  bool FoundWaterThatWouldPad = false;
-  water_iterator IPThatWouldPad;
-  for (water_iterator IP = prior(WaterList.end()),
-         B = WaterList.begin();; --IP) {
+  unsigned BestGrowth = ~0u;
+  for (water_iterator IP = prior(WaterList.end()), B = WaterList.begin();;
+       --IP) {
     MachineBasicBlock* WaterBB = *IP;
     // Check if water is in range and is either at a lower address than the
     // current "high water mark" or a new water block that was created since
@@ -1143,30 +1169,24 @@ bool ARMConstantIslands::LookForWater(CPUser &U, unsigned UserOffset,
     // should be relatively uncommon and when it does happen, we want to be
     // sure to take advantage of it for all the CPEs near that block, so that
     // we don't insert more branches than necessary.
-    if (WaterIsInRange(UserOffset, WaterBB, U) &&
+    unsigned Growth;
+    if (WaterIsInRange(UserOffset, WaterBB, U, Growth) &&
         (WaterBB->getNumber() < U.HighWaterMark->getNumber() ||
-         NewWaterList.count(WaterBB))) {
-      unsigned WBBId = WaterBB->getNumber();
-      if (isThumb && BBInfo[WBBId].postOffset()%4 != 0) {
-        // This is valid Water, but would introduce padding.  Remember
-        // it in case we don't find any Water that doesn't do this.
-        if (!FoundWaterThatWouldPad) {
-          FoundWaterThatWouldPad = true;
-          IPThatWouldPad = IP;
-        }
-      } else {
-        WaterIter = IP;
+         NewWaterList.count(WaterBB)) && Growth < BestGrowth) {
+      // This is the least amount of required padding seen so far.
+      BestGrowth = Growth;
+      WaterIter = IP;
+      DEBUG(dbgs() << "Found water after BB#" << WaterBB->getNumber()
+                   << " Growth=" << Growth << '\n');
+
+      // Keep looking unless it is perfect.
+      if (BestGrowth == 0)
         return true;
-      }
     }
     if (IP == B)
       break;
   }
-  if (FoundWaterThatWouldPad) {
-    WaterIter = IPThatWouldPad;
-    return true;
-  }
-  return false;
+  return BestGrowth != ~0u;
 }
 
 /// CreateNewWater - No existing WaterList entry will work for
