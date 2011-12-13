@@ -492,7 +492,7 @@ bool is_separator(char value) {
 
 void system_temp_directory(bool erasedOnReboot, SmallVectorImpl<char> &result) {
   result.clear();
-  
+
   // Check whether the temporary directory is specified by an environment
   // variable.
   const char *EnvironmentVariable;
@@ -505,7 +505,7 @@ void system_temp_directory(bool erasedOnReboot, SmallVectorImpl<char> &result) {
     result.append(RequestedDir, RequestedDir + strlen(RequestedDir));
     return;
   }
-    
+
   // Fall back to a system default.
   const char *DefaultResult;
 #ifdef LLVM_ON_WIN32
@@ -519,7 +519,7 @@ void system_temp_directory(bool erasedOnReboot, SmallVectorImpl<char> &result) {
 #endif
   result.append(DefaultResult, DefaultResult + strlen(DefaultResult));
 }
-  
+
 bool has_root_name(const Twine &path) {
   SmallString<128> path_storage;
   StringRef p = path.toStringRef(path_storage);
