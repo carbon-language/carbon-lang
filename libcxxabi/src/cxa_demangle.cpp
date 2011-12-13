@@ -10019,7 +10019,9 @@ public:
     virtual size_t first_size() const
     {
         if (__cached_size_ == -1)
-            const_cast<long&>(__cached_size_) = __left_->size() + 3 + __right_->size();
+            const_cast<long&>(__cached_size_) = __left_->size() + 3
+                                                + __right_->first_size()
+                                                + __right_->second_size();
         return __cached_size_;
     }
     virtual char* first_demangled_name(char* buf) const
