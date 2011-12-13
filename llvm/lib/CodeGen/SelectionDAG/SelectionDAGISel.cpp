@@ -63,6 +63,10 @@ STATISTIC(NumDAGBlocks, "Number of blocks selected using DAG");
 STATISTIC(NumDAGIselRetries,"Number of times dag isel has to try another path");
 
 #ifndef NDEBUG
+static cl::opt<bool>
+EnableFastISelVerbose2("fast-isel-verbose2", cl::Hidden,
+          cl::desc("Enable extra verbose messages in the \"fast\" "
+                   "instruction selector"));
   // Terminators
 STATISTIC(NumFastIselFailRet,"Fast isel fails on Ret");
 STATISTIC(NumFastIselFailBr,"Fast isel fails on Br");
@@ -1086,7 +1090,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
         }
 
 #ifndef NDEBUG
-        collectFailStats(Inst);
+        if (EnableFastISelVerbose2)
+          collectFailStats(Inst);
 #endif
 
         // Then handle certain instructions as single-LLVM-Instruction blocks.
