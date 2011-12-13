@@ -583,6 +583,9 @@ clang_index_getObjCProtocolRefListInfo(const CXIdxDeclInfo *DInfo) {
         ProtInfo = dyn_cast<ObjCProtocolDeclInfo>(DI))
     return &ProtInfo->ObjCProtoRefListInfo;
 
+  if (const ObjCCategoryDeclInfo *CatInfo = dyn_cast<ObjCCategoryDeclInfo>(DI))
+    return CatInfo->ObjCCatDeclInfo.protocols;
+
   return 0;
 }
 

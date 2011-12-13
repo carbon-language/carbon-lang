@@ -149,6 +149,7 @@ struct ObjCProtocolDeclInfo : public ObjCContainerDeclInfo {
 
 struct ObjCCategoryDeclInfo : public ObjCContainerDeclInfo {
   CXIdxObjCCategoryDeclInfo ObjCCatDeclInfo;
+  CXIdxObjCProtocolRefListInfo ObjCProtoListInfo;
 
   explicit ObjCCategoryDeclInfo(bool isImplementation)
     : ObjCContainerDeclInfo(Info_ObjCCategory,

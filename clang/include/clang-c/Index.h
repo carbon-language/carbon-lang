@@ -4239,13 +4239,6 @@ typedef struct {
 } CXIdxObjCContainerDeclInfo;
 
 typedef struct {
-  const CXIdxObjCContainerDeclInfo *containerInfo;
-  const CXIdxEntityInfo *objcClass;
-  CXCursor classCursor;
-  CXIdxLoc classLoc;
-} CXIdxObjCCategoryDeclInfo;
-
-typedef struct {
   const CXIdxEntityInfo *base;
   CXCursor cursor;
   CXIdxLoc loc;
@@ -4267,6 +4260,14 @@ typedef struct {
   const CXIdxBaseClassInfo *superInfo;
   const CXIdxObjCProtocolRefListInfo *protocols;
 } CXIdxObjCInterfaceDeclInfo;
+
+typedef struct {
+  const CXIdxObjCContainerDeclInfo *containerInfo;
+  const CXIdxEntityInfo *objcClass;
+  CXCursor classCursor;
+  CXIdxLoc classLoc;
+  const CXIdxObjCProtocolRefListInfo *protocols;
+} CXIdxObjCCategoryDeclInfo;
 
 typedef struct {
   const CXIdxDeclInfo *declInfo;

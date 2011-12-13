@@ -383,6 +383,8 @@ bool IndexingContext::handleObjCCategory(const ObjCCategoryDecl *D) {
   if (suppressRefs())
     markEntityOccurrenceInFile(IFaceD, ClassLoc);
 
+  ObjCProtocolListInfo ProtInfo(D->getReferencedProtocols(), *this, SA);
+  
   CatDInfo.ObjCCatDeclInfo.containerInfo = &CatDInfo.ObjCContDeclInfo;
   if (IFaceD) {
     CatDInfo.ObjCCatDeclInfo.objcClass = &ClassEntity;
@@ -393,6 +395,9 @@ bool IndexingContext::handleObjCCategory(const ObjCCategoryDecl *D) {
     CatDInfo.ObjCCatDeclInfo.classCursor = clang_getNullCursor();
   }
   CatDInfo.ObjCCatDeclInfo.classLoc = getIndexLoc(ClassLoc);
+  CatDInfo.ObjCProtoListInfo = ProtInfo.getListInfo();
+  CatDInfo.ObjCCatDeclInfo.protocols = &CatDInfo.ObjCProtoListInfo;
+
   return handleObjCContainer(D, CategoryLoc, getCursor(D), CatDInfo);
 }
 
@@ -416,6 +421,8 @@ bool IndexingContext::handleObjCCategoryImpl(const ObjCCategoryImplDecl *D) {
     CatDInfo.ObjCCatDeclInfo.classCursor = clang_getNullCursor();
   }
   CatDInfo.ObjCCatDeclInfo.classLoc = getIndexLoc(ClassLoc);
+  CatDInfo.ObjCCatDeclInfo.protocols = 0;
+
   return handleObjCContainer(D, CategoryLoc, getCursor(D), CatDInfo);
 }
 
