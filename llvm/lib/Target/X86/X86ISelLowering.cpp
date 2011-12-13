@@ -378,6 +378,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::FREM             , MVT::f80  , Expand);
   setOperationAction(ISD::FLT_ROUNDS_      , MVT::i32  , Custom);
 
+  setOperationAction(ISD::CTTZ_ZERO_UNDEF  , MVT::i8   , Expand);
+  setOperationAction(ISD::CTTZ_ZERO_UNDEF  , MVT::i16  , Expand);
+  setOperationAction(ISD::CTTZ_ZERO_UNDEF  , MVT::i32  , Expand);
+  setOperationAction(ISD::CTTZ_ZERO_UNDEF  , MVT::i64  , Expand);
   if (Subtarget->hasBMI()) {
     setOperationAction(ISD::CTTZ           , MVT::i8   , Promote);
   } else {
@@ -388,6 +392,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setOperationAction(ISD::CTTZ         , MVT::i64  , Custom);
   }
 
+  setOperationAction(ISD::CTLZ_ZERO_UNDEF  , MVT::i8   , Expand);
+  setOperationAction(ISD::CTLZ_ZERO_UNDEF  , MVT::i16  , Expand);
+  setOperationAction(ISD::CTLZ_ZERO_UNDEF  , MVT::i32  , Expand);
+  setOperationAction(ISD::CTLZ_ZERO_UNDEF  , MVT::i64  , Expand);
   if (Subtarget->hasLZCNT()) {
     setOperationAction(ISD::CTLZ           , MVT::i8   , Promote);
   } else {
@@ -719,7 +727,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FPOW, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::CTPOP, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::CTTZ, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::CTTZ_ZERO_UNDEF, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::CTLZ, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::SHL, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::SRA, (MVT::SimpleValueType)VT, Expand);
     setOperationAction(ISD::SRL, (MVT::SimpleValueType)VT, Expand);

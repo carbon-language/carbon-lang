@@ -1856,7 +1856,9 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
     return;
   }
   case ISD::CTTZ:
+  case ISD::CTTZ_ZERO_UNDEF:
   case ISD::CTLZ:
+  case ISD::CTLZ_ZERO_UNDEF:
   case ISD::CTPOP: {
     unsigned LowBits = Log2_32(BitWidth)+1;
     KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - LowBits);
@@ -2429,8 +2431,10 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
     case ISD::CTPOP:
       return getConstant(Val.countPopulation(), VT);
     case ISD::CTLZ:
+    case ISD::CTLZ_ZERO_UNDEF:
       return getConstant(Val.countLeadingZeros(), VT);
     case ISD::CTTZ:
+    case ISD::CTTZ_ZERO_UNDEF:
       return getConstant(Val.countTrailingZeros(), VT);
     }
   }
@@ -6111,10 +6115,12 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::TRAP:               return "trap";
 
   // Bit manipulation
-  case ISD::BSWAP:   return "bswap";
-  case ISD::CTPOP:   return "ctpop";
-  case ISD::CTTZ:    return "cttz";
-  case ISD::CTLZ:    return "ctlz";
+  case ISD::BSWAP:           return "bswap";
+  case ISD::CTPOP:           return "ctpop";
+  case ISD::CTTZ:            return "cttz";
+  case ISD::CTTZ_ZERO_UNDEF: return "cttz_zero_undef";
+  case ISD::CTLZ:            return "ctlz";
+  case ISD::CTLZ_ZERO_UNDEF: return "ctlz_zero_undef";
 
   // Trampolines
   case ISD::INIT_TRAMPOLINE: return "init_trampoline";

@@ -180,7 +180,9 @@ namespace {
     SDValue visitSRA(SDNode *N);
     SDValue visitSRL(SDNode *N);
     SDValue visitCTLZ(SDNode *N);
+    SDValue visitCTLZ_ZERO_UNDEF(SDNode *N);
     SDValue visitCTTZ(SDNode *N);
+    SDValue visitCTTZ_ZERO_UNDEF(SDNode *N);
     SDValue visitCTPOP(SDNode *N);
     SDValue visitSELECT(SDNode *N);
     SDValue visitSELECT_CC(SDNode *N);
@@ -1078,7 +1080,9 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::SRA:                return visitSRA(N);
   case ISD::SRL:                return visitSRL(N);
   case ISD::CTLZ:               return visitCTLZ(N);
+  case ISD::CTLZ_ZERO_UNDEF:    return visitCTLZ_ZERO_UNDEF(N);
   case ISD::CTTZ:               return visitCTTZ(N);
+  case ISD::CTTZ_ZERO_UNDEF:    return visitCTTZ_ZERO_UNDEF(N);
   case ISD::CTPOP:              return visitCTPOP(N);
   case ISD::SELECT:             return visitSELECT(N);
   case ISD::SELECT_CC:          return visitSELECT_CC(N);
@@ -3717,6 +3721,16 @@ SDValue DAGCombiner::visitCTLZ(SDNode *N) {
   return SDValue();
 }
 
+SDValue DAGCombiner::visitCTLZ_ZERO_UNDEF(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  EVT VT = N->getValueType(0);
+
+  // fold (ctlz_zero_undef c1) -> c2
+  if (isa<ConstantSDNode>(N0))
+    return DAG.getNode(ISD::CTLZ_ZERO_UNDEF, N->getDebugLoc(), VT, N0);
+  return SDValue();
+}
+
 SDValue DAGCombiner::visitCTTZ(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   EVT VT = N->getValueType(0);
@@ -3724,6 +3738,16 @@ SDValue DAGCombiner::visitCTTZ(SDNode *N) {
   // fold (cttz c1) -> c2
   if (isa<ConstantSDNode>(N0))
     return DAG.getNode(ISD::CTTZ, N->getDebugLoc(), VT, N0);
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitCTTZ_ZERO_UNDEF(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  EVT VT = N->getValueType(0);
+
+  // fold (cttz_zero_undef c1) -> c2
+  if (isa<ConstantSDNode>(N0))
+    return DAG.getNode(ISD::CTTZ_ZERO_UNDEF, N->getDebugLoc(), VT, N0);
   return SDValue();
 }
 

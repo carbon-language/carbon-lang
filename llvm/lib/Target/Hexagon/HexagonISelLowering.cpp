@@ -1250,7 +1250,9 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
     setOperationAction(ISD::FREM , MVT::f32, Expand);
     setOperationAction(ISD::CTPOP, MVT::i32, Expand);
     setOperationAction(ISD::CTTZ , MVT::i32, Expand);
+    setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32, Expand);
     setOperationAction(ISD::CTLZ , MVT::i32, Expand);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32, Expand);
     setOperationAction(ISD::ROTL , MVT::i32, Expand);
     setOperationAction(ISD::ROTR , MVT::i32, Expand);
     setOperationAction(ISD::BSWAP, MVT::i32, Expand);

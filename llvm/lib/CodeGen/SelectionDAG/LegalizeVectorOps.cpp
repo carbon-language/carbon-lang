@@ -185,8 +185,10 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   case ISD::SRL:
   case ISD::ROTL:
   case ISD::ROTR:
-  case ISD::CTTZ:
   case ISD::CTLZ:
+  case ISD::CTTZ:
+  case ISD::CTLZ_ZERO_UNDEF:
+  case ISD::CTTZ_ZERO_UNDEF:
   case ISD::CTPOP:
   case ISD::SELECT:
   case ISD::VSELECT:

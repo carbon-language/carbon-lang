@@ -296,12 +296,22 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::CTTZ , MVT::i32,   Expand);
   setOperationAction(ISD::CTTZ , MVT::i64,   Expand);
   setOperationAction(ISD::CTTZ , MVT::i128,  Expand);
+  setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i8,    Expand);
+  setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i16,   Expand);
+  setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32,   Expand);
+  setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64,   Expand);
+  setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i128,  Expand);
 
   setOperationAction(ISD::CTLZ , MVT::i8,    Promote);
   setOperationAction(ISD::CTLZ , MVT::i16,   Promote);
   setOperationAction(ISD::CTLZ , MVT::i32,   Legal);
   setOperationAction(ISD::CTLZ , MVT::i64,   Expand);
   setOperationAction(ISD::CTLZ , MVT::i128,  Expand);
+  setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i8,    Expand);
+  setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i16,   Expand);
+  setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32,   Expand);
+  setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64,   Expand);
+  setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i128,  Expand);
 
   // SPU has a version of select that implements (a&~c)|(b&c), just like
   // select ought to work:

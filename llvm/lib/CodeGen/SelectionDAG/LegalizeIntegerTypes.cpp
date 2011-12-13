@@ -56,8 +56,10 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::Constant:    Res = PromoteIntRes_Constant(N); break;
   case ISD::CONVERT_RNDSAT:
                          Res = PromoteIntRes_CONVERT_RNDSAT(N); break;
+  case ISD::CTLZ_ZERO_UNDEF:
   case ISD::CTLZ:        Res = PromoteIntRes_CTLZ(N); break;
   case ISD::CTPOP:       Res = PromoteIntRes_CTPOP(N); break;
+  case ISD::CTTZ_ZERO_UNDEF:
   case ISD::CTTZ:        Res = PromoteIntRes_CTTZ(N); break;
   case ISD::EXTRACT_VECTOR_ELT:
                          Res = PromoteIntRes_EXTRACT_VECTOR_ELT(N); break;
@@ -311,7 +313,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_CTLZ(SDNode *N) {
   DebugLoc dl = N->getDebugLoc();
   EVT OVT = N->getValueType(0);
   EVT NVT = Op.getValueType();
-  Op = DAG.getNode(ISD::CTLZ, dl, NVT, Op);
+  Op = DAG.getNode(N->getOpcode(), dl, NVT, Op);
   // Subtract off the extra leading bits in the bigger type.
   return DAG.getNode(ISD::SUB, dl, NVT, Op,
                      DAG.getConstant(NVT.getSizeInBits() -
@@ -329,13 +331,15 @@ SDValue DAGTypeLegalizer::PromoteIntRes_CTTZ(SDNode *N) {
   EVT OVT = N->getValueType(0);
   EVT NVT = Op.getValueType();
   DebugLoc dl = N->getDebugLoc();
-  // The count is the same in the promoted type except if the original
-  // value was zero.  This can be handled by setting the bit just off
-  // the top of the original type.
-  APInt TopBit(NVT.getSizeInBits(), 0);
-  TopBit.setBit(OVT.getSizeInBits());
-  Op = DAG.getNode(ISD::OR, dl, NVT, Op, DAG.getConstant(TopBit, NVT));
-  return DAG.getNode(ISD::CTTZ, dl, NVT, Op);
+  if (N->getOpcode() == ISD::CTTZ) {
+    // The count is the same in the promoted type except if the original
+    // value was zero.  This can be handled by setting the bit just off
+    // the top of the original type.
+    APInt TopBit(NVT.getSizeInBits(), 0);
+    TopBit.setBit(OVT.getSizeInBits());
+    Op = DAG.getNode(ISD::OR, dl, NVT, Op, DAG.getConstant(TopBit, NVT));
+  }
+  return DAG.getNode(N->getOpcode(), dl, NVT, Op);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_EXTRACT_VECTOR_ELT(SDNode *N) {
@@ -1097,8 +1101,10 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::AssertZext:  ExpandIntRes_AssertZext(N, Lo, Hi); break;
   case ISD::BSWAP:       ExpandIntRes_BSWAP(N, Lo, Hi); break;
   case ISD::Constant:    ExpandIntRes_Constant(N, Lo, Hi); break;
+  case ISD::CTLZ_ZERO_UNDEF:
   case ISD::CTLZ:        ExpandIntRes_CTLZ(N, Lo, Hi); break;
   case ISD::CTPOP:       ExpandIntRes_CTPOP(N, Lo, Hi); break;
+  case ISD::CTTZ_ZERO_UNDEF:
   case ISD::CTTZ:        ExpandIntRes_CTTZ(N, Lo, Hi); break;
   case ISD::FP_TO_SINT:  ExpandIntRes_FP_TO_SINT(N, Lo, Hi); break;
   case ISD::FP_TO_UINT:  ExpandIntRes_FP_TO_UINT(N, Lo, Hi); break;
@@ -1701,8 +1707,8 @@ void DAGTypeLegalizer::ExpandIntRes_CTLZ(SDNode *N,
   SDValue HiNotZero = DAG.getSetCC(dl, TLI.getSetCCResultType(NVT), Hi,
                                    DAG.getConstant(0, NVT), ISD::SETNE);
 
-  SDValue LoLZ = DAG.getNode(ISD::CTLZ, dl, NVT, Lo);
-  SDValue HiLZ = DAG.getNode(ISD::CTLZ, dl, NVT, Hi);
+  SDValue LoLZ = DAG.getNode(N->getOpcode(), dl, NVT, Lo);
+  SDValue HiLZ = DAG.getNode(ISD::CTLZ_ZERO_UNDEF, dl, NVT, Hi);
 
   Lo = DAG.getNode(ISD::SELECT, dl, NVT, HiNotZero, HiLZ,
                    DAG.getNode(ISD::ADD, dl, NVT, LoLZ,
@@ -1731,8 +1737,8 @@ void DAGTypeLegalizer::ExpandIntRes_CTTZ(SDNode *N,
   SDValue LoNotZero = DAG.getSetCC(dl, TLI.getSetCCResultType(NVT), Lo,
                                    DAG.getConstant(0, NVT), ISD::SETNE);
 
-  SDValue LoLZ = DAG.getNode(ISD::CTTZ, dl, NVT, Lo);
-  SDValue HiLZ = DAG.getNode(ISD::CTTZ, dl, NVT, Hi);
+  SDValue LoLZ = DAG.getNode(ISD::CTTZ_ZERO_UNDEF, dl, NVT, Lo);
+  SDValue HiLZ = DAG.getNode(N->getOpcode(), dl, NVT, Hi);
 
   Lo = DAG.getNode(ISD::SELECT, dl, NVT, LoNotZero, LoLZ,
                    DAG.getNode(ISD::ADD, dl, NVT, HiLZ,

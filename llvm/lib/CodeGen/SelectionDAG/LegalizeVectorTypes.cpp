@@ -441,8 +441,10 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::ANY_EXTEND:
   case ISD::CONVERT_RNDSAT:
   case ISD::CTLZ:
-  case ISD::CTPOP:
   case ISD::CTTZ:
+  case ISD::CTLZ_ZERO_UNDEF:
+  case ISD::CTTZ_ZERO_UNDEF:
+  case ISD::CTPOP:
   case ISD::FABS:
   case ISD::FCEIL:
   case ISD::FCOS:
