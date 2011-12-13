@@ -2,7 +2,7 @@
 
 enum E {};
 
-struct Z {};
+struct Z {}; // expected-note {{here}}
 typedef int Integer;
 
 struct X {
@@ -14,5 +14,5 @@ struct X {
 
 struct Y {
   enum E : int(2);
-  enum E : Z(); // expected-error{{not an integer constant}}
+  enum E : Z(); // expected-error{{not an integer constant}} expected-note {{non-constexpr constructor 'Z'}}
 };

@@ -10,7 +10,7 @@ static_assert(false, "test"); // expected-error {{test}}
 
 // FIXME: support const T& parameters here.
 //template<typename T> constexpr T id(const T &t) { return t; }
-template<typename T> constexpr T id(T t) { return t; }
+template<typename T> constexpr T id(T t) { return t; } // expected-note {{here}}
 // FIXME: support templates here.
 //template<typename T> constexpr T min(const T &a, const T &b) {
 //  return a < b ? a : b;
@@ -95,9 +95,9 @@ namespace CaseStatements {
   void f(int n) {
     switch (n) {
     // FIXME: Produce the 'add ()' fixit for this.
-    case MemberZero().zero: // desired-error {{did you mean to call it with no arguments?}} expected-error {{not an integer constant expression}}
+    case MemberZero().zero: // desired-error {{did you mean to call it with no arguments?}} expected-error {{not an integer constant expression}} expected-note {{non-literal type '<bound member function type>'}}
     // FIXME: This should be accepted once we implement the new ICE rules.
-    case id(1): // expected-error {{not an integer constant expression}}
+    case id(1): // expected-error {{not an integer constant expression}} expected-note {{undefined function}}
       return;
     }
   }

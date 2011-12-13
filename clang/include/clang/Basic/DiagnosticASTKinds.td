@@ -15,6 +15,24 @@ def note_expr_divide_by_zero : Note<"division by zero">;
 def note_constexpr_invalid_cast : Note<
   "%select{reinterpret_cast|dynamic_cast|cast which performs the conversions of"
   " a reinterpret_cast|cast from %1}0 is not allowed in a constant expression">;
+def note_constexpr_overflow : Note<
+  "value %0 is outside the range of representable values of type %1">;
+def note_constexpr_invalid_function : Note<
+  "%select{non-constexpr|undefined}0 %select{function|constructor}1 %2 cannot "
+  "be used in a constant expression">;
+def note_constexpr_nonliteral : Note<
+  "non-literal type %0 cannot be used in a constant expression">;
+def note_constexpr_non_global : Note<
+  "%select{pointer|reference}0 to %select{|subobject of }1"
+  "%select{temporary|%4}2 %select{is not a constant expression|"
+  "cannot be returned from a constexpr function|"
+  "cannot be used to initialize a member in a constant expression}3">;
+def note_constexpr_past_end : Note<
+  "dereferenced pointer past the end of %select{|subobject of}0 "
+  "%select{temporary|%2}1 is not a constant expression">;
+def note_constexpr_temporary_here : Note<"temporary created here">;
+def note_constexpr_depth_limit_exceeded : Note<
+  "constexpr evaluation exceeded maximum depth of %0 calls">;
 
 // inline asm related.
 let CategoryName = "Inline Assembly Issue" in {

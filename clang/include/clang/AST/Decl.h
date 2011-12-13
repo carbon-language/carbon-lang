@@ -3162,6 +3162,12 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                   DiagnosticsEngine::ak_nameddecl);
   return DB;
 }
+inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
+                                           const NamedDecl* ND) {
+  PD.AddTaggedVal(reinterpret_cast<intptr_t>(ND),
+                  DiagnosticsEngine::ak_nameddecl);
+  return PD;
+}
 
 template<typename decl_type>
 void Redeclarable<decl_type>::setPreviousDeclaration(decl_type *PrevDecl) {
