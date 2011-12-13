@@ -2666,7 +2666,15 @@ parseRegisterList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     return Error(E, "'}' expected");
   Parser.Lex(); // Eat '}' token.
 
+  // Push the register list operand.
   Operands.push_back(ARMOperand::CreateRegList(Registers, S, E));
+
+  // The ARM system instruction variants for LDM/STM have a '^' token here.
+  if (Parser.getTok().is(AsmToken::Caret)) {
+    Operands.push_back(ARMOperand::CreateToken("^",Parser.getTok().getLoc()));
+    Parser.Lex(); // Eat '^' token.
+  }
+
   return false;
 }
 

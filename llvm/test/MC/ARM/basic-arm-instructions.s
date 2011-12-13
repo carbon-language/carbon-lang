@@ -764,6 +764,10 @@ Lforward:
         ldmda     r2!, {r1,r3-r6,sp}
         ldmdb     r2!, {r1,r3-r6,sp}
 
+        @ system version
+        ldm r0, {r0, r2, lr}^
+        ldm sp!, {r0-r3, pc}^
+
 @ CHECK: ldm   r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x92,0xe8]
 @ CHECK: ldm   r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x92,0xe8]
 @ CHECK: ldmib r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x92,0xe9]
@@ -775,6 +779,8 @@ Lforward:
 @ CHECK: ldmib r2!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0xb2,0xe9]
 @ CHECK: ldmda r2!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x32,0xe8]
 @ CHECK: ldmdb r2!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x32,0xe9]
+@ CHECK: ldm	r0, {lr, r0, r2} ^          @ encoding: [0x05,0x40,0xd0,0xe8]
+@ CHECK: ldm	sp!, {pc, r0, r1, r2, r3} ^ @ encoding: [0x0f,0x80,0xfd,0xe8]
 
 
 @------------------------------------------------------------------------------

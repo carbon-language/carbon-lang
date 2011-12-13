@@ -2804,23 +2804,25 @@ defm STRHT : AI3strT<0b1011, "strht">;
 //  Load / store multiple Instructions.
 //
 
-multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
+multiclass arm_ldst_mult<string asm, string sfx, bit L_bit, bit P_bit, Format f,
                          InstrItinClass itin, InstrItinClass itin_upd> {
   // IA is the default, so no need for an explicit suffix on the
   // mnemonic here. Without it is the cannonical spelling.
   def IA :
     AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeNone, f, itin,
-         !strconcat(asm, "${p}\t$Rn, $regs"), "", []> {
+         !strconcat(asm, "${p}\t$Rn, $regs", sfx), "", []> {
     let Inst{24-23} = 0b01;       // Increment After
+    let Inst{22}    = P_bit;
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
   }
   def IA_UPD :
     AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeUpd, f, itin_upd,
-         !strconcat(asm, "${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+         !strconcat(asm, "${p}\t$Rn!, $regs", sfx), "$Rn = $wb", []> {
     let Inst{24-23} = 0b01;       // Increment After
+    let Inst{22}    = P_bit;
     let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
 
@@ -2829,16 +2831,18 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
   def DA :
     AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeNone, f, itin,
-         !strconcat(asm, "da${p}\t$Rn, $regs"), "", []> {
+         !strconcat(asm, "da${p}\t$Rn, $regs", sfx), "", []> {
     let Inst{24-23} = 0b00;       // Decrement After
+    let Inst{22}    = P_bit;
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
   }
   def DA_UPD :
     AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeUpd, f, itin_upd,
-         !strconcat(asm, "da${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+         !strconcat(asm, "da${p}\t$Rn!, $regs", sfx), "$Rn = $wb", []> {
     let Inst{24-23} = 0b00;       // Decrement After
+    let Inst{22}    = P_bit;
     let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
 
@@ -2847,16 +2851,18 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
   def DB :
     AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeNone, f, itin,
-         !strconcat(asm, "db${p}\t$Rn, $regs"), "", []> {
+         !strconcat(asm, "db${p}\t$Rn, $regs", sfx), "", []> {
     let Inst{24-23} = 0b10;       // Decrement Before
+    let Inst{22}    = P_bit;
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
   }
   def DB_UPD :
     AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeUpd, f, itin_upd,
-         !strconcat(asm, "db${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+         !strconcat(asm, "db${p}\t$Rn!, $regs", sfx), "$Rn = $wb", []> {
     let Inst{24-23} = 0b10;       // Decrement Before
+    let Inst{22}    = P_bit;
     let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
 
@@ -2865,16 +2871,18 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
   def IB :
     AXI4<(outs), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeNone, f, itin,
-         !strconcat(asm, "ib${p}\t$Rn, $regs"), "", []> {
+         !strconcat(asm, "ib${p}\t$Rn, $regs", sfx), "", []> {
     let Inst{24-23} = 0b11;       // Increment Before
+    let Inst{22}    = P_bit;
     let Inst{21}    = 0;          // No writeback
     let Inst{20}    = L_bit;
   }
   def IB_UPD :
     AXI4<(outs GPR:$wb), (ins GPR:$Rn, pred:$p, reglist:$regs, variable_ops),
          IndexModeUpd, f, itin_upd,
-         !strconcat(asm, "ib${p}\t$Rn!, $regs"), "$Rn = $wb", []> {
+         !strconcat(asm, "ib${p}\t$Rn!, $regs", sfx), "$Rn = $wb", []> {
     let Inst{24-23} = 0b11;       // Increment Before
+    let Inst{22}    = P_bit;
     let Inst{21}    = 1;          // Writeback
     let Inst{20}    = L_bit;
 
@@ -2885,10 +2893,12 @@ multiclass arm_ldst_mult<string asm, bit L_bit, Format f,
 let neverHasSideEffects = 1 in {
 
 let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
-defm LDM : arm_ldst_mult<"ldm", 1, LdStMulFrm, IIC_iLoad_m, IIC_iLoad_mu>;
+defm LDM : arm_ldst_mult<"ldm", "", 1, 0, LdStMulFrm, IIC_iLoad_m,
+                         IIC_iLoad_mu>;
 
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
-defm STM : arm_ldst_mult<"stm", 0, LdStMulFrm, IIC_iStore_m, IIC_iStore_mu>;
+defm STM : arm_ldst_mult<"stm", "", 0, 0, LdStMulFrm, IIC_iStore_m,
+                         IIC_iStore_mu>;
 
 } // neverHasSideEffects
 
@@ -2901,6 +2911,16 @@ def LDMIA_RET : ARMPseudoExpand<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
                      4, IIC_iLoad_mBr, [],
                      (LDMIA_UPD GPR:$wb, GPR:$Rn, pred:$p, reglist:$regs)>,
       RegConstraint<"$Rn = $wb">;
+
+let mayLoad = 1, hasExtraDefRegAllocReq = 1 in
+defm sysLDM : arm_ldst_mult<"ldm", " ^", 1, 1, LdStMulFrm, IIC_iLoad_m,
+                               IIC_iLoad_mu>;
+
+let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
+defm sysSTM : arm_ldst_mult<"stm", " ^", 0, 1, LdStMulFrm, IIC_iStore_m,
+                               IIC_iStore_mu>;
+
+
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.
