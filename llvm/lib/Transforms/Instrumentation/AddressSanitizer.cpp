@@ -979,15 +979,23 @@ BlackList::BlackList(const std::string &Path) {
   for (size_t i = 0, numLines = Lines.size(); i < numLines; i++) {
     if (Lines[i].startswith(kFunPrefix)) {
       std::string ThisFunc = Lines[i].substr(strlen(kFunPrefix));
-      if (Fun.size()) {
-        Fun += "|";
-      }
+      std::string ThisFuncRE;
       // add ThisFunc replacing * with .*
       for (size_t j = 0, n = ThisFunc.size(); j < n; j++) {
         if (ThisFunc[j] == '*')
-          Fun += '.';
-        Fun += ThisFunc[j];
+          ThisFuncRE += '.';
+        ThisFuncRE += ThisFunc[j];
       }
+      // Check that the regexp is valid.
+      Regex CheckRE(ThisFuncRE);
+      std::string Error;
+      if (!CheckRE.isValid(Error))
+        report_fatal_error("malformed blacklist regex: " + ThisFunc +
+                           ": " + Error);
+      // Append to the final regexp.
+      if (Fun.size())
+        Fun += "|";
+      Fun += ThisFuncRE;
     }
   }
   if (Fun.size()) {
