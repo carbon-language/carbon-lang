@@ -852,7 +852,9 @@ ASTContext::getTypeInfo(const Type *T) const {
     const ConstantArrayType *CAT = cast<ConstantArrayType>(T);
 
     std::pair<uint64_t, unsigned> EltInfo = getTypeInfo(CAT->getElementType());
-    Width = EltInfo.first*CAT->getSize().getZExtValue();
+    uint64_t Size = CAT->getSize().getZExtValue();
+    assert((Size == 0 || EltInfo.first <= (uint64_t)(-1)/Size) && "Overflow in array type bit size evaluation");
+    Width = EltInfo.first*Size;
     Align = EltInfo.second;
     Width = llvm::RoundUpToAlignment(Width, Align);
     break;
