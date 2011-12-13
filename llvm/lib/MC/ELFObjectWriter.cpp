@@ -1851,7 +1851,8 @@ const MCSymbol *MipsELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
   assert(Target.getSymA() && "SymA cannot be 0.");
   const MCSymbol &Sym = Target.getSymA()->getSymbol();
   
-  if (Sym.getSection().getKind().isMergeable1ByteCString())
+  if (Sym.getSection().getKind().isMergeableCString() ||
+      Sym.getSection().getKind().isMergeableConst())
     return &Sym;
 
   return NULL;
@@ -1914,4 +1915,3 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
 
   return Type;
 }
-
