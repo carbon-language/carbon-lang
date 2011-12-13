@@ -4737,8 +4737,11 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Op->getImm());
     if (CE && CE->getValue() == 0 &&
         (isThumbOne() ||
+         // The cc_out operand matches the IT block.
+         ((inITBlock() != CarrySetting) &&
+         // Neither register operand is a high register.
          (isARMLowRegister(static_cast<ARMOperand*>(Operands[3])->getReg()) &&
-          isARMLowRegister(static_cast<ARMOperand*>(Operands[4])->getReg())))) {
+          isARMLowRegister(static_cast<ARMOperand*>(Operands[4])->getReg()))))){
       Operands.erase(Operands.begin() + 5);
       Operands.push_back(ARMOperand::CreateToken("#0", Op->getStartLoc()));
       delete Op;
