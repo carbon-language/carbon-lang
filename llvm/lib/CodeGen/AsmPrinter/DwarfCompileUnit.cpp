@@ -791,13 +791,13 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         DISubprogram SP(Element);
         ElemDie = getOrCreateSubprogramDIE(DISubprogram(Element));
         if (SP.isProtected())
-          addUInt(ElemDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
+          addUInt(ElemDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
                   dwarf::DW_ACCESS_protected);
         else if (SP.isPrivate())
-          addUInt(ElemDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
+          addUInt(ElemDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
                   dwarf::DW_ACCESS_private);
         else 
-          addUInt(ElemDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
+          addUInt(ElemDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_public);
         if (SP.isExplicit())
           addUInt(ElemDie, dwarf::DW_AT_explicit, dwarf::DW_FORM_flag, 1);
@@ -1398,14 +1398,14 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
     addBlock(MemberDie, dwarf::DW_AT_data_member_location, 0, MemLocationDie);
 
   if (DT.isProtected())
-    addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
+    addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_protected);
   else if (DT.isPrivate())
-    addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
+    addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_private);
   // Otherwise C++ member and base classes are considered public.
   else 
-    addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_flag,
+    addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_public);
   if (DT.isVirtual())
     addUInt(MemberDie, dwarf::DW_AT_virtuality, dwarf::DW_FORM_flag,
