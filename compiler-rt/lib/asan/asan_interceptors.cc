@@ -84,7 +84,7 @@ static inline bool RangesOverlap(const char *offset1, const char *offset2,
   const char *offset2 = (const char*)_offset2; \
   if (RangesOverlap((const char*)offset1, (const char*)offset2, \
                     length)) { \
-    Printf("ERROR: AddressSanitizer strcpy-param-overlap: " \
+    Report("ERROR: AddressSanitizer strcpy-param-overlap: " \
            "memory ranges [%p,%p) and [%p, %p) overlap\n", \
            offset1, offset1 + length, offset2, offset2 + length); \
     PRINT_CURRENT_STACK(); \

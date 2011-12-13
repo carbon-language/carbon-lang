@@ -690,12 +690,13 @@ static void Deallocate(uint8_t *ptr, AsanStackTrace *stack) {
   // Printf("Deallocate %p\n", ptr);
   AsanChunk *m = PtrToChunk((uintptr_t)ptr);
   if (m->chunk_state == CHUNK_QUARANTINE) {
-    Printf("attempting double-free on %p:\n", ptr);
+    Report("ERROR: AddressSanitizer attempting double-free on %p:\n", ptr);
     stack->PrintStack();
     m->DescribeAddress((uintptr_t)ptr, 1);
     ShowStatsAndAbort();
   } else if (m->chunk_state != CHUNK_ALLOCATED) {
-    Printf("attempting free on address which was not malloc()-ed: %p\n", ptr);
+    Report("ERROR: AddressSanitizer attempting free on address which was not"
+           " malloc()-ed: %p\n", ptr);
     stack->PrintStack();
     ShowStatsAndAbort();
   }

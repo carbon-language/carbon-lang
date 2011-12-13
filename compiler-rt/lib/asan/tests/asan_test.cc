@@ -606,7 +606,8 @@ void WrongFree() {
 }
 
 TEST(AddressSanitizer, WrongFreeTest) {
-  EXPECT_DEATH(WrongFree(), "attempting free.*not malloc");
+  EXPECT_DEATH(WrongFree(),
+               "ERROR: AddressSanitizer attempting free.*not malloc");
 }
 
 void DoubleFree() {
@@ -619,7 +620,7 @@ void DoubleFree() {
 }
 
 TEST(AddressSanitizer, DoubleFreeTest) {
-  EXPECT_DEATH(DoubleFree(), "attempting double-free");
+  EXPECT_DEATH(DoubleFree(), "ERROR: AddressSanitizer attempting double-free");
 }
 
 template<int kSize>
