@@ -90,7 +90,7 @@ if( MSVC )
   set(LLVM_TARGETS_TO_BUILD X86
     CACHE STRING "Semicolon-separated list of targets to build, or \"all\".")
 else( MSVC )
-  set(LLVM_TARGETS_TO_BUILD ${LLVM_ALL_TARGETS}
+  set(LLVM_TARGETS_TO_BUILD "all"
     CACHE STRING "Semicolon-separated list of targets to build, or \"all\".")
 endif( MSVC )
 
