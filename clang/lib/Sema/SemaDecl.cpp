@@ -3203,6 +3203,16 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
          (S->getFlags() & Scope::TemplateParamScope) != 0)
     S = S->getParent();
 
+  if (NestedNameSpecifierLoc SpecLoc = 
+        D.getCXXScopeSpec().getWithLocInContext(Context)) {
+    while (SpecLoc.getPrefix())
+      SpecLoc = SpecLoc.getPrefix();
+    if (dyn_cast_or_null<DecltypeType>(
+          SpecLoc.getNestedNameSpecifier()->getAsType()))
+      Diag(SpecLoc.getBeginLoc(), diag::err_decltype_in_declarator)
+        << SpecLoc.getTypeLoc().getSourceRange();
+  }
+
   DeclContext *DC = CurContext;
   if (D.getCXXScopeSpec().isInvalid())
     D.setInvalidType();

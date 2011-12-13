@@ -28,10 +28,6 @@ namespace PR10127 {
              int (decltype(outer())::middle::inner::*p)());
   };
 
-  int decltype(outer::middle())::inner::func() {
-    return 0;
-  }
-
   decltype(outer::middle::inner()) a;
   void scope() {
     a.decltype(outer::middle())::mfunc(); // expected-error{{'PR10127::outer::middle::mfunc' is not a member of class 'decltype(outer::middle::inner())'}}
