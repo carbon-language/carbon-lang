@@ -1668,11 +1668,15 @@ _func:
         rsbs r3, r12, #0xf
         rsb r1, #0xff
         rsb r1, r1, #0xff
+        rsb r11, r11, #0
+        rsb r9, #0
 
 @ CHECK: rsb.w	r2, r5, #1044480        @ encoding: [0xc5,0xf5,0x7f,0x22]
 @ CHECK: rsbs.w	r3, r12, #15            @ encoding: [0xdc,0xf1,0x0f,0x03]
 @ CHECK: rsb.w	r1, r1, #255            @ encoding: [0xc1,0xf1,0xff,0x01]
 @ CHECK: rsb.w	r1, r1, #255            @ encoding: [0xc1,0xf1,0xff,0x01]
+@ CHECK: rsb.w	r11, r11, #0            @ encoding: [0xcb,0xf1,0x00,0x0b]
+@ CHECK: rsb.w	r9, r9, #0              @ encoding: [0xc9,0xf1,0x00,0x09]
 
 
 @------------------------------------------------------------------------------
