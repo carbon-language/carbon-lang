@@ -5,10 +5,4 @@ add_llvm_library(LLVMHexagonInfo
   HexagonTargetInfo.cpp
   )
 
-add_llvm_library_dependencies(LLVMHexagonInfo
-  LLVMMC
-  LLVMSupport
-  LLVMTarget
-  )
-
 add_dependencies(LLVMHexagonInfo HexagonCommonTableGen)

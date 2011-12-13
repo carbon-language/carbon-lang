@@ -30,14 +30,4 @@ add_llvm_target(HexagonCodeGen
   HexagonTargetObjectFile.cpp
   )
 
-add_llvm_library_dependencies(LLVMHexagonCodeGen
-  LLVMAsmPrinter
-  LLVMCodeGen
-  LLVMCore
-  LLVMHexagonInfo
-  LLVMSelectionDAG
-  LLVMSupport
-  LLVMTarget
-  )
-
 add_subdirectory(TargetInfo)
