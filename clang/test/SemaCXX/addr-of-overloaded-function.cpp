@@ -156,7 +156,7 @@ namespace test1 {
   }
 
   void parameter_mismatch() {
-    void (*ptr1)(double) = &fun; // expected-error {{cannot initialize a variable of type 'void (*)(double)' with an rvalue of type 'void (*)(int)': type mismatch in 1st parameter ('double' vs 'int')}}
+    void (*ptr1)(double) = &fun; // expected-error {{cannot initialize a variable of type 'void (*)(double)' with an rvalue of type 'void (*)(int)': type mismatch at 1st parameter ('double' vs 'int')}}
     void (*ptr2)(double);
     ptr2 = &fun; // expected-error {{assigning to 'void (*)(double)' from incompatible type 'void (*)(int)': type mismatch at 1st parameter ('double' vs 'int')}}
   }

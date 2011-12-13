@@ -2177,6 +2177,12 @@ enum {
 /// parameter types, and different return types.
 void Sema::HandleFunctionTypeMismatch(PartialDiagnostic &PDiag,
                                       QualType FromType, QualType ToType) {
+  // If either type is not valid, include no extra info.
+  if (FromType.isNull() || ToType.isNull()) {
+    PDiag << ft_default;
+    return;
+  }
+
   // Get the function type from the pointers.
   if (FromType->isMemberPointerType() && ToType->isMemberPointerType()) {
     const MemberPointerType *FromMember = FromType->getAs<MemberPointerType>(),
@@ -2188,27 +2194,26 @@ void Sema::HandleFunctionTypeMismatch(PartialDiagnostic &PDiag,
     }
     FromType = FromMember->getPointeeType();
     ToType = ToMember->getPointeeType();
-  } else if (FromType->isPointerType() && ToType->isPointerType()) {
-    FromType = FromType->getPointeeType();
-    ToType = ToType->getPointeeType();
-  } else {
-    PDiag << ft_default;
-    return;
   }
 
+  if (FromType->isPointerType())
+    FromType = FromType->getPointeeType();
+  if (ToType->isPointerType())
+    ToType = ToType->getPointeeType();
+
+  // Remove references.
   FromType = FromType.getNonReferenceType();
   ToType = ToType.getNonReferenceType();
-
-  // If either type is not valid, of the types are the same, no extra info.
-  if (FromType.isNull() || ToType.isNull() ||
-      Context.hasSameType(FromType, ToType)) {
-    PDiag << ft_default;
-    return;
-  }
 
   // Don't print extra info for non-specialized template functions.
   if (FromType->isInstantiationDependentType() &&
       !FromType->getAs<TemplateSpecializationType>()) {
+    PDiag << ft_default;
+    return;
+  }
+
+  // No extra info for same types.
+  if (Context.hasSameType(FromType, ToType)) {
     PDiag << ft_default;
     return;
   }
