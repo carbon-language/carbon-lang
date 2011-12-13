@@ -334,11 +334,16 @@ public:
                            const DeclContext *DC = 0);
 
   void indexTypeLoc(TypeLoc TL, const NamedDecl *Parent,
-                           const DeclContext *DC);
+                    const DeclContext *DC = 0);
+
+  void indexNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS,
+                                   const NamedDecl *Parent,
+                                   const DeclContext *DC = 0);
 
   void indexDeclContext(const DeclContext *DC);
   
-  void indexBody(const Stmt *S, const DeclContext *DC);
+  void indexBody(const Stmt *S, const NamedDecl *Parent,
+                 const DeclContext *DC = 0);
 
   void handleDiagnosticSet(CXDiagnosticSet CXDiagSet);
 

@@ -34,6 +34,11 @@ public:
     return true;
   }
 
+  bool TraverseNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS) {
+    IndexCtx.indexNestedNameSpecifierLoc(NNS, Parent, ParentDC);
+    return true;
+  }
+
   bool VisitTagTypeLoc(TagTypeLoc TL) {
     TagDecl *D = TL.getDecl();
     if (D->getParentFunctionOrMethod())
@@ -75,15 +80,52 @@ void IndexingContext::indexTypeSourceInfo(TypeSourceInfo *TInfo,
   if (!TInfo || TInfo->getTypeLoc().isNull())
     return;
   
-  if (DC == 0)
-    DC = Parent->getDeclContext();
   indexTypeLoc(TInfo->getTypeLoc(), Parent, DC);
 }
 
 void IndexingContext::indexTypeLoc(TypeLoc TL,
                                    const NamedDecl *Parent,
                                    const DeclContext *DC) {
+  if (TL.isNull())
+    return;
+
+  if (DC == 0)
+    DC = Parent->getLexicalDeclContext();
   TypeIndexer(*this, Parent, DC).TraverseTypeLoc(TL);
+}
+
+void IndexingContext::indexNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS,
+                                                  const NamedDecl *Parent,
+                                                  const DeclContext *DC) {
+  if (!NNS)
+    return;
+
+  if (NestedNameSpecifierLoc Prefix = NNS.getPrefix())
+    indexNestedNameSpecifierLoc(Prefix, Parent, DC);
+
+  if (DC == 0)
+    DC = Parent->getLexicalDeclContext();
+  SourceLocation Loc = NNS.getSourceRange().getBegin();
+
+  switch (NNS.getNestedNameSpecifier()->getKind()) {
+  case NestedNameSpecifier::Identifier:
+  case NestedNameSpecifier::Global:
+    break;
+
+  case NestedNameSpecifier::Namespace:
+    handleReference(NNS.getNestedNameSpecifier()->getAsNamespace(),
+                    Loc, Parent, DC);
+    break;
+  case NestedNameSpecifier::NamespaceAlias:
+    handleReference(NNS.getNestedNameSpecifier()->getAsNamespaceAlias(),
+                    Loc, Parent, DC);
+    break;
+
+  case NestedNameSpecifier::TypeSpec:
+  case NestedNameSpecifier::TypeSpecWithTemplate:
+    indexTypeLoc(NNS.getTypeLoc(), Parent, DC);
+    break;
+  }
 }
 
 void IndexingContext::indexTagDecl(const TagDecl *D) {

@@ -23,13 +23,19 @@ public:
   explicit IndexingDeclVisitor(IndexingContext &indexCtx)
     : IndexCtx(indexCtx) { }
 
+  void handleDeclarator(DeclaratorDecl *D, const NamedDecl *Parent = 0) {
+    if (!Parent) Parent = D;
+    IndexCtx.indexTypeSourceInfo(D->getTypeSourceInfo(), Parent);
+    IndexCtx.indexNestedNameSpecifierLoc(D->getQualifierLoc(), Parent);
+  }
+
   bool VisitFunctionDecl(FunctionDecl *D) {
     IndexCtx.handleFunction(D);
-    IndexCtx.indexTypeSourceInfo(D->getTypeSourceInfo(), D);
+    handleDeclarator(D);
     if (D->isThisDeclarationADefinition()) {
       const Stmt *Body = D->getBody();
       if (Body) {
-        IndexCtx.indexBody(Body, D);
+        IndexCtx.indexBody(Body, D, D);
       }
     }
     return true;
@@ -37,18 +43,24 @@ public:
 
   bool VisitVarDecl(VarDecl *D) {
     IndexCtx.handleVar(D);
-    IndexCtx.indexTypeSourceInfo(D->getTypeSourceInfo(), D);
+    handleDeclarator(D);
+    IndexCtx.indexBody(D->getInit(), D);
     return true;
   }
 
   bool VisitFieldDecl(FieldDecl *D) {
     IndexCtx.handleField(D);
-    IndexCtx.indexTypeSourceInfo(D->getTypeSourceInfo(), D);
+    handleDeclarator(D);
+    if (D->isBitField())
+      IndexCtx.indexBody(D->getBitWidth(), D);
+    else if (D->hasInClassInitializer())
+      IndexCtx.indexBody(D->getInClassInitializer(), D);
     return true;
   }
   
   bool VisitEnumConstantDecl(EnumConstantDecl *D) {
     IndexCtx.handleEnumerator(D);
+    IndexCtx.indexBody(D->getInitExpr(), D);
     return true;
   }
 
@@ -147,12 +159,12 @@ public:
     IndexCtx.indexTypeSourceInfo(D->getResultTypeSourceInfo(), D);
     for (ObjCMethodDecl::param_iterator
            I = D->param_begin(), E = D->param_end(); I != E; ++I)
-      IndexCtx.indexTypeSourceInfo((*I)->getTypeSourceInfo(), D);
+      handleDeclarator(*I, D);
 
     if (D->isThisDeclarationADefinition()) {
       const Stmt *Body = D->getBody();
       if (Body) {
-        IndexCtx.indexBody(Body, D);
+        IndexCtx.indexBody(Body, D, D);
       }
     }
     return true;
@@ -205,11 +217,11 @@ public:
   bool VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
     IndexCtx.handleFunctionTemplate(D);
     FunctionDecl *FD = D->getTemplatedDecl();
-    IndexCtx.indexTypeSourceInfo(FD->getTypeSourceInfo(), D);
+    handleDeclarator(FD, D);
     if (FD->isThisDeclarationADefinition()) {
       const Stmt *Body = FD->getBody();
       if (Body) {
-        IndexCtx.indexBody(Body, FD);
+        IndexCtx.indexBody(Body, D, FD);
       }
     }
     return true;
