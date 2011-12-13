@@ -4126,3 +4126,10 @@ def : t2InstAlias<"mul${p} $Rn, $Rm",
 // "neg" is and alias for "rsb rd, rn, #0"
 def : t2InstAlias<"neg${s}${p} $Rd, $Rm",
                   (t2RSBri rGPR:$Rd, rGPR:$Rm, 0, pred:$p, cc_out:$s)>;
+
+// MOV so_reg assembler pseudos. InstAlias isn't expressive enough for
+// these, unfortunately.
+def t2MOVsi: t2AsmPseudo<"mov${p} $Rd, $shift",
+                         (ins rGPR:$Rd, t2_so_reg:$shift, pred:$p)>;
+def t2MOVSsi: t2AsmPseudo<"movs${p} $Rd, $shift",
+                          (ins rGPR:$Rd, t2_so_reg:$shift, pred:$p)>;
