@@ -33,60 +33,162 @@
   </p>
 
   <!--=====================================================================-->
-  <h2>Major changes in Polly</h2>
+  <h2>News</h2>
   <!--=====================================================================-->
 
-  <ul>
-  <li>November 2011 - Talk at the <a href="http://llvm.org/devmtg/2011-11/">
-  LLVM Developer Meeting 2011</a>
-  </li>
-  <li>November 2011 - New SCEV parser (Support for parameters in array
-  subscript as well as max/min/signextend)
-  </li>
-  <li>October 2011 - Support for the isl scheduler (similar to Pluto, but
-      part of isl. At the moment it still has performance issues).
-  </li>
-  <li>August 2011 - <a href="example_load_Polly_into_clang.html">Use Polly as
-  clang plugin</a>
-  </li>
-  <li>July 2011 - Add Polly builder to the <a
+  <table id="news">
+  <tr><td><b>2011</b></td></tr>
+  <tr><td width="120"><p>November</p></td>
+  <td>
+  <p>
+  Talk at the <a href="http://llvm.org/devmtg/2011-11/">
+      LLVM Developer Meeting 2011</a></p>
+  New SCEV parser<br>
+  (Allows parameters in array subscript and max/signextend)
+  </td></tr>
+
+  <tr>
+  <td><p>October</p></td>
+  <td>
+  <p>Polly can use the isl schedule optimizer<br>
+    (The optimizer is similar to the one in Pluto, but it is part of isl)
+  </p>
+  </td></tr>
+
+  <tr>
+  <td><p>August</p></td>
+  <td>
+  <p>
+  <a href="example_load_Polly_into_clang.html">Use Polly as
+  clang plugin</a></p>
+  </td>
+  </tr>
+
+  <tr>
+  <td><p>July</p></td>
+  <td>
+  <p> Polly builder as part of the <a
   href="http://lab.llvm.org:8011/console">LLVM Buildbots</a>
-  </li>
-  <li>June 2011 - <a href="http://www.grosser.es">Tobias</a> is founded for
-  three years through a <a
+  </p>
+  </td>
+  </tr>
+
+  <tr>
+  <td><p>June</p></td>
+  <td>
+  <p><a href="http://www.grosser.es">Tobias</a> is founded for
+  three years by a <a
   href="http://research.google.com/university/relations/fellowship_recipients.html">
   Google Europe Fellowship in Efficient Computing</a>.
-  </li>
-  <li>May 2011 - <a href="http://www.grosser.es">Tobias</a>' diploma thesis and
-  Raghesh's master thesis are published. For details see our <a
-  href="publications.html">list of publications</a>.</li>
-  <li>April 2011 - Polly moves to the LLVM infrastructure </li>
-  <li>March 2011 - Polly is presented at <a
-  href="http://impact2011.inrialpes.fr/">CGO/IMPACT 2011</a>, Polly can compile
-  polybench 2.0 with vectorization and OpenMP code generation.  </li>
-  <li> Februar 2011 - pollycc - a script to automatically compile with
-  polyhedral optimizations </li>
-  <li> Januar 2011 - Basic OpenMP support, Alias analysis integration,
-  Pluto/POCC support </li>
-  <li> Dezember 2010 - Basic vectorization support </li>
-  <li> November 2010 - Talk about Polly at the <a
-  href="http://llvm.org/devmtg/2010-11/">LLVM Developer Meeting</a> </li>
-  <li> October 2010 - Added dependency analysis </li>
-  <li> October 2010 - Finished Phase 1 - Get something working </li>
-  <li> October 2010 - Support for scalar dependences and sequential SCoPs </li>
-  <li> August 2010 - RegionInfo pass committed to llvm </li>
-  <li> August 2010 - llvm-test suite compiles </li>
-  <li> July 2010 - Code generation works for normal SCoPs.  </li>
-  <li> June 2010 - OpenSCoP import/export works (as far as openscop is finished)
-  </li>
-  <li> May 2010 - The CLooG AST can be parsed </li>
-  <li> April 2010 - SCoPs can automatically be detected (WIP) </li>
-  <li> March 2010 - The RegionInfo framework is almost completed.  </li>
-  <li> February 2010 - Translating a simple loop to Polly-IR and passing it to
-  CLooG-isl to regenerate a loop structure works.  </li>
-  <li> February 2010 - ISL and CLooG are integrated.  </li>
-  <li> January 2010 - The RegionInfo pass is finished.  </li>
-  <li> End of 2009 - Work on the infrastructure started.  </li>
+  </p>
+  </td>
+  </tr>
+
+  <tr>
+  <td><p>May </p></td>
+  <td><p><a href="http://www.grosser.es">Tobias</a>' diploma thesis and
+  Raghesh's master thesis. See our <a 
+  href="publications.html">list of publications</a>.</p></td>
+  </tr>
+
+  <tr>
+  <td><p>April</p></td>
+  <td><p>Polly moves to the LLVM infrastructure (svn, bugtracker)</p></td>
+  </tr>
+
+  <tr>
+  <td><p>March</p></td>
+  <td><p>Presentation at <a
+  href="http://impact2011.inrialpes.fr/">CGO/IMPACT</a></p>
+  <p>Polly can compile
+  polybench 2.0 with vectorization and OpenMP code generation</p>
+  </td>
+  </tr>
+  <tr>
+  <td><p>Februar</p></td>
+  <td><p>pollycc - a script to automatically compile with
+  polyhedral optimizations </p></td>
+  </tr>
+
+  <tr>
+  <td><p> Januar</p></td>
+  <td><p> Basic OpenMP support, Alias analysis integration,
+  Pluto/POCC support </p></td>
+  </tr>
+
+  <tr><td><b><br>2010</b></td></tr>
+  <tr>
+  <td><p> Dezember </p></td>
+  <td><p>Basic vectorization support </p></td>
+  </tr>
+
+  <tr>
+  <td><p> November </p></td>
+  <td><p>Talk at the <a
+  href="http://llvm.org/devmtg/2010-11/">LLVM Developer Meeting</a> </p></td>
+  </tr>
+
+  <tr>
+  <td><p>October</p></td>
+  <td><p>Dependency analysis </p>
+  <p>Finished Phase 1 - Get something working </p>
+  <p>Support scalar dependences and sequential SCoPs </p>
+  </td>
+  </tr>
+
+  <tr>
+  <td><p>August</p></td>
+  <td><p>RegionInfo pass committed to LLVM</p>
+  <p>llvm-test suite compiles </p>
+  </td>
+  </tr>
+
+  <tr>
+  <td><p>July</p></td>
+  <td><p>Code generation works for normal SCoPs.  </p></td>
+  </tr>
+
+  <tr>
+  <td><p>June </p></td>
+  <td><p>OpenSCoP import/export works (as far as openscop is finished).</p></td>
+  </tr>
+
+  <tr>
+  <td><p>May</p></td>
+  <td><p>The CLooG AST can be parsed.</p>
+  </td>
+  </tr>
+
+  <tr>
+  <td><p>April</p></td>
+  <td><p>SCoPs can automatically be detected. </p></td>
+  </tr>
+
+  <tr>
+  <td><p>March</p></td>
+  <td><p>The RegionInfo framework is almost completed.  </p></td>
+  </tr>
+
+  <tr>
+  <td><p>February</p></td>
+  <td><p>Translate a simple loop to Polly-IR and regenerate a loop structure
+         with CLooG works.  </p>
+  <p>ISL and CLooG are integrated.  </p></td>
+  </tr>
+
+  </tr>
+
+  <tr>
+  <td><p>January</p></td>
+  <td><p>The RegionInfo pass is finished.  </p></td>
+  </tr>
+
+  <tr><td><b><br>2009</b></td></tr>
+  <tr>
+  <td><p>End of the year</p></td>
+  <td><p>Work on the infrastructure started.  </p></td>
+  </tr>
+  </table>
   </ul>
   <!--=====================================================================-->
   <h2> The architecture of Polly</h2>
