@@ -1,4 +1,5 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
+; RUN: true
+; DISABLED: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
 ; CHECK: += mpyi
 
 define void @foo(i32 %acc, i32 %num, i32 %num2) nounwind {

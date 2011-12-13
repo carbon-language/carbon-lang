@@ -1,4 +1,5 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
+; RUN: true
+; DISABLED: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
 ; CHECK: __hexagon_adddf3
 ; CHECK: __hexagon_subdf3
 
