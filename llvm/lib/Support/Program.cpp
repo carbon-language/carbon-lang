@@ -13,6 +13,7 @@
 
 #include "llvm/Support/Program.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/system_error.h"
 using namespace llvm;
 using namespace sys;
 

@@ -412,19 +412,19 @@ Program::Kill(std::string* ErrMsg) {
   return false;
 }
 
-bool Program::ChangeStdinToBinary(){
+error_code Program::ChangeStdinToBinary(){
   // Do nothing, as Unix doesn't differentiate between text and binary.
-  return false;
+  return make_error_code(errc::success);
 }
 
-bool Program::ChangeStdoutToBinary(){
+error_code Program::ChangeStdoutToBinary(){
   // Do nothing, as Unix doesn't differentiate between text and binary.
-  return false;
+  return make_error_code(errc::success);
 }
 
-bool Program::ChangeStderrToBinary(){
+error_code Program::ChangeStderrToBinary(){
   // Do nothing, as Unix doesn't differentiate between text and binary.
-  return false;
+  return make_error_code(errc::success);
 }
 
 }

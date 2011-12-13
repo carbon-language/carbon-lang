@@ -17,6 +17,7 @@
 #include "llvm/Support/Path.h"
 
 namespace llvm {
+class error_code;
 namespace sys {
 
   // TODO: Add operations to communicate with the process, redirect its I/O,
@@ -122,12 +123,12 @@ namespace sys {
     /// @brief Construct a Program by finding it by name.
     static Path FindProgramByName(const std::string& name);
 
-    // These methods change the specified standard stream (stdin,
-    // stdout, or stderr) to binary mode. They return true if an error
-    // occurred
-    static bool ChangeStdinToBinary();
-    static bool ChangeStdoutToBinary();
-    static bool ChangeStderrToBinary();
+    // These methods change the specified standard stream (stdin, stdout, or
+    // stderr) to binary mode. They return errc::success if the specified stream
+    // was changed. Otherwise a platform dependent error is returned.
+    static error_code ChangeStdinToBinary();
+    static error_code ChangeStdoutToBinary();
+    static error_code ChangeStderrToBinary();
 
     /// A convenience function equivalent to Program prg; prg.Execute(..);
     /// prg.Wait(..);

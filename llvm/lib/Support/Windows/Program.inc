@@ -397,19 +397,25 @@ Program::Kill(std::string* ErrMsg) {
   return false;
 }
 
-bool Program::ChangeStdinToBinary(){
+error_code Program::ChangeStdinToBinary(){
   int result = _setmode( _fileno(stdin), _O_BINARY );
-  return result == -1;
+  if (result == -1)
+    return error_code(errno, generic_category());
+  return make_error_code(errc::success);
 }
 
-bool Program::ChangeStdoutToBinary(){
+error_code Program::ChangeStdoutToBinary(){
   int result = _setmode( _fileno(stdout), _O_BINARY );
-  return result == -1;
+  if (result == -1)
+    return error_code(errno, generic_category());
+  return make_error_code(errc::success);
 }
 
-bool Program::ChangeStderrToBinary(){
+error_code Program::ChangeStderrToBinary(){
   int result = _setmode( _fileno(stderr), _O_BINARY );
-  return result == -1;
+  if (result == -1)
+    return error_code(errno, generic_category());
+  return make_error_code(errc::success);
 }
 
 }

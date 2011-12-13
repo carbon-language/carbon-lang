@@ -20,6 +20,7 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/system_error.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cctype>
 #include <cerrno>
