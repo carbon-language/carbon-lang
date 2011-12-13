@@ -198,3 +198,24 @@ entry:
   ret void
 }
 
+; Check unaligned loads of floats
+%class.TAlignTest = type <{ i16, float }>
+
+define zeroext i1 @test6(%class.TAlignTest* %this) nounwind align 2 {
+entry:
+; ARM: @test6
+; THUMB: @test6
+  %0 = alloca %class.TAlignTest*, align 4
+  store %class.TAlignTest* %this, %class.TAlignTest** %0, align 4
+  %1 = load %class.TAlignTest** %0
+  %2 = getelementptr inbounds %class.TAlignTest* %1, i32 0, i32 1
+  %3 = load float* %2, align 1
+  %4 = fcmp une float %3, 0.000000e+00
+; ARM: ldr r0, [r0, #2]
+; ARM: vmov s0, r0
+; ARM: vcmpe.f32 s0, #0
+; THUMB: ldr.w r0, [r0, #2]
+; THUMB: vmov s0, r0
+; THUMB: vcmpe.f32 s0, #0
+  ret i1 %4
+}

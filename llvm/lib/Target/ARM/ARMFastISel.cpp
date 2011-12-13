@@ -178,8 +178,8 @@ class ARMFastISel : public FastISel {
     bool isLoadTypeLegal(Type *Ty, MVT &VT);
     bool ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
                     bool isZExt);
-    bool ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr, bool isZExt,
-                     bool allocReg);
+    bool ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr, unsigned Alignment = 0,
+                     bool isZExt = true, bool allocReg = true);
                      
     bool ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr,
                       unsigned Alignment = 0);
@@ -965,10 +965,11 @@ void ARMFastISel::AddLoadStoreOperands(EVT VT, Address &Addr,
 }
 
 bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr,
-                              bool isZExt = true, bool allocReg = true) {
+                              unsigned Alignment, bool isZExt, bool allocReg) {
   assert(VT.isSimple() && "Non-simple types are invalid here!");
   unsigned Opc;
   bool useAM3 = false;
+  bool needVMOV = false;
   TargetRegisterClass *RC;  
   switch (VT.getSimpleVT().SimpleTy) {
     // This is mostly going to be Neon/vector support.
@@ -1014,10 +1015,23 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr,
       RC = ARM::GPRRegisterClass;
       break;
     case MVT::f32:
-      Opc = ARM::VLDRS;
-      RC = TLI.getRegClassFor(VT);
+      // Unaligned loads need special handling. Floats require word-alignment.
+      if (Alignment && Alignment < 4) {
+        needVMOV = true;
+        VT = MVT::i32;
+        Opc = isThumb2 ? ARM::t2LDRi12 : ARM::LDRi12;
+        RC = ARM::GPRRegisterClass;
+      } else {
+        Opc = ARM::VLDRS;
+        RC = TLI.getRegClassFor(VT);
+      }
       break;
     case MVT::f64:
+      if (Alignment && Alignment < 4) {
+        // FIXME: Unaligned loads need special handling.  Doublewords require
+        // word-alignment.
+        return false;
+      }
       Opc = ARM::VLDRD;
       RC = TLI.getRegClassFor(VT);
       break;
@@ -1032,6 +1046,16 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr,
   MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                                     TII.get(Opc), ResultReg);
   AddLoadStoreOperands(VT, Addr, MIB, MachineMemOperand::MOLoad, useAM3);
+
+  // If we had an unaligned load of a float we've converted it to an regular
+  // load.  Now we must move from the GRP to the FP register.
+  if (needVMOV) {
+    unsigned MoveReg = createResultReg(TLI.getRegClassFor(MVT::f32));
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                            TII.get(ARM::VMOVSR), MoveReg)
+                    .addReg(ResultReg));
+    ResultReg = MoveReg;
+  }
   return true;
 }
 
@@ -1050,7 +1074,8 @@ bool ARMFastISel::SelectLoad(const Instruction *I) {
   if (!ARMComputeAddress(I->getOperand(0), Addr)) return false;
 
   unsigned ResultReg;
-  if (!ARMEmitLoad(VT, ResultReg, Addr)) return false;
+  if (!ARMEmitLoad(VT, ResultReg, Addr, cast<LoadInst>(I)->getAlignment()))
+    return false;
   UpdateValueMap(I, ResultReg);
   return true;
 }
@@ -2477,7 +2502,7 @@ bool ARMFastISel::TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
   if (!ARMComputeAddress(LI->getOperand(0), Addr)) return false;
   
   unsigned ResultReg = MI->getOperand(0).getReg();
-  if (!ARMEmitLoad(VT, ResultReg, Addr, isZExt, false))
+  if (!ARMEmitLoad(VT, ResultReg, Addr, LI->getAlignment(), isZExt, false))
     return false;
   MI->eraseFromParent();
   return true;
