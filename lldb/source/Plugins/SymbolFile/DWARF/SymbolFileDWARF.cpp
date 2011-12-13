@@ -4902,7 +4902,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                         // prototype off of, so we need this type to be completed so that the
                                         // m_die_to_decl_ctx for the method in the specification has a valid
                                         // clang decl context.
-                                        class_type->GetClangFullType();
+                                        class_type->GetClangForwardType();
                                         // If we have a specification, then the function type should have been
                                         // made with the specification and not with this die.
                                         DWARFCompileUnitSP spec_cu_sp;
@@ -4926,7 +4926,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                         // prototype off of, so we need this type to be completed so that the
                                         // m_die_to_decl_ctx for the method in the abstract origin has a valid
                                         // clang decl context.
-                                        class_type->GetClangFullType();
+                                        class_type->GetClangForwardType();
 
                                         DWARFCompileUnitSP abs_cu_sp;
                                         const DWARFDebugInfoEntry* abs_die = DebugInfo()->GetDIEPtr(abstract_origin_die_offset, &abs_cu_sp);
