@@ -1334,7 +1334,7 @@ def t2STRDi8 : T2Ii8s4<1, 0, 0, (outs),
 
 let mayStore = 1, neverHasSideEffects = 1 in {
 def t2STR_PRE  : T2Ipreldst<0, 0b10, 0, 1, (outs GPRnopc:$Rn_wb),
-                            (ins rGPR:$Rt, t2addrmode_imm8:$addr),
+                            (ins GPRnopc:$Rt, t2addrmode_imm8:$addr),
                             AddrModeT2_i8, IndexModePre, IIC_iStore_iu,
                             "str", "\t$Rt, $addr!",
                             "$addr.base = $Rn_wb,@earlyclobber $Rn_wb", []> {
@@ -1358,13 +1358,13 @@ def t2STRB_PRE  : T2Ipreldst<0, 0b00, 0, 1, (outs GPRnopc:$Rn_wb),
 } // mayStore = 1, neverHasSideEffects = 1
 
 def t2STR_POST : T2Ipostldst<0, 0b10, 0, 0, (outs GPRnopc:$Rn_wb),
-                            (ins rGPR:$Rt, addr_offset_none:$Rn,
+                            (ins GPRnopc:$Rt, addr_offset_none:$Rn,
                                  t2am_imm8_offset:$offset),
                             AddrModeT2_i8, IndexModePost, IIC_iStore_iu,
                           "str", "\t$Rt, $Rn$offset",
                           "$Rn = $Rn_wb,@earlyclobber $Rn_wb",
              [(set GPRnopc:$Rn_wb,
-                  (post_store rGPR:$Rt, addr_offset_none:$Rn,
+                  (post_store GPRnopc:$Rt, addr_offset_none:$Rn,
                               t2am_imm8_offset:$offset))]>;
 
 def t2STRH_POST : T2Ipostldst<0, 0b01, 0, 0, (outs GPRnopc:$Rn_wb),
