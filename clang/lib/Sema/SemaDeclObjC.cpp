@@ -2210,8 +2210,14 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
           Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
         Method->setInvalidDecl();
       } else {
-        if (PrevMethod)
+        if (PrevMethod) {
           Method->setAsRedeclaration(PrevMethod);
+          if (!Context.getSourceManager().isInSystemHeader(
+                 Method->getLocation()))
+            Diag(Method->getLocation(), diag::warn_duplicate_method_decl)
+              << Method->getDeclName();
+          Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
+        }
         InsMap[Method->getSelector()] = Method;
         /// The following allows us to typecheck messages to "id".
         AddInstanceMethodToGlobalPool(Method);
@@ -2231,8 +2237,14 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
         Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
         Method->setInvalidDecl();
       } else {
-        if (PrevMethod)
+        if (PrevMethod) {
           Method->setAsRedeclaration(PrevMethod);
+          if (!Context.getSourceManager().isInSystemHeader(
+                 Method->getLocation()))
+            Diag(Method->getLocation(), diag::warn_duplicate_method_decl)
+              << Method->getDeclName();
+          Diag(PrevMethod->getLocation(), diag::note_previous_declaration);
+        }
         ClsMap[Method->getSelector()] = Method;
         /// The following allows us to typecheck messages to "Class".
         AddFactoryMethodToGlobalPool(Method);

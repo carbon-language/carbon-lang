@@ -4,7 +4,7 @@
 @optional
 - (void) FOO;
 @optional
-- (void) FOO;
+- (void) FOO1;
 @optional 
 - (void) REQ;
 @optional

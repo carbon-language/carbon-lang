@@ -5,8 +5,8 @@
     int ivar;
 }
 
-- (void) method;
-- (void) method;
+- (void) method; // expected-note {{previous declaration is here}}
+- (void) method; // expected-warning {{multiple declarations of method 'method' found and ignored}}
 @end
 
 @implementation Subclass

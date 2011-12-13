@@ -8,12 +8,11 @@
 - (INTF*) METH1;	// expected-note {{previous declaration is here}}
 - (INTF<P1>*) METH1;	// expected-error {{duplicate declaration of method 'METH1'}}
 
-- (INTF<P1,P2>*) METH2;
 - (INTF<P2,P1>*) METH2;  // expected-note {{previous declaration is here}}
 - (INTF<P2,P1,P3>*) METH2;  // expected-error {{duplicate declaration of method 'METH2'}}
 
-- (INTF<P2,P1,P3>*) METH3;
-- (INTF<P3,P1,P2, P3>*) METH3;
+- (INTF<P2,P1,P3>*) METH3; // expected-note {{previous declaration is here}}
+- (INTF<P3,P1,P2, P3>*) METH3; // expected-warning {{multiple declarations of method 'METH3' found and ignored}}
 
 @end
 
