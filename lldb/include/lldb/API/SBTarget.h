@@ -494,6 +494,12 @@ public:
     
     SBSourceManager
     GetSourceManager();
+    
+    lldb::SBInstructionList
+    GetInstructions (lldb::SBAddress base_addr, const void *buf, size_t size);
+    
+    lldb::SBInstructionList
+    GetInstructions (lldb::addr_t base_addr, const void *buf, size_t size);
 
 #ifndef SWIG
     bool

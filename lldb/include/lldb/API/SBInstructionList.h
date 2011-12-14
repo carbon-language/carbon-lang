@@ -58,6 +58,7 @@ public:
 protected:
     friend class SBFunction;
     friend class SBSymbol;
+    friend class SBTarget;
     
     void
     SetDisassembler (const lldb::DisassemblerSP &opaque_sp);

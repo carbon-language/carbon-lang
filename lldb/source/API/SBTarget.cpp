@@ -1285,6 +1285,33 @@ SBTarget::GetSourceManager()
     return source_manager;
 }
 
+lldb::SBInstructionList
+SBTarget::GetInstructions (lldb::SBAddress base_addr, const void *buf, size_t size)
+{
+    SBInstructionList sb_instructions;
+    
+    if (m_opaque_sp)
+    {
+        Address addr;
+        
+        if (base_addr.get())
+            addr = *base_addr.get();
+        
+        sb_instructions.SetDisassembler (Disassembler::DisassembleBytes (m_opaque_sp->GetArchitecture(),
+                                                                         NULL,
+                                                                         addr,
+                                                                         buf,
+                                                                         size));
+    }
+
+    return sb_instructions;
+}
+
+lldb::SBInstructionList
+SBTarget::GetInstructions (lldb::addr_t base_addr, const void *buf, size_t size)
+{
+    return GetInstructions (ResolveLoadAddress(base_addr), buf, size);
+}
 
 SBError
 SBTarget::SetSectionLoadAddress (lldb::SBSection section,

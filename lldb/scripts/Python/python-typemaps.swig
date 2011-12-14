@@ -69,30 +69,48 @@
 // typemap for an outgoing buffer
 // See also SBEvent::SBEvent(uint32_t event, const char *cstr, uint32_t cstr_len).
 %typemap(in) (const char *cstr, uint32_t cstr_len) {
-   if (!PyString_Check($input)) {
-       PyErr_SetString(PyExc_ValueError, "Expecting a string");
-       return NULL;
+   if (PyString_Check($input)) {
+      $1 = (char *) PyString_AsString($input);
+      $2 = PyString_Size($input);
    }
-   $1 = (char *) PyString_AsString($input);
-   $2 = PyString_Size($input);
+   else if(PyByteArray_Check($input)) {
+      $1 = (char *) PyByteArray_AsString($input);
+      $2 = PyByteArray_Size($input);
+   }
+   else {
+      PyErr_SetString(PyExc_ValueError, "Expecting a string");
+      return NULL;
+   }
 }
 // Ditto for SBProcess::PutSTDIN(const char *src, size_t src_len).
 %typemap(in) (const char *src, size_t src_len) {
-   if (!PyString_Check($input)) {
-       PyErr_SetString(PyExc_ValueError, "Expecting a string");
-       return NULL;
+   if (PyString_Check($input)) {
+      $1 = (char *) PyString_AsString($input);
+      $2 = PyString_Size($input);
    }
-   $1 = (char *) PyString_AsString($input);
-   $2 = PyString_Size($input);
+   else if(PyByteArray_Check($input)) {
+      $1 = (char *) PyByteArray_AsString($input);
+      $2 = PyByteArray_Size($input);
+   }
+   else {
+      PyErr_SetString(PyExc_ValueError, "Expecting a string");
+      return NULL;
+   }
 }
 // And SBProcess::WriteMemory.
 %typemap(in) (const void *buf, size_t size) {
-   if (!PyString_Check($input)) {
-       PyErr_SetString(PyExc_ValueError, "Expecting a string");
-       return NULL;
+   if (PyString_Check($input)) {
+      $1 = (void *) PyString_AsString($input);
+      $2 = PyString_Size($input);
    }
-   $1 = (void *) PyString_AsString($input);
-   $2 = PyString_Size($input);
+   else if(PyByteArray_Check($input)) {
+      $1 = (void *) PyByteArray_AsString($input);
+      $2 = PyByteArray_Size($input);
+   }
+   else {
+      PyErr_SetString(PyExc_ValueError, "Expecting a string");
+      return NULL;
+   }
 }
 
 // typemap for an incoming buffer

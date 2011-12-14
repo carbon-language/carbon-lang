@@ -470,7 +470,10 @@ public:
 
     lldb::SBBroadcaster
     GetBroadcaster () const;
-
+    
+    lldb::SBInstructionList
+    GetInstructions (lldb::SBAddress base_addr, const void *buf, size_t size);
+    
     bool
     GetDescription (lldb::SBStream &description, lldb::DescriptionLevel description_level);
 };

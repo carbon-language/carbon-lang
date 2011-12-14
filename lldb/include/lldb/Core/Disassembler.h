@@ -261,6 +261,13 @@ public:
                       const char *plugin_name,
                       const ExecutionContext &exe_ctx,
                       const AddressRange &disasm_range);
+    
+    static lldb::DisassemblerSP 
+    DisassembleBytes (const ArchSpec &arch,
+                      const char *plugin_name,
+                      const Address &start,
+                      const void *bytes,
+                      size_t length);
 
     static bool
     Disassemble (Debugger &debugger,

@@ -230,6 +230,37 @@ Disassembler::DisassembleRange
     return disasm_sp;
 }
 
+lldb::DisassemblerSP 
+Disassembler::DisassembleBytes 
+(
+    const ArchSpec &arch,
+    const char *plugin_name,
+    const Address &start,
+    const void *bytes,
+    size_t length
+)
+{
+    lldb::DisassemblerSP disasm_sp;
+    
+    if (bytes)
+    {
+        disasm_sp.reset(Disassembler::FindPlugin(arch, plugin_name));
+        
+        if (disasm_sp)
+        {
+            DataExtractor data(bytes, length, arch.GetByteOrder(), arch.GetAddressByteSize());
+            
+            (void)disasm_sp->DecodeInstructions (start,
+                                                 data,
+                                                 0,
+                                                 UINT32_MAX,
+                                                 false);
+        }
+    }
+    
+    return disasm_sp;
+}
+
 
 bool
 Disassembler::Disassemble
