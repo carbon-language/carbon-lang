@@ -109,36 +109,8 @@ public:
 
 static StaticInitializer InitializeEverything;
 
-static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
-                                llvm::PassManagerBase &PM) {
-  if (PollyOnlyPrinter || PollyPrinter || PollyOnlyViewer || PollyViewer ||
-      ExportJScop || ImportJScop)
-    PollyEnabled = true;
-
-  if (!PollyEnabled) {
-    if (DisableCodegen)
-      errs() << "The option -polly-no-codegen has no effect. "
-                "Polly was not enabled\n";
-
-    if (DisableScheduler)
-      errs() << "The option -polly-no-optimizer has no effect. "
-                "Polly was not enabled\n";
-
-    return;
-  }
-
-  // Polly is only enabled at -O3
-  if (Builder.OptLevel != 3) {
-    errs() << "Polly should only be run with -O3. Disabling Polly.\n";
-    return;
-  }
-
-  bool RunScheduler = !DisableScheduler;
-  bool RunCodegen = !DisableCodegen;
-
-
-
-
+static void registerPollyPreoptPasses(const llvm::PassManagerBuilder &Builder,
+                                      llvm::PassManagerBase &PM) {
   // A standard set of optimization passes partially taken/copied from the
   // set of default optimization passes. It is used to bring the code into
   // a canonical form that can than be analyzed by Polly. This set of passes is
@@ -168,6 +140,40 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
   //           recover them
   PM.add(llvm::createIndVarSimplifyPass());
   PM.add(polly::createRegionSimplifyPass());
+}
+
+static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
+                                llvm::PassManagerBase &PM) {
+
+  if (Builder.OptLevel == 0)
+    return;
+
+  if (PollyOnlyPrinter || PollyPrinter || PollyOnlyViewer || PollyViewer ||
+      ExportJScop || ImportJScop)
+    PollyEnabled = true;
+
+  if (!PollyEnabled) {
+    if (DisableCodegen)
+      errs() << "The option -polly-no-codegen has no effect. "
+                "Polly was not enabled\n";
+
+    if (DisableScheduler)
+      errs() << "The option -polly-no-optimizer has no effect. "
+                "Polly was not enabled\n";
+
+    return;
+  }
+
+  // Polly is only enabled at -O3
+  if (Builder.OptLevel != 3) {
+    errs() << "Polly should only be run with -O3. Disabling Polly.\n";
+    return;
+  }
+
+  bool RunScheduler = !DisableScheduler;
+  bool RunCodegen = !DisableCodegen;
+
+  registerPollyPreoptPasses(Builder, PM);
 
   if (PollyViewer)
     PM.add(polly::createDOTViewerPass());
@@ -216,3 +222,6 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
 static llvm::RegisterStandardPasses
 PassRegister(llvm::PassManagerBuilder::EP_EarlyAsPossible,
              registerPollyPasses);
+static llvm::RegisterStandardPasses
+PassRegisterPreopt(llvm::PassManagerBuilder::EP_EnabledOnOptLevel0,
+                   registerPollyPreoptPasses);

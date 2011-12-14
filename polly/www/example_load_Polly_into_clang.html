@@ -59,6 +59,16 @@ Automatic vector code generation can be enabled by adding <b>-mllvm
 
 <pre class="code">pollycc -O3 -mllvm -enable-polly-vector file.c</pre>
 
+<h2>Extract a preoptimized LLVM-IR file</h2>
+
+Often it is useful to derive from a C-file the LLVM-IR code that is actually
+optimized by Polly. Normally the LLVM-IR is automatically generated from
+the C code by first lowering C to LLVM-IR (clang) and by subsequently applying a
+set of preparing transformations on the LLVM-IR. To get the LLVM-IR after the
+preparing transformations have been applied run Polly with '-O0'.
+
+<pre class="code">pollycc -O0 -mllvm -polly -S -emit-llvm file.c</pre>
+
 <h2>Further options</h2>
 
 Polly supports further options that are mainly useful for the development or
