@@ -590,6 +590,12 @@ public:
   /// \brief Whether this particular Decl is a canonical one.
   bool isCanonicalDecl() const { return getCanonicalDecl() == this; }
 
+  /// \brief Determine whether this declaration declares the same entity as
+  /// the other declaration.
+  bool isSameEntityAs(const Decl *Other) const {
+    return getCanonicalDecl() == Other->getCanonicalDecl();
+  }
+  
 protected:
   /// \brief Returns the next redeclaration or itself if this is the only decl.
   ///
