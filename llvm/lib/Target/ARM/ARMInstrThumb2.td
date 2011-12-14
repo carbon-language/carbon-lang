@@ -4097,6 +4097,8 @@ def : t2InstAlias<"sxth${p} $Rd, $Rm$rot",
 // for isel.
 def : t2InstAlias<"mov${p} $Rd, $imm",
                   (t2MVNi rGPR:$Rd, t2_so_imm_not:$imm, pred:$p, zero_reg)>;
+def : t2InstAlias<"mvn${p} $Rd, $imm",
+                  (t2MOVi rGPR:$Rd, t2_so_imm_not:$imm, pred:$p, zero_reg)>;
 // Same for AND <--> BIC
 def : t2InstAlias<"bic${s}${p} $Rd, $Rn, $imm",
                   (t2ANDri rGPR:$Rd, rGPR:$Rn, so_imm_not:$imm,

@@ -5070,6 +5070,8 @@ def : MnemonicAlias<"usubaddx", "usax">;
 // for isel.
 def : ARMInstAlias<"mov${s}${p} $Rd, $imm",
                    (MVNi rGPR:$Rd, so_imm_not:$imm, pred:$p, cc_out:$s)>;
+def : ARMInstAlias<"mvn${s}${p} $Rd, $imm",
+                   (MOVi rGPR:$Rd, so_imm_not:$imm, pred:$p, cc_out:$s)>;
 // Same for AND <--> BIC
 def : ARMInstAlias<"bic${s}${p} $Rd, $Rn, $imm",
                    (ANDri rGPR:$Rd, rGPR:$Rn, so_imm_not:$imm,
