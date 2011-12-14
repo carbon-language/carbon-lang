@@ -73,9 +73,14 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, Type *Ty) {
          "InsertNoopCastOfTo cannot change sizes!");
 
   // Short-circuit unnecessary bitcasts.
-  if (Op == Instruction::BitCast && V->getType() == Ty)
-    return V;
-
+  if (Op == Instruction::BitCast) {
+    if (V->getType() == Ty)
+      return V;
+    if (CastInst *CI = dyn_cast<CastInst>(V)) {
+      if (CI->getOperand(0)->getType() == Ty)
+        return CI->getOperand(0);
+    }
+  }
   // Short-circuit unnecessary inttoptr<->ptrtoint casts.
   if ((Op == Instruction::PtrToInt || Op == Instruction::IntToPtr) &&
       SE.getTypeSizeInBits(Ty) == SE.getTypeSizeInBits(V->getType())) {
