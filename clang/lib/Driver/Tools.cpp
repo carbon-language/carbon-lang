@@ -1195,6 +1195,24 @@ static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
   CmdArgs.push_back("-export-dynamic");
 }
 
+static bool shouldUseFramePointer(const ArgList &Args,
+                                  const llvm::Triple &Triple) {
+  if (Arg *A = Args.getLastArg(options::OPT_fno_omit_frame_pointer,
+                               options::OPT_fomit_frame_pointer))
+    return A->getOption().matches(options::OPT_fno_omit_frame_pointer);
+
+  // Don't use a frame poiter on liunx x86 and x86_64 if optimizing.
+  if ((Triple.getArch() == llvm::Triple::x86_64 ||
+       Triple.getArch() == llvm::Triple::x86) &&
+      Triple.getOS() == llvm::Triple::Linux) {
+    if (Arg *A = Args.getLastArg(options::OPT_O_Group))
+      if (!A->getOption().matches(options::OPT_O0))
+        return false;
+  }
+
+  return true;
+}
+
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output,
                          const InputInfoList &Inputs,
@@ -1408,8 +1426,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-mrtd");
 
   // FIXME: Set --enable-unsafe-fp-math.
-  if (Args.hasFlag(options::OPT_fno_omit_frame_pointer,
-                   options::OPT_fomit_frame_pointer))
+  if (shouldUseFramePointer(Args, getToolChain().getTriple()))
     CmdArgs.push_back("-mdisable-fp-elim");
   if (!Args.hasFlag(options::OPT_fzero_initialized_in_bss,
                     options::OPT_fno_zero_initialized_in_bss))
