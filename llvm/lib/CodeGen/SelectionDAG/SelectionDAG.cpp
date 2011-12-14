@@ -6151,6 +6151,11 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
     case ISD::SETLT:   return "setlt";
     case ISD::SETLE:   return "setle";
     case ISD::SETNE:   return "setne";
+
+    case ISD::SETTRUE:   return "settrue";
+    case ISD::SETTRUE2:  return "settrue2";
+    case ISD::SETFALSE:  return "setfalse";
+    case ISD::SETFALSE2: return "setfalse2";
     }
   }
 }
