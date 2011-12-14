@@ -63,6 +63,7 @@ void GenericTaintChecker::checkPostStmt(const CallExpr *CE,
   FnCheck evalFunction = llvm::StringSwitch<FnCheck>(Name)
     .Case("scanf", &GenericTaintChecker::processScanf)
     .Case("getchar", &GenericTaintChecker::processRetTaint)
+    .Case("getenv", &GenericTaintChecker::processRetTaint)
     .Default(NULL);
 
   // If the callee isn't defined, it is not of security concern.

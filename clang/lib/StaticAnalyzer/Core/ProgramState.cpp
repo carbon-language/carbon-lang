@@ -654,8 +654,15 @@ bool ProgramState::scanReachableSymbols(const MemRegion * const *I,
 const ProgramState* ProgramState::addTaint(const Stmt *S,
                                            TaintTagType Kind) const {
   SymbolRef Sym = getSVal(S).getAsSymbol();
-  assert(Sym && "Cannot add taint to statements whose value is not a symbol");
-  return addTaint(Sym, Kind);
+  if (Sym)
+    return addTaint(Sym, Kind);
+
+  const MemRegion *R = getSVal(S).getAsRegion();
+  if (const SymbolicRegion *SR = dyn_cast_or_null<SymbolicRegion>(R))
+    return addTaint(SR->getSymbol(), Kind);
+
+  // Cannot add taint, so just return the state.
+  return this;
 }
 
 const ProgramState* ProgramState::addTaint(SymbolRef Sym,

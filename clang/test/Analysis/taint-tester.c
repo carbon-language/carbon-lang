@@ -70,3 +70,13 @@ void BitwiseOp(int in, char inn) {
     m = inn;
   int mm = m; // expected-warning   {{tainted}}
 }
+
+// Test getenv.
+char *getenv(const char *name);
+void getenvTest(char *home) {
+  home = getenv("HOME"); // expected-warning 2 {{tainted}}
+  if (home != 0) { // expected-warning 2 {{tainted}}
+      char d = home[0]; // expected-warning 2 {{tainted}}
+    }
+}
+
