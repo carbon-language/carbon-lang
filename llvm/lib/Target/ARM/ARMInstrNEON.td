@@ -1530,7 +1530,7 @@ multiclass VST2DWB<bits<4> op11_8, bits<4> op7_4, string Dt,
                      "vst2", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
-    let Inst{4} = Rn{4};
+    let Inst{5-4} = Rn{5-4};
     let DecoderMethod = "DecodeVSTInstruction";
     let AsmMatchConverter = "cvtVSTwbFixed";
   }
@@ -1538,7 +1538,7 @@ multiclass VST2DWB<bits<4> op11_8, bits<4> op7_4, string Dt,
                         (ins addrmode6:$Rn, rGPR:$Rm, VdTy:$Vd), IIC_VLD1u,
                         "vst2", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
-    let Inst{4} = Rn{4};
+    let Inst{5-4} = Rn{5-4};
     let DecoderMethod = "DecodeVSTInstruction";
     let AsmMatchConverter = "cvtVSTwbRegister";
   }
@@ -1549,7 +1549,7 @@ multiclass VST2QWB<bits<4> op7_4, string Dt> {
                      "vst2", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
-    let Inst{4} = Rn{4};
+    let Inst{5-4} = Rn{5-4};
     let DecoderMethod = "DecodeVSTInstruction";
     let AsmMatchConverter = "cvtVSTwbFixed";
   }
@@ -1558,7 +1558,7 @@ multiclass VST2QWB<bits<4> op7_4, string Dt> {
                         IIC_VLD1u,
                         "vst2", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
-    let Inst{4} = Rn{4};
+    let Inst{5-4} = Rn{5-4};
     let DecoderMethod = "DecodeVSTInstruction";
     let AsmMatchConverter = "cvtVSTwbRegister";
   }

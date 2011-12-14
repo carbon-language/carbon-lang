@@ -37,6 +37,12 @@
 	vst2.8	{d16, d17, d18, d19}, [r0, :64]
 	vst2.16	{d16, d17, d18, d19}, [r0, :128]
 	vst2.32	{d16, d17, d18, d19}, [r0, :256]
+	vst2.8	{d16, d17}, [r0, :64]!
+	vst2.16	{q15}, [r0, :128]!
+	vst2.32	{d14, d15}, [r0]!
+	vst2.8	{d16, d17, d18, d19}, [r0, :64]!
+	vst2.16	{d18-d21}, [r0, :128]!
+	vst2.32	{q4, q5}, [r0, :256]!
 
 @ CHECK: vst2.8	{d16, d17}, [r0, :64]   @ encoding: [0x1f,0x08,0x40,0xf4]
 @ CHECK: vst2.16 {d16, d17}, [r0, :128] @ encoding: [0x6f,0x08,0x40,0xf4]
@@ -44,6 +50,12 @@
 @ CHECK: vst2.8	{d16, d17, d18, d19}, [r0, :64] @ encoding: [0x1f,0x03,0x40,0xf4]
 @ CHECK: vst2.16 {d16, d17, d18, d19}, [r0, :128] @ encoding: [0x6f,0x03,0x40,0xf4]
 @ CHECK: vst2.32 {d16, d17, d18, d19}, [r0, :256] @ encoding: [0xbf,0x03,0x40,0xf4]
+@ CHECK: vst2.8	{d16, d17}, [r0, :64]!  @ encoding: [0x1d,0x08,0x40,0xf4]
+@ CHECK: vst2.16	{d30, d31}, [r0, :128]! @ encoding: [0x6d,0xe8,0x40,0xf4]
+@ CHECK: vst2.32	{d14, d15}, [r0]!       @ encoding: [0x8d,0xe8,0x00,0xf4]
+@ CHECK: vst2.8	{d16, d17, d18, d19}, [r0, :64]! @ encoding: [0x1d,0x03,0x40,0xf4]
+@ CHECK: vst2.16	{d18, d19, d20, d21}, [r0, :128]! @ encoding: [0x6d,0x23,0x40,0xf4]
+@ CHECK: vst2.32	{d8, d9, d10, d11}, [r0, :256]! @ encoding: [0xbd,0x83,0x00,0xf4]
 
 
 @	vst3.8	{d16, d17, d18}, [r0, :64]
