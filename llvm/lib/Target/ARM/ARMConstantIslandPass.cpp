@@ -53,7 +53,7 @@ AdjustJumpTableBlocks("arm-adjust-jump-tables", cl::Hidden, cl::init(true),
           cl::desc("Adjust basic block layout to better use TB[BH]"));
 
 static cl::opt<bool>
-AlignConstantIslands("arm-align-constant-island", cl::Hidden,
+AlignConstantIslands("arm-align-constant-islands", cl::Hidden,
           cl::desc("Align constant islands in code"));
 
 /// UnknownPadding - Return the worst case padding that could result from
@@ -496,7 +496,7 @@ ARMConstantIslands::DoInitialPlacement(std::vector<MachineInstr*> &CPEMIs) {
   MF->push_back(BB);
 
   // MachineConstantPool measures alignment in bytes. We measure in log2(bytes).
-  unsigned MaxAlign = Log2_32(MF->getConstantPool()->getConstantPoolAlignment());
+  unsigned MaxAlign = Log2_32(MCP->getConstantPoolAlignment());
 
   // Mark the basic block as required by the const-pool.
   // If AlignConstantIslands isn't set, use 4-byte alignment for everything.
@@ -514,8 +514,7 @@ ARMConstantIslands::DoInitialPlacement(std::vector<MachineInstr*> &CPEMIs) {
 
   // Add all of the constants from the constant pool to the end block, use an
   // identity mapping of CPI's to CPE's.
-  const std::vector<MachineConstantPoolEntry> &CPs =
-    MF->getConstantPool()->getConstants();
+  const std::vector<MachineConstantPoolEntry> &CPs = MCP->getConstants();
 
   const TargetData &TD = *MF->getTarget().getTargetData();
   for (unsigned i = 0, e = CPs.size(); i != e; ++i) {
