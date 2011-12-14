@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c++11 -pedantic -verify -fcxx-exceptions %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 -pedantic -verify -fcxx-exceptions %s -fconstexpr-depth 256
 
 // A conditional-expression is a core constant expression unless it involves one
 // of the following as a potentially evaluated subexpression [...]:
@@ -95,11 +95,11 @@ namespace NonConstExprCtor {
 //   exceed the implementation-defined recursion limits (see Annex B);
 namespace RecursionLimits {
   constexpr int RecurseForever(int n) {
-    return n + RecurseForever(n+1); // expected-note {{constexpr evaluation exceeded maximum depth of 512 calls}}
+    return n + RecurseForever(n+1); // expected-note {{constexpr evaluation exceeded maximum depth of 256 calls}}
   }
   struct AlsoRecurseForever {
     constexpr AlsoRecurseForever(int n) :
-      n(AlsoRecurseForever(n+1).n) // expected-note {{constexpr evaluation exceeded maximum depth of 512 calls}}
+      n(AlsoRecurseForever(n+1).n) // expected-note {{constexpr evaluation exceeded maximum depth of 256 calls}}
     {}
     int n;
   };
