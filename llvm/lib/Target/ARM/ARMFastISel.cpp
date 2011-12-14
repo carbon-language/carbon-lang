@@ -178,8 +178,9 @@ class ARMFastISel : public FastISel {
     bool isLoadTypeLegal(Type *Ty, MVT &VT);
     bool ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
                     bool isZExt);
-    bool ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr, unsigned Alignment = 0,
-                     bool isZExt = true, bool allocReg = true);
+    bool ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr,
+                     unsigned Alignment = 0, bool isZExt = true,
+                     bool allocReg = true);
                      
     bool ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr,
                       unsigned Alignment = 0);
@@ -1027,11 +1028,11 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr,
       }
       break;
     case MVT::f64:
-      if (Alignment && Alignment < 4) {
-        // FIXME: Unaligned loads need special handling.  Doublewords require
-        // word-alignment.
+      // FIXME: Unaligned loads need special handling.  Doublewords require
+      // word-alignment.
+      if (Alignment && Alignment < 4)
         return false;
-      }
+
       Opc = ARM::VLDRD;
       RC = TLI.getRegClassFor(VT);
       break;
@@ -1145,9 +1146,9 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr,
       if (!Subtarget->hasVFP2()) return false;
       // FIXME: Unaligned stores need special handling.  Doublewords require
       // word-alignment.
-      if (Alignment && Alignment < 4) {
+      if (Alignment && Alignment < 4)
           return false;
-      }
+
       StrOpc = ARM::VSTRD;
       break;
   }
