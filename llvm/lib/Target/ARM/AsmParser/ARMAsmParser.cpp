@@ -45,6 +45,9 @@ class ARMAsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
 
+  // Map of register aliases registers via the .req directive.
+  StringMap<unsigned> RegisterReqs;
+
   struct {
     ARMCC::CondCodes Cond;    // Condition for IT block.
     unsigned Mask:4;          // Condition mask for instructions.
@@ -96,6 +99,8 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool parseDirectiveThumbFunc(SMLoc L);
   bool parseDirectiveCode(SMLoc L);
   bool parseDirectiveSyntax(SMLoc L);
+  bool parseDirectiveReq(StringRef Name, SMLoc L);
+  bool parseDirectiveUnreq(SMLoc L);
 
   StringRef splitMnemonic(StringRef Mnemonic, unsigned &PredicationCode,
                           bool &CarrySetting, unsigned &ProcessorIMod,
@@ -2167,7 +2172,9 @@ static unsigned MatchRegisterName(StringRef Name);
 
 bool ARMAsmParser::ParseRegister(unsigned &RegNo,
                                  SMLoc &StartLoc, SMLoc &EndLoc) {
+  StartLoc = Parser.getTok().getLoc();
   RegNo = tryParseRegister();
+  EndLoc = Parser.getTok().getLoc();
 
   return (RegNo == (unsigned)-1);
 }
@@ -2206,7 +2213,16 @@ int ARMAsmParser::tryParseRegister() {
       .Case("fp", ARM::R11)
       .Default(0);
   }
-  if (!RegNum) return -1;
+  if (!RegNum) {
+    // Check for aliases registered via .req.
+    StringMap<unsigned>::const_iterator Entry =
+      RegisterReqs.find(Tok.getIdentifier());
+    // If no match, return failure.
+    if (Entry == RegisterReqs.end())
+      return -1;
+    Parser.Lex(); // Eat identifier token.
+    return Entry->getValue();
+  }
 
   Parser.Lex(); // Eat identifier token.
 
@@ -4544,6 +4560,15 @@ bool ARMAsmParser::ParseInstruction(StringRef Name, SMLoc NameLoc,
   unsigned AvailableFeatures = getAvailableFeatures();
   applyMnemonicAliases(Name, AvailableFeatures);
 
+  // First check for the ARM-specific .req directive.
+  if (Parser.getTok().is(AsmToken::Identifier) &&
+      Parser.getTok().getIdentifier() == ".req") {
+    parseDirectiveReq(Name, NameLoc);
+    // We always return 'error' for this, as we're done with this
+    // statement and don't need to match the 'instruction."
+    return true;
+  }
+
   // Create the leading tokens for the mnemonic, split by '.' characters.
   size_t Start = 0, Next = Name.find('.');
   StringRef Mnemonic = Name.slice(Start, Next);
@@ -5801,6 +5826,8 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveCode(DirectiveID.getLoc());
   else if (IDVal == ".syntax")
     return parseDirectiveSyntax(DirectiveID.getLoc());
+  else if (IDVal == ".unreq")
+    return parseDirectiveUnreq(DirectiveID.getLoc());
   return true;
 }
 
@@ -5938,6 +5965,45 @@ bool ARMAsmParser::parseDirectiveCode(SMLoc L) {
     getParser().getStreamer().EmitAssemblerFlag(MCAF_Code32);
   }
 
+  return false;
+}
+
+/// parseDirectiveReq
+///  ::= name .req registername
+bool ARMAsmParser::parseDirectiveReq(StringRef Name, SMLoc L) {
+  Parser.Lex(); // Eat the '.req' token.
+  unsigned Reg;
+  SMLoc SRegLoc, ERegLoc;
+  if (ParseRegister(Reg, SRegLoc, ERegLoc)) {
+    Parser.EatToEndOfStatement();
+    return Error(SRegLoc, "register name expected");
+  }
+
+  // Shouldn't be anything else.
+  if (Parser.getTok().isNot(AsmToken::EndOfStatement)) {
+    Parser.EatToEndOfStatement();
+    return Error(Parser.getTok().getLoc(),
+                 "unexpected input in .req directive.");
+  }
+
+  Parser.Lex(); // Consume the EndOfStatement
+
+  if (RegisterReqs.GetOrCreateValue(Name, Reg).getValue() != Reg)
+    return Error(SRegLoc, "redefinition of '" + Name +
+                          "' does not match original.");
+
+  return false;
+}
+
+/// parseDirectiveUneq
+///  ::= .unreq registername
+bool ARMAsmParser::parseDirectiveUnreq(SMLoc L) {
+  if (Parser.getTok().isNot(AsmToken::Identifier)) {
+    Parser.EatToEndOfStatement();
+    return Error(L, "unexpected input in .unreq directive.");
+  }
+  RegisterReqs.erase(Parser.getTok().getIdentifier());
+  Parser.Lex(); // Eat the identifier.
   return false;
 }
 
