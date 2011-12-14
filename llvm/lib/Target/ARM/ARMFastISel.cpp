@@ -1130,7 +1130,6 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr,
       break;
     case MVT::f32:
       if (!Subtarget->hasVFP2()) return false;
-      StrOpc = ARM::VSTRS;
       // Unaligned stores need special handling. Floats require word-alignment.
       if (Alignment && Alignment < 4) {
         unsigned MoveReg = createResultReg(TLI.getRegClassFor(MVT::i32));
@@ -1140,6 +1139,8 @@ bool ARMFastISel::ARMEmitStore(EVT VT, unsigned SrcReg, Address &Addr,
         SrcReg = MoveReg;
         VT = MVT::i32;
         StrOpc = isThumb2 ? ARM::t2STRi12 : ARM::STRi12;
+      } else {
+        StrOpc = ARM::VSTRS;
       }
       break;
     case MVT::f64:
