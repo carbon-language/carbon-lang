@@ -8257,6 +8257,48 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
                                            VK, OK, OpLoc));
 }
 
+/// \brief Determine whether the given expression is a qualified member
+/// access expression, of a form that could be turned into a pointer to member
+/// with the address-of operator.
+static bool isQualifiedMemberAccess(Expr *E) {
+  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+    if (!DRE->getQualifier())
+      return false;
+    
+    ValueDecl *VD = DRE->getDecl();
+    if (!VD->isCXXClassMember())
+      return false;
+    
+    if (isa<FieldDecl>(VD) || isa<IndirectFieldDecl>(VD))
+      return true;
+    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(VD))
+      return Method->isInstance();
+      
+    return false;
+  }
+  
+  if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(E)) {
+    if (!ULE->getQualifier())
+      return false;
+    
+    for (UnresolvedLookupExpr::decls_iterator D = ULE->decls_begin(),
+                                           DEnd = ULE->decls_end();
+         D != DEnd; ++D) {
+      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*D)) {
+        if (Method->isInstance())
+          return true;
+      } else {
+        // Overload set does not contain methods.
+        break;
+      }
+    }
+    
+    return false;
+  }
+  
+  return false;
+}
+
 ExprResult Sema::BuildUnaryOp(Scope *S, SourceLocation OpLoc,
                               UnaryOperatorKind Opc, Expr *Input) {
   // First things first: handle placeholders so that the
@@ -8286,7 +8328,8 @@ ExprResult Sema::BuildUnaryOp(Scope *S, SourceLocation OpLoc,
   }
 
   if (getLangOptions().CPlusPlus && Input->getType()->isOverloadableType() &&
-      UnaryOperator::getOverloadedOperator(Opc) != OO_None) {
+      UnaryOperator::getOverloadedOperator(Opc) != OO_None &&
+      !(Opc == UO_AddrOf && isQualifiedMemberAccess(Input))) {
     // Find all of the overloaded operators visible from this
     // point. We perform both an operator-name lookup from the local
     // scope and an argument-dependent lookup based on the types of
