@@ -39,6 +39,7 @@ class GenericTaintChecker : public Checker< check::PostStmt<CallExpr> > {
   typedef void (GenericTaintChecker::*FnCheck)(const CallExpr *,
                                                CheckerContext &C) const;
   void processScanf(const CallExpr *CE, CheckerContext &C) const;
+  void processFscanf(const CallExpr *CE, CheckerContext &C) const;
   void processRetTaint(const CallExpr *CE, CheckerContext &C) const;
 
 public:
@@ -62,8 +63,14 @@ void GenericTaintChecker::checkPostStmt(const CallExpr *CE,
   // Set the evaluation function by switching on the callee name.
   FnCheck evalFunction = llvm::StringSwitch<FnCheck>(Name)
     .Case("scanf", &GenericTaintChecker::processScanf)
+    .Case("fscanf", &GenericTaintChecker::processFscanf)
+    .Case("sscanf", &GenericTaintChecker::processFscanf)
+    // TODO: Add support for vfscanf & family.
     .Case("getchar", &GenericTaintChecker::processRetTaint)
     .Case("getenv", &GenericTaintChecker::processRetTaint)
+    .Case("fopen", &GenericTaintChecker::processRetTaint)
+    .Case("fdopen", &GenericTaintChecker::processRetTaint)
+    .Case("freopen", &GenericTaintChecker::processRetTaint)
     .Default(NULL);
 
   // If the callee isn't defined, it is not of security concern.
@@ -108,7 +115,7 @@ SymbolRef GenericTaintChecker::getPointedToSymbol(CheckerContext &C,
 void GenericTaintChecker::processScanf(const CallExpr *CE,
                                        CheckerContext &C) const {
   const ProgramState *State = C.getState();
-  assert(CE->getNumArgs() == 2);
+  assert(CE->getNumArgs() >= 2);
   SVal x = State->getSVal(CE->getArg(1));
   // All arguments except for the very first one should get taint.
   for (unsigned int i = 1; i < CE->getNumArgs(); ++i) {
@@ -120,7 +127,29 @@ void GenericTaintChecker::processScanf(const CallExpr *CE,
       State = State->addTaint(Sym);
   }
   C.addTransition(State);
+}
 
+/// If argument 0 (file descriptor) is tainted, all arguments except for arg 0
+/// and arg 1 should get taint.
+void GenericTaintChecker::processFscanf(const CallExpr *CE,
+                                        CheckerContext &C) const {
+  const ProgramState *State = C.getState();
+  assert(CE->getNumArgs() >= 2);
+
+  // Check is the file descriptor is tainted.
+  if (!State->isTainted(CE->getArg(0)))
+    return;
+
+  // All arguments except for the first two should get taint.
+  for (unsigned int i = 2; i < CE->getNumArgs(); ++i) {
+    // The arguments are pointer arguments. The data they are pointing at is
+    // tainted after the call.
+    const Expr* Arg = CE->getArg(i);
+    SymbolRef Sym = getPointedToSymbol(C, Arg);
+    if (Sym)
+      State = State->addTaint(Sym);
+  }
+  C.addTransition(State);
 }
 
 void GenericTaintChecker::processRetTaint(const CallExpr *CE,

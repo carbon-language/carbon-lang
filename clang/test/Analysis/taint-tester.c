@@ -54,6 +54,10 @@ void taintTracking(int x) {
   int tx = xy.x; // expected-warning {{tainted}}
   int ty = xy.y; // FIXME: This should be tainted as well.
   char ntz = xy.z;// no warning
+  // Now, scanf scans both.
+  scanf("%d %d", &xy.y, &xy.x);
+  int ttx = xy.x; // expected-warning {{tainted}}
+  int tty = xy.y; // expected-warning {{tainted}}
 }
 
 void BitwiseOp(int in, char inn) {
@@ -80,3 +84,34 @@ void getenvTest(char *home) {
     }
 }
 
+struct _IO_FILE {
+  unsigned fakeField1;
+  char fakeField2;
+};
+typedef struct _IO_FILE FILE;
+extern struct _IO_FILE *stdin;
+extern struct _IO_FILE *stdout;
+extern struct _IO_FILE *stderr;
+int fscanf(FILE *restrict stream, const char *restrict format, ...);
+int fprintf(FILE *stream, const char *format, ...);
+int fclose(FILE *stream);
+FILE *fopen(const char *path, const char *mode);
+
+int fscanfTest(void) {
+  FILE *fp;
+  char s[80];
+  int t;
+
+  if((fp=fopen("test", "w")) == 0) // expected-warning 3 {{tainted}}
+    return 1;
+  // TODO: Have to mark stdin as tainted.
+  fscanf(stdin, "%s%d", s, &t);
+  fprintf(fp, "%s %d", s, t); // expected-warning 1 {{tainted}}
+  fclose(fp); // expected-warning 1 {{tainted}}
+
+  if((fp=fopen("test","r")) == 0) // expected-warning 3 {{tainted}}
+    return 1;
+  fscanf(fp, "%s%d", s, &t); // expected-warning 1 {{tainted}}
+  fprintf(stdout, "%s %d", s, t); // expected-warning 1 {{tainted}}
+  return 0;
+}
