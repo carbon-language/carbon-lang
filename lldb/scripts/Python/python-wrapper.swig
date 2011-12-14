@@ -234,7 +234,7 @@ LLDBSwigPythonCallTypeScript
                 
                 if (pvalue != NULL)
                 {
-                    if (pvalue != Py_None)
+                    if (pvalue != Py_None && PyString_CheckExact(pvalue))
                         retval = std::string(PyString_AsString(pvalue));
                     else
                         retval = "None";
