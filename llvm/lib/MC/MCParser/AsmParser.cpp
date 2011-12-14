@@ -442,11 +442,11 @@ bool AsmParser::ProcessIncbinFile(const std::string &Filename) {
   if (NewBuf == -1)
     return true;
 
-  // Loop picking the bytes from the file and emitting them.
+  // Pick up the bytes from the file and emit them.
   const char *BufferStart = SrcMgr.getMemoryBuffer(NewBuf)->getBufferStart();
-  const char *BufferEnd = SrcMgr.getMemoryBuffer(NewBuf)->getBufferEnd();
-  for(const char *p = BufferStart; p < BufferEnd; p++)
-    getStreamer().EmitIntValue(*p, 1, DEFAULT_ADDRSPACE);
+  size_t BufferSize = SrcMgr.getMemoryBuffer(NewBuf)->getBufferSize();
+  std::string Data(BufferStart, BufferSize);
+  getStreamer().EmitBytes(Data, DEFAULT_ADDRSPACE);
 
   return false;
 }

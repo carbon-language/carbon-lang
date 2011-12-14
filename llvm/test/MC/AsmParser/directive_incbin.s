@@ -3,7 +3,4 @@
 .data
 .incbin "incbin_abcd"
 
-# CHECK: .byte	97
-# CHECK: .byte	98
-# CHECK: .byte	99
-# CHECK: .byte	100
+# CHECK: .ascii	 "abcd\n"
