@@ -506,6 +506,9 @@ Module::FindTypes_Impl (const SymbolContext& sc, const ConstString &name, const 
 static const char*
 StripTypeName(const char* name_cstr)
 {
+    // Protect against null c string.
+    if (!name_cstr)
+        return name_cstr;
     const char* skip_namespace = strstr(name_cstr, "::");
     const char* template_arg_char = strchr(name_cstr, '<');
     while (skip_namespace != NULL)

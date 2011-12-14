@@ -1188,7 +1188,7 @@ SBTarget::FindFunctions (const char *name,
 {
     if (!append)
         sc_list.Clear();
-    if (m_opaque_sp)
+    if (name && m_opaque_sp)
     {
         const bool symbols_ok = true;
         return m_opaque_sp->GetImages().FindFunctions (ConstString(name), 
@@ -1203,7 +1203,7 @@ SBTarget::FindFunctions (const char *name,
 lldb::SBType
 SBTarget::FindFirstType (const char* type)
 {
-    if (m_opaque_sp)
+    if (type && m_opaque_sp)
     {
         size_t count = m_opaque_sp->GetImages().GetSize();
         for (size_t idx = 0; idx < count; idx++)
@@ -1223,7 +1223,7 @@ SBTarget::FindTypes (const char* type)
     
     SBTypeList retval;
     
-    if (m_opaque_sp)
+    if (type && m_opaque_sp)
     {
         ModuleList& images = m_opaque_sp->GetImages();
         ConstString name_const(type);
@@ -1251,7 +1251,7 @@ SBTarget::FindGlobalVariables (const char *name, uint32_t max_matches)
 {
     SBValueList sb_value_list;
     
-    if (m_opaque_sp)
+    if (name && m_opaque_sp)
     {
         VariableList variable_list;
         const bool append = true;

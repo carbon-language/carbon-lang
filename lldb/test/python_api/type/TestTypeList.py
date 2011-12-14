@@ -69,6 +69,10 @@ class TypeAndTypeListTestCase(TestBase):
             self.assertTrue(type)
             self.DebugSBType(type)
 
+        # Pass an empty string.  LLDB should not crash. :-)
+        fuzz_types = target.FindTypes(None)
+        fuzz_type = target.FindFirstType(None)
+
         # Now use the SBTarget.FindFirstType() API to find 'Task'.
         task_type = target.FindFirstType('Task')
         self.assertTrue(task_type)
