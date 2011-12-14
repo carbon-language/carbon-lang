@@ -37,6 +37,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
 
+static const int CONSTANT_BOUND = 20;
+
 using namespace llvm;
 using namespace polly;
 
@@ -433,6 +435,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
 
   isl_schedule *schedule;
 
+  isl_options_set_schedule_max_constant_term(S.getIslCtx(), CONSTANT_BOUND);
   schedule  = isl_union_set_compute_schedule(domain, validity, proximity);
 
   DEBUG(dbgs() << "Computed schedule: ");
