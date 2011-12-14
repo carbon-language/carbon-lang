@@ -50,6 +50,7 @@
     <li><a href="#machinebasicblock">The <tt>MachineBasicBlock</tt>
                                      class</a></li>
     <li><a href="#machinefunction">The <tt>MachineFunction</tt> class</a></li>
+    <li><a href="#machineinstrbundle"><tt>MachineInstr Bundles</tt></a></li>
     </ul>
   </li>
   <li><a href="#mc">The "MC" Layer</a>
@@ -760,6 +761,88 @@ ret
    <tt>include/llvm/CodeGen/MachineFunction.h</tt> for more information.</p>
 
 </div>
+
+<!-- ======================================================================= -->
+<h3>
+  <a name="machineinstrbundle"><tt>MachineInstr Bundles</tt></a>
+</h3>
+
+<div>
+
+<p>LLVM code generator can model sequences of instructions as MachineInstr
+   bundles. A MI bundle can model a VLIW group / pack which contains an
+   arbitrary number of parallel instructions. It can also be used to model
+   a sequential list of instructions (potentially with data dependencies) that
+   cannot be legally separated (e.g. ARM Thumb2 IT blocks).</p>
+
+<p>Conceptually a MI bundle is a MI with a number of other MIs nested within:
+</p>
+
+<div class="doc_code">
+<pre>
+--------------
+|   Bundle   | ---------
+--------------          \
+       |           ----------------
+       |           |      MI      |
+       |           ----------------
+       |                   |
+       |           ----------------
+       |           |      MI      |
+       |           ----------------
+       |                   |
+       |           ----------------
+       |           |      MI      |
+       |           ----------------
+       |
+--------------
+|   Bundle   | --------
+--------------         \
+       |           ----------------
+       |           |      MI      |
+       |           ----------------
+       |                   |
+       |           ----------------
+       |           |      MI      |
+       |           ----------------
+       |                   |
+       |                  ...
+       |
+--------------
+|   Bundle   | --------
+--------------         \
+       |
+      ...
+</pre>
+</div>
+
+<p> MI bundle support does not change the physical representations of
+    MachineBasicBlock and MachineInstr. All the MIs (including top level and
+    nested ones) are stored as sequential list of MIs. The "bundled" MIs are
+    marked with the 'InsideBundle' flag. A top level MI with the special BUNDLE
+    opcode is used to represent the start of a bundle. It's legal to mix BUNDLE
+    MIs with indiviual MIs that are not inside bundles nor represent bundles.
+</p>
+
+<p> MachineInstr passes should operate on a MI bundle as a single unit. Member
+    methods have been taught to correctly handle bundles and MIs inside bundles.
+    The MachineBasicBlock iterator has been modified to skip over bundled MIs to
+    enforce the bundle-as-a-single-unit concept. An alternative iterator
+    instr_iterator has been added to MachineBasicBlock to allow passes to
+    iterate over all of the MIs in a MachineBasicBlock, including those which
+    are nested inside bundles. The top level BUNDLE instruction must have the
+    correct set of register MachineOperand's that represent the cumulative
+    inputs and outputs of the bundled MIs.</p>
+
+<p> Packing / bundling of MachineInstr's should be done as part of the register
+    allocation super-pass. More specifically, the pass which determines what
+    MIs should be bundled together must be done after code generator exits SSA
+    form (i.e. after two-address pass, PHI elimination, and copy coalescing).
+    Bundles should only be finalized (i.e. adding BUNDLE MIs and input and
+    output register MachineOperands) after virtual registers have been
+    rewritten into physical registers. This requirement eliminates the need to
+    add virtual register operands to BUNDLE instructions which would effectively
+    double the virtual register def and use lists.</p>
 
 </div>
 
