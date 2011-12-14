@@ -648,6 +648,16 @@ public:
                                 SDNode *DefNode, unsigned DefIdx,
                                 SDNode *UseNode, unsigned UseIdx) const;
 
+  /// getOutputLatency - Compute and return the output dependency latency of a
+  /// a given pair of defs which both target the same register. This is usually
+  /// one.
+  virtual unsigned getOutputLatency(const InstrItineraryData *ItinData,
+                                    const MachineInstr *DefMI1,
+                                    const MachineInstr *DefMI2,
+                                    unsigned Reg) const {
+    return 1;
+  }
+
   /// getInstrLatency - Compute the instruction latency of a given instruction.
   /// If the instruction has higher cost when predicated, it's returned via
   /// PredCost.

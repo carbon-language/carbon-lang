@@ -278,7 +278,13 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
         if (DefSU != SU &&
             (Kind != SDep::Output || !MO.isDead() ||
              !DefSU->getInstr()->registerDefIsDead(Reg))) {
-          DefSU->addPred(SDep(SU, Kind, AOLatency, /*Reg=*/Reg));
+          if (Kind == SDep::Anti)
+            DefSU->addPred(SDep(SU, Kind, 0, /*Reg=*/Reg));
+          else {
+            unsigned AOLat = TII->getOutputLatency(InstrItins, MI,
+                                                   DefSU->getInstr(), Reg);
+            DefSU->addPred(SDep(SU, Kind, AOLat, /*Reg=*/Reg));
+          }
         }
       }
       for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
