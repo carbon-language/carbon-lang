@@ -632,8 +632,8 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
         clang::QualType pointer_qual_type = result_var->getType();
         const clang::Type *pointer_type = pointer_qual_type.getTypePtr();
         
-        const clang::PointerType *pointer_pointertype = dyn_cast<clang::PointerType>(pointer_type);
-        const clang::ObjCObjectPointerType *pointer_objcobjpointertype = dyn_cast<clang::ObjCObjectPointerType>(pointer_type);
+        const clang::PointerType *pointer_pointertype = pointer_type->getAs<clang::PointerType>();
+        const clang::ObjCObjectPointerType *pointer_objcobjpointertype = pointer_type->getAs<clang::ObjCObjectPointerType>();
         
         if (pointer_pointertype)
         {

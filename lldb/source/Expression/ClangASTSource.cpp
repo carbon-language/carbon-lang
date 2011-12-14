@@ -220,7 +220,7 @@ ClangASTSource::CompleteType (TagDecl *tag_decl)
                     if (!opaque_type)
                         continue;
                     
-                    const TagType *tag_type = dyn_cast<TagType>(QualType::getFromOpaquePtr(opaque_type).getTypePtr());
+                    const TagType *tag_type = QualType::getFromOpaquePtr(opaque_type)->getAs<TagType>();
                     
                     if (!tag_type)
                         continue;
@@ -258,7 +258,7 @@ ClangASTSource::CompleteType (TagDecl *tag_decl)
                 if (!opaque_type)
                     continue;
                 
-                const TagType *tag_type = dyn_cast<TagType>(QualType::getFromOpaquePtr(opaque_type).getTypePtr());
+                const TagType *tag_type = QualType::getFromOpaquePtr(opaque_type)->getAs<TagType>();
                 
                 if (!tag_type)
                     continue;
@@ -677,7 +677,7 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
             
             QualType backing_qual_type = QualType::getFromOpaquePtr(backing_type);
             
-            const ObjCInterfaceType *backing_interface_type = dyn_cast<ObjCInterfaceType>(backing_qual_type.getTypePtr());
+            const ObjCInterfaceType *backing_interface_type = backing_qual_type.getTypePtr()->getAs<ObjCInterfaceType>();
             
             if (!backing_interface_type)
                 continue;
@@ -1067,7 +1067,7 @@ NameSearchContext::AddFunDecl (void *type)
     // this, we raid the function's FunctionProtoType for types.
     
     QualType qual_type (QualType::getFromOpaquePtr(type));
-    const FunctionProtoType *func_proto_type = dyn_cast<FunctionProtoType>(qual_type.getTypePtr());
+    const FunctionProtoType *func_proto_type = qual_type.getTypePtr()->getAs<FunctionProtoType>();
     
     if (func_proto_type)
     {        
@@ -1128,7 +1128,7 @@ NameSearchContext::AddTypeDecl(void *type)
     {
         QualType qual_type = QualType::getFromOpaquePtr(type);
 
-        if (const TagType *tag_type = dyn_cast<clang::TagType>(qual_type))
+        if (const TagType *tag_type = qual_type->getAs<TagType>())
         {
             TagDecl *tag_decl = tag_type->getDecl();
             
@@ -1136,7 +1136,7 @@ NameSearchContext::AddTypeDecl(void *type)
             
             return tag_decl;
         }
-        else if (const ObjCObjectType *objc_object_type = dyn_cast<clang::ObjCObjectType>(qual_type))
+        else if (const ObjCObjectType *objc_object_type = qual_type->getAs<ObjCObjectType>())
         {
             ObjCInterfaceDecl *interface_decl = objc_object_type->getInterface();
             

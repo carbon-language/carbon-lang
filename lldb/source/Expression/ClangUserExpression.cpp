@@ -160,7 +160,7 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
             do {
                 clang::QualType this_type = method_decl->getThisType(decl_context->getParentASTContext());
 
-                const clang::PointerType *this_pointer_type = llvm::dyn_cast<clang::PointerType>(this_type.getTypePtr());
+                const clang::PointerType *this_pointer_type = this_type->getAs<clang::PointerType>();
 
                 if (!this_pointer_type)
                     break;

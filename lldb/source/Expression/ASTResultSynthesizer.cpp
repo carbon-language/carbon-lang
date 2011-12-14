@@ -333,7 +333,7 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
         
         QualType ptr_qual_type;
         
-        if (isa<ObjCObjectType>(expr_qual_type))
+        if (expr_qual_type->getAs<ObjCObjectType>() != NULL)
             ptr_qual_type = Ctx.getObjCObjectPointerType(expr_qual_type);
         else
             ptr_qual_type = Ctx.getPointerType(expr_qual_type);
