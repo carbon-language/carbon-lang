@@ -37,6 +37,7 @@ class CmdPythonTestCase(TestBase):
             self.runCmd('command script delete tell_sync', check=False)
             self.runCmd('command script delete tell_async', check=False)
             self.runCmd('command script delete tell_curr', check=False)
+            self.runCmd('command script delete bug11569', check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
@@ -114,6 +115,12 @@ class CmdPythonTestCase(TestBase):
 
         self.expect('command script add -f foobar frame', error=True,
                     substrs = ['cannot add command'])
+
+        # http://llvm.org/bugs/show_bug.cgi?id=11569
+        # LLDBSwigPythonCallCommand crashes when a command script returns an object 
+        self.runCmd('command script add -f bug11569 bug11569')
+        # This should not crash.
+        self.runCmd('bug11569', check=False)
 
 if __name__ == '__main__':
     import atexit

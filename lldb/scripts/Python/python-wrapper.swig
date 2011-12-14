@@ -645,9 +645,11 @@ LLDBSwigPythonCallCommand
                         err_msg.clear();
                         retval = true;
                     }
-                    else // return value is an error string
+                    else
                     {
-                        err_msg.assign(PyString_AsString(pvalue));
+                        // return value is an error string
+                        if (PyString_CheckExact(pvalue))
+                            err_msg.assign(PyString_AsString(pvalue));
                         retval = false;
                     }
                     Py_DECREF (pvalue);
