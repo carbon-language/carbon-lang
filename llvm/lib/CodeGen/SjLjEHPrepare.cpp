@@ -69,8 +69,6 @@ namespace {
 
   private:
     bool setupEntryBlockAndCallSites(Function &F);
-    void substituteLPadValues(LandingPadInst *LPI, Value *ExnVal,
-                              Value *SelVal, IRBuilder<> &Builder);
     Value *setupFunctionContext(Function &F, ArrayRef<LandingPadInst*> LPads);
     void lowerIncomingArguments(Function &F);
     void lowerAcrossUnwindEdges(Function &F, ArrayRef<InvokeInst*> Invokes);
@@ -140,36 +138,6 @@ static void MarkBlocksLiveIn(BasicBlock *BB,
     MarkBlocksLiveIn(*PI, LiveBBs);
 }
 
-/// substituteLPadValues - Substitute the values returned by the landingpad
-/// instruction with those returned by the personality function.
-void SjLjEHPass::substituteLPadValues(LandingPadInst *LPI, Value *ExnVal,
-                                      Value *SelVal, IRBuilder<> &Builder) {
-  SmallVector<Value*, 8> UseWorkList(LPI->use_begin(), LPI->use_end());
-  while (!UseWorkList.empty()) {
-    Value *Val = UseWorkList.pop_back_val();
-    ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(Val);
-    if (!EVI) continue;
-    if (EVI->getNumIndices() != 1) continue;
-    if (*EVI->idx_begin() == 0)
-      EVI->replaceAllUsesWith(ExnVal);
-    else if (*EVI->idx_begin() == 1)
-      EVI->replaceAllUsesWith(SelVal);
-    if (EVI->getNumUses() == 0)
-      EVI->eraseFromParent();
-  }
-
-  if (LPI->getNumUses() == 0)  return;
-
-  // There are still some uses of LPI. Construct an aggregate with the exception
-  // values and replace the LPI with that aggregate.
-  Type *LPadType = LPI->getType();
-  Value *LPadVal = UndefValue::get(LPadType);
-  LPadVal = Builder.CreateInsertValue(LPadVal, ExnVal, 0, "lpad.val");
-  LPadVal = Builder.CreateInsertValue(LPadVal, SelVal, 1, "lpad.val");
-
-  LPI->replaceAllUsesWith(LPadVal);
-}
-
 /// setupFunctionContext - Allocate the function context on the stack and fill
 /// it with all of the data that we know at this point.
 Value *SjLjEHPass::
@@ -221,7 +189,12 @@ setupFunctionContext(Function &F, ArrayRef<LandingPadInst*> LPads) {
     ExnVal = Builder.CreateIntToPtr(ExnVal, Type::getInt8PtrTy(F.getContext()));
     Value *SelVal = Builder.CreateLoad(SelectorAddr, true, "exn_selector_val");
 
-    substituteLPadValues(LPI, ExnVal, SelVal, Builder);
+    Type *LPadType = LPI->getType();
+    Value *LPadVal = UndefValue::get(LPadType);
+    LPadVal = Builder.CreateInsertValue(LPadVal, ExnVal, 0, "lpad.val");
+    LPadVal = Builder.CreateInsertValue(LPadVal, SelVal, 1, "lpad.val");
+
+    LPI->replaceAllUsesWith(LPadVal);
   }
 
   // Personality function
