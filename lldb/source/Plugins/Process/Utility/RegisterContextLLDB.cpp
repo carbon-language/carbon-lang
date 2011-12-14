@@ -26,6 +26,7 @@
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
+#include "lldb/Target/DynamicLoader.h"
 
 #include "RegisterContextLLDB.h"
 
@@ -621,7 +622,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
         }
     }
 
-    // No Module fm_current_pc.GetLoadAddress (&m_thread.GetProcess().GetTarget()or the current pc, try using the architecture default unwind.
+    // No Module for the current pc, try using the architecture default unwind.
     if (!m_current_pc.IsValid() || m_current_pc.GetModule() == NULL || m_current_pc.GetModule()->GetObjectFile() == NULL)
     {
         m_frame_type = eNormalFrame;
@@ -653,7 +654,28 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
             return unwind_plan_sp;
     }
 
-    
+    // Ask the DynamicLoader if the eh_frame CFI should be trusted in this frame even when it's frame zero
+    // This comes up if we have hand-written functions in a Module and hand-written eh_frame.  The assembly
+    // instruction inspection may fail and the eh_frame CFI were probably written with some care to do the
+    // right thing.  It'd be nice if there was a way to ask the eh_frame directly if it is asynchronous
+    // (can be trusted at every instruction point) or synchronous (the normal case - only at call sites).
+    // But there is not.
+    if (m_thread.GetProcess().GetDynamicLoader() 
+        && m_thread.GetProcess().GetDynamicLoader()->AlwaysRelyOnEHUnwindInfo (m_sym_ctx))
+    {
+        unwind_plan_sp = func_unwinders_sp->GetUnwindPlanAtCallSite (m_current_offset_backed_up_one);
+        if (unwind_plan_sp && unwind_plan_sp->PlanValidAtAddress (m_current_pc))
+        {
+            if (log && log->GetVerbose())
+            {
+                log->Printf("%*sFrame %u frame uses %s for full UnwindPlan because the DynamicLoader suggested we prefer it",
+                            m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
+                            unwind_plan_sp->GetSourceName().GetCString());
+            }
+            return unwind_plan_sp;
+        }
+    }
+
     // Typically the NonCallSite UnwindPlan is the unwind created by inspecting the assembly language instructions
     if (behaves_like_zeroth_frame)
     {

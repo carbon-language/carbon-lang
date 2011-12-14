@@ -86,6 +86,9 @@ public:
     virtual uint32_t
     GetPluginVersion();
 
+    virtual bool
+    AlwaysRelyOnEHUnwindInfo (lldb_private::SymbolContext &sym_ctx);
+
 protected:
     void
     PrivateInitialize (lldb_private::Process *process);

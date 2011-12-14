@@ -1230,6 +1230,50 @@ DynamicLoaderMacOSXDYLD::UpdateImageInfosHeaderAndLoadCommands(DYLDImageInfo::co
 }
 
 //----------------------------------------------------------------------
+// On Mac OS X libobjc (the Objective-C runtime) has several critical dispatch
+// functions written in hand-written assembly, and also have hand-written unwind
+// information in the eh_frame section.  Normally we prefer analyzing the 
+// assembly instructions of a curently executing frame to unwind from that frame --
+// but on hand-written functions this profiling can fail.  We should use the
+// eh_frame instructions for these functions all the time.
+//
+// As an aside, it would be better if the eh_frame entries had a flag (or were
+// extensible so they could have an Apple-specific flag) which indicates that
+// the instructions are asynchronous -- accurate at every instruction, instead
+// of our normal default assumption that they are not.
+//----------------------------------------------------------------------
+
+bool
+DynamicLoaderMacOSXDYLD::AlwaysRelyOnEHUnwindInfo (SymbolContext &sym_ctx)
+{
+    ModuleSP module_sp;
+    if (sym_ctx.symbol)
+    {
+        AddressRange *ar = sym_ctx.symbol->GetAddressRangePtr();
+        if (ar)
+        {
+            module_sp = ar->GetBaseAddress().GetModule();
+        }
+    }
+    if (module_sp.get() == NULL && sym_ctx.function)
+    {
+        module_sp = sym_ctx.function->GetAddressRange().GetBaseAddress().GetModule();
+    }
+    if (module_sp.get() == NULL)
+        return false;
+
+    ObjCLanguageRuntime *objc_runtime = m_process->GetObjCLanguageRuntime();
+    if (objc_runtime != NULL && objc_runtime->IsModuleObjCLibrary (module_sp))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+
+
+//----------------------------------------------------------------------
 // Dump a Segment to the file handle provided.
 //----------------------------------------------------------------------
 void
