@@ -39,7 +39,8 @@ class ExprDoesntDeadlockTestCase(TestBase):
 
         main_file_spec = lldb.SBFileSpec ("locking.c")
         breakpoint = target.BreakpointCreateBySourceRegex('Break here', main_file_spec)
-        print "breakpoint:", breakpoint
+        if self.TraceOn():
+            print "breakpoint:", breakpoint
         self.assertTrue(breakpoint and
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
