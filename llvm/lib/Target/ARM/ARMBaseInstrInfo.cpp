@@ -439,6 +439,22 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   return false;
 }
 
+bool ARMBaseInstrInfo::isPredicated(const MachineInstr *MI) const {
+  if (MI->isBundle()) {
+    MachineBasicBlock::const_instr_iterator I = MI;
+    MachineBasicBlock::const_instr_iterator E = MI->getParent()->instr_end();
+    while (++I != E && I->isInsideBundle()) {
+      int PIdx = I->findFirstPredOperandIdx();
+      if (PIdx != -1 && I->getOperand(PIdx).getImm() != ARMCC::AL)
+        return true;
+    }
+    return false;
+  }
+
+  int PIdx = MI->findFirstPredOperandIdx();
+  return PIdx != -1 && MI->getOperand(PIdx).getImm() != ARMCC::AL;
+}
+
 bool ARMBaseInstrInfo::
 PredicateInstruction(MachineInstr *MI,
                      const SmallVectorImpl<MachineOperand> &Pred) const {
@@ -547,7 +563,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       return getInlineAsmLength(MI->getOperand(0).getSymbolName(), *MAI);
     if (MI->isLabel())
       return 0;
-  unsigned Opc = MI->getOpcode();
+    unsigned Opc = MI->getOpcode();
     switch (Opc) {
     case TargetOpcode::IMPLICIT_DEF:
     case TargetOpcode::KILL:
@@ -555,6 +571,8 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
     case TargetOpcode::EH_LABEL:
     case TargetOpcode::DBG_VALUE:
       return 0;
+    case TargetOpcode::BUNDLE:
+      return getInstBundleLength(MI);
     case ARM::MOVi16_ga_pcrel:
     case ARM::MOVTi16_ga_pcrel:
     case ARM::t2MOVi16_ga_pcrel:
@@ -619,6 +637,17 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       return 0;
     }
   return 0; // Not reached
+}
+
+unsigned ARMBaseInstrInfo::getInstBundleLength(const MachineInstr *MI) const {
+  unsigned Size = 0;
+  MachineBasicBlock::const_instr_iterator I = MI;
+  MachineBasicBlock::const_instr_iterator E = MI->getParent()->instr_end();
+  while (++I != E && I->isInsideBundle()) {
+    assert(!I->isBundle() && "No nested bundle!");
+    Size += GetInstSizeInBytes(&*I);
+  }
+  return Size;
 }
 
 void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
@@ -1955,7 +1984,7 @@ bool ARMBaseInstrInfo::FoldImmediate(MachineInstr *UseMI,
   bool isKill = UseMI->getOperand(OpIdx).isKill();
   unsigned NewReg = MRI->createVirtualRegister(MRI->getRegClass(Reg));
   AddDefaultCC(AddDefaultPred(BuildMI(*UseMI->getParent(),
-                                      *UseMI, UseMI->getDebugLoc(),
+                                      UseMI, UseMI->getDebugLoc(),
                                       get(NewUseOpc), NewReg)
                               .addReg(Reg1, getKillRegState(isKill))
                               .addImm(SOImmValV1)));
@@ -2330,6 +2359,57 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   return UseCycle;
 }
 
+static const MachineInstr *getBundledDefMI(const TargetRegisterInfo *TRI,
+                                           const MachineInstr *MI,
+                                           unsigned &DefIdx, unsigned &Dist) {
+  Dist = 0;
+
+  MachineBasicBlock::const_iterator I = MI; ++I;
+  MachineBasicBlock::const_instr_iterator II =
+    llvm::prior(I.getInstrIterator());
+  assert(II->isInsideBundle() && "Empty bundle?");
+
+  int Idx = -1;
+  unsigned Reg = MI->getOperand(DefIdx).getReg();
+  while (II->isInsideBundle()) {
+    Idx = II->findRegisterDefOperandIdx(Reg, false, true, TRI);
+    if (Idx != -1)
+      break;
+    --II;
+    ++Dist;
+  }
+
+  assert(Idx != -1 && "Cannot find bundled definition!");
+  DefIdx = Idx;
+  return II;
+}
+
+static const MachineInstr *getBundledUseMI(const TargetRegisterInfo *TRI,
+                                           const MachineInstr *MI,
+                                           unsigned &UseIdx, unsigned &Dist) {
+  Dist = 0;
+
+  MachineBasicBlock::const_instr_iterator II = MI; ++II;
+  assert(II->isInsideBundle() && "Empty bundle?");
+  MachineBasicBlock::const_instr_iterator E = MI->getParent()->instr_end();
+
+  // FIXME: This doesn't properly handle multiple uses.
+  int Idx = -1;
+  unsigned Reg = MI->getOperand(UseIdx).getReg();
+  while (II != E && II->isInsideBundle()) {
+    Idx = II->findRegisterUseOperandIdx(Reg, false, TRI);
+    if (Idx != -1)
+      break;
+    if (II->getOpcode() != ARM::t2IT)
+      ++Dist;
+    ++II;
+  }
+
+  assert(Idx != -1 && "Cannot find bundled definition!");
+  UseIdx = Idx;
+  return II;
+}
+
 int
 ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
                              const MachineInstr *DefMI, unsigned DefIdx,
@@ -2341,8 +2421,8 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   if (!ItinData || ItinData->isEmpty())
     return DefMI->mayLoad() ? 3 : 1;
 
-  const MCInstrDesc &DefMCID = DefMI->getDesc();
-  const MCInstrDesc &UseMCID = UseMI->getDesc();
+  const MCInstrDesc *DefMCID = &DefMI->getDesc();
+  const MCInstrDesc *UseMCID = &UseMI->getDesc();
   const MachineOperand &DefMO = DefMI->getOperand(DefIdx);
   if (DefMO.getReg() == ARM::CPSR) {
     if (DefMI->getOpcode() == ARM::FMSTAT) {
@@ -2353,20 +2433,50 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     // CPSR set and branch can be paired in the same cycle.
     if (UseMI->isBranch())
       return 0;
+
+    // Otherwise it takes the instruction latency (generally one).
+    int Latency = getInstrLatency(ItinData, DefMI);
+    // For Thumb2, prefer scheduling CPSR setting instruction close to its uses.
+    // Instructions which are otherwise scheduled between them may incur a code
+    // size penalty (not able to use the CPSR setting 16-bit instructions).
+    if (Latency > 0 && Subtarget.isThumb2())
+      --Latency;
+    return Latency;
   }
 
   unsigned DefAlign = DefMI->hasOneMemOperand()
     ? (*DefMI->memoperands_begin())->getAlignment() : 0;
   unsigned UseAlign = UseMI->hasOneMemOperand()
     ? (*UseMI->memoperands_begin())->getAlignment() : 0;
-  int Latency = getOperandLatency(ItinData, DefMCID, DefIdx, DefAlign,
-                                  UseMCID, UseIdx, UseAlign);
+
+  unsigned DefAdj = 0;
+  if (DefMI->isBundle()) {
+    DefMI = getBundledDefMI(&getRegisterInfo(), DefMI, DefIdx, DefAdj);
+    if (DefMI->isCopyLike() || DefMI->isInsertSubreg() ||
+        DefMI->isRegSequence() || DefMI->isImplicitDef())
+      return 1;
+    DefMCID = &DefMI->getDesc();
+  }
+  unsigned UseAdj = 0;
+  if (UseMI->isBundle()) {
+    UseMI = getBundledUseMI(&getRegisterInfo(), UseMI, UseIdx, UseAdj);
+    UseMCID = &UseMI->getDesc();
+  }
+
+  int Latency = getOperandLatency(ItinData, *DefMCID, DefIdx, DefAlign,
+                                  *UseMCID, UseIdx, UseAlign);
+  int Adj = DefAdj + UseAdj;
+  if (Adj) {
+    Latency -= (int)(DefAdj + UseAdj);
+    if (Latency < 1)
+      return 1;
+  }
 
   if (Latency > 1 &&
       (Subtarget.isCortexA8() || Subtarget.isCortexA9())) {
     // FIXME: Shifter op hack: no shift (i.e. [r +/- r]) or [r + r << 2]
     // variants are one cycle cheaper.
-    switch (DefMCID.getOpcode()) {
+    switch (DefMCID->getOpcode()) {
     default: break;
     case ARM::LDRrs:
     case ARM::LDRBrs: {
@@ -2391,7 +2501,7 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   }
 
   if (DefAlign < 8 && Subtarget.isCortexA9())
-    switch (DefMCID.getOpcode()) {
+    switch (DefMCID->getOpcode()) {
     default: break;
     case ARM::VLD1q8:
     case ARM::VLD1q16:
@@ -2696,6 +2806,17 @@ int ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
 
   if (!ItinData || ItinData->isEmpty())
     return 1;
+
+  if (MI->isBundle()) {
+    int Latency = 0;
+    MachineBasicBlock::const_instr_iterator I = MI;
+    MachineBasicBlock::const_instr_iterator E = MI->getParent()->instr_end();
+    while (++I != E && I->isInsideBundle()) {
+      if (I->getOpcode() != ARM::t2IT)
+        Latency += getInstrLatency(ItinData, I, PredCost);
+    }
+    return Latency;
+  }
 
   const MCInstrDesc &MCID = MI->getDesc();
   unsigned Class = MCID.getSchedClass();

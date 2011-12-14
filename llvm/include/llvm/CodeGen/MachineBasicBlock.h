@@ -194,21 +194,21 @@ public:
       return tmp;
     }
 
-    IterTy getInsnIterator() const {
+    IterTy getInstrIterator() const {
       return MII;
     }    
   };
 
-  typedef Instructions::iterator                                  insn_iterator;
-  typedef Instructions::const_iterator                      const_insn_iterator;
-  typedef std::reverse_iterator<insn_iterator>            reverse_insn_iterator;
+  typedef Instructions::iterator                                 instr_iterator;
+  typedef Instructions::const_iterator                     const_instr_iterator;
+  typedef std::reverse_iterator<instr_iterator>          reverse_instr_iterator;
   typedef
-  std::reverse_iterator<const_insn_iterator>        const_reverse_insn_iterator;
+  std::reverse_iterator<const_instr_iterator>      const_reverse_instr_iterator;
 
   typedef
-  bundle_iterator<MachineInstr,insn_iterator>                          iterator;
+  bundle_iterator<MachineInstr,instr_iterator>                         iterator;
   typedef
-  bundle_iterator<const MachineInstr,const_insn_iterator>        const_iterator;
+  bundle_iterator<const MachineInstr,const_instr_iterator>       const_iterator;
   typedef std::reverse_iterator<const_iterator>          const_reverse_iterator;
   typedef std::reverse_iterator<iterator>                      reverse_iterator;
 
@@ -221,44 +221,44 @@ public:
   const MachineInstr& front() const { return Insts.front(); }
   const MachineInstr& back()  const { return Insts.back(); }
 
-  insn_iterator                insn_begin()       { return Insts.begin();  }
-  const_insn_iterator          insn_begin() const { return Insts.begin();  }
-  insn_iterator                  insn_end()       { return Insts.end();    }
-  const_insn_iterator            insn_end() const { return Insts.end();    }
-  reverse_insn_iterator       insn_rbegin()       { return Insts.rbegin(); }
-  const_reverse_insn_iterator insn_rbegin() const { return Insts.rbegin(); }
-  reverse_insn_iterator       insn_rend  ()       { return Insts.rend();   }
-  const_reverse_insn_iterator insn_rend  () const { return Insts.rend();   }
+  instr_iterator                instr_begin()       { return Insts.begin();  }
+  const_instr_iterator          instr_begin() const { return Insts.begin();  }
+  instr_iterator                  instr_end()       { return Insts.end();    }
+  const_instr_iterator            instr_end() const { return Insts.end();    }
+  reverse_instr_iterator       instr_rbegin()       { return Insts.rbegin(); }
+  const_reverse_instr_iterator instr_rbegin() const { return Insts.rbegin(); }
+  reverse_instr_iterator       instr_rend  ()       { return Insts.rend();   }
+  const_reverse_instr_iterator instr_rend  () const { return Insts.rend();   }
 
   iterator                begin()       { return Insts.begin();  }
   const_iterator          begin() const { return Insts.begin();  }
   iterator                  end()       {
-    insn_iterator II = insn_end();
-    if (II != insn_begin()) {
+    instr_iterator II = instr_end();
+    if (II != instr_begin()) {
       while (II->isInsideBundle())
         --II;
     }
     return II;
   }
   const_iterator            end() const {
-    const_insn_iterator II = insn_end();
-    if (II != insn_begin()) {
+    const_instr_iterator II = instr_end();
+    if (II != instr_begin()) {
       while (II->isInsideBundle())
         --II;
     }
     return II;
   }
   reverse_iterator       rbegin()       {
-    reverse_insn_iterator II = insn_rbegin();
-    if (II != insn_rend()) {
+    reverse_instr_iterator II = instr_rbegin();
+    if (II != instr_rend()) {
       while (II->isInsideBundle())
         ++II;
     }
     return II;
   }
   const_reverse_iterator rbegin() const {
-    const_reverse_insn_iterator II = insn_rbegin();
-    if (II != insn_rend()) {
+    const_reverse_instr_iterator II = instr_rbegin();
+    if (II != instr_rend()) {
       while (II->isInsideBundle())
         ++II;
     }
@@ -442,9 +442,9 @@ public:
   iterator getFirstTerminator();
   const_iterator getFirstTerminator() const;
 
-  /// getFirstInsnTerminator - Same getFirstTerminator but it ignores bundles
-  /// and return an insn_iterator instead.
-  insn_iterator getFirstInsnTerminator();
+  /// getFirstInstrTerminator - Same getFirstTerminator but it ignores bundles
+  /// and return an instr_iterator instead.
+  instr_iterator getFirstInstrTerminator();
 
   /// getLastNonDebugInstr - returns an iterator to the last non-debug
   /// instruction in the basic block, or end()
@@ -464,68 +464,80 @@ public:
   void push_back(MachineInstr *MI) { Insts.push_back(MI); }
 
   template<typename IT>
-  void insert(insn_iterator I, IT S, IT E) {
+  void insert(instr_iterator I, IT S, IT E) {
     Insts.insert(I, S, E);
   }
-  insn_iterator insert(insn_iterator I, MachineInstr *M) {
+  instr_iterator insert(instr_iterator I, MachineInstr *M) {
     return Insts.insert(I, M);
   }
-  insn_iterator insertAfter(insn_iterator I, MachineInstr *M) { 
+  instr_iterator insertAfter(instr_iterator I, MachineInstr *M) { 
     return Insts.insertAfter(I, M); 
   }
 
   template<typename IT>
   void insert(iterator I, IT S, IT E) {
-    Insts.insert(I.getInsnIterator(), S, E);
+    Insts.insert(I.getInstrIterator(), S, E);
   }
   iterator insert(iterator I, MachineInstr *M) {
-    return Insts.insert(I.getInsnIterator(), M);
+    return Insts.insert(I.getInstrIterator(), M);
   }
   iterator insertAfter(iterator I, MachineInstr *M) { 
-    return Insts.insertAfter(I.getInsnIterator(), M); 
+    return Insts.insertAfter(I.getInstrIterator(), M); 
   }
 
-  // erase - Remove the specified element or range from the instruction list.
-  // These functions delete any instructions removed.
-  //
-  insn_iterator erase(insn_iterator I) {
+  /// erase - Remove the specified element or range from the instruction list.
+  /// These functions delete any instructions removed.
+  ///
+  instr_iterator erase(instr_iterator I) {
     return Insts.erase(I);
   }
-  insn_iterator erase(insn_iterator I, insn_iterator E) {
+  instr_iterator erase(instr_iterator I, instr_iterator E) {
     return Insts.erase(I, E);
   }
-
-  iterator erase(iterator I)             {
-    return Insts.erase(I.getInsnIterator());
+  instr_iterator erase_instr(MachineInstr *I) {
+    instr_iterator MII(I);
+    return erase(MII);
   }
+
+  iterator erase(iterator I);
   iterator erase(iterator I, iterator E) {
-    return Insts.erase(I.getInsnIterator(), E.getInsnIterator());
+    return Insts.erase(I.getInstrIterator(), E.getInstrIterator());
+  }
+  iterator erase(MachineInstr *I) {
+    iterator MII(I);
+    return erase(MII);
   }
 
-  iterator erase(MachineInstr *I)        { iterator MII(I); return erase(MII); }
-  MachineInstr *remove(MachineInstr *I)  { return Insts.remove(I); }
-  void clear()                           { Insts.clear(); }
+  /// remove - Remove the instruction from the instruction list. This function
+  /// does not delete the instruction. WARNING: Note, if the specified
+  /// instruction is a bundle this function will remove all the bundled
+  /// instructions as well. It is up to the caller to keep a list of the
+  /// bundled instructions and re-insert them if desired. This function is
+  /// *not recommended* for manipulating instructions with bundled. Use
+  /// splice instead.
+  MachineInstr *remove(MachineInstr *I);
+  void clear() {
+    Insts.clear();
+  }
 
   /// splice - Take an instruction from MBB 'Other' at the position From,
   /// and insert it into this MBB right before 'where'.
-  void splice(insn_iterator where, MachineBasicBlock *Other,
-              insn_iterator From) {
+  void splice(instr_iterator where, MachineBasicBlock *Other,
+              instr_iterator From) {
     Insts.splice(where, Other->Insts, From);
   }
-  void splice(iterator where, MachineBasicBlock *Other, iterator From) {
-    Insts.splice(where.getInsnIterator(), Other->Insts, From.getInsnIterator());
-  }
+  void splice(iterator where, MachineBasicBlock *Other, iterator From);
 
   /// splice - Take a block of instructions from MBB 'Other' in the range [From,
   /// To), and insert them into this MBB right before 'where'.
-  void splice(insn_iterator where, MachineBasicBlock *Other, insn_iterator From,
-              insn_iterator To) {
+  void splice(instr_iterator where, MachineBasicBlock *Other, instr_iterator From,
+              instr_iterator To) {
     Insts.splice(where, Other->Insts, From, To);
   }
   void splice(iterator where, MachineBasicBlock *Other, iterator From,
               iterator To) {
-    Insts.splice(where.getInsnIterator(), Other->Insts,
-                 From.getInsnIterator(), To.getInsnIterator());
+    Insts.splice(where.getInstrIterator(), Other->Insts,
+                 From.getInstrIterator(), To.getInstrIterator());
   }
 
   /// removeFromParent - This method unlinks 'this' from the containing
@@ -552,9 +564,9 @@ public:
 
   /// findDebugLoc - find the next valid DebugLoc starting at MBBI, skipping
   /// any DBG_VALUE instructions.  Return UnknownLoc if there is none.
-  DebugLoc findDebugLoc(insn_iterator MBBI);
+  DebugLoc findDebugLoc(instr_iterator MBBI);
   DebugLoc findDebugLoc(iterator MBBI) {
-    return findDebugLoc(MBBI.getInsnIterator());
+    return findDebugLoc(MBBI.getInstrIterator());
   }
 
   // Debugging methods.

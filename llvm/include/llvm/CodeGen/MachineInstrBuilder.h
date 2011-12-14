@@ -209,6 +209,30 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
   return MachineInstrBuilder(MI).addReg(DestReg, RegState::Define);
 }
 
+inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
+                                   MachineBasicBlock::instr_iterator I,
+                                   DebugLoc DL,
+                                   const MCInstrDesc &MCID,
+                                   unsigned DestReg) {
+  MachineInstr *MI = BB.getParent()->CreateMachineInstr(MCID, DL);
+  BB.insert(I, MI);
+  return MachineInstrBuilder(MI).addReg(DestReg, RegState::Define);
+}
+
+inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
+                                   MachineInstr *I,
+                                   DebugLoc DL,
+                                   const MCInstrDesc &MCID,
+                                   unsigned DestReg) {
+  if (I->isInsideBundle()) {
+    MachineBasicBlock::instr_iterator MII = I;
+    return BuildMI(BB, MII, DL, MCID, DestReg);
+  }
+
+  MachineBasicBlock::iterator MII = I;
+  return BuildMI(BB, MII, DL, MCID, DestReg);
+}
+
 /// BuildMI - This version of the builder inserts the newly-built
 /// instruction before the given position in the given MachineBasicBlock, and
 /// does NOT take a destination register.
@@ -220,6 +244,28 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
   MachineInstr *MI = BB.getParent()->CreateMachineInstr(MCID, DL);
   BB.insert(I, MI);
   return MachineInstrBuilder(MI);
+}
+
+inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
+                                   MachineBasicBlock::instr_iterator I,
+                                   DebugLoc DL,
+                                   const MCInstrDesc &MCID) {
+  MachineInstr *MI = BB.getParent()->CreateMachineInstr(MCID, DL);
+  BB.insert(I, MI);
+  return MachineInstrBuilder(MI);
+}
+
+inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
+                                   MachineInstr *I,
+                                   DebugLoc DL,
+                                   const MCInstrDesc &MCID) {
+  if (I->isInsideBundle()) {
+    MachineBasicBlock::instr_iterator MII = I;
+    return BuildMI(BB, MII, DL, MCID);
+  }
+
+  MachineBasicBlock::iterator MII = I;
+  return BuildMI(BB, MII, DL, MCID);
 }
 
 /// BuildMI - This version of the builder inserts the newly-built

@@ -212,7 +212,8 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   RegClassInfo.runOnMachineFunction(Fn);
 
   // Check for explicit enable/disable of post-ra scheduling.
-  TargetSubtargetInfo::AntiDepBreakMode AntiDepMode = TargetSubtargetInfo::ANTIDEP_NONE;
+  TargetSubtargetInfo::AntiDepBreakMode AntiDepMode =
+    TargetSubtargetInfo::ANTIDEP_NONE;
   SmallVector<TargetRegisterClass*, 4> CriticalPathRCs;
   if (EnablePostRAScheduler.getPosition() > 0) {
     if (!EnablePostRAScheduler)
@@ -271,6 +272,8 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
       }
       I = MI;
       --Count;
+      if (MI->isBundle())
+        Count -= MI->getBundleSize();
     }
     assert(Count == 0 && "Instruction count mismatch!");
     assert((MBB->begin() == Current || CurrentCount != 0) &&

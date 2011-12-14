@@ -750,11 +750,11 @@ void MachineInstr::addMemOperand(MachineFunction &MF,
 
 bool
 MachineInstr::hasProperty(unsigned MCFlag, QueryType Type) const {
-  if (Type == IgnoreBundle || getOpcode() != TargetOpcode::BUNDLE)
+  if (Type == IgnoreBundle || !isBundle())
     return getDesc().getFlags() & (1 << MCFlag);
 
   const MachineBasicBlock *MBB = getParent();
-  MachineBasicBlock::const_insn_iterator MII = *this; ++MII;
+  MachineBasicBlock::const_instr_iterator MII = *this; ++MII;
   while (MII != MBB->end() && MII->isInsideBundle()) {
     if (MII->getDesc().getFlags() & (1 << MCFlag)) {
       if (Type == AnyInBundle)
@@ -776,6 +776,19 @@ bool MachineInstr::isIdenticalTo(const MachineInstr *Other,
   if (Other->getOpcode() != getOpcode() ||
       Other->getNumOperands() != getNumOperands())
     return false;
+
+  if (isBundle()) {
+    // Both instructions are bundles, compare MIs inside the bundle.
+    MachineBasicBlock::const_instr_iterator I1 = *this;
+    MachineBasicBlock::const_instr_iterator E1 = getParent()->instr_end();
+    MachineBasicBlock::const_instr_iterator I2 = *Other;
+    MachineBasicBlock::const_instr_iterator E2= Other->getParent()->instr_end();
+    while (++I1 != E1 && I1->isInsideBundle()) {
+      ++I2;
+      if (I2 == E2 || !I2->isInsideBundle() || !I1->isIdenticalTo(I2, Check))
+        return false;
+    }
+  }
 
   // Check operands to make sure they match.
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
@@ -825,10 +838,11 @@ MachineInstr *MachineInstr::removeFromParent() {
   assert(getParent() && "Not embedded in a basic block!");
 
   // If it's a bundle then remove the MIs inside the bundle as well.
-  if (getOpcode() == TargetOpcode::BUNDLE) {
+  if (isBundle()) {
     MachineBasicBlock *MBB = getParent();
-    MachineBasicBlock::insn_iterator MII = *this; ++MII;
-    while (MII != MBB->end() && MII->isInsideBundle()) {
+    MachineBasicBlock::instr_iterator MII = *this; ++MII;
+    MachineBasicBlock::instr_iterator E = MBB->instr_end();
+    while (MII != E && MII->isInsideBundle()) {
       MachineInstr *MI = &*MII;
       ++MII;
       MBB->remove(MI);
@@ -844,10 +858,11 @@ MachineInstr *MachineInstr::removeFromParent() {
 void MachineInstr::eraseFromParent() {
   assert(getParent() && "Not embedded in a basic block!");
   // If it's a bundle then remove the MIs inside the bundle as well.
-  if (getOpcode() == TargetOpcode::BUNDLE) {
+  if (isBundle()) {
     MachineBasicBlock *MBB = getParent();
-    MachineBasicBlock::insn_iterator MII = *this; ++MII;
-    while (MII != MBB->end() && MII->isInsideBundle()) {
+    MachineBasicBlock::instr_iterator MII = *this; ++MII;
+    MachineBasicBlock::instr_iterator E = MBB->instr_end();
+    while (MII != E && MII->isInsideBundle()) {
       MachineInstr *MI = &*MII;
       ++MII;
       MBB->erase(MI);
@@ -942,6 +957,20 @@ MachineInstr::getRegClassConstraint(unsigned OpIdx,
   return NULL;
 }
 
+/// getBundleSize - Return the number of instructions inside the MI bundle.
+unsigned MachineInstr::getBundleSize() const {
+  assert(isBundle() && "Expecting a bundle");
+
+  MachineBasicBlock::const_instr_iterator I = *this;
+  unsigned Size = 0;
+  while ((++I)->isInsideBundle()) {
+    ++Size;
+  }
+  assert(Size > 1 && "Malformed bundle");
+
+  return Size;
+}
+
 /// findRegisterUseOperandIdx() - Returns the MachineOperand that is a use of
 /// the specific register or -1 if it is not found. It further tightens
 /// the search criteria to a use that kills the register if isKill is true.
@@ -1024,9 +1053,6 @@ MachineInstr::findRegisterDefOperandIdx(unsigned Reg, bool isDead, bool Overlap,
 /// operand list that is used to represent the predicate. It returns -1 if
 /// none is found.
 int MachineInstr::findFirstPredOperandIdx() const {
-  assert(getOpcode() != TargetOpcode::BUNDLE &&
-         "MachineInstr::findFirstPredOperandIdx() can't handle bundles");
-
   // Don't call MCID.findFirstPredOperandIdx() because this variant
   // is sometimes called on an instruction that's not yet complete, and
   // so the number of operands is less than the MCID indicates. In
@@ -1176,8 +1202,7 @@ void MachineInstr::copyKillDeadInfo(const MachineInstr *MI) {
 
 /// copyPredicates - Copies predicate operand(s) from MI.
 void MachineInstr::copyPredicates(const MachineInstr *MI) {
-  assert(getOpcode() != TargetOpcode::BUNDLE &&
-         "MachineInstr::copyPredicates() can't handle bundles");
+  assert(!isBundle() && "MachineInstr::copyPredicates() can't handle bundles");
 
   const MCInstrDesc &MCID = MI->getDesc();
   if (!MCID.isPredicable())

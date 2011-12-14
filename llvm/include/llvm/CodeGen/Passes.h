@@ -238,6 +238,10 @@ namespace llvm {
   ///
   FunctionPass *createExecutionDependencyFixPass(const TargetRegisterClass *RC);
 
+  /// createUnpackMachineBundles - This pass unpack machine instruction bundles.
+  ///
+  FunctionPass *createUnpackMachineBundlesPass();
+
 } // End llvm namespace
 
 #endif

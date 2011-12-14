@@ -69,10 +69,7 @@ public:
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
 
   // Predication support.
-  bool isPredicated(const MachineInstr *MI) const {
-    int PIdx = MI->findFirstPredOperandIdx();
-    return PIdx != -1 && MI->getOperand(PIdx).getImm() != ARMCC::AL;
-  }
+  bool isPredicated(const MachineInstr *MI) const;
 
   ARMCC::CondCodes getPredicate(const MachineInstr *MI) const {
     int PIdx = MI->findFirstPredOperandIdx();
@@ -219,6 +216,8 @@ public:
   void setExecutionDomain(MachineInstr *MI, unsigned Domain) const;
 
 private:
+  unsigned getInstBundleLength(const MachineInstr *MI) const;
+
   int getVLDMDefCycle(const InstrItineraryData *ItinData,
                       const MCInstrDesc &DefMCID,
                       unsigned DefClass,

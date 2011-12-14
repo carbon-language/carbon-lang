@@ -147,10 +147,16 @@ bool ARMBaseTargetMachine::addPreSched2(PassManagerBase &PM) {
 }
 
 bool ARMBaseTargetMachine::addPreEmitPass(PassManagerBase &PM) {
-  if (Subtarget.isThumb2() && !Subtarget.prefers32BitThumb())
-    PM.add(createThumb2SizeReductionPass());
+  if (Subtarget.isThumb2()) {
+    if (!Subtarget.prefers32BitThumb())
+      PM.add(createThumb2SizeReductionPass());
+
+    // Constant island pass work on unbundled instructions.
+    PM.add(createUnpackMachineBundlesPass());
+  }
 
   PM.add(createARMConstantIslandPass());
+
   return true;
 }
 

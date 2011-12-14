@@ -38,9 +38,6 @@ ARMHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
   MachineInstr *MI = SU->getInstr();
 
   if (!MI->isDebugValue()) {
-    if (ITBlockSize && MI != ITBlockMIs[ITBlockSize-1])
-      return Hazard;
-
     // Look for special VMLA / VMLS hazards. A VMUL / VADD / VSUB following
     // a VMLA / VMLS will cause 4 cycle stall.
     const MCInstrDesc &MCID = MI->getDesc();
@@ -76,30 +73,11 @@ ARMHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
 void ARMHazardRecognizer::Reset() {
   LastMI = 0;
   FpMLxStalls = 0;
-  ITBlockSize = 0;
   ScoreboardHazardRecognizer::Reset();
 }
 
 void ARMHazardRecognizer::EmitInstruction(SUnit *SU) {
   MachineInstr *MI = SU->getInstr();
-  unsigned Opcode = MI->getOpcode();
-  if (ITBlockSize) {
-    --ITBlockSize;
-  } else if (Opcode == ARM::t2IT) {
-    unsigned Mask = MI->getOperand(1).getImm();
-    unsigned NumTZ = CountTrailingZeros_32(Mask);
-    assert(NumTZ <= 3 && "Invalid IT mask!");
-    ITBlockSize = 4 - NumTZ;
-    MachineBasicBlock::iterator I = MI;
-    for (unsigned i = 0; i < ITBlockSize; ++i) {
-      // Advance to the next instruction, skipping any dbg_value instructions.
-      do {
-        ++I;
-      } while (I->isDebugValue());
-      ITBlockMIs[ITBlockSize-1-i] = &*I;
-    }
-  }
-
   if (!MI->isDebugValue()) {
     LastMI = MI;
     FpMLxStalls = 0;

@@ -222,14 +222,14 @@ MLxExpansion::ExpandFPMLxInstruction(MachineBasicBlock &MBB, MachineInstr *MI,
   const MCInstrDesc &MCID2 = TII->get(AddSubOpc);
   unsigned TmpReg = MRI->createVirtualRegister(TII->getRegClass(MCID1, 0, TRI));
 
-  MachineInstrBuilder MIB = BuildMI(MBB, *MI, MI->getDebugLoc(), MCID1, TmpReg)
+  MachineInstrBuilder MIB = BuildMI(MBB, MI, MI->getDebugLoc(), MCID1, TmpReg)
     .addReg(Src1Reg, getKillRegState(Src1Kill))
     .addReg(Src2Reg, getKillRegState(Src2Kill));
   if (HasLane)
     MIB.addImm(LaneImm);
   MIB.addImm(Pred).addReg(PredReg);
 
-  MIB = BuildMI(MBB, *MI, MI->getDebugLoc(), MCID2)
+  MIB = BuildMI(MBB, MI, MI->getDebugLoc(), MCID2)
     .addReg(DstReg, getDefRegState(true) | getDeadRegState(DstDead));
 
   if (NegAcc) {

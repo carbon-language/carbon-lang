@@ -1528,9 +1528,9 @@ X86InstrInfo::convertToThreeAddressWithLEA(unsigned MIOpc,
       leaInReg2 = RegInfo.createVirtualRegister(&X86::GR32_NOSPRegClass);
       // Build and insert into an implicit UNDEF value. This is OK because
       // well be shifting and then extracting the lower 16-bits.
-      BuildMI(*MFI, MIB, MI->getDebugLoc(), get(X86::IMPLICIT_DEF), leaInReg2);
+      BuildMI(*MFI, &*MIB, MI->getDebugLoc(), get(X86::IMPLICIT_DEF),leaInReg2);
       InsMI2 =
-        BuildMI(*MFI, MIB, MI->getDebugLoc(), get(TargetOpcode::COPY))
+        BuildMI(*MFI, &*MIB, MI->getDebugLoc(), get(TargetOpcode::COPY))
         .addReg(leaInReg2, RegState::Define, X86::sub_16bit)
         .addReg(Src2, getKillRegState(isKill2));
       addRegReg(MIB, leaInReg, true, leaInReg2, true);

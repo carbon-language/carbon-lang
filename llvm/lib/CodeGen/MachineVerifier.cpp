@@ -279,13 +279,17 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator MFI = MF.begin(), MFE = MF.end();
        MFI!=MFE; ++MFI) {
     visitMachineBasicBlockBefore(MFI);
-    for (MachineBasicBlock::const_iterator MBBI = MFI->begin(),
-           MBBE = MFI->end(); MBBI != MBBE; ++MBBI) {
+    for (MachineBasicBlock::const_instr_iterator MBBI = MFI->instr_begin(),
+           MBBE = MFI->instr_end(); MBBI != MBBE; ++MBBI) {
       if (MBBI->getParent() != MFI) {
         report("Bad instruction parent pointer", MFI);
         *OS << "Instruction: " << *MBBI;
         continue;
       }
+      // Skip BUNDLE instruction for now. FIXME: We should add code to verify
+      // the BUNDLE's specifically.
+      if (MBBI->isBundle())
+        continue;
       visitMachineInstrBefore(MBBI);
       for (unsigned I = 0, E = MBBI->getNumOperands(); I != E; ++I)
         visitMachineOperand(&MBBI->getOperand(I), I);

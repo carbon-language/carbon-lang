@@ -277,8 +277,9 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
           continue;
         if (DefSU != SU &&
             (Kind != SDep::Output || !MO.isDead() ||
-             !DefSU->getInstr()->registerDefIsDead(Reg)))
+             !DefSU->getInstr()->registerDefIsDead(Reg))) {
           DefSU->addPred(SDep(SU, Kind, AOLatency, /*Reg=*/Reg));
+        }
       }
       for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
         std::vector<SUnit *> &MemDefList = Defs[*Alias];
@@ -657,22 +658,16 @@ std::string ScheduleDAGInstrs::getGraphNodeLabel(const SUnit *SU) const {
 
 // EmitSchedule - Emit the machine code in scheduled order.
 MachineBasicBlock *ScheduleDAGInstrs::EmitSchedule() {
-  // For MachineInstr-based scheduling, we're rescheduling the instructions in
-  // the block, so start by removing them from the block.
-  while (Begin != InsertPos) {
-    MachineBasicBlock::iterator I = Begin;
-    ++Begin;
-    BB->remove(I);
-  }
+  Begin = InsertPos;
 
   // If first instruction was a DBG_VALUE then put it back.
   if (FirstDbgValue)
-    BB->insert(InsertPos, FirstDbgValue);
+    BB->splice(InsertPos, BB, FirstDbgValue);
 
   // Then re-insert them according to the given schedule.
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     if (SUnit *SU = Sequence[i])
-      BB->insert(InsertPos, SU->getInstr());
+      BB->splice(InsertPos, BB, SU->getInstr());
     else
       // Null SUnit* is a noop.
       EmitNoop();
@@ -689,7 +684,7 @@ MachineBasicBlock *ScheduleDAGInstrs::EmitSchedule() {
     std::pair<MachineInstr *, MachineInstr *> P = *prior(DI);
     MachineInstr *DbgValue = P.first;
     MachineBasicBlock::iterator OrigPrivMI = P.second;
-    BB->insertAfter(OrigPrivMI, DbgValue);
+    BB->splice(++OrigPrivMI, BB, DbgValue);
   }
   DbgValues.clear();
   FirstDbgValue = NULL;

@@ -121,7 +121,7 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
 bool TargetInstrInfoImpl::findCommutedOpIndices(MachineInstr *MI,
                                                 unsigned &SrcOpIdx1,
                                                 unsigned &SrcOpIdx2) const {
-  assert(MI->getOpcode() != TargetOpcode::BUNDLE &&
+  assert(!MI->isBundle() &&
          "TargetInstrInfoImpl::findCommutedOpIndices() can't handle bundles");
 
   const MCInstrDesc &MCID = MI->getDesc();
@@ -156,7 +156,7 @@ bool TargetInstrInfoImpl::PredicateInstruction(MachineInstr *MI,
                             const SmallVectorImpl<MachineOperand> &Pred) const {
   bool MadeChange = false;
 
-  assert(MI->getOpcode() != TargetOpcode::BUNDLE &&
+  assert(!MI->isBundle() &&
          "TargetInstrInfoImpl::PredicateInstruction() can't handle bundles");
 
   const MCInstrDesc &MCID = MI->getDesc();

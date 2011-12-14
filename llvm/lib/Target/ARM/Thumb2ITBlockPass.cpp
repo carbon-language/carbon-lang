@@ -13,6 +13,7 @@
 #include "Thumb2InstrInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -236,6 +237,9 @@ bool Thumb2ITBlockPass::InsertITInstructions(MachineBasicBlock &MBB) {
 
     // Last instruction in IT block kills ITSTATE.
     LastITMI->findRegisterUseOperand(ARM::ITSTATE)->setIsKill();
+
+    // Finalize the bundle.
+    FinalizeBundle(MBB, InsertPos.getInstrIterator(), LastITMI);
 
     Modified = true;
     ++NumITs;

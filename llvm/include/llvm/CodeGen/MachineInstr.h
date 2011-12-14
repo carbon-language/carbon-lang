@@ -175,6 +175,11 @@ public:
     Flags = flags;
   }
 
+  /// clearFlag - Clear a MI flag.
+  void clearFlag(MIFlag Flag) {
+    Flags &= ~((uint8_t)Flag);
+  }
+
   /// isInsideBundle - Return true if MI is in a bundle (but not the first MI
   /// in a bundle).
   ///
@@ -213,6 +218,15 @@ public:
   /// a bundle, but the next three MIs are.
   bool isInsideBundle() const {
     return getFlag(InsideBundle);
+  }
+
+  /// setIsInsideBundle - Set InsideBundle bit.
+  ///
+  void setIsInsideBundle(bool Val = true) {
+    if (Val)
+      setFlag(InsideBundle);
+    else
+      clearFlag(InsideBundle);
   }
 
   /// getDebugLoc - Returns the debug location id of this MachineInstr.
@@ -589,6 +603,9 @@ public:
   bool isRegSequence() const {
     return getOpcode() == TargetOpcode::REG_SEQUENCE;
   }
+  bool isBundle() const {
+    return getOpcode() == TargetOpcode::BUNDLE;
+  }
   bool isCopy() const {
     return getOpcode() == TargetOpcode::COPY;
   }
@@ -607,6 +624,9 @@ public:
     return isCopy() && getOperand(0).getReg() == getOperand(1).getReg() &&
       getOperand(0).getSubReg() == getOperand(1).getSubReg();
   }
+
+  /// getBundleSize - Return the number of instructions inside the MI bundle.
+  unsigned getBundleSize() const;
 
   /// readsRegister - Return true if the MachineInstr reads the specified
   /// register. If TargetRegisterInfo is passed, then it also checks if there
