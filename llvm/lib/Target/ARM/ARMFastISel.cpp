@@ -1016,6 +1016,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr,
       RC = ARM::GPRRegisterClass;
       break;
     case MVT::f32:
+      if (!Subtarget->hasVFP2()) return false;
       // Unaligned loads need special handling. Floats require word-alignment.
       if (Alignment && Alignment < 4) {
         needVMOV = true;
@@ -1028,6 +1029,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr,
       }
       break;
     case MVT::f64:
+      if (!Subtarget->hasVFP2()) return false;
       // FIXME: Unaligned loads need special handling.  Doublewords require
       // word-alignment.
       if (Alignment && Alignment < 4)
