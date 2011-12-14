@@ -843,7 +843,7 @@ void Parser::ParseThreadSafetyAttribute(IdentifierInfo &AttrName,
   bool ArgExprsOk = true;
   
   // now parse the list of expressions
-  while (1) {
+  while (Tok.isNot(tok::r_paren)) {
     ExprResult ArgExpr(ParseAssignmentExpression());
     if (ArgExpr.isInvalid()) {
       ArgExprsOk = false;
@@ -857,7 +857,7 @@ void Parser::ParseThreadSafetyAttribute(IdentifierInfo &AttrName,
     ConsumeToken(); // Eat the comma, move to the next argument
   }
   // Match the ')'.
-  if (ArgExprsOk && !T.consumeClose()) {
+  if (ArgExprsOk && !T.consumeClose() && ArgExprs.size() > 0) {
     Attrs.addNew(&AttrName, AttrNameLoc, 0, AttrNameLoc, 0, SourceLocation(),
                  ArgExprs.take(), ArgExprs.size());
   }
