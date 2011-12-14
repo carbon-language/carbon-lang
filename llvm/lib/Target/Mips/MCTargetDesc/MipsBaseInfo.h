@@ -56,6 +56,13 @@ namespace MipsII {
     // Dynamic TLS).
     MO_TLSGD,
 
+    /// MO_TLSLDM - Represents the offset into the global offset table at which
+    // the module ID and TSL block offset reside during execution (Local
+    // Dynamic TLS).
+    MO_TLSLDM,
+    MO_DTPREL_HI,
+    MO_DTPREL_LO,
+
     /// MO_GOTTPREL - Represents the offset from the thread pointer (Initial
     // Exec TLS).
     MO_GOTTPREL,

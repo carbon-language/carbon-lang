@@ -44,3 +44,22 @@ entry:
 ; STATIC:   addu    $[[R1:[0-9]+]], $3, $[[R0]]
 ; STATIC:   lw      $2, 0($[[R1]])
 }
+
+@f3.i = internal thread_local unnamed_addr global i32 1, align 4
+
+define i32 @f3() nounwind {
+entry:
+; CHECK: f3:
+
+; PIC:   addiu   $4, $gp, %tlsldm(f3.i)
+; PIC:   jalr    $25
+; PIC:   lui     $[[R0:[0-9]+]], %dtprel_hi(f3.i)
+; PIC:   addu    $[[R1:[0-9]+]], $[[R0]], $2
+; PIC:   addiu   ${{[0-9]+}}, $[[R1]], %dtprel_lo(f3.i)
+
+  %0 = load i32* @f3.i, align 4
+  %inc = add nsw i32 %0, 1
+  store i32 %inc, i32* @f3.i, align 4
+  ret i32 %inc
+}
+

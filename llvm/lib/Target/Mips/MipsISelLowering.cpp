@@ -1540,9 +1540,9 @@ SDValue MipsTargetLowering::LowerBlockAddress(SDValue Op,
 SDValue MipsTargetLowering::
 LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
 {
-  // If the relocation model is PIC, use the General Dynamic TLS Model,
-  // otherwise use the Initial Exec or Local Exec TLS Model.
-  // TODO: implement Local Dynamic TLS model
+  // If the relocation model is PIC, use the General Dynamic TLS Model or
+  // Local Dynamic TLS model, otherwise use the Initial Exec or
+  // Local Exec TLS Model.
 
   GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(Op);
   DebugLoc dl = GA->getDebugLoc();
@@ -1551,8 +1551,9 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
 
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
     // General Dynamic TLS Model
-    SDValue TGA = DAG.getTargetGlobalAddress(GV, dl, PtrVT,
-                                             0, MipsII::MO_TLSGD);
+    bool LocalDynamic = GV->hasInternalLinkage();
+    unsigned Flag = LocalDynamic ? MipsII::MO_TLSLDM :MipsII::MO_TLSGD;
+    SDValue TGA = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0, Flag);
     SDValue Argument = DAG.getNode(MipsISD::Wrapper, dl, PtrVT, TGA);
     unsigned PtrSize = PtrVT.getSizeInBits();
     IntegerType *PtrTy = Type::getIntNTy(*DAG.getContext(), PtrSize);
@@ -1570,7 +1571,19 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
                   false, false, false, false, 0, CallingConv::C, false, true,
                   TlsGetAddr, Args, DAG, dl);
 
-    return CallResult.first;
+    SDValue Ret = CallResult.first;
+
+    if (!LocalDynamic)
+      return Ret;
+
+    SDValue TGAHi = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
+                                               MipsII::MO_DTPREL_HI);
+    SDValue Hi = DAG.getNode(MipsISD::Hi, dl, PtrVT, TGAHi);
+    SDValue TGALo = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
+                                               MipsII::MO_DTPREL_LO);
+    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, PtrVT, TGALo);
+    SDValue Add = DAG.getNode(ISD::ADD, dl, PtrVT, Hi, Ret);
+    return DAG.getNode(ISD::ADD, dl, PtrVT, Add, Lo);
   }
 
   SDValue Offset;

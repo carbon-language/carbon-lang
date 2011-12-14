@@ -101,6 +101,9 @@ static void printExpr(const MCExpr *Expr, raw_ostream &OS) {
   case MCSymbolRefExpr::VK_Mips_ABS_HI:   OS << "%hi(";     break;
   case MCSymbolRefExpr::VK_Mips_ABS_LO:   OS << "%lo(";     break;
   case MCSymbolRefExpr::VK_Mips_TLSGD:    OS << "%tlsgd(";  break;
+  case MCSymbolRefExpr::VK_Mips_TLSLDM:   OS << "%tlsldm(";  break;
+  case MCSymbolRefExpr::VK_Mips_DTPREL_HI:OS << "%dtprel_hi(";  break;
+  case MCSymbolRefExpr::VK_Mips_DTPREL_LO:OS << "%dtprel_lo(";  break;
   case MCSymbolRefExpr::VK_Mips_GOTTPREL: OS << "%gottprel("; break;
   case MCSymbolRefExpr::VK_Mips_TPREL_HI: OS << "%tprel_hi("; break;
   case MCSymbolRefExpr::VK_Mips_TPREL_LO: OS << "%tprel_lo("; break;
