@@ -179,9 +179,13 @@ static bool IsPotentialUse(const Value *Op) {
         Arg->hasNestAttr() ||
         Arg->hasStructRetAttr())
       return false;
-  // Only consider values with pointer types, and not function pointers.
+  // Only consider values with pointer types.
+  // It seemes intuitive to exclude function pointer types as well, since
+  // functions are never reference-counted, however clang occasionally
+  // bitcasts reference-counted pointers to function-pointer type
+  // temporarily.
   PointerType *Ty = dyn_cast<PointerType>(Op->getType());
-  if (!Ty || isa<FunctionType>(Ty->getElementType()))
+  if (!Ty)
     return false;
   // Conservatively assume anything else is a potential use.
   return true;

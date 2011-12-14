@@ -1528,9 +1528,11 @@ define void @test52(i8** %zz, i8** %pp) {
 
 ; Like test52, but the pointer has function type, so it's assumed to
 ; be not reference counted.
+; Oops. That's wrong. Clang sometimes uses function types gratuitously.
+; See rdar://10551239.
 
 ; CHECK: define void @test53(
-; CHECK-NOT: @objc_
+; CHECK: @objc_
 ; CHECK: }
 define void @test53(void ()** %zz, i8** %pp) {
   %p = load i8** %pp
