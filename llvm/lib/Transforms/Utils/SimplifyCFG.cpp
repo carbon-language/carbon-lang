@@ -257,7 +257,7 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
   // Okay, it looks like the instruction IS in the "condition".  Check to
   // see if it's a cheap instruction to unconditionally compute, and if it
   // only uses stuff defined outside of the condition.  If so, hoist it out.
-  if (!I->isSafeToSpeculativelyExecute())
+  if (!isSafeToSpeculativelyExecute(I))
     return false;
 
   unsigned Cost = 0;
@@ -1487,7 +1487,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   Instruction *BonusInst = 0;
   if (&*FrontIt != Cond &&
       FrontIt->hasOneUse() && *FrontIt->use_begin() == Cond &&
-      FrontIt->isSafeToSpeculativelyExecute()) {
+      isSafeToSpeculativelyExecute(FrontIt)) {
     BonusInst = &*FrontIt;
     ++FrontIt;
     

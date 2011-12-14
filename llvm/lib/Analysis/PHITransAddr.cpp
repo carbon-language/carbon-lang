@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/PHITransAddr.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/Dominators.h"
@@ -27,7 +28,7 @@ static bool CanPHITrans(Instruction *Inst) {
     return true;
 
   if (isa<CastInst>(Inst) &&
-      Inst->isSafeToSpeculativelyExecute())
+      isSafeToSpeculativelyExecute(Inst))
     return true;
 
   if (Inst->getOpcode() == Instruction::Add &&
@@ -186,7 +187,7 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
   // operands need to be phi translated, and if so, reconstruct it.
 
   if (CastInst *Cast = dyn_cast<CastInst>(Inst)) {
-    if (!Cast->isSafeToSpeculativelyExecute()) return 0;
+    if (!isSafeToSpeculativelyExecute(Cast)) return 0;
     Value *PHIIn = PHITranslateSubExpr(Cast->getOperand(0), CurBB, PredBB, DT);
     if (PHIIn == 0) return 0;
     if (PHIIn == Cast->getOperand(0))
@@ -381,7 +382,7 @@ InsertPHITranslatedSubExpr(Value *InVal, BasicBlock *CurBB,
 
   // Handle cast of PHI translatable value.
   if (CastInst *Cast = dyn_cast<CastInst>(Inst)) {
-    if (!Cast->isSafeToSpeculativelyExecute()) return 0;
+    if (!isSafeToSpeculativelyExecute(Cast)) return 0;
     Value *OpVal = InsertPHITranslatedSubExpr(Cast->getOperand(0),
                                               CurBB, PredBB, DT, NewInsts);
     if (OpVal == 0) return 0;

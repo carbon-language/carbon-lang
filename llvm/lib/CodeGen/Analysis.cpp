@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/Analysis.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
@@ -234,7 +235,7 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
   // If I will have a chain, make sure no other instruction that will have a
   // chain interposes between I and the return.
   if (I->mayHaveSideEffects() || I->mayReadFromMemory() ||
-      !I->isSafeToSpeculativelyExecute())
+      !isSafeToSpeculativelyExecute(I))
     for (BasicBlock::const_iterator BBI = prior(prior(ExitBB->end())); ;
          --BBI) {
       if (&*BBI == I)
@@ -243,7 +244,7 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
       if (isa<DbgInfoIntrinsic>(BBI))
         continue;
       if (BBI->mayHaveSideEffects() || BBI->mayReadFromMemory() ||
-          !BBI->isSafeToSpeculativelyExecute())
+          !isSafeToSpeculativelyExecute(BBI))
         return false;
     }
 

@@ -19,6 +19,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopIterator.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
@@ -95,7 +96,7 @@ bool Loop::makeLoopInvariant(Instruction *I, bool &Changed,
   // Test if the value is already loop-invariant.
   if (isLoopInvariant(I))
     return true;
-  if (!I->isSafeToSpeculativelyExecute())
+  if (!isSafeToSpeculativelyExecute(I))
     return false;
   if (I->mayReadFromMemory())
     return false;

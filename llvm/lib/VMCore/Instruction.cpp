@@ -391,59 +391,6 @@ bool Instruction::isCommutative(unsigned op) {
   }
 }
 
-bool Instruction::isSafeToSpeculativelyExecute() const {
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    if (Constant *C = dyn_cast<Constant>(getOperand(i)))
-      if (C->canTrap())
-        return false;
-
-  switch (getOpcode()) {
-  default:
-    return true;
-  case UDiv:
-  case URem: {
-    // x / y is undefined if y == 0, but calcuations like x / 3 are safe.
-    ConstantInt *Op = dyn_cast<ConstantInt>(getOperand(1));
-    return Op && !Op->isNullValue();
-  }
-  case SDiv:
-  case SRem: {
-    // x / y is undefined if y == 0, and might be undefined if y == -1,
-    // but calcuations like x / 3 are safe.
-    ConstantInt *Op = dyn_cast<ConstantInt>(getOperand(1));
-    return Op && !Op->isNullValue() && !Op->isAllOnesValue();
-  }
-  case Load: {
-    const LoadInst *LI = cast<LoadInst>(this);
-    if (!LI->isUnordered())
-      return false;
-    return LI->getPointerOperand()->isDereferenceablePointer();
-  }
-  case Call:
-    return false; // The called function could have undefined behavior or
-                  // side-effects.
-                  // FIXME: We should special-case some intrinsics (bswap,
-                  // overflow-checking arithmetic, etc.)
-  case VAArg:
-  case Alloca:
-  case Invoke:
-  case PHI:
-  case Store:
-  case Ret:
-  case Br:
-  case IndirectBr:
-  case Switch:
-  case Unwind:
-  case Unreachable:
-  case Fence:
-  case LandingPad:
-  case AtomicRMW:
-  case AtomicCmpXchg:
-  case Resume:
-    return false; // Misc instructions which have effects
-  }
-}
-
 Instruction *Instruction::clone() const {
   Instruction *New = clone_impl();
   New->SubclassOptionalData = SubclassOptionalData;

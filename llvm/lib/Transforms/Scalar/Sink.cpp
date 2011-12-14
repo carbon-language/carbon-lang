@@ -18,6 +18,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CFG.h"
@@ -240,7 +241,7 @@ bool Sinking::SinkInstruction(Instruction *Inst,
   if (SuccToSinkTo->getUniquePredecessor() != ParentBlock) {
     // We cannot sink a load across a critical edge - there may be stores in
     // other code paths.
-    if (!Inst->isSafeToSpeculativelyExecute()) {
+    if (!isSafeToSpeculativelyExecute(Inst)) {
       DEBUG(dbgs() << " *** PUNTING: Wont sink load along critical edge.\n");
       return false;
     }

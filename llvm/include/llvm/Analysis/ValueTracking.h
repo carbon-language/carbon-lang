@@ -156,6 +156,27 @@ namespace llvm {
   /// are lifetime markers.
   bool onlyUsedByLifetimeMarkers(const Value *V);
 
+  /// isSafeToSpeculativelyExecute - Return true if the instruction does not
+  /// have any effects besides calculating the result and does not have
+  /// undefined behavior.
+  ///
+  /// This method never returns true for an instruction that returns true for
+  /// mayHaveSideEffects; however, this method also does some other checks in
+  /// addition. It checks for undefined behavior, like dividing by zero or
+  /// loading from an invalid pointer (but not for undefined results, like a
+  /// shift with a shift amount larger than the width of the result). It checks
+  /// for malloc and alloca because speculatively executing them might cause a
+  /// memory leak. It also returns false for instructions related to control
+  /// flow, specifically terminators and PHI nodes.
+  ///
+  /// This method only looks at the instruction itself and its operands, so if
+  /// this method returns true, it is safe to move the instruction as long as
+  /// the correct dominance relationships for the operands and users hold.
+  /// However, this method can return true for instructions that read memory;
+  /// for such instructions, moving them may change the resulting value.
+  bool isSafeToSpeculativelyExecute(const Instruction *Inst,
+                                    const TargetData *TD = 0);
+
 } // end namespace llvm
 
 #endif
