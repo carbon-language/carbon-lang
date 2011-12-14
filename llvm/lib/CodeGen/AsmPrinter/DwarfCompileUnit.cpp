@@ -988,7 +988,7 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
   unsigned VK = SP.getVirtuality();
   if (VK) {
-    addUInt(SPDie, dwarf::DW_AT_virtuality, dwarf::DW_FORM_flag, VK);
+    addUInt(SPDie, dwarf::DW_AT_virtuality, dwarf::DW_FORM_data1, VK);
     DIEBlock *Block = getDIEBlock();
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
     addUInt(Block, 0, dwarf::DW_FORM_udata, SP.getVirtualIndex());
@@ -1408,7 +1408,7 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
     addUInt(MemberDie, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
             dwarf::DW_ACCESS_public);
   if (DT.isVirtual())
-    addUInt(MemberDie, dwarf::DW_AT_virtuality, dwarf::DW_FORM_flag,
+    addUInt(MemberDie, dwarf::DW_AT_virtuality, dwarf::DW_FORM_data1,
             dwarf::DW_VIRTUALITY_virtual);
 
   // Objective-C properties.
