@@ -3605,13 +3605,13 @@ Decl *ASTNodeImporter::VisitObjCClassDecl(ObjCClassDecl *D) {
   
   // Import the location of this declaration.
   SourceLocation Loc = Importer.Import(D->getLocation());
-  ObjCClassDecl::ObjCClassRef *From = D->getForwardDecl();
   ObjCInterfaceDecl *ToIface
-    = cast_or_null<ObjCInterfaceDecl>(Importer.Import(From->getInterface()));
+    = cast_or_null<ObjCInterfaceDecl>(
+        Importer.Import(D->getForwardInterfaceDecl()));
   ObjCClassDecl *ToClass = ObjCClassDecl::Create(Importer.getToContext(), DC,
-                                        Loc,
-                                        ToIface,
-                                        Importer.Import(From->getLocation()));
+                             Loc,
+                             ToIface,
+                             Importer.Import(D->getNameLoc()));
     
   ToClass->setLexicalDeclContext(LexicalDC);
   LexicalDC->addDeclInternal(ToClass);

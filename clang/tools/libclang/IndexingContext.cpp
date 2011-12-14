@@ -300,9 +300,8 @@ bool IndexingContext::handleTypedefName(const TypedefNameDecl *D) {
 }
 
 bool IndexingContext::handleObjCClass(const ObjCClassDecl *D) {
-  const ObjCClassDecl::ObjCClassRef *Ref = D->getForwardDecl();
-  ObjCInterfaceDecl *IFaceD = Ref->getInterface();
-  SourceLocation Loc = Ref->getLocation();
+  ObjCInterfaceDecl *IFaceD = D->getForwardInterfaceDecl();
+  SourceLocation Loc = D->getNameLoc();
   bool isRedeclaration = IFaceD->getLocation() != Loc;
  
   // For @class forward declarations, suppress them the same way as references.

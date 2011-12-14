@@ -1021,33 +1021,26 @@ public:
 /// @class NSCursor, NSImage, NSPasteboard, NSWindow;
 ///
 class ObjCClassDecl : public Decl {
-public:
-  class ObjCClassRef {
-    ObjCInterfaceDecl *ID;
-    SourceLocation L;
-  public:
-    ObjCClassRef(ObjCInterfaceDecl *d, SourceLocation l) : ID(d), L(l) {}
-    SourceLocation getLocation() const { return L; }
-    ObjCInterfaceDecl *getInterface() const { return ID; }
-  };
-private:
-  ObjCClassRef *ForwardDecl;
-
+  ObjCInterfaceDecl *Interface;
+  SourceLocation InterfaceLoc;
+  
   ObjCClassDecl(DeclContext *DC, SourceLocation L,
-                ObjCInterfaceDecl *const Elt, const SourceLocation Loc,
-                ASTContext &C);
+                ObjCInterfaceDecl *Interface, SourceLocation InterfaceLoc);
+  
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
+  
 public:
   static ObjCClassDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                               ObjCInterfaceDecl *const Elt = 0,
-                               const SourceLocation Locs = SourceLocation());
+                               ObjCInterfaceDecl *Interface = 0,
+                               SourceLocation InterfaceLoc = SourceLocation());
 
-  ObjCInterfaceDecl *getForwardInterfaceDecl() {
-    return ForwardDecl->getInterface();
+  ObjCInterfaceDecl *getForwardInterfaceDecl() const {
+    return Interface;
   }
-  ObjCClassRef *getForwardDecl() { return ForwardDecl; }
-  const ObjCClassRef *getForwardDecl() const { return ForwardDecl; }
-  void setClass(ASTContext &C, ObjCInterfaceDecl*const Cls,
-                const SourceLocation Locs);
+
+  /// \brief Retrieve the location of the class name.
+  SourceLocation getNameLoc() const { return InterfaceLoc; }
 
   virtual SourceRange getSourceRange() const;
 

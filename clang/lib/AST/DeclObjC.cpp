@@ -942,31 +942,21 @@ void ObjCProtocolDecl::completedForwardDecl() {
 //===----------------------------------------------------------------------===//
 
 ObjCClassDecl::ObjCClassDecl(DeclContext *DC, SourceLocation L,
-                             ObjCInterfaceDecl *const Elt,
-                             const SourceLocation Loc,
-                             ASTContext &C)
-  : Decl(ObjCClass, DC, L) {
-  setClass(C, Elt, Loc);
+                             ObjCInterfaceDecl *Interface, 
+                             SourceLocation InterfaceLoc)
+  : Decl(ObjCClass, DC, L), Interface(Interface), InterfaceLoc(InterfaceLoc)
+{
 }
 
 ObjCClassDecl *ObjCClassDecl::Create(ASTContext &C, DeclContext *DC,
                                      SourceLocation L,
-                                     ObjCInterfaceDecl *const Elt,
-                                     const SourceLocation Loc) {
-  return new (C) ObjCClassDecl(DC, L, Elt, Loc, C);
+                                     ObjCInterfaceDecl *Interface,
+                                     SourceLocation InterfaceLoc) {
+  return new (C) ObjCClassDecl(DC, L, Interface, InterfaceLoc);
 }
 
-void ObjCClassDecl::setClass(ASTContext &C, ObjCInterfaceDecl*const Cls,
-                             const SourceLocation Loc) {
-    
-  ForwardDecl = (ObjCClassRef*) C.Allocate(sizeof(ObjCClassRef),
-                                           llvm::alignOf<ObjCClassRef>());
-  new (ForwardDecl) ObjCClassRef(Cls, Loc);
-}
-    
 SourceRange ObjCClassDecl::getSourceRange() const {
-  // FIXME: We should include the semicolon
-  return SourceRange(getLocation(), ForwardDecl->getLocation());
+  return SourceRange(getLocation(), InterfaceLoc);
 }
 
 //===----------------------------------------------------------------------===//

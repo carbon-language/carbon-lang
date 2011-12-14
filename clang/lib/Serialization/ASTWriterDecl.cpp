@@ -526,8 +526,8 @@ void ASTDeclWriter::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *D) {
 
 void ASTDeclWriter::VisitObjCClassDecl(ObjCClassDecl *D) {
   VisitDecl(D);
-  Writer.AddDeclRef(D->getForwardInterfaceDecl(), Record);
-  Writer.AddSourceLocation(D->getForwardDecl()->getLocation(), Record);
+  Writer.AddDeclRef(D->Interface, Record);
+  Writer.AddSourceLocation(D->InterfaceLoc, Record);
   Code = serialization::DECL_OBJC_CLASS;
 }
 

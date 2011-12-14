@@ -629,9 +629,8 @@ void ASTDeclReader::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *FD) {
 
 void ASTDeclReader::VisitObjCClassDecl(ObjCClassDecl *CD) {
   VisitDecl(CD);
-  ObjCInterfaceDecl *ClassRef = ReadDeclAs<ObjCInterfaceDecl>(Record, Idx);
-  SourceLocation SLoc = ReadSourceLocation(Record, Idx);
-  CD->setClass(Reader.getContext(), ClassRef, SLoc);
+  CD->Interface = ReadDeclAs<ObjCInterfaceDecl>(Record, Idx);
+  CD->InterfaceLoc = ReadSourceLocation(Record, Idx);
 }
 
 void ASTDeclReader::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *FPD) {

@@ -1065,7 +1065,7 @@ bool CursorVisitor::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {
 
 bool CursorVisitor::VisitObjCClassDecl(ObjCClassDecl *D) {
   if (Visit(MakeCursorObjCClassRef(D->getForwardInterfaceDecl(), 
-                                   D->getForwardDecl()->getLocation(), TU)))
+                                   D->getNameLoc(), TU)))
       return true;
   return false;
 }
