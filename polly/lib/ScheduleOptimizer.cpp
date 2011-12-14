@@ -436,6 +436,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   isl_schedule *schedule;
 
   isl_options_set_schedule_max_constant_term(S.getIslCtx(), CONSTANT_BOUND);
+  isl_options_set_schedule_maximize_band_depth(S.getIslCtx(), 1);
   schedule  = isl_union_set_compute_schedule(domain, validity, proximity);
 
   DEBUG(dbgs() << "Computed schedule: ");
