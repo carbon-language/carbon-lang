@@ -90,7 +90,11 @@ namespace {
     bool AllUsesDominatedByBlock(unsigned Reg, MachineBasicBlock *MBB,
                                  MachineBasicBlock *DefMBB,
                                  bool &BreakPHIEdge, bool &LocalUse) const;
-    MachineBasicBlock *FindSuccToSinkTo(MachineInstr *MI, bool &BreakPHIEdge);
+    MachineBasicBlock *FindSuccToSinkTo(MachineInstr *MI, MachineBasicBlock *MBB,
+               bool &BreakPHIEdge);
+    bool isProfitableToSinkTo(unsigned Reg, MachineInstr *MI, 
+                              MachineBasicBlock *MBB,
+                              MachineBasicBlock *SuccToSinkTo);
 
     bool PerformTrivialForwardCoalescing(MachineInstr *MI,
                                          MachineBasicBlock *MBB);
@@ -399,18 +403,76 @@ static void collectDebugValues(MachineInstr *MI,
   }
 }
 
+/// isPostDominatedBy - Return true if A is post dominated by B.
+static bool isPostDominatedBy(MachineBasicBlock *A, MachineBasicBlock *B) {
+
+  // FIXME - Use real post dominator.
+  if (A->succ_size() != 2)
+    return false;
+  MachineBasicBlock::succ_iterator I = A->succ_begin();
+  if (B == *I)
+    ++I;
+  MachineBasicBlock *OtherSuccBlock = *I;
+  if (OtherSuccBlock->succ_size() != 1 ||
+      *(OtherSuccBlock->succ_begin()) != B)
+    return false;
+
+  return true;
+}
+
+/// isProfitableToSinkTo - Return true if it is profitable to sink MI.
+bool MachineSinking::isProfitableToSinkTo(unsigned Reg, MachineInstr *MI, 
+                                          MachineBasicBlock *MBB,
+                                          MachineBasicBlock *SuccToSinkTo) {
+  assert (MI && "Invalid MachineInstr!");
+  assert (SuccToSinkTo && "Invalid SinkTo Candidate BB");
+
+  if (MBB == SuccToSinkTo)
+    return false;
+
+  // It is profitable if SuccToSinkTo does not post dominate current block.
+  if (!isPostDominatedBy(MBB, SuccToSinkTo))
+      return true;
+
+  // Check if only use in post dominated block is PHI instruction.
+  bool NonPHIUse = false;
+  for (MachineRegisterInfo::use_nodbg_iterator
+         I = MRI->use_nodbg_begin(Reg), E = MRI->use_nodbg_end();
+       I != E; ++I) {
+    MachineInstr *UseInst = &*I;
+    MachineBasicBlock *UseBlock = UseInst->getParent();
+    if (UseBlock == SuccToSinkTo && !UseInst->isPHI())
+      NonPHIUse = true;
+  }
+  if (!NonPHIUse)
+    return true;
+
+  // If SuccToSinkTo post dominates then also it may be profitable if MI
+  // can further profitably sinked into another block in next round.
+  bool BreakPHIEdge = false;
+  // FIXME - If finding successor is compile time expensive then catch results.
+  if (MachineBasicBlock *MBB2 = FindSuccToSinkTo(MI, SuccToSinkTo, BreakPHIEdge))
+    return isProfitableToSinkTo(Reg, MI, SuccToSinkTo, MBB2);
+
+  // If SuccToSinkTo is final destination and it is a post dominator of current
+  // block then it is not profitable to sink MI into SuccToSinkTo block.
+  return false;
+}
+
 /// FindSuccToSinkTo - Find a successor to sink this instruction to.
 MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
-						    bool &BreakPHIEdge) {
+                                   MachineBasicBlock *MBB,
+                                   bool &BreakPHIEdge) {
+
+  assert (MI && "Invalid MachineInstr!");
+  assert (MBB && "Invalid MachineBasicBlock!");
 
   // Loop over all the operands of the specified instruction.  If there is
   // anything we can't handle, bail out.
-  MachineBasicBlock *ParentBlock = MI->getParent();
 
   // SuccToSinkTo - This is the successor to sink this instruction to, once we
   // decide.
   MachineBasicBlock *SuccToSinkTo = 0;
-
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg()) continue;  // Ignore non-register operands.
@@ -469,7 +531,7 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
         // If a previous operand picked a block to sink to, then this operand
         // must be sinkable to the same block.
         bool LocalUse = false;
-        if (!AllUsesDominatedByBlock(Reg, SuccToSinkTo, ParentBlock,
+        if (!AllUsesDominatedByBlock(Reg, SuccToSinkTo, MBB,
                                      BreakPHIEdge, LocalUse))
           return NULL;
 
@@ -478,11 +540,11 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
 
       // Otherwise, we should look at all the successors and decide which one
       // we should sink to.
-      for (MachineBasicBlock::succ_iterator SI = ParentBlock->succ_begin(),
-           E = ParentBlock->succ_end(); SI != E; ++SI) {
-	MachineBasicBlock *SuccBlock = *SI;
+      for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
+           E = MBB->succ_end(); SI != E; ++SI) {
+        MachineBasicBlock *SuccBlock = *SI;
         bool LocalUse = false;
-        if (AllUsesDominatedByBlock(Reg, SuccBlock, ParentBlock,
+        if (AllUsesDominatedByBlock(Reg, SuccBlock, MBB,
                                     BreakPHIEdge, LocalUse)) {
           SuccToSinkTo = SuccBlock;
           break;
@@ -495,12 +557,14 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
       // If we couldn't find a block to sink to, ignore this instruction.
       if (SuccToSinkTo == 0)
         return NULL;
+      else if (!isProfitableToSinkTo(Reg, MI, MBB, SuccToSinkTo))
+        return NULL;
     }
   }
 
   // It is not possible to sink an instruction into its own block.  This can
   // happen with loops.
-  if (ParentBlock == SuccToSinkTo)
+  if (MBB == SuccToSinkTo)
     return NULL;
 
   // It's not safe to sink instructions to EH landing pad. Control flow into
@@ -532,7 +596,8 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   // and z and only shrink the live range of x.
 
   bool BreakPHIEdge = false;
-  MachineBasicBlock *SuccToSinkTo = FindSuccToSinkTo(MI, BreakPHIEdge);
+  MachineBasicBlock *ParentBlock = MI->getParent();
+  MachineBasicBlock *SuccToSinkTo = FindSuccToSinkTo(MI, ParentBlock, BreakPHIEdge);
 
   // If there are no outputs, it must have side-effects.
   if (SuccToSinkTo == 0)
@@ -552,8 +617,6 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   }
 
   DEBUG(dbgs() << "Sink instr " << *MI << "\tinto block " << *SuccToSinkTo);
-
-  MachineBasicBlock *ParentBlock = MI->getParent();
 
   // If the block has multiple predecessors, this would introduce computation on
   // a path that it doesn't already exist.  We could split the critical edge,
