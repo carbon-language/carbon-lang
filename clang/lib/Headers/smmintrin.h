@@ -239,7 +239,7 @@ _mm_testnzc_si128(__m128i __M, __m128i __V)
 
 #define _mm_test_all_ones(V) _mm_testc_si128((V), _mm_cmpeq_epi32((V), (V)))
 #define _mm_test_mix_ones_zeros(M, V) _mm_testnzc_si128((M), (V))
-#define _mm_test_all_zeros(M, V) _mm_testz_si128 ((V), (V))
+#define _mm_test_all_zeros(M, V) _mm_testz_si128 ((M), (V))
 
 /* SSE4 64-bit Packed Integer Comparisons.  */
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
