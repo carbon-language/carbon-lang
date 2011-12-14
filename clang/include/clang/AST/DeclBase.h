@@ -589,12 +589,6 @@ public:
 
   /// \brief Whether this particular Decl is a canonical one.
   bool isCanonicalDecl() const { return getCanonicalDecl() == this; }
-
-  /// \brief Determine whether this declaration declares the same entity as
-  /// the other declaration.
-  bool isSameEntityAs(const Decl *Other) const {
-    return getCanonicalDecl() == Other->getCanonicalDecl();
-  }
   
 protected:
   /// \brief Returns the next redeclaration or itself if this is the only decl.
@@ -766,6 +760,17 @@ protected:
   ASTMutationListener *getASTMutationListener() const;
 };
 
+/// \brief Determine whether two declarations declare the same entity.
+inline bool declaresSameEntity(const Decl *D1, const Decl *D2) {
+  if (D1 == D2)
+    return true;
+  
+  if (!D1 || !D2)
+    return false;
+  
+  return D1->getCanonicalDecl() == D2->getCanonicalDecl();
+}
+  
 /// PrettyStackTraceDecl - If a crash occurs, indicate that it happened when
 /// doing something to a specific decl.
 class PrettyStackTraceDecl : public llvm::PrettyStackTraceEntry {
