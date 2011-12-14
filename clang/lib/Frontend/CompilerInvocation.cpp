@@ -406,7 +406,6 @@ static const char *getActionName(frontend::ActionKind Kind) {
   case frontend::DumpTokens:             return "-dump-tokens";
   case frontend::EmitAssembly:           return "-S";
   case frontend::EmitBC:                 return "-emit-llvm-bc";
-  case frontend::EmitBCVerify:           return "-emit-llvm-bc-verify";
   case frontend::EmitHTML:               return "-emit-html";
   case frontend::EmitLLVM:               return "-emit-llvm";
   case frontend::EmitLLVMOnly:           return "-emit-llvm-only";
@@ -1270,8 +1269,6 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       Opts.ProgramAction = frontend::EmitAssembly; break;
     case OPT_emit_llvm_bc:
       Opts.ProgramAction = frontend::EmitBC; break;
-    case OPT_emit_llvm_bc_verify:
-      Opts.ProgramAction = frontend::EmitBCVerify; break;
     case OPT_emit_html:
       Opts.ProgramAction = frontend::EmitHTML; break;
     case OPT_emit_llvm:

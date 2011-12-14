@@ -72,11 +72,6 @@ public:
   EmitBCAction(llvm::LLVMContext *_VMContext = 0);
 };
 
-class EmitBCVerifyAction : public CodeGenAction {
-public:
-  EmitBCVerifyAction(llvm::LLVMContext *_VMContext = 0);
-};
-
 class EmitLLVMAction : public CodeGenAction {
 public:
   EmitLLVMAction(llvm::LLVMContext *_VMContext = 0);

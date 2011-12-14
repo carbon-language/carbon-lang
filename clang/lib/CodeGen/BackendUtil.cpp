@@ -373,10 +373,7 @@ void EmitAssemblyHelper::EmitAssembly(BackendAction Action, raw_ostream *OS) {
     break;
 
   case Backend_EmitBC:
-  case Backend_EmitBCVerify:
     getPerModulePasses()->add(createBitcodeWriterPass(*OS));
-    if (Action == Backend_EmitBCVerify)
-      getPerModulePasses()->add(createBitcodeVerifierPass(*OS));
     break;
 
   case Backend_EmitLL:
