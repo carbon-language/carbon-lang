@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -analyze -analyzer-checker=experimental.security.taint,debug.TaintTest -verify %s
+// RUN: %clang_cc1  -analyze -analyzer-checker=experimental.security.taint,debug.TaintTest %s
 
 #include <stdarg.h>
 
