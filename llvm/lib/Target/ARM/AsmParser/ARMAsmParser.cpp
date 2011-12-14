@@ -1116,9 +1116,29 @@ public:
     return VectorList.Count == 1 && VectorList.LaneIndex <= 7;
   }
 
+  bool isVecListOneDHWordIndexed() const {
+    if (Kind != k_VectorListIndexed) return false;
+    return VectorList.Count == 1 && VectorList.LaneIndex <= 3;
+  }
+
+  bool isVecListOneDWordIndexed() const {
+    if (Kind != k_VectorListIndexed) return false;
+    return VectorList.Count == 1 && VectorList.LaneIndex <= 1;
+  }
+
   bool isVecListTwoDByteIndexed() const {
     if (Kind != k_VectorListIndexed) return false;
     return VectorList.Count == 2 && VectorList.LaneIndex <= 7;
+  }
+
+  bool isVecListTwoDHWordIndexed() const {
+    if (Kind != k_VectorListIndexed) return false;
+    return VectorList.Count == 2 && VectorList.LaneIndex <= 3;
+  }
+
+  bool isVecListTwoDWordIndexed() const {
+    if (Kind != k_VectorListIndexed) return false;
+    return VectorList.Count == 2 && VectorList.LaneIndex <= 1;
   }
 
   bool isVectorIndex8() const {
