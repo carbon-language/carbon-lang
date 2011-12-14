@@ -252,7 +252,7 @@ def so_imm_neg : Operand<i32>, PatLeaf<(imm), [{
 
 // Note: this pattern doesn't require an encoder method and such, as it's
 // only used on aliases (Pat<> and InstAlias<>). The actual encoding
-// is handled by the destination instructions, which use t2_so_imm.
+// is handled by the destination instructions, which use so_imm.
 def so_imm_not_asmoperand : AsmOperandClass { let Name = "ARMSOImmNot"; }
 def so_imm_not : Operand<i32>, PatLeaf<(imm), [{
     return ARM_AM::getSOImmVal(~(uint32_t)N->getZExtValue()) != -1;
@@ -5091,11 +5091,11 @@ def : ARMInstAlias<"add${s}${p} $Rd, $Rn, $imm",
                  (SUBri GPR:$Rd, GPR:$Rn, so_imm_neg:$imm, pred:$p, cc_out:$s)>;
 def : ARMInstAlias<"add${s}${p} $Rd, $imm",
                  (SUBri GPR:$Rd, GPR:$Rd, so_imm_neg:$imm, pred:$p, cc_out:$s)>;
-// Same for CMP <--> CMN via t2_so_imm_neg
+// Same for CMP <--> CMN via so_imm_neg
 def : ARMInstAlias<"cmp${p} $Rd, $imm",
-                   (CMNzri rGPR:$Rd, t2_so_imm_neg:$imm, pred:$p)>;
+                   (CMNzri rGPR:$Rd, so_imm_neg:$imm, pred:$p)>;
 def : ARMInstAlias<"cmn${p} $Rd, $imm",
-                   (CMPri rGPR:$Rd, t2_so_imm_neg:$imm, pred:$p)>;
+                   (CMPri rGPR:$Rd, so_imm_neg:$imm, pred:$p)>;
 
 // The shifter forms of the MOV instruction are aliased to the ASR, LSL,
 // LSR, ROR, and RRX instructions.
