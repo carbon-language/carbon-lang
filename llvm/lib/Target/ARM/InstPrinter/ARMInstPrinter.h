@@ -137,6 +137,8 @@ public:
                                   raw_ostream &O);
   void printVectorListTwoAllLanes(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O);
+  void printVectorListTwoSpaced(const MCInst *MI, unsigned OpNum,
+                                raw_ostream &O);
 };
 
 } // end namespace llvm

@@ -116,7 +116,7 @@ def VecListTwoQAsmOperand : AsmOperandClass {
   let ParserMethod = "parseVectorList";
   let RenderMethod = "addVecListOperands";
 }
-def VecListTwoQ : RegisterOperand<DPR, "printVectorListTwo"> {
+def VecListTwoQ : RegisterOperand<DPR, "printVectorListTwoSpaced"> {
   let ParserMatchClass = VecListTwoQAsmOperand;
 }
 
@@ -1497,31 +1497,28 @@ def VST1d64QPseudoWB_fixed    : VSTQQWBPseudo<IIC_VST1x4u>;
 def VST1d64QPseudoWB_register : VSTQQWBPseudo<IIC_VST1x4u>;
 
 //   VST2     : Vector Store (multiple 2-element structures)
-class VST2D<bits<4> op11_8, bits<4> op7_4, string Dt>
-  : NLdSt<0, 0b00, op11_8, op7_4, (outs),
-          (ins addrmode6:$Rn, DPR:$Vd, DPR:$src2),
-          IIC_VST2, "vst2", Dt, "\\{$Vd, $src2\\}, $Rn", "", []> {
+class VST2D<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy>
+  : NLdSt<0, 0b00, op11_8, op7_4, (outs), (ins addrmode6:$Rn, VdTy:$Vd),
+          IIC_VST2, "vst2", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVSTInstruction";
 }
-class VST2Q<bits<4> op7_4, string Dt>
-  : NLdSt<0, 0b00, 0b0011, op7_4, (outs),
-          (ins addrmode6:$Rn, DPR:$Vd, DPR:$src2, DPR:$src3, DPR:$src4),
-          IIC_VST2x2, "vst2", Dt, "\\{$Vd, $src2, $src3, $src4\\}, $Rn",
-          "", []> {
+class VST2Q<bits<4> op7_4, string Dt, RegisterOperand VdTy>
+  : NLdSt<0, 0b00, 0b0011, op7_4, (outs), (ins addrmode6:$Rn, VdTy:$Vd),
+          IIC_VST2x2, "vst2", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVSTInstruction";
 }
 
-def  VST2d8   : VST2D<0b1000, {0,0,?,?}, "8">;
-def  VST2d16  : VST2D<0b1000, {0,1,?,?}, "16">;
-def  VST2d32  : VST2D<0b1000, {1,0,?,?}, "32">;
+def  VST2d8   : VST2D<0b1000, {0,0,?,?}, "8",  VecListTwoD>;
+def  VST2d16  : VST2D<0b1000, {0,1,?,?}, "16", VecListTwoD>;
+def  VST2d32  : VST2D<0b1000, {1,0,?,?}, "32", VecListTwoD>;
 
-def  VST2q8   : VST2Q<{0,0,?,?}, "8">;
-def  VST2q16  : VST2Q<{0,1,?,?}, "16">;
-def  VST2q32  : VST2Q<{1,0,?,?}, "32">;
+def  VST2q8   : VST2Q<{0,0,?,?}, "8",  VecListFourD>;
+def  VST2q16  : VST2Q<{0,1,?,?}, "16", VecListFourD>;
+def  VST2q32  : VST2Q<{1,0,?,?}, "32", VecListFourD>;
 
 def  VST2d8Pseudo  : VSTQPseudo<IIC_VST2>;
 def  VST2d16Pseudo : VSTQPseudo<IIC_VST2>;
@@ -1532,27 +1529,24 @@ def  VST2q16Pseudo : VSTQQPseudo<IIC_VST2x2>;
 def  VST2q32Pseudo : VSTQQPseudo<IIC_VST2x2>;
 
 // ...with address register writeback:
-class VST2DWB<bits<4> op11_8, bits<4> op7_4, string Dt>
+class VST2DWB<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy>
   : NLdSt<0, 0b00, op11_8, op7_4, (outs GPR:$wb),
-          (ins addrmode6:$Rn, am6offset:$Rm, DPR:$Vd, DPR:$src2),
-          IIC_VST2u, "vst2", Dt, "\\{$Vd, $src2\\}, $Rn$Rm",
-          "$Rn.addr = $wb", []> {
+          (ins addrmode6:$Rn, am6offset:$Rm, VdTy:$Vd),
+          IIC_VST2u, "vst2", Dt, "$Vd, $Rn$Rm", "$Rn.addr = $wb", []> {
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVSTInstruction";
 }
 class VST2QWB<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0011, op7_4, (outs GPR:$wb),
-          (ins addrmode6:$Rn, am6offset:$Rm,
-           DPR:$Vd, DPR:$src2, DPR:$src3, DPR:$src4), IIC_VST2x2u,
-          "vst2", Dt, "\\{$Vd, $src2, $src3, $src4\\}, $Rn$Rm",
-          "$Rn.addr = $wb", []> {
+          (ins addrmode6:$Rn, am6offset:$Rm, VecListFourD:$Vd), IIC_VST2x2u,
+          "vst2", Dt, "$Vd, $Rn$Rm", "$Rn.addr = $wb", []> {
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVSTInstruction";
 }
 
-def VST2d8_UPD  : VST2DWB<0b1000, {0,0,?,?}, "8">;
-def VST2d16_UPD : VST2DWB<0b1000, {0,1,?,?}, "16">;
-def VST2d32_UPD : VST2DWB<0b1000, {1,0,?,?}, "32">;
+def VST2d8_UPD  : VST2DWB<0b1000, {0,0,?,?}, "8",  VecListTwoD>;
+def VST2d16_UPD : VST2DWB<0b1000, {0,1,?,?}, "16", VecListTwoD>;
+def VST2d32_UPD : VST2DWB<0b1000, {1,0,?,?}, "32", VecListTwoD>;
 
 def VST2q8_UPD  : VST2QWB<{0,0,?,?}, "8">;
 def VST2q16_UPD : VST2QWB<{0,1,?,?}, "16">;
@@ -1567,12 +1561,12 @@ def VST2q16Pseudo_UPD : VSTQQWBPseudo<IIC_VST2x2u>;
 def VST2q32Pseudo_UPD : VSTQQWBPseudo<IIC_VST2x2u>;
 
 // ...with double-spaced registers
-def VST2b8      : VST2D<0b1001, {0,0,?,?}, "8">;
-def VST2b16     : VST2D<0b1001, {0,1,?,?}, "16">;
-def VST2b32     : VST2D<0b1001, {1,0,?,?}, "32">;
-def VST2b8_UPD  : VST2DWB<0b1001, {0,0,?,?}, "8">;
-def VST2b16_UPD : VST2DWB<0b1001, {0,1,?,?}, "16">;
-def VST2b32_UPD : VST2DWB<0b1001, {1,0,?,?}, "32">;
+def VST2b8      : VST2D<0b1001, {0,0,?,?}, "8",  VecListTwoQ>;
+def VST2b16     : VST2D<0b1001, {0,1,?,?}, "16", VecListTwoQ>;
+def VST2b32     : VST2D<0b1001, {1,0,?,?}, "32", VecListTwoQ>;
+def VST2b8_UPD  : VST2DWB<0b1001, {0,0,?,?}, "8",  VecListTwoQ>;
+def VST2b16_UPD : VST2DWB<0b1001, {0,1,?,?}, "16", VecListTwoQ>;
+def VST2b32_UPD : VST2DWB<0b1001, {1,0,?,?}, "32", VecListTwoQ>;
 
 //   VST3     : Vector Store (multiple 3-element structures)
 class VST3D<bits<4> op11_8, bits<4> op7_4, string Dt>

@@ -1045,3 +1045,13 @@ void ARMInstPrinter::printVectorListTwoAllLanes(const MCInst *MI,
   O << "{" << getRegisterName(MI->getOperand(OpNum).getReg()) << "[], "
     << getRegisterName(MI->getOperand(OpNum).getReg() + 1) << "[]}";
 }
+
+void ARMInstPrinter::printVectorListTwoSpaced(const MCInst *MI, unsigned OpNum,
+                                              raw_ostream &O) {
+  // Normally, it's not safe to use register enum values directly with
+  // addition to get the next register, but for VFP registers, the
+  // sort order is guaranteed because they're all of the form D<n>.
+  O << "{" << getRegisterName(MI->getOperand(OpNum).getReg()) << ", "
+    << getRegisterName(MI->getOperand(OpNum).getReg() + 2) << "}";
+}
+

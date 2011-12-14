@@ -31,19 +31,19 @@
 @ CHECK: vst1.64 {d16, d17, d18, d19}, [r3], r2 @ encoding: [0xc2,0x02,0x43,0xf4]
 
 
-@	vst2.8	{d16, d17}, [r0, :64]
-@	vst2.16	{d16, d17}, [r0, :128]
-@	vst2.32	{d16, d17}, [r0]
-@	vst2.8	{d16, d17, d18, d19}, [r0, :64]
-@	vst2.16	{d16, d17, d18, d19}, [r0, :128]
-@	vst2.32	{d16, d17, d18, d19}, [r0, :256]
+	vst2.8	{d16, d17}, [r0, :64]
+	vst2.16	{d16, d17}, [r0, :128]
+	vst2.32	{d16, d17}, [r0]
+	vst2.8	{d16, d17, d18, d19}, [r0, :64]
+	vst2.16	{d16, d17, d18, d19}, [r0, :128]
+	vst2.32	{d16, d17, d18, d19}, [r0, :256]
 
-@ FIXME: vst2.8	{d16, d17}, [r0, :64]   @ encoding: [0x1f,0x08,0x40,0xf4]
-@ FIXME: vst2.16 {d16, d17}, [r0, :128] @ encoding: [0x6f,0x08,0x40,0xf4]
-@ FIXME: vst2.32 {d16, d17}, [r0]       @ encoding: [0x8f,0x08,0x40,0xf4]
-@ FIXME: vst2.8	{d16, d17, d18, d19}, [r0, :64] @ encoding: [0x1f,0x03,0x40,0xf4]
-@ FIXME: vst2.16 {d16, d17, d18, d19}, [r0, :128] @ encoding: [0x6f,0x03,0x40,0xf4]
-@ FIXME: vst2.32 {d16, d17, d18, d19}, [r0, :256] @ encoding: [0xbf,0x03,0x40,0xf4]
+@ CHECK: vst2.8	{d16, d17}, [r0, :64]   @ encoding: [0x1f,0x08,0x40,0xf4]
+@ CHECK: vst2.16 {d16, d17}, [r0, :128] @ encoding: [0x6f,0x08,0x40,0xf4]
+@ CHECK: vst2.32 {d16, d17}, [r0]       @ encoding: [0x8f,0x08,0x40,0xf4]
+@ CHECK: vst2.8	{d16, d17, d18, d19}, [r0, :64] @ encoding: [0x1f,0x03,0x40,0xf4]
+@ CHECK: vst2.16 {d16, d17, d18, d19}, [r0, :128] @ encoding: [0x6f,0x03,0x40,0xf4]
+@ CHECK: vst2.32 {d16, d17, d18, d19}, [r0, :256] @ encoding: [0xbf,0x03,0x40,0xf4]
 
 
 @	vst3.8	{d16, d17, d18}, [r0, :64]
