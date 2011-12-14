@@ -1,8 +1,6 @@
 // RUN: %clang -ccc-host-triple i386-apple-darwin9 -miphoneos-version-min=3.0 -arch armv7 -flto -S -o - %s | FileCheck %s
 
-// CHECK: @f0
-// CHECK-NOT: ssp
-// CHECK: ) {
+// CHECK: @f0() ssp
 // CHECK: @__f0_block_invoke
 // CHECK: void @f1
 // CHECK-NOT: msgSend_fixup_alloc

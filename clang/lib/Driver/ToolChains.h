@@ -359,7 +359,7 @@ public:
   virtual unsigned GetDefaultStackProtectorLevel(bool KernelOrKext) const {
     // Stack protectors default to on for user code on 10.5,
     // and for everything in 10.6 and beyond
-    return !isTargetIPhoneOS() &&
+    return isTargetIPhoneOS() ||
       (!isMacosxVersionLT(10, 6) ||
          (!isMacosxVersionLT(10, 5) && !KernelOrKext));
   }
