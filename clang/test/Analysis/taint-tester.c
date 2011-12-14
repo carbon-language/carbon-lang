@@ -1,5 +1,7 @@
 // RUN: %clang_cc1  -analyze -analyzer-checker=experimental.security.taint,debug.TaintTest -verify %s
 
+#include <stdarg.h>
+
 int scanf(const char *restrict format, ...);
 int getchar(void);
 
@@ -84,14 +86,10 @@ void getenvTest(char *home) {
     }
 }
 
-struct _IO_FILE {
-  unsigned fakeField1;
-  char fakeField2;
-};
-typedef struct _IO_FILE FILE;
-extern struct _IO_FILE *stdin;
-extern struct _IO_FILE *stdout;
-extern struct _IO_FILE *stderr;
+typedef struct _FILE FILE;
+extern FILE *stdin;
+extern FILE *stdout;
+extern FILE *stderr;
 int fscanf(FILE *restrict stream, const char *restrict format, ...);
 int fprintf(FILE *stream, const char *format, ...);
 int fclose(FILE *stream);
@@ -102,13 +100,22 @@ int fscanfTest(void) {
   char s[80];
   int t;
 
+  // Check if stdin is treated as tainted.
+  fscanf(stdin, "%s %d", s, &t);
+  // Note, here, s is not tainted, but the data s points to is tainted.
+  char *ts = s;
+  char tss = s[0]; // expected-warning 1 {{tainted}}
+  int tt = t; // expected-warning 1 {{tainted}}
   if((fp=fopen("test", "w")) == 0) // expected-warning 3 {{tainted}}
     return 1;
-  // TODO: Have to mark stdin as tainted.
-  fscanf(stdin, "%s%d", s, &t);
-  fprintf(fp, "%s %d", s, t); // expected-warning 1 {{tainted}}
+  fprintf(fp, "%s %d", s, t); // expected-warning 2 {{tainted}}
   fclose(fp); // expected-warning 1 {{tainted}}
 
+  // Check if we propagate taint from stdin when it's used in an assignment.
+  FILE *pfstd = stdin;
+  fscanf(pfstd, "%s %d", s, &t); // TODO: This should be tainted as well.
+
+  // Test fscanf and fopen.
   if((fp=fopen("test","r")) == 0) // expected-warning 3 {{tainted}}
     return 1;
   fscanf(fp, "%s%d", s, &t); // expected-warning 1 {{tainted}}

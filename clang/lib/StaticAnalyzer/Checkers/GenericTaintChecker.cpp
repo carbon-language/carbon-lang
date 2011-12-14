@@ -24,7 +24,8 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class GenericTaintChecker : public Checker< check::PostStmt<CallExpr> > {
+class GenericTaintChecker : public Checker< check::PostStmt<CallExpr>,
+                                            check::PostStmt<DeclRefExpr> > {
 
   mutable llvm::OwningPtr<BugType> BT;
   void initBugType() const;
@@ -42,8 +43,12 @@ class GenericTaintChecker : public Checker< check::PostStmt<CallExpr> > {
   void processFscanf(const CallExpr *CE, CheckerContext &C) const;
   void processRetTaint(const CallExpr *CE, CheckerContext &C) const;
 
+  bool isStdin(const Expr *E, CheckerContext &C) const;
+  bool isStdin(const DeclRefExpr *E, CheckerContext &C) const;
+
 public:
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
+  void checkPostStmt(const DeclRefExpr *DRE, CheckerContext &C) const;
 };
 }
 
@@ -77,18 +82,28 @@ void GenericTaintChecker::checkPostStmt(const CallExpr *CE,
   // Check and evaluate the call.
   if (evalFunction)
     (this->*evalFunction)(CE, C);
+}
 
+void GenericTaintChecker::checkPostStmt(const DeclRefExpr *DRE,
+                                       CheckerContext &C) const {
+  if (isStdin(DRE, C)) {
+    const ProgramState *NewState = C.getState()->addTaint(DRE);
+    C.addTransition(NewState);
+  }
 }
 
 SymbolRef GenericTaintChecker::getPointedToSymbol(CheckerContext &C,
                                                   const Expr* Arg,
                                                   bool IssueWarning) const {
   const ProgramState *State = C.getState();
-  SVal AddrVal = State->getSVal(Arg->IgnoreParenCasts());
+  SVal AddrVal = State->getSVal(Arg->IgnoreParens());
 
-  // TODO: Taint is not going to propagate?
-  if (AddrVal.isUnknownOrUndef())
+  // TODO: Taint is not going to propagate? Should we ever peel off the casts
+  // IgnoreParenImpCasts()?
+  if (AddrVal.isUnknownOrUndef()) {
+    assert(State->getSVal(Arg->IgnoreParenImpCasts()).isUnknownOrUndef());
     return 0;
+  }
 
   Loc *AddrLoc = dyn_cast<Loc>(&AddrVal);
 
@@ -110,7 +125,6 @@ SymbolRef GenericTaintChecker::getPointedToSymbol(CheckerContext &C,
   SVal Val = State->getSVal(*AddrLoc);
   return Val.getAsSymbol();
 }
-
 
 void GenericTaintChecker::processScanf(const CallExpr *CE,
                                        CheckerContext &C) const {
@@ -137,7 +151,7 @@ void GenericTaintChecker::processFscanf(const CallExpr *CE,
   assert(CE->getNumArgs() >= 2);
 
   // Check is the file descriptor is tainted.
-  if (!State->isTainted(CE->getArg(0)))
+  if (!State->isTainted(CE->getArg(0)) && !isStdin(CE->getArg(0), C))
     return;
 
   // All arguments except for the first two should get taint.
@@ -157,6 +171,30 @@ void GenericTaintChecker::processRetTaint(const CallExpr *CE,
   const ProgramState *NewState = C.getState()->addTaint(CE);
   C.addTransition(NewState);
 }
+
+bool GenericTaintChecker::isStdin(const Expr *E,
+                                  CheckerContext &C) const {
+  if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E->IgnoreParenCasts()))
+    return isStdin(DR, C);
+  return false;
+}
+
+bool GenericTaintChecker::isStdin(const DeclRefExpr *DR,
+                                  CheckerContext &C) const {
+  const VarDecl *D = dyn_cast_or_null<VarDecl>(DR->getDecl());
+  if (!D)
+    return false;
+
+  D = D->getCanonicalDecl();
+  if ((D->getName().find("stdin") != StringRef::npos) && D->isExternC())
+    if (const PointerType * PtrTy =
+          dyn_cast<PointerType>(D->getType().getTypePtr()))
+      if (PtrTy->getPointeeType() == C.getASTContext().getFILEType())
+        return true;
+
+  return false;
+}
+
 
 void ento::registerGenericTaintChecker(CheckerManager &mgr) {
   mgr.registerChecker<GenericTaintChecker>();
