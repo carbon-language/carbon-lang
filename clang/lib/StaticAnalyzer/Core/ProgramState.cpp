@@ -658,10 +658,16 @@ const ProgramState* ProgramState::addTaint(const Stmt *S,
     return addTaint(Sym, Kind);
 
   const MemRegion *R = getSVal(S).getAsRegion();
-  if (const SymbolicRegion *SR = dyn_cast_or_null<SymbolicRegion>(R))
-    return addTaint(SR->getSymbol(), Kind);
+  addTaint(R, Kind);
 
   // Cannot add taint, so just return the state.
+  return this;
+}
+
+const ProgramState* ProgramState::addTaint(const MemRegion *R,
+                                           TaintTagType Kind) const {
+  if (const SymbolicRegion *SR = dyn_cast_or_null<SymbolicRegion>(R))
+    return addTaint(SR->getSymbol(), Kind);
   return this;
 }
 
