@@ -1201,123 +1201,136 @@ void ARMConstantIslands::CreateNewWater(unsigned CPUserIndex,
   CPUser &U = CPUsers[CPUserIndex];
   MachineInstr *UserMI = U.MI;
   MachineInstr *CPEMI  = U.CPEMI;
+  unsigned CPELogAlign = getCPELogAlign(CPEMI);
   MachineBasicBlock *UserMBB = UserMI->getParent();
   const BasicBlockInfo &UserBBI = BBInfo[UserMBB->getNumber()];
-  unsigned OffsetOfNextBlock = UserBBI.postOffset();
 
   // If the block does not end in an unconditional branch already, and if the
   // end of the block is within range, make new water there.  (The addition
   // below is for the unconditional branch we will be adding: 4 bytes on ARM +
   // Thumb2, 2 on Thumb1.  Possible Thumb1 alignment padding is allowed for
   // inside OffsetIsInRange.
-  if (BBHasFallthrough(UserMBB) &&
-      OffsetIsInRange(UserOffset, OffsetOfNextBlock + (isThumb1 ? 2: 4), U)) {
-    DEBUG(dbgs() << "Split at end of block\n");
-    if (&UserMBB->back() == UserMI)
-      assert(BBHasFallthrough(UserMBB) && "Expected a fallthrough BB!");
-    NewMBB = llvm::next(MachineFunction::iterator(UserMBB));
-    // Add an unconditional branch from UserMBB to fallthrough block.
-    // Record it for branch lengthening; this new branch will not get out of
-    // range, but if the preceding conditional branch is out of range, the
-    // targets will be exchanged, and the altered branch may be out of
-    // range, so the machinery has to know about it.
-    int UncondBr = isThumb ? ((isThumb2) ? ARM::t2B : ARM::tB) : ARM::B;
-    if (!isThumb)
-      BuildMI(UserMBB, DebugLoc(), TII->get(UncondBr)).addMBB(NewMBB);
-    else
-      BuildMI(UserMBB, DebugLoc(), TII->get(UncondBr)).addMBB(NewMBB)
-              .addImm(ARMCC::AL).addReg(0);
-    unsigned MaxDisp = getUnconditionalBrDisp(UncondBr);
-    ImmBranches.push_back(ImmBranch(&UserMBB->back(),
-                          MaxDisp, false, UncondBr));
-    int delta = isThumb1 ? 2 : 4;
-    BBInfo[UserMBB->getNumber()].Size += delta;
-    AdjustBBOffsetsAfter(UserMBB);
-  } else {
-    // What a big block.  Find a place within the block to split it.
-    // This is a little tricky on Thumb1 since instructions are 2 bytes
-    // and constant pool entries are 4 bytes: if instruction I references
-    // island CPE, and instruction I+1 references CPE', it will
-    // not work well to put CPE as far forward as possible, since then
-    // CPE' cannot immediately follow it (that location is 2 bytes
-    // farther away from I+1 than CPE was from I) and we'd need to create
-    // a new island.  So, we make a first guess, then walk through the
-    // instructions between the one currently being looked at and the
-    // possible insertion point, and make sure any other instructions
-    // that reference CPEs will be able to use the same island area;
-    // if not, we back up the insertion point.
+  if (BBHasFallthrough(UserMBB)) {
+    // Size of branch to insert.
+    unsigned Delta = isThumb1 ? 2 : 4;
+    // End of UserBlock after adding a branch.
+    unsigned UserBlockEnd = UserBBI.postOffset() + Delta;
+    // Compute the offset where the CPE will begin.
+    unsigned CPEOffset = WorstCaseAlign(UserBlockEnd, CPELogAlign,
+                                        UserBBI.postKnownBits());
 
-    // Try to split the block so it's fully aligned.  Compute the latest split
-    // point where we can add a 4-byte branch instruction, and then
-    // WorstCaseAlign to LogAlign.
-    unsigned LogAlign = UserMBB->getParent()->getAlignment();
-    unsigned KnownBits = UserBBI.internalKnownBits();
-    unsigned UPad = UnknownPadding(LogAlign, KnownBits);
-    unsigned BaseInsertOffset = UserOffset + U.MaxDisp;
-    DEBUG(dbgs() << format("Split in middle of big block before %#x",
-                           BaseInsertOffset));
-
-    // Account for alignment and unknown padding.
-    BaseInsertOffset &= ~((1u << LogAlign) - 1);
-    BaseInsertOffset -= UPad;
-
-    // The 4 in the following is for the unconditional branch we'll be
-    // inserting (allows for long branch on Thumb1).  Alignment of the
-    // island is handled inside OffsetIsInRange.
-    BaseInsertOffset -= 4;
-
-    DEBUG(dbgs() << format(", adjusted to %#x", BaseInsertOffset)
-                 << " la=" << LogAlign
-                 << " kb=" << KnownBits
-                 << " up=" << UPad << '\n');
-
-    // This could point off the end of the block if we've already got
-    // constant pool entries following this block; only the last one is
-    // in the water list.  Back past any possible branches (allow for a
-    // conditional and a maximally long unconditional).
-    if (BaseInsertOffset >= BBInfo[UserMBB->getNumber()+1].Offset)
-      BaseInsertOffset = BBInfo[UserMBB->getNumber()+1].Offset -
-                              (isThumb1 ? 6 : 8);
-    unsigned EndInsertOffset =
-      WorstCaseAlign(BaseInsertOffset + 4, LogAlign, KnownBits) +
-      CPEMI->getOperand(2).getImm();
-    MachineBasicBlock::iterator MI = UserMI;
-    ++MI;
-    unsigned CPUIndex = CPUserIndex+1;
-    unsigned NumCPUsers = CPUsers.size();
-    MachineInstr *LastIT = 0;
-    for (unsigned Offset = UserOffset+TII->GetInstSizeInBytes(UserMI);
-         Offset < BaseInsertOffset;
-         Offset += TII->GetInstSizeInBytes(MI),
-           MI = llvm::next(MI)) {
-      if (CPUIndex < NumCPUsers && CPUsers[CPUIndex].MI == MI) {
-        CPUser &U = CPUsers[CPUIndex];
-        if (!OffsetIsInRange(Offset, EndInsertOffset, U)) {
-          BaseInsertOffset -= 1u << LogAlign;
-          EndInsertOffset  -= 1u << LogAlign;
-        }
-        // This is overly conservative, as we don't account for CPEMIs
-        // being reused within the block, but it doesn't matter much.
-        EndInsertOffset += CPUsers[CPUIndex].CPEMI->getOperand(2).getImm();
-        CPUIndex++;
-      }
-
-      // Remember the last IT instruction.
-      if (MI->getOpcode() == ARM::t2IT)
-        LastIT = MI;
+    if (OffsetIsInRange(UserOffset, CPEOffset, U)) {
+      DEBUG(dbgs() << "Split at end of BB#" << UserMBB->getNumber()
+            << format(", expected CPE offset %#x\n", CPEOffset));
+      NewMBB = llvm::next(MachineFunction::iterator(UserMBB));
+      // Add an unconditional branch from UserMBB to fallthrough block.  Record
+      // it for branch lengthening; this new branch will not get out of range,
+      // but if the preceding conditional branch is out of range, the targets
+      // will be exchanged, and the altered branch may be out of range, so the
+      // machinery has to know about it.
+      int UncondBr = isThumb ? ((isThumb2) ? ARM::t2B : ARM::tB) : ARM::B;
+      if (!isThumb)
+        BuildMI(UserMBB, DebugLoc(), TII->get(UncondBr)).addMBB(NewMBB);
+      else
+        BuildMI(UserMBB, DebugLoc(), TII->get(UncondBr)).addMBB(NewMBB)
+          .addImm(ARMCC::AL).addReg(0);
+      unsigned MaxDisp = getUnconditionalBrDisp(UncondBr);
+      ImmBranches.push_back(ImmBranch(&UserMBB->back(),
+                                      MaxDisp, false, UncondBr));
+      BBInfo[UserMBB->getNumber()].Size += Delta;
+      AdjustBBOffsetsAfter(UserMBB);
+      return;
     }
-
-    --MI;
-
-    // Avoid splitting an IT block.
-    if (LastIT) {
-      unsigned PredReg = 0;
-      ARMCC::CondCodes CC = llvm::getITInstrPredicate(MI, PredReg);
-      if (CC != ARMCC::AL)
-        MI = LastIT;
-    }
-    NewMBB = SplitBlockBeforeInstr(MI);
   }
+
+  // What a big block.  Find a place within the block to split it.  This is a
+  // little tricky on Thumb1 since instructions are 2 bytes and constant pool
+  // entries are 4 bytes: if instruction I references island CPE, and
+  // instruction I+1 references CPE', it will not work well to put CPE as far
+  // forward as possible, since then CPE' cannot immediately follow it (that
+  // location is 2 bytes farther away from I+1 than CPE was from I) and we'd
+  // need to create a new island.  So, we make a first guess, then walk through
+  // the instructions between the one currently being looked at and the
+  // possible insertion point, and make sure any other instructions that
+  // reference CPEs will be able to use the same island area; if not, we back
+  // up the insertion point.
+
+  // Try to split the block so it's fully aligned.  Compute the latest split
+  // point where we can add a 4-byte branch instruction, and then
+  // WorstCaseAlign to LogAlign.
+  unsigned LogAlign = MF->getAlignment();
+  assert(LogAlign >= CPELogAlign && "Over-aligned constant pool entry");
+  unsigned KnownBits = UserBBI.internalKnownBits();
+  unsigned UPad = UnknownPadding(LogAlign, KnownBits);
+  unsigned BaseInsertOffset = UserOffset + U.MaxDisp;
+  DEBUG(dbgs() << format("Split in middle of big block before %#x",
+                         BaseInsertOffset));
+
+  // Account for alignment and unknown padding.
+  BaseInsertOffset &= ~((1u << LogAlign) - 1);
+  BaseInsertOffset -= UPad;
+
+  // The 4 in the following is for the unconditional branch we'll be inserting
+  // (allows for long branch on Thumb1).  Alignment of the island is handled
+  // inside OffsetIsInRange.
+  BaseInsertOffset -= 4;
+
+  DEBUG(dbgs() << format(", adjusted to %#x", BaseInsertOffset)
+               << " la=" << LogAlign
+               << " kb=" << KnownBits
+               << " up=" << UPad << '\n');
+
+  // This could point off the end of the block if we've already got constant
+  // pool entries following this block; only the last one is in the water list.
+  // Back past any possible branches (allow for a conditional and a maximally
+  // long unconditional).
+  if (BaseInsertOffset >= BBInfo[UserMBB->getNumber()+1].Offset)
+    BaseInsertOffset = BBInfo[UserMBB->getNumber()+1].Offset -
+      (isThumb1 ? 6 : 8);
+  unsigned EndInsertOffset =
+    WorstCaseAlign(BaseInsertOffset + 4, LogAlign, KnownBits) +
+    CPEMI->getOperand(2).getImm();
+  MachineBasicBlock::iterator MI = UserMI;
+  ++MI;
+  unsigned CPUIndex = CPUserIndex+1;
+  unsigned NumCPUsers = CPUsers.size();
+  MachineInstr *LastIT = 0;
+  for (unsigned Offset = UserOffset+TII->GetInstSizeInBytes(UserMI);
+       Offset < BaseInsertOffset;
+       Offset += TII->GetInstSizeInBytes(MI),
+       MI = llvm::next(MI)) {
+    if (CPUIndex < NumCPUsers && CPUsers[CPUIndex].MI == MI) {
+      CPUser &U = CPUsers[CPUIndex];
+      if (!OffsetIsInRange(Offset, EndInsertOffset, U)) {
+        // Shift intertion point by one unit of alignment so it is within reach.
+        BaseInsertOffset -= 1u << LogAlign;
+        EndInsertOffset  -= 1u << LogAlign;
+      }
+      // This is overly conservative, as we don't account for CPEMIs being
+      // reused within the block, but it doesn't matter much.  Also assume CPEs
+      // are added in order with alignment padding.  We may eventually be able
+      // to pack the aligned CPEs better.
+      EndInsertOffset = RoundUpToAlignment(EndInsertOffset,
+                                           1u << getCPELogAlign(U.CPEMI)) +
+        U.CPEMI->getOperand(2).getImm();
+      CPUIndex++;
+    }
+
+    // Remember the last IT instruction.
+    if (MI->getOpcode() == ARM::t2IT)
+      LastIT = MI;
+  }
+
+  --MI;
+
+  // Avoid splitting an IT block.
+  if (LastIT) {
+    unsigned PredReg = 0;
+    ARMCC::CondCodes CC = llvm::getITInstrPredicate(MI, PredReg);
+    if (CC != ARMCC::AL)
+      MI = LastIT;
+  }
+  NewMBB = SplitBlockBeforeInstr(MI);
 }
 
 /// HandleConstantPoolUser - Analyze the specified user, checking to see if it
