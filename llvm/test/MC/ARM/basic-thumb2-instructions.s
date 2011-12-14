@@ -368,6 +368,7 @@ _func:
         cmp sp, r6, lsr #1
         cmp r2, r5, asr #24
         cmp r1, r4, ror #15
+        cmp r0, #-2
 
 @ CHECK: cmp.w	r5, #65280              @ encoding: [0xb5,0xf5,0x7f,0x4f]
 @ CHECK: cmp.w	r4, r12                 @ encoding: [0xb4,0xeb,0x0c,0x0f]
@@ -376,7 +377,7 @@ _func:
 @ CHECK: cmp.w	sp, r6, lsr #1          @ encoding: [0xbd,0xeb,0x56,0x0f]
 @ CHECK: cmp.w	r2, r5, asr #24         @ encoding: [0xb2,0xeb,0x25,0x6f]
 @ CHECK: cmp.w	r1, r4, ror #15         @ encoding: [0xb1,0xeb,0xf4,0x3f]
-
+@ CHECK: cmn.w	r0, #2                  @ encoding: [0x10,0xf1,0x02,0x0f]
 
 @------------------------------------------------------------------------------
 @ DBG

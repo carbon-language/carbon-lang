@@ -4110,13 +4110,18 @@ def : t2InstAlias<"and${s}${p} $Rd, $Rn, $imm",
 def : t2InstAlias<"and${s}${p} $Rdn, $imm",
                   (t2BICri rGPR:$Rdn, rGPR:$Rdn, so_imm_not:$imm,
                            pred:$p, cc_out:$s)>;
-// Likewise, "add Rd, so_imm_neg" -> sub
+// Likewise, "add Rd, t2_so_imm_neg" -> sub
 def : t2InstAlias<"add${s}${p} $Rd, $Rn, $imm",
                   (t2SUBri GPRnopc:$Rd, GPRnopc:$Rn, t2_so_imm_neg:$imm,
                            pred:$p, cc_out:$s)>;
 def : t2InstAlias<"add${s}${p} $Rd, $imm",
                   (t2SUBri GPRnopc:$Rd, GPRnopc:$Rd, t2_so_imm_neg:$imm,
                            pred:$p, cc_out:$s)>;
+// Same for CMP <--> CMN via t2_so_imm_neg
+def : t2InstAlias<"cmp${p} $Rd, $imm",
+                  (t2CMNzri rGPR:$Rd, t2_so_imm_neg:$imm, pred:$p)>;
+def : t2InstAlias<"cmn${p} $Rd, $imm",
+                  (t2CMPri rGPR:$Rd, t2_so_imm_neg:$imm, pred:$p)>;
 
 
 // Wide 'mul' encoding can be specified with only two operands.

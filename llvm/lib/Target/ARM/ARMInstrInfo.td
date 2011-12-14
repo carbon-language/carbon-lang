@@ -5089,6 +5089,11 @@ def : ARMInstAlias<"add${s}${p} $Rd, $Rn, $imm",
                  (SUBri GPR:$Rd, GPR:$Rn, so_imm_neg:$imm, pred:$p, cc_out:$s)>;
 def : ARMInstAlias<"add${s}${p} $Rd, $imm",
                  (SUBri GPR:$Rd, GPR:$Rd, so_imm_neg:$imm, pred:$p, cc_out:$s)>;
+// Same for CMP <--> CMN via t2_so_imm_neg
+def : ARMInstAlias<"cmp${p} $Rd, $imm",
+                   (CMNzri rGPR:$Rd, t2_so_imm_neg:$imm, pred:$p)>;
+def : ARMInstAlias<"cmn${p} $Rd, $imm",
+                   (CMPri rGPR:$Rd, t2_so_imm_neg:$imm, pred:$p)>;
 
 // The shifter forms of the MOV instruction are aliased to the ASR, LSL,
 // LSR, ROR, and RRX instructions.
