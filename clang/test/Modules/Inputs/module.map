@@ -36,3 +36,8 @@ module category_bottom {
 module redeclarations_left { header "redeclarations_left.h" }
 module redeclarations_right { header "redeclarations_right.h" }
 module load_failure { header "load_failure.h" }
+
+module decldef {
+  explicit module Decl { header "decl.h" }
+  explicit module Def { header "def.h" }
+}
