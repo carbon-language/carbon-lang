@@ -287,8 +287,6 @@ lib: $(LIBASAN_A)
 $(LIBASAN_A): $(BIN) $(LIBASAN_OBJ) $(MAKEFILE)
 	mkdir -p $(LIBASAN_INST_DIR)
 	ar ru $@ $(LIBASAN_OBJ)
-	$(CXX) -shared $(CFLAGS) $(LIBASAN_OBJ) $(LD_FLAGS) -o $(BIN)/libasan$(SUFF).so
-
 
 TEST_OBJECTS_COMMON=\
 	     $(BIN)/asan_test$(SUFF).o \
