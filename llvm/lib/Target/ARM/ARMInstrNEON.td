@@ -1497,28 +1497,22 @@ def VST1d64QPseudoWB_fixed    : VSTQQWBPseudo<IIC_VST1x4u>;
 def VST1d64QPseudoWB_register : VSTQQWBPseudo<IIC_VST1x4u>;
 
 //   VST2     : Vector Store (multiple 2-element structures)
-class VST2D<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy>
+class VST2<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy,
+            InstrItinClass itin>
   : NLdSt<0, 0b00, op11_8, op7_4, (outs), (ins addrmode6:$Rn, VdTy:$Vd),
-          IIC_VST2, "vst2", Dt, "$Vd, $Rn", "", []> {
-  let Rm = 0b1111;
-  let Inst{5-4} = Rn{5-4};
-  let DecoderMethod = "DecodeVSTInstruction";
-}
-class VST2Q<bits<4> op7_4, string Dt, RegisterOperand VdTy>
-  : NLdSt<0, 0b00, 0b0011, op7_4, (outs), (ins addrmode6:$Rn, VdTy:$Vd),
-          IIC_VST2x2, "vst2", Dt, "$Vd, $Rn", "", []> {
+          itin, "vst2", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVSTInstruction";
 }
 
-def  VST2d8   : VST2D<0b1000, {0,0,?,?}, "8",  VecListTwoD>;
-def  VST2d16  : VST2D<0b1000, {0,1,?,?}, "16", VecListTwoD>;
-def  VST2d32  : VST2D<0b1000, {1,0,?,?}, "32", VecListTwoD>;
+def  VST2d8   : VST2<0b1000, {0,0,?,?}, "8",  VecListTwoD, IIC_VST2>;
+def  VST2d16  : VST2<0b1000, {0,1,?,?}, "16", VecListTwoD, IIC_VST2>;
+def  VST2d32  : VST2<0b1000, {1,0,?,?}, "32", VecListTwoD, IIC_VST2>;
 
-def  VST2q8   : VST2Q<{0,0,?,?}, "8",  VecListFourD>;
-def  VST2q16  : VST2Q<{0,1,?,?}, "16", VecListFourD>;
-def  VST2q32  : VST2Q<{1,0,?,?}, "32", VecListFourD>;
+def  VST2q8   : VST2<0b0011, {0,0,?,?}, "8",  VecListFourD, IIC_VST2x2>;
+def  VST2q16  : VST2<0b0011, {0,1,?,?}, "16", VecListFourD, IIC_VST2x2>;
+def  VST2q32  : VST2<0b0011, {1,0,?,?}, "32", VecListFourD, IIC_VST2x2>;
 
 def  VST2d8Pseudo  : VSTQPseudo<IIC_VST2>;
 def  VST2d16Pseudo : VSTQPseudo<IIC_VST2>;
@@ -1561,9 +1555,9 @@ def VST2q16Pseudo_UPD : VSTQQWBPseudo<IIC_VST2x2u>;
 def VST2q32Pseudo_UPD : VSTQQWBPseudo<IIC_VST2x2u>;
 
 // ...with double-spaced registers
-def VST2b8      : VST2D<0b1001, {0,0,?,?}, "8",  VecListTwoQ>;
-def VST2b16     : VST2D<0b1001, {0,1,?,?}, "16", VecListTwoQ>;
-def VST2b32     : VST2D<0b1001, {1,0,?,?}, "32", VecListTwoQ>;
+def VST2b8      : VST2<0b1001, {0,0,?,?}, "8",  VecListTwoQ, IIC_VST2>;
+def VST2b16     : VST2<0b1001, {0,1,?,?}, "16", VecListTwoQ, IIC_VST2>;
+def VST2b32     : VST2<0b1001, {1,0,?,?}, "32", VecListTwoQ, IIC_VST2>;
 def VST2b8_UPD  : VST2DWB<0b1001, {0,0,?,?}, "8",  VecListTwoQ>;
 def VST2b16_UPD : VST2DWB<0b1001, {0,1,?,?}, "16", VecListTwoQ>;
 def VST2b32_UPD : VST2DWB<0b1001, {1,0,?,?}, "32", VecListTwoQ>;
