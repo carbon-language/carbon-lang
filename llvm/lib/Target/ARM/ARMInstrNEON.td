@@ -1523,13 +1523,6 @@ def  VST2q16Pseudo : VSTQQPseudo<IIC_VST2x2>;
 def  VST2q32Pseudo : VSTQQPseudo<IIC_VST2x2>;
 
 // ...with address register writeback:
-//class VST2DWB<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy>
-//  : NLdSt<0, 0b00, op11_8, op7_4, (outs GPR:$wb),
-//          (ins addrmode6:$Rn, am6offset:$Rm, VdTy:$Vd),
-//          IIC_VST2u, "vst2", Dt, "$Vd, $Rn$Rm", "$Rn.addr = $wb", []> {
-//  let Inst{5-4} = Rn{5-4};
-//  let DecoderMethod = "DecodeVSTInstruction";
-//}
 multiclass VST2DWB<bits<4> op11_8, bits<4> op7_4, string Dt,
                    RegisterOperand VdTy> {
   def _fixed : NLdSt<0, 0b00, op11_8, op7_4, (outs GPR:$wb),
@@ -1550,13 +1543,6 @@ multiclass VST2DWB<bits<4> op11_8, bits<4> op7_4, string Dt,
     let AsmMatchConverter = "cvtVSTwbRegister";
   }
 }
-//class VST2QWB<bits<4> op7_4, string Dt>
-//  : NLdSt<0, 0b00, 0b0011, op7_4, (outs GPR:$wb),
-//          (ins addrmode6:$Rn, am6offset:$Rm, VecListFourD:$Vd), IIC_VST2x2u,
-//          "vst2", Dt, "$Vd, $Rn$Rm", "$Rn.addr = $wb", []> {
-//  let Inst{5-4} = Rn{5-4};
-//  let DecoderMethod = "DecodeVSTInstruction";
-//}
 multiclass VST2QWB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<0, 0b00, 0b0011, op7_4, (outs GPR:$wb),
                      (ins addrmode6:$Rn, VecListFourD:$Vd), IIC_VLD1u,
