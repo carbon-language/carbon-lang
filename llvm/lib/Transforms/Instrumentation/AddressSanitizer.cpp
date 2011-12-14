@@ -163,8 +163,6 @@ struct AddressSanitizer : public ModulePass {
 
  private:
 
-  void appendToPreinitArray(Module &M, Function *F);
-
   uint64_t getAllocaSizeInBytes(AllocaInst *AI) {
     Type *Ty = AI->getAllocatedType();
     uint64_t SizeInBytes = TD->getTypeStoreSizeInBits(Ty) / 8;
@@ -565,17 +563,6 @@ bool AddressSanitizer::insertGlobalRedzones(Module &M) {
   return true;
 }
 
-// .preinit_array is something that hapens before all other inits.
-// On systems where .preinit_array is honored, we will call __asan_init early.
-void AddressSanitizer::appendToPreinitArray(Module &M, Function *F) {
-  IRBuilder<> IRB(M.getContext());
-  GlobalVariable *Var =
-      new GlobalVariable(M, PointerType::getUnqual(F->getFunctionType()),
-                         false, GlobalValue::PrivateLinkage,
-                         F, "__asan_preinit_private");
-  Var->setSection(".preinit_array");
-}
-
 // virtual
 bool AddressSanitizer::runOnModule(Module &M) {
   // Initialize the private fields. No one has accessed them before.
@@ -646,9 +633,6 @@ bool AddressSanitizer::runOnModule(Module &M) {
   }
 
   appendToGlobalCtors(M, AsanCtorFunction, 1 /*high priority*/);
-
-  if (M.getTargetTriple().find("linux") != std::string::npos)
-    appendToPreinitArray(M, AsanInitFunction);
 
   return Res;
 }
