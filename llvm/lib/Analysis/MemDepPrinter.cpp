@@ -130,7 +130,7 @@ bool MemDepPrinter::runOnFunction(Function &F) {
         AliasAnalysis::Location Loc = AA.getLocation(LI);
         MDA.getNonLocalPointerDependency(Loc, true, LI->getParent(), NLDI);
       } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-        if (!LI->isUnordered()) {
+        if (!SI->isUnordered()) {
           // FIXME: Handle atomic/volatile stores.
           Deps[Inst].insert(std::make_pair(getInstTypePair(0, Unknown),
                                            static_cast<BasicBlock *>(0)));
