@@ -4274,20 +4274,21 @@ static bool IsTailPaddedMemberArray(Sema &S, llvm::APInt Size,
 }
 
 void Sema::CheckArrayAccess(const Expr *BaseExpr, const Expr *IndexExpr,
-                            bool isSubscript, bool AllowOnePastEnd) {
+                            const ArraySubscriptExpr *ASE,
+                            bool AllowOnePastEnd) {
+  IndexExpr = IndexExpr->IgnoreParenCasts();
+  if (IndexExpr->isValueDependent())
+    return;
+
   const Type *EffectiveType = getElementType(BaseExpr);
   BaseExpr = BaseExpr->IgnoreParenCasts();
-  IndexExpr = IndexExpr->IgnoreParenCasts();
-
   const ConstantArrayType *ArrayTy =
     Context.getAsConstantArrayType(BaseExpr->getType());
   if (!ArrayTy)
     return;
 
-  if (IndexExpr->isValueDependent())
-    return;
   llvm::APSInt index;
-  if (!IndexExpr->isIntegerConstantExpr(index, Context))
+  if (!IndexExpr->EvaluateAsInt(index, Context))
     return;
 
   const NamedDecl *ND = NULL;
@@ -4336,8 +4337,22 @@ void Sema::CheckArrayAccess(const Expr *BaseExpr, const Expr *IndexExpr,
     if (IsTailPaddedMemberArray(*this, size, ND))
       return;
 
+    // Suppress the warning if the subscript expression (as identified by the
+    // ']' location) and the index expression are both from macro expansions
+    // within a system header.
+    if (ASE) {
+      SourceLocation RBracketLoc = SourceMgr.getSpellingLoc(
+          ASE->getRBracketLoc());
+      if (SourceMgr.isInSystemHeader(RBracketLoc)) {
+        SourceLocation IndexLoc = SourceMgr.getSpellingLoc(
+            IndexExpr->getLocStart());
+        if (SourceMgr.isFromSameFile(RBracketLoc, IndexLoc))
+          return;
+      }
+    }
+
     unsigned DiagID = diag::warn_ptr_arith_exceeds_bounds;
-    if (isSubscript)
+    if (ASE)
       DiagID = diag::warn_array_index_exceeds_bounds;
 
     DiagRuntimeBehavior(BaseExpr->getLocStart(), BaseExpr,
@@ -4347,7 +4362,7 @@ void Sema::CheckArrayAccess(const Expr *BaseExpr, const Expr *IndexExpr,
                           << IndexExpr->getSourceRange());
   } else {
     unsigned DiagID = diag::warn_array_index_precedes_bounds;
-    if (!isSubscript) {
+    if (!ASE) {
       DiagID = diag::warn_ptr_arith_precedes_bounds;
       if (index.isNegative()) index = -index;
     }
@@ -4381,17 +4396,7 @@ void Sema::CheckArrayAccess(const Expr *expr) {
     switch (expr->getStmtClass()) {
       case Stmt::ArraySubscriptExprClass: {
         const ArraySubscriptExpr *ASE = cast<ArraySubscriptExpr>(expr);
-        // Suppress the warning if the subscript expression (as identified by
-        // the ']' location) and the index expression are both from macro
-        // expansions within a system header.
-        SourceLocation RBracketLoc = SourceMgr.getSpellingLoc(
-            ASE->getRBracketLoc());
-        SourceLocation IndexLoc = SourceMgr.getSpellingLoc(
-            ASE->getIdx()->IgnoreParens()->getLocStart());
-        if (SourceMgr.isFromSameFile(RBracketLoc, IndexLoc) &&
-            SourceMgr.isInSystemHeader(RBracketLoc))
-          return;
-        CheckArrayAccess(ASE->getBase(), ASE->getIdx(), true,
+        CheckArrayAccess(ASE->getBase(), ASE->getIdx(), ASE,
                          AllowOnePastEnd > 0);
         return;
       }
