@@ -351,8 +351,7 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(MachineFunction &MF,
 /// register. The number corresponds to the enum lists in
 /// compact_unwind_encoding.h.
 static int getCompactUnwindRegNum(const unsigned *CURegs, unsigned Reg) {
-  int Idx = 1;
-  for (; *CURegs; ++CURegs, ++Idx)
+  for (int Idx = 1; *CURegs; ++CURegs, ++Idx)
     if (*CURegs == Reg)
       return Idx;
 
@@ -388,11 +387,16 @@ encodeCompactUnwindRegistersWithoutFrame(unsigned SavedRegs[CU_NUM_SAVED_REGS],
   };
   const unsigned *CURegs = (Is64Bit ? CU64BitRegs : CU32BitRegs);
 
-  for (unsigned i = CU_NUM_SAVED_REGS - RegCount; i < CU_NUM_SAVED_REGS; ++i) {
+  for (unsigned i = 0; i != CU_NUM_SAVED_REGS; ++i) {
     int CUReg = getCompactUnwindRegNum(CURegs, SavedRegs[i]);
     if (CUReg == -1) return ~0U;
     SavedRegs[i] = CUReg;
   }
+
+  // Reverse the list.
+  std::swap(SavedRegs[0], SavedRegs[5]);
+  std::swap(SavedRegs[1], SavedRegs[4]);
+  std::swap(SavedRegs[2], SavedRegs[3]);
 
   uint32_t RenumRegs[CU_NUM_SAVED_REGS];
   for (unsigned i = CU_NUM_SAVED_REGS - RegCount; i < CU_NUM_SAVED_REGS; ++i) {
@@ -454,7 +458,7 @@ encodeCompactUnwindRegistersWithFrame(unsigned SavedRegs[CU_NUM_SAVED_REGS],
   // Encode the registers in the order they were saved, 3-bits per register. The
   // registers are numbered from 1 to 6.
   uint32_t RegEnc = 0;
-  for (int I = 5; I >= 0; --I) {
+  for (int I = 0; I != 6; --I) {
     unsigned Reg = SavedRegs[I];
     if (Reg == 0) break;
     int CURegNum = getCompactUnwindRegNum(CURegs, Reg);
@@ -479,7 +483,7 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
   bool HasFP = hasFP(MF);
 
   unsigned SavedRegs[CU_NUM_SAVED_REGS] = { 0, 0, 0, 0, 0, 0 };
-  int SavedRegIdx = CU_NUM_SAVED_REGS;
+  unsigned SavedRegIdx = 0;
 
   unsigned OffsetSize = (Is64Bit ? 8 : 4);
 
@@ -509,9 +513,9 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
 
     if (Opc == PushInstr) {
       // If there are too many saved registers, we cannot use compact encoding.
-      if (--SavedRegIdx < 0) return 0;
+      if (SavedRegIdx >= CU_NUM_SAVED_REGS) return 0;
 
-      SavedRegs[SavedRegIdx] = MI.getOperand(0).getReg();
+      SavedRegs[SavedRegIdx++] = MI.getOperand(0).getReg();
       StackAdjust += OffsetSize;
       InstrOffset += PushInstrSize;
     } else if (Opc == MoveInstr) {
@@ -523,7 +527,7 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
 
       StackAdjust = 0;
       memset(SavedRegs, 0, sizeof(SavedRegs));
-      SavedRegIdx = CU_NUM_SAVED_REGS;
+      SavedRegIdx = 0;
       InstrOffset += MoveInstrSize;
     } else if (Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
                Opc == X86::SUB32ri || Opc == X86::SUB32ri8) {
@@ -586,13 +590,12 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
     }
 
     // Encode the number of registers saved.
-    CompactUnwindEncoding |= ((CU_NUM_SAVED_REGS - SavedRegIdx) & 0x7) << 10;
+    CompactUnwindEncoding |= (SavedRegIdx & 0x7) << 10;
 
     // Get the encoding of the saved registers when we don't have a frame
     // pointer.
     uint32_t RegEnc =
-      encodeCompactUnwindRegistersWithoutFrame(SavedRegs,
-                                               CU_NUM_SAVED_REGS - SavedRegIdx,
+      encodeCompactUnwindRegistersWithoutFrame(SavedRegs, SavedRegIdx,
                                                Is64Bit);
     if (RegEnc == ~0U) return 0;
 
