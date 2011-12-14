@@ -1201,7 +1201,7 @@ static bool shouldUseFramePointer(const ArgList &Args,
                                options::OPT_fomit_frame_pointer))
     return A->getOption().matches(options::OPT_fno_omit_frame_pointer);
 
-  // Don't use a frame poiter on liunx x86 and x86_64 if optimizing.
+  // Don't use a frame pointer on linux x86 and x86_64 if optimizing.
   if ((Triple.getArch() == llvm::Triple::x86_64 ||
        Triple.getArch() == llvm::Triple::x86) &&
       Triple.getOS() == llvm::Triple::Linux) {
