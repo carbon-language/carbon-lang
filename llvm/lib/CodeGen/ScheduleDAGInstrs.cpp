@@ -281,8 +281,8 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
           if (Kind == SDep::Anti)
             DefSU->addPred(SDep(SU, Kind, 0, /*Reg=*/Reg));
           else {
-            unsigned AOLat = TII->getOutputLatency(InstrItins, MI,
-                                                   DefSU->getInstr(), Reg);
+            unsigned AOLat = TII->getOutputLatency(InstrItins, MI, j,
+                                                   DefSU->getInstr());
             DefSU->addPred(SDep(SU, Kind, AOLat, /*Reg=*/Reg));
           }
         }

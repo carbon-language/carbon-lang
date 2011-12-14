@@ -652,9 +652,8 @@ public:
   /// a given pair of defs which both target the same register. This is usually
   /// one.
   virtual unsigned getOutputLatency(const InstrItineraryData *ItinData,
-                                    const MachineInstr *DefMI1,
-                                    const MachineInstr *DefMI2,
-                                    unsigned Reg) const {
+                                    const MachineInstr *DefMI, unsigned DefIdx,
+                                    const MachineInstr *DepMI) const {
     return 1;
   }
 

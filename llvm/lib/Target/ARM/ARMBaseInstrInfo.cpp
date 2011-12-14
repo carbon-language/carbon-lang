@@ -2360,7 +2360,7 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
 }
 
 static const MachineInstr *getBundledDefMI(const TargetRegisterInfo *TRI,
-                                           const MachineInstr *MI,
+                                           const MachineInstr *MI, unsigned Reg,
                                            unsigned &DefIdx, unsigned &Dist) {
   Dist = 0;
 
@@ -2370,7 +2370,6 @@ static const MachineInstr *getBundledDefMI(const TargetRegisterInfo *TRI,
   assert(II->isInsideBundle() && "Empty bundle?");
 
   int Idx = -1;
-  unsigned Reg = MI->getOperand(DefIdx).getReg();
   while (II->isInsideBundle()) {
     Idx = II->findRegisterDefOperandIdx(Reg, false, true, TRI);
     if (Idx != -1)
@@ -2385,7 +2384,7 @@ static const MachineInstr *getBundledDefMI(const TargetRegisterInfo *TRI,
 }
 
 static const MachineInstr *getBundledUseMI(const TargetRegisterInfo *TRI,
-                                           const MachineInstr *MI,
+                                           const MachineInstr *MI, unsigned Reg,
                                            unsigned &UseIdx, unsigned &Dist) {
   Dist = 0;
 
@@ -2395,7 +2394,6 @@ static const MachineInstr *getBundledUseMI(const TargetRegisterInfo *TRI,
 
   // FIXME: This doesn't properly handle multiple uses.
   int Idx = -1;
-  unsigned Reg = MI->getOperand(UseIdx).getReg();
   while (II != E && II->isInsideBundle()) {
     Idx = II->findRegisterUseOperandIdx(Reg, false, TRI);
     if (Idx != -1)
@@ -2405,7 +2403,11 @@ static const MachineInstr *getBundledUseMI(const TargetRegisterInfo *TRI,
     ++II;
   }
 
-  assert(Idx != -1 && "Cannot find bundled definition!");
+  if (Idx == -1) {
+    Dist = 0;
+    return 0;
+  }
+
   UseIdx = Idx;
   return II;
 }
@@ -2424,7 +2426,8 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   const MCInstrDesc *DefMCID = &DefMI->getDesc();
   const MCInstrDesc *UseMCID = &UseMI->getDesc();
   const MachineOperand &DefMO = DefMI->getOperand(DefIdx);
-  if (DefMO.getReg() == ARM::CPSR) {
+  unsigned Reg = DefMO.getReg();
+  if (Reg == ARM::CPSR) {
     if (DefMI->getOpcode() == ARM::FMSTAT) {
       // fpscr -> cpsr stalls over 20 cycles on A8 (and earlier?)
       return Subtarget.isCortexA9() ? 1 : 20;
@@ -2436,11 +2439,16 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
 
     // Otherwise it takes the instruction latency (generally one).
     int Latency = getInstrLatency(ItinData, DefMI);
-    // For Thumb2, prefer scheduling CPSR setting instruction close to its uses.
-    // Instructions which are otherwise scheduled between them may incur a code
-    // size penalty (not able to use the CPSR setting 16-bit instructions).
-    if (Latency > 0 && Subtarget.isThumb2())
-      --Latency;
+
+    // For Thumb2 and -Os, prefer scheduling CPSR setting instruction close to
+    // its uses. Instructions which are otherwise scheduled between them may
+    // incur a code size penalty (not able to use the CPSR setting 16-bit
+    // instructions).
+    if (Latency > 0 && Subtarget.isThumb2()) {
+      const MachineFunction *MF = DefMI->getParent()->getParent();
+      if (MF->getFunction()->hasFnAttr(Attribute::OptimizeForSize))
+        --Latency;
+    }
     return Latency;
   }
 
@@ -2451,7 +2459,7 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
 
   unsigned DefAdj = 0;
   if (DefMI->isBundle()) {
-    DefMI = getBundledDefMI(&getRegisterInfo(), DefMI, DefIdx, DefAdj);
+    DefMI = getBundledDefMI(&getRegisterInfo(), DefMI, Reg, DefIdx, DefAdj);
     if (DefMI->isCopyLike() || DefMI->isInsertSubreg() ||
         DefMI->isRegSequence() || DefMI->isImplicitDef())
       return 1;
@@ -2459,8 +2467,14 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   }
   unsigned UseAdj = 0;
   if (UseMI->isBundle()) {
-    UseMI = getBundledUseMI(&getRegisterInfo(), UseMI, UseIdx, UseAdj);
-    UseMCID = &UseMI->getDesc();
+    unsigned NewUseIdx;
+    const MachineInstr *NewUseMI = getBundledUseMI(&getRegisterInfo(), UseMI,
+                                                   Reg, NewUseIdx, UseAdj);
+    if (NewUseMI) {
+      UseMI = NewUseMI;
+      UseIdx = NewUseIdx;
+      UseMCID = &UseMI->getDesc();
+    }
   }
 
   int Latency = getOperandLatency(ItinData, *DefMCID, DefIdx, DefAlign,
@@ -2795,6 +2809,19 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     }
 
   return Latency;
+}
+
+unsigned
+ARMBaseInstrInfo::getOutputLatency(const InstrItineraryData *ItinData,
+                                   const MachineInstr *DefMI, unsigned DefIdx,
+                                   const MachineInstr *DepMI) const {
+  unsigned Reg = DefMI->getOperand(DefIdx).getReg();
+  if (DepMI->readsRegister(Reg, &getRegisterInfo()) || !isPredicated(DepMI))
+    return 1;
+
+  // If the second MI is predicated, then there is an implicit use dependency.
+  return getOperandLatency(ItinData, DefMI, DefIdx, DepMI,
+                           DepMI->getNumOperands());
 }
 
 int ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
