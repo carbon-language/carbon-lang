@@ -1,8 +1,8 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++11
 
-int f();
+int f(); // expected-note {{declared here}}
 
-static_assert(f(), "f"); // expected-error {{static_assert expression is not an integral constant expression}}
+static_assert(f(), "f"); // expected-error {{static_assert expression is not an integral constant expression}} expected-note {{non-constexpr function 'f' cannot be used in a constant expression}}
 static_assert(true, "true is not false");
 static_assert(false, "false is false"); // expected-error {{static_assert failed "false is false"}}
 
@@ -27,4 +27,3 @@ template<typename T> struct S {
 
 S<char> s1; // expected-note {{in instantiation of template class 'S<char>' requested here}}
 S<int> s2;
-

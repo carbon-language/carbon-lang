@@ -6002,10 +6002,12 @@ public:
   /// in the global scope.
   bool CheckObjCDeclScope(Decl *D);
 
-  /// VerifyIntegerConstantExpression - verifies that an expression is an ICE,
+  /// VerifyIntegerConstantExpression - Verifies that an expression is an ICE,
   /// and reports the appropriate diagnostics. Returns false on success.
   /// Can optionally return the value of the expression.
-  bool VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result = 0);
+  bool VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result = 0,
+                                       unsigned DiagId = 0,
+                                       bool AllowFold = true);
 
   /// VerifyBitField - verifies that a bit field expression is an ICE and has
   /// the correct width, and that the field type is valid.

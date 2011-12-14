@@ -9232,30 +9232,45 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   return isInvalid;
 }
 
-bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result){
-  // FIXME: In C++11, this evaluates the expression even if it's not an ICE.
-  //        Don't evaluate it a second time below just to get the diagnostics.
-  llvm::APSInt ICEResult;
-  if (E->isIntegerConstantExpr(ICEResult, Context)) {
-    if (Result)
-      *Result = ICEResult;
-    return false;
+bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result,
+                                           unsigned DiagID, bool AllowFold) {
+  // Circumvent ICE checking in C++11 to avoid evaluating the expression twice
+  // in the non-ICE case.
+  if (!getLangOptions().CPlusPlus0x) {
+    if (E->isIntegerConstantExpr(Context)) {
+      if (Result)
+        *Result = E->EvaluateKnownConstInt(Context);
+      return false;
+    }
   }
 
   Expr::EvalResult EvalResult;
   llvm::SmallVector<PartialDiagnosticAt, 8> Notes;
   EvalResult.Diag = &Notes;
 
-  if (!E->EvaluateAsRValue(EvalResult, Context) || !EvalResult.Val.isInt() ||
-      EvalResult.HasSideEffects) {
-    Diag(E->getExprLoc(), diag::err_expr_not_ice) << E->getSourceRange();
+  // Try to evaluate the expression, and produce diagnostics explaining why it's
+  // not a constant expression as a side-effect.
+  bool Folded = E->EvaluateAsRValue(EvalResult, Context) &&
+                EvalResult.Val.isInt() && !EvalResult.HasSideEffects;
+
+  // In C++11, we can rely on diagnostics being produced for any expression
+  // which is not a constant expression. If no diagnostics were produced, then
+  // this is a constant expression.
+  if (Folded && getLangOptions().CPlusPlus0x && Notes.empty()) {
+    if (Result)
+      *Result = EvalResult.Val.getInt();
+    return false;
+  }
+
+  if (!Folded || !AllowFold) {
+    Diag(E->getSourceRange().getBegin(),
+         DiagID ? DiagID : diag::err_expr_not_ice) << E->getSourceRange();
 
     // We only show the notes if they're not the usual "invalid subexpression"
     // or if they are actually in a subexpression.
-    if (!Notes.empty() &&
-        (Notes.size() != 1 ||
-         Notes[0].second.getDiagID() != diag::note_invalid_subexpr_in_const_expr
-         || Notes[0].first != E->IgnoreParens()->getExprLoc())) {
+    if (Notes.size() != 1 ||
+        Notes[0].second.getDiagID() != diag::note_invalid_subexpr_in_const_expr
+        || Notes[0].first != E->IgnoreParens()->getExprLoc()) {
       for (unsigned I = 0, N = Notes.size(); I != N; ++I)
         Diag(Notes[I].first, Notes[I].second);
     }
@@ -9263,10 +9278,10 @@ bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result){
     return true;
   }
 
-  Diag(E->getExprLoc(), diag::ext_expr_not_ice) << E->getSourceRange();
+  Diag(E->getSourceRange().getBegin(), diag::ext_expr_not_ice)
+    << E->getSourceRange();
 
-  if (Notes.size() &&
-      Diags.getDiagnosticLevel(diag::ext_expr_not_ice, E->getExprLoc())
+  if (Diags.getDiagnosticLevel(diag::ext_expr_not_ice, E->getExprLoc())
           != DiagnosticsEngine::Ignored)
     for (unsigned I = 0, N = Notes.size(); I != N; ++I)
       Diag(Notes[I].first, Notes[I].second);

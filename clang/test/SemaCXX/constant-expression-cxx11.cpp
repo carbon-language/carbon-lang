@@ -141,7 +141,7 @@ static_assert(F(1, 0) == 1, "");
 static_assert(F(2, "test") == 2, "");
 static_assert(F(3, &F) == 3, "");
 int k = 0;
-static_assert(F(4, k) == 3, ""); // expected-error {{constant expression}}
+static_assert(F(4, k) == 3, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
 
 }
 
@@ -414,7 +414,9 @@ static_assert(sum_xs == 15, "");
 
 constexpr int ZipFoldR(int (*F)(int x, int y, int c), int n,
                        const int *xs, const int *ys, int c) {
-  return n ? F(*xs, *ys, ZipFoldR(F, n-1, xs+1, ys+1, c)) : c;
+  return n ? F(
+               *xs, // expected-note {{subexpression not valid}}
+               *ys, ZipFoldR(F, n-1, xs+1, ys+1, c)) : c;
 }
 constexpr int MulAdd(int x, int y, int c) { return x * y + c; }
 constexpr int InnerProduct = ZipFoldR(MulAdd, 5, xs, ys, 0);
@@ -434,7 +436,7 @@ constexpr int xs_1 = p[-4]; // expected-error {{constant expression}}
 constexpr int zs[2][2][2][2] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
 static_assert(zs[0][0][0][0] == 1, "");
 static_assert(zs[1][1][1][1] == 16, "");
-static_assert(zs[0][0][0][2] == 3, ""); // expected-error {{constant expression}}
+static_assert(zs[0][0][0][2] == 3, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
 static_assert((&zs[0][0][0][2])[-1] == 2, "");
 static_assert(**(**(zs + 1) + 1) == 11, "");
 static_assert(*(&(&(*(*&(&zs[2] - 1)[0] + 2 - 2))[2])[-1][-1] + 1) == 11, "");
@@ -505,7 +507,7 @@ constexpr const E &e1 = E(); // expected-error {{constant expression}}
 // We notice this when evaluating an expression which uses it, but not when
 // checking its initializer.
 constexpr E e2 = E(); // unexpected-error {{constant expression}}
-static_assert(e2.p == &e2.p, ""); // unexpected-error {{constant expression}}
+static_assert(e2.p == &e2.p, ""); // unexpected-error {{constant expression}} unexpected-note {{subexpression}}
 // FIXME: We don't pass through the fact that 'this' is ::e3 when checking the
 // initializer of this declaration.
 constexpr E e3; // unexpected-error {{constant expression}}
@@ -533,10 +535,10 @@ struct G {
   constexpr G() : t(&t) {}
 } constexpr g;
 
-static_assert(g.t.u1.a == 42, ""); // expected-error {{constant expression}}
+static_assert(g.t.u1.a == 42, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
 static_assert(g.t.u1.b == 42, "");
 static_assert(g.t.u2.c == 42, "");
-static_assert(g.t.u2.d == 42, ""); // expected-error {{constant expression}}
+static_assert(g.t.u2.d == 42, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
 
 struct S {
   int a, b;
@@ -580,10 +582,10 @@ constexpr AggregateInit agg1 = { "hello"[0] };
 static_assert(strcmp_ce(&agg1.c, "hello") == 0, "");
 static_assert(agg1.n == 0, "");
 static_assert(agg1.d == 0.0, "");
-static_assert(agg1.arr[-1] == 0, ""); // expected-error {{constant expression}}
+static_assert(agg1.arr[-1] == 0, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
 static_assert(agg1.arr[0] == 0, "");
 static_assert(agg1.arr[4] == 0, "");
-static_assert(agg1.arr[5] == 0, ""); // expected-error {{constant expression}}
+static_assert(agg1.arr[5] == 0, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
 static_assert(agg1.p == nullptr, "");
 
 namespace SimpleDerivedClass {
@@ -706,8 +708,8 @@ constexpr U u[4] = { { .a = 0 }, { .b = 1 }, { .a = 2 }, { .b = 3 } }; // expect
 static_assert(u[0].a == 0, "");
 static_assert(u[0].b, ""); // expected-error {{constant expression}}
 static_assert(u[1].b == 1, "");
-static_assert((&u[1].b)[1] == 2, ""); // expected-error {{constant expression}}
-static_assert(*(&(u[1].b) + 1 + 1) == 3, ""); // expected-error {{constant expression}}
+static_assert((&u[1].b)[1] == 2, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
+static_assert(*(&(u[1].b) + 1 + 1) == 3, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
 static_assert((&(u[1]) + 1 + 1)->b == 3, "");
 
 }

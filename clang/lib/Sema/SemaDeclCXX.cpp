@@ -9636,18 +9636,15 @@ Decl *Sema::ActOnStaticAssertDeclaration(SourceLocation StaticAssertLoc,
   StringLiteral *AssertMessage = cast<StringLiteral>(AssertMessageExpr_);
 
   if (!AssertExpr->isTypeDependent() && !AssertExpr->isValueDependent()) {
-    llvm::APSInt Value(32);
-    if (!AssertExpr->isIntegerConstantExpr(Value, Context)) {
-      Diag(StaticAssertLoc,
-           diag::err_static_assert_expression_is_not_constant) <<
-        AssertExpr->getSourceRange();
+    llvm::APSInt Cond;
+    if (VerifyIntegerConstantExpression(AssertExpr, &Cond,
+                             diag::err_static_assert_expression_is_not_constant,
+                                        /*AllowFold=*/false))
       return 0;
-    }
 
-    if (Value == 0) {
+    if (!Cond)
       Diag(StaticAssertLoc, diag::err_static_assert_failed)
         << AssertMessage->getString() << AssertExpr->getSourceRange();
-    }
   }
 
   if (DiagnoseUnexpandedParameterPack(AssertExpr, UPPC_StaticAssertExpression))
