@@ -1116,6 +1116,11 @@ public:
     return VectorList.Count == 1 && VectorList.LaneIndex <= 7;
   }
 
+  bool isVecListTwoDByteIndexed() const {
+    if (Kind != k_VectorListIndexed) return false;
+    return VectorList.Count == 2 && VectorList.LaneIndex <= 7;
+  }
+
   bool isVectorIndex8() const {
     if (Kind != k_VectorIndex) return false;
     return VectorIndex.Val < 8;
@@ -4977,108 +4982,162 @@ validateInstruction(MCInst &Inst,
 static unsigned getRealVSTLNOpcode(unsigned Opc) {
   switch(Opc) {
   default: assert(0 && "unexpected opcode!");
-  case ARM::VST1LNdWB_fixed_Asm_8:   return ARM::VST1LNd8_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_P8:  return ARM::VST1LNd8_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_I8:  return ARM::VST1LNd8_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_S8:  return ARM::VST1LNd8_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_U8:  return ARM::VST1LNd8_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_16:  return ARM::VST1LNd16_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_P16: return ARM::VST1LNd16_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_I16: return ARM::VST1LNd16_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_S16: return ARM::VST1LNd16_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_U16: return ARM::VST1LNd16_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_32:  return ARM::VST1LNd32_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_F:   return ARM::VST1LNd32_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_F32: return ARM::VST1LNd32_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_I32: return ARM::VST1LNd32_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_S32: return ARM::VST1LNd32_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_U32: return ARM::VST1LNd32_UPD;
-  case ARM::VST1LNdWB_register_Asm_8:   return ARM::VST1LNd8_UPD;
-  case ARM::VST1LNdWB_register_Asm_P8:  return ARM::VST1LNd8_UPD;
-  case ARM::VST1LNdWB_register_Asm_I8:  return ARM::VST1LNd8_UPD;
-  case ARM::VST1LNdWB_register_Asm_S8:  return ARM::VST1LNd8_UPD;
-  case ARM::VST1LNdWB_register_Asm_U8:  return ARM::VST1LNd8_UPD;
-  case ARM::VST1LNdWB_register_Asm_16:  return ARM::VST1LNd16_UPD;
-  case ARM::VST1LNdWB_register_Asm_P16: return ARM::VST1LNd16_UPD;
-  case ARM::VST1LNdWB_register_Asm_I16: return ARM::VST1LNd16_UPD;
-  case ARM::VST1LNdWB_register_Asm_S16: return ARM::VST1LNd16_UPD;
-  case ARM::VST1LNdWB_register_Asm_U16: return ARM::VST1LNd16_UPD;
-  case ARM::VST1LNdWB_register_Asm_32:  return ARM::VST1LNd32_UPD;
-  case ARM::VST1LNdWB_register_Asm_F:   return ARM::VST1LNd32_UPD;
-  case ARM::VST1LNdWB_register_Asm_F32: return ARM::VST1LNd32_UPD;
-  case ARM::VST1LNdWB_register_Asm_I32: return ARM::VST1LNd32_UPD;
-  case ARM::VST1LNdWB_register_Asm_S32: return ARM::VST1LNd32_UPD;
-  case ARM::VST1LNdWB_register_Asm_U32: return ARM::VST1LNd32_UPD;
-  case ARM::VST1LNdAsm_8:   return ARM::VST1LNd8;
-  case ARM::VST1LNdAsm_P8:  return ARM::VST1LNd8;
-  case ARM::VST1LNdAsm_I8:  return ARM::VST1LNd8;
-  case ARM::VST1LNdAsm_S8:  return ARM::VST1LNd8;
-  case ARM::VST1LNdAsm_U8:  return ARM::VST1LNd8;
-  case ARM::VST1LNdAsm_16:  return ARM::VST1LNd16;
-  case ARM::VST1LNdAsm_P16: return ARM::VST1LNd16;
-  case ARM::VST1LNdAsm_I16: return ARM::VST1LNd16;
-  case ARM::VST1LNdAsm_S16: return ARM::VST1LNd16;
-  case ARM::VST1LNdAsm_U16: return ARM::VST1LNd16;
-  case ARM::VST1LNdAsm_32:  return ARM::VST1LNd32;
-  case ARM::VST1LNdAsm_F:   return ARM::VST1LNd32;
-  case ARM::VST1LNdAsm_F32: return ARM::VST1LNd32;
-  case ARM::VST1LNdAsm_I32: return ARM::VST1LNd32;
-  case ARM::VST1LNdAsm_S32: return ARM::VST1LNd32;
-  case ARM::VST1LNdAsm_U32: return ARM::VST1LNd32;
+  // VST1LN
+  case ARM::VST1LNdWB_fixed_Asm_8:  case ARM::VST1LNdWB_fixed_Asm_P8:
+  case ARM::VST1LNdWB_fixed_Asm_I8: case ARM::VST1LNdWB_fixed_Asm_S8:
+  case ARM::VST1LNdWB_fixed_Asm_U8:
+    return ARM::VST1LNd8_UPD;
+  case ARM::VST1LNdWB_fixed_Asm_16:  case ARM::VST1LNdWB_fixed_Asm_P16:
+  case ARM::VST1LNdWB_fixed_Asm_I16: case ARM::VST1LNdWB_fixed_Asm_S16:
+  case ARM::VST1LNdWB_fixed_Asm_U16:
+    return ARM::VST1LNd16_UPD;
+  case ARM::VST1LNdWB_fixed_Asm_32:  case ARM::VST1LNdWB_fixed_Asm_F:
+  case ARM::VST1LNdWB_fixed_Asm_F32: case ARM::VST1LNdWB_fixed_Asm_I32:
+  case ARM::VST1LNdWB_fixed_Asm_S32: case ARM::VST1LNdWB_fixed_Asm_U32:
+    return ARM::VST1LNd32_UPD;
+  case ARM::VST1LNdWB_register_Asm_8:  case ARM::VST1LNdWB_register_Asm_P8:
+  case ARM::VST1LNdWB_register_Asm_I8: case ARM::VST1LNdWB_register_Asm_S8:
+  case ARM::VST1LNdWB_register_Asm_U8:
+    return ARM::VST1LNd8_UPD;
+  case ARM::VST1LNdWB_register_Asm_16:  case ARM::VST1LNdWB_register_Asm_P16:
+  case ARM::VST1LNdWB_register_Asm_I16: case ARM::VST1LNdWB_register_Asm_S16:
+  case ARM::VST1LNdWB_register_Asm_U16:
+    return ARM::VST1LNd16_UPD;
+  case ARM::VST1LNdWB_register_Asm_32:  case ARM::VST1LNdWB_register_Asm_F:
+  case ARM::VST1LNdWB_register_Asm_F32: case ARM::VST1LNdWB_register_Asm_I32:
+  case ARM::VST1LNdWB_register_Asm_S32: case ARM::VST1LNdWB_register_Asm_U32:
+    return ARM::VST1LNd32_UPD;
+  case ARM::VST1LNdAsm_8:  case ARM::VST1LNdAsm_P8:
+  case ARM::VST1LNdAsm_I8: case ARM::VST1LNdAsm_S8:
+  case ARM::VST1LNdAsm_U8:
+    return ARM::VST1LNd8;
+  case ARM::VST1LNdAsm_16:  case ARM::VST1LNdAsm_P16:
+  case ARM::VST1LNdAsm_I16: case ARM::VST1LNdAsm_S16:
+  case ARM::VST1LNdAsm_U16:
+    return ARM::VST1LNd16;
+  case ARM::VST1LNdAsm_32:  case ARM::VST1LNdAsm_F:
+  case ARM::VST1LNdAsm_F32: case ARM::VST1LNdAsm_I32:
+  case ARM::VST1LNdAsm_S32: case ARM::VST1LNdAsm_U32:
+    return ARM::VST1LNd32;
+
+  // VST2LN
+  case ARM::VST2LNdWB_fixed_Asm_8:  case ARM::VST2LNdWB_fixed_Asm_P8:
+  case ARM::VST2LNdWB_fixed_Asm_I8: case ARM::VST2LNdWB_fixed_Asm_S8:
+  case ARM::VST2LNdWB_fixed_Asm_U8:
+    return ARM::VST2LNd8_UPD;
+  case ARM::VST2LNdWB_fixed_Asm_16:  case ARM::VST2LNdWB_fixed_Asm_P16:
+  case ARM::VST2LNdWB_fixed_Asm_I16: case ARM::VST2LNdWB_fixed_Asm_S16:
+  case ARM::VST2LNdWB_fixed_Asm_U16:
+    return ARM::VST2LNd16_UPD;
+  case ARM::VST2LNdWB_fixed_Asm_32:  case ARM::VST2LNdWB_fixed_Asm_F:
+  case ARM::VST2LNdWB_fixed_Asm_F32: case ARM::VST2LNdWB_fixed_Asm_I32:
+  case ARM::VST2LNdWB_fixed_Asm_S32: case ARM::VST2LNdWB_fixed_Asm_U32:
+    return ARM::VST2LNd32_UPD;
+  case ARM::VST2LNdWB_register_Asm_8:  case ARM::VST2LNdWB_register_Asm_P8:
+  case ARM::VST2LNdWB_register_Asm_I8: case ARM::VST2LNdWB_register_Asm_S8:
+  case ARM::VST2LNdWB_register_Asm_U8:
+    return ARM::VST2LNd8_UPD;
+  case ARM::VST2LNdWB_register_Asm_16:  case ARM::VST2LNdWB_register_Asm_P16:
+  case ARM::VST2LNdWB_register_Asm_I16: case ARM::VST2LNdWB_register_Asm_S16:
+  case ARM::VST2LNdWB_register_Asm_U16:
+    return ARM::VST2LNd16_UPD;
+  case ARM::VST2LNdWB_register_Asm_32:  case ARM::VST2LNdWB_register_Asm_F:
+  case ARM::VST2LNdWB_register_Asm_F32: case ARM::VST2LNdWB_register_Asm_I32:
+  case ARM::VST2LNdWB_register_Asm_S32: case ARM::VST2LNdWB_register_Asm_U32:
+    return ARM::VST2LNd32_UPD;
+  case ARM::VST2LNdAsm_8:  case ARM::VST2LNdAsm_P8:
+  case ARM::VST2LNdAsm_I8: case ARM::VST2LNdAsm_S8:
+  case ARM::VST2LNdAsm_U8:
+    return ARM::VST2LNd8;
+  case ARM::VST2LNdAsm_16:  case ARM::VST2LNdAsm_P16:
+  case ARM::VST2LNdAsm_I16: case ARM::VST2LNdAsm_S16:
+  case ARM::VST2LNdAsm_U16:
+    return ARM::VST2LNd16;
+  case ARM::VST2LNdAsm_32:  case ARM::VST2LNdAsm_F:
+  case ARM::VST2LNdAsm_F32: case ARM::VST2LNdAsm_I32:
+  case ARM::VST2LNdAsm_S32: case ARM::VST2LNdAsm_U32:
+    return ARM::VST2LNd32;
   }
 }
 
 static unsigned getRealVLDLNOpcode(unsigned Opc) {
   switch(Opc) {
   default: assert(0 && "unexpected opcode!");
-  case ARM::VLD1LNdWB_fixed_Asm_8:   return ARM::VLD1LNd8_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_P8:  return ARM::VLD1LNd8_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_I8:  return ARM::VLD1LNd8_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_S8:  return ARM::VLD1LNd8_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_U8:  return ARM::VLD1LNd8_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_16:  return ARM::VLD1LNd16_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_P16: return ARM::VLD1LNd16_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_I16: return ARM::VLD1LNd16_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_S16: return ARM::VLD1LNd16_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_U16: return ARM::VLD1LNd16_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_32:  return ARM::VLD1LNd32_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_F:   return ARM::VLD1LNd32_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_F32: return ARM::VLD1LNd32_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_I32: return ARM::VLD1LNd32_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_S32: return ARM::VLD1LNd32_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_U32: return ARM::VLD1LNd32_UPD;
-  case ARM::VLD1LNdWB_register_Asm_8:   return ARM::VLD1LNd8_UPD;
-  case ARM::VLD1LNdWB_register_Asm_P8:  return ARM::VLD1LNd8_UPD;
-  case ARM::VLD1LNdWB_register_Asm_I8:  return ARM::VLD1LNd8_UPD;
-  case ARM::VLD1LNdWB_register_Asm_S8:  return ARM::VLD1LNd8_UPD;
-  case ARM::VLD1LNdWB_register_Asm_U8:  return ARM::VLD1LNd8_UPD;
-  case ARM::VLD1LNdWB_register_Asm_16:  return ARM::VLD1LNd16_UPD;
-  case ARM::VLD1LNdWB_register_Asm_P16: return ARM::VLD1LNd16_UPD;
-  case ARM::VLD1LNdWB_register_Asm_I16: return ARM::VLD1LNd16_UPD;
-  case ARM::VLD1LNdWB_register_Asm_S16: return ARM::VLD1LNd16_UPD;
-  case ARM::VLD1LNdWB_register_Asm_U16: return ARM::VLD1LNd16_UPD;
-  case ARM::VLD1LNdWB_register_Asm_32:  return ARM::VLD1LNd32_UPD;
-  case ARM::VLD1LNdWB_register_Asm_F:   return ARM::VLD1LNd32_UPD;
-  case ARM::VLD1LNdWB_register_Asm_F32: return ARM::VLD1LNd32_UPD;
-  case ARM::VLD1LNdWB_register_Asm_I32: return ARM::VLD1LNd32_UPD;
-  case ARM::VLD1LNdWB_register_Asm_S32: return ARM::VLD1LNd32_UPD;
-  case ARM::VLD1LNdWB_register_Asm_U32: return ARM::VLD1LNd32_UPD;
-  case ARM::VLD1LNdAsm_8:   return ARM::VLD1LNd8;
-  case ARM::VLD1LNdAsm_P8:  return ARM::VLD1LNd8;
-  case ARM::VLD1LNdAsm_I8:  return ARM::VLD1LNd8;
-  case ARM::VLD1LNdAsm_S8:  return ARM::VLD1LNd8;
-  case ARM::VLD1LNdAsm_U8:  return ARM::VLD1LNd8;
-  case ARM::VLD1LNdAsm_16:  return ARM::VLD1LNd16;
-  case ARM::VLD1LNdAsm_P16: return ARM::VLD1LNd16;
-  case ARM::VLD1LNdAsm_I16: return ARM::VLD1LNd16;
-  case ARM::VLD1LNdAsm_S16: return ARM::VLD1LNd16;
-  case ARM::VLD1LNdAsm_U16: return ARM::VLD1LNd16;
-  case ARM::VLD1LNdAsm_32:  return ARM::VLD1LNd32;
-  case ARM::VLD1LNdAsm_F:   return ARM::VLD1LNd32;
-  case ARM::VLD1LNdAsm_F32: return ARM::VLD1LNd32;
-  case ARM::VLD1LNdAsm_I32: return ARM::VLD1LNd32;
-  case ARM::VLD1LNdAsm_S32: return ARM::VLD1LNd32;
-  case ARM::VLD1LNdAsm_U32: return ARM::VLD1LNd32;
+  // VLD1LN
+  case ARM::VLD1LNdWB_fixed_Asm_8:  case ARM::VLD1LNdWB_fixed_Asm_P8:
+  case ARM::VLD1LNdWB_fixed_Asm_I8: case ARM::VLD1LNdWB_fixed_Asm_S8:
+  case ARM::VLD1LNdWB_fixed_Asm_U8:
+    return ARM::VLD1LNd8_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_16:  case ARM::VLD1LNdWB_fixed_Asm_P16:
+  case ARM::VLD1LNdWB_fixed_Asm_I16: case ARM::VLD1LNdWB_fixed_Asm_S16:
+  case ARM::VLD1LNdWB_fixed_Asm_U16:
+    return ARM::VLD1LNd16_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_32:  case ARM::VLD1LNdWB_fixed_Asm_F:
+  case ARM::VLD1LNdWB_fixed_Asm_F32: case ARM::VLD1LNdWB_fixed_Asm_I32:
+  case ARM::VLD1LNdWB_fixed_Asm_S32: case ARM::VLD1LNdWB_fixed_Asm_U32:
+    return ARM::VLD1LNd32_UPD;
+  case ARM::VLD1LNdWB_register_Asm_8:  case ARM::VLD1LNdWB_register_Asm_P8:
+  case ARM::VLD1LNdWB_register_Asm_I8: case ARM::VLD1LNdWB_register_Asm_S8:
+  case ARM::VLD1LNdWB_register_Asm_U8:
+    return ARM::VLD1LNd8_UPD;
+  case ARM::VLD1LNdWB_register_Asm_16:  case ARM::VLD1LNdWB_register_Asm_P16:
+  case ARM::VLD1LNdWB_register_Asm_I16: case ARM::VLD1LNdWB_register_Asm_S16:
+  case ARM::VLD1LNdWB_register_Asm_U16:
+    return ARM::VLD1LNd16_UPD;
+  case ARM::VLD1LNdWB_register_Asm_32:  case ARM::VLD1LNdWB_register_Asm_F:
+  case ARM::VLD1LNdWB_register_Asm_F32: case ARM::VLD1LNdWB_register_Asm_I32:
+  case ARM::VLD1LNdWB_register_Asm_S32: case ARM::VLD1LNdWB_register_Asm_U32:
+    return ARM::VLD1LNd32_UPD;
+  case ARM::VLD1LNdAsm_8:  case ARM::VLD1LNdAsm_P8:
+  case ARM::VLD1LNdAsm_I8: case ARM::VLD1LNdAsm_S8:
+  case ARM::VLD1LNdAsm_U8:
+    return ARM::VLD1LNd8;
+  case ARM::VLD1LNdAsm_16:  case ARM::VLD1LNdAsm_P16:
+  case ARM::VLD1LNdAsm_I16: case ARM::VLD1LNdAsm_S16:
+  case ARM::VLD1LNdAsm_U16:
+    return ARM::VLD1LNd16;
+  case ARM::VLD1LNdAsm_32:  case ARM::VLD1LNdAsm_F:
+  case ARM::VLD1LNdAsm_F32: case ARM::VLD1LNdAsm_I32:
+  case ARM::VLD1LNdAsm_S32: case ARM::VLD1LNdAsm_U32:
+    return ARM::VLD1LNd32;
+
+  // VLD2LN
+  case ARM::VLD2LNdWB_fixed_Asm_8:  case ARM::VLD2LNdWB_fixed_Asm_P8:
+  case ARM::VLD2LNdWB_fixed_Asm_I8: case ARM::VLD2LNdWB_fixed_Asm_S8:
+  case ARM::VLD2LNdWB_fixed_Asm_U8:
+    return ARM::VLD2LNd8_UPD;
+  case ARM::VLD2LNdWB_fixed_Asm_16:  case ARM::VLD2LNdWB_fixed_Asm_P16:
+  case ARM::VLD2LNdWB_fixed_Asm_I16: case ARM::VLD2LNdWB_fixed_Asm_S16:
+  case ARM::VLD2LNdWB_fixed_Asm_U16:
+    return ARM::VLD2LNd16_UPD;
+  case ARM::VLD2LNdWB_fixed_Asm_32:  case ARM::VLD2LNdWB_fixed_Asm_F:
+  case ARM::VLD2LNdWB_fixed_Asm_F32: case ARM::VLD2LNdWB_fixed_Asm_I32:
+  case ARM::VLD2LNdWB_fixed_Asm_S32: case ARM::VLD2LNdWB_fixed_Asm_U32:
+    return ARM::VLD2LNd32_UPD;
+  case ARM::VLD2LNdWB_register_Asm_8:  case ARM::VLD2LNdWB_register_Asm_P8:
+  case ARM::VLD2LNdWB_register_Asm_I8: case ARM::VLD2LNdWB_register_Asm_S8:
+  case ARM::VLD2LNdWB_register_Asm_U8:
+    return ARM::VLD2LNd8_UPD;
+  case ARM::VLD2LNdWB_register_Asm_16:  case ARM::VLD2LNdWB_register_Asm_P16:
+  case ARM::VLD2LNdWB_register_Asm_I16: case ARM::VLD2LNdWB_register_Asm_S16:
+  case ARM::VLD2LNdWB_register_Asm_U16:
+    return ARM::VLD2LNd16_UPD;
+  case ARM::VLD2LNdWB_register_Asm_32:  case ARM::VLD2LNdWB_register_Asm_F:
+  case ARM::VLD2LNdWB_register_Asm_F32: case ARM::VLD2LNdWB_register_Asm_I32:
+  case ARM::VLD2LNdWB_register_Asm_S32: case ARM::VLD2LNdWB_register_Asm_U32:
+    return ARM::VLD2LNd32_UPD;
+  case ARM::VLD2LNdAsm_8:  case ARM::VLD2LNdAsm_P8:
+  case ARM::VLD2LNdAsm_I8: case ARM::VLD2LNdAsm_S8:
+  case ARM::VLD2LNdAsm_U8:
+    return ARM::VLD2LNd8;
+  case ARM::VLD2LNdAsm_16:  case ARM::VLD2LNdAsm_P16:
+  case ARM::VLD2LNdAsm_I16: case ARM::VLD2LNdAsm_S16:
+  case ARM::VLD2LNdAsm_U16:
+    return ARM::VLD2LNd16;
+  case ARM::VLD2LNdAsm_32:  case ARM::VLD2LNdAsm_F:
+  case ARM::VLD2LNdAsm_F32: case ARM::VLD2LNdAsm_I32:
+  case ARM::VLD2LNdAsm_S32: case ARM::VLD2LNdAsm_U32:
+    return ARM::VLD2LNd32;
   }
 }
 
@@ -5086,23 +5145,15 @@ bool ARMAsmParser::
 processInstruction(MCInst &Inst,
                    const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   switch (Inst.getOpcode()) {
-  // Handle NEON VST1 complex aliases.
-  case ARM::VST1LNdWB_register_Asm_8:
-  case ARM::VST1LNdWB_register_Asm_P8:
-  case ARM::VST1LNdWB_register_Asm_I8:
-  case ARM::VST1LNdWB_register_Asm_S8:
-  case ARM::VST1LNdWB_register_Asm_U8:
-  case ARM::VST1LNdWB_register_Asm_16:
-  case ARM::VST1LNdWB_register_Asm_P16:
-  case ARM::VST1LNdWB_register_Asm_I16:
-  case ARM::VST1LNdWB_register_Asm_S16:
-  case ARM::VST1LNdWB_register_Asm_U16:
-  case ARM::VST1LNdWB_register_Asm_32:
-  case ARM::VST1LNdWB_register_Asm_F:
-  case ARM::VST1LNdWB_register_Asm_F32:
-  case ARM::VST1LNdWB_register_Asm_I32:
-  case ARM::VST1LNdWB_register_Asm_S32:
-  case ARM::VST1LNdWB_register_Asm_U32: {
+  // Handle NEON VST complex aliases.
+  case ARM::VST1LNdWB_register_Asm_8: case ARM::VST1LNdWB_register_Asm_P8:
+  case ARM::VST1LNdWB_register_Asm_I8: case ARM::VST1LNdWB_register_Asm_S8:
+  case ARM::VST1LNdWB_register_Asm_U8: case ARM::VST1LNdWB_register_Asm_16:
+  case ARM::VST1LNdWB_register_Asm_P16: case ARM::VST1LNdWB_register_Asm_I16:
+  case ARM::VST1LNdWB_register_Asm_S16: case ARM::VST1LNdWB_register_Asm_U16:
+  case ARM::VST1LNdWB_register_Asm_32: case ARM::VST1LNdWB_register_Asm_F:
+  case ARM::VST1LNdWB_register_Asm_F32: case ARM::VST1LNdWB_register_Asm_I32:
+  case ARM::VST1LNdWB_register_Asm_S32: case ARM::VST1LNdWB_register_Asm_U32: {
     MCInst TmpInst;
     // Shuffle the operands around so the lane index operand is in the
     // right place.
@@ -5118,22 +5169,39 @@ processInstruction(MCInst &Inst,
     Inst = TmpInst;
     return true;
   }
-  case ARM::VST1LNdWB_fixed_Asm_8:
-  case ARM::VST1LNdWB_fixed_Asm_P8:
-  case ARM::VST1LNdWB_fixed_Asm_I8:
-  case ARM::VST1LNdWB_fixed_Asm_S8:
-  case ARM::VST1LNdWB_fixed_Asm_U8:
-  case ARM::VST1LNdWB_fixed_Asm_16:
-  case ARM::VST1LNdWB_fixed_Asm_P16:
-  case ARM::VST1LNdWB_fixed_Asm_I16:
-  case ARM::VST1LNdWB_fixed_Asm_S16:
-  case ARM::VST1LNdWB_fixed_Asm_U16:
-  case ARM::VST1LNdWB_fixed_Asm_32:
-  case ARM::VST1LNdWB_fixed_Asm_F:
-  case ARM::VST1LNdWB_fixed_Asm_F32:
-  case ARM::VST1LNdWB_fixed_Asm_I32:
-  case ARM::VST1LNdWB_fixed_Asm_S32:
-  case ARM::VST1LNdWB_fixed_Asm_U32: {
+
+  case ARM::VST2LNdWB_register_Asm_8: case ARM::VST2LNdWB_register_Asm_P8:
+  case ARM::VST2LNdWB_register_Asm_I8: case ARM::VST2LNdWB_register_Asm_S8:
+  case ARM::VST2LNdWB_register_Asm_U8: case ARM::VST2LNdWB_register_Asm_16:
+  case ARM::VST2LNdWB_register_Asm_P16: case ARM::VST2LNdWB_register_Asm_I16:
+  case ARM::VST2LNdWB_register_Asm_S16: case ARM::VST2LNdWB_register_Asm_U16:
+  case ARM::VST2LNdWB_register_Asm_32: case ARM::VST2LNdWB_register_Asm_F:
+  case ARM::VST2LNdWB_register_Asm_F32: case ARM::VST2LNdWB_register_Asm_I32:
+  case ARM::VST2LNdWB_register_Asm_S32: case ARM::VST2LNdWB_register_Asm_U32: {
+    MCInst TmpInst;
+    // Shuffle the operands around so the lane index operand is in the
+    // right place.
+    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode()));
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn
+    TmpInst.addOperand(Inst.getOperand(3)); // alignment
+    TmpInst.addOperand(Inst.getOperand(4)); // Rm
+    TmpInst.addOperand(Inst.getOperand(0)); // Vd
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg()+1));
+    TmpInst.addOperand(Inst.getOperand(1)); // lane
+    TmpInst.addOperand(Inst.getOperand(5)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(6));
+    Inst = TmpInst;
+    return true;
+  }
+  case ARM::VST1LNdWB_fixed_Asm_8: case ARM::VST1LNdWB_fixed_Asm_P8:
+  case ARM::VST1LNdWB_fixed_Asm_I8: case ARM::VST1LNdWB_fixed_Asm_S8:
+  case ARM::VST1LNdWB_fixed_Asm_U8: case ARM::VST1LNdWB_fixed_Asm_16:
+  case ARM::VST1LNdWB_fixed_Asm_P16: case ARM::VST1LNdWB_fixed_Asm_I16:
+  case ARM::VST1LNdWB_fixed_Asm_S16: case ARM::VST1LNdWB_fixed_Asm_U16:
+  case ARM::VST1LNdWB_fixed_Asm_32: case ARM::VST1LNdWB_fixed_Asm_F:
+  case ARM::VST1LNdWB_fixed_Asm_F32: case ARM::VST1LNdWB_fixed_Asm_I32:
+  case ARM::VST1LNdWB_fixed_Asm_S32: case ARM::VST1LNdWB_fixed_Asm_U32: {
     MCInst TmpInst;
     // Shuffle the operands around so the lane index operand is in the
     // right place.
@@ -5149,21 +5217,36 @@ processInstruction(MCInst &Inst,
     Inst = TmpInst;
     return true;
   }
-  case ARM::VST1LNdAsm_8:
-  case ARM::VST1LNdAsm_P8:
-  case ARM::VST1LNdAsm_I8:
-  case ARM::VST1LNdAsm_S8:
-  case ARM::VST1LNdAsm_U8:
-  case ARM::VST1LNdAsm_16:
-  case ARM::VST1LNdAsm_P16:
-  case ARM::VST1LNdAsm_I16:
-  case ARM::VST1LNdAsm_S16:
-  case ARM::VST1LNdAsm_U16:
-  case ARM::VST1LNdAsm_32:
-  case ARM::VST1LNdAsm_F:
-  case ARM::VST1LNdAsm_F32:
-  case ARM::VST1LNdAsm_I32:
-  case ARM::VST1LNdAsm_S32:
+
+  case ARM::VST2LNdWB_fixed_Asm_8: case ARM::VST2LNdWB_fixed_Asm_P8:
+  case ARM::VST2LNdWB_fixed_Asm_I8: case ARM::VST2LNdWB_fixed_Asm_S8:
+  case ARM::VST2LNdWB_fixed_Asm_U8: case ARM::VST2LNdWB_fixed_Asm_16:
+  case ARM::VST2LNdWB_fixed_Asm_P16: case ARM::VST2LNdWB_fixed_Asm_I16:
+  case ARM::VST2LNdWB_fixed_Asm_S16: case ARM::VST2LNdWB_fixed_Asm_U16:
+  case ARM::VST2LNdWB_fixed_Asm_32: case ARM::VST2LNdWB_fixed_Asm_F:
+  case ARM::VST2LNdWB_fixed_Asm_F32: case ARM::VST2LNdWB_fixed_Asm_I32:
+  case ARM::VST2LNdWB_fixed_Asm_S32: case ARM::VST2LNdWB_fixed_Asm_U32: {
+    MCInst TmpInst;
+    // Shuffle the operands around so the lane index operand is in the
+    // right place.
+    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode()));
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn
+    TmpInst.addOperand(Inst.getOperand(3)); // alignment
+    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(Inst.getOperand(0)); // Vd
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg()+1));
+    TmpInst.addOperand(Inst.getOperand(1)); // lane
+    TmpInst.addOperand(Inst.getOperand(4)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(5));
+    Inst = TmpInst;
+    return true;
+  }
+  case ARM::VST1LNdAsm_8: case ARM::VST1LNdAsm_P8: case ARM::VST1LNdAsm_I8:
+  case ARM::VST1LNdAsm_S8: case ARM::VST1LNdAsm_U8: case ARM::VST1LNdAsm_16:
+  case ARM::VST1LNdAsm_P16: case ARM::VST1LNdAsm_I16: case ARM::VST1LNdAsm_S16:
+  case ARM::VST1LNdAsm_U16: case ARM::VST1LNdAsm_32: case ARM::VST1LNdAsm_F:
+  case ARM::VST1LNdAsm_F32: case ARM::VST1LNdAsm_I32: case ARM::VST1LNdAsm_S32:
   case ARM::VST1LNdAsm_U32: {
     MCInst TmpInst;
     // Shuffle the operands around so the lane index operand is in the
@@ -5178,23 +5261,36 @@ processInstruction(MCInst &Inst,
     Inst = TmpInst;
     return true;
   }
-  // Handle NEON VLD1 complex aliases.
-  case ARM::VLD1LNdWB_register_Asm_8:
-  case ARM::VLD1LNdWB_register_Asm_P8:
-  case ARM::VLD1LNdWB_register_Asm_I8:
-  case ARM::VLD1LNdWB_register_Asm_S8:
-  case ARM::VLD1LNdWB_register_Asm_U8:
-  case ARM::VLD1LNdWB_register_Asm_16:
-  case ARM::VLD1LNdWB_register_Asm_P16:
-  case ARM::VLD1LNdWB_register_Asm_I16:
-  case ARM::VLD1LNdWB_register_Asm_S16:
-  case ARM::VLD1LNdWB_register_Asm_U16:
-  case ARM::VLD1LNdWB_register_Asm_32:
-  case ARM::VLD1LNdWB_register_Asm_F:
-  case ARM::VLD1LNdWB_register_Asm_F32:
-  case ARM::VLD1LNdWB_register_Asm_I32:
-  case ARM::VLD1LNdWB_register_Asm_S32:
-  case ARM::VLD1LNdWB_register_Asm_U32: {
+
+  case ARM::VST2LNdAsm_8: case ARM::VST2LNdAsm_P8: case ARM::VST2LNdAsm_I8:
+  case ARM::VST2LNdAsm_S8: case ARM::VST2LNdAsm_U8: case ARM::VST2LNdAsm_16:
+  case ARM::VST2LNdAsm_P16: case ARM::VST2LNdAsm_I16: case ARM::VST2LNdAsm_S16:
+  case ARM::VST2LNdAsm_U16: case ARM::VST2LNdAsm_32: case ARM::VST2LNdAsm_F:
+  case ARM::VST2LNdAsm_F32: case ARM::VST2LNdAsm_I32: case ARM::VST2LNdAsm_S32:
+  case ARM::VST2LNdAsm_U32: {
+    MCInst TmpInst;
+    // Shuffle the operands around so the lane index operand is in the
+    // right place.
+    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode()));
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn
+    TmpInst.addOperand(Inst.getOperand(3)); // alignment
+    TmpInst.addOperand(Inst.getOperand(0)); // Vd
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg()+1));
+    TmpInst.addOperand(Inst.getOperand(1)); // lane
+    TmpInst.addOperand(Inst.getOperand(4)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(5));
+    Inst = TmpInst;
+    return true;
+  }
+  // Handle NEON VLD complex aliases.
+  case ARM::VLD1LNdWB_register_Asm_8: case ARM::VLD1LNdWB_register_Asm_P8:
+  case ARM::VLD1LNdWB_register_Asm_I8: case ARM::VLD1LNdWB_register_Asm_S8:
+  case ARM::VLD1LNdWB_register_Asm_U8: case ARM::VLD1LNdWB_register_Asm_16:
+  case ARM::VLD1LNdWB_register_Asm_P16: case ARM::VLD1LNdWB_register_Asm_I16:
+  case ARM::VLD1LNdWB_register_Asm_S16: case ARM::VLD1LNdWB_register_Asm_U16:
+  case ARM::VLD1LNdWB_register_Asm_32: case ARM::VLD1LNdWB_register_Asm_F:
+  case ARM::VLD1LNdWB_register_Asm_F32: case ARM::VLD1LNdWB_register_Asm_I32:
+  case ARM::VLD1LNdWB_register_Asm_S32: case ARM::VLD1LNdWB_register_Asm_U32: {
     MCInst TmpInst;
     // Shuffle the operands around so the lane index operand is in the
     // right place.
@@ -5211,22 +5307,42 @@ processInstruction(MCInst &Inst,
     Inst = TmpInst;
     return true;
   }
-  case ARM::VLD1LNdWB_fixed_Asm_8:
-  case ARM::VLD1LNdWB_fixed_Asm_P8:
-  case ARM::VLD1LNdWB_fixed_Asm_I8:
-  case ARM::VLD1LNdWB_fixed_Asm_S8:
-  case ARM::VLD1LNdWB_fixed_Asm_U8:
-  case ARM::VLD1LNdWB_fixed_Asm_16:
-  case ARM::VLD1LNdWB_fixed_Asm_P16:
-  case ARM::VLD1LNdWB_fixed_Asm_I16:
-  case ARM::VLD1LNdWB_fixed_Asm_S16:
-  case ARM::VLD1LNdWB_fixed_Asm_U16:
-  case ARM::VLD1LNdWB_fixed_Asm_32:
-  case ARM::VLD1LNdWB_fixed_Asm_F:
-  case ARM::VLD1LNdWB_fixed_Asm_F32:
-  case ARM::VLD1LNdWB_fixed_Asm_I32:
-  case ARM::VLD1LNdWB_fixed_Asm_S32:
-  case ARM::VLD1LNdWB_fixed_Asm_U32: {
+
+  case ARM::VLD2LNdWB_register_Asm_8: case ARM::VLD2LNdWB_register_Asm_P8:
+  case ARM::VLD2LNdWB_register_Asm_I8: case ARM::VLD2LNdWB_register_Asm_S8:
+  case ARM::VLD2LNdWB_register_Asm_U8: case ARM::VLD2LNdWB_register_Asm_16:
+  case ARM::VLD2LNdWB_register_Asm_P16: case ARM::VLD2LNdWB_register_Asm_I16:
+  case ARM::VLD2LNdWB_register_Asm_S16: case ARM::VLD2LNdWB_register_Asm_U16:
+  case ARM::VLD2LNdWB_register_Asm_32: case ARM::VLD2LNdWB_register_Asm_F:
+  case ARM::VLD2LNdWB_register_Asm_F32: case ARM::VLD2LNdWB_register_Asm_I32:
+  case ARM::VLD2LNdWB_register_Asm_S32: case ARM::VLD2LNdWB_register_Asm_U32: {
+    MCInst TmpInst;
+    // Shuffle the operands around so the lane index operand is in the
+    // right place.
+    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode()));
+    TmpInst.addOperand(Inst.getOperand(0)); // Vd
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg()+1));
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn
+    TmpInst.addOperand(Inst.getOperand(3)); // alignment
+    TmpInst.addOperand(Inst.getOperand(4)); // Rm
+    TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg()+1));
+    TmpInst.addOperand(Inst.getOperand(1)); // lane
+    TmpInst.addOperand(Inst.getOperand(5)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(6));
+    Inst = TmpInst;
+    return true;
+  }
+
+  case ARM::VLD1LNdWB_fixed_Asm_8: case ARM::VLD1LNdWB_fixed_Asm_P8:
+  case ARM::VLD1LNdWB_fixed_Asm_I8: case ARM::VLD1LNdWB_fixed_Asm_S8:
+  case ARM::VLD1LNdWB_fixed_Asm_U8: case ARM::VLD1LNdWB_fixed_Asm_16:
+  case ARM::VLD1LNdWB_fixed_Asm_P16: case ARM::VLD1LNdWB_fixed_Asm_I16:
+  case ARM::VLD1LNdWB_fixed_Asm_S16: case ARM::VLD1LNdWB_fixed_Asm_U16:
+  case ARM::VLD1LNdWB_fixed_Asm_32: case ARM::VLD1LNdWB_fixed_Asm_F:
+  case ARM::VLD1LNdWB_fixed_Asm_F32: case ARM::VLD1LNdWB_fixed_Asm_I32:
+  case ARM::VLD1LNdWB_fixed_Asm_S32: case ARM::VLD1LNdWB_fixed_Asm_U32: {
     MCInst TmpInst;
     // Shuffle the operands around so the lane index operand is in the
     // right place.
@@ -5243,21 +5359,39 @@ processInstruction(MCInst &Inst,
     Inst = TmpInst;
     return true;
   }
-  case ARM::VLD1LNdAsm_8:
-  case ARM::VLD1LNdAsm_P8:
-  case ARM::VLD1LNdAsm_I8:
-  case ARM::VLD1LNdAsm_S8:
-  case ARM::VLD1LNdAsm_U8:
-  case ARM::VLD1LNdAsm_16:
-  case ARM::VLD1LNdAsm_P16:
-  case ARM::VLD1LNdAsm_I16:
-  case ARM::VLD1LNdAsm_S16:
-  case ARM::VLD1LNdAsm_U16:
-  case ARM::VLD1LNdAsm_32:
-  case ARM::VLD1LNdAsm_F:
-  case ARM::VLD1LNdAsm_F32:
-  case ARM::VLD1LNdAsm_I32:
-  case ARM::VLD1LNdAsm_S32:
+
+  case ARM::VLD2LNdWB_fixed_Asm_8: case ARM::VLD2LNdWB_fixed_Asm_P8:
+  case ARM::VLD2LNdWB_fixed_Asm_I8: case ARM::VLD2LNdWB_fixed_Asm_S8:
+  case ARM::VLD2LNdWB_fixed_Asm_U8: case ARM::VLD2LNdWB_fixed_Asm_16:
+  case ARM::VLD2LNdWB_fixed_Asm_P16: case ARM::VLD2LNdWB_fixed_Asm_I16:
+  case ARM::VLD2LNdWB_fixed_Asm_S16: case ARM::VLD2LNdWB_fixed_Asm_U16:
+  case ARM::VLD2LNdWB_fixed_Asm_32: case ARM::VLD2LNdWB_fixed_Asm_F:
+  case ARM::VLD2LNdWB_fixed_Asm_F32: case ARM::VLD2LNdWB_fixed_Asm_I32:
+  case ARM::VLD2LNdWB_fixed_Asm_S32: case ARM::VLD2LNdWB_fixed_Asm_U32: {
+    MCInst TmpInst;
+    // Shuffle the operands around so the lane index operand is in the
+    // right place.
+    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode()));
+    TmpInst.addOperand(Inst.getOperand(0)); // Vd
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg()+1));
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn
+    TmpInst.addOperand(Inst.getOperand(3)); // alignment
+    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg()+1));
+    TmpInst.addOperand(Inst.getOperand(1)); // lane
+    TmpInst.addOperand(Inst.getOperand(4)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(5));
+    Inst = TmpInst;
+    return true;
+  }
+
+  case ARM::VLD1LNdAsm_8: case ARM::VLD1LNdAsm_P8: case ARM::VLD1LNdAsm_I8:
+  case ARM::VLD1LNdAsm_S8: case ARM::VLD1LNdAsm_U8: case ARM::VLD1LNdAsm_16:
+  case ARM::VLD1LNdAsm_P16: case ARM::VLD1LNdAsm_I16: case ARM::VLD1LNdAsm_S16:
+  case ARM::VLD1LNdAsm_U16: case ARM::VLD1LNdAsm_32: case ARM::VLD1LNdAsm_F:
+  case ARM::VLD1LNdAsm_F32: case ARM::VLD1LNdAsm_I32: case ARM::VLD1LNdAsm_S32:
   case ARM::VLD1LNdAsm_U32: {
     MCInst TmpInst;
     // Shuffle the operands around so the lane index operand is in the
@@ -5267,6 +5401,29 @@ processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
+    TmpInst.addOperand(Inst.getOperand(1)); // lane
+    TmpInst.addOperand(Inst.getOperand(4)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(5));
+    Inst = TmpInst;
+    return true;
+  }
+
+  case ARM::VLD2LNdAsm_8: case ARM::VLD2LNdAsm_P8: case ARM::VLD2LNdAsm_I8:
+  case ARM::VLD2LNdAsm_S8: case ARM::VLD2LNdAsm_U8: case ARM::VLD2LNdAsm_16:
+  case ARM::VLD2LNdAsm_P16: case ARM::VLD2LNdAsm_I16: case ARM::VLD2LNdAsm_S16:
+  case ARM::VLD2LNdAsm_U16: case ARM::VLD2LNdAsm_32: case ARM::VLD2LNdAsm_F:
+  case ARM::VLD2LNdAsm_F32: case ARM::VLD2LNdAsm_I32: case ARM::VLD2LNdAsm_S32:
+  case ARM::VLD2LNdAsm_U32: {
+    MCInst TmpInst;
+    // Shuffle the operands around so the lane index operand is in the
+    // right place.
+    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode()));
+    TmpInst.addOperand(Inst.getOperand(0)); // Vd
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg()+1));
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn
+    TmpInst.addOperand(Inst.getOperand(3)); // alignment
+    TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg()+1));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
     TmpInst.addOperand(Inst.getOperand(5));

@@ -149,6 +149,16 @@ def VecListOneDByteIndexed : Operand<i32> {
   let ParserMatchClass = VecListOneDByteIndexAsmOperand;
   let MIOperandInfo = (ops DPR:$Vd, i32imm:$idx);
 }
+// Register list of one D register, with byte lane subscripting.
+def VecListTwoDByteIndexAsmOperand : AsmOperandClass {
+  let Name = "VecListTwoDByteIndexed";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListIndexedOperands";
+}
+def VecListTwoDByteIndexed : Operand<i32> {
+  let ParserMatchClass = VecListTwoDByteIndexAsmOperand;
+  let MIOperandInfo = (ops DPR:$Vd, i32imm:$idx);
+}
 
 //===----------------------------------------------------------------------===//
 // NEON-specific DAG Nodes.
@@ -1866,10 +1876,10 @@ def VST2LNq32Pseudo : VSTQQLNPseudo<IIC_VST2ln>;
 // ...with address register writeback:
 class VST2LNWB<bits<4> op11_8, bits<4> op7_4, string Dt>
   : NLdStLn<1, 0b00, op11_8, op7_4, (outs GPR:$wb),
-          (ins addrmode6:$addr, am6offset:$offset,
-           DPR:$src1, DPR:$src2, nohash_imm:$lane), IIC_VST2lnu, "vst2", Dt,
-          "\\{$src1[$lane], $src2[$lane]\\}, $addr$offset",
-          "$addr.addr = $wb", []> {
+          (ins addrmode6:$Rn, am6offset:$Rm,
+           DPR:$Vd, DPR:$src2, nohash_imm:$lane), IIC_VST2lnu, "vst2", Dt,
+          "\\{$Vd[$lane], $src2[$lane]\\}, $Rn$Rm",
+          "$Rn.addr = $wb", []> {
   let Inst{4}   = Rn{4};
   let DecoderMethod = "DecodeVST2LN";
 }
@@ -5671,6 +5681,63 @@ defm VST1LNdWB_register_Asm :
 defm VST1LNdWB_register_Asm :
         NEONDT32AsmPseudoInst<"vst1${p}", "$list, $addr, $Rm",
                   (ins VecListOneDByteIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+
+// VLD2 single-lane pseudo-instructions. These need special handling for
+// the lane index that an InstAlias can't handle, so we use these instead.
+defm VLD2LNdAsm : NEONDT8AsmPseudoInst<"vld2${p}", "$list, $addr",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VLD2LNdAsm : NEONDT16AsmPseudoInst<"vld2${p}", "$list, $addr",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VLD2LNdAsm : NEONDT32AsmPseudoInst<"vld2${p}", "$list, $addr",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+
+defm VLD2LNdWB_fixed_Asm : NEONDT8AsmPseudoInst<"vld2${p}", "$list, $addr!",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VLD2LNdWB_fixed_Asm : NEONDT16AsmPseudoInst<"vld2${p}", "$list, $addr!",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VLD2LNdWB_fixed_Asm : NEONDT32AsmPseudoInst<"vld2${p}", "$list, $addr!",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VLD2LNdWB_register_Asm :
+        NEONDT8AsmPseudoInst<"vld2${p}", "$list, $addr, $Rm",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+defm VLD2LNdWB_register_Asm :
+        NEONDT16AsmPseudoInst<"vld2${p}", "$list, $addr, $Rm",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+defm VLD2LNdWB_register_Asm :
+        NEONDT32AsmPseudoInst<"vld2${p}", "$list, $addr, $Rm",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+
+
+// VST2 single-lane pseudo-instructions. These need special handling for
+// the lane index that an InstAlias can't handle, so we use these instead.
+defm VST2LNdAsm : NEONDT8AsmPseudoInst<"vst2${p}", "$list, $addr",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VST2LNdAsm : NEONDT16AsmPseudoInst<"vst2${p}", "$list, $addr",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VST2LNdAsm : NEONDT32AsmPseudoInst<"vst2${p}", "$list, $addr",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+
+defm VST2LNdWB_fixed_Asm : NEONDT8AsmPseudoInst<"vst2${p}", "$list, $addr!",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VST2LNdWB_fixed_Asm : NEONDT16AsmPseudoInst<"vst2${p}", "$list, $addr!",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VST2LNdWB_fixed_Asm : NEONDT32AsmPseudoInst<"vst2${p}", "$list, $addr!",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VST2LNdWB_register_Asm :
+        NEONDT8AsmPseudoInst<"vst2${p}", "$list, $addr, $Rm",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+defm VST2LNdWB_register_Asm :
+        NEONDT16AsmPseudoInst<"vst2${p}", "$list, $addr, $Rm",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+defm VST2LNdWB_register_Asm :
+        NEONDT32AsmPseudoInst<"vst2${p}", "$list, $addr, $Rm",
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
 // VMOV takes an optional datatype suffix
