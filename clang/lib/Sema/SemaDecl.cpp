@@ -3203,16 +3203,6 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
          (S->getFlags() & Scope::TemplateParamScope) != 0)
     S = S->getParent();
 
-  if (NestedNameSpecifierLoc SpecLoc = 
-        D.getCXXScopeSpec().getWithLocInContext(Context)) {
-    while (SpecLoc.getPrefix())
-      SpecLoc = SpecLoc.getPrefix();
-    if (dyn_cast_or_null<DecltypeType>(
-          SpecLoc.getNestedNameSpecifier()->getAsType()))
-      Diag(SpecLoc.getBeginLoc(), diag::err_decltype_in_declarator)
-        << SpecLoc.getTypeLoc().getSourceRange();
-  }
-
   DeclContext *DC = CurContext;
   if (D.getCXXScopeSpec().isInvalid())
     D.setInvalidType();
@@ -3377,6 +3367,20 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
             << Name << cast<NamedDecl>(DC) << R;
         D.setInvalidType();
       }
+
+      // C++11 8.3p1:
+      // ... "The nested-name-specifier of the qualified declarator-id shall
+      // not begin with a decltype-specifer"
+      NestedNameSpecifierLoc SpecLoc = 
+            D.getCXXScopeSpec().getWithLocInContext(Context);
+      assert(SpecLoc && "A non-empty CXXScopeSpec should have a non-empty "
+                        "NestedNameSpecifierLoc");
+      while (SpecLoc.getPrefix())
+        SpecLoc = SpecLoc.getPrefix();
+      if (dyn_cast_or_null<DecltypeType>(
+            SpecLoc.getNestedNameSpecifier()->getAsType()))
+        Diag(SpecLoc.getBeginLoc(), diag::err_decltype_in_declarator)
+          << SpecLoc.getTypeLoc().getSourceRange();
     }
   }
 
