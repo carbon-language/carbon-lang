@@ -2221,15 +2221,24 @@ static DecodeStatus DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
     case ARM::VST1d16Qwb_register:
     case ARM::VST1d32Qwb_register:
     case ARM::VST1d64Qwb_register:
-    case ARM::VST2d8_UPD:
-    case ARM::VST2d16_UPD:
-    case ARM::VST2d32_UPD:
-    case ARM::VST2q8_UPD:
-    case ARM::VST2q16_UPD:
-    case ARM::VST2q32_UPD:
-    case ARM::VST2b8_UPD:
-    case ARM::VST2b16_UPD:
-    case ARM::VST2b32_UPD:
+    case ARM::VST2d8wb_fixed:
+    case ARM::VST2d16wb_fixed:
+    case ARM::VST2d32wb_fixed:
+    case ARM::VST2d8wb_register:
+    case ARM::VST2d16wb_register:
+    case ARM::VST2d32wb_register:
+    case ARM::VST2q8wb_fixed:
+    case ARM::VST2q16wb_fixed:
+    case ARM::VST2q32wb_fixed:
+    case ARM::VST2q8wb_register:
+    case ARM::VST2q16wb_register:
+    case ARM::VST2q32wb_register:
+    case ARM::VST2b8wb_fixed:
+    case ARM::VST2b16wb_fixed:
+    case ARM::VST2b32wb_fixed:
+    case ARM::VST2b8wb_register:
+    case ARM::VST2b16wb_register:
+    case ARM::VST2b32wb_register:
     case ARM::VST3d8_UPD:
     case ARM::VST3d16_UPD:
     case ARM::VST3d32_UPD:

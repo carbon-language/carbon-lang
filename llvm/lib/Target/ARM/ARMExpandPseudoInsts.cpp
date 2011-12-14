@@ -308,18 +308,24 @@ static const NEONLdStTableEntry NEONLdStTable[] = {
 { ARM::VST2LNq32Pseudo_UPD, ARM::VST2LNq32_UPD, false, true, true,  EvenDblSpc, 2, 2,true},
 
 { ARM::VST2d16Pseudo,       ARM::VST2d16,      false, false, false, SingleSpc,  2, 4 ,false},
-{ ARM::VST2d16Pseudo_UPD,   ARM::VST2d16_UPD, false, true, true,  SingleSpc,  2, 4 ,false},
+{ ARM::VST2d16PseudoWB_fixed,   ARM::VST2d16wb_fixed, false, true, false,  SingleSpc,  2, 4 ,false},
+{ ARM::VST2d16PseudoWB_register,   ARM::VST2d16wb_register, false, true, true,  SingleSpc,  2, 4 ,false},
 { ARM::VST2d32Pseudo,       ARM::VST2d32,      false, false, false, SingleSpc,  2, 2 ,false},
-{ ARM::VST2d32Pseudo_UPD,   ARM::VST2d32_UPD, false, true, true,  SingleSpc,  2, 2 ,false},
+{ ARM::VST2d32PseudoWB_fixed,   ARM::VST2d32wb_fixed, false, true, true,  SingleSpc,  2, 2 ,false},
+{ ARM::VST2d32PseudoWB_register,   ARM::VST2d32wb_register, false, true, true,  SingleSpc,  2, 2 ,false},
 { ARM::VST2d8Pseudo,        ARM::VST2d8,       false, false, false, SingleSpc,  2, 8 ,false},
-{ ARM::VST2d8Pseudo_UPD,    ARM::VST2d8_UPD, false, true, true,  SingleSpc,  2, 8 ,false},
+{ ARM::VST2d8PseudoWB_fixed,    ARM::VST2d8wb_fixed, false, true, false,  SingleSpc,  2, 8 ,false},
+{ ARM::VST2d8PseudoWB_register,    ARM::VST2d8wb_register, false, true, true,  SingleSpc,  2, 8 ,false},
 
 { ARM::VST2q16Pseudo,       ARM::VST2q16,      false, false, false, SingleSpc,  4, 4 ,false},
-{ ARM::VST2q16Pseudo_UPD,   ARM::VST2q16_UPD, false, true, true,  SingleSpc,  4, 4 ,false},
+{ ARM::VST2q16PseudoWB_fixed,   ARM::VST2q16wb_fixed, false, true, false,  SingleSpc,  4, 4 ,false},
+{ ARM::VST2q16PseudoWB_register,   ARM::VST2q16wb_register, false, true, true,  SingleSpc,  4, 4 ,false},
 { ARM::VST2q32Pseudo,       ARM::VST2q32,      false, false, false, SingleSpc,  4, 2 ,false},
-{ ARM::VST2q32Pseudo_UPD,   ARM::VST2q32_UPD, false, true, true,  SingleSpc,  4, 2 ,false},
+{ ARM::VST2q32PseudoWB_fixed,   ARM::VST2q32wb_fixed, false, true, false,  SingleSpc,  4, 2 ,false},
+{ ARM::VST2q32PseudoWB_register,   ARM::VST2q32wb_register, false, true, true,  SingleSpc,  4, 2 ,false},
 { ARM::VST2q8Pseudo,        ARM::VST2q8,       false, false, false, SingleSpc,  4, 8 ,false},
-{ ARM::VST2q8Pseudo_UPD,    ARM::VST2q8_UPD, false, true, true,  SingleSpc,  4, 8 ,false},
+{ ARM::VST2q8PseudoWB_fixed,    ARM::VST2q8wb_fixed, false, true, false,  SingleSpc,  4, 8 ,false},
+{ ARM::VST2q8PseudoWB_register,    ARM::VST2q8wb_register, false, true, true,  SingleSpc,  4, 8 ,false},
 
 { ARM::VST3LNd16Pseudo,     ARM::VST3LNd16,     false, false, false, SingleSpc, 3, 4 ,true},
 { ARM::VST3LNd16Pseudo_UPD, ARM::VST3LNd16_UPD, false, true, true,  SingleSpc, 3, 4 ,true},
@@ -1193,12 +1199,18 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::VST2q8Pseudo:
     case ARM::VST2q16Pseudo:
     case ARM::VST2q32Pseudo:
-    case ARM::VST2d8Pseudo_UPD:
-    case ARM::VST2d16Pseudo_UPD:
-    case ARM::VST2d32Pseudo_UPD:
-    case ARM::VST2q8Pseudo_UPD:
-    case ARM::VST2q16Pseudo_UPD:
-    case ARM::VST2q32Pseudo_UPD:
+    case ARM::VST2d8PseudoWB_fixed:
+    case ARM::VST2d16PseudoWB_fixed:
+    case ARM::VST2d32PseudoWB_fixed:
+    case ARM::VST2q8PseudoWB_fixed:
+    case ARM::VST2q16PseudoWB_fixed:
+    case ARM::VST2q32PseudoWB_fixed:
+    case ARM::VST2d8PseudoWB_register:
+    case ARM::VST2d16PseudoWB_register:
+    case ARM::VST2d32PseudoWB_register:
+    case ARM::VST2q8PseudoWB_register:
+    case ARM::VST2q16PseudoWB_register:
+    case ARM::VST2q32PseudoWB_register:
     case ARM::VST3d8Pseudo:
     case ARM::VST3d16Pseudo:
     case ARM::VST3d32Pseudo:
