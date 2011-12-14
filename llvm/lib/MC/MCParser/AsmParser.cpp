@@ -181,6 +181,9 @@ private:
 
   /// EnterIncludeFile - Enter the specified file. This returns true on failure.
   bool EnterIncludeFile(const std::string &Filename);
+  /// ProcessIncbinFile - Process the specified file for the .incbin directive.
+  /// This returns true on failure.
+  bool ProcessIncbinFile(const std::string &Filename);
 
   /// \brief Reset the current lexer position to that given by \arg Loc. The
   /// current token is not set; clients should ensure Lex() is called
@@ -227,6 +230,7 @@ private:
 
   bool ParseDirectiveAbort(); // ".abort"
   bool ParseDirectiveInclude(); // ".include"
+  bool ParseDirectiveIncbin(); // ".incbin"
 
   bool ParseDirectiveIf(SMLoc DirectiveLoc); // ".if"
   // ".ifdef" or ".ifndef", depending on expect_defined
@@ -425,6 +429,24 @@ bool AsmParser::EnterIncludeFile(const std::string &Filename) {
   CurBuffer = NewBuf;
 
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
+
+  return false;
+}
+
+/// Process the specified .incbin file by seaching for it in the include paths
+/// then just emiting the byte contents of the file to the streamer. This 
+/// returns true on failure.
+bool AsmParser::ProcessIncbinFile(const std::string &Filename) {
+  std::string IncludedFile;
+  int NewBuf = SrcMgr.AddIncludeFile(Filename, Lexer.getLoc(), IncludedFile);
+  if (NewBuf == -1)
+    return true;
+
+  // Loop picking the bytes from the file and emitting them.
+  const char *BufferStart = SrcMgr.getMemoryBuffer(NewBuf)->getBufferStart();
+  const char *BufferEnd = SrcMgr.getMemoryBuffer(NewBuf)->getBufferEnd();
+  for(const char *p = BufferStart; p < BufferEnd; p++)
+    getStreamer().EmitIntValue(*p, 1, DEFAULT_ADDRSPACE);
 
   return false;
 }
@@ -1183,6 +1205,8 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveAbort();
     if (IDVal == ".include")
       return ParseDirectiveInclude();
+    if (IDVal == ".incbin")
+      return ParseDirectiveIncbin();
 
     if (IDVal == ".code16")
       return TokError(Twine(IDVal) + " not supported yet");
@@ -2200,6 +2224,31 @@ bool AsmParser::ParseDirectiveInclude() {
   // of statement to avoid losing it when we switch.
   if (EnterIncludeFile(Filename)) {
     Error(IncludeLoc, "Could not find include file '" + Filename + "'");
+    return true;
+  }
+
+  return false;
+}
+
+/// ParseDirectiveIncbin
+///  ::= .incbin "filename"
+bool AsmParser::ParseDirectiveIncbin() {
+  if (getLexer().isNot(AsmToken::String))
+    return TokError("expected string in '.incbin' directive");
+
+  std::string Filename = getTok().getString();
+  SMLoc IncbinLoc = getLexer().getLoc();
+  Lex();
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '.incbin' directive");
+
+  // Strip the quotes.
+  Filename = Filename.substr(1, Filename.size()-2);
+
+  // Attempt to process the included file.
+  if (ProcessIncbinFile(Filename)) {
+    Error(IncbinLoc, "Could not find incbin file '" + Filename + "'");
     return true;
   }
 
