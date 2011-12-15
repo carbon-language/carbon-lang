@@ -682,6 +682,13 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       return BinaryOperator::CreateOr(CondVal, FalseVal);
     else if (CondVal == FalseVal)
       return BinaryOperator::CreateAnd(CondVal, TrueVal);
+
+    // select a, ~a, b -> (~a)&b
+    // select a, b, ~a -> (~a)|b
+    if (match(TrueVal, m_Not(m_Specific(CondVal))))
+      return BinaryOperator::CreateAnd(TrueVal, FalseVal);
+    else if (match(FalseVal, m_Not(m_Specific(CondVal))))
+      return BinaryOperator::CreateOr(TrueVal, FalseVal);
   }
 
   // Selecting between two integer constants?

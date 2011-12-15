@@ -809,3 +809,23 @@ define i32 @test61(i32* %ptr) {
 ; CHECK: @test61
 ; CHECK: ret i32 10
 }
+
+define i1 @test62(i1 %A, i1 %B) {
+        %not = xor i1 %A, true
+        %C = select i1 %A, i1 %not, i1 %B             
+        ret i1 %C
+; CHECK: @test62
+; CHECK: %not = xor i1 %A, true
+; CHECK: %C = and i1 %not, %B
+; CHECK: ret i1 %C
+}
+
+define i1 @test63(i1 %A, i1 %B) {
+        %not = xor i1 %A, true
+        %C = select i1 %A, i1 %B, i1 %not         
+        ret i1 %C
+; CHECK: @test63
+; CHECK: %not = xor i1 %A, true
+; CHECK: %C = or i1 %B, %not
+; CHECK: ret i1 %C
+}
