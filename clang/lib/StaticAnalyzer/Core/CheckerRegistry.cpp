@@ -9,12 +9,13 @@
 
 #include "clang/StaticAnalyzer/Core/CheckerRegistry.h"
 #include "clang/StaticAnalyzer/Core/CheckerOptInfo.h"
+#include "llvm/ADT/SetVector.h"
 
 using namespace clang;
 using namespace ento;
 
 static const char PackageSeparator = '.';
-typedef llvm::DenseSet<const CheckerRegistry::CheckerInfo *> CheckerInfoSet;
+typedef llvm::SetVector<const CheckerRegistry::CheckerInfo *> CheckerInfoSet;
 
 
 static bool checkerNameLT(const CheckerRegistry::CheckerInfo &a,
@@ -72,7 +73,7 @@ static void collectCheckers(const CheckerRegistry::CheckerInfoList &checkers,
     if (opt.isEnabled())
       collected.insert(&*i);
     else
-      collected.erase(&*i);
+      collected.remove(&*i);
   }
 }
 
