@@ -139,6 +139,7 @@ class SelectionDAG {
   const TargetSelectionDAGInfo &TSI;
   MachineFunction *MF;
   LLVMContext *Context;
+  CodeGenOpt::Level OptLevel;
 
   /// EntryNode - The starting token.
   SDNode EntryNode;
@@ -187,7 +188,7 @@ class SelectionDAG {
   SelectionDAG(const SelectionDAG&);   // Do not implement.
 
 public:
-  explicit SelectionDAG(const TargetMachine &TM);
+  explicit SelectionDAG(const TargetMachine &TM, llvm::CodeGenOpt::Level);
   ~SelectionDAG();
 
   /// init - Prepare this SelectionDAG to process code in the given
@@ -1034,6 +1035,7 @@ private:
                                void *&InsertPos);
   SDNode *FindModifiedNodeSlot(SDNode *N, const SDValue *Ops, unsigned NumOps,
                                void *&InsertPos);
+  SDNode *UpdadeDebugLocOnMergedSDNode(SDNode *N, DebugLoc loc);
 
   void DeleteNodeNotInCSEMaps(SDNode *N);
   void DeallocateNode(SDNode *N);

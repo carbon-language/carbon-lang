@@ -840,9 +840,9 @@ unsigned SelectionDAG::getEVTAlignment(EVT VT) const {
 }
 
 // EntryNode could meaningfully have debug info if we can find it...
-SelectionDAG::SelectionDAG(const TargetMachine &tm)
+SelectionDAG::SelectionDAG(const TargetMachine &tm, CodeGenOpt::Level OL)
   : TM(tm), TLI(*tm.getTargetLowering()), TSI(*tm.getSelectionDAGInfo()),
-    EntryNode(ISD::EntryToken, DebugLoc(), getVTList(MVT::Other)),
+    OptLevel(OL), EntryNode(ISD::EntryToken, DebugLoc(), getVTList(MVT::Other)),
     Root(getEntryNode()), Ordering(0) {
   AllNodes.push_back(&EntryNode);
   Ordering = new SDNodeOrdering();
@@ -4918,6 +4918,20 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
   return N;
 }
 
+/// UpdadeDebugLocOnMergedSDNode - If the opt level is -O0 then it throws away
+/// the line number information on the merged node since it is not possible to
+/// preserve the information that operation is associated with multiple lines.
+/// This will make the debugger working better at -O0, were there is a higher
+/// probability having other instructions associated with that line.
+///
+SDNode *SelectionDAG::UpdadeDebugLocOnMergedSDNode(SDNode *N, DebugLoc OLoc) {
+  DebugLoc NLoc = N->getDebugLoc();
+  if (!(NLoc.isUnknown()) && (OptLevel == CodeGenOpt::None) && (OLoc != NLoc)) {
+    N->setDebugLoc(DebugLoc());
+  }
+  return N;
+}
+
 /// MorphNodeTo - This *mutates* the specified node to have the specified
 /// return type, opcode, and operands.
 ///
@@ -4939,7 +4953,7 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opc, VTs, Ops, NumOps);
     if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
-      return ON;
+      return UpdadeDebugLocOnMergedSDNode(ON, N->getDebugLoc());
   }
 
   if (!RemoveNodeFromCSEMaps(N))
@@ -5143,8 +5157,9 @@ SelectionDAG::getMachineNode(unsigned Opcode, DebugLoc DL, SDVTList VTs,
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, ~Opcode, VTs, Ops, NumOps);
     IP = 0;
-    if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-      return cast<MachineSDNode>(E);
+    if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
+      return cast<MachineSDNode>(UpdadeDebugLocOnMergedSDNode(E, DL));
+    }
   }
 
   // Allocate a new MachineSDNode.

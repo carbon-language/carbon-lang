@@ -266,7 +266,7 @@ SelectionDAGISel::SelectionDAGISel(const TargetMachine &tm,
                                    CodeGenOpt::Level OL) :
   MachineFunctionPass(ID), TM(tm), TLI(*tm.getTargetLowering()),
   FuncInfo(new FunctionLoweringInfo(TLI)),
-  CurDAG(new SelectionDAG(tm)),
+  CurDAG(new SelectionDAG(tm, OL)),
   SDB(new SelectionDAGBuilder(*CurDAG, *FuncInfo, OL)),
   GFI(),
   OptLevel(OL),
