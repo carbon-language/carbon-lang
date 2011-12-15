@@ -1,7 +1,7 @@
 // REQUIRES: x86-64-registered-target
 // RUN: %clang_cc1 -emit-llvm -triple x86_64-apple-darwin10 -fexceptions -fobjc-exceptions -g %s -o - | FileCheck %s
 
-// CHECK: !30 = metadata !{i32 720942, i32 0, metadata !6, metadata !"-[InstanceVariablesEverywhereButTheInterface someString]", metadata !"-[InstanceVariablesEverywhereButTheInterface someString]", metadata !"", metadata !6, i32 27, metadata !31, i1 true, i1 true, i32 0, i32 0, i32 0, i32 320, i1 false, %1* (%0*, i8*)* @"\01-[InstanceVariablesEverywhereButTheInterface someString]", null, null, metadata !33} ; [ DW_TAG_subprogram ]
+// CHECK: !30 = metadata !{i32 720942, i32 0, metadata !6, metadata !"-[InstanceVariablesEverywhereButTheInterface someString]", metadata !"-[InstanceVariablesEverywhereButTheInterface someString]", metadata !"", metadata !6, i32 27, metadata !31, i1 true, i1 true, i32 0, i32 0, null, i32 320, i1 false, %1* (%0*, i8*)* @"\01-[InstanceVariablesEverywhereButTheInterface someString]", null, null, metadata !33} ; [ DW_TAG_subprogram ]
 
 //rdar: //8498026
 
