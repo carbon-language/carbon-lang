@@ -776,11 +776,3 @@ void __asan_init() {
     Report("AddressSanitizer Init done\n");
   }
 }
-
-#ifdef __linux__
-// On Linux, we force __asan_init to be called before anyone else
-// by placing it into .preinit_array section.
-// FIXME: do we have anything like this on Mac?
-__attribute__((section(".preinit_array")))
-  typeof(__asan_init) *__asan_preinit =__asan_init;
-#endif
