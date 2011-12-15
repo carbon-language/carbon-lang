@@ -556,43 +556,80 @@ void ASTDeclReader::VisitObjCContainerDecl(ObjCContainerDecl *CD) {
 void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   VisitObjCContainerDecl(ID);
   ID->setTypeForDecl(Reader.readType(F, Record, Idx).getTypePtrOrNull());
-  ID->setSuperClass(ReadDeclAs<ObjCInterfaceDecl>(Record, Idx));
   
-  // Read the directly referenced protocols and their SourceLocations.
-  unsigned NumProtocols = Record[Idx++];
-  SmallVector<ObjCProtocolDecl *, 16> Protocols;
-  Protocols.reserve(NumProtocols);
-  for (unsigned I = 0; I != NumProtocols; ++I)
-    Protocols.push_back(ReadDeclAs<ObjCProtocolDecl>(Record, Idx));
-  SmallVector<SourceLocation, 16> ProtoLocs;
-  ProtoLocs.reserve(NumProtocols);
-  for (unsigned I = 0; I != NumProtocols; ++I)
-    ProtoLocs.push_back(ReadSourceLocation(Record, Idx));
-  ID->setProtocolList(Protocols.data(), NumProtocols, ProtoLocs.data(),
-                      Reader.getContext());
+  ObjCInterfaceDecl *Def = ReadDeclAs<ObjCInterfaceDecl>(Record, Idx);
+  if (ID == Def) {
+    // Read the definition.
+    ID->allocateDefinitionData();
+    
+    ObjCInterfaceDecl::DefinitionData &Data = ID->data();
+    
+    // Read the superclass.
+    Data.SuperClass = ReadDeclAs<ObjCInterfaceDecl>(Record, Idx);
+    Data.SuperClassLoc = ReadSourceLocation(Record, Idx);
+
+    // Read the directly referenced protocols and their SourceLocations.
+    unsigned NumProtocols = Record[Idx++];
+    SmallVector<ObjCProtocolDecl *, 16> Protocols;
+    Protocols.reserve(NumProtocols);
+    for (unsigned I = 0; I != NumProtocols; ++I)
+      Protocols.push_back(ReadDeclAs<ObjCProtocolDecl>(Record, Idx));
+    SmallVector<SourceLocation, 16> ProtoLocs;
+    ProtoLocs.reserve(NumProtocols);
+    for (unsigned I = 0; I != NumProtocols; ++I)
+      ProtoLocs.push_back(ReadSourceLocation(Record, Idx));
+    ID->setProtocolList(Protocols.data(), NumProtocols, ProtoLocs.data(),
+                        Reader.getContext());
   
-  // Read the transitive closure of protocols referenced by this class.
-  NumProtocols = Record[Idx++];
-  Protocols.clear();
-  Protocols.reserve(NumProtocols);
-  for (unsigned I = 0; I != NumProtocols; ++I)
-    Protocols.push_back(ReadDeclAs<ObjCProtocolDecl>(Record, Idx));
-  ID->AllReferencedProtocols.set(Protocols.data(), NumProtocols,
-                                 Reader.getContext());
+    // Read the transitive closure of protocols referenced by this class.
+    NumProtocols = Record[Idx++];
+    Protocols.clear();
+    Protocols.reserve(NumProtocols);
+    for (unsigned I = 0; I != NumProtocols; ++I)
+      Protocols.push_back(ReadDeclAs<ObjCProtocolDecl>(Record, Idx));
+    ID->data().AllReferencedProtocols.set(Protocols.data(), NumProtocols,
+                                          Reader.getContext());
   
-  // Read the ivars.
-  unsigned NumIvars = Record[Idx++];
-  SmallVector<ObjCIvarDecl *, 16> IVars;
-  IVars.reserve(NumIvars);
-  for (unsigned I = 0; I != NumIvars; ++I)
-    IVars.push_back(ReadDeclAs<ObjCIvarDecl>(Record, Idx));
-  ID->setCategoryList(ReadDeclAs<ObjCCategoryDecl>(Record, Idx));
+    // Read the ivars.
+    unsigned NumIvars = Record[Idx++];
+    SmallVector<ObjCIvarDecl *, 16> IVars;
+    IVars.reserve(NumIvars);
+    for (unsigned I = 0; I != NumIvars; ++I)
+      IVars.push_back(ReadDeclAs<ObjCIvarDecl>(Record, Idx));
+    
+    // Read the categories.
+    ID->setCategoryList(ReadDeclAs<ObjCCategoryDecl>(Record, Idx));
   
-  // We will rebuild this list lazily.
-  ID->setIvarList(0);
+    // We will rebuild this list lazily.
+    ID->setIvarList(0);
+    
+    // If there are any pending forward references, make their definition data
+    // pointers point at the newly-allocated data.
+    ASTReader::PendingForwardRefsMap::iterator
+    FindI = Reader.PendingForwardRefs.find(ID);
+    if (FindI != Reader.PendingForwardRefs.end()) {
+      ASTReader::ForwardRefs &Refs = FindI->second;
+      for (ASTReader::ForwardRefs::iterator I = Refs.begin(), 
+                                            E = Refs.end(); 
+           I != E; ++I)
+        cast<ObjCInterfaceDecl>(*I)->Definition = ID->Definition;
+#ifndef NDEBUG
+      // We later check whether PendingForwardRefs is empty to make sure all
+      // pending references were linked.
+      Reader.PendingForwardRefs.erase(ID);
+#endif
+    
+    } else if (Def) {
+      if (Def->Definition) {
+        ID->Definition = Def->Definition;
+      } else {
+        // The definition is still initializing.
+        Reader.PendingForwardRefs[Def].push_back(ID);
+      }
+    }
+  }
+  
   ID->InitiallyForwardDecl = Record[Idx++];
-  ID->ForwardDecl = Record[Idx++];
-  ID->setSuperClassLoc(ReadSourceLocation(Record, Idx));
   ID->setLocEnd(ReadSourceLocation(Record, Idx));
 }
 
@@ -972,7 +1009,7 @@ void ASTDeclReader::InitializeCXXDefinitionData(CXXRecordDecl *D,
       ASTReader::ForwardRefs &Refs = FindI->second;
       for (ASTReader::ForwardRefs::iterator
              I = Refs.begin(), E = Refs.end(); I != E; ++I)
-        (*I)->DefinitionData = D->DefinitionData;
+        cast<CXXRecordDecl>(*I)->DefinitionData = D->DefinitionData;
 #ifndef NDEBUG
       // We later check whether PendingForwardRefs is empty to make sure all
       // pending references were linked.

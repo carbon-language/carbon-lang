@@ -369,7 +369,10 @@ bool IndexingContext::handleObjCInterface(const ObjCInterfaceDecl *D) {
       markEntityOccurrenceInFile(SuperD, SuperLoc);
   }
   
-  ObjCProtocolListInfo ProtInfo(D->getReferencedProtocols(), *this, SA);
+  ObjCProtocolList EmptyProtoList;
+  ObjCProtocolListInfo ProtInfo(D->hasDefinition()? D->getReferencedProtocols()
+                                                  : EmptyProtoList, 
+                                *this, SA);
   
   ObjCInterfaceDeclInfo InterInfo(D);
   InterInfo.ObjCProtoListInfo = ProtInfo.getListInfo();

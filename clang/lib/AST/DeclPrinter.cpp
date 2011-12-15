@@ -905,6 +905,11 @@ void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
   else
     Out << "@interface " << I;
 
+  if (OID->isForwardDecl()) {
+    Out << "@end";
+    return;
+  }
+  
   // Protocols?
   const ObjCList<ObjCProtocolDecl> &Protocols = OID->getReferencedProtocols();
   if (!Protocols.empty()) {

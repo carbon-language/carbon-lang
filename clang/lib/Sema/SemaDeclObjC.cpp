@@ -368,10 +368,10 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   ObjCInterfaceDecl* IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
   if (IDecl) {
     // Class already seen. Is it a forward declaration?
-    if (!IDecl->isForwardDecl()) {
+    if (ObjCInterfaceDecl *Def = IDecl->getDefinition()) {
       IDecl->setInvalidDecl();
       Diag(AtInterfaceLoc, diag::err_duplicate_class_def)<<IDecl->getDeclName();
-      Diag(IDecl->getLocation(), diag::note_previous_definition);
+      Diag(Def->getLocation(), diag::note_previous_definition);
 
       // Create a new one; the other may be in a different DeclContex, (e.g.
       // this one may be in a LinkageSpecDecl while the other is not) which
@@ -392,8 +392,6 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       IDecl->setLexicalDeclContext(CurContext);
       CurContext->addDecl(IDecl);
 
-      IDecl->completedForwardDecl();
-
       if (AttrList)
         ProcessDeclAttributeList(TUScope, IDecl, AttrList);
     }
@@ -406,6 +404,9 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
     PushOnScopeChains(IDecl, TUScope);
   }
 
+  if (!IDecl->hasDefinition())
+    IDecl->startDefinition();
+  
   if (SuperName) {
     // Check if a different kind of symbol declared in this scope.
     PrevDecl = LookupSingleName(TUScope, SuperName, SuperLoc,
@@ -942,6 +943,7 @@ Decl *Sema::ActOnStartClassImplementation(
     // copy them over.
     IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtClassImplLoc,
                                       ClassName, ClassLoc, false, true);
+    IDecl->startDefinition();
     IDecl->setSuperClass(SDecl);
     IDecl->setLocEnd(ClassLoc);
 
@@ -950,8 +952,8 @@ Decl *Sema::ActOnStartClassImplementation(
     // Mark the interface as being completed, even if it was just as
     //   @class ....;
     // declaration; the user cannot reopen it.
-    if (IDecl->isForwardDecl())
-      IDecl->completedForwardDecl();
+    if (!IDecl->hasDefinition())
+      IDecl->startDefinition();
   }
 
   ObjCImplementationDecl* IMPDecl =
@@ -2540,7 +2542,9 @@ private:
 
   void searchFrom(ObjCInterfaceDecl *iface) {
     // A method in a class declaration overrides declarations from
-
+    if (!iface->hasDefinition())
+      return;
+    
     //   - categories,
     for (ObjCCategoryDecl *category = iface->getCategoryList();
            category; category = category->getNextClassCategory())

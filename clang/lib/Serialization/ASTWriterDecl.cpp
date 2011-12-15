@@ -449,36 +449,46 @@ void ASTDeclWriter::VisitObjCContainerDecl(ObjCContainerDecl *D) {
 void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   VisitObjCContainerDecl(D);
   Writer.AddTypeRef(QualType(D->getTypeForDecl(), 0), Record);
-  Writer.AddDeclRef(D->getSuperClass(), Record);
 
-  // Write out the protocols that are directly referenced by the @interface.
-  Record.push_back(D->ReferencedProtocols.size());
-  for (ObjCInterfaceDecl::protocol_iterator P = D->protocol_begin(),
-         PEnd = D->protocol_end();
-       P != PEnd; ++P)
-    Writer.AddDeclRef(*P, Record);
-  for (ObjCInterfaceDecl::protocol_loc_iterator PL = D->protocol_loc_begin(),
-         PLEnd = D->protocol_loc_end();
-       PL != PLEnd; ++PL)
-    Writer.AddSourceLocation(*PL, Record);
-
-  // Write out the protocols that are transitively referenced.
-  Record.push_back(D->AllReferencedProtocols.size());
-  for (ObjCList<ObjCProtocolDecl>::iterator
-        P = D->AllReferencedProtocols.begin(),
-        PEnd = D->AllReferencedProtocols.end();
-       P != PEnd; ++P)
-    Writer.AddDeclRef(*P, Record);
+  ObjCInterfaceDecl *Def = D->getDefinition();
+  Writer.AddDeclRef(Def, Record);
   
-  // Write out the ivars.
-  Record.push_back(D->ivar_size());
-  for (ObjCInterfaceDecl::ivar_iterator I = D->ivar_begin(),
-                                     IEnd = D->ivar_end(); I != IEnd; ++I)
-    Writer.AddDeclRef(*I, Record);
-  Writer.AddDeclRef(D->getCategoryList(), Record);
+  if (D == Def) {
+    // Write the DefinitionData
+    ObjCInterfaceDecl::DefinitionData &Data = D->data();
+    
+    Writer.AddDeclRef(D->getSuperClass(), Record);
+    Writer.AddSourceLocation(D->getSuperClassLoc(), Record);
+    
+    // Write out the protocols that are directly referenced by the @interface.
+    Record.push_back(Data.ReferencedProtocols.size());
+    for (ObjCInterfaceDecl::protocol_iterator P = D->protocol_begin(),
+                                           PEnd = D->protocol_end();
+         P != PEnd; ++P)
+      Writer.AddDeclRef(*P, Record);
+    for (ObjCInterfaceDecl::protocol_loc_iterator PL = D->protocol_loc_begin(),
+         PLEnd = D->protocol_loc_end();
+         PL != PLEnd; ++PL)
+      Writer.AddSourceLocation(*PL, Record);
+    
+    // Write out the protocols that are transitively referenced.
+    Record.push_back(Data.AllReferencedProtocols.size());
+    for (ObjCList<ObjCProtocolDecl>::iterator
+              P = Data.AllReferencedProtocols.begin(),
+           PEnd = Data.AllReferencedProtocols.end();
+         P != PEnd; ++P)
+      Writer.AddDeclRef(*P, Record);
+    
+    // Write out the ivars.
+    Record.push_back(D->ivar_size());
+    for (ObjCInterfaceDecl::ivar_iterator I = D->ivar_begin(),
+                                       IEnd = D->ivar_end(); I != IEnd; ++I)
+      Writer.AddDeclRef(*I, Record);
+    
+    Writer.AddDeclRef(D->getCategoryList(), Record);
+  }  
+  
   Record.push_back(D->isInitiallyForwardDecl());
-  Record.push_back(D->isForwardDecl());
-  Writer.AddSourceLocation(D->getSuperClassLoc(), Record);
   Writer.AddSourceLocation(D->getLocEnd(), Record);
   Code = serialization::DECL_OBJC_INTERFACE;
 }

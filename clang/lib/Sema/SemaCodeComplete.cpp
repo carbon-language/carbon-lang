@@ -4558,7 +4558,7 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
   }
   
   ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container);
-  if (!IFace)
+  if (!IFace || !IFace->hasDefinition())
     return;
   
   // Add methods in protocols.
@@ -5783,6 +5783,9 @@ static void FindImplementableMethods(ASTContext &Context,
                                      bool InOriginalClass = true) {
   if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container)) {
     // Recurse into protocols.
+    if (!IFace->hasDefinition())
+      return;
+    
     const ObjCList<ObjCProtocolDecl> &Protocols
       = IFace->getReferencedProtocols();
     for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),

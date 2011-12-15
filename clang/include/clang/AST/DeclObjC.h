@@ -545,45 +545,63 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   /// TypeDecl.  It is a cache maintained by ASTContext::getObjCInterfaceType
   mutable const Type *TypeForDecl;
   friend class ASTContext;
+  
+  struct DefinitionData {
+    /// Class's super class.
+    ObjCInterfaceDecl *SuperClass;
 
-  /// Class's super class.
-  ObjCInterfaceDecl *SuperClass;
+    /// Protocols referenced in the @interface  declaration
+    ObjCProtocolList ReferencedProtocols;
 
-  /// Protocols referenced in the @interface  declaration
-  ObjCProtocolList ReferencedProtocols;
+    /// Protocols reference in both the @interface and class extensions.
+    ObjCList<ObjCProtocolDecl> AllReferencedProtocols;
 
-  /// Protocols reference in both the @interface and class extensions.
-  ObjCList<ObjCProtocolDecl> AllReferencedProtocols;
+    /// \brief List of categories and class extensions defined for this class.
+    ///
+    /// Categories are stored as a linked list in the AST, since the categories
+    /// and class extensions come long after the initial interface declaration,
+    /// and we avoid dynamically-resized arrays in the AST wherever possible.
+    ObjCCategoryDecl *CategoryList;
 
-  /// \brief List of categories and class extensions defined for this class.
-  ///
-  /// Categories are stored as a linked list in the AST, since the categories
-  /// and class extensions come long after the initial interface declaration,
-  /// and we avoid dynamically-resized arrays in the AST wherever possible.
-  ObjCCategoryDecl *CategoryList;
+    /// IvarList - List of all ivars defined by this class; including class
+    /// extensions and implementation. This list is built lazily.
+    ObjCIvarDecl *IvarList;
 
-  /// IvarList - List of all ivars defined by this class; including class
-  /// extensions and implementation. This list is built lazily.
-  ObjCIvarDecl *IvarList;
+    /// \brief Indicates that the contents of this Objective-C class will be
+    /// completed by the external AST source when required.
+    mutable bool ExternallyCompleted : 1;
+
+    SourceLocation SuperClassLoc; // location of the super class identifier.
+  };
+
+  ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
+                    SourceLocation CLoc, bool FD, bool isInternal);
+
+  void LoadExternalDefinition() const;
+
+  /// \brief Contains a pointer to the data associated with this class,
+  /// which will be NULL if this class has not yet been defined.
+  DefinitionData *Definition;
+
+  /// \brief The location of the last location in this declaration, e.g.,
+  /// the '>', '}', or identifier.
+  /// FIXME: This seems like the wrong location to care about.
+  SourceLocation EndLoc; 
 
   /// \brief True if it was initially declared with @class.
   /// Differs with \see ForwardDecl in that \see ForwardDecl will change to
   /// false when we see the @interface, but InitiallyForwardDecl will remain
   /// true.
   bool InitiallyForwardDecl : 1;
-  bool ForwardDecl:1; // declared with @class.
 
-  /// \brief Indicates that the contents of this Objective-C class will be
-  /// completed by the external AST source when required.
-  mutable bool ExternallyCompleted : 1;
+  DefinitionData &data() const {
+    assert(Definition != 0 && "Declaration is not a definition!");
+    return *Definition;
+  }
 
-  SourceLocation SuperClassLoc; // location of the super class identifier.
-  SourceLocation EndLoc; // marks the '>', '}', or identifier.
-
-  ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
-                    SourceLocation CLoc, bool FD, bool isInternal);
-
-  void LoadExternalDefinition() const;
+  /// \brief Allocate the definition data for this class.
+  void allocateDefinitionData();
+  
 public:
   static ObjCInterfaceDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation atLoc,
@@ -604,10 +622,10 @@ public:
   void setExternallyCompleted();
 
   const ObjCProtocolList &getReferencedProtocols() const {
-    if (ExternallyCompleted)
+    if (data().ExternallyCompleted)
       LoadExternalDefinition();
 
-    return ReferencedProtocols;
+    return data().ReferencedProtocols;
   }
 
   ObjCImplementationDecl *getImplementation() const;
@@ -626,55 +644,93 @@ public:
   typedef ObjCProtocolList::iterator protocol_iterator;
 
   protocol_iterator protocol_begin() const {
-    if (ExternallyCompleted)
+    // FIXME: Should make sure no callers ever do this.
+    if (!hasDefinition())
+      return protocol_iterator();
+    
+    if (data().ExternallyCompleted)
       LoadExternalDefinition();
 
-    return ReferencedProtocols.begin();
+    return data().ReferencedProtocols.begin();
   }
   protocol_iterator protocol_end() const {
-    if (ExternallyCompleted)
+    // FIXME: Should make sure no callers ever do this.
+    if (!hasDefinition())
+      return protocol_iterator();
+
+    if (data().ExternallyCompleted)
       LoadExternalDefinition();
 
-    return ReferencedProtocols.end();
+    return data().ReferencedProtocols.end();
   }
 
   typedef ObjCProtocolList::loc_iterator protocol_loc_iterator;
 
   protocol_loc_iterator protocol_loc_begin() const {
-    if (ExternallyCompleted)
+    // FIXME: Should make sure no callers ever do this.
+    if (!hasDefinition())
+      return protocol_loc_iterator();
+
+    if (data().ExternallyCompleted)
       LoadExternalDefinition();
 
-    return ReferencedProtocols.loc_begin();
+    return data().ReferencedProtocols.loc_begin();
   }
 
   protocol_loc_iterator protocol_loc_end() const {
-    if (ExternallyCompleted)
+    // FIXME: Should make sure no callers ever do this.
+    if (!hasDefinition())
+      return protocol_loc_iterator();
+
+    if (data().ExternallyCompleted)
       LoadExternalDefinition();
 
-    return ReferencedProtocols.loc_end();
+    return data().ReferencedProtocols.loc_end();
   }
 
   typedef ObjCList<ObjCProtocolDecl>::iterator all_protocol_iterator;
 
   all_protocol_iterator all_referenced_protocol_begin() const {
-    if (ExternallyCompleted)
+    // FIXME: Should make sure no callers ever do this.
+    if (!hasDefinition())
+      return all_protocol_iterator();
+
+    if (data().ExternallyCompleted)
       LoadExternalDefinition();
 
-    return AllReferencedProtocols.empty() ? protocol_begin()
-      : AllReferencedProtocols.begin();
+    return data().AllReferencedProtocols.empty()  
+             ? protocol_begin()
+             : data().AllReferencedProtocols.begin();
   }
   all_protocol_iterator all_referenced_protocol_end() const {
-    if (ExternallyCompleted)
+    // FIXME: Should make sure no callers ever do this.
+    if (!hasDefinition())
+      return all_protocol_iterator();
+    
+    if (data().ExternallyCompleted)
       LoadExternalDefinition();
 
-    return AllReferencedProtocols.empty() ? protocol_end()
-      : AllReferencedProtocols.end();
+    return data().AllReferencedProtocols.empty() 
+             ? protocol_end()
+             : data().AllReferencedProtocols.end();
   }
 
   typedef specific_decl_iterator<ObjCIvarDecl> ivar_iterator;
 
-  ivar_iterator ivar_begin() const { return ivar_iterator(decls_begin()); }
-  ivar_iterator ivar_end() const { return ivar_iterator(decls_end()); }
+  ivar_iterator ivar_begin() const { 
+    if (const ObjCInterfaceDecl *Def = getDefinition())
+      return ivar_iterator(Def->decls_begin()); 
+    
+    // FIXME: Should make sure no callers ever do this.
+    return ivar_iterator();
+  }
+  ivar_iterator ivar_end() const { 
+    if (const ObjCInterfaceDecl *Def = getDefinition())
+      return ivar_iterator(Def->decls_end()); 
+
+    // FIXME: Should make sure no callers ever do this.
+    return ivar_iterator();
+  }
 
   unsigned ivar_size() const {
     return std::distance(ivar_begin(), ivar_end());
@@ -688,13 +744,13 @@ public:
     // the ivar chain is essentially a cached property of ObjCInterfaceDecl.
     return const_cast<ObjCInterfaceDecl *>(this)->all_declared_ivar_begin();
   }
-  void setIvarList(ObjCIvarDecl *ivar) { IvarList = ivar; }
+  void setIvarList(ObjCIvarDecl *ivar) { data().IvarList = ivar; }
 
   /// setProtocolList - Set the list of protocols that this interface
   /// implements.
   void setProtocolList(ObjCProtocolDecl *const* List, unsigned Num,
                        const SourceLocation *Locs, ASTContext &C) {
-    ReferencedProtocols.set(List, Num, Locs, C);
+    data().ReferencedProtocols.set(List, Num, Locs, C);
   }
 
   /// mergeClassExtensionProtocolList - Merge class extension's protocol list
@@ -706,30 +762,63 @@ public:
   /// \brief True if it was initially declared with @class.
   /// Differs with \see isForwardDecl in that \see isForwardDecl will change to
   /// false when we see the @interface, but this will remain true.
-  bool isInitiallyForwardDecl() const { return InitiallyForwardDecl; }
-
-  bool isForwardDecl() const { return ForwardDecl; }
-
-  void completedForwardDecl();
-
-  ObjCInterfaceDecl *getSuperClass() const {
-    if (ExternallyCompleted)
-      LoadExternalDefinition();
-
-    return SuperClass;
+  bool isInitiallyForwardDecl() const { 
+    return InitiallyForwardDecl; 
   }
 
-  void setSuperClass(ObjCInterfaceDecl * superCls) { SuperClass = superCls; }
+  /// \brief Determine whether this declaration is a forward declaration of
+  /// the class.
+  bool isForwardDecl() const { return Definition == 0; }
 
-  ObjCCategoryDecl* getCategoryList() const {
-    if (ExternallyCompleted)
+  /// \brief Determine whether this class has been defined.
+  bool hasDefinition() const { return Definition != 0; }
+  
+  /// \brief Retrieve the definition of this class, or NULL if this class 
+  /// has been forward-declared (with @class) but not yet defined (with 
+  /// @interface).
+  ObjCInterfaceDecl *getDefinition() {
+    return hasDefinition()? this : 0;
+  }
+
+  /// \brief Retrieve the definition of this class, or NULL if this class 
+  /// has been forward-declared (with @class) but not yet defined (with 
+  /// @interface).
+  const ObjCInterfaceDecl *getDefinition() const {
+    return hasDefinition()? this : 0;
+  }
+
+  /// \brief Starts the definition of this Objective-C class, taking it from
+  /// a forward declaration (@class) to a definition (@interface).
+  void startDefinition();
+  
+  ObjCInterfaceDecl *getSuperClass() const {
+    // FIXME: Should make sure no callers ever do this.
+    if (!hasDefinition())
+      return 0;
+    
+    if (data().ExternallyCompleted)
       LoadExternalDefinition();
 
-    return CategoryList;
+    return data().SuperClass;
+  }
+
+  void setSuperClass(ObjCInterfaceDecl * superCls) { 
+    data().SuperClass = superCls; 
+  }
+
+  ObjCCategoryDecl* getCategoryList() const {
+    // FIXME: Should make sure no callers ever do this.
+    if (!hasDefinition())
+      return 0;
+    
+    if (data().ExternallyCompleted)
+      LoadExternalDefinition();
+
+    return data().CategoryList;
   }
 
   void setCategoryList(ObjCCategoryDecl *category) {
-    CategoryList = category;
+    data().CategoryList = category;
   }
 
   ObjCCategoryDecl* getFirstClassExtension() const;
@@ -744,6 +833,7 @@ public:
     while (I != NULL) {
       if (declaresSameEntity(this, I))
         return true;
+      
       I = I->getSuperClass();
     }
     return false;
@@ -787,8 +877,8 @@ public:
   SourceLocation getLocEnd() const { return EndLoc; }
   void setLocEnd(SourceLocation LE) { EndLoc = LE; }
 
-  void setSuperClassLoc(SourceLocation Loc) { SuperClassLoc = Loc; }
-  SourceLocation getSuperClassLoc() const { return SuperClassLoc; }
+  void setSuperClassLoc(SourceLocation Loc) { data().SuperClassLoc = Loc; }
+  SourceLocation getSuperClassLoc() const { return data().SuperClassLoc; }
 
   /// isImplicitInterfaceDecl - check that this is an implicitly declared
   /// ObjCInterfaceDecl node. This is for legacy objective-c @implementation

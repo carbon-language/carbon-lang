@@ -329,13 +329,15 @@ private:
   /// haven't been loaded yet.
   DeclContextVisibleUpdatesPending PendingVisibleUpdates;
 
-  typedef SmallVector<CXXRecordDecl *, 4> ForwardRefs;
-  typedef llvm::DenseMap<const CXXRecordDecl *, ForwardRefs>
+  typedef SmallVector<Decl *, 4> ForwardRefs;
+  typedef llvm::DenseMap<const Decl *, ForwardRefs>
       PendingForwardRefsMap;
+  
   /// \brief Forward references that have a definition but the definition decl
   /// is still initializing. When the definition gets read it will update
   /// the DefinitionData pointer of all pending references.
   PendingForwardRefsMap PendingForwardRefs;
+
 
   typedef llvm::DenseMap<serialization::DeclID, serialization::DeclID>
       FirstLatestDeclIDMap;
