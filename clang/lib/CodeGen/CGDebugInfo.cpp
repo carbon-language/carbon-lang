@@ -1211,7 +1211,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
   // If this is just a forward declaration return a special forward-declaration
   // debug type since we won't be able to lay out the entire type.
-  if (!ID->isThisDeclarationADefinition()) {
+  ObjCInterfaceDecl *Def = ID->getDefinition();
+  if (!Def) {
     llvm::DIType FwdDecl =
       DBuilder.createStructType(Unit, ID->getName(),
                                 DefUnit, Line, 0, 0,
@@ -1219,6 +1220,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
                                 llvm::DIArray(), RuntimeLang);
     return FwdDecl;
   }
+  ID = Def;
 
   // To handle a recursive interface, we first generate a debug descriptor
   // for the struct as a forward declaration. Then (if it is a definition)
