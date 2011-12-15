@@ -5946,7 +5946,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     return;
   }
 
-  // C++0x [decl.spec.auto]p6. Deduce the type which 'auto' stands in for.
+  // C++11 [decl.spec.auto]p6. Deduce the type which 'auto' stands in for.
   if (TypeMayContainAuto && VDecl->getType()->getContainedAutoType()) {
     TypeSourceInfo *DeducedType = 0;
     if (!DeduceAutoType(VDecl->getTypeSourceInfo(), Init, DeducedType))
@@ -5969,7 +5969,14 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     if (VarDecl *Old = VDecl->getPreviousDeclaration())
       MergeVarDeclTypes(VDecl, Old);
   }
-  
+
+  if (VDecl->isLocalVarDecl() && VDecl->hasExternalStorage()) {
+    // C99 6.7.8p5. C++ has no such restriction, but that is a defect.
+    Diag(VDecl->getLocation(), diag::err_block_extern_cant_init);
+    VDecl->setInvalidDecl();
+    return;
+  }
+
 
   // A definition must end up with a complete type, which means it must be
   // complete with the restriction that an array type might be completed by the
@@ -6036,44 +6043,58 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     return;
   }
 
-  // Capture the variable that is being initialized and the style of
-  // initialization.
-  InitializedEntity Entity = InitializedEntity::InitializeVariable(VDecl);
-  
-  // FIXME: Poor source location information.
-  InitializationKind Kind
-    = DirectInit? InitializationKind::CreateDirect(VDecl->getLocation(),
-                                                   Init->getLocStart(),
-                                                   Init->getLocEnd())
-                : InitializationKind::CreateCopy(VDecl->getLocation(),
-                                                 Init->getLocStart());
-  
   // Get the decls type and save a reference for later, since
   // CheckInitializerTypes may change it.
   QualType DclT = VDecl->getType(), SavT = DclT;
-  if (VDecl->isLocalVarDecl()) {
-    if (VDecl->hasExternalStorage()) { // C99 6.7.8p5
-      Diag(VDecl->getLocation(), diag::err_block_extern_cant_init);
+
+  // Perform the initialization.
+  if (!VDecl->isInvalidDecl()) {
+    InitializedEntity Entity = InitializedEntity::InitializeVariable(VDecl);
+    InitializationKind Kind
+      = DirectInit ? InitializationKind::CreateDirect(VDecl->getLocation(),
+                                                      Init->getLocStart(),
+                                                      Init->getLocEnd())
+                   : InitializationKind::CreateCopy(VDecl->getLocation(),
+                                                    Init->getLocStart());
+
+    InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
+    ExprResult Result = InitSeq.Perform(*this, Entity, Kind,
+                                              MultiExprArg(*this, &Init, 1),
+                                              &DclT);
+    if (Result.isInvalid()) {
       VDecl->setInvalidDecl();
-    } else if (!VDecl->isInvalidDecl()) {
-      InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
-      ExprResult Result = InitSeq.Perform(*this, Entity, Kind,
-                                                MultiExprArg(*this, &Init, 1),
-                                                &DclT);
-      if (Result.isInvalid()) {
-        VDecl->setInvalidDecl();
-        return;
-      }
-
-      Init = Result.takeAs<Expr>();
-
-      // C++ 3.6.2p2, allow dynamic initialization of static initializers.
-      // Don't check invalid declarations to avoid emitting useless diagnostics.
-      if (!getLangOptions().CPlusPlus && !VDecl->isInvalidDecl()) {
-        if (VDecl->getStorageClass() == SC_Static) // C99 6.7.8p4.
-          CheckForConstantInitializer(Init, DclT);
-      }
+      return;
     }
+
+    Init = Result.takeAs<Expr>();
+  }
+
+  // If the type changed, it means we had an incomplete type that was
+  // completed by the initializer. For example:
+  //   int ary[] = { 1, 3, 5 };
+  // "ary" transitions from a VariableArrayType to a ConstantArrayType.
+  if (!VDecl->isInvalidDecl() && (DclT != SavT)) {
+    VDecl->setType(DclT);
+    Init->setType(DclT.getNonReferenceType());
+  }
+
+  // Check any implicit conversions within the expression.
+  CheckImplicitConversions(Init, VDecl->getLocation());
+
+  if (!VDecl->isInvalidDecl())
+    checkUnsafeAssigns(VDecl->getLocation(), VDecl->getType(), Init);
+
+  Init = MaybeCreateExprWithCleanups(Init);
+  // Attach the initializer to the decl.
+  VDecl->setInit(Init);
+
+  if (VDecl->isLocalVarDecl()) {
+    // C99 6.7.8p4: All the expressions in an initializer for an object that has
+    // static storage duration shall be constant expressions or string literals.
+    // C++ does not have this restriction.
+    if (!getLangOptions().CPlusPlus && !VDecl->isInvalidDecl() &&
+        VDecl->getStorageClass() == SC_Static)
+      CheckForConstantInitializer(Init, DclT);
   } else if (VDecl->isStaticDataMember() &&
              VDecl->getLexicalDeclContext()->isRecord()) {
     // This is an in-class initialization for a static data member, e.g.,
@@ -6082,26 +6103,12 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     //   static const int value = 17;
     // };
 
-    // Try to perform the initialization regardless.
-    if (!VDecl->isInvalidDecl()) {
-      InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
-      ExprResult Result = InitSeq.Perform(*this, Entity, Kind,
-                                          MultiExprArg(*this, &Init, 1),
-                                          &DclT);
-      if (Result.isInvalid()) {
-        VDecl->setInvalidDecl();
-        return;
-      }
-
-      Init = Result.takeAs<Expr>();
-    }
-
     // C++ [class.mem]p4:
     //   A member-declarator can contain a constant-initializer only
     //   if it declares a static member (9.4) of const integral or
     //   const enumeration type, see 9.4.2.
     //
-    // C++0x [class.static.data]p3:
+    // C++11 [class.static.data]p3:
     //   If a non-volatile const static data member is of integral or
     //   enumeration type, its declaration in the class definition can
     //   specify a brace-or-equal-initializer in which every initalizer-clause
@@ -6110,10 +6117,9 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     //   with the constexpr specifier; if so, its declaration shall specify a
     //   brace-or-equal-initializer in which every initializer-clause that is
     //   an assignment-expression is a constant expression.
-    QualType T = VDecl->getType();
 
     // Do nothing on dependent types.
-    if (T->isDependentType()) {
+    if (DclT->isDependentType()) {
 
     // Allow any 'static constexpr' members, whether or not they are of literal
     // type. We separately check that the initializer is a constant expression,
@@ -6121,17 +6127,17 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     } else if (VDecl->isConstexpr()) {
 
     // Require constness.
-    } else if (!T.isConstQualified()) {
+    } else if (!DclT.isConstQualified()) {
       Diag(VDecl->getLocation(), diag::err_in_class_initializer_non_const)
         << Init->getSourceRange();
       VDecl->setInvalidDecl();
 
     // We allow integer constant expressions in all cases.
-    } else if (T->isIntegralOrEnumerationType()) {
+    } else if (DclT->isIntegralOrEnumerationType()) {
       // Check whether the expression is a constant expression.
       SourceLocation Loc;
-      if (getLangOptions().CPlusPlus0x && T.isVolatileQualified())
-        // In C++0x, a non-constexpr const static data member with an
+      if (getLangOptions().CPlusPlus0x && DclT.isVolatileQualified())
+        // In C++11, a non-constexpr const static data member with an
         // in-class initializer cannot be volatile.
         Diag(VDecl->getLocation(), diag::err_in_class_initializer_volatile);
       else if (Init->isValueDependent())
@@ -6151,77 +6157,43 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
         VDecl->setInvalidDecl();
       }
 
-    // We allow floating-point constants as an extension.
-    } else if (T->isFloatingType()) { // also permits complex, which is ok
+    // We allow foldable floating-point constants as an extension.
+    } else if (DclT->isFloatingType()) { // also permits complex, which is ok
       Diag(VDecl->getLocation(), diag::ext_in_class_initializer_float_type)
-        << T << Init->getSourceRange();
+        << DclT << Init->getSourceRange();
       if (getLangOptions().CPlusPlus0x)
         Diag(VDecl->getLocation(),
              diag::note_in_class_initializer_float_type_constexpr)
           << FixItHint::CreateInsertion(VDecl->getLocStart(), "constexpr ");
 
-      if (!Init->isValueDependent() &&
-          !Init->isConstantInitializer(Context, false)) {
+      if (!Init->isValueDependent() && !Init->isEvaluatable(Context)) {
         Diag(Init->getExprLoc(), diag::err_in_class_initializer_non_constant)
           << Init->getSourceRange();
         VDecl->setInvalidDecl();
       }
 
-    // Suggest adding 'constexpr' in C++0x for literal types.
-    } else if (getLangOptions().CPlusPlus0x && T->isLiteralType()) {
+    // Suggest adding 'constexpr' in C++11 for literal types.
+    } else if (getLangOptions().CPlusPlus0x && DclT->isLiteralType()) {
       Diag(VDecl->getLocation(), diag::err_in_class_initializer_literal_type)
-        << T << Init->getSourceRange()
+        << DclT << Init->getSourceRange()
         << FixItHint::CreateInsertion(VDecl->getLocStart(), "constexpr ");
       VDecl->setConstexpr(true);
 
     } else {
       Diag(VDecl->getLocation(), diag::err_in_class_initializer_bad_type)
-        << T << Init->getSourceRange();
+        << DclT << Init->getSourceRange();
       VDecl->setInvalidDecl();
     }
   } else if (VDecl->isFileVarDecl()) {
-    if (VDecl->getStorageClassAsWritten() == SC_Extern && 
-        (!getLangOptions().CPlusPlus || 
+    if (VDecl->getStorageClassAsWritten() == SC_Extern &&
+        (!getLangOptions().CPlusPlus ||
          !Context.getBaseElementType(VDecl->getType()).isConstQualified()))
       Diag(VDecl->getLocation(), diag::warn_extern_init);
-    if (!VDecl->isInvalidDecl()) {
-      InitializationSequence InitSeq(*this, Entity, Kind, &Init, 1);
-      ExprResult Result = InitSeq.Perform(*this, Entity, Kind,
-                                                MultiExprArg(*this, &Init, 1),
-                                                &DclT);
-      if (Result.isInvalid()) {
-        VDecl->setInvalidDecl();
-        return;
-      }
 
-      Init = Result.takeAs<Expr>();
-    }
-
-    // C++ 3.6.2p2, allow dynamic initialization of static initializers.
-    // Don't check invalid declarations to avoid emitting useless diagnostics.
-    if (!getLangOptions().CPlusPlus && !VDecl->isInvalidDecl()) {
-      // C99 6.7.8p4. All file scoped initializers need to be constant.
+    // C99 6.7.8p4. All file scoped initializers need to be constant.
+    if (!getLangOptions().CPlusPlus && !VDecl->isInvalidDecl())
       CheckForConstantInitializer(Init, DclT);
-    }
   }
-  // If the type changed, it means we had an incomplete type that was
-  // completed by the initializer. For example:
-  //   int ary[] = { 1, 3, 5 };
-  // "ary" transitions from a VariableArrayType to a ConstantArrayType.
-  if (!VDecl->isInvalidDecl() && (DclT != SavT)) {
-    VDecl->setType(DclT);
-    Init->setType(DclT.getNonReferenceType());
-  }
-  
-  // Check any implicit conversions within the expression.
-  CheckImplicitConversions(Init, VDecl->getLocation());
-  
-  if (!VDecl->isInvalidDecl())
-    checkUnsafeAssigns(VDecl->getLocation(), VDecl->getType(), Init);
-
-  Init = MaybeCreateExprWithCleanups(Init);
-  // Attach the initializer to the decl.
-  VDecl->setInit(Init);
 
   CheckCompleteVariableDeclaration(VDecl);
 }
