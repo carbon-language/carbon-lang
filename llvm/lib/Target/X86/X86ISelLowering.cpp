@@ -10177,7 +10177,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
     M = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                     DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32), M,
                     DAG.getConstant(4, MVT::i32));
-    R = DAG.getNode(ISD::VSELECT, dl, VT, Op, R, M);
+    R = DAG.getNode(ISD::VSELECT, dl, VT, Op, M, R);
     // a += a
     Op = DAG.getNode(ISD::ADD, dl, VT, Op, Op);
 
@@ -10192,13 +10192,13 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
     M = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                     DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32), M,
                     DAG.getConstant(2, MVT::i32));
-    R = DAG.getNode(ISD::VSELECT, dl, VT, Op, R, M);
+    R = DAG.getNode(ISD::VSELECT, dl, VT, Op, M, R);
     // a += a
     Op = DAG.getNode(ISD::ADD, dl, VT, Op, Op);
 
     // return pblendv(r, r+r, a);
     R = DAG.getNode(ISD::VSELECT, dl, VT, Op,
-                    R, DAG.getNode(ISD::ADD, dl, VT, R, R));
+                    DAG.getNode(ISD::ADD, dl, VT, R, R), R);
     return R;
   }
 
