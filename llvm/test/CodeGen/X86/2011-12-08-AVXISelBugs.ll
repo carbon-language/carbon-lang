@@ -61,3 +61,11 @@ t2.exit:                                 ; preds = %0, %loop
 return:                                           ; preds = %loop.cond
   ret void
 }
+
+define <3 x i64> @t4() nounwind {
+entry:
+  %0 = load <2 x i64> addrspace(1)* undef, align 16
+  %1 = extractelement <2 x i64> %0, i32 0
+  %2 = insertelement <3 x i64> <i64 undef, i64 0, i64 0>, i64 %1, i32 0
+  ret <3 x i64> %2
+}

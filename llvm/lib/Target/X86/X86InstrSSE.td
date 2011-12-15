@@ -618,6 +618,9 @@ let Predicates = [HasAVX] in {
             (SUBREG_TO_REG (i64 0),
                            (v2f64 (VMOVSDrr (v2f64 (V_SET0)), FR64:$src)),
                            sub_xmm)>;
+  def : Pat<(v4i64 (X86vzmovl (insert_subvector undef,
+                   (v2i64 (scalar_to_vector (loadi64 addr:$src))), (i32 0)))),
+            (SUBREG_TO_REG (i64 0), (VMOVSDrm addr:$src), sub_sd)>;
 
   // Move low f64 and clear high bits.
   def : Pat<(v4f64 (X86vzmovl (v4f64 VR256:$src))),
@@ -799,6 +802,9 @@ let isCodeGenOnly = 1 in {
 let Predicates = [HasAVX] in {
 def : Pat<(v8i32 (X86vzmovl
                         (insert_subvector undef, (v4i32 VR128:$src), (i32 0)))),
+          (SUBREG_TO_REG (i32 0), (VMOVAPSrr VR128:$src), sub_xmm)>;
+def : Pat<(v4i64 (X86vzmovl
+                        (insert_subvector undef, (v2i64 VR128:$src), (i32 0)))),
           (SUBREG_TO_REG (i32 0), (VMOVAPSrr VR128:$src), sub_xmm)>;
 def : Pat<(v8f32 (X86vzmovl
                         (insert_subvector undef, (v4f32 VR128:$src), (i32 0)))),
