@@ -149,7 +149,6 @@ Options:\n\
   --build-mode      Print build mode of LLVM tree (e.g. Debug or Release).\n\
 Typical components:\n\
   all               All LLVM libraries (default).\n\
-  backend           Either a native backend or the C backend.\n\
   engine            Either a native JIT or a bitcode interpreter.\n";
   exit(1);
 }
