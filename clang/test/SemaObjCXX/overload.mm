@@ -171,3 +171,9 @@ namespace rdar9327203 {
     int &fr = (f)(x, 0); 
   }
 }
+
+namespace class_id {
+  // it's okay to overload Class with id.
+  void f(Class) { }
+  void f(id) { }
+}
