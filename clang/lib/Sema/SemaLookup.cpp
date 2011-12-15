@@ -1063,6 +1063,8 @@ static NamedDecl *getPreviousDeclaration(NamedDecl *D) {
     return FD->getPreviousDeclaration();
   if (RedeclarableTemplateDecl *RTD = dyn_cast<RedeclarableTemplateDecl>(D))
     return RTD->getPreviousDeclaration();
+  if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D))
+    return ID->getPreviousDeclaration();
   
   return 0;
 }

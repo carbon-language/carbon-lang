@@ -7,9 +7,7 @@ B *b1; // expected-error{{unknown type name 'B'}}
 
 __import_module__ decldef.Decl;
 
-// FIXME: No link between @interface (which we can't see) and @class
-// (which we can).
-// A *a2;
+A *a2;
 B *b;
 
 void testB() {
