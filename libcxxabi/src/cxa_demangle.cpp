@@ -78,11 +78,8 @@ public:
     {
         return get_demangled_name(buf);
     }
-    virtual ptrdiff_t print_base_name(char* f, char* l) const
-    {
-        return print(f, l);
-    }
-    virtual bool ends_with_template() const
+
+    virtual bool ends_with_template(bool parsing = false) const
     {
         return false;
     }
@@ -127,20 +124,6 @@ public:
     {
         return false;
     }
-
-    virtual ptrdiff_t print(char* f, char* l) const
-    {
-        const ptrdiff_t sz1 = print_first(f, l);
-        return sz1 + print_second(f+std::min(sz1, l-f), l);
-    }
-    virtual ptrdiff_t print_first(char*, char*) const
-    {
-        return 0;
-    }
-    virtual ptrdiff_t print_second(char*, char*) const
-    {
-        return 0;
-    }
 };
 
 #ifdef DEBUGGING
@@ -152,7 +135,7 @@ void display(__node* x, int indent = 0)
         for (int i = 0; i < 2*indent; ++i)
             printf(" ");
         std::string buf(x->size(), '\0');
-        x->print(&buf.front(), &buf.back()+1);
+        x->get_demangled_name(&buf.front());
         printf("%s %s, %p\n", typeid(*x).name(), buf.c_str(), x);
         display(x->__left_, indent+1);
         display(x->__right_, indent+1);
@@ -181,28 +164,6 @@ public:
     {
         strncpy(buf, "vtable for ", n);
         return __right_->get_demangled_name(buf+n);
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r < n)
-            return n + __right_->print(l, l);
-        ptrdiff_t sz = __right_->print(f+n, l) + n;
-        if (r >= sz)
-        {
-            *f++ = 'v';
-            *f++ = 't';
-            *f++ = 'a';
-            *f++ = 'b';
-            *f++ = 'l';
-            *f++ = 'e';
-            *f++ = ' ';
-            *f++ = 'f';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = ' ';
-        }
-        return sz;
     }
     virtual __node* base_name() const
     {
@@ -234,25 +195,6 @@ public:
     {
         strncpy(buf, "VTT for ", n);
         return __right_->get_demangled_name(buf+n);
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r < n)
-            return n + __right_->print(l, l);
-        ptrdiff_t sz = __right_->print(f+n, l) + n;
-        if (r >= sz)
-        {
-            *f++ = 'V';
-            *f++ = 'T';
-            *f++ = 'T';
-            *f++ = ' ';
-            *f++ = 'f';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = ' ';
-        }
-        return sz;
     }
     virtual __node* base_name() const
     {
@@ -292,30 +234,6 @@ public:
         *buf++ = '-';
         return __right_->get_demangled_name(buf);
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r < n)
-            return n + __left_->print(l, l) + __right_->print(l, l);
-        ptrdiff_t lsz = __left_->print(f+n-4, l);
-        ptrdiff_t sz = lsz + n;
-        if (r >= sz)
-        {
-            sz += __right_->print(f+sz, l);
-            if (r >= sz)
-            {
-                strncpy(f, "construction vtable for ", n-4);
-                f += n-4 + lsz;
-                *f++ = '-';
-                *f++ = 'i';
-                *f++ = 'n';
-                *f++ = '-';
-            }
-        }
-        else
-            return sz + __right_->print(l, l);
-        return sz;
-    }
     virtual __node* base_name() const
     {
         return __right_->base_name();
@@ -350,30 +268,6 @@ public:
         strncpy(buf, "typeinfo for ", n);
         return __right_->get_demangled_name(buf+n);
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r < n)
-            return n + __right_->print(l, l);
-        ptrdiff_t sz = __right_->print(f+n, l) + n;
-        if (r >= sz)
-        {
-            *f++ = 't';
-            *f++ = 'y';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'i';
-            *f++ = 'n';
-            *f++ = 'f';
-            *f++ = 'o';
-            *f++ = ' ';
-            *f++ = 'f';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = ' ';
-        }
-        return sz;
-    }
     virtual __node* base_name() const
     {
         return __right_->base_name();
@@ -404,35 +298,6 @@ public:
     {
         strncpy(buf, "typeinfo name for ", n);
         return __right_->get_demangled_name(buf+n);
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r < n)
-            return n + __right_->print(l, l);
-        ptrdiff_t sz = __right_->print(f+n, l) + n;
-        if (r >= sz)
-        {
-            *f++ = 't';
-            *f++ = 'y';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'i';
-            *f++ = 'n';
-            *f++ = 'f';
-            *f++ = 'o';
-            *f++ = ' ';
-            *f++ = 'n';
-            *f++ = 'a';
-            *f++ = 'm';
-            *f++ = 'e';
-            *f++ = ' ';
-            *f++ = 'f';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = ' ';
-        }
-        return sz;
     }
     virtual __node* base_name() const
     {
@@ -465,43 +330,6 @@ public:
         strncpy(buf, "covariant return thunk to ", n);
         return __right_->get_demangled_name(buf+n);
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r < n)
-            return n + __right_->print(l, l);
-        ptrdiff_t sz = __right_->print(f+n, l) + n;
-        if (r >= sz)
-        {
-            *f++ = 'c';
-            *f++ = 'o';
-            *f++ = 'v';
-            *f++ = 'a';
-            *f++ = 'r';
-            *f++ = 'i';
-            *f++ = 'a';
-            *f++ = 'n';
-            *f++ = 't';
-            *f++ = ' ';
-            *f++ = 'r';
-            *f++ = 'e';
-            *f++ = 't';
-            *f++ = 'u';
-            *f++ = 'r';
-            *f++ = 'n';
-            *f++ = ' ';
-            *f++ = 't';
-            *f++ = 'h';
-            *f++ = 'u';
-            *f++ = 'n';
-            *f++ = 'k';
-            *f++ = ' ';
-            *f++ = 't';
-            *f++ = 'o';
-            *f   = ' ';
-        }
-        return sz;
-    }
     virtual __node* base_name() const
     {
         return __right_->base_name();
@@ -532,34 +360,6 @@ public:
     {
         strncpy(buf, "virtual thunk to ", n);
         return __right_->get_demangled_name(buf+n);
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r < n)
-            return n + __right_->print(l, l);
-        ptrdiff_t sz = __right_->print(f+n, l) + n;
-        if (r >= sz)
-        {
-            *f++ = 'v';
-            *f++ = 'i';
-            *f++ = 'r';
-            *f++ = 't';
-            *f++ = 'u';
-            *f++ = 'a';
-            *f++ = 'l';
-            *f++ = ' ';
-            *f++ = 't';
-            *f++ = 'h';
-            *f++ = 'u';
-            *f++ = 'n';
-            *f++ = 'k';
-            *f++ = ' ';
-            *f++ = 't';
-            *f++ = 'o';
-            *f   = ' ';
-        }
-        return sz;
     }
     virtual __node* base_name() const
     {
@@ -592,38 +392,6 @@ public:
         strncpy(buf, "non-virtual thunk to ", n);
         return __right_->get_demangled_name(buf+n);
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r < n)
-            return n + __right_->print(l, l);
-        ptrdiff_t sz = __right_->print(f+n, l) + n;
-        if (r >= sz)
-        {
-            *f++ = 'n';
-            *f++ = 'o';
-            *f++ = 'n';
-            *f++ = '-';
-            *f++ = 'v';
-            *f++ = 'i';
-            *f++ = 'r';
-            *f++ = 't';
-            *f++ = 'u';
-            *f++ = 'a';
-            *f++ = 'l';
-            *f++ = ' ';
-            *f++ = 't';
-            *f++ = 'h';
-            *f++ = 'u';
-            *f++ = 'n';
-            *f++ = 'k';
-            *f++ = ' ';
-            *f++ = 't';
-            *f++ = 'o';
-            *f   = ' ';
-        }
-        return sz;
-    }
     virtual __node* base_name() const
     {
         return __right_->base_name();
@@ -655,36 +423,6 @@ public:
         strncpy(buf, "guard variable for ", n);
         return __right_->get_demangled_name(buf+n);
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r < n)
-            return n + __right_->print(l, l);
-        ptrdiff_t sz = __right_->print(f+n, l) + n;
-        if (r >= sz)
-        {
-            *f++ = 'g';
-            *f++ = 'u';
-            *f++ = 'a';
-            *f++ = 'r';
-            *f++ = 'd';
-            *f++ = ' ';
-            *f++ = 'v';
-            *f++ = 'a';
-            *f++ = 'r';
-            *f++ = 'i';
-            *f++ = 'a';
-            *f++ = 'b';
-            *f++ = 'l';
-            *f++ = 'e';
-            *f++ = ' ';
-            *f++ = 'f';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = ' ';
-        }
-        return sz;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         return __right_->fix_forward_references(t_begin, t_end);
@@ -711,16 +449,6 @@ public:
     {
         strncpy(buf, "reference temporary for ", n);
         return __right_->get_demangled_name(buf+n);
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r < n)
-            return n + __right_->print(l, l);
-        ptrdiff_t sz = __right_->print(f+n, l) + n;
-        if (r >= sz)
-            strncpy(f, "reference temporary for ", n);
-        return sz;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -755,42 +483,6 @@ public:
             return strncpy(buf, "(anonymous namespace)", 21) + 21;
         return strncpy(buf, __name_, __size_) + __size_;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__size_ >= 10 && strncmp(__name_, "_GLOBAL__N", 10) == 0)
-        {
-            const ptrdiff_t n = sizeof("(anonymous namespace)") - 1;
-            if (r >= n)
-            {
-                *f++ = '(';
-                *f++ = 'a';
-                *f++ = 'n';
-                *f++ = 'o';
-                *f++ = 'n';
-                *f++ = 'y';
-                *f++ = 'm';
-                *f++ = 'o';
-                *f++ = 'u';
-                *f++ = 's';
-                *f++ = ' ';
-                *f++ = 'n';
-                *f++ = 'a';
-                *f++ = 'm';
-                *f++ = 'e';
-                *f++ = 's';
-                *f++ = 'p';
-                *f++ = 'a';
-                *f++ = 'c';
-                *f++ = 'e';
-                *f   = ')';
-            }
-            return n;
-        }
-        if (r >= __size_)
-            strncpy(f, __name_, __size_);
-        return __size_;
-    }
 };
 
 class __operator_new
@@ -803,27 +495,6 @@ public:
     {
         return strncpy(buf, "operator new", sizeof("operator new") - 1) +
                                             sizeof("operator new") - 1;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("operator new") - 1;
-        if (r >= n)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = ' ';
-            *f++ = 'n';
-            *f++ = 'e';
-            *f   = 'w';
-        }
-        return n;
     }
 };
 
@@ -838,29 +509,6 @@ public:
         return strncpy(buf, "operator new[]", sizeof("operator new[]") - 1) +
                                               sizeof("operator new[]") - 1;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("operator new[]") - 1;
-        if (r >= n)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = ' ';
-            *f++ = 'n';
-            *f++ = 'e';
-            *f++ = 'w';
-            *f++ = '[';
-            *f   = ']';
-        }
-        return n;
-    }
 };
 
 class __operator_delete
@@ -874,30 +522,6 @@ public:
         return strncpy(buf, "operator delete", sizeof("operator delete") - 1) +
                                                sizeof("operator delete") - 1;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("operator delete") - 1;
-        if (r >= n)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = ' ';
-            *f++ = 'd';
-            *f++ = 'e';
-            *f++ = 'l';
-            *f++ = 'e';
-            *f++ = 't';
-            *f   = 'e';
-        }
-        return n;
-    }
 };
 
 class __operator_delete_array
@@ -910,32 +534,6 @@ public:
     {
         return strncpy(buf, "operator delete[]", sizeof("operator delete[]") - 1) +
                                                  sizeof("operator delete[]") - 1;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("operator delete[]") - 1;
-        if (r >= n)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = ' ';
-            *f++ = 'd';
-            *f++ = 'e';
-            *f++ = 'l';
-            *f++ = 'e';
-            *f++ = 't';
-            *f++ = 'e';
-            *f++ = '[';
-            *f   = ']';
-        }
-        return n;
     }
 };
 
@@ -978,49 +576,6 @@ public:
             buf += sizeof("operator&&") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '&';
-                *f++ = '&';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator&&") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '&';
-            *f   = '&';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -1070,39 +625,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 3;
-            if (r < n1)
-                return n1 + __left_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+2, l);
-            if (r >= n1 + sz1)
-            {
-                *f++ = '&';
-                *f   = '(';
-                f += 1 + sz1;
-                *f   = ')';
-            }
-            return n1 + sz1;
-        }
-        const ptrdiff_t n2 = sizeof("operator&") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '&';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         if (__left_)
@@ -1150,47 +672,6 @@ public:
             buf += sizeof("operator&") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 7;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '&';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator&") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '&';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -1243,49 +724,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '&';
-                *f++ = '=';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator&=") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '&';
-            *f   = '=';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -1337,47 +775,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 7;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '=';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator=") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '=';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -1426,53 +823,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__right_)
-        {
-            const ptrdiff_t n1 = sizeof("alignof ()") - 1;
-            if (r < n1)
-                return n1 + __right_->print(l, l);
-            ptrdiff_t sz1 = __right_->print(f+(n1-1), l);
-            if (r >= n1 + sz1)
-            {
-                *f++ = 'a';
-                *f++ = 'l';
-                *f++ = 'i';
-                *f++ = 'g';
-                *f++ = 'n';
-                *f++ = 'o';
-                *f++ = 'f';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz1;
-                *f   = ')';
-            }
-            return n1 + sz1;
-        }
-        const ptrdiff_t n2 = sizeof("operator alignof") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = ' ';
-            *f++ = 'a';
-            *f++ = 'l';
-            *f++ = 'i';
-            *f++ = 'g';
-            *f++ = 'n';
-            *f++ = 'o';
-            *f   = 'f';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         if (__right_)
@@ -1518,53 +868,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__right_)
-        {
-            const ptrdiff_t n1 = sizeof("alignof ()") - 1;
-            if (r < n1)
-                return n1 + __right_->print(l, l);
-            ptrdiff_t sz1 = __right_->print(f+(n1-1), l);
-            if (r >= n1 + sz1)
-            {
-                *f++ = 'a';
-                *f++ = 'l';
-                *f++ = 'i';
-                *f++ = 'g';
-                *f++ = 'n';
-                *f++ = 'o';
-                *f++ = 'f';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz1;
-                *f   = ')';
-            }
-            return n1 + sz1;
-        }
-        const ptrdiff_t n2 = sizeof("operator alignof") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = ' ';
-            *f++ = 'a';
-            *f++ = 'l';
-            *f++ = 'i';
-            *f++ = 'g';
-            *f++ = 'n';
-            *f++ = 'o';
-            *f   = 'f';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         if (__right_)
@@ -1583,25 +886,6 @@ public:
     {
         strncpy(buf, "operator()", sizeof("operator()") - 1);
         return buf + sizeof("operator()") - 1;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("operator()") - 1;
-        if (r >= n)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '(';
-            *f   = ')';
-        }
-        return n;
     }
 };
 
@@ -1644,47 +928,6 @@ public:
             buf += sizeof("operator,") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 7;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = ',';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator,") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = ',';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -1733,39 +976,6 @@ public:
             buf += sizeof("operator~") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 3;
-            if (r < n1)
-                return n1 + __left_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+2, l);
-            if (r >= n1 + sz1)
-            {
-                *f++ = '~';
-                *f   = '(';
-                f += 1 + sz1;
-                *f   = ')';
-            }
-            return n1 + sz1;
-        }
-        const ptrdiff_t n2 = sizeof("operator~") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '~';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -1828,48 +1038,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__size_)
-        {
-            const ptrdiff_t n1 = 4;
-            if (r < n1)
-                return n1 + __right_->print(l, l) +
-                            (__left_ ? __left_->print(l, l) : 0);
-            ptrdiff_t sz1 = __right_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + (__left_ ? __left_->print(l, l) : 0);
-            ptrdiff_t sz2 = __left_ ? __left_->print(f+3+sz1, l) : 0;
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator ") - 1;
-        if (r < n2)
-            return n2 + __right_->print(l, l);
-        ptrdiff_t sz1 = __right_->print(f+n2, l);
-        if (r >= n2 + sz1)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = ' ';
-        }
-        return n2 + sz1;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -1908,22 +1076,6 @@ public:
         *buf++ = ')';
         strncpy(buf, __name_, __size_);
         return buf + __size_;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = 2;
-        if (r < __size_ + n)
-            return __size_ + n + __left_->print(l, l);
-        ptrdiff_t sz = __left_->print(f+1, l);
-        if (r >= __size_ + n + sz)
-        {
-            *f   = '(';
-            f += 1 + sz;
-            *f++ = ')';
-            strncpy(f, __name_, __size_);
-        }
-        return __size_ + n + sz;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -1967,39 +1119,6 @@ public:
             buf += sizeof("operator*") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 3;
-            if (r < n1)
-                return n1 + __left_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+2, l);
-            if (r >= n1 + sz1)
-            {
-                *f++ = '*';
-                *f   = '(';
-                f += 1 + sz1;
-                *f   = ')';
-            }
-            return n1 + sz1;
-        }
-        const ptrdiff_t n2 = sizeof("operator*") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '*';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -2048,47 +1167,6 @@ public:
             buf += sizeof("operator/") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 7;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '/';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator/") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '/';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -2141,49 +1219,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '/';
-                *f++ = '=';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator/=") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '/';
-            *f   = '=';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -2234,47 +1269,6 @@ public:
             buf += sizeof("operator^") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 7;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '^';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator^") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '^';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -2327,49 +1321,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '^';
-                *f++ = '=';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator^=") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '^';
-            *f   = '=';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -2421,49 +1372,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '=';
-                *f++ = '=';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator==") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '=';
-            *f   = '=';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -2514,49 +1422,6 @@ public:
             buf += sizeof("operator>=") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '>';
-                *f++ = '=';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator>=") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '>';
-            *f   = '=';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -2611,49 +1476,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 9;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+2, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-2)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f++ = '(';
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '>';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f++ = ')';
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator>") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '>';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -2675,25 +1497,6 @@ public:
     {
         strncpy(buf, "operator[]", sizeof("operator[]") - 1);
         return buf + sizeof("operator[]") - 1;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("operator[]") - 1;
-        if (r >= n)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '[';
-            *f   = ']';
-        }
-        return n;
     }
 };
 
@@ -2736,49 +1539,6 @@ public:
             buf += sizeof("operator<=") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '<';
-                *f++ = '=';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator<=") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '<';
-            *f   = '=';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -2831,47 +1591,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 7;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '<';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator<") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '<';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -2922,49 +1641,6 @@ public:
             buf += sizeof("operator<<") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '<';
-                *f++ = '<';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator<<") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '<';
-            *f   = '<';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -3017,51 +1693,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 9;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '<';
-                *f++ = '<';
-                *f++ = '=';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator<<=") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '<';
-            *f++ = '<';
-            *f   = '=';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -3112,47 +1743,6 @@ public:
             buf += sizeof("operator-") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 7;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '-';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator-") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '-';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -3205,49 +1795,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '-';
-                *f++ = '=';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator-=") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '-';
-            *f   = '=';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -3299,47 +1846,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 7;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '*';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator*") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '*';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -3390,49 +1896,6 @@ public:
             buf += sizeof("operator*=") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '*';
-                *f++ = '=';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator*=") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '*';
-            *f   = '=';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -3496,52 +1959,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 4;
-            if (r < n1)
-                return n1 + __left_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f + (__size_ ? 3 : 1), l);
-            if (r >= n1 + sz1)
-            {
-                if (__size_)
-                {
-                    *f++ = '-';
-                    *f++ = '-';
-                    *f   = '(';
-                    f += 1+sz1;
-                    *f   = ')';
-                }
-                else
-                {
-                    *f   = '(';
-                    f += 1+sz1;
-                    *f++ = ')';
-                    *f++ = '-';
-                    *f   = '-';
-                }
-            }
-            return n1 + sz1;
-        }
-        const ptrdiff_t n2 = sizeof("operator--") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '-';
-            *f   = '-';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         if (__left_)
@@ -3589,49 +2006,6 @@ public:
             buf += sizeof("operator!=") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '!';
-                *f++ = '=';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator!=") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '!';
-            *f   = '=';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -3681,39 +2055,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 3;
-            if (r < n1)
-                return n1 + __left_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+2, l);
-            if (r >= n1 + sz1)
-            {
-                *f++ = '-';
-                *f   = '(';
-                f += 1 + sz1;
-                *f   = ')';
-            }
-            return n1 + sz1;
-        }
-        const ptrdiff_t n2 = sizeof("operator-") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '-';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         if (__left_)
@@ -3758,39 +2099,6 @@ public:
             buf += sizeof("operator!") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 3;
-            if (r < n1)
-                return n1 + __left_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+2, l);
-            if (r >= n1 + sz1)
-            {
-                *f++ = '!';
-                *f   = '(';
-                f += 1 + sz1;
-                *f   = ')';
-            }
-            return n1 + sz1;
-        }
-        const ptrdiff_t n2 = sizeof("operator!") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '!';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -3839,49 +2147,6 @@ public:
             buf += sizeof("operator||") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '|';
-                *f++ = '|';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator||") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '|';
-            *f   = '|';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -3934,47 +2199,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 7;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '|';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator|") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '|';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -4025,49 +2249,6 @@ public:
             buf += sizeof("operator|=") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '|';
-                *f++ = '=';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator|=") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '|';
-            *f   = '=';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -4120,51 +2301,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 9;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '-';
-                *f++ = '>';
-                *f++ = '*';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator->*") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '-';
-            *f++ = '>';
-            *f   = '*';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -4216,47 +2352,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 7;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '+';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator+") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '+';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -4307,49 +2402,6 @@ public:
             buf += sizeof("operator+=") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '+';
-                *f++ = '=';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator+=") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '+';
-            *f   = '=';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -4413,52 +2465,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 4;
-            if (r < n1)
-                return n1 + __left_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f + (__size_ ? 3 : 1), l);
-            if (r >= n1 + sz1)
-            {
-                if (__size_)
-                {
-                    *f++ = '+';
-                    *f++ = '+';
-                    *f   = '(';
-                    f += 1+sz1;
-                    *f   = ')';
-                }
-                else
-                {
-                    *f   = '(';
-                    f += 1+sz1;
-                    *f++ = ')';
-                    *f++ = '+';
-                    *f   = '+';
-                }
-            }
-            return n1 + sz1;
-        }
-        const ptrdiff_t n2 = sizeof("operator++") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '+';
-            *f   = '+';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         if (__left_)
@@ -4503,39 +2509,6 @@ public:
             buf += sizeof("operator+") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 3;
-            if (r < n1)
-                return n1 + __left_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+2, l);
-            if (r >= n1 + sz1)
-            {
-                *f++ = '+';
-                *f   = '(';
-                f += 1 + sz1;
-                *f   = ')';
-            }
-            return n1 + sz1;
-        }
-        const ptrdiff_t n2 = sizeof("operator+") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '+';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -4584,49 +2557,6 @@ public:
             buf += sizeof("operator->") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '-';
-                *f++ = '>';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator->") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '-';
-            *f   = '>';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -4687,58 +2617,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 12;
-            __node* op1 = (__node*)__name_;
-            if (r < n1)
-                return n1 + op1->print(l, l) + __left_->print(l, l) +
-                                               __right_->print(l, l);
-            ptrdiff_t sz1 = op1->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz2 = __left_->print(f+6+sz1, l);
-            if (r < n1 + sz1 + sz2)
-                return n1 + sz1 + sz2 + __right_->print(l, l);
-            ptrdiff_t sz3 = __right_->print(f+11+sz1+sz2, l);
-            if (r >= n1 + sz1 + sz2 + sz3)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '?';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = ':';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz3;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2 + sz3;
-        }
-        const ptrdiff_t n2 = sizeof("operator?") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '?';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -4792,47 +2670,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 7;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '%';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator%") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = '%';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -4883,49 +2720,6 @@ public:
             buf += sizeof("operator%=") - 1;
         }
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '%';
-                *f++ = '=';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator%=") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '%';
-            *f   = '=';
-        }
-        return n2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -4978,49 +2772,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 8;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '>';
-                *f++ = '>';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator>>") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '>';
-            *f   = '>';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -5072,51 +2823,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__left_)
-        {
-            const ptrdiff_t n1 = 9;
-            if (r < n1)
-                return n1 + __left_->print(l, l) + __right_->print(l, l);
-            ptrdiff_t sz1 = __left_->print(f+1, l);
-            if (r < n1 + sz1)
-                return n1 + sz1 + __right_->print(l, l);
-            ptrdiff_t sz2 = __right_->print(f+(n1-1)+sz1, l);
-            if (r >= n1 + sz1 + sz2)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-                *f++ = ' ';
-                *f++ = '>';
-                *f++ = '>';
-                *f++ = '=';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz2;
-                *f   = ')';
-            }
-            return n1 + sz1 + sz2;
-        }
-        const ptrdiff_t n2 = sizeof("operator>>=") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = '>';
-            *f++ = '>';
-            *f   = '=';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = true;
@@ -5165,51 +2871,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__right_)
-        {
-            const ptrdiff_t n1 = sizeof("sizeof ()") - 1;
-            if (r < n1)
-                return n1 + __right_->print(l, l);
-            ptrdiff_t sz1 = __right_->print(f+(n1-1), l);
-            if (r >= n1 + sz1)
-            {
-                *f++ = 's';
-                *f++ = 'i';
-                *f++ = 'z';
-                *f++ = 'e';
-                *f++ = 'o';
-                *f++ = 'f';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz1;
-                *f   = ')';
-            }
-            return n1 + sz1;
-        }
-        const ptrdiff_t n2 = sizeof("operator sizeof") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = ' ';
-            *f++ = 's';
-            *f++ = 'i';
-            *f++ = 'z';
-            *f++ = 'e';
-            *f++ = 'o';
-            *f   = 'f';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         if (__right_)
@@ -5255,51 +2916,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__right_)
-        {
-            const ptrdiff_t n1 = sizeof("sizeof ()") - 1;
-            if (r < n1)
-                return n1 + __right_->print(l, l);
-            ptrdiff_t sz1 = __right_->print(f+(n1-1), l);
-            if (r >= n1 + sz1)
-            {
-                *f++ = 's';
-                *f++ = 'i';
-                *f++ = 'z';
-                *f++ = 'e';
-                *f++ = 'o';
-                *f++ = 'f';
-                *f++ = ' ';
-                *f   = '(';
-                f += 1 + sz1;
-                *f   = ')';
-            }
-            return n1 + sz1;
-        }
-        const ptrdiff_t n2 = sizeof("operator sizeof") - 1;
-        if (r >= n2)
-        {
-            *f++ = 'o';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = ' ';
-            *f++ = 's';
-            *f++ = 'i';
-            *f++ = 'z';
-            *f++ = 'e';
-            *f++ = 'o';
-            *f   = 'f';
-        }
-        return n2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         if (__right_)
@@ -5331,27 +2947,6 @@ public:
         *buf++ = ')';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n1 = sizeof("typeid()") - 1;
-            if (r < n1)
-                return n1 + __right_->print(l, l);
-        ptrdiff_t sz1 = __right_->print(f+(n1-1), l);
-        if (r >= n1 + sz1)
-        {
-            *f++ = 't';
-            *f++ = 'y';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f++ = 'i';
-            *f++ = 'd';
-            *f   = '(';
-            f += 1 + sz1;
-            *f   = ')';
-        }
-        return n1 + sz1;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         return __right_->fix_forward_references(t_begin, t_end);
@@ -5378,24 +2973,6 @@ public:
         strncpy(buf, "throw ", 6);
         return __right_->get_demangled_name(buf+6);
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n1 = sizeof("throw ") - 1;
-        if (r < n1)
-            return n1 + __right_->print(l, l);
-        ptrdiff_t sz1 = __right_->print(f+n1, l);
-        if (r >= n1 + sz1)
-        {
-            *f++ = 't';
-            *f++ = 'h';
-            *f++ = 'r';
-            *f++ = 'o';
-            *f++ = 'w';
-            *f   = ' ';
-        }
-        return n1 + sz1;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         return __right_->fix_forward_references(t_begin, t_end);
@@ -5413,19 +2990,6 @@ public:
     {
         strncpy(buf, "throw", n);
         return buf+n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 't';
-            *f++ = 'h';
-            *f++ = 'r';
-            *f++ = 'o';
-            *f   = 'w';
-        }
-        return n;
     }
 };
 
@@ -5451,30 +3015,6 @@ public:
         buf = __right_->get_demangled_name(buf);
         *buf++ = ')';
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n1 = sizeof("sizeof...()") - 1;
-        if (r < n1)
-            return n1 + __right_->print(l, l);
-        ptrdiff_t sz1 = __right_->print(f+(n1-1), l);
-        if (r >= n1 + sz1)
-        {
-            *f++ = 's';
-            *f++ = 'i';
-            *f++ = 'z';
-            *f++ = 'e';
-            *f++ = 'o';
-            *f++ = 'f';
-            *f++ = '.';
-            *f++ = '.';
-            *f++ = '.';
-            *f   = '(';
-            f += 1+sz1;
-            *f   = ')';
-        }
-        return n1 + sz1;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -5508,37 +3048,6 @@ public:
         buf = __right_->get_demangled_name(buf);
         *buf++ = ')';
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n1 = sizeof("const_cast<>()") - 1;
-        if (r < n1)
-            return n1 + __left_->print(l, l) + __right_->print(l, l);
-        ptrdiff_t sz1 = __left_->print(f+(n1-3), l);
-        if (r < n1 + sz1)
-            return n1 + sz1 + __right_->print(l, l);
-        ptrdiff_t sz2 = __right_->print(f+sz1+(n1-1), l);
-        if (r >= n1 + sz1 + sz2)
-        {
-            *f++ = 'c';
-            *f++ = 'o';
-            *f++ = 'n';
-            *f++ = 's';
-            *f++ = 't';
-            *f++ = '_';
-            *f++ = 'c';
-            *f++ = 'a';
-            *f++ = 's';
-            *f++ = 't';
-            *f   = '<';
-            f += 1+sz1;
-            *f++ = '>';
-            *f   = '(';
-            f += 1+sz2;
-            *f   = ')';
-        }
-        return n1 + sz1 + sz2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -5574,39 +3083,6 @@ public:
         *buf++ = ')';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n1 = sizeof("dynamic_cast<>()") - 1;
-        if (r < n1)
-            return n1 + __left_->print(l, l) + __right_->print(l, l);
-        ptrdiff_t sz1 = __left_->print(f+(n1-3), l);
-        if (r < n1 + sz1)
-            return n1 + sz1 + __right_->print(l, l);
-        ptrdiff_t sz2 = __right_->print(f+sz1+(n1-1), l);
-        if (r >= n1 + sz1 + sz2)
-        {
-            *f++ = 'd';
-            *f++ = 'y';
-            *f++ = 'n';
-            *f++ = 'a';
-            *f++ = 'm';
-            *f++ = 'i';
-            *f++ = 'c';
-            *f++ = '_';
-            *f++ = 'c';
-            *f++ = 'a';
-            *f++ = 's';
-            *f++ = 't';
-            *f   = '<';
-            f += 1+sz1;
-            *f++ = '>';
-            *f   = '(';
-            f += 1+sz2;
-            *f   = ')';
-        }
-        return n1 + sz1 + sz2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         return __left_->fix_forward_references(t_begin, t_end) &&
@@ -5641,43 +3117,6 @@ public:
         *buf++ = ')';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n1 = sizeof("reinterpret_cast<>()") - 1;
-        if (r < n1)
-            return n1 + __left_->print(l, l) + __right_->print(l, l);
-        ptrdiff_t sz1 = __left_->print(f+(n1-3), l);
-        if (r < n1 + sz1)
-            return n1 + sz1 + __right_->print(l, l);
-        ptrdiff_t sz2 = __right_->print(f+sz1+(n1-1), l);
-        if (r >= n1 + sz1 + sz2)
-        {
-            *f++ = 'r';
-            *f++ = 'e';
-            *f++ = 'i';
-            *f++ = 'n';
-            *f++ = 't';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'p';
-            *f++ = 'r';
-            *f++ = 'e';
-            *f++ = 't';
-            *f++ = '_';
-            *f++ = 'c';
-            *f++ = 'a';
-            *f++ = 's';
-            *f++ = 't';
-            *f   = '<';
-            f += 1+sz1;
-            *f++ = '>';
-            *f   = '(';
-            f += 1+sz2;
-            *f   = ')';
-        }
-        return n1 + sz1 + sz2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         return __left_->fix_forward_references(t_begin, t_end) &&
@@ -5711,38 +3150,6 @@ public:
         buf = __right_->get_demangled_name(buf);
         *buf++ = ')';
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n1 = sizeof("static_cast<>()") - 1;
-        if (r < n1)
-            return n1 + __left_->print(l, l) + __right_->print(l, l);
-        ptrdiff_t sz1 = __left_->print(f+(n1-3), l);
-        if (r < n1 + sz1)
-            return n1 + sz1 + __right_->print(l, l);
-        ptrdiff_t sz2 = __right_->print(f+sz1+(n1-1), l);
-        if (r >= n1 + sz1 + sz2)
-        {
-            *f++ = 's';
-            *f++ = 't';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'i';
-            *f++ = 'c';
-            *f++ = '_';
-            *f++ = 'c';
-            *f++ = 'a';
-            *f++ = 's';
-            *f++ = 't';
-            *f   = '<';
-            f += 1+sz1;
-            *f++ = '>';
-            *f   = '(';
-            f += 1+sz2;
-            *f   = ')';
-        }
-        return n1 + sz1 + sz2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -5781,25 +3188,6 @@ public:
         *buf++ = ')';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n1 = sizeof("()") - 1;
-        if (r < n1)
-            return n1 + __left_->print(l, l) + (__right_ ? __right_->print(l, l) : 0);
-        ptrdiff_t sz1 = __left_->print(f, l);
-        if (r < n1 + sz1)
-            return n1 + sz1 + (__right_ ? __right_->print(l, l) : 0);
-        ptrdiff_t sz2 = __right_ ? __right_->print(f+sz1+1, l) : 0;
-        if (r >= n1 + sz1 + sz2)
-        {
-            f += sz1;
-            *f = '(';
-            f += 1+sz2;
-            *f = ')';
-        }
-        return n1 + sz1 + sz2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         bool r = __left_->fix_forward_references(t_begin, t_end);
@@ -5835,32 +3223,6 @@ public:
         strncpy(buf, "delete[] ", 9);
         return __right_->get_demangled_name(buf+9);
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n1 = sizeof("delete[] ") - 1 + (__size_ ? 2 : 0);
-        if (r < n1)
-            return n1 + __right_->print(l, l);
-        ptrdiff_t sz1 = __right_->print(f+n1, l);
-        if (r >= n1 + sz1)
-        {
-            if (__size_)
-            {
-                *f++ = ':';
-                *f++ = ':';
-            }
-            *f++ = 'd';
-            *f++ = 'e';
-            *f++ = 'l';
-            *f++ = 'e';
-            *f++ = 't';
-            *f++ = 'e';
-            *f++ = '[';
-            *f++ = ']';
-            *f   = ' ';
-        }
-        return n1 + sz1;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         return __right_->fix_forward_references(t_begin, t_end);
@@ -5892,30 +3254,6 @@ public:
         }
         strncpy(buf, "delete ", 7);
         return __right_->get_demangled_name(buf+7);
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n1 = sizeof("delete ") - 1 + (__size_ ? 2 : 0);
-        if (r < n1)
-            return n1 + __right_->print(l, l);
-        ptrdiff_t sz1 = __right_->print(f+n1, l);
-        if (r >= n1 + sz1)
-        {
-            if (__size_)
-            {
-                *f++ = ':';
-                *f++ = ':';
-            }
-            *f++ = 'd';
-            *f++ = 'e';
-            *f++ = 'l';
-            *f++ = 'e';
-            *f++ = 't';
-            *f++ = 'e';
-            *f   = ' ';
-        }
-        return n1 + sz1;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -5997,58 +3335,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n1 = sizeof("new ") - 1 + (__size_ & 1 ? 2 : 0) +
-              (__size_ & 2 ? 2 : 0) + (__left_ ? 2 : 0) + (__size_ & 4 ? 2 : 0);
-        __node* type = (__node*)__name_;
-        if (r < n1)
-            return n1 + (__left_ ? __left_->print(l, l) : 0) +
-                        type->print(l, l) +
-                        (__right_ ? __right_->print(l, l) : 0);
-        ptrdiff_t sz1 = __left_ ? __left_->print(f+4+
-                                                 (__size_ & 1 ? 2 : 0) +
-                                                 (__size_ & 2 ? 2 : 0), l) : 0;
-        if (r < n1 + sz1)
-            return n1 + sz1 + type->print(l, l) +
-                              (__right_ ? __right_->print(l, l) : 0);
-        ptrdiff_t sz2 = type->print(f+(n1-(__size_ & 4 ? 2 : 0)+sz1), l);
-        if (r < n1 + sz1 + sz2)
-            return n1 + sz1 + sz2 + (__right_ ? __right_->print(l, l) : 0);
-        ptrdiff_t sz3 = __right_ ? __right_->print(f+(n1-1)+sz1+sz2, l) : 0;
-        if (r >= n1 + sz1 + sz2 + sz3)
-        {
-            if (__size_ & 1)
-            {
-                *f++ = ':';
-                *f++ = ':';
-            }
-            *f++ = 'n';
-            *f++ = 'e';
-            *f++ = 'w';
-            if (__size_ & 2)
-            {
-                *f++ = '[';
-                *f++ = ']';
-            }
-            if (__left_)
-            {
-                *f   = '(';
-                f += 1 + sz1;
-                *f++ = ')';
-            }
-            *f   = ' ';
-            if (__size_ & 4)
-            {
-                f += 1 + sz2;
-                *f = '(';
-                f += 1 + sz3;
-                *f = ')';
-            }
-        }
-        return n1 + sz1 + sz2 + sz3;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         __node* type = (__node*)__name_;
@@ -6084,24 +3370,6 @@ public:
         *buf++ = '*';
         return __right_->get_demangled_name(buf);
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof(".*") - 1;
-        if (r < n)
-            return n + __left_->print(l, l) + __right_->print(l, l);
-        ptrdiff_t sz1 = __left_->print(f, l);
-        if (r < n + sz1)
-            return n + sz1 + __right_->print(l, l);
-        ptrdiff_t sz2 = __right_->print(f+sz1+n, l);
-        if (r >= n + sz1 + sz2)
-        {
-            f += sz1;
-            *f++ = '.';
-            *f   = '*';
-        }
-        return n + sz1 + sz2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         return __left_->fix_forward_references(t_begin, t_end) &&
@@ -6130,20 +3398,6 @@ public:
         buf = __left_->get_demangled_name(buf);
         *buf++ = '.';
         return __right_->get_demangled_name(buf);
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof(".") - 1;
-        if (r < n)
-            return n + __left_->print(l, l) + __right_->print(l, l);
-        ptrdiff_t sz1 = __left_->print(f, l);
-        if (r < n + sz1)
-            return n + sz1 + __right_->print(l, l);
-        ptrdiff_t sz2 = __right_->print(f+sz1+n, l);
-        if (r >= n + sz1 + sz2)
-            f[sz1] = '.';
-        return n + sz1 + sz2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -6175,24 +3429,6 @@ public:
         *buf++ = '>';
         return __right_->get_demangled_name(buf);
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("->") - 1;
-        if (r < n)
-            return n + __left_->print(l, l) + __right_->print(l, l);
-        ptrdiff_t sz1 = __left_->print(f, l);
-        if (r < n + sz1)
-            return n + sz1 + __right_->print(l, l);
-        ptrdiff_t sz2 = __right_->print(f+sz1+n, l);
-        if (r >= n + sz1 + sz2)
-        {
-            f += sz1;
-            *f++ = '-';
-            *f   = '>';
-        }
-        return n + sz1 + sz2;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         return __left_->fix_forward_references(t_begin, t_end) &&
@@ -6221,17 +3457,6 @@ public:
         *buf++ = 'd';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 's';
-            *f++ = 't';
-            *f   = 'd';
-        }
-        return n;
-    }
 };
 
 class __sub_allocator
@@ -6249,28 +3474,6 @@ public:
         strncpy(buf, "std::allocator", n);
         return buf + n;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 's';
-            *f++ = 't';
-            *f++ = 'd';
-            *f++ = ':';
-            *f++ = ':';
-            *f++ = 'a';
-            *f++ = 'l';
-            *f++ = 'l';
-            *f++ = 'o';
-            *f++ = 'c';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = 'o';
-            *f   = 'r';
-        }
-        return n;
-    }
 };
 
 class __sub_basic_string
@@ -6287,31 +3490,6 @@ public:
     {
         strncpy(buf, "std::basic_string", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 's';
-            *f++ = 't';
-            *f++ = 'd';
-            *f++ = ':';
-            *f++ = ':';
-            *f++ = 'b';
-            *f++ = 'a';
-            *f++ = 's';
-            *f++ = 'i';
-            *f++ = 'c';
-            *f++ = '_';
-            *f++ = 's';
-            *f++ = 't';
-            *f++ = 'r';
-            *f++ = 'i';
-            *f++ = 'n';
-            *f   = 'g';
-        }
-        return n;
     }
 };
 
@@ -6343,36 +3521,6 @@ public:
         return buf;
     }
 
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (__size_)
-        {
-            const ptrdiff_t n1 =
-                sizeof("std::basic_string<char, std::char_traits<char>,"
-                       " std::allocator<char> >") - 1;
-            if (r >= n1)
-                strncpy(f, "std::basic_string<char, std::char_traits<char>,"
-                           " std::allocator<char> >", n1);
-            return n1;
-        }
-        const ptrdiff_t n2 = sizeof("std::string") - 1;
-        if (r >= n2)
-        {
-            *f++ = 's';
-            *f++ = 't';
-            *f++ = 'd';
-            *f++ = ':';
-            *f++ = ':';
-            *f++ = 's';
-            *f++ = 't';
-            *f++ = 'r';
-            *f++ = 'i';
-            *f++ = 'n';
-            *f   = 'g';
-        }
-        return n2;
-    }
     virtual size_t base_size() const
     {
         return 12;
@@ -6381,27 +3529,6 @@ public:
     {
         strncpy(buf, "basic_string", 12);
         return buf + 12;
-    }
-    virtual ptrdiff_t print_base_name(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("basic_string") - 1;
-        if (r >= n)
-        {
-            *f++ = 'b';
-            *f++ = 'a';
-            *f++ = 's';
-            *f++ = 'i';
-            *f++ = 'c';
-            *f++ = '_';
-            *f++ = 's';
-            *f++ = 't';
-            *f++ = 'r';
-            *f++ = 'i';
-            *f++ = 'n';
-            *f   = 'g';
-        }
-        return n;
     }
 
     virtual __node* base_name() const
@@ -6423,26 +3550,6 @@ public:
         strncpy(buf, "std::istream", n);
         return buf + n;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 's';
-            *f++ = 't';
-            *f++ = 'd';
-            *f++ = ':';
-            *f++ = ':';
-            *f++ = 'i';
-            *f++ = 's';
-            *f++ = 't';
-            *f++ = 'r';
-            *f++ = 'e';
-            *f++ = 'a';
-            *f   = 'm';
-        }
-        return n;
-    }
 };
 
 class __sub_ostream
@@ -6457,26 +3564,6 @@ public:
         strncpy(buf, "std::ostream", n);
         return buf + n;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 's';
-            *f++ = 't';
-            *f++ = 'd';
-            *f++ = ':';
-            *f++ = ':';
-            *f++ = 'o';
-            *f++ = 's';
-            *f++ = 't';
-            *f++ = 'r';
-            *f++ = 'e';
-            *f++ = 'a';
-            *f   = 'm';
-        }
-        return n;
-    }
 };
 
 class __sub_iostream
@@ -6490,27 +3577,6 @@ public:
     {
         strncpy(buf, "std::iostream", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 's';
-            *f++ = 't';
-            *f++ = 'd';
-            *f++ = ':';
-            *f++ = ':';
-            *f++ = 'i';
-            *f++ = 'o';
-            *f++ = 's';
-            *f++ = 't';
-            *f++ = 'r';
-            *f++ = 'e';
-            *f++ = 'a';
-            *f   = 'm';
-        }
-        return n;
     }
 };
 
@@ -6543,17 +3609,9 @@ public:
     {
         return __left_->second_demangled_name(buf);
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
+    virtual bool ends_with_template(bool parsing = false) const
     {
-        return __left_->print_first(f, l);
-    }
-    virtual ptrdiff_t print_second(char* f, char* l) const
-    {
-        return __left_->print_second(f, l);
-    }
-    virtual bool ends_with_template() const
-    {
-        return __left_->ends_with_template();
+        return __left_->ends_with_template(parsing);
     }
     virtual __node* base_name() const
     {
@@ -6621,17 +3679,9 @@ public:
         buf = __left_->get_demangled_name(buf);
         return __right_->get_demangled_name(buf);
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
+    virtual bool ends_with_template(bool parsing = false) const
     {
-        const ptrdiff_t r = l - f;
-        ptrdiff_t sz1 = __left_->print(f, l);
-        if (r < sz1)
-            return sz1 + __right_->print(l, l);
-        return sz1 + __right_->print(f + sz1, l);
-    }
-    virtual bool ends_with_template() const
-    {
-        return __right_->ends_with_template();
+        return __right_->ends_with_template(parsing);
     }
     virtual __node* base_name() const
     {
@@ -6690,40 +3740,12 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        if (__left_ == 0)
-            return 0;
-        const ptrdiff_t r = l - f;
-        ptrdiff_t n = 0;
-        if (__size_)
-        {
-            n = 2;
-            if (r < n)
-            {
-                ptrdiff_t sz1 = __left_->print(l, l);
-                if (sz1 == 0)
-                    n = 0;
-                return n + sz1 + (__right_ ? __right_->print(l, l) : 0);
-            }
-        }
-        const ptrdiff_t sz1 = __left_->print(f+n, l);
-        if (sz1 == 0)
-            n = 0;
-        else if (n != 0)
-        {
-            f[0] = ',';
-            f[1] = ' ';
-        }
-        const ptrdiff_t sz2 = __right_ ? __right_->print(f+std::min(n+sz1, r), l) : 0;
-        return n + sz1 + sz2;
-    }
-    virtual bool ends_with_template() const
+    virtual bool ends_with_template(bool parsing = false) const
     {
         if (__right_ != NULL)
-            return __right_->ends_with_template();
+            return __right_->ends_with_template(parsing);
         if (__left_ != NULL)
-            return __left_->ends_with_template();
+            return __left_->ends_with_template(parsing);
         return false;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
@@ -6783,35 +3805,7 @@ public:
         *buf++ = '>';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t sz1 = __left_->print(f, l);
-        ptrdiff_t sz2 = 0;
-        ptrdiff_t n = 2;
-        if (__right_)
-        {
-            sz2 = __right_->print(f+std::min(sz1+1, r), l);
-            if (r >= sz1 + sz2 + 2)
-            {
-                if (f[sz1+sz2] == '>')
-                {
-                    f[sz1+sz2+1] = ' ';
-                    ++n;
-                }
-            }
-            else if (__right_->ends_with_template())
-                ++n;
-        }
-        if (r >= sz1 + sz2 + n)
-        {
-            f[sz1] = '<';
-            f[sz1+sz2+n-1] = '>';
-        }
-        return n + sz1 + sz2;
-    }
-
-    virtual bool ends_with_template() const
+    virtual bool ends_with_template(bool parsing = false) const
     {
         return true;
     }
@@ -6851,21 +3845,6 @@ public:
         buf = __right_->get_demangled_name(buf);
         *buf++ = ')';
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = 2;
-        if (r < n)
-            return n + __right_->print(l, l);
-        ptrdiff_t sz1 = __right_->print(f+1, l);
-        if (r >= n + sz1)
-        {
-            *f = '(';
-            f += 1 + sz1;
-            *f = ')';
-        }
-        return n + sz1;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -6932,90 +3911,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t sz = __left_->print_first(f, l);
-        ptrdiff_t n = 0;
-        if (__size_ & 0x1F)
-        {
-            if (__size_ & 1)
-            {
-                const ptrdiff_t d = sizeof(" const")-1;
-                if (r >= sz + n + d)
-                {
-                    char* t = f + sz + n;
-                    *t++ = ' ';
-                    *t++ = 'c';
-                    *t++ = 'o';
-                    *t++ = 'n';
-                    *t++ = 's';
-                    *t   = 't';
-                }
-                n += d;
-            }
-            if (__size_ & 2)
-            {
-                const ptrdiff_t d = sizeof(" volatile")-1;
-                if (r >= sz + n + d)
-                {
-                    char* t = f + sz + n;
-                    *t++ = ' ';
-                    *t++ = 'v';
-                    *t++ = 'o';
-                    *t++ = 'l';
-                    *t++ = 'a';
-                    *t++ = 't';
-                    *t++ = 'i';
-                    *t++ = 'l';
-                    *t   = 'e';
-                }
-                n += d;
-            }
-            if (__size_ & 4)
-            {
-                const ptrdiff_t d = sizeof(" restrict")-1;
-                if (r >= sz + n + d)
-                {
-                    char* t = f + sz + n;
-                    *t++ = ' ';
-                    *t++ = 'r';
-                    *t++ = 'e';
-                    *t++ = 's';
-                    *t++ = 't';
-                    *t++ = 'r';
-                    *t++ = 'i';
-                    *t++ = 'c';
-                    *t   = 't';
-                }
-                n += d;
-            }
-            if (__size_ & 8)
-            {
-                const ptrdiff_t d = sizeof(" &")-1;
-                if (r >= sz + n + d)
-                {
-                    char* t = f + sz + n;
-                    *t++ = ' ';
-                    *t   = '&';
-                }
-                n += d;
-            }
-            if (__size_ & 16)
-            {
-                const ptrdiff_t d = sizeof(" &&")-1;
-                if (r >= sz + n + d)
-                {
-                    char* t = f + sz + n;
-                    *t++ = ' ';
-                    *t++ = '&';
-                    *t   = '&';
-                }
-                n += d;
-            }
-        }
-        return n + sz;
-    }
     virtual size_t second_size() const
     {
         size_t s = __left_->second_size();
@@ -7065,90 +3960,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_second(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t sz = __left_->print_second(f, l);
-        ptrdiff_t n = 0;
-        if (__size_ & 0x3E0)
-        {
-            if (__size_ & 32)
-            {
-                const ptrdiff_t d = sizeof(" const")-1;
-                if (r >= sz + n + d)
-                {
-                    char* t = f + sz + n;
-                    *t++ = ' ';
-                    *t++ = 'c';
-                    *t++ = 'o';
-                    *t++ = 'n';
-                    *t++ = 's';
-                    *t   = 't';
-                }
-                n += d;
-            }
-            if (__size_ & 64)
-            {
-                const ptrdiff_t d = sizeof(" volatile")-1;
-                if (r >= sz + n + d)
-                {
-                    char* t = f + sz + n;
-                    *t++ = ' ';
-                    *t++ = 'v';
-                    *t++ = 'o';
-                    *t++ = 'l';
-                    *t++ = 'a';
-                    *t++ = 't';
-                    *t++ = 'i';
-                    *t++ = 'l';
-                    *t   = 'e';
-                }
-                n += d;
-            }
-            if (__size_ & 128)
-            {
-                const ptrdiff_t d = sizeof(" restrict")-1;
-                if (r >= sz + n + d)
-                {
-                    char* t = f + sz + n;
-                    *t++ = ' ';
-                    *t++ = 'r';
-                    *t++ = 'e';
-                    *t++ = 's';
-                    *t++ = 't';
-                    *t++ = 'r';
-                    *t++ = 'i';
-                    *t++ = 'c';
-                    *t   = 't';
-                }
-                n += d;
-            }
-            if (__size_ & 256)
-            {
-                const ptrdiff_t d = sizeof(" &")-1;
-                if (r >= sz + n + d)
-                {
-                    char* t = f + sz + n;
-                    *t++ = ' ';
-                    *t   = '&';
-                }
-                n += d;
-            }
-            if (__size_ & 512)
-            {
-                const ptrdiff_t d = sizeof(" &&")-1;
-                if (r >= sz + n + d)
-                {
-                    char* t = f + sz + n;
-                    *t++ = ' ';
-                    *t++ = '&';
-                    *t   = '&';
-                }
-                n += d;
-            }
-        }
-        return n + sz;
-    }
     virtual __node* base_name() const
     {
         return __left_->base_name();
@@ -7174,9 +3985,11 @@ public:
         }
         return 0;
     }
-    virtual bool ends_with_template() const
+    virtual bool ends_with_template(bool parsing = false) const
     {
-        return __left_->ends_with_template();
+        if (parsing)
+            return __left_->ends_with_template(parsing);
+        return false;
     }
     virtual bool is_ctor_dtor_conv() const
     {
@@ -7224,22 +4037,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t sz1 = __left_->print_first(f, l);
-        ptrdiff_t sz2 = 0;
-        ptrdiff_t n = 0;
-        if (__size_ == 0)
-        {
-            if (r < sz1 + 1)
-                return sz1 + 1 + __right_->print(l, l);
-            sz2 = __right_->print(f+1+sz1, l);
-            n = 1;
-            f[sz1] = ' ';
-        }
-        return n + sz1 + sz2;
-    }
     virtual size_t second_size() const
     {
         size_t s = __left_->second_size();
@@ -7256,22 +4053,6 @@ public:
             buf = __right_->get_demangled_name(buf);
         }
         return buf;
-    }
-    virtual ptrdiff_t print_second(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t sz1 = __left_->print_second(f, l);
-        ptrdiff_t sz2 = 0;
-        ptrdiff_t n = 0;
-        if (__size_ == 1)
-        {
-            if (r < sz1 + 1)
-                return sz1 + 1 + __right_->print(l, l);
-            sz2 = __right_->print(f+1+sz1, l);
-            n = 1;
-            f[sz1] = ' ';
-        }
-        return n + sz1 + sz2;
     }
     virtual __node* base_name() const
     {
@@ -7298,9 +4079,9 @@ public:
         }
         return 0;
     }
-    virtual bool ends_with_template() const
+    virtual bool ends_with_template(bool parsing = false) const
     {
-        return __left_->ends_with_template();
+        return __left_->ends_with_template(parsing);
     }
     virtual bool is_ctor_dtor_conv() const
     {
@@ -7386,47 +4167,6 @@ public:
             *buf++ = '(';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        ptrdiff_t n = 0;
-        ptrdiff_t sz1 = 0;
-        ptrdiff_t sz2 = 0;
-        if (__size_)
-        {
-            sz1 = __right_->print_first(f, l);
-            if (sz1 != 0 && (__left_ == NULL ||
-                            !__right_->__left_->is_reference_or_pointer_to_function_or_array()))
-            {
-                ++n;
-                if (r >= sz1 + 1)
-                    f[sz1] = ' ';
-            }
-        }
-        else
-        {
-            n = 5;
-            if (r >= 5)
-            {
-                char* t = f;
-                *t++ = 'a';
-                *t++ = 'u';
-                *t++ = 't';
-                *t++ = 'o';
-                *t++ = ' ';
-            }
-        }
-        if (__left_)
-            sz2 = __left_->print_first(f + std::min(n + sz1, r), l);
-        else
-        {
-            ++n;
-            if (r >= n + sz1)
-                f[n+sz1-1] = '(';
-        }
-        return n + sz1 + sz2;
-    }
-
     virtual char* second_demangled_name(char* buf) const
     {
         if (__left_ == NULL)
@@ -7440,32 +4180,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_second(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        ptrdiff_t n = 0;
-        ptrdiff_t sz1 = 0;
-        ptrdiff_t sz2 = 0;
-        if (__left_ == NULL)
-        {
-            n = 1;
-            if (r >= 1)
-                *f = ')';
-        }
-        sz1 = __right_->print_second(f+std::min(r, n), l);
-        if (!__size_)
-        {
-            if (r > n+sz1+1)
-            {
-                f[n+sz1]   = '-';
-                f[n+sz1+1] = '>';
-            }
-            n += 2;
-            sz2 = __right_->print_first(f+std::min(r, n+sz1), l);
-        }
-        return n + sz1 + sz2;
-    }
-
     virtual char* get_demangled_name(char* buf) const
     {
         if (__size_)
@@ -7520,54 +4234,6 @@ public:
         return __cached_size_;
     }
 
-    virtual ptrdiff_t print(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        ptrdiff_t n = 0;
-        ptrdiff_t sz1 = 0;
-        ptrdiff_t sz2 = 0;
-        if (__size_)
-        {
-            sz1 = __right_->print_first(f, l);
-            if (sz1 != 0 && (__left_ == NULL ||
-                            !__right_->__left_->is_reference_or_pointer_to_function_or_array()))
-            {
-                ++n;
-                if (r >= sz1 + 1)
-                    f[sz1] = ' ';
-            }
-        }
-        else
-        {
-            n = 5;
-            if (r >= 5)
-            {
-                char* t = f;
-                *t++ = 'a';
-                *t++ = 'u';
-                *t++ = 't';
-                *t++ = 'o';
-                *t++ = ' ';
-            }
-        }
-        if (__left_)
-            sz2 = __left_->print_first(f + std::min(n + sz1, r), l);
-        n += sz1 + sz2;
-        sz2 = 0;
-        sz1 = __right_->print_second(f+std::min(r, n), l);
-        if (!__size_)
-        {
-            if (r > n+sz1+1)
-            {
-                f[n+sz1]   = '-';
-                f[n+sz1+1] = '>';
-            }
-            n += 2;
-            sz2 = __right_->print_first(f+std::min(r, n+sz1), l);
-        }
-        return n + sz1 + sz2;
-    }
-
     virtual bool is_function() const
     {
         return true;
@@ -7612,10 +4278,6 @@ public:
             buf = __left_->first_demangled_name(buf);
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        return __left_ ? __left_->print_first(f, l) : 0;
-    }
 
     virtual char* second_demangled_name(char* buf) const
     {
@@ -7626,19 +4288,6 @@ public:
         if (__left_)
             buf = __left_->second_demangled_name(buf);
         return buf;
-    }
-    virtual ptrdiff_t print_second(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t sz1 = __right_ ? __right_->print(f+std::min<ptrdiff_t>(1, r), l) : 0;
-        const ptrdiff_t sz2 = __left_ ? __left_->print_second(f+std::min(2+sz1, r), l) : 0;
-        if (r >= 2 + sz1 + sz2)
-        {
-            *f = '(';
-            f += 1 + sz1;
-            *f = ')';
-        }
-        return 2 + sz1 + sz2;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -7681,47 +4330,11 @@ public:
             *buf++ = '*';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t sz = __left_->print_first(f, l);
-        ptrdiff_t n;
-        if (__left_->is_array())
-        {
-            n = 3;
-            if (r >= sz + n)
-            {
-                f += sz;
-                *f++ = ' ';
-                *f++ = '(';
-                *f   = '*';
-            }
-        }
-        else
-        {
-            n = 1;
-            if (r >= sz + n)
-                f[sz] = '*';
-        }
-        return sz + n;
-    }
     virtual char* second_demangled_name(char* buf) const
     {
         if (__left_->is_array())
             *buf++ = ')';
         return __left_->second_demangled_name(buf);
-    }
-    virtual ptrdiff_t print_second(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        ptrdiff_t n = 0;
-        if (__left_->is_array())
-        {
-            n = 1;
-            if (r > n)
-                *f = ')';
-        }
-        return __left_->print_second(f + std::min(n, r), l) + n;
     }
     virtual __node* base_name() const
     {
@@ -7772,47 +4385,11 @@ public:
             *buf++ = '&';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t sz = __left_->print_first(f, l);
-        ptrdiff_t n;
-        if (__left_->is_array())
-        {
-            n = 3;
-            if (r >= sz + n)
-            {
-                f += sz;
-                *f++ = ' ';
-                *f++ = '(';
-                *f   = '&';
-            }
-        }
-        else
-        {
-            n = 1;
-            if (r >= sz + n)
-                f[sz] = '&';
-        }
-        return sz + n;
-    }
     virtual char* second_demangled_name(char* buf) const
     {
         if (__left_->is_array())
             *buf++ = ')';
         return __left_->second_demangled_name(buf);
-    }
-    virtual ptrdiff_t print_second(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        ptrdiff_t n = 0;
-        if (__left_->is_array())
-        {
-            n = 1;
-            if (r > n)
-                *f = ')';
-        }
-        return __left_->print_second(f + std::min(n, r), l) + n;
     }
     virtual __node* base_name() const
     {
@@ -7864,52 +4441,11 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t sz = __left_->print_first(f, l);
-        ptrdiff_t n;
-        if (__left_->is_array())
-        {
-            n = 4;
-            if (r >= sz + n)
-            {
-                f += sz;
-                *f++ = ' ';
-                *f++ = '(';
-                *f++ = '&';
-                *f   = '&';
-            }
-        }
-        else
-        {
-            n = 2;
-            if (r >= sz + n)
-            {
-                f += sz;
-                *f++ = '&';
-                *f   = '&';
-            }
-        }
-        return sz + n;
-    }
     virtual char* second_demangled_name(char* buf) const
     {
         if (__left_->is_array())
             *buf++ = ')';
         return __left_->second_demangled_name(buf);
-    }
-    virtual ptrdiff_t print_second(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        ptrdiff_t n = 0;
-        if (__left_->is_array())
-        {
-            n = 1;
-            if (r > n)
-                *f = ')';
-        }
-        return __left_->print_second(f + std::min(n, r), l) + n;
     }
     virtual __node* base_name() const
     {
@@ -7951,25 +4487,6 @@ public:
         strncpy(buf, " complex", n);
         return buf + n;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t sz = __left_->print(f, l);
-        const ptrdiff_t n = sizeof(" complex") - 1;
-        if (r >= sz + n)
-        {
-            f += sz;
-            *f++ = ' ';
-            *f++ = 'c';
-            *f++ = 'o';
-            *f++ = 'm';
-            *f++ = 'p';
-            *f++ = 'l';
-            *f++ = 'e';
-            *f   = 'x';
-        }
-        return sz + n;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         return __left_->fix_forward_references(t_begin, t_end);
@@ -7997,27 +4514,6 @@ public:
         buf = __left_->get_demangled_name(buf);
         strncpy(buf, " imaginary", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t sz = __left_->print(f, l);
-        const ptrdiff_t n = sizeof(" imaginary") - 1;
-        if (r >= sz + n)
-        {
-            f += sz;
-            *f++ = ' ';
-            *f++ = 'i';
-            *f++ = 'm';
-            *f++ = 'a';
-            *f++ = 'g';
-            *f++ = 'i';
-            *f++ = 'n';
-            *f++ = 'a';
-            *f++ = 'r';
-            *f   = 'y';
-        }
-        return sz + n;
     }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
@@ -8106,45 +4602,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t len = __left_->list_len();
-        ptrdiff_t sz = 0;
-        if (len != 0)
-        {
-             if (__left_->is_sub() || len == 1)
-                sz = __left_->print(f, l);
-            else
-            {
-                __node* top = __left_;
-                __node* bottom = top;
-                while (!bottom->__left_->is_sub())
-                    bottom = bottom->__left_;
-                __node* sub = bottom->__left_;
-                __node* i = sub->__left_;
-                bool first = true;
-                while (i)
-                {
-                    if (!first)
-                    {
-                        if (r >= sz+2)
-                        {
-                            f[sz]   = ',';
-                            f[sz+1] = ' ';
-                        }
-                        sz += 2;
-                    }
-                    bottom->__left_ = i->__left_;
-                    sz += top->print(f+std::min(sz, r), l);
-                    i = i->__right_;
-                    first = false;
-                }
-                bottom->__left_ = sub;
-            }
-        }
-        return sz;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         return __left_->fix_forward_references(t_begin, t_end);
@@ -8163,18 +4620,6 @@ public:
         strncpy(buf, "void", n);
         return buf + n;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'v';
-            *f++ = 'o';
-            *f++ = 'i';
-            *f   = 'd';
-        }
-        return n;
-    }
 };
 
 class __wchar_t
@@ -8188,21 +4633,6 @@ public:
     {
         strncpy(buf, "wchar_t", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'w';
-            *f++ = 'c';
-            *f++ = 'h';
-            *f++ = 'a';
-            *f++ = 'r';
-            *f++ = '_';
-            *f   = 't';
-        }
-        return n;
     }
 };
 
@@ -8227,25 +4657,6 @@ public:
         strncpy(buf, __name_, __size_);
         return buf + __size_;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("(wchar_t)") - 1;
-        if (r >= n + __size_)
-        {
-            *f++ = '(';
-            *f++ = 'w';
-            *f++ = 'c';
-            *f++ = 'h';
-            *f++ = 'a';
-            *f++ = 'r';
-            *f++ = '_';
-            *f++ = 't';
-            *f++ = ')';
-            strncpy(f, __name_, __size_);
-        }
-        return n + __size_;
-    }
 };
 
 class __bool
@@ -8259,18 +4670,6 @@ public:
     {
         strncpy(buf, "bool", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'b';
-            *f++ = 'o';
-            *f++ = 'o';
-            *f   = 'l';
-        }
-        return n;
     }
 };
 
@@ -8293,13 +4692,6 @@ public:
         strncpy(buf, __name_, __size_);
         return buf + __size_;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= __size_)
-            strncpy(f, __name_, __size_);
-        return __size_;
-    }
 };
 
 class __char
@@ -8313,18 +4705,6 @@ public:
     {
         strncpy(buf, "char", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'c';
-            *f++ = 'h';
-            *f++ = 'a';
-            *f   = 'r';
-        }
-        return n;
     }
 };
 
@@ -8359,28 +4739,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("(char)") - 1;
-        if (r >= __size_ + n)
-        {
-            *f++ = '(';
-            *f++ = 'c';
-            *f++ = 'h';
-            *f++ = 'a';
-            *f++ = 'r';
-            *f++ = ')';
-            if (*__name_ == 'n')
-            {
-                *f++ = '-';
-                strncpy(f, __name_+1, __size_-1);
-            }
-            else
-                strncpy(f, __name_, __size_);
-        }
-        return __size_ + n;
-    }
 };
 
 class __signed_char
@@ -8394,25 +4752,6 @@ public:
     {
         strncpy(buf, "signed char", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 's';
-            *f++ = 'i';
-            *f++ = 'g';
-            *f++ = 'n';
-            *f++ = 'e';
-            *f++ = 'd';
-            *f++ = ' ';
-            *f++ = 'c';
-            *f++ = 'h';
-            *f++ = 'a';
-            *f   = 'r';
-        }
-        return n;
     }
 };
 
@@ -8447,35 +4786,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("(signed char)") - 1;
-        if (r >= __size_ + n)
-        {
-            *f++ = '(';
-            *f++ = 's';
-            *f++ = 'i';
-            *f++ = 'g';
-            *f++ = 'n';
-            *f++ = 'e';
-            *f++ = 'd';
-            *f++ = ' ';
-            *f++ = 'c';
-            *f++ = 'h';
-            *f++ = 'a';
-            *f++ = 'r';
-            *f++ = ')';
-            if (*__name_ == 'n')
-            {
-                *f++ = '-';
-                strncpy(f, __name_+1, __size_-1);
-            }
-            else
-                strncpy(f, __name_, __size_);
-        }
-        return __size_ + n;
-    }
 };
 
 class __unsigned_char
@@ -8489,27 +4799,6 @@ public:
     {
         strncpy(buf, "unsigned char", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'u';
-            *f++ = 'n';
-            *f++ = 's';
-            *f++ = 'i';
-            *f++ = 'g';
-            *f++ = 'n';
-            *f++ = 'e';
-            *f++ = 'd';
-            *f++ = ' ';
-            *f++ = 'c';
-            *f++ = 'h';
-            *f++ = 'a';
-            *f   = 'r';
-        }
-        return n;
     }
 };
 
@@ -8534,31 +4823,6 @@ public:
         strncpy(buf, __name_, __size_);
         return buf + __size_;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("(unsigned char)") - 1;
-        if (r >= __size_ + n)
-        {
-            *f++ = '(';
-            *f++ = 'u';
-            *f++ = 'n';
-            *f++ = 's';
-            *f++ = 'i';
-            *f++ = 'g';
-            *f++ = 'n';
-            *f++ = 'e';
-            *f++ = 'd';
-            *f++ = ' ';
-            *f++ = 'c';
-            *f++ = 'h';
-            *f++ = 'a';
-            *f++ = 'r';
-            *f++ = ')';
-            strncpy(f, __name_, __size_);
-        }
-        return __size_ + n;
-    }
 };
 
 class __short
@@ -8572,19 +4836,6 @@ public:
     {
         strncpy(buf, "short", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 's';
-            *f++ = 'h';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = 't';
-        }
-        return n;
     }
 };
 
@@ -8619,29 +4870,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("(short)") - 1;
-        if (r >= __size_ + n)
-        {
-            *f++ = '(';
-            *f++ = 's';
-            *f++ = 'h';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = 't';
-            *f++ = ')';
-            if (*__name_ == 'n')
-            {
-                *f++ = '-';
-                strncpy(f, __name_+1, __size_-1);
-            }
-            else
-                strncpy(f, __name_, __size_);
-        }
-        return __size_ + n;
-    }
 };
 
 class __unsigned_short
@@ -8655,28 +4883,6 @@ public:
     {
         strncpy(buf, "unsigned short", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'u';
-            *f++ = 'n';
-            *f++ = 's';
-            *f++ = 'i';
-            *f++ = 'g';
-            *f++ = 'n';
-            *f++ = 'e';
-            *f++ = 'd';
-            *f++ = ' ';
-            *f++ = 's';
-            *f++ = 'h';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f   = 't';
-        }
-        return n;
     }
 };
 
@@ -8701,32 +4907,6 @@ public:
         strncpy(buf, __name_, __size_);
         return buf + __size_;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("(unsigned short)") - 1;
-        if (r >= __size_ + n)
-        {
-            *f++ = '(';
-            *f++ = 'u';
-            *f++ = 'n';
-            *f++ = 's';
-            *f++ = 'i';
-            *f++ = 'g';
-            *f++ = 'n';
-            *f++ = 'e';
-            *f++ = 'd';
-            *f++ = ' ';
-            *f++ = 's';
-            *f++ = 'h';
-            *f++ = 'o';
-            *f++ = 'r';
-            *f++ = 't';
-            *f++ = ')';
-            strncpy(f, __name_, __size_);
-        }
-        return __size_ + n;
-    }
 };
 
 class __int
@@ -8742,17 +4922,6 @@ public:
         *buf++ = 'n';
         *buf++ = 't';
         return buf;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'i';
-            *f++ = 'n';
-            *f   = 't';
-        }
-        return n;
     }
 };
 
@@ -8785,21 +4954,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= __size_)
-        {
-            if (*__name_ == 'n')
-            {
-                *f++ = '-';
-                strncpy(f, __name_+1, __size_-1);
-            }
-            else
-                strncpy(f, __name_, __size_);
-        }
-        return __size_;
-    }
 };
 
 class __unsigned_int
@@ -8813,26 +4967,6 @@ public:
     {
         strncpy(buf, "unsigned int", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'u';
-            *f++ = 'n';
-            *f++ = 's';
-            *f++ = 'i';
-            *f++ = 'g';
-            *f++ = 'n';
-            *f++ = 'e';
-            *f++ = 'd';
-            *f++ = ' ';
-            *f++ = 'i';
-            *f++ = 'n';
-            *f   = 't';
-        }
-        return n;
     }
 };
 
@@ -8857,17 +4991,6 @@ public:
         *buf++ = 'u';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("u") - 1;
-        if (r >= __size_ + n)
-        {
-            strncpy(f, __name_, __size_);
-            f[__size_] = 'u';
-        }
-        return __size_ + n;
-    }
 };
 
 class __long
@@ -8881,18 +5004,6 @@ public:
     {
         strncpy(buf, "long", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'l';
-            *f++ = 'o';
-            *f++ = 'n';
-            *f   = 'g';
-        }
-        return n;
     }
 };
 
@@ -8926,27 +5037,6 @@ public:
         *buf++ = 'l';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("l") - 1;
-        if (r >= __size_ + n)
-        {
-            if (*__name_ == 'n')
-            {
-                *f++ = '-';
-                strncpy(f, __name_+1, __size_-1);
-                f += __size_-1;
-            }
-            else
-            {
-                strncpy(f, __name_, __size_);
-                f += __size_;
-            }
-            *f = 'l';
-        }
-        return __size_ + n;
-    }
 };
 
 class __unsigned_long
@@ -8960,27 +5050,6 @@ public:
     {
         strncpy(buf, "unsigned long", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'u';
-            *f++ = 'n';
-            *f++ = 's';
-            *f++ = 'i';
-            *f++ = 'g';
-            *f++ = 'n';
-            *f++ = 'e';
-            *f++ = 'd';
-            *f++ = ' ';
-            *f++ = 'l';
-            *f++ = 'o';
-            *f++ = 'n';
-            *f   = 'g';
-        }
-        return n;
     }
 };
 
@@ -9006,19 +5075,6 @@ public:
         *buf++ = 'l';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("ul") - 1;
-        if (r >= __size_ + n)
-        {
-            strncpy(f, __name_, __size_);
-            f += __size_;
-            *f++ = 'u';
-            *f   = 'l';
-        }
-        return __size_ + n;
-    }
 };
 
 class __long_long
@@ -9032,23 +5088,6 @@ public:
     {
         strncpy(buf, "long long", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'l';
-            *f++ = 'o';
-            *f++ = 'n';
-            *f++ = 'g';
-            *f++ = ' ';
-            *f++ = 'l';
-            *f++ = 'o';
-            *f++ = 'n';
-            *f   = 'g';
-        }
-        return n;
     }
 };
 
@@ -9083,28 +5122,6 @@ public:
         *buf++ = 'l';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("ll") - 1;
-        if (r >= __size_ + n)
-        {
-            if (*__name_ == 'n')
-            {
-                *f++ = '-';
-                strncpy(f, __name_+1, __size_-1);
-                f += __size_-1;
-            }
-            else
-            {
-                strncpy(f, __name_, __size_);
-                f += __size_;
-            }
-            *f++ = 'l';
-            *f   = 'l';
-        }
-        return __size_ + n;
-    }
 };
 
 class __unsigned_long_long
@@ -9118,32 +5135,6 @@ public:
     {
         strncpy(buf, "unsigned long long", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'u';
-            *f++ = 'n';
-            *f++ = 's';
-            *f++ = 'i';
-            *f++ = 'g';
-            *f++ = 'n';
-            *f++ = 'e';
-            *f++ = 'd';
-            *f++ = ' ';
-            *f++ = 'l';
-            *f++ = 'o';
-            *f++ = 'n';
-            *f++ = 'g';
-            *f++ = ' ';
-            *f++ = 'l';
-            *f++ = 'o';
-            *f++ = 'n';
-            *f   = 'g';
-        }
-        return n;
     }
 };
 
@@ -9170,20 +5161,6 @@ public:
         *buf++ = 'l';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("ull") - 1;
-        if (r >= __size_ + n)
-        {
-            strncpy(f, __name_, __size_);
-            f += __size_;
-            *f++ = 'u';
-            *f++ = 'l';
-            *f   = 'l';
-        }
-        return __size_ + n;
-    }
 };
 
 class __int128
@@ -9197,22 +5174,6 @@ public:
     {
         strncpy(buf, "__int128", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = '_';
-            *f++ = '_';
-            *f++ = 'i';
-            *f++ = 'n';
-            *f++ = 't';
-            *f++ = '1';
-            *f++ = '2';
-            *f   = '8';
-        }
-        return n;
     }
 };
 
@@ -9247,32 +5208,6 @@ public:
         }
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("(__int128)") - 1;
-        if (r >= __size_ + n)
-        {
-            *f++ = '(';
-            *f++ = '_';
-            *f++ = '_';
-            *f++ = 'i';
-            *f++ = 'n';
-            *f++ = 't';
-            *f++ = '1';
-            *f++ = '2';
-            *f++ = '8';
-            *f   = ')';
-            if (*__name_ == 'n')
-            {
-                *f++ = '-';
-                strncpy(f, __name_+1, __size_-1);
-            }
-            else
-                strncpy(f, __name_, __size_);
-        }
-        return __size_ + n;
-    }
 };
 
 class __unsigned_int128
@@ -9286,31 +5221,6 @@ public:
     {
         strncpy(buf, "unsigned __int128", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'u';
-            *f++ = 'n';
-            *f++ = 's';
-            *f++ = 'i';
-            *f++ = 'g';
-            *f++ = 'n';
-            *f++ = 'e';
-            *f++ = 'd';
-            *f++ = ' ';
-            *f++ = '_';
-            *f++ = '_';
-            *f++ = 'i';
-            *f++ = 'n';
-            *f++ = 't';
-            *f++ = '1';
-            *f++ = '2';
-            *f   = '8';
-        }
-        return n;
     }
 };
 
@@ -9334,35 +5244,6 @@ public:
         buf += 19;
         strncpy(buf, __name_, __size_);
         return buf + __size_;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("(unsigned __int128)") - 1;
-        if (r >= __size_ + n)
-        {
-            *f++ = '(';
-            *f++ = 'u';
-            *f++ = 'n';
-            *f++ = 's';
-            *f++ = 'i';
-            *f++ = 'g';
-            *f++ = 'n';
-            *f++ = 'e';
-            *f++ = 'd';
-            *f++ = ' ';
-            *f++ = '_';
-            *f++ = '_';
-            *f++ = 'i';
-            *f++ = 'n';
-            *f++ = 't';
-            *f++ = '1';
-            *f++ = '2';
-            *f++ = '8';
-            *f   = ')';
-            strncpy(f, __name_, __size_);
-        }
-        return __size_ + n;
     }
 };
 
@@ -9395,20 +5276,6 @@ public:
         *buf++ = 'f';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        char num[20] = {0};
-        float v = static_cast<float>(__value_);
-        ptrdiff_t n = sprintf(num, "%a", v);
-        if (r >= n+1)
-        {
-            strncpy(f, num, n);
-            f[n] = 'f';
-        }
-        ++n;
-        return n;
-    }
 };
 
 class __float
@@ -9422,19 +5289,6 @@ public:
     {
         strncpy(buf, "float", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'f';
-            *f++ = 'l';
-            *f++ = 'o';
-            *f++ = 'a';
-            *f   = 't';
-        }
-        return n;
     }
 };
 
@@ -9465,16 +5319,6 @@ public:
         strncpy(buf, num, n);
         return buf + n;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        char num[30] = {0};
-        double v = static_cast<double>(__value_);
-        const ptrdiff_t n = sprintf(num, "%a", v);
-        if (r >= n)
-            strncpy(f, num, n);
-        return n;
-    }
 };
 
 class __double
@@ -9488,20 +5332,6 @@ public:
     {
         strncpy(buf, "double", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'd';
-            *f++ = 'o';
-            *f++ = 'u';
-            *f++ = 'b';
-            *f++ = 'l';
-            *f   = 'e';
-        }
-        return n;
     }
 };
 
@@ -9517,25 +5347,6 @@ public:
         strncpy(buf, "long double", n);
         return buf + n;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'l';
-            *f++ = 'o';
-            *f++ = 'n';
-            *f++ = 'g';
-            *f++ = ' ';
-            *f++ = 'd';
-            *f++ = 'o';
-            *f++ = 'u';
-            *f++ = 'b';
-            *f++ = 'l';
-            *f   = 'e';
-        }
-        return n;
-    }
 };
 
 class __float128
@@ -9549,24 +5360,6 @@ public:
     {
         strncpy(buf, "__float128", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = '_';
-            *f++ = '_';
-            *f++ = 'f';
-            *f++ = 'l';
-            *f++ = 'o';
-            *f++ = 'a';
-            *f++ = 't';
-            *f++ = '1';
-            *f++ = '2';
-            *f   = '8';
-        }
-        return n;
     }
 };
 
@@ -9584,17 +5377,6 @@ public:
         *buf++ = '.';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = '.';
-            *f++ = '.';
-            *f   = '.';
-        }
-        return n;
-    }
 };
 
 class __decimal64
@@ -9608,23 +5390,6 @@ public:
     {
         strncpy(buf, "decimal64", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'd';
-            *f++ = 'e';
-            *f++ = 'c';
-            *f++ = 'i';
-            *f++ = 'm';
-            *f++ = 'a';
-            *f++ = 'l';
-            *f++ = '6';
-            *f   = '4';
-        }
-        return n;
     }
 };
 
@@ -9640,24 +5405,6 @@ public:
         strncpy(buf, "decimal128", n);
         return buf + n;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'd';
-            *f++ = 'e';
-            *f++ = 'c';
-            *f++ = 'i';
-            *f++ = 'm';
-            *f++ = 'a';
-            *f++ = 'l';
-            *f++ = '1';
-            *f++ = '2';
-            *f   = '8';
-        }
-        return n;
-    }
 };
 
 class __decimal32
@@ -9671,23 +5418,6 @@ public:
     {
         strncpy(buf, "decimal32", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'd';
-            *f++ = 'e';
-            *f++ = 'c';
-            *f++ = 'i';
-            *f++ = 'm';
-            *f++ = 'a';
-            *f++ = 'l';
-            *f++ = '3';
-            *f   = '2';
-        }
-        return n;
     }
 };
 
@@ -9703,23 +5433,6 @@ public:
         strncpy(buf, "decimal16", n);
         return buf + n;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'd';
-            *f++ = 'e';
-            *f++ = 'c';
-            *f++ = 'i';
-            *f++ = 'm';
-            *f++ = 'a';
-            *f++ = 'l';
-            *f++ = '1';
-            *f   = '6';
-        }
-        return n;
-    }
 };
 
 class __d_char32_t
@@ -9733,22 +5446,6 @@ public:
     {
         strncpy(buf, "char32_t", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'c';
-            *f++ = 'h';
-            *f++ = 'a';
-            *f++ = 'r';
-            *f++ = '3';
-            *f++ = '2';
-            *f++ = '_';
-            *f   = 't';
-        }
-        return n;
     }
 };
 
@@ -9764,22 +5461,6 @@ public:
         strncpy(buf, "char16_t", n);
         return buf + n;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'c';
-            *f++ = 'h';
-            *f++ = 'a';
-            *f++ = 'r';
-            *f++ = '1';
-            *f++ = '6';
-            *f++ = '_';
-            *f   = 't';
-        }
-        return n;
-    }
 };
 
 class __auto
@@ -9794,18 +5475,6 @@ public:
         strncpy(buf, "auto", n);
         return buf + n;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 'a';
-            *f++ = 'u';
-            *f++ = 't';
-            *f   = 'o';
-        }
-        return n;
-    }
 };
 
 class __nullptr_t
@@ -9819,28 +5488,6 @@ public:
     {
         strncpy(buf, "std::nullptr_t", n);
         return buf + n;
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        if (r >= n)
-        {
-            *f++ = 's';
-            *f++ = 't';
-            *f++ = 'd';
-            *f++ = ':';
-            *f++ = ':';
-            *f++ = 'n';
-            *f++ = 'u';
-            *f++ = 'l';
-            *f++ = 'l';
-            *f++ = 'p';
-            *f++ = 't';
-            *f++ = 'r';
-            *f++ = '_';
-            *f   = 't';
-        }
-        return n;
     }
 };
 
@@ -9895,31 +5542,6 @@ public:
         *buf++ = ']';
         return buf;
     }
-    virtual ptrdiff_t print(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = 3;
-        const ptrdiff_t sz1 = __left_->print(f, l);
-        char buf[20];
-        ptrdiff_t sz2 = 0;
-        if (__right_ != 0)
-            sz2 = __right_->print(f+std::min(sz1+(n-1), r), l);
-        else if (__size_ != 0)
-        {
-            sz2 = sprintf(buf, "%ld", __size_);
-            if (r >= sz1 + sz2 + n)
-                strncpy(f+sz1+2, buf, sz2);
-        }
-        if (r >= sz1 + sz2 + n)
-        {
-            f += sz1;
-            *f++ = ' ';
-            *f   = '[';
-            f += 1 + sz2;
-            *f   = ']';
-        }
-        return sz1 + sz2 + n;
-    }
 
     virtual size_t first_size() const
     {
@@ -9929,11 +5551,6 @@ public:
     virtual char* first_demangled_name(char* buf) const
     {
         return __left_->first_demangled_name(buf);
-    }
-
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        return __left_->print_first(f, l);
     }
 
     virtual size_t second_size() const
@@ -9965,32 +5582,6 @@ public:
         if (buf == t)
             ++buf;
         return buf;
-    }
-    virtual ptrdiff_t print_second(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        ptrdiff_t n = 2;
-        char buf[20];
-        ptrdiff_t sz2 = 0;
-        if (__right_ != 0)
-            sz2 = __right_->print(f+std::min(n, r), l);
-        else if (__size_ != 0)
-        {
-            sz2 = sprintf(buf, "%ld", __size_);
-            if (r >= sz2 + 3)
-                strncpy(f+2, buf, sz2);
-        }
-        const ptrdiff_t sz1 = __left_->print_second(f+std::min(2+sz2, r), l);
-        if (sz1 == 0)
-            ++n;
-        if (r >= sz1 + sz2 + n)
-        {
-            *f++ = ' ';
-            *f   = '[';
-            f += 1 + sz2;
-            *f   = ']';
-        }
-        return sz1 + sz2 + n;
     }
     virtual bool is_array() const
     {
@@ -10033,22 +5624,6 @@ public:
         *buf++ = '*';
         return __right_->second_demangled_name(buf);
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = 3;
-        const ptrdiff_t sz1 = __right_->print_first(f, l);
-        const ptrdiff_t sz2 = __left_->print(f+std::min(sz1, r), l);
-        const ptrdiff_t sz3 = __right_->print_second(f+std::min(sz1+sz2+n, r), l);
-        if (r >= sz1 + sz2 + sz3 + n)
-        {
-            f += sz1 + sz2;
-            *f++ = ':';
-            *f++ = ':';
-            *f   = '*';
-        }
-        return sz1 + sz2 + sz3 + n;
-    }
     virtual __node* base_name() const
     {
         return __left_->base_name();
@@ -10089,27 +5664,6 @@ public:
         *buf++ = ')';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("decltype()") - 1;
-        const ptrdiff_t sz1 = __right_->print(f+std::min(n-1, r), l);
-        if (r >= sz1 + n)
-        {
-            *f++ = 'd';
-            *f++ = 'e';
-            *f++ = 'c';
-            *f++ = 'l';
-            *f++ = 't';
-            *f++ = 'y';
-            *f++ = 'p';
-            *f++ = 'e';
-            *f   = '(';
-            f += 1 + sz1;
-            *f   = ')';
-        }
-        return sz1 + n;
-    }
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         return __right_->fix_forward_references(t_begin, t_end);
@@ -10141,24 +5695,10 @@ public:
         *buf++ = ':';
         return __right_->get_demangled_name(buf);
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("::") - 1;
-        const ptrdiff_t sz1 = __left_->print(f, l);
-        if (r >= sz1 + n)
-        {
-            f += sz1;
-            *f++ = ':';
-            *f++ = ':';
-        }
-        const ptrdiff_t sz2 = __right_->print(f, l);
-        return sz1 + n + sz2;
-    }
 
-    virtual bool ends_with_template() const
+    virtual bool ends_with_template(bool parsing = false) const
     {
-        return __right_->ends_with_template();
+        return __right_->ends_with_template(parsing);
     }
     virtual __node* base_name() const
     {
@@ -10220,37 +5760,10 @@ public:
         }
         return __right_->get_demangled_name(buf);
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        ptrdiff_t n = 0;
-        if (__size_)
-        {
-            n = 2;
-            if (r >= n)
-            {
-                f[0] = ':';
-                f[1] = ':';
-            }
-        }
-        ptrdiff_t sz1 = 0;
-        if (__left_)
-        {
-            sz1 = __left_->print(f+std::min(n, r), l);
-            n += 2;
-            if (r >= sz1 + n)
-            {
-                f[sz1 + n - 2] = ':';
-                f[sz1 + n - 1] = ':';
-            }
-        }
-        const ptrdiff_t sz2 = __right_->print(f+std::min(sz1+n, r), l);
-        return sz1 + n + sz2;
-    }
 
-    virtual bool ends_with_template() const
+    virtual bool ends_with_template(bool parsing = false) const
     {
-        return __right_->ends_with_template();
+        return __right_->ends_with_template(parsing);
     }
     virtual __node* base_name() const
     {
@@ -10288,29 +5801,6 @@ public:
         strncpy(buf, "string literal", 14);
         return buf + 14;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = sizeof("string literal") - 1;
-        if (r >= n)
-        {
-            *f++ = 's';
-            *f++ = 't';
-            *f++ = 'r';
-            *f++ = 'i';
-            *f++ = 'n';
-            *f++ = 'g';
-            *f++ = ' ';
-            *f++ = 'l';
-            *f++ = 'i';
-            *f++ = 't';
-            *f++ = 'e';
-            *f++ = 'r';
-            *f++ = 'a';
-            *f   = 'l';
-        }
-        return n;
-    }
 };
 
 class __constructor
@@ -10334,17 +5824,13 @@ public:
     {
         return __right_->get_base_name(buf);
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        return __right_->print_base_name(f, l);
-    }
     virtual __node* base_name() const
     {
         return __right_->base_name();
     }
-    virtual bool ends_with_template() const
+    virtual bool ends_with_template(bool parsing = false) const
     {
-        return __right_->ends_with_template();
+        return __right_->ends_with_template(parsing);
     }
     virtual bool is_ctor_dtor_conv() const
     {
@@ -10377,15 +5863,6 @@ public:
     {
         *buf++ = '~';
         return __right_->get_base_name(buf);
-    }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = 1;
-        const ptrdiff_t sz = __right_->print_base_name(f+std::min(n, r), l);
-        if (r >= n + sz)
-            *f = '~';
-        return n + sz;
     }
     virtual __node* base_name() const
     {
@@ -10432,22 +5909,6 @@ public:
         *buf++ = ')';
         return buf;
     }
-    virtual ptrdiff_t print_first(char* f, char* l) const
-    {
-        const ptrdiff_t r = l - f;
-        const ptrdiff_t n = 3 + __size_;
-        const ptrdiff_t sz = __left_->print(f, l);
-        if (r >= n + sz)
-        {
-            f += sz;
-            *f++ = ' ';
-            *f++ = '(';
-            strncpy(f, __name_, __size_);
-            f += __size_;
-            *f   = ')';
-        }
-        return n + sz;
-    }
     virtual __node* base_name() const
     {
         return __left_->base_name();
@@ -10455,6 +5916,77 @@ public:
     virtual bool fix_forward_references(__node** t_begin, __node** t_end)
     {
         return __left_->fix_forward_references(t_begin, t_end);
+    }
+};
+
+class __vector_type
+    : public __node
+{
+public:
+    __vector_type(__node* type, const char* num, size_t sz)
+    {
+        __left_ = type;
+        __name_ = num;
+        __size_ = sz;
+    }
+
+    __vector_type(__node* type, __node* num)
+    {
+        __left_ = type;
+        __right_ = num;
+    }
+
+    virtual size_t first_size() const
+    {
+        if (__cached_size_ == -1)
+        {
+            size_t off = 5;
+            if (__left_)
+                off = __left_->size();
+            off += 9;
+            if (__right_)
+                off += __right_->size();
+            else if (__size_ > 0)
+                off += __size_;
+            const_cast<long&>(__cached_size_) = off;
+        }
+        return __cached_size_;
+    }
+    virtual char* first_demangled_name(char* buf) const
+    {
+        if (__left_)
+            buf = __left_->get_demangled_name(buf);
+        else
+        {
+            strncpy(buf, "pixel", 5);
+            buf += 5;
+        }
+        strncpy(buf, " vector[", 8);
+        buf += 8;
+        if (__right_)
+            buf = __right_->get_demangled_name(buf);
+        else if (__size_ > 0)
+        {
+            strncpy(buf, __name_, __size_);
+            buf += __size_;
+        }
+        *buf++ = ']';
+        return buf;
+    }
+    virtual __node* base_name() const
+    {
+        if (__left_)
+            return __left_->base_name();
+        return __left_;
+    }
+    virtual bool fix_forward_references(__node** t_begin, __node** t_end)
+    {
+        bool r = true;
+        if (__left_)
+            r = __left_->fix_forward_references(t_begin, t_end);
+        if (__right_)
+            r = r && __right_->fix_forward_references(t_begin, t_end);
+        return r;
     }
 };
 
@@ -11241,18 +6773,33 @@ __demangle_tree::__parse_expr_primary(const char* first, const char* last)
                     }
                 }
             }
-            assert(!"case in __parse_expr_primary not implemented");
+//            assert(!"case in __parse_expr_primary not implemented");
+            __status_ = not_yet_implemented;
         }
     }
     return first;
 }
 
+// <unnamed-type-name> ::= Ut [ <nonnegative number> ] _
+//                     ::= <closure-type-name>
+// 
+// <closure-type-name> ::= Ul <lambda-sig> E [ <nonnegative number> ] _ 
+// 
+// <lambda-sig> ::= <parameter type>+  # Parameter types or "v" if the lambda has no parameters
+
 const char*
 __demangle_tree::__parse_unnamed_type_name(const char* first, const char* last)
 {
-    if (first != last && *first == 'U')
+    if (last - first > 2 && first[0] == 'U')
     {
-        assert(!"__parse_unnamed_type_name not implemented");
+        switch (first[1])
+        {
+        case 't':
+        case 'l':
+            first += 2;
+            __status_ = not_yet_implemented;
+            break;
+        }
     }
     return first;
 }
@@ -11301,7 +6848,9 @@ __demangle_tree::__parse_ctor_dtor_name(const char* first, const char* last)
 const char*
 __demangle_tree::__parse_unscoped_template_name(const char* first, const char* last)
 {
-    assert(!"__parse_unscoped_template_name not implemented");
+//    assert(!"__parse_unscoped_template_name not implemented");
+    __status_ = not_yet_implemented;
+    return first;
 }
 
 // <discriminator> := _ <non-negative number>      # when number < 10
@@ -11367,7 +6916,8 @@ __demangle_tree::__parse_local_name(const char* first, const char* last)
                 }
                 break;
             case 'd':
-                assert(!"__parse_local_name d not implemented");
+//                assert(!"__parse_local_name d not implemented");
+                __status_ = not_yet_implemented;
                 break;
             default:
                 {
@@ -11633,11 +7183,13 @@ __demangle_tree::__parse_function_param(const char* first, const char* last)
     {
         if (first[1] == 'p')
         {
-            assert(!"__parse_function_param not implemented");
+//            assert(!"__parse_function_param not implemented");
+            __status_ = not_yet_implemented;
         }
         else if (first[1] == 'L')
         {
-            assert(!"__parse_function_param not implemented");
+//            assert(!"__parse_function_param not implemented");
+            __status_ = not_yet_implemented;
         }
     }
     return first;
@@ -12536,6 +8088,72 @@ __demangle_tree::__parse_template_param(const char* first, const char* last)
     return first;
 }
 
+// extension:
+// <vector-type>           ::= Dv <positive dimension number> _
+//                                    <extended element type>
+//                         ::= Dv [<dimension expression>] _ <element type>
+// <extended element type> ::= <element type>
+//                         ::= p # AltiVec vector pixel
+
+const char*
+__demangle_tree::__parse_vector_type(const char* first, const char* last)
+{
+    if (last - first > 3 && first[0] == 'D' && first[1] == 'v')
+    {
+        if ('1' <= first[2] && first[2] <= '9')
+        {
+            const char* t = first+3;
+            while (*t != '_')
+            {
+                if (!isdigit(*t) || ++t == last)
+                    return first;
+            }
+            const char* num = first + 2;
+            size_t sz = t - num;
+            if (++t != last)
+            {
+                if (*t != 'p')
+                {
+                    const char* t1 = __parse_type(t, last);
+                    if (t1 != t)
+                    {
+                        if (__make<__vector_type>(__root_, num, sz))
+                            first = t1;
+                    }
+                }
+                else
+                {
+                    ++t;
+                    if (__make<__vector_type>((__node*)0, num, sz))
+                        first = t;
+                }
+            }
+        }
+        else
+        {
+            __node* num = 0;
+            const char* t1 = first+2;
+            if (*t1 != '_')
+            {
+                const char* t = __parse_expression(t1, last);
+                if (t != t1)
+                    num = __root_;
+                t1 = t;
+            }
+            if (t1 != last && *t1 == '_' && ++t1 != last)
+            {
+                const char* t = __parse_type(t1, last);
+                if (t != t1)
+                {
+                    if (__make<__vector_type>(__root_, num))
+                        first = t;
+                }
+            }
+        }
+    }
+    return first;
+}
+
 // <type> ::= <builtin-type>
 //        ::= <function-type>
 //        ::= <class-enum-type>
@@ -12553,6 +8171,7 @@ __demangle_tree::__parse_template_param(const char* first, const char* last)
 //        ::= G <type>        # imaginary (C 2000)
 //        ::= Dp <type>       # pack expansion (C++0x)
 //        ::= U <source-name> <type>  # vendor extended type qualifier
+// extension := <vector-type> # <vector-type> starts with Dv
 
 const char*
 __demangle_tree::__parse_type(const char* first, const char* last,
@@ -12829,6 +8448,20 @@ __demangle_tree::__parse_type(const char* first, const char* last,
                 case 't':
                 case 'T':
                     t = __parse_decltype(first, last);
+                    if (t != first)
+                    {
+                       if (__sub_end_ == __sub_cap_)
+                            __status_ = memory_alloc_failure;
+                        else
+                        {
+                            *__sub_end_++ = __root_;
+                            first = t;
+                        }
+                        return first;
+                    }
+                    break;
+                case 'v':
+                    t = __parse_vector_type(first, last);
                     if (t != first)
                     {
                        if (__sub_end_ == __sub_cap_)
@@ -14740,14 +10373,23 @@ __demangle_tree::__parse_template_args(const char* first, const char* last)
         __node* args = NULL;
         __node* prev = NULL;
         __node* name = __root_;
-        bool prev_tag_templates = __tag_templates_;
-        __tag_templates_ = false;
-        if (prev_tag_templates)
+        if (__tag_templates_)
             __t_end_ = __t_begin_;
         const char* t = first+1;
         while (*t != 'E')
         {
+            bool prev_tag_templates = __tag_templates_;
+            __node** prev_t_begin = __t_begin_;
+            __node** prev_t_end = __t_end_;
+            if (__tag_templates_)
+                __t_begin_ = __t_end_;
             const char* t2 = __parse_template_arg(t, last);
+            if (prev_tag_templates)
+            {
+                __tag_templates_ = prev_tag_templates;
+                __t_begin_ = prev_t_begin;
+                __t_end_ = prev_t_end;
+            }
             if (t2 == t || t2 == last)
                 break;
             if (!__make<__list>(__root_))
@@ -14760,7 +10402,7 @@ __demangle_tree::__parse_template_args(const char* first, const char* last)
                 __root_->__size_ = prev->__size_ + 1;
             }
             prev = __root_;
-            if (prev_tag_templates)
+            if (__tag_templates_)
             {
                 if (__t_end_ == __t_cap_)
                 {
@@ -14779,7 +10421,6 @@ __demangle_tree::__parse_template_args(const char* first, const char* last)
             if (__make<__template_args>(name, args))
                 first = t+1;
         }
-        __tag_templates_ = prev_tag_templates;
     }
     return first;
 }
@@ -14971,7 +10612,7 @@ __demangle_tree::__parse_encoding(const char* first, const char* last)
         if (t != last && *t != 'E' && *t != '.')
         {
             __node* name = __root_;
-            bool has_return = name->ends_with_template() &&
+            bool has_return = name->ends_with_template(true) &&
                              !name->is_ctor_dtor_conv();
             __node* ret = NULL;
             const char* t2;
