@@ -102,14 +102,17 @@
 @N = constant i64* getelementptr ({ i64, i64 }* null, i32 0, i32 1)
 @O = constant i64* getelementptr ([2 x i64]* null, i32 0, i32 1)
 
-; Fold GEP of a GEP. Theoretically some of these cases could be folded
-; without using targetdata, however that's not implemented yet.
+; Fold GEP of a GEP. Very simple cases are folded without targetdata.
 
+; PLAIN: @Y = global [3 x { i32, i32 }]* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 2)
 ; PLAIN: @Z = global i32* getelementptr inbounds (i32* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 0, i64 1, i32 0), i64 1)
+; OPT: @Y = global [3 x { i32, i32 }]* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 2)
 ; OPT: @Z = global i32* getelementptr (i32* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 0, i64 1, i32 0), i64 1)
+; TO: @Y = global [3 x { i32, i32 }]* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 2)
 ; TO: @Z = global i32* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 0, i64 1, i32 1)
 
 @ext = external global [3 x { i32, i32 }]
+@Y = global [3 x { i32, i32 }]* getelementptr inbounds ([3 x { i32, i32 }]* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 1), i64 1)
 @Z = global i32* getelementptr inbounds (i32* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 0, i64 1, i32 0), i64 1)
 
 ; Duplicate all of the above as function return values rather than
