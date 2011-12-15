@@ -48,9 +48,12 @@
 #include <fstream>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <cstdlib>
 
 #if LLVM_ON_WIN32
 #include <windows.h>
+#include <io.h>
+#include <fcntl.h>
 #endif
 #if LLVM_ON_UNIX
 #include <unistd.h>
