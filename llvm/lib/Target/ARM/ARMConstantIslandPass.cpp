@@ -53,7 +53,7 @@ AdjustJumpTableBlocks("arm-adjust-jump-tables", cl::Hidden, cl::init(true),
           cl::desc("Adjust basic block layout to better use TB[BH]"));
 
 static cl::opt<bool>
-AlignConstantIslands("arm-align-constant-islands", cl::Hidden,
+AlignConstantIslands("arm-align-constant-islands", cl::Hidden, cl::init(true),
           cl::desc("Align constant islands in code"));
 
 /// UnknownPadding - Return the worst case padding that could result from
