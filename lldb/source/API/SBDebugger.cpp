@@ -124,6 +124,12 @@ SBDebugger::Destroy (SBDebugger &debugger)
         debugger.m_opaque_sp.reset();
 }
 
+void
+SBDebugger::MemoryPressureDetected ()
+{
+    ModuleList::RemoveOrphanSharedModules();    
+}
+
 SBDebugger::SBDebugger () :
     m_opaque_sp ()
 {

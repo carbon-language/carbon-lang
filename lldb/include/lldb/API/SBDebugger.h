@@ -35,6 +35,9 @@ public:
     static void
     Destroy (lldb::SBDebugger &debugger);
 
+    static void
+    MemoryPressureDetected ();
+
     SBDebugger();
 
     SBDebugger(const lldb::SBDebugger &rhs);
