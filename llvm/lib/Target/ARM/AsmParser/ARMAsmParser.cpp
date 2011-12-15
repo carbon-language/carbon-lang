@@ -2832,7 +2832,7 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     return MatchOperand_ParseFail;
   }
   unsigned Count = 1;
-  unsigned Spacing = 0;
+  int Spacing = 0;
   unsigned FirstReg = Reg;
   // The list is of D registers, but we also allow Q regs and just interpret
   // them as the two D sub-registers.
