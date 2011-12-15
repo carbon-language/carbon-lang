@@ -1348,8 +1348,7 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
   ArrayRef<MCDwarfFrameInfo> FrameArray = Streamer.getFrameInfos();
 
   // Emit the compact unwind info if available.
-  // FIXME: Re-enable.
-  if (false && IsEH && MOFI->getCompactUnwindSection())
+  if (IsEH && MOFI->getCompactUnwindSection())
     for (unsigned i = 0, n = Streamer.getNumFrameInfos(); i < n; ++i) {
       const MCDwarfFrameInfo &Frame = Streamer.getFrameInfo(i);
       if (Frame.CompactUnwindEncoding)
