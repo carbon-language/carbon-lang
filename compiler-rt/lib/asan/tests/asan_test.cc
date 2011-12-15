@@ -1577,6 +1577,13 @@ TEST(AddressSanitizer, GlobalStringConstTest) {
   EXPECT_DEATH(Ident(p[15]), "is ascii string 'FOOBAR123'");
 }
 
+TEST(AddressSanitizer, FileNameInGlobalReportTest) {
+  static char zoo[10];
+  const char *p = Ident(zoo);
+  // The file name should be present in the report.
+  EXPECT_DEATH(Ident(p[15]), "zoo.*asan_test.cc");
+}
+
 int *ReturnsPointerToALocalObject() {
   int a = 0;
   return Ident(&a);

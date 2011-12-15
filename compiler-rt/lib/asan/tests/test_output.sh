@@ -38,8 +38,8 @@ for t in  *.tmpl; do
         actual_t="$t"
       fi
       ./$exe 2>&1 | $SYMBOLIZER 2> /dev/null | c++filt | ./match_output.py $actual_t
-      #rm ./$exe
-      #[ -e "$so" ] && rm ./$so
+      rm ./$exe
+      [ -e "$so" ] && rm ./$so
     done
   done
 done
