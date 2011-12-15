@@ -106,9 +106,9 @@
 
 ; PLAIN: @Y = global [3 x { i32, i32 }]* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 2)
 ; PLAIN: @Z = global i32* getelementptr inbounds (i32* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 0, i64 1, i32 0), i64 1)
-; OPT: @Y = global [3 x { i32, i32 }]* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 2)
+; OPT: @Y = global [3 x { i32, i32 }]* getelementptr ([3 x { i32, i32 }]* @ext, i64 2)
 ; OPT: @Z = global i32* getelementptr (i32* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 0, i64 1, i32 0), i64 1)
-; TO: @Y = global [3 x { i32, i32 }]* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 2)
+; TO: @Y = global [3 x { i32, i32 }]* getelementptr ([3 x { i32, i32 }]* @ext, i64 2)
 ; TO: @Z = global i32* getelementptr inbounds ([3 x { i32, i32 }]* @ext, i64 0, i64 1, i32 1)
 
 @ext = external global [3 x { i32, i32 }]
