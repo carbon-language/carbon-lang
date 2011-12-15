@@ -382,13 +382,17 @@ SourceManager::~SourceManager() {
   // content cache objects are bump pointer allocated, we just have to run the
   // dtors, but we call the deallocate method for completeness.
   for (unsigned i = 0, e = MemBufferInfos.size(); i != e; ++i) {
-    MemBufferInfos[i]->~ContentCache();
-    ContentCacheAlloc.Deallocate(MemBufferInfos[i]);
+    if (MemBufferInfos[i]) {
+      MemBufferInfos[i]->~ContentCache();
+      ContentCacheAlloc.Deallocate(MemBufferInfos[i]);
+    }
   }
   for (llvm::DenseMap<const FileEntry*, SrcMgr::ContentCache*>::iterator
        I = FileInfos.begin(), E = FileInfos.end(); I != E; ++I) {
-    I->second->~ContentCache();
-    ContentCacheAlloc.Deallocate(I->second);
+    if (I->second) {
+      I->second->~ContentCache();
+      ContentCacheAlloc.Deallocate(I->second);
+    }
   }
   
   delete FakeBufferForRecovery;
