@@ -34,7 +34,7 @@ ifneq ($(HAVE_PTHREAD), 1)
   CPP.Flags += -DGTEST_HAS_PTHREAD=0
 endif
 
-TESTLIBS = -lGoogleTest -lUnitTestMain
+TESTLIBS = -lgtest -lgtest_main
 
 ifeq ($(ENABLE_SHARED), 1)
   ifneq (,$(RPATH))

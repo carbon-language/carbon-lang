@@ -11,7 +11,7 @@ LEVEL := ../../..
 
 include $(LEVEL)/Makefile.config
 
-LIBRARYNAME = GoogleTest
+LIBRARYNAME = gtest
 BUILD_ARCHIVE = 1
 REQUIRES_RTTI = 1
 

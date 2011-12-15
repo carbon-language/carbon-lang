@@ -329,7 +329,7 @@ subdirectories = %s
             
             # Get the library name, or None for LibraryGroups.
             if c.type_name == 'Library':
-                library_name = c.get_library_name()
+                library_name = c.get_prefixed_library_name()
             else:
                 library_name = None
 
@@ -391,9 +391,7 @@ subdirectories = %s
             if library_name is None:
                 library_name_as_cstr = '0'
             else:
-                # If we had a project level component, we could derive the
-                # library prefix.
-                library_name_as_cstr = '"libLLVM%s.a"' % library_name
+                library_name_as_cstr = '"lib%s.a"' % library_name
             print >>f, '  { "%s", %s, { %s } },' % (
                 name, library_name_as_cstr,
                 ', '.join('"%s"' % dep
