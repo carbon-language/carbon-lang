@@ -73,6 +73,6 @@ void test_alloc_extension(char **sp, wchar_t **lsp) {
    * even when followed by an 's', 'S' or '[', which would cause it to be
    * parsed as a length modifier in C90. */
   scanf("%as", sp); // expected-warning{{conversion specifies type 'float *' but the argument has type 'char **'}}
-  scanf("%aS", lsp); // expected-warning{{conversion specifies type 'float *' but the argument has type 'wchar_t **' (aka 'int **')}}
+  scanf("%aS", lsp); // expected-warning{{conversion specifies type 'float *' but the argument has type 'wchar_t **'}}
   scanf("%a[bcd]", sp); // expected-warning{{conversion specifies type 'float *' but the argument has type 'char **'}}
 }
