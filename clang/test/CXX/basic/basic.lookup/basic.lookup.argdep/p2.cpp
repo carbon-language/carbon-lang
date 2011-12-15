@@ -46,7 +46,7 @@ namespace M {
   int g(N::X); // expected-note{{candidate function}}
 
   void test(N::X x) {
-    g(x); // expected-error{{call to 'g' is ambiguous; candidates are:}}
+    g(x); // expected-error{{call to 'g' is ambiguous}}
     int i = (g)(x);
 
     int g(N::X);

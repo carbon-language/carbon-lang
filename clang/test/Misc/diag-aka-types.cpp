@@ -27,7 +27,7 @@ namespace bar {
 }
 
 void test(Foo::foo* x) {
-  bar::f(x); // expected-error{{cannot initialize a parameter of type 'Foo::foo *' (aka 'bar::Foo::foo *') with an lvalue of type 'Foo::foo *')}}
+  bar::f(x); // expected-error{{cannot initialize a parameter of type 'Foo::foo *' (aka 'bar::Foo::foo *') with an lvalue of type 'Foo::foo *'}}
 }
 
 // PR9548 - "no known conversion from 'vector<string>' to 'vector<string>'"

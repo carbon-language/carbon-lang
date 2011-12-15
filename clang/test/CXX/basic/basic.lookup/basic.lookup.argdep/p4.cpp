@@ -44,7 +44,7 @@ namespace Test {
     A::A() + A::A();
     B::B() + B::B();
     C::C() + C::C();
-    D::D() + D::D(); // expected-error {{ invalid operands to binary expression ('D::D' and 'D::D') }}
+    D::D() + D::D(); // expected-error {{invalid operands to binary expression ('D::D' and 'D::D')}}
   }
 }
 

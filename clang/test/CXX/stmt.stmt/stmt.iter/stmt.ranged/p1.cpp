@@ -128,7 +128,7 @@ void g() {
     void *begin(); // expected-note {{selected 'begin' function with iterator type 'void *'}}
     void *end();
   };
-  for (auto u : NoIncr()) { // expected-error {{arithmetic on a pointer to void type}}
+  for (auto u : NoIncr()) { // expected-error {{arithmetic on a pointer to void}}
   }
 
   struct NoNotEq {

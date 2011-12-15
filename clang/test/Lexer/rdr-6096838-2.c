@@ -2,4 +2,4 @@
  rdar://6096838
  */
 
-long double d = 0x0.0000003ffffffff00000p-16357L; /* expected-warning {{ hexadecimal floating constants are a C99 feature }} */
+long double d = 0x0.0000003ffffffff00000p-16357L; /* expected-warning {{hexadecimal floating constants are a C99 feature}} */

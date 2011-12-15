@@ -25,7 +25,7 @@ extern id NSApp;
 
 - (void)startFSEventGathering:(id)sender
 {
-  fsEventStream = [NSApp delegate].fsEventStream; // expected-warning {{warning: instance method '-delegate' not found (return type defaults to 'id')}} \
+  fsEventStream = [NSApp delegate].fsEventStream; // expected-warning {{instance method '-delegate' not found (return type defaults to 'id')}} \
                                                   // expected-error {{property 'fsEventStream' not found on object of type 'id'}}
 
 }

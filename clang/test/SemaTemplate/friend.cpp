@@ -28,6 +28,6 @@ namespace PR6770 {
   template <class T>
   void f() {
     friend class f; // expected-error{{'friend' used outside of class}}
-    friend class f1; // expected-error{{ 'friend' used outside of class}}
+    friend class f1; // expected-error{{'friend' used outside of class}}
   }
 }

@@ -9,7 +9,7 @@ fizbin::Foobar *my_foo = new fizbin::FooBar; // expected-error{{unknown type nam
 namespace barstool { int toFoobar() { return 1; } } // expected-note 3 {{'barstool::toFoobar' declared here}}
 int Double(int x) { return x + x; }
 void empty() {
-  Double(toFoobar()); // expected-error{{{use of undeclared identifier 'toFoobar'; did you mean 'barstool::toFoobar'?}}
+  Double(toFoobar()); // expected-error{{use of undeclared identifier 'toFoobar'; did you mean 'barstool::toFoobar'?}}
 }
 
 namespace fizbin {
@@ -36,7 +36,7 @@ void Check() { // expected-note{{'Check' declared here}}
 }
 
 void Alt() {
-  Cleck(); // expected-error{{{use of undeclared identifier 'Cleck'; did you mean 'Check'?}}
+  Cleck(); // expected-error{{use of undeclared identifier 'Cleck'; did you mean 'Check'?}}
 }
 
 namespace N {

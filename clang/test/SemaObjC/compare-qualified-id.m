@@ -24,7 +24,7 @@ extern NSString * const NSTaskDidTerminateNotification;
 @end
 
 @implementation XCPropertyExpansionContext // expected-warning {{incomplete implementation}} \
-					   // expected-warning {{method in protocol not implemented [-Wprotocol]}}
+					   // expected-warning {{method in protocol not implemented}}
 - (NSString *)expandedValueForProperty:(NSString *)property {
   id <XCPropertyValues> cachedValueNode = [_propNamesToPropValuesCache objectForKey:property]; // expected-warning {{method '-objectForKey:' not found (return type defaults to 'id')}}
   if (cachedValueNode == ((void *)0)) { }

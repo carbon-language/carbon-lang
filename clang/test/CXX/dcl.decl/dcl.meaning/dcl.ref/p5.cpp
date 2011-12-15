@@ -12,7 +12,7 @@ typedef intref &intrefref;
 template <class T> class RefMem { // expected-warning{{class 'RefMem<int &>' does not declare any constructor to initialize its non-modifiable members}}
   T
     &
-      member; // expected-note{{ reference member 'member' will never be initialized}}
+      member; // expected-note{{reference member 'member' will never be initialized}}
 };
 
 struct RefRef {

@@ -21,7 +21,7 @@ __import_module__ macros;
 double d;
 DOUBLE *dp = &d;
 
-#__export_macro__ WIBBLE // expected-error{{no macro named 'WIBBLE' to export}}
+#__export_macro__ WIBBLE // expected-error{{no macro named 'WIBBLE'}}
 
 void f() {
   // CHECK-PREPROCESSED: int i = INTEGER;

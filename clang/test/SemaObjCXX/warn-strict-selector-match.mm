@@ -13,6 +13,6 @@
 void foo(void) {
   id r;
 
-  [r meth1:r];	// expected-warning {{multiple methods named 'meth1:' found [-Wstrict-selector-match]}}
-  [r window]; 	// expected-warning {{multiple methods named 'window' found [-Wstrict-selector-match]}}
+  [r meth1:r];	// expected-warning {{multiple methods named 'meth1:' found}}
+  [r window]; 	// expected-warning {{multiple methods named 'window' found}}
 }

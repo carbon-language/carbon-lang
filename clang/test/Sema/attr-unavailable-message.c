@@ -40,8 +40,8 @@ enum fee { // expected-note {{declaration has been explicitly marked unavailable
     t = 3
 }__attribute__((unavailable()));  
 
-enum fee f() { // expected-error {{error: 'fee' is unavailable}}
-    int i = a; // expected-warning {{'a' is deprecated }}
+enum fee f() { // expected-error {{'fee' is unavailable}}
+    int i = a; // expected-warning {{'a' is deprecated}}
 
     i = b; // expected-warning {{'b' is deprecated}}
 

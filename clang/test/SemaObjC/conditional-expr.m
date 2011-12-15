@@ -21,7 +21,7 @@
 @end
 
 @interface DTFilterOutputStream2
-- nextOutputStream; // expected-note {{{{method definition for 'nextOutputStream' not found}}
+- nextOutputStream; // expected-note {{method definition for 'nextOutputStream' not found}}
 @end
 
 @implementation DTFilterOutputStream2 // expected-warning {{incomplete implementation}}
@@ -100,7 +100,7 @@ void f8(int a, A<P0> *x, A *y) {
 }
 
 void f9(int a, A<P0> *x, A<P1> *y) {
-  id l0 = (a ? x : y ); // expected-warning {{incompatible operand types ('A<P0> *' and 'A<P1> *')'}}
+  id l0 = (a ? x : y ); // expected-warning {{incompatible operand types ('A<P0> *' and 'A<P1> *')}}
   A<P0> *l1 = (a ? x : y ); // expected-warning {{incompatible operand types ('A<P0> *' and 'A<P1> *')}}
   A<P1> *l2 = (a ? x : y ); // expected-warning {{incompatible operand types ('A<P0> *' and 'A<P1> *')}}
   [ (a ? x : y ) intProp ]; // expected-warning {{incompatible operand types ('A<P0> *' and 'A<P1> *')}}

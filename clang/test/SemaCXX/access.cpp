@@ -28,7 +28,7 @@ namespace test1 {
   private:
     class X; // expected-note {{previously declared 'private' here}}
   public:
-    class X; // expected-error {{ 'X' redeclared with 'public' access}}
+    class X; // expected-error {{'X' redeclared with 'public' access}}
     class X {};
   };
 }

@@ -20,7 +20,7 @@ namespace test1 {
 
   int f(bool b) {
     if (b)
-      goto foo; // expected-error {{illegal goto into protected scope}}
+      goto foo; // expected-error {{goto into protected scope}}
     C c; // expected-note {{jump bypasses variable initialization}}
   foo:
     return 1;

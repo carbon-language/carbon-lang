@@ -8,7 +8,7 @@ template<typename T> using Y = struct { // expected-error {{can not be defined i
 class K {
   virtual ~K();
   // FIXME: Diagnostic could use some work
-  operator struct S {} (); // expected-error{{ 'operator S' cannot be the name of a variable or data member}} \
+  operator struct S {} (); // expected-error{{'operator S' cannot be the name of a variable or data member}} \
   // expected-error{{expected ';' at end of declaration list}}
 };
 

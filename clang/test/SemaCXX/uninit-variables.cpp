@@ -27,7 +27,7 @@ void unevaluated_tests() {
 struct A { virtual ~A() {} };
 void polymorphic_test() {
   A *a; // expected-note{{initialize the variable 'a' to silence this warning}}
-  (void)typeid(*a); // expected-warning{{variable 'a' is uninitialized when used here }}
+  (void)typeid(*a); // expected-warning{{variable 'a' is uninitialized when used here}}
 }
 
 // Handle cases where the CFG may constant fold some branches, thus

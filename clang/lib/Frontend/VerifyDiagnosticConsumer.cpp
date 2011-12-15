@@ -119,8 +119,7 @@ public:
   }
 
   virtual bool Match(const std::string &S) {
-    return S.find(Text) != std::string::npos ||
-           Text.find(S) != std::string::npos;
+    return S.find(Text) != std::string::npos;
   }
 };
 

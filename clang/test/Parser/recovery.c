@@ -49,7 +49,7 @@ void test(int a) {
 char ((((                       /* expected-note {{to match this '('}} */
          *X x ] ))));                    /* expected-error {{expected ')'}} */
 
-;   // expected-warning {{ISO C does not allow an extra ';' outside of a function}}
+;   // expected-warning {{extra ';' outside of a function}}
 
 
 

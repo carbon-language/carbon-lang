@@ -17,7 +17,7 @@
 // Test2
 @interface super - PMeth; @end
 @interface J : super <P>
-- PMeth;	// expected-note {{ method definition for 'PMeth' not found}}
+- PMeth;	// expected-note {{method definition for 'PMeth' not found}}
 @end
 @implementation J @end	// expected-warning {{incomplete implementation}}
 

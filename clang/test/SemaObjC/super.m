@@ -21,7 +21,7 @@ void takevoidptr(void*);
 @implementation B
 
 - (void)instanceMethod {
-  [super iMethod]; // expected-warning{{'A' may not respond to 'iMethod')}}
+  [super iMethod]; // expected-warning{{'A' may not respond to 'iMethod'}}
   
   // Use of super in a block is ok and does codegen to the right thing.
   // rdar://7852959

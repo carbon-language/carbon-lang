@@ -80,7 +80,7 @@ struct HasReference {
 };
 int global_int;
 HasReference r1 = { 1, global_int };
-HasReference r2 = { 1 } ; // expected-error{{initialization leaves reference member of type 'int &' uninitialized}}
+HasReference r2 = { 1 } ; // expected-error{{reference member of type 'int &' uninitialized}}
 
 // C++ [dcl.init.aggr]p10
 // Note: the behavior here is identical to C

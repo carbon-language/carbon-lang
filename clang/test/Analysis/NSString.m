@@ -97,31 +97,31 @@ extern void *_NSConstantStringClassReference;
 
 NSComparisonResult f1(NSString* s) {
   NSString *aString = 0;
-  return [s compare:aString]; // expected-warning {{Argument to 'NSString' method 'compare:' cannot be nil.}}
+  return [s compare:aString]; // expected-warning {{Argument to 'NSString' method 'compare:' cannot be nil}}
 }
 
 NSComparisonResult f2(NSString* s) {
   NSString *aString = 0;
-  return [s caseInsensitiveCompare:aString]; // expected-warning {{Argument to 'NSString' method 'caseInsensitiveCompare:' cannot be nil.}}
+  return [s caseInsensitiveCompare:aString]; // expected-warning {{Argument to 'NSString' method 'caseInsensitiveCompare:' cannot be nil}}
 }
 
 NSComparisonResult f3(NSString* s, NSStringCompareOptions op) {
   NSString *aString = 0;
-  return [s compare:aString options:op]; // expected-warning {{Argument to 'NSString' method 'compare:options:' cannot be nil.}}
+  return [s compare:aString options:op]; // expected-warning {{Argument to 'NSString' method 'compare:options:' cannot be nil}}
 }
 
 NSComparisonResult f4(NSString* s, NSStringCompareOptions op, NSRange R) {
   NSString *aString = 0;
-  return [s compare:aString options:op range:R]; // expected-warning {{Argument to 'NSString' method 'compare:options:range:' cannot be nil.}}
+  return [s compare:aString options:op range:R]; // expected-warning {{Argument to 'NSString' method 'compare:options:range:' cannot be nil}}
 }
 
 NSComparisonResult f5(NSString* s, NSStringCompareOptions op, NSRange R) {
   NSString *aString = 0;
-  return [s compare:aString options:op range:R locale:0]; // expected-warning {{Argument to 'NSString' method 'compare:options:range:locale:' cannot be nil.}}
+  return [s compare:aString options:op range:R locale:0]; // expected-warning {{Argument to 'NSString' method 'compare:options:range:locale:' cannot be nil}}
 }
 
 NSArray *f6(NSString* s) {
-  return [s componentsSeparatedByCharactersInSet:0]; // expected-warning {{Argument to 'NSString' method 'componentsSeparatedByCharactersInSet:' cannot be nil.}}
+  return [s componentsSeparatedByCharactersInSet:0]; // expected-warning {{Argument to 'NSString' method 'componentsSeparatedByCharactersInSet:' cannot be nil}}
 }
 
 NSString* f7(NSString* s1, NSString* s2, NSString* s3) {
@@ -189,7 +189,7 @@ void f13(void) {
 @end
 
 void f14(MyString *s) {
-  [s compare:0]; // expected-warning {{Argument to 'MyString' method 'compare:' cannot be nil.}}
+  [s compare:0]; // expected-warning {{Argument to 'MyString' method 'compare:' cannot be nil}}
 }
 
 // Test regular use of -autorelease

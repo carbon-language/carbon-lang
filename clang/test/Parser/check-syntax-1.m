@@ -6,7 +6,7 @@ int @interface bla  ; // expected-error {{cannot combine with previous 'int' dec
 typedef float CGFloat;
 @interface XNSNumber 
 + (XNSNumber *) numberWithCGFloat  : (CGFloat) float; // expected-error {{expected identifier}}  \
-                                                      // expected-error {{ expected ';' after method prototype}}
+                                                      // expected-error {{expected ';' after method prototype}}
 @end
 
 // rdar: // 7822196

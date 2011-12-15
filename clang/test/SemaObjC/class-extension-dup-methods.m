@@ -1,9 +1,9 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 @interface Foo
-- (int)  garf; // expected-note {{ previous declaration is here}}
+- (int)  garf; // expected-note {{previous declaration is here}}
 - (int) OK;
-+ (int)  cgarf; // expected-note {{ previous declaration is here}}
++ (int)  cgarf; // expected-note {{previous declaration is here}}
 - (int)  InstMeth;
 @end
 

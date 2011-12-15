@@ -31,8 +31,8 @@ char *promote_or_convert(double _Complex) __attribute__((__overloadable__));  //
 int *promote_or_convert(long double _Complex) __attribute__((__overloadable__)); // expected-note 2 {{candidate function}} 
 
 void test_promote_or_convert(float f, float _Complex fc) {
-  char *cp = promote_or_convert(fc); // expected-error{{call to 'promote_or_convert' is ambiguous; candidates are:}}
-  int *ip2 = promote_or_convert(f); // expected-error{{call to 'promote_or_convert' is ambiguous; candidates are:}}
+  char *cp = promote_or_convert(fc); // expected-error{{call to 'promote_or_convert' is ambiguous}}
+  int *ip2 = promote_or_convert(f); // expected-error{{call to 'promote_or_convert' is ambiguous}}
 }
 
 char *promote_or_convert2(float) __attribute__((__overloadable__));

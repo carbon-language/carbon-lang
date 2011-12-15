@@ -173,7 +173,7 @@ void sls_fun_bad_2() {
 
 void sls_fun_bad_3() {
   sls_mu.Lock(); // \
-    // expected-warning{{mutex 'sls_mu' is still locked at the end of function 'sls_fun_bad_3'}}
+    // expected-warning{{mutex 'sls_mu' is still locked at the end of function}}
 }
 
 void sls_fun_bad_4() {
@@ -241,7 +241,7 @@ void sls_fun_bad_9() {
 
 void sls_fun_bad_10() {
   sls_mu.Lock(); // \
-    // expected-warning{{mutex 'sls_mu' is still locked at the end of function 'sls_fun_bad_10'}} \
+    // expected-warning{{mutex 'sls_mu' is still locked at the end of function}} \
     // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
   while(getBool()) {
     sls_mu.Unlock();
@@ -290,7 +290,7 @@ void aa_fun_bad_2() {
 
 void aa_fun_bad_3() {
   glock.globalLock(); // \
-    // expected-warning{{mutex 'aa_mu' is still locked at the end of function 'aa_fun_bad_3'}}
+    // expected-warning{{mutex 'aa_mu' is still locked at the end of function}}
 }
 
 //--------------------------------------------------//
@@ -303,19 +303,19 @@ Mutex wmu;
 class WeirdMethods {
   WeirdMethods() {
     wmu.Lock(); // \
-      // expected-warning {{mutex 'wmu' is still locked at the end of function 'WeirdMethods'}}
+      // expected-warning {{mutex 'wmu' is still locked at the end of function}}
   }
   ~WeirdMethods() {
     wmu.Lock(); // \
-      // expected-warning {{mutex 'wmu' is still locked at the end of function '~WeirdMethods'}}
+      // expected-warning {{mutex 'wmu' is still locked at the end of function}}
   }
   void operator++() {
     wmu.Lock(); // \
-      // expected-warning {{mutex 'wmu' is still locked at the end of function 'operator++'}}
+      // expected-warning {{mutex 'wmu' is still locked at the end of function}}
   }
   operator int*() {
     wmu.Lock(); // \
-      // expected-warning {{mutex 'wmu' is still locked at the end of function 'operator int *'}}
+      // expected-warning {{mutex 'wmu' is still locked at the end of function}}
     return 0;
   }
 };

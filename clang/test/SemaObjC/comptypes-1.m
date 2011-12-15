@@ -42,7 +42,7 @@ int main()
      MyProtocol), but not from an 'id' or from a 'MyOtherClass *'
      (which implements MyProtocol).  */
   obj_p = obj;    /* Ok */
-  obj_p = obj_c;  // expected-warning {{ assigning to 'id<MyProtocol>' from incompatible type 'MyClass *'}}
+  obj_p = obj_c;  // expected-warning {{assigning to 'id<MyProtocol>' from incompatible type 'MyClass *'}}
   obj_p = obj_cp; /* Ok  */
   obj_p = obj_C;  // expected-warning {{incompatible pointer types assigning to 'id<MyProtocol>' from 'Class'}}
 

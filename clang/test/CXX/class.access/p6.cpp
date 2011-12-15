@@ -150,7 +150,7 @@ namespace test6 {
   class B : A {
     public_inner a;
     protected_inner b;
-    private_inner c; // expected-error {{ 'private_inner' is a private member of 'test6::A'}}
+    private_inner c; // expected-error {{'private_inner' is a private member of 'test6::A'}}
   };
 }
 

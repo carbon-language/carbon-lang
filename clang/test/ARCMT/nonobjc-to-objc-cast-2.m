@@ -20,7 +20,7 @@ void f(BOOL b) {
 void f2(NSString *s) {
   CFStringRef ref;
   ref = [(CFStringRef)[s string] retain]; // expected-error {{cast of Objective-C pointer type 'id' to C pointer type 'CFStringRef' (aka 'const struct __CFString *') requires a bridged cast}} \
-    // expected-error {{ bad receiver type 'CFStringRef' (aka 'const struct __CFString *')}} \
+    // expected-error {{bad receiver type 'CFStringRef' (aka 'const struct __CFString *')}} \
     // expected-note{{use __bridge to convert directly (no change in ownership)}} \
     // expected-note{{use __bridge_retained to make an ARC object available as a +1 'CFStringRef' (aka 'const struct __CFString *')}}
 }

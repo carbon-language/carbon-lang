@@ -1,4 +1,4 @@
-// Note: inside the module. expected-note{{ 'nested_umbrella_a' declared here}}
+// Note: inside the module. expected-note{{'nested_umbrella_a' declared here}}
 
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -x objective-c -fmodule-cache-path %t -fauto-module-import -I %S/Inputs/normal-module-map %s -verify

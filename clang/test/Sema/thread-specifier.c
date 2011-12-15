@@ -15,7 +15,7 @@ int f(__thread int t7) { // expected-error {{'__thread' is only allowed on varia
   __thread register int t13; // expected-error {{'__thread' variables must have global storage}}
 }
 __thread typedef int t14; // expected-error {{'__thread' is only allowed on variable declarations}}
-__thread int t15; // expected-note {{[previous definition is here}}
+__thread int t15; // expected-note {{previous definition is here}}
 int t15; // expected-error {{non-thread-local declaration of 't15' follows thread-local declaration}}
-int t16; // expected-note {{[previous definition is here}}
+int t16; // expected-note {{previous definition is here}}
 __thread int t16; // expected-error {{thread-local declaration of 't16' follows non-thread-local declaration}}

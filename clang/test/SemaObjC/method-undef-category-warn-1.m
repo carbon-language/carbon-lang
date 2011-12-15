@@ -4,8 +4,8 @@
 @end
 
 @protocol P
-- (void) Pmeth;	  // expected-note {{method declared here }}
-- (void) Pmeth1;    // expected-note {{method declared here }}
+- (void) Pmeth;	  // expected-note {{method declared here}}
+- (void) Pmeth1;    // expected-note {{method declared here}}
 @end
 
 @interface MyClass1(CAT) <P> // expected-note {{required for direct or indirect protocol 'P'}}
@@ -13,7 +13,7 @@
 @end
 
 @implementation MyClass1(CAT) // expected-warning {{incomplete implementation}}  \
-				// expected-warning {{method in protocol not implemented [-Wprotocol]}}
+				// expected-warning {{method in protocol not implemented}}
 - (void) Pmeth1{}
 @end
 
@@ -22,7 +22,7 @@
 @end
 
 @implementation MyClass1(DOG) // expected-warning {{incomplete implementation}} \
-		// expected-warning {{method in protocol not implemented [-Wprotocol]}}
+		// expected-warning {{method in protocol not implemented}}
 - (void) Pmeth {}
 @end
 

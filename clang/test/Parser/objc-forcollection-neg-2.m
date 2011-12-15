@@ -30,7 +30,7 @@ typedef struct objc_object {
         for (id el in self) 
            ++i;
 	MyList<P> ***p;
-        for (p in self)  // expected-error {{selector element type 'MyList<P> ***' is not a valid object type}}
+        for (p in self)  // expected-error {{selector element type 'MyList<P> ***' is not a valid object}}
            ++i;
 
 }

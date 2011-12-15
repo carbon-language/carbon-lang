@@ -2,7 +2,7 @@
 
 void f()
 {
-  (void)typeid(int); // expected-error {{error: you need to include <typeinfo> before using the 'typeid' operator}}
+  (void)typeid(int); // expected-error {{you need to include <typeinfo> before using the 'typeid' operator}}
 }
 
 namespace std {

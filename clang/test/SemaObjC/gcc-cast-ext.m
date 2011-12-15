@@ -5,8 +5,8 @@ typedef struct _NSRange { } NSRange;
 @class PBXFileReference;
 
 @interface PBXDocBookmark
-+ alloc;	// expected-note {{{{method definition for 'alloc' not found}}
-- autorelease;	// expected-note {{{{method definition for 'autorelease' not found}}
++ alloc;	// expected-note {{method definition for 'alloc' not found}}
+- autorelease;	// expected-note {{method definition for 'autorelease' not found}}
 @end
 
 // GCC allows pointer expressions in integer constant expressions.

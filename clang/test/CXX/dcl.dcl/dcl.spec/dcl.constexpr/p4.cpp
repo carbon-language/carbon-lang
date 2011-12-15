@@ -37,14 +37,14 @@ struct S {
 
 // - the class shall not have any virtual base classes;
 struct T : virtual S { // expected-note {{here}}
-  constexpr T(); // expected-error {{constexpr constructor not allowed in struct with virtual base classes}}
+  constexpr T(); // expected-error {{constexpr constructor not allowed in struct with virtual base class}}
 };
 namespace IndirectVBase {
   struct A {};
   struct B : virtual A {}; // expected-note {{here}}
   class C : public B {
   public:
-    constexpr C(); // expected-error {{constexpr constructor not allowed in class with virtual base classes}}
+    constexpr C(); // expected-error {{constexpr constructor not allowed in class with virtual base class}}
   };
 }
 

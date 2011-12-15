@@ -31,7 +31,7 @@ void f2(id<P1> x) {
 }
 
 void f3(A *a) {
-  id<P1> l = a; // expected-warning {{ initializing 'id<P1>' with an expression of incompatible type 'A *'}}
+  id<P1> l = a; // expected-warning {{initializing 'id<P1>' with an expression of incompatible type 'A *'}}
 }
 
 void f4(int cond, id x, A *a) {

@@ -19,6 +19,6 @@
 @end
 
 @implementation MyClass // expected-warning {{incomplete implementation}}  \
-			// expected-warning {{method in protocol not implemented [-Wprotocol]}}
+			// expected-warning {{method in protocol not implemented}}
 - (void)Pmeth {}
 @end

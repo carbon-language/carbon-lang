@@ -30,7 +30,7 @@ template<typename T>
 T get_value_badly() {
   double *dp = 0;
   // The extension doesn't extend far enough to turn this error into a warning.
-  T *tp = dp; // expected-error{{ cannot initialize a variable of type 'int *' with an lvalue of type 'double *'}}
+  T *tp = dp; // expected-error{{cannot initialize a variable of type 'int *' with an lvalue of type 'double *'}}
   return T();
 }
 
@@ -54,7 +54,7 @@ void g5(const X5&);
 
 void test() {
   g1(X1());
-  g2(X2()); // expected-warning{{C++98 requires an accessible copy constructor for class 'X2' when binding a reference to a temporary; was private [-Wbind-to-temporary-copy]}}
+  g2(X2()); // expected-warning{{C++98 requires an accessible copy constructor for class 'X2' when binding a reference to a temporary; was private}}
   g3(X3()); // expected-warning{{no viable constructor copying parameter of type 'X3'}}
   g4(X4<int>());
   g5(X5());  // Generates a warning in the default argument.

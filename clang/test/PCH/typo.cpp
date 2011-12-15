@@ -1,8 +1,8 @@
 
-// In header: expected-note{{ 'boost::function' declared here}}
+// In header: expected-note{{'boost::function' declared here}}
 
 
-// In header: expected-note{{ 'boost::graph::adjacency_list' declared here}}
+// In header: expected-note{{'boost::graph::adjacency_list' declared here}}
 
 
 

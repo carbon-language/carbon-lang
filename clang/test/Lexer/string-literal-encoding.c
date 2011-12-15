@@ -5,11 +5,11 @@
 // U+00F5 U+00FC
 
 void f() {
-    wchar_t const *a = L"Àéîõü"; // expected-error {{ illegal sequence in string literal }}
+    wchar_t const *a = L"Àéîõü"; // expected-error {{illegal sequence in string literal}}
 
-    char16_t const *b = u"Àéîõü"; // expected-error {{ illegal sequence in string literal }}
-    char32_t const *c = U"Àéîõü"; // expected-error {{ illegal sequence in string literal }}
-    wchar_t const *d = LR"(Àéîõü)"; // expected-error {{ illegal sequence in string literal }}
-    char16_t const *e = uR"(Àéîõü)"; // expected-error {{ illegal sequence in string literal }}
-    char32_t const *f = UR"(Àéîõü)"; // expected-error {{ illegal sequence in string literal }}
+    char16_t const *b = u"Àéîõü"; // expected-error {{illegal sequence in string literal}}
+    char32_t const *c = U"Àéîõü"; // expected-error {{illegal sequence in string literal}}
+    wchar_t const *d = LR"(Àéîõü)"; // expected-error {{illegal sequence in string literal}}
+    char16_t const *e = uR"(Àéîõü)"; // expected-error {{illegal sequence in string literal}}
+    char32_t const *f = UR"(Àéîõü)"; // expected-error {{illegal sequence in string literal}}
 }

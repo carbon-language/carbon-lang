@@ -2,10 +2,10 @@
 // rdar://9615045
 
 @interface I
--  initWithFoo:(id)foo; // expected-warning {{method has no return type specified; defaults to 'id' [-Wmissing-method-return-type]}}
+-  initWithFoo:(id)foo; // expected-warning {{method has no return type specified; defaults to 'id'}}
 @end
 
 @implementation I
-- initWithFoo:(id)foo { return 0; } // expected-warning {{method has no return type specified; defaults to 'id' [-Wmissing-method-return-type]}}
+- initWithFoo:(id)foo { return 0; } // expected-warning {{method has no return type specified; defaults to 'id'}}
 @end
 

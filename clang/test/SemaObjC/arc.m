@@ -189,13 +189,13 @@ void test7_unsafe(void) {
 - (id) init50 { return 0; }
 
 - (void) init01 {} // expected-error {{method was declared as an 'init' method, but its implementation doesn't match because its result type is not an object pointer}} \
-                   // expected-warning{{ method is expected to return an instance of its class type 'Test8', but is declared to return 'void'}}
+                   // expected-warning{{method is expected to return an instance of its class type 'Test8', but is declared to return 'void'}}
 - (void) init11 {}
 - (void) init21 {} // expected-error {{method was declared as an 'init' method, but its implementation doesn't match because its result type is not an object pointer}}
 - (void) init31 {} // expected-error {{method was declared as an 'init' method, but its implementation doesn't match because its result type is not an object pointer}} \
-                   // expected-warning{{ method is expected to return an instance of its class type 'Test8', but is declared to return 'void'}}
+                   // expected-warning{{method is expected to return an instance of its class type 'Test8', but is declared to return 'void'}}
 - (void) init41 {} // expected-error {{method was declared as an 'init' method, but its implementation doesn't match because its result type is not an object pointer}} \
-                   // expected-warning{{ method is expected to return an instance of its class type 'Test8', but is declared to return 'void'}}
+                   // expected-warning{{method is expected to return an instance of its class type 'Test8', but is declared to return 'void'}}
 - (void) init51 {}
 
 - (Test8_incomplete*) init02 { return 0; } // expected-error {{init methods must return a type related to the receiver type}} \
@@ -403,7 +403,7 @@ struct Test19 *const test19b = 0;
 void test19(void) {
   id x;
   x = (id) test19a; // expected-error {{bridged cast}} \
-  // expected-note{{use __bridge to convert directly (no change in ownership))}} \
+  // expected-note{{use __bridge to convert directly (no change in ownership)}} \
   // expected-note{{use __bridge_transfer to transfer ownership of a +1 'struct Test19 *' into ARC}}
   x = (id) test19b; // expected-error {{bridged cast}} \
   // expected-note{{use __bridge to convert directly (no change in ownership)}} \

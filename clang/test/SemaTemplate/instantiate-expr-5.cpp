@@ -6,7 +6,7 @@ int y() { return x<int>(1); }
 namespace PR5880 {
   template<typename T>
   struct A { 
-    static const int a  = __builtin_offsetof(T, a.array[5].m); // expected-error{{error: no member named 'a' in 'HasM'}}
+    static const int a  = __builtin_offsetof(T, a.array[5].m); // expected-error{{no member named 'a' in 'HasM'}}
   };
   struct HasM {
     float m;

@@ -67,7 +67,7 @@ __vector double vv_d1;               // expected-error {{cannot use 'double' wit
 vector double v_d2;                  // expected-error {{cannot use 'double' with '__vector'}}
 __vector long double  vv_ld3;        // expected-warning {{Use of 'long' with '__vector' is deprecated}} expected-error {{cannot use 'double' with '__vector'}}
 vector long double  v_ld4;           // expected-warning {{Use of 'long' with '__vector' is deprecated}} expected-error {{cannot use 'double' with '__vector'}}
-vector bool v_b;                     // expected-error {{error: C++ requires a type specifier for all declarations}}
+vector bool v_b;                     // expected-error {{C++ requires a type specifier for all declarations}}
 vector bool float v_bf;              // expected-error {{cannot use 'float' with '__vector bool'}}
 vector bool double v_bd;             // expected-error {{cannot use 'double' with '__vector bool'}}
 vector bool pixel v_bp;              // expected-error {{cannot use '__pixel' with '__vector bool'}}

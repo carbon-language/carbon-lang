@@ -30,7 +30,7 @@ void test() {
   r1.top_left.x = 0;
 
   typedef struct Rectangle Rectangle; // expected-note{{'Rectangle' declared here}}
-  rectangle *r2 = &r1; // expected-error{{ unknown type name 'rectangle'; did you mean 'Rectangle'?}}
+  rectangle *r2 = &r1; // expected-error{{unknown type name 'rectangle'; did you mean 'Rectangle'?}}
   r2->top_left.y = 0;
   unsinged *ptr = 0; // expected-error{{use of undeclared identifier 'unsinged'; did you mean 'unsigned'?}}
   *ptr = 17;

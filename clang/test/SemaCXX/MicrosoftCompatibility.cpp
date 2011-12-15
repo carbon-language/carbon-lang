@@ -23,7 +23,7 @@ namespace ms_protected_scope {
 
   int jump_over_variable_init(bool b) {
     if (b)
-      goto foo; // expected-warning {{illegal goto into protected scope}}
+      goto foo; // expected-warning {{goto into protected scope}}
     C c; // expected-note {{jump bypasses variable initialization}}
   foo:
     return 1;
@@ -51,7 +51,7 @@ void jump_over_var_with_dtor() {
 
  
 void exception_jump() {
-  goto l2; // expected-error {{illegal goto into protected scope}}
+  goto l2; // expected-error {{goto into protected scope}}
   try { // expected-note {{jump bypasses initialization of try block}}
      l2: ;
   } catch(int) {

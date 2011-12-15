@@ -110,7 +110,7 @@ CFAbsoluteTime f4() {
   CFDateGetAbsoluteTime(date); // no-warning
   x.f = (NSDate*) date;  
   [((NSDate*) date) release];
-  t = CFDateGetAbsoluteTime(date);   // expected-warning{{Reference-counted object is used after it is released.}}
+  t = CFDateGetAbsoluteTime(date);   // expected-warning{{Reference-counted object is used after it is released}}
   return t;
 }
 

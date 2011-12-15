@@ -50,6 +50,6 @@ __attribute ((deprecated))
 @end
 
 void foo() {
-  [DEPRECATED new]; // expected-warning {{warning: 'DEPRECATED' is deprecated}}
+  [DEPRECATED new]; // expected-warning {{'DEPRECATED' is deprecated}}
 }
 

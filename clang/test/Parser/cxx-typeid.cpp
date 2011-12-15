@@ -9,5 +9,5 @@ void f()
 {
   (void)typeid(int);
   (void)typeid(0);
-  (void)typeid 1; // expected-error {{error: expected '(' after 'typeid'}}
+  (void)typeid 1; // expected-error {{expected '(' after 'typeid'}}
 }

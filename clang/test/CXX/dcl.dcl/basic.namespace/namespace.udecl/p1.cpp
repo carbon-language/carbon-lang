@@ -39,7 +39,7 @@ namespace Test0 {
       test<2> _1 = (foo)(a);
 
       class Test0::foo b;
-      test<2> _2 = (foo)(b); // expected-error {{no viable conversion from 'class Test0::foo' to 'class ::foo' is possible}}
+      test<2> _2 = (foo)(b); // expected-error {{no viable conversion from 'class Test0::foo' to 'class ::foo'}}
     }
   }
 }
@@ -76,7 +76,7 @@ namespace test2 {
 
   class B : private A {
   protected:
-    using A::operator int; // expected-note {{'declared protected here'}}
+    using A::operator int; // expected-note {{declared protected here}}
   public:
     using A::operator bool;
   };

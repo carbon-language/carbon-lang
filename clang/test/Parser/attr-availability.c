@@ -16,7 +16,7 @@ void f4() __attribute__((availability(macosx,introduced=10.5), availability(ios,
 
 void f5() __attribute__((availability(macosx,introduced=10.5), availability(ios,unavailable, unavailable))); // expected-error{{redundant 'unavailable' availability change; only the last specified change will be used}}
 
-void f6() __attribute__((availability(macosx,unavailable,introduced=10.5))); // expected-warning{{warning: 'unavailable' availability overrides all other availability information}}
+void f6() __attribute__((availability(macosx,unavailable,introduced=10.5))); // expected-warning{{'unavailable' availability overrides all other availability information}}
 
 // rdar://10095131
 enum E{

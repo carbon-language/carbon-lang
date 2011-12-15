@@ -36,7 +36,7 @@ void resolves_to_different() {
     Value v;
     // The fact that the next line is a warning rather than an error is an
     // extension.
-    v.set<double>(3.2);  // expected-warning{{lookup of 'set' in member access expression is ambiguous; using member of 'Value' [-Wambiguous-member-template]}}
+    v.set<double>(3.2);  // expected-warning{{lookup of 'set' in member access expression is ambiguous; using member of 'Value'}}
   }
   {
     int set;  // Non-template.

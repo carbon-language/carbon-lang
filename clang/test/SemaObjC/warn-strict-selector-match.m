@@ -8,7 +8,7 @@
 -(float) method;	// expected-note {{also found}}
 @end
 
-int main() { [(id)0 method]; } // expected-warning {{multiple methods named 'method' found [-Wstrict-selector-match]}}
+int main() { [(id)0 method]; } // expected-warning {{multiple methods named 'method' found}}
 
 @interface Object @end
 
@@ -24,7 +24,7 @@ id foo(void) {
   Object *obj = 0;
   id obj2 = obj;
   [obj setWindow:0]; 	// expected-warning {{Object' may not respond to 'setWindow:'}}
-  [obj2 setWindow:0]; // expected-warning {{multiple methods named 'setWindow:' found [-Wstrict-selector-match]}}
+  [obj2 setWindow:0]; // expected-warning {{multiple methods named 'setWindow:' found}}
   return obj;
 }
 
@@ -54,7 +54,7 @@ id foo(void) {
 }
 + (NTGridDataObject*)dataObject:(id<MyObject, MyCoding>)data
 {
-    NTGridDataObject *result = [(id)0 initWithData:data]; // expected-warning {{multiple methods named 'initWithData:' found [-Wstrict-selector-match]}} \
+    NTGridDataObject *result = [(id)0 initWithData:data]; // expected-warning {{multiple methods named 'initWithData:' found}} \
     expected-warning {{sending 'id<MyObject,MyCoding>' to parameter of incompatible type 'Object *'}}
     return result;
 }

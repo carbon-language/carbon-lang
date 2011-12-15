@@ -116,7 +116,7 @@ int main()
   { ptrdiff_t x = (ptrdiff_t) &twoT<int,int>;
   x = (ptrdiff_t) &twoT<int>; }
 
-  { oneT<int>;   &oneT<int>; } //expected-warning 2{{ expression result unused }}
+  { oneT<int>;   &oneT<int>; } //expected-warning 2{{expression result unused}}
   { static_cast<void>(cant_resolve<int>); } // expected-error {{address of overload}}
   { bool b = cant_resolve<int>; } // expected-error {{address of overload}}
   { (void) cant_resolve<int>; } // expected-error {{address of overload}}

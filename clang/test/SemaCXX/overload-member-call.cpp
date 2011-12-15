@@ -32,7 +32,7 @@ struct X {
 
   static void test_member_static() {
     double& d1 = g(0.0);
-    g(0); // expected-error{{call to 'g' is ambiguous; candidates are:}}
+    g(0); // expected-error{{call to 'g' is ambiguous}}
   }
 };
 
@@ -41,8 +41,8 @@ void test(X x, const X xc, X* xp, const X* xcp, volatile X xv, volatile X* xvp) 
   int& i2 = xcp->f(0);
   float& f1 = x.f(0);
   float& f2 = xp->f(0);
-  xv.f(0); // expected-error{{no matching member function for call to 'f'; candidates are:}}
-  xvp->f(0); // expected-error{{no matching member function for call to 'f'; candidates are:}}
+  xv.f(0); // expected-error{{no matching member function for call to 'f'}}
+  xvp->f(0); // expected-error{{no matching member function for call to 'f'}}
 
   int& i3 = xc.g(0);
   int& i4 = xcp->g(0);
@@ -50,7 +50,7 @@ void test(X x, const X xc, X* xp, const X* xcp, volatile X xv, volatile X* xvp) 
   float& f4 = xp->g(0);
   double& d1 = xp->g(0.0);
   double& d2 = X::g(0.0);
-  X::g(0); // expected-error{{call to 'g' is ambiguous; candidates are:}}
+  X::g(0); // expected-error{{call to 'g' is ambiguous}}
   
   X::h(0); // expected-error{{call to non-static member function without an object argument}}
 }

@@ -62,7 +62,7 @@ namespace Conversion {
     // 13.3.1.4p1 & 8.5p16:
     Y y2 = z; // expected-error {{no viable conversion from 'Conversion::Z' to 'Conversion::Y'}}
     // FIXME: These are well-formed per C++0x 13.3.1.4p1 (see DR899).
-    Y y3 = (Y)z; // expected-error {{no matching conversion for C-style cast from 'Conversion::Z' to 'Conversion::Y''}}
+    Y y3 = (Y)z; // expected-error {{no matching conversion for C-style cast from 'Conversion::Z' to 'Conversion::Y'}}
     Y y4 = Y(z); // expected-error {{no matching conversion for functional-style cast from 'Conversion::Z' to 'Conversion::Y'}}
     Y y5 = static_cast<Y>(z); // expected-error {{no matching conversion for static_cast from 'Conversion::Z' to 'Conversion::Y'}}
     // 13.3.1.5p1 & 8.5p16:

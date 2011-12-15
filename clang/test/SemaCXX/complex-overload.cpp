@@ -32,7 +32,7 @@ int *promote_or_convert(long double _Complex); // expected-note{{candidate funct
 
 void test_promote_or_convert(float f, float _Complex fc) {
   char *cp = promote_or_convert(fc);
-  int *ip2 = promote_or_convert(f); // expected-error{{call to 'promote_or_convert' is ambiguous; candidates are:}}
+  int *ip2 = promote_or_convert(f); // expected-error{{call to 'promote_or_convert' is ambiguous}}
 }
 
 char *promote_or_convert2(float);

@@ -8,10 +8,10 @@ void test_f(int iv, float fv) {
   int* ip = f(iv);
 }
 
-int* g(int, float, int); // expected-note {{ candidate function }}
-float* g(int, int, int); // expected-note {{ candidate function }}
-double* g(int, float, float); // expected-note {{ candidate function }}
-char* g(int, float, ...); // expected-note {{ candidate function }}
+int* g(int, float, int); // expected-note {{candidate function}}
+float* g(int, int, int); // expected-note {{candidate function}}
+double* g(int, float, float); // expected-note {{candidate function}}
+char* g(int, float, ...); // expected-note {{candidate function}}
 void g();
 
 void test_g(int iv, float fv) {
@@ -21,7 +21,7 @@ void test_g(int iv, float fv) {
   char* cp1 = g(0, 0);
   char* cp2 = g(0, 0, 0, iv, fv);
 
-  double* dp2 = g(0, fv, 1.5); // expected-error {{ call to 'g' is ambiguous; candidates are: }}
+  double* dp2 = g(0, fv, 1.5); // expected-error {{call to 'g' is ambiguous}}
 }
 
 double* h(double f);
@@ -126,9 +126,9 @@ void test_bitfield(Bits bits, int x) {
   float* fp = bitfields(bits.uint_bitfield, 0u);
 }
 
-int* multiparm(long, int, long); // expected-note {{ candidate function }}
-float* multiparm(int, int, int); // expected-note {{ candidate function }}
-double* multiparm(int, int, short); // expected-note {{ candidate function }}
+int* multiparm(long, int, long); // expected-note {{candidate function}}
+float* multiparm(int, int, int); // expected-note {{candidate function}}
+double* multiparm(int, int, short); // expected-note {{candidate function}}
 
 void test_multiparm(long lv, short sv, int iv) {
   int* ip1 = multiparm(lv, iv, lv);
@@ -137,7 +137,7 @@ void test_multiparm(long lv, short sv, int iv) {
   float* fp2 = multiparm(sv, iv, iv);
   double* dp1 = multiparm(sv, sv, sv);
   double* dp2 = multiparm(iv, sv, sv);
-  multiparm(sv, sv, lv); // expected-error {{ call to 'multiparm' is ambiguous; candidates are: }}
+  multiparm(sv, sv, lv); // expected-error {{call to 'multiparm' is ambiguous}}
 }
 
 // Test overloading based on qualification vs. no qualification
@@ -183,9 +183,9 @@ void test_quals_ranking(int * p, int volatile *pq, int * * pp, int * * * ppp) {
 
   float* q6 = quals_rank2(pp);
 
-  quals_rank3(ppp); // expected-error {{call to 'quals_rank3' is ambiguous; candidates are:}}
+  quals_rank3(ppp); // expected-error {{call to 'quals_rank3' is ambiguous}}
 
-  quals_rank3(p); // expected-error {{call to 'quals_rank3' is ambiguous; candidates are:}}
+  quals_rank3(p); // expected-error {{call to 'quals_rank3' is ambiguous}}
   quals_rank3(pq);
 }
 
@@ -266,8 +266,8 @@ float& cvqual_subsume2(const volatile Y&); // expected-note{{candidate function}
 Z get_Z();
 
 void cvqual_subsume_test(Z z) {
-  cvqual_subsume(z); // expected-error{{call to 'cvqual_subsume' is ambiguous; candidates are:}}
-  int& x = cvqual_subsume2(get_Z()); // expected-error{{call to 'cvqual_subsume2' is ambiguous; candidates are:}}
+  cvqual_subsume(z); // expected-error{{call to 'cvqual_subsume' is ambiguous}}
+  int& x = cvqual_subsume2(get_Z()); // expected-error{{call to 'cvqual_subsume2' is ambiguous}}
 }
 
 // Test overloading with cv-qualification differences in reference

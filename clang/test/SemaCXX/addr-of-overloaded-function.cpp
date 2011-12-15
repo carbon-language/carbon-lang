@@ -13,9 +13,9 @@ int (*pfe)(...) = &f;    // expected-error{{address of overloaded function 'f' d
 int (&rfi)(int) = f;     // selects f(int)
 int (&rfd)(double) = f;  // selects f(double)
 
-void g(int (*fp)(int));   // expected-note{{note: candidate function}}
+void g(int (*fp)(int));   // expected-note{{candidate function}}
 void g(int (*fp)(float));
-void g(int (*fp)(double)); // expected-note{{note: candidate function}}
+void g(int (*fp)(double)); // expected-note{{candidate function}}
 
 int g1(int);
 int g1(char);
@@ -29,7 +29,7 @@ int g3(char);
 
 void g_test() {
   g(g1);
-  g(g2); // expected-error{{call to 'g' is ambiguous; candidates are:}}
+  g(g2); // expected-error{{call to 'g' is ambiguous}}
   g(g3);
 }
 
@@ -98,8 +98,10 @@ namespace PR7971 {
 }
 
 namespace PR8033 {
-  template <typename T1, typename T2> int f(T1 *, const T2 *); // expected-note 2{{candidate function [with T1 = const int, T2 = int]}}
-  template <typename T1, typename T2> int f(const T1 *, T2 *); // expected-note 2{{candidate function [with T1 = int, T2 = const int]}}
+  template <typename T1, typename T2> int f(T1 *, const T2 *); // expected-note {{candidate function [with T1 = const int, T2 = int]}} \
+  // expected-note{{candidate function}}
+  template <typename T1, typename T2> int f(const T1 *, T2 *); // expected-note {{candidate function [with T1 = int, T2 = const int]}} \
+  // expected-note{{candidate function}}
   int (*p)(const int *, const int *) = f; // expected-error{{address of overloaded function 'f' is ambiguous}} \
   // expected-error{{address of overloaded function 'f' is ambiguous}}
 

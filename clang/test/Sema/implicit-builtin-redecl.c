@@ -6,7 +6,7 @@ static void* malloc(int size) {
   return ((void*)0); /*do not use heap in this file*/
 }
 
-void *calloc(int, int, int); // expected-warning{{incompatible redeclaration of library function 'calloc' will be ignored}} \
+void *calloc(int, int, int); // expected-warning{{incompatible redeclaration of library function 'calloc'}} \
 // expected-note{{'calloc' is a builtin with type 'void *}}
 
 void f1(void) { 

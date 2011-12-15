@@ -1,14 +1,14 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wc++11-compat %s 
 class C {
 public:
-  auto int errx; // expected-error {{error: storage class specified for a member declaration}} expected-warning {{'auto' storage class specifier is redundant}}
-  register int erry; // expected-error {{error: storage class specified for a member declaration}}
-  extern int errz; // expected-error {{error: storage class specified for a member declaration}}
+  auto int errx; // expected-error {{storage class specified for a member declaration}} expected-warning {{'auto' storage class specifier is redundant}}
+  register int erry; // expected-error {{storage class specified for a member declaration}}
+  extern int errz; // expected-error {{storage class specified for a member declaration}}
 
   static void sm() {
     sx = 0;
-    this->x = 0; // expected-error {{error: invalid use of 'this' outside of a nonstatic member function}}
-    x = 0; // expected-error {{error: invalid use of member 'x' in static member function}}
+    this->x = 0; // expected-error {{invalid use of 'this' outside of a nonstatic member function}}
+    x = 0; // expected-error {{invalid use of member 'x' in static member function}}
   }
 
   class NestedC {
@@ -46,7 +46,7 @@ public:
     sx = 0;
     this->x = 0;
     y = 0;
-    this = 0; // expected-error {{error: expression is not assignable}}
+    this = 0; // expected-error {{expression is not assignable}}
   }
 
   int f1(int p) {
@@ -57,7 +57,7 @@ public:
   typedef int A;
 
   virtual int viv; // expected-error {{'virtual' can only appear on non-static member functions}}
-  virtual static int vsif(); // expected-error {{error: 'virtual' can only appear on non-static member functions}}
+  virtual static int vsif(); // expected-error {{'virtual' can only appear on non-static member functions}}
   virtual int vif();
 
 private:
@@ -65,9 +65,9 @@ private:
   static int sx;
 
   mutable int mi;
-  mutable int &mir; // expected-error {{error: 'mutable' cannot be applied to references}}
-  mutable void mfn(); // expected-error {{error: 'mutable' cannot be applied to functions}}
-  mutable const int mci; // expected-error {{error: 'mutable' and 'const' cannot be mixed}}
+  mutable int &mir; // expected-error {{'mutable' cannot be applied to references}}
+  mutable void mfn(); // expected-error {{'mutable' cannot be applied to functions}}
+  mutable const int mci; // expected-error {{'mutable' and 'const' cannot be mixed}}
 
   static const int number = 50;
   static int arr[number];
@@ -98,11 +98,11 @@ void f()
 }
 
 // Play with mutable a bit more, to make sure it doesn't crash anything.
-mutable int gi; // expected-error {{error: 'mutable' can only be applied to member variables}}
+mutable int gi; // expected-error {{'mutable' can only be applied to member variables}}
 mutable void gfn(); // expected-error {{illegal storage class on function}}
 void ogfn()
 {
-  mutable int ml; // expected-error {{error: 'mutable' can only be applied to member variables}}
+  mutable int ml; // expected-error {{'mutable' can only be applied to member variables}}
 
   // PR3020: This used to crash due to double ownership of C4.
   struct C4;

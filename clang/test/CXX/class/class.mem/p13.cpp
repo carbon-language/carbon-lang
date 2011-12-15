@@ -17,7 +17,7 @@ struct X1 { // expected-note{{previous use is here}}
 };
 
 struct X2 {
-  typedef int X2; // expected-error{{member 'X2' has the same name as its class)}}
+  typedef int X2; // expected-error{{member 'X2' has the same name as its class}}
 };
 
 // - every enumerator of every member of class T that is an enumerated type; and

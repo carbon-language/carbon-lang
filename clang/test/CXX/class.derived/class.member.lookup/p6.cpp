@@ -29,7 +29,7 @@ void D::glorp() {
   x++;
   f();
   y++; // expected-error{{member 'y' found in multiple base classes of different types}}
-  g(); // expected-error{{error: member 'g' found in multiple base classes of different types}}
+  g(); // expected-error{{member 'g' found in multiple base classes of different types}}
 }
 
 // PR6462

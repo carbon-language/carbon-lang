@@ -29,7 +29,7 @@
 @end
 
 @implementation INTF   // expected-warning {{incomplete implementation}} \
-                       // expected-warning 9 {{method in protocol not implemented [-Wprotocol}}
+                       // expected-warning 9 {{method in protocol not implemented}}
 - (void) DefP1proto{}
 
 + (void) DefClsP3Proto{}

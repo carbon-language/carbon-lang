@@ -8,6 +8,6 @@
 @property int P3; // expected-note {{property declared here}}
 @end
 
-@implementation Super // expected-warning {{property is assumed atomic when auto-synthesizing the property [-Wimplicit-atomic-properties]}}
-@synthesize P,P1,P2; // expected-warning {{property is assumed atomic by default [-Wimplicit-atomic-properties]}}
+@implementation Super // expected-warning {{property is assumed atomic when auto-synthesizing the property}}
+@synthesize P,P1,P2; // expected-warning {{property is assumed atomic by default}}
 @end
