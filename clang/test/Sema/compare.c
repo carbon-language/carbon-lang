@@ -327,3 +327,9 @@ void test10(void) {
   b = (si == (ui = sl)); // expected-warning {{comparison of integers of different signs: 'int' and 'unsigned int'}}
   b = (si == (ui = sl&15));
 }
+
+// PR11572
+struct test11S { unsigned x : 30; };
+int test11(unsigned y, struct test11S *p) {
+  return y > (p->x >> 24); // no-warning
+}
