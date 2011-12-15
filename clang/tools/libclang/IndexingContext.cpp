@@ -34,6 +34,9 @@ IndexingContext::ObjCProtocolListInfo::ObjCProtocolListInfo(
                                 MakeCursorObjCProtocolRef(PD, Loc, IdxCtx.CXTU),
                                 IdxCtx.getIndexLoc(Loc) };
     ProtInfos.push_back(ProtInfo);
+
+    if (IdxCtx.suppressRefs())
+      IdxCtx.markEntityOccurrenceInFile(PD, Loc);
   }
 
   for (unsigned i = 0, e = ProtInfos.size(); i != e; ++i)
@@ -328,6 +331,9 @@ bool IndexingContext::handleObjCInterface(const ObjCInterfaceDecl *D) {
     BaseClass.base = &BaseEntity;
     BaseClass.cursor = MakeCursorObjCSuperClassRef(SuperD, SuperLoc, CXTU);
     BaseClass.loc = getIndexLoc(SuperLoc);
+
+    if (suppressRefs())
+      markEntityOccurrenceInFile(SuperD, SuperLoc);
   }
   
   ObjCProtocolListInfo ProtInfo(D->getReferencedProtocols(), *this, SA);
