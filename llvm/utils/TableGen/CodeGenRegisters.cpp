@@ -756,6 +756,43 @@ void CodeGenRegBank::computeDerivedInfo() {
   computeComposites();
 }
 
+//
+// Synthesize missing register class intersections.
+//
+// Make sure that sub-classes of RC exists such that getCommonSubClass(RC, X)
+// returns a maximal register class for all X.
+//
+void CodeGenRegBank::inferCommonSubClass(CodeGenRegisterClass *RC) {
+  for (unsigned rci = 0, rce = RegClasses.size(); rci != rce; ++rci) {
+    CodeGenRegisterClass *RC1 = RC;
+    CodeGenRegisterClass *RC2 = RegClasses[rci];
+    if (RC1 == RC2)
+      continue;
+
+    // Compute the set intersection of RC1 and RC2.
+    const CodeGenRegister::Set &Memb1 = RC1->getMembers();
+    const CodeGenRegister::Set &Memb2 = RC2->getMembers();
+    CodeGenRegister::Set Intersection;
+    std::set_intersection(Memb1.begin(), Memb1.end(),
+                          Memb2.begin(), Memb2.end(),
+                          std::inserter(Intersection, Intersection.begin()));
+
+    // Skip disjoint class pairs.
+    if (Intersection.empty())
+      continue;
+
+    // If RC1 and RC2 have different spill sizes or alignments, use the
+    // larger size for sub-classing.  If they are equal, prefer RC1.
+    if (RC2->SpillSize > RC1->SpillSize ||
+        (RC2->SpillSize == RC1->SpillSize &&
+         RC2->SpillAlignment > RC1->SpillAlignment))
+      std::swap(RC1, RC2);
+
+    getOrCreateSubClass(RC1, &Intersection,
+                        RC1->getName() + "_and_" + RC2->getName());
+  }
+}
+
 // Infer missing register classes.
 //
 // For every register class RC, make sure that the set of registers in RC with
@@ -801,6 +838,9 @@ void CodeGenRegBank::computeInferredRegisterClasses() {
                             RC.getName() + "_with_" + I->first->getName());
       RC.setSubClassWithSubReg(SubIdx, SubRC);
     }
+
+    // Synthesize answers for getCommonSubClass().
+    inferCommonSubClass(&RC);
   }
 }
 
