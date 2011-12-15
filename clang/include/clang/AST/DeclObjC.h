@@ -576,8 +576,14 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
     /// completed by the external AST source when required.
     mutable bool ExternallyCompleted : 1;
 
-    SourceLocation SuperClassLoc; // location of the super class identifier.
+    /// \brief The location of the superclass, if any.
+    SourceLocation SuperClassLoc;
     
+    /// \brief The location of the last location in this declaration, before
+    /// the properties/methods. For example, this will be the '>', '}', or 
+    /// identifier, 
+    SourceLocation EndLoc; 
+
     DefinitionData() : Definition(), SuperClass(), CategoryList(), IvarList(), 
                        ExternallyCompleted() { }
   };
@@ -590,11 +596,6 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
   /// \brief Contains a pointer to the data associated with this class,
   /// which will be NULL if this class has not yet been defined.
   DefinitionData *Data;
-
-  /// \brief The location of the last location in this declaration, e.g.,
-  /// the '>', '}', or identifier.
-  /// FIXME: This seems like the wrong location to care about.
-  SourceLocation EndLoc; 
 
   DefinitionData &data() const {
     assert(Data != 0 && "Declaration has no definition!");
@@ -874,10 +875,14 @@ public:
   // Lookup a method in the classes implementation hierarchy.
   ObjCMethodDecl *lookupPrivateMethod(const Selector &Sel, bool Instance=true);
 
-  // Location information, modeled after the Stmt API.
-  SourceLocation getLocStart() const { return getAtStartLoc(); } // '@'interface
-  SourceLocation getLocEnd() const { return EndLoc; }
-  void setLocEnd(SourceLocation LE) { EndLoc = LE; }
+  SourceLocation getEndOfDefinitionLoc() const { 
+    if (!hasDefinition())
+      return getLocation();
+    
+    return data().EndLoc; 
+  }
+                          
+  void setEndOfDefinitionLoc(SourceLocation LE) { data().EndLoc = LE; }
 
   void setSuperClassLoc(SourceLocation Loc) { data().SuperClassLoc = Loc; }
   SourceLocation getSuperClassLoc() const { return data().SuperClassLoc; }

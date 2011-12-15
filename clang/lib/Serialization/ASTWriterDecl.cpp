@@ -460,7 +460,8 @@ void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
     
     Writer.AddDeclRef(D->getSuperClass(), Record);
     Writer.AddSourceLocation(D->getSuperClassLoc(), Record);
-    
+    Writer.AddSourceLocation(D->getEndOfDefinitionLoc(), Record);
+
     // Write out the protocols that are directly referenced by the @interface.
     Record.push_back(Data.ReferencedProtocols.size());
     for (ObjCInterfaceDecl::protocol_iterator P = D->protocol_begin(),
@@ -489,7 +490,6 @@ void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
     Writer.AddDeclRef(D->getCategoryList(), Record);
   }  
   
-  Writer.AddSourceLocation(D->getLocEnd(), Record);
   Code = serialization::DECL_OBJC_INTERFACE;
 }
 

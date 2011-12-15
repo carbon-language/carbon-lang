@@ -569,6 +569,8 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
     Data.SuperClass = ReadDeclAs<ObjCInterfaceDecl>(Record, Idx);
     Data.SuperClassLoc = ReadSourceLocation(Record, Idx);
 
+    Data.EndLoc = ReadSourceLocation(Record, Idx);
+    
     // Read the directly referenced protocols and their SourceLocations.
     unsigned NumProtocols = Record[Idx++];
     SmallVector<ObjCProtocolDecl *, 16> Protocols;
@@ -628,8 +630,6 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
       }
     }
   }
-  
-  ID->setLocEnd(ReadSourceLocation(Record, Idx));
 }
 
 void ASTDeclReader::VisitObjCIvarDecl(ObjCIvarDecl *IVD) {
