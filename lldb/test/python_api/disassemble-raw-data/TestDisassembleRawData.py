@@ -10,7 +10,7 @@ from lldbtest import *
 
 class DisassembleRawDataTestCase(TestBase):
 
-    mydir = os.path.join("api", "disassemble-raw-data")
+    mydir = os.path.join("python_api", "disassemble-raw-data")
 
     @python_api_test
     def test_disassemble_raw_data(self):
@@ -32,6 +32,11 @@ class DisassembleRawDataTestCase(TestBase):
 
         self.assertTrue (inst.GetMnemonic(target) == "movq")
         self.assertTrue (inst.GetOperands(target) == '%' + "rsp, " + '%' + "rbp")
+
+        if self.TraceOn():
+            print
+            print "Raw bytes:   ", [hex(x) for x in raw_bytes]
+            print "Disassembled:", inst
  
 if __name__ == '__main__':
     import atexit
