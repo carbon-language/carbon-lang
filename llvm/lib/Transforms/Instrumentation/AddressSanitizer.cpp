@@ -521,7 +521,11 @@ bool AddressSanitizer::insertGlobalRedzones(Module &M) {
         NewTy, G->getInitializer(),
         Constant::getNullValue(RightRedZoneTy), NULL);
 
-    GlobalVariable *Name = createPrivateGlobalForString(M, G->getName());
+    SmallString<2048> DescriptionOfGlobal = G->getName();
+    DescriptionOfGlobal += " (";
+    DescriptionOfGlobal += M.getModuleIdentifier();
+    DescriptionOfGlobal += ")";
+    GlobalVariable *Name = createPrivateGlobalForString(M, DescriptionOfGlobal);
 
     // Create a new global variable with enough space for a redzone.
     GlobalVariable *NewGlobal = new GlobalVariable(
