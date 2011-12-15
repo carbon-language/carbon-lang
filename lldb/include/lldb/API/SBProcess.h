@@ -155,6 +155,15 @@ public:
     size_t
     WriteMemory (addr_t addr, const void *buf, size_t size, lldb::SBError &error);
 
+    size_t
+    ReadCStringFromMemory (addr_t addr, void *buf, size_t size, lldb::SBError &error);
+
+    uint64_t
+    ReadUnsignedFromMemory (addr_t addr, uint32_t byte_size, lldb::SBError &error);
+
+    lldb::addr_t
+    ReadPointerFromMemory (addr_t addr, lldb::SBError &error);
+
     // Events
     static lldb::StateType
     GetStateFromEvent (const lldb::SBEvent &event);

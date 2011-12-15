@@ -1856,11 +1856,12 @@ Process::ReadMemory (addr_t addr, void *buf, size_t size, Error &error)
 
 
 size_t
-Process::ReadCStringFromMemory (addr_t addr, char *dst, size_t dst_max_len)
+Process::ReadCStringFromMemory (addr_t addr, char *dst, size_t dst_max_len, Error &result_error)
 {
     size_t total_cstr_len = 0;
     if (dst && dst_max_len)
     {
+        result_error.Clear();
         // NULL out everything just to be safe
         memset (dst, 0, dst_max_len);
         Error error;
@@ -1877,6 +1878,7 @@ Process::ReadCStringFromMemory (addr_t addr, char *dst, size_t dst_max_len)
             
             if (bytes_read == 0)
             {
+                result_error = error;
                 dst[total_cstr_len] = '\0';
                 break;
             }
@@ -1891,6 +1893,13 @@ Process::ReadCStringFromMemory (addr_t addr, char *dst, size_t dst_max_len)
             curr_addr += bytes_read;
             bytes_left -= bytes_read;
         }
+    }
+    else
+    {
+        if (dst == NULL)
+            result_error.SetErrorString("invalid arguments");
+        else
+            result_error.Clear();
     }
     return total_cstr_len;
 }

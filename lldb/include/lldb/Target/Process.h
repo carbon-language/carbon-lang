@@ -2373,7 +2373,8 @@ public:
     size_t
     ReadCStringFromMemory (lldb::addr_t vm_addr, 
                            char *cstr, 
-                           size_t cstr_max_len);
+                           size_t cstr_max_len,
+                           Error &error);
 
     size_t
     ReadMemoryFromInferior (lldb::addr_t vm_addr, 

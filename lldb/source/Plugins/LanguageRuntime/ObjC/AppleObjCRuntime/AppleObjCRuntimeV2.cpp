@@ -220,10 +220,11 @@ AppleObjCRuntimeV2::RunFunctionToFindClassName(addr_t object_addr, Thread *threa
     }
     
     addr_t result_ptr = void_ptr_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
-    size_t chars_read = m_process->ReadCStringFromMemory (result_ptr, name_dst, max_name_len);
+    Error error;
+    size_t chars_read = m_process->ReadCStringFromMemory (result_ptr, name_dst, max_name_len, error);
     
     // If we exhausted our buffer before finding a NULL we're probably off in the weeds somewhere...
-    if (chars_read == max_name_len)
+    if (error.Fail() || chars_read == max_name_len)
         return false;
     else
         return true;
@@ -686,8 +687,8 @@ AppleObjCRuntimeV2::GetActualTypeName(ObjCLanguageRuntime::ObjCISA isa)
         return g_unknown;
     
     //printf("name_pointer: %llx\n", name_pointer);
-    char* cstr = new char[512];
-    if (m_process->ReadCStringFromMemory(name_pointer, cstr, 512) > 0)
+    char cstr[512];
+    if (m_process->ReadCStringFromMemory(name_pointer, cstr, sizeof(cstr), error) > 0)
     {
         if (::strstr(cstr, "NSKVONotify") == cstr)
         {

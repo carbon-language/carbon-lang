@@ -918,10 +918,13 @@ DynamicLoaderMacOSXDYLD::ReadImageInfos (lldb::addr_t image_infos_addr,
             image_infos[i].mod_date = info_data_ref.GetPointer(&info_data_offset);
 
             char raw_path[PATH_MAX];
-            m_process->ReadCStringFromMemory (path_addr, raw_path, sizeof(raw_path));
+            m_process->ReadCStringFromMemory (path_addr, raw_path, sizeof(raw_path), error);
             // don't resolve the path
-            const bool resolve_path = false;
-            image_infos[i].file_spec.SetFile(raw_path, resolve_path);
+            if (error.Success())
+            {
+                const bool resolve_path = false;
+                image_infos[i].file_spec.SetFile(raw_path, resolve_path);
+            }
         }
         return true;
     }

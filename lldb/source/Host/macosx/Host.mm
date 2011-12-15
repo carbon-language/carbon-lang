@@ -657,7 +657,7 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
     if (log)
         log->Printf("Sending source file: \"%s\" and line: %d to external editor.\n", file_path, line_no);
     
-    OSStatus error;	
+    long error;	
     BabelAESelInfo file_and_line_info = 
     {
         0,              // reserved0
@@ -678,7 +678,7 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
     if (error != noErr)
     {
         if (log)
-            log->Printf("Error creating AEDesc: %d.\n", error);
+            log->Printf("Error creating AEDesc: %ld.\n", error);
         return false;
     }
     
@@ -713,7 +713,7 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
             if (error != noErr)
             {
                 if (log)
-                    log->Printf("Could not find External Editor application, error: %d.\n", error);
+                    log->Printf("Could not find External Editor application, error: %ld.\n", error);
                 return false;
             }
                 
@@ -735,7 +735,7 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
     if (error != noErr)
     {
         if (log)
-            log->Printf("LSOpenURLsWithRole failed, error: %d.\n", error);
+            log->Printf("LSOpenURLsWithRole failed, error: %ld.\n", error);
 
         return false;
     }
@@ -750,7 +750,7 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
     if (error != noErr)
     {
         if (log)
-            log->Printf("GetProcessInformation failed, error: %d.\n", error);
+            log->Printf("GetProcessInformation failed, error: %ld.\n", error);
         using_xcode = false;
     }
     else
@@ -807,7 +807,7 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
         if (error != noErr)
         {
             if (log)
-                log->Printf("Failed to create AEDesc for Xcode AppleEvent: %d.\n", error);
+                log->Printf("Failed to create AEDesc for Xcode AppleEvent: %ld.\n", error);
             return false;
         }
             
@@ -825,7 +825,7 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
         if (error != noErr)
         {
             if (log)
-                log->Printf("Sending AppleEvent to Xcode failed, error: %d.\n", error);
+                log->Printf("Sending AppleEvent to Xcode failed, error: %ld.\n", error);
             return false;
         }
     }
