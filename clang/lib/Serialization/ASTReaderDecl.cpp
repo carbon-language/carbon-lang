@@ -613,15 +613,15 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
       for (ASTReader::ForwardRefs::iterator I = Refs.begin(), 
                                             E = Refs.end(); 
            I != E; ++I)
-        cast<ObjCInterfaceDecl>(*I)->Definition = ID->Definition;
+        cast<ObjCInterfaceDecl>(*I)->Data = ID->Data;
 #ifndef NDEBUG
       // We later check whether PendingForwardRefs is empty to make sure all
       // pending references were linked.
       Reader.PendingForwardRefs.erase(ID);
 #endif
     } else if (Def) {
-      if (Def->Definition.getPointer()) {
-        ID->Definition.setPointer(Def->Definition.getPointer());
+      if (Def->Data) {
+        ID->Data = Def->Data;
       } else {
         // The definition is still initializing.
         Reader.PendingForwardRefs[Def].push_back(ID);
@@ -2072,8 +2072,8 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
       ObjCInterfaceDecl *ID = cast<ObjCInterfaceDecl>(D);
       ObjCInterfaceDecl *Def
         = Reader.ReadDeclAs<ObjCInterfaceDecl>(ModuleFile, Record, Idx);
-      if (Def->Definition.getPointer()) {
-        ID->Definition.setPointer(Def->Definition.getPointer());
+      if (Def->Data) {
+        ID->Data = Def->Data;
       } else {
         // The definition is still initializing.
         Reader.PendingForwardRefs[Def].push_back(ID);

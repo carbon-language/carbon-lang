@@ -548,6 +548,10 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
   friend class ASTContext;
   
   struct DefinitionData {
+    /// \brief The definition of this class, for quick access from any 
+    /// declaration.
+    ObjCInterfaceDecl *Definition;
+    
     /// Class's super class.
     ObjCInterfaceDecl *SuperClass;
 
@@ -574,7 +578,7 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
 
     SourceLocation SuperClassLoc; // location of the super class identifier.
     
-    DefinitionData() : SuperClass(), CategoryList(), IvarList(), 
+    DefinitionData() : Definition(), SuperClass(), CategoryList(), IvarList(), 
                        ExternallyCompleted() { }
   };
 
@@ -585,10 +589,7 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
 
   /// \brief Contains a pointer to the data associated with this class,
   /// which will be NULL if this class has not yet been defined.
-  ///
-  /// The boolean value indicates whether this particular declaration is 
-  /// also the definition.
-  llvm::PointerIntPair<DefinitionData *, 1, bool> Definition;
+  DefinitionData *Data;
 
   /// \brief The location of the last location in this declaration, e.g.,
   /// the '>', '}', or identifier.
@@ -602,8 +603,8 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
   bool InitiallyForwardDecl : 1;
 
   DefinitionData &data() const {
-    assert(Definition.getPointer() != 0 && "Declaration is not a definition!");
-    return *Definition.getPointer();
+    assert(Data != 0 && "Declaration has no definition!");
+    return *Data;
   }
 
   /// \brief Allocate the definition data for this class.
@@ -778,29 +779,30 @@ public:
     return InitiallyForwardDecl; 
   }
 
-  /// \brief Determine whether this declaration is a forward declaration of
-  /// the class.
-  bool isForwardDecl() const { return !Definition.getInt(); }
-
+  /// \brief Determine whether this class has only ever been forward-declared.
+  bool isForwardDecl() const { return Data == 0; }
+                          
   /// \brief Determine whether this particular declaration of this class is
   /// actually also a definition.
-  bool isThisDeclarationADefinition() const { return Definition.getInt(); }
+  bool isThisDeclarationADefinition() const { 
+    return Data == 0 || Data->Definition != this;
+  }
                           
   /// \brief Determine whether this class has been defined.
-  bool hasDefinition() const { return Definition.getPointer() != 0; }
+  bool hasDefinition() const { return Data; }
                         
   /// \brief Retrieve the definition of this class, or NULL if this class 
   /// has been forward-declared (with @class) but not yet defined (with 
   /// @interface).
   ObjCInterfaceDecl *getDefinition() {
-    return hasDefinition()? this : 0;
+    return hasDefinition()? Data->Definition : 0;
   }
 
   /// \brief Retrieve the definition of this class, or NULL if this class 
   /// has been forward-declared (with @class) but not yet defined (with 
   /// @interface).
   const ObjCInterfaceDecl *getDefinition() const {
-    return hasDefinition()? this : 0;
+    return hasDefinition()? Data->Definition : 0;
   }
 
   /// \brief Starts the definition of this Objective-C class, taking it from

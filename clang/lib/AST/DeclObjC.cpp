@@ -224,14 +224,14 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
 
 void ObjCInterfaceDecl::allocateDefinitionData() {
   assert(!hasDefinition() && "ObjC class already has a definition");
-  Definition.setPointer(new (getASTContext()) DefinitionData());
-  Definition.setInt(true);
+  Data = new (getASTContext()) DefinitionData();
+  Data->Definition = this;
   
   // Update all of the declarations with a pointer to the definition.
   for (redecl_iterator RD = redecls_begin(), RDEnd = redecls_end();
        RD != RDEnd; ++RD) {
     if (*RD != this)
-      RD->Definition.setPointer(Definition.getPointer());
+      RD->Data = Data;
   }
 }
 
@@ -684,7 +684,7 @@ ObjCInterfaceDecl::
 ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
                   SourceLocation CLoc, bool FD, bool isInternal)
   : ObjCContainerDecl(ObjCInterface, DC, Id, CLoc, atLoc),
-    TypeForDecl(0), Definition(), InitiallyForwardDecl(FD) 
+    TypeForDecl(0), Data(), InitiallyForwardDecl(FD) 
 {
   setImplicit(isInternal);
 }
