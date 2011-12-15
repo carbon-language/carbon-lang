@@ -5631,6 +5631,28 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
+      } else if ((LibInfo->has(LibFunc::log2) && Name == "log2") ||
+                 (LibInfo->has(LibFunc::log2f) && Name == "log2f") ||
+                 (LibInfo->has(LibFunc::log2l) && Name == "log2l")) {
+        if (I.getNumArgOperands() == 1 && // Basic sanity checks.
+            I.getArgOperand(0)->getType()->isFloatingPointTy() &&
+            I.getType() == I.getArgOperand(0)->getType()) {
+          SDValue Tmp = getValue(I.getArgOperand(0));
+          setValue(&I, DAG.getNode(ISD::FLOG2, getCurDebugLoc(),
+                                   Tmp.getValueType(), Tmp));
+          return;
+        }
+      } else if ((LibInfo->has(LibFunc::exp2) && Name == "exp2") ||
+                 (LibInfo->has(LibFunc::exp2f) && Name == "exp2f") ||
+                 (LibInfo->has(LibFunc::exp2l) && Name == "exp2l")) {
+        if (I.getNumArgOperands() == 1 && // Basic sanity checks.
+            I.getArgOperand(0)->getType()->isFloatingPointTy() &&
+            I.getType() == I.getArgOperand(0)->getType()) {
+          SDValue Tmp = getValue(I.getArgOperand(0));
+          setValue(&I, DAG.getNode(ISD::FEXP2, getCurDebugLoc(),
+                                   Tmp.getValueType(), Tmp));
+          return;
+        }
       } else if (Name == "memcmp") {
         if (visitMemCmpCall(I))
           return;
