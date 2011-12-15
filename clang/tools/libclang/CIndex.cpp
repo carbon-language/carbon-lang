@@ -46,16 +46,6 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/Threading.h"
 #include "llvm/Support/Compiler.h"
-#include <cstdlib>
-
-#if LLVM_ON_WIN32
-#include <windows.h>
-#include <io.h>
-#include <fcntl.h>
-#endif
-#if LLVM_ON_UNIX
-#include <unistd.h>
-#endif
 
 using namespace clang;
 using namespace clang::cxcursor;
@@ -2347,13 +2337,9 @@ static llvm::sys::Mutex EnableMultithreadingMutex;
 static bool EnabledMultithreading;
 
 static void fatal_error_handler(void *user_data, const std::string& reason) {
-  llvm::SmallString<64> Buffer;
-  llvm::raw_svector_ostream OS(Buffer);
-  OS << "LIBCLANG FATAL ERROR: " << reason << "\n";
-  StringRef MessageStr = OS.str();
   // Write the result out to stderr avoiding errs() because raw_ostreams can
   // call report_fatal_error.
-  ::write(2, MessageStr.data(), MessageStr.size());
+  fprintf(stderr, "LIBCLANG FATAL ERROR: %s\n", reason.c_str());
   ::abort();
 }
 
