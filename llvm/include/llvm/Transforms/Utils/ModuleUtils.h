@@ -25,6 +25,9 @@ class Function;
 /// http://llvm.org/docs/LangRef.html#intg_global_ctors
 void appendToGlobalCtors(Module &M, Function *F, int Priority);
 
+/// Same as appendToGlobalCtors(), but for global dtors.
+void appendToGlobalDtors(Module &M, Function *F, int Priority);
+
 } // End llvm namespace
 
 #endif //  LLVM_TRANSFORMS_UTILS_MODULE_UTILS_H

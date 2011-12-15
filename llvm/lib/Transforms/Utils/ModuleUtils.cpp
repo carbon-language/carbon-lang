@@ -19,7 +19,8 @@
 
 using namespace llvm;
 
-void llvm::appendToGlobalCtors(Module &M, Function *F, int Priority) {
+static void appendToGlobalArray(const char *Array, 
+                                Module &M, Function *F, int Priority) {
   IRBuilder<> IRB(M.getContext());
   FunctionType *FnTy = FunctionType::get(IRB.getVoidTy(), false);
   StructType *Ty = StructType::get(
@@ -31,7 +32,7 @@ void llvm::appendToGlobalCtors(Module &M, Function *F, int Priority) {
   // Get the current set of static global constructors and add the new ctor
   // to the list.
   SmallVector<Constant *, 16> CurrentCtors;
-  if (GlobalVariable * GVCtor = M.getNamedGlobal("llvm.global_ctors")) {
+  if (GlobalVariable * GVCtor = M.getNamedGlobal(Array)) {
     if (Constant *Init = GVCtor->getInitializer()) {
       unsigned n = Init->getNumOperands();
       CurrentCtors.reserve(n + 1);
@@ -51,6 +52,13 @@ void llvm::appendToGlobalCtors(Module &M, Function *F, int Priority) {
   // Create the new global variable and replace all uses of
   // the old global variable with the new one.
   (void)new GlobalVariable(M, NewInit->getType(), false,
-                           GlobalValue::AppendingLinkage, NewInit,
-                           "llvm.global_ctors");
+                           GlobalValue::AppendingLinkage, NewInit, Array);
+}
+
+void llvm::appendToGlobalCtors(Module &M, Function *F, int Priority) {
+  appendToGlobalArray("llvm.global_ctors", M, F, Priority);
+}
+
+void llvm::appendToGlobalDtors(Module &M, Function *F, int Priority) {
+  appendToGlobalArray("llvm.global_dtors", M, F, Priority);
 }
