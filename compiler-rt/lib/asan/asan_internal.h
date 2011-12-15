@@ -180,6 +180,7 @@ const int kAsanStackPartialRedzoneMagic = 0xf4;
 const int kAsanStackAfterReturnMagic = 0xf5;
 const int kAsanUserPoisonedMemoryMagic = 0xf7;
 const int kAsanGlobalRedzoneMagic = 0xf9;
+const int kAsanInternalHeapMagic = 0xfe;
 
 static const uintptr_t kCurrentStackFrameMagic = 0x41B58AB3;
 static const uintptr_t kRetiredStackFrameMagic = 0x45E0360E;

@@ -117,7 +117,7 @@ static void RegisterGlobal(const Global *g) {
   l->next = list_of_globals;
   list_of_globals = l;
   if (FLAG_report_globals >= 2)
-    Printf("Added Global: beg=%p size=%ld name=%s\n",
+    Report("Added Global: beg=%p size=%ld name=%s\n",
            g->beg, g->size, g->name);
 }
 

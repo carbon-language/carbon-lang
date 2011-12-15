@@ -178,6 +178,8 @@ void *LowLevelAllocator::Allocate(size_t size) {
                                           MAP_PRIVATE | MAP_ANON, -1, 0);
     CHECK((allocated_current_ != (char*)-1) && "Can't mmap");
     allocated_end_ = allocated_current_ + size_to_allocate;
+    PoisonShadow((uintptr_t)allocated_current_, size_to_allocate,
+                 kAsanInternalHeapMagic);
   }
   CHECK(allocated_end_ - allocated_current_ >= size);
   void *res = allocated_current_;
