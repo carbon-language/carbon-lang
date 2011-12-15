@@ -82,6 +82,9 @@ public:
   static Directive* Create(bool RegexKind, const SourceLocation &Location,
                            const std::string &Text, unsigned Count);
 public:
+  /// Constant representing one or more matches aka regex "+".
+  static const unsigned OneOrMoreCount =  UINT_MAX;
+
   SourceLocation Location;
   const std::string Text;
   unsigned Count;
@@ -276,10 +279,14 @@ static void ParseDirective(const char *CommentStart, unsigned CommentLen,
     // skip optional whitespace
     PH.SkipWhitespace();
 
-    // next optional token: positive integer
+    // next optional token: positive integer or a '+'.
     unsigned Count = 1;
     if (PH.Next(Count))
       PH.Advance();
+    else if (PH.Next("+")) {
+      Count = Directive::OneOrMoreCount;
+      PH.Advance();
+    }
 
     // skip optional whitespace
     PH.SkipWhitespace();
@@ -420,6 +427,7 @@ static unsigned CheckLists(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
   for (DirectiveList::iterator I = Left.begin(), E = Left.end(); I != E; ++I) {
     Directive& D = **I;
     unsigned LineNo1 = SourceMgr.getPresumedLineNumber(D.Location);
+    bool FoundOnce = false;
 
     for (unsigned i = 0; i < D.Count; ++i) {
       DiagList::iterator II, IE;
@@ -433,11 +441,16 @@ static unsigned CheckLists(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
           break;
       }
       if (II == IE) {
+        if (D.Count == D.OneOrMoreCount && FoundOnce) {
+          // We are only interested in at least one match and we found one.
+          break;
+        }
         // Not found.
         LeftOnly.push_back(*I);
       } else {
         // Found. The same cannot be found twice.
         Right.erase(II);
+        FoundOnce = true;
       }
     }
   }

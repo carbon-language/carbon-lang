@@ -18,48 +18,48 @@ void taintTracking(int x) {
   int n;
   int *addr = &Buffer[0];
   scanf("%d", &n);
-  addr += n;// expected-warning 2 {{tainted}}
-  *addr = n; // expected-warning 3 {{tainted}}
+  addr += n;// expected-warning + {{tainted}}
+  *addr = n; // expected-warning + {{tainted}}
 
-  double tdiv = n / 30; // expected-warning 3 {{tainted}}
-  char *loc_cast = (char *) n; // expected-warning {{tainted}}
-  char tinc = tdiv++; // expected-warning {{tainted}}
-  int tincdec = (char)tinc--; // expected-warning 2 {{tainted}}
+  double tdiv = n / 30; // expected-warning+ {{tainted}}
+  char *loc_cast = (char *) n; // expected-warning +{{tainted}}
+  char tinc = tdiv++; // expected-warning + {{tainted}}
+  int tincdec = (char)tinc--; // expected-warning+{{tainted}}
 
   // Tainted ptr arithmetic/array element address.
-  int tprtarithmetic1 = *(addr+1); // expected-warning 2 {{tainted}}
+  int tprtarithmetic1 = *(addr+1); // expected-warning + {{tainted}}
 
   // Dereference.
   int *ptr;
   scanf("%p", &ptr);
-  int ptrDeref = *ptr; // expected-warning 2 {{tainted}}
-  int _ptrDeref = ptrDeref + 13; // expected-warning 2 {{tainted}}
+  int ptrDeref = *ptr; // expected-warning + {{tainted}}
+  int _ptrDeref = ptrDeref + 13; // expected-warning + {{tainted}}
 
   // Pointer arithmetic + dereferencing.
   // FIXME: We fail to propagate the taint here because RegionStore does not
   // handle ElementRegions with symbolic indexes.
-  int addrDeref = *addr; // expected-warning {{tainted}}
+  int addrDeref = *addr; // expected-warning + {{tainted}}
   int _addrDeref = addrDeref;
 
   // Tainted struct address, casts.
   struct XYStruct *xyPtr = 0;
   scanf("%p", &xyPtr);
-  void *tXYStructPtr = xyPtr; // expected-warning 2 {{tainted}}
-  struct XYStruct *xyPtrCopy = tXYStructPtr; // expected-warning 2 {{tainted}}
-  int ptrtx = xyPtr->x;// expected-warning 2 {{tainted}}
-  int ptrty = xyPtr->y;// expected-warning 2 {{tainted}}
+  void *tXYStructPtr = xyPtr; // expected-warning + {{tainted}}
+  struct XYStruct *xyPtrCopy = tXYStructPtr; // expected-warning + {{tainted}}
+  int ptrtx = xyPtr->x;// expected-warning + {{tainted}}
+  int ptrty = xyPtr->y;// expected-warning + {{tainted}}
 
   // Taint on fields of a struct.
   struct XYStruct xy = {2, 3, 11};
   scanf("%d", &xy.y);
   scanf("%d", &xy.x);
-  int tx = xy.x; // expected-warning {{tainted}}
+  int tx = xy.x; // expected-warning + {{tainted}}
   int ty = xy.y; // FIXME: This should be tainted as well.
   char ntz = xy.z;// no warning
   // Now, scanf scans both.
   scanf("%d %d", &xy.y, &xy.x);
-  int ttx = xy.x; // expected-warning {{tainted}}
-  int tty = xy.y; // expected-warning {{tainted}}
+  int ttx = xy.x; // expected-warning + {{tainted}}
+  int tty = xy.y; // expected-warning + {{tainted}}
 }
 
 void BitwiseOp(int in, char inn) {
@@ -67,22 +67,22 @@ void BitwiseOp(int in, char inn) {
   int m;
   int x = 0;
   scanf("%d", &x);
-  int y = (in << (x << in)) * 5;// expected-warning 4 {{tainted}}
+  int y = (in << (x << in)) * 5;// expected-warning + {{tainted}}
   // The next line tests integer to integer cast.
-  int z = y & inn; // expected-warning 2 {{tainted}}
-  if (y == 5) // expected-warning 2 {{tainted}}
-    m = z | z;// expected-warning 4 {{tainted}}
+  int z = y & inn; // expected-warning + {{tainted}}
+  if (y == 5) // expected-warning + {{tainted}}
+    m = z | z;// expected-warning + {{tainted}}
   else
     m = inn;
-  int mm = m; // expected-warning   {{tainted}}
+  int mm = m; // expected-warning + {{tainted}}
 }
 
 // Test getenv.
 char *getenv(const char *name);
 void getenvTest(char *home) {
-  home = getenv("HOME"); // expected-warning 2 {{tainted}}
-  if (home != 0) { // expected-warning 2 {{tainted}}
-      char d = home[0]; // expected-warning 2 {{tainted}}
+  home = getenv("HOME"); // expected-warning + {{tainted}}
+  if (home != 0) { // expected-warning + {{tainted}}
+      char d = home[0]; // expected-warning + {{tainted}}
     }
 }
 
@@ -104,21 +104,21 @@ int fscanfTest(void) {
   fscanf(stdin, "%s %d", s, &t);
   // Note, here, s is not tainted, but the data s points to is tainted.
   char *ts = s;
-  char tss = s[0]; // expected-warning 1 {{tainted}}
-  int tt = t; // expected-warning 1 {{tainted}}
-  if((fp=fopen("test", "w")) == 0) // expected-warning 3 {{tainted}}
+  char tss = s[0]; // expected-warning + {{tainted}}
+  int tt = t; // expected-warning + {{tainted}}
+  if((fp=fopen("test", "w")) == 0) // expected-warning + {{tainted}}
     return 1;
-  fprintf(fp, "%s %d", s, t); // expected-warning 2 {{tainted}}
-  fclose(fp); // expected-warning 1 {{tainted}}
+  fprintf(fp, "%s %d", s, t); // expected-warning + {{tainted}}
+  fclose(fp); // expected-warning + {{tainted}}
 
   // Check if we propagate taint from stdin when it's used in an assignment.
   FILE *pfstd = stdin;
   fscanf(pfstd, "%s %d", s, &t); // TODO: This should be tainted as well.
 
   // Test fscanf and fopen.
-  if((fp=fopen("test","r")) == 0) // expected-warning 3 {{tainted}}
+  if((fp=fopen("test","r")) == 0) // expected-warning + {{tainted}}
     return 1;
-  fscanf(fp, "%s%d", s, &t); // expected-warning 1 {{tainted}}
-  fprintf(stdout, "%s %d", s, t); // expected-warning 1 {{tainted}}
+  fscanf(fp, "%s%d", s, &t); // expected-warning + {{tainted}}
+  fprintf(stdout, "%s %d", s, t); // expected-warning + {{tainted}}
   return 0;
 }
