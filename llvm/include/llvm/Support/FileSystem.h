@@ -666,8 +666,8 @@ public:
     return *this;
   }
 
-  const directory_entry &operator*() const { return *State->Stack.top(); };
-  const directory_entry *operator->() const { return &*State->Stack.top(); };
+  const directory_entry &operator*() const { return *State->Stack.top(); }
+  const directory_entry *operator->() const { return &*State->Stack.top(); }
 
   // observers
   /// Gets the current level. Starting path is at level 0.
