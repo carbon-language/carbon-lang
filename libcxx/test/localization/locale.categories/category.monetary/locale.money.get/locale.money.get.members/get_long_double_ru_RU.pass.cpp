@@ -45,7 +45,7 @@ public:
 int main()
 {
     std::ios ios(0);
-    std::string loc_name("LOCALE_ru_RU_UTF_8");
+    std::string loc_name(LOCALE_ru_RU_UTF_8);
     ios.imbue(std::locale(ios.getloc(),
                           new std::moneypunct_byname<char, false>(loc_name)));
     ios.imbue(std::locale(ios.getloc(),
