@@ -7910,19 +7910,18 @@ SDValue X86TargetLowering::LowerFNEG(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
   EVT VT = Op.getValueType();
   EVT EltVT = VT;
-  if (VT.isVector())
+  unsigned NumElts = VT == MVT::f64 ? 2 : 4;
+  if (VT.isVector()) {
     EltVT = VT.getVectorElementType();
-  std::vector<Constant*> CV;
+    NumElts = VT.getVectorNumElements();
+  }
+  SmallVector<Constant*,8> CV;
   if (EltVT == MVT::f64) {
     Constant *C = ConstantFP::get(*Context, APFloat(APInt(64, 1ULL << 63)));
-    CV.push_back(C);
-    CV.push_back(C);
+    CV.assign(NumElts, C);
   } else {
     Constant *C = ConstantFP::get(*Context, APFloat(APInt(32, 1U << 31)));
-    CV.push_back(C);
-    CV.push_back(C);
-    CV.push_back(C);
-    CV.push_back(C);
+    CV.assign(NumElts, C);
   }
   Constant *C = ConstantVector::get(CV);
   SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
@@ -7930,11 +7929,12 @@ SDValue X86TargetLowering::LowerFNEG(SDValue Op, SelectionDAG &DAG) const {
                              MachinePointerInfo::getConstantPool(),
                              false, false, false, 16);
   if (VT.isVector()) {
+    MVT XORVT = VT.getSizeInBits() == 128 ? MVT::v2i64 : MVT::v4i64;
     return DAG.getNode(ISD::BITCAST, dl, VT,
-                       DAG.getNode(ISD::XOR, dl, MVT::v2i64,
-                    DAG.getNode(ISD::BITCAST, dl, MVT::v2i64,
+                       DAG.getNode(ISD::XOR, dl, XORVT,
+                    DAG.getNode(ISD::BITCAST, dl, XORVT,
                                 Op.getOperand(0)),
-                    DAG.getNode(ISD::BITCAST, dl, MVT::v2i64, Mask)));
+                    DAG.getNode(ISD::BITCAST, dl, XORVT, Mask)));
   } else {
     return DAG.getNode(X86ISD::FXOR, dl, VT, Op.getOperand(0), Mask);
   }
