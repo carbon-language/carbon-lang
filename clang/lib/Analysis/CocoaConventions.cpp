@@ -115,7 +115,7 @@ bool cocoa::isCocoaObjectRef(QualType Ty) {
   
   // Assume that anything declared with a forward declaration and no
   // @interface subclasses NSObject.
-  if (ID->isForwardDecl())
+  if (!ID->hasDefinition())
     return true;
   
   for ( ; ID ; ID = ID->getSuperClass())

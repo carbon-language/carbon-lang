@@ -583,7 +583,7 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
   };
 
   ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
-                    SourceLocation CLoc, bool FD, bool isInternal);
+                    SourceLocation CLoc, bool isInternal);
 
   void LoadExternalDefinition() const;
 
@@ -595,12 +595,6 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
   /// the '>', '}', or identifier.
   /// FIXME: This seems like the wrong location to care about.
   SourceLocation EndLoc; 
-
-  /// \brief True if it was initially declared with @class.
-  /// Differs with \see ForwardDecl in that \see ForwardDecl will change to
-  /// false when we see the @interface, but InitiallyForwardDecl will remain
-  /// true.
-  bool InitiallyForwardDecl : 1;
 
   DefinitionData &data() const {
     assert(Data != 0 && "Declaration has no definition!");
@@ -620,13 +614,13 @@ public:
                                    SourceLocation atLoc,
                                    IdentifierInfo *Id,
                                    SourceLocation ClassLoc = SourceLocation(),
-                                   bool ForwardDecl = false,
                                    bool isInternal = false);
 
   virtual SourceRange getSourceRange() const {
-    if (isForwardDecl())
-      return SourceRange(getAtStartLoc(), getLocation());
-    return ObjCContainerDecl::getSourceRange();
+    if (isThisDeclarationADefinition())
+      return ObjCContainerDecl::getSourceRange();
+    
+    return SourceRange(getAtStartLoc(), getLocation());
   }
 
   /// \brief Indicate that this Objective-C class is complete, but that
@@ -772,20 +766,10 @@ public:
                                        unsigned Num,
                                        ASTContext &C);
 
-  /// \brief True if it was initially declared with @class.
-  /// Differs with \see isForwardDecl in that \see isForwardDecl will change to
-  /// false when we see the @interface, but this will remain true.
-  bool isInitiallyForwardDecl() const { 
-    return InitiallyForwardDecl; 
-  }
-
-  /// \brief Determine whether this class has only ever been forward-declared.
-  bool isForwardDecl() const { return Data == 0; }
-                          
   /// \brief Determine whether this particular declaration of this class is
   /// actually also a definition.
   bool isThisDeclarationADefinition() const { 
-    return Data == 0 || Data->Definition != this;
+    return Data && Data->Definition == this;
   }
                           
   /// \brief Determine whether this class has been defined.
@@ -926,6 +910,8 @@ public:
   const ObjCInterfaceDecl *getCanonicalDecl() const {
     return getFirstDeclaration();
   }
+
+  void setPreviousDeclaration(ObjCInterfaceDecl *PrevDecl);
 
   // Low-level accessor
   const Type *getTypeForDecl() const { return TypeForDecl; }

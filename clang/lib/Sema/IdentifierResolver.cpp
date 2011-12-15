@@ -318,15 +318,6 @@ static DeclMatchKind compareDeclarations(NamedDecl *Existing, NamedDecl *New) {
     return DMK_Ignore;
   }
   
-  // If the declarations are both Objective-C classes, and one is a forward
-  // declaration and the other is not, take the full definition.
-  // FIXME: At some point, we'll actually have to detect collisions better.
-  // This logic, however, belongs in the AST reader, not here.
-  if (ObjCInterfaceDecl *ExistingIFace = dyn_cast<ObjCInterfaceDecl>(Existing))
-    if (ObjCInterfaceDecl *NewIFace = dyn_cast<ObjCInterfaceDecl>(New))
-      if (ExistingIFace->isForwardDecl() != NewIFace->isForwardDecl())
-        return ExistingIFace->isForwardDecl()? DMK_Replace : DMK_Ignore;
-        
   return DMK_Different;
 }
 

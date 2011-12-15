@@ -927,7 +927,7 @@ bool Type::isIncompleteType() const {
                                                          ->isIncompleteType();
   case ObjCInterface:
     // ObjC interfaces are incomplete if they are @class, not @interface.
-    return cast<ObjCInterfaceType>(CanonicalType)->getDecl()->isForwardDecl();
+    return !cast<ObjCInterfaceType>(CanonicalType)->getDecl()->hasDefinition();
   }
 }
 

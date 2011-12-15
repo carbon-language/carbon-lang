@@ -653,8 +653,9 @@ void RewriteObjC::HandleTopLevelSingleDecl(Decl *D) {
       ConstantStringClassReference = FVD;
       return;
     }
-  } else if (ObjCInterfaceDecl *MD = dyn_cast<ObjCInterfaceDecl>(D)) {
-    RewriteInterfaceDecl(MD);
+  } else if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D)) {
+    if (ID->isThisDeclarationADefinition())
+      RewriteInterfaceDecl(ID);
   } else if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(D)) {
     RewriteCategoryDecl(CD);
   } else if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D)) {
@@ -673,9 +674,18 @@ void RewriteObjC::HandleTopLevelSingleDecl(Decl *D) {
         SourceLocation Loc = D->getLocation();
         while (DI != DIEnd &&
                isa<ObjCClassDecl>(D) && D->getLocation() == Loc) {
+          ObjCClassDecl *Class = cast<ObjCClassDecl>(D);
           DG.push_back(D);
           ++DI;
           D = (*DI);
+
+          // Following the ObjCClassDecl, we should have the corresponding
+          // ObjCInterfaceDecl. Skip over it.
+          if (DI != DIEnd && isa<ObjCInterfaceDecl>(D) && 
+              Class->getForwardInterfaceDecl() == D) {
+            ++DI;
+            D = (*DI);
+          }
         }
         RewriteForwardClassDecl(DG);
         continue;
@@ -1179,7 +1189,7 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
 
 void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
   std::string ResultStr;
-  if (!ObjCForwardDecls.count(ClassDecl)) {
+  if (!ObjCForwardDecls.count(ClassDecl->getCanonicalDecl())) {
     // we haven't seen a forward decl - generate a typedef.
     ResultStr = "#ifndef _REWRITER_typedef_";
     ResultStr += ClassDecl->getNameAsString();
@@ -1191,7 +1201,7 @@ void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
     ResultStr += ClassDecl->getNameAsString();
     ResultStr += ";\n#endif\n";
     // Mark this typedef as having been generated.
-    ObjCForwardDecls.insert(ClassDecl);
+    ObjCForwardDecls.insert(ClassDecl->getCanonicalDecl());
   }
   RewriteObjCInternalStruct(ClassDecl, ResultStr);
 
@@ -3130,7 +3140,7 @@ void RewriteObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
 
   // If no ivars and no root or if its root, directly or indirectly,
   // have no ivars (thus not synthesized) then no need to synthesize this class.
-  if ((CDecl->isForwardDecl() || NumIvars == 0) &&
+  if ((!CDecl->isThisDeclarationADefinition() || NumIvars == 0) &&
       (!RCDecl || !ObjCSynthesizedStructs.count(RCDecl))) {
     endBuf += Lexer::MeasureTokenLength(LocEnd, *SM, LangOpts);
     ReplaceText(LocStart, endBuf-startBuf, Result);
@@ -5357,7 +5367,7 @@ void RewriteObjCFragileABI::RewriteObjCClassMetaData(ObjCImplementationDecl *IDe
   
   // Explicitly declared @interface's are already synthesized.
   if (CDecl->isImplicitInterfaceDecl()) {
-    // FIXME: Implementation of a class with no @interface (legacy) doese not
+    // FIXME: Implementation of a class with no @interface (legacy) does not
     // produce correct synthesis as yet.
     RewriteObjCInternalStruct(CDecl, Result);
   }

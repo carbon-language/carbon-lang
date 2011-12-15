@@ -60,7 +60,7 @@ bool Sema::checkInitMethod(ObjCMethodDecl *method,
 
     // It's okay for the result type to still be a forward declaration
     // if we're checking an interface declaration.
-    if (resultClass->isForwardDecl()) {
+    if (!resultClass->hasDefinition()) {
       if (receiverTypeIfCall.isNull() &&
           !isa<ObjCImplementationDecl>(method->getDeclContext()))
         return false;
@@ -365,45 +365,31 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
     Diag(PrevDecl->getLocation(), diag::note_previous_definition);
   }
 
-  ObjCInterfaceDecl* IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
-  if (IDecl) {
-    // Class already seen. Is it a forward declaration?
-    if (ObjCInterfaceDecl *Def = IDecl->getDefinition()) {
-      IDecl->setInvalidDecl();
-      Diag(AtInterfaceLoc, diag::err_duplicate_class_def)<<IDecl->getDeclName();
+  // Create a declaration to describe this @interface.
+  ObjCInterfaceDecl *IDecl
+    = ObjCInterfaceDecl::Create(Context, CurContext, AtInterfaceLoc, ClassName,
+                                ClassLoc);
+  
+  ObjCInterfaceDecl* PrevIDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
+  if (PrevIDecl) {
+    // Class already seen. Was it a definition?
+    if (ObjCInterfaceDecl *Def = PrevIDecl->getDefinition()) {
+      Diag(AtInterfaceLoc, diag::err_duplicate_class_def)
+        << PrevIDecl->getDeclName();
       Diag(Def->getLocation(), diag::note_previous_definition);
-
-      // Create a new one; the other may be in a different DeclContex, (e.g.
-      // this one may be in a LinkageSpecDecl while the other is not) which
-      // will break invariants.
-      IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtInterfaceLoc,
-                                        ClassName, ClassLoc);
-      if (AttrList)
-        ProcessDeclAttributeList(TUScope, IDecl, AttrList);
-      PushOnScopeChains(IDecl, TUScope);
-
-    } else {
-      IDecl->setLocation(ClassLoc);
-      IDecl->setAtStartLoc(AtInterfaceLoc);
-      
-      // Since this ObjCInterfaceDecl was created by a forward declaration,
-      // we now add it to the DeclContext since it wasn't added before
-      // (see ActOnForwardClassDeclaration).
-      IDecl->setLexicalDeclContext(CurContext);
-      CurContext->addDecl(IDecl);
-
-      if (AttrList)
-        ProcessDeclAttributeList(TUScope, IDecl, AttrList);
+      IDecl->setInvalidDecl();
     }
-  } else {
-    IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtInterfaceLoc,
-                                      ClassName, ClassLoc);
-    if (AttrList)
-      ProcessDeclAttributeList(TUScope, IDecl, AttrList);
 
-    PushOnScopeChains(IDecl, TUScope);
+    // Link to the previous declaration.
+    IDecl->setPreviousDeclaration(PrevIDecl);
   }
+  
+  if (AttrList)
+    ProcessDeclAttributeList(TUScope, IDecl, AttrList);
+  PushOnScopeChains(IDecl, TUScope);
 
+  // Start the definition of this class. If we're in a redefinition case, there 
+  // may already be a definition, so we'll end up adding to it.
   if (!IDecl->hasDefinition())
     IDecl->startDefinition();
   
@@ -942,7 +928,7 @@ Decl *Sema::ActOnStartClassImplementation(
     // FIXME: Do we support attributes on the @implementation? If so we should
     // copy them over.
     IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtClassImplLoc,
-                                      ClassName, ClassLoc, false, true);
+                                      ClassName, ClassLoc, true);
     IDecl->startDefinition();
     IDecl->setSuperClass(SDecl);
     IDecl->setLocEnd(ClassLoc);
@@ -1781,22 +1767,29 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
           PrevDecl = OI->getInterface();
       }
     }
-    ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
-    if (!IDecl) {  // Not already seen?  Make a forward decl.
-      IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtClassLoc,
-                                        IdentList[i], IdentLocs[i], true);
-      
-      // Push the ObjCInterfaceDecl on the scope chain but do *not* add it to
-      // the current DeclContext.  This prevents clients that walk DeclContext
-      // from seeing the imaginary ObjCInterfaceDecl until it is actually
-      // declared later (if at all).  We also take care to explicitly make
-      // sure this declaration is visible for name lookup.
-      PushOnScopeChains(IDecl, TUScope, false);
-      CurContext->makeDeclVisibleInContext(IDecl, true);
-    }
+    
+    // Create a declaration to describe this forward declaration.
+    ObjCInterfaceDecl *IDecl
+      = ObjCInterfaceDecl::Create(Context, CurContext, AtClassLoc,
+                                  IdentList[i], IdentLocs[i], true);
+    IDecl->setAtEndRange(IdentLocs[i]);
+    IDecl->setLocEnd(IdentLocs[i]);
+    
+    // If there was a previous declaration, link to it.
+    if (ObjCInterfaceDecl *PrevIDecl
+        = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl))
+      IDecl->setPreviousDeclaration(PrevIDecl);
+
+    // Create the forward declaration. Note that we intentionally do this 
+    // before we add the ObjCInterfaceDecl we just created, so that the
+    // rewriter sees the ObjCClassDecl first.
+    // FIXME: ObjCClassDecl should probably just go away.
     ObjCClassDecl *CDecl = ObjCClassDecl::Create(Context, CurContext, AtClassLoc,
                                                  IDecl, IdentLocs[i]);
     CurContext->addDecl(CDecl);
+    
+    PushOnScopeChains(IDecl, TUScope);
+    
     CheckObjCDeclScope(CDecl);
     DeclsInGroup.push_back(CDecl);
   }

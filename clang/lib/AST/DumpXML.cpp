@@ -755,7 +755,7 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
   }
   void visitObjCInterfaceDeclAttrs(ObjCInterfaceDecl *D) {
     setPointer("typeptr", D->getTypeForDecl());
-    setFlag("forward_decl", D->isForwardDecl());
+    setFlag("forward_decl", !D->isThisDeclarationADefinition());
     setFlag("implicit_interface", D->isImplicitInterfaceDecl());
   }
   void visitObjCInterfaceDeclChildren(ObjCInterfaceDecl *D) {

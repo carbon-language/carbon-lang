@@ -299,12 +299,7 @@ void CursorVisitor::visitDeclsFromFileRegion(FileID File,
 
     // We handle forward decls via ObjCClassDecl.
     if (ObjCInterfaceDecl *InterD = dyn_cast<ObjCInterfaceDecl>(D)) {
-      if (InterD->isForwardDecl())
-        continue;
-      // An interface that started as a forward decl may have changed location
-      // because its @interface was parsed.
-      if (InterD->isInitiallyForwardDecl() &&
-          !SM.isInFileID(SM.getFileLoc(InterD->getLocation()), File))
+      if (!InterD->isThisDeclarationADefinition())
         continue;
     }
 
@@ -3948,8 +3943,13 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
     case CXCursor_ObjCProtocolRef: {
       return MakeCXCursor(getCursorObjCProtocolRef(C).first, tu);
 
-    case CXCursor_ObjCClassRef:
-      return MakeCXCursor(getCursorObjCClassRef(C).first, tu );
+    case CXCursor_ObjCClassRef: {
+      ObjCInterfaceDecl *Class = getCursorObjCClassRef(C).first;
+      if (ObjCInterfaceDecl *Def = Class->getDefinition())
+        return MakeCXCursor(Def, tu);
+
+      return MakeCXCursor(Class, tu);
+    }
 
     case CXCursor_TypeRef:
       return MakeCXCursor(getCursorTypeRef(C).first, tu );
@@ -4147,8 +4147,8 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
     // the definition; when we were provided with the interface,
     // produce the @implementation as the definition.
     if (WasReference) {
-      if (!cast<ObjCInterfaceDecl>(D)->isForwardDecl())
-        return C;
+      if (ObjCInterfaceDecl *Def = cast<ObjCInterfaceDecl>(D)->getDefinition())
+        return MakeCXCursor(Def, TU);
     } else if (ObjCImplementationDecl *Impl
                               = cast<ObjCInterfaceDecl>(D)->getImplementation())
       return MakeCXCursor(Impl, TU);
@@ -4162,8 +4162,8 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::ObjCCompatibleAlias:
     if (ObjCInterfaceDecl *Class
           = cast<ObjCCompatibleAliasDecl>(D)->getClassInterface())
-      if (!Class->isForwardDecl())
-        return MakeCXCursor(Class, TU);
+      if (ObjCInterfaceDecl *Def = Class->getDefinition())
+        return MakeCXCursor(Def, TU);
 
     return clang_getNullCursor();
 

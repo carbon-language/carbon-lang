@@ -629,7 +629,6 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
     }
   }
   
-  ID->InitiallyForwardDecl = Record[Idx++];
   ID->setLocEnd(ReadSourceLocation(Record, Idx));
 }
 

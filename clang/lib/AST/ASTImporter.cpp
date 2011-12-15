@@ -3183,7 +3183,6 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
       ToIface = ObjCInterfaceDecl::Create(Importer.getToContext(), DC,
                                           Importer.Import(D->getAtStartLoc()),
                                           Name.getAsIdentifierInfo(), Loc,
-                                          D->isInitiallyForwardDecl(),
                                           D->isImplicitInterfaceDecl());
       ToIface->setLexicalDeclContext(LexicalDC);
       LexicalDC->addDeclInternal(ToIface);

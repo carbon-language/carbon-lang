@@ -97,7 +97,7 @@ public:
 
   bool VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
     // Forward decls are handled at VisitObjCClassDecl.
-    if (D->isForwardDecl())
+    if (!D->isThisDeclarationADefinition())
       return true;
 
     IndexCtx.handleObjCInterface(D);
