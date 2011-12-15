@@ -8,6 +8,8 @@
 
 namespace clang {
 
+class LangOptions;
+
 template <typename T>
 class UpdateOnReturn {
   T &ValueToUpdate;
@@ -42,7 +44,8 @@ bool ParseArgPosition(FormatStringHandler &H,
 
 /// Returns true if a LengthModifier was parsed and installed in the
 /// FormatSpecifier& argument, and false otherwise.
-bool ParseLengthModifier(FormatSpecifier &FS, const char *&Beg, const char *E);
+bool ParseLengthModifier(FormatSpecifier &FS, const char *&Beg, const char *E,
+                         const LangOptions &LO, bool IsScanf = false);
   
 template <typename T> class SpecifierResult {
   T FS;
@@ -69,4 +72,3 @@ public:
 } // end clang namespace
 
 #endif
-

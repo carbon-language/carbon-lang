@@ -67,3 +67,12 @@ void test_variants(int *i, const char *s, ...) {
   vfscanf(f, "%[abc", ap); // expected-warning{{no closing ']' for '%[' in scanf format string}}
   vsscanf(buf, "%[abc", ap); // expected-warning{{no closing ']' for '%[' in scanf format string}}
 }
+
+void test_alloc_extension(char **sp, wchar_t **lsp) {
+  /* Make sure "%a" gets parsed as a conversion specifier for float,
+   * even when followed by an 's', 'S' or '[', which would cause it to be
+   * parsed as a length modifier in C90. */
+  scanf("%as", sp); // expected-warning{{conversion specifies type 'float *' but the argument has type 'char **'}}
+  scanf("%aS", lsp); // expected-warning{{conversion specifies type 'float *' but the argument has type 'wchar_t **' (aka 'int **')}}
+  scanf("%a[bcd]", sp); // expected-warning{{conversion specifies type 'float *' but the argument has type 'char **'}}
+}

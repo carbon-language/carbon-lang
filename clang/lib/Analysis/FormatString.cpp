@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "FormatStringParsing.h"
+#include "clang/Basic/LangOptions.h"
 
 using clang::analyze_format_string::ArgTypeResult;
 using clang::analyze_format_string::FormatStringHandler;
@@ -175,7 +176,9 @@ clang::analyze_format_string::ParseArgPosition(FormatStringHandler &H,
 bool
 clang::analyze_format_string::ParseLengthModifier(FormatSpecifier &FS,
                                                   const char *&I,
-                                                  const char *E) {
+                                                  const char *E,
+                                                  const LangOptions &LO,
+                                                  bool IsScanf) {
   LengthModifier::Kind lmKind = LengthModifier::None;
   const char *lmPosition = I;
   switch (*I) {
@@ -196,6 +199,19 @@ clang::analyze_format_string::ParseLengthModifier(FormatSpecifier &FS,
     case 't': lmKind = LengthModifier::AsPtrDiff;    ++I; break;
     case 'L': lmKind = LengthModifier::AsLongDouble; ++I; break;
     case 'q': lmKind = LengthModifier::AsLongLong;   ++I; break;
+    case 'a':
+      if (IsScanf && !LO.C99 && !LO.CPlusPlus) {
+        // For scanf in C90, look at the next character to see if this should
+        // be parsed as the GNU extension 'a' length modifier. If not, this
+        // will be parsed as a conversion specifier.
+        ++I;
+        if (I != E && (*I == 's' || *I == 'S' || *I == '[')) {
+          lmKind = LengthModifier::AsAllocate;
+          break;
+        }
+        --I;
+      }
+      return false;
   }
   LengthModifier lm(lmPosition, lmKind);
   FS.setLengthModifier(lm);
@@ -391,6 +407,8 @@ analyze_format_string::LengthModifier::toString() const {
     return "t";
   case AsLongDouble:
     return "L";
+  case AsAllocate:
+    return "a";
   case None:
     return "";
   }
@@ -523,6 +541,15 @@ bool FormatSpecifier::hasValidLengthModifier() const {
         case ConversionSpecifier::EArg:
         case ConversionSpecifier::gArg:
         case ConversionSpecifier::GArg:
+          return true;
+        default:
+          return false;
+      }
+
+    case LengthModifier::AsAllocate:
+      switch (CS.getKind()) {
+        case ConversionSpecifier::sArg:
+        case ConversionSpecifier::SArg:
           return true;
         default:
           return false;

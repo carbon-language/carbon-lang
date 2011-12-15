@@ -71,6 +71,7 @@ public:
     AsSizeT,      // 'z'
     AsPtrDiff,    // 't'
     AsLongDouble, // 'L'
+    AsAllocate,    // for '%as', GNU extension to C90 scanf
     AsWideChar = AsLong // for '%ls', only makes sense for printf
   };
 
@@ -630,10 +631,10 @@ public:
 };
 
 bool ParsePrintfString(FormatStringHandler &H,
-                       const char *beg, const char *end);
+                       const char *beg, const char *end, const LangOptions &LO);
 
 bool ParseScanfString(FormatStringHandler &H,
-                       const char *beg, const char *end);
+                      const char *beg, const char *end, const LangOptions &LO);
 
 } // end analyze_format_string namespace
 } // end clang namespace

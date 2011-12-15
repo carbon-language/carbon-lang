@@ -2442,7 +2442,8 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
                          Str, HasVAListArg, TheCall, format_idx,
                          inFunctionCall);
   
-    if (!analyze_format_string::ParsePrintfString(H, Str, Str + StrLen))
+    if (!analyze_format_string::ParsePrintfString(H, Str, Str + StrLen,
+                                                  getLangOptions()))
       H.DoneProcessing();
   }
   else {
@@ -2451,7 +2452,8 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
                         Str, HasVAListArg, TheCall, format_idx,
                         inFunctionCall);
     
-    if (!analyze_format_string::ParseScanfString(H, Str, Str + StrLen))
+    if (!analyze_format_string::ParseScanfString(H, Str, Str + StrLen,
+                                                 getLangOptions()))
       H.DoneProcessing();
   }
 }

@@ -51,7 +51,8 @@ static bool ParsePrecision(FormatStringHandler &H, PrintfSpecifier &FS,
 static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
                                                   const char *&Beg,
                                                   const char *E,
-                                                  unsigned &argIndex) {
+                                                  unsigned &argIndex,
+                                                  const LangOptions &LO) {
 
   using namespace clang::analyze_format_string;
   using namespace clang::analyze_printf;
@@ -150,7 +151,7 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
   }
 
   // Look for the length modifier.
-  if (ParseLengthModifier(FS, I, E) && I == E) {
+  if (ParseLengthModifier(FS, I, E, LO) && I == E) {
     // No more characters left?
     H.HandleIncompleteSpecifier(Start, E - Start);
     return true;
@@ -210,13 +211,15 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
 
 bool clang::analyze_format_string::ParsePrintfString(FormatStringHandler &H,
                                                      const char *I,
-                                                     const char *E) {
+                                                     const char *E,
+                                                     const LangOptions &LO) {
 
   unsigned argIndex = 0;
 
   // Keep looking for a format specifier until we have exhausted the string.
   while (I != E) {
-    const PrintfSpecifierResult &FSR = ParsePrintfSpecifier(H, I, E, argIndex);
+    const PrintfSpecifierResult &FSR = ParsePrintfSpecifier(H, I, E, argIndex,
+                                                            LO);
     // Did a fail-stop error of any kind occur when parsing the specifier?
     // If so, don't do any more processing.
     if (FSR.shouldStop())
@@ -269,6 +272,8 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
         return ArgTypeResult();
       case LengthModifier::AsPtrDiff:
         return ArgTypeResult(Ctx.getPointerDiffType(), "ptrdiff_t");
+      case LengthModifier::AsAllocate:
+        return ArgTypeResult::Invalid();
     }
 
   if (CS.isUIntArg())
@@ -288,6 +293,8 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
         // FIXME: How to get the corresponding unsigned
         // version of ptrdiff_t?
         return ArgTypeResult();
+      case LengthModifier::AsAllocate:
+        return ArgTypeResult::Invalid();
     }
 
   if (CS.isDoubleArg()) {

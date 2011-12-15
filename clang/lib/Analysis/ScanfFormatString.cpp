@@ -67,7 +67,8 @@ static bool ParseScanList(FormatStringHandler &H,
 static ScanfSpecifierResult ParseScanfSpecifier(FormatStringHandler &H,
                                                 const char *&Beg,
                                                 const char *E,
-                                                unsigned &argIndex) {
+                                                unsigned &argIndex,
+                                                const LangOptions &LO) {
   
   using namespace clang::analyze_scanf;
   const char *I = Beg;
@@ -132,7 +133,7 @@ static ScanfSpecifierResult ParseScanfSpecifier(FormatStringHandler &H,
   }
   
   // Look for the length modifier.
-  if (ParseLengthModifier(FS, I, E) && I == E) {
+  if (ParseLengthModifier(FS, I, E, LO, /*scanf=*/true) && I == E) {
       // No more characters left?
     H.HandleIncompleteSpecifier(Start, E - Start);
     return true;
@@ -218,6 +219,7 @@ ScanfArgTypeResult ScanfSpecifier::getArgType(ASTContext &Ctx) const {
         case LengthModifier::AsPtrDiff:
           return ScanfArgTypeResult(Ctx.getPointerDiffType(), "ptrdiff_t *");
         case LengthModifier::AsLongDouble: return ScanfArgTypeResult::Invalid();
+        case LengthModifier::AsAllocate: return ScanfArgTypeResult::Invalid();
       }
 
     // Unsigned int.
@@ -240,6 +242,7 @@ ScanfArgTypeResult ScanfSpecifier::getArgType(ASTContext &Ctx) const {
           // FIXME: Unsigned version of ptrdiff_t?
           return ScanfArgTypeResult();
         case LengthModifier::AsLongDouble: return ScanfArgTypeResult::Invalid();
+        case LengthModifier::AsAllocate: return ScanfArgTypeResult::Invalid();
       }
 
     // Float.
@@ -274,7 +277,9 @@ ScanfArgTypeResult ScanfSpecifier::getArgType(ASTContext &Ctx) const {
     case ConversionSpecifier::CArg:
     case ConversionSpecifier::SArg:
       // FIXME: Mac OS X specific?
-      return ScanfArgTypeResult(ScanfArgTypeResult::WCStrTy, "wchar_t *");
+      if (LM.getKind() == LengthModifier::None)
+        return ScanfArgTypeResult(ScanfArgTypeResult::WCStrTy, "wchar_t *");
+      return ScanfArgTypeResult::Invalid();
 
     // Pointer.
     case ConversionSpecifier::pArg:
@@ -401,13 +406,15 @@ void ScanfSpecifier::toString(raw_ostream &os) const {
 
 bool clang::analyze_format_string::ParseScanfString(FormatStringHandler &H,
                                                     const char *I,
-                                                    const char *E) {
+                                                    const char *E,
+                                                    const LangOptions &LO) {
   
   unsigned argIndex = 0;
   
   // Keep looking for a format specifier until we have exhausted the string.
   while (I != E) {
-    const ScanfSpecifierResult &FSR = ParseScanfSpecifier(H, I, E, argIndex);
+    const ScanfSpecifierResult &FSR = ParseScanfSpecifier(H, I, E, argIndex,
+                                                          LO);
     // Did a fail-stop error of any kind occur when parsing the specifier?
     // If so, don't do any more processing.
     if (FSR.shouldStop())
