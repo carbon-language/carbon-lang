@@ -572,6 +572,9 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
     mutable bool ExternallyCompleted : 1;
 
     SourceLocation SuperClassLoc; // location of the super class identifier.
+    
+    DefinitionData() : SuperClass(), CategoryList(), IvarList(), 
+                       ExternallyCompleted() { }
   };
 
   ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
