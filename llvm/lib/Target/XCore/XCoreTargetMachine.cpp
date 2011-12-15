@@ -35,7 +35,7 @@ XCoreTargetMachine::XCoreTargetMachine(const Target &T, StringRef TT,
 }
 
 bool XCoreTargetMachine::addInstSelector(PassManagerBase &PM) {
-  PM.add(createXCoreISelDag(*this));
+  PM.add(createXCoreISelDag(*this, getOptLevel()));
   return false;
 }
 

@@ -24,7 +24,8 @@ namespace llvm {
   class XCoreTargetMachine;
   class formatted_raw_ostream;
 
-  FunctionPass *createXCoreISelDag(XCoreTargetMachine &TM);
+  FunctionPass *createXCoreISelDag(XCoreTargetMachine &TM,
+                                   CodeGenOpt::Level OptLevel);
 
 } // end namespace llvm;
 
