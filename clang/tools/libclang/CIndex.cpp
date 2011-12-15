@@ -2336,6 +2336,17 @@ RefNamePieces buildPieces(unsigned NameFlags, bool IsMemberRefExpr,
 static llvm::sys::Mutex EnableMultithreadingMutex;
 static bool EnabledMultithreading;
 
+static void fatal_error_handler(void *user_data, const std::string& reason) {
+  llvm::SmallString<64> Buffer;
+  llvm::raw_svector_ostream OS(Buffer);
+  OS << "LIBCLANG FATAL ERROR: " << reason << "\n";
+  StringRef MessageStr = OS.str();
+  // Write the result out to stderr avoiding errs() because raw_ostreams can
+  // call report_fatal_error.
+  ::write(2, MessageStr.data(), MessageStr.size());
+  ::abort();
+}
+
 extern "C" {
 CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
                           int displayDiagnostics) {
@@ -2351,6 +2362,7 @@ CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
   {
     llvm::sys::ScopedLock L(EnableMultithreadingMutex);
     if (!EnabledMultithreading) {
+      llvm::install_fatal_error_handler(fatal_error_handler, 0);
       llvm::llvm_start_multithreaded();
       EnabledMultithreading = true;
     }
