@@ -46,6 +46,16 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/Threading.h"
 #include "llvm/Support/Compiler.h"
+#include <cstdlib>
+
+#if LLVM_ON_WIN32
+#include <windows.h>
+#include <io.h>
+#include <fcntl.h>
+#endif
+#if LLVM_ON_UNIX
+#include <unistd.h>
+#endif
 
 using namespace clang;
 using namespace clang::cxcursor;
