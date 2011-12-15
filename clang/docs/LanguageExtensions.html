@@ -357,20 +357,25 @@ is used in the file argument.</p>
   <dd>Defined when compiling with Clang</dd>
 
   <dt><code>__clang_major__</code></dt>
-  <dd>Defined to the major version number of Clang (e.g., the 2 in
-  2.0.1).</dd> 
+  <dd>Defined to the major marketing version number of Clang (e.g., the 
+  2 in 2.0.1).  Note that marketing version numbers should not be used to 
+  check for language features, as different vendors use different numbering
+  schemes.  Instead, use the <a href="#feature_check">feature checking
+  macros</a>.</dd> 
 
   <dt><code>__clang_minor__</code></dt>
   <dd>Defined to the minor version number of Clang (e.g., the 0 in
-  2.0.1).</dd> 
+  2.0.1).  Note that marketing version numbers should not be used to 
+  check for language features, as different vendors use different numbering
+  schemes.  Instead, use the <a href="#feature_check">feature checking
+  macros</a>.</dd> 
 
   <dt><code>__clang_patchlevel__</code></dt>
-  <dd>Defined to the patch level of Clang (e.g., the 1 in 2.0.1).</dd>
+  <dd>Defined to the marketing patch level of Clang (e.g., the 1 in 2.0.1).</dd>
 
   <dt><code>__clang_version__</code></dt>
-  <dd>Defined to a string that captures the Clang version, including
-  the Subversion tag or revision number, e.g., "1.5 (trunk
-  102332)".</dd> 
+  <dd>Defined to a string that captures the Clang marketing version, including
+  the Subversion tag or revision number, e.g., "1.5 (trunk 102332)".</dd> 
 </dl>
 
 <!-- ======================================================================= -->
