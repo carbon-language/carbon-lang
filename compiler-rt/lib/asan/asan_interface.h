@@ -40,9 +40,11 @@ extern "C" {
     const char *name;          // Name as a C string.
   };
 
-  // This function should be called by the instrumented code.
-  // gets an array of structures describing globals.
+  // These two functions should be called by the instrumented code.
+  // 'globals' is an array of structures describing 'n' globals.
   void __asan_register_globals(__asan_global *globals, size_t n)
+      __attribute__((visibility("default")));
+  void __asan_unregister_globals(__asan_global *globals, size_t n)
       __attribute__((visibility("default")));
 
   // These two functions are used by the instrumented code in the

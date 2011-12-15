@@ -106,10 +106,10 @@ bool DescribeAddrIfGlobal(uintptr_t addr) {
 // so we store the globals in a map.
 static void RegisterGlobal(const Global *g) {
   CHECK(asan_inited);
-  if (!FLAG_report_globals) return;
-  ScopedLock lock(&mu_for_globals);
+  CHECK(FLAG_report_globals);
   CHECK(AddrIsInMem(g->beg));
   CHECK(AddrIsAlignedByGranularity(g->beg));
+  CHECK(AddrIsAlignedByGranularity(g->size_with_redzone));
   PoisonRedZones(*g);
   ListOfGlobals *l =
       (ListOfGlobals*)allocator_for_globals.Allocate(sizeof(ListOfGlobals));
@@ -121,6 +121,18 @@ static void RegisterGlobal(const Global *g) {
            g->beg, g->size, g->name);
 }
 
+static void UnregisterGlobal(const Global *g) {
+  CHECK(asan_inited);
+  CHECK(FLAG_report_globals);
+  CHECK(AddrIsInMem(g->beg));
+  CHECK(AddrIsAlignedByGranularity(g->beg));
+  CHECK(AddrIsAlignedByGranularity(g->size_with_redzone));
+  PoisonShadow(g->beg, g->size_with_redzone, 0);
+  // We unpoison the shadow memory for the global but we do not remove it from
+  // the list because that would require O(n^2) time with the current list
+  // implementation. It might not be worth doing anyway.
+}
+
 }  // namespace __asan
 
 // ---------------------- Interface ---------------- {{{1
@@ -129,17 +141,31 @@ using namespace __asan;  // NOLINT
 // Register one global with a default redzone.
 void __asan_register_global(uintptr_t addr, size_t size,
                             const char *name) {
-  Global g;
-  g.beg = addr;
-  g.size = size;
-  g.size_with_redzone = GetAlignedSize(size) + kGlobalAndStackRedzone;
-  g.name = name;
-  RegisterGlobal(&g);
+  if (!FLAG_report_globals) return;
+  ScopedLock lock(&mu_for_globals);
+  Global *g = (Global *)allocator_for_globals.Allocate(sizeof(Global));
+  g->beg = addr;
+  g->size = size;
+  g->size_with_redzone = GetAlignedSize(size) + kGlobalAndStackRedzone;
+  g->name = name;
+  RegisterGlobal(g);
 }
 
 // Register an array of globals.
 void __asan_register_globals(__asan_global *globals, size_t n) {
+  if (!FLAG_report_globals) return;
+  ScopedLock lock(&mu_for_globals);
   for (size_t i = 0; i < n; i++) {
     RegisterGlobal(&globals[i]);
+  }
+}
+
+// Unregister an array of globals.
+// We must do it when a shared objects gets dlclosed.
+void __asan_unregister_globals(__asan_global *globals, size_t n) {
+  if (!FLAG_report_globals) return;
+  ScopedLock lock(&mu_for_globals);
+  for (size_t i = 0; i < n; i++) {
+    UnregisterGlobal(&globals[i]);
   }
 }
