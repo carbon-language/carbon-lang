@@ -319,4 +319,5 @@ unsigned HexagonRegisterInfo::getEHHandlerRegister() const {
   return 0;
 }
 
+#define GET_REGINFO_TARGET_DESC
 #include "HexagonGenRegisterInfo.inc"

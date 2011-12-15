@@ -18,6 +18,6 @@ BUILT_SOURCES = HexagonGenRegisterInfo.inc \
                 HexagonGenCallingConv.inc \
                 HexagonAsmPrinter.cpp
 
-DIRS = TargetInfo
+DIRS = TargetInfo MCTargetDesc
 
 include $(LEVEL)/Makefile.common

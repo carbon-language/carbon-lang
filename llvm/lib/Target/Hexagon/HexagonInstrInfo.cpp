@@ -23,7 +23,6 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
-#define GET_INSTRINFO_MC_DESC
 #define GET_INSTRINFO_CTOR
 #include "HexagonGenInstrInfo.inc"
 

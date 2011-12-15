@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "HexagonMCAsmInfo.h"
 #include "HexagonTargetMachine.h"
 #include "Hexagon.h"
 #include "HexagonISelLowering.h"
@@ -22,12 +21,6 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/TargetRegistry.h"
 #include <iostream>
-
-#define GET_REGINFO_MC_DESC
-#define GET_REGINFO_TARGET_DESC
-#include "HexagonGenRegisterInfo.inc"
-
-extern "C" void LLVMInitializeHexagonTargetMC() {}
 
 using namespace llvm;
 
@@ -47,9 +40,6 @@ int HexagonTargetMachineModule = 0;
 extern "C" void LLVMInitializeHexagonTarget() {
   // Register the target.
   RegisterTargetMachine<HexagonTargetMachine> X(TheHexagonTarget);
-
-  // Register the target asm info.
-  RegisterMCAsmInfo<HexagonMCAsmInfo> A(TheHexagonTarget);
 }
 
 
