@@ -7,10 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 #include <stdio.h>
+#include <stdint.h>
 
 // This simple program is to test the lldb Python API related to process.
 
 char my_char = 'u';
+char my_cstring[] = "lldb.SBProcess.ReadCStringFromMemory() works!";
+uint32_t my_uint32 = 12345;
 int my_int = 0;
 
 int main (int argc, char const *argv[])

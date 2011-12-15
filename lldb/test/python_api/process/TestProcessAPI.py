@@ -105,6 +105,51 @@ class ProcessAPITestCase(TestBase):
                     exe=False,
             startstr = 'x')
 
+        # Get the SBValue for the global variable 'my_cstring'.
+        val = frame.FindValue("my_cstring", lldb.eValueTypeVariableGlobal)
+        self.DebugSBValue(val)
+
+        # If the variable does not have a load address, there's no sense continuing.
+        if not val.GetLocation().startswith("0x"):
+            return
+
+        # OK, let's get the hex location of the variable.
+        location = int(val.GetLocation(), 16)
+
+        # Due to the typemap magic (see lldb.swig), we pass in 256 to read at most 256 bytes
+        # from the address, and expect to get a Python string as the result object!
+        cstring = process.ReadCStringFromMemory(location, 256, error)
+        if not error.Success():
+            self.fail("SBProcess.ReadCStringFromMemory() failed")
+        if self.TraceOn():
+            print "cstring read is:", cstring
+
+        self.expect(cstring, "Result from SBProcess.ReadCStringFromMemory() matches our expected output",
+                    exe=False,
+            startstr = 'lldb.SBProcess.ReadCStringFromMemory() works!')
+
+        # Get the SBValue for the global variable 'my_uint32'.
+        val = frame.FindValue("my_uint32", lldb.eValueTypeVariableGlobal)
+        self.DebugSBValue(val)
+
+        # If the variable does not have a load address, there's no sense continuing.
+        if not val.GetLocation().startswith("0x"):
+            return
+
+        # OK, let's get the hex location of the variable.
+        location = int(val.GetLocation(), 16)
+
+        # Due to the typemap magic (see lldb.swig), we pass in 4 to read at 4 bytes
+        # from the address, and expect to get an int as the result!
+        my_uint32 = process.ReadUnsignedFromMemory(location, 4, error)
+        if not error.Success():
+            self.fail("SBProcess.ReadCStringFromMemory() failed")
+        if self.TraceOn():
+            print "uint32 read is:", my_uint32
+
+        if my_uint32 != 12345:
+            self.fail("Result from SBProcess.ReadUnsignedFromMemory() does not match our expected output")
+
     def write_memory(self):
         """Test Python SBProcess.WriteMemory() API."""
         exe = os.path.join(os.getcwd(), "a.out")
