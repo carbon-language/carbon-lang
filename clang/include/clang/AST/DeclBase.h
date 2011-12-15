@@ -762,11 +762,11 @@ protected:
 
 /// \brief Determine whether two declarations declare the same entity.
 inline bool declaresSameEntity(const Decl *D1, const Decl *D2) {
-  if (D1 == D2)
-    return true;
-  
   if (!D1 || !D2)
     return false;
+  
+  if (D1 == D2)
+    return true;
   
   return D1->getCanonicalDecl() == D2->getCanonicalDecl();
 }
