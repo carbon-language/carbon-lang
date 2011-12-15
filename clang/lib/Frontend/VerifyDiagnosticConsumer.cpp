@@ -18,7 +18,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/DataTypes.h"
+#include <limits>
 
 using namespace clang;
 
