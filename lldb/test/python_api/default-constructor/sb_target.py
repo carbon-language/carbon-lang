@@ -25,6 +25,7 @@ def fuzz_obj(obj):
     obj.FindFirstType("dont_care")
     obj.FindTypes("dont_care")
     obj.FindFirstType(None)
+    obj.GetInstructions(lldb.SBAddress(), bytearray())
     obj.GetSourceManager()
     obj.FindGlobalVariables("my_global_var", 1)
     address = obj.ResolveLoadAddress(0xffff)
