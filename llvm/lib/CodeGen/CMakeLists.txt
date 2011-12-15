@@ -93,8 +93,10 @@ add_llvm_library(LLVMCodeGen
   StackSlotColoring.cpp
   StrongPHIElimination.cpp
   TailDuplication.cpp
+  TargetFrameLoweringImpl.cpp
   TargetInstrInfoImpl.cpp
   TargetLoweringObjectFileImpl.cpp
+  TargetOptionsImpl.cpp
   TwoAddressInstructionPass.cpp
   UnreachableBlockElim.cpp
   VirtRegMap.cpp

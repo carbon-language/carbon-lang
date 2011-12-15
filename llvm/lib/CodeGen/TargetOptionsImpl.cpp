@@ -1,4 +1,4 @@
-//===-- TargetOptions.cpp - Options that apply to all targets --------------==//
+//===-- TargetOptionsImpl.cpp - Options that apply to all targets ----------==//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -3,13 +3,11 @@ add_llvm_library(LLVMTarget
   Target.cpp
   TargetData.cpp
   TargetELFWriterInfo.cpp
-  TargetFrameLowering.cpp
   TargetInstrInfo.cpp
   TargetIntrinsicInfo.cpp
   TargetLibraryInfo.cpp
   TargetLoweringObjectFile.cpp
   TargetMachine.cpp
-  TargetOptions.cpp
   TargetRegisterInfo.cpp
   TargetSubtargetInfo.cpp
   )

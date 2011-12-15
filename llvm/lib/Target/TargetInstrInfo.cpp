@@ -13,7 +13,6 @@
 
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -73,23 +72,6 @@ TargetInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   return ItinData->getOperandLatency(DefClass, DefIdx, UseClass, UseIdx);
 }
 
-int
-TargetInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
-                                   SDNode *DefNode, unsigned DefIdx,
-                                   SDNode *UseNode, unsigned UseIdx) const {
-  if (!ItinData || ItinData->isEmpty())
-    return -1;
-
-  if (!DefNode->isMachineOpcode())
-    return -1;
-
-  unsigned DefClass = get(DefNode->getMachineOpcode()).getSchedClass();
-  if (!UseNode->isMachineOpcode())
-    return ItinData->getOperandCycle(DefClass, DefIdx);
-  unsigned UseClass = get(UseNode->getMachineOpcode()).getSchedClass();
-  return ItinData->getOperandLatency(DefClass, DefIdx, UseClass, UseIdx);
-}
-
 int TargetInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
                                      const MachineInstr *MI,
                                      unsigned *PredCost) const {
@@ -97,17 +79,6 @@ int TargetInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
     return 1;
 
   return ItinData->getStageLatency(MI->getDesc().getSchedClass());
-}
-
-int TargetInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
-                                     SDNode *N) const {
-  if (!ItinData || ItinData->isEmpty())
-    return 1;
-
-  if (!N->isMachineOpcode())
-    return 1;
-
-  return ItinData->getStageLatency(get(N->getMachineOpcode()).getSchedClass());
 }
 
 bool TargetInstrInfo::hasLowDefLatency(const InstrItineraryData *ItinData,

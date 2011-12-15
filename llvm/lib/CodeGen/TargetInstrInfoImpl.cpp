@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScoreboardHazardRecognizer.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -510,3 +511,32 @@ CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II,
   return (ScheduleHazardRecognizer *)
     new ScoreboardHazardRecognizer(II, DAG, "post-RA-sched");
 }
+
+int
+TargetInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
+                                   SDNode *DefNode, unsigned DefIdx,
+                                   SDNode *UseNode, unsigned UseIdx) const {
+  if (!ItinData || ItinData->isEmpty())
+    return -1;
+
+  if (!DefNode->isMachineOpcode())
+    return -1;
+
+  unsigned DefClass = get(DefNode->getMachineOpcode()).getSchedClass();
+  if (!UseNode->isMachineOpcode())
+    return ItinData->getOperandCycle(DefClass, DefIdx);
+  unsigned UseClass = get(UseNode->getMachineOpcode()).getSchedClass();
+  return ItinData->getOperandLatency(DefClass, DefIdx, UseClass, UseIdx);
+}
+
+int TargetInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
+                                     SDNode *N) const {
+  if (!ItinData || ItinData->isEmpty())
+    return 1;
+
+  if (!N->isMachineOpcode())
+    return 1;
+
+  return ItinData->getStageLatency(get(N->getMachineOpcode()).getSchedClass());
+}
+

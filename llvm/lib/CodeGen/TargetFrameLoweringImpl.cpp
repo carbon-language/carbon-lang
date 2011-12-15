@@ -1,4 +1,4 @@
-//===----- TargetFrameLowering.cpp - Implement target frame interface ------==//
+//===----- TargetFrameLoweringImpl.cpp - Implement target frame interface --==//
 //
 //                     The LLVM Compiler Infrastructure
 //
