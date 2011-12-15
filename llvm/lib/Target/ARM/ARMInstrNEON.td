@@ -5788,6 +5788,38 @@ defm : VFPDTAnyInstAlias<"vmov${p}", "$Vd, $Vm",
 
 // VCLT (register) is an assembler alias for VCGT w/ the operands reversed.
 // D-register versions.
+def : NEONInstAlias<"vcle${p}.s8 $Dd, $Dn, $Dm",
+                    (VCGEsv8i8 DPR:$Dd, DPR:$Dm, DPR:$Dn, pred:$p)>;
+def : NEONInstAlias<"vcle${p}.s16 $Dd, $Dn, $Dm",
+                    (VCGEsv4i16 DPR:$Dd, DPR:$Dm, DPR:$Dn, pred:$p)>;
+def : NEONInstAlias<"vcle${p}.s32 $Dd, $Dn, $Dm",
+                    (VCGEsv2i32 DPR:$Dd, DPR:$Dm, DPR:$Dn, pred:$p)>;
+def : NEONInstAlias<"vcle${p}.u8 $Dd, $Dn, $Dm",
+                    (VCGEuv8i8 DPR:$Dd, DPR:$Dm, DPR:$Dn, pred:$p)>;
+def : NEONInstAlias<"vcle${p}.u16 $Dd, $Dn, $Dm",
+                    (VCGEuv4i16 DPR:$Dd, DPR:$Dm, DPR:$Dn, pred:$p)>;
+def : NEONInstAlias<"vcle${p}.u32 $Dd, $Dn, $Dm",
+                    (VCGEuv2i32 DPR:$Dd, DPR:$Dm, DPR:$Dn, pred:$p)>;
+def : NEONInstAlias<"vcle${p}.f32 $Dd, $Dn, $Dm",
+                    (VCGEfd DPR:$Dd, DPR:$Dm, DPR:$Dn, pred:$p)>;
+// Q-register versions.
+def : NEONInstAlias<"vcle${p}.s8 $Qd, $Qn, $Qm",
+                    (VCGEsv16i8 QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
+def : NEONInstAlias<"vcle${p}.s16 $Qd, $Qn, $Qm",
+                    (VCGEsv8i16 QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
+def : NEONInstAlias<"vcle${p}.s32 $Qd, $Qn, $Qm",
+                    (VCGEsv4i32 QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
+def : NEONInstAlias<"vcle${p}.u8 $Qd, $Qn, $Qm",
+                    (VCGEuv16i8 QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
+def : NEONInstAlias<"vcle${p}.u16 $Qd, $Qn, $Qm",
+                    (VCGEuv8i16 QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
+def : NEONInstAlias<"vcle${p}.u32 $Qd, $Qn, $Qm",
+                    (VCGEuv4i32 QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
+def : NEONInstAlias<"vcle${p}.f32 $Qd, $Qn, $Qm",
+                    (VCGEfq QPR:$Qd, QPR:$Qm, QPR:$Qn, pred:$p)>;
+
+// VCLT (register) is an assembler alias for VCGT w/ the operands reversed.
+// D-register versions.
 def : NEONInstAlias<"vclt${p}.s8 $Dd, $Dn, $Dm",
                     (VCGTsv8i8 DPR:$Dd, DPR:$Dm, DPR:$Dn, pred:$p)>;
 def : NEONInstAlias<"vclt${p}.s16 $Dd, $Dn, $Dm",
