@@ -4674,6 +4674,15 @@ ExprResult Sema::ActOnFinishFullExpr(Expr *FE) {
   if (DiagnoseUnexpandedParameterPack(FullExpr.get()))
     return ExprError();
 
+  // Top-level message sends default to 'id' when we're in a debugger.
+  if (getLangOptions().DebuggerSupport &&
+      FullExpr.get()->getType() == Context.UnknownAnyTy &&
+      isa<ObjCMessageExpr>(FullExpr.get())) {
+    FullExpr = forceUnknownAnyToType(FullExpr.take(), Context.getObjCIdType());
+    if (FullExpr.isInvalid())
+      return ExprError();
+  }
+  
   FullExpr = CheckPlaceholderExpr(FullExpr.take());
   if (FullExpr.isInvalid())
     return ExprError();

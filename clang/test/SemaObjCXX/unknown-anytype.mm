@@ -3,6 +3,7 @@
 // rdar://problem/9416370
 namespace test0 {
   void test(id x) {
-    [x foo]; // expected-error {{no known method '-foo'; cast the message send to the method's return type}}
+    if ([x foo]) {} // expected-error {{no known method '-foo'; cast the message send to the method's return type}}
+    [x foo];
   }
 }

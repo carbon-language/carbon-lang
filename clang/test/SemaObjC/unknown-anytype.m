@@ -17,8 +17,13 @@ void test_unknown_anytype_receiver() {
   int *ip = [test0 getIntPtr];
   float *fp = [test1() getFloatPtr];
   double *dp = [test1() getSomePtr]; // okay: picks first method found
-  [[test0 unknownMethod] otherUnknownMethod]; // expected-error{{no known method '-otherUnknownMethod'; cast the message send to the method's return type}}
+  [[test0 unknownMethod] otherUnknownMethod]; 
   (void)(int)[[test0 unknownMethod] otherUnknownMethod];;
-  [[test1() unknownMethod] otherUnknownMethod]; // expected-error{{no known method '-otherUnknownMethod'; cast the message send to the method's return type}}
+  [[test1() unknownMethod] otherUnknownMethod];
   (void)(id)[[test1() unknownMethod] otherUnknownMethod];
+
+  if ([[test0 unknownMethod] otherUnknownMethod]) { // expected-error{{no known method '-otherUnknownMethod'; cast the message send to the method's return type}}
+  }
+  if ([[test1() unknownMethod] otherUnknownMethod]) { // expected-error{{no known method '-otherUnknownMethod'; cast the message send to the method's return type}}
+  }
 }
