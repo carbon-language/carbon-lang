@@ -1328,7 +1328,13 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
       if (IMPDecl->getInstanceMethod(Prop->getSetterName()))
         continue;
     }
-
+    if (isa<ObjCProtocolDecl>(Prop->getDeclContext())) {
+      // We won't auto-synthesize properties declared in protocols.
+      Diag(IMPDecl->getLocation(), 
+           diag::warn_auto_synthesizing_protocol_property);
+      Diag(Prop->getLocation(), diag::note_property_declare);
+      continue;
+    }
 
     // We use invalid SourceLocations for the synthesized ivars since they
     // aren't really synthesized at a particular location; they just exist.

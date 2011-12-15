@@ -528,6 +528,10 @@ def warn_owning_getter_rule : Warning<
   "property's synthesized getter follows Cocoa naming"
   " convention for returning 'owned' objects">,
   InGroup<DiagGroup<"objc-property-matches-cocoa-ownership-rule">>;
+def warn_auto_synthesizing_protocol_property :Warning<
+  "auto property synthesis will not synthesize property"
+  " declared in a protocol">,
+  InGroup<DiagGroup<"objc-protocol-property-synthesis">>;
 def warn_property_getter_owning_mismatch : Warning<
   "property declared as returning non-retained objects"
   "; getter returning retained objects">;

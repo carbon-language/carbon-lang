@@ -115,3 +115,16 @@
 @synthesize PROP=IVAR;
 @end
 
+// rdar://10567333
+@protocol MyProtocol 
+@property (nonatomic, strong) NSString *requiredString; // expected-note {{property declared here}}
+
+@optional
+@property (nonatomic, strong) NSString *optionalString;
+@end
+ 
+@interface MyClass <MyProtocol> 
+@end
+ 
+@implementation MyClass // expected-warning {{auto property synthesis will not synthesize property declared in a protocol}}
+@end
