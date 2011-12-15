@@ -6563,14 +6563,14 @@ let Constraints = "$src1 = $dst" in {
 multiclass SS41I_quaternary_int_avx<bits<8> opc, string OpcodeStr,
                                     RegisterClass RC, X86MemOperand x86memop,
                                     PatFrag mem_frag, Intrinsic IntId> {
-  def rr : I<opc, MRMSrcReg, (outs RC:$dst),
+  def rr : Ii8<opc, MRMSrcReg, (outs RC:$dst),
                   (ins RC:$src1, RC:$src2, RC:$src3),
                   !strconcat(OpcodeStr,
                     "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
                   [(set RC:$dst, (IntId RC:$src1, RC:$src2, RC:$src3))],
                   SSEPackedInt>, OpSize, TA, VEX_4V, VEX_I8IMM;
 
-  def rm : I<opc, MRMSrcMem, (outs RC:$dst),
+  def rm : Ii8<opc, MRMSrcMem, (outs RC:$dst),
                   (ins RC:$src1, x86memop:$src2, RC:$src3),
                   !strconcat(OpcodeStr,
                     "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),

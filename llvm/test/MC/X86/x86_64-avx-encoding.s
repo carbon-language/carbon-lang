@@ -3346,3 +3346,10 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 _foo:
   nop
   vpshufb _foo(%rip), %xmm0, %xmm0
+
+// CHECK: vblendvps %ymm1, _foo2(%rip), %ymm0, %ymm0
+// CHECK: encoding: [0xc4,0xe3,0x7d,0x4a,0x05,A,A,A,A,0x10]
+// CHECK: fixup A - offset: 5, value: _foo2-5
+_foo2:
+  nop
+  vblendvps %ymm1, _foo2(%rip), %ymm0, %ymm0
