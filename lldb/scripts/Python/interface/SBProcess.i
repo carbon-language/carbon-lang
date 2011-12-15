@@ -215,7 +215,7 @@ public:
     
     # Read a C string of at most 256 bytes from address '0x1000' 
     error = lldb.SBError()
-    cstring = process.ReadMemory(0x1000, 256, error)
+    cstring = process.ReadCStringFromMemory(0x1000, 256, error)
     if error.Success():
         print 'cstring: ', cstring
     else
