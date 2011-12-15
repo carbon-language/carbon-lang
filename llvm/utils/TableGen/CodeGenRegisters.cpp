@@ -775,7 +775,8 @@ void CodeGenRegBank::inferCommonSubClass(CodeGenRegisterClass *RC) {
     CodeGenRegister::Set Intersection;
     std::set_intersection(Memb1.begin(), Memb1.end(),
                           Memb2.begin(), Memb2.end(),
-                          std::inserter(Intersection, Intersection.begin()));
+                          std::inserter(Intersection, Intersection.begin()),
+                          CodeGenRegister::Less());
 
     // Skip disjoint class pairs.
     if (Intersection.empty())
