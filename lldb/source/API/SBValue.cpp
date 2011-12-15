@@ -404,9 +404,8 @@ lldb::SBValue
 SBValue::CreateValueFromAddress(const char* name, lldb::addr_t address, SBType type)
 {
     lldb::SBValue result;
-    if (m_opaque_sp)
+    if (m_opaque_sp && type.IsValid() && type.GetPointerType().IsValid())
     {
-        
         SBType real_type(type.GetPointerType());
         
         lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&address,sizeof(lldb::addr_t)));

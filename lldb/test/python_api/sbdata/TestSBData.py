@@ -112,6 +112,11 @@ class SBDataAPICase(TestBase):
         foobar_addr = star_foobar.GetLoadAddress()
         foobar_addr += 12
 
+        # http://llvm.org/bugs/show_bug.cgi?id=11579
+        # lldb::SBValue::CreateValueFromAddress does not verify SBType::GetPointerType succeeds
+        # This should not crash LLDB.
+        nothing = foobar.CreateValueFromAddress("nothing", foobar_addr, star_foobar.GetType().GetBasicType(lldb.eBasicTypeInvalid))
+
         new_foobar = foobar.CreateValueFromAddress("f00", foobar_addr, star_foobar.GetType())
 
         if self.TraceOn():
