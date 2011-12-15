@@ -4171,19 +4171,6 @@ typedef enum {
   CXIdxEntity_TemplateSpecialization = 3
 } CXIdxEntityCXXTemplateKind;
 
-typedef struct {
-  CXIdxEntityKind kind;
-  CXIdxEntityCXXTemplateKind templateKind;
-  CXIdxEntityLanguage lang;
-  const char *name;
-  const char *USR;
-  CXCursor cursor;
-} CXIdxEntityInfo;
-
-typedef struct {
-  CXCursor cursor;
-} CXIdxContainerInfo;
-
 typedef enum {
   CXIdxAttr_Unexposed     = 0,
   CXIdxAttr_IBAction      = 1,
@@ -4196,6 +4183,21 @@ typedef struct {
   CXCursor cursor;
   CXIdxLoc loc;
 } CXIdxAttrInfo;
+
+typedef struct {
+  CXIdxEntityKind kind;
+  CXIdxEntityCXXTemplateKind templateKind;
+  CXIdxEntityLanguage lang;
+  const char *name;
+  const char *USR;
+  CXCursor cursor;
+  const CXIdxAttrInfo *const *attributes;
+  unsigned numAttributes;
+} CXIdxEntityInfo;
+
+typedef struct {
+  CXCursor cursor;
+} CXIdxContainerInfo;
 
 typedef struct {
   const CXIdxAttrInfo *attrInfo;

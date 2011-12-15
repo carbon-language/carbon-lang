@@ -1684,6 +1684,7 @@ static void printEntityInfo(const char *cb,
                             const CXIdxEntityInfo *info) {
   const char *name;
   IndexData *index_data;
+  unsigned i;
   index_data = (IndexData *)client_data;
   printCheck(index_data);
 
@@ -1701,6 +1702,12 @@ static void printEntityInfo(const char *cb,
   printf(" | name: %s", name);
   printf(" | USR: %s", info->USR);
   printf(" | lang: %s", getEntityLanguageString(info->lang));
+
+  for (i = 0; i != info->numAttributes; ++i) {
+    const CXIdxAttrInfo *Attr = info->attributes[i];
+    printf("     <attribute>: ");
+    PrintCursor(Attr->cursor);
+  }
 }
 
 static void printBaseClassInfo(CXClientData client_data,
