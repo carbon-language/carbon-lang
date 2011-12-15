@@ -224,7 +224,15 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
 
 void ObjCInterfaceDecl::allocateDefinitionData() {
   assert(!hasDefinition() && "ObjC class already has a definition");
-  Definition = new (getASTContext()) DefinitionData();  
+  Definition.setPointer(new (getASTContext()) DefinitionData());
+  Definition.setInt(true);
+  
+  // Update all of the declarations with a pointer to the definition.
+  for (redecl_iterator RD = redecls_begin(), RDEnd = redecls_end();
+       RD != RDEnd; ++RD) {
+    if (*RD != this)
+      RD->Definition.setPointer(Definition.getPointer());
+  }
 }
 
 void ObjCInterfaceDecl::startDefinition() {

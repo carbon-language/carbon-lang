@@ -540,7 +540,8 @@ public:
 ///   Unlike C++, ObjC is a single-rooted class model. In Cocoa, classes
 ///   typically inherit from NSObject (an exception is NSProxy).
 ///
-class ObjCInterfaceDecl : public ObjCContainerDecl {
+class ObjCInterfaceDecl : public ObjCContainerDecl
+                        , public Redeclarable<ObjCInterfaceDecl> {
   /// TypeForDecl - This indicates the Type object that represents this
   /// TypeDecl.  It is a cache maintained by ASTContext::getObjCInterfaceType
   mutable const Type *TypeForDecl;
@@ -584,7 +585,10 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
 
   /// \brief Contains a pointer to the data associated with this class,
   /// which will be NULL if this class has not yet been defined.
-  DefinitionData *Definition;
+  ///
+  /// The boolean value indicates whether this particular declaration is 
+  /// also the definition.
+  llvm::PointerIntPair<DefinitionData *, 1, bool> Definition;
 
   /// \brief The location of the last location in this declaration, e.g.,
   /// the '>', '}', or identifier.
@@ -598,13 +602,18 @@ class ObjCInterfaceDecl : public ObjCContainerDecl {
   bool InitiallyForwardDecl : 1;
 
   DefinitionData &data() const {
-    assert(Definition != 0 && "Declaration is not a definition!");
-    return *Definition;
+    assert(Definition.getPointer() != 0 && "Declaration is not a definition!");
+    return *Definition.getPointer();
   }
 
   /// \brief Allocate the definition data for this class.
   void allocateDefinitionData();
   
+  typedef Redeclarable<ObjCInterfaceDecl> redeclarable_base;
+  virtual ObjCInterfaceDecl *getNextRedeclaration() { 
+    return RedeclLink.getNext(); 
+  }
+
 public:
   static ObjCInterfaceDecl *Create(ASTContext &C, DeclContext *DC,
                                    SourceLocation atLoc,
@@ -771,11 +780,15 @@ public:
 
   /// \brief Determine whether this declaration is a forward declaration of
   /// the class.
-  bool isForwardDecl() const { return Definition == 0; }
+  bool isForwardDecl() const { return !Definition.getInt(); }
 
+  /// \brief Determine whether this particular declaration of this class is
+  /// actually also a definition.
+  bool isThisDeclarationADefinition() const { return Definition.getInt(); }
+                          
   /// \brief Determine whether this class has been defined.
-  bool hasDefinition() const { return Definition != 0; }
-  
+  bool hasDefinition() const { return Definition.getPointer() != 0; }
+                        
   /// \brief Retrieve the definition of this class, or NULL if this class 
   /// has been forward-declared (with @class) but not yet defined (with 
   /// @interface).
@@ -895,6 +908,22 @@ public:
   bool ClassImplementsProtocol(ObjCProtocolDecl *lProto,
                                bool lookupCategory,
                                bool RHSIsQualifiedID = false);
+
+  typedef redeclarable_base::redecl_iterator redecl_iterator;
+  redecl_iterator redecls_begin() const {
+    return redeclarable_base::redecls_begin();
+  }
+  redecl_iterator redecls_end() const {
+    return redeclarable_base::redecls_end();
+  }
+
+  /// Retrieves the canonical declaration of this Objective-C class.
+  ObjCInterfaceDecl *getCanonicalDecl() {
+    return getFirstDeclaration();
+  }
+  const ObjCInterfaceDecl *getCanonicalDecl() const {
+    return getFirstDeclaration();
+  }
 
   // Low-level accessor
   const Type *getTypeForDecl() const { return TypeForDecl; }

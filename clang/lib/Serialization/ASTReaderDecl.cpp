@@ -554,6 +554,7 @@ void ASTDeclReader::VisitObjCContainerDecl(ObjCContainerDecl *CD) {
 }
 
 void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
+  VisitRedeclarable(ID);
   VisitObjCContainerDecl(ID);
   ID->setTypeForDecl(Reader.readType(F, Record, Idx).getTypePtrOrNull());
   
@@ -618,10 +619,9 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
       // pending references were linked.
       Reader.PendingForwardRefs.erase(ID);
 #endif
-    
     } else if (Def) {
-      if (Def->Definition) {
-        ID->Definition = Def->Definition;
+      if (Def->Definition.getPointer()) {
+        ID->Definition.setPointer(Def->Definition.getPointer());
       } else {
         // The definition is still initializing.
         Reader.PendingForwardRefs[Def].push_back(ID);
@@ -2067,6 +2067,19 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
       cast<VarDecl>(D)->getMemberSpecializationInfo()->setPointOfInstantiation(
           Reader.ReadSourceLocation(ModuleFile, Record, Idx));
       break;
+    
+    case UPD_OBJC_SET_CLASS_DEFINITIONDATA: {
+      ObjCInterfaceDecl *ID = cast<ObjCInterfaceDecl>(D);
+      ObjCInterfaceDecl *Def
+        = Reader.ReadDeclAs<ObjCInterfaceDecl>(ModuleFile, Record, Idx);
+      if (Def->Definition.getPointer()) {
+        ID->Definition.setPointer(Def->Definition.getPointer());
+      } else {
+        // The definition is still initializing.
+        Reader.PendingForwardRefs[Def].push_back(ID);
+      }
+      break;
+    }
     }
   }
 }
