@@ -78,6 +78,22 @@ entry:
   ret i32 %shr.i
 }
 
+; PR11570
+define void @float_call_signbit(double %n) {
+entry:
+; FIXME: This should also use movmskps; we don't form the FGETSIGN node
+; in this case, though.
+; CHECK: float_call_signbit:
+; CHECK: movd %xmm0, %rdi
+; FIXME
+  %t0 = bitcast double %n to i64
+  %tobool.i.i.i.i = icmp slt i64 %t0, 0
+  tail call void @float_call_signbit_callee(i1 zeroext %tobool.i.i.i.i)
+  ret void
+}
+declare void @float_call_signbit_callee(i1 zeroext)
+
+
 ; rdar://10247336
 ; movmskp{s|d} only set low 4/2 bits, high bits are known zero
 
