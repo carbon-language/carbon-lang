@@ -58,9 +58,10 @@ SValBuilder *ento::createSimpleSValBuilder(llvm::BumpPtrAllocator &alloc,
 // Transfer function for Casts.
 //===----------------------------------------------------------------------===//
 
-SVal SimpleSValBuilder::dispatchCast(SVal val, QualType castTy) {
-  return isa<Loc>(val) ? evalCastFromLoc(cast<Loc>(val), castTy)
-                       : evalCastFromNonLoc(cast<NonLoc>(val), castTy);
+SVal SimpleSValBuilder::dispatchCast(SVal Val, QualType CastTy) {
+  assert(isa<Loc>(&Val) || isa<NonLoc>(&Val));
+  return isa<Loc>(Val) ? evalCastFromLoc(cast<Loc>(Val), CastTy)
+                       : evalCastFromNonLoc(cast<NonLoc>(Val), CastTy);
 }
 
 SVal SimpleSValBuilder::evalCastFromNonLoc(NonLoc val, QualType castTy) {

@@ -227,7 +227,6 @@ SVal StoreManager::CastRetrievedVal(SVal V, const TypedValueRegion *R,
     return V;
   }
   
-  assert(isa<Loc>(&V) || isa<NonLoc>(&V));
   return svalBuilder.dispatchCast(V, castTy);
 }
 

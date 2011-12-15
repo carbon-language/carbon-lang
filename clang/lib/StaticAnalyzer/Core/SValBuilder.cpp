@@ -327,9 +327,5 @@ SVal SValBuilder::evalCast(SVal val, QualType castTy, QualType originalTy) {
     return R ? SVal(loc::MemRegionVal(R)) : UnknownVal();
   }
 
-  // Check for casts from integers to integers.
-  if (castTy->isIntegerType() && originalTy->isIntegerType())
-    return dispatchCast(val, castTy);
-
   return dispatchCast(val, castTy);
 }
