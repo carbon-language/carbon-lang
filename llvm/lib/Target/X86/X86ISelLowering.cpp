@@ -7597,7 +7597,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op,
   LLVMContext *Context = DAG.getContext();
 
   // Build some magic constants.
-  std::vector<Constant*> CV0;
+  SmallVector<Constant*,4> CV0;
   CV0.push_back(ConstantInt::get(*Context, APInt(32, 0x45300000)));
   CV0.push_back(ConstantInt::get(*Context, APInt(32, 0x43300000)));
   CV0.push_back(ConstantInt::get(*Context, APInt(32, 0)));
@@ -7605,7 +7605,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op,
   Constant *C0 = ConstantVector::get(CV0);
   SDValue CPIdx0 = DAG.getConstantPool(C0, getPointerTy(), 16);
 
-  std::vector<Constant*> CV1;
+  SmallVector<Constant*,2> CV1;
   CV1.push_back(
     ConstantFP::get(*Context, APFloat(APInt(64, 0x4530000000000000ULL))));
   CV1.push_back(
@@ -7885,17 +7885,13 @@ SDValue X86TargetLowering::LowerFABS(SDValue Op,
   EVT EltVT = VT;
   if (VT.isVector())
     EltVT = VT.getVectorElementType();
-  std::vector<Constant*> CV;
+  SmallVector<Constant*,4> CV;
   if (EltVT == MVT::f64) {
     Constant *C = ConstantFP::get(*Context, APFloat(APInt(64, ~(1ULL << 63))));
-    CV.push_back(C);
-    CV.push_back(C);
+    CV.assign(2, C);
   } else {
     Constant *C = ConstantFP::get(*Context, APFloat(APInt(32, ~(1U << 31))));
-    CV.push_back(C);
-    CV.push_back(C);
-    CV.push_back(C);
-    CV.push_back(C);
+    CV.assign(4, C);
   }
   Constant *C = ConstantVector::get(CV);
   SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
@@ -7963,7 +7959,7 @@ SDValue X86TargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
   // type, and that won't be f80 since that is not custom lowered.
 
   // First get the sign bit of second operand.
-  std::vector<Constant*> CV;
+  SmallVector<Constant*,4> CV;
   if (SrcVT == MVT::f64) {
     CV.push_back(ConstantFP::get(*Context, APFloat(APInt(64, 1ULL << 63))));
     CV.push_back(ConstantFP::get(*Context, APFloat(APInt(64, 0))));
