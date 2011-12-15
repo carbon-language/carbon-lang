@@ -1701,7 +1701,7 @@ bool Sema::IsSimplyAccessible(NamedDecl *Decl, DeclContext *Ctx) {
       return false;
     
     // If we're inside the same interface that owns the ivar, we're fine.
-    if (ClassOfMethodDecl == Ivar->getContainingInterface())
+    if (declaresSameEntity(ClassOfMethodDecl, Ivar->getContainingInterface()))
       return true;
     
     // If the ivar is private, it's inaccessible.

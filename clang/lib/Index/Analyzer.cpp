@@ -205,7 +205,7 @@ public:
     assert(MsgD);
 
     // Same interface ? We have a winner!
-    if (MsgD == IFace)
+    if (declaresSameEntity(MsgD, IFace))
       return true;
 
     // If the message interface is a superclass of the original interface,
@@ -220,7 +220,7 @@ public:
     if (IFace) {
       Selector Sel = Msg->getSelector();
       for (ObjCInterfaceDecl *Cls = MsgD; Cls; Cls = Cls->getSuperClass()) {
-        if (Cls == IFace)
+        if (declaresSameEntity(Cls, IFace))
           return true;
         if (Cls->getMethod(Sel, IsInstanceMethod))
           return false;

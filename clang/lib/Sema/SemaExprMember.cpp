@@ -1150,8 +1150,8 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
       }
 
       if (IV->getAccessControl() == ObjCIvarDecl::Private) {
-        if (ClassDeclared != IDecl ||
-            ClassOfMethodDecl != ClassDeclared)
+        if (!declaresSameEntity(ClassDeclared, IDecl) ||
+            !declaresSameEntity(ClassOfMethodDecl, ClassDeclared))
           Diag(MemberLoc, diag::error_private_ivar_access)
             << IV->getDeclName();
       } else if (!IDecl->isSuperClassOf(ClassOfMethodDecl))

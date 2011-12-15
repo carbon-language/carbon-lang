@@ -5938,7 +5938,7 @@ Stmt *RewriteObjCFragileABI::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
                                               OldRange.getEnd(),
                                               castExpr);
       if (IV->isFreeIvar() &&
-          CurMethodDef->getClassInterface() == iFaceDecl->getDecl()) {
+          declaresSameEntity(CurMethodDef->getClassInterface(), iFaceDecl->getDecl())) {
         MemberExpr *ME = new (Context) MemberExpr(PE, true, D,
                                                   IV->getLocation(),
                                                   D->getType(),

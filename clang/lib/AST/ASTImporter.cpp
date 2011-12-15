@@ -3373,7 +3373,7 @@ Decl *ASTNodeImporter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
     if ((Super && !Impl->getSuperClass()) ||
         (!Super && Impl->getSuperClass()) ||
         (Super && Impl->getSuperClass() && 
-         Super->getCanonicalDecl() != Impl->getSuperClass())) {
+         !declaresSameEntity(Super->getCanonicalDecl(), Impl->getSuperClass()))) {
         Importer.ToDiag(Impl->getLocation(), 
                         diag::err_odr_objc_superclass_inconsistent)
           << Iface->getDeclName();

@@ -2300,7 +2300,8 @@ bool Sema::FunctionArgTypesAreEqual(const FunctionProtoType *OldType,
                  ToType->getAs<ObjCObjectPointerType>()) {
         if (const ObjCObjectPointerType *PTFr =
               FromType->getAs<ObjCObjectPointerType>())
-          if (PTTo->getInterfaceDecl() == PTFr->getInterfaceDecl())
+          if (declaresSameEntity(PTTo->getInterfaceDecl(), 
+                                 PTFr->getInterfaceDecl()))
             continue;
       }
       if (ArgPos) *ArgPos = O - OldType->arg_type_begin();

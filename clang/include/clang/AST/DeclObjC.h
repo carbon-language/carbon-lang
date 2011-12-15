@@ -742,7 +742,7 @@ public:
   bool isSuperClassOf(const ObjCInterfaceDecl *I) const {
     // If RHS is derived from LHS it is OK; else it is not OK.
     while (I != NULL) {
-      if (this == I)
+      if (declaresSameEntity(this, I))
         return true;
       I = I->getSuperClass();
     }

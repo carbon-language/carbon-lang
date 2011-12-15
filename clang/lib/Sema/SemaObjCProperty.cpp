@@ -690,7 +690,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       // Note! I deliberately want it to fall thru so, we have a
       // a property implementation and to avoid future warnings.
     } else if (getLangOptions().ObjCNonFragileABI &&
-               ClassDeclared != IDecl) {
+               !declaresSameEntity(ClassDeclared, IDecl)) {
       Diag(PropertyLoc, diag::error_ivar_in_superclass_use)
       << property->getDeclName() << Ivar->getDeclName()
       << ClassDeclared->getDeclName();
@@ -870,7 +870,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       }
       // Issue diagnostics only if Ivar belongs to current class.
       if (Ivar && Ivar->getSynthesize() && 
-          IC->getClassInterface() == ClassDeclared) {
+          declaresSameEntity(IC->getClassInterface(), ClassDeclared)) {
         Diag(Ivar->getLocation(), diag::err_undeclared_var_use) 
         << PropertyId;
         Ivar->setInvalidDecl();
