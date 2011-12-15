@@ -61,7 +61,7 @@ namespace {
     void ExpandVST(MachineBasicBlock::iterator &MBBI);
     void ExpandLaneOp(MachineBasicBlock::iterator &MBBI);
     void ExpandVTBL(MachineBasicBlock::iterator &MBBI,
-                    unsigned Opc, bool IsExt, unsigned NumRegs);
+                    unsigned Opc, bool IsExt);
     void ExpandMOV32BitImm(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator &MBBI);
   };
@@ -637,7 +637,7 @@ void ARMExpandPseudo::ExpandLaneOp(MachineBasicBlock::iterator &MBBI) {
 /// ExpandVTBL - Translate VTBL and VTBX pseudo instructions with Q or QQ
 /// register operands to real instructions with D register operands.
 void ARMExpandPseudo::ExpandVTBL(MachineBasicBlock::iterator &MBBI,
-                                 unsigned Opc, bool IsExt, unsigned NumRegs) {
+                                 unsigned Opc, bool IsExt) {
   MachineInstr &MI = *MBBI;
   MachineBasicBlock &MBB = *MI.getParent();
 
@@ -653,11 +653,7 @@ void ARMExpandPseudo::ExpandVTBL(MachineBasicBlock::iterator &MBBI,
   unsigned SrcReg = MI.getOperand(OpIdx++).getReg();
   unsigned D0, D1, D2, D3;
   GetDSubRegs(SrcReg, SingleSpc, TRI, D0, D1, D2, D3);
-  MIB.addReg(D0).addReg(D1);
-  if (NumRegs > 2)
-    MIB.addReg(D2);
-  if (NumRegs > 3)
-    MIB.addReg(D3);
+  MIB.addReg(D0);
 
   // Copy the other source register operand.
   MIB.addOperand(MI.getOperand(OpIdx++));
@@ -1325,12 +1321,12 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       ExpandLaneOp(MBBI);
       return true;
 
-    case ARM::VTBL2Pseudo: ExpandVTBL(MBBI, ARM::VTBL2, false, 2); return true;
-    case ARM::VTBL3Pseudo: ExpandVTBL(MBBI, ARM::VTBL3, false, 3); return true;
-    case ARM::VTBL4Pseudo: ExpandVTBL(MBBI, ARM::VTBL4, false, 4); return true;
-    case ARM::VTBX2Pseudo: ExpandVTBL(MBBI, ARM::VTBX2, true, 2); return true;
-    case ARM::VTBX3Pseudo: ExpandVTBL(MBBI, ARM::VTBX3, true, 3); return true;
-    case ARM::VTBX4Pseudo: ExpandVTBL(MBBI, ARM::VTBX4, true, 4); return true;
+    case ARM::VTBL2Pseudo: ExpandVTBL(MBBI, ARM::VTBL2, false); return true;
+    case ARM::VTBL3Pseudo: ExpandVTBL(MBBI, ARM::VTBL3, false); return true;
+    case ARM::VTBL4Pseudo: ExpandVTBL(MBBI, ARM::VTBL4, false); return true;
+    case ARM::VTBX2Pseudo: ExpandVTBL(MBBI, ARM::VTBX2, true); return true;
+    case ARM::VTBX3Pseudo: ExpandVTBL(MBBI, ARM::VTBX3, true); return true;
+    case ARM::VTBX4Pseudo: ExpandVTBL(MBBI, ARM::VTBX4, true); return true;
   }
 
   return false;

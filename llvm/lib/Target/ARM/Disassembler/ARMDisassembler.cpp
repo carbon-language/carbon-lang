@@ -2644,7 +2644,6 @@ static DecodeStatus DecodeTBLInstruction(llvm::MCInst &Inst, unsigned Insn,
   unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
   Rm |= fieldFromInstruction32(Insn, 5, 1) << 4;
   unsigned op = fieldFromInstruction32(Insn, 6, 1);
-  unsigned length = fieldFromInstruction32(Insn, 8, 2) + 1;
 
   if (!Check(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)))
     return MCDisassembler::Fail;
@@ -2653,10 +2652,8 @@ static DecodeStatus DecodeTBLInstruction(llvm::MCInst &Inst, unsigned Insn,
     return MCDisassembler::Fail; // Writeback
   }
 
-  for (unsigned i = 0; i < length; ++i) {
-    if (!Check(S, DecodeDPRRegisterClass(Inst, (Rn+i)%32, Address, Decoder)))
+  if (!Check(S, DecodeDPRRegisterClass(Inst, Rn, Address, Decoder)))
     return MCDisassembler::Fail;
-  }
 
   if (!Check(S, DecodeDPRRegisterClass(Inst, Rm, Address, Decoder)))
     return MCDisassembler::Fail;
