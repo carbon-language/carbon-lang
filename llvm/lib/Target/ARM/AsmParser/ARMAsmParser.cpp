@@ -336,6 +336,7 @@ class ARMOperand : public MCParsedAsmOperand {
       unsigned RegNum;
       unsigned Count;
       unsigned LaneIndex;
+      bool isDoubleSpaced;
     } VectorList;
 
     struct {
@@ -1074,31 +1075,35 @@ public:
   bool isProcIFlags() const { return Kind == k_ProcIFlags; }
 
   // NEON operands.
+  bool isSingleSpacedVectorList() const {
+    return Kind == k_VectorList && !VectorList.isDoubleSpaced;
+  }
+  bool isDoubleSpacedVectorList() const {
+    return Kind == k_VectorList && VectorList.isDoubleSpaced;
+  }
   bool isVecListOneD() const {
-    if (Kind != k_VectorList) return false;
+    if (!isSingleSpacedVectorList()) return false;
     return VectorList.Count == 1;
   }
 
   bool isVecListTwoD() const {
-    if (Kind != k_VectorList) return false;
+    if (!isSingleSpacedVectorList()) return false;
     return VectorList.Count == 2;
   }
 
   bool isVecListThreeD() const {
-    if (Kind != k_VectorList) return false;
+    if (!isSingleSpacedVectorList()) return false;
     return VectorList.Count == 3;
   }
 
   bool isVecListFourD() const {
-    if (Kind != k_VectorList) return false;
+    if (!isSingleSpacedVectorList()) return false;
     return VectorList.Count == 4;
   }
 
   bool isVecListTwoQ() const {
-    if (Kind != k_VectorList) return false;
-    //FIXME: We haven't taught the parser to handle by-two register lists
-    // yet, so don't pretend to know one.
-    return VectorList.Count == 2 && false;
+    if (!isDoubleSpacedVectorList()) return false;
+    return VectorList.Count == 2;
   }
 
   bool isVecListOneDAllLanes() const {
@@ -1948,10 +1953,11 @@ public:
   }
 
   static ARMOperand *CreateVectorList(unsigned RegNum, unsigned Count,
-                                      SMLoc S, SMLoc E) {
+                                      bool isDoubleSpaced, SMLoc S, SMLoc E) {
     ARMOperand *Op = new ARMOperand(k_VectorList);
     Op->VectorList.RegNum = RegNum;
     Op->VectorList.Count = Count;
+    Op->VectorList.isDoubleSpaced = isDoubleSpaced;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -2774,7 +2780,7 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
         assert(0 && "unexpected lane kind!");
       case NoLanes:
         E = Parser.getTok().getLoc();
-        Operands.push_back(ARMOperand::CreateVectorList(Reg, 1, S, E));
+        Operands.push_back(ARMOperand::CreateVectorList(Reg, 1, false, S, E));
         break;
       case AllLanes:
         E = Parser.getTok().getLoc();
@@ -2797,7 +2803,7 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
         assert(0 && "unexpected lane kind!");
       case NoLanes:
         E = Parser.getTok().getLoc();
-        Operands.push_back(ARMOperand::CreateVectorList(Reg, 2, S, E));
+        Operands.push_back(ARMOperand::CreateVectorList(Reg, 2, false, S, E));
         break;
       case AllLanes:
         E = Parser.getTok().getLoc();
@@ -2826,11 +2832,14 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     return MatchOperand_ParseFail;
   }
   unsigned Count = 1;
+  unsigned Spacing = 0;
   unsigned FirstReg = Reg;
   // The list is of D registers, but we also allow Q regs and just interpret
   // them as the two D sub-registers.
   if (ARMMCRegisterClasses[ARM::QPRRegClassID].contains(Reg)) {
     FirstReg = Reg = getDRegFromQReg(Reg);
+    Spacing = 1; // double-spacing requires explicit D registers, otherwise
+                 // it's ambiguous with four-register single spaced.
     ++Reg;
     ++Count;
   }
@@ -2840,6 +2849,13 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   while (Parser.getTok().is(AsmToken::Comma) ||
          Parser.getTok().is(AsmToken::Minus)) {
     if (Parser.getTok().is(AsmToken::Minus)) {
+      if (!Spacing)
+        Spacing = 1; // Register range implies a single spaced list.
+      else if (Spacing == 2) {
+        Error(Parser.getTok().getLoc(),
+              "sequential registers in double spaced list");
+        return MatchOperand_ParseFail;
+      }
       Parser.Lex(); // Eat the minus.
       SMLoc EndLoc = Parser.getTok().getLoc();
       int EndReg = tryParseRegister();
@@ -2895,6 +2911,13 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     // The list is of D registers, but we also allow Q regs and just interpret
     // them as the two D sub-registers.
     if (ARMMCRegisterClasses[ARM::QPRRegClassID].contains(Reg)) {
+      if (!Spacing)
+        Spacing = 1; // Register range implies a single spaced list.
+      else if (Spacing == 2) {
+        Error(RegLoc,
+              "invalid register in double-spaced list (must be 'D' register')");
+        return MatchOperand_ParseFail;
+      }
       Reg = getDRegFromQReg(Reg);
       if (Reg != OldReg + 1) {
         Error(RegLoc, "non-contiguous register range");
@@ -2914,8 +2937,14 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       }
       continue;
     }
-    // Normal D register. Just check that it's contiguous and keep going.
-    if (Reg != OldReg + 1) {
+    // Normal D register.
+    // Figure out the register spacing (single or double) of the list if
+    // we don't know it already.
+    if (!Spacing)
+      Spacing = 1 + (Reg == OldReg + 2);
+
+    // Just check that it's contiguous and keep going.
+    if (Reg != OldReg + Spacing) {
       Error(RegLoc, "non-contiguous register range");
       return MatchOperand_ParseFail;
     }
@@ -2928,6 +2957,11 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       return MatchOperand_ParseFail;
     if (NextLaneKind != LaneKind || LaneIndex != NextLaneIndex) {
       Error(EndLoc, "mismatched lane index in register list");
+      return MatchOperand_ParseFail;
+    }
+    if (Spacing == 2 && LaneKind != NoLanes) {
+      Error(EndLoc,
+            "lane index specfier invalid in double spaced register list");
       return MatchOperand_ParseFail;
     }
   }
@@ -2943,7 +2977,8 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   default:
     assert(0 && "unexpected lane kind in register list.");
   case NoLanes:
-    Operands.push_back(ARMOperand::CreateVectorList(FirstReg, Count, S, E));
+    Operands.push_back(ARMOperand::CreateVectorList(FirstReg, Count,
+                                                    (Spacing == 2), S, E));
     break;
   case AllLanes:
     Operands.push_back(ARMOperand::CreateVectorListAllLanes(FirstReg, Count,
