@@ -49,6 +49,9 @@ class PPCHazardRecognizer970 : public ScheduleHazardRecognizer {
   // HasCTRSet - If the CTR register is set in this group, disallow BCTRL.
   bool HasCTRSet;
 
+  // Was the last instruction issued a BL8_ELF
+  bool LastWasBL8_ELF;
+
   // StoredPtr - Keep track of the address of any store.  If we see a load from
   // the same address (or one that aliases it), disallow the store.  We can have
   // up to four stores in one dispatch group, hence we track up to 4.
