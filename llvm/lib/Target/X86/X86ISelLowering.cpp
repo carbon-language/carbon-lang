@@ -5138,8 +5138,10 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
                                            DAG);
       } else if (ExtVT == MVT::i16 || ExtVT == MVT::i8) {
         Item = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, Item);
-        assert(VT.getSizeInBits() == 128 && "Expected an SSE value type!");
-        EVT MiddleVT = MVT::v4i32;
+        unsigned NumBits = VT.getSizeInBits();
+        assert((NumBits == 128 || NumBits == 256) && 
+               "Expected an SSE or AVX value type!");
+        EVT MiddleVT = NumBits == 128 ? MVT::v4i32 : MVT::v8i32;
         Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MiddleVT, Item);
         Item = getShuffleVectorZeroOrUndef(Item, 0, true,
                                            Subtarget->hasXMMInt(), DAG);
