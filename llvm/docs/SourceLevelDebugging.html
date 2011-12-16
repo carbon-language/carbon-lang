@@ -446,7 +446,7 @@ global variables are collected by named metadata <tt>!llvm.dbg.gv</tt>.</p>
   i32,      ;; Index into a virtual function
   metadata, ;; indicates which base type contains the vtable pointer for the 
             ;; derived class
-  i1,       ;; isArtificial
+  i32,      ;; Flags - Artifical, Private, Protected, Explicit, Prototyped.
   i1,       ;; isOptimized
   Function *,;; Pointer to LLVM function
   metadata, ;; Lists function template parameters
