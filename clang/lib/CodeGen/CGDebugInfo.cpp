@@ -488,6 +488,11 @@ llvm::DIType CGDebugInfo::CreatePointeeType(QualType PointeeTy,
 
   // Limit debug info for the pointee type.
 
+  // If we have an existing type, use that, it's still smaller than creating
+  // a new type.
+  llvm::DIType Ty = getTypeOrNull(PointeeTy);
+  if (Ty.Verify()) return Ty;
+
   // Handle qualifiers.
   if (PointeeTy.hasLocalQualifiers())
     return CreateQualifiedType(PointeeTy, Unit);
@@ -1565,15 +1570,12 @@ static QualType UnwrapTypeForDebugInfo(QualType T) {
   return T;
 }
 
-/// getOrCreateType - Get the type from the cache or create a new
-/// one if necessary.
-llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
-  if (Ty.isNull())
-    return llvm::DIType();
+/// getType - Get the type from the cache or return null type if it doesn't exist.
+llvm::DIType CGDebugInfo::getTypeOrNull(QualType Ty) {
 
   // Unwrap the type as needed for debug information.
   Ty = UnwrapTypeForDebugInfo(Ty);
-
+  
   // Check for existing entry.
   llvm::DenseMap<void *, llvm::WeakVH>::iterator it =
     TypeCache.find(Ty.getAsOpaquePtr());
@@ -1582,6 +1584,21 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
     if (&*it->second)
       return llvm::DIType(cast<llvm::MDNode>(it->second));
   }
+
+  return llvm::DIType();
+}
+
+/// getOrCreateType - Get the type from the cache or create a new
+/// one if necessary.
+llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
+  if (Ty.isNull())
+    return llvm::DIType();
+
+  // Unwrap the type as needed for debug information.
+  Ty = UnwrapTypeForDebugInfo(Ty);
+  
+  llvm::DIType T = getTypeOrNull(Ty);
+  if (T.Verify()) return T;
 
   // Otherwise create the type.
   llvm::DIType Res = CreateTypeNode(Ty, Unit);
