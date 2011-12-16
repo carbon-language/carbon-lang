@@ -73,6 +73,7 @@ add_llvm_unittest(ADT
   ADT/StringRefTest.cpp
   ADT/TripleTest.cpp
   ADT/TwineTest.cpp
+  ADT/VariadicFunctionTest.cpp
  )
 
 add_llvm_unittest(Analysis
