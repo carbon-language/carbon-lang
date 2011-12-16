@@ -25,7 +25,6 @@
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdlib>
 #include <set>
@@ -271,14 +270,7 @@ int main(int argc, char **argv) {
         }
         OS << '\n';
       } else if (Arg == "--targets-built") {
-        bool First = true;
-        for (TargetRegistry::iterator I = TargetRegistry::begin(),
-               E = TargetRegistry::end(); I != E; First = false, ++I) {
-          if (!First)
-            OS << ' ';
-          OS << I->getName();
-        }
-        OS << '\n';
+        OS << LLVM_TARGETS_BUILT << '\n';
       } else if (Arg == "--host-target") {
         OS << LLVM_DEFAULT_TARGET_TRIPLE << '\n';
       } else if (Arg == "--build-mode") {
