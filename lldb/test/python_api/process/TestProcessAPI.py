@@ -105,6 +105,19 @@ class ProcessAPITestCase(TestBase):
                     exe=False,
             startstr = 'x')
 
+        # Read (char *)my_char_ptr.
+        val = frame.FindValue("my_char_ptr", lldb.eValueTypeVariableGlobal)
+        self.DebugSBValue(val)
+        cstring = process.ReadCStringFromMemory(val.GetValueAsUnsigned(), 256, error)
+        if not error.Success():
+            self.fail("SBProcess.ReadCStringFromMemory() failed")
+        if self.TraceOn():
+            print "cstring read is:", cstring
+
+        self.expect(cstring, "Result from SBProcess.ReadCStringFromMemory() matches our expected output",
+                    exe=False,
+            startstr = 'Does it work?')
+
         # Get the SBValue for the global variable 'my_cstring'.
         val = frame.FindValue("my_cstring", lldb.eValueTypeVariableGlobal)
         self.DebugSBValue(val)
