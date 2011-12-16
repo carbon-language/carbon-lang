@@ -225,7 +225,11 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
 void ObjCInterfaceDecl::allocateDefinitionData() {
   assert(!hasDefinition() && "ObjC class already has a definition");
   Data = new (getASTContext()) DefinitionData();
-  Data->Definition = this;  
+  Data->Definition = this;
+
+  // Make the type point at the definition, now that we have one.
+  if (TypeForDecl)
+    cast<ObjCInterfaceType>(TypeForDecl)->Decl = this;
 }
 
 void ObjCInterfaceDecl::startDefinition() {

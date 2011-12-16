@@ -4139,12 +4139,13 @@ inline ObjCProtocolDecl **ObjCObjectType::getProtocolStorage() {
 ///   - It is its own base type.  That is, if T is an ObjCInterfaceType*,
 ///     T->getBaseType() == QualType(T, 0).
 class ObjCInterfaceType : public ObjCObjectType {
-  ObjCInterfaceDecl *Decl;
+  mutable ObjCInterfaceDecl *Decl;
 
   ObjCInterfaceType(const ObjCInterfaceDecl *D)
     : ObjCObjectType(Nonce_ObjCInterface),
       Decl(const_cast<ObjCInterfaceDecl*>(D)) {}
   friend class ASTContext;  // ASTContext creates these.
+  friend class ObjCInterfaceDecl;
 
 public:
   /// getDecl - Get the declaration of this interface.
