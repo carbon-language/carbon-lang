@@ -96,7 +96,7 @@ endif()
 
 add_llvm_unittest(ExecutionEngine/JIT ${JITTestsSources})
 
-if(MINGW)
+if(MINGW OR CYGWIN)
   set_property(TARGET JITTests PROPERTY LINK_FLAGS -Wl,--export-all-symbols)
 endif()
 
