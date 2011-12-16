@@ -696,7 +696,7 @@ public:
     void
     SetName (const ConstString &name);
     
-    lldb::addr_t
+    virtual lldb::addr_t
     GetAddressOf (bool scalar_is_load_address = true,
                   AddressType *address_type = NULL);
     
@@ -747,6 +747,18 @@ public:
     
     virtual lldb::ValueObjectSP
     AddressOf (Error &error);
+    
+    virtual lldb::addr_t
+    GetLiveAddress()
+    {
+        return LLDB_INVALID_ADDRESS;
+    }
+    
+    virtual void
+    SetLiveAddress(lldb::addr_t addr = LLDB_INVALID_ADDRESS,
+                   AddressType address_type = eAddressTypeLoad)
+    {
+    }
 
     virtual lldb::ValueObjectSP
     CastPointerType (const char *name,

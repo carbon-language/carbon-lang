@@ -61,13 +61,19 @@ public:
     }
     
     void
-    SetLiveAddress(lldb::addr_t addr = LLDB_INVALID_ADDRESS)
+    SetLiveAddress(lldb::addr_t addr = LLDB_INVALID_ADDRESS,
+                   AddressType address_type = eAddressTypeLoad)
     {
         m_live_address = addr;
+        m_live_address_type = address_type;
     }
     
     lldb::ValueObjectSP
     DerefOnTarget();
+    
+    virtual lldb::addr_t
+    GetAddressOf (bool scalar_is_load_address = true,
+                  AddressType *address_type = NULL);
     
     virtual size_t
     GetPointeeData (DataExtractor& data,
@@ -78,6 +84,7 @@ private:
     
     ValueObject *m_impl_backend;
     lldb::addr_t m_live_address;
+    AddressType m_live_address_type;
     lldb::ValueObjectSP m_load_addr_backend;
     lldb::ValueObjectSP m_address_of_backend;
     

@@ -40,7 +40,8 @@ using namespace lldb_private;
 ValueObjectConstResultImpl::ValueObjectConstResultImpl (ValueObject* valobj,
                                                         lldb::addr_t live_address) :
     m_impl_backend(valobj),
-    m_live_address(live_address), 
+    m_live_address(live_address),
+    m_live_address_type(eAddressTypeLoad),
     m_load_addr_backend(),
     m_address_of_backend()
 {
@@ -199,6 +200,26 @@ ValueObjectConstResultImpl::AddressOf (Error &error)
     }
     else
         return lldb::ValueObjectSP();
+}
+
+lldb::addr_t
+ValueObjectConstResultImpl::GetAddressOf (bool scalar_is_load_address,
+                                          AddressType *address_type)
+{
+    
+    if (m_impl_backend == NULL)
+        return 0;
+    
+    if (m_live_address == LLDB_INVALID_ADDRESS)
+    {
+        return m_impl_backend->ValueObject::GetAddressOf (scalar_is_load_address,
+                                                          address_type);
+    }
+    
+    if (address_type)
+        *address_type = m_live_address_type;
+        
+    return m_live_address;
 }
 
 size_t

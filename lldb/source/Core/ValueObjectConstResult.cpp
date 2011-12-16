@@ -324,6 +324,13 @@ ValueObjectConstResult::AddressOf (Error &error)
     return m_impl.AddressOf(error);
 }
 
+lldb::addr_t
+ValueObjectConstResult::GetAddressOf (bool scalar_is_load_address,
+                                      AddressType *address_type)
+{
+    return m_impl.GetAddressOf(scalar_is_load_address, address_type);
+}
+
 ValueObject *
 ValueObjectConstResult::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index)
 {
