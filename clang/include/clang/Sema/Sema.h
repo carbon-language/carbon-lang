@@ -3250,6 +3250,13 @@ public:
                                        UnqualifiedId &SecondTypeName,
                                        bool HasTrailingLParen);
 
+  ExprResult ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
+                                       SourceLocation OpLoc,
+                                       tok::TokenKind OpKind,
+                                       SourceLocation TildeLoc, 
+                                       const DeclSpec& DS,
+                                       bool HasTrailingLParen);
+
   /// MaybeCreateExprWithCleanups - If the current full-expression
   /// requires any cleanups, surround it with a ExprWithCleanups node.
   /// Otherwise, just returns the passed-in expression.

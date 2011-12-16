@@ -1019,6 +1019,17 @@ Parser::ParseCXXPseudoDestructor(ExprArg Base, SourceLocation OpLoc,
   // Parse the tilde.
   assert(Tok.is(tok::tilde) && "ParseOptionalCXXScopeSpecifier fail");
   SourceLocation TildeLoc = ConsumeToken();
+
+  if (Tok.is(tok::kw_decltype) && !FirstTypeName.isValid() && SS.isEmpty()) {
+    DeclSpec DS(AttrFactory);
+    SourceLocation EndLoc = ParseDecltypeSpecifier(DS);
+    if (DS.getTypeSpecType() == TST_error)
+      return ExprError();
+    return Actions.ActOnPseudoDestructorExpr(getCurScope(), Base, OpLoc, 
+                                             OpKind, TildeLoc, DS, 
+                                             Tok.is(tok::l_paren));
+  }
+
   if (!Tok.is(tok::identifier)) {
     Diag(Tok, diag::err_destructor_tilde_identifier);
     return ExprError();
