@@ -203,6 +203,7 @@ void
 RegisterContextLLDB::InitializeNonZerothFrame()
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+
     if (IsFrameZero ())
     {
         m_frame_type = eNotAValidFrame;
@@ -231,7 +232,8 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         m_frame_type = eNotAValidFrame;
         return;
     }
-    // A pc value of 0 up on the stack indicates we've hit the end of the stack
+
+    // A pc of 0x0 means it's the end of the stack crawl
     if (pc == 0)
     {
         m_frame_type = eNotAValidFrame;
@@ -239,13 +241,29 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     }
 
     // Test the pc value to see if we know it's in an unmapped/non-executable region of memory.
-    // If so, our unwind has made a mistake somewhere and we should stop.
     uint32_t permissions;
     if (m_thread.GetProcess().GetLoadAddressPermissions(pc, permissions)
         && (permissions & ePermissionsExecutable) == 0)
     {
-        m_frame_type = eNotAValidFrame;
-        return;
+        // If this is the second frame off the stack, we may have unwound the first frame
+        // incorrectly.  But using the architecture default unwind plan may get us back on
+        // track -- albeit possibly skipping a real frame.  Give this frame a clearly-invalid
+        // pc and see if we can get any further.
+        if (GetNextFrame().get() && GetNextFrame()->IsValid() && GetNextFrame()->IsFrameZero())
+        {
+            if (log)
+            {
+                log->Printf("%*sFrame %u had a pc of 0x%llx which is not in executable memory but on frame 1 -- allowing it once.",
+                            m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number, (uint64_t) pc);
+            }
+            m_frame_type = eSkipFrame;
+        }
+        else
+        {
+            // anywhere other than the second frame, a non-executable pc means we're off in the weeds -- stop now.
+            m_frame_type = eNotAValidFrame;
+            return;
+        }
     }
 
     m_thread.GetProcess().GetTarget().GetSectionLoadList().ResolveLoadAddress (pc, m_current_pc);
@@ -265,7 +283,10 @@ RegisterContextLLDB::InitializeNonZerothFrame()
             m_fast_unwind_plan_sp.reset ();
             m_full_unwind_plan_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
             abi->CreateDefaultUnwindPlan(*m_full_unwind_plan_sp);
-            m_frame_type = eNormalFrame;
+            if (m_frame_type != eSkipFrame)  // don't override eSkipFrame
+            {
+                m_frame_type = eNormalFrame;
+            }
             m_all_registers_available = false;
             m_current_offset = -1;
             m_current_offset_backed_up_one = -1;
@@ -283,7 +304,10 @@ RegisterContextLLDB::InitializeNonZerothFrame()
                         log->Printf("%*sFrame %u failed to get cfa value",
                                     m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
                     }
-                    m_frame_type = eNormalFrame;
+                    if (m_frame_type != eSkipFrame)   // don't override eSkipFrame
+                    {
+                        m_frame_type = eNormalFrame;
+                    }
                     return;
                 }
                 m_cfa = cfa_regval + cfa_offset;
@@ -408,7 +432,10 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     else
     {
         // FIXME:  Detect eDebuggerFrame here.
-        m_frame_type = eNormalFrame;
+        if (m_frame_type != eSkipFrame) // don't override eSkipFrame
+        {
+            m_frame_type = eNormalFrame;
+        }
     }
 
     // We've set m_frame_type and m_sym_ctx before this call.
@@ -869,6 +896,18 @@ RegisterContextLLDB::IsValid () const
     return m_frame_type != eNotAValidFrame;
 }
 
+// A skip frame is a bogus frame on the stack -- but one where we're likely to find a real frame farther
+// up the stack if we keep looking.  It's always the second frame in an unwind (i.e. the first frame after
+// frame zero) where unwinding can be the trickiest.  Ideally we'll mark up this frame in some way so the
+// user knows we're displaying bad data and we may have skipped one frame of their real program in the 
+// process of getting back on track.
+
+bool
+RegisterContextLLDB::IsSkipFrame () const
+{
+    return m_frame_type == eSkipFrame;
+}
+
 // Answer the question: Where did THIS frame save the CALLER frame ("previous" frame)'s register value?
 
 bool
@@ -1312,6 +1351,13 @@ RegisterContextLLDB::GetNextFrame () const
     return m_parent_unwind.GetRegisterContextForFrameNum (m_frame_number - 1);
 }
 
+RegisterContextLLDB::SharedPtr
+RegisterContextLLDB::GetPrevFrame () const
+{
+    RegisterContextLLDB::SharedPtr regctx;
+    return m_parent_unwind.GetRegisterContextForFrameNum (m_frame_number + 1);
+}
+
 // Retrieve the address of the start of the function of THIS frame
 
 bool
@@ -1319,6 +1365,7 @@ RegisterContextLLDB::GetStartPC (addr_t& start_pc)
 {
     if (!IsValid())
         return false;
+
     if (!m_start_pc.IsValid())
     {
         return ReadPC (start_pc); 
@@ -1334,6 +1381,7 @@ RegisterContextLLDB::ReadPC (addr_t& pc)
 {
     if (!IsValid())
         return false;
+
     if (ReadGPRValue (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, pc))
     {
         // A pc value of 0 or 1 is impossible in the middle of the stack -- it indicates the end of a stack walk.
@@ -1356,4 +1404,3 @@ RegisterContextLLDB::ReadPC (addr_t& pc)
         return false;
     }
 }
-
