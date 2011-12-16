@@ -29,6 +29,7 @@ add_llvm_library(LLVMSupport
   IntervalMap.cpp
   IsInf.cpp
   IsNAN.cpp
+  JSONParser.cpp
   ManagedStatic.cpp
   MemoryBuffer.cpp
   MemoryObject.cpp

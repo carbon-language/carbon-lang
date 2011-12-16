@@ -133,6 +133,7 @@ add_llvm_unittest(Support
   Support/CommandLineTest.cpp
   Support/ConstantRangeTest.cpp
   Support/EndianTest.cpp
+  Support/JSONParserTest.cpp
   Support/LeakDetectorTest.cpp
   Support/MathExtrasTest.cpp
   Support/Path.cpp
