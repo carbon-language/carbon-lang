@@ -693,7 +693,7 @@ DisassemblerLLVM::DisassemblerLLVM(const ArchSpec &arch) :
 		// addresses.
         if (llvm_arch == llvm::Triple::arm)
         {
-            if (EDGetDisassembler(&m_disassembler_thumb, "thumb-apple-darwin", kEDAssemblySyntaxARMUAL))
+            if (EDGetDisassembler(&m_disassembler_thumb, "thumbv7-apple-darwin", kEDAssemblySyntaxARMUAL))
                 m_disassembler_thumb = NULL;
         }
     }
