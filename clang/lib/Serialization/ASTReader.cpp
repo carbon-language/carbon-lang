@@ -4559,7 +4559,7 @@ Decl *ASTReader::GetDecl(DeclID ID) {
     return 0;
   }
   
-if (!DeclsLoaded[Index]) {
+  if (!DeclsLoaded[Index]) {
     ReadDeclRecord(ID);
     if (DeserializationListener)
       DeserializationListener->DeclRead(ID, DeclsLoaded[Index]);
