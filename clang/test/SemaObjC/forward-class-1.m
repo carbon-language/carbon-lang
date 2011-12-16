@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-@class FOO, BAR; 
 @class FOO, BAR; // expected-note {{forward declaration of class here}}
+@class FOO, BAR; 
 
 @interface INTF : FOO	// expected-error {{attempting to use the forward class 'FOO' as superclass of 'INTF'}}
 @end

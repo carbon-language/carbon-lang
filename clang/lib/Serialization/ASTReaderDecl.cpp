@@ -223,6 +223,9 @@ void ASTDeclReader::Visit(Decl *D) {
   if (TypeDecl *TD = dyn_cast<TypeDecl>(D)) {
     // if we have a fully initialized TypeDecl, we can safely read its type now.
     TD->setTypeForDecl(Reader.GetType(TypeIDForTypeDecl).getTypePtrOrNull());
+  } else if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D)) {
+    // if we have a fully initialized TypeDecl, we can safely read its type now.
+    ID->TypeForDecl = Reader.GetType(TypeIDForTypeDecl).getTypePtrOrNull();
   } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // FunctionDecl's body was written last after all other Stmts/Exprs.
     if (Record[Idx++])
@@ -556,7 +559,7 @@ void ASTDeclReader::VisitObjCContainerDecl(ObjCContainerDecl *CD) {
 void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   VisitRedeclarable(ID);
   VisitObjCContainerDecl(ID);
-  ID->setTypeForDecl(Reader.readType(F, Record, Idx).getTypePtrOrNull());
+  TypeIDForTypeDecl = Reader.getGlobalTypeID(F, Record[Idx++]);
   
   ObjCInterfaceDecl *Def = ReadDeclAs<ObjCInterfaceDecl>(Record, Idx);
   if (ID == Def) {
@@ -621,13 +624,13 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
       // pending references were linked.
       Reader.PendingForwardRefs.erase(ID);
 #endif
-    } else if (Def) {
-      if (Def->Data) {
-        ID->Data = Def->Data;
-      } else {
-        // The definition is still initializing.
-        Reader.PendingForwardRefs[Def].push_back(ID);
-      }
+    }
+  } else if (Def) {
+    if (Def->Data) {
+      ID->Data = Def->Data;
+    } else {
+      // The definition is still initializing.
+      Reader.PendingForwardRefs[Def].push_back(ID);
     }
   }
 }
@@ -1561,6 +1564,8 @@ void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *previous) {
     FD->RedeclLink.setPointer(cast<FunctionDecl>(previous));
   } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
     VD->RedeclLink.setPointer(cast<VarDecl>(previous));
+  } else if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(previous)) {
+    ID->RedeclLink.setPointer(cast<ObjCInterfaceDecl>(previous));
   } else {
     RedeclarableTemplateDecl *TD = cast<RedeclarableTemplateDecl>(D);
     TD->CommonOrPrev = cast<RedeclarableTemplateDecl>(previous);
@@ -1736,7 +1741,7 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
                                Selector(), QualType(), 0, 0);
     break;
   case DECL_OBJC_INTERFACE:
-    D = ObjCInterfaceDecl::Create(Context, 0, SourceLocation(), 0);
+    D = ObjCInterfaceDecl::CreateEmpty(Context);
     break;
   case DECL_OBJC_IVAR:
     D = ObjCIvarDecl::Create(Context, 0, SourceLocation(), SourceLocation(),

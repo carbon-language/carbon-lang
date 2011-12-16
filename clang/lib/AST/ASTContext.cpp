@@ -2808,11 +2808,17 @@ QualType ASTContext::getObjCObjectPointerType(QualType ObjectT) const {
 
 /// getObjCInterfaceType - Return the unique reference to the type for the
 /// specified ObjC interface decl. The list of protocols is optional.
-QualType ASTContext::getObjCInterfaceType(const ObjCInterfaceDecl *Decl) const {
+QualType ASTContext::getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
+                                          ObjCInterfaceDecl *PrevDecl) const {
   if (Decl->TypeForDecl)
     return QualType(Decl->TypeForDecl, 0);
 
-  // FIXME: redeclarations?
+  if (PrevDecl) {
+    assert(PrevDecl->TypeForDecl && "previous decl has no TypeForDecl");
+    Decl->TypeForDecl = PrevDecl->TypeForDecl;
+    return QualType(PrevDecl->TypeForDecl, 0);
+  }
+
   void *Mem = Allocate(sizeof(ObjCInterfaceType), TypeAlignment);
   ObjCInterfaceType *T = new (Mem) ObjCInterfaceType(Decl);
   Decl->TypeForDecl = T;

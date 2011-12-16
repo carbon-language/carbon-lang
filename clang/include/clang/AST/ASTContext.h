@@ -853,7 +853,8 @@ public:
   QualType getPackExpansionType(QualType Pattern,
                                 llvm::Optional<unsigned> NumExpansions);
 
-  QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl) const;
+  QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
+                                ObjCInterfaceDecl *PrevDecl = 0) const;
 
   QualType getObjCObjectType(QualType Base,
                              ObjCProtocolDecl * const *Protocols,

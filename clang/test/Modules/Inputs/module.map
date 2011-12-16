@@ -39,5 +39,6 @@ module load_failure { header "load_failure.h" }
 
 module decldef {
   explicit module Decl { header "decl.h" }
+  explicit module Decl2 { header "decl2.h" }
   explicit module Def { header "def.h" }
 }

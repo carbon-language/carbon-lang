@@ -225,18 +225,19 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
 void ObjCInterfaceDecl::allocateDefinitionData() {
   assert(!hasDefinition() && "ObjC class already has a definition");
   Data = new (getASTContext()) DefinitionData();
-  Data->Definition = this;
-  
+  Data->Definition = this;  
+}
+
+void ObjCInterfaceDecl::startDefinition() {
+  allocateDefinitionData();
+
   // Update all of the declarations with a pointer to the definition.
   for (redecl_iterator RD = redecls_begin(), RDEnd = redecls_end();
        RD != RDEnd; ++RD) {
     if (*RD != this)
       RD->Data = Data;
   }
-}
 
-void ObjCInterfaceDecl::startDefinition() {
-  allocateDefinitionData();
   if (ASTMutationListener *L = getASTContext().getASTMutationListener())
     L->CompletedObjCForwardRef(this);
 }
@@ -674,9 +675,24 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
                                              DeclContext *DC,
                                              SourceLocation atLoc,
                                              IdentifierInfo *Id,
+                                             ObjCInterfaceDecl *PrevDecl,
                                              SourceLocation ClassLoc,
                                              bool isInternal){
-  return new (C) ObjCInterfaceDecl(DC, atLoc, Id, ClassLoc, isInternal);
+  ObjCInterfaceDecl *Result = new (C) ObjCInterfaceDecl(DC, atLoc, Id, ClassLoc, 
+                                                        isInternal);
+  C.getObjCInterfaceType(Result, PrevDecl);
+  
+  if (PrevDecl) {
+    Result->Data = PrevDecl->Data;
+    Result->setPreviousDeclaration(PrevDecl);
+  }
+
+  return Result;
+}
+
+ObjCInterfaceDecl *ObjCInterfaceDecl::CreateEmpty(ASTContext &C) {
+  return new (C) ObjCInterfaceDecl(0, SourceLocation(), 0, SourceLocation(),
+                                   false);
 }
 
 ObjCInterfaceDecl::
@@ -849,14 +865,6 @@ bool ObjCInterfaceDecl::ClassImplementsProtocol(ObjCProtocolDecl *lProto,
                                                   RHSIsQualifiedID);
 
   return false;
-}
-
-void ObjCInterfaceDecl::setPreviousDeclaration(ObjCInterfaceDecl *PrevDecl) {
-  redeclarable_base::setPreviousDeclaration(PrevDecl);
-  
-  // Inherit the 'Data' pointer from the previous declaration.
-  if (PrevDecl)
-    Data = PrevDecl->Data;
 }
 
 //===----------------------------------------------------------------------===//

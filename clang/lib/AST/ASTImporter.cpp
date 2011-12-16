@@ -3182,7 +3182,8 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
     if (!ToIface) {
       ToIface = ObjCInterfaceDecl::Create(Importer.getToContext(), DC,
                                           Importer.Import(D->getAtStartLoc()),
-                                          Name.getAsIdentifierInfo(), Loc,
+                                          Name.getAsIdentifierInfo(), 
+                                          /*PrevDecl=*/0,Loc,
                                           D->isImplicitInterfaceDecl());
       ToIface->setLexicalDeclContext(LexicalDC);
       LexicalDC->addDeclInternal(ToIface);

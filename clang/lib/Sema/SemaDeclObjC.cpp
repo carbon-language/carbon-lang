@@ -366,11 +366,11 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
   }
 
   // Create a declaration to describe this @interface.
+  ObjCInterfaceDecl* PrevIDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
   ObjCInterfaceDecl *IDecl
     = ObjCInterfaceDecl::Create(Context, CurContext, AtInterfaceLoc, ClassName,
-                                ClassLoc);
+                                PrevIDecl, ClassLoc);
   
-  ObjCInterfaceDecl* PrevIDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
   if (PrevIDecl) {
     // Class already seen. Was it a definition?
     if (ObjCInterfaceDecl *Def = PrevIDecl->getDefinition()) {
@@ -379,9 +379,6 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
       Diag(Def->getLocation(), diag::note_previous_definition);
       IDecl->setInvalidDecl();
     }
-
-    // Link to the previous declaration.
-    IDecl->setPreviousDeclaration(PrevIDecl);
   }
   
   if (AttrList)
@@ -870,9 +867,8 @@ Decl *Sema::ActOnStartClassImplementation(
     Diag(ClassLoc, diag::err_redefinition_different_kind) << ClassName;
     Diag(PrevDecl->getLocation(), diag::note_previous_definition);
   } else if ((IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl))) {
-    if (RequireCompleteType(ClassLoc, Context.getObjCInterfaceType(IDecl),
-                            diag::warn_undef_interface))
-      IDecl = 0;
+    RequireCompleteType(ClassLoc, Context.getObjCInterfaceType(IDecl),
+                        diag::warn_undef_interface);
   } else {
     // We did not find anything with the name ClassName; try to correct for 
     // typos in the class name.
@@ -928,7 +924,8 @@ Decl *Sema::ActOnStartClassImplementation(
     // FIXME: Do we support attributes on the @implementation? If so we should
     // copy them over.
     IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtClassImplLoc,
-                                      ClassName, ClassLoc, true);
+                                      ClassName, /*PrevDecl=*/0, ClassLoc, 
+                                      true);
     IDecl->startDefinition();
     if (SDecl) {
       IDecl->setSuperClass(SDecl);
@@ -1774,16 +1771,13 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
     }
     
     // Create a declaration to describe this forward declaration.
+    ObjCInterfaceDecl *PrevIDecl
+      = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
     ObjCInterfaceDecl *IDecl
       = ObjCInterfaceDecl::Create(Context, CurContext, AtClassLoc,
-                                  IdentList[i], IdentLocs[i], true);
+                                  IdentList[i], PrevIDecl, IdentLocs[i], true);
     IDecl->setAtEndRange(IdentLocs[i]);
     
-    // If there was a previous declaration, link to it.
-    if (ObjCInterfaceDecl *PrevIDecl
-        = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl))
-      IDecl->setPreviousDeclaration(PrevIDecl);
-
     // Create the forward declaration. Note that we intentionally do this 
     // before we add the ObjCInterfaceDecl we just created, so that the
     // rewriter sees the ObjCClassDecl first.
