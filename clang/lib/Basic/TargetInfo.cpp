@@ -34,6 +34,7 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   IntWidth = IntAlign = 32;
   LongWidth = LongAlign = 32;
   LongLongWidth = LongLongAlign = 64;
+  SuitableAlign = 64;
   HalfWidth = 16;
   HalfAlign = 16;
   FloatWidth = 32;

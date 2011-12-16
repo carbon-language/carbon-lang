@@ -76,6 +76,7 @@ protected:
   unsigned char LargeArrayMinWidth, LargeArrayAlign;
   unsigned char LongWidth, LongAlign;
   unsigned char LongLongWidth, LongLongAlign;
+  unsigned char SuitableAlign;
   unsigned char MaxAtomicPromoteWidth, MaxAtomicInlineWidth;
   const char *DescriptionString;
   const char *UserLabelPrefix;
@@ -211,6 +212,10 @@ public:
   /// 'unsigned long long' for this target, in bits.
   unsigned getLongLongWidth() const { return LongLongWidth; }
   unsigned getLongLongAlign() const { return LongLongAlign; }
+
+  /// getSuitableAlign - Return the alignment that is suitable for storing any
+  /// object with a fundamental alignment requirement.
+  unsigned getSuitableAlign() const { return SuitableAlign; }
 
   /// getWCharWidth/Align - Return the size of 'wchar_t' for this target, in
   /// bits.

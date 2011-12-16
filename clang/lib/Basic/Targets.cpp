@@ -2049,6 +2049,7 @@ public:
     DoubleAlign = LongLongAlign = 32;
     LongDoubleWidth = 96;
     LongDoubleAlign = 32;
+    SuitableAlign = 32;
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-"
                         "a0:0:64-f80:32:32-n8:16:32-S128";
@@ -2098,6 +2099,7 @@ public:
     DarwinTargetInfo<X86_32TargetInfo>(triple) {
     LongDoubleWidth = 128;
     LongDoubleAlign = 128;
+    SuitableAlign = 128;
     SizeType = UnsignedLong;
     IntPtrType = SignedLong;
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
@@ -2290,6 +2292,7 @@ public:
     LongDoubleAlign = 128;
     LargeArrayMinWidth = 128;
     LargeArrayAlign = 128;
+    SuitableAlign = 128;
     IntMaxType = SignedLong;
     UIntMaxType = UnsignedLong;
     Int64Type = SignedLong;
@@ -2498,7 +2501,7 @@ public:
     // FIXME: We need support for -meabi... we could just mangle it into the
     // name.
     if (Name == "apcs-gnu") {
-      DoubleAlign = LongLongAlign = LongDoubleAlign = 32;
+      DoubleAlign = LongLongAlign = LongDoubleAlign = SuitableAlign = 32;
       SizeType = UnsignedLong;
 
       // Revert to using SignedInt on apcs-gnu to comply with existing behaviour.
@@ -3087,6 +3090,7 @@ namespace {
       LongWidth = 32; LongLongWidth = 64;
       LongAlign = LongLongAlign = 16;
       PointerWidth = 16; PointerAlign = 16;
+      SuitableAlign = 16;
       SizeType = UnsignedInt;
       IntMaxType = SignedLong;
       UIntMaxType = UnsignedLong;
@@ -3168,6 +3172,7 @@ namespace {
       IntAlign = 32;
       LongAlign = LongLongAlign = 32;
       PointerAlign = 32;
+      SuitableAlign = 32;
       SizeType = UnsignedInt;
       IntMaxType = SignedLong;
       UIntMaxType = UnsignedLong;
@@ -3397,6 +3402,7 @@ public:
     PointerWidth = PointerAlign = 64;
     LongDoubleWidth = LongDoubleAlign = 128;
     LongDoubleFormat = &llvm::APFloat::IEEEquad;
+    SuitableAlign = 128;
   }
   virtual bool setABI(const std::string &Name) {
     SetDescriptionString(Name);
