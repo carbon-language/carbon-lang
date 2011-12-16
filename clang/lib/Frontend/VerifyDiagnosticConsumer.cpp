@@ -443,8 +443,10 @@ static unsigned CheckLists(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
           break;
       }
       if (II == IE) {
-        if (D.Count == D.OneOrMoreCount && FoundOnce) {
-          // We are only interested in at least one match and we found one.
+        if (D.Count == D.OneOrMoreCount) {
+          if (!FoundOnce)
+            LeftOnly.push_back(*I);
+          // We are only interested in at least one match, so exit the loop.
           break;
         }
         // Not found.
