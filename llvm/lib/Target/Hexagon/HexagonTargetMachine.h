@@ -29,8 +29,8 @@ class Module;
 class HexagonTargetMachine : public LLVMTargetMachine {
   const TargetData DataLayout;       // Calculates type size & alignment.
   HexagonSubtarget Subtarget;
-  HexagonTargetLowering TLInfo;
   HexagonInstrInfo InstrInfo;
+  HexagonTargetLowering TLInfo;
   HexagonSelectionDAGInfo TSInfo;
   HexagonFrameLowering FrameLowering;
   const InstrItineraryData* InstrItins;

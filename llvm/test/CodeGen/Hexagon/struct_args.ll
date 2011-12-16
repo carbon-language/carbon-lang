@@ -1,5 +1,4 @@
-; RUN: true
-; DISABLED: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
+; RUN: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
 ; CHECK: r1:0 = or(r{{[0-9]}}:{{[0-9]}}, r{{[0-9]}}:{{[0-9]}})
 
 %struct.small = type { i32, i32 }

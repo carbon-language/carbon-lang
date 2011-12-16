@@ -1,5 +1,4 @@
-; RUN: true
-; DISABLED: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
+; RUN: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
 ; CHECK: r[[T0:[0-9]+]] = #7
 ; CHECK: memw(r29 + #0) = r[[T0]]
 ; CHECK: r0 = #1
