@@ -290,6 +290,9 @@ def fcommon : Flag<"-fcommon">, Group<f_Group>;
 def fcompile_resource_EQ : Joined<"-fcompile-resource=">, Group<f_Group>;
 def fconstant_cfstrings : Flag<"-fconstant-cfstrings">, Group<f_Group>;
 def fconstant_string_class_EQ : Joined<"-fconstant-string-class=">, Group<f_Group>;
+def fconstexpr_depth_EQ : Joined<"-fconstexpr-depth=">, Group<f_Group>;
+def fconstexpr_backtrace_limit_EQ : Joined<"-fconstexpr-backtrace-limit=">,
+                                    Group<f_Group>;
 def fcreate_profile : Flag<"-fcreate-profile">, Group<f_Group>;
 def fcxx_exceptions: Flag<"-fcxx-exceptions">, Group<f_Group>;
 def fdebug_pass_arguments : Flag<"-fdebug-pass-arguments">, Group<f_Group>;
@@ -490,7 +493,6 @@ def fsyntax_only : Flag<"-fsyntax-only">, Flags<[DriverOption]>;
 def ftabstop_EQ : Joined<"-ftabstop=">, Group<f_Group>;
 def ftemplate_depth_EQ : Joined<"-ftemplate-depth=">, Group<f_Group>;
 def ftemplate_depth_ : Joined<"-ftemplate-depth-">, Group<f_Group>;
-def fconstexpr_depth_EQ : Joined<"-fconstexpr-depth=">, Group<f_Group>;
 def ftemplate_backtrace_limit_EQ : Joined<"-ftemplate-backtrace-limit=">,
                                    Group<f_Group>;
 def ftest_coverage : Flag<"-ftest-coverage">, Group<f_Group>;

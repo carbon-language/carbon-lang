@@ -1808,6 +1808,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   }
 
+  if (Arg *A = Args.getLastArg(options::OPT_fconstexpr_backtrace_limit_EQ)) {
+    CmdArgs.push_back("-fconstexpr-backtrace-limit");
+    CmdArgs.push_back(A->getValue(Args));
+  }
+
   // Pass -fmessage-length=.
   CmdArgs.push_back("-fmessage-length");
   if (Arg *A = Args.getLastArg(options::OPT_fmessage_length_EQ)) {

@@ -21,6 +21,7 @@
 #include "llvm/ADT/PointerUnion.h"
 
 namespace clang {
+  class ASTContext;
   class CharUnits;
   class DiagnosticBuilder;
   class Expr;
@@ -28,6 +29,7 @@ namespace clang {
   class Decl;
   class ValueDecl;
   class CXXRecordDecl;
+  class QualType;
 
 /// APValue - This class implements a discriminated union of [uninitialized]
 /// [APSInt] [APFloat], [Complex APSInt] [Complex APFloat], [Expr + Offset],
@@ -171,8 +173,11 @@ public:
   bool isUnion() const { return Kind == Union; }
   bool isMemberPointer() const { return Kind == MemberPointer; }
 
-  void print(raw_ostream &OS) const;
   void dump() const;
+  void dump(raw_ostream &OS) const;
+
+  void printPretty(raw_ostream &OS, ASTContext &Ctx, QualType Ty) const;
+  std::string getAsString(ASTContext &Ctx, QualType Ty) const;
 
   APSInt &getInt() {
     assert(isInt() && "Invalid accessor");
@@ -393,15 +398,6 @@ private:
   void MakeMemberPointer(const ValueDecl *Member, bool IsDerivedMember,
                          ArrayRef<const CXXRecordDecl*> Path);
 };
-
-inline raw_ostream &operator<<(raw_ostream &OS, const APValue &V) {
-  V.print(OS);
-  return OS;
-}
-
-// Writes a concise representation of V to DB, in a single << operation.
-const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
-                                    const APValue &V);
 
 } // end namespace clang.
 

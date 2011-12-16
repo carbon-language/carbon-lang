@@ -231,6 +231,12 @@ namespace {
     /// Parent - The caller of this stack frame.
     CallStackFrame *Caller;
 
+    /// CallLoc - The location of the call expression for this call.
+    SourceLocation CallLoc;
+
+    /// Callee - The function which was called.
+    const FunctionDecl *Callee;
+
     /// This - The binding for the this pointer in this call, if any.
     const LValue *This;
 
@@ -243,7 +249,8 @@ namespace {
     /// Temporaries - Temporary lvalues materialized within this stack frame.
     MapTy Temporaries;
 
-    CallStackFrame(EvalInfo &Info, const LValue *This,
+    CallStackFrame(EvalInfo &Info, SourceLocation CallLoc,
+                   const FunctionDecl *Callee, const LValue *This,
                    const CCValue *Arguments);
     ~CallStackFrame();
   };
@@ -300,8 +307,8 @@ namespace {
 
     EvalInfo(const ASTContext &C, Expr::EvalStatus &S)
       : Ctx(const_cast<ASTContext&>(C)), EvalStatus(S), CurrentCall(0),
-        CallStackDepth(0), BottomFrame(*this, 0, 0), EvaluatingDecl(0),
-        EvaluatingDeclValue(0), HasActiveDiagnostic(false) {}
+        CallStackDepth(0), BottomFrame(*this, SourceLocation(), 0, 0, 0),
+        EvaluatingDecl(0), EvaluatingDeclValue(0), HasActiveDiagnostic(false) {}
 
     const CCValue *getOpaqueValue(const OpaqueValueExpr *e) const {
       MapTy::const_iterator i = OpaqueValues.find(e);
@@ -332,6 +339,9 @@ namespace {
       return EvalStatus.Diag->back().second;
     }
 
+    /// Add notes containing a call stack to the current point of evaluation.
+    void addCallStack(unsigned Limit);
+
   public:
     /// Diagnose that the evaluation cannot be folded.
     OptionalDiagnostic Diag(SourceLocation Loc, diag::kind DiagId,
@@ -340,11 +350,17 @@ namespace {
       // isn't a constant expression. This diagnostic is more important.
       // FIXME: We might want to show both diagnostics to the user.
       if (EvalStatus.Diag) {
+        unsigned CallStackNotes = CallStackDepth - 1;
+        unsigned Limit = Ctx.getDiagnostics().getConstexprBacktraceLimit();
+        if (Limit)
+          CallStackNotes = std::min(CallStackNotes, Limit + 1);
+
         HasActiveDiagnostic = true;
         EvalStatus.Diag->clear();
-        EvalStatus.Diag->reserve(1 + ExtraNotes);
-        // FIXME: Add a call stack for constexpr evaluation.
-        return OptionalDiagnostic(&addDiag(Loc, DiagId));
+        EvalStatus.Diag->reserve(1 + ExtraNotes + CallStackNotes);
+        addDiag(Loc, DiagId);
+        addCallStack(Limit);
+        return OptionalDiagnostic(&(*EvalStatus.Diag)[0].second);
       }
       HasActiveDiagnostic = false;
       return OptionalDiagnostic();
@@ -367,20 +383,87 @@ namespace {
       return OptionalDiagnostic(&addDiag(Loc, DiagId));
     }
   };
+}
 
-  CallStackFrame::CallStackFrame(EvalInfo &Info, const LValue *This,
-                                 const CCValue *Arguments)
-      : Info(Info), Caller(Info.CurrentCall), This(This), Arguments(Arguments) {
-    Info.CurrentCall = this;
-    ++Info.CallStackDepth;
+CallStackFrame::CallStackFrame(EvalInfo &Info, SourceLocation CallLoc,
+                               const FunctionDecl *Callee, const LValue *This,
+                               const CCValue *Arguments)
+    : Info(Info), Caller(Info.CurrentCall), CallLoc(CallLoc), Callee(Callee),
+      This(This), Arguments(Arguments) {
+  Info.CurrentCall = this;
+  ++Info.CallStackDepth;
+}
+
+CallStackFrame::~CallStackFrame() {
+  assert(Info.CurrentCall == this && "calls retired out of order");
+  --Info.CallStackDepth;
+  Info.CurrentCall = Caller;
+}
+
+/// Produce a string describing the given constexpr call.
+static void describeCall(CallStackFrame *Frame, llvm::raw_ostream &Out) {
+  unsigned ArgIndex = 0;
+  bool IsMemberCall = isa<CXXMethodDecl>(Frame->Callee) &&
+                      !isa<CXXConstructorDecl>(Frame->Callee);
+
+  if (!IsMemberCall)
+    Out << *Frame->Callee << '(';
+
+  for (FunctionDecl::param_const_iterator I = Frame->Callee->param_begin(),
+       E = Frame->Callee->param_end(); I != E; ++I, ++ArgIndex) {
+    if (ArgIndex > IsMemberCall)
+      Out << ", ";
+
+    const ParmVarDecl *Param = *I;
+    const CCValue &Arg = Frame->Arguments[ArgIndex];
+    if (!Arg.isLValue() || Arg.getLValueDesignator().Invalid)
+      Arg.printPretty(Out, Frame->Info.Ctx, Param->getType());
+    else {
+      // Deliberately slice off the frame to form an APValue we can print.
+      APValue Value(Arg.getLValueBase(), Arg.getLValueOffset(),
+                    Arg.getLValueDesignator().Entries,
+                    Arg.getLValueDesignator().OnePastTheEnd);
+      Value.printPretty(Out, Frame->Info.Ctx, Param->getType());
+    }
+
+    if (ArgIndex == 0 && IsMemberCall)
+      Out << "->" << *Frame->Callee << '(';
   }
 
-  CallStackFrame::~CallStackFrame() {
-    assert(Info.CurrentCall == this && "calls retired out of order");
-    --Info.CallStackDepth;
-    Info.CurrentCall = Caller;
+  Out << ')';
+}
+
+void EvalInfo::addCallStack(unsigned Limit) {
+  // Determine which calls to skip, if any.
+  unsigned ActiveCalls = CallStackDepth - 1;
+  unsigned SkipStart = ActiveCalls, SkipEnd = SkipStart;
+  if (Limit && Limit < ActiveCalls) {
+    SkipStart = Limit / 2 + Limit % 2;
+    SkipEnd = ActiveCalls - Limit / 2;
   }
 
+  // Walk the call stack and add the diagnostics.
+  unsigned CallIdx = 0;
+  for (CallStackFrame *Frame = CurrentCall; Frame != &BottomFrame;
+       Frame = Frame->Caller, ++CallIdx) {
+    // Skip this call?
+    if (CallIdx >= SkipStart && CallIdx < SkipEnd) {
+      if (CallIdx == SkipStart) {
+        // Note that we're skipping calls.
+        addDiag(Frame->CallLoc, diag::note_constexpr_calls_suppressed)
+          << unsigned(ActiveCalls - Limit);
+      }
+      continue;
+    }
+
+    llvm::SmallVector<char, 128> Buffer;
+    llvm::raw_svector_ostream Out(Buffer);
+    describeCall(Frame, Out);
+    addDiag(Frame->CallLoc, diag::note_constexpr_call_here) << Out.str();
+  }
+}
+
+namespace {
   struct ComplexValue {
   private:
     bool IsInt;
@@ -1465,7 +1548,8 @@ static bool EvaluateArgs(ArrayRef<const Expr*> Args, ArgVector &ArgValues,
 }
 
 /// Evaluate a function call.
-static bool HandleFunctionCall(const Expr *CallExpr, const LValue *This,
+static bool HandleFunctionCall(const Expr *CallExpr, const FunctionDecl *Callee,
+                               const LValue *This,
                                ArrayRef<const Expr*> Args, const Stmt *Body,
                                EvalInfo &Info, APValue &Result) {
   if (!Info.CheckCallLimit(CallExpr->getExprLoc()))
@@ -1475,7 +1559,8 @@ static bool HandleFunctionCall(const Expr *CallExpr, const LValue *This,
   if (!EvaluateArgs(Args, ArgValues, Info))
     return false;
 
-  CallStackFrame Frame(Info, This, ArgValues.data());
+  CallStackFrame Frame(Info, CallExpr->getExprLoc(), Callee, This,
+                       ArgValues.data());
   return EvaluateStmt(Result, Info, Body) == ESR_Returned;
 }
 
@@ -1492,7 +1577,8 @@ static bool HandleConstructorCall(const Expr *CallExpr, const LValue &This,
   if (!EvaluateArgs(Args, ArgValues, Info))
     return false;
 
-  CallStackFrame Frame(Info, &This, ArgValues.data());
+  CallStackFrame Frame(Info, CallExpr->getExprLoc(), Definition,
+                       &This, ArgValues.data());
 
   // If it's a delegating constructor, just delegate.
   if (Definition->isDelegatingConstructor()) {
@@ -1855,7 +1941,7 @@ public:
     APValue Result;
 
     if (!CheckConstexprFunction(Info, E->getExprLoc(), FD, Definition) ||
-        !HandleFunctionCall(E, This, Args, Body, Info, Result))
+        !HandleFunctionCall(E, Definition, This, Args, Body, Info, Result))
       return false;
 
     return DerivedSuccess(CCValue(Result, CCValue::GlobalValue()), E);

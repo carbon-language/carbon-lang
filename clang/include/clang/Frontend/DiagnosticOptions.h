@@ -51,12 +51,14 @@ public:
   unsigned ErrorLimit;           /// Limit # errors emitted.
   unsigned MacroBacktraceLimit;  /// Limit depth of macro expansion backtrace.
   unsigned TemplateBacktraceLimit; /// Limit depth of instantiation backtrace.
+  unsigned ConstexprBacktraceLimit; /// Limit depth of constexpr backtrace.
 
   /// The distance between tab stops.
   unsigned TabStop;
   enum { DefaultTabStop = 8, MaxTabStop = 100, 
          DefaultMacroBacktraceLimit = 6,
-         DefaultTemplateBacktraceLimit = 10 };
+         DefaultTemplateBacktraceLimit = 10,
+         DefaultConstexprBacktraceLimit = 10 };
 
   /// Column limit for formatting message diagnostics, or 0 if unused.
   unsigned MessageLength;
@@ -99,6 +101,7 @@ public:
     ErrorLimit = 0;
     TemplateBacktraceLimit = DefaultTemplateBacktraceLimit;
     MacroBacktraceLimit = DefaultMacroBacktraceLimit;
+    ConstexprBacktraceLimit = DefaultConstexprBacktraceLimit;
   }
 };
 

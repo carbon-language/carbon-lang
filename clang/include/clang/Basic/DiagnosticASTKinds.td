@@ -33,6 +33,10 @@ def note_constexpr_past_end : Note<
 def note_constexpr_temporary_here : Note<"temporary created here">;
 def note_constexpr_depth_limit_exceeded : Note<
   "constexpr evaluation exceeded maximum depth of %0 calls">;
+def note_constexpr_calls_suppressed : Note<
+  "(skipping %0 call%s0 in backtrace; use -fconstexpr-backtrace-limit=0 to "
+  "see all)">;
+def note_constexpr_call_here : Note<"in call to '%0'">;
 
 // inline asm related.
 let CategoryName = "Inline Assembly Issue" in {

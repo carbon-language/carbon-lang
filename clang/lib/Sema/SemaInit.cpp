@@ -5707,7 +5707,7 @@ static void DiagnoseNarrowingInInitList(
            ? diag::err_init_list_constant_narrowing
            : diag::warn_init_list_constant_narrowing)
       << InitE->getSourceRange()
-      << ConstantValue
+      << ConstantValue.getAsString(S.getASTContext(), EntityType)
       << EntityType.getLocalUnqualifiedType();
   } else
     S.Diag(InitE->getLocStart(),

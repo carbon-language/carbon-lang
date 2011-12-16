@@ -354,6 +354,11 @@ static void DiagnosticOptsToArgs(const DiagnosticOptions &Opts,
     Res.push_back("-ftemplate-backtrace-limit");
     Res.push_back(llvm::utostr(Opts.TemplateBacktraceLimit));
   }
+  if (Opts.ConstexprBacktraceLimit
+                        != DiagnosticOptions::DefaultConstexprBacktraceLimit) {
+    Res.push_back("-fconstexpr-backtrace-limit");
+    Res.push_back(llvm::utostr(Opts.ConstexprBacktraceLimit));
+  }
 
   if (Opts.TabStop != DiagnosticOptions::DefaultTabStop) {
     Res.push_back("-ftabstop");
@@ -1228,6 +1233,10 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.TemplateBacktraceLimit
     = Args.getLastArgIntValue(OPT_ftemplate_backtrace_limit,
                          DiagnosticOptions::DefaultTemplateBacktraceLimit,
+                         Diags);
+  Opts.ConstexprBacktraceLimit
+    = Args.getLastArgIntValue(OPT_fconstexpr_backtrace_limit,
+                         DiagnosticOptions::DefaultConstexprBacktraceLimit,
                          Diags);
   Opts.TabStop = Args.getLastArgIntValue(OPT_ftabstop,
                                     DiagnosticOptions::DefaultTabStop, Diags);

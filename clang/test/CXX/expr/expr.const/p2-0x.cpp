@@ -56,7 +56,7 @@ namespace NonConstExprReturn {
     return n; // expected-note {{reference to temporary cannot be returned from a constexpr function}}
   }
   struct NonConstExprFunction {
-    int n : id_ref( // expected-error {{constant expression}}
+    int n : id_ref( // expected-error {{constant expression}} expected-note {{in call to 'id_ref(16)'}}
         16 // expected-note {{temporary created here}}
         );
   };
@@ -64,10 +64,10 @@ namespace NonConstExprReturn {
     return &a; // expected-note {{pointer to 'n' cannot be returned from a constexpr function}}
   }
   constexpr const int *return_param(int n) { // expected-note {{declared here}}
-    return address_of(n);
+    return address_of(n); // expected-note {{in call to 'address_of(n)'}}
   }
   struct S {
-    int n : *return_param(0); // expected-error {{constant expression}}
+    int n : *return_param(0); // expected-error {{constant expression}} expected-note {{in call to 'return_param(0)'}}
   };
 }
 
@@ -87,7 +87,7 @@ namespace NonConstExprCtor {
   constexpr T t2(0); // expected-error {{must be initialized by a constant expression}}
 
   struct S {
-    int n : T(4).r; // expected-error {{constant expression}} expected-note {{temporary created here}}
+    int n : T(4).r; // expected-error {{constant expression}} expected-note {{temporary created here}} expected-note {{in call to 'T(4)'}}
   };
 }
 
@@ -95,17 +95,17 @@ namespace NonConstExprCtor {
 //   exceed the implementation-defined recursion limits (see Annex B);
 namespace RecursionLimits {
   constexpr int RecurseForever(int n) {
-    return n + RecurseForever(n+1); // expected-note {{constexpr evaluation exceeded maximum depth of 256 calls}}
+    return n + RecurseForever(n+1); // expected-note {{constexpr evaluation exceeded maximum depth of 256 calls}} expected-note 9{{in call to 'RecurseForever(}} expected-note {{skipping 246 calls}}
   }
   struct AlsoRecurseForever {
     constexpr AlsoRecurseForever(int n) :
-      n(AlsoRecurseForever(n+1).n) // expected-note {{constexpr evaluation exceeded maximum depth of 256 calls}}
+      n(AlsoRecurseForever(n+1).n) // expected-note {{constexpr evaluation exceeded maximum depth of 256 calls}} expected-note 9{{in call to 'AlsoRecurseForever(}} expected-note {{skipping 246 calls}}
     {}
     int n;
   };
   struct S {
-    int k : RecurseForever(0); // expected-error {{constant expression}}
-    int l : AlsoRecurseForever(0).n; // expected-error {{constant expression}}
+    int k : RecurseForever(0); // expected-error {{constant expression}} expected-note {{in call to}}
+    int l : AlsoRecurseForever(0).n; // expected-error {{constant expression}} expected-note {{in call to}}
   };
 }
 
@@ -135,7 +135,7 @@ namespace UndefinedBehavior {
     return q[0]; // expected-note {{dereferenced pointer past the end of subobject of 's' is not a constant expression}}
   }
   struct T {
-    int n : f(p); // expected-error {{not an integer constant expression}}
+    int n : f(p); // expected-error {{not an integer constant expression}} expected-note {{in call to 'f(&s.m + 1)'}}
   };
 }
 

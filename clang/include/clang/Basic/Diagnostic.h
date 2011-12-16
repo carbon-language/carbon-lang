@@ -158,6 +158,8 @@ private:
   unsigned ErrorLimit;           // Cap of # errors emitted, 0 -> no limit.
   unsigned TemplateBacktraceLimit; // Cap on depth of template backtrace stack,
                                    // 0 -> no limit.
+  unsigned ConstexprBacktraceLimit; // Cap on depth of constexpr evaluation
+                                    // backtrace stack, 0 -> no limit.
   ExtensionHandling ExtBehavior; // Map extensions onto warnings or errors?
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> Diags;
   DiagnosticConsumer *Client;
@@ -363,13 +365,25 @@ public:
   void setTemplateBacktraceLimit(unsigned Limit) {
     TemplateBacktraceLimit = Limit;
   }
-  
+
   /// \brief Retrieve the maximum number of template instantiation
-  /// nodes to emit along with a given diagnostic.
+  /// notes to emit along with a given diagnostic.
   unsigned getTemplateBacktraceLimit() const {
     return TemplateBacktraceLimit;
   }
-  
+
+  /// \brief Specify the maximum number of constexpr evaluation
+  /// notes to emit along with a given diagnostic.
+  void setConstexprBacktraceLimit(unsigned Limit) {
+    ConstexprBacktraceLimit = Limit;
+  }
+
+  /// \brief Retrieve the maximum number of constexpr evaluation
+  /// notes to emit along with a given diagnostic.
+  unsigned getConstexprBacktraceLimit() const {
+    return ConstexprBacktraceLimit;
+  }
+
   /// setIgnoreAllWarnings - When set to true, any unmapped warnings are
   /// ignored.  If this and WarningsAsErrors are both set, then this one wins.
   void setIgnoreAllWarnings(bool Val) { IgnoreAllWarnings = Val; }

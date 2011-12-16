@@ -416,7 +416,11 @@ constexpr int ZipFoldR(int (*F)(int x, int y, int c), int n,
                        const int *xs, const int *ys, int c) {
   return n ? F(
                *xs, // expected-note {{subexpression not valid}}
-               *ys, ZipFoldR(F, n-1, xs+1, ys+1, c)) : c;
+               *ys,
+               ZipFoldR(F, n-1, xs+1, ys+1, c)) // \
+      expected-note {{in call to 'ZipFoldR(&SubMul, 2, &xs[4], &ys[4], 1)'}} \
+      expected-note {{in call to 'ZipFoldR(&SubMul, 1, &xs[5], &ys[5], 1)'}}
+           : c;
 }
 constexpr int MulAdd(int x, int y, int c) { return x * y + c; }
 constexpr int InnerProduct = ZipFoldR(MulAdd, 5, xs, ys, 0);
@@ -425,7 +429,9 @@ static_assert(InnerProduct == 35, "");
 constexpr int SubMul(int x, int y, int c) { return (x - y) * c; }
 constexpr int DiffProd = ZipFoldR(SubMul, 2, xs+3, ys+3, 1);
 static_assert(DiffProd == 8, "");
-static_assert(ZipFoldR(SubMul, 3, xs+3, ys+3, 1), ""); // expected-error {{constant expression}}
+static_assert(ZipFoldR(SubMul, 3, xs+3, ys+3, 1), ""); // \
+      expected-error {{constant expression}} \
+      expected-note {{in call to 'ZipFoldR(&SubMul, 3, &xs[3], &ys[3], 1)'}}
 
 constexpr const int *p = xs + 3;
 constexpr int xs4 = p[1]; // ok
@@ -440,6 +446,13 @@ static_assert(zs[0][0][0][2] == 3, ""); // expected-error {{constant expression}
 static_assert((&zs[0][0][0][2])[-1] == 2, "");
 static_assert(**(**(zs + 1) + 1) == 11, "");
 static_assert(*(&(&(*(*&(&zs[2] - 1)[0] + 2 - 2))[2])[-1][-1] + 1) == 11, "");
+
+constexpr int fail(const int &p) {
+  return (&p)[64]; // expected-note {{subexpression}}
+}
+static_assert(fail(*(&(&(*(*&(&zs[2] - 1)[0] + 2 - 2))[2])[-1][-1] + 1)) == 11, ""); // \
+expected-error {{static_assert expression is not an integral constant expression}} \
+expected-note {{in call to 'fail(zs[1][0][1][0])'}}
 
 constexpr int arr[40] = { 1, 2, 3, [8] = 4 }; // expected-warning {{extension}}
 constexpr int SumNonzero(const int *p) {

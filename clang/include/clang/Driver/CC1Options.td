@@ -291,6 +291,8 @@ def fmacro_backtrace_limit : Separate<"-fmacro-backtrace-limit">, MetaVarName<"<
   HelpText<"Set the maximum number of entries to print in a macro expansion backtrace (0 = no limit).">;
 def ftemplate_backtrace_limit : Separate<"-ftemplate-backtrace-limit">, MetaVarName<"<N>">,
   HelpText<"Set the maximum number of entries to print in a template instantiation backtrace (0 = no limit).">;
+def fconstexpr_backtrace_limit : Separate<"-fconstexpr-backtrace-limit">, MetaVarName<"<N>">,
+  HelpText<"Set the maximum number of entries to print in a constexpr evaluation backtrace (0 = no limit).">;
 def fmessage_length : Separate<"-fmessage-length">, MetaVarName<"<N>">,
   HelpText<"Format message diagnostics so that they fit within N columns or fewer, when possible.">;
 def fcolor_diagnostics : Flag<"-fcolor-diagnostics">,

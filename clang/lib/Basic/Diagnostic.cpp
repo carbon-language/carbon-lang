@@ -53,6 +53,7 @@ DiagnosticsEngine::DiagnosticsEngine(
 
   ErrorLimit = 0;
   TemplateBacktraceLimit = 0;
+  ConstexprBacktraceLimit = 0;
 
   Reset();
 }
