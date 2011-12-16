@@ -52,6 +52,7 @@ static cl::opt<bool>
 AdjustJumpTableBlocks("arm-adjust-jump-tables", cl::Hidden, cl::init(true),
           cl::desc("Adjust basic block layout to better use TB[BH]"));
 
+// FIXME: This option should be removed once it has received sufficient testing.
 static cl::opt<bool>
 AlignConstantIslands("arm-align-constant-islands", cl::Hidden, cl::init(true),
           cl::desc("Align constant islands in code"));
