@@ -21,6 +21,7 @@
 #include "llvm/Analysis/RegionPass.h"
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -144,7 +145,7 @@ bool IndependentBlocks::isSafeToMove(Instruction *Inst) {
       Inst->mayWriteToMemory())
     return false;
 
-  return Inst->isSafeToSpeculativelyExecute();
+  return isSafeToSpeculativelyExecute(Inst);
 }
 
 void IndependentBlocks::moveOperandTree(Instruction *Inst, const Region *R,
