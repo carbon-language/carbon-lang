@@ -106,6 +106,7 @@ void asan_dispatch_call_block_and_release(void *block) {
     t = (AsanThread*)asan_malloc(sizeof(AsanThread), &stack);
     new(t) AsanThread(context->parent_tid,
                       /*start_routine*/NULL, /*arg*/NULL, &stack);
+    t->Init();
     asanThreadRegistry().SetCurrent(t);
   }
   // Call the original dispatcher for the block.

@@ -51,7 +51,7 @@ void AsanThread::ClearShadowForThreadStack() {
   real_memset((void*)shadow_bot, 0, shadow_top - shadow_bot);
 }
 
-void *AsanThread::ThreadStart() {
+void AsanThread::Init() {
   SetThreadStackTopAndBottom();
   fake_stack_.Init(stack_size());
   if (FLAG_v >= 1) {
@@ -65,6 +65,10 @@ void *AsanThread::ThreadStart() {
   CHECK(AddrIsInMem(stack_top_));
 
   ClearShadowForThreadStack();
+}
+
+void *AsanThread::ThreadStart() {
+  Init();
 
   if (!start_routine_) {
     // start_routine_ == NULL if we're on the main thread or on one of the

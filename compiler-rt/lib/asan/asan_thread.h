@@ -66,6 +66,7 @@ class AsanThread {
              void *arg, AsanStackTrace *stack);
   ~AsanThread();
 
+  void Init();  // Should be called from the thread itself.
   void *ThreadStart();
 
   uintptr_t stack_top() { return stack_top_; }
