@@ -463,23 +463,20 @@ _mm256_extract_epi64(__m256i a, const int imm)
 #endif
 
 /* Vector insert */
-static __inline __m256d __attribute__((__always_inline__, __nodebug__))
-_mm256_insertf128_pd(__m256d a, __m128d b, const int o)
-{
-  return (__m256d)__builtin_ia32_vinsertf128_pd256((__v4df)a, (__v2df)b, o);
-}
+#define _mm256_insertf128_pd(V1, V2, O) __extension__ ({ \
+  __m256d __V1 = (V1); \
+  __m128d __V2 = (V2); \
+  (__m256d)__builtin_ia32_vinsertf128_pd256((__v4df)__V1, (__v2df)__V2, O); })
 
-static __inline __m256 __attribute__((__always_inline__, __nodebug__))
-_mm256_insertf128_ps(__m256 a, __m128 b, const int o)
-{
-  return (__m256)__builtin_ia32_vinsertf128_ps256((__v8sf)a, (__v4sf)b, o);
-}
+#define _mm256_insertf128_ps(V1, V2, O) __extension__ ({ \
+  __m256 __V1 = (V1); \
+  __m128 __V2 = (V2); \
+  (__m256)__builtin_ia32_vinsertf128_ps256((__v8sf)__V1, (__v4sf)__V2, O); })
 
-static __inline __m256i __attribute__((__always_inline__, __nodebug__))
-_mm256_insertf128_si256(__m256i a, __m128i b, const int o)
-{
-  return (__m256i)__builtin_ia32_vinsertf128_si256((__v8si)a, (__v4si)b, o);
-}
+#define _mm256_insertf128_si256(V1, V2, O) __extension__ ({ \
+  __m256i __V1 = (V1); \
+  __m128i __V2 = (V2); \
+  (__m256i)__builtin_ia32_vinsertf128_si256((__v8si)__V1, (__v4si)__V2, O); })
 
 static __inline __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_insert_epi32(__m256i a, int b, int const imm)
