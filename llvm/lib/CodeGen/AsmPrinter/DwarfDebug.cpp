@@ -449,8 +449,6 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
   return ScopeDIE;
 }
 
-
-
 /// constructScopeDIE - Construct a DIE for this scope.
 DIE *DwarfDebug::constructScopeDIE(CompileUnit *TheCU, LexicalScope *Scope) {
   if (!Scope || !Scope->getScopeNode())
@@ -1055,7 +1053,8 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
       }
 
       // The value is valid until the next DBG_VALUE or clobber.
-      DotDebugLocEntries.push_back(getDebugLocEntry(Asm, FLabel, SLabel, Begin));
+      DotDebugLocEntries.push_back(getDebugLocEntry(Asm, FLabel, SLabel,
+                                                    Begin));
     }
     DotDebugLocEntries.push_back(DotDebugLocEntry());
   }
