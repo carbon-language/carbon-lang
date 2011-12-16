@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (271):
+CHECK: Warnings without flags (270):
 CHECK-NEXT:   ext_anon_param_requires_type_specifier
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_array_init_copy
@@ -28,7 +28,6 @@ CHECK-NEXT:   ext_designated_init
 CHECK-NEXT:   ext_designated_init_cxx
 CHECK-NEXT:   ext_duplicate_declspec
 CHECK-NEXT:   ext_ellipsis_exception_spec
-CHECK-NEXT:   ext_embedded_directive
 CHECK-NEXT:   ext_empty_fnmacro_arg
 CHECK-NEXT:   ext_empty_source_file
 CHECK-NEXT:   ext_enum_friend
