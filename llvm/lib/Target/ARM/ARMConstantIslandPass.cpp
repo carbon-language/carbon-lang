@@ -537,7 +537,7 @@ ARMConstantIslands::DoInitialPlacement(std::vector<MachineInstr*> &CPEMIs) {
 
     // Ensure that future entries with higher alignment get inserted before
     // CPEMI. This is bucket sort with iterators.
-    for (unsigned a = LogAlign + 1; a < MaxAlign; ++a)
+    for (unsigned a = LogAlign + 1; a <= MaxAlign; ++a)
       if (InsPoint[a] == InsAt)
         InsPoint[a] = CPEMI;
 
