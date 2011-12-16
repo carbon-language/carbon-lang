@@ -577,9 +577,25 @@ void Preprocessor::HandleDirective(Token &Result) {
   //   A(abc
   //     #warning blah
   //   def)
-  // If so, the user is relying on non-portable behavior, emit a diagnostic.
-  if (InMacroArgs)
+  // If so, the user is relying on undefined behavior, emit a diagnostic. Do
+  // not support this for #include-like directives, since that can result in
+  // terrible diagnostics, and does not work in GCC.
+  if (InMacroArgs) {
+    if (IdentifierInfo *II = Result.getIdentifierInfo()) {
+      switch (II->getPPKeywordID()) {
+      case tok::pp_include:
+      case tok::pp_import:
+      case tok::pp_include_next:
+      case tok::pp___include_macros:
+        Diag(Result, diag::err_embedded_include) << II->getName();
+        DiscardUntilEndOfDirective();
+        return;
+      default:
+        break;
+      }
+    }
     Diag(Result, diag::ext_embedded_directive);
+  }
 
 TryAgain:
   switch (Result.getKind()) {

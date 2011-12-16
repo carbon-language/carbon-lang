@@ -202,8 +202,10 @@ def warn_cxx98_compat_variadic_macro : Warning<
   InGroup<CXX98CompatPedantic>, DefaultIgnore;
 def ext_named_variadic_macro : Extension<
   "named variadic macros are a GNU extension">, InGroup<VariadicMacros>;
+def err_embedded_include : Error<
+  "embedding a #%0 directive within macro arguments is not supported">;
 def ext_embedded_directive : Extension<
-  "embedding a directive within macro arguments is not portable">,
+  "embedding a directive within macro arguments has undefined behavior">,
   InGroup<DiagGroup<"embedded-directive">>;
 def ext_missing_varargs_arg : Extension<
   "varargs argument missing, but tolerated as an extension">;
