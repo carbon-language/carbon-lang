@@ -934,23 +934,8 @@ bool ARMConstantIslands::OffsetIsInRange(unsigned UserOffset,
   // purposes of the displacement computation; compensate for that here.
   // Effectively, the valid range of displacements is 2 bytes smaller for such
   // references.
-  unsigned TotalAdj = 0;
-  if (isThumb && UserOffset%4 !=0) {
+  if (isThumb && UserOffset%4 !=0)
     UserOffset -= 2;
-    TotalAdj = 2;
-  }
-  // CPEs will be rounded up to a multiple of 4.
-  if (isThumb && TrialOffset%4 != 0) {
-    TrialOffset += 2;
-    TotalAdj += 2;
-  }
-
-  // In Thumb2 mode, later branch adjustments can shift instructions up and
-  // cause alignment change. In the worst case scenario this can cause the
-  // user's effective address to be subtracted by 2 and the CPE's address to
-  // be plus 2.
-  if (isThumb2 && TotalAdj != 4)
-    MaxDisp -= (4 - TotalAdj);
 
   if (UserOffset <= TrialOffset) {
     // User before the Trial.
