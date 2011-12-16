@@ -176,6 +176,11 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
   if (TripCount != 0 && Count > TripCount)
     Count = TripCount;
 
+  // Don't enter the unroll code if there is nothing to do. This way we don't
+  // need to support "partial unrolling by 1".
+  if (TripCount == 0 && Count < 2)
+    return false;
+
   assert(Count > 0);
   assert(TripMultiple > 0);
   assert(TripCount == 0 || TripCount % TripMultiple == 0);
