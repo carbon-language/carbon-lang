@@ -114,7 +114,7 @@ class VariadicFunction {
 #define LLVM_DEFINE_OVERLOAD(N) \
   ResultT operator()(LLVM_COMMA_JOIN ## N(const ArgT &A)) const { \
     const ArgT *const Args[] = { LLVM_COMMA_JOIN ## N(&A) }; \
-    return Func(Args); \
+    return Func(makeArrayRef(Args)); \
   }
   LLVM_DEFINE_OVERLOAD(1)
   LLVM_DEFINE_OVERLOAD(2)
@@ -164,7 +164,7 @@ class VariadicFunction1 {
 #define LLVM_DEFINE_OVERLOAD(N) \
   ResultT operator()(Param0T P0, LLVM_COMMA_JOIN ## N(const ArgT &A)) const { \
     const ArgT *const Args[] = { LLVM_COMMA_JOIN ## N(&A) }; \
-    return Func(P0, Args); \
+    return Func(P0, makeArrayRef(Args)); \
   }
   LLVM_DEFINE_OVERLOAD(1)
   LLVM_DEFINE_OVERLOAD(2)
@@ -215,7 +215,7 @@ class VariadicFunction2 {
   ResultT operator()(Param0T P0, Param1T P1, \
                      LLVM_COMMA_JOIN ## N(const ArgT &A)) const { \
     const ArgT *const Args[] = { LLVM_COMMA_JOIN ## N(&A) }; \
-    return Func(P0, P1, Args); \
+    return Func(P0, P1, makeAraryRef(Args)); \
   }
   LLVM_DEFINE_OVERLOAD(1)
   LLVM_DEFINE_OVERLOAD(2)
@@ -267,7 +267,7 @@ class VariadicFunction3 {
   ResultT operator()(Param0T P0, Param1T P1, Param2T P2, \
                      LLVM_COMMA_JOIN ## N(const ArgT &A)) const { \
     const ArgT *const Args[] = { LLVM_COMMA_JOIN ## N(&A) }; \
-    return Func(P0, P1, P2, Args); \
+    return Func(P0, P1, P2, makeArrayRef(Args)); \
   }
   LLVM_DEFINE_OVERLOAD(1)
   LLVM_DEFINE_OVERLOAD(2)
