@@ -838,8 +838,11 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       addUInt(&Buffer, dwarf::DW_AT_APPLE_objc_complete_type,
               dwarf::DW_FORM_flag, 1);
 
-    // FIXME: a structure type can have template params too.
-    if (Tag == dwarf::DW_TAG_class_type) 
+    // Add template parameters to a class, structure or union types.
+    // FIXME: The support isn't in the metadata for this yet.
+    if (Tag == dwarf::DW_TAG_class_type ||
+        Tag == dwarf::DW_TAG_structure_type ||
+        Tag == dwarf::DW_TAG_union_type)
       addTemplateParams(Buffer, CTy.getTemplateParams());
 
     break;
