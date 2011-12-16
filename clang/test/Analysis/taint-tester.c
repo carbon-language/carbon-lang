@@ -111,14 +111,42 @@ int fscanfTest(void) {
   fprintf(fp, "%s %d", s, t); // expected-warning + {{tainted}}
   fclose(fp); // expected-warning + {{tainted}}
 
-  // Check if we propagate taint from stdin when it's used in an assignment.
-  FILE *pfstd = stdin;
-  fscanf(pfstd, "%s %d", s, &t); // TODO: This should be tainted as well.
-
   // Test fscanf and fopen.
   if((fp=fopen("test","r")) == 0) // expected-warning + {{tainted}}
     return 1;
   fscanf(fp, "%s%d", s, &t); // expected-warning + {{tainted}}
   fprintf(stdout, "%s %d", s, t); // expected-warning + {{tainted}}
   return 0;
+}
+
+// Check if we propagate taint from stdin when it's used in an assignment.
+void stdinTest1() {
+  int i;
+  fscanf(stdin, "%d", &i);
+  int j = i; // expected-warning + {{tainted}}
+}
+void stdinTest2(FILE *pIn) {
+  FILE *p = stdin;
+  FILE *pp = p;
+  int ii;
+
+  fscanf(pp, "%d", &ii);
+  int jj = ii;// expected-warning + {{tainted}}
+
+  fscanf(p, "%d", &ii);
+  int jj2 = ii;// expected-warning + {{tainted}}
+
+  ii = 3;
+  int jj3 = ii;// no warning
+
+  p = pIn;
+  fscanf(p, "%d", &ii);
+  int jj4 = ii;// no warning
+}
+
+void stdinTest3() {
+  FILE **ppp = &stdin;
+  int iii;
+  fscanf(*ppp, "%d", &iii);
+  int jjj = iii;// expected-warning + {{tainted}}
 }

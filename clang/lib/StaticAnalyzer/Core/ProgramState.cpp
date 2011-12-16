@@ -653,6 +653,9 @@ bool ProgramState::scanReachableSymbols(const MemRegion * const *I,
 
 const ProgramState* ProgramState::addTaint(const Stmt *S,
                                            TaintTagType Kind) const {
+  if (const Expr *E = dyn_cast_or_null<Expr>(S))
+    S = E->IgnoreParens();
+
   SymbolRef Sym = getSVal(S).getAsSymbol();
   if (Sym)
     return addTaint(Sym, Kind);
@@ -679,6 +682,9 @@ const ProgramState* ProgramState::addTaint(SymbolRef Sym,
 }
 
 bool ProgramState::isTainted(const Stmt *S, TaintTagType Kind) const {
+  if (const Expr *E = dyn_cast_or_null<Expr>(S))
+    S = E->IgnoreParens();
+
   SVal val = getSVal(S);
   return isTainted(val, Kind);
 }

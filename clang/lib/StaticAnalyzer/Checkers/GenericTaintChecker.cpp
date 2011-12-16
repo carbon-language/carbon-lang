@@ -43,8 +43,9 @@ class GenericTaintChecker : public Checker< check::PostStmt<CallExpr>,
   void processFscanf(const CallExpr *CE, CheckerContext &C) const;
   void processRetTaint(const CallExpr *CE, CheckerContext &C) const;
 
+  /// Check if the region the expression evaluates to is the standard input,
+  /// and thus, is tainted.
   bool isStdin(const Expr *E, CheckerContext &C) const;
-  bool isStdin(const DeclRefExpr *E, CheckerContext &C) const;
 
 public:
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
@@ -97,13 +98,8 @@ SymbolRef GenericTaintChecker::getPointedToSymbol(CheckerContext &C,
                                                   bool IssueWarning) const {
   const ProgramState *State = C.getState();
   SVal AddrVal = State->getSVal(Arg->IgnoreParens());
-
-  // TODO: Taint is not going to propagate? Should we ever peel off the casts
-  // IgnoreParenImpCasts()?
-  if (AddrVal.isUnknownOrUndef()) {
-    assert(State->getSVal(Arg->IgnoreParenImpCasts()).isUnknownOrUndef());
+  if (AddrVal.isUnknownOrUndef())
     return 0;
-  }
 
   Loc *AddrLoc = dyn_cast<Loc>(&AddrVal);
 
@@ -174,27 +170,37 @@ void GenericTaintChecker::processRetTaint(const CallExpr *CE,
 
 bool GenericTaintChecker::isStdin(const Expr *E,
                                   CheckerContext &C) const {
-  if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E->IgnoreParenCasts()))
-    return isStdin(DR, C);
-  return false;
-}
+  const ProgramState *State = C.getState();
+  SVal Val = State->getSVal(E);
 
-bool GenericTaintChecker::isStdin(const DeclRefExpr *DR,
-                                  CheckerContext &C) const {
-  const VarDecl *D = dyn_cast_or_null<VarDecl>(DR->getDecl());
-  if (!D)
+  // stdin is a pointer, so it would be a region.
+  const MemRegion *MemReg = Val.getAsRegion();
+
+  // The region should be symbolic, we do not know it's value.
+  const SymbolicRegion *SymReg = dyn_cast_or_null<SymbolicRegion>(MemReg);
+  if (!SymReg)
     return false;
 
-  D = D->getCanonicalDecl();
-  if ((D->getName().find("stdin") != StringRef::npos) && D->isExternC())
-    if (const PointerType * PtrTy =
-          dyn_cast<PointerType>(D->getType().getTypePtr()))
-      if (PtrTy->getPointeeType() == C.getASTContext().getFILEType())
-        return true;
+  // Get it's symbol and find the declaration region it's pointing to.
+  const SymbolRegionValue *Sm =dyn_cast<SymbolRegionValue>(SymReg->getSymbol());
+  if (!Sm)
+    return false;
+  const DeclRegion *DeclReg = dyn_cast_or_null<DeclRegion>(Sm->getRegion());
+  if (!DeclReg)
+    return false;
 
+  // This region corresponds to a declaration, find out if it's a global/extern
+  // variable named stdin with the proper type.
+  if (const VarDecl *D = dyn_cast_or_null<VarDecl>(DeclReg->getDecl())) {
+    D = D->getCanonicalDecl();
+    if ((D->getName().find("stdin") != StringRef::npos) && D->isExternC())
+        if (const PointerType * PtrTy =
+              dyn_cast<PointerType>(D->getType().getTypePtr()))
+          if (PtrTy->getPointeeType() == C.getASTContext().getFILEType())
+            return true;
+  }
   return false;
 }
-
 
 void ento::registerGenericTaintChecker(CheckerManager &mgr) {
   mgr.registerChecker<GenericTaintChecker>();
