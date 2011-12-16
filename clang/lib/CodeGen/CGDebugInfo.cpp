@@ -499,7 +499,12 @@ llvm::DIType CGDebugInfo::CreatePointeeType(QualType PointeeTy,
     llvm::DIDescriptor FDContext =
       getContextDescriptor(cast<Decl>(RD->getDeclContext()));
 
-    if (RD->isStruct())
+    CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
+    if (CXXDecl)
+      return DBuilder.createClassType(FDContext, RD->getName(), DefUnit,
+                                      Line, 0, 0, 0, llvm::DIType::FlagFwdDecl,
+                                      llvm::DIType(), llvm::DIArray());
+    else if (RD->isStruct())
       return DBuilder.createStructType(FDContext, RD->getName(), DefUnit,
                                        Line, 0, 0, llvm::DIType::FlagFwdDecl,
                                        llvm::DIArray());
@@ -507,12 +512,8 @@ llvm::DIType CGDebugInfo::CreatePointeeType(QualType PointeeTy,
       return DBuilder.createUnionType(FDContext, RD->getName(), DefUnit,
                                       Line, 0, 0, llvm::DIType::FlagFwdDecl,
                                       llvm::DIArray());
-    else {
-      assert(RD->isClass() && "Unknown RecordType!");
-      return DBuilder.createClassType(FDContext, RD->getName(), DefUnit,
-                                      Line, 0, 0, 0, llvm::DIType::FlagFwdDecl,
-                                      llvm::DIType(), llvm::DIArray());
-    }
+    else
+      llvm_unreachable("Unknown RecordDecl type!");
   }
   return getOrCreateType(PointeeTy, Unit);
 
@@ -1175,11 +1176,13 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
     else if (CXXDecl->isDynamicClass()) 
       ContainingType = FwdDecl;
 
-   RealDecl = DBuilder.createClassType(RDContext, RDName, DefUnit, Line,
-                                       Size, Align, 0, 0, llvm::DIType(),
-                                       Elements, ContainingType,
-                                       TParamsArray);
-  } else 
+    // FIXME: This could be a struct type giving a default visibility different
+    // than C++ class type, but needs llvm metadata changes first.
+    RealDecl = DBuilder.createClassType(RDContext, RDName, DefUnit, Line,
+                                        Size, Align, 0, 0, llvm::DIType(),
+                                        Elements, ContainingType,
+                                        TParamsArray);
+  } else
     RealDecl = DBuilder.createStructType(RDContext, RDName, DefUnit, Line,
                                          Size, Align, 0, Elements);
 
