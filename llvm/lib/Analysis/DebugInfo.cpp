@@ -482,6 +482,7 @@ bool DINameSpace::Verify() const {
 /// return base type size.
 uint64_t DIDerivedType::getOriginalTypeSize() const {
   unsigned Tag = getTag();
+
   if (Tag == dwarf::DW_TAG_member || Tag == dwarf::DW_TAG_typedef ||
       Tag == dwarf::DW_TAG_const_type || Tag == dwarf::DW_TAG_volatile_type ||
       Tag == dwarf::DW_TAG_restrict_type) {
@@ -490,7 +491,12 @@ uint64_t DIDerivedType::getOriginalTypeSize() const {
     // approach.
     if (!BaseType.isValid())
       return getSizeInBits();
-    if (BaseType.isDerivedType())
+    // If this is a derived type, go ahead and get the base type, unless
+    // it's a reference or pointer type, then it's just the size of the field.
+    if (BaseType.getTag() == dwarf::DW_TAG_reference_type ||
+        BaseType.getTag() == dwarf::DW_TAG_pointer_type)
+      return getSizeInBits();
+    else if (BaseType.isDerivedType())
       return DIDerivedType(BaseType).getOriginalTypeSize();
     else
       return BaseType.getSizeInBits();
