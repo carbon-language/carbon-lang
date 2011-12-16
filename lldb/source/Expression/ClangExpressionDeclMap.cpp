@@ -444,9 +444,9 @@ ClangExpressionDeclMap::AddPersistentVariable
 
     ASTContext *context(target->GetScratchClangASTContext()->getASTContext());
     
-    TypeFromUser user_type(m_ast_importer->CopyType(context, 
-                                                    parser_type.GetASTContext(),
-                                                    parser_type.GetOpaqueQualType()),
+    TypeFromUser user_type(m_ast_importer->DeportType(context, 
+                                                      parser_type.GetASTContext(),
+                                                      parser_type.GetOpaqueQualType()),
                            context);
     
     if (!user_type.GetOpaqueQualType())

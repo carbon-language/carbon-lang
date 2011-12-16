@@ -71,6 +71,39 @@ ClangASTImporter::CopyDecl (clang::ASTContext *dst_ast,
     return NULL;
 }
 
+lldb::clang_type_t
+ClangASTImporter::DeportType (clang::ASTContext *dst_ctx,
+                              clang::ASTContext *src_ctx,
+                              lldb::clang_type_t type)
+{
+    lldb::clang_type_t result = CopyType(dst_ctx, src_ctx, type);
+    
+    if (!result)
+        return NULL;
+    
+    QualType qual_type = QualType::getFromOpaquePtr(type);
+    
+    if (const TagType *tag_type = qual_type->getAs<TagType>())
+    {
+        TagDecl *tag_decl = tag_type->getDecl();
+        const TagType *result_tag_type = QualType::getFromOpaquePtr(result)->getAs<TagType>();
+        TagDecl *result_tag_decl = result_tag_type->getDecl();
+        
+        if (tag_decl)
+        {
+            MinionSP minion_sp (GetMinion (dst_ctx, src_ctx));
+
+            minion_sp->ImportDefinition(tag_decl);
+            
+            ASTContextMetadataSP to_context_md = GetContextMetadata(dst_ctx);
+            
+            to_context_md->m_origins.erase(result_tag_decl);
+        }
+    }
+    
+    return result;
+}
+
 clang::Decl *
 ClangASTImporter::DeportDecl (clang::ASTContext *dst_ctx,
                               clang::ASTContext *src_ctx,
@@ -398,7 +431,7 @@ clang::Decl
         
         if (to_interface_decl->isForwardDecl())
             to_interface_decl->completedForwardDecl();
-        
+         
         to_interface_decl->setExternallyCompleted();
                 
         if (log)

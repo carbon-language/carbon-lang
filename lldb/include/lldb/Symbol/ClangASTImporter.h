@@ -48,6 +48,11 @@ public:
               clang::ASTContext *src_ctx,
               clang::Decl *decl);
     
+    lldb::clang_type_t
+    DeportType (clang::ASTContext *dst_ctx,
+                clang::ASTContext *src_ctx,
+                lldb::clang_type_t type);
+    
     clang::Decl *
     DeportDecl (clang::ASTContext *dst_ctx,
                 clang::ASTContext *src_ctx,

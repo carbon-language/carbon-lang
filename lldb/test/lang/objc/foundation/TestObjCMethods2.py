@@ -52,6 +52,16 @@ class FoundationTestCase2(TestBase):
         self.buildDwarf()
         self.MyString_dump()
 
+	def test_NSError_po_with_dsym(self):
+		"""Test that po of the result of an unknown method doesn't require a cast."""
+		self.buildDsym()
+		self.NSError_po()
+
+	def test_NSError_po_with_dwarf(self):
+		"""Test that po of the result of an unknown method doesn't require a cast."""
+		self.buildDsym()
+		self.NSError_po()
+				
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
@@ -175,6 +185,23 @@ class FoundationTestCase2(TestBase):
         
         self.expect("expression *my",
             patterns = ["\(MyString\) \$.* = ", "\(MyBase\)", "\(NSObject\)", "\(Class\)"])
+        self.runCmd("process continue")
+
+	def NSError_po(self):
+		"""Test that po of the result of an unknown method doesn't require a cast."""
+		exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+        
+        line = self.lines[4]
+
+        self.expect("breakpoint set -f main.m -l %d" % line, BREAKPOINT_CREATED,
+                    substrs = ["Breakpoint created:",
+                               "file ='main.m', line = %d, locations = 1" % line])
+
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        self.expect("po [NSError errorWithDomain:@\"Hello\" code:35 userInfo:nil]",
+            patterns = ["\(id\) \$.* = ", "Error Domain=Hello", "Code=35", "be completed."])
         self.runCmd("process continue")
 
 if __name__ == '__main__':
