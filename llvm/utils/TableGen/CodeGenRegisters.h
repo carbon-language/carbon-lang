@@ -245,6 +245,7 @@ namespace llvm {
     // Infer missing register classes.
     void computeInferredRegisterClasses();
     void inferCommonSubClass(CodeGenRegisterClass *RC);
+    void inferSubClassWithSubReg(CodeGenRegisterClass *RC);
 
     // Composite SubRegIndex instances.
     // Map (SubRegIndex, SubRegIndex) -> SubRegIndex.

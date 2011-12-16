@@ -794,54 +794,64 @@ void CodeGenRegBank::inferCommonSubClass(CodeGenRegisterClass *RC) {
   }
 }
 
+//
+// Synthesize missing sub-classes for getSubClassWithSubReg().
+//
+// Make sure that the set of registers in RC with a given SubIdx sub-register
+// form a register class.  Update RC->SubClassWithSubReg.
+//
+void CodeGenRegBank::inferSubClassWithSubReg(CodeGenRegisterClass *RC) {
+  // Map SubRegIndex to set of registers in RC supporting that SubRegIndex.
+  typedef std::map<Record*, CodeGenRegister::Set, LessRecord> SubReg2SetMap;
+
+  // Compute the set of registers supporting each SubRegIndex.
+  SubReg2SetMap SRSets;
+  for (CodeGenRegister::Set::const_iterator RI = RC->getMembers().begin(),
+       RE = RC->getMembers().end(); RI != RE; ++RI) {
+    const CodeGenRegister::SubRegMap &SRM = (*RI)->getSubRegs();
+    for (CodeGenRegister::SubRegMap::const_iterator I = SRM.begin(),
+         E = SRM.end(); I != E; ++I)
+      SRSets[I->first].insert(*RI);
+  }
+
+  // Find matching classes for all SRSets entries.  Iterate in SubRegIndex
+  // numerical order to visit synthetic indices last.
+  for (unsigned sri = 0, sre = SubRegIndices.size(); sri != sre; ++sri) {
+    Record *SubIdx = SubRegIndices[sri];
+    SubReg2SetMap::const_iterator I = SRSets.find(SubIdx);
+    // Unsupported SubRegIndex. Skip it.
+    if (I == SRSets.end())
+      continue;
+    // In most cases, all RC registers support the SubRegIndex.
+    if (I->second.size() == RC->getMembers().size()) {
+      RC->setSubClassWithSubReg(SubIdx, RC);
+      continue;
+    }
+    // This is a real subset.  See if we have a matching class.
+    CodeGenRegisterClass *SubRC =
+      getOrCreateSubClass(RC, &I->second,
+                          RC->getName() + "_with_" + I->first->getName());
+    RC->setSubClassWithSubReg(SubIdx, SubRC);
+  }
+}
+
+//
 // Infer missing register classes.
 //
-// For every register class RC, make sure that the set of registers in RC with
-// a given SubIxx sub-register form a register class.
 void CodeGenRegBank::computeInferredRegisterClasses() {
   // When this function is called, the register classes have not been sorted
   // and assigned EnumValues yet.  That means getSubClasses(),
   // getSuperClasses(), and hasSubClass() functions are defunct.
 
-  // Map SubRegIndex to register set.
-  typedef std::map<Record*, CodeGenRegister::Set, LessRecord> SubReg2SetMap;
-
   // Visit all register classes, including the ones being added by the loop.
   for (unsigned rci = 0; rci != RegClasses.size(); ++rci) {
-    CodeGenRegisterClass &RC = *RegClasses[rci];
+    CodeGenRegisterClass *RC = RegClasses[rci];
 
-    // Compute the set of registers supporting each SubRegIndex.
-    SubReg2SetMap SRSets;
-    for (CodeGenRegister::Set::const_iterator RI = RC.getMembers().begin(),
-         RE = RC.getMembers().end(); RI != RE; ++RI) {
-      const CodeGenRegister::SubRegMap &SRM = (*RI)->getSubRegs();
-      for (CodeGenRegister::SubRegMap::const_iterator I = SRM.begin(),
-           E = SRM.end(); I != E; ++I)
-        SRSets[I->first].insert(*RI);
-    }
-
-    // Find matching classes for all SRSets entries.  Iterate in SubRegIndex
-    // numerical order to visit synthetic indices last.
-    for (unsigned sri = 0, sre = SubRegIndices.size(); sri != sre; ++sri) {
-      Record *SubIdx = SubRegIndices[sri];
-      SubReg2SetMap::const_iterator I = SRSets.find(SubIdx);
-      // Unsupported SubRegIndex. Skip it.
-      if (I == SRSets.end())
-        continue;
-      // In most cases, all RC registers support the SubRegIndex.
-      if (I->second.size() == RC.getMembers().size()) {
-        RC.setSubClassWithSubReg(SubIdx, &RC);
-        continue;
-      }
-      // This is a real subset.  See if we have a matching class.
-      CodeGenRegisterClass *SubRC =
-        getOrCreateSubClass(&RC, &I->second,
-                            RC.getName() + "_with_" + I->first->getName());
-      RC.setSubClassWithSubReg(SubIdx, SubRC);
-    }
+    // Synthesize answers for getSubClassWithSubReg().
+    inferSubClassWithSubReg(RC);
 
     // Synthesize answers for getCommonSubClass().
-    inferCommonSubClass(&RC);
+    inferCommonSubClass(RC);
   }
 }
 
