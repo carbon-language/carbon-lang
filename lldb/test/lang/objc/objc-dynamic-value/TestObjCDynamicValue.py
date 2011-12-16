@@ -92,6 +92,16 @@ class ObjCDynamicValueTestCase(TestBase):
         myObserver_source = myObserver.GetChildMemberWithName ('_source', lldb.eDynamicCanRunTarget)
         self.examine_SourceDerived_ptr (myObserver_source)
 
+        #
+        #  Make sure a static value can be correctly turned into a dynamic value.
+
+        frame = thread.GetFrameAtIndex(0)
+        myObserver_static = frame.FindVariable('myObserver', lldb.eNoDynamicValues)
+        self.assertTrue (myObserver_static)
+        myObserver = myObserver_static.GetDynamicValue (lldb.eDynamicCanRunTarget)
+        myObserver_source = myObserver.GetChildMemberWithName ('_source', lldb.eDynamicCanRunTarget)
+        self.examine_SourceDerived_ptr (myObserver_source)
+
         # The "frame var" code uses another path to get into children, so let's
         # make sure that works as well:
 

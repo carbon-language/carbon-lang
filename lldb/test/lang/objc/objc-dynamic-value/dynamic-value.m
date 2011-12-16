@@ -125,7 +125,7 @@ handle_SourceBase (SourceBase *object)
 
 int main ()
 {
-    SourceDerived *mySource;
+    Source *mySource;
     Observer *myObserver;
 
     NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
