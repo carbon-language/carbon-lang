@@ -12,3 +12,10 @@ void* broken (struct ext2_super_block *es,int a)
 {
 	 return (void *)es->s_uuid + 80; // expected-warning {{refers past the end of the array}}
 }
+
+// Test case reduced from PR11594
+struct S { int n; };
+void pr11594(struct S *s) {
+  int a[10];
+  int *p = a - s->n;
+}
