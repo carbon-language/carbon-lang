@@ -589,7 +589,8 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
   };
 
   ObjCInterfaceDecl(DeclContext *DC, SourceLocation atLoc, IdentifierInfo *Id,
-                    SourceLocation CLoc, bool isInternal);
+                    SourceLocation CLoc, ObjCInterfaceDecl *PrevDecl,
+                    bool isInternal);
 
   void LoadExternalDefinition() const;
 
