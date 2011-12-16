@@ -876,10 +876,26 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         case StabGlobalSymbol:    
                             // N_GSYM -- global symbol: name,,NO_SECT,type,0
                             // Sometimes the N_GSYM value contains the address.
-                            sym[sym_idx].SetExternal(true);
-                            if (nlist.n_value != 0)
-                                symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
-                            type = eSymbolTypeData;
+                            
+                            // FIXME: In the .o files, we have a GSYM and a debug symbol for all the ObjC data.  They
+                            // have the same address, but we want to ensure that we always find only the real symbol,
+                            // 'cause we don't currently correctly attribute the GSYM one to the ObjCClass/Ivar/MetaClass
+                            // symbol type.  This is a temporary hack to make sure the ObjectiveC symbols get treated
+                            // correctly.  To do this right, we should coalesce all the GSYM & global symbols that have the
+                            // same address.
+                            
+                            if (symbol_name && symbol_name[0] == '_' && symbol_name[1] ==  'O' 
+                                && (strncmp (symbol_name, "_OBJC_IVAR_$_", strlen ("_OBJC_IVAR_$_")) == 0
+                                    || strncmp (symbol_name, "_OBJC_CLASS_$_", strlen ("_OBJC_CLASS_$_")) == 0
+                                    || strncmp (symbol_name, "_OBJC_METACLASS_$_", strlen ("_OBJC_METACLASS_$_")) == 0))
+                                add_nlist = false;
+                            else
+                            {
+                                sym[sym_idx].SetExternal(true);
+                                if (nlist.n_value != 0)
+                                    symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
+                                type = eSymbolTypeData;
+                            }
                             break;
 
                         case StabFunctionName:
