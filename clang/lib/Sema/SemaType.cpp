@@ -4065,6 +4065,34 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
   if (!T->isIncompleteType())
     return false;
 
+  const TagType *Tag = T->getAs<TagType>();
+  const ObjCInterfaceType *IFace = 0;
+  
+  if (Tag) {
+    // Avoid diagnosing invalid decls as incomplete.
+    if (Tag->getDecl()->isInvalidDecl())
+      return true;
+
+    // Give the external AST source a chance to complete the type.
+    if (Tag->getDecl()->hasExternalLexicalStorage()) {
+      Context.getExternalSource()->CompleteType(Tag->getDecl());
+      if (!Tag->isIncompleteType())
+        return false;
+    }
+  }
+  else if ((IFace = T->getAs<ObjCInterfaceType>())) {
+    // Avoid diagnosing invalid decls as incomplete.
+    if (IFace->getDecl()->isInvalidDecl())
+      return true;
+    
+    // Give the external AST source a chance to complete the type.
+    if (IFace->getDecl()->hasExternalLexicalStorage()) {
+      Context.getExternalSource()->CompleteType(IFace->getDecl());
+      if (!IFace->isIncompleteType())
+        return false;
+    }
+  }
+    
   // If we have a class template specialization or a class member of a
   // class template specialization, or an array with known size of such,
   // try to instantiate it.
@@ -4096,34 +4124,6 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
 
   if (diag == 0)
     return true;
-
-  const TagType *Tag = T->getAs<TagType>();
-  const ObjCInterfaceType *IFace = 0;
-  
-  if (Tag) {
-    // Avoid diagnosing invalid decls as incomplete.
-    if (Tag->getDecl()->isInvalidDecl())
-      return true;
-
-    // Give the external AST source a chance to complete the type.
-    if (Tag->getDecl()->hasExternalLexicalStorage()) {
-      Context.getExternalSource()->CompleteType(Tag->getDecl());
-      if (!Tag->isIncompleteType())
-        return false;
-    }
-  }
-  else if ((IFace = T->getAs<ObjCInterfaceType>())) {
-    // Avoid diagnosing invalid decls as incomplete.
-    if (IFace->getDecl()->isInvalidDecl())
-      return true;
-    
-    // Give the external AST source a chance to complete the type.
-    if (IFace->getDecl()->hasExternalLexicalStorage()) {
-      Context.getExternalSource()->CompleteType(IFace->getDecl());
-      if (!IFace->isIncompleteType())
-        return false;
-    }
-  }
     
   // We have an incomplete type. Produce a diagnostic.
   Diag(Loc, PD) << T;
