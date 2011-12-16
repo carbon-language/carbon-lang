@@ -33,7 +33,6 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
-#include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
@@ -299,15 +298,13 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
                     {
                         if (sc.symbol->GetType() == eSymbolTypeObjCClass)
                             class_name = sc.symbol->GetName().GetCString();
-                        else
-                            return false;
                     }
                 }
             }
         }
         
         char class_buffer[1024];
-        if (class_name == NULL && use_dynamic != eDynamicDontRunTarget)
+        if (class_name == NULL && use_dynamic == eDynamicCanRunTarget)
         {
             // If the class address didn't point into the binary, or
             // it points into the right section but there wasn't a symbol
