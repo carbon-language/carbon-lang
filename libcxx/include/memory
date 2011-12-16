@@ -2498,6 +2498,24 @@ private:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unique_ptr(const unique_ptr&);
     unique_ptr& operator=(const unique_ptr&);
+
+template <class _P1,
+          bool = is_same<typename remove_cv<typename pointer_traits<_P1>::element_type>::type,
+                         typename remove_cv<element_type>::type>::value>
+struct __same_or_less_cv_qualified_imp
+    : is_convertible<_P1, pointer> {};
+template <class _P1>
+struct __same_or_less_cv_qualified_imp<_P1, false>
+    : false_type {};
+
+template <class _P1, bool = is_scalar<_P1>::value && !is_pointer<_P1>::value>
+struct __same_or_less_cv_qualified
+    : __same_or_less_cv_qualified_imp<_P1> {};
+
+template <class _P1>
+struct __same_or_less_cv_qualified<_P1, true>
+    : false_type {};
+
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unique_ptr(unique_ptr&);
     template <class _Up>
@@ -2526,7 +2544,7 @@ public:
         }
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _Pp,
-              class = typename enable_if<is_same<_Pp, pointer>::value>::type
+              class = typename enable_if<__same_or_less_cv_qualified<_Pp>::value>::type
              >
     _LIBCPP_INLINE_VISIBILITY explicit unique_ptr(_Pp __p) _NOEXCEPT
         : __ptr_(__p)
@@ -2536,7 +2554,7 @@ public:
         }
 
     template <class _Pp,
-              class = typename enable_if<is_same<_Pp, pointer>::value>::type
+              class = typename enable_if<__same_or_less_cv_qualified<_Pp>::value>::type
              >
     _LIBCPP_INLINE_VISIBILITY unique_ptr(_Pp __p, typename conditional<
                                        is_reference<deleter_type>::value,
@@ -2553,7 +2571,7 @@ public:
         : __ptr_(pointer(), __d) {}
 
     template <class _Pp,
-              class = typename enable_if<is_same<_Pp, pointer>::value ||
+              class = typename enable_if<__same_or_less_cv_qualified<_Pp>::value ||
                                          is_same<_Pp, nullptr_t>::value>::type
              >
     _LIBCPP_INLINE_VISIBILITY unique_ptr(_Pp __p, typename remove_reference<deleter_type>::type&& __d)
@@ -2637,7 +2655,7 @@ public:
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _Pp,
-              class = typename enable_if<is_same<_Pp, pointer>::value>::type
+              class = typename enable_if<__same_or_less_cv_qualified<_Pp>::value>::type
              >
     _LIBCPP_INLINE_VISIBILITY void reset(_Pp __p) _NOEXCEPT
     {
