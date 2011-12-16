@@ -5889,6 +5889,10 @@ def : NEONMnemonicAlias<"vorrq", "vorr">;
 
 def : NEONMnemonicAlias<"vmovq", "vmov">;
 def : NEONMnemonicAlias<"vmvnq", "vmvn">;
+// Explicit versions for floating point so that the FPImm variants get
+// handled early. The parser gets confused otherwise.
+def : NEONMnemonicAlias<"vmovq.f32", "vmov.f32">;
+def : NEONMnemonicAlias<"vmovq.f64", "vmov.f64">;
 
 def : NEONMnemonicAlias<"vaddq", "vadd">;
 def : NEONMnemonicAlias<"vsubq", "vsub">;
