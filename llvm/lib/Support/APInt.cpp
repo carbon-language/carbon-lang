@@ -2189,7 +2189,7 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
                      bool Signed, bool formatAsCLiteral) const {
   assert((Radix == 10 || Radix == 8 || Radix == 16 || Radix == 2 || 
           Radix == 36) &&
-         "Radix should be 2, 8, 10, or 16!");
+         "Radix should be 2, 8, 10, 16, or 36!");
 
   const char *Prefix = "";
   if (formatAsCLiteral) {
@@ -2202,9 +2202,13 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
       case 8:
         Prefix = "0";
         break;
+      case 10:
+        break; // No prefix
       case 16:
         Prefix = "0x";
         break;
+      default:
+        llvm_unreachable("Invalid radix!");
     }
   }
 

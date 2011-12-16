@@ -354,7 +354,7 @@ TEST(APIntTest, toString) {
   APInt(8, 0).toString(S, 16, true, true);
   EXPECT_EQ(S.str().str(), "0x0");
   S.clear();
-  APInt(8, 0).toString(S, 36, true, true);
+  APInt(8, 0).toString(S, 36, true, false);
   EXPECT_EQ(S.str().str(), "0");
   S.clear();
 
@@ -371,7 +371,7 @@ TEST(APIntTest, toString) {
   APInt(8, 255, isSigned).toString(S, 16, isSigned, true);
   EXPECT_EQ(S.str().str(), "0xFF");
   S.clear();
-  APInt(8, 255, isSigned).toString(S, 36, isSigned, true);
+  APInt(8, 255, isSigned).toString(S, 36, isSigned, false);
   EXPECT_EQ(S.str().str(), "73");
   S.clear();
 
@@ -388,7 +388,7 @@ TEST(APIntTest, toString) {
   APInt(8, 255, isSigned).toString(S, 16, isSigned, true);
   EXPECT_EQ(S.str().str(), "-0x1");
   S.clear();
-  APInt(8, 255, isSigned).toString(S, 36, isSigned, true);
+  APInt(8, 255, isSigned).toString(S, 36, isSigned, false);
   EXPECT_EQ(S.str().str(), "-1");
   S.clear();
 }
