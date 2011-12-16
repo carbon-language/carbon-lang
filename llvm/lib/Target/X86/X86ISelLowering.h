@@ -408,12 +408,12 @@ namespace llvm {
     /// isUNPCKL_v_undef_Mask - Special case of isUNPCKLMask for canonical form
     /// of vector_shuffle v, v, <0, 4, 1, 5>, i.e. vector_shuffle v, undef,
     /// <0, 0, 1, 1>
-    bool isUNPCKL_v_undef_Mask(ShuffleVectorSDNode *N);
+    bool isUNPCKL_v_undef_Mask(ShuffleVectorSDNode *N, bool HasAVX2);
 
     /// isUNPCKH_v_undef_Mask - Special case of isUNPCKHMask for canonical form
     /// of vector_shuffle v, v, <2, 6, 3, 7>, i.e. vector_shuffle v, undef,
     /// <2, 2, 3, 3>
-    bool isUNPCKH_v_undef_Mask(ShuffleVectorSDNode *N);
+    bool isUNPCKH_v_undef_Mask(ShuffleVectorSDNode *N, bool HasAVX2);
 
     /// isMOVLMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to MOVSS,

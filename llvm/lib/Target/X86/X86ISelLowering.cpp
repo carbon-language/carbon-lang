@@ -3472,7 +3472,7 @@ bool X86::isMOVLHPSMask(ShuffleVectorSDNode *N) {
 /// specifies a shuffle of elements that is suitable for input to UNPCKL.
 static bool isUNPCKLMask(const SmallVectorImpl<int> &Mask, EVT VT,
                          bool HasAVX2, bool V2IsSplat = false) {
-  int NumElts = VT.getVectorNumElements();
+  unsigned NumElts = VT.getVectorNumElements();
 
   assert((VT.is128BitVector() || VT.is256BitVector()) &&
          "Unsupported vector type for unpckh");
@@ -3486,11 +3486,9 @@ static bool isUNPCKLMask(const SmallVectorImpl<int> &Mask, EVT VT,
   unsigned NumLanes = VT.getSizeInBits()/128;
   unsigned NumLaneElts = NumElts/NumLanes;
 
-  unsigned Start = 0;
-  unsigned End = NumLaneElts;
-  for (unsigned s = 0; s < NumLanes; ++s) {
-    for (unsigned i = Start, j = s * NumLaneElts;
-         i != End;
+  for (unsigned l = 0; l != NumLanes; ++l) {
+    for (unsigned i = l*NumLaneElts, j = l*NumLaneElts;
+         i != (l+1)*NumLaneElts;
          i += 2, ++j) {
       int BitI  = Mask[i];
       int BitI1 = Mask[i+1];
@@ -3504,9 +3502,6 @@ static bool isUNPCKLMask(const SmallVectorImpl<int> &Mask, EVT VT,
           return false;
       }
     }
-    // Process the next 128 bits.
-    Start += NumLaneElts;
-    End += NumLaneElts;
   }
 
   return true;
@@ -3522,7 +3517,7 @@ bool X86::isUNPCKLMask(ShuffleVectorSDNode *N, bool HasAVX2, bool V2IsSplat) {
 /// specifies a shuffle of elements that is suitable for input to UNPCKH.
 static bool isUNPCKHMask(const SmallVectorImpl<int> &Mask, EVT VT,
                          bool HasAVX2, bool V2IsSplat = false) {
-  int NumElts = VT.getVectorNumElements();
+  unsigned NumElts = VT.getVectorNumElements();
 
   assert((VT.is128BitVector() || VT.is256BitVector()) &&
          "Unsupported vector type for unpckh");
@@ -3536,11 +3531,9 @@ static bool isUNPCKHMask(const SmallVectorImpl<int> &Mask, EVT VT,
   unsigned NumLanes = VT.getSizeInBits()/128;
   unsigned NumLaneElts = NumElts/NumLanes;
 
-  unsigned Start = 0;
-  unsigned End = NumLaneElts;
   for (unsigned l = 0; l != NumLanes; ++l) {
-    for (unsigned i = Start, j = (l*NumLaneElts)+NumLaneElts/2;
-                             i != End; i += 2, ++j) {
+    for (unsigned i = l*NumLaneElts, j = (l*NumLaneElts)+NumLaneElts/2;
+         i != (l+1)*NumLaneElts; i += 2, ++j) {
       int BitI  = Mask[i];
       int BitI1 = Mask[i+1];
       if (!isUndefOrEqual(BitI, j))
@@ -3553,9 +3546,6 @@ static bool isUNPCKHMask(const SmallVectorImpl<int> &Mask, EVT VT,
           return false;
       }
     }
-    // Process the next 128 bits.
-    Start += NumLaneElts;
-    End += NumLaneElts;
   }
   return true;
 }
@@ -3569,26 +3559,32 @@ bool X86::isUNPCKHMask(ShuffleVectorSDNode *N, bool HasAVX2, bool V2IsSplat) {
 /// isUNPCKL_v_undef_Mask - Special case of isUNPCKLMask for canonical form
 /// of vector_shuffle v, v, <0, 4, 1, 5>, i.e. vector_shuffle v, undef,
 /// <0, 0, 1, 1>
-static bool isUNPCKL_v_undef_Mask(const SmallVectorImpl<int> &Mask, EVT VT) {
-  int NumElems = VT.getVectorNumElements();
-  if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
+static bool isUNPCKL_v_undef_Mask(const SmallVectorImpl<int> &Mask, EVT VT,
+                                  bool HasAVX2) {
+  unsigned NumElts = VT.getVectorNumElements();
+
+  assert((VT.is128BitVector() || VT.is256BitVector()) &&
+         "Unsupported vector type for unpckh");
+
+  if (VT.getSizeInBits() == 256 && NumElts != 4 && NumElts != 8 &&
+      (!HasAVX2 || (NumElts != 16 && NumElts != 32)))
     return false;
 
   // For 256-bit i64/f64, use MOVDDUPY instead, so reject the matching pattern
   // FIXME: Need a better way to get rid of this, there's no latency difference
   // between UNPCKLPD and MOVDDUP, the later should always be checked first and
   // the former later. We should also remove the "_undef" special mask.
-  if (NumElems == 4 && VT.getSizeInBits() == 256)
+  if (NumElts == 4 && VT.getSizeInBits() == 256)
     return false;
 
   // Handle 128 and 256-bit vector lengths. AVX defines UNPCK* to operate
   // independently on 128-bit lanes.
-  unsigned NumLanes = VT.getSizeInBits() / 128;
-  unsigned NumLaneElts = NumElems / NumLanes;
+  unsigned NumLanes = VT.getSizeInBits()/128;
+  unsigned NumLaneElts = NumElts/NumLanes;
 
-  for (unsigned s = 0; s < NumLanes; ++s) {
-    for (unsigned i = s * NumLaneElts, j = s * NumLaneElts;
-         i != NumLaneElts * (s + 1);
+  for (unsigned l = 0; l != NumLanes; ++l) {
+    for (unsigned i = l*NumLaneElts, j = l*NumLaneElts;
+         i != (l+1)*NumLaneElts;
          i += 2, ++j) {
       int BitI  = Mask[i];
       int BitI1 = Mask[i+1];
@@ -3603,35 +3599,49 @@ static bool isUNPCKL_v_undef_Mask(const SmallVectorImpl<int> &Mask, EVT VT) {
   return true;
 }
 
-bool X86::isUNPCKL_v_undef_Mask(ShuffleVectorSDNode *N) {
+bool X86::isUNPCKL_v_undef_Mask(ShuffleVectorSDNode *N, bool HasAVX2) {
   SmallVector<int, 8> M;
   N->getMask(M);
-  return ::isUNPCKL_v_undef_Mask(M, N->getValueType(0));
+  return ::isUNPCKL_v_undef_Mask(M, N->getValueType(0), HasAVX2);
 }
 
 /// isUNPCKH_v_undef_Mask - Special case of isUNPCKHMask for canonical form
 /// of vector_shuffle v, v, <2, 6, 3, 7>, i.e. vector_shuffle v, undef,
 /// <2, 2, 3, 3>
-static bool isUNPCKH_v_undef_Mask(const SmallVectorImpl<int> &Mask, EVT VT) {
-  int NumElems = VT.getVectorNumElements();
-  if (NumElems != 2 && NumElems != 4 && NumElems != 8 && NumElems != 16)
+static bool isUNPCKH_v_undef_Mask(const SmallVectorImpl<int> &Mask, EVT VT,
+                                  bool HasAVX2) {
+  unsigned NumElts = VT.getVectorNumElements();
+
+  assert((VT.is128BitVector() || VT.is256BitVector()) &&
+         "Unsupported vector type for unpckh");
+
+  if (VT.getSizeInBits() == 256 && NumElts != 4 && NumElts != 8 &&
+      (!HasAVX2 || (NumElts != 16 && NumElts != 32)))
     return false;
 
-  for (int i = 0, j = NumElems / 2; i != NumElems; i += 2, ++j) {
-    int BitI  = Mask[i];
-    int BitI1 = Mask[i+1];
-    if (!isUndefOrEqual(BitI, j))
-      return false;
-    if (!isUndefOrEqual(BitI1, j))
-      return false;
+  // Handle 128 and 256-bit vector lengths. AVX defines UNPCK* to operate
+  // independently on 128-bit lanes.
+  unsigned NumLanes = VT.getSizeInBits()/128;
+  unsigned NumLaneElts = NumElts/NumLanes;
+
+  for (unsigned l = 0; l != NumLanes; ++l) {
+    for (unsigned i = l*NumLaneElts, j = (l*NumLaneElts)+NumLaneElts/2;
+         i != (l+1)*NumLaneElts; i += 2, ++j) {
+      int BitI  = Mask[i];
+      int BitI1 = Mask[i+1];
+      if (!isUndefOrEqual(BitI, j))
+        return false;
+      if (!isUndefOrEqual(BitI1, j))
+        return false;
+    }
   }
   return true;
 }
 
-bool X86::isUNPCKH_v_undef_Mask(ShuffleVectorSDNode *N) {
+bool X86::isUNPCKH_v_undef_Mask(ShuffleVectorSDNode *N, bool HasAVX2) {
   SmallVector<int, 8> M;
   N->getMask(M);
-  return ::isUNPCKH_v_undef_Mask(M, N->getValueType(0));
+  return ::isUNPCKH_v_undef_Mask(M, N->getValueType(0), HasAVX2);
 }
 
 /// isMOVLMask - Return true if the specified VECTOR_SHUFFLE operand
@@ -6481,9 +6491,9 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   // NOTE: isPSHUFDMask can also match both masks below (unpckl_undef and
   // unpckh_undef). Only use pshufd if speed is more important than size.
-  if (OptForSize && X86::isUNPCKL_v_undef_Mask(SVOp))
+  if (OptForSize && X86::isUNPCKL_v_undef_Mask(SVOp, HasAVX2))
     return getTargetShuffleNode(X86ISD::UNPCKL, dl, VT, V1, V1, DAG);
-  if (OptForSize && X86::isUNPCKH_v_undef_Mask(SVOp))
+  if (OptForSize && X86::isUNPCKH_v_undef_Mask(SVOp, HasAVX2))
     return getTargetShuffleNode(X86ISD::UNPCKH, dl, VT, V1, V1, DAG);
 
   if (X86::isMOVDDUPMask(SVOp) && Subtarget->hasSSE3orAVX() &&
@@ -6663,9 +6673,9 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getTargetShuffleNode(getSHUFPOpcode(VT), dl, VT, V1, V2,
                                 X86::getShuffleSHUFImmediate(SVOp), DAG);
 
-  if (isUNPCKL_v_undef_Mask(M, VT))
+  if (isUNPCKL_v_undef_Mask(M, VT, HasAVX2))
     return getTargetShuffleNode(X86ISD::UNPCKL, dl, VT, V1, V1, DAG);
-  if (isUNPCKH_v_undef_Mask(M, VT))
+  if (isUNPCKH_v_undef_Mask(M, VT, HasAVX2))
     return getTargetShuffleNode(X86ISD::UNPCKH, dl, VT, V1, V1, DAG);
 
   //===--------------------------------------------------------------------===//
@@ -11100,8 +11110,8 @@ X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
           isPALIGNRMask(M, VT, Subtarget->hasSSSE3orAVX()) ||
           isUNPCKLMask(M, VT, Subtarget->hasAVX2()) ||
           isUNPCKHMask(M, VT, Subtarget->hasAVX2()) ||
-          isUNPCKL_v_undef_Mask(M, VT) ||
-          isUNPCKH_v_undef_Mask(M, VT));
+          isUNPCKL_v_undef_Mask(M, VT, Subtarget->hasAVX2()) ||
+          isUNPCKH_v_undef_Mask(M, VT, Subtarget->hasAVX2()));
 }
 
 bool
