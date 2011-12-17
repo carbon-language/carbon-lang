@@ -10168,48 +10168,54 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
     return DAG.getNode(ISD::MUL, dl, VT, Op, R);
   }
   if (VT == MVT::v16i8 && Op->getOpcode() == ISD::SHL) {
+    assert((Subtarget->hasSSE2() || Subtarget->hasAVX()) &&
+            "Need SSE2 for pslli/pcmpeq.");
+
     // a = a << 5;
     Op = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                      DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32),
                      Op.getOperand(1), DAG.getConstant(5, MVT::i32));
 
-    ConstantInt *CM1 = ConstantInt::get(*Context, APInt(8, 15));
-    ConstantInt *CM2 = ConstantInt::get(*Context, APInt(8, 63));
+    // Turn 'a' into a mask suitable for VSELECT
+    SDValue VSelM = DAG.getConstant(0x80, VT);
+    SDValue OpVSel = DAG.getNode(ISD::AND, dl, VT, VSelM, Op);
+    OpVSel = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                        DAG.getConstant(Intrinsic::x86_sse2_pcmpeq_b, MVT::i32),
+                        OpVSel, VSelM);
 
-    std::vector<Constant*> CVM1(16, CM1);
-    std::vector<Constant*> CVM2(16, CM2);
-    Constant *C = ConstantVector::get(CVM1);
-    SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
-    SDValue M = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
-                            MachinePointerInfo::getConstantPool(),
-                            false, false, false, 16);
+    SDValue CM1 = DAG.getConstant(0x0f, VT);
+    SDValue CM2 = DAG.getConstant(0x3f, VT);
 
-    // r = pblendv(r, psllw(r & (char16)15, 4), a);
-    M = DAG.getNode(ISD::AND, dl, VT, R, M);
+    // r = VSELECT(r, psllw(r & (char16)15, 4), a);
+    SDValue M = DAG.getNode(ISD::AND, dl, VT, R, CM1);
     M = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                     DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32), M,
                     DAG.getConstant(4, MVT::i32));
-    R = DAG.getNode(ISD::VSELECT, dl, VT, Op, M, R);
+    R = DAG.getNode(ISD::VSELECT, dl, VT, OpVSel, M, R);
+
     // a += a
     Op = DAG.getNode(ISD::ADD, dl, VT, Op, Op);
+    OpVSel = DAG.getNode(ISD::AND, dl, VT, VSelM, Op);
+    OpVSel = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                        DAG.getConstant(Intrinsic::x86_sse2_pcmpeq_b, MVT::i32),
+                        OpVSel, VSelM);
 
-    C = ConstantVector::get(CVM2);
-    CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
-    M = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
-                    MachinePointerInfo::getConstantPool(),
-                    false, false, false, 16);
-
-    // r = pblendv(r, psllw(r & (char16)63, 2), a);
-    M = DAG.getNode(ISD::AND, dl, VT, R, M);
+    // r = VSELECT(r, psllw(r & (char16)63, 2), a);
+    M = DAG.getNode(ISD::AND, dl, VT, R, CM2);
     M = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                     DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32), M,
                     DAG.getConstant(2, MVT::i32));
-    R = DAG.getNode(ISD::VSELECT, dl, VT, Op, M, R);
+    R = DAG.getNode(ISD::VSELECT, dl, VT, OpVSel, M, R);
+
     // a += a
     Op = DAG.getNode(ISD::ADD, dl, VT, Op, Op);
+    OpVSel = DAG.getNode(ISD::AND, dl, VT, VSelM, Op);
+    OpVSel = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                        DAG.getConstant(Intrinsic::x86_sse2_pcmpeq_b, MVT::i32),
+                        OpVSel, VSelM);
 
-    // return pblendv(r, r+r, a);
-    R = DAG.getNode(ISD::VSELECT, dl, VT, Op,
+    // return VSELECT(r, r+r, a);
+    R = DAG.getNode(ISD::VSELECT, dl, VT, OpVSel,
                     DAG.getNode(ISD::ADD, dl, VT, R, R), R);
     return R;
   }
