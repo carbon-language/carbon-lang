@@ -7,19 +7,8 @@
 }
 @end
 
-@interface B
--(id) f0 { // expected-error {{expected ';' after method prototype}}
-  assert(0);
-@end
-
 @interface C
 - (id) f0 { // expected-error {{expected ';' after method prototype}}
     assert(0);
 };
-@end
-
-@interface D
-- (id) f0 { // expected-error {{expected ';' after method prototype}}
-  assert(0);
-@property int P;
 @end
