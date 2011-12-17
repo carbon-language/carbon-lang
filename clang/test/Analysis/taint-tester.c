@@ -150,3 +150,19 @@ void stdinTest3() {
   fscanf(*ppp, "%d", &iii);
   int jjj = iii;// expected-warning + {{tainted}}
 }
+
+// Test propagation functions - the ones that propagate taint from arguments to
+// return value, ptr arguments.
+
+int atoi(const char *nptr);
+// TODO: Add support for atol and atoll.
+long atol(const char *nptr);
+long long atoll(const char *nptr);
+
+void atoiTest() {
+  char s[80];
+  scanf("%s", s);
+  int d = atoi(s); // expected-warning + {{tainted}}
+  int td = d; // expected-warning + {{tainted}}
+}
+
