@@ -2564,7 +2564,10 @@ ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
  }
 
 Decl *Parser::ParseLexedObjCMethodDefs(LexedMethod &LM) {
-    
+
+  // Save the current token position.
+  SourceLocation OrigLoc = Tok.getLocation();
+
   assert(!LM.Toks.empty() && "ParseLexedObjCMethodDef - Empty body!");
   // Append the current token at the end of the new token stream so that it
   // doesn't get lost.
@@ -2603,5 +2606,19 @@ Decl *Parser::ParseLexedObjCMethodDefs(LexedMethod &LM) {
   // Leave the function body scope.
   BodyScope.Exit();
     
-  return Actions.ActOnFinishFunctionBody(MDecl, FnBody.take());
+  MDecl = Actions.ActOnFinishFunctionBody(MDecl, FnBody.take());
+
+  if (Tok.getLocation() != OrigLoc) {
+    // Due to parsing error, we either went over the cached tokens or
+    // there are still cached tokens left. If it's the latter case skip the
+    // leftover tokens.
+    // Since this is an uncommon situation that should be avoided, use the
+    // expensive isBeforeInTranslationUnit call.
+    if (PP.getSourceManager().isBeforeInTranslationUnit(Tok.getLocation(),
+                                                     OrigLoc))
+      while (Tok.getLocation() != OrigLoc && Tok.isNot(tok::eof))
+        ConsumeAnyToken();
+  }
+  
+  return MDecl;
 }
