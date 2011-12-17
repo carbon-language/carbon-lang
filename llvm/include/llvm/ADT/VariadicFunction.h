@@ -103,10 +103,7 @@ namespace llvm {
 /// fixed leading arguments and up-to 32 optional arguments.
 template <typename ResultT, typename ArgT,
           ResultT (*Func)(ArrayRef<const ArgT *>)>
-class VariadicFunction {
- public:
-  VariadicFunction() {}
-
+struct VariadicFunction {
   ResultT operator()() const {
     return Func(ArrayRef<const ArgT *>());
   }
@@ -153,10 +150,7 @@ class VariadicFunction {
 
 template <typename ResultT, typename Param0T, typename ArgT,
           ResultT (*Func)(Param0T, ArrayRef<const ArgT *>)>
-class VariadicFunction1 {
- public:
-  VariadicFunction1() {}
-
+struct VariadicFunction1 {
   ResultT operator()(Param0T P0) const {
     return Func(P0, ArrayRef<const ArgT *>());
   }
@@ -203,10 +197,7 @@ class VariadicFunction1 {
 
 template <typename ResultT, typename Param0T, typename Param1T, typename ArgT,
           ResultT (*Func)(Param0T, Param1T, ArrayRef<const ArgT *>)>
-class VariadicFunction2 {
- public:
-  VariadicFunction2() {}
-
+struct VariadicFunction2 {
   ResultT operator()(Param0T P0, Param1T P1) const {
     return Func(P0, P1, ArrayRef<const ArgT *>());
   }
@@ -255,10 +246,7 @@ class VariadicFunction2 {
 template <typename ResultT, typename Param0T, typename Param1T,
           typename Param2T, typename ArgT,
           ResultT (*Func)(Param0T, Param1T, Param2T, ArrayRef<const ArgT *>)>
-class VariadicFunction3 {
- public:
-  VariadicFunction3() {}
-
+struct VariadicFunction3 {
   ResultT operator()(Param0T P0, Param1T P1, Param2T P2) const {
     return Func(P0, P1, P2, ArrayRef<const ArgT *>());
   }

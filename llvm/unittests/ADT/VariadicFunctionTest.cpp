@@ -22,7 +22,7 @@ std::string StringCatImpl(ArrayRef<const std::string *> Args) {
     S += *Args[i];
   return S;
 }
-const VariadicFunction<std::string, std::string, StringCatImpl> StringCat;
+const VariadicFunction<std::string, std::string, StringCatImpl> StringCat = {};
 
 TEST(VariadicFunctionTest, WorksForClassTypes) {
   EXPECT_EQ("", StringCat());
@@ -45,7 +45,7 @@ long SumImpl(ArrayRef<const int *> Args) {
     Result += *Args[i];
   return Result;
 }
-const VariadicFunction<long, int, SumImpl> Sum;
+const VariadicFunction<long, int, SumImpl> Sum = {};
 
 TEST(VariadicFunctionTest, WorksForPrimitiveTypes) {
   EXPECT_EQ(0, Sum());
@@ -65,7 +65,7 @@ int StringAppendImpl(std::string *Dest, ArrayRef<const std::string *> Args) {
   return Chars;
 }
 const VariadicFunction1<int, std::string *, std::string,
-                        StringAppendImpl> StringAppend;
+                        StringAppendImpl> StringAppend = {};
 
 TEST(VariadicFunction1Test, Works) {
   std::string S0("hi");
@@ -93,7 +93,7 @@ void CountInRangeImpl(int *NumInRange, int Low, int High,
       ++(*NumInRange);
 }
 const VariadicFunction3<void, int *, int, int, int,
-                        CountInRangeImpl> CountInRange;
+                        CountInRangeImpl> CountInRange = {};
 
 TEST(VariadicFunction3Test, Works) {
   int N = -1;
