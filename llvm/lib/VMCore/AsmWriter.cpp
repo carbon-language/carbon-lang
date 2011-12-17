@@ -189,6 +189,7 @@ void TypePrinting::incorporateTypes(const Module &M) {
 void TypePrinting::print(Type *Ty, raw_ostream &OS) {
   switch (Ty->getTypeID()) {
   case Type::VoidTyID:      OS << "void"; break;
+  case Type::HalfTyID:      OS << "half"; break;
   case Type::FloatTyID:     OS << "float"; break;
   case Type::DoubleTyID:    OS << "double"; break;
   case Type::X86_FP80TyID:  OS << "x86_fp80"; break;
@@ -708,31 +709,35 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
   }
 
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(CV)) {
-    if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEdouble ||
-        &CFP->getValueAPF().getSemantics() == &APFloat::IEEEsingle) {
+    if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEhalf ||
+        &CFP->getValueAPF().getSemantics() == &APFloat::IEEEsingle ||
+        &CFP->getValueAPF().getSemantics() == &APFloat::IEEEdouble) {
       // We would like to output the FP constant value in exponential notation,
       // but we cannot do this if doing so will lose precision.  Check here to
       // make sure that we only output it in exponential format if we can parse
       // the value back and get the same value.
       //
       bool ignored;
+      bool isHalf = &CFP->getValueAPF().getSemantics()==&APFloat::IEEEhalf;
       bool isDouble = &CFP->getValueAPF().getSemantics()==&APFloat::IEEEdouble;
-      double Val = isDouble ? CFP->getValueAPF().convertToDouble() :
-                              CFP->getValueAPF().convertToFloat();
-      SmallString<128> StrVal;
-      raw_svector_ostream(StrVal) << Val;
+      if (!isHalf) {
+        double Val = isDouble ? CFP->getValueAPF().convertToDouble() :
+                                CFP->getValueAPF().convertToFloat();
+        SmallString<128> StrVal;
+        raw_svector_ostream(StrVal) << Val;
 
-      // Check to make sure that the stringized number is not some string like
-      // "Inf" or NaN, that atof will accept, but the lexer will not.  Check
-      // that the string matches the "[-+]?[0-9]" regex.
-      //
-      if ((StrVal[0] >= '0' && StrVal[0] <= '9') ||
-          ((StrVal[0] == '-' || StrVal[0] == '+') &&
-           (StrVal[1] >= '0' && StrVal[1] <= '9'))) {
-        // Reparse stringized version!
-        if (atof(StrVal.c_str()) == Val) {
-          Out << StrVal.str();
-          return;
+        // Check to make sure that the stringized number is not some string like
+        // "Inf" or NaN, that atof will accept, but the lexer will not.  Check
+        // that the string matches the "[-+]?[0-9]" regex.
+        //
+        if ((StrVal[0] >= '0' && StrVal[0] <= '9') ||
+            ((StrVal[0] == '-' || StrVal[0] == '+') &&
+             (StrVal[1] >= '0' && StrVal[1] <= '9'))) {
+          // Reparse stringized version!
+          if (atof(StrVal.c_str()) == Val) {
+            Out << StrVal.str();
+            return;
+          }
         }
       }
       // Otherwise we could not reparse it to exactly the same value, so we must
@@ -743,7 +748,7 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
              "assuming that double is 64 bits!");
       char Buffer[40];
       APFloat apf = CFP->getValueAPF();
-      // Floats are represented in ASCII IR as double, convert.
+      // Halves and floats are represented in ASCII IR as double, convert.
       if (!isDouble)
         apf.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
                           &ignored);

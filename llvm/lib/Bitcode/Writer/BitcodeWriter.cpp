@@ -266,6 +266,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
     switch (T->getTypeID()) {
     default: llvm_unreachable("Unknown type!");
     case Type::VoidTyID:      Code = bitc::TYPE_CODE_VOID;   break;
+    case Type::HalfTyID:      Code = bitc::TYPE_CODE_HALF;   break;
     case Type::FloatTyID:     Code = bitc::TYPE_CODE_FLOAT;  break;
     case Type::DoubleTyID:    Code = bitc::TYPE_CODE_DOUBLE; break;
     case Type::X86_FP80TyID:  Code = bitc::TYPE_CODE_X86_FP80; break;
@@ -826,7 +827,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
     } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
       Code = bitc::CST_CODE_FLOAT;
       Type *Ty = CFP->getType();
-      if (Ty->isFloatTy() || Ty->isDoubleTy()) {
+      if (Ty->isHalfTy() || Ty->isFloatTy() || Ty->isDoubleTy()) {
         Record.push_back(CFP->getValueAPF().bitcastToAPInt().getZExtValue());
       } else if (Ty->isX86_FP80Ty()) {
         // api needed to prevent premature destruction

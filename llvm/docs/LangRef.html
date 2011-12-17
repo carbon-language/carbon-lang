@@ -1709,7 +1709,7 @@ in signal handlers).</p>
     </tr>
     <tr>
       <td><a href="#t_floating">floating point</a></td>
-      <td><tt>float, double, x86_fp80, fp128, ppc_fp128</tt></td>
+      <td><tt>half, float, double, x86_fp80, fp128, ppc_fp128</tt></td>
     </tr>
     <tr>
       <td><a name="t_firstclass">first class</a></td>
@@ -1809,6 +1809,7 @@ in signal handlers).</p>
 <table>
   <tbody>
     <tr><th>Type</th><th>Description</th></tr>
+    <tr><td><tt>half</tt></td><td>16-bit floating point value</td></tr>
     <tr><td><tt>float</tt></td><td>32-bit floating point value</td></tr>
     <tr><td><tt>double</tt></td><td>64-bit floating point value</td></tr>
     <tr><td><tt>fp128</tt></td><td>128-bit floating point value (112-bit mantissa)</td></tr>
@@ -2268,10 +2269,11 @@ in signal handlers).</p>
    represented in their IEEE hexadecimal format so that assembly and disassembly
    do not cause any bits to change in the constants.</p>
 
-<p>When using the hexadecimal form, constants of types float and double are
+<p>When using the hexadecimal form, constants of types half, float, and double are
    represented using the 16-digit form shown above (which matches the IEEE754
-   representation for double); float values must, however, be exactly
-   representable as IEE754 single precision.  Hexadecimal format is always used
+   representation for double); half and float values must, however, be exactly
+   representable as IEE754 half and single precision, respectively.
+   Hexadecimal format is always used
    for long double, and there are three forms of long double.  The 80-bit format
    used by x86 is represented as <tt>0xK</tt> followed by 20 hexadecimal digits.
    The 128-bit format used by PowerPC (two adjacent doubles) is represented

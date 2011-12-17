@@ -574,6 +574,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   if (Len == strlen(STR) && !memcmp(StartChar, STR, strlen(STR))) { \
     TyVal = LLVMTY; return lltok::Type; }
   TYPEKEYWORD("void",      Type::getVoidTy(Context));
+  TYPEKEYWORD("half",      Type::getHalfTy(Context));
   TYPEKEYWORD("float",     Type::getFloatTy(Context));
   TYPEKEYWORD("double",    Type::getDoubleTy(Context));
   TYPEKEYWORD("x86_fp80",  Type::getX86_FP80Ty(Context));
@@ -693,7 +694,7 @@ lltok::Kind LLLexer::Lex0x() {
   if (Kind == 'J') {
     // HexFPConstant - Floating point constant represented in IEEE format as a
     // hexadecimal number for when exponential notation is not precise enough.
-    // Float and double only.
+    // Half, Float, and double only.
     APFloatVal = APFloat(BitsToDouble(HexIntToVal(TokStart+2, CurPtr)));
     return lltok::APFloat;
   }

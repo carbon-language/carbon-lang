@@ -571,7 +571,8 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
     if (ConstantFP *FPC = dyn_cast<ConstantFP>(V)) {
       bool ignored;
       APFloat Val = FPC->getValueAPF();
-      Val.convert(DestTy->isFloatTy() ? APFloat::IEEEsingle :
+      Val.convert(DestTy->isHalfTy() ? APFloat::IEEEhalf :
+                  DestTy->isFloatTy() ? APFloat::IEEEsingle :
                   DestTy->isDoubleTy() ? APFloat::IEEEdouble :
                   DestTy->isX86_FP80Ty() ? APFloat::x87DoubleExtended :
                   DestTy->isFP128Ty() ? APFloat::IEEEquad :

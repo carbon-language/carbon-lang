@@ -2848,7 +2848,9 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
 
         const fltSemantics *Sem;
         // FIXME: This shouldn't be here.
-        if (LHSExt->getSrcTy()->isFloatTy())
+        if (LHSExt->getSrcTy()->isHalfTy())
+          Sem = &APFloat::IEEEhalf;
+        else if (LHSExt->getSrcTy()->isFloatTy())
           Sem = &APFloat::IEEEsingle;
         else if (LHSExt->getSrcTy()->isDoubleTy())
           Sem = &APFloat::IEEEdouble;

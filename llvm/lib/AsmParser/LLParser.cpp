@@ -2483,13 +2483,16 @@ bool LLParser::ConvertValIDToValue(Type *Ty, ValID &ID, Value *&V,
         !ConstantFP::isValueValidForType(Ty, ID.APFloatVal))
       return Error(ID.Loc, "floating point constant invalid for type");
 
-    // The lexer has no type info, so builds all float and double FP constants
-    // as double.  Fix this here.  Long double does not need this.
-    if (&ID.APFloatVal.getSemantics() == &APFloat::IEEEdouble &&
-        Ty->isFloatTy()) {
+    // The lexer has no type info, so builds all half, float, and double FP
+    // constants as double.  Fix this here.  Long double does not need this.
+    if (&ID.APFloatVal.getSemantics() == &APFloat::IEEEdouble) {
       bool Ignored;
-      ID.APFloatVal.convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven,
-                            &Ignored);
+      if (Ty->isHalfTy())
+        ID.APFloatVal.convert(APFloat::IEEEhalf, APFloat::rmNearestTiesToEven,
+                              &Ignored);
+      else if (Ty->isFloatTy())
+        ID.APFloatVal.convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven,
+                              &Ignored);
     }
     V = ConstantFP::get(Context, ID.APFloatVal);
 

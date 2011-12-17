@@ -1160,6 +1160,9 @@ static Value *LookThroughFPExtensions(Value *V) {
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(V)) {
     if (CFP->getType() == Type::getPPC_FP128Ty(V->getContext()))
       return V;  // No constant folding of this.
+    // See if the value can be truncated to half and then reextended.
+    if (Value *V = FitsInFPType(CFP, APFloat::IEEEhalf))
+      return V;
     // See if the value can be truncated to float and then reextended.
     if (Value *V = FitsInFPType(CFP, APFloat::IEEEsingle))
       return V;

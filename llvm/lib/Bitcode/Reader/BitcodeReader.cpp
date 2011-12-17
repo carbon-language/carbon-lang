@@ -565,6 +565,9 @@ bool BitcodeReader::ParseTypeTableBody() {
     case bitc::TYPE_CODE_VOID:      // VOID
       ResultTy = Type::getVoidTy(Context);
       break;
+    case bitc::TYPE_CODE_HALF:     // HALF
+      ResultTy = Type::getHalfTy(Context);
+      break;
     case bitc::TYPE_CODE_FLOAT:     // FLOAT
       ResultTy = Type::getFloatTy(Context);
       break;
@@ -1032,7 +1035,9 @@ bool BitcodeReader::ParseConstants() {
     case bitc::CST_CODE_FLOAT: {    // FLOAT: [fpval]
       if (Record.empty())
         return Error("Invalid FLOAT record");
-      if (CurTy->isFloatTy())
+      if (CurTy->isHalfTy())
+        V = ConstantFP::get(Context, APFloat(APInt(16, (uint16_t)Record[0])));
+      else if (CurTy->isFloatTy())
         V = ConstantFP::get(Context, APFloat(APInt(32, (uint32_t)Record[0])));
       else if (CurTy->isDoubleTy())
         V = ConstantFP::get(Context, APFloat(APInt(64, Record[0])));

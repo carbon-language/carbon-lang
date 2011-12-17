@@ -94,7 +94,7 @@ namespace bitc {
     TYPE_CODE_FUNCTION_OLD = 9, // FUNCTION: [vararg, attrid, retty,
                                 //            paramty x N]
     
-    // Code #10 is unused.
+    TYPE_CODE_HALF     =  10,   // HALF
     
     TYPE_CODE_ARRAY    = 11,    // ARRAY: [numelts, eltty]
     TYPE_CODE_VECTOR   = 12,    // VECTOR: [numelts, eltty]

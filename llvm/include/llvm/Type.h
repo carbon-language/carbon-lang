@@ -47,23 +47,24 @@ public:
   enum TypeID {
     // PrimitiveTypes - make sure LastPrimitiveTyID stays up to date.
     VoidTyID = 0,    ///<  0: type with no size
-    FloatTyID,       ///<  1: 32-bit floating point type
-    DoubleTyID,      ///<  2: 64-bit floating point type
-    X86_FP80TyID,    ///<  3: 80-bit floating point type (X87)
-    FP128TyID,       ///<  4: 128-bit floating point type (112-bit mantissa)
-    PPC_FP128TyID,   ///<  5: 128-bit floating point type (two 64-bits, PowerPC)
-    LabelTyID,       ///<  6: Labels
-    MetadataTyID,    ///<  7: Metadata
-    X86_MMXTyID,     ///<  8: MMX vectors (64 bits, X86 specific)
+    HalfTyID,        ///<  1: 32-bit floating point type
+    FloatTyID,       ///<  2: 32-bit floating point type
+    DoubleTyID,      ///<  3: 64-bit floating point type
+    X86_FP80TyID,    ///<  4: 80-bit floating point type (X87)
+    FP128TyID,       ///<  5: 128-bit floating point type (112-bit mantissa)
+    PPC_FP128TyID,   ///<  6: 128-bit floating point type (two 64-bits, PowerPC)
+    LabelTyID,       ///<  7: Labels
+    MetadataTyID,    ///<  8: Metadata
+    X86_MMXTyID,     ///<  9: MMX vectors (64 bits, X86 specific)
 
     // Derived types... see DerivedTypes.h file.
     // Make sure FirstDerivedTyID stays up to date!
-    IntegerTyID,     ///<  9: Arbitrary bit width integers
-    FunctionTyID,    ///< 10: Functions
-    StructTyID,      ///< 11: Structures
-    ArrayTyID,       ///< 12: Arrays
-    PointerTyID,     ///< 13: Pointers
-    VectorTyID,      ///< 14: SIMD 'packed' format, or other vector type
+    IntegerTyID,     ///< 10: Arbitrary bit width integers
+    FunctionTyID,    ///< 11: Functions
+    StructTyID,      ///< 12: Structures
+    ArrayTyID,       ///< 13: Arrays
+    PointerTyID,     ///< 14: Pointers
+    VectorTyID,      ///< 15: SIMD 'packed' format, or other vector type
 
     NumTypeIDs,                         // Must remain as last defined ID
     LastPrimitiveTyID = X86_MMXTyID,
@@ -121,6 +122,9 @@ public:
   /// isVoidTy - Return true if this is 'void'.
   bool isVoidTy() const { return ID == VoidTyID; }
 
+  /// isHalfTy - Return true if this is 'half', a 16-bit IEEE fp type.
+  bool isHalfTy() const { return ID == HalfTyID; }
+
   /// isFloatTy - Return true if this is 'float', a 32-bit IEEE fp type.
   bool isFloatTy() const { return ID == FloatTyID; }
   
@@ -139,7 +143,7 @@ public:
   /// isFloatingPointTy - Return true if this is one of the five floating point
   /// types
   bool isFloatingPointTy() const {
-    return ID == FloatTyID || ID == DoubleTyID ||
+    return ID == HalfTyID || ID == FloatTyID || ID == DoubleTyID ||
       ID == X86_FP80TyID || ID == FP128TyID || ID == PPC_FP128TyID;
   }
 
@@ -310,6 +314,7 @@ public:
   //
   static Type *getVoidTy(LLVMContext &C);
   static Type *getLabelTy(LLVMContext &C);
+  static Type *getHalfTy(LLVMContext &C);
   static Type *getFloatTy(LLVMContext &C);
   static Type *getDoubleTy(LLVMContext &C);
   static Type *getMetadataTy(LLVMContext &C);
@@ -328,6 +333,7 @@ public:
   // Convenience methods for getting pointer types with one of the above builtin
   // types as pointee.
   //
+  static PointerType *getHalfPtrTy(LLVMContext &C, unsigned AS = 0);
   static PointerType *getFloatPtrTy(LLVMContext &C, unsigned AS = 0);
   static PointerType *getDoublePtrTy(LLVMContext &C, unsigned AS = 0);
   static PointerType *getX86_FP80PtrTy(LLVMContext &C, unsigned AS = 0);

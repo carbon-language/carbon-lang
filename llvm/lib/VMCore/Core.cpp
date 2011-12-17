@@ -136,6 +136,8 @@ LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty) {
     assert(false && "Unhandled TypeID.");
   case Type::VoidTyID:
     return LLVMVoidTypeKind;
+  case Type::HalfTyID:
+    return LLVMHalfTypeKind;
   case Type::FloatTyID:
     return LLVMFloatTypeKind;
   case Type::DoubleTyID:
@@ -222,6 +224,9 @@ unsigned LLVMGetIntTypeWidth(LLVMTypeRef IntegerTy) {
 
 /*--.. Operations on real types ............................................--*/
 
+LLVMTypeRef LLVMHalfTypeInContext(LLVMContextRef C) {
+  return (LLVMTypeRef) Type::getHalfTy(*unwrap(C));
+}
 LLVMTypeRef LLVMFloatTypeInContext(LLVMContextRef C) {
   return (LLVMTypeRef) Type::getFloatTy(*unwrap(C));
 }
@@ -241,6 +246,9 @@ LLVMTypeRef LLVMX86MMXTypeInContext(LLVMContextRef C) {
   return (LLVMTypeRef) Type::getX86_MMXTy(*unwrap(C));
 }
 
+LLVMTypeRef LLVMHalfType(void) {
+  return LLVMHalfTypeInContext(LLVMGetGlobalContext());
+}
 LLVMTypeRef LLVMFloatType(void) {
   return LLVMFloatTypeInContext(LLVMGetGlobalContext());
 }

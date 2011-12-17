@@ -84,6 +84,9 @@ Constant *Constant::getNullValue(Type *Ty) {
   switch (Ty->getTypeID()) {
   case Type::IntegerTyID:
     return ConstantInt::get(Ty, 0);
+  case Type::HalfTyID:
+    return ConstantFP::get(Ty->getContext(),
+                           APFloat::getZero(APFloat::IEEEhalf));
   case Type::FloatTyID:
     return ConstantFP::get(Ty->getContext(),
                            APFloat::getZero(APFloat::IEEEsingle));
@@ -468,6 +471,8 @@ ConstantInt* ConstantInt::get(IntegerType* Ty, StringRef Str,
 //===----------------------------------------------------------------------===//
 
 static const fltSemantics *TypeToFloatSemantics(Type *Ty) {
+  if (Ty->isHalfTy())
+    return &APFloat::IEEEhalf;
   if (Ty->isFloatTy())
     return &APFloat::IEEEsingle;
   if (Ty->isDoubleTy())
@@ -550,7 +555,9 @@ ConstantFP* ConstantFP::get(LLVMContext &Context, const APFloat& V) {
     
   if (!Slot) {
     Type *Ty;
-    if (&V.getSemantics() == &APFloat::IEEEsingle)
+    if (&V.getSemantics() == &APFloat::IEEEhalf)
+      Ty = Type::getHalfTy(Context);
+    else if (&V.getSemantics() == &APFloat::IEEEsingle)
       Ty = Type::getFloatTy(Context);
     else if (&V.getSemantics() == &APFloat::IEEEdouble)
       Ty = Type::getDoubleTy(Context);
@@ -939,6 +946,12 @@ bool ConstantFP::isValueValidForType(Type *Ty, const APFloat& Val) {
     return false;         // These can't be represented as floating point!
 
   // FIXME rounding mode needs to be more flexible
+  case Type::HalfTyID: {
+    if (&Val2.getSemantics() == &APFloat::IEEEhalf)
+      return true;
+    Val2.convert(APFloat::IEEEhalf, APFloat::rmNearestTiesToEven, &losesInfo);
+    return !losesInfo;
+  }
   case Type::FloatTyID: {
     if (&Val2.getSemantics() == &APFloat::IEEEsingle)
       return true;
@@ -946,22 +959,26 @@ bool ConstantFP::isValueValidForType(Type *Ty, const APFloat& Val) {
     return !losesInfo;
   }
   case Type::DoubleTyID: {
-    if (&Val2.getSemantics() == &APFloat::IEEEsingle ||
+    if (&Val2.getSemantics() == &APFloat::IEEEhalf ||
+        &Val2.getSemantics() == &APFloat::IEEEsingle ||
         &Val2.getSemantics() == &APFloat::IEEEdouble)
       return true;
     Val2.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven, &losesInfo);
     return !losesInfo;
   }
   case Type::X86_FP80TyID:
-    return &Val2.getSemantics() == &APFloat::IEEEsingle || 
+    return &Val2.getSemantics() == &APFloat::IEEEhalf ||
+           &Val2.getSemantics() == &APFloat::IEEEsingle || 
            &Val2.getSemantics() == &APFloat::IEEEdouble ||
            &Val2.getSemantics() == &APFloat::x87DoubleExtended;
   case Type::FP128TyID:
-    return &Val2.getSemantics() == &APFloat::IEEEsingle || 
+    return &Val2.getSemantics() == &APFloat::IEEEhalf ||
+           &Val2.getSemantics() == &APFloat::IEEEsingle || 
            &Val2.getSemantics() == &APFloat::IEEEdouble ||
            &Val2.getSemantics() == &APFloat::IEEEquad;
   case Type::PPC_FP128TyID:
-    return &Val2.getSemantics() == &APFloat::IEEEsingle || 
+    return &Val2.getSemantics() == &APFloat::IEEEhalf ||
+           &Val2.getSemantics() == &APFloat::IEEEsingle || 
            &Val2.getSemantics() == &APFloat::IEEEdouble ||
            &Val2.getSemantics() == &APFloat::PPCDoubleDouble;
   }

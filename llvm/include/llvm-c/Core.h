@@ -203,6 +203,7 @@ typedef enum {
 
 typedef enum {
   LLVMVoidTypeKind,        /**< type with no size */
+  LLVMHalfTypeKind,        /**< 16 bit floating point type */
   LLVMFloatTypeKind,       /**< 32 bit floating point type */
   LLVMDoubleTypeKind,      /**< 64 bit floating point type */
   LLVMX86_FP80TypeKind,    /**< 80 bit floating point type (X87) */
@@ -382,12 +383,14 @@ LLVMTypeRef LLVMIntType(unsigned NumBits);
 unsigned LLVMGetIntTypeWidth(LLVMTypeRef IntegerTy);
 
 /* Operations on real types */
+LLVMTypeRef LLVMHalfTypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMFloatTypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMDoubleTypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMX86FP80TypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMFP128TypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMPPCFP128TypeInContext(LLVMContextRef C);
 
+LLVMTypeRef LLVMHalfType(void);
 LLVMTypeRef LLVMFloatType(void);
 LLVMTypeRef LLVMDoubleType(void);
 LLVMTypeRef LLVMX86FP80Type(void);
