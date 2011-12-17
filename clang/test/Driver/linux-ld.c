@@ -171,3 +171,26 @@
 // CHECK-SUSE-10-3-PPC64: "-L[[SYSROOT]]/usr/lib/gcc/powerpc64-suse-linux/4.1.2/../../../../lib64"
 // CHECK-SUSE-10-3-PPC64: "-L[[SYSROOT]]/lib/../lib64"
 // CHECK-SUSE-10-3-PPC64: "-L[[SYSROOT]]/usr/lib/../lib64"
+//
+// Check that we do not pass --hash-style=gnu and --hash-style=both to linker
+// when build for MIPS platforms.
+// RUN: %clang %s -### -o %t.o 2>&1 \
+// RUN:     -ccc-host-triple mips-linux-gnu -ccc-clang-archs mips \
+// RUN:   | FileCheck --check-prefix=CHECK-MIPS %s
+// CHECK-MIPS: "{{.*}}ld{{(.exe)?}}"
+// CHECK-MIPS-NOT: "--hash-style={{gnu|both}}"
+// RUN: %clang %s -### -o %t.o 2>&1 \
+// RUN:     -ccc-host-triple mipsel-linux-gnu -ccc-clang-archs mipsel \
+// RUN:   | FileCheck --check-prefix=CHECK-MIPSEL %s
+// CHECK-MIPSEL: "{{.*}}ld{{(.exe)?}}"
+// CHECK-MIPSEL-NOT: "--hash-style={{gnu|both}}"
+// RUN: %clang %s -### -o %t.o 2>&1 \
+// RUN:     -ccc-host-triple mips64-linux-gnu -ccc-clang-archs mips64 \
+// RUN:   | FileCheck --check-prefix=CHECK-MIPS64 %s
+// CHECK-MIPS64: "{{.*}}ld{{(.exe)?}}"
+// CHECK-MIPS64-NOT: "--hash-style={{gnu|both}}"
+// RUN: %clang %s -### -o %t.o 2>&1 \
+// RUN:     -ccc-host-triple mips64el-linux-gnu -ccc-clang-archs mips64el \
+// RUN:   | FileCheck --check-prefix=CHECK-MIPS64EL %s
+// CHECK-MIPS64EL: "{{.*}}ld{{(.exe)?}}"
+// CHECK-MIPS64EL-NOT: "--hash-style={{gnu|both}}"
