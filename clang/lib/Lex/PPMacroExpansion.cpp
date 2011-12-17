@@ -116,6 +116,11 @@ static bool isTrivialSingleTokenExpansion(const MacroInfo *MI,
   // If the token isn't an identifier, it's always literally expanded.
   if (II == 0) return true;
 
+  // If the information about this identifier is out of date, update it from
+  // the external source.
+  if (II->isOutOfDate())
+    PP.getExternalSource()->updateOutOfDateIdentifier(*II);
+
   // If the identifier is a macro, and if that macro is enabled, it may be
   // expanded so it's not a trivial expansion.
   if (II->hasMacroDefinition() && PP.getMacroInfo(II)->isEnabled() &&
