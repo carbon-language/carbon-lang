@@ -258,17 +258,13 @@ _mm256_permutevar_ps(__m256 a, __m256i c)
 						  (__v8si)c);
 }
 
-static __inline __m128d __attribute__((__always_inline__, __nodebug__))
-_mm_permute_pd(__m128d a, const int c)
-{
-  return (__m128d)__builtin_ia32_vpermilpd((__v2df)a, c);
-}
+#define _mm_permute_pd(A, C) __extension__ ({ \
+  __m128d __A = (A); \
+  (__m128d)__builtin_ia32_vpermilpd((__v2df)__A, C); })
 
-static __inline __m256d __attribute__((__always_inline__, __nodebug__))
-_mm256_permute_pd(__m256d a, const int c)
-{
-  return (__m256d)__builtin_ia32_vpermilpd256((__v4df)a, c);
-}
+#define _mm256_permute_pd(A, C) __extension__ ({ \
+  __m256d __A = (A); \
+  (__m256d)__builtin_ia32_vpermilpd256((__v4df)__A, C); })
 
 static __inline __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_permute_ps(__m128 a, const int c)
