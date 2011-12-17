@@ -12,6 +12,7 @@
 
 #include <vector>
 
+#include "DWARFDefines.h"
 #include "DWARFFormValue.h"
 
 #include "lldb/lldb-defines.h"
@@ -29,12 +30,20 @@ struct DWARFMappedHash
     struct DIEInfo
     {
         dw_offset_t offset;  // The DIE offset
+        dw_tag_t tag;
         uint32_t type_flags; // Any flags for this DIEInfo
-        
-        DIEInfo (dw_offset_t _offset = DW_INVALID_OFFSET, 
-                  uint32_t _type_flags = 0) :
-            offset(_offset),
-            type_flags (_type_flags)
+
+        DIEInfo () :
+            offset (DW_INVALID_OFFSET),
+            tag (0),
+            type_flags (0)
+        {
+        }
+
+        DIEInfo (dw_offset_t o, dw_tag_t t, uint32_t f) :
+            offset(o),
+            tag (t),
+            type_flags (f)
         {
         }
         
@@ -42,6 +51,7 @@ struct DWARFMappedHash
         Clear()
         {
             offset = DW_INVALID_OFFSET;
+            tag = 0;
             type_flags = 0;
         }            
     };
@@ -84,35 +94,16 @@ struct DWARFMappedHash
         eAtomTypeTypeFlags  = 5u    // Flags from enum TypeFlags
     };
     
-    // Held in bits[3:0] of the eAtomTypeTypeFlags value to help us know what kind of type
-    // the name is describing
-    enum TypeFlagsTypeClass
-    {
-        eTypeClassInvalid       = 0u,   // An invalid type class, this might happend when type flags were not correctly set
-        eTypeClassOther         = 1u,   // A type other than any listed below
-        eTypeClassBuiltIn       = 2u,   // Language built in type
-        eTypeClassClassOrStruct = 3u,   // A class or structure, just not an objective C class
-        eTypeClassClassOBJC     = 4u,
-        eTypeClassEnum          = 5u,
-        eTypeClassTypedef       = 7u,
-        eTypeClassUnion         = 8u
-    };
-    
-    // Other type bits for the eAtomTypeTypeFlags flags
-    
+    // Bit definitions for the eAtomTypeTypeFlags flags
     enum TypeFlags
     {
-        // Make bits [3:0] of the eAtomTypeTypeFlags value and see TypeFlagsTypeClass
-        eTypeFlagClassMask = 0x0000000fu,
-        
         // If the name contains the namespace and class scope or the type 
         // exists in the global namespace, then this bits should be set
-        eTypeFlagNameIsFullyQualified   = ( 1u << 4 ),
+        eTypeFlagNameIsFullyQualified   = ( 1u << 0 ),
         
         // Always set for C++, only set for ObjC if this is the 
         // @implementation for class
-        eTypeFlagClassIsImplementation  = ( 1u << 5 ),
-        
+        eTypeFlagClassIsImplementation  = ( 1u << 1 ),        
     };
 
     struct Atom
@@ -334,6 +325,10 @@ struct DWARFMappedHash
                     case eAtomTypeDIEOffset:    // DIE offset, check form for encoding
                         hash_data.offset = form_value.Reference (header_data.die_base_offset);
                         break;
+
+                    case eAtomTypeTag:          // DW_TAG value for the DIE
+                        hash_data.tag = form_value.Unsigned ();
+                        
                     case eAtomTypeTypeFlags:    // Flags from enum TypeFlags
                         hash_data.type_flags = form_value.Unsigned ();
                         break;
@@ -358,34 +353,31 @@ struct DWARFMappedHash
                 switch (header_data.atoms[i].type)
                 {
                     case eAtomTypeDIEOffset:    // DIE offset, check form for encoding
-                        strm.Printf ("0x%8.8x", hash_data.offset);
+                        strm.Printf ("{0x%8.8x}", hash_data.offset);
                         break;
-                        
-                    case eAtomTypeTypeFlags:    // Flags from enum TypeFlags
-                        strm.Printf ("0x%2.2x ( type = ", hash_data.type_flags);
-                        switch (hash_data.type_flags & eTypeFlagClassMask)
-                    {
-                        case eTypeClassInvalid:         strm.PutCString ("invalid");        break;
-                        case eTypeClassOther:           strm.PutCString ("other");          break;
-                        case eTypeClassBuiltIn:         strm.PutCString ("built-in");       break;
-                        case eTypeClassClassOrStruct:   strm.PutCString ("class-struct");   break;
-                        case eTypeClassClassOBJC:       strm.PutCString ("class-objc");     break;
-                        case eTypeClassEnum:            strm.PutCString ("enum");           break;
-                        case eTypeClassTypedef:         strm.PutCString ("typedef");        break;
-                        case eTypeClassUnion:           strm.PutCString ("union");          break;
-                        default:                        strm.PutCString ("???");            break;
-                    }
-                        
-                        if (hash_data.type_flags & ~eTypeFlagClassMask)
+
+                    case eAtomTypeTag:          // DW_TAG value for the DIE
                         {
-                            strm.PutCString (", flags =");
+                            const char *tag_cstr = lldb_private::DW_TAG_value_to_name (hash_data.tag);
+                            if (tag_cstr)
+                                strm.PutCString (tag_cstr);
+                            else
+                                strm.Printf ("DW_TAG_(0x%4.4x)", hash_data.tag);
+                        }
+                        break;
+
+                    case eAtomTypeTypeFlags:    // Flags from enum TypeFlags
+                        strm.Printf ("0x%2.2x", hash_data.type_flags);
+                        if (hash_data.type_flags)
+                        {
+                            strm.PutCString (" (");
                             if (hash_data.type_flags & eTypeFlagNameIsFullyQualified)
                                 strm.PutCString (" qualified");
                             
                             if (hash_data.type_flags & eTypeFlagClassIsImplementation)
                                 strm.PutCString (" implementation");
+                            strm.PutCString (" )");
                         }
-                        strm.PutCString (" )");
                         break;
                         
                     default:
@@ -671,7 +663,7 @@ struct DWARFMappedHash
                     // efficiently.
                     DWARFMappedHash::ExtractTypesFromDIEArray (die_info_array, 
                                                                UINT32_MAX,
-                                                               eTypeFlagNameIsFullyQualified | eTypeFlagClassIsImplementation  | eTypeClassClassOBJC,
+                                                               eTypeFlagNameIsFullyQualified | eTypeFlagClassIsImplementation,
                                                                die_offsets);
                 }
                 else
