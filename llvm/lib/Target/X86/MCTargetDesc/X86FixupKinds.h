@@ -23,6 +23,8 @@ enum Fixups {
   reloc_global_offset_table,                 // 32-bit, relative to the start
                                              // of the instruction. Used only
                                              // for _GLOBAL_OFFSET_TABLE_.
+  reloc_coff_secrel32,                       // PE-COFF section relative 32
+                                             // (only valid for win32 COFF)
   // Marker
   LastTargetFixupKind,
   NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind

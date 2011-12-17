@@ -122,6 +122,11 @@ public:
     return Child->EndCOFFSymbolDef();
   }
 
+  virtual void EmitCOFFSecRel32(MCSymbol const *Symbol) {
+    LogCall("EmitCOFFSecRel32");
+    return Child->EmitCOFFSecRel32(Symbol);
+  }
+
   virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
     LogCall("EmitELFSize");
     return Child->EmitELFSize(Symbol, Value);

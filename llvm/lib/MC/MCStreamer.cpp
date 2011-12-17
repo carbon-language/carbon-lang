@@ -558,6 +558,10 @@ void MCStreamer::EmitWin64EHEndProlog() {
   EmitLabel(CurFrame->PrologEnd);
 }
 
+void MCStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol) {
+  assert(0 && "This file format doesn't support this directive");
+}
+
 void MCStreamer::EmitFnStart() {
   errs() << "Not implemented yet\n";
   abort();

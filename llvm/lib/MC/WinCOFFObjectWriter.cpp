@@ -716,6 +716,10 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
     else
       llvm_unreachable("unsupported relocation type");
     break;
+  case X86::reloc_coff_secrel32:
+    Reloc.Data.Type = Is64Bit ? COFF::IMAGE_REL_AMD64_SREL32
+                              : COFF::IMAGE_REL_I386_SECREL;
+    break;
   default:
     llvm_unreachable("unsupported relocation type");
   }
