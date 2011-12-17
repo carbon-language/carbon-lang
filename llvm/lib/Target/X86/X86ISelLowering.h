@@ -268,7 +268,6 @@ namespace llvm {
       MOVLHPS,
       MOVLHPD,
       MOVHLPS,
-      MOVHLPD,
       MOVLPS,
       MOVLPD,
       MOVSD,
