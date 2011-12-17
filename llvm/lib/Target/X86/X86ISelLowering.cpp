@@ -14700,10 +14700,40 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
 //                           X86 Inline Assembly Support
 //===----------------------------------------------------------------------===//
 
+// Helper to match a string separated by whitespace.
+static bool END_WITH_NULL matchAsm(StringRef s, ...) {
+  va_list ap;
+  va_start(ap, s);
+  s = s.substr(s.find_first_not_of(" \t")); // Skip leading whitespace.
+
+  while (const char *p = va_arg(ap, const char *)) {
+    StringRef piece(p);
+    if (!s.startswith(piece)) { // Check if the piece matches.
+      va_end(ap);
+      return false;
+    }
+
+    s = s.substr(piece.size());
+    StringRef::size_type i = s.find_first_not_of(" \t");
+    if (i == 0) { // We matched a prefix.
+      va_end(ap);
+      return false;
+    }
+    s = s.substr(i);
+  }
+
+  va_end(ap);
+  return s.empty();
+}
+
 bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
   InlineAsm *IA = cast<InlineAsm>(CI->getCalledValue());
 
   std::string AsmStr = IA->getAsmString();
+
+  IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
+  if (!Ty || Ty->getBitWidth() % 16 != 0)
+    return false;
 
   // TODO: should remove alternatives from the asmstring: "foo {a|b}" -> "foo a"
   SmallVector<StringRef, 4> AsmPieces;
@@ -14712,35 +14742,27 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
   switch (AsmPieces.size()) {
   default: return false;
   case 1:
-    AsmStr = AsmPieces[0];
-    AsmPieces.clear();
-    SplitString(AsmStr, AsmPieces, " \t");  // Split with whitespace.
-
     // FIXME: this should verify that we are targeting a 486 or better.  If not,
-    // we will turn this bswap into something that will be lowered to logical ops
-    // instead of emitting the bswap asm.  For now, we don't support 486 or lower
-    // so don't worry about this.
+    // we will turn this bswap into something that will be lowered to logical
+    // ops instead of emitting the bswap asm.  For now, we don't support 486 or
+    // lower so don't worry about this.
     // bswap $0
-    if (AsmPieces.size() == 2 &&
-        (AsmPieces[0] == "bswap" ||
-         AsmPieces[0] == "bswapq" ||
-         AsmPieces[0] == "bswapl") &&
-        (AsmPieces[1] == "$0" ||
-         AsmPieces[1] == "${0:q}")) {
+    if (matchAsm(AsmPieces[0], "bswap", "$0", NULL) ||
+        matchAsm(AsmPieces[0], "bswapl", "$0", NULL) ||
+        matchAsm(AsmPieces[0], "bswapq", "$0", NULL) ||
+        matchAsm(AsmPieces[0], "bswap", "${0:q}", NULL) ||
+        matchAsm(AsmPieces[0], "bswapl", "${0:q}", NULL) ||
+        matchAsm(AsmPieces[0], "bswapq", "${0:q}", NULL)) {
       // No need to check constraints, nothing other than the equivalent of
       // "=r,0" would be valid here.
-      IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
-      if (!Ty || Ty->getBitWidth() % 16 != 0)
-        return false;
       return IntrinsicLowering::LowerToByteSwap(CI);
     }
+
     // rorw $$8, ${0:w}  -->  llvm.bswap.i16
     if (CI->getType()->isIntegerTy(16) &&
-        AsmPieces.size() == 3 &&
-        (AsmPieces[0] == "rorw" || AsmPieces[0] == "rolw") &&
-        AsmPieces[1] == "$$8," &&
-        AsmPieces[2] == "${0:w}" &&
-        IA->getConstraintString().compare(0, 5, "=r,0,") == 0) {
+        IA->getConstraintString().compare(0, 5, "=r,0,") == 0 &&
+        (matchAsm(AsmPieces[0], "rorw", "$$8,", "${0:w}", NULL) ||
+         matchAsm(AsmPieces[0], "rolw", "$$8,", "${0:w}", NULL))) {
       AsmPieces.clear();
       const std::string &ConstraintsStr = IA->getConstraintString();
       SplitString(StringRef(ConstraintsStr).substr(5), AsmPieces, ",");
@@ -14749,46 +14771,26 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
           AsmPieces[0] == "~{cc}" &&
           AsmPieces[1] == "~{dirflag}" &&
           AsmPieces[2] == "~{flags}" &&
-          AsmPieces[3] == "~{fpsr}") {
-        IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
-        if (!Ty || Ty->getBitWidth() % 16 != 0)
-          return false;
-        return IntrinsicLowering::LowerToByteSwap(CI);
-      }
+          AsmPieces[3] == "~{fpsr}")
+      return IntrinsicLowering::LowerToByteSwap(CI);
     }
     break;
   case 3:
     if (CI->getType()->isIntegerTy(32) &&
-        IA->getConstraintString().compare(0, 5, "=r,0,") == 0) {
-      SmallVector<StringRef, 4> Words;
-      SplitString(AsmPieces[0], Words, " \t,");
-      if (Words.size() == 3 && Words[0] == "rorw" && Words[1] == "$$8" &&
-          Words[2] == "${0:w}") {
-        Words.clear();
-        SplitString(AsmPieces[1], Words, " \t,");
-        if (Words.size() == 3 && Words[0] == "rorl" && Words[1] == "$$16" &&
-            Words[2] == "$0") {
-          Words.clear();
-          SplitString(AsmPieces[2], Words, " \t,");
-          if (Words.size() == 3 && Words[0] == "rorw" && Words[1] == "$$8" &&
-              Words[2] == "${0:w}") {
-            AsmPieces.clear();
-            const std::string &ConstraintsStr = IA->getConstraintString();
-            SplitString(StringRef(ConstraintsStr).substr(5), AsmPieces, ",");
-            std::sort(AsmPieces.begin(), AsmPieces.end());
-            if (AsmPieces.size() == 4 &&
-                AsmPieces[0] == "~{cc}" &&
-                AsmPieces[1] == "~{dirflag}" &&
-                AsmPieces[2] == "~{flags}" &&
-                AsmPieces[3] == "~{fpsr}") {
-              IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
-              if (!Ty || Ty->getBitWidth() % 16 != 0)
-                return false;
-              return IntrinsicLowering::LowerToByteSwap(CI);
-            }
-          }
-        }
-      }
+        IA->getConstraintString().compare(0, 5, "=r,0,") == 0 &&
+        matchAsm(AsmPieces[0], "rorw", "$$8,", "${0:w}", NULL) &&
+        matchAsm(AsmPieces[1], "rorl", "$$16,", "$0", NULL) &&
+        matchAsm(AsmPieces[2], "rorw", "$$8,", "${0:w}", NULL)) {
+      AsmPieces.clear();
+      const std::string &ConstraintsStr = IA->getConstraintString();
+      SplitString(StringRef(ConstraintsStr).substr(5), AsmPieces, ",");
+      std::sort(AsmPieces.begin(), AsmPieces.end());
+      if (AsmPieces.size() == 4 &&
+          AsmPieces[0] == "~{cc}" &&
+          AsmPieces[1] == "~{dirflag}" &&
+          AsmPieces[2] == "~{flags}" &&
+          AsmPieces[3] == "~{fpsr}")
+        return IntrinsicLowering::LowerToByteSwap(CI);
     }
 
     if (CI->getType()->isIntegerTy(64)) {
@@ -14797,23 +14799,10 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
           Constraints[0].Codes.size() == 1 && Constraints[0].Codes[0] == "A" &&
           Constraints[1].Codes.size() == 1 && Constraints[1].Codes[0] == "0") {
         // bswap %eax / bswap %edx / xchgl %eax, %edx  -> llvm.bswap.i64
-        SmallVector<StringRef, 4> Words;
-        SplitString(AsmPieces[0], Words, " \t");
-        if (Words.size() == 2 && Words[0] == "bswap" && Words[1] == "%eax") {
-          Words.clear();
-          SplitString(AsmPieces[1], Words, " \t");
-          if (Words.size() == 2 && Words[0] == "bswap" && Words[1] == "%edx") {
-            Words.clear();
-            SplitString(AsmPieces[2], Words, " \t,");
-            if (Words.size() == 3 && Words[0] == "xchgl" && Words[1] == "%eax" &&
-                Words[2] == "%edx") {
-              IntegerType *Ty = dyn_cast<IntegerType>(CI->getType());
-              if (!Ty || Ty->getBitWidth() % 16 != 0)
-                return false;
-              return IntrinsicLowering::LowerToByteSwap(CI);
-            }
-          }
-        }
+        if (matchAsm(AsmPieces[0], "bswap", "%eax", NULL) &&
+            matchAsm(AsmPieces[1], "bswap", "%edx", NULL) &&
+            matchAsm(AsmPieces[2], "xchgl", "%eax,", "%edx", NULL))
+          return IntrinsicLowering::LowerToByteSwap(CI);
       }
     }
     break;
