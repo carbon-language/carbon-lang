@@ -674,6 +674,17 @@ private:
   /// deeply nested calls when there are many redeclarations.
   std::deque<std::pair<Decl *, serialization::DeclID> > PendingPreviousDecls;
 
+  /// \brief The list of redeclaration chains that still need to be 
+  /// reconstructed.
+  ///
+  /// Each element is the global declaration ID of the first declaration in
+  /// the chain. Elements in this vector should be unique; use 
+  /// PendingDeclChainsKnown to ensure uniqueness.
+  llvm::SmallVector<serialization::DeclID, 16> PendingDeclChains;
+
+  /// \brief Keeps track of the elements added to PendingDeclChains.
+  llvm::SmallSet<serialization::DeclID, 16> PendingDeclChainsKnown;
+
   /// \brief We delay loading the chain of objc categories after recursive
   /// loading of declarations is finished.
   std::vector<std::pair<ObjCInterfaceDecl *, serialization::DeclID> >
@@ -759,6 +770,7 @@ private:
   RecordLocation DeclCursorForID(serialization::DeclID ID,
                                  unsigned &RawLocation);
   void loadDeclUpdateRecords(serialization::DeclID ID, Decl *D);
+  void loadPendingDeclChain(serialization::GlobalDeclID ID);
   void loadObjCChainedCategories(serialization::GlobalDeclID ID,
                                  ObjCInterfaceDecl *D);
 
@@ -1028,6 +1040,15 @@ public:
     return cast_or_null<T>(GetLocalDecl(F, LocalID));
   }
 
+  /// \brief Map a global declaration ID into the declaration ID used to 
+  /// refer to this declaration within the given module fule.
+  ///
+  /// \returns the global ID of the given declaration as known in the given
+  /// module file.
+  serialization::DeclID 
+  mapGlobalIDToModuleFileGlobalID(ModuleFile &M,
+                                  serialization::DeclID GlobalID);
+  
   /// \brief Reads a declaration ID from the given position in a record in the
   /// given module.
   ///

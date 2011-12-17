@@ -114,6 +114,7 @@ namespace clang {
         TypeIDForTypeDecl(0) { }
 
     static void attachPreviousDecl(Decl *D, Decl *previous);
+    static void attachLatestDecl(Decl *D, Decl *latest);
 
     void Visit(Decl *D);
 
@@ -307,11 +308,13 @@ void ASTDeclReader::VisitTypeDecl(TypeDecl *TD) {
 }
 
 void ASTDeclReader::VisitTypedefDecl(TypedefDecl *TD) {
+  VisitRedeclarable(TD);
   VisitTypeDecl(TD);
   TD->setTypeSourceInfo(GetTypeSourceInfo(Record, Idx));
 }
 
 void ASTDeclReader::VisitTypeAliasDecl(TypeAliasDecl *TD) {
+  VisitRedeclarable(TD);
   VisitTypeDecl(TD);
   TD->setTypeSourceInfo(GetTypeSourceInfo(Record, Idx));
 }
@@ -1398,72 +1401,38 @@ ASTDeclReader::VisitDeclContext(DeclContext *DC) {
 
 template <typename T>
 void ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
-  enum RedeclKind { NoRedeclaration = 0, PointsToPrevious, PointsToLatest };
+  enum RedeclKind { FirstInFile, PointsToPrevious };
   RedeclKind Kind = (RedeclKind)Record[Idx++];
+  
+  // Read the first declaration ID, and note that we need to reconstruct
+  // the redeclaration chain once we hit the top level.
+  DeclID FirstDeclID = ReadDeclID(Record, Idx);
+  if (Reader.PendingDeclChainsKnown.insert(FirstDeclID))
+    Reader.PendingDeclChains.push_back(FirstDeclID);
+
+  T *FirstDecl = cast_or_null<T>(Reader.GetDecl(FirstDeclID));
+
   switch (Kind) {
-  default:
-    llvm_unreachable("Out of sync with ASTDeclWriter::VisitRedeclarable or"
-                     " messed up reading");
-  case NoRedeclaration:
+  case FirstInFile:
+    if (FirstDecl != D)
+      D->RedeclLink = typename Redeclarable<T>::PreviousDeclLink(FirstDecl);
     break;
+      
   case PointsToPrevious: {
     DeclID PreviousDeclID = ReadDeclID(Record, Idx);
-    DeclID FirstDeclID = ReadDeclID(Record, Idx);
+    
     // We delay loading of the redeclaration chain to avoid deeply nested calls.
     // We temporarily set the first (canonical) declaration as the previous one
     // which is the one that matters and mark the real previous DeclID to be
     // loaded & attached later on.
-    T *FirstDecl = cast_or_null<T>(Reader.GetDecl(FirstDeclID));
     D->RedeclLink = typename Redeclarable<T>::PreviousDeclLink(FirstDecl);
-    if (PreviousDeclID != FirstDeclID)
-      Reader.PendingPreviousDecls.push_back(std::make_pair(static_cast<T*>(D),
-                                                           PreviousDeclID));
-
-    // If the first declaration in the chain is in an inconsistent
-    // state where it thinks that it is the only declaration, fix its
-    // redeclaration link now to point at this declaration, so that we have a 
-    // proper redeclaration chain.
-    if (FirstDecl->RedeclLink.getPointer() == FirstDecl) {
-      FirstDecl->RedeclLink
-        = typename Redeclarable<T>::LatestDeclLink(static_cast<T*>(D));
-    }
-    break;
-  }
-  case PointsToLatest: {
-    T *LatestDecl = ReadDeclAs<T>(Record, Idx);
-    D->RedeclLink = typename Redeclarable<T>::LatestDeclLink(LatestDecl);
     
-    // If the latest declaration in the chain is in an inconsistent
-    // state where it thinks that it is the only declaration, fix its
-    // redeclaration link now to point at this declaration, so that we have a 
-    // proper redeclaration chain.
-    if (LatestDecl->RedeclLink.getPointer() == LatestDecl) {
-      LatestDecl->RedeclLink
-        = typename Redeclarable<T>::PreviousDeclLink(static_cast<T*>(D));
-    }
+    // Make a note that we need to wire up this declaration to its
+    // previous declaration, later.
+    Reader.PendingPreviousDecls.push_back(std::make_pair(static_cast<T*>(D),
+                                                         PreviousDeclID));
     break;
   }
-  }
-
-  assert(!(Kind == PointsToPrevious &&
-           Reader.FirstLatestDeclIDs.find(ThisDeclID) !=
-               Reader.FirstLatestDeclIDs.end()) &&
-         "This decl is not first, it should not be in the map");
-  if (Kind == PointsToPrevious)
-    return;
-
-  // This decl is a first one and the latest declaration that it points to is in
-  // the same AST file. However, if this actually needs to point to a
-  // redeclaration in another AST file, we need to update it by checking the
-  // FirstLatestDeclIDs map which tracks this kind of decls.
-  assert(Reader.GetDecl(ThisDeclID) == static_cast<T*>(D) &&
-         "Invalid ThisDeclID ?");
-  ASTReader::FirstLatestDeclIDMap::iterator I
-      = Reader.FirstLatestDeclIDs.find(ThisDeclID);
-  if (I != Reader.FirstLatestDeclIDs.end()) {
-    Decl *NewLatest = Reader.GetDecl(I->second);
-    D->RedeclLink
-        = typename Redeclarable<T>::LatestDeclLink(cast_or_null<T>(NewLatest));
   }
 }
 
@@ -1564,11 +1533,38 @@ void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *previous) {
     FD->RedeclLink.setPointer(cast<FunctionDecl>(previous));
   } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
     VD->RedeclLink.setPointer(cast<VarDecl>(previous));
-  } else if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(previous)) {
+  } else if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
+    TD->RedeclLink.setPointer(cast<TypedefNameDecl>(previous));
+  } else if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D)) {
     ID->RedeclLink.setPointer(cast<ObjCInterfaceDecl>(previous));
   } else {
     RedeclarableTemplateDecl *TD = cast<RedeclarableTemplateDecl>(D);
     TD->CommonOrPrev = cast<RedeclarableTemplateDecl>(previous);
+  }
+}
+
+void ASTDeclReader::attachLatestDecl(Decl *D, Decl *Latest) {
+  assert(D && Latest);
+  if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
+    TD->RedeclLink
+      = Redeclarable<TagDecl>::LatestDeclLink(cast<TagDecl>(Latest));
+  } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    FD->RedeclLink 
+      = Redeclarable<FunctionDecl>::LatestDeclLink(cast<FunctionDecl>(Latest));
+  } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    VD->RedeclLink
+      = Redeclarable<VarDecl>::LatestDeclLink(cast<VarDecl>(Latest));
+  } else if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D)) {
+    TD->RedeclLink
+      = Redeclarable<TypedefNameDecl>::LatestDeclLink(
+                                                cast<TypedefNameDecl>(Latest));
+  } else if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D)) {
+    ID->RedeclLink
+      = Redeclarable<ObjCInterfaceDecl>::LatestDeclLink(
+                                              cast<ObjCInterfaceDecl>(Latest));
+  } else {
+    RedeclarableTemplateDecl *TD = cast<RedeclarableTemplateDecl>(D);
+    TD->getCommonPtr()->Latest = cast<RedeclarableTemplateDecl>(Latest);
   }
 }
 
@@ -1901,6 +1897,152 @@ void ASTReader::loadDeclUpdateRecords(serialization::DeclID ID, Decl *D) {
       Reader.UpdateDecl(D, *F, Record);
     }
   }
+}
+
+namespace {
+  struct CompareLocalRedeclarationsInfoToID {
+    bool operator()(const LocalRedeclarationsInfo &X, DeclID Y) {
+      return X.FirstID < Y;
+    }
+
+    bool operator()(DeclID X, const LocalRedeclarationsInfo &Y) {
+      return X < Y.FirstID;
+    }
+
+    bool operator()(const LocalRedeclarationsInfo &X, 
+                    const LocalRedeclarationsInfo &Y) {
+      return X.FirstID < Y.FirstID;
+    }
+    bool operator()(DeclID X, DeclID Y) {
+      return X < Y;
+    }
+  };
+  
+  class RedeclChainVisitor {
+    ASTReader &Reader;
+    DeclID GlobalFirstID;
+    llvm::SmallVector<std::pair<Decl *, Decl *>, 4> Chains;
+    
+  public:
+    RedeclChainVisitor(ASTReader &Reader, DeclID GlobalFirstID)
+      : Reader(Reader), GlobalFirstID(GlobalFirstID) { }
+    
+    static bool visit(ModuleFile &M, bool Preorder, void *UserData) {
+      if (Preorder)
+        return false;
+      
+      return static_cast<RedeclChainVisitor *>(UserData)->visit(M);
+    }
+    
+    bool visit(ModuleFile &M) {
+      // Map global ID of the first declaration down to the local ID
+      // used in this module file.
+      DeclID FirstID = Reader.mapGlobalIDToModuleFileGlobalID(M, GlobalFirstID);
+      if (!FirstID)
+        return false;
+      
+      // Perform a binary search to find the local redeclarations for this
+      // declaration (if any).
+      const LocalRedeclarationsInfo *Result
+        = std::lower_bound(M.RedeclarationsInfo,
+                           M.RedeclarationsInfo + M.LocalNumRedeclarationsInfos, 
+                           FirstID, CompareLocalRedeclarationsInfoToID());
+      if (Result == M.RedeclarationsInfo + M.LocalNumRedeclarationsInfos ||
+          Result->FirstID != FirstID)
+        return false;
+
+      // Dig out the starting/ending declarations.
+      Decl *FirstLocalDecl = Reader.GetLocalDecl(M, Result->FirstLocalID);
+      Decl *LastLocalDecl = Reader.GetLocalDecl(M, Result->LastLocalID);
+      if (!FirstLocalDecl || !LastLocalDecl)
+        return false;
+      
+      // Append this redeclaration chain to the list.
+      Chains.push_back(std::make_pair(FirstLocalDecl, LastLocalDecl));
+      return false;
+    }
+    
+    ArrayRef<std::pair<Decl *, Decl *> > getChains() const {
+      return Chains;
+    }
+    
+    void addParsed(Decl *FirstParsedDecl, Decl *LastParsedDecl) {
+      Chains.push_back(std::make_pair(FirstParsedDecl, LastParsedDecl));
+    }
+  };
+}
+
+/// \brief Retrieve the previous declaration to D.
+static Decl *getPreviousDecl(Decl *D) {
+  if (TagDecl *TD = dyn_cast<TagDecl>(D))
+    return TD->getPreviousDeclaration();
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    return FD->getPreviousDeclaration();
+  if (VarDecl *VD = dyn_cast<VarDecl>(D))
+    return VD->getPreviousDeclaration();
+  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D))
+    return TD->getPreviousDeclaration();
+  if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D))
+    return ID->getPreviousDeclaration();
+  
+  return cast<RedeclarableTemplateDecl>(D)->getPreviousDeclaration();
+}
+
+/// \brief Retrieve the most recent declaration of D.
+static Decl *getMostRecentDecl(Decl *D) {
+  if (TagDecl *TD = dyn_cast<TagDecl>(D))
+    return TD->getMostRecentDeclaration();
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    return FD->getMostRecentDeclaration();
+  if (VarDecl *VD = dyn_cast<VarDecl>(D))
+    return VD->getMostRecentDeclaration();
+  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D))
+    return TD->getMostRecentDeclaration();
+  if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D))
+    return ID->getMostRecentDeclaration();
+  
+  return cast<RedeclarableTemplateDecl>(D)->getMostRecentDeclaration();
+}
+
+void ASTReader::loadPendingDeclChain(serialization::GlobalDeclID ID) {
+  // Build up the list of redeclaration chains.
+  RedeclChainVisitor Visitor(*this, ID);
+  ModuleMgr.visitDepthFirst(&RedeclChainVisitor::visit, &Visitor);
+  
+  // Retrieve the chains.
+  ArrayRef<std::pair<Decl *, Decl *> > Chains = Visitor.getChains();
+  if (Chains.empty())
+    return;
+  
+  // FIXME: Splice local (not from AST file) declarations into the list,
+  // rather than always re-ordering them.
+  Decl *CanonDecl = GetDecl(ID);  
+  
+  // Capture all of the parsed declarations and put them at the end.
+  Decl *MostRecent = getMostRecentDecl(CanonDecl);
+  Decl *FirstParsed = MostRecent;
+  if (CanonDecl != MostRecent && !MostRecent->isFromASTFile()) {
+    Decl *Current = MostRecent;
+    while (Decl *Prev = getPreviousDecl(Current)) {
+      if (Prev->isFromASTFile()) {
+        Current = Prev;
+        continue;
+      }
+      
+      // Chain all of the parsed declarations together.
+      ASTDeclReader::attachPreviousDecl(FirstParsed, Prev);
+      FirstParsed = Prev;
+      Current = Prev;
+    }
+    
+    Visitor.addParsed(FirstParsed, MostRecent);
+  }
+  
+  // Hook up the separate chains.
+  Chains = Visitor.getChains();
+  for (unsigned I = 1, N = Chains.size(); I != N; ++I)
+    ASTDeclReader::attachPreviousDecl(Chains[I].first, Chains[I-1].second);    
+  ASTDeclReader::attachLatestDecl(CanonDecl, Chains.back().second);
 }
 
 namespace {

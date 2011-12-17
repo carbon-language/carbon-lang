@@ -312,7 +312,11 @@ private:
   /// serialized again. In this case, it is registered here, so that the reader
   /// knows to read the updated version.
   SmallVector<ReplacedDeclInfo, 16> ReplacedDecls;
-
+                    
+  /// \brief The list of local redeclarations of entities that were
+  /// first declared non-locally.
+  SmallVector<serialization::LocalRedeclarationsInfo, 2> LocalRedeclarations;
+                  
   /// \brief Statements that we've encountered while serializing a
   /// declaration or type.
   SmallVector<Stmt *, 16> StmtsToEmit;

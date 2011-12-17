@@ -1846,6 +1846,10 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         F.DeclRemap.insert(std::make_pair(LocalBaseDeclID, 
                                           F.BaseDeclID - LocalBaseDeclID));
         
+        // Introduce the global -> local mapping for declarations within this
+        // module.
+        F.GlobalToLocalDeclIDs[&F] = LocalBaseDeclID;
+        
         DeclsLoaded.resize(DeclsLoaded.size() + F.LocalNumDecls);
       }
       break;
@@ -2125,6 +2129,9 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         
         TypeRemap.insert(std::make_pair(TypeIndexOffset, 
                                     OM->BaseTypeIndex - TypeIndexOffset));
+
+        // Global -> local mappings.
+        F.GlobalToLocalDeclIDs[OM] = DeclIDOffset;
       }
       break;
     }
@@ -2396,7 +2403,17 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         }
       }
       break;
+    }
+        
+    case LOCAL_REDECLARATIONS: {
+      if (F.LocalNumRedeclarationsInfos != 0) {
+        Error("duplicate LOCAL_REDECLARATIONS record in AST file");
+        return Failure;
+      }
       
+      F.LocalNumRedeclarationsInfos = Record[0];
+      F.RedeclarationsInfo = (const LocalRedeclarationsInfo *)BlobStart;
+      break;
     }
     }
   }
@@ -4568,6 +4585,23 @@ Decl *ASTReader::GetDecl(DeclID ID) {
   return DeclsLoaded[Index];
 }
 
+DeclID ASTReader::mapGlobalIDToModuleFileGlobalID(ModuleFile &M, 
+                                                  DeclID GlobalID) {
+  if (GlobalID < NUM_PREDEF_DECL_IDS)
+    return GlobalID;
+  
+  GlobalDeclMapType::const_iterator I = GlobalDeclMap.find(GlobalID);
+  assert(I != GlobalDeclMap.end() && "Corrupted global declaration map");
+  ModuleFile *Owner = I->second;
+
+  llvm::DenseMap<ModuleFile *, serialization::DeclID>::iterator Pos
+    = M.GlobalToLocalDeclIDs.find(Owner);
+  if (Pos == M.GlobalToLocalDeclIDs.end())
+    return 0;
+      
+  return GlobalID - Owner->BaseDeclID + Pos->second;
+}
+
 serialization::DeclID ASTReader::ReadDeclID(ModuleFile &F, 
                                             const RecordData &Record,
                                             unsigned &Idx) {
@@ -6027,6 +6061,7 @@ void ASTReader::ClearSwitchCaseIDs() {
 void ASTReader::finishPendingActions() {
   while (!PendingIdentifierInfos.empty() ||
          !PendingPreviousDecls.empty() ||
+         !PendingDeclChains.empty() ||
          !PendingChainedObjCCategories.empty()) {
 
     // If any identifiers with corresponding top-level declarations have
@@ -6044,6 +6079,12 @@ void ASTReader::finishPendingActions() {
       PendingPreviousDecls.pop_front();
     }
   
+    // Load pending declaration chains.
+    for (unsigned I = 0; I != PendingDeclChains.size(); ++I) {
+      loadPendingDeclChain(PendingDeclChains[I]);
+    }
+    PendingDeclChains.clear();
+
     for (std::vector<std::pair<ObjCInterfaceDecl *,
                                serialization::DeclID> >::iterator
            I = PendingChainedObjCCategories.begin(),
@@ -6082,6 +6123,7 @@ void ASTReader::FinishedDeserializing() {
     }
 
     finishPendingActions();
+    PendingDeclChainsKnown.clear();
 
     assert(PendingForwardRefs.size() == 0 &&
            "Some forward refs did not get linked to the definition!");

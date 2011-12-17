@@ -452,7 +452,11 @@ namespace clang {
       
       /// \brief Record code for an array of all of the (sub)modules that were
       /// imported by the AST file.
-      IMPORTED_MODULES
+      IMPORTED_MODULES,
+      
+      /// \brief Record code for the array describing the first/last local
+      /// redeclarations of each entity.
+      LOCAL_REDECLARATIONS
     };
 
     /// \brief Record types used within a source manager block.
@@ -1188,6 +1192,33 @@ namespace clang {
       CTOR_INITIALIZER_DELEGATING,
       CTOR_INITIALIZER_MEMBER,
       CTOR_INITIALIZER_INDIRECT_MEMBER
+    };
+
+    /// \brief Describes the redeclarations of a declaration.
+    struct LocalRedeclarationsInfo {
+      DeclID FirstID;      // The ID of the first declaration
+      DeclID FirstLocalID; // The ID of the first local declaration
+      DeclID LastLocalID;  // The ID of the last local declaration
+      
+      friend bool operator<(const LocalRedeclarationsInfo &X,
+                            const LocalRedeclarationsInfo &Y) {
+        return X.FirstID < Y.FirstID;
+      }
+      
+      friend bool operator>(const LocalRedeclarationsInfo &X,
+                            const LocalRedeclarationsInfo &Y) {
+        return X.FirstID > Y.FirstID;
+      }
+      
+      friend bool operator<=(const LocalRedeclarationsInfo &X,
+                             const LocalRedeclarationsInfo &Y) {
+        return X.FirstID <= Y.FirstID;
+      }
+      
+      friend bool operator>=(const LocalRedeclarationsInfo &X,
+                             const LocalRedeclarationsInfo &Y) {
+        return X.FirstID >= Y.FirstID;
+      }
     };
 
     /// @}

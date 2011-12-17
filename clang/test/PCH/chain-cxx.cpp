@@ -44,6 +44,8 @@ const int TS3<T>::value;
 // Instantiate struct, but not value.
 struct instantiate : TS3<int> {};
 
+// Typedef
+typedef int Integer;
 
 //===----------------------------------------------------------------------===//
 #elif not defined(HEADER2)
@@ -97,6 +99,9 @@ struct B : A { };
 // Instantiate TS3's member.
 static const int ts3m1 = TS3<int>::value;
 
+// Redefinition of typedef
+typedef int Integer;
+
 //===----------------------------------------------------------------------===//
 #else
 //===----------------------------------------------------------------------===//
@@ -122,6 +127,7 @@ void test() {
   TS2int ts2;
 
   B b;
+  Integer i = 17;
 }
 
 // Should have remembered that there is a definition.

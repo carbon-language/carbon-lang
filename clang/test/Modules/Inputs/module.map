@@ -42,3 +42,19 @@ module decldef {
   explicit module Decl2 { header "decl2.h" }
   explicit module Def { header "def.h" }
 }
+
+module redecl_merge_top { 
+  header "redecl-merge-top.h" 
+}
+module redecl_merge_left { 
+  header "redecl-merge-left.h" 
+  export *
+}
+module redecl_merge_right { 
+  header "redecl-merge-right.h" 
+  export *
+}
+module redecl_merge_bottom { 
+  header "redecl-merge-bottom.h" 
+  export *
+}

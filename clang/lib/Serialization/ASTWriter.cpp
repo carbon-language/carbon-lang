@@ -798,7 +798,8 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(KNOWN_NAMESPACES);
   RECORD(MODULE_OFFSET_MAP);
   RECORD(SOURCE_MANAGER_LINE_TABLE);
-  
+  RECORD(LOCAL_REDECLARATIONS);
+         
   // SourceManager Block.
   BLOCK(SOURCE_MANAGER_BLOCK);
   RECORD(SM_SLOC_FILE_ENTRY);
@@ -3411,6 +3412,25 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteDeclReplacementsBlock();
   WriteChainedObjCCategories();
 
+  if (!LocalRedeclarations.empty()) {
+    // Sort the local redeclarations info by the first declaration ID,
+    // since the reader will be perforing binary searches on this information.
+    llvm::array_pod_sort(LocalRedeclarations.begin(),LocalRedeclarations.end());
+    
+    llvm::BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+    Abbrev->Add(BitCodeAbbrevOp(LOCAL_REDECLARATIONS));
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // # of entries
+    Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+    unsigned AbbrevID = Stream.EmitAbbrev(Abbrev);
+
+    Record.clear();
+    Record.push_back(LOCAL_REDECLARATIONS);
+    Record.push_back(LocalRedeclarations.size());
+    Stream.EmitRecordWithBlob(AbbrevID, Record, 
+      reinterpret_cast<char*>(LocalRedeclarations.data()),
+      LocalRedeclarations.size() * sizeof(LocalRedeclarationsInfo));
+  }
+  
   // Some simple statistics
   Record.clear();
   Record.push_back(NumStatements);
