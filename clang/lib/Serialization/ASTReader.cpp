@@ -6024,56 +6024,64 @@ void ASTReader::ClearSwitchCaseIDs() {
   SwitchCaseStmts.clear();
 }
 
+void ASTReader::finishPendingActions() {
+  while (!PendingIdentifierInfos.empty() ||
+         !PendingPreviousDecls.empty() ||
+         !PendingChainedObjCCategories.empty()) {
+
+    // If any identifiers with corresponding top-level declarations have
+    // been loaded, load those declarations now.
+    while (!PendingIdentifierInfos.empty()) {
+      SetGloballyVisibleDecls(PendingIdentifierInfos.front().II,
+                              PendingIdentifierInfos.front().DeclIDs, true);
+      PendingIdentifierInfos.pop_front();
+    }
+  
+    // Ready to load previous declarations of Decls that were delayed.
+    while (!PendingPreviousDecls.empty()) {
+      loadAndAttachPreviousDecl(PendingPreviousDecls.front().first,
+                                PendingPreviousDecls.front().second);
+      PendingPreviousDecls.pop_front();
+    }
+  
+    for (std::vector<std::pair<ObjCInterfaceDecl *,
+                               serialization::DeclID> >::iterator
+           I = PendingChainedObjCCategories.begin(),
+           E = PendingChainedObjCCategories.end(); I != E; ++I) {
+      loadObjCChainedCategories(I->second, I->first);
+    }
+    PendingChainedObjCCategories.clear();
+  }
+}
+
 void ASTReader::FinishedDeserializing() {
   assert(NumCurrentElementsDeserializing &&
          "FinishedDeserializing not paired with StartedDeserializing");
   if (NumCurrentElementsDeserializing == 1) {
 
-    // Fully load the interesting decls, including deserializing their bodies,
-    // so that any other declarations that get referenced in the body will be
-    // fully deserialized by the time we pass them to the consumer.
-    for (std::deque<Decl *>::iterator
-           I = InterestingDecls.begin(),
-           E = InterestingDecls.end(); I != E; ++I)
-      (*I)->getBody();
+    while (Consumer && !InterestingDecls.empty()) {
+      finishPendingActions();
 
-    do {
-      // If any identifiers with corresponding top-level declarations have
-      // been loaded, load those declarations now.
-      while (!PendingIdentifierInfos.empty()) {
-        SetGloballyVisibleDecls(PendingIdentifierInfos.front().II,
-                                PendingIdentifierInfos.front().DeclIDs, true);
-        PendingIdentifierInfos.pop_front();
-      }
-  
-      // Ready to load previous declarations of Decls that were delayed.
-      while (!PendingPreviousDecls.empty()) {
-        loadAndAttachPreviousDecl(PendingPreviousDecls.front().first,
-                                  PendingPreviousDecls.front().second);
-        PendingPreviousDecls.pop_front();
-      }
-  
-      for (std::vector<std::pair<ObjCInterfaceDecl *,
-                                 serialization::DeclID> >::iterator
-             I = PendingChainedObjCCategories.begin(),
-             E = PendingChainedObjCCategories.end(); I != E; ++I) {
-        loadObjCChainedCategories(I->second, I->first);
-      }
-      PendingChainedObjCCategories.clear();
-  
       // We are not in recursive loading, so it's safe to pass the "interesting"
       // decls to the consumer.
-      if (Consumer && !InterestingDecls.empty()) {
-        Decl *D = InterestingDecls.front();
-        InterestingDecls.pop_front();
+      Decl *D = InterestingDecls.front();
+      InterestingDecls.pop_front();
 
-        PassInterestingDeclToConsumer(D);
+      // Fully load the interesting decls, including deserializing their
+      // bodies, so that any other declarations that get referenced in the
+      // body will be fully deserialized by the time we pass them to the
+      // consumer.
+      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+        if (FD->doesThisDeclarationHaveABody()) {
+          FD->getBody();
+          finishPendingActions();
+        }
       }
 
-    } while ((Consumer && !InterestingDecls.empty()) ||
-             !PendingIdentifierInfos.empty() ||
-             !PendingPreviousDecls.empty() ||
-             !PendingChainedObjCCategories.empty());
+      PassInterestingDeclToConsumer(D);
+    }
+
+    finishPendingActions();
 
     assert(PendingForwardRefs.size() == 0 &&
            "Some forward refs did not get linked to the definition!");

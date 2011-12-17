@@ -790,6 +790,8 @@ private:
   void PassInterestingDeclsToConsumer();
   void PassInterestingDeclToConsumer(Decl *D);
 
+  void finishPendingActions();
+
   /// \brief Produce an error diagnostic and return true.
   ///
   /// This routine should only be used for fatal errors that have to
