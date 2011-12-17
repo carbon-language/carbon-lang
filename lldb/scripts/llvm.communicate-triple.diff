@@ -1,0 +1,199 @@
+Index: lib/MC/MCDisassembler/EDOperand.cpp
+===================================================================
+--- lib/MC/MCDisassembler/EDOperand.cpp	(revision 146622)
++++ lib/MC/MCDisassembler/EDOperand.cpp	(working copy)
+@@ -30,8 +30,10 @@
+   MCOpIndex(mcOpIndex) {
+   unsigned int numMCOperands = 0;
+     
+-  if (Disassembler.Key.Arch == Triple::x86 ||
+-      Disassembler.Key.Arch == Triple::x86_64) {
++  Triple::ArchType arch = Disassembler.TgtTriple.getArch();
++    
++  if (arch == Triple::x86 ||
++      arch == Triple::x86_64) {
+     uint8_t operandType = inst.ThisInstInfo->operandTypes[opIndex];
+     
+     switch (operandType) {
+@@ -54,8 +56,8 @@
+       break;
+     }
+   }
+-  else if (Disassembler.Key.Arch == Triple::arm ||
+-           Disassembler.Key.Arch == Triple::thumb) {
++  else if (arch == Triple::arm ||
++           arch == Triple::thumb) {
+     uint8_t operandType = inst.ThisInstInfo->operandTypes[opIndex];
+     
+     switch (operandType) {
+@@ -126,7 +128,9 @@
+                         void *arg) {
+   uint8_t operandType = Inst.ThisInstInfo->operandTypes[OpIndex];
+   
+-  switch (Disassembler.Key.Arch) {
++  Triple::ArchType arch = Disassembler.TgtTriple.getArch();
++  
++  switch (arch) {
+   default:
+     return -1;  
+   case Triple::x86:
+@@ -168,7 +172,7 @@
+         
+       unsigned segmentReg = Inst.Inst->getOperand(MCOpIndex+4).getReg();
+         
+-      if (segmentReg != 0 && Disassembler.Key.Arch == Triple::x86_64) {
++      if (segmentReg != 0 && arch == Triple::x86_64) {
+         unsigned fsID = Disassembler.registerIDWithName("FS");
+         unsigned gsID = Disassembler.registerIDWithName("GS");
+         
+Index: lib/MC/MCDisassembler/EDDisassembler.cpp
+===================================================================
+--- lib/MC/MCDisassembler/EDDisassembler.cpp	(revision 146622)
++++ lib/MC/MCDisassembler/EDDisassembler.cpp	(working copy)
+@@ -98,16 +98,23 @@
+ 
+ EDDisassembler *EDDisassembler::getDisassembler(Triple::ArchType arch,
+                                                 AssemblySyntax syntax) {
++  const char *triple = tripleFromArch(arch);
++  return getDisassembler(StringRef(triple), syntax);
++}
++
++EDDisassembler *EDDisassembler::getDisassembler(StringRef str,
++                                                AssemblySyntax syntax) {
+   CPUKey key;
+-  key.Arch = arch;
++  key.Triple = str.str();
+   key.Syntax = syntax;
+   
+   EDDisassembler::DisassemblerMap_t::iterator i = sDisassemblers.find(key);
+-  
++    
+   if (i != sDisassemblers.end()) {
+-    return i->second;
+-  } else {
+-    EDDisassembler* sdd = new EDDisassembler(key);
++    return i->second;  
++  }
++  else {
++    EDDisassembler *sdd = new EDDisassembler(key);
+     if (!sdd->valid()) {
+       delete sdd;
+       return NULL;
+@@ -119,10 +126,7 @@
+   }
+   
+   return NULL;
+-}
+-
+-EDDisassembler *EDDisassembler::getDisassembler(StringRef str,
+-                                                AssemblySyntax syntax) {
++    
+   return getDisassembler(Triple(str).getArch(), syntax);
+ }
+ 
+@@ -130,21 +134,20 @@
+   Valid(false), 
+   HasSemantics(false), 
+   ErrorStream(nulls()), 
+-  Key(key) {
+-  const char *triple = tripleFromArch(key.Arch);
+-    
+-  if (!triple)
++  Key(key),
++  TgtTriple(key.Triple.c_str()) {        
++  if (TgtTriple.getArch() == Triple::InvalidArch)
+     return;
+   
+-  LLVMSyntaxVariant = getLLVMSyntaxVariant(key.Arch, key.Syntax);
++  LLVMSyntaxVariant = getLLVMSyntaxVariant(TgtTriple.getArch(), key.Syntax);
+   
+   if (LLVMSyntaxVariant < 0)
+     return;
+   
+-  std::string tripleString(triple);
++  std::string tripleString(key.Triple);
+   std::string errorString;
+   
+-  Tgt = TargetRegistry::lookupTarget(tripleString, 
++  Tgt = TargetRegistry::lookupTarget(key.Triple, 
+                                      errorString);
+   
+   if (!Tgt)
+@@ -263,7 +266,7 @@
+     RegRMap[registerName] = registerIndex;
+   }
+   
+-  switch (Key.Arch) {
++  switch (TgtTriple.getArch()) {
+   default:
+     break;
+   case Triple::x86:
+@@ -331,7 +334,7 @@
+                               const std::string &str) {
+   int ret = 0;
+   
+-  switch (Key.Arch) {
++  switch (TgtTriple.getArch()) {
+   default:
+     return -1;
+   case Triple::x86:
+@@ -356,8 +359,7 @@
+                                                          context, *streamer,
+                                                          *AsmInfo));
+ 
+-  StringRef triple = tripleFromArch(Key.Arch);
+-  OwningPtr<MCSubtargetInfo> STI(Tgt->createMCSubtargetInfo(triple, "", ""));
++  OwningPtr<MCSubtargetInfo> STI(Tgt->createMCSubtargetInfo(Key.Triple.c_str(), "", ""));
+   OwningPtr<MCTargetAsmParser>
+     TargetParser(Tgt->createMCAsmParser(*STI, *genericParser));
+   
+Index: lib/MC/MCDisassembler/EDDisassembler.h
+===================================================================
+--- lib/MC/MCDisassembler/EDDisassembler.h	(revision 146622)
++++ lib/MC/MCDisassembler/EDDisassembler.h	(working copy)
+@@ -25,6 +25,7 @@
+ 
+ #include <map>
+ #include <set>
++#include <string>
+ #include <vector>
+ 
+ namespace llvm {
+@@ -74,21 +75,21 @@
+   ///   pair
+   struct CPUKey {
+     /// The architecture type
+-    llvm::Triple::ArchType Arch;
++    std::string Triple;
+     
+     /// The assembly syntax
+     AssemblySyntax Syntax;
+     
+     /// operator== - Equality operator
+     bool operator==(const CPUKey &key) const {
+-      return (Arch == key.Arch &&
++      return (Triple == key.Triple &&
+               Syntax == key.Syntax);
+     }
+     
+     /// operator< - Less-than operator
+     bool operator<(const CPUKey &key) const {
+-      return ((Arch < key.Arch) ||
+-              ((Arch == key.Arch) && Syntax < (key.Syntax)));
++      return ((Triple < key.Triple) ||
++              ((Triple == key.Triple) && Syntax < (key.Syntax)));
+     }
+   };
+   
+@@ -126,8 +127,10 @@
+   /// The stream to write errors to
+   llvm::raw_ostream &ErrorStream;
+ 
+-  /// The architecture/syntax pair for the current architecture
++  /// The triple/syntax pair for the current architecture
+   CPUKey Key;
++  /// The Triple fur the current architecture
++  Triple TgtTriple;
+   /// The LLVM target corresponding to the disassembler
+   const llvm::Target *Tgt;
+   /// The assembly information for the target architecture
