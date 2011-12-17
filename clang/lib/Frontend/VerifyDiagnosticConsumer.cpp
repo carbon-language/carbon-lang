@@ -459,10 +459,10 @@ static unsigned CheckLists(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
     }
   }
   // Now all that's left in Right are those that were not matched.
-
-  return (PrintProblem(Diags, &SourceMgr, LeftOnly, Label, true) +
-          PrintProblem(Diags, &SourceMgr, Right.begin(), Right.end(),
-                       Label, false));
+  unsigned num = PrintProblem(Diags, &SourceMgr, LeftOnly, Label, true);
+  num += PrintProblem(Diags, &SourceMgr, Right.begin(), Right.end(),
+                      Label, false);
+  return num;
 }
 
 /// CheckResults - This compares the expected results to those that
