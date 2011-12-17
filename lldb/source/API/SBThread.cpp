@@ -141,8 +141,7 @@ SBThread::GetStopReasonDataCount ()
                 break;
 
             case eStopReasonWatchpoint:
-                assert (!"implement watchpoint support in SBThread::GetStopReasonDataCount ()");
-                return 0; // We don't have watchpoint support yet...
+                return 1;
 
             case eStopReasonSignal:
                 return 1;
@@ -201,8 +200,7 @@ SBThread::GetStopReasonDataAtIndex (uint32_t idx)
                 break;
 
             case eStopReasonWatchpoint:
-                assert (!"implement watchpoint support in SBThread::GetStopReasonDataCount ()");
-                return 0; // We don't have watchpoint support yet...
+                return stop_info_sp->GetValue();
 
             case eStopReasonSignal:
                 return stop_info_sp->GetValue();

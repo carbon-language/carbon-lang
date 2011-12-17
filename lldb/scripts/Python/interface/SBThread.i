@@ -70,7 +70,7 @@ public:
     /// eStopReasonNone          0
     /// eStopReasonTrace         0
     /// eStopReasonBreakpoint    N     duple: {breakpoint id, location id}
-    /// eStopReasonWatchpoint    N     duple: {watchpoint id, location id}
+    /// eStopReasonWatchpoint    1     watchpoint id
     /// eStopReasonSignal        1     unix signal number
     /// eStopReasonException     N     exception data
     /// eStopReasonPlanComplete  0
