@@ -631,6 +631,8 @@ void ARMExpandPseudo::ExpandLaneOp(MachineBasicBlock::iterator &MBBI) {
     // Add an implicit def for the super-register.
     MIB.addReg(DstReg, RegState::ImplicitDefine | getDeadRegState(DstIsDead));
   TransferImpOps(MI, MIB, MIB);
+  // Transfer memoperands.
+  MIB->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
   MI.eraseFromParent();
 }
 
@@ -1024,6 +1026,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       // Add an implicit def for the super-register.
       MIB.addReg(DstReg, RegState::ImplicitDefine | getDeadRegState(DstIsDead));
       TransferImpOps(MI, MIB, MIB);
+      MIB.setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       MI.eraseFromParent();
       return true;
     }
@@ -1054,6 +1057,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
         MIB->addRegisterKilled(SrcReg, TRI, true);
 
       TransferImpOps(MI, MIB, MIB);
+      MIB.setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       MI.eraseFromParent();
       return true;
     }
