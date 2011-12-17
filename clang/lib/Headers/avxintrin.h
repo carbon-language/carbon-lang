@@ -410,23 +410,17 @@ _mm256_blendv_ps(__m256 a, __m256 b, __m256 c)
   (__m128)__builtin_ia32_cmpss((__v4sf)__a, (__v4sf)__b, (c)); })
 
 /* Vector extract */
-static __inline __m128d __attribute__((__always_inline__, __nodebug__))
-_mm256_extractf128_pd(__m256d a, const int o)
-{
-  return (__m128d)__builtin_ia32_vextractf128_pd256((__v4df)a, o);
-}
+#define _mm256_extractf128_pd(A, O) __extension__ ({ \
+  __m256d __A = (A); \
+  (__m128d)__builtin_ia32_vextractf128_pd256((__v4df)__A, O); })
 
-static __inline __m128 __attribute__((__always_inline__, __nodebug__))
-_mm256_extractf128_ps(__m256 a, const int o)
-{
-  return (__m128)__builtin_ia32_vextractf128_ps256((__v8sf)a, o);
-}
+#define _mm256_extractf128_ps(A, O) __extension__ ({ \
+  __m256 __A = (A); \
+  (__m128)__builtin_ia32_vextractf128_ps256((__v8sf)__A, O); })
 
-static __inline __m128i __attribute__((__always_inline__, __nodebug__))
-_mm256_extractf128_si256(__m256i a, const int o)
-{
-  return (__m128i)__builtin_ia32_vextractf128_si256((__v8si)a, o);
-}
+#define _mm256_extractf128_si256(A, O) __extension__ ({ \
+  __m256i __A = (A); \
+  (__m128i)__builtin_ia32_vextractf128_si256((__v8si)__A, O); })
 
 static __inline int __attribute__((__always_inline__, __nodebug__))
 _mm256_extract_epi32(__m256i a, int const imm)
