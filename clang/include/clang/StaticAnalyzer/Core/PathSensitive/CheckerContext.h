@@ -34,7 +34,10 @@ public:
     : Eng(eng),
       Pred(pred),
       Location(loc),
-      NB(builder) {}
+      NB(builder) {
+    assert(Pred->getState() &&
+           "We should not call the checkers on an empty state.");
+  }
 
   AnalysisManager &getAnalysisManager() {
     return Eng.getAnalysisManager();

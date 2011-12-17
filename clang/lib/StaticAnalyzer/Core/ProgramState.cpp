@@ -692,8 +692,8 @@ bool ProgramState::isTainted(const Stmt *S, TaintTagType Kind) const {
 bool ProgramState::isTainted(SVal V, TaintTagType Kind) const {
   if (const SymExpr *Sym = V.getAsSymExpr())
     return isTainted(Sym, Kind);
-  if (loc::MemRegionVal *RegVal = dyn_cast<loc::MemRegionVal>(&V))
-    return isTainted(RegVal->getRegion(), Kind);
+  if (const MemRegion *Reg = V.getAsRegion())
+    return isTainted(Reg, Kind);
   return false;
 }
 
