@@ -10,8 +10,6 @@
 #ifndef HEADER
 #define HEADER
 
-#define SKATA
-
 #define __stdcall
 #define STDCALL __stdcall
 
