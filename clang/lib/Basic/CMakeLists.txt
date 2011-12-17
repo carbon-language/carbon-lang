@@ -43,5 +43,6 @@ add_dependencies(clangBasic
                  ClangDiagnosticLex
                  ClangDiagnosticParse
                  ClangDiagnosticSema
+                 ClangDiagnosticSerialization
                  ClangDiagnosticIndexName)
                  
