@@ -17,6 +17,7 @@ add_clang_library(clangDriver
   Tool.cpp
   ToolChain.cpp
   ToolChains.cpp
+  WindowsToolChain.cpp
   Tools.cpp
   Types.cpp
   )

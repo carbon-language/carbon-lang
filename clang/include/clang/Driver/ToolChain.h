@@ -59,6 +59,19 @@ private:
 protected:
   ToolChain(const HostInfo &Host, const llvm::Triple &_Triple);
 
+  /// \name Utilities for implementing subclasses.
+  ///@{
+  static void addSystemInclude(const ArgList &DriverArgs,
+                               ArgStringList &CC1Args,
+                               const Twine &Path);
+  static void addExternCSystemInclude(const ArgList &DriverArgs,
+                                      ArgStringList &CC1Args,
+                                      const Twine &Path);
+  static void addSystemIncludes(const ArgList &DriverArgs,
+                                ArgStringList &CC1Args,
+                                ArrayRef<StringRef> Paths);
+  ///@}
+
 public:
   virtual ~ToolChain();
 
