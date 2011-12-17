@@ -14,6 +14,7 @@
 #include "InstCombine.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Transforms/Utils/CmpInstAnalysis.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/PatternMatch.h"
 using namespace llvm;
@@ -62,50 +63,6 @@ static inline Value *dyn_castNotVal(Value *V) {
   return 0;
 }
 
-
-/// getICmpCode - Encode a icmp predicate into a three bit mask.  These bits
-/// are carefully arranged to allow folding of expressions such as:
-///
-///      (A < B) | (A > B) --> (A != B)
-///
-/// Note that this is only valid if the first and second predicates have the
-/// same sign. Is illegal to do: (A u< B) | (A s> B) 
-///
-/// Three bits are used to represent the condition, as follows:
-///   0  A > B
-///   1  A == B
-///   2  A < B
-///
-/// <=>  Value  Definition
-/// 000     0   Always false
-/// 001     1   A >  B
-/// 010     2   A == B
-/// 011     3   A >= B
-/// 100     4   A <  B
-/// 101     5   A != B
-/// 110     6   A <= B
-/// 111     7   Always true
-///  
-static unsigned getICmpCode(const ICmpInst *ICI) {
-  switch (ICI->getPredicate()) {
-    // False -> 0
-  case ICmpInst::ICMP_UGT: return 1;  // 001
-  case ICmpInst::ICMP_SGT: return 1;  // 001
-  case ICmpInst::ICMP_EQ:  return 2;  // 010
-  case ICmpInst::ICMP_UGE: return 3;  // 011
-  case ICmpInst::ICMP_SGE: return 3;  // 011
-  case ICmpInst::ICMP_ULT: return 4;  // 100
-  case ICmpInst::ICMP_SLT: return 4;  // 100
-  case ICmpInst::ICMP_NE:  return 5;  // 101
-  case ICmpInst::ICMP_ULE: return 6;  // 110
-  case ICmpInst::ICMP_SLE: return 6;  // 110
-    // True -> 7
-  default:
-    llvm_unreachable("Invalid ICmp predicate!");
-    return 0;
-  }
-}
-
 /// getFCmpCode - Similar to getICmpCode but for FCmpInst. This encodes a fcmp
 /// predicate into a three bit mask. It also returns whether it is an ordered
 /// predicate by reference.
@@ -138,23 +95,12 @@ static unsigned getFCmpCode(FCmpInst::Predicate CC, bool &isOrdered) {
 /// opcode and two operands into either a constant true or false, or a brand 
 /// new ICmp instruction. The sign is passed in to determine which kind
 /// of predicate to use in the new icmp instruction.
-static Value *getICmpValue(bool Sign, unsigned Code, Value *LHS, Value *RHS,
-                           InstCombiner::BuilderTy *Builder) {
-  CmpInst::Predicate Pred;
-  switch (Code) {
-  default: assert(0 && "Illegal ICmp code!");
-  case 0: // False.
-    return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 0);
-  case 1: Pred = Sign ? ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT; break;
-  case 2: Pred = ICmpInst::ICMP_EQ; break;
-  case 3: Pred = Sign ? ICmpInst::ICMP_SGE : ICmpInst::ICMP_UGE; break;
-  case 4: Pred = Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT; break;
-  case 5: Pred = ICmpInst::ICMP_NE; break;
-  case 6: Pred = Sign ? ICmpInst::ICMP_SLE : ICmpInst::ICMP_ULE; break;
-  case 7: // True.
-    return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 1);
-  }
-  return Builder->CreateICmp(Pred, LHS, RHS);
+Value *getNewICmpValue(bool Sign, unsigned Code, Value *LHS, Value *RHS,
+                    InstCombiner::BuilderTy *Builder) {
+  ICmpInst::Predicate NewPred;
+  if (Value *NewConstant = getICmpValue(Sign, Code, LHS, RHS, NewPred))
+    return NewConstant;
+  return Builder->CreateICmp(NewPred, LHS, RHS);
 }
 
 /// getFCmpValue - This is the complement of getFCmpCode, which turns an
@@ -178,14 +124,6 @@ static Value *getFCmpValue(bool isordered, unsigned code,
     Pred = FCmpInst::FCMP_ORD; break;
   }
   return Builder->CreateFCmp(Pred, LHS, RHS);
-}
-
-/// PredicatesFoldable - Return true if both predicates match sign or if at
-/// least one of them is an equality comparison (which is signless).
-static bool PredicatesFoldable(ICmpInst::Predicate p1, ICmpInst::Predicate p2) {
-  return (CmpInst::isSigned(p1) == CmpInst::isSigned(p2)) ||
-         (CmpInst::isSigned(p1) && ICmpInst::isEquality(p2)) ||
-         (CmpInst::isSigned(p2) && ICmpInst::isEquality(p1));
 }
 
 // OptAndOp - This handles expressions of the form ((val OP C1) & C2).  Where
@@ -728,7 +666,7 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
       Value *Op0 = LHS->getOperand(0), *Op1 = LHS->getOperand(1);
       unsigned Code = getICmpCode(LHS) & getICmpCode(RHS);
       bool isSigned = LHS->isSigned() || RHS->isSigned();
-      return getICmpValue(isSigned, Code, Op0, Op1, Builder);
+      return getNewICmpValue(isSigned, Code, Op0, Op1, Builder);
     }
   }
 
@@ -1469,7 +1407,7 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
       Value *Op0 = LHS->getOperand(0), *Op1 = LHS->getOperand(1);
       unsigned Code = getICmpCode(LHS) | getICmpCode(RHS);
       bool isSigned = LHS->isSigned() || RHS->isSigned();
-      return getICmpValue(isSigned, Code, Op0, Op1, Builder);
+      return getNewICmpValue(isSigned, Code, Op0, Op1, Builder);
     }
   }
 
@@ -2281,7 +2219,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           unsigned Code = getICmpCode(LHS) ^ getICmpCode(RHS);
           bool isSigned = LHS->isSigned() || RHS->isSigned();
           return ReplaceInstUsesWith(I, 
-                               getICmpValue(isSigned, Code, Op0, Op1, Builder));
+                               getNewICmpValue(isSigned, Code, Op0, Op1,
+                                               Builder));
         }
       }
 
