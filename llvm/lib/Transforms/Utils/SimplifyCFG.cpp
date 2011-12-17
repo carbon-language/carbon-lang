@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "simplifycfg"
-#include "llvm/Transforms/Utils/CmpInstAnalysis.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
@@ -1700,47 +1699,6 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
       
       BI->setCondition(NewPN);
       return true;
-    }
-  }
-  
-  // Treat "if (cond1) { if (cond2) {} }" as "cond1 & cond2" and fold.
-  // This gives us the value of what cond2 is given cond1 is already known to
-  // be true.
-  if (ICmpInst *LHS = dyn_cast<ICmpInst>(PBI->getCondition())) {
-    if (ICmpInst *RHS = dyn_cast<ICmpInst>(BI->getCondition())) {
-      ICmpInst::Predicate LHSCC = LHS->getPredicate(),
-      RHSCC = RHS->getPredicate();
-      if (PredicatesFoldable(LHSCC, RHSCC)) {
-        if (LHS->getOperand(0) == RHS->getOperand(1) &&
-            LHS->getOperand(1) == RHS->getOperand(0))
-          LHS->swapOperands();
-        if (LHS->getOperand(0) == RHS->getOperand(0) &&
-            LHS->getOperand(1) == RHS->getOperand(1) &&
-            BB->getSinglePredecessor()) {
-          Value *Op0 = LHS->getOperand(0), *Op1 = LHS->getOperand(1);
-          bool CondIsTrue = PBI->getSuccessor(0) == BB;
-          unsigned LHSCode = getICmpCode(LHS, !CondIsTrue);
-          unsigned RHSCode = getICmpCode(RHS);
-          unsigned Code = LHSCode & RHSCode;
-          
-          Value *ConstantCondition = NULL;
-          // If the resultant code is the same as the LHS code then as that
-          // code is known to be true we can make RHS now be true.
-          if (Code == LHSCode)
-            ConstantCondition = ConstantInt::get(
-                                 CmpInst::makeCmpResultType(LHS->getType()), 1);
-          else {
-            bool isSigned = LHS->isSigned() || RHS->isSigned();
-            CmpInst::Predicate IgnoredNewPred;
-            ConstantCondition = getICmpValue(isSigned, Code, Op0, Op1,
-                                             IgnoredNewPred);
-          }
-          if (ConstantCondition) {
-            RHS->replaceAllUsesWith(ConstantCondition);
-            return true;
-          }
-        }
-      }
     }
   }
   
