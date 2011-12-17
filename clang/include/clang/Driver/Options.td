@@ -610,6 +610,7 @@ def mno_sse : Flag<"-mno-sse">, Group<m_x86_Features_Group>;
 def mno_ssse3 : Flag<"-mno-ssse3">, Group<m_x86_Features_Group>;
 def mno_aes : Flag<"-mno-aes">, Group<m_x86_Features_Group>;
 def mno_avx : Flag<"-mno-avx">, Group<m_x86_Features_Group>;
+def mno_avx2 : Flag<"-mno-avx2">, Group<m_x86_Features_Group>;
 
 def mno_thumb : Flag<"-mno-thumb">, Group<m_Group>;
 def marm : Flag<"-marm">, Alias<mno_thumb>;
@@ -634,6 +635,7 @@ def msse : Flag<"-msse">, Group<m_x86_Features_Group>;
 def mssse3 : Flag<"-mssse3">, Group<m_x86_Features_Group>;
 def maes : Flag<"-maes">, Group<m_x86_Features_Group>;
 def mavx : Flag<"-mavx">, Group<m_x86_Features_Group>;
+def mavx2 : Flag<"-mavx2">, Group<m_x86_Features_Group>;
 def mthumb : Flag<"-mthumb">, Group<m_Group>;
 def mtune_EQ : Joined<"-mtune=">, Group<m_Group>;
 def multi__module : Flag<"-multi_module">;

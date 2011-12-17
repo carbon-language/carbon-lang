@@ -1198,6 +1198,7 @@ class X86TargetInfo : public TargetInfo {
 
   bool HasAES;
   bool HasAVX;
+  bool HasAVX2;
 
   /// \brief Enumeration of all of the X86 CPUs supported by Clang.
   ///
@@ -1279,6 +1280,7 @@ class X86TargetInfo : public TargetInfo {
     CK_Corei7,
     CK_Corei7AVX,
     CK_CoreAVXi,
+    CK_CoreAVX2,
     //@}
 
     /// \name K6
@@ -1333,7 +1335,7 @@ class X86TargetInfo : public TargetInfo {
 public:
   X86TargetInfo(const std::string& triple)
     : TargetInfo(triple), SSELevel(NoSSE), MMX3DNowLevel(NoMMX3DNow),
-      HasAES(false), HasAVX(false), CPU(CK_Generic) {
+      HasAES(false), HasAVX(false), HasAVX2(false), CPU(CK_Generic) {
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
@@ -1404,6 +1406,7 @@ public:
       .Case("corei7", CK_Corei7)
       .Case("corei7-avx", CK_Corei7AVX)
       .Case("core-avx-i", CK_CoreAVXi)
+      .Case("core-avx2", CK_CoreAVX2)
       .Case("k6", CK_K6)
       .Case("k6-2", CK_K6_2)
       .Case("k6-3", CK_K6_3)
@@ -1475,6 +1478,7 @@ public:
     case CK_Corei7:
     case CK_Corei7AVX:
     case CK_CoreAVXi:
+    case CK_CoreAVX2:
     case CK_Athlon64:
     case CK_Athlon64SSE3:
     case CK_AthlonFX:
@@ -1506,6 +1510,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   Features["sse4a"] = false;
   Features["aes"] = false;
   Features["avx"] = false;
+  Features["avx2"] = false;
 
   // FIXME: This *really* should not be here.
 
@@ -1568,6 +1573,12 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabled(Features, "sse4", true);
     setFeatureEnabled(Features, "aes", true);
     //setFeatureEnabled(Features, "avx", true);
+    break;
+  case CK_CoreAVX2:
+    setFeatureEnabled(Features, "mmx", true);
+    setFeatureEnabled(Features, "sse4", true);
+    setFeatureEnabled(Features, "aes", true);
+    //setFeatureEnabled(Features, "avx2", true);
     break;
   case CK_K6:
   case CK_WinChipC6:
@@ -1661,6 +1672,10 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] =
         Features["avx"] = true;
+    else if (Name == "avx2")
+      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
+        Features["ssse3"] = Features["sse41"] = Features["sse42"] =
+        Features["avx"] = Features["avx2"] = true;
     else if (Name == "sse4a")
       Features["mmx"] = Features["sse4a"] = true;
   } else {
@@ -1688,7 +1703,9 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
     else if (Name == "aes")
       Features["aes"] = false;
     else if (Name == "avx")
-      Features["avx"] = false;
+      Features["avx"] = Features["avx2"] = false;
+    else if (Name == "avx2")
+      Features["avx2"] = false;
     else if (Name == "sse4a")
       Features["sse4a"] = false;
   }
@@ -1712,6 +1729,11 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
 
     // FIXME: Not sure yet how to treat AVX in regard to SSE levels.
     // For now let it be enabled together with other SSE levels.
+    if (Features[i].substr(1) == "avx2") {
+      HasAVX = true;
+      HasAVX2 = true;
+      continue;
+    }
     if (Features[i].substr(1) == "avx") {
       HasAVX = true;
       continue;
@@ -1840,6 +1862,7 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   case CK_Corei7:
   case CK_Corei7AVX:
   case CK_CoreAVXi:
+  case CK_CoreAVX2:
     Builder.defineMacro("__corei7");
     Builder.defineMacro("__corei7__");
     Builder.defineMacro("__tune_corei7__");
@@ -1923,6 +1946,8 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
 
   if (HasAVX)
     Builder.defineMacro("__AVX__");
+  if (HasAVX2)
+    Builder.defineMacro("__AVX2__");
 
   // Each case falls through to the previous one here.
   switch (SSELevel) {
