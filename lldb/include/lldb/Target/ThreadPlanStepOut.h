@@ -42,6 +42,11 @@ public:
     virtual bool WillStop ();
     virtual bool MischiefManaged ();
     virtual void DidPush();
+    
+    virtual lldb::ValueObjectSP GetReturnValueObject()
+    {
+        return m_return_valobj_sp;
+    }
 
 protected:
     bool QueueInlinedStepPlan (bool queue_now);
@@ -56,6 +61,8 @@ private:
     bool m_stop_others;
     lldb::ThreadPlanSP m_step_through_inline_plan_sp;
     lldb::ThreadPlanSP m_step_out_plan_sp;
+    Function          *m_immediate_step_from_function;
+    lldb::ValueObjectSP m_return_valobj_sp;
 
     friend ThreadPlan *
     Thread::QueueThreadPlanForStepOut (bool abort_other_plans,
@@ -69,6 +76,9 @@ private:
     // Need an appropriate marker for the current stack so we can tell step out
     // from step in.
 
+    void
+    CalculateReturnValue();
+    
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepOut);
 
 };

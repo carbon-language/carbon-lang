@@ -59,6 +59,12 @@ public:
             AddressType address_type,
             uint8_t addr_byte_size);
 
+    static lldb::ValueObjectSP
+    Create (ExecutionContextScope *exe_scope,
+            clang::ASTContext *clang_ast,
+            Value &value,
+            const ConstString &name);
+
     // When an expression fails to evaluate, we return an error
     static lldb::ValueObjectSP
     Create (ExecutionContextScope *exe_scope,
@@ -179,6 +185,11 @@ private:
                             lldb::addr_t address,
                             AddressType address_type,
                             uint8_t addr_byte_size);
+
+    ValueObjectConstResult (ExecutionContextScope *exe_scope,
+                            clang::ASTContext *clang_ast,
+                            const Value &value,
+                            const ConstString &name);
 
     ValueObjectConstResult (ExecutionContextScope *exe_scope,
                             const Error& error);

@@ -9,6 +9,10 @@
 
 #include "lldb/Target/ABI.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/Value.h"
+#include "lldb/Core/ValueObjectConstResult.h"
+#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Target/Thread.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -97,3 +101,28 @@ ABI::GetRegisterInfoByKind (RegisterKind reg_kind, uint32_t reg_num, RegisterInf
     }
     return false;
 }
+
+ValueObjectSP
+ABI::GetReturnValueObject (Thread &thread,
+                          ClangASTType &ast_type) const
+{
+    if (!ast_type.IsValid())
+        return ValueObjectSP();
+        
+    Value ret_value;
+    ret_value.SetContext(Value::eContextTypeClangType, 
+                       ast_type.GetOpaqueQualType());
+    if (GetReturnValue (thread, ret_value))
+    {
+        return ValueObjectConstResult::Create(
+                                        thread.GetStackFrameAtIndex(0).get(),
+                                        ast_type.GetASTContext(),
+                                        ret_value,
+                                        ConstString("FunctionReturn"));
+
+    }
+    else
+        return ValueObjectSP();
+}
+
+

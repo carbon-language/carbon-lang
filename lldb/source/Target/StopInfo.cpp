@@ -722,9 +722,10 @@ class StopInfoThreadPlan : public StopInfo
 {
 public:
 
-    StopInfoThreadPlan (ThreadPlanSP &plan_sp) :
+    StopInfoThreadPlan (ThreadPlanSP &plan_sp, ValueObjectSP &return_valobj_sp) :
         StopInfo (plan_sp->GetThread(), LLDB_INVALID_UID),
-        m_plan_sp (plan_sp)
+        m_plan_sp (plan_sp),
+        m_return_valobj_sp (return_valobj_sp)
     {
     }
     
@@ -749,9 +750,16 @@ public:
         }
         return m_description.c_str();
     }
+    
+    ValueObjectSP
+    GetReturnValueObject()
+    {
+        return m_return_valobj_sp;
+    }
 
 private:
     ThreadPlanSP m_plan_sp;
+    ValueObjectSP m_return_valobj_sp;
 };
 } // namespace lldb_private
 
@@ -786,13 +794,25 @@ StopInfo::CreateStopReasonToTrace (Thread &thread)
 }
 
 StopInfoSP
-StopInfo::CreateStopReasonWithPlan (ThreadPlanSP &plan_sp)
+StopInfo::CreateStopReasonWithPlan (ThreadPlanSP &plan_sp, ValueObjectSP return_valobj_sp)
 {
-    return StopInfoSP (new StopInfoThreadPlan (plan_sp));
+    return StopInfoSP (new StopInfoThreadPlan (plan_sp, return_valobj_sp));
 }
 
 StopInfoSP
 StopInfo::CreateStopReasonWithException (Thread &thread, const char *description)
 {
     return StopInfoSP (new StopInfoException (thread, description));
+}
+
+ValueObjectSP
+StopInfo::GetReturnValueObject(StopInfoSP &stop_info_sp)
+{
+    if (stop_info_sp && stop_info_sp->GetStopReason() == eStopReasonPlanComplete)
+    {
+        StopInfoThreadPlan *plan_stop_info = static_cast<StopInfoThreadPlan *>(stop_info_sp.get());
+        return plan_stop_info->GetReturnValueObject();
+    }
+    else
+        return ValueObjectSP();
 }

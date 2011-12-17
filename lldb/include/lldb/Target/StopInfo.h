@@ -126,10 +126,13 @@ public:
     CreateStopReasonToTrace (Thread &thread);
 
     static lldb::StopInfoSP
-    CreateStopReasonWithPlan (lldb::ThreadPlanSP &plan);
+    CreateStopReasonWithPlan (lldb::ThreadPlanSP &plan, lldb::ValueObjectSP return_valobj_sp);
 
     static lldb::StopInfoSP
     CreateStopReasonWithException (Thread &thread, const char *description);
+    
+    static lldb::ValueObjectSP
+    GetReturnValueObject (lldb::StopInfoSP &stop_info_sp);
 
 protected:
     //------------------------------------------------------------------

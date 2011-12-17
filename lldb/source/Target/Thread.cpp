@@ -95,7 +95,7 @@ Thread::GetStopInfo ()
 {
     ThreadPlanSP plan_sp (GetCompletedPlan());
     if (plan_sp)
-        return StopInfo::CreateStopReasonWithPlan (plan_sp);
+        return StopInfo::CreateStopReasonWithPlan (plan_sp, GetReturnValueObject());
     else
     {
         if (m_actual_stop_info_sp 
@@ -549,6 +549,22 @@ Thread::GetCompletedPlan ()
         }
     }
     return empty_plan_sp;
+}
+
+ValueObjectSP
+Thread::GetReturnValueObject ()
+{
+    if (!m_completed_plan_stack.empty())
+    {
+        for (int i = m_completed_plan_stack.size() - 1; i >= 0; i--)
+        {
+            ValueObjectSP return_valobj_sp;
+            return_valobj_sp = m_completed_plan_stack[i]->GetReturnValueObject();
+            if (return_valobj_sp)
+            return return_valobj_sp;
+        }
+    }
+    return ValueObjectSP();
 }
 
 bool

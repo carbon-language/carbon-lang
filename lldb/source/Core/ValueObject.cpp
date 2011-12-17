@@ -707,7 +707,7 @@ ValueObject::GetPointeeData (DataExtractor& data,
         AddressType addr_type;
         lldb::addr_t addr = IsPointerType() ? GetPointerValue(&addr_type) : GetAddressOf(true, &addr_type);
         
-        ExecutionContextScope *exe_scope = m_update_point.GetExecutionContextScope();
+        ExecutionContextScope *exe_scope = GetExecutionContextScope();
         
         
         switch (addr_type)
@@ -3428,12 +3428,14 @@ ValueObject::CastPointerType (const char *name, TypeSP &type_sp)
 }
 
 ValueObject::EvaluationPoint::EvaluationPoint () :
+    ExecutionContextScope(),
     m_thread_id (LLDB_INVALID_UID),
     m_mod_id ()
 {
 }
 
 ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope, bool use_selected):
+    ExecutionContextScope (),
     m_needs_update (true),
     m_first_update (true),
     m_thread_id (LLDB_INVALID_THREAD_ID),
@@ -3500,14 +3502,47 @@ ValueObject::EvaluationPoint::~EvaluationPoint ()
 {
 }
 
-ExecutionContextScope *
-ValueObject::EvaluationPoint::GetExecutionContextScope ()
+Target *
+ValueObject::EvaluationPoint::CalculateTarget ()
 {
-    // We have to update before giving out the scope, or we could be handing out stale pointers.
-    ExecutionContextScope *exe_scope;    
+    return m_target_sp.get();
+}
+
+Process *
+ValueObject::EvaluationPoint::CalculateProcess ()
+{
+    return m_process_sp.get();
+}
+
+Thread *
+ValueObject::EvaluationPoint::CalculateThread ()
+{
+    ExecutionContextScope *exe_scope;
     SyncWithProcessState(exe_scope);
-    
-    return exe_scope;
+    if (exe_scope) 
+        return exe_scope->CalculateThread();
+    else
+        return NULL;
+}
+
+StackFrame *
+ValueObject::EvaluationPoint::CalculateStackFrame ()
+{
+    ExecutionContextScope *exe_scope;
+    SyncWithProcessState(exe_scope);
+    if (exe_scope) 
+        return exe_scope->CalculateStackFrame();
+    else
+        return NULL;
+}
+
+void
+ValueObject::EvaluationPoint::CalculateExecutionContext (ExecutionContext &exe_ctx)
+{
+    ExecutionContextScope *exe_scope;
+    SyncWithProcessState(exe_scope);
+    if (exe_scope) 
+        return exe_scope->CalculateExecutionContext (exe_ctx);
 }
 
 // This function checks the EvaluationPoint against the current process state.  If the current
@@ -3520,12 +3555,18 @@ ValueObject::EvaluationPoint::GetExecutionContextScope ()
 bool
 ValueObject::EvaluationPoint::SyncWithProcessState(ExecutionContextScope *&exe_scope)
 {
+
+    // Start with the target, if it is NULL, then we're obviously not going to get any further:
+    exe_scope = m_target_sp.get();
+    
+    if (exe_scope == NULL)
+        return false;
+    
     // If we don't have a process nothing can change.
     if (!m_process_sp)
-    {
-        exe_scope = m_target_sp.get();
         return false;
-    }
+        
+    exe_scope = m_process_sp.get();
         
     // If our stop id is the current stop ID, nothing has changed:
     ProcessModID current_mod_id = m_process_sp->GetModID();
@@ -3533,10 +3574,7 @@ ValueObject::EvaluationPoint::SyncWithProcessState(ExecutionContextScope *&exe_s
     // If the current stop id is 0, either we haven't run yet, or the process state has been cleared.
     // In either case, we aren't going to be able to sync with the process state.
     if (current_mod_id.GetStopID() == 0)
-    {
-        exe_scope = m_target_sp.get();
         return false;
-    }
     
     bool changed;
     
@@ -3555,10 +3593,10 @@ ValueObject::EvaluationPoint::SyncWithProcessState(ExecutionContextScope *&exe_s
             changed = true;
         }       
     }
-    exe_scope = m_process_sp.get();
     
-    // Something has changed, so we will return true.  Now make sure the thread & frame still exist, and if either
-    // doesn't, mark ourselves as invalid.
+    // Now re-look up the thread and frame in case the underlying objects have gone away & been recreated.
+    // That way we'll be sure to return a valid exe_scope.
+    // If we used to have a thread or a frame but can't find it anymore, then mark ourselves as invalid.
     
     if (m_thread_id != LLDB_INVALID_THREAD_ID)
     {

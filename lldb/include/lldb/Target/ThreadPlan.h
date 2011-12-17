@@ -387,6 +387,12 @@ public:
         return m_thread.GetStopInfo ();
     }
     
+    virtual lldb::ValueObjectSP
+    GetReturnValueObject ()
+    {
+        return lldb::ValueObjectSP();
+    }
+    
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ThreadPlan can see and modify these

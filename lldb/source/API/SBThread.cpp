@@ -31,10 +31,10 @@
 
 
 #include "lldb/API/SBAddress.h"
-#include "lldb/API/SBFrame.h"
-// DONT THINK THIS IS NECESSARY: #include "lldb/API/SBSourceManager.h"
 #include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBFrame.h"
 #include "lldb/API/SBProcess.h"
+#include "lldb/API/SBValue.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -314,6 +314,30 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
     if (dst)
         *dst = 0;
     return 0;
+}
+
+SBValue
+SBThread::GetStopReturnValue ()
+{
+    ValueObjectSP return_valobj_sp;
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
+        StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
+        if (stop_info_sp)
+        {
+            return_valobj_sp = StopInfo::GetReturnValueObject (stop_info_sp);
+        }
+    }
+    
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+        log->Printf ("SBThread(%p)::GetStopReturnValue () => %s", m_opaque_sp.get(), 
+                                                                  return_valobj_sp.get() 
+                                                                      ? return_valobj_sp->GetValueAsCString() 
+                                                                        : "<no return value>");
+        
+    return SBValue (return_valobj_sp);
 }
 
 void

@@ -185,7 +185,7 @@ ValueObjectConstResultImpl::AddressOf (Error &error)
         std::string new_name("&");
         new_name.append(m_impl_backend->GetName().AsCString(""));
         
-        m_address_of_backend = ValueObjectConstResult::Create(m_impl_backend->GetUpdatePoint().GetExecutionContextScope(),
+        m_address_of_backend = ValueObjectConstResult::Create(m_impl_backend->GetExecutionContextScope(),
                                                               type.GetASTContext(),
                                                               type.GetPointerType(),
                                                               ConstString(new_name.c_str()),

@@ -380,7 +380,7 @@ SBValue::CreateValueFromExpression (const char *name, const char* expression)
     {
         ValueObjectSP result_valobj_sp;
         m_opaque_sp->GetUpdatePoint().GetTargetSP()->EvaluateExpression (expression,
-                                                                         m_opaque_sp->GetUpdatePoint().GetExecutionContextScope()->CalculateStackFrame(),
+                                                                         m_opaque_sp->GetExecutionContextScope()->CalculateStackFrame(),
                                                                          eExecutionPolicyOnlyWhenNeeded,
                                                                          true, // unwind on error
                                                                          true, // keep in memory
@@ -410,7 +410,7 @@ SBValue::CreateValueFromAddress(const char* name, lldb::addr_t address, SBType t
         
         lldb::DataBufferSP buffer(new lldb_private::DataBufferHeap(&address,sizeof(lldb::addr_t)));
         
-        ValueObjectSP ptr_result_valobj_sp(ValueObjectConstResult::Create (m_opaque_sp->GetUpdatePoint().GetExecutionContextScope(),
+        ValueObjectSP ptr_result_valobj_sp(ValueObjectConstResult::Create (m_opaque_sp->GetExecutionContextScope(),
                                                                            real_type.m_opaque_sp->GetASTContext(),
                                                                            real_type.m_opaque_sp->GetOpaqueQualType(),
                                                                            ConstString(name),
@@ -871,9 +871,9 @@ SBValue::GetThread()
     SBThread result;
     if (m_opaque_sp)
     {
-        if (m_opaque_sp->GetUpdatePoint().GetExecutionContextScope())
+        if (m_opaque_sp->GetExecutionContextScope())
         {
-            result = SBThread(m_opaque_sp->GetUpdatePoint().GetExecutionContextScope()->CalculateThread()->GetSP());
+            result = SBThread(m_opaque_sp->GetExecutionContextScope()->CalculateThread()->GetSP());
         }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -893,9 +893,9 @@ SBValue::GetFrame()
     SBFrame result;
     if (m_opaque_sp)
     {
-        if (m_opaque_sp->GetUpdatePoint().GetExecutionContextScope())
+        if (m_opaque_sp->GetExecutionContextScope())
         {
-            result.SetFrame (m_opaque_sp->GetUpdatePoint().GetExecutionContextScope()->CalculateStackFrame()->GetSP());
+            result.SetFrame (m_opaque_sp->GetExecutionContextScope()->CalculateStackFrame()->GetSP());
         }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));

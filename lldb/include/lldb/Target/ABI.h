@@ -48,6 +48,10 @@ public:
     virtual bool
     GetReturnValue (Thread &thread,
                     Value &value) const = 0;
+                    
+    virtual lldb::ValueObjectSP
+    GetReturnValueObject (Thread &thread,
+                          ClangASTType &type) const;
 
     virtual bool
     CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan) = 0;

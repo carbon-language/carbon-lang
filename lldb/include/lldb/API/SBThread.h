@@ -63,6 +63,9 @@ public:
 
     size_t
     GetStopDescription (char *dst, size_t dst_len);
+    
+    SBValue
+    GetStopReturnValue ();
 
     lldb::tid_t
     GetThreadID () const;

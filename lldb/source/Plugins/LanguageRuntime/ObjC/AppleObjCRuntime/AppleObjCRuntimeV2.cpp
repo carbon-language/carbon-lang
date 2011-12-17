@@ -309,7 +309,7 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
             // If the class address didn't point into the binary, or
             // it points into the right section but there wasn't a symbol
             // there, try to look it up by calling the class method in the target.
-            ExecutionContextScope *exe_scope = in_value.GetUpdatePoint().GetExecutionContextScope();
+            ExecutionContextScope *exe_scope = in_value.GetExecutionContextScope();
             Thread *thread_to_use;
             if (exe_scope)
                 thread_to_use = exe_scope->CalculateThread();

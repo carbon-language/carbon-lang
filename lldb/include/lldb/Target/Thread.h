@@ -604,7 +604,7 @@ private:
 public:
 
     //------------------------------------------------------------------
-    /// Gets the inner-most plan that was popped off the plan stack in the
+    /// Gets the outer-most plan that was popped off the plan stack in the
     /// most recent stop.  Useful for printing the stop reason accurately.
     ///
     /// @return
@@ -612,6 +612,16 @@ public:
     //------------------------------------------------------------------
     lldb::ThreadPlanSP
     GetCompletedPlan ();
+
+    //------------------------------------------------------------------
+    /// Gets the outer-most return value from the completed plans
+    ///
+    /// @return
+    ///     A ValueObjectSP, either empty if there is no return value,
+    ///     or containing the return value.
+    //------------------------------------------------------------------
+    lldb::ValueObjectSP
+    GetReturnValueObject ();
 
     //------------------------------------------------------------------
     ///  Checks whether the given plan is in the completed plans for this

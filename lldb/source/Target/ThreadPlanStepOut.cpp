@@ -16,6 +16,8 @@
 #include "lldb/Breakpoint/Breakpoint.h"
 #include "lldb/lldb-private-log.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Value.h"
+#include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StopInfo.h"
@@ -47,7 +49,8 @@ ThreadPlanStepOut::ThreadPlanStepOut
     m_first_insn (first_insn),
     m_stop_others (stop_others),
     m_step_through_inline_plan_sp(),
-    m_step_out_plan_sp ()
+    m_step_out_plan_sp (),
+    m_immediate_step_from_function(NULL)
 
 {
     m_step_from_insn = m_thread.GetRegisterContext()->GetPC(0);
@@ -87,6 +90,15 @@ ThreadPlanStepOut::ThreadPlanStepOut
         {
             return_bp->SetThreadID(m_thread.GetID());
             m_return_bp_id = return_bp->GetID();
+        }
+        
+        if (immediate_return_from_sp)
+        {
+            const SymbolContext &sc = immediate_return_from_sp->GetSymbolContext(eSymbolContextFunction);
+            if (sc.function)
+            {
+                m_immediate_step_from_function = sc.function; 
+            }
         }
     }
 
@@ -152,6 +164,7 @@ ThreadPlanStepOut::PlanExplainsStop ()
         if (m_step_out_plan_sp->MischiefManaged())
         {
             // If this one is done, then we are all done.
+            CalculateReturnValue();
             SetPlanComplete();
             return true;
         }
@@ -183,7 +196,10 @@ ThreadPlanStepOut::PlanExplainsStop ()
             {
                 const uint32_t num_frames = m_thread.GetStackFrameCount();
                 if (m_stack_depth > num_frames)
+                {
+                    CalculateReturnValue();
                     SetPlanComplete();
+                }
 
                 // If there was only one owner, then we're done.  But if we also hit some
                 // user breakpoint on our way out, we should mark ourselves as done, but
@@ -217,6 +233,7 @@ ThreadPlanStepOut::ShouldStop (Event *event_ptr)
         }
         else if (m_stack_depth > m_thread.GetStackFrameCount())
         {
+            CalculateReturnValue();
             SetPlanComplete();
             return true;
         }
@@ -233,6 +250,7 @@ ThreadPlanStepOut::ShouldStop (Event *event_ptr)
                     }
                     else
                     {
+                        CalculateReturnValue();
                         SetPlanComplete ();
                         return true;
                     }
@@ -244,6 +262,10 @@ ThreadPlanStepOut::ShouldStop (Event *event_ptr)
             {
                 if (m_step_through_inline_plan_sp->MischiefManaged())
                 {
+                    // We don't calculate the return value here because we don't know how to.
+                    // But in case we had a return value sitting around from our process in
+                    // getting here, let's clear it out.
+                    m_return_valobj_sp.reset();
                     SetPlanComplete();
                     return true;
                 }
@@ -386,4 +408,27 @@ ThreadPlanStepOut::QueueInlinedStepPlan (bool queue_now)
     }
         
     return false;
+}
+
+void
+ThreadPlanStepOut::CalculateReturnValue ()
+{
+    if (m_return_valobj_sp)
+        return;
+        
+    if (m_immediate_step_from_function != NULL)
+    {
+        Type *return_type = m_immediate_step_from_function->GetType();
+        lldb::clang_type_t return_clang_type = m_immediate_step_from_function->GetReturnClangType();
+        if (return_type && return_clang_type)
+        {
+            ClangASTType ast_type (return_type->GetClangAST(), return_clang_type);
+            
+            lldb::ABISP abi_sp = m_thread.GetProcess().GetABI();
+            if (abi_sp)
+            {
+                m_return_valobj_sp = abi_sp->GetReturnValueObject(m_thread, ast_type);
+            }
+        }
+    }
 }
