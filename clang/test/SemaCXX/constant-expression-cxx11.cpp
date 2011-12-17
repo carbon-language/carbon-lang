@@ -919,3 +919,9 @@ static_assert(makeComplexWrap(1,0) == complex(1), "");
 static_assert(makeComplexWrap(1,0) != complex(0, 1), "");
 
 }
+
+namespace PR11595 {
+  struct A { constexpr bool operator==(int x) { return true; } };
+  struct B { B(); ~B(); A& x; };
+  static_assert(B().x == 3, "");  // expected-error {{constant expression}}
+}

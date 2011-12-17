@@ -2066,6 +2066,9 @@ public:
         return false;
       BaseTy = E->getBase()->getType()->getAs<PointerType>()->getPointeeType();
     } else if (E->getBase()->isRValue()) {
+      if (!E->getBase()->getType()->isRecordType() ||
+          !E->getBase()->getType()->isLiteralType())
+        return false;
       if (!EvaluateTemporary(E->getBase(), Result, this->Info))
         return false;
       BaseTy = E->getBase()->getType();
