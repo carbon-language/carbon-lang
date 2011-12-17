@@ -880,14 +880,17 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
     }
 
   ProcessNext:
-    if (LiveCPSR &&
-        NextMII != E && MI->isInsideBundle() && !NextMII->isInsideBundle() &&
-        BundleMI->killsRegister(ARM::CPSR))
+    if (NextMII != E && MI->isInsideBundle() && !NextMII->isInsideBundle()) {
       // FIXME: Since post-ra scheduler operates on bundles, the CPSR kill
       // marker is only on the BUNDLE instruction. Process the BUNDLE
       // instruction as we finish with the bundled instruction to work around
       // the inconsistency.
-      LiveCPSR = false;
+      if (BundleMI->killsRegister(ARM::CPSR))
+        LiveCPSR = false;
+      MachineOperand *MO = BundleMI->findRegisterDefOperand(ARM::CPSR);
+      if (MO && !MO->isDead())
+        LiveCPSR = true;
+    }
 
     bool DefCPSR = false;
     LiveCPSR = UpdateCPSRDef(*MI, LiveCPSR, DefCPSR);
