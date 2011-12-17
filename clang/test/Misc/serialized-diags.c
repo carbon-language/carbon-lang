@@ -15,6 +15,16 @@ void qux(int x) {
    return;
 }
 
+// Test handling of macros.
+void taz(int x, int y);
+#define false 0
+void testMacro() {
+  taz(0, 0, false);
+}
+
+// Test handling of issues from #includes.
+#include "serialized-diags.h"
+
 // RUN: rm -f %t
 // RUN: %clang -Wall -fsyntax-only %s --serialize-diagnostics %t > /dev/null 2>&1 || true
 // RUN: c-index-test -read-diagnostics %t 2>&1 | FileCheck %s
@@ -35,5 +45,15 @@ void qux(int x) {
 // CHECK: +-FIXIT: ({{.*[/\\]}}serialized-diags.c:14:18 - {{.*[/\\]}}serialized-diags.c:14:19): ""
 // CHECK: +-{{.*[/\\]}}serialized-diags.c:14:10: note: use '=' to turn this equality comparison into an assignment []
 // CHECK: +-FIXIT: ({{.*[/\\]}}serialized-diags.c:14:10 - {{.*[/\\]}}serialized-diags.c:14:12): "="
-// CHECK: Number of diagnostics: 3
+// CHECK: {{.*[/\\]}}serialized-diags.c:22:13: error: too many arguments to function call, expected 2, have 3 []
+// CHECK: Range: {{.*[/\\]}}serialized-diags.c:22:3 {{.*[/\\]}}serialized-diags.c:22:6
+// CHECK: Range: {{.*[/\\]}}serialized-diags.c:22:13 {{.*[/\\]}}serialized-diags.c:22:18
+// CHECK: +-{{.*[/\\]}}serialized-diags.c:20:15: note: expanded from macro 'false' []
+// CHECK: +-Range: {{.*[/\\]}}serialized-diags.c:22:3 {{.*[/\\]}}serialized-diags.c:22:6
+// CHECK: +-Range: {{.*[/\\]}}serialized-diags.c:20:15 {{.*[/\\]}}serialized-diags.c:20:16
+// CHECK: +-{{.*[/\\]}}serialized-diags.c:19:1: note: 'taz' declared here []
+// CHECK: {{.*[/\\]}}serialized-diags.h:5:7: warning: incompatible integer to pointer conversion initializing 'char *' with an expression of type 'int';  []
+// CHECK: Range: {{.*[/\\]}}serialized-diags.h:5:16 {{.*[/\\]}}serialized-diags.h:5:17
+// CHECK: +-{{.*[/\\]}}serialized-diags.c:26:10: note: in file included from {{.*[/\\]}}serialized-diags.c:26: []
+// CHECK: Number of diagnostics: 5
 

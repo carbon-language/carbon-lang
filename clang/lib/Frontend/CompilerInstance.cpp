@@ -170,7 +170,7 @@ static void SetupSerializedDiagnostics(const DiagnosticOptions &DiagOpts,
   }
   
   DiagnosticConsumer *SerializedConsumer =
-    clang::serialized_diags::create(OS.take());
+    clang::serialized_diags::create(OS.take(), DiagOpts);
 
   
   Diags.setClient(new ChainedDiagnosticConsumer(Diags.takeClient(),
