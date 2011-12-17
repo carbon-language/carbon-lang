@@ -116,6 +116,7 @@ public:
     /// Current - The current declaration.
     decl_type *Current;
     decl_type *Starter;
+    bool PassedFirst;
 
   public:
     typedef decl_type*                value_type;
@@ -125,13 +126,24 @@ public:
     typedef std::ptrdiff_t            difference_type;
 
     redecl_iterator() : Current(0) { }
-    explicit redecl_iterator(decl_type *C) : Current(C), Starter(C) { }
+    explicit redecl_iterator(decl_type *C)
+      : Current(C), Starter(C), PassedFirst(false) { }
 
     reference operator*() const { return Current; }
     pointer operator->() const { return Current; }
 
     redecl_iterator& operator++() {
       assert(Current && "Advancing while iterator has reached end");
+      // Sanity check to avoid infinite loop on invalid redecl chain.
+      if (Current->isFirstDeclaration()) {
+        if (PassedFirst) {
+          assert(0 && "Passed first decl twice, invalid redecl chain!");
+          Current = 0;
+          return *this;
+        }
+        PassedFirst = true;
+      }
+
       // Get either previous decl or latest decl.
       decl_type *Next = Current->RedeclLink.getNext();
       Current = (Next != Starter ? Next : 0);
