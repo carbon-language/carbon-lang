@@ -16,14 +16,9 @@
 #ifndef LLVM_CLANG_FRONTEND_TEXT_DIAGNOSTIC_H_
 #define LLVM_CLANG_FRONTEND_TEXT_DIAGNOSTIC_H_
 
-#include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/LLVM.h"
-#include "clang/Basic/SourceLocation.h"
+#include "clang/Frontend/DiagnosticRenderer.h"
 
 namespace clang {
-class DiagnosticOptions;
-class LangOptions;
-class SourceManager;
 
 /// \brief Class to encapsulate the logic for formatting and printing a textual
 /// diagnostic message.
@@ -37,34 +32,8 @@ class SourceManager;
 /// beautiful text diagnostics from any particular interfaces. The Clang
 /// DiagnosticClient is implemented through this class as is diagnostic
 /// printing coming out of libclang.
-///
-/// A brief worklist:
-/// FIXME: Sink the recursive printing of template instantiations into this
-/// class.
-class TextDiagnostic {
+class TextDiagnostic : public DiagnosticRenderer {
   raw_ostream &OS;
-  const SourceManager &SM;
-  const LangOptions &LangOpts;
-  const DiagnosticOptions &DiagOpts;
-
-  /// \brief The location of the previous diagnostic if known.
-  ///
-  /// This will be invalid in cases where there is no (known) previous
-  /// diagnostic location, or that location itself is invalid or comes from
-  /// a different source manager than SM.
-  SourceLocation LastLoc;
-
-  /// \brief The location of the last include whose stack was printed if known.
-  ///
-  /// Same restriction as \see LastLoc essentially, but tracking include stack
-  /// root locations rather than diagnostic locations.
-  SourceLocation LastIncludeLoc;
-
-  /// \brief The level of the last diagnostic emitted.
-  ///
-  /// The level of the last diagnostic emitted. Used to detect level changes
-  /// which change the amount of information displayed.
-  DiagnosticsEngine::Level LastLevel;
 
 public:
   TextDiagnostic(raw_ostream &OS,
@@ -72,22 +41,8 @@ public:
                  const LangOptions &LangOpts,
                  const DiagnosticOptions &DiagOpts);
 
-  /// \brief Emit a textual diagnostic.
-  ///
-  /// This is the primary entry point for emitting textual diagnostic messages.
-  /// It handles formatting and printing the message as well as any ancillary
-  /// information needed based on macros whose expansions impact the
-  /// diagnostic.
-  ///
-  /// \param Loc The location for this caret.
-  /// \param Level The level of the diagnostic to be emitted.
-  /// \param Message The diagnostic message to emit.
-  /// \param Ranges The underlined ranges for this code snippet.
-  /// \param FixItHints The FixIt hints active for this diagnostic.
-  void emitDiagnostic(SourceLocation Loc, DiagnosticsEngine::Level Level,
-                      StringRef Message, ArrayRef<CharSourceRange> Ranges,
-                      ArrayRef<FixItHint> FixItHints);
-
+  virtual ~TextDiagnostic();
+  
   /// \brief Print the diagonstic level to a raw_ostream.
   ///
   /// This is a static helper that handles colorizing the level and formatting
@@ -121,18 +76,29 @@ public:
                                      unsigned CurrentColumn, unsigned Columns,
                                      bool ShowColors);
 
+protected:
+  virtual void emitDiagnosticMessage(SourceLocation Loc,PresumedLoc PLoc,
+                                     DiagnosticsEngine::Level Level,
+                                     StringRef Message,
+                                     ArrayRef<CharSourceRange> Ranges,
+                                     const Diagnostic *Info);
+
+  virtual void emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
+                                 DiagnosticsEngine::Level Level,
+                                 ArrayRef<CharSourceRange> Ranges);
+  
+  virtual void emitCodeContext(SourceLocation Loc,
+                               DiagnosticsEngine::Level Level,
+                               SmallVectorImpl<CharSourceRange>& Ranges,
+                               ArrayRef<FixItHint> Hints) {
+    emitSnippetAndCaret(Loc, Level, Ranges, Hints);
+  }
+  
+  virtual void emitBasicNote(StringRef Message);
+  
+  virtual void emitIncludeLocation(SourceLocation Loc, PresumedLoc PLoc);
+
 private:
-  void emitIncludeStack(SourceLocation Loc, DiagnosticsEngine::Level Level);
-  void emitIncludeStackRecursively(SourceLocation Loc);
-  void emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
-                         DiagnosticsEngine::Level Level,
-                         ArrayRef<CharSourceRange> Ranges);
-  void emitMacroExpansionsAndCarets(SourceLocation Loc,
-                                    DiagnosticsEngine::Level Level,
-                                    SmallVectorImpl<CharSourceRange>& Ranges,
-                                    ArrayRef<FixItHint> Hints,
-                                    unsigned &MacroDepth,
-                                    unsigned OnMacroInst = 0);
   void emitSnippetAndCaret(SourceLocation Loc, DiagnosticsEngine::Level Level,
                            SmallVectorImpl<CharSourceRange>& Ranges,
                            ArrayRef<FixItHint> Hints);

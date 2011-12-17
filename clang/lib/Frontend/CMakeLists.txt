@@ -18,6 +18,7 @@ add_clang_library(clangFrontend
   CompilerInvocation.cpp
   CreateInvocationFromCommandLine.cpp
   DependencyFile.cpp
+  DiagnosticRenderer.cpp
   FrontendAction.cpp
   FrontendActions.cpp
   FrontendOptions.cpp
