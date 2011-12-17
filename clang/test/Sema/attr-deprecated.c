@@ -44,8 +44,8 @@ void test1(struct foo *F) {
 typedef struct foo foo_dep __attribute__((deprecated));
 foo_dep *test2;    // expected-warning {{'foo_dep' is deprecated}}
 
-struct bar_dep __attribute__((deprecated, 
-                              invalid_attribute));  // expected-warning {{unknown attribute 'invalid_attribute' ignored}}
+struct __attribute__((deprecated, 
+                      invalid_attribute)) bar_dep ;  // expected-warning {{unknown attribute 'invalid_attribute' ignored}}
 
 struct bar_dep *test3;   // expected-warning {{'bar_dep' is deprecated}}
 

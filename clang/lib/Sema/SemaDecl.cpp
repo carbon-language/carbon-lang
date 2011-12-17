@@ -2367,8 +2367,6 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
   bool emittedWarning = false;
          
   if (RecordDecl *Record = dyn_cast_or_null<RecordDecl>(Tag)) {
-    ProcessDeclAttributeList(S, Record, DS.getAttributes().getList());
-    
     if (!Record->getDeclName() && Record->isCompleteDefinition() &&
         DS.getStorageClassSpec() != DeclSpec::SCS_typedef) {
       if (getLangOptions().CPlusPlus ||
@@ -2463,7 +2461,27 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
       << Tag->getTagKind()
       << FixItHint::CreateRemoval(DS.getModulePrivateSpecLoc());
 
-  // FIXME: Warn on useless attributes
+  // Warn about ignored type attributes, for example:
+  // __attribute__((aligned)) struct A;
+  // Attributes should be placed after tag to apply to type declaration.
+  if (!DS.getAttributes().empty()) {
+    DeclSpec::TST TypeSpecType = DS.getTypeSpecType();
+    if (TypeSpecType == DeclSpec::TST_class ||
+        TypeSpecType == DeclSpec::TST_struct ||
+        TypeSpecType == DeclSpec::TST_union ||
+        TypeSpecType == DeclSpec::TST_enum) {
+      AttributeList* attrs = DS.getAttributes().getList();
+      while (attrs) {
+        Diag(attrs->getScopeLoc(),
+             diag::warn_declspec_attribute_ignored)
+        << attrs->getName()
+        << (TypeSpecType == DeclSpec::TST_class ? 0 :
+            TypeSpecType == DeclSpec::TST_struct ? 1 :
+            TypeSpecType == DeclSpec::TST_union ? 2 : 3);
+        attrs = attrs->getNext();
+      }
+    }
+  }
 
   return TagD;
 }

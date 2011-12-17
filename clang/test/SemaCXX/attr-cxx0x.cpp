@@ -9,7 +9,7 @@ struct align_member {
   int member alignas(8);
 };
 
-template <unsigned A> alignas(A) struct align_class_template {};
+template <unsigned A> struct alignas(A) align_class_template {};
 
 // FIXME: these should not error
 template <typename... T> alignas(T...) struct align_class_temp_pack_type {}; // expected-error{{pack expansions in alignment specifiers are not supported yet}}

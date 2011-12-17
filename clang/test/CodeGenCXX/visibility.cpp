@@ -156,7 +156,7 @@ namespace Test9 {
 namespace Test10 {
   struct A;
 
-  DEFAULT class B {
+  class DEFAULT B {
     void foo(A*);
   };
 
