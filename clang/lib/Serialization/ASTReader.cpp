@@ -6028,6 +6028,15 @@ void ASTReader::FinishedDeserializing() {
   assert(NumCurrentElementsDeserializing &&
          "FinishedDeserializing not paired with StartedDeserializing");
   if (NumCurrentElementsDeserializing == 1) {
+
+    // Fully load the interesting decls, including deserializing their bodies,
+    // so that any other declarations that get referenced in the body will be
+    // fully deserialized by the time we pass them to the consumer.
+    for (std::deque<Decl *>::iterator
+           I = InterestingDecls.begin(),
+           E = InterestingDecls.end(); I != E; ++I)
+      (*I)->getBody();
+
     do {
       // If any identifiers with corresponding top-level declarations have
       // been loaded, load those declarations now.
