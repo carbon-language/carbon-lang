@@ -295,7 +295,6 @@ static bool OffsetFitsS11(EVT MemType, int64_t Offset) {
 // CONST32.
 //
 SDNode *HexagonDAGToDAGISel::SelectBaseOffsetLoad(LoadSDNode *LD, DebugLoc dl) {
-  EVT LoadedVT = LD->getMemoryVT();
   SDValue Chain = LD->getChain();
   SDNode* Const32 = LD->getBasePtr().getNode();
   unsigned Opcode = 0;
@@ -767,7 +766,6 @@ SDNode *HexagonDAGToDAGISel::SelectMul(SDNode *N) {
         SelectCode(N);
       }
 
-      SDValue Base = LD->getBasePtr();
       SDValue Chain = LD->getChain();
       SDValue TargetConst0 = CurDAG->getTargetConstant(0, MVT::i32);
       OP0 = SDValue (CurDAG->getMachineNode(Hexagon::LDriw, dl, MVT::i32,
@@ -794,7 +792,6 @@ SDNode *HexagonDAGToDAGISel::SelectMul(SDNode *N) {
         return SelectCode(N);
       }
 
-      SDValue Base = LD->getBasePtr();
       SDValue Chain = LD->getChain();
       SDValue TargetConst0 = CurDAG->getTargetConstant(0, MVT::i32);
       OP1 = SDValue (CurDAG->getMachineNode(Hexagon::LDriw, dl, MVT::i32,
@@ -949,7 +946,6 @@ SDNode *HexagonDAGToDAGISel::SelectTruncate(SDNode *N) {
           return SelectCode(N);
         }
 
-        SDValue Base = LD->getBasePtr();
         SDValue Chain = LD->getChain();
         SDValue TargetConst0 = CurDAG->getTargetConstant(0, MVT::i32);
         OP0 = SDValue (CurDAG->getMachineNode(Hexagon::LDriw, dl, MVT::i32,
@@ -975,7 +971,6 @@ SDNode *HexagonDAGToDAGISel::SelectTruncate(SDNode *N) {
           return SelectCode(N);
         }
 
-        SDValue Base = LD->getBasePtr();
         SDValue Chain = LD->getChain();
         SDValue TargetConst0 = CurDAG->getTargetConstant(0, MVT::i32);
         OP1 = SDValue (CurDAG->getMachineNode(Hexagon::LDriw, dl, MVT::i32,
@@ -1175,9 +1170,6 @@ SDNode *HexagonDAGToDAGISel::SelectConstant(SDNode *N) {
     SDNode* Result;
     int32_t Val = cast<ConstantSDNode>(N)->getSExtValue();
     if (Val == -1) {
-      unsigned NewIntReg = TM.getInstrInfo()->createVR(MF, MVT(MVT::i32));
-      SDValue Reg = CurDAG->getRegister(NewIntReg, MVT::i32);
-
       // Create the IntReg = 1 node.
       SDNode* IntRegTFR =
         CurDAG->getMachineNode(Hexagon::TFRI, dl, MVT::i32,

@@ -305,9 +305,6 @@ HexagonTargetLowering::LowerReturn(SDValue Chain,
   // Analyze return values of ISD::RET
   CCInfo.AnalyzeReturn(Outs, RetCC_Hexagon);
 
-  SDValue StackPtr = DAG.getRegister(TM.getRegisterInfo()->getStackRegister(),
-                                     MVT::i32);
-
   // If this is the first return lowered for this function, add the regs to the
   // liveout set for the function.
   if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
@@ -320,8 +317,6 @@ HexagonTargetLowering::LowerReturn(SDValue Chain,
   // Copy the result values into the output registers.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
     CCValAssign &VA = RVLocs[i];
-    SDValue Ret = OutVals[i];
-    ISD::ArgFlagsTy Flags = Outs[i].Flags;
 
     Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), OutVals[i], Flag);
 
