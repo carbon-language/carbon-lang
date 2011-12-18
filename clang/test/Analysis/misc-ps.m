@@ -5,7 +5,7 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -analyze -analyzer-checker=core,deadcode.IdempotentOperations,experimental.core,osx.cocoa.AtSync -analyzer-store=region -analyzer-constraints=range -verify -fblocks -Wno-unreachable-code -Wno-null-dereference %s
 
 #ifndef __clang_analyzer__
-#error __clang__analyzer__ not defined
+#error __clang_analyzer__ not defined
 #endif
 
 typedef struct objc_ivar *Ivar;
