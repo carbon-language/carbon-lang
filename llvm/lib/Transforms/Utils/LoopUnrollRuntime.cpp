@@ -11,11 +11,11 @@
 // trip counts.  See LoopUnroll.cpp for unrolling loops with compile-time
 // trip counts.
 //
-// The functions in this file are used to generate extra code when the 
+// The functions in this file are used to generate extra code when the
 // run-time trip count modulo the unroll factor is not 0.  When this is the
 // case, we need to generate code to execute these 'left over' iterations.
 //
-// The current strategy generates an if-then-else sequence prior to the 
+// The current strategy generates an if-then-else sequence prior to the
 // unrolled loop to execute the 'left over' iterations.  Other strategies
 // include generate a loop before or after the unrolled loop.
 //
@@ -37,7 +37,7 @@
 
 using namespace llvm;
 
-STATISTIC(NumRuntimeUnrolled, 
+STATISTIC(NumRuntimeUnrolled,
           "Number of loops unrolled with run-time trip counts");
 
 /// Connect the unrolling prolog code to the original loop.
@@ -81,8 +81,8 @@ static void ConnectProlog(Loop *L, Value *TripCount, unsigned Count,
       } else {
         NewPN->addIncoming(Constant::getNullValue(PN->getType()), OrigPH);
       }
-      Value *OrigVal = PN->getIncomingValueForBlock(Latch);
-      Value *V = OrigVal;
+
+      Value *V = PN->getIncomingValueForBlock(Latch);
       if (Instruction *I = dyn_cast<Instruction>(V)) {
         if (L->contains(I)) {
           V = LVMap[I];
@@ -207,7 +207,7 @@ static void CloneLoopBlocks(Loop *L,
 /// to the unroll factor as the number of *extra* copies added).
 /// We assume also that the loop unroll factor is a power-of-two. So, after
 /// unrolling the loop, the number of loop bodies executed is 2,
-/// 4, 8, etc.  Note - LLVM converts the if-then-sequence to a switch 
+/// 4, 8, etc.  Note - LLVM converts the if-then-sequence to a switch
 /// instruction in SimplifyCFG.cpp.  Then, the backend decides how code for
 /// the switch instruction is generated.
 ///
@@ -227,9 +227,7 @@ static void CloneLoopBlocks(Loop *L,
 bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
                                    LPPassManager *LPM) {
   // for now, only unroll loops that contain a single exit
-  SmallVector<BasicBlock*, 4> ExitingBlocks;
-  L->getExitingBlocks(ExitingBlocks);
-  if (ExitingBlocks.size() > 1)
+  if (!L->getExitingBlock())
     return false;
 
   // Make sure the loop is in canonical form, and there is a single
@@ -250,7 +248,7 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
     return false;
 
   // Add 1 since the backedge count doesn't include the first loop iteration
-  const SCEV *TripCountSC = 
+  const SCEV *TripCountSC =
     SE->getAddExpr(BECount, SE->getConstant(BECount->getType(), 1));
   if (isa<SCEVCouldNotCompute>(TripCountSC))
     return false;
@@ -293,8 +291,8 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
   // Branch to either the extra iterations or the unrolled loop
   // We will fix up the true branch label when adding loop body copies
   BranchInst::Create(PEnd, PEnd, BranchVal, PreHeaderBR);
-  assert(PreHeaderBR->isUnconditional() && 
-         PreHeaderBR->getSuccessor(0) == PEnd && 
+  assert(PreHeaderBR->isUnconditional() &&
+         PreHeaderBR->getSuccessor(0) == PEnd &&
          "CFG edges in Preheader are not correct");
   PreHeaderBR->eraseFromParent();
 
@@ -359,7 +357,7 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
     for (unsigned i = 0, e = NewBlocks.size(); i != e; ++i) {
       for (BasicBlock::iterator I = NewBlocks[i]->begin(),
              E = NewBlocks[i]->end(); I != E; ++I) {
-        RemapInstruction(I, VMap, 
+        RemapInstruction(I, VMap,
                          RF_NoModuleLevelChanges|RF_IgnoreMissingEntries);
       }
     }
