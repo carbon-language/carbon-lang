@@ -5252,9 +5252,23 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXConstCastExprClass:
   case Expr::ObjCBridgedCastExprClass: {
     const Expr *SubExpr = cast<CastExpr>(E)->getSubExpr();
-    if (isa<ExplicitCastExpr>(E) &&
-        isa<FloatingLiteral>(SubExpr->IgnoreParenImpCasts()))
-      return NoDiag();
+    if (isa<ExplicitCastExpr>(E)) {
+      if (const FloatingLiteral *FL
+            = dyn_cast<FloatingLiteral>(SubExpr->IgnoreParenImpCasts())) {
+        unsigned DestWidth = Ctx.getIntWidth(E->getType());
+        bool DestSigned = E->getType()->isSignedIntegerOrEnumerationType();
+        APSInt IgnoredVal(DestWidth, !DestSigned);
+        bool Ignored;
+        // If the value does not fit in the destination type, the behavior is
+        // undefined, so we are not required to treat it as a constant
+        // expression.
+        if (FL->getValue().convertToInteger(IgnoredVal,
+                                            llvm::APFloat::rmTowardZero,
+                                            &Ignored) & APFloat::opInvalidOp)
+          return ICEDiag(2, E->getLocStart());
+        return NoDiag();
+      }
+    }
     switch (cast<CastExpr>(E)->getCastKind()) {
     case CK_LValueToRValue:
     case CK_NoOp:

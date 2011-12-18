@@ -102,3 +102,9 @@ namespace IntOrEnum {
   template<int n> struct S {};
   S<p> s; // expected-error {{not an integral constant expression}}
 }
+
+namespace FloatConvert {
+  typedef int a[(int)42.3];
+  typedef int a[(int)42.997];
+  typedef int b[(int)4e10]; // expected-error {{variable length}}
+}
