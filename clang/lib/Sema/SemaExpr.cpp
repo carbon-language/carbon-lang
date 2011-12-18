@@ -9262,7 +9262,8 @@ bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result,
 
   if (!Folded || !AllowFold) {
     Diag(E->getSourceRange().getBegin(),
-         DiagID ? DiagID : diag::err_expr_not_ice) << E->getSourceRange();
+         DiagID ? DiagID : unsigned(diag::err_expr_not_ice))
+      << E->getSourceRange();
 
     // We only show the notes if they're not the usual "invalid subexpression"
     // or if they are actually in a subexpression.

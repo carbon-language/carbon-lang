@@ -1022,7 +1022,7 @@ Parser::ParseCXXPseudoDestructor(ExprArg Base, SourceLocation OpLoc,
 
   if (Tok.is(tok::kw_decltype) && !FirstTypeName.isValid() && SS.isEmpty()) {
     DeclSpec DS(AttrFactory);
-    SourceLocation EndLoc = ParseDecltypeSpecifier(DS);
+    ParseDecltypeSpecifier(DS);
     if (DS.getTypeSpecType() == TST_error)
       return ExprError();
     return Actions.ActOnPseudoDestructorExpr(getCurScope(), Base, OpLoc, 
