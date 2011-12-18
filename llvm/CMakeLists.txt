@@ -23,9 +23,9 @@ if( LLVM_APPEND_VC_REV )
   add_version_info_from_vcs(PACKAGE_VERSION)
 endif()
 
-set(PACKAGE_NAME llvm)
+set(PACKAGE_NAME LLVM)
 set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
-set(PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu")
+set(PACKAGE_BUGREPORT "http://llvm.org/bugs/")
 
 # Sanity check our source directory to make sure that we are not trying to
 # generate an in-tree build (unless on MSVC_IDE, where it is ok), and to make

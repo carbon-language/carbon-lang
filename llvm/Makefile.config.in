@@ -13,7 +13,7 @@
 #===------------------------------------------------------------------------===#
 
 # Define LLVM specific info and directories based on the autoconf variables
-LLVMPackageName   := @PACKAGE_NAME@
+LLVMPackageName   := @PACKAGE_TARNAME@
 LLVMVersion       := @PACKAGE_VERSION@
 LLVM_CONFIGTIME   := @LLVM_CONFIGTIME@
 
@@ -48,7 +48,7 @@ PROJ_OBJ_ROOT := $(call realpath, $(PROJ_OBJ_DIR)/$(LEVEL))
 
 CLANG_SRC_ROOT  := @CLANG_SRC_ROOT@
 
-ifeq ($(PROJECT_NAME),llvm)
+ifeq ($(PROJECT_NAME),$(LLVMPackageName))
 LLVM_SRC_ROOT   := $(call realpath, @abs_top_srcdir@)
 LLVM_OBJ_ROOT   := $(call realpath, @abs_top_builddir@)
 PROJ_SRC_ROOT   := $(LLVM_SRC_ROOT)

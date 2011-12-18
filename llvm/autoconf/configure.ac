@@ -30,8 +30,8 @@ dnl=== SECTION 1: Initialization & Setup
 dnl===
 dnl===-----------------------------------------------------------------------===
 dnl Initialize autoconf and define the package name, version number and
-dnl email address for reporting bugs.
-AC_INIT([[llvm]],[[3.1svn]],[llvmbugs@cs.uiuc.edu])
+dnl address for reporting bugs.
+AC_INIT([LLVM],[3.1svn],[http://llvm.org/bugs/])
 
 dnl Provide a copyright substitution and ensure the copyright notice is included
 dnl in the output of --version option of the generated configure script.
