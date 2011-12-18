@@ -31,8 +31,9 @@ namespace llvm {
     /// caller.
     // bool NeverInline;
 
-    // True if this function contains a call to setjmp or _setjmp
-    bool callsSetJmp;
+    // True if this function contains a call to setjmp or other functions
+    // with attribute "returns twice" without having the attribute by itself.
+    bool exposesReturnsTwice;
 
     // True if this function calls itself
     bool isRecursive;
@@ -66,7 +67,7 @@ namespace llvm {
     /// NumRets - Keep track of how many Ret instructions the block contains.
     unsigned NumRets;
 
-    CodeMetrics() : callsSetJmp(false), isRecursive(false),
+    CodeMetrics() : exposesReturnsTwice(false), isRecursive(false),
                     containsIndirectBr(false), usesDynamicAlloca(false),
                     NumInsts(0), NumBlocks(0), NumCalls(0),
                     NumInlineCandidates(0), NumVectorInsts(0),

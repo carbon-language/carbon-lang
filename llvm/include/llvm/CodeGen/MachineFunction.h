@@ -120,10 +120,12 @@ class MachineFunction {
   /// Alignment - The alignment of the function.
   unsigned Alignment;
 
-  /// CallsSetJmp - True if the function calls setjmp or sigsetjmp. This is used
-  /// to limit optimizations which cannot reason about the control flow of
-  /// setjmp.
-  bool CallsSetJmp;
+  /// ExposesReturnsTwice - True if the function calls setjmp or related
+  /// functions with attribute "returns twice", but doesn't have
+  /// the attribute itself.
+  /// This is used to limit optimizations which cannot reason
+  /// about the control flow of such functions.
+  bool ExposesReturnsTwice;
 
   MachineFunction(const MachineFunction &); // DO NOT IMPLEMENT
   void operator=(const MachineFunction&);   // DO NOT IMPLEMENT
@@ -192,15 +194,17 @@ public:
     if (Alignment < A) Alignment = A;
   }
 
-  /// callsSetJmp - Returns true if the function calls setjmp or sigsetjmp.
-  bool callsSetJmp() const {
-    return CallsSetJmp;
+  /// exposesReturnsTwice - Returns true if the function calls setjmp or
+  /// any other similar functions with attribute "returns twice" without
+  /// having the attribute itself.
+  bool exposesReturnsTwice() const {
+    return ExposesReturnsTwice;
   }
 
-  /// setCallsSetJmp - Set a flag that indicates if there's a call to setjmp or
-  /// sigsetjmp.
-  void setCallsSetJmp(bool B) {
-    CallsSetJmp = B;
+  /// setCallsSetJmp - Set a flag that indicates if there's a call to
+  /// a "returns twice" function.
+  void setExposesReturnsTwice(bool B) {
+    ExposesReturnsTwice = B;
   }
   
   /// getInfo - Keep track of various per-function pieces of information for

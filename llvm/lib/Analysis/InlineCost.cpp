@@ -232,10 +232,12 @@ unsigned CodeMetrics::CountCodeReductionForAlloca(Value *V) {
 /// from the specified function.
 void CodeMetrics::analyzeFunction(Function *F, const TargetData *TD) {
   // If this function contains a call that "returns twice" (e.g., setjmp or
-  // _setjmp), never inline it. This is a hack because we depend on the user
-  // marking their local variables as volatile if they are live across a setjmp
-  // call, and they probably won't do this in callers.
-  callsSetJmp = F->callsFunctionThatReturnsTwice();
+  // _setjmp) and it isn't marked with "returns twice" itself, never inline it.
+  // This is a hack because we depend on the user marking their local variables
+  // as volatile if they are live across a setjmp call, and they probably
+  // won't do this in callers.
+  exposesReturnsTwice = F->callsFunctionThatReturnsTwice() &&
+    !F->hasFnAttr(Attribute::ReturnsTwice);
 
   // Look at the size of the callee.
   for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
@@ -265,7 +267,7 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F,
 /// NeverInline - returns true if the function should never be inlined into
 /// any caller
 bool InlineCostAnalyzer::FunctionInfo::NeverInline() {
-  return (Metrics.callsSetJmp || Metrics.isRecursive ||
+  return (Metrics.exposesReturnsTwice || Metrics.isRecursive ||
           Metrics.containsIndirectBr);
 }
 // getSpecializationBonus - The heuristic used to determine the per-call
@@ -634,7 +636,7 @@ InlineCostAnalyzer::growCachedCostInfo(Function *Caller, Function *Callee) {
 
   // FIXME: If any of these three are true for the callee, the callee was
   // not inlined into the caller, so I think they're redundant here.
-  CallerMetrics.callsSetJmp |= CalleeMetrics.callsSetJmp;
+  CallerMetrics.exposesReturnsTwice |= CalleeMetrics.exposesReturnsTwice;
   CallerMetrics.isRecursive |= CalleeMetrics.isRecursive;
   CallerMetrics.containsIndirectBr |= CalleeMetrics.containsIndirectBr;
 

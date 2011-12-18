@@ -426,7 +426,7 @@ bool StackSlotColoring::runOnMachineFunction(MachineFunction &MF) {
   // coloring. The stack could be modified before the longjmp is executed,
   // resulting in the wrong value being used afterwards. (See
   // <rdar://problem/8007500>.)
-  if (MF.callsSetJmp())
+  if (MF.exposesReturnsTwice())
     return false;
 
   // Gather spill slot references
