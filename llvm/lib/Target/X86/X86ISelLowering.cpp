@@ -14702,11 +14702,10 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
 
 namespace {
   // Helper to match a string separated by whitespace.
-  bool matchAsmImpl(ArrayRef<const StringRef *> args) {
-    StringRef s(*args[0]);
+  bool matchAsmImpl(StringRef s, ArrayRef<const StringRef *> args) {
     s = s.substr(s.find_first_not_of(" \t")); // Skip leading whitespace.
 
-    for (unsigned i = 1, e = args.size(); i != e; ++i) {
+    for (unsigned i = 0, e = args.size(); i != e; ++i) {
       StringRef piece(*args[i]);
       if (!s.startswith(piece)) // Check if the piece matches.
         return false;
@@ -14721,7 +14720,7 @@ namespace {
 
     return s.empty();
   }
-  const VariadicFunction<bool, StringRef, matchAsmImpl> matchAsm = {};
+  const VariadicFunction1<bool, StringRef, StringRef, matchAsmImpl> matchAsm={};
 }
 
 bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
