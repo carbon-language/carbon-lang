@@ -2292,13 +2292,37 @@ struct _LIBCPP_VISIBLE default_delete
 template <class _Tp>
 struct _LIBCPP_VISIBLE default_delete<_Tp[]>
 {
-    _LIBCPP_INLINE_VISIBILITY void operator() (_Tp* __ptr) const _NOEXCEPT
+private:
+    template <class _P1,
+              bool = is_same<typename remove_cv<typename pointer_traits<_P1>::element_type>::type,
+                             typename remove_cv<_Tp>::type>::value>
+    struct __same_or_less_cv_qualified_imp
+        : is_convertible<_P1, _Tp*> {};
+    template <class _P1>
+    struct __same_or_less_cv_qualified_imp<_P1, false>
+        : false_type {};
+    
+    template <class _P1, bool = is_scalar<_P1>::value && !is_pointer<_P1>::value>
+    struct __same_or_less_cv_qualified
+        : __same_or_less_cv_qualified_imp<_P1> {};
+    
+    template <class _P1>
+    struct __same_or_less_cv_qualified<_P1, true>
+        : false_type {};
+
+public:
+    _LIBCPP_INLINE_VISIBILITY default_delete() _NOEXCEPT {}
+    template <class _Up>
+        _LIBCPP_INLINE_VISIBILITY default_delete(const default_delete<_Up[]>&,
+             typename enable_if<__same_or_less_cv_qualified<_Up*>::value>::type* = 0) _NOEXCEPT {}
+    template <class _Up>
+        _LIBCPP_INLINE_VISIBILITY
+        void operator() (_Up* __ptr,
+                         typename enable_if<__same_or_less_cv_qualified<_Up*>::value>::type* = 0) const _NOEXCEPT
         {
             static_assert(sizeof(_Tp) > 0, "default_delete can not delete incomplete type");
             delete [] __ptr;
         }
-private:
-    template <class _Up> void operator() (_Up*) const;
 };
 
 template <class _Tp, class _Dp = default_delete<_Tp> >
@@ -2499,22 +2523,22 @@ private:
     unique_ptr(const unique_ptr&);
     unique_ptr& operator=(const unique_ptr&);
 
-template <class _P1,
-          bool = is_same<typename remove_cv<typename pointer_traits<_P1>::element_type>::type,
-                         typename remove_cv<element_type>::type>::value>
-struct __same_or_less_cv_qualified_imp
-    : is_convertible<_P1, pointer> {};
-template <class _P1>
-struct __same_or_less_cv_qualified_imp<_P1, false>
-    : false_type {};
-
-template <class _P1, bool = is_scalar<_P1>::value && !is_pointer<_P1>::value>
-struct __same_or_less_cv_qualified
-    : __same_or_less_cv_qualified_imp<_P1> {};
-
-template <class _P1>
-struct __same_or_less_cv_qualified<_P1, true>
-    : false_type {};
+    template <class _P1,
+              bool = is_same<typename remove_cv<typename pointer_traits<_P1>::element_type>::type,
+                             typename remove_cv<element_type>::type>::value>
+    struct __same_or_less_cv_qualified_imp
+        : is_convertible<_P1, pointer> {};
+    template <class _P1>
+    struct __same_or_less_cv_qualified_imp<_P1, false>
+        : false_type {};
+    
+    template <class _P1, bool = is_scalar<_P1>::value && !is_pointer<_P1>::value>
+    struct __same_or_less_cv_qualified
+        : __same_or_less_cv_qualified_imp<_P1> {};
+    
+    template <class _P1>
+    struct __same_or_less_cv_qualified<_P1, true>
+        : false_type {};
 
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unique_ptr(unique_ptr&);
@@ -2597,6 +2621,40 @@ public:
             __ptr_.second() = _VSTD::forward<deleter_type>(__u.get_deleter());
             return *this;
         }
+
+    template <class _Up, class _Ep>
+        _LIBCPP_INLINE_VISIBILITY
+        unique_ptr(unique_ptr<_Up, _Ep>&& __u,
+                   typename enable_if
+                            <
+                                is_array<_Up>::value &&
+                                __same_or_less_cv_qualified<typename unique_ptr<_Up, _Ep>::pointer>::value
+                                && is_convertible<_Ep, deleter_type>::value &&
+                                (
+                                    !is_reference<deleter_type>::value ||
+                                    is_same<deleter_type, _Ep>::value
+                                ),
+                                __nat
+                            >::type = __nat()
+                  ) _NOEXCEPT
+        : __ptr_(__u.release(), _VSTD::forward<deleter_type>(__u.get_deleter())) {}
+
+
+        template <class _Up, class _Ep>
+            _LIBCPP_INLINE_VISIBILITY
+            typename enable_if
+            <
+                is_array<_Up>::value &&
+                __same_or_less_cv_qualified<typename unique_ptr<_Up, _Ep>::pointer>::value &&
+                is_assignable<deleter_type, _Ep>::value,
+                unique_ptr&
+            >::type
+            operator=(unique_ptr<_Up, _Ep>&& __u) _NOEXCEPT
+            {
+                reset(__u.release());
+                __ptr_.second() = _VSTD::forward<_Ep>(__u.get_deleter());
+                return *this;
+            }
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY explicit unique_ptr(pointer __p)
