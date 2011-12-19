@@ -28,9 +28,6 @@ def Subtract32 : SDNodeXForm<imm, [{
   return getImm(N, (unsigned)N->getZExtValue() - 32);
 }]>;
 
-// shamt field must fit in 5 bits.
-def immZExt5_64 : ImmLeaf<i64, [{return Imm == (Imm & 0x1f);}]>;
-
 // imm32_63 predicate - True if imm is in range [32, 63].
 def imm32_63 : ImmLeaf<i32,
                        [{return (int32_t)Imm >= 32 && (int32_t)Imm < 64;}],
