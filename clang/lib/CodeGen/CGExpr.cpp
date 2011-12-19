@@ -1443,7 +1443,7 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
     QualType T = E->getSubExpr()->getType()->getPointeeType();
     assert(!T.isNull() && "CodeGenFunction::EmitUnaryOpLValue: Illegal type");
 
-    LValue LV = MakeAddrLValue(EmitScalarExpr(E->getSubExpr()), T);
+    LValue LV = MakeNaturalAlignAddrLValue(EmitScalarExpr(E->getSubExpr()), T);
     LV.getQuals().setAddressSpace(ExprTy.getAddressSpace());
 
     // We should not generate __weak write barrier on indirect reference
