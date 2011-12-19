@@ -92,26 +92,26 @@ static void printExpr(const MCExpr *Expr, raw_ostream &OS) {
   MCSymbolRefExpr::VariantKind Kind = SRE->getKind();
 
   switch (Kind) {
-  default: assert(0 && "Invalid kind!");
-  case MCSymbolRefExpr::VK_None:     break;
-  case MCSymbolRefExpr::VK_Mips_GPREL:    OS << "%gp_rel("; break;
-  case MCSymbolRefExpr::VK_Mips_GOT_CALL: OS << "%call16("; break;
-  case MCSymbolRefExpr::VK_Mips_GOT16:    OS << "%got(";    break;
-  case MCSymbolRefExpr::VK_Mips_GOT:      OS << "%got(";    break;
-  case MCSymbolRefExpr::VK_Mips_ABS_HI:   OS << "%hi(";     break;
-  case MCSymbolRefExpr::VK_Mips_ABS_LO:   OS << "%lo(";     break;
-  case MCSymbolRefExpr::VK_Mips_TLSGD:    OS << "%tlsgd(";  break;
-  case MCSymbolRefExpr::VK_Mips_TLSLDM:   OS << "%tlsldm(";  break;
-  case MCSymbolRefExpr::VK_Mips_DTPREL_HI:OS << "%dtprel_hi(";  break;
-  case MCSymbolRefExpr::VK_Mips_DTPREL_LO:OS << "%dtprel_lo(";  break;
-  case MCSymbolRefExpr::VK_Mips_GOTTPREL: OS << "%gottprel("; break;
-  case MCSymbolRefExpr::VK_Mips_TPREL_HI: OS << "%tprel_hi("; break;
-  case MCSymbolRefExpr::VK_Mips_TPREL_LO: OS << "%tprel_lo("; break;
-  case MCSymbolRefExpr::VK_Mips_GPOFF_HI: OS << "%hi(%neg(%gp_rel("; break;
-  case MCSymbolRefExpr::VK_Mips_GPOFF_LO: OS << "%lo(%neg(%gp_rel("; break;
-  case MCSymbolRefExpr::VK_Mips_GOT_DISP: OS << "%got_disp("; break;
-  case MCSymbolRefExpr::VK_Mips_GOT_PAGE: OS << "%got_page("; break;
-  case MCSymbolRefExpr::VK_Mips_GOT_OFST: OS << "%got_ofst("; break;
+  default:                                 assert(0 && "Invalid kind!");
+  case MCSymbolRefExpr::VK_None:           break;
+  case MCSymbolRefExpr::VK_Mips_GPREL:     OS << "%gp_rel("; break;
+  case MCSymbolRefExpr::VK_Mips_GOT_CALL:  OS << "%call16("; break;
+  case MCSymbolRefExpr::VK_Mips_GOT16:     OS << "%got(";    break;
+  case MCSymbolRefExpr::VK_Mips_GOT:       OS << "%got(";    break;
+  case MCSymbolRefExpr::VK_Mips_ABS_HI:    OS << "%hi(";     break;
+  case MCSymbolRefExpr::VK_Mips_ABS_LO:    OS << "%lo(";     break;
+  case MCSymbolRefExpr::VK_Mips_TLSGD:     OS << "%tlsgd(";  break;
+  case MCSymbolRefExpr::VK_Mips_TLSLDM:    OS << "%tlsldm(";  break;
+  case MCSymbolRefExpr::VK_Mips_DTPREL_HI: OS << "%dtprel_hi(";  break;
+  case MCSymbolRefExpr::VK_Mips_DTPREL_LO: OS << "%dtprel_lo(";  break;
+  case MCSymbolRefExpr::VK_Mips_GOTTPREL:  OS << "%gottprel("; break;
+  case MCSymbolRefExpr::VK_Mips_TPREL_HI:  OS << "%tprel_hi("; break;
+  case MCSymbolRefExpr::VK_Mips_TPREL_LO:  OS << "%tprel_lo("; break;
+  case MCSymbolRefExpr::VK_Mips_GPOFF_HI:  OS << "%hi(%neg(%gp_rel("; break;
+  case MCSymbolRefExpr::VK_Mips_GPOFF_LO:  OS << "%lo(%neg(%gp_rel("; break;
+  case MCSymbolRefExpr::VK_Mips_GOT_DISP:  OS << "%got_disp("; break;
+  case MCSymbolRefExpr::VK_Mips_GOT_PAGE:  OS << "%got_page("; break;
+  case MCSymbolRefExpr::VK_Mips_GOT_OFST:  OS << "%got_ofst("; break;
   }
 
   OS << SRE->getSymbol();

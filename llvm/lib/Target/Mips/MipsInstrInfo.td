@@ -229,24 +229,26 @@ def addr : ComplexPattern<iPTR, 2, "SelectAddr", [frameindex], []>;
 //===----------------------------------------------------------------------===//
 // Pattern fragment for load/store
 //===----------------------------------------------------------------------===//
-class UnalignedLoad<PatFrag Node> : PatFrag<(ops node:$ptr), (Node node:$ptr), [{
+class UnalignedLoad<PatFrag Node> :
+  PatFrag<(ops node:$ptr), (Node node:$ptr), [{
   LoadSDNode *LD = cast<LoadSDNode>(N);
   return LD->getMemoryVT().getSizeInBits()/8 > LD->getAlignment();
 }]>;
 
-class AlignedLoad<PatFrag Node> : PatFrag<(ops node:$ptr), (Node node:$ptr), [{
+class AlignedLoad<PatFrag Node> :
+  PatFrag<(ops node:$ptr), (Node node:$ptr), [{
   LoadSDNode *LD = cast<LoadSDNode>(N);
   return LD->getMemoryVT().getSizeInBits()/8 <= LD->getAlignment();
 }]>;
 
-class UnalignedStore<PatFrag Node> : PatFrag<(ops node:$val, node:$ptr),
-                                             (Node node:$val, node:$ptr), [{
+class UnalignedStore<PatFrag Node> :
+  PatFrag<(ops node:$val, node:$ptr), (Node node:$val, node:$ptr), [{
   StoreSDNode *SD = cast<StoreSDNode>(N);
   return SD->getMemoryVT().getSizeInBits()/8 > SD->getAlignment();
 }]>;
 
-class AlignedStore<PatFrag Node> : PatFrag<(ops node:$val, node:$ptr),
-                                           (Node node:$val, node:$ptr), [{
+class AlignedStore<PatFrag Node> :
+  PatFrag<(ops node:$val, node:$ptr), (Node node:$val, node:$ptr), [{
   StoreSDNode *SD = cast<StoreSDNode>(N);
   return SD->getMemoryVT().getSizeInBits()/8 <= SD->getAlignment();
 }]>;

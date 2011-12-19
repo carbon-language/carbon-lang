@@ -459,7 +459,8 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
 
   // Tell the assembler which ABI we are using
   if (OutStreamer.hasRawTextSupport())
-    OutStreamer.EmitRawText("\t.section .mdebug." + Twine(getCurrentABIString()));
+    OutStreamer.EmitRawText("\t.section .mdebug." +
+                            Twine(getCurrentABIString()));
 
   // TODO: handle O64 ABI
   if (OutStreamer.hasRawTextSupport()) {

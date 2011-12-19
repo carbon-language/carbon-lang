@@ -294,7 +294,7 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
       ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(Node);
       if (Node->getValueType(0) == MVT::f64 && CN->isExactlyValue(+0.0)) {
         SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
-                                        Mips::ZERO, MVT::i32);
+                                              Mips::ZERO, MVT::i32);
         return CurDAG->getMachineNode(Mips::BuildPairF64, dl, MVT::f64, Zero,
                                       Zero);
       }
@@ -315,10 +315,12 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
         DestReg = Mips::V1_64;
       }
       
-      SDNode *Rdhwr = CurDAG->getMachineNode(RdhwrOpc, Node->getDebugLoc(),
-          Node->getValueType(0), CurDAG->getRegister(SrcReg, PtrVT));
+      SDNode *Rdhwr =
+        CurDAG->getMachineNode(RdhwrOpc, Node->getDebugLoc(),
+                               Node->getValueType(0),
+                               CurDAG->getRegister(SrcReg, PtrVT));
       SDValue Chain = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, DestReg,
-          SDValue(Rdhwr, 0));
+                                           SDValue(Rdhwr, 0));
       SDValue ResNode = CurDAG->getCopyFromReg(Chain, dl, DestReg, PtrVT);
       ReplaceUses(SDValue(Node, 0), ResNode);
       return ResNode.getNode();

@@ -246,21 +246,21 @@ static unsigned GetAnalyzableBrOpc(unsigned Opc) {
 unsigned Mips::GetOppositeBranchOpc(unsigned Opc)
 {
   switch (Opc) {
-  default: llvm_unreachable("Illegal opcode!");
-  case Mips::BEQ    : return Mips::BNE;
-  case Mips::BNE    : return Mips::BEQ;
-  case Mips::BGTZ   : return Mips::BLEZ;
-  case Mips::BGEZ   : return Mips::BLTZ;
-  case Mips::BLTZ   : return Mips::BGEZ;
-  case Mips::BLEZ   : return Mips::BGTZ;
-  case Mips::BEQ64  : return Mips::BNE64;
-  case Mips::BNE64  : return Mips::BEQ64;
-  case Mips::BGTZ64 : return Mips::BLEZ64;
-  case Mips::BGEZ64 : return Mips::BLTZ64;
-  case Mips::BLTZ64 : return Mips::BGEZ64;
-  case Mips::BLEZ64 : return Mips::BGTZ64;
-  case Mips::BC1T   : return Mips::BC1F;
-  case Mips::BC1F   : return Mips::BC1T;
+  default:           llvm_unreachable("Illegal opcode!");
+  case Mips::BEQ:    return Mips::BNE;
+  case Mips::BNE:    return Mips::BEQ;
+  case Mips::BGTZ:   return Mips::BLEZ;
+  case Mips::BGEZ:   return Mips::BLTZ;
+  case Mips::BLTZ:   return Mips::BGEZ;
+  case Mips::BLEZ:   return Mips::BGTZ;
+  case Mips::BEQ64:  return Mips::BNE64;
+  case Mips::BNE64:  return Mips::BEQ64;
+  case Mips::BGTZ64: return Mips::BLEZ64;
+  case Mips::BGEZ64: return Mips::BLTZ64;
+  case Mips::BLTZ64: return Mips::BGEZ64;
+  case Mips::BLEZ64: return Mips::BGTZ64;
+  case Mips::BC1T:   return Mips::BC1F;
+  case Mips::BC1F:   return Mips::BC1T;
   }
 }
 

@@ -142,7 +142,8 @@ extern "C" void LLVMInitializeMipsTargetMC() {
   TargetRegistry::RegisterMCAsmBackend(TheMips64elTarget, createMipsAsmBackend);
 
   TargetRegistry::RegisterMCCodeEmitter(TheMipsTarget, createMipsMCCodeEmitter);
-  TargetRegistry::RegisterMCCodeEmitter(TheMipselTarget, createMipsMCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(TheMipselTarget,
+                                        createMipsMCCodeEmitter);
 
   // Register the MC subtarget info.
   TargetRegistry::RegisterMCSubtargetInfo(TheMipsTarget,

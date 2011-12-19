@@ -37,26 +37,26 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   const MCSymbol *Symbol;
 
   switch(MO.getTargetFlags()) {
-  default:                  assert(0 && "Invalid target flag!");
-  case MipsII::MO_NO_FLAG:  Kind = MCSymbolRefExpr::VK_None; break;
-  case MipsII::MO_GPREL:    Kind = MCSymbolRefExpr::VK_Mips_GPREL; break;
-  case MipsII::MO_GOT_CALL: Kind = MCSymbolRefExpr::VK_Mips_GOT_CALL; break;
-  case MipsII::MO_GOT16:    Kind = MCSymbolRefExpr::VK_Mips_GOT16; break;
-  case MipsII::MO_GOT:      Kind = MCSymbolRefExpr::VK_Mips_GOT; break;
-  case MipsII::MO_ABS_HI:   Kind = MCSymbolRefExpr::VK_Mips_ABS_HI; break;
-  case MipsII::MO_ABS_LO:   Kind = MCSymbolRefExpr::VK_Mips_ABS_LO; break;
-  case MipsII::MO_TLSGD:    Kind = MCSymbolRefExpr::VK_Mips_TLSGD; break;
-  case MipsII::MO_TLSLDM:   Kind = MCSymbolRefExpr::VK_Mips_TLSLDM; break;
-  case MipsII::MO_DTPREL_HI:Kind = MCSymbolRefExpr::VK_Mips_DTPREL_HI; break;
-  case MipsII::MO_DTPREL_LO:Kind = MCSymbolRefExpr::VK_Mips_DTPREL_LO; break;
-  case MipsII::MO_GOTTPREL: Kind = MCSymbolRefExpr::VK_Mips_GOTTPREL; break;
-  case MipsII::MO_TPREL_HI: Kind = MCSymbolRefExpr::VK_Mips_TPREL_HI; break;
-  case MipsII::MO_TPREL_LO: Kind = MCSymbolRefExpr::VK_Mips_TPREL_LO; break;
-  case MipsII::MO_GPOFF_HI: Kind = MCSymbolRefExpr::VK_Mips_GPOFF_HI; break;
-  case MipsII::MO_GPOFF_LO: Kind = MCSymbolRefExpr::VK_Mips_GPOFF_LO; break;
-  case MipsII::MO_GOT_DISP: Kind = MCSymbolRefExpr::VK_Mips_GOT_DISP; break;
-  case MipsII::MO_GOT_PAGE: Kind = MCSymbolRefExpr::VK_Mips_GOT_PAGE; break;
-  case MipsII::MO_GOT_OFST: Kind = MCSymbolRefExpr::VK_Mips_GOT_OFST; break;
+  default:                   assert(0 && "Invalid target flag!");
+  case MipsII::MO_NO_FLAG:   Kind = MCSymbolRefExpr::VK_None; break;
+  case MipsII::MO_GPREL:     Kind = MCSymbolRefExpr::VK_Mips_GPREL; break;
+  case MipsII::MO_GOT_CALL:  Kind = MCSymbolRefExpr::VK_Mips_GOT_CALL; break;
+  case MipsII::MO_GOT16:     Kind = MCSymbolRefExpr::VK_Mips_GOT16; break;
+  case MipsII::MO_GOT:       Kind = MCSymbolRefExpr::VK_Mips_GOT; break;
+  case MipsII::MO_ABS_HI:    Kind = MCSymbolRefExpr::VK_Mips_ABS_HI; break;
+  case MipsII::MO_ABS_LO:    Kind = MCSymbolRefExpr::VK_Mips_ABS_LO; break;
+  case MipsII::MO_TLSGD:     Kind = MCSymbolRefExpr::VK_Mips_TLSGD; break;
+  case MipsII::MO_TLSLDM:    Kind = MCSymbolRefExpr::VK_Mips_TLSLDM; break;
+  case MipsII::MO_DTPREL_HI: Kind = MCSymbolRefExpr::VK_Mips_DTPREL_HI; break;
+  case MipsII::MO_DTPREL_LO: Kind = MCSymbolRefExpr::VK_Mips_DTPREL_LO; break;
+  case MipsII::MO_GOTTPREL:  Kind = MCSymbolRefExpr::VK_Mips_GOTTPREL; break;
+  case MipsII::MO_TPREL_HI:  Kind = MCSymbolRefExpr::VK_Mips_TPREL_HI; break;
+  case MipsII::MO_TPREL_LO:  Kind = MCSymbolRefExpr::VK_Mips_TPREL_LO; break;
+  case MipsII::MO_GPOFF_HI:  Kind = MCSymbolRefExpr::VK_Mips_GPOFF_HI; break;
+  case MipsII::MO_GPOFF_LO:  Kind = MCSymbolRefExpr::VK_Mips_GPOFF_LO; break;
+  case MipsII::MO_GOT_DISP:  Kind = MCSymbolRefExpr::VK_Mips_GOT_DISP; break;
+  case MipsII::MO_GOT_PAGE:  Kind = MCSymbolRefExpr::VK_Mips_GOT_PAGE; break;
+  case MipsII::MO_GOT_OFST:  Kind = MCSymbolRefExpr::VK_Mips_GOT_OFST; break;
   }
 
   switch (MOTy) {

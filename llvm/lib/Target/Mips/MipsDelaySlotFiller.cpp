@@ -105,8 +105,7 @@ runOnMachineBasicBlock(MachineBasicBlock &MBB) {
       if (EnableDelaySlotFiller && findDelayInstr(MBB, I, D)) {
         MBB.splice(llvm::next(I), &MBB, D);
         ++UsefulSlots;
-      }
-      else 
+      } else 
         BuildMI(MBB, llvm::next(I), I->getDebugLoc(), TII->get(Mips::NOP));
 
       // Record the filler instruction that filled the delay slot.
@@ -167,8 +166,7 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB,
 }
 
 bool Filler::delayHasHazard(MachineBasicBlock::iterator candidate,
-                            bool &sawLoad,
-                            bool &sawStore,
+                            bool &sawLoad, bool &sawStore,
                             SmallSet<unsigned, 32> &RegDefs,
                             SmallSet<unsigned, 32> &RegUses) {
   if (candidate->isImplicitDef() || candidate->isKill())

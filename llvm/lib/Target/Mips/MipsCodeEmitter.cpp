@@ -107,7 +107,8 @@ class MipsCodeEmitter : public MachineFunctionPass {
 
     unsigned getJumpTargetOpValue(const MachineInstr &MI, unsigned OpNo) const;
 
-    unsigned getBranchTargetOpValue(const MachineInstr &MI, unsigned OpNo) const;
+    unsigned getBranchTargetOpValue(const MachineInstr &MI,
+                                    unsigned OpNo) const;
     unsigned getMemEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getSizeExtEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getSizeInsEncoding(const MachineInstr &MI, unsigned OpNo) const;
@@ -119,7 +120,7 @@ class MipsCodeEmitter : public MachineFunctionPass {
     int emitUSH(const MachineInstr &MI);
 
     void emitGlobalAddressUnaligned(const GlobalValue *GV, unsigned Reloc,
-                                                            int Offset) const;
+                                    int Offset) const;
   };
 }
 
