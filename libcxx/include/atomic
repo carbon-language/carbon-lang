@@ -555,7 +555,7 @@ kill_dependency(_Tp __y)
 template <class _Tp, bool = is_integral<_Tp>::value && !is_same<_Tp, bool>::value>
 struct __atomic_base  // false
 {
-    _Tp __a_;
+    _Atomic(_Tp) __a_;
 
     _LIBCPP_INLINE_VISIBILITY
     bool is_lock_free() const volatile
@@ -621,7 +621,7 @@ struct __atomic_base  // false
     _LIBCPP_INLINE_VISIBILITY
     __atomic_base() {} // = default;
     _LIBCPP_INLINE_VISIBILITY
-    /*constexpr*/ __atomic_base(_Tp __d) : __a_(__d) {}
+    /*constexpr*/ __atomic_base(_Tp __d) { __atomic_store(&__a_, __d, memory_order_seq_cst); }
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     __atomic_base(const __atomic_base&) = delete;
     __atomic_base& operator=(const __atomic_base&) = delete;
@@ -820,7 +820,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 atomic_init(volatile atomic<_Tp>* __o, _Tp __d)
 {
-    __o->__a_ = __d;
+    __atomic_store(&__o->__a_, __d, memory_order_seq_cst);
 }
 
 template <class _Tp>
@@ -828,7 +828,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 atomic_init(atomic<_Tp>* __o, _Tp __d)
 {
-    __o->__a_ = __d;
+    __atomic_store(&__o->__a_, __d, memory_order_seq_cst);
 }
 
 // atomic_store
@@ -1348,7 +1348,7 @@ atomic_fetch_xor_explicit(atomic<_Tp>* __o, _Tp __op, memory_order __m)
 
 typedef struct atomic_flag
 {
-    bool __a_;
+    _Atomic(bool) __a_;
 
     _LIBCPP_INLINE_VISIBILITY
     bool test_and_set(memory_order __m = memory_order_seq_cst) volatile
@@ -1366,7 +1366,7 @@ typedef struct atomic_flag
     _LIBCPP_INLINE_VISIBILITY
     atomic_flag() {} // = default;
     _LIBCPP_INLINE_VISIBILITY
-    atomic_flag(bool __b) : __a_(__b) {}
+    atomic_flag(bool __b) { __atomic_store(&__a_, __b, memory_order_seq_cst); }
 
 #ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
     atomic_flag(const atomic_flag&) = delete;
