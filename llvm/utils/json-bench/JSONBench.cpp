@@ -23,7 +23,7 @@ Verify("verify", llvm::cl::desc(
          "Run a quick verification useful for regression testing"),
        llvm::cl::init(false));
 
-static llvm::cl::opt<unsigned>
+static llvm::cl::opt<size_t>
 MemoryLimitMB("memory-limit", llvm::cl::desc(
                 "Do not use more megabytes of memory"),
 	          llvm::cl::init(1000));
@@ -49,11 +49,11 @@ void benchmark(llvm::TimerGroup &Group, llvm::StringRef Name,
   Parsing.stopTimer();
 }
 
-std::string createJSONText(unsigned MemoryMB, unsigned ValueSize) {
+std::string createJSONText(size_t MemoryMB, unsigned ValueSize) {
   std::string JSONText;
   llvm::raw_string_ostream Stream(JSONText);
   Stream << "[\n";
-  unsigned MemoryBytes = MemoryMB * 1024 * 1024;
+  size_t MemoryBytes = MemoryMB * 1024 * 1024;
   while (JSONText.size() < MemoryBytes) {
     Stream << " {\n"
            << "  \"key1\": \"" << std::string(ValueSize, '*') << "\",\n"
