@@ -25,6 +25,12 @@ class FrameAPITestCase(TestBase):
         self.buildDwarf()
         self.do_get_arg_vals()
 
+    @python_api_test
+    def test_frame_api_boundary_condition(self):
+        """Exercise SBFrame APIs with boundary condition inputs."""
+        self.buildDefault()
+        self.frame_api_boundary_condition()
+
     def do_get_arg_vals(self):
         """Get argument vals for the call stack when stopped on a breakpoint."""
         exe = os.path.join(os.getcwd(), "a.out")
@@ -109,6 +115,42 @@ class FrameAPITestCase(TestBase):
                     exe=False,
             substrs = ["a((int)val=1, (char)ch='A')",
                        "a((int)val=3, (char)ch='A')"])
+
+    def frame_api_boundary_condition(self):
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target, VALID_TARGET)
+
+        # Now create a breakpoint on main.c by name 'c'.
+        breakpoint = target.BreakpointCreateByName('c', 'a.out')
+        #print "breakpoint:", breakpoint
+        self.assertTrue(breakpoint and
+                        breakpoint.GetNumLocations() == 1,
+                        VALID_BREAKPOINT)
+
+        # Now launch the process, and do not stop at the entry point.
+        process = target.LaunchSimple(None, None, os.getcwd())
+
+        process = target.GetProcess()
+        self.assertTrue(process.GetState() == lldb.eStateStopped,
+                        PROCESS_STOPPED)
+
+        thread = process.GetThreadAtIndex(0)
+        frame = thread.GetFrameAtIndex(0)
+        if self.TraceOn():
+            print "frame:", frame
+
+        # Boundary condition testings.
+        val1 = frame.FindVariable(None, True)
+        val2 = frame.FindVariable(None, False)
+        val3 = frame.FindValue(None, lldb.eValueTypeVariableGlobal)
+        if self.TraceOn():
+            print "val1:", val1
+            print "val2:", val2
+
+        frame.EvaluateExpression(None)
 
 
 if __name__ == '__main__':
