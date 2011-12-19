@@ -923,3 +923,9 @@ namespace PR11595 {
   }
   constexpr int n = f(1); // expected-error {{must be initialized by a constant expression}} expected-note {{in call to 'f(1)'}}
 }
+
+namespace ExprWithCleanups {
+  struct A { A(); ~A(); int get(); };
+  constexpr int get(bool FromA) { return FromA ? A().get() : 1; }
+  constexpr int n = get(false);
+}

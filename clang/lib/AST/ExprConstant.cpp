@@ -1799,6 +1799,10 @@ public:
     { return StmtVisitorTy::Visit(E->getReplacement()); }
   RetTy VisitCXXDefaultArgExpr(const CXXDefaultArgExpr *E)
     { return StmtVisitorTy::Visit(E->getExpr()); }
+  // We cannot create any objects for which cleanups are required, so there is
+  // nothing to do here; all cleanups must come from unevaluated subexpressions.
+  RetTy VisitExprWithCleanups(const ExprWithCleanups *E)
+    { return StmtVisitorTy::Visit(E->getSubExpr()); }
 
   RetTy VisitCXXReinterpretCastExpr(const CXXReinterpretCastExpr *E) {
     CCEDiag(E, diag::note_constexpr_invalid_cast) << 0;
