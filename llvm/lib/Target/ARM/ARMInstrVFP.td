@@ -1175,6 +1175,7 @@ def : VFP2MnemonicAlias<"fmrdd", "vmov">;
 def : VFP2MnemonicAlias<"fmrds", "vmov">;
 def : VFP2MnemonicAlias<"fmrrd", "vmov">;
 def : VFP2MnemonicAlias<"fmdrr", "vmov">;
+def : VFP2MnemonicAlias<"fmuls", "vmul.f32">;
 def : VFP2MnemonicAlias<"fmuld", "vmul.f64">;
 def : VFP2MnemonicAlias<"fnegs", "vneg.f32">;
 def : VFP2MnemonicAlias<"fnegd", "vneg.f64">;
