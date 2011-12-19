@@ -326,14 +326,6 @@ def QQPR : RegisterClass<"ARM", [v4i64], 256, (sequence "QQ%u", 0, 7)> {
   let AltOrderSelect = [{ return 1; }];
 }
 
-// Subset of QQPR that have 32-bit SPR subregs.
-def QQPR_VFP2 : RegisterClass<"ARM", [v4i64], 256, (trunc QQPR, 4)> {
-  let SubRegClasses = [(SPR      ssub_0, ssub_1, ssub_2, ssub_3),
-                       (DPR_VFP2 dsub_0, dsub_1, dsub_2, dsub_3),
-                       (QPR_VFP2 qsub_0, qsub_1)];
-
-}
-
 // Pseudo 512-bit vector register class to model 4 consecutive Q registers
 // (8 consecutive D registers).
 def QQQQPR : RegisterClass<"ARM", [v8i64], 256, (sequence "QQQQ%u", 0, 3)> {

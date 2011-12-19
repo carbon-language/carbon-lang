@@ -337,7 +337,10 @@ Release Notes</a>.</h1>
    make it run faster:</p>
 
 <ul>
-  <li>....</li>
+  <li>TableGen can now synthesize register classes that are only needed to
+  represent combinations of constraints from instructions and sub-registers.
+  The synthetic register classes inherit most of their properties form their
+  closest user-defined super-class.</li>
 </ul>
 </div>
 
