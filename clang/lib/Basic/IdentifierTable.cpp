@@ -125,7 +125,9 @@ static void AddKeyword(StringRef Keyword,
   else if (LangOpts.OpenCL && (Flags & KEYOPENCL)) AddResult = 2;
   else if (!LangOpts.CPlusPlus && (Flags & KEYNOCXX)) AddResult = 2;
   else if (LangOpts.C1X && (Flags & KEYC1X)) AddResult = 2;
-  else if (LangOpts.ObjCAutoRefCount && (Flags & KEYARC)) AddResult = 2;
+  // We treat bridge casts as objective-C keywords so we can warn on them
+  // in non-arc mode.
+  else if (LangOpts.ObjC2 && (Flags & KEYARC)) AddResult = 2;
   else if (LangOpts.CPlusPlus && (Flags & KEYCXX0X)) AddResult = 3;
 
   // Don't add this keyword if disabled in this language.

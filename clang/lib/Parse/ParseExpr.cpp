@@ -1817,9 +1817,23 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
     return ExprError();
   }
 
+  // Diagnose use of bridge casts in non-arc mode.
+  bool BridgeCast = (getLang().ObjC2 &&
+                     (Tok.is(tok::kw___bridge) || 
+                      Tok.is(tok::kw___bridge_transfer) ||
+                      Tok.is(tok::kw___bridge_retained) ||
+                      Tok.is(tok::kw___bridge_retain)));
+  if (BridgeCast && !getLang().ObjCAutoRefCount) {
+    SourceLocation BridgeKeywordLoc = ConsumeToken();
+    if (!PP.getSourceManager().isInSystemHeader(BridgeKeywordLoc))
+      Diag(BridgeKeywordLoc, diag::warn_arc_bridge_retain)
+      << FixItHint::CreateReplacement(BridgeKeywordLoc,
+                                      "");
+    BridgeCast = false;
+  }
+  
   // None of these cases should fall through with an invalid Result
   // unless they've already reported an error.
-  
   if (ExprType >= CompoundStmt && Tok.is(tok::l_brace)) {
     Diag(Tok, diag::ext_gnu_statement_expr);
     ParsedAttributes attrs(AttrFactory);
@@ -1829,11 +1843,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
     // If the substmt parsed correctly, build the AST node.
     if (!Stmt.isInvalid())
       Result = Actions.ActOnStmtExpr(OpenLoc, Stmt.take(), Tok.getLocation());
-  } else if (ExprType >= CompoundLiteral && 
-             (Tok.is(tok::kw___bridge) || 
-              Tok.is(tok::kw___bridge_transfer) ||
-              Tok.is(tok::kw___bridge_retained) ||
-              Tok.is(tok::kw___bridge_retain))) {
+  } else if (ExprType >= CompoundLiteral && BridgeCast) {
     tok::TokenKind tokenKind = Tok.getKind();
     SourceLocation BridgeKeywordLoc = ConsumeToken();
 

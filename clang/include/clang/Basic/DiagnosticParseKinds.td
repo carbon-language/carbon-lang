@@ -326,6 +326,9 @@ def err_illegal_super_cast : Error<
 let CategoryName = "ARC Parse Issue" in {
 def err_arc_bridge_retain : Error<
   "unknown cast annotation __bridge_retain; did you mean __bridge_retained?">;
+def warn_arc_bridge_retain : Warning<
+  "bridge casts will have no effect in non-arc mode and will be ignored">,
+  InGroup<DiagGroup<"bridge-casts-non-arc-mode">>;
 }
   
 def err_objc_illegal_visibility_spec : Error<

@@ -99,13 +99,6 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
     // allow this in C, since one might have block pointers in structs that
     // are used in pure C code and in Objective-C ARC.
     Builder.defineMacro("__unsafe_unretained", "");
-
-    // The Objective-C bridged cast keywords are defined to nothing in non-ARC
-    // mode; then they become normal, C-style casts.
-    Builder.defineMacro("__bridge", "");
-    Builder.defineMacro("__bridge_transfer", "");
-    Builder.defineMacro("__bridge_retained", "");
-    Builder.defineMacro("__bridge_retain", "");
   }
 
   if (Opts.Static)
