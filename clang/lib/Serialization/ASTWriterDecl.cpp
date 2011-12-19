@@ -55,6 +55,7 @@ namespace clang {
     void VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
     void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
     void VisitTypeDecl(TypeDecl *D);
+    void VisitTypedefNameDecl(TypedefNameDecl *D);
     void VisitTypedefDecl(TypedefDecl *D);
     void VisitTypeAliasDecl(TypeAliasDecl *D);
     void VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D);
@@ -200,11 +201,14 @@ void ASTDeclWriter::VisitTypeDecl(TypeDecl *D) {
   Writer.AddTypeRef(QualType(D->getTypeForDecl(), 0), Record);
 }
 
-void ASTDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
+void ASTDeclWriter::VisitTypedefNameDecl(TypedefNameDecl *D) {
   VisitRedeclarable(D);
   VisitTypeDecl(D);
-  Writer.AddTypeSourceInfo(D->getTypeSourceInfo(), Record);
+  Writer.AddTypeSourceInfo(D->getTypeSourceInfo(), Record);  
+}
 
+void ASTDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
+  VisitTypedefNameDecl(D);
   if (!D->hasAttrs() &&
       !D->isImplicit() &&
       !D->isUsed(false) &&
@@ -221,9 +225,7 @@ void ASTDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
 }
 
 void ASTDeclWriter::VisitTypeAliasDecl(TypeAliasDecl *D) {
-  VisitRedeclarable(D);
-  VisitTypeDecl(D);
-  Writer.AddTypeSourceInfo(D->getTypeSourceInfo(), Record);
+  VisitTypedefNameDecl(D);
   Code = serialization::DECL_TYPEALIAS;
 }
 

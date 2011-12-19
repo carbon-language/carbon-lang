@@ -134,6 +134,7 @@ namespace clang {
     void VisitUsingDirectiveDecl(UsingDirectiveDecl *D);
     void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
     void VisitTypeDecl(TypeDecl *TD);
+    void VisitTypedefNameDecl(TypedefNameDecl *TD);
     void VisitTypedefDecl(TypedefDecl *TD);
     void VisitTypeAliasDecl(TypeAliasDecl *TD);
     void VisitUnresolvedUsingTypenameDecl(UnresolvedUsingTypenameDecl *D);
@@ -307,16 +308,18 @@ void ASTDeclReader::VisitTypeDecl(TypeDecl *TD) {
   TypeIDForTypeDecl = Reader.getGlobalTypeID(F, Record[Idx++]);
 }
 
-void ASTDeclReader::VisitTypedefDecl(TypedefDecl *TD) {
+void ASTDeclReader::VisitTypedefNameDecl(TypedefNameDecl *TD) {
   VisitRedeclarable(TD);
   VisitTypeDecl(TD);
-  TD->setTypeSourceInfo(GetTypeSourceInfo(Record, Idx));
+  TD->setTypeSourceInfo(GetTypeSourceInfo(Record, Idx));  
+}
+
+void ASTDeclReader::VisitTypedefDecl(TypedefDecl *TD) {
+  VisitTypedefNameDecl(TD);
 }
 
 void ASTDeclReader::VisitTypeAliasDecl(TypeAliasDecl *TD) {
-  VisitRedeclarable(TD);
-  VisitTypeDecl(TD);
-  TD->setTypeSourceInfo(GetTypeSourceInfo(Record, Idx));
+  VisitTypedefNameDecl(TD);
 }
 
 void ASTDeclReader::VisitTagDecl(TagDecl *TD) {
