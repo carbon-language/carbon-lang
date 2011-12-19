@@ -962,13 +962,13 @@ unsigned SourceManager::getColumnNumber(FileID FID, unsigned FilePos,
   if (MyInvalid)
     return 1;
 
-  const char *Buf = MemBuf->getBufferStart();
-  if (Buf + FilePos >= MemBuf->getBufferEnd()) {
+  if (FilePos >= MemBuf->getBufferSize()) {
     if (Invalid)
       *Invalid = MyInvalid;
     return 1;
   }
 
+  const char *Buf = MemBuf->getBufferStart();
   unsigned LineStart = FilePos;
   while (LineStart && Buf[LineStart-1] != '\n' && Buf[LineStart-1] != '\r')
     --LineStart;
@@ -1524,9 +1524,10 @@ SourceLocation SourceManager::translateLineCol(FileID FID,
     return FileLoc.getLocWithOffset(Size);
   }
 
+  const llvm::MemoryBuffer *Buffer = Content->getBuffer(Diag, *this);
   unsigned FilePos = Content->SourceLineCache[Line - 1];
-  const char *Buf = Content->getBuffer(Diag, *this)->getBufferStart() + FilePos;
-  unsigned BufLength = Content->getBuffer(Diag, *this)->getBufferEnd() - Buf;
+  const char *Buf = Buffer->getBufferStart() + FilePos;
+  unsigned BufLength = Buffer->getBufferSize() - FilePos;
   if (BufLength == 0)
     return FileLoc.getLocWithOffset(FilePos);
 
