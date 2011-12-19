@@ -306,7 +306,7 @@ struct _LIBCPP_VISIBLE pair
 
 
 
-    template <class... _Args1, class... _Args2, size_t... _I1, size_t... _I2>
+    template <class... _Args1, class... _Args2>
         _LIBCPP_INLINE_VISIBILITY
         pair(piecewise_construct_t __pc, tuple<_Args1...> __first_args,
                                     tuple<_Args2...> __second_args)

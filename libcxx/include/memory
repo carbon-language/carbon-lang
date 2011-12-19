@@ -596,6 +596,7 @@ void* align(size_t alignment, size_t size, void*& ptr, size_t& space);
 #include <iterator>
 #include <__functional_base>
 #include <iosfwd>
+#include <tuple>
 #if defined(_LIBCPP_NO_EXCEPTIONS)
     #include <cassert>
 #endif
@@ -607,12 +608,6 @@ void* align(size_t alignment, size_t size, void*& ptr, size_t& space);
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_STD
-
-// allocator_arg_t
-
-struct _LIBCPP_VISIBLE allocator_arg_t { };
-
-extern const allocator_arg_t allocator_arg;
 
 // addressof
 
@@ -1570,58 +1565,6 @@ private:
             {return __a;}
 };
 
-// uses_allocator
-
-template <class _Tp>
-struct __has_allocator_type
-{
-private:
-    struct __two {char _; char __;};
-    template <class _Up> static __two __test(...);
-    template <class _Up> static char __test(typename _Up::allocator_type* = 0);
-public:
-    static const bool value = sizeof(__test<_Tp>(0)) == 1;
-};
-
-template <class _Tp, class _Alloc, bool = __has_allocator_type<_Tp>::value>
-struct __uses_allocator
-    : public integral_constant<bool,
-        is_convertible<_Alloc, typename _Tp::allocator_type>::value>
-{
-};
-
-template <class _Tp, class _Alloc>
-struct __uses_allocator<_Tp, _Alloc, false>
-    : public false_type
-{
-};
-
-template <class _Tp, class _Alloc>
-struct _LIBCPP_VISIBLE uses_allocator
-    : public __uses_allocator<_Tp, _Alloc>
-{
-};
-
-#ifndef _LIBCPP_HAS_NO_VARIADICS
-
-// uses-allocator construction
-
-template <class _Tp, class _Alloc, class ..._Args>
-struct __uses_alloc_ctor_imp
-{
-    static const bool __ua = uses_allocator<_Tp, _Alloc>::value;
-    static const bool __ic =
-        is_constructible<_Tp, allocator_arg_t, _Alloc, _Args...>::value;
-    static const int value = __ua ? 2 - __ic : 0;
-};
-
-template <class _Tp, class _Alloc, class ..._Args>
-struct __uses_alloc_ctor
-    : integral_constant<int, __uses_alloc_ctor_imp<_Tp, _Alloc, _Args...>::value>
-    {};
-
-#endif  // _LIBCPP_HAS_NO_VARIADICS
-
 // allocator
 
 template <class _Tp>
@@ -1940,6 +1883,21 @@ public:
             return *this;
         }
 
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
+    template <class... _Args1, class... _Args2, size_t... _I1, size_t... _I2>
+        _LIBCPP_INLINE_VISIBILITY
+        __libcpp_compressed_pair_imp(piecewise_construct_t __pc,
+                                     tuple<_Args1...> __first_args,
+                                     tuple<_Args2...> __second_args,
+                                     __tuple_indices<_I1...>,
+                                     __tuple_indices<_I2...>)
+            : __first_(_VSTD::forward<_Args1>(get<_I1>(__first_args))...),
+              __second_(_VSTD::forward<_Args2>(get<_I2>(__second_args))...)
+            {}
+
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
@@ -2019,6 +1977,21 @@ public:
             __second_ = _VSTD::forward<_T2>(__p.second());
             return *this;
         }
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
+    template <class... _Args1, class... _Args2, size_t... _I1, size_t... _I2>
+        _LIBCPP_INLINE_VISIBILITY
+        __libcpp_compressed_pair_imp(piecewise_construct_t __pc,
+                                     tuple<_Args1...> __first_args,
+                                     tuple<_Args2...> __second_args,
+                                     __tuple_indices<_I1...>,
+                                     __tuple_indices<_I2...>)
+            : _T1(_VSTD::forward<_Args1>(get<_I1>(__first_args))...),
+              __second_(_VSTD::forward<_Args2>(get<_I2>(__second_args))...)
+            {}
+
+#endif  // _LIBCPP_HAS_NO_VARIADICS
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
@@ -2101,6 +2074,22 @@ public:
             return *this;
         }
 
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
+    template <class... _Args1, class... _Args2, size_t... _I1, size_t... _I2>
+        _LIBCPP_INLINE_VISIBILITY
+        __libcpp_compressed_pair_imp(piecewise_construct_t __pc,
+                                     tuple<_Args1...> __first_args,
+                                     tuple<_Args2...> __second_args,
+                                     __tuple_indices<_I1...>,
+                                     __tuple_indices<_I2...>)
+            : _T2(_VSTD::forward<_Args2>(get<_I2>(__second_args))...),
+              __first_(_VSTD::forward<_Args1>(get<_I1>(__first_args))...)
+              
+            {}
+
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
@@ -2179,6 +2168,21 @@ public:
             return *this;
         }
 
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
+    template <class... _Args1, class... _Args2, size_t... _I1, size_t... _I2>
+        _LIBCPP_INLINE_VISIBILITY
+        __libcpp_compressed_pair_imp(piecewise_construct_t __pc,
+                                     tuple<_Args1...> __first_args,
+                                     tuple<_Args2...> __second_args,
+                                     __tuple_indices<_I1...>,
+                                     __tuple_indices<_I2...>)
+            : _T1(_VSTD::forward<_Args1>(get<_I1>(__first_args))...),
+              _T2(_VSTD::forward<_Args2>(get<_I2>(__second_args))...)
+            {}
+
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
@@ -2251,6 +2255,20 @@ public:
             base::operator=(_VSTD::move(__p));
             return *this;
         }
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
+    template <class... _Args1, class... _Args2>
+        _LIBCPP_INLINE_VISIBILITY
+        __compressed_pair(piecewise_construct_t __pc, tuple<_Args1...> __first_args,
+                                                      tuple<_Args2...> __second_args)
+            : base(__pc, __first_args, __second_args,
+                   typename __make_tuple_indices<sizeof...(_Args1)>::type(),
+                   typename __make_tuple_indices<sizeof...(_Args2) >::type())
+            {}
+
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
@@ -3365,7 +3383,8 @@ public:
     template <class ..._Args>
         _LIBCPP_INLINE_VISIBILITY
         __shared_ptr_emplace(_Alloc __a, _Args&& ...__args)
-            :  __data_(_VSTD::move(__a), _Tp(_VSTD::forward<_Args>(__args)...)) {}
+            :  __data_(piecewise_construct, _VSTD::forward_as_tuple(__a),
+                   _VSTD::forward_as_tuple(_VSTD::forward<_Args>(__args)...)) {}
 
 #else  // _LIBCPP_HAS_NO_VARIADICS
 
