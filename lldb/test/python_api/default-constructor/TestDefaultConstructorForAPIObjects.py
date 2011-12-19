@@ -2,6 +2,10 @@
 Test lldb Python API object's default constructor and make sure it is invalid
 after initial construction.
 
+There are also some cases of boundary condition testings sprinkled throughout
+the tests where None is passed to SB API which expects (const char *) in the
+C++ API counterpart.  Passing None should not crash lldb!
+
 There are three exceptions to the above general rules, though; API objects
 SBCommadnReturnObject, SBStream, and SBSymbolContextList, are all valid objects
 after default construction.
@@ -130,6 +134,8 @@ class APIDefaultConstructorTestCase(TestBase):
     @python_api_test
     def test_SBFileSpec(self):
         obj = lldb.SBFileSpec()
+        # This is just to test that FileSpec(None) does not crash.
+        obj2 = lldb.SBFileSpec(None, True)
         if self.TraceOn():
             print obj
         self.assertFalse(obj)
