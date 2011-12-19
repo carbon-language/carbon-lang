@@ -57,6 +57,8 @@ CommandReturnObject::~CommandReturnObject ()
 void
 CommandReturnObject::AppendErrorWithFormat (const char *format, ...)
 {
+    if (!format)
+        return;
     va_list args;
     va_start (args, format);
     StreamString sstrm;
@@ -76,6 +78,8 @@ CommandReturnObject::AppendErrorWithFormat (const char *format, ...)
 void
 CommandReturnObject::AppendMessageWithFormat (const char *format, ...)
 {
+    if (!format)
+        return;
     va_list args;
     va_start (args, format);
     StreamString sstrm;
@@ -88,6 +92,8 @@ CommandReturnObject::AppendMessageWithFormat (const char *format, ...)
 void
 CommandReturnObject::AppendWarningWithFormat (const char *format, ...)
 {
+    if (!format)
+        return;
     va_list args;
     va_start (args, format);
     StreamString sstrm;
@@ -100,6 +106,8 @@ CommandReturnObject::AppendWarningWithFormat (const char *format, ...)
 void
 CommandReturnObject::AppendMessage (const char *in_string, int len)
 {
+    if (!in_string)
+        return;
     if (len < 0)
         len = ::strlen (in_string);
     GetOutputStream().Printf("%*.*s\n", len, len, in_string);
@@ -108,6 +116,8 @@ CommandReturnObject::AppendMessage (const char *in_string, int len)
 void
 CommandReturnObject::AppendWarning (const char *in_string, int len)
 {
+    if (!in_string)
+        return;
     if (len < 0)
         len = ::strlen (in_string);
     GetErrorStream().Printf("warning: %*.*s\n", len, len, in_string);
@@ -119,6 +129,8 @@ CommandReturnObject::AppendWarning (const char *in_string, int len)
 void
 CommandReturnObject::AppendRawWarning (const char *in_string, int len)
 {
+    if (!in_string)
+        return;
     if (len < 0)
         len = ::strlen (in_string);
     GetErrorStream().Printf("%*.*s", len, len, in_string);
@@ -129,7 +141,6 @@ CommandReturnObject::AppendError (const char *in_string, int len)
 {
     if (!in_string)
         return;
-
     if (len < 0)
         len = ::strlen (in_string);
     GetErrorStream().Printf ("error: %*.*s\n", len, len, in_string);
@@ -150,6 +161,8 @@ CommandReturnObject::SetError (const Error &error, const char *fallback_error_cs
 void
 CommandReturnObject::AppendRawError (const char *in_string, int len)
 {
+    if (!in_string)
+        return;
     if (len < 0)
         len = ::strlen (in_string);
     GetErrorStream().Printf ("%*.*s", len, len, in_string);

@@ -64,6 +64,10 @@ class CommandInterpreterAPICase(TestBase):
         self.assertFalse(ci.AliasExists(None))
         ci.HandleCommand(None, res)
         self.assertFalse(res.Succeeded())
+        res.AppendMessage("Just appended a message.")
+        res.AppendMessage(None)
+        if self.TraceOn():
+            print res
 
         process = ci.GetProcess()
         self.assertTrue(process)
