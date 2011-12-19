@@ -513,9 +513,9 @@ CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II,
 }
 
 int
-TargetInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
-                                   SDNode *DefNode, unsigned DefIdx,
-                                   SDNode *UseNode, unsigned UseIdx) const {
+TargetInstrInfoImpl::getOperandLatency(const InstrItineraryData *ItinData,
+                                       SDNode *DefNode, unsigned DefIdx,
+                                       SDNode *UseNode, unsigned UseIdx) const {
   if (!ItinData || ItinData->isEmpty())
     return -1;
 
@@ -529,8 +529,8 @@ TargetInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   return ItinData->getOperandLatency(DefClass, DefIdx, UseClass, UseIdx);
 }
 
-int TargetInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
-                                     SDNode *N) const {
+int TargetInstrInfoImpl::getInstrLatency(const InstrItineraryData *ItinData,
+                                         SDNode *N) const {
   if (!ItinData || ItinData->isEmpty())
     return 1;
 
