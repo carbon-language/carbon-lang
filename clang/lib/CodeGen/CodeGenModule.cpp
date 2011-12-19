@@ -30,6 +30,7 @@
 #include "clang/AST/Mangle.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/Basic/Builtins.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -863,20 +864,27 @@ namespace {
   struct FunctionIsDirectlyRecursive :
     public RecursiveASTVisitor<FunctionIsDirectlyRecursive> {
     const StringRef Name;
+    const Builtin::Context &BI;
     bool Result;
-    FunctionIsDirectlyRecursive(const FunctionDecl *F) :
-      Name(F->getName()), Result(false) {
+    FunctionIsDirectlyRecursive(StringRef N, const Builtin::Context &C) :
+      Name(N), BI(C), Result(false) {
     }
     typedef RecursiveASTVisitor<FunctionIsDirectlyRecursive> Base;
 
     bool TraverseCallExpr(CallExpr *E) {
-      const Decl *D = E->getCalleeDecl();
-      if (!D)
+      const FunctionDecl *FD = E->getDirectCallee();
+      if (!FD)
         return true;
-      AsmLabelAttr *Attr = D->getAttr<AsmLabelAttr>();
-      if (!Attr)
+      AsmLabelAttr *Attr = FD->getAttr<AsmLabelAttr>();
+      if (Attr && Name == Attr->getLabel()) {
+        Result = true;
+        return false;
+      }
+      unsigned BuiltinID = FD->getBuiltinID();
+      if (!BuiltinID)
         return true;
-      if (Name == Attr->getLabel()) {
+      const char *BuiltinName = BI.GetName(BuiltinID) + strlen("__builtin_");
+      if (Name == BuiltinName) {
         Result = true;
         return false;
       }
@@ -885,15 +893,24 @@ namespace {
   };
 }
 
-// isTriviallyRecursiveViaAsm - Check if this function calls another
-// decl that, because of the asm attribute, ends up pointing to itself.
+// isTriviallyRecursive - Check if this function calls another
+// decl that, because of the asm attribute or the other decl being a builtin,
+// ends up pointing to itself.
 bool
-CodeGenModule::isTriviallyRecursiveViaAsm(const FunctionDecl *F) {
-  if (getCXXABI().getMangleContext().shouldMangleDeclName(F))
-    return false;
+CodeGenModule::isTriviallyRecursive(const FunctionDecl *FD) {
+  StringRef Name;
+  if (getCXXABI().getMangleContext().shouldMangleDeclName(FD)) {
+    // asm labels are a special king of mangling we have to support.
+    AsmLabelAttr *Attr = FD->getAttr<AsmLabelAttr>();
+    if (!Attr)
+      return false;
+    Name = Attr->getLabel();
+  } else {
+    Name = FD->getName();
+  }
 
-  FunctionIsDirectlyRecursive Walker(F);
-  Walker.TraverseFunctionDecl(const_cast<FunctionDecl*>(F));
+  FunctionIsDirectlyRecursive Walker(Name, Context.BuiltinInfo);
+  Walker.TraverseFunctionDecl(const_cast<FunctionDecl*>(FD));
   return Walker.Result;
 }
 
@@ -909,7 +926,7 @@ CodeGenModule::shouldEmitFunction(const FunctionDecl *F) {
   // but a function that calls itself is clearly not equivalent to the real
   // implementation.
   // This happens in glibc's btowc and in some configure checks.
-  return !isTriviallyRecursiveViaAsm(F);
+  return !isTriviallyRecursive(F);
 }
 
 void CodeGenModule::EmitGlobalDefinition(GlobalDecl GD) {

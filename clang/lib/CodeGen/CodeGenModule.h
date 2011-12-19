@@ -323,7 +323,7 @@ class CodeGenModule : public CodeGenTypeCache {
   void createOpenCLRuntime();
   void createCUDARuntime();
 
-  bool isTriviallyRecursiveViaAsm(const FunctionDecl *F);
+  bool isTriviallyRecursive(const FunctionDecl *F);
   bool shouldEmitFunction(const FunctionDecl *F);
   llvm::LLVMContext &VMContext;
 
