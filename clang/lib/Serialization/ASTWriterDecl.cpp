@@ -126,30 +126,6 @@ namespace clang {
   };
 }
 
-static bool isFirstDeclInFile(Decl *D) {
-  // FIXME: There must be a better way to abstract Redeclarable<T> into a 
-  // more-general "redeclarable type".
-  if (TagDecl *Tag = dyn_cast<TagDecl>(D))
-    return !Tag->getPreviousDeclaration() ||
-           Tag->getPreviousDeclaration()->isFromASTFile();
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-    return !FD->getPreviousDeclaration() ||
-           FD->getPreviousDeclaration()->isFromASTFile();
-  if (VarDecl *VD = dyn_cast<VarDecl>(D))
-    return !VD->getPreviousDeclaration() ||
-           VD->getPreviousDeclaration()->isFromASTFile();
-  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D))
-    return !TD->getPreviousDeclaration() ||
-           TD->getPreviousDeclaration()->isFromASTFile();
-  if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D))
-    return !ID->getPreviousDeclaration() ||
-            ID->getPreviousDeclaration()->isFromASTFile();
-  
-  RedeclarableTemplateDecl *RTD = cast<RedeclarableTemplateDecl>(D);
-  return !RTD->getPreviousDeclaration() ||
-          RTD->getPreviousDeclaration()->isFromASTFile();  
-}
-
 void ASTDeclWriter::Visit(Decl *D) {
   DeclVisitor<ASTDeclWriter>::Visit(D);
 
@@ -212,7 +188,7 @@ void ASTDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
   if (!D->hasAttrs() &&
       !D->isImplicit() &&
       !D->isUsed(false) &&
-      isFirstDeclInFile(D) &&
+      D->RedeclLink.getPointer() == D &&
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       !D->isTopLevelDeclInObjCContainer() &&
@@ -262,7 +238,7 @@ void ASTDeclWriter::VisitEnumDecl(EnumDecl *D) {
       !D->isImplicit() &&
       !D->isUsed(false) &&
       !D->hasExtInfo() &&
-      isFirstDeclInFile(D) &&
+      D->RedeclLink.getPointer() == D &&
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       !D->isTopLevelDeclInObjCContainer() &&
@@ -286,7 +262,7 @@ void ASTDeclWriter::VisitRecordDecl(RecordDecl *D) {
       !D->isImplicit() &&
       !D->isUsed(false) &&
       !D->hasExtInfo() &&
-      isFirstDeclInFile(D) &&
+      D->RedeclLink.getPointer() == D &&
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       !D->isTopLevelDeclInObjCContainer() &&
@@ -732,7 +708,7 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
       !D->isModulePrivate() &&
       D->getDeclName().getNameKind() == DeclarationName::Identifier &&
       !D->hasExtInfo() &&
-      isFirstDeclInFile(D) &&
+      D->RedeclLink.getPointer() == D &&
       !D->hasCXXDirectInitializer() &&
       D->getInit() == 0 &&
       !isa<ParmVarDecl>(D) &&
@@ -1298,7 +1274,13 @@ void ASTDeclWriter::VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
 
 template <typename T>
 void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
-  enum { FirstInFile, PointsToPrevious };
+  enum { OnlyDeclaration = 0, FirstInFile, PointsToPrevious };
+  if (D->RedeclLink.getPointer() == D) {
+    // This is the only declaration.
+    Record.push_back(OnlyDeclaration);
+    return;
+  }
+  
   T *First = D->getFirstDeclaration();
   if (!D->getPreviousDeclaration() ||
       D->getPreviousDeclaration()->isFromASTFile()) {
@@ -1399,8 +1381,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv = new BitCodeAbbrev();
   Abv->Add(BitCodeAbbrevOp(serialization::DECL_ENUM));
   // Redeclarable
-  Abv->Add(BitCodeAbbrevOp(0));                       // First in file
-  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // First ID
+  Abv->Add(BitCodeAbbrevOp(0));                       // No redeclaration
   // Decl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // DeclContext
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LexicalDeclContext
@@ -1447,8 +1428,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv = new BitCodeAbbrev();
   Abv->Add(BitCodeAbbrevOp(serialization::DECL_RECORD));
   // Redeclarable
-  Abv->Add(BitCodeAbbrevOp(0));                       // First in file
-  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // First ID
+  Abv->Add(BitCodeAbbrevOp(0));                       // No redeclaration
   // Decl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // DeclContext
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LexicalDeclContext
@@ -1489,8 +1469,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv = new BitCodeAbbrev();
   Abv->Add(BitCodeAbbrevOp(serialization::DECL_PARM_VAR));
   // Redeclarable
-  Abv->Add(BitCodeAbbrevOp(0));                       // First in file
-  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // First ID
+  Abv->Add(BitCodeAbbrevOp(0));                       // No redeclaration
   // Decl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // DeclContext
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LexicalDeclContext
@@ -1540,8 +1519,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv = new BitCodeAbbrev();
   Abv->Add(BitCodeAbbrevOp(serialization::DECL_TYPEDEF));
   // Redeclarable
-  Abv->Add(BitCodeAbbrevOp(0));                       // First in file
-  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // First ID
+  Abv->Add(BitCodeAbbrevOp(0));                       // No redeclaration
   // Decl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // DeclContext
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LexicalDeclContext
@@ -1569,8 +1547,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv = new BitCodeAbbrev();
   Abv->Add(BitCodeAbbrevOp(serialization::DECL_VAR));
   // Redeclarable
-  Abv->Add(BitCodeAbbrevOp(0));                       // First in file
-  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // First ID
+  Abv->Add(BitCodeAbbrevOp(0));                       // No redeclaration
   // Decl
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // DeclContext
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LexicalDeclContext

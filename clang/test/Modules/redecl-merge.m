@@ -14,7 +14,12 @@ void f(A *a) {
 
 @class A;
 
+@class B;
+
 __import_module__ redecl_merge_bottom;
+
+@implementation B
+@end
 
 void g(A *a) {
   [a init];

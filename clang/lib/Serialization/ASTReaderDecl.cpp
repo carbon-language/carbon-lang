@@ -1410,8 +1410,17 @@ ASTDeclReader::VisitDeclContext(DeclContext *DC) {
 
 template <typename T>
 void ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
-  enum RedeclKind { FirstInFile, PointsToPrevious };
+  enum RedeclKind { OnlyDeclaration = 0, FirstInFile, PointsToPrevious };
   RedeclKind Kind = (RedeclKind)Record[Idx++];
+  
+  // If this is the only known declaration of this entity, this module file
+  // has no additional redeclaration information. However, other module
+  // files might have redeclarations.
+  if (Kind == OnlyDeclaration) {
+    if (Reader.PendingDeclChainsKnown.insert(ThisDeclID))
+      Reader.PendingDeclChains.push_back(ThisDeclID);
+    return;
+  }
   
   // Read the first declaration ID, and note that we need to reconstruct
   // the redeclaration chain once we hit the top level.
@@ -1422,6 +1431,9 @@ void ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
   T *FirstDecl = cast_or_null<T>(Reader.GetDecl(FirstDeclID));
 
   switch (Kind) {
+  case OnlyDeclaration:
+    llvm_unreachable("only declaration handled above");
+      
   case FirstInFile:
     if (FirstDecl != D)
       D->RedeclLink = typename Redeclarable<T>::PreviousDeclLink(FirstDecl);

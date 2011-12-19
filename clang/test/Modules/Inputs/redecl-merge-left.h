@@ -4,4 +4,8 @@ __import_module__ redecl_merge_top;
 
 @class A;
 
+@interface B
+@end
+
 @class A;
+

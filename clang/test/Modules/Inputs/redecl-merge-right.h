@@ -7,3 +7,5 @@ __import_module__ redecl_merge_top;
 - (Super*)init;
 @end
 
+@class B;
+
