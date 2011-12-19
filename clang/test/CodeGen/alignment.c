@@ -18,6 +18,13 @@ void test1(myint *p) {
 // CHECK: store i32 0, i32* {{.*}}, align 1
 // CHECK: ret void
 
+int test1a(myint *p) {
+  return *p;
+}
+// CHECK: @test1a(
+// CHECK: load i32* {{.*}}, align 1
+// CHECK: ret i32
+
 
 // PR5279 - Reduced alignment on typedef.
 typedef float __attribute__((vector_size(16), aligned(4))) packedfloat4;
@@ -38,4 +45,5 @@ void test3(packedfloat3 *p) {
 // CHECK: @test3(
 // CHECK: store <3 x float> {{.*}}, align 4
 // CHECK: ret void
+
 
