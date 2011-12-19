@@ -1,6 +1,7 @@
 set(files
   altivec.h
   avxintrin.h
+  avx2intrin.h
   emmintrin.h
   float.h
   immintrin.h

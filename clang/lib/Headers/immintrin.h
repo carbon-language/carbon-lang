@@ -56,4 +56,8 @@
 #include <avxintrin.h>
 #endif
 
+#ifdef __AVX2__
+#include <avx2intrin.h>
+#endif
+
 #endif /* __IMMINTRIN_H */

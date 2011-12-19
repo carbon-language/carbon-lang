@@ -2519,6 +2519,7 @@ public:
     uint32_t Bits = 0;
     bool HasMacroDefinition = hasMacroDefinition(II, Macro);
     Bits = (uint32_t)II->getObjCOrBuiltinID();
+    assert((Bits & 0x7ff) == Bits && "ObjCOrBuiltinID too big for ASTReader.");
     Bits = (Bits << 1) | unsigned(HasMacroDefinition);
     Bits = (Bits << 1) | unsigned(II->isExtensionToken());
     Bits = (Bits << 1) | unsigned(II->isPoisoned());

@@ -529,8 +529,8 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
   Bits >>= 1;
   bool hasMacroDefinition = Bits & 0x01;
   Bits >>= 1;
-  unsigned ObjCOrBuiltinID = Bits & 0x3FF;
-  Bits >>= 10;
+  unsigned ObjCOrBuiltinID = Bits & 0x7FF;
+  Bits >>= 11;
 
   assert(Bits == 0 && "Extra bits in the identifier?");
   DataLen -= 6;
