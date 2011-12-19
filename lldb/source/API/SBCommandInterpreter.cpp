@@ -65,7 +65,7 @@ SBCommandInterpreter::IsValid() const
 bool
 SBCommandInterpreter::CommandExists (const char *cmd)
 {
-    if (m_opaque_ptr)
+    if (cmd && m_opaque_ptr)
         return m_opaque_ptr->CommandExists (cmd);
     return false;
 }
@@ -73,7 +73,7 @@ SBCommandInterpreter::CommandExists (const char *cmd)
 bool
 SBCommandInterpreter::AliasExists (const char *cmd)
 {
-    if (m_opaque_ptr)
+    if (cmd && m_opaque_ptr)
         return m_opaque_ptr->AliasExists (cmd);
     return false;
 }
@@ -88,7 +88,7 @@ SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnOb
                      m_opaque_ptr, command_line, result.get(), add_to_history);
 
     result.Clear();
-    if (m_opaque_ptr)
+    if (command_line && m_opaque_ptr)
     {
         TargetSP target_sp(m_opaque_ptr->GetDebugger().GetSelectedTarget());
         Mutex::Locker api_locker;
@@ -98,7 +98,7 @@ SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnOb
     }
     else
     {
-        result->AppendError ("SBCommandInterpreter is not valid");
+        result->AppendError ("SBCommandInterpreter or the command line is not valid");
         result->SetStatus (eReturnStatusFailed);
     }
 
