@@ -14,6 +14,7 @@ def fuzz_obj(obj):
     obj.AdoptFileDesriptor(1, False)
     obj.AdoptFileDesriptor(2, False)
     obj.Connect("file:/tmp/myfile")
+    obj.Connect(None)
     obj.Disconnect()
     obj.IsConnected()
     obj.GetCloseOnEOF()
