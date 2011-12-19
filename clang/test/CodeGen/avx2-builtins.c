@@ -65,6 +65,36 @@ __m256 test_mm256_add_epi64(__m256 a, __m256 b) {
   return _mm256_add_epi64(a, b);
 }
 
+__m256 test_mm256_adds_epi8(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.padds.b
+  return _mm256_adds_epi8(a, b);
+}
+
+__m256 test_mm256_adds_epi16(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.padds.w
+  return _mm256_adds_epi16(a, b);
+}
+
+__m256 test_mm256_adds_epu8(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.paddus.b
+  return _mm256_adds_epu8(a, b);
+}
+
+__m256 test_mm256_adds_epu16(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.paddus.w
+  return _mm256_adds_epu16(a, b);
+}
+
+__m256 test_mm256_alignr_epi8(__m256 a, __m256 b) {
+  // CHECK: shufflevector <32 x i8> %1, <32 x i8> %0, <32 x i32> <i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 32, i32 33, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 48, i32 49>
+  return _mm256_alignr_epi8(a, b, 2);
+}
+
+__m256 test2_mm256_alignr_epi8(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.psrl.dq({{.*}}, i32 8)
+  return _mm256_alignr_epi8(a, b, 17);
+}
+
 __m256 test_mm256_sub_epi8(__m256 a, __m256 b) {
   // CHECK: sub <32 x i8>
   return _mm256_sub_epi8(a, b);
@@ -83,4 +113,24 @@ __m256 test_mm256_sub_epi32(__m256 a, __m256 b) {
 __m256 test_mm256_sub_epi64(__m256 a, __m256 b) {
   // CHECK: sub <4 x i64>
   return _mm256_sub_epi64(a, b);
+}
+
+__m256 test_mm256_subs_epi8(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.psubs.b
+  return _mm256_subs_epi8(a, b);
+}
+
+__m256 test_mm256_subs_epi16(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.psubs.w
+  return _mm256_subs_epi16(a, b);
+}
+
+__m256 test_mm256_subs_epu8(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.psubus.b
+  return _mm256_subs_epu8(a, b);
+}
+
+__m256 test_mm256_subs_epu16(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.psubus.w
+  return _mm256_subs_epu16(a, b);
 }

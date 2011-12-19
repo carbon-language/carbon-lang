@@ -95,6 +95,35 @@ _mm256_add_epi64(__m256i a, __m256i b)
 }
 
 static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_adds_epi8(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_paddsb256((__v32qi)a, (__v32qi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_adds_epi16(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_paddsw256((__v16hi)a, (__v16hi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_adds_epu8(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_paddusb256((__v32qi)a, (__v32qi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_adds_epu16(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_paddusw256((__v16hi)a, (__v16hi)b);
+}
+
+#define _mm256_alignr_epi8(a, b, n) __extension__ ({ \
+  __m256i __a = (a); \
+  __m256i __b = (b); \
+  (__m256i)__builtin_ia32_palignr256((__v32qi)__a, (__v32qi)__b, (n)); })
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_sub_epi8(__m256i a, __m256i b)
 {
   return (__m256i)((__v32qi)a - (__v32qi)b);
@@ -117,3 +146,28 @@ _mm256_sub_epi64(__m256i a, __m256i b)
 {
   return a - b;
 }
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_subs_epi8(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_psubsb256((__v32qi)a, (__v32qi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_subs_epi16(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_psubsw256((__v16hi)a, (__v16hi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_subs_epu8(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_psubusb256((__v32qi)a, (__v32qi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_subs_epu16(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_psubusw256((__v16hi)a, (__v16hi)b);
+}
+
