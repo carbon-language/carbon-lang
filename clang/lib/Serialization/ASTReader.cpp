@@ -1817,8 +1817,9 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         GlobalTypeMap.insert(std::make_pair(getTotalNumTypes(), &F));
         
         // Introduce the local -> global mapping for types within this module.
-        F.TypeRemap.insert(std::make_pair(LocalBaseTypeIndex, 
-                             F.BaseTypeIndex - LocalBaseTypeIndex));
+        F.TypeRemap.insertOrReplace(
+          std::make_pair(LocalBaseTypeIndex, 
+                         F.BaseTypeIndex - LocalBaseTypeIndex));
         
         TypesLoaded.resize(TypesLoaded.size() + F.LocalNumTypes);
       }
@@ -1843,8 +1844,8 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         
         // Introduce the local -> global mapping for declarations within this
         // module.
-        F.DeclRemap.insert(std::make_pair(LocalBaseDeclID, 
-                                          F.BaseDeclID - LocalBaseDeclID));
+        F.DeclRemap.insertOrReplace(
+          std::make_pair(LocalBaseDeclID, F.BaseDeclID - LocalBaseDeclID));
         
         // Introduce the global -> local mapping for declarations within this
         // module.
@@ -1927,9 +1928,9 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         
         // Introduce the local -> global mapping for identifiers within this
         // module.
-        F.IdentifierRemap.insert(
-                            std::make_pair(LocalBaseIdentifierID,
-                              F.BaseIdentifierID - LocalBaseIdentifierID));
+        F.IdentifierRemap.insertOrReplace(
+          std::make_pair(LocalBaseIdentifierID,
+                         F.BaseIdentifierID - LocalBaseIdentifierID));
         
         IdentifiersLoaded.resize(IdentifiersLoaded.size() 
                                  + F.LocalNumIdentifiers);
@@ -2004,8 +2005,9 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         
         // Introduce the local -> global mapping for selectors within this 
         // module.
-        F.SelectorRemap.insert(std::make_pair(LocalBaseSelectorID,
-                                 F.BaseSelectorID - LocalBaseSelectorID));
+        F.SelectorRemap.insertOrReplace(
+          std::make_pair(LocalBaseSelectorID,
+                         F.BaseSelectorID - LocalBaseSelectorID));
 
         SelectorsLoaded.resize(SelectorsLoaded.size() + F.LocalNumSelectors);        
       }
@@ -2275,7 +2277,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
        
         // Introduce the local -> global mapping for preprocessed entities in
         // this module.
-        F.PreprocessedEntityRemap.insert(
+        F.PreprocessedEntityRemap.insertOrReplace(
           std::make_pair(LocalBasePreprocessedEntityID,
             F.BasePreprocessedEntityID - LocalBasePreprocessedEntityID));
       }
@@ -3184,7 +3186,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         
         // Introduce the local -> global mapping for submodules within this 
         // module.
-        F.SubmoduleRemap.insert(
+        F.SubmoduleRemap.insertOrReplace(
           std::make_pair(LocalBaseSubmoduleID,
                          F.BaseSubmoduleID - LocalBaseSubmoduleID));
         

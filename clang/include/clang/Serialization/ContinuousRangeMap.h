@@ -68,6 +68,16 @@ public:
            "Must insert keys in order.");
     Rep.push_back(Val);
   }
+  
+  void insertOrReplace(const value_type &Val) {
+    iterator I = std::lower_bound(Rep.begin(), Rep.end(), Val, Compare());
+    if (I != Rep.end() && I->first == Val.first) {
+      I->second = Val.second;
+      return;
+    }
+    
+    Rep.insert(I, Val);
+  }
 
   typedef typename Representation::iterator iterator;
   typedef typename Representation::const_iterator const_iterator;

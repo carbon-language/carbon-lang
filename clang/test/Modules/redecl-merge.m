@@ -14,11 +14,16 @@ void f(A *a) {
 
 @class A;
 
+B *f1() {
+  return [B create_a_B];
+}
+
 @class B;
 
 __import_module__ redecl_merge_bottom;
 
 @implementation B
++ (B*)create_a_B { return 0; }
 @end
 
 void g(A *a) {
