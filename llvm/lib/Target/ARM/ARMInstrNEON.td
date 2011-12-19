@@ -819,12 +819,11 @@ def VLD1LNd8  : VLD1LN<0b0000, {?,?,?,0}, "8", v8i8, extloadi8> {
 }
 def VLD1LNd16 : VLD1LN<0b0100, {?,?,0,?}, "16", v4i16, extloadi16> {
   let Inst{7-6} = lane{1-0};
-  let Inst{4}   = Rn{4};
+  let Inst{5-4} = Rn{5-4};
 }
 def VLD1LNd32 : VLD1LN32<0b1000, {?,0,?,?}, "32", v2i32, load> {
   let Inst{7} = lane{0};
-  let Inst{5} = Rn{4};
-  let Inst{4} = Rn{4};
+  let Inst{5-4} = Rn{5-4};
 }
 
 def VLD1LNq8Pseudo  : VLD1QLNPseudo<v16i8, extloadi8>;

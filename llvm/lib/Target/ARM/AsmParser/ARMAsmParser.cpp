@@ -361,7 +361,7 @@ class ARMOperand : public MCParsedAsmOperand {
       ARM_AM::ShiftOpc ShiftType; // Shift type for OffsetReg
       unsigned ShiftImm;        // shift for OffsetReg.
       unsigned Alignment;       // 0 = no alignment specified
-                                // n = alignment in bytes (8, 16, or 32)
+                                // n = alignment in bytes (2, 4, 8, 16, or 32)
       unsigned isNegative : 1;  // Negated OffsetReg? (~'U' bit)
     } Memory;
 
@@ -3954,7 +3954,10 @@ parseMemory(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     unsigned Align = 0;
     switch (CE->getValue()) {
     default:
-      return Error(E, "alignment specifier must be 64, 128, or 256 bits");
+      return Error(E,
+                   "alignment specifier must be 16, 32, 64, 128, or 256 bits");
+    case 16:  Align = 2; break;
+    case 32:  Align = 4; break;
     case 64:  Align = 8; break;
     case 128: Align = 16; break;
     case 256: Align = 32; break;

@@ -1372,11 +1372,11 @@ getAddrMode6OneLane32AddressOpValue(const MCInst &MI, unsigned Op,
 
   switch (Imm.getImm()) {
   default: break;
-  case 2:
-  case 4:
   case 8:
-  case 16: Align = 0x00; break;
-  case 32: Align = 0x03; break;
+  case 16:
+  case 32: // Default '0' value for invalid alignments of 8, 16, 32 bytes.
+  case 2: Align = 0x00; break;
+  case 4: Align = 0x03; break;
   }
 
   return RegNo | (Align << 4);
