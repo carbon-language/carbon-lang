@@ -63,6 +63,7 @@ public:
 { "fixup_arm_ldst_pcrel_12", 0,            32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_t2_ldst_pcrel_12",  0,            32,  MCFixupKindInfo::FKF_IsPCRel |
                                    MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
+{ "fixup_arm_pcrel_10_unscaled", 0,        32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_pcrel_10",      0,            32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_t2_pcrel_10",       0,            32,  MCFixupKindInfo::FKF_IsPCRel |
                                    MCFixupKindInfo::FKF_IsAlignedDownTo32Bits},
@@ -399,6 +400,17 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case ARM::fixup_arm_thumb_bcc:
     // Offset by 4 and don't encode the lower bit, which is always 0.
     return ((Value - 4) >> 1) & 0xff;
+  case ARM::fixup_arm_pcrel_10_unscaled: {
+    Value = Value - 8; // ARM fixups offset by an additional word and don't
+                       // need to adjust for the half-word ordering.
+    bool isAdd = true;
+    if ((int64_t)Value < 0) {
+      Value = -Value;
+      isAdd = false;
+    }
+    assert ((Value < 256) && "Out of range pc-relative fixup value!");
+    return Value | (isAdd << 23);
+  }
   case ARM::fixup_arm_pcrel_10:
     Value = Value - 4; // ARM fixups offset by an additional word and don't
                        // need to adjust for the half-word ordering.
@@ -416,8 +428,8 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     assert ((Value < 256) && "Out of range pc-relative fixup value!");
     Value |= isAdd << 23;
 
-    // Same addressing mode as fixup_arm_pcrel_10,
-    // but with 16-bit halfwords swapped.
+    // Same addressing mode as fixup_arm_pcrel_10, but with 16-bit halfwords
+    // swapped.
     if (Kind == ARM::fixup_t2_pcrel_10) {
       uint32_t swapped = (Value & 0xFFFF0000) >> 16;
       swapped |= (Value & 0x0000FFFF) << 16;
@@ -504,6 +516,7 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   case ARM::fixup_arm_thumb_cb:
     return 2;
 
+  case ARM::fixup_arm_pcrel_10_unscaled:
   case ARM::fixup_arm_ldst_pcrel_12:
   case ARM::fixup_arm_pcrel_10:
   case ARM::fixup_arm_adr_pcrel_12:

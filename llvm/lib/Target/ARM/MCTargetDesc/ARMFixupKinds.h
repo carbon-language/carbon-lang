@@ -23,6 +23,9 @@ enum Fixups {
   // the 16-bit halfwords reordered.
   fixup_t2_ldst_pcrel_12,
 
+  // fixup_arm_pcrel_10_unscaled - 10-bit PC relative relocation for symbol
+  // addresses used in LDRD/LDRH/LDRB/etc. instructions. All bits are encoded.
+  fixup_arm_pcrel_10_unscaled,
   // fixup_arm_pcrel_10 - 10-bit PC relative relocation for symbol addresses
   // used in VFP instructions where the lower 2 bits are not encoded
   // (so it's encoded as an 8-bit immediate).

@@ -436,6 +436,12 @@ void ARMInstPrinter::printAM3PreOrOffsetIndexOp(const MCInst *MI, unsigned Op,
 
 void ARMInstPrinter::printAddrMode3Operand(const MCInst *MI, unsigned Op,
                                            raw_ostream &O) {
+  const MCOperand &MO1 = MI->getOperand(Op);
+  if (!MO1.isReg()) {   //  For label symbolic references.
+    printOperand(MI, Op, O);
+    return;
+  }
+
   const MCOperand &MO3 = MI->getOperand(Op+2);
   unsigned IdxMode = ARM_AM::getAM3IdxMode(MO3.getImm());
 
@@ -884,6 +890,11 @@ void ARMInstPrinter::printT2AddrModeImm8s4Operand(const MCInst *MI,
                                                   raw_ostream &O) {
   const MCOperand &MO1 = MI->getOperand(OpNum);
   const MCOperand &MO2 = MI->getOperand(OpNum+1);
+
+  if (!MO1.isReg()) {   //  For label symbolic references.
+    printOperand(MI, OpNum, O);
+    return;
+  }
 
   O << "[" << getRegisterName(MO1.getReg());
 

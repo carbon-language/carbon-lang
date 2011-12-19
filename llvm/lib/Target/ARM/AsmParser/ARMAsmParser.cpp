@@ -880,6 +880,11 @@ public:
     return Val > -4096 && Val < 4096;
   }
   bool isAddrMode3() const {
+    // If we have an immediate that's not a constant, treat it as a label
+    // reference needing a fixup. If it is a constant, it's something else
+    // and we reject it.
+    if (Kind == k_Immediate && !isa<MCConstantExpr>(getImm()))
+      return true;
     if (!isMemory() || Memory.Alignment != 0) return false;
     // No shifts are legal for AM3.
     if (Memory.ShiftType != ARM_AM::no_shift) return false;
@@ -992,6 +997,11 @@ public:
     return Val >= 0 && Val <= 1020 && (Val % 4) == 0;
   }
   bool isMemImm8s4Offset() const {
+    // If we have an immediate that's not a constant, treat it as a label
+    // reference needing a fixup. If it is a constant, it's something else
+    // and we reject it.
+    if (Kind == k_Immediate && !isa<MCConstantExpr>(getImm()))
+      return true;
     if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)
       return false;
     // Immediate offset a multiple of 4 in range [-1020, 1020].
@@ -1488,6 +1498,16 @@ public:
 
   void addAddrMode3Operands(MCInst &Inst, unsigned N) const {
     assert(N == 3 && "Invalid number of operands!");
+    // If we have an immediate that's not a constant, treat it as a label
+    // reference needing a fixup. If it is a constant, it's something else
+    // and we reject it.
+    if (isImm()) {
+      Inst.addOperand(MCOperand::CreateExpr(getImm()));
+      Inst.addOperand(MCOperand::CreateReg(0));
+      Inst.addOperand(MCOperand::CreateImm(0));
+      return;
+    }
+
     int32_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() : 0;
     if (!Memory.OffsetRegNum) {
       ARM_AM::AddrOpc AddSub = Val < 0 ? ARM_AM::sub : ARM_AM::add;
@@ -1551,6 +1571,15 @@ public:
 
   void addMemImm8s4OffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
+    // If we have an immediate that's not a constant, treat it as a label
+    // reference needing a fixup. If it is a constant, it's something else
+    // and we reject it.
+    if (isImm()) {
+      Inst.addOperand(MCOperand::CreateExpr(getImm()));
+      Inst.addOperand(MCOperand::CreateImm(0));
+      return;
+    }
+
     int64_t Val = Memory.OffsetImm ? Memory.OffsetImm->getValue() : 0;
     Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
     Inst.addOperand(MCOperand::CreateImm(Val));
