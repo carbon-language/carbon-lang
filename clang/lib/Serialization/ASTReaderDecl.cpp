@@ -615,32 +615,10 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
     // We will rebuild this list lazily.
     ID->setIvarList(0);
     
-    // If there are any pending forward references, make their definition data
-    // pointers point at the newly-allocated data.
-    ASTReader::PendingForwardRefsMap::iterator
-    FindI = Reader.PendingForwardRefs.find(ID);
-    if (FindI != Reader.PendingForwardRefs.end()) {
-      ASTReader::ForwardRefs &Refs = FindI->second;
-      for (ASTReader::ForwardRefs::iterator I = Refs.begin(), 
-                                            E = Refs.end(); 
-           I != E; ++I)
-        cast<ObjCInterfaceDecl>(*I)->Data = ID->Data;
-#ifndef NDEBUG
-      // We later check whether PendingForwardRefs is empty to make sure all
-      // pending references were linked.
-      Reader.PendingForwardRefs.erase(ID);
-#endif
-      
-      // Note that we have deserialized a definition.
-      Reader.PendingDefinitions.insert(ID);
-    }
-  } else if (Def) {
-    if (Def->Data) {
-      ID->Data = Def->Data;
-    } else {
-      // The definition is still initializing.
-      Reader.PendingForwardRefs[Def].push_back(ID);
-    }
+    // Note that we have deserialized a definition.
+    Reader.PendingDefinitions.insert(ID);
+  } else if (Def && Def->Data) {
+    ID->Data = Def->Data;
   }
 }
 
@@ -1018,31 +996,11 @@ void ASTDeclReader::InitializeCXXDefinitionData(CXXRecordDecl *D,
   if (D == DefinitionDecl) {
     D->DefinitionData = new (C) struct CXXRecordDecl::DefinitionData(D);
     ReadCXXDefinitionData(*D->DefinitionData, Record, Idx);
-    // We read the definition info. Check if there are pending forward
-    // references that need to point to this DefinitionData pointer.
-    ASTReader::PendingForwardRefsMap::iterator
-        FindI = Reader.PendingForwardRefs.find(D);
-    if (FindI != Reader.PendingForwardRefs.end()) {
-      ASTReader::ForwardRefs &Refs = FindI->second;
-      for (ASTReader::ForwardRefs::iterator
-             I = Refs.begin(), E = Refs.end(); I != E; ++I)
-        cast<CXXRecordDecl>(*I)->DefinitionData = D->DefinitionData;
-#ifndef NDEBUG
-      // We later check whether PendingForwardRefs is empty to make sure all
-      // pending references were linked.
-      Reader.PendingForwardRefs.erase(D);
-#endif
-    }
-    
+
     // Note that we have deserialized a definition.
     Reader.PendingDefinitions.insert(D);
-  } else if (DefinitionDecl) {
-    if (DefinitionDecl->DefinitionData) {
-      D->DefinitionData = DefinitionDecl->DefinitionData;
-    } else {
-      // The definition is still initializing.
-      Reader.PendingForwardRefs[DefinitionDecl].push_back(D);
-    }
+  } else if (DefinitionDecl && DefinitionDecl->DefinitionData) {
+    D->DefinitionData = DefinitionDecl->DefinitionData;
   }
 }
 
@@ -2244,12 +2202,8 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
       ObjCInterfaceDecl *ID = cast<ObjCInterfaceDecl>(D);
       ObjCInterfaceDecl *Def
         = Reader.ReadDeclAs<ObjCInterfaceDecl>(ModuleFile, Record, Idx);
-      if (Def->Data) {
+      if (Def->Data)
         ID->Data = Def->Data;
-      } else {
-        // The definition is still initializing.
-        Reader.PendingForwardRefs[Def].push_back(ID);
-      }
       break;
     }
     }

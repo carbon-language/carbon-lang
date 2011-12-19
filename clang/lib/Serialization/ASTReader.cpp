@@ -6149,9 +6149,6 @@ void ASTReader::FinishedDeserializing() {
 
     finishPendingActions();
     PendingDeclChainsKnown.clear();
-
-    assert(PendingForwardRefs.size() == 0 &&
-           "Some forward refs did not get linked to the definition!");
   }
   --NumCurrentElementsDeserializing;
 }
