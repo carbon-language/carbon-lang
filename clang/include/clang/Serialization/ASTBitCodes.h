@@ -366,10 +366,10 @@ namespace clang {
       /// \brief Record code for an update to the TU's lexically contained
       /// declarations.
       TU_UPDATE_LEXICAL = 28,
-
-      /// \brief Record code for an update to first decls pointing to the
-      /// latest redeclarations.
-      REDECLS_UPDATE_LATEST = 29,
+      
+      /// \brief Record code for the array describing the first/last local
+      /// redeclarations of each entity.
+      LOCAL_REDECLARATIONS = 29,
 
       /// \brief Record code for declarations that Sema keeps references of.
       SEMA_DECL_REFS = 30,
@@ -445,18 +445,14 @@ namespace clang {
 
       /// \brief Record code for ObjC categories in a module that are chained to
       /// an interface.
-      OBJC_CHAINED_CATEGORIES,
+      OBJC_CHAINED_CATEGORIES = 49,
 
       /// \brief Record code for a file sorted array of DeclIDs in a module.
-      FILE_SORTED_DECLS,
+      FILE_SORTED_DECLS = 50,
       
       /// \brief Record code for an array of all of the (sub)modules that were
       /// imported by the AST file.
-      IMPORTED_MODULES,
-      
-      /// \brief Record code for the array describing the first/last local
-      /// redeclarations of each entity.
-      LOCAL_REDECLARATIONS
+      IMPORTED_MODULES = 51
     };
 
     /// \brief Record types used within a source manager block.

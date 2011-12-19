@@ -333,12 +333,6 @@ private:
   /// declarations that have not yet been linked to their definitions.
   llvm::SmallPtrSet<Decl *, 4> PendingDefinitions;
   
-  typedef llvm::DenseMap<serialization::DeclID, serialization::DeclID>
-      FirstLatestDeclIDMap;
-  /// \brief Map of first declarations from a chained PCH that point to the
-  /// most recent declarations in another AST file.
-  FirstLatestDeclIDMap FirstLatestDeclIDs;
-
   /// \brief Set of ObjC interfaces that have categories chained to them in
   /// other modules.
   llvm::DenseSet<serialization::GlobalDeclID> ObjCChainedCategoriesInterfaces;
