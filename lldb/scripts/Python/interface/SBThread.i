@@ -79,6 +79,10 @@ public:
     uint64_t
     GetStopReasonDataAtIndex(uint32_t idx);
 
+    %feature("autodoc", "
+    Pass only an (int)length and expect to get a Python string describing the
+    stop reason.
+    ") GetStopDescription;
     size_t
     GetStopDescription (char *dst, size_t dst_len);
 

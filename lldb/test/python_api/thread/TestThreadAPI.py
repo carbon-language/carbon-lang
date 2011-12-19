@@ -148,7 +148,7 @@ class ThreadAPITestCase(TestBase):
         #self.runCmd("process status")
 
         # Due to the typemap magic (see lldb.swig), we pass in an (int)length to GetStopDescription
-        # and expect to get a Python string as the result object!
+        # and expect to get a Python string as the return object!
         # The 100 is just an arbitrary number specifying the buffer size.
         stop_description = thread.GetStopDescription(100)
         self.expect(stop_description, exe=False,
