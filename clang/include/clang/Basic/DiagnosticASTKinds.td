@@ -30,6 +30,8 @@ def note_constexpr_non_global : Note<
 def note_constexpr_past_end : Note<
   "dereferenced pointer past the end of %select{|subobject of}0 "
   "%select{temporary|%2}1 is not a constant expression">;
+def note_constexpr_var_init_non_constant : Note<
+  "initializer of %0 is not a constant expression">;
 def note_constexpr_temporary_here : Note<"temporary created here">;
 def note_constexpr_depth_limit_exceeded : Note<
   "constexpr evaluation exceeded maximum depth of %0 calls">;

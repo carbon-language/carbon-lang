@@ -799,8 +799,14 @@ void ASTDeclReader::VisitVarDecl(VarDecl *VD) {
   VD->VarDeclBits.NRVOVariable = Record[Idx++];
   VD->VarDeclBits.CXXForRangeDecl = Record[Idx++];
   VD->VarDeclBits.ARCPseudoStrong = Record[Idx++];
-  if (Record[Idx++])
+  if (uint64_t Val = Record[Idx++]) {
     VD->setInit(Reader.ReadExpr(F));
+    if (Val > 1) {
+      EvaluatedStmt *Eval = VD->ensureEvaluatedStmt();
+      Eval->CheckedICE = true;
+      Eval->IsICE = Val == 3;
+    }
+  }
 
   if (Record[Idx++]) { // HasMemberSpecializationInfo.
     VarDecl *Tmpl = ReadDeclAs<VarDecl>(Record, Idx);

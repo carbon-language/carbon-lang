@@ -34,13 +34,12 @@ constexpr int f(DerivedFromNonTrivDtor<NonTrivDtorBase>); // expected-error {{co
 struct TrivDtor {
   constexpr TrivDtor();
 };
-// FIXME: when building DefinitionData we look at 'isUserProvided' before it's set up!
-#if 0
+constexpr int f(TrivDtor);
 struct TrivDefaultedDtor {
   constexpr TrivDefaultedDtor();
   ~TrivDefaultedDtor() = default;
 };
-#endif
+constexpr int f(TrivDefaultedDtor);
 
 //  - it is an aggregate type or has at least one constexpr constructor or
 //    constexpr constructor template that is not a copy or move constructor
@@ -100,6 +99,7 @@ struct ArrGood {
   Agg agg[24];
   double d[12];
   TrivDtor td[3];
+  TrivDefaultedDtor tdd[3];
 };
 constexpr int f(ArrGood);
 
@@ -120,8 +120,7 @@ namespace MutableMembers {
   // Here's one reason why allowing this would be a disaster...
   template<int n> struct Id { int k = n; };
   int f() {
-    // FIXME: correctly check whether the initializer is a constant expression.
-    constexpr MM m = { 0 }; // desired-error {{must be a constant expression}}
+    constexpr MM m = { 0 }; // expected-error {{must be initialized by a constant expression}} expected-note {{non-literal type 'const MutableMembers::MM' cannot be used in a constant expression}}
     ++m.n;
     return Id<m.n>().k; // expected-error {{not an integral constant expression}}
   }

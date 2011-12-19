@@ -382,6 +382,14 @@ namespace {
         return OptionalDiagnostic();
       return OptionalDiagnostic(&addDiag(Loc, DiagId));
     }
+
+    /// Add a stack of notes to a prior diagnostic.
+    void addNotes(ArrayRef<PartialDiagnosticAt> Diags) {
+      if (HasActiveDiagnostic) {
+        EvalStatus.Diag->insert(EvalStatus.Diag->end(),
+                                Diags.begin(), Diags.end());
+      }
+    }
   };
 }
 
@@ -1069,6 +1077,13 @@ static bool EvaluateVarDeclInit(EvalInfo &Info, const Expr *E,
     return true;
   }
 
+  // Dig out the initializer, and use the declaration which it's attached to.
+  const Expr *Init = VD->getAnyInitializer(VD);
+  if (!Init || Init->isValueDependent()) {
+    Info.Diag(E->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
+    return false;
+  }
+
   // If we're currently evaluating the initializer of this declaration, use that
   // in-flight value.
   if (Info.EvaluatingDecl == VD) {
@@ -1083,47 +1098,23 @@ static bool EvaluateVarDeclInit(EvalInfo &Info, const Expr *E,
     return false;
   }
 
-  const Expr *Init = VD->getAnyInitializer();
-  if (!Init || Init->isValueDependent()) {
-    Info.Diag(E->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
+  // Check that we can fold the initializer. In C++, we will have already done
+  // this in the cases where it matters for conformance.
+  llvm::SmallVector<PartialDiagnosticAt, 8> Notes;
+  if (!VD->evaluateValue(Notes)) {
+    Info.Diag(E->getExprLoc(), diag::note_constexpr_var_init_non_constant,
+              Notes.size() + 1) << VD;
+    Info.Note(VD->getLocation(), diag::note_declared_at);
+    Info.addNotes(Notes);
     return false;
+  } else if (!VD->checkInitIsICE()) {
+    Info.CCEDiag(E->getExprLoc(), diag::note_constexpr_var_init_non_constant,
+                 Notes.size() + 1) << VD;
+    Info.Note(VD->getLocation(), diag::note_declared_at);
+    Info.addNotes(Notes);
   }
 
-  if (APValue *V = VD->getEvaluatedValue()) {
-    Result = CCValue(*V, CCValue::GlobalValue());
-    return !Result.isUninit();
-  }
-
-  if (VD->isEvaluatingValue()) {
-    Info.Diag(E->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
-    return false;
-  }
-
-  VD->setEvaluatingValue();
-
-  Expr::EvalStatus EStatus;
-  EvalInfo InitInfo(Info.Ctx, EStatus);
-  APValue EvalResult;
-  InitInfo.setEvaluatingDecl(VD, EvalResult);
-  LValue LVal;
-  LVal.set(VD);
-  // FIXME: The caller will need to know whether the value was a constant
-  // expression. If not, we should propagate up a diagnostic.
-  if (!EvaluateConstantExpression(EvalResult, InitInfo, LVal, Init)) {
-    // FIXME: If the evaluation failure was not permanent (for instance, if we
-    // hit a variable with no declaration yet, or a constexpr function with no
-    // definition yet), the standard is unclear as to how we should behave.
-    //
-    // Either the initializer should be evaluated when the variable is defined,
-    // or a failed evaluation of the initializer should be reattempted each time
-    // it is used.
-    VD->setEvaluatedValue(APValue());
-    Info.Diag(E->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
-    return false;
-  }
-
-  VD->setEvaluatedValue(EvalResult);
-  Result = CCValue(EvalResult, CCValue::GlobalValue());
+  Result = CCValue(*VD->getEvaluatedValue(), CCValue::GlobalValue());
   return true;
 }
 
@@ -1523,6 +1514,8 @@ static bool CheckConstexprFunction(EvalInfo &Info, SourceLocation CallLoc,
 
   if (Info.getLangOpts().CPlusPlus0x) {
     const FunctionDecl *DiagDecl = Definition ? Definition : Declaration;
+    // FIXME: If DiagDecl is an implicitly-declared special member function, we
+    // should be much more explicit about why it's not constexpr.
     Info.Diag(CallLoc, diag::note_constexpr_invalid_function, 1)
       << DiagDecl->isConstexpr() << isa<CXXConstructorDecl>(DiagDecl)
       << DiagDecl;
@@ -4887,6 +4880,22 @@ bool Expr::EvaluateAsLValue(EvalResult &Result, const ASTContext &Ctx) const {
                                        CCEK_Constant);
 }
 
+bool Expr::EvaluateAsInitializer(APValue &Value, const ASTContext &Ctx,
+                                 const VarDecl *VD,
+                      llvm::SmallVectorImpl<PartialDiagnosticAt> &Notes) const {
+  Expr::EvalStatus EStatus;
+  EStatus.Diag = &Notes;
+
+  EvalInfo InitInfo(Ctx, EStatus);
+  InitInfo.setEvaluatingDecl(VD, Value);
+
+  LValue LVal;
+  LVal.set(VD);
+
+  return EvaluateConstantExpression(Value, InitInfo, LVal, this) &&
+         !EStatus.HasSideEffects;
+}
+
 /// isEvaluatable - Call EvaluateAsRValue to see if this expression can be
 /// constant folded, but discard the result.
 bool Expr::isEvaluatable(const ASTContext &Ctx) const {
@@ -5083,33 +5092,13 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
         if (!Dcl->getType()->isIntegralOrEnumerationType())
           return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
 
-        // Look for a declaration of this variable that has an initializer.
-        const VarDecl *ID = 0;
-        const Expr *Init = Dcl->getAnyInitializer(ID);
-        if (Init) {
-          if (ID->isInitKnownICE()) {
-            // We have already checked whether this subexpression is an
-            // integral constant expression.
-            if (ID->isInitICE())
-              return NoDiag();
-            else
-              return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
-          }
-
-          // It's an ICE whether or not the definition we found is
-          // out-of-line.  See DR 721 and the discussion in Clang PR
-          // 6206 for details.
-
-          if (Dcl->isCheckingICE()) {
-            return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
-          }
-
-          Dcl->setCheckingICE();
-          ICEDiag Result = CheckICE(Init, Ctx);
-          // Cache the result of the ICE test.
-          Dcl->setInitKnownICE(Result.Val == 0);
-          return Result;
-        }
+        const VarDecl *VD;
+        // Look for a declaration of this variable that has an initializer, and
+        // check whether it is an ICE.
+        if (Dcl->getAnyInitializer(VD) && VD->checkInitIsICE())
+          return NoDiag();
+        else
+          return ICEDiag(2, cast<DeclRefExpr>(E)->getLocation());
       }
     }
     return ICEDiag(2, E->getLocStart());

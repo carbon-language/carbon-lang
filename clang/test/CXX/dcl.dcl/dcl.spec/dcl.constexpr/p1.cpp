@@ -20,7 +20,7 @@ constexpr int s1::mi2 = 0;
 // not a definition of an object
 constexpr extern int i2; // expected-error {{constexpr variable declaration must be a definition}}
 // not a literal type
-constexpr notlit nl1; // expected-error {{constexpr variable 'nl1' must be initialized by a constant expression}}
+constexpr notlit nl1; // expected-error {{constexpr variable 'nl1' must be initialized by a constant expression}} expected-note {{non-literal type 'const notlit' cannot be used in a constant expression}}
 // function parameters
 void f2(constexpr int i) {} // expected-error {{function parameter cannot be constexpr}}
 // non-static member
@@ -42,12 +42,13 @@ class C2 {} constexpr; // expected-error {{class cannot be marked constexpr}}
 struct S2 {} constexpr; // expected-error {{struct cannot be marked constexpr}}
 union U2 {} constexpr; // expected-error {{union cannot be marked constexpr}}
 enum E2 {} constexpr; // expected-error {{enum cannot be marked constexpr}}
-constexpr class C3 {} c3 = C3();
-constexpr struct S3 {} s3 = S3();
+// FIXME: Mark default constructors as 'constexpr' when appropriate.
+constexpr class C3 {} c3 = C3(); // unexpected-error {{must be initialized by a constant expression}} unexpected-note {{non-constexpr constructor}} unexpected-note {{here}}
+constexpr struct S3 {} s3 = S3(); // unexpected-error {{must be initialized by a constant expression}} unexpected-note {{non-constexpr constructor}} unexpected-note {{here}}
 constexpr union U3 {} u3 = {};
 constexpr enum E3 { V3 } e3 = V3;
-class C4 {} constexpr c4 = C4();
-struct S4 {} constexpr s4 = S4();
+class C4 {} constexpr c4 = C4(); // unexpected-error {{must be initialized by a constant expression}} unexpected-note {{non-constexpr constructor}} unexpected-note {{here}}
+struct S4 {} constexpr s4 = S4(); // unexpected-error {{must be initialized by a constant expression}} unexpected-note {{non-constexpr constructor}} unexpected-note {{here}}
 union U4 {} constexpr u4 = {};
 enum E4 { V4 } constexpr e4 = V4;
 constexpr int; // expected-error {{constexpr can only be used in variable and function declarations}}
@@ -67,7 +68,7 @@ struct ConstexprDtor {
 };
 
 // template stuff
-template <typename T> constexpr T ft(T t) { return t; }
+template <typename T> constexpr T ft(T t) { return t; } // unexpected-note {{here}}
 template <typename T> T gt(T t) { return t; }
 struct S {
   template<typename T> constexpr T f();
@@ -89,7 +90,7 @@ template <> char S::g() { return 0; } // expected-error {{no function template m
 template <> double S::g() const { return 0; } // ok
 
 // FIXME: The initializer is a constant expression.
-constexpr int i3 = ft(1); // unexpected-error {{must be initialized by a constant expression}}
+constexpr int i3 = ft(1); // unexpected-error {{must be initialized by a constant expression}} unexpected-note {{undefined function 'ft<int>'}}
 
 void test() {
   // ignore constexpr when instantiating with non-literal
@@ -98,7 +99,7 @@ void test() {
 }
 
 // Examples from the standard:
-constexpr int square(int x);
+constexpr int square(int x); // expected-note {{declared here}}
 constexpr int bufsz = 1024;
 
 constexpr struct pixel { // expected-error {{struct cannot be marked constexpr}}
@@ -108,10 +109,10 @@ constexpr struct pixel { // expected-error {{struct cannot be marked constexpr}}
 };
 
 constexpr pixel::pixel(int a)
-  : x(square(a)), y(square(a))
+  : x(square(a)), y(square(a)) // expected-note {{undefined function 'square' cannot be used in a constant expression}}
   { }
 
-constexpr pixel small(2); // expected-error {{must be initialized by a constant expression}}
+constexpr pixel small(2); // expected-error {{must be initialized by a constant expression}} expected-note {{in call to 'pixel(2)'}}
 
 constexpr int square(int x) {
   return x * x;

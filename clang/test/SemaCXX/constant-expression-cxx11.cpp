@@ -8,9 +8,7 @@ static_assert(false, "test"); // expected-error {{test}}
 
 }
 
-// FIXME: support const T& parameters here.
-//template<typename T> constexpr T id(const T &t) { return t; }
-template<typename T> constexpr T id(T t) { return t; } // expected-note {{here}}
+template<typename T> constexpr T id(const T &t) { return t; } // expected-note {{here}}
 // FIXME: support templates here.
 //template<typename T> constexpr T min(const T &a, const T &b) {
 //  return a < b ? a : b;
@@ -104,8 +102,14 @@ namespace CaseStatements {
 }
 
 extern int &Recurse1;
-int &Recurse2 = Recurse1, &Recurse1 = Recurse2;
-constexpr int &Recurse3 = Recurse2; // expected-error {{must be initialized by a constant expression}}
+int &Recurse2 = Recurse1; // expected-note 2{{declared here}} expected-note {{initializer of 'Recurse1' is not a constant expression}}
+int &Recurse1 = Recurse2; // expected-note {{declared here}} expected-note {{initializer of 'Recurse2' is not a constant expression}}
+constexpr int &Recurse3 = Recurse2; // expected-error {{must be initialized by a constant expression}} expected-note {{initializer of 'Recurse2' is not a constant expression}}
+
+extern const int RecurseA;
+const int RecurseB = RecurseA; // expected-note {{declared here}}
+const int RecurseA = 10;
+constexpr int RecurseC = RecurseB; // expected-error {{must be initialized by a constant expression}} expected-note {{initializer of 'RecurseB' is not a constant expression}}
 
 namespace MemberEnum {
   struct WithMemberEnum {
@@ -188,26 +192,26 @@ namespace StaticMemberFunction {
 namespace ParameterScopes {
 
   const int k = 42;
-  constexpr const int &ObscureTheTruth(const int &a) { return a; }
-  constexpr const int &MaybeReturnJunk(bool b, const int a) {
-    return ObscureTheTruth(b ? a : k);
+  constexpr const int &ObscureTheTruth(const int &a) { return a; } // expected-note 3{{reference to 'a' cannot be returned from a constexpr function}}
+  constexpr const int &MaybeReturnJunk(bool b, const int a) { // expected-note 2{{declared here}}
+    return ObscureTheTruth(b ? a : k); // expected-note 2{{in call to 'ObscureTheTruth(a)'}}
   }
   static_assert(MaybeReturnJunk(false, 0) == 42, ""); // ok
-  constexpr int a = MaybeReturnJunk(true, 0); // expected-error {{constant expression}}
+  constexpr int a = MaybeReturnJunk(true, 0); // expected-error {{constant expression}} expected-note {{in call to 'MaybeReturnJunk(1, 0)'}}
 
-  constexpr const int MaybeReturnNonstaticRef(bool b, const int a) {
+  constexpr const int MaybeReturnNonstaticRef(bool b, const int a) { // expected-note {{here}}
     // If ObscureTheTruth returns a reference to 'a', the result is not a
     // constant expression even though 'a' is still in scope.
-    return ObscureTheTruth(b ? a : k);
+    return ObscureTheTruth(b ? a : k); // expected-note {{in call to 'ObscureTheTruth(a)'}}
   }
   static_assert(MaybeReturnNonstaticRef(false, 0) == 42, ""); // ok
-  constexpr int b = MaybeReturnNonstaticRef(true, 0); // expected-error {{constant expression}}
+  constexpr int b = MaybeReturnNonstaticRef(true, 0); // expected-error {{constant expression}} expected-note {{in call to 'MaybeReturnNonstaticRef(1, 0)'}}
 
   constexpr int InternalReturnJunk(int n) {
     // FIXME: We should reject this: it never produces a constant expression.
-    return MaybeReturnJunk(true, n);
+    return MaybeReturnJunk(true, n); // expected-note {{in call to 'MaybeReturnJunk(1, 0)'}}
   }
-  constexpr int n3 = InternalReturnJunk(0); // expected-error {{must be initialized by a constant expression}}
+  constexpr int n3 = InternalReturnJunk(0); // expected-error {{must be initialized by a constant expression}} expected-note {{in call to 'InternalReturnJunk(0)'}}
 
   constexpr int LToR(int &n) { return n; }
   constexpr int GrabCallersArgument(bool which, int a, int b) {
@@ -243,11 +247,11 @@ namespace FunctionPointers {
   constexpr auto Select(int n) -> int (*)(int) {
     return n == 2 ? &Double : n == 3 ? &Triple : n == 4 ? &Quadruple : 0;
   }
-  constexpr int Apply(int (*F)(int), int n) { return F(n); }
+  constexpr int Apply(int (*F)(int), int n) { return F(n); } // expected-note {{subexpression}}
 
   static_assert(1 + Apply(Select(4), 5) + Apply(Select(3), 7) == 42, "");
 
-  constexpr int Invalid = Apply(Select(0), 0); // expected-error {{must be initialized by a constant expression}}
+  constexpr int Invalid = Apply(Select(0), 0); // expected-error {{must be initialized by a constant expression}} expected-note {{in call to 'Apply(0, 0)'}}
 
 }
 
@@ -293,9 +297,7 @@ static_assert(&x < &x, "false"); // expected-error {{false}}
 static_assert(&x > &x, "false"); // expected-error {{false}}
 
 constexpr S* sptr = &s;
-// FIXME: This is not a constant expression; check we reject this and move this
-// test elsewhere.
-constexpr bool dyncast = sptr == dynamic_cast<S*>(sptr);
+constexpr bool dyncast = sptr == dynamic_cast<S*>(sptr); // expected-error {{constant expression}} expected-note {{dynamic_cast}}
 
 struct Str {
   // FIXME: In C++ mode, we should say 'integral' not 'integer'
@@ -323,8 +325,6 @@ struct Str {
 };
 
 extern char externalvar[];
-// FIXME: This is not a constant expression; check we reject this and move this
-// test elsewhere.
 constexpr bool constaddress = (void *)externalvar == (void *)0x4000UL; // expected-error {{must be initialized by a constant expression}}
 constexpr bool litaddress = "foo" == "foo"; // expected-error {{must be initialized by a constant expression}} expected-warning {{unspecified}}
 static_assert(0 != "foo", "");
@@ -509,21 +509,17 @@ struct D {
 };
 static_assert(D().c.n == 42, "");
 
-struct E {
-  constexpr E() : p(&p) {}
+struct E { // expected-note {{here}}
+  constexpr E() : p(&p) {} // expected-note {{pointer to temporary cannot be used to initialize a member in a constant expression}}
   void *p;
 };
-constexpr const E &e1 = E(); // expected-error {{constant expression}}
+constexpr const E &e1 = E(); // expected-error {{constant expression}} expected-note {{in call to 'E()'}} expected-note {{temporary created here}}
 // This is a constant expression if we elide the copy constructor call, and
 // is not a constant expression if we don't! But we do, so it is.
 // FIXME: The move constructor is not currently implicitly defined as constexpr.
-// We notice this when evaluating an expression which uses it, but not when
-// checking its initializer.
-constexpr E e2 = E(); // unexpected-error {{constant expression}}
-static_assert(e2.p == &e2.p, ""); // unexpected-error {{constant expression}} unexpected-note {{subexpression}}
-// FIXME: We don't pass through the fact that 'this' is ::e3 when checking the
-// initializer of this declaration.
-constexpr E e3; // unexpected-error {{constant expression}}
+constexpr E e2 = E(); // unexpected-error {{constant expression}} unexpected-note {{here}} unexpected-note {{non-constexpr constructor 'E' cannot be used in a constant expression}}
+static_assert(e2.p == &e2.p, ""); // unexpected-error {{constant expression}} unexpected-note {{initializer of 'e2' is not a constant expression}}
+constexpr E e3;
 static_assert(e3.p == &e3.p, "");
 
 extern const class F f;
@@ -531,7 +527,7 @@ struct F {
   constexpr F() : p(&f.p) {}
   const void *p;
 };
-constexpr F f = F();
+constexpr F f;
 
 struct G {
   struct T {
@@ -624,10 +620,7 @@ struct Base : Bottom {
 struct Base2 : Bottom {
   constexpr Base2(const int &r) : r(r) {}
   int q = 123;
-  // FIXME: When we track the global for which we are computing the initializer,
-  // use a reference here.
-  //const int &r;
-  int r;
+  const int &r;
 };
 struct Derived : Base, Base2 {
   constexpr Derived() : Base(76), Base2(a) {}
@@ -646,7 +639,7 @@ static_assert(derived.b[2] == 's', "");
 static_assert(derived.c == 76 + 'e', "");
 static_assert(derived.q == 123, "");
 static_assert(derived.r == 76, "");
-static_assert(&derived.r == &derived.a, ""); // expected-error {{}}
+static_assert(&derived.r == &derived.a, "");
 
 static_assert(!(derived == base), "");
 static_assert(derived == base2, "");

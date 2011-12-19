@@ -2802,6 +2802,11 @@ Decl *ASTNodeImporter::VisitVarDecl(VarDecl *D) {
         } else {
           Expr *Init = Importer.Import(DDef->getInit());
           MergeWithVar->setInit(Init);
+          if (DDef->isInitKnownICE()) {
+            EvaluatedStmt *Eval = MergeWithVar->ensureEvaluatedStmt();
+            Eval->CheckedICE = true;
+            Eval->IsICE = DDef->isInitICE();
+          }
         }
       }
       

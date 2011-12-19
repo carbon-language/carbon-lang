@@ -78,13 +78,13 @@ namespace NonConstExprReturn {
 namespace NonConstExprCtor {
   struct T {
     constexpr T(const int &r) :
-      r(r) { // expected-note {{reference to temporary cannot be used to initialize a member in a constant expression}}
+      r(r) { // expected-note 2{{reference to temporary cannot be used to initialize a member in a constant expression}}
     }
     const int &r;
   };
   constexpr int n = 0;
   constexpr T t1(n); // ok
-  constexpr T t2(0); // expected-error {{must be initialized by a constant expression}}
+  constexpr T t2(0); // expected-error {{must be initialized by a constant expression}} expected-note {{temporary created here}} expected-note {{in call to 'T(0)'}}
 
   struct S {
     int n : T(4).r; // expected-error {{constant expression}} expected-note {{temporary created here}} expected-note {{in call to 'T(4)'}}
@@ -187,8 +187,8 @@ namespace References {
   constexpr int e = 42;
   int &f = const_cast<int&>(e);
   extern int &g;
-  constexpr int &h(); // expected-note {{here}}
-  int &i = h();
+  constexpr int &h(); // expected-note 2{{here}}
+  int &i = h(); // expected-note {{here}} expected-note {{undefined function 'h' cannot be used in a constant expression}}
   constexpr int &j() { return b; }
   int &k = j();
 
@@ -202,7 +202,7 @@ namespace References {
     int F : f - 11;
     int G : g; // expected-error {{constant expression}}
     int H : h(); // expected-error {{constant expression}} expected-note {{undefined function 'h'}}
-    int I : i; // expected-error {{constant expression}}
+    int I : i; // expected-error {{constant expression}} expected-note {{initializer of 'i' is not a constant expression}}
     int J : j();
     int K : k;
   };

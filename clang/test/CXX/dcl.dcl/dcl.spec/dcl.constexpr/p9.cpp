@@ -18,17 +18,17 @@ extern int (*const d)(int);
 // A variable declaration which uses the constexpr specifier shall have an
 // initializer and shall be initialized by a constant expression.
 constexpr int ni1; // expected-error {{default initialization of an object of const type 'const int'}}
-constexpr struct C { C(); } ni2; // expected-error {{constexpr variable 'ni2' must be initialized by a constant expression}}
+constexpr struct C { C(); } ni2; // expected-error {{constexpr variable 'ni2' must be initialized by a constant expression}} expected-note {{non-literal type 'const struct C' cannot be used in a constant expression}}
 constexpr double &ni3; // expected-error {{declaration of reference variable 'ni3' requires an initializer}}
 
 constexpr int nc1 = i; // expected-error {{constexpr variable 'nc1' must be initialized by a constant expression}}
-constexpr C nc2 = C(); // expected-error {{constexpr variable 'nc2' must be initialized by a constant expression}}
-int &f();
-constexpr int &nc3 = f(); // expected-error {{constexpr variable 'nc3' must be initialized by a constant expression}}
+constexpr C nc2 = C(); // expected-error {{constexpr variable 'nc2' must be initialized by a constant expression}} expected-note {{non-literal type}}
+int &f(); // expected-note {{declared here}}
+constexpr int &nc3 = f(); // expected-error {{constexpr variable 'nc3' must be initialized by a constant expression}} expected-note {{non-constexpr function 'f' cannot be used in a constant expression}}
 constexpr int nc4(i); // expected-error {{constexpr variable 'nc4' must be initialized by a constant expression}}
-constexpr C nc5((C())); // expected-error {{constexpr variable 'nc5' must be initialized by a constant expression}}
-int &f();
-constexpr int &nc6(f()); // expected-error {{constexpr variable 'nc6' must be initialized by a constant expression}}
+constexpr C nc5((C())); // expected-error {{constexpr variable 'nc5' must be initialized by a constant expression}} expected-note {{non-literal type 'const C'}}
+int &f(); // expected-note {{here}}
+constexpr int &nc6(f()); // expected-error {{constexpr variable 'nc6' must be initialized by a constant expression}} expected-note {{non-constexpr function 'f'}}
 
 struct pixel {
   int x, y;

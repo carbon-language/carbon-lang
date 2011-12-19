@@ -704,9 +704,12 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
   Record.push_back(D->isNRVOVariable());
   Record.push_back(D->isCXXForRangeDecl());
   Record.push_back(D->isARCPseudoStrong());
-  Record.push_back(D->getInit() ? 1 : 0);
-  if (D->getInit())
+  if (D->getInit()) {
+    Record.push_back(!D->isInitKnownICE() ? 1 : (D->isInitICE() ? 3 : 2));
     Writer.AddStmt(D->getInit());
+  } else {
+    Record.push_back(0);
+  }
 
   MemberSpecializationInfo *SpecInfo
     = D->isStaticDataMember() ? D->getMemberSpecializationInfo() : 0;

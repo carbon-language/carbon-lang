@@ -664,8 +664,9 @@ struct EvaluatedStmt {
   /// integral constant expression.
   bool CheckingICE : 1;
 
-  /// \brief Whether this statement is an integral constant
-  /// expression. Only valid if CheckedICE is true.
+  /// \brief Whether this statement is an integral constant expression,
+  /// or in C++11, whether the statement is a constant expression. Only
+  /// valid if CheckedICE is true.
   bool IsICE : 1;
 
   Stmt *Value;
@@ -1019,41 +1020,13 @@ public:
   /// \endcode
   bool extendsLifetimeOfTemporary() const;
 
-  EvaluatedStmt *EnsureEvaluatedStmt() const {
-    EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>();
-    if (!Eval) {
-      Stmt *S = Init.get<Stmt *>();
-      Eval = new (getASTContext()) EvaluatedStmt;
-      Eval->Value = S;
-      Init = Eval;
-    }
-    return Eval;
-  }
+  EvaluatedStmt *ensureEvaluatedStmt() const;
 
-  /// \brief Check whether we are in the process of checking whether the
-  /// initializer can be evaluated.
-  bool isEvaluatingValue() const {
-    if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>())
-      return Eval->IsEvaluating;
-
-    return false;
-  }
-
-  /// \brief Note that we now are checking whether the initializer can be
-  /// evaluated.
-  void setEvaluatingValue() const {
-    EvaluatedStmt *Eval = EnsureEvaluatedStmt();
-    Eval->IsEvaluating = true;
-  }
-
-  /// \brief Note that constant evaluation has computed the given
-  /// value for this variable's initializer.
-  void setEvaluatedValue(const APValue &Value) const {
-    EvaluatedStmt *Eval = EnsureEvaluatedStmt();
-    Eval->IsEvaluating = false;
-    Eval->WasEvaluated = true;
-    Eval->Evaluated = Value;
-  }
+  /// \brief Attempt to evaluate the value of the initializer attached to this
+  /// declaration, and produce notes explaining why it cannot be evaluated or is
+  /// not a constant expression. Returns true if evaluation succeeded.
+  /// The value can be obtained by calling getEvaluatedValue.
+  bool evaluateValue(llvm::SmallVectorImpl<PartialDiagnosticAt> &Notes) const;
 
   /// \brief Return the already-evaluated value of this variable's
   /// initializer, or NULL if the value is not yet known. Returns pointer
@@ -1075,8 +1048,9 @@ public:
     return false;
   }
 
-  /// \brief Determines whether the initializer is an integral
-  /// constant expression.
+  /// \brief Determines whether the initializer is an integral constant
+  /// expression, or in C++11, whether the initializer is a constant
+  /// expression.
   ///
   /// \pre isInitKnownICE()
   bool isInitICE() const {
@@ -1085,30 +1059,9 @@ public:
     return Init.get<EvaluatedStmt *>()->IsICE;
   }
 
-  /// \brief Check whether we are in the process of checking the initializer
-  /// is an integral constant expression.
-  bool isCheckingICE() const {
-    if (EvaluatedStmt *Eval = Init.dyn_cast<EvaluatedStmt *>())
-      return Eval->CheckingICE;
-
-    return false;
-  }
-
-  /// \brief Note that we now are checking whether the initializer is an
-  /// integral constant expression.
-  void setCheckingICE() const {
-    EvaluatedStmt *Eval = EnsureEvaluatedStmt();
-    Eval->CheckingICE = true;
-  }
-
-  /// \brief Note that we now know whether the initializer is an
-  /// integral constant expression.
-  void setInitKnownICE(bool IsICE) const {
-    EvaluatedStmt *Eval = EnsureEvaluatedStmt();
-    Eval->CheckingICE = false;
-    Eval->CheckedICE = true;
-    Eval->IsICE = IsICE;
-  }
+  /// \brief Determine whether the value of the initializer attached to this
+  /// declaration is an integral constant expression.
+  bool checkInitIsICE() const;
 
   void setCXXDirectInitializer(bool T) { VarDeclBits.HasCXXDirectInit = T; }
 

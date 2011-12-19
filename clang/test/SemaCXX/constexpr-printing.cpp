@@ -1,18 +1,19 @@
 // RUN: %clang_cc1 %s -std=c++11 -fsyntax-only -verify
 
-constexpr int extract(struct S &s);
+struct S;
+constexpr int extract(const S &s);
 
 struct S {
-  constexpr S() : n(extract(*this)), m(0) {}
+  constexpr S() : n(extract(*this)), m(0) {} // expected-note {{in call to 'extract(s1)'}}
   constexpr S(int k) : n(k), m(extract(*this)) {}
   int n, m;
 };
 
-constexpr int extract(S &s) { return s.n; }
+constexpr int extract(const S &s) { return s.n; } // expected-note {{subexpression}}
 
 // FIXME: once we produce notes for constexpr variable declarations, this should
 // produce a note indicating that S.n is used uninitialized.
-constexpr S s1; // expected-error {{constant expression}}
+constexpr S s1; // expected-error {{constant expression}} expected-note {{in call to 'S()'}}
 constexpr S s2(10);
 
 typedef __attribute__((vector_size(16))) int vector_int;
