@@ -280,7 +280,9 @@ UserSettingsController::SetVariable (const char *full_dot_name,
     ConstString const_var_name;
     const ConstString &default_name = InstanceSettings::GetDefaultName();
 
-    Args names = UserSettingsController::BreakNameIntoPieces (full_dot_name);
+    Args names;
+    if (full_dot_name )
+        names = UserSettingsController::BreakNameIntoPieces (full_dot_name);
     int num_pieces = names.GetArgumentCount();
 
     if (num_pieces < 1)
@@ -538,11 +540,17 @@ UserSettingsController::GetVariable
     Error &err
 )
 {
-    Args names = UserSettingsController::BreakNameIntoPieces (full_dot_name);
-    ConstString const_var_name;
     StringList value;
+    if (!full_dot_name)
+    {
+        err.SetErrorString ("invalid variable name");
+        return value;
+    }
 
+    Args names = UserSettingsController::BreakNameIntoPieces (full_dot_name);
     int num_pieces = names.GetArgumentCount();
+
+    ConstString const_var_name;
 
     ConstString prefix (names.GetArgumentAtIndex (0));
     const_var_name.SetCString (names.GetArgumentAtIndex (num_pieces - 1));
