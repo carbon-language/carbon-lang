@@ -55,7 +55,7 @@ entry:
 ; PIC:   jalr    $25
 ; PIC:   lui     $[[R0:[0-9]+]], %dtprel_hi(f3.i)
 ; PIC:   addu    $[[R1:[0-9]+]], $[[R0]], $2
-; PIC:   addiu   ${{[0-9]+}}, $[[R1]], %dtprel_lo(f3.i)
+; PIC:   lw      ${{[0-9]+}}, %dtprel_lo(f3.i)($[[R1]])
 
   %0 = load i32* @f3.i, align 4
   %inc = add nsw i32 %0, 1

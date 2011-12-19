@@ -160,9 +160,7 @@ SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset) {
     // Generate:
     //  lui $2, %hi($CPI1_0)
     //  lwc1 $f0, %lo($CPI1_0)($2)
-    if ((Addr.getOperand(0).getOpcode() == MipsISD::Hi ||
-         Addr.getOperand(0).getOpcode() == ISD::LOAD) &&
-        Addr.getOperand(1).getOpcode() == MipsISD::Lo) {
+    if (Addr.getOperand(1).getOpcode() == MipsISD::Lo) {
       SDValue LoVal = Addr.getOperand(1);
       if (isa<ConstantPoolSDNode>(LoVal.getOperand(0)) || 
           isa<GlobalAddressSDNode>(LoVal.getOperand(0))) {
