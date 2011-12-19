@@ -19,6 +19,12 @@ class ModuleAndSectionAPIsTestCase(TestBase):
         self.buildDefault()
         self.module_and_section()
 
+    @python_api_test
+    def test_module_and_section_boundary_condition(self):
+        """Test module and section APIs by passing None when it expects a Python string."""
+        self.buildDefault()
+        self.module_and_section_boundary_condition()
+
     def module_and_section(self):
         exe = os.path.join(os.getcwd(), "a.out")
 
@@ -56,6 +62,43 @@ class ModuleAndSectionAPIsTestCase(TestBase):
                         print INDENT2 + repr(sym)
                         print INDENT2 + "symbol type: %s" % symbol_type_to_str(sym.GetType())
 
+    def module_and_section_boundary_condition(self):
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target, VALID_TARGET)
+        self.assertTrue(target.GetNumModules() > 0)
+
+        # Hide stdout if not running with '-t' option.
+        if not self.TraceOn():
+            self.HideStdout()
+
+        print "Number of modules for the target: %d" % target.GetNumModules()
+        for module in target.module_iter():
+            print module
+
+        # Get the executable module at index 0.
+        exe_module = target.GetModuleAtIndex(0)
+
+        print "Exe module: %s" % repr(exe_module)
+        print "Number of sections: %d" % exe_module.GetNumSections()
+
+        # Boundary condition testings.  Should not crash lldb!
+        exe_module.FindFirstType(None)
+        exe_module.FindTypes(None)
+        exe_module.FindGlobalVariables(target, None, 1)
+        exe_module.FindFunctions(None, 0, True, lldb.SBSymbolContextList())
+        exe_module.FindSection(None)
+
+        # Get the section at index 1.
+        if exe_module.GetNumSections() > 1:
+            sec1 = exe_module.GetSectionAtIndex(1)
+            print sec1
+        else:
+            sec1 = None
+
+        if sec1:
+            sec1.FindSubSection(None)
 
 if __name__ == '__main__':
     import atexit

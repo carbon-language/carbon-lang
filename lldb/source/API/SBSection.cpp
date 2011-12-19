@@ -142,7 +142,7 @@ lldb::SBSection
 SBSection::FindSubSection (const char *sect_name)
 {
     lldb::SBSection sb_section;
-    if (IsValid())
+    if (sect_name && IsValid())
     {
         ConstString const_sect_name(sect_name);
         sb_section.SetSection(m_opaque_ap->GetSection()->GetChildren ().FindSectionByName(const_sect_name).get());

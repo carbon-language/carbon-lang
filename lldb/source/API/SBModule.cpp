@@ -342,7 +342,7 @@ SBModule::FindFunctions (const char *name,
 {
     if (!append)
         sc_list.Clear();
-    if (m_opaque_sp)
+    if (name && m_opaque_sp)
     {
         const bool symbols_ok = true;
         return m_opaque_sp->FindFunctions (ConstString(name),
@@ -360,7 +360,7 @@ SBValueList
 SBModule::FindGlobalVariables (SBTarget &target, const char *name, uint32_t max_matches)
 {
     SBValueList sb_value_list;
-    if (m_opaque_sp)
+    if (name && m_opaque_sp)
     {
         VariableList variable_list;
         const uint32_t match_count = m_opaque_sp->FindGlobalVariables (ConstString (name),
@@ -389,10 +389,10 @@ SBModule::FindGlobalVariables (SBTarget &target, const char *name, uint32_t max_
 }
 
 lldb::SBType
-SBModule::FindFirstType (const char* name_cstr)
+SBModule::FindFirstType (const char *name_cstr)
 {
     SBType sb_type;
-    if (IsValid())
+    if (name_cstr && IsValid())
     {
         SymbolContext sc;
         TypeList type_list;
@@ -413,12 +413,12 @@ SBModule::FindFirstType (const char* name_cstr)
 }
 
 lldb::SBTypeList
-SBModule::FindTypes (const char* type)
+SBModule::FindTypes (const char *type)
 {
     
     SBTypeList retval;
     
-    if (IsValid())
+    if (type && IsValid())
     {
         SymbolContext sc;
         TypeList type_list;
@@ -449,7 +449,7 @@ SBModule::FindSection (const char *sect_name)
 {
     SBSection sb_section;
     
-    if (IsValid())
+    if (sect_name && IsValid())
     {
         ObjectFile *objfile = m_opaque_sp->GetObjectFile();
         if (objfile)
