@@ -23,6 +23,11 @@ Verify("verify", llvm::cl::desc(
          "Run a quick verification useful for regression testing"),
        llvm::cl::init(false));
 
+static llvm::cl::opt<unsigned>
+MemoryLimitMB("memory-limit", llvm::cl::desc(
+                "Do not use more megabytes of memory"),
+	          llvm::cl::init(1000));
+
 void benchmark(llvm::TimerGroup &Group, llvm::StringRef Name,
                llvm::StringRef JSONText) {
   llvm::Timer BaseLine((Name + ": Loop").str(), Group);
@@ -44,17 +49,19 @@ void benchmark(llvm::TimerGroup &Group, llvm::StringRef Name,
   Parsing.stopTimer();
 }
 
-std::string createJSONText(int N, int ValueSize) {
+std::string createJSONText(unsigned MemoryMB, unsigned ValueSize) {
   std::string JSONText;
   llvm::raw_string_ostream Stream(JSONText);
   Stream << "[\n";
-  for (int I = 0; I < N; ++I) {
+  unsigned MemoryBytes = MemoryMB * 1024 * 1024;
+  while (JSONText.size() < MemoryBytes) {
     Stream << " {\n"
            << "  \"key1\": \"" << std::string(ValueSize, '*') << "\",\n"
            << "  \"key2\": \"" << std::string(ValueSize, '*') << "\",\n"
            << "  \"key3\": \"" << std::string(ValueSize, '*') << "\"\n"
            << " }";
-    if (I + 1 < N) Stream << ",";
+    Stream.flush();
+    if (JSONText.size() < MemoryBytes) Stream << ",";
     Stream << "\n";
   }
   Stream << "]\n";
@@ -66,11 +73,11 @@ int main(int argc, char **argv) {
   llvm::cl::ParseCommandLineOptions(argc, argv);
   llvm::TimerGroup Group("JSON parser benchmark");
   if (Verify) {
-    benchmark(Group, "Fast", createJSONText(1000, 500));
+    benchmark(Group, "Fast", createJSONText(10, 500));
   } else {
-    benchmark(Group, "Small Values", createJSONText(1000000, 5));
-    benchmark(Group, "Medium Values", createJSONText(1000000, 500));
-    benchmark(Group, "Large Values", createJSONText(10000, 50000));
+    benchmark(Group, "Small Values", createJSONText(MemoryLimitMB, 5));
+    benchmark(Group, "Medium Values", createJSONText(MemoryLimitMB, 500));
+    benchmark(Group, "Large Values", createJSONText(MemoryLimitMB, 50000));
   }
   return 0;
 }
