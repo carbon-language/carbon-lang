@@ -39,6 +39,11 @@ def nImmVMOVI32 : Operand<i32> {
   let PrintMethod = "printNEONModImmOperand";
   let ParserMatchClass = nImmVMOVI32AsmOperand;
 }
+def nImmVMOVI32NegAsmOperand : AsmOperandClass { let Name = "NEONi32vmovNeg"; }
+def nImmVMOVI32Neg : Operand<i32> {
+  let PrintMethod = "printNEONModImmOperand";
+  let ParserMatchClass = nImmVMOVI32NegAsmOperand;
+}
 def nImmVMOVF32 : Operand<i32> {
   let PrintMethod = "printFPImmOperand";
   let ParserMatchClass = FPImmOperand;
@@ -5948,6 +5953,16 @@ def : NEONInstAlias<"vpadd${p}.i32 $Vdn, $Vm",
                     (VPADDi32 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
 def : NEONInstAlias<"vpadd${p}.f32 $Vdn, $Vm",
                     (VPADDf DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+
+// "vmov Rd, #-imm" can be handled via "vmvn".
+def : NEONInstAlias<"vmov${p}.i32 $Vd, $imm",
+                    (VMVNv2i32 DPR:$Vd, nImmVMOVI32Neg:$imm, pred:$p)>;
+def : NEONInstAlias<"vmov${p}.i32 $Vd, $imm",
+                    (VMVNv4i32 QPR:$Vd, nImmVMOVI32Neg:$imm, pred:$p)>;
+def : NEONInstAlias<"vmvn${p}.i32 $Vd, $imm",
+                    (VMOVv2i32 DPR:$Vd, nImmVMOVI32Neg:$imm, pred:$p)>;
+def : NEONInstAlias<"vmvn${p}.i32 $Vd, $imm",
+                    (VMOVv4i32 QPR:$Vd, nImmVMOVI32Neg:$imm, pred:$p)>;
 
 // 'gas' compatibility aliases for quad-word instructions. Strictly speaking,
 // these should restrict to just the Q register variants, but the register

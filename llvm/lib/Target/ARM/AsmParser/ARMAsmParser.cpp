@@ -1222,6 +1222,22 @@ public:
       (Value >= 0x01ff && Value <= 0xffff && (Value & 0xff) == 0xff) ||
       (Value >= 0x01ffff && Value <= 0xffffff && (Value & 0xffff) == 0xffff);
   }
+  bool isNEONi32vmovNeg() const {
+    if (Kind != k_Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    // Must be a constant.
+    if (!CE) return false;
+    int64_t Value = ~CE->getValue();
+    // i32 value with set bits only in one byte X000, 0X00, 00X0, or 000X,
+    // for VMOV/VMVN only, 00Xf or 0Xff are also accepted.
+    return (Value >= 0 && Value < 256) ||
+      (Value >= 0x0100 && Value <= 0xff00) ||
+      (Value >= 0x010000 && Value <= 0xff0000) ||
+      (Value >= 0x01000000 && Value <= 0xff000000) ||
+      (Value >= 0x01ff && Value <= 0xffff && (Value & 0xff) == 0xff) ||
+      (Value >= 0x01ffff && Value <= 0xffffff && (Value & 0xffff) == 0xffff);
+  }
 
   bool isNEONi64splat() const {
     if (Kind != k_Immediate)
@@ -1816,6 +1832,20 @@ public:
     // The immediate encodes the type of constant as well as the value.
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     unsigned Value = CE->getValue();
+    if (Value >= 256 && Value <= 0xffff)
+      Value = (Value >> 8) | ((Value & 0xff) ? 0xc00 : 0x200);
+    else if (Value > 0xffff && Value <= 0xffffff)
+      Value = (Value >> 16) | ((Value & 0xff) ? 0xd00 : 0x400);
+    else if (Value > 0xffffff)
+      Value = (Value >> 24) | 0x600;
+    Inst.addOperand(MCOperand::CreateImm(Value));
+  }
+
+  void addNEONi32vmovNegOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // The immediate encodes the type of constant as well as the value.
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    unsigned Value = ~CE->getValue();
     if (Value >= 256 && Value <= 0xffff)
       Value = (Value >> 8) | ((Value & 0xff) ? 0xc00 : 0x200);
     else if (Value > 0xffff && Value <= 0xffffff)
