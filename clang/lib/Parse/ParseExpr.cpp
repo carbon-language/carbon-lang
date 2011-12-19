@@ -1826,7 +1826,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
   if (BridgeCast && !getLang().ObjCAutoRefCount) {
     SourceLocation BridgeKeywordLoc = ConsumeToken();
     if (!PP.getSourceManager().isInSystemHeader(BridgeKeywordLoc))
-      Diag(BridgeKeywordLoc, diag::warn_arc_bridge_retain)
+      Diag(BridgeKeywordLoc, diag::err_arc_bridge_cast)
       << FixItHint::CreateReplacement(BridgeKeywordLoc,
                                       "");
     BridgeCast = false;

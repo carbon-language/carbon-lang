@@ -14,7 +14,13 @@ CFStringRef CFGetString();
 id CreateSomething();
 NSString *CreateNSString();
 
-typedef int array0[sizeof((__bridge id)CFCreateSomething())];
-typedef int array1[sizeof((__bridge CFTypeRef)CreateSomething())];
+#if __has_feature(objc_arc)
+#define BRIDGE __bridge
+#else
+#define BRIDGE
+#endif
+
+typedef int array0[sizeof((BRIDGE id)CFCreateSomething())];
+typedef int array1[sizeof((BRIDGE CFTypeRef)CreateSomething())];
 
 
