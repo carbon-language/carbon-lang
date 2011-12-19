@@ -15,6 +15,8 @@ def fuzz_obj(obj):
     obj.SetErrorToErrno()
     obj.SetErrorToGenericError()
     obj.SetErrorString("xyz")
+    obj.SetErrorString(None)
     obj.SetErrorStringWithFormat("%s!", "error")
+    obj.SetErrorStringWithFormat(None)
     obj.GetDescription(lldb.SBStream())
     obj.Clear()
