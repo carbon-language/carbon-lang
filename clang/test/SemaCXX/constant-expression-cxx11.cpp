@@ -915,6 +915,11 @@ static_assert(makeComplexWrap(1,0) != complex(0, 1), "");
 
 namespace PR11595 {
   struct A { constexpr bool operator==(int x) { return true; } };
-  struct B { B(); ~B(); A& x; };
-  static_assert(B().x == 3, "");  // expected-error {{constant expression}}
+  struct B { B(); A& x; };
+  static_assert(B().x == 3, "");  // expected-error {{constant expression}} expected-note {{non-literal type 'PR11595::B' cannot be used in a constant expression}}
+
+  constexpr bool f(int k) {
+    return B().x == k; // expected-note {{non-literal type 'PR11595::B' cannot be used in a constant expression}}
+  }
+  constexpr int n = f(1); // expected-error {{must be initialized by a constant expression}} expected-note {{in call to 'f(1)'}}
 }
