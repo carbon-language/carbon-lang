@@ -5877,6 +5877,68 @@ def : NEONInstAlias<"vqdmulh${p}.s16 $Vdn, $Vm",
 def : NEONInstAlias<"vqdmulh${p}.s32 $Vdn, $Vm",
                     (VQDMULHv4i32 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
 
+// Two-operand variants for VMAX.
+def : NEONInstAlias<"vmax${p}.s8 $Vdn, $Vm",
+                    (VMAXsv8i8 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmax${p}.s16 $Vdn, $Vm",
+                    (VMAXsv4i16 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmax${p}.s32 $Vdn, $Vm",
+                    (VMAXsv2i32 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmax${p}.u8 $Vdn, $Vm",
+                    (VMAXuv8i8 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmax${p}.u16 $Vdn, $Vm",
+                    (VMAXuv4i16 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmax${p}.u32 $Vdn, $Vm",
+                    (VMAXuv2i32 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmax${p}.f32 $Vdn, $Vm",
+                    (VMAXfd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+
+def : NEONInstAlias<"vmax${p}.s8 $Vdn, $Vm",
+                    (VMAXsv16i8 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmax${p}.s16 $Vdn, $Vm",
+                    (VMAXsv8i16 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmax${p}.s32 $Vdn, $Vm",
+                    (VMAXsv4i32 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmax${p}.u8 $Vdn, $Vm",
+                    (VMAXuv16i8 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmax${p}.u16 $Vdn, $Vm",
+                    (VMAXuv8i16 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmax${p}.u32 $Vdn, $Vm",
+                    (VMAXuv4i32 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmax${p}.f32 $Vdn, $Vm",
+                    (VMAXfq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+
+// Two-operand variants for VMIN.
+def : NEONInstAlias<"vmin${p}.s8 $Vdn, $Vm",
+                    (VMINsv8i8 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmin${p}.s16 $Vdn, $Vm",
+                    (VMINsv4i16 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmin${p}.s32 $Vdn, $Vm",
+                    (VMINsv2i32 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmin${p}.u8 $Vdn, $Vm",
+                    (VMINuv8i8 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmin${p}.u16 $Vdn, $Vm",
+                    (VMINuv4i16 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmin${p}.u32 $Vdn, $Vm",
+                    (VMINuv2i32 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmin${p}.f32 $Vdn, $Vm",
+                    (VMINfd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+
+def : NEONInstAlias<"vmin${p}.s8 $Vdn, $Vm",
+                    (VMINsv16i8 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmin${p}.s16 $Vdn, $Vm",
+                    (VMINsv8i16 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmin${p}.s32 $Vdn, $Vm",
+                    (VMINsv4i32 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmin${p}.u8 $Vdn, $Vm",
+                    (VMINuv16i8 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmin${p}.u16 $Vdn, $Vm",
+                    (VMINuv8i16 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmin${p}.u32 $Vdn, $Vm",
+                    (VMINuv4i32 QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmin${p}.f32 $Vdn, $Vm",
+                    (VMINfq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
+
 // 'gas' compatibility aliases for quad-word instructions. Strictly speaking,
 // these should restrict to just the Q register variants, but the register
 // classes are enough to match correctly regardless, so we keep it simple
