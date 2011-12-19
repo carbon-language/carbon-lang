@@ -994,7 +994,7 @@ def VLD3LNd16_UPD : VLD3LNWB<0b0110, {?,?,0,0}, "16"> {
   let Inst{7-6} = lane{1-0};
 }
 def VLD3LNd32_UPD : VLD3LNWB<0b1010, {?,0,0,0}, "32"> {
-  let Inst{7}   = lane{0};
+  let Inst{7} = lane{0};
 }
 
 def VLD3LNd8Pseudo_UPD  : VLDQQLNWBPseudo<IIC_VLD3lnu>;
@@ -1005,7 +1005,7 @@ def VLD3LNq16_UPD : VLD3LNWB<0b0110, {?,?,1,0}, "16"> {
   let Inst{7-6} = lane{1-0};
 }
 def VLD3LNq32_UPD : VLD3LNWB<0b1010, {?,1,0,0}, "32"> {
-  let Inst{7}   = lane{0};
+  let Inst{7} = lane{0};
 }
 
 def VLD3LNq16Pseudo_UPD : VLDQQQQLNWBPseudo<IIC_VLD3lnu>;
@@ -1020,7 +1020,7 @@ class VLD4LN<bits<4> op11_8, bits<4> op7_4, string Dt>
           "\\{$Vd[$lane], $dst2[$lane], $dst3[$lane], $dst4[$lane]\\}, $Rn",
           "$src1 = $Vd, $src2 = $dst2, $src3 = $dst3, $src4 = $dst4", []> {
   let Rm = 0b1111;
-  let Inst{4}   = Rn{4};
+  let Inst{4} = Rn{4};
   let DecoderMethod = "DecodeVLD4LN";
 }
 
@@ -1031,7 +1031,7 @@ def VLD4LNd16 : VLD4LN<0b0111, {?,?,0,?}, "16"> {
   let Inst{7-6} = lane{1-0};
 }
 def VLD4LNd32 : VLD4LN<0b1011, {?,0,?,?}, "32"> {
-  let Inst{7}   = lane{0};
+  let Inst{7} = lane{0};
   let Inst{5} = Rn{5};
 }
 
@@ -1044,7 +1044,7 @@ def VLD4LNq16 : VLD4LN<0b0111, {?,?,1,?}, "16"> {
   let Inst{7-6} = lane{1-0};
 }
 def VLD4LNq32 : VLD4LN<0b1011, {?,1,?,?}, "32"> {
-  let Inst{7}   = lane{0};
+  let Inst{7} = lane{0};
   let Inst{5} = Rn{5};
 }
 
@@ -1072,7 +1072,7 @@ def VLD4LNd16_UPD : VLD4LNWB<0b0111, {?,?,0,?}, "16"> {
   let Inst{7-6} = lane{1-0};
 }
 def VLD4LNd32_UPD : VLD4LNWB<0b1011, {?,0,?,?}, "32"> {
-  let Inst{7}   = lane{0};
+  let Inst{7} = lane{0};
   let Inst{5} = Rn{5};
 }
 
@@ -1084,7 +1084,7 @@ def VLD4LNq16_UPD : VLD4LNWB<0b0111, {?,?,1,?}, "16"> {
   let Inst{7-6} = lane{1-0};
 }
 def VLD4LNq32_UPD : VLD4LNWB<0b1011, {?,1,?,?}, "32"> {
-  let Inst{7}   = lane{0};
+  let Inst{7} = lane{0};
   let Inst{5} = Rn{5};
 }
 
