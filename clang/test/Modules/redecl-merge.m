@@ -29,3 +29,10 @@ __import_module__ redecl_merge_bottom;
 void g(A *a) {
   [a init];
 }
+
+#ifdef __cplusplus
+void testVector() {
+  Vector<int> *vec_int;
+  // FIXME:  vec_int.push_back(0);
+}
+#endif

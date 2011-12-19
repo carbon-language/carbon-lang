@@ -188,7 +188,7 @@ void ASTDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
   if (!D->hasAttrs() &&
       !D->isImplicit() &&
       !D->isUsed(false) &&
-      D->RedeclLink.getPointer() == D &&
+      !D->getPreviousDeclaration() &&
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       !D->isTopLevelDeclInObjCContainer() &&
@@ -238,7 +238,7 @@ void ASTDeclWriter::VisitEnumDecl(EnumDecl *D) {
       !D->isImplicit() &&
       !D->isUsed(false) &&
       !D->hasExtInfo() &&
-      D->RedeclLink.getPointer() == D &&
+      !D->getPreviousDeclaration() &&
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       !D->isTopLevelDeclInObjCContainer() &&
@@ -262,7 +262,7 @@ void ASTDeclWriter::VisitRecordDecl(RecordDecl *D) {
       !D->isImplicit() &&
       !D->isUsed(false) &&
       !D->hasExtInfo() &&
-      D->RedeclLink.getPointer() == D &&
+      !D->getPreviousDeclaration() &&
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       !D->isTopLevelDeclInObjCContainer() &&
@@ -708,7 +708,7 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
       !D->isModulePrivate() &&
       D->getDeclName().getNameKind() == DeclarationName::Identifier &&
       !D->hasExtInfo() &&
-      D->RedeclLink.getPointer() == D &&
+      !D->getPreviousDeclaration() &&
       !D->hasCXXDirectInitializer() &&
       D->getInit() == 0 &&
       !isa<ParmVarDecl>(D) &&
@@ -1051,32 +1051,34 @@ void ASTDeclWriter::VisitTemplateDecl(TemplateDecl *D) {
 void ASTDeclWriter::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
   // Emit data to initialize CommonOrPrev before VisitTemplateDecl so that
   // getCommonPtr() can be used while this is still initializing.
-
-  Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
-  if (D->getPreviousDeclaration())
-    Writer.AddDeclRef(D->getFirstDeclaration(), Record);
-
-  if (D->getPreviousDeclaration() == 0) {
-    // This TemplateDecl owns the CommonPtr; write it.
-    assert(D->isCanonicalDecl());
-
+  enum { FirstDeclaration, PointsToPrevious };
+  RedeclarableTemplateDecl *Prev = D->getPreviousDeclaration();
+  RedeclarableTemplateDecl *First = 0;
+  if (!Prev) {
+    Record.push_back(FirstDeclaration);
+    
+    // This declaration owns the 'common' pointer, so serialize that data now.
     Writer.AddDeclRef(D->getInstantiatedFromMemberTemplate(), Record);
     if (D->getInstantiatedFromMemberTemplate())
       Record.push_back(D->isMemberSpecialization());
-
-    Writer.AddDeclRef(D->getCommonPtr()->Latest, Record);
   } else {
-    RedeclarableTemplateDecl *First = D->getFirstDeclaration();
-    assert(First != D);
-    // If this is a most recent redeclaration that is pointed to by a first decl
-    // in a chained PCH, keep track of the association with the map so we can
-    // update the first decl during AST reading.
-    if (First->getMostRecentDeclaration() == D &&
-        First->isFromASTFile() && !D->isFromASTFile()) {
-      assert(Writer.FirstLatestDecls.find(First)==Writer.FirstLatestDecls.end()
-             && "The latest is already set");
-      Writer.FirstLatestDecls[First] = D;
-    }
+    First = D->getFirstDeclaration();
+    Record.push_back(PointsToPrevious);
+    Writer.AddDeclRef(First, Record);
+    Writer.AddDeclRef(Prev, Record);    
+  }
+  
+  if (D->getMostRecentDeclaration() != D && (!Prev || Prev->isFromASTFile())) {
+    if (!First)
+      First = D->getFirstDeclaration();
+    
+    // Capture the set of redeclarations in this file.
+    LocalRedeclarationsInfo LocalInfo = {
+      Writer.GetDeclRef(First),
+      Writer.GetDeclRef(D),
+      Writer.GetDeclRef(D->getMostRecentDeclaration())
+    };
+    Writer.LocalRedeclarations.push_back(LocalInfo);
   }
 
   VisitTemplateDecl(D);
@@ -1274,19 +1276,19 @@ void ASTDeclWriter::VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
 
 template <typename T>
 void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
-  enum { OnlyDeclaration = 0, FirstInFile, PointsToPrevious };
-  if (D->RedeclLink.getPointer() == D) {
-    // This is the only declaration.
-    Record.push_back(OnlyDeclaration);
-    return;
+  enum { FirstDeclaration = 0, PointsToPrevious };
+  T *Prev = D->getPreviousDeclaration();
+  T *First = D->getFirstDeclaration();
+  
+  if (!Prev) {
+    Record.push_back(FirstDeclaration);
+  } else {  
+    Record.push_back(PointsToPrevious);
+    Writer.AddDeclRef(First, Record);
+    Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   }
   
-  T *First = D->getFirstDeclaration();
-  if (!D->getPreviousDeclaration() ||
-      D->getPreviousDeclaration()->isFromASTFile()) {
-    Record.push_back(FirstInFile);
-    Writer.AddDeclRef(First, Record);
-
+  if (D->RedeclLink.getPointer() != D && (!Prev || Prev->isFromASTFile())) {
     // Capture the set of redeclarations in this file.
     LocalRedeclarationsInfo LocalInfo = {
       Writer.GetDeclRef(First),
@@ -1294,10 +1296,6 @@ void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
       Writer.GetDeclRef(D->getMostRecentDeclaration())
     };
     Writer.LocalRedeclarations.push_back(LocalInfo);    
-  } else {
-    Record.push_back(PointsToPrevious);
-    Writer.AddDeclRef(First, Record);
-    Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   }
 }
 

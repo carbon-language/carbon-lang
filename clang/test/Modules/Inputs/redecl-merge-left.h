@@ -10,3 +10,8 @@ __import_module__ redecl_merge_top;
 
 @class A;
 
+#ifdef __cplusplus
+template<typename T> class Vector;
+
+template<typename T> class Vector;
+#endif
