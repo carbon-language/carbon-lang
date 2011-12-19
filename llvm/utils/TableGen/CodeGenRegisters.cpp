@@ -836,12 +836,69 @@ void CodeGenRegBank::inferSubClassWithSubReg(CodeGenRegisterClass *RC) {
 }
 
 //
+// Synthesize missing sub-classes of RC for getMatchingSuperRegClass().
+//
+// Create sub-classes of RC such that getMatchingSuperRegClass(RC, SubIdx, X)
+// has a maximal result for any SubIdx and any X >= FirstSubRegRC.
+//
+
+void CodeGenRegBank::inferMatchingSuperRegClass(CodeGenRegisterClass *RC,
+                                                unsigned FirstSubRegRC) {
+  SmallVector<std::pair<const CodeGenRegister*,
+                        const CodeGenRegister*>, 16> SSPairs;
+
+  // Iterate in SubRegIndex numerical order to visit synthetic indices last.
+  for (unsigned sri = 0, sre = SubRegIndices.size(); sri != sre; ++sri) {
+    Record *SubIdx = SubRegIndices[sri];
+    // Skip indexes that aren't fully supported by RC's registers. This was
+    // computed by inferSubClassWithSubReg() above which should have been
+    // called first.
+    if (RC->getSubClassWithSubReg(SubIdx) != RC)
+      continue;
+
+    // Build list of (Super, Sub) pairs for this SubIdx.
+    SSPairs.clear();
+    for (CodeGenRegister::Set::const_iterator RI = RC->getMembers().begin(),
+         RE = RC->getMembers().end(); RI != RE; ++RI) {
+      const CodeGenRegister *Super = *RI;
+      const CodeGenRegister *Sub = Super->getSubRegs().find(SubIdx)->second;
+      assert(Sub && "Missing sub-register");
+      SSPairs.push_back(std::make_pair(Super, Sub));
+    }
+
+    // Iterate over sub-register class candidates.  Ignore classes created by
+    // this loop. They will never be useful.
+    for (unsigned rci = FirstSubRegRC, rce = RegClasses.size(); rci != rce;
+         ++rci) {
+      CodeGenRegisterClass *SubRC = RegClasses[rci];
+      // Compute the subset of RC that maps into SubRC.
+      CodeGenRegister::Set SubSet;
+      for (unsigned i = 0, e = SSPairs.size(); i != e; ++i)
+        if (SubRC->contains(SSPairs[i].second))
+          SubSet.insert(SSPairs[i].first);
+      if (SubSet.empty())
+        continue;
+      // RC injects completely into SubRC.
+      if (SubSet.size() == SSPairs.size())
+        continue;
+      // Only a subset of RC maps into SubRC. Make sure it is represented by a
+      // class.
+      getOrCreateSubClass(RC, &SubSet, RC->getName() +
+                          "_with_" + SubIdx->getName() +
+                          "_in_" + SubRC->getName());
+    }
+  }
+}
+
+
+//
 // Infer missing register classes.
 //
 void CodeGenRegBank::computeInferredRegisterClasses() {
   // When this function is called, the register classes have not been sorted
   // and assigned EnumValues yet.  That means getSubClasses(),
   // getSuperClasses(), and hasSubClass() functions are defunct.
+  unsigned FirstNewRC = RegClasses.size();
 
   // Visit all register classes, including the ones being added by the loop.
   for (unsigned rci = 0; rci != RegClasses.size(); ++rci) {
@@ -852,6 +909,22 @@ void CodeGenRegBank::computeInferredRegisterClasses() {
 
     // Synthesize answers for getCommonSubClass().
     inferCommonSubClass(RC);
+
+    // Synthesize answers for getMatchingSuperRegClass().
+    inferMatchingSuperRegClass(RC);
+
+    // New register classes are created while this loop is running, and we need
+    // to visit all of them.  I  particular, inferMatchingSuperRegClass needs
+    // to match old super-register classes with sub-register classes created
+    // after inferMatchingSuperRegClass was called.  At this point,
+    // inferMatchingSuperRegClass has checked SuperRC = [0..rci] with SubRC =
+    // [0..FirstNewRC).  We need to cover SubRC = [FirstNewRC..rci].
+    if (rci + 1 == FirstNewRC) {
+      unsigned NextNewRC = RegClasses.size();
+      for (unsigned rci2 = 0; rci2 != FirstNewRC; ++rci2)
+        inferMatchingSuperRegClass(RegClasses[rci2], FirstNewRC);
+      FirstNewRC = NextNewRC;
+    }
   }
 }
 

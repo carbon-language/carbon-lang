@@ -246,6 +246,8 @@ namespace llvm {
     void computeInferredRegisterClasses();
     void inferCommonSubClass(CodeGenRegisterClass *RC);
     void inferSubClassWithSubReg(CodeGenRegisterClass *RC);
+    void inferMatchingSuperRegClass(CodeGenRegisterClass *RC,
+                                    unsigned FirstSubRegRC = 0);
 
     // Composite SubRegIndex instances.
     // Map (SubRegIndex, SubRegIndex) -> SubRegIndex.
