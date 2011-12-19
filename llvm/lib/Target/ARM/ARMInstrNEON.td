@@ -5939,6 +5939,16 @@ def : NEONInstAlias<"vmin${p}.u32 $Vdn, $Vm",
 def : NEONInstAlias<"vmin${p}.f32 $Vdn, $Vm",
                     (VMINfq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
 
+// Two-operand variants for VPADD.
+def : NEONInstAlias<"vpadd${p}.i8 $Vdn, $Vm",
+                    (VPADDi8 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vpadd${p}.i16 $Vdn, $Vm",
+                    (VPADDi16 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vpadd${p}.i32 $Vdn, $Vm",
+                    (VPADDi32 DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+def : NEONInstAlias<"vpadd${p}.f32 $Vdn, $Vm",
+                    (VPADDf DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
+
 // 'gas' compatibility aliases for quad-word instructions. Strictly speaking,
 // these should restrict to just the Q register variants, but the register
 // classes are enough to match correctly regardless, so we keep it simple

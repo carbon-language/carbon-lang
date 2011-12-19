@@ -8,6 +8,16 @@
 	vpadd.i32	d16, d17, d16
 @ CHECK: vpadd.f32	d16, d16, d17   @ encoding: [0xa1,0x0d,0x40,0xf3]
 	vpadd.f32	d16, d16, d17
+
+@ CHECK: vpadd.i8	d17, d17, d16   @ encoding: [0xb0,0x1b,0x41,0xf2]
+	vpadd.i8	d17, d16
+@ CHECK: vpadd.i16	d17, d17, d16   @ encoding: [0xb0,0x1b,0x51,0xf2]
+	vpadd.i16	d17, d16
+@ CHECK: vpadd.i32	d17, d17, d16   @ encoding: [0xb0,0x1b,0x61,0xf2]
+	vpadd.i32	d17, d16
+@ CHECK: vpadd.f32	d16, d16, d17   @ encoding: [0xa1,0x0d,0x40,0xf3]
+	vpadd.f32	d16, d17
+
 @ CHECK: vpaddl.s8	d16, d16        @ encoding: [0x20,0x02,0xf0,0xf3]
 	vpaddl.s8	d16, d16
 @ CHECK: vpaddl.s16	d16, d16        @ encoding: [0x20,0x02,0xf4,0xf3]
