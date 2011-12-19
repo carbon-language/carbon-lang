@@ -103,6 +103,9 @@ public:
     bool
     IsValid () const;
 
+    void
+    Clear();
+
     %feature("docstring", "
     //------------------------------------------------------------------
     /// Get const accessor for the module file specification.

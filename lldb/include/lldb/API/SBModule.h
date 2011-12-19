@@ -36,6 +36,9 @@ public:
     bool
     IsValid () const;
 
+    void
+    Clear();
+
     //------------------------------------------------------------------
     /// Get const accessor for the module file specification.
     ///
@@ -166,7 +169,7 @@ public:
     
     lldb::SBTypeList
     FindTypes (const char* type);
-
+    
 private:
     friend class SBAddress;
     friend class SBFrame;

@@ -75,6 +75,12 @@ SBValue::IsValid ()
     return m_opaque_sp.get() != NULL;
 }
 
+void
+SBValue::Clear()
+{
+    m_opaque_sp.reset();
+}
+
 SBError
 SBValue::GetError()
 {

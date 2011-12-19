@@ -34,6 +34,9 @@ public:
     bool
     IsValid();
     
+    void
+    Clear();
+    
     SBError
     GetError();
 

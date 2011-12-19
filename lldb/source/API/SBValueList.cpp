@@ -64,6 +64,12 @@ SBValueList::IsValid () const
     return (m_opaque_ap.get() != NULL);
 }
 
+void
+SBValueList::Clear()
+{
+    m_opaque_ap.reset();
+}
+
 const SBValueList &
 SBValueList::operator = (const SBValueList &rhs)
 {

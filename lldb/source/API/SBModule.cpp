@@ -58,6 +58,12 @@ SBModule::IsValid () const
     return m_opaque_sp.get() != NULL;
 }
 
+void
+SBModule::Clear()
+{
+    m_opaque_sp.reset();
+}
+
 SBFileSpec
 SBModule::GetFileSpec () const
 {

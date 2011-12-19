@@ -26,6 +26,9 @@ public:
 
     bool
     IsValid() const;
+    
+    void
+    Clear();
 
     void
     Append (const lldb::SBValue &val_obj);
