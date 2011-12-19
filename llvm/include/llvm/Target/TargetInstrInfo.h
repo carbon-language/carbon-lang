@@ -839,9 +839,11 @@ public:
   virtual bool isSchedulingBoundary(const MachineInstr *MI,
                                     const MachineBasicBlock *MBB,
                                     const MachineFunction &MF) const;
+  using TargetInstrInfo::getOperandLatency;
   virtual int getOperandLatency(const InstrItineraryData *ItinData,
                                 SDNode *DefNode, unsigned DefIdx,
                                 SDNode *UseNode, unsigned UseIdx) const;
+  using TargetInstrInfo::getInstrLatency;
   virtual int getInstrLatency(const InstrItineraryData *ItinData,
                               SDNode *Node) const;
 
