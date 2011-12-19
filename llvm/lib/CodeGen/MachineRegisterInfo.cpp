@@ -76,12 +76,14 @@ MachineRegisterInfo::recomputeRegClass(unsigned Reg, const TargetMachine &TM) {
   // Accumulate constraints from all uses.
   for (reg_nodbg_iterator I = reg_nodbg_begin(Reg), E = reg_nodbg_end(); I != E;
        ++I) {
-    // TRI doesn't have accurate enough information to model this yet.
-    if (I.getOperand().getSubReg())
-      return false;
     const TargetRegisterClass *OpRC =
       I->getRegClassConstraint(I.getOperandNo(), TII, TRI);
-    if (OpRC)
+    if (unsigned SubIdx = I.getOperand().getSubReg()) {
+      if (OpRC)
+        NewRC = TRI->getMatchingSuperRegClass(NewRC, OpRC, SubIdx);
+      else
+        NewRC = TRI->getSubClassWithSubReg(NewRC, SubIdx);
+    } else if (OpRC)
       NewRC = TRI->getCommonSubClass(NewRC, OpRC);
     if (!NewRC || NewRC == OldRC)
       return false;
