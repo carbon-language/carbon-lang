@@ -6095,6 +6095,29 @@ void ASTReader::finishPendingActions() {
     }
     PendingChainedObjCCategories.clear();
   }
+  
+  // If we deserialized any C++ or Objective-C class definitions, make sure
+  // that all redeclarations point to the definitions. Note that this can only 
+  // happen now, after the redeclaration chains have been fully wired.
+  for (llvm::SmallPtrSet<Decl *, 4>::iterator D = PendingDefinitions.begin(),
+                                           DEnd = PendingDefinitions.end();
+       D != DEnd; ++D) {
+    if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(*D)) {
+      for (CXXRecordDecl::redecl_iterator R = RD->redecls_begin(),
+                                       REnd = RD->redecls_end();
+           R != REnd; ++R)
+        cast<CXXRecordDecl>(*R)->DefinitionData = RD->DefinitionData;
+      
+      continue;
+    }
+    
+    ObjCInterfaceDecl *ID = cast<ObjCInterfaceDecl>(*D);
+    for (ObjCInterfaceDecl::redecl_iterator R = ID->redecls_begin(),
+                                         REnd = ID->redecls_end();
+         R != REnd; ++R)
+      R->Data = ID->Data;
+  }
+  PendingDefinitions.clear();
 }
 
 void ASTReader::FinishedDeserializing() {

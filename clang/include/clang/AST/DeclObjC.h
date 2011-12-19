@@ -928,6 +928,7 @@ public:
   static bool classof(const ObjCInterfaceDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCInterface; }
 
+  friend class ASTReader;
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };

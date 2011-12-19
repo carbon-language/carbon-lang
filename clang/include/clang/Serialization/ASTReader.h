@@ -338,7 +338,10 @@ private:
   /// the DefinitionData pointer of all pending references.
   PendingForwardRefsMap PendingForwardRefs;
 
-
+  /// \brief The set of C++ or Objective-C classes that have forward 
+  /// declarations that have not yet been linked to their definitions.
+  llvm::SmallPtrSet<Decl *, 4> PendingDefinitions;
+  
   typedef llvm::DenseMap<serialization::DeclID, serialization::DeclID>
       FirstLatestDeclIDMap;
   /// \brief Map of first declarations from a chained PCH that point to the

@@ -630,6 +630,9 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
       // pending references were linked.
       Reader.PendingForwardRefs.erase(ID);
 #endif
+      
+      // Note that we have deserialized a definition.
+      Reader.PendingDefinitions.insert(ID);
     }
   } else if (Def) {
     if (Def->Data) {
@@ -1030,6 +1033,9 @@ void ASTDeclReader::InitializeCXXDefinitionData(CXXRecordDecl *D,
       Reader.PendingForwardRefs.erase(D);
 #endif
     }
+    
+    // Note that we have deserialized a definition.
+    Reader.PendingDefinitions.insert(D);
   } else if (DefinitionDecl) {
     if (DefinitionDecl->DefinitionData) {
       D->DefinitionData = DefinitionDecl->DefinitionData;
@@ -1162,7 +1168,7 @@ void ASTDeclReader::VisitTemplateDecl(TemplateDecl *D) {
 void ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
   // Initialize CommonOrPrev before VisitTemplateDecl so that getCommonPtr()
   // can be used while this is still initializing.
-  enum RedeclKind { FirstDeclaration, PointsToPrevious };
+  enum RedeclKind { FirstDeclaration, FirstInFile, PointsToPrevious };
   RedeclKind Kind = (RedeclKind)Record[Idx++];
   
   // Determine the first declaration ID.
@@ -1190,7 +1196,8 @@ void ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
     }
     break;
   }
-      
+   
+  case FirstInFile:
   case PointsToPrevious: {
     FirstDeclID = ReadDeclID(Record, Idx);
     DeclID PrevDeclID = ReadDeclID(Record, Idx);
@@ -1204,9 +1211,13 @@ void ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
     // loaded and attached later on.
     D->CommonOrPrev = FirstDecl;
     
-    // Make a note that we need to wire up this declaration to its
-    // previous declaration, later.
-    Reader.PendingPreviousDecls.push_back(std::make_pair(D, PrevDeclID));
+    if (Kind == PointsToPrevious) {
+      // Make a note that we need to wire up this declaration to its
+      // previous declaration, later. We don't need to do this for the first
+      // declaration in any given module file, because those will be wired 
+      // together later.
+      Reader.PendingPreviousDecls.push_back(std::make_pair(D, PrevDeclID));
+    }
     break;
   }
   }
@@ -1412,7 +1423,7 @@ ASTDeclReader::VisitDeclContext(DeclContext *DC) {
 
 template <typename T>
 void ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
-  enum RedeclKind { FirstDeclaration = 0, PointsToPrevious };
+  enum RedeclKind { FirstDeclaration = 0, FirstInFile, PointsToPrevious };
   RedeclKind Kind = (RedeclKind)Record[Idx++];
   
   DeclID FirstDeclID;
@@ -1420,7 +1431,8 @@ void ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
   case FirstDeclaration:
     FirstDeclID = ThisDeclID;
     break;
-      
+    
+  case FirstInFile:
   case PointsToPrevious: {
     FirstDeclID = ReadDeclID(Record, Idx);
     DeclID PrevDeclID = ReadDeclID(Record, Idx);
@@ -1433,10 +1445,14 @@ void ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
     // loaded & attached later on.
     D->RedeclLink = typename Redeclarable<T>::PreviousDeclLink(FirstDecl);
     
-    // Make a note that we need to wire up this declaration to its
-    // previous declaration, later.
-    Reader.PendingPreviousDecls.push_back(std::make_pair(static_cast<T*>(D),
-                                                         PrevDeclID));
+    if (Kind == PointsToPrevious) {
+      // Make a note that we need to wire up this declaration to its
+      // previous declaration, later. We don't need to do this for the first
+      // declaration in any given module file, because those will be wired 
+      // together later.
+      Reader.PendingPreviousDecls.push_back(std::make_pair(static_cast<T*>(D),
+                                                           PrevDeclID));
+    }
     break;
   }
   }

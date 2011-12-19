@@ -1051,7 +1051,7 @@ void ASTDeclWriter::VisitTemplateDecl(TemplateDecl *D) {
 void ASTDeclWriter::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
   // Emit data to initialize CommonOrPrev before VisitTemplateDecl so that
   // getCommonPtr() can be used while this is still initializing.
-  enum { FirstDeclaration, PointsToPrevious };
+  enum { FirstDeclaration, FirstInFile, PointsToPrevious };
   RedeclarableTemplateDecl *Prev = D->getPreviousDeclaration();
   RedeclarableTemplateDecl *First = 0;
   if (!Prev) {
@@ -1063,7 +1063,7 @@ void ASTDeclWriter::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
       Record.push_back(D->isMemberSpecialization());
   } else {
     First = D->getFirstDeclaration();
-    Record.push_back(PointsToPrevious);
+    Record.push_back(Prev->isFromASTFile()? FirstInFile : PointsToPrevious);
     Writer.AddDeclRef(First, Record);
     Writer.AddDeclRef(Prev, Record);    
   }
@@ -1276,14 +1276,14 @@ void ASTDeclWriter::VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
 
 template <typename T>
 void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
-  enum { FirstDeclaration = 0, PointsToPrevious };
+  enum { FirstDeclaration = 0, FirstInFile, PointsToPrevious };
   T *Prev = D->getPreviousDeclaration();
   T *First = D->getFirstDeclaration();
   
   if (!Prev) {
     Record.push_back(FirstDeclaration);
   } else {  
-    Record.push_back(PointsToPrevious);
+    Record.push_back(Prev->isFromASTFile()? FirstInFile : PointsToPrevious);
     Writer.AddDeclRef(First, Record);
     Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   }

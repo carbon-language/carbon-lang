@@ -32,7 +32,7 @@ void g(A *a) {
 
 #ifdef __cplusplus
 void testVector() {
-  Vector<int> *vec_int;
-  // FIXME:  vec_int.push_back(0);
+  Vector<int> vec_int;
+  vec_int.push_back(0);
 }
 #endif
