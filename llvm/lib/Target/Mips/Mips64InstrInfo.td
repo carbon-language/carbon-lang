@@ -28,10 +28,8 @@ def Subtract32 : SDNodeXForm<imm, [{
   return getImm(N, (unsigned)N->getZExtValue() - 32);
 }]>;
 
-// imm32_63 predicate - True if imm is in range [32, 63].
-def imm32_63 : ImmLeaf<i32,
-                       [{return (int32_t)Imm >= 32 && (int32_t)Imm < 64;}],
-                       Subtract32>;
+// shamt must fit in 6 bits.
+def immZExt6 : ImmLeaf<i32, [{return Imm == (Imm & 0x3f);}]>;
 
 // Is a 32-bit int.
 def immSExt32 : ImmLeaf<i64, [{return isInt<32>(Imm);}]>;
@@ -53,12 +51,7 @@ def HIGHEST : SDNodeXForm<imm, [{
 // 64-bit shift instructions.
 class shift_rotate_imm64<bits<6> func, bits<5> isRotate, string instr_asm,
                          SDNode OpNode>:
-  shift_rotate_imm<func, isRotate, instr_asm, OpNode, immZExt5, shamt,
-                   CPU64Regs>;
-
-class shift_rotate_imm64_32<bits<6> func, bits<5> isRotate, string instr_asm,
-                            SDNode OpNode>:
-  shift_rotate_imm<func, isRotate, instr_asm, OpNode, imm32_63, shamt,
+  shift_rotate_imm<func, isRotate, instr_asm, OpNode, immZExt6, shamt,
                    CPU64Regs>;
 
 // Jump and Link (Call)
@@ -141,9 +134,6 @@ def NOR64    : LogicNOR<0x00, 0x27, "nor", CPU64Regs>;
 def DSLL     : shift_rotate_imm64<0x38, 0x00, "dsll", shl>;
 def DSRL     : shift_rotate_imm64<0x3a, 0x00, "dsrl", srl>;
 def DSRA     : shift_rotate_imm64<0x3b, 0x00, "dsra", sra>;
-def DSLL32   : shift_rotate_imm64_32<0x3c, 0x00, "dsll32", shl>;
-def DSRL32   : shift_rotate_imm64_32<0x3e, 0x00, "dsrl32", srl>;
-def DSRA32   : shift_rotate_imm64_32<0x3f, 0x00, "dsra32", sra>;
 def DSLLV    : shift_rotate_reg<0x24, 0x00, "dsllv", shl, CPU64Regs>;
 def DSRLV    : shift_rotate_reg<0x26, 0x00, "dsrlv", srl, CPU64Regs>;
 def DSRAV    : shift_rotate_reg<0x27, 0x00, "dsrav", sra, CPU64Regs>;
@@ -151,7 +141,6 @@ def DSRAV    : shift_rotate_reg<0x27, 0x00, "dsrav", sra, CPU64Regs>;
 // Rotate Instructions
 let Predicates = [HasMips64r2] in {
   def DROTR    : shift_rotate_imm64<0x3a, 0x01, "drotr", rotr>;
-  def DROTR32  : shift_rotate_imm64_32<0x3e, 0x01, "drotr32", rotr>;
   def DROTRV   : shift_rotate_reg<0x16, 0x01, "drotrv", rotr, CPU64Regs>;
 }
 
@@ -222,7 +211,7 @@ def DEXT : ExtBase<3, "dext", CPU64Regs>;
 def DINS : InsBase<7, "dins", CPU64Regs>;
 
 def DSLL64_32 : FR<0x3c, 0x00, (outs CPU64Regs:$rd), (ins CPURegs:$rt),
-                   "dsll32\t$rd, $rt, 0", [], IIAlu>;
+                   "dsll\t$rd, $rt, 32", [], IIAlu>;
 
 def SLL64_32 : FR<0x0, 0x00, (outs CPU64Regs:$rd), (ins CPURegs:$rt),
                   "sll\t$rd, $rt, 0", [], IIAlu>;
@@ -249,13 +238,12 @@ def : Pat<(i64 imm:$imm),
 
 // extended loads
 let Predicates = [NotN64] in {
-  def : Pat<(extloadi32_a addr:$a), (DSRL32 (DSLL32 (LW64 addr:$a), 0), 0)>;
-  def : Pat<(zextloadi32_u addr:$a), (DSRL32 (DSLL32 (ULW64 addr:$a), 0), 0)>;
+  def : Pat<(extloadi32_a addr:$a), (DSRL (DSLL (LW64 addr:$a), 32), 32)>;
+  def : Pat<(zextloadi32_u addr:$a), (DSRL (DSLL (ULW64 addr:$a), 32), 32)>;
 }
 let Predicates = [IsN64] in {
-  def : Pat<(extloadi32_a addr:$a), (DSRL32 (DSLL32 (LW64_P8 addr:$a), 0), 0)>;
-  def : Pat<(zextloadi32_u addr:$a), 
-            (DSRL32 (DSLL32 (ULW64_P8 addr:$a), 0), 0)>;
+  def : Pat<(extloadi32_a addr:$a), (DSRL (DSLL (LW64_P8 addr:$a), 32), 32)>;
+  def : Pat<(zextloadi32_u addr:$a), (DSRL (DSLL (ULW64_P8 addr:$a), 32), 32)>;
 }
 
 // hi/lo relocs
@@ -308,4 +296,4 @@ def : Pat<(i32 (trunc CPU64Regs:$src)),
  
 // 32-to-64-bit extension
 def : Pat<(i64 (anyext CPURegs:$src)), (SLL64_32 CPURegs:$src)>;
-def : Pat<(i64 (zext CPURegs:$src)), (DSRL32 (DSLL64_32 CPURegs:$src), 0)>;
+def : Pat<(i64 (zext CPURegs:$src)), (DSRL (DSLL64_32 CPURegs:$src), 32)>;

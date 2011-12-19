@@ -44,21 +44,21 @@ entry:
 
 define i64 @f6(i64 %a0) nounwind readnone {
 entry:
-; CHECK: dsll32 ${{[0-9]+}}, ${{[0-9]+}}, 8
+; CHECK: dsll ${{[0-9]+}}, ${{[0-9]+}}, 40
   %shl = shl i64 %a0, 40
   ret i64 %shl
 }
 
 define i64 @f7(i64 %a0) nounwind readnone {
 entry:
-; CHECK: dsra32 ${{[0-9]+}}, ${{[0-9]+}}, 8
+; CHECK: dsra ${{[0-9]+}}, ${{[0-9]+}}, 40
   %shr = ashr i64 %a0, 40
   ret i64 %shr
 }
 
 define i64 @f8(i64 %a0) nounwind readnone {
 entry:
-; CHECK: dsrl32 ${{[0-9]+}}, ${{[0-9]+}}, 8
+; CHECK: dsrl ${{[0-9]+}}, ${{[0-9]+}}, 40
   %shr = lshr i64 %a0, 40
   ret i64 %shr
 }
@@ -94,7 +94,7 @@ entry:
 
 define i64 @f12(i64 %a0) nounwind readnone {
 entry:
-; CHECK: drotr32 ${{[0-9]+}}, ${{[0-9]+}}, 22
+; CHECK: drotr ${{[0-9]+}}, ${{[0-9]+}}, 54
   %shl = shl i64 %a0, 10
   %shr = lshr i64 %a0, 54
   %or = or i64 %shl, %shr
