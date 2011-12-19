@@ -504,6 +504,18 @@ void CodeGenRegisterClass::computeSubClasses(CodeGenRegBank &RegBank) {
       RegClasses[rci]->inheritProperties(RegBank);
 }
 
+void
+CodeGenRegisterClass::getSuperRegClasses(Record *SubIdx, BitVector &Out) const {
+  DenseMap<Record*, SmallPtrSet<CodeGenRegisterClass*, 8> >::const_iterator
+    FindI = SuperRegClasses.find(SubIdx);
+  if (FindI == SuperRegClasses.end())
+    return;
+  for (SmallPtrSet<CodeGenRegisterClass*, 8>::const_iterator I =
+       FindI->second.begin(), E = FindI->second.end(); I != E; ++I)
+    Out.set((*I)->EnumValue);
+}
+
+
 //===----------------------------------------------------------------------===//
 //                               CodeGenRegBank
 //===----------------------------------------------------------------------===//
@@ -879,8 +891,10 @@ void CodeGenRegBank::inferMatchingSuperRegClass(CodeGenRegisterClass *RC,
       if (SubSet.empty())
         continue;
       // RC injects completely into SubRC.
-      if (SubSet.size() == SSPairs.size())
+      if (SubSet.size() == SSPairs.size()) {
+        SubRC->addSuperRegClass(SubIdx, RC);
         continue;
+      }
       // Only a subset of RC maps into SubRC. Make sure it is represented by a
       // class.
       getOrCreateSubClass(RC, &SubSet, RC->getName() +

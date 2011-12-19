@@ -426,6 +426,9 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
      << "  unsigned composeSubRegIndices(unsigned, unsigned) const;\n"
      << "  const TargetRegisterClass *"
         "getSubClassWithSubReg(const TargetRegisterClass*, unsigned) const;\n"
+     << "  const TargetRegisterClass *getMatchingSuperRegClass("
+        "const TargetRegisterClass*, const TargetRegisterClass*, "
+        "unsigned) const;\n"
      << "};\n\n";
 
   const std::vector<Record*> &SubRegIndices = RegBank.getSubRegIndices();
@@ -812,6 +815,51 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
        << "  assert(Idx < " << SubRegIndices.size() << " && \"Bad subreg\");\n"
        << "  unsigned TV = Table[RC->getID()][Idx];\n"
        << "  return TV ? getRegClass(TV - 1) : 0;\n";
+  }
+  OS << "}\n\n";
+
+  // Emit getMatchingSuperRegClass.
+  OS << "const TargetRegisterClass *" << ClassName
+     << "::getMatchingSuperRegClass(const TargetRegisterClass *A,"
+        " const TargetRegisterClass *B, unsigned Idx) const {\n";
+  if (SubRegIndices.empty()) {
+    OS << "  llvm_unreachable(\"Target has no sub-registers\");\n";
+  } else {
+    // We need to find the largest sub-class of A such that every register has
+    // an Idx sub-register in B.  Map (B, Idx) to a bit-vector of
+    // super-register classes that map into B. Then compute the largest common
+    // sub-class with A by taking advantage of the register class ordering,
+    // like getCommonSubClass().
+
+    // Bitvector table is NumRCs x NumSubIndexes x BVWords, where BVWords is
+    // the number of 32-bit words required to represent all register classes.
+    const unsigned BVWords = (RegisterClasses.size()+31)/32;
+    BitVector BV(RegisterClasses.size());
+
+    OS << "  static const unsigned Table[" << RegisterClasses.size()
+       << "][" << SubRegIndices.size() << "][" << BVWords << "] = {\n";
+    for (unsigned rci = 0, rce = RegisterClasses.size(); rci != rce; ++rci) {
+      const CodeGenRegisterClass &RC = *RegisterClasses[rci];
+      OS << "    {\t// " << RC.getName() << "\n";
+      for (unsigned sri = 0, sre = SubRegIndices.size(); sri != sre; ++sri) {
+        Record *Idx = SubRegIndices[sri];
+        BV.reset();
+        RC.getSuperRegClasses(Idx, BV);
+        OS << "      { ";
+        printBitVectorAsHex(OS, BV, 32);
+        OS << "},\t// " << Idx->getName() << '\n';
+      }
+      OS << "    },\n";
+    }
+    OS << "  };\n  assert(A && B && \"Missing regclass\");\n"
+       << "  --Idx;\n"
+       << "  assert(Idx < " << SubRegIndices.size() << " && \"Bad subreg\");\n"
+       << "  const unsigned *TV = Table[B->getID()][Idx];\n"
+       << "  const unsigned *SC = A->getSubClassMask();\n"
+       << "  for (unsigned i = 0; i != " << BVWords << "; ++i)\n"
+       << "    if (unsigned Common = TV[i] & SC[i])\n"
+       << "      return getRegClass(32*i + CountTrailingZeros_32(Common));\n"
+       << "  return 0;\n";
   }
   OS << "}\n\n";
 

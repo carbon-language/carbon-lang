@@ -98,13 +98,6 @@ public:
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
-  /// getMatchingSuperRegClass - Return a subclass of the specified register
-  /// class A so that each register in it has a sub-register of the
-  /// specified sub-register index which is in the specified register class B.
-  virtual const TargetRegisterClass *
-  getMatchingSuperRegClass(const TargetRegisterClass *A,
-                           const TargetRegisterClass *B, unsigned Idx) const;
-
   /// canCombineSubRegIndices - Given a register class and a list of
   /// subregister indices, return true if it's possible to combine the
   /// subregister indices into one that corresponds to a larger

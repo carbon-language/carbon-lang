@@ -402,11 +402,11 @@ public:
   /// getMatchingSuperRegClass - Return a subclass of the specified register
   /// class A so that each register in it has a sub-register of the
   /// specified sub-register index which is in the specified register class B.
+  ///
+  /// TableGen will synthesize missing A sub-classes.
   virtual const TargetRegisterClass *
   getMatchingSuperRegClass(const TargetRegisterClass *A,
-                           const TargetRegisterClass *B, unsigned Idx) const {
-    return 0;
-  }
+                           const TargetRegisterClass *B, unsigned Idx) const =0;
 
   /// getSubClassWithSubReg - Returns the largest legal sub-class of RC that
   /// supports the sub-register index Idx.
@@ -419,6 +419,7 @@ public:
   /// supported by the full GR32 register class in 64-bit mode, but only by the
   /// GR32_ABCD regiister class in 32-bit mode.
   ///
+  /// TableGen will synthesize missing RC sub-classes.
   virtual const TargetRegisterClass *
   getSubClassWithSubReg(const TargetRegisterClass *RC, unsigned Idx) const =0;
 

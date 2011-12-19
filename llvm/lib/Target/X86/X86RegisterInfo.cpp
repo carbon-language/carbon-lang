@@ -127,121 +127,13 @@ const TargetRegisterClass *
 X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
                                           const TargetRegisterClass *B,
                                           unsigned SubIdx) const {
-  switch (SubIdx) {
-  default: return 0;
-  case X86::sub_8bit:
-    if (B == &X86::GR8RegClass) {
-      if (A->getSize() == 2 || A->getSize() == 4 || A->getSize() == 8)
-        return A;
-    } else if (B == &X86::GR8_ABCD_LRegClass || B == &X86::GR8_ABCD_HRegClass) {
-      if (A == &X86::GR64RegClass || A == &X86::GR64_ABCDRegClass ||
-          A == &X86::GR64_NOREXRegClass ||
-          A == &X86::GR64_NOSPRegClass ||
-          A == &X86::GR64_NOREX_NOSPRegClass)
-        return &X86::GR64_ABCDRegClass;
-      else if (A == &X86::GR32RegClass || A == &X86::GR32_ABCDRegClass ||
-               A == &X86::GR32_NOREXRegClass ||
-               A == &X86::GR32_NOSPRegClass)
-        return &X86::GR32_ABCDRegClass;
-      else if (A == &X86::GR16RegClass || A == &X86::GR16_ABCDRegClass ||
-               A == &X86::GR16_NOREXRegClass)
-        return &X86::GR16_ABCDRegClass;
-    } else if (B == &X86::GR8_NOREXRegClass) {
-      if (A == &X86::GR64RegClass || A == &X86::GR64_NOREXRegClass ||
-          A == &X86::GR64_NOSPRegClass || A == &X86::GR64_NOREX_NOSPRegClass)
-        return &X86::GR64_NOREXRegClass;
-      else if (A == &X86::GR64_ABCDRegClass)
-        return &X86::GR64_ABCDRegClass;
-      else if (A == &X86::GR32RegClass || A == &X86::GR32_NOREXRegClass ||
-               A == &X86::GR32_NOSPRegClass)
-        return &X86::GR32_NOREXRegClass;
-      else if (A == &X86::GR32_ABCDRegClass)
-        return &X86::GR32_ABCDRegClass;
-      else if (A == &X86::GR16RegClass || A == &X86::GR16_NOREXRegClass)
-        return &X86::GR16_NOREXRegClass;
-      else if (A == &X86::GR16_ABCDRegClass)
-        return &X86::GR16_ABCDRegClass;
-    }
-    break;
-  case X86::sub_8bit_hi:
-    if (B->hasSubClassEq(&X86::GR8_ABCD_HRegClass))
-      switch (A->getSize()) {
-        case 2: return getCommonSubClass(A, &X86::GR16_ABCDRegClass);
-        case 4: return getCommonSubClass(A, &X86::GR32_ABCDRegClass);
-        case 8: return getCommonSubClass(A, &X86::GR64_ABCDRegClass);
-        default: return 0;
-      }
-    break;
-  case X86::sub_16bit:
-    if (B == &X86::GR16RegClass) {
-      if (A->getSize() == 4 || A->getSize() == 8)
-        return A;
-    } else if (B == &X86::GR16_ABCDRegClass) {
-      if (A == &X86::GR64RegClass || A == &X86::GR64_ABCDRegClass ||
-          A == &X86::GR64_NOREXRegClass ||
-          A == &X86::GR64_NOSPRegClass ||
-          A == &X86::GR64_NOREX_NOSPRegClass)
-        return &X86::GR64_ABCDRegClass;
-      else if (A == &X86::GR32RegClass || A == &X86::GR32_ABCDRegClass ||
-               A == &X86::GR32_NOREXRegClass || A == &X86::GR32_NOSPRegClass)
-        return &X86::GR32_ABCDRegClass;
-    } else if (B == &X86::GR16_NOREXRegClass) {
-      if (A == &X86::GR64RegClass || A == &X86::GR64_NOREXRegClass ||
-          A == &X86::GR64_NOSPRegClass || A == &X86::GR64_NOREX_NOSPRegClass)
-        return &X86::GR64_NOREXRegClass;
-      else if (A == &X86::GR64_ABCDRegClass)
-        return &X86::GR64_ABCDRegClass;
-      else if (A == &X86::GR32RegClass || A == &X86::GR32_NOREXRegClass ||
-               A == &X86::GR32_NOSPRegClass)
-        return &X86::GR32_NOREXRegClass;
-      else if (A == &X86::GR32_ABCDRegClass)
-        return &X86::GR64_ABCDRegClass;
-    }
-    break;
-  case X86::sub_32bit:
-    if (B == &X86::GR32RegClass) {
-      if (A->getSize() == 8)
-        return A;
-    } else if (B == &X86::GR32_NOSPRegClass) {
-      if (A == &X86::GR64RegClass || A == &X86::GR64_NOSPRegClass)
-        return &X86::GR64_NOSPRegClass;
-      if (A->getSize() == 8)
-        return getCommonSubClass(A, &X86::GR64_NOSPRegClass);
-    } else if (B == &X86::GR32_ABCDRegClass) {
-      if (A == &X86::GR64RegClass || A == &X86::GR64_ABCDRegClass ||
-          A == &X86::GR64_NOREXRegClass ||
-          A == &X86::GR64_NOSPRegClass ||
-          A == &X86::GR64_NOREX_NOSPRegClass)
-        return &X86::GR64_ABCDRegClass;
-    } else if (B == &X86::GR32_NOREXRegClass) {
-      if (A == &X86::GR64RegClass || A == &X86::GR64_NOREXRegClass)
-        return &X86::GR64_NOREXRegClass;
-      else if (A == &X86::GR64_NOSPRegClass || A == &X86::GR64_NOREX_NOSPRegClass)
-        return &X86::GR64_NOREX_NOSPRegClass;
-      else if (A == &X86::GR64_ABCDRegClass)
-        return &X86::GR64_ABCDRegClass;
-    } else if (B == &X86::GR32_NOREX_NOSPRegClass) {
-      if (A == &X86::GR64RegClass || A == &X86::GR64_NOREXRegClass ||
-          A == &X86::GR64_NOSPRegClass || A == &X86::GR64_NOREX_NOSPRegClass)
-        return &X86::GR64_NOREX_NOSPRegClass;
-      else if (A == &X86::GR64_ABCDRegClass)
-        return &X86::GR64_ABCDRegClass;
-    }
-    break;
-  case X86::sub_ss:
-    if (B == &X86::FR32RegClass)
-      return A;
-    break;
-  case X86::sub_sd:
-    if (B == &X86::FR64RegClass)
-      return A;
-    break;
-  case X86::sub_xmm:
-    if (B == &X86::VR128RegClass)
-      return A;
-    break;
+  // The sub_8bit sub-register index is more constrained in 32-bit mode.
+  if (!Is64Bit && SubIdx == X86::sub_8bit) {
+    A = X86GenRegisterInfo::getSubClassWithSubReg(A, X86::sub_8bit_hi);
+    if (!A)
+      return 0;
   }
-  return 0;
+  return X86GenRegisterInfo::getMatchingSuperRegClass(A, B, SubIdx);
 }
 
 const TargetRegisterClass*
