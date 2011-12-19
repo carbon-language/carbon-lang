@@ -3045,6 +3045,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   llvm::CallInst *SetJmpResult =
     CGF.Builder.CreateCall(ObjCTypes.getSetJmpFn(), SetJmpBuffer, "setjmp_result");
   SetJmpResult->setDoesNotThrow();
+  SetJmpResult->setCanReturnTwice();
 
   // If setjmp returned 0, enter the protected block; otherwise,
   // branch to the handler.
@@ -3110,6 +3111,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         CGF.Builder.CreateCall(ObjCTypes.getSetJmpFn(), SetJmpBuffer,
                                "setjmp.result");
       SetJmpResult->setDoesNotThrow();
+      SetJmpResult->setCanReturnTwice();
 
       llvm::Value *Threw =
         CGF.Builder.CreateIsNotNull(SetJmpResult, "did_catch_exception");
