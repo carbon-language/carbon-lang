@@ -5,9 +5,8 @@
 define double @func0(double %d0, double %d1) nounwind readnone {
 entry:
 ; MIPS32-EL: func0:
-; MIPS32-EL: lui $[[T1:[0-9]+]], 32768
-; MIPS32-EL: ori $[[MSK1:[0-9]+]], $[[T1]], 0
 ; MIPS32-EL: mfc1 $[[HI0:[0-9]+]], $f15
+; MIPS32-EL: lui $[[MSK1:[0-9]+]], 32768
 ; MIPS32-EL: and $[[AND1:[0-9]+]], $[[HI0]], $[[MSK1]]
 ; MIPS32-EL: lui $[[T0:[0-9]+]], 32767
 ; MIPS32-EL: ori $[[MSK0:[0-9]+]], $[[T0]], 65535
@@ -18,9 +17,8 @@ entry:
 ; MIPS32-EL: mtc1 $[[LO0]], $f0
 ; MIPS32-EL: mtc1 $[[OR]], $f1
 ;
-; MIPS32-EB: lui $[[T1:[0-9]+]], 32768
-; MIPS32-EB: ori $[[MSK1:[0-9]+]], $[[T1]], 0
 ; MIPS32-EB: mfc1 $[[HI1:[0-9]+]], $f14
+; MIPS32-EB: lui $[[MSK1:[0-9]+]], 32768
 ; MIPS32-EB: and $[[AND1:[0-9]+]], $[[HI1]], $[[MSK1]]
 ; MIPS32-EB: lui $[[T0:[0-9]+]], 32767
 ; MIPS32-EB: ori $[[MSK0:[0-9]+]], $[[T0]], 65535
@@ -46,9 +44,8 @@ declare double @copysign(double, double) nounwind readnone
 define float @func1(float %f0, float %f1) nounwind readnone {
 entry:
 ; MIPS32-EL: func1:
-; MIPS32-EL: lui $[[T1:[0-9]+]], 32768
-; MIPS32-EL: ori $[[MSK1:[0-9]+]], $[[T1]], 0
 ; MIPS32-EL: mfc1 $[[ARG1:[0-9]+]], $f14
+; MIPS32-EL: lui $[[MSK1:[0-9]+]], 32768
 ; MIPS32-EL: and $[[T3:[0-9]+]], $[[ARG1]], $[[MSK1]]
 ; MIPS32-EL: lui $[[T0:[0-9]+]], 32767
 ; MIPS32-EL: ori $[[MSK0:[0-9]+]], $[[T0]], 65535

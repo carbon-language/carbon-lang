@@ -225,6 +225,8 @@ def : Pat<(i64 immSExt16:$in),
           (DADDiu ZERO_64, imm:$in)>;
 def : Pat<(i64 immZExt16:$in),
           (ORi64 ZERO_64, imm:$in)>;
+def : Pat<(i64 immLUiOpnd:$in),
+          (LUi64 (HI16 imm:$in))>;
 
 // 32-bit immediates
 def : Pat<(i64 immSExt32:$imm),
