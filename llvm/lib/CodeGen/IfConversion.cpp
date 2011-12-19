@@ -62,6 +62,7 @@ STATISTIC(NumTriangleFRev, "Number of triangle (F/R) if-conversions performed");
 STATISTIC(NumDiamonds,     "Number of diamond if-conversions performed");
 STATISTIC(NumIfConvBBs,    "Number of if-converted blocks");
 STATISTIC(NumDupBBs,       "Number of duplicated blocks");
+STATISTIC(NumUnpred,       "Number of true blocks of diamonds unpredicated");
 
 namespace {
   class IfConverter : public MachineFunctionPass {
@@ -195,7 +196,8 @@ namespace {
     void PredicateBlock(BBInfo &BBI,
                         MachineBasicBlock::iterator E,
                         SmallVectorImpl<MachineOperand> &Cond,
-                        SmallSet<unsigned, 4> &Redefs);
+                        SmallSet<unsigned, 4> &Redefs,
+                        SmallSet<unsigned, 4> *LaterRedefs = 0);
     void CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
                                SmallVectorImpl<MachineOperand> &Cond,
                                SmallSet<unsigned, 4> &Redefs,
@@ -1280,7 +1282,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   BBI.BB->splice(BBI.BB->end(), BBI1->BB, BBI1->BB->begin(), DI1);
   BBI2->BB->erase(BBI2->BB->begin(), DI2);
 
-  // Predicate the 'true' block after removing its branch.
+  // Remove branch from 'true' block and remove duplicated instructions.
   BBI1->NonPredSize -= TII->RemoveBranch(*BBI1->BB);
   DI1 = BBI1->BB->end();
   for (unsigned i = 0; i != NumDups2; ) {
@@ -1293,9 +1295,8 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
       ++i;
   }
   BBI1->BB->erase(DI1, BBI1->BB->end());
-  PredicateBlock(*BBI1, BBI1->BB->end(), *Cond1, Redefs);
 
-  // Predicate the 'false' block.
+  // Remove 'false' block branch and find the last instruction to predicate.
   BBI2->NonPredSize -= TII->RemoveBranch(*BBI2->BB);
   DI2 = BBI2->BB->end();
   while (NumDups2 != 0) {
@@ -1307,6 +1308,55 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
     if (!DI2->isDebugValue())
       --NumDups2;
   }
+
+  // Remember which registers would later be defined by the false block.
+  // This allows us not to predicate instructions in the true block that would
+  // later be re-defined. That is, rather than
+  //   subeq  r0, r1, #1
+  //   addne  r0, r1, #1
+  // generate:
+  //   sub    r0, r1, #1
+  //   addne  r0, r1, #1
+  SmallSet<unsigned, 4> RedefsByFalse;
+  SmallSet<unsigned, 4> ExtUses;
+  if (TII->isProfitableToUnpredicate(*BBI1->BB, *BBI2->BB)) {
+    for (MachineBasicBlock::iterator FI = BBI2->BB->begin(); FI != DI2; ++FI) {
+      if (FI->isDebugValue())
+        continue;
+      SmallVector<unsigned, 4> Defs;
+      for (unsigned i = 0, e = FI->getNumOperands(); i != e; ++i) {
+        const MachineOperand &MO = FI->getOperand(i);
+        if (!MO.isReg())
+          continue;
+        unsigned Reg = MO.getReg();
+        if (!Reg)
+          continue;
+        if (MO.isDef()) {
+          Defs.push_back(Reg);
+        } else if (!RedefsByFalse.count(Reg)) {
+          // These are defined before ctrl flow reach the 'false' instructions.
+          // They cannot be modified by the 'true' instructions.
+          ExtUses.insert(Reg);
+          for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
+            ExtUses.insert(*SR);
+        }
+      }
+
+      for (unsigned i = 0, e = Defs.size(); i != e; ++i) {
+        unsigned Reg = Defs[i];
+        if (!ExtUses.count(Reg)) {
+          RedefsByFalse.insert(Reg);
+          for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
+            RedefsByFalse.insert(*SR);
+        }
+      }
+    }
+  }
+
+  // Predicate the 'true' block.
+  PredicateBlock(*BBI1, BBI1->BB->end(), *Cond1, Redefs, &RedefsByFalse);
+
+  // Predicate the 'false' block.
   PredicateBlock(*BBI2, DI2, *Cond2, Redefs);
 
   // Merge the true block into the entry of the diamond.
@@ -1355,15 +1405,49 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   return true;
 }
 
+static bool MaySpeculate(const MachineInstr *MI,
+                         SmallSet<unsigned, 4> &LaterRedefs,
+                         const TargetInstrInfo *TII) {
+  bool SawStore = true;
+  if (!MI->isSafeToMove(TII, 0, SawStore))
+    return false;
+
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (!Reg)
+      continue;
+    if (MO.isDef() && !LaterRedefs.count(Reg))
+      return false;
+  }
+
+  return true;
+}
+
 /// PredicateBlock - Predicate instructions from the start of the block to the
 /// specified end with the specified condition.
 void IfConverter::PredicateBlock(BBInfo &BBI,
                                  MachineBasicBlock::iterator E,
                                  SmallVectorImpl<MachineOperand> &Cond,
-                                 SmallSet<unsigned, 4> &Redefs) {
+                                 SmallSet<unsigned, 4> &Redefs,
+                                 SmallSet<unsigned, 4> *LaterRedefs) {
+  bool AnyUnpred = false;
+  bool MaySpec = LaterRedefs != 0;
   for (MachineBasicBlock::iterator I = BBI.BB->begin(); I != E; ++I) {
     if (I->isDebugValue() || TII->isPredicated(I))
       continue;
+    // It may be possible not to predicate an instruction if it's the 'true'
+    // side of a diamond and the 'false' side may re-define the instruction's
+    // defs.
+    if (MaySpec && MaySpeculate(I, *LaterRedefs, TII)) {
+      AnyUnpred = true;
+      continue;
+    }
+    // If any instruction is predicated, then every instruction after it must
+    // be predicated.
+    MaySpec = false;
     if (!TII->PredicateInstruction(I, Cond)) {
 #ifndef NDEBUG
       dbgs() << "Unable to predicate " << *I << "!\n";
@@ -1382,6 +1466,8 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
   BBI.NonPredSize = 0;
 
   ++NumIfConvBBs;
+  if (AnyUnpred)
+    ++NumUnpred;
 }
 
 /// CopyAndPredicateBlock - Copy and predicate instructions from source BB to

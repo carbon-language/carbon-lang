@@ -353,6 +353,22 @@ public:
     return false;
   }
 
+  /// isProfitableToUnpredicate - Return true if it's profitable to unpredicate
+  /// one side of a 'diamond', i.e. two sides of if-else predicated on mutually
+  /// exclusive predicates.
+  /// e.g.
+  ///   subeq  r0, r1, #1
+  ///   addne  r0, r1, #1
+  /// =>
+  ///   sub    r0, r1, #1
+  ///   addne  r0, r1, #1
+  ///
+  /// This may be profitable is conditional instructions are always executed.
+  virtual bool isProfitableToUnpredicate(MachineBasicBlock &TMBB,
+                                         MachineBasicBlock &FMBB) const {
+    return false;
+  }
+
   /// copyPhysReg - Emit instructions to copy a pair of physical registers.
   virtual void copyPhysReg(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI, DebugLoc DL,
