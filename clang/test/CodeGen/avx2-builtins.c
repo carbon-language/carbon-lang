@@ -134,3 +134,24 @@ __m256 test_mm256_subs_epu16(__m256 a, __m256 b) {
   // CHECK: @llvm.x86.avx2.psubus.w
   return _mm256_subs_epu16(a, b);
 }
+
+__m256 test_mm256_and_si256(__m256 a, __m256 b) {
+  // CHECK: and <4 x i64>
+  return _mm256_and_si256(a, b);
+}
+
+__m256 test_mm256_andnot_si256(__m256 a, __m256 b) {
+  // CHECK: xor <4 x i64>
+  // CHECK: and <4 x i64>
+  return _mm256_andnot_si256(a, b);
+}
+
+__m256 test_mm256_or_si256(__m256 a, __m256 b) {
+  // CHECK: or <4 x i64>
+  return _mm256_or_si256(a, b);
+}
+
+__m256 test_mm256_xor_si256(__m256 a, __m256 b) {
+  // CHECK: xor <4 x i64>
+  return _mm256_xor_si256(a, b);
+}

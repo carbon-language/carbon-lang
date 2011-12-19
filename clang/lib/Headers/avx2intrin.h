@@ -124,6 +124,24 @@ _mm256_adds_epu16(__m256i a, __m256i b)
   (__m256i)__builtin_ia32_palignr256((__v32qi)__a, (__v32qi)__b, (n)); })
 
 static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_and_si256(__m256i a, __m256i b)
+{
+  return a & b;
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_andnot_si256(__m256i a, __m256i b)
+{
+  return ~a & b;
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_or_si256(__m256i a, __m256i b)
+{
+  return a | b;
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_sub_epi8(__m256i a, __m256i b)
 {
   return (__m256i)((__v32qi)a - (__v32qi)b);
@@ -171,3 +189,8 @@ _mm256_subs_epu16(__m256i a, __m256i b)
   return (__m256i)__builtin_ia32_psubusw256((__v16hi)a, (__v16hi)b);
 }
 
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_xor_si256(__m256i a, __m256i b)
+{
+  return a ^ b;
+}
