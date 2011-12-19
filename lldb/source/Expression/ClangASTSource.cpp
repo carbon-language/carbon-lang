@@ -574,12 +574,13 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
         TypeList types;
         SymbolContext null_sc;
         
+        if (name == id_name || name == Class_name)
+            break;
+      
         if (module_sp && namespace_decl)
             module_sp->FindTypes(null_sc, name, &namespace_decl, true, 1, types);
-        else if(name != id_name && name != Class_name)
+        else 
             m_target->GetImages().FindTypes(null_sc, name, true, 1, types);
-        else
-            break;
         
         if (types.GetSize())
         {
