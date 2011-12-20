@@ -1270,9 +1270,23 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
   
   // Make the named module visible, if it's not already part of the module
   // we are parsing.
-  if (ModuleName != getLangOpts().CurrentModule)
+  if (ModuleName != getLangOpts().CurrentModule) {
+    if (!Module->IsFromModuleFile) {
+      // We have an umbrella header or directory that doesn't actually include
+      // all of the headers within the directory it covers. Complain about
+      // this missing submodule and recover by forgetting that we ever saw
+      // this submodule.
+      // FIXME: Should we detect this at module load time? It seems fairly
+      // expensive (and rare).
+      getDiagnostics().Report(ImportLoc, diag::warn_missing_submodule)
+        << Module->getFullModuleName()
+        << SourceRange(Path.front().second, Path.back().second);
+      
+      return 0;
+    }
     ModuleManager->makeModuleVisible(Module, Visibility);
-
+  }
+  
   // If this module import was due to an inclusion directive, create an 
   // implicit import declaration to capture it in the AST.
   if (IsInclusionDirective && hasASTContext()) {

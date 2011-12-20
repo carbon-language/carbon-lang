@@ -58,6 +58,9 @@ public:
   /// \brief The headers that are part of this module.
   llvm::SmallVector<const FileEntry *, 2> Headers;
   
+  /// \brief Whether this module was loaded from a module file.
+  unsigned IsFromModuleFile : 1;
+  
   /// \brief Whether this is a framework module.
   unsigned IsFramework : 1;
   
@@ -131,17 +134,18 @@ public:
   explicit Module(StringRef Name, SourceLocation DefinitionLoc,
                   bool IsFramework)
     : Name(Name), DefinitionLoc(DefinitionLoc), Parent(0), Umbrella(),
-      IsFramework(IsFramework), IsExplicit(false), InferSubmodules(false),
-      InferExplicitSubmodules(false), InferExportWildcard(false),
-      NameVisibility(Hidden) { }
+      IsFromModuleFile(false), IsFramework(IsFramework), IsExplicit(false),
+      InferSubmodules(false), InferExplicitSubmodules(false),
+      InferExportWildcard(false), NameVisibility(Hidden) { }
   
   /// \brief Construct  a new module or submodule.
   Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent, 
          bool IsFramework, bool IsExplicit)
     : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent), 
-      Umbrella(), IsFramework(IsFramework), IsExplicit(IsExplicit), 
-      InferSubmodules(false), InferExplicitSubmodules(false), 
-      InferExportWildcard(false),NameVisibility(Hidden) { }
+      Umbrella(), IsFromModuleFile(false), IsFramework(IsFramework), 
+      IsExplicit(IsExplicit), InferSubmodules(false), 
+      InferExplicitSubmodules(false), InferExportWildcard(false),
+      NameVisibility(Hidden) { }
   
   ~Module();
   

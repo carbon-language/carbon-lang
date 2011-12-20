@@ -1877,7 +1877,6 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
   for (ASTContext::import_iterator I = Context->local_import_begin(),
                                 IEnd = Context->local_import_end();
        I != IEnd; ++I) {
-    assert(SubmoduleIDs.find(I->getImportedModule()) != SubmoduleIDs.end());
     if (Module *ImportedFrom
           = ModMap.inferModuleFromLocation(FullSourceLoc(I->getLocation(), 
                                                          SrcMgr))) {
