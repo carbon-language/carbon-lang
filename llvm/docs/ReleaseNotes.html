@@ -285,6 +285,7 @@ Release Notes</a>.</h1>
 
   <ul>
     <li>IR support for half float</li>
+	<li>IR support for vectors of pointers, including vector GEPs.</li>
     <li>....</li>
   </ul>
 </div>
@@ -333,6 +334,14 @@ Release Notes</a>.</h1>
 
 <div>
 
+<p>We have changed the way that the Type Legalizer legalizes vectors.
+	The type legalizer now attempts to promote integer elements.
+	This enabled the implementation of vector-select.
+	Additionally, we see a performance boost on workloads which use vectors of chars and shorts, since they are now promoted
+	to 32-bit types, which are better supported by the SIMD instruction set.
+	Floating point types are still widened as before.</p>
+
+
 <p>We have put a significant amount of work into the code generator
    infrastructure, which allows us to implement more aggressive algorithms and
    make it run faster:</p>
@@ -355,6 +364,8 @@ Release Notes</a>.</h1>
 <p>New features and major changes in the X86 target include:</p>
 
 <ul>
+  <li>Bug fixes and improved support for AVX1</li>
+  <li>Support for AVX2 (still incomplete at this point)</li>
   <li>....</li>
 </ul>
 
