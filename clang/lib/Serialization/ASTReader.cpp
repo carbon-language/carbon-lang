@@ -2487,8 +2487,14 @@ void ASTReader::makeNamesVisible(const HiddenNames &Names) {
   for (unsigned I = 0, N = Names.size(); I != N; ++I) {
     if (Decl *D = Names[I].dyn_cast<Decl *>())
       D->ModulePrivate = false;
-    else
-      Names[I].get<IdentifierInfo *>()->setHasMacroDefinition(true);
+    else {
+      IdentifierInfo *II = Names[I].get<IdentifierInfo *>();
+      if (!II->hasMacroDefinition()) {
+        II->setHasMacroDefinition(true);
+        if (DeserializationListener)
+          DeserializationListener->MacroVisible(II);
+      }
+    }
   }
 }
 

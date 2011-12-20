@@ -21,3 +21,7 @@ public:
   void push_back(const T&);
 };
 #endif
+
+int ONE;
+__import_module__ redecl_merge_top.Explicit;
+const int one = ONE;
