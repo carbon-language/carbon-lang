@@ -45,49 +45,50 @@ namespace llvm {
       FIRST_INTEGER_VALUETYPE = i1,
       LAST_INTEGER_VALUETYPE  = i128,
 
-      f32            =   7,   // This is a 32 bit floating point value
-      f64            =   8,   // This is a 64 bit floating point value
-      f80            =   9,   // This is a 80 bit floating point value
-      f128           =  10,   // This is a 128 bit floating point value
-      ppcf128        =  11,   // This is a PPC 128-bit floating point value
+      f16            =   7,   // This is a 16 bit floating point value
+      f32            =   8,   // This is a 32 bit floating point value
+      f64            =   9,   // This is a 64 bit floating point value
+      f80            =  10,   // This is a 80 bit floating point value
+      f128           =  11,   // This is a 128 bit floating point value
+      ppcf128        =  12,   // This is a PPC 128-bit floating point value
 
-      v2i8           =  12,   //  2 x i8
-      v4i8           =  13,   //  4 x i8
-      v8i8           =  14,   //  8 x i8
-      v16i8          =  15,   // 16 x i8
-      v32i8          =  16,   // 32 x i8
-      v2i16          =  17,   //  2 x i16
-      v4i16          =  18,   //  4 x i16
-      v8i16          =  19,   //  8 x i16
-      v16i16         =  20,   // 16 x i16
-      v2i32          =  21,   //  2 x i32
-      v4i32          =  22,   //  4 x i32
-      v8i32          =  23,   //  8 x i32
-      v1i64          =  24,   //  1 x i64
-      v2i64          =  25,   //  2 x i64
-      v4i64          =  26,   //  4 x i64
-      v8i64          =  27,   //  8 x i64
+      v2i8           =  13,   //  2 x i8
+      v4i8           =  14,   //  4 x i8
+      v8i8           =  15,   //  8 x i8
+      v16i8          =  16,   // 16 x i8
+      v32i8          =  17,   // 32 x i8
+      v2i16          =  18,   //  2 x i16
+      v4i16          =  19,   //  4 x i16
+      v8i16          =  20,   //  8 x i16
+      v16i16         =  21,   // 16 x i16
+      v2i32          =  22,   //  2 x i32
+      v4i32          =  23,   //  4 x i32
+      v8i32          =  24,   //  8 x i32
+      v1i64          =  25,   //  1 x i64
+      v2i64          =  26,   //  2 x i64
+      v4i64          =  27,   //  4 x i64
+      v8i64          =  28,   //  8 x i64
 
-      v2f32          =  28,   //  2 x f32
-      v4f32          =  29,   //  4 x f32
-      v8f32          =  30,   //  8 x f32
-      v2f64          =  31,   //  2 x f64
-      v4f64          =  32,   //  4 x f64
+      v2f32          =  29,   //  2 x f32
+      v4f32          =  30,   //  4 x f32
+      v8f32          =  31,   //  8 x f32
+      v2f64          =  32,   //  2 x f64
+      v4f64          =  33,   //  4 x f64
 
       FIRST_VECTOR_VALUETYPE = v2i8,
       LAST_VECTOR_VALUETYPE  = v4f64,
 
-      x86mmx         =  33,   // This is an X86 MMX value
+      x86mmx         =  34,   // This is an X86 MMX value
 
-      Glue           =  34,   // This glues nodes together during pre-RA sched
+      Glue           =  35,   // This glues nodes together during pre-RA sched
 
-      isVoid         =  35,   // This has no value
+      isVoid         =  36,   // This has no value
 
-      Untyped        =  36,   // This value takes a register, but has
+      Untyped        =  37,   // This value takes a register, but has
                               // unspecified type.  The register class
                               // will be determined by the opcode.
 
-      LAST_VALUETYPE =  37,   // This always remains at the end of the list.
+      LAST_VALUETYPE =  38,   // This always remains at the end of the list.
 
       // This is the current maximum for LAST_VALUETYPE.
       // MVT::MAX_ALLOWED_VALUETYPE is used for asserts and to size bit vectors
@@ -143,7 +144,7 @@ namespace llvm {
 
     /// isFloatingPoint - Return true if this is a FP, or a vector FP type.
     bool isFloatingPoint() const {
-      return ((SimpleTy >= MVT::f32 && SimpleTy <= MVT::ppcf128) ||
+      return ((SimpleTy >= MVT::f16 && SimpleTy <= MVT::ppcf128) ||
 	      (SimpleTy >= MVT::v2f32 && SimpleTy <= MVT::v4f64));
     }
 
@@ -252,6 +253,7 @@ namespace llvm {
       case i1  :  return 1;
       case i8  :  return 8;
       case i16 :
+      case f16:
       case v2i8:  return 16;
       case f32 :
       case i32 :
@@ -301,6 +303,8 @@ namespace llvm {
       switch (BitWidth) {
       default:
         assert(false && "Bad bit width!");
+      case 16:
+        return MVT::f16;
       case 32:
         return MVT::f32;
       case 64:

@@ -1694,16 +1694,14 @@ static void EmitGlobalConstantStruct(const ConstantStruct *CS,
 
 static void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
                                  AsmPrinter &AP) {
-  // FP Constants are printed as integer constants to avoid losing
-  // precision.
-  if (CFP->getType()->isDoubleTy()) {
+  if (CFP->getType()->isHalfTy()) {
     if (AP.isVerbose()) {
-      double Val = CFP->getValueAPF().convertToDouble();
-      AP.OutStreamer.GetCommentOS() << "double " << Val << '\n';
+      SmallString<10> Str;
+      CFP->getValueAPF().toString(Str);
+      AP.OutStreamer.GetCommentOS() << "half " << Str << '\n';
     }
-
     uint64_t Val = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
-    AP.OutStreamer.EmitIntValue(Val, 8, AddrSpace);
+    AP.OutStreamer.EmitIntValue(Val, 2, AddrSpace);
     return;
   }
 
@@ -1714,6 +1712,19 @@ static void EmitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
     }
     uint64_t Val = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
     AP.OutStreamer.EmitIntValue(Val, 4, AddrSpace);
+    return;
+  }
+
+  // FP Constants are printed as integer constants to avoid losing
+  // precision.
+  if (CFP->getType()->isDoubleTy()) {
+    if (AP.isVerbose()) {
+      double Val = CFP->getValueAPF().convertToDouble();
+      AP.OutStreamer.GetCommentOS() << "double " << Val << '\n';
+    }
+
+    uint64_t Val = CFP->getValueAPF().bitcastToAPInt().getZExtValue();
+    AP.OutStreamer.EmitIntValue(Val, 8, AddrSpace);
     return;
   }
 

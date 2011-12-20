@@ -147,6 +147,7 @@ void TargetData::init() {
   setAlignment(INTEGER_ALIGN,   2,  2, 16);  // i16
   setAlignment(INTEGER_ALIGN,   4,  4, 32);  // i32
   setAlignment(INTEGER_ALIGN,   4,  8, 64);  // i64
+  setAlignment(FLOAT_ALIGN,     2,  2, 16);  // half
   setAlignment(FLOAT_ALIGN,     4,  4, 32);  // float
   setAlignment(FLOAT_ALIGN,     8,  8, 64);  // double
   setAlignment(VECTOR_ALIGN,    8,  8, 64);  // v2i32, v1i64, ...
@@ -477,6 +478,8 @@ uint64_t TargetData::getTypeSizeInBits(Type *Ty) const {
     return cast<IntegerType>(Ty)->getBitWidth();
   case Type::VoidTyID:
     return 8;
+  case Type::HalfTyID:
+    return 16;
   case Type::FloatTyID:
     return 32;
   case Type::DoubleTyID:
@@ -534,6 +537,7 @@ unsigned TargetData::getAlignment(Type *Ty, bool abi_or_pref) const {
   case Type::VoidTyID:
     AlignType = INTEGER_ALIGN;
     break;
+  case Type::HalfTyID:
   case Type::FloatTyID:
   case Type::DoubleTyID:
   // PPC_FP128TyID and FP128TyID have different data contents, but the
