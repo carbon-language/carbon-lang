@@ -1015,7 +1015,10 @@ def : Pat<(extloadi16_a addr:$src), (LHu addr:$src)>;
 def : Pat<(extloadi16_u addr:$src), (ULHu addr:$src)>;
 
 // peepholes
-def : Pat<(store (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;
+def : Pat<(store (i32 0), addr:$dst), (SW ZERO, addr:$dst)>,
+      Requires<[NotN64]>;
+def : Pat<(store (i32 0), addr:$dst), (SW_P8 ZERO, addr:$dst)>,
+      Requires<[IsN64]>;
 
 // brcond patterns
 multiclass BrcondPats<RegisterClass RC, Instruction BEQOp, Instruction BNEOp,
