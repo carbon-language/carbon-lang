@@ -2010,6 +2010,12 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
           Diag(Loc, diag::warn_ivar_use_hidden) << IV->getDeclName();
       }
     }
+  } else if (Lookup.isSingleResult() &&
+             Lookup.getFoundDecl()->isDefinedOutsideFunctionOrMethod()) {
+    // If accessing a stand-alone ivar in a class method, this is an error.
+    if (const ObjCIvarDecl *IV = dyn_cast<ObjCIvarDecl>(Lookup.getFoundDecl()))
+      return ExprError(Diag(Loc, diag::error_ivar_use_in_class_method)
+                       << IV->getDeclName());
   }
 
   if (Lookup.empty() && II && AllowBuiltinCreation) {
