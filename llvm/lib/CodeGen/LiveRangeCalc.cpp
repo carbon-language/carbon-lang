@@ -65,7 +65,7 @@ void LiveRangeCalc::extend(LiveInterval *LI,
   assert(DomTree && "Missing dominator tree");
 
   MachineBasicBlock *KillMBB = Indexes->getMBBFromIndex(Kill.getPrevSlot());
-  assert(Kill && "No MBB at Kill");
+  assert(KillMBB && "No MBB at Kill");
 
   // Is there a def in the same MBB we can extend?
   if (LI->extendInBlock(Indexes->getMBBStartIdx(KillMBB), Kill))
