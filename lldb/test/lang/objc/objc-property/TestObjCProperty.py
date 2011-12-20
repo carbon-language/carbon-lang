@@ -8,19 +8,19 @@ import unittest2
 import lldb, lldbutil
 from lldbtest import *
 
-class ObjCDynamicValueTestCase(TestBase):
+class ObjCPropertyTestCase(TestBase):
 
     mydir = os.path.join("lang", "objc", "objc-property")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
-    def test_get_dynamic_objc_vals_with_dsym(self):
+    def test_objc_properties_with_dsym(self):
         """Test that expr uses the correct property getters and setters"""
         self.buildDsym()
         self.do_test_properties()
 
     @python_api_test
-    def test_get_objc_dynamic_vals_with_dwarf(self):
+    def test_objc_properties_with_dwarf(self):
         """Test that expr uses the correct property getters and setters"""
         self.buildDwarf()
         self.do_test_properties()
