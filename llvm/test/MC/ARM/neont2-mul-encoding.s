@@ -70,9 +70,9 @@
 
 	vqdmull.s16	q8, d16, d17
 	vqdmull.s32	q8, d16, d17
-@ vqdmull.s16	q1, d7, d1[1]
+        vqdmull.s16	q1, d7, d1[1]
 
 @ CHECK: vqdmull.s16	q8, d16, d17    @ encoding: [0xd0,0xef,0xa1,0x0d]
 @ CHECK: vqdmull.s32	q8, d16, d17    @ encoding: [0xe0,0xef,0xa1,0x0d]
-@ FIXME: vqdmull.s16	q1, d7, d1[1]    @ encoding: [0x97,0xef,0x49,0x3b]
+@ CHECK: vqdmull.s16	q1, d7, d1[1]   @ encoding: [0x97,0xef,0x49,0x2b]
 
