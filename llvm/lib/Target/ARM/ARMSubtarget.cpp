@@ -108,13 +108,13 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   if (isAAPCS_ABI())
     stackAlignment = 8;
 
-  if (!isTargetDarwin())
+  if (!isTargetIOS())
     UseMovt = hasV6T2Ops();
   else {
     IsR9Reserved = ReserveR9 | !HasV6Ops;
     UseMovt = DarwinUseMOVT && hasV6T2Ops();
     const Triple &T = getTargetTriple();
-    SupportsTailCall = T.getOS() == Triple::IOS && !T.isOSVersionLT(5, 0);
+    SupportsTailCall = !T.isOSVersionLT(5, 0);
   }
 
   if (!isThumb() || hasThumb2())

@@ -72,8 +72,8 @@ ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     0
   };
 
-  static const unsigned DarwinCalleeSavedRegs[] = {
-    // Darwin ABI deviates from ARM standard ABI. R9 is not a callee-saved
+  static const unsigned iOSCalleeSavedRegs[] = {
+    // iOS ABI deviates from ARM standard ABI. R9 is not a callee-saved
     // register.
     ARM::LR,  ARM::R7,  ARM::R6, ARM::R5, ARM::R4,
     ARM::R11, ARM::R10, ARM::R8,
@@ -82,7 +82,7 @@ ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     ARM::D11, ARM::D10, ARM::D9,  ARM::D8,
     0
   };
-  return STI.isTargetDarwin() ? DarwinCalleeSavedRegs : CalleeSavedRegs;
+  return (STI.isTargetIOS()) ? iOSCalleeSavedRegs : CalleeSavedRegs;
 }
 
 BitVector ARMBaseRegisterInfo::

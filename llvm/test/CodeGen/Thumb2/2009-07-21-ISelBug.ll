@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin9 -mattr=+vfp2,+thumb2 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-ios -mattr=+vfp2,+thumb2 | FileCheck %s
 ; rdar://7076238
 
 @"\01LC" = external constant [36 x i8], align 1		; <[36 x i8]*> [#uses=1]

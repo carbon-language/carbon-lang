@@ -3212,17 +3212,17 @@ def t2Bcc : T2I<(outs), (ins brtarget:$target), IIC_Br,
   let DecoderMethod = "DecodeThumb2BCCInstruction";
 }
 
-// Tail calls. The Darwin version of thumb tail calls uses a t2 branch, so
+// Tail calls. The IOS version of thumb tail calls uses a t2 branch, so
 // it goes here.
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
-  // Darwin version.
+  // IOS version.
   let Defs = [R0, R1, R2, R3, R9, R12, QQQQ0, QQQQ2, QQQQ3, PC],
       Uses = [SP] in
   def tTAILJMPd: tPseudoExpand<(outs),
                    (ins uncondbrtarget:$dst, pred:$p, variable_ops),
                    4, IIC_Br, [],
                    (t2B uncondbrtarget:$dst, pred:$p)>,
-                 Requires<[IsThumb2, IsDarwin]>;
+                 Requires<[IsThumb2, IsIOS]>;
 }
 
 // IT block

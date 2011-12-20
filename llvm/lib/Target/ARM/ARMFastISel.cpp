@@ -2012,12 +2012,12 @@ bool ARMFastISel::SelectRet(const Instruction *I) {
 
 unsigned ARMFastISel::ARMSelectCallOp(const GlobalValue *GV) {
 
-  // Darwin needs the r9 versions of the opcodes.
-  bool isDarwin = Subtarget->isTargetDarwin();
+  // iOS needs the r9 versions of the opcodes.
+  bool isiOS = Subtarget->isTargetIOS();
   if (isThumb2) {
-    return isDarwin ? ARM::tBLr9 : ARM::tBL;
+    return isiOS ? ARM::tBLr9 : ARM::tBL;
   } else  {
-    return isDarwin ? ARM::BLr9 : ARM::BL;
+    return isiOS ? ARM::BLr9 : ARM::BL;
   }
 }
 
@@ -2076,7 +2076,7 @@ bool ARMFastISel::ARMEmitLibcall(const Instruction *I, RTLIB::Libcall Call) {
   if (!ProcessCallArgs(Args, ArgRegs, ArgVTs, ArgFlags, RegArgs, CC, NumBytes))
     return false;
 
-  // Issue the call, BLr9 for darwin, BL otherwise.
+  // Issue the call, BLr9 for iOS, BL otherwise.
   // TODO: Turn this into the table of arm call ops.
   MachineInstrBuilder MIB;
   unsigned CallOpc = ARMSelectCallOp(NULL);
@@ -2197,7 +2197,7 @@ bool ARMFastISel::SelectCall(const Instruction *I,
   if (!ProcessCallArgs(Args, ArgRegs, ArgVTs, ArgFlags, RegArgs, CC, NumBytes))
     return false;
 
-  // Issue the call, BLr9 for darwin, BL otherwise.
+  // Issue the call, BLr9 for iOS, BL otherwise.
   // TODO: Turn this into the table of arm call ops.
   MachineInstrBuilder MIB;
   unsigned CallOpc = ARMSelectCallOp(GV);
@@ -2514,12 +2514,12 @@ bool ARMFastISel::TryToFoldLoad(MachineInstr *MI, unsigned OpNo,
 
 namespace llvm {
   llvm::FastISel *ARM::createFastISel(FunctionLoweringInfo &funcInfo) {
-    // Completely untested on non-darwin.
+    // Completely untested on non-iOS.
     const TargetMachine &TM = funcInfo.MF->getTarget();
 
     // Darwin and thumb1 only for now.
     const ARMSubtarget *Subtarget = &TM.getSubtarget<ARMSubtarget>();
-    if (Subtarget->isTargetDarwin() && !Subtarget->isThumb1Only() &&
+    if (Subtarget->isTargetIOS() && !Subtarget->isThumb1Only() &&
         !DisableARMFastISel)
       return new ARMFastISel(funcInfo);
     return 0;

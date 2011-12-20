@@ -206,8 +206,8 @@ def IsARClass        : Predicate<"!Subtarget->isMClass()">,
                                  AssemblerPredicate<"!FeatureMClass">;
 def IsARM            : Predicate<"!Subtarget->isThumb()">,
                                  AssemblerPredicate<"!ModeThumb">;
-def IsDarwin         : Predicate<"Subtarget->isTargetDarwin()">;
-def IsNotDarwin      : Predicate<"!Subtarget->isTargetDarwin()">;
+def IsIOS            : Predicate<"Subtarget->isTargetIOS()">;
+def IsNotIOS         : Predicate<"!Subtarget->isTargetIOS()">;
 def IsNaCl           : Predicate<"Subtarget->isTargetNaCl()">;
 
 // FIXME: Eventually this will be just "hasV6T2Ops".
@@ -1896,7 +1896,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 // a use to prevent stack-pointer assignments that appear immediately
 // before calls from potentially appearing dead.
 let isCall = 1,
-  // On non-Darwin platforms R9 is callee-saved.
+  // On non-IOS platforms R9 is callee-saved.
   // FIXME:  Do we really need a non-predicated version? If so, it should
   // at least be a pseudo instruction expanding to the predicated version
   // at MC lowering time.
@@ -1905,7 +1905,7 @@ let isCall = 1,
   def BL  : ABXI<0b1011, (outs), (ins bl_target:$func, variable_ops),
                 IIC_Br, "bl\t$func",
                 [(ARMcall tglobaladdr:$func)]>,
-            Requires<[IsARM, IsNotDarwin]> {
+            Requires<[IsARM, IsNotIOS]> {
     let Inst{31-28} = 0b1110;
     bits<24> func;
     let Inst{23-0} = func;
@@ -1915,7 +1915,7 @@ let isCall = 1,
   def BL_pred : ABI<0b1011, (outs), (ins bl_target:$func, variable_ops),
                    IIC_Br, "bl", "\t$func",
                    [(ARMcall_pred tglobaladdr:$func)]>,
-                Requires<[IsARM, IsNotDarwin]> {
+                Requires<[IsARM, IsNotIOS]> {
     bits<24> func;
     let Inst{23-0} = func;
     let DecoderMethod = "DecodeBranchImmInstruction";
@@ -1925,7 +1925,7 @@ let isCall = 1,
   def BLX : AXI<(outs), (ins GPR:$func, variable_ops), BrMiscFrm,
                 IIC_Br, "blx\t$func",
                 [(ARMcall GPR:$func)]>,
-            Requires<[IsARM, HasV5T, IsNotDarwin]> {
+            Requires<[IsARM, HasV5T, IsNotIOS]> {
     bits<4> func;
     let Inst{31-4} = 0b1110000100101111111111110011;
     let Inst{3-0}  = func;
@@ -1934,7 +1934,7 @@ let isCall = 1,
   def BLX_pred : AI<(outs), (ins GPR:$func, variable_ops), BrMiscFrm,
                     IIC_Br, "blx", "\t$func",
                     [(ARMcall_pred GPR:$func)]>,
-                 Requires<[IsARM, HasV5T, IsNotDarwin]> {
+                 Requires<[IsARM, HasV5T, IsNotIOS]> {
     bits<4> func;
     let Inst{27-4} = 0b000100101111111111110011;
     let Inst{3-0}  = func;
@@ -1944,16 +1944,16 @@ let isCall = 1,
   // Note: Restrict $func to the tGPR regclass to prevent it being in LR.
   def BX_CALL : ARMPseudoInst<(outs), (ins tGPR:$func, variable_ops),
                    8, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
-                   Requires<[IsARM, HasV4T, IsNotDarwin]>;
+                   Requires<[IsARM, HasV4T, IsNotIOS]>;
 
   // ARMv4
   def BMOVPCRX_CALL : ARMPseudoInst<(outs), (ins tGPR:$func, variable_ops),
                    8, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
-                   Requires<[IsARM, NoV4T, IsNotDarwin]>;
+                   Requires<[IsARM, NoV4T, IsNotIOS]>;
 }
 
 let isCall = 1,
-  // On Darwin R9 is call-clobbered.
+  // On IOS R9 is call-clobbered.
   // R7 is marked as a use to prevent frame-pointer assignments from being
   // moved above / below calls.
   Defs = [R0,  R1,  R2,  R3,  R9,  R12, LR, QQQQ0, QQQQ2, QQQQ3, CPSR, FPSCR],
@@ -1961,38 +1961,38 @@ let isCall = 1,
   def BLr9  : ARMPseudoExpand<(outs), (ins bl_target:$func, variable_ops),
                 4, IIC_Br,
                 [(ARMcall tglobaladdr:$func)], (BL bl_target:$func)>,
-              Requires<[IsARM, IsDarwin]>;
+              Requires<[IsARM, IsIOS]>;
 
   def BLr9_pred : ARMPseudoExpand<(outs),
                    (ins bl_target:$func, pred:$p, variable_ops),
                    4, IIC_Br,
                    [(ARMcall_pred tglobaladdr:$func)],
                    (BL_pred bl_target:$func, pred:$p)>,
-                  Requires<[IsARM, IsDarwin]>;
+                  Requires<[IsARM, IsIOS]>;
 
   // ARMv5T and above
   def BLXr9 : ARMPseudoExpand<(outs), (ins GPR:$func, variable_ops),
                 4, IIC_Br,
                 [(ARMcall GPR:$func)],
                 (BLX GPR:$func)>,
-               Requires<[IsARM, HasV5T, IsDarwin]>;
+               Requires<[IsARM, HasV5T, IsIOS]>;
 
   def BLXr9_pred: ARMPseudoExpand<(outs), (ins GPR:$func, pred:$p,variable_ops),
                 4, IIC_Br,
                 [(ARMcall_pred GPR:$func)],
                 (BLX_pred GPR:$func, pred:$p)>,
-                   Requires<[IsARM, HasV5T, IsDarwin]>;
+                   Requires<[IsARM, HasV5T, IsIOS]>;
 
   // ARMv4T
   // Note: Restrict $func to the tGPR regclass to prevent it being in LR.
   def BXr9_CALL : ARMPseudoInst<(outs), (ins tGPR:$func, variable_ops),
                   8, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
-                  Requires<[IsARM, HasV4T, IsDarwin]>;
+                  Requires<[IsARM, HasV4T, IsIOS]>;
 
   // ARMv4
   def BMOVPCRXr9_CALL : ARMPseudoInst<(outs), (ins tGPR:$func, variable_ops),
                   8, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
-                  Requires<[IsARM, NoV4T, IsDarwin]>;
+                  Requires<[IsARM, NoV4T, IsIOS]>;
 }
 
 let isBranch = 1, isTerminator = 1 in {
@@ -2060,45 +2060,45 @@ def BXJ : ABI<0b0001, (outs), (ins GPR:$func), NoItinerary, "bxj", "\t$func",
 // Tail calls.
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
-  // Darwin versions.
+  // IOS versions.
   let Defs = [R0, R1, R2, R3, R9, R12, QQQQ0, QQQQ2, QQQQ3, PC],
       Uses = [SP] in {
     def TCRETURNdi : PseudoInst<(outs), (ins i32imm:$dst, variable_ops),
-                       IIC_Br, []>, Requires<[IsDarwin]>;
+                       IIC_Br, []>, Requires<[IsIOS]>;
 
     def TCRETURNri : PseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
-                       IIC_Br, []>, Requires<[IsDarwin]>;
+                       IIC_Br, []>, Requires<[IsIOS]>;
 
     def TAILJMPd : ARMPseudoExpand<(outs), (ins br_target:$dst, variable_ops),
                    4, IIC_Br, [],
                    (Bcc br_target:$dst, (ops 14, zero_reg))>,
-                   Requires<[IsARM, IsDarwin]>;
+                   Requires<[IsARM, IsIOS]>;
 
     def TAILJMPr : ARMPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
                    4, IIC_Br, [],
                    (BX GPR:$dst)>,
-                   Requires<[IsARM, IsDarwin]>;
+                   Requires<[IsARM, IsIOS]>;
 
   }
 
-  // Non-Darwin versions (the difference is R9).
+  // Non-IOS versions (the difference is R9).
   let Defs = [R0, R1, R2, R3, R12, QQQQ0, QQQQ2, QQQQ3, PC],
       Uses = [SP] in {
     def TCRETURNdiND : PseudoInst<(outs), (ins i32imm:$dst, variable_ops),
-                       IIC_Br, []>, Requires<[IsNotDarwin]>;
+                       IIC_Br, []>, Requires<[IsNotIOS]>;
 
     def TCRETURNriND : PseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
-                       IIC_Br, []>, Requires<[IsNotDarwin]>;
+                       IIC_Br, []>, Requires<[IsNotIOS]>;
 
     def TAILJMPdND : ARMPseudoExpand<(outs), (ins brtarget:$dst, variable_ops),
                    4, IIC_Br, [],
                    (Bcc br_target:$dst, (ops 14, zero_reg))>,
-                   Requires<[IsARM, IsNotDarwin]>;
+                   Requires<[IsARM, IsNotIOS]>;
 
     def TAILJMPrND : ARMPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
                      4, IIC_Br, [],
                      (BX GPR:$dst)>,
-                     Requires<[IsARM, IsNotDarwin]>;
+                     Requires<[IsARM, IsNotIOS]>;
   }
 }
 
@@ -4728,13 +4728,13 @@ let Defs =
                                 Requires<[IsARM, NoVFP]>;
 }
 
-// FIXME: Non-Darwin version(s)
+// FIXME: Non-IOS version(s)
 let isBarrier = 1, hasSideEffects = 1, isTerminator = 1,
     Defs = [ R7, LR, SP ] in {
 def Int_eh_sjlj_longjmp : PseudoInst<(outs), (ins GPR:$src, GPR:$scratch),
                              NoItinerary,
                          [(ARMeh_sjlj_longjmp GPR:$src, GPR:$scratch)]>,
-                                Requires<[IsARM, IsDarwin]>;
+                                Requires<[IsARM, IsIOS]>;
 }
 
 // eh.sjlj.dispatchsetup pseudo-instruction.
@@ -4804,28 +4804,28 @@ def : ARMPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
 
 // Tail calls
 def : ARMPat<(ARMtcret tcGPR:$dst),
-          (TCRETURNri tcGPR:$dst)>, Requires<[IsDarwin]>;
+          (TCRETURNri tcGPR:$dst)>, Requires<[IsIOS]>;
 
 def : ARMPat<(ARMtcret (i32 tglobaladdr:$dst)),
-          (TCRETURNdi texternalsym:$dst)>, Requires<[IsDarwin]>;
+          (TCRETURNdi texternalsym:$dst)>, Requires<[IsIOS]>;
 
 def : ARMPat<(ARMtcret (i32 texternalsym:$dst)),
-          (TCRETURNdi texternalsym:$dst)>, Requires<[IsDarwin]>;
+          (TCRETURNdi texternalsym:$dst)>, Requires<[IsIOS]>;
 
 def : ARMPat<(ARMtcret tcGPR:$dst),
-          (TCRETURNriND tcGPR:$dst)>, Requires<[IsNotDarwin]>;
+          (TCRETURNriND tcGPR:$dst)>, Requires<[IsNotIOS]>;
 
 def : ARMPat<(ARMtcret (i32 tglobaladdr:$dst)),
-          (TCRETURNdiND texternalsym:$dst)>, Requires<[IsNotDarwin]>;
+          (TCRETURNdiND texternalsym:$dst)>, Requires<[IsNotIOS]>;
 
 def : ARMPat<(ARMtcret (i32 texternalsym:$dst)),
-          (TCRETURNdiND texternalsym:$dst)>, Requires<[IsNotDarwin]>;
+          (TCRETURNdiND texternalsym:$dst)>, Requires<[IsNotIOS]>;
 
 // Direct calls
 def : ARMPat<(ARMcall texternalsym:$func), (BL texternalsym:$func)>,
-      Requires<[IsARM, IsNotDarwin]>;
+      Requires<[IsARM, IsNotIOS]>;
 def : ARMPat<(ARMcall texternalsym:$func), (BLr9 texternalsym:$func)>,
-      Requires<[IsARM, IsDarwin]>;
+      Requires<[IsARM, IsIOS]>;
 
 // zextload i1 -> zextload i8
 def : ARMPat<(zextloadi1 addrmode_imm12:$addr), (LDRBi12 addrmode_imm12:$addr)>;
