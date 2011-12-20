@@ -8,6 +8,14 @@ entry:
   ret i64 %mul
 }
 
+define i64 @m1(i64 %a) nounwind readnone {
+entry:
+; CHECK: dmult
+; CHECK: mfhi
+  %div = sdiv i64 %a, 3
+  ret i64 %div
+}
+
 define i64 @d0(i64 %a0, i64 %a1) nounwind readnone {
 entry:
 ; CHECK: ddivu

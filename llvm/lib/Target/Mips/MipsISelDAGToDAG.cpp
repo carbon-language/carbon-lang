@@ -81,6 +81,10 @@ private:
   }
 
   SDNode *getGlobalBaseReg();
+
+  std::pair<SDNode*, SDNode*> SelectMULT(SDNode *N, unsigned Opc, DebugLoc dl,
+                                         EVT Ty, bool HasLo, bool HasHi);
+
   SDNode *Select(SDNode *N);
 
   // Complex Pattern.
@@ -176,6 +180,28 @@ SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset) {
   return true;
 }
 
+/// Select multiply instructions.
+std::pair<SDNode*, SDNode*>
+MipsDAGToDAGISel::SelectMULT(SDNode *N, unsigned Opc, DebugLoc dl, EVT Ty, 
+                             bool HasLo, bool HasHi) {
+  SDNode *Lo, *Hi;
+  SDNode *Mul = CurDAG->getMachineNode(Opc, dl, MVT::Glue, N->getOperand(0),
+                                       N->getOperand(1));
+  SDValue InFlag = SDValue(Mul, 0);
+
+  if (HasLo) {
+    Lo = CurDAG->getMachineNode(Ty == MVT::i32 ? Mips::MFLO : Mips::MFLO64, dl,
+                                Ty, MVT::Glue, InFlag);
+    InFlag = SDValue(Lo, 1);
+  }
+  if (HasHi)
+    Hi = CurDAG->getMachineNode(Ty == MVT::i32 ? Mips::MFHI : Mips::MFHI64, dl,
+                                Ty, InFlag);
+  
+  return std::make_pair(Lo, Hi);
+}
+
+
 /// Select instructions not customized! Used for
 /// expanded, promoted and normal instructions
 SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
@@ -195,6 +221,9 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
   // Instruction Selection not handled by the auto-generated
   // tablegen selection should be handled here.
   ///
+  EVT NodeTy = Node->getValueType(0);
+  unsigned MultOpc;
+
   switch(Opcode) {
   default: break;
 
@@ -232,58 +261,39 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
   /// Mul with two results
   case ISD::SMUL_LOHI:
   case ISD::UMUL_LOHI: {
-    assert(Node->getValueType(0) != MVT::i64 &&
-           "64-bit multiplication with two results not handled.");
-    SDValue Op1 = Node->getOperand(0);
-    SDValue Op2 = Node->getOperand(1);
+    if (NodeTy == MVT::i32)
+      MultOpc = (Opcode == ISD::UMUL_LOHI ? Mips::MULTu : Mips::MULT);
+    else
+      MultOpc = (Opcode == ISD::UMUL_LOHI ? Mips::DMULTu : Mips::DMULT);
 
-    unsigned Op;
-    Op = (Opcode == ISD::UMUL_LOHI ? Mips::MULTu : Mips::MULT);
-
-    SDNode *Mul = CurDAG->getMachineNode(Op, dl, MVT::Glue, Op1, Op2);
-
-    SDValue InFlag = SDValue(Mul, 0);
-    SDNode *Lo = CurDAG->getMachineNode(Mips::MFLO, dl, MVT::i32,
-                                        MVT::Glue, InFlag);
-    InFlag = SDValue(Lo,1);
-    SDNode *Hi = CurDAG->getMachineNode(Mips::MFHI, dl, MVT::i32, InFlag);
+    std::pair<SDNode*, SDNode*> LoHi = SelectMULT(Node, MultOpc, dl, NodeTy,
+                                                  true, true);
 
     if (!SDValue(Node, 0).use_empty())
-      ReplaceUses(SDValue(Node, 0), SDValue(Lo,0));
+      ReplaceUses(SDValue(Node, 0), SDValue(LoHi.first, 0));
 
     if (!SDValue(Node, 1).use_empty())
-      ReplaceUses(SDValue(Node, 1), SDValue(Hi,0));
+      ReplaceUses(SDValue(Node, 1), SDValue(LoHi.second, 0));
 
     return NULL;
   }
 
   /// Special Muls
-  case ISD::MUL:
+  case ISD::MUL: {
     // Mips32 has a 32-bit three operand mul instruction.
-    if (Subtarget.hasMips32() && Node->getValueType(0) == MVT::i32)
+    if (Subtarget.hasMips32() && NodeTy == MVT::i32)
       break;
+    return SelectMULT(Node, NodeTy == MVT::i32 ? Mips::MULT : Mips::DMULT,
+                      dl, NodeTy, true, false).first;
+  }
   case ISD::MULHS:
   case ISD::MULHU: {
-    assert((Opcode == ISD::MUL || Node->getValueType(0) != MVT::i64) &&
-           "64-bit MULH* not handled.");
-    EVT Ty = Node->getValueType(0);
-    SDValue MulOp1 = Node->getOperand(0);
-    SDValue MulOp2 = Node->getOperand(1);
-
-    unsigned MulOp  = (Opcode == ISD::MULHU ?
-                       Mips::MULTu :
-                       (Ty == MVT::i32 ? Mips::MULT : Mips::DMULT));
-    SDNode *MulNode = CurDAG->getMachineNode(MulOp, dl,
-                                             MVT::Glue, MulOp1, MulOp2);
-
-    SDValue InFlag = SDValue(MulNode, 0);
-
-    if (Opcode == ISD::MUL) {
-      unsigned Opc = (Ty == MVT::i32 ? Mips::MFLO : Mips::MFLO64);
-      return CurDAG->getMachineNode(Opc, dl, Ty, InFlag);
-    }
+    if (NodeTy == MVT::i32)
+      MultOpc = (Opcode == ISD::MULHU ? Mips::MULTu : Mips::MULT);
     else
-      return CurDAG->getMachineNode(Mips::MFHI, dl, MVT::i32, InFlag);
+      MultOpc = (Opcode == ISD::MULHU ? Mips::DMULTu : Mips::DMULT);
+
+    return SelectMULT(Node, MultOpc, dl, NodeTy, false, true).second;
   }
 
   // Get target GOT address.
