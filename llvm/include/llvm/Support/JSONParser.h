@@ -128,7 +128,16 @@ private:
 
   /// \brief Skips all elements in the given container.
   template <typename ContainerT>
-  bool skipContainer(const ContainerT &Container);
+  bool skipContainer(const ContainerT &Container) {
+    for (typename ContainerT::const_iterator I = Container.current(),
+                                             E = Container.end();
+         I != E; ++I) {
+      assert(*I != 0);
+      if (!skip(**I))
+        return false;
+    }
+    return !failed();
+  }
 
   /// \brief Skips to the next position behind the given JSON atom.
   bool skip(const JSONAtom &Atom);

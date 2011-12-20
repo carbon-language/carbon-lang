@@ -43,18 +43,6 @@ bool JSONParser::validate() {
   return skip(*parseRoot());
 }
 
-template <typename ContainerT>
-bool JSONParser::skipContainer(const ContainerT &Container) {
-  for (typename ContainerT::const_iterator I = Container.current(),
-                                           E = Container.end();
-       I != E; ++I) {
-    assert(*I != 0);
-    if (!skip(**I))
-      return false;
-  }
-  return !failed();
-}
-
 bool JSONParser::skip(const JSONAtom &Atom) {
   switch(Atom.getKind()) {
     case JSONAtom::JK_Array: return skipContainer(*cast<JSONArray>(&Atom));
