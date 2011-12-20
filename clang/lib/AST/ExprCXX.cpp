@@ -1023,4 +1023,4 @@ TemplateArgument SubstNonTypeTemplateParmPackExpr::getArgumentPack() const {
   return TemplateArgument(Arguments, NumArguments);
 }
 
-
+void ArrayTypeTraitExpr::anchor() { }

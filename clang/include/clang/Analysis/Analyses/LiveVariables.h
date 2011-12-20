@@ -52,7 +52,9 @@ public:
     friend class LiveVariables;    
   };
   
-  struct Observer {
+  class Observer {
+    virtual void anchor();
+  public:
     virtual ~Observer() {}
     
     /// A callback invoked right before invoking the

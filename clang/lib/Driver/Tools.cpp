@@ -2865,6 +2865,8 @@ const char *darwin::CC1::getCC1Name(types::ID Type) const {
   }
 }
 
+void darwin::CC1::anchor() {}
+
 const char *darwin::CC1::getBaseInputName(const ArgList &Args,
                                           const InputInfoList &Inputs) {
   return Args.MakeArgString(
@@ -3508,6 +3510,8 @@ void darwin::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     Args.MakeArgString(getToolChain().GetProgramPath("as"));
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
+
+void darwin::DarwinTool::anchor() {}
 
 void darwin::DarwinTool::AddDarwinArch(const ArgList &Args,
                                        ArgStringList &CmdArgs) const {

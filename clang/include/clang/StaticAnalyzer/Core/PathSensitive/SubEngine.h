@@ -43,6 +43,7 @@ class NodeBuilderWithSinks;
 class MemRegion;
 
 class SubEngine {
+  virtual void anchor();
 public:
   virtual ~SubEngine() {}
 

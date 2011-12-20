@@ -64,6 +64,8 @@ private:
 /// MangleContext - Context for tracking state which persists across multiple
 /// calls to the C++ name mangler.
 class MangleContext {
+  virtual void anchor();
+
   ASTContext &Context;
   DiagnosticsEngine &Diags;
 

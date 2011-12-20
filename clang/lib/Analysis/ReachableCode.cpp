@@ -251,7 +251,9 @@ void DeadCodeScan::reportDeadCode(const Stmt *S,
 }
 
 namespace clang { namespace reachable_code {
-  
+
+void Callback::anchor() { }  
+
 unsigned ScanReachableFromBlock(const CFGBlock *Start,
                                 llvm::BitVector &Reachable) {
   unsigned count = 0;

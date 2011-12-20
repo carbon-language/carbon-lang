@@ -19,4 +19,8 @@ using namespace clang;
 
 Attr::~Attr() { }
 
+void InheritableAttr::anchor() { }
+
+void InheritableParamAttr::anchor() { }
+
 #include "clang/AST/AttrImpl.inc"

@@ -35,6 +35,7 @@ namespace clang {
 ///
 /// The semantic context of a friend decl is its declaring class.
 class FriendDecl : public Decl {
+  virtual void anchor();
 public:
   typedef llvm::PointerUnion<NamedDecl*,TypeSourceInfo*> FriendUnion;
 

@@ -33,6 +33,7 @@ using namespace llvm;
 
 namespace clang {
   class BackendConsumer : public ASTConsumer {
+    virtual void anchor();
     DiagnosticsEngine &Diags;
     BackendAction Action;
     const CodeGenOptions &CodeGenOpts;
@@ -180,6 +181,8 @@ namespace clang {
     void InlineAsmDiagHandler2(const llvm::SMDiagnostic &,
                                SourceLocation LocCookie);
   };
+  
+  void BackendConsumer::anchor() {}
 }
 
 /// ConvertBackendLocation - Convert a location in a temporary llvm::SourceMgr
@@ -406,20 +409,26 @@ void CodeGenAction::ExecuteAction() {
 
 //
 
+void EmitAssemblyAction::anchor() { }
 EmitAssemblyAction::EmitAssemblyAction(llvm::LLVMContext *_VMContext)
   : CodeGenAction(Backend_EmitAssembly, _VMContext) {}
 
+void EmitBCAction::anchor() { }
 EmitBCAction::EmitBCAction(llvm::LLVMContext *_VMContext)
   : CodeGenAction(Backend_EmitBC, _VMContext) {}
 
+void EmitLLVMAction::anchor() { }
 EmitLLVMAction::EmitLLVMAction(llvm::LLVMContext *_VMContext)
   : CodeGenAction(Backend_EmitLL, _VMContext) {}
 
+void EmitLLVMOnlyAction::anchor() { }
 EmitLLVMOnlyAction::EmitLLVMOnlyAction(llvm::LLVMContext *_VMContext)
   : CodeGenAction(Backend_EmitNothing, _VMContext) {}
 
+void EmitCodeGenOnlyAction::anchor() { }
 EmitCodeGenOnlyAction::EmitCodeGenOnlyAction(llvm::LLVMContext *_VMContext)
   : CodeGenAction(Backend_EmitMCNull, _VMContext) {}
 
+void EmitObjAction::anchor() { }
 EmitObjAction::EmitObjAction(llvm::LLVMContext *_VMContext)
   : CodeGenAction(Backend_EmitObj, _VMContext) {}

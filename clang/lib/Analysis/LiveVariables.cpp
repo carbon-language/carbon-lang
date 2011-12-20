@@ -143,6 +143,8 @@ namespace {
   }
 }
 
+void LiveVariables::Observer::anchor() { }
+
 LiveVariables::LivenessValues
 LiveVariablesImpl::merge(LiveVariables::LivenessValues valsA,
                          LiveVariables::LivenessValues valsB) {  

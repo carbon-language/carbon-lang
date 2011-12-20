@@ -15,6 +15,8 @@
 
 using namespace clang;
 
+void PostOrderCFGView::anchor() { }
+
 PostOrderCFGView::PostOrderCFGView(const CFG *cfg) {
   Blocks.reserve(cfg->getNumBlockIDs());
   CFGBlockSet BSet(cfg);

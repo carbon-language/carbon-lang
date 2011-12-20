@@ -20,3 +20,11 @@ StringRef CheckerBase::getTagDescription() const {
   // FIXME: We want to return the package + name of the checker here.
   return "A Checker";  
 }
+
+void Checker<check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
+             check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
+             check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
+             check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
+             check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
+             check::_VoidCheck, check::_VoidCheck, check::_VoidCheck
+             >::anchor() { }

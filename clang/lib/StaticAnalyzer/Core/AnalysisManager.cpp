@@ -14,6 +14,8 @@
 using namespace clang;
 using namespace ento;
 
+void AnalysisManager::anchor() { }
+
 AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
                                  const LangOptions &lang,
                                  PathDiagnosticConsumer *pd,

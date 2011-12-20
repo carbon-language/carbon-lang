@@ -31,6 +31,7 @@ typedef llvm::DomTreeNodeBase<CFGBlock> DomTreeNode;
 /// This class implements the dominators tree functionality given a Clang CFG.
 ///
 class DominatorTree : public ManagedAnalysis {
+  virtual void anchor();
 public:
   llvm::DominatorTreeBase<CFGBlock>* DT;
 
@@ -155,7 +156,7 @@ private:
   CFG *cfg;
 };
 
-void WriteAsOperand(raw_ostream &OS, const CFGBlock *BB,
+inline void WriteAsOperand(raw_ostream &OS, const CFGBlock *BB,
                           bool t) {
   OS << "BB#" << BB->getBlockID();
 }

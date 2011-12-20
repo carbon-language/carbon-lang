@@ -537,6 +537,8 @@ SourceLocation NonTypeTemplateParmDecl::getDefaultArgumentLoc() const {
 // TemplateTemplateParmDecl Method Implementations
 //===----------------------------------------------------------------------===//
 
+void TemplateTemplateParmDecl::anchor() { }
+
 TemplateTemplateParmDecl *
 TemplateTemplateParmDecl::Create(const ASTContext &C, DeclContext *DC,
                                  SourceLocation L, unsigned D, unsigned P,
@@ -580,6 +582,12 @@ FunctionTemplateSpecializationInfo::Create(ASTContext &C, FunctionDecl *FD,
                                                     ArgsAsWritten,
                                                     POI);
 }
+
+//===----------------------------------------------------------------------===//
+// TemplateDecl Implementation
+//===----------------------------------------------------------------------===//
+
+void TemplateDecl::anchor() { }
 
 //===----------------------------------------------------------------------===//
 // ClassTemplateSpecializationDecl Implementation
@@ -682,6 +690,8 @@ ClassTemplateSpecializationDecl::getSourceRange() const {
 //===----------------------------------------------------------------------===//
 // ClassTemplatePartialSpecializationDecl Implementation
 //===----------------------------------------------------------------------===//
+void ClassTemplatePartialSpecializationDecl::anchor() { }
+
 ClassTemplatePartialSpecializationDecl::
 ClassTemplatePartialSpecializationDecl(ASTContext &Context, TagKind TK,
                                        DeclContext *DC,
@@ -749,6 +759,8 @@ ClassTemplatePartialSpecializationDecl::Create(ASTContext &Context,
 // FriendTemplateDecl Implementation
 //===----------------------------------------------------------------------===//
 
+void FriendTemplateDecl::anchor() { }
+
 FriendTemplateDecl *FriendTemplateDecl::Create(ASTContext &Context,
                                                DeclContext *DC,
                                                SourceLocation L,
@@ -796,3 +808,8 @@ TypeAliasTemplateDecl::newCommon(ASTContext &C) {
   return CommonPtr;
 }
 
+//===----------------------------------------------------------------------===//
+// ClassScopeFunctionSpecializationDecl Implementation
+//===----------------------------------------------------------------------===//
+
+void ClassScopeFunctionSpecializationDecl::anchor() { }

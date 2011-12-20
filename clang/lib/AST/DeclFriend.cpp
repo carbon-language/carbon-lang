@@ -16,6 +16,8 @@
 #include "clang/AST/DeclTemplate.h"
 using namespace clang;
 
+void FriendDecl::anchor() { }
+
 FriendDecl *FriendDecl::Create(ASTContext &C, DeclContext *DC,
                                SourceLocation L,
                                FriendUnion Friend,

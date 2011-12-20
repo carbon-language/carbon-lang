@@ -25,6 +25,8 @@ using namespace ento;
 // Basic SVal creation.
 //===----------------------------------------------------------------------===//
 
+void SValBuilder::anchor() { }
+
 DefinedOrUnknownSVal SValBuilder::makeZeroVal(QualType type) {
   if (Loc::isLocType(type))
     return makeNull();

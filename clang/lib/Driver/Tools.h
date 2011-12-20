@@ -192,6 +192,7 @@ namespace hexagon {
 
 namespace darwin {
   class LLVM_LIBRARY_VISIBILITY DarwinTool : public Tool {
+    virtual void anchor();
   protected:
     void AddDarwinArch(const ArgList &Args, ArgStringList &CmdArgs) const;
 
@@ -205,6 +206,7 @@ namespace darwin {
   };
 
   class LLVM_LIBRARY_VISIBILITY CC1 : public DarwinTool  {
+    virtual void anchor();
   public:
     static const char *getBaseInputName(const ArgList &Args,
                                  const InputInfoList &Input);

@@ -284,6 +284,9 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
 /// The Objective-C property callback.  This should be defined where
 /// it's used, but instead it's been lifted to here to support VS2005.
 struct Parser::ObjCPropertyCallback : FieldCallback {
+private:
+  virtual void anchor();
+public:
   Parser &P;
   SmallVectorImpl<Decl *> &Props;
   ObjCDeclSpec &OCDS;
@@ -336,6 +339,9 @@ struct Parser::ObjCPropertyCallback : FieldCallback {
     return Property;
   }
 };
+
+void Parser::ObjCPropertyCallback::anchor() {
+}
 
 ///   objc-interface-decl-list:
 ///     empty

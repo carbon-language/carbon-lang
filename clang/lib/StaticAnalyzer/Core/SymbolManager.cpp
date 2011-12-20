@@ -21,6 +21,8 @@
 using namespace clang;
 using namespace ento;
 
+void SymExpr::anchor() { }
+
 void SymExpr::dump() const {
   dumpToStream(llvm::errs());
 }
@@ -98,6 +100,8 @@ void SymbolMetadata::dumpToStream(raw_ostream &os) const {
   os << "meta_$" << getSymbolID() << '{'
      << getRegion() << ',' << T.getAsString() << '}';
 }
+
+void SymbolData::anchor() { }
 
 void SymbolRegionValue::dumpToStream(raw_ostream &os) const {
   os << "reg_$" << getSymbolID() << "<" << R << ">";

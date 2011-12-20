@@ -423,7 +423,8 @@ public:
 };
 
 class LLVM_LIBRARY_VISIBILITY Generic_ELF : public Generic_GCC {
- public:
+  virtual void anchor();
+public:
   Generic_ELF(const HostInfo &Host, const llvm::Triple& Triple)
     : Generic_GCC(Host, Triple) {}
 

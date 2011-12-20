@@ -46,6 +46,8 @@ void ObjCProtocolList::set(ObjCProtocolDecl* const* InList, unsigned Elts,
 // ObjCInterfaceDecl
 //===----------------------------------------------------------------------===//
 
+void ObjCContainerDecl::anchor() { }
+
 /// getIvarDecl - This method looks up an ivar in this ContextDecl.
 ///
 ObjCIvarDecl *
@@ -146,6 +148,8 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
   }
   return 0;
 }
+
+void ObjCInterfaceDecl::anchor() { }
 
 /// FindPropertyVisibleInPrimaryClass - Finds declaration of the property
 /// with name 'PropertyId' in the primary class; including those in protocols
@@ -876,6 +880,8 @@ bool ObjCInterfaceDecl::ClassImplementsProtocol(ObjCProtocolDecl *lProto,
 // ObjCIvarDecl
 //===----------------------------------------------------------------------===//
 
+void ObjCIvarDecl::anchor() { }
+
 ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, ObjCContainerDecl *DC,
                                    SourceLocation StartLoc,
                                    SourceLocation IdLoc, IdentifierInfo *Id,
@@ -946,6 +952,8 @@ const ObjCInterfaceDecl *ObjCIvarDecl::getContainingInterface() const {
 // ObjCAtDefsFieldDecl
 //===----------------------------------------------------------------------===//
 
+void ObjCAtDefsFieldDecl::anchor() { }
+
 ObjCAtDefsFieldDecl
 *ObjCAtDefsFieldDecl::Create(ASTContext &C, DeclContext *DC,
                              SourceLocation StartLoc,  SourceLocation IdLoc,
@@ -956,6 +964,8 @@ ObjCAtDefsFieldDecl
 //===----------------------------------------------------------------------===//
 // ObjCProtocolDecl
 //===----------------------------------------------------------------------===//
+
+void ObjCProtocolDecl::anchor() { }
 
 ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, DeclContext *DC,
                                            IdentifierInfo *Id,
@@ -1026,6 +1036,8 @@ SourceRange ObjCClassDecl::getSourceRange() const {
 // ObjCForwardProtocolDecl
 //===----------------------------------------------------------------------===//
 
+void ObjCForwardProtocolDecl::anchor() { }
+
 ObjCForwardProtocolDecl::
 ObjCForwardProtocolDecl(DeclContext *DC, SourceLocation L,
                         ObjCProtocolDecl *const *Elts, unsigned nElts,
@@ -1047,6 +1059,8 @@ ObjCForwardProtocolDecl::Create(ASTContext &C, DeclContext *DC,
 //===----------------------------------------------------------------------===//
 // ObjCCategoryDecl
 //===----------------------------------------------------------------------===//
+
+void ObjCCategoryDecl::anchor() { }
 
 ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation AtLoc, 
@@ -1089,6 +1103,8 @@ void ObjCCategoryDecl::setImplementation(ObjCCategoryImplDecl *ImplD) {
 // ObjCCategoryImplDecl
 //===----------------------------------------------------------------------===//
 
+void ObjCCategoryImplDecl::anchor() { }
+
 ObjCCategoryImplDecl *
 ObjCCategoryImplDecl::Create(ASTContext &C, DeclContext *DC,
                              IdentifierInfo *Id,
@@ -1107,6 +1123,8 @@ ObjCCategoryDecl *ObjCCategoryImplDecl::getCategoryDecl() const {
   return 0;
 }
 
+
+void ObjCImplDecl::anchor() { }
 
 void ObjCImplDecl::addPropertyImplementation(ObjCPropertyImplDecl *property) {
   // FIXME: The context should be correct before we get here.
@@ -1170,6 +1188,8 @@ raw_ostream &clang::operator<<(raw_ostream &OS,
 // ObjCImplementationDecl
 //===----------------------------------------------------------------------===//
 
+void ObjCImplementationDecl::anchor() { }
+
 ObjCImplementationDecl *
 ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC,
                                ObjCInterfaceDecl *ClassInterface,
@@ -1203,6 +1223,8 @@ raw_ostream &clang::operator<<(raw_ostream &OS,
 // ObjCCompatibleAliasDecl
 //===----------------------------------------------------------------------===//
 
+void ObjCCompatibleAliasDecl::anchor() { }
+
 ObjCCompatibleAliasDecl *
 ObjCCompatibleAliasDecl::Create(ASTContext &C, DeclContext *DC,
                                 SourceLocation L,
@@ -1214,6 +1236,8 @@ ObjCCompatibleAliasDecl::Create(ASTContext &C, DeclContext *DC,
 //===----------------------------------------------------------------------===//
 // ObjCPropertyDecl
 //===----------------------------------------------------------------------===//
+
+void ObjCPropertyDecl::anchor() { }
 
 ObjCPropertyDecl *ObjCPropertyDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation L,

@@ -25,6 +25,7 @@ namespace clang {
 /// system calls, which is used by precompiled and pretokenized headers to
 /// improve performance.
 class FileSystemStatCache {
+  virtual void anchor();
 protected:
   llvm::OwningPtr<FileSystemStatCache> NextStatCache;
   

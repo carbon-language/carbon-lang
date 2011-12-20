@@ -806,6 +806,7 @@ CB ProgramState::scanReachableSymbols(const MemRegion * const *beg,
 /// A Utility class that allows to visit the reachable symbols using a custom
 /// SymbolVisitor.
 class ScanReachableSymbols : public SubRegionMap::Visitor  {
+  virtual void anchor();
   typedef llvm::DenseMap<const void*, unsigned> VisitedItems;
 
   VisitedItems visited;

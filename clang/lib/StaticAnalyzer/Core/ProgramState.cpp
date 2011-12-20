@@ -536,6 +536,8 @@ const ProgramState *ProgramStateManager::removeGDM(const ProgramState *state, vo
   return getPersistentState(NewState);
 }
 
+void ScanReachableSymbols::anchor() { }
+
 bool ScanReachableSymbols::scan(nonloc::CompoundVal val) {
   for (nonloc::CompoundVal::iterator I=val.begin(), E=val.end(); I!=E; ++I)
     if (!scan(*I))

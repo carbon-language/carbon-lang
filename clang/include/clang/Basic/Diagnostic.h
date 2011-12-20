@@ -1118,6 +1118,7 @@ public:
 /// IgnoringDiagConsumer - This is a diagnostic client that just ignores all
 /// diags.
 class IgnoringDiagConsumer : public DiagnosticConsumer {
+  virtual void anchor();
   void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                         const Diagnostic &Info) {
     // Just ignore it.

@@ -46,6 +46,8 @@ public:
   /// Command - An executable path/name and argument vector to
   /// execute.
 class Command : public Job {
+  virtual void anchor();
+
   /// Source - The action which caused the creation of this job.
   const Action &Source;
 

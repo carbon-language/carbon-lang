@@ -94,6 +94,7 @@ public:
 };
 
 class InputAction : public Action {
+  virtual void anchor();
   const Arg &Input;
 public:
   InputAction(const Arg &_Input, types::ID _Type);
@@ -107,6 +108,7 @@ public:
 };
 
 class BindArchAction : public Action {
+  virtual void anchor();
   /// The architecture to bind, or 0 if the default architecture
   /// should be bound.
   const char *ArchName;
@@ -123,6 +125,7 @@ public:
 };
 
 class JobAction : public Action {
+  virtual void anchor();
 protected:
   JobAction(ActionClass Kind, Action *Input, types::ID Type);
   JobAction(ActionClass Kind, const ActionList &Inputs, types::ID Type);
@@ -136,6 +139,7 @@ public:
 };
 
 class PreprocessJobAction : public JobAction {
+  virtual void anchor();
 public:
   PreprocessJobAction(Action *Input, types::ID OutputType);
 
@@ -146,6 +150,7 @@ public:
 };
 
 class PrecompileJobAction : public JobAction {
+  virtual void anchor();
 public:
   PrecompileJobAction(Action *Input, types::ID OutputType);
 
@@ -156,6 +161,7 @@ public:
 };
 
 class AnalyzeJobAction : public JobAction {
+  virtual void anchor();
 public:
   AnalyzeJobAction(Action *Input, types::ID OutputType);
 
@@ -166,6 +172,7 @@ public:
 };
 
 class CompileJobAction : public JobAction {
+  virtual void anchor();
 public:
   CompileJobAction(Action *Input, types::ID OutputType);
 
@@ -176,6 +183,7 @@ public:
 };
 
 class AssembleJobAction : public JobAction {
+  virtual void anchor();
 public:
   AssembleJobAction(Action *Input, types::ID OutputType);
 
@@ -186,6 +194,7 @@ public:
 };
 
 class LinkJobAction : public JobAction {
+  virtual void anchor();
 public:
   LinkJobAction(ActionList &Inputs, types::ID Type);
 
@@ -196,6 +205,7 @@ public:
 };
 
 class LipoJobAction : public JobAction {
+  virtual void anchor();
 public:
   LipoJobAction(ActionList &Inputs, types::ID Type);
 
@@ -206,6 +216,7 @@ public:
 };
 
 class DsymutilJobAction : public JobAction {
+  virtual void anchor();
 public:
   DsymutilJobAction(ActionList &Inputs, types::ID Type);
 
@@ -216,6 +227,7 @@ public:
 };
 
 class VerifyJobAction : public JobAction {
+  virtual void anchor();
 public:
   VerifyJobAction(ActionList &Inputs, types::ID Type);
   static bool classof(const Action *A) {

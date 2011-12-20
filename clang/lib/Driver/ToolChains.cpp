@@ -192,6 +192,8 @@ std::string Darwin::ComputeEffectiveClangTriple(const ArgList &Args,
   return Triple.getTriple();
 }
 
+void Generic_ELF::anchor() {}
+
 Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA,
                          const ActionList &Inputs) const {
   Action::ActionClass Key;

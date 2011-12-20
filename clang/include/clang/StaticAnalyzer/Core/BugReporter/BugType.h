@@ -49,6 +49,7 @@ public:
 };
 
 class BuiltinBug : public BugType {
+  virtual void anchor();
   const std::string desc;
 public:
   BuiltinBug(const char *name, const char *description)

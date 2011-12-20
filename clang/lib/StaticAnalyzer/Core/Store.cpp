@@ -331,3 +331,5 @@ SVal StoreManager::getLValueElement(QualType elementType, NonLoc Offset,
 
 StoreManager::BindingsHandler::~BindingsHandler() {}
 
+void SubRegionMap::anchor() { }
+void SubRegionMap::Visitor::anchor() { }

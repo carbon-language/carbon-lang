@@ -27,6 +27,7 @@
 namespace clang {
 
 class PostOrderCFGView : public ManagedAnalysis {
+  virtual void anchor();
 public:
   /// \brief Implements a set of CFGBlocks using a BitVector.
   ///

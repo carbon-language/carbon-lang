@@ -52,6 +52,7 @@ class BugType;
 class BugReport {
 public:
   class NodeResolver {
+    virtual void anchor();
   public:
     virtual ~NodeResolver() {}
     virtual const ExplodedNode*
@@ -374,6 +375,7 @@ public:
 };
 
 class BugReporterContext {
+  virtual void anchor();
   GRBugReporter &BR;
 public:
   BugReporterContext(GRBugReporter& br) : BR(br) {}

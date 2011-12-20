@@ -426,6 +426,8 @@ public:
 /// ObjCProtocolDecl, and ObjCImplDecl.
 ///
 class ObjCContainerDecl : public NamedDecl, public DeclContext {
+  virtual void anchor();
+
   SourceLocation AtStart;
 
   // These two locations in the range mark the end of the method container.
@@ -542,6 +544,8 @@ public:
 ///
 class ObjCInterfaceDecl : public ObjCContainerDecl
                         , public Redeclarable<ObjCInterfaceDecl> {
+  virtual void anchor();
+
   /// TypeForDecl - This indicates the Type object that represents this
   /// TypeDecl.  It is a cache maintained by ASTContext::getObjCInterfaceType
   mutable const Type *TypeForDecl;
@@ -949,6 +953,8 @@ public:
 ///   }
 ///
 class ObjCIvarDecl : public FieldDecl {
+  virtual void anchor();
+
 public:
   enum AccessControl {
     None, Private, Protected, Public, Package
@@ -1010,7 +1016,7 @@ private:
 /// ObjCAtDefsFieldDecl - Represents a field declaration created by an
 ///  @defs(...).
 class ObjCAtDefsFieldDecl : public FieldDecl {
-private:
+  virtual void anchor();
   ObjCAtDefsFieldDecl(DeclContext *DC, SourceLocation StartLoc,
                       SourceLocation IdLoc, IdentifierInfo *Id,
                       QualType T, Expr *BW)
@@ -1055,6 +1061,8 @@ public:
 /// id <NSDraggingInfo> anyObjectThatImplementsNSDraggingInfo;
 ///
 class ObjCProtocolDecl : public ObjCContainerDecl {
+  virtual void anchor();
+
   /// Referenced protocols
   ObjCProtocolList ReferencedProtocols;
 
@@ -1173,6 +1181,8 @@ public:
 /// @protocol NSTextInput, NSChangeSpelling, NSDraggingInfo;
 ///
 class ObjCForwardProtocolDecl : public Decl {
+  virtual void anchor();
+
   ObjCProtocolList ReferencedProtocols;
 
   ObjCForwardProtocolDecl(DeclContext *DC, SourceLocation L,
@@ -1232,6 +1242,8 @@ public:
 /// don't support this level of dynamism, which is both powerful and dangerous.
 ///
 class ObjCCategoryDecl : public ObjCContainerDecl {
+  virtual void anchor();
+
   /// Interface belonging to this category
   ObjCInterfaceDecl *ClassInterface;
 
@@ -1328,6 +1340,8 @@ public:
 };
 
 class ObjCImplDecl : public ObjCContainerDecl {
+  virtual void anchor();
+
   /// Class interface for this class/category implementation
   ObjCInterfaceDecl *ClassInterface;
 
@@ -1391,6 +1405,8 @@ public:
 ///
 /// ObjCCategoryImplDecl
 class ObjCCategoryImplDecl : public ObjCImplDecl {
+  virtual void anchor();
+
   // Category name
   IdentifierInfo *Id;
 
@@ -1479,6 +1495,7 @@ raw_ostream &operator<<(raw_ostream &OS,
 /// specified, they need to be *identical* to the interface.
 ///
 class ObjCImplementationDecl : public ObjCImplDecl {
+  virtual void anchor();
   /// Implementation Class's super class.
   ObjCInterfaceDecl *SuperClass;
   /// Support for ivar initialization.
@@ -1609,6 +1626,7 @@ raw_ostream &operator<<(raw_ostream &OS,
 /// ObjCCompatibleAliasDecl - Represents alias of a class. This alias is
 /// declared as @compatibility_alias alias class.
 class ObjCCompatibleAliasDecl : public NamedDecl {
+  virtual void anchor();
   /// Class that this is an alias of.
   ObjCInterfaceDecl *AliasedClass;
 
@@ -1635,6 +1653,7 @@ public:
 /// @property (assign, readwrite) int MyProperty;
 ///
 class ObjCPropertyDecl : public NamedDecl {
+  virtual void anchor();
 public:
   enum PropertyAttributeKind {
     OBJC_PR_noattr    = 0x00,

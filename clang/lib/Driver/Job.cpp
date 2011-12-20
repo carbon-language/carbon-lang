@@ -16,6 +16,8 @@ using namespace clang::driver;
 
 Job::~Job() {}
 
+void Command::anchor() {}
+
 Command::Command(const Action &_Source, const Tool &_Creator,
                  const char *_Executable, const ArgStringList &_Arguments)
   : Job(CommandClass), Source(_Source), Creator(_Creator),

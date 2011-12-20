@@ -37,6 +37,7 @@ namespace clang {
 namespace reachable_code {
 
 class Callback {
+  virtual void anchor();
 public:
   virtual ~Callback() {}
   virtual void HandleUnreachable(SourceLocation L, SourceRange R1,

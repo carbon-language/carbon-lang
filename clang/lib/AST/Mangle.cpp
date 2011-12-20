@@ -59,6 +59,8 @@ static void checkMangleDC(const DeclContext *DC, const BlockDecl *BD) {
 
 }
 
+void MangleContext::anchor() { }
+
 void MangleContext::mangleGlobalBlock(const BlockDecl *BD,
                                       raw_ostream &Out) {
   Out << "__block_global_" << getBlockId(BD, false);

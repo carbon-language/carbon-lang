@@ -198,6 +198,7 @@ public:
 /// parameters and a reference to the templated scoped declaration: the
 /// underlying AST node.
 class TemplateDecl : public NamedDecl {
+  virtual void anchor();
 protected:
   // This is probably never used.
   TemplateDecl(Kind DK, DeclContext *DC, SourceLocation L,
@@ -1201,6 +1202,7 @@ public:
 /// name of a template and the template parameters allowable for substitution.
 class TemplateTemplateParmDecl
   : public TemplateDecl, protected TemplateParmPosition {
+  virtual void anchor();
 
   /// DefaultArgument - The default template argument, if any.
   TemplateArgumentLoc DefaultArgument;
@@ -1561,6 +1563,8 @@ public:
 
 class ClassTemplatePartialSpecializationDecl
   : public ClassTemplateSpecializationDecl {
+  virtual void anchor();
+
   /// \brief The list of template parameters
   TemplateParameterList* TemplateParams;
 
@@ -1941,6 +1945,7 @@ public:
 /// NOTE: This class is not currently in use.  All of the above
 /// will yield a FriendDecl, not a FriendTemplateDecl.
 class FriendTemplateDecl : public Decl {
+  virtual void anchor();
 public:
   typedef llvm::PointerUnion<NamedDecl*,TypeSourceInfo*> FriendUnion;
 
@@ -2107,7 +2112,8 @@ public:
 /// CXXMethodDecl. Then during an instantiation of class A, it will be
 /// transformed into an actual function specialization.
 class ClassScopeFunctionSpecializationDecl : public Decl {
-private:
+  virtual void anchor();
+
   ClassScopeFunctionSpecializationDecl(DeclContext *DC, SourceLocation Loc,
                                        CXXMethodDecl *FD)
     : Decl(Decl::ClassScopeFunctionSpecialization, DC, Loc),

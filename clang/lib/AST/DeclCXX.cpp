@@ -28,6 +28,8 @@ using namespace clang;
 // Decl Allocation/Deallocation Method Implementations
 //===----------------------------------------------------------------------===//
 
+void AccessSpecDecl::anchor() { }
+
 CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
   : UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
     UserDeclaredMoveConstructor(false), UserDeclaredCopyAssignment(false),
@@ -1155,6 +1157,8 @@ bool CXXRecordDecl::mayBeAbstract() const {
   return false;
 }
 
+void CXXMethodDecl::anchor() { }
+
 CXXMethodDecl *
 CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                       SourceLocation StartLoc,
@@ -1404,6 +1408,8 @@ SourceRange CXXCtorInitializer::getSourceRange() const {
   return SourceRange(getSourceLocation(), getRParenLoc());
 }
 
+void CXXConstructorDecl::anchor() { }
+
 CXXConstructorDecl *
 CXXConstructorDecl::Create(ASTContext &C, EmptyShell Empty) {
   return new (C) CXXConstructorDecl(0, SourceLocation(), DeclarationNameInfo(),
@@ -1548,6 +1554,8 @@ CXXConstructorDecl::setInheritedConstructor(const CXXConstructorDecl *BaseCtor){
   addOverriddenMethod(BaseCtor);
 }
 
+void CXXDestructorDecl::anchor() { }
+
 CXXDestructorDecl *
 CXXDestructorDecl::Create(ASTContext &C, EmptyShell Empty) {
   return new (C) CXXDestructorDecl(0, SourceLocation(), DeclarationNameInfo(),
@@ -1566,6 +1574,8 @@ CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
   return new (C) CXXDestructorDecl(RD, StartLoc, NameInfo, T, TInfo, isInline,
                                    isImplicitlyDeclared);
 }
+
+void CXXConversionDecl::anchor() { }
 
 CXXConversionDecl *
 CXXConversionDecl::Create(ASTContext &C, EmptyShell Empty) {
@@ -1589,6 +1599,8 @@ CXXConversionDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                                    EndLocation);
 }
 
+void LinkageSpecDecl::anchor() { }
+
 LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
                                          DeclContext *DC,
                                          SourceLocation ExternLoc,
@@ -1597,6 +1609,8 @@ LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
                                          SourceLocation RBraceLoc) {
   return new (C) LinkageSpecDecl(DC, ExternLoc, LangLoc, Lang, RBraceLoc);
 }
+
+void UsingDirectiveDecl::anchor() { }
 
 UsingDirectiveDecl *UsingDirectiveDecl::Create(ASTContext &C, DeclContext *DC,
                                                SourceLocation L,
@@ -1618,6 +1632,8 @@ NamespaceDecl *UsingDirectiveDecl::getNominatedNamespace() {
   return cast_or_null<NamespaceDecl>(NominatedNamespace);
 }
 
+void NamespaceAliasDecl::anchor() { }
+
 NamespaceAliasDecl *NamespaceAliasDecl::Create(ASTContext &C, DeclContext *DC,
                                                SourceLocation UsingLoc,
                                                SourceLocation AliasLoc,
@@ -1631,6 +1647,8 @@ NamespaceAliasDecl *NamespaceAliasDecl::Create(ASTContext &C, DeclContext *DC,
                                     QualifierLoc, IdentLoc, Namespace);
 }
 
+void UsingShadowDecl::anchor() { }
+
 UsingDecl *UsingShadowDecl::getUsingDecl() const {
   const UsingShadowDecl *Shadow = this;
   while (const UsingShadowDecl *NextShadow =
@@ -1638,6 +1656,8 @@ UsingDecl *UsingShadowDecl::getUsingDecl() const {
     Shadow = NextShadow;
   return cast<UsingDecl>(Shadow->UsingOrNextShadow);
 }
+
+void UsingDecl::anchor() { }
 
 void UsingDecl::addShadowDecl(UsingShadowDecl *S) {
   assert(std::find(shadow_begin(), shadow_end(), S) == shadow_end() &&
@@ -1676,6 +1696,8 @@ UsingDecl *UsingDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation UL,
   return new (C) UsingDecl(DC, UL, QualifierLoc, NameInfo, IsTypeNameArg);
 }
 
+void UnresolvedUsingValueDecl::anchor() { }
+
 UnresolvedUsingValueDecl *
 UnresolvedUsingValueDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation UsingLoc,
@@ -1684,6 +1706,8 @@ UnresolvedUsingValueDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) UnresolvedUsingValueDecl(DC, C.DependentTy, UsingLoc,
                                           QualifierLoc, NameInfo);
 }
+
+void UnresolvedUsingTypenameDecl::anchor() { }
 
 UnresolvedUsingTypenameDecl *
 UnresolvedUsingTypenameDecl::Create(ASTContext &C, DeclContext *DC,
@@ -1696,6 +1720,8 @@ UnresolvedUsingTypenameDecl::Create(ASTContext &C, DeclContext *DC,
                                              QualifierLoc, TargetNameLoc,
                                              TargetName.getAsIdentifierInfo());
 }
+
+void StaticAssertDecl::anchor() { }
 
 StaticAssertDecl *StaticAssertDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation StaticAssertLoc,

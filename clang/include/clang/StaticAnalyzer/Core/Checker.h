@@ -383,6 +383,7 @@ class Checker<check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
                 check::_VoidCheck, check::_VoidCheck, check::_VoidCheck>
   : public CheckerBase 
 {
+  virtual void anchor();
 public:
   static void _register(void *checker, CheckerManager &mgr) { }
 };

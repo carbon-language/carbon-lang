@@ -825,6 +825,8 @@ StoredDiagnostic::~StoredDiagnostic() { }
 ///  reported by DiagnosticsEngine.
 bool DiagnosticConsumer::IncludeInDiagnosticCounts() const { return true; }
 
+void IgnoringDiagConsumer::anchor() { }
+
 PartialDiagnostic::StorageAllocator::StorageAllocator() {
   for (unsigned I = 0; I != NumCached; ++I)
     FreeList[I] = Cached + I;

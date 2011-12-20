@@ -17,6 +17,8 @@
 #include "clang/Basic/SourceManager.h"
 using namespace clang;
 
+void PreprocessorLexer::anchor() { }
+
 PreprocessorLexer::PreprocessorLexer(Preprocessor *pp, FileID fid)
   : PP(pp), FID(fid), InitialNumSLocEntries(0),
     ParsingPreprocessorDirective(false),

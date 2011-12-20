@@ -28,6 +28,7 @@ namespace clang {
   class CodeGenOptions;
 
   class CodeGenerator : public ASTConsumer {
+    virtual void anchor();
   public:
     virtual llvm::Module* GetModule() = 0;
     virtual llvm::Module* ReleaseModule() = 0;

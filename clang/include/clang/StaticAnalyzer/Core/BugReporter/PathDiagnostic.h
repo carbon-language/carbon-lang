@@ -46,6 +46,7 @@ class ExplodedNode;
 class PathDiagnostic;
 
 class PathDiagnosticConsumer {
+  virtual void anchor();
 public:
   PathDiagnosticConsumer() {}
 

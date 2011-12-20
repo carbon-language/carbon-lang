@@ -228,6 +228,7 @@ private:
 
 // FIXME: Is this class necessary?
 class InterExplodedGraphMap {
+  virtual void anchor();
   llvm::DenseMap<const ExplodedNode*, ExplodedNode*> M;
   friend class ExplodedGraph;
 

@@ -1643,6 +1643,8 @@ public:
 /// __array_rank(int[10][20]) == 2
 /// __array_extent(int, 1)    == 20
 class ArrayTypeTraitExpr : public Expr {
+  virtual void anchor();
+
   /// ATT - The trait. An ArrayTypeTrait enum in MSVC compat unsigned.
   unsigned ATT : 2;
 

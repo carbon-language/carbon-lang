@@ -21,6 +21,7 @@ class LangOptions;
 /// should be the "primary" client, and will be used for computing whether the
 /// diagnostics should be included in counts.
 class ChainedDiagnosticConsumer : public DiagnosticConsumer {
+  virtual void anchor();
   llvm::OwningPtr<DiagnosticConsumer> Primary;
   llvm::OwningPtr<DiagnosticConsumer> Secondary;
 

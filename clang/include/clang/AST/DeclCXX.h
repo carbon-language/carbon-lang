@@ -104,6 +104,7 @@ namespace clang {
 /// Also note that this class has nothing to do with so-called
 /// "access declarations" (C++98 11.3 [class.access.dcl]).
 class AccessSpecDecl : public Decl {
+  virtual void anchor();
   /// ColonLoc - The location of the ':'.
   SourceLocation ColonLoc;
 
@@ -1316,6 +1317,7 @@ public:
 /// CXXMethodDecl - Represents a static or instance method of a
 /// struct/union/class.
 class CXXMethodDecl : public FunctionDecl {
+  virtual void anchor();
 protected:
   CXXMethodDecl(Kind DK, CXXRecordDecl *RD, SourceLocation StartLoc,
                 const DeclarationNameInfo &NameInfo,
@@ -1325,9 +1327,9 @@ protected:
     : FunctionDecl(DK, RD, StartLoc, NameInfo, T, TInfo,
                    (isStatic ? SC_Static : SC_None),
                    SCAsWritten, isInline, isConstexpr) {
-      if (EndLocation.isValid())
-        setRangeEnd(EndLocation);
-    }
+    if (EndLocation.isValid())
+      setRangeEnd(EndLocation);
+  }
 
 public:
   static CXXMethodDecl *Create(ASTContext &C, CXXRecordDecl *RD,
@@ -1690,6 +1692,7 @@ public:
 /// };
 /// @endcode
 class CXXConstructorDecl : public CXXMethodDecl {
+  virtual void anchor();
   /// IsExplicitSpecified - Whether this constructor declaration has the
   /// 'explicit' keyword specified.
   bool IsExplicitSpecified : 1;
@@ -1918,6 +1921,7 @@ public:
 /// };
 /// @endcode
 class CXXDestructorDecl : public CXXMethodDecl {
+  virtual void anchor();
   /// ImplicitlyDefined - Whether this destructor was implicitly
   /// defined by the compiler. When false, the destructor was defined
   /// by the user. In C++03, this flag will have the same value as
@@ -1989,6 +1993,7 @@ public:
 /// };
 /// @endcode
 class CXXConversionDecl : public CXXMethodDecl {
+  virtual void anchor();
   /// IsExplicitSpecified - Whether this conversion function declaration is
   /// marked "explicit", meaning that it can only be applied when the user
   /// explicitly wrote a cast. This is a C++0x feature.
@@ -2045,6 +2050,7 @@ public:
 ///   extern "C" void foo();
 ///
 class LinkageSpecDecl : public Decl, public DeclContext {
+  virtual void anchor();
 public:
   /// LanguageIDs - Used to represent the language in a linkage
   /// specification.  The values are part of the serialization abi for
@@ -2117,9 +2123,10 @@ public:
 ///    using namespace std;
 ///
 // NB: UsingDirectiveDecl should be Decl not NamedDecl, but we provide
-// artificial name, for all using-directives in order to store
+// artificial names for all using-directives in order to store
 // them in DeclContext effectively.
 class UsingDirectiveDecl : public NamedDecl {
+  virtual void anchor();
   /// \brief The location of the "using" keyword.
   SourceLocation UsingLoc;
 
@@ -2219,6 +2226,8 @@ public:
 /// namespace Foo = Bar;
 /// @endcode
 class NamespaceAliasDecl : public NamedDecl {
+  virtual void anchor();
+
   /// \brief The location of the "namespace" keyword.
   SourceLocation NamespaceLoc;
 
@@ -2308,6 +2317,8 @@ public:
 /// }
 ///
 class UsingShadowDecl : public NamedDecl {
+  virtual void anchor();
+
   /// The referenced declaration.
   NamedDecl *Underlying;
 
@@ -2367,6 +2378,8 @@ public:
 /// UsingDecl - Represents a C++ using-declaration. For example:
 ///    using someNameSpace::someIdentifier;
 class UsingDecl : public NamedDecl {
+  virtual void anchor();
+
   /// \brief The source location of the "using" location itself.
   SourceLocation UsingLocation;
 
@@ -2497,6 +2510,8 @@ public:
 ///   using Base<T>::foo;
 /// };
 class UnresolvedUsingValueDecl : public ValueDecl {
+  virtual void anchor();
+
   /// \brief The source location of the 'using' keyword
   SourceLocation UsingLocation;
 
@@ -2564,6 +2579,8 @@ public:
 /// The type associated with a unresolved using typename decl is
 /// currently always a typename type.
 class UnresolvedUsingTypenameDecl : public TypeDecl {
+  virtual void anchor();
+
   /// \brief The source location of the 'using' keyword
   SourceLocation UsingLocation;
 
@@ -2612,6 +2629,7 @@ public:
 
 /// StaticAssertDecl - Represents a C++0x static_assert declaration.
 class StaticAssertDecl : public Decl {
+  virtual void anchor();
   Expr *AssertExpr;
   StringLiteral *Message;
   SourceLocation RParenLoc;

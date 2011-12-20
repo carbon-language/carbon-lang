@@ -224,6 +224,7 @@ public:
 
 /// PPChainedCallbacks - Simple wrapper class for chaining callbacks.
 class PPChainedCallbacks : public PPCallbacks {
+  virtual void anchor();
   PPCallbacks *First, *Second;
 
 public:

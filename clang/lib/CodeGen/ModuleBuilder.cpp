@@ -113,6 +113,8 @@ namespace {
   };
 }
 
+void CodeGenerator::anchor() { }
+
 CodeGenerator *clang::CreateLLVMCodeGen(DiagnosticsEngine &Diags,
                                         const std::string& ModuleName,
                                         const CodeGenOptions &CGO,

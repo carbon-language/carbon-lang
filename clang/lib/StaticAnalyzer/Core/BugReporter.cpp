@@ -34,6 +34,8 @@ using namespace ento;
 
 BugReporterVisitor::~BugReporterVisitor() {}
 
+void BugReporterContext::anchor() {}
+
 //===----------------------------------------------------------------------===//
 // Helper routines for walking the ExplodedGraph and fetching statements.
 //===----------------------------------------------------------------------===//
@@ -1204,9 +1206,13 @@ BugType::~BugType() { }
 
 void BugType::FlushReports(BugReporter &BR) {}
 
+void BuiltinBug::anchor() {}
+
 //===----------------------------------------------------------------------===//
 // Methods for BugReport and subclasses.
 //===----------------------------------------------------------------------===//
+
+void BugReport::NodeResolver::anchor() {}
 
 void BugReport::addVisitor(BugReporterVisitor* visitor) {
   if (!visitor)

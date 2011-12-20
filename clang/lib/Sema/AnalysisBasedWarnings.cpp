@@ -634,6 +634,7 @@ struct SortDiagBySourceLocation {
   }
 };
 
+namespace {
 class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
   Sema &S;
   DiagList Warnings;
@@ -742,6 +743,7 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
     Warnings.push_back(DelayedDiag(Loc, Warning));
   }
 };
+}
 }
 }
 

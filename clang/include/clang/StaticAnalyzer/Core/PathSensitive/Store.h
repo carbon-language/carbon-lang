@@ -258,10 +258,12 @@ inline StoreRef &StoreRef::operator=(StoreRef const &newStore) {
 /// SubRegionMap - An abstract interface that represents a queryable map
 ///  between MemRegion objects and their subregions.
 class SubRegionMap {
+  virtual void anchor();
 public:
   virtual ~SubRegionMap() {}
 
   class Visitor {
+    virtual void anchor();
   public:
     virtual ~Visitor() {}
     virtual bool Visit(const MemRegion* Parent, const MemRegion* SubRegion) = 0;

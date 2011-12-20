@@ -44,6 +44,8 @@ enum ConflictMarkerKind {
 /// or buffering/seeking of tokens, only forward lexing is supported.  It relies
 /// on the specified Preprocessor object to handle preprocessor directives, etc.
 class Lexer : public PreprocessorLexer {
+  virtual void anchor();
+
   //===--------------------------------------------------------------------===//
   // Constant configuration values for this lexer.
   const char *BufferStart;       // Start of the buffer.

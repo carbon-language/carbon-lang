@@ -537,6 +537,8 @@ void CoreEngine::enqueueEndOfFunction(ExplodedNodeSet &Set) {
 }
 
 
+void NodeBuilder::anchor() { }
+
 ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
                                             const ProgramState *State,
                                             ExplodedNode *FromN,
@@ -556,12 +558,16 @@ ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
   return N;
 }
 
+void NodeBuilderWithSinks::anchor() { }
+
 StmtNodeBuilder::~StmtNodeBuilder() {
   if (EnclosingBldr)
     for (ExplodedNodeSet::iterator I = Frontier.begin(),
                                    E = Frontier.end(); I != E; ++I )
       EnclosingBldr->addNodes(*I);
 }
+
+void BranchNodeBuilder::anchor() { }
 
 ExplodedNode *BranchNodeBuilder::generateNode(const ProgramState *State,
                                               bool branch,

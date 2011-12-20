@@ -43,6 +43,7 @@ namespace ento {
 /// \brief Symbolic value. These values used to capture symbolic execution of
 /// the program.
 class SymExpr : public llvm::FoldingSetNode {
+  virtual void anchor();
 public:
   enum Kind { RegionValueKind, ConjuredKind, DerivedKind, ExtentKind,
               MetadataKind,
@@ -102,7 +103,7 @@ typedef unsigned SymbolID;
 /// \brief A symbol representing data which can be stored in a memory location
 /// (region).
 class SymbolData : public SymExpr {
-private:
+  virtual void anchor();
   const SymbolID Sym;
 
 protected:

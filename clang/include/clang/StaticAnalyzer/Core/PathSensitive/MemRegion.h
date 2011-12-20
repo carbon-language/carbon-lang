@@ -177,6 +177,7 @@ public:
 };
   
 class GlobalsSpaceRegion : public MemSpaceRegion {
+  virtual void anchor();
 protected:
   GlobalsSpaceRegion(MemRegionManager *mgr, Kind k)
     : MemSpaceRegion(mgr, k) {}
@@ -223,6 +224,7 @@ public:
 };
   
 class HeapSpaceRegion : public MemSpaceRegion {
+  virtual void anchor();
   friend class MemRegionManager;
   
   HeapSpaceRegion(MemRegionManager *mgr)
@@ -234,6 +236,7 @@ public:
 };
   
 class UnknownSpaceRegion : public MemSpaceRegion {
+  virtual void anchor();
   friend class MemRegionManager;
   UnknownSpaceRegion(MemRegionManager *mgr)
     : MemSpaceRegion(mgr, UnknownSpaceRegionKind) {}
@@ -266,7 +269,7 @@ public:
 };
   
 class StackLocalsSpaceRegion : public StackSpaceRegion {
-private:
+  virtual void anchor();
   friend class MemRegionManager;
   StackLocalsSpaceRegion(MemRegionManager *mgr, const StackFrameContext *sfc)
     : StackSpaceRegion(mgr, StackLocalsSpaceRegionKind, sfc) {}
@@ -278,6 +281,7 @@ public:
 
 class StackArgumentsSpaceRegion : public StackSpaceRegion {
 private:
+  virtual void anchor();
   friend class MemRegionManager;
   StackArgumentsSpaceRegion(MemRegionManager *mgr, const StackFrameContext *sfc)
     : StackSpaceRegion(mgr, StackArgumentsSpaceRegionKind, sfc) {}
@@ -291,6 +295,8 @@ public:
 /// SubRegion - A region that subsets another larger region.  Most regions
 ///  are subclasses of SubRegion.
 class SubRegion : public MemRegion {
+private:
+  virtual void anchor();
 protected:
   const MemRegion* superRegion;
   SubRegion(const MemRegion* sReg, Kind k) : MemRegion(k), superRegion(sReg) {}
@@ -351,6 +357,8 @@ public:
 
 /// TypedRegion - An abstract class representing regions that are typed.
 class TypedRegion : public SubRegion {
+public:
+  virtual void anchor();
 protected:
   TypedRegion(const MemRegion* sReg, Kind k) : SubRegion(sReg, k) {}
 
@@ -371,6 +379,8 @@ public:
 
 /// TypedValueRegion - An abstract class representing regions having a typed value.
 class TypedValueRegion : public TypedRegion {
+public:
+  virtual void anchor();
 protected:
   TypedValueRegion(const MemRegion* sReg, Kind k) : TypedRegion(sReg, k) {}
 
@@ -399,6 +409,8 @@ public:
 
 
 class CodeTextRegion : public TypedRegion {
+public:
+  virtual void anchor();
 protected:
   CodeTextRegion(const MemRegion *sreg, Kind k) : TypedRegion(sreg, k) {}
 public:

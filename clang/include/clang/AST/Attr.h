@@ -112,6 +112,7 @@ public:
 };
 
 class InheritableAttr : public Attr {
+  virtual void anchor();
 protected:
   InheritableAttr(attr::Kind AK, SourceRange R)
     : Attr(AK, R) {}
@@ -127,6 +128,7 @@ public:
 };
 
 class InheritableParamAttr : public InheritableAttr {
+  virtual void anchor();
 protected:
   InheritableParamAttr(attr::Kind AK, SourceRange R)
     : InheritableAttr(AK, R) {}

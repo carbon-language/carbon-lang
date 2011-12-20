@@ -28,6 +28,7 @@ namespace ento {
 class ProgramState;
 
 class SValBuilder {
+  virtual void anchor();
 protected:
   ASTContext &Context;
   

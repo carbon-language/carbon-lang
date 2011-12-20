@@ -231,6 +231,7 @@ public:
 };
 
 class PluginASTAction : public ASTFrontendAction {
+  virtual void anchor();
 protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          StringRef InFile) = 0;

@@ -82,6 +82,8 @@ PathDiagnostic::PathDiagnostic(StringRef bugtype, StringRef desc,
     Desc(StripTrailingDots(desc)),
     Category(StripTrailingDots(category)) {}
 
+void PathDiagnosticConsumer::anchor() { }
+
 void PathDiagnosticConsumer::HandlePathDiagnostic(const PathDiagnostic *D) {
   // For now this simply forwards to HandlePathDiagnosticImpl.  In the future
   // we can use this indirection to control for multi-threaded access to

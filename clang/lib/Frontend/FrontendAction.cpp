@@ -411,6 +411,8 @@ void ASTFrontendAction::ExecuteAction() {
   ParseAST(CI.getSema(), CI.getFrontendOpts().ShowStats);
 }
 
+void PluginASTAction::anchor() { }
+
 ASTConsumer *
 PreprocessorFrontendAction::CreateASTConsumer(CompilerInstance &CI,
                                               StringRef InFile) {

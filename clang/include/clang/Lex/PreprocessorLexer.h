@@ -24,6 +24,7 @@ class FileEntry;
 class Preprocessor;
 
 class PreprocessorLexer {
+  virtual void anchor();
 protected:
   Preprocessor *PP;              // Preprocessor object controlling lexing.
 
