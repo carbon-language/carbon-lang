@@ -174,7 +174,7 @@ def VecListOneDWordIndexed : Operand<i32> {
   let ParserMatchClass = VecListOneDWordIndexAsmOperand;
   let MIOperandInfo = (ops DPR:$Vd, i32imm:$idx);
 }
-// Register list of two D registers, with byte lane subscripting.
+// Register list of two D registers with byte lane subscripting.
 def VecListTwoDByteIndexAsmOperand : AsmOperandClass {
   let Name = "VecListTwoDByteIndexed";
   let ParserMethod = "parseVectorList";
@@ -202,6 +202,26 @@ def VecListTwoDWordIndexAsmOperand : AsmOperandClass {
 }
 def VecListTwoDWordIndexed : Operand<i32> {
   let ParserMatchClass = VecListTwoDWordIndexAsmOperand;
+  let MIOperandInfo = (ops DPR:$Vd, i32imm:$idx);
+}
+// Register list of two Q registers with half-word lane subscripting.
+def VecListTwoQHWordIndexAsmOperand : AsmOperandClass {
+  let Name = "VecListTwoQHWordIndexed";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListIndexedOperands";
+}
+def VecListTwoQHWordIndexed : Operand<i32> {
+  let ParserMatchClass = VecListTwoQHWordIndexAsmOperand;
+  let MIOperandInfo = (ops DPR:$Vd, i32imm:$idx);
+}
+// ...with word lane subscripting.
+def VecListTwoQWordIndexAsmOperand : AsmOperandClass {
+  let Name = "VecListTwoQWordIndexed";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListIndexedOperands";
+}
+def VecListTwoQWordIndexed : Operand<i32> {
+  let ParserMatchClass = VecListTwoQWordIndexAsmOperand;
   let MIOperandInfo = (ops DPR:$Vd, i32imm:$idx);
 }
 
@@ -5735,6 +5755,10 @@ defm VLD2LNdAsm : NEONDT16AsmPseudoInst<"vld2${p}", "$list, $addr",
                  (ins VecListTwoDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 defm VLD2LNdAsm : NEONDT32AsmPseudoInst<"vld2${p}", "$list, $addr",
                  (ins VecListTwoDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VLD2LNqAsm : NEONDT16AsmPseudoInst<"vld2${p}", "$list, $addr",
+                 (ins VecListTwoQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VLD2LNqAsm : NEONDT32AsmPseudoInst<"vld2${p}", "$list, $addr",
+                 (ins VecListTwoQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 
 defm VLD2LNdWB_fixed_Asm : NEONDT8AsmPseudoInst<"vld2${p}", "$list, $addr!",
                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
@@ -5742,6 +5766,10 @@ defm VLD2LNdWB_fixed_Asm : NEONDT16AsmPseudoInst<"vld2${p}", "$list, $addr!",
                  (ins VecListTwoDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 defm VLD2LNdWB_fixed_Asm : NEONDT32AsmPseudoInst<"vld2${p}", "$list, $addr!",
                  (ins VecListTwoDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VLD2LNqWB_fixed_Asm : NEONDT16AsmPseudoInst<"vld2${p}", "$list, $addr!",
+                 (ins VecListTwoQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VLD2LNqWB_fixed_Asm : NEONDT32AsmPseudoInst<"vld2${p}", "$list, $addr!",
+                 (ins VecListTwoQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 defm VLD2LNdWB_register_Asm :
         NEONDT8AsmPseudoInst<"vld2${p}", "$list, $addr, $Rm",
                   (ins VecListTwoDByteIndexed:$list, addrmode6:$addr,
@@ -5753,6 +5781,14 @@ defm VLD2LNdWB_register_Asm :
 defm VLD2LNdWB_register_Asm :
         NEONDT32AsmPseudoInst<"vld2${p}", "$list, $addr, $Rm",
                   (ins VecListTwoDWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+defm VLD2LNqWB_register_Asm :
+        NEONDT16AsmPseudoInst<"vld2${p}", "$list, $addr, $Rm",
+                  (ins VecListTwoQHWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+defm VLD2LNqWB_register_Asm :
+        NEONDT32AsmPseudoInst<"vld2${p}", "$list, $addr, $Rm",
+                  (ins VecListTwoQWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
 
