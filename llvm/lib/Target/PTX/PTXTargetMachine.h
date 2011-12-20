@@ -91,6 +91,7 @@ class PTXTargetMachine : public LLVMTargetMachine {
 
 
 class PTX32TargetMachine : public PTXTargetMachine {
+  virtual void anchor();
 public:
 
   PTX32TargetMachine(const Target &T, StringRef TT,
@@ -100,6 +101,7 @@ public:
 }; // class PTX32TargetMachine
 
 class PTX64TargetMachine : public PTXTargetMachine {
+  virtual void anchor();
 public:
 
   PTX64TargetMachine(const Target &T, StringRef TT,

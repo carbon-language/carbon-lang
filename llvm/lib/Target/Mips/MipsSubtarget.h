@@ -25,6 +25,7 @@ namespace llvm {
 class StringRef;
 
 class MipsSubtarget : public MipsGenSubtargetInfo {
+  virtual void anchor();
 
 public:
   // NOTE: O64 will not be supported.

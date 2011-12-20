@@ -106,6 +106,7 @@ public:
 };
 
 class MCDataFragment : public MCFragment {
+  virtual void anchor();
   SmallString<32> Contents;
 
   /// Fixups - The list of fixups in this fragment.
@@ -160,6 +161,8 @@ public:
 // object with just the MCInst and a code size, then we should just change
 // MCDataFragment to have an optional MCInst at its end.
 class MCInstFragment : public MCFragment {
+  virtual void anchor();
+
   /// Inst - The instruction this is a fragment for.
   MCInst Inst;
 
@@ -215,6 +218,8 @@ public:
 };
 
 class MCAlignFragment : public MCFragment {
+  virtual void anchor();
+
   /// Alignment - The alignment to ensure, in bytes.
   unsigned Alignment;
 
@@ -263,6 +268,8 @@ public:
 };
 
 class MCFillFragment : public MCFragment {
+  virtual void anchor();
+
   /// Value - Value to use for filling bytes.
   int64_t Value;
 
@@ -300,6 +307,8 @@ public:
 };
 
 class MCOrgFragment : public MCFragment {
+  virtual void anchor();
+
   /// Offset - The offset this fragment should start at.
   const MCExpr *Offset;
 
@@ -327,6 +336,8 @@ public:
 };
 
 class MCLEBFragment : public MCFragment {
+  virtual void anchor();
+
   /// Value - The value this fragment should contain.
   const MCExpr *Value;
 
@@ -358,6 +369,8 @@ public:
 };
 
 class MCDwarfLineAddrFragment : public MCFragment {
+  virtual void anchor();
+
   /// LineDelta - the value of the difference between the two line numbers
   /// between two .loc dwarf directives.
   int64_t LineDelta;
@@ -393,6 +406,8 @@ public:
 };
 
 class MCDwarfCallFrameFragment : public MCFragment {
+  virtual void anchor();
+
   /// AddrDelta - The expression for the difference of the two symbols that
   /// make up the address delta between two .cfi_* dwarf directives.
   const MCExpr *AddrDelta;

@@ -153,6 +153,7 @@ private:
 /// LexicalScope - This class is used to track scope information.
 ///
 class LexicalScope {
+  virtual void anchor();
 
 public:
   LexicalScope(LexicalScope *P, const MDNode *D, const MDNode *I, bool A)

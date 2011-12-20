@@ -174,6 +174,7 @@ void DIE::dump() {
 }
 #endif
 
+void DIEValue::anchor() { }
 
 #ifndef NDEBUG
 void DIEValue::dump() {

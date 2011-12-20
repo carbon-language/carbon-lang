@@ -18,7 +18,9 @@
 #include "llvm/MC/MCAsmInfo.h"
 
 namespace llvm {
-  struct MCAsmInfoDarwin : public MCAsmInfo {
+  class MCAsmInfoDarwin : public MCAsmInfo {
+    virtual void anchor();
+  public:
     explicit MCAsmInfoDarwin();
   };
 }

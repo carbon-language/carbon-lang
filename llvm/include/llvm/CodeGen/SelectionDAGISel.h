@@ -181,6 +181,7 @@ protected:
   /// ISelUpdater - helper class to handle updates of the
   /// instruction selection graph.
   class ISelUpdater : public SelectionDAG::DAGUpdateListener {
+    virtual void anchor();
     SelectionDAG::allnodes_iterator &ISelPosition;
   public:
     explicit ISelUpdater(SelectionDAG::allnodes_iterator &isp)

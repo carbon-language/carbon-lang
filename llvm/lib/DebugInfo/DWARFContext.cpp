@@ -165,3 +165,5 @@ DILineInfo DWARFContext::getLineInfoForAddress(uint64_t address) {
 
   return DILineInfo(fileName.c_str(), row.Line, row.Column);
 }
+
+void DWARFContextInMemory::anchor() { }

@@ -29,6 +29,8 @@ using namespace llvm;
 // MDString implementation.
 //
 
+void MDString::anchor() { }
+
 MDString::MDString(LLVMContext &C, StringRef S)
   : Value(Type::getMetadataTy(C), Value::MDStringVal), Str(S) {}
 

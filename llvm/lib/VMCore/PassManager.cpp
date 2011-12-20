@@ -223,6 +223,7 @@ namespace llvm {
 class FunctionPassManagerImpl : public Pass,
                                 public PMDataManager,
                                 public PMTopLevelManager {
+  virtual void anchor();
 private:
   bool wasRun;
 public:
@@ -290,6 +291,8 @@ public:
     return FP;
   }
 };
+
+void FunctionPassManagerImpl::anchor() {}
 
 char FunctionPassManagerImpl::ID = 0;
 
@@ -384,6 +387,7 @@ char MPPassManager::ID = 0;
 class PassManagerImpl : public Pass,
                         public PMDataManager,
                         public PMTopLevelManager {
+  virtual void anchor();
 
 public:
   static char ID;
@@ -436,6 +440,8 @@ public:
     return MP;
   }
 };
+
+void PassManagerImpl::anchor() {}
 
 char PassManagerImpl::ID = 0;
 } // End of llvm namespace

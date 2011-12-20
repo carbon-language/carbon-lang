@@ -68,6 +68,7 @@ class RecordKeeper;
 
 class RecTy {
   ListRecTy *ListTy;
+  virtual void anchor();
 public:
   RecTy() : ListTy(0) {}
   virtual ~RecTy() {}
@@ -489,6 +490,7 @@ RecTy *resolveTypes(RecTy *T1, RecTy *T2);
 class Init {
   Init(const Init &);  // Do not define.
   Init &operator=(const Init &);  // Do not define.
+  virtual void anchor();
 
 protected:
   Init(void) {}
@@ -617,6 +619,7 @@ class UnsetInit : public Init {
   UnsetInit() : Init() {}
   UnsetInit(const UnsetInit &);  // Do not define.
   UnsetInit &operator=(const UnsetInit &Other);  // Do not define.
+  virtual void anchor();
 
 public:
   static UnsetInit *get();
@@ -638,6 +641,7 @@ class BitInit : public Init {
   explicit BitInit(bool V) : Value(V) {}
   BitInit(const BitInit &Other);  // Do not define.
   BitInit &operator=(BitInit &Other);  // Do not define.
+  virtual void anchor();
 
 public:
   static BitInit *get(bool V);
@@ -750,6 +754,7 @@ class StringInit : public TypedInit {
 
   StringInit(const StringInit &Other);  // Do not define.
   StringInit &operator=(const StringInit &Other);  // Do not define.
+  virtual void anchor();
 
 public:
   static StringInit *get(const std::string &V);
@@ -792,6 +797,7 @@ class CodeInit : public Init {
 
   CodeInit(const CodeInit &Other);  // Do not define.
   CodeInit &operator=(const CodeInit &Other);  // Do not define.
+  virtual void anchor();
 
 public:
   static CodeInit *get(const std::string &V);

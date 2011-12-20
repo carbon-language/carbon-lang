@@ -14,6 +14,8 @@
 #include "SPUMCAsmInfo.h"
 using namespace llvm;
 
+void SPULinuxMCAsmInfo::anchor() { }
+
 SPULinuxMCAsmInfo::SPULinuxMCAsmInfo(const Target &T, StringRef TT) {
   IsLittleEndian = false;
 

@@ -29,6 +29,7 @@ namespace llvm {
 
   /// The interface for consumers of difference data.
   class Consumer {
+    virtual void anchor();
   public:
     /// Record that a local context has been entered.  Left and
     /// Right are IR "containers" of some sort which are being

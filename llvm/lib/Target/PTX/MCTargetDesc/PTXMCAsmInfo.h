@@ -20,7 +20,9 @@ namespace llvm {
   class Target;
   class StringRef;
 
-  struct PTXMCAsmInfo : public MCAsmInfo {
+  class PTXMCAsmInfo : public MCAsmInfo {
+    virtual void anchor();
+  public:
     explicit PTXMCAsmInfo(const Target &T, const StringRef &TT);
   };
 } // namespace llvm

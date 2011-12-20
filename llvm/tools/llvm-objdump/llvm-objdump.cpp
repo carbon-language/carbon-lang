@@ -126,6 +126,8 @@ static const Target *GetTarget(const ObjectFile *Obj = NULL) {
   return 0;
 }
 
+void llvm::StringRefMemoryObject::anchor() { }
+
 void llvm::DumpBytes(StringRef bytes) {
   static const char hex_rep[] = "0123456789abcdef";
   // FIXME: The real way to do this is to figure out the longest instruction

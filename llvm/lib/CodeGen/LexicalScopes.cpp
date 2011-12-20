@@ -311,6 +311,8 @@ bool LexicalScopes::dominates(DebugLoc DL, MachineBasicBlock *MBB) {
   return Result;
 }
 
+void LexicalScope::anchor() { }
+
 /// dump - Print data structures.
 void LexicalScope::dump() const {
 #ifndef NDEBUG

@@ -14,17 +14,19 @@
 
 namespace llvm {
   class MCAsmInfoCOFF : public MCAsmInfo {
+    virtual void anchor();
   protected:
     explicit MCAsmInfoCOFF();
-      
   };
 
   class MCAsmInfoMicrosoft : public MCAsmInfoCOFF {
+    virtual void anchor();
   protected:
     explicit MCAsmInfoMicrosoft();
   };
 
   class MCAsmInfoGNUCOFF : public MCAsmInfoCOFF {
+    virtual void anchor();
   protected:
     explicit MCAsmInfoGNUCOFF();
   };

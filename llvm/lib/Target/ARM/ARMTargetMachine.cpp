@@ -34,6 +34,7 @@ extern "C" void LLVMInitializeARMTarget() {
   RegisterTargetMachine<ThumbTargetMachine> Y(TheThumbTarget);
 }
 
+
 /// TargetMachine ctor - Create an ARM architecture model.
 ///
 ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
@@ -49,6 +50,8 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
   if (Options.FloatABIType == FloatABI::Default)
     this->Options.FloatABIType = FloatABI::Soft;
 }
+
+void ARMTargetMachine::anchor() { }
 
 ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
                                    StringRef CPU, StringRef FS,
@@ -73,6 +76,8 @@ ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
     report_fatal_error("CPU: '" + Subtarget.getCPUString() + "' does not "
                        "support ARM mode execution!");
 }
+
+void ThumbTargetMachine::anchor() { }
 
 ThumbTargetMachine::ThumbTargetMachine(const Target &T, StringRef TT,
                                        StringRef CPU, StringRef FS,

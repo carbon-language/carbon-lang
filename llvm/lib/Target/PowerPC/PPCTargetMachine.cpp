@@ -44,6 +44,8 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT,
 /// groups, which typically degrades performance.
 bool PPCTargetMachine::getEnableTailMergeDefault() const { return false; }
 
+void PPC32TargetMachine::anchor() { }
+
 PPC32TargetMachine::PPC32TargetMachine(const Target &T, StringRef TT, 
                                        StringRef CPU, StringRef FS,
                                        const TargetOptions &Options,
@@ -52,6 +54,7 @@ PPC32TargetMachine::PPC32TargetMachine(const Target &T, StringRef TT,
   : PPCTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {
 }
 
+void PPC64TargetMachine::anchor() { }
 
 PPC64TargetMachine::PPC64TargetMachine(const Target &T, StringRef TT, 
                                        StringRef CPU,  StringRef FS,

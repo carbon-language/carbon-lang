@@ -16,6 +16,8 @@
 #include "ARMRegisterInfo.h"
 using namespace llvm;
 
+void ARMRegisterInfo::anchor() { }
+
 ARMRegisterInfo::ARMRegisterInfo(const ARMBaseInstrInfo &tii,
                                  const ARMSubtarget &sti)
   : ARMBaseRegisterInfo(tii, sti) {

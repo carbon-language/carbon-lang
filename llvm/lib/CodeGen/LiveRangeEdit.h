@@ -33,7 +33,9 @@ class VirtRegMap;
 class LiveRangeEdit {
 public:
   /// Callback methods for LiveRangeEdit owners.
-  struct Delegate {
+  class Delegate {
+    virtual void anchor();
+  public:
     /// Called immediately before erasing a dead machine instruction.
     virtual void LRE_WillEraseInstruction(MachineInstr *MI) {}
 

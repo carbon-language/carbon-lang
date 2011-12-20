@@ -25,6 +25,7 @@ namespace llvm {
 class StringRef;
 
 class MSP430Subtarget : public MSP430GenSubtargetInfo {
+  virtual void anchor();
   bool ExtendedInsts;
 public:
   /// This constructor initializes the data members to match that

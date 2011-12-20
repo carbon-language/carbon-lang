@@ -14,6 +14,8 @@
 #include "MBlazeMCAsmInfo.h"
 using namespace llvm;
 
+void MBlazeMCAsmInfo::anchor() { }
+
 MBlazeMCAsmInfo::MBlazeMCAsmInfo() {
   IsLittleEndian              = false;
   StackGrowsUp                = false;

@@ -18,6 +18,7 @@
 namespace llvm {
 
   class SparcMachineFunctionInfo : public MachineFunctionInfo {
+    virtual void anchor();
   private:
     unsigned GlobalBaseReg;
 

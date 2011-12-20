@@ -86,6 +86,7 @@ public:
 /// DWARFContext. It assumes all content is available in memory and stores
 /// pointers to it.
 class DWARFContextInMemory : public DWARFContext {
+  virtual void anchor();
   StringRef InfoSection;
   StringRef AbbrevSection;
   StringRef ARangeSection;

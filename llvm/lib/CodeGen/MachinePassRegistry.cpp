@@ -16,6 +16,7 @@
 
 using namespace llvm;
 
+void MachinePassRegistryListener::anchor() { }
 
 /// Add - Adds a function pass to the registration list.
 ///

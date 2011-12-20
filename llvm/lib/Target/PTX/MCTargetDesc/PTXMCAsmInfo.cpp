@@ -16,6 +16,8 @@
 
 using namespace llvm;
 
+void PTXMCAsmInfo::anchor() { }
+
 PTXMCAsmInfo::PTXMCAsmInfo(const Target &T, const StringRef &TT) {
   Triple TheTriple(TT);
   if (TheTriple.getArch() == Triple::ptx64)

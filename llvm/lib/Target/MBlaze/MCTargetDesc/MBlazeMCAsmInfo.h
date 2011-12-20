@@ -21,6 +21,7 @@ namespace llvm {
   class Target;
 
   class MBlazeMCAsmInfo : public MCAsmInfo {
+    virtual void anchor();
   public:
     explicit MBlazeMCAsmInfo();
   };

@@ -234,6 +234,8 @@ int LLI::ExecuteProgram(const std::string &Bitcode,
       Timeout, MemoryLimit, Error);
 }
 
+void AbstractInterpreter::anchor() { }
+
 // LLI create method - Try to find the LLI executable
 AbstractInterpreter *AbstractInterpreter::createLLI(const char *Argv0,
                                                     std::string &Message,

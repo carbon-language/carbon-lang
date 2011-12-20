@@ -62,6 +62,7 @@ public:
 /// SparcV8TargetMachine - Sparc 32-bit target machine
 ///
 class SparcV8TargetMachine : public SparcTargetMachine {
+  virtual void anchor();
 public:
   SparcV8TargetMachine(const Target &T, StringRef TT,
                        StringRef CPU, StringRef FS,
@@ -73,6 +74,7 @@ public:
 /// SparcV9TargetMachine - Sparc 64-bit target machine
 ///
 class SparcV9TargetMachine : public SparcTargetMachine {
+  virtual void anchor();
 public:
   SparcV9TargetMachine(const Target &T, StringRef TT,
                        StringRef CPU, StringRef FS,

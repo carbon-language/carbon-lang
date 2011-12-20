@@ -93,3 +93,24 @@ LLVMContextImpl::~LLVMContextImpl() {
   // Destroy MDStrings.
   DeleteContainerSeconds(MDStringCache);
 }
+
+// ConstantsContext anchors
+void UnaryConstantExpr::anchor() { }
+
+void BinaryConstantExpr::anchor() { }
+
+void SelectConstantExpr::anchor() { }
+
+void ExtractElementConstantExpr::anchor() { }
+
+void InsertElementConstantExpr::anchor() { }
+
+void ShuffleVectorConstantExpr::anchor() { }
+
+void ExtractValueConstantExpr::anchor() { }
+
+void InsertValueConstantExpr::anchor() { }
+
+void GetElementPtrConstantExpr::anchor() { }
+
+void CompareConstantExpr::anchor() { }

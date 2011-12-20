@@ -86,6 +86,7 @@ public:
 /// complexity behind a simple interface.
 ///
 class AbstractInterpreter {
+  virtual void anchor();
 public:
   static CBE *createCBE(const char *Argv0, std::string &Message,
                         const std::string              &GCCBinary,

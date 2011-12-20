@@ -35,6 +35,8 @@ namespace {
   };
 }
 
+void DominanceFrontier::anchor() { }
+
 const DominanceFrontier::DomSetType &
 DominanceFrontier::calculate(const DominatorTree &DT,
                              const DomTreeNode *Node) {

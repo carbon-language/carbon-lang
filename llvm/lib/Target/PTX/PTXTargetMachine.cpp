@@ -85,6 +85,8 @@ PTXTargetMachine::PTXTargetMachine(const Target &T,
     TLInfo(*this) {
 }
 
+void PTX32TargetMachine::anchor() { }
+
 PTX32TargetMachine::PTX32TargetMachine(const Target &T, StringRef TT,
                                        StringRef CPU, StringRef FS,
                                        const TargetOptions &Options,
@@ -92,6 +94,8 @@ PTX32TargetMachine::PTX32TargetMachine(const Target &T, StringRef TT,
                                        CodeGenOpt::Level OL)
   : PTXTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {
 }
+
+void PTX64TargetMachine::anchor() { }
 
 PTX64TargetMachine::PTX64TargetMachine(const Target &T, StringRef TT,
                                        StringRef CPU, StringRef FS,

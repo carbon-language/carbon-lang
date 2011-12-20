@@ -29,6 +29,8 @@ STATISTIC(NumDCEDeleted,     "Number of instructions deleted by DCE");
 STATISTIC(NumDCEFoldedLoads, "Number of single use loads folded after DCE");
 STATISTIC(NumFracRanges,     "Number of live ranges fractured by DCE");
 
+void LiveRangeEdit::Delegate::anchor() { }
+
 LiveInterval &LiveRangeEdit::createFrom(unsigned OldReg,
                                         LiveIntervals &LIS,
                                         VirtRegMap &VRM) {

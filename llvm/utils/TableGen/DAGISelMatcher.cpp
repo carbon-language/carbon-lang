@@ -15,6 +15,8 @@
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
+void Matcher::anchor() { }
+
 void Matcher::dump() const {
   print(errs(), 0);
 }
@@ -323,6 +325,10 @@ unsigned EmitNodeMatcherCommon::getHashImpl() const {
   return (HashString(OpcodeName) << 4) | Operands.size();
 }
 
+
+void EmitNodeMatcher::anchor() { }
+
+void MorphNodeToMatcher::anchor() { }
 
 unsigned MarkGlueResultsMatcher::getHashImpl() const {
   return HashUnsigneds(GlueResultNodes.begin(), GlueResultNodes.end());

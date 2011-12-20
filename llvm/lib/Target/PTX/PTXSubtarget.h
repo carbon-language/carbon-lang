@@ -23,6 +23,7 @@ namespace llvm {
 class StringRef;
 
   class PTXSubtarget : public PTXGenSubtargetInfo {
+      virtual void anchor(); 
     public:
 
       /**

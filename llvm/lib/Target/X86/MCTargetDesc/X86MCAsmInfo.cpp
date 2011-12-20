@@ -48,6 +48,8 @@ static const char *const x86_asm_table[] = {
   "{cc}", "cc",
   0,0};
 
+void X86MCAsmInfoDarwin::anchor() { }
+
 X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &T) {
   bool is64Bit = T.getArch() == Triple::x86_64;
   if (is64Bit)
@@ -79,6 +81,8 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &T) {
 X86_64MCAsmInfoDarwin::X86_64MCAsmInfoDarwin(const Triple &Triple)
   : X86MCAsmInfoDarwin(Triple) {
 }
+
+void X86ELFMCAsmInfo::anchor() { }
 
 X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &T) {
   if (T.getArch() == Triple::x86_64)
@@ -125,6 +129,8 @@ getNonexecutableStackSection(MCContext &Ctx) const {
                            0, SectionKind::getMetadata());
 }
 
+void X86MCAsmInfoMicrosoft::anchor() { }
+
 X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const Triple &Triple) {
   if (Triple.getArch() == Triple::x86_64) {
     GlobalPrefix = "";
@@ -136,6 +142,8 @@ X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const Triple &Triple) {
 
   TextAlignFillValue = 0x90;
 }
+
+void X86MCAsmInfoGNUCOFF::anchor() { }
 
 X86MCAsmInfoGNUCOFF::X86MCAsmInfoGNUCOFF(const Triple &Triple) {
   if (Triple.getArch() == Triple::x86_64) {

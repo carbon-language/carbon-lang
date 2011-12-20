@@ -22,6 +22,7 @@ namespace llvm {
 namespace object {
 
 class Archive : public Binary {
+  virtual void anchor();
 public:
   class Child {
     const Archive *Parent;

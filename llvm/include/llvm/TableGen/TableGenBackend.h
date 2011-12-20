@@ -24,6 +24,7 @@ class Record;
 class RecordKeeper;
 
 struct TableGenBackend {
+  virtual void anchor();
   virtual ~TableGenBackend() {}
 
   // run - All TableGen backends should implement the run method, which should

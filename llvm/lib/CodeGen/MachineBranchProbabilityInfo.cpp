@@ -26,6 +26,8 @@ INITIALIZE_PASS_END(MachineBranchProbabilityInfo, "machine-branch-prob",
 
 char MachineBranchProbabilityInfo::ID = 0;
 
+void MachineBranchProbabilityInfo::anchor() { }
+
 uint32_t MachineBranchProbabilityInfo::
 getSumForBlock(MachineBasicBlock *MBB, uint32_t &Scale) const {
   // First we compute the sum with 64-bits of precision, ensuring that cannot

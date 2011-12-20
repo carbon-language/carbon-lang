@@ -208,6 +208,7 @@ namespace llvm {
 /// library functions are available for the current target, and allows a
 /// frontend to disable optimizations through -fno-builtin etc.
 class TargetLibraryInfo : public ImmutablePass {
+  virtual void anchor();
   unsigned char AvailableArray[(LibFunc::NumLibFuncs+3)/4];
   llvm::DenseMap<unsigned, std::string> CustomNames;
   static const char* StandardNames[LibFunc::NumLibFuncs];

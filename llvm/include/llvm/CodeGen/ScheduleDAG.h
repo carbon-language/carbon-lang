@@ -427,6 +427,7 @@ namespace llvm {
   /// implementation to decide.
   ///
   class SchedulingPriorityQueue {
+    virtual void anchor();
     unsigned CurCycle;
     bool HasReadyFilter;
   public:

@@ -21,7 +21,8 @@ namespace llvm {
 /// SPUFunctionInfo - Cell SPU target-specific information for each
 /// MachineFunction
 class SPUFunctionInfo : public MachineFunctionInfo {
-private:
+  virtual void anchor();
+
   /// UsesLR - Indicates whether LR is used in the current function.
   ///
   bool UsesLR;

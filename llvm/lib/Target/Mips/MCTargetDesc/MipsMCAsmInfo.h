@@ -21,6 +21,7 @@ namespace llvm {
   class Target;
 
   class MipsMCAsmInfo : public MCAsmInfo {
+    virtual void anchor();
   public:
     explicit MipsMCAsmInfo(const Target &T, StringRef TT);
   };

@@ -30,6 +30,7 @@ namespace llvm {
   /// TargetJITInfo - Target specific information required by the Just-In-Time
   /// code generator.
   class TargetJITInfo {
+    virtual void anchor();
   public:
     virtual ~TargetJITInfo() {}
 

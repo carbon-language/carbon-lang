@@ -74,6 +74,8 @@ static bool isInternalMember(const ArchiveMemberHeader &amh) {
   return false;
 }
 
+void Archive::anchor() { }
+
 Archive::Child Archive::Child::getNext() const {
   size_t SpaceToSkip = sizeof(ArchiveMemberHeader) +
     ToHeader(Data.data())->getSize();

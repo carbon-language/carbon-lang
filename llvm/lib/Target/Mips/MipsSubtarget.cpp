@@ -21,6 +21,8 @@
 
 using namespace llvm;
 
+void MipsSubtarget::anchor() { }
+
 MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
                              const std::string &FS, bool little) :
   MipsGenSubtargetInfo(TT, CPU, FS),

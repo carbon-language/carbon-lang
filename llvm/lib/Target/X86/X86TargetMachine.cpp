@@ -28,6 +28,7 @@ extern "C" void LLVMInitializeX86Target() {
   RegisterTargetMachine<X86_64TargetMachine> Y(TheX86_64Target);
 }
 
+void X86_32TargetMachine::anchor() { }
 
 X86_32TargetMachine::X86_32TargetMachine(const Target &T, StringRef TT,
                                          StringRef CPU, StringRef FS,
@@ -50,6 +51,7 @@ X86_32TargetMachine::X86_32TargetMachine(const Target &T, StringRef TT,
     JITInfo(*this) {
 }
 
+void X86_64TargetMachine::anchor() { }
 
 X86_64TargetMachine::X86_64TargetMachine(const Target &T, StringRef TT,
                                          StringRef CPU, StringRef FS,

@@ -21,6 +21,7 @@ namespace llvm {
 // and the RuntimeDyld interface that maps objects, by name, onto their
 // matching LLVM IR counterparts in the module(s) being compiled.
 class MCJITMemoryManager : public RTDyldMemoryManager {
+  virtual void anchor();
   JITMemoryManager *JMM;
 
   // FIXME: Multiple modules.

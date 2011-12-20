@@ -128,6 +128,7 @@ private:
 
 /// X86_16Disassembler - 16-bit X86 disassembler.
 class X86_16Disassembler : public X86GenericDisassembler {
+  virtual void anchor();
 public:
   X86_16Disassembler(const MCSubtargetInfo &STI) :
     X86GenericDisassembler(STI, MODE_16BIT) {
@@ -136,6 +137,7 @@ public:
 
 /// X86_16Disassembler - 32-bit X86 disassembler.
 class X86_32Disassembler : public X86GenericDisassembler {
+  virtual void anchor();
 public:
   X86_32Disassembler(const MCSubtargetInfo &STI) :
     X86GenericDisassembler(STI, MODE_32BIT) {
@@ -144,6 +146,7 @@ public:
 
 /// X86_16Disassembler - 64-bit X86 disassembler.
 class X86_64Disassembler : public X86GenericDisassembler {
+  virtual void anchor();
 public:
   X86_64Disassembler(const MCSubtargetInfo &STI) :
     X86GenericDisassembler(STI, MODE_64BIT) {

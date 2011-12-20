@@ -20,6 +20,8 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/DebugLoc.h"
 
+#include <string>
+
 namespace llvm {
 
 class MachineBasicBlock;
@@ -49,6 +51,7 @@ class MCSymbol;
 /// occurred, more memory is allocated, and we reemit the code into it.
 /// 
 class MachineCodeEmitter {
+  virtual void anchor();
 protected:
   /// BufferBegin/BufferEnd - Pointers to the start and end of the memory
   /// allocated for this code buffer.

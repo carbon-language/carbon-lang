@@ -628,6 +628,8 @@ void FunctionDifferenceEngine::runBlockDiff(BasicBlock::iterator LStart,
 
 }
 
+void DifferenceEngine::Oracle::anchor() { }
+
 void DifferenceEngine::diff(Function *L, Function *R) {
   Context C(*this, L, R);
 

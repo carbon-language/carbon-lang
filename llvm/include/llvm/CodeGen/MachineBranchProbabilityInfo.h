@@ -25,6 +25,7 @@ class raw_ostream;
 class MachineBasicBlock;
 
 class MachineBranchProbabilityInfo : public ImmutablePass {
+  virtual void anchor();
 
   // Default weight value. Used when we don't have information about the edge.
   // TODO: DEFAULT_WEIGHT makes sense during static predication, when none of

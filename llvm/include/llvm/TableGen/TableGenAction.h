@@ -21,6 +21,7 @@ class raw_ostream;
 class RecordKeeper;
 
 class TableGenAction {
+  virtual void anchor();
 public:
   virtual ~TableGenAction() {}
 

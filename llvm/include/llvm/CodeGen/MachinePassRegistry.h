@@ -33,6 +33,7 @@ typedef void *(*MachinePassCtor)();
 ///
 //===----------------------------------------------------------------------===//
 class MachinePassRegistryListener {
+  virtual void anchor();
 public:
   MachinePassRegistryListener() {}
   virtual ~MachinePassRegistryListener() {}

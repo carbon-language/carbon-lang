@@ -41,6 +41,7 @@ class Matcher {
   // The next matcher node that is executed after this one.  Null if this is the
   // last stage of a match.
   OwningPtr<Matcher> Next;
+  virtual void anchor();
 public:
   enum KindTy {
     // Matcher state manipulation.
@@ -1011,6 +1012,7 @@ private:
 
 /// EmitNodeMatcher - This signals a successful match and generates a node.
 class EmitNodeMatcher : public EmitNodeMatcherCommon {
+  virtual void anchor();
   unsigned FirstResultSlot;
 public:
   EmitNodeMatcher(const std::string &opcodeName,
@@ -1033,6 +1035,7 @@ public:
 };
 
 class MorphNodeToMatcher : public EmitNodeMatcherCommon {
+  virtual void anchor();
   const PatternToMatch &Pattern;
 public:
   MorphNodeToMatcher(const std::string &opcodeName,

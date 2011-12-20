@@ -44,6 +44,8 @@ static void ComputeNumbering(Function *F, DenseMap<Value*,unsigned> &Numbering){
 }
 
 
+void Consumer::anchor() { }
+
 void DiffConsumer::printValue(Value *V, bool isL) {
   if (V->hasName()) {
     out << (isa<GlobalValue>(V) ? '@' : '%') << V->getName();

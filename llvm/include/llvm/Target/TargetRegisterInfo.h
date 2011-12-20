@@ -38,6 +38,7 @@ public:
   typedef const EVT* vt_iterator;
   typedef const TargetRegisterClass* const * sc_iterator;
 private:
+  virtual void anchor();
   const MCRegisterClass *MC;
   const vt_iterator VTs;
   const unsigned *SubClassMask;

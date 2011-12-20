@@ -36,6 +36,7 @@ template<typename ValueSubClass, typename ItemParentClass>
 /// These are used to efficiently contain a byte sequence for metadata.
 /// MDString is always unnamed.
 class MDString : public Value {
+  virtual void anchor();
   MDString(const MDString &);            // DO NOT IMPLEMENT
 
   StringRef Str;

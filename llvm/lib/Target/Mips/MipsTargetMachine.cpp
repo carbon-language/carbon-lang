@@ -52,12 +52,16 @@ MipsTargetMachine(const Target &T, StringRef TT,
     TLInfo(*this), TSInfo(*this), JITInfo() {
 }
 
+void MipsebTargetMachine::anchor() { }
+
 MipsebTargetMachine::
 MipsebTargetMachine(const Target &T, StringRef TT,
                     StringRef CPU, StringRef FS, const TargetOptions &Options,
                     Reloc::Model RM, CodeModel::Model CM,
                     CodeGenOpt::Level OL)
   : MipsTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {}
+
+void MipselTargetMachine::anchor() { }
 
 MipselTargetMachine::
 MipselTargetMachine(const Target &T, StringRef TT,
@@ -66,12 +70,16 @@ MipselTargetMachine(const Target &T, StringRef TT,
                     CodeGenOpt::Level OL)
   : MipsTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
 
+void Mips64ebTargetMachine::anchor() { }
+
 Mips64ebTargetMachine::
 Mips64ebTargetMachine(const Target &T, StringRef TT,
                       StringRef CPU, StringRef FS, const TargetOptions &Options,
                       Reloc::Model RM, CodeModel::Model CM,
                       CodeGenOpt::Level OL)
   : MipsTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {}
+
+void Mips64elTargetMachine::anchor() { }
 
 Mips64elTargetMachine::
 Mips64elTargetMachine(const Target &T, StringRef TT,

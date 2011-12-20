@@ -25,6 +25,7 @@ namespace llvm {
 /// ARMFunctionInfo - This class is derived from MachineFunctionInfo and
 /// contains private ARM-specific information for each MachineFunction.
 class ARMFunctionInfo : public MachineFunctionInfo {
+  virtual void anchor();
 
   /// isThumb - True if this function is compiled under Thumb mode.
   /// Used to initialized Align, so must precede it.

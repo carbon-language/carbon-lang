@@ -33,6 +33,7 @@ class ScalarEvolution;
 /// Interface for visiting interesting IV users that are recognized but not
 /// simplified by this utility.
 class IVVisitor {
+  virtual void anchor();
 public:
   virtual ~IVVisitor() {}
   virtual void visitCast(CastInst *Cast) = 0;

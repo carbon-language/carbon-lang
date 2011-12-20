@@ -45,6 +45,7 @@ struct ConvertConstantType;
 /// represents both boolean and integral constants.
 /// @brief Class for constant integers.
 class ConstantInt : public Constant {
+  virtual void anchor();
   void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
   ConstantInt(const ConstantInt &);      // DO NOT IMPLEMENT
   ConstantInt(IntegerType *Ty, const APInt& V);
@@ -229,6 +230,7 @@ public:
 ///
 class ConstantFP : public Constant {
   APFloat Val;
+  virtual void anchor();
   void *operator new(size_t, unsigned);// DO NOT IMPLEMENT
   ConstantFP(const ConstantFP &);      // DO NOT IMPLEMENT
   friend class LLVMContextImpl;

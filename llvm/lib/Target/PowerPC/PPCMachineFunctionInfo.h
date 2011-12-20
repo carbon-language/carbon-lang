@@ -21,7 +21,8 @@ namespace llvm {
 /// PPCFunctionInfo - This class is derived from MachineFunction private
 /// PowerPC target-specific information for each MachineFunction.
 class PPCFunctionInfo : public MachineFunctionInfo {
-private:
+  virtual void anchor();
+
   /// FramePointerSaveIndex - Frame index of where the old frame pointer is
   /// stored.  Also used as an anchor for instructions that need to be altered
   /// when using frame pointers (dyna_add, dyna_sub.)

@@ -169,7 +169,7 @@ ReduceCrashingGlobalVariables::TestGlobalVariables(
   return false;
 }
 
-namespace llvm {
+namespace {
   /// ReduceCrashingFunctions reducer - This works by removing functions and
   /// seeing if the program still crashes. If it does, then keep the newer,
   /// smaller program.

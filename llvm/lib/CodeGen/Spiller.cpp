@@ -185,6 +185,8 @@ public:
 
 } // end anonymous namespace
 
+void Spiller::anchor() { }
+
 llvm::Spiller* llvm::createSpiller(MachineFunctionPass &pass,
                                    MachineFunction &mf,
                                    VirtRegMap &vrm) {

@@ -19,6 +19,7 @@
 
 using namespace llvm;
 
+namespace {
 class IRBuilderTest : public testing::Test {
 protected:
   virtual void SetUp() {
@@ -37,6 +38,7 @@ protected:
   OwningPtr<Module> M;
   BasicBlock *BB;
 };
+}
 
 TEST_F(IRBuilderTest, Lifetime) {
   IRBuilder<> Builder(BB);

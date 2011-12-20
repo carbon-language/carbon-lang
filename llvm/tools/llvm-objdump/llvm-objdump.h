@@ -25,7 +25,7 @@ void DumpBytes(StringRef bytes);
 void DisassembleInputMachO(StringRef Filename);
 
 class StringRefMemoryObject : public MemoryObject {
-private:
+  virtual void anchor();
   StringRef Bytes;
 public:
   StringRefMemoryObject(StringRef bytes) : Bytes(bytes) {}

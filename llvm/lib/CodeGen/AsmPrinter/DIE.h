@@ -195,6 +195,7 @@ namespace llvm {
   /// DIEValue - A debug information entry value.
   ///
   class DIEValue {
+    virtual void anchor();
   public:
     enum {
       isInteger,

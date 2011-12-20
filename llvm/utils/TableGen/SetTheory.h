@@ -65,7 +65,9 @@ public:
   typedef SmallSetVector<Record*, 16> RecSet;
 
   /// Operator - A callback representing a DAG operator.
-  struct Operator {
+  class Operator {
+    virtual void anchor();
+  public:
     virtual ~Operator() {}
 
     /// apply - Apply this operator to Expr's arguments and insert the result
@@ -76,7 +78,9 @@ public:
   /// Expander - A callback function that can transform a Record representing a
   /// set into a fully expanded list of elements. Expanders provide a way for
   /// users to define named sets that can be used in DAG expressions.
-  struct Expander {
+  class Expander {
+    virtual void anchor();
+  public:
     virtual ~Expander() {}
 
     virtual void expand(SetTheory&, Record*, RecSet &Elts) =0;

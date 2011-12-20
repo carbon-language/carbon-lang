@@ -34,6 +34,7 @@ class raw_ostream;
 /// Abstract base class for all machine specific constantpool value subclasses.
 ///
 class MachineConstantPoolValue {
+  virtual void anchor();
   Type *Ty;
 
 public:

@@ -198,6 +198,10 @@ struct FieldExpander : public SetTheory::Expander {
 };
 } // end anonymous namespace
 
+void SetTheory::Operator::anchor() { }
+
+void SetTheory::Expander::anchor() { }
+
 SetTheory::SetTheory() {
   addOperator("add", new AddOp);
   addOperator("sub", new SubOp);

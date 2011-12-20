@@ -78,6 +78,7 @@ public:
 /// X86_32TargetMachine - X86 32-bit target machine.
 ///
 class X86_32TargetMachine : public X86TargetMachine {
+  virtual void anchor();
   const TargetData  DataLayout; // Calculates type size & alignment
   X86InstrInfo      InstrInfo;
   X86SelectionDAGInfo TSInfo;
@@ -106,6 +107,7 @@ public:
 /// X86_64TargetMachine - X86 64-bit target machine.
 ///
 class X86_64TargetMachine : public X86TargetMachine {
+  virtual void anchor();
   const TargetData  DataLayout; // Calculates type size & alignment
   X86InstrInfo      InstrInfo;
   X86SelectionDAGInfo TSInfo;

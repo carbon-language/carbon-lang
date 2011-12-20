@@ -18,11 +18,15 @@
 
 namespace llvm {
 
-  struct PPCMCAsmInfoDarwin : public MCAsmInfoDarwin {
+  class PPCMCAsmInfoDarwin : public MCAsmInfoDarwin {
+    virtual void anchor();
+  public:
     explicit PPCMCAsmInfoDarwin(bool is64Bit);
   };
 
-  struct PPCLinuxMCAsmInfo : public MCAsmInfo {
+  class PPCLinuxMCAsmInfo : public MCAsmInfo {
+    virtual void anchor();
+  public:
     explicit PPCLinuxMCAsmInfo(bool is64Bit);
   };
 

@@ -20,7 +20,9 @@
 namespace llvm {
   class Target;
   
-  struct SPULinuxMCAsmInfo : public MCAsmInfo {
+  class SPULinuxMCAsmInfo : public MCAsmInfo {
+    virtual void anchor();
+  public:
     explicit SPULinuxMCAsmInfo(const Target &T, StringRef TT);
   };
 } // namespace llvm

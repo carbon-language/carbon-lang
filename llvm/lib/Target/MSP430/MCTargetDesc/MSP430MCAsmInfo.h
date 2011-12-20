@@ -20,7 +20,9 @@
 namespace llvm {
   class Target;
 
-  struct MSP430MCAsmInfo : public MCAsmInfo {
+  class MSP430MCAsmInfo : public MCAsmInfo {
+    virtual void anchor();
+  public:
     explicit MSP430MCAsmInfo(const Target &T, StringRef TT);
   };
 

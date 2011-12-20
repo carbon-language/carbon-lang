@@ -972,3 +972,13 @@ void MCAssembler::dump() {
   }
   OS << "]>\n";
 }
+
+// anchors for MC*Fragment vtables
+void MCDataFragment::anchor() { }
+void MCInstFragment::anchor() { }
+void MCAlignFragment::anchor() { }
+void MCFillFragment::anchor() { }
+void MCOrgFragment::anchor() { }
+void MCLEBFragment::anchor() { }
+void MCDwarfLineAddrFragment::anchor() { }
+void MCDwarfCallFrameFragment::anchor() { }

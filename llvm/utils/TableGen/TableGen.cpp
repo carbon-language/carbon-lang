@@ -101,92 +101,92 @@ namespace {
 
   cl::opt<std::string>
   Class("class", cl::desc("Print Enum list for this class"),
-        cl::value_desc("class name"));
-}
-
-class LLVMTableGenAction : public TableGenAction {
-public:
-  bool operator()(raw_ostream &OS, RecordKeeper &Records) {
-    switch (Action) {
-    case PrintRecords:
-      OS << Records;           // No argument, dump all contents
-      break;
-    case GenEmitter:
-      CodeEmitterGen(Records).run(OS);
-      break;
-    case GenRegisterInfo:
-      RegisterInfoEmitter(Records).run(OS);
-      break;
-    case GenInstrInfo:
-      InstrInfoEmitter(Records).run(OS);
-      break;
-    case GenCallingConv:
-      CallingConvEmitter(Records).run(OS);
-      break;
-    case GenAsmWriter:
-      AsmWriterEmitter(Records).run(OS);
-      break;
-    case GenAsmMatcher:
-      AsmMatcherEmitter(Records).run(OS);
-      break;
-    case GenDisassembler:
-      DisassemblerEmitter(Records).run(OS);
-      break;
-    case GenPseudoLowering:
-      PseudoLoweringEmitter(Records).run(OS);
-      break;
-    case GenDAGISel:
-      DAGISelEmitter(Records).run(OS);
-      break;
-    case GenDFAPacketizer:
-      DFAGen(Records).run(OS);
-      break;
-    case GenFastISel:
-      FastISelEmitter(Records).run(OS);
-      break;
-    case GenSubtarget:
-      SubtargetEmitter(Records).run(OS);
-      break;
-    case GenIntrinsic:
-      IntrinsicEmitter(Records).run(OS);
-      break;
-    case GenTgtIntrinsic:
-      IntrinsicEmitter(Records, true).run(OS);
-      break;
-    case GenEDInfo:
-      EDEmitter(Records).run(OS);
-      break;
-    case PrintEnums:
-    {
-      std::vector<Record*> Recs = Records.getAllDerivedDefinitions(Class);
-      for (unsigned i = 0, e = Recs.size(); i != e; ++i)
-        OS << Recs[i]->getName() << ", ";
-      OS << "\n";
-      break;
-    }
-    case PrintSets:
-    {
-      SetTheory Sets;
-      Sets.addFieldExpander("Set", "Elements");
-      std::vector<Record*> Recs = Records.getAllDerivedDefinitions("Set");
-      for (unsigned i = 0, e = Recs.size(); i != e; ++i) {
-        OS << Recs[i]->getName() << " = [";
-        const std::vector<Record*> *Elts = Sets.expand(Recs[i]);
-        assert(Elts && "Couldn't expand Set instance");
-        for (unsigned ei = 0, ee = Elts->size(); ei != ee; ++ei)
-          OS << ' ' << (*Elts)[ei]->getName();
-        OS << " ]\n";
+          cl::value_desc("class name"));
+  
+  class LLVMTableGenAction : public TableGenAction {
+  public:
+    bool operator()(raw_ostream &OS, RecordKeeper &Records) {
+      switch (Action) {
+      case PrintRecords:
+        OS << Records;           // No argument, dump all contents
+        break;
+      case GenEmitter:
+        CodeEmitterGen(Records).run(OS);
+        break;
+      case GenRegisterInfo:
+        RegisterInfoEmitter(Records).run(OS);
+        break;
+      case GenInstrInfo:
+        InstrInfoEmitter(Records).run(OS);
+        break;
+      case GenCallingConv:
+        CallingConvEmitter(Records).run(OS);
+        break;
+      case GenAsmWriter:
+        AsmWriterEmitter(Records).run(OS);
+        break;
+      case GenAsmMatcher:
+        AsmMatcherEmitter(Records).run(OS);
+        break;
+      case GenDisassembler:
+        DisassemblerEmitter(Records).run(OS);
+        break;
+      case GenPseudoLowering:
+        PseudoLoweringEmitter(Records).run(OS);
+        break;
+      case GenDAGISel:
+        DAGISelEmitter(Records).run(OS);
+        break;
+      case GenDFAPacketizer:
+        DFAGen(Records).run(OS);
+        break;
+      case GenFastISel:
+        FastISelEmitter(Records).run(OS);
+        break;
+      case GenSubtarget:
+        SubtargetEmitter(Records).run(OS);
+        break;
+      case GenIntrinsic:
+        IntrinsicEmitter(Records).run(OS);
+        break;
+      case GenTgtIntrinsic:
+        IntrinsicEmitter(Records, true).run(OS);
+        break;
+      case GenEDInfo:
+        EDEmitter(Records).run(OS);
+        break;
+      case PrintEnums:
+      {
+        std::vector<Record*> Recs = Records.getAllDerivedDefinitions(Class);
+        for (unsigned i = 0, e = Recs.size(); i != e; ++i)
+          OS << Recs[i]->getName() << ", ";
+        OS << "\n";
+        break;
       }
-      break;
+      case PrintSets:
+      {
+        SetTheory Sets;
+        Sets.addFieldExpander("Set", "Elements");
+        std::vector<Record*> Recs = Records.getAllDerivedDefinitions("Set");
+        for (unsigned i = 0, e = Recs.size(); i != e; ++i) {
+          OS << Recs[i]->getName() << " = [";
+          const std::vector<Record*> *Elts = Sets.expand(Recs[i]);
+          assert(Elts && "Couldn't expand Set instance");
+          for (unsigned ei = 0, ee = Elts->size(); ei != ee; ++ei)
+            OS << ' ' << (*Elts)[ei]->getName();
+          OS << " ]\n";
+        }
+        break;
+      }
+      default:
+        assert(1 && "Invalid Action");
+        return true;
+      }
+  
+      return false;
     }
-    default:
-      assert(1 && "Invalid Action");
-      return true;
-    }
-
-    return false;
-  }
-};
+  };
+}
 
 int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();

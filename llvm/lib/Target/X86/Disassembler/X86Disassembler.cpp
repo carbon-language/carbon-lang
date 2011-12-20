@@ -79,6 +79,12 @@ EDInstInfo *X86GenericDisassembler::getEDInfo() const {
   return instInfoX86;
 }
 
+void X86_16Disassembler::anchor() { }
+
+void X86_32Disassembler::anchor() { }
+
+void X86_64Disassembler::anchor() { }
+
 /// regionReader - a callback function that wraps the readByte method from
 ///   MemoryObject.
 ///

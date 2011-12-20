@@ -18,6 +18,8 @@
 #include "llvm/MC/MCStreamer.h"
 using namespace llvm;
 
+void MCAsmInfoDarwin::anchor() { } 
+
 MCAsmInfoDarwin::MCAsmInfoDarwin() {
   // Common settings for all Darwin targets.
   // Syntax:

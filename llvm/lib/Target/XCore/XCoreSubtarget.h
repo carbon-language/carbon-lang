@@ -25,6 +25,7 @@ namespace llvm {
 class StringRef;
 
 class XCoreSubtarget : public XCoreGenSubtargetInfo {
+  virtual void anchor();
 
 public:
   /// This constructor initializes the data members to match that

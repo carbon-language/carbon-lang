@@ -25,8 +25,8 @@ namespace llvm {
 /// MBlazeFunctionInfo - This class is derived from MachineFunction private
 /// MBlaze target-specific information for each MachineFunction.
 class MBlazeFunctionInfo : public MachineFunctionInfo {
+  virtual void anchor();
 
-private:
   /// Holds for each function where on the stack the Frame Pointer must be
   /// saved. This is used on Prologue and Epilogue to emit FP save/restore
   int FPStackOffset;

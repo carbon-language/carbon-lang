@@ -81,6 +81,7 @@ StringRecTy StringRecTy::Shared;
 CodeRecTy CodeRecTy::Shared;
 DagRecTy DagRecTy::Shared;
 
+void RecTy::anchor() { }
 void RecTy::dump() const { print(errs()); }
 
 ListRecTy *RecTy::getListTy() {
@@ -444,12 +445,17 @@ RecTy *llvm::resolveTypes(RecTy *T1, RecTy *T2) {
 //    Initializer implementations
 //===----------------------------------------------------------------------===//
 
+void Init::anchor() { }
 void Init::dump() const { return print(errs()); }
+
+void UnsetInit::anchor() { }
 
 UnsetInit *UnsetInit::get() {
   static UnsetInit TheInit;
   return &TheInit;
 }
+
+void BitInit::anchor() { }
 
 BitInit *BitInit::get(bool V) {
   static BitInit True(true);
@@ -565,6 +571,8 @@ IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
   return BitsInit::get(NewBits);
 }
 
+void StringInit::anchor() { }
+
 StringInit *StringInit::get(const std::string &V) {
   typedef StringMap<StringInit *> Pool;
   static Pool ThePool;
@@ -573,6 +581,8 @@ StringInit *StringInit::get(const std::string &V) {
   if (!I) I = new StringInit(V);
   return I;
 }
+
+void CodeInit::anchor() { }
 
 CodeInit *CodeInit::get(const std::string &V) {
   typedef StringMap<CodeInit *> Pool;

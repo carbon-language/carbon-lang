@@ -65,6 +65,7 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
   class RefCountedBaseVPTR {
     mutable unsigned ref_cnt;
+    virtual void anchor();
 
   protected:
     RefCountedBaseVPTR() : ref_cnt(0) {}

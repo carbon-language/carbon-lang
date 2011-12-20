@@ -232,7 +232,7 @@ const uint64_t UnknownAddressOrSize = ~0ULL;
 /// Concrete instances of this object are created by createObjectFile, which
 /// figure out which type to create.
 class ObjectFile : public Binary {
-private:
+  virtual void anchor();
   ObjectFile(); // = delete
   ObjectFile(const ObjectFile &other); // = delete
 

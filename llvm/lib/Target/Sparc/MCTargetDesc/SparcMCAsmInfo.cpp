@@ -16,6 +16,8 @@
 
 using namespace llvm;
 
+void SparcELFMCAsmInfo::anchor() { }
+
 SparcELFMCAsmInfo::SparcELFMCAsmInfo(const Target &T, StringRef TT) {
   IsLittleEndian = false;
   Triple TheTriple(TT);

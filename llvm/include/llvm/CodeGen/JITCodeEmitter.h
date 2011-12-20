@@ -51,6 +51,7 @@ class Function;
 /// occurred, more memory is allocated, and we reemit the code into it.
 /// 
 class JITCodeEmitter : public MachineCodeEmitter {
+  virtual void anchor();
 public:
   virtual ~JITCodeEmitter() {}
 

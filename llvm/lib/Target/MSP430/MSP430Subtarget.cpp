@@ -21,6 +21,8 @@
 
 using namespace llvm;
 
+void MSP430Subtarget::anchor() { }
+
 MSP430Subtarget::MSP430Subtarget(const std::string &TT,
                                  const std::string &CPU,
                                  const std::string &FS) :

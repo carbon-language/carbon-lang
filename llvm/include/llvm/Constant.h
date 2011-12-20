@@ -41,6 +41,7 @@ namespace llvm {
 class Constant : public User {
   void operator=(const Constant &);     // Do not implement
   Constant(const Constant &);           // Do not implement
+  virtual void anchor();
   
 protected:
   Constant(Type *ty, ValueTy vty, Use *Ops, unsigned NumOps)

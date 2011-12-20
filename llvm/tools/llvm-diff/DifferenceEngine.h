@@ -50,7 +50,9 @@ namespace llvm {
 
     /// An oracle for answering whether two values are equivalent as
     /// operands.
-    struct Oracle {
+    class Oracle {
+      virtual void anchor();
+    public:
       virtual bool operator()(Value *L, Value *R) = 0;
 
     protected:

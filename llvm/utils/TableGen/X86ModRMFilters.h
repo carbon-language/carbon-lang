@@ -27,6 +27,7 @@ namespace X86Disassembler {
 /// ModRMFilter - Abstract base class for clases that recognize patterns in
 ///   ModR/M bytes.
 class ModRMFilter {
+  virtual void anchor();
 public:
   /// Destructor    - Override as necessary.
   virtual ~ModRMFilter() { }
@@ -49,6 +50,7 @@ public:
 ///   require a ModR/M byte or instructions where the entire ModR/M byte is used
 ///   for operands.
 class DumbFilter : public ModRMFilter {
+  virtual void anchor();
 public:
   bool isDumb() const {
     return true;
@@ -63,7 +65,7 @@ public:
 ///   Some instructions are classified based on whether they are 11 or anything
 ///   else.  This filter performs that classification.
 class ModFilter : public ModRMFilter {
-private:
+  virtual void anchor();
   bool R;
 public:
   /// Constructor
@@ -90,7 +92,7 @@ public:
 ///   possible value.  Otherwise, there is one instruction for each value of the
 ///   nnn field [bits 5-3], known elsewhere as the reg field.
 class EscapeFilter : public ModRMFilter {
-private:
+  virtual void anchor();
   bool C0_FF;
   uint8_t NNN_or_ModRM;
 public:
@@ -121,7 +123,7 @@ public:
 ///   maps to a single instruction.  Such instructions require the ModR/M byte
 ///   to fall between 0xc0 and 0xff.
 class AddRegEscapeFilter : public ModRMFilter {
-private:
+  virtual void anchor();
   uint8_t ModRM;
 public:
   /// Constructor
@@ -142,7 +144,7 @@ public:
 /// ExtendedFilter - Extended opcodes are classified based on the value of the
 ///   mod field [bits 7-6] and the value of the nnn field [bits 5-3]. 
 class ExtendedFilter : public ModRMFilter {
-private:
+  virtual void anchor();
   bool R;
   uint8_t NNN;
 public:
@@ -169,9 +171,8 @@ public:
 
 /// ExactFilter - The occasional extended opcode (such as VMCALL or MONITOR)
 ///   requires the ModR/M byte to have a specific value.
-class ExactFilter : public ModRMFilter
-{
-private:
+class ExactFilter : public ModRMFilter {
+  virtual void anchor();
   uint8_t ModRM;
 public:
   /// Constructor

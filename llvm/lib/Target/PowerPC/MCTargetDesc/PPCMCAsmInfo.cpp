@@ -14,6 +14,8 @@
 #include "PPCMCAsmInfo.h"
 using namespace llvm;
 
+void PPCMCAsmInfoDarwin::anchor() { }
+
 PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit) {
   if (is64Bit)
     PointerSize = 8;
@@ -29,6 +31,8 @@ PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit) {
   AssemblerDialect = 1;           // New-Style mnemonics.
   SupportsDebugInformation= true; // Debug information.
 }
+
+void PPCLinuxMCAsmInfo::anchor() { }
 
 PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit) {
   if (is64Bit)

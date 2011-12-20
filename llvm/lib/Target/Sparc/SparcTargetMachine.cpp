@@ -51,6 +51,8 @@ bool SparcTargetMachine::addPreEmitPass(PassManagerBase &PM){
   return true;
 }
 
+void SparcV8TargetMachine::anchor() { }
+
 SparcV8TargetMachine::SparcV8TargetMachine(const Target &T,
                                            StringRef TT, StringRef CPU,
                                            StringRef FS,
@@ -60,6 +62,8 @@ SparcV8TargetMachine::SparcV8TargetMachine(const Target &T,
                                            CodeGenOpt::Level OL)
   : SparcTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {
 }
+
+void SparcV9TargetMachine::anchor() { }
 
 SparcV9TargetMachine::SparcV9TargetMachine(const Target &T, 
                                            StringRef TT,  StringRef CPU,

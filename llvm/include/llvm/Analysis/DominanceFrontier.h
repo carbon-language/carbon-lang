@@ -154,6 +154,7 @@ public:
 /// used to compute a forward dominator frontiers.
 ///
 class DominanceFrontier : public DominanceFrontierBase {
+  virtual void anchor();
 public:
   static char ID; // Pass ID, replacement for typeid
   DominanceFrontier() :

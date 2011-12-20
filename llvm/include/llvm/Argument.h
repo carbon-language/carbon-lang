@@ -30,6 +30,7 @@ template<typename ValueSubClass, typename ItemParentClass>
 /// the function was called with.
 /// @brief LLVM Argument representation  
 class Argument : public Value, public ilist_node<Argument> {
+  virtual void anchor();
   Function *Parent;
 
   friend class SymbolTableListTraits<Argument, Function>;

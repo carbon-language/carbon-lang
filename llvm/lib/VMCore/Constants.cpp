@@ -40,6 +40,8 @@ using namespace llvm;
 //                              Constant Class
 //===----------------------------------------------------------------------===//
 
+void Constant::anchor() { }
+
 bool Constant::isNegativeZeroValue() const {
   // Floating point values have an explicit -0.0 value.
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(this))
@@ -363,6 +365,8 @@ void Constant::removeDeadConstantUsers() const {
 //                                ConstantInt
 //===----------------------------------------------------------------------===//
 
+void ConstantInt::anchor() { }
+
 ConstantInt::ConstantInt(IntegerType *Ty, const APInt& V)
   : Constant(Ty, ConstantIntVal, 0, 0), Val(V) {
   assert(V.getBitWidth() == Ty->getBitWidth() && "Invalid constant for type");
@@ -485,6 +489,8 @@ static const fltSemantics *TypeToFloatSemantics(Type *Ty) {
   assert(Ty->isPPC_FP128Ty() && "Unknown FP format");
   return &APFloat::PPCDoubleDouble;
 }
+
+void ConstantFP::anchor() { }
 
 /// get() - This returns a constant fp for the specified value in the
 /// specified type.  This should only be used for simple constant values like

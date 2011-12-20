@@ -24,6 +24,7 @@ namespace llvm {
   class Type;
 
 struct ARMRegisterInfo : public ARMBaseRegisterInfo {
+  virtual void anchor();
 public:
   ARMRegisterInfo(const ARMBaseInstrInfo &tii, const ARMSubtarget &STI);
 };

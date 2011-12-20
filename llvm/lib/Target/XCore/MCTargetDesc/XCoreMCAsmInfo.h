@@ -21,6 +21,7 @@ namespace llvm {
   class Target;
 
   class XCoreMCAsmInfo : public MCAsmInfo {
+    virtual void anchor();
   public:
     explicit XCoreMCAsmInfo(const Target &T, StringRef TT);
   };

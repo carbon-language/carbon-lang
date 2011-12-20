@@ -16,6 +16,8 @@
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
+void MCAsmInfoCOFF::anchor() { }
+
 MCAsmInfoCOFF::MCAsmInfoCOFF() {
   GlobalPrefix = "_";
   COMMDirectiveAlignmentIsInBytes = false;
@@ -39,9 +41,13 @@ MCAsmInfoCOFF::MCAsmInfoCOFF() {
   SupportsDataRegions = false;
 }
 
+void MCAsmInfoMicrosoft::anchor() { }
+
 MCAsmInfoMicrosoft::MCAsmInfoMicrosoft() {
   AllowQuotesInName = true;
 }
+
+void MCAsmInfoGNUCOFF::anchor() { }
 
 MCAsmInfoGNUCOFF::MCAsmInfoGNUCOFF() {
 

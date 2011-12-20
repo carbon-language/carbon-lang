@@ -24,6 +24,7 @@ namespace llvm {
 class StringRef;
 
 class SparcSubtarget : public SparcGenSubtargetInfo {
+  virtual void anchor();
   bool IsV9;
   bool V8DeprecatedInsts;
   bool IsVIS;

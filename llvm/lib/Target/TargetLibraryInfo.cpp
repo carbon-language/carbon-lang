@@ -20,6 +20,8 @@ INITIALIZE_PASS(TargetLibraryInfo, "targetlibinfo",
                 "Target Library Information", false, true)
 char TargetLibraryInfo::ID = 0;
 
+void TargetLibraryInfo::anchor() { }
+
 const char* TargetLibraryInfo::StandardNames[LibFunc::NumLibFuncs] =
   {
     "acos",

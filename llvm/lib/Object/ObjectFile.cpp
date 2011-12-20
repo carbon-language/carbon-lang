@@ -21,6 +21,8 @@
 using namespace llvm;
 using namespace object;
 
+void ObjectFile::anchor() { }
+
 ObjectFile::ObjectFile(unsigned int Type, MemoryBuffer *source, error_code &ec)
   : Binary(Type, source) {
 }

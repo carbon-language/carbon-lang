@@ -22,6 +22,7 @@ namespace llvm {
   /// Implementations are utility classes which insert spill or remat code on
   /// demand.
   class Spiller {
+    virtual void anchor();
   public:
     virtual ~Spiller() = 0;
 
