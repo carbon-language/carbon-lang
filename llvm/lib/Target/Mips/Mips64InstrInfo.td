@@ -240,11 +240,21 @@ def : Pat<(i64 imm:$imm),
 
 // extended loads
 let Predicates = [NotN64] in {
-  def : Pat<(extloadi32_a addr:$a), (DSRL (DSLL (LW64 addr:$a), 32), 32)>;
+  def : Pat<(i64 (extloadi1  addr:$src)), (LB64 addr:$src)>;
+  def : Pat<(i64 (extloadi8  addr:$src)), (LB64 addr:$src)>;
+  def : Pat<(i64 (extloadi16_a addr:$src)), (LH64 addr:$src)>;
+  def : Pat<(i64 (extloadi16_u addr:$src)), (ULH64 addr:$src)>;
+  def : Pat<(i64 (extloadi32_a addr:$src)), (LW64 addr:$src)>;
+  def : Pat<(i64 (extloadi32_u addr:$src)), (ULW64 addr:$src)>;
   def : Pat<(zextloadi32_u addr:$a), (DSRL (DSLL (ULW64 addr:$a), 32), 32)>;
 }
 let Predicates = [IsN64] in {
-  def : Pat<(extloadi32_a addr:$a), (DSRL (DSLL (LW64_P8 addr:$a), 32), 32)>;
+  def : Pat<(i64 (extloadi1  addr:$src)), (LB64_P8 addr:$src)>;
+  def : Pat<(i64 (extloadi8  addr:$src)), (LB64_P8 addr:$src)>;
+  def : Pat<(i64 (extloadi16_a addr:$src)), (LH64_P8 addr:$src)>;
+  def : Pat<(i64 (extloadi16_u addr:$src)), (ULH64_P8 addr:$src)>;
+  def : Pat<(i64 (extloadi32_a addr:$src)), (LW64_P8 addr:$src)>;
+  def : Pat<(i64 (extloadi32_u addr:$src)), (ULW64_P8 addr:$src)>;
   def : Pat<(zextloadi32_u addr:$a), (DSRL (DSLL (ULW64_P8 addr:$a), 32), 32)>;
 }
 
