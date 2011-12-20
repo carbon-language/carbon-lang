@@ -1753,3 +1753,20 @@ def : Pat<(and GR64:$src1, i64immSExt8:$src2),
           (AND64ri8 GR64:$src1, i64immSExt8:$src2)>;
 def : Pat<(and GR64:$src1, i64immSExt32:$src2),
           (AND64ri32 GR64:$src1, i64immSExt32:$src2)>;
+
+// Bit scan instruction patterns to match explicit zero-undef behavior.
+def : Pat<(cttz_zero_undef GR16:$src), (BSF16rr GR16:$src)>;
+def : Pat<(cttz_zero_undef GR32:$src), (BSF32rr GR32:$src)>;
+def : Pat<(cttz_zero_undef GR64:$src), (BSF64rr GR64:$src)>;
+def : Pat<(cttz_zero_undef (loadi16 addr:$src)), (BSF16rm addr:$src)>;
+def : Pat<(cttz_zero_undef (loadi32 addr:$src)), (BSF32rm addr:$src)>;
+def : Pat<(cttz_zero_undef (loadi64 addr:$src)), (BSF64rm addr:$src)>;
+def : Pat<(ctlz_zero_undef GR16:$src), (XOR16ri (BSR16rr GR16:$src), 15)>;
+def : Pat<(ctlz_zero_undef GR32:$src), (XOR32ri (BSR32rr GR32:$src), 31)>;
+def : Pat<(ctlz_zero_undef GR64:$src), (XOR64ri8 (BSR64rr GR64:$src), 63)>;
+def : Pat<(ctlz_zero_undef (loadi16 addr:$src)),
+          (XOR16ri (BSR16rm addr:$src), 15)>;
+def : Pat<(ctlz_zero_undef (loadi32 addr:$src)),
+          (XOR32ri (BSR32rm addr:$src), 31)>;
+def : Pat<(ctlz_zero_undef (loadi64 addr:$src)),
+          (XOR64ri8 (BSR64rm addr:$src), 63)>;
