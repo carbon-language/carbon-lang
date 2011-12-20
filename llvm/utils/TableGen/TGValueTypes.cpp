@@ -18,9 +18,6 @@
 #include <map>
 using namespace llvm;
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wweak-vtables"
-
 namespace llvm {
 
 class Type {
@@ -60,8 +57,6 @@ public:
     return NumElements;
   }
 };
-
-#pragma clang diagnostic pop
 
 static std::map<unsigned, const Type *>
   ExtendedIntegerTypeMap;
