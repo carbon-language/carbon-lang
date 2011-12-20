@@ -23,7 +23,7 @@ Verify("verify", llvm::cl::desc(
          "Run a quick verification useful for regression testing"),
        llvm::cl::init(false));
 
-static llvm::cl::opt<size_t>
+static llvm::cl::opt<unsigned>
 MemoryLimitMB("memory-limit", llvm::cl::desc(
                 "Do not use more megabytes of memory"),
 	          llvm::cl::init(1000));
