@@ -10,3 +10,12 @@ struct S {
 
 int i = sizeof(S::m); // ok
 int j = sizeof(S::m + 42); // ok
+
+
+struct T {
+  int n;
+  static void f() {
+    int a[n]; // expected-error {{invalid use of member 'n' in static member function}}
+    int b[sizeof n]; // ok
+  }
+};

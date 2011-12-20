@@ -1,5 +1,19 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin %s -emit-llvm -o - | FileCheck %s
 
+template<typename T>
+struct S {
+  static int n;
+};
+template<typename T> int S<T>::n = 5;
+
+int f() {
+  // Make sure that the reference here is enough to trigger the instantiation of
+  // the static data member.
+  // CHECK: @_ZN1SIiE1nE = weak_odr global i32 5
+  int a[S<int>::n];
+  return sizeof a;
+}
+
 // rdar://problem/9506377
 void test0(void *array, int n) {
   // CHECK: define void @_Z5test0Pvi(
@@ -40,4 +54,3 @@ void test0(void *array, int n) {
 
   // CHECK-NEXT: ret void
 }
-

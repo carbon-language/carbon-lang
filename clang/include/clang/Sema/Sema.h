@@ -512,11 +512,16 @@ public:
   /// evaluated at run-time, if at all.
   enum ExpressionEvaluationContext {
     /// \brief The current expression and its subexpressions occur within an
-    /// unevaluated operand (C++0x [expr]p8), such as a constant expression
-    /// or the subexpression of \c sizeof, where the type or the value of the
-    /// expression may be significant but no code will be generated to evaluate
-    /// the value of the expression at run time.
+    /// unevaluated operand (C++11 [expr]p7), such as the subexpression of
+    /// \c sizeof, where the type of the expression may be significant but
+    /// no code will be generated to evaluate the value of the expression at
+    /// run time.
     Unevaluated,
+
+    /// \brief The current expression and its subexpressions occur within a
+    /// constant expression. Such a context is not potentially-evaluated in
+    /// C++98, but is potentially-evaluated in C++11.
+    ConstantEvaluated,
 
     /// \brief The current expression is potentially evaluated at run time,
     /// which means that code may be generated to evaluate the value of the

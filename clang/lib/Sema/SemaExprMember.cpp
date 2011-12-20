@@ -140,7 +140,7 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
         return IMA_Mixed_StaticContext;
         
     if (SemaRef.getLangOptions().CPlusPlus0x && hasField) {
-      // C++0x [expr.prim.general]p10:
+      // C++11 [expr.prim.general]p12:
       //   An id-expression that denotes a non-static data member or non-static
       //   member function of a class can only be used:
       //   (...)

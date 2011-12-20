@@ -2898,7 +2898,7 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
     Expr *SourceExpr = Input.getSourceDeclExpression();
     if (SourceExpr) {
       EnterExpressionEvaluationContext Unevaluated(getSema(),
-                                                   Sema::Unevaluated);
+                                                   Sema::ConstantEvaluated);
       ExprResult E = getDerived().TransformExpr(SourceExpr);
       SourceExpr = (E.isInvalid() ? 0 : E.take());
     }
@@ -2932,9 +2932,9 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
     llvm_unreachable("Caller should expand pack expansions");
 
   case TemplateArgument::Expression: {
-    // Template argument expressions are not potentially evaluated.
+    // Template argument expressions are constant expressions.
     EnterExpressionEvaluationContext Unevaluated(getSema(),
-                                                 Sema::Unevaluated);
+                                                 Sema::ConstantEvaluated);
 
     Expr *InputExpr = Input.getSourceExpression();
     if (!InputExpr) InputExpr = Input.getArgument().getAsExpr();
@@ -3182,6 +3182,9 @@ QualType TreeTransform<Derived>::TransformType(QualType T) {
 
 template<typename Derived>
 TypeSourceInfo *TreeTransform<Derived>::TransformType(TypeSourceInfo *DI) {
+  // Refine the base location to the type's location.
+  TemporaryBase Rebase(*this, DI->getTypeLoc().getBeginLoc(),
+                       getDerived().getBaseEntity());
   if (getDerived().AlreadyTransformed(DI->getType()))
     return DI;
 
@@ -3595,7 +3598,8 @@ TreeTransform<Derived>::TransformConstantArrayType(TypeLocBuilder &TLB,
 
   Expr *Size = TL.getSizeExpr();
   if (Size) {
-    EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
+    EnterExpressionEvaluationContext Unevaluated(SemaRef,
+                                                 Sema::ConstantEvaluated);
     Size = getDerived().TransformExpr(Size).template takeAs<Expr>();
   }
   NewTL.setSizeExpr(Size);
@@ -3640,9 +3644,6 @@ TreeTransform<Derived>::TransformVariableArrayType(TypeLocBuilder &TLB,
   if (ElementType.isNull())
     return QualType();
 
-  // Array bounds are not potentially evaluated contexts
-  EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
-
   ExprResult SizeResult
     = getDerived().TransformExpr(T->getSizeExpr());
   if (SizeResult.isInvalid())
@@ -3680,8 +3681,9 @@ TreeTransform<Derived>::TransformDependentSizedArrayType(TypeLocBuilder &TLB,
   if (ElementType.isNull())
     return QualType();
 
-  // Array bounds are not potentially evaluated contexts
-  EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
+  // Array bounds are constant expressions.
+  EnterExpressionEvaluationContext Unevaluated(SemaRef,
+                                               Sema::ConstantEvaluated);
 
   // Prefer the expression from the TypeLoc;  the other may have been uniqued.
   Expr *origSize = TL.getSizeExpr();
@@ -3728,8 +3730,9 @@ QualType TreeTransform<Derived>::TransformDependentSizedExtVectorType(
   if (ElementType.isNull())
     return QualType();
 
-  // Vector sizes are not potentially evaluated contexts
-  EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
+  // Vector sizes are constant expressions.
+  EnterExpressionEvaluationContext Unevaluated(SemaRef,
+                                               Sema::ConstantEvaluated);
 
   ExprResult Size = getDerived().TransformExpr(T->getSizeExpr());
   if (Size.isInvalid())
@@ -6913,9 +6916,6 @@ TreeTransform<Derived>::TransformCXXUuidofExpr(CXXUuidofExpr *E) {
                                              E->getLocEnd());
   }
 
-  // We don't know whether the expression is potentially evaluated until
-  // after we perform semantic analysis, so the expression is potentially
-  // potentially evaluated.
   EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
 
   ExprResult SubExpr = getDerived().TransformExpr(E->getExprOperand());

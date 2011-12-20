@@ -1199,7 +1199,8 @@ diagnoseUncapturableValueReference(Sema &S, SourceLocation loc,
                                    VarDecl *var, DeclContext *DC) {
   switch (S.ExprEvalContexts.back().Context) {
   case Sema::Unevaluated:
-    // The argument will never be evaluated, so don't complain.
+  case Sema::ConstantEvaluated:
+    // The argument will never be evaluated at runtime, so don't complain.
     return CR_NoCapture;
 
   case Sema::PotentiallyEvaluated:
@@ -9330,7 +9331,7 @@ void Sema::PopExpressionEvaluationContext() {
   // temporaries that we may have created as part of the evaluation of
   // the expression in that context: they aren't relevant because they
   // will never be constructed.
-  if (Rec.Context == Unevaluated) {
+  if (Rec.Context == Unevaluated || Rec.Context == ConstantEvaluated) {
     ExprCleanupObjects.erase(ExprCleanupObjects.begin() + Rec.NumCleanupObjects,
                              ExprCleanupObjects.end());
     ExprNeedsCleanups = Rec.ParentNeedsCleanups;
@@ -9391,6 +9392,16 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     case Unevaluated:
       // We are in an expression that is not potentially evaluated; do nothing.
       return;
+
+    case ConstantEvaluated:
+      // We are in an expression that will be evaluated during translation; in
+      // C++11, we need to define any functions which are used in case they're
+      // constexpr, whereas in C++98, we only need to define static data members
+      // of class templates.
+      if (!getLangOptions().CPlusPlus ||
+          (!getLangOptions().CPlusPlus0x && !isa<VarDecl>(D)))
+        return;
+      break;
 
     case PotentiallyEvaluated:
       // We are in a potentially-evaluated expression, so this declaration is
@@ -9661,6 +9672,10 @@ bool Sema::DiagRuntimeBehavior(SourceLocation Loc, const Stmt *Statement,
   switch (ExprEvalContexts.back().Context) {
   case Unevaluated:
     // The argument will never be evaluated, so don't complain.
+    break;
+
+  case ConstantEvaluated:
+    // Relevant diagnostics should be produced by constant evaluation.
     break;
 
   case PotentiallyEvaluated:

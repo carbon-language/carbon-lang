@@ -1055,7 +1055,8 @@ static QualType inferARCLifetimeForPointee(Sema &S, QualType type,
 
   // If we are in an unevaluated context, like sizeof, assume ExplicitNone and
   // don't give error.
-  } else if (S.ExprEvalContexts.back().Context == Sema::Unevaluated) {
+  } else if (S.ExprEvalContexts.back().Context == Sema::Unevaluated ||
+             S.ExprEvalContexts.back().Context == Sema::ConstantEvaluated) {
     implicitLifetime = Qualifiers::OCL_ExplicitNone;
 
   // If that failed, give an error and recover using __autoreleasing.

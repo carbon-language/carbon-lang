@@ -247,11 +247,12 @@ Parser::ParseAssignmentExprWithObjCMessageExprStart(SourceLocation LBracLoc,
 
 
 ExprResult Parser::ParseConstantExpression() {
-  // C++ [basic.def.odr]p2:
+  // C++03 [basic.def.odr]p2:
   //   An expression is potentially evaluated unless it appears where an
   //   integral constant expression is required (see 5.19) [...].
+  // C++98 and C++11 have no such rule, but this is only a defect in C++98.
   EnterExpressionEvaluationContext Unevaluated(Actions,
-                                               Sema::Unevaluated);
+                                               Sema::ConstantEvaluated);
 
   ExprResult LHS(ParseCastExpression(false));
   return ParseRHSOfBinaryExpression(LHS, prec::Conditional);
@@ -1041,7 +1042,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 
     if (T.expectAndConsume(diag::err_expected_lparen_after, "noexcept"))
       return ExprError();
-    // C++ [expr.unary.noexcept]p1:
+    // C++11 [expr.unary.noexcept]p1:
     //   The noexcept operator determines whether the evaluation of its operand,
     //   which is an unevaluated operand, can throw an exception.
     EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
@@ -1439,8 +1440,8 @@ Parser::ParseExprAfterUnaryExprOrTypeTrait(const Token &OpTok,
     //   [...] The operand is either an expression, which is an unevaluated
     //   operand (Clause 5) [...]
     //
-    // The GNU typeof and alignof extensions also behave as unevaluated
-    // operands.
+    // The GNU typeof and GNU/C++11 alignof extensions also behave as
+    // unevaluated operands.
     EnterExpressionEvaluationContext Unevaluated(Actions,
                                                  Sema::Unevaluated);
     Operand = ParseCastExpression(true/*isUnaryExpression*/);
@@ -1456,8 +1457,8 @@ Parser::ParseExprAfterUnaryExprOrTypeTrait(const Token &OpTok,
     //   [...] The operand is either an expression, which is an unevaluated
     //   operand (Clause 5) [...]
     //
-    // The GNU typeof and alignof extensions also behave as unevaluated
-    // operands.
+    // The GNU typeof and GNU/C++11 alignof extensions also behave as
+    // unevaluated operands.
     EnterExpressionEvaluationContext Unevaluated(Actions,
                                                  Sema::Unevaluated);
     Operand = ParseParenExpression(ExprType, true/*stopIfCastExpr*/, 
