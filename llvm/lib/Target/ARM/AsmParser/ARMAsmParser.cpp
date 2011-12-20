@@ -4297,7 +4297,6 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
     Error(Parser.getTok().getLoc(), "unexpected token in operand");
     return true;
   case AsmToken::Identifier: {
-    // If this is VMRS, check for the apsr_nzcv operand.
     if (!tryParseRegisterWithWriteBack(Operands))
       return false;
     int Res = tryParseShiftRegister(Operands);
@@ -4305,6 +4304,7 @@ bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
       return false;
     else if (Res == -1) // irrecoverable error
       return true;
+    // If this is VMRS, check for the apsr_nzcv operand.
     if (Mnemonic == "vmrs" && Parser.getTok().getString() == "apsr_nzcv") {
       S = Parser.getTok().getLoc();
       Parser.Lex();
