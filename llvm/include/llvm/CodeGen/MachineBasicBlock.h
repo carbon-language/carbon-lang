@@ -513,7 +513,7 @@ public:
   /// instruction is a bundle this function will remove all the bundled
   /// instructions as well. It is up to the caller to keep a list of the
   /// bundled instructions and re-insert them if desired. This function is
-  /// *not recommended* for manipulating instructions with bundled. Use
+  /// *not recommended* for manipulating instructions with bundles. Use
   /// splice instead.
   MachineInstr *remove(MachineInstr *I);
   void clear() {
