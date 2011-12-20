@@ -221,8 +221,10 @@ MipsTargetLowering(MipsTargetMachine &TM)
   if (!Subtarget->hasBitCount())
     setOperationAction(ISD::CTLZ, MVT::i32, Expand);
 
-  if (!Subtarget->hasSwap())
+  if (!Subtarget->hasSwap()) {
     setOperationAction(ISD::BSWAP, MVT::i32, Expand);
+    setOperationAction(ISD::BSWAP, MVT::i64, Expand);
+  }
 
   setTargetDAGCombine(ISD::ADDE);
   setTargetDAGCombine(ISD::SUBE);

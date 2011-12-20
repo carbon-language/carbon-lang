@@ -199,6 +199,10 @@ def MFLO64 : MoveFromLOHI<0x12, "mflo", CPU64Regs, [LO64]>;
 def DCLZ : CountLeading0<0x24, "dclz", CPU64Regs>;
 def DCLO : CountLeading1<0x25, "dclo", CPU64Regs>;
 
+/// Double Word Swap Bytes/HalfWords
+def DSBH : SubwordSwap<0x24, 0x2, "dsbh", CPU64Regs>;
+def DSHD : SubwordSwap<0x24, 0x5, "dshd", CPU64Regs>;
+
 def LEA_ADDiu64 : EffectiveAddress<"addiu\t$rt, $addr", CPU64Regs, mem_ea_64>;
 
 let Uses = [SP_64] in
@@ -316,3 +320,5 @@ def : Pat<(i64 (sext CPURegs:$src)), (SLL64_32 CPURegs:$src)>;
 // Sign extend in register
 def : Pat<(i64 (sext_inreg CPU64Regs:$src, i32)), (SLL64_64 CPU64Regs:$src)>;
 
+// bswap pattern
+def : Pat<(bswap CPU64Regs:$rt), (DSHD (DSBH CPU64Regs:$rt))>;
