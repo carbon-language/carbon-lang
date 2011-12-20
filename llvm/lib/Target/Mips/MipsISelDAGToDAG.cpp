@@ -293,12 +293,6 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
     case ISD::ConstantFP: {
       ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(Node);
       if (Node->getValueType(0) == MVT::f64 && CN->isExactlyValue(+0.0)) {
-        if (Subtarget.hasMips64()) {
-          SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
-                                                Mips::ZERO_64, MVT::i64);
-          return CurDAG->getMachineNode(Mips::DMTC1, dl, MVT::f64, Zero);
-        }
-
         SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
                                               Mips::ZERO, MVT::i32);
         return CurDAG->getMachineNode(Mips::BuildPairF64, dl, MVT::f64, Zero,
