@@ -1019,6 +1019,16 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
   BasicBlock *SaveInsertBB = Builder.GetInsertBlock();
   BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
 
+  // Another AddRec may need to be recursively expanded below. For example, if
+  // this AddRec is quadratic, the StepV may itself be an AddRec in this
+  // loop. Remove this loop from the PostIncLoops set before expanding such
+  // AddRecs. Otherwise, we cannot find a valid position for the step
+  // (i.e. StepV can never dominate its loop header).  Ideally, we could do
+  // SavedIncLoops.swap(PostIncLoops), but we generally have a single element,
+  // so it's not worth implementing SmallPtrSet::swap.
+  PostIncLoopSet SavedPostIncLoops = PostIncLoops;
+  PostIncLoops.clear();
+
   // Expand code for the start value.
   Value *StartV = expandCodeFor(Normalized->getStart(), ExpandTy,
                                 L->getHeader()->begin());
@@ -1072,6 +1082,10 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
   // Restore the original insert point.
   if (SaveInsertBB)
     restoreInsertPoint(SaveInsertBB, SaveInsertPt);
+
+  // After expanding subexpressions, restore the PostIncLoops set so the caller
+  // can ensure that IVIncrement dominates the current uses.
+  PostIncLoops = SavedPostIncLoops;
 
   // Remember this PHI, even in post-inc mode.
   InsertedValues.insert(PN);
