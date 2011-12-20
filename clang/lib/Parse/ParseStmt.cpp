@@ -1371,6 +1371,14 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
         return StmtError();
       }
       Collection = ParseExpression();
+    } else if (getLang().CPlusPlus0x && Tok.is(tok::colon) &&
+               !FirstPart.isInvalid()) {
+      // User tried to write the reasonable, but ill-formed, for-range-statement
+      //   for (expr : expr) { ... }
+      Diag(Tok, diag::err_for_range_expected_decl)
+        << FirstPart.get()->getSourceRange();
+      SkipUntil(tok::r_paren, false, true);
+      SecondPartIsInvalid = true;
     } else {
       if (!Value.isInvalid()) {
         Diag(Tok, diag::err_expected_semi_for);
