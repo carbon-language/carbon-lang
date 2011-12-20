@@ -1709,6 +1709,13 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
         << Context.getTypeDeclType(Instantiation);
       Diag(Pattern->getLocation(), diag::note_template_decl_here);
     }
+
+    // In general, Instantiation isn't marked invalid to get more than one
+    // error for multiple undefined instantiations. But the code that does
+    // explicit declaration -> explicit definition conversion can't handle
+    // invalid declarations, so mark as invalid in that case.
+    if (TSK == TSK_ExplicitInstantiationDeclaration)
+       Instantiation->setInvalidDecl();
     return true;
   }
   Pattern = PatternDef;
@@ -1719,7 +1726,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
     MSInfo->setTemplateSpecializationKind(TSK);
     MSInfo->setPointOfInstantiation(PointOfInstantiation);
   } else if (ClassTemplateSpecializationDecl *Spec 
-               = dyn_cast<ClassTemplateSpecializationDecl>(Instantiation)) {
+        = dyn_cast<ClassTemplateSpecializationDecl>(Instantiation)) {
     Spec->setTemplateSpecializationKind(TSK);
     Spec->setPointOfInstantiation(PointOfInstantiation);
   }
@@ -1888,7 +1895,8 @@ Sema::InstantiateClassTemplateSpecialization(
       
       // If this is an explicit instantiation definition, mark the
       // vtable as used.
-      if (TSK == TSK_ExplicitInstantiationDefinition)
+      if (TSK == TSK_ExplicitInstantiationDefinition &&
+          !ClassTemplateSpec->isInvalidDecl())
         MarkVTableUsed(PointOfInstantiation, ClassTemplateSpec, true);
 
       return false;

@@ -72,3 +72,10 @@ namespace PR7979 {
   template <typename T> int S<T>::i;
   template <typename T> void S<T>::S2::h() {}
 }
+
+namespace PR11599 {
+  template <typename STRING_TYPE> class BasicStringPiece;  // expected-note {{template is declared here}}
+
+  extern template class BasicStringPiece<int>;  // expected-error{{explicit instantiation of undefined template 'PR11599::BasicStringPiece<int>}}
+  template class BasicStringPiece<int>;
+}
