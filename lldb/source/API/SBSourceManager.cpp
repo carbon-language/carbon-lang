@@ -48,7 +48,7 @@ namespace lldb_private
                                            uint32_t line,
                                            uint32_t context_before,
                                            uint32_t context_after,
-                                           const char* current_line_cstr,
+                                           const char *current_line_cstr,
                                            lldb_private::Stream *s)
         {
             if (!file)
@@ -118,7 +118,7 @@ SBSourceManager::DisplaySourceLinesWithLineNumbers
     uint32_t line,
     uint32_t context_before,
     uint32_t context_after,
-    const char* current_line_cstr,
+    const char *current_line_cstr,
     SBStream &s
 )
 {
