@@ -171,19 +171,18 @@ private:
 }
 
 int main(int argc, const char *argv[]) {
-  llvm::OwningPtr<llvm::MemoryBuffer> mb;
-  if (error(llvm::MemoryBuffer::getFileOrSTDIN(llvm::StringRef(argv[1]), mb)))
-    return 1;
-
+  // read input YAML doc into object file(s)
   std::vector<File *> files;
-  if (error(yaml::parseObjectText(mb.get(), files)))
+  if (error(yaml::parseObjectTextFileOrSTDIN(llvm::StringRef(argv[1]), files)))
     return 1;
 
+  // merge all atom graphs
   LdCore core(files);
   Resolver resolver(core, core);
   std::vector<const Atom *> &mergedAtoms = resolver.resolve();
   MergedFile outFile(mergedAtoms);
 
+  // write new atom graph out as YAML doc
   std::string errorInfo;
   llvm::raw_fd_ostream out("-", errorInfo);
   yaml::writeObjectText(&outFile, out);

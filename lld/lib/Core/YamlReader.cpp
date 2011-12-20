@@ -555,5 +555,20 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
   result.push_back(file);
   return success;
 }
+
+//
+// Fill in vector<File*> from path to input text file.
+//
+llvm::error_code parseObjectTextFileOrSTDIN(llvm::StringRef path
+                                 , std::vector<File*>& result) {
+  llvm::OwningPtr<llvm::MemoryBuffer> mb;
+  llvm::error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(path, mb);
+  if ( ec ) 
+      return ec;
+      
+  return parseObjectText(mb.get(), result);
+}
+
+
 } // namespace yaml
 } // namespace lld

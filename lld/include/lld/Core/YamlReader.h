@@ -21,7 +21,16 @@ namespace llvm { class MemoryBuffer; }
 namespace lld {
 namespace yaml {
 
-llvm::error_code parseObjectText(  llvm::MemoryBuffer *mb
+  /// parseObjectTextFileOrSTDIN - Open the specified YAML file (use stdin if 
+  /// the path is "-") and parse into lld::File object(s) and append each to 
+  /// the specified vector<File*>.
+  llvm::error_code parseObjectTextFileOrSTDIN(llvm::StringRef path
+                                 , std::vector<File *>&);
+
+
+  /// parseObjectText - Parse the specified YAML formatted MemoryBuffer
+  /// into lld::File object(s) and append each to the specified vector<File*>.
+  llvm::error_code parseObjectText(llvm::MemoryBuffer *mb
                                  , std::vector<File *>&);
 
 } // namespace yaml
