@@ -48,10 +48,6 @@ protected:
   JSONAtom(Kind MyKind) : MyKind(MyKind) {}
 
 private:
-  /// \brief Parses to the end of the object and returns whether parsing
-  /// was successful.
-  bool skip() const;
-
   Kind MyKind;
 
   friend class JSONParser;
@@ -76,8 +72,8 @@ public:
   /// \brief Returns the outermost JSON value (either an array or an object).
   ///
   /// Can return NULL if the input does not start with an array or an object.
-  /// The object is not parsed yet - the caller must either iterate over the
-  /// returned object or call 'skip' to trigger parsing.
+  /// The object is not parsed yet - the caller must iterate over the
+  /// returned object to trigger parsing.
   ///
   /// A JSONValue can be either a JSONString, JSONObject or JSONArray.
   JSONValue *parseRoot();
@@ -129,6 +125,13 @@ private:
   bool errorIfAtEndOfFile(StringRef Message);
   bool errorIfNotAt(char C, StringRef Message);
   /// }
+
+  /// \brief Skips all elements in the given container.
+  template <typename ContainerT>
+  bool skipContainer(const ContainerT &Container);
+
+  /// \brief Skips to the next position behind the given JSON atom.
+  bool skip(const JSONAtom &Atom);
 
   /// All nodes are allocated by the parser and will be deallocated when the
   /// parser is destroyed.
@@ -191,9 +194,6 @@ public:
 private:
   JSONString(StringRef RawText) : JSONValue(JK_String), RawText(RawText) {}
 
-  /// \brief Skips to the next position in the parse stream.
-  bool skip() const { return true; };
-
   StringRef RawText;
 
   friend class JSONAtom;
@@ -223,9 +223,6 @@ private:
   JSONKeyValuePair(const JSONString *Key, const JSONValue *Value)
       : JSONAtom(JK_KeyValuePair), Key(Key), Value(Value) {}
 
-  /// \brief Skips to the next position in the parse stream.
-  bool skip() const { return Value->skip(); };
-
   friend class JSONAtom;
   friend class JSONParser;
   template <typename, char, char, JSONAtom::Kind> friend class JSONContainer;
@@ -243,8 +240,7 @@ public:
 /// \brief Implementation of JSON containers (arrays and objects).
 ///
 /// JSONContainers drive the lazy parsing of JSON arrays and objects via
-/// forward iterators. Call 'skip' to validate parsing of all elements of the
-/// container and to position the parse stream behind the container.
+/// forward iterators.
 template <typename AtomT, char StartChar, char EndChar,
           JSONAtom::Kind ContainerKind>
 class JSONContainer : public JSONValue {
@@ -320,23 +316,13 @@ private:
     return const_iterator(this);
   }
 
-  /// \brief Skips to the next position in the parse stream.
-  bool skip() const {
-    for (const_iterator I = current(), E = end(); I != E; ++I) {
-      assert(*I != 0);
-      if (!(*I)->skip())
-        return false;
-    }
-    return !Parser->failed();
-  }
-
   /// \brief Parse the next element in the container into the Current element.
   ///
   /// This routine is called as an iterator into this container walks through
   /// its elements. It mutates the container's internal current node to point to
   /// the next atom of the container.
   void parseNextElement() const {
-    Current->skip();
+    Parser->skip(*Current);
     Position = Parser->parseNextElement<AtomT, EndChar>(Current);
   }
 

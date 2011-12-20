@@ -40,7 +40,30 @@ JSONValue *JSONParser::parseRoot() {
 }
 
 bool JSONParser::validate() {
-  return parseRoot()->skip();
+  return skip(*parseRoot());
+}
+
+template <typename ContainerT>
+bool JSONParser::skipContainer(const ContainerT &Container) {
+  for (typename ContainerT::const_iterator I = Container.current(),
+                                           E = Container.end();
+       I != E; ++I) {
+    assert(*I != 0);
+    if (!skip(**I))
+      return false;
+  }
+  return !failed();
+}
+
+bool JSONParser::skip(const JSONAtom &Atom) {
+  switch(Atom.getKind()) {
+    case JSONAtom::JK_Array: return skipContainer(*cast<JSONArray>(&Atom));
+    case JSONAtom::JK_Object: return skipContainer(*cast<JSONObject>(&Atom));
+    case JSONAtom::JK_String: return true;
+    case JSONAtom::JK_KeyValuePair:
+      return skip(*cast<JSONKeyValuePair>(&Atom)->Value);
+  }
+  llvm_unreachable("Impossible enum value.");
 }
 
 // Sets the current error to:
@@ -157,16 +180,6 @@ bool JSONParser::failed() const {
 
 std::string JSONParser::getErrorMessage() const {
   return ErrorMessage;
-}
-
-bool JSONAtom::skip() const {
-  switch (MyKind) {
-  case JK_Array:        return cast<JSONArray>(this)->skip();
-  case JK_Object:       return cast<JSONObject>(this)->skip();
-  case JK_String:       return cast<JSONString>(this)->skip();
-  case JK_KeyValuePair: return cast<JSONKeyValuePair>(this)->skip();
-  }
-  llvm_unreachable("Impossible enum value.");
 }
 
 // Parses a JSONValue, assuming that the current position is at the first
