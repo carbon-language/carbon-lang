@@ -69,3 +69,12 @@ entry:
   %2 = insertelement <3 x i64> <i64 undef, i64 0, i64 0>, i64 %1, i32 0
   ret <3 x i64> %2
 }
+
+define void @t5() nounwind {
+entry:
+  %0 = shufflevector <2 x i64> zeroinitializer, <2 x i64> undef, <8 x i32> <i32 0, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %1 = shufflevector <8 x i64> <i64 0, i64 0, i64 0, i64 undef, i64 undef, i64 0, i64 0, i64 0>, <8 x i64> %0, <8 x i32> <i32 0, i32 1, i32 2, i32 9, i32 8, i32 5, i32 6, i32 7>
+  store <8 x i64> %1, <8 x i64> addrspace(1)* undef, align 64
+
+  ret void
+}
