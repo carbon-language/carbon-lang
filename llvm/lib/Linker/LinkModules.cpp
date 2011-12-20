@@ -38,9 +38,14 @@ class TypeMapTy : public ValueMapTypeRemapper {
   /// case we need to roll back.
   SmallVector<Type*, 16> SpeculativeTypes;
   
-  /// DefinitionsToResolve - This is a list of non-opaque structs in the source
-  /// module that are mapped to an opaque struct in the destination module.
-  SmallVector<StructType*, 16> DefinitionsToResolve;
+  /// SrcDefinitionsToResolve - This is a list of non-opaque structs in the
+  /// source module that are mapped to an opaque struct in the destination
+  /// module.
+  SmallVector<StructType*, 16> SrcDefinitionsToResolve;
+  
+  /// DstResolvedOpaqueTypes - This is the set of opaque types in the
+  /// destination modules who are getting a body from the source module.
+  SmallPtrSet<StructType*, 16> DstResolvedOpaqueTypes;
 public:
   
   /// addTypeMapping - Indicate that the specified type in the destination
@@ -118,11 +123,17 @@ bool TypeMapTy::areTypesIsomorphic(Type *DstTy, Type *SrcTy) {
       return true;
     }
 
-    // Mapping a non-opaque source type to an opaque dest.  Keep the dest, but
-    // fill it in later.  This doesn't need to be speculative.
+    // Mapping a non-opaque source type to an opaque dest.  If this is the first
+    // type that we're mapping onto this destination type then we succeed.  Keep
+    // the dest, but fill it in later.  This doesn't need to be speculative.  If
+    // this is the second (different) type that we're trying to map onto the
+    // same opaque type then we fail.
     if (cast<StructType>(DstTy)->isOpaque()) {
+      // We can only map one source type onto the opaque destination type.
+      if (!DstResolvedOpaqueTypes.insert(cast<StructType>(DstTy)))
+        return false;
+      SrcDefinitionsToResolve.push_back(SSTy);
       Entry = DstTy;
-      DefinitionsToResolve.push_back(SSTy);
       return true;
     }
   }
@@ -174,9 +185,9 @@ void TypeMapTy::linkDefinedTypeBodies() {
   SmallString<16> TmpName;
   
   // Note that processing entries in this loop (calling 'get') can add new
-  // entries to the DefinitionsToResolve vector.
-  while (!DefinitionsToResolve.empty()) {
-    StructType *SrcSTy = DefinitionsToResolve.pop_back_val();
+  // entries to the SrcDefinitionsToResolve vector.
+  while (!SrcDefinitionsToResolve.empty()) {
+    StructType *SrcSTy = SrcDefinitionsToResolve.pop_back_val();
     StructType *DstSTy = cast<StructType>(MappedTypes[SrcSTy]);
     
     // TypeMap is a many-to-one mapping, if there were multiple types that
@@ -204,6 +215,8 @@ void TypeMapTy::linkDefinedTypeBodies() {
       TmpName.clear();
     }
   }
+  
+  DstResolvedOpaqueTypes.clear();
 }
 
 
@@ -213,7 +226,7 @@ Type *TypeMapTy::get(Type *Ty) {
   Type *Result = getImpl(Ty);
   
   // If this caused a reference to any struct type, resolve it before returning.
-  if (!DefinitionsToResolve.empty())
+  if (!SrcDefinitionsToResolve.empty())
     linkDefinedTypeBodies();
   return Result;
 }
@@ -304,8 +317,10 @@ Type *TypeMapTy::getImpl(Type *Ty) {
   
   // Otherwise we create a new type and resolve its body later.  This will be
   // resolved by the top level of get().
-  DefinitionsToResolve.push_back(STy);
-  return *Entry = StructType::create(STy->getContext());
+  SrcDefinitionsToResolve.push_back(STy);
+  StructType *DTy = StructType::create(STy->getContext());
+  DstResolvedOpaqueTypes.insert(DTy);
+  return *Entry = DTy;
 }
 
 
