@@ -379,7 +379,7 @@ SBTarget::AttachToProcessWithName
 )
 {
     SBProcess sb_process;
-    if (m_opaque_sp)
+    if (name && m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
 

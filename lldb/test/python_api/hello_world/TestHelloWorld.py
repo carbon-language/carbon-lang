@@ -155,6 +155,13 @@ class HelloWorldTestCase(TestBase):
         error = lldb.SBError()
         # Pass 'False' since we don't want to wait for new instance of "hello_world" to be launched.
         name = os.path.basename(self.exe)
+
+        # While we're at it, make sure that passing a None as the process name
+        # does not hang LLDB.
+        target.AttachToProcessWithName(listener, None, False, error)
+        # Also boundary condition test ConnectRemote(), too.
+        target.ConnectRemote(listener, None, None, error)
+
         process = target.AttachToProcessWithName(listener, name, False, error)
 
         self.assertTrue(error.Success() and process, PROCESS_IS_VALID)
