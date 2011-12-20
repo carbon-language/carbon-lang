@@ -356,6 +356,11 @@ clang::Decl
         {
             to_context_md->m_origins[to] = origin_iter->second;
             
+            MinionSP direct_completer = m_master.GetMinion(&to->getASTContext(), origin_iter->second.ctx);
+            
+            if (direct_completer.get() != this)
+                direct_completer->ASTImporter::Imported(origin_iter->second.decl, to);
+            
             if (log)
                 log->Printf("    [ClangASTImporter] Propagated origin (Decl*)%p/(ASTContext*)%p from (ASTContext*)%p to (ASTContext*)%p",
                             origin_iter->second.decl,
