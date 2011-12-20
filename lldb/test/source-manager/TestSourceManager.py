@@ -74,7 +74,11 @@ class SourceManagerTestCase(TestBase):
         #    6    }
         self.expect(stream.GetData(), "Source code displayed correctly",
                     exe=False,
-            patterns = ['=> %d.*Hello world' % self.line])        
+            patterns = ['=> %d.*Hello world' % self.line])
+
+        # Boundary condition testings for SBStream().  LLDB should not crash!
+        stream.Printf(None)
+        stream.RedirectToFile(None, True)
 
     def move_and_then_display_source(self):
         """Test that target.source-map settings work by moving main.c to hidden/main.c."""

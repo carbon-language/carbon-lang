@@ -59,6 +59,8 @@ SBStream::GetSize()
 void
 SBStream::Printf (const char *format, ...)
 {
+    if (!format)
+        return;
     va_list args;
     va_start (args, format);
     ref().PrintfVarArg (format, args);
