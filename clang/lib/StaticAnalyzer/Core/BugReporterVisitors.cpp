@@ -637,7 +637,7 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
         return 0;
     }
   
-  switch (BExpr->getOpcode()) {
+  switch (Op) {
     case BO_EQ:
       Out << "equal to ";
       break;
