@@ -1356,6 +1356,17 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
     if (PtrArgNum >= 0 && (Proto[0] >= '2' && Proto[0] <= '4'))
       PtrArgNum += 1;
 
+    // Omit type checking for the pointer arguments of vld1_lane, vld1_dup,
+    // and vst1_lane intrinsics.  Using a pointer to the vector element
+    // type with one of those operations causes codegen to select an aligned
+    // load/store instruction.  If you want an unaligned operation,
+    // the pointer argument needs to have less alignment than element type,
+    // so just accept any pointer type.
+    if (name == "vld1_lane" || name == "vld1_dup" || name == "vst1_lane") {
+      PtrArgNum = -1;
+      HasConstPtr = false;
+    }
+
     if (mask) {
       OS << "case ARM::BI__builtin_neon_"
          << MangleName(name, TypeVec[si], ClassB)
