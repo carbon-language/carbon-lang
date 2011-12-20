@@ -5118,84 +5118,134 @@ validateInstruction(MCInst &Inst,
   return false;
 }
 
-static unsigned getRealVSTLNOpcode(unsigned Opc) {
+static unsigned getRealVSTLNOpcode(unsigned Opc, unsigned &Spacing) {
   switch(Opc) {
   default: assert(0 && "unexpected opcode!");
   // VST1LN
   case ARM::VST1LNdWB_fixed_Asm_8:  case ARM::VST1LNdWB_fixed_Asm_P8:
   case ARM::VST1LNdWB_fixed_Asm_I8: case ARM::VST1LNdWB_fixed_Asm_S8:
   case ARM::VST1LNdWB_fixed_Asm_U8:
+    Spacing = 1;
     return ARM::VST1LNd8_UPD;
   case ARM::VST1LNdWB_fixed_Asm_16:  case ARM::VST1LNdWB_fixed_Asm_P16:
   case ARM::VST1LNdWB_fixed_Asm_I16: case ARM::VST1LNdWB_fixed_Asm_S16:
   case ARM::VST1LNdWB_fixed_Asm_U16:
+    Spacing = 1;
     return ARM::VST1LNd16_UPD;
   case ARM::VST1LNdWB_fixed_Asm_32:  case ARM::VST1LNdWB_fixed_Asm_F:
   case ARM::VST1LNdWB_fixed_Asm_F32: case ARM::VST1LNdWB_fixed_Asm_I32:
   case ARM::VST1LNdWB_fixed_Asm_S32: case ARM::VST1LNdWB_fixed_Asm_U32:
+    Spacing = 1;
     return ARM::VST1LNd32_UPD;
   case ARM::VST1LNdWB_register_Asm_8:  case ARM::VST1LNdWB_register_Asm_P8:
   case ARM::VST1LNdWB_register_Asm_I8: case ARM::VST1LNdWB_register_Asm_S8:
   case ARM::VST1LNdWB_register_Asm_U8:
+    Spacing = 1;
     return ARM::VST1LNd8_UPD;
   case ARM::VST1LNdWB_register_Asm_16:  case ARM::VST1LNdWB_register_Asm_P16:
   case ARM::VST1LNdWB_register_Asm_I16: case ARM::VST1LNdWB_register_Asm_S16:
   case ARM::VST1LNdWB_register_Asm_U16:
+    Spacing = 1;
     return ARM::VST1LNd16_UPD;
   case ARM::VST1LNdWB_register_Asm_32:  case ARM::VST1LNdWB_register_Asm_F:
   case ARM::VST1LNdWB_register_Asm_F32: case ARM::VST1LNdWB_register_Asm_I32:
   case ARM::VST1LNdWB_register_Asm_S32: case ARM::VST1LNdWB_register_Asm_U32:
+    Spacing = 1;
     return ARM::VST1LNd32_UPD;
   case ARM::VST1LNdAsm_8:  case ARM::VST1LNdAsm_P8:
   case ARM::VST1LNdAsm_I8: case ARM::VST1LNdAsm_S8:
   case ARM::VST1LNdAsm_U8:
+    Spacing = 1;
     return ARM::VST1LNd8;
   case ARM::VST1LNdAsm_16:  case ARM::VST1LNdAsm_P16:
   case ARM::VST1LNdAsm_I16: case ARM::VST1LNdAsm_S16:
   case ARM::VST1LNdAsm_U16:
+    Spacing = 1;
     return ARM::VST1LNd16;
   case ARM::VST1LNdAsm_32:  case ARM::VST1LNdAsm_F:
   case ARM::VST1LNdAsm_F32: case ARM::VST1LNdAsm_I32:
   case ARM::VST1LNdAsm_S32: case ARM::VST1LNdAsm_U32:
+    Spacing = 1;
     return ARM::VST1LNd32;
 
   // VST2LN
   case ARM::VST2LNdWB_fixed_Asm_8:  case ARM::VST2LNdWB_fixed_Asm_P8:
   case ARM::VST2LNdWB_fixed_Asm_I8: case ARM::VST2LNdWB_fixed_Asm_S8:
   case ARM::VST2LNdWB_fixed_Asm_U8:
+    Spacing = 1;
     return ARM::VST2LNd8_UPD;
   case ARM::VST2LNdWB_fixed_Asm_16:  case ARM::VST2LNdWB_fixed_Asm_P16:
   case ARM::VST2LNdWB_fixed_Asm_I16: case ARM::VST2LNdWB_fixed_Asm_S16:
   case ARM::VST2LNdWB_fixed_Asm_U16:
+    Spacing = 1;
     return ARM::VST2LNd16_UPD;
   case ARM::VST2LNdWB_fixed_Asm_32:  case ARM::VST2LNdWB_fixed_Asm_F:
   case ARM::VST2LNdWB_fixed_Asm_F32: case ARM::VST2LNdWB_fixed_Asm_I32:
   case ARM::VST2LNdWB_fixed_Asm_S32: case ARM::VST2LNdWB_fixed_Asm_U32:
+    Spacing = 1;
     return ARM::VST2LNd32_UPD;
+  case ARM::VST2LNqWB_fixed_Asm_16:  case ARM::VST2LNqWB_fixed_Asm_P16:
+  case ARM::VST2LNqWB_fixed_Asm_I16: case ARM::VST2LNqWB_fixed_Asm_S16:
+  case ARM::VST2LNqWB_fixed_Asm_U16:
+    Spacing = 2;
+    return ARM::VST2LNq16_UPD;
+  case ARM::VST2LNqWB_fixed_Asm_32:  case ARM::VST2LNqWB_fixed_Asm_F:
+  case ARM::VST2LNqWB_fixed_Asm_F32: case ARM::VST2LNqWB_fixed_Asm_I32:
+  case ARM::VST2LNqWB_fixed_Asm_S32: case ARM::VST2LNqWB_fixed_Asm_U32:
+    Spacing = 2;
+    return ARM::VST2LNq32_UPD;
+
   case ARM::VST2LNdWB_register_Asm_8:  case ARM::VST2LNdWB_register_Asm_P8:
   case ARM::VST2LNdWB_register_Asm_I8: case ARM::VST2LNdWB_register_Asm_S8:
   case ARM::VST2LNdWB_register_Asm_U8:
+    Spacing = 1;
     return ARM::VST2LNd8_UPD;
   case ARM::VST2LNdWB_register_Asm_16:  case ARM::VST2LNdWB_register_Asm_P16:
   case ARM::VST2LNdWB_register_Asm_I16: case ARM::VST2LNdWB_register_Asm_S16:
   case ARM::VST2LNdWB_register_Asm_U16:
+    Spacing = 1;
     return ARM::VST2LNd16_UPD;
   case ARM::VST2LNdWB_register_Asm_32:  case ARM::VST2LNdWB_register_Asm_F:
   case ARM::VST2LNdWB_register_Asm_F32: case ARM::VST2LNdWB_register_Asm_I32:
   case ARM::VST2LNdWB_register_Asm_S32: case ARM::VST2LNdWB_register_Asm_U32:
+    Spacing = 1;
     return ARM::VST2LNd32_UPD;
+  case ARM::VST2LNqWB_register_Asm_16:  case ARM::VST2LNqWB_register_Asm_P16:
+  case ARM::VST2LNqWB_register_Asm_I16: case ARM::VST2LNqWB_register_Asm_S16:
+  case ARM::VST2LNqWB_register_Asm_U16:
+    Spacing = 2;
+    return ARM::VST2LNq16_UPD;
+  case ARM::VST2LNqWB_register_Asm_32:  case ARM::VST2LNqWB_register_Asm_F:
+  case ARM::VST2LNqWB_register_Asm_F32: case ARM::VST2LNqWB_register_Asm_I32:
+  case ARM::VST2LNqWB_register_Asm_S32: case ARM::VST2LNqWB_register_Asm_U32:
+    Spacing = 2;
+    return ARM::VST2LNq32_UPD;
+
   case ARM::VST2LNdAsm_8:  case ARM::VST2LNdAsm_P8:
   case ARM::VST2LNdAsm_I8: case ARM::VST2LNdAsm_S8:
   case ARM::VST2LNdAsm_U8:
+    Spacing = 1;
     return ARM::VST2LNd8;
   case ARM::VST2LNdAsm_16:  case ARM::VST2LNdAsm_P16:
   case ARM::VST2LNdAsm_I16: case ARM::VST2LNdAsm_S16:
   case ARM::VST2LNdAsm_U16:
+    Spacing = 1;
     return ARM::VST2LNd16;
   case ARM::VST2LNdAsm_32:  case ARM::VST2LNdAsm_F:
   case ARM::VST2LNdAsm_F32: case ARM::VST2LNdAsm_I32:
   case ARM::VST2LNdAsm_S32: case ARM::VST2LNdAsm_U32:
+    Spacing = 1;
     return ARM::VST2LNd32;
+  case ARM::VST2LNqAsm_16:  case ARM::VST2LNqAsm_P16:
+  case ARM::VST2LNqAsm_I16: case ARM::VST2LNqAsm_S16:
+  case ARM::VST2LNqAsm_U16:
+    Spacing = 2;
+    return ARM::VST2LNq16;
+  case ARM::VST2LNqAsm_32:  case ARM::VST2LNqAsm_F:
+  case ARM::VST2LNqAsm_F32: case ARM::VST2LNqAsm_I32:
+  case ARM::VST2LNqAsm_S32: case ARM::VST2LNqAsm_U32:
+    Spacing = 2;
+    return ARM::VST2LNq32;
   }
 }
 
@@ -5344,7 +5394,8 @@ processInstruction(MCInst &Inst,
     MCInst TmpInst;
     // Shuffle the operands around so the lane index operand is in the
     // right place.
-    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode()));
+    unsigned Spacing;
+    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
@@ -5357,24 +5408,32 @@ processInstruction(MCInst &Inst,
     return true;
   }
 
-  case ARM::VST2LNdWB_register_Asm_8: case ARM::VST2LNdWB_register_Asm_P8:
-  case ARM::VST2LNdWB_register_Asm_I8: case ARM::VST2LNdWB_register_Asm_S8:
-  case ARM::VST2LNdWB_register_Asm_U8: case ARM::VST2LNdWB_register_Asm_16:
+  case ARM::VST2LNdWB_register_Asm_8:   case ARM::VST2LNdWB_register_Asm_P8:
+  case ARM::VST2LNdWB_register_Asm_I8:  case ARM::VST2LNdWB_register_Asm_S8:
+  case ARM::VST2LNdWB_register_Asm_U8:  case ARM::VST2LNdWB_register_Asm_16:
   case ARM::VST2LNdWB_register_Asm_P16: case ARM::VST2LNdWB_register_Asm_I16:
   case ARM::VST2LNdWB_register_Asm_S16: case ARM::VST2LNdWB_register_Asm_U16:
-  case ARM::VST2LNdWB_register_Asm_32: case ARM::VST2LNdWB_register_Asm_F:
+  case ARM::VST2LNdWB_register_Asm_32:  case ARM::VST2LNdWB_register_Asm_F:
   case ARM::VST2LNdWB_register_Asm_F32: case ARM::VST2LNdWB_register_Asm_I32:
-  case ARM::VST2LNdWB_register_Asm_S32: case ARM::VST2LNdWB_register_Asm_U32: {
+  case ARM::VST2LNdWB_register_Asm_S32: case ARM::VST2LNdWB_register_Asm_U32:
+  case ARM::VST2LNqWB_register_Asm_16:  case ARM::VST2LNqWB_register_Asm_P16:
+  case ARM::VST2LNqWB_register_Asm_I16: case ARM::VST2LNqWB_register_Asm_S16:
+  case ARM::VST2LNqWB_register_Asm_U16: case ARM::VST2LNqWB_register_Asm_32:
+  case ARM::VST2LNqWB_register_Asm_F:   case ARM::VST2LNqWB_register_Asm_F32:
+  case ARM::VST2LNqWB_register_Asm_I32: case ARM::VST2LNqWB_register_Asm_S32:
+  case ARM::VST2LNqWB_register_Asm_U32: {
     MCInst TmpInst;
     // Shuffle the operands around so the lane index operand is in the
     // right place.
-    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode()));
+    unsigned Spacing;
+    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(4)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg()+1));
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(5)); // CondCode
     TmpInst.addOperand(Inst.getOperand(6));
@@ -5392,7 +5451,8 @@ processInstruction(MCInst &Inst,
     MCInst TmpInst;
     // Shuffle the operands around so the lane index operand is in the
     // right place.
-    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode()));
+    unsigned Spacing;
+    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
@@ -5405,24 +5465,32 @@ processInstruction(MCInst &Inst,
     return true;
   }
 
-  case ARM::VST2LNdWB_fixed_Asm_8: case ARM::VST2LNdWB_fixed_Asm_P8:
-  case ARM::VST2LNdWB_fixed_Asm_I8: case ARM::VST2LNdWB_fixed_Asm_S8:
-  case ARM::VST2LNdWB_fixed_Asm_U8: case ARM::VST2LNdWB_fixed_Asm_16:
+  case ARM::VST2LNdWB_fixed_Asm_8:   case ARM::VST2LNdWB_fixed_Asm_P8:
+  case ARM::VST2LNdWB_fixed_Asm_I8:  case ARM::VST2LNdWB_fixed_Asm_S8:
+  case ARM::VST2LNdWB_fixed_Asm_U8:  case ARM::VST2LNdWB_fixed_Asm_16:
   case ARM::VST2LNdWB_fixed_Asm_P16: case ARM::VST2LNdWB_fixed_Asm_I16:
   case ARM::VST2LNdWB_fixed_Asm_S16: case ARM::VST2LNdWB_fixed_Asm_U16:
-  case ARM::VST2LNdWB_fixed_Asm_32: case ARM::VST2LNdWB_fixed_Asm_F:
+  case ARM::VST2LNdWB_fixed_Asm_32:  case ARM::VST2LNdWB_fixed_Asm_F:
   case ARM::VST2LNdWB_fixed_Asm_F32: case ARM::VST2LNdWB_fixed_Asm_I32:
-  case ARM::VST2LNdWB_fixed_Asm_S32: case ARM::VST2LNdWB_fixed_Asm_U32: {
+  case ARM::VST2LNdWB_fixed_Asm_S32: case ARM::VST2LNdWB_fixed_Asm_U32:
+  case ARM::VST2LNqWB_fixed_Asm_16:  case ARM::VST2LNqWB_fixed_Asm_P16:
+  case ARM::VST2LNqWB_fixed_Asm_I16: case ARM::VST2LNqWB_fixed_Asm_S16:
+  case ARM::VST2LNqWB_fixed_Asm_U16: case ARM::VST2LNqWB_fixed_Asm_32:
+  case ARM::VST2LNqWB_fixed_Asm_F:   case ARM::VST2LNqWB_fixed_Asm_F32:
+  case ARM::VST2LNqWB_fixed_Asm_I32: case ARM::VST2LNqWB_fixed_Asm_S32:
+  case ARM::VST2LNqWB_fixed_Asm_U32: {
     MCInst TmpInst;
     // Shuffle the operands around so the lane index operand is in the
     // right place.
-    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode()));
+    unsigned Spacing;
+    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg()+1));
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
     TmpInst.addOperand(Inst.getOperand(5));
@@ -5438,7 +5506,8 @@ processInstruction(MCInst &Inst,
     MCInst TmpInst;
     // Shuffle the operands around so the lane index operand is in the
     // right place.
-    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode()));
+    unsigned Spacing;
+    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
@@ -5449,20 +5518,25 @@ processInstruction(MCInst &Inst,
     return true;
   }
 
-  case ARM::VST2LNdAsm_8: case ARM::VST2LNdAsm_P8: case ARM::VST2LNdAsm_I8:
-  case ARM::VST2LNdAsm_S8: case ARM::VST2LNdAsm_U8: case ARM::VST2LNdAsm_16:
+  case ARM::VST2LNdAsm_8:   case ARM::VST2LNdAsm_P8:  case ARM::VST2LNdAsm_I8:
+  case ARM::VST2LNdAsm_S8:  case ARM::VST2LNdAsm_U8:  case ARM::VST2LNdAsm_16:
   case ARM::VST2LNdAsm_P16: case ARM::VST2LNdAsm_I16: case ARM::VST2LNdAsm_S16:
-  case ARM::VST2LNdAsm_U16: case ARM::VST2LNdAsm_32: case ARM::VST2LNdAsm_F:
+  case ARM::VST2LNdAsm_U16: case ARM::VST2LNdAsm_32:  case ARM::VST2LNdAsm_F:
   case ARM::VST2LNdAsm_F32: case ARM::VST2LNdAsm_I32: case ARM::VST2LNdAsm_S32:
-  case ARM::VST2LNdAsm_U32: {
+  case ARM::VST2LNdAsm_U32: case ARM::VST2LNqAsm_16:  case ARM::VST2LNqAsm_P16:
+  case ARM::VST2LNqAsm_I16: case ARM::VST2LNqAsm_S16: case ARM::VST2LNqAsm_U16:
+  case ARM::VST2LNqAsm_32:  case ARM::VST2LNqAsm_F:   case ARM::VST2LNqAsm_F32:
+  case ARM::VST2LNqAsm_I32: case ARM::VST2LNqAsm_S32: case ARM::VST2LNqAsm_U32:{
     MCInst TmpInst;
     // Shuffle the operands around so the lane index operand is in the
     // right place.
-    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode()));
+    unsigned Spacing;
+    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
-    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg()+1));
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
     TmpInst.addOperand(Inst.getOperand(5));
@@ -5504,11 +5578,12 @@ processInstruction(MCInst &Inst,
   case ARM::VLD2LNdWB_register_Asm_32:  case ARM::VLD2LNdWB_register_Asm_F:
   case ARM::VLD2LNdWB_register_Asm_F32: case ARM::VLD2LNdWB_register_Asm_I32:
   case ARM::VLD2LNdWB_register_Asm_S32: case ARM::VLD2LNdWB_register_Asm_U32:
-  case ARM::VLD2LNqWB_register_Asm_P16: case ARM::VLD2LNqWB_register_Asm_I16:
-  case ARM::VLD2LNqWB_register_Asm_S16: case ARM::VLD2LNqWB_register_Asm_U16:
-  case ARM::VLD2LNqWB_register_Asm_32:  case ARM::VLD2LNqWB_register_Asm_F:
-  case ARM::VLD2LNqWB_register_Asm_F32: case ARM::VLD2LNqWB_register_Asm_I32:
-  case ARM::VLD2LNqWB_register_Asm_S32: case ARM::VLD2LNqWB_register_Asm_U32: {
+  case ARM::VLD2LNqWB_register_Asm_16:  case ARM::VLD2LNqWB_register_Asm_P16:
+  case ARM::VLD2LNqWB_register_Asm_I16: case ARM::VLD2LNqWB_register_Asm_S16:
+  case ARM::VLD2LNqWB_register_Asm_U16: case ARM::VLD2LNqWB_register_Asm_32:
+  case ARM::VLD2LNqWB_register_Asm_F:   case ARM::VLD2LNqWB_register_Asm_F32:
+  case ARM::VLD2LNqWB_register_Asm_I32: case ARM::VLD2LNqWB_register_Asm_S32:
+  case ARM::VLD2LNqWB_register_Asm_U32: {
     MCInst TmpInst;
     // Shuffle the operands around so the lane index operand is in the
     // right place.
@@ -5565,11 +5640,12 @@ processInstruction(MCInst &Inst,
   case ARM::VLD2LNdWB_fixed_Asm_32:  case ARM::VLD2LNdWB_fixed_Asm_F:
   case ARM::VLD2LNdWB_fixed_Asm_F32: case ARM::VLD2LNdWB_fixed_Asm_I32:
   case ARM::VLD2LNdWB_fixed_Asm_S32: case ARM::VLD2LNdWB_fixed_Asm_U32:
-  case ARM::VLD2LNqWB_fixed_Asm_P16: case ARM::VLD2LNqWB_fixed_Asm_I16:
-  case ARM::VLD2LNqWB_fixed_Asm_S16: case ARM::VLD2LNqWB_fixed_Asm_U16:
-  case ARM::VLD2LNqWB_fixed_Asm_32:  case ARM::VLD2LNqWB_fixed_Asm_F:
-  case ARM::VLD2LNqWB_fixed_Asm_F32: case ARM::VLD2LNqWB_fixed_Asm_I32:
-  case ARM::VLD2LNqWB_fixed_Asm_S32: case ARM::VLD2LNqWB_fixed_Asm_U32: {
+  case ARM::VLD2LNqWB_fixed_Asm_16:  case ARM::VLD2LNqWB_fixed_Asm_P16:
+  case ARM::VLD2LNqWB_fixed_Asm_I16: case ARM::VLD2LNqWB_fixed_Asm_S16:
+  case ARM::VLD2LNqWB_fixed_Asm_U16: case ARM::VLD2LNqWB_fixed_Asm_32:
+  case ARM::VLD2LNqWB_fixed_Asm_F:   case ARM::VLD2LNqWB_fixed_Asm_F32:
+  case ARM::VLD2LNqWB_fixed_Asm_I32: case ARM::VLD2LNqWB_fixed_Asm_S32:
+  case ARM::VLD2LNqWB_fixed_Asm_U32: {
     MCInst TmpInst;
     // Shuffle the operands around so the lane index operand is in the
     // right place.
@@ -5592,10 +5668,10 @@ processInstruction(MCInst &Inst,
     return true;
   }
 
-  case ARM::VLD1LNdAsm_8: case ARM::VLD1LNdAsm_P8: case ARM::VLD1LNdAsm_I8:
-  case ARM::VLD1LNdAsm_S8: case ARM::VLD1LNdAsm_U8: case ARM::VLD1LNdAsm_16:
+  case ARM::VLD1LNdAsm_8:   case ARM::VLD1LNdAsm_P8:  case ARM::VLD1LNdAsm_I8:
+  case ARM::VLD1LNdAsm_S8:  case ARM::VLD1LNdAsm_U8:  case ARM::VLD1LNdAsm_16:
   case ARM::VLD1LNdAsm_P16: case ARM::VLD1LNdAsm_I16: case ARM::VLD1LNdAsm_S16:
-  case ARM::VLD1LNdAsm_U16: case ARM::VLD1LNdAsm_32: case ARM::VLD1LNdAsm_F:
+  case ARM::VLD1LNdAsm_U16: case ARM::VLD1LNdAsm_32:  case ARM::VLD1LNdAsm_F:
   case ARM::VLD1LNdAsm_F32: case ARM::VLD1LNdAsm_I32: case ARM::VLD1LNdAsm_S32:
   case ARM::VLD1LNdAsm_U32: {
     MCInst TmpInst;

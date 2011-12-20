@@ -5800,6 +5800,10 @@ defm VST2LNdAsm : NEONDT16AsmPseudoInst<"vst2${p}", "$list, $addr",
                  (ins VecListTwoDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 defm VST2LNdAsm : NEONDT32AsmPseudoInst<"vst2${p}", "$list, $addr",
                  (ins VecListTwoDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VST2LNqAsm : NEONDT16AsmPseudoInst<"vst2${p}", "$list, $addr",
+                 (ins VecListTwoQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VST2LNqAsm : NEONDT32AsmPseudoInst<"vst2${p}", "$list, $addr",
+                 (ins VecListTwoQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 
 defm VST2LNdWB_fixed_Asm : NEONDT8AsmPseudoInst<"vst2${p}", "$list, $addr!",
                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
@@ -5807,6 +5811,10 @@ defm VST2LNdWB_fixed_Asm : NEONDT16AsmPseudoInst<"vst2${p}", "$list, $addr!",
                  (ins VecListTwoDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 defm VST2LNdWB_fixed_Asm : NEONDT32AsmPseudoInst<"vst2${p}", "$list, $addr!",
                  (ins VecListTwoDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VST2LNqWB_fixed_Asm : NEONDT16AsmPseudoInst<"vst2${p}", "$list, $addr!",
+                 (ins VecListTwoQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+defm VST2LNqWB_fixed_Asm : NEONDT32AsmPseudoInst<"vst2${p}", "$list, $addr!",
+                 (ins VecListTwoQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 defm VST2LNdWB_register_Asm :
         NEONDT8AsmPseudoInst<"vst2${p}", "$list, $addr, $Rm",
                   (ins VecListTwoDByteIndexed:$list, addrmode6:$addr,
@@ -5818,6 +5826,14 @@ defm VST2LNdWB_register_Asm :
 defm VST2LNdWB_register_Asm :
         NEONDT32AsmPseudoInst<"vst2${p}", "$list, $addr, $Rm",
                   (ins VecListTwoDWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+defm VST2LNqWB_register_Asm :
+        NEONDT16AsmPseudoInst<"vst2${p}", "$list, $addr, $Rm",
+                  (ins VecListTwoQHWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+defm VST2LNqWB_register_Asm :
+        NEONDT32AsmPseudoInst<"vst2${p}", "$list, $addr, $Rm",
+                  (ins VecListTwoQWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
 // VMOV takes an optional datatype suffix
