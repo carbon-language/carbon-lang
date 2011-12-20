@@ -1,4 +1,4 @@
-//===--- JsonParser.h - Simple JSON parser ----------------------*- C++ -*-===//
+//===--- JSONParser.h - Simple JSON parser ----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -17,14 +17,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLING_JSON_PARSER_H
-#define LLVM_CLANG_TOOLING_JSON_PARSER_H
+#ifndef LLVM_SUPPORT_JSON_PARSER_H
+#define LLVM_SUPPORT_JSON_PARSER_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/ErrorHandling.h"
-
-#include <string>
 
 namespace llvm {
 
@@ -441,4 +439,4 @@ StringRef::iterator JSONParser::parseNextElement(const AtomT *&Element) {
 
 } // end namespace llvm
 
-#endif // LLVM_CLANG_TOOLING_JSON_PARSER_H
+#endif // LLVM_SUPPORT_JSON_PARSER_H

@@ -1,4 +1,4 @@
-//===--- JsonParser.cpp - Simple JSON parser ------------------------------===//
+//===--- JSONParser.cpp - Simple JSON parser ------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,7 +16,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Casting.h"
 
-namespace llvm {
+using namespace llvm;
 
 JSONParser::JSONParser(StringRef Input)
   : Input(Input), Position(Input.begin()) {}
@@ -217,5 +217,3 @@ template <> JSONValue *JSONParser::parseElement() {
 template <> JSONKeyValuePair *JSONParser::parseElement() {
   return parseKeyValuePair();
 }
-
-} // end namespace llvm
