@@ -89,6 +89,7 @@ def IgnoredQualifiers : DiagGroup<"ignored-qualifiers">;
 def : DiagGroup<"import">;
 def IncompatiblePointerTypes : DiagGroup<"incompatible-pointer-types">;
 def IncompleteUmbrella : DiagGroup<"incomplete-umbrella">;
+def KNRPromotedParameter : DiagGroup<"knr-promoted-parameter">;
 def : DiagGroup<"init-self">;
 def : DiagGroup<"inline">;
 def : DiagGroup<"int-to-pointer-cast">;

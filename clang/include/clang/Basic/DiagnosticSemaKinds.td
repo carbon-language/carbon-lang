@@ -1825,7 +1825,8 @@ def note_default_argument_declared_here : Note<
 
 def ext_param_promoted_not_compatible_with_prototype : ExtWarn<
   "promoted type %0 of K&R function parameter is not compatible with the "
-  "parameter type %1 declared in a previous prototype">;
+  "parameter type %1 declared in a previous prototype">,
+  InGroup<KNRPromotedParameter>;
 
 
 // C++ Overloading Semantic Analysis.

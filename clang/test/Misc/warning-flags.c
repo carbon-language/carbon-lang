@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (270):
+CHECK: Warnings without flags (269):
 CHECK-NEXT:   ext_anon_param_requires_type_specifier
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_array_init_copy
@@ -56,7 +56,6 @@ CHECK-NEXT:   ext_missing_whitespace_after_macro_name
 CHECK-NEXT:   ext_new_paren_array_nonconst
 CHECK-NEXT:   ext_nonstandard_escape
 CHECK-NEXT:   ext_param_not_declared
-CHECK-NEXT:   ext_param_promoted_not_compatible_with_prototype
 CHECK-NEXT:   ext_paste_comma
 CHECK-NEXT:   ext_plain_complex
 CHECK-NEXT:   ext_pp_bad_vaargs_use
