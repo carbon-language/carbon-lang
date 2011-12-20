@@ -9,3 +9,11 @@ entry:
   %conv = zext i32 %add to i64
   ret i64 %conv
 }
+
+define i64 @sext64_32(i32 %a) nounwind readnone {
+entry:
+; CHECK: sll ${{[0-9]+}}, ${{[0-9]+}}, 0
+  %conv = sext i32 %a to i64
+  ret i64 %conv
+}
+

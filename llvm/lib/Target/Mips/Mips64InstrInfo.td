@@ -215,6 +215,8 @@ def DSLL64_32 : FR<0x3c, 0x00, (outs CPU64Regs:$rd), (ins CPURegs:$rt),
 
 def SLL64_32 : FR<0x0, 0x00, (outs CPU64Regs:$rd), (ins CPURegs:$rt),
                   "sll\t$rd, $rt, 0", [], IIAlu>;
+def SLL64_64 : FR<0x0, 0x00, (outs CPU64Regs:$rd), (ins CPU64Regs:$rt),
+                  "sll\t$rd, $rt, 0", [], IIAlu>;
 
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
@@ -310,4 +312,7 @@ def : Pat<(i32 (trunc CPU64Regs:$src)),
 def : Pat<(i64 (anyext CPURegs:$src)), (SLL64_32 CPURegs:$src)>;
 def : Pat<(i64 (zext CPURegs:$src)), (DSRL (DSLL64_32 CPURegs:$src), 32)>;
 def : Pat<(i64 (sext CPURegs:$src)), (SLL64_32 CPURegs:$src)>;
+
+// Sign extend in register
+def : Pat<(i64 (sext_inreg CPU64Regs:$src, i32)), (SLL64_64 CPU64Regs:$src)>;
 
