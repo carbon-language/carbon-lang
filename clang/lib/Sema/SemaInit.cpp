@@ -171,9 +171,6 @@ class InitListChecker {
   bool hadError;
   bool VerifyOnly; // no diagnostics, no structure building
   bool AllowBraceElision;
-  Expr *LastCheckedSubobject;
-  unsigned LastCheckedSubobjectIndex;
-  
   std::map<InitListExpr *, InitListExpr *> SyntacticToSemantic;
   InitListExpr *FullyStructuredList;
 
@@ -473,8 +470,7 @@ InitListChecker::FillInValueInitializations(const InitializedEntity &Entity,
 InitListChecker::InitListChecker(Sema &S, const InitializedEntity &Entity,
                                  InitListExpr *IL, QualType &T,
                                  bool VerifyOnly, bool AllowBraceElision)
-  : SemaRef(S), VerifyOnly(VerifyOnly), AllowBraceElision(AllowBraceElision),
-    LastCheckedSubobject(0), LastCheckedSubobjectIndex(0) {
+  : SemaRef(S), VerifyOnly(VerifyOnly), AllowBraceElision(AllowBraceElision) {
   hadError = false;
 
   unsigned newIndex = 0;
@@ -796,40 +792,13 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
 
     if (Seq) {
       if (!VerifyOnly) {
-        // struct S {
-        //   S(int);
-        // };
-        //
-        // S s[] = { [0 ... 2] = 3 };
-        //
-        // In code like this, we want to perform the initialization and then
-        // update the syntactic list with the result. However, we reach this
-        // point once for each subobject, but the update needs
-        // to be done only once for each syntactic element. For this reason,
-        // the initialization result and its syntactic Index are cached in
-        // LastCheckedSubobject and LastCheckedSubobjectIndex and reused until
-        // we move to the next Index.
-        Expr *ResultExpr = LastCheckedSubobject;
-        
-        if (!ResultExpr || Index != LastCheckedSubobjectIndex) {
-          ExprResult Result = Seq.Perform(SemaRef, Entity, Kind, MultiExprArg(&expr, 1));
-
-          if (Result.isInvalid()) {
-            hadError = true;
-            ResultExpr = 0;
-          } else {
-            ResultExpr = Result.takeAs<Expr>();
-          }
-          
-          LastCheckedSubobject = ResultExpr;
-          LastCheckedSubobjectIndex = Index;
-        }
-
-        // Update the syntactic list
-        IList->setInit(Index, ResultExpr);
+        ExprResult Result =
+          Seq.Perform(SemaRef, Entity, Kind, MultiExprArg(&expr, 1));
+        if (Result.isInvalid())
+          hadError = true;
 
         UpdateStructuredListElement(StructuredList, StructuredIndex,
-                                    ResultExpr);
+                                    Result.takeAs<Expr>());
       }
       ++Index;
       return;
