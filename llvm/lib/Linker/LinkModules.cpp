@@ -148,6 +148,7 @@ bool TypeMapTy::areTypesIsomorphic(Type *DstTy, Type *SrcTy) {
   if (PointerType *PT = dyn_cast<PointerType>(DstTy)) {
     if (PT->getAddressSpace() != cast<PointerType>(SrcTy)->getAddressSpace())
       return false;
+    
   } else if (FunctionType *FT = dyn_cast<FunctionType>(DstTy)) {
     if (FT->isVarArg() != cast<FunctionType>(SrcTy)->isVarArg())
       return false;
@@ -567,6 +568,9 @@ void ModuleLinker::computeTypeMapping() {
   std::vector<StructType*> SrcStructTypes;
   SrcM->findUsedStructTypes(SrcStructTypes);
   
+  SmallPtrSet<StructType*, 32> SrcStructTypesSet(SrcStructTypes.begin(),
+                                                 SrcStructTypes.end());
+  
   for (unsigned i = 0, e = SrcStructTypes.size(); i != e; ++i) {
     StructType *ST = SrcStructTypes[i];
     if (!ST->hasName()) continue;
@@ -579,7 +583,10 @@ void ModuleLinker::computeTypeMapping() {
     
     // Check to see if the destination module has a struct with the prefix name.
     if (StructType *DST = DstM->getTypeByName(ST->getName().substr(0, DotPos)))
-      TypeMap.addTypeMapping(DST, ST);
+      // Don't use it if this actually came from the source module.  They're in
+      // the same LLVMContext after all.
+      if (!SrcStructTypesSet.count(DST))
+        TypeMap.addTypeMapping(DST, ST);
   }
   
   
