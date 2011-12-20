@@ -904,11 +904,28 @@ Lforward:
         movs r2, r3
         moveq r2, r3
         movseq r2, r3
+        mov r12, r8, lsl #(2 - 2)
+        lsl r2, r3, #(2 - 2)
+        mov r12, r8, lsr #(2 - 2)
+        lsr r2, r3, #(2 - 2)
+        mov r12, r8, asr #(2 - 2)
+        asr r2, r3, #(2 - 2)
+        mov r12, r8, ror #(2 - 2)
+        ror r2, r3, #(2 - 2)
 
 @ CHECK: mov	r2, r3                  @ encoding: [0x03,0x20,0xa0,0xe1]
 @ CHECK: movs	r2, r3                  @ encoding: [0x03,0x20,0xb0,0xe1]
 @ CHECK: moveq	r2, r3                  @ encoding: [0x03,0x20,0xa0,0x01]
 @ CHECK: movseq	r2, r3                  @ encoding: [0x03,0x20,0xb0,0x01]
+@ CHECK: mov	r12, r8                 @ encoding: [0x08,0xc0,0xa0,0xe1]
+@ CHECK: mov	r2, r3                  @ encoding: [0x03,0x20,0xa0,0xe1]
+@ CHECK: mov	r12, r8                 @ encoding: [0x08,0xc0,0xa0,0xe1]
+@ CHECK: mov	r2, r3                  @ encoding: [0x03,0x20,0xa0,0xe1]
+@ CHECK: mov	r12, r8                 @ encoding: [0x08,0xc0,0xa0,0xe1]
+@ CHECK: mov	r2, r3                  @ encoding: [0x03,0x20,0xa0,0xe1]
+@ CHECK: mov	r12, r8                 @ encoding: [0x08,0xc0,0xa0,0xe1]
+@ CHECK: mov	r2, r3                  @ encoding: [0x03,0x20,0xa0,0xe1]
+
 
 @------------------------------------------------------------------------------
 @ MOVT

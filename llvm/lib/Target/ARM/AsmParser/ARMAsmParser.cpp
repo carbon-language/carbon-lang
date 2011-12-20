@@ -5945,6 +5945,23 @@ processInstruction(MCInst &Inst,
     }
     break;
   }
+  case ARM::MOVsi: {
+    ARM_AM::ShiftOpc SOpc = ARM_AM::getSORegShOp(Inst.getOperand(2).getImm());
+    if (SOpc == ARM_AM::rrx) return false;
+    if (ARM_AM::getSORegOffset(Inst.getOperand(2).getImm()) == 0) {
+      // Shifting by zero is accepted as a vanilla 'MOVr'
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::MOVr);
+      TmpInst.addOperand(Inst.getOperand(0));
+      TmpInst.addOperand(Inst.getOperand(1));
+      TmpInst.addOperand(Inst.getOperand(3));
+      TmpInst.addOperand(Inst.getOperand(4));
+      TmpInst.addOperand(Inst.getOperand(5));
+      Inst = TmpInst;
+      return true;
+    }
+    return false;
+  }
   case ARM::t2IT: {
     // The mask bits for all but the first condition are represented as
     // the low bit of the condition code value implies 't'. We currently
