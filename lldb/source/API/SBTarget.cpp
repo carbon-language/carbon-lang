@@ -1071,13 +1071,6 @@ SBTarget::AddModule (lldb::SBModule &module)
     return false;
 }
 
-lldb::SBModule
-AddModule (const char *path,
-           const char *triple,
-           const char *uuid);
-
-
-
 uint32_t
 SBTarget::GetNumModules () const
 {
