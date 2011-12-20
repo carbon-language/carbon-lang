@@ -98,8 +98,8 @@
 @ FIXME: vst4.32 {d17, d19, d21, d23}, [r0]! @ encoding: [0x8d,0x11,0x40,0xf4]
 
 
-@	vst2.8	{d16[1], d17[1]}, [r0, :16]
-@	vst2.16	{d16[1], d17[1]}, [r0, :32]
+	vst2.8	{d16[1], d17[1]}, [r0, :16]
+	vst2.16	{d16[1], d17[1]}, [r0, :32]
 	vst2.32	{d16[1], d17[1]}, [r0]
 @	vst2.16	{d17[1], d19[1]}, [r0]
 @	vst2.32	{d17[0], d19[0]}, [r0, :64]
@@ -108,8 +108,8 @@
         vst2.8 {d2[4], d3[4]}, [r2]!
         vst2.8 {d2[4], d3[4]}, [r2]
 
-@ FIXME: vst2.8	{d16[1], d17[1]}, [r0, :16] @ encoding: [0x3f,0x01,0xc0,0xf4]
-@ FIXME: vst2.16 {d16[1], d17[1]}, [r0, :32] @ encoding: [0x5f,0x05,0xc0,0xf4]
+@ CHECK: vst2.8	{d16[1], d17[1]}, [r0, :16] @ encoding: [0x3f,0x01,0xc0,0xf4]
+@ CHECK: vst2.16 {d16[1], d17[1]}, [r0, :32] @ encoding: [0x5f,0x05,0xc0,0xf4]
 @ CHECK: vst2.32 {d16[1], d17[1]}, [r0]  @ encoding: [0x8f,0x09,0xc0,0xf4]
 @ FIXME: vst2.16 {d17[1], d19[1]}, [r0]  @ encoding: [0x6f,0x15,0xc0,0xf4]
 @ FIXME: vst2.32 {d17[0], d19[0]}, [r0, :64] @ encoding: [0x5f,0x19,0xc0,0xf4]
