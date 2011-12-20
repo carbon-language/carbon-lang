@@ -1,5 +1,5 @@
 __module_private__ double &f0(double);
-double &f0(double);
+__module_private__ double &f0(double);
 
 __module_private__ int hidden_var;
 

@@ -1,6 +1,6 @@
 __module_private__ struct HiddenStruct;
 
-struct HiddenStruct {
+__module_private__ struct HiddenStruct {
 };
 
 
@@ -10,17 +10,17 @@ template<typename T>
 __module_private__ void f1(T*);
 
 template<typename T>
-void f1(T*);
+__module_private__ void f1(T*);
 
 template<typename T>
 __module_private__ class vector;
 
 template<typename T>
-class vector {
+__module_private__ class vector {
 };
 
 vector<float> vec_float;
 
 typedef __module_private__ int Integer;
-typedef int Integer;
+typedef __module_private__ int Integer;
 

@@ -20,6 +20,18 @@ B *f1() {
 
 @class B;
 
+// Test redeclarations of entities in explicit submodules, to make
+// sure we're maintaining the declaration chains even when normal name
+// lookup can't see what we're looking for.
+void testExplicit() {
+  Explicit *e;
+  int *(*fp)(void) = &explicit_func;
+  int *ip = explicit_func();
+
+  // FIXME: Should complain about definition not having been imported.
+  struct explicit_struct es = { 0 };
+}
+
 __import_module__ redecl_merge_bottom;
 
 @implementation B

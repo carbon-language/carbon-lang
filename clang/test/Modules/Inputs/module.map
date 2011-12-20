@@ -44,7 +44,8 @@ module decldef {
 }
 
 module redecl_merge_top { 
-  header "redecl-merge-top.h" 
+  header "redecl-merge-top.h"
+  explicit module Explicit { header "redecl-merge-top-explicit.h" }
 }
 module redecl_merge_left { 
   header "redecl-merge-left.h" 

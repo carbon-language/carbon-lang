@@ -1119,12 +1119,6 @@ public:
   /// \param Path The module access path.
   DeclResult ActOnModuleImport(SourceLocation ImportLoc, ModuleIdPath Path);
 
-  /// \brief Diagnose that \p New is a module-private redeclaration of
-  /// \p Old.
-  void diagnoseModulePrivateRedeclaration(NamedDecl *New, NamedDecl *Old,
-                                          SourceLocation ModulePrivateKeyword
-                                            = SourceLocation());
-
   /// \brief Retrieve a suitable printing policy.
   PrintingPolicy getPrintingPolicy() const;
 

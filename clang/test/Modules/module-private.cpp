@@ -31,28 +31,28 @@ int test_broken() {
 
 // Check for private redeclarations of public entities.
 template<typename T>
-class public_class_template; // expected-note{{previous declaration is here}}
+class public_class_template;
 
 template<typename T>
-__module_private__ class public_class_template; // expected-error{{__module_private__ declaration of 'public_class_template' follows public declaration}}
+__module_private__ class public_class_template;
 
 
-typedef int public_typedef; // expected-note{{previous declaration is here}}
-typedef __module_private__ int public_typedef; // expected-error{{__module_private__ declaration of 'public_typedef' follows public declaration}}
+typedef int public_typedef;
+typedef __module_private__ int public_typedef;
 
-extern int public_var; // expected-note{{previous declaration is here}}
-extern __module_private__ int public_var; // expected-error{{__module_private__ declaration of 'public_var' follows public declaration}}
+extern int public_var;
+extern __module_private__ int public_var;
 
-void public_func(); // expected-note{{previous declaration is here}}
-__module_private__ void public_func(); // expected-error{{__module_private__ declaration of 'public_func' follows public declaration}}
+void public_func();
+__module_private__ void public_func();
 
 template<typename T>
-void public_func_template(); // expected-note{{previous declaration is here}}
+void public_func_template();
 template<typename T>
-__module_private__ void public_func_template(); // expected-error{{__module_private__ declaration of 'public_func_template' follows public declaration}}
+__module_private__ void public_func_template();
 
-struct public_struct; // expected-note{{previous declaration is here}}
-__module_private__ struct public_struct; // expected-error{{__module_private__ declaration of 'public_struct' follows public declaration}}
+struct public_struct;
+__module_private__ struct public_struct;
 
 // Check for attempts to make specializations private
 template<> __module_private__ void public_func_template<int>(); // expected-error{{template specialization cannot be declared __module_private__}}

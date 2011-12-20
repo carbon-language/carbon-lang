@@ -286,7 +286,7 @@ public:
     if (!D->isInIdentifierNamespace(IDNS))
       return 0;
     
-    if (isVisible(D))
+    if (Redecl == Sema::ForRedeclaration || isVisible(D))
       return D;
     
     return getAcceptableDeclSlow(D);
