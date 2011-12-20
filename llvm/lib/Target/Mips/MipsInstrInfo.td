@@ -625,11 +625,10 @@ class SignExtInReg<bits<5> sa, string instr_asm, ValueType vt>:
   let Predicates = [HasSEInReg];
 }
 
-// Byte Swap
-class ByteSwap<bits<6> func, bits<5> sa, string instr_asm>:
-  FR<0x1f, func, (outs CPURegs:$rd), (ins CPURegs:$rt),
-     !strconcat(instr_asm, "\t$rd, $rt"),
-     [(set CPURegs:$rd, (bswap CPURegs:$rt))], NoItinerary> {
+// Subword Swap
+class SubwordSwap<bits<6> func, bits<5> sa, string instr_asm, RegisterClass RC>:
+  FR<0x1f, func, (outs RC:$rd), (ins RC:$rt),
+     !strconcat(instr_asm, "\t$rd, $rt"), [], NoItinerary> {
   let rs = 0;
   let shamt = sa;
   let Predicates = [HasSwap];
@@ -895,8 +894,8 @@ def SEH : SignExtInReg<0x18, "seh", i16>;
 def CLZ : CountLeading0<0x20, "clz", CPURegs>;
 def CLO : CountLeading1<0x21, "clo", CPURegs>;
 
-/// Byte Swap
-def WSBW : ByteSwap<0x20, 0x2, "wsbw">;
+/// Word Swap Bytes Within Halfwords
+def WSBH : SubwordSwap<0x20, 0x2, "wsbh", CPURegs>;
 
 /// No operation
 let addr=0 in
@@ -1103,6 +1102,9 @@ defm : SetgeImmPats<CPURegs, SLTi, SLTiu>;
 
 // select MipsDynAlloc
 def : Pat<(MipsDynAlloc addr:$f), (DynAlloc addr:$f)>;
+
+// bswap pattern
+def : Pat<(bswap CPURegs:$rt), (ROTR (WSBH CPURegs:$rt), 16)>; 
 
 //===----------------------------------------------------------------------===//
 // Floating Point Support
