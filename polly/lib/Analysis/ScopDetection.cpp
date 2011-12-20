@@ -79,6 +79,11 @@ IgnoreAliasing("polly-ignore-aliasing",
                cl::desc("Ignore possible aliasing of the array bases"),
                cl::Hidden, cl::init(false));
 
+static cl::opt<bool>
+AllowNonAffine("polly-allow-nonaffine",
+               cl::desc("Allow non affine access functions in arrays"),
+               cl::Hidden, cl::init(false));
+
 //===----------------------------------------------------------------------===//
 // Statistics.
 
@@ -245,7 +250,7 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
 
-  if (!isAffineExpr(&Context.CurRegion, AccessFunction, *SE, BaseValue))
+  if (!isAffineExpr(&Context.CurRegion, AccessFunction, *SE, BaseValue) && !AllowNonAffine)
     INVALID(AffFunc, "Bad memory address " << *AccessFunction);
 
   // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions

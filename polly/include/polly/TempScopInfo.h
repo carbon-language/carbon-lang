@@ -45,12 +45,13 @@ public:
 private:
   unsigned ElemBytes;
   TypeKind Type;
+  bool IsAffine;
 
 public:
   explicit IRAccess (TypeKind Type, const Value *BaseAddress,
-                     const SCEV *Offset, unsigned elemBytes)
+                     const SCEV *Offset, unsigned elemBytes, bool Affine)
     : BaseAddress(BaseAddress), Offset(Offset),
-      ElemBytes(elemBytes), Type(Type) {}
+      ElemBytes(elemBytes), Type(Type), IsAffine(Affine) {}
 
   enum TypeKind getType() const { return Type; }
 
@@ -60,7 +61,10 @@ public:
 
   unsigned getElemSizeInBytes() const { return ElemBytes; }
 
+  bool isAffine() const { return IsAffine; }
+
   bool isRead() const { return Type == READ; }
+
 };
 
 class Comparison {

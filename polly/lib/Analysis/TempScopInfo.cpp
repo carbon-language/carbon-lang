@@ -98,11 +98,15 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB) {
         dyn_cast<SCEVUnknown>(SE->getPointerBase(AccessFunction));
 
       assert(BasePointer && "Could not find base pointer");
-
       AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
+
+      bool IsAffine = isAffineExpr(&R, AccessFunction, *SE,
+                                   BasePointer->getValue());
+
       Functions.push_back(std::make_pair(IRAccess(Type,
                                                   BasePointer->getValue(),
-                                                  AccessFunction, Size),
+                                                  AccessFunction, Size,
+                                                  IsAffine),
                                          &Inst));
     }
   }
