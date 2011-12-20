@@ -1824,11 +1824,12 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
                       Tok.is(tok::kw___bridge_retained) ||
                       Tok.is(tok::kw___bridge_retain)));
   if (BridgeCast && !getLang().ObjCAutoRefCount) {
+    StringRef BridgeCastName = Tok.getName();
     SourceLocation BridgeKeywordLoc = ConsumeToken();
     if (!PP.getSourceManager().isInSystemHeader(BridgeKeywordLoc))
-      Diag(BridgeKeywordLoc, diag::err_arc_bridge_cast)
-      << FixItHint::CreateReplacement(BridgeKeywordLoc,
-                                      "");
+      Diag(BridgeKeywordLoc, diag::err_arc_bridge_cast_nonarc)
+        << BridgeCastName
+        << FixItHint::CreateReplacement(BridgeKeywordLoc, "");
     BridgeCast = false;
   }
   

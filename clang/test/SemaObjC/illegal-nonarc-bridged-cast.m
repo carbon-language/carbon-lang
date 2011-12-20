@@ -16,19 +16,19 @@ id CreateSomething();
 NSString *CreateNSString();
 
 void from_cf() {
-  id obj1 = (__bridge_transfer id)CFCreateSomething(); // expected-error {{bridge casts will have no effect in non-arc mode}}
-  id obj2 = (__bridge_transfer NSString*)CFCreateString(); // expected-error {{bridge casts will have no effect in non-arc mode}}
-  (__bridge int*)CFCreateSomething();  // expected-error {{bridge casts will have no effect in non-arc mode}}  \
+  id obj1 = (__bridge_transfer id)CFCreateSomething(); // expected-error {{'__bridge_transfer' casts are only allowed when using ARC}}
+  id obj2 = (__bridge_transfer NSString*)CFCreateString(); // expected-error {{'__bridge_transfer' casts are only allowed when using ARC}}
+  (__bridge int*)CFCreateSomething();  // expected-error {{'__bridge' casts are only allowed when using ARC}}  \
                                        // expected-warning {{expression result unused}}
-  id obj3 = (__bridge id)CFGetSomething(); // expected-error {{bridge casts will have no effect in non-arc mode}}
-  id obj4 = (__bridge NSString*)CFGetString(); // expected-error {{bridge casts will have no effect in non-arc mode}}
+  id obj3 = (__bridge id)CFGetSomething(); // expected-error {{'__bridge' casts are only allowed when using ARC}}
+  id obj4 = (__bridge NSString*)CFGetString(); // expected-error {{'__bridge' casts are only allowed when using ARC}}
 }
 
 void to_cf(id obj) {
-  CFTypeRef cf1 = (__bridge_retained CFTypeRef)CreateSomething(); // expected-error {{bridge casts will have no effect in non-arc mode}}
-  CFStringRef cf2 = (__bridge_retained CFStringRef)CreateNSString(); // expected-error {{bridge casts will have no effect in non-arc mode}}
-  CFTypeRef cf3 = (__bridge CFTypeRef)CreateSomething(); // expected-error {{bridge casts will have no effect in non-arc mode}}
-  CFStringRef cf4 = (__bridge CFStringRef)CreateNSString(); // expected-error {{bridge casts will have no effect in non-arc mode}} 
+  CFTypeRef cf1 = (__bridge_retained CFTypeRef)CreateSomething(); // expected-error {{'__bridge_retained' casts are only allowed when using ARC}}
+  CFStringRef cf2 = (__bridge_retained CFStringRef)CreateNSString(); // expected-error {{'__bridge_retained' casts are only allowed when using ARC}}
+  CFTypeRef cf3 = (__bridge CFTypeRef)CreateSomething(); // expected-error {{'__bridge' casts are only allowed when using ARC}}
+  CFStringRef cf4 = (__bridge CFStringRef)CreateNSString(); // expected-error {{'__bridge' casts are only allowed when using ARC}} 
 }
 
 void fixits() {
