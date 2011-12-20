@@ -196,141 +196,141 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
   // tablegen selection should be handled here.
   ///
   switch(Opcode) {
-    default: break;
+  default: break;
 
-    case ISD::SUBE:
-    case ISD::ADDE: {
-      SDValue InFlag = Node->getOperand(2), CmpLHS;
-      unsigned Opc = InFlag.getOpcode(); (void)Opc;
-      assert(((Opc == ISD::ADDC || Opc == ISD::ADDE) ||
-              (Opc == ISD::SUBC || Opc == ISD::SUBE)) &&
-             "(ADD|SUB)E flag operand must come from (ADD|SUB)C/E insn");
+  case ISD::SUBE:
+  case ISD::ADDE: {
+    SDValue InFlag = Node->getOperand(2), CmpLHS;
+    unsigned Opc = InFlag.getOpcode(); (void)Opc;
+    assert(((Opc == ISD::ADDC || Opc == ISD::ADDE) ||
+            (Opc == ISD::SUBC || Opc == ISD::SUBE)) &&
+           "(ADD|SUB)E flag operand must come from (ADD|SUB)C/E insn");
 
-      unsigned MOp;
-      if (Opcode == ISD::ADDE) {
-        CmpLHS = InFlag.getValue(0);
-        MOp = Mips::ADDu;
-      } else {
-        CmpLHS = InFlag.getOperand(0);
-        MOp = Mips::SUBu;
-      }
-
-      SDValue Ops[] = { CmpLHS, InFlag.getOperand(1) };
-
-      SDValue LHS = Node->getOperand(0);
-      SDValue RHS = Node->getOperand(1);
-
-      EVT VT = LHS.getValueType();
-      SDNode *Carry = CurDAG->getMachineNode(Mips::SLTu, dl, VT, Ops, 2);
-      SDNode *AddCarry = CurDAG->getMachineNode(Mips::ADDu, dl, VT,
-                                                SDValue(Carry,0), RHS);
-
-      return CurDAG->SelectNodeTo(Node, MOp, VT, MVT::Glue,
-                                  LHS, SDValue(AddCarry,0));
+    unsigned MOp;
+    if (Opcode == ISD::ADDE) {
+      CmpLHS = InFlag.getValue(0);
+      MOp = Mips::ADDu;
+    } else {
+      CmpLHS = InFlag.getOperand(0);
+      MOp = Mips::SUBu;
     }
 
-    /// Mul with two results
-    case ISD::SMUL_LOHI:
-    case ISD::UMUL_LOHI: {
-      assert(Node->getValueType(0) != MVT::i64 &&
-             "64-bit multiplication with two results not handled.");
-      SDValue Op1 = Node->getOperand(0);
-      SDValue Op2 = Node->getOperand(1);
+    SDValue Ops[] = { CmpLHS, InFlag.getOperand(1) };
 
-      unsigned Op;
-      Op = (Opcode == ISD::UMUL_LOHI ? Mips::MULTu : Mips::MULT);
+    SDValue LHS = Node->getOperand(0);
+    SDValue RHS = Node->getOperand(1);
 
-      SDNode *Mul = CurDAG->getMachineNode(Op, dl, MVT::Glue, Op1, Op2);
+    EVT VT = LHS.getValueType();
+    SDNode *Carry = CurDAG->getMachineNode(Mips::SLTu, dl, VT, Ops, 2);
+    SDNode *AddCarry = CurDAG->getMachineNode(Mips::ADDu, dl, VT,
+                                              SDValue(Carry,0), RHS);
 
-      SDValue InFlag = SDValue(Mul, 0);
-      SDNode *Lo = CurDAG->getMachineNode(Mips::MFLO, dl, MVT::i32,
-                                          MVT::Glue, InFlag);
-      InFlag = SDValue(Lo,1);
-      SDNode *Hi = CurDAG->getMachineNode(Mips::MFHI, dl, MVT::i32, InFlag);
+    return CurDAG->SelectNodeTo(Node, MOp, VT, MVT::Glue,
+                                LHS, SDValue(AddCarry,0));
+  }
 
-      if (!SDValue(Node, 0).use_empty())
-        ReplaceUses(SDValue(Node, 0), SDValue(Lo,0));
+  /// Mul with two results
+  case ISD::SMUL_LOHI:
+  case ISD::UMUL_LOHI: {
+    assert(Node->getValueType(0) != MVT::i64 &&
+           "64-bit multiplication with two results not handled.");
+    SDValue Op1 = Node->getOperand(0);
+    SDValue Op2 = Node->getOperand(1);
 
-      if (!SDValue(Node, 1).use_empty())
-        ReplaceUses(SDValue(Node, 1), SDValue(Hi,0));
+    unsigned Op;
+    Op = (Opcode == ISD::UMUL_LOHI ? Mips::MULTu : Mips::MULT);
 
-      return NULL;
-    }
+    SDNode *Mul = CurDAG->getMachineNode(Op, dl, MVT::Glue, Op1, Op2);
 
-    /// Special Muls
-    case ISD::MUL:
-      // Mips32 has a 32-bit three operand mul instruction.
-      if (Subtarget.hasMips32() && Node->getValueType(0) == MVT::i32)
-        break;
-    case ISD::MULHS:
-    case ISD::MULHU: {
-      assert((Opcode == ISD::MUL || Node->getValueType(0) != MVT::i64) &&
-             "64-bit MULH* not handled.");
-      EVT Ty = Node->getValueType(0);
-      SDValue MulOp1 = Node->getOperand(0);
-      SDValue MulOp2 = Node->getOperand(1);
+    SDValue InFlag = SDValue(Mul, 0);
+    SDNode *Lo = CurDAG->getMachineNode(Mips::MFLO, dl, MVT::i32,
+                                        MVT::Glue, InFlag);
+    InFlag = SDValue(Lo,1);
+    SDNode *Hi = CurDAG->getMachineNode(Mips::MFHI, dl, MVT::i32, InFlag);
 
-      unsigned MulOp  = (Opcode == ISD::MULHU ?
-                         Mips::MULTu :
-                         (Ty == MVT::i32 ? Mips::MULT : Mips::DMULT));
-      SDNode *MulNode = CurDAG->getMachineNode(MulOp, dl,
-                                               MVT::Glue, MulOp1, MulOp2);
+    if (!SDValue(Node, 0).use_empty())
+      ReplaceUses(SDValue(Node, 0), SDValue(Lo,0));
 
-      SDValue InFlag = SDValue(MulNode, 0);
+    if (!SDValue(Node, 1).use_empty())
+      ReplaceUses(SDValue(Node, 1), SDValue(Hi,0));
 
-      if (Opcode == ISD::MUL) {
-        unsigned Opc = (Ty == MVT::i32 ? Mips::MFLO : Mips::MFLO64);
-        return CurDAG->getMachineNode(Opc, dl, Ty, InFlag);
-      }
-      else
-        return CurDAG->getMachineNode(Mips::MFHI, dl, MVT::i32, InFlag);
-    }
+    return NULL;
+  }
 
-    // Get target GOT address.
-    case ISD::GLOBAL_OFFSET_TABLE:
-      return getGlobalBaseReg();
-
-    case ISD::ConstantFP: {
-      ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(Node);
-      if (Node->getValueType(0) == MVT::f64 && CN->isExactlyValue(+0.0)) {
-        if (Subtarget.hasMips64()) {
-          SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
-                                                Mips::ZERO_64, MVT::i64);
-          return CurDAG->getMachineNode(Mips::DMTC1, dl, MVT::f64, Zero);
-        }
-
-        SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
-                                              Mips::ZERO, MVT::i32);
-        return CurDAG->getMachineNode(Mips::BuildPairF64, dl, MVT::f64, Zero,
-                                      Zero);
-      }
+  /// Special Muls
+  case ISD::MUL:
+    // Mips32 has a 32-bit three operand mul instruction.
+    if (Subtarget.hasMips32() && Node->getValueType(0) == MVT::i32)
       break;
+  case ISD::MULHS:
+  case ISD::MULHU: {
+    assert((Opcode == ISD::MUL || Node->getValueType(0) != MVT::i64) &&
+           "64-bit MULH* not handled.");
+    EVT Ty = Node->getValueType(0);
+    SDValue MulOp1 = Node->getOperand(0);
+    SDValue MulOp2 = Node->getOperand(1);
+
+    unsigned MulOp  = (Opcode == ISD::MULHU ?
+                       Mips::MULTu :
+                       (Ty == MVT::i32 ? Mips::MULT : Mips::DMULT));
+    SDNode *MulNode = CurDAG->getMachineNode(MulOp, dl,
+                                             MVT::Glue, MulOp1, MulOp2);
+
+    SDValue InFlag = SDValue(MulNode, 0);
+
+    if (Opcode == ISD::MUL) {
+      unsigned Opc = (Ty == MVT::i32 ? Mips::MFLO : Mips::MFLO64);
+      return CurDAG->getMachineNode(Opc, dl, Ty, InFlag);
     }
+    else
+      return CurDAG->getMachineNode(Mips::MFHI, dl, MVT::i32, InFlag);
+  }
 
-    case MipsISD::ThreadPointer: {
-      EVT PtrVT = TLI.getPointerTy();
-      unsigned RdhwrOpc, SrcReg, DestReg;
+  // Get target GOT address.
+  case ISD::GLOBAL_OFFSET_TABLE:
+    return getGlobalBaseReg();
 
-      if (PtrVT == MVT::i32) {
-        RdhwrOpc = Mips::RDHWR;
-        SrcReg = Mips::HWR29;
-        DestReg = Mips::V1;
-      } else {
-        RdhwrOpc = Mips::RDHWR64;
-        SrcReg = Mips::HWR29_64;
-        DestReg = Mips::V1_64;
+  case ISD::ConstantFP: {
+    ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(Node);
+    if (Node->getValueType(0) == MVT::f64 && CN->isExactlyValue(+0.0)) {
+      if (Subtarget.hasMips64()) {
+        SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
+                                              Mips::ZERO_64, MVT::i64);
+        return CurDAG->getMachineNode(Mips::DMTC1, dl, MVT::f64, Zero);
       }
-      
-      SDNode *Rdhwr =
-        CurDAG->getMachineNode(RdhwrOpc, Node->getDebugLoc(),
-                               Node->getValueType(0),
-                               CurDAG->getRegister(SrcReg, PtrVT));
-      SDValue Chain = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, DestReg,
-                                           SDValue(Rdhwr, 0));
-      SDValue ResNode = CurDAG->getCopyFromReg(Chain, dl, DestReg, PtrVT);
-      ReplaceUses(SDValue(Node, 0), ResNode);
-      return ResNode.getNode();
+
+      SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), dl,
+                                            Mips::ZERO, MVT::i32);
+      return CurDAG->getMachineNode(Mips::BuildPairF64, dl, MVT::f64, Zero,
+                                    Zero);
     }
+    break;
+  }
+
+  case MipsISD::ThreadPointer: {
+    EVT PtrVT = TLI.getPointerTy();
+    unsigned RdhwrOpc, SrcReg, DestReg;
+
+    if (PtrVT == MVT::i32) {
+      RdhwrOpc = Mips::RDHWR;
+      SrcReg = Mips::HWR29;
+      DestReg = Mips::V1;
+    } else {
+      RdhwrOpc = Mips::RDHWR64;
+      SrcReg = Mips::HWR29_64;
+      DestReg = Mips::V1_64;
+    }
+  
+    SDNode *Rdhwr =
+      CurDAG->getMachineNode(RdhwrOpc, Node->getDebugLoc(),
+                             Node->getValueType(0),
+                             CurDAG->getRegister(SrcReg, PtrVT));
+    SDValue Chain = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, DestReg,
+                                         SDValue(Rdhwr, 0));
+    SDValue ResNode = CurDAG->getCopyFromReg(Chain, dl, DestReg, PtrVT);
+    ReplaceUses(SDValue(Node, 0), ResNode);
+    return ResNode.getNode();
+  }
   }
 
   // Select the default instruction
