@@ -1008,11 +1008,19 @@ def : WrapperPat<tglobaltlsaddr, ADDiu, GP>;
 def : Pat<(not CPURegs:$in),
           (NOR CPURegs:$in, ZERO)>;
 
-// extended load and stores
-def : Pat<(extloadi1  addr:$src), (LBu addr:$src)>;
-def : Pat<(extloadi8  addr:$src), (LBu addr:$src)>;
-def : Pat<(extloadi16_a addr:$src), (LHu addr:$src)>;
-def : Pat<(extloadi16_u addr:$src), (ULHu addr:$src)>;
+// extended loads
+let Predicates = [NotN64] in {
+  def : Pat<(i32 (extloadi1  addr:$src)), (LBu addr:$src)>;
+  def : Pat<(i32 (extloadi8  addr:$src)), (LBu addr:$src)>;
+  def : Pat<(i32 (extloadi16_a addr:$src)), (LHu addr:$src)>;
+  def : Pat<(i32 (extloadi16_u addr:$src)), (ULHu addr:$src)>;
+}
+let Predicates = [IsN64] in {
+  def : Pat<(i32 (extloadi1  addr:$src)), (LBu_P8 addr:$src)>;
+  def : Pat<(i32 (extloadi8  addr:$src)), (LBu_P8 addr:$src)>;
+  def : Pat<(i32 (extloadi16_a addr:$src)), (LHu_P8 addr:$src)>;
+  def : Pat<(i32 (extloadi16_u addr:$src)), (ULHu_P8 addr:$src)>;
+}
 
 // peepholes
 def : Pat<(store (i32 0), addr:$dst), (SW ZERO, addr:$dst)>,
