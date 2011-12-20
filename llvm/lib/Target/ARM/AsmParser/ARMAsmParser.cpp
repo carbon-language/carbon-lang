@@ -101,6 +101,8 @@ class ARMAsmParser : public MCTargetAsmParser {
   bool parseDirectiveSyntax(SMLoc L);
   bool parseDirectiveReq(StringRef Name, SMLoc L);
   bool parseDirectiveUnreq(SMLoc L);
+  bool parseDirectiveArch(SMLoc L);
+  bool parseDirectiveEabiAttr(SMLoc L);
 
   StringRef splitMnemonic(StringRef Mnemonic, unsigned &PredicationCode,
                           bool &CarrySetting, unsigned &ProcessorIMod,
@@ -6121,6 +6123,10 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveSyntax(DirectiveID.getLoc());
   else if (IDVal == ".unreq")
     return parseDirectiveUnreq(DirectiveID.getLoc());
+  else if (IDVal == ".arch")
+    return parseDirectiveArch(DirectiveID.getLoc());
+  else if (IDVal == ".eabi_attribute")
+    return parseDirectiveEabiAttr(DirectiveID.getLoc());
   return true;
 }
 
@@ -6298,6 +6304,18 @@ bool ARMAsmParser::parseDirectiveUnreq(SMLoc L) {
   RegisterReqs.erase(Parser.getTok().getIdentifier());
   Parser.Lex(); // Eat the identifier.
   return false;
+}
+
+/// parseDirectiveArch
+///  ::= .arch token
+bool ARMAsmParser::parseDirectiveArch(SMLoc L) {
+  return true;
+}
+
+/// parseDirectiveEabiAttr
+///  ::= .eabi_attribute int, int
+bool ARMAsmParser::parseDirectiveEabiAttr(SMLoc L) {
+  return true;
 }
 
 extern "C" void LLVMInitializeARMAsmLexer();
