@@ -1683,13 +1683,13 @@ private:
     return isDeclarationSpecifier(true);
   }
 
-  /// isSimpleDeclaration - Disambiguates between a declaration or an
-  /// expression, mainly used for the C 'clause-1' or the C++
+  /// isForInitDeclaration - Disambiguates between a declaration or an
+  /// expression in the context of the C 'clause-1' or the C++
   // 'for-init-statement' part of a 'for' statement.
   /// Returns true for declaration, false for expression.
-  bool isSimpleDeclaration() {
+  bool isForInitDeclaration() {
     if (getLang().CPlusPlus)
-      return isCXXSimpleDeclaration();
+      return isCXXSimpleDeclaration(/*AllowForRangeDecl=*/true);
     return isDeclarationSpecifier(true);
   }
 
@@ -1734,7 +1734,7 @@ private:
   /// If during the disambiguation process a parsing error is encountered,
   /// the function returns true to let the declaration parsing code handle it.
   /// Returns false if the statement is disambiguated as expression.
-  bool isCXXSimpleDeclaration();
+  bool isCXXSimpleDeclaration(bool AllowForRangeDecl);
 
   /// isCXXFunctionDeclarator - Disambiguates between a function declarator or
   /// a constructor-style initializer, when parsing declaration statements.
@@ -1808,7 +1808,7 @@ private:
   // They all consume tokens, so backtracking should be used after calling them.
 
   TPResult TryParseDeclarationSpecifier();
-  TPResult TryParseSimpleDeclaration();
+  TPResult TryParseSimpleDeclaration(bool AllowForRangeDecl);
   TPResult TryParseTypeofSpecifier();
   TPResult TryParseProtocolQualifiers();
   TPResult TryParseInitDeclaratorList();

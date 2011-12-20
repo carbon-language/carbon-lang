@@ -62,7 +62,7 @@ bool Parser::isCXXDeclarationStatement() {
     return true;
     // simple-declaration
   default:
-    return isCXXSimpleDeclaration();
+    return isCXXSimpleDeclaration(/*AllowForRangeDecl=*/false);
   }
 }
 
@@ -75,7 +75,11 @@ bool Parser::isCXXDeclarationStatement() {
 /// simple-declaration:
 ///   decl-specifier-seq init-declarator-list[opt] ';'
 ///
-bool Parser::isCXXSimpleDeclaration() {
+/// (if AllowForRangeDecl specified)
+/// for ( for-range-declaration : for-range-initializer ) statement
+/// for-range-declaration: 
+///    attribute-specifier-seqopt type-specifier-seq declarator
+bool Parser::isCXXSimpleDeclaration(bool AllowForRangeDecl) {
   // C++ 6.8p1:
   // There is an ambiguity in the grammar involving expression-statements and
   // declarations: An expression-statement with a function-style explicit type
@@ -112,7 +116,7 @@ bool Parser::isCXXSimpleDeclaration() {
   // We need tentative parsing...
 
   TentativeParsingAction PA(*this);
-  TPR = TryParseSimpleDeclaration();
+  TPR = TryParseSimpleDeclaration(AllowForRangeDecl);
   PA.Revert();
 
   // In case of an error, let the declaration parsing code handle it.
@@ -130,7 +134,12 @@ bool Parser::isCXXSimpleDeclaration() {
 /// simple-declaration:
 ///   decl-specifier-seq init-declarator-list[opt] ';'
 ///
-Parser::TPResult Parser::TryParseSimpleDeclaration() {
+/// (if AllowForRangeDecl specified)
+/// for ( for-range-declaration : for-range-initializer ) statement
+/// for-range-declaration: 
+///    attribute-specifier-seqopt type-specifier-seq declarator
+///
+Parser::TPResult Parser::TryParseSimpleDeclaration(bool AllowForRangeDecl) {
   // We know that we have a simple-type-specifier/typename-specifier followed
   // by a '('.
   assert(isCXXDeclarationSpecifier() == TPResult::Ambiguous());
@@ -150,7 +159,7 @@ Parser::TPResult Parser::TryParseSimpleDeclaration() {
   if (TPR != TPResult::Ambiguous())
     return TPR;
 
-  if (Tok.isNot(tok::semi))
+  if (Tok.isNot(tok::semi) && (!AllowForRangeDecl || Tok.isNot(tok::colon)))
     return TPResult::False();
 
   return TPResult::Ambiguous();
