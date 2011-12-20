@@ -299,3 +299,5 @@ def : Pat<(i32 (trunc CPU64Regs:$src)),
 // 32-to-64-bit extension
 def : Pat<(i64 (anyext CPURegs:$src)), (SLL64_32 CPURegs:$src)>;
 def : Pat<(i64 (zext CPURegs:$src)), (DSRL (DSLL64_32 CPURegs:$src), 32)>;
+def : Pat<(i64 (sext CPURegs:$src)), (SLL64_32 CPURegs:$src)>;
+
