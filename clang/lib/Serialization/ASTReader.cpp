@@ -4564,7 +4564,7 @@ Decl *ASTReader::GetDecl(DeclID ID) {
   
   unsigned Index = ID - NUM_PREDEF_DECL_IDS;
 
-  if (Index > DeclsLoaded.size()) {
+  if (Index >= DeclsLoaded.size()) {
     Error("declaration ID out-of-range for AST file");
     return 0;
   }
