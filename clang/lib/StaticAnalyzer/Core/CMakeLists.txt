@@ -36,6 +36,7 @@ add_clang_library(clangStaticAnalyzerCore
   SimpleConstraintManager.cpp
   SimpleSValBuilder.cpp
   Store.cpp
+  SubEngine.cpp
   SymbolManager.cpp
   TextPathDiagnostics.cpp
   )

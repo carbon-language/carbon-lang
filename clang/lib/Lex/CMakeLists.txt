@@ -13,6 +13,7 @@ add_clang_library(clangLex
   MacroInfo.cpp
   ModuleMap.cpp
   PPCaching.cpp
+  PPCallbacks.cpp
   PPDirectives.cpp
   PPExpressions.cpp
   PPLexerChange.cpp

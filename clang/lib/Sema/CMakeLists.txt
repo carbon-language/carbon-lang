@@ -17,6 +17,7 @@ add_clang_library(clangSema
   SemaCast.cpp
   SemaChecking.cpp
   SemaCodeComplete.cpp
+  SemaConsumer.cpp
   SemaDecl.cpp
   SemaDeclAttr.cpp
   SemaDeclCXX.cpp
