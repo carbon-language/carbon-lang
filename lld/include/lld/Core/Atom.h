@@ -37,17 +37,11 @@ public:
 
   enum Definition {
     definitionRegular,      // usual C/C++ function or global variable
+    definitionWeak,         // can be silently overridden by regular definition
     definitionTentative,    // C-only pre-ANSI support aka common
     definitionAbsolute,     // asm-only (foo = 10) not tied to any content
     definitionUndefined,    // Only in .o files to model reference to undef
     definitionSharedLibrary // Only in shared libraries to model export
-  };
-
-  enum Combine {
-    combineNever,            // most symbols
-    combineByName,           // weak-definition symbol
-    combineByTypeContent,    // simple constant that can be coalesced
-    combineByTypeContentDeep // complex coalescable constants
   };
 
   enum ContentType {
@@ -104,6 +98,12 @@ public:
     sectionCustomRequired   // linker must place in specific section
   };
 
+  enum DeadStripKind {
+    deadStripNormal,        // linker may dead strip this atom
+    deadStripNever,         // linker must never dead strip this atom
+    deadStripAlways         // linker must remove this atom if unused
+  };
+
   struct Alignment {
     Alignment(int p2, int m = 0)
       : powerOf2(p2)
@@ -121,54 +121,114 @@ public:
     typedef UnwindInfo *iterator;
   };
 
-  // link-once (throw away if not used)??
-  // dll import/export
+  /// name - The name of the atom. For a function atom, it is the (mangled)
+  /// name of the function. 
+  virtual llvm::StringRef name() const = 0;
+  
+  /// internalName - If the name is just a temporary label that should
+  /// not show up in the final linked image.
+  bool internalName() const { 
+    return _internalName; 
+  }
 
-  Scope scope() const { return _scope; }
-  Definition definition() const { return _definition; }
-  Combine combine() const { return _combine; }
-  ContentType contentType() const { return _contentType; }
-  Alignment alignment() const;
-  SectionChoice sectionChoice() const { return _sectionChoice; }
-  bool deadStrip() const { return _DeadStrip; }
+  /// size - the number of bytes of space this atom's content will occupy
+  /// in the final linked image.  For a function atom, it is the number
+  /// of bytes of code in the function.
+  virtual uint64_t size() const = 0;
+
+  /// scope - The visibility of this atom to other atoms.  C static functions
+  /// have scope scopeTranslationUnit.  Regular C functions have scope 
+  /// scopeGlobal.  Functions compiled with visibility=hidden have scope
+  /// scopeLinkageUnit so they can be see by other atoms being linked but not
+  /// by the OS loader.
+  Scope scope() const { 
+    return _scope; 
+  }
+  
+  /// definition - Whether this atom is a definition or represents an undefined
+  /// or tentative symbol.
+  Definition definition() const { 
+    return _definition; 
+  }
+  
+  /// mergeDuplicates - For definitionRegular atoms, this means the
+  /// atom can be silently coalesced with another atom that has the 
+  /// same name or content.
+  bool mergeDuplicates() const { 
+    return _mergeDuplicates; 
+  }
+  
+  /// contentType - The type of this atom, such as code or data.
+  ContentType contentType() const { 
+    return _contentType; 
+  }
+  
+  /// alignment - The alignment constraints on how this atom must be laid out 
+  /// in the final linked image (e.g. 16-byte aligned).
+  Alignment alignment() const {
+    return Alignment(_alignmentPowerOf2, _alignmentModulus);
+  }
+
+  /// sectionChoice - Whether this atom must be in a specially named section
+  /// in the final linked image, or if the linker can infer the section 
+  /// based on the contentType().
+  SectionChoice sectionChoice() const { 
+    return _sectionChoice; 
+  }
+  
+  /// customSectionName - If sectionChoice() != sectionBasedOnContent, then
+  /// this return the name of the section the atom should be placed into.
+  virtual llvm::StringRef customSectionName() const;
+    
+  /// deadStrip - constraints on whether the linker may dead strip away 
+  /// this atom.
+  DeadStripKind deadStrip() const { 
+    return _deadStrip; 
+  }
+  
+  /// autoHide - Whether it is ok for the linker to change the scope of this 
+  /// atom to hidden as long as all other duplicates are also autoHide.
+  bool autoHide() const {
+    return _autoHide;
+  }
+
+  /// permissions - Returns the OS memory protections required for this atom's
+  /// content at runtime.  A function atom is R_X and a global variable is RW_.
+  virtual ContentPermissions permissions() const;
+    
+  /// 
+  virtual void copyRawContent(uint8_t buffer[]) const = 0;
+  virtual llvm::ArrayRef<uint8_t> rawContent() const;
+
+
   bool isThumb() const { return _thumb; }
   bool isAlias() const { return _alias; }
-  bool userVisibleName() const { return _userVisibleName; }
-  bool autoHide() const;
+  
   void setLive(bool l) { _live = l; }
   bool live() const { return _live; }
-  void setOverridesDylibsWeakDef();
 
   virtual const class File *file() const = 0;
   virtual bool translationUnitSource(llvm::StringRef &path) const;
-  virtual llvm::StringRef name() const;
   virtual uint64_t objectAddress() const = 0;
-  virtual llvm::StringRef customSectionName() const;
-  virtual uint64_t size() const = 0;
-  virtual ContentPermissions permissions() const { return perm___; }
-  virtual void copyRawContent(uint8_t buffer[]) const = 0;
-  virtual llvm::ArrayRef<uint8_t> rawContent() const;
   virtual Reference::iterator referencesBegin() const;
   virtual Reference::iterator referencesEnd() const;
   virtual UnwindInfo::iterator beginUnwind() const;
   virtual UnwindInfo::iterator endUnwind() const;
 
   Atom( Definition d
-      , Combine c
       , Scope s
       , ContentType ct
       , SectionChoice sc
-      , bool UserVisibleName
-      , bool DeadStrip
+      , bool internalName
+      , DeadStripKind ds
       , bool IsThumb
       , bool IsAlias
       , Alignment a)
     : _alignmentModulus(a.modulus)
     , _alignmentPowerOf2(a.powerOf2)
     , _definition(d)
-    , _combine(c)
-    , _userVisibleName(UserVisibleName)
-    , _DeadStrip(DeadStrip)
+    , _internalName(internalName)
+    , _deadStrip(ds)
     , _thumb(IsThumb)
     , _alias(IsAlias)
     , _contentType(ct)
@@ -178,18 +238,19 @@ public:
   virtual ~Atom();
 
 protected:
-  uint16_t _alignmentModulus;
-  uint8_t _alignmentPowerOf2;
-  Definition _definition : 3;
-  Combine _combine : 2;
-  bool _userVisibleName : 1;
-  bool _DeadStrip : 1;
-  bool _thumb : 1;
-  bool _alias : 1;
-  bool _live : 1;
-  ContentType _contentType : 8;
-  Scope _scope : 2;
+  uint16_t      _alignmentModulus;
+  uint8_t       _alignmentPowerOf2;
+  ContentType   _contentType : 8;
+  Definition    _definition : 3;
+  Scope         _scope : 2;
   SectionChoice _sectionChoice: 2;
+  bool          _internalName : 1;
+  DeadStripKind _deadStrip : 2;
+  bool          _mergeDuplicates : 1;
+  bool          _thumb : 1;
+  bool          _autoHide : 1;
+  bool          _alias : 1;
+  bool          _live : 1;
 };
 
 } // namespace lld

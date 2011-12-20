@@ -26,15 +26,11 @@ namespace lld {
 
 void SymbolTable::add(const Atom &atom) {
   assert(atom.scope() != Atom::scopeTranslationUnit);
-  switch (atom.combine()) {
-  case Atom::combineNever:
-  case Atom::combineByName:
+  if ( !atom.internalName() ) {
     this->addByName(atom);
-    break;
-  case Atom::combineByTypeContent:
-  case Atom::combineByTypeContentDeep:
+  }
+  else if ( atom.mergeDuplicates() ) {
     // TO DO: support constants merging
-    break;
   }
 }
 
@@ -46,27 +42,31 @@ enum NameCollisionResolution {
   NCR_Error
 };
 
-static NameCollisionResolution cases[5][5] = {
-  //regular     tentative   absolute    undef      sharedLib
+static NameCollisionResolution cases[6][6] = {
+  //regular     weak         tentative   absolute    undef      sharedLib
   {
     // first is regular
-    NCR_Error,  NCR_First,  NCR_Error,  NCR_First, NCR_First
+    NCR_Error,  NCR_First,   NCR_First,  NCR_Error,  NCR_First, NCR_First
+  },
+  {
+    // first is weak
+    NCR_Second, NCR_Weak,   NCR_Larger, NCR_Error,  NCR_First, NCR_First
   },
   {
     // first is tentative
-    NCR_Second, NCR_Larger, NCR_Error,  NCR_First, NCR_First
+    NCR_Second, NCR_Second, NCR_Larger, NCR_Error,  NCR_First, NCR_First
   },
   {
     // first is absolute
-    NCR_Error,  NCR_Error,  NCR_Error,  NCR_First, NCR_First
+    NCR_Error,  NCR_Error,  NCR_Error,  NCR_Error,  NCR_First, NCR_First
   },
   {
     // first is undef
-    NCR_Second, NCR_Second, NCR_Second, NCR_First, NCR_Second
+    NCR_Second, NCR_Second, NCR_Second, NCR_Second, NCR_First, NCR_Second
   },
   {
     // first is sharedLib
-    NCR_Second, NCR_Second, NCR_Second, NCR_First, NCR_First
+    NCR_Second, NCR_Second, NCR_Second, NCR_Second, NCR_First, NCR_First
   }
 };
 

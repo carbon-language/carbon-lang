@@ -32,6 +32,10 @@ namespace lld {
     return llvm::ArrayRef<uint8_t>();
   }
 
+  Atom::ContentPermissions Atom::permissions() const { 
+    return perm___; 
+  }
+
   Reference::iterator Atom::referencesBegin() const {
     return 0;
   }

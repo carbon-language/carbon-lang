@@ -239,18 +239,17 @@ bool YAMLFile::justInTimeforEachAtom(llvm::StringRef name,
 class YAMLAtom : public Atom {
 public:
   YAMLAtom( Definition d
-          , Combine c
           , Scope s
           , ContentType ct
           , SectionChoice sc
-          , bool uvn
-          , bool dds
+          , bool intn
+          , DeadStripKind dsk
           , bool tb
           , bool al
           , Alignment a
           , YAMLFile *f
           , const char *n)
-    : Atom(d, c, s, ct, sc, uvn, dds, tb, al, a)
+    : Atom(d, s, ct, sc, intn, dsk, tb, al, a)
     , _file(f)
     , _name(n)
     , _size(0)
@@ -322,13 +321,13 @@ public:
 private:
   const char *_name;
   Atom::Alignment _align;
-  Atom::Combine _combine;
   Atom::ContentType _type;
   Atom::Scope _scope;
   Atom::Definition _def;
   Atom::SectionChoice _sectionChoice;
+  bool _internalName;
   bool _userVisibleName;
-  bool _dontDeadStrip;
+  Atom::DeadStripKind _dontDeadStrip;
   bool _thumb;
   bool _alias;
   Reference _ref;
@@ -337,11 +336,10 @@ private:
 YAMLAtomState::YAMLAtomState()
   : _name(NULL)
   , _align(0, 0)
-  , _combine(Atom::combineNever)
   , _type(Atom::typeData)
   , _scope(Atom::scopeGlobal)
   , _userVisibleName(true)
-  , _dontDeadStrip(false)
+  , _dontDeadStrip(Atom::deadStripNormal)
   , _thumb(false)
   , _alias(false) {
   _ref.target       = NULL;
@@ -352,8 +350,8 @@ YAMLAtomState::YAMLAtomState()
 }
 
 void YAMLAtomState::makeAtom(YAMLFile *f) {
-  Atom *a = new YAMLAtom(_def, _combine, _scope, _type, _sectionChoice,
-                         _userVisibleName, _dontDeadStrip, _thumb, _alias,
+  Atom *a = new YAMLAtom(_def, _scope, _type, _sectionChoice,
+                         _internalName, _dontDeadStrip, _thumb, _alias,
                          _align, f, _name);
 
   f->_atoms.push_back(a);
@@ -362,13 +360,12 @@ void YAMLAtomState::makeAtom(YAMLFile *f) {
   _name             = NULL;
   _align.powerOf2   = 0;
   _align.modulus    = 0;
-  _combine          = Atom::combineNever;
   _type             = Atom::typeData;
   _scope            = Atom::scopeGlobal;
   _def              = Atom::definitionRegular;
   _sectionChoice    = Atom::sectionBasedOnContent;
-  _userVisibleName  = true;
-  _dontDeadStrip    = false;
+  _internalName     = false;
+  _dontDeadStrip    = Atom::deadStripNormal;
   _thumb            = false;
   _alias            = false;
   _ref.target       = NULL;

@@ -22,12 +22,11 @@ class UndefinedAtom : public Atom {
 public:
   UndefinedAtom(llvm::StringRef nm)
     : Atom( Atom::definitionUndefined
-          , Atom::combineNever
           , Atom::scopeLinkageUnit
           , Atom::typeUnknown
           , Atom::sectionBasedOnContent
-          , true
           , false
+          , deadStripNormal
           , false
           , false
           , Atom::Alignment(0))

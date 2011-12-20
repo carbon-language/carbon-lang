@@ -29,8 +29,8 @@ public:
   virtual void doFile(const class File &) { }
   virtual void doAtom(const class Atom &atom) {
     _out << "    - name:        " << atom.name() << "\n";
+    _out << "      internal-name:" << atom.internalName() << "\n";
     _out << "      definition:  " << definitionString(atom.definition()) <<"\n";
-    _out << "      user-visible:" << atom.userVisibleName() << "\n";
     _out << "      scope:       " << scopeString(atom.scope()) << "\n";
     _out << "      type:        " << typeString(atom.contentType()) << "\n";
     if (atom.referencesBegin() != atom.referencesEnd()) {
