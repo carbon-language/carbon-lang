@@ -155,3 +155,63 @@ __m256 test_mm256_xor_si256(__m256 a, __m256 b) {
   // CHECK: xor <4 x i64>
   return _mm256_xor_si256(a, b);
 }
+
+__m256 test_mm256_avg_epu8(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.pavg.b
+  return _mm256_avg_epu8(a, b);
+}
+
+__m256 test_mm256_avg_epu16(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.pavg.w
+  return _mm256_avg_epu16(a, b);
+}
+
+__m256 test_mm256_blendv_epi8(__m256 a, __m256 b, __m256 m) {
+  // CHECK: @llvm.x86.avx2.pblendvb
+  return _mm256_blendv_epi8(a, b, m);
+}
+
+__m256 test_mm256_blend_epi16(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.pblendw(<16 x i16> %{{.*}}, <16 x i16> %{{.*}}, i32 2)
+  return _mm256_blend_epi16(a, b, 2);
+}
+
+__m256 test_mm256_cmpeq_epi8(__m256 a, __m256 b) {
+  // CHECK: icmp eq <32 x i8>
+  return _mm256_cmpeq_epi8(a, b);
+}
+
+__m256 test_mm256_cmpeq_epi16(__m256 a, __m256 b) {
+  // CHECK: icmp eq <16 x i16>
+  return _mm256_cmpeq_epi16(a, b);
+}
+
+__m256 test_mm256_cmpeq_epi32(__m256 a, __m256 b) {
+  // CHECK: icmp eq <8 x i32>
+  return _mm256_cmpeq_epi32(a, b);
+}
+
+__m256 test_mm256_cmpeq_epi64(__m256 a, __m256 b) {
+  // CHECK: icmp eq <4 x i64>
+  return _mm256_cmpeq_epi64(a, b);
+}
+
+__m256 test_mm256_cmpgt_epi8(__m256 a, __m256 b) {
+  // CHECK: icmp sgt <32 x i8>
+  return _mm256_cmpgt_epi8(a, b);
+}
+
+__m256 test_mm256_cmpgt_epi16(__m256 a, __m256 b) {
+  // CHECK: icmp sgt <16 x i16>
+  return _mm256_cmpgt_epi16(a, b);
+}
+
+__m256 test_mm256_cmpgt_epi32(__m256 a, __m256 b) {
+  // CHECK: icmp sgt <8 x i32>
+  return _mm256_cmpgt_epi32(a, b);
+}
+
+__m256 test_mm256_cmpgt_epi64(__m256 a, __m256 b) {
+  // CHECK: icmp sgt <4 x i64>
+  return _mm256_cmpgt_epi64(a, b);
+}

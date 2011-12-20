@@ -199,12 +199,6 @@ void f0() {
   tmp_V8s = __builtin_ia32_pmulhw128(tmp_V8s, tmp_V8s);
   tmp_V16c = __builtin_ia32_pavgb128(tmp_V16c, tmp_V16c);
   tmp_V8s = __builtin_ia32_pavgw128(tmp_V8s, tmp_V8s);
-  tmp_V16c = __builtin_ia32_pcmpeqb128(tmp_V16c, tmp_V16c);
-  tmp_V8s = __builtin_ia32_pcmpeqw128(tmp_V8s, tmp_V8s);
-  tmp_V4i = __builtin_ia32_pcmpeqd128(tmp_V4i, tmp_V4i);
-  tmp_V16c = __builtin_ia32_pcmpgtb128(tmp_V16c, tmp_V16c);
-  tmp_V8s = __builtin_ia32_pcmpgtw128(tmp_V8s, tmp_V8s);
-  tmp_V4i = __builtin_ia32_pcmpgtd128(tmp_V4i, tmp_V4i);
   tmp_V16c = __builtin_ia32_pmaxub128(tmp_V16c, tmp_V16c);
   tmp_V8s = __builtin_ia32_pmaxsw128(tmp_V8s, tmp_V8s);
   tmp_V16c = __builtin_ia32_pminub128(tmp_V16c, tmp_V16c);

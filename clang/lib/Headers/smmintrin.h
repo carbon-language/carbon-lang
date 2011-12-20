@@ -245,7 +245,7 @@ _mm_testnzc_si128(__m128i __M, __m128i __V)
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_cmpeq_epi64(__m128i __V1, __m128i __V2)
 {
-  return (__m128i) __builtin_ia32_pcmpeqq((__v2di)__V1, (__v2di)__V2);
+  return (__m128i)((__v2di)__V1 == (__v2di)__V2);
 }
 
 /* SSE4 Packed Integer Sign-Extension.  */
@@ -398,7 +398,7 @@ _mm_packus_epi32(__m128i __V1, __m128i __V2)
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_cmpgt_epi64(__m128i __V1, __m128i __V2)
 {
-  return __builtin_ia32_pcmpgtq((__v2di)__V1, (__v2di)__V2);
+  return (__m128i)((__v2di)__V1 > (__v2di)__V2);
 }
 
 /* SSE4.2 Accumulate CRC32.  */

@@ -136,6 +136,78 @@ _mm256_andnot_si256(__m256i a, __m256i b)
 }
 
 static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_avg_epu8(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_pavgb256((__v32qi)a, (__v32qi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_avg_epu16(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_pavgw256((__v16hi)a, (__v16hi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_blendv_epi8(__m256i __V1, __m256i __V2, __m256i __M)
+{
+  return (__m256i)__builtin_ia32_pblendvb256((__v32qi)__V1, (__v32qi)__V2,
+                                              (__v32qi)__M);
+}
+
+#define _mm256_blend_epi16(V1, V2, M) __extension__ ({ \
+  __m256i __V1 = (V1); \
+  __m256i __V2 = (V2); \
+  (__m256i)__builtin_ia32_pblendw256((__v16hi)__V1, (__v16hi)__V2, M); })
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cmpeq_epi8(__m256i a, __m256i b)
+{
+  return (__m256i)((__v32qi)a == (__v32qi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cmpeq_epi16(__m256i a, __m256i b)
+{
+  return (__m256i)((__v16hi)a == (__v16hi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cmpeq_epi32(__m256i a, __m256i b)
+{
+  return (__m256i)((__v8si)a == (__v8si)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cmpeq_epi64(__m256i a, __m256i b)
+{
+  return (__m256i)((__v4di)a == (__v4di)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cmpgt_epi8(__m256i a, __m256i b)
+{
+  return (__m256i)((__v32qi)a > (__v32qi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cmpgt_epi16(__m256i a, __m256i b)
+{
+  return (__m256i)((__v16hi)a > (__v16hi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cmpgt_epi32(__m256i a, __m256i b)
+{
+  return (__m256i)((__v8si)a > (__v8si)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cmpgt_epi64(__m256i a, __m256i b)
+{
+  return (__m256i)((__v4di)a > (__v4di)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_or_si256(__m256i a, __m256i b)
 {
   return a | b;
