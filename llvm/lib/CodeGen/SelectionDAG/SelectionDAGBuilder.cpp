@@ -1287,8 +1287,8 @@ bool SelectionDAGBuilder::isExportableFromCurrentBlock(const Value *V,
 }
 
 /// Return branch probability calculated by BranchProbabilityInfo for IR blocks.
-uint32_t SelectionDAGBuilder::getEdgeWeight(MachineBasicBlock *Src,
-                                            MachineBasicBlock *Dst) {
+uint32_t SelectionDAGBuilder::getEdgeWeight(const MachineBasicBlock *Src,
+                                            const MachineBasicBlock *Dst) const {
   BranchProbabilityInfo *BPI = FuncInfo.BPI;
   if (!BPI)
     return 0;

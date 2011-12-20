@@ -49,12 +49,13 @@ public:
 
   // Return edge weight. If we don't have any informations about it - return
   // DEFAULT_WEIGHT.
-  uint32_t getEdgeWeight(MachineBasicBlock *Src, MachineBasicBlock *Dst) const;
+  uint32_t getEdgeWeight(const MachineBasicBlock *Src,
+                         const MachineBasicBlock *Dst) const;
 
   // Get sum of the block successors' weights, potentially scaling them to fit
   // within 32-bits. If scaling is required, sets Scale based on the necessary
   // adjustment. Any edge weights used with the sum should be divided by Scale.
-  uint32_t getSumForBlock(MachineBasicBlock *MBB, uint32_t &Scale) const;
+  uint32_t getSumForBlock(const MachineBasicBlock *MBB, uint32_t &Scale) const;
 
   // A 'Hot' edge is an edge which probability is >= 80%.
   bool isEdgeHot(MachineBasicBlock *Src, MachineBasicBlock *Dst) const;

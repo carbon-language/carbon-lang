@@ -56,6 +56,6 @@ bool MachineBlockFrequencyInfo::runOnMachineFunction(MachineFunction &F) {
 /// the other block frequencies. We do this to avoid using of floating points.
 ///
 BlockFrequency MachineBlockFrequencyInfo::
-getBlockFreq(MachineBasicBlock *MBB) const {
+getBlockFreq(const MachineBasicBlock *MBB) const {
   return MBFI->getBlockFreq(MBB);
 }

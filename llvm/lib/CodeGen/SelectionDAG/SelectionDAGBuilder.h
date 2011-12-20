@@ -454,7 +454,8 @@ private:
                                 MachineBasicBlock* Default,
                                 MachineBasicBlock *SwitchBB);
 
-  uint32_t getEdgeWeight(MachineBasicBlock *Src, MachineBasicBlock *Dst);
+  uint32_t getEdgeWeight(const MachineBasicBlock *Src,
+                         const MachineBasicBlock *Dst) const;
   void addSuccessorWithWeight(MachineBasicBlock *Src, MachineBasicBlock *Dst,
                               uint32_t Weight = 0);
 public:

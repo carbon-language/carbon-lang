@@ -47,7 +47,7 @@ public:
   /// that we should not rely on the value itself, but only on the comparison to
   /// the other block frequencies. We do this to avoid using of floating points.
   ///
-  BlockFrequency getBlockFreq(BasicBlock *BB) const;
+  BlockFrequency getBlockFreq(const BasicBlock *BB) const;
 };
 
 }

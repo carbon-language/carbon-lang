@@ -40,7 +40,7 @@ class MachineBlockFrequencyInfo;
 template<class BlockT, class FunctionT, class BlockProbInfoT>
 class BlockFrequencyImpl {
 
-  DenseMap<BlockT *, BlockFrequency> Freqs;
+  DenseMap<const BlockT *, BlockFrequency> Freqs;
 
   BlockProbInfoT *BPI;
 
@@ -308,8 +308,9 @@ class BlockFrequencyImpl {
 
 public:
   /// getBlockFreq - Return block frequency. Return 0 if we don't have it.
-  BlockFrequency getBlockFreq(BlockT *BB) const {
-    typename DenseMap<BlockT *, BlockFrequency>::const_iterator I = Freqs.find(BB);
+  BlockFrequency getBlockFreq(const BlockT *BB) const {
+    typename DenseMap<const BlockT *, BlockFrequency>::const_iterator
+      I = Freqs.find(BB);
     if (I != Freqs.end())
       return I->second;
     return 0;

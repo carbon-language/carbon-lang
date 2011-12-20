@@ -77,6 +77,7 @@ class MachineBasicBlock : public ilist_node<MachineBasicBlock> {
   /// (disable optimization).
   std::vector<uint32_t> Weights;
   typedef std::vector<uint32_t>::iterator weight_iterator;
+  typedef std::vector<uint32_t>::const_iterator const_weight_iterator;
 
   /// LiveIns - Keep track of the physical registers that are livein of
   /// the basicblock.
@@ -589,13 +590,14 @@ private:
   /// getWeightIterator - Return weight iterator corresponding to the I
   /// successor iterator.
   weight_iterator getWeightIterator(succ_iterator I);
+  const_weight_iterator getWeightIterator(const_succ_iterator I) const;
 
   friend class MachineBranchProbabilityInfo;
 
   /// getSuccWeight - Return weight of the edge from this block to MBB. This
   /// method should NOT be called directly, but by using getEdgeWeight method
   /// from MachineBranchProbabilityInfo class.
-  uint32_t getSuccWeight(MachineBasicBlock *succ);
+  uint32_t getSuccWeight(const MachineBasicBlock *succ) const;
 
 
   // Methods used to maintain doubly linked list of blocks...
