@@ -63,6 +63,46 @@ void ExprEngine::processCallExit(CallExitNodeBuilder &B) {
   B.generateNode(state);
 }
 
+static bool isPointerToConst(const ParmVarDecl *ParamDecl) {
+  QualType PointeeTy = ParamDecl->getOriginalType()->getPointeeType();
+  if (PointeeTy != QualType() && PointeeTy.isConstQualified() &&
+      !PointeeTy->isAnyPointerType() && !PointeeTy->isReferenceType()) {
+    return true;
+  }
+  return false;
+}
+
+// Try to retrieve the function declaration and find the function parameter
+// types which are pointers/references to a non-pointer const.
+// We do not invalidate the corresponding argument regions.
+static void findPtrToConstParams(llvm::SmallSet<unsigned, 1> &PreserveArgs,
+                       const CallOrObjCMessage &Call) {
+  const Decl *CallDecl = Call.getDecl();
+  if (!CallDecl)
+    return;
+
+  if (const FunctionDecl *FDecl = dyn_cast<FunctionDecl>(CallDecl)) {
+    for (unsigned Idx = 0, E = Call.getNumArgs(); Idx != E; ++Idx) {
+      if (FDecl && Idx < FDecl->getNumParams()) {
+        if (isPointerToConst(FDecl->getParamDecl(Idx)))
+          PreserveArgs.insert(Idx);
+      }
+    }
+    return;
+  }
+
+  if (const ObjCMethodDecl *MDecl = dyn_cast<ObjCMethodDecl>(CallDecl)) {
+    assert(MDecl->param_size() <= Call.getNumArgs());
+    unsigned Idx = 0;
+    for (clang::ObjCMethodDecl::param_const_iterator
+         I = MDecl->param_begin(), E = MDecl->param_end(); I != E; ++I, ++Idx) {
+      if (isPointerToConst(*I))
+        PreserveArgs.insert(Idx);
+    }
+    return;
+  }
+}
+
 const ProgramState *
 ExprEngine::invalidateArguments(const ProgramState *State,
                                 const CallOrObjCMessage &Call,
@@ -84,13 +124,21 @@ ExprEngine::invalidateArguments(const ProgramState *State,
 
   } else if (Call.isFunctionCall()) {
     // Block calls invalidate all captured-by-reference values.
-    if (const MemRegion *Callee = Call.getFunctionCallee().getAsRegion()) {
+    SVal CalleeVal = Call.getFunctionCallee();
+    if (const MemRegion *Callee = CalleeVal.getAsRegion()) {
       if (isa<BlockDataRegion>(Callee))
         RegionsToInvalidate.push_back(Callee);
     }
   }
 
+  // Indexes of arguments whose values will be preserved by the call.
+  llvm::SmallSet<unsigned, 1> PreserveArgs;
+  findPtrToConstParams(PreserveArgs, Call);
+
   for (unsigned idx = 0, e = Call.getNumArgs(); idx != e; ++idx) {
+    if (PreserveArgs.count(idx))
+      continue;
+
     SVal V = Call.getArgSVal(idx);
 
     // If we are passing a location wrapped as an integer, unwrap it and
@@ -104,7 +152,7 @@ ExprEngine::invalidateArguments(const ProgramState *State,
       // Invalidate the value of the variable passed by reference.
 
       // Are we dealing with an ElementRegion?  If the element type is
-      // a basic integer type (e.g., char, int) and the underying region
+      // a basic integer type (e.g., char, int) and the underlying region
       // is a variable region then strip off the ElementRegion.
       // FIXME: We really need to think about this for the general case
       //   as sometimes we are reasoning about arrays and other times
@@ -115,7 +163,7 @@ ExprEngine::invalidateArguments(const ProgramState *State,
         // we'll leave it in for now until we have a systematic way of
         // handling all of these cases.  Eventually we need to come up
         // with an interface to StoreManager so that this logic can be
-        // approriately delegated to the respective StoreManagers while
+        // appropriately delegated to the respective StoreManagers while
         // still allowing us to do checker-specific logic (e.g.,
         // invalidating reference counts), probably via callbacks.
         if (ER->getElementType()->isIntegralOrEnumerationType()) {

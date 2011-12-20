@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
+#include "clang/AST/DeclCXX.h"
 
 using namespace clang;
 using namespace ento;
@@ -162,3 +163,21 @@ CallOrObjCMessage::getInstanceMessageReceiver(const LocationContext *LC) const {
   assert(isObjCMessage());
   return Msg.getInstanceReceiverSVal(State, LC);
 }
+
+const Decl *CallOrObjCMessage::getDecl() const {
+  if (isCXXCall()) {
+    const CXXMemberCallExpr *CE =
+        cast<CXXMemberCallExpr>(CallE.dyn_cast<const CallExpr *>());
+    assert(CE);
+    return CE->getMethodDecl();
+  } else if (isObjCMessage()) {
+    return Msg.getMethodDecl();
+  } else if (isFunctionCall()) {
+    // In case of a C style call, use the path sensitive information to find
+    // the function declaration.
+    SVal CalleeVal = getFunctionCallee();
+    return CalleeVal.getAsFunctionDecl();
+  }
+  return 0;
+}
+

@@ -289,4 +289,25 @@ void pr4759() {
   pr4759_aux(p); // expected-warning{{Function call argument is an uninitialized value}}
 }
 
-
+// Relax function call arguments invalidation to be aware of const
+// arguments. Test with function pointers. radar://10595327
+void ttt(const int *nptr);
+void ttt2(const int *nptr);
+typedef void (*NoConstType)(int*);
+int foo10595327(int b) {
+  void (*fp)(int *);
+  // We use path sensitivity to get the function declaration. Even when the
+  // function pointer is cast to non pointer-to-const parameter type, we can
+  // find the right function declaration.
+  if (b > 5)
+    fp = (NoConstType)ttt2;
+  else
+    fp = (NoConstType)ttt;
+  int x = 3;
+  int y = x + 1;
+  int *p = 0;
+  fp(&y);
+  if (x == y)
+      return *p; // no-warning
+  return 0;
+}

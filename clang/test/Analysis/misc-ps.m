@@ -274,6 +274,17 @@ void rdar_6777003(int x) {
   *p = 1; // expected-warning{{Dereference of null pointer}}  
 }
 
+// Check that the pointer-to-conts arguments do not get invalidated by Obj C 
+// interfaces. radar://10595327
+int rdar_10595327(char *str) {
+  char fl = str[0]; 
+  int *p = 0;
+  NSString *s = [NSString stringWithUTF8String:str];
+  if (str[0] != fl)
+      return *p; // no-warning
+  return 0;
+}
+
 // For pointer arithmetic, --/++ should be treated as preserving non-nullness,
 // regardless of how well the underlying StoreManager reasons about pointer
 // arithmetic.

@@ -246,6 +246,9 @@ public:
   SVal getCXXCallee() const;
   SVal getInstanceMessageReceiver(const LocationContext *LC) const;
 
+  /// Get the declaration of the function or method.
+  const Decl *getDecl() const;
+
   unsigned getNumArgs() const {
     if (!CallE)
       return Msg.getNumArgs();
