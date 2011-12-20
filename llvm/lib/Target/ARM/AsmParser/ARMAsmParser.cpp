@@ -2325,9 +2325,10 @@ int ARMAsmParser::tryParseRegister() {
       .Default(0);
   }
   if (!RegNum) {
-    // Check for aliases registered via .req.
-    StringMap<unsigned>::const_iterator Entry =
-      RegisterReqs.find(Tok.getIdentifier());
+    // Check for aliases registered via .req. Canonicalize to lower case.
+    // That's more consistent since register names are case insensitive, and
+    // it's how the original entry was passed in from MC/MCParser/AsmParser.
+    StringMap<unsigned>::const_iterator Entry = RegisterReqs.find(lowerCase);
     // If no match, return failure.
     if (Entry == RegisterReqs.end())
       return -1;
