@@ -392,8 +392,11 @@ SBValue::CreateValueFromExpression (const char *name, const char* expression)
                                                                          true, // keep in memory
                                                                          eNoDynamicValues,
                                                                          result_valobj_sp);
-        result_valobj_sp->SetName(ConstString(name));
-        result = SBValue(result_valobj_sp);
+        if (result_valobj_sp)
+        {
+            result_valobj_sp->SetName(ConstString(name));
+            result = SBValue(result_valobj_sp);
+        }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)

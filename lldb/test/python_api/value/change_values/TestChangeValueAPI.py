@@ -130,6 +130,10 @@ class ChangeValueAPITestCase(TestBase):
         self.assertTrue (error.Success(), "Got a changed value for sp")
         self.assertTrue (actual_value == 1, "Got the right changed value for sp.")
         
+        # Boundary condition test the SBValue.CreateValueFromExpression() API.
+        # LLDB should not crash!
+        nosuchval = mine_value.CreateValueFromExpression(None, None)
+
         process.Continue()
 
         self.assertTrue(process.GetState() == lldb.eStateStopped)
