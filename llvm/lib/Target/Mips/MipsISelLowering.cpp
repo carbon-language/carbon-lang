@@ -136,6 +136,7 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::SELECT,             MVT::i32,   Custom);
   setOperationAction(ISD::BRCOND,             MVT::Other, Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32,   Custom);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64,   Custom);
   setOperationAction(ISD::VASTART,            MVT::Other, Custom);
 
   setOperationAction(ISD::SDIV, MVT::i32, Expand);
