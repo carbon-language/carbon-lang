@@ -21,6 +21,7 @@ add_llvm_target(PowerPCCodeGen
   PPCFrameLowering.cpp
   PPCJITInfo.cpp
   PPCMCInstLower.cpp
+  PPCMachineFunctionInfo.cpp
   PPCRegisterInfo.cpp
   PPCSubtarget.cpp
   PPCTargetMachine.cpp

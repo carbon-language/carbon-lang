@@ -24,6 +24,7 @@ add_llvm_library(LLVMCodeGen
   InlineSpiller.cpp
   InterferenceCache.cpp
   IntrinsicLowering.cpp
+  JITCodeEmitter.cpp
   LLVMTargetMachine.cpp
   LatencyPriorityQueue.cpp
   LexicalScopes.cpp
@@ -40,6 +41,7 @@ add_llvm_library(LLVMCodeGen
   MachineBlockFrequencyInfo.cpp
   MachineBlockPlacement.cpp
   MachineBranchProbabilityInfo.cpp
+  MachineCodeEmitter.cpp
   MachineCSE.cpp
   MachineDominators.cpp
   MachineFunction.cpp

@@ -14,6 +14,7 @@ add_llvm_target(XCoreCodeGen
   XCoreInstrInfo.cpp
   XCoreISelDAGToDAG.cpp
   XCoreISelLowering.cpp
+  XCoreMachineFunctionInfo.cpp
   XCoreRegisterInfo.cpp
   XCoreSubtarget.cpp
   XCoreTargetMachine.cpp

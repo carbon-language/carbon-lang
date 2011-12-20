@@ -27,6 +27,7 @@ add_llvm_library(LLVMSupport
   GraphWriter.cpp
   IntEqClasses.cpp
   IntervalMap.cpp
+  IntrusiveRefCntPtr.cpp
   IsInf.cpp
   IsNAN.cpp
   JSONParser.cpp

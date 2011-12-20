@@ -26,6 +26,7 @@ set(sources
   X86InstrInfo.cpp
   X86JITInfo.cpp
   X86MCInstLower.cpp
+  X86MachineFunctionInfo.cpp
   X86RegisterInfo.cpp
   X86SelectionDAGInfo.cpp
   X86Subtarget.cpp

@@ -33,5 +33,6 @@ add_tablegen(llvm-tblgen LLVM
   TGValueTypes.cpp
   TableGen.cpp
   X86DisassemblerTables.cpp
+  X86ModRMFilters.cpp
   X86RecognizableInstr.cpp
   )
