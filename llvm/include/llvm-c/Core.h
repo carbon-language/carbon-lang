@@ -567,6 +567,8 @@ LLVMValueRef LLVMMDNode(LLVMValueRef *Vals, unsigned Count);
 const char  *LLVMGetMDString(LLVMValueRef V, unsigned* Len);
 unsigned LLVMGetNamedMetadataNumOperands(LLVMModuleRef M, const char* name);
 void LLVMGetNamedMetadataOperands(LLVMModuleRef M, const char* name, LLVMValueRef *Dest);
+void LLVMAddNamedMetadataOperand(LLVMModuleRef M, const char* name,
+                                 LLVMValueRef Val);
 
 /* Operations on scalar constants */
 LLVMValueRef LLVMConstInt(LLVMTypeRef IntTy, unsigned long long N,

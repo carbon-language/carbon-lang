@@ -566,6 +566,17 @@ void LLVMGetNamedMetadataOperands(LLVMModuleRef M, const char* name, LLVMValueRe
     Dest[i] = wrap(N->getOperand(i));
 }
 
+void LLVMAddNamedMetadataOperand(LLVMModuleRef M, const char* name,
+                                 LLVMValueRef Val)
+{
+  NamedMDNode *N = unwrap(M)->getOrInsertNamedMetadata(name);
+  if (!N)
+    return;
+  MDNode *Op = Val ? unwrap<MDNode>(Val) : NULL;
+  if (Op)
+    N->addOperand(Op);
+}
+
 /*--.. Operations on scalar constants ......................................--*/
 
 LLVMValueRef LLVMConstInt(LLVMTypeRef IntTy, unsigned long long N,
