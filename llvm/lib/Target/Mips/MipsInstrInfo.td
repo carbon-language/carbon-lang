@@ -1022,10 +1022,14 @@ let Predicates = [IsN64] in {
 }
 
 // peepholes
-def : Pat<(store (i32 0), addr:$dst), (SW ZERO, addr:$dst)>,
-      Requires<[NotN64]>;
-def : Pat<(store (i32 0), addr:$dst), (SW_P8 ZERO, addr:$dst)>,
-      Requires<[IsN64]>;
+let Predicates = [NotN64] in {
+  def : Pat<(store_a (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;
+  def : Pat<(store_u (i32 0), addr:$dst), (USW ZERO, addr:$dst)>;
+}
+let Predicates = [IsN64] in {
+  def : Pat<(store_a (i32 0), addr:$dst), (SW_P8 ZERO, addr:$dst)>;
+  def : Pat<(store_u (i32 0), addr:$dst), (USW_P8 ZERO, addr:$dst)>;
+}
 
 // brcond patterns
 multiclass BrcondPats<RegisterClass RC, Instruction BEQOp, Instruction BNEOp,
