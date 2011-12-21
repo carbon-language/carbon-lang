@@ -108,7 +108,7 @@ void ELFObjectWriter::WriteHeader(uint64_t SectionDataSize,
             sizeof(ELF::Elf32_Ehdr)));  // e_shoff = sec hdr table off in bytes
 
   // e_flags = whatever the target wants
-  WriteEFlags();
+  Write32(getEFlags());
 
   // e_ehsize = ELF header size
   Write16(is64Bit() ? sizeof(ELF::Elf64_Ehdr) : sizeof(ELF::Elf32_Ehdr));
@@ -1296,8 +1296,8 @@ ARMELFObjectWriter::~ARMELFObjectWriter()
 {}
 
 // FIXME: get the real EABI Version from the Triple.
-void ARMELFObjectWriter::WriteEFlags() {
-  Write32(ELF::EF_ARM_EABIMASK & DefaultEABIVersion);
+unsigned ARMELFObjectWriter::getEFlags() {
+  return ELF::EF_ARM_EABIMASK & DefaultEABIVersion;
 }
 
 // In ARM, _MergedGlobals and other most symbols get emitted directly.
@@ -1646,9 +1646,8 @@ MipsELFObjectWriter::MipsELFObjectWriter(MCELFObjectTargetWriter *MOTW,
 MipsELFObjectWriter::~MipsELFObjectWriter() {}
 
 // FIXME: get the real EABI Version from the Triple.
-void MipsELFObjectWriter::WriteEFlags() {
-  Write32(ELF::EF_MIPS_NOREORDER |
-          ELF::EF_MIPS_ARCH_32R2);
+unsigned MipsELFObjectWriter::getEFlags() {
+  return ELF::EF_MIPS_NOREORDER | ELF::EF_MIPS_ARCH_32R2;
 }
 
 const MCSymbol *MipsELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
