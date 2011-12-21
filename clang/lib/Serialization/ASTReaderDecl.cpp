@@ -1416,8 +1416,8 @@ void ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
   }
 
   // Note that we need to load the other declaration chains for this ID.
-  if (Reader.PendingDeclChainsKnown.insert(ThisDeclID))
-    Reader.PendingDeclChains.push_back(ThisDeclID);
+  if (Reader.PendingDeclChainsKnown.insert(FirstDeclID))
+    Reader.PendingDeclChains.push_back(FirstDeclID);
 }
 
 //===----------------------------------------------------------------------===//
