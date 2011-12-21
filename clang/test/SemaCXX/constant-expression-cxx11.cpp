@@ -8,16 +8,17 @@ static_assert(false, "test"); // expected-error {{test}}
 
 }
 
-template<typename T> constexpr T id(const T &t) { return t; } // expected-note {{here}}
-// FIXME: support templates here.
-//template<typename T> constexpr T min(const T &a, const T &b) {
-//  return a < b ? a : b;
-//}
-//template<typename T> constexpr T max(const T &a, const T &b) {
-//  return a < b ? b : a;
-//}
-constexpr int min(const int &a, const int &b) { return a < b ? a : b; }
-constexpr int max(const int &a, const int &b) { return a < b ? b : a; }
+typedef decltype(sizeof(char)) size_t;
+
+template<typename T> constexpr T id(const T &t) { return t; }
+template<typename T> constexpr T min(const T &a, const T &b) {
+  return a < b ? a : b;
+}
+template<typename T> constexpr T max(const T &a, const T &b) {
+  return a < b ? b : a;
+}
+template<typename T, size_t N> constexpr T *begin(T (&xs)[N]) { return xs; }
+template<typename T, size_t N> constexpr T *end(T (&xs)[N]) { return xs + N; }
 
 struct MemberZero {
   constexpr int zero() { return 0; }
@@ -84,8 +85,7 @@ namespace TemplateArgumentConversion {
   template<int n> struct IntParam {};
 
   using IntParam0 = IntParam<0>;
-  // FIXME: This should be accepted once we implement the new ICE rules.
-  using IntParam0 = IntParam<id(0)>; // expected-error {{not an integral constant expression}}
+  using IntParam0 = IntParam<id(0)>;
   using IntParam0 = IntParam<MemberZero().zero>; // expected-error {{did you mean to call it with no arguments?}} expected-error {{not an integral constant expression}}
 }
 
@@ -94,8 +94,7 @@ namespace CaseStatements {
     switch (n) {
     // FIXME: Produce the 'add ()' fixit for this.
     case MemberZero().zero: // desired-error {{did you mean to call it with no arguments?}} expected-error {{not an integer constant expression}} expected-note {{non-literal type '<bound member function type>'}}
-    // FIXME: This should be accepted once we implement the new ICE rules.
-    case id(1): // expected-error {{not an integer constant expression}} expected-note {{undefined function}}
+    case id(1):
       return;
     }
   }
@@ -352,14 +351,8 @@ constexpr int strcmp_ce(const char *p, const char *q) {
 
 namespace StringLiteral {
 
-// FIXME: Refactor this once we support constexpr templates.
-constexpr int MangleChars(const char *p) {
-  return *p + 3 * (*p ? MangleChars(p+1) : 0);
-}
-constexpr int MangleChars(const char16_t *p) {
-  return *p + 3 * (*p ? MangleChars(p+1) : 0);
-}
-constexpr int MangleChars(const char32_t *p) {
+template<typename Char>
+constexpr int MangleChars(const Char *p) {
   return *p + 3 * (*p ? MangleChars(p+1) : 0);
 }
 
@@ -383,9 +376,6 @@ constexpr const char *max_element(const char *a, const char *b) {
   return (a+1 >= b) ? a : max_iter(a, max_element(a+1, b));
 }
 
-constexpr const char *begin(const char (&arr)[45]) { return arr; }
-constexpr const char *end(const char (&arr)[45]) { return arr + 45; }
-
 constexpr char str[] = "the quick brown fox jumped over the lazy dog";
 constexpr const char *max = max_element(begin(str), end(str));
 static_assert(*max == 'z', "");
@@ -400,12 +390,10 @@ static_assert(strcmp_ce("", " ") < 0, "");
 
 namespace Array {
 
-// FIXME: Use templates for these once we support constexpr templates.
-constexpr int Sum(const int *begin, const int *end) {
+template<typename Iter>
+constexpr auto Sum(Iter begin, Iter end) -> decltype(+*begin) {
   return begin == end ? 0 : *begin + Sum(begin+1, end);
 }
-constexpr const int *begin(const int (&xs)[5]) { return xs; }
-constexpr const int *end(const int (&xs)[5]) { return xs + 5; }
 
 constexpr int xs[] = { 1, 2, 3, 4, 5 };
 constexpr int ys[] = { 5, 4, 3, 2, 1 };

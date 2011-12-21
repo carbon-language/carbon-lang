@@ -1339,6 +1339,26 @@ void VarDecl::setInit(Expr *I) {
   Init = I;
 }
 
+bool VarDecl::isUsableInConstantExpressions() const {
+  const LangOptions &Lang = getASTContext().getLangOptions();
+
+  // Only const variables can be used in constant expressions in C++. C++98 does
+  // not require the variable to be non-volatile, but we consider this to be a
+  // defect.
+  if (!Lang.CPlusPlus ||
+      !getType().isConstQualified() || getType().isVolatileQualified())
+    return false;
+
+  // In C++, const, non-volatile variables of integral or enumeration types
+  // can be used in constant expressions.
+  if (getType()->isIntegralOrEnumerationType())
+    return true;
+
+  // Additionally, in C++11, non-volatile constexpr variables and references can
+  // be used in constant expressions.
+  return Lang.CPlusPlus0x && (isConstexpr() || getType()->isReferenceType());
+}
+
 /// Convert the initializer for this declaration to the elaborated EvaluatedStmt
 /// form, which contains extra information on the evaluated value of the
 /// initializer.

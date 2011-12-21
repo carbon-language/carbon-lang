@@ -68,7 +68,7 @@ struct ConstexprDtor {
 };
 
 // template stuff
-template <typename T> constexpr T ft(T t) { return t; } // unexpected-note {{here}}
+template <typename T> constexpr T ft(T t) { return t; }
 template <typename T> T gt(T t) { return t; }
 struct S {
   template<typename T> constexpr T f();
@@ -89,8 +89,7 @@ template <> int S::g() const; // desired-error {{non-constexpr declaration of 'g
 template <> char S::g() { return 0; } // expected-error {{no function template matches}}
 template <> double S::g() const { return 0; } // ok
 
-// FIXME: The initializer is a constant expression.
-constexpr int i3 = ft(1); // unexpected-error {{must be initialized by a constant expression}} unexpected-note {{undefined function 'ft<int>'}}
+constexpr int i3 = ft(1);
 
 void test() {
   // ignore constexpr when instantiating with non-literal

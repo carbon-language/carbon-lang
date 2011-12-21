@@ -9491,6 +9491,11 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
             cast<CXXRecordDecl>(Function->getDeclContext())->isLocalClass())
           PendingLocalImplicitInstantiations.push_back(std::make_pair(Function,
                                                                       Loc));
+        else if (Function->getTemplateInstantiationPattern()->isConstexpr())
+          // Do not defer instantiations of constexpr functions, to avoid the
+          // expression evaluator needing to call back into Sema if it sees a
+          // call to such a function.
+          InstantiateFunctionDefinition(Loc, Function);
         else
           PendingInstantiations.push_back(std::make_pair(Function, Loc));
       }
@@ -9526,9 +9531,9 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
         // This is a modification of an existing AST node. Notify listeners.
         if (ASTMutationListener *L = getASTMutationListener())
           L->StaticDataMemberInstantiated(Var);
-        QualType T = Var->getType();
-        if (T.isConstQualified() && !T.isVolatileQualified() &&
-            T->isIntegralOrEnumerationType())
+        if (Var->isUsableInConstantExpressions())
+          // Do not defer instantiations of variables which could be used in a
+          // constant expression.
           InstantiateStaticDataMemberDefinition(Loc, Var);
         else
           PendingInstantiations.push_back(std::make_pair(Var, Loc));

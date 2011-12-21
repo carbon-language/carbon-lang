@@ -1025,6 +1025,12 @@ public:
   /// \endcode
   bool extendsLifetimeOfTemporary() const;
 
+  /// \brief Determine whether this variable's value can be used in a
+  /// constant expression, according to the relevant language standard.
+  /// This only checks properties of the declaration, and does not check
+  /// whether the initializer is in fact a constant expression.
+  bool isUsableInConstantExpressions() const;
+
   EvaluatedStmt *ensureEvaluatedStmt() const;
 
   /// \brief Attempt to evaluate the value of the initializer attached to this
