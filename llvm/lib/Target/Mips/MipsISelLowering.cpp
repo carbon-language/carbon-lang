@@ -206,7 +206,9 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::ATOMIC_FENCE,      MVT::Other, Custom);  
 
   setOperationAction(ISD::ATOMIC_LOAD,       MVT::i32,    Expand);  
+  setOperationAction(ISD::ATOMIC_LOAD,       MVT::i64,    Expand);  
   setOperationAction(ISD::ATOMIC_STORE,      MVT::i32,    Expand);  
+  setOperationAction(ISD::ATOMIC_STORE,      MVT::i64,    Expand);  
 
   setInsertFencesForAtomic(true);
 
