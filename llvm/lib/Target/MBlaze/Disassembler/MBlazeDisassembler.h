@@ -17,8 +17,6 @@
 
 #include "llvm/MC/MCDisassembler.h"
 
-struct InternalInstruction;
-
 namespace llvm {
   
 class MCInst;
