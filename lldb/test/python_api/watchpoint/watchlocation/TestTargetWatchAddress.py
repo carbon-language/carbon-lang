@@ -30,7 +30,7 @@ class TargetWatchAddressAPITestCase(TestBase):
         self.do_set_watchaddress()
 
     @python_api_test
-    def test_watch_val_with_dwarf(self):
+    def test_watch_address_with_dwarf(self):
         """Exercise SBTarget.WatchAddress() API to set a watchpoint."""
         self.buildDwarf()
         self.do_set_watchaddress()
