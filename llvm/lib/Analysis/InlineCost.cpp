@@ -138,7 +138,7 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
   // FIXME: This logic isn't really right; we can safely inline functions
   // with indirectbr's as long as no other function or global references the
   // blockaddress of a block within the current function.  And as a QOI issue,
-  // if someone is using a blockaddress wihtout an indirectbr, and that
+  // if someone is using a blockaddress without an indirectbr, and that
   // reference somehow ends up in another function or global, we probably
   // don't want to inline this function.
   if (isa<IndirectBrInst>(BB->getTerminator()))
@@ -422,7 +422,7 @@ int InlineCostAnalyzer::getInlineSize(CallSite CS, Function *Callee) {
   InlineCost += CalleeFI->Metrics.NumCalls * InlineConstants::CallPenalty;
 
   // Look at the size of the callee. Each instruction counts as 5.
-  InlineCost += CalleeFI->Metrics.NumInsts*InlineConstants::InstrCost;
+  InlineCost += CalleeFI->Metrics.NumInsts * InlineConstants::InstrCost;
 
   return InlineCost;
 }
