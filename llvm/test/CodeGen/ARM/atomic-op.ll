@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=armv7-apple-darwin10 -verify-machineinstrs | FileCheck %s
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin10 -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -mtriple=armv7-apple-ios -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-ios -verify-machineinstrs | FileCheck %s
 
 define void @func(i32 %argc, i8** %argv) nounwind {
 entry:
@@ -61,7 +61,7 @@ entry:
   ; CHECK: strex
   %7 = atomicrmw min i32* %val2, i32 16 monotonic
 	store i32 %7, i32* %old
-	%neg = sub i32 0, 1		; <i32> [#uses=1]
+	%neg = sub i32 0, 1
   ; CHECK: ldrex
   ; CHECK: cmp
   ; CHECK: strex
@@ -77,5 +77,27 @@ entry:
   ; CHECK: strex
   %10 = atomicrmw max i32* %val2, i32 0 monotonic
 	store i32 %10, i32* %old
-	ret void
+  ; CHECK: ldrex
+  ; CHECK: cmp
+  ; CHECK: strex
+  %11 = atomicrmw umin i32* %val2, i32 16 monotonic
+	store i32 %11, i32* %old
+	%uneg = sub i32 0, 1
+  ; CHECK: ldrex
+  ; CHECK: cmp
+  ; CHECK: strex
+  %12 = atomicrmw umin i32* %val2, i32 %uneg monotonic
+	store i32 %12, i32* %old
+  ; CHECK: ldrex
+  ; CHECK: cmp
+  ; CHECK: strex
+  %13 = atomicrmw umax i32* %val2, i32 1 monotonic
+	store i32 %13, i32* %old
+  ; CHECK: ldrex
+  ; CHECK: cmp
+  ; CHECK: strex
+  %14 = atomicrmw umax i32* %val2, i32 0 monotonic
+	store i32 %14, i32* %old
+
+  ret void
 }
