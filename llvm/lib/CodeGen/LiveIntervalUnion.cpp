@@ -21,6 +21,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
+#include <algorithm>
+
 using namespace llvm;
 
 
