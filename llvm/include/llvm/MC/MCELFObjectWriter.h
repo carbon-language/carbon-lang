@@ -31,7 +31,7 @@ public:
   Triple::OSType getOSType() { return OSType; }
   uint16_t getEMachine() { return EMachine; }
   bool hasRelocationAddend() { return HasRelocationAddend; }
-  bool is64Bit() { return Is64Bit; }
+  bool is64Bit() const { return Is64Bit; }
   /// @}
 };
 
