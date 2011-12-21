@@ -224,17 +224,9 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   std::vector<CalleeSavedInfo> CSI;
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
-    if (Fn.getRegInfo().isPhysRegUsed(Reg)) {
+    if (Fn.getRegInfo().isPhysRegOrOverlapUsed(Reg)) {
       // If the reg is modified, save it!
       CSI.push_back(CalleeSavedInfo(Reg));
-    } else {
-      for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
-           *AliasSet; ++AliasSet) {  // Check alias registers too.
-        if (Fn.getRegInfo().isPhysRegUsed(*AliasSet)) {
-          CSI.push_back(CalleeSavedInfo(Reg));
-          break;
-        }
-      }
     }
   }
 

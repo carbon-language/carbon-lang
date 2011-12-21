@@ -283,7 +283,16 @@ public:
   /// isPhysRegUsed - Return true if the specified register is used in this
   /// function.  This only works after register allocation.
   bool isPhysRegUsed(unsigned Reg) const { return UsedPhysRegs[Reg]; }
-  
+
+  /// isPhysRegOrOverlapUsed - Return true if Reg or any overlapping register
+  /// is used in this function.
+  bool isPhysRegOrOverlapUsed(unsigned Reg) const {
+    for (const unsigned *AI = TRI->getOverlaps(Reg); *AI; ++AI)
+      if (isPhysRegUsed(*AI))
+        return true;
+    return false;
+  }
+
   /// setPhysRegUsed - Mark the specified register used in this function.
   /// This should only be called during and after register allocation.
   void setPhysRegUsed(unsigned Reg) { UsedPhysRegs[Reg] = true; }

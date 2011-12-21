@@ -898,18 +898,9 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
     bool Spilled = false;
-    if (MF.getRegInfo().isPhysRegUsed(Reg)) {
+    if (MF.getRegInfo().isPhysRegOrOverlapUsed(Reg)) {
       Spilled = true;
       CanEliminateFrame = false;
-    } else {
-      // Check alias registers too.
-      for (const unsigned *Aliases =
-             RegInfo->getAliasSet(Reg); *Aliases; ++Aliases) {
-        if (MF.getRegInfo().isPhysRegUsed(*Aliases)) {
-          Spilled = true;
-          CanEliminateFrame = false;
-        }
-      }
     }
 
     if (!ARM::GPRRegisterClass->contains(Reg))
