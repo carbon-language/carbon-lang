@@ -19,5 +19,6 @@ struct foo {
 };
 
 union bar u[1];
-struct foo x = {(intptr_t) u}; // no-error
+struct foo x = {(intptr_t) u}; // expected-error {{initializer element is not a compile-time constant}}
 struct foo y = {(char) u}; // expected-error {{initializer element is not a compile-time constant}}
+intptr_t z = (intptr_t) u; // no-error

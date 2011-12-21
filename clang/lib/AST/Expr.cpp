@@ -2550,17 +2550,30 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
     if (getType()->isVectorType() && CE->getCastKind() == CK_BitCast)
       return CE->getSubExpr()->isConstantInitializer(Ctx, false);
 
-    // Handle casts with a destination that's a struct or union; this
-    // deals with both the gcc no-op struct cast extension and the
-    // cast-to-union extension.
-    if (getType()->isRecordType())
+    // Handle misc casts we want to ignore.
+    // FIXME: Is it really safe to ignore all these?
+    if (CE->getCastKind() == CK_NoOp ||
+        CE->getCastKind() == CK_LValueToRValue ||
+        CE->getCastKind() == CK_ToUnion ||
+        CE->getCastKind() == CK_ConstructorConversion)
       return CE->getSubExpr()->isConstantInitializer(Ctx, false);
 
-    // Integer->integer casts can be handled here, which is important for
-    // things like (int)(&&x-&&y).  Scary but true.
-    if (getType()->isIntegerType() &&
-        CE->getSubExpr()->getType()->isIntegerType())
-      return CE->getSubExpr()->isConstantInitializer(Ctx, false);
+    // Handle things like (int)(&&x-&&y). It's a bit nasty, but we support it.
+    if (CE->getCastKind() == CK_IntegralCast) {
+      const Expr *E = CE->getSubExpr()->IgnoreParenNoopCasts(Ctx);
+      while (const CastExpr *InnerCE = dyn_cast<CastExpr>(E)) {
+        if (InnerCE->getCastKind() != CK_IntegralCast)
+          break;
+        E = InnerCE->getSubExpr()->IgnoreParenNoopCasts(Ctx);
+      }
+
+      if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
+        if (BO->getOpcode() == BO_Sub &&
+            isa<AddrLabelExpr>(BO->getLHS()->IgnoreParenNoopCasts(Ctx)) &&
+            isa<AddrLabelExpr>(BO->getRHS()->IgnoreParenNoopCasts(Ctx)))
+          return true;
+      }
+    }
 
     break;
   }
