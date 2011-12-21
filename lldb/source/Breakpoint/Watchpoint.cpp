@@ -212,7 +212,7 @@ Watchpoint::SetCondition (const char *condition)
     else
     {
         // Pass NULL for expr_prefix (no translation-unit level definitions).
-        m_condition_ap.reset(new ClangUserExpression (condition, NULL, lldb::eLanguageTypeUnknown));
+        m_condition_ap.reset(new ClangUserExpression (condition, NULL, lldb::eLanguageTypeUnknown, ClangUserExpression::eResultTypeAny));
     }
 }
 

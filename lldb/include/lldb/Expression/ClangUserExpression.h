@@ -48,7 +48,7 @@ class ClangUserExpression : public ClangExpression
 {
 public:
     typedef lldb::SharedPtr<ClangUserExpression>::Type ClangUserExpressionSP;
-
+    
     //------------------------------------------------------------------
     /// Constructor
     ///
@@ -63,10 +63,15 @@ public:
     ///     If not eLanguageTypeUnknown, a language to use when parsing
     ///     the expression.  Currently restricted to those languages 
     ///     supported by Clang.
+    ///
+    /// @param[in] desired_type
+    ///     If not eResultTypeAny, the type to use for the expression
+    ///     result.
     //------------------------------------------------------------------
     ClangUserExpression (const char *expr,
                          const char *expr_prefix,
-                         lldb::LanguageType language);
+                         lldb::LanguageType language,
+                         ResultType desired_type);
     
     //------------------------------------------------------------------
     /// Destructor
@@ -85,10 +90,6 @@ public:
     ///     are needed for parsing (locations of functions, types of
     ///     variables, persistent variables, etc.)
     ///
-    /// @param[in] desired_type
-    ///     The type that the expression should be coerced to.  If NULL,
-    ///     inferred from the expression itself.
-    ///
     /// @param[in] execution_policy
     ///     Determines whether interpretation is possible or mandatory.
     ///
@@ -102,7 +103,6 @@ public:
     bool
     Parse (Stream &error_stream, 
            ExecutionContext &exe_ctx,
-           TypeFromUser desired_type,
            lldb_private::ExecutionPolicy execution_policy,
            bool keep_result_in_memory);
     
@@ -247,6 +247,16 @@ public:
     ASTTransformer (clang::ASTConsumer *passthrough);
     
     //------------------------------------------------------------------
+    /// Return the desired result type of the function, or 
+    /// eResultTypeAny if indifferent.
+    //------------------------------------------------------------------
+    virtual ResultType
+    DesiredResultType ()
+    {
+        return m_desired_type;
+    }
+    
+    //------------------------------------------------------------------
     /// Return true if validation code should be inserted into the
     /// expression.
     //------------------------------------------------------------------
@@ -285,6 +295,10 @@ public:
     ///     True if the thread's state should be restored in the case 
     ///     of an error.
     ///
+    /// @param[in] result_type
+    ///     If not eResultTypeAny, the type of the desired result.  Will
+    ///     result in parse errors if impossible.
+    ///
     /// @param[in] expr_cstr
     ///     A C string containing the expression to be evaluated.
     ///
@@ -302,6 +316,7 @@ public:
     Evaluate (ExecutionContext &exe_ctx,
               lldb_private::ExecutionPolicy execution_policy,
               lldb::LanguageType language,
+              ResultType desired_type,
               bool discard_on_error,
               const char *expr_cstr,
               const char *expr_prefix,
@@ -311,6 +326,7 @@ public:
     EvaluateWithError (ExecutionContext &exe_ctx,
                        lldb_private::ExecutionPolicy execution_policy,
                        lldb::LanguageType language,
+                       ResultType desired_type,
                        bool discard_on_error,
                        const char *expr_cstr,
                        const char *expr_prefix,
@@ -346,7 +362,7 @@ private:
     bool                                        m_allow_cxx;            ///< True if the language allows C++.
     bool                                        m_allow_objc;           ///< True if the language allows Objective-C.
     std::string                                 m_transformed_text;     ///< The text of the expression, as send to the parser
-    TypeFromUser                                m_desired_type;         ///< The type to coerce the expression's result to.  If NULL, inferred from the expression.
+    ResultType                                  m_desired_type;         ///< The type to coerce the expression's result to.  If eResultTypeAny, inferred from the expression.
     
     std::auto_ptr<ClangExpressionDeclMap>       m_expr_decl_map;        ///< The map to use when parsing and materializing the expression.
     std::auto_ptr<ClangExpressionVariableList>  m_local_variables;      ///< The local expression variables, if the expression is DWARF.

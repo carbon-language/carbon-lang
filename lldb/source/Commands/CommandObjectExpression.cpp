@@ -312,6 +312,7 @@ CommandObjectExpression::EvaluateExpression
         exe_results = target->EvaluateExpression (expr, 
                                                   m_exe_ctx.GetFramePtr(),
                                                   eExecutionPolicyOnlyWhenNeeded,
+                                                  m_command_options.print_object,
                                                   m_command_options.unwind_on_error,
                                                   keep_in_memory, 
                                                   use_dynamic, 

@@ -45,13 +45,14 @@ using namespace lldb_private;
 
 ClangUserExpression::ClangUserExpression (const char *expr,
                                           const char *expr_prefix,
-                                          lldb::LanguageType language) :
+                                          lldb::LanguageType language,
+                                          ResultType desired_type) :
     ClangExpression (),
     m_expr_text (expr),
     m_expr_prefix (expr_prefix ? expr_prefix : ""),
     m_language (language),
     m_transformed_text (),
-    m_desired_type (NULL, NULL),
+    m_desired_type (desired_type),
     m_cplusplus (false),
     m_objectivec (false),
     m_needs_object_ptr (false),
@@ -92,7 +93,6 @@ ClangUserExpression::ASTTransformer (clang::ASTConsumer *passthrough)
     
     if (!m_result_synthesizer.get())
         m_result_synthesizer.reset(new ASTResultSynthesizer(passthrough,
-                                                            m_desired_type,
                                                             *m_target));
     
     return m_result_synthesizer.get();
@@ -249,7 +249,6 @@ ApplyUnicharHack(std::string &expr)
 bool
 ClangUserExpression::Parse (Stream &error_stream, 
                             ExecutionContext &exe_ctx,
-                            TypeFromUser desired_type,
                             lldb_private::ExecutionPolicy execution_policy,
                             bool keep_result_in_memory)
 {
@@ -308,9 +307,7 @@ ClangUserExpression::Parse (Stream &error_stream,
     //////////////////////////
     // Parse the expression
     //
-    
-    m_desired_type = desired_type;
-    
+        
     m_expr_decl_map.reset(new ClangExpressionDeclMap(keep_result_in_memory, exe_ctx));
     
     if (!m_expr_decl_map->WillParse(exe_ctx))
@@ -638,19 +635,21 @@ ExecutionResults
 ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                                lldb_private::ExecutionPolicy execution_policy,
                                lldb::LanguageType language,
+                               ResultType desired_type,
                                bool discard_on_error,
                                const char *expr_cstr,
                                const char *expr_prefix,
                                lldb::ValueObjectSP &result_valobj_sp)
 {
     Error error;
-    return EvaluateWithError (exe_ctx, execution_policy, language, discard_on_error, expr_cstr, expr_prefix, result_valobj_sp, error);
+    return EvaluateWithError (exe_ctx, execution_policy, language, desired_type, discard_on_error, expr_cstr, expr_prefix, result_valobj_sp, error);
 }
 
 ExecutionResults
 ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
                                         lldb_private::ExecutionPolicy execution_policy,
                                         lldb::LanguageType language,
+                                        ResultType desired_type,
                                         bool discard_on_error,
                                         const char *expr_cstr,
                                         const char *expr_prefix,
@@ -679,7 +678,7 @@ ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
     if (process == NULL || !process->CanJIT())
         execution_policy = eExecutionPolicyNever;
     
-    ClangUserExpressionSP user_expression_sp (new ClangUserExpression (expr_cstr, expr_prefix, language));
+    ClangUserExpressionSP user_expression_sp (new ClangUserExpression (expr_cstr, expr_prefix, language, desired_type));
 
     StreamString error_stream;
         
@@ -688,7 +687,7 @@ ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
     
     const bool keep_expression_in_memory = true;
     
-    if (!user_expression_sp->Parse (error_stream, exe_ctx, TypeFromUser(NULL, NULL), execution_policy, keep_expression_in_memory))
+    if (!user_expression_sp->Parse (error_stream, exe_ctx, execution_policy, keep_expression_in_memory))
     {
         if (error_stream.GetString().empty())
             error.SetErrorString ("expression failed to parse, unknown error");

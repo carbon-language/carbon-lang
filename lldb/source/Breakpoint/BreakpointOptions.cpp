@@ -60,7 +60,7 @@ BreakpointOptions::BreakpointOptions(const BreakpointOptions& rhs) :
     if (rhs.m_thread_spec_ap.get() != NULL)
         m_thread_spec_ap.reset (new ThreadSpec(*rhs.m_thread_spec_ap.get()));
     if (rhs.m_condition_ap.get())
-        m_condition_ap.reset (new ClangUserExpression (rhs.m_condition_ap->GetUserText(), NULL, lldb::eLanguageTypeUnknown));
+        m_condition_ap.reset (new ClangUserExpression (rhs.m_condition_ap->GetUserText(), NULL, lldb::eLanguageTypeUnknown, ClangUserExpression::eResultTypeAny));
 }
 
 //----------------------------------------------------------------------
@@ -77,7 +77,7 @@ BreakpointOptions::operator=(const BreakpointOptions& rhs)
     if (rhs.m_thread_spec_ap.get() != NULL)
         m_thread_spec_ap.reset(new ThreadSpec(*rhs.m_thread_spec_ap.get()));
     if (rhs.m_condition_ap.get())
-        m_condition_ap.reset (new ClangUserExpression (rhs.m_condition_ap->GetUserText(), NULL, lldb::eLanguageTypeUnknown));
+        m_condition_ap.reset (new ClangUserExpression (rhs.m_condition_ap->GetUserText(), NULL, lldb::eLanguageTypeUnknown, ClangUserExpression::eResultTypeAny));
     return *this;
 }
 
@@ -166,7 +166,7 @@ BreakpointOptions::SetCondition (const char *condition)
     }
     else
     {
-        m_condition_ap.reset(new ClangUserExpression (condition, NULL, lldb::eLanguageTypeUnknown));
+        m_condition_ap.reset(new ClangUserExpression (condition, NULL, lldb::eLanguageTypeUnknown, ClangUserExpression::eResultTypeAny));
     }
 }
 
@@ -196,13 +196,9 @@ BreakpointOptions::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx,
         process->SetDynamicCheckers(dynamic_checkers);
     }
     
-    // Get the boolean type from the process's scratch AST context
-    ClangASTContext *ast_context = exe_ctx.GetTargetRef().GetScratchClangASTContext();
-    TypeFromUser bool_type(ast_context->GetBuiltInType_bool(), ast_context->getASTContext());
-
     const bool keep_in_memory = false;
     
-    if (!m_condition_ap->Parse (error_stream, exe_ctx, bool_type, eExecutionPolicyAlways, keep_in_memory))
+    if (!m_condition_ap->Parse (error_stream, exe_ctx, eExecutionPolicyAlways, keep_in_memory))
     {
         // Errors mean we should stop.
         return NULL;

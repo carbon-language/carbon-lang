@@ -816,6 +816,7 @@ public:
     EvaluateExpression (const char *expression,
                         StackFrame *frame,
                         lldb_private::ExecutionPolicy execution_policy,
+                        bool coerce_to_id,
                         bool unwind_on_error,
                         bool keep_in_memory,
                         lldb::DynamicValueType use_dynamic,

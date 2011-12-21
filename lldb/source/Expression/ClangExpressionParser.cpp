@@ -245,7 +245,10 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     m_compiler->getLangOpts().ThreadsafeStatics = false;
     m_compiler->getLangOpts().AccessControl = false; // Debuggers get universal access
     m_compiler->getLangOpts().DollarIdents = true; // $ indicates a persistent variable name
+    
     m_compiler->getLangOpts().DebuggerSupport = true; // Features specifically for debugger clients
+    if (expr.DesiredResultType() == ClangExpression::eResultTypeId)
+        m_compiler->getLangOpts().DebuggerCastResultToId = true;
     
     // Set CodeGen options
     m_compiler->getCodeGenOpts().EmitDeclMetadata = true;

@@ -41,16 +41,11 @@ public:
     ///     pass to the next step in the chain after processing.  Passthrough is
     ///     the next ASTConsumer, or NULL if none is required.
     ///
-    /// @param[in] desired_type
-    ///     The type that the result should have.  May be initialized with a
-    ///     NULL type, in which case the type is inferred.
-    ///
     /// @param[in] target
     ///     The target, which contains the persistent variable store and the
     ///     AST importer.
     //----------------------------------------------------------------------
     ASTResultSynthesizer(clang::ASTConsumer *passthrough,
-                         TypeFromUser desired_type,
                          Target &target);
     
     //----------------------------------------------------------------------
@@ -182,7 +177,6 @@ private:
     clang::SemaConsumer *m_passthrough_sema;    ///< The SemaConsumer down the chain, for passthrough.  NULL if it's an ASTConsumer.
     Target &m_target;                           ///< The target, which contains the persistent variable store and the
     clang::Sema *m_sema;                        ///< The Sema to use.
-    TypeFromUser m_desired_type;                ///< If non-NULL, the type to coerce the result to.
 };
 
 }

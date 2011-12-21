@@ -1,0 +1,25 @@
+Index: include/clang/Basic/LangOptions.def
+===================================================================
+--- include/clang/Basic/LangOptions.def	(revision 146622)
++++ include/clang/Basic/LangOptions.def	(working copy)
+@@ -121,6 +121,7 @@
+ BENIGN_LANGOPT(InlineVisibilityHidden , 1, 0, "hidden default visibility for inline C++ methods")
+ BENIGN_LANGOPT(ParseUnknownAnytype, 1, 0, "__unknown_anytype")
+ BENIGN_LANGOPT(DebuggerSupport , 1, 0, "debugger support")
++BENIGN_LANGOPT(DebuggerCastResultToId, 1, 0, "for 'po' in the debugger, cast the result to id if it is of unknown type")
+ BENIGN_LANGOPT(AddressSanitizer , 1, 0, "AddressSanitizer enabled")
+ 
+ BENIGN_LANGOPT(SpellChecking , 1, 1, "spell-checking")
+Index: lib/Sema/SemaExprCXX.cpp
+===================================================================
+--- lib/Sema/SemaExprCXX.cpp	(revision 146622)
++++ lib/Sema/SemaExprCXX.cpp	(working copy)
+@@ -4675,7 +4675,7 @@
+     return ExprError();
+ 
+   // Top-level message sends default to 'id' when we're in a debugger.
+-  if (getLangOptions().DebuggerSupport &&
++  if (getLangOptions().DebuggerCastResultToId &&
+       FullExpr.get()->getType() == Context.UnknownAnyTy &&
+       isa<ObjCMessageExpr>(FullExpr.get())) {
+     FullExpr = forceUnknownAnyToType(FullExpr.take(), Context.getObjCIdType());

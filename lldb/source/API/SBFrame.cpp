@@ -756,12 +756,14 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
         Host::SetCrashDescriptionWithFormat ("SBFrame::EvaluateExpression (expr = \"%s\", fetch_dynamic_value = %u) %s",
                                              expr, fetch_dynamic_value, frame_description.GetString().c_str());
 
+        const bool coerce_to_id = false;
         const bool unwind_on_error = true;
         const bool keep_in_memory = false;
 
         exe_results = m_opaque_sp->GetThread().GetProcess().GetTarget().EvaluateExpression(expr, 
                                                                                            m_opaque_sp.get(),
                                                                                            eExecutionPolicyOnlyWhenNeeded,
+                                                                                           coerce_to_id,
                                                                                            unwind_on_error, 
                                                                                            keep_in_memory, 
                                                                                            fetch_dynamic_value, 

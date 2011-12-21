@@ -41,6 +41,11 @@ class RecordingMemoryManager;
 class ClangExpression
 {
 public:
+    enum ResultType {
+        eResultTypeAny,
+        eResultTypeId
+    };
+    
     ClangExpression () :
         m_jit_process_sp(),
         m_jit_alloc (LLDB_INVALID_ADDRESS),
@@ -106,6 +111,16 @@ public:
     //------------------------------------------------------------------
     virtual clang::ASTConsumer *
     ASTTransformer (clang::ASTConsumer *passthrough) = 0;
+    
+    //------------------------------------------------------------------
+    /// Return the desired result type of the function, or 
+    /// eResultTypeAny if indifferent.
+    //------------------------------------------------------------------
+    virtual ResultType
+    DesiredResultType ()
+    {
+        return eResultTypeAny;
+    }
     
     //------------------------------------------------------------------
     /// Flags
