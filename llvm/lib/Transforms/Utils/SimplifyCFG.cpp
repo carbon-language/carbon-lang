@@ -293,6 +293,7 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
     Cost = 1;
     break;   // These are all cheap and non-trapping instructions.
 
+  case Instruction::Call:
   case Instruction::Select:
     Cost = 2;
     break;

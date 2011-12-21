@@ -1912,11 +1912,31 @@ bool llvm::isSafeToSpeculativelyExecute(const Instruction *Inst,
       return false;
     return LI->getPointerOperand()->isDereferenceablePointer();
   }
-  case Instruction::Call:
+  case Instruction::Call: {
+   if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
+     switch (II->getIntrinsicID()) {
+       case Intrinsic::bswap:
+       case Intrinsic::ctlz:
+       case Intrinsic::ctpop:
+       case Intrinsic::cttz:
+       case Intrinsic::objectsize:
+       case Intrinsic::sadd_with_overflow:
+       case Intrinsic::smul_with_overflow:
+       case Intrinsic::ssub_with_overflow:
+       case Intrinsic::uadd_with_overflow:
+       case Intrinsic::umul_with_overflow:
+       case Intrinsic::usub_with_overflow:
+         return true;
+       // TODO: some fp intrinsics are marked as having the same error handling
+       // as libm. They're safe to speculate when they won't error.
+       // TODO: are convert_{from,to}_fp16 safe?
+       // TODO: can we list target-specific intrinsics here?
+       default: break;
+     }
+   }
     return false; // The called function could have undefined behavior or
-                  // side-effects.
-                  // FIXME: We should special-case some intrinsics (bswap,
-                  // overflow-checking arithmetic, etc.)
+                  // side-effects, even if marked readnone nounwind.
+  }
   case Instruction::VAArg:
   case Instruction::Alloca:
   case Instruction::Invoke:
