@@ -6085,3 +6085,6 @@ def : NEONMnemonicAlias<"vceqq", "vceq">;
 
 def : NEONMnemonicAlias<"vzipq", "vzip">;
 def : NEONMnemonicAlias<"vswpq", "vswp">;
+
+def : NEONMnemonicAlias<"vrecpeq.f32", "vrecpe.f32">;
+def : NEONMnemonicAlias<"vrecpeq.u32", "vrecpe.u32">;
