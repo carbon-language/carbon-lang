@@ -11,3 +11,6 @@
 @implementation b
 @end
 
+@interface NSArray @end
+@class NSArray;
+@implementation NSArray @end

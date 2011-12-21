@@ -2478,7 +2478,7 @@ void RewriteObjC::SynthGetSuperClassFunctionDecl() {
                                                    false);
 }
 
-// SynthGetMetaClassFunctionDecl - id objc_getClass(const char *name);
+// SynthGetMetaClassFunctionDecl - id objc_getMetaClass(const char *name);
 void RewriteObjC::SynthGetMetaClassFunctionDecl() {
   IdentifierInfo *getClassIdent = &Context->Idents.get("objc_getMetaClass");
   SmallVector<QualType, 16> ArgTys;
@@ -2673,7 +2673,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     // (Class)objc_getClass("CurrentClass")
     CastExpr *ArgExpr = NoTypeInfoCStyleCastExpr(Context,
                                              Context->getObjCClassType(),
-                                             CK_CPointerToObjCPointerCast, Cls);
+                                             CK_BitCast, Cls);
     ClsExprs.clear();
     ClsExprs.push_back(ArgExpr);
     Cls = SynthesizeCallToFunctionDecl(GetSuperClassFunctionDecl,

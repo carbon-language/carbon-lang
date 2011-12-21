@@ -898,8 +898,9 @@ public:
   /// isImplicitInterfaceDecl - check that this is an implicitly declared
   /// ObjCInterfaceDecl node. This is for legacy objective-c @implementation
   /// declaration without an @interface declaration.
-  bool isImplicitInterfaceDecl() const { return isImplicit(); }
-  void setImplicitInterfaceDecl(bool val) { setImplicit(val); }
+  bool isImplicitInterfaceDecl() const { 
+    return hasDefinition() ? Data->Definition->isImplicit() : isImplicit(); 
+  }
 
   /// ClassImplementsProtocol - Checks that 'lProto' protocol
   /// has been implemented in IDecl class, its super class or categories (if
