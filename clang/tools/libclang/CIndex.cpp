@@ -193,8 +193,8 @@ static bool visitPreprocessedEntitiesInRange(SourceRange R,
   if (!Visitor.shouldVisitIncludedEntities()) {
     // If the begin/end of the range lie in the same FileID, do the optimization
     // where we skip preprocessed entities that do not come from the same FileID.
-    FID = SM.getFileID(R.getBegin());
-    if (FID != SM.getFileID(R.getEnd()))
+    FID = SM.getFileID(SM.getFileLoc(R.getBegin()));
+    if (FID != SM.getFileID(SM.getFileLoc(R.getEnd())))
       FID = FileID();
   }
 
