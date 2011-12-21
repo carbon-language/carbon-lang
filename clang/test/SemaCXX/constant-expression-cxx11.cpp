@@ -143,8 +143,8 @@ static_assert(F(0) == 0, "");
 static_assert(F(1, 0) == 1, "");
 static_assert(F(2, "test") == 2, "");
 static_assert(F(3, &F) == 3, "");
-int k = 0;
-static_assert(F(4, k) == 3, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
+int k = 0; // expected-note {{here}}
+static_assert(F(4, k) == 3, ""); // expected-error {{constant expression}} expected-note {{read of non-const variable 'k'}}
 
 }
 
@@ -362,8 +362,9 @@ static_assert(MangleChars(U"constexpr!") == 1768383, "");
 
 constexpr char c0 = "nought index"[0];
 constexpr char c1 = "nice index"[10];
-constexpr char c2 = "nasty index"[12]; // expected-error {{must be initialized by a constant expression}} expected-warning {{is past the end}}
-constexpr char c3 = "negative index"[-1]; // expected-error {{must be initialized by a constant expression}} expected-warning {{is before the beginning}}
+constexpr char c2 = "nasty index"[12]; // expected-error {{must be initialized by a constant expression}} expected-warning {{is past the end}} expected-note {{read of dereferenced one-past-the-end pointer}}
+// FIXME: block the pointer arithmetic with undefined behavior here
+constexpr char c3 = "negative index"[-1]; // expected-error {{must be initialized by a constant expression}} expected-warning {{is before the beginning}} expected-note {{read of dereferenced one-past-the-end pointer}}
 constexpr char c4 = ((char*)(int*)"no reinterpret_casts allowed")[14]; // expected-error {{must be initialized by a constant expression}}
 
 constexpr const char *p = "test" + 2;
@@ -386,6 +387,10 @@ static_assert(strcmp_ce("hello world", "hello clang") > 0, "");
 static_assert(strcmp_ce("constexpr", "test") < 0, "");
 static_assert(strcmp_ce("", " ") < 0, "");
 
+struct S {
+  int n : "foo"[4]; // expected-error {{constant expression}} expected-note {{read of dereferenced one-past-the-end pointer is not allowed in a constant expression}}
+};
+
 }
 
 namespace Array {
@@ -403,7 +408,7 @@ static_assert(sum_xs == 15, "");
 constexpr int ZipFoldR(int (*F)(int x, int y, int c), int n,
                        const int *xs, const int *ys, int c) {
   return n ? F(
-               *xs, // expected-note {{subexpression not valid}}
+               *xs, // expected-note {{read of dereferenced one-past-the-end pointer}}
                *ys,
                ZipFoldR(F, n-1, xs+1, ys+1, c)) // \
       expected-note {{in call to 'ZipFoldR(&SubMul, 2, &xs[4], &ys[4], 1)'}} \
@@ -423,20 +428,21 @@ static_assert(ZipFoldR(SubMul, 3, xs+3, ys+3, 1), ""); // \
 
 constexpr const int *p = xs + 3;
 constexpr int xs4 = p[1]; // ok
-constexpr int xs5 = p[2]; // expected-error {{constant expression}}
+constexpr int xs5 = p[2]; // expected-error {{constant expression}} expected-note {{read of dereferenced one-past-the-end pointer}}
 constexpr int xs0 = p[-3]; // ok
-constexpr int xs_1 = p[-4]; // expected-error {{constant expression}}
+// FIXME: check pointer arithmetic here
+constexpr int xs_1 = p[-4]; // expected-error {{constant expression}} expected-note {{read of dereferenced one-past-the-end pointer}}
 
 constexpr int zs[2][2][2][2] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
 static_assert(zs[0][0][0][0] == 1, "");
 static_assert(zs[1][1][1][1] == 16, "");
-static_assert(zs[0][0][0][2] == 3, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
+static_assert(zs[0][0][0][2] == 3, ""); // expected-error {{constant expression}} expected-note {{read of dereferenced one-past-the-end pointer}}
 static_assert((&zs[0][0][0][2])[-1] == 2, "");
 static_assert(**(**(zs + 1) + 1) == 11, "");
 static_assert(*(&(&(*(*&(&zs[2] - 1)[0] + 2 - 2))[2])[-1][-1] + 1) == 11, "");
 
 constexpr int fail(const int &p) {
-  return (&p)[64]; // expected-note {{subexpression}}
+  return (&p)[64]; // expected-note {{read of dereferenced one-past-the-end pointer}}
 }
 static_assert(fail(*(&(&(*(*&(&zs[2] - 1)[0] + 2 - 2))[2])[-1][-1] + 1)) == 11, ""); // \
 expected-error {{static_assert expression is not an integral constant expression}} \
@@ -532,10 +538,10 @@ struct G {
   constexpr G() : t(&t) {}
 } constexpr g;
 
-static_assert(g.t.u1.a == 42, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
+static_assert(g.t.u1.a == 42, ""); // expected-error {{constant expression}} expected-note {{read of member 'a' of union with active member 'b'}}
 static_assert(g.t.u1.b == 42, "");
 static_assert(g.t.u2.c == 42, "");
-static_assert(g.t.u2.d == 42, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
+static_assert(g.t.u2.d == 42, ""); // expected-error {{constant expression}} expected-note {{read of member 'd' of union with active member 'c'}}
 
 struct S {
   int a, b;
@@ -579,10 +585,11 @@ constexpr AggregateInit agg1 = { "hello"[0] };
 static_assert(strcmp_ce(&agg1.c, "hello") == 0, "");
 static_assert(agg1.n == 0, "");
 static_assert(agg1.d == 0.0, "");
-static_assert(agg1.arr[-1] == 0, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
+// FIXME: check pointer arithmetic here.
+static_assert(agg1.arr[-1] == 0, ""); // expected-error {{constant expression}} expected-note {{read of dereferenced one-past-the-end}}
 static_assert(agg1.arr[0] == 0, "");
 static_assert(agg1.arr[4] == 0, "");
-static_assert(agg1.arr[5] == 0, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
+static_assert(agg1.arr[5] == 0, ""); // expected-error {{constant expression}} expected-note {{read of dereferenced one-past-the-end}}
 static_assert(agg1.p == nullptr, "");
 
 namespace SimpleDerivedClass {
@@ -700,9 +707,9 @@ union U {
 
 constexpr U u[4] = { { .a = 0 }, { .b = 1 }, { .a = 2 }, { .b = 3 } }; // expected-warning 4{{extension}}
 static_assert(u[0].a == 0, "");
-static_assert(u[0].b, ""); // expected-error {{constant expression}}
+static_assert(u[0].b, ""); // expected-error {{constant expression}} expected-note {{read of member 'b' of union with active member 'a'}}
 static_assert(u[1].b == 1, "");
-static_assert((&u[1].b)[1] == 2, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
+static_assert((&u[1].b)[1] == 2, ""); // expected-error {{constant expression}} expected-note {{read of dereferenced one-past-the-end pointer}}
 static_assert(*(&(u[1].b) + 1 + 1) == 3, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
 static_assert((&(u[1]) + 1 + 1)->b == 3, "");
 
@@ -830,9 +837,10 @@ namespace ArrayBaseDerived {
   constexpr Derived *pd9 = pd6 + 3;
   constexpr Derived *pd10 = pd6 + 4;
   constexpr int pd9n = pd9->n; // ok
-  constexpr int err_pd10n = pd10->n; // expected-error {{constant expression}}
+  constexpr int err_pd10n = pd10->n; // expected-error {{constant expression}} expected-note {{read of dereferenced one-past-the-end pointer}}
   constexpr int pd0n = pd10[-10].n;
-  constexpr int err_pdminus1n = pd10[-11].n; // expected-error {{constant expression}}
+  // FIXME: check pointer arithmetic here.
+  constexpr int err_pdminus1n = pd10[-11].n; // expected-error {{constant expression}} expected-note {{read of dereferenced one-past-the-end pointer}}
 
   constexpr Base *pb9 = pd9;
   constexpr const int *(Base::*pfb)() const =
@@ -916,4 +924,27 @@ namespace ExprWithCleanups {
   struct A { A(); ~A(); int get(); };
   constexpr int get(bool FromA) { return FromA ? A().get() : 1; }
   constexpr int n = get(false);
+}
+
+namespace Volatile {
+
+volatile constexpr int n1 = 0; // expected-note {{here}}
+volatile const int n2 = 0; // expected-note {{here}}
+int n3 = 37; // expected-note {{declared here}}
+
+constexpr int m1 = n1; // expected-error {{constant expression}} expected-note {{read of volatile object 'n1'}}
+constexpr int m2 = n2; // expected-error {{constant expression}} expected-note {{read of volatile object 'n2'}}
+
+struct T { int n; };
+const T t = { 42 }; // expected-note {{declared here}}
+
+constexpr int f(volatile int &&r) {
+  return r; // expected-note {{read of volatile temporary is not allowed in a constant expression}}
+}
+struct S {
+  int k : f(0); // expected-error {{constant expression}} expected-note {{temporary created here}} expected-note {{in call to 'f(0)'}}
+  int l : n3; // expected-error {{constant expression}} expected-note {{read of non-const variable}}
+  int m : t.n; // expected-error {{constant expression}} expected-note {{read of non-constexpr variable}}
+};
+
 }

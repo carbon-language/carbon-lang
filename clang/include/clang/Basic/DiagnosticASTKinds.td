@@ -9,6 +9,7 @@
 
 let Component = "AST" in {
 
+// Constant expression diagnostics. These (and their users) belong in Sema.
 //def note_comma_in_ice : Note<
 //  "C does not permit evaluated commas in an integer constant expression">;
 def note_expr_divide_by_zero : Note<"division by zero">;
@@ -33,8 +34,26 @@ def note_constexpr_past_end : Note<
 def note_constexpr_var_init_non_constant : Note<
   "initializer of %0 is not a constant expression">;
 def note_constexpr_temporary_here : Note<"temporary created here">;
+def note_constexpr_literal_here : Note<"literal written here">;
 def note_constexpr_depth_limit_exceeded : Note<
   "constexpr evaluation exceeded maximum depth of %0 calls">;
+def note_constexpr_ltor_volatile_type : Note<
+  "read of volatile-qualified type %0 is not allowed in a constant expression">;
+def note_constexpr_ltor_volatile_obj : Note<
+  "read of volatile %select{temporary|object %1|member %1}0 is not allowed in "
+  "a constant expression">;
+def note_constexpr_ltor_non_const_int : Note<
+  "read of non-const variable %0 is not allowed in a constant expression">;
+def note_constexpr_ltor_non_constexpr : Note<
+  "read of non-constexpr variable %0 is not allowed in a constant expression">;
+def note_constexpr_read_past_end : Note<
+  "read of dereferenced one-past-the-end pointer is not allowed in a "
+  "constant expression">;
+def note_constexpr_read_inactive_union_member : Note<
+  "read of member %0 of union with %select{active member %2|no active member}1 "
+  "is not allowed in a constant expression">;
+def note_constexpr_read_uninit : Note<
+  "read of uninitialized object is not allowed in a constant expression">;
 def note_constexpr_calls_suppressed : Note<
   "(skipping %0 call%s0 in backtrace; use -fconstexpr-backtrace-limit=0 to "
   "see all)">;

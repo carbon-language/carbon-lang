@@ -146,26 +146,50 @@ struct Lambda {
   //int n : []{ return 1; }();
 };
 
-// FIXME:
 // - an lvalue-to-rvalue conversion (4.1) unless it is applied to
-//
-//   - a non-volatile glvalue of integral or enumeration type that refers to a
-//   non-volatile const object with a preceding initialization, initialized with
-//   a constant expression  [Note: a string literal (2.14.5 [lex.string])
-//   corresponds to an array of such objects. -end note], or
-//
-//   - a non-volatile glvalue of literal type that refers to a non-volatile
-//   object defined with constexpr, or that refers to a sub-object of such an
-//   object, or
-//
-//   - a non-volatile glvalue of literal type that refers to a non-volatile
-//   temporary object whose lifetime has not ended, initialized with a constant
-//   expression;
+namespace LValueToRValue {
+  // - a non-volatile glvalue of integral or enumeration type that refers to a
+  //   non-volatile const object with a preceding initialization, initialized
+  //   with a constant expression  [Note: a string literal (2.14.5 [lex.string])
+  //   corresponds to an array of such objects. -end note], or
+  volatile const int vi = 1; // expected-note {{here}}
+  const int ci = 1;
+  volatile const int &vrci = ci;
+  static_assert(vi, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type 'const volatile int'}}
+  static_assert(const_cast<int&>(vi), ""); // expected-error {{constant expression}} expected-note {{read of volatile object 'vi'}}
+  static_assert(vrci, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
+
+  // - a non-volatile glvalue of literal type that refers to a non-volatile
+  //   object defined with constexpr, or that refers to a sub-object of such an
+  //   object, or
+  struct S {
+    constexpr S(int=0) : i(1), v(1) {}
+    constexpr S(const S &s) : i(2), v(2) {}
+    int i;
+    volatile int v;
+  };
+  constexpr S s;
+  constexpr volatile S vs; // expected-note {{here}}
+  constexpr const volatile S &vrs = s;
+  static_assert(s.i, "");
+  static_assert(s.v, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
+  static_assert(vs.i, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
+  static_assert(const_cast<int&>(vs.i), ""); // expected-error {{constant expression}} expected-note {{read of volatile object 'vs'}}
+  static_assert(vrs.i, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
+
+  // - a non-volatile glvalue of literal type that refers to a non-volatile
+  //   temporary object whose lifetime has not ended, initialized with a
+  //   constant expression;
+  constexpr volatile S f() { return S(); }
+  static_assert(f().i, ""); // ok! there's no lvalue-to-rvalue conversion here!
+  static_assert(((volatile const S&&)(S)0).i, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
+}
 
 // FIXME:
 //
-// DR1312: The proposed wording for this defect has issues, so we instead
-// prohibit casts from pointers to cv void (see core-20842 and core-20845).
+// DR1312: The proposed wording for this defect has issues, so we ignore this
+// bullet and instead prohibit casts from pointers to cv void (see core-20842
+// and core-20845).
 //
 // - an lvalue-to-rvalue conversion (4.1 [conv.lval]) that is applied to a
 // glvalue of type cv1 T that refers to an object of type cv2 U, where T and U
@@ -175,14 +199,13 @@ struct Lambda {
 // - an lvalue-to-rvalue conversion (4.1) that is applied to a glvalue that
 // refers to a non-active member of a union or a subobject thereof;
 
-// FIXME:
 // - an id-expression that refers to a variable or data member of reference type
 //   unless the reference has a preceding initialization, initialized with a
 //   constant expression;
 namespace References {
   const int a = 2;
   int &b = *const_cast<int*>(&a);
-  int c = 10;
+  int c = 10; // expected-note 2 {{here}}
   int &d = c;
   constexpr int e = 42;
   int &f = const_cast<int&>(e);
@@ -195,8 +218,8 @@ namespace References {
   struct S {
     int A : a;
     int B : b;
-    int C : c; // expected-error {{constant expression}}
-    int D : d; // expected-error {{constant expression}}
+    int C : c; // expected-error {{constant expression}} expected-note {{read of non-const variable 'c'}}
+    int D : d; // expected-error {{constant expression}} expected-note {{read of non-const variable 'c'}}
     int D2 : &d - &c + 1;
     int E : e / 2;
     int F : f - 11;

@@ -344,7 +344,8 @@ namespace {
 
   public:
     /// Diagnose that the evaluation cannot be folded.
-    OptionalDiagnostic Diag(SourceLocation Loc, diag::kind DiagId,
+    OptionalDiagnostic Diag(SourceLocation Loc, diag::kind DiagId
+                              = diag::note_invalid_subexpr_in_const_expr,
                             unsigned ExtraNotes = 0) {
       // If we have a prior diagnostic, it will be noting that the expression
       // isn't a constant expression. This diagnostic is more important.
@@ -368,7 +369,8 @@ namespace {
 
     /// Diagnose that the evaluation does not produce a C++11 core constant
     /// expression.
-    OptionalDiagnostic CCEDiag(SourceLocation Loc, diag::kind DiagId,
+    OptionalDiagnostic CCEDiag(SourceLocation Loc, diag::kind DiagId
+                                 = diag::note_invalid_subexpr_in_const_expr,
                                unsigned ExtraNotes = 0) {
       // Don't override a previous diagnostic.
       if (!EvalStatus.Diag || !EvalStatus.Diag->empty())
@@ -729,7 +731,7 @@ static bool CheckLValueConstantExpression(EvalInfo &Info, const Expr *E,
         Info.Note(Base.dyn_cast<const Expr*>()->getExprLoc(),
                   diag::note_constexpr_temporary_here);
     } else {
-      Info.Diag(E->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
+      Info.Diag(E->getExprLoc());
     }
     return false;
   }
@@ -1142,8 +1144,14 @@ static unsigned getBaseIndex(const CXXRecordDecl *Derived,
 static bool ExtractSubobject(EvalInfo &Info, const Expr *E,
                              CCValue &Obj, QualType ObjType,
                              const SubobjectDesignator &Sub, QualType SubType) {
-  if (Sub.Invalid || Sub.OnePastTheEnd) {
+  if (Sub.Invalid) {
     Info.Diag(E->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
+    return false;
+  }
+  if (Sub.OnePastTheEnd) {
+    Info.Diag(E->getExprLoc(), Info.getLangOpts().CPlusPlus0x ?
+                diag::note_constexpr_read_past_end :
+                diag::note_invalid_subexpr_in_const_expr);
     return false;
   }
   if (Sub.Entries.empty())
@@ -1159,7 +1167,11 @@ static bool ExtractSubobject(EvalInfo &Info, const Expr *E,
       assert(CAT && "vla in literal type?");
       uint64_t Index = Sub.Entries[I].ArrayIndex;
       if (CAT->getSize().ule(Index)) {
-        Info.Diag(E->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
+        // Note, it should not be possible to form a pointer with a valid
+        // designator which points more than one past the end of the array.
+        Info.Diag(E->getExprLoc(), Info.getLangOpts().CPlusPlus0x ?
+                    diag::note_constexpr_read_past_end :
+                    diag::note_invalid_subexpr_in_const_expr);
         return false;
       }
       if (O->getArrayInitializedElts() > Index)
@@ -1174,13 +1186,27 @@ static bool ExtractSubobject(EvalInfo &Info, const Expr *E,
         const FieldDecl *UnionField = O->getUnionField();
         if (!UnionField ||
             UnionField->getCanonicalDecl() != Field->getCanonicalDecl()) {
-          Info.Diag(E->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
+          Info.Diag(E->getExprLoc(),
+                    diag::note_constexpr_read_inactive_union_member)
+            << Field << !UnionField << UnionField;
           return false;
         }
         O = &O->getUnionValue();
       } else
         O = &O->getStructField(Field->getFieldIndex());
       ObjType = Field->getType();
+
+      if (ObjType.isVolatileQualified()) {
+        if (Info.getLangOpts().CPlusPlus) {
+          // FIXME: Include a description of the path to the volatile subobject.
+          Info.Diag(E->getExprLoc(), diag::note_constexpr_ltor_volatile_obj, 1)
+            << 2 << Field;
+          Info.Note(Field->getLocation(), diag::note_declared_at);
+        } else {
+          Info.Diag(E->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
+        }
+        return false;
+      }
     } else {
       // Next subobject is a base class.
       const CXXRecordDecl *Derived = ObjType->getAsCXXRecordDecl();
@@ -1190,7 +1216,7 @@ static bool ExtractSubobject(EvalInfo &Info, const Expr *E,
     }
 
     if (O->isUninit()) {
-      Info.Diag(E->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
+      Info.Diag(E->getExprLoc(), diag::note_constexpr_read_uninit);
       return false;
     }
   }
@@ -1212,12 +1238,29 @@ static bool ExtractSubobject(EvalInfo &Info, const Expr *E,
 static bool HandleLValueToRValueConversion(EvalInfo &Info, const Expr *Conv,
                                            QualType Type,
                                            const LValue &LVal, CCValue &RVal) {
+  // In C, an lvalue-to-rvalue conversion is never a constant expression.
+  if (!Info.getLangOpts().CPlusPlus)
+    Info.CCEDiag(Conv->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
+
   const Expr *Base = LVal.Base.dyn_cast<const Expr*>();
   CallStackFrame *Frame = LVal.Frame;
+  SourceLocation Loc = Conv->getExprLoc();
 
   if (!LVal.Base) {
     // FIXME: Indirection through a null pointer deserves a specific diagnostic.
-    Info.Diag(Conv->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
+    Info.Diag(Loc, diag::note_invalid_subexpr_in_const_expr);
+    return false;
+  }
+
+  // C++11 DR1311: An lvalue-to-rvalue conversion on a volatile-qualified type
+  // is not a constant expression (even if the object is non-volatile). We also
+  // apply this rule to C++98, in order to conform to the expected 'volatile'
+  // semantics.
+  if (Type.isVolatileQualified()) {
+    if (Info.getLangOpts().CPlusPlus)
+      Info.Diag(Loc, diag::note_constexpr_ltor_volatile_type) << Type;
+    else
+      Info.Diag(Loc);
     return false;
   }
 
@@ -1227,31 +1270,60 @@ static bool HandleLValueToRValueConversion(EvalInfo &Info, const Expr *Conv,
     // expressions are constant expressions too. Inside constexpr functions,
     // parameters are constant expressions even if they're non-const.
     // In C, such things can also be folded, although they are not ICEs.
-    //
-    // FIXME: volatile-qualified ParmVarDecls need special handling. A literal
-    // interpretation of C++11 suggests that volatile parameters are OK if
-    // they're never read (there's no prohibition against constructing volatile
-    // objects in constant expressions), but lvalue-to-rvalue conversions on
-    // them are not permitted.
     const VarDecl *VD = dyn_cast<VarDecl>(D);
     if (!VD || VD->isInvalidDecl()) {
-      Info.Diag(Conv->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
+      Info.Diag(Loc);
       return false;
     }
 
+    // DR1313: If the object is volatile-qualified but the glvalue was not,
+    // behavior is undefined so the result is not a constant expression.
     QualType VT = VD->getType();
-    if (!isa<ParmVarDecl>(VD)) {
-      if (!IsConstNonVolatile(VT)) {
-        Info.Diag(Conv->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
-        return false;
+    if (VT.isVolatileQualified()) {
+      if (Info.getLangOpts().CPlusPlus) {
+        Info.Diag(Loc, diag::note_constexpr_ltor_volatile_obj, 1) << 1 << VD;
+        Info.Note(VD->getLocation(), diag::note_declared_at);
+      } else {
+        Info.Diag(Loc);
       }
-      // FIXME: Allow folding of values of any literal type in all languages.
-      if (!VT->isIntegralOrEnumerationType() && !VT->isRealFloatingType() &&
-          !VD->isConstexpr()) {
-        Info.Diag(Conv->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
+      return false;
+    }
+
+    if (!isa<ParmVarDecl>(VD)) {
+      if (VD->isConstexpr()) {
+        // OK, we can read this variable.
+      } else if (VT->isIntegralOrEnumerationType()) {
+        if (!VT.isConstQualified()) {
+          if (Info.getLangOpts().CPlusPlus) {
+            Info.Diag(Loc, diag::note_constexpr_ltor_non_const_int, 1) << VD;
+            Info.Note(VD->getLocation(), diag::note_declared_at);
+          } else {
+            Info.Diag(Loc);
+          }
+          return false;
+        }
+      } else if (VT->isFloatingType() && VT.isConstQualified()) {
+        // We support folding of const floating-point types, in order to make
+        // static const data members of such types (supported as an extension)
+        // more useful.
+        if (Info.getLangOpts().CPlusPlus0x) {
+          Info.CCEDiag(Loc, diag::note_constexpr_ltor_non_constexpr, 1) << VD;
+          Info.Note(VD->getLocation(), diag::note_declared_at);
+        } else {
+          Info.CCEDiag(Loc);
+        }
+      } else {
+        // FIXME: Allow folding of values of any literal type in all languages.
+        if (Info.getLangOpts().CPlusPlus0x) {
+          Info.Diag(Loc, diag::note_constexpr_ltor_non_constexpr, 1) << VD;
+          Info.Note(VD->getLocation(), diag::note_declared_at);
+        } else {
+          Info.Diag(Loc);
+        }
         return false;
       }
     }
+
     if (!EvaluateVarDeclInit(Info, Conv, VD, Frame, RVal))
       return false;
 
@@ -1269,6 +1341,17 @@ static bool HandleLValueToRValueConversion(EvalInfo &Info, const Expr *Conv,
     Frame = RVal.getLValueFrame();
   }
 
+  // Volatile temporary objects cannot be read in constant expressions.
+  if (Base->getType().isVolatileQualified()) {
+    if (Info.getLangOpts().CPlusPlus) {
+      Info.Diag(Loc, diag::note_constexpr_ltor_volatile_obj, 1) << 0;
+      Info.Note(Base->getExprLoc(), diag::note_constexpr_temporary_here);
+    } else {
+      Info.Diag(Loc);
+    }
+    return false;
+  }
+
   // FIXME: Support PredefinedExpr, ObjCEncodeExpr, MakeStringConstant
   if (const StringLiteral *S = dyn_cast<StringLiteral>(Base)) {
     const SubobjectDesignator &Designator = LVal.Designator;
@@ -1279,8 +1362,13 @@ static bool HandleLValueToRValueConversion(EvalInfo &Info, const Expr *Conv,
 
     assert(Type->isIntegerType() && "string element not integer type");
     uint64_t Index = Designator.Entries[0].ArrayIndex;
-    if (Index > S->getLength()) {
-      Info.Diag(Conv->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
+    const ConstantArrayType *CAT =
+        Info.Ctx.getAsConstantArrayType(S->getType());
+    if (Index >= CAT->getSize().getZExtValue()) {
+      // Note, it should not be possible to form a pointer which points more
+      // than one past the end of the array without producing a prior const expr
+      // diagnostic.
+      Info.Diag(Loc, diag::note_constexpr_read_past_end);
       return false;
     }
     APSInt Value(S->getCharByteWidth() * Info.Ctx.getCharWidth(),
