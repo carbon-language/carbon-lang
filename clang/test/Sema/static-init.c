@@ -15,7 +15,7 @@ union bar {
 };
 
 struct foo {
-  unsigned ptr;
+  short ptr;
 };
 
 union bar u[1];
