@@ -41,7 +41,8 @@ void benchmark(llvm::TimerGroup &Group, llvm::StringRef Name,
 
   llvm::Timer Parsing((Name + ": Parsing").str(), Group);
   Parsing.startTimer();
-  llvm::JSONParser Parser(JSONText);
+  llvm::SourceMgr SM;
+  llvm::JSONParser Parser(JSONText, &SM);
   if (!Parser.validate()) {
     llvm::errs() << "Parsing error in JSON parser benchmark.\n";
     exit(1);

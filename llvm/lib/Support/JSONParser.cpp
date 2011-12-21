@@ -15,14 +15,20 @@
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/MemoryBuffer.h"
 
 using namespace llvm;
 
-JSONParser::JSONParser(StringRef Input)
-  : Input(Input), Position(Input.begin()) {}
+JSONParser::JSONParser(StringRef Input, SourceMgr *SM)
+  : SM(SM), Failed(false) {
+  InputBuffer = MemoryBuffer::getMemBuffer(Input, "JSON");
+  SM->AddNewSourceBuffer(InputBuffer, SMLoc());
+  End = InputBuffer->getBuffer().end();
+  Position = InputBuffer->getBuffer().begin();
+}
 
 JSONValue *JSONParser::parseRoot() {
-  if (Position != Input.begin())
+  if (Position != InputBuffer->getBuffer().begin())
     report_fatal_error("Cannot resuse JSONParser.");
   if (isWhitespace())
     nextNonWhitespace();
@@ -40,7 +46,11 @@ JSONValue *JSONParser::parseRoot() {
 }
 
 bool JSONParser::validate() {
-  return skip(*parseRoot());
+  JSONValue *Root = parseRoot();
+  if (Root == NULL) {
+    return false;
+  }
+  return skip(*Root);
 }
 
 bool JSONParser::skip(const JSONAtom &Atom) {
@@ -55,22 +65,23 @@ bool JSONParser::skip(const JSONAtom &Atom) {
 }
 
 // Sets the current error to:
-// "Error while parsing JSON: expected <Expected>, but found <Found>".
+// "expected <Expected>, but found <Found>".
 void JSONParser::setExpectedError(StringRef Expected, StringRef Found) {
-  ErrorMessage = ("Error while parsing JSON: expected " +
-    Expected + ", but found " + Found + ".").str();
+  SM->PrintMessage(SMLoc::getFromPointer(Position), SourceMgr::DK_Error,
+    "expected " + Expected + ", but found " + Found + ".", ArrayRef<SMRange>());
+  Failed = true;
 }
 
 // Sets the current error to:
-// "Error while parsing JSON: expected <Expected>, but found <Found>".
+// "expected <Expected>, but found <Found>".
 void JSONParser::setExpectedError(StringRef Expected, char Found) {
-  setExpectedError(Expected, StringRef(&Found, 1));
+  setExpectedError(Expected, ("'" + StringRef(&Found, 1) + "'").str());
 }
 
 // If there is no character available, returns true and sets the current error
-// to: "Error while parsing JSON: expected <Expected>, but found EOF.".
+// to: "expected <Expected>, but found EOF.".
 bool JSONParser::errorIfAtEndOfFile(StringRef Expected) {
-  if (Position == Input.end()) {
+  if (Position == End) {
     setExpectedError(Expected, "EOF");
     return true;
   }
@@ -78,12 +89,12 @@ bool JSONParser::errorIfAtEndOfFile(StringRef Expected) {
 }
 
 // Sets the current error if the current character is not C to:
-// "Error while parsing JSON: expected 'C', but got <current character>".
+// "expected 'C', but got <current character>".
 bool JSONParser::errorIfNotAt(char C, StringRef Message) {
-  if (Position == Input.end() || *Position != C) {
+  if (*Position != C) {
     std::string Expected =
       ("'" + StringRef(&C, 1) + "' " + Message).str();
-    if (Position == Input.end())
+    if (Position == End)
       setExpectedError(Expected, "EOF");
     else
       setExpectedError(Expected, *Position);
@@ -113,7 +124,7 @@ static bool wasEscaped(StringRef::iterator First,
 
 // Parses a JSONString, assuming that the current position is on a quote.
 JSONString *JSONParser::parseString() {
-  assert(Position != Input.end());
+  assert(Position != End);
   assert(!isWhitespace());
   if (errorIfNotAt('"', "at start of string"))
     return 0;
@@ -136,9 +147,9 @@ JSONString *JSONParser::parseString() {
     // Step over the current quote.
     ++Position;
     // Find the next quote.
-    while (Position != Input.end() && *Position != '"')
+    while (Position != End && *Position != '"')
       ++Position;
-    if (errorIfAtEndOfFile("\" at end of string"))
+    if (errorIfAtEndOfFile("'\"' at end of string"))
       return 0;
     // Repeat until the previous character was not a '\' or was an escaped
     // backslash.
@@ -158,22 +169,18 @@ void JSONParser::nextNonWhitespace() {
 
 // Checks if there is a whitespace character at the current position.
 bool JSONParser::isWhitespace() {
-  return Position != Input.end() && (*Position == ' ' || *Position == '\t' ||
-                                     *Position == '\n' || *Position == '\r');
+  return *Position == ' ' || *Position == '\t' ||
+         *Position == '\n' || *Position == '\r';
 }
 
 bool JSONParser::failed() const {
-  return !ErrorMessage.empty();
-}
-
-std::string JSONParser::getErrorMessage() const {
-  return ErrorMessage;
+  return Failed;
 }
 
 // Parses a JSONValue, assuming that the current position is at the first
 // character of the value.
 JSONValue *JSONParser::parseValue() {
-  assert(Position != Input.end());
+  assert(Position != End);
   assert(!isWhitespace());
   switch (*Position) {
     case '[':
@@ -191,7 +198,7 @@ JSONValue *JSONParser::parseValue() {
 // Parses a JSONKeyValuePair, assuming that the current position is at the first
 // character of the key, value pair.
 JSONKeyValuePair *JSONParser::parseKeyValuePair() {
-  assert(Position != Input.end());
+  assert(Position != End);
   assert(!isWhitespace());
 
   JSONString *Key = parseString();

@@ -23,6 +23,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/SourceMgr.h"
 
 namespace llvm {
 
@@ -67,7 +68,7 @@ public:
   ///
   /// Parsing is started via parseRoot(). Access to the object returned from
   /// parseRoot() will parse the input lazily.
-  JSONParser(StringRef Input);
+  JSONParser(StringRef Input, SourceMgr *SM);
 
   /// \brief Returns the outermost JSON value (either an array or an object).
   ///
@@ -89,9 +90,6 @@ public:
   /// If there was an error while parsing an object that was created by
   /// iterating over the result of 'parseRoot', 'failed' will return true.
   bool failed() const;
-
-  /// \brief Returns an error message when 'failed' returns true.
-  std::string getErrorMessage() const;
 
 private:
   /// \brief These methods manage the implementation details of parsing new JSON
@@ -147,13 +145,20 @@ private:
   BumpPtrAllocator ValueAllocator;
 
   /// \brief The original input to the parser.
-  const StringRef Input;
+  MemoryBuffer *InputBuffer;
+
+  /// \brief The source manager used for diagnostics and buffer management.
+  SourceMgr *SM;
 
   /// \brief The current position in the parse stream.
   StringRef::iterator Position;
 
-  /// \brief If non-empty, an error has occurred.
-  std::string ErrorMessage;
+  /// \brief The end position for fast EOF checks without introducing
+  /// unnecessary dereferences.
+  StringRef::iterator End;
+
+  /// \brief If true, an error has occurred.
+  bool Failed;
 
   template <typename AtomT, char StartChar, char EndChar,
             JSONAtom::Kind ContainerKind>

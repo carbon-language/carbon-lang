@@ -14,57 +14,28 @@
 
 namespace llvm {
 
-// Returns a buffer that contains the content of the given string without
-// the trailing zero, in order to get valgrind to catch out-of-bound reads.
-static std::vector<char> CutTrailingZero(StringRef String) {
-  std::vector<char> InputWithoutZero(String.size());
-  memcpy(&InputWithoutZero[0], String.data(), String.size());
-  return InputWithoutZero;
-}
-
 // Checks that the given input gives a parse error. Makes sure that an error
 // text is available and the parse fails.
-static void ExpectParseError(StringRef Message,
-                             const std::vector<char> &InputWithoutZero) {
-  StringRef Input = StringRef(&InputWithoutZero[0], InputWithoutZero.size());
-  JSONParser Parser(Input);
+static void ExpectParseError(StringRef Message, StringRef Input) {
+  SourceMgr SM;
+  JSONParser Parser(Input, &SM);
   EXPECT_FALSE(Parser.validate()) << Message << ": " << Input;
   EXPECT_TRUE(Parser.failed()) << Message << ": " << Input;
-  EXPECT_FALSE(Parser.getErrorMessage().empty()) << Message << ": " << Input;
-}
-
-// Overloads the above to allow using const char * as Input.
-static void ExpectParseError(StringRef Message, StringRef Input) {
-  return ExpectParseError(Message, CutTrailingZero(Input));
 }
 
 // Checks that the given input can be parsed without error.
-static void ExpectParseSuccess(StringRef Message,
-                               const std::vector<char> &InputWithoutZero) {
-  StringRef Input = StringRef(&InputWithoutZero[0], InputWithoutZero.size());
-  JSONParser Parser(Input);
-  EXPECT_TRUE(Parser.validate())
-    << Message << ": " << Input << " - " << Parser.getErrorMessage();
-}
-
-// Overloads the above to allow using const char * as Input.
 static void ExpectParseSuccess(StringRef Message, StringRef Input) {
-  return ExpectParseSuccess(Message, CutTrailingZero(Input));
+  SourceMgr SM;
+  JSONParser Parser(Input, &SM);
+  EXPECT_TRUE(Parser.validate()) << Message << ": " << Input;
 }
 
 TEST(JSONParser, FailsOnEmptyString) {
-  JSONParser Parser("");
-  EXPECT_EQ(NULL, Parser.parseRoot());
+  ExpectParseError("Empty JSON text", "");
 }
-
-TEST(JSONParser, DoesNotReadAfterInput) {
-  JSONParser Parser(llvm::StringRef(NULL, 0));
-  EXPECT_EQ(NULL, Parser.parseRoot());
-}
-
+ 
 TEST(JSONParser, FailsIfStartsWithString) {
-  JSONParser Character("\"x\"");
-  EXPECT_EQ(NULL, Character.parseRoot());
+  ExpectParseError("Top-level string", "\"x\"");
 }
 
 TEST(JSONParser, ParsesEmptyArray) {
@@ -177,11 +148,12 @@ TEST(JSONParser, HandlesEndOfFileGracefully) {
 // of an array.
 static void ExpectCanParseString(StringRef String) {
   std::string StringInArray = (llvm::Twine("[\"") + String + "\"]").str();
-  JSONParser Parser(StringInArray);
+  SourceMgr SM;
+  JSONParser Parser(StringInArray, &SM);
   const JSONArray *ParsedArray = dyn_cast<JSONArray>(Parser.parseRoot());
   StringRef ParsedString =
       dyn_cast<JSONString>(*ParsedArray->begin())->getRawText();
-  EXPECT_EQ(String, ParsedString.str()) << Parser.getErrorMessage();
+  EXPECT_EQ(String, ParsedString.str());
 }
 
 // Checks that parsing the given string inside an array fails.
@@ -210,7 +182,8 @@ TEST(JSONParser, ParsesStrings) {
 }
 
 TEST(JSONParser, WorksWithIteratorAlgorithms) {
-  JSONParser Parser("[\"1\", \"2\", \"3\", \"4\", \"5\", \"6\"]");
+  SourceMgr SM;
+  JSONParser Parser("[\"1\", \"2\", \"3\", \"4\", \"5\", \"6\"]", &SM);
   const JSONArray *Array = dyn_cast<JSONArray>(Parser.parseRoot());
   EXPECT_EQ(6, std::distance(Array->begin(), Array->end()));
 }
