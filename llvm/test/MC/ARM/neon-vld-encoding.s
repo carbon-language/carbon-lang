@@ -238,6 +238,10 @@
         vld2.8 {d2[4], d3[4]}, [r2]
         vld2.32 {d22[], d23[]}, [r1]
         vld2.32 {d22[], d24[]}, [r1]
+        vld2.32 {d10[ ],d11[ ]}, [r3]!
+        vld2.32 {d14[ ],d16[ ]}, [r4]!
+        vld2.32 {d22[ ],d23[ ]}, [r5], r4
+        vld2.32 {d22[ ],d24[ ]}, [r6], r4
 
 @ CHECK: vld2.8	{d16[1], d17[1]}, [r0, :16] @ encoding: [0x3f,0x01,0xe0,0xf4]
 @ CHECK: vld2.16 {d16[1], d17[1]}, [r0, :32] @ encoding: [0x5f,0x05,0xe0,0xf4]
@@ -250,6 +254,10 @@
 @ CHECK: vld2.8	{d2[4], d3[4]}, [r2]    @ encoding: [0x8f,0x21,0xa2,0xf4]
 @ CHECK: vld2.32 {d22[], d23[]}, [r1]    @ encoding: [0x8f,0x6d,0xe1,0xf4]
 @ CHECK: vld2.32 {d22[], d24[]}, [r1]    @ encoding: [0xaf,0x6d,0xe1,0xf4]
+@ CHECK: vld2.32 {d10[], d11[]}, [r3]!   @ encoding: [0x8d,0xad,0xa3,0xf4]
+@ CHECK: vld2.32 {d14[], d16[]}, [r4]!   @ encoding: [0xad,0xed,0xa4,0xf4]
+@ CHECK: vld2.32 {d22[], d23[]}, [r5], r4 @ encoding: [0x84,0x6d,0xe5,0xf4]
+@ CHECK: vld2.32 {d22[], d24[]}, [r6], r4 @ encoding: [0xa4,0x6d,0xe6,0xf4]
 
 
 @	vld3.8	{d16[1], d17[1], d18[1]}, [r0]

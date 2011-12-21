@@ -1254,25 +1254,42 @@ def VLD2DUPd16x2 : VLD2DUP<{0,1,1,?}, "16", VecListTwoQAllLanes>;
 def VLD2DUPd32x2 : VLD2DUP<{1,0,1,?}, "32", VecListTwoQAllLanes>;
 
 // ...with address register writeback:
-class VLD2DUPWB<bits<4> op7_4, string Dt>
-  : NLdSt<1, 0b10, 0b1101, op7_4, (outs DPR:$Vd, DPR:$dst2, GPR:$wb),
-          (ins addrmode6dup:$Rn, am6offset:$Rm), IIC_VLD2dupu,
-          "vld2", Dt, "\\{$Vd[], $dst2[]\\}, $Rn$Rm", "$Rn.addr = $wb", []> {
-  let Inst{4} = Rn{4};
-  let DecoderMethod = "DecodeVLD2DupInstruction";
+multiclass VLD2DUPWB<bits<4> op7_4, string Dt, RegisterOperand VdTy> {
+  def _fixed : NLdSt<1, 0b10, 0b1101, op7_4,
+                     (outs VdTy:$Vd, GPR:$wb),
+                     (ins addrmode6dup:$Rn), IIC_VLD2dupu,
+                     "vld2", Dt, "$Vd, $Rn!",
+                     "$Rn.addr = $wb", []> {
+    let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
+    let Inst{4} = Rn{4};
+    let DecoderMethod = "DecodeVLD2DupInstruction";
+    let AsmMatchConverter = "cvtVLDwbFixed";
+  }
+  def _register : NLdSt<1, 0b10, 0b1101, op7_4,
+                        (outs VdTy:$Vd, GPR:$wb),
+                        (ins addrmode6dup:$Rn, rGPR:$Rm), IIC_VLD2dupu,
+                        "vld2", Dt, "$Vd, $Rn, $Rm",
+                        "$Rn.addr = $wb", []> {
+    let Inst{4} = Rn{4};
+    let DecoderMethod = "DecodeVLD2DupInstruction";
+    let AsmMatchConverter = "cvtVLDwbRegister";
+  }
 }
 
-def VLD2DUPd8_UPD  : VLD2DUPWB<{0,0,0,0}, "8">;
-def VLD2DUPd16_UPD : VLD2DUPWB<{0,1,0,?}, "16">;
-def VLD2DUPd32_UPD : VLD2DUPWB<{1,0,0,?}, "32">;
+defm VLD2DUPd8wb    : VLD2DUPWB<{0,0,0,0}, "8",  VecListTwoDAllLanes>;
+defm VLD2DUPd16wb   : VLD2DUPWB<{0,1,0,?}, "16", VecListTwoDAllLanes>;
+defm VLD2DUPd32wb   : VLD2DUPWB<{1,0,0,?}, "32", VecListTwoDAllLanes>;
 
-def VLD2DUPd8x2_UPD  : VLD2DUPWB<{0,0,1,0}, "8">;
-def VLD2DUPd16x2_UPD : VLD2DUPWB<{0,1,1,?}, "16">;
-def VLD2DUPd32x2_UPD : VLD2DUPWB<{1,0,1,?}, "32">;
+defm VLD2DUPd8x2wb  : VLD2DUPWB<{0,0,1,0}, "8",  VecListTwoQAllLanes>;
+defm VLD2DUPd16x2wb : VLD2DUPWB<{0,1,1,?}, "16", VecListTwoQAllLanes>;
+defm VLD2DUPd32x2wb : VLD2DUPWB<{1,0,1,?}, "32", VecListTwoQAllLanes>;
 
-def VLD2DUPd8Pseudo_UPD  : VLDQWBPseudo<IIC_VLD2dupu>;
-def VLD2DUPd16Pseudo_UPD : VLDQWBPseudo<IIC_VLD2dupu>;
-def VLD2DUPd32Pseudo_UPD : VLDQWBPseudo<IIC_VLD2dupu>;
+def VLD2DUPd8PseudoWB_fixed     : VLDQWBfixedPseudo   <IIC_VLD2dupu>;
+def VLD2DUPd8PseudoWB_register  : VLDQWBregisterPseudo<IIC_VLD2dupu>;
+def VLD2DUPd16PseudoWB_fixed    : VLDQWBfixedPseudo   <IIC_VLD2dupu>;
+def VLD2DUPd16PseudoWB_register : VLDQWBregisterPseudo<IIC_VLD2dupu>;
+def VLD2DUPd32PseudoWB_fixed    : VLDQWBfixedPseudo   <IIC_VLD2dupu>;
+def VLD2DUPd32PseudoWB_register : VLDQWBregisterPseudo<IIC_VLD2dupu>;
 
 //   VLD3DUP  : Vector Load (single 3-element structure to all lanes)
 class VLD3DUP<bits<4> op7_4, string Dt>
