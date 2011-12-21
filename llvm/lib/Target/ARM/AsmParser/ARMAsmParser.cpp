@@ -6421,23 +6421,32 @@ bool ARMAsmParser::parseDirectiveThumbFunc(SMLoc L) {
   const MCAsmInfo &MAI = getParser().getStreamer().getContext().getAsmInfo();
   bool isMachO = MAI.hasSubsectionsViaSymbols();
   StringRef Name;
+  bool needFuncName = true;
 
-  // Darwin asm has function name after .thumb_func direction
+  // Darwin asm has (optionally) function name after .thumb_func direction
   // ELF doesn't
   if (isMachO) {
     const AsmToken &Tok = Parser.getTok();
-    if (Tok.isNot(AsmToken::Identifier) && Tok.isNot(AsmToken::String))
-      return Error(L, "unexpected token in .thumb_func directive");
-    Name = Tok.getIdentifier();
-    Parser.Lex(); // Consume the identifier token.
+    if (Tok.isNot(AsmToken::EndOfStatement)) {
+      if (Tok.isNot(AsmToken::Identifier) && Tok.isNot(AsmToken::String))
+        return Error(L, "unexpected token in .thumb_func directive");
+      Name = Tok.getIdentifier();
+      Parser.Lex(); // Consume the identifier token.
+      needFuncName = false;
+    }
   }
 
- if (getLexer().isNot(AsmToken::EndOfStatement))
+  if (getLexer().isNot(AsmToken::EndOfStatement))
     return Error(L, "unexpected token in directive");
-  Parser.Lex();
+
+  // Eat the end of statement and any blank lines that follow.
+  while (getLexer().is(AsmToken::EndOfStatement))
+    Parser.Lex();
 
   // FIXME: assuming function name will be the line following .thumb_func
-  if (!isMachO) {
+  // We really should be checking the next symbol definition even if there's
+  // stuff in between.
+  if (needFuncName) {
     Name = Parser.getTok().getIdentifier();
   }
 
