@@ -1190,7 +1190,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
   setTargetDAGCombine(ISD::EXTRACT_VECTOR_ELT);
-  setTargetDAGCombine(ISD::BUILD_VECTOR);
   setTargetDAGCombine(ISD::VSELECT);
   setTargetDAGCombine(ISD::SELECT);
   setTargetDAGCombine(ISD::SHL);
