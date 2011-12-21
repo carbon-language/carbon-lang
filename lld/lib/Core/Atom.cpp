@@ -16,10 +16,6 @@ namespace lld {
 
   Atom::~Atom() {}
 
-  bool Atom::translationUnitSource(llvm::StringRef &path) const {
-    return false;
-  }
-
   llvm::StringRef Atom::name() const {
     return llvm::StringRef();
   }
@@ -44,12 +40,5 @@ namespace lld {
     return 0;
   }
 
-  Atom::UnwindInfo::iterator Atom::beginUnwind() const{
-    return 0;
-  }
-
-  Atom::UnwindInfo::iterator Atom::endUnwind() const{
-    return 0;
-  }
 
 } // namespace lld

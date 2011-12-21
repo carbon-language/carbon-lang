@@ -238,7 +238,8 @@ bool YAMLFile::justInTimeforEachAtom(llvm::StringRef name,
 
 class YAMLAtom : public Atom {
 public:
-  YAMLAtom( Definition d
+  YAMLAtom( uint64_t ord
+          , Definition d
           , Scope s
           , ContentType ct
           , SectionChoice sc
@@ -247,18 +248,18 @@ public:
           , bool tb
           , bool al
           , Alignment a
-          , YAMLFile *f
+          , YAMLFile& f
           , const char *n)
-    : Atom(d, s, ct, sc, intn, dsk, tb, al, a)
+    : Atom(ord, d, s, ct, sc, intn, dsk, tb, al, a)
     , _file(f)
     , _name(n)
     , _size(0)
-    , _refStartIndex(f->_lastRefIndex)
-    , _refEndIndex(f->_references.size()) {
-    f->_lastRefIndex = _refEndIndex;
+    , _refStartIndex(f._lastRefIndex)
+    , _refEndIndex(f._references.size()) {
+    f._lastRefIndex = _refEndIndex;
   }
 
-  virtual const class File *file() const {
+  virtual const class File& file() const {
     return _file;
   }
 
@@ -282,7 +283,7 @@ public:
   virtual Reference::iterator referencesBegin() const;
   virtual Reference::iterator referencesEnd() const;
 private:
-  YAMLFile *_file;
+  YAMLFile& _file;
   const char *_name;
   unsigned long _size;
   unsigned int _refStartIndex;
@@ -290,14 +291,14 @@ private:
 };
 
 Reference::iterator YAMLAtom::referencesBegin() const {
-  if (_file->_references.size() < _refStartIndex)
-    return (Reference::iterator)&_file->_references[_refStartIndex];
+  if (_file._references.size() < _refStartIndex)
+    return (Reference::iterator)&_file._references[_refStartIndex];
   return 0;
 }
 
 Reference::iterator YAMLAtom::referencesEnd() const {
-  if (_file->_references.size() < _refEndIndex)
-    return (Reference::iterator)&_file->_references[_refEndIndex];
+  if (_file._references.size() < _refEndIndex)
+    return (Reference::iterator)&_file._references[_refEndIndex];
   return 0;
 }
 
@@ -316,9 +317,10 @@ public:
   void setFixupTarget(const char *n);
   void addFixup(YAMLFile *f);
 
-  void makeAtom(YAMLFile *);
+  void makeAtom(YAMLFile&);
 
 private:
+  uint64_t  _ordinal;
   const char *_name;
   Atom::Alignment _align;
   Atom::ContentType _type;
@@ -334,7 +336,8 @@ private:
 };
 
 YAMLAtomState::YAMLAtomState()
-  : _name(NULL)
+  : _ordinal(0)
+  , _name(NULL)
   , _align(0, 0)
   , _type(Atom::typeData)
   , _scope(Atom::scopeGlobal)
@@ -349,13 +352,14 @@ YAMLAtomState::YAMLAtomState()
   _ref.flags        = 0;
 }
 
-void YAMLAtomState::makeAtom(YAMLFile *f) {
-  Atom *a = new YAMLAtom(_def, _scope, _type, _sectionChoice,
+void YAMLAtomState::makeAtom(YAMLFile& f) {
+  Atom *a = new YAMLAtom(_ordinal, _def, _scope, _type, _sectionChoice,
                          _internalName, _dontDeadStrip, _thumb, _alias,
                          _align, f, _name);
 
-  f->_atoms.push_back(a);
-
+  f._atoms.push_back(a);
+  ++_ordinal;
+  
   // reset state for next atom
   _name             = NULL;
   _align.powerOf2   = 0;
@@ -472,7 +476,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
     if (entry->beginDocument) {
       if (file != NULL) {
         if (haveAtom) {
-          atomState.makeAtom(file);
+          atomState.makeAtom(*file);
           haveAtom = false;
         }
         result.push_back(file);
@@ -502,7 +506,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
       if (depthForAtoms == entry->depth) {
         if (entry->beginSequence) {
           if (haveAtom) {
-            atomState.makeAtom(file);
+            atomState.makeAtom(*file);
             haveAtom = false;
           }
         }
@@ -546,7 +550,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
     lastDepth = entry->depth;
   }
   if (haveAtom) {
-    atomState.makeAtom(file);
+    atomState.makeAtom(*file);
   }
 
   result.push_back(file);

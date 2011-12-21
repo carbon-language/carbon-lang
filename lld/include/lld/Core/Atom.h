@@ -10,6 +10,8 @@
 #ifndef LLD_CORE_ATOM_H_
 #define LLD_CORE_ATOM_H_
 
+#include <assert.h>
+
 #include "lld/Core/Reference.h"
 
 namespace llvm {
@@ -27,21 +29,85 @@ class File;
 /// is an atom.  An atom has content and attributes. The content of a function
 /// atom is the instructions that implement the function.  The content of a
 /// global variable atom is its initial bytes.
+///
+/// Here are some example attribute sets for common atoms. If a particular
+/// attribute is not listed, the default values are:  definition=regular,
+/// sectionChoice=basedOnContent, scope=translationUnit, mergeDups=false, 
+/// autoHide=false, internalName=false, deadStrip=normal
+///
+///  C function:  void foo() {} <br>
+///    name=foo, type=code, perm=r_x, scope=global
+///
+///  C static function:  staic void func() {} <br>
+///    name=func, type=code, perm=r_x
+///
+///  C global variable:  int count = 1; <br>
+///    name=count, type=data, perm=rw_, scope=global
+///
+///  C tentative definition:  int bar; <br>
+///    name=bar, type=data, perm=rw_, scope=global, definition=tentative
+///
+///  Uninitialized C static variable:  static int stuff; <br>
+///    name=stuff, type=zerofill, perm=rw_
+///
+///  Weak C function:  __attribute__((weak)) void foo() {} <br>
+///    name=foo, type=code, perm=r_x, scope=global, definition=weak
+///
+///  Hidden C function:  __attribute__((visibility("hidden"))) void foo() {}<br>
+///    name=foo, type=code, perm=r_x, scope=linkageUnit
+///
+///  No-dead-strip function:  __attribute__((used)) void foo() {} <br>
+///    name=foo, type=code, perm=r_x, scope=global, deadStrip=never
+///
+///  Non-inlined C++ inline method:  inline void Foo::doit() {} <br>
+///    name=_ZN3Foo4doitEv, type=code, perm=r_x, scope=global, 
+///    mergeDups=true, autoHide=true
+///
+///  Non-inlined C++ inline method whose address is taken:  
+///     inline void Foo::doit() {} <br>
+///    name=_ZN3Foo4doitEv, type=code, perm=r_x, scope=global, mergeDups=true
+///
+///  literal c-string:  "hello" <br>
+///    name=L0, internalName=true, type=cstring, perm=r__, 
+///    scope=linkageUnit, mergeDups=true
+///
+///  literal double:  1.234 <br>
+///    name=L0, internalName=true, type=literal8, perm=r__, 
+///    scope=linkageUnit, mergeDups=true
+///
+///  constant:  { 1,2,3 } <br>
+///    name=L0, internalName=true, type=constant, perm=r__, 
+///    scope=linkageUnit, mergeDups=true
+///
+///  Pointer to initializer function:  <br>
+///    name=_init, internalName=true, type=initializer, perm=rw_l,
+///    sectionChoice=customRequired
+///
+///  C function place in custom section:  __attribute__((section("__foo"))) 
+///                                       void foo() {} <br>
+///    name=foo, type=code, perm=r_x, scope=global, 
+///    sectionChoice=customRequired, sectionName=__foo
+///
 class Atom {
 public:
+  /// The scope in which this atom is acessible to other atoms.
   enum Scope {
-    scopeTranslationUnit,   // static, private to translation unit
-    scopeLinkageUnit,       // hidden, accessible to just atoms being linked
-    scopeGlobal             // default
+    scopeTranslationUnit,  ///< Accessible only to atoms in the same translation
+                           ///  unit (e.g. a C static).
+    scopeLinkageUnit,      ///< Accessible to atoms being linked but not visible  
+                           ///  to runtime loader (e.g. visibility=hidden).
+    scopeGlobal            ///< Accessible to all atoms and visible to runtime
+                           ///  loader (e.g. visibility=default) .
   };
 
+  /// Whether this atom is defined or a proxy for an undefined symbol
   enum Definition {
-    definitionRegular,      // usual C/C++ function or global variable
-    definitionWeak,         // can be silently overridden by regular definition
-    definitionTentative,    // C-only pre-ANSI support aka common
-    definitionAbsolute,     // asm-only (foo = 10) not tied to any content
-    definitionUndefined,    // Only in .o files to model reference to undef
-    definitionSharedLibrary // Only in shared libraries to model export
+    definitionRegular,      ///< Normal C/C++ function or global variable.
+    definitionWeak,         ///< Can be silently overridden by definitionRegular
+    definitionTentative,    ///< C-only pre-ANSI support aka common.
+    definitionAbsolute,     ///< Asm-only (foo = 10). Not tied to any content.
+    definitionUndefined,    ///< Only in .o files to model reference to undef.
+    definitionSharedLibrary ///< Only in shared libraries to model export.
   };
 
   enum ContentType {
@@ -113,13 +179,8 @@ public:
     uint16_t modulus;
   };
 
-  // MacOSX specific compact unwind info
-  struct UnwindInfo {
-    uint32_t startOffset;
-    uint32_t unwindInfo;
-
-    typedef UnwindInfo *iterator;
-  };
+  /// file - returns the File that produced/owns this Atom
+  virtual const class File& file() const = 0;
 
   /// name - The name of the atom. For a function atom, it is the (mangled)
   /// name of the function. 
@@ -193,29 +254,84 @@ public:
   }
 
   /// permissions - Returns the OS memory protections required for this atom's
-  /// content at runtime.  A function atom is R_X and a global variable is RW_.
+  /// content at runtime.  A function atom is R_X, a global variable is RW_,
+  /// and a read-only constant is R__.
   virtual ContentPermissions permissions() const;
-    
-  /// 
-  virtual void copyRawContent(uint8_t buffer[]) const = 0;
+  
+  /// isThumb - only applicable to ARM code. Tells the linker if the code
+  /// uses thumb or arm instructions.  The linker needs to know this to
+  /// set the low bit of pointers to thumb functions.
+  bool isThumb() const { 
+    return _thumb; 
+  }
+  
+  /// isAlias - means this is a zero size atom that exists to provide an
+  /// alternate name for another atom.  Alias atoms must have a special
+  /// Reference to the atom they alias which the layout engine recognizes
+  /// and forces the alias atom to layout right before the target atom.
+  bool isAlias() const { 
+    return _alias; 
+  }
+
+  /// rawContent - returns a reference to the raw (unrelocated) bytes of 
+  /// this Atom's content.
   virtual llvm::ArrayRef<uint8_t> rawContent() const;
 
+  /// referencesBegin - used to start iterating this Atom's References
+  virtual Reference::iterator referencesBegin() const;
 
-  bool isThumb() const { return _thumb; }
-  bool isAlias() const { return _alias; }
-  
+  /// referencesEnd - used to end iterating this Atom's References
+  virtual Reference::iterator referencesEnd() const;
+
+  /// setLive - sets or clears the liveness bit.  Used by linker to do 
+  /// dead code stripping.
   void setLive(bool l) { _live = l; }
+  
+  /// live - returns the liveness bit. Used by linker to do 
+  /// dead code stripping.
   bool live() const { return _live; }
 
-  virtual const class File *file() const = 0;
-  virtual bool translationUnitSource(llvm::StringRef &path) const;
-  virtual uint64_t objectAddress() const = 0;
-  virtual Reference::iterator referencesBegin() const;
-  virtual Reference::iterator referencesEnd() const;
-  virtual UnwindInfo::iterator beginUnwind() const;
-  virtual UnwindInfo::iterator endUnwind() const;
+  /// ordinal - returns a value for the order of this Atom within its file.
+  /// This is used by the linker to order the layout of Atoms so that
+  /// the resulting image is stable and reproducible.
+  uint64_t ordinal() const {
+    assert(_mode == modeOrdinal);
+    return _address;
+  }
+  
+  /// sectionOffset - returns the section offset assigned to this Atom within
+  /// its final section. 
+  uint64_t sectionOffset() const {
+    assert(_mode == modeSectionOffset);
+    return _address;
+  }
 
-  Atom( Definition d
+  /// finalAddress - returns the address assigned to Atom within the final
+  /// linked image. 
+  uint64_t finalAddress() const {
+    assert(_mode == modeFinalAddress);
+    return _address;
+  }
+
+  /// setSectionOffset - assigns an offset within a section in the final
+  /// linked image.
+  void setSectionOffset(uint64_t off) { 
+    assert(_mode != modeFinalAddress); 
+    _address = off; 
+    _mode = modeSectionOffset; 
+  }
+  
+  /// setSectionOffset - assigns an offset within a section in the final
+  /// linked image.
+  void setFinalAddress(uint64_t addr) { 
+    assert(_mode == modeSectionOffset); 
+    _address = addr; 
+    _mode = modeFinalAddress; 
+  }
+  
+  /// constructor
+  Atom( uint64_t ord
+      , Definition d
       , Scope s
       , ContentType ct
       , SectionChoice sc
@@ -224,20 +340,31 @@ public:
       , bool IsThumb
       , bool IsAlias
       , Alignment a)
-    : _alignmentModulus(a.modulus)
+    : _address(ord)
+    , _alignmentModulus(a.modulus)
     , _alignmentPowerOf2(a.powerOf2)
     , _definition(d)
     , _internalName(internalName)
     , _deadStrip(ds)
+    , _mode(modeOrdinal)
     , _thumb(IsThumb)
     , _alias(IsAlias)
     , _contentType(ct)
     , _scope(s)
     , _sectionChoice(sc) {}
 
-  virtual ~Atom();
 
 protected:
+  /// The memory for Atom objects is always managed by the owning File
+  /// object.  Therefore, no one but the owning File object should call
+  /// delete on an Atom.  In fact, some File objects may bulk allocate
+  /// an array of Atoms, so they cannot be individually deleted by anyone.
+  virtual ~Atom();
+
+  /// The __address field has different meanings throughout the life of an Atom.
+	enum AddressMode { modeOrdinal, modeSectionOffset, modeFinalAddress };
+
+  uint64_t      _address;
   uint16_t      _alignmentModulus;
   uint8_t       _alignmentPowerOf2;
   ContentType   _contentType : 8;
@@ -246,6 +373,7 @@ protected:
   SectionChoice _sectionChoice: 2;
   bool          _internalName : 1;
   DeadStripKind _deadStrip : 2;
+  AddressMode   _mode : 2;
   bool          _mergeDuplicates : 1;
   bool          _thumb : 1;
   bool          _autoHide : 1;

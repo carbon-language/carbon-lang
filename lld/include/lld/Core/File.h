@@ -34,6 +34,9 @@ public:
   virtual bool justInTimeforEachAtom( llvm::StringRef name
                                     , AtomHandler &) const = 0;
 
+  virtual bool translationUnitSource(llvm::StringRef &path) const;
+
+
 private:
   llvm::StringRef _path;
 };

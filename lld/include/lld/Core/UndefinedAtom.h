@@ -20,8 +20,9 @@ namespace lld {
 /// It exists as a place holder for a future atom.
 class UndefinedAtom : public Atom {
 public:
-  UndefinedAtom(llvm::StringRef nm)
-    : Atom( Atom::definitionUndefined
+  UndefinedAtom(llvm::StringRef nm, const File& f)
+    : Atom( 0,
+            Atom::definitionUndefined
           , Atom::scopeLinkageUnit
           , Atom::typeUnknown
           , Atom::sectionBasedOnContent
@@ -30,15 +31,11 @@ public:
           , false
           , false
           , Atom::Alignment(0))
-    , _name(nm) {}
+    , _name(nm), _file(f) {}
 
   // overrides of Atom
-  virtual const File *file() const {
-    return 0;
-  }
-
-  virtual bool translationUnitSource(llvm::StringRef path) const {
-    return false;
+  virtual const File& file() const {
+    return _file;
   }
 
   virtual llvm::StringRef name() const {
@@ -58,6 +55,7 @@ protected:
   virtual ~UndefinedAtom() {}
 
   llvm::StringRef _name;
+  const File&     _file;
 };
 
 } // namespace lld

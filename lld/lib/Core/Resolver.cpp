@@ -183,14 +183,14 @@ void Resolver::updateReferences() {
 void Resolver::markLive(const Atom &atom, WhyLiveBackChain *previous) {
   // if -why_live cares about this symbol, then dump chain
   if ((previous->referer != NULL) && _platform.printWhyLive(atom.name())) {
-    llvm::errs() << atom.name() << " from " << atom.file()->path() << "\n";
+    llvm::errs() << atom.name() << " from " << atom.file().path() << "\n";
     int depth = 1;
     for (WhyLiveBackChain *p = previous; p != NULL;
          p = p->previous, ++depth) {
       for (int i = depth; i > 0; --i)
         llvm::errs() << "  ";
       llvm::errs() << p->referer->name() << " from "
-                   << p->referer->file()->path() << "\n";
+                   << p->referer->file().path() << "\n";
     }
   }
 
