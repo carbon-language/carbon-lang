@@ -40,6 +40,10 @@ public:
 
   virtual ~MCELFObjectTargetWriter();
 
+  virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
+                                bool IsPCRel, bool IsRelocWithSymbol,
+                                int64_t Addend) const; // FIXME: add = 0
+
   /// @name Accessors
   /// @{
   uint8_t getOSABI() { return OSABI; }

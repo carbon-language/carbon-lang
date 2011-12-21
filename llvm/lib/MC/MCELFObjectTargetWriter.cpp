@@ -19,5 +19,13 @@ MCELFObjectTargetWriter::MCELFObjectTargetWriter(bool Is64Bit_,
     HasRelocationAddend(HasRelocationAddend_), Is64Bit(Is64Bit_) {
 }
 
+unsigned MCELFObjectTargetWriter::GetRelocType(const MCValue &Target,
+                                               const MCFixup &Fixup,
+                                               bool IsPCRel,
+                                               bool IsRelocWithSymbol,
+                                               int64_t Addend) const {
+  return 0;
+}
+
 MCELFObjectTargetWriter::~MCELFObjectTargetWriter() {
 }

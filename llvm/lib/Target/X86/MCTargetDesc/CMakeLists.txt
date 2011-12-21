@@ -2,8 +2,9 @@ add_llvm_library(LLVMX86Desc
   X86AsmBackend.cpp
   X86MCTargetDesc.cpp
   X86MCAsmInfo.cpp
-  X86MCCodeEmitter.cpp 
+  X86MCCodeEmitter.cpp
   X86MachObjectWriter.cpp
+  X86ELFObjectWriter.cpp
   )
 
 add_dependencies(LLVMX86Desc X86CommonTableGen)
