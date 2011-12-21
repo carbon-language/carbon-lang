@@ -1155,11 +1155,36 @@ _func:
         mov r6, r2, lsr #16
         movs r6, r2, asr #32
         movs r6, r2, ror #5
+        movs r4, r4, lsl r5
+        movs r4, r4, lsr r5
+        movs r4, r4, asr r5
+        movs r4, r4, ror r5
+        mov r4, r4, lsl r5
+        movs r4, r4, ror r8
+        movs r4, r5, lsr r6
+        itttt eq
+        moveq r4, r4, lsl r5
+        moveq r4, r4, lsr r5
+        moveq r4, r4, asr r5
+        moveq r4, r4, ror r5
 
 @ CHECK: lsl.w	r6, r2, #16             @ encoding: [0x4f,0xea,0x02,0x46]
 @ CHECK: lsr.w	r6, r2, #16             @ encoding: [0x4f,0xea,0x12,0x46]
 @ CHECK: asrs	r6, r2, #32             @ encoding: [0x16,0x10]
 @ CHECK: rors.w	r6, r2, #5              @ encoding: [0x5f,0xea,0x72,0x16]
+@ CHECK: lsls	r4, r5                  @ encoding: [0xac,0x40]
+@ CHECK: lsrs	r4, r5                  @ encoding: [0xec,0x40]
+@ CHECK: asrs	r4, r5                  @ encoding: [0x2c,0x41]
+@ CHECK: rors	r4, r5                  @ encoding: [0xec,0x41]
+@ CHECK: lsl.w	r4, r4, r5              @ encoding: [0x04,0xfa,0x05,0xf4]
+@ CHECK: rors.w	r4, r4, r8              @ encoding: [0x74,0xfa,0x08,0xf4]
+@ CHECK: lsrs.w	r4, r5, r6              @ encoding: [0x35,0xfa,0x06,0xf4]
+@ CHECK: itttt	eq                      @ encoding: [0x01,0xbf]
+@ CHECK: lsleq	r4, r5                  @ encoding: [0xac,0x40]
+@ CHECK: lsreq	r4, r5                  @ encoding: [0xec,0x40]
+@ CHECK: asreq	r4, r5                  @ encoding: [0x2c,0x41]
+@ CHECK: roreq	r4, r5                  @ encoding: [0xec,0x41]
+
 
 
 @------------------------------------------------------------------------------

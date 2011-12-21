@@ -4141,6 +4141,11 @@ def t2MOVsi: t2AsmPseudo<"mov${p} $Rd, $shift",
 def t2MOVSsi: t2AsmPseudo<"movs${p} $Rd, $shift",
                           (ins rGPR:$Rd, t2_so_reg:$shift, pred:$p)>;
 
+def t2MOVsr: t2AsmPseudo<"mov${p} $Rd, $shift",
+                         (ins rGPR:$Rd, so_reg_reg:$shift, pred:$p)>;
+def t2MOVSsr: t2AsmPseudo<"movs${p} $Rd, $shift",
+                          (ins rGPR:$Rd, so_reg_reg:$shift, pred:$p)>;
+
 // ADR w/o the .w suffix
 def : t2InstAlias<"adr${p} $Rd, $addr",
                   (t2ADR rGPR:$Rd, t2adrlabel:$addr, pred:$p)>;

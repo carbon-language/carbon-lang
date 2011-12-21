@@ -5748,6 +5748,42 @@ processInstruction(MCInst &Inst,
     return true;
   }
   // Handle the Thumb2 mode MOV complex aliases.
+  case ARM::t2MOVsr:
+  case ARM::t2MOVSsr: {
+    // Which instruction to expand to depends on the CCOut operand and
+    // whether we're in an IT block if the register operands are low
+    // registers.
+    bool isNarrow = false;
+    if (isARMLowRegister(Inst.getOperand(0).getReg()) &&
+        isARMLowRegister(Inst.getOperand(1).getReg()) &&
+        isARMLowRegister(Inst.getOperand(2).getReg()) &&
+        Inst.getOperand(0).getReg() == Inst.getOperand(1).getReg() &&
+        inITBlock() == (Inst.getOpcode() == ARM::t2MOVsr))
+      isNarrow = true;
+    MCInst TmpInst;
+    unsigned newOpc;
+    switch(ARM_AM::getSORegShOp(Inst.getOperand(3).getImm())) {
+    default: llvm_unreachable("unexpected opcode!");
+    case ARM_AM::asr: newOpc = isNarrow ? ARM::tASRrr : ARM::t2ASRrr; break;
+    case ARM_AM::lsr: newOpc = isNarrow ? ARM::tLSRrr : ARM::t2LSRrr; break;
+    case ARM_AM::lsl: newOpc = isNarrow ? ARM::tLSLrr : ARM::t2LSLrr; break;
+    case ARM_AM::ror: newOpc = isNarrow ? ARM::tROR   : ARM::t2RORrr; break;
+    }
+    TmpInst.setOpcode(newOpc);
+    TmpInst.addOperand(Inst.getOperand(0)); // Rd
+    if (isNarrow)
+      TmpInst.addOperand(MCOperand::CreateReg(
+          Inst.getOpcode() == ARM::t2MOVSsr ? ARM::CPSR : 0));
+    TmpInst.addOperand(Inst.getOperand(1)); // Rn
+    TmpInst.addOperand(Inst.getOperand(2)); // Rm
+    TmpInst.addOperand(Inst.getOperand(4)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(5));
+    if (!isNarrow)
+      TmpInst.addOperand(MCOperand::CreateReg(
+          Inst.getOpcode() == ARM::t2MOVSsr ? ARM::CPSR : 0));
+    Inst = TmpInst;
+    return true;
+  }
   case ARM::t2MOVsi:
   case ARM::t2MOVSsi: {
     // Which instruction to expand to depends on the CCOut operand and
