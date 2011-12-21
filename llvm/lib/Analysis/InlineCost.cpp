@@ -63,8 +63,8 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
 
     // Special handling for calls.
     if (isa<CallInst>(II) || isa<InvokeInst>(II)) {
-      if (isa<DbgInfoIntrinsic>(II))
-        continue;  // Debug intrinsics don't count as size.
+      if (isa<IntrinsicInst>(II))
+        continue;  // Intrinsics have no argument setup and can't be inlined.
 
       ImmutableCallSite CS(cast<Instruction>(II));
 
@@ -72,7 +72,7 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
         // If a function is both internal and has a single use, then it is
         // extremely likely to get inlined in the future (it was probably
         // exposed by an interleaved devirtualization pass).
-        if (F->hasInternalLinkage() && F->hasOneUse())
+        if (!CS.isNoInline() && F->hasInternalLinkage() && F->hasOneUse())
           ++NumInlineCandidates;
 
         // If this call is to function itself, then the function is recursive.
@@ -83,7 +83,7 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
           isRecursive = true;
       }
 
-      if (!isa<IntrinsicInst>(II) && !callIsSmall(CS.getCalledFunction())) {
+      if (!callIsSmall(CS.getCalledFunction())) {
         // Each argument to a call takes on average one instruction to set up.
         NumInsts += CS.arg_size();
 
