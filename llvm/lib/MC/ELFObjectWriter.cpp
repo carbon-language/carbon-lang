@@ -447,6 +447,10 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   FixedValue = Value;
   unsigned Type = GetRelocType(Target, Fixup, IsPCRel,
                                (RelocSymbol != 0), Addend);
+  MCSymbolRefExpr::VariantKind Modifier = Target.isAbsolute() ?
+    MCSymbolRefExpr::VK_None : Target.getSymA()->getKind();
+  if (RelocNeedsGOT(Modifier))
+    NeedsGOT = true;
 
   uint64_t RelocOffset = Layout.getFragmentOffset(Fragment) +
     Fixup.getOffset();
@@ -1385,16 +1389,8 @@ unsigned ARMELFObjectWriter::GetRelocType(const MCValue &Target,
                                           const MCFixup &Fixup,
                                           bool IsPCRel,
                                           bool IsRelocWithSymbol,
-                                          int64_t Addend) {
-  MCSymbolRefExpr::VariantKind Modifier = Target.isAbsolute() ?
-    MCSymbolRefExpr::VK_None : Target.getSymA()->getKind();
-
-  unsigned Type = GetRelocTypeInner(Target, Fixup, IsPCRel);
-
-  if (RelocNeedsGOT(Modifier))
-    NeedsGOT = true;
-  
-  return Type;
+                                          int64_t Addend) const {
+  return GetRelocTypeInner(Target, Fixup, IsPCRel);
 }
 
 unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
@@ -1536,7 +1532,7 @@ unsigned PPCELFObjectWriter::GetRelocType(const MCValue &Target,
                                              const MCFixup &Fixup,
                                              bool IsPCRel,
                                              bool IsRelocWithSymbol,
-                                             int64_t Addend) {
+                                             int64_t Addend) const {
   // determine the type of the relocation
   unsigned Type;
   if (IsPCRel) {
@@ -1606,7 +1602,7 @@ unsigned MBlazeELFObjectWriter::GetRelocType(const MCValue &Target,
                                              const MCFixup &Fixup,
                                              bool IsPCRel,
                                              bool IsRelocWithSymbol,
-                                             int64_t Addend) {
+                                             int64_t Addend) const {
   // determine the type of the relocation
   unsigned Type;
   if (IsPCRel) {
@@ -1652,7 +1648,7 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
                                           const MCFixup &Fixup,
                                           bool IsPCRel,
                                           bool IsRelocWithSymbol,
-                                          int64_t Addend) {
+                                          int64_t Addend) const {
   // determine the type of the relocation
 
   MCSymbolRefExpr::VariantKind Modifier = Target.isAbsolute() ?
@@ -1822,9 +1818,6 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
     }
   }
 
-  if (RelocNeedsGOT(Modifier))
-    NeedsGOT = true;
-
   return Type;
 }
 
@@ -1862,7 +1855,7 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
                                            const MCFixup &Fixup,
                                            bool IsPCRel,
                                            bool IsRelocWithSymbol,
-                                           int64_t Addend) {
+                                           int64_t Addend) const {
   // determine the type of the relocation
   unsigned Type = (unsigned)ELF::R_MIPS_NONE;
   unsigned Kind = (unsigned)Fixup.getKind();

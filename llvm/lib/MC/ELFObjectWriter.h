@@ -351,7 +351,7 @@ class ELFObjectWriter : public MCObjectWriter {
   protected:
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
-                                  int64_t Addend) = 0;
+                                  int64_t Addend) const = 0;
     virtual void adjustFixupOffset(const MCFixup &Fixup,
                                    uint64_t &RelocOffset) {}
   };
@@ -368,7 +368,7 @@ class ELFObjectWriter : public MCObjectWriter {
   protected:
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
-                                  int64_t Addend);
+                                  int64_t Addend) const;
   };
 
 
@@ -395,11 +395,10 @@ class ELFObjectWriter : public MCObjectWriter {
 
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
-                                  int64_t Addend);
+                                  int64_t Addend) const;
   private:
     unsigned GetRelocTypeInner(const MCValue &Target,
                                const MCFixup &Fixup, bool IsPCRel) const;
-    
   };
 
   //===- PPCELFObjectWriter -------------------------------------------===//
@@ -414,7 +413,7 @@ class ELFObjectWriter : public MCObjectWriter {
   protected:
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
-                                  int64_t Addend);
+                                  int64_t Addend) const;
     virtual void adjustFixupOffset(const MCFixup &Fixup, uint64_t &RelocOffset);
   };
 
@@ -430,7 +429,7 @@ class ELFObjectWriter : public MCObjectWriter {
   protected:
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
-                                  int64_t Addend);
+                                  int64_t Addend) const;
   };
 
   //===- MipsELFObjectWriter -------------------------------------------===//
@@ -453,7 +452,7 @@ class ELFObjectWriter : public MCObjectWriter {
 
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
-                                  int64_t Addend);
+                                  int64_t Addend) const;
   };
 }
 
