@@ -143,6 +143,16 @@ def VecListTwoDAllLanesAsmOperand : AsmOperandClass {
 def VecListTwoDAllLanes : RegisterOperand<DPR, "printVectorListTwoAllLanes"> {
   let ParserMatchClass = VecListTwoDAllLanesAsmOperand;
 }
+// Register list of two D registers spaced by 2 (two sequential Q registers).
+def VecListTwoQAllLanesAsmOperand : AsmOperandClass {
+  let Name = "VecListTwoQAllLanes";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListOperands";
+}
+def VecListTwoQAllLanes : RegisterOperand<DPR,
+                                         "printVectorListTwoSpacedAllLanes"> {
+  let ParserMatchClass = VecListTwoQAllLanesAsmOperand;
+}
 
 // Register list of one D register, with byte lane subscripting.
 def VecListOneDByteIndexAsmOperand : AsmOperandClass {
@@ -1221,27 +1231,27 @@ def VLD1DUPq16PseudoWB_register : VLDQWBregisterPseudo<IIC_VLD1dupu>;
 def VLD1DUPq32PseudoWB_register : VLDQWBregisterPseudo<IIC_VLD1dupu>;
 
 //   VLD2DUP  : Vector Load (single 2-element structure to all lanes)
-class VLD2DUP<bits<4> op7_4, string Dt>
-  : NLdSt<1, 0b10, 0b1101, op7_4, (outs DPR:$Vd, DPR:$dst2),
+class VLD2DUP<bits<4> op7_4, string Dt, RegisterOperand VdTy>
+  : NLdSt<1, 0b10, 0b1101, op7_4, (outs VdTy:$Vd),
           (ins addrmode6dup:$Rn), IIC_VLD2dup,
-          "vld2", Dt, "\\{$Vd[], $dst2[]\\}, $Rn", "", []> {
+          "vld2", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
   let DecoderMethod = "DecodeVLD2DupInstruction";
 }
 
-def VLD2DUPd8  : VLD2DUP<{0,0,0,?}, "8">;
-def VLD2DUPd16 : VLD2DUP<{0,1,0,?}, "16">;
-def VLD2DUPd32 : VLD2DUP<{1,0,0,?}, "32">;
+def VLD2DUPd8  : VLD2DUP<{0,0,0,?}, "8",  VecListTwoDAllLanes>;
+def VLD2DUPd16 : VLD2DUP<{0,1,0,?}, "16", VecListTwoDAllLanes>;
+def VLD2DUPd32 : VLD2DUP<{1,0,0,?}, "32", VecListTwoDAllLanes>;
 
 def VLD2DUPd8Pseudo  : VLDQPseudo<IIC_VLD2dup>;
 def VLD2DUPd16Pseudo : VLDQPseudo<IIC_VLD2dup>;
 def VLD2DUPd32Pseudo : VLDQPseudo<IIC_VLD2dup>;
 
 // ...with double-spaced registers (not used for codegen):
-def VLD2DUPd8x2  : VLD2DUP<{0,0,1,?}, "8">;
-def VLD2DUPd16x2 : VLD2DUP<{0,1,1,?}, "16">;
-def VLD2DUPd32x2 : VLD2DUP<{1,0,1,?}, "32">;
+def VLD2DUPd8x2  : VLD2DUP<{0,0,1,?}, "8",  VecListTwoQAllLanes>;
+def VLD2DUPd16x2 : VLD2DUP<{0,1,1,?}, "16", VecListTwoQAllLanes>;
+def VLD2DUPd32x2 : VLD2DUP<{1,0,1,?}, "32", VecListTwoQAllLanes>;
 
 // ...with address register writeback:
 class VLD2DUPWB<bits<4> op7_4, string Dt>

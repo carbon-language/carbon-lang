@@ -1118,13 +1118,24 @@ public:
     return VectorList.Count == 2;
   }
 
+  bool isSingleSpacedVectorAllLanes() const {
+    return Kind == k_VectorListAllLanes && !VectorList.isDoubleSpaced;
+  }
+  bool isDoubleSpacedVectorAllLanes() const {
+    return Kind == k_VectorListAllLanes && VectorList.isDoubleSpaced;
+  }
   bool isVecListOneDAllLanes() const {
-    if (Kind != k_VectorListAllLanes) return false;
+    if (!isSingleSpacedVectorAllLanes()) return false;
     return VectorList.Count == 1;
   }
 
   bool isVecListTwoDAllLanes() const {
-    if (Kind != k_VectorListAllLanes) return false;
+    if (!isSingleSpacedVectorAllLanes()) return false;
+    return VectorList.Count == 2;
+  }
+
+  bool isVecListTwoQAllLanes() const {
+    if (!isDoubleSpacedVectorAllLanes()) return false;
     return VectorList.Count == 2;
   }
 
@@ -2041,10 +2052,12 @@ public:
   }
 
   static ARMOperand *CreateVectorListAllLanes(unsigned RegNum, unsigned Count,
+                                              bool isDoubleSpaced,
                                               SMLoc S, SMLoc E) {
     ARMOperand *Op = new ARMOperand(k_VectorListAllLanes);
     Op->VectorList.RegNum = RegNum;
     Op->VectorList.Count = Count;
+    Op->VectorList.isDoubleSpaced = isDoubleSpaced;
     Op->StartLoc = S;
     Op->EndLoc = E;
     return Op;
@@ -2865,7 +2878,8 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
         break;
       case AllLanes:
         E = Parser.getTok().getLoc();
-        Operands.push_back(ARMOperand::CreateVectorListAllLanes(Reg, 1, S, E));
+        Operands.push_back(ARMOperand::CreateVectorListAllLanes(Reg, 1, false,
+                                                                S, E));
         break;
       case IndexedLane:
         Operands.push_back(ARMOperand::CreateVectorListIndexed(Reg, 1,
@@ -2889,7 +2903,8 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
         break;
       case AllLanes:
         E = Parser.getTok().getLoc();
-        Operands.push_back(ARMOperand::CreateVectorListAllLanes(Reg, 2, S, E));
+        Operands.push_back(ARMOperand::CreateVectorListAllLanes(Reg, 2, false,
+                                                                S, E));
         break;
       case IndexedLane:
         Operands.push_back(ARMOperand::CreateVectorListIndexed(Reg, 2,
@@ -3060,6 +3075,7 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     break;
   case AllLanes:
     Operands.push_back(ARMOperand::CreateVectorListAllLanes(FirstReg, Count,
+                                                            (Spacing == 2),
                                                             S, E));
     break;
   case IndexedLane:

@@ -578,6 +578,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   REG("VecListTwoQ");
   REG("VecListOneDAllLanes");
   REG("VecListTwoDAllLanes");
+  REG("VecListTwoQAllLanes");
 
   IMM("i32imm");
   IMM("i32imm_hilo16");
