@@ -6033,6 +6033,12 @@ def : NEONInstAlias<"vpadd${p}.i32 $Vdn, $Vm",
 def : NEONInstAlias<"vpadd${p}.f32 $Vdn, $Vm",
                     (VPADDf DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
 
+// VSWP allows, but does not require, a type suffix.
+defm : VFPDTAnyInstAlias<"vswp${p}", "$Vd, $Vm",
+                         (VSWPd DPR:$Vd, DPR:$Vm, pred:$p)>;
+defm : VFPDTAnyInstAlias<"vswp${p}", "$Vd, $Vm",
+                         (VSWPq QPR:$Vd, QPR:$Vm, pred:$p)>;
+
 // "vmov Rd, #-imm" can be handled via "vmvn".
 def : NEONInstAlias<"vmov${p}.i32 $Vd, $imm",
                     (VMVNv2i32 DPR:$Vd, nImmVMOVI32Neg:$imm, pred:$p)>;
