@@ -42,7 +42,6 @@ namespace llvm {
     APFloat APFloatVal;
     APSInt  APSIntVal;
 
-    std::string TheError;
   public:
     explicit LLLexer(MemoryBuffer *StartBuf, SourceMgr &SM, SMDiagnostic &,
                      LLVMContext &C);
