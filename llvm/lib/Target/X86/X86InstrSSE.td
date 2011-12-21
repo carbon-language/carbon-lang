@@ -1222,9 +1222,9 @@ let Predicates = [HasAVX] in {
             (VMOVHPSrm VR128:$src1, addr:$src2)>;
 
   // FIXME: Instead of X86Unpckl, there should be a X86Movlhpd here, the problem
-  // is during lowering, where it's not possible to recognize the load fold cause
-  // it has two uses through a bitcast. One use disappears at isel time and the
-  // fold opportunity reappears.
+  // is during lowering, where it's not possible to recognize the load fold 
+  // cause it has two uses through a bitcast. One use disappears at isel time
+  // and the fold opportunity reappears.
   def : Pat<(v2f64 (X86Unpckl VR128:$src1,
                       (scalar_to_vector (loadf64 addr:$src2)))),
             (VMOVHPDrm VR128:$src1, addr:$src2)>;
@@ -1265,9 +1265,9 @@ let Predicates = [HasSSE1] in {
 
 let Predicates = [HasSSE2] in {
   // FIXME: Instead of X86Unpckl, there should be a X86Movlhpd here, the problem
-  // is during lowering, where it's not possible to recognize the load fold cause
-  // it has two uses through a bitcast. One use disappears at isel time and the
-  // fold opportunity reappears.
+  // is during lowering, where it's not possible to recognize the load fold 
+  // cause it has two uses through a bitcast. One use disappears at isel time
+  // and the fold opportunity reappears.
   def : Pat<(v2f64 (X86Unpckl VR128:$src1,
                       (scalar_to_vector (loadf64 addr:$src2)))),
             (MOVHPDrm VR128:$src1, addr:$src2)>;
