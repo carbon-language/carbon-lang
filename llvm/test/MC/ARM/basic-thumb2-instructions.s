@@ -1167,6 +1167,7 @@ _func:
         moveq r4, r4, lsr r5
         moveq r4, r4, asr r5
         moveq r4, r4, ror r5
+        mov r4, r4, rrx
 
 @ CHECK: lsl.w	r6, r2, #16             @ encoding: [0x4f,0xea,0x02,0x46]
 @ CHECK: lsr.w	r6, r2, #16             @ encoding: [0x4f,0xea,0x12,0x46]
@@ -1184,7 +1185,7 @@ _func:
 @ CHECK: lsreq	r4, r5                  @ encoding: [0xec,0x40]
 @ CHECK: asreq	r4, r5                  @ encoding: [0x2c,0x41]
 @ CHECK: roreq	r4, r5                  @ encoding: [0xec,0x41]
-
+@ CHECK: rrx	r4, r4                  @ encoding: [0x4f,0xea,0x34,0x04]
 
 
 @------------------------------------------------------------------------------

@@ -5802,6 +5802,7 @@ processInstruction(MCInst &Inst,
     case ARM_AM::lsr: newOpc = isNarrow ? ARM::tLSRri : ARM::t2LSRri; break;
     case ARM_AM::lsl: newOpc = isNarrow ? ARM::tLSLri : ARM::t2LSLri; break;
     case ARM_AM::ror: newOpc = ARM::t2RORri; isNarrow = false; break;
+    case ARM_AM::rrx: isNarrow = false; newOpc = ARM::t2RRX; break;
     }
     unsigned Ammount = ARM_AM::getSORegOffset(Inst.getOperand(2).getImm());
     if (Ammount == 32) Ammount = 0;
@@ -5811,7 +5812,8 @@ processInstruction(MCInst &Inst,
       TmpInst.addOperand(MCOperand::CreateReg(
           Inst.getOpcode() == ARM::t2MOVSsi ? ARM::CPSR : 0));
     TmpInst.addOperand(Inst.getOperand(1)); // Rn
-    TmpInst.addOperand(MCOperand::CreateImm(Ammount));
+    if (newOpc != ARM::t2RRX)
+      TmpInst.addOperand(MCOperand::CreateImm(Ammount));
     TmpInst.addOperand(Inst.getOperand(3)); // CondCode
     TmpInst.addOperand(Inst.getOperand(4));
     if (!isNarrow)
