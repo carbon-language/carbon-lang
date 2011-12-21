@@ -300,6 +300,11 @@ namespace SrcMgr {
         SourceLocation::getFromRawEncoding(ExpansionLocEnd).isInvalid();
     }
 
+    bool isFunctionMacroExpansion() const {
+      return getExpansionLocStart().isValid() &&
+          getExpansionLocStart() != getExpansionLocEnd();
+    }
+
     /// create - Return a ExpansionInfo for an expansion. Start and End specify
     /// the expansion range (where the macro is expanded), and SpellingLoc
     /// specifies the spelling location (where the characters from the token

@@ -1585,14 +1585,31 @@ void SourceManager::computeMacroArgsCache(MacroArgsMap *&CachePtr,
       continue;
     }
 
-    if (!Entry.getExpansion().isMacroArgExpansion())
+    const ExpansionInfo &ExpInfo = Entry.getExpansion();
+
+    if (ExpInfo.getExpansionLocStart().isFileID()) {
+      if (!isInFileID(ExpInfo.getExpansionLocStart(), FID))
+        return; // No more files/macros that may be "contained" in this file.
+    }
+
+    if (!ExpInfo.isMacroArgExpansion())
       continue;
- 
-    SourceLocation SpellLoc =
-        getSpellingLoc(Entry.getExpansion().getSpellingLoc());
+
+    SourceLocation SpellLoc = ExpInfo.getSpellingLoc();
+    while (!SpellLoc.isFileID()) {
+      std::pair<FileID, unsigned> LocInfo = getDecomposedLoc(SpellLoc);
+      const ExpansionInfo &Info = getSLocEntry(LocInfo.first).getExpansion();
+      if (!Info.isMacroArgExpansion())
+        break;
+      SpellLoc = Info.getSpellingLoc().getLocWithOffset(LocInfo.second);
+    }
+    if (!SpellLoc.isFileID())
+      continue;
+    
     unsigned BeginOffs;
     if (!isInFileID(SpellLoc, FID, &BeginOffs))
-      return; // No more files/macros that may be "contained" in this file.
+      continue;
+
     unsigned EndOffs = BeginOffs + getFileIDSize(FileID::get(ID));
 
     // Add a new chunk for this macro argument. A previous macro argument chunk
