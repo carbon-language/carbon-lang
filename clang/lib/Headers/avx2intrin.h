@@ -244,6 +244,18 @@ _mm256_hsubs_epi16(__m256i a, __m256i b)
 }
 
 static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_maddubs_epi16(__m256i a, __m256i b)
+{
+    return (__m256i)__builtin_ia32_pmaddubsw256((__v32qi)a, (__v32qi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_madd_epi16(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_pmaddwd256((__v16hi)a, (__v16hi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_or_si256(__m256i a, __m256i b)
 {
   return a | b;

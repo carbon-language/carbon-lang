@@ -245,3 +245,13 @@ __m256 test_mm256_hsubs_epi16(__m256 a, __m256 b) {
   // CHECK: @llvm.x86.avx2.phsub.sw
   return _mm256_hsubs_epi16(a, b);
 }
+
+__m256 test_mm256_maddubs_epi16(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.pmadd.ub.sw
+  return _mm256_maddubs_epi16(a, b);
+}
+
+__m256 test_mm256_madd_epi16(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.pmadd.wd
+  return _mm256_madd_epi16(a, b);
+}
