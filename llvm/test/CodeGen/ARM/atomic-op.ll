@@ -101,3 +101,61 @@ entry:
 
   ret void
 }
+
+define void @func2() nounwind {
+entry:
+  %val = alloca i16
+  %old = alloca i16
+  store i16 31, i16* %val
+  ; CHECK: ldrex
+  ; CHECK: cmp
+  ; CHECK: strex
+  %0 = atomicrmw umin i16* %val, i16 16 monotonic
+  store i16 %0, i16* %old
+  %uneg = sub i16 0, 1
+  ; CHECK: ldrex
+  ; CHECK: cmp
+  ; CHECK: strex
+  %1 = atomicrmw umin i16* %val, i16 %uneg monotonic
+  store i16 %1, i16* %old
+  ; CHECK: ldrex
+  ; CHECK: cmp
+  ; CHECK: strex
+  %2 = atomicrmw umax i16* %val, i16 1 monotonic
+  store i16 %2, i16* %old
+  ; CHECK: ldrex
+  ; CHECK: cmp
+  ; CHECK: strex
+  %3 = atomicrmw umax i16* %val, i16 0 monotonic
+  store i16 %3, i16* %old
+  ret void
+}
+
+define void @func3() nounwind {
+entry:
+  %val = alloca i8
+  %old = alloca i8
+  store i8 31, i8* %val
+  ; CHECK: ldrex
+  ; CHECK: cmp
+  ; CHECK: strex
+  %0 = atomicrmw umin i8* %val, i8 16 monotonic
+  store i8 %0, i8* %old
+  ; CHECK: ldrex
+  ; CHECK: cmp
+  ; CHECK: strex
+  %uneg = sub i8 0, 1
+  %1 = atomicrmw umin i8* %val, i8 %uneg monotonic
+  store i8 %1, i8* %old
+  ; CHECK: ldrex
+  ; CHECK: cmp
+  ; CHECK: strex
+  %2 = atomicrmw umax i8* %val, i8 1 monotonic
+  store i8 %2, i8* %old
+  ; CHECK: ldrex
+  ; CHECK: cmp
+  ; CHECK: strex
+  %3 = atomicrmw umax i8* %val, i8 0 monotonic
+  store i8 %3, i8* %old
+  ret void
+}
