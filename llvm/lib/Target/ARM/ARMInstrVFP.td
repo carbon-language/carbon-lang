@@ -1240,10 +1240,18 @@ def : VFP2InstAlias<"vsub${p}.f64 $Dn, $Dm",
 def : VFP2InstAlias<"vsub${p}.f32 $Sn, $Sm",
                     (VSUBS SPR:$Sn, SPR:$Sn, SPR:$Sm, pred:$p)>;
 
-// VMOV can accept optional .f32/.f64 suffix.
-def : VFP2InstAlias<"vmov${p}.f32 $Rt, $Sn",
+// VMOV can accept optional 32-bit or less data type suffix suffix.
+def : VFP2InstAlias<"vmov${p}.8 $Rt, $Sn",
                     (VMOVRS GPR:$Rt, SPR:$Sn, pred:$p)>;
-def : VFP2InstAlias<"vmov${p}.f32 $Sn, $Rt",
+def : VFP2InstAlias<"vmov${p}.16 $Rt, $Sn",
+                    (VMOVRS GPR:$Rt, SPR:$Sn, pred:$p)>;
+def : VFP2InstAlias<"vmov${p}.32 $Rt, $Sn",
+                    (VMOVRS GPR:$Rt, SPR:$Sn, pred:$p)>;
+def : VFP2InstAlias<"vmov${p}.8 $Sn, $Rt",
+                    (VMOVSR SPR:$Sn, GPR:$Rt, pred:$p)>;
+def : VFP2InstAlias<"vmov${p}.16 $Sn, $Rt",
+                    (VMOVSR SPR:$Sn, GPR:$Rt, pred:$p)>;
+def : VFP2InstAlias<"vmov${p}.32 $Sn, $Rt",
                     (VMOVSR SPR:$Sn, GPR:$Rt, pred:$p)>;
 
 def : VFP2InstAlias<"vmov${p}.f64 $Rt, $Rt2, $Dn",
