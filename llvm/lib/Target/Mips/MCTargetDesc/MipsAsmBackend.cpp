@@ -72,9 +72,9 @@ namespace {
 
 class MipsELFObjectWriter : public MCELFObjectTargetWriter {
 public:
-  MipsELFObjectWriter(bool is64Bit, Triple::OSType OSType, uint16_t EMachine,
+  MipsELFObjectWriter(bool is64Bit, uint8_t OSABI, uint16_t EMachine,
                       bool HasRelocationAddend)
-    : MCELFObjectTargetWriter(is64Bit, OSType, EMachine,
+    : MCELFObjectTargetWriter(is64Bit, OSABI, EMachine,
                               HasRelocationAddend) {}
 };
 
@@ -197,10 +197,10 @@ public:
 
 class MipsEB_AsmBackend : public MipsAsmBackend {
 public:
-  Triple::OSType OSType;
+  uint8_t OSABI;
 
-  MipsEB_AsmBackend(const Target &T, Triple::OSType _OSType)
-    : MipsAsmBackend(T), OSType(_OSType) {}
+  MipsEB_AsmBackend(const Target &T, uint8_t _OSABI)
+    : MipsAsmBackend(T), OSABI(_OSABI) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return createELFObjectWriter(createELFObjectTargetWriter(),
@@ -208,16 +208,16 @@ public:
   }
 
   MCELFObjectTargetWriter *createELFObjectTargetWriter() const {
-    return new MipsELFObjectWriter(false, OSType, ELF::EM_MIPS, false);
+    return new MipsELFObjectWriter(false, OSABI, ELF::EM_MIPS, false);
   }
 };
 
 class MipsEL_AsmBackend : public MipsAsmBackend {
 public:
-  Triple::OSType OSType;
+  uint8_t OSABI;
 
-  MipsEL_AsmBackend(const Target &T, Triple::OSType _OSType)
-    : MipsAsmBackend(T), OSType(_OSType) {}
+  MipsEL_AsmBackend(const Target &T, uint8_t _OSABI)
+    : MipsAsmBackend(T), OSABI(_OSABI) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return createELFObjectWriter(createELFObjectTargetWriter(),
@@ -225,7 +225,7 @@ public:
   }
 
   MCELFObjectTargetWriter *createELFObjectTargetWriter() const {
-    return new MipsELFObjectWriter(false, OSType, ELF::EM_MIPS, false);
+    return new MipsELFObjectWriter(false, OSABI, ELF::EM_MIPS, false);
   }
 };
 } // namespace
@@ -235,5 +235,6 @@ MCAsmBackend *llvm::createMipsAsmBackend(const Target &T, StringRef TT) {
 
   // just return little endian for now
   //
-  return new MipsEL_AsmBackend(T, Triple(TT).getOS());
+  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(Triple(TT).getOS());
+  return new MipsEL_AsmBackend(T, OSABI);
 }

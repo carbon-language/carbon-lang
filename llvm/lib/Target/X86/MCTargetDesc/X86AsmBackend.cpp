@@ -58,9 +58,9 @@ namespace {
 
 class X86ELFObjectWriter : public MCELFObjectTargetWriter {
 public:
-  X86ELFObjectWriter(bool is64Bit, Triple::OSType OSType, uint16_t EMachine,
-                     bool HasRelocationAddend)
-    : MCELFObjectTargetWriter(is64Bit, OSType, EMachine, HasRelocationAddend) {}
+  X86ELFObjectWriter(bool is64Bit, uint8_t OSABI, uint16_t EMachine,
+                     bool HasRelocationAddend, bool foobar)
+    : MCELFObjectTargetWriter(is64Bit, OSABI, EMachine, HasRelocationAddend) {}
 };
 
 class X86AsmBackend : public MCAsmBackend {
@@ -325,9 +325,9 @@ bool X86AsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
 namespace {
 class ELFX86AsmBackend : public X86AsmBackend {
 public:
-  Triple::OSType OSType;
-  ELFX86AsmBackend(const Target &T, Triple::OSType _OSType)
-    : X86AsmBackend(T), OSType(_OSType) {
+  uint8_t OSABI;
+  ELFX86AsmBackend(const Target &T, uint8_t _OSABI)
+    : X86AsmBackend(T), OSABI(_OSABI) {
     HasReliableSymbolDifference = true;
   }
 
@@ -339,8 +339,8 @@ public:
 
 class ELFX86_32AsmBackend : public ELFX86AsmBackend {
 public:
-  ELFX86_32AsmBackend(const Target &T, Triple::OSType OSType)
-    : ELFX86AsmBackend(T, OSType) {}
+  ELFX86_32AsmBackend(const Target &T, uint8_t OSABI)
+    : ELFX86AsmBackend(T, OSABI) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return createELFObjectWriter(createELFObjectTargetWriter(),
@@ -348,14 +348,14 @@ public:
   }
 
   MCELFObjectTargetWriter *createELFObjectTargetWriter() const {
-    return new X86ELFObjectWriter(false, OSType, ELF::EM_386, false);
+    return new X86ELFObjectWriter(false, OSABI, ELF::EM_386, false, false);
   }
 };
 
 class ELFX86_64AsmBackend : public ELFX86AsmBackend {
 public:
-  ELFX86_64AsmBackend(const Target &T, Triple::OSType OSType)
-    : ELFX86AsmBackend(T, OSType) {}
+  ELFX86_64AsmBackend(const Target &T, uint8_t OSABI)
+    : ELFX86AsmBackend(T, OSABI) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
     return createELFObjectWriter(createELFObjectTargetWriter(),
@@ -363,7 +363,7 @@ public:
   }
 
   MCELFObjectTargetWriter *createELFObjectTargetWriter() const {
-    return new X86ELFObjectWriter(true, OSType, ELF::EM_X86_64, true);
+    return new X86ELFObjectWriter(true, OSABI, ELF::EM_X86_64, true, false);
   }
 };
 
@@ -457,7 +457,8 @@ MCAsmBackend *llvm::createX86_32AsmBackend(const Target &T, StringRef TT) {
   if (TheTriple.isOSWindows())
     return new WindowsX86AsmBackend(T, false);
 
-  return new ELFX86_32AsmBackend(T, TheTriple.getOS());
+  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TheTriple.getOS());
+  return new ELFX86_32AsmBackend(T, OSABI);
 }
 
 MCAsmBackend *llvm::createX86_64AsmBackend(const Target &T, StringRef TT) {
@@ -469,5 +470,6 @@ MCAsmBackend *llvm::createX86_64AsmBackend(const Target &T, StringRef TT) {
   if (TheTriple.isOSWindows())
     return new WindowsX86AsmBackend(T, true);
 
-  return new ELFX86_64AsmBackend(T, TheTriple.getOS());
+  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TheTriple.getOS());
+  return new ELFX86_64AsmBackend(T, OSABI);
 }

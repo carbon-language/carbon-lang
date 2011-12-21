@@ -93,11 +93,7 @@ void ELFObjectWriter::WriteHeader(uint64_t SectionDataSize,
 
   Write8(ELF::EV_CURRENT);        // e_ident[EI_VERSION]
   // e_ident[EI_OSABI]
-  switch (TargetObjectWriter->getOSType()) {
-    case Triple::FreeBSD:  Write8(ELF::ELFOSABI_FREEBSD); break;
-    case Triple::Linux:    Write8(ELF::ELFOSABI_LINUX); break;
-    default:               Write8(ELF::ELFOSABI_NONE); break;
-  }
+  Write8(TargetObjectWriter->getOSABI());
   Write8(0);                  // e_ident[EI_ABIVERSION]
 
   WriteZeros(ELF::EI_NIDENT - ELF::EI_PAD);

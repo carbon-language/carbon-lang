@@ -31,8 +31,8 @@ using namespace llvm;
 namespace {
 class ARMELFObjectWriter : public MCELFObjectTargetWriter {
 public:
-  ARMELFObjectWriter(Triple::OSType OSType)
-    : MCELFObjectTargetWriter(/*Is64Bit*/ false, OSType, ELF::EM_ARM,
+  ARMELFObjectWriter(uint8_t OSABI)
+    : MCELFObjectTargetWriter(/*Is64Bit*/ false, OSABI, ELF::EM_ARM,
                               /*HasRelocationAddend*/ false) {}
 };
 
@@ -447,16 +447,16 @@ namespace {
 // ELF is an ELF of course...
 class ELFARMAsmBackend : public ARMAsmBackend {
 public:
-  Triple::OSType OSType;
+  uint8_t OSABI;
   ELFARMAsmBackend(const Target &T, const StringRef TT,
-                   Triple::OSType _OSType)
-    : ARMAsmBackend(T, TT), OSType(_OSType) { }
+                   uint8_t _OSABI)
+    : ARMAsmBackend(T, TT), OSABI(_OSABI) { }
 
   void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value) const;
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createELFObjectWriter(new ARMELFObjectWriter(OSType), OS,
+    return createELFObjectWriter(new ARMELFObjectWriter(OSABI), OS,
                               /*IsLittleEndian*/ true);
   }
 };
@@ -580,5 +580,6 @@ MCAsmBackend *llvm::createARMAsmBackend(const Target &T, StringRef TT) {
   if (TheTriple.isOSWindows())
     assert(0 && "Windows not supported on ARM");
 
-  return new ELFARMAsmBackend(T, TT, Triple(TT).getOS());
+  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(Triple(TT).getOS());
+  return new ELFARMAsmBackend(T, TT, OSABI);
 }

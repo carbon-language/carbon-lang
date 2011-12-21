@@ -12,23 +12,37 @@
 
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ELF.h"
 
 namespace llvm {
 class MCELFObjectTargetWriter {
-  const Triple::OSType OSType;
+  const uint8_t OSABI;
   const uint16_t EMachine;
   const unsigned HasRelocationAddend : 1;
   const unsigned Is64Bit : 1;
+
 protected:
-  MCELFObjectTargetWriter(bool Is64Bit_, Triple::OSType OSType_,
+
+  MCELFObjectTargetWriter(bool Is64Bit_, uint8_t OSABI_,
                           uint16_t EMachine_,  bool HasRelocationAddend_);
 
 public:
+  static uint8_t getOSABI(Triple::OSType OSType) {
+    switch (OSType) {
+      case Triple::FreeBSD:
+        return ELF::ELFOSABI_FREEBSD;
+      case Triple::Linux:
+        return ELF::ELFOSABI_LINUX;
+      default:
+        return ELF::ELFOSABI_NONE;
+    }
+  }
+
   virtual ~MCELFObjectTargetWriter();
 
   /// @name Accessors
   /// @{
-  Triple::OSType getOSType() { return OSType; }
+  uint8_t getOSABI() { return OSABI; }
   uint16_t getEMachine() { return EMachine; }
   bool hasRelocationAddend() { return HasRelocationAddend; }
   bool is64Bit() const { return Is64Bit; }
