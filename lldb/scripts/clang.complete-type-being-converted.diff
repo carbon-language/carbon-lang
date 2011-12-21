@@ -1,0 +1,14 @@
+Index: lib/CodeGen/CodeGenTypes.cpp
+===================================================================
+--- lib/CodeGen/CodeGenTypes.cpp	(revision 146622)
++++ lib/CodeGen/CodeGenTypes.cpp	(working copy)
+@@ -113,6 +113,9 @@
+ static bool 
+ isSafeToConvert(const RecordDecl *RD, CodeGenTypes &CGT,
+                 llvm::SmallPtrSet<const RecordDecl*, 16> &AlreadyChecked) {
++  if (RD->hasExternalLexicalStorage() && !RD->getDefinition())
++    RD->getASTContext().getExternalSource()->CompleteType(const_cast<RecordDecl*>(RD));
++
+   // If we have already checked this type (maybe the same type is used by-value
+   // multiple times in multiple structure fields, don't check again.
+   if (!AlreadyChecked.insert(RD)) return true;
