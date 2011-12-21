@@ -208,6 +208,42 @@ _mm256_cmpgt_epi64(__m256i a, __m256i b)
 }
 
 static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_hadd_epi16(__m256i a, __m256i b)
+{
+    return (__m256i)__builtin_ia32_phaddw256((__v16hi)a, (__v16hi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_hadd_epi32(__m256i a, __m256i b)
+{
+    return (__m256i)__builtin_ia32_phaddd256((__v8si)a, (__v8si)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_hadds_epi16(__m256i a, __m256i b)
+{
+    return (__m256i)__builtin_ia32_phaddsw256((__v16hi)a, (__v16hi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_hsub_epi16(__m256i a, __m256i b)
+{
+    return (__m256i)__builtin_ia32_phsubw256((__v16hi)a, (__v16hi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_hsub_epi32(__m256i a, __m256i b)
+{
+    return (__m256i)__builtin_ia32_phsubd256((__v8si)a, (__v8si)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_hsubs_epi16(__m256i a, __m256i b)
+{
+    return (__m256i)__builtin_ia32_phsubsw256((__v16hi)a, (__v16hi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_or_si256(__m256i a, __m256i b)
 {
   return a | b;

@@ -494,5 +494,11 @@ BUILTIN(__builtin_ia32_pavgb256, "V32cV32cV32c", "")
 BUILTIN(__builtin_ia32_pavgw256, "V16sV16sV16s", "")
 BUILTIN(__builtin_ia32_pblendvb256, "V32cV32cV32cV32c", "")
 BUILTIN(__builtin_ia32_pblendw256, "V16sV16sV16sIi", "")
+BUILTIN(__builtin_ia32_phaddw256, "V16sV16sV16s", "")
+BUILTIN(__builtin_ia32_phaddd256, "V8iV8iV8i", "")
+BUILTIN(__builtin_ia32_phaddsw256, "V16sV16sV16s", "")
+BUILTIN(__builtin_ia32_phsubw256, "V16sV16sV16s", "")
+BUILTIN(__builtin_ia32_phsubd256, "V8iV8iV8i", "")
+BUILTIN(__builtin_ia32_phsubsw256, "V16sV16sV16s", "")
 
 #undef BUILTIN

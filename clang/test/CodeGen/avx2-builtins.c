@@ -215,3 +215,33 @@ __m256 test_mm256_cmpgt_epi64(__m256 a, __m256 b) {
   // CHECK: icmp sgt <4 x i64>
   return _mm256_cmpgt_epi64(a, b);
 }
+
+__m256 test_mm256_hadd_epi16(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.phadd.w
+  return _mm256_hadd_epi16(a, b);
+}
+
+__m256 test_mm256_hadd_epi32(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.phadd.d
+  return _mm256_hadd_epi32(a, b);
+}
+
+__m256 test_mm256_hadds_epi16(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.phadd.sw
+  return _mm256_hadds_epi16(a, b);
+}
+
+__m256 test_mm256_hsub_epi16(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.phsub.w
+  return _mm256_hsub_epi16(a, b);
+}
+
+__m256 test_mm256_hsub_epi32(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.phsub.d
+  return _mm256_hsub_epi32(a, b);
+}
+
+__m256 test_mm256_hsubs_epi16(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.phsub.sw
+  return _mm256_hsubs_epi16(a, b);
+}
