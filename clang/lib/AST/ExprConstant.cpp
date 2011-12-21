@@ -1150,8 +1150,8 @@ static bool ExtractSubobject(EvalInfo &Info, const Expr *E,
   }
   if (Sub.OnePastTheEnd) {
     Info.Diag(E->getExprLoc(), Info.getLangOpts().CPlusPlus0x ?
-                diag::note_constexpr_read_past_end :
-                diag::note_invalid_subexpr_in_const_expr);
+                (unsigned)diag::note_constexpr_read_past_end :
+                (unsigned)diag::note_invalid_subexpr_in_const_expr);
     return false;
   }
   if (Sub.Entries.empty())
@@ -1170,8 +1170,8 @@ static bool ExtractSubobject(EvalInfo &Info, const Expr *E,
         // Note, it should not be possible to form a pointer with a valid
         // designator which points more than one past the end of the array.
         Info.Diag(E->getExprLoc(), Info.getLangOpts().CPlusPlus0x ?
-                    diag::note_constexpr_read_past_end :
-                    diag::note_invalid_subexpr_in_const_expr);
+                    (unsigned)diag::note_constexpr_read_past_end :
+                    (unsigned)diag::note_invalid_subexpr_in_const_expr);
         return false;
       }
       if (O->getArrayInitializedElts() > Index)
