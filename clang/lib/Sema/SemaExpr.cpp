@@ -9526,7 +9526,12 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
         // This is a modification of an existing AST node. Notify listeners.
         if (ASTMutationListener *L = getASTMutationListener())
           L->StaticDataMemberInstantiated(Var);
-        PendingInstantiations.push_back(std::make_pair(Var, Loc));
+        QualType T = Var->getType();
+        if (T.isConstQualified() && !T.isVolatileQualified() &&
+            T->isIntegralOrEnumerationType())
+          InstantiateStaticDataMemberDefinition(Loc, Var);
+        else
+          PendingInstantiations.push_back(std::make_pair(Var, Loc));
       }
     }
 
