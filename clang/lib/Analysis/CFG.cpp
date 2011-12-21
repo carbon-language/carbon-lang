@@ -3487,6 +3487,9 @@ static void print_elem(raw_ostream &OS, StmtPrinterHelper* Helper,
     else if (isa<CXXBindTemporaryExpr>(S)) {
       OS << " (BindTemporary)";
     }
+    else if (const CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(S)) {
+      OS << " (CXXConstructExpr, " << CCE->getType().getAsString() << ")";
+    }
     else if (const CastExpr *CE = dyn_cast<CastExpr>(S)) {
       OS << " (" << CE->getStmtClassName() << ", "
          << CE->getCastKindName()
