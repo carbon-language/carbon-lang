@@ -20,8 +20,6 @@
 #include "llvm/ADT/IntervalMap.h"
 #include "llvm/CodeGen/LiveInterval.h"
 
-#include <algorithm>
-
 namespace llvm {
 
 class MachineLoopRange;
