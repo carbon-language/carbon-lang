@@ -434,6 +434,7 @@ __cxa_rethrow_primary_exception(void* thrown_object)
         deh->unexpectedHandler = std::get_unexpected();
         deh->terminateHandler = std::get_terminate();
         setDependentExceptionClass(&deh->unwindHeader);
+        __cxa_get_globals()->uncaughtExceptions += 1;
         deh->unwindHeader.exception_cleanup = dependent_exception_cleanup;
 #if __arm__
         _Unwind_SjLj_RaiseException(&deh->unwindHeader);
