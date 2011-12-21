@@ -155,24 +155,6 @@ extern char* __cxa_demangle(const char* mangled_name,
                             size_t*     length, 
                             int*        status);
 
-  } // extern "C"
-} // namespace __cxxabiv1
-namespace abi = __cxxabiv1;
-
-
-
-
-
-// Below are Apple extensions to support implementing C++ ABI in a seperate dylib
-namespace __cxxabiapple {  
-  extern "C"  {
-
-// Apple additions to support multiple STL stacks that share common 
-// terminate, unexpected, and new handlers
-extern void (*__cxa_terminate_handler)();
-extern void (*__cxa_unexpected_handler)();
-extern void (*__cxa_new_handler)();
-
 // Apple additions to support C++ 0x exception_ptr class
 // These are primitives to wrap a smart pointer around an exception object
 extern void * __cxa_current_primary_exception() throw();
@@ -185,6 +167,7 @@ extern bool __cxa_uncaught_exception() throw();
 
   } // extern "C"
 } // namespace __cxxabiv1
+namespace abi = __cxxabiv1;
 
 #endif // __cplusplus
 
