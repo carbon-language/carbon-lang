@@ -2737,8 +2737,11 @@ Decl *Sema::ActOnMethodDeclaration(
                                 ObjCMethod->isInstanceMethod());
     if (ObjCMethod->hasAttrs() &&
         containsInvalidMethodImplAttribute(IMD, ObjCMethod->getAttrs())) {
-      Diag(EndLoc, diag::warn_attribute_method_def);
-      Diag(IMD->getLocation(), diag::note_method_declared_at);
+      SourceLocation MethodLoc = IMD->getLocation();
+      if (!getSourceManager().isInSystemHeader(MethodLoc)) {
+        Diag(EndLoc, diag::warn_attribute_method_def);
+        Diag(MethodLoc, diag::note_method_declared_at);
+      }
     }
   } else {
     cast<DeclContext>(ClassDecl)->addDecl(ObjCMethod);
