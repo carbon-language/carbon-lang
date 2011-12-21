@@ -1665,7 +1665,7 @@ static bool MoveUpIncludeHierarchy(std::pair<FileID, unsigned> &Loc,
   SourceLocation UpperLoc;
   const SrcMgr::SLocEntry &Entry = SM.getSLocEntry(Loc.first);
   if (Entry.isExpansion())
-    UpperLoc = Entry.getExpansion().getExpansionLocEnd();
+    UpperLoc = Entry.getExpansion().getExpansionLocStart();
   else
     UpperLoc = Entry.getFile().getIncludeLoc();
   

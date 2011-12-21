@@ -438,8 +438,7 @@ public:
     // to determine which came first. This will also take care the case where
     // one of the locations points at the inclusion/expansion point of the other
     // in which case its FileID will come before the other.
-    if (LOffset == ROffset &&
-        (LQueryFID != CommonFID || RQueryFID != CommonFID))
+    if (LOffset == ROffset)
       return IsLQFIDBeforeRQFID;
 
     return LOffset < ROffset;
