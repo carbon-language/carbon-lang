@@ -2504,7 +2504,7 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
         Pred = *PI++;
         if (Pred != BB) {
           I = BBStates.find(Pred);
-          if (I == BBStates.end() || I->second.isVisitedTopDown())
+          if (I != BBStates.end() && I->second.isVisitedTopDown())
             MyStates.MergePred(I->second);
         }
       }
