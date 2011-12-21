@@ -675,8 +675,9 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
             log->Printf("Result type has size 0");
         
         if (m_error_stream)
-            m_error_stream->Printf("Internal error [IRForTarget]: Result type '%s' has invalid size\n", 
+            m_error_stream->Printf("Error [IRForTarget]: Size of result type '%s' couldn't be determined\n", 
                                    type_desc_stream.GetData());
+        return false;
     }
     
     if (log)
