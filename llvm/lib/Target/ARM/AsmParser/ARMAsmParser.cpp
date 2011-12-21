@@ -2831,21 +2831,32 @@ parseVectorLane(VectorLaneTy &LaneKind, unsigned &Index) {
       Parser.Lex(); // Eat the ']'.
       return MatchOperand_Success;
     }
-    if (Parser.getTok().is(AsmToken::Integer)) {
-      int64_t Val = Parser.getTok().getIntVal();
-      // Make this range check context sensitive for .8, .16, .32.
-      if (Val < 0 && Val > 7)
-        Error(Parser.getTok().getLoc(), "lane index out of range");
-      Index = Val;
-      LaneKind = IndexedLane;
-      Parser.Lex(); // Eat the token;
-      if (Parser.getTok().isNot(AsmToken::RBrac))
-        Error(Parser.getTok().getLoc(), "']' expected");
-      Parser.Lex(); // Eat the ']'.
-      return MatchOperand_Success;
+    const MCExpr *LaneIndex;
+    SMLoc Loc = Parser.getTok().getLoc();
+    if (getParser().ParseExpression(LaneIndex)) {
+      Error(Loc, "illegal expression");
+      return MatchOperand_ParseFail;
     }
-    Error(Parser.getTok().getLoc(), "lane index must be empty or an integer");
-    return MatchOperand_ParseFail;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(LaneIndex);
+    if (!CE) {
+      Error(Loc, "lane index must be empty or an integer");
+      return MatchOperand_ParseFail;
+    }
+    if (Parser.getTok().isNot(AsmToken::RBrac)) {
+      Error(Parser.getTok().getLoc(), "']' expected");
+      return MatchOperand_ParseFail;
+    }
+    Parser.Lex(); // Eat the ']'.
+    int64_t Val = CE->getValue();
+
+    // FIXME: Make this range check context sensitive for .8, .16, .32.
+    if (Val < 0 || Val > 7) {
+      Error(Parser.getTok().getLoc(), "lane index out of range");
+      return MatchOperand_ParseFail;
+    }
+    Index = Val;
+    LaneKind = IndexedLane;
+    return MatchOperand_Success;
   }
   LaneKind = NoLanes;
   return MatchOperand_Success;
