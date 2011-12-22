@@ -23,7 +23,7 @@
 #include <cstring>
 #include <cerrno>
 
-#include "llvm/Config/config.h"
+#include "llvm/Config/config.h" // for strtoull()/strtoll() define
 
 using namespace llvm;
 
