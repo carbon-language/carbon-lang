@@ -20986,14 +20986,14 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
   oldcxxflags="$CXXFLAGS"
-  CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"
+  CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden -Werror"
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-template <typename T> struct X { inline void f() {} };
+template <typename T> struct X { void __attribute__((noinline)) f() {} };
 int
 main ()
 {
