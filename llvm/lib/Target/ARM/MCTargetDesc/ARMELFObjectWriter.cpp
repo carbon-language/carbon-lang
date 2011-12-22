@@ -209,14 +209,7 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
       break;
     case ARM::fixup_arm_thumb_bl:
     case ARM::fixup_arm_thumb_blx:
-      switch (Modifier) {
-      case MCSymbolRefExpr::VK_ARM_PLT:
-        Type = ELF::R_ARM_THM_CALL;
-        break;
-      default:
-        Type = ELF::R_ARM_NONE;
-        break;
-      }
+      Type = ELF::R_ARM_THM_CALL;
       break;
     }
   } else {
