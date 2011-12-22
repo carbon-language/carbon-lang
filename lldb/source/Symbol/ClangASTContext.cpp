@@ -5411,9 +5411,10 @@ ClangASTContext::IsIntegerType (clang_type_t clang_type, bool &is_signed)
     if (builtin_type)
     {
         if (builtin_type->isInteger())
+        {
             is_signed = builtin_type->isSignedInteger();
-        
-        return true;
+            return true;
+        }
     }
     
     return false;

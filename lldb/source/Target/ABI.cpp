@@ -12,6 +12,7 @@
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
 using namespace lldb;
@@ -104,25 +105,69 @@ ABI::GetRegisterInfoByKind (RegisterKind reg_kind, uint32_t reg_num, RegisterInf
 
 ValueObjectSP
 ABI::GetReturnValueObject (Thread &thread,
-                          ClangASTType &ast_type) const
+                          ClangASTType &ast_type,
+                          bool persistent) const
 {
     if (!ast_type.IsValid())
         return ValueObjectSP();
         
-    Value ret_value;
-    ret_value.SetContext(Value::eContextTypeClangType, 
-                       ast_type.GetOpaqueQualType());
-    if (GetReturnValue (thread, ret_value))
+    ValueObjectSP return_valobj_sp;
+        
+    return_valobj_sp = GetReturnValueObjectImpl(thread, ast_type);
+    if (!return_valobj_sp)
+        return return_valobj_sp;
+    
+    // Now turn this into a persistent variable.
+    // FIXME: This code is duplicated from Target::EvaluateExpression, and it is used in similar form in a couple
+    // of other places.  Figure out the correct Create function to do all this work.
+    
+    if (persistent)
     {
-        return ValueObjectConstResult::Create(
-                                        thread.GetStackFrameAtIndex(0).get(),
-                                        ast_type.GetASTContext(),
-                                        ret_value,
-                                        ConstString("FunctionReturn"));
+        ClangPersistentVariables& persistent_variables = thread.GetProcess().GetTarget().GetPersistentVariables();
+        ConstString persistent_variable_name (persistent_variables.GetNextPersistentVariableName());
+
+        lldb::ValueObjectSP const_valobj_sp;
+        
+        // Check in case our value is already a constant value
+        if (return_valobj_sp->GetIsConstant())
+        {
+            const_valobj_sp = return_valobj_sp;
+            const_valobj_sp->SetName (persistent_variable_name);
+        }
+        else
+            const_valobj_sp = return_valobj_sp->CreateConstantValue (persistent_variable_name);
+
+        lldb::ValueObjectSP live_valobj_sp = return_valobj_sp;
+        
+        return_valobj_sp = const_valobj_sp;
+
+        ClangExpressionVariableSP clang_expr_variable_sp(persistent_variables.CreatePersistentVariable(return_valobj_sp));
+               
+        assert (clang_expr_variable_sp.get());
+        
+        // Set flags and live data as appropriate
+
+        const Value &result_value = live_valobj_sp->GetValue();
+        
+        switch (result_value.GetValueType())
+        {
+        case Value::eValueTypeHostAddress:
+        case Value::eValueTypeFileAddress:
+            // we don't do anything with these for now
+            break;
+        case Value::eValueTypeScalar:
+            clang_expr_variable_sp->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
+            clang_expr_variable_sp->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
+            break;
+        case Value::eValueTypeLoadAddress:
+            clang_expr_variable_sp->m_live_sp = live_valobj_sp;
+            clang_expr_variable_sp->m_flags |= ClangExpressionVariable::EVIsProgramReference;
+            break;
+        }
+        return_valobj_sp = clang_expr_variable_sp->GetValueObject();
 
     }
-    else
-        return ValueObjectSP();
+    return return_valobj_sp;
 }
 
 

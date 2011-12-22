@@ -16,6 +16,7 @@
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/Value.h"
+#include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Target/Process.h"
@@ -417,85 +418,92 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
     return true;
 }
 
-bool
-ABIMacOSX_arm::GetReturnValue (Thread &thread,
-                               Value &value) const
+ValueObjectSP
+ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
+                               lldb_private::ClangASTType &ast_type) const
 {
-    switch (value.GetContextType())
+    Value value;
+    ValueObjectSP return_valobj_sp;
+    
+    void *value_type = ast_type.GetOpaqueQualType();
+    if (!value_type) 
+        return return_valobj_sp;
+    
+    clang::ASTContext *ast_context = ast_type.GetASTContext();
+    if (!ast_context)
+        return return_valobj_sp;
+
+    value.SetContext (Value::eContextTypeClangType, value_type);
+            
+    RegisterContext *reg_ctx = thread.GetRegisterContext().get();
+    if (!reg_ctx)
+        return return_valobj_sp;
+        
+    bool is_signed;
+    
+    // Get the pointer to the first stack argument so we have a place to start 
+    // when reading data
+    
+    const RegisterInfo *r0_reg_info = reg_ctx->GetRegisterInfoByName("r0", 0);
+    if (ClangASTContext::IsIntegerType (value_type, is_signed))
     {
-        default:
-            return false;
-        case Value::eContextTypeClangType:
+        size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
+        
+        switch (bit_width)
         {
-            // Extract the Clang AST context from the PC so that we can figure out type
-            // sizes
-            
-            clang::ASTContext *ast_context = thread.CalculateTarget()->GetScratchClangASTContext()->getASTContext();
-            
-            // Get the pointer to the first stack argument so we have a place to start 
-            // when reading data
-            
-            RegisterContext *reg_ctx = thread.GetRegisterContext().get();
-            
-            void *value_type = value.GetClangType();
-            bool is_signed;
-            
-            const RegisterInfo *r0_reg_info = reg_ctx->GetRegisterInfoByName("r0", 0);
-            if (ClangASTContext::IsIntegerType (value_type, is_signed))
+            default:
+                return return_valobj_sp;
+            case 64:
             {
-                size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
-                
-                switch (bit_width)
-                {
-                    default:
-                        return false;
-                    case 64:
-                    {
-                        const RegisterInfo *r1_reg_info = reg_ctx->GetRegisterInfoByName("r1", 0);
-                        uint64_t raw_value;
-                        raw_value = reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX;
-                        raw_value |= ((uint64_t)(reg_ctx->ReadRegisterAsUnsigned(r1_reg_info, 0) & UINT32_MAX)) << 32;
-                        if (is_signed)
-                            value.GetScalar() = (int64_t)raw_value;
-                        else
-                            value.GetScalar() = (uint64_t)raw_value;
-                    }
-                        break;
-                    case 32:
-                        if (is_signed)
-                            value.GetScalar() = (int32_t)(reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX);
-                        else
-                            value.GetScalar() = (uint32_t)(reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX);
-                        break;
-                    case 16:
-                        if (is_signed)
-                            value.GetScalar() = (int16_t)(reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT16_MAX);
-                        else
-                            value.GetScalar() = (uint16_t)(reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT16_MAX);
-                        break;
-                    case 8:
-                        if (is_signed)
-                            value.GetScalar() = (int8_t)(reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT8_MAX);
-                        else
-                            value.GetScalar() = (uint8_t)(reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT8_MAX);
-                        break;
-                }
+                const RegisterInfo *r1_reg_info = reg_ctx->GetRegisterInfoByName("r1", 0);
+                uint64_t raw_value;
+                raw_value = reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX;
+                raw_value |= ((uint64_t)(reg_ctx->ReadRegisterAsUnsigned(r1_reg_info, 0) & UINT32_MAX)) << 32;
+                if (is_signed)
+                    value.GetScalar() = (int64_t)raw_value;
+                else
+                    value.GetScalar() = (uint64_t)raw_value;
             }
-            else if (ClangASTContext::IsPointerType (value_type))
-            {
-                uint32_t ptr = thread.GetRegisterContext()->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX;
-                value.GetScalar() = ptr;
-            }
-            else
-            {
-                // not handled yet
-                return false;
-            }
+                break;
+            case 32:
+                if (is_signed)
+                    value.GetScalar() = (int32_t)(reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX);
+                else
+                    value.GetScalar() = (uint32_t)(reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX);
+                break;
+            case 16:
+                if (is_signed)
+                    value.GetScalar() = (int16_t)(reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT16_MAX);
+                else
+                    value.GetScalar() = (uint16_t)(reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT16_MAX);
+                break;
+            case 8:
+                if (is_signed)
+                    value.GetScalar() = (int8_t)(reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT8_MAX);
+                else
+                    value.GetScalar() = (uint8_t)(reg_ctx->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT8_MAX);
+                break;
         }
-            break;
+    }
+    else if (ClangASTContext::IsPointerType (value_type))
+    {
+        uint32_t ptr = thread.GetRegisterContext()->ReadRegisterAsUnsigned(r0_reg_info, 0) & UINT32_MAX;
+        value.GetScalar() = ptr;
+    }
+    else
+    {
+        // not handled yet
+        return return_valobj_sp;
     }
     
-    return true;
+    // If we get here, we have a valid Value, so make our ValueObject out of it:
+    
+    return_valobj_sp = ValueObjectConstResult::Create(
+                                    thread.GetStackFrameAtIndex(0).get(),
+                                    ast_type.GetASTContext(),
+                                    value,
+                                    ConstString(""));
+    return return_valobj_sp;
 }
 
 bool

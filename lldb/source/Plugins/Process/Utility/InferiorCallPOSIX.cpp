@@ -9,7 +9,7 @@
 
 #include "InferiorCallPOSIX.h"
 #include "lldb/Core/StreamFile.h"
-#include "lldb/Core/Value.h"
+#include "lldb/Core/ValueObject.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
@@ -70,9 +70,12 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
             AddressRange mmap_range;
             if (sc.GetAddressRange(range_scope, 0, use_inline_block_range, mmap_range))
             {
+                ClangASTContext *clang_ast_context = process->GetTarget().GetScratchClangASTContext();
+                lldb::clang_type_t clang_void_ptr_type = clang_ast_context->GetVoidPtrType(false);
                 ThreadPlanCallFunction *call_function_thread_plan
                   = new ThreadPlanCallFunction (*thread,
                                                 mmap_range.GetBaseAddress(),
+                                                ClangASTType (clang_ast_context->getASTContext(), clang_void_ptr_type),
                                                 stop_other_threads,
                                                 discard_on_error,
                                                 &addr,
@@ -84,13 +87,6 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
                 lldb::ThreadPlanSP call_plan_sp (call_function_thread_plan);
                 if (call_plan_sp)
                 {
-                    ValueSP return_value_sp (new Value);
-                    ClangASTContext *clang_ast_context = process->GetTarget().GetScratchClangASTContext();
-                    lldb::clang_type_t clang_void_ptr_type = clang_ast_context->GetVoidPtrType(false);
-                    return_value_sp->SetValueType (Value::eValueTypeScalar);
-                    return_value_sp->SetContext (Value::eContextTypeClangType, clang_void_ptr_type);
-                    call_function_thread_plan->RequestReturnValue (return_value_sp);
-
                     StreamFile error_strm;
                     StackFrame *frame = thread->GetStackFrameAtIndex (0).get();
                     if (frame)
@@ -106,7 +102,8 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
                                                                           error_strm);
                         if (result == eExecutionCompleted)
                         {
-                            allocated_addr = return_value_sp->GetScalar().ULongLong();
+                            
+                            allocated_addr = call_plan_sp->GetReturnValueObject()->GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
                             if (process->GetAddressByteSize() == 4)
                             {
                                 if (allocated_addr == UINT32_MAX)
@@ -155,6 +152,7 @@ bool lldb_private::InferiorCallMunmap(Process *process, addr_t addr,
            {
                lldb::ThreadPlanSP call_plan_sp (new ThreadPlanCallFunction (*thread,
                                                                             munmap_range.GetBaseAddress(),
+                                                                            ClangASTType(),
                                                                             stop_other_threads,
                                                                             discard_on_error,
                                                                             &addr,

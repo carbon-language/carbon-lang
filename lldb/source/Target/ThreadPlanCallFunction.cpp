@@ -37,6 +37,7 @@ using namespace lldb_private;
 
 ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                                 Address &function,
+                                                const ClangASTType &return_type,
                                                 addr_t arg,
                                                 bool stop_other_threads,
                                                 bool discard_on_error,
@@ -47,6 +48,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_stop_other_threads (stop_other_threads),
     m_function_addr (function),
     m_function_sp (NULL),
+    m_return_type (return_type),
     m_takedown_done (false),
     m_stop_address (LLDB_INVALID_ADDRESS)
 {
@@ -149,6 +151,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
 
 ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                                 Address &function,
+                                                const ClangASTType &return_type,
                                                 bool stop_other_threads,
                                                 bool discard_on_error,
                                                 addr_t *arg1_ptr,
@@ -162,6 +165,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_stop_other_threads (stop_other_threads),
     m_function_addr (function),
     m_function_sp(NULL),
+    m_return_type (return_type),
     m_takedown_done (false)
 {
     SetOkayToDiscard (discard_on_error);
@@ -281,13 +285,12 @@ ThreadPlanCallFunction::DoTakedown ()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (!m_takedown_done)
     {
-        // TODO: how do we tell if all went well?
-        if (m_return_value_sp)
+        const ABI *abi = m_thread.GetProcess().GetABI().get();
+        if (abi && m_return_type.IsValid())
         {
-            const ABI *abi = m_thread.GetProcess().GetABI().get();
-            if (abi)
-                abi->GetReturnValue(m_thread, *m_return_value_sp);
+            m_return_valobj_sp = abi->GetReturnValueObject (m_thread, m_return_type);
         }
+
         if (log)
             log->Printf ("DoTakedown called for thread 0x%4.4llx, m_valid: %d complete: %d.\n", m_thread.GetID(), m_valid, IsPlanComplete());
         m_takedown_done = true;

@@ -405,6 +405,7 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx,
     Address wrapper_address (NULL, func_addr);
     ThreadPlan *new_plan = new ThreadPlanCallFunction (*thread, 
                                                        wrapper_address,
+                                                       ClangASTType(),
                                                        args_addr,
                                                        stop_others, 
                                                        discard_on_error,
@@ -418,7 +419,8 @@ ClangFunction::FetchFunctionResults (ExecutionContext &exe_ctx, lldb::addr_t arg
 {
     // Read the return value - it is the last field in the struct:
     // FIXME: How does clang tell us there's no return value?  We need to handle that case.
-    
+    // FIXME: Create our ThreadPlanCallFunction with the return ClangASTType, and then use GetReturnValueObject
+    // to fetch the value.  That way we can fetch any values we need.
     Process *process = exe_ctx.GetProcessPtr();
     
     if (process == NULL)

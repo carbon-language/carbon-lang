@@ -45,14 +45,19 @@ public:
     GetArgumentValues (Thread &thread,
                        ValueList &values) const = 0;
     
-    virtual bool
-    GetReturnValue (Thread &thread,
-                    Value &value) const = 0;
-                    
-    virtual lldb::ValueObjectSP
+public:
+    lldb::ValueObjectSP
     GetReturnValueObject (Thread &thread,
-                          ClangASTType &type) const;
+                          ClangASTType &type,
+                          bool persistent = true) const;
 
+protected:    
+    // This is the method the ABI will call to actually calculate the return value.
+    // Don't put it in a persistant value object, that will be done by the ABI::GetReturnValueObject.
+    virtual lldb::ValueObjectSP
+    GetReturnValueObjectImpl (Thread &thread,
+                          ClangASTType &type) const = 0;
+public:
     virtual bool
     CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan) = 0;
 

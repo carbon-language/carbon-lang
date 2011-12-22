@@ -17,6 +17,9 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Value.h"
+#include "lldb/Core/ValueObjectConstResult.h"
+#include "lldb/Core/ValueObjectRegister.h"
+#include "lldb/Core/ValueObjectMemory.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Target/Target.h"
@@ -547,83 +550,404 @@ ABISysV_x86_64::GetArgumentValues (Thread &thread,
     return true;
 }
 
-bool
-ABISysV_x86_64::GetReturnValue (Thread &thread,
-                                Value &value) const
+ValueObjectSP
+ABISysV_x86_64::GetReturnValueObjectSimple (Thread &thread,
+                                ClangASTType &ast_type) const
 {
-    switch (value.GetContextType())
+    ValueObjectSP return_valobj_sp;
+    Value value;
+    
+    clang_type_t value_type = ast_type.GetOpaqueQualType();
+    if (!value_type) 
+        return return_valobj_sp;
+    
+    clang::ASTContext *ast_context = ast_type.GetASTContext();
+    if (!ast_context)
+        return return_valobj_sp;
+
+    value.SetContext (Value::eContextTypeClangType, value_type);
+    
+    RegisterContext *reg_ctx = thread.GetRegisterContext().get();
+    if (!reg_ctx)
+        return return_valobj_sp;
+    
+    bool is_signed;
+    bool is_complex;
+    uint32_t count;
+
+    if (ClangASTContext::IsIntegerType (value_type, is_signed))
     {
-        default:
-            return false;
-        case Value::eContextTypeClangType:
+        // For now, assume that the types in the AST values come from the Target's 
+        // scratch AST.    
+        
+        
+        // Extract the register context so we can read arguments from registers
+        
+        size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
+        unsigned rax_id = reg_ctx->GetRegisterInfoByName("rax", 0)->kinds[eRegisterKindLLDB];
+        
+        switch (bit_width)
         {
-            void *value_type = value.GetClangType();
-            bool is_signed;
-            
-            RegisterContext *reg_ctx = thread.GetRegisterContext().get();
-            
-            if (!reg_ctx)
-                return false;
-            
-            if (ClangASTContext::IsIntegerType (value_type, is_signed))
+        default:
+        case 128:
+            // Scalar can't hold 128-bit literals, so we don't handle this
+            return return_valobj_sp;
+        case 64:
+            if (is_signed)
+                value.GetScalar() = (int64_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0));
+            else
+                value.GetScalar() = (uint64_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0));
+            break;
+        case 32:
+            if (is_signed)
+                value.GetScalar() = (int32_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xffffffff);
+            else
+                value.GetScalar() = (uint32_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xffffffff);
+            break;
+        case 16:
+            if (is_signed)
+                value.GetScalar() = (int16_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xffff);
+            else
+                value.GetScalar() = (uint16_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xffff);
+            break;
+        case 8:
+            if (is_signed)
+                value.GetScalar() = (int8_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xff);
+            else
+                value.GetScalar() = (uint8_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xff);
+            break;
+        }
+    }
+    else if (ClangASTContext::IsFloatingPointType(value_type, count, is_complex))
+    {
+        // Don't handle complex yet.
+        if (is_complex)
+            return return_valobj_sp;
+        
+        size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
+        if (bit_width <= 64)
+        {
+            const RegisterInfo *xmm0_info = reg_ctx->GetRegisterInfoByName("xmm0", 0);
+            RegisterValue xmm0_value;
+            if (reg_ctx->ReadRegister (xmm0_info, xmm0_value))
             {
-                // For now, assume that the types in the AST values come from the Target's 
-                // scratch AST.    
-                
-                clang::ASTContext *ast_context = thread.CalculateTarget()->GetScratchClangASTContext()->getASTContext();
-                
-                // Extract the register context so we can read arguments from registers
-                
-                size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
-                unsigned rax_id = reg_ctx->GetRegisterInfoByName("rax", 0)->kinds[eRegisterKindLLDB];
-                
-                switch (bit_width)
+                DataExtractor data;
+                if (xmm0_value.GetData(data))
                 {
-                default:
-                case 128:
-                    // Scalar can't hold 128-bit literals, so we don't handle this
-                    return false;
-                case 64:
-                    if (is_signed)
-                        value.GetScalar() = (int64_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0));
-                    else
-                        value.GetScalar() = (uint64_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0));
-                    break;
-                case 32:
-                    if (is_signed)
-                        value.GetScalar() = (int32_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xffffffff);
-                    else
-                        value.GetScalar() = (uint32_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xffffffff);
-                    break;
-                case 16:
-                    if (is_signed)
-                        value.GetScalar() = (int16_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xffff);
-                    else
-                        value.GetScalar() = (uint16_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xffff);
-                    break;
-                case 8:
-                    if (is_signed)
-                        value.GetScalar() = (int8_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xff);
-                    else
-                        value.GetScalar() = (uint8_t)(thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0) & 0xff);
-                    break;
+                    uint32_t offset = 0;
+                    switch (bit_width)
+                    {
+                        default:
+                            return return_valobj_sp;
+                        case 32:
+                            value.GetScalar() = (float) data.GetFloat(&offset);
+                            break;
+                        case 64:
+                            value.GetScalar() = (double) data.GetDouble(&offset);
+                            break;
+                    }
                 }
             }
-            else if (ClangASTContext::IsPointerType (value_type))
-            {
-                unsigned rax_id = reg_ctx->GetRegisterInfoByName("rax", 0)->kinds[eRegisterKindLLDB];
-                value.GetScalar() = (uint64_t)thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0);
-            }
-            else
-            {
-                // not handled yet
-                return false;
-            }
         }
-        break;
+        else if (bit_width == 128)
+        {
+            // FIXME: x86_64 returns long doubles in stmm0, which is in some 80 bit long double
+            // format, and so we'll have to write some code to convert that into 128 bit long doubles.
+//            const RegisterInfo *st0_info = reg_ctx->GetRegisterInfoByName("stmm0", 0);
+//            RegisterValue st0_value;
+//            if (reg_ctx->ReadRegister (st0_info, st0_value))
+//            {
+//                DataExtractor data;
+//                if (st0_value.GetData(data))
+//                {
+//                    uint32_t offset = 0;
+//                    value.GetScalar() = (long double) data.GetLongDouble (&offset);
+//                    return true;
+//                }
+//            }
+            
+            return return_valobj_sp;
+        }
+    }
+    else if (ClangASTContext::IsPointerType (value_type))
+    {
+        unsigned rax_id = reg_ctx->GetRegisterInfoByName("rax", 0)->kinds[eRegisterKindLLDB];
+        value.GetScalar() = (uint64_t)thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0);
+    }
+    else
+    {
+        return return_valobj_sp;
     }
     
-    return true;
+    // If we get here, we have a valid Value, so make our ValueObject out of it:
+    
+    return_valobj_sp = ValueObjectConstResult::Create(
+                                    thread.GetStackFrameAtIndex(0).get(),
+                                    ast_type.GetASTContext(),
+                                    value,
+                                    ConstString(""));
+    return return_valobj_sp;
+}
+
+ValueObjectSP
+ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread,
+                      ClangASTType &ast_type) const
+{
+
+    ValueObjectSP return_valobj_sp;
+    
+    return_valobj_sp = GetReturnValueObjectSimple(thread, ast_type);
+    if (return_valobj_sp)
+        return return_valobj_sp;
+    
+    clang_type_t ret_value_type = ast_type.GetOpaqueQualType();
+    if (!ret_value_type) 
+        return return_valobj_sp;
+    
+    clang::ASTContext *ast_context = ast_type.GetASTContext();
+    if (!ast_context)
+        return return_valobj_sp;
+        
+    RegisterContextSP reg_ctx_sp = thread.GetRegisterContext();
+    if (!reg_ctx_sp)
+        return return_valobj_sp;
+        
+    size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, ret_value_type);
+    if (ClangASTContext::IsAggregateType(ret_value_type))
+    {
+        Target &target = thread.GetProcess().GetTarget();
+        bool is_memory = true;
+        if (bit_width <= 128)
+        {
+            ByteOrder target_byte_order = target.GetArchitecture().GetByteOrder();
+            DataBufferSP data_sp (new DataBufferHeap(16, 0));
+            DataExtractor return_ext (data_sp, 
+                                      target_byte_order, 
+                                      target.GetArchitecture().GetAddressByteSize());
+                                                           
+            const RegisterInfo *rax_info = reg_ctx_sp->GetRegisterInfoByName("rax", 0);
+            const RegisterInfo *rdx_info = reg_ctx_sp->GetRegisterInfoByName("rdx", 0);
+            const RegisterInfo *xmm0_info = reg_ctx_sp->GetRegisterInfoByName("xmm0", 0);
+            const RegisterInfo *xmm1_info = reg_ctx_sp->GetRegisterInfoByName("xmm1", 0);
+            
+            RegisterValue rax_value, rdx_value, xmm0_value, xmm1_value;
+            reg_ctx_sp->ReadRegister (rax_info, rax_value);
+            reg_ctx_sp->ReadRegister (rdx_info, rdx_value);
+            reg_ctx_sp->ReadRegister (xmm0_info, xmm0_value);
+            reg_ctx_sp->ReadRegister (xmm1_info, xmm1_value);
+
+            DataExtractor rax_data, rdx_data, xmm0_data, xmm1_data;
+            
+            rax_value.GetData(rax_data);
+            rdx_value.GetData(rdx_data);
+            xmm0_value.GetData(xmm0_data);
+            xmm1_value.GetData(xmm1_data);
+            
+            uint32_t fp_bytes = 0;       // Tracks how much of the xmm registers we've consumed so far
+            uint32_t integer_bytes = 0;  // Tracks how much of the rax/rds registers we've consumed so far
+            
+            uint32_t num_children = ClangASTContext::GetNumFields (ast_context, ret_value_type);
+            
+            // Since we are in the small struct regime, assume we are not in memory.
+            is_memory = false;
+            
+            for (uint32_t idx = 0; idx < num_children; idx++)
+            {
+                std::string name;
+                uint32_t field_bit_offset;
+                bool is_signed;
+                bool is_complex;
+                uint32_t count;
+                
+                clang_type_t field_clang_type = ClangASTContext::GetFieldAtIndex (ast_context, ret_value_type, idx, name, &field_bit_offset);
+                size_t field_bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, field_clang_type);
+
+                // If there are any unaligned fields, this is stored in memory.
+                if (field_bit_offset % field_bit_width != 0)
+                {
+                    is_memory = true;
+                    break;
+                }
+                
+                uint32_t field_byte_width = field_bit_width/8;
+                uint32_t field_byte_offset = field_bit_offset/8;
+                
+
+                DataExtractor *copy_from_extractor = NULL;
+                uint32_t       copy_from_offset    = 0;
+                
+                if (ClangASTContext::IsIntegerType (field_clang_type, is_signed) || ClangASTContext::IsPointerType (field_clang_type))
+                {
+                    if (integer_bytes < 8)
+                    {
+                        if (integer_bytes + field_byte_width <= 8)
+                        {
+                            // This is in RAX, copy from register to our result structure:
+                            copy_from_extractor = &rax_data;
+                            copy_from_offset = integer_bytes;
+                            integer_bytes += field_byte_width;
+                        }
+                        else
+                        {
+                            // The next field wouldn't fit in the remaining space, so we pushed it to rdx.
+                            copy_from_extractor = &rdx_data;
+                            copy_from_offset = 0;
+                            integer_bytes = 8 + field_byte_width;
+                        
+                        }
+                    }
+                    else if (integer_bytes + field_byte_width <= 16)
+                    {
+                        copy_from_extractor = &rdx_data;
+                        copy_from_offset = integer_bytes - 8;
+                        integer_bytes += field_byte_width;
+                    }
+                    else
+                    {
+                        // The last field didn't fit.  I can't see how that would happen w/o the overall size being 
+                        // greater than 16 bytes.  For now, return a NULL return value object.
+                        return return_valobj_sp;
+                    }
+                }
+                else if (ClangASTContext::IsFloatingPointType (field_clang_type, count, is_complex))
+                {
+                    // Structs with long doubles are always passed in memory.
+                    if (field_bit_width == 128)
+                    {
+                        is_memory = true;
+                        break;
+                    }
+                    else if (field_bit_width == 64)
+                    {
+                        // These have to be in a single xmm register.
+                        if (fp_bytes == 0)
+                            copy_from_extractor = &xmm0_data;
+                        else
+                            copy_from_extractor = &xmm1_data;
+
+                        copy_from_offset = 0;
+                        fp_bytes += field_byte_width;
+                    }
+                    else if (field_bit_width == 32)
+                    {
+                        // This one is kind of complicated.  If we are in an "eightbyte" with another float, we'll
+                        // be stuffed into an xmm register with it.  If we are in an "eightbyte" with one or more ints,
+                        // then we will be stuffed into the appropriate GPR with them.
+                        bool in_gpr;
+                        if (field_byte_offset % 8 == 0) 
+                        {
+                            // We are at the beginning of one of the eightbytes, so check the next element (if any)
+                            if (idx == num_children - 1)
+                                in_gpr = true;
+                            else
+                            {
+                                uint32_t next_field_bit_offset;
+                                clang_type_t next_field_clang_type = ClangASTContext::GetFieldAtIndex (ast_context, 
+                                                                                                       ret_value_type, 
+                                                                                                       idx + 1, 
+                                                                                                       name, 
+                                                                                                       &next_field_bit_offset);
+                                if (ClangASTContext::IsIntegerType (next_field_clang_type, is_signed))
+                                    in_gpr = true;
+                                else
+                                {
+                                    copy_from_offset = 0;
+                                    in_gpr = false;
+                                }
+                            }
+                                
+                        }
+                        else if (field_byte_offset % 4 == 0)
+                        {
+                            // We are inside of an eightbyte, so see if the field before us is floating point:
+                            // This could happen if somebody put padding in the structure.
+                            if (idx == 0)
+                                in_gpr = false;
+                            else
+                            {
+                                uint32_t prev_field_bit_offset;
+                                clang_type_t prev_field_clang_type = ClangASTContext::GetFieldAtIndex (ast_context, 
+                                                                                                       ret_value_type, 
+                                                                                                       idx - 1, 
+                                                                                                       name, 
+                                                                                                       &prev_field_bit_offset);
+                                if (ClangASTContext::IsIntegerType (prev_field_clang_type, is_signed))
+                                    in_gpr = true;
+                                else
+                                {
+                                    copy_from_offset = 4;
+                                    in_gpr = false;
+                                }
+                            }
+                            
+                        }
+                        else
+                        {
+                            is_memory = true;
+                            continue;
+                        }
+                        
+                        // Okay, we've figured out whether we are in GPR or XMM, now figure out which one.
+                        if (in_gpr)
+                        {
+                            if (integer_bytes < 8)
+                            {
+                                // This is in RAX, copy from register to our result structure:
+                                copy_from_extractor = &rax_data;
+                                copy_from_offset = integer_bytes;
+                                integer_bytes += field_byte_width;
+                            }
+                            else
+                            {
+                                copy_from_extractor = &rdx_data;
+                                copy_from_offset = integer_bytes - 8;
+                                integer_bytes += field_byte_width;
+                            }
+                        }
+                        else
+                        {
+                            if (fp_bytes < 8)
+                                copy_from_extractor = &xmm0_data;
+                            else
+                                copy_from_extractor = &xmm1_data;
+
+                            fp_bytes += field_byte_width;
+                        }
+                    } 
+                }
+                if (!copy_from_extractor)
+                    return return_valobj_sp;
+                    
+                copy_from_extractor->CopyByteOrderedData (copy_from_offset, 
+                                                          field_byte_width, 
+                                                          data_sp->GetBytes() + field_byte_offset, 
+                                                          field_byte_width, 
+                                                          target_byte_order);
+            }
+            
+            if (!is_memory)
+            {
+                // The result is in our data buffer.  Let's make a variable object out of it:
+                return_valobj_sp = ValueObjectConstResult::Create (&thread, 
+                                                                   ast_context, 
+                                                                   ret_value_type, 
+                                                                   ConstString(""),
+                                                                   return_ext);
+            }
+        }
+        
+        if (is_memory)
+        {
+            unsigned rax_id = reg_ctx_sp->GetRegisterInfoByName("rax", 0)->kinds[eRegisterKindLLDB];
+            lldb::addr_t storage_addr = (uint64_t)thread.GetRegisterContext()->ReadRegisterAsUnsigned(rax_id, 0);
+            return_valobj_sp = ValueObjectMemory::Create (&thread,
+                                                          "",
+                                                          Address (storage_addr, NULL),
+                                                          ast_type); 
+        }
+    }
+        
+    return return_valobj_sp;
 }
 
 bool

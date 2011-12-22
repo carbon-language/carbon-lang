@@ -1709,12 +1709,9 @@ Debugger::FormatPrompt
                                                 ValueObjectSP return_valobj_sp = StopInfo::GetReturnValueObject (stop_info_sp);
                                                 if (return_valobj_sp)
                                                 {
-                                                    cstr = return_valobj_sp->GetValueAsCString ();
-                                                    if (cstr && cstr[0])
-                                                    {
-                                                        s.PutCString(cstr);
-                                                        var_success = true;
-                                                    }
+                                                    ValueObject::DumpValueObjectOptions dump_options;
+                                                    ValueObject::DumpValueObject (s, return_valobj_sp.get(), dump_options);
+                                                    var_success = true;
                                                 }
                                             }
                                         }
@@ -2579,7 +2576,7 @@ Debugger::SettingsController::global_settings_table[] =
     MODULE_WITH_FUNC\
     FILE_AND_LINE\
     "{, stop reason = ${thread.stop-reason}}"\
-    "{, return value = ${thread.return-value}}"\
+    "{\\nReturn value: ${thread.return-value}}"\
     "\\n"
 
 //#define DEFAULT_THREAD_FORMAT "thread #${thread.index}: tid = ${thread.id}"\

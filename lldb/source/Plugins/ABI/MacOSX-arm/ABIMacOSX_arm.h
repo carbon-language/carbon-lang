@@ -41,10 +41,12 @@ public:
     GetArgumentValues (lldb_private::Thread &thread,
                        lldb_private::ValueList &values) const;
     
-    virtual bool
-    GetReturnValue (lldb_private::Thread &thread,
-                    lldb_private::Value &value) const;
+protected:
+    virtual lldb::ValueObjectSP
+    GetReturnValueObjectImpl (lldb_private::Thread &thread,
+                    lldb_private::ClangASTType &ast_type) const;
 
+public:
     virtual bool
     CreateFunctionEntryUnwindPlan (lldb_private::UnwindPlan &unwind_plan);
     

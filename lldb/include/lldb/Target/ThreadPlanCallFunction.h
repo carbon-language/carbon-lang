@@ -22,9 +22,13 @@ namespace lldb_private {
 
 class ThreadPlanCallFunction : public ThreadPlan
 {
+    // Create a thread plan to call a function at the address passed in the "function"
+    // argument.  If you plan to call GetReturnValueObject, then pass in the 
+    // return type, otherwise just pass in an invalid ClangASTType.
 public:
     ThreadPlanCallFunction (Thread &thread,
                             Address &function,
+                            const ClangASTType &return_type,
                             lldb::addr_t arg,
                             bool stop_other_threads,
                             bool discard_on_error = true,
@@ -33,6 +37,7 @@ public:
 
     ThreadPlanCallFunction (Thread &thread,
                             Address &function,
+                            const ClangASTType &return_type,
                             bool stop_other_threads,
                             bool discard_on_error,
                             lldb::addr_t *arg1_ptr = NULL,
@@ -90,16 +95,10 @@ public:
     // plan is complete, you can call "GetReturnValue()" to retrieve the value
     // that was extracted.
 
-    const lldb::ValueSP &
-    GetReturnValue ()
+    virtual lldb::ValueObjectSP
+    GetReturnValueObject ()
     {
-        return m_return_value_sp;
-    }
-
-    void
-    RequestReturnValue (lldb::ValueSP &return_value_sp)
-    {
-        m_return_value_sp = return_value_sp;
+        return m_return_valobj_sp;
     }
 
     // Return the stack pointer that the function received
@@ -165,7 +164,8 @@ private:
                                                                          // thread plans, but for reporting purposes,
                                                                          // it's nice to know the real stop reason.
                                                                          // This gets set in DoTakedown.
-    lldb::ValueSP                                   m_return_value_sp;  // If this contains a valid pointer, use the ABI to extract values when complete
+    ClangASTType                                    m_return_type;
+    lldb::ValueObjectSP                             m_return_valobj_sp;  // If this contains a valid pointer, use the ABI to extract values when complete
     bool                                            m_takedown_done;    // We want to ensure we only do the takedown once.  This ensures that.
     lldb::addr_t                                    m_stop_address;     // This is the address we stopped at.  Also set in DoTakedown;
 
