@@ -394,6 +394,27 @@ def expectedFailureClang(func):
             raise case._UnexpectedSuccess
     return wrapper
 
+def expectedFailurei386(func):
+    """Decorate the item as an i386 only expectedFailure."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@expectedFailurei386 can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        from unittest2 import case
+        self = args[0]
+        arch = self.getArchitecture()
+        try:
+            func(*args, **kwargs)
+        except Exception:
+            if "i386" in arch:
+                raise case._ExpectedFailure(sys.exc_info())
+            else:
+                raise
+
+        if "i386" in arch:
+            raise case._UnexpectedSuccess
+    return wrapper
+
 class Base(unittest2.TestCase):
     """
     Abstract base for performing lldb (see TestBase) or other generic tests (see

@@ -13,12 +13,14 @@ class ReturnValueTestCase(TestBase):
     mydir = os.path.join("functionalities", "return-value")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @expectedFailurei386
     @python_api_test
     def test_with_dsym_python(self):
         """Test getting return values from stepping out with dsyms."""
         self.buildDsym()
         self.do_return_value()
 
+    @expectedFailurei386
     @python_api_test
     def test_with_dwarf_python(self):
         """Test getting return values from stepping out."""
