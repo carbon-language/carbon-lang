@@ -219,9 +219,6 @@ if [ "x$LLVM_DEBUG" != "x1" ]; then
     done
 fi
 
-# Copy over the tblgen utility.
-cp `find $DIR -name tblgen` $DEST_DIR$DEST_ROOT/bin
-
 # Remove .dir files 
 cd $DEST_DIR$DEST_ROOT
 rm -f bin/.dir etc/llvm/.dir lib/.dir
