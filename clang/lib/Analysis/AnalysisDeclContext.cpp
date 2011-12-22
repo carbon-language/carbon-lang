@@ -179,8 +179,8 @@ CFGReverseBlockReachabilityAnalysis *AnalysisDeclContext::getCFGReachablityAnaly
   return 0;
 }
 
-void AnalysisDeclContext::dumpCFG() {
-    getCFG()->dump(getASTContext().getLangOptions());
+void AnalysisDeclContext::dumpCFG(bool ShowColors) {
+    getCFG()->dump(getASTContext().getLangOptions(), ShowColors);
 }
 
 ParentMap &AnalysisDeclContext::getParentMap() {

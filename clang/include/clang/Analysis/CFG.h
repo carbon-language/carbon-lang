@@ -495,8 +495,9 @@ public:
 
   CFG *getParent() const { return Parent; }
 
-  void dump(const CFG *cfg, const LangOptions &LO) const;
-  void print(raw_ostream &OS, const CFG* cfg, const LangOptions &LO) const;
+  void dump(const CFG *cfg, const LangOptions &LO, bool ShowColors = false) const;
+  void print(raw_ostream &OS, const CFG* cfg, const LangOptions &LO,
+             bool ShowColors) const;
   void printTerminator(raw_ostream &OS, const LangOptions &LO) const;
 
   void addSuccessor(CFGBlock *Block, BumpVectorContext &C) {
@@ -755,8 +756,8 @@ public:
   //===--------------------------------------------------------------------===//
 
   void viewCFG(const LangOptions &LO) const;
-  void print(raw_ostream &OS, const LangOptions &LO) const;
-  void dump(const LangOptions &LO) const;
+  void print(raw_ostream &OS, const LangOptions &LO, bool ShowColors) const;
+  void dump(const LangOptions &LO, bool ShowColors) const;
 
   //===--------------------------------------------------------------------===//
   // Internal: constructors and data.

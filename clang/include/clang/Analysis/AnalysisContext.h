@@ -146,7 +146,7 @@ public:
   /// Return a version of the CFG without any edges pruned.
   CFG *getUnoptimizedCFG();
 
-  void dumpCFG();
+  void dumpCFG(bool ShowColors);
 
   /// \brief Returns true if we have built a CFG for this analysis context.
   /// Note that this doesn't correspond to whether or not a valid CFG exists, it

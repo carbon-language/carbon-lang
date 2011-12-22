@@ -44,60 +44,55 @@ TestControlFlow::TestControlFlow(bool b)
   int v;
 }
 
-// CHECK:  [ B2 (ENTRY) ]
-// CHECK:     Predecessors (0):
-// CHECK:     Successors (1): B1
-// CHECK:  [ B1 ]
-// CHECK:       1: 
-// CHECK:       2: A([B1.1]) (Base initializer)
-// CHECK:       3: 
-// CHECK:       4: C([B1.3]) (Base initializer)
-// CHECK:       5: 
-// CHECK:       6: B([B1.5]) (Base initializer)
-// CHECK:       7: 
-// CHECK:       8: A([B1.7]) (Base initializer)
-// CHECK:       9: /*implicit*/int()
-// CHECK:      10: i([B1.9]) (Member initializer)
-// CHECK:      11: this
-// CHECK:      12: [B1.11]->i
-// CHECK:      13: r([B1.12]) (Member initializer)
-// CHECK:      14: 
-// CHECK:      15: A a;
-// CHECK:     Predecessors (1): B2
-// CHECK:     Successors (1): B0
-// CHECK:  [ B0 (EXIT) ]
-// CHECK:     Predecessors (1): B1
-// CHECK:     Successors (0):
-// CHECK:  [ B5 (ENTRY) ]
-// CHECK:     Predecessors (0):
-// CHECK:     Successors (1): B4
-// CHECK:  [ B1 ]
-// CHECK:       1: [B4.4] ? [B2.1] : [B3.1]
-// CHECK:       2: y([B1.1]) (Member initializer)
-// CHECK:       3: this
-// CHECK:       4: [B1.3]->y
-// CHECK:       5: [B1.4]
-// CHECK:       6: z([B1.5]) (Member initializer)
-// CHECK:       7: int v;
-// CHECK:     Predecessors (2): B2 B3
-// CHECK:     Successors (1): B0
-// CHECK:  [ B2 ]
-// CHECK:       1: 0
-// CHECK:     Predecessors (1): B4
-// CHECK:     Successors (1): B1
-// CHECK:  [ B3 ]
-// CHECK:       1: 1
-// CHECK:     Predecessors (1): B4
-// CHECK:     Successors (1): B1
-// CHECK:  [ B4 ]
-// CHECK:       1: 0
-// CHECK:       2: x([B4.1]) (Member initializer)
-// CHECK:       3: b
-// CHECK:       4: [B4.3]
-// CHECK:       T: [B4.4] ? ... : ...
-// CHECK:     Predecessors (1): B5
-// CHECK:     Successors (2): B2 B3
-// CHECK:  [ B0 (EXIT) ]
-// CHECK:     Predecessors (1): B1
-// CHECK:     Successors (0):
-
+// CHECK:  [B2 (ENTRY)]
+// CHECK:    Succs (1): B1
+// CHECK:  [B1]
+// CHECK:    1:  (CXXConstructExpr, class A)
+// CHECK:    2: A([B1.1]) (Base initializer)
+// CHECK:    3:  (CXXConstructExpr, class C)
+// CHECK:    4: C([B1.3]) (Base initializer)
+// CHECK:    5:  (CXXConstructExpr, class B)
+// CHECK:    6: B([B1.5]) (Base initializer)
+// CHECK:    7:  (CXXConstructExpr, class A)
+// CHECK:    8: A([B1.7]) (Base initializer)
+// CHECK:    9: /*implicit*/int()
+// CHECK:   10: i([B1.9]) (Member initializer)
+// CHECK:   11: this
+// CHECK:   12: [B1.11]->i
+// CHECK:   13: r([B1.12]) (Member initializer)
+// CHECK:   14:  (CXXConstructExpr, class A)
+// CHECK:   15: A a;
+// CHECK:    Preds (1): B2
+// CHECK:    Succs (1): B0
+// CHECK:  [B0 (EXIT)]
+// CHECK:    Preds (1): B1
+// CHECK:  [B5 (ENTRY)]
+// CHECK:    Succs (1): B4
+// CHECK:  [B1]
+// CHECK:    1: [B4.4] ? [B2.1] : [B3.1]
+// CHECK:    2: y([B1.1]) (Member initializer)
+// CHECK:    3: this
+// CHECK:    4: [B1.3]->y
+// CHECK:    5: [B1.4] (ImplicitCastExpr, LValueToRValue, int)
+// CHECK:    6: z([B1.5]) (Member initializer)
+// CHECK:    7: int v;
+// CHECK:    Preds (2): B2 B3
+// CHECK:    Succs (1): B0
+// CHECK:  [B2]
+// CHECK:    1: 0
+// CHECK:    Preds (1): B4
+// CHECK:    Succs (1): B1
+// CHECK:  [B3]
+// CHECK:    1: 1
+// CHECK:    Preds (1): B4
+// CHECK:    Succs (1): B1
+// CHECK:  [B4]
+// CHECK:    1: 0
+// CHECK:    2: x([B4.1]) (Member initializer)
+// CHECK:    3: b
+// CHECK:    4: [B4.3] (ImplicitCastExpr, LValueToRValue, _Bool)
+// CHECK:    T: [B4.4] ? ... : ...
+// CHECK:    Preds (1): B5
+// CHECK:    Succs (2): B2 B3
+// CHECK:  [B0 (EXIT)]
+// CHECK:    Preds (1): B1

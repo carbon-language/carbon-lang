@@ -16,6 +16,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/Analyses/Dominators.h"
+#include "llvm/Support/Process.h"
 
 using namespace clang;
 using namespace ento;
@@ -92,7 +93,8 @@ public:
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
                         BugReporter &BR) const {
     if (CFG *cfg = mgr.getCFG(D)) {
-      cfg->dump(mgr.getLangOptions());
+      cfg->dump(mgr.getLangOptions(),
+                llvm::sys::Process::StandardErrHasColors());
     }
   }
 };
