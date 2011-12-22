@@ -187,6 +187,7 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
 
     if (Kind == MCExpr::SymbolRef) {
       Mips::Fixups FixupKind;
+
       switch(cast<MCSymbolRefExpr>(Expr)->getKind()) {
       case MCSymbolRefExpr::VK_Mips_GPREL:
         FixupKind = Mips::fixup_Mips_GPREL16;
@@ -208,6 +209,15 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
         break;
       case MCSymbolRefExpr::VK_Mips_TLSGD:
         FixupKind = Mips::fixup_Mips_TLSGD;
+        break;
+      case MCSymbolRefExpr::VK_Mips_TLSLDM:
+        FixupKind = Mips::fixup_Mips_TLSLDM;
+        break;
+      case MCSymbolRefExpr::VK_Mips_DTPREL_HI:
+        FixupKind = Mips::fixup_Mips_DTPREL_HI;
+        break;
+      case MCSymbolRefExpr::VK_Mips_DTPREL_LO:
+        FixupKind = Mips::fixup_Mips_DTPREL_LO;
         break;
       case MCSymbolRefExpr::VK_Mips_GOTTPREL:
         FixupKind = Mips::fixup_Mips_GOTTPREL;

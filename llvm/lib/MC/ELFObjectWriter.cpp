@@ -1474,6 +1474,15 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
   case Mips::fixup_Mips_TPREL_LO:
     Type = ELF::R_MIPS_TLS_TPREL_LO16;
     break;
+  case Mips::fixup_Mips_TLSLDM:
+    Type = ELF::R_MIPS_TLS_LDM;
+    break;
+  case Mips::fixup_Mips_DTPREL_HI:
+    Type = ELF::R_MIPS_TLS_DTPREL_HI16;
+    break;
+  case Mips::fixup_Mips_DTPREL_LO:
+    Type = ELF::R_MIPS_TLS_DTPREL_LO16;
+    break;
   case Mips::fixup_Mips_Branch_PCRel:
   case Mips::fixup_Mips_PC16:
     Type = ELF::R_MIPS_PC16;

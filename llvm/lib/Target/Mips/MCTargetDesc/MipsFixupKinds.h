@@ -83,6 +83,15 @@ namespace Mips {
     // resulting in - R_MIPS_TLS_TPREL_LO16.
     fixup_Mips_TPREL_LO,
 
+    // resulting in - R_MIPS_TLS_LDM.
+    fixup_Mips_TLSLDM,
+
+    // resulting in - R_MIPS_TLS_DTPREL_HI16.
+    fixup_Mips_DTPREL_HI,
+
+    // resulting in - R_MIPS_TLS_DTPREL_LO16.
+    fixup_Mips_DTPREL_LO,
+
     // PC relative branch fixup resulting in - R_MIPS_PC16
     fixup_Mips_Branch_PCRel,
 

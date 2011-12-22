@@ -200,6 +200,24 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_PPC_DARWIN_LO16: return "lo16";
   case VK_PPC_GAS_HA16: return "ha";
   case VK_PPC_GAS_LO16: return "l";
+  case VK_Mips_GPREL: return "GPREL";
+  case VK_Mips_GOT_CALL: return "GOT_CALL";
+  case VK_Mips_GOT16: return "GOT16";
+  case VK_Mips_GOT: return "GOT";
+  case VK_Mips_ABS_HI: return "ABS_HI";
+  case VK_Mips_ABS_LO: return "ABS_LO";
+  case VK_Mips_TLSGD: return "TLSGD";
+  case VK_Mips_TLSLDM: return "TLSLDM";
+  case VK_Mips_DTPREL_HI: return "DTPREL_HI";
+  case VK_Mips_DTPREL_LO: return "DTPREL_LO";
+  case VK_Mips_GOTTPREL: return "GOTTPREL";
+  case VK_Mips_TPREL_HI: return "TPREL_HI";
+  case VK_Mips_TPREL_LO: return "TPREL_LO";
+  case VK_Mips_GPOFF_HI: return "GPOFF_HI";
+  case VK_Mips_GPOFF_LO: return "GPOFF_LO";
+  case VK_Mips_GOT_DISP: return "GOT_DISP";
+  case VK_Mips_GOT_PAGE: return "GOT_PAGE";
+  case VK_Mips_GOT_OFST: return "GOT_OFST";
   }
 }
 

@@ -141,6 +141,9 @@ public:
       { "fixup_Mips_GOTTPREL",     0,     16,   0 },
       { "fixup_Mips_TPREL_HI",     0,     16,   0 },
       { "fixup_Mips_TPREL_LO",     0,     16,   0 },
+      { "fixup_Mips_TLSLDM",       0,     16,   0 },
+      { "fixup_Mips_DTPREL_HI",    0,     16,   0 },
+      { "fixup_Mips_DTPREL_LO",    0,     16,   0 },
       { "fixup_Mips_Branch_PCRel", 0,     16,  MCFixupKindInfo::FKF_IsPCRel }
     };
 
