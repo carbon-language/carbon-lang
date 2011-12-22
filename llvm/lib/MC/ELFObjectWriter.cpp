@@ -1253,24 +1253,5 @@ ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
 MCObjectWriter *llvm::createELFObjectWriter(MCELFObjectTargetWriter *MOTW,
                                             raw_ostream &OS,
                                             bool IsLittleEndian) {
-  switch (MOTW->getEMachine()) {
-    case ELF::EM_386:
-    case ELF::EM_X86_64:
-    case ELF::EM_ARM:
-    case ELF::EM_PPC:
-    case ELF::EM_PPC64:
-    case ELF::EM_MBLAZE:
-    case ELF::EM_MIPS:
-      return new ELFObjectWriter(MOTW, OS, IsLittleEndian); break;
-    default: llvm_unreachable("Unsupported architecture"); break;
-  }
-}
-
-unsigned ELFObjectWriter::GetRelocType(const MCValue &Target,
-                                       const MCFixup &Fixup,
-                                       bool IsPCRel,
-                                       bool IsRelocWithSymbol,
-                                       int64_t Addend) const {
-  return TargetObjectWriter->GetRelocType(Target, Fixup, IsPCRel,
-                                          IsRelocWithSymbol, Addend);
+  return new ELFObjectWriter(MOTW, OS, IsLittleEndian);
 }

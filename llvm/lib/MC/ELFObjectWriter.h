@@ -140,18 +140,18 @@ class ELFObjectWriter : public MCObjectWriter {
     unsigned ShstrtabIndex;
 
 
-    virtual const MCSymbol *SymbolToReloc(const MCAssembler &Asm,
-                                          const MCValue &Target,
-                                          const MCFragment &F,
-                                          const MCFixup &Fixup,
-                                          bool IsPCRel) const;
+    const MCSymbol *SymbolToReloc(const MCAssembler &Asm,
+                                  const MCValue &Target,
+                                  const MCFragment &F,
+                                  const MCFixup &Fixup,
+                                  bool IsPCRel) const;
 
-    // For arch-specific emission of explicit reloc symbol
-    virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
-                                           const MCValue &Target,
-                                           const MCFragment &F,
-                                           const MCFixup &Fixup,
-                                           bool IsPCRel) const {
+    // TargetObjectWriter wrappers.
+    const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
+                                   const MCValue &Target,
+                                   const MCFragment &F,
+                                   const MCFixup &Fixup,
+                                   bool IsPCRel) const {
       return TargetObjectWriter->ExplicitRelSym(Asm, Target, F, Fixup, IsPCRel);
     }
 
@@ -159,6 +159,16 @@ class ELFObjectWriter : public MCObjectWriter {
     bool hasRelocationAddend() const {
       return TargetObjectWriter->hasRelocationAddend();
     }
+    unsigned getEFlags() const {
+      return TargetObjectWriter->getEFlags();
+    }
+    unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
+                          bool IsPCRel, bool IsRelocWithSymbol,
+                          int64_t Addend) const {
+      return TargetObjectWriter->GetRelocType(Target, Fixup, IsPCRel,
+                                              IsRelocWithSymbol, Addend);
+    }
+
 
   public:
     ELFObjectWriter(MCELFObjectTargetWriter *MOTW,
@@ -240,30 +250,26 @@ class ELFObjectWriter : public MCObjectWriter {
       F.getContents() += StringRef(buf, 8);
     }
 
-    virtual void WriteHeader(uint64_t SectionDataSize,
-                             unsigned NumberOfSections);
+    void WriteHeader(uint64_t SectionDataSize,
+                     unsigned NumberOfSections);
 
-    virtual unsigned getEFlags() const {
-      return TargetObjectWriter->getEFlags();
-    }
+    void WriteSymbolEntry(MCDataFragment *SymtabF,
+                          MCDataFragment *ShndxF,
+                          uint64_t name, uint8_t info,
+                          uint64_t value, uint64_t size,
+                          uint8_t other, uint32_t shndx,
+                          bool Reserved);
 
-    virtual void WriteSymbolEntry(MCDataFragment *SymtabF,
-                                  MCDataFragment *ShndxF,
-                                  uint64_t name, uint8_t info,
-                                  uint64_t value, uint64_t size,
-                                  uint8_t other, uint32_t shndx,
-                                  bool Reserved);
-
-    virtual void WriteSymbol(MCDataFragment *SymtabF,  MCDataFragment *ShndxF,
+    void WriteSymbol(MCDataFragment *SymtabF,  MCDataFragment *ShndxF,
                      ELFSymbolData &MSD,
                      const MCAsmLayout &Layout);
 
     typedef DenseMap<const MCSectionELF*, uint32_t> SectionIndexMapTy;
-    virtual void WriteSymbolTable(MCDataFragment *SymtabF,
-                                  MCDataFragment *ShndxF,
-                                  const MCAssembler &Asm,
-                                  const MCAsmLayout &Layout,
-                                  const SectionIndexMapTy &SectionIndexMap);
+    void WriteSymbolTable(MCDataFragment *SymtabF,
+                          MCDataFragment *ShndxF,
+                          const MCAssembler &Asm,
+                          const MCAsmLayout &Layout,
+                          const SectionIndexMapTy &SectionIndexMap);
 
     virtual void RecordRelocation(const MCAssembler &Asm,
                                   const MCAsmLayout &Layout,
@@ -271,8 +277,8 @@ class ELFObjectWriter : public MCObjectWriter {
                                   const MCFixup &Fixup,
                                   MCValue Target, uint64_t &FixedValue);
 
-    virtual uint64_t getSymbolIndexInSymbolTable(const MCAssembler &Asm,
-                                                 const MCSymbol *S);
+    uint64_t getSymbolIndexInSymbolTable(const MCAssembler &Asm,
+                                         const MCSymbol *S);
 
     // Map from a group section to the signature symbol
     typedef DenseMap<const MCSectionELF*, const MCSymbol*> GroupMapTy;
@@ -288,14 +294,14 @@ class ELFObjectWriter : public MCObjectWriter {
     /// \param StringTable [out] - The string table data.
     /// \param StringIndexMap [out] - Map from symbol names to offsets in the
     /// string table.
-    virtual void ComputeSymbolTable(MCAssembler &Asm,
+    void ComputeSymbolTable(MCAssembler &Asm,
                             const SectionIndexMapTy &SectionIndexMap,
-                                    RevGroupMapTy RevGroupMap,
-                                    unsigned NumRegularSections);
+                            RevGroupMapTy RevGroupMap,
+                            unsigned NumRegularSections);
 
-    virtual void ComputeIndexMap(MCAssembler &Asm,
-                                 SectionIndexMapTy &SectionIndexMap,
-                                 const RelMapTy &RelMap);
+    void ComputeIndexMap(MCAssembler &Asm,
+                         SectionIndexMapTy &SectionIndexMap,
+                         const RelMapTy &RelMap);
 
     void CreateRelocationSections(MCAssembler &Asm, MCAsmLayout &Layout,
                                   RelMapTy &RelMap);
@@ -303,17 +309,17 @@ class ELFObjectWriter : public MCObjectWriter {
     void WriteRelocations(MCAssembler &Asm, MCAsmLayout &Layout,
                           const RelMapTy &RelMap);
 
-    virtual void CreateMetadataSections(MCAssembler &Asm, MCAsmLayout &Layout,
-                                        SectionIndexMapTy &SectionIndexMap,
-                                        const RelMapTy &RelMap);
+    void CreateMetadataSections(MCAssembler &Asm, MCAsmLayout &Layout,
+                                SectionIndexMapTy &SectionIndexMap,
+                                const RelMapTy &RelMap);
 
     // Create the sections that show up in the symbol table. Currently
     // those are the .note.GNU-stack section and the group sections.
-    virtual void CreateIndexedSections(MCAssembler &Asm, MCAsmLayout &Layout,
-                                       GroupMapTy &GroupMap,
-                                       RevGroupMapTy &RevGroupMap,
-                                       SectionIndexMapTy &SectionIndexMap,
-                                       const RelMapTy &RelMap);
+    void CreateIndexedSections(MCAssembler &Asm, MCAsmLayout &Layout,
+                               GroupMapTy &GroupMap,
+                               RevGroupMapTy &RevGroupMap,
+                               SectionIndexMapTy &SectionIndexMap,
+                               const RelMapTy &RelMap);
 
     virtual void ExecutePostLayoutBinding(MCAssembler &Asm,
                                           const MCAsmLayout &Layout);
@@ -326,14 +332,14 @@ class ELFObjectWriter : public MCObjectWriter {
     void ComputeSectionOrder(MCAssembler &Asm,
                              std::vector<const MCSectionELF*> &Sections);
 
-    virtual void WriteSecHdrEntry(uint32_t Name, uint32_t Type, uint64_t Flags,
+    void WriteSecHdrEntry(uint32_t Name, uint32_t Type, uint64_t Flags,
                           uint64_t Address, uint64_t Offset,
                           uint64_t Size, uint32_t Link, uint32_t Info,
                           uint64_t Alignment, uint64_t EntrySize);
 
-    virtual void WriteRelocationsFragment(const MCAssembler &Asm,
-                                          MCDataFragment *F,
-                                          const MCSectionData *SD);
+    void WriteRelocationsFragment(const MCAssembler &Asm,
+                                  MCDataFragment *F,
+                                  const MCSectionData *SD);
 
     virtual bool
     IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
@@ -343,16 +349,11 @@ class ELFObjectWriter : public MCObjectWriter {
                                            bool IsPCRel) const;
 
     virtual void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
-    virtual void WriteSection(MCAssembler &Asm,
+    void WriteSection(MCAssembler &Asm,
                       const SectionIndexMapTy &SectionIndexMap,
                       uint32_t GroupSymbolIndex,
                       uint64_t Offset, uint64_t Size, uint64_t Alignment,
                       const MCSectionELF &Section);
-
-  protected:
-    virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
-                                  bool IsPCRel, bool IsRelocWithSymbol,
-                                  int64_t Addend) const;
   };
 }
 
