@@ -643,8 +643,10 @@ public:
     FK_InitListBadDestinationType,
     /// \brief Overloading for a user-defined conversion failed.
     FK_UserConversionOverloadFailed,
-    /// \brief Overloaded for initialization by constructor failed.
+    /// \brief Overloading for initialization by constructor failed.
     FK_ConstructorOverloadFailed,
+    /// \brief Overloading for list-initialization by constructor failed.
+    FK_ListConstructorOverloadFailed,
     /// \brief Default-initialization of a 'const' object.
     FK_DefaultInitOfConst,
     /// \brief Initialization of an incomplete type.

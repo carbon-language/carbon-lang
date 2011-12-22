@@ -824,6 +824,86 @@ bool Sema::isFunctionConsideredUnavailable(FunctionDecl *FD) {
   return FD->isUnavailable() && !cast<Decl>(CurContext)->isUnavailable();
 }
 
+/// \brief Tries a user-defined conversion from From to ToType.
+///
+/// Produces an implicit conversion sequence for when a standard conversion
+/// is not an option. See TryImplicitConversion for more information.
+static ImplicitConversionSequence
+TryUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
+                         bool SuppressUserConversions,
+                         bool AllowExplicit,
+                         bool InOverloadResolution,
+                         bool CStyle,
+                         bool AllowObjCWritebackConversion) {
+  ImplicitConversionSequence ICS;
+
+  if (SuppressUserConversions) {
+    // We're not in the case above, so there is no conversion that
+    // we can perform.
+    ICS.setBad(BadConversionSequence::no_conversion, From, ToType);
+    return ICS;
+  }
+
+  // Attempt user-defined conversion.
+  OverloadCandidateSet Conversions(From->getExprLoc());
+  OverloadingResult UserDefResult
+    = IsUserDefinedConversion(S, From, ToType, ICS.UserDefined, Conversions,
+                              AllowExplicit);
+
+  if (UserDefResult == OR_Success) {
+    ICS.setUserDefined();
+    // C++ [over.ics.user]p4:
+    //   A conversion of an expression of class type to the same class
+    //   type is given Exact Match rank, and a conversion of an
+    //   expression of class type to a base class of that type is
+    //   given Conversion rank, in spite of the fact that a copy
+    //   constructor (i.e., a user-defined conversion function) is
+    //   called for those cases.
+    if (CXXConstructorDecl *Constructor
+          = dyn_cast<CXXConstructorDecl>(ICS.UserDefined.ConversionFunction)) {
+      QualType FromCanon
+        = S.Context.getCanonicalType(From->getType().getUnqualifiedType());
+      QualType ToCanon
+        = S.Context.getCanonicalType(ToType).getUnqualifiedType();
+      if (Constructor->isCopyConstructor() &&
+          (FromCanon == ToCanon || S.IsDerivedFrom(FromCanon, ToCanon))) {
+        // Turn this into a "standard" conversion sequence, so that it
+        // gets ranked with standard conversion sequences.
+        ICS.setStandard();
+        ICS.Standard.setAsIdentityConversion();
+        ICS.Standard.setFromType(From->getType());
+        ICS.Standard.setAllToTypes(ToType);
+        ICS.Standard.CopyConstructor = Constructor;
+        if (ToCanon != FromCanon)
+          ICS.Standard.Second = ICK_Derived_To_Base;
+      }
+    }
+
+    // C++ [over.best.ics]p4:
+    //   However, when considering the argument of a user-defined
+    //   conversion function that is a candidate by 13.3.1.3 when
+    //   invoked for the copying of the temporary in the second step
+    //   of a class copy-initialization, or by 13.3.1.4, 13.3.1.5, or
+    //   13.3.1.6 in all cases, only standard conversion sequences and
+    //   ellipsis conversion sequences are allowed.
+    if (SuppressUserConversions && ICS.isUserDefined()) {
+      ICS.setBad(BadConversionSequence::suppressed_user, From, ToType);
+    }
+  } else if (UserDefResult == OR_Ambiguous && !SuppressUserConversions) {
+    ICS.setAmbiguous();
+    ICS.Ambiguous.setFromType(From->getType());
+    ICS.Ambiguous.setToType(ToType);
+    for (OverloadCandidateSet::iterator Cand = Conversions.begin();
+         Cand != Conversions.end(); ++Cand)
+      if (Cand->Viable)
+        ICS.Ambiguous.addConversion(Cand->Function);
+  } else {
+    ICS.setBad(BadConversionSequence::no_conversion, From, ToType);
+  }
+
+  return ICS;
+}
+
 /// TryImplicitConversion - Attempt to perform an implicit conversion
 /// from the given expression (Expr) to the given type (ToType). This
 /// function returns an implicit conversion sequence that can be used
@@ -899,71 +979,9 @@ TryImplicitConversion(Sema &S, Expr *From, QualType ToType,
     return ICS;
   }
 
-  if (SuppressUserConversions) {
-    // We're not in the case above, so there is no conversion that
-    // we can perform.
-    ICS.setBad(BadConversionSequence::no_conversion, From, ToType);
-    return ICS;
-  }
-
-  // Attempt user-defined conversion.
-  OverloadCandidateSet Conversions(From->getExprLoc());
-  OverloadingResult UserDefResult
-    = IsUserDefinedConversion(S, From, ToType, ICS.UserDefined, Conversions,
-                              AllowExplicit);
-
-  if (UserDefResult == OR_Success) {
-    ICS.setUserDefined();
-    // C++ [over.ics.user]p4:
-    //   A conversion of an expression of class type to the same class
-    //   type is given Exact Match rank, and a conversion of an
-    //   expression of class type to a base class of that type is
-    //   given Conversion rank, in spite of the fact that a copy
-    //   constructor (i.e., a user-defined conversion function) is
-    //   called for those cases.
-    if (CXXConstructorDecl *Constructor
-          = dyn_cast<CXXConstructorDecl>(ICS.UserDefined.ConversionFunction)) {
-      QualType FromCanon
-        = S.Context.getCanonicalType(From->getType().getUnqualifiedType());
-      QualType ToCanon
-        = S.Context.getCanonicalType(ToType).getUnqualifiedType();
-      if (Constructor->isCopyConstructor() &&
-          (FromCanon == ToCanon || S.IsDerivedFrom(FromCanon, ToCanon))) {
-        // Turn this into a "standard" conversion sequence, so that it
-        // gets ranked with standard conversion sequences.
-        ICS.setStandard();
-        ICS.Standard.setAsIdentityConversion();
-        ICS.Standard.setFromType(From->getType());
-        ICS.Standard.setAllToTypes(ToType);
-        ICS.Standard.CopyConstructor = Constructor;
-        if (ToCanon != FromCanon)
-          ICS.Standard.Second = ICK_Derived_To_Base;
-      }
-    }
-
-    // C++ [over.best.ics]p4:
-    //   However, when considering the argument of a user-defined
-    //   conversion function that is a candidate by 13.3.1.3 when
-    //   invoked for the copying of the temporary in the second step
-    //   of a class copy-initialization, or by 13.3.1.4, 13.3.1.5, or
-    //   13.3.1.6 in all cases, only standard conversion sequences and
-    //   ellipsis conversion sequences are allowed.
-    if (SuppressUserConversions && ICS.isUserDefined()) {
-      ICS.setBad(BadConversionSequence::suppressed_user, From, ToType);
-    }
-  } else if (UserDefResult == OR_Ambiguous && !SuppressUserConversions) {
-    ICS.setAmbiguous();
-    ICS.Ambiguous.setFromType(From->getType());
-    ICS.Ambiguous.setToType(ToType);
-    for (OverloadCandidateSet::iterator Cand = Conversions.begin();
-         Cand != Conversions.end(); ++Cand)
-      if (Cand->Viable)
-        ICS.Ambiguous.addConversion(Cand->Function);
-  } else {
-    ICS.setBad(BadConversionSequence::no_conversion, From, ToType);
-  }
-
-  return ICS;
+  return TryUserDefinedConversion(S, From, ToType, SuppressUserConversions,
+                                  AllowExplicit, InOverloadResolution, CStyle,
+                                  AllowObjCWritebackConversion);
 }
 
 ImplicitConversionSequence
@@ -2612,6 +2630,18 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
       // We're not going to find any constructors.
     } else if (CXXRecordDecl *ToRecordDecl
                  = dyn_cast<CXXRecordDecl>(ToRecordType->getDecl())) {
+
+      Expr **Args = &From;
+      unsigned NumArgs = 1;
+      bool ListInitializing = false;
+      // If we're list-initializing, we pass the individual elements as
+      // arguments, not the entire list.
+      if (InitListExpr *InitList = dyn_cast<InitListExpr>(From)) {
+        Args = InitList->getInits();
+        NumArgs = InitList->getNumInits();
+        ListInitializing = true;
+      }
+
       DeclContext::lookup_iterator Con, ConEnd;
       for (llvm::tie(Con, ConEnd) = S.LookupConstructors(ToRecordDecl);
            Con != ConEnd; ++Con) {
@@ -2628,28 +2658,33 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
         else
           Constructor = cast<CXXConstructorDecl>(D);
 
-        if (!Constructor->isInvalidDecl() &&
-            Constructor->isConvertingConstructor(AllowExplicit)) {
+        bool Usable = !Constructor->isInvalidDecl();
+        if (ListInitializing)
+          Usable = Usable && (AllowExplicit || !Constructor->isExplicit());
+        else
+          Usable = Usable &&Constructor->isConvertingConstructor(AllowExplicit);
+        if (Usable) {
           if (ConstructorTmpl)
             S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                            /*ExplicitArgs*/ 0,
-                                           &From, 1, CandidateSet,
+                                           Args, NumArgs, CandidateSet,
                                            /*SuppressUserConversions=*/
-                                             !ConstructorsOnly);
+                                           !ConstructorsOnly &&
+                                             !ListInitializing);
           else
             // Allow one user-defined conversion when user specifies a
             // From->ToType conversion via an static cast (c-style, etc).
             S.AddOverloadCandidate(Constructor, FoundDecl,
-                                   &From, 1, CandidateSet,
+                                   Args, NumArgs, CandidateSet,
                                    /*SuppressUserConversions=*/
-                                     !ConstructorsOnly);
+                                   !ConstructorsOnly && !ListInitializing);
         }
       }
     }
   }
 
   // Enumerate conversion functions, if we're allowed to.
-  if (ConstructorsOnly) {
+  if (ConstructorsOnly || isa<InitListExpr>(From)) {
   } else if (S.RequireCompleteType(From->getLocStart(), From->getType(),
                                    S.PDiag(0) << From->getSourceRange())) {
     // No conversion functions from incomplete types.
@@ -2705,11 +2740,16 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
       //   the argument of the constructor.
       //
       QualType ThisType = Constructor->getThisType(S.Context);
-      if (Best->Conversions[0].isEllipsis())
-        User.EllipsisConversion = true;
-      else {
-        User.Before = Best->Conversions[0].Standard;
-        User.EllipsisConversion = false;
+      if (isa<InitListExpr>(From)) {
+        // Initializer lists don't have conversions as such.
+        User.Before.setAsIdentityConversion();
+      } else {
+        if (Best->Conversions[0].isEllipsis())
+          User.EllipsisConversion = true;
+        else {
+          User.Before = Best->Conversions[0].Standard;
+          User.EllipsisConversion = false;
+        }
       }
       User.HadMultipleCandidates = HadMultipleCandidates;
       User.ConversionFunction = Constructor;
@@ -3916,7 +3956,7 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
   //   conversion sequence is the worst conversion necessary to convert an
   //   element of the list to X.
   // FIXME: Recognize std::initializer_list.
-  // FIXME: Arrays don't make sense until we can deal with references.
+  // FIXME: Implement arrays.
   if (ToType->isArrayType())
     return Result;
 
@@ -3926,9 +3966,15 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
   //   conversion sequence is a user-defined conversion sequence. If multiple
   //   constructors are viable but none is better than the others, the
   //   implicit conversion sequence is a user-defined conversion sequence.
-  // FIXME: Implement this.
-  if (ToType->isRecordType() && !ToType->isAggregateType())
+  if (ToType->isRecordType() && !ToType->isAggregateType()) {
+    // This function can deal with initializer lists.
+    Result = TryUserDefinedConversion(S, From, ToType, SuppressUserConversions,
+                                      /*AllowExplicit=*/false,
+                                      InOverloadResolution, /*CStyle=*/false,
+                                      AllowObjCWritebackConversion);
+    Result.setListInitializationSequence();
     return Result;
+  }
 
   // C++11 [over.ics.list]p4:
   //   Otherwise, if the parameter has an aggregate type which can be

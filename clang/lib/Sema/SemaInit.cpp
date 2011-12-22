@@ -2436,6 +2436,7 @@ bool InitializationSequence::isAmbiguous() const {
   case FK_ReferenceInitOverloadFailed:
   case FK_UserConversionOverloadFailed:
   case FK_ConstructorOverloadFailed:
+  case FK_ListConstructorOverloadFailed:
     return FailedOverloadResult == OR_Ambiguous;
   }
 
@@ -2849,8 +2850,8 @@ static bool TryListConstructionSpecialCases(Sema &S,
                                  Args, NumArgs, CandidateSet,
                                  /*SuppressUserConversions*/ false);
         Sequence.SetOverloadFailure(
-                          InitializationSequence::FK_ConstructorOverloadFailed,
-                          OR_Deleted);
+                       InitializationSequence::FK_ListConstructorOverloadFailed,
+                       OR_Deleted);
       } else
         Sequence.AddConstructorInitializationStep(DefaultConstructor,
                                                 DefaultConstructor->getAccess(),
@@ -2961,8 +2962,9 @@ static void TryConstructorInitialization(Sema &S,
   OverloadCandidateSet::iterator Best;
   if (OverloadingResult Result
         = CandidateSet.BestViableFunction(S, DeclLoc, Best)) {
-    Sequence.SetOverloadFailure(
-                          InitializationSequence::FK_ConstructorOverloadFailed,
+    Sequence.SetOverloadFailure(FromInitList ?
+                      InitializationSequence::FK_ListConstructorOverloadFailed :
+                      InitializationSequence::FK_ConstructorOverloadFailed,
                                 Result);
     return;
   }
@@ -5428,11 +5430,19 @@ bool InitializationSequence::Diagnose(Sema &S,
       << (DestType->isRecordType()) << DestType << Args[0]->getSourceRange();
     break;
 
+  case FK_ListConstructorOverloadFailed:
   case FK_ConstructorOverloadFailed: {
     SourceRange ArgsRange;
     if (NumArgs)
       ArgsRange = SourceRange(Args[0]->getLocStart(),
                               Args[NumArgs - 1]->getLocEnd());
+
+    if (Failure == FK_ListConstructorOverloadFailed) {
+      assert(NumArgs == 1 && "List construction from other than 1 argument.");
+      InitListExpr *InitList = cast<InitListExpr>(Args[0]);
+      Args = InitList->getInits();
+      NumArgs = InitList->getNumInits();
+    }
 
     // FIXME: Using "DestType" for the entity we're printing is probably
     // bad.

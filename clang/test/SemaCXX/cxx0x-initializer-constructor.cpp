@@ -1,5 +1,8 @@
 // RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
 
+struct one { char c[1]; };
+struct two { char c[2]; };
+
 namespace objects {
 
   struct X1 { X1(int); };
@@ -45,8 +48,8 @@ namespace objects {
     void takes_C(C);
     takes_C({1, 1.0});
 
-    //C c;
-    //c[{1, 1.0}]; needs overloading
+    C c;
+    c[{1, 1.0}];
 
     return {1, 1.0};
   }
@@ -56,11 +59,23 @@ namespace objects {
     (void) new C{1, 1.0};
   }
 
-  struct B {
-    B(C, int, C);
+  struct B { // expected-note 2 {{candidate constructor}}
+    B(C, int, C); // expected-note {{candidate constructor not viable: cannot convert initializer list argument to 'objects::C'}}
   };
 
   void nested_init() {
-    //B b{{1, 1.0}, 2, {3, 4}}; needs overloading
+    B b1{{1, 1.0}, 2, {3, 4}};
+    B b2{{1, 1.0, 4}, 2, {3, 4}}; // expected-error {{no matching constructor for initialization of 'objects::B'}}
+  }
+
+  void overloaded_call() {
+    one ov1(B); // expected-note {{not viable: cannot convert initializer list}}
+    two ov1(C); // expected-note {{not viable: cannot convert initializer list}}
+
+    static_assert(sizeof(ov1({})) == sizeof(two), "bad overload");
+    static_assert(sizeof(ov1({1, 2})) == sizeof(two), "bad overload");
+    static_assert(sizeof(ov1({{1, 1.0}, 2, {3, 4}})) == sizeof(one), "bad overload");
+
+    ov1({1}); // expected-error {{no matching function}}
   }
 }
