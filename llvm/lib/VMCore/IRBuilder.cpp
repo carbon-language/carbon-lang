@@ -27,7 +27,7 @@ Value *IRBuilderBase::CreateGlobalString(StringRef Str, const Twine &Name) {
   Constant *StrConstant = ConstantArray::get(Context, Str, true);
   Module &M = *BB->getParent()->getParent();
   GlobalVariable *GV = new GlobalVariable(M, StrConstant->getType(),
-                                          true, GlobalValue::InternalLinkage,
+                                          true, GlobalValue::PrivateLinkage,
                                           StrConstant, "", 0, false);
   GV->setName(Name);
   GV->setUnnamedAddr(true);

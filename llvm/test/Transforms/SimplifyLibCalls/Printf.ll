@@ -3,7 +3,7 @@
 @str = internal constant [13 x i8] c"hello world\0A\00"         ; <[13 x i8]*> [#uses=1]
 @str1 = internal constant [2 x i8] c"h\00"              ; <[2 x i8]*> [#uses=1]
 
-; CHECK: internal unnamed_addr constant [12 x i8] c"hello world\00"
+; CHECK: private unnamed_addr constant [12 x i8] c"hello world\00"
 
 declare i32 @printf(i8*, ...)
 
