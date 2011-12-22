@@ -1296,7 +1296,7 @@ ARMELFObjectWriter::~ARMELFObjectWriter()
 {}
 
 // FIXME: get the real EABI Version from the Triple.
-unsigned ARMELFObjectWriter::getEFlags() {
+unsigned ARMELFObjectWriter::getEFlags() const {
   return ELF::EF_ARM_EABIMASK & DefaultEABIVersion;
 }
 
@@ -1646,7 +1646,7 @@ MipsELFObjectWriter::MipsELFObjectWriter(MCELFObjectTargetWriter *MOTW,
 MipsELFObjectWriter::~MipsELFObjectWriter() {}
 
 // FIXME: get the real EABI Version from the Triple.
-unsigned MipsELFObjectWriter::getEFlags() {
+unsigned MipsELFObjectWriter::getEFlags() const {
   return ELF::EF_MIPS_NOREORDER | ELF::EF_MIPS_ARCH_32R2;
 }
 

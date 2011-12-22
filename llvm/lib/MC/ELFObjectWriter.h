@@ -244,7 +244,7 @@ class ELFObjectWriter : public MCObjectWriter {
                              unsigned NumberOfSections);
 
     /// Default e_flags = 0
-    virtual unsigned getEFlags() { return 0; }
+    virtual unsigned getEFlags() const { return 0; }
 
     virtual void WriteSymbolEntry(MCDataFragment *SymtabF,
                                   MCDataFragment *ShndxF,
@@ -369,7 +369,7 @@ class ELFObjectWriter : public MCObjectWriter {
 
     virtual ~ARMELFObjectWriter();
 
-    virtual unsigned getEFlags();
+    virtual unsigned getEFlags() const;
   protected:
     virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
                                            const MCValue &Target,
@@ -425,7 +425,7 @@ class ELFObjectWriter : public MCObjectWriter {
                         bool IsLittleEndian);
 
     virtual ~MipsELFObjectWriter();
-    virtual unsigned getEFlags();
+    virtual unsigned getEFlags() const;
 
   protected:
     virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
