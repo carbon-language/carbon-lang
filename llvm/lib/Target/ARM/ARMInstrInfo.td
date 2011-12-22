@@ -4737,15 +4737,20 @@ def Int_eh_sjlj_longjmp : PseudoInst<(outs), (ins GPR:$src, GPR:$scratch),
                                 Requires<[IsARM, IsIOS]>;
 }
 
-// eh.sjlj.dispatchsetup pseudo-instruction.
-// This pseudo is used for ARM, Thumb1 and Thumb2. Any differences are
+// eh.sjlj.dispatchsetup pseudo-instructions.
+// These pseudos are used for both ARM and Thumb2. Any differences are
 // handled when the pseudo is expanded (which happens before any passes
 // that need the instruction size).
 let Defs =
   [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR, CPSR,
-    QQQQ0, QQQQ1, QQQQ2, QQQQ3 ], isBarrier = 1 in {
-  def eh_sjlj_dispatchsetup : PseudoInst<(outs), (ins), NoItinerary, []>;
-}
+    QQQQ0, QQQQ1, QQQQ2, QQQQ3 ], isBarrier = 1 in
+def Int_eh_sjlj_dispatchsetup : PseudoInst<(outs), (ins), NoItinerary, []>;
+
+let Defs =
+  [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR, CPSR ],
+  isBarrier = 1 in
+def Int_eh_sjlj_dispatchsetup_nofp : PseudoInst<(outs), (ins), NoItinerary, []>;
+
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns

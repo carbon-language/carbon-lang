@@ -5792,7 +5792,12 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
                              MachineMemOperand::MOLoad |
                              MachineMemOperand::MOVolatile, 4, 4);
 
-  BuildMI(DispatchBB, dl, TII->get(ARM::eh_sjlj_dispatchsetup));
+  if (AFI->isThumb1OnlyFunction())
+    BuildMI(DispatchBB, dl, TII->get(ARM::tInt_eh_sjlj_dispatchsetup));
+  else if (!Subtarget->hasVFP2())
+    BuildMI(DispatchBB, dl, TII->get(ARM::Int_eh_sjlj_dispatchsetup_nofp));
+  else 
+    BuildMI(DispatchBB, dl, TII->get(ARM::Int_eh_sjlj_dispatchsetup));
 
   unsigned NumLPads = LPadList.size();
   if (Subtarget->isThumb2()) {
