@@ -30,7 +30,7 @@ struct SS : S {
 
 // The definition of a constexpr function shall satisfy the following
 // constraints:
-struct T : SS { // expected-note {{base class 'SS' of non-literal type}}
+struct T : SS, NonLiteral { // expected-note {{base class 'NonLiteral' of non-literal type}}
   constexpr T(); // expected-error {{non-literal type 'T' cannot have constexpr members}}
 
   //  - it shall not be virtual;

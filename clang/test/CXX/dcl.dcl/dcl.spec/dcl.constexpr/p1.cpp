@@ -42,13 +42,12 @@ class C2 {} constexpr; // expected-error {{class cannot be marked constexpr}}
 struct S2 {} constexpr; // expected-error {{struct cannot be marked constexpr}}
 union U2 {} constexpr; // expected-error {{union cannot be marked constexpr}}
 enum E2 {} constexpr; // expected-error {{enum cannot be marked constexpr}}
-// FIXME: Mark default constructors as 'constexpr' when appropriate.
-constexpr class C3 {} c3 = C3(); // unexpected-error {{must be initialized by a constant expression}} unexpected-note {{non-constexpr constructor}} unexpected-note {{here}}
-constexpr struct S3 {} s3 = S3(); // unexpected-error {{must be initialized by a constant expression}} unexpected-note {{non-constexpr constructor}} unexpected-note {{here}}
+constexpr class C3 {} c3 = C3();
+constexpr struct S3 {} s3 = S3();
 constexpr union U3 {} u3 = {};
 constexpr enum E3 { V3 } e3 = V3;
-class C4 {} constexpr c4 = C4(); // unexpected-error {{must be initialized by a constant expression}} unexpected-note {{non-constexpr constructor}} unexpected-note {{here}}
-struct S4 {} constexpr s4 = S4(); // unexpected-error {{must be initialized by a constant expression}} unexpected-note {{non-constexpr constructor}} unexpected-note {{here}}
+class C4 {} constexpr c4 = C4();
+struct S4 {} constexpr s4 = S4();
 union U4 {} constexpr u4 = {};
 enum E4 { V4 } constexpr e4 = V4;
 constexpr int; // expected-error {{constexpr can only be used in variable and function declarations}}

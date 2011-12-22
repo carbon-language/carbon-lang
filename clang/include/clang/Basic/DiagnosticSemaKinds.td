@@ -4685,6 +4685,9 @@ def err_incorrect_defaulted_exception_spec : Error<
   "copy constructor|move constructor|copy assignment operator|move assignment "
   "operator|destructor}0 does not match the "
   "calculated one">;
+def err_incorrect_defaulted_constexpr : Error<
+  "defaulted definition of %select{default constructor|copy constructor|"
+  "move constructor}0 is not constexpr">;
 def err_out_of_line_default_deletes : Error<
   "defaulting this %select{default constructor|copy constructor|move "
   "constructor|copy assignment operator|move assignment operator|destructor}0 "

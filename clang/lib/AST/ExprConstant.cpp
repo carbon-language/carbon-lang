@@ -1591,6 +1591,29 @@ static EvalStmtResult EvaluateStmt(APValue &Result, EvalInfo &Info,
   }
 }
 
+/// CheckTrivialDefaultConstructor - Check whether a constructor is a trivial
+/// default constructor. If so, we'll fold it whether or not it's marked as
+/// constexpr. If it is marked as constexpr, we will never implicitly define it,
+/// so we need special handling.
+static bool CheckTrivialDefaultConstructor(EvalInfo &Info, SourceLocation Loc,
+                                    const CXXConstructorDecl *CD) {
+  if (!CD->isTrivial() || !CD->isDefaultConstructor())
+    return false;
+
+  if (!CD->isConstexpr()) {
+    if (Info.getLangOpts().CPlusPlus0x) {
+      // FIXME: If DiagDecl is an implicitly-declared special member function,
+      // we should be much more explicit about why it's not constexpr.
+      Info.CCEDiag(Loc, diag::note_constexpr_invalid_function, 1)
+        << /*IsConstexpr*/0 << /*IsConstructor*/1 << CD;
+      Info.Note(CD->getLocation(), diag::note_declared_at);
+    } else {
+      Info.CCEDiag(Loc, diag::note_invalid_subexpr_in_const_expr);
+    }
+  }
+  return true;
+}
+
 /// CheckConstexprFunction - Check that a function can be called in a constant
 /// expression.
 static bool CheckConstexprFunction(EvalInfo &Info, SourceLocation CallLoc,
@@ -2790,6 +2813,16 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
 
 bool RecordExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
   const CXXConstructorDecl *FD = E->getConstructor();
+  if (CheckTrivialDefaultConstructor(Info, E->getExprLoc(), FD)) {
+    const CXXRecordDecl *RD = FD->getParent();
+    if (RD->isUnion())
+      Result = APValue((FieldDecl*)0);
+    else
+      Result = APValue(APValue::UninitStruct(), RD->getNumBases(),
+                       std::distance(RD->field_begin(), RD->field_end()));
+    return true;
+  }
+
   const FunctionDecl *Definition = 0;
   FD->getBody(Definition);
 
@@ -3144,6 +3177,18 @@ bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
     return true;
 
   const CXXConstructorDecl *FD = E->getConstructor();
+
+  if (CheckTrivialDefaultConstructor(Info, E->getExprLoc(), FD)) {
+    const CXXRecordDecl *RD = FD->getParent();
+    if (RD->isUnion())
+      Result.getArrayFiller() = APValue((FieldDecl*)0);
+    else
+      Result.getArrayFiller() =
+          APValue(APValue::UninitStruct(), RD->getNumBases(),
+                  std::distance(RD->field_begin(), RD->field_end()));
+    return true;
+  }
+
   const FunctionDecl *Definition = 0;
   FD->getBody(Definition);
 
