@@ -131,6 +131,14 @@ namespace clang {
       }
 
       ~RedeclarableResult() {
+        // FIXME: We want to suppress this when the declaration is local to
+        // a function, since there's no reason to search other AST files
+        // for redeclarations (they can't exist). However, this is hard to 
+        // do locally because the declaration hasn't necessarily loaded its
+        // declaration context yet. Also, local externs still have the function
+        // as their (semantic) declaration context, which is wrong and would
+        // break this optimize.
+        
         if (FirstID && Owning && Reader.PendingDeclChainsKnown.insert(FirstID))
           Reader.PendingDeclChains.push_back(FirstID);
       }
