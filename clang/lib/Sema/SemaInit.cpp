@@ -5665,6 +5665,10 @@ void InitializationSequence::dump(raw_ostream &OS) const {
     case FK_PlaceholderType:
       OS << "initializer expression isn't contextually valid";
       break;
+
+    case FK_ListConstructorOverloadFailed:
+      OS << "list constructor overloading failed";
+      break;
     }
     OS << '\n';
     return;
