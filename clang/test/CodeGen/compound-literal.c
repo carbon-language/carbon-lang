@@ -4,7 +4,7 @@ int* a = &(int){1};
 struct s {int a, b, c;} * b = &(struct s) {1, 2, 3};
 _Complex double * x = &(_Complex double){1.0f};
 typedef int v4i32 __attribute((vector_size(16)));
-v4i32 *x = &(v4i32){1,2,3,4};
+v4i32 *y = &(v4i32){1,2,3,4};
 
 void xxx() {
 int* a = &(int){1};
