@@ -23,12 +23,6 @@ using namespace llvm;
 namespace {
   class ARMELFObjectWriter : public MCELFObjectTargetWriter {
     enum { DefaultEABIVersion = 0x05000000U };
-
-    const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
-                                   const MCValue &Target,
-                                   const MCFragment &F,
-                                   const MCFixup &Fixup,
-                                   bool IsPCRel) const;
     unsigned GetRelocTypeInner(const MCValue &Target,
                                const MCFixup &Fixup,
                                bool IsPCRel) const;
@@ -38,11 +32,16 @@ namespace {
     ARMELFObjectWriter(uint8_t OSABI);
 
     virtual ~ARMELFObjectWriter();
-  protected:
+
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
                                   int64_t Addend) const;
     virtual unsigned getEFlags() const;
+    virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
+                                   const MCValue &Target,
+                                   const MCFragment &F,
+                                   const MCFixup &Fixup,
+                                   bool IsPCRel) const;
   };
 }
 
