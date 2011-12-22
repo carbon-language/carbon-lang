@@ -47,7 +47,7 @@ public:
   enum TypeID {
     // PrimitiveTypes - make sure LastPrimitiveTyID stays up to date.
     VoidTyID = 0,    ///<  0: type with no size
-    HalfTyID,        ///<  1: 32-bit floating point type
+    HalfTyID,        ///<  1: 16-bit floating point type
     FloatTyID,       ///<  2: 32-bit floating point type
     DoubleTyID,      ///<  3: 64-bit floating point type
     X86_FP80TyID,    ///<  4: 80-bit floating point type (X87)
