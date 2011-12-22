@@ -2421,6 +2421,10 @@ int ARMAsmParser::tryParseShiftRegister(
         Error(ImmLoc, "immediate shift value out of range");
         return -1;
       }
+      // shift by zero is a nop. Always send it through as lsl.
+      // ('as' compatibility)
+      if (Imm == 0)
+        ShiftTy = ARM_AM::lsl;
     } else if (Parser.getTok().is(AsmToken::Identifier)) {
       ShiftReg = tryParseRegister();
       SMLoc L = Parser.getTok().getLoc();
