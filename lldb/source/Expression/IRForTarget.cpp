@@ -1831,19 +1831,27 @@ IRForTarget::ResolveExternals (Function &llvm_function)
          global != end;
          ++global)
     {
+        if (!global)
+        {
+            if (m_error_stream)
+                m_error_stream->Printf("Internal error [IRForTarget]: global variable is NULL");
+            
+            return false;
+        }
+        
+        std::string global_name = (*global).getName().str();
+        
         if (log)
             log->Printf("Examining %s, DeclForGlobalValue returns %p", 
-                        (*global).getName().str().c_str(),
+                        global_name.c_str(),
                         DeclForGlobal(global));
-    
-        std::string global_name = (*global).getName().str();
         
         if (global_name.find("OBJC_IVAR") == 0)
         {
             if (!HandleSymbol(global))
             {
                 if (m_error_stream)
-                    m_error_stream->Printf("Error [IRForTarget]: Couldn't find Objective-C indirect ivar symbol %s\n", (*global).getName().str().c_str());
+                    m_error_stream->Printf("Error [IRForTarget]: Couldn't find Objective-C indirect ivar symbol %s\n", global_name.c_str());
                 
                 return false;
             }
@@ -1863,7 +1871,7 @@ IRForTarget::ResolveExternals (Function &llvm_function)
             if (!MaybeHandleVariable (global))
             {
                 if (m_error_stream)
-                    m_error_stream->Printf("Internal error [IRForTarget]: Couldn't rewrite external variable %s\n", (*global).getName().str().c_str());
+                    m_error_stream->Printf("Internal error [IRForTarget]: Couldn't rewrite external variable %s\n", global_name.c_str());
                 
                 return false;
             }
