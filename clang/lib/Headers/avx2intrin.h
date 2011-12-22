@@ -256,6 +256,156 @@ _mm256_madd_epi16(__m256i a, __m256i b)
 }
 
 static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_max_epi8(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_pmaxsb256((__v32qi)a, (__v32qi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_max_epi16(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_pmaxsw256((__v16hi)a, (__v16hi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_max_epi32(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_pmaxsd256((__v8si)a, (__v8si)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_max_epu8(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_pmaxub256((__v32qi)a, (__v32qi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_max_epu16(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_pmaxuw256((__v16hi)a, (__v16hi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_max_epu32(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_pmaxud256((__v8si)a, (__v8si)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_min_epi8(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_pminsb256((__v32qi)a, (__v32qi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_min_epi16(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_pminsw256((__v16hi)a, (__v16hi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_min_epi32(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_pminsd256((__v8si)a, (__v8si)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_min_epu8(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_pminub256((__v32qi)a, (__v32qi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_min_epu16(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_pminuw256 ((__v16hi)a, (__v16hi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_min_epu32(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_pminud256((__v8si)a, (__v8si)b);
+}
+
+static __inline__ int __attribute__((__always_inline__, __nodebug__))
+_mm256_movemask_epi8(__m256i a)
+{
+  return __builtin_ia32_pmovmskb256((__v32qi)a);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cvtepi8_epi16(__m128i __V)
+{
+  return (__m256i)__builtin_ia32_pmovsxbw256((__v16qi)__V);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cvtepi8_epi32(__m128i __V)
+{
+  return (__m256i)__builtin_ia32_pmovsxbd256((__v16qi)__V);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cvtepi8_epi64(__m128i __V)
+{
+  return (__m256i)__builtin_ia32_pmovsxbq256((__v16qi)__V);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cvtepi16_epi32(__m128i __V)
+{
+  return (__m256i)__builtin_ia32_pmovsxwd256((__v8hi)__V);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cvtepi16_epi64(__m128i __V)
+{
+  return (__m256i)__builtin_ia32_pmovsxwq256((__v8hi)__V);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cvtepi32_epi64(__m128i __V)
+{
+  return (__m256i)__builtin_ia32_pmovsxdq256((__v4si)__V);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cvtepu8_epi16(__m128i __V)
+{
+  return (__m256i)__builtin_ia32_pmovzxbw256((__v16qi)__V);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cvtepu8_epi32(__m128i __V)
+{
+  return (__m256i)__builtin_ia32_pmovzxbd256((__v16qi)__V);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cvtepu8_epi64(__m128i __V)
+{
+  return (__m256i)__builtin_ia32_pmovzxbq256((__v16qi)__V);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cvtepu16_epi32(__m128i __V)
+{
+  return (__m256i)__builtin_ia32_pmovzxwd256((__v8hi)__V);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cvtepu16_epi64(__m128i __V)
+{
+  return (__m256i)__builtin_ia32_pmovzxwq256((__v8hi)__V);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_cvtepu32_epi64(__m128i __V)
+{
+  return (__m256i)__builtin_ia32_pmovzxdq256((__v4si)__V);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_or_si256(__m256i a, __m256i b)
 {
   return a | b;
