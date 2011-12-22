@@ -189,7 +189,7 @@ AC_CACHE_CHECK([type of operating system we're going to host on],
     llvm_cv_no_link_all_option="-Wl,-noall_load"
     llvm_cv_os_type="Minix"
     llvm_cv_platform_type="Unix" ;;
-  *-*-freebsd*)
+  *-*-freebsd* | *-*-kfreebsd-gnu)
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="FreeBSD"
@@ -223,6 +223,11 @@ AC_CACHE_CHECK([type of operating system we're going to host on],
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="Linux"
+    llvm_cv_platform_type="Unix" ;;
+  *-*-gnu*)
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
+    llvm_cv_os_type="GNU"
     llvm_cv_platform_type="Unix" ;;
   *-*-solaris*)
     llvm_cv_link_all_option="-Wl,-z,allextract"

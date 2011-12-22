@@ -3693,7 +3693,7 @@ else
     llvm_cv_no_link_all_option="-Wl,-noall_load"
     llvm_cv_os_type="Minix"
     llvm_cv_platform_type="Unix" ;;
-  *-*-freebsd*)
+  *-*-freebsd* | *-*-kfreebsd-gnu)
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="FreeBSD"
@@ -3727,6 +3727,11 @@ else
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="Linux"
+    llvm_cv_platform_type="Unix" ;;
+  *-*-gnu*)
+    llvm_cv_link_all_option="-Wl,--whole-archive"
+    llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
+    llvm_cv_os_type="GNU"
     llvm_cv_platform_type="Unix" ;;
   *-*-solaris*)
     llvm_cv_link_all_option="-Wl,-z,allextract"
@@ -10495,7 +10500,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10498 "configure"
+#line 10503 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
