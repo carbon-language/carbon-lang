@@ -2501,7 +2501,32 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   // Ignore explicit -force_cpusubtype_ALL option.
   (void) Args.hasArg(options::OPT_force__cpusubtype__ALL);
 
-  // FIXME: Add -g support, once we have it.
+  // Same as Clang::ConstructJob() we special case debug options to only pass
+  // -g to clang. I guess if it is wrong there then it is wrong here too :) .
+  Args.ClaimAllArgs(options::OPT_g_Group);
+  if (Arg *A = Args.getLastArg(options::OPT_g_Group))
+    if (!A->getOption().matches(options::OPT_g0)) {
+      CmdArgs.push_back("-g");
+    }
+
+  // Optionally embed the -cc1as level arguments into the debug info, for build
+  // analysis.
+  if (getToolChain().UseDwarfDebugFlags()) {
+    ArgStringList OriginalArgs;
+    for (ArgList::const_iterator it = Args.begin(),
+           ie = Args.end(); it != ie; ++it)
+      (*it)->render(Args, OriginalArgs);
+
+    llvm::SmallString<256> Flags;
+    const char *Exec = getToolChain().getDriver().getClangProgramPath();
+    Flags += Exec;
+    for (unsigned i = 0, e = OriginalArgs.size(); i != e; ++i) {
+      Flags += " ";
+      Flags += OriginalArgs[i];
+    }
+    CmdArgs.push_back("-dwarf-debug-flags");
+    CmdArgs.push_back(Args.MakeArgString(Flags.str()));
+  }
 
   // FIXME: Add -static support, once we have it.
 

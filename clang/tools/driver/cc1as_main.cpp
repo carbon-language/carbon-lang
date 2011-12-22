@@ -72,6 +72,8 @@ struct AssemblerInvocation {
   std::vector<std::string> IncludePaths;
   unsigned NoInitialTextSection : 1;
   unsigned SaveTemporaryLabels : 1;
+  unsigned GenDwarfForAssembly : 1;
+  std::string DwarfDebugFlags;
 
   /// @}
   /// @name Frontend Options
@@ -158,6 +160,8 @@ void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   Opts.IncludePaths = Args->getAllArgValues(OPT_I);
   Opts.NoInitialTextSection = Args->hasArg(OPT_n);
   Opts.SaveTemporaryLabels = Args->hasArg(OPT_L);
+  Opts.GenDwarfForAssembly = Args->hasArg(OPT_g);
+  Opts.DwarfDebugFlags = Args->getLastArgValue(OPT_dwarf_debug_flags);
 
   // Frontend Options
   if (Args->hasArg(OPT_INPUT)) {
@@ -273,6 +277,10 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
                              Reloc::Default, CodeModel::Default, Ctx);
   if (Opts.SaveTemporaryLabels)
     Ctx.setAllowTemporaryLabels(false);
+  if (Opts.GenDwarfForAssembly)
+    Ctx.setGenDwarfForAssembly(true);
+  if (!Opts.DwarfDebugFlags.empty())
+    Ctx.setDwarfDebugFlags(StringRef(Opts.DwarfDebugFlags));
 
   OwningPtr<MCStreamer> Str;
 

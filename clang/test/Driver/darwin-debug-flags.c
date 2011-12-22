@@ -1,5 +1,7 @@
 // RUN: env RC_DEBUG_OPTIONS=1 %clang -ccc-host-triple i386-apple-darwin9 -g -Os %s  -emit-llvm -S -o - | FileCheck %s
 // <rdar://problem/7256886>
+// RUN: touch %t.s
+// RUN: env RC_DEBUG_OPTIONS=1 %clang -### -c -g %t.s 2>&1 | FileCheck -check-prefix=S %s
 
 // CHECK: !0 = metadata !{
 // CHECK: -g -Os
@@ -7,3 +9,5 @@
 // CHECK: [ DW_TAG_compile_unit ]
 
 int x;
+
+// S: "-dwarf-debug-flags"
