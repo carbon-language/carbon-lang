@@ -6,6 +6,7 @@ add_llvm_library(LLVMARMDesc
   ARMMCExpr.cpp
   ARMMCTargetDesc.cpp
   ARMMachObjectWriter.cpp
+  ARMELFObjectWriter.cpp
   )
 add_dependencies(LLVMARMDesc ARMCommonTableGen)
 
