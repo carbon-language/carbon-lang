@@ -954,7 +954,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Custom);
 
     // FIXME: these should be Legal but thats only for the case where
-    // the index is constant.  For now custom expand to deal with that
+    // the index is constant.  For now custom expand to deal with that.
     if (Subtarget->is64Bit()) {
       setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2i64, Custom);
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2i64, Custom);
@@ -1152,7 +1152,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   // of this type with custom code.
   for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
          VT != (unsigned)MVT::LAST_VECTOR_VALUETYPE; VT++) {
-    setOperationAction(ISD::SIGN_EXTEND_INREG, (MVT::SimpleValueType)VT, Custom);
+    setOperationAction(ISD::SIGN_EXTEND_INREG, (MVT::SimpleValueType)VT,
+                       Custom);
   }
 
   // We want to custom lower some of our intrinsics.
@@ -1922,7 +1923,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         TotalNumIntRegs = 6; TotalNumXMMRegs = 8;
         GPR64ArgRegs = GPR64ArgRegs64Bit;
 
-        NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs64Bit, TotalNumXMMRegs);
+        NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs64Bit,
+                                                TotalNumXMMRegs);
       }
       unsigned NumIntRegs = CCInfo.getFirstUnallocated(GPR64ArgRegs,
                                                        TotalNumIntRegs);
@@ -1951,8 +1953,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
           FuncInfo->setVarArgsFrameIndex(FuncInfo->getRegSaveFrameIndex());
       } else {
         // For X86-64, if there are vararg parameters that are passed via
-        // registers, then we must store them to their spots on the stack so they
-        // may be loaded by deferencing the result of va_next.
+        // registers, then we must store them to their spots on the stack so
+        // they may be loaded by deferencing the result of va_next.
         FuncInfo->setVarArgsGPOffset(NumIntRegs * 8);
         FuncInfo->setVarArgsFPOffset(TotalNumIntRegs * 8 + NumXMMRegs * 16);
         FuncInfo->setRegSaveFrameIndex(
@@ -2703,9 +2705,9 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
         return false;
   }
 
-  // If the call result is in ST0 / ST1, it needs to be popped off the x87 stack.
-  // Therefore if it's not used by the call it is not safe to optimize this into
-  // a sibcall.
+  // If the call result is in ST0 / ST1, it needs to be popped off the x87
+  // stack.  Therefore, if it's not used by the call it is not safe to optimize
+  // this into a sibcall.
   bool Unused = false;
   for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
     if (!Ins[i].Used) {
@@ -3296,8 +3298,8 @@ static bool isVSHUFPYMask(const SmallVectorImpl<int> &Mask, EVT VT,
         int Idx = Mask[i+QuarterStart+LaneStart];
         if (!isUndefOrInRange(Idx, SrcStart, SrcStart+HalfSize))
           return false;
-        // For VSHUFPSY, the mask of the second half must be the same as the first
-        // but with the appropriate offsets. This works in the same way as
+        // For VSHUFPSY, the mask of the second half must be the same as the 
+        // first but with the appropriate offsets. This works in the same way as
         // VPERMILPS works with masks.
         if (NumElems == 4 || l == 0 || Mask[i+QuarterStart] < 0)
           continue;
@@ -10333,7 +10335,8 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(ISD::MERGE_VALUES, DL, N->getVTList(), Sum, SetCC);
 }
 
-SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const{
+SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
+                                                  SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
   EVT ExtraVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
   EVT VT = Op.getValueType();
