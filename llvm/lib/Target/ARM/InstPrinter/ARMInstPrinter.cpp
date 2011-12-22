@@ -1001,6 +1001,16 @@ void ARMInstPrinter::printRotImmOperand(const MCInst *MI, unsigned OpNum,
   }
 }
 
+void ARMInstPrinter::printFBits16(const MCInst *MI, unsigned OpNum,
+                                  raw_ostream &O) {
+  O << "#" << 16 - MI->getOperand(OpNum).getImm();
+}
+
+void ARMInstPrinter::printFBits32(const MCInst *MI, unsigned OpNum,
+                                  raw_ostream &O) {
+  O << "#" << 32 - MI->getOperand(OpNum).getImm();
+}
+
 void ARMInstPrinter::printVectorIndex(const MCInst *MI, unsigned OpNum,
                                       raw_ostream &O) {
   O << "[" << MI->getOperand(OpNum).getImm() << "]";

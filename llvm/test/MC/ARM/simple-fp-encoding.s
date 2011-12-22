@@ -299,3 +299,15 @@
 @ CHECK: vmov	r4, s1                  @ encoding: [0x90,0x4a,0x10,0xee]
 @ CHECK: vmov	r5, s2                  @ encoding: [0x10,0x5a,0x11,0xee]
 @ CHECK: vmov	r6, s3                  @ encoding: [0x90,0x6a,0x11,0xee]
+
+
+@ VCVT (between floating-point and fixed-point)
+	vcvt.f32.u32 s0, s0, #20
+        vcvt.f64.s32 d0, d0, #32
+        vcvt.f32.u16 s0, s0, #1
+        vcvt.f64.s16 d0, d0, #16
+
+@ CHECK: vcvt.f32.u32	s0, s0, #20     @ encoding: [0xc6,0x0a,0xbb,0xee]
+@ CHECK: vcvt.f64.s32	d0, d0, #32     @ encoding: [0xc0,0x0b,0xba,0xee]
+@ CHECK: vcvt.f32.u16	s0, s0, #1      @ encoding: [0x67,0x0a,0xbb,0xee]
+@ CHECK: vcvt.f64.s16	d0, d0, #16     @ encoding: [0x40,0x0b,0xba,0xee]

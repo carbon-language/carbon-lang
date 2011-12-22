@@ -61,6 +61,22 @@ def vfp_f64imm : Operand<f64>,
   let ParserMatchClass = FPImmOperand;
 }
 
+// The VCVT to/from fixed-point instructions encode the 'fbits' operand
+// (the number of fixed bits) differently than it appears in the assembly
+// source. It's encoded as "Size - fbits" where Size is the size of the
+// fixed-point representation (32 or 16) and fbits is the value appearing
+// in the assembly source, an integer in [0,16] or (0,32], depending on size.
+def fbits32_asm_operand : AsmOperandClass { let Name = "FBits32"; }
+def fbits32 : Operand<i32> {
+  let PrintMethod = "printFBits32";
+  let ParserMatchClass = fbits32_asm_operand;
+}
+
+def fbits16_asm_operand : AsmOperandClass { let Name = "FBits16"; }
+def fbits16 : Operand<i32> {
+  let PrintMethod = "printFBits16";
+  let ParserMatchClass = fbits16_asm_operand;
+}
 
 //===----------------------------------------------------------------------===//
 //  Load / store Instructions.
@@ -795,7 +811,7 @@ let Constraints = "$a = $dst" in {
 // FP to Fixed-Point:
 
 def VTOSHS : AVConv1XI<0b11101, 0b11, 0b1110, 0b1010, 0,
-                       (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
+                       (outs SPR:$dst), (ins SPR:$a, fbits16:$fbits),
                  IIC_fpCVTSI, "vcvt", ".s16.f32\t$dst, $a, $fbits", []> {
   // Some single precision VFP instructions may be executed on both NEON and
   // VFP pipelines on A8.
@@ -803,7 +819,7 @@ def VTOSHS : AVConv1XI<0b11101, 0b11, 0b1110, 0b1010, 0,
 }
 
 def VTOUHS : AVConv1XI<0b11101, 0b11, 0b1111, 0b1010, 0,
-                       (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
+                       (outs SPR:$dst), (ins SPR:$a, fbits16:$fbits),
                  IIC_fpCVTSI, "vcvt", ".u16.f32\t$dst, $a, $fbits", []> {
   // Some single precision VFP instructions may be executed on both NEON and
   // VFP pipelines on A8.
@@ -811,7 +827,7 @@ def VTOUHS : AVConv1XI<0b11101, 0b11, 0b1111, 0b1010, 0,
 }
 
 def VTOSLS : AVConv1XI<0b11101, 0b11, 0b1110, 0b1010, 1,
-                       (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
+                       (outs SPR:$dst), (ins SPR:$a, fbits32:$fbits),
                  IIC_fpCVTSI, "vcvt", ".s32.f32\t$dst, $a, $fbits", []> {
   // Some single precision VFP instructions may be executed on both NEON and
   // VFP pipelines on A8.
@@ -819,7 +835,7 @@ def VTOSLS : AVConv1XI<0b11101, 0b11, 0b1110, 0b1010, 1,
 }
 
 def VTOULS : AVConv1XI<0b11101, 0b11, 0b1111, 0b1010, 1,
-                       (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
+                       (outs SPR:$dst), (ins SPR:$a, fbits32:$fbits),
                  IIC_fpCVTSI, "vcvt", ".u32.f32\t$dst, $a, $fbits", []> {
   // Some single precision VFP instructions may be executed on both NEON and
   // VFP pipelines on A8.
@@ -827,25 +843,25 @@ def VTOULS : AVConv1XI<0b11101, 0b11, 0b1111, 0b1010, 1,
 }
 
 def VTOSHD : AVConv1XI<0b11101, 0b11, 0b1110, 0b1011, 0,
-                       (outs DPR:$dst), (ins DPR:$a, i32imm:$fbits),
+                       (outs DPR:$dst), (ins DPR:$a, fbits16:$fbits),
                  IIC_fpCVTDI, "vcvt", ".s16.f64\t$dst, $a, $fbits", []>;
 
 def VTOUHD : AVConv1XI<0b11101, 0b11, 0b1111, 0b1011, 0,
-                       (outs DPR:$dst), (ins DPR:$a, i32imm:$fbits),
+                       (outs DPR:$dst), (ins DPR:$a, fbits16:$fbits),
                  IIC_fpCVTDI, "vcvt", ".u16.f64\t$dst, $a, $fbits", []>;
 
 def VTOSLD : AVConv1XI<0b11101, 0b11, 0b1110, 0b1011, 1,
-                       (outs DPR:$dst), (ins DPR:$a, i32imm:$fbits),
+                       (outs DPR:$dst), (ins DPR:$a, fbits32:$fbits),
                  IIC_fpCVTDI, "vcvt", ".s32.f64\t$dst, $a, $fbits", []>;
 
 def VTOULD : AVConv1XI<0b11101, 0b11, 0b1111, 0b1011, 1,
-                       (outs DPR:$dst), (ins DPR:$a, i32imm:$fbits),
+                       (outs DPR:$dst), (ins DPR:$a, fbits32:$fbits),
                  IIC_fpCVTDI, "vcvt", ".u32.f64\t$dst, $a, $fbits", []>;
 
 // Fixed-Point to FP:
 
 def VSHTOS : AVConv1XI<0b11101, 0b11, 0b1010, 0b1010, 0,
-                       (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
+                       (outs SPR:$dst), (ins SPR:$a, fbits16:$fbits),
                  IIC_fpCVTIS, "vcvt", ".f32.s16\t$dst, $a, $fbits", []> {
   // Some single precision VFP instructions may be executed on both NEON and
   // VFP pipelines on A8.
@@ -853,7 +869,7 @@ def VSHTOS : AVConv1XI<0b11101, 0b11, 0b1010, 0b1010, 0,
 }
 
 def VUHTOS : AVConv1XI<0b11101, 0b11, 0b1011, 0b1010, 0,
-                       (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
+                       (outs SPR:$dst), (ins SPR:$a, fbits16:$fbits),
                  IIC_fpCVTIS, "vcvt", ".f32.u16\t$dst, $a, $fbits", []> {
   // Some single precision VFP instructions may be executed on both NEON and
   // VFP pipelines on A8.
@@ -861,7 +877,7 @@ def VUHTOS : AVConv1XI<0b11101, 0b11, 0b1011, 0b1010, 0,
 }
 
 def VSLTOS : AVConv1XI<0b11101, 0b11, 0b1010, 0b1010, 1,
-                       (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
+                       (outs SPR:$dst), (ins SPR:$a, fbits32:$fbits),
                  IIC_fpCVTIS, "vcvt", ".f32.s32\t$dst, $a, $fbits", []> {
   // Some single precision VFP instructions may be executed on both NEON and
   // VFP pipelines on A8.
@@ -869,7 +885,7 @@ def VSLTOS : AVConv1XI<0b11101, 0b11, 0b1010, 0b1010, 1,
 }
 
 def VULTOS : AVConv1XI<0b11101, 0b11, 0b1011, 0b1010, 1,
-                       (outs SPR:$dst), (ins SPR:$a, i32imm:$fbits),
+                       (outs SPR:$dst), (ins SPR:$a, fbits32:$fbits),
                  IIC_fpCVTIS, "vcvt", ".f32.u32\t$dst, $a, $fbits", []> {
   // Some single precision VFP instructions may be executed on both NEON and
   // VFP pipelines on A8.
@@ -877,19 +893,19 @@ def VULTOS : AVConv1XI<0b11101, 0b11, 0b1011, 0b1010, 1,
 }
 
 def VSHTOD : AVConv1XI<0b11101, 0b11, 0b1010, 0b1011, 0,
-                       (outs DPR:$dst), (ins DPR:$a, i32imm:$fbits),
+                       (outs DPR:$dst), (ins DPR:$a, fbits16:$fbits),
                  IIC_fpCVTID, "vcvt", ".f64.s16\t$dst, $a, $fbits", []>;
 
 def VUHTOD : AVConv1XI<0b11101, 0b11, 0b1011, 0b1011, 0,
-                       (outs DPR:$dst), (ins DPR:$a, i32imm:$fbits),
+                       (outs DPR:$dst), (ins DPR:$a, fbits16:$fbits),
                  IIC_fpCVTID, "vcvt", ".f64.u16\t$dst, $a, $fbits", []>;
 
 def VSLTOD : AVConv1XI<0b11101, 0b11, 0b1010, 0b1011, 1,
-                       (outs DPR:$dst), (ins DPR:$a, i32imm:$fbits),
+                       (outs DPR:$dst), (ins DPR:$a, fbits32:$fbits),
                  IIC_fpCVTID, "vcvt", ".f64.s32\t$dst, $a, $fbits", []>;
 
 def VULTOD : AVConv1XI<0b11101, 0b11, 0b1011, 0b1011, 1,
-                       (outs DPR:$dst), (ins DPR:$a, i32imm:$fbits),
+                       (outs DPR:$dst), (ins DPR:$a, fbits32:$fbits),
                  IIC_fpCVTID, "vcvt", ".f64.u32\t$dst, $a, $fbits", []>;
 
 } // End of 'let Constraints = "$a = $dst" in'
