@@ -52,7 +52,7 @@ namespace objects {
   }
 
   void inline_init() {
-    //(void) C{1, 1.0}; FIXME: inline initialization
+    (void) C{1, 1.0};
     (void) new C{1, 1.0};
   }
 

@@ -678,7 +678,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
       if (Next.is(tok::coloncolon) ||
           (!ColonIsSacred && Next.is(tok::colon)) ||
           Next.is(tok::less) ||
-          Next.is(tok::l_paren)) {
+          Next.is(tok::l_paren) ||
+          Next.is(tok::l_brace)) {
         // If TryAnnotateTypeOrScopeToken annotates the token, tail recurse.
         if (TryAnnotateTypeOrScopeToken())
           return ExprError();
