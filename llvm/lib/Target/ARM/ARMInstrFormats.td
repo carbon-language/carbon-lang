@@ -1594,8 +1594,11 @@ class AVConv1XI<bits<5> op1, bits<2> op2, bits<4> op3, bits<4> op4, bit op5,
                 dag oops, dag iops, InstrItinClass itin, string opc, string asm,
                 list<dag> pattern>
   : AVConv1I<op1, op2, op3, op4, oops, iops, itin, opc, asm, pattern> {
+  bits<5> fbits;
   // size (fixed-point number): sx == 0 ? 16 : 32
   let Inst{7} = op5; // sx
+  let Inst{5} = fbits{0};
+  let Inst{3-0} = fbits{4-1};
 }
 
 // VFP conversion instructions, if no NEON
