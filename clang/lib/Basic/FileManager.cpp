@@ -25,7 +25,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/system_error.h"
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 #include <map>
 #include <set>
 #include <string>

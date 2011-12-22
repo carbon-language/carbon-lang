@@ -24,7 +24,7 @@
 #include "clang/Lex/LiteralSupport.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cstdio>

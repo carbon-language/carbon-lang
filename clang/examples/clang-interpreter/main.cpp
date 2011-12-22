@@ -18,10 +18,8 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 
 #include "llvm/Module.h"
-#include "llvm/Config/config.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Config/config.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/Support/ManagedStatic.h"
