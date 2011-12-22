@@ -27,8 +27,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/StringSwitch.h"
 
-#include "../Target/Mips/MCTargetDesc/MipsFixupKinds.h"
-
 #include <vector>
 using namespace llvm;
 
@@ -1262,9 +1260,8 @@ MCObjectWriter *llvm::createELFObjectWriter(MCELFObjectTargetWriter *MOTW,
     case ELF::EM_PPC:
     case ELF::EM_PPC64:
     case ELF::EM_MBLAZE:
-      return new ELFObjectWriter(MOTW, OS, IsLittleEndian); break;
     case ELF::EM_MIPS:
-      return new MipsELFObjectWriter(MOTW, OS, IsLittleEndian); break;
+      return new ELFObjectWriter(MOTW, OS, IsLittleEndian); break;
     default: llvm_unreachable("Unsupported architecture"); break;
   }
 }
@@ -1276,101 +1273,4 @@ unsigned ELFObjectWriter::GetRelocType(const MCValue &Target,
                                        int64_t Addend) const {
   return TargetObjectWriter->GetRelocType(Target, Fixup, IsPCRel,
                                           IsRelocWithSymbol, Addend);
-}
-
-/// START OF SUBCLASSES for ELFObjectWriter
-//===- MipsELFObjectWriter -------------------------------------------===//
-
-MipsELFObjectWriter::MipsELFObjectWriter(MCELFObjectTargetWriter *MOTW,
-                                         raw_ostream &_OS,
-                                         bool IsLittleEndian)
-  : ELFObjectWriter(MOTW, _OS, IsLittleEndian) {}
-
-MipsELFObjectWriter::~MipsELFObjectWriter() {}
-
-// FIXME: get the real EABI Version from the Triple.
-unsigned MipsELFObjectWriter::getEFlags() const {
-  return ELF::EF_MIPS_NOREORDER | ELF::EF_MIPS_ARCH_32R2;
-}
-
-const MCSymbol *MipsELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
-                                                    const MCValue &Target,
-                                                    const MCFragment &F,
-                                                    const MCFixup &Fixup,
-                                                    bool IsPCRel) const {
-  assert(Target.getSymA() && "SymA cannot be 0.");
-  const MCSymbol &Sym = Target.getSymA()->getSymbol();
-  
-  if (Sym.getSection().getKind().isMergeableCString() ||
-      Sym.getSection().getKind().isMergeableConst())
-    return &Sym;
-
-  return NULL;
-}
-
-unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
-                                           const MCFixup &Fixup,
-                                           bool IsPCRel,
-                                           bool IsRelocWithSymbol,
-                                           int64_t Addend) const {
-  // determine the type of the relocation
-  unsigned Type = (unsigned)ELF::R_MIPS_NONE;
-  unsigned Kind = (unsigned)Fixup.getKind();
-
-  switch (Kind) {
-  default:
-    llvm_unreachable("invalid fixup kind!");
-  case FK_Data_4:
-    Type = ELF::R_MIPS_32;
-    break;
-  case FK_GPRel_4:
-    Type = ELF::R_MIPS_GPREL32;
-    break;
-  case Mips::fixup_Mips_GPREL16:
-    Type = ELF::R_MIPS_GPREL16;
-    break;
-  case Mips::fixup_Mips_26:
-    Type = ELF::R_MIPS_26;
-    break;
-  case Mips::fixup_Mips_CALL16:
-    Type = ELF::R_MIPS_CALL16;
-    break;
-  case Mips::fixup_Mips_GOT_Global:
-  case Mips::fixup_Mips_GOT_Local:
-    Type = ELF::R_MIPS_GOT16;
-    break;
-  case Mips::fixup_Mips_HI16:
-    Type = ELF::R_MIPS_HI16;
-    break;
-  case Mips::fixup_Mips_LO16:
-    Type = ELF::R_MIPS_LO16;
-    break;
-  case Mips::fixup_Mips_TLSGD:
-    Type = ELF::R_MIPS_TLS_GD;
-    break;
-  case Mips::fixup_Mips_GOTTPREL:
-    Type = ELF::R_MIPS_TLS_GOTTPREL;
-    break;
-  case Mips::fixup_Mips_TPREL_HI:
-    Type = ELF::R_MIPS_TLS_TPREL_HI16;
-    break;
-  case Mips::fixup_Mips_TPREL_LO:
-    Type = ELF::R_MIPS_TLS_TPREL_LO16;
-    break;
-  case Mips::fixup_Mips_TLSLDM:
-    Type = ELF::R_MIPS_TLS_LDM;
-    break;
-  case Mips::fixup_Mips_DTPREL_HI:
-    Type = ELF::R_MIPS_TLS_DTPREL_HI16;
-    break;
-  case Mips::fixup_Mips_DTPREL_LO:
-    Type = ELF::R_MIPS_TLS_DTPREL_LO16;
-    break;
-  case Mips::fixup_Mips_Branch_PCRel:
-  case Mips::fixup_Mips_PC16:
-    Type = ELF::R_MIPS_PC16;
-    break;
-  }
-
-  return Type;
 }

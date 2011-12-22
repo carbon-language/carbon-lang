@@ -69,15 +69,6 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
 }
 
 namespace {
-
-class MipsELFObjectWriter : public MCELFObjectTargetWriter {
-public:
-  MipsELFObjectWriter(bool is64Bit, uint8_t OSABI, uint16_t EMachine,
-                      bool HasRelocationAddend)
-    : MCELFObjectTargetWriter(is64Bit, OSABI, EMachine,
-                              HasRelocationAddend) {}
-};
-
 class MipsAsmBackend : public MCAsmBackend {
 public:
   MipsAsmBackend(const Target &T) : MCAsmBackend() {}
@@ -206,12 +197,7 @@ public:
     : MipsAsmBackend(T), OSABI(_OSABI) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createELFObjectWriter(createELFObjectTargetWriter(),
-                                 OS, /*IsLittleEndian*/ false);
-  }
-
-  MCELFObjectTargetWriter *createELFObjectTargetWriter() const {
-    return new MipsELFObjectWriter(false, OSABI, ELF::EM_MIPS, false);
+    return createMipsELFObjectWriter(OS, /*IsLittleEndian*/ false, OSABI);
   }
 };
 
@@ -223,12 +209,7 @@ public:
     : MipsAsmBackend(T), OSABI(_OSABI) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createELFObjectWriter(createELFObjectTargetWriter(),
-                                 OS, /*IsLittleEndian*/ true);
-  }
-
-  MCELFObjectTargetWriter *createELFObjectTargetWriter() const {
-    return new MipsELFObjectWriter(false, OSABI, ELF::EM_MIPS, false);
+    return createMipsELFObjectWriter(OS, /*IsLittleEndian*/ true, OSABI);
   }
 };
 } // namespace

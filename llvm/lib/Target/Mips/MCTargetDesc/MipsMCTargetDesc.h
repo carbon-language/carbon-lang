@@ -14,6 +14,8 @@
 #ifndef MIPSMCTARGETDESC_H
 #define MIPSMCTARGETDESC_H
 
+#include "llvm/Support/DataTypes.h"
+
 namespace llvm {
 class MCAsmBackend;
 class MCCodeEmitter;
@@ -36,6 +38,9 @@ MCCodeEmitter *createMipsMCCodeEmitter(const MCInstrInfo &MCII,
 
 MCAsmBackend *createMipsAsmBackend(const Target &T, StringRef TT);
 
+MCObjectWriter *createMipsELFObjectWriter(raw_ostream &OS,
+                                          bool IsLittleEndian,
+                                          uint8_t OSABI);
 } // End llvm namespace
 
 // Defines symbolic names for Mips registers.  This defines a mapping from

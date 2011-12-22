@@ -354,29 +354,6 @@ class ELFObjectWriter : public MCObjectWriter {
                                   bool IsPCRel, bool IsRelocWithSymbol,
                                   int64_t Addend) const;
   };
-
-  //===- MipsELFObjectWriter -------------------------------------------===//
-
-  class MipsELFObjectWriter : public ELFObjectWriter {
-  public:
-    MipsELFObjectWriter(MCELFObjectTargetWriter *MOTW,
-                        raw_ostream &_OS,
-                        bool IsLittleEndian);
-
-    virtual ~MipsELFObjectWriter();
-    virtual unsigned getEFlags() const;
-
-  protected:
-    virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
-                                           const MCValue &Target,
-                                           const MCFragment &F,
-                                           const MCFixup &Fixup,
-                                           bool IsPCRel) const;
-
-    virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
-                                  bool IsPCRel, bool IsRelocWithSymbol,
-                                  int64_t Addend) const;
-  };
 }
 
 #endif
