@@ -296,7 +296,9 @@ void __cxa_end_catch() {
 
 std::type_info * __cxa_current_exception_type() {
 //  get the current exception
-    __cxa_eh_globals *globals = __cxa_get_globals();
+    __cxa_eh_globals *globals = __cxa_get_globals_fast();
+    if (NULL == globals)
+        return NULL;     //  If there have never been any exceptions, there are none now.
     __cxa_exception *current_exception = globals->caughtExceptions;
     if (NULL == current_exception)
         return NULL;        //  No current exception

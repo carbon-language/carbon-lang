@@ -16,7 +16,7 @@ N: Marshall Clow
 E: marshall@idio.com
 E: mclow.lists@gmail.com
 E: mclow@qualcomm.com
-D: Aux Runtime and vector functionality
+D: Aux Runtime and vector functionality, exception handling
 
 N: Nick Kledzik
 E: kledzik@apple.com
