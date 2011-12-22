@@ -3189,14 +3189,14 @@ parseMSRMaskOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       .Case("faultmask", 19)
       .Case("control", 20)
       .Default(~0U);
-    
+
     if (FlagsVal == ~0U)
       return MatchOperand_NoMatch;
 
     if (!hasV7Ops() && FlagsVal >= 17 && FlagsVal <= 19)
       // basepri, basepri_max and faultmask only valid for V7m.
       return MatchOperand_NoMatch;
-    
+
     Parser.Lex(); // Eat identifier token.
     Operands.push_back(ARMOperand::CreateMSRMask(FlagsVal, S));
     return MatchOperand_Success;
