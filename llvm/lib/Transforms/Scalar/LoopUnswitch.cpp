@@ -71,9 +71,7 @@ namespace {
     // LoopProcessWorklist - Used to check if second loop needs processing
     // after RewriteLoopBodyWithConditionConstant rewrites first loop.
     std::vector<Loop*> LoopProcessWorklist;
-    
-    // FIXME: Consider custom class for this.
-    std::map<const SwitchInst*, SmallPtrSet<const Value *,8> > UnswitchedVals;
+    SmallPtrSet<Value *,8> UnswitchedVals;
     
     bool OptimizeForSize;
     bool redoLoop;
@@ -119,15 +117,7 @@ namespace {
   private:
 
     virtual void releaseMemory() {
-      // We need to forget about all switches in the current loop.
-      // FIXME: Do it better than enumerating all blocks of code
-      // and see if it is a switch instruction.
-      for (Loop::block_iterator I = currentLoop->block_begin(), 
-           E = currentLoop->block_end(); I != E; ++I) {
-        SwitchInst* SI = dyn_cast<SwitchInst>((*I)->getTerminator());
-        if (SI)
-          UnswitchedVals.erase(SI);
-      }
+      UnswitchedVals.clear();
     }
 
     /// RemoveLoopFromWorklist - If the specified loop is on the loop worklist,
@@ -138,12 +128,6 @@ namespace {
       if (I != LoopProcessWorklist.end())
         LoopProcessWorklist.erase(I);
     }
-    
-    /// For new loop switches we clone info about values that was
-    /// already unswitched and has redundant successors.
-    /// Note, that new loop data is stored inside the VMap.
-    void CloneUnswitchedVals(const ValueToValueMapTy& VMap,
-                                    const BasicBlock* SrcBB);     
 
     void initLoopData() {
       loopHeader = currentLoop->getHeader();
@@ -271,25 +255,13 @@ bool LoopUnswitch::processCurrentLoop() {
     } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
       Value *LoopCond = FindLIVLoopCondition(SI->getCondition(), 
                                              currentLoop, Changed);
-      unsigned NumCases = SI->getNumCases(); 
-      if (LoopCond && NumCases > 1) {
+      if (LoopCond && SI->getNumCases() > 1) {
         // Find a value to unswitch on:
         // FIXME: this should chose the most expensive case!
         // FIXME: scan for a case with a non-critical edge?
-        Constant *UnswitchVal = NULL;
-        
+        Constant *UnswitchVal = SI->getCaseValue(1);
         // Do not process same value again and again.
-        // At this point we have some cases already unswitched and
-        // some not yet unswitched. Let's find the first not yet unswitched one.
-        for (unsigned i = 1; i < NumCases; ++i) {
-          Constant* UnswitchValCandidate = SI->getCaseValue(i);
-          if (!UnswitchedVals[SI].count(UnswitchValCandidate)) {
-            UnswitchVal = UnswitchValCandidate;
-            break;
-          }
-        }
-        
-        if (!UnswitchVal)
+        if (!UnswitchedVals.insert(UnswitchVal))
           continue;
 
         if (UnswitchIfProfitable(LoopCond, UnswitchVal)) {
@@ -313,23 +285,6 @@ bool LoopUnswitch::processCurrentLoop() {
       }
   }
   return Changed;
-}
-
-/// For new loop switches we clone info about values that was
-/// already unswitched and has redundant successors.
-/// Not that new loop data is stored inside the VMap.
-void LoopUnswitch::CloneUnswitchedVals(const ValueToValueMapTy& VMap,
-                                             const BasicBlock* SrcBB) {
-  
-  const SwitchInst* SI = dyn_cast<SwitchInst>(SrcBB->getTerminator());
-  if (SI && UnswitchedVals.count(SI)) {
-    // Don't clone a totally simplified switch.
-    if (isa<Constant>(SI->getCondition()))
-      return;
-    Value* I = VMap.lookup(SI);
-    assert(I && "All instructions that are in SrcBB must be in VMap.");
-    UnswitchedVals[cast<SwitchInst>(I)] = UnswitchedVals[SI];
-  }
 }
 
 /// isTrivialLoopExitBlock - Check to see if all paths from BB exit the
@@ -423,25 +378,14 @@ bool LoopUnswitch::IsTrivialUnswitchCondition(Value *Cond, Constant **Val,
     // Check to see if a successor of the switch is guaranteed to go to the
     // latch block or exit through a one exit block without having any 
     // side-effects.  If so, determine the value of Cond that causes it to do
-    // this. 
-    // Note that we can't trivially unswitch on the default case or
-    // on already unswitched cases.
-    for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i) {
-      BasicBlock* LoopExitCandidate;
-      if ((LoopExitCandidate = isTrivialLoopExitBlock(currentLoop, 
+    // this.  Note that we can't trivially unswitch on the default case.
+    for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i)
+      if ((LoopExitBB = isTrivialLoopExitBlock(currentLoop, 
                                                SI->getSuccessor(i)))) {
         // Okay, we found a trivial case, remember the value that is trivial.
-        ConstantInt* CaseVal = SI->getCaseValue(i);
-
-        // Check that it was not unswitched before, since already unswitched
-        // trivial vals are looks trivial too.
-        if (UnswitchedVals[SI].count(CaseVal))
-          continue;
-        LoopExitBB = LoopExitCandidate;
-        if (Val) *Val = CaseVal;
+        if (Val) *Val = SI->getCaseValue(i);
         break;
       }
-    }
   }
 
   // If we didn't find a single unique LoopExit block, or if the loop exit block
@@ -503,14 +447,8 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val) {
   // expansion, and the number of basic blocks, to avoid loops with
   // large numbers of branches which cause loop unswitching to go crazy.
   // This is a very ad-hoc heuristic.
-  
-  unsigned NumUnswitched =
-      (NumSwitches + NumBranches) + 1 /*take in account current iteration*/;
-  
-  unsigned NumInsts = Metrics.NumInsts * NumUnswitched;
-  unsigned NumBlocks = Metrics.NumBlocks * NumUnswitched;
-  
-  if (NumInsts > Threshold || NumBlocks * 5 > Threshold ||
+  if (Metrics.NumInsts > Threshold ||
+      Metrics.NumBlocks * 5 > Threshold ||
       Metrics.containsIndirectBr || Metrics.isRecursive) {
     DEBUG(dbgs() << "NOT unswitching loop %"
           << currentLoop->getHeader()->getName() << ", cost too high: "
@@ -682,12 +620,6 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   ValueToValueMapTy VMap;
   for (unsigned i = 0, e = LoopBlocks.size(); i != e; ++i) {
     BasicBlock *NewBB = CloneBasicBlock(LoopBlocks[i], VMap, ".us", F);
-    
-    // Inherit simplified switches info for NewBB
-    // We needn't pass NewBB since its instructions are already contained
-    // inside the VMap.
-    CloneUnswitchedVals(VMap, LoopBlocks[i]);
-    
     NewBlocks.push_back(NewBB);
     VMap[LoopBlocks[i]] = NewBB;  // Keep the BB mapping.
     LPM->cloneBasicBlockSimpleAnalysis(LoopBlocks[i], NewBB, L);
@@ -1013,9 +945,6 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
     BasicBlock *Switch = SI->getParent();
     BasicBlock *SISucc = SI->getSuccessor(DeadCase);
     BasicBlock *Latch = L->getLoopLatch();
-    
-    UnswitchedVals[SI].insert(Val);
-    
     if (!SI->findCaseDest(SISucc)) continue;  // Edge is critical.
     // If the DeadCase successor dominates the loop latch, then the
     // transformation isn't safe since it will delete the sole predecessor edge
