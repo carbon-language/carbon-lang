@@ -1172,8 +1172,11 @@ Slash:
       Size += EscapedNewLineSize;
       Ptr  += EscapedNewLineSize;
 
-      if (Ptr[0] == '\0')
-        return '\\';
+      // If the char that we finally got was a \n, then we must have had
+      // something like \<newline><newline>.  We don't want to consume the
+      // second newline.
+      if (*Ptr == '\n' || *Ptr == '\r' || *Ptr == '\0')
+        return ' ';
 
       // Use slow version to accumulate a correct size field.
       return getCharAndSizeSlow(Ptr, Size, Tok);
@@ -1226,8 +1229,11 @@ Slash:
       Size += EscapedNewLineSize;
       Ptr  += EscapedNewLineSize;
 
-      if (Ptr[0] == '\0')
-        return '\\';
+      // If the char that we finally got was a \n, then we must have had
+      // something like \<newline><newline>.  We don't want to consume the
+      // second newline.
+      if (*Ptr == '\n' || *Ptr == '\r' || *Ptr == '\0')
+        return ' ';
 
       // Use slow version to accumulate a correct size field.
       return getCharAndSizeSlowNoWarn(Ptr, Size, Features);
@@ -1694,14 +1700,6 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
     if (C != 0 && CurPtr == OldPtr+1) {
       CurPtr = NextLine;
       break;
-    }
-
-    // If the char that we finally got was a \n, then we must have had something
-    // like \<newline><newline>.  We don't want to have consumed the second
-    // newline, we want CurPtr, to end up pointing to it down below.
-    if (C == '\n' || C == '\r') {
-      --CurPtr;
-      C = 'x'; // doesn't matter what this is.
     }
 
     // If we read multiple characters, and one of those characters was a \r or
