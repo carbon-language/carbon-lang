@@ -6201,6 +6201,39 @@ processInstruction(MCInst &Inst,
     }
     return false;
   }
+  case ARM::ANDrsi:
+  case ARM::ORRrsi:
+  case ARM::EORrsi:
+  case ARM::BICrsi:
+  case ARM::SUBrsi:
+  case ARM::ADDrsi: {
+    unsigned newOpc;
+    ARM_AM::ShiftOpc SOpc = ARM_AM::getSORegShOp(Inst.getOperand(3).getImm());
+    if (SOpc == ARM_AM::rrx) return false;
+    switch (Inst.getOpcode()) {
+    default: assert("unexpected opcode!");
+    case ARM::ANDrsi: newOpc = ARM::ANDrr; break;
+    case ARM::ORRrsi: newOpc = ARM::ORRrr; break;
+    case ARM::EORrsi: newOpc = ARM::EORrr; break;
+    case ARM::BICrsi: newOpc = ARM::BICrr; break;
+    case ARM::SUBrsi: newOpc = ARM::SUBrr; break;
+    case ARM::ADDrsi: newOpc = ARM::ADDrr; break;
+    }
+    // If the shift is by zero, use the non-shifted instruction definition.
+    if (ARM_AM::getSORegOffset(Inst.getOperand(3).getImm()) == 0) {
+      MCInst TmpInst;
+      TmpInst.setOpcode(newOpc);
+      TmpInst.addOperand(Inst.getOperand(0));
+      TmpInst.addOperand(Inst.getOperand(1));
+      TmpInst.addOperand(Inst.getOperand(2));
+      TmpInst.addOperand(Inst.getOperand(4));
+      TmpInst.addOperand(Inst.getOperand(5));
+      TmpInst.addOperand(Inst.getOperand(6));
+      Inst = TmpInst;
+      return true;
+    }
+    return false;
+  }
   case ARM::t2IT: {
     // The mask bits for all but the first condition are represented as
     // the low bit of the condition code value implies 't'. We currently
