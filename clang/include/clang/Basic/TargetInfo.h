@@ -64,6 +64,7 @@ class TargetInfo : public llvm::RefCountedBase<TargetInfo> {
 protected:
   // Target values set by the ctor of the actual target implementation.  Default
   // values are specified by the TargetInfo constructor.
+  bool BigEndian;
   bool TLSSupported;
   bool NoAsmVariants;  // True if {|} are normal characters.
   unsigned char PointerWidth, PointerAlign;
@@ -620,6 +621,8 @@ public:
   /// \brief Retrieve the minimum desired version of the platform, to
   /// which the program should be compiled.
   VersionTuple getPlatformMinVersion() const { return PlatformMinVersion; }
+
+  bool isBigEndian() const { return BigEndian; }
 
 protected:
   virtual uint64_t getPointerWidthV(unsigned AddrSpace) const {

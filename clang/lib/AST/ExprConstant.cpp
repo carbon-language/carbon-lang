@@ -913,6 +913,53 @@ static bool HandleIntToFloatCast(EvalInfo &Info, const Expr *E,
   return true;
 }
 
+static bool EvalAndBitcastToAPInt(EvalInfo &Info, const Expr *E,
+                                  llvm::APInt &Res) {
+  CCValue SVal;
+  if (!Evaluate(SVal, Info, E))
+    return false;
+  if (SVal.isInt()) {
+    Res = SVal.getInt();
+    return true;
+  }
+  if (SVal.isFloat()) {
+    Res = SVal.getFloat().bitcastToAPInt();
+    return true;
+  }
+  if (SVal.isVector()) {
+    QualType VecTy = E->getType();
+    unsigned VecSize = Info.Ctx.getTypeSize(VecTy);
+    QualType EltTy = VecTy->castAs<VectorType>()->getElementType();
+    unsigned EltSize = Info.Ctx.getTypeSize(EltTy);
+    bool BigEndian = Info.Ctx.getTargetInfo().isBigEndian();
+    Res = llvm::APInt::getNullValue(VecSize);
+    for (unsigned i = 0; i < SVal.getVectorLength(); i++) {
+      APValue &Elt = SVal.getVectorElt(i);
+      llvm::APInt EltAsInt;
+      if (Elt.isInt()) {
+        EltAsInt = Elt.getInt();
+      } else if (Elt.isFloat()) {
+        EltAsInt = Elt.getFloat().bitcastToAPInt();
+      } else {
+        // Don't try to handle vectors of anything other than int or float
+        // (not sure if it's possible to hit this case).
+        Info.Diag(E->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
+        return false;
+      }
+      unsigned BaseEltSize = EltAsInt.getBitWidth();
+      if (BigEndian)
+        Res |= EltAsInt.zextOrTrunc(VecSize).rotr(i*EltSize+BaseEltSize);
+      else
+        Res |= EltAsInt.zextOrTrunc(VecSize).rotl(i*EltSize);
+    }
+    return true;
+  }
+  // Give up if the input isn't an int, float, or vector.  For example, we
+  // reject "(v4i16)(intptr_t)&a".
+  Info.Diag(E->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
+  return false;
+}
+
 static bool FindMostDerivedObject(EvalInfo &Info, const LValue &LVal,
                                   const CXXRecordDecl *&MostDerivedType,
                                   unsigned &MostDerivedPathLength,
@@ -2975,6 +3022,44 @@ bool VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
 
     // Splat and create vector APValue.
     SmallVector<APValue, 4> Elts(NElts, Val);
+    return Success(Elts, E);
+  }
+  case CK_BitCast: {
+    // Evaluate the operand into an APInt we can extract from.
+    llvm::APInt SValInt;
+    if (!EvalAndBitcastToAPInt(Info, SE, SValInt))
+      return false;
+    // Extract the elements
+    QualType EltTy = VTy->getElementType();
+    unsigned EltSize = Info.Ctx.getTypeSize(EltTy);
+    bool BigEndian = Info.Ctx.getTargetInfo().isBigEndian();
+    SmallVector<APValue, 4> Elts;
+    if (EltTy->isRealFloatingType()) {
+      const llvm::fltSemantics &Sem = Info.Ctx.getFloatTypeSemantics(EltTy);
+      bool isIEESem = &Sem != &APFloat::PPCDoubleDouble;
+      unsigned FloatEltSize = EltSize;
+      if (&Sem == &APFloat::x87DoubleExtended)
+        FloatEltSize = 80;
+      for (unsigned i = 0; i < NElts; i++) {
+        llvm::APInt Elt;
+        if (BigEndian)
+          Elt = SValInt.rotl(i*EltSize+FloatEltSize).trunc(FloatEltSize);
+        else
+          Elt = SValInt.rotr(i*EltSize).trunc(FloatEltSize);
+        Elts.push_back(APValue(APFloat(Elt, isIEESem)));
+      }
+    } else if (EltTy->isIntegerType()) {
+      for (unsigned i = 0; i < NElts; i++) {
+        llvm::APInt Elt;
+        if (BigEndian)
+          Elt = SValInt.rotl(i*EltSize+EltSize).zextOrTrunc(EltSize);
+        else
+          Elt = SValInt.rotr(i*EltSize).zextOrTrunc(EltSize);
+        Elts.push_back(APValue(APSInt(Elt, EltTy->isSignedIntegerType())));
+      }
+    } else {
+      return Error(E);
+    }
     return Success(Elts, E);
   }
   default:
