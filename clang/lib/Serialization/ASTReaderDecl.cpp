@@ -14,6 +14,8 @@
 
 #include "ASTCommon.h"
 #include "clang/Serialization/ASTReader.h"
+#include "clang/Sema/IdentifierResolver.h"
+#include "clang/Sema/Sema.h"
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -104,6 +106,82 @@ namespace clang {
     void InitializeCXXDefinitionData(CXXRecordDecl *D,
                                      CXXRecordDecl *DefinitionDecl,
                                      const RecordData &Record, unsigned &Idx);
+    
+    /// \brief RAII class used to capture the first ID within a redeclaration
+    /// chain and to introduce it into the list of pending redeclaration chains
+    /// on destruction.
+    ///
+    /// The caller can choose not to introduce this ID into the redeclaration
+    /// chain by calling \c suppress().
+    class RedeclarableResult {
+      ASTReader &Reader;
+      GlobalDeclID FirstID;
+      mutable bool Owning;
+      
+      RedeclarableResult &operator=(RedeclarableResult&); // DO NOT IMPLEMENT
+      
+    public:
+      RedeclarableResult(ASTReader &Reader, GlobalDeclID FirstID)
+        : Reader(Reader), FirstID(FirstID), Owning(true) { }
+
+      RedeclarableResult(const RedeclarableResult &Other)
+        : Reader(Other.Reader), FirstID(Other.FirstID), Owning(Other.Owning) 
+      { 
+        Other.Owning = false;
+      }
+
+      ~RedeclarableResult() {
+        if (FirstID && Owning && Reader.PendingDeclChainsKnown.insert(FirstID))
+          Reader.PendingDeclChains.push_back(FirstID);
+      }
+      
+      /// \brief Retrieve the first ID.
+      GlobalDeclID getFirstID() const { return FirstID; }
+      
+      /// \brief Do not introduce this declaration ID into the set of pending
+      /// declaration chains.
+      void suppress() {
+        Owning = false;
+      }
+    };
+    
+    /// \brief Class used to capture the result of searching for an existing
+    /// declaration of a specific kind and name, along with the ability
+    /// to update the place where this result was found (the declaration
+    /// chain hanging off an identifier or the DeclContext we searched in)
+    /// if requested.
+    class FindExistingResult {
+      ASTReader &Reader;
+      NamedDecl *New;
+      NamedDecl *Existing;
+      mutable bool AddResult;
+      
+      FindExistingResult &operator=(FindExistingResult&); // DO NOT IMPLEMENT
+      
+    public:
+      FindExistingResult(ASTReader &Reader)
+        : Reader(Reader), New(0), Existing(0), AddResult(false) { }
+      
+      FindExistingResult(ASTReader &Reader, NamedDecl *New, NamedDecl *Existing)
+        : Reader(Reader), New(New), Existing(Existing), AddResult(true) { }
+      
+      FindExistingResult(const FindExistingResult &Other)
+        : Reader(Other.Reader), New(Other.New), Existing(Other.Existing), 
+          AddResult(Other.AddResult)
+      {
+        Other.AddResult = false;
+      }
+      
+      ~FindExistingResult();
+      
+      operator NamedDecl*() const { return Existing; }
+      
+      template<typename T>
+      operator T*() const { return dyn_cast_or_null<T>(Existing); }
+    };
+    
+    FindExistingResult findExisting(NamedDecl *D);
+    
   public:
     ASTDeclReader(ASTReader &Reader, ModuleFile &F,
                   llvm::BitstreamCursor &Cursor, DeclID thisDeclID,
@@ -182,7 +260,9 @@ namespace clang {
     void VisitBlockDecl(BlockDecl *BD);
 
     std::pair<uint64_t, uint64_t> VisitDeclContext(DeclContext *DC);
-    template <typename T> void VisitRedeclarable(Redeclarable<T> *D);
+    
+    template <typename T> 
+    RedeclarableResult VisitRedeclarable(Redeclarable<T> *D);
 
     // FIXME: Reorder according to DeclNodes.td?
     void VisitObjCMethodDecl(ObjCMethodDecl *D);
@@ -563,9 +643,30 @@ void ASTDeclReader::VisitObjCContainerDecl(ObjCContainerDecl *CD) {
 }
 
 void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
-  VisitRedeclarable(ID);
+  RedeclarableResult Redecl = VisitRedeclarable(ID);
   VisitObjCContainerDecl(ID);
   TypeIDForTypeDecl = Reader.getGlobalTypeID(F, Record[Idx++]);
+  
+  // Determine whether we need to merge this declaration with another @interface
+  // with the same name.
+  // FIXME: Not needed unless the module file graph is a DAG.
+  if (FindExistingResult ExistingRes = findExisting(ID)) {
+    if (ObjCInterfaceDecl *Existing = ExistingRes) {
+      ObjCInterfaceDecl *ExistingCanon = Existing->getCanonicalDecl();
+      ObjCInterfaceDecl *IDCanon = ID->getCanonicalDecl();
+      if (ExistingCanon != IDCanon) {
+        // Have our redeclaration link point back at the canonical declaration
+        // of the existing declaration, so that this declaration has the 
+        // appropriate canonical declaration.
+        ID->RedeclLink = ObjCInterfaceDecl::PreviousDeclLink(ExistingCanon);
+        
+        // If this declaration was the canonical declaration, make a note of 
+        // that.
+        if (IDCanon == ID)
+          Reader.MergedDecls[ExistingCanon].push_back(Redecl.getFirstID());
+      }
+    }
+  }
   
   ObjCInterfaceDecl *Def = ReadDeclAs<ObjCInterfaceDecl>(Record, Idx);
   if (ID == Def) {
@@ -1143,9 +1244,9 @@ void ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
       Common->Latest = D;
       D->CommonOrPrev = Common;
     }
-    
+
     if (RedeclarableTemplateDecl *RTD
-        = ReadDeclAs<RedeclarableTemplateDecl>(Record, Idx)) {
+          = ReadDeclAs<RedeclarableTemplateDecl>(Record, Idx)) {
       assert(RTD->getKind() == D->getKind() &&
              "InstantiatedFromMemberTemplate kind mismatch");
       D->setInstantiatedFromMemberTemplateImpl(RTD);
@@ -1380,7 +1481,8 @@ ASTDeclReader::VisitDeclContext(DeclContext *DC) {
 }
 
 template <typename T>
-void ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
+ASTDeclReader::RedeclarableResult 
+ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
   enum RedeclKind { FirstDeclaration = 0, FirstInFile, PointsToPrevious };
   RedeclKind Kind = (RedeclKind)Record[Idx++];
   
@@ -1415,9 +1517,9 @@ void ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
   }
   }
 
-  // Note that we need to load the other declaration chains for this ID.
-  if (Reader.PendingDeclChainsKnown.insert(FirstDeclID))
-    Reader.PendingDeclChains.push_back(FirstDeclID);
+  // The result structure takes care of note that we need to load the 
+  // other declaration chains for this ID.
+  return RedeclarableResult(Reader, FirstDeclID);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1507,6 +1609,62 @@ ASTReader::RecordLocation ASTReader::getLocalBitOffset(uint64_t GlobalOffset) {
 
 uint64_t ASTReader::getGlobalBitOffset(ModuleFile &M, uint32_t LocalOffset) {
   return LocalOffset + M.GlobalBitOffset;
+}
+
+/// \brief Determine whether the two declarations refer to the same entity.
+static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
+  assert(X->getDeclName() == Y->getDeclName() && "Declaration name mismatch!");
+  
+  if (X == Y)
+    return true;
+  
+  // Must have the same kind.
+  if (X->getKind() != Y->getKind())
+    return false;
+  
+  // Must be in the same context.
+  if (!X->getDeclContext()->getRedeclContext()->Equals(
+         Y->getDeclContext()->getRedeclContext()))
+    return false;
+  
+  // Objective-C classes with the same name always match.
+  if (isa<ObjCInterfaceDecl>(X))
+    return true;
+  
+  // FIXME: Many other cases to implement.
+  return false;
+}
+
+ASTDeclReader::FindExistingResult::~FindExistingResult() {
+  if (!AddResult)
+    return;
+  
+  DeclContext *DC = New->getDeclContext()->getRedeclContext();
+  if (DC->isTranslationUnit() && Reader.SemaObj) {
+    if (!Existing) {
+      Reader.SemaObj->IdResolver.tryAddTopLevelDecl(New, New->getDeclName());
+    }
+  }
+}
+
+ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
+  DeclContext *DC = D->getDeclContext()->getRedeclContext();
+  if (!DC->isFileContext())
+    return FindExistingResult(Reader);
+  
+  if (DC->isTranslationUnit() && Reader.SemaObj) {
+    IdentifierResolver &IdResolver = Reader.SemaObj->IdResolver;
+    for (IdentifierResolver::iterator I = IdResolver.begin(D->getDeclName()), 
+                                   IEnd = IdResolver.end();
+         I != IEnd; ++I) {
+      if (isSameEntity(*I, D))
+        return FindExistingResult(Reader, D, *I);
+    }
+  }
+
+  // FIXME: Search in the DeclContext.
+  
+  return FindExistingResult(Reader, D, /*Existing=*/0);
 }
 
 void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *previous) {
@@ -1902,14 +2060,18 @@ namespace {
     }
   };
   
+  /// \brief Module visitor class that finds all of the redeclarations of a 
+  /// 
   class RedeclChainVisitor {
     ASTReader &Reader;
-    DeclID GlobalFirstID;
+    SmallVectorImpl<DeclID> &SearchDecls;
+    GlobalDeclID CanonID;
     llvm::SmallVector<std::pair<Decl *, Decl *>, 4> Chains;
     
   public:
-    RedeclChainVisitor(ASTReader &Reader, DeclID GlobalFirstID)
-      : Reader(Reader), GlobalFirstID(GlobalFirstID) { }
+    RedeclChainVisitor(ASTReader &Reader, SmallVectorImpl<DeclID> &SearchDecls,
+                       GlobalDeclID CanonID)
+      : Reader(Reader), SearchDecls(SearchDecls), CanonID(CanonID) { }
     
     static bool visit(ModuleFile &M, bool Preorder, void *UserData) {
       if (Preorder)
@@ -1918,31 +2080,49 @@ namespace {
       return static_cast<RedeclChainVisitor *>(UserData)->visit(M);
     }
     
-    bool visit(ModuleFile &M) {
+    void searchForID(ModuleFile &M, GlobalDeclID GlobalID) {
       // Map global ID of the first declaration down to the local ID
       // used in this module file.
-      DeclID FirstID = Reader.mapGlobalIDToModuleFileGlobalID(M, GlobalFirstID);
-      if (!FirstID)
-        return false;
+      DeclID ID = Reader.mapGlobalIDToModuleFileGlobalID(M, GlobalID);
+      if (!ID)
+        return;
       
       // Perform a binary search to find the local redeclarations for this
       // declaration (if any).
       const LocalRedeclarationsInfo *Result
         = std::lower_bound(M.RedeclarationsInfo,
                            M.RedeclarationsInfo + M.LocalNumRedeclarationsInfos, 
-                           FirstID, CompareLocalRedeclarationsInfoToID());
+                           ID, CompareLocalRedeclarationsInfoToID());
       if (Result == M.RedeclarationsInfo + M.LocalNumRedeclarationsInfos ||
-          Result->FirstID != FirstID)
-        return false;
-
+          Result->FirstID != ID) {
+        // If we have a previously-canonical singleton declaration that was 
+        // merged into another redeclaration chain, create a trivial chain
+        // for this single declaration so that it will get wired into the 
+        // complete redeclaration chain.
+        if (GlobalID != CanonID && 
+            GlobalID - NUM_PREDEF_DECL_IDS >= M.BaseDeclID && 
+            GlobalID - NUM_PREDEF_DECL_IDS < M.BaseDeclID + M.LocalNumDecls) {
+          if (Decl *D = Reader.GetDecl(GlobalID))
+            Chains.push_back(std::make_pair(D, D));
+        }
+        
+        return;
+      }
+      
       // Dig out the starting/ending declarations.
       Decl *FirstLocalDecl = Reader.GetLocalDecl(M, Result->FirstLocalID);
       Decl *LastLocalDecl = Reader.GetLocalDecl(M, Result->LastLocalID);
       if (!FirstLocalDecl || !LastLocalDecl)
-        return false;
+        return;
       
       // Append this redeclaration chain to the list.
       Chains.push_back(std::make_pair(FirstLocalDecl, LastLocalDecl));
+    }
+    
+    bool visit(ModuleFile &M) {
+      // Visit each of the declarations.
+      for (unsigned I = 0, N = SearchDecls.size(); I != N; ++I)
+        searchForID(M, SearchDecls[I]);
       return false;
     }
     
@@ -1989,30 +2169,44 @@ static Decl *getMostRecentDecl(Decl *D) {
 }
 
 void ASTReader::loadPendingDeclChain(serialization::GlobalDeclID ID) {
+  Decl *D = GetDecl(ID);  
+  Decl *CanonDecl = D->getCanonicalDecl();
+    
+  // Determine the set of declaration IDs we'll be searching for.
+  llvm::SmallVector<DeclID, 1> SearchDecls;
+  GlobalDeclID CanonID = 0;
+  if (D == CanonDecl) {
+    SearchDecls.push_back(ID); // Always first.
+    CanonID = ID;
+  }
+  MergedDeclsMap::iterator MergedPos = MergedDecls.find(CanonDecl);
+  if (MergedPos != MergedDecls.end())
+    SearchDecls.append(MergedPos->second.begin(), MergedPos->second.end());  
+  
   // Build up the list of redeclaration chains.
-  RedeclChainVisitor Visitor(*this, ID);
+  RedeclChainVisitor Visitor(*this, SearchDecls, CanonID);
   ModuleMgr.visitDepthFirst(&RedeclChainVisitor::visit, &Visitor);
   
   // Retrieve the chains.
   ArrayRef<std::pair<Decl *, Decl *> > Chains = Visitor.getChains();
   if (Chains.empty())
     return;
-  
-  // FIXME: Splice local (not from AST file) declarations into the list,
-  // rather than always re-ordering them.
-  Decl *CanonDecl = GetDecl(ID);  
-  
+    
+    
   // Capture all of the parsed declarations and put them at the end.
   Decl *MostRecent = getMostRecentDecl(CanonDecl);
   Decl *FirstParsed = MostRecent;
   if (CanonDecl != MostRecent && !MostRecent->isFromASTFile()) {
     Decl *Current = MostRecent;
     while (Decl *Prev = getPreviousDecl(Current)) {
+      if (Prev == CanonDecl)
+        break;
+      
       if (Prev->isFromASTFile()) {
         Current = Prev;
         continue;
       }
-      
+            
       // Chain all of the parsed declarations together.
       ASTDeclReader::attachPreviousDecl(FirstParsed, Prev);
       FirstParsed = Prev;
@@ -2021,9 +2215,11 @@ void ASTReader::loadPendingDeclChain(serialization::GlobalDeclID ID) {
     
     Visitor.addParsed(FirstParsed, MostRecent);
   }
-  
+
   // Hook up the separate chains.
   Chains = Visitor.getChains();
+  if (Chains[0].first != CanonDecl)
+    ASTDeclReader::attachPreviousDecl(Chains[0].first, CanonDecl);
   for (unsigned I = 1, N = Chains.size(); I != N; ++I)
     ASTDeclReader::attachPreviousDecl(Chains[I].first, Chains[I-1].second);    
   ASTDeclReader::attachLatestDecl(CanonDecl, Chains.back().second);

@@ -6083,7 +6083,7 @@ void ASTReader::finishPendingActions() {
       loadPendingDeclChain(PendingDeclChains[I]);
     }
     PendingDeclChains.clear();
-
+    
     for (std::vector<std::pair<ObjCInterfaceDecl *,
                                serialization::DeclID> >::iterator
            I = PendingChainedObjCCategories.begin(),

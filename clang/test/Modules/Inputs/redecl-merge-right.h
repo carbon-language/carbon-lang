@@ -9,6 +9,15 @@ __import_module__ redecl_merge_top;
 
 @class B;
 
+// Test declarations in different modules with no common initial
+// declaration.
+@class C;
+C *get_a_C(void);
+@class C2;
+C2 *get_a_C2(void);
+@class C3;
+C3 *get_a_C3(void);
+
 @class Explicit;
 
 int *explicit_func(void);

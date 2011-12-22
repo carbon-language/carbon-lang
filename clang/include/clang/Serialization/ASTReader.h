@@ -34,6 +34,8 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/DenseSet.h"
@@ -673,6 +675,14 @@ private:
   /// \brief Keeps track of the elements added to PendingDeclChains.
   llvm::SmallSet<serialization::DeclID, 16> PendingDeclChainsKnown;
 
+  typedef llvm::DenseMap<Decl *, llvm::SmallVector<serialization::DeclID, 2> >
+    MergedDeclsMap;
+    
+  /// \brief A mapping from canonical declarations to the set of additional
+  /// (global, previously-canonical) declaration IDs that have been merged with
+  /// that canonical declaration.
+  MergedDeclsMap MergedDecls;
+  
   /// \brief We delay loading the chain of objc categories after recursive
   /// loading of declarations is finished.
   std::vector<std::pair<ObjCInterfaceDecl *, serialization::DeclID> >
