@@ -825,18 +825,19 @@ public:
   void AddConversionSequenceStep(const ImplicitConversionSequence &ICS,
                                  QualType T);
 
-  /// \brief Add a list-initialiation step.
+  /// \brief Add a list-initialization step.
   void AddListInitializationStep(QualType T);
 
   /// \brief Add a constructor-initialization step.
   void AddConstructorInitializationStep(CXXConstructorDecl *Constructor,
                                         AccessSpecifier Access,
                                         QualType T,
-                                        bool HadMultipleCandidates);
+                                        bool HadMultipleCandidates,
+                                        bool FromInitList);
 
   /// \brief Add a zero-initialization step.
   void AddZeroInitializationStep(QualType T);
-  
+
   /// \brief Add a C assignment step.
   //
   // FIXME: It isn't clear whether this should ever be needed;

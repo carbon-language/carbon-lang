@@ -1,33 +1,33 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s 
 
-// Verify that we can't initialize non-aggregates with an initializer
-// list.
+// Verify that using an initializer list for a non-aggregate looks for
+// constructors..
 // Note that due to a (likely) standard bug, this is technically an aggregate,
 // but we do not treat it as one.
-struct NonAggr1 {
-  NonAggr1(int) { }
+struct NonAggr1 { // expected-note 2 {{candidate constructor}}
+  NonAggr1(int, int) { } // expected-note {{candidate constructor}}
 
   int m;
 };
 
 struct Base { };
-struct NonAggr2 : public Base {
+struct NonAggr2 : public Base { // expected-note 3 {{candidate constructor}}
   int m;
 };
 
-class NonAggr3 {
+class NonAggr3 { // expected-note 3 {{candidate constructor}}
   int m;
 };
 
-struct NonAggr4 {
+struct NonAggr4 { // expected-note 3 {{candidate constructor}}
   int m;
   virtual void f();
 };
 
-NonAggr1 na1 = { 17 }; // expected-error{{non-aggregate type 'NonAggr1' cannot be initialized with an initializer list}}
-NonAggr2 na2 = { 17 }; // expected-error{{non-aggregate type 'NonAggr2' cannot be initialized with an initializer list}}
-NonAggr3 na3 = { 17 }; // expected-error{{non-aggregate type 'NonAggr3' cannot be initialized with an initializer list}}
-NonAggr4 na4 = { 17 }; // expected-error{{non-aggregate type 'NonAggr4' cannot be initialized with an initializer list}}
+NonAggr1 na1 = { 17 }; // expected-error{{no matching constructor for initialization of 'NonAggr1'}}
+NonAggr2 na2 = { 17 }; // expected-error{{no matching constructor for initialization of 'NonAggr2'}}
+NonAggr3 na3 = { 17 }; // expected-error{{no matching constructor for initialization of 'NonAggr3'}}
+NonAggr4 na4 = { 17 }; // expected-error{{no matching constructor for initialization of 'NonAggr4'}}
 
 // PR5817
 typedef int type[][2];

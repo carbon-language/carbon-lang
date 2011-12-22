@@ -2701,9 +2701,10 @@ InitializationSequence
 ::AddConstructorInitializationStep(CXXConstructorDecl *Constructor,
                                    AccessSpecifier Access,
                                    QualType T,
-                                   bool HadMultipleCandidates) {
+                                   bool HadMultipleCandidates,
+                                   bool FromInitList) {
   Step S;
-  S.Kind = SK_ConstructorInitialization;
+  S.Kind = FromInitList ? SK_ListConstructorCall : SK_ConstructorInitialization;
   S.Type = T;
   S.Function.HadMultipleCandidates = HadMultipleCandidates;
   S.Function.Function = Constructor;
@@ -2813,6 +2814,178 @@ static void MaybeProduceObjCObject(Sema &S,
 
     Sequence.AddProduceObjCObjectStep(Entity.getType());
   }
+}
+
+/// \brief When initializing from init list via constructor, deal with the
+/// empty init list and std::initializer_list special cases.
+///
+/// \return True if this was a special case, false otherwise.
+static bool TryListConstructionSpecialCases(Sema &S,
+                                            Expr **Args, unsigned NumArgs,
+                                            CXXRecordDecl *DestRecordDecl,
+                                            QualType DestType,
+                                            InitializationSequence &Sequence) {
+  // C++0x [dcl.init.list]p3:
+  //   List-initialization of an object of type T is defined as follows:
+  //   - If the initializer list has no elements and T is a class type with
+  //     a default constructor, the object is value-initialized.
+  if (NumArgs == 0) {
+    if (CXXConstructorDecl *DefaultConstructor =
+            S.LookupDefaultConstructor(DestRecordDecl)) {
+      if (DefaultConstructor->isDeleted() ||
+          S.isFunctionConsideredUnavailable(DefaultConstructor)) {
+        // Fake an overload resolution failure.
+        OverloadCandidateSet &CandidateSet = Sequence.getFailedCandidateSet();
+        DeclAccessPair FoundDecl = DeclAccessPair::make(DefaultConstructor,
+                                              DefaultConstructor->getAccess());
+        if (FunctionTemplateDecl *ConstructorTmpl =
+                dyn_cast<FunctionTemplateDecl>(DefaultConstructor))
+          S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
+                                         /*ExplicitArgs*/ 0,
+                                         Args, NumArgs, CandidateSet,
+                                         /*SuppressUserConversions*/ false);
+        else
+          S.AddOverloadCandidate(DefaultConstructor, FoundDecl,
+                                 Args, NumArgs, CandidateSet,
+                                 /*SuppressUserConversions*/ false);
+        Sequence.SetOverloadFailure(
+                          InitializationSequence::FK_ConstructorOverloadFailed,
+                          OR_Deleted);
+      } else
+        Sequence.AddConstructorInitializationStep(DefaultConstructor,
+                                                DefaultConstructor->getAccess(),
+                                                  DestType,
+                                                  /*MultipleCandidates=*/false,
+                                                  /*FromInitList=*/true);
+      return true;
+    }
+  }
+
+  //   - Otherwise, if T is a specialization of std::initializer_list, [...]
+  // FIXME: Implement.
+
+  // Not a special case.
+  return false;
+}
+
+/// \brief Attempt initialization by constructor (C++ [dcl.init]), which
+/// enumerates the constructors of the initialized entity and performs overload
+/// resolution to select the best.
+/// If FromInitList is true, this is list-initialization of a non-aggregate
+/// class type.
+static void TryConstructorInitialization(Sema &S,
+                                         const InitializedEntity &Entity,
+                                         const InitializationKind &Kind,
+                                         Expr **Args, unsigned NumArgs,
+                                         QualType DestType,
+                                         InitializationSequence &Sequence,
+                                         bool FromInitList = false) {
+  // Check constructor arguments for self reference.
+  if (DeclaratorDecl *DD = Entity.getDecl())
+    // Parameters arguments are occassionially constructed with itself,
+    // for instance, in recursive functions.  Skip them.
+    if (!isa<ParmVarDecl>(DD))
+      for (unsigned i = 0; i < NumArgs; ++i)
+        S.CheckSelfReference(DD, Args[i]);
+
+  // Build the candidate set directly in the initialization sequence
+  // structure, so that it will persist if we fail.
+  OverloadCandidateSet &CandidateSet = Sequence.getFailedCandidateSet();
+  CandidateSet.clear();
+
+  // Determine whether we are allowed to call explicit constructors or
+  // explicit conversion operators.
+  bool AllowExplicit = (Kind.getKind() == InitializationKind::IK_Direct ||
+                        Kind.getKind() == InitializationKind::IK_Value ||
+                        Kind.getKind() == InitializationKind::IK_Default);
+
+  // The type we're constructing needs to be complete.
+  if (S.RequireCompleteType(Kind.getLocation(), DestType, 0)) {
+    Sequence.SetFailed(InitializationSequence::FK_Incomplete);
+  }
+
+  const RecordType *DestRecordType = DestType->getAs<RecordType>();
+  assert(DestRecordType && "Constructor initialization requires record type");
+  CXXRecordDecl *DestRecordDecl
+    = cast<CXXRecordDecl>(DestRecordType->getDecl());
+
+  if (FromInitList &&
+      TryListConstructionSpecialCases(S, Args, NumArgs, DestRecordDecl,
+                                      DestType, Sequence))
+    return;
+
+  //   - Otherwise, if T is a class type, constructors are considered. The
+  //     applicable constructors are enumerated, and the best one is chosen
+  //     through overload resolution.
+  DeclContext::lookup_iterator Con, ConEnd;
+  for (llvm::tie(Con, ConEnd) = S.LookupConstructors(DestRecordDecl);
+       Con != ConEnd; ++Con) {
+    NamedDecl *D = *Con;
+    DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
+    bool SuppressUserConversions = false;
+
+    // Find the constructor (which may be a template).
+    CXXConstructorDecl *Constructor = 0;
+    FunctionTemplateDecl *ConstructorTmpl = dyn_cast<FunctionTemplateDecl>(D);
+    if (ConstructorTmpl)
+      Constructor = cast<CXXConstructorDecl>(
+                                           ConstructorTmpl->getTemplatedDecl());
+    else {
+      Constructor = cast<CXXConstructorDecl>(D);
+
+      // If we're performing copy initialization using a copy constructor, we
+      // suppress user-defined conversions on the arguments.
+      // FIXME: Move constructors?
+      if (Kind.getKind() == InitializationKind::IK_Copy &&
+          Constructor->isCopyConstructor())
+        SuppressUserConversions = true;
+    }
+
+    if (!Constructor->isInvalidDecl() &&
+        (AllowExplicit || !Constructor->isExplicit())) {
+      if (ConstructorTmpl)
+        S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
+                                       /*ExplicitArgs*/ 0,
+                                       Args, NumArgs, CandidateSet,
+                                       SuppressUserConversions);
+      else
+        S.AddOverloadCandidate(Constructor, FoundDecl,
+                               Args, NumArgs, CandidateSet,
+                               SuppressUserConversions);
+    }
+  }
+
+  SourceLocation DeclLoc = Kind.getLocation();
+
+  // Perform overload resolution. If it fails, return the failed result.
+  OverloadCandidateSet::iterator Best;
+  if (OverloadingResult Result
+        = CandidateSet.BestViableFunction(S, DeclLoc, Best)) {
+    Sequence.SetOverloadFailure(
+                          InitializationSequence::FK_ConstructorOverloadFailed,
+                                Result);
+    return;
+  }
+
+  // C++0x [dcl.init]p6:
+  //   If a program calls for the default initialization of an object
+  //   of a const-qualified type T, T shall be a class type with a
+  //   user-provided default constructor.
+  if (Kind.getKind() == InitializationKind::IK_Default &&
+      Entity.getType().isConstQualified() &&
+      cast<CXXConstructorDecl>(Best->Function)->isImplicit()) {
+    Sequence.SetFailed(InitializationSequence::FK_DefaultInitOfConst);
+    return;
+  }
+
+  // Add the constructor initialization step. Any cv-qualification conversion is
+  // subsumed by the initialization.
+  bool HadMultipleCandidates = (CandidateSet.size() > 1);
+  CXXConstructorDecl *CtorDecl = cast<CXXConstructorDecl>(Best->Function);
+  Sequence.AddConstructorInitializationStep(CtorDecl,
+                                            Best->FoundDecl.getAccess(),
+                                            DestType, HadMultipleCandidates,
+                                            FromInitList);
 }
 
 static bool
@@ -2942,9 +3115,13 @@ static void TryListInitialization(Sema &S,
     TryReferenceListInitialization(S, Entity, Kind, InitList, Sequence);
     return;
   }
-  // FIXME: C++11 defines behavior for this case.
   if (DestType->isRecordType() && !DestType->isAggregateType()) {
-    Sequence.SetFailed(InitializationSequence::FK_InitListBadDestinationType);
+    if (S.getLangOptions().CPlusPlus0x)
+      TryConstructorInitialization(S, Entity, Kind, InitList->getInits(),
+                                   InitList->getNumInits(), DestType, Sequence,
+                                   /*FromInitList=*/true);
+    else
+      Sequence.SetFailed(InitializationSequence::FK_InitListBadDestinationType);
     return;
   }
 
@@ -3418,117 +3595,6 @@ static void TryStringLiteralInitialization(Sema &S,
                                            Expr *Initializer,
                                        InitializationSequence &Sequence) {
   Sequence.AddStringInitStep(Entity.getType());
-}
-
-/// \brief Attempt initialization by constructor (C++ [dcl.init]), which
-/// enumerates the constructors of the initialized entity and performs overload
-/// resolution to select the best.
-static void TryConstructorInitialization(Sema &S,
-                                         const InitializedEntity &Entity,
-                                         const InitializationKind &Kind,
-                                         Expr **Args, unsigned NumArgs,
-                                         QualType DestType,
-                                         InitializationSequence &Sequence) {
-  // Check constructor arguments for self reference.
-  if (DeclaratorDecl *DD = Entity.getDecl())
-    // Parameters arguments are occassionially constructed with itself,
-    // for instance, in recursive functions.  Skip them.
-    if (!isa<ParmVarDecl>(DD))
-      for (unsigned i = 0; i < NumArgs; ++i)
-        S.CheckSelfReference(DD, Args[i]);
-
-  // Build the candidate set directly in the initialization sequence
-  // structure, so that it will persist if we fail.
-  OverloadCandidateSet &CandidateSet = Sequence.getFailedCandidateSet();
-  CandidateSet.clear();
-
-  // Determine whether we are allowed to call explicit constructors or
-  // explicit conversion operators.
-  bool AllowExplicit = (Kind.getKind() == InitializationKind::IK_Direct ||
-                        Kind.getKind() == InitializationKind::IK_Value ||
-                        Kind.getKind() == InitializationKind::IK_Default);
-
-  // The type we're constructing needs to be complete.
-  if (S.RequireCompleteType(Kind.getLocation(), DestType, 0)) {
-    Sequence.SetFailed(InitializationSequence::FK_Incomplete);
-    return;
-  }
-
-  // The type we're converting to is a class type. Enumerate its constructors
-  // to see if one is suitable.
-  const RecordType *DestRecordType = DestType->getAs<RecordType>();
-  assert(DestRecordType && "Constructor initialization requires record type");
-  CXXRecordDecl *DestRecordDecl
-    = cast<CXXRecordDecl>(DestRecordType->getDecl());
-
-  DeclContext::lookup_iterator Con, ConEnd;
-  for (llvm::tie(Con, ConEnd) = S.LookupConstructors(DestRecordDecl);
-       Con != ConEnd; ++Con) {
-    NamedDecl *D = *Con;
-    DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
-    bool SuppressUserConversions = false;
-
-    // Find the constructor (which may be a template).
-    CXXConstructorDecl *Constructor = 0;
-    FunctionTemplateDecl *ConstructorTmpl = dyn_cast<FunctionTemplateDecl>(D);
-    if (ConstructorTmpl)
-      Constructor = cast<CXXConstructorDecl>(
-                                           ConstructorTmpl->getTemplatedDecl());
-    else {
-      Constructor = cast<CXXConstructorDecl>(D);
-
-      // If we're performing copy initialization using a copy constructor, we
-      // suppress user-defined conversions on the arguments.
-      // FIXME: Move constructors?
-      if (Kind.getKind() == InitializationKind::IK_Copy &&
-          Constructor->isCopyConstructor())
-        SuppressUserConversions = true;
-    }
-
-    if (!Constructor->isInvalidDecl() &&
-        (AllowExplicit || !Constructor->isExplicit())) {
-      if (ConstructorTmpl)
-        S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
-                                       /*ExplicitArgs*/ 0,
-                                       Args, NumArgs, CandidateSet,
-                                       SuppressUserConversions);
-      else
-        S.AddOverloadCandidate(Constructor, FoundDecl,
-                               Args, NumArgs, CandidateSet,
-                               SuppressUserConversions);
-    }
-  }
-
-  SourceLocation DeclLoc = Kind.getLocation();
-
-  // Perform overload resolution. If it fails, return the failed result.
-  OverloadCandidateSet::iterator Best;
-  if (OverloadingResult Result
-        = CandidateSet.BestViableFunction(S, DeclLoc, Best)) {
-    Sequence.SetOverloadFailure(
-                          InitializationSequence::FK_ConstructorOverloadFailed,
-                                Result);
-    return;
-  }
-
-  // C++0x [dcl.init]p6:
-  //   If a program calls for the default initialization of an object
-  //   of a const-qualified type T, T shall be a class type with a
-  //   user-provided default constructor.
-  if (Kind.getKind() == InitializationKind::IK_Default &&
-      Entity.getType().isConstQualified() &&
-      cast<CXXConstructorDecl>(Best->Function)->isImplicit()) {
-    Sequence.SetFailed(InitializationSequence::FK_DefaultInitOfConst);
-    return;
-  }
-
-  // Add the constructor initialization step. Any cv-qualification conversion is
-  // subsumed by the initialization.
-  bool HadMultipleCandidates = (CandidateSet.size() > 1);
-  CXXConstructorDecl *CtorDecl = cast<CXXConstructorDecl>(Best->Function);
-  Sequence.AddConstructorInitializationStep(CtorDecl,
-                                            Best->FoundDecl.getAccess(),
-                                            DestType, HadMultipleCandidates);
 }
 
 /// \brief Attempt value initialization (C++ [dcl.init]p7).
@@ -4526,6 +4592,117 @@ static bool isReferenceBinding(const InitializationSequence::Step &s) {
          s.Kind == InitializationSequence::SK_BindReferenceToTemporary;
 }
 
+static ExprResult
+PerformConstructorInitialization(Sema &S,
+                                 const InitializedEntity &Entity,
+                                 const InitializationKind &Kind,
+                                 MultiExprArg Args,
+                                 const InitializationSequence::Step& Step,
+                                 bool &ConstructorInitRequiresZeroInit) {
+  unsigned NumArgs = Args.size();
+  CXXConstructorDecl *Constructor
+    = cast<CXXConstructorDecl>(Step.Function.Function);
+  bool HadMultipleCandidates = Step.Function.HadMultipleCandidates;
+
+  // Build a call to the selected constructor.
+  ASTOwningVector<Expr*> ConstructorArgs(S);
+  SourceLocation Loc = (Kind.isCopyInit() && Kind.getEqualLoc().isValid())
+                         ? Kind.getEqualLoc()
+                         : Kind.getLocation();
+
+  if (Kind.getKind() == InitializationKind::IK_Default) {
+    // Force even a trivial, implicit default constructor to be
+    // semantically checked. We do this explicitly because we don't build
+    // the definition for completely trivial constructors.
+    CXXRecordDecl *ClassDecl = Constructor->getParent();
+    assert(ClassDecl && "No parent class for constructor.");
+    if (Constructor->isDefaulted() && Constructor->isDefaultConstructor() &&
+        ClassDecl->hasTrivialDefaultConstructor() &&
+        !Constructor->isUsed(false))
+      S.DefineImplicitDefaultConstructor(Loc, Constructor);
+  }
+
+  ExprResult CurInit = S.Owned((Expr *)0);
+
+  // Determine the arguments required to actually perform the constructor
+  // call.
+  if (S.CompleteConstructorCall(Constructor, move(Args),
+                                Loc, ConstructorArgs))
+    return ExprError();
+
+
+  if (Entity.getKind() == InitializedEntity::EK_Temporary &&
+      NumArgs != 1 && // FIXME: Hack to work around cast weirdness
+      (Kind.getKind() == InitializationKind::IK_Direct ||
+       Kind.getKind() == InitializationKind::IK_Value)) {
+    // An explicitly-constructed temporary, e.g., X(1, 2).
+    unsigned NumExprs = ConstructorArgs.size();
+    Expr **Exprs = (Expr **)ConstructorArgs.take();
+    S.MarkDeclarationReferenced(Loc, Constructor);
+    S.DiagnoseUseOfDecl(Constructor, Loc);
+
+    TypeSourceInfo *TSInfo = Entity.getTypeSourceInfo();
+    if (!TSInfo)
+      TSInfo = S.Context.getTrivialTypeSourceInfo(Entity.getType(), Loc);
+
+    CurInit = S.Owned(new (S.Context) CXXTemporaryObjectExpr(S.Context,
+                                                             Constructor,
+                                                             TSInfo,
+                                                             Exprs,
+                                                             NumExprs,
+                                                     Kind.getParenRange(),
+                                                     HadMultipleCandidates,
+                                         ConstructorInitRequiresZeroInit));
+  } else {
+    CXXConstructExpr::ConstructionKind ConstructKind =
+      CXXConstructExpr::CK_Complete;
+
+    if (Entity.getKind() == InitializedEntity::EK_Base) {
+      ConstructKind = Entity.getBaseSpecifier()->isVirtual() ?
+        CXXConstructExpr::CK_VirtualBase :
+        CXXConstructExpr::CK_NonVirtualBase;
+    } else if (Entity.getKind() == InitializedEntity::EK_Delegating) {
+      ConstructKind = CXXConstructExpr::CK_Delegating;
+    }
+
+    // Only get the parenthesis range if it is a direct construction.
+    SourceRange parenRange =
+        Kind.getKind() == InitializationKind::IK_Direct ?
+        Kind.getParenRange() : SourceRange();
+
+    // If the entity allows NRVO, mark the construction as elidable
+    // unconditionally.
+    if (Entity.allowsNRVO())
+      CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType(),
+                                        Constructor, /*Elidable=*/true,
+                                        move_arg(ConstructorArgs),
+                                        HadMultipleCandidates,
+                                        ConstructorInitRequiresZeroInit,
+                                        ConstructKind,
+                                        parenRange);
+    else
+      CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType(),
+                                        Constructor,
+                                        move_arg(ConstructorArgs),
+                                        HadMultipleCandidates,
+                                        ConstructorInitRequiresZeroInit,
+                                        ConstructKind,
+                                        parenRange);
+  }
+  if (CurInit.isInvalid())
+    return ExprError();
+
+  // Only check access if all of that succeeded.
+  S.CheckConstructorAccess(Loc, Constructor, Entity,
+                           Step.Function.FoundDecl.getAccess());
+  S.DiagnoseUseOfDecl(Step.Function.FoundDecl, Loc);
+
+  if (shouldBindAsTemporary(Entity))
+    CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());
+
+  return move(CurInit);
+}
+
 ExprResult
 InitializationSequence::Perform(Sema &S,
                                 const InitializedEntity &Entity,
@@ -4910,8 +5087,14 @@ InitializationSequence::Perform(Sema &S,
       break;
     }
 
-    case SK_ListConstructorCall:
-      assert(false && "List constructor calls not yet supported.");
+    case SK_ListConstructorCall: {
+      InitListExpr *InitList = cast<InitListExpr>(CurInit.get());
+      MultiExprArg Arg(InitList->getInits(), InitList->getNumInits());
+      CurInit = PerformConstructorInitialization(S, Entity, Kind,
+                                                 move(Arg), *Step,
+                                               ConstructorInitRequiresZeroInit);
+      break;
+    }
 
     case SK_UnwrapInitList:
       CurInit = S.Owned(cast<InitListExpr>(CurInit.take())->getInit(0));
@@ -4929,108 +5112,11 @@ InitializationSequence::Perform(Sema &S,
       break;
     }
 
-    case SK_ConstructorInitialization: {
-      unsigned NumArgs = Args.size();
-      CXXConstructorDecl *Constructor
-        = cast<CXXConstructorDecl>(Step->Function.Function);
-      bool HadMultipleCandidates = Step->Function.HadMultipleCandidates;
-
-      // Build a call to the selected constructor.
-      ASTOwningVector<Expr*> ConstructorArgs(S);
-      SourceLocation Loc = (Kind.isCopyInit() && Kind.getEqualLoc().isValid())
-                             ? Kind.getEqualLoc()
-                             : Kind.getLocation();
-
-      if (Kind.getKind() == InitializationKind::IK_Default) {
-        // Force even a trivial, implicit default constructor to be
-        // semantically checked. We do this explicitly because we don't build
-        // the definition for completely trivial constructors.
-        CXXRecordDecl *ClassDecl = Constructor->getParent();
-        assert(ClassDecl && "No parent class for constructor.");
-        if (Constructor->isDefaulted() && Constructor->isDefaultConstructor() &&
-            ClassDecl->hasTrivialDefaultConstructor() &&
-            !Constructor->isUsed(false))
-          S.DefineImplicitDefaultConstructor(Loc, Constructor);
-      }
-
-      // Determine the arguments required to actually perform the constructor
-      // call.
-      if (S.CompleteConstructorCall(Constructor, move(Args),
-                                    Loc, ConstructorArgs))
-        return ExprError();
-
-
-      if (Entity.getKind() == InitializedEntity::EK_Temporary &&
-          NumArgs != 1 && // FIXME: Hack to work around cast weirdness
-          (Kind.getKind() == InitializationKind::IK_Direct ||
-           Kind.getKind() == InitializationKind::IK_Value)) {
-        // An explicitly-constructed temporary, e.g., X(1, 2).
-        unsigned NumExprs = ConstructorArgs.size();
-        Expr **Exprs = (Expr **)ConstructorArgs.take();
-        S.MarkDeclarationReferenced(Loc, Constructor);
-        S.DiagnoseUseOfDecl(Constructor, Loc);
-
-        TypeSourceInfo *TSInfo = Entity.getTypeSourceInfo();
-        if (!TSInfo)
-          TSInfo = S.Context.getTrivialTypeSourceInfo(Entity.getType(), Loc);
-
-        CurInit = S.Owned(new (S.Context) CXXTemporaryObjectExpr(S.Context,
-                                                                 Constructor,
-                                                                 TSInfo,
-                                                                 Exprs,
-                                                                 NumExprs,
-                                                         Kind.getParenRange(),
-                                                         HadMultipleCandidates,
-                                             ConstructorInitRequiresZeroInit));
-      } else {
-        CXXConstructExpr::ConstructionKind ConstructKind =
-          CXXConstructExpr::CK_Complete;
-
-        if (Entity.getKind() == InitializedEntity::EK_Base) {
-          ConstructKind = Entity.getBaseSpecifier()->isVirtual() ?
-            CXXConstructExpr::CK_VirtualBase :
-            CXXConstructExpr::CK_NonVirtualBase;
-        } else if (Entity.getKind() == InitializedEntity::EK_Delegating) {
-          ConstructKind = CXXConstructExpr::CK_Delegating;
-        }
-
-        // Only get the parenthesis range if it is a direct construction.
-        SourceRange parenRange =
-            Kind.getKind() == InitializationKind::IK_Direct ?
-            Kind.getParenRange() : SourceRange();
-
-        // If the entity allows NRVO, mark the construction as elidable
-        // unconditionally.
-        if (Entity.allowsNRVO())
-          CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType(),
-                                            Constructor, /*Elidable=*/true,
-                                            move_arg(ConstructorArgs),
-                                            HadMultipleCandidates,
-                                            ConstructorInitRequiresZeroInit,
-                                            ConstructKind,
-                                            parenRange);
-        else
-          CurInit = S.BuildCXXConstructExpr(Loc, Entity.getType(),
-                                            Constructor,
-                                            move_arg(ConstructorArgs),
-                                            HadMultipleCandidates,
-                                            ConstructorInitRequiresZeroInit,
-                                            ConstructKind,
-                                            parenRange);
-      }
-      if (CurInit.isInvalid())
-        return ExprError();
-
-      // Only check access if all of that succeeded.
-      S.CheckConstructorAccess(Loc, Constructor, Entity,
-                               Step->Function.FoundDecl.getAccess());
-      S.DiagnoseUseOfDecl(Step->Function.FoundDecl, Loc);
-
-      if (shouldBindAsTemporary(Entity))
-        CurInit = S.MaybeBindToTemporary(CurInit.takeAs<Expr>());
-
+    case SK_ConstructorInitialization:
+      CurInit = PerformConstructorInitialization(S, Entity, Kind, move(Args),
+                                                 *Step,
+                                               ConstructorInitRequiresZeroInit);
       break;
-    }
 
     case SK_ZeroInitialization: {
       step_iterator NextStep = Step;

@@ -14,56 +14,56 @@ bool b;
 Aggr ag = { b };
 
 // with no user-provided constructors, ...
-struct NonAggr1a {
-  NonAggr1a(int, int);
+struct NonAggr1a { // expected-note 2 {{candidate constructor}}
+  NonAggr1a(int, int); // expected-note {{candidate constructor}}
   int k;
 };
 // In C++0x, 'user-provided' is only defined for special member functions, so
 // this type is considered to be an aggregate. This is considered to be
 // a language defect.
-NonAggr1a na1a = { 42 }; // expected-error {{non-aggregate type 'NonAggr1a'}}
+NonAggr1a na1a = { 42 }; // expected-error {{no matching constructor for initialization of 'NonAggr1a'}}
 
 struct NonAggr1b {
-  NonAggr1b(const NonAggr1b &);
+  NonAggr1b(const NonAggr1b &); // expected-note {{candidate constructor}}
   int k;
 };
-NonAggr1b na1b = { 42 }; // expected-error {{non-aggregate type 'NonAggr1b'}}
+NonAggr1b na1b = { 42 }; // expected-error {{no matching constructor for initialization of 'NonAggr1b'}}
 
 // no brace-or-equal-initializers for non-static data members, ...
-struct NonAggr2 {
+struct NonAggr2 { // expected-note 3 {{candidate constructor}}
   int m = { 123 };
 };
-NonAggr2 na2 = { 42 }; // expected-error {{non-aggregate type 'NonAggr2'}}
+NonAggr2 na2 = { 42 }; // expected-error {{no matching constructor for initialization of 'NonAggr2'}}
 
 // no private...
-struct NonAggr3 {
+struct NonAggr3 { // expected-note 3 {{candidate constructor}}
 private:
   int n;
 };
-NonAggr3 na3 = { 42 }; // expected-error {{non-aggregate type 'NonAggr3'}}
+NonAggr3 na3 = { 42 }; // expected-error {{no matching constructor for initialization of 'NonAggr3'}}
 
 // or protected non-static data members, ...
-struct NonAggr4 {
+struct NonAggr4 { // expected-note 3 {{candidate constructor}}
 protected:
   int n;
 };
-NonAggr4 na4 = { 42 }; // expected-error {{non-aggregate type 'NonAggr4'}}
+NonAggr4 na4 = { 42 }; // expected-error {{no matching constructor for initialization of 'NonAggr4'}}
 
 // no base classes, ...
-struct NonAggr5 : Aggr {
+struct NonAggr5 : Aggr { // expected-note 3 {{candidate constructor}}
 };
-NonAggr5 na5 = { b }; // expected-error {{non-aggregate type 'NonAggr5'}}
+NonAggr5 na5 = { b }; // expected-error {{no matching constructor for initialization of 'NonAggr5'}}
 template<typename...BaseList>
-struct MaybeAggr5a : BaseList... {};
+struct MaybeAggr5a : BaseList... {}; // expected-note {{explicitly marked deleted}}
 MaybeAggr5a<> ma5a0 = {}; // ok
-MaybeAggr5a<Aggr> ma5a1 = {}; // expected-error {{non-aggregate type 'MaybeAggr5a<Aggr>'}}
+MaybeAggr5a<Aggr> ma5a1 = {}; // expected-error {{call to deleted constructor of 'MaybeAggr5a<Aggr>'}}
 
 // and no virtual functions.
-struct NonAggr6 {
+struct NonAggr6 { // expected-note 3 {{candidate constructor}}
   virtual void f();
   int n;
 };
-NonAggr6 na6 = { 42 }; // expected-error {{non-aggregate type 'NonAggr6'}}
+NonAggr6 na6 = { 42 }; // expected-error {{no matching constructor for initialization of 'NonAggr6'}}
 
 struct DefaultedAggr {
   int n;
