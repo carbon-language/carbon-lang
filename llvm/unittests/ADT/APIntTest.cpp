@@ -144,6 +144,12 @@ TEST(APIntTest, i1) {
   EXPECT_EQ(zero, one.lshr(1));
   EXPECT_EQ(zero, one.ashr(1));
 
+  // Rotates.
+  EXPECT_EQ(one, one.rotl(0));
+  EXPECT_EQ(one, one.rotl(1));
+  EXPECT_EQ(one, one.rotr(0));
+  EXPECT_EQ(one, one.rotr(1));
+
   // Multiplies.
   EXPECT_EQ(neg_one, neg_one * one);
   EXPECT_EQ(neg_one, one * neg_one);
@@ -448,6 +454,32 @@ TEST(APIntTest, mul_clear) {
   ValC = ValA * ValB;
   ValA *= ValB;
   EXPECT_EQ(ValA.toString(10, false), ValC.toString(10, false));
+}
+
+TEST(APIntTest, Rotate) {
+  EXPECT_EQ(APInt(8, 1),  APInt(8, 1).rotl(0));
+  EXPECT_EQ(APInt(8, 2),  APInt(8, 1).rotl(1));
+  EXPECT_EQ(APInt(8, 4),  APInt(8, 1).rotl(2));
+  EXPECT_EQ(APInt(8, 16), APInt(8, 1).rotl(4));
+  EXPECT_EQ(APInt(8, 1),  APInt(8, 1).rotl(8));
+
+  EXPECT_EQ(APInt(8, 16), APInt(8, 16).rotl(0));
+  EXPECT_EQ(APInt(8, 32), APInt(8, 16).rotl(1));
+  EXPECT_EQ(APInt(8, 64), APInt(8, 16).rotl(2));
+  EXPECT_EQ(APInt(8, 1),  APInt(8, 16).rotl(4));
+  EXPECT_EQ(APInt(8, 16), APInt(8, 16).rotl(8));
+
+  EXPECT_EQ(APInt(8, 16), APInt(8, 16).rotr(0));
+  EXPECT_EQ(APInt(8, 8),  APInt(8, 16).rotr(1));
+  EXPECT_EQ(APInt(8, 4),  APInt(8, 16).rotr(2));
+  EXPECT_EQ(APInt(8, 1),  APInt(8, 16).rotr(4));
+  EXPECT_EQ(APInt(8, 16), APInt(8, 16).rotr(8));
+
+  EXPECT_EQ(APInt(8, 1),   APInt(8, 1).rotr(0));
+  EXPECT_EQ(APInt(8, 128), APInt(8, 1).rotr(1));
+  EXPECT_EQ(APInt(8, 64),  APInt(8, 1).rotr(2));
+  EXPECT_EQ(APInt(8, 16),  APInt(8, 1).rotr(4));
+  EXPECT_EQ(APInt(8, 1),   APInt(8, 1).rotr(8));
 }
 
 }
