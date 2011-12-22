@@ -315,7 +315,7 @@ public:
 
   QualType getType(ASTContext &C) const { return ToTy; }
 
-  const SymExpr *getOperand() const { return Operand; };
+  const SymExpr *getOperand() const { return Operand; }
 
   void dumpToStream(raw_ostream &os) const;
 
