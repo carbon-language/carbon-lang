@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.core -analyzer-checker=deadcode.DeadStores,osx.cocoa.RetainCount -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.core -analyzer-checker=deadcode.DeadStores,osx.cocoa.RetainCount -fblocks -verify %s
 
 typedef signed char BOOL;
 typedef unsigned int NSUInteger;
@@ -76,3 +76,15 @@ void foo_rdar8527823();
 }
 @end
 
+// Don't flag dead stores when a variable is captured in a block used
+// by a property access.
+@interface RDar10591355
+@property (assign) int x;
+@end
+
+RDar10591355 *rdar10591355_aux();
+
+void rdar10591355() {
+  RDar10591355 *p = rdar10591355_aux();
+  ^{ (void) p.x; }();
+}
