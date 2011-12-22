@@ -22,6 +22,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
+
+#include "llvm/Config/config.h"
+
 using namespace llvm;
 
 TGLexer::TGLexer(SourceMgr &SM) : SrcMgr(SM) {
