@@ -55,6 +55,14 @@ void test_C3(C3 *c3) {
   accept_a_C3(c3);
 }
 
+C4 *global_C4;
+__import_module__ redecl_merge_left_left;
+
+void test_C4(C4 *c4) {
+  global_C4 = c4 = get_a_C4();
+  accept_a_C4(c4);
+}
+
 __import_module__ redecl_merge_bottom;
 
 @implementation B

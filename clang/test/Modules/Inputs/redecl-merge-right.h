@@ -18,6 +18,12 @@ C2 *get_a_C2(void);
 @class C3;
 C3 *get_a_C3(void);
 
+@class C4;
+@class C4;
+@class C4;
+@class C4;
+C4 *get_a_C4(void);
+
 @class Explicit;
 
 int *explicit_func(void);

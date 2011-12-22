@@ -1,0 +1,5 @@
+__import_module__ redecl_merge_left;
+
+@class C4;
+void accept_a_C4(C4*);
+

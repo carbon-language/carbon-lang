@@ -643,10 +643,13 @@ void ASTDeclReader::VisitObjCContainerDecl(ObjCContainerDecl *CD) {
 }
 
 void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
+  // Record the declaration -> global ID mapping.
+  Reader.DeclToID[ID] = ThisDeclID;
+  
   RedeclarableResult Redecl = VisitRedeclarable(ID);
   VisitObjCContainerDecl(ID);
   TypeIDForTypeDecl = Reader.getGlobalTypeID(F, Record[Idx++]);
-  
+                  
   // Determine whether we need to merge this declaration with another @interface
   // with the same name.
   // FIXME: Not needed unless the module file graph is a DAG.
@@ -659,6 +662,18 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
         // of the existing declaration, so that this declaration has the 
         // appropriate canonical declaration.
         ID->RedeclLink = ObjCInterfaceDecl::PreviousDeclLink(ExistingCanon);
+        
+        // Don't introduce IDCanon into the set of pending declaration chains.
+        Redecl.suppress();
+        
+        // Introduce ExistingCanon into the set of pending declaration chains,
+        // if in fact it came from a module file.
+        if (ExistingCanon->isFromASTFile()) {
+          GlobalDeclID ExistingCanonID = Reader.DeclToID[ExistingCanon];
+          assert(ExistingCanonID && "Unrecorded canonical declaration ID?");
+          if (Reader.PendingDeclChainsKnown.insert(ExistingCanonID))
+            Reader.PendingDeclChains.push_back(ExistingCanonID);
+        }
         
         // If this declaration was the canonical declaration, make a note of 
         // that.
@@ -2191,7 +2206,6 @@ void ASTReader::loadPendingDeclChain(serialization::GlobalDeclID ID) {
   ArrayRef<std::pair<Decl *, Decl *> > Chains = Visitor.getChains();
   if (Chains.empty())
     return;
-    
     
   // Capture all of the parsed declarations and put them at the end.
   Decl *MostRecent = getMostRecentDecl(CanonDecl);

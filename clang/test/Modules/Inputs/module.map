@@ -51,6 +51,10 @@ module redecl_merge_left {
   header "redecl-merge-left.h" 
   export *
 }
+module redecl_merge_left_left { 
+  header "redecl-merge-left-left.h" 
+  export *
+}
 module redecl_merge_right { 
   header "redecl-merge-right.h" 
   export *
