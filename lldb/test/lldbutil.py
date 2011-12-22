@@ -311,7 +311,7 @@ def get_threads_stopped_at_breakpoint (process, bkpt):
         return threads
     
     for thread in stopped_threads:
-    # Make sure we've hit our breakpoint...
+        # Make sure we've hit our breakpoint...
         break_id = thread.GetStopReasonDataAtIndex (0)
         if break_id == bkpt.GetID():
             threads.append(thread)
