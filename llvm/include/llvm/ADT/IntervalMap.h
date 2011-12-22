@@ -739,7 +739,7 @@ public:
 // A Path is used by iterators to represent a position in a B+-tree, and the
 // path to get there from the root.
 //
-// The Path class also constains the tree navigation code that doesn't have to
+// The Path class also contains the tree navigation code that doesn't have to
 // be templatized.
 //
 //===----------------------------------------------------------------------===//
