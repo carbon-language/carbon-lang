@@ -1,4 +1,4 @@
-//===-- X86ELFObjectWriter.cpp - X86 ELF Writer ---------------------------===//
+//===-- ARMELFObjectWriter.cpp - ARM ELF Writer ---------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
