@@ -152,7 +152,7 @@ class ELFObjectWriter : public MCObjectWriter {
                                            const MCFragment &F,
                                            const MCFixup &Fixup,
                                            bool IsPCRel) const {
-      return NULL;
+      return TargetObjectWriter->ExplicitRelSym(Asm, Target, F, Fixup, IsPCRel);
     }
 
     bool is64Bit() const { return TargetObjectWriter->is64Bit(); }
@@ -243,8 +243,9 @@ class ELFObjectWriter : public MCObjectWriter {
     virtual void WriteHeader(uint64_t SectionDataSize,
                              unsigned NumberOfSections);
 
-    /// Default e_flags = 0
-    virtual unsigned getEFlags() const { return 0; }
+    virtual unsigned getEFlags() const {
+      return TargetObjectWriter->getEFlags();
+    }
 
     virtual void WriteSymbolEntry(MCDataFragment *SymtabF,
                                   MCDataFragment *ShndxF,
@@ -354,35 +355,6 @@ class ELFObjectWriter : public MCObjectWriter {
                                   int64_t Addend) const;
     virtual void adjustFixupOffset(const MCFixup &Fixup,
                                    uint64_t &RelocOffset) {}
-  };
-
-  //===- ARMELFObjectWriter -------------------------------------------===//
-
-  class ARMELFObjectWriter : public ELFObjectWriter {
-  public:
-    // FIXME: MCAssembler can't yet return the Subtarget,
-    enum { DefaultEABIVersion = 0x05000000U };
-
-    ARMELFObjectWriter(MCELFObjectTargetWriter *MOTW,
-                       raw_ostream &_OS,
-                       bool IsLittleEndian);
-
-    virtual ~ARMELFObjectWriter();
-
-    virtual unsigned getEFlags() const;
-  protected:
-    virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
-                                           const MCValue &Target,
-                                           const MCFragment &F,
-                                           const MCFixup &Fixup,
-                                           bool IsPCRel) const;
-
-    virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
-                                  bool IsPCRel, bool IsRelocWithSymbol,
-                                  int64_t Addend) const;
-  private:
-    unsigned GetRelocTypeInner(const MCValue &Target,
-                               const MCFixup &Fixup, bool IsPCRel) const;
   };
 
   //===- PPCELFObjectWriter -------------------------------------------===//

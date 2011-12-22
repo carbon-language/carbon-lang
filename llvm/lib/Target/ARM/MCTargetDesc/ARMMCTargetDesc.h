@@ -46,6 +46,10 @@ MCCodeEmitter *createARMMCCodeEmitter(const MCInstrInfo &MCII,
 
 MCAsmBackend *createARMAsmBackend(const Target &T, StringRef TT);
 
+/// createARMELFObjectWriter - Construct an ELF Mach-O object writer.
+MCObjectWriter *createARMELFObjectWriter(raw_ostream &OS,
+                                         uint8_t OSABI);
+
 /// createARMMachObjectWriter - Construct an ARM Mach-O object writer.
 MCObjectWriter *createARMMachObjectWriter(raw_ostream &OS,
                                           bool Is64Bit,

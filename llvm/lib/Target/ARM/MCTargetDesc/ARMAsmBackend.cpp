@@ -456,8 +456,7 @@ public:
                   uint64_t Value) const;
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createELFObjectWriter(new ARMELFObjectWriter(OSABI), OS,
-                              /*IsLittleEndian*/ true);
+    return createARMELFObjectWriter(OS, OSABI);
   }
 };
 

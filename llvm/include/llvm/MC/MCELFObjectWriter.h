@@ -43,6 +43,12 @@ public:
   virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                 bool IsPCRel, bool IsRelocWithSymbol,
                                 int64_t Addend) const; // FIXME: add = 0
+  virtual unsigned getEFlags() const;
+  virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
+                                         const MCValue &Target,
+                                         const MCFragment &F,
+                                         const MCFixup &Fixup,
+                                         bool IsPCRel) const;
 
   /// @name Accessors
   /// @{

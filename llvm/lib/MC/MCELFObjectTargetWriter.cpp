@@ -19,6 +19,20 @@ MCELFObjectTargetWriter::MCELFObjectTargetWriter(bool Is64Bit_,
     HasRelocationAddend(HasRelocationAddend_), Is64Bit(Is64Bit_) {
 }
 
+/// Default e_flags = 0
+unsigned MCELFObjectTargetWriter::getEFlags() const {
+  return 0;
+}
+
+const MCSymbol *MCELFObjectTargetWriter::ExplicitRelSym(const MCAssembler &Asm,
+                                                        const MCValue &Target,
+                                                        const MCFragment &F,
+                                                        const MCFixup &Fixup,
+                                                        bool IsPCRel) const {
+  return NULL;
+}
+
+
 unsigned MCELFObjectTargetWriter::GetRelocType(const MCValue &Target,
                                                const MCFixup &Fixup,
                                                bool IsPCRel,
