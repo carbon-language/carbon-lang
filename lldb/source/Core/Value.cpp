@@ -213,7 +213,12 @@ Value::GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr)
 
     case eContextTypeVariable:         // Variable *
         if (GetVariable())
-            byte_size = GetVariable()->GetType()->GetByteSize();
+        {   
+            if (GetVariable()->GetType())
+                byte_size = GetVariable()->GetType()->GetByteSize();
+            else if (error_ptr)
+                error_ptr->SetErrorString ("Can't determine byte size with NULL Type *.");
+        }
         else if (error_ptr)
             error_ptr->SetErrorString ("Can't determine byte size with NULL Variable *.");
         break;
