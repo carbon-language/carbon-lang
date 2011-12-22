@@ -5835,7 +5835,6 @@ processInstruction(MCInst &Inst,
     case ARM::LSLr: ShiftTy = ARM_AM::lsl; break;
     case ARM::RORr: ShiftTy = ARM_AM::ror; break;
     }
-    // A shift by zero is a plain MOVr, not a MOVsi.
     unsigned Shifter = ARM_AM::getSORegOpc(ShiftTy, 0);
     MCInst TmpInst;
     TmpInst.setOpcode(ARM::MOVsr);
