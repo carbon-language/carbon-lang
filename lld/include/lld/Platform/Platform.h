@@ -67,6 +67,12 @@ public:
   /// @brief for debugging dead code stripping, -why_live
   virtual bool printWhyLive(llvm::StringRef name) = 0;
 
+  /// When core linking finds a duplicate definition, the platform
+  /// can either print an error message and terminate or return with
+  /// which atom the linker should use.
+  virtual const Atom& handleMultipleDefinitions(const Atom& def1, 
+                                                const Atom& def2) = 0;
+
   /// @brief print out undefined symbol error messages in platform specific way
   virtual void errorWithUndefines(const std::vector<const Atom *>& undefs,
                                   const std::vector<const Atom *>& all) = 0;

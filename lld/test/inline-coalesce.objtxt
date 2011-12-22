@@ -1,0 +1,34 @@
+# RUN: lld-core %s | FileCheck %s
+
+#
+# Test that non-inlined inlined functions are silently coalesced
+#
+
+---
+atoms:
+    - name:              _inlineFunc
+      scope:             global
+      definition:        regular
+      type:              code
+      merge-duplicates:  true
+---
+atoms:
+    - name:              _inlineFunc
+      scope:             global
+      definition:        regular
+      type:              code
+      merge-duplicates:  true
+---
+atoms:
+    - name:              _inlineFunc
+      scope:             global
+      definition:        regular
+      type:              code
+      merge-duplicates:  true
+...
+
+
+# CHECK:       name: _inlineFunc
+# CHECK:       merge-duplicates: true
+# CHECK-NOT:   name: _inlineFunc
+# CHECK:       ...

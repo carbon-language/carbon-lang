@@ -24,6 +24,10 @@
 
 namespace lld {
 
+SymbolTable::SymbolTable(Platform& plat)
+  : _platform(plat) {
+}
+
 void SymbolTable::add(const Atom &atom) {
   assert(atom.scope() != Atom::scopeTranslationUnit);
   if ( !atom.internalName() ) {
@@ -39,6 +43,7 @@ enum NameCollisionResolution {
   NCR_Second,
   NCR_Weak,
   NCR_Larger,
+  NCR_Dup,
   NCR_Error
 };
 
@@ -46,7 +51,7 @@ static NameCollisionResolution cases[6][6] = {
   //regular     weak         tentative   absolute    undef      sharedLib
   {
     // first is regular
-    NCR_Error,  NCR_First,   NCR_First,  NCR_Error,  NCR_First, NCR_First
+    NCR_Dup,    NCR_First,   NCR_First,  NCR_Error,  NCR_First, NCR_First
   },
   {
     // first is weak
@@ -75,26 +80,44 @@ static NameCollisionResolution collide(Atom::Definition first,
   return cases[first][second];
 }
 
-void SymbolTable::addByName(const Atom &atom) {
-  llvm::StringRef name = atom.name();
+void SymbolTable::addByName(const Atom & newAtom) {
+  llvm::StringRef name = newAtom.name();
   const Atom *existing = this->findByName(name);
   if (existing == NULL) {
     // name is not in symbol table yet, add it associate with this atom
-    _nameTable[name] = &atom;
+    _nameTable[name] = &newAtom;
   } else {
     // name is already in symbol table and associated with another atom
-    switch (collide(existing->definition(), atom.definition())) {
+    switch (collide(existing->definition(), newAtom.definition())) {
     case NCR_First:
       // using first, just add new to _replacedAtoms
-      _replacedAtoms[&atom] = existing;
+      _replacedAtoms[&newAtom] = existing;
       break;
     case NCR_Second:
       // using second, update tables
-      _nameTable[name] = &atom;
-      _replacedAtoms[existing] = &atom;
+      _nameTable[name] = &newAtom;
+      _replacedAtoms[existing] = &newAtom;
+      break;
+    case NCR_Dup:
+      if ( existing->mergeDuplicates() && newAtom.mergeDuplicates() ) {
+          // using existing atom, add new atom to _replacedAtoms
+        _replacedAtoms[&newAtom] = existing;
+      }
+      else {
+        const Atom& use = _platform.handleMultipleDefinitions(*existing, newAtom);
+        if ( &use == existing ) {
+          // using existing atom, add new atom to _replacedAtoms
+          _replacedAtoms[&newAtom] = existing;
+        }
+        else {
+          // using new atom, update tables
+          _nameTable[name] = &newAtom;
+          _replacedAtoms[existing] = &newAtom;
+        }
+      }
       break;
     default:
-      llvm::report_fatal_error("unhandled switch clause");
+      llvm::report_fatal_error("SymbolTable::addByName(): unhandled switch clause");
     }
   }
 }

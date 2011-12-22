@@ -17,7 +17,7 @@
 namespace lld {
 namespace yaml {
 
-void writeObjectText(File *, llvm::raw_ostream &);
+void writeObjectText(lld::File &, llvm::raw_ostream &);
 
 } // namespace yaml
 } // namespace lld

@@ -21,4 +21,4 @@ atoms:
 
 
 # CHECK:        name: _foo
-# CHECK-NEXT:   definition: regular
+# CHECK-NOT:   definition: tentative

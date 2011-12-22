@@ -137,6 +137,8 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
         state = inTriplePeriod;
       } else if (c == '\n') {
         // ignore empty lines
+      } else if (c == '\t') {
+        llvm::report_fatal_error("TAB character found in yaml file");
       } else {
         return;
       }
@@ -244,13 +246,14 @@ public:
           , ContentType ct
           , SectionChoice sc
           , bool intn
+          , bool md
           , DeadStripKind dsk
           , bool tb
           , bool al
           , Alignment a
           , YAMLFile& f
           , const char *n)
-    : Atom(ord, d, s, ct, sc, intn, dsk, tb, al, a)
+    : Atom(ord, d, s, ct, sc, intn, md, dsk, tb, al, a)
     , _file(f)
     , _name(n)
     , _size(0)
@@ -311,6 +314,7 @@ public:
   void setType(const char *n);
   void setAlign2(const char *n);
   void setDefinition(const char *n);
+  void setMergeDuplicates(const char *n);
 
   void setFixupKind(const char *n);
   void setFixupOffset(const char *n);
@@ -328,7 +332,7 @@ private:
   Atom::Definition _def;
   Atom::SectionChoice _sectionChoice;
   bool _internalName;
-  bool _userVisibleName;
+  bool _mergeDuplicates;
   Atom::DeadStripKind _dontDeadStrip;
   bool _thumb;
   bool _alias;
@@ -341,7 +345,8 @@ YAMLAtomState::YAMLAtomState()
   , _align(0, 0)
   , _type(Atom::typeData)
   , _scope(Atom::scopeGlobal)
-  , _userVisibleName(true)
+  , _internalName(false)
+  , _mergeDuplicates(false)
   , _dontDeadStrip(Atom::deadStripNormal)
   , _thumb(false)
   , _alias(false) {
@@ -354,8 +359,8 @@ YAMLAtomState::YAMLAtomState()
 
 void YAMLAtomState::makeAtom(YAMLFile& f) {
   Atom *a = new YAMLAtom(_ordinal, _def, _scope, _type, _sectionChoice,
-                         _internalName, _dontDeadStrip, _thumb, _alias,
-                         _align, f, _name);
+                         _internalName, _mergeDuplicates, _dontDeadStrip, 
+                         _thumb, _alias, _align, f, _name);
 
   f._atoms.push_back(a);
   ++_ordinal;
@@ -369,6 +374,7 @@ void YAMLAtomState::makeAtom(YAMLFile& f) {
   _def              = Atom::definitionRegular;
   _sectionChoice    = Atom::sectionBasedOnContent;
   _internalName     = false;
+  _mergeDuplicates  = false;
   _dontDeadStrip    = Atom::deadStripNormal;
   _thumb            = false;
   _alias            = false;
@@ -419,10 +425,21 @@ void YAMLAtomState::setDefinition(const char *s) {
     _def = Atom::definitionRegular;
   else if (strcmp(s, "tentative") == 0)
     _def = Atom::definitionTentative;
+  else if (strcmp(s, "weak") == 0)
+    _def = Atom::definitionWeak;
   else if (strcmp(s, "absolute") == 0)
     _def = Atom::definitionAbsolute;
   else
     llvm::report_fatal_error("bad definition value");
+}
+
+void YAMLAtomState::setMergeDuplicates(const char *s) {
+  if (strcmp(s, "true") == 0)
+    _mergeDuplicates = true;
+  else if (strcmp(s, "false") == 0)
+    _mergeDuplicates = false;
+  else
+    llvm::report_fatal_error("bad merge-duplicates value");
 }
 
 void YAMLAtomState::setFixupKind(const char *s) {
@@ -524,6 +541,9 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
           haveAtom = true;
         } else if (strcmp(entry->key, "definition") == 0) {
           atomState.setDefinition(entry->value);
+          haveAtom = true;
+        } else if (strcmp(entry->key, "merge-duplicates") == 0) {
+          atomState.setMergeDuplicates(entry->value);
           haveAtom = true;
         } else if (strcmp(entry->key, "fixups") == 0) {
           inFixups = true;

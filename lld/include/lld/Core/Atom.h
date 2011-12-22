@@ -32,7 +32,7 @@ class File;
 ///
 /// Here are some example attribute sets for common atoms. If a particular
 /// attribute is not listed, the default values are:  definition=regular,
-/// sectionChoice=basedOnContent, scope=translationUnit, mergeDups=false, 
+/// sectionChoice=basedOnContent, scope=translationUnit, mergeDupes=false, 
 /// autoHide=false, internalName=false, deadStrip=normal
 ///
 ///  C function:  void foo() {} <br>
@@ -61,23 +61,23 @@ class File;
 ///
 ///  Non-inlined C++ inline method:  inline void Foo::doit() {} <br>
 ///    name=_ZN3Foo4doitEv, type=code, perm=r_x, scope=global, 
-///    mergeDups=true, autoHide=true
+///    mergeDupes=true, autoHide=true
 ///
 ///  Non-inlined C++ inline method whose address is taken:  
 ///     inline void Foo::doit() {} <br>
-///    name=_ZN3Foo4doitEv, type=code, perm=r_x, scope=global, mergeDups=true
+///    name=_ZN3Foo4doitEv, type=code, perm=r_x, scope=global, mergeDupes=true
 ///
 ///  literal c-string:  "hello" <br>
 ///    name=L0, internalName=true, type=cstring, perm=r__, 
-///    scope=linkageUnit, mergeDups=true
+///    scope=linkageUnit, mergeDupes=true
 ///
 ///  literal double:  1.234 <br>
 ///    name=L0, internalName=true, type=literal8, perm=r__, 
-///    scope=linkageUnit, mergeDups=true
+///    scope=linkageUnit, mergeDupes=true
 ///
 ///  constant:  { 1,2,3 } <br>
 ///    name=L0, internalName=true, type=constant, perm=r__, 
-///    scope=linkageUnit, mergeDups=true
+///    scope=linkageUnit, mergeDupes=true
 ///
 ///  Pointer to initializer function:  <br>
 ///    name=_init, internalName=true, type=initializer, perm=rw_l,
@@ -336,6 +336,7 @@ public:
       , ContentType ct
       , SectionChoice sc
       , bool internalName
+      , bool md
       , DeadStripKind ds
       , bool IsThumb
       , bool IsAlias
@@ -347,6 +348,7 @@ public:
     , _internalName(internalName)
     , _deadStrip(ds)
     , _mode(modeOrdinal)
+    , _mergeDuplicates(md)
     , _thumb(IsThumb)
     , _alias(IsAlias)
     , _contentType(ct)

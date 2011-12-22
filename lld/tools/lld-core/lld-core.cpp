@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Core/InputFiles.h"
+#include "lld/Core/Atom.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Core/YamlReader.h"
 #include "lld/Core/YamlWriter.h"
@@ -19,6 +20,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
+#include "llvm/Support/ErrorHandling.h"
 
 #include <vector>
 
@@ -118,6 +120,13 @@ public:
     return false;
   }
 
+  virtual const Atom& handleMultipleDefinitions(const Atom& def1, 
+                                                const Atom& def2) {
+    llvm::report_fatal_error("symbol '" 
+                            + llvm::Twine(def1.name()) 
+                            + "' multiply defined");
+  }
+
   // print out undefined symbol error messages in platform specific way
   virtual void errorWithUndefines(const std::vector<const Atom *> &undefs,
                                   const std::vector<const Atom *> &all) {}
@@ -185,6 +194,6 @@ int main(int argc, const char *argv[]) {
   // write new atom graph out as YAML doc
   std::string errorInfo;
   llvm::raw_fd_ostream out("-", errorInfo);
-  yaml::writeObjectText(&outFile, out);
+  yaml::writeObjectText(outFile, out);
   return 0;
 }

@@ -33,6 +33,7 @@ public:
   Resolver(Platform &plat, const InputFiles &inputs)
     : _platform(plat)
     , _inputFiles(inputs)
+    , _symbolTable(plat)
     , _haveLLVMObjs(false)
     , _addToFinalSection(false)
     , _completedInitialObjectFiles(false) {}

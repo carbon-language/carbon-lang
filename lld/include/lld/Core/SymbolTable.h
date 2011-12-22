@@ -19,6 +19,7 @@ namespace llvm { class StringRef; }
 namespace lld {
 
 class Atom;
+class Platform;
 
 /// The SymbolTable class is responsible for coalescing atoms.
 ///
@@ -27,6 +28,8 @@ class Atom;
 /// if an atom has been coalesced away.
 class SymbolTable {
 public:
+      SymbolTable(Platform& plat);
+
   /// @brief add atom to symbol table
   void add(const Atom &);
 
@@ -52,6 +55,7 @@ private:
 
   void addByName(const Atom &);
 
+  Platform&  _platform;
   AtomToAtom _replacedAtoms;
   NameToAtom _nameTable;
 };

@@ -28,11 +28,22 @@ public:
 
   virtual void doFile(const class File &) { }
   virtual void doAtom(const class Atom &atom) {
-    _out << "    - name:        " << atom.name() << "\n";
-    _out << "      internal-name:" << atom.internalName() << "\n";
-    _out << "      definition:  " << definitionString(atom.definition()) <<"\n";
-    _out << "      scope:       " << scopeString(atom.scope()) << "\n";
-    _out << "      type:        " << typeString(atom.contentType()) << "\n";
+    _out << "    - name:             " << atom.name() << "\n";
+    
+    if ( atom.internalName() )
+      _out << "      internal-name:     true\n";
+      
+    if ( atom.definition() != Atom::definitionRegular )
+      _out << "      definition:       " << definitionString(atom.definition()) <<"\n";
+      
+    if ( atom.scope() != Atom::scopeTranslationUnit )
+      _out << "      scope:            " << scopeString(atom.scope()) << "\n";
+      
+    _out << "      type:             " << typeString(atom.contentType()) << "\n";
+    
+    if ( atom.mergeDuplicates() )
+      _out << "      merge-duplicates: true\n";
+      
     if (atom.referencesBegin() != atom.referencesEnd()) {
       _out << "      fixups:\n";
       for (Reference::iterator it = atom.referencesBegin(),
@@ -76,6 +87,8 @@ private:
     switch (def) {
     case Atom::definitionRegular:
       return "regular";
+    case Atom::definitionWeak:
+      return "weak";
     case Atom::definitionTentative:
       return "tentative";
     case Atom::definitionAbsolute:
@@ -88,11 +101,11 @@ private:
   llvm::raw_ostream &_out;
 };
 
-void writeObjectText(File *file, llvm::raw_ostream &out) {
+void writeObjectText(File &file, llvm::raw_ostream &out) {
   Handler h(out);
   out << "---\n";
   out << "atoms:\n";
-  file->forEachAtom(h);
+  file.forEachAtom(h);
   out << "...\n";
 }
 

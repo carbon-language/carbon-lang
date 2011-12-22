@@ -1,0 +1,28 @@
+# RUN: lld-core %s | FileCheck %s
+
+#
+# Test that weak definitions are coalesced away in favor of a regular definition
+#
+
+---
+atoms:
+    - name:         _foo
+      definition:   weak
+      type:         data
+---
+atoms:
+    - name:         _foo
+      definition:   regular
+      type:         data
+---
+atoms:
+    - name:         _foo
+      definition:   weak
+      type:         data
+...
+
+
+# CHECK:       name: _foo
+# CHECK-NOT:   definition: weak
+# CHECK-NOT:   name: _foo
+# CHECK:       ...

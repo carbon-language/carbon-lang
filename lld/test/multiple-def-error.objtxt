@@ -1,0 +1,18 @@
+# RUN:  lld-core %s  2>&1  |  grep "multiply defined" 
+
+#
+# Test that multiple definitions cause an error
+#
+
+---
+atoms:
+    - name:         _foo
+      definition:   regular
+      type:         data
+---
+atoms:
+    - name:         _foo
+      definition:   regular
+      type:         data
+...
+
