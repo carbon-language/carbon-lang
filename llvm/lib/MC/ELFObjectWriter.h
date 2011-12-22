@@ -355,21 +355,6 @@ class ELFObjectWriter : public MCObjectWriter {
                                   int64_t Addend) const;
   };
 
-  //===- MBlazeELFObjectWriter -------------------------------------------===//
-
-  class MBlazeELFObjectWriter : public ELFObjectWriter {
-  public:
-    MBlazeELFObjectWriter(MCELFObjectTargetWriter *MOTW,
-                          raw_ostream &_OS,
-                          bool IsLittleEndian);
-
-    virtual ~MBlazeELFObjectWriter();
-  protected:
-    virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
-                                  bool IsPCRel, bool IsRelocWithSymbol,
-                                  int64_t Addend) const;
-  };
-
   //===- MipsELFObjectWriter -------------------------------------------===//
 
   class MipsELFObjectWriter : public ELFObjectWriter {

@@ -1261,9 +1261,8 @@ MCObjectWriter *llvm::createELFObjectWriter(MCELFObjectTargetWriter *MOTW,
     case ELF::EM_ARM:
     case ELF::EM_PPC:
     case ELF::EM_PPC64:
-      return new ELFObjectWriter(MOTW, OS, IsLittleEndian); break;
     case ELF::EM_MBLAZE:
-      return new MBlazeELFObjectWriter(MOTW, OS, IsLittleEndian); break;
+      return new ELFObjectWriter(MOTW, OS, IsLittleEndian); break;
     case ELF::EM_MIPS:
       return new MipsELFObjectWriter(MOTW, OS, IsLittleEndian); break;
     default: llvm_unreachable("Unsupported architecture"); break;
@@ -1280,51 +1279,6 @@ unsigned ELFObjectWriter::GetRelocType(const MCValue &Target,
 }
 
 /// START OF SUBCLASSES for ELFObjectWriter
-//===- MBlazeELFObjectWriter -------------------------------------------===//
-
-MBlazeELFObjectWriter::MBlazeELFObjectWriter(MCELFObjectTargetWriter *MOTW,
-                                             raw_ostream &_OS,
-                                             bool IsLittleEndian)
-  : ELFObjectWriter(MOTW, _OS, IsLittleEndian) {
-}
-
-MBlazeELFObjectWriter::~MBlazeELFObjectWriter() {
-}
-
-unsigned MBlazeELFObjectWriter::GetRelocType(const MCValue &Target,
-                                             const MCFixup &Fixup,
-                                             bool IsPCRel,
-                                             bool IsRelocWithSymbol,
-                                             int64_t Addend) const {
-  // determine the type of the relocation
-  unsigned Type;
-  if (IsPCRel) {
-    switch ((unsigned)Fixup.getKind()) {
-    default:
-      llvm_unreachable("Unimplemented");
-    case FK_PCRel_4:
-      Type = ELF::R_MICROBLAZE_64_PCREL;
-      break;
-    case FK_PCRel_2:
-      Type = ELF::R_MICROBLAZE_32_PCREL;
-      break;
-    }
-  } else {
-    switch ((unsigned)Fixup.getKind()) {
-    default: llvm_unreachable("invalid fixup kind!");
-    case FK_Data_4:
-      Type = ((IsRelocWithSymbol || Addend !=0)
-              ? ELF::R_MICROBLAZE_32
-              : ELF::R_MICROBLAZE_64);
-      break;
-    case FK_Data_2:
-      Type = ELF::R_MICROBLAZE_32;
-      break;
-    }
-  }
-  return Type;
-}
-
 //===- MipsELFObjectWriter -------------------------------------------===//
 
 MipsELFObjectWriter::MipsELFObjectWriter(MCELFObjectTargetWriter *MOTW,
