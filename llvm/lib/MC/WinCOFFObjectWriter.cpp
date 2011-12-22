@@ -120,6 +120,8 @@ public:
 };
 
 class WinCOFFObjectWriter : public MCObjectWriter {
+  unsigned getRelocType(unsigned FixupKind) const;
+
 public:
 
   typedef std::vector<COFFSymbol*>  symbols;
@@ -627,6 +629,32 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
   }
 }
 
+unsigned WinCOFFObjectWriter::getRelocType(unsigned FixupKind) const {
+  switch (FixupKind) {
+  case FK_PCRel_4:
+  case X86::reloc_riprel_4byte:
+  case X86::reloc_riprel_4byte_movq_load:
+    return Is64Bit ? COFF::IMAGE_REL_AMD64_REL32 : COFF::IMAGE_REL_I386_REL32;
+    break;
+  case FK_Data_4:
+  case X86::reloc_signed_4byte:
+    return Is64Bit ? COFF::IMAGE_REL_AMD64_ADDR32 : COFF::IMAGE_REL_I386_DIR32;
+    break;
+  case FK_Data_8:
+    if (Is64Bit)
+      return COFF::IMAGE_REL_AMD64_ADDR64;
+    else
+      llvm_unreachable("unsupported relocation type");
+    break;
+  case X86::reloc_coff_secrel32:
+    return Is64Bit ? COFF::IMAGE_REL_AMD64_SREL32 : COFF::IMAGE_REL_I386_SECREL;
+    break;
+  default:
+    llvm_unreachable("unsupported relocation type");
+  }
+}
+
+
 void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
                                            const MCAsmLayout &Layout,
                                            const MCFragment *Fragment,
@@ -695,34 +723,13 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   if (CrossSection)
     FixupKind = FK_PCRel_4;
 
-  switch (FixupKind) {
-  case FK_PCRel_4:
-  case X86::reloc_riprel_4byte:
-  case X86::reloc_riprel_4byte_movq_load:
-    Reloc.Data.Type = Is64Bit ? COFF::IMAGE_REL_AMD64_REL32
-                              : COFF::IMAGE_REL_I386_REL32;
-    // FIXME: Can anyone explain what this does other than adjust for the size
-    // of the offset?
+  Reloc.Data.Type = getRelocType(FixupKind);
+
+  // FIXME: Can anyone explain what this does other than adjust for the size
+  // of the offset?
+  if (Reloc.Data.Type == COFF::IMAGE_REL_AMD64_REL32 ||
+      Reloc.Data.Type == COFF::IMAGE_REL_I386_REL32)
     FixedValue += 4;
-    break;
-  case FK_Data_4:
-  case X86::reloc_signed_4byte:
-    Reloc.Data.Type = Is64Bit ? COFF::IMAGE_REL_AMD64_ADDR32
-                              : COFF::IMAGE_REL_I386_DIR32;
-    break;
-  case FK_Data_8:
-    if (Is64Bit)
-      Reloc.Data.Type = COFF::IMAGE_REL_AMD64_ADDR64;
-    else
-      llvm_unreachable("unsupported relocation type");
-    break;
-  case X86::reloc_coff_secrel32:
-    Reloc.Data.Type = Is64Bit ? COFF::IMAGE_REL_AMD64_SREL32
-                              : COFF::IMAGE_REL_I386_SECREL;
-    break;
-  default:
-    llvm_unreachable("unsupported relocation type");
-  }
 
   coff_section->Relocations.push_back(Reloc);
 }
