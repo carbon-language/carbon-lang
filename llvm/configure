@@ -20993,11 +20993,11 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-
+template <typename T> struct X { inline void f() {} };
 int
 main ()
 {
-
+X<int>().f();
   ;
   return 0;
 }
