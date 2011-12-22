@@ -92,7 +92,6 @@ class AnalysisDeclContext {
 
   llvm::BumpPtrAllocator A;
 
-  // FIXME: remove.
   llvm::DenseMap<const BlockDecl*,void*> *ReferencedBlockVars;
 
   void *ManagedAnalyses;

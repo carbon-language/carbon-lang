@@ -353,7 +353,7 @@ public:
         Visit(child);
   }
 
-  void VisitDeclRefExpr(const DeclRefExpr *DR) {
+  void VisitDeclRefExpr(DeclRefExpr *DR) {
     // Non-local variables are also directly modified.
     if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl()))
       if (!VD->hasLocalStorage()) {
@@ -380,6 +380,16 @@ public:
     // Blocks containing blocks can transitively capture more variables.
     IgnoredContexts.insert(BR->getBlockDecl());
     Visit(BR->getBlockDecl()->getBody());
+  }
+  
+  void VisitPseudoObjectExpr(PseudoObjectExpr *PE) {
+    for (PseudoObjectExpr::semantics_iterator it = PE->semantics_begin(), 
+         et = PE->semantics_end(); it != et; ++it) {
+      Expr *Semantic = *it;
+      if (OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(Semantic))
+        Semantic = OVE->getSourceExpr();
+      Visit(Semantic);
+    }
   }
 };
 } // end anonymous namespace
