@@ -509,7 +509,7 @@ public:
   }
 
   const MCExpr *getImm() const {
-    assert(Kind == k_Immediate && "Invalid access!");
+    assert(isImm() && "Invalid access!");
     return Imm.Val;
   }
 
@@ -548,200 +548,175 @@ public:
   bool isImm() const { return Kind == k_Immediate; }
   bool isFPImm() const { return Kind == k_FPImmediate; }
   bool isImm8s4() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return ((Value & 3) == 0) && Value >= -1020 && Value <= 1020;
   }
   bool isImm0_1020s4() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return ((Value & 3) == 0) && Value >= 0 && Value <= 1020;
   }
   bool isImm0_508s4() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return ((Value & 3) == 0) && Value >= 0 && Value <= 508;
   }
   bool isImm0_255() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value >= 0 && Value < 256;
   }
   bool isImm0_1() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value >= 0 && Value < 2;
   }
   bool isImm0_3() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value >= 0 && Value < 4;
   }
   bool isImm0_7() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value >= 0 && Value < 8;
   }
   bool isImm0_15() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value >= 0 && Value < 16;
   }
   bool isImm0_31() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value >= 0 && Value < 32;
   }
   bool isImm0_63() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value >= 0 && Value < 64;
   }
   bool isImm8() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value == 8;
   }
   bool isImm16() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value == 16;
   }
   bool isImm32() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value == 32;
   }
   bool isShrImm8() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value > 0 && Value <= 8;
   }
   bool isShrImm16() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value > 0 && Value <= 16;
   }
   bool isShrImm32() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value > 0 && Value <= 32;
   }
   bool isShrImm64() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value > 0 && Value <= 64;
   }
   bool isImm1_7() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value > 0 && Value < 8;
   }
   bool isImm1_15() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value > 0 && Value < 16;
   }
   bool isImm1_31() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value > 0 && Value < 32;
   }
   bool isImm1_16() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value > 0 && Value < 17;
   }
   bool isImm1_32() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value > 0 && Value < 33;
   }
   bool isImm0_32() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value >= 0 && Value < 33;
   }
   bool isImm0_65535() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value >= 0 && Value < 65536;
   }
   bool isImm0_65535Expr() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     // If it's not a constant expression, it'll generate a fixup and be
     // handled later.
@@ -750,88 +725,77 @@ public:
     return Value >= 0 && Value < 65536;
   }
   bool isImm24bit() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value >= 0 && Value <= 0xffffff;
   }
   bool isImmThumbSR() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value > 0 && Value < 33;
   }
   bool isPKHLSLImm() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value >= 0 && Value < 32;
   }
   bool isPKHASRImm() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return Value > 0 && Value <= 32;
   }
   bool isARMSOImm() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return ARM_AM::getSOImmVal(Value) != -1;
   }
   bool isARMSOImmNot() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return ARM_AM::getSOImmVal(~Value) != -1;
   }
   bool isARMSOImmNeg() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return ARM_AM::getSOImmVal(-Value) != -1;
   }
   bool isT2SOImm() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return ARM_AM::getT2SOImmVal(Value) != -1;
   }
   bool isT2SOImmNot() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return ARM_AM::getT2SOImmVal(~Value) != -1;
   }
   bool isT2SOImmNeg() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
     return ARM_AM::getT2SOImmVal(-Value) != -1;
   }
   bool isSetEndImm() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Value = CE->getValue();
@@ -873,8 +837,7 @@ public:
     return Val > -4096 && Val < 4096;
   }
   bool isAM2OffsetImm() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     // Immediate offset in range [-4095, 4095].
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
@@ -885,7 +848,7 @@ public:
     // If we have an immediate that's not a constant, treat it as a label
     // reference needing a fixup. If it is a constant, it's something else
     // and we reject it.
-    if (Kind == k_Immediate && !isa<MCConstantExpr>(getImm()))
+    if (isImm() && !isa<MCConstantExpr>(getImm()))
       return true;
     if (!isMemory() || Memory.Alignment != 0) return false;
     // No shifts are legal for AM3.
@@ -913,7 +876,7 @@ public:
     // If we have an immediate that's not a constant, treat it as a label
     // reference needing a fixup. If it is a constant, it's something else
     // and we reject it.
-    if (Kind == k_Immediate && !isa<MCConstantExpr>(getImm()))
+    if (isImm() && !isa<MCConstantExpr>(getImm()))
       return true;
     if (!isMemory() || Memory.Alignment != 0) return false;
     // Check for register offset.
@@ -1002,7 +965,7 @@ public:
     // If we have an immediate that's not a constant, treat it as a label
     // reference needing a fixup. If it is a constant, it's something else
     // and we reject it.
-    if (Kind == k_Immediate && !isa<MCConstantExpr>(getImm()))
+    if (isImm() && !isa<MCConstantExpr>(getImm()))
       return true;
     if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)
       return false;
@@ -1055,7 +1018,7 @@ public:
     // If we have an immediate that's not a constant, treat it as a label
     // reference needing a fixup. If it is a constant, it's something else
     // and we reject it.
-    if (Kind == k_Immediate && !isa<MCConstantExpr>(getImm()))
+    if (isImm() && !isa<MCConstantExpr>(getImm()))
       return true;
 
     if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)
@@ -1066,16 +1029,14 @@ public:
     return (Val > -4096 && Val < 4096) || (Val == INT32_MIN);
   }
   bool isPostIdxImm8() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Val = CE->getValue();
     return (Val > -256 && Val < 256) || (Val == INT32_MIN);
   }
   bool isPostIdxImm8s4() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     if (!CE) return false;
     int64_t Val = CE->getValue();
@@ -1199,8 +1160,7 @@ public:
   }
 
   bool isNEONi8splat() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     // Must be a constant.
     if (!CE) return false;
@@ -1211,8 +1171,7 @@ public:
   }
 
   bool isNEONi16splat() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     // Must be a constant.
     if (!CE) return false;
@@ -1222,8 +1181,7 @@ public:
   }
 
   bool isNEONi32splat() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     // Must be a constant.
     if (!CE) return false;
@@ -1236,8 +1194,7 @@ public:
   }
 
   bool isNEONi32vmov() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     // Must be a constant.
     if (!CE) return false;
@@ -1252,8 +1209,7 @@ public:
       (Value >= 0x01ffff && Value <= 0xffffff && (Value & 0xffff) == 0xffff);
   }
   bool isNEONi32vmovNeg() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     // Must be a constant.
     if (!CE) return false;
@@ -1269,8 +1225,7 @@ public:
   }
 
   bool isNEONi64splat() const {
-    if (Kind != k_Immediate)
-      return false;
+    if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
     // Must be a constant.
     if (!CE) return false;
@@ -1656,7 +1611,7 @@ public:
   void addMemUImm12OffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     // If this is an immediate, it's a label reference.
-    if (Kind == k_Immediate) {
+    if (isImm()) {
       addExpr(Inst, getImm());
       Inst.addOperand(MCOperand::CreateImm(0));
       return;
@@ -1671,7 +1626,7 @@ public:
   void addMemImm12OffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 2 && "Invalid number of operands!");
     // If this is an immediate, it's a label reference.
-    if (Kind == k_Immediate) {
+    if (isImm()) {
       addExpr(Inst, getImm());
       Inst.addOperand(MCOperand::CreateImm(0));
       return;
