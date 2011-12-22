@@ -215,13 +215,25 @@ namespace {
     /// If not then a load from this mbb may not be safe to hoist.
     bool IsGuaranteedToExecute(MachineBasicBlock *BB);
 
-    /// HoistRegion - Walk the specified region of the CFG (defined by all
-    /// blocks dominated by the specified block, and that are in the current
-    /// loop) in depth first order w.r.t the DominatorTree. This allows us to
-    /// visit definitions before uses, allowing us to hoist a loop body in one
-    /// pass without iteration.
+    void EnterScope(MachineBasicBlock *MBB);
+
+    void ExitScope(MachineBasicBlock *MBB);
+
+    /// ExitScopeIfDone - Destroy scope for the MBB that corresponds to given
+    /// dominator tree node if its a leaf or all of its children are done. Walk
+    /// up the dominator tree to destroy ancestors which are now done.
+    void ExitScopeIfDone(MachineDomTreeNode *Node,
+                DenseMap<MachineDomTreeNode*, unsigned> &OpenChildren,
+                DenseMap<MachineDomTreeNode*, MachineDomTreeNode*> &ParentMap);
+
+    /// HoistOutOfLoop - Walk the specified loop in the CFG (defined by all
+    /// blocks dominated by the specified header block, and that are in the
+    /// current loop) in depth first order w.r.t the DominatorTree. This allows
+    /// us to visit definitions before uses, allowing us to hoist a loop body in
+    /// one pass without iteration.
     ///
-    void HoistRegion(MachineDomTreeNode *N, bool IsHeader = false);
+    void HoistOutOfLoop(MachineDomTreeNode *LoopHeaderNode);
+    void HoistRegion(MachineDomTreeNode *N, bool IsHeader);
 
     /// getRegisterClassIDAndCost - For a given MI, register, and the operand
     /// index, return the ID and cost of its representative register class by
@@ -356,7 +368,7 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
       // being hoisted.
       MachineDomTreeNode *N = DT->getNode(CurLoop->getHeader());
       FirstInLoop = true;
-      HoistRegion(N, true);
+      HoistOutOfLoop(N);
       CSEMap.clear();
     }
   }
@@ -605,57 +617,126 @@ bool MachineLICM::IsGuaranteedToExecute(MachineBasicBlock *BB) {
   return true;
 }
 
-/// HoistRegion - Walk the specified region of the CFG (defined by all blocks
-/// dominated by the specified block, and that are in the current loop) in depth
-/// first order w.r.t the DominatorTree. This allows us to visit definitions
-/// before uses, allowing us to hoist a loop body in one pass without iteration.
-///
-void MachineLICM::HoistRegion(MachineDomTreeNode *N, bool IsHeader) {
-  assert(N != 0 && "Null dominator tree node?");
-  MachineBasicBlock *BB = N->getBlock();
+void MachineLICM::EnterScope(MachineBasicBlock *MBB) {
+  DEBUG(dbgs() << "Entering: " << MBB->getName() << '\n');
 
-  // If the header of the loop containing this basic block is a landing pad,
-  // then don't try to hoist instructions out of this loop.
-  const MachineLoop *ML = MLI->getLoopFor(BB);
-  if (ML && ML->getHeader()->isLandingPad()) return;
+  // Remember livein register pressure.
+  BackTrace.push_back(RegPressure);
+}
 
-  // If this subregion is not in the top level loop at all, exit.
-  if (!CurLoop->contains(BB)) return;
+void MachineLICM::ExitScope(MachineBasicBlock *MBB) {
+  DEBUG(dbgs() << "Exiting: " << MBB->getName() << '\n');
+  BackTrace.pop_back();
+}
 
-  MachineBasicBlock *Preheader = getCurPreheader();
-  if (!Preheader)
+/// ExitScopeIfDone - Destroy scope for the MBB that corresponds to the given
+/// dominator tree node if its a leaf or all of its children are done. Walk
+/// up the dominator tree to destroy ancestors which are now done.
+void MachineLICM::ExitScopeIfDone(MachineDomTreeNode *Node,
+                                  DenseMap<MachineDomTreeNode*, unsigned> &OpenChildren,
+                                  DenseMap<MachineDomTreeNode*, MachineDomTreeNode*> &ParentMap) {
+  if (OpenChildren[Node])
     return;
 
-  if (IsHeader) {
+  // Pop scope.
+  ExitScope(Node->getBlock());
+
+  // Now traverse upwards to pop ancestors whose offsprings are all done.
+  while (MachineDomTreeNode *Parent = ParentMap[Node]) {
+    unsigned Left = --OpenChildren[Parent];
+    if (Left != 0)
+      break;
+    ExitScope(Parent->getBlock());
+    Node = Parent;
+  }
+}
+
+/// HoistOutOfLoop - Walk the specified loop in the CFG (defined by all
+/// blocks dominated by the specified header block, and that are in the
+/// current loop) in depth first order w.r.t the DominatorTree. This allows
+/// us to visit definitions before uses, allowing us to hoist a loop body in
+/// one pass without iteration.
+///
+void MachineLICM::HoistOutOfLoop(MachineDomTreeNode *HeaderN) {
+  SmallVector<MachineDomTreeNode*, 32> Scopes;
+  SmallVector<MachineDomTreeNode*, 8> WorkList;
+  DenseMap<MachineDomTreeNode*, MachineDomTreeNode*> ParentMap;
+  DenseMap<MachineDomTreeNode*, unsigned> OpenChildren;
+
+  // Perform a DFS walk to determine the order of visit.
+  WorkList.push_back(HeaderN);
+  do {
+    MachineDomTreeNode *Node = WorkList.pop_back_val();
+    assert(Node != 0 && "Null dominator tree node?");
+    MachineBasicBlock *BB = Node->getBlock();
+
+    // If the header of the loop containing this basic block is a landing pad,
+    // then don't try to hoist instructions out of this loop.
+    const MachineLoop *ML = MLI->getLoopFor(BB);
+    if (ML && ML->getHeader()->isLandingPad())
+      continue;
+
+    // If this subregion is not in the top level loop at all, exit.
+    if (!CurLoop->contains(BB))
+      continue;
+
+    Scopes.push_back(Node);
+    const std::vector<MachineDomTreeNode*> &Children = Node->getChildren();
+    unsigned NumChildren = Children.size();
+
+    // Don't hoist things out of a large switch statement.  This often causes
+    // code to be hoisted that wasn't going to be executed, and increases
+    // register pressure in a situation where it's likely to matter.
+    if (BB->succ_size() >= 25)
+      NumChildren = 0;
+
+    OpenChildren[Node] = NumChildren;
+    // Add children in reverse order as then the next popped worklist node is
+    // the first child of this node.  This means we ultimately traverse the
+    // DOM tree in exactly the same order as if we'd recursed.
+    for (int i = (int)NumChildren-1; i >= 0; --i) {
+      MachineDomTreeNode *Child = Children[i];
+      ParentMap[Child] = Node;
+      WorkList.push_back(Child);
+    }
+  } while (!WorkList.empty());
+
+  if (Scopes.size() != 0) {
+    MachineBasicBlock *Preheader = getCurPreheader();
+    if (!Preheader)
+      return;
+
     // Compute registers which are livein into the loop headers.
     RegSeen.clear();
     BackTrace.clear();
     InitRegPressure(Preheader);
   }
 
-  // Remember livein register pressure.
-  BackTrace.push_back(RegPressure);
+  // Now perform LICM.
+  for (unsigned i = 0, e = Scopes.size(); i != e; ++i) {
+    MachineDomTreeNode *Node = Scopes[i];
+    MachineBasicBlock *MBB = Node->getBlock();
 
-  SpeculationState = SpeculateUnknown;
-  for (MachineBasicBlock::iterator
-         MII = BB->begin(), E = BB->end(); MII != E; ) {
-    MachineBasicBlock::iterator NextMII = MII; ++NextMII;
-    MachineInstr *MI = &*MII;
-    if (!Hoist(MI, Preheader))
-      UpdateRegPressure(MI);
-    MII = NextMII;
+    MachineBasicBlock *Preheader = getCurPreheader();
+    if (!Preheader)
+      continue;
+
+    EnterScope(MBB);
+
+    // Process the block
+    SpeculationState = SpeculateUnknown;
+    for (MachineBasicBlock::iterator
+         MII = MBB->begin(), E = MBB->end(); MII != E; ) {
+      MachineBasicBlock::iterator NextMII = MII; ++NextMII;
+      MachineInstr *MI = &*MII;
+      if (!Hoist(MI, Preheader))
+        UpdateRegPressure(MI);
+      MII = NextMII;
+    }
+
+    // If it's a leaf node, it's done. Traverse upwards to pop ancestors.
+    ExitScopeIfDone(Node, OpenChildren, ParentMap);
   }
-
-  // Don't hoist things out of a large switch statement.  This often causes
-  // code to be hoisted that wasn't going to be executed, and increases
-  // register pressure in a situation where it's likely to matter.
-  if (BB->succ_size() < 25) {
-    const std::vector<MachineDomTreeNode*> &Children = N->getChildren();
-    for (unsigned I = 0, E = Children.size(); I != E; ++I)
-      HoistRegion(Children[I]);
-  }
-
-  BackTrace.pop_back();
 }
 
 static bool isOperandKill(const MachineOperand &MO, MachineRegisterInfo *MRI) {
