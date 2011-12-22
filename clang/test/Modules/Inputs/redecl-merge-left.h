@@ -22,6 +22,8 @@ void accept_a_C2(C2*);
 void accept_a_C3(C3*);
 @class C3;
 
+@class C4;
+
 @class Explicit;
 
 int *explicit_func(void);

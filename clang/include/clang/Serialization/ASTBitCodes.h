@@ -452,7 +452,10 @@ namespace clang {
       
       /// \brief Record code for an array of all of the (sub)modules that were
       /// imported by the AST file.
-      IMPORTED_MODULES = 51
+      IMPORTED_MODULES = 51,
+      
+      /// \brief Record code for the set of merged declarations in an AST file.
+      MERGED_DECLARATIONS = 52
     };
 
     /// \brief Record types used within a source manager block.

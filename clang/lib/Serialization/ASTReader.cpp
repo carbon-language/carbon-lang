@@ -2407,6 +2407,16 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
       F.RedeclarationsInfo = (const LocalRedeclarationsInfo *)BlobStart;
       break;
     }
+        
+    case MERGED_DECLARATIONS: {
+      for (unsigned Idx = 0; Idx < Record.size(); /* increment in loop */) {
+        GlobalDeclID CanonID = getGlobalDeclID(F, Record[Idx++]);
+        SmallVectorImpl<GlobalDeclID> &Decls = StoredMergedDecls[CanonID];
+        for (unsigned N = Record[Idx++]; N > 0; --N)
+          Decls.push_back(getGlobalDeclID(F, Record[Idx++]));
+      }
+      break;
+    }
     }
   }
   Error("premature end of bitstream in AST file");

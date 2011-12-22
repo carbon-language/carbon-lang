@@ -58,12 +58,17 @@ void test_C3(C3 *c3) {
 C4 *global_C4;
 __import_module__ redecl_merge_left_left;
 
-void test_C4(C4 *c4) {
+void test_C4a(C4 *c4) {
   global_C4 = c4 = get_a_C4();
   accept_a_C4(c4);
 }
 
 __import_module__ redecl_merge_bottom;
+
+void test_C4b() {
+  if (&refers_to_C4) {
+  }
+}
 
 @implementation B
 + (B*)create_a_B { return 0; }

@@ -2903,6 +2903,25 @@ void ASTWriter::WriteOpenCLExtensions(Sema &SemaRef) {
   Stream.EmitRecord(OPENCL_EXTENSIONS, Record);
 }
 
+void ASTWriter::WriteMergedDecls() {
+  if (!Chain || Chain->MergedDecls.empty())
+    return;
+  
+  RecordData Record;
+  for (ASTReader::MergedDeclsMap::iterator I = Chain->MergedDecls.begin(),
+                                        IEnd = Chain->MergedDecls.end();
+       I != IEnd; ++I) {
+    DeclID CanonID = I->first->isFromASTFile()? Chain->DeclToID[I->first]
+                                              : getDeclID(I->first);
+    assert(CanonID && "Merged declaration not known?");
+    
+    Record.push_back(CanonID);
+    Record.push_back(I->second.size());
+    Record.append(I->second.begin(), I->second.end());
+  }
+  Stream.EmitRecord(MERGED_DECLARATIONS, Record);
+}
+
 //===----------------------------------------------------------------------===//
 // General Serialization Routines
 //===----------------------------------------------------------------------===//
@@ -3401,7 +3420,8 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteDeclUpdatesBlocks();
   WriteDeclReplacementsBlock();
   WriteChainedObjCCategories();
-
+  WriteMergedDecls();
+  
   if (!LocalRedeclarations.empty()) {
     // Sort the local redeclarations info by the first declaration ID,
     // since the reader will be perforing binary searches on this information.
