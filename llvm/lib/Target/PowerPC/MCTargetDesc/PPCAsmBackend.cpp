@@ -57,13 +57,6 @@ public:
                         MCValue Target, uint64_t &FixedValue) {}
 };
 
-class PPCELFObjectWriter : public MCELFObjectTargetWriter {
-public:
-  PPCELFObjectWriter(bool Is64Bit, uint8_t OSABI, uint16_t EMachine,
-                     bool HasRelocationAddend, bool isLittleEndian)
-    : MCELFObjectTargetWriter(Is64Bit, OSABI, EMachine, HasRelocationAddend) {}
-};
-
 class PPCAsmBackend : public MCAsmBackend {
 const Target &TheTarget;
 public:
@@ -175,12 +168,7 @@ namespace {
     
     MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
       bool is64 = getPointerSize() == 8;
-      return createELFObjectWriter(new PPCELFObjectWriter(
-                                      /*Is64Bit=*/is64,
-                                      OSABI,
-                                      is64 ? ELF::EM_PPC64 : ELF::EM_PPC,                                      
-                                      /*addend*/ true, /*isLittleEndian*/ false),
-                                   OS, /*IsLittleEndian=*/false);
+      return createPPCELFObjectWriter(OS, is64, OSABI);
     }
     
     virtual bool doesSectionRequireSymbols(const MCSection &Section) const {

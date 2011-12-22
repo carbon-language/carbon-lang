@@ -31,7 +31,7 @@ namespace {
 PPCELFObjectWriter::PPCELFObjectWriter(bool Is64Bit, uint8_t OSABI)
   : MCELFObjectTargetWriter(Is64Bit, OSABI,
                             Is64Bit ?  ELF::EM_PPC64 : ELF::EM_PPC,
-                            /*HasRelocationAddend*/ false) {}
+                            /*HasRelocationAddend*/ true) {}
 
 PPCELFObjectWriter::~PPCELFObjectWriter() {
 }
@@ -99,5 +99,5 @@ MCObjectWriter *llvm::createPPCELFObjectWriter(raw_ostream &OS,
                                                bool Is64Bit,
                                                uint8_t OSABI) {
   MCELFObjectTargetWriter *MOTW = new PPCELFObjectWriter(Is64Bit, OSABI);
-  return createELFObjectWriter(MOTW, OS,  /*IsLittleEndian=*/true);
+  return createELFObjectWriter(MOTW, OS,  /*IsLittleEndian=*/false);
 }
