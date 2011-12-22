@@ -26,7 +26,10 @@ class SBDirCheckerCase(TestBase):
         # Call the program generator to produce main.cpp.
         self.generate_main_cpp()
 
-        d = {'FRAMEWORK_INCLUDES' : "-F%s" % self.build_dir}
+        if sys.platform.startswith("darwin"):
+            d = {'FRAMEWORK_INCLUDES' : "-F%s" % self.build_dir}
+        if sys.platform.startswith("linux"):
+            d = {'FRAMEWORK_INCLUDES' : "-I%s" % os.path.join(os.environ["LLDB_SRC"], "include")}
         self.buildDefault(dictionary=d)
         self.exe_name = 'a.out'
         self.sanity_check_executable(self.exe_name)
@@ -45,6 +48,8 @@ class SBDirCheckerCase(TestBase):
         # For different platforms, the include statement can vary.
         if sys.platform.startswith("darwin"):
             include_stmt = "'#include <%s>' % os.path.join('LLDB', header)"
+        if sys.platform.startswith("linux"):
+            include_stmt = "'#include <%s>' % os.path.join(public_api_dir, header)"
         list = [eval(include_stmt) for header in public_headers if (header.startswith("SB") and
                                                                     header.endswith(".h"))]
         includes = '\n'.join(list)
@@ -65,6 +70,9 @@ class SBDirCheckerCase(TestBase):
 
         if sys.platform.startswith("darwin"):
             env_var = 'DYLD_FRAMEWORK_PATH'
+            env_val = self.build_dir
+        if sys.platform.startswith("linux"):
+            env_var = 'LD_LIBRARY_PATH'
             env_val = self.build_dir
 
         env_cmd = "settings set target.env-vars %s=%s" %(env_var, env_val)

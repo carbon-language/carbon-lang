@@ -18,6 +18,7 @@ class OrderFileTestCase(TestBase):
         self.buildDsym()
         self.order_file()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dwarf(self):
         """Test debug symbols follow the correct order by the order file."""
         self.buildDwarf()

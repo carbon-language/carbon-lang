@@ -1,7 +1,13 @@
 LEVEL = ../../make
 
 CXX_SOURCES := main.cpp
-LD_EXTRAS ?= -framework LLDB
+
+MY_OS = $(shell uname -s)
+ifeq "$(MY_OS)" "Darwin"
+    LD_EXTRAS ?= -framework LLDB
+else
+    LD_EXTRAS ?= $(LLDB_BUILD_DIR)/_lldb.so
+endif
 
 # Example dictionary to pass to the Python build method:
 # 
