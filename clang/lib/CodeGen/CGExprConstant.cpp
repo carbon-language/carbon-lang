@@ -870,7 +870,8 @@ public:
       // Note that due to the nature of compound literals, this is guaranteed
       // to be the only use of the variable, so we just generate it here.
       CompoundLiteralExpr *CLE = cast<CompoundLiteralExpr>(E);
-      llvm::Constant* C = Visit(CLE->getInitializer());
+      llvm::Constant* C = CGM.EmitConstantExpr(CLE->getInitializer(),
+                                               CLE->getType(), CGF);
       // FIXME: "Leaked" on failure.
       if (C)
         C = new llvm::GlobalVariable(CGM.getModule(), C->getType(),
