@@ -391,6 +391,20 @@ struct S {
   int n : "foo"[4]; // expected-error {{constant expression}} expected-note {{read of dereferenced one-past-the-end pointer is not allowed in a constant expression}}
 };
 
+struct T {
+  char c[6];
+  constexpr T() : c{"foo"} {}
+};
+constexpr T t;
+
+static_assert(t.c[0] == 'f', "");
+static_assert(t.c[1] == 'o', "");
+static_assert(t.c[2] == 'o', "");
+static_assert(t.c[3] == 0, "");
+static_assert(t.c[4] == 0, "");
+static_assert(t.c[5] == 0, "");
+static_assert(t.c[6] == 0, ""); // expected-error {{constant expression}} expected-note {{one-past-the-end}}
+
 }
 
 namespace Array {

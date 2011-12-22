@@ -3084,6 +3084,32 @@ bool ArrayExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
   if (!CAT)
     return Error(E);
 
+  // C++11 [dcl.init.string]p1: A char array [...] can be initialized by [...]
+  // an appropriately-typed string literal enclosed in braces.
+  if (E->getNumInits() == 1 && CAT->getElementType()->isAnyCharacterType() &&
+      Info.Ctx.hasSameUnqualifiedType(E->getType(), E->getInit(0)->getType())) {
+    LValue LV;
+    if (!EvaluateLValue(E->getInit(0), LV, Info))
+      return false;
+    uint64_t NumElements = CAT->getSize().getZExtValue();
+    Result = APValue(APValue::UninitArray(), NumElements, NumElements);
+
+    // Copy the string literal into the array. FIXME: Do this better.
+    LV.Designator.addIndex(0);
+    for (uint64_t I = 0; I < NumElements; ++I) {
+      CCValue Char;
+      if (!HandleLValueToRValueConversion(Info, E->getInit(0),
+                                          CAT->getElementType(), LV, Char))
+        return false;
+      if (!CheckConstantExpression(Info, E->getInit(0), Char,
+                                   Result.getArrayInitializedElt(I)))
+        return false;
+      if (!HandleLValueArrayAdjustment(Info, LV, CAT->getElementType(), 1))
+        return false;
+    }
+    return true;
+  }
+
   Result = APValue(APValue::UninitArray(), E->getNumInits(),
                    CAT->getSize().getZExtValue());
   LValue Subobject = This;
