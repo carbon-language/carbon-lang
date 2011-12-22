@@ -1338,14 +1338,10 @@ APInt APInt::rotl(const APInt &rotateAmt) const {
 }
 
 APInt APInt::rotl(unsigned rotateAmt) const {
+  rotateAmt %= BitWidth;
   if (rotateAmt == 0)
     return *this;
-  // Don't get too fancy, just use existing shift/or facilities
-  APInt hi(*this);
-  APInt lo(*this);
-  hi.shl(rotateAmt);
-  lo.lshr(BitWidth - rotateAmt);
-  return hi | lo;
+  return shl(rotateAmt) | lshr(BitWidth - rotateAmt);
 }
 
 APInt APInt::rotr(const APInt &rotateAmt) const {
@@ -1353,14 +1349,10 @@ APInt APInt::rotr(const APInt &rotateAmt) const {
 }
 
 APInt APInt::rotr(unsigned rotateAmt) const {
+  rotateAmt %= BitWidth;
   if (rotateAmt == 0)
     return *this;
-  // Don't get too fancy, just use existing shift/or facilities
-  APInt hi(*this);
-  APInt lo(*this);
-  lo.lshr(rotateAmt);
-  hi.shl(BitWidth - rotateAmt);
-  return hi | lo;
+  return lshr(rotateAmt) | shl(BitWidth - rotateAmt);
 }
 
 // Square Root - this method computes and returns the square root of "this".
