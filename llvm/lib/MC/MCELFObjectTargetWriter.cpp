@@ -33,6 +33,10 @@ const MCSymbol *MCELFObjectTargetWriter::ExplicitRelSym(const MCAssembler &Asm,
 }
 
 
+void MCELFObjectTargetWriter::adjustFixupOffset(const MCFixup &Fixup,
+                                                uint64_t &RelocOffset) {
+}
+
 unsigned MCELFObjectTargetWriter::GetRelocType(const MCValue &Target,
                                                const MCFixup &Fixup,
                                                bool IsPCRel,
