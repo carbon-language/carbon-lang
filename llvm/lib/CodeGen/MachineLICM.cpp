@@ -1036,9 +1036,11 @@ bool MachineLICM::CanCauseHighRegPressure(DenseMap<unsigned, int> &Cost) {
       continue;
 
     unsigned RCId = CI->first;
+    unsigned Limit = RegLimit[RCId];
+    int Cost = CI->second;
     for (unsigned i = BackTrace.size(); i != 0; --i) {
       SmallVector<unsigned, 8> &RP = BackTrace[i-1];
-      if (RP[RCId] + CI->second >= RegLimit[RCId])
+      if (RP[RCId] + Cost >= Limit)
         return true;
     }
   }
