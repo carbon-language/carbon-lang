@@ -15,7 +15,6 @@
 #include "llvm/TableGen/Error.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Config/config.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 #include <cctype>

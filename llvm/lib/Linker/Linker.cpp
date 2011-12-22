@@ -17,7 +17,6 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Config/config.h"
 #include "llvm/Support/system_error.h"
 using namespace llvm;
 

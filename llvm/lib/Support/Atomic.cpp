@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Atomic.h"
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 
 using namespace llvm;
 

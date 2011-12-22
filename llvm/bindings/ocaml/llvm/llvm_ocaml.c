@@ -21,7 +21,6 @@
 #include "caml/memory.h"
 #include "caml/fail.h"
 #include "caml/callback.h"
-#include "llvm/Config/config.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>

@@ -16,7 +16,6 @@
 #include "llvm/Module.h"
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/Bitcode/Archive.h"
-#include "llvm/Config/config.h"
 #include <memory>
 #include <set>
 using namespace llvm;

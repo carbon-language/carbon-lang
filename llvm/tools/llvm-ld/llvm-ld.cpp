@@ -37,7 +37,6 @@
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/Signals.h"
-#include "llvm/Config/config.h"
 #include <memory>
 #include <cstring>
 using namespace llvm;

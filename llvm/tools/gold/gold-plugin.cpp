@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Config/config.h"
+#include "llvm/Config/config.h" // plugin-api.h requires HAVE_STDINT_H
 #include "plugin-api.h"
 
 #include "llvm-c/lto.h"
