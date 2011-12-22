@@ -65,8 +65,9 @@ static const uint32_t UR_TAKEN_WEIGHT = 1;
 ///
 /// This is the weight for a branch not being taken toward a block that
 /// terminates (eventually) in unreachable. Such a branch is essentially never
-/// taken.
-static const uint32_t UR_NONTAKEN_WEIGHT = 1023;
+/// taken. Set the weight to an absurdly high value so that nested loops don't
+/// easily subsume it.
+static const uint32_t UR_NONTAKEN_WEIGHT = 1024*1024 - 1;
 
 static const uint32_t PH_TAKEN_WEIGHT = 20;
 static const uint32_t PH_NONTAKEN_WEIGHT = 12;
