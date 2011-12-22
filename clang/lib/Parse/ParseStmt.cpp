@@ -76,7 +76,8 @@ using namespace clang;
 /// [OBC]   '@' 'throw' ';'
 ///
 StmtResult
-Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement) {
+Parser::ParseStatementOrDeclaration(StmtVector &Stmts, bool OnlyStatement,
+                                    SourceLocation *TrailingElseLoc) {
   const char *SemiError = 0;
   StmtResult Res;
 
@@ -234,18 +235,18 @@ Retry:
   }
 
   case tok::kw_if:                  // C99 6.8.4.1: if-statement
-    return ParseIfStatement(attrs);
+    return ParseIfStatement(attrs, TrailingElseLoc);
   case tok::kw_switch:              // C99 6.8.4.2: switch-statement
-    return ParseSwitchStatement(attrs);
+    return ParseSwitchStatement(attrs, TrailingElseLoc);
 
   case tok::kw_while:               // C99 6.8.5.1: while-statement
-    return ParseWhileStatement(attrs);
+    return ParseWhileStatement(attrs, TrailingElseLoc);
   case tok::kw_do:                  // C99 6.8.5.2: do-statement
     Res = ParseDoStatement(attrs);
     SemiError = "do/while";
     break;
   case tok::kw_for:                 // C99 6.8.5.3: for-statement
-    return ParseForStatement(attrs);
+    return ParseForStatement(attrs, TrailingElseLoc);
 
   case tok::kw_goto:                // C99 6.8.6.1: goto-statement
     Res = ParseGotoStatement(attrs);
@@ -874,7 +875,8 @@ bool Parser::ParseParenExprOrCondition(ExprResult &ExprResult,
 /// [C++]   'if' '(' condition ')' statement
 /// [C++]   'if' '(' condition ')' statement 'else' statement
 ///
-StmtResult Parser::ParseIfStatement(ParsedAttributes &attrs) {
+StmtResult Parser::ParseIfStatement(ParsedAttributes &attrs,
+                                    SourceLocation *TrailingElseLoc) {
   // FIXME: Use attributes?
 
   assert(Tok.is(tok::kw_if) && "Not an if stmt!");
@@ -933,7 +935,9 @@ StmtResult Parser::ParseIfStatement(ParsedAttributes &attrs) {
 
   // Read the 'then' stmt.
   SourceLocation ThenStmtLoc = Tok.getLocation();
-  StmtResult ThenStmt(ParseStatement());
+
+  SourceLocation InnerStatementTrailingElseLoc;
+  StmtResult ThenStmt(ParseStatement(&InnerStatementTrailingElseLoc));
 
   // Pop the 'if' scope if needed.
   InnerScope.Exit();
@@ -944,6 +948,9 @@ StmtResult Parser::ParseIfStatement(ParsedAttributes &attrs) {
   StmtResult ElseStmt;
 
   if (Tok.is(tok::kw_else)) {
+    if (TrailingElseLoc)
+      *TrailingElseLoc = Tok.getLocation();
+
     ElseLoc = ConsumeToken();
     ElseStmtLoc = Tok.getLocation();
 
@@ -967,6 +974,8 @@ StmtResult Parser::ParseIfStatement(ParsedAttributes &attrs) {
     Actions.CodeCompleteAfterIf(getCurScope());
     cutOffParsing();
     return StmtError();
+  } else if (InnerStatementTrailingElseLoc.isValid()) {
+    Diag(InnerStatementTrailingElseLoc, diag::warn_dangling_else);
   }
 
   IfScope.Exit();
@@ -1000,7 +1009,8 @@ StmtResult Parser::ParseIfStatement(ParsedAttributes &attrs) {
 ///       switch-statement:
 ///         'switch' '(' expression ')' statement
 /// [C++]   'switch' '(' condition ')' statement
-StmtResult Parser::ParseSwitchStatement(ParsedAttributes &attrs) {
+StmtResult Parser::ParseSwitchStatement(ParsedAttributes &attrs,
+                                        SourceLocation *TrailingElseLoc) {
   // FIXME: Use attributes?
 
   assert(Tok.is(tok::kw_switch) && "Not a switch stmt!");
@@ -1068,7 +1078,7 @@ StmtResult Parser::ParseSwitchStatement(ParsedAttributes &attrs) {
                         C99orCXX && Tok.isNot(tok::l_brace));
 
   // Read the body statement.
-  StmtResult Body(ParseStatement());
+  StmtResult Body(ParseStatement(TrailingElseLoc));
 
   // Pop the scopes.
   InnerScope.Exit();
@@ -1085,7 +1095,8 @@ StmtResult Parser::ParseSwitchStatement(ParsedAttributes &attrs) {
 ///       while-statement: [C99 6.8.5.1]
 ///         'while' '(' expression ')' statement
 /// [C++]   'while' '(' condition ')' statement
-StmtResult Parser::ParseWhileStatement(ParsedAttributes &attrs) {
+StmtResult Parser::ParseWhileStatement(ParsedAttributes &attrs,
+                                       SourceLocation *TrailingElseLoc) {
   // FIXME: Use attributes?
 
   assert(Tok.is(tok::kw_while) && "Not a while stmt!");
@@ -1143,7 +1154,7 @@ StmtResult Parser::ParseWhileStatement(ParsedAttributes &attrs) {
                         C99orCXX && Tok.isNot(tok::l_brace));
 
   // Read the body statement.
-  StmtResult Body(ParseStatement());
+  StmtResult Body(ParseStatement(TrailingElseLoc));
 
   // Pop the body scope if needed.
   InnerScope.Exit();
@@ -1242,7 +1253,8 @@ StmtResult Parser::ParseDoStatement(ParsedAttributes &attrs) {
 /// [C++0x] for-range-initializer:
 /// [C++0x]   expression
 /// [C++0x]   braced-init-list            [TODO]
-StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
+StmtResult Parser::ParseForStatement(ParsedAttributes &attrs,
+                                     SourceLocation *TrailingElseLoc) {
   // FIXME: Use attributes?
 
   assert(Tok.is(tok::kw_for) && "Not a for stmt!");
@@ -1467,7 +1479,7 @@ StmtResult Parser::ParseForStatement(ParsedAttributes &attrs) {
                         C99orCXXorObjC && Tok.isNot(tok::l_brace));
 
   // Read the body statement.
-  StmtResult Body(ParseStatement());
+  StmtResult Body(ParseStatement(TrailingElseLoc));
 
   // Pop the body scope if needed.
   InnerScope.Exit();

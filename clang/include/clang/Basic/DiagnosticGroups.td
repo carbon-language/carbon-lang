@@ -85,6 +85,7 @@ def GlobalConstructors : DiagGroup<"global-constructors">;
 def : DiagGroup<"idiomatic-parentheses">;
 def BitwiseOpParentheses: DiagGroup<"bitwise-op-parentheses">;
 def LogicalOpParentheses: DiagGroup<"logical-op-parentheses">;
+def DanglingElse: DiagGroup<"dangling-else">;
 def IgnoredQualifiers : DiagGroup<"ignored-qualifiers">;
 def : DiagGroup<"import">;
 def IncompatiblePointerTypes : DiagGroup<"incompatible-pointer-types">;
@@ -322,8 +323,8 @@ def Most : DiagGroup<"most", [
 // Thread Safety warnings 
 def ThreadSafety : DiagGroup<"thread-safety">;
 
-// -Wall is -Wmost -Wparentheses -Wtop-level-comparison
-def : DiagGroup<"all", [Most, Parentheses]>;
+// -Wall is -Wmost -Wparentheses -Wdangling-else
+def : DiagGroup<"all", [DanglingElse, Most, Parentheses]>;
 
 // Aliases.
 def : DiagGroup<"", [Extra]>;                   // -W = -Wextra

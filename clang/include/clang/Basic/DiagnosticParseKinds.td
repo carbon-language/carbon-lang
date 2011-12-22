@@ -387,6 +387,9 @@ def err_expected_equal_after_declarator : Error<
   "expected '=' after declarator">;
 def warn_parens_disambiguated_as_function_decl : Warning<
   "parentheses were disambiguated as a function declarator">;
+def warn_dangling_else : Warning<
+  "add explicit braces to avoid dangling else">,
+  InGroup<DanglingElse>;
 def err_expected_member_or_base_name : Error<
   "expected class member or base class name">;
 def err_expected_lbrace_after_base_specifiers : Error<

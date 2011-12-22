@@ -1466,9 +1466,9 @@ private:
   bool isSimpleObjCMessageExpression();
   ExprResult ParseObjCMessageExpression();
   ExprResult ParseObjCMessageExpressionBody(SourceLocation LBracloc,
-                                                  SourceLocation SuperLoc,
-                                                  ParsedType ReceiverType,
-                                                  ExprArg ReceiverExpr);
+                                            SourceLocation SuperLoc,
+                                            ParsedType ReceiverType,
+                                            ExprArg ReceiverExpr);
   ExprResult ParseAssignmentExprWithObjCMessageExprStart(
       SourceLocation LBracloc, SourceLocation SuperLoc,
       ParsedType ReceiverType, ExprArg ReceiverExpr);
@@ -1477,12 +1477,13 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.8: Statements and Blocks.
 
-  StmtResult ParseStatement() {
+  StmtResult ParseStatement(SourceLocation *TrailingElseLoc = NULL) {
     StmtVector Stmts(Actions);
-    return ParseStatementOrDeclaration(Stmts, true);
+    return ParseStatementOrDeclaration(Stmts, true, TrailingElseLoc);
   }
   StmtResult ParseStatementOrDeclaration(StmtVector& Stmts,
-                                         bool OnlyStatement = false);
+                                         bool OnlyStatement,
+                                        SourceLocation *TrailingElseLoc = NULL);
   StmtResult ParseExprStatement(ParsedAttributes &Attrs);
   StmtResult ParseLabeledStatement(ParsedAttributes &Attr);
   StmtResult ParseCaseStatement(ParsedAttributes &Attr,
@@ -1499,11 +1500,15 @@ private:
                                  Decl *&DeclResult,
                                  SourceLocation Loc,
                                  bool ConvertToBoolean);
-  StmtResult ParseIfStatement(ParsedAttributes &Attr);
-  StmtResult ParseSwitchStatement(ParsedAttributes &Attr);
-  StmtResult ParseWhileStatement(ParsedAttributes &Attr);
+  StmtResult ParseIfStatement(ParsedAttributes &Attr,
+                              SourceLocation *TrailingElseLoc);
+  StmtResult ParseSwitchStatement(ParsedAttributes &Attr,
+                                  SourceLocation *TrailingElseLoc);
+  StmtResult ParseWhileStatement(ParsedAttributes &Attr,
+                                 SourceLocation *TrailingElseLoc);
   StmtResult ParseDoStatement(ParsedAttributes &Attr);
-  StmtResult ParseForStatement(ParsedAttributes &Attr);
+  StmtResult ParseForStatement(ParsedAttributes &Attr,
+                               SourceLocation *TrailingElseLoc);
   StmtResult ParseGotoStatement(ParsedAttributes &Attr);
   StmtResult ParseContinueStatement(ParsedAttributes &Attr);
   StmtResult ParseBreakStatement(ParsedAttributes &Attr);
