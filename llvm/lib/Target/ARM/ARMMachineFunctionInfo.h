@@ -64,6 +64,9 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   /// GPR callee-saved (2) : r8, r10, r11
   /// --------------------------------------------
   /// DPR callee-saved : d8 - d15
+  ///
+  /// Also see AlignedDPRCSRegs below. Not all D-regs need to go in area 3.
+  /// Some may be spilled after the stack has been realigned.
   unsigned GPRCS1Offset;
   unsigned GPRCS2Offset;
   unsigned DPRCSOffset;
@@ -79,6 +82,15 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   BitVector GPRCS1Frames;
   BitVector GPRCS2Frames;
   BitVector DPRCSFrames;
+
+  /// NumAlignedDPRCS2Regs - The number of callee-saved DPRs that are saved in
+  /// the aligned portion of the stack frame.  This is always a contiguous
+  /// sequence of D-registers starting from d8.
+  ///
+  /// We do not keep track of the frame indices used for these registers - they
+  /// behave like any other frame index in the aligned stack frame.  These
+  /// registers also aren't included in DPRCSSize above.
+  unsigned NumAlignedDPRCS2Regs;
 
   /// JumpTableUId - Unique id for jumptables.
   ///
@@ -105,6 +117,7 @@ public:
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0),
     GPRCS1Frames(0), GPRCS2Frames(0), DPRCSFrames(0),
+    NumAlignedDPRCS2Regs(0),
     JumpTableUId(0), PICLabelUId(0),
     VarArgsFrameIndex(0), HasITBlocks(false) {}
 
@@ -137,6 +150,9 @@ public:
 
   unsigned getFramePtrSpillOffset() const { return FramePtrSpillOffset; }
   void setFramePtrSpillOffset(unsigned o) { FramePtrSpillOffset = o; }
+
+  unsigned getNumAlignedDPRCS2Regs() const { return NumAlignedDPRCS2Regs; }
+  void setNumAlignedDPRCS2Regs(unsigned n) { NumAlignedDPRCS2Regs = n; }
 
   unsigned getGPRCalleeSavedArea1Offset() const { return GPRCS1Offset; }
   unsigned getGPRCalleeSavedArea2Offset() const { return GPRCS2Offset; }

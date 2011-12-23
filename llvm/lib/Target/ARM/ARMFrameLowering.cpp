@@ -16,14 +16,24 @@
 #include "ARMBaseRegisterInfo.h"
 #include "ARMMachineFunctionInfo.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
+#include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
+
+cl::opt<bool>
+SpillAlignedNEONRegs("align-neon-spills", cl::Hidden,
+                     cl::desc("Align ARM NEON spills in prolog and epilog"));
+
+static MachineBasicBlock::iterator
+skipAlignedDPRCS2Spills(MachineBasicBlock::iterator MI,
+                        unsigned NumAlignedDPRCS2Regs);
 
 /// hasFP - Return true if the specified function should have a dedicated frame
 /// pointer register.  This is true if the function has variable sized allocas
@@ -139,6 +149,7 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   // belongs to which callee-save spill areas.
   unsigned GPRCS1Size = 0, GPRCS2Size = 0, DPRCSSize = 0;
   int FramePtrSpillFI = 0;
+  int D8SpillFI = 0;
 
   // Allocate the vararg register save area. This is not counted in NumBytes.
   if (VARegSaveSize)
@@ -181,8 +192,13 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
       }
       break;
     default:
-      AFI->addDPRCalleeSavedAreaFrame(FI);
-      DPRCSSize += 8;
+      // This is a DPR. Exclude the aligned DPRCS2 spills.
+      if (Reg == ARM::D8)
+        D8SpillFI = FI;
+      if (Reg < ARM::D8 || Reg >= ARM::D8 + AFI->getNumAlignedDPRCS2Regs()) {
+        AFI->addDPRCalleeSavedAreaFrame(FI);
+        DPRCSSize += 8;
+      }
     }
   }
 
@@ -227,7 +243,17 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
       MBBI++;
   }
 
-  NumBytes = DPRCSOffset;
+  // Move past the aligned DPRCS2 area.
+  if (AFI->getNumAlignedDPRCS2Regs() > 0) {
+    MBBI = skipAlignedDPRCS2Spills(MBBI, AFI->getNumAlignedDPRCS2Regs());
+    // The code inserted by emitAlignedDPRCS2Spills realigns the stack, and
+    // leaves the stack pointer pointing to the DPRCS2 area.
+    //
+    // Adjust NumBytes to represent the stack slots below the DPRCS2 area.
+    NumBytes += MFI->getObjectOffset(D8SpillFI);
+  } else
+    NumBytes = DPRCSOffset;
+
   if (NumBytes) {
     // Adjust SP after all the callee-save spills.
     emitSPUpdate(isARM, MBB, MBBI, dl, TII, -NumBytes,
@@ -254,7 +280,9 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   // If we need dynamic stack realignment, do it here. Be paranoid and make
   // sure if we also have VLAs, we have a base pointer for frame access.
-  if (RegInfo->needsStackRealignment(MF)) {
+  // If aligned NEON registers were sp[illed, the stack has already been
+  // realigned.
+  if (!AFI->getNumAlignedDPRCS2Regs() && RegInfo->needsStackRealignment(MF)) {
     unsigned MaxAlign = MFI->getMaxAlignment();
     assert (!AFI->isThumb1OnlyFunction());
     if (!AFI->isThumbFunction()) {
@@ -541,6 +569,7 @@ void ARMFrameLowering::emitPushInst(MachineBasicBlock &MBB,
                                     unsigned StmOpc, unsigned StrOpc,
                                     bool NoGap,
                                     bool(*Func)(unsigned, bool),
+                                    unsigned NumAlignedDPRCS2Regs,
                                     unsigned MIFlags) const {
   MachineFunction &MF = *MBB.getParent();
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
@@ -555,6 +584,10 @@ void ARMFrameLowering::emitPushInst(MachineBasicBlock &MBB,
     for (; i != 0; --i) {
       unsigned Reg = CSI[i-1].getReg();
       if (!(Func)(Reg, STI.isTargetDarwin())) continue;
+
+      // D-registers in the aligned area DPRCS2 are NOT spilled here.
+      if (Reg >= ARM::D8 && Reg < ARM::D8 + NumAlignedDPRCS2Regs)
+        continue;
 
       // Add the callee-saved register as live-in unless it's LR and
       // @llvm.returnaddress is called. If LR is returned for
@@ -604,7 +637,8 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
                                    const std::vector<CalleeSavedInfo> &CSI,
                                    unsigned LdmOpc, unsigned LdrOpc,
                                    bool isVarArg, bool NoGap,
-                                   bool(*Func)(unsigned, bool)) const {
+                                   bool(*Func)(unsigned, bool),
+                                   unsigned NumAlignedDPRCS2Regs) const {
   MachineFunction &MF = *MBB.getParent();
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
@@ -623,6 +657,10 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
     for (; i != 0; --i) {
       unsigned Reg = CSI[i-1].getReg();
       if (!(Func)(Reg, STI.isTargetDarwin())) continue;
+
+      // The aligned reloads from area DPRCS2 are not inserted here.
+      if (Reg >= ARM::D8 && Reg < ARM::D8 + NumAlignedDPRCS2Regs)
+        continue;
 
       if (Reg == ARM::LR && !isTailCall && !isVarArg && STI.hasV5TOps()) {
         Reg = ARM::PC;
@@ -676,6 +714,249 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
   }
 }
 
+/// Emit aligned spill instructions for NumAlignedDPRCS2Regs D-registers
+/// starting from d8.  It is assumed that the stack will be realigned before
+/// these instructions are executed.
+static void emitAlignedDPRCS2Spills(MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator MI,
+                                    unsigned NumAlignedDPRCS2Regs,
+                                    const std::vector<CalleeSavedInfo> &CSI,
+                                    const TargetRegisterInfo *TRI) {
+  MachineFunction &MF = *MBB.getParent();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  DebugLoc DL = MI->getDebugLoc();
+  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+  MachineFrameInfo &MFI = *MF.getFrameInfo();
+
+  // Mark the D-register spill slots as properly aligned.  Since MFI computes
+  // stack slot layout backwards, this can actually mean that the d-reg stack
+  // slot offsets can be wrong. The offset for d8 will always be correct.
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+    unsigned DNum = CSI[i].getReg() - ARM::D8;
+    if (DNum >= 8)
+      continue;
+    int FI = CSI[i].getFrameIdx();
+    // The even-numbered registers will be 16-byte aligned, the odd-numbered
+    // registers will be 8-byte aligned.
+    MFI.setObjectAlignment(FI, DNum % 2 ? 8 : 16);
+
+    // The stack slot for D8 needs to be maximally aligned because this is
+    // actually the point where we align the stack pointer.  MachineFrameInfo
+    // computes all offsets relative to the incoming stack pointer which is a
+    // bit weird when realigning the stack.  Any extra padding for this
+    // over-alignment is not realized because the code inserted below adjusts
+    // the stack pointer by numregs * 8 before aligning the stack pointer.
+    if (DNum == 0)
+      MFI.setObjectAlignment(FI, MFI.getMaxAlignment());
+  }
+
+  // Move the stack pointer to the d8 spill slot, and align it at the same
+  // time. Leave the stack slot address in the scratch register r4.
+  //
+  //   sub r4, sp, #numregs * 8
+  //   bic r4, r4, #align - 1
+  //   mov sp, r4
+  //
+  bool isThumb = AFI->isThumbFunction();
+  assert(!AFI->isThumb1OnlyFunction() && "Can't realign stack for thumb1");
+  AFI->setShouldRestoreSPFromFP(true);
+
+  // sub r4, sp, #numregs * 8
+  // The immediate is <= 64, so it doesn't need any special encoding.
+  unsigned Opc = isThumb ? ARM::t2SUBri : ARM::SUBri;
+  AddDefaultCC(AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(Opc), ARM::R4)
+                              .addReg(ARM::SP)
+                              .addImm(8 * NumAlignedDPRCS2Regs)));
+
+  // bic r4, r4, #align-1
+  Opc = isThumb ? ARM::t2BICri : ARM::BICri;
+  unsigned MaxAlign = MF.getFrameInfo()->getMaxAlignment();
+  AddDefaultCC(AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(Opc), ARM::R4)
+                              .addReg(ARM::R4, RegState::Kill)
+                              .addImm(MaxAlign - 1)));
+
+  // mov sp, r4
+  // The stack pointer must be adjusted before spilling anything, otherwise
+  // the stack slots could be clobbered by an interrupt handler.
+  // Leave r4 live, it is used below.
+  Opc = isThumb ? ARM::tMOVr : ARM::MOVr;
+  MachineInstrBuilder MIB = BuildMI(MBB, MI, DL, TII.get(Opc), ARM::SP)
+                            .addReg(ARM::R4);
+  MIB = AddDefaultPred(MIB);
+  if (!isThumb)
+    AddDefaultCC(MIB);
+
+  // Now spill NumAlignedDPRCS2Regs registers starting from d8.
+  // r4 holds the stack slot address.
+  unsigned NextReg = ARM::D8;
+
+  // 16-byte aligned vst1.64 with 4 d-regs and address writeback.
+  // The writeback is only needed when emitting two vst1.64 instructions.
+  if (NumAlignedDPRCS2Regs >= 6) {
+    unsigned SupReg = TRI->getMatchingSuperReg(NextReg, ARM::dsub_0,
+                                               ARM::QQPRRegisterClass);
+    MBB.addLiveIn(SupReg);
+    AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(ARM::VST1d64Qwb_fixed),
+                           ARM::R4)
+                   .addReg(ARM::R4, RegState::Kill).addImm(16)
+                   .addReg(NextReg)
+                   .addReg(SupReg, RegState::ImplicitKill));
+    NextReg += 4;
+    NumAlignedDPRCS2Regs -= 4;
+  }
+
+  // We won't modify r4 beyond this point.  It currently points to the next
+  // register to be spilled.
+  unsigned R4BaseReg = NextReg;
+
+  // 16-byte aligned vst1.64 with 4 d-regs, no writeback.
+  if (NumAlignedDPRCS2Regs >= 4) {
+    unsigned SupReg = TRI->getMatchingSuperReg(NextReg, ARM::dsub_0,
+                                               ARM::QQPRRegisterClass);
+    MBB.addLiveIn(SupReg);
+    AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(ARM::VST1d64Q))
+                   .addReg(ARM::R4).addImm(16).addReg(NextReg)
+                   .addReg(SupReg, RegState::ImplicitKill));
+    NextReg += 4;
+    NumAlignedDPRCS2Regs -= 4;
+  }
+
+  // 16-byte aligned vst1.64 with 2 d-regs.
+  if (NumAlignedDPRCS2Regs >= 2) {
+    unsigned SupReg = TRI->getMatchingSuperReg(NextReg, ARM::dsub_0,
+                                               ARM::QPRRegisterClass);
+    MBB.addLiveIn(SupReg);
+    AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(ARM::VST1q64))
+                   .addReg(ARM::R4).addImm(16).addReg(NextReg)
+                   .addReg(SupReg, RegState::ImplicitKill));
+    NextReg += 2;
+    NumAlignedDPRCS2Regs -= 2;
+  }
+
+  // Finally, use a vanilla vstr.64 for the odd last register.
+  if (NumAlignedDPRCS2Regs) {
+    MBB.addLiveIn(NextReg);
+    // vstr.64 uses addrmode5 which has an offset scale of 4.
+    AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(ARM::VSTRD))
+                   .addReg(NextReg)
+                   .addReg(ARM::R4).addImm((NextReg-R4BaseReg)*2));
+  }
+
+  // The last spill instruction inserted should kill the scratch register r4.
+  llvm::prior(MI)->addRegisterKilled(ARM::R4, TRI);
+}
+
+/// Skip past the code inserted by emitAlignedDPRCS2Spills, and return an
+/// iterator to the following instruction.
+static MachineBasicBlock::iterator
+skipAlignedDPRCS2Spills(MachineBasicBlock::iterator MI,
+                        unsigned NumAlignedDPRCS2Regs) {
+  //   sub r4, sp, #numregs * 8
+  //   bic r4, r4, #align - 1
+  //   mov sp, r4
+  ++MI; ++MI; ++MI;
+  assert(MI->mayStore() && "Expecting spill instruction");
+
+  // These switches all fall through.
+  switch(NumAlignedDPRCS2Regs) {
+  case 7:
+    ++MI;
+    assert(MI->mayStore() && "Expecting spill instruction");
+  default:
+    ++MI;
+    assert(MI->mayStore() && "Expecting spill instruction");
+  case 1:
+  case 2:
+  case 4:
+    assert(MI->killsRegister(ARM::R4) && "Missed kill flag");
+    ++MI;
+  }
+  return MI;
+}
+
+/// Emit aligned reload instructions for NumAlignedDPRCS2Regs D-registers
+/// starting from d8.  These instructions are assumed to execute while the
+/// stack is still aligned, unlike the code inserted by emitPopInst.
+static void emitAlignedDPRCS2Restores(MachineBasicBlock &MBB,
+                                      MachineBasicBlock::iterator MI,
+                                      unsigned NumAlignedDPRCS2Regs,
+                                      const std::vector<CalleeSavedInfo> &CSI,
+                                      const TargetRegisterInfo *TRI) {
+  MachineFunction &MF = *MBB.getParent();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  DebugLoc DL = MI->getDebugLoc();
+  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+
+  // Find the frame index assigned to d8.
+  int D8SpillFI = 0;
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i)
+    if (CSI[i].getReg() == ARM::D8) {
+      D8SpillFI = CSI[i].getFrameIdx();
+      break;
+    }
+
+  // Materialize the address of the d8 spill slot into the scratch register r4.
+  // This can be fairly complicated if the stack frame is large, so just use
+  // the normal frame index elimination mechanism to do it.  This code runs as
+  // the initial part of the epilog where the stack and base pointers haven't
+  // been changed yet.
+  bool isThumb = AFI->isThumbFunction();
+  assert(!AFI->isThumb1OnlyFunction() && "Can't realign stack for thumb1");
+
+  unsigned Opc = isThumb ? ARM::t2ADDri : ARM::ADDri;
+  AddDefaultCC(AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(Opc), ARM::R4)
+                              .addFrameIndex(D8SpillFI).addImm(0)));
+
+  // Now restore NumAlignedDPRCS2Regs registers starting from d8.
+  unsigned NextReg = ARM::D8;
+
+  // 16-byte aligned vld1.64 with 4 d-regs and writeback.
+  if (NumAlignedDPRCS2Regs >= 6) {
+    unsigned SupReg = TRI->getMatchingSuperReg(NextReg, ARM::dsub_0,
+                                               ARM::QQPRRegisterClass);
+    AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(ARM::VLD1d64Qwb_fixed), NextReg)
+                   .addReg(ARM::R4, RegState::Define)
+                   .addReg(ARM::R4, RegState::Kill).addImm(16)
+                   .addReg(SupReg, RegState::ImplicitDefine));
+    NextReg += 4;
+    NumAlignedDPRCS2Regs -= 4;
+  }
+
+  // We won't modify r4 beyond this point.  It currently points to the next
+  // register to be spilled.
+  unsigned R4BaseReg = NextReg;
+
+  // 16-byte aligned vld1.64 with 4 d-regs, no writeback.
+  if (NumAlignedDPRCS2Regs >= 4) {
+    unsigned SupReg = TRI->getMatchingSuperReg(NextReg, ARM::dsub_0,
+                                               ARM::QQPRRegisterClass);
+    AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(ARM::VLD1d64Q), NextReg)
+                   .addReg(ARM::R4).addImm(16)
+                   .addReg(SupReg, RegState::ImplicitDefine));
+    NextReg += 4;
+    NumAlignedDPRCS2Regs -= 4;
+  }
+
+  // 16-byte aligned vld1.64 with 2 d-regs.
+  if (NumAlignedDPRCS2Regs >= 2) {
+    unsigned SupReg = TRI->getMatchingSuperReg(NextReg, ARM::dsub_0,
+                                               ARM::QPRRegisterClass);
+    AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(ARM::VLD1q64), NextReg)
+                   .addReg(ARM::R4).addImm(16)
+                   .addReg(SupReg, RegState::ImplicitDefine));
+    NextReg += 2;
+    NumAlignedDPRCS2Regs -= 2;
+  }
+
+  // Finally, use a vanilla vldr.64 for the remaining odd register.
+  if (NumAlignedDPRCS2Regs)
+    AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(ARM::VLDRD), NextReg)
+                   .addReg(ARM::R4).addImm(2*(NextReg-R4BaseReg)));
+
+  // Last store kills r4.
+  llvm::prior(MI)->addRegisterKilled(ARM::R4, TRI);
+}
+
 bool ARMFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
                                         const std::vector<CalleeSavedInfo> &CSI,
@@ -690,12 +971,19 @@ bool ARMFrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   unsigned PushOneOpc = AFI->isThumbFunction() ?
     ARM::t2STR_PRE : ARM::STR_PRE_IMM;
   unsigned FltOpc = ARM::VSTMDDB_UPD;
-  emitPushInst(MBB, MI, CSI, PushOpc, PushOneOpc, false, &isARMArea1Register,
+  unsigned NumAlignedDPRCS2Regs = AFI->getNumAlignedDPRCS2Regs();
+  emitPushInst(MBB, MI, CSI, PushOpc, PushOneOpc, false, &isARMArea1Register, 0,
                MachineInstr::FrameSetup);
-  emitPushInst(MBB, MI, CSI, PushOpc, PushOneOpc, false, &isARMArea2Register,
+  emitPushInst(MBB, MI, CSI, PushOpc, PushOneOpc, false, &isARMArea2Register, 0,
                MachineInstr::FrameSetup);
   emitPushInst(MBB, MI, CSI, FltOpc, 0, true, &isARMArea3Register,
-               MachineInstr::FrameSetup);
+               NumAlignedDPRCS2Regs, MachineInstr::FrameSetup);
+
+  // The code above does not insert spill code for the aligned DPRCS2 registers.
+  // The stack realignment code will be inserted between the push instructions
+  // and these spills.
+  if (NumAlignedDPRCS2Regs)
+    emitAlignedDPRCS2Spills(MBB, MI, NumAlignedDPRCS2Regs, CSI, TRI);
 
   return true;
 }
@@ -710,15 +998,22 @@ bool ARMFrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   MachineFunction &MF = *MBB.getParent();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   bool isVarArg = AFI->getVarArgsRegSaveSize() > 0;
+  unsigned NumAlignedDPRCS2Regs = AFI->getNumAlignedDPRCS2Regs();
+
+  // The emitPopInst calls below do not insert reloads for the aligned DPRCS2
+  // registers. Do that here instead.
+  if (NumAlignedDPRCS2Regs)
+    emitAlignedDPRCS2Restores(MBB, MI, NumAlignedDPRCS2Regs, CSI, TRI);
 
   unsigned PopOpc = AFI->isThumbFunction() ? ARM::t2LDMIA_UPD : ARM::LDMIA_UPD;
   unsigned LdrOpc = AFI->isThumbFunction() ? ARM::t2LDR_POST :ARM::LDR_POST_IMM;
   unsigned FltOpc = ARM::VLDMDIA_UPD;
-  emitPopInst(MBB, MI, CSI, FltOpc, 0, isVarArg, true, &isARMArea3Register);
+  emitPopInst(MBB, MI, CSI, FltOpc, 0, isVarArg, true, &isARMArea3Register,
+              NumAlignedDPRCS2Regs);
   emitPopInst(MBB, MI, CSI, PopOpc, LdrOpc, isVarArg, false,
-              &isARMArea2Register);
+              &isARMArea2Register, 0);
   emitPopInst(MBB, MI, CSI, PopOpc, LdrOpc, isVarArg, false,
-              &isARMArea1Register);
+              &isARMArea1Register, 0);
 
   return true;
 }
@@ -842,6 +1137,55 @@ static unsigned estimateRSStackSizeLimit(MachineFunction &MF,
   return Limit;
 }
 
+// In functions that realign the stack, it can be an advantage to spill the
+// callee-saved vector registers after realigning the stack. The vst1 and vld1
+// instructions take alignment hints that can improve performance.
+//
+static void checkNumAlignedDPRCS2Regs(MachineFunction &MF) {
+  MF.getInfo<ARMFunctionInfo>()->setNumAlignedDPRCS2Regs(0);
+  if (!SpillAlignedNEONRegs)
+    return;
+
+  // Naked functions don't spill callee-saved registers.
+  if (MF.getFunction()->hasFnAttr(Attribute::Naked))
+    return;
+
+  // We are planning to use NEON instructions vst1 / vld1.
+  if (!MF.getTarget().getSubtarget<ARMSubtarget>().hasNEON())
+    return;
+
+  // Don't bother if the default stack alignment is sufficiently high.
+  if (MF.getTarget().getFrameLowering()->getStackAlignment() >= 8)
+    return;
+
+  // Aligned spills require stack realignment.
+  const ARMBaseRegisterInfo *RegInfo =
+    static_cast<const ARMBaseRegisterInfo*>(MF.getTarget().getRegisterInfo());
+  if (!RegInfo->canRealignStack(MF))
+    return;
+
+  // We always spill contiguous d-registers starting from d8. Count how many
+  // needs spilling.  The register allocator will almost always use the
+  // callee-saved registers in order, but it can happen that there are holes in
+  // the range.  Registers above the hole will be spilled to the standard DPRCS
+  // area.
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+  unsigned NumSpills = 0;
+  for (; NumSpills < 8; ++NumSpills)
+    if (!MRI.isPhysRegOrOverlapUsed(ARM::D8 + NumSpills))
+      break;
+
+  // Don't do this for just one d-register. It's not worth it.
+  if (NumSpills < 2)
+    return;
+
+  // Spill the first NumSpills D-registers after realigning the stack.
+  MF.getInfo<ARMFunctionInfo>()->setNumAlignedDPRCS2Regs(NumSpills);
+
+  // A scratch register is required for the vst1 / vld1 instructions.
+  MF.getRegInfo().setPhysRegUsed(ARM::R4);
+}
+
 void
 ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                                        RegScavenger *RS) const {
@@ -887,6 +1231,9 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     if (MFI->hasVarSizedObjects() || StackSize > 508)
       MF.getRegInfo().setPhysRegUsed(ARM::R4);
   }
+
+  // See if we can spill vector registers to aligned stack.
+  checkNumAlignedDPRCS2Regs(MF);
 
   // Spill the BasePtr if it's used.
   if (RegInfo->hasBasePointer(MF))
