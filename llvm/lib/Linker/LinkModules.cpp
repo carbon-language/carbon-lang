@@ -890,7 +890,7 @@ void ModuleLinker::linkFunctionBody(Function *Dst, Function *Src) {
   } else {
     // Clone the body of the function into the dest function.
     SmallVector<ReturnInst*, 8> Returns; // Ignore returns.
-    CloneFunctionInto(Dst, Src, ValueMap, false, Returns);
+    CloneFunctionInto(Dst, Src, ValueMap, false, Returns, "", NULL, &TypeMap);
   }
   
   // There is no need to map the arguments anymore.

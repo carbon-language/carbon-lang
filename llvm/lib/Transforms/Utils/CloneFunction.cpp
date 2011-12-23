@@ -75,7 +75,8 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
                              ValueToValueMapTy &VMap,
                              bool ModuleLevelChanges,
                              SmallVectorImpl<ReturnInst*> &Returns,
-                             const char *NameSuffix, ClonedCodeInfo *CodeInfo) {
+                             const char *NameSuffix, ClonedCodeInfo *CodeInfo,
+                             ValueMapTypeRemapper *TypeMapper) {
   assert(NameSuffix && "NameSuffix cannot be null!");
 
 #ifndef NDEBUG
@@ -141,7 +142,8 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
     // Loop over all instructions, fixing each one as we find it...
     for (BasicBlock::iterator II = BB->begin(); II != BB->end(); ++II)
       RemapInstruction(II, VMap,
-                       ModuleLevelChanges ? RF_None : RF_NoModuleLevelChanges);
+                       ModuleLevelChanges ? RF_None : RF_NoModuleLevelChanges,
+                       TypeMapper);
 }
 
 /// CloneFunction - Return a copy of the specified function, but without

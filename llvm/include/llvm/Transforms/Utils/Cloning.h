@@ -134,8 +134,8 @@ inline Function *CloneFunction(const Function *F, ClonedCodeInfo *CodeInfo = 0){
 /// Clone OldFunc into NewFunc, transforming the old arguments into references
 /// to VMap values.  Note that if NewFunc already has basic blocks, the ones
 /// cloned into it will be added to the end of the function.  This function
-/// fills in a list of return instructions, and can optionally append the
-/// specified suffix to all values cloned.
+/// fills in a list of return instructions, and can optionally remap types
+/// and/or append the specified suffix to all values cloned.
 ///
 /// If ModuleLevelChanges is false, VMap contains no non-identity GlobalValue
 /// mappings.
@@ -145,7 +145,8 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
                        bool ModuleLevelChanges,
                        SmallVectorImpl<ReturnInst*> &Returns,
                        const char *NameSuffix = "", 
-                       ClonedCodeInfo *CodeInfo = 0);
+                       ClonedCodeInfo *CodeInfo = 0,
+                       ValueMapTypeRemapper *TypeMapper = 0);
 
 /// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,
 /// except that it does some simple constant prop and DCE on the fly.  The
