@@ -28,3 +28,11 @@ class DebuggerAPITestCase(TestBase):
         self.dbg.SetPrompt(None)
         self.dbg.SetCurrentPlatform(None)
         self.dbg.SetCurrentPlatformSDKRoot(None)
+
+    @python_api_test
+    def test_debugger_delete_invalid_target(self):
+        """SBDebugger.DeleteTarget() should not crash LLDB given and invalid target."""
+        target = lldb.SBTarget()
+        self.assertFalse(target.IsValid())
+        self.dbg.DeleteTarget(target)
+        

@@ -616,7 +616,7 @@ bool
 SBDebugger::DeleteTarget (lldb::SBTarget &target)
 {
     bool result = false;
-    if (m_opaque_sp)
+    if (m_opaque_sp && target.IsValid())
     {
         // No need to lock, the target list is thread safe
         result = m_opaque_sp->GetTargetList().DeleteTarget (target.m_opaque_sp);
