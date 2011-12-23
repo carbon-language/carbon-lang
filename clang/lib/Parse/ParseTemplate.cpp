@@ -31,8 +31,9 @@ Parser::ParseDeclarationStartingWithTemplate(unsigned Context,
   ObjCDeclContextSwitch ObjCDC(*this);
   
   if (Tok.is(tok::kw_template) && NextToken().isNot(tok::less)) {
-    return ParseExplicitInstantiation(SourceLocation(), ConsumeToken(),
-                                           DeclEnd);
+    return ParseExplicitInstantiation(Context,
+                                      SourceLocation(), ConsumeToken(),
+                                      DeclEnd, AS);
   }
   return ParseTemplateDeclarationOrSpecialization(Context, DeclEnd, AS,
                                                   AccessAttrs);
@@ -1107,17 +1108,19 @@ Parser::ParseTemplateArgumentList(TemplateArgList &TemplateArgs) {
 ///         'extern' [opt] 'template' declaration
 ///
 /// Note that the 'extern' is a GNU extension and C++0x feature.
-Decl *Parser::ParseExplicitInstantiation(SourceLocation ExternLoc,
+Decl *Parser::ParseExplicitInstantiation(unsigned Context,
+                                         SourceLocation ExternLoc,
                                          SourceLocation TemplateLoc,
-                                         SourceLocation &DeclEnd) {
+                                         SourceLocation &DeclEnd,
+                                         AccessSpecifier AS) {
   // This isn't really required here.
   ParsingDeclRAIIObject ParsingTemplateParams(*this);
 
-  return ParseSingleDeclarationAfterTemplate(Declarator::FileContext,
+  return ParseSingleDeclarationAfterTemplate(Context,
                                              ParsedTemplateInfo(ExternLoc,
                                                                 TemplateLoc),
                                              ParsingTemplateParams,
-                                             DeclEnd, AS_none);
+                                             DeclEnd, AS);
 }
 
 SourceRange Parser::ParsedTemplateInfo::getSourceRange() const {

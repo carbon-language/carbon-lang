@@ -2119,9 +2119,11 @@ private:
   bool ParseTemplateArgumentList(TemplateArgList &TemplateArgs);
   ParsedTemplateArgument ParseTemplateTemplateArgument();
   ParsedTemplateArgument ParseTemplateArgument();
-  Decl *ParseExplicitInstantiation(SourceLocation ExternLoc,
-                                        SourceLocation TemplateLoc,
-                                        SourceLocation &DeclEnd);
+  Decl *ParseExplicitInstantiation(unsigned Context,
+                                   SourceLocation ExternLoc,
+                                   SourceLocation TemplateLoc,
+                                   SourceLocation &DeclEnd,
+                                   AccessSpecifier AS = AS_none);
 
   //===--------------------------------------------------------------------===//
   // Modules

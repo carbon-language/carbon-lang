@@ -97,3 +97,11 @@ namespace PR7622 {
   // expected-error{{expected member name or ';' after declaration specifiers}}
   template struct basic_streambuf<int>;
 }
+
+// Test that we do not crash.
+class TC1 {
+  class TC2 {
+    template // FIXME: error here.
+    void foo() { }
+   };
+};
