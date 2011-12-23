@@ -65,23 +65,23 @@ LANGSTANDARD(gnu9x, "gnu9x",
 // C11 modes
 LANGSTANDARD(c11, "c11",
              "ISO C 2011",
-             BCPLComment | C99 | C1X | Digraphs | HexFloat)
+             BCPLComment | C99 | C11 | Digraphs | HexFloat)
 LANGSTANDARD(c1x, "c1x",
              "ISO C 2011",
-             BCPLComment | C99 | C1X | Digraphs | HexFloat)
+             BCPLComment | C99 | C11 | Digraphs | HexFloat)
 LANGSTANDARD(iso9899_2011,
              "iso9899:2011", "ISO C 2011",
-             BCPLComment | C99 | C1X | Digraphs | HexFloat)
+             BCPLComment | C99 | C11 | Digraphs | HexFloat)
 LANGSTANDARD(iso9899_201x,
              "iso9899:2011", "ISO C 2011",
-             BCPLComment | C99 | C1X | Digraphs | HexFloat)
+             BCPLComment | C99 | C11 | Digraphs | HexFloat)
 
 LANGSTANDARD(gnu11, "gnu11",
              "ISO C 2011 with GNU extensions",
-             BCPLComment | C99 | C1X | Digraphs | GNUMode | HexFloat)
+             BCPLComment | C99 | C11 | Digraphs | GNUMode | HexFloat)
 LANGSTANDARD(gnu1x, "gnu1x",
              "ISO C 2011 with GNU extensions",
-             BCPLComment | C99 | C1X | Digraphs | GNUMode | HexFloat)
+             BCPLComment | C99 | C11 | Digraphs | GNUMode | HexFloat)
 
 // C++ modes
 LANGSTANDARD(cxx98, "c++98",

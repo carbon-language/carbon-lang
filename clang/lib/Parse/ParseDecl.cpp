@@ -883,7 +883,7 @@ void Parser::DiagnoseProhibitedAttributes(ParsedAttributesWithRange &attrs) {
 /// [C++]   namespace-definition
 /// [C++]   using-directive
 /// [C++]   using-declaration
-/// [C++0x/C1X] static_assert-declaration
+/// [C++0x/C11] static_assert-declaration
 ///         others... [FIXME]
 ///
 Parser::DeclGroupPtrTy Parser::ParseDeclaration(StmtVector &Stmts,
@@ -1566,8 +1566,8 @@ Parser::getDeclSpecContextFromDeclaratorContext(unsigned Context) {
 /// FIXME: Simply returns an alignof() expression if the argument is a
 /// type. Ideally, the type should be propagated directly into Sema.
 ///
-/// [C1X]   type-id
-/// [C1X]   constant-expression
+/// [C11]   type-id
+/// [C11]   constant-expression
 /// [C++0x] type-id ...[opt]
 /// [C++0x] assignment-expression ...[opt]
 ExprResult Parser::ParseAlignArgument(SourceLocation Start,
@@ -1592,8 +1592,8 @@ ExprResult Parser::ParseAlignArgument(SourceLocation Start,
 /// attribute to Attrs.
 ///
 /// alignment-specifier:
-/// [C1X]   '_Alignas' '(' type-id ')'
-/// [C1X]   '_Alignas' '(' constant-expression ')'
+/// [C11]   '_Alignas' '(' type-id ')'
+/// [C11]   '_Alignas' '(' constant-expression ')'
 /// [C++0x] 'alignas' '(' type-id ...[opt] ')'
 /// [C++0x] 'alignas' '(' assignment-expression ...[opt] ')'
 void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
@@ -1636,7 +1636,7 @@ void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
 ///         storage-class-specifier declaration-specifiers[opt]
 ///         type-specifier declaration-specifiers[opt]
 /// [C99]   function-specifier declaration-specifiers[opt]
-/// [C1X]   alignment-specifier declaration-specifiers[opt]
+/// [C11]   alignment-specifier declaration-specifiers[opt]
 /// [GNU]   attributes declaration-specifiers[opt]
 /// [Clang] '__module_private__' declaration-specifiers[opt]
 ///
@@ -2085,8 +2085,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
     // alignment-specifier
     case tok::kw__Alignas:
-      if (!getLang().C1X)
-        Diag(Tok, diag::ext_c1x_alignas);
+      if (!getLang().C11)
+        Diag(Tok, diag::ext_c11_alignas);
       ParseAlignmentSpecifier(DS.getAttributes());
       continue;
 
@@ -3341,7 +3341,7 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw_private:
     return getLang().OpenCL;
 
-  // C1x _Atomic()
+  // C11 _Atomic()
   case tok::kw__Atomic:
     return true;
   }
@@ -3465,7 +3465,7 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   case tok::annot_decltype:
     return true;
 
-    // C1x _Atomic()
+    // C11 _Atomic()
   case tok::kw__Atomic:
     return true;
 
@@ -4670,7 +4670,7 @@ void Parser::ParseTypeofSpecifier(DeclSpec &DS) {
     Diag(StartLoc, DiagID) << PrevSpec;
 }
 
-/// [C1X]   atomic-specifier:
+/// [C11]   atomic-specifier:
 ///           _Atomic ( type-name )
 ///
 void Parser::ParseAtomicSpecifier(DeclSpec &DS) {

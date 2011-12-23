@@ -1615,7 +1615,7 @@ void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
   const LangStandard &Std = LangStandard::getLangStandardForKind(LangStd);
   Opts.BCPLComment = Std.hasBCPLComments();
   Opts.C99 = Std.isC99();
-  Opts.C1X = Std.isC1X();
+  Opts.C11 = Std.isC11();
   Opts.CPlusPlus = Std.isCPlusPlus();
   Opts.CPlusPlus0x = Std.isCPlusPlus0x();
   Opts.Digraphs = Std.hasDigraphs();

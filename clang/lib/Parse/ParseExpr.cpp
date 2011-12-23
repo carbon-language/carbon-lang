@@ -466,7 +466,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 /// [C++]   boolean-literal  [C++ 2.13.5]
 /// [C++0x] 'nullptr'        [C++0x 2.14.7]
 ///         '(' expression ')'
-/// [C1X]   generic-selection
+/// [C11]   generic-selection
 ///         '__func__'        [C99 6.4.2.2]
 /// [GNU]   '__FUNCTION__'
 /// [GNU]   '__PRETTY_FUNCTION__'
@@ -794,7 +794,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::utf32_string_literal:
     Res = ParseStringLiteralExpression();
     break;
-  case tok::kw__Generic:   // primary-expression: generic-selection [C1X 6.5.1]
+  case tok::kw__Generic:   // primary-expression: generic-selection [C11 6.5.1]
     Res = ParseGenericSelectionExpression();
     break;
   case tok::kw___builtin_va_arg:
@@ -2050,8 +2050,8 @@ ExprResult Parser::ParseStringLiteralExpression() {
   return Actions.ActOnStringLiteral(&StringToks[0], StringToks.size());
 }
 
-/// ParseGenericSelectionExpression - Parse a C1X generic-selection
-/// [C1X 6.5.1.1].
+/// ParseGenericSelectionExpression - Parse a C11 generic-selection
+/// [C11 6.5.1.1].
 ///
 ///    generic-selection:
 ///           _Generic ( assignment-expression , generic-assoc-list )
@@ -2065,8 +2065,8 @@ ExprResult Parser::ParseGenericSelectionExpression() {
   assert(Tok.is(tok::kw__Generic) && "_Generic keyword expected");
   SourceLocation KeyLoc = ConsumeToken();
 
-  if (!getLang().C1X)
-    Diag(KeyLoc, diag::ext_c1x_generic_selection);
+  if (!getLang().C11)
+    Diag(KeyLoc, diag::ext_c11_generic_selection);
 
   BalancedDelimiterTracker T(*this, tok::l_paren);
   if (T.expectAndConsume(diag::err_expected_lparen))
@@ -2074,7 +2074,7 @@ ExprResult Parser::ParseGenericSelectionExpression() {
 
   ExprResult ControllingExpr;
   {
-    // C1X 6.5.1.1p3 "The controlling expression of a generic selection is
+    // C11 6.5.1.1p3 "The controlling expression of a generic selection is
     // not evaluated."
     EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
     ControllingExpr = ParseAssignmentExpression();
@@ -2095,7 +2095,7 @@ ExprResult Parser::ParseGenericSelectionExpression() {
   while (1) {
     ParsedType Ty;
     if (Tok.is(tok::kw_default)) {
-      // C1X 6.5.1.1p2 "A generic selection shall have no more than one default
+      // C11 6.5.1.1p2 "A generic selection shall have no more than one default
       // generic association."
       if (!DefaultLoc.isInvalid()) {
         Diag(Tok, diag::err_duplicate_default_assoc);

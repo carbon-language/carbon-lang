@@ -1015,7 +1015,7 @@ Sema::CreateGenericSelectionExpr(SourceLocation KeyLoc,
       if (Types[i]->getType()->isDependentType()) {
         IsResultDependent = true;
       } else {
-        // C1X 6.5.1.1p2 "The type name in a generic association shall specify a
+        // C11 6.5.1.1p2 "The type name in a generic association shall specify a
         // complete object type other than a variably modified type."
         unsigned D = 0;
         if (Types[i]->getType()->isIncompleteType())
@@ -1032,7 +1032,7 @@ Sema::CreateGenericSelectionExpr(SourceLocation KeyLoc,
           TypeErrorFound = true;
         }
 
-        // C1X 6.5.1.1p2 "No two generic associations in the same generic
+        // C11 6.5.1.1p2 "No two generic associations in the same generic
         // selection shall specify compatible types."
         for (unsigned j = i+1; j < NumAssocs; ++j)
           if (Types[j] && !Types[j]->getType()->isDependentType() &&
@@ -1073,7 +1073,7 @@ Sema::CreateGenericSelectionExpr(SourceLocation KeyLoc,
       CompatIndices.push_back(i);
   }
 
-  // C1X 6.5.1.1p2 "The controlling expression of a generic selection shall have
+  // C11 6.5.1.1p2 "The controlling expression of a generic selection shall have
   // type compatible with at most one of the types named in its generic
   // association list."
   if (CompatIndices.size() > 1) {
@@ -1093,7 +1093,7 @@ Sema::CreateGenericSelectionExpr(SourceLocation KeyLoc,
     return ExprError();
   }
 
-  // C1X 6.5.1.1p2 "If a generic selection has no default generic association,
+  // C11 6.5.1.1p2 "If a generic selection has no default generic association,
   // its controlling expression shall have type compatible with exactly one of
   // the types named in its generic association list."
   if (DefaultIndex == -1U && CompatIndices.size() == 0) {
@@ -1105,7 +1105,7 @@ Sema::CreateGenericSelectionExpr(SourceLocation KeyLoc,
     return ExprError();
   }
 
-  // C1X 6.5.1.1p3 "If a generic selection has a generic association with a
+  // C11 6.5.1.1p3 "If a generic selection has a generic association with a
   // type name that is compatible with the type of the controlling expression,
   // then the result expression of the generic selection is the expression
   // in that generic association. Otherwise, the result expression of the

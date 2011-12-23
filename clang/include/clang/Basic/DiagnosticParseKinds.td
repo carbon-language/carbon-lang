@@ -79,15 +79,15 @@ def warn_microsoft_dependent_exists : Warning<
   "dependent %select{__if_not_exists|__if_exists}0 declarations are ignored">, 
   InGroup<DiagGroup<"microsoft-exists">>;
 
-def ext_c1x_generic_selection : Extension<
-  "generic selections are a C1X-specific feature">, InGroup<C1X>;
+def ext_c11_generic_selection : Extension<
+  "generic selections are a C11-specific feature">, InGroup<C11>;
 def err_duplicate_default_assoc : Error<
   "duplicate default generic association">;
 def note_previous_default_assoc : Note<
   "previous default generic association is here">;
 
-def ext_c1x_alignas : Extension<
-  "_Alignas is a C1X-specific feature">, InGroup<C1X>;
+def ext_c11_alignas : Extension<
+  "_Alignas is a C11-specific feature">, InGroup<C11>;
 
 def ext_gnu_indirect_goto : Extension<
   "use of GNU indirect-goto extension">, InGroup<GNU>;
@@ -304,8 +304,8 @@ def err_unexected_colon_in_nested_name_spec : Error<
   "unexpected ':' in nested name specifier">;
 def err_bool_redeclaration : Error<
   "redeclaration of C++ built-in type 'bool'">;
-def ext_c1x_static_assert : Extension<
-  "_Static_assert is a C1X-specific feature">, InGroup<C1X>;
+def ext_c11_static_assert : Extension<
+  "_Static_assert is a C11-specific feature">, InGroup<C11>;
 def warn_cxx98_compat_static_assert : Warning<
   "static_assert declarations are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;

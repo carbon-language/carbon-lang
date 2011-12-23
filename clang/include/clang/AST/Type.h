@@ -1455,7 +1455,7 @@ public:
   bool isCARCBridgableType() const;
   bool isTemplateTypeParmType() const;          // C++ template type parameter
   bool isNullPtrType() const;                   // C++0x nullptr_t
-  bool isAtomicType() const;                    // C1X _Atomic()
+  bool isAtomicType() const;                    // C11 _Atomic()
 
   /// Determines if this type, which must satisfy
   /// isObjCLifetimeType(), is implicitly __unsafe_unretained rather

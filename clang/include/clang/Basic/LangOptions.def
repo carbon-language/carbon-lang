@@ -42,7 +42,7 @@
 #endif
 
 LANGOPT(C99               , 1, 0, "C99")
-LANGOPT(C1X               , 1, 0, "C1X")
+LANGOPT(C11               , 1, 0, "C11")
 LANGOPT(MicrosoftExt      , 1, 0, "Microsoft extensions")
 LANGOPT(MicrosoftMode     , 1, 0, "Microsoft compatibility mode")
 LANGOPT(Borland           , 1, 0, "Borland extensions")

@@ -343,8 +343,8 @@ def : DiagGroup<"c++0x-extensions", [CXX11]>;
 def DelegatingCtorCycles :
   DiagGroup<"delegating-ctor-cycles">;
 
-// A warning group for warnings about using C1X features as extensions.
-def C1X : DiagGroup<"c1x-extensions">;
+// A warning group for warnings about using C11 features as extensions.
+def C11 : DiagGroup<"c11-extensions">;
 
 // A warning group for warnings about using C99 features as extensions.
 def C99 : DiagGroup<"c99-extensions">;

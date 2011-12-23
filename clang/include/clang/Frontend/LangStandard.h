@@ -21,7 +21,7 @@ enum LangFeatures {
   BCPLComment = (1 << 0),
   C89 = (1 << 1),
   C99 = (1 << 2),
-  C1X = (1 << 3),
+  C11 = (1 << 3),
   CPlusPlus = (1 << 4),
   CPlusPlus0x = (1 << 5),
   Digraphs = (1 << 6),
@@ -62,8 +62,8 @@ public:
   /// isC99 - Language is a superset of C99.
   bool isC99() const { return Flags & frontend::C99; }
 
-  /// isC1X - Language is a superset of C1X.
-  bool isC1X() const { return Flags & frontend::C1X; }
+  /// isC11 - Language is a superset of C11.
+  bool isC11() const { return Flags & frontend::C11; }
 
   /// isCPlusPlus - Language is a C++ variant.
   bool isCPlusPlus() const { return Flags & frontend::CPlusPlus; }

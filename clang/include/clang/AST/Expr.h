@@ -3948,9 +3948,9 @@ public:
 };
 
 
-/// \brief Represents a C1X generic selection.
+/// \brief Represents a C11 generic selection.
 ///
-/// A generic selection (C1X 6.5.1.1) contains an unevaluated controlling
+/// A generic selection (C11 6.5.1.1) contains an unevaluated controlling
 /// expression, followed by one or more generic associations.  Each generic
 /// association specifies a type name and an expression, or "default" and an
 /// expression (in which case it is known as a default generic association).

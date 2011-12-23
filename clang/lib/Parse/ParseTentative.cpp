@@ -1046,7 +1046,7 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   case tok::kw___underlying_type:
     return TPResult::True();
 
-  // C1x _Atomic
+  // C11 _Atomic
   case tok::kw__Atomic:
     return TPResult::True();
 

@@ -621,10 +621,10 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("ownership_returns", true)
            .Case("ownership_takes", true)
            .Case("arc_cf_code_audited", true)
-           // C1X features
-           .Case("c_alignas", LangOpts.C1X)
-           .Case("c_generic_selections", LangOpts.C1X)
-           .Case("c_static_assert", LangOpts.C1X)
+           // C11 features
+           .Case("c_alignas", LangOpts.C11)
+           .Case("c_generic_selections", LangOpts.C11)
+           .Case("c_static_assert", LangOpts.C11)
            // C++0x features
            .Case("cxx_access_control_sfinae", LangOpts.CPlusPlus0x)
            .Case("cxx_alias_templates", LangOpts.CPlusPlus0x)
@@ -718,7 +718,7 @@ static bool HasExtension(const Preprocessor &PP, const IdentifierInfo *II) {
   // Because we inherit the feature list from HasFeature, this string switch
   // must be less restrictive than HasFeature's.
   return llvm::StringSwitch<bool>(II->getName())
-           // C1X features supported by other languages as extensions.
+           // C11 features supported by other languages as extensions.
            .Case("c_alignas", true)
            .Case("c_generic_selections", true)
            .Case("c_static_assert", true)

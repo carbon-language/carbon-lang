@@ -1617,7 +1617,7 @@ enum CXCursorKind {
    */
   CXCursor_StmtExpr                      = 121,
 
-  /** \brief Represents a C1X generic selection.
+  /** \brief Represents a C11 generic selection.
    */
   CXCursor_GenericSelectionExpr          = 122,
 

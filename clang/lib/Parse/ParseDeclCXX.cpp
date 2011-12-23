@@ -573,20 +573,20 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
                                        IsTypeName, TypenameLoc);
 }
 
-/// ParseStaticAssertDeclaration - Parse C++0x or C1X static_assert-declaration.
+/// ParseStaticAssertDeclaration - Parse C++0x or C11 static_assert-declaration.
 ///
 /// [C++0x] static_assert-declaration:
 ///           static_assert ( constant-expression  ,  string-literal  ) ;
 ///
-/// [C1X]   static_assert-declaration:
+/// [C11]   static_assert-declaration:
 ///           _Static_assert ( constant-expression  ,  string-literal  ) ;
 ///
 Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
   assert((Tok.is(tok::kw_static_assert) || Tok.is(tok::kw__Static_assert)) &&
          "Not a static_assert declaration");
 
-  if (Tok.is(tok::kw__Static_assert) && !getLang().C1X)
-    Diag(Tok, diag::ext_c1x_static_assert);
+  if (Tok.is(tok::kw__Static_assert) && !getLang().C11)
+    Diag(Tok, diag::ext_c11_static_assert);
   if (Tok.is(tok::kw_static_assert))
     Diag(Tok, diag::warn_cxx98_compat_static_assert);
 
