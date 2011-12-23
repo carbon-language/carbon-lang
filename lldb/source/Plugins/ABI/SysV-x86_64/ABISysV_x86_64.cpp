@@ -838,7 +838,7 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread,
                         {
                             // We are at the beginning of one of the eightbytes, so check the next element (if any)
                             if (idx == num_children - 1)
-                                in_gpr = true;
+                                in_gpr = false;
                             else
                             {
                                 uint32_t next_field_bit_offset;
