@@ -915,7 +915,13 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread,
                         }
                     } 
                 }
+                
+                // These two tests are just sanity checks.  If I somehow get the
+                // type calculation wrong above it is better to just return nothing
+                // than to assert or crash.
                 if (!copy_from_extractor)
+                    return return_valobj_sp;
+                if (copy_from_offset + field_byte_width > copy_from_extractor->GetByteSize())
                     return return_valobj_sp;
                     
                 copy_from_extractor->CopyByteOrderedData (copy_from_offset, 
