@@ -342,7 +342,8 @@ static bool isTrivialLoopExitBlockHelper(Loop *L, BasicBlock *BB,
                                          BasicBlock *&ExitBB,
                                          std::set<BasicBlock*> &Visited) {
   if (!Visited.insert(BB).second) {
-    // Already visited. Without more analysis, this could indicate an infinte loop.
+    // Already visited. Without more analysis, this could indicate an infinite
+    // loop.
     return false;
   } else if (!L->contains(BB)) {
     // Otherwise, this is a loop exit, this is fine so long as this is the
