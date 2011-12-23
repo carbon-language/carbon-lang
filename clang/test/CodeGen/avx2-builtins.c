@@ -380,3 +380,38 @@ __m256 test_mm256_cvtepu32_epi64(__m128 a) {
   // CHECK: @llvm.x86.avx2.pmovzxdq
   return _mm256_cvtepu32_epi64(a);
 }
+
+__m256 test_mm256_mul_epi32(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.pmul.dq
+  return _mm256_mul_epi32(a, b);
+}
+
+__m256 test_mm256_mulhrs_epi16(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.pmul.hr.sw
+  return _mm256_mulhrs_epi16(a, b);
+}
+
+__m256 test_mm256_mulhi_epu16(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.pmulhu.w
+  return _mm256_mulhi_epu16(a, b);
+}
+
+__m256 test_mm256_mulhi_epi16(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.pmulh.w
+  return _mm256_mulhi_epi16(a, b);
+}
+
+__m256 test_mm256_mullo_epi16(__m256 a, __m256 b) {
+  // CHECK: mul <16 x i16>
+  return _mm256_mullo_epi16(a, b);
+}
+
+__m256 test_mm256_mullo_epi32(__m256 a, __m256 b) {
+  // CHECK: mul <8 x i32>
+  return _mm256_mullo_epi32(a, b);
+}
+
+__m256 test_mm256_mul_epu32(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.pmulu.dq
+  return _mm256_mul_epu32(a, b);
+}
