@@ -36,3 +36,16 @@ void *sel_registerName(const char *);
     return [super allocWithZone:zone];
 }
 @end
+
+@interface XNSArray
+{
+  Class isa;
+}
+@end
+
+@class XNSArray;
+
+@interface __NSArray0 : XNSArray
+@end
+
+@implementation __NSArray0 @end

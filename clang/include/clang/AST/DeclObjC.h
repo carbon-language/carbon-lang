@@ -814,7 +814,9 @@ public:
   }
 
   void setSuperClass(ObjCInterfaceDecl * superCls) { 
-    data().SuperClass = superCls; 
+    data().SuperClass = 
+      (superCls && superCls->hasDefinition()) ? superCls->getDefinition() 
+                                              : superCls; 
   }
 
   ObjCCategoryDecl* getCategoryList() const {

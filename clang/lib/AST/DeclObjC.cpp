@@ -1112,6 +1112,8 @@ ObjCCategoryImplDecl::Create(ASTContext &C, DeclContext *DC,
                              SourceLocation nameLoc,
                              SourceLocation atStartLoc,
                              SourceLocation CategoryNameLoc) {
+  if (ClassInterface && ClassInterface->hasDefinition())
+    ClassInterface = ClassInterface->getDefinition();
   return new (C) ObjCCategoryImplDecl(DC, Id, ClassInterface,
                                       nameLoc, atStartLoc, CategoryNameLoc);
 }
@@ -1196,6 +1198,8 @@ ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC,
                                ObjCInterfaceDecl *SuperDecl,
                                SourceLocation nameLoc,
                                SourceLocation atStartLoc) {
+  if (ClassInterface && ClassInterface->hasDefinition())
+    ClassInterface = ClassInterface->getDefinition();
   return new (C) ObjCImplementationDecl(DC, ClassInterface, SuperDecl,
                                         nameLoc, atStartLoc);
 }
