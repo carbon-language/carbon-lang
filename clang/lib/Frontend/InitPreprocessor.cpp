@@ -267,11 +267,8 @@ static void InitializeStandardPredefinedMacros(const TargetInfo &TI,
     Builder.defineMacro("__STDC_HOSTED__");
 
   if (!LangOpts.CPlusPlus) {
-    // FIXME: C1x doesn't have a defined version number yet, so pick something
-    // that is the minimum possible according to their placeholder scheme
-    // 201ymmL.
     if (LangOpts.C11)
-      Builder.defineMacro("__STDC_VERSION__", "201001L");
+      Builder.defineMacro("__STDC_VERSION__", "201112L");
     else if (LangOpts.C99)
       Builder.defineMacro("__STDC_VERSION__", "199901L");
     else if (!LangOpts.GNUMode && LangOpts.Digraphs)
