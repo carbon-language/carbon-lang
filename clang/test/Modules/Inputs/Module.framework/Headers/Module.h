@@ -1,3 +1,5 @@
+// expected-warning{{umbrella header}}
+
 #ifndef MODULE_H
 #define MODULE_H
 const char *getModuleVersion(void);

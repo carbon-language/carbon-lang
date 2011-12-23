@@ -18,7 +18,10 @@
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/PathV2.h"
+#include "llvm/ADT/StringSwitch.h"
 using namespace clang;
 
 PPCallbacks::~PPCallbacks() {}
@@ -199,6 +202,31 @@ void Preprocessor::EnterTokenStream(const Token *Toks, unsigned NumToks,
     CurLexerKind = CLK_TokenLexer;
 }
 
+/// \brief Compute the relative path that names the given file relative to
+/// the given directory.
+static void computeRelativePath(FileManager &FM, const DirectoryEntry *Dir,
+                                const FileEntry *File,
+                                llvm::SmallString<128> &Result) {
+  Result.clear();
+
+  StringRef FilePath = File->getDir()->getName();
+  StringRef Path = FilePath;
+  while (!Path.empty()) {
+    if (const DirectoryEntry *CurDir = FM.getDirectory(Path)) {
+      if (CurDir == Dir) {
+        Result = FilePath.substr(Path.size());
+        llvm::sys::path::append(Result, 
+                                llvm::sys::path::filename(File->getName()));
+        return;
+      }
+    }
+    
+    Path = llvm::sys::path::parent_path(Path);
+  }
+  
+  Result = File->getName();
+}
+
 /// HandleEndOfFile - This callback is invoked when the lexer hits the end of
 /// the current file.  This either returns the EOF token or pops a level off
 /// the include stack and keeps going.
@@ -316,6 +344,45 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
          I=WarnUnusedMacroLocs.begin(), E=WarnUnusedMacroLocs.end(); I!=E; ++I)
     Diag(*I, diag::pp_macro_not_used);
 
+  // If we are building a module that has an umbrella header, make sure that
+  // each of the headers within the directory covered by the umbrella header
+  // was actually included by the umbrella header.
+  if (Module *Mod = getCurrentModule()) {
+    if (Mod->getUmbrellaHeader()) {
+      SourceLocation StartLoc
+        = SourceMgr.getLocForStartOfFile(SourceMgr.getMainFileID());
+
+      if (getDiagnostics().getDiagnosticLevel(
+            diag::warn_uncovered_module_header, 
+            StartLoc) != DiagnosticsEngine::Ignored) {
+        typedef typename llvm::sys::fs::recursive_directory_iterator
+          recursive_directory_iterator;
+        const DirectoryEntry *Dir = Mod->getUmbrellaDir();
+        llvm::error_code EC;
+        for (recursive_directory_iterator Entry(Dir->getName(), EC), End;
+             Entry != End && !EC; Entry.increment(EC)) {
+          using llvm::StringSwitch;
+          
+          // Check whether this entry has an extension typically associated with 
+          // headers.
+          if (!StringSwitch<bool>(llvm::sys::path::extension(Entry->path()))
+              .Cases(".h", ".H", ".hh", ".hpp", true)
+              .Default(false))
+            continue;
+
+          if (const FileEntry *Header = getFileManager().getFile(Entry->path()))
+            if (!getSourceManager().hasFileInfo(Header)) {
+              // Find the 
+              llvm::SmallString<128> RelativePath;
+              computeRelativePath(FileMgr, Dir, Header, RelativePath);              
+              Diag(StartLoc, diag::warn_uncovered_module_header)
+                << RelativePath;
+            }
+        }
+      }
+    }
+  }
+  
   return true;
 }
 
