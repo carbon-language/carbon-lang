@@ -90,13 +90,13 @@ public:
   /// @{
 
   /// CreateFromArgs - Create a compiler invocation from a list of input
-  /// options.
+  /// options. Returns true on success.
   ///
   /// \param Res [out] - The resulting invocation.
   /// \param ArgBegin - The first element in the argument vector.
   /// \param ArgEnd - The last element in the argument vector.
   /// \param Diags - The diagnostic engine to use for errors.
-  static void CreateFromArgs(CompilerInvocation &Res,
+  static bool CreateFromArgs(CompilerInvocation &Res,
                              const char* const *ArgBegin,
                              const char* const *ArgEnd,
                              DiagnosticsEngine &Diags);

@@ -122,17 +122,19 @@ public:
     NoExecStack = 0;
   }
 
-  static void CreateFromArgs(AssemblerInvocation &Res, const char **ArgBegin,
+  static bool CreateFromArgs(AssemblerInvocation &Res, const char **ArgBegin,
                              const char **ArgEnd, DiagnosticsEngine &Diags);
 };
 
 }
 
-void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
+bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
                                          const char **ArgBegin,
                                          const char **ArgEnd,
                                          DiagnosticsEngine &Diags) {
   using namespace clang::driver::cc1asoptions;
+  bool Success = true;
+
   // Parse the arguments.
   OwningPtr<OptTable> OptTbl(createCC1AsOptTable());
   unsigned MissingArgIndex, MissingArgCount;
@@ -140,14 +142,18 @@ void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
     OptTbl->ParseArgs(ArgBegin, ArgEnd,MissingArgIndex, MissingArgCount));
 
   // Check for missing argument error.
-  if (MissingArgCount)
+  if (MissingArgCount) {
     Diags.Report(diag::err_drv_missing_argument)
       << Args->getArgString(MissingArgIndex) << MissingArgCount;
+    Success = false;
+  }
 
   // Issue errors on unknown arguments.
   for (arg_iterator it = Args->filtered_begin(cc1asoptions::OPT_UNKNOWN),
-         ie = Args->filtered_end(); it != ie; ++it)
+         ie = Args->filtered_end(); it != ie; ++it) {
     Diags.Report(diag::err_drv_unknown_argument) << (*it) ->getAsString(*Args);
+    Success = false;
+  }
 
   // Construct the invocation.
 
@@ -171,8 +177,10 @@ void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
       const Arg *A = it;
       if (First)
         Opts.InputFile = A->getValue(*Args);
-      else
+      else {
         Diags.Report(diag::err_drv_unknown_argument) << A->getAsString(*Args);
+        Success = false;
+      }
     }
   }
   Opts.LLVMArgs = Args->getAllArgValues(OPT_mllvm);
@@ -186,10 +194,11 @@ void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
       .Case("null", FT_Null)
       .Case("obj", FT_Obj)
       .Default(~0U);
-    if (OutputType == ~0U)
+    if (OutputType == ~0U) {
       Diags.Report(diag::err_drv_invalid_value)
         << A->getAsString(*Args) << Name;
-    else
+      Success = false;
+    } else
       Opts.OutputType = FileType(OutputType);
   }
   Opts.ShowHelp = Args->hasArg(OPT_help);
@@ -204,6 +213,8 @@ void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   // Assemble Options
   Opts.RelaxAll = Args->hasArg(OPT_relax_all);
   Opts.NoExecStack =  Args->hasArg(OPT_no_exec_stack);
+
+  return true;
 }
 
 static formatted_raw_ostream *GetOutputStream(AssemblerInvocation &Opts,
@@ -374,7 +385,8 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
 
   // Parse the arguments.
   AssemblerInvocation Asm;
-  AssemblerInvocation::CreateFromArgs(Asm, ArgBegin, ArgEnd, Diags);
+  if (!AssemblerInvocation::CreateFromArgs(Asm, ArgBegin, ArgEnd, Diags))
+    return 1;
 
   // Honor -help.
   if (Asm.ShowHelp) {

@@ -118,7 +118,8 @@ static bool checkForMigration(StringRef resourcesPath,
   }
 
   CompilerInvocation CI;
-  CompilerInvocation::CreateFromArgs(CI, Args.begin(), Args.end(), *Diags);
+  if (!CompilerInvocation::CreateFromArgs(CI, Args.begin(), Args.end(), *Diags))
+    return true;
 
   if (CI.getFrontendOpts().Inputs.empty()) {
     llvm::errs() << "error: no input files\n";
@@ -159,8 +160,9 @@ static bool performTransformations(StringRef resourcesPath,
       new DiagnosticsEngine(DiagID, DiagClient));
 
   CompilerInvocation origCI;
-  CompilerInvocation::CreateFromArgs(origCI, Args.begin(), Args.end(),
-                                     *TopDiags);
+  if (!CompilerInvocation::CreateFromArgs(origCI, Args.begin(), Args.end(),
+                                     *TopDiags))
+    return true;
 
   if (origCI.getFrontendOpts().Inputs.empty()) {
     llvm::errs() << "error: no input files\n";

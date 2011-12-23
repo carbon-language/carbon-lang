@@ -80,11 +80,12 @@ clang::createInvocationFromCommandLine(ArrayRef<const char *> ArgList,
   }
 
   const driver::ArgStringList &CCArgs = Cmd->getArguments();
-  CompilerInvocation *CI = new CompilerInvocation();
-  CompilerInvocation::CreateFromArgs(*CI,
+  llvm::OwningPtr<CompilerInvocation> CI(new CompilerInvocation());
+  if (!CompilerInvocation::CreateFromArgs(*CI,
                                      const_cast<const char **>(CCArgs.data()),
                                      const_cast<const char **>(CCArgs.data()) +
                                      CCArgs.size(),
-                                     *Diags);
-  return CI;
+                                     *Diags))
+    return 0;
+  return CI.take();
 }

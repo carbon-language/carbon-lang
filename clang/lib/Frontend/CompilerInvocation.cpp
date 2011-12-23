@@ -944,10 +944,10 @@ static unsigned getOptimizationLevel(ArgList &Args, InputKind IK,
     Args.getLastArgIntValue(OPT_O, DefaultOpt, Diags);
 }
 
-static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
+static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
                               DiagnosticsEngine &Diags) {
   using namespace cc1options;
-
+  bool Success = true;
   if (Arg *A = Args.getLastArg(OPT_analyzer_store)) {
     StringRef Name = A->getValue(Args);
     AnalysisStores Value = llvm::StringSwitch<AnalysisStores>(Name)
@@ -955,12 +955,13 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
       .Case(CMDFLAG, NAME##Model)
 #include "clang/Frontend/Analyses.def"
       .Default(NumStores);
-    // FIXME: Error handling.
-    if (Value == NumStores)
+    if (Value == NumStores) {
       Diags.Report(diag::err_drv_invalid_value)
         << A->getAsString(Args) << Name;
-    else
+      Success = false;
+    } else {
       Opts.AnalysisStoreOpt = Value;
+    }
   }
 
   if (Arg *A = Args.getLastArg(OPT_analyzer_constraints)) {
@@ -970,12 +971,13 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
       .Case(CMDFLAG, NAME##Model)
 #include "clang/Frontend/Analyses.def"
       .Default(NumConstraints);
-    // FIXME: Error handling.
-    if (Value == NumConstraints)
+    if (Value == NumConstraints) {
       Diags.Report(diag::err_drv_invalid_value)
         << A->getAsString(Args) << Name;
-    else
+      Success = false;
+    } else {
       Opts.AnalysisConstraintsOpt = Value;
+    }
   }
 
   if (Arg *A = Args.getLastArg(OPT_analyzer_output)) {
@@ -985,12 +987,13 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
       .Case(CMDFLAG, PD_##NAME)
 #include "clang/Frontend/Analyses.def"
       .Default(NUM_ANALYSIS_DIAG_CLIENTS);
-    // FIXME: Error handling.
-    if (Value == NUM_ANALYSIS_DIAG_CLIENTS)
+    if (Value == NUM_ANALYSIS_DIAG_CLIENTS) {
       Diags.Report(diag::err_drv_invalid_value)
         << A->getAsString(Args) << Name;
-    else
+      Success = false;
+    } else {
       Opts.AnalysisDiagOpt = Value;
+    }
   }
 
   if (Arg *A = Args.getLastArg(OPT_analyzer_purge)) {
@@ -1000,12 +1003,13 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
       .Case(CMDFLAG, NAME)
 #include "clang/Frontend/Analyses.def"
       .Default(NumPurgeModes);
-    // FIXME: Error handling.
-    if (Value == NumPurgeModes)
+    if (Value == NumPurgeModes) {
       Diags.Report(diag::err_drv_invalid_value)
         << A->getAsString(Args) << Name;
-    else
+      Success = false;
+    } else {
       Opts.AnalysisPurgeOpt = Value;
+    }
   }
 
   Opts.ShowCheckerHelp = Args.hasArg(OPT_analyzer_checker_help);
@@ -1041,17 +1045,21 @@ static void ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
     for (unsigned i = 0, e = checkers.size(); i != e; ++i)
       Opts.CheckersControlList.push_back(std::make_pair(checkers[i], enable));
   }
+
+  return Success;
 }
 
-static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
+static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
                              DiagnosticsEngine &Diags) {
   using namespace cc1options;
+  bool Success = true;
 
   Opts.OptimizationLevel = getOptimizationLevel(Args, IK, Diags);
   if (Opts.OptimizationLevel > 3) {
     Diags.Report(diag::err_drv_invalid_value)
       << Args.getLastArg(OPT_O)->getAsString(Args) << Opts.OptimizationLevel;
     Opts.OptimizationLevel = 3;
+    Success = false;
   }
 
   // We must always run at least the always inlining pass.
@@ -1140,11 +1148,15 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
       .Case("non-legacy", CodeGenOptions::NonLegacy)
       .Case("mixed", CodeGenOptions::Mixed)
       .Default(~0U);
-    if (Method == ~0U)
+    if (Method == ~0U) {
       Diags.Report(diag::err_drv_invalid_value) << A->getAsString(Args) << Name;
-    else
+      Success = false;
+    } else {
       Opts.ObjCDispatchMethod = Method;
+    }
   }
+
+  return Success;
 }
 
 static void ParseDependencyOutputArgs(DependencyOutputOptions &Opts,
@@ -1159,9 +1171,11 @@ static void ParseDependencyOutputArgs(DependencyOutputOptions &Opts,
   Opts.AddMissingHeaderDeps = Args.hasArg(OPT_MG);
 }
 
-static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
+static bool ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
                                 DiagnosticsEngine &Diags) {
   using namespace cc1options;
+  bool Success = true;
+
   Opts.DiagnosticLogFile = Args.getLastArgValue(OPT_diagnostic_log_file);
   Opts.DiagnosticSerializationFile =
     Args.getLastArgValue(OPT_diagnostic_serialized_file);
@@ -1192,10 +1206,12 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
     Opts.ShowOverloads = DiagnosticsEngine::Ovl_Best;
   else if (ShowOverloads == "all")
     Opts.ShowOverloads = DiagnosticsEngine::Ovl_All;
-  else
+  else {
     Diags.Report(diag::err_drv_invalid_value)
       << Args.getLastArg(OPT_fshow_overloads_EQ)->getAsString(Args)
       << ShowOverloads;
+    Success = false;
+  }
 
   StringRef ShowCategory =
     Args.getLastArgValue(OPT_fdiagnostics_show_category, "none");
@@ -1205,23 +1221,27 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
     Opts.ShowCategories = 1;
   else if (ShowCategory == "name")
     Opts.ShowCategories = 2;
-  else
+  else {
     Diags.Report(diag::err_drv_invalid_value)
       << Args.getLastArg(OPT_fdiagnostics_show_category)->getAsString(Args)
       << ShowCategory;
+    Success = false;
+  }
 
   StringRef Format =
     Args.getLastArgValue(OPT_fdiagnostics_format, "clang");
   if (Format == "clang")
     Opts.Format = DiagnosticOptions::Clang;
-  else if (Format == "msvc") 
+  else if (Format == "msvc")
     Opts.Format = DiagnosticOptions::Msvc;
-  else if (Format == "vi") 
+  else if (Format == "vi")
     Opts.Format = DiagnosticOptions::Vi;
-  else 
+  else {
     Diags.Report(diag::err_drv_invalid_value)
       << Args.getLastArg(OPT_fdiagnostics_format)->getAsString(Args)
       << Format;
+    Success = false;
+  }
   
   Opts.ShowSourceRanges = Args.hasArg(OPT_fdiagnostics_print_source_range_info);
   Opts.ShowParseableFixits = Args.hasArg(OPT_fdiagnostics_parseable_fixits);
@@ -1248,6 +1268,8 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.MessageLength = Args.getLastArgIntValue(OPT_fmessage_length, 0, Diags);
   Opts.DumpBuildInformation = Args.getLastArgValue(OPT_dump_build_information);
   Opts.Warnings = Args.getAllArgValues(OPT_W);
+
+  return Success;
 }
 
 static void ParseFileSystemArgs(FileSystemOptions &Opts, ArgList &Args) {
@@ -1994,10 +2016,12 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args) {
 
 //
 
-void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
+bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
                                         const char *const *ArgBegin,
                                         const char *const *ArgEnd,
                                         DiagnosticsEngine &Diags) {
+  bool Success = true;
+
   // Parse the arguments.
   llvm::OwningPtr<OptTable> Opts(createCC1OptTable());
   unsigned MissingArgIndex, MissingArgCount;
@@ -2005,22 +2029,28 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
     Opts->ParseArgs(ArgBegin, ArgEnd,MissingArgIndex, MissingArgCount));
 
   // Check for missing argument error.
-  if (MissingArgCount)
+  if (MissingArgCount) {
     Diags.Report(diag::err_drv_missing_argument)
       << Args->getArgString(MissingArgIndex) << MissingArgCount;
+    Success = false;
+  }
 
   // Issue errors on unknown arguments.
   for (arg_iterator it = Args->filtered_begin(OPT_UNKNOWN),
-         ie = Args->filtered_end(); it != ie; ++it)
+         ie = Args->filtered_end(); it != ie; ++it) {
     Diags.Report(diag::err_drv_unknown_argument) << (*it)->getAsString(*Args);
+    Success = false;
+  }
 
-  ParseAnalyzerArgs(Res.getAnalyzerOpts(), *Args, Diags);
+  Success = ParseAnalyzerArgs(Res.getAnalyzerOpts(), *Args, Diags) && Success;
   ParseDependencyOutputArgs(Res.getDependencyOutputOpts(), *Args);
-  ParseDiagnosticArgs(Res.getDiagnosticOpts(), *Args, Diags);
+  Success = ParseDiagnosticArgs(Res.getDiagnosticOpts(), *Args, Diags)
+            && Success;
   ParseFileSystemArgs(Res.getFileSystemOpts(), *Args);
   // FIXME: We shouldn't have to pass the DashX option around here
   InputKind DashX = ParseFrontendArgs(Res.getFrontendOpts(), *Args, Diags);
-  ParseCodeGenArgs(Res.getCodeGenOpts(), *Args, DashX, Diags);
+  Success = ParseCodeGenArgs(Res.getCodeGenOpts(), *Args, DashX, Diags)
+            && Success;
   ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *Args);
   if (DashX != IK_AST && DashX != IK_LLVM_IR) {
     ParseLangArgs(*Res.getLangOpts(), *Args, DashX, Diags);
@@ -2035,6 +2065,8 @@ void CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args, FileMgr, Diags);
   ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *Args);
   ParseTargetArgs(Res.getTargetOpts(), *Args);
+
+  return Success;
 }
 
 namespace {

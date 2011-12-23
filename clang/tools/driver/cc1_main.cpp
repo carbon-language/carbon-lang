@@ -77,7 +77,8 @@ static int cc1_test(DiagnosticsEngine &Diags,
   // Create a compiler invocation.
   llvm::errs() << "cc1 creating invocation.\n";
   CompilerInvocation Invocation;
-  CompilerInvocation::CreateFromArgs(Invocation, ArgBegin, ArgEnd, Diags);
+  if (!CompilerInvocation::CreateFromArgs(Invocation, ArgBegin, ArgEnd, Diags))
+    return 1;
 
   // Convert the invocation back to argument strings.
   std::vector<std::string> InvocationArgs;
@@ -95,8 +96,9 @@ static int cc1_test(DiagnosticsEngine &Diags,
   // Convert those arguments to another invocation, and check that we got the
   // same thing.
   CompilerInvocation Invocation2;
-  CompilerInvocation::CreateFromArgs(Invocation2, Invocation2Args.begin(),
-                                     Invocation2Args.end(), Diags);
+  if (!CompilerInvocation::CreateFromArgs(Invocation2, Invocation2Args.begin(),
+                                          Invocation2Args.end(), Diags))
+    return 1;
 
   // FIXME: Implement CompilerInvocation comparison.
   if (true) {
@@ -135,8 +137,11 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
   // well formed diagnostic object.
   TextDiagnosticBuffer *DiagsBuffer = new TextDiagnosticBuffer;
   DiagnosticsEngine Diags(DiagID, DiagsBuffer);
-  CompilerInvocation::CreateFromArgs(Clang->getInvocation(), ArgBegin, ArgEnd,
-                                     Diags);
+  bool Success;
+  Success = CompilerInvocation::CreateFromArgs(Clang->getInvocation(),
+                                               ArgBegin, ArgEnd, Diags);
+  if (!Success)
+    return 1;
 
   // Infer the builtin include path if unspecified.
   if (Clang->getHeaderSearchOpts().UseBuiltinIncludes &&
@@ -157,7 +162,7 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
   DiagsBuffer->FlushDiagnostics(Clang->getDiagnostics());
 
   // Execute the frontend actions.
-  bool Success = ExecuteCompilerInvocation(Clang.get());
+  Success = ExecuteCompilerInvocation(Clang.get());
 
   // If any timers were active but haven't been destroyed yet, print their
   // results now.  This happens in -disable-free mode.
