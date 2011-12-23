@@ -261,6 +261,7 @@ def fPIE : Flag<"-fPIE">, Group<f_Group>, Flags<[NoArgumentUnused]>;
 def fno_PIE : Flag<"-fno-PIE">, Group<f_Group>, Flags<[NoArgumentUnused]>;
 def faccess_control : Flag<"-faccess-control">, Group<f_Group>;
 def fallow_unsupported : Flag<"-fallow-unsupported">, Group<f_Group>;
+def faltivec : Flag<"-faltivec">, Group<f_Group>;
 def fapple_kext : Flag<"-fapple-kext">, Group<f_Group>;
 def fapple_pragma_pack : Flag<"-fapple-pragma-pack">, Group<f_Group>;
 def faddress_sanitizer : Flag<"-faddress-sanitizer">, Group<f_Group>;
