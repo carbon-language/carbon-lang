@@ -355,7 +355,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
       if (getDiagnostics().getDiagnosticLevel(
             diag::warn_uncovered_module_header, 
             StartLoc) != DiagnosticsEngine::Ignored) {
-        typedef typename llvm::sys::fs::recursive_directory_iterator
+        typedef llvm::sys::fs::recursive_directory_iterator
           recursive_directory_iterator;
         const DirectoryEntry *Dir = Mod->getUmbrellaDir();
         llvm::error_code EC;
