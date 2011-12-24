@@ -181,10 +181,10 @@ entry:
 
 define void @cmp.simplify(i32 %a, i32 %b, i1* %c) {
 entry:
-  %lz = tail call i32 @llvm.ctlz.i32(i32 %a, i1 true) nounwind readnone
+  %lz = tail call i32 @llvm.ctlz.i32(i32 %a, i1 false) nounwind readnone
   %lz.cmp = icmp eq i32 %lz, 32
   store volatile i1 %lz.cmp, i1* %c
-  %tz = tail call i32 @llvm.cttz.i32(i32 %a, i1 true) nounwind readnone
+  %tz = tail call i32 @llvm.cttz.i32(i32 %a, i1 false) nounwind readnone
   %tz.cmp = icmp ne i32 %tz, 32
   store volatile i1 %tz.cmp, i1* %c
   %pop = tail call i32 @llvm.ctpop.i32(i32 %b) nounwind readnone
@@ -203,7 +203,7 @@ entry:
 
 
 define i32 @cttz_simplify1(i32 %x) nounwind readnone ssp {
-  %tmp1 = tail call i32 @llvm.ctlz.i32(i32 %x, i1 true)    ; <i32> [#uses=1]
+  %tmp1 = tail call i32 @llvm.ctlz.i32(i32 %x, i1 false)    ; <i32> [#uses=1]
   %shr3 = lshr i32 %tmp1, 5                       ; <i32> [#uses=1]
   ret i32 %shr3
   
