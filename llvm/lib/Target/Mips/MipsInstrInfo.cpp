@@ -168,6 +168,16 @@ copyPhysReg(MachineBasicBlock &MBB,
     MIB.addReg(SrcReg, getKillRegState(KillSrc));
 }
 
+static MachineMemOperand* GetMemOperand(MachineBasicBlock &MBB, int FI,
+                                        unsigned Flag) {
+  MachineFunction &MF = *MBB.getParent();
+  MachineFrameInfo &MFI = *MF.getFrameInfo();
+  unsigned Align = MFI.getObjectAlignment(FI);
+  
+  return MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(FI), Flag,
+                                 MFI.getObjectSize(FI), Align);
+}
+
 void MipsInstrInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, bool isKill, int FI,
@@ -175,6 +185,8 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     const TargetRegisterInfo *TRI) const {
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
+  MachineMemOperand *MMO = GetMemOperand(MBB, FI, MachineMemOperand::MOStore);
+
   unsigned Opc = 0;
 
   if (RC == Mips::CPURegsRegisterClass)
@@ -190,7 +202,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 
   assert(Opc && "Register class not handled!");
   BuildMI(MBB, I, DL, get(Opc)).addReg(SrcReg, getKillRegState(isKill))
-    .addFrameIndex(FI).addImm(0);
+    .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
 }
 
 void MipsInstrInfo::
@@ -201,6 +213,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 {
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
+  MachineMemOperand *MMO = GetMemOperand(MBB, FI, MachineMemOperand::MOLoad);
   unsigned Opc = 0;
 
   if (RC == Mips::CPURegsRegisterClass)
@@ -215,7 +228,8 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     Opc = IsN64 ? Mips::LDC164_P8 : Mips::LDC164;
 
   assert(Opc && "Register class not handled!");
-  BuildMI(MBB, I, DL, get(Opc), DestReg).addFrameIndex(FI).addImm(0);
+  BuildMI(MBB, I, DL, get(Opc), DestReg).addFrameIndex(FI).addImm(0)
+    .addMemOperand(MMO);
 }
 
 MachineInstr*
