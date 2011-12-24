@@ -758,9 +758,83 @@ _mm_broadcastsi128_si256(__m128i const *a)
 #define _mm_blend_epi32(V1, V2, M) __extension__ ({ \
   __m128i __V1 = (V1); \
   __m128i __V2 = (V2); \
-  (__m128i)__builtin_ia32_pblendd128((__v4si)__V1, (__v4si)__V2, M); })
+  (__m128i)__builtin_ia32_pblendd128((__v4si)__V1, (__v4si)__V2, (M)); })
 
 #define _mm256_blend_epi32(V1, V2, M) __extension__ ({ \
   __m256i __V1 = (V1); \
   __m256i __V2 = (V2); \
-  (__m256i)__builtin_ia32_pblendd256((__v8si)__V1, (__v8si)__V2, M); })
+  (__m256i)__builtin_ia32_pblendd256((__v8si)__V1, (__v8si)__V2, (M)); })
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_broadcastb_epi8(__m128i __X)
+{
+  return (__m256i)__builtin_ia32_pbroadcastb256((__v16qi)__X);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_broadcastw_epi16(__m128i __X)
+{
+  return (__m256i)__builtin_ia32_pbroadcastw256((__v8hi)__X);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_broadcastd_epi32(__m128i __X)
+{
+  return (__m256i)__builtin_ia32_pbroadcastd256((__v4si)__X);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_broadcastq_epi64(__m128i __X)
+{
+  return (__m256i)__builtin_ia32_pbroadcastq256(__X);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_broadcastb_epi8(__m128i __X)
+{
+  return (__m128i)__builtin_ia32_pbroadcastb128((__v16qi)__X);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_broadcastw_epi16(__m128i __X)
+{
+  return (__m128i)__builtin_ia32_pbroadcastw128((__v8hi)__X);
+}
+
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_broadcastd_epi32(__m128i __X)
+{
+  return (__m128i)__builtin_ia32_pbroadcastd128((__v4si)__X);
+}
+
+static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+_mm_broadcastq_epi64(__m128i __X)
+{
+  return (__m128i)__builtin_ia32_pbroadcastq128(__X);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_permutevar8x32_epi32(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_permvarsi256((__v8si)a, (__v8si)b);
+}
+
+#define _mm256_permute4x64_pd(V, M) __extension__ ({ \
+  __m256d __V = (V); \
+  (__m256d)__builtin_ia32_permdf256((__v4df)__V, (M)); })
+
+static __inline__ __m256 __attribute__((__always_inline__, __nodebug__))
+_mm256_permutevar8x32_ps(__m256 a, __m256 b)
+{
+  return (__m256)__builtin_ia32_permvarsf256((__v8sf)a, (__v8sf)b);
+}
+
+#define _mm256_permute4x64_epi64(V, M) __extension__ ({ \
+  __m256i __V = (V); \
+  (__m256i)__builtin_ia32_permdi256((__v4di)__V, (M)); })
+
+#define _mm256_permute2x128_si256(V1, V2, M) __extension__ ({ \
+  __m256i __V1 = (V1); \
+  __m256i __V2 = (V2); \
+  (__m256i)__builtin_ia32_permti256((__v4di)__V1, (__v4di)__V2, (M)); })

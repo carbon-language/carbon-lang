@@ -664,7 +664,7 @@ _mm_storer_ps(float *p, __m128 a)
 /* FIXME: We have to #define this because "sel" must be a constant integer, and
    Sema doesn't do any form of constant propagation yet. */
 
-#define _mm_prefetch(a, sel) (__builtin_prefetch((void *)(a), 0, sel))
+#define _mm_prefetch(a, sel) (__builtin_prefetch((void *)(a), 0, (sel)))
 
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
 _mm_stream_pi(__m64 *p, __m64 a)
