@@ -580,3 +580,38 @@ __m256i test_mm256_unpacklo_epi64(__m256i a, __m256i b) {
   // CHECK: shufflevector <4 x i64> %{{.*}}, <4 x i64> %{{.*}}, <4 x i32> <i32 0, i32 4, i32 2, i32 6>
   return _mm256_unpacklo_epi64(a, b);
 }
+
+__m256i test_mm256_stream_load_si256(__m256i *a) {
+  // CHECK: @llvm.x86.avx2.movntdqa
+  return _mm256_stream_load_si256(a);
+}
+
+__m128 test_mm_broadcastss_ps(__m128 a) {
+  // CHECK: @llvm.x86.avx2.vbroadcast.ss.ps
+  return _mm_broadcastss_ps(a);
+}
+
+__m256 test_mm256_broadcastss_ps(__m128 a) {
+  // CHECK: @llvm.x86.avx2.vbroadcast.ss.ps.256
+  return _mm256_broadcastss_ps(a);
+}
+
+__m256d test_mm256_broadcastsd_pd(__m128d a) {
+  // CHECK: @llvm.x86.avx2.vbroadcast.sd.pd.256
+  return _mm256_broadcastsd_pd(a);
+}
+
+__m256i test_mm_broadcastsi128_si256(__m128i *a) {
+  // CHECK: @llvm.x86.avx2.vbroadcasti128
+  return _mm_broadcastsi128_si256(a);
+}
+
+__m128i test_mm_blend_epi32(__m128i a, __m128i b) {
+  // CHECK: @llvm.x86.avx2.pblendd.128
+  return _mm_blend_epi32(a, b, 57);
+}
+
+__m256i test_mm256_blend_epi32(__m256i a, __m256i b) {
+  // CHECK: @llvm.x86.avx2.pblendd.256
+  return _mm256_blend_epi32(a, b, 57);
+}

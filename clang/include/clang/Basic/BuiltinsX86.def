@@ -555,5 +555,12 @@ BUILTIN(__builtin_ia32_psrldi256, "V8iV8ii", "")
 BUILTIN(__builtin_ia32_psrld256, "V8iV8iV4i", "")
 BUILTIN(__builtin_ia32_psrlqi256, "V4LLiV4LLii", "")
 BUILTIN(__builtin_ia32_psrlq256, "V4LLiV4LLiV2LLi", "")
+BUILTIN(__builtin_ia32_movntdqa256, "V4LLiV4LLi*", "")
+BUILTIN(__builtin_ia32_vbroadcastss_ps, "V4fV4f", "")
+BUILTIN(__builtin_ia32_vbroadcastss_ps256, "V8fV4f", "")
+BUILTIN(__builtin_ia32_vbroadcastsd_pd256, "V4dV2d", "")
+BUILTIN(__builtin_ia32_vbroadcastsi256, "V4LLiV2LLiC*", "")
+BUILTIN(__builtin_ia32_pblendd128, "V4iV4iV4iIi", "")
+BUILTIN(__builtin_ia32_pblendd256, "V8iV8iV8iIi", "")
 
 #undef BUILTIN
