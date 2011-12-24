@@ -454,6 +454,176 @@ _mm256_or_si256(__m256i a, __m256i b)
 }
 
 static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_sad_epu8(__m256i a, __m256i b)
+{
+  return __builtin_ia32_psadbw256((__v32qi)a, (__v32qi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_shuffle_epi8(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_ia32_pshufb256((__v32qi)a, (__v32qi)b);
+}
+
+#define _mm256_shuffle_epi32(a, imm) __extension__ ({ \
+  __m256i __a = (a); \
+  (__m256i)__builtin_shufflevector((__v8si)__a, (__v8si)_mm256_set1_epi32(0), \
+                                   (imm) & 0x3, ((imm) & 0xc) >> 2, \
+                                   ((imm) & 0x30) >> 4, ((imm) & 0xc0) >> 6, \
+                                   4 + (((imm) & 0x03) >> 0), \
+                                   4 + (((imm) & 0x0c) >> 2), \
+                                   4 + (((imm) & 0x30) >> 4), \
+                                   4 + (((imm) & 0xc0) >> 6)); })
+
+#define _mm256_shufflehi_epi16(a, imm) __extension__ ({ \
+  __m256i __a = (a); \
+  (__m256i)__builtin_shufflevector((__v16hi)__a, (__v16hi)_mm256_set1_epi16(0), \
+                                   0, 1, 2, 3, \
+                                   4 + (((imm) & 0x03) >> 0), \
+                                   4 + (((imm) & 0x0c) >> 2), \
+                                   4 + (((imm) & 0x30) >> 4), \
+                                   4 + (((imm) & 0xc0) >> 6), \
+                                   8, 9, 10, 11, \
+                                   12 + (((imm) & 0x03) >> 0), \
+                                   12 + (((imm) & 0x0c) >> 2), \
+                                   12 + (((imm) & 0x30) >> 4), \
+                                   12 + (((imm) & 0xc0) >> 6)); })
+
+#define _mm256_shufflelo_epi16(a, imm) __extension__ ({ \
+  __m256i __a = (a); \
+  (__m256i)__builtin_shufflevector((__v16hi)__a, (__v16hi)_mm256_set1_epi16(0), \
+                                   (imm) & 0x3,((imm) & 0xc) >> 2, \
+                                   ((imm) & 0x30) >> 4, ((imm) & 0xc0) >> 6, \
+                                   4, 5, 6, 7, \
+                                   8 + (((imm) & 0x03) >> 0), \
+                                   8 + (((imm) & 0x0c) >> 2), \
+                                   8 + (((imm) & 0x30) >> 4), \
+                                   8 + (((imm) & 0xc0) >> 6), \
+                                   12, 13, 14, 15); })
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_sign_epi8(__m256i a, __m256i b)
+{
+    return (__m256i)__builtin_ia32_psignb256((__v32qi)a, (__v32qi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_sign_epi16(__m256i a, __m256i b)
+{
+    return (__m256i)__builtin_ia32_psignw256((__v16hi)a, (__v16hi)b);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_sign_epi32(__m256i a, __m256i b)
+{
+    return (__m256i)__builtin_ia32_psignd256((__v8si)a, (__v8si)b);
+}
+
+#define _mm256_slli_si256(a, count) __extension__ ({ \
+  __m256i __a = (a); \
+  (__m256i)__builtin_ia32_pslldqi256(__a, (count)*8); })
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_slli_epi16(__m256i a, int count)
+{
+  return (__m256i)__builtin_ia32_psllwi256((__v16hi)a, count);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_sll_epi16(__m256i a, __m128i count)
+{
+  return (__m256i)__builtin_ia32_psllw256((__v16hi)a, (__v8hi)count);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_slli_epi32(__m256i a, int count)
+{
+  return (__m256i)__builtin_ia32_pslldi256((__v8si)a, count);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_sll_epi32(__m256i a, __m128i count)
+{
+  return (__m256i)__builtin_ia32_pslld256((__v8si)a, (__v4si)count);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_slli_epi64(__m256i a, int count)
+{
+  return __builtin_ia32_psllqi256(a, count);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_sll_epi64(__m256i a, __m128i count)
+{
+  return __builtin_ia32_psllq256(a, count);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_srai_epi16(__m256i a, int count)
+{
+  return (__m256i)__builtin_ia32_psrawi256((__v16hi)a, count);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_sra_epi16(__m256i a, __m128i count)
+{
+  return (__m256i)__builtin_ia32_psraw256((__v16hi)a, (__v8hi)count);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_srai_epi32(__m256i a, int count)
+{
+  return (__m256i)__builtin_ia32_psradi256((__v8si)a, count);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_sra_epi32(__m256i a, __m128i count)
+{
+  return (__m256i)__builtin_ia32_psrad256((__v8si)a, (__v4si)count);
+}
+
+#define _mm256_srli_si256(a, count) __extension__ ({ \
+  __m256i __a = (a); \
+  (__m256i)__builtin_ia32_psrldqi256(__a, (count)*8); })
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_srli_epi16(__m256i a, int count)
+{
+  return (__m256i)__builtin_ia32_psrlwi256((__v16hi)a, count);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_srl_epi16(__m256i a, __m128i count)
+{
+  return (__m256i)__builtin_ia32_psrlw256((__v16hi)a, (__v8hi)count);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_srli_epi32(__m256i a, int count)
+{
+  return (__m256i)__builtin_ia32_psrldi256((__v8si)a, count);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_srl_epi32(__m256i a, __m128i count)
+{
+  return (__m256i)__builtin_ia32_psrld256((__v8si)a, (__v4si)count);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_srli_epi64(__m256i a, int count)
+{
+  return __builtin_ia32_psrlqi256(a, count);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_srl_epi64(__m256i a, __m128i count)
+{
+  return __builtin_ia32_psrlq256(a, count);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_sub_epi8(__m256i a, __m256i b)
 {
   return (__m256i)((__v32qi)a - (__v32qi)b);
