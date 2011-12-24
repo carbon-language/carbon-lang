@@ -49,7 +49,14 @@ static bool isUnalignedLoadStore(unsigned Opc) {
   return Opc == Mips::ULW    || Opc == Mips::ULH    || Opc == Mips::ULHu ||
          Opc == Mips::USW    || Opc == Mips::USH    ||
          Opc == Mips::ULW_P8 || Opc == Mips::ULH_P8 || Opc == Mips::ULHu_P8 ||
-         Opc == Mips::USW_P8 || Opc == Mips::USH_P8;
+         Opc == Mips::USW_P8 || Opc == Mips::USH_P8 ||
+         Opc == Mips::ULD    || Opc == Mips::ULW64  || Opc == Mips::ULH64 ||
+         Opc == Mips::ULHu64 || Opc == Mips::USD    || Opc == Mips::USW64 ||
+         Opc == Mips::USH64  ||
+         Opc == Mips::ULD_P8    || Opc == Mips::ULW64_P8  ||
+         Opc == Mips::ULH64_P8  || Opc == Mips::ULHu64_P8 || 
+         Opc == Mips::USD_P8    || Opc == Mips::USW64_P8  ||
+         Opc == Mips::USH64_P8;
 }
 
 static bool isDirective(unsigned Opc) {
