@@ -680,3 +680,103 @@ __m256i test_mm256_permute2x128_si256(__m256i a, __m256i b) {
   // CHECK: @llvm.x86.avx2.vperm2i128
   return _mm256_permute2x128_si256(a, b, 94);
 }
+
+__m128i test_mm256_extracti128_si256(__m256i a) {
+  // CHECK: @llvm.x86.avx2.vextracti128
+  return _mm256_extracti128_si256(a, 1);
+}
+
+__m256i test_mm256_inserti128_si256(__m256i a, __m128i b) {
+  // CHECK: @llvm.x86.avx2.vinserti128
+  return _mm256_inserti128_si256(a, b, 1);
+}
+
+__m256i test_mm256_maskload_epi32(int const *a, __m256i m) {
+  // CHECK: @llvm.x86.avx2.maskload.d.256
+  return _mm256_maskload_epi32(a, m);
+}
+
+__m256i test_mm256_maskload_epi64(long long const *a, __m256i m) {
+  // CHECK: @llvm.x86.avx2.maskload.q.256
+  return _mm256_maskload_epi64(a, m);
+}
+
+__m128i test_mm_maskload_epi32(int const *a, __m128i m) {
+  // CHECK: @llvm.x86.avx2.maskload.d
+  return _mm_maskload_epi32(a, m);
+}
+
+__m128i test_mm_maskload_epi64(long long const *a, __m128i m) {
+  // CHECK: @llvm.x86.avx2.maskload.q
+  return _mm_maskload_epi64(a, m);
+}
+
+void test_mm256_maskstore_epi32(int *a, __m256i m, __m256i b) {
+  // CHECK: @llvm.x86.avx2.maskstore.d.256
+  _mm256_maskstore_epi32(a, m, b);
+}
+
+void test_mm256_maskstore_epi64(long long *a, __m256i m, __m256i b) {
+  // CHECK: @llvm.x86.avx2.maskstore.q.256
+  _mm256_maskstore_epi64(a, m, b);
+}
+
+void test_mm_maskstore_epi32(int *a, __m128i m, __m128i b) {
+  // CHECK: @llvm.x86.avx2.maskstore.d
+  _mm_maskstore_epi32(a, m, b);
+}
+
+void test_mm_maskstore_epi64(long long *a, __m128i m, __m128i b) {
+  // CHECK: @llvm.x86.avx2.maskstore.q
+  _mm_maskstore_epi64(a, m, b);
+}
+
+__m256i test_mm256_sllv_epi32(__m256i a, __m256i b) {
+  // CHECK: @llvm.x86.avx2.psllv.d.256
+  return _mm256_sllv_epi32(a, b);
+}
+
+__m128i test_mm_sllv_epi32(__m128i a, __m128i b) {
+  // CHECK: @llvm.x86.avx2.psllv.d
+  return _mm_sllv_epi32(a, b);
+}
+
+__m256i test_mm256_sllv_epi64(__m256i a, __m256i b) {
+  // CHECK: @llvm.x86.avx2.psllv.q.256
+  return _mm256_sllv_epi64(a, b);
+}
+
+__m128i test_mm_sllv_epi64(__m128i a, __m128i b) {
+  // CHECK: @llvm.x86.avx2.psllv.q
+  return _mm_sllv_epi64(a, b);
+}
+
+__m256i test_mm256_srav_epi32(__m256i a, __m256i b) {
+  // CHECK: @llvm.x86.avx2.psrav.d.256
+  return _mm256_srav_epi32(a, b);
+}
+
+__m128i test_mm_srav_epi32(__m128i a, __m128i b) {
+  // CHECK: @llvm.x86.avx2.psrav.d
+  return _mm_srav_epi32(a, b);
+}
+
+__m256i test_mm256_srlv_epi32(__m256i a, __m256i b) {
+  // CHECK: @llvm.x86.avx2.psrlv.d.256
+  return _mm256_srlv_epi32(a, b);
+}
+
+__m128i test_mm_srlv_epi32(__m128i a, __m128i b) {
+  // CHECK: @llvm.x86.avx2.psrlv.d
+  return _mm_srlv_epi32(a, b);
+}
+
+__m256i test_mm256_srlv_epi64(__m256i a, __m256i b) {
+  // CHECK: @llvm.x86.avx2.psrlv.q.256
+  return _mm256_srlv_epi64(a, b);
+}
+
+__m128i test_mm_srlv_epi64(__m128i a, __m128i b) {
+  // CHECK: @llvm.x86.avx2.psrlv.q
+  return _mm_srlv_epi64(a, b);
+}
