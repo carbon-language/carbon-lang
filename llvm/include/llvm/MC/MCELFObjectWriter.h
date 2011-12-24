@@ -38,7 +38,7 @@ public:
     }
   }
 
-  virtual ~MCELFObjectTargetWriter();
+  virtual ~MCELFObjectTargetWriter() {}
 
   virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                 bool IsPCRel, bool IsRelocWithSymbol,
