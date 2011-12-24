@@ -37,13 +37,5 @@ void MCELFObjectTargetWriter::adjustFixupOffset(const MCFixup &Fixup,
                                                 uint64_t &RelocOffset) {
 }
 
-unsigned MCELFObjectTargetWriter::GetRelocType(const MCValue &Target,
-                                               const MCFixup &Fixup,
-                                               bool IsPCRel,
-                                               bool IsRelocWithSymbol,
-                                               int64_t Addend) const {
-  return 0;
-}
-
 MCELFObjectTargetWriter::~MCELFObjectTargetWriter() {
 }
