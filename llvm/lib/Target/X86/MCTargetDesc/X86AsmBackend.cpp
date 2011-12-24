@@ -367,7 +367,7 @@ public:
   }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createWinCOFFObjectWriter(OS, Is64Bit);
+    return createX86WinCOFFObjectWriter(OS, Is64Bit);
   }
 };
 

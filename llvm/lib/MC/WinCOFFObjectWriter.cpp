@@ -22,8 +22,10 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCSectionCOFF.h"
+#include "llvm/MC/MCWinCOFFObjectWriter.h"
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 
@@ -32,8 +34,6 @@
 #include "llvm/Support/ErrorHandling.h"
 
 #include "llvm/Support/TimeValue.h"
-
-#include "../Target/X86/MCTargetDesc/X86FixupKinds.h"
 
 #include <cstdio>
 
@@ -120,8 +120,6 @@ public:
 };
 
 class WinCOFFObjectWriter : public MCObjectWriter {
-  unsigned getRelocType(unsigned FixupKind) const;
-
 public:
 
   typedef std::vector<COFFSymbol*>  symbols;
@@ -130,8 +128,9 @@ public:
   typedef DenseMap<MCSymbol  const *, COFFSymbol *>   symbol_map;
   typedef DenseMap<MCSection const *, COFFSection *> section_map;
 
+  llvm::OwningPtr<MCWinCOFFObjectTargetWriter> TargetObjectWriter;
+
   // Root level file contents.
-  bool Is64Bit;
   COFF::header Header;
   sections     Sections;
   symbols      Symbols;
@@ -141,7 +140,7 @@ public:
   section_map SectionMap;
   symbol_map  SymbolMap;
 
-  WinCOFFObjectWriter(raw_ostream &OS, bool is64Bit);
+  WinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW, raw_ostream &OS);
   ~WinCOFFObjectWriter();
 
   COFFSymbol *createSymbol(StringRef Name);
@@ -316,13 +315,13 @@ size_t StringTable::insert(llvm::StringRef String) {
 //------------------------------------------------------------------------------
 // WinCOFFObjectWriter class implementation
 
-WinCOFFObjectWriter::WinCOFFObjectWriter(raw_ostream &OS, bool is64Bit)
+WinCOFFObjectWriter::WinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW,
+                                         raw_ostream &OS)
   : MCObjectWriter(OS, true)
-  , Is64Bit(is64Bit) {
+  , TargetObjectWriter(MOTW) {
   memset(&Header, 0, sizeof(Header));
 
-  Is64Bit ? Header.Machine = COFF::IMAGE_FILE_MACHINE_AMD64
-          : Header.Machine = COFF::IMAGE_FILE_MACHINE_I386;
+  Header.Machine = TargetObjectWriter->getMachine();
 }
 
 WinCOFFObjectWriter::~WinCOFFObjectWriter() {
@@ -629,32 +628,6 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
   }
 }
 
-unsigned WinCOFFObjectWriter::getRelocType(unsigned FixupKind) const {
-  switch (FixupKind) {
-  case FK_PCRel_4:
-  case X86::reloc_riprel_4byte:
-  case X86::reloc_riprel_4byte_movq_load:
-    return Is64Bit ? COFF::IMAGE_REL_AMD64_REL32 : COFF::IMAGE_REL_I386_REL32;
-    break;
-  case FK_Data_4:
-  case X86::reloc_signed_4byte:
-    return Is64Bit ? COFF::IMAGE_REL_AMD64_ADDR32 : COFF::IMAGE_REL_I386_DIR32;
-    break;
-  case FK_Data_8:
-    if (Is64Bit)
-      return COFF::IMAGE_REL_AMD64_ADDR64;
-    else
-      llvm_unreachable("unsupported relocation type");
-    break;
-  case X86::reloc_coff_secrel32:
-    return Is64Bit ? COFF::IMAGE_REL_AMD64_SREL32 : COFF::IMAGE_REL_I386_SECREL;
-    break;
-  default:
-    llvm_unreachable("unsupported relocation type");
-  }
-}
-
-
 void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
                                            const MCAsmLayout &Layout,
                                            const MCFragment *Fragment,
@@ -723,7 +696,7 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   if (CrossSection)
     FixupKind = FK_PCRel_4;
 
-  Reloc.Data.Type = getRelocType(FixupKind);
+  Reloc.Data.Type = TargetObjectWriter->getRelocType(FixupKind);
 
   // FIXME: Can anyone explain what this does other than adjust for the size
   // of the offset?
@@ -889,11 +862,16 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
   OS.write((char const *)&Strings.Data.front(), Strings.Data.size());
 }
 
+MCWinCOFFObjectTargetWriter::MCWinCOFFObjectTargetWriter(unsigned Machine_) :
+  Machine(Machine_) {
+}
+
 //------------------------------------------------------------------------------
 // WinCOFFObjectWriter factory function
 
 namespace llvm {
-  MCObjectWriter *createWinCOFFObjectWriter(raw_ostream &OS, bool is64Bit) {
-    return new WinCOFFObjectWriter(OS, is64Bit);
+  MCObjectWriter *createWinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW,
+                                            raw_ostream &OS) {
+    return new WinCOFFObjectWriter(MOTW, OS);
   }
 }
