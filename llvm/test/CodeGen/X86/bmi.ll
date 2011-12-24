@@ -33,6 +33,34 @@ define i64 @t4(i64 %x) nounwind  {
 ; CHECK: tzcntq
 }
 
+define i8 @t5(i8 %x) nounwind  {
+  %tmp = tail call i8 @llvm.cttz.i8( i8 %x, i1 true )
+  ret i8 %tmp
+; CHECK: t5:
+; CHECK: tzcntw
+}
+
+define i16 @t6(i16 %x) nounwind  {
+  %tmp = tail call i16 @llvm.cttz.i16( i16 %x, i1 true )
+  ret i16 %tmp
+; CHECK: t6:
+; CHECK: tzcntw
+}
+
+define i32 @t7(i32 %x) nounwind  {
+  %tmp = tail call i32 @llvm.cttz.i32( i32 %x, i1 true )
+  ret i32 %tmp
+; CHECK: t7:
+; CHECK: tzcntl
+}
+
+define i64 @t8(i64 %x) nounwind  {
+  %tmp = tail call i64 @llvm.cttz.i64( i64 %x, i1 true )
+  ret i64 %tmp
+; CHECK: t8:
+; CHECK: tzcntq
+}
+
 define i32 @andn32(i32 %x, i32 %y) nounwind readnone {
   %tmp1 = xor i32 %x, -1
   %tmp2 = and i32 %y, %tmp1

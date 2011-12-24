@@ -382,6 +382,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::CTTZ_ZERO_UNDEF  , MVT::i8   , Expand);
   if (Subtarget->hasBMI()) {
     setOperationAction(ISD::CTTZ           , MVT::i8   , Promote);
+    setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i16  , Expand);
+    setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32  , Expand);
+    if (Subtarget->is64Bit())
+      setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Expand);
   } else {
     setOperationAction(ISD::CTTZ           , MVT::i8   , Custom);
     setOperationAction(ISD::CTTZ           , MVT::i16  , Custom);
