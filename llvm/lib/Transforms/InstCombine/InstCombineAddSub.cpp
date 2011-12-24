@@ -587,6 +587,9 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     ConstantInt *C2;
     if (match(Op1, m_Add(m_Value(X), m_ConstantInt(C2))))
       return BinaryOperator::CreateSub(ConstantExpr::getSub(C, C2), X);
+
+    if (SimplifyDemandedInstructionBits(I))
+      return &I;
   }
 
   
