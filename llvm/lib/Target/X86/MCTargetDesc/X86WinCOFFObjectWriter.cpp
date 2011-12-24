@@ -55,7 +55,7 @@ unsigned X86WinCOFFObjectWriter::getRelocType(unsigned FixupKind) const {
     else
       llvm_unreachable("unsupported relocation type");
     break;
-  case X86::reloc_coff_secrel32:
+  case FK_SecRel_4:
     return Is64Bit ? COFF::IMAGE_REL_AMD64_SREL32 : COFF::IMAGE_REL_I386_SECREL;
     break;
   default:

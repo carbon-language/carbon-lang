@@ -32,7 +32,11 @@ MCAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
     { "FK_GPRel_1", 0,  8, 0 },
     { "FK_GPRel_2", 0, 16, 0 },
     { "FK_GPRel_4", 0, 32, 0 },
-    { "FK_GPRel_8", 0, 64, 0 }
+    { "FK_GPRel_8", 0, 64, 0 },
+    { "FK_SecRel_1", 0,  8, 0 },
+    { "FK_SecRel_2", 0, 16, 0 },
+    { "FK_SecRel_4", 0, 32, 0 },
+    { "FK_SecRel_8", 0, 64, 0 }
   };
   
   assert((size_t)Kind <= sizeof(Builtins) / sizeof(Builtins[0]) &&

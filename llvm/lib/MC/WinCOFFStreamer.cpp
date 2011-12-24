@@ -33,8 +33,6 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include "../Target/X86/MCTargetDesc/X86FixupKinds.h"
-
 using namespace llvm;
 
 namespace {
@@ -303,7 +301,7 @@ void WinCOFFStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol)
 
   DF->addFixup(MCFixup::Create(DF->getContents().size(),
                                MCSymbolRefExpr::Create (Symbol, getContext ()),
-                               (MCFixupKind)X86::reloc_coff_secrel32));
+                               FK_SecRel_4));
   DF->getContents().resize(DF->getContents().size() + 4, 0);
 }
 
