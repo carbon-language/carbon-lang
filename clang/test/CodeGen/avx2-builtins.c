@@ -597,7 +597,7 @@ __m256 test_mm256_broadcastss_ps(__m128 a) {
 }
 
 __m256d test_mm256_broadcastsd_pd(__m128d a) {
-  // CHECK: @llvm.x86.avx2.vbroadcast.sd.pd.256
+  // check: @llvm.x86.avx2.vbroadcast.sd.pd.256
   return _mm256_broadcastsd_pd(a);
 }
 
@@ -614,4 +614,69 @@ __m128i test_mm_blend_epi32(__m128i a, __m128i b) {
 __m256i test_mm256_blend_epi32(__m256i a, __m256i b) {
   // CHECK: @llvm.x86.avx2.pblendd.256
   return _mm256_blend_epi32(a, b, 57);
+}
+
+__m256i test_mm256_broadcastb_epi8(__m128i a) {
+  // CHECK: @llvm.x86.avx2.pbroadcastb.256
+  return _mm256_broadcastb_epi8(a);
+}
+
+__m256i test_mm256_broadcastw_epi16(__m128i a) {
+  // CHECK: @llvm.x86.avx2.pbroadcastw.256
+  return _mm256_broadcastw_epi16(a);
+}
+
+__m256i test_mm256_broadcastd_epi32(__m128i a) {
+  // CHECK: @llvm.x86.avx2.pbroadcastd.256
+  return _mm256_broadcastd_epi32(a);
+}
+
+__m256i test_mm256_broadcastq_epi64(__m128i a) {
+  // CHECK: @llvm.x86.avx2.pbroadcastq.256
+  return _mm256_broadcastq_epi64(a);
+}
+
+__m128i test_mm_broadcastb_epi8(__m128i a) {
+  // CHECK: @llvm.x86.avx2.pbroadcastb.128
+  return _mm_broadcastb_epi8(a);
+}
+
+__m128i test_mm_broadcastw_epi16(__m128i a) {
+  // CHECK: @llvm.x86.avx2.pbroadcastw.128
+  return _mm_broadcastw_epi16(a);
+}
+
+__m128i test_mm_broadcastd_epi32(__m128i a) {
+  // CHECK: @llvm.x86.avx2.pbroadcastd.128
+  return _mm_broadcastd_epi32(a);
+}
+
+__m128i test_mm_broadcastq_epi64(__m128i a) {
+  // CHECK: @llvm.x86.avx2.pbroadcastq.128
+  return _mm_broadcastq_epi64(a);
+}
+
+__m256i test_mm256_permutevar8x32_epi32(__m256i a, __m256i b) {
+  // CHECK: @llvm.x86.avx2.permd
+  return _mm256_permutevar8x32_epi32(a, b);
+}
+
+__m256d test_mm256_permute4x64_pd(__m256d a) {
+  // CHECK: @llvm.x86.avx2.permpd
+  return _mm256_permute4x64_pd(a, 25);
+}
+
+__m256 test_mm256_permutevar8x32_ps(__m256 a, __m256 b) {
+  // CHECK: @llvm.x86.avx2.permps
+  return _mm256_permutevar8x32_ps(a, b);
+}
+
+__m256i test_mm256_permute4x64_epi64(__m256i a) {
+  // CHECK:  @llvm.x86.avx2.permq
+  return _mm256_permute4x64_epi64(a, 35);
+}
+
+__m256i test_mm256_permute2x128_si256(__m256i a, __m256i b) {
+  // CHECK: @llvm.x86.avx2.vperm2i128
+  return _mm256_permute2x128_si256(a, b, 94);
 }
