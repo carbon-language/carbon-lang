@@ -672,6 +672,54 @@ _mm256_subs_epu16(__m256i a, __m256i b)
 }
 
 static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_unpackhi_epi8(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_shufflevector((__v32qi)a, (__v32qi)b, 8, 32+8, 9, 32+9, 10, 32+10, 11, 32+11, 12, 32+12, 13, 32+13, 14, 32+14, 15, 32+15, 24, 32+24, 25, 32+25, 26, 32+26, 27, 32+27, 28, 32+28, 29, 32+29, 30, 32+30, 31, 32+31);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_unpackhi_epi16(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_shufflevector((__v16hi)a, (__v16hi)b, 4, 16+4, 5, 16+5, 6, 16+6, 7, 16+7, 12, 16+12, 13, 16+13, 14, 16+14, 15, 16+15);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_unpackhi_epi32(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_shufflevector((__v8si)a, (__v8si)b, 2, 8+2, 3, 8+3, 6, 8+6, 7, 8+7);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_unpackhi_epi64(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_shufflevector(a, b, 1, 4+1, 3, 4+3);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_unpacklo_epi8(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_shufflevector((__v32qi)a, (__v32qi)b, 0, 32+0, 1, 32+1, 2, 32+2, 3, 32+3, 4, 32+4, 5, 32+5, 6, 32+6, 7, 32+7, 16, 32+16, 17, 32+17, 18, 32+18, 19, 32+19, 20, 32+20, 21, 32+21, 22, 32+22, 23, 32+23);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_unpacklo_epi16(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_shufflevector((__v16hi)a, (__v16hi)b, 0, 16+0, 1, 16+1, 2, 16+2, 3, 16+3, 8, 16+8, 9, 16+9, 10, 16+10, 11, 16+11);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_unpacklo_epi32(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_shufflevector((__v8si)a, (__v8si)b, 0, 8+0, 1, 8+1, 4, 8+4, 5, 8+5);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
+_mm256_unpacklo_epi64(__m256i a, __m256i b)
+{
+  return (__m256i)__builtin_shufflevector(a, b, 0, 4+0, 2, 4+2);
+}
+
+static __inline__ __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_xor_si256(__m256i a, __m256i b)
 {
   return a ^ b;
