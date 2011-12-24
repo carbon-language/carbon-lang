@@ -4981,6 +4981,9 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
   if (!ClassDecl->hasUserDeclaredCopyConstructor())
     ++ASTContext::NumImplicitCopyConstructors;
 
+  if (getLangOptions().CPlusPlus0x && ClassDecl->needsImplicitMoveConstructor())
+    ++ASTContext::NumImplicitMoveConstructors;
+
   if (!ClassDecl->hasUserDeclaredCopyAssignment()) {
     ++ASTContext::NumImplicitCopyAssignmentOperators;
     
@@ -4990,6 +4993,14 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     // problems with the implicit exception specification.    
     if (ClassDecl->isDynamicClass())
       DeclareImplicitCopyAssignment(ClassDecl);
+  }
+
+  if (getLangOptions().CPlusPlus0x && ClassDecl->needsImplicitMoveAssignment()){
+    ++ASTContext::NumImplicitMoveAssignmentOperators;
+
+    // Likewise for the move assignment operator.
+    if (ClassDecl->isDynamicClass())
+      DeclareImplicitMoveAssignment(ClassDecl);
   }
 
   if (!ClassDecl->hasUserDeclaredDestructor()) {
