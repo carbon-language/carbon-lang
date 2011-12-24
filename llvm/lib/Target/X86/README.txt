@@ -2060,35 +2060,3 @@ Instead we could generate:
 The trick is to match "fetch_and_add(X, -C) == C".
 
 //===---------------------------------------------------------------------===//
-
-unsigned log2(unsigned x) {
-  return x > 1 ? 32-__builtin_clz(x-1) : 0;
-}
-
-generates (x86_64):
-	xorl	%eax, %eax
-	cmpl	$2, %edi
-	jb	LBB0_2
-## BB#1:
-	decl	%edi
-	movl	$63, %ecx
-	bsrl	%edi, %eax
-	cmovel	%ecx, %eax
-	xorl	$-32, %eax
-	addl	$33, %eax
-LBB0_2:
-	ret
-
-The cmov and the early test are redundant:
-	xorl	%eax, %eax
-	cmpl	$2, %edi
-	jb	LBB0_2
-## BB#1:
-	decl	%edi
-	bsrl	%edi, %eax
-	xorl	$-32, %eax
-	addl	$33, %eax
-LBB0_2:
-	ret
-
-//===---------------------------------------------------------------------===//
