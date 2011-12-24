@@ -280,7 +280,7 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   // If we need dynamic stack realignment, do it here. Be paranoid and make
   // sure if we also have VLAs, we have a base pointer for frame access.
-  // If aligned NEON registers were sp[illed, the stack has already been
+  // If aligned NEON registers were spilled, the stack has already been
   // realigned.
   if (!AFI->getNumAlignedDPRCS2Regs() && RegInfo->needsStackRealignment(MF)) {
     unsigned MaxAlign = MFI->getMaxAlignment();
@@ -715,8 +715,8 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
 }
 
 /// Emit aligned spill instructions for NumAlignedDPRCS2Regs D-registers
-/// starting from d8.  It is assumed that the stack will be realigned before
-/// these instructions are executed.
+/// starting from d8.  Also insert stack realignment code and leave the stack
+/// pointer pointing to the d8 spill slot.
 static void emitAlignedDPRCS2Spills(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator MI,
                                     unsigned NumAlignedDPRCS2Regs,
