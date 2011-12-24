@@ -1,16 +1,46 @@
 ; RUN: llc < %s -march=x86-64 -mcpu=yonah | FileCheck %s
 
+declare i8 @llvm.cttz.i8(i8, i1)
+declare i16 @llvm.cttz.i16(i16, i1)
 declare i32 @llvm.cttz.i32(i32, i1)
+declare i64 @llvm.cttz.i64(i64, i1)
 declare i8 @llvm.ctlz.i8(i8, i1)
 declare i16 @llvm.ctlz.i16(i16, i1)
 declare i32 @llvm.ctlz.i32(i32, i1)
 declare i64 @llvm.ctlz.i64(i64, i1)
+
+define i8 @cttz_i8(i8 %x)  {
+  %tmp = call i8 @llvm.cttz.i8( i8 %x, i1 true )
+  ret i8 %tmp
+; CHECK: cttz_i8:
+; CHECK: bsfw
+; CHECK-NOT: cmov
+; CHECK: ret
+}
+
+define i16 @cttz_i16(i16 %x)  {
+  %tmp = call i16 @llvm.cttz.i16( i16 %x, i1 true )
+  ret i16 %tmp
+; CHECK: cttz_i16:
+; CHECK: bsfw
+; CHECK-NOT: cmov
+; CHECK: ret
+}
 
 define i32 @cttz_i32(i32 %x)  {
   %tmp = call i32 @llvm.cttz.i32( i32 %x, i1 true )
   ret i32 %tmp
 ; CHECK: cttz_i32:
 ; CHECK: bsfl
+; CHECK-NOT: cmov
+; CHECK: ret
+}
+
+define i64 @cttz_i64(i64 %x)  {
+  %tmp = call i64 @llvm.cttz.i64( i64 %x, i1 true )
+  ret i64 %tmp
+; CHECK: cttz_i64:
+; CHECK: bsfq
 ; CHECK-NOT: cmov
 ; CHECK: ret
 }

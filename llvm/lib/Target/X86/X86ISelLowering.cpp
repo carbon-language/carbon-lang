@@ -379,9 +379,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::FREM             , MVT::f80  , Expand);
   setOperationAction(ISD::FLT_ROUNDS_      , MVT::i32  , Custom);
 
-  setOperationAction(ISD::CTTZ_ZERO_UNDEF  , MVT::i8   , Expand);
   if (Subtarget->hasBMI()) {
     setOperationAction(ISD::CTTZ           , MVT::i8   , Promote);
+    setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i8   , Expand);
     setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i16  , Expand);
     setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32  , Expand);
     if (Subtarget->is64Bit())
@@ -390,6 +390,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::CTTZ           , MVT::i8   , Custom);
     setOperationAction(ISD::CTTZ           , MVT::i16  , Custom);
     setOperationAction(ISD::CTTZ           , MVT::i32  , Custom);
+    setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i8   , Promote);
     if (Subtarget->is64Bit())
       setOperationAction(ISD::CTTZ         , MVT::i64  , Custom);
   }
