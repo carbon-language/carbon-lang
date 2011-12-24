@@ -13,7 +13,7 @@ define i8 @cttz_i8(i8 %x)  {
   %tmp = call i8 @llvm.cttz.i8( i8 %x, i1 true )
   ret i8 %tmp
 ; CHECK: cttz_i8:
-; CHECK: bsfw
+; CHECK: bsfl
 ; CHECK-NOT: cmov
 ; CHECK: ret
 }

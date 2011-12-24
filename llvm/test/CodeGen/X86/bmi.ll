@@ -9,7 +9,7 @@ define i8 @t1(i8 %x) nounwind  {
   %tmp = tail call i8 @llvm.cttz.i8( i8 %x, i1 false )
   ret i8 %tmp
 ; CHECK: t1:
-; CHECK: tzcntw
+; CHECK: tzcntl
 }
 
 define i16 @t2(i16 %x) nounwind  {
@@ -37,7 +37,7 @@ define i8 @t5(i8 %x) nounwind  {
   %tmp = tail call i8 @llvm.cttz.i8( i8 %x, i1 true )
   ret i8 %tmp
 ; CHECK: t5:
-; CHECK: tzcntw
+; CHECK: tzcntl
 }
 
 define i16 @t6(i16 %x) nounwind  {

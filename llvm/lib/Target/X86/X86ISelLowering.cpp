@@ -379,25 +379,31 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::FREM             , MVT::f80  , Expand);
   setOperationAction(ISD::FLT_ROUNDS_      , MVT::i32  , Custom);
 
+  // Promote the i8 variants and force them on up to i32 which has a shorter
+  // encoding.
+  setOperationAction(ISD::CTTZ             , MVT::i8   , Promote);
+  AddPromotedToType (ISD::CTTZ             , MVT::i8   , MVT::i32);
+  setOperationAction(ISD::CTTZ_ZERO_UNDEF  , MVT::i8   , Promote);
+  AddPromotedToType (ISD::CTTZ_ZERO_UNDEF  , MVT::i8   , MVT::i32);
   if (Subtarget->hasBMI()) {
-    setOperationAction(ISD::CTTZ           , MVT::i8   , Promote);
-    setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i8   , Expand);
     setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i16  , Expand);
     setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i32  , Expand);
     if (Subtarget->is64Bit())
       setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i64, Expand);
   } else {
-    setOperationAction(ISD::CTTZ           , MVT::i8   , Custom);
     setOperationAction(ISD::CTTZ           , MVT::i16  , Custom);
     setOperationAction(ISD::CTTZ           , MVT::i32  , Custom);
-    setOperationAction(ISD::CTTZ_ZERO_UNDEF, MVT::i8   , Promote);
     if (Subtarget->is64Bit())
       setOperationAction(ISD::CTTZ         , MVT::i64  , Custom);
   }
 
   if (Subtarget->hasLZCNT()) {
+    // When promoting the i8 variants, force them to i32 for a shorter
+    // encoding.
     setOperationAction(ISD::CTLZ           , MVT::i8   , Promote);
-    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i8   , Expand);
+    AddPromotedToType (ISD::CTLZ           , MVT::i8   , MVT::i32);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i8   , Promote);
+    AddPromotedToType (ISD::CTLZ_ZERO_UNDEF, MVT::i8   , MVT::i32);
     setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i16  , Expand);
     setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32  , Expand);
     if (Subtarget->is64Bit())
@@ -9876,32 +9882,22 @@ SDValue X86TargetLowering::LowerCTLZ_ZERO_UNDEF(SDValue Op,
 
 SDValue X86TargetLowering::LowerCTTZ(SDValue Op, SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
-  EVT OpVT = VT;
   unsigned NumBits = VT.getSizeInBits();
   DebugLoc dl = Op.getDebugLoc();
-
   Op = Op.getOperand(0);
-  if (VT == MVT::i8) {
-    OpVT = MVT::i32;
-    Op = DAG.getNode(ISD::ZERO_EXTEND, dl, OpVT, Op);
-  }
 
   // Issue a bsf (scan bits forward) which also sets EFLAGS.
-  SDVTList VTs = DAG.getVTList(OpVT, MVT::i32);
+  SDVTList VTs = DAG.getVTList(VT, MVT::i32);
   Op = DAG.getNode(X86ISD::BSF, dl, VTs, Op);
 
   // If src is zero (i.e. bsf sets ZF), returns NumBits.
   SDValue Ops[] = {
     Op,
-    DAG.getConstant(NumBits, OpVT),
+    DAG.getConstant(NumBits, VT),
     DAG.getConstant(X86::COND_E, MVT::i8),
     Op.getValue(1)
   };
-  Op = DAG.getNode(X86ISD::CMOV, dl, OpVT, Ops, array_lengthof(Ops));
-
-  if (VT == MVT::i8)
-    Op = DAG.getNode(ISD::TRUNCATE, dl, MVT::i8, Op);
-  return Op;
+  return DAG.getNode(X86ISD::CMOV, dl, VT, Ops, array_lengthof(Ops));
 }
 
 // Lower256IntArith - Break a 256-bit integer operation into two new 128-bit
