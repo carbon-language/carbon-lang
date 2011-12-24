@@ -390,15 +390,24 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setOperationAction(ISD::CTTZ         , MVT::i64  , Custom);
   }
 
-  setOperationAction(ISD::CTLZ_ZERO_UNDEF  , MVT::i8   , Expand);
   if (Subtarget->hasLZCNT()) {
     setOperationAction(ISD::CTLZ           , MVT::i8   , Promote);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i8   , Expand);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i16  , Expand);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32  , Expand);
+    if (Subtarget->is64Bit())
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Expand);
   } else {
     setOperationAction(ISD::CTLZ           , MVT::i8   , Custom);
     setOperationAction(ISD::CTLZ           , MVT::i16  , Custom);
     setOperationAction(ISD::CTLZ           , MVT::i32  , Custom);
-    if (Subtarget->is64Bit())
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i8   , Custom);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i16  , Custom);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32  , Custom);
+    if (Subtarget->is64Bit()) {
       setOperationAction(ISD::CTLZ         , MVT::i64  , Custom);
+      setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i64, Custom);
+    }
   }
 
   if (Subtarget->hasPOPCNT()) {
@@ -9834,6 +9843,32 @@ SDValue X86TargetLowering::LowerCTLZ(SDValue Op, SelectionDAG &DAG) const {
   return Op;
 }
 
+SDValue X86TargetLowering::LowerCTLZ_ZERO_UNDEF(SDValue Op,
+                                                SelectionDAG &DAG) const {
+  EVT VT = Op.getValueType();
+  EVT OpVT = VT;
+  unsigned NumBits = VT.getSizeInBits();
+  DebugLoc dl = Op.getDebugLoc();
+
+  Op = Op.getOperand(0);
+  if (VT == MVT::i8) {
+    // Zero extend to i32 since there is not an i8 bsr.
+    OpVT = MVT::i32;
+    Op = DAG.getNode(ISD::ZERO_EXTEND, dl, OpVT, Op);
+  }
+
+  // Issue a bsr (scan bits in reverse).
+  SDVTList VTs = DAG.getVTList(OpVT, MVT::i32);
+  Op = DAG.getNode(X86ISD::BSR, dl, VTs, Op);
+
+  // And xor with NumBits-1.
+  Op = DAG.getNode(ISD::XOR, dl, OpVT, Op, DAG.getConstant(NumBits-1, OpVT));
+
+  if (VT == MVT::i8)
+    Op = DAG.getNode(ISD::TRUNCATE, dl, MVT::i8, Op);
+  return Op;
+}
+
 SDValue X86TargetLowering::LowerCTTZ(SDValue Op, SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
   EVT OpVT = VT;
@@ -10686,6 +10721,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ADJUST_TRAMPOLINE:  return LowerADJUST_TRAMPOLINE(Op, DAG);
   case ISD::FLT_ROUNDS_:        return LowerFLT_ROUNDS_(Op, DAG);
   case ISD::CTLZ:               return LowerCTLZ(Op, DAG);
+  case ISD::CTLZ_ZERO_UNDEF:    return LowerCTLZ_ZERO_UNDEF(Op, DAG);
   case ISD::CTTZ:               return LowerCTTZ(Op, DAG);
   case ISD::MUL:                return LowerMUL(Op, DAG);
   case ISD::SRA:

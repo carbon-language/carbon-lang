@@ -31,7 +31,7 @@ entry:
 ; CHECK: t3:
 ; CHECK: bsrw
 ; CHECK-NOT: cmov
-; CHECK: xorw $15,
+; CHECK: xorl $15,
 ; CHECK: ret
 }
 
@@ -62,4 +62,29 @@ entry:
   %or = or i32 %n, 1
   %tmp1 = tail call i32 @llvm.ctlz.i32(i32 %or, i1 false)
   ret i32 %tmp1
+}
+
+define i32 @t6(i32 %n) nounwind {
+entry:
+; Don't generate any xors when a 'ctlz' intrinsic is actually used to compute
+; the most significant bit, which is what 'bsr' does natively.
+; CHECK: t6:
+; CHECK: bsrl
+; CHECK-NOT: xorl
+; CHECK: ret
+  %ctlz = tail call i32 @llvm.ctlz.i32(i32 %n, i1 true)
+  %bsr = xor i32 %ctlz, 31
+  ret i32 %bsr
+}
+
+define i32 @t7(i32 %n) nounwind {
+entry:
+; Same as t6, but ensure this happens even when there is a potential zero.
+; CHECK: t7:
+; CHECK: bsrl
+; CHECK-NOT: xorl
+; CHECK: ret
+  %ctlz = tail call i32 @llvm.ctlz.i32(i32 %n, i1 false)
+  %bsr = xor i32 %ctlz, 31
+  ret i32 %bsr
 }
