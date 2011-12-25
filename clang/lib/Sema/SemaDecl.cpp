@@ -6527,7 +6527,6 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
       Diag(var->getLocation(), diag::warn_global_constructor)
         << Init->getSourceRange();
 
-    QualType Type = var->getType();
     if (var->isConstexpr()) {
       llvm::SmallVector<PartialDiagnosticAt, 8> Notes;
       if (!var->evaluateValue(Notes) || !var->isInitICE()) {

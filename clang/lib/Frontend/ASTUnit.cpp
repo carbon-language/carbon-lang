@@ -2406,7 +2406,7 @@ CXSaveError ASTUnit::Save(StringRef File) {
   if (Out.has_error())
     return CXSaveError_Unknown;
 
-  if (llvm::error_code ec = llvm::sys::fs::rename(TempPath.str(), File)) {
+  if (llvm::sys::fs::rename(TempPath.str(), File)) {
     bool exists;
     llvm::sys::fs::remove(TempPath.str(), exists);
     return CXSaveError_Unknown;

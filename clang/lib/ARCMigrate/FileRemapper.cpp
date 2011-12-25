@@ -61,8 +61,7 @@ bool FileRemapper::initFromDisk(StringRef outputDir, DiagnosticsEngine &Diag,
   std::vector<std::pair<const FileEntry *, const FileEntry *> > pairs;
   
   llvm::OwningPtr<llvm::MemoryBuffer> fileBuf;
-  if (llvm::error_code ec = llvm::MemoryBuffer::getFile(infoFile.c_str(),
-                                                        fileBuf))
+  if (llvm::MemoryBuffer::getFile(infoFile.c_str(), fileBuf))
     return report("Error opening file: " + infoFile, Diag);
   
   SmallVector<StringRef, 64> lines;

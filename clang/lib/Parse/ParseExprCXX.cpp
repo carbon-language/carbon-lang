@@ -785,7 +785,7 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
                                Scope::BreakScope | Scope::ContinueScope |
                                Scope::DeclScope);
 
-    StmtResult Stmt(ParseCompoundStatementBody());
+    ParseCompoundStatementBody();
 
     BodyScope.Exit();
   } else {
