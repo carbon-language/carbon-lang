@@ -569,7 +569,7 @@ static bool DebugACrash(BugDriver &BD,
         for (Function::const_iterator BI = FI->begin(), E = FI->end(); BI != E;
              ++BI)
           for (BasicBlock::const_iterator I = BI->begin(), E = --BI->end();
-               I != E; ++I, ++CurInstructionNum)
+               I != E; ++I, ++CurInstructionNum) {
             if (InstructionsToSkipBeforeDeleting) {
               --InstructionsToSkipBeforeDeleting;
             } else {
@@ -594,6 +594,7 @@ static bool DebugACrash(BugDriver &BD,
               // one.
               delete M;
             }
+          }
 
     if (InstructionsToSkipBeforeDeleting) {
       InstructionsToSkipBeforeDeleting = 0;
