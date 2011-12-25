@@ -601,5 +601,7 @@ BUILTIN(__builtin_clzs, "UsUs", "")
 
 // BMI
 BUILTIN(__builtin_ctzs, "UsUs", "")
+BUILTIN(__builtin_ia32_bextr_u32, "UiUiUi", "")
+BUILTIN(__builtin_ia32_bextr_u64, "ULLiULLiULLi", "")
 
 #undef BUILTIN
