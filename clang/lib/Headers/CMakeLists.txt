@@ -2,11 +2,13 @@ set(files
   altivec.h
   avxintrin.h
   avx2intrin.h
+  bmiintrin.h
   emmintrin.h
   float.h
   immintrin.h
   iso646.h
   limits.h
+  lzcntintrin.h
   mm3dnow.h
   mmintrin.h
   mm_malloc.h
