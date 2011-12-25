@@ -1,4 +1,4 @@
-/*===---- immintrin.h - Intel intrinsics -----------------------------------===
+/*===---- lzcntintrin.h - LZCNT intrinsics ---------------------------------===
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,51 +21,35 @@
  *===-----------------------------------------------------------------------===
  */
 
-#ifndef __IMMINTRIN_H
-#define __IMMINTRIN_H
-
-#ifdef __MMX__
-#include <mmintrin.h>
+#if !defined __X86INTRIN_H && !defined __IMMINTRIN_H
+#error "Never use <lzcntintrin.h> directly; include <x86intrin.h> instead."
 #endif
 
-#ifdef __SSE__
-#include <xmmintrin.h>
+#ifndef __LZCNT__
+# error "LZCNT instruction is not enabled"
+#endif /* __LZCNT__ */
+
+#ifndef __LZCNTINTRIN_H
+#define __LZCNTINTRIN_H
+
+static __inline__ unsigned short __attribute__((__always_inline__, __nodebug__))
+__lzcnt16(unsigned short __X)
+{
+  return __builtin_clzs(__X);
+}
+
+static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
+__lzcnt32(unsigned int __X)
+{
+  return __builtin_clz(__X);
+}
+
+#ifdef __x86_64__
+static __inline__ unsigned long long __attribute__((__always_inline__, __nodebug__))
+__lzcnt64(unsigned long long __X)
+{
+  return __builtin_clzll(__X);
+}
 #endif
 
-#ifdef __SSE2__
-#include <emmintrin.h>
-#endif
-
-#ifdef __SSE3__
-#include <pmmintrin.h>
-#endif
-
-#ifdef __SSSE3__
-#include <tmmintrin.h>
-#endif
-
-#if defined (__SSE4_2__) || defined (__SSE4_1__)
-#include <smmintrin.h>
-#endif
-
-#if defined (__AES__)
-#include <wmmintrin.h>
-#endif
-
-#ifdef __AVX__
-#include <avxintrin.h>
-#endif
-
-#ifdef __AVX2__
-#include <avx2intrin.h>
-#endif
-
-#ifdef __BMI__
-#include <bmiintrin.h>
-#endif
-
-#ifdef __LZCNT__
-#include <lzcntintrin.h>
-#endif
-
-#endif /* __IMMINTRIN_H */
+#endif /* __LZCNTINTRIN_H */
