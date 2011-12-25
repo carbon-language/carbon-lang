@@ -961,3 +961,13 @@ struct S {
 };
 
 }
+
+namespace ExternConstexpr {
+  extern constexpr int n = 0;
+  extern constexpr int m; // expected-error {{constexpr variable declaration must be a definition}}
+  void f() {
+    extern constexpr int i; // expected-error {{constexpr variable declaration must be a definition}}
+    constexpr int j = 0;
+    constexpr int k; // expected-error {{default initialization of an object of const type}}
+  }
+}

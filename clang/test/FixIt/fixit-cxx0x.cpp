@@ -18,41 +18,6 @@ using ::T = void; // expected-error {{name defined in alias declaration must be 
 using typename U = void; // expected-error {{name defined in alias declaration must be an identifier}}
 using typename ::V = void; // expected-error {{name defined in alias declaration must be an identifier}}
 
-namespace Constexpr {
-  extern constexpr int a; // expected-error {{must be a definition}}
-  // -> extern const int a;
-
-  extern constexpr int *b; // expected-error {{must be a definition}}
-  // -> extern int *const b;
-
-  extern constexpr int &c; // expected-error {{must be a definition}}
-  // -> extern int &b;
-
-  extern constexpr const int d; // expected-error {{must be a definition}}
-  // -> extern const int d;
-
-  int z;
-  constexpr int a = 0;
-  constexpr int *b = &z;
-  constexpr int &c = z;
-  constexpr int d = a;
-
-  // FIXME: Provide FixIts for static data members too.
-#if 0
-  struct S {
-    static constexpr int b; // xpected-error {{requires an initializer}}
-    // -> const int b;
-  };
-
-  constexpr int S::b = 0;
-#endif
-
-  struct S {
-    static char *const p = 0; // expected-error {{requires 'constexpr' specifier}}
-    // -> constexpr static char *const p = 0;
-  };
-}
-
 namespace SemiCommaTypo {
   int m {},
   n [[]], // expected-error {{expected ';' at end of declaration}}

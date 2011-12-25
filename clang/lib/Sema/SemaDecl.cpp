@@ -3948,38 +3948,8 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                                            TemplateParamLists.release());
     }
 
-    if (D.getDeclSpec().isConstexprSpecified()) {
-      // FIXME: once we know whether there's an initializer, apply this to
-      // static data members too.
-      if (!NewVD->isStaticDataMember() &&
-          !NewVD->isThisDeclarationADefinition()) {
-        // 'constexpr' is redundant and ill-formed on a non-defining declaration
-        // of a variable. Suggest replacing it with 'const' if appropriate.
-        SourceLocation ConstexprLoc = D.getDeclSpec().getConstexprSpecLoc();
-        SourceRange ConstexprRange(ConstexprLoc, ConstexprLoc);
-        // If the declarator is complex, we need to move the keyword to the
-        // innermost chunk as we switch it from 'constexpr' to 'const'.
-        int Kind = DeclaratorChunk::Paren;
-        for (unsigned I = 0, E = D.getNumTypeObjects(); I != E; ++I) {
-          Kind = D.getTypeObject(I).Kind;
-          if (Kind != DeclaratorChunk::Paren)
-            break;
-        }
-        if ((D.getDeclSpec().getTypeQualifiers() & DeclSpec::TQ_const) ||
-            Kind == DeclaratorChunk::Reference)
-          Diag(ConstexprLoc, diag::err_invalid_constexpr_var_decl)
-            << FixItHint::CreateRemoval(ConstexprRange);
-        else if (Kind == DeclaratorChunk::Paren)
-          Diag(ConstexprLoc, diag::err_invalid_constexpr_var_decl)
-            << FixItHint::CreateReplacement(ConstexprRange, "const");
-        else
-          Diag(ConstexprLoc, diag::err_invalid_constexpr_var_decl)
-            << FixItHint::CreateRemoval(ConstexprRange)
-            << FixItHint::CreateInsertion(D.getIdentifierLoc(), "const ");
-      } else {
-        NewVD->setConstexpr(true);
-      }
-    }
+    if (D.getDeclSpec().isConstexprSpecified())
+      NewVD->setConstexpr(true);
   }
 
   // Set the lexical context. If the declarator has a C++ scope specifier, the
@@ -6244,7 +6214,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
   if (VarDecl *Var = dyn_cast<VarDecl>(RealDecl)) {
     QualType Type = Var->getType();
 
-    // C++0x [dcl.spec.auto]p3
+    // C++11 [dcl.spec.auto]p3
     if (TypeMayContainAuto && Type->getContainedAutoType()) {
       Diag(Var->getLocation(), diag::err_auto_var_requires_init)
         << Var->getDeclName() << Type;
@@ -6252,13 +6222,19 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
       return;
     }
 
-    // C++0x [class.static.data]p3: A static data member can be declared with
+    // C++11 [class.static.data]p3: A static data member can be declared with
     // the constexpr specifier; if so, its declaration shall specify
     // a brace-or-equal-initializer.
-    if (Var->isConstexpr() && Var->isStaticDataMember() &&
-        !Var->isThisDeclarationADefinition()) {
-      Diag(Var->getLocation(), diag::err_constexpr_static_mem_var_requires_init)
-        << Var->getDeclName();
+    // C++11 [dcl.constexpr]p1: The constexpr specifier shall be applied only to
+    // the definition of a variable [...] or the declaration of a static data
+    // member.
+    if (Var->isConstexpr() && !Var->isThisDeclarationADefinition()) {
+      if (Var->isStaticDataMember())
+        Diag(Var->getLocation(),
+             diag::err_constexpr_static_mem_var_requires_init)
+          << Var->getDeclName();
+      else
+        Diag(Var->getLocation(), diag::err_invalid_constexpr_var_decl);
       Var->setInvalidDecl();
       return;
     }
