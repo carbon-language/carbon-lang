@@ -112,6 +112,17 @@ static SPCC::CondCodes GetOppositeBranchCondition(SPCC::CondCodes CC)
   }
 }
 
+MachineInstr *
+SparcInstrInfo::emitFrameIndexDebugValue(MachineFunction &MF,
+                                         int FrameIx,
+                                         uint64_t Offset,
+                                         const MDNode *MDPtr,
+                                         DebugLoc dl) const {
+  MachineInstrBuilder MIB = BuildMI(MF, dl, get(SP::DBG_VALUE))
+    .addFrameIndex(FrameIx).addImm(0).addImm(Offset).addMetadata(MDPtr);
+  return &*MIB;
+}
+
 
 bool SparcInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
                                    MachineBasicBlock *&TBB,
