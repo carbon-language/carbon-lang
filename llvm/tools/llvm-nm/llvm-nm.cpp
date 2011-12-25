@@ -335,7 +335,7 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
       for (object::Archive::child_iterator i = a->begin_children(),
                                            e = a->end_children(); i != e; ++i) {
         OwningPtr<Binary> child;
-        if (error_code ec = i->getAsBinary(child)) {
+        if (i->getAsBinary(child)) {
           // Try opening it as a bitcode file.
           OwningPtr<MemoryBuffer> buff(i->getBuffer());
           Module *Result = 0;

@@ -58,7 +58,7 @@ ObjectFile *ObjectFile::createObjectFile(MemoryBuffer *Object) {
 
 ObjectFile *ObjectFile::createObjectFile(StringRef ObjectPath) {
   OwningPtr<MemoryBuffer> File;
-  if (error_code ec = MemoryBuffer::getFile(ObjectPath, File))
+  if (MemoryBuffer::getFile(ObjectPath, File))
     return NULL;
   return createObjectFile(File.take());
 }
