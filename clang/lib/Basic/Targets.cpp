@@ -1195,6 +1195,9 @@ class X86TargetInfo : public TargetInfo {
   bool HasAES;
   bool HasAVX;
   bool HasAVX2;
+  bool HasLZCNT;
+  bool HasBMI;
+  bool HasBMI2;
 
   /// \brief Enumeration of all of the X86 CPUs supported by Clang.
   ///
@@ -1331,7 +1334,8 @@ class X86TargetInfo : public TargetInfo {
 public:
   X86TargetInfo(const std::string& triple)
     : TargetInfo(triple), SSELevel(NoSSE), MMX3DNowLevel(NoMMX3DNow),
-      HasAES(false), HasAVX(false), HasAVX2(false), CPU(CK_Generic) {
+      HasAES(false), HasAVX(false), HasAVX2(false), HasLZCNT(false),
+      HasBMI(false), HasBMI2(false), CPU(CK_Generic) {
     BigEndian = false;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
@@ -1508,6 +1512,9 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   Features["aes"] = false;
   Features["avx"] = false;
   Features["avx2"] = false;
+  Features["lzcnt"] = false;
+  Features["bmi"] = false;
+  Features["bmi2"] = false;
 
   // FIXME: This *really* should not be here.
 
@@ -1575,6 +1582,9 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse4", true);
     setFeatureEnabled(Features, "aes", true);
+    setFeatureEnabled(Features, "lzcnt", true);
+    setFeatureEnabled(Features, "bmi", true);
+    setFeatureEnabled(Features, "bmi2", true);
     //setFeatureEnabled(Features, "avx2", true);
     break;
   case CK_K6:
@@ -1675,6 +1685,12 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
         Features["avx"] = Features["avx2"] = true;
     else if (Name == "sse4a")
       Features["mmx"] = Features["sse4a"] = true;
+    else if (Name == "lzcnt")
+      Features["lzcnt"] = true;
+    else if (Name == "bmi")
+      Features["bmi"] = true;
+    else if (Name == "bmi2")
+      Features["bmi2"] = true;
   } else {
     if (Name == "mmx")
       Features["mmx"] = Features["3dnow"] = Features["3dnowa"] = false;
@@ -1705,6 +1721,12 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       Features["avx2"] = false;
     else if (Name == "sse4a")
       Features["sse4a"] = false;
+    else if (Name == "lzcnt")
+      Features["lzcnt"] = false;
+    else if (Name == "bmi")
+      Features["bmi"] = false;
+    else if (Name == "bmi2")
+      Features["bmi2"] = false;
   }
 
   return true;
@@ -1721,6 +1743,21 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
 
     if (Features[i].substr(1) == "aes") {
       HasAES = true;
+      continue;
+    }
+
+    if (Features[i].substr(1) == "lzcnt") {
+      HasLZCNT = true;
+      continue;
+    }
+
+    if (Features[i].substr(1) == "bmi") {
+      HasBMI = true;
+      continue;
+    }
+
+    if (Features[i].substr(1) == "bmi2") {
+      HasBMI2 = true;
       continue;
     }
 
@@ -1945,6 +1982,15 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__AVX__");
   if (HasAVX2)
     Builder.defineMacro("__AVX2__");
+
+  if (HasLZCNT)
+    Builder.defineMacro("__LZCNT__");
+
+  if (HasBMI)
+    Builder.defineMacro("__BMI__");
+
+  if (HasBMI2)
+    Builder.defineMacro("__BMI2__");
 
   // Each case falls through to the previous one here.
   switch (SSELevel) {
