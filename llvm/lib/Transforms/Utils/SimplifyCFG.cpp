@@ -14,11 +14,11 @@
 #define DEBUG_TYPE "simplifycfg"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Type.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/GlobalVariable.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
@@ -431,9 +431,9 @@ GatherConstantCompares(Value *V, std::vector<ConstantInt*> &Vals, Value *&Extra,
   
   return 0;
 }
-      
+
 static void EraseTerminatorInstAndDCECond(TerminatorInst *TI) {
-  Instruction* Cond = 0;
+  Instruction *Cond = 0;
   if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
     Cond = dyn_cast<Instruction>(SI->getCondition());
   } else if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
@@ -1480,7 +1480,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
 
   // Ignore dbg intrinsics.
   while (isa<DbgInfoIntrinsic>(FrontIt)) ++FrontIt;
-    
+
   // Allow a single instruction to be hoisted in addition to the compare
   // that feeds the branch.  We later ensure that any values that _it_ uses
   // were also live in the predecessor, so that we don't unnecessarily create
@@ -1558,7 +1558,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
       SmallPtrSet<Value*, 4> UsedValues;
       for (Instruction::op_iterator OI = BonusInst->op_begin(),
            OE = BonusInst->op_end(); OI != OE; ++OI) {
-        Value* V = *OI;
+        Value *V = *OI;
         if (!isa<Constant>(V))
           UsedValues.insert(V);
       }
@@ -2365,7 +2365,7 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
       if (SI->getSuccessor(0) == BB) {
         std::map<BasicBlock*, std::pair<unsigned, unsigned> > Popularity;
         for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i) {
-          std::pair<unsigned, unsigned>& entry =
+          std::pair<unsigned, unsigned> &entry =
               Popularity[SI->getSuccessor(i)];
           if (entry.first == 0) {
             entry.first = 1;
@@ -2677,8 +2677,8 @@ bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI, IRBuilder<> &Builder){
     if (ICI->isEquality() && isa<ConstantInt>(ICI->getOperand(1))) {
       for (++I; isa<DbgInfoIntrinsic>(I); ++I)
         ;
-      if (I->isTerminator() 
-          && TryToSimplifyUncondBranchWithICmpInIt(ICI, TD, Builder))
+      if (I->isTerminator() &&
+          TryToSimplifyUncondBranchWithICmpInIt(ICI, TD, Builder))
         return true;
     }
   
@@ -2755,8 +2755,8 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
       if (FoldCondBranchOnPHI(BI, TD))
         return SimplifyCFG(BB) | true;
   
-  // If this basic block is ONLY a setcc and a branch, and if a predecessor
-  // branches to us and one of our successors, fold the setcc into the
+  // If this basic block is ONLY a compare and a branch, and if a predecessor
+  // branches to us and one of our successors, fold the comparison into the
   // predecessor and use logical operations to pick the right destination.
   if (FoldBranchToCommonDest(BI))
     return SimplifyCFG(BB) | true;
@@ -2810,7 +2810,7 @@ static bool passingValueIsAlwaysUndefined(Value *V, Instruction *I) {
 }
 
 /// If BB has an incoming value that will always trigger undefined behavior
-/// (eg. null pointer derefence), remove the branch leading here.
+/// (eg. null pointer dereference), remove the branch leading here.
 static bool removeUndefIntroducingPredecessor(BasicBlock *BB) {
   for (BasicBlock::iterator i = BB->begin();
        PHINode *PHI = dyn_cast<PHINode>(i); ++i)
