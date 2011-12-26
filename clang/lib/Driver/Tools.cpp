@@ -800,9 +800,8 @@ void Clang::AddSparcTargetArgs(const ArgList &Args,
   const Driver &D = getToolChain().getDriver();
 
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
-    StringRef MArch = A->getValue(Args);
     CmdArgs.push_back("-target-cpu");
-    CmdArgs.push_back(MArch.str().c_str());
+    CmdArgs.push_back(A->getValue(Args));
   }
 
   // Select the float ABI as determined by -msoft-float, -mhard-float, and
