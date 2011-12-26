@@ -30,6 +30,10 @@
 #include <bmiintrin.h>
 #endif
 
+#ifdef __BMI2__
+#include <bmi2intrin.h>
+#endif
+
 #ifdef __LZCNT__
 #include <lzcntintrin.h>
 #endif
