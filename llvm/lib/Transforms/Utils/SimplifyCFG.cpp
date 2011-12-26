@@ -1603,10 +1603,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
       }
       
       PBI->setCondition(NewCond);
-      BasicBlock *OldTrue = PBI->getSuccessor(0);
-      BasicBlock *OldFalse = PBI->getSuccessor(1);
-      PBI->setSuccessor(0, OldFalse);
-      PBI->setSuccessor(1, OldTrue);
+      PBI->swapSuccessors();
     }
     
     // If we have a bonus inst, clone it into the predecessor block.
