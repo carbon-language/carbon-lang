@@ -1368,6 +1368,30 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   return New;
 }
 
+bool Sema::isIncompatibleTypedef(TypeDecl *Old, TypedefNameDecl *New) {
+  QualType OldType;
+  if (TypedefNameDecl *OldTypedef = dyn_cast<TypedefNameDecl>(Old))
+    OldType = OldTypedef->getUnderlyingType();
+  else
+    OldType = Context.getTypeDeclType(Old);
+  QualType NewType = New->getUnderlyingType();
+
+  if (OldType != NewType &&
+      !OldType->isDependentType() &&
+      !NewType->isDependentType() &&
+      Context.getCanonicalType(OldType) !=
+      Context.getCanonicalType(NewType)) {
+    int Kind = isa<TypeAliasDecl>(Old) ? 1 : 0;
+    Diag(New->getLocation(), diag::err_redefinition_different_typedef)
+      << Kind << NewType << OldType;
+    if (Old->getLocation().isValid())
+      Diag(Old->getLocation(), diag::note_previous_definition);
+    New->setInvalidDecl();
+    return true;
+  }
+  return false;
+}
+
 /// MergeTypedefNameDecl - We just parsed a typedef 'New' which has the
 /// same name and scope as a previous declaration 'Old'.  Figure out
 /// how to resolve this situation, merging decls or emitting
@@ -1426,28 +1450,10 @@ void Sema::MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls) {
   if (Old->isInvalidDecl())
     return New->setInvalidDecl();
 
-  // Determine the "old" type we'll use for checking and diagnostics.
-  QualType OldType;
-  if (TypedefNameDecl *OldTypedef = dyn_cast<TypedefNameDecl>(Old))
-    OldType = OldTypedef->getUnderlyingType();
-  else
-    OldType = Context.getTypeDeclType(Old);
-
   // If the typedef types are not identical, reject them in all languages and
   // with any extensions enabled.
-
-  if (OldType != New->getUnderlyingType() &&
-      Context.getCanonicalType(OldType) !=
-      Context.getCanonicalType(New->getUnderlyingType())) {
-    int Kind = 0;
-    if (isa<TypeAliasDecl>(Old))
-      Kind = 1;
-    Diag(New->getLocation(), diag::err_redefinition_different_typedef)
-      << Kind << New->getUnderlyingType() << OldType;
-    if (Old->getLocation().isValid())
-      Diag(Old->getLocation(), diag::note_previous_definition);
-    return New->setInvalidDecl();
-  }
+  if (isIncompatibleTypedef(Old, New))
+    return;
 
   // The types match.  Link up the redeclaration chain if the old
   // declaration was a typedef.

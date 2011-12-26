@@ -1326,6 +1326,7 @@ public:
   /// Subroutines of ActOnDeclarator().
   TypedefDecl *ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                 TypeSourceInfo *TInfo);
+  bool isIncompatibleTypedef(TypeDecl *Old, TypedefNameDecl *New);
   void MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls);
   bool MergeFunctionDecl(FunctionDecl *New, Decl *Old);
   bool MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old);

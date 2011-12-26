@@ -169,7 +169,12 @@ Decl *TemplateDeclInstantiator::InstantiateTypedefNameDecl(TypedefNameDecl *D,
     if (!InstPrev)
       return 0;
 
-    Typedef->setPreviousDeclaration(cast<TypedefNameDecl>(InstPrev));
+    TypedefNameDecl *InstPrevTypedef = cast<TypedefNameDecl>(InstPrev);
+
+    // If the typedef types are not identical, reject them.
+    SemaRef.isIncompatibleTypedef(InstPrevTypedef, Typedef);
+
+    Typedef->setPreviousDeclaration(InstPrevTypedef);
   }
 
   SemaRef.InstantiateAttrs(TemplateArgs, D, Typedef);

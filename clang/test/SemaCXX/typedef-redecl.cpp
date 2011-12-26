@@ -59,3 +59,37 @@ template<typename T>
 typedef T f(T t) { return t; } // expected-error {{function definition declared 'typedef'}}
 int k = f(0);
 int k2 = k;
+
+namespace PR11630 {
+  template <class T>
+  struct S
+  {
+    static const unsigned C = 1;
+    static void f()
+    {
+      typedef int q[C == 1 ? 1 : -1]; // expected-note{{previous definition is here}}
+      typedef int q[C >= 1 ? 2 : -2]; // expected-error{{typedef redefinition with different types ('int [2]' vs 'int [1]')}}
+      typedef int n[C == 1 ? 1 : -1];
+      typedef int n[C >= 1 ? 1 : -1];
+    }
+  };
+
+  template <int T>
+  struct S2
+  {
+    static void f()
+    {
+      typedef int q[1];  // expected-note{{previous definition is here}}
+      typedef int q[T];  // expected-error{{typedef redefinition with different types ('int [2]' vs 'int [1]')}}
+    }
+  };
+
+  void f() {
+    S<int> a;
+    a.f(); // expected-note{{in instantiation of member function 'PR11630::S<int>::f' requested here}}
+    S2<1> b;
+    b.f();
+    S2<2> b2;
+    b2.f(); // expected-note{{in instantiation of member function 'PR11630::S2<2>::f' requested here}}
+  }
+}
