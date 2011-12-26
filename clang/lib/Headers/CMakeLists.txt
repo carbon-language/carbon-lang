@@ -3,6 +3,7 @@ set(files
   avxintrin.h
   avx2intrin.h
   bmiintrin.h
+  bmi2intrin.h
   emmintrin.h
   float.h
   immintrin.h
