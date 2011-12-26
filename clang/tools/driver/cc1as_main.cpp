@@ -214,7 +214,7 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   Opts.RelaxAll = Args->hasArg(OPT_relax_all);
   Opts.NoExecStack =  Args->hasArg(OPT_no_exec_stack);
 
-  return true;
+  return Success;
 }
 
 static formatted_raw_ostream *GetOutputStream(AssemblerInvocation &Opts,
