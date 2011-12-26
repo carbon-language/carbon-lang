@@ -8,11 +8,11 @@ define void @test_sqrt(<4 x float>* %X) nounwind {
 
 ; CHECK:      movw    r1, :lower16:{{.*}}
 ; CHECK:      movt    r1, :upper16:{{.*}}
-; CHECK:      vldmia  r1, {[[short0:s[0-9]+]], [[short1:s[0-9]+]], [[short2:s[0-9]+]], [[short3:s[0-9]+]]}
-; CHECK:      vsqrt.f32       {{s[0-9]+}}, [[short3]]
-; CHECK:      vsqrt.f32       {{s[0-9]+}}, [[short2]]
-; CHECK:      vsqrt.f32       {{s[0-9]+}}, [[short1]]
-; CHECK:      vsqrt.f32       {{s[0-9]+}}, [[short0]]
+; CHECK:      vldmia  r1
+; CHECK:      vsqrt.f32       {{s[0-9]+}}, {{s[0-9]+}}
+; CHECK:      vsqrt.f32       {{s[0-9]+}}, {{s[0-9]+}}
+; CHECK:      vsqrt.f32       {{s[0-9]+}}, {{s[0-9]+}}
+; CHECK:      vsqrt.f32       {{s[0-9]+}}, {{s[0-9]+}}
 ; CHECK:      vstmia  {{.*}}
 
 L.entry:

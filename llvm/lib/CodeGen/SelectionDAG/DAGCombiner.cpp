@@ -6905,6 +6905,10 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     EVT LVT = ExtVT;
 
     if (InVec.getOpcode() == ISD::BITCAST) {
+      // Don't duplicate a load with other uses.
+      if (!InVec.hasOneUse())
+        return SDValue();
+
       EVT BCVT = InVec.getOperand(0).getValueType();
       if (!BCVT.isVector() || ExtVT.bitsGT(BCVT.getVectorElementType()))
         return SDValue();
@@ -6922,11 +6926,19 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     } else if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR &&
                InVec.getOperand(0).getValueType() == ExtVT &&
                ISD::isNormalLoad(InVec.getOperand(0).getNode())) {
+      // Don't duplicate a load with other uses.
+      if (!InVec.hasOneUse())
+        return SDValue();
+
       LN0 = cast<LoadSDNode>(InVec.getOperand(0));
     } else if ((SVN = dyn_cast<ShuffleVectorSDNode>(InVec))) {
       // (vextract (vector_shuffle (load $addr), v2, <1, u, u, u>), 1)
       // =>
       // (load $addr+1*size)
+
+      // Don't duplicate a load with other uses.
+      if (!InVec.hasOneUse())
+        return SDValue();
 
       // If the bit convert changed the number of elements, it is unsafe
       // to examine the mask.
@@ -6938,14 +6950,21 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       int Idx = (Elt > (int)NumElems) ? -1 : SVN->getMaskElt(Elt);
       InVec = (Idx < (int)NumElems) ? InVec.getOperand(0) : InVec.getOperand(1);
 
-      if (InVec.getOpcode() == ISD::BITCAST)
+      if (InVec.getOpcode() == ISD::BITCAST) {
+        // Don't duplicate a load with other uses.
+        if (!InVec.hasOneUse())
+          return SDValue();
+
         InVec = InVec.getOperand(0);
+      }
       if (ISD::isNormalLoad(InVec.getNode())) {
         LN0 = cast<LoadSDNode>(InVec);
         Elt = (Idx < (int)NumElems) ? Idx : Idx - (int)NumElems;
       }
     }
 
+    // Make sure we found a non-volatile load and the extractelement is
+    // the only use.
     if (!LN0 || !LN0->hasNUsesOfValue(1,0) || LN0->isVolatile())
       return SDValue();
 
@@ -6982,6 +7001,9 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     // The replacement we need to do here is a little tricky: we need to
     // replace an extractelement of a load with a load.
     // Use ReplaceAllUsesOfValuesWith to do the replacement.
+    // Note that this replacement assumes that the extractvalue is the only
+    // use of the load; that's okay because we don't want to perform this
+    // transformation in other cases anyway.
     SDValue Load = DAG.getLoad(LVT, N->getDebugLoc(), LN0->getChain(), NewPtr,
                                LN0->getPointerInfo().getWithOffset(PtrOff),
                                LN0->isVolatile(), LN0->isNonTemporal(), 
