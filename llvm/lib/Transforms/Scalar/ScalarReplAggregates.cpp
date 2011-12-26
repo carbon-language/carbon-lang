@@ -938,13 +938,14 @@ public:
   void run(AllocaInst *AI, const SmallVectorImpl<Instruction*> &Insts) {
     // Remember which alloca we're promoting (for isInstInList).
     this->AI = AI;
-    if (MDNode *DebugNode = MDNode::getIfExists(AI->getContext(), AI))
+    if (MDNode *DebugNode = MDNode::getIfExists(AI->getContext(), AI)) {
       for (Value::use_iterator UI = DebugNode->use_begin(),
              E = DebugNode->use_end(); UI != E; ++UI)
         if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(*UI))
           DDIs.push_back(DDI);
         else if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(*UI))
           DVIs.push_back(DVI);
+    }
 
     LoadAndStorePromoter::run(Insts);
     AI->eraseFromParent();
