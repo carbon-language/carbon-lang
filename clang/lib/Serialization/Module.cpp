@@ -30,7 +30,7 @@ ModuleFile::ModuleFile(ModuleKind Kind)
     PreprocessedEntityOffsets(0), NumPreprocessedEntities(0),
     LocalNumHeaderFileInfos(0), 
     HeaderFileInfoTableData(0), HeaderFileInfoTable(0),
-    HeaderFileFrameworkStrings(0), LocalNumSubmodules(0),
+    HeaderFileFrameworkStrings(0), LocalNumSubmodules(0), BaseSubmoduleID(0),
     LocalNumSelectors(0), SelectorOffsets(0), BaseSelectorID(0),
     SelectorLookupTableData(0), SelectorLookupTable(0), LocalNumDecls(0),
     DeclOffsets(0), BaseDeclID(0),
