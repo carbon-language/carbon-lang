@@ -255,9 +255,6 @@ TEST(AddressSanitizer, VariousMallocsTest) {
   delete c;
 
 #ifndef __APPLE__
-  // cfree
-  cfree(Ident(malloc(1)));
-
   // fprintf(stderr, "posix_memalign\n");
   int *pm;
   int pm_res = posix_memalign((void**)&pm, kPageSize, kPageSize);
