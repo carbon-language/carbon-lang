@@ -404,12 +404,17 @@ using namespace __asan;  // NOLINT
   GET_STACK_TRACE_HERE_FOR_MALLOC;\
   return asan_memalign(0, size, &stack);
 
+#ifdef ANDROID
+void *operator new(size_t size) { OPERATOR_NEW_BODY; }
+void *operator new[](size_t size) { OPERATOR_NEW_BODY; }
+#else
 void *operator new(size_t size) throw(std::bad_alloc) { OPERATOR_NEW_BODY; }
 void *operator new[](size_t size) throw(std::bad_alloc) { OPERATOR_NEW_BODY; }
 void *operator new(size_t size, std::nothrow_t const&) throw()
 { OPERATOR_NEW_BODY; }
 void *operator new[](size_t size, std::nothrow_t const&) throw()
 { OPERATOR_NEW_BODY; }
+#endif
 
 #define OPERATOR_DELETE_BODY \
   GET_STACK_TRACE_HERE_FOR_FREE(ptr);\
