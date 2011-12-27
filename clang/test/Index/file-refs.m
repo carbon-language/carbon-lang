@@ -43,6 +43,7 @@ void test2(Sub *s, id<Prot1> p) {
 
 // RUN:  -file-refs-at=%s:7:18 \
 // CHECK:      ObjCImplementationDecl=Foo:7:17 (Definition)
+// CHECK-NEXT: UnexposedDecl=Foo:1:8 =[1:8 - 1:11]
 // CHECK-NEXT: ObjCClassRef=Foo:3:12 =[1:8 - 1:11]
 // CHECK-NEXT: ObjCInterfaceDecl=Foo:3:12 =[3:12 - 3:15]
 // CHECK-NEXT: ObjCImplementationDecl=Foo:7:17 (Definition) =[7:17 - 7:20]

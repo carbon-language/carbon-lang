@@ -837,11 +837,6 @@ void AddTopLevelDeclarationToHash(Decl *D, unsigned &Hash) {
       AddTopLevelDeclarationToHash(*P, Hash);
     return;
   }
-  
-  if (ObjCClassDecl *Class = dyn_cast<ObjCClassDecl>(D)) {
-    AddTopLevelDeclarationToHash(Class->getForwardInterfaceDecl(), Hash);
-    return;
-  }
 }
 
 class TopLevelDeclTrackerConsumer : public ASTConsumer {

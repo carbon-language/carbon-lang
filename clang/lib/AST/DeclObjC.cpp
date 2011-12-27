@@ -1011,28 +1011,6 @@ void ObjCProtocolDecl::completedForwardDecl() {
 }
 
 //===----------------------------------------------------------------------===//
-// ObjCClassDecl
-//===----------------------------------------------------------------------===//
-
-ObjCClassDecl::ObjCClassDecl(DeclContext *DC, SourceLocation L,
-                             ObjCInterfaceDecl *Interface, 
-                             SourceLocation InterfaceLoc)
-  : Decl(ObjCClass, DC, L), Interface(Interface), InterfaceLoc(InterfaceLoc)
-{
-}
-
-ObjCClassDecl *ObjCClassDecl::Create(ASTContext &C, DeclContext *DC,
-                                     SourceLocation L,
-                                     ObjCInterfaceDecl *Interface,
-                                     SourceLocation InterfaceLoc) {
-  return new (C) ObjCClassDecl(DC, L, Interface, InterfaceLoc);
-}
-
-SourceRange ObjCClassDecl::getSourceRange() const {
-  return SourceRange(getLocation(), InterfaceLoc);
-}
-
-//===----------------------------------------------------------------------===//
 // ObjCForwardProtocolDecl
 //===----------------------------------------------------------------------===//
 

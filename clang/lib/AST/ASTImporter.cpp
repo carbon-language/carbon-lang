@@ -128,7 +128,6 @@ namespace clang {
     Decl *VisitObjCPropertyDecl(ObjCPropertyDecl *D);
     Decl *VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D);
     Decl *VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
-    Decl *VisitObjCClassDecl(ObjCClassDecl *D);
     Decl *VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D);
     Decl *VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
     Decl *VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
@@ -3603,35 +3602,6 @@ ASTNodeImporter::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {
   LexicalDC->addDeclInternal(ToForward);
   Importer.Imported(D, ToForward);
   return ToForward;
-}
-
-Decl *ASTNodeImporter::VisitObjCClassDecl(ObjCClassDecl *D) {
-  // Import the context of this declaration.
-  DeclContext *DC = Importer.ImportContext(D->getDeclContext());
-  if (!DC)
-    return 0;
-  
-  DeclContext *LexicalDC = DC;
-  if (D->getDeclContext() != D->getLexicalDeclContext()) {
-    LexicalDC = Importer.ImportContext(D->getLexicalDeclContext());
-    if (!LexicalDC)
-      return 0;
-  }
-  
-  // Import the location of this declaration.
-  SourceLocation Loc = Importer.Import(D->getLocation());
-  ObjCInterfaceDecl *ToIface
-    = cast_or_null<ObjCInterfaceDecl>(
-        Importer.Import(D->getForwardInterfaceDecl()));
-  ObjCClassDecl *ToClass = ObjCClassDecl::Create(Importer.getToContext(), DC,
-                             Loc,
-                             ToIface,
-                             Importer.Import(D->getNameLoc()));
-    
-  ToClass->setLexicalDeclContext(LexicalDC);
-  LexicalDC->addDeclInternal(ToClass);
-  Importer.Imported(D, ToClass);
-  return ToClass;
 }
 
 Decl *ASTNodeImporter::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {

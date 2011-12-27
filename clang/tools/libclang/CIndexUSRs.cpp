@@ -75,7 +75,6 @@ public:
   void VisitNamespaceAliasDecl(NamespaceAliasDecl *D);
   void VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
   void VisitClassTemplateDecl(ClassTemplateDecl *D);
-  void VisitObjCClassDecl(ObjCClassDecl *CD);
   void VisitObjCContainerDecl(ObjCContainerDecl *CD);
   void VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *P);
   void VisitObjCMethodDecl(ObjCMethodDecl *MD);
@@ -308,12 +307,6 @@ void USRGenerator::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   Out << (D->isInstanceMethod() ? "(im)" : "(cm)");
   DeclarationName N(D->getSelector());
   N.printName(Out);
-}
-
-void USRGenerator::VisitObjCClassDecl(ObjCClassDecl *D) {
-  // FIXME: @class declarations can refer to multiple classes.  We need
-  //  to be able to traverse these.
-  IgnoreResults = true;
 }
 
 void USRGenerator::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {

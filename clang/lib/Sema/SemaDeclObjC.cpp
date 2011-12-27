@@ -1775,21 +1775,12 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
       = dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
     ObjCInterfaceDecl *IDecl
       = ObjCInterfaceDecl::Create(Context, CurContext, AtClassLoc,
-                                  IdentList[i], PrevIDecl, IdentLocs[i], true);
+                                  IdentList[i], PrevIDecl, IdentLocs[i]);
     IDecl->setAtEndRange(IdentLocs[i]);
     
-    // Create the forward declaration. Note that we intentionally do this 
-    // before we add the ObjCInterfaceDecl we just created, so that the
-    // rewriter sees the ObjCClassDecl first.
-    // FIXME: ObjCClassDecl should probably just go away.
-    ObjCClassDecl *CDecl = ObjCClassDecl::Create(Context, CurContext, AtClassLoc,
-                                                 IDecl, IdentLocs[i]);
-    CurContext->addDecl(CDecl);
-    
     PushOnScopeChains(IDecl, TUScope);
-    
-    CheckObjCDeclScope(CDecl);
-    DeclsInGroup.push_back(CDecl);
+    CheckObjCDeclScope(IDecl);
+    DeclsInGroup.push_back(IDecl);
   }
   
   return BuildDeclaratorGroup(DeclsInGroup.data(), DeclsInGroup.size(), false);

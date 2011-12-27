@@ -452,8 +452,8 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Punctuation: ")" [88:24 - 88:25] ObjCProtocolExpr=Proto:85:1
 // CHECK: Punctuation: ";" [88:25 - 88:26] CompoundStmt=
 // CHECK: Punctuation: "}" [89:1 - 89:2] CompoundStmt=
-// CHECK: Punctuation: "@" [93:1 - 93:2] UnexposedDecl=[93:8]
-// CHECK: Keyword: "class" [93:2 - 93:7] UnexposedDecl=[93:8]
+// CHECK: Punctuation: "@" [93:1 - 93:2] UnexposedDecl=Rdar8595462_A:93:8
+// CHECK: Keyword: "class" [93:2 - 93:7] UnexposedDecl=Rdar8595462_A:93:8
 // CHECK: Identifier: "Rdar8595462_A" [93:8 - 93:21] ObjCClassRef=Rdar8595462_A:93:8
 // CHECK: Punctuation: ";" [93:21 - 93:22]
 // CHECK: Punctuation: "@" [94:1 - 94:2] ObjCInterfaceDecl=Rdar8595462_B:94:12

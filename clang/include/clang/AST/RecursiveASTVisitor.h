@@ -1162,10 +1162,6 @@ DEF_TRAVERSE_DECL(ClassScopeFunctionSpecializationDecl, {
 
 DEF_TRAVERSE_DECL(LinkageSpecDecl, { })
 
-DEF_TRAVERSE_DECL(ObjCClassDecl, {
-    // FIXME: implement this
-  })
-
 DEF_TRAVERSE_DECL(ObjCForwardProtocolDecl, {
     // FIXME: implement this
   })

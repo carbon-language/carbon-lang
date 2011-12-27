@@ -17,7 +17,6 @@
 namespace clang {
   class FileEntry;
   class ObjCPropertyDecl;
-  class ObjCClassDecl;
   class ClassTemplateDecl;
   class FunctionTemplateDecl;
   class TypeAliasTemplateDecl;
@@ -370,7 +369,6 @@ public:
   
   bool handleTypedefName(const TypedefNameDecl *D);
 
-  bool handleObjCClass(const ObjCClassDecl *D);
   bool handleObjCInterface(const ObjCInterfaceDecl *D);
   bool handleObjCImplementation(const ObjCImplementationDecl *D);
 

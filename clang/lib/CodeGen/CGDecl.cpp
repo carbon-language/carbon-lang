@@ -65,7 +65,6 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
   case Decl::AccessSpec:
   case Decl::LinkageSpec:
   case Decl::ObjCPropertyImpl:
-  case Decl::ObjCClass:
   case Decl::ObjCForwardProtocol:
   case Decl::FileScopeAsm:
   case Decl::Friend:

@@ -335,24 +335,22 @@ bool IndexingContext::handleTypedefName(const TypedefNameDecl *D) {
   return handleDecl(D, D->getLocation(), getCursor(D), DInfo);
 }
 
-bool IndexingContext::handleObjCClass(const ObjCClassDecl *D) {
-  ObjCInterfaceDecl *IFaceD = D->getForwardInterfaceDecl();
-  SourceLocation Loc = D->getNameLoc();
-  bool isRedeclaration = IFaceD->getLocation() != Loc;
- 
+bool IndexingContext::handleObjCInterface(const ObjCInterfaceDecl *D) {
   // For @class forward declarations, suppress them the same way as references.
-  if (suppressRefs()) {
-    if (markEntityOccurrenceInFile(IFaceD, Loc))
+  if (!D->isThisDeclarationADefinition()) {
+    if (suppressRefs() && markEntityOccurrenceInFile(D, D->getLocation()))
       return false; // already occurred.
+
+    // FIXME: This seems like the wrong definition for redeclaration.
+    bool isRedeclaration = D->hasDefinition() || D->getPreviousDeclaration();
+    ObjCContainerDeclInfo ContDInfo(/*isForwardRef=*/true, isRedeclaration,
+                                    /*isImplementation=*/false);
+    return handleObjCContainer(D, D->getLocation(),
+                               MakeCursorObjCClassRef(D, D->getLocation(),
+                                                      CXTU), 
+                               ContDInfo);
   }
 
-  ObjCContainerDeclInfo ContDInfo(/*isForwardRef=*/true, isRedeclaration,
-                                  /*isImplementation=*/false);
-  return handleObjCContainer(IFaceD, Loc,
-                          MakeCursorObjCClassRef(IFaceD, Loc, CXTU), ContDInfo);
-}
-
-bool IndexingContext::handleObjCInterface(const ObjCInterfaceDecl *D) {
   ScratchAlloc SA(*this);
 
   CXIdxBaseClassInfo BaseClass;
@@ -370,8 +368,8 @@ bool IndexingContext::handleObjCInterface(const ObjCInterfaceDecl *D) {
   }
   
   ObjCProtocolList EmptyProtoList;
-  ObjCProtocolListInfo ProtInfo(D->hasDefinition()? D->getReferencedProtocols()
-                                                  : EmptyProtoList, 
+  ObjCProtocolListInfo ProtInfo(D->hasDefinition() ? D->getReferencedProtocols()
+                                                   : EmptyProtoList, 
                                 *this, SA);
   
   ObjCInterfaceDeclInfo InterInfo(D);

@@ -1145,39 +1145,6 @@ public:
   friend class ASTDeclWriter;
 };
 
-/// ObjCClassDecl - Specifies a list of forward class declarations. For example:
-///
-/// @class NSCursor, NSImage, NSPasteboard, NSWindow;
-///
-class ObjCClassDecl : public Decl {
-  ObjCInterfaceDecl *Interface;
-  SourceLocation InterfaceLoc;
-  
-  ObjCClassDecl(DeclContext *DC, SourceLocation L,
-                ObjCInterfaceDecl *Interface, SourceLocation InterfaceLoc);
-  
-  friend class ASTDeclReader;
-  friend class ASTDeclWriter;
-  
-public:
-  static ObjCClassDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                               ObjCInterfaceDecl *Interface = 0,
-                               SourceLocation InterfaceLoc = SourceLocation());
-
-  ObjCInterfaceDecl *getForwardInterfaceDecl() const {
-    return Interface;
-  }
-
-  /// \brief Retrieve the location of the class name.
-  SourceLocation getNameLoc() const { return InterfaceLoc; }
-
-  virtual SourceRange getSourceRange() const;
-
-  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
-  static bool classof(const ObjCClassDecl *D) { return true; }
-  static bool classofKind(Kind K) { return K == ObjCClass; }
-};
-
 /// ObjCForwardProtocolDecl - Specifies a list of forward protocol declarations.
 /// For example:
 ///

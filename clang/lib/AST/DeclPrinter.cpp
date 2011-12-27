@@ -70,7 +70,6 @@ namespace {
     void VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
     void VisitClassTemplateDecl(ClassTemplateDecl *D);
     void VisitObjCMethodDecl(ObjCMethodDecl *D);
-    void VisitObjCClassDecl(ObjCClassDecl *D);
     void VisitObjCImplementationDecl(ObjCImplementationDecl *D);
     void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
     void VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
@@ -846,10 +845,6 @@ void DeclPrinter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 //----------------------------------------------------------------------------
 // Objective-C declarations
 //----------------------------------------------------------------------------
-
-void DeclPrinter::VisitObjCClassDecl(ObjCClassDecl *D) {
-  Out << "@class " << *D->getForwardInterfaceDecl();
-}
 
 void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
   if (OMD->isInstanceMethod())

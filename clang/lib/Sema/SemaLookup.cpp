@@ -2776,12 +2776,6 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
             Visited.add(ND);
           }
         }
-      } else if (ObjCClassDecl *Class = dyn_cast<ObjCClassDecl>(*D)) {
-          ObjCInterfaceDecl *IFace = Class->getForwardInterfaceDecl();
-          if (NamedDecl *ND = Result.getAcceptableDecl(IFace)) {
-            Consumer.FoundDecl(ND, Visited.checkHidden(ND), Ctx, InBaseClass);
-            Visited.add(ND);
-          }
       }
       
       // Visit transparent contexts and inline namespaces inside this context.

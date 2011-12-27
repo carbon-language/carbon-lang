@@ -165,10 +165,13 @@ namespace {
     // Top Level Driver code.
     virtual bool HandleTopLevelDecl(DeclGroupRef D) {
       for (DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; ++I) {
-        if (isa<ObjCClassDecl>((*I))) {
-          RewriteForwardClassDecl(D);
-          break;
+        if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(*I)) {
+          if (!Class->isThisDeclarationADefinition()) {
+            RewriteForwardClassDecl(D);
+            break;
+          }
         }
+
         HandleTopLevelSingleDecl(*I);
       }
       return true;
@@ -256,7 +259,7 @@ namespace {
     void RewriteInclude();
     void RewriteForwardClassDecl(DeclGroupRef D);
     void RewriteForwardClassDecl(const llvm::SmallVector<Decl*, 8> &DG);
-    void RewriteForwardClassEpilogue(ObjCClassDecl *ClassDecl, 
+    void RewriteForwardClassEpilogue(ObjCInterfaceDecl *ClassDecl, 
                                      const std::string &typedefString);
     void RewriteImplementations();
     void RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
@@ -668,27 +671,23 @@ void RewriteObjC::HandleTopLevelSingleDecl(Decl *D) {
     for (DeclContext::decl_iterator DI = LSD->decls_begin(),
                                  DIEnd = LSD->decls_end();
          DI != DIEnd; ) {
-      if (isa<ObjCClassDecl>((*DI))) {
-        SmallVector<Decl *, 8> DG;
-        Decl *D = (*DI);
-        SourceLocation Loc = D->getLocation();
-        while (DI != DIEnd &&
-               isa<ObjCClassDecl>(D) && D->getLocation() == Loc) {
-          ObjCClassDecl *Class = cast<ObjCClassDecl>(D);
-          DG.push_back(D);
-          ++DI;
-          D = (*DI);
-
-          // Following the ObjCClassDecl, we should have the corresponding
-          // ObjCInterfaceDecl. Skip over it.
-          if (DI != DIEnd && isa<ObjCInterfaceDecl>(D) && 
-              Class->getForwardInterfaceDecl() == D) {
+      if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>((*DI))) {
+        if (!IFace->isThisDeclarationADefinition()) {
+          SmallVector<Decl *, 8> DG;
+          SourceLocation StartLoc = IFace->getLocStart();
+          do {
+            if (isa<ObjCInterfaceDecl>(*DI) &&
+                !cast<ObjCInterfaceDecl>(*DI)->isThisDeclarationADefinition() &&
+                StartLoc == (*DI)->getLocStart())
+              DG.push_back(*DI);
+            else
+              break;
+            
             ++DI;
-            D = (*DI);
-          }
+          } while (DI != DIEnd);
+          RewriteForwardClassDecl(DG);
+          continue;
         }
-        RewriteForwardClassDecl(DG);
-        continue;
       }
       HandleTopLevelSingleDecl(*DI);
       ++DI;
@@ -873,9 +872,9 @@ static void RewriteOneForwardClassDecl(ObjCInterfaceDecl *ForwardDecl,
   typedefString += ";\n#endif\n";
 }
 
-void RewriteObjC::RewriteForwardClassEpilogue(ObjCClassDecl *ClassDecl,
+void RewriteObjC::RewriteForwardClassEpilogue(ObjCInterfaceDecl *ClassDecl,
                                               const std::string &typedefString) {
-    SourceLocation startLoc = ClassDecl->getLocation();
+    SourceLocation startLoc = ClassDecl->getLocStart();
     const char *startBuf = SM->getCharacterData(startLoc);
     const char *semiPtr = strchr(startBuf, ';'); 
     // Replace the @class with typedefs corresponding to the classes.
@@ -885,8 +884,7 @@ void RewriteObjC::RewriteForwardClassEpilogue(ObjCClassDecl *ClassDecl,
 void RewriteObjC::RewriteForwardClassDecl(DeclGroupRef D) {
   std::string typedefString;
   for (DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; ++I) {
-    ObjCClassDecl *ClassDecl = cast<ObjCClassDecl>(*I);
-    ObjCInterfaceDecl *ForwardDecl = ClassDecl->getForwardInterfaceDecl();
+    ObjCInterfaceDecl *ForwardDecl = cast<ObjCInterfaceDecl>(*I);
     if (I == D.begin()) {
       // Translate to typedef's that forward reference structs with the same name
       // as the class. As a convenience, we include the original declaration
@@ -898,15 +896,14 @@ void RewriteObjC::RewriteForwardClassDecl(DeclGroupRef D) {
     RewriteOneForwardClassDecl(ForwardDecl, typedefString);
   }
   DeclGroupRef::iterator I = D.begin();
-  RewriteForwardClassEpilogue(cast<ObjCClassDecl>(*I), typedefString);
+  RewriteForwardClassEpilogue(cast<ObjCInterfaceDecl>(*I), typedefString);
 }
 
 void RewriteObjC::RewriteForwardClassDecl(
                                 const llvm::SmallVector<Decl*, 8> &D) {
   std::string typedefString;
   for (unsigned i = 0; i < D.size(); i++) {
-    ObjCClassDecl *ClassDecl = cast<ObjCClassDecl>(D[i]);
-    ObjCInterfaceDecl *ForwardDecl = ClassDecl->getForwardInterfaceDecl();
+    ObjCInterfaceDecl *ForwardDecl = cast<ObjCInterfaceDecl>(D[i]);
     if (i == 0) {
       typedefString += "// @class ";
       typedefString += ForwardDecl->getNameAsString();
@@ -914,7 +911,7 @@ void RewriteObjC::RewriteForwardClassDecl(
     }
     RewriteOneForwardClassDecl(ForwardDecl, typedefString);
   }
-  RewriteForwardClassEpilogue(cast<ObjCClassDecl>(D[0]), typedefString);
+  RewriteForwardClassEpilogue(cast<ObjCInterfaceDecl>(D[0]), typedefString);
 }
 
 void RewriteObjC::RewriteMethodDeclaration(ObjCMethodDecl *Method) {
@@ -4988,10 +4985,6 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
       RecordDecl *RD = cast<RecordDecl>(D);
       if (RD->isCompleteDefinition()) 
         RewriteRecordBody(RD);
-      break;
-    }
-    case Decl::ObjCClass: {
-      llvm_unreachable("RewriteObjC::HandleDeclInMainFile - ObjCClassDecl");
       break;
     }
     default:

@@ -279,7 +279,6 @@ namespace clang {
     void VisitObjCIvarDecl(ObjCIvarDecl *D);
     void VisitObjCProtocolDecl(ObjCProtocolDecl *D);
     void VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *D);
-    void VisitObjCClassDecl(ObjCClassDecl *D);
     void VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
     void VisitObjCCategoryDecl(ObjCCategoryDecl *D);
     void VisitObjCImplDecl(ObjCImplDecl *D);
@@ -780,12 +779,6 @@ void ASTDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
 
 void ASTDeclReader::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *FD) {
   VisitFieldDecl(FD);
-}
-
-void ASTDeclReader::VisitObjCClassDecl(ObjCClassDecl *CD) {
-  VisitDecl(CD);
-  CD->Interface = ReadDeclAs<ObjCInterfaceDecl>(Record, Idx);
-  CD->InterfaceLoc = ReadSourceLocation(Record, Idx);
 }
 
 void ASTDeclReader::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *FPD) {
@@ -1943,9 +1936,6 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   case DECL_OBJC_AT_DEFS_FIELD:
     D = ObjCAtDefsFieldDecl::Create(Context, 0, SourceLocation(),
                                     SourceLocation(), 0, QualType(), 0);
-    break;
-  case DECL_OBJC_CLASS:
-    D = ObjCClassDecl::Create(Context, 0, SourceLocation());
     break;
   case DECL_OBJC_FORWARD_PROTOCOL:
     D = ObjCForwardProtocolDecl::Create(Context, 0, SourceLocation());

@@ -114,7 +114,6 @@ namespace clang {
     void VisitObjCIvarDecl(ObjCIvarDecl *D);
     void VisitObjCProtocolDecl(ObjCProtocolDecl *D);
     void VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *D);
-    void VisitObjCClassDecl(ObjCClassDecl *D);
     void VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
     void VisitObjCCategoryDecl(ObjCCategoryDecl *D);
     void VisitObjCImplDecl(ObjCImplDecl *D);
@@ -536,13 +535,6 @@ void ASTDeclWriter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
 void ASTDeclWriter::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *D) {
   VisitFieldDecl(D);
   Code = serialization::DECL_OBJC_AT_DEFS_FIELD;
-}
-
-void ASTDeclWriter::VisitObjCClassDecl(ObjCClassDecl *D) {
-  VisitDecl(D);
-  Writer.AddDeclRef(D->Interface, Record);
-  Writer.AddSourceLocation(D->InterfaceLoc, Record);
-  Code = serialization::DECL_OBJC_CLASS;
 }
 
 void ASTDeclWriter::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {

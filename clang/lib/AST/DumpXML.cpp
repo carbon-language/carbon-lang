@@ -740,11 +740,6 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
     visitDeclContext(D);
   }
 
-  // ObjCClassDecl
-  void visitObjCClassDeclChildren(ObjCClassDecl *D) {
-    visitDeclRef(D->getForwardInterfaceDecl());
-  }
-
   // ObjCInterfaceDecl
   void visitCategoryList(ObjCCategoryDecl *D) {
     if (!D) return;

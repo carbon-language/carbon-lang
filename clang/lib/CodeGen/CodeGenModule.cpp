@@ -2375,7 +2375,6 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   // Objective-C Decls
 
   // Forward declarations, no (immediate) code generation.
-  case Decl::ObjCClass:
   case Decl::ObjCForwardProtocol:
   case Decl::ObjCInterface:
     break;
