@@ -934,6 +934,15 @@ public:
 
       return CGM.GetAddrOfGlobalBlock(cast<BlockExpr>(E), FunctionName.c_str());
     }
+    case Expr::CXXTypeidExprClass: {
+      CXXTypeidExpr *Typeid = cast<CXXTypeidExpr>(E);
+      QualType T;
+      if (Typeid->isTypeOperand())
+        T = Typeid->getTypeOperand();
+      else
+        T = Typeid->getExprOperand()->getType();
+      return CGM.GetAddrOfRTTIDescriptor(T);
+    }
     }
 
     return 0;

@@ -280,11 +280,10 @@ namespace std {
 namespace TypeId {
   struct S { virtual void f(); };
   constexpr S *p = 0;
-  constexpr const std::type_info &ti1 = typeid(*p); // expected-error {{must be initialized by a constant expression}}
+  constexpr const std::type_info &ti1 = typeid(*p); // expected-error {{must be initialized by a constant expression}} expected-note {{typeid applied to expression of polymorphic type 'TypeId::S'}}
 
-  // FIXME: Implement typeid evaluation.
   struct T {} t;
-  constexpr const std::type_info &ti2 = typeid(t); // unexpected-error {{must be initialized by a constant expression}}
+  constexpr const std::type_info &ti2 = typeid(t);
 }
 
 // - a new-expression (5.3.4);

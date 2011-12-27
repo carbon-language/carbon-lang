@@ -697,6 +697,7 @@ static bool IsGlobalLValue(APValue::LValueBase B) {
   case Expr::PredefinedExprClass:
   case Expr::ObjCStringLiteralClass:
   case Expr::ObjCEncodeExprClass:
+  case Expr::CXXTypeidExprClass:
     return true;
   case Expr::CallExprClass:
     return IsStringLiteralCall(cast<CallExpr>(E));
@@ -2329,6 +2330,7 @@ public:
 // - Literals
 //  * CompoundLiteralExpr in C
 //  * StringLiteral
+//  * CXXTypeidExpr
 //  * PredefinedExpr
 //  * ObjCStringLiteralExpr
 //  * ObjCEncodeExpr
@@ -2356,6 +2358,7 @@ public:
   bool VisitMemberExpr(const MemberExpr *E);
   bool VisitStringLiteral(const StringLiteral *E) { return Success(E); }
   bool VisitObjCEncodeExpr(const ObjCEncodeExpr *E) { return Success(E); }
+  bool VisitCXXTypeidExpr(const CXXTypeidExpr *E);
   bool VisitArraySubscriptExpr(const ArraySubscriptExpr *E);
   bool VisitUnaryDeref(const UnaryOperator *E);
 
@@ -2448,6 +2451,19 @@ LValueExprEvaluator::VisitCompoundLiteralExpr(const CompoundLiteralExpr *E) {
   assert(!Info.getLangOpts().CPlusPlus && "lvalue compound literal in c++?");
   // Defer visiting the literal until the lvalue-to-rvalue conversion. We can
   // only see this when folding in C, so there's no standard to follow here.
+  return Success(E);
+}
+
+bool LValueExprEvaluator::VisitCXXTypeidExpr(const CXXTypeidExpr *E) {
+  if (E->isTypeOperand())
+    return Success(E);
+  CXXRecordDecl *RD = E->getExprOperand()->getType()->getAsCXXRecordDecl();
+  if (RD && RD->isPolymorphic()) {
+    Info.Diag(E->getExprLoc(), diag::note_constexpr_typeid_polymorphic)
+      << E->getExprOperand()->getType()
+      << E->getExprOperand()->getSourceRange();
+    return false;
+  }
   return Success(E);
 }
 
