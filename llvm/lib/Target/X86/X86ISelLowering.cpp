@@ -12621,7 +12621,8 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
     case Intrinsic::x86_sse2_movmsk_pd:
     case Intrinsic::x86_avx_movmsk_pd_256:
     case Intrinsic::x86_mmx_pmovmskb:
-    case Intrinsic::x86_sse2_pmovmskb_128: {
+    case Intrinsic::x86_sse2_pmovmskb_128:
+    case Intrinsic::x86_avx2_pmovmskb: {
       // High bits of movmskp{s|d}, pmovmskb are known zero.
       switch (IntId) {
         case Intrinsic::x86_sse_movmsk_ps:      NumLoBits = 4; break;
@@ -12630,6 +12631,7 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
         case Intrinsic::x86_avx_movmsk_pd_256:  NumLoBits = 4; break;
         case Intrinsic::x86_mmx_pmovmskb:       NumLoBits = 8; break;
         case Intrinsic::x86_sse2_pmovmskb_128:  NumLoBits = 16; break;
+        case Intrinsic::x86_avx2_pmovmskb:      NumLoBits = 32; break;
       }
       KnownZero = APInt::getHighBitsSet(Mask.getBitWidth(),
                                         Mask.getBitWidth() - NumLoBits);
@@ -13856,6 +13858,7 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+// PerformXorCombine - Attempts to turn XOR nodes into BLSMSK nodes
 static SDValue PerformXorCombine(SDNode *N, SelectionDAG &DAG,
                                  TargetLowering::DAGCombinerInfo &DCI,
                                  const X86Subtarget *Subtarget) {
@@ -13866,6 +13869,8 @@ static SDValue PerformXorCombine(SDNode *N, SelectionDAG &DAG,
 
   if (VT != MVT::i32 && VT != MVT::i64)
     return SDValue();
+
+  assert(Subtarget->hasBMI() && "Creating BLSMSK requires BMI instructions");
 
   // Create BLSMSK instructions by finding X ^ (X-1)
   SDValue N0 = N->getOperand(0);
