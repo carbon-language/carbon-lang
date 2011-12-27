@@ -841,6 +841,28 @@ struct MemSetOpt : public LibCallOptimization {
 //===----------------------------------------------------------------------===//
 
 //===---------------------------------------===//
+// 'cos*' Optimizations
+
+struct CosOpt : public LibCallOptimization {
+  virtual Value *CallOptimizer(Function *Callee, CallInst *CI, IRBuilder<> &B) {
+    FunctionType *FT = Callee->getFunctionType();
+    // Just make sure this has 1 argument of FP type, which matches the
+    // result type.
+    if (FT->getNumParams() != 1 || FT->getReturnType() != FT->getParamType(0) ||
+        !FT->getParamType(0)->isFloatingPointTy())
+      return 0;
+
+    // cos(-x) -> cos(x)
+    Value *Op1 = CI->getArgOperand(0);
+    if (BinaryOperator::isFNeg(Op1)) {
+      BinaryOperator *BinExpr = cast<BinaryOperator>(Op1);
+      return B.CreateCall(Callee, BinExpr->getOperand(1), "cos");
+    }
+    return 0;
+  }
+};
+
+//===---------------------------------------===//
 // 'pow*' Optimizations
 
 struct PowOpt : public LibCallOptimization {
@@ -870,7 +892,7 @@ struct PowOpt : public LibCallOptimization {
     if (Op2C->isExactlyValue(0.5)) {
       // Expand pow(x, 0.5) to (x == -infinity ? +infinity : fabs(sqrt(x))).
       // This is faster than calling pow, and still handles negative zero
-      // and negative infinite correctly.
+      // and negative infinity correctly.
       // TODO: In fast-math mode, this could be just sqrt(x).
       // TODO: In finite-only mode, this could be just fabs(sqrt(x)).
       Value *Inf = ConstantFP::getInfinity(CI->getType());
@@ -1455,7 +1477,7 @@ namespace {
     StrToOpt StrTo; StrSpnOpt StrSpn; StrCSpnOpt StrCSpn; StrStrOpt StrStr;
     MemCmpOpt MemCmp; MemCpyOpt MemCpy; MemMoveOpt MemMove; MemSetOpt MemSet;
     // Math Library Optimizations
-    PowOpt Pow; Exp2Opt Exp2; UnaryDoubleFPOpt UnaryDoubleFP;
+    CosOpt Cos; PowOpt Pow; Exp2Opt Exp2; UnaryDoubleFPOpt UnaryDoubleFP;
     // Integer Optimizations
     FFSOpt FFS; AbsOpt Abs; IsDigitOpt IsDigit; IsAsciiOpt IsAscii;
     ToAsciiOpt ToAscii;
@@ -1539,6 +1561,9 @@ void SimplifyLibCalls::InitOptimizations() {
   Optimizations["__strcpy_chk"] = &StrCpyChk;
 
   // Math Library Optimizations
+  Optimizations["cosf"] = &Cos;
+  Optimizations["cos"] = &Cos;
+  Optimizations["cosl"] = &Cos;
   Optimizations["powf"] = &Pow;
   Optimizations["pow"] = &Pow;
   Optimizations["powl"] = &Pow;
@@ -2351,9 +2376,6 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
 //   * cbrt(expN(X))  -> expN(x/3)
 //   * cbrt(sqrt(x))  -> pow(x,1/6)
 //   * cbrt(sqrt(x))  -> pow(x,1/9)
-//
-// cos, cosf, cosl:
-//   * cos(-x)  -> cos(x)
 //
 // exp, expf, expl:
 //   * exp(log(x))  -> x
