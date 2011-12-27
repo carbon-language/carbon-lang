@@ -1473,10 +1473,10 @@ static bool ExtractBranchMetadata(BranchInst *BI,
   assert(BI->isConditional() &&
          "Looking for probabilities on unconditional branch?");
   MDNode *ProfileData = BI->getMetadata(LLVMContext::MD_prof);
-  if (!ProfileData || ProfileData->getNumOperands() != 3) return 0;
+  if (!ProfileData || ProfileData->getNumOperands() != 3) return false;
   ConstantInt *CITrue = dyn_cast<ConstantInt>(ProfileData->getOperand(1));
   ConstantInt *CIFalse = dyn_cast<ConstantInt>(ProfileData->getOperand(2));
-  if (!CITrue || !CIFalse) return 0;
+  if (!CITrue || !CIFalse) return false;
   ProbTrue = CITrue->getValue();
   ProbFalse = CIFalse->getValue();
   assert(ProbTrue.getBitWidth() == 32 && ProbFalse.getBitWidth() == 32 &&
