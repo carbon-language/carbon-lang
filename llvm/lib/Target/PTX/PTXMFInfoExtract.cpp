@@ -71,6 +71,8 @@ bool PTXMFInfoExtract::runOnMachineFunction(MachineFunction &MF) {
       RegType = PTXRegisterType::F32;
     else if (TRC == PTX::RegF64RegisterClass)
       RegType = PTXRegisterType::F64;
+    else
+      llvm_unreachable("Unkown register class.");
     MFI->addRegister(Reg, RegType, PTXRegisterSpace::Reg);
   }
 

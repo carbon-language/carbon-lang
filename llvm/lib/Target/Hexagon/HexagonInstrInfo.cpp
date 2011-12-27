@@ -461,7 +461,7 @@ unsigned HexagonInstrInfo::createVR(MachineFunction* MF, MVT VT) const {
   } else if (VT == MVT::i64) {
     TRC =  Hexagon::DoubleRegsRegisterClass;
   } else {
-    assert(0 && "Cannot handle this register class");
+    llvm_unreachable("Cannot handle this register class");
   }
 
   unsigned NewReg = RegInfo.createVirtualRegister(TRC);
@@ -553,10 +553,6 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
 
   case Hexagon::JMPR:
     return false;
-    return true;
-
-  default:
-    return true;
   }
 
   return true;
@@ -793,9 +789,8 @@ getMatchingCondBranchOpcode(int Opc, bool invertPredicate) const {
   case Hexagon::DEALLOC_RET_V4:
     return !invertPredicate ? Hexagon::DEALLOC_RET_cPt_V4 :
                               Hexagon::DEALLOC_RET_cNotPt_V4;
-  default:
-    assert(false && "Unexpected predicable instruction");
   }
+  llvm_unreachable("Unexpected predicable instruction");
 }
 
 
@@ -1243,8 +1238,8 @@ isValidOffset(const int Opcode, const int Offset) const {
     return true;
   }
 
-  assert(0 && "No offset range is defined for this opcode. Please define it in \
-               the above switch statement!");
+  llvm_unreachable("No offset range is defined for this opcode. "
+                   "Please define it in the above switch statement!");
 }
 
 

@@ -58,18 +58,16 @@ const unsigned* HexagonRegisterInfo::getCalleeSavedRegs(const MachineFunction
   };
 
   switch(Subtarget.getHexagonArchVersion()) {
+  case HexagonSubtarget::V1:
+    break;
   case HexagonSubtarget::V2:
     return CalleeSavedRegsV2;
-    break;
   case HexagonSubtarget::V3:
   case HexagonSubtarget::V4:
     return CalleeSavedRegsV3;
-    break;
-  default:
-    const char *ErrorString = 
-      "Callee saved registers requested for unknown archtecture version";
-    llvm_unreachable(ErrorString);
   }
+  llvm_unreachable("Callee saved registers requested for unknown architecture "
+                   "version");
 }
 
 BitVector HexagonRegisterInfo::getReservedRegs(const MachineFunction &MF)
@@ -106,18 +104,16 @@ HexagonRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
   };
 
   switch(Subtarget.getHexagonArchVersion()) {
+  case HexagonSubtarget::V1:
+    break;
   case HexagonSubtarget::V2:
     return CalleeSavedRegClassesV2;
-    break;
   case HexagonSubtarget::V3:
   case HexagonSubtarget::V4:
     return CalleeSavedRegClassesV3;
-    break;
-  default:
-    const char *ErrorString = 
-      "Callee saved register classes requested for unknown archtecture version";
-    llvm_unreachable(ErrorString);
   }
+  llvm_unreachable("Callee saved register classes requested for unknown "
+                   "architecture version");
 }
 
 void HexagonRegisterInfo::
