@@ -470,9 +470,11 @@ void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
   }
 
   // Otherwise, we're removing metadata from an instruction.
-  assert(hasMetadataHashEntry() &&
-         getContext().pImpl->MetadataStore.count(this) &&
+  assert((hasMetadataHashEntry() ==
+          getContext().pImpl->MetadataStore.count(this)) &&
          "HasMetadata bit out of date!");
+  if (!hasMetadataHashEntry())
+    return;  // Nothing to remove!
   LLVMContextImpl::MDMapTy &Info = getContext().pImpl->MetadataStore[this];
 
   // Common case is removing the only entry.
