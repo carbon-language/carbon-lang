@@ -100,10 +100,7 @@ __shared_weak_count::lock() _NOEXCEPT
         if (__sync_bool_compare_and_swap(&__shared_owners_,
                                          object_owners,
                                          object_owners+1))
-        {
-            __add_weak();
             return this;
-        }
         object_owners = __shared_owners_;
     }
     return 0;
