@@ -75,7 +75,7 @@ extern "C" {
   void __asan_unpoison_memory_region(void const volatile *addr, size_t size);
 
 // User code should use macro instead of functions.
-#ifdef ADDRESS_SANITIZER
+#if defined(__has_feature) && __has_feature(address_sanitizer)
 #define ASAN_POISON_MEMORY_REGION(addr, size) \
   __asan_poison_memory_region((addr), (size))
 #define ASAN_UNPOISON_MEMORY_REGION(addr, size) \

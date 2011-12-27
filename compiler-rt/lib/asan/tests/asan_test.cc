@@ -219,8 +219,13 @@ void uaf_test(int size, int off) {
   asan_write((T*)(p + off));
 }
 
-TEST(AddressSanitizer, ADDRESS_SANITIZER_MacroTest) {
-  EXPECT_EQ(1, ADDRESS_SANITIZER);
+TEST(AddressSanitizer, HasFeatureAddressSanitizerTest) {
+#if defined(__has_feature) && __has_feature(address_sanitizer)
+  bool asan = 1;
+#else
+  bool asan = 0;
+#endif
+  EXPECT_EQ(true, asan);
 }
 
 TEST(AddressSanitizer, SimpleDeathTest) {

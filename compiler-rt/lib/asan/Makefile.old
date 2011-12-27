@@ -137,7 +137,6 @@ COMMON_ASAN_DEFINES=\
 
 CLANG_ASAN_CXX=$(CLANG_CXX) \
 	       -faddress-sanitizer \
-	       -DADDRESS_SANITIZER=1 \
 		$(BLACKLIST)  \
 		-mllvm -asan-stack=$(ASAN_STACK)      \
 		-mllvm -asan-globals=$(ASAN_GLOBALS)  \
@@ -152,7 +151,6 @@ CLANG_ASAN_LD=$(CLANG_CXX) -faddress-sanitizer
 GCC_ASAN_PATH=SET_FROM_COMMAND_LINE
 GCC_ASAN_CXX=$(GCC_ASAN_PATH)/g++ \
 	     -faddress-sanitizer \
-	     -DADDRESS_SANITIZER=1 \
 	     $(COMMON_ASAN_DEFINES)
 
 GCC_ASAN_LD=$(GCC_ASAN_PATH)/g++ -ldl -lpthread

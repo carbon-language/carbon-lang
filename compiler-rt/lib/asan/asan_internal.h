@@ -36,7 +36,7 @@
 #include <sys/atomics.h>
 #endif
 
-#ifdef ADDRESS_SANITIZER
+#if defined(__has_feature) && __has_feature(address_sanitizer)
 # error "The AddressSanitizer run-time should not be"
         " instrumented by AddressSanitizer"
 #endif
