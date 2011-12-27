@@ -568,6 +568,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
     // about whether containing classes have visibility attributes,
     // and that's intentional.
     if (TSK != TSK_ExplicitInstantiationDeclaration &&
+        TSK != TSK_ExplicitInstantiationDefinition &&
         F.ConsiderGlobalVisibility &&
         MD->getASTContext().getLangOptions().InlineVisibilityHidden) {
       // InlineVisibilityHidden only applies to definitions, and

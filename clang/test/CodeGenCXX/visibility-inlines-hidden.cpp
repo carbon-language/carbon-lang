@@ -97,3 +97,14 @@ namespace test2 {
 
   // CHECK: define available_externally void @_ZN5test22ns3fooINS_1BINS_1AEEEEEvv()
 }
+
+namespace PR11642 {
+  template <typename T>
+  class Foo {
+  public:
+    T foo(T x) { return x; }
+  };
+  extern template class Foo<int>;
+  template class Foo<int>;
+  // CHECK: define weak_odr i32 @_ZN7PR116423FooIiE3fooEi
+}
