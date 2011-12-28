@@ -1339,6 +1339,10 @@ public:
     BigEndian = false;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
+  virtual unsigned getFloatEvalMethod() const {
+    // X87 evaluates with 80 bits "long double" precision.
+    return SSELevel == NoSSE ? 2 : 0;
+  }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
     Records = BuiltinInfo;

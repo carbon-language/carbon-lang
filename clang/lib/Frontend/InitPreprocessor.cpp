@@ -513,7 +513,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   }
 
   // Macros to control C99 numerics and <float.h>
-  Builder.defineMacro("__FLT_EVAL_METHOD__", "0");
+  Builder.defineMacro("__FLT_EVAL_METHOD__", Twine(TI.getFloatEvalMethod()));
   Builder.defineMacro("__FLT_RADIX__", "2");
   int Dig = PickFP(&TI.getLongDoubleFormat(), -1/*FIXME*/, 17, 21, 33, 36);
   Builder.defineMacro("__DECIMAL_DIG__", Twine(Dig));

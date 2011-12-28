@@ -242,7 +242,7 @@
 // I386:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // I386:#define __FLT_DIG__ 6
 // I386:#define __FLT_EPSILON__ 1.19209290e-7F
-// I386:#define __FLT_EVAL_METHOD__ 0
+// I386:#define __FLT_EVAL_METHOD__ 2
 // I386:#define __FLT_HAS_DENORM__ 1
 // I386:#define __FLT_HAS_INFINITY__ 1
 // I386:#define __FLT_HAS_QUIET_NAN__ 1
@@ -315,7 +315,7 @@
 // I386:#define __i386__ 1
 // I386:#define i386 1
 //
-// RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-pc-linux-gnu < /dev/null | FileCheck -check-prefix I386-LINUX %s
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=i386-pc-linux-gnu -target-cpu pentium4 < /dev/null | FileCheck -check-prefix I386-LINUX %s
 //
 // I386-LINUX:#define __CHAR16_TYPE__ unsigned short
 // I386-LINUX:#define __CHAR32_TYPE__ unsigned int
