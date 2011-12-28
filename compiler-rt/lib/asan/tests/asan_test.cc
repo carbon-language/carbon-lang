@@ -14,6 +14,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <setjmp.h>
@@ -1050,11 +1051,16 @@ TEST(AddressSanitizer, StrLenOOBTest) {
   free(heap_string);
 }
 
+static inline char* MallocAndMemsetString(size_t size) {
+  char *s = Ident((char*)malloc(size));
+  memset(s, 'z', size);
+  return s;
+}
+
 #ifndef __APPLE__
 TEST(AddressSanitizer, StrNLenOOBTest) {
   size_t size = Ident(123);
-  char *str = Ident((char*)malloc(size));
-  memset(str, 'z', size);
+  char *str = MallocAndMemsetString(size);
   // Normal strnlen calls.
   Ident(strnlen(str - 1, 0));
   Ident(strnlen(str, size));
@@ -1073,9 +1079,8 @@ TEST(AddressSanitizer, StrNLenOOBTest) {
 
 TEST(AddressSanitizer, StrDupOOBTest) {
   size_t size = Ident(42);
-  char *str = Ident((char*)malloc(size));
+  char *str = MallocAndMemsetString(size);
   char *new_str;
-  memset(str, 'z', size);
   // Normal strdup calls.
   str[size - 1] = '\0';
   new_str = strdup(str);
@@ -1157,8 +1162,7 @@ TEST(AddressSanitizer, StrNCpyOOBTest) {
 typedef char*(*PointerToStrChr)(const char*, int);
 void RunStrChrTest(PointerToStrChr StrChr) {
   size_t size = Ident(100);
-  char *str = Ident((char*)malloc(size));
-  memset(str, 'z', size);
+  char *str = MallocAndMemsetString(size);
   str[10] = 'q';
   str[11] = '\0';
   EXPECT_EQ(str, StrChr(str, 'z'));
@@ -1181,79 +1185,111 @@ TEST(AddressSanitizer, StrCmpAndFriendsLogicTest) {
   // strcmp
   EXPECT_EQ(0, strcmp("", ""));
   EXPECT_EQ(0, strcmp("abcd", "abcd"));
-  EXPECT_EQ(-1, strcmp("ab", "ac"));
-  EXPECT_EQ(-1, strcmp("abc", "abcd"));
-  EXPECT_EQ(1, strcmp("acc", "abc"));
-  EXPECT_EQ(1, strcmp("abcd", "abc"));
+  EXPECT_GT(0, strcmp("ab", "ac"));
+  EXPECT_GT(0, strcmp("abc", "abcd"));
+  EXPECT_LT(0, strcmp("acc", "abc"));
+  EXPECT_LT(0, strcmp("abcd", "abc"));
 
   // strncmp
   EXPECT_EQ(0, strncmp("a", "b", 0));
   EXPECT_EQ(0, strncmp("abcd", "abcd", 10));
   EXPECT_EQ(0, strncmp("abcd", "abcef", 3));
-  EXPECT_EQ(-1, strncmp("abcde", "abcfa", 4));
-  EXPECT_EQ(-1, strncmp("a", "b", 5));
-  EXPECT_EQ(-1, strncmp("bc", "bcde", 4));
-  EXPECT_EQ(1, strncmp("xyz", "xyy", 10));
-  EXPECT_EQ(1, strncmp("baa", "aaa", 1));
-  EXPECT_EQ(1, strncmp("zyx", "", 2));
+  EXPECT_GT(0, strncmp("abcde", "abcfa", 4));
+  EXPECT_GT(0, strncmp("a", "b", 5));
+  EXPECT_GT(0, strncmp("bc", "bcde", 4));
+  EXPECT_LT(0, strncmp("xyz", "xyy", 10));
+  EXPECT_LT(0, strncmp("baa", "aaa", 1));
+  EXPECT_LT(0, strncmp("zyx", "", 2));
+
+  // strcasecmp
+  EXPECT_EQ(0, strcasecmp("", ""));
+  EXPECT_EQ(0, strcasecmp("zzz", "zzz"));
+  EXPECT_EQ(0, strcasecmp("abCD", "ABcd"));
+  EXPECT_GT(0, strcasecmp("aB", "Ac"));
+  EXPECT_GT(0, strcasecmp("ABC", "ABCd"));
+  EXPECT_LT(0, strcasecmp("acc", "abc"));
+  EXPECT_LT(0, strcasecmp("ABCd", "abc"));
+
+  // strncasecmp
+  EXPECT_EQ(0, strncasecmp("a", "b", 0));
+  EXPECT_EQ(0, strncasecmp("abCD", "ABcd", 10));
+  EXPECT_EQ(0, strncasecmp("abCd", "ABcef", 3));
+  EXPECT_GT(0, strncasecmp("abcde", "ABCfa", 4));
+  EXPECT_GT(0, strncasecmp("a", "B", 5));
+  EXPECT_GT(0, strncasecmp("bc", "BCde", 4));
+  EXPECT_LT(0, strncasecmp("xyz", "xyy", 10));
+  EXPECT_LT(0, strncasecmp("Baa", "aaa", 1));
+  EXPECT_LT(0, strncasecmp("zyx", "", 2));
 }
 
-static inline char* MallocAndMemsetString(size_t size) {
-  char *s = Ident((char*)malloc(size));
-  memset(s, 'z', size);
-  return s;
-}
-
-TEST(AddressSanitizer, StrCmpOOBTest) {
+typedef int(*PointerToStrCmp)(const char*, const char*);
+void RunStrCmpTest(PointerToStrCmp StrCmp) {
   size_t size = Ident(100);
   char *s1 = MallocAndMemsetString(size);
   char *s2 = MallocAndMemsetString(size);
   s1[size - 1] = '\0';
   s2[size - 1] = '\0';
-  // Normal strcmp calls
-  Ident(strcmp(s1, s2));
-  Ident(strcmp(s1, s2 + size - 1));
-  Ident(strcmp(s1 + size - 1, s2 + size - 1));
+  // Normal StrCmp calls
+  Ident(StrCmp(s1, s2));
+  Ident(StrCmp(s1, s2 + size - 1));
+  Ident(StrCmp(s1 + size - 1, s2 + size - 1));
   s1[size - 1] = 'z';
   s2[size - 1] = 'x';
-  Ident(strcmp(s1, s2));
+  Ident(StrCmp(s1, s2));
   // One of arguments points to not allocated memory.
-  EXPECT_DEATH(Ident(strcmp)(s1 - 1, s2), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(Ident(strcmp)(s1, s2 - 1), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(Ident(strcmp)(s1 + size, s2), RightOOBErrorMessage(0));
-  EXPECT_DEATH(Ident(strcmp)(s1, s2 + size), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(StrCmp)(s1 - 1, s2), LeftOOBErrorMessage(1));
+  EXPECT_DEATH(Ident(StrCmp)(s1, s2 - 1), LeftOOBErrorMessage(1));
+  EXPECT_DEATH(Ident(StrCmp)(s1 + size, s2), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(StrCmp)(s1, s2 + size), RightOOBErrorMessage(0));
   // Hit unallocated memory and die.
   s2[size - 1] = 'z';
-  EXPECT_DEATH(Ident(strcmp)(s1, s1), RightOOBErrorMessage(0));
-  EXPECT_DEATH(Ident(strcmp)(s1 + size - 1, s2), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(StrCmp)(s1, s1), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(StrCmp)(s1 + size - 1, s2), RightOOBErrorMessage(0));
+  free(s1);
+  free(s2);
+}
+
+TEST(AddressSanitizer, StrCmpOOBTest) {
+  RunStrCmpTest(&strcmp);
+}
+
+TEST(AddressSanitizer, StrCaseCmpOOBTest) {
+  RunStrCmpTest(&strcasecmp);
+}
+
+typedef int(*PointerToStrNCmp)(const char*, const char*, size_t);
+void RunStrNCmpTest(PointerToStrNCmp StrNCmp) {
+  size_t size = Ident(100);
+  char *s1 = MallocAndMemsetString(size);
+  char *s2 = MallocAndMemsetString(size);
+  s1[size - 1] = '\0';
+  s2[size - 1] = '\0';
+  // Normal StrNCmp calls
+  Ident(StrNCmp(s1, s2, size + 2));
+  s1[size - 1] = 'z';
+  s2[size - 1] = 'x';
+  Ident(StrNCmp(s1 + size - 2, s2 + size - 2, size));
+  s2[size - 1] = 'z';
+  Ident(StrNCmp(s1 - 1, s2 - 1, 0));
+  Ident(StrNCmp(s1 + size - 1, s2 + size - 1, 1));
+  // One of arguments points to not allocated memory.
+  EXPECT_DEATH(Ident(StrNCmp)(s1 - 1, s2, 1), LeftOOBErrorMessage(1));
+  EXPECT_DEATH(Ident(StrNCmp)(s1, s2 - 1, 1), LeftOOBErrorMessage(1));
+  EXPECT_DEATH(Ident(StrNCmp)(s1 + size, s2, 1), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(StrNCmp)(s1, s2 + size, 1), RightOOBErrorMessage(0));
+  // Hit unallocated memory and die.
+  EXPECT_DEATH(Ident(StrNCmp)(s1 + 1, s2 + 1, size), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(StrNCmp)(s1 + size - 1, s2, 2), RightOOBErrorMessage(0));
   free(s1);
   free(s2);
 }
 
 TEST(AddressSanitizer, StrNCmpOOBTest) {
-  size_t size = Ident(100);
-  char *s1 = MallocAndMemsetString(size);
-  char *s2 = MallocAndMemsetString(size);
-  s1[size - 1] = '\0';
-  s2[size - 1] = '\0';
-  // Normal strncmp calls
-  Ident(strncmp(s1, s2, size + 2));
-  s1[size - 1] = 'z';
-  s2[size - 1] = 'x';
-  Ident(strncmp(s1 + size - 2, s2 + size - 2, size));
-  s2[size - 1] = 'z';
-  Ident(strncmp(s1 - 1, s2 - 1, 0));
-  Ident(strncmp(s1 + size - 1, s2 + size - 1, 1));
-  // One of arguments points to not allocated memory.
-  EXPECT_DEATH(Ident(strncmp)(s1 - 1, s2, 1), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(Ident(strncmp)(s1, s2 - 1, 1), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(Ident(strncmp)(s1 + size, s2, 1), RightOOBErrorMessage(0));
-  EXPECT_DEATH(Ident(strncmp)(s1, s2 + size, 1), RightOOBErrorMessage(0));
-  // Hit unallocated memory and die.
-  EXPECT_DEATH(Ident(strncmp)(s1 + 1, s2 + 1, size), RightOOBErrorMessage(0));
-  EXPECT_DEATH(Ident(strncmp)(s1 + size - 1, s2, 2), RightOOBErrorMessage(0));
-  free(s1);
-  free(s2);
+  RunStrNCmpTest(&strncmp);
+}
+
+TEST(AddressSanitizer, StrNCaseCmpOOBTest) {
+  RunStrNCmpTest(&strncasecmp);
 }
 
 static const char *kOverlapErrorMessage = "strcpy-param-overlap";

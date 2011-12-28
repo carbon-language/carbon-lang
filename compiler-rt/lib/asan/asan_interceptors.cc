@@ -20,8 +20,10 @@
 #include "asan_stack.h"
 #include "asan_stats.h"
 
+#include <ctype.h>
 #include <dlfcn.h>
 #include <string.h>
+#include <strings.h>
 
 namespace __asan {
 
@@ -29,11 +31,13 @@ index_f       real_index;
 memcpy_f      real_memcpy;
 memmove_f     real_memmove;
 memset_f      real_memset;
+strcasecmp_f  real_strcasecmp;
 strchr_f      real_strchr;
 strcmp_f      real_strcmp;
 strcpy_f      real_strcpy;
 strdup_f      real_strdup;
 strlen_f      real_strlen;
+strncasecmp_f real_strncasecmp;
 strncmp_f     real_strncmp;
 strncpy_f     real_strncpy;
 strnlen_f     real_strnlen;
@@ -123,11 +127,13 @@ void InitializeAsanInterceptors() {
   INTERCEPT_FUNCTION(memcpy);
   INTERCEPT_FUNCTION(memmove);
   INTERCEPT_FUNCTION(memset);
+  INTERCEPT_FUNCTION(strcasecmp);
   INTERCEPT_FUNCTION(strchr);
   INTERCEPT_FUNCTION(strcmp);
   INTERCEPT_FUNCTION(strcpy);  // NOLINT
   INTERCEPT_FUNCTION(strdup);
   INTERCEPT_FUNCTION(strlen);
+  INTERCEPT_FUNCTION(strncasecmp);
   INTERCEPT_FUNCTION(strncmp);
   INTERCEPT_FUNCTION(strncpy);
 #ifndef __APPLE__
@@ -202,6 +208,26 @@ static inline int CharCmp(unsigned char c1, unsigned char c2) {
   return (c1 == c2) ? 0 : (c1 < c2) ? -1 : 1;
 }
 
+static inline int CharCaseCmp(unsigned char c1, unsigned char c2) {
+  int c1_low = tolower(c1);
+  int c2_low = tolower(c2);
+  return c1_low - c2_low;
+}
+
+int WRAP(strcasecmp)(const char *s1, const char *s2) {
+  ENSURE_ASAN_INITED();
+  unsigned char c1, c2;
+  size_t i;
+  for (i = 0; ; i++) {
+    c1 = (unsigned char)s1[i];
+    c2 = (unsigned char)s2[i];
+    if (CharCaseCmp(c1, c2) != 0 || c1 == '\0') break;
+  }
+  ASAN_READ_RANGE(s1, i + 1);
+  ASAN_READ_RANGE(s2, i + 1);
+  return CharCaseCmp(c1, c2);
+}
+
 int WRAP(strcmp)(const char *s1, const char *s2) {
   // strcmp is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
@@ -257,6 +283,20 @@ size_t WRAP(strlen)(const char *s) {
     ASAN_READ_RANGE(s, length + 1);
   }
   return length;
+}
+
+int WRAP(strncasecmp)(const char *s1, const char *s2, size_t size) {
+  ENSURE_ASAN_INITED();
+  unsigned char c1 = 0, c2 = 0;
+  size_t i;
+  for (i = 0; i < size; i++) {
+    c1 = (unsigned char)s1[i];
+    c2 = (unsigned char)s2[i];
+    if (CharCaseCmp(c1, c2) != 0 || c1 == '\0') break;
+  }
+  ASAN_READ_RANGE(s1, Min(i + 1, size));
+  ASAN_READ_RANGE(s2, Min(i + 1, size));
+  return CharCaseCmp(c1, c2);
 }
 
 int WRAP(strncmp)(const char *s1, const char *s2, size_t size) {
