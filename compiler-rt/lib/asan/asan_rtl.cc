@@ -396,6 +396,7 @@ static void force_interface_symbols() {
     __asan_report_store16(NULL);
     __asan_register_global(0, 0, NULL);
     __asan_register_globals(NULL, 0);
+    __asan_unregister_globals(NULL, 0);
   }
 }
 
