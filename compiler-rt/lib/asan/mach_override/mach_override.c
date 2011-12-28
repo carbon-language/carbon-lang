@@ -108,18 +108,18 @@ typedef	struct	{
 allocateBranchIsland(
 		BranchIsland	**island,
 		int				allocateHigh,
-		void *originalFunctionAddress);
+		void *originalFunctionAddress) __attribute__((visibility("hidden")));
 
 	mach_error_t
 freeBranchIsland(
-		BranchIsland	*island );
+		BranchIsland	*island ) __attribute__((visibility("hidden")));
 
 #if defined(__ppc__) || defined(__POWERPC__)
 	mach_error_t
 setBranchIslandTarget(
 		BranchIsland	*island,
 		const void		*branchTo,
-		long			instruction );
+		long			instruction ) __attribute__((visibility("hidden")));
 #endif 
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -127,11 +127,11 @@ mach_error_t
 setBranchIslandTarget_i386(
 						   BranchIsland	*island,
 						   const void		*branchTo,
-						   char*			instructions );
+						   char*			instructions ) __attribute__((visibility("hidden")));
 void 
 atomic_mov64(
 		uint64_t *targetAddress,
-		uint64_t value );
+		uint64_t value ) __attribute__((visibility("hidden")));
 
 	static Boolean 
 eatKnownInstructions( 
@@ -140,7 +140,7 @@ eatKnownInstructions(
 	int				*howManyEaten, 
 	char			*originalInstructions,
 	int				*originalInstructionCount, 
-	uint8_t			*originalInstructionSizes );
+	uint8_t			*originalInstructionSizes ) __attribute__((visibility("hidden")));
 
 	static void
 fixupInstructions(
@@ -148,7 +148,7 @@ fixupInstructions(
     void		*escapeIsland,
     void		*instructionsToFix,
 	int			instructionCount,
-	uint8_t		*instructionSizes );
+	uint8_t		*instructionSizes ) __attribute__((visibility("hidden")));
 #endif
 
 /*******************************************************************************
@@ -176,7 +176,7 @@ mach_error_t makeIslandExecutable(void *address) {
 #endif
 
     mach_error_t
-mach_override_ptr(
+__asan_mach_override_ptr(
 	void *originalFunctionAddress,
     const void *overrideFunctionAddress,
     void **originalFunctionReentryIsland )

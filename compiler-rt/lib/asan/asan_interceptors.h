@@ -39,15 +39,15 @@
 #define WRAPPER_NAME(x) "wrap_"#x
 
 #define OVERRIDE_FUNCTION(oldfunc, newfunc)                             \
-  CHECK(0 == mach_override_ptr((void*)(oldfunc),                        \
-                               (void*)(newfunc),                        \
-                               (void**)&real_##oldfunc));               \
+  CHECK(0 == __asan_mach_override_ptr((void*)(oldfunc),                        \
+                                      (void*)(newfunc),                        \
+                                      (void**)&real_##oldfunc));               \
   CHECK(real_##oldfunc != NULL);
 
 #define OVERRIDE_FUNCTION_IF_EXISTS(oldfunc, newfunc)                   \
-  do { mach_override_ptr((void*)(oldfunc),                              \
-                         (void*)(newfunc),                              \
-                         (void**)&real_##oldfunc); } while (0)
+  do { __asan_mach_override_ptr((void*)(oldfunc),                              \
+                                (void*)(newfunc),                              \
+                                (void**)&real_##oldfunc); } while (0)
 
 #define INTERCEPT_FUNCTION(func)                                        \
   OVERRIDE_FUNCTION(func, WRAP(func))

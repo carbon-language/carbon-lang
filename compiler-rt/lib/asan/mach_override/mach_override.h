@@ -77,8 +77,10 @@
 
 	************************************************************************************/
 
+// We're prefixing mach_override_ptr() with "__asan_" to avoid name conflicts with other
+// mach_override_ptr() implementations that may appear in the client program.
     mach_error_t
-mach_override_ptr(
+__asan_mach_override_ptr(
 	void *originalFunctionAddress,
     const void *overrideFunctionAddress,
     void **originalFunctionReentryIsland );
