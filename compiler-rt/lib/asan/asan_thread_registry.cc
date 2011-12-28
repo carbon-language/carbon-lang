@@ -27,6 +27,12 @@ AsanThreadRegistry &asanThreadRegistry() {
   return asan_thread_registry;
 }
 
+#ifdef ANDROID
+#ifndef PTHREAD_DESTRUCTOR_ITERATIONS
+#define PTHREAD_DESTRUCTOR_ITERATIONS 4
+#endif
+#endif
+
 // Dark magic below. In order to be able to notice that we're not handling
 // some thread creation routines (e.g. on Mac OS) we want to distinguish the
 // thread that used to have a corresponding AsanThread object from the thread
