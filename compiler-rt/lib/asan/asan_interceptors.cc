@@ -33,6 +33,7 @@ memcpy_f      real_memcpy;
 memmove_f     real_memmove;
 memset_f      real_memset;
 strcasecmp_f  real_strcasecmp;
+strcat_f      real_strcat;
 strchr_f      real_strchr;
 strcmp_f      real_strcmp;
 strcpy_f      real_strcpy;
@@ -80,18 +81,17 @@ static void AccessAddress(uintptr_t address, bool isWrite) {
 // Behavior of functions like "memcpy" or "strcpy" is undefined
 // if memory intervals overlap. We report error in this case.
 // Macro is used to avoid creation of new frames.
-static inline bool RangesOverlap(const char *offset1, const char *offset2,
-                                 size_t length) {
-  return !((offset1 + length <= offset2) || (offset2 + length <= offset1));
+static inline bool RangesOverlap(const char *offset1, size_t length1,
+                                 const char *offset2, size_t length2) {
+  return !((offset1 + length1 <= offset2) || (offset2 + length2 <= offset1));
 }
-#define CHECK_RANGES_OVERLAP(_offset1, _offset2, length) do { \
+#define CHECK_RANGES_OVERLAP(_offset1, length1, _offset2, length2) do { \
   const char *offset1 = (const char*)_offset1; \
   const char *offset2 = (const char*)_offset2; \
-  if (RangesOverlap((const char*)offset1, (const char*)offset2, \
-                    length)) { \
+  if (RangesOverlap(offset1, length1, offset2, length2)) { \
     Report("ERROR: AddressSanitizer strcpy-param-overlap: " \
            "memory ranges [%p,%p) and [%p, %p) overlap\n", \
-           offset1, offset1 + length, offset2, offset2 + length); \
+           offset1, offset1 + length1, offset2, offset2 + length2); \
     PRINT_CURRENT_STACK(); \
     ShowStatsAndAbort(); \
   } \
@@ -130,6 +130,7 @@ void InitializeAsanInterceptors() {
   INTERCEPT_FUNCTION(memmove);
   INTERCEPT_FUNCTION(memset);
   INTERCEPT_FUNCTION(strcasecmp);
+  INTERCEPT_FUNCTION(strcat);  // NOLINT
   INTERCEPT_FUNCTION(strchr);
   INTERCEPT_FUNCTION(strcmp);
   INTERCEPT_FUNCTION(strcpy);  // NOLINT
@@ -185,7 +186,7 @@ void *WRAP(memcpy)(void *to, const void *from, size_t size) {
   }
   ENSURE_ASAN_INITED();
   if (FLAG_replace_intrin) {
-    CHECK_RANGES_OVERLAP(to, from, size);
+    CHECK_RANGES_OVERLAP(to, size, from, size);
     ASAN_WRITE_RANGE(from, size);
     ASAN_READ_RANGE(to, size);
   }
@@ -246,6 +247,21 @@ int WRAP(strcasecmp)(const char *s1, const char *s2) {
   return CharCaseCmp(c1, c2);
 }
 
+char *WRAP(strcat)(char *to, const char *from) {  // NOLINT
+  ENSURE_ASAN_INITED();
+  if (FLAG_replace_str) {
+    size_t from_length = real_strlen(from);
+    ASAN_READ_RANGE(from, from_length + 1);
+    if (from_length > 0) {
+      size_t to_length = real_strlen(to);
+      ASAN_READ_RANGE(to, to_length);
+      ASAN_WRITE_RANGE(to + to_length, from_length + 1);
+      CHECK_RANGES_OVERLAP(to, to_length + 1, from, from_length + 1);
+    }
+  }
+  return real_strcat(to, from);
+}
+
 int WRAP(strcmp)(const char *s1, const char *s2) {
   // strcmp is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
@@ -273,7 +289,7 @@ char *WRAP(strcpy)(char *to, const char *from) {  // NOLINT
   ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
     size_t from_size = real_strlen(from) + 1;
-    CHECK_RANGES_OVERLAP(to, from, from_size);
+    CHECK_RANGES_OVERLAP(to, from_size, from, from_size);
     ASAN_READ_RANGE(from, from_size);
     ASAN_WRITE_RANGE(to, from_size);
   }
@@ -339,7 +355,7 @@ char *WRAP(strncpy)(char *to, const char *from, size_t size) {
   ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
     size_t from_size = Min(size, internal_strnlen(from, size) + 1);
-    CHECK_RANGES_OVERLAP(to, from, from_size);
+    CHECK_RANGES_OVERLAP(to, from_size, from, from_size);
     ASAN_READ_RANGE(from, from_size);
     ASAN_WRITE_RANGE(to, size);
   }

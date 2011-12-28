@@ -1324,6 +1324,39 @@ TEST(AddressSanitizer, MemCmpOOBTest) {
   free(s2);
 }
 
+TEST(AddressSanitizer, StrCatOOBTest) {
+  size_t to_size = Ident(100);
+  char *to = MallocAndMemsetString(to_size);
+  to[0] = '\0';
+  size_t from_size = Ident(20);
+  char *from = MallocAndMemsetString(from_size);
+  from[from_size - 1] = '\0';
+  // Normal strcat calls.
+  strcat(to, from);
+  strcat(to, from);
+  strcat(to + from_size, from + from_size - 2);
+  // Catenate empty string is not always an error.
+  strcat(to - 1, from + from_size - 1);
+  // One of arguments points to not allocated memory.
+  EXPECT_DEATH(strcat(to - 1, from), LeftOOBErrorMessage(1));
+  EXPECT_DEATH(strcat(to, from - 1), LeftOOBErrorMessage(1));
+  EXPECT_DEATH(strcat(to + to_size, from), RightOOBErrorMessage(0));
+  EXPECT_DEATH(strcat(to, from + from_size), RightOOBErrorMessage(0));
+
+  // "from" is not zero-terminated.
+  from[from_size - 1] = 'z';
+  EXPECT_DEATH(strcat(to, from), RightOOBErrorMessage(0));
+  from[from_size - 1] = '\0';
+  // "to" is not zero-terminated.
+  memset(to, 'z', to_size);
+  EXPECT_DEATH(strcat(to, from), RightOOBErrorMessage(0));
+  // "to" is too short to fit "from".
+  to[to_size - from_size + 1] = '\0';
+  EXPECT_DEATH(strcat(to, from), RightOOBErrorMessage(0));
+  // length of "to" is just enough.
+  strcat(to, from + 1);
+}
+
 static const char *kOverlapErrorMessage = "strcpy-param-overlap";
 
 TEST(AddressSanitizer, StrArgsOverlapTest) {
@@ -1356,6 +1389,18 @@ TEST(AddressSanitizer, StrArgsOverlapTest) {
   str[10] = '\0';
   strncpy(str + 11, str, 20);
   EXPECT_DEATH(strncpy(str + 10, str, 20), kOverlapErrorMessage);
+
+  // Check "strcat".
+  memset(str, 'z', size);
+  str[10] = '\0';
+  str[20] = '\0';
+  strcat(str, str + 10);
+  strcat(str, str + 11);
+  str[10] = '\0';
+  strcat(str + 11, str);
+  EXPECT_DEATH(strcat(str, str + 9), kOverlapErrorMessage);
+  EXPECT_DEATH(strcat(str + 9, str), kOverlapErrorMessage);
+  EXPECT_DEATH(strcat(str + 10, str), kOverlapErrorMessage);
 
   free(str);
 }

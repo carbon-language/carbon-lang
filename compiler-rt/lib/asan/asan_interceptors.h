@@ -72,6 +72,7 @@ void *WRAP(memcpy)(void *to, const void *from, size_t size);
 void *WRAP(memmove)(void *to, const void *from, size_t size);
 void *WRAP(memset)(void *block, int c, size_t size);
 int WRAP(strcasecmp)(const char *s1, const char *s2);
+char *WRAP(strcat)(char *to, const char *from);  // NOLINT
 char *WRAP(strchr)(const char *string, int c);
 int WRAP(strcmp)(const char *s1, const char *s2);
 char *WRAP(strcpy)(char *to, const char *from);  // NOLINT
@@ -90,6 +91,7 @@ typedef void* (*memcpy_f)(void *to, const void *from, size_t size);
 typedef void* (*memmove_f)(void *to, const void *from, size_t size);
 typedef void* (*memset_f)(void *block, int c, size_t size);
 typedef int (*strcasecmp_f)(const char *s1, const char *s2);
+typedef char* (*strcat_f)(char *to, const char *from);
 typedef char* (*strchr_f)(const char *str, int c);
 typedef int (*strcmp_f)(const char *s1, const char *s2);
 typedef char* (*strcpy_f)(char *to, const char *from);
@@ -107,6 +109,7 @@ extern memcpy_f         real_memcpy;
 extern memmove_f        real_memmove;
 extern memset_f         real_memset;
 extern strcasecmp_f     real_strcasecmp;
+extern strcat_f         real_strcat;
 extern strchr_f         real_strchr;
 extern strcmp_f         real_strcmp;
 extern strcpy_f         real_strcpy;
