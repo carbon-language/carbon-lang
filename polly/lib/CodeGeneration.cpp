@@ -44,6 +44,8 @@
 #include "cloog/cloog.h"
 #include "cloog/isl/cloog.h"
 
+#include "isl/aff.h"
+
 #include <vector>
 #include <utility>
 
@@ -83,6 +85,11 @@ Aligned("enable-polly-aligned",
 typedef DenseMap<const Value*, Value*> ValueMapT;
 typedef DenseMap<const char*, Value*> CharMapT;
 typedef std::vector<ValueMapT> VectorValueMapT;
+typedef struct {
+  Value *BaseAddress;
+  Value *Result;
+  IRBuilder<> *Builder;
+}IslPwAffUserInfo;
 
 // Create a new loop.
 //
@@ -315,6 +322,58 @@ public:
     return vector;
   }
 
+  static Value* islAffToValue(__isl_take isl_aff *Aff,
+                              IslPwAffUserInfo *UserInfo) {
+    assert(isl_aff_is_cst(Aff) && "Only constant access functions supported");
+
+    IRBuilder<> *Builder = UserInfo->Builder;
+
+    isl_int OffsetIsl;
+    mpz_t OffsetMPZ;
+
+    isl_int_init(OffsetIsl);
+    mpz_init(OffsetMPZ);
+    isl_aff_get_constant(Aff, &OffsetIsl);
+    isl_int_get_gmp(OffsetIsl, OffsetMPZ);
+
+    Value *OffsetValue = NULL;
+    APInt Offset = APInt_from_MPZ(OffsetMPZ);
+    OffsetValue = ConstantInt::get(Builder->getContext(), Offset);
+
+    mpz_clear(OffsetMPZ);
+    isl_int_clear(OffsetIsl);
+    isl_aff_free(Aff);
+
+    return OffsetValue;
+  }
+
+  static int mergeIslAffValues(__isl_take isl_set *Set,
+                               __isl_take isl_aff *Aff, void *User) {
+    IslPwAffUserInfo *UserInfo = (IslPwAffUserInfo *)User;
+
+    assert((UserInfo->Result == NULL) && "Result is already set."
+           "Currently only single isl_aff is supported");
+    assert(isl_set_plain_is_universe(Set)
+           && "Code generation failed because the set is not universe");
+
+    UserInfo->Result = islAffToValue(Aff, UserInfo);
+
+    isl_set_free(Set);
+    return 0;
+  }
+
+  Value* islPwAffToValue(__isl_take isl_pw_aff *PwAff, Value *BaseAddress) {
+    IslPwAffUserInfo UserInfo;
+    UserInfo.BaseAddress = BaseAddress;
+    UserInfo.Result = NULL;
+    UserInfo.Builder = &Builder;
+    isl_pw_aff_foreach_piece(PwAff, mergeIslAffValues, &UserInfo);
+    assert(UserInfo.Result && "Code generation for isl_pw_aff failed");
+
+    isl_pw_aff_free(PwAff);
+    return UserInfo.Result;
+  }
+
   /// @brief Get the memory access offset to be added to the base address
   std::vector <Value*> getMemoryAccessIndex(__isl_keep isl_map *AccessRelation,
                                             Value *BaseAddress) {
@@ -324,13 +383,9 @@ public:
     assert((isl_map_dim(AccessRelation, isl_dim_out) == 1)
            && "Only single dimensional access functions supported");
 
-    if (isl_map_plain_is_fixed(AccessRelation, isl_dim_out,
-                               0, &OffsetMPZ) == -1)
-      errs() << "Only fixed value access functions supported\n";
+    isl_pw_aff *PwAff = isl_map_dim_max(isl_map_copy(AccessRelation), 0);
+    Value *OffsetValue = islPwAffToValue(PwAff, BaseAddress);
 
-    // Convert the offset from MPZ to Value*.
-    APInt Offset = APInt_from_MPZ(OffsetMPZ);
-    Value *OffsetValue = ConstantInt::get(Builder.getContext(), Offset);
     PointerType *BaseAddressType = dyn_cast<PointerType>(
                                    BaseAddress->getType());
     Type *ArrayTy = BaseAddressType->getElementType();
