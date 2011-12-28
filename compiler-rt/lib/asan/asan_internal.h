@@ -88,9 +88,10 @@ void OutOfMemoryMessageAndDie(const char *mem_type, size_t size);
 // asan_linux.cc / asan_mac.cc
 void *AsanDoesNotSupportStaticLinkage();
 int AsanOpenReadonly(const char* filename);
-void *asan_mmap(void *addr, size_t length, int prot, int flags,
-                int fd, uint64_t offset);
 
+void *AsanMmapFixedNoReserve(uintptr_t fixed_addr, size_t size);
+void *AsanMmapFixedReserve(uintptr_t fixed_addr, size_t size);
+void *AsanMprotect(uintptr_t fixed_addr, size_t size);
 void *AsanMmapSomewhereOrDie(size_t size, const char *where);
 void AsanUnmapOrDie(void *ptr, size_t size);
 

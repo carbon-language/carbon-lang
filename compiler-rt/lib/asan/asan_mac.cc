@@ -22,6 +22,7 @@
 #include "asan_thread_registry.h"
 
 #include <sys/mman.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 #include <new>
@@ -40,12 +41,12 @@ void *AsanDoesNotSupportStaticLinkage() {
   return NULL;
 }
 
-void *asan_mmap(void *addr, size_t length, int prot, int flags,
+static void *asan_mmap(void *addr, size_t length, int prot, int flags,
                 int fd, uint64_t offset) {
   return mmap(addr, length, prot, flags, fd, offset);
 }
 
-ssize_t asan_write(int fd, const void *buf, size_t count) {
+ssize_t AsanWrite(int fd, const void *buf, size_t count) {
   return write(fd, buf, count);
 }
 
@@ -58,6 +59,27 @@ void *AsanMmapSomewhereOrDie(size_t size, const char *mem_type) {
     OutOfMemoryMessageAndDie(mem_type, size);
   }
   return res;
+}
+
+void *AsanMmapFixedNoReserve(uintptr_t fixed_addr, size_t size) {
+  return asan_mmap((void*)fixed_addr, size,
+                   PROT_READ | PROT_WRITE,
+                   MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
+                   0, 0);
+}
+
+void *AsanMmapFixedReserve(uintptr_t fixed_addr, size_t size) {
+  return asan_mmap((void*)fixed_addr, size,
+                   PROT_READ | PROT_WRITE,
+                   MAP_PRIVATE | MAP_ANON | MAP_FIXED,
+                   0, 0);
+}
+
+void *AsanMprotect(uintptr_t fixed_addr, size_t size) {
+  return asan_mmap((void*)fixed_addr, size,
+                   PROT_NONE,
+                   MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
+                   0, 0);
 }
 
 void AsanUnmapOrDie(void *addr, size_t size) {

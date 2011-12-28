@@ -21,7 +21,6 @@
 #include "sysinfo/sysinfo.h"
 #endif
 
-#include <sys/mman.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <pthread.h>

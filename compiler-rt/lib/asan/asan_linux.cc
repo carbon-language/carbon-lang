@@ -30,7 +30,7 @@ void *AsanDoesNotSupportStaticLinkage() {
   return &_DYNAMIC;
 }
 
-void *asan_mmap(void *addr, size_t length, int prot, int flags,
+static void *asan_mmap(void *addr, size_t length, int prot, int flags,
                 int fd, uint64_t offset) {
 # if __WORDSIZE == 64
   return (void *)syscall(__NR_mmap, addr, length, prot, flags, fd, offset);
@@ -48,6 +48,27 @@ void *AsanMmapSomewhereOrDie(size_t size, const char *mem_type) {
     OutOfMemoryMessageAndDie(mem_type, size);
   }
   return res;
+}
+
+void *AsanMmapFixedNoReserve(uintptr_t fixed_addr, size_t size) {
+  return asan_mmap((void*)fixed_addr, size,
+                   PROT_READ | PROT_WRITE,
+                   MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
+                   0, 0);
+}
+
+void *AsanMmapFixedReserve(uintptr_t fixed_addr, size_t size) {
+  return asan_mmap((void*)fixed_addr, size,
+                   PROT_READ | PROT_WRITE,
+                   MAP_PRIVATE | MAP_ANON | MAP_FIXED,
+                   0, 0);
+}
+
+void *AsanMprotect(uintptr_t fixed_addr, size_t size) {
+  return asan_mmap((void*)fixed_addr, size,
+                   PROT_NONE,
+                   MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
+                   0, 0);
 }
 
 void AsanUnmapOrDie(void *addr, size_t size) {

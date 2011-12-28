@@ -35,7 +35,6 @@
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 
-#include <sys/mman.h>
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>

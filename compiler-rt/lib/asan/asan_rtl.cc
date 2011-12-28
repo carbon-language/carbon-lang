@@ -16,9 +16,7 @@
 #include "asan_interface.h"
 #include "asan_internal.h"
 #include "asan_lock.h"
-#ifdef __APPLE__
 #include "asan_mac.h"
-#endif
 #include "asan_mapping.h"
 #include "asan_stack.h"
 #include "asan_stats.h"
@@ -36,7 +34,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #ifndef ANDROID
@@ -188,37 +185,13 @@ void OutOfMemoryMessageAndDie(const char *mem_type, size_t size) {
   ShowStatsAndAbort();
 }
 
-static char *mmap_pages(size_t start_page, size_t n_pages, const char *mem_type,
-                        bool abort_on_failure = true) {
-  void *res = asan_mmap((void*)start_page, kPageSize * n_pages,
-                   PROT_READ | PROT_WRITE,
-                   MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE, 0, 0);
-  // Printf("%p => %p\n", (void*)start_page, res);
-  char *ch = (char*)res;
-  if (res == (void*)-1L && abort_on_failure) {
-    OutOfMemoryMessageAndDie(mem_type, n_pages * kPageSize);
-  }
-  CHECK(res == (void*)start_page || res == (void*)-1L);
-  return ch;
-}
-
-// mmap range [beg, end]
-static char *mmap_range(uintptr_t beg, uintptr_t end, const char *mem_type) {
+// Reserve memory range [beg, end].
+static void ReserveShadowMemoryRange(uintptr_t beg, uintptr_t end) {
   CHECK((beg % kPageSize) == 0);
   CHECK(((end + 1) % kPageSize) == 0);
-  // Printf("mmap_range %p %p %ld\n", beg, end, (end - beg) / kPageSize);
-  return mmap_pages(beg, (end - beg + 1) / kPageSize, mem_type);
-}
-
-// protect range [beg, end]
-static void protect_range(uintptr_t beg, uintptr_t end) {
-  CHECK((beg % kPageSize) == 0);
-  CHECK(((end+1) % kPageSize) == 0);
-  // Printf("protect_range %p %p %ld\n", beg, end, (end - beg) / kPageSize);
-  void *res = asan_mmap((void*)beg, end - beg + 1,
-                   PROT_NONE,
-                   MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE, 0, 0);
-  CHECK(res == (void*)beg);
+  size_t size = end - beg + 1;
+  void *res = AsanMmapFixedNoReserve(beg, size);
+  CHECK(res == (void*)beg && "ReserveShadowMemoryRange failed");
 }
 
 // ---------------------- LowLevelAllocator ------------- {{{1
@@ -349,9 +322,7 @@ static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
     // this address.
     const uintptr_t chunk_size = kPageSize << 10;  // 4M
     uintptr_t chunk = addr & ~(chunk_size - 1);
-    asan_mmap((void*)chunk, chunk_size,
-                   PROT_READ | PROT_WRITE,
-                   MAP_PRIVATE | MAP_ANON | MAP_FIXED, 0, 0);
+    AsanMmapFixedReserve(chunk, chunk_size);
     return;
   }
   // Write the first message using the bullet-proof write.
@@ -813,13 +784,14 @@ void __asan_init() {
     if (!FLAG_lazy_shadow) {
       if (kLowShadowBeg != kLowShadowEnd) {
         // mmap the low shadow plus one page.
-        mmap_range(kLowShadowBeg - kPageSize, kLowShadowEnd, "LowShadow");
+        ReserveShadowMemoryRange(kLowShadowBeg - kPageSize, kLowShadowEnd);
       }
       // mmap the high shadow.
-      mmap_range(kHighShadowBeg, kHighShadowEnd, "HighShadow");
+      ReserveShadowMemoryRange(kHighShadowBeg, kHighShadowEnd);
     }
     // protect the gap
-    protect_range(kShadowGapBeg, kShadowGapEnd);
+    void *prot = AsanMprotect(kShadowGapBeg, kShadowGapEnd - kShadowGapBeg + 1);
+    CHECK(prot == (void*)kShadowGapBeg);
   }
 
   // On Linux AsanThread::ThreadStart() calls malloc() that's why asan_inited
