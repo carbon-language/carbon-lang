@@ -17,7 +17,13 @@
 #include "asan_thread_registry.h"
 #include "asan_mapping.h"
 
+#if ASAN_USE_SYSINFO == 1
+#include "sysinfo/sysinfo.h"
+#endif
+
 #include <sys/mman.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
@@ -121,6 +127,36 @@ void AsanThread::SetThreadStackTopAndBottom() {
   int local;
   CHECK(AddrIsInStack((uintptr_t)&local));
 #else
+#if ASAN_USE_SYSINFO == 1
+  if (tid() == 0) {
+    // This is the main thread. Libpthread may not be initialized yet.
+    struct rlimit rl;
+    CHECK(getrlimit(RLIMIT_STACK, &rl) == 0);
+
+    // Find the mapping that contains a stack variable.
+    ProcMapsIterator it(0);
+    uint64_t start, end;
+    uint64_t prev_end = 0;
+    while (it.Next(&start, &end, NULL, NULL, NULL, NULL)) {
+      if ((uintptr_t)&rl < end)
+        break;
+      prev_end = end;
+    }
+    CHECK((uintptr_t)&rl >= start && (uintptr_t)&rl < end);
+
+    // Get stacksize from rlimit, but clip it so that it does not overlap
+    // with other mappings.
+    size_t stacksize = rl.rlim_cur;
+    if (stacksize > end - prev_end)
+      stacksize = end - prev_end;
+    if (stacksize > kMaxThreadStackSize)
+      stacksize = kMaxThreadStackSize;
+    stack_top_ = end;
+    stack_bottom_ = end - stacksize;
+    CHECK(AddrIsInStack((uintptr_t)&rl));
+    return;
+  }
+#endif
   pthread_attr_t attr;
   CHECK(pthread_getattr_np(pthread_self(), &attr) == 0);
   size_t stacksize = 0;
