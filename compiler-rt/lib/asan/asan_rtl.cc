@@ -39,7 +39,9 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#ifndef ANDROID
 #include <sys/ucontext.h>
+#endif
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
@@ -254,7 +256,9 @@ static void DescribeAddress(uintptr_t addr, uintptr_t access_size) {
 // -------------------------- Run-time entry ------------------- {{{1
 void GetPcSpBpAx(void *context,
                  uintptr_t *pc, uintptr_t *sp, uintptr_t *bp, uintptr_t *ax) {
+#ifndef ANDROID
   ucontext_t *ucontext = (ucontext_t*)context;
+#endif
 #ifdef __APPLE__
 # if __WORDSIZE == 64
   *pc = ucontext->uc_mcontext->__ss.__rip;
@@ -268,7 +272,9 @@ void GetPcSpBpAx(void *context,
   *ax = ucontext->uc_mcontext->__ss.__eax;
 # endif  // __WORDSIZE
 #else  // assume linux
-# if defined(__arm__)
+# if defined (ANDROID)
+  *pc = *sp = *bp = *ax = 0;
+# elif defined(__arm__)
   *pc = ucontext->uc_mcontext.arm_pc;
   *bp = ucontext->uc_mcontext.arm_fp;
   *sp = ucontext->uc_mcontext.arm_sp;
