@@ -3662,12 +3662,10 @@ bool AnalyzeBitFieldAssignment(Sema &S, FieldDecl *Bitfield, Expr *Init,
 
   Expr *OriginalInit = Init->IgnoreParenImpCasts();
 
-  Expr::EvalResult InitValue;
-  if (!OriginalInit->EvaluateAsRValue(InitValue, S.Context) ||
-      !InitValue.Val.isInt())
+  llvm::APSInt Value;
+  if (!OriginalInit->EvaluateAsInt(Value, S.Context, Expr::SE_AllowSideEffects))
     return false;
 
-  const llvm::APSInt &Value = InitValue.Val.getInt();
   unsigned OriginalWidth = Value.getBitWidth();
   unsigned FieldWidth = Bitfield->getBitWidthValue(S.Context);
 

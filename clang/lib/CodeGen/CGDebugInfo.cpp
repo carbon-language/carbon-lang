@@ -1107,18 +1107,18 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
     CollectCXXBases(CXXDecl, Unit, EltTys, FwdDecl);
     CollectVTableInfo(CXXDecl, Unit, EltTys);
   }
-  
+
   // Collect static variables with initializers.
   for (RecordDecl::decl_iterator I = RD->decls_begin(), E = RD->decls_end();
        I != E; ++I)
     if (const VarDecl *V = dyn_cast<VarDecl>(*I)) {
-      if (const Expr *Init = V->getInit()) {
-        Expr::EvalResult Result;
-        if (Init->EvaluateAsRValue(Result, CGM.getContext()) &&
-            Result.Val.isInt()) {
-          llvm::ConstantInt *CI 
-            = llvm::ConstantInt::get(CGM.getLLVMContext(), Result.Val.getInt());
-          
+      llvm::SmallVector<PartialDiagnosticAt, 8> Notes;
+      if (V->getInit() && V->evaluateValue(Notes)) {
+        APValue *Value = V->getEvaluatedValue();
+        if (Value && Value->isInt()) {
+          llvm::ConstantInt *CI
+            = llvm::ConstantInt::get(CGM.getLLVMContext(), Value->getInt());
+
           // Create the descriptor for static variable.
           llvm::DIFile VUnit = getOrCreateFile(V->getLocation());
           StringRef VName = V->getName();

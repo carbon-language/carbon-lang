@@ -18,7 +18,6 @@
 #include "CGDebugInfo.h"
 #include "CGException.h"
 #include "clang/Basic/TargetInfo.h"
-#include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
@@ -520,15 +519,14 @@ bool CodeGenFunction::
 ConstantFoldsToSimpleInteger(const Expr *Cond, llvm::APInt &ResultInt) {
   // FIXME: Rename and handle conversion of other evaluatable things
   // to bool.
-  Expr::EvalResult Result;
-  if (!Cond->EvaluateAsRValue(Result, getContext()) || !Result.Val.isInt() ||
-      Result.HasSideEffects)
+  llvm::APSInt Int;
+  if (!Cond->EvaluateAsInt(Int, getContext()))
     return false;  // Not foldable, not integer or not fully evaluatable.
-  
+
   if (CodeGenFunction::ContainsLabel(Cond))
     return false;  // Contains a label.
-  
-  ResultInt = Result.Val.getInt();
+
+  ResultInt = Int;
   return true;
 }
 

@@ -482,9 +482,8 @@ void ExprEngine::
 VisitOffsetOfExpr(const OffsetOfExpr *OOE, 
                   ExplodedNode *Pred, ExplodedNodeSet &Dst) {
   StmtNodeBuilder B(Pred, Dst, *currentBuilderContext);
-  Expr::EvalResult Res;
-  if (OOE->EvaluateAsRValue(Res, getContext()) && Res.Val.isInt()) {
-    const APSInt &IV = Res.Val.getInt();
+  APSInt IV;
+  if (OOE->EvaluateAsInt(IV, getContext())) {
     assert(IV.getBitWidth() == getContext().getTypeSize(OOE->getType()));
     assert(OOE->getType()->isIntegerType());
     assert(IV.isSigned() == OOE->getType()->isSignedIntegerOrEnumerationType());
@@ -519,9 +518,8 @@ VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *Ex,
     }
   }
   
-  Expr::EvalResult Result;
-  Ex->EvaluateAsRValue(Result, getContext());
-  CharUnits amt = CharUnits::fromQuantity(Result.Val.getInt().getZExtValue());
+  APSInt Value = Ex->EvaluateKnownConstInt(getContext());
+  CharUnits amt = CharUnits::fromQuantity(Value.getZExtValue());
   
   const ProgramState *state = Pred->getState();
   state = state->BindExpr(Ex, svalBuilder.makeIntVal(amt.getQuantity(),

@@ -16,7 +16,6 @@
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
-#include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclObjC.h"
@@ -664,20 +663,15 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
     // condition is constant.
     llvm::APSInt ConstantCondValue;
     bool HasConstantCond = false;
-    bool ShouldCheckConstantCond = false;
     if (!HasDependentValue && !TheDefaultStmt) {
-      Expr::EvalResult Result;
       HasConstantCond
-        = CondExprBeforePromotion->EvaluateAsRValue(Result, Context);
-      if (HasConstantCond) {
-        assert(Result.Val.isInt() && "switch condition evaluated to non-int");
-        ConstantCondValue = Result.Val.getInt();
-        ShouldCheckConstantCond = true;
-
-        assert(ConstantCondValue.getBitWidth() == CondWidth &&
-               ConstantCondValue.isSigned() == CondIsSigned);
-      }
+        = CondExprBeforePromotion->EvaluateAsInt(ConstantCondValue, Context,
+                                                 Expr::SE_AllowSideEffects);
+      assert(!HasConstantCond ||
+             (ConstantCondValue.getBitWidth() == CondWidth &&
+              ConstantCondValue.isSigned() == CondIsSigned));
     }
+    bool ShouldCheckConstantCond = HasConstantCond;
 
     // Sort all the scalar case values so we can easily detect duplicates.
     std::stable_sort(CaseVals.begin(), CaseVals.end(), CmpCaseVals);

@@ -3658,6 +3658,61 @@ static int EvaluateBuiltinClassifyType(const CallExpr *E) {
   return -1;
 }
 
+/// EvaluateBuiltinConstantPForLValue - Determine the result of
+/// __builtin_constant_p when applied to the given lvalue.
+///
+/// An lvalue is only "constant" if it is a pointer or reference to the first
+/// character of a string literal.
+template<typename LValue>
+static bool EvaluateBuiltinConstantPForLValue(const LValue &LV) {
+  const Expr *E = LV.getLValueBase().dyn_cast<const Expr*>();
+  return E && isa<StringLiteral>(E) && LV.getLValueOffset().isZero();
+}
+
+/// EvaluateBuiltinConstantP - Evaluate __builtin_constant_p as similarly to
+/// GCC as we can manage.
+static bool EvaluateBuiltinConstantP(ASTContext &Ctx, const Expr *Arg) {
+  QualType ArgType = Arg->getType();
+
+  // __builtin_constant_p always has one operand. The rules which gcc follows
+  // are not precisely documented, but are as follows:
+  //
+  //  - If the operand is of integral, floating, complex or enumeration type,
+  //    and can be folded to a known value of that type, it returns 1.
+  //  - If the operand and can be folded to a pointer to the first character
+  //    of a string literal (or such a pointer cast to an integral type), it
+  //    returns 1.
+  //
+  // Otherwise, it returns 0.
+  //
+  // FIXME: GCC also intends to return 1 for literals of aggregate types, but
+  // its support for this does not currently work.
+  if (ArgType->isIntegralOrEnumerationType()) {
+    Expr::EvalResult Result;
+    if (!Arg->EvaluateAsRValue(Result, Ctx) || Result.HasSideEffects)
+      return false;
+
+    APValue &V = Result.Val;
+    if (V.getKind() == APValue::Int)
+      return true;
+
+    return EvaluateBuiltinConstantPForLValue(V);
+  } else if (ArgType->isFloatingType() || ArgType->isAnyComplexType()) {
+    return Arg->isEvaluatable(Ctx);
+  } else if (ArgType->isPointerType() || Arg->isGLValue()) {
+    LValue LV;
+    Expr::EvalStatus Status;
+    EvalInfo Info(Ctx, Status);
+    if ((Arg->isGLValue() ? EvaluateLValue(Arg, LV, Info)
+                          : EvaluatePointer(Arg, LV, Info)) &&
+        !Status.HasSideEffects)
+      return EvaluateBuiltinConstantPForLValue(LV);
+  }
+
+  // Anything else isn't considered to be sufficiently constant.
+  return false;
+}
+
 /// Retrieves the "underlying object type" of the given expression,
 /// as used by __builtin_object_size.
 QualType IntExprEvaluator::GetObjectType(APValue::LValueBase B) {
@@ -3722,53 +3777,9 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
   case Builtin::BI__builtin_classify_type:
     return Success(EvaluateBuiltinClassifyType(E), E);
 
-  case Builtin::BI__builtin_constant_p: {
-    const Expr *Arg = E->getArg(0);
-    QualType ArgType = Arg->getType();
-    // __builtin_constant_p always has one operand. The rules which gcc follows
-    // are not precisely documented, but are as follows:
-    //
-    //  - If the operand is of integral, floating, complex or enumeration type,
-    //    and can be folded to a known value of that type, it returns 1.
-    //  - If the operand and can be folded to a pointer to the first character
-    //    of a string literal (or such a pointer cast to an integral type), it
-    //    returns 1.
-    //
-    // Otherwise, it returns 0.
-    //
-    // FIXME: GCC also intends to return 1 for literals of aggregate types, but
-    // its support for this does not currently work.
-    int IsConstant = 0;
-    if (ArgType->isIntegralOrEnumerationType()) {
-      // Note, a pointer cast to an integral type is only a constant if it is
-      // a pointer to the first character of a string literal.
-      Expr::EvalResult Result;
-      if (Arg->EvaluateAsRValue(Result, Info.Ctx) && !Result.HasSideEffects) {
-        APValue &V = Result.Val;
-        if (V.getKind() == APValue::LValue) {
-          if (const Expr *E = V.getLValueBase().dyn_cast<const Expr*>())
-            IsConstant = isa<StringLiteral>(E) && V.getLValueOffset().isZero();
-        } else {
-          IsConstant = 1;
-        }
-      }
-    } else if (ArgType->isFloatingType() || ArgType->isAnyComplexType()) {
-      IsConstant = Arg->isEvaluatable(Info.Ctx);
-    } else if (ArgType->isPointerType() || Arg->isGLValue()) {
-      LValue LV;
-      // Use a separate EvalInfo: ignore constexpr parameter and 'this' bindings
-      // during the check.
-      Expr::EvalStatus Status;
-      EvalInfo SubInfo(Info.Ctx, Status);
-      if ((Arg->isGLValue() ? EvaluateLValue(Arg, LV, SubInfo)
-                            : EvaluatePointer(Arg, LV, SubInfo)) &&
-          !Status.HasSideEffects)
-        if (const Expr *E = LV.getLValueBase().dyn_cast<const Expr*>())
-          IsConstant = isa<StringLiteral>(E) && LV.getLValueOffset().isZero();
-    }
+  case Builtin::BI__builtin_constant_p:
+    return Success(EvaluateBuiltinConstantP(Info.Ctx, E->getArg(0)), E);
 
-    return Success(IsConstant, E);
-  }
   case Builtin::BI__builtin_eh_return_data_regno: {
     int Operand = E->getArg(0)->EvaluateKnownConstInt(Info.Ctx).getZExtValue();
     Operand = Info.Ctx.getTargetInfo().getEHDataRegisterNumber(Operand);
@@ -5240,10 +5251,14 @@ bool Expr::EvaluateAsBooleanCondition(bool &Result,
                                 Result);
 }
 
-bool Expr::EvaluateAsInt(APSInt &Result, const ASTContext &Ctx) const {
+bool Expr::EvaluateAsInt(APSInt &Result, const ASTContext &Ctx,
+                         SideEffectsKind AllowSideEffects) const {
+  if (!getType()->isIntegralOrEnumerationType())
+    return false;
+
   EvalResult ExprResult;
-  if (!EvaluateAsRValue(ExprResult, Ctx) || ExprResult.HasSideEffects ||
-      !ExprResult.Val.isInt())
+  if (!EvaluateAsRValue(ExprResult, Ctx) || !ExprResult.Val.isInt() ||
+      (!AllowSideEffects && ExprResult.HasSideEffects))
     return false;
 
   Result = ExprResult.Val.getInt();
@@ -5680,14 +5695,8 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     // extension.  See GCC PR38377 for discussion.
     if (const CallExpr *CallCE
         = dyn_cast<CallExpr>(Exp->getCond()->IgnoreParenCasts()))
-      if (CallCE->isBuiltinCall() == Builtin::BI__builtin_constant_p) {
-        Expr::EvalResult EVResult;
-        if (!E->EvaluateAsRValue(EVResult, Ctx) || EVResult.HasSideEffects ||
-            !EVResult.Val.isInt()) {
-          return ICEDiag(2, E->getLocStart());
-        }
-        return NoDiag();
-      }
+      if (CallCE->isBuiltinCall() == Builtin::BI__builtin_constant_p)
+        return CheckEvalInICE(E, Ctx);
     ICEDiag CondResult = CheckICE(Exp->getCond(), Ctx);
     if (CondResult.Val == 2)
       return CondResult;

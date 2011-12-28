@@ -471,10 +471,12 @@ public:
   /// side-effects.
   bool EvaluateAsBooleanCondition(bool &Result, const ASTContext &Ctx) const;
 
+  enum SideEffectsKind { SE_NoSideEffects, SE_AllowSideEffects };
+
   /// EvaluateAsInt - Return true if this is a constant which we can fold and
-  /// convert to an integer without side-effects, using any crazy technique that
-  /// we want to.
-  bool EvaluateAsInt(llvm::APSInt &Result, const ASTContext &Ctx) const;
+  /// convert to an integer, using any crazy technique that we want to.
+  bool EvaluateAsInt(llvm::APSInt &Result, const ASTContext &Ctx,
+                     SideEffectsKind AllowSideEffects = SE_NoSideEffects) const;
 
   /// isEvaluatable - Call EvaluateAsRValue to see if this expression can be
   /// constant folded without side-effects, but discard the result.

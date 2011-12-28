@@ -43,7 +43,6 @@ namespace llvm {
 }
 
 namespace clang {
-  class APValue;
   class ASTContext;
   class BlockDecl;
   class CXXDestructorDecl;
