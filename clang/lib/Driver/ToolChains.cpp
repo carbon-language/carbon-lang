@@ -1817,9 +1817,9 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
     StringRef Data = File.get()->getBuffer();
     if (Data[0] == '5')
       return DebianLenny;
-    else if (Data.startswith("squeeze/sid"))
+    else if (Data.startswith("squeeze/sid") || Data[0] == '6')
       return DebianSqueeze;
-    else if (Data.startswith("wheezy/sid"))
+    else if (Data.startswith("wheezy/sid")  || Data[0] == '7')
       return DebianWheezy;
     return UnknownDistro;
   }
