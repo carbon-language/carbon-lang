@@ -1,15 +1,15 @@
 #!/bin/sh -x
 
 # Usage:
-# build-lldb-llvm-clang <revision> [Debug|Release]
-# build-lldb-llvm-clang <llvm-revision> <clang-revision> [Debug|Release]
+# build-lldb-llvm-clang <revision> [Debug|Release|BuildAndIntegration]
+# build-lldb-llvm-clang <llvm-revision> <clang-revision> [Debug|Release|BuildAndIntegration]
 
 LLVM_REVISION=$1
 CLANG_REVISION=$2
 LLVM_CONFIGURATION=$3
 
 if [ "$LLVM_REVISION" = "" ]; then
-	echo "Usage:\n    build-lldb-llvm-clang <llvm-revision> [<clang-revision> Debug|Release]"
+	echo "Usage:\n    build-lldb-llvm-clang <llvm-revision> [<clang-revision> Debug|Release||BuildAndIntegration]"
 	exit 1
 fi
 
