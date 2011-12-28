@@ -2768,7 +2768,7 @@ CFGBlock *CFGBuilder::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E,
 CFGBlock *CFGBuilder::VisitCXXConstructExpr(CXXConstructExpr *C,
                                             AddStmtChoice asc) {
   autoCreateBlock();
-  if (!C->isElidable())
+  if (!C->isElidable() && asc.alwaysAdd(*this, C))
     appendStmt(Block, C);
 
   return VisitChildren(C);
