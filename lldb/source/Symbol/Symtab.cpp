@@ -322,6 +322,7 @@ Symtab::InitNameIndexes()
                                                         
         }
         m_name_to_index.Sort();
+        m_name_to_index.SizeToFit();
     }
 }
 

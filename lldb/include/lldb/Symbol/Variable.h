@@ -159,7 +159,7 @@ public:
 
 protected:
     ConstString m_name;                 // The basename of the variable (no namespaces)
-    Mangled m_mangled;                  // The mangled name of hte variable
+    Mangled m_mangled;                  // The mangled name of the variable
     lldb::SymbolFileTypeSP m_symfile_type_sp;   // The type pointer of the variable (int, struct, class, etc)
     lldb::ValueType m_scope;            // global, parameter, local
     SymbolContextScope *m_owner_scope;  // The symbol file scope that this variable was defined in

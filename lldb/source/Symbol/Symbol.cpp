@@ -30,7 +30,6 @@ Symbol::Symbol() :
     m_is_external (false),
     m_size_is_sibling (false),
     m_size_is_synthesized (false),
-    m_searched_for_function (false),
     m_type (eSymbolTypeInvalid),
     m_flags (),
     m_addr_range ()
@@ -62,7 +61,6 @@ Symbol::Symbol
     m_is_external (external),
     m_size_is_sibling (false),
     m_size_is_synthesized (false),
-    m_searched_for_function (false),
     m_type (type),
     m_flags (flags),
     m_addr_range (section, offset, size)
@@ -92,7 +90,6 @@ Symbol::Symbol
     m_is_external (external),
     m_size_is_sibling (false),
     m_size_is_synthesized (false),
-    m_searched_for_function (false),
     m_type (type),
     m_flags (flags),
     m_addr_range (range)
@@ -110,7 +107,6 @@ Symbol::Symbol(const Symbol& rhs):
     m_is_external (rhs.m_is_external),
     m_size_is_sibling (rhs.m_size_is_sibling),
     m_size_is_synthesized (false),
-    m_searched_for_function (false),
     m_type (rhs.m_type),
     m_flags (rhs.m_flags),
     m_addr_range (rhs.m_addr_range)
@@ -132,7 +128,6 @@ Symbol::operator= (const Symbol& rhs)
         m_is_external = rhs.m_is_external;
         m_size_is_sibling = rhs.m_size_is_sibling;
         m_size_is_synthesized = rhs.m_size_is_sibling;
-        m_searched_for_function = rhs.m_searched_for_function;
         m_type = rhs.m_type;
         m_flags = rhs.m_flags;
         m_addr_range = rhs.m_addr_range;
@@ -152,7 +147,6 @@ Symbol::Clear()
     m_is_external = false;
     m_size_is_sibling = false;
     m_size_is_synthesized = false;
-    m_searched_for_function = false;
     m_type = eSymbolTypeInvalid;
     m_flags = 0;
     m_addr_range.Clear();
