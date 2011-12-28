@@ -3448,6 +3448,11 @@ bool X86::isMOVHLPS_v_undef_Mask(ShuffleVectorSDNode *N) {
 /// isMOVLPMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to MOVLP{S|D}.
 bool X86::isMOVLPMask(ShuffleVectorSDNode *N) {
+  EVT VT = N->getValueType(0);
+
+  if (VT.getSizeInBits() != 128)
+    return false;
+
   unsigned NumElems = N->getValueType(0).getVectorNumElements();
 
   if (NumElems != 2 && NumElems != 4)
@@ -3665,6 +3670,8 @@ bool X86::isUNPCKH_v_undef_Mask(ShuffleVectorSDNode *N, bool HasAVX2) {
 /// MOVSD, and MOVD, i.e. setting the lowest element.
 static bool isMOVLMask(const SmallVectorImpl<int> &Mask, EVT VT) {
   if (VT.getVectorElementType().getSizeInBits() < 32)
+    return false;
+  if (VT.getSizeInBits() == 256)
     return false;
 
   int NumElts = VT.getVectorNumElements();
@@ -5158,16 +5165,30 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
         return DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Item);
       } else if (ExtVT == MVT::i32 || ExtVT == MVT::f32 || ExtVT == MVT::f64 ||
           (ExtVT == MVT::i64 && Subtarget->is64Bit())) {
+        if (VT.getSizeInBits() == 256) {
+          
+          EVT VT128 = EVT::getVectorVT(*DAG.getContext(), ExtVT, NumElems / 2);
+          Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT128, Item);
+          SDValue ZeroVec = getZeroVector(VT, true, DAG, dl);              
+          return Insert128BitVector(ZeroVec, Item, DAG.getConstant(0, MVT::i32),
+                              DAG, dl);
+        }
         Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Item);
         // Turn it into a MOVL (i.e. movss, movsd, or movd) to a zero vector.
         return getShuffleVectorZeroOrUndef(Item, 0, true,Subtarget->hasXMMInt(),
                                            DAG);
       } else if (ExtVT == MVT::i16 || ExtVT == MVT::i8) {
         Item = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, Item);
-        unsigned NumBits = VT.getSizeInBits();
-        assert((NumBits == 128 || NumBits == 256) && 
-               "Expected an SSE or AVX value type!");
-        EVT MiddleVT = NumBits == 128 ? MVT::v4i32 : MVT::v8i32;
+        if (VT.getSizeInBits() == 256) {
+          
+          EVT VT128 = EVT::getVectorVT(*DAG.getContext(), ExtVT, NumElems / 2);
+          Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT128, Item);
+          SDValue ZeroVec = getZeroVector(VT, true, DAG, dl);              
+          return Insert128BitVector(ZeroVec, Item, DAG.getConstant(0, MVT::i32),
+                              DAG, dl);
+        }
+        assert (VT.getSizeInBits() == 128 || "Expected an SSE value type!");
+        EVT MiddleVT = MVT::v4i32;
         Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MiddleVT, Item);
         Item = getShuffleVectorZeroOrUndef(Item, 0, true,
                                            Subtarget->hasXMMInt(), DAG);
