@@ -53,6 +53,7 @@ type llmemorybuffer
 module TypeKind : sig
   type t =
     Void
+  | Half
   | Float
   | Double
   | X86fp80

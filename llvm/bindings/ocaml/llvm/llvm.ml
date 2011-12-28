@@ -20,6 +20,7 @@ type llmemorybuffer
 module TypeKind = struct
   type t =
   | Void
+  | Half
   | Float
   | Double
   | X86fp80
@@ -1234,5 +1235,6 @@ let rec string_of_lltype ty =
   | TypeKind.X86fp80 -> "x86_fp80"
   | TypeKind.Double -> "double"
   | TypeKind.Float -> "float"
+  | TypeKind.Half -> "half"
   | TypeKind.Void -> "void"
   | TypeKind.Metadata -> "metadata"
