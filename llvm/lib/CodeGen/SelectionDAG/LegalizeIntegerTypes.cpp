@@ -489,7 +489,11 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SELECT(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_VSELECT(SDNode *N) {
-  SDValue Mask = GetPromotedInteger(N->getOperand(0));
+  SDValue Mask = N->getOperand(0);
+  EVT OpTy = N->getOperand(1).getValueType();
+
+  // Promote all the way up to the canonical SetCC type.
+  Mask = PromoteTargetBoolean(Mask, TLI.getSetCCResultType(OpTy));
   SDValue LHS = GetPromotedInteger(N->getOperand(1));
   SDValue RHS = GetPromotedInteger(N->getOperand(2));
   return DAG.getNode(ISD::VSELECT, N->getDebugLoc(),
