@@ -1357,7 +1357,9 @@ TEST(AddressSanitizer, StrCatOOBTest) {
   strcat(to, from + 1);
 }
 
-static const char *kOverlapErrorMessage = "strcpy-param-overlap";
+static string OverlapErrorMessage(const string &func) {
+  return func + "-param-overlap";
+}
 
 TEST(AddressSanitizer, StrArgsOverlapTest) {
   size_t size = Ident(100);
@@ -1368,27 +1370,28 @@ TEST(AddressSanitizer, StrArgsOverlapTest) {
   memset(str, 'z', size);
   Ident(memcpy)(str + 1, str + 11, 10);
   Ident(memcpy)(str, str, 0);
-  EXPECT_DEATH(Ident(memcpy)(str, str + 14, 15), kOverlapErrorMessage);
-  EXPECT_DEATH(Ident(memcpy)(str + 14, str, 15), kOverlapErrorMessage);
-  EXPECT_DEATH(Ident(memcpy)(str + 20, str + 20, 1), kOverlapErrorMessage);
+  EXPECT_DEATH(Ident(memcpy)(str, str + 14, 15), OverlapErrorMessage("memcpy"));
+  EXPECT_DEATH(Ident(memcpy)(str + 14, str, 15), OverlapErrorMessage("memcpy"));
+  EXPECT_DEATH(Ident(memcpy)(str + 20, str + 20, 1),
+               OverlapErrorMessage("memcpy"));
 #endif
 
   // Check "strcpy".
   memset(str, 'z', size);
   str[9] = '\0';
   strcpy(str + 10, str);
-  EXPECT_DEATH(strcpy(str + 9, str), kOverlapErrorMessage);
-  EXPECT_DEATH(strcpy(str, str + 4), kOverlapErrorMessage);
+  EXPECT_DEATH(strcpy(str + 9, str), OverlapErrorMessage("strcpy"));
+  EXPECT_DEATH(strcpy(str, str + 4), OverlapErrorMessage("strcpy"));
   strcpy(str, str + 5);
 
   // Check "strncpy".
   memset(str, 'z', size);
   strncpy(str, str + 10, 10);
-  EXPECT_DEATH(strncpy(str, str + 9, 10), kOverlapErrorMessage);
-  EXPECT_DEATH(strncpy(str + 9, str, 10), kOverlapErrorMessage);
+  EXPECT_DEATH(strncpy(str, str + 9, 10), OverlapErrorMessage("strncpy"));
+  EXPECT_DEATH(strncpy(str + 9, str, 10), OverlapErrorMessage("strncpy"));
   str[10] = '\0';
   strncpy(str + 11, str, 20);
-  EXPECT_DEATH(strncpy(str + 10, str, 20), kOverlapErrorMessage);
+  EXPECT_DEATH(strncpy(str + 10, str, 20), OverlapErrorMessage("strncpy"));
 
   // Check "strcat".
   memset(str, 'z', size);
@@ -1398,9 +1401,9 @@ TEST(AddressSanitizer, StrArgsOverlapTest) {
   strcat(str, str + 11);
   str[10] = '\0';
   strcat(str + 11, str);
-  EXPECT_DEATH(strcat(str, str + 9), kOverlapErrorMessage);
-  EXPECT_DEATH(strcat(str + 9, str), kOverlapErrorMessage);
-  EXPECT_DEATH(strcat(str + 10, str), kOverlapErrorMessage);
+  EXPECT_DEATH(strcat(str, str + 9), OverlapErrorMessage("strcat"));
+  EXPECT_DEATH(strcat(str + 9, str), OverlapErrorMessage("strcat"));
+  EXPECT_DEATH(strcat(str + 10, str), OverlapErrorMessage("strcat"));
 
   free(str);
 }

@@ -85,13 +85,13 @@ static inline bool RangesOverlap(const char *offset1, size_t length1,
                                  const char *offset2, size_t length2) {
   return !((offset1 + length1 <= offset2) || (offset2 + length2 <= offset1));
 }
-#define CHECK_RANGES_OVERLAP(_offset1, length1, _offset2, length2) do { \
+#define CHECK_RANGES_OVERLAP(name, _offset1, length1, _offset2, length2) do { \
   const char *offset1 = (const char*)_offset1; \
   const char *offset2 = (const char*)_offset2; \
   if (RangesOverlap(offset1, length1, offset2, length2)) { \
-    Report("ERROR: AddressSanitizer strcpy-param-overlap: " \
+    Report("ERROR: AddressSanitizer %s-param-overlap: " \
            "memory ranges [%p,%p) and [%p, %p) overlap\n", \
-           offset1, offset1 + length1, offset2, offset2 + length2); \
+           name, offset1, offset1 + length1, offset2, offset2 + length2); \
     PRINT_CURRENT_STACK(); \
     ShowStatsAndAbort(); \
   } \
@@ -186,7 +186,7 @@ void *WRAP(memcpy)(void *to, const void *from, size_t size) {
   }
   ENSURE_ASAN_INITED();
   if (FLAG_replace_intrin) {
-    CHECK_RANGES_OVERLAP(to, size, from, size);
+    CHECK_RANGES_OVERLAP("memcpy", to, size, from, size);
     ASAN_WRITE_RANGE(from, size);
     ASAN_READ_RANGE(to, size);
   }
@@ -256,7 +256,7 @@ char *WRAP(strcat)(char *to, const char *from) {  // NOLINT
       size_t to_length = real_strlen(to);
       ASAN_READ_RANGE(to, to_length);
       ASAN_WRITE_RANGE(to + to_length, from_length + 1);
-      CHECK_RANGES_OVERLAP(to, to_length + 1, from, from_length + 1);
+      CHECK_RANGES_OVERLAP("strcat", to, to_length + 1, from, from_length + 1);
     }
   }
   return real_strcat(to, from);
@@ -289,7 +289,7 @@ char *WRAP(strcpy)(char *to, const char *from) {  // NOLINT
   ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
     size_t from_size = real_strlen(from) + 1;
-    CHECK_RANGES_OVERLAP(to, from_size, from, from_size);
+    CHECK_RANGES_OVERLAP("strcpy", to, from_size, from, from_size);
     ASAN_READ_RANGE(from, from_size);
     ASAN_WRITE_RANGE(to, from_size);
   }
@@ -355,7 +355,7 @@ char *WRAP(strncpy)(char *to, const char *from, size_t size) {
   ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
     size_t from_size = Min(size, internal_strnlen(from, size) + 1);
-    CHECK_RANGES_OVERLAP(to, from_size, from, from_size);
+    CHECK_RANGES_OVERLAP("strncpy", to, from_size, from, from_size);
     ASAN_READ_RANGE(from, from_size);
     ASAN_WRITE_RANGE(to, size);
   }
