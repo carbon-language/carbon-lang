@@ -331,12 +331,12 @@ static void     ASAN_OnSIGILL(int, siginfo_t *siginfo, void *context) {
 }
 
 // exported functions
-#define ASAN_REPORT_ERROR(type, is_write, size) \
-extern "C" void __asan_report_ ## type ## size(uintptr_t addr)   \
-  __attribute__((visibility("default")));                        \
-extern "C" void __asan_report_ ## type ## size(uintptr_t addr) { \
-  GET_BP_PC_SP;                                                  \
-  __asan_report_error(pc, bp, sp, addr, is_write, size);  \
+#define ASAN_REPORT_ERROR(type, is_write, size)                     \
+extern "C" void __asan_report_ ## type ## size(uintptr_t addr)      \
+  __attribute__((visibility("default"))) __attribute__((noinline)); \
+extern "C" void __asan_report_ ## type ## size(uintptr_t addr) {    \
+  GET_BP_PC_SP;                                                     \
+  __asan_report_error(pc, bp, sp, addr, is_write, size);            \
 }
 
 ASAN_REPORT_ERROR(load, false, 1)
@@ -355,8 +355,7 @@ ASAN_REPORT_ERROR(store, true, 16)
 // dynamic libraries access the symbol even if it is not used by the executable
 // itself. This should help if the build system is removing dead code at link
 // time.
-extern "C"
-void __asan_force_interface_symbols() {
+static void force_interface_symbols() {
   volatile int fake_condition = 0;  // prevent dead condition elimination.
   if (fake_condition) {
     __asan_report_load1(NULL);
@@ -775,7 +774,7 @@ void __asan_init() {
 
   asanThreadRegistry().Init();
   asanThreadRegistry().GetMain()->ThreadStart();
-  __asan_force_interface_symbols();  // no-op.
+  force_interface_symbols();  // no-op.
 
   if (FLAG_v) {
     Report("AddressSanitizer Init done\n");
