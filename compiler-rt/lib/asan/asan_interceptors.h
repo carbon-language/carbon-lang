@@ -67,6 +67,7 @@
 #endif
 
 #ifdef __APPLE__
+int WRAP(memcmp)(const void *a1, const void *a2, size_t size);
 void *WRAP(memcpy)(void *to, const void *from, size_t size);
 void *WRAP(memmove)(void *to, const void *from, size_t size);
 void *WRAP(memset)(void *block, int c, size_t size);
@@ -84,6 +85,7 @@ char *WRAP(strncpy)(char *to, const char *from, size_t size);
 namespace __asan {
 
 typedef void* (*index_f)(const char *string, int c);
+typedef int (*memcmp_f)(const void *a1, const void *a2, size_t size);
 typedef void* (*memcpy_f)(void *to, const void *from, size_t size);
 typedef void* (*memmove_f)(void *to, const void *from, size_t size);
 typedef void* (*memset_f)(void *block, int c, size_t size);
@@ -100,6 +102,7 @@ typedef size_t (*strnlen_f)(const char *s, size_t maxlen);
 
 // __asan::real_X() holds pointer to library implementation of X().
 extern index_f          real_index;
+extern memcmp_f         real_memcmp;
 extern memcpy_f         real_memcpy;
 extern memmove_f        real_memmove;
 extern memset_f         real_memset;

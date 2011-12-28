@@ -28,6 +28,7 @@
 namespace __asan {
 
 index_f       real_index;
+memcmp_f      real_memcmp;
 memcpy_f      real_memcpy;
 memmove_f     real_memmove;
 memset_f      real_memset;
@@ -124,6 +125,7 @@ void InitializeAsanInterceptors() {
 #else
   OVERRIDE_FUNCTION(index, WRAP(strchr));
 #endif
+  INTERCEPT_FUNCTION(memcmp);
   INTERCEPT_FUNCTION(memcpy);
   INTERCEPT_FUNCTION(memmove);
   INTERCEPT_FUNCTION(memset);
@@ -148,6 +150,32 @@ void InitializeAsanInterceptors() {
 
 // ---------------------- Wrappers ---------------- {{{1
 using namespace __asan;  // NOLINT
+
+static inline int CharCmp(unsigned char c1, unsigned char c2) {
+  return (c1 == c2) ? 0 : (c1 < c2) ? -1 : 1;
+}
+
+static inline int CharCaseCmp(unsigned char c1, unsigned char c2) {
+  int c1_low = tolower(c1);
+  int c2_low = tolower(c2);
+  return c1_low - c2_low;
+}
+
+int WRAP(memcmp)(const void *a1, const void *a2, size_t size) {
+  ENSURE_ASAN_INITED();
+  unsigned char c1 = 0, c2 = 0;
+  const unsigned char *s1 = (const unsigned char*)a1;
+  const unsigned char *s2 = (const unsigned char*)a2;
+  size_t i;
+  for (i = 0; i < size; i++) {
+    c1 = s1[i];
+    c2 = s2[i];
+    if (c1 != c2) break;
+  }
+  ASAN_READ_RANGE(s1, Min(i + 1, size));
+  ASAN_READ_RANGE(s2, Min(i + 1, size));
+  return CharCmp(c1, c2);
+}
 
 void *WRAP(memcpy)(void *to, const void *from, size_t size) {
   // memcpy is called during __asan_init() from the internals
@@ -202,16 +230,6 @@ char *WRAP(strchr)(const char *str, int c) {
     ASAN_READ_RANGE(str, bytes_read);
   }
   return result;
-}
-
-static inline int CharCmp(unsigned char c1, unsigned char c2) {
-  return (c1 == c2) ? 0 : (c1 < c2) ? -1 : 1;
-}
-
-static inline int CharCaseCmp(unsigned char c1, unsigned char c2) {
-  int c1_low = tolower(c1);
-  int c2_low = tolower(c2);
-  return c1_low - c2_low;
 }
 
 int WRAP(strcasecmp)(const char *s1, const char *s2) {

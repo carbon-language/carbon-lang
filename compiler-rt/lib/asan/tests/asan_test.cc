@@ -1220,6 +1220,14 @@ TEST(AddressSanitizer, StrCmpAndFriendsLogicTest) {
   EXPECT_LT(0, strncasecmp("xyz", "xyy", 10));
   EXPECT_LT(0, strncasecmp("Baa", "aaa", 1));
   EXPECT_LT(0, strncasecmp("zyx", "", 2));
+
+  // memcmp
+  EXPECT_EQ(0, memcmp("a", "b", 0));
+  EXPECT_EQ(0, memcmp("ab\0c", "ab\0c", 4));
+  EXPECT_GT(0, memcmp("\0ab", "\0ac", 3));
+  EXPECT_GT(0, memcmp("abb\0", "abba", 4));
+  EXPECT_LT(0, memcmp("ab\0cd", "ab\0c\0", 5));
+  EXPECT_LT(0, memcmp("zza", "zyx", 3));
 }
 
 typedef int(*PointerToStrCmp)(const char*, const char*);
@@ -1290,6 +1298,30 @@ TEST(AddressSanitizer, StrNCmpOOBTest) {
 
 TEST(AddressSanitizer, StrNCaseCmpOOBTest) {
   RunStrNCmpTest(&strncasecmp);
+}
+
+TEST(AddressSanitizer, MemCmpOOBTest) {
+  size_t size = Ident(100);
+  char *s1 = MallocAndMemsetString(size);
+  char *s2 = MallocAndMemsetString(size);
+  // Normal memcmp calls.
+  Ident(memcmp(s1, s2, size));
+  Ident(memcmp(s1 + size - 1, s2 + size - 1, 1));
+  Ident(memcmp(s1 - 1, s2 - 1, 0));
+  // One of arguments points to not allocated memory.
+  EXPECT_DEATH(Ident(memcmp)(s1 - 1, s2, 1), LeftOOBErrorMessage(1));
+  EXPECT_DEATH(Ident(memcmp)(s1, s2 - 1, 1), LeftOOBErrorMessage(1));
+  EXPECT_DEATH(Ident(memcmp)(s1 + size, s2, 1), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(memcmp)(s1, s2 + size, 1), RightOOBErrorMessage(0));
+  // Hit unallocated memory and die.
+  EXPECT_DEATH(Ident(memcmp)(s1 + 1, s2 + 1, size), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(memcmp)(s1 + size - 1, s2, 2), RightOOBErrorMessage(0));
+  // Zero bytes are not terminators and don't prevent from OOB.
+  s1[size - 1] = '\0';
+  s2[size - 1] = '\0';
+  EXPECT_DEATH(Ident(memcmp)(s1, s2, size + 1), RightOOBErrorMessage(0));
+  free(s1);
+  free(s2);
 }
 
 static const char *kOverlapErrorMessage = "strcpy-param-overlap";

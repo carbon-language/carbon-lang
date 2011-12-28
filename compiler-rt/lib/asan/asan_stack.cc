@@ -230,8 +230,8 @@ size_t AsanStackTrace::CompressStack(AsanStackTrace *stack,
   // |res| may be greater than check_stack.size, because
   // UncompressStack(CompressStack(stack)) eliminates the 0x0 frames.
   CHECK(res >= check_stack.size);
-  CHECK(0 == memcmp(check_stack.trace, stack->trace,
-                    check_stack.size * sizeof(uintptr_t)));
+  CHECK(0 == real_memcmp(check_stack.trace, stack->trace,
+                         check_stack.size * sizeof(uintptr_t)));
 #endif
 
   return res;
