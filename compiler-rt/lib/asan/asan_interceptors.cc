@@ -119,6 +119,23 @@ size_t internal_strnlen(const char *s, size_t maxlen) {
   return i;
 }
 
+void* internal_memchr(const void* s, int c, size_t n) {
+  const char* t = (char*)s;
+  for (size_t i = 0; i < n; ++i, ++t)
+    if (*t == c)
+      return (void*)t;
+  return NULL;
+}
+
+int internal_memcmp(const void* s1, const void* s2, size_t n) {
+  const char* t1 = (char*)s1;
+  const char* t2 = (char*)s2;
+  for (size_t i = 0; i < n; ++i, ++t1, ++t2)
+    if (*t1 != *t2)
+      return *t1 < *t2 ? -1 : 1;
+  return 0;
+}
+
 void InitializeAsanInterceptors() {
 #ifndef __APPLE__
   INTERCEPT_FUNCTION(index);

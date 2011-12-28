@@ -83,11 +83,20 @@ bool DescribeAddrIfGlobal(uintptr_t addr);
 // asan_malloc_linux.cc / asan_malloc_mac.cc
 void ReplaceSystemMalloc();
 
+void OutOfMemoryMessageAndDie(const char *mem_type, size_t size);
+
 // asan_linux.cc / asan_mac.cc
 void *AsanDoesNotSupportStaticLinkage();
+int AsanOpenReadonly(const char* filename);
 void *asan_mmap(void *addr, size_t length, int prot, int flags,
                 int fd, uint64_t offset);
-ssize_t asan_write(int fd, const void *buf, size_t count);
+
+void *AsanMmapSomewhereOrDie(size_t size, const char *where);
+void AsanUnmapOrDie(void *ptr, size_t size);
+
+ssize_t AsanRead(int fd, void *buf, size_t count);
+ssize_t AsanWrite(int fd, const void *buf, size_t count);
+int AsanClose(int fd);
 
 // asan_printf.cc
 void RawWrite(const char *buffer);
@@ -108,7 +117,6 @@ void PoisonShadowPartialRightRedzone(uintptr_t addr,
                                      uintptr_t size,
                                      uintptr_t redzone_size,
                                      uint8_t value);
-
 
 extern size_t FLAG_quarantine_size;
 extern int    FLAG_demangle;
@@ -184,6 +192,16 @@ const int kAsanInternalHeapMagic = 0xfe;
 
 static const uintptr_t kCurrentStackFrameMagic = 0x41B58AB3;
 static const uintptr_t kRetiredStackFrameMagic = 0x45E0360E;
+
+// --------------------------- Bit twiddling ------- {{{1
+inline bool IsPowerOfTwo(size_t x) {
+  return (x & (x - 1)) == 0;
+}
+
+inline size_t RoundUpTo(size_t size, size_t boundary) {
+  CHECK(IsPowerOfTwo(boundary));
+  return (size + boundary - 1) & ~(boundary - 1);
+}
 
 // -------------------------- LowLevelAllocator ----- {{{1
 // A simple low-level memory allocator for internal use.

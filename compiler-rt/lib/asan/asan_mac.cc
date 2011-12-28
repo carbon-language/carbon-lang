@@ -49,6 +49,38 @@ ssize_t asan_write(int fd, const void *buf, size_t count) {
   return write(fd, buf, count);
 }
 
+void *AsanMmapSomewhereOrDie(size_t size, const char *mem_type) {
+  size = RoundUpTo(size, kPageSize);
+  void *res = asan_mmap(0, size,
+                        PROT_READ | PROT_WRITE,
+                        MAP_PRIVATE | MAP_ANON, -1, 0);
+  if (res == (void*)-1) {
+    OutOfMemoryMessageAndDie(mem_type, size);
+  }
+  return res;
+}
+
+void AsanUnmapOrDie(void *addr, size_t size) {
+  if (!addr || !size) return;
+  int res = munmap(addr, size);
+  if (res != 0) {
+    Report("Failed to unmap\n");
+    ASAN_DIE;
+  }
+}
+
+int AsanOpenReadonly(const char* filename) {
+  return open(filename, O_RDONLY);
+}
+
+ssize_t AsanRead(int fd, void *buf, size_t count) {
+  return read(fd, buf, count);
+}
+
+int AsanClose(int fd) {
+  return close(fd);
+}
+
 // Support for the following functions from libdispatch on Mac OS:
 //   dispatch_async_f()
 //   dispatch_async()

@@ -24,8 +24,8 @@ namespace __asan {
 void RawWrite(const char *buffer) {
   static const char *kRawWriteError = "RawWrite can't output requested buffer!";
   ssize_t length = (ssize_t)internal_strlen(buffer);
-  if (length != asan_write(2, buffer, length)) {
-    asan_write(2, kRawWriteError, internal_strlen(kRawWriteError));
+  if (length != AsanWrite(2, buffer, length)) {
+    AsanWrite(2, kRawWriteError, internal_strlen(kRawWriteError));
     ASAN_DIE;
   }
 }

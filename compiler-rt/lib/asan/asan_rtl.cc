@@ -122,6 +122,56 @@ static void PrintBytes(const char *before, uintptr_t *a) {
   Printf("\n");
 }
 
+// Opens the file 'file_name" and reads up to 'max_len' bytes.
+// The resulting buffer is mmaped and stored in '*buff'.
+// Returns the number of read bytes or -1 if file can not be opened.
+static ssize_t ReadFileToBuffer(const char *file_name, char **buff,
+                                size_t max_len) {
+  const size_t kMinFileLen = kPageSize;
+  ssize_t read_len = -1;
+  *buff = 0;
+  size_t maped_size = 0;
+  // The files we usually open are not seekable, so try different buffer sizes.
+  for (size_t size = kMinFileLen; size <= max_len; size *= 2) {
+    int fd = AsanOpenReadonly(file_name);
+    if (fd < 0) return -1;
+    AsanUnmapOrDie(*buff, maped_size);
+    maped_size = size;
+    *buff = (char*)AsanMmapSomewhereOrDie(size, __FUNCTION__);
+    read_len = AsanRead(fd, *buff, size);
+    AsanClose(fd);
+    if (read_len < size)  // We've read the whole file.
+      break;
+  }
+  return read_len;
+}
+
+// Like getenv, but reads env directly from /proc and does not use libc.
+// This function should be called first inside __asan_init.
+static const char* GetEnvFromProcSelfEnviron(const char* name) {
+  static char *environ;
+  static ssize_t len;
+  static bool inited;
+  if (!inited) {
+    inited = true;
+    len = ReadFileToBuffer("/proc/self/environ", &environ, 1 << 20);
+  }
+  if (!environ || len <= 0) return NULL;
+  size_t namelen = internal_strlen(name);
+  const char *p = environ;
+  while (*p != '\0') {  // will happen at the \0\0 that terminates the buffer
+    // proc file has the format NAME=value\0NAME=value\0NAME=value\0...
+    const char* endp =
+        (char*)internal_memchr(p, '\0', len - (p - environ));
+    if (endp == NULL)  // this entry isn't NUL terminated
+      return NULL;
+    else if (!internal_memcmp(p, name, namelen) && p[namelen] == '=')  // Match.
+      return p + namelen + 1;  // point after =
+    p = endp + 1;
+  }
+  return NULL;  // Not found.
+}
+
 // ---------------------- Thread ------------------------- {{{1
 static void *asan_thread_start(void *arg) {
   AsanThread *t= (AsanThread*)arg;
@@ -130,10 +180,12 @@ static void *asan_thread_start(void *arg) {
 }
 
 // ---------------------- mmap -------------------- {{{1
-static void OutOfMemoryMessage(const char *mem_type, size_t size) {
+void OutOfMemoryMessageAndDie(const char *mem_type, size_t size) {
   Report("ERROR: AddressSanitizer failed to allocate "
          "0x%lx (%ld) bytes of %s\n",
          size, size, mem_type);
+  PRINT_CURRENT_STACK();
+  ShowStatsAndAbort();
 }
 
 static char *mmap_pages(size_t start_page, size_t n_pages, const char *mem_type,
@@ -144,8 +196,7 @@ static char *mmap_pages(size_t start_page, size_t n_pages, const char *mem_type,
   // Printf("%p => %p\n", (void*)start_page, res);
   char *ch = (char*)res;
   if (res == (void*)-1L && abort_on_failure) {
-    OutOfMemoryMessage(mem_type, n_pages * kPageSize);
-    ShowStatsAndAbort();
+    OutOfMemoryMessageAndDie(mem_type, n_pages * kPageSize);
   }
   CHECK(res == (void*)start_page || res == (void*)-1L);
   return ch;
@@ -175,10 +226,8 @@ void *LowLevelAllocator::Allocate(size_t size) {
   CHECK((size & (size - 1)) == 0 && "size must be a power of two");
   if (allocated_end_ - allocated_current_ < size) {
     size_t size_to_allocate = Max(size, kPageSize);
-    allocated_current_ = (char*)asan_mmap(0, size_to_allocate,
-                                          PROT_READ | PROT_WRITE,
-                                          MAP_PRIVATE | MAP_ANON, -1, 0);
-    CHECK((allocated_current_ != (char*)-1) && "Can't mmap");
+    allocated_current_ =
+        (char*)AsanMmapSomewhereOrDie(size_to_allocate, __FUNCTION__);
     allocated_end_ = allocated_current_ + size_to_allocate;
     PoisonShadow((uintptr_t)allocated_current_, size_to_allocate,
                  kAsanInternalHeapMagic);
@@ -306,7 +355,7 @@ static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
     return;
   }
   // Write the first message using the bullet-proof write.
-  if (13 != asan_write(2, "ASAN:SIGSEGV\n", 13)) ASAN_DIE;
+  if (13 != AsanWrite(2, "ASAN:SIGSEGV\n", 13)) ASAN_DIE;
   uintptr_t pc, sp, bp, ax;
   GetPcSpBpAx(context, &pc, &sp, &bp, &ax);
   Report("ERROR: AddressSanitizer crashed on unknown address %p"
@@ -321,7 +370,7 @@ static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
 
 static void     ASAN_OnSIGILL(int, siginfo_t *siginfo, void *context) {
   // Write the first message using the bullet-proof write.
-  if (12 != asan_write(2, "ASAN:SIGILL\n", 12)) ASAN_DIE;
+  if (12 != AsanWrite(2, "ASAN:SIGILL\n", 12)) ASAN_DIE;
   uintptr_t pc, sp, bp, ax;
   GetPcSpBpAx(context, &pc, &sp, &bp, &ax);
 
@@ -656,7 +705,7 @@ void __asan_init() {
   AsanDoesNotSupportStaticLinkage();
 
   // flags
-  const char *options = getenv("ASAN_OPTIONS");
+  const char *options = GetEnvFromProcSelfEnviron("ASAN_OPTIONS");
   FLAG_malloc_context_size =
       IntFlagValue(options, "malloc_context_size=", kMallocContextSize);
   CHECK(FLAG_malloc_context_size <= kMallocContextSize);

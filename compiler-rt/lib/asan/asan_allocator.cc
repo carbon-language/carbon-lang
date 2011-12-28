@@ -60,30 +60,13 @@ static const size_t kMaxAllowedMallocSize = 3UL << 30;  // 3G
 static const size_t kMaxAllowedMallocSize = 8UL << 30;  // 8G
 #endif
 
-static void OutOfMemoryMessage(const char *mem_type, size_t size) {
-  AsanThread *t = asanThreadRegistry().GetCurrent();
-  CHECK(t);
-  Report("ERROR: AddressSanitizer failed to allocate "
-         "0x%lx (%lu) bytes (%s) in T%d\n",
-         size, size, mem_type, t->tid());
-}
-
 static inline bool IsAligned(uintptr_t a, uintptr_t alignment) {
   return (a & (alignment - 1)) == 0;
-}
-
-static inline bool IsPowerOfTwo(size_t x) {
-  return (x & (x - 1)) == 0;
 }
 
 static inline size_t Log2(size_t x) {
   CHECK(IsPowerOfTwo(x));
   return __builtin_ctzl(x);
-}
-
-static inline size_t RoundUpTo(size_t size, size_t boundary) {
-  CHECK(IsPowerOfTwo(boundary));
-  return (size + boundary - 1) & ~(boundary - 1);
 }
 
 static inline size_t RoundUpToPowerOfTwo(size_t size) {
@@ -132,14 +115,7 @@ static void PoisonHeapPartialRightRedzone(uintptr_t mem, size_t size) {
 
 static uint8_t *MmapNewPagesAndPoisonShadow(size_t size) {
   CHECK(IsAligned(size, kPageSize));
-  uint8_t *res = (uint8_t*)asan_mmap(0, size,
-                   PROT_READ | PROT_WRITE,
-                   MAP_PRIVATE | MAP_ANON, -1, 0);
-  if (res == (uint8_t*)-1) {
-    OutOfMemoryMessage(__FUNCTION__, size);
-    PRINT_CURRENT_STACK();
-    ASAN_DIE;
-  }
+  uint8_t *res = (uint8_t*)AsanMmapSomewhereOrDie(size, __FUNCTION__);
   PoisonShadow((uintptr_t)res, size, kAsanHeapLeftRedzoneMagic);
   if (FLAG_debug) {
     Printf("ASAN_MMAP: [%p, %p)\n", res, res + size);
@@ -929,8 +905,7 @@ void FakeStack::Cleanup() {
     if (mem) {
       PoisonShadow(mem, ClassMmapSize(i), 0);
       allocated_size_classes_[i] = 0;
-      int munmap_res = munmap((void*)mem, ClassMmapSize(i));
-      CHECK(munmap_res == 0);
+      AsanUnmapOrDie((void*)mem, ClassMmapSize(i));
     }
   }
 }
@@ -941,10 +916,8 @@ size_t FakeStack::ClassMmapSize(size_t size_class) {
 
 void FakeStack::AllocateOneSizeClass(size_t size_class) {
   CHECK(ClassMmapSize(size_class) >= kPageSize);
-  uintptr_t new_mem = (uintptr_t)asan_mmap(0, ClassMmapSize(size_class),
-                                             PROT_READ | PROT_WRITE,
-                                             MAP_PRIVATE | MAP_ANON, -1, 0);
-  CHECK(new_mem != (uintptr_t)-1);
+  uintptr_t new_mem = (uintptr_t)AsanMmapSomewhereOrDie(
+      ClassMmapSize(size_class), __FUNCTION__);
   // Printf("T%d new_mem[%ld]: %p-%p mmap %ld\n",
   //       asanThreadRegistry().GetCurrent()->tid(),
   //       size_class, new_mem, new_mem + ClassMmapSize(size_class),

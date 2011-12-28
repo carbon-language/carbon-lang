@@ -17,6 +17,8 @@
 
 #include <sys/mman.h>
 #include <sys/syscall.h>
+#include <sys/types.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 extern char _DYNAMIC[];
@@ -28,22 +30,49 @@ void *AsanDoesNotSupportStaticLinkage() {
   return &_DYNAMIC;
 }
 
-#ifdef ANDROID
-#define SYS_mmap2 __NR_mmap2
-#define SYS_write __NR_write
-#endif
-
 void *asan_mmap(void *addr, size_t length, int prot, int flags,
                 int fd, uint64_t offset) {
 # if __WORDSIZE == 64
-  return (void *)syscall(SYS_mmap, addr, length, prot, flags, fd, offset);
+  return (void *)syscall(__NR_mmap, addr, length, prot, flags, fd, offset);
 # else
-  return (void *)syscall(SYS_mmap2, addr, length, prot, flags, fd, offset);
+  return (void *)syscall(__NR_mmap2, addr, length, prot, flags, fd, offset);
 # endif
 }
 
-ssize_t asan_write(int fd, const void *buf, size_t count) {
-  return (ssize_t)syscall(SYS_write, fd, buf, count);
+void *AsanMmapSomewhereOrDie(size_t size, const char *mem_type) {
+  size = RoundUpTo(size, kPageSize);
+  void *res = asan_mmap(0, size,
+                        PROT_READ | PROT_WRITE,
+                        MAP_PRIVATE | MAP_ANON, -1, 0);
+  if (res == (void*)-1) {
+    OutOfMemoryMessageAndDie(mem_type, size);
+  }
+  return res;
+}
+
+void AsanUnmapOrDie(void *addr, size_t size) {
+  if (!addr || !size) return;
+  int res = syscall(__NR_munmap, addr, size);
+  if (res != 0) {
+    Report("Failed to unmap\n");
+    ASAN_DIE;
+  }
+}
+
+ssize_t AsanWrite(int fd, const void *buf, size_t count) {
+  return (ssize_t)syscall(__NR_write, fd, buf, count);
+}
+
+int AsanOpenReadonly(const char* filename) {
+  return open(filename, O_RDONLY);
+}
+
+ssize_t AsanRead(int fd, void *buf, size_t count) {
+  return (ssize_t)syscall(__NR_read, fd, buf, count);
+}
+
+int AsanClose(int fd) {
+  return close(fd);
 }
 
 }  // namespace __asan
