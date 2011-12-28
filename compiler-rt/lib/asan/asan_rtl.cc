@@ -676,7 +676,7 @@ void __asan_init() {
   FLAG_replace_cfallocator = IntFlagValue(options, "replace_cfallocator=", 1);
   FLAG_fast_unwind = IntFlagValue(options, "fast_unwind=", 1);
   FLAG_replace_str = IntFlagValue(options, "replace_str=", 1);
-  FLAG_replace_intrin = IntFlagValue(options, "replace_intrin=", 0);
+  FLAG_replace_intrin = IntFlagValue(options, "replace_intrin=", 1);
   FLAG_use_fake_stack = IntFlagValue(options, "use_fake_stack=", 1);
   FLAG_exitcode = IntFlagValue(options, "exitcode=", EXIT_FAILURE);
   FLAG_allow_user_poisoning = IntFlagValue(options,

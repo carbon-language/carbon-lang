@@ -183,9 +183,8 @@ size_t AsanStackTrace::CompressStack(AsanStackTrace *stack,
     compressed[i] = stack->trace[i];
     res++;
   }
-  for (size_t i = stack->size; i < size; i++) {
-    compressed[i] = 0;
-  }
+  if (stack->size < size)
+    compressed[stack->size] = 0;
 #else  // 64 bits, compress.
   uintptr_t prev_pc = 0;
   const uintptr_t kMaxOffset = (1ULL << 30) - 1;
@@ -214,9 +213,10 @@ size_t AsanStackTrace::CompressStack(AsanStackTrace *stack,
     res++;
     prev_pc = pc;
   }
-  for (size_t i = c_index; i < size; i++) {
-    compressed[i] = 0;
-  }
+  if (c_index < size)
+    compressed[c_index] = 0;
+  if (c_index + 1 < size)
+    compressed[c_index + 1] = 0;
 #endif  // __WORDSIZE
 
   // debug-only code

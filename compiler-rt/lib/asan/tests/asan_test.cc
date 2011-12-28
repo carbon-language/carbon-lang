@@ -1365,7 +1365,6 @@ TEST(AddressSanitizer, StrArgsOverlapTest) {
   size_t size = Ident(100);
   char *str = Ident((char*)malloc(size));
 
-#if 0
   // Check "memcpy". Use Ident() to avoid inlining.
   memset(str, 'z', size);
   Ident(memcpy)(str + 1, str + 11, 10);
@@ -1374,7 +1373,6 @@ TEST(AddressSanitizer, StrArgsOverlapTest) {
   EXPECT_DEATH(Ident(memcpy)(str + 14, str, 15), OverlapErrorMessage("memcpy"));
   EXPECT_DEATH(Ident(memcpy)(str + 20, str + 20, 1),
                OverlapErrorMessage("memcpy"));
-#endif
 
   // Check "strcpy".
   memset(str, 'z', size);
