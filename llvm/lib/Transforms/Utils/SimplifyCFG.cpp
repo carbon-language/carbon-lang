@@ -1664,12 +1664,23 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     // Merge probability data into PredBlock's branch.
     APInt A, B, C, D;
     if (ExtractBranchMetadata(PBI, C, D) && ExtractBranchMetadata(BI, A, B)) {
-      // bbA: br bbB (a% probability), bbC (b% prob.)
-      // bbB: br bbD (c% probability), bbC (d% prob.)
-      // --> bbA: br bbD ((a*c)% prob.), bbC ((b+a*d)% prob.)
+      // Given IR which does:
+      //   bbA:
+      //     br i1 %x, label %bbB, label %bbC
+      //   bbB:
+      //     br i1 %y, label %bbD, label %bbC
+      // Let's call the probability that we take the edge from %bbA to %bbB
+      // 'a', from %bbA to %bbC, 'b', from %bbB to %bbD 'c' and from %bbB to
+      // %bbC probability 'd'.
       //
-      // Probabilities aren't stored as ratios directly. Converting to
-      // probability-numerator form, we get:
+      // We transform the IR into:
+      //   bbA:
+      //     br i1 %z, label %bbD, label %bbC
+      // where the probability of going to %bbD is (a*c) and going to bbC is
+      // (b+a*d).
+      //
+      // Probabilities aren't stored as ratios directly. Using branch weights,
+      // we get:
       // (a*c)% = A*C, (b+(a*d))% = A*D+B*C+B*D.
 
       bool Overflow1 = false, Overflow2 = false, Overflow3 = false;
