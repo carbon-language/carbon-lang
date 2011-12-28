@@ -30,8 +30,8 @@ namespace {
 
     bool shouldExplore(Use *U) { return true; }
 
-    bool captured(Instruction *I) {
-      if (isa<ReturnInst>(I) && !ReturnCaptures)
+    bool captured(Use *U) {
+      if (isa<ReturnInst>(U->getUser()) && !ReturnCaptures)
 	return false;
 
       Captured = true;
@@ -117,7 +117,7 @@ void llvm::PointerMayBeCaptured(const Value *V, CaptureTracker *Tracker) {
       for (CallSite::arg_iterator A = B; A != E; ++A)
         if (A->get() == V && !CS.doesNotCapture(A - B))
           // The parameter is not marked 'nocapture' - captured.
-          if (Tracker->captured(I))
+          if (Tracker->captured(U))
             return;
       break;
     }
@@ -130,7 +130,7 @@ void llvm::PointerMayBeCaptured(const Value *V, CaptureTracker *Tracker) {
     case Instruction::Store:
       if (V == I->getOperand(0))
         // Stored the pointer - conservatively assume it may be captured.
-        if (Tracker->captured(I))
+        if (Tracker->captured(U))
           return;
       // Storing to the pointee does not cause the pointer to be captured.
       break;
@@ -158,12 +158,12 @@ void llvm::PointerMayBeCaptured(const Value *V, CaptureTracker *Tracker) {
             break;
       // Otherwise, be conservative. There are crazy ways to capture pointers
       // using comparisons.
-      if (Tracker->captured(I))
+      if (Tracker->captured(U))
         return;
       break;
     default:
       // Something else - be conservative and say it is captured.
-      if (Tracker->captured(I))
+      if (Tracker->captured(U))
         return;
       break;
     }

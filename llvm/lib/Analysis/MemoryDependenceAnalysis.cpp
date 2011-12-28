@@ -349,7 +349,8 @@ namespace {
       return true;
     }
 
-    bool captured(Instruction *I) {
+    bool captured(Use *U) {
+      Instruction *I = cast<Instruction>(U->getUser());
       if (BeforeHere != I && DT->dominates(BeforeHere, I))
         return false;
       Captured = true;

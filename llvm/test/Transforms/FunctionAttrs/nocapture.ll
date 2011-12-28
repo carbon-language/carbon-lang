@@ -115,3 +115,64 @@ define void @nc5(void (i8*)* %f, i8* %p) {
 	call void %f(i8* nocapture %p)
 	ret void
 }
+
+; CHECK: define void @test1_1(i8* nocapture %x1_1, i8* %y1_1)
+define void @test1_1(i8* %x1_1, i8* %y1_1) {
+  call i8* @test1_2(i8* %x1_1, i8* %y1_1)
+  store i32* null, i32** @g
+  ret void
+}
+
+; CHECK: define i8* @test1_2(i8* nocapture %x1_2, i8* %y1_2)
+define i8* @test1_2(i8* %x1_2, i8* %y1_2) {
+  call void @test1_1(i8* %x1_2, i8* %y1_2)
+  store i32* null, i32** @g
+  ret i8* %y1_2
+}
+
+; CHECK: define void @test2(i8* nocapture %x2)
+define void @test2(i8* %x2) {
+  call void @test2(i8* %x2)
+  store i32* null, i32** @g
+  ret void
+}
+
+; CHECK: define void @test3(i8* nocapture %x3, i8* nocapture %y3, i8* nocapture %z3)
+define void @test3(i8* %x3, i8* %y3, i8* %z3) {
+  call void @test3(i8* %z3, i8* %y3, i8* %x3)
+  store i32* null, i32** @g
+  ret void
+}
+
+; CHECK: define void @test4_1(i8* %x4_1)
+define void @test4_1(i8* %x4_1) {
+  call i8* @test4_2(i8* %x4_1, i8* %x4_1, i8* %x4_1)
+  store i32* null, i32** @g
+  ret void
+}
+
+; CHECK: define i8* @test4_2(i8* nocapture %x4_2, i8* %y4_2, i8* nocapture %z4_2)
+define i8* @test4_2(i8* %x4_2, i8* %y4_2, i8* %z4_2) {
+  call void @test4_1(i8* null)
+  store i32* null, i32** @g
+  ret i8* %y4_2
+}
+
+declare i8* @test5_1(i8* %x5_1)
+
+; CHECK: define void @test5_2(i8* %x5_2)
+define void @test5_2(i8* %x5_2) {
+  call i8* @test5_1(i8* %x5_2)
+  store i32* null, i32** @g
+  ret void
+}
+
+declare void @test6_1(i8* %x6_1, i8* nocapture %y6_1, ...)
+
+; CHECK: define void @test6_2(i8* %x6_2, i8* nocapture %y6_2, i8* %z6_2)
+define void @test6_2(i8* %x6_2, i8* %y6_2, i8* %z6_2) {
+  call void (i8*, i8*, ...)* @test6_1(i8* %x6_2, i8* %y6_2, i8* %z6_2)
+  store i32* null, i32** @g
+  ret void
+}
+

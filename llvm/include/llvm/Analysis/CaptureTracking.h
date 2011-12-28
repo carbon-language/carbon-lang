@@ -50,10 +50,10 @@ namespace llvm {
     /// U->getUser() is always an Instruction.
     virtual bool shouldExplore(Use *U) = 0;
 
-    /// captured - The instruction I captured the pointer. Return true to
-    /// stop the traversal or false to continue looking for more capturing
-    /// instructions.
-    virtual bool captured(Instruction *I) = 0;
+    /// captured - Information about the pointer was captured by the user of
+    /// use U. Return true to stop the traversal or false to continue looking
+    /// for more capturing instructions.
+    virtual bool captured(Use *U) = 0;
   };
 
   /// PointerMayBeCaptured - Visit the value and the values derived from it and

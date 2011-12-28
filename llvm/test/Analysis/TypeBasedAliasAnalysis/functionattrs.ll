@@ -24,7 +24,7 @@ define void @test0_no(i32* %p) nounwind {
 ; Add the readonly attribute, since there's just a call to a function which 
 ; TBAA says doesn't modify any memory.
 
-; CHECK: define void @test1_yes(i32* %p) nounwind readonly {
+; CHECK: define void @test1_yes(i32* nocapture %p) nounwind readonly {
 define void @test1_yes(i32* %p) nounwind {
   call void @callee(i32* %p), !tbaa !1
   ret void

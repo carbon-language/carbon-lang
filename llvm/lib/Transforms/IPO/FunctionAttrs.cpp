@@ -27,6 +27,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/CaptureTracking.h"
+#include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/UniqueVector.h"
@@ -225,9 +226,131 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
   return MadeChange;
 }
 
+namespace {
+  // For a given pointer Argument, this retains a list of Arguments of functions
+  // in the same SCC that the pointer data flows into. We use this to build an
+  // SCC of the arguments.
+  struct ArgumentGraphNode {
+    Argument *Definition;
+    SmallVector<ArgumentGraphNode*, 4> Uses;
+  };
+
+  class ArgumentGraph {
+    // We store pointers to ArgumentGraphNode objects, so it's important that
+    // that they not move around upon insert.
+    typedef std::map<Argument*, ArgumentGraphNode> ArgumentMapTy;
+
+    ArgumentMapTy ArgumentMap;
+
+    // There is no root node for the argument graph, in fact:
+    //   void f(int *x, int *y) { if (...) f(x, y); }
+    // is an example where the graph is disconnected. The SCCIterator requires a
+    // single entry point, so we maintain a fake ("synthetic") root node that
+    // uses every node. Because the graph is directed and nothing points into
+    // the root, it will not participate in any SCCs (except for its own).
+    ArgumentGraphNode SyntheticRoot;
+
+  public:
+    ArgumentGraph() { SyntheticRoot.Definition = 0; }
+
+    typedef SmallVectorImpl<ArgumentGraphNode*>::iterator iterator;
+
+    iterator begin() { return SyntheticRoot.Uses.begin(); }
+    iterator end() { return SyntheticRoot.Uses.end(); }
+    ArgumentGraphNode *getEntryNode() { return &SyntheticRoot; }
+
+    ArgumentGraphNode *operator[](Argument *A) {
+      ArgumentGraphNode &Node = ArgumentMap[A];
+      Node.Definition = A;
+      SyntheticRoot.Uses.push_back(&Node);
+      return &Node;
+    }
+  };
+
+  // This tracker checks whether callees are in the SCC, and if so it does not
+  // consider that a capture, instead adding it to the "Uses" list and
+  // continuing with the analysis.
+  struct ArgumentUsesTracker : public CaptureTracker {
+    ArgumentUsesTracker(const SmallPtrSet<Function*, 8> &SCCNodes)
+      : Captured(false), SCCNodes(SCCNodes) {}
+
+    void tooManyUses() { Captured = true; }
+
+    bool shouldExplore(Use *U) { return true; }
+
+    bool captured(Use *U) {
+      CallSite CS(U->getUser());
+      if (!CS.getInstruction()) { Captured = true; return true; }
+
+      Function *F = CS.getCalledFunction();
+      if (!F || !SCCNodes.count(F)) { Captured = true; return true; }
+
+      Function::arg_iterator AI = F->arg_begin(), AE = F->arg_end();
+      for (CallSite::arg_iterator PI = CS.arg_begin(), PE = CS.arg_end();
+           PI != PE; ++PI, ++AI) {
+        if (AI == AE) {
+          assert(F->isVarArg() && "More params than args in non-varargs call");
+          Captured = true;
+          return true;
+        }
+        if (PI == U) {
+          Uses.push_back(AI);
+          break;
+        }
+      }
+      assert(!Uses.empty() && "Capturing call-site captured nothing?");
+      return false;
+    }
+
+    bool Captured;  // True only if certainly captured (used outside our SCC).
+    SmallVector<Argument*, 4> Uses;  // Uses within our SCC.
+
+    const SmallPtrSet<Function*, 8> &SCCNodes;
+  };
+}
+
+namespace llvm {
+  template<> struct GraphTraits<ArgumentGraphNode*> {
+    typedef ArgumentGraphNode NodeType;
+    typedef SmallVectorImpl<ArgumentGraphNode*>::iterator ChildIteratorType;
+
+    static inline NodeType *getEntryNode(NodeType *A) { return A; }
+    static inline ChildIteratorType child_begin(NodeType *N) {
+      return N->Uses.begin();
+    }
+    static inline ChildIteratorType child_end(NodeType *N) {
+      return N->Uses.end();
+    }
+  };
+  template<> struct GraphTraits<ArgumentGraph*>
+    : public GraphTraits<ArgumentGraphNode*> {
+    static NodeType *getEntryNode(ArgumentGraph *AG) {
+      return AG->getEntryNode();
+    }
+    static ChildIteratorType nodes_begin(ArgumentGraph *AG) {
+      return AG->begin();
+    }
+    static ChildIteratorType nodes_end(ArgumentGraph *AG) {
+      return AG->end();
+    }
+  };
+}
+
 /// AddNoCaptureAttrs - Deduce nocapture attributes for the SCC.
 bool FunctionAttrs::AddNoCaptureAttrs(const CallGraphSCC &SCC) {
   bool Changed = false;
+
+  SmallPtrSet<Function*, 8> SCCNodes;
+
+  // Fill SCCNodes with the elements of the SCC.  Used for quickly
+  // looking up whether a given CallGraphNode is in this SCC.
+  for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
+    Function *F = (*I)->getFunction();
+    if (F && !F->isDeclaration() && !F->mayBeOverridden())
+      SCCNodes.insert(F);
+  }
+
+  ArgumentGraph AG;
 
   // Check each function in turn, determining which pointer arguments are not
   // captured.
@@ -235,21 +358,115 @@ bool FunctionAttrs::AddNoCaptureAttrs(const CallGraphSCC &SCC) {
     Function *F = (*I)->getFunction();
 
     if (F == 0)
-      // External node - skip it;
+      // External node - only a problem for arguments that we pass to it.
       continue;
 
     // Definitions with weak linkage may be overridden at linktime with
-    // something that writes memory, so treat them like declarations.
+    // something that captures pointers, so treat them like declarations.
     if (F->isDeclaration() || F->mayBeOverridden())
       continue;
 
+    // Functions that are readonly (or readnone) and nounwind and don't return
+    // a value can't capture arguments. Don't analyze them.
+    if (F->onlyReadsMemory() && F->doesNotThrow() &&
+        F->getReturnType()->isVoidTy()) {
+      for (Function::arg_iterator A = F->arg_begin(), E = F->arg_end();
+           A != E; ++A) {
+        if (A->getType()->isPointerTy() && !A->hasNoCaptureAttr()) {
+          A->addAttr(Attribute::NoCapture);
+          ++NumNoCapture;
+          Changed = true;
+        }
+      }
+      continue;
+    }
+
     for (Function::arg_iterator A = F->arg_begin(), E = F->arg_end(); A!=E; ++A)
-      if (A->getType()->isPointerTy() && !A->hasNoCaptureAttr() &&
-          !PointerMayBeCaptured(A, true, /*StoreCaptures=*/false)) {
-        A->addAttr(Attribute::NoCapture);
+      if (A->getType()->isPointerTy() && !A->hasNoCaptureAttr()) {
+        ArgumentUsesTracker Tracker(SCCNodes);
+        PointerMayBeCaptured(A, &Tracker);
+        if (!Tracker.Captured) {
+          if (Tracker.Uses.empty()) {
+            // If it's trivially not captured, mark it nocapture now.
+            A->addAttr(Attribute::NoCapture);
+            ++NumNoCapture;
+            Changed = true;
+          } else {
+            // If it's not trivially captured and not trivially not captured,
+            // then it must be calling into another function in our SCC. Save
+            // its particulars for Argument-SCC analysis later.
+            ArgumentGraphNode *Node = AG[A];
+            for (SmallVectorImpl<Argument*>::iterator UI = Tracker.Uses.begin(),
+                   UE = Tracker.Uses.end(); UI != UE; ++UI)
+              Node->Uses.push_back(AG[*UI]);
+          }
+        }
+        // Otherwise, it's captured. Don't bother doing SCC analysis on it.
+      }
+  }
+
+  // The graph we've collected is partial because we stopped scanning for
+  // argument uses once we solved the argument trivially. These partial nodes
+  // show up as ArgumentGraphNode objects with an empty Uses list, and for
+  // these nodes the final decision about whether they capture has already been
+  // made.  If the definition doesn't have a 'nocapture' attribute by now, it
+  // captures.
+
+  for (scc_iterator<ArgumentGraph*> I = scc_begin(&AG), E = scc_end(&AG);
+       I != E; ++I) {
+    std::vector<ArgumentGraphNode*> &ArgumentSCC = *I;
+    if (ArgumentSCC.size() == 1) {
+      if (!ArgumentSCC[0]->Definition) continue;  // synthetic root node
+
+      // eg. "void f(int* x) { if (...) f(x); }"
+      if (ArgumentSCC[0]->Uses.size() == 1 &&
+          ArgumentSCC[0]->Uses[0] == ArgumentSCC[0]) {
+        ArgumentSCC[0]->Definition->addAttr(Attribute::NoCapture);
         ++NumNoCapture;
         Changed = true;
       }
+      continue;
+    }
+
+    bool SCCCaptured = false;
+    for (std::vector<ArgumentGraphNode*>::iterator I = ArgumentSCC.begin(),
+           E = ArgumentSCC.end(); I != E && !SCCCaptured; ++I) {
+      ArgumentGraphNode *Node = *I;
+      if (Node->Uses.empty()) {
+        if (!Node->Definition->hasNoCaptureAttr())
+          SCCCaptured = true;
+      }
+    }
+    if (SCCCaptured) continue;
+
+    SmallPtrSet<Argument*, 8> ArgumentSCCNodes;
+    // Fill ArgumentSCCNodes with the elements of the ArgumentSCC.  Used for
+    // quickly looking up whether a given Argument is in this ArgumentSCC.
+    for (std::vector<ArgumentGraphNode*>::iterator I = ArgumentSCC.begin(),
+           E = ArgumentSCC.end(); I != E; ++I) {
+      ArgumentSCCNodes.insert((*I)->Definition);
+    }
+
+    for (std::vector<ArgumentGraphNode*>::iterator I = ArgumentSCC.begin(),
+           E = ArgumentSCC.end(); I != E && !SCCCaptured; ++I) {
+      ArgumentGraphNode *N = *I;
+      for (SmallVectorImpl<ArgumentGraphNode*>::iterator UI = N->Uses.begin(),
+             UE = N->Uses.end(); UI != UE; ++UI) {
+        Argument *A = (*UI)->Definition;
+        if (A->hasNoCaptureAttr() || ArgumentSCCNodes.count(A))
+          continue;
+        SCCCaptured = true;
+        break;
+      }
+    }
+    if (SCCCaptured) continue;
+
+    for (unsigned i = 0, e = ArgumentSCC.size(); i != e && !SCCCaptured; ++i) {
+      Argument *A = ArgumentSCC[i]->Definition;
+      A->addAttr(Attribute::NoCapture);
+      ++NumNoCapture;
+      Changed = true;
+    }
   }
 
   return Changed;
