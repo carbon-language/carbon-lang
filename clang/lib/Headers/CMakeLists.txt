@@ -15,6 +15,7 @@ set(files
   mm_malloc.h
   nmmintrin.h
   pmmintrin.h
+  popcntintrin.h
   smmintrin.h
   stdalign.h
   stdarg.h
