@@ -5182,17 +5182,16 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
 
       if (ExtVT == MVT::i16 || ExtVT == MVT::i8) {
         Item = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, Item);
-        if (VT.getSizeInBits() == 256) {
-          EVT VT128 = EVT::getVectorVT(*DAG.getContext(), ExtVT, NumElems / 2);
-          Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT128, Item);
-          SDValue ZeroVec = getZeroVector(VT, true, DAG, dl);
-          return Insert128BitVector(ZeroVec, Item, DAG.getConstant(0, MVT::i32),
-                              DAG, dl);
-        }
-        assert(VT.getSizeInBits() == 128 && "Expected an SSE value type!");
         Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4i32, Item);
-        Item = getShuffleVectorZeroOrUndef(Item, 0, true,
-                                           Subtarget->hasXMMInt(), DAG);
+        if (VT.getSizeInBits() == 256) {
+          SDValue ZeroVec = getZeroVector(MVT::v8i32, true, DAG, dl);
+          Item = Insert128BitVector(ZeroVec, Item, DAG.getConstant(0, MVT::i32),
+                                    DAG, dl);
+        } else {
+          assert(VT.getSizeInBits() == 128 && "Expected an SSE value type!");
+          Item = getShuffleVectorZeroOrUndef(Item, 0, true,
+                                             Subtarget->hasXMMInt(), DAG);
+        }
         return DAG.getNode(ISD::BITCAST, dl, VT, Item);
       }
     }
