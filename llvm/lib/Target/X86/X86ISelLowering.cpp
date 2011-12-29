@@ -5161,9 +5161,10 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     // the rest of the elements.  This will be matched as movd/movq/movss/movsd
     // depending on what the source datatype is.
     if (Idx == 0) {
-      if (NumZero == 0) {
+      if (NumZero == 0)
         return DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Item);
-      } else if (ExtVT == MVT::i32 || ExtVT == MVT::f32 || ExtVT == MVT::f64 ||
+
+      if (ExtVT == MVT::i32 || ExtVT == MVT::f32 || ExtVT == MVT::f64 ||
           (ExtVT == MVT::i64 && Subtarget->is64Bit())) {
         if (VT.getSizeInBits() == 256) {
           EVT VT128 = EVT::getVectorVT(*DAG.getContext(), ExtVT, NumElems / 2);
@@ -5172,12 +5173,14 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
           return Insert128BitVector(ZeroVec, Item, DAG.getConstant(0, MVT::i32),
                               DAG, dl);
         }
-        assert (VT.getSizeInBits() == 128 && "Expected an SSE value type!");
+        assert(VT.getSizeInBits() == 128 && "Expected an SSE value type!");
         Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Item);
         // Turn it into a MOVL (i.e. movss, movsd, or movd) to a zero vector.
-        return getShuffleVectorZeroOrUndef(Item, 0, true,Subtarget->hasXMMInt(),
-                                           DAG);
-      } else if (ExtVT == MVT::i16 || ExtVT == MVT::i8) {
+        return getShuffleVectorZeroOrUndef(Item, 0, true,
+                                           Subtarget->hasXMMInt(), DAG);
+      }
+
+      if (ExtVT == MVT::i16 || ExtVT == MVT::i8) {
         Item = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, Item);
         if (VT.getSizeInBits() == 256) {
           EVT VT128 = EVT::getVectorVT(*DAG.getContext(), ExtVT, NumElems / 2);
@@ -5186,7 +5189,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
           return Insert128BitVector(ZeroVec, Item, DAG.getConstant(0, MVT::i32),
                               DAG, dl);
         }
-        assert (VT.getSizeInBits() == 128 && "Expected an SSE value type!");
+        assert(VT.getSizeInBits() == 128 && "Expected an SSE value type!");
         Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4i32, Item);
         Item = getShuffleVectorZeroOrUndef(Item, 0, true,
                                            Subtarget->hasXMMInt(), DAG);
