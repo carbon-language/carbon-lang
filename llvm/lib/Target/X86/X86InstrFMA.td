@@ -15,7 +15,7 @@
 // FMA3 - Intel 3 operand Fused Multiply-Add instructions
 //===----------------------------------------------------------------------===//
 
-multiclass fma_rm<bits<8> opc, string OpcodeStr> {
+multiclass fma3p_rm<bits<8> opc, string OpcodeStr> {
   def r : FMA3<opc, MRMSrcReg, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
@@ -34,28 +34,64 @@ multiclass fma_rm<bits<8> opc, string OpcodeStr> {
            []>;
 }
 
-multiclass fma_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
-                     string OpcodeStr, string PackTy> {
-  defm r132 : fma_rm<opc132, !strconcat(OpcodeStr, !strconcat("132", PackTy))>;
-  defm r213 : fma_rm<opc213, !strconcat(OpcodeStr, !strconcat("213", PackTy))>;
-  defm r231 : fma_rm<opc231, !strconcat(OpcodeStr, !strconcat("231", PackTy))>;
+multiclass fma3p_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
+                       string OpcodeStr, string PackTy> {
+  defm r132 : fma3p_rm<opc132, !strconcat(OpcodeStr, !strconcat("132", PackTy))>;
+  defm r213 : fma3p_rm<opc213, !strconcat(OpcodeStr, !strconcat("213", PackTy))>;
+  defm r231 : fma3p_rm<opc231, !strconcat(OpcodeStr, !strconcat("231", PackTy))>;
 }
 
 // Fused Multiply-Add
-defm VFMADDPS    : fma_forms<0x98, 0xA8, 0xB8, "vfmadd", "ps">;
-defm VFMADDPD    : fma_forms<0x98, 0xA8, 0xB8, "vfmadd", "pd">, VEX_W;
-defm VFMADDSUBPS : fma_forms<0x96, 0xA6, 0xB6, "vfmaddsub", "ps">;
-defm VFMADDSUBPD : fma_forms<0x96, 0xA6, 0xB6, "vfmaddsub", "pd">, VEX_W;
-defm VFMSUBADDPS : fma_forms<0x97, 0xA7, 0xB7, "vfmsubadd", "ps">;
-defm VFMSUBADDPD : fma_forms<0x97, 0xA7, 0xB7, "vfmsubadd", "pd">, VEX_W;
-defm VFMSUBPS    : fma_forms<0x9A, 0xAA, 0xBA, "vfmsub", "ps">;
-defm VFMSUBPD    : fma_forms<0x9A, 0xAA, 0xBA, "vfmsub", "pd">, VEX_W;
+let ExeDomain = SSEPackedSingle in {
+  defm VFMADDPS    : fma3p_forms<0x98, 0xA8, 0xB8, "vfmadd", "ps">;
+  defm VFMSUBPS    : fma3p_forms<0x9A, 0xAA, 0xBA, "vfmsub", "ps">;
+  defm VFMADDSUBPS : fma3p_forms<0x96, 0xA6, 0xB6, "vfmaddsub", "ps">;
+  defm VFMSUBADDPS : fma3p_forms<0x97, 0xA7, 0xB7, "vfmsubadd", "ps">;
+}
+
+let ExeDomain = SSEPackedDouble in {
+  defm VFMADDPD    : fma3p_forms<0x98, 0xA8, 0xB8, "vfmadd", "pd">, VEX_W;
+  defm VFMSUBPD    : fma3p_forms<0x9A, 0xAA, 0xBA, "vfmsub", "pd">, VEX_W;
+  defm VFMADDSUBPD : fma3p_forms<0x96, 0xA6, 0xB6, "vfmaddsub", "pd">, VEX_W;
+  defm VFMSUBADDPD : fma3p_forms<0x97, 0xA7, 0xB7, "vfmsubadd", "pd">, VEX_W;
+}
 
 // Fused Negative Multiply-Add
-defm VFNMADDPS : fma_forms<0x9C, 0xAC, 0xBC, "vfnmadd", "ps">;
-defm VFNMADDPD : fma_forms<0x9C, 0xAC, 0xBC, "vfnmadd", "pd">, VEX_W;
-defm VFNMSUBPS : fma_forms<0x9E, 0xAE, 0xBE, "vfnmsub", "ps">;
-defm VFNMSUBPD : fma_forms<0x9E, 0xAE, 0xBE, "vfnmsub", "pd">, VEX_W;
+let ExeDomain = SSEPackedSingle in {
+  defm VFNMADDPS : fma3p_forms<0x9C, 0xAC, 0xBC, "vfnmadd", "ps">;
+  defm VFNMSUBPS : fma3p_forms<0x9E, 0xAE, 0xBE, "vfnmsub", "ps">;
+}
+let ExeDomain = SSEPackedDouble in {
+  defm VFNMADDPD : fma3p_forms<0x9C, 0xAC, 0xBC, "vfnmadd", "pd">, VEX_W;
+  defm VFNMSUBPD : fma3p_forms<0x9E, 0xAE, 0xBE, "vfnmsub", "pd">, VEX_W;
+}
+
+multiclass fma3s_rm<bits<8> opc, string OpcodeStr, X86MemOperand x86memop> {
+  def r : FMA3<opc, MRMSrcReg, (outs VR128:$dst),
+           (ins VR128:$src1, VR128:$src2),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+           []>;
+  def m : FMA3<opc, MRMSrcMem, (outs VR128:$dst),
+           (ins VR128:$src1, x86memop:$src2),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+           []>;
+}
+
+multiclass fma3s_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
+                       string OpcodeStr> {
+  defm SSr132 : fma3s_rm<opc132, !strconcat(OpcodeStr, "132ss"), f32mem>;
+  defm SSr213 : fma3s_rm<opc213, !strconcat(OpcodeStr, "213ss"), f32mem>;
+  defm SSr231 : fma3s_rm<opc231, !strconcat(OpcodeStr, "231ss"), f32mem>;
+  defm SDr132 : fma3s_rm<opc132, !strconcat(OpcodeStr, "132sd"), f64mem>, VEX_W;
+  defm SDr213 : fma3s_rm<opc213, !strconcat(OpcodeStr, "213sd"), f64mem>, VEX_W;
+  defm SDr231 : fma3s_rm<opc231, !strconcat(OpcodeStr, "231sd"), f64mem>, VEX_W;
+}
+
+defm VFMADD : fma3s_forms<0x99, 0xA9, 0xB9, "vfmadd">;
+defm VFMSUB : fma3s_forms<0x9B, 0xAB, 0xBB, "vfmsub">;
+
+defm VFNMADD : fma3s_forms<0x9D, 0xAD, 0xBD, "vfnmadd">;
+defm VFNMSUB : fma3s_forms<0x9F, 0xAF, 0xBF, "vfnmsub">;
 
 //===----------------------------------------------------------------------===//
 // FMA4 - AMD 4 operand Fused Multiply-Add instructions

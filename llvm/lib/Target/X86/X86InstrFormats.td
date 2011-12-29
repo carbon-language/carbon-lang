@@ -504,7 +504,7 @@ class AVXCLMULIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
 // FMA3 Instruction Templates
 class FMA3<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag>pattern>
-      : I<o, F, outs, ins, asm, pattern, SSEPackedInt>, T8,
+      : I<o, F, outs, ins, asm, pattern>, T8,
         OpSize, VEX_4V, Requires<[HasFMA3]>;
 
 // FMA4 Instruction Templates
