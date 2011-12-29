@@ -769,7 +769,7 @@ void f(int a, int a);
 <!-- ======================================================================= -->
 
 <p>In C++11, the explicit declaration of a move constructor or a move
-assignment operator within a class disables the implicit declaration
+assignment operator within a class deletes the implicit declaration
 of the copy constructor and copy assignment operator. This change came
 fairly late in the C++11 standardization process, so early
 implementations of C++11 (including Clang before 3.0, GCC before 4.7,
@@ -778,16 +778,17 @@ accept this ill-formed code:</p>
 
 <pre>
 struct X {
-  X(X&amp;&amp;); <i>// suppresses implicit copy constructor</i>
+  X(X&amp;&amp;); <i>// deletes implicit copy constructor:</i>
+  <i>// X(const X&amp;) = delete;</i>
 };
 
 void f(X x);
 void g(X x) {
-  f(x); <i>// error: X has no copy constructor</i>
+  f(x); <i>// error: X has a deleted copy constructor</i>
 }
 </pre>
 
-<p>This affects some C++11 code, including Boost's popular <a
+<p>This affects some early C++11 code, including Boost's popular <a
 href="http://www.boost.org/doc/libs/release/libs/smart_ptr/shared_ptr.htm"><tt>shared_ptr</tt></a>
 up to version 1.47.0. The fix for Boost's <tt>shared_ptr</tt> is
 <a href="https://svn.boost.org/trac/boost/changeset/73202">available here</a>.</p>
