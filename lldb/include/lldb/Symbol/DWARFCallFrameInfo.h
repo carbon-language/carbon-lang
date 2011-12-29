@@ -113,6 +113,9 @@ private:
 
     const CIE* 
     GetCIE(dw_offset_t cie_offset);
+    
+    void
+    GetCFIData();
 
     ObjectFile&                 m_objfile;
     lldb::SectionSP             m_section;
