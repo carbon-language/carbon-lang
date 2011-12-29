@@ -150,6 +150,12 @@ public:
     const DWARFDebugAranges &
     GetFunctionAranges ();
 
+    SymbolFileDWARF*
+    GetSymbolFileDWARF () const
+    {
+        return m_dwarf2Data;
+    }
+
 protected:
     SymbolFileDWARF*    m_dwarf2Data;
     const DWARFAbbreviationDeclarationSet *m_abbrevs;

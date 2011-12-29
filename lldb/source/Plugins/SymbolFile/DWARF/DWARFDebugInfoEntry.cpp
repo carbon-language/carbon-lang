@@ -124,11 +124,11 @@ DWARFDebugInfoEntry::FastExtract
     m_parent_idx = 0;
     m_sibling_idx = 0;
     m_empty_children = false;
-    uint64_t abbr_idx = debug_info_data.GetULEB128 (offset_ptr);
+    const uint64_t abbr_idx = debug_info_data.GetULEB128 (offset_ptr);
     assert (abbr_idx < (1 << DIE_ABBR_IDX_BITSIZE));
     m_abbr_idx = abbr_idx;
     
-    assert (fixed_form_sizes);  // For best performance this should be specified!
+    //assert (fixed_form_sizes);  // For best performance this should be specified!
     
     if (m_abbr_idx)
     {
@@ -136,6 +136,15 @@ DWARFDebugInfoEntry::FastExtract
 
         const DWARFAbbreviationDeclaration *abbrevDecl = cu->GetAbbreviations()->GetAbbreviationDeclaration(m_abbr_idx);
         
+        if (abbrevDecl == NULL)
+        {
+            cu->GetSymbolFileDWARF ()->ReportError ("{0x%8.8x}: invalid abbreviation code %u, please file a bug and attach the file at the start of this error message", 
+                                                    m_offset, 
+                                                    (unsigned)abbr_idx);
+            // WE can't parse anymore if the DWARF is borked...
+            *offset_ptr = UINT32_MAX;
+            return false;
+        }
         m_tag = abbrevDecl->Tag();
         m_has_children = abbrevDecl->HasChildren();
         // Skip all data in the .debug_info for the attributes
