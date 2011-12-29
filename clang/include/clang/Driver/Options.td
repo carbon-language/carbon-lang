@@ -615,6 +615,7 @@ def mno_avx2 : Flag<"-mno-avx2">, Group<m_x86_Features_Group>;
 def mno_lzcnt : Flag<"-mno-lzcnt">, Group<m_x86_Features_Group>;
 def mno_bmi : Flag<"-mno-bmi">, Group<m_x86_Features_Group>;
 def mno_bmi2 : Flag<"-mno-bmi2">, Group<m_x86_Features_Group>;
+def mno_popcnt : Flag<"-mno-popcnt">, Group<m_x86_Features_Group>;
 
 def mno_thumb : Flag<"-mno-thumb">, Group<m_Group>;
 def marm : Flag<"-marm">, Alias<mno_thumb>;
@@ -643,6 +644,7 @@ def mavx2 : Flag<"-mavx2">, Group<m_x86_Features_Group>;
 def mlzcnt : Flag<"-mlzcnt">, Group<m_x86_Features_Group>;
 def mbmi : Flag<"-mbmi">, Group<m_x86_Features_Group>;
 def mbmi2 : Flag<"-mbmi2">, Group<m_x86_Features_Group>;
+def mpopcnt : Flag<"-mpopcnt">, Group<m_x86_Features_Group>;
 def mthumb : Flag<"-mthumb">, Group<m_Group>;
 def mtune_EQ : Joined<"-mtune=">, Group<m_Group>;
 def multi__module : Flag<"-multi_module">;

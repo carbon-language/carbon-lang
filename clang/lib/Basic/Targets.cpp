@@ -1198,6 +1198,7 @@ class X86TargetInfo : public TargetInfo {
   bool HasLZCNT;
   bool HasBMI;
   bool HasBMI2;
+  bool HasPOPCNT;
 
   /// \brief Enumeration of all of the X86 CPUs supported by Clang.
   ///
@@ -1335,7 +1336,7 @@ public:
   X86TargetInfo(const std::string& triple)
     : TargetInfo(triple), SSELevel(NoSSE), MMX3DNowLevel(NoMMX3DNow),
       HasAES(false), HasAVX(false), HasAVX2(false), HasLZCNT(false),
-      HasBMI(false), HasBMI2(false), CPU(CK_Generic) {
+      HasBMI(false), HasBMI2(false), HasPOPCNT(false), CPU(CK_Generic) {
     BigEndian = false;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
@@ -1519,6 +1520,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
   Features["lzcnt"] = false;
   Features["bmi"] = false;
   Features["bmi2"] = false;
+  Features["popcnt"] = false;
 
   // FIXME: This *really* should not be here.
 
@@ -1669,7 +1671,8 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
         Features["ssse3"] = true;
     else if (Name == "sse4" || Name == "sse4.2")
       Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
-        Features["ssse3"] = Features["sse41"] = Features["sse42"] = true;
+        Features["ssse3"] = Features["sse41"] = Features["sse42"] =
+        Features["popcnt"] = true;
     else if (Name == "sse4.1")
       Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = true;
@@ -1682,11 +1685,11 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
     else if (Name == "avx")
       Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] =
-        Features["avx"] = true;
+        Features["popcnt"] = Features["avx"] = true;
     else if (Name == "avx2")
       Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] =
-        Features["avx"] = Features["avx2"] = true;
+        Features["popcnt"] = Features["avx"] = Features["avx2"] = true;
     else if (Name == "sse4a")
       Features["mmx"] = Features["sse4a"] = true;
     else if (Name == "lzcnt")
@@ -1695,6 +1698,8 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       Features["bmi"] = true;
     else if (Name == "bmi2")
       Features["bmi2"] = true;
+    else if (Name == "popcnt")
+      Features["popcnt"] = true;
   } else {
     if (Name == "mmx")
       Features["mmx"] = Features["3dnow"] = Features["3dnowa"] = false;
@@ -1731,6 +1736,8 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
       Features["bmi"] = false;
     else if (Name == "bmi2")
       Features["bmi2"] = false;
+    else if (Name == "popcnt")
+      Features["popcnt"] = false;
   }
 
   return true;
@@ -1762,6 +1769,11 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
 
     if (Features[i].substr(1) == "bmi2") {
       HasBMI2 = true;
+      continue;
+    }
+
+    if (Features[i].substr(1) == "popcnt") {
+      HasPOPCNT = true;
       continue;
     }
 
@@ -1995,6 +2007,9 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
 
   if (HasBMI2)
     Builder.defineMacro("__BMI2__");
+
+  if (HasPOPCNT)
+    Builder.defineMacro("__POPCNT__");
 
   // Each case falls through to the previous one here.
   switch (SSELevel) {

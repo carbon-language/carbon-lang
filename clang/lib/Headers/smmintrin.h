@@ -428,20 +428,9 @@ _mm_crc32_u64(unsigned long long __C, unsigned long long __D)
 }
 #endif /* __x86_64__ */
 
-/* SSE4.2 Population Count.  */
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
-_mm_popcnt_u32(unsigned int __A)
-{
-  return __builtin_popcount(__A);
-}
-
-#ifdef __x86_64__
-static __inline__ long long __attribute__((__always_inline__, __nodebug__))
-_mm_popcnt_u64(unsigned long long __A)
-{
-  return __builtin_popcountll(__A);
-}
-#endif /* __x86_64__ */
+#ifdef __POPCNT__
+#include <popcntintrin.h>
+#endif
 
 #endif /* __SSE4_2__ */
 #endif /* __SSE4_1__ */

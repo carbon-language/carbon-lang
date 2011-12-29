@@ -1,4 +1,4 @@
-/*===---- x86intrin.h - X86 intrinsics -------------------------------------===
+/*===---- popcntintrin.h - POPCNT intrinsics -------------------------------===
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,27 +21,25 @@
  *===-----------------------------------------------------------------------===
  */
 
-#ifndef __X86INTRIN_H
-#define __X86INTRIN_H
-
-#include <immintrin.h>
-
-#ifdef __BMI__
-#include <bmiintrin.h>
+#ifndef __POPCNT__
+#error "POPCNT instruction set not enabled"
 #endif
 
-#ifdef __BMI2__
-#include <bmi2intrin.h>
-#endif
+#ifndef _POPCNTINTRIN_H
+#define _POPCNTINTRIN_H
 
-#ifdef __LZCNT__
-#include <lzcntintrin.h>
-#endif
+static __inline__ int __attribute__((__always_inline__, __nodebug__))
+_mm_popcnt_u32(unsigned int __A)
+{
+  return __builtin_popcount(__A);
+}
 
-#ifdef __POPCNT__
-#include <popcntintrin.h>
-#endif
+#ifdef __x86_64__
+static __inline__ long long __attribute__((__always_inline__, __nodebug__))
+_mm_popcnt_u64(unsigned long long __A)
+{
+  return __builtin_popcountll(__A);
+}
+#endif /* __x86_64__ */
 
-// FIXME: SSE4A, 3dNOW, FMA4, XOP, LWP, ABM
-
-#endif /* __X86INTRIN_H */
+#endif /* _POPCNTINTRIN_H */
