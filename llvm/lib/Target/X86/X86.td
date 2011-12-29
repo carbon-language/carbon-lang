@@ -146,31 +146,34 @@ def : Proc<"atom",            [FeatureSSE3, FeatureCMPXCHG16B, FeatureMOVBE,
                                FeatureSlowBTMem]>;
 // "Arrandale" along with corei3 and corei5
 def : Proc<"corei7",          [FeatureSSE42, FeatureCMPXCHG16B,
-                               FeatureSlowBTMem, FeatureFastUAMem, FeatureAES]>;
+                               FeatureSlowBTMem, FeatureFastUAMem,
+                               FeaturePOPCNT, FeatureAES]>;
 def : Proc<"nehalem",         [FeatureSSE42,  FeatureCMPXCHG16B,
-                               FeatureSlowBTMem, FeatureFastUAMem]>;
+                               FeatureSlowBTMem, FeatureFastUAMem,
+                               FeaturePOPCNT]>;
 // Westmere is a similar machine to nehalem with some additional features.
 // Westmere is the corei3/i5/i7 path from nehalem to sandybridge
 def : Proc<"westmere",        [FeatureSSE42, FeatureCMPXCHG16B,
-                               FeatureSlowBTMem, FeatureFastUAMem, FeatureAES,
-                               FeatureCLMUL]>;
+                               FeatureSlowBTMem, FeatureFastUAMem,
+                               FeaturePOPCNT, FeatureAES, FeatureCLMUL]>;
 // Sandy Bridge
 // SSE is not listed here since llvm treats AVX as a reimplementation of SSE,
 // rather than a superset.
 // FIXME: Disabling AVX for now since it's not ready.
-def : Proc<"corei7-avx",      [FeatureSSE42, FeatureCMPXCHG16B,
+def : Proc<"corei7-avx",      [FeatureSSE42, FeatureCMPXCHG16B, FeaturePOPCNT,
                                FeatureAES, FeatureCLMUL]>;
 // Ivy Bridge
-def : Proc<"core-avx-i",      [FeatureSSE42, FeatureCMPXCHG16B,
+def : Proc<"core-avx-i",      [FeatureSSE42, FeatureCMPXCHG16B, FeaturePOPCNT,
                                FeatureAES, FeatureCLMUL,
                                FeatureRDRAND, FeatureF16C, FeatureFSGSBase]>;
 
 // Haswell
 // FIXME: Disabling AVX/AVX2 for now since it's not ready.
-def : Proc<"core-avx2",       [FeatureSSE42, FeatureCMPXCHG16B, FeatureAES,
-                               FeatureCLMUL, FeatureRDRAND, FeatureF16C,
-                               FeatureFSGSBase, FeatureFMA3, FeatureMOVBE,
-                               FeatureLZCNT, FeatureBMI, FeatureBMI2]>;
+def : Proc<"core-avx2",       [FeatureSSE42, FeatureCMPXCHG16B, FeaturePOPCNT,
+                               FeatureAES, FeatureCLMUL, FeatureRDRAND,
+                               FeatureF16C, FeatureFSGSBase, FeatureFMA3,
+                               FeatureMOVBE, FeatureLZCNT, FeatureBMI,
+                               FeatureBMI2]>;
 
 def : Proc<"k6",              [FeatureMMX]>;
 def : Proc<"k6-2",            [Feature3DNow]>;
@@ -196,15 +199,15 @@ def : Proc<"athlon64-sse3",   [FeatureSSE3,   Feature3DNowA, FeatureCMPXCHG16B,
                                FeatureSlowBTMem]>;
 def : Proc<"amdfam10",        [FeatureSSE3,   FeatureSSE4A,
                                Feature3DNowA, FeatureCMPXCHG16B, FeatureLZCNT,
-                               FeatureSlowBTMem]>;
+                               FeaturePOPCNT, FeatureSlowBTMem]>;
 // FIXME: Disabling AVX for now since it's not ready.
 def : Proc<"bdver1",          [FeatureSSE42, FeatureSSE4A, FeatureCMPXCHG16B,
                                FeatureAES, FeatureCLMUL, FeatureFMA4,
-                               FeatureXOP, FeatureLZCNT]>;
+                               FeatureXOP, FeatureLZCNT, FeaturePOPCNT]>;
 def : Proc<"bdver2",          [FeatureSSE42, FeatureSSE4A, FeatureCMPXCHG16B,
                                FeatureAES, FeatureCLMUL, FeatureFMA4,
-                                FeatureXOP, FeatureF16C, FeatureLZCNT,
-                                 FeatureBMI]>;
+                               FeatureXOP, FeatureF16C, FeatureLZCNT,
+                               FeaturePOPCNT, FeatureBMI]>;
 
 def : Proc<"winchip-c6",      [FeatureMMX]>;
 def : Proc<"winchip2",        [Feature3DNow]>;
