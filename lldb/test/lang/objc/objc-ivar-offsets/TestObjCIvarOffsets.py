@@ -80,9 +80,9 @@ class TestObjCIvarOffsets(TestBase):
         self.assertTrue (flag2_value == 7)
 
         # GetValueAsUnsigned fails for bit-fields:
-#        flag2_value = mine_flag2.GetValueAsUnsigned (error)
-#        self.assertTrue (error.Success())
-#        self.assertTrue (flag2_value == 7)
+        flag2_value = mine_flag2.GetValueAsUnsigned (error)
+        self.assertTrue (error.Success())
+        self.assertTrue (flag2_value == 7)
         
 if __name__ == '__main__':
     import atexit

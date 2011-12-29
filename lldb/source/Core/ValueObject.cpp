@@ -359,10 +359,15 @@ ValueObject::ResolveValue (Scalar &scalar)
             exe_scope->CalculateExecutionContext(exe_ctx);
         Value tmp_value(m_value);
         scalar = tmp_value.ResolveValue(&exe_ctx, GetClangAST ());
-        return scalar.IsValid();
+        if (scalar.IsValid())
+        {
+            const uint32_t bitfield_bit_size = GetBitfieldBitSize();
+            if (bitfield_bit_size)
+                return scalar.ExtractBitfield (bitfield_bit_size, GetBitfieldBitOffset());
+            return true;
+        }
     }
-    else
-        return false;
+    return false;
 }
 
 bool

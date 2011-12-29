@@ -57,6 +57,10 @@ public:
     bool
     SignExtend (uint32_t bit_pos);
 
+    bool
+    ExtractBitfield (uint32_t bit_size, 
+                     uint32_t bit_offset);
+
     size_t
     GetByteSize() const;
 
