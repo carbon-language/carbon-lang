@@ -987,6 +987,10 @@ void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
     Streamer.EmitULEB128IntValue(Reg);
     return;
   }
+  case MCCFIInstruction::Escape:
+    if (VerboseAsm) Streamer.AddComment("Escape bytes");
+    Streamer.EmitBytes(Instr.getValues(), 0);
+    return;
   }
   llvm_unreachable("Unhandled case in switch");
 }
