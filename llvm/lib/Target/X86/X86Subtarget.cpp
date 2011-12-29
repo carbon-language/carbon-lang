@@ -266,15 +266,19 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
         HasLZCNT = true;
         ToggleFeature(X86::FeatureLZCNT);
       }
-      if (IsAMD && ((ECX >> 6) & 0x1)) {
-        HasSSE4A = true;
-        ToggleFeature(X86::FeatureSSE4A);
-      }
-      if (IsAMD && ((ECX >> 16) & 0x1)) {
-        HasFMA4 = true;
-        ToggleFeature(X86::FeatureFMA4);
-        HasXOP = true;
-        ToggleFeature(X86::FeatureXOP);
+      if (IsAMD) {
+        if ((ECX >> 6) & 0x1) {
+          HasSSE4A = true;
+          ToggleFeature(X86::FeatureSSE4A);
+        }
+        if ((ECX >> 11) & 0x1) {
+          HasXOP = true;
+          ToggleFeature(X86::FeatureXOP);
+        }
+        if ((ECX >> 16) & 0x1) {
+          HasFMA4 = true;
+          ToggleFeature(X86::FeatureFMA4);
+        }
       }
     }
   }
