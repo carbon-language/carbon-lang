@@ -147,6 +147,9 @@ class MutexID {
       Parent = CE->getImplicitObjectArgument();
       NumArgs = CE->getNumArgs();
       FunArgs = CE->getArgs();
+    } else if (CallExpr *CE = dyn_cast<CallExpr>(DeclExp)) {
+      NumArgs = CE->getNumArgs();
+      FunArgs = CE->getArgs();
     } else if (CXXConstructExpr *CE = dyn_cast<CXXConstructExpr>(DeclExp)) {
       Parent = 0;  // FIXME -- get the parent from DeclStmt
       NumArgs = CE->getNumArgs();
@@ -350,7 +353,7 @@ public:
   void VisitUnaryOperator(UnaryOperator *UO);
   void VisitBinaryOperator(BinaryOperator *BO);
   void VisitCastExpr(CastExpr *CE);
-  void VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp);
+  void VisitCallExpr(CallExpr *Exp);
   void VisitCXXConstructExpr(CXXConstructExpr *Exp);
   void VisitDeclStmt(DeclStmt *S);
 };
@@ -647,7 +650,7 @@ void BuildLockset::VisitCastExpr(CastExpr *CE) {
 }
 
 
-void BuildLockset::VisitCXXMemberCallExpr(CXXMemberCallExpr *Exp) {
+void BuildLockset::VisitCallExpr(CallExpr *Exp) {
   NamedDecl *D = dyn_cast_or_null<NamedDecl>(Exp->getCalleeDecl());
   if(!D || !D->hasAttrs())
     return;

@@ -1605,3 +1605,25 @@ struct TestScopedLockable {
 } // end namespace test_scoped_lockable
 
 
+namespace FunctionAttrTest {
+
+class Foo {
+public:
+  Mutex mu_;
+  int a GUARDED_BY(mu_);
+};
+
+Foo fooObj;
+
+void foo() EXCLUSIVE_LOCKS_REQUIRED(fooObj.mu_);
+
+void bar() {
+  foo();  // expected-warning {{calling function 'foo' requires exclusive lock on 'mu_'}}
+  fooObj.mu_.Lock();
+  foo();
+  fooObj.mu_.Unlock();
+}
+
+};  // end namespace FunctionAttrTest
+
+
