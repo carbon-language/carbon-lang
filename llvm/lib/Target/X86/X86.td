@@ -87,7 +87,8 @@ def FeatureAVX2    : SubtargetFeature<"avx2", "HasAVX2", "true",
 def FeatureCLMUL   : SubtargetFeature<"clmul", "HasCLMUL", "true",
                                "Enable carry-less multiplication instructions">;
 def FeatureFMA3    : SubtargetFeature<"fma3", "HasFMA3", "true",
-                                     "Enable three-operand fused multiple-add">;
+                                      "Enable three-operand fused multiple-add",
+                                      [FeatureAVX]>;
 def FeatureFMA4    : SubtargetFeature<"fma4", "HasFMA4", "true",
                                       "Enable four-operand fused multiple-add">;
 def FeatureXOP    : SubtargetFeature<"xop", "HasXOP", "true",
@@ -168,10 +169,10 @@ def : Proc<"core-avx-i",      [FeatureSSE42, FeatureCMPXCHG16B, FeaturePOPCNT,
                                FeatureRDRAND, FeatureF16C, FeatureFSGSBase]>;
 
 // Haswell
-// FIXME: Disabling AVX/AVX2 for now since it's not ready.
+// FIXME: Disabling AVX/AVX2/FMA3 for now since it's not ready.
 def : Proc<"core-avx2",       [FeatureSSE42, FeatureCMPXCHG16B, FeaturePOPCNT,
                                FeatureAES, FeatureCLMUL, FeatureRDRAND,
-                               FeatureF16C, FeatureFSGSBase, FeatureFMA3,
+                               FeatureF16C, FeatureFSGSBase,
                                FeatureMOVBE, FeatureLZCNT, FeatureBMI,
                                FeatureBMI2]>;
 
