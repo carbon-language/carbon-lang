@@ -1,5 +1,4 @@
-# TODO: This must need some dependencies, but it builds fine without them.
-#set(LLVM_USED_LIBS ???)
+set(LLVM_USED_LIBS clangSema)
 
 add_clang_library(clangSerialization
   ASTCommon.h
