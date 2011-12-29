@@ -5166,13 +5166,13 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       } else if (ExtVT == MVT::i32 || ExtVT == MVT::f32 || ExtVT == MVT::f64 ||
           (ExtVT == MVT::i64 && Subtarget->is64Bit())) {
         if (VT.getSizeInBits() == 256) {
-          
           EVT VT128 = EVT::getVectorVT(*DAG.getContext(), ExtVT, NumElems / 2);
           Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT128, Item);
-          SDValue ZeroVec = getZeroVector(VT, true, DAG, dl);              
+          SDValue ZeroVec = getZeroVector(VT, true, DAG, dl);
           return Insert128BitVector(ZeroVec, Item, DAG.getConstant(0, MVT::i32),
                               DAG, dl);
         }
+        assert (VT.getSizeInBits() == 128 && "Expected an SSE value type!");
         Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Item);
         // Turn it into a MOVL (i.e. movss, movsd, or movd) to a zero vector.
         return getShuffleVectorZeroOrUndef(Item, 0, true,Subtarget->hasXMMInt(),
@@ -5180,16 +5180,14 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       } else if (ExtVT == MVT::i16 || ExtVT == MVT::i8) {
         Item = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, Item);
         if (VT.getSizeInBits() == 256) {
-          
           EVT VT128 = EVT::getVectorVT(*DAG.getContext(), ExtVT, NumElems / 2);
           Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT128, Item);
-          SDValue ZeroVec = getZeroVector(VT, true, DAG, dl);              
+          SDValue ZeroVec = getZeroVector(VT, true, DAG, dl);
           return Insert128BitVector(ZeroVec, Item, DAG.getConstant(0, MVT::i32),
                               DAG, dl);
         }
-        assert (VT.getSizeInBits() == 128 || "Expected an SSE value type!");
-        EVT MiddleVT = MVT::v4i32;
-        Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MiddleVT, Item);
+        assert (VT.getSizeInBits() == 128 && "Expected an SSE value type!");
+        Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4i32, Item);
         Item = getShuffleVectorZeroOrUndef(Item, 0, true,
                                            Subtarget->hasXMMInt(), DAG);
         return DAG.getNode(ISD::BITCAST, dl, VT, Item);
