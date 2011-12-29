@@ -385,7 +385,7 @@ void MCStreamer::EmitCFIRememberState() {
   MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   MCSymbol *Label = getContext().CreateTempSymbol();
   EmitLabel(Label);
-  MCCFIInstruction Instruction(MCCFIInstruction::Remember, Label);
+  MCCFIInstruction Instruction(MCCFIInstruction::RememberState, Label);
   CurFrame->Instructions.push_back(Instruction);
 }
 
@@ -395,7 +395,7 @@ void MCStreamer::EmitCFIRestoreState() {
   MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
   MCSymbol *Label = getContext().CreateTempSymbol();
   EmitLabel(Label);
-  MCCFIInstruction Instruction(MCCFIInstruction::Restore, Label);
+  MCCFIInstruction Instruction(MCCFIInstruction::RestoreState, Label);
   CurFrame->Instructions.push_back(Instruction);
 }
 
