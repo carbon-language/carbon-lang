@@ -32,7 +32,7 @@ namespace llvm {
     // bool NeverInline;
 
     // True if this function contains a call to setjmp or other functions
-    // with attribute "returns twice" without having the attribute by itself.
+    // with attribute "returns twice" without having the attribute itself.
     bool exposesReturnsTwice;
 
     // True if this function calls itself
