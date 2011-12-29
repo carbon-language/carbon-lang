@@ -2,7 +2,7 @@
 template<typename T, T Divisor>
 class X {
 public:
-  static const T value = 10 / Divisor; // expected-error{{in-class initializer is not a constant expression}}
+  static const T value = 10 / Divisor; // expected-error{{in-class initializer for static data member is not a constant expression}}
 };
 
 int array1[X<int, 2>::value == 5? 1 : -1];
@@ -114,4 +114,3 @@ namespace PR6449 {
   template class X1<char>;
 
 }
-

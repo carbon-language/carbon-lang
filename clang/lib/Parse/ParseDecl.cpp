@@ -2725,9 +2725,10 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
 
   // Empty structs are an extension in C (C99 6.7.2.1p7), but are allowed in
   // C++.
-  if (Tok.is(tok::r_brace) && !getLang().CPlusPlus)
-    Diag(Tok, diag::ext_empty_struct_union)
-      << (TagType == TST_union);
+  if (Tok.is(tok::r_brace) && !getLang().CPlusPlus) {
+    Diag(Tok, diag::ext_empty_struct_union) << (TagType == TST_union);
+    Diag(Tok, diag::warn_empty_struct_union_compat) << (TagType == TST_union);
+  }
 
   SmallVector<Decl *, 32> FieldDecls;
 

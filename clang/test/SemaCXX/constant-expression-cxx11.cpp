@@ -168,7 +168,7 @@ namespace FunctionCast {
   constexpr int f() { return 1; }
   typedef double (*DoubleFn)();
   typedef int (*IntFn)();
-  int a[(int)DoubleFn(f)()]; // expected-error {{variable length array}} expected-warning{{extension}}
+  int a[(int)DoubleFn(f)()]; // expected-error {{variable length array}} expected-warning{{C99 feature}}
   int b[(int)IntFn(f)()];    // ok
 }
 
@@ -462,7 +462,7 @@ static_assert(fail(*(&(&(*(*&(&zs[2] - 1)[0] + 2 - 2))[2])[-1][-1] + 1)) == 11, 
 expected-error {{static_assert expression is not an integral constant expression}} \
 expected-note {{in call to 'fail(zs[1][0][1][0])'}}
 
-constexpr int arr[40] = { 1, 2, 3, [8] = 4 }; // expected-warning {{extension}}
+constexpr int arr[40] = { 1, 2, 3, [8] = 4 }; // expected-warning {{C99 feature}}
 constexpr int SumNonzero(const int *p) {
   return *p + (*p ? SumNonzero(p+1) : 0);
 }
@@ -718,7 +718,7 @@ union U {
   int b;
 };
 
-constexpr U u[4] = { { .a = 0 }, { .b = 1 }, { .a = 2 }, { .b = 3 } }; // expected-warning 4{{extension}}
+constexpr U u[4] = { { .a = 0 }, { .b = 1 }, { .a = 2 }, { .b = 3 } }; // expected-warning 4{{C99 feature}}
 static_assert(u[0].a == 0, "");
 static_assert(u[0].b, ""); // expected-error {{constant expression}} expected-note {{read of member 'b' of union with active member 'a'}}
 static_assert(u[1].b == 1, "");

@@ -933,7 +933,7 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
     if (Tok.is(tok::kw_delete)) {
       Diag(Tok, getLang().CPlusPlus0x ?
            diag::warn_cxx98_compat_deleted_function :
-           diag::warn_deleted_function_accepted_as_extension);
+           diag::ext_deleted_function);
 
       KWLoc = ConsumeToken();
       Actions.SetDeclDeleted(Res, KWLoc);
@@ -941,7 +941,7 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
     } else if (Tok.is(tok::kw_default)) {
       Diag(Tok, getLang().CPlusPlus0x ?
            diag::warn_cxx98_compat_defaulted_function :
-           diag::warn_defaulted_function_accepted_as_extension);
+           diag::ext_defaulted_function);
 
       KWLoc = ConsumeToken();
       Actions.SetDeclDefaulted(Res, KWLoc);

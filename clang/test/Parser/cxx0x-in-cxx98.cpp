@@ -12,9 +12,9 @@ struct B {
   virtual void f();
   virtual void g();
 };
-struct D final : B { // expected-warning {{'final' keyword accepted as a C++11 extension}}
-  virtual void f() override; // expected-warning {{'override' keyword accepted as a C++11 extension}}
-  virtual void g() final; // expected-warning {{'final' keyword accepted as a C++11 extension}}
+struct D final : B { // expected-warning {{'final' keyword is a C++11 extension}}
+  virtual void f() override; // expected-warning {{'override' keyword is a C++11 extension}}
+  virtual void g() final; // expected-warning {{'final' keyword is a C++11 extension}}
 };
 
 void NewBracedInitList() {

@@ -84,7 +84,7 @@ private:
 
 class C : public B { 
 private:   
-  using B::f; // expected-warning {{using declaration refers to inaccessible member 'ms_using_declaration_bug::B::f', which refers to accessible member 'ms_using_declaration_bug::A::f', accepted for Microsoft compatibility}}
+  using B::f; // expected-warning {{using declaration referring to inaccessible member 'ms_using_declaration_bug::B::f' (which refers to accessible member 'ms_using_declaration_bug::A::f') is a Microsoft compatibility extension}}
 };
 
 }

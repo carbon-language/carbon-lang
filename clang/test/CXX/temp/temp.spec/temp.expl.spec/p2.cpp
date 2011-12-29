@@ -36,7 +36,8 @@ namespace N1 {
   template<> void N0::f0(long) { } // expected-error{{not in a namespace enclosing}}
 }
 
-template<> void N0::f0(double) { } // expected-warning{{originally be declared}}
+template<> void N0::f0(double); // expected-warning{{C++11 extension}}
+template<> void N0::f0(double) { }
 
 struct X1 {
   template<typename T> void f(T);
@@ -75,7 +76,7 @@ void N0::X0<T>::ft1(T t, U u) {
 
 template<typename T> T N0::X0<T>::member;
 
-template<> struct N0::X0<void> { }; // expected-warning{{originally}}
+template<> struct N0::X0<void> { }; // expected-warning{{C++11 extension}}
 N0::X0<void> test_X0;
 
 namespace N1 {
@@ -124,7 +125,7 @@ NonDefaultConstructible &get_static_member() {
   return N0::X0<NonDefaultConstructible>::member;
 }
 
-template<> int N0::X0<int>::member;  // expected-warning{{originally}}
+template<> int N0::X0<int>::member;  // expected-warning{{C++11 extension}}
 
 template<> float N0::X0<float>::member = 3.14f;
 
@@ -152,7 +153,7 @@ namespace N0 {
 }
 
 template<>
-struct N0::X0<long>::Inner { }; // expected-warning{{originally}}
+struct N0::X0<long>::Inner { }; // expected-warning{{C++11 extension}}
 
 template<>
 struct N0::X0<float>::Inner { };

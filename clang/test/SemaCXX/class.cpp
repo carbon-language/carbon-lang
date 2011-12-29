@@ -34,10 +34,10 @@ public:
 
   enum E1 { en1, en2 };
 
-  int i = 0; // expected-warning {{in-class initialization of non-static data member accepted as a C++11 extension}}
+  int i = 0; // expected-warning {{in-class initialization of non-static data member is a C++11 extension}}
   static int si = 0; // expected-error {{non-const static data member must be initialized out of line}}
   static const NestedC ci = 0; // expected-error {{static data member of type 'const C::NestedC' must be initialized out of line}}
-  static const int nci = vs; // expected-error {{in-class initializer is not a constant expression}}
+  static const int nci = vs; // expected-error {{in-class initializer for static data member is not a constant expression}}
   static const int vi = 0;
   static const volatile int cvi = 0; // ok, illegal in C++11
   static const E evi = 0;
@@ -174,7 +174,7 @@ namespace rdar8367341 {
 
   struct A {
     static const float x = 5.0f; // expected-warning {{in-class initializer for static data member of type 'const float' is a GNU extension}}
-    static const float y = foo(); // expected-warning {{in-class initializer for static data member of type 'const float' is a GNU extension}} expected-error {{in-class initializer is not a constant expression}}
+    static const float y = foo(); // expected-warning {{in-class initializer for static data member of type 'const float' is a GNU extension}} expected-error {{in-class initializer for static data member is not a constant expression}}
   };
 }
 

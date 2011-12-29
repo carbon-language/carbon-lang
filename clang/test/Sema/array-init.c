@@ -218,7 +218,7 @@ void varArray() {
 }
 
 // PR2151
-void emptyInit() {struct {} x[] = {6};} //expected-warning{{empty struct (accepted as an extension) has size 0 in C, size 1 in C++}} \
+void emptyInit() {struct {} x[] = {6};} //expected-warning{{empty struct is a GNU extension}} \
 // expected-error{{initializer for aggregate with no elements}}
 
 void noNamedInit() {
@@ -242,7 +242,7 @@ struct soft_segment_descriptor gdt_segs[] = {
 };
 
 static void sppp_ipv6cp_up();
-const struct {} ipcp = { sppp_ipv6cp_up }; //expected-warning{{empty struct (accepted as an extension) has size 0 in C, size 1 in C++}} \
+const struct {} ipcp = { sppp_ipv6cp_up }; //expected-warning{{empty struct is a GNU extension}} \
 // expected-warning{{excess elements in struct initializer}}
 
 struct _Matrix { union { float m[4][4]; }; }; //expected-warning{{anonymous unions are a GNU extension in C}}

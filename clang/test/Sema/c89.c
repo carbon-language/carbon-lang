@@ -61,11 +61,11 @@ void foo(T); /* typedef for void is allowed */
 void foo(void) {}
 
 /* PR2759 */
-void test10 (int x[*]); /* expected-warning {{variable length arrays are a C99 feature, accepted as an extension}} */
-void test11 (int x[static 4]); /* expected-warning {{use of C99-specific array features}} */
+void test10 (int x[*]); /* expected-warning {{variable length arrays are a C99 feature}} */
+void test11 (int x[static 4]); /* expected-warning {{static array size is a C99 feature}} */
 
-void test12 (int x[const 4]) { /* expected-warning {{use of C99-specific array features}} */
-  int Y[x[1]]; /* expected-warning {{variable length arrays are a C99 feature, accepted as an extension}} */
+void test12 (int x[const 4]) { /* expected-warning {{qualifier in array size is a C99 feature}} */
+  int Y[x[1]]; /* expected-warning {{variable length arrays are a C99 feature}} */
 }
 
 /* PR4074 */

@@ -35,8 +35,7 @@ def warn_double_const_requires_fp64 : Warning<
   "double precision constant requires cl_khr_fp64, casting to single precision">;
 
 // C99 variable-length arrays
-def ext_vla : Extension<
-  "variable length arrays are a C99 feature, accepted as an extension">,
+def ext_vla : Extension<"variable length arrays are a C99 feature">,
   InGroup<VLA>;
 def err_vla_non_pod : Error<"variable length array of non-POD element type %0">;
 def err_vla_in_sfinae : Error<
@@ -63,8 +62,6 @@ def err_variably_modified_new_type : Error<
 // C99 Designated Initializers
 def ext_designated_init : Extension<
   "designated initializers are a C99 feature">;
-def ext_designated_init_cxx : Extension<
-  "designated initializers are a C99 feature, accepted in C++ as an extension">;
 def err_array_designator_negative : Error<
   "array designator value '%0' is negative">;
 def err_array_designator_empty_range : Error<
@@ -653,8 +650,8 @@ def warn_cxx98_compat_friend_is_member : Warning<
   "friend declaration naming a member of the declaring class is incompatible "
   "with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
 def ext_unelaborated_friend_type : ExtWarn<
-  "specify '%select{struct|union|class|enum}0' to befriend %1; accepted "
-  "as a C++11 extension">, InGroup<CXX11>;
+  "unelaborated friend declaration is a C++11 extension; specify "
+  "'%select{struct|union|class|enum}0' to befriend %1">, InGroup<CXX11>;
 def warn_cxx98_compat_unelaborated_friend_type : Warning<
   "befriending %1 without '%select{struct|union|class|enum}0' keyword is "
   "incompatible with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
@@ -750,9 +747,9 @@ def err_class_redeclared_with_different_access : Error<
   "%0 redeclared with '%1' access">;
 def err_access : Error<
   "%1 is a %select{private|protected}0 member of %3">, AccessControl;
-def war_ms_using_declaration_inaccessible : ExtWarn<
-  "using declaration refers to inaccessible member '%0', which refers "
-  "to accessible member '%1', accepted for Microsoft compatibility">,
+def ext_ms_using_declaration_inaccessible : ExtWarn<
+  "using declaration referring to inaccessible member '%0' (which refers "
+  "to accessible member '%1') is a Microsoft compatibility extension">,
     AccessControl, InGroup<Microsoft>;
 def err_access_ctor : Error<
   "calling a %select{private|protected}0 constructor of class %2">, 
@@ -2314,9 +2311,9 @@ def err_template_spec_decl_out_of_scope : Error<
   "function|static data member|member class}0 specialization of %1 must "
   "originally be declared in namespace %2">;
 def ext_template_spec_decl_out_of_scope : ExtWarn<
-  "%select{class template|class template partial|function template|member "
-  "function|static data member|member class}0 specialization of %1 must "
-  "originally be declared in namespace %2; accepted as a C++11 extension">,
+  "first declaration of %select{class template|class template partial|"
+  "function template|member function|static data member|member class}0 "
+  "specialization of %1 outside namespace %2 is a C++11 extension">,
   InGroup<CXX11>;
 def warn_cxx98_compat_template_spec_decl_out_of_scope : Warning<
   "%select{class template|class template partial|function template|member "
@@ -4329,8 +4326,8 @@ def warn_typecheck_cond_pointer_integer_mismatch : ExtWarn<
   InGroup<DiagGroup<"conditional-type-mismatch">>;
 def err_typecheck_choose_expr_requires_constant : Error<
   "'__builtin_choose_expr' requires a constant expression">;
-def ext_typecheck_expression_not_constant_but_accepted : Extension<
-  "expression is not a constant, but is accepted as one by GNU extensions">, 
+def ext_typecheck_expression_not_constant : Extension<
+  "expression is not a constant; folding it to one is a GNU extension">,
   InGroup<GNU>;
 def warn_unused_expr : Warning<"expression result unused">,
   InGroup<UnusedValue>;
@@ -4447,10 +4444,11 @@ def err_in_class_initializer_literal_type : Error<
   "in-class initializer for static data member of type %0 requires "
   "'constexpr' specifier">;
 def err_in_class_initializer_non_constant : Error<
-  "in-class initializer is not a constant expression">;
+  "in-class initializer for static data member is not a constant expression">;
 
 def ext_in_class_initializer_non_constant : Extension<
- "in-class initializer is not a constant expression, accepted as an extension">;
+  "in-class initializer for static data member is not a constant expression; "
+  "folding it to a constant is a GNU extension">;
 
 // C++ anonymous unions and GNU anonymous structs/unions
 def ext_anonymous_union : Extension<
@@ -5021,9 +5019,11 @@ def err_missing_param_declspec : Error<
 def err_objc_array_of_interfaces : Error<
   "array of interface %0 is invalid (probably should be an array of pointers)">;
 def ext_c99_array_usage : Extension<
-  "use of C99-specific array features, accepted as an extension">, InGroup<C99>;
+  "%select{qualifier in |static |}0array size %select{||'[*] '}0is a C99 "
+  "feature">, InGroup<C99>;
 def err_c99_array_usage_cxx : Error<
-  "C99-specific array features are not permitted in C++">;
+  "%select{qualifier in |static |}0array size %select{||'[*] '}0is a C99 "
+  "feature, not permitted in C++">;
 def err_double_requires_fp64 : Error<
   "use of type 'double' requires cl_khr_fp64 extension to be enabled">;
 def err_nsconsumed_attribute_mismatch : Error<

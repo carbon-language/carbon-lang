@@ -48,7 +48,7 @@ void pr6373(const unsigned x = 0) {
 namespace rdar9204520 {
   
 struct A {
-  static const int B = int(0.75 * 1000 * 1000); // expected-warning {{not a constant expression, accepted as an extension}}
+  static const int B = int(0.75 * 1000 * 1000); // expected-warning {{not a constant expression; folding it to a constant is a GNU extension}}
 };
 
 int foo() { return A::B; }

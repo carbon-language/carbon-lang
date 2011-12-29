@@ -76,7 +76,7 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
     if (Tok.is(tok::kw_delete)) {
       Diag(Tok, getLang().CPlusPlus0x ?
            diag::warn_cxx98_compat_deleted_function :
-           diag::warn_deleted_function_accepted_as_extension);
+           diag::ext_deleted_function);
 
       KWLoc = ConsumeToken();
       Actions.SetDeclDeleted(FnD, KWLoc);
@@ -84,7 +84,7 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
     } else if (Tok.is(tok::kw_default)) {
       Diag(Tok, getLang().CPlusPlus0x ?
            diag::warn_cxx98_compat_defaulted_function :
-           diag::warn_defaulted_function_accepted_as_extension);
+           diag::ext_defaulted_function);
 
       KWLoc = ConsumeToken();
       Actions.SetDeclDefaulted(FnD, KWLoc);

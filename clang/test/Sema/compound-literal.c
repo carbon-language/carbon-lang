@@ -12,7 +12,7 @@ static int x = (int){1};
 static int *p2 = (int []){2,x}; // -expected-error {{initializer element is not a compile-time constant}}
 static long *p3 = (long []){2,"x"}; // -expected-warning {{incompatible pointer to integer conversion initializing 'long' with an expression of type 'char [2]'}}
 
-typedef struct { } cache_t; // -expected-warning{{empty struct (accepted as an extension) has size 0 in C, size 1 in C++}}
+typedef struct { } cache_t; // -expected-warning{{empty struct is a GNU extension}}
 static cache_t clo_I1_cache = ((cache_t) { } ); // -expected-warning{{use of GNU empty initializer extension}}
 
 typedef struct Test {int a;int b;} Test;
