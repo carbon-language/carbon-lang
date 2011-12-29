@@ -41,23 +41,21 @@ multiclass fma_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
   defm r231 : fma_rm<opc231, !strconcat(OpcodeStr, !strconcat("231", PackTy))>;
 }
 
-let isAsmParserOnly = 1 in {
-  // Fused Multiply-Add
-  defm VFMADDPS    : fma_forms<0x98, 0xA8, 0xB8, "vfmadd", "ps">;
-  defm VFMADDPD    : fma_forms<0x98, 0xA8, 0xB8, "vfmadd", "pd">, VEX_W;
-  defm VFMADDSUBPS : fma_forms<0x96, 0xA6, 0xB6, "vfmaddsub", "ps">;
-  defm VFMADDSUBPD : fma_forms<0x96, 0xA6, 0xB6, "vfmaddsub", "pd">, VEX_W;
-  defm VFMSUBADDPS : fma_forms<0x97, 0xA7, 0xB7, "vfmsubadd", "ps">;
-  defm VFMSUBADDPD : fma_forms<0x97, 0xA7, 0xB7, "vfmsubadd", "pd">, VEX_W;
-  defm VFMSUBPS    : fma_forms<0x9A, 0xAA, 0xBA, "vfmsub", "ps">;
-  defm VFMSUBPD    : fma_forms<0x9A, 0xAA, 0xBA, "vfmsub", "pd">, VEX_W;
+// Fused Multiply-Add
+defm VFMADDPS    : fma_forms<0x98, 0xA8, 0xB8, "vfmadd", "ps">;
+defm VFMADDPD    : fma_forms<0x98, 0xA8, 0xB8, "vfmadd", "pd">, VEX_W;
+defm VFMADDSUBPS : fma_forms<0x96, 0xA6, 0xB6, "vfmaddsub", "ps">;
+defm VFMADDSUBPD : fma_forms<0x96, 0xA6, 0xB6, "vfmaddsub", "pd">, VEX_W;
+defm VFMSUBADDPS : fma_forms<0x97, 0xA7, 0xB7, "vfmsubadd", "ps">;
+defm VFMSUBADDPD : fma_forms<0x97, 0xA7, 0xB7, "vfmsubadd", "pd">, VEX_W;
+defm VFMSUBPS    : fma_forms<0x9A, 0xAA, 0xBA, "vfmsub", "ps">;
+defm VFMSUBPD    : fma_forms<0x9A, 0xAA, 0xBA, "vfmsub", "pd">, VEX_W;
 
-  // Fused Negative Multiply-Add
-  defm VFNMADDPS : fma_forms<0x9C, 0xAC, 0xBC, "vfnmadd", "ps">;
-  defm VFNMADDPD : fma_forms<0x9C, 0xAC, 0xBC, "vfnmadd", "pd">, VEX_W;
-  defm VFNMSUBPS : fma_forms<0x9E, 0xAE, 0xBE, "vfnmsub", "ps">;
-  defm VFNMSUBPD : fma_forms<0x9E, 0xAE, 0xBE, "vfnmsub", "pd">, VEX_W;
-}
+// Fused Negative Multiply-Add
+defm VFNMADDPS : fma_forms<0x9C, 0xAC, 0xBC, "vfnmadd", "ps">;
+defm VFNMADDPD : fma_forms<0x9C, 0xAC, 0xBC, "vfnmadd", "pd">, VEX_W;
+defm VFNMSUBPS : fma_forms<0x9E, 0xAE, 0xBE, "vfnmsub", "ps">;
+defm VFNMSUBPD : fma_forms<0x9E, 0xAE, 0xBE, "vfnmsub", "pd">, VEX_W;
 
 //===----------------------------------------------------------------------===//
 // FMA4 - AMD 4 operand Fused Multiply-Add instructions
