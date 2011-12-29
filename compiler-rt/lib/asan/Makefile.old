@@ -262,7 +262,8 @@ $(BIN)/%_test$(SUFF).o: tests/%_test.mm $(RTL_HDR) $(MAKEFILE)
 	$(ASAN_CXX) $(GTEST_INCLUDE) -I. -g -c $< -O2 -o $@ -ObjC $(PIE) $(CFLAGS)
 
 $(BIN)/%$(SUFF).o: %.cc $(RTL_HDR) $(MAKEFILE)
-	$(CXX) $(PIE) $(CFLAGS) -fPIC -c -O2 -fno-exceptions -o $@ -g $< -Ithird_party \
+	$(CXX) $(PIE) $(CFLAGS) -fPIC -c -O2 -fno-exceptions -funwind-tables \
+		-o $@ -g $< -Ithird_party \
 		-DASAN_USE_SYSINFO=1 \
 		-DASAN_NEEDS_SEGV=$(ASAN_NEEDS_SEGV) \
 		-DASAN_HAS_EXCEPTIONS=$(ASAN_HAS_EXCEPTIONS) \
