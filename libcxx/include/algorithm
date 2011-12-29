@@ -4751,6 +4751,8 @@ __nth_element(_RandomAccessIterator __first, _RandomAccessIterator __nth, _Rando
     while (true)
     {
     __restart:
+        if (__nth == __last)
+            return;
         difference_type __len = __last - __first;
         switch (__len)
         {
