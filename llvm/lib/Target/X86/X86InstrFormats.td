@@ -483,12 +483,12 @@ class AVX2AIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
 class AES8I<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag>pattern>
       : I<o, F, outs, ins, asm, pattern, SSEPackedInt>, T8,
-        Requires<[HasAES]>;
+        Requires<[HasSSE2, HasAES]>;
 
 class AESAI<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern>
       : Ii8<o, F, outs, ins, asm, pattern, SSEPackedInt>, TA,
-        Requires<[HasAES]>;
+        Requires<[HasSSE2, HasAES]>;
 
 // CLMUL Instruction Templates
 class CLMULIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
