@@ -146,28 +146,37 @@ struct DWARFMappedHash
         dw_offset_t die_base_offset;
         AtomArray atoms;
         size_t min_hash_data_byte_size;
+        bool hash_data_has_fixed_byte_size;
         
         Prologue (dw_offset_t _die_base_offset = 0) :
             die_base_offset (_die_base_offset),
             atoms(),
-            min_hash_data_byte_size(0)
+            min_hash_data_byte_size(0),
+            hash_data_has_fixed_byte_size(true)
         {
             // Define an array of DIE offsets by first defining an array, 
             // and then define the atom type for the array, in this case
             // we have an array of DIE offsets
             AppendAtom (eAtomTypeDIEOffset, DW_FORM_data4);
-            min_hash_data_byte_size = 4;
         }
         
         virtual ~Prologue()
         {
         }
 
+        void
+        ClearAtoms ()
+        {
+            hash_data_has_fixed_byte_size = true;
+            min_hash_data_byte_size = 0;
+            atoms.clear();
+        }
+
         virtual void
         Clear ()
         {
             die_base_offset = 0;
-            atoms.clear();
+            ClearAtoms ();
         }
         
         void
@@ -186,21 +195,29 @@ struct DWARFMappedHash
                 case DW_FORM_string:
                 case DW_FORM_block:
                 case DW_FORM_block1:
+                case DW_FORM_sdata:
+                case DW_FORM_udata:
+                case DW_FORM_ref_udata:
+                    hash_data_has_fixed_byte_size = false;
+                    // Fall through to the cases below...
                 case DW_FORM_flag:
                 case DW_FORM_data1:
                 case DW_FORM_ref1:
-                case DW_FORM_sdata:
-                case DW_FORM_udata:
                 case DW_FORM_sec_offset:
-                case DW_FORM_ref_udata:
                     min_hash_data_byte_size += 1; 
                     break;
+
                 case DW_FORM_block2:
+                    hash_data_has_fixed_byte_size = false;
+                    // Fall through to the cases below...
                 case DW_FORM_data2: 
                 case DW_FORM_ref2:
                     min_hash_data_byte_size += 2; 
                     break;
+
                 case DW_FORM_block4: 
+                    hash_data_has_fixed_byte_size = false;
+                    // Fall through to the cases below...
                 case DW_FORM_data4:
                 case DW_FORM_ref4:
                 case DW_FORM_addr:
@@ -208,6 +225,7 @@ struct DWARFMappedHash
                 case DW_FORM_strp:
                     min_hash_data_byte_size += 4; 
                     break;
+
                 case DW_FORM_data8:
                 case DW_FORM_ref8:
                     min_hash_data_byte_size += 8; 
@@ -222,7 +240,7 @@ struct DWARFMappedHash
         uint32_t
         Read (const lldb_private::DataExtractor &data, uint32_t offset)
         {
-            atoms.clear();
+            ClearAtoms ();
             
             die_base_offset = data.GetU32 (&offset);
             
@@ -233,7 +251,7 @@ struct DWARFMappedHash
                 while (data.GetU32(&offset))
                     /* do nothing */;
 
-                // Hardcode to the only know value for now.
+                // Hardcode to the only known value for now.
                 AppendAtom (eAtomTypeDIEOffset, DW_FORM_data4);
             }
             else
@@ -260,11 +278,16 @@ struct DWARFMappedHash
         }
         
         size_t
-        GetHashDataByteSize () const
+        GetMinumumHashDataByteSize () const
         {
             return min_hash_data_byte_size;
         }
 
+        bool
+        HashDataHasFixedByteSize() const
+        {
+            return hash_data_has_fixed_byte_size;
+        }
     };
     
     struct Header : public MappedHash::Header<Prologue>
@@ -283,13 +306,7 @@ struct DWARFMappedHash
         {
             return header_data.GetByteSize();
         }
-        
-        size_t
-        GetHashDataByteSize ()
-        {
-            return header_data.GetHashDataByteSize();
-        }
-        
+
         //        virtual void
         //        Dump (std::ostream* ostrm_ptr);        
         //        
@@ -481,6 +498,8 @@ struct DWARFMappedHash
                             Pair &pair) const
         {
             pair.key = m_data.GetU32 (hash_data_offset_ptr);
+            pair.value.clear();
+
             // If the key is zero, this terminates our chain of HashData objects
             // for this hash value.
             if (pair.key == 0)
@@ -490,31 +509,59 @@ struct DWARFMappedHash
             // there isn't, there is something wrong, return and error
             const char *strp_cstr = m_string_table.PeekCStr (pair.key);
             if (strp_cstr == NULL)
+            {
+                *hash_data_offset_ptr = UINT32_MAX;
                 return eResultError;
+            }
 
             const uint32_t count = m_data.GetU32 (hash_data_offset_ptr);
-            const uint32_t data_size = count * m_header.header_data.GetHashDataByteSize();
-            if (count > 0 && m_data.ValidOffsetForDataOfSize (*hash_data_offset_ptr, data_size))
+            const uint32_t min_total_hash_data_size = count * m_header.header_data.GetMinumumHashDataByteSize();
+            if (count > 0 && m_data.ValidOffsetForDataOfSize (*hash_data_offset_ptr, min_total_hash_data_size))
             {
-                if (strcmp (name, strp_cstr) == 0)
+                // We have at least one HashData entry, and we have enough
+                // data to parse at leats "count" HashData enties.
+                
+                // First make sure the entire C string matches...
+                const bool match = strcmp (name, strp_cstr) == 0;
+                
+                if (!match && m_header.header_data.HashDataHasFixedByteSize())
                 {
-                    pair.value.clear();
+                    // If the string doesn't match and we have fixed size data,
+                    // we can just add the total byte size of all HashData objects
+                    // to the hash data offset and be done...
+                    *hash_data_offset_ptr += min_total_hash_data_size;
+                }
+                else
+                {
+                    // If the string does match, or we don't have fixed size data
+                    // then we need to read the hash data as a stream. If the
+                    // string matches we also append all HashData objects to the
+                    // value array.
                     for (uint32_t i=0; i<count; ++i)
                     {
                         DIEInfo die_info;
                         if (m_header.Read(m_data, hash_data_offset_ptr, die_info))
-                            pair.value.push_back (die_info);
+                        {
+                            // Only happend the HashData if the string matched...
+                            if (match)
+                                pair.value.push_back (die_info);
+                        }
+                        else
+                        {
+                            // Something went wrong while reading the data
+                            *hash_data_offset_ptr = UINT32_MAX;
+                            return eResultError;
+                        }
                     }
-                    return eResultKeyMatch;
                 }
+                // Return the correct response depending on if the string matched
+                // or not...
+                if (match)
+                    return eResultKeyMatch;     // The key (cstring) matches and we have lookup results!
                 else
-                {
-                    // Skip the data so we are ready to parse another HashData
-                    // for this hash value
-                    *hash_data_offset_ptr += data_size;
-                    // The key doesn't match
-                    return eResultKeyMismatch;
-                }
+                    return eResultKeyMismatch;  // The key doesn't match, this function will get called 
+                                                // again for the next key/value or the key terminator
+                                                // which in our case is a zero .debug_str offset.
             }
             else
             {
@@ -541,27 +588,49 @@ struct DWARFMappedHash
                 return eResultError;
             
             const uint32_t count = m_data.GetU32 (hash_data_offset_ptr);
-            const uint32_t data_size = count * m_header.header_data.GetHashDataByteSize();
-            if (count > 0 && m_data.ValidOffsetForDataOfSize (*hash_data_offset_ptr, data_size))
+            const uint32_t min_total_hash_data_size = count * m_header.header_data.GetMinumumHashDataByteSize();
+            if (count > 0 && m_data.ValidOffsetForDataOfSize (*hash_data_offset_ptr, min_total_hash_data_size))
             {
-                if (regex.Execute(strp_cstr))
+                const bool match = regex.Execute(strp_cstr);
+                
+                if (!match && m_header.header_data.HashDataHasFixedByteSize())
                 {
+                    // If the regex doesn't match and we have fixed size data,
+                    // we can just add the total byte size of all HashData objects
+                    // to the hash data offset and be done...
+                    *hash_data_offset_ptr += min_total_hash_data_size;
+                }
+                else
+                {
+                    // If the string does match, or we don't have fixed size data
+                    // then we need to read the hash data as a stream. If the
+                    // string matches we also append all HashData objects to the
+                    // value array.
                     for (uint32_t i=0; i<count; ++i)
                     {
                         DIEInfo die_info;
                         if (m_header.Read(m_data, hash_data_offset_ptr, die_info))
-                            pair.value.push_back (die_info);
+                        {
+                            // Only happend the HashData if the string matched...
+                            if (match)
+                                pair.value.push_back (die_info);
+                        }
+                        else
+                        {
+                            // Something went wrong while reading the data
+                            *hash_data_offset_ptr = UINT32_MAX;
+                            return eResultError;
+                        }
                     }
-                    return eResultKeyMatch;
                 }
+                // Return the correct response depending on if the string matched
+                // or not...
+                if (match)
+                    return eResultKeyMatch;     // The key (cstring) matches and we have lookup results!
                 else
-                {
-                    // Skip the data so we are ready to parse another HashData
-                    // for this hash value
-                    *hash_data_offset_ptr += data_size;
-                    // The key doesn't match
-                    return eResultKeyMismatch;
-                }
+                    return eResultKeyMismatch;  // The key doesn't match, this function will get called 
+                                                // again for the next key/value or the key terminator
+                                                // which in our case is a zero .debug_str offset.
             }
             else
             {
