@@ -408,6 +408,15 @@ void MCStreamer::EmitCFISameValue(int64_t Register) {
   CurFrame->Instructions.push_back(Instruction);
 }
 
+void MCStreamer::EmitCFIRestore(int64_t Register) {
+  EnsureValidFrame();
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
+  MCSymbol *Label = getContext().CreateTempSymbol();
+  EmitLabel(Label);
+  MCCFIInstruction Instruction(MCCFIInstruction::Restore, Label, Register);
+  CurFrame->Instructions.push_back(Instruction);
+}
+
 void MCStreamer::EmitCFIEscape(StringRef Values) {
   EnsureValidFrame();
   MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();

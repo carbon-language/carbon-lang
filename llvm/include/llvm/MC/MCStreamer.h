@@ -547,6 +547,7 @@ namespace llvm {
     virtual void EmitCFIRememberState();
     virtual void EmitCFIRestoreState();
     virtual void EmitCFISameValue(int64_t Register);
+    virtual void EmitCFIRestore(int64_t Register);
     virtual void EmitCFIRelOffset(int64_t Register, int64_t Offset);
     virtual void EmitCFIAdjustCfaOffset(int64_t Adjustment);
     virtual void EmitCFIEscape(StringRef Values);
