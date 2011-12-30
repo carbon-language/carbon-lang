@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 
   // Figure out which globals we should extract.
   for (size_t i = 0, e = ExtractGlobals.size(); i != e; ++i) {
-    GlobalValue *GV = M.get()->getNamedGlobal(ExtractGlobals[i]);
+    GlobalValue *GV = M->getNamedGlobal(ExtractGlobals[i]);
     if (!GV) {
       errs() << argv[0] << ": program doesn't contain global named '"
              << ExtractGlobals[i] << "'!\n";
@@ -117,8 +117,8 @@ int main(int argc, char **argv) {
         "invalid regex: " << Error;
     }
     bool match = false;
-    for (Module::global_iterator GV = M.get()->global_begin(), 
-           E = M.get()->global_end(); GV != E; GV++) {
+    for (Module::global_iterator GV = M->global_begin(),
+           E = M->global_end(); GV != E; GV++) {
       if (RegEx.match(GV->getName())) {
         GVs.insert(&*GV);
         match = true;
@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
 
   // Figure out which functions we should extract.
   for (size_t i = 0, e = ExtractFuncs.size(); i != e; ++i) {
-    GlobalValue *GV = M.get()->getFunction(ExtractFuncs[i]);
+    GlobalValue *GV = M->getFunction(ExtractFuncs[i]);
     if (!GV) {
       errs() << argv[0] << ": program doesn't contain function named '"
              << ExtractFuncs[i] << "'!\n";
@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
         "invalid regex: " << Error;
     }
     bool match = false;
-    for (Module::iterator F = M.get()->begin(), E = M.get()->end(); F != E; 
+    for (Module::iterator F = M->begin(), E = M->end(); F != E;
          F++) {
       if (RegEx.match(F->getName())) {
         GVs.insert(&*F);
