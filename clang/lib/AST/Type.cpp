@@ -1126,6 +1126,10 @@ bool Type::isLiteralType() const {
   if (BaseTy->isIncompleteType())
     return false;
 
+  // Objective-C lifetime types are not literal types.
+  if (BaseTy->isObjCRetainableType())
+    return false;
+  
   // C++0x [basic.types]p10:
   //   A type is a literal type if it is:
   //    -- a scalar type; or

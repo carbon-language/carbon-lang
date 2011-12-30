@@ -33,11 +33,11 @@ struct NonConstexpr3 {
   int m : NonConstexpr2().n; // expected-error {{constant expression}} expected-note {{undefined constructor 'NonConstexpr2'}}
 };
 struct NonConstexpr4 {
-  NonConstexpr4(); // expected-note {{declared here}}
+  NonConstexpr4();
   int n;
 };
 struct NonConstexpr5 {
-  int n : NonConstexpr4().n; // expected-error {{constant expression}} expected-note {{non-constexpr constructor 'NonConstexpr4' cannot be used in a constant expression}}
+  int n : NonConstexpr4().n; // expected-error {{constant expression}} expected-note {{non-literal type 'NonConstexpr4' cannot be used in a constant expression}}
 };
 
 // - an invocation of an undefined constexpr function or an undefined

@@ -11,11 +11,8 @@ struct S {
 
 constexpr int extract(const S &s) { return s.n; } // expected-note {{read of uninitialized object is not allowed in a constant expression}}
 
-constexpr S s1; // ok
-void f() {
-  constexpr S s1; // expected-error {{constant expression}} expected-note {{in call to 'S()'}}
-  constexpr S s2(10);
-}
+constexpr S s1; // expected-error {{constant expression}} expected-note {{in call to 'S()'}}
+constexpr S s2(10);
 
 typedef __attribute__((vector_size(16))) int vector_int;
 

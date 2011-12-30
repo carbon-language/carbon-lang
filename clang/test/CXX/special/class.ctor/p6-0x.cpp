@@ -8,16 +8,8 @@ struct NonConstexpr1 { // expected-note {{here}}
 struct NonConstexpr2 { // expected-note {{here}}
   NonConstexpr1 nl;
 };
-struct NonConstexpr2a : NonConstexpr1 { };
-constexpr NonConstexpr1 nc1 = NonConstexpr1(); // ok, does not call constructor
-constexpr NonConstexpr2 nc2 = NonConstexpr2(); // ok, does not call constructor
-constexpr NonConstexpr2a nc2a = NonConstexpr2a(); // expected-error {{constant expression}} expected-note {{non-literal type 'const NonConstexpr2a'}}
-constexpr int nc2_a = NonConstexpr2().nl.a; // ok
-constexpr int nc2a_a = NonConstexpr2a().a; // ok
-struct Helper {
-  friend constexpr NonConstexpr1::NonConstexpr1(); // expected-error {{follows non-constexpr declaration}}
-  friend constexpr NonConstexpr2::NonConstexpr2(); // expected-error {{follows non-constexpr declaration}}
-};
+constexpr NonConstexpr1 nc1 = NonConstexpr1(); // expected-error {{constant expression}} expected-note {{non-constexpr constructor 'NonConstexpr1'}}
+constexpr NonConstexpr2 nc2 = NonConstexpr2(); // expected-error {{constant expression}} expected-note {{non-constexpr constructor 'NonConstexpr2'}}
 
 struct Constexpr1 {};
 constexpr Constexpr1 c1 = Constexpr1(); // ok
