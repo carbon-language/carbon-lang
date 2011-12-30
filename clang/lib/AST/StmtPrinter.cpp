@@ -710,16 +710,27 @@ void StmtPrinter::VisitStringLiteral(StringLiteral *Str) {
   case StringLiteral::UTF32: OS << 'U'; break;
   }
   OS << '"';
+  static char Hex[] = "0123456789ABCDEF";
 
-  // FIXME: this doesn't print wstrings right.
-  StringRef StrData = Str->getString();
-  for (StringRef::iterator I = StrData.begin(), E = StrData.end(); 
-                                                             I != E; ++I) {
-    unsigned char Char = *I;
-
-    switch (Char) {
+  for (unsigned I = 0, N = Str->getLength(); I != N; ++I) {
+    switch (uint32_t Char = Str->getCodeUnit(I)) {
     default:
-      if (isprint(Char))
+      // FIXME: Is this the best way to print wchar_t?
+      if (Char > 0xff) {
+        // char32_t values are <= 0x10ffff.
+        if (Char > 0xffff)
+          OS << "\\U00"
+             << Hex[(Char >> 20) & 15]
+             << Hex[(Char >> 16) & 15];
+        else
+          OS << "\\u";
+        OS << Hex[(Char >> 12) & 15]
+           << Hex[(Char >>  8) & 15]
+           << Hex[(Char >>  4) & 15]
+           << Hex[(Char >>  0) & 15];
+        break;
+      }
+      if (Char <= 0xff && isprint(Char))
         OS << (char)Char;
       else  // Output anything hard as an octal escape.
         OS << '\\'

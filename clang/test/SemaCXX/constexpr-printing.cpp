@@ -73,3 +73,17 @@ constexpr int MemPtr(int (MemPtrTest::*a), void (MemPtrTest::*b)(), int &c) {
 }
 static_assert(MemPtr(&MemPtrTest::n, &MemPtrTest::f, mpt.*&MemPtrTest::n), ""); // expected-error {{constant expression}} \
 expected-note {{in call to 'MemPtr(&MemPtrTest::n, &MemPtrTest::f, mpt.n)'}}
+
+template<typename CharT>
+constexpr CharT get(const CharT *p) { return p[-1]; } // expected-note 5{{}}
+
+constexpr char c = get("test\0\\\"\t\a\b\234"); // \
+  expected-error {{}} expected-note {{"test\000\\\"\t\a\b\234"}}
+constexpr char c8 = get(u8"test\0\\\"\t\a\b\234"); // \
+  expected-error {{}} expected-note {{u8"test\000\\\"\t\a\b\234"}}
+constexpr char16_t c16 = get(u"test\0\\\"\t\a\b\234\u1234"); // \
+  expected-error {{}} expected-note {{u"test\000\\\"\t\a\b\234\u1234"}}
+constexpr char32_t c32 = get(U"test\0\\\"\t\a\b\234\u1234\U00101234"); // \
+  expected-error {{}} expected-note {{U"test\000\\\"\t\a\b\234\u1234\U00101234"}}
+constexpr wchar_t wc = get(L"test\0\\\"\t\a\b\234\u1234"); // \
+  expected-error {{}} expected-note {{L"test\000\\\"\t\a\b\234\u1234"}}
