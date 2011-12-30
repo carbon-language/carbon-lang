@@ -77,7 +77,8 @@ def FeatureFastUAMem : SubtargetFeature<"fast-unaligned-mem",
                                         "IsUAMemFast", "true",
                                         "Fast unaligned memory access">;
 def FeatureSSE4A   : SubtargetFeature<"sse4a", "HasSSE4A", "true",
-                                      "Support SSE 4a instructions">;
+                                      "Support SSE 4a instructions",
+                                      [FeatureSSE3]>;
 
 def FeatureAVX     : SubtargetFeature<"avx", "HasAVX", "true",
                                       "Enable AVX instructions">;
@@ -90,8 +91,9 @@ def FeatureFMA3    : SubtargetFeature<"fma3", "HasFMA3", "true",
                                       "Enable three-operand fused multiple-add",
                                       [FeatureAVX]>;
 def FeatureFMA4    : SubtargetFeature<"fma4", "HasFMA4", "true",
-                                      "Enable four-operand fused multiple-add">;
-def FeatureXOP    : SubtargetFeature<"xop", "HasXOP", "true",
+                                      "Enable four-operand fused multiple-add",
+                                      [FeatureAVX]>;
+def FeatureXOP     : SubtargetFeature<"xop", "HasXOP", "true",
                                       "Enable XOP instructions">;
 def FeatureVectorUAMem : SubtargetFeature<"vector-unaligned-mem",
                                           "HasVectorUAMem", "true",
@@ -201,12 +203,12 @@ def : Proc<"athlon64-sse3",   [FeatureSSE3,   Feature3DNowA, FeatureCMPXCHG16B,
 def : Proc<"amdfam10",        [FeatureSSE3,   FeatureSSE4A,
                                Feature3DNowA, FeatureCMPXCHG16B, FeatureLZCNT,
                                FeaturePOPCNT, FeatureSlowBTMem]>;
-// FIXME: Disabling AVX for now since it's not ready.
+// FIXME: Disabling AVX/FMA4 for now since it's not ready.
 def : Proc<"bdver1",          [FeatureSSE42, FeatureSSE4A, FeatureCMPXCHG16B,
-                               FeatureAES, FeatureCLMUL, FeatureFMA4,
+                               FeatureAES, FeatureCLMUL,
                                FeatureXOP, FeatureLZCNT, FeaturePOPCNT]>;
 def : Proc<"bdver2",          [FeatureSSE42, FeatureSSE4A, FeatureCMPXCHG16B,
-                               FeatureAES, FeatureCLMUL, FeatureFMA4,
+                               FeatureAES, FeatureCLMUL,
                                FeatureXOP, FeatureF16C, FeatureLZCNT,
                                FeaturePOPCNT, FeatureBMI]>;
 
