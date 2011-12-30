@@ -237,7 +237,5 @@ multiclass xop5op<bits<8> opc, string OpcodeStr> {
         []>;
 }
 
-let isAsmParserOnly = 1 in {
-  defm VPERMIL2PD : xop5op<0x49, "vpermil2pd">;
-  defm VPERMIL2PS : xop5op<0x48, "vpermil2ps">;
-}
+defm VPERMIL2PD : xop5op<0x49, "vpermil2pd">;
+defm VPERMIL2PS : xop5op<0x48, "vpermil2ps">;
