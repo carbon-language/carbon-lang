@@ -42,10 +42,6 @@
 #include <popcntintrin.h>
 #endif
 
-#ifdef __FMA4__
-#include <fma4intrin.h>
-#endif
-
 // FIXME: SSE4A, 3dNOW, XOP, LWP, ABM
 
 #endif /* __X86INTRIN_H */
