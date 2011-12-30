@@ -6,6 +6,7 @@ set(files
   bmi2intrin.h
   emmintrin.h
   float.h
+  fma4intrin.h
   immintrin.h
   iso646.h
   limits.h
