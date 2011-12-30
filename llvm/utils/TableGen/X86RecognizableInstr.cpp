@@ -221,6 +221,7 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   HasVEX_4VPrefix  = Rec->getValueAsBit("hasVEX_4VPrefix");
   HasVEX_4VOp3Prefix = Rec->getValueAsBit("hasVEX_4VOp3Prefix");
   HasVEX_WPrefix   = Rec->getValueAsBit("hasVEX_WPrefix");
+  HasMemOp4Prefix  = Rec->getValueAsBit("hasMemOp4Prefix");
   IgnoresVEX_L     = Rec->getValueAsBit("ignoresVEX_L");
   HasLockPrefix    = Rec->getValueAsBit("hasLockPrefix");
   IsCodeGenOnly    = Rec->getValueAsBit("isCodeGenOnly");
@@ -690,6 +691,9 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
       // in ModRMVEX and the one above the one in the VEX.VVVV field
       HANDLE_OPERAND(vvvvRegister)
 
+    if (HasMemOp4Prefix)
+      HANDLE_OPERAND(immediate)
+
     HANDLE_OPERAND(rmRegister)
 
     if (HasVEX_4VOp3Prefix)
@@ -716,6 +720,9 @@ void RecognizableInstr::emitInstructionSpecifier(DisassemblerTables &tables) {
       // FIXME: In AVX, the register below becomes the one encoded
       // in ModRMVEX and the one above the one in the VEX.VVVV field
       HANDLE_OPERAND(vvvvRegister)
+
+    if (HasMemOp4Prefix)
+      HANDLE_OPERAND(immediate)
 
     HANDLE_OPERAND(memory)
 
