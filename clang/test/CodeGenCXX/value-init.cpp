@@ -134,8 +134,7 @@ namespace zeroinit {
   // CHECK: define i32 @_ZN8zeroinit4testEv()
   int test() {
     // CHECK: call void @llvm.memset.p0i8.i64
-    // CHECK: getelementptr
-    // CHECK: ret i32
+    // CHECK: ret i32 0
     return S().i;
   }
 

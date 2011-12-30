@@ -53,16 +53,16 @@ TRAIT_IS_TRUE(__has_trivial_destructor, __autoreleasing id);
 TRAIT_IS_TRUE(__has_trivial_destructor, __unsafe_unretained id);
 
 // __is_literal
-TRAIT_IS_FALSE(__is_literal, __strong id);
-TRAIT_IS_FALSE(__is_literal, __weak id);
-TRAIT_IS_FALSE(__is_literal, __autoreleasing id);
-TRAIT_IS_FALSE(__is_literal, __unsafe_unretained id);
+TRAIT_IS_TRUE(__is_literal, __strong id);
+TRAIT_IS_TRUE(__is_literal, __weak id);
+TRAIT_IS_TRUE(__is_literal, __autoreleasing id);
+TRAIT_IS_TRUE(__is_literal, __unsafe_unretained id);
 
 // __is_literal_type
-TRAIT_IS_FALSE(__is_literal_type, __strong id);
-TRAIT_IS_FALSE(__is_literal_type, __weak id);
-TRAIT_IS_FALSE(__is_literal_type, __autoreleasing id);
-TRAIT_IS_FALSE(__is_literal_type, __unsafe_unretained id);
+TRAIT_IS_TRUE(__is_literal_type, __strong id);
+TRAIT_IS_TRUE(__is_literal_type, __weak id);
+TRAIT_IS_TRUE(__is_literal_type, __autoreleasing id);
+TRAIT_IS_TRUE(__is_literal_type, __unsafe_unretained id);
 
 // __is_pod
 TRAIT_IS_FALSE(__is_pod, __strong id);
