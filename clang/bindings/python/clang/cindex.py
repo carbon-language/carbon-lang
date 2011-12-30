@@ -816,6 +816,11 @@ CursorKind.IB_ACTION_ATTR = CursorKind(401)
 CursorKind.IB_OUTLET_ATTR = CursorKind(402)
 CursorKind.IB_OUTLET_COLLECTION_ATTR = CursorKind(403)
 
+CursorKind.CXX_FINAL_ATTR = CursorKind(404)
+CursorKind.CXX_OVERRIDE_ATTR = CursorKind(405)
+CursorKind.ANNOTATE_ATTR = CursorKind(406)
+CursorKind.ASM_LABEL_ATTR = CursorKind(407)
+
 ###
 # Preprocessing
 CursorKind.PREPROCESSING_DIRECTIVE = CursorKind(500)
