@@ -200,7 +200,7 @@ void MipsJITInfo::relocate(void *Function, MachineRelocation *MR,
     intptr_t ResultPtr = (intptr_t) MR->getResultPointer();
 
     switch ((Mips::RelocationType) MR->getRelocationType()) {
-    case Mips::reloc_mips_branch:
+    case Mips::reloc_mips_pc16:
       ResultPtr = (((ResultPtr - (intptr_t) RelocPos) - 4) >> 2) & 0xffff;
       *((unsigned*) RelocPos) |= (unsigned) ResultPtr;
       break;

@@ -163,7 +163,7 @@ unsigned MipsCodeEmitter::getRelocation(const MachineInstr &MI,
     return Mips::reloc_mips_26;
   if ((Form == MipsII::FrmI || Form == MipsII::FrmFI)
        && MI.isBranch())
-    return Mips::reloc_mips_branch;
+    return Mips::reloc_mips_pc16;
   if (Form == MipsII::FrmI && MI.getOpcode() == Mips::LUi)
     return Mips::reloc_mips_hi;
   return Mips::reloc_mips_lo;
@@ -171,13 +171,22 @@ unsigned MipsCodeEmitter::getRelocation(const MachineInstr &MI,
 
 unsigned MipsCodeEmitter::getJumpTargetOpValue(const MachineInstr &MI,
                                                unsigned OpNo) const {
-  // FIXME: implement
+  MachineOperand MO = MI.getOperand(OpNo);
+  if (MO.isGlobal())
+    emitGlobalAddress(MO.getGlobal(), getRelocation(MI, MO), true);
+  else if (MO.isSymbol())
+    emitExternalSymbolAddress(MO.getSymbolName(), getRelocation(MI, MO));
+  else if (MO.isMBB())
+    emitMachineBasicBlock(MO.getMBB(), getRelocation(MI, MO));
+  else
+    llvm_unreachable("Unexpected jump target operand kind.");
   return 0;
 }
 
 unsigned MipsCodeEmitter::getBranchTargetOpValue(const MachineInstr &MI,
                                                  unsigned OpNo) const {
-  // FIXME: implement
+  MachineOperand MO = MI.getOperand(OpNo);
+  emitMachineBasicBlock(MO.getMBB(), getRelocation(MI, MO));
   return 0;
 }
 
