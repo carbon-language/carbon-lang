@@ -120,7 +120,7 @@ class VEX_I8IMM { bit hasVEX_i8ImmReg = 1; }
 class VEX_L  { bit hasVEX_L = 1; }
 class VEX_LIG { bit ignoresVEX_L = 1; }
 class Has3DNow0F0FOpcode  { bit has3DNow0F0FOpcode = 1; }
-class XOP_W { bit hasXOP_WPrefix = 1; }
+class MemOp4 { bit hasMemOp4Prefix = 1; }
 class XOP { bit hasXOP_Prefix = 1; }
 class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
               string AsmStr, Domain d = GenericDomain>
@@ -161,7 +161,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   bit hasVEX_L = 0;         // Does this inst use large (256-bit) registers?
   bit ignoresVEX_L = 0;     // Does this instruction ignore the L-bit
   bit has3DNow0F0FOpcode =0;// Wacky 3dNow! encoding?
-  bit hasXOP_WPrefix = 0;   // Same bit as VEX_W, but used for swapping operands
+  bit hasMemOp4Prefix = 0;  // Same bit as VEX_W, but used for swapping operands
   bit hasXOP_Prefix = 0;    // Does this inst require an XOP prefix?
 
   // TSFlags layout should be kept in sync with X86InstrInfo.h.
@@ -184,7 +184,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   let TSFlags{38}    = hasVEX_L;
   let TSFlags{39}    = ignoresVEX_L;
   let TSFlags{40}    = has3DNow0F0FOpcode;
-  let TSFlags{41}    = hasXOP_WPrefix;
+  let TSFlags{41}    = hasMemOp4Prefix;
   let TSFlags{42}    = hasXOP_Prefix;
 }
 

@@ -431,10 +431,6 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   // opcode extension, or ignored, depending on the opcode byte)
   unsigned char VEX_W = 0;
 
-  // XOP_W: opcode specific, same bit as VEX_W, but used to
-  // swap operand 3 and 4 for FMA4 and XOP instructions
-  unsigned char XOP_W = 0;
-
   // XOP: Use XOP prefix byte 0x8f instead of VEX.
   unsigned char XOP = 0;
 
@@ -476,9 +472,6 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 
   if ((TSFlags >> X86II::VEXShift) & X86II::VEX_W)
     VEX_W = 1;
-
-  if ((TSFlags >> X86II::VEXShift) & X86II::XOP_W)
-    XOP_W = 1;
 
   if ((TSFlags >> X86II::VEXShift) & X86II::XOP)
     XOP = 1;
@@ -669,7 +662,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
   // 3 byte VEX prefix
   EmitByte(XOP ? 0x8F : 0xC4, CurByte, OS);
   EmitByte(VEX_R << 7 | VEX_X << 6 | VEX_B << 5 | VEX_5M, CurByte, OS);
-  EmitByte(LastByte | ((VEX_W | XOP_W) << 7), CurByte, OS);
+  EmitByte(LastByte | (VEX_W << 7), CurByte, OS);
 }
 
 /// DetermineREXPrefix - Determine if the MCInst has to be encoded with a X86-64
@@ -929,8 +922,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   // It uses the VEX.VVVV field?
   bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
   bool HasVEX_4VOp3 = (TSFlags >> X86II::VEXShift) & X86II::VEX_4VOp3;
-  bool HasXOP_W = (TSFlags >> X86II::VEXShift) & X86II::XOP_W;
-  unsigned XOP_W_I8IMMOperand = 2;
+  bool HasMemOp4 = (TSFlags >> X86II::VEXShift) & X86II::MemOp4;
+  const unsigned MemOp4_I8IMMOperand = 2;
 
   // Determine where the memory operand starts, if present.
   int MemoryOperand = X86II::getMemoryOperandNo(TSFlags, Opcode);
@@ -1003,14 +996,14 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     if (HasVEX_4V) // Skip 1st src (which is encoded in VEX_VVVV)
       SrcRegNum++;
 
-    if(HasXOP_W) // Skip 2nd src (which is encoded in I8IMM)
+    if(HasMemOp4) // Skip 2nd src (which is encoded in I8IMM)
       SrcRegNum++;
 
     EmitRegModRMByte(MI.getOperand(SrcRegNum),
                      GetX86RegNum(MI.getOperand(CurOp)), CurByte, OS);
 
-    // 2 operands skipped with HasXOP_W, comensate accordingly
-    CurOp = HasXOP_W ? SrcRegNum : SrcRegNum + 1;
+    // 2 operands skipped with HasMemOp4, comensate accordingly
+    CurOp = HasMemOp4 ? SrcRegNum : SrcRegNum + 1;
     if (HasVEX_4VOp3)
       ++CurOp;
     break;
@@ -1022,7 +1015,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
       ++AddrOperands;
       ++FirstMemOp;  // Skip the register source (which is encoded in VEX_VVVV).
     }
-    if(HasXOP_W) // Skip second register source (encoded in I8IMM)
+    if(HasMemOp4) // Skip second register source (encoded in I8IMM)
       ++FirstMemOp;
 
     EmitByte(BaseOpcode, CurByte, OS);
@@ -1113,7 +1106,7 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     // The last source register of a 4 operand instruction in AVX is encoded
     // in bits[7:4] of a immediate byte.
     if ((TSFlags >> X86II::VEXShift) & X86II::VEX_I8IMM) {
-      const MCOperand &MO = MI.getOperand(HasXOP_W ? XOP_W_I8IMMOperand
+      const MCOperand &MO = MI.getOperand(HasMemOp4 ? MemOp4_I8IMMOperand
                                                    : CurOp);
       CurOp++;
       bool IsExtReg = X86II::isX86_64ExtendedReg(MO.getReg());

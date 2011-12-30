@@ -169,7 +169,7 @@ multiclass xop4op<bits<8> opc, string OpcodeStr> {
            (ins VR128:$src1, VR128:$src2, f128mem:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-           []>, VEX_4V, VEX_I8IMM, XOP_W;
+           []>, VEX_4V, VEX_I8IMM, VEX_W, MemOp4;
   def mr : IXOPi8<opc, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, f128mem:$src2, VR128:$src3),
            !strconcat(OpcodeStr,
@@ -192,7 +192,7 @@ multiclass xop4op256<bits<8> opc, string OpcodeStr> {
            (ins VR256:$src1, VR256:$src2, f256mem:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-           []>, VEX_4V, VEX_I8IMM, XOP_W;
+           []>, VEX_4V, VEX_I8IMM, VEX_W, MemOp4;
   def mrY : IXOPi8<opc, MRMSrcMem, (outs VR256:$dst),
            (ins VR256:$src1, f256mem:$src2, VR256:$src3),
            !strconcat(OpcodeStr,
@@ -214,7 +214,7 @@ multiclass xop5op<bits<8> opc, string OpcodeStr> {
         (ins VR128:$src1, VR128:$src2, f128mem:$src3, i8imm:$src4),
         !strconcat(OpcodeStr,
         "\t{$src4, $src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3, $src4}"),
-        []>, XOP_W;
+        []>, VEX_W, MemOp4;
   def mr : IXOP5<opc, MRMSrcMem, (outs VR128:$dst),
         (ins VR128:$src1, f128mem:$src2, VR128:$src3, i8imm:$src4),
         !strconcat(OpcodeStr,
@@ -229,7 +229,7 @@ multiclass xop5op<bits<8> opc, string OpcodeStr> {
         (ins VR256:$src1, VR256:$src2, f256mem:$src3, i8imm:$src4),
         !strconcat(OpcodeStr,
         "\t{$src4, $src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3, $src4}"),
-        []>, XOP_W;
+        []>, VEX_W, MemOp4;
   def mrY : IXOP5<opc, MRMSrcMem, (outs VR256:$dst),
         (ins VR256:$src1, f256mem:$src2, VR256:$src3, i8imm:$src4),
         !strconcat(OpcodeStr,

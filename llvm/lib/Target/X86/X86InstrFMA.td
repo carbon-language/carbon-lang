@@ -105,13 +105,13 @@ multiclass fma4s<bits<8> opc, string OpcodeStr, Operand memop,
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR128:$dst,
-             (Int VR128:$src1, VR128:$src2, VR128:$src3))]>, XOP_W;
+             (Int VR128:$src1, VR128:$src2, VR128:$src3))]>, VEX_W, MemOp4;
   def rm : FMA4<opc, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, memop:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR128:$dst,
-             (Int VR128:$src1, VR128:$src2, mem_cpat:$src3))]>, XOP_W;
+             (Int VR128:$src1, VR128:$src2, mem_cpat:$src3))]>, VEX_W, MemOp4;
   def mr : FMA4<opc, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, memop:$src2, VR128:$src3),
            !strconcat(OpcodeStr,
@@ -128,13 +128,13 @@ multiclass fma4p<bits<8> opc, string OpcodeStr,
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR128:$dst,
-             (Int128 VR128:$src1, VR128:$src2, VR128:$src3))]>, XOP_W;
+             (Int128 VR128:$src1, VR128:$src2, VR128:$src3))]>, VEX_W, MemOp4;
   def rm : FMA4<opc, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, f128mem:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR128:$dst, (Int128 VR128:$src1, VR128:$src2,
-                              (ld_frag128 addr:$src3)))]>, XOP_W;
+                              (ld_frag128 addr:$src3)))]>, VEX_W, MemOp4;
   def mr : FMA4<opc, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, f128mem:$src2, VR128:$src3),
            !strconcat(OpcodeStr,
@@ -146,13 +146,13 @@ multiclass fma4p<bits<8> opc, string OpcodeStr,
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR256:$dst,
-             (Int256 VR256:$src1, VR256:$src2, VR256:$src3))]>, XOP_W;
+             (Int256 VR256:$src1, VR256:$src2, VR256:$src3))]>, VEX_W, MemOp4;
   def rmY : FMA4<opc, MRMSrcMem, (outs VR256:$dst),
            (ins VR256:$src1, VR256:$src2, f256mem:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
            [(set VR256:$dst, (Int256 VR256:$src1, VR256:$src2,
-                              (ld_frag256 addr:$src3)))]>, XOP_W;
+                              (ld_frag256 addr:$src3)))]>, VEX_W, MemOp4;
   def mrY : FMA4<opc, MRMSrcMem, (outs VR256:$dst),
            (ins VR256:$src1, f256mem:$src2, VR256:$src3),
            !strconcat(OpcodeStr,
