@@ -48,11 +48,35 @@ define < 4 x float > @test_x86_fma4_vfmadd_ps(< 4 x float > %a0, < 4 x float > %
   %res = call < 4 x float > @llvm.x86.fma4.vfmadd.ps(< 4 x float > %a0, < 4 x float > %a1, < 4 x float > %a2) ; <i64> [#uses=1]
   ret < 4 x float > %res
 }
+define < 4 x float > @test_x86_fma4_vfmadd_ps_load(< 4 x float > %a0, < 4 x float > %a1, < 4 x float >* %a2) {
+  ; CHECK: vfmaddps (%{{.*}})
+  %x = load <4 x float>* %a2
+  %res = call < 4 x float > @llvm.x86.fma4.vfmadd.ps(< 4 x float > %a0, < 4 x float > %a1, < 4 x float > %x) ; <i64> [#uses=1]
+  ret < 4 x float > %res
+}
+define < 4 x float > @test_x86_fma4_vfmadd_ps_load2(< 4 x float > %a0, < 4 x float >* %a1, < 4 x float > %a2) {
+  ; CHECK: vfmaddps %{{.*}}, (%{{.*}})
+  %x = load <4 x float>* %a1
+  %res = call < 4 x float > @llvm.x86.fma4.vfmadd.ps(< 4 x float > %a0, < 4 x float > %x, < 4 x float > %a2) ; <i64> [#uses=1]
+  ret < 4 x float > %res
+}
 declare < 4 x float > @llvm.x86.fma4.vfmadd.ps(< 4 x float >, < 4 x float >, < 4 x float >) nounwind readnone
 
 define < 2 x double > @test_x86_fma4_vfmadd_pd(< 2 x double > %a0, < 2 x double > %a1, < 2 x double > %a2) {
   ; CHECK: vfmaddpd
   %res = call < 2 x double > @llvm.x86.fma4.vfmadd.pd(< 2 x double > %a0, < 2 x double > %a1, < 2 x double > %a2) ; <i64> [#uses=1]
+  ret < 2 x double > %res
+}
+define < 2 x double > @test_x86_fma4_vfmadd_pd_load(< 2 x double > %a0, < 2 x double > %a1, < 2 x double >* %a2) {
+  ; CHECK: vfmaddpd (%{{.*}})
+  %x = load <2 x double>* %a2
+  %res = call < 2 x double > @llvm.x86.fma4.vfmadd.pd(< 2 x double > %a0, < 2 x double > %a1, < 2 x double > %x) ; <i64> [#uses=1]
+  ret < 2 x double > %res
+}
+define < 2 x double > @test_x86_fma4_vfmadd_pd_load2(< 2 x double > %a0, < 2 x double >* %a1, < 2 x double > %a2) {
+  ; CHECK: vfmaddpd %{{.*}}, (%{{.*}})
+  %x = load <2 x double>* %a1
+  %res = call < 2 x double > @llvm.x86.fma4.vfmadd.pd(< 2 x double > %a0, < 2 x double > %x, < 2 x double > %a2) ; <i64> [#uses=1]
   ret < 2 x double > %res
 }
 declare < 2 x double > @llvm.x86.fma4.vfmadd.pd(< 2 x double >, < 2 x double >, < 2 x double >) nounwind readnone

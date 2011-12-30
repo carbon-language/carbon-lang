@@ -192,38 +192,36 @@ def : Pat<(int_x86_fma4_vfmadd_sd VR128:$src1, sse_load_f64:$src2, VR128:$src3),
 def : Pat<(int_x86_fma4_vfmadd_ps VR128:$src1, VR128:$src2, VR128:$src3),
           (VFMADDPS4rr VR128:$src1, VR128:$src2, VR128:$src3)>;
 def : Pat<(int_x86_fma4_vfmadd_ps VR128:$src1, VR128:$src2,
-                                  (alignedloadv4f32 addr:$src3)),
+                                  (memopv4f32 addr:$src3)),
           (VFMADDPS4rm VR128:$src1, VR128:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfmadd_ps VR128:$src1, (alignedloadv4f32 addr:$src2),
+def : Pat<(int_x86_fma4_vfmadd_ps VR128:$src1, (memopv4f32 addr:$src2),
                                   VR128:$src3),
           (VFMADDPS4mr VR128:$src1, addr:$src2, VR128:$src3)>;
 
 def : Pat<(int_x86_fma4_vfmadd_pd VR128:$src1, VR128:$src2, VR128:$src3),
           (VFMADDPD4rr VR128:$src1, VR128:$src2, VR128:$src3)>;
 def : Pat<(int_x86_fma4_vfmadd_pd VR128:$src1, VR128:$src2,
-                                  (alignedloadv2f64 addr:$src3)),
+                                  (memopv2f64 addr:$src3)),
           (VFMADDPD4rm VR128:$src1, VR128:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfmadd_pd VR128:$src1, (alignedloadv2f64 addr:$src2),
+def : Pat<(int_x86_fma4_vfmadd_pd VR128:$src1, (memopv2f64 addr:$src2),
                                   VR128:$src3),
           (VFMADDPD4mr VR128:$src1, addr:$src2, VR128:$src3)>;
 
 def : Pat<(int_x86_fma4_vfmadd_ps_256 VR256:$src1, VR256:$src2, VR256:$src3),
           (VFMADDPS4rrY VR256:$src1, VR256:$src2, VR256:$src3)>;
 def : Pat<(int_x86_fma4_vfmadd_ps_256 VR256:$src1, VR256:$src2,
-                                  (alignedloadv8f32 addr:$src3)),
+                                  (memopv8f32 addr:$src3)),
           (VFMADDPS4rmY VR256:$src1, VR256:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfmadd_ps_256 VR256:$src1,
-                                      (alignedloadv8f32 addr:$src2),
+def : Pat<(int_x86_fma4_vfmadd_ps_256 VR256:$src1, (memopv8f32 addr:$src2),
                                       VR256:$src3),
           (VFMADDPS4mrY VR256:$src1, addr:$src2, VR256:$src3)>;
 
 def : Pat<(int_x86_fma4_vfmadd_pd_256 VR256:$src1, VR256:$src2, VR256:$src3),
           (VFMADDPD4rrY VR256:$src1, VR256:$src2, VR256:$src3)>;
 def : Pat<(int_x86_fma4_vfmadd_pd_256 VR256:$src1, VR256:$src2,
-                                  (alignedloadv4f64 addr:$src3)),
+                                  (memopv4f64 addr:$src3)),
           (VFMADDPD4rmY VR256:$src1, VR256:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfmadd_pd_256 VR256:$src1,
-                                      (alignedloadv4f64 addr:$src2),
+def : Pat<(int_x86_fma4_vfmadd_pd_256 VR256:$src1, (memopv4f64 addr:$src2),
                                       VR256:$src3),
           (VFMADDPD4mrY VR256:$src1, addr:$src2, VR256:$src3)>;
 
@@ -245,38 +243,36 @@ def : Pat<(int_x86_fma4_vfmsub_sd VR128:$src1, sse_load_f64:$src2, VR128:$src3),
 def : Pat<(int_x86_fma4_vfmsub_ps VR128:$src1, VR128:$src2, VR128:$src3),
           (VFMSUBPS4rr VR128:$src1, VR128:$src2, VR128:$src3)>;
 def : Pat<(int_x86_fma4_vfmsub_ps VR128:$src1, VR128:$src2,
-                                  (alignedloadv4f32 addr:$src3)),
+                                  (memopv4f32 addr:$src3)),
           (VFMSUBPS4rm VR128:$src1, VR128:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfmsub_ps VR128:$src1, (alignedloadv4f32 addr:$src2),
+def : Pat<(int_x86_fma4_vfmsub_ps VR128:$src1, (memopv4f32 addr:$src2),
                                   VR128:$src3),
           (VFMSUBPS4mr VR128:$src1, addr:$src2, VR128:$src3)>;
 
 def : Pat<(int_x86_fma4_vfmsub_pd VR128:$src1, VR128:$src2, VR128:$src3),
           (VFMSUBPD4rr VR128:$src1, VR128:$src2, VR128:$src3)>;
 def : Pat<(int_x86_fma4_vfmsub_pd VR128:$src1, VR128:$src2,
-                                  (alignedloadv2f64 addr:$src3)),
+                                  (memopv2f64 addr:$src3)),
           (VFMSUBPD4rm VR128:$src1, VR128:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfmsub_pd VR128:$src1, (alignedloadv2f64 addr:$src2),
+def : Pat<(int_x86_fma4_vfmsub_pd VR128:$src1, (memopv2f64 addr:$src2),
                                   VR128:$src3),
           (VFMSUBPD4mr VR128:$src1, addr:$src2, VR128:$src3)>;
 
 def : Pat<(int_x86_fma4_vfmsub_ps_256 VR256:$src1, VR256:$src2, VR256:$src3),
           (VFMSUBPS4rrY VR256:$src1, VR256:$src2, VR256:$src3)>;
 def : Pat<(int_x86_fma4_vfmsub_ps_256 VR256:$src1, VR256:$src2,
-                                  (alignedloadv8f32 addr:$src3)),
+                                  (memopv8f32 addr:$src3)),
           (VFMSUBPS4rmY VR256:$src1, VR256:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfmsub_ps_256 VR256:$src1,
-                                      (alignedloadv8f32 addr:$src2),
+def : Pat<(int_x86_fma4_vfmsub_ps_256 VR256:$src1, (memopv8f32 addr:$src2),
                                       VR256:$src3),
           (VFMSUBPS4mrY VR256:$src1, addr:$src2, VR256:$src3)>;
 
 def : Pat<(int_x86_fma4_vfmsub_pd_256 VR256:$src1, VR256:$src2, VR256:$src3),
           (VFMSUBPD4rrY VR256:$src1, VR256:$src2, VR256:$src3)>;
 def : Pat<(int_x86_fma4_vfmsub_pd_256 VR256:$src1, VR256:$src2,
-                                  (alignedloadv4f64 addr:$src3)),
+                                  (memopv4f64 addr:$src3)),
           (VFMSUBPD4rmY VR256:$src1, VR256:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfmsub_pd_256 VR256:$src1,
-                                      (alignedloadv4f64 addr:$src2),
+def : Pat<(int_x86_fma4_vfmsub_pd_256 VR256:$src1, (memopv4f64 addr:$src2),
                                       VR256:$src3),
           (VFMSUBPD4mrY VR256:$src1, addr:$src2, VR256:$src3)>;
 
@@ -298,38 +294,36 @@ def : Pat<(int_x86_fma4_vfnmadd_sd VR128:$src1, sse_load_f64:$src2, VR128:$src3)
 def : Pat<(int_x86_fma4_vfnmadd_ps VR128:$src1, VR128:$src2, VR128:$src3),
           (VFNMADDPS4rr VR128:$src1, VR128:$src2, VR128:$src3)>;
 def : Pat<(int_x86_fma4_vfnmadd_ps VR128:$src1, VR128:$src2,
-                                  (alignedloadv4f32 addr:$src3)),
+                                  (memopv4f32 addr:$src3)),
           (VFNMADDPS4rm VR128:$src1, VR128:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfnmadd_ps VR128:$src1, (alignedloadv4f32 addr:$src2),
+def : Pat<(int_x86_fma4_vfnmadd_ps VR128:$src1, (memopv4f32 addr:$src2),
                                   VR128:$src3),
           (VFNMADDPS4mr VR128:$src1, addr:$src2, VR128:$src3)>;
 
 def : Pat<(int_x86_fma4_vfnmadd_pd VR128:$src1, VR128:$src2, VR128:$src3),
           (VFNMADDPD4rr VR128:$src1, VR128:$src2, VR128:$src3)>;
 def : Pat<(int_x86_fma4_vfnmadd_pd VR128:$src1, VR128:$src2,
-                                  (alignedloadv2f64 addr:$src3)),
+                                  (memopv2f64 addr:$src3)),
           (VFNMADDPD4rm VR128:$src1, VR128:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfnmadd_pd VR128:$src1, (alignedloadv2f64 addr:$src2),
+def : Pat<(int_x86_fma4_vfnmadd_pd VR128:$src1, (memopv2f64 addr:$src2),
                                   VR128:$src3),
           (VFNMADDPD4mr VR128:$src1, addr:$src2, VR128:$src3)>;
 
 def : Pat<(int_x86_fma4_vfnmadd_ps_256 VR256:$src1, VR256:$src2, VR256:$src3),
           (VFNMADDPS4rrY VR256:$src1, VR256:$src2, VR256:$src3)>;
 def : Pat<(int_x86_fma4_vfnmadd_ps_256 VR256:$src1, VR256:$src2,
-                                  (alignedloadv8f32 addr:$src3)),
+                                  (memopv8f32 addr:$src3)),
           (VFNMADDPS4rmY VR256:$src1, VR256:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfnmadd_ps_256 VR256:$src1,
-                                      (alignedloadv8f32 addr:$src2),
+def : Pat<(int_x86_fma4_vfnmadd_ps_256 VR256:$src1, (memopv8f32 addr:$src2),
                                       VR256:$src3),
           (VFNMADDPS4mrY VR256:$src1, addr:$src2, VR256:$src3)>;
 
 def : Pat<(int_x86_fma4_vfnmadd_pd_256 VR256:$src1, VR256:$src2, VR256:$src3),
           (VFNMADDPD4rrY VR256:$src1, VR256:$src2, VR256:$src3)>;
 def : Pat<(int_x86_fma4_vfnmadd_pd_256 VR256:$src1, VR256:$src2,
-                                  (alignedloadv4f64 addr:$src3)),
+                                  (memopv4f64 addr:$src3)),
           (VFNMADDPD4rmY VR256:$src1, VR256:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfnmadd_pd_256 VR256:$src1,
-                                      (alignedloadv4f64 addr:$src2),
+def : Pat<(int_x86_fma4_vfnmadd_pd_256 VR256:$src1, (memopv4f64 addr:$src2),
                                       VR256:$src3),
           (VFNMADDPD4mrY VR256:$src1, addr:$src2, VR256:$src3)>;
 
@@ -351,38 +345,38 @@ def : Pat<(int_x86_fma4_vfnmsub_sd VR128:$src1, sse_load_f64:$src2, VR128:$src3)
 def : Pat<(int_x86_fma4_vfnmsub_ps VR128:$src1, VR128:$src2, VR128:$src3),
           (VFNMSUBPS4rr VR128:$src1, VR128:$src2, VR128:$src3)>;
 def : Pat<(int_x86_fma4_vfnmsub_ps VR128:$src1, VR128:$src2,
-                                  (alignedloadv4f32 addr:$src3)),
+                                  (memopv4f32 addr:$src3)),
           (VFNMSUBPS4rm VR128:$src1, VR128:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfnmsub_ps VR128:$src1, (alignedloadv4f32 addr:$src2),
+def : Pat<(int_x86_fma4_vfnmsub_ps VR128:$src1, (memopv4f32 addr:$src2),
                                   VR128:$src3),
           (VFNMSUBPS4mr VR128:$src1, addr:$src2, VR128:$src3)>;
 
 def : Pat<(int_x86_fma4_vfnmsub_pd VR128:$src1, VR128:$src2, VR128:$src3),
           (VFNMSUBPD4rr VR128:$src1, VR128:$src2, VR128:$src3)>;
 def : Pat<(int_x86_fma4_vfnmsub_pd VR128:$src1, VR128:$src2,
-                                  (alignedloadv2f64 addr:$src3)),
+                                  (memopv2f64 addr:$src3)),
           (VFNMSUBPD4rm VR128:$src1, VR128:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfnmsub_pd VR128:$src1, (alignedloadv2f64 addr:$src2),
+def : Pat<(int_x86_fma4_vfnmsub_pd VR128:$src1, (memopv2f64 addr:$src2),
                                   VR128:$src3),
           (VFNMSUBPD4mr VR128:$src1, addr:$src2, VR128:$src3)>;
 
 def : Pat<(int_x86_fma4_vfnmsub_ps_256 VR256:$src1, VR256:$src2, VR256:$src3),
           (VFNMSUBPS4rrY VR256:$src1, VR256:$src2, VR256:$src3)>;
 def : Pat<(int_x86_fma4_vfnmsub_ps_256 VR256:$src1, VR256:$src2,
-                                  (alignedloadv8f32 addr:$src3)),
+                                  (memopv8f32 addr:$src3)),
           (VFNMSUBPS4rmY VR256:$src1, VR256:$src2, addr:$src3)>;
 def : Pat<(int_x86_fma4_vfnmsub_ps_256 VR256:$src1,
-                                      (alignedloadv8f32 addr:$src2),
+                                      (memopv8f32 addr:$src2),
                                       VR256:$src3),
           (VFNMSUBPS4mrY VR256:$src1, addr:$src2, VR256:$src3)>;
 
 def : Pat<(int_x86_fma4_vfnmsub_pd_256 VR256:$src1, VR256:$src2, VR256:$src3),
           (VFNMSUBPD4rrY VR256:$src1, VR256:$src2, VR256:$src3)>;
 def : Pat<(int_x86_fma4_vfnmsub_pd_256 VR256:$src1, VR256:$src2,
-                                  (alignedloadv4f64 addr:$src3)),
+                                  (memopv4f64 addr:$src3)),
           (VFNMSUBPD4rmY VR256:$src1, VR256:$src2, addr:$src3)>;
 def : Pat<(int_x86_fma4_vfnmsub_pd_256 VR256:$src1,
-                                      (alignedloadv4f64 addr:$src2),
+                                      (memopv4f64 addr:$src2),
                                       VR256:$src3),
           (VFNMSUBPD4mrY VR256:$src1, addr:$src2, VR256:$src3)>;
 
@@ -390,38 +384,36 @@ def : Pat<(int_x86_fma4_vfnmsub_pd_256 VR256:$src1,
 def : Pat<(int_x86_fma4_vfmaddsub_ps VR128:$src1, VR128:$src2, VR128:$src3),
           (VFMADDSUBPS4rr VR128:$src1, VR128:$src2, VR128:$src3)>;
 def : Pat<(int_x86_fma4_vfmaddsub_ps VR128:$src1, VR128:$src2,
-                                  (alignedloadv4f32 addr:$src3)),
+                                  (memopv4f32 addr:$src3)),
           (VFMADDSUBPS4rm VR128:$src1, VR128:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfmaddsub_ps VR128:$src1, (alignedloadv4f32 addr:$src2),
+def : Pat<(int_x86_fma4_vfmaddsub_ps VR128:$src1, (memopv4f32 addr:$src2),
                                   VR128:$src3),
           (VFMADDSUBPS4mr VR128:$src1, addr:$src2, VR128:$src3)>;
 
 def : Pat<(int_x86_fma4_vfmaddsub_pd VR128:$src1, VR128:$src2, VR128:$src3),
           (VFMADDSUBPD4rr VR128:$src1, VR128:$src2, VR128:$src3)>;
 def : Pat<(int_x86_fma4_vfmaddsub_pd VR128:$src1, VR128:$src2,
-                                  (alignedloadv2f64 addr:$src3)),
+                                  (memopv2f64 addr:$src3)),
           (VFMADDSUBPD4rm VR128:$src1, VR128:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfmaddsub_pd VR128:$src1, (alignedloadv2f64 addr:$src2),
+def : Pat<(int_x86_fma4_vfmaddsub_pd VR128:$src1, (memopv2f64 addr:$src2),
                                   VR128:$src3),
           (VFMADDSUBPD4mr VR128:$src1, addr:$src2, VR128:$src3)>;
 
 def : Pat<(int_x86_fma4_vfmaddsub_ps_256 VR256:$src1, VR256:$src2, VR256:$src3),
           (VFMADDSUBPS4rrY VR256:$src1, VR256:$src2, VR256:$src3)>;
 def : Pat<(int_x86_fma4_vfmaddsub_ps_256 VR256:$src1, VR256:$src2,
-                                  (alignedloadv8f32 addr:$src3)),
+                                  (memopv8f32 addr:$src3)),
           (VFMADDSUBPS4rmY VR256:$src1, VR256:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfmaddsub_ps_256 VR256:$src1,
-                                      (alignedloadv8f32 addr:$src2),
+def : Pat<(int_x86_fma4_vfmaddsub_ps_256 VR256:$src1, (memopv8f32 addr:$src2),
                                       VR256:$src3),
           (VFMADDSUBPS4mrY VR256:$src1, addr:$src2, VR256:$src3)>;
 
 def : Pat<(int_x86_fma4_vfmaddsub_pd_256 VR256:$src1, VR256:$src2, VR256:$src3),
           (VFMADDSUBPD4rrY VR256:$src1, VR256:$src2, VR256:$src3)>;
 def : Pat<(int_x86_fma4_vfmaddsub_pd_256 VR256:$src1, VR256:$src2,
-                                  (alignedloadv4f64 addr:$src3)),
+                                  (memopv4f64 addr:$src3)),
           (VFMADDSUBPD4rmY VR256:$src1, VR256:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfmaddsub_pd_256 VR256:$src1,
-                                      (alignedloadv4f64 addr:$src2),
+def : Pat<(int_x86_fma4_vfmaddsub_pd_256 VR256:$src1, (memopv4f64 addr:$src2),
                                       VR256:$src3),
           (VFMADDSUBPD4mrY VR256:$src1, addr:$src2, VR256:$src3)>;
 
@@ -429,37 +421,35 @@ def : Pat<(int_x86_fma4_vfmaddsub_pd_256 VR256:$src1,
 def : Pat<(int_x86_fma4_vfmsubadd_ps VR128:$src1, VR128:$src2, VR128:$src3),
           (VFMSUBADDPS4rr VR128:$src1, VR128:$src2, VR128:$src3)>;
 def : Pat<(int_x86_fma4_vfmsubadd_ps VR128:$src1, VR128:$src2,
-                                  (alignedloadv4f32 addr:$src3)),
+                                  (memopv4f32 addr:$src3)),
           (VFMSUBADDPS4rm VR128:$src1, VR128:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfmsubadd_ps VR128:$src1, (alignedloadv4f32 addr:$src2),
+def : Pat<(int_x86_fma4_vfmsubadd_ps VR128:$src1, (memopv4f32 addr:$src2),
                                   VR128:$src3),
           (VFMSUBADDPS4mr VR128:$src1, addr:$src2, VR128:$src3)>;
 
 def : Pat<(int_x86_fma4_vfmsubadd_pd VR128:$src1, VR128:$src2, VR128:$src3),
           (VFMSUBADDPD4rr VR128:$src1, VR128:$src2, VR128:$src3)>;
 def : Pat<(int_x86_fma4_vfmsubadd_pd VR128:$src1, VR128:$src2,
-                                  (alignedloadv2f64 addr:$src3)),
+                                  (memopv2f64 addr:$src3)),
           (VFMSUBADDPD4rm VR128:$src1, VR128:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfmsubadd_pd VR128:$src1, (alignedloadv2f64 addr:$src2),
+def : Pat<(int_x86_fma4_vfmsubadd_pd VR128:$src1, (memopv2f64 addr:$src2),
                                   VR128:$src3),
           (VFMSUBADDPD4mr VR128:$src1, addr:$src2, VR128:$src3)>;
 
 def : Pat<(int_x86_fma4_vfmsubadd_ps_256 VR256:$src1, VR256:$src2, VR256:$src3),
           (VFMSUBADDPS4rrY VR256:$src1, VR256:$src2, VR256:$src3)>;
 def : Pat<(int_x86_fma4_vfmsubadd_ps_256 VR256:$src1, VR256:$src2,
-                                  (alignedloadv8f32 addr:$src3)),
+                                  (memopv8f32 addr:$src3)),
           (VFMSUBADDPS4rmY VR256:$src1, VR256:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfmsubadd_ps_256 VR256:$src1,
-                                      (alignedloadv8f32 addr:$src2),
+def : Pat<(int_x86_fma4_vfmsubadd_ps_256 VR256:$src1, (memopv8f32 addr:$src2),
                                       VR256:$src3),
           (VFMSUBADDPS4mrY VR256:$src1, addr:$src2, VR256:$src3)>;
 
 def : Pat<(int_x86_fma4_vfmsubadd_pd_256 VR256:$src1, VR256:$src2, VR256:$src3),
           (VFMSUBADDPD4rrY VR256:$src1, VR256:$src2, VR256:$src3)>;
 def : Pat<(int_x86_fma4_vfmsubadd_pd_256 VR256:$src1, VR256:$src2,
-                                  (alignedloadv4f64 addr:$src3)),
+                                  (memopv4f64 addr:$src3)),
           (VFMSUBADDPD4rmY VR256:$src1, VR256:$src2, addr:$src3)>;
-def : Pat<(int_x86_fma4_vfmsubadd_pd_256 VR256:$src1,
-                                      (alignedloadv4f64 addr:$src2),
+def : Pat<(int_x86_fma4_vfmsubadd_pd_256 VR256:$src1, (memopv4f64 addr:$src2),
                                       VR256:$src3),
           (VFMSUBADDPD4mrY VR256:$src1, addr:$src2, VR256:$src3)>;
