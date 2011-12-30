@@ -659,6 +659,22 @@ DataExtractor::GetMaxU64 (uint32_t *offset_ptr, uint32_t size) const
     return 0;
 }
 
+uint64_t
+DataExtractor::GetMaxU64_unchecked (uint32_t *offset_ptr, uint32_t size) const
+{
+    switch (size)
+    {
+        case 1: return GetU8_unchecked  (offset_ptr); break;
+        case 2: return GetU16_unchecked (offset_ptr); break;
+        case 4: return GetU32_unchecked (offset_ptr); break;
+        case 8: return GetU64_unchecked (offset_ptr); break;
+        default:
+            assert(!"GetMax64 unhandled case!");
+            break;
+    }
+    return 0;
+}
+
 int64_t
 DataExtractor::GetMaxS64 (uint32_t *offset_ptr, uint32_t size) const
 {
@@ -801,6 +817,12 @@ uint64_t
 DataExtractor::GetAddress (uint32_t *offset_ptr) const
 {
     return GetMaxU64 (offset_ptr, m_addr_size);
+}
+
+uint64_t
+DataExtractor::GetAddress_unchecked (uint32_t *offset_ptr) const
+{
+    return GetMaxU64_unchecked (offset_ptr, m_addr_size);
 }
 
 //------------------------------------------------------------------

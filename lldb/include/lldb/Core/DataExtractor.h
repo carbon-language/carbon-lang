@@ -354,6 +354,9 @@ public:
     //------------------------------------------------------------------
     uint64_t
     GetAddress (uint32_t *offset_ptr) const;
+    
+    uint64_t
+    GetAddress_unchecked (uint32_t *offset_ptr) const;
 
     //------------------------------------------------------------------
     /// Get the current address size.
@@ -628,6 +631,9 @@ public:
     //------------------------------------------------------------------
     uint64_t
     GetMaxU64 (uint32_t *offset_ptr, uint32_t byte_size) const;
+
+    uint64_t
+    GetMaxU64_unchecked (uint32_t *offset_ptr, uint32_t byte_size) const;
 
     //------------------------------------------------------------------
     /// Extract an signed integer of size \a byte_size from \a *offset_ptr.

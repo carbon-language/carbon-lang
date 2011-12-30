@@ -752,6 +752,9 @@ ObjectFileMachO::ParseSymtab (bool minimize)
     struct symtab_command symtab_load_command;
     uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
     uint32_t i;
+    
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYMBOLS));
+
     for (i=0; i<m_header.ncmds; ++i)
     {
         const uint32_t cmd_offset = offset;
@@ -764,16 +767,67 @@ ObjectFileMachO::ParseSymtab (bool minimize)
             // Read in the rest of the symtab load command
             if (m_data.GetU32(&offset, &symtab_load_command.symoff, 4)) // fill in symoff, nsyms, stroff, strsize fields
             {
+                if (symtab_load_command.symoff == 0)
+                {
+                    if (log)
+                        GetModule()->LogMessage(log.get(), "LC_SYMTAB.symoff == 0");
+                    return 0;
+                }
+
+                if (symtab_load_command.stroff == 0)
+                {
+                    if (log)
+                        GetModule()->LogMessage(log.get(), "LC_SYMTAB.stroff == 0");
+                    return 0;
+                }
+                
+                if (symtab_load_command.nsyms == 0)
+                {
+                    if (log)
+                        GetModule()->LogMessage(log.get(), "LC_SYMTAB.nsyms == 0");
+                    return 0;
+                }
+                
+                if (symtab_load_command.strsize == 0)
+                {
+                    if (log)
+                        GetModule()->LogMessage(log.get(), "LC_SYMTAB.strsize == 0");
+                    return 0;
+                }
+
                 Symtab *symtab = m_symtab_ap.get();
                 SectionList *section_list = GetSectionList();
-                assert(section_list);
-                const size_t addr_size = m_data.GetAddressByteSize();
-                const ByteOrder endian = m_data.GetByteOrder();
-                bool bit_width_32 = addr_size == 4;
-                const size_t nlist_size = bit_width_32 ? sizeof(struct nlist) : sizeof(struct nlist_64);
+                if (section_list == NULL)
+                    return 0;
 
-                DataBufferSP symtab_data_sp(m_file.ReadFileContents(m_offset + symtab_load_command.symoff, symtab_load_command.nsyms * nlist_size));
-                DataBufferSP strtab_data_sp(m_file.ReadFileContents(m_offset + symtab_load_command.stroff, symtab_load_command.strsize));
+                const size_t addr_byte_size = m_data.GetAddressByteSize();
+                const ByteOrder byte_order = m_data.GetByteOrder();
+                bool bit_width_32 = addr_byte_size == 4;
+                const size_t nlist_byte_size = bit_width_32 ? sizeof(struct nlist) : sizeof(struct nlist_64);
+
+                DataBufferSP symtab_data_sp(m_file.ReadFileContents (m_offset + symtab_load_command.symoff, 
+                                                                     symtab_load_command.nsyms * nlist_byte_size));
+
+                if (symtab_data_sp.get() == NULL || 
+                    symtab_data_sp->GetBytes() == NULL ||
+                    symtab_data_sp->GetByteSize() == 0)
+                {
+                    if (log)
+                        GetModule()->LogMessage(log.get(), "failed to read nlist data");
+                    return 0;
+                }
+
+                DataBufferSP strtab_data_sp(m_file.ReadFileContents (m_offset + symtab_load_command.stroff, 
+                                                                     symtab_load_command.strsize));
+
+                if (strtab_data_sp.get() == NULL || 
+                    strtab_data_sp->GetBytes() == NULL ||
+                    strtab_data_sp->GetByteSize() == 0)
+                {
+                    if (log)
+                        GetModule()->LogMessage(log.get(), "failed to read strtab data");
+                    return 0;
+                }
 
                 const char *strtab_data = (const char *)strtab_data_sp->GetBytes();
                 const size_t strtab_data_len = strtab_data_sp->GetByteSize();
@@ -793,15 +847,11 @@ ObjectFileMachO::ParseSymtab (bool minimize)
 
                 uint8_t TEXT_eh_frame_sectID = eh_frame_section_sp.get() ? eh_frame_section_sp->GetID() : NListSectionNoSection;
                 //uint32_t symtab_offset = 0;
-                const uint8_t* nlist_data = symtab_data_sp->GetBytes();
-                assert (symtab_data_sp->GetByteSize()/nlist_size >= symtab_load_command.nsyms);
+                assert (symtab_data_sp->GetByteSize()/nlist_byte_size >= symtab_load_command.nsyms);
 
+                uint32_t nlist_data_offset = 0;
+                DataExtractor nlist_data (symtab_data_sp, byte_order, addr_byte_size);
 
-                if (endian != lldb::endian::InlHostByteOrder())
-                {
-                    // ...
-                    assert (!"UNIMPLEMENTED: Swap all nlist entries");
-                }
                 uint32_t N_SO_index = UINT32_MAX;
 
                 MachSymtabSectionInfo section_info (section_list);
@@ -828,19 +878,14 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 for (nlist_idx = 0; nlist_idx < symtab_load_command.nsyms; ++nlist_idx)
                 {
                     struct nlist_64 nlist;
-                    if (bit_width_32)
-                    {
-                        struct nlist* nlist32_ptr = (struct nlist*)(nlist_data + (nlist_idx * nlist_size));
-                        nlist.n_strx = nlist32_ptr->n_strx;
-                        nlist.n_type = nlist32_ptr->n_type;
-                        nlist.n_sect = nlist32_ptr->n_sect;
-                        nlist.n_desc = nlist32_ptr->n_desc;
-                        nlist.n_value = nlist32_ptr->n_value;
-                    }
-                    else
-                    {
-                        nlist = *((struct nlist_64*)(nlist_data + (nlist_idx * nlist_size)));
-                    }
+                    if (!nlist_data.ValidOffsetForDataOfSize(nlist_data_offset, nlist_byte_size))
+                        break;
+
+                    nlist.n_strx  = nlist_data.GetU32_unchecked(&nlist_data_offset);
+                    nlist.n_type  = nlist_data.GetU8_unchecked (&nlist_data_offset);
+                    nlist.n_sect  = nlist_data.GetU8_unchecked (&nlist_data_offset);
+                    nlist.n_desc  = nlist_data.GetU16_unchecked (&nlist_data_offset);
+                    nlist.n_value = nlist_data.GetAddress_unchecked (&nlist_data_offset);
 
                     SymbolType type = eSymbolTypeInvalid;
                     if (nlist.n_strx >= strtab_data_len)
@@ -1556,9 +1601,6 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         }
                     }
                 }
-                
-                
-
                 return symtab->GetNumSymbols();
             }
         }
