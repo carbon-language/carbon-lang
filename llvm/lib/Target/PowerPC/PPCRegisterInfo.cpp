@@ -299,8 +299,9 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       DebugLoc dl = MI->getDebugLoc();
 
       if (isInt<16>(CalleeAmt)) {
-        BuildMI(MBB, I, dl, TII.get(ADDIInstr), StackReg).addReg(StackReg).
-          addImm(CalleeAmt);
+        BuildMI(MBB, I, dl, TII.get(ADDIInstr), StackReg)
+          .addReg(StackReg, RegState::Kill)
+          .addImm(CalleeAmt);
       } else {
         MachineBasicBlock::iterator MBBI = I;
         BuildMI(MBB, MBBI, dl, TII.get(LISInstr), TmpReg)
@@ -308,9 +309,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
         BuildMI(MBB, MBBI, dl, TII.get(ORIInstr), TmpReg)
           .addReg(TmpReg, RegState::Kill)
           .addImm(CalleeAmt & 0xFFFF);
-        BuildMI(MBB, MBBI, dl, TII.get(ADDInstr))
-          .addReg(StackReg)
-          .addReg(StackReg)
+        BuildMI(MBB, MBBI, dl, TII.get(ADDInstr), StackReg)
+          .addReg(StackReg, RegState::Kill)
           .addReg(TmpReg);
       }
     }
@@ -407,12 +407,12 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
     if (requiresRegisterScavenging(MF)) // FIXME (64-bit): Use "true" part.
       BuildMI(MBB, II, dl, TII.get(PPC::STDUX))
         .addReg(Reg, RegState::Kill)
-        .addReg(PPC::X1)
+        .addReg(PPC::X1, RegState::Define)
         .addReg(MI.getOperand(1).getReg());
     else
       BuildMI(MBB, II, dl, TII.get(PPC::STDUX))
         .addReg(PPC::X0, RegState::Kill)
-        .addReg(PPC::X1)
+        .addReg(PPC::X1, RegState::Define)
         .addReg(MI.getOperand(1).getReg());
 
     if (!MI.getOperand(1).isKill())
@@ -428,7 +428,7 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II,
   } else {
     BuildMI(MBB, II, dl, TII.get(PPC::STWUX))
       .addReg(Reg, RegState::Kill)
-      .addReg(PPC::R1)
+      .addReg(PPC::R1, RegState::Define)
       .addReg(MI.getOperand(1).getReg());
 
     if (!MI.getOperand(1).isKill())
@@ -681,7 +681,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   unsigned StackReg = MI.getOperand(FIOperandNo).getReg();
   MI.getOperand(OperandBase).ChangeToRegister(StackReg, false);
-  MI.getOperand(OperandBase + 1).ChangeToRegister(SReg, false);
+  MI.getOperand(OperandBase + 1).ChangeToRegister(SReg, false, false, true);
 }
 
 unsigned PPCRegisterInfo::getFrameRegister(const MachineFunction &MF) const {

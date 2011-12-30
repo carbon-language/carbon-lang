@@ -6,16 +6,22 @@ target triple = "powerpc-apple-darwin9.6"
 
 define void @foo() nounwind {
 entry:
-;CHECK:  lis r3, 1
-;CHECK:  ori r3, r3, 34524
 ;CHECK:  mfcr r2
+;CHECK:  lis r3, 1
 ;CHECK:  rlwinm r2, r2, 8, 0, 31
+;CHECK:  ori r3, r3, 34524
+;CHECK:  stwx r2, r1, r3
+; Make sure that the register scavenger returns the same temporary register.
+;CHECK:  mfcr r2
+;CHECK:  lis r3, 1
+;CHECK:  rlwinm r2, r2, 12, 0, 31
+;CHECK:  ori r3, r3, 34520
 ;CHECK:  stwx r2, r1, r3
   %x = alloca [100000 x i8]                       ; <[100000 x i8]*> [#uses=1]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   %x1 = bitcast [100000 x i8]* %x to i8*          ; <i8*> [#uses=1]
   call void @bar(i8* %x1) nounwind
-  call void asm sideeffect "", "~{cr2}"() nounwind
+  call void asm sideeffect "", "~{cr2},~{cr3}"() nounwind
   br label %return
 
 return:                                           ; preds = %entry
