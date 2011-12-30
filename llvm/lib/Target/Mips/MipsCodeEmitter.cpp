@@ -216,7 +216,7 @@ unsigned MipsCodeEmitter::getSizeInsEncoding(const MachineInstr &MI,
 unsigned MipsCodeEmitter::getMachineOpValue(const MachineInstr &MI,
                                             const MachineOperand &MO) const {
   if (MO.isReg())
-    return MipsRegisterInfo::getRegisterNumbering(MO.getReg());
+    return getMipsRegisterNumbering(MO.getReg());
   else if (MO.isImm())
     return static_cast<unsigned>(MO.getImm());
   else if (MO.isGlobal()) {

@@ -66,10 +66,10 @@ static bool isDirective(unsigned Opc) {
 }
 
 void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  SmallString<128> Str;
-  raw_svector_ostream OS(Str);
-
   if (MI->isDebugValue()) {
+    SmallString<128> Str;
+    raw_svector_ostream OS(Str);
+
     PrintDebugValueComment(MI, OS);
     return;
   }
@@ -178,7 +178,7 @@ void MipsAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
     if (Mips::CPURegsRegisterClass->contains(Reg))
       break;
 
-    unsigned RegNum = MipsRegisterInfo::getRegisterNumbering(Reg);
+    unsigned RegNum = getMipsRegisterNumbering(Reg);
     if (Mips::AFGR64RegisterClass->contains(Reg)) {
       FPUBitmask |= (3 << RegNum);
       CSFPRegsSize += AFGR64RegSize;
@@ -193,7 +193,7 @@ void MipsAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
   // Set CPU Bitmask.
   for (; i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
-    unsigned RegNum = MipsRegisterInfo::getRegisterNumbering(Reg);
+    unsigned RegNum = getMipsRegisterNumbering(Reg);
     CPUBitmask |= (1 << RegNum);
   }
 
