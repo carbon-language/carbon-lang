@@ -536,12 +536,11 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     if (ShiftAmt1 == 0) return 0;  // Will be simplified in the future.
     Value *X = ShiftOp->getOperand(0);
     
-    uint32_t AmtSum = ShiftAmt1+ShiftAmt2;   // Fold into one big shift.
-    
     IntegerType *Ty = cast<IntegerType>(I.getType());
     
     // Check for (X << c1) << c2  and  (X >> c1) >> c2
     if (I.getOpcode() == ShiftOp->getOpcode()) {
+      uint32_t AmtSum = ShiftAmt1+ShiftAmt2;   // Fold into one big shift.
       // If this is oversized composite shift, then unsigned shifts get 0, ashr
       // saturates.
       if (AmtSum >= TypeBits) {
@@ -603,9 +602,16 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       // (X >>? C1) << C2 --> X >>? (C1-C2) & (-1 << C2)
       if (I.getOpcode() == Instruction::Shl &&
           ShiftOp->getOpcode() != Instruction::Shl) {
-        Value *Shift = Builder->CreateBinOp(ShiftOp->getOpcode(), X,
-                                            ConstantInt::get(Ty, ShiftDiff));
-        
+        ConstantInt *ShiftDiffCst = ConstantInt::get(Ty, ShiftDiff);
+        if (ShiftOp->isExact()) {
+          // (X >>?exact C1) << C2 --> X >>?exact (C1-C2)
+          BinaryOperator *NewShr = BinaryOperator::Create(ShiftOp->getOpcode(),
+                                                          X, ShiftDiffCst);
+          NewShr->setIsExact(true);
+          return NewShr;
+        }
+        Value *Shift = Builder->CreateBinOp(ShiftOp->getOpcode(),
+                                            X, ShiftDiffCst);
         APInt Mask(APInt::getHighBitsSet(TypeBits, TypeBits - ShiftAmt2));
         return BinaryOperator::CreateAnd(Shift,
                                          ConstantInt::get(I.getContext(),Mask));

@@ -542,3 +542,21 @@ define i32 @test45(i32 %a) nounwind {
 ; CHECK-NEXT: %y = lshr i32 %a, 5
 ; CHECK-NEXT: ret i32 %y
 }
+
+define i32 @test46(i32 %a) {
+  %y = ashr exact i32 %a, 3
+  %z = shl i32 %y, 1
+  ret i32 %z
+; CHECK: @test46
+; CHECK-NEXT: %z = ashr exact i32 %a, 2
+; CHECK-NEXT: ret i32 %z
+}
+
+define i32 @test47(i32 %a) {
+  %y = lshr exact i32 %a, 3
+  %z = shl i32 %y, 1
+  ret i32 %z
+; CHECK: @test47
+; CHECK-NEXT: %z = lshr exact i32 %a, 2
+; CHECK-NEXT: ret i32 %z
+}
