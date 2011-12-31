@@ -2523,6 +2523,11 @@ void ASTReader::makeModuleVisible(Module *Mod,
       continue;
     }
     
+    if (!Mod->isAvailable()) {
+      // Modules that aren't available cannot be made visible.
+      continue;
+    }
+
     // Update the module's name visibility.
     Mod->NameVisibility = NameVisibility;
     
@@ -3245,6 +3250,19 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       // Once we've loaded the set of exports, there's no reason to keep 
       // the parsed, unresolved exports around.
       CurrentModule->UnresolvedExports.clear();
+      break;
+    }
+    case SUBMODULE_REQUIRES: {
+      if (First) {
+        Error("missing submodule metadata record at beginning of block");
+        return Failure;
+      }
+
+      if (!CurrentModule)
+        break;
+
+      CurrentModule->addRequirement(StringRef(BlobStart, BlobLen), 
+                                    Context.getLangOptions());
       break;
     }
     }

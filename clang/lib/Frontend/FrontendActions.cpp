@@ -136,6 +136,10 @@ ASTConsumer *GenerateModuleAction::CreateASTConsumer(CompilerInstance &CI,
 static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
                                         clang::Module *Module,
                                         llvm::SmallString<256> &Includes) {
+  // Don't collect any headers for unavailable modules.
+  if (!Module->isAvailable())
+    return;
+
   // Add includes for each of these headers.
   for (unsigned I = 0, N = Module->Headers.size(); I != N; ++I) {
     if (LangOpts.ObjC1)
@@ -222,7 +226,17 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
     
     return false;
   }
-  
+
+  // Check whether we can build this module at all.
+  StringRef Feature;
+  if (!Module->isAvailable(CI.getLangOpts(), Feature)) {
+    CI.getDiagnostics().Report(diag::err_module_unavailable)
+      << Module->getFullModuleName()
+      << Feature;
+
+    return false;
+  }
+
   // Do we have an umbrella header for this module?
   const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader();
   

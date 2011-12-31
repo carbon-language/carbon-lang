@@ -252,7 +252,8 @@ void CompilerInstance::createPreprocessor() {
 
   // Create the Preprocessor.
   HeaderSearch *HeaderInfo = new HeaderSearch(getFileManager(), 
-                                              getDiagnostics());
+                                              getDiagnostics(),
+                                              getLangOpts());
   PP = new Preprocessor(getDiagnostics(), getLangOpts(), &getTarget(),
                         getSourceManager(), *HeaderInfo, *this, PTHMgr,
                         /*OwnsHeaderSearch=*/true);
@@ -1284,6 +1285,19 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
       
       return 0;
     }
+
+    // Check whether this module is available.
+    StringRef Feature;
+    if (!Module->isAvailable(getLangOpts(), Feature)) {
+      getDiagnostics().Report(ImportLoc, diag::err_module_unavailable)
+        << Module->getFullModuleName()
+        << Feature
+        << SourceRange(Path.front().second, Path.back().second);
+      LastModuleImportLoc = ImportLoc;
+      LastModuleImportResult = 0;
+      return 0;
+    }
+
     ModuleManager->makeModuleVisible(Module, Visibility);
   }
   

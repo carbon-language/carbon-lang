@@ -38,8 +38,13 @@ class ModuleMapParser;
 class ModuleMap {
   SourceManager *SourceMgr;
   llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags;
-  LangOptions LangOpts;
-  
+  const LangOptions &LangOpts;
+
+  /// \brief Language options used to parse the module map itself.
+  ///
+  /// These are always simple C language options.
+  LangOptions MMapLangOpts;
+
   /// \brief The top-level modules that are known.
   llvm::StringMap<Module *> Modules;
   
@@ -82,7 +87,10 @@ public:
   ///
   /// \param DC A diagnostic consumer that will be cloned for use in generating
   /// diagnostics.
-  ModuleMap(FileManager &FileMgr, const DiagnosticConsumer &DC);
+  ///
+  /// \param LangOpts Language options for this translation unit.
+  ModuleMap(FileManager &FileMgr, const DiagnosticConsumer &DC,
+            const LangOptions &LangOpts);
 
   /// \brief Destroy the module map.
   ///
@@ -95,6 +103,10 @@ public:
   /// \returns The module that owns the given header file, or null to indicate
   /// that no module owns this header file.
   Module *findModuleForHeader(const FileEntry *File);
+
+  /// \brief Determine whether the given header is part of a module
+  /// marked 'unavailable'.
+  bool isHeaderInUnavailableModule(const FileEntry *Header);
 
   /// \brief Retrieve a module with the given name.
   ///
@@ -188,7 +200,7 @@ public:
 
   /// \brief Adds this header to the given module.
   void addHeader(Module *Mod, const FileEntry *Header);
-  
+
   /// \brief Parse the given module map file, and record any modules we 
   /// encounter.
   ///

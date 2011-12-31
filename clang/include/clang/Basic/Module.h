@@ -29,8 +29,9 @@ namespace llvm {
 
 namespace clang {
   
-class FileEntry;
 class DirectoryEntry;
+class FileEntry;
+class LangOptions;
   
 /// \brief Describes the name of a module.
 typedef llvm::SmallVector<std::pair<std::string, SourceLocation>, 2>
@@ -57,7 +58,18 @@ public:
   
   /// \brief The headers that are part of this module.
   llvm::SmallVector<const FileEntry *, 2> Headers;
-  
+
+  /// \brief The set of language features required to use this module.
+  ///
+  /// If any of these features is not present, the \c IsAvailable bit
+  /// will be false to indicate that this (sub)module is not
+  /// available.
+  llvm::SmallVector<std::string, 2> Requires;
+
+  /// \brief Whether this module is available in the current
+  /// translation unit.
+  unsigned IsAvailable : 1;
+
   /// \brief Whether this module was loaded from a module file.
   unsigned IsFromModuleFile : 1;
   
@@ -134,21 +146,40 @@ public:
   explicit Module(StringRef Name, SourceLocation DefinitionLoc,
                   bool IsFramework)
     : Name(Name), DefinitionLoc(DefinitionLoc), Parent(0), Umbrella(),
-      IsFromModuleFile(false), IsFramework(IsFramework), IsExplicit(false),
-      InferSubmodules(false), InferExplicitSubmodules(false),
+      IsAvailable(true), IsFromModuleFile(false), IsFramework(IsFramework), 
+      IsExplicit(false), InferSubmodules(false), InferExplicitSubmodules(false),
       InferExportWildcard(false), NameVisibility(Hidden) { }
   
   /// \brief Construct  a new module or submodule.
   Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent, 
          bool IsFramework, bool IsExplicit)
     : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent), 
-      Umbrella(), IsFromModuleFile(false), IsFramework(IsFramework), 
-      IsExplicit(IsExplicit), InferSubmodules(false), 
+      Umbrella(), IsAvailable(true), IsFromModuleFile(false), 
+      IsFramework(IsFramework), IsExplicit(IsExplicit), InferSubmodules(false), 
       InferExplicitSubmodules(false), InferExportWildcard(false),
-      NameVisibility(Hidden) { }
+      NameVisibility(Hidden) 
+  { 
+    if (Parent && !Parent->isAvailable())
+      IsAvailable = false;
+  }
   
   ~Module();
   
+  /// \brief Determine whether this module is available for use within the
+  /// current translation unit.
+  bool isAvailable() const { return IsAvailable; }
+
+  /// \brief Determine whether this module is available for use within the
+  /// current translation unit.
+  ///
+  /// \param LangOpts The language options used for the current
+  /// translation unit.
+  ///
+  /// \param Feature If this module is unavailable, this parameter
+  /// will be set to one of the features that is required for use of
+  /// this module (but is not available).
+  bool isAvailable(const LangOptions &LangOpts, StringRef &Feature) const;
+
   /// \brief Determine whether this module is a submodule.
   bool isSubModule() const { return Parent != 0; }
   
@@ -203,7 +234,17 @@ public:
   bool hasUmbrellaDir() const {
     return Umbrella && Umbrella.is<const DirectoryEntry *>();
   }
-  
+
+  /// \briaf Add the given feature requirement to the list of features
+  /// required by this module.
+  ///
+  /// \param Feature The feature that is required by this module (and
+  /// its submodules).
+  ///
+  /// \param LangOpts The set of language options that will be used to
+  /// evaluate the availability of this feature.
+  void addRequirement(StringRef Feature, const LangOptions &LangOpts);
+
   /// \brief Print the module map for this module to the given stream. 
   ///
   void print(llvm::raw_ostream &OS, unsigned Indent = 0) const;

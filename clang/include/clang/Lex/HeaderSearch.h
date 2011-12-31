@@ -185,7 +185,8 @@ class HeaderSearch {
   explicit HeaderSearch(const HeaderSearch&);
   void operator=(const HeaderSearch&);
 public:
-  HeaderSearch(FileManager &FM, DiagnosticsEngine &Diags);
+  HeaderSearch(FileManager &FM, DiagnosticsEngine &Diags,
+               const LangOptions &LangOpts);
   ~HeaderSearch();
 
   FileManager &getFileMgr() const { return FileMgr; }
@@ -369,6 +370,8 @@ public:
   bool hasModuleMap(StringRef Filename, const DirectoryEntry *Root);
   
   /// \brief Retrieve the module that corresponds to the given file, if any.
+  ///
+  /// \param File The header that we wish to map to a module.
   Module *findModuleForHeader(const FileEntry *File);
   
   

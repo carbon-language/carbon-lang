@@ -355,6 +355,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
       if (getDiagnostics().getDiagnosticLevel(
             diag::warn_uncovered_module_header, 
             StartLoc) != DiagnosticsEngine::Ignored) {
+        ModuleMap &ModMap = getHeaderSearchInfo().getModuleMap();
         typedef llvm::sys::fs::recursive_directory_iterator
           recursive_directory_iterator;
         const DirectoryEntry *Dir = Mod->getUmbrellaDir();
@@ -363,20 +364,22 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
              Entry != End && !EC; Entry.increment(EC)) {
           using llvm::StringSwitch;
           
-          // Check whether this entry has an extension typically associated with 
+          // Check whether this entry has an extension typically associated with
           // headers.
           if (!StringSwitch<bool>(llvm::sys::path::extension(Entry->path()))
-              .Cases(".h", ".H", ".hh", ".hpp", true)
-              .Default(false))
+                 .Cases(".h", ".H", ".hh", ".hpp", true)
+                 .Default(false))
             continue;
 
           if (const FileEntry *Header = getFileManager().getFile(Entry->path()))
             if (!getSourceManager().hasFileInfo(Header)) {
-              // Find the 
-              llvm::SmallString<128> RelativePath;
-              computeRelativePath(FileMgr, Dir, Header, RelativePath);              
-              Diag(StartLoc, diag::warn_uncovered_module_header)
-                << RelativePath;
+              if (!ModMap.isHeaderInUnavailableModule(Header)) {
+                // Find the relative path that would access this header.
+                llvm::SmallString<128> RelativePath;
+                computeRelativePath(FileMgr, Dir, Header, RelativePath);              
+                Diag(StartLoc, diag::warn_uncovered_module_header)
+                  << RelativePath;
+              }
             }
         }
       }

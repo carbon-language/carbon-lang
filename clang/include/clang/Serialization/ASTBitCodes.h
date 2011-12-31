@@ -527,7 +527,9 @@ namespace clang {
       SUBMODULE_IMPORTS = 5,
       /// \brief Specifies the submodules that are re-exported from this 
       /// submodule.
-      SUBMODULE_EXPORTS = 6
+      SUBMODULE_EXPORTS = 6,
+      /// \brief Specifies a required feature.
+      SUBMODULE_REQUIRES = 7
     };
     
     /// \defgroup ASTAST AST file AST constants

@@ -143,4 +143,6 @@ def warn_missing_submodule : Warning<"missing submodule '%0'">,
   InGroup<IncompleteUmbrella>;
 def err_module_map_temp_file : Error<
   "unable to write temporary module map file '%0'">, DefaultFatal;
+def err_module_unavailable : Error<"module '%0' requires feature '%1'">;
+
 }

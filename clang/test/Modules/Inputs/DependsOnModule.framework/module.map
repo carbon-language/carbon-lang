@@ -4,6 +4,11 @@ framework module DependsOnModule {
   module * {
     export *
   }
+  explicit module CXX {
+    requires cplusplus
+    header "cxx_other.h"
+  }
+
   explicit framework module SubFramework {
     umbrella header "SubFramework.h"
 
