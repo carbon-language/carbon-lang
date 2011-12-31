@@ -7,7 +7,7 @@ entry:
   ret <8 x float> %shuffle
 }
 
-; CHECK: vshufps  $-53, (%
+; CHECK: vshufps  $-53, (%{{.*}}), %ymm
 define <8 x float> @A2(<8 x float>* %a, <8 x float>* %b) nounwind uwtable readnone ssp {
 entry:
   %a2 = load <8 x float>* %a
@@ -23,7 +23,7 @@ entry:
   ret <4 x double> %shuffle
 }
 
-; CHECK: vshufpd  $10, (%
+; CHECK: vshufpd  $10, (%{{.*}}), %ymm
 define <4 x double> @B2(<4 x double>* %a, <4 x double>* %b) nounwind uwtable readnone ssp {
 entry:
   %a2 = load <4 x double>* %a
@@ -58,4 +58,36 @@ define <4 x double> @F(<4 x double> %a, <4 x double> %b) nounwind uwtable readno
 entry:
   %shuffle = shufflevector <4 x double> %a, <4 x double> %b, <4 x i32> <i32 0, i32 4, i32 2, i32 7>
   ret <4 x double> %shuffle
+}
+
+; CHECK: vshufps  $-53, %xmm
+define <4 x float> @A128(<4 x float> %a, <4 x float> %b) nounwind uwtable readnone ssp {
+entry:
+  %shuffle = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 3, i32 2, i32 4, i32 7>
+  ret <4 x float> %shuffle
+}
+
+; CHECK: vshufps  $-53, (%{{.*}}), %xmm
+define <4 x float> @A2128(<4 x float>* %a, <4 x float>* %b) nounwind uwtable readnone ssp {
+entry:
+  %a2 = load <4 x float>* %a
+  %b2 = load <4 x float>* %b
+  %shuffle = shufflevector <4 x float> %a2, <4 x float> %b2, <4 x i32> <i32 3, i32 2, i32 4, i32 7>
+  ret <4 x float> %shuffle
+}
+
+; CHECK: vshufpd  $1, %xmm
+define <2 x double> @B128(<2 x double> %a, <2 x double> %b) nounwind uwtable readnone ssp {
+entry:
+  %shuffle = shufflevector <2 x double> %a, <2 x double> %b, <2 x i32> <i32 1, i32 2>
+  ret <2 x double> %shuffle
+}
+
+; CHECK: vshufpd  $1, (%{{.*}}), %xmm
+define <2 x double> @B2128(<2 x double>* %a, <2 x double>* %b) nounwind uwtable readnone ssp {
+entry:
+  %a2 = load <2 x double>* %a
+  %b2 = load <2 x double>* %b
+  %shuffle = shufflevector <2 x double> %a2, <2 x double> %b2, <2 x i32> <i32 1, i32 2>
+  ret <2 x double> %shuffle
 }

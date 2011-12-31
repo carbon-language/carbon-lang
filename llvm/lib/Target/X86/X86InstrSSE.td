@@ -2348,7 +2348,7 @@ let Predicates = [HasSSE2] in {
             (SHUFPDrri VR128:$src1, VR128:$src2,
                        (SHUFFLE_get_shuf_imm VR128:$src3))>;
   // Generic SHUFPD patterns
-  def : Pat<(v2f64 (X86Shufps VR128:$src1,
+  def : Pat<(v2f64 (X86Shufpd VR128:$src1,
                        (memopv2f64 addr:$src2), (i8 imm:$imm))),
             (SHUFPDrmi VR128:$src1, addr:$src2, imm:$imm)>;
   def : Pat<(v2i64 (X86Shufpd VR128:$src1, VR128:$src2, (i8 imm:$imm))),
@@ -2397,7 +2397,7 @@ let Predicates = [HasAVX] in {
             (VSHUFPDrri VR128:$src1, VR128:$src2,
                         (SHUFFLE_get_shuf_imm VR128:$src3))>;
 
-  def : Pat<(v2f64 (X86Shufps VR128:$src1,
+  def : Pat<(v2f64 (X86Shufpd VR128:$src1,
                        (memopv2f64 addr:$src2), (i8 imm:$imm))),
             (VSHUFPDrmi VR128:$src1, addr:$src2, imm:$imm)>;
   def : Pat<(v2i64 (X86Shufpd VR128:$src1, VR128:$src2, (i8 imm:$imm))),
