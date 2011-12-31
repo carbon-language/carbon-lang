@@ -63,7 +63,7 @@ TEST_F(SourceManagerTest, isBeforeInTranslationUnit) {
   FileID mainFileID = SourceMgr.createMainFileIDForMemBuffer(buf);
 
   VoidModuleLoader ModLoader;
-  HeaderSearch HeaderInfo(FileMgr, Diags);
+  HeaderSearch HeaderInfo(FileMgr, Diags, LangOpts);
   Preprocessor PP(Diags, LangOpts,
                   Target.getPtr(),
                   SourceMgr, HeaderInfo, ModLoader,
@@ -130,7 +130,7 @@ TEST_F(SourceManagerTest, getMacroArgExpandedLocation) {
   SourceMgr.overrideFileContents(headerFile, headerBuf);
 
   VoidModuleLoader ModLoader;
-  HeaderSearch HeaderInfo(FileMgr, Diags);
+  HeaderSearch HeaderInfo(FileMgr, Diags, LangOpts);
   Preprocessor PP(Diags, LangOpts,
                   Target.getPtr(),
                   SourceMgr, HeaderInfo, ModLoader,
