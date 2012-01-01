@@ -713,13 +713,8 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
         
     PushOnScopeChains(PDecl, TUScope);
     
-    if (attrList) {
+    if (attrList)
       ProcessDeclAttributeList(TUScope, PDecl, attrList);
-      if (PrevDecl) {
-        if (ASTMutationListener *L = Context.getASTMutationListener())
-          L->UpdatedAttributeList(PDecl);
-      }
-    }
     
     if (PrevDecl)
       mergeDeclAttributes(PDecl, PrevDecl);

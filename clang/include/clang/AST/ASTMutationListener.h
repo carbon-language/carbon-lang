@@ -77,9 +77,6 @@ public:
   virtual void AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
                                             const ObjCPropertyDecl *OrigProp,
                                             const ObjCCategoryDecl *ClassExt) {}
-
-  /// \brief The attributes list of a declaration was updated.
-  virtual void UpdatedAttributeList(const Decl *D) {}
 };
 
 } // end namespace clang
