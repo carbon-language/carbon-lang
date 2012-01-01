@@ -436,8 +436,8 @@ class SS428I<bits<8> o, Format F, dag outs, dag ins, string asm,
 //   SS42FI - SSE 4.2 instructions with T8XD prefix.
 class SS42FI<bits<8> o, Format F, dag outs, dag ins, string asm,
               list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, T8XD, Requires<[HasSSE42]>;
-      
+      : I<o, F, outs, ins, asm, pattern>, T8XD, Requires<[HasSSE42orAVX]>;
+
 //   SS42AI = SSE 4.2 instructions with TA prefix
 class SS42AI<bits<8> o, Format F, dag outs, dag ins, string asm,
              list<dag> pattern>
