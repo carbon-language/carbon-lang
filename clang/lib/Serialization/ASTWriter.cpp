@@ -4428,8 +4428,6 @@ void ASTWriter::AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
 
 void ASTWriter::CompletedObjCForwardRef(const ObjCContainerDecl *D) {
   assert(!WritingAST && "Already writing the AST!");
-  if (D->isFromASTFile())
-    RewriteDecl(D);
 
   if (const ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D)) {
     for (ObjCInterfaceDecl::redecl_iterator I = ID->redecls_begin(), 
