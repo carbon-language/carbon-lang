@@ -2795,48 +2795,15 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
                                               Node->getOperand(2), dl));
     break;
   case ISD::VECTOR_SHUFFLE: {
-    SmallVector<int, 32> Mask(32U, -1);
+    SmallVector<int, 8> Mask;
     cast<ShuffleVectorSDNode>(Node)->getMask(Mask);
 
     EVT VT = Node->getValueType(0);
     EVT EltVT = VT.getVectorElementType();
-    SDValue Op0 = Node->getOperand(0);
-    SDValue Op1 = Node->getOperand(1);
-    if (!TLI.isTypeLegal(EltVT)) {
-
+    if (!TLI.isTypeLegal(EltVT))
       EltVT = TLI.getTypeToTransformTo(*DAG.getContext(), EltVT);
-      
-      // Convert shuffle node
-      // If original node was v4i64 and the new EltVT is i32,
-      // cast operands to v8i32 and re-build the mask
-      unsigned OldNumElems = VT.getVectorNumElements();
-      // Calculate new VT
-      VT = EVT::getVectorVT(*DAG.getContext(), EltVT, VT.getSizeInBits()/EltVT.getSizeInBits());
-      
-      // cast operands to new VT
-      Op0 = DAG.getNode(ISD::BITCAST, dl, VT, Op0);
-      Op1 = DAG.getNode(ISD::BITCAST, dl, VT, Op1);
-	    
-      // Convert the shuffle mask
-	    unsigned int factor = VT.getVectorNumElements()/OldNumElems;
-      // assume that EltVT gets smaller
-      assert(factor > 0);
-      SmallVector<int, 32> NewMask(32U, -1);
-
-      for (unsigned i = 0; i < OldNumElems; ++i) {
-        if (Mask[i] < 0) {
-          for (unsigned fi = 0; fi < factor; ++fi)
-              NewMask[i*factor+fi] = Mask[i];
-        }
-        else {
-          for (unsigned fi = 0; fi < factor; ++fi)
-              NewMask[i*factor+fi] = Mask[i]*factor+fi;
-        }
-        Mask = NewMask;
-      }
-    }    
     unsigned NumElems = VT.getVectorNumElements();
-    SmallVector<SDValue, 16> Ops;
+    SmallVector<SDValue, 8> Ops;
     for (unsigned i = 0; i != NumElems; ++i) {
       if (Mask[i] < 0) {
         Ops.push_back(DAG.getUNDEF(EltVT));
@@ -2845,14 +2812,13 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
       unsigned Idx = Mask[i];
       if (Idx < NumElems)
         Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT,
-                                  Op0,
+                                  Node->getOperand(0),
                                   DAG.getIntPtrConstant(Idx)));
       else
         Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT,
-                                  Op1,
+                                  Node->getOperand(1),
                                   DAG.getIntPtrConstant(Idx - NumElems)));
     }
-    
     Tmp1 = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Ops[0], Ops.size());
     Results.push_back(Tmp1);
     break;
