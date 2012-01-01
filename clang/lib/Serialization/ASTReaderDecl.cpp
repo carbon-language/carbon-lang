@@ -759,11 +759,53 @@ void ASTDeclReader::VisitObjCIvarDecl(ObjCIvarDecl *IVD) {
 }
 
 void ASTDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
-  VisitRedeclarable(PD);
+  // Record the declaration -> global ID mapping.
+  Reader.DeclToID[PD] = ThisDeclID;
+  
+  RedeclarableResult Redecl = VisitRedeclarable(PD);
   VisitObjCContainerDecl(PD);
   PD->InitiallyForwardDecl = Record[Idx++];
   PD->isForwardProtoDecl = Record[Idx++];
   PD->setLocEnd(ReadSourceLocation(Record, Idx));
+  
+  // Determine whether we need to merge this declaration with another @protocol
+  // with the same name.
+  // FIXME: Not needed unless the module file graph is a DAG.
+  if (FindExistingResult ExistingRes = findExisting(PD)) {
+    if (ObjCProtocolDecl *Existing = ExistingRes) {
+      ObjCProtocolDecl *ExistingCanon = Existing->getCanonicalDecl();
+      ObjCProtocolDecl *PDCanon = PD->getCanonicalDecl();
+      if (ExistingCanon != PDCanon) {
+        // Have our redeclaration link point back at the canonical declaration
+        // of the existing declaration, so that this declaration has the 
+        // appropriate canonical declaration.
+        PD->RedeclLink = ObjCProtocolDecl::PreviousDeclLink(ExistingCanon);
+        
+        // Don't introduce IDCanon into the set of pending declaration chains.
+        Redecl.suppress();
+        
+        // Introduce ExistingCanon into the set of pending declaration chains,
+        // if in fact it came from a module file.
+        if (ExistingCanon->isFromASTFile()) {
+          GlobalDeclID ExistingCanonID = Reader.DeclToID[ExistingCanon];
+          assert(ExistingCanonID && "Unrecorded canonical declaration ID?");
+          if (Reader.PendingDeclChainsKnown.insert(ExistingCanonID))
+            Reader.PendingDeclChains.push_back(ExistingCanonID);
+        }
+        
+        // If this declaration was the canonical declaration, make a note of 
+        // that. We accept the linear algorithm here because the number of 
+        // unique canonical declarations of an entity should always be tiny.
+        if (PDCanon == PD) {
+          SmallVectorImpl<DeclID> &Merged = Reader.MergedDecls[ExistingCanon];
+          if (std::find(Merged.begin(), Merged.end(), Redecl.getFirstID())
+                == Merged.end())
+            Merged.push_back(Redecl.getFirstID());
+        }
+      }
+    }
+  }
+
   
   ObjCProtocolDecl *Def = ReadDeclAs<ObjCProtocolDecl>(Record, Idx);
   if (PD == Def) {
@@ -1645,8 +1687,8 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
          Y->getDeclContext()->getRedeclContext()))
     return false;
   
-  // Objective-C classes with the same name always match.
-  if (isa<ObjCInterfaceDecl>(X))
+  // Objective-C classes and protocols with the same name always match.
+  if (isa<ObjCInterfaceDecl>(X) || isa<ObjCProtocolDecl>(X))
     return true;
   
   // FIXME: Many other cases to implement.

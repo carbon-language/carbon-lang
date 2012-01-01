@@ -677,9 +677,9 @@ private:
 
   /// \brief Reverse mapping from declarations to their global declaration IDs.
   /// 
-  /// FIXME: This data structure is currently only used for ObjCInterfaceDecls, 
-  /// support declaration merging. If we must have this for other declarations,
-  /// allocate it along with the Decl itself.
+  /// FIXME: This data structure is currently only used for ObjCInterfaceDecls
+  /// and ObjCProtocolDecls to support declaration merging. If we must have 
+  /// this for other declarations, allocate it along with the Decl itself.
   llvm::DenseMap<Decl *, serialization::GlobalDeclID> DeclToID;
   
   typedef llvm::DenseMap<Decl *, llvm::SmallVector<serialization::DeclID, 2> >

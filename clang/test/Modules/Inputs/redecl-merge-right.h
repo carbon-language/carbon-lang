@@ -42,6 +42,11 @@ int *explicit_func(void);
 
 struct explicit_struct;
 
+@protocol P4, P3;
+@protocol P3;
+@protocol P3;
+@protocol P3;
+
 #ifdef __cplusplus
 template<typename T> class Vector { 
 public:
