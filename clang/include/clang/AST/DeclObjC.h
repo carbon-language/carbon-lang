@@ -1089,12 +1089,8 @@ class ObjCProtocolDecl : public ObjCContainerDecl,
   
   ObjCProtocolDecl(DeclContext *DC, IdentifierInfo *Id,
                    SourceLocation nameLoc, SourceLocation atStartLoc,
-                   bool isForwardDecl)
-    : ObjCContainerDecl(ObjCProtocol, DC, Id, nameLoc, atStartLoc),
-      Data(0),
-      InitiallyForwardDecl(isForwardDecl),
-      isForwardProtoDecl(isForwardDecl) {
-  }
+                   ObjCProtocolDecl *PrevDecl,
+                   bool isForwardDecl);
 
   void allocateDefinitionData();
 
@@ -1108,6 +1104,7 @@ public:
                                   IdentifierInfo *Id,
                                   SourceLocation nameLoc,
                                   SourceLocation atStartLoc,
+                                  ObjCProtocolDecl *PrevDecl,
                                   bool isForwardDecl);
 
   const ObjCProtocolList &getReferencedProtocols() const {
@@ -1193,8 +1190,6 @@ public:
   /// Differs with \see isForwardDecl in that \see isForwardDecl will change to
   /// false when we see the definition, but this will remain true.
   bool isInitiallyForwardDecl() const { return InitiallyForwardDecl; }
-
-  void completedForwardDecl();
 
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const { return getAtStartLoc(); } // '@'protocol

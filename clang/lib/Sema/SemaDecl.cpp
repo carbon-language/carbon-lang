@@ -1540,36 +1540,37 @@ DeclHasAttr(const Decl *D, const Attr *A) {
 }
 
 /// mergeDeclAttributes - Copy attributes from the Old decl to the New one.
-static void mergeDeclAttributes(Decl *newDecl, const Decl *oldDecl,
-                                ASTContext &C, bool mergeDeprecation = true) {
-  if (!oldDecl->hasAttrs())
+void Sema::mergeDeclAttributes(Decl *New, Decl *Old,
+                               bool MergeDeprecation) {
+  if (!Old->hasAttrs())
     return;
 
-  bool foundAny = newDecl->hasAttrs();
+  bool foundAny = New->hasAttrs();
 
   // Ensure that any moving of objects within the allocated map is done before
   // we process them.
-  if (!foundAny) newDecl->setAttrs(AttrVec());
+  if (!foundAny) New->setAttrs(AttrVec());
 
   for (specific_attr_iterator<InheritableAttr>
-       i = oldDecl->specific_attr_begin<InheritableAttr>(),
-       e = oldDecl->specific_attr_end<InheritableAttr>(); i != e; ++i) {
+         i = Old->specific_attr_begin<InheritableAttr>(),
+         e = Old->specific_attr_end<InheritableAttr>(); 
+       i != e; ++i) {
     // Ignore deprecated/unavailable/availability attributes if requested.
-    if (!mergeDeprecation &&
+    if (!MergeDeprecation &&
         (isa<DeprecatedAttr>(*i) || 
          isa<UnavailableAttr>(*i) ||
          isa<AvailabilityAttr>(*i)))
       continue;
 
-    if (!DeclHasAttr(newDecl, *i)) {
-      InheritableAttr *newAttr = cast<InheritableAttr>((*i)->clone(C));
+    if (!DeclHasAttr(New, *i)) {
+      InheritableAttr *newAttr = cast<InheritableAttr>((*i)->clone(Context));
       newAttr->setInherited(true);
-      newDecl->addAttr(newAttr);
+      New->addAttr(newAttr);
       foundAny = true;
     }
   }
 
-  if (!foundAny) newDecl->dropAttrs();
+  if (!foundAny) New->dropAttrs();
 }
 
 /// mergeParamDeclAttributes - Copy attributes from the old parameter
@@ -2035,7 +2036,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
 /// \returns false
 bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old) {
   // Merge the attributes
-  mergeDeclAttributes(New, Old, Context);
+  mergeDeclAttributes(New, Old);
 
   // Merge the storage class.
   if (Old->getStorageClass() != SC_Extern &&
@@ -2061,13 +2062,13 @@ bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old) {
 
 
 void Sema::mergeObjCMethodDecls(ObjCMethodDecl *newMethod,
-                                const ObjCMethodDecl *oldMethod) {
+                                ObjCMethodDecl *oldMethod) {
   // We don't want to merge unavailable and deprecated attributes
   // except from interface to implementation.
   bool mergeDeprecation = isa<ObjCImplDecl>(newMethod->getDeclContext());
 
   // Merge the attributes.
-  mergeDeclAttributes(newMethod, oldMethod, Context, mergeDeprecation);
+  mergeDeclAttributes(newMethod, oldMethod, mergeDeprecation);
 
   // Merge attributes from the parameters.
   ObjCMethodDecl::param_const_iterator oi = oldMethod->param_begin();
@@ -2174,7 +2175,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
     New->setInvalidDecl();
   }
   
-  mergeDeclAttributes(New, Old, Context);
+  mergeDeclAttributes(New, Old);
   // Warn if an already-declared variable is made a weak_import in a subsequent 
   // declaration
   if (New->getAttr<WeakImportAttr>() &&

@@ -26,6 +26,11 @@ B *f1() {
 
 @class B;
 
+void testProtoMerge(id<P1> p1, id<P2> p2) {
+  [p1 protoMethod1];
+  [p2 protoMethod2];
+}
+
 // Test redeclarations of entities in explicit submodules, to make
 // sure we're maintaining the declaration chains even when normal name
 // lookup can't see what we're looking for.

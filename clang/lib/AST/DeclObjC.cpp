@@ -967,12 +967,32 @@ ObjCAtDefsFieldDecl
 
 void ObjCProtocolDecl::anchor() { }
 
+ObjCProtocolDecl::ObjCProtocolDecl(DeclContext *DC, IdentifierInfo *Id,
+                                   SourceLocation nameLoc, 
+                                   SourceLocation atStartLoc,
+                                   ObjCProtocolDecl *PrevDecl,
+                                   bool isForwardDecl)
+  : ObjCContainerDecl(ObjCProtocol, DC, Id, nameLoc, atStartLoc),
+    Data(0),
+    InitiallyForwardDecl(isForwardDecl),
+    isForwardProtoDecl(isForwardDecl) 
+{
+  setPreviousDeclaration(PrevDecl);
+  if (PrevDecl)
+    Data = PrevDecl->Data;
+}
+
 ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, DeclContext *DC,
                                            IdentifierInfo *Id,
                                            SourceLocation nameLoc,
                                            SourceLocation atStartLoc,
+                                           ObjCProtocolDecl *PrevDecl,
                                            bool isForwardDecl) {
-  return new (C) ObjCProtocolDecl(DC, Id, nameLoc, atStartLoc, isForwardDecl);
+  ObjCProtocolDecl *Result 
+    = new (C) ObjCProtocolDecl(DC, Id, nameLoc, atStartLoc, PrevDecl,
+                               isForwardDecl);
+  
+  return Result;
 }
 
 ObjCProtocolDecl *ObjCProtocolDecl::lookupProtocolNamed(IdentifierInfo *Name) {
@@ -1016,12 +1036,7 @@ void ObjCProtocolDecl::startDefinition() {
   for (redecl_iterator RD = redecls_begin(), RDEnd = redecls_end();
        RD != RDEnd; ++RD)
     RD->Data = this->Data;
-}
-
-void ObjCProtocolDecl::completedForwardDecl() {
-  assert(!hasDefinition() && "Only valid to call for forward refs");
-  isForwardProtoDecl = false;
-  startDefinition();
+  
   if (ASTMutationListener *L = getASTContext().getASTMutationListener())
     L->CompletedObjCForwardRef(this);
 }

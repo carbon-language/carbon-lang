@@ -9,6 +9,18 @@ __import_module__ redecl_merge_top;
 
 @class B;
 
+@protocol P1
+- (void)protoMethod1;
+@end
+
+@protocol P1;
+
+@protocol P2;
+
+@protocol P2;
+
+@protocol P2;
+
 // Test declarations in different modules with no common initial
 // declaration.
 @class C;

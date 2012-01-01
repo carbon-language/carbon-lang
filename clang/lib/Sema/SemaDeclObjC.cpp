@@ -569,46 +569,50 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
   bool err = false;
   // FIXME: Deal with AttrList.
   assert(ProtocolName && "Missing protocol identifier");
-  ObjCProtocolDecl *PDecl = LookupProtocol(ProtocolName, ProtocolLoc);
-  if (PDecl) {
-    // Protocol already seen. Better be a forward protocol declaration
-    if (ObjCProtocolDecl *Def = PDecl->getDefinition()) {
-      Diag(ProtocolLoc, diag::warn_duplicate_protocol_def) << ProtocolName;
-      Diag(Def->getLocation(), diag::note_previous_definition);
+  ObjCProtocolDecl *PrevDecl = LookupProtocol(ProtocolName, ProtocolLoc,
+                                              ForRedeclaration);
+  ObjCProtocolDecl *PDecl = 0;
+  if (ObjCProtocolDecl *Def = PrevDecl? PrevDecl->getDefinition() : 0) {
+    // If we already have a definition, complain.
+    Diag(ProtocolLoc, diag::warn_duplicate_protocol_def) << ProtocolName;
+    Diag(Def->getLocation(), diag::note_previous_definition);
 
-      // Create a new protocol that is completely distinct from previous
-      // declarations, and do not make this protocol available for name lookup.
-      // That way, we'll end up completely ignoring the duplicate.
-      // FIXME: Can we turn this into an error?
-      PDecl = ObjCProtocolDecl::Create(Context, CurContext, ProtocolName,
-                                       ProtocolLoc, AtProtoInterfaceLoc,
-                                       /*isForwardDecl=*/false);
-      PDecl->startDefinition();
-    } else {
+    // Create a new protocol that is completely distinct from previous
+    // declarations, and do not make this protocol available for name lookup.
+    // That way, we'll end up completely ignoring the duplicate.
+    // FIXME: Can we turn this into an error?
+    PDecl = ObjCProtocolDecl::Create(Context, CurContext, ProtocolName,
+                                     ProtocolLoc, AtProtoInterfaceLoc,
+                                     /*PrevDecl=*/0,
+                                     /*isForwardDecl=*/false);
+    PDecl->startDefinition();
+  } else {
+    if (PrevDecl) {
+      // Check for circular dependencies among protocol declarations. This can
+      // only happen if this protocol was forward-declared.
       ObjCList<ObjCProtocolDecl> PList;
       PList.set((ObjCProtocolDecl *const*)ProtoRefs, NumProtoRefs, Context);
       err = CheckForwardProtocolDeclarationForCircularDependency(
-              ProtocolName, ProtocolLoc, PDecl->getLocation(), PList);
-  
-      // Make sure the cached decl gets a valid start location.
-      PDecl->setAtStartLoc(AtProtoInterfaceLoc);
-      PDecl->setLocation(ProtocolLoc);
-      // Since this ObjCProtocolDecl was created by a forward declaration,
-      // we now add it to the DeclContext since it wasn't added before
-      PDecl->setLexicalDeclContext(CurContext);
-      CurContext->addDecl(PDecl);
-      PDecl->completedForwardDecl();
+              ProtocolName, ProtocolLoc, PrevDecl->getLocation(), PList);
     }
-  } else {
+
+    // Create the new declaration.
     PDecl = ObjCProtocolDecl::Create(Context, CurContext, ProtocolName,
                                      ProtocolLoc, AtProtoInterfaceLoc,
+                                     /*PrevDecl=*/PrevDecl, 
                                      /*isForwardDecl=*/false);
+    
     PushOnScopeChains(PDecl, TUScope);
     PDecl->startDefinition();
   }
   
   if (AttrList)
     ProcessDeclAttributeList(TUScope, PDecl, AttrList);
+  
+  // Merge attributes from previous declarations.
+  if (PrevDecl)
+    mergeDeclAttributes(PDecl, PrevDecl);
+
   if (!err && NumProtoRefs ) {
     /// Check then save referenced protocols.
     PDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs,
@@ -700,22 +704,26 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
 
   for (unsigned i = 0; i != NumElts; ++i) {
     IdentifierInfo *Ident = IdentList[i].first;
-    ObjCProtocolDecl *PDecl = LookupProtocol(Ident, IdentList[i].second);
-    bool isNew = false;
-    if (PDecl == 0) { // Not already seen?
-      PDecl = ObjCProtocolDecl::Create(Context, CurContext, Ident,
-                                       IdentList[i].second, AtProtocolLoc,
-                                       /*isForwardDecl=*/true);
-      PushOnScopeChains(PDecl, TUScope, false);
-      isNew = true;
-    }
+    ObjCProtocolDecl *PrevDecl = LookupProtocol(Ident, IdentList[i].second,
+                                                ForRedeclaration);
+    ObjCProtocolDecl *PDecl
+      = ObjCProtocolDecl::Create(Context, CurContext, Ident, 
+                                 IdentList[i].second, AtProtocolLoc,
+                                 PrevDecl, /*isForwardDecl=*/true);
+        
+    PushOnScopeChains(PDecl, TUScope);
+    
     if (attrList) {
       ProcessDeclAttributeList(TUScope, PDecl, attrList);
-      if (!isNew) {
+      if (PrevDecl) {
         if (ASTMutationListener *L = Context.getASTMutationListener())
           L->UpdatedAttributeList(PDecl);
       }
     }
+    
+    if (PrevDecl)
+      mergeDeclAttributes(PDecl, PrevDecl);
+
     Protocols.push_back(PDecl);
     ProtoLocs.push_back(IdentList[i].second);
   }

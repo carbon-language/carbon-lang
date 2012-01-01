@@ -1950,7 +1950,7 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
     break;
   case DECL_OBJC_PROTOCOL:
     D = ObjCProtocolDecl::Create(Context, 0, 0, SourceLocation(),
-                                 SourceLocation(), 0);
+                                 SourceLocation(), 0, false);
     break;
   case DECL_OBJC_AT_DEFS_FIELD:
     D = ObjCAtDefsFieldDecl::Create(Context, 0, SourceLocation(),

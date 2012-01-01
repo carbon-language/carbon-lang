@@ -8,6 +8,8 @@ __import_module__ redecl_merge_right;
 
 @class A;
 
+@protocol P1;
+
 void refers_to_C4(C4*);
 
 #ifdef __cplusplus

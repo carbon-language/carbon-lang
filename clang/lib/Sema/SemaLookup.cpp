@@ -2180,9 +2180,10 @@ NamedDecl *Sema::LookupSingleName(Scope *S, DeclarationName Name,
 
 /// \brief Find the protocol with the given name, if any.
 ObjCProtocolDecl *Sema::LookupProtocol(IdentifierInfo *II,
-                                       SourceLocation IdLoc) {
+                                       SourceLocation IdLoc,
+                                       RedeclarationKind Redecl) {
   Decl *D = LookupSingleName(TUScope, II, IdLoc,
-                             LookupObjCProtocolName);
+                             LookupObjCProtocolName, Redecl);
   return cast_or_null<ObjCProtocolDecl>(D);
 }
 
