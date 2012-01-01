@@ -5255,7 +5255,7 @@ public:
                                      SourceLocation *IdentLocs,
                                      unsigned NumElts);
 
-  Decl *ActOnForwardProtocolDeclaration(SourceLocation AtProtoclLoc,
+  DeclGroupPtrTy ActOnForwardProtocolDeclaration(SourceLocation AtProtoclLoc,
                                         const IdentifierLocPair *IdentList,
                                         unsigned NumElts,
                                         AttributeList *attrList);

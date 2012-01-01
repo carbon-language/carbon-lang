@@ -372,10 +372,6 @@ public:
   bool handleObjCInterface(const ObjCInterfaceDecl *D);
   bool handleObjCImplementation(const ObjCImplementationDecl *D);
 
-  bool handleObjCForwardProtocol(const ObjCProtocolDecl *D,
-                                 SourceLocation Loc,
-                                 bool isRedeclaration);
-
   bool handleObjCProtocol(const ObjCProtocolDecl *D);
 
   bool handleObjCCategory(const ObjCCategoryDecl *D);

@@ -810,17 +810,13 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
     }
   }
 
-  // ObjCForwardProtocolDecl
-  void visitObjCForwardProtocolDeclChildren(ObjCForwardProtocolDecl *D) {
-    for (ObjCForwardProtocolDecl::protocol_iterator
-           I = D->protocol_begin(), E = D->protocol_end(); I != E; ++I)
-      visitDeclRef(*I);
-  }
-
   // ObjCProtocolDecl
   void visitObjCProtocolDeclAttrs(ObjCProtocolDecl *D) {
   }
   void visitObjCProtocolDeclChildren(ObjCProtocolDecl *D) {
+    if (!D->isThisDeclarationADefinition())
+      return;
+    
     if (D->protocol_begin() != D->protocol_end()) {
       TemporaryContainer C(*this, "protocols");
       for (ObjCInterfaceDecl::protocol_iterator
@@ -829,6 +825,9 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
     }
   }
   void visitObjCProtocolDeclAsContext(ObjCProtocolDecl *D) {
+    if (!D->isThisDeclarationADefinition())
+      return;
+    
     visitDeclContext(D);
   }
 

@@ -733,7 +733,6 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
     case Decl::ObjCCategory:
     case Decl::ObjCCategoryImpl:
     case Decl::ObjCCompatibleAlias:
-    case Decl::ObjCForwardProtocol:
     case Decl::ObjCImplementation:
     case Decl::ObjCMethod:
     case Decl::ObjCProperty:

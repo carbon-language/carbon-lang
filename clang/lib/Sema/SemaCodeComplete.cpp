@@ -2783,9 +2783,6 @@ CXCursorKind clang::getCursorKindForDecl(Decl *D) {
     case Decl::ObjCCategoryImpl:   return CXCursor_ObjCCategoryImplDecl;
       // FIXME
       return CXCursor_UnexposedDecl;
-    case Decl::ObjCForwardProtocol:
-      // FIXME
-      return CXCursor_UnexposedDecl;      
     case Decl::ObjCImplementation: return CXCursor_ObjCImplementationDecl;
 
     case Decl::ObjCInterface:
@@ -2804,7 +2801,12 @@ CXCursorKind clang::getCursorKindForDecl(Decl *D) {
     case Decl::CXXDestructor:      return CXCursor_Destructor;
     case Decl::CXXConversion:      return CXCursor_ConversionFunction;
     case Decl::ObjCProperty:       return CXCursor_ObjCPropertyDecl;
-    case Decl::ObjCProtocol:       return CXCursor_ObjCProtocolDecl;
+    case Decl::ObjCProtocol:       
+      if (cast<ObjCProtocolDecl>(D)->isThisDeclarationADefinition())
+        return CXCursor_ObjCProtocolDecl;
+      
+      return CXCursor_UnexposedDecl;
+      
     case Decl::ParmVar:            return CXCursor_ParmDecl;
     case Decl::Typedef:            return CXCursor_TypedefDecl;
     case Decl::TypeAlias:          return CXCursor_TypeAliasDecl;
@@ -5422,17 +5424,6 @@ static void AddProtocolResults(DeclContext *Ctx, DeclContext *CurContext,
     if (ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>(*D))
       if (!OnlyForwardDeclarations || !Proto->hasDefinition())
         Results.AddResult(Result(Proto, 0), CurContext, 0, false);
-
-    // Record any forward-declared protocols we find.
-    if (ObjCForwardProtocolDecl *Forward
-          = dyn_cast<ObjCForwardProtocolDecl>(*D)) {
-      for (ObjCForwardProtocolDecl::protocol_iterator 
-             P = Forward->protocol_begin(),
-             PEnd = Forward->protocol_end();
-           P != PEnd; ++P)
-        if (!OnlyForwardDeclarations || !(*P)->hasDefinition())
-          Results.AddResult(Result(*P, 0), CurContext, 0, false);
-    }
   }
 }
 

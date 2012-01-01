@@ -2375,7 +2375,6 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   // Objective-C Decls
 
   // Forward declarations, no (immediate) code generation.
-  case Decl::ObjCForwardProtocol:
   case Decl::ObjCInterface:
     break;
   
@@ -2386,10 +2385,13 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     break;
   }
 
-  case Decl::ObjCProtocol:
-    ObjCRuntime->GenerateProtocol(cast<ObjCProtocolDecl>(D));
+  case Decl::ObjCProtocol: {
+    ObjCProtocolDecl *Proto = cast<ObjCProtocolDecl>(D);
+    if (Proto->isThisDeclarationADefinition())
+      ObjCRuntime->GenerateProtocol(Proto);
     break;
-
+  }
+      
   case Decl::ObjCCategoryImpl:
     // Categories have properties but don't support synthesize so we
     // can ignore them here.

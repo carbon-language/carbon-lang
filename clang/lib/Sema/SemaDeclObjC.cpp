@@ -694,14 +694,12 @@ void Sema::DiagnoseClassExtensionDupMethods(ObjCCategoryDecl *CAT,
 }
 
 /// ActOnForwardProtocolDeclaration - Handle @protocol foo;
-Decl *
+Sema::DeclGroupPtrTy
 Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
                                       const IdentifierLocPair *IdentList,
                                       unsigned NumElts,
                                       AttributeList *attrList) {
-  SmallVector<ObjCProtocolDecl*, 32> Protocols;
-  SmallVector<SourceLocation, 8> ProtoLocs;
-
+  SmallVector<Decl *, 8> DeclsInGroup;
   for (unsigned i = 0; i != NumElts; ++i) {
     IdentifierInfo *Ident = IdentList[i].first;
     ObjCProtocolDecl *PrevDecl = LookupProtocol(Ident, IdentList[i].second,
@@ -712,6 +710,7 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
                                  PrevDecl, /*isForwardDecl=*/true);
         
     PushOnScopeChains(PDecl, TUScope);
+    CheckObjCDeclScope(PDecl);
     
     if (attrList)
       ProcessDeclAttributeList(TUScope, PDecl, attrList);
@@ -719,17 +718,10 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
     if (PrevDecl)
       mergeDeclAttributes(PDecl, PrevDecl);
 
-    Protocols.push_back(PDecl);
-    ProtoLocs.push_back(IdentList[i].second);
+    DeclsInGroup.push_back(PDecl);
   }
 
-  ObjCForwardProtocolDecl *PDecl =
-    ObjCForwardProtocolDecl::Create(Context, CurContext, AtProtocolLoc,
-                                    Protocols.data(), Protocols.size(),
-                                    ProtoLocs.data());
-  CurContext->addDecl(PDecl);
-  CheckObjCDeclScope(PDecl);
-  return PDecl;
+  return BuildDeclaratorGroup(DeclsInGroup.data(), DeclsInGroup.size(), false);
 }
 
 Decl *Sema::

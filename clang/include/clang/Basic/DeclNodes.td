@@ -66,7 +66,6 @@ def Named : Decl<1>;
   def ObjCCompatibleAlias : DDecl<Named>;
 def LinkageSpec : Decl, DeclContext;
 def ObjCPropertyImpl : Decl;
-def ObjCForwardProtocol : Decl;
 def FileScopeAsm : Decl;
 def AccessSpec : Decl;
 def Friend : Decl;

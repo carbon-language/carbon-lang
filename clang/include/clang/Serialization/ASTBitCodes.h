@@ -816,8 +816,6 @@ namespace clang {
       DECL_OBJC_IVAR,
       /// \brief A ObjCAtDefsFieldDecl record.
       DECL_OBJC_AT_DEFS_FIELD,
-      /// \brief A ObjCForwardProtocolDecl record.
-      DECL_OBJC_FORWARD_PROTOCOL,
       /// \brief A ObjCCategoryDecl record.
       DECL_OBJC_CATEGORY,
       /// \brief A ObjCCategoryImplDecl record.

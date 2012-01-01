@@ -776,12 +776,11 @@ Parser::ParseDeclarationOrFunctionDefinition(ParsingDeclSpec &DS,
     if (DS.SetTypeSpecType(DeclSpec::TST_unspecified, AtLoc, PrevSpec, DiagID))
       Diag(AtLoc, DiagID) << PrevSpec;
 
-    Decl *TheDecl = 0;
     if (Tok.isObjCAtKeyword(tok::objc_protocol))
-      TheDecl = ParseObjCAtProtocolDeclaration(AtLoc, DS.getAttributes());
-    else
-      TheDecl = ParseObjCAtInterfaceDeclaration(AtLoc, DS.getAttributes());
-    return Actions.ConvertDeclToDeclGroup(TheDecl);
+      return ParseObjCAtProtocolDeclaration(AtLoc, DS.getAttributes());
+
+    return Actions.ConvertDeclToDeclGroup(
+            ParseObjCAtInterfaceDeclaration(AtLoc, DS.getAttributes()));
   }
 
   // If the declspec consisted only of 'extern' and we have a string

@@ -2767,18 +2767,6 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
           Consumer.FoundDecl(ND, Visited.checkHidden(ND), Ctx, InBaseClass);
           Visited.add(ND);
         }
-      } else if (ObjCForwardProtocolDecl *ForwardProto
-                                      = dyn_cast<ObjCForwardProtocolDecl>(*D)) {
-        for (ObjCForwardProtocolDecl::protocol_iterator
-                  P = ForwardProto->protocol_begin(),
-               PEnd = ForwardProto->protocol_end();
-             P != PEnd;
-             ++P) {
-          if (NamedDecl *ND = Result.getAcceptableDecl(*P)) {
-            Consumer.FoundDecl(ND, Visited.checkHidden(ND), Ctx, InBaseClass);
-            Visited.add(ND);
-          }
-        }
       }
       
       // Visit transparent contexts and inline namespaces inside this context.

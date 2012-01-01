@@ -390,17 +390,22 @@ bool IndexingContext::handleObjCImplementation(
   return handleObjCContainer(D, D->getLocation(), getCursor(D), ContDInfo);
 }
 
-bool IndexingContext::handleObjCForwardProtocol(const ObjCProtocolDecl *D,
-                                                SourceLocation Loc,
-                                                bool isRedeclaration) {
-  ObjCContainerDeclInfo ContDInfo(/*isForwardRef=*/true,
-                                  isRedeclaration,
-                                  /*isImplementation=*/false);
-  return handleObjCContainer(D, Loc, MakeCursorObjCProtocolRef(D, Loc, CXTU),
-                             ContDInfo);
-}
-
 bool IndexingContext::handleObjCProtocol(const ObjCProtocolDecl *D) {
+  if (!D->isThisDeclarationADefinition()) {
+    if (suppressRefs() && markEntityOccurrenceInFile(D, D->getLocation()))
+      return false; // already occurred.
+    
+    // FIXME: This seems like the wrong definition for redeclaration.
+    bool isRedeclaration = D->hasDefinition() || D->getPreviousDeclaration();
+    ObjCContainerDeclInfo ContDInfo(/*isForwardRef=*/true,
+                                    isRedeclaration,
+                                    /*isImplementation=*/false);
+    return handleObjCContainer(D, D->getLocation(), 
+                               MakeCursorObjCProtocolRef(D, D->getLocation(),
+                                                         CXTU),
+                               ContDInfo);    
+  }
+  
   ScratchAlloc SA(*this);
   ObjCProtocolList EmptyProtoList;
   ObjCProtocolListInfo ProtListInfo(D->isThisDeclarationADefinition()

@@ -1042,30 +1042,6 @@ void ObjCProtocolDecl::startDefinition() {
 }
 
 //===----------------------------------------------------------------------===//
-// ObjCForwardProtocolDecl
-//===----------------------------------------------------------------------===//
-
-void ObjCForwardProtocolDecl::anchor() { }
-
-ObjCForwardProtocolDecl::
-ObjCForwardProtocolDecl(DeclContext *DC, SourceLocation L,
-                        ObjCProtocolDecl *const *Elts, unsigned nElts,
-                        const SourceLocation *Locs, ASTContext &C)
-: Decl(ObjCForwardProtocol, DC, L) {
-  ReferencedProtocols.set(Elts, nElts, Locs, C);
-}
-
-
-ObjCForwardProtocolDecl *
-ObjCForwardProtocolDecl::Create(ASTContext &C, DeclContext *DC,
-                                SourceLocation L,
-                                ObjCProtocolDecl *const *Elts,
-                                unsigned NumElts,
-                                const SourceLocation *Locs) {
-  return new (C) ObjCForwardProtocolDecl(DC, L, Elts, NumElts, Locs, C);
-}
-
-//===----------------------------------------------------------------------===//
 // ObjCCategoryDecl
 //===----------------------------------------------------------------------===//
 

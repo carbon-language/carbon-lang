@@ -951,6 +951,9 @@ bool CursorVisitor::VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
 }
 
 bool CursorVisitor::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
+  if (!PID->isThisDeclarationADefinition())
+    return Visit(MakeCursorObjCProtocolRef(PID, PID->getLocation(), TU));
+  
   ObjCProtocolDecl::protocol_loc_iterator PL = PID->protocol_loc_begin();
   for (ObjCProtocolDecl::protocol_iterator I = PID->protocol_begin(),
        E = PID->protocol_end(); I != E; ++I, ++PL)
@@ -1044,17 +1047,6 @@ bool CursorVisitor::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
 #endif
 
   return VisitObjCImplDecl(D);
-}
-
-bool CursorVisitor::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {
-  ObjCForwardProtocolDecl::protocol_loc_iterator PL = D->protocol_loc_begin();
-  for (ObjCForwardProtocolDecl::protocol_iterator I = D->protocol_begin(),
-                                                  E = D->protocol_end();
-       I != E; ++I, ++PL)
-    if (Visit(MakeCursorObjCProtocolRef(*I, *PL, TU)))
-      return true;
-
-  return false;
 }
 
 bool CursorVisitor::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *PD) {
@@ -3882,9 +3874,6 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
       return clang_getNullCursor();
     if (UsingDecl *Using = dyn_cast<UsingDecl>(D))
       return MakeCursorOverloadedDeclRef(Using, D->getLocation(), tu);
-    if (ObjCForwardProtocolDecl *Protocols
-                                        = dyn_cast<ObjCForwardProtocolDecl>(D))
-      return MakeCursorOverloadedDeclRef(Protocols, D->getLocation(), tu);
     if (ObjCPropertyImplDecl *PropImpl =dyn_cast<ObjCPropertyImplDecl>(D))
       if (ObjCPropertyDecl *Property = PropImpl->getPropertyDecl())
         return MakeCXCursor(Property, tu);
@@ -4158,10 +4147,6 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
 
     return clang_getNullCursor();
 
-  case Decl::ObjCForwardProtocol:
-    return MakeCursorOverloadedDeclRef(cast<ObjCForwardProtocolDecl>(D), 
-                                       D->getLocation(), TU);
-
   case Decl::Friend:
     if (NamedDecl *Friend = cast<FriendDecl>(D)->getFriendDecl())
       return clang_getCursorDefinition(MakeCXCursor(Friend, TU));
@@ -4217,8 +4202,6 @@ unsigned clang_getNumOverloadedDecls(CXCursor C) {
   Decl *D = Storage.get<Decl*>();
   if (UsingDecl *Using = dyn_cast<UsingDecl>(D))
     return Using->shadow_size();
-  if (ObjCForwardProtocolDecl *Protocols =dyn_cast<ObjCForwardProtocolDecl>(D))
-    return Protocols->protocol_size();
   
   return 0;
 }
@@ -4246,8 +4229,6 @@ CXCursor clang_getOverloadedDecl(CXCursor cursor, unsigned index) {
     std::advance(Pos, index);
     return MakeCXCursor(cast<UsingShadowDecl>(*Pos)->getTargetDecl(), TU);
   }
-  if (ObjCForwardProtocolDecl *Protocols = dyn_cast<ObjCForwardProtocolDecl>(D))
-    return MakeCXCursor(Protocols->protocol_begin()[index], TU);
   
   return clang_getNullCursor();
 }
@@ -5175,7 +5156,6 @@ static CXLanguageKind getDeclLanguage(const Decl *D) {
     case Decl::ObjCCategory:
     case Decl::ObjCCategoryImpl:
     case Decl::ObjCCompatibleAlias:
-    case Decl::ObjCForwardProtocol:
     case Decl::ObjCImplementation:
     case Decl::ObjCInterface:
     case Decl::ObjCIvar:

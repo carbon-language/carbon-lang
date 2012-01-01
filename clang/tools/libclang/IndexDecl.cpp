@@ -77,19 +77,6 @@ public:
     return true;
   }
 
-  bool VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {
-    ObjCForwardProtocolDecl::protocol_loc_iterator LI = D->protocol_loc_begin();
-    for (ObjCForwardProtocolDecl::protocol_iterator
-           I = D->protocol_begin(), E = D->protocol_end(); I != E; ++I, ++LI) {
-      SourceLocation Loc = *LI;
-      ObjCProtocolDecl *PD = *I;
-
-      bool isRedeclaration = PD->getLocation() != Loc;
-      IndexCtx.handleObjCForwardProtocol(PD, Loc, isRedeclaration);
-    }
-    return true;
-  }
-
   bool VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
     IndexCtx.handleObjCInterface(D);
 
@@ -101,14 +88,12 @@ public:
   }
 
   bool VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
-    // Forward decls are handled at VisitObjCForwardProtocolDecl.
-    if (!D->isThisDeclarationADefinition())
-      return true;
-
     IndexCtx.handleObjCProtocol(D);
 
-    IndexCtx.indexTUDeclsInObjCContainer();
-    IndexCtx.indexDeclContext(D);
+    if (D->isThisDeclarationADefinition()) {
+      IndexCtx.indexTUDeclsInObjCContainer();
+      IndexCtx.indexDeclContext(D);
+    }
     return true;
   }
 

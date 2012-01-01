@@ -1206,8 +1206,8 @@ private:
   ExprResult ParseAsmStringLiteral();
 
   // Objective-C External Declarations
-  Parser::DeclGroupPtrTy ParseObjCAtDirectives();
-  Parser::DeclGroupPtrTy ParseObjCAtClassDeclaration(SourceLocation atLoc);
+  DeclGroupPtrTy ParseObjCAtDirectives();
+  DeclGroupPtrTy ParseObjCAtClassDeclaration(SourceLocation atLoc);
   Decl *ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
                                         ParsedAttributes &prefixAttrs);
   void ParseObjCClassInstanceVariables(Decl *interfaceDecl,
@@ -1221,8 +1221,8 @@ private:
   bool ParseObjCProtocolQualifiers(DeclSpec &DS);
   void ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
                                   Decl *CDecl);
-  Decl *ParseObjCAtProtocolDeclaration(SourceLocation atLoc,
-                                       ParsedAttributes &prefixAttrs);
+  DeclGroupPtrTy ParseObjCAtProtocolDeclaration(SourceLocation atLoc,
+                                                ParsedAttributes &prefixAttrs);
 
   Decl *ObjCImpDecl;
   SmallVector<Decl *, 4> PendingObjCImpDecl;

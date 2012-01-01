@@ -72,7 +72,6 @@ namespace {
     void VisitObjCMethodDecl(ObjCMethodDecl *D);
     void VisitObjCImplementationDecl(ObjCImplementationDecl *D);
     void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
-    void VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D);
     void VisitObjCProtocolDecl(ObjCProtocolDecl *D);
     void VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D);
     void VisitObjCCategoryDecl(ObjCCategoryDecl *D);
@@ -932,17 +931,12 @@ void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
   // FIXME: implement the rest...
 }
 
-void DeclPrinter::VisitObjCForwardProtocolDecl(ObjCForwardProtocolDecl *D) {
-  Out << "@protocol ";
-  for (ObjCForwardProtocolDecl::protocol_iterator I = D->protocol_begin(),
-         E = D->protocol_end();
-       I != E; ++I) {
-    if (I != D->protocol_begin()) Out << ", ";
-    Out << **I;
-  }
-}
-
 void DeclPrinter::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
+  if (!PID->isThisDeclarationADefinition()) {
+    Out << "@protocol " << PID->getIdentifier() << ";\n";
+    return;
+  }
+  
   Out << "@protocol " << *PID << '\n';
   VisitDeclContext(PID, false);
   Out << "@end";

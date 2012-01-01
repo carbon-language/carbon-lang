@@ -496,7 +496,6 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
     case FileScopeAsm:
     case StaticAssert:
     case ObjCPropertyImpl:
-    case ObjCForwardProtocol:
     case Block:
     case TranslationUnit:
 

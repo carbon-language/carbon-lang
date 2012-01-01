@@ -425,10 +425,13 @@ void CodeCompletionResult::computeCursorKindAndAvailability(bool Accessible) {
       
     CursorKind = getCursorKindForDecl(Declaration);
     if (CursorKind == CXCursor_UnexposedDecl) {
-      // FIXME: Forward declarations of Objective-C classes are not directly
-      // exposed, but we want code completion to treat them like an @interface.
+      // FIXME: Forward declarations of Objective-C classes and protocols 
+      // are not directly exposed, but we want code completion to treat them 
+      // like a definition.
       if (isa<ObjCInterfaceDecl>(Declaration))
         CursorKind = CXCursor_ObjCInterfaceDecl;
+      else if (isa<ObjCProtocolDecl>(Declaration))
+        CursorKind = CXCursor_ObjCProtocolDecl;
       else
         CursorKind = CXCursor_NotImplemented;
     }

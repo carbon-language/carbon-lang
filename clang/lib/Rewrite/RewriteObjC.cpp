@@ -172,6 +172,13 @@ namespace {
           }
         }
 
+        if (ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>(*I)) {
+          if (!Proto->isThisDeclarationADefinition()) {
+            RewriteForwardProtocolDecl(D);
+            break;
+          }
+        }
+
         HandleTopLevelSingleDecl(*I);
       }
       return true;
@@ -275,7 +282,8 @@ namespace {
                             ValueDecl *VD, bool def=false);
     void RewriteCategoryDecl(ObjCCategoryDecl *Dcl);
     void RewriteProtocolDecl(ObjCProtocolDecl *Dcl);
-    void RewriteForwardProtocolDecl(ObjCForwardProtocolDecl *Dcl);
+    void RewriteForwardProtocolDecl(DeclGroupRef D);
+    void RewriteForwardProtocolDecl(const llvm::SmallVector<Decl*, 8> &DG);
     void RewriteMethodDeclaration(ObjCMethodDecl *Method);
     void RewriteProperty(ObjCPropertyDecl *prop);
     void RewriteFunctionDecl(FunctionDecl *FD);
@@ -662,10 +670,8 @@ void RewriteObjC::HandleTopLevelSingleDecl(Decl *D) {
   } else if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(D)) {
     RewriteCategoryDecl(CD);
   } else if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D)) {
-    RewriteProtocolDecl(PD);
-  } else if (ObjCForwardProtocolDecl *FP =
-             dyn_cast<ObjCForwardProtocolDecl>(D)){
-    RewriteForwardProtocolDecl(FP);
+    if (PD->isThisDeclarationADefinition())
+      RewriteProtocolDecl(PD);
   } else if (LinkageSpecDecl *LSD = dyn_cast<LinkageSpecDecl>(D)) {
     // Recurse into linkage specifications
     for (DeclContext::decl_iterator DI = LSD->decls_begin(),
@@ -689,6 +695,26 @@ void RewriteObjC::HandleTopLevelSingleDecl(Decl *D) {
           continue;
         }
       }
+
+      if (ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>((*DI))) {
+        if (!Proto->isThisDeclarationADefinition()) {
+          SmallVector<Decl *, 8> DG;
+          SourceLocation StartLoc = Proto->getLocStart();
+          do {
+            if (isa<ObjCProtocolDecl>(*DI) &&
+                !cast<ObjCProtocolDecl>(*DI)->isThisDeclarationADefinition() &&
+                StartLoc == (*DI)->getLocStart())
+              DG.push_back(*DI);
+            else
+              break;
+            
+            ++DI;
+          } while (DI != DIEnd);
+          RewriteForwardProtocolDecl(DG);
+          continue;
+        }
+      }
+      
       HandleTopLevelSingleDecl(*DI);
       ++DI;
     }
@@ -1002,8 +1028,17 @@ void RewriteObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
   }
 }
 
-void RewriteObjC::RewriteForwardProtocolDecl(ObjCForwardProtocolDecl *PDecl) {
-  SourceLocation LocStart = PDecl->getLocation();
+void RewriteObjC::RewriteForwardProtocolDecl(DeclGroupRef D) {
+  SourceLocation LocStart = (*D.begin())->getLocStart();
+  if (LocStart.isInvalid())
+    llvm_unreachable("Invalid SourceLocation");
+  // FIXME: handle forward protocol that are declared across multiple lines.
+  ReplaceText(LocStart, 0, "// ");
+}
+
+void 
+RewriteObjC::RewriteForwardProtocolDecl(const llvm::SmallVector<Decl*, 8> &DG) {
+  SourceLocation LocStart = DG[0]->getLocStart();
   if (LocStart.isInvalid())
     llvm_unreachable("Invalid SourceLocation");
   // FIXME: handle forward protocol that are declared across multiple lines.
