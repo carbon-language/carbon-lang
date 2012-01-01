@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
-; RUN: llc < %s -mtriple=x86_64-win32 | FileCheck %s -check-prefix=WIN64
+; RUN: llc < %s -mtriple=x86_64-linux -mattr=+sse3 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-win32 -mattr=+sse3 | FileCheck %s -check-prefix=WIN64
 ; PR8573
 
 ; CHECK: foo:

@@ -3253,19 +3253,21 @@ def MOVNTI_64mr : RI<0xC3, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
 //===----------------------------------------------------------------------===//
 
 // Prefetch intrinsic.
-def PREFETCHT0   : VoPSI<0x18, MRM1m, (outs), (ins i8mem:$src),
-    "prefetcht0\t$src", [(prefetch addr:$src, imm, (i32 3), (i32 1))]>;
-def PREFETCHT1   : VoPSI<0x18, MRM2m, (outs), (ins i8mem:$src),
-    "prefetcht1\t$src", [(prefetch addr:$src, imm, (i32 2), (i32 1))]>;
-def PREFETCHT2   : VoPSI<0x18, MRM3m, (outs), (ins i8mem:$src),
-    "prefetcht2\t$src", [(prefetch addr:$src, imm, (i32 1), (i32 1))]>;
-def PREFETCHNTA  : VoPSI<0x18, MRM0m, (outs), (ins i8mem:$src),
-    "prefetchnta\t$src", [(prefetch addr:$src, imm, (i32 0), (i32 1))]>;
+let Predicates = [HasXMM] in {
+def PREFETCHT0   : I<0x18, MRM1m, (outs), (ins i8mem:$src),
+    "prefetcht0\t$src", [(prefetch addr:$src, imm, (i32 3), (i32 1))]>, TB;
+def PREFETCHT1   : I<0x18, MRM2m, (outs), (ins i8mem:$src),
+    "prefetcht1\t$src", [(prefetch addr:$src, imm, (i32 2), (i32 1))]>, TB;
+def PREFETCHT2   : I<0x18, MRM3m, (outs), (ins i8mem:$src),
+    "prefetcht2\t$src", [(prefetch addr:$src, imm, (i32 1), (i32 1))]>, TB;
+def PREFETCHNTA  : I<0x18, MRM0m, (outs), (ins i8mem:$src),
+    "prefetchnta\t$src", [(prefetch addr:$src, imm, (i32 0), (i32 1))]>, TB;
+}
 
 // Flush cache
 def CLFLUSH : I<0xAE, MRM7m, (outs), (ins i8mem:$src),
                "clflush\t$src", [(int_x86_sse2_clflush addr:$src)]>,
-              TB, Requires<[HasSSE2]>;
+              TB, Requires<[HasXMMInt]>;
 
 // Pause. This "instruction" is encoded as "rep; nop", so even though it
 // was introduced with SSE2, it's backward compatible.
@@ -3273,11 +3275,11 @@ def PAUSE : I<0x90, RawFrm, (outs), (ins), "pause", []>, REP;
 
 // Load, store, and memory fence
 def SFENCE : I<0xAE, MRM_F8, (outs), (ins),
-               "sfence", [(int_x86_sse_sfence)]>, TB, Requires<[HasSSE1]>;
+               "sfence", [(int_x86_sse_sfence)]>, TB, Requires<[HasXMM]>;
 def LFENCE : I<0xAE, MRM_E8, (outs), (ins),
-               "lfence", [(int_x86_sse2_lfence)]>, TB, Requires<[HasSSE2]>;
+               "lfence", [(int_x86_sse2_lfence)]>, TB, Requires<[HasXMMInt]>;
 def MFENCE : I<0xAE, MRM_F0, (outs), (ins),
-               "mfence", [(int_x86_sse2_mfence)]>, TB, Requires<[HasSSE2]>;
+               "mfence", [(int_x86_sse2_mfence)]>, TB, Requires<[HasXMMInt]>;
 
 def : Pat<(X86SFence), (SFENCE)>;
 def : Pat<(X86LFence), (LFENCE)>;
@@ -5463,17 +5465,19 @@ def : Pat<(v16i8 (X86PAlign VR128:$src1, VR128:$src2, (i8 imm:$imm))),
 
 let usesCustomInserter = 1 in {
 def MONITOR : PseudoI<(outs), (ins i32mem:$src1, GR32:$src2, GR32:$src3),
-                [(int_x86_sse3_monitor addr:$src1, GR32:$src2, GR32:$src3)]>;
+                [(int_x86_sse3_monitor addr:$src1, GR32:$src2, GR32:$src3)]>,
+                Requires<[HasSSE3orAVX]>;
 def MWAIT : PseudoI<(outs), (ins GR32:$src1, GR32:$src2),
-                [(int_x86_sse3_mwait GR32:$src1, GR32:$src2)]>;
+                [(int_x86_sse3_mwait GR32:$src1, GR32:$src2)]>,
+                Requires<[HasSSE3orAVX]>;
 }
 
 let Uses = [EAX, ECX, EDX] in
 def MONITORrrr : I<0x01, MRM_C8, (outs), (ins), "monitor", []>, TB,
-                 Requires<[HasSSE3]>;
+                 Requires<[HasSSE3orAVX]>;
 let Uses = [ECX, EAX] in
 def MWAITrr   : I<0x01, MRM_C9, (outs), (ins), "mwait", []>, TB,
-                Requires<[HasSSE3]>;
+                Requires<[HasSSE3orAVX]>;
 
 def : InstAlias<"mwait %eax, %ecx", (MWAITrr)>, Requires<[In32BitMode]>;
 def : InstAlias<"mwait %rax, %rcx", (MWAITrr)>, Requires<[In64BitMode]>;

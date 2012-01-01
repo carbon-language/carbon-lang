@@ -2481,4 +2481,52 @@ define void @test_x86_avx_vzeroupper() {
 }
 declare void @llvm.x86.avx.vzeroupper() nounwind
 
+; Make sure instructions with no AVX equivalents, but are associated with SSEX feature flags still work
 
+; CHECK: monitor
+define void @monitor(i8* %P, i32 %E, i32 %H) nounwind {
+entry:
+  tail call void @llvm.x86.sse3.monitor(i8* %P, i32 %E, i32 %H)
+  ret void
+}
+declare void @llvm.x86.sse3.monitor(i8*, i32, i32) nounwind
+
+; CHECK: mwait
+define void @mwait(i32 %E, i32 %H) nounwind {
+entry:
+  tail call void @llvm.x86.sse3.mwait(i32 %E, i32 %H)
+  ret void
+}
+declare void @llvm.x86.sse3.mwait(i32, i32) nounwind
+
+; CHECK: sfence
+define void @sfence() nounwind {
+entry:
+  tail call void @llvm.x86.sse.sfence()
+  ret void
+}
+declare void @llvm.x86.sse.sfence() nounwind
+
+; CHECK: lfence
+define void @lfence() nounwind {
+entry:
+  tail call void @llvm.x86.sse2.lfence()
+  ret void
+}
+declare void @llvm.x86.sse2.lfence() nounwind
+
+; CHECK: mfence
+define void @mfence() nounwind {
+entry:
+  tail call void @llvm.x86.sse2.mfence()
+  ret void
+}
+declare void @llvm.x86.sse2.mfence() nounwind
+
+; CHECK: clflush
+define void @clflush(i8* %p) nounwind {
+entry:
+  tail call void @llvm.x86.sse2.clflush(i8* %p)
+  ret void
+}
+declare void @llvm.x86.sse2.clflush(i8*) nounwind
