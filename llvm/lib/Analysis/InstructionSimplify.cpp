@@ -812,14 +812,10 @@ static Value *SimplifyMulInst(Value *Op0, Value *Op1, const TargetData *TD,
     return Op0;
 
   // (X / Y) * Y -> X if the division is exact.
-  Value *X = 0, *Y = 0;
-  if ((match(Op0, m_IDiv(m_Value(X), m_Value(Y))) && Y == Op1) || // (X / Y) * Y
-      (match(Op1, m_IDiv(m_Value(X), m_Value(Y))) && Y == Op0)) { // Y * (X / Y)
-    PossiblyExactOperator *Div =
-      cast<PossiblyExactOperator>(Y == Op1 ? Op0 : Op1);
-    if (Div->isExact())
-      return X;
-  }
+  Value *X = 0;
+  if (match(Op0, m_Exact(m_IDiv(m_Value(X), m_Specific(Op1)))) || // (X / Y) * Y
+      match(Op1, m_Exact(m_IDiv(m_Value(X), m_Specific(Op0)))))   // Y * (X / Y)
+    return X;
 
   // i1 mul -> and.
   if (MaxRecurse && Op0->getType()->isIntegerTy(1))
@@ -1162,8 +1158,7 @@ static Value *SimplifyShlInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 
   // (X >> A) << A -> X
   Value *X;
-  if (match(Op0, m_Shr(m_Value(X), m_Specific(Op1))) &&
-      cast<PossiblyExactOperator>(Op0)->isExact())
+  if (match(Op0, m_Exact(m_Shr(m_Value(X), m_Specific(Op1)))))
     return X;
   return 0;
 }

@@ -442,6 +442,26 @@ m_IDiv(const LHS &L, const RHS &R) {
 }
 
 //===----------------------------------------------------------------------===//
+// Class that matches exact binary ops.
+//
+template<typename SubPattern_t>
+struct Exact_match {
+  SubPattern_t SubPattern;
+
+  Exact_match(const SubPattern_t &SP) : SubPattern(SP) {}
+
+  template<typename OpTy>
+  bool match(OpTy *V) {
+    if (PossiblyExactOperator *PEO = dyn_cast<PossiblyExactOperator>(V))
+      return PEO->isExact() && SubPattern.match(V);
+    return false;
+  }
+};
+
+template<typename T>
+inline Exact_match<T> m_Exact(const T &SubPattern) { return SubPattern; }
+
+//===----------------------------------------------------------------------===//
 // Matchers for CmpInst classes
 //
 

@@ -811,11 +811,9 @@ bool llvm::isPowerOfTwo(Value *V, const TargetData *TD, bool OrZero,
   // An exact divide or right shift can only shift off zero bits, so the result
   // is a power of two only if the first operand is a power of two and not
   // copying a sign bit (sdiv int_min, 2).
-  if (match(V, m_LShr(m_Value(), m_Value())) ||
-      match(V, m_UDiv(m_Value(), m_Value()))) {
-    PossiblyExactOperator *PEO = cast<PossiblyExactOperator>(V);
-    if (PEO->isExact())
-      return isPowerOfTwo(PEO->getOperand(0), TD, OrZero, Depth);
+  if (match(V, m_Exact(m_LShr(m_Value(), m_Value()))) ||
+      match(V, m_Exact(m_UDiv(m_Value(), m_Value())))) {
+    return isPowerOfTwo(cast<Operator>(V)->getOperand(0), TD, OrZero, Depth);
   }
 
   return false;
@@ -879,10 +877,8 @@ bool llvm::isKnownNonZero(Value *V, const TargetData *TD, unsigned Depth) {
       return true;
   }
   // div exact can only produce a zero if the dividend is zero.
-  else if (match(V, m_IDiv(m_Value(X), m_Value()))) {
-    PossiblyExactOperator *BO = cast<PossiblyExactOperator>(V);
-    if (BO->isExact())
-      return isKnownNonZero(X, TD, Depth);
+  else if (match(V, m_Exact(m_IDiv(m_Value(X), m_Value())))) {
+    return isKnownNonZero(X, TD, Depth);
   }
   // X + Y.
   else if (match(V, m_Add(m_Value(X), m_Value(Y)))) {
