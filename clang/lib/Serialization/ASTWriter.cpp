@@ -3483,6 +3483,7 @@ void ASTWriter::ResolveDeclUpdatesBlocks() {
       case UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION:
       case UPD_CXX_ADDED_ANONYMOUS_NAMESPACE:
       case UPD_OBJC_SET_CLASS_DEFINITIONDATA:
+      case UPD_OBJC_SET_PROTOCOL_DEFINITIONDATA:
         URec[Idx] = GetDeclRef(reinterpret_cast<Decl *>(URec[Idx]));
         ++Idx;
         break;
@@ -4441,6 +4442,24 @@ void ASTWriter::CompletedObjCForwardRef(const ObjCContainerDecl *D) {
       if (I->isFromASTFile()) {
         UpdateRecord &Record = DeclUpdates[*I];
         Record.push_back(UPD_OBJC_SET_CLASS_DEFINITIONDATA);
+        assert((*I)->hasDefinition());
+        assert((*I)->getDefinition() == D);
+        Record.push_back(reinterpret_cast<uint64_t>(D)); // the DefinitionDecl
+      }
+    }
+  }
+
+  if (const ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D)) {
+    for (ObjCProtocolDecl::redecl_iterator I = PD->redecls_begin(), 
+                                           E = PD->redecls_end(); 
+         I != E; ++I) {
+      if (*I == PD)
+        continue;
+      
+      // We are interested when a PCH decl is modified.
+      if (I->isFromASTFile()) {
+        UpdateRecord &Record = DeclUpdates[*I];
+        Record.push_back(UPD_OBJC_SET_PROTOCOL_DEFINITIONDATA);
         assert((*I)->hasDefinition());
         assert((*I)->getDefinition() == D);
         Record.push_back(reinterpret_cast<uint64_t>(D)); // the DefinitionDecl

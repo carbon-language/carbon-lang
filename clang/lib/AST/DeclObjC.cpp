@@ -1005,11 +1005,17 @@ ObjCMethodDecl *ObjCProtocolDecl::lookupMethod(Selector Sel,
 
 void ObjCProtocolDecl::allocateDefinitionData() {
   assert(!Data && "Protocol already has a definition!");
-  Data = new (getASTContext()) DefinitionData;  
+  Data = new (getASTContext()) DefinitionData;
+  Data->Definition = this;
 }
 
 void ObjCProtocolDecl::startDefinition() {
   allocateDefinitionData();
+  
+  // Update all of the declarations with a pointer to the definition.
+  for (redecl_iterator RD = redecls_begin(), RDEnd = redecls_end();
+       RD != RDEnd; ++RD)
+    RD->Data = this->Data;
 }
 
 void ObjCProtocolDecl::completedForwardDecl() {

@@ -517,6 +517,7 @@ void ASTDeclWriter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
 }
 
 void ASTDeclWriter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
+  VisitRedeclarable(D);
   VisitObjCContainerDecl(D);
   Record.push_back(D->isInitiallyForwardDecl());
   Record.push_back(D->isForwardProtoDecl);

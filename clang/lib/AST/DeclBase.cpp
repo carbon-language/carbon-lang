@@ -784,8 +784,10 @@ DeclContext *DeclContext::getPrimaryContext() {
     return this;
       
   case Decl::ObjCProtocol:
-    // FIXME: Update when protocols properly model forward declarations.
-    // For now, it's fine to fall through
+    if (ObjCProtocolDecl *Def = cast<ObjCProtocolDecl>(this)->getDefinition())
+      return Def;
+    
+    return this;
       
   case Decl::ObjCCategory:
     return this;

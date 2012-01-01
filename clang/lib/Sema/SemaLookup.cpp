@@ -1067,6 +1067,8 @@ static NamedDecl *getPreviousDeclaration(NamedDecl *D) {
     return TD->getPreviousDeclaration();
   if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D))
     return ID->getPreviousDeclaration();
+  if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D))
+    return PD->getPreviousDeclaration();
   
   return 0;
 }

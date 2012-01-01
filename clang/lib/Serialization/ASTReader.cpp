@@ -6121,9 +6121,10 @@ void ASTReader::finishPendingActions() {
     PendingChainedObjCCategories.clear();
   }
   
-  // If we deserialized any C++ or Objective-C class definitions, make sure
-  // that all redeclarations point to the definitions. Note that this can only 
-  // happen now, after the redeclaration chains have been fully wired.
+  // If we deserialized any C++ or Objective-C class definitions or any
+  // Objective-C protocol definitions, make sure that all redeclarations point 
+  // to the definitions. Note that this can only happen now, after the 
+  // redeclaration chains have been fully wired.
   for (llvm::SmallPtrSet<Decl *, 4>::iterator D = PendingDefinitions.begin(),
                                            DEnd = PendingDefinitions.end();
        D != DEnd; ++D) {
@@ -6136,11 +6137,20 @@ void ASTReader::finishPendingActions() {
       continue;
     }
     
-    ObjCInterfaceDecl *ID = cast<ObjCInterfaceDecl>(*D);
-    for (ObjCInterfaceDecl::redecl_iterator R = ID->redecls_begin(),
-                                         REnd = ID->redecls_end();
+    if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(*D)) {
+      for (ObjCInterfaceDecl::redecl_iterator R = ID->redecls_begin(),
+                                           REnd = ID->redecls_end();
+           R != REnd; ++R)
+        R->Data = ID->Data;
+      
+      continue;
+    }
+    
+    ObjCProtocolDecl *PD = cast<ObjCProtocolDecl>(*D);
+    for (ObjCProtocolDecl::redecl_iterator R = PD->redecls_begin(),
+                                        REnd = PD->redecls_end();
          R != REnd; ++R)
-      R->Data = ID->Data;
+      R->Data = PD->Data;
   }
   PendingDefinitions.clear();
 }

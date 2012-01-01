@@ -760,6 +760,7 @@ void ASTDeclReader::VisitObjCIvarDecl(ObjCIvarDecl *IVD) {
 }
 
 void ASTDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
+  VisitRedeclarable(PD);
   VisitObjCContainerDecl(PD);
   PD->InitiallyForwardDecl = Record[Idx++];
   PD->isForwardProtoDecl = Record[Idx++];
@@ -782,8 +783,8 @@ void ASTDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
     PD->setProtocolList(ProtoRefs.data(), NumProtoRefs, ProtoLocs.data(),
                         Reader.getContext());
     
-    // FIXME: Note that we have deserialized a definition.
-    // Reader.PendingDefinitions.insert(PD);
+    // Note that we have deserialized a definition.
+    Reader.PendingDefinitions.insert(PD);
   } else if (Def && Def->Data) {
     PD->Data = Def->Data;
   }
@@ -1712,6 +1713,8 @@ void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *previous) {
     TD->RedeclLink.setPointer(cast<TypedefNameDecl>(previous));
   } else if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D)) {
     ID->RedeclLink.setPointer(cast<ObjCInterfaceDecl>(previous));
+  } else if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D)) {
+    PD->RedeclLink.setPointer(cast<ObjCProtocolDecl>(previous));
   } else {
     RedeclarableTemplateDecl *TD = cast<RedeclarableTemplateDecl>(D);
     TD->CommonOrPrev = cast<RedeclarableTemplateDecl>(previous);
@@ -1737,6 +1740,10 @@ void ASTDeclReader::attachLatestDecl(Decl *D, Decl *Latest) {
     ID->RedeclLink
       = Redeclarable<ObjCInterfaceDecl>::LatestDeclLink(
                                               cast<ObjCInterfaceDecl>(Latest));
+  } else if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D)) {
+    PD->RedeclLink
+      = Redeclarable<ObjCProtocolDecl>::LatestDeclLink(
+                                                cast<ObjCProtocolDecl>(Latest));
   } else {
     RedeclarableTemplateDecl *TD = cast<RedeclarableTemplateDecl>(D);
     TD->getCommonPtr()->Latest = cast<RedeclarableTemplateDecl>(Latest);
@@ -2201,6 +2208,8 @@ static Decl *getPreviousDecl(Decl *D) {
     return TD->getPreviousDeclaration();
   if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D))
     return ID->getPreviousDeclaration();
+  if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D))
+    return PD->getPreviousDeclaration();
   
   return cast<RedeclarableTemplateDecl>(D)->getPreviousDeclaration();
 }
@@ -2217,6 +2226,8 @@ static Decl *getMostRecentDecl(Decl *D) {
     return TD->getMostRecentDeclaration();
   if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D))
     return ID->getMostRecentDeclaration();
+  if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D))
+    return PD->getMostRecentDeclaration();
   
   return cast<RedeclarableTemplateDecl>(D)->getMostRecentDeclaration();
 }
@@ -2450,6 +2461,15 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
       ObjCInterfaceDecl *ID = cast<ObjCInterfaceDecl>(D);
       ObjCInterfaceDecl *Def
         = Reader.ReadDeclAs<ObjCInterfaceDecl>(ModuleFile, Record, Idx);
+      if (Def->Data)
+        ID->Data = Def->Data;
+      break;
+    }
+
+    case UPD_OBJC_SET_PROTOCOL_DEFINITIONDATA: {
+      ObjCProtocolDecl *ID = cast<ObjCProtocolDecl>(D);
+      ObjCProtocolDecl *Def
+        = Reader.ReadDeclAs<ObjCProtocolDecl>(ModuleFile, Record, Idx);
       if (Def->Data)
         ID->Data = Def->Data;
       break;

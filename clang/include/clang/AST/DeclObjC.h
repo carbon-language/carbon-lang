@@ -1063,10 +1063,14 @@ public:
 ///
 /// id <NSDraggingInfo> anyObjectThatImplementsNSDraggingInfo;
 ///
-class ObjCProtocolDecl : public ObjCContainerDecl {
+class ObjCProtocolDecl : public ObjCContainerDecl,
+                         public Redeclarable<ObjCProtocolDecl> {
   virtual void anchor();
 
   struct DefinitionData {
+    // \brief The declaration that defines this protocol.
+    ObjCProtocolDecl *Definition;
+
     /// Referenced protocols
     ObjCProtocolList ReferencedProtocols;    
   };
@@ -1093,7 +1097,12 @@ class ObjCProtocolDecl : public ObjCContainerDecl {
   }
 
   void allocateDefinitionData();
-  
+
+  typedef Redeclarable<ObjCProtocolDecl> redeclarable_base;
+  virtual ObjCProtocolDecl *getNextRedeclaration() { 
+    return RedeclLink.getNext(); 
+  }
+                           
 public:
   static ObjCProtocolDecl *Create(ASTContext &C, DeclContext *DC,
                                   IdentifierInfo *Id,
@@ -1163,12 +1172,12 @@ public:
 
   /// \brief Retrieve the definition of this protocol, if any.
   ObjCProtocolDecl *getDefinition() {
-    return hasDefinition()? this : 0;
+    return Data? Data->Definition : 0;
   }
 
   /// \brief Retrieve the definition of this protocol, if any.
   const ObjCProtocolDecl *getDefinition() const {
-    return hasDefinition()? this : 0;
+    return Data? Data->Definition : 0;
   }
 
   /// \brief Determine whether this particular declaration is also the 
@@ -1192,12 +1201,20 @@ public:
   SourceLocation getLocEnd() const { return EndLoc; }
   void setLocEnd(SourceLocation LE) { EndLoc = LE; }
 
+  typedef redeclarable_base::redecl_iterator redecl_iterator;
+  redecl_iterator redecls_begin() const {
+    return redeclarable_base::redecls_begin();
+  }
+  redecl_iterator redecls_end() const {
+    return redeclarable_base::redecls_end();
+  }
+                           
   /// Retrieves the canonical declaration of this Objective-C protocol.
   ObjCProtocolDecl *getCanonicalDecl() {
-    return this;
+    return getFirstDeclaration();
   }
   const ObjCProtocolDecl *getCanonicalDecl() const {
-    return this;
+    return getFirstDeclaration();
   }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
