@@ -1195,10 +1195,10 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
     for (ObjCInterfaceDecl::all_protocol_iterator P = OI->all_referenced_protocol_begin(),
          PE = OI->all_referenced_protocol_end(); P != PE; ++P) {
       ObjCProtocolDecl *Proto = (*P);
-      Protocols.insert(Proto);
+      Protocols.insert(Proto->getCanonicalDecl());
       for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
            PE = Proto->protocol_end(); P != PE; ++P) {
-        Protocols.insert(*P);
+        Protocols.insert((*P)->getCanonicalDecl());
         CollectInheritedProtocols(*P, Protocols);
       }
     }
@@ -1216,7 +1216,7 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
     for (ObjCCategoryDecl::protocol_iterator P = OC->protocol_begin(),
          PE = OC->protocol_end(); P != PE; ++P) {
       ObjCProtocolDecl *Proto = (*P);
-      Protocols.insert(Proto);
+      Protocols.insert(Proto->getCanonicalDecl());
       for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
            PE = Proto->protocol_end(); P != PE; ++P)
         CollectInheritedProtocols(*P, Protocols);
@@ -1225,7 +1225,7 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
     for (ObjCProtocolDecl::protocol_iterator P = OP->protocol_begin(),
          PE = OP->protocol_end(); P != PE; ++P) {
       ObjCProtocolDecl *Proto = (*P);
-      Protocols.insert(Proto);
+      Protocols.insert(Proto->getCanonicalDecl());
       for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
            PE = Proto->protocol_end(); P != PE; ++P)
         CollectInheritedProtocols(*P, Protocols);
@@ -5178,7 +5178,7 @@ bool ASTContext::areCompatibleVectorTypes(QualType FirstVec,
 bool
 ASTContext::ProtocolCompatibleWithProtocol(ObjCProtocolDecl *lProto,
                                            ObjCProtocolDecl *rProto) const {
-  if (lProto == rProto)
+  if (declaresSameEntity(lProto, rProto))
     return true;
   for (ObjCProtocolDecl::protocol_iterator PI = rProto->protocol_begin(),
        E = rProto->protocol_end(); PI != E; ++PI)

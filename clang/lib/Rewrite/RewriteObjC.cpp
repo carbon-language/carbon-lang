@@ -3085,7 +3085,7 @@ Stmt *RewriteObjC::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
                                                 CK_BitCast,
                                                 DerefExpr);
   ReplaceStmt(Exp, castExpr);
-  ProtocolExprDecls.insert(Exp->getProtocol());
+  ProtocolExprDecls.insert(Exp->getProtocol()->getCanonicalDecl());
   // delete Exp; leak for now, see RewritePropertyOrImplicitSetter() usage for more info.
   return castExpr;
 
@@ -5185,7 +5185,7 @@ void RewriteObjCFragileABI::RewriteObjCProtocolMetaData(
     objc_protocol_methods = true;
   }
   // Do not synthesize the protocol more than once.
-  if (ObjCSynthesizedProtocols.count(PDecl))
+  if (ObjCSynthesizedProtocols.count(PDecl->getCanonicalDecl()))
     return;
   
   if (PDecl->instmeth_begin() != PDecl->instmeth_end()) {
@@ -5307,7 +5307,7 @@ void RewriteObjCFragileABI::RewriteObjCProtocolMetaData(
   Result += "};\n";
   
   // Mark this protocol as having been generated.
-  if (!ObjCSynthesizedProtocols.insert(PDecl))
+  if (!ObjCSynthesizedProtocols.insert(PDecl->getCanonicalDecl()))
     llvm_unreachable("protocol already synthesized");
   
 }
