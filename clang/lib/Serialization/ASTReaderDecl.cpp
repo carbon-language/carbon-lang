@@ -764,17 +764,29 @@ void ASTDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
   PD->InitiallyForwardDecl = Record[Idx++];
   PD->isForwardProtoDecl = Record[Idx++];
   PD->setLocEnd(ReadSourceLocation(Record, Idx));
-  unsigned NumProtoRefs = Record[Idx++];
-  SmallVector<ObjCProtocolDecl *, 16> ProtoRefs;
-  ProtoRefs.reserve(NumProtoRefs);
-  for (unsigned I = 0; I != NumProtoRefs; ++I)
-    ProtoRefs.push_back(ReadDeclAs<ObjCProtocolDecl>(Record, Idx));
-  SmallVector<SourceLocation, 16> ProtoLocs;
-  ProtoLocs.reserve(NumProtoRefs);
-  for (unsigned I = 0; I != NumProtoRefs; ++I)
-    ProtoLocs.push_back(ReadSourceLocation(Record, Idx));
-  PD->setProtocolList(ProtoRefs.data(), NumProtoRefs, ProtoLocs.data(),
-                      Reader.getContext());
+  
+  ObjCProtocolDecl *Def = ReadDeclAs<ObjCProtocolDecl>(Record, Idx);
+  if (PD == Def) {
+    // Read the definition.
+    PD->allocateDefinitionData();
+    
+    unsigned NumProtoRefs = Record[Idx++];
+    SmallVector<ObjCProtocolDecl *, 16> ProtoRefs;
+    ProtoRefs.reserve(NumProtoRefs);
+    for (unsigned I = 0; I != NumProtoRefs; ++I)
+      ProtoRefs.push_back(ReadDeclAs<ObjCProtocolDecl>(Record, Idx));
+    SmallVector<SourceLocation, 16> ProtoLocs;
+    ProtoLocs.reserve(NumProtoRefs);
+    for (unsigned I = 0; I != NumProtoRefs; ++I)
+      ProtoLocs.push_back(ReadSourceLocation(Record, Idx));
+    PD->setProtocolList(ProtoRefs.data(), NumProtoRefs, ProtoLocs.data(),
+                        Reader.getContext());
+    
+    // FIXME: Note that we have deserialized a definition.
+    // Reader.PendingDefinitions.insert(PD);
+  } else if (Def && Def->Data) {
+    PD->Data = Def->Data;
+  }
 }
 
 void ASTDeclReader::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *FD) {

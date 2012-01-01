@@ -819,7 +819,6 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
 
   // ObjCProtocolDecl
   void visitObjCProtocolDeclAttrs(ObjCProtocolDecl *D) {
-    setFlag("forward_decl", D->isForwardDecl());
   }
   void visitObjCProtocolDeclChildren(ObjCProtocolDecl *D) {
     if (D->protocol_begin() != D->protocol_end()) {

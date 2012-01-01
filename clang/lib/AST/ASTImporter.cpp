@@ -3119,7 +3119,7 @@ Decl *ASTNodeImporter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
   }
   
   ObjCProtocolDecl *ToProto = MergeWithProtocol;
-  if (!ToProto || ToProto->isForwardDecl()) {
+  if (!ToProto || !ToProto->hasDefinition()) {
     if (!ToProto) {
       ToProto = ObjCProtocolDecl::Create(Importer.getToContext(), DC,
                                          Name.getAsIdentifierInfo(), Loc,
@@ -3127,9 +3127,12 @@ Decl *ASTNodeImporter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
                                          D->isInitiallyForwardDecl());
       ToProto->setLexicalDeclContext(LexicalDC);
       LexicalDC->addDeclInternal(ToProto);
-      if (D->isInitiallyForwardDecl() && !D->isForwardDecl())
+      if (D->isInitiallyForwardDecl() && D->hasDefinition())
         ToProto->completedForwardDecl();
     }
+    if (!ToProto->hasDefinition())
+      ToProto->startDefinition();
+    
     Importer.Imported(D, ToProto);
 
     // Import protocols

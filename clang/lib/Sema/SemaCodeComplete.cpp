@@ -4554,13 +4554,16 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
   
   // Visit the protocols of protocols.
   if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Container)) {
-    const ObjCList<ObjCProtocolDecl> &Protocols
-      = Protocol->getReferencedProtocols();
-    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
-                                              E = Protocols.end(); 
-         I != E; ++I)
-      AddObjCMethods(*I, WantInstanceMethods, WantKind, SelIdents, NumSelIdents, 
-                     CurContext, Selectors, AllowSameLength, Results, false);    
+    if (Protocol->hasDefinition()) {
+      const ObjCList<ObjCProtocolDecl> &Protocols
+        = Protocol->getReferencedProtocols();
+      for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+                                                E = Protocols.end(); 
+           I != E; ++I)
+        AddObjCMethods(*I, WantInstanceMethods, WantKind, SelIdents, 
+                       NumSelIdents, CurContext, Selectors, AllowSameLength, 
+                       Results, false);
+    }
   }
   
   ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container);
@@ -5417,7 +5420,7 @@ static void AddProtocolResults(DeclContext *Ctx, DeclContext *CurContext,
        D != DEnd; ++D) {
     // Record any protocols we find.
     if (ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>(*D))
-      if (!OnlyForwardDeclarations || Proto->isForwardDecl())
+      if (!OnlyForwardDeclarations || !Proto->hasDefinition())
         Results.AddResult(Result(Proto, 0), CurContext, 0, false);
 
     // Record any forward-declared protocols we find.
@@ -5427,7 +5430,7 @@ static void AddProtocolResults(DeclContext *Ctx, DeclContext *CurContext,
              P = Forward->protocol_begin(),
              PEnd = Forward->protocol_end();
            P != PEnd; ++P)
-        if (!OnlyForwardDeclarations || (*P)->isForwardDecl())
+        if (!OnlyForwardDeclarations || !(*P)->hasDefinition())
           Results.AddResult(Result(*P, 0), CurContext, 0, false);
     }
   }
@@ -5823,14 +5826,16 @@ static void FindImplementableMethods(ASTContext &Context,
   }
 
   if (ObjCProtocolDecl *Protocol = dyn_cast<ObjCProtocolDecl>(Container)) {
-    // Recurse into protocols.
-    const ObjCList<ObjCProtocolDecl> &Protocols
-      = Protocol->getReferencedProtocols();
-    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
-           E = Protocols.end(); 
-         I != E; ++I)
-      FindImplementableMethods(Context, *I, WantInstanceMethods, ReturnType,
-                               KnownMethods, false);
+    if (Protocol->hasDefinition()) {
+      // Recurse into protocols.
+      const ObjCList<ObjCProtocolDecl> &Protocols
+        = Protocol->getReferencedProtocols();
+      for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+             E = Protocols.end(); 
+           I != E; ++I)
+        FindImplementableMethods(Context, *I, WantInstanceMethods, ReturnType,
+                                 KnownMethods, false);
+    }
   }
 
   // Add methods in this container. This operation occurs last because

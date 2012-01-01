@@ -368,8 +368,9 @@ bool IndexingContext::handleObjCInterface(const ObjCInterfaceDecl *D) {
   }
   
   ObjCProtocolList EmptyProtoList;
-  ObjCProtocolListInfo ProtInfo(D->hasDefinition() ? D->getReferencedProtocols()
-                                                   : EmptyProtoList, 
+  ObjCProtocolListInfo ProtInfo(D->isThisDeclarationADefinition() 
+                                  ? D->getReferencedProtocols()
+                                  : EmptyProtoList, 
                                 *this, SA);
   
   ObjCInterfaceDeclInfo InterInfo(D);
@@ -401,7 +402,11 @@ bool IndexingContext::handleObjCForwardProtocol(const ObjCProtocolDecl *D,
 
 bool IndexingContext::handleObjCProtocol(const ObjCProtocolDecl *D) {
   ScratchAlloc SA(*this);
-  ObjCProtocolListInfo ProtListInfo(D->getReferencedProtocols(), *this, SA);
+  ObjCProtocolList EmptyProtoList;
+  ObjCProtocolListInfo ProtListInfo(D->isThisDeclarationADefinition()
+                                      ? D->getReferencedProtocols()
+                                      : EmptyProtoList,
+                                    *this, SA);
   
   ObjCProtocolDeclInfo ProtInfo(D);
   ProtInfo.ObjCProtoRefListInfo = ProtListInfo.getListInfo();

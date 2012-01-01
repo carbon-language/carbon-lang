@@ -545,6 +545,10 @@ bool Sema::CheckForwardProtocolDeclarationForCircularDependency(
         Diag(PrevLoc, diag::note_previous_definition);
         res = true;
       }
+      
+      if (!PDecl->hasDefinition())
+        continue;
+      
       if (CheckForwardProtocolDeclarationForCircularDependency(PName, Ploc,
             PDecl->getLocation(), PDecl->getReferencedProtocols()))
         res = true;
@@ -568,18 +572,18 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
   ObjCProtocolDecl *PDecl = LookupProtocol(ProtocolName, ProtocolLoc);
   if (PDecl) {
     // Protocol already seen. Better be a forward protocol declaration
-    if (!PDecl->isForwardDecl()) {
+    if (ObjCProtocolDecl *Def = PDecl->getDefinition()) {
       Diag(ProtocolLoc, diag::warn_duplicate_protocol_def) << ProtocolName;
-      Diag(PDecl->getLocation(), diag::note_previous_definition);
+      Diag(Def->getLocation(), diag::note_previous_definition);
 
-      // Create a new one; the other may be in a different DeclContex, (e.g.
-      // this one may be in a LinkageSpecDecl while the other is not) which
-      // will break invariants.
-      // We will not add it to scope chains to ignore it as the warning says.
+      // Create a new protocol that is completely distinct from previous
+      // declarations, and do not make this protocol available for name lookup.
+      // That way, we'll end up completely ignoring the duplicate.
+      // FIXME: Can we turn this into an error?
       PDecl = ObjCProtocolDecl::Create(Context, CurContext, ProtocolName,
                                        ProtocolLoc, AtProtoInterfaceLoc,
                                        /*isForwardDecl=*/false);
-
+      PDecl->startDefinition();
     } else {
       ObjCList<ObjCProtocolDecl> PList;
       PList.set((ObjCProtocolDecl *const*)ProtoRefs, NumProtoRefs, Context);
@@ -600,7 +604,9 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
                                      ProtocolLoc, AtProtoInterfaceLoc,
                                      /*isForwardDecl=*/false);
     PushOnScopeChains(PDecl, TUScope);
+    PDecl->startDefinition();
   }
+  
   if (AttrList)
     ProcessDeclAttributeList(TUScope, PDecl, AttrList);
   if (!err && NumProtoRefs ) {
@@ -647,7 +653,7 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
 
     // If this is a forward declaration and we are supposed to warn in this
     // case, do it.
-    if (WarnOnDeclarations && PDecl->isForwardDecl())
+    if (WarnOnDeclarations && !PDecl->hasDefinition())
       Diag(ProtocolId[i].second, diag::warn_undef_protocolref)
         << ProtocolId[i].first;
     Protocols.push_back(PDecl);
@@ -2497,6 +2503,9 @@ private:
   }
 
   void searchFrom(ObjCProtocolDecl *protocol) {
+    if (!protocol->hasDefinition())
+      return;
+    
     // A method in a protocol declaration overrides declarations from
     // referenced ("parent") protocols.
     search(protocol->getReferencedProtocols());

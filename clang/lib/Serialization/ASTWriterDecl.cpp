@@ -519,16 +519,23 @@ void ASTDeclWriter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
 void ASTDeclWriter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
   VisitObjCContainerDecl(D);
   Record.push_back(D->isInitiallyForwardDecl());
-  Record.push_back(D->isForwardDecl());
+  Record.push_back(D->isForwardProtoDecl);
   Writer.AddSourceLocation(D->getLocEnd(), Record);
-  Record.push_back(D->protocol_size());
-  for (ObjCProtocolDecl::protocol_iterator
-       I = D->protocol_begin(), IEnd = D->protocol_end(); I != IEnd; ++I)
-    Writer.AddDeclRef(*I, Record);
-  for (ObjCProtocolDecl::protocol_loc_iterator PL = D->protocol_loc_begin(),
-         PLEnd = D->protocol_loc_end();
-       PL != PLEnd; ++PL)
-    Writer.AddSourceLocation(*PL, Record);
+  
+  ObjCProtocolDecl *Def = D->getDefinition();
+  Writer.AddDeclRef(Def, Record);
+
+  if (D == Def) {
+    Record.push_back(D->protocol_size());
+    for (ObjCProtocolDecl::protocol_iterator
+         I = D->protocol_begin(), IEnd = D->protocol_end(); I != IEnd; ++I)
+      Writer.AddDeclRef(*I, Record);
+    for (ObjCProtocolDecl::protocol_loc_iterator PL = D->protocol_loc_begin(),
+           PLEnd = D->protocol_loc_end();
+         PL != PLEnd; ++PL)
+      Writer.AddSourceLocation(*PL, Record);
+  }
+  
   Code = serialization::DECL_OBJC_PROTOCOL;
 }
 

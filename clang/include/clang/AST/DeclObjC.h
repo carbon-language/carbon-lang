@@ -1066,22 +1066,34 @@ public:
 class ObjCProtocolDecl : public ObjCContainerDecl {
   virtual void anchor();
 
-  /// Referenced protocols
-  ObjCProtocolList ReferencedProtocols;
+  struct DefinitionData {
+    /// Referenced protocols
+    ObjCProtocolList ReferencedProtocols;    
+  };
+  
+  DefinitionData *Data;
 
   bool InitiallyForwardDecl : 1;
   bool isForwardProtoDecl : 1; // declared with @protocol.
 
   SourceLocation EndLoc; // marks the '>' or identifier.
 
+  DefinitionData &data() const {
+    assert(Data && "Objective-C protocol has no definition!");
+    return *Data;
+  }
+  
   ObjCProtocolDecl(DeclContext *DC, IdentifierInfo *Id,
                    SourceLocation nameLoc, SourceLocation atStartLoc,
                    bool isForwardDecl)
     : ObjCContainerDecl(ObjCProtocol, DC, Id, nameLoc, atStartLoc),
+      Data(0),
       InitiallyForwardDecl(isForwardDecl),
       isForwardProtoDecl(isForwardDecl) {
   }
 
+  void allocateDefinitionData();
+  
 public:
   static ObjCProtocolDecl *Create(ASTContext &C, DeclContext *DC,
                                   IdentifierInfo *Id,
@@ -1090,25 +1102,48 @@ public:
                                   bool isForwardDecl);
 
   const ObjCProtocolList &getReferencedProtocols() const {
-    return ReferencedProtocols;
+    assert(hasDefinition() && "No definition available!");
+    return data().ReferencedProtocols;
   }
   typedef ObjCProtocolList::iterator protocol_iterator;
-  protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}
-  protocol_iterator protocol_end() const { return ReferencedProtocols.end(); }
+  protocol_iterator protocol_begin() const {
+    if (!hasDefinition())
+      return protocol_iterator();
+    
+    return data().ReferencedProtocols.begin();
+  }
+  protocol_iterator protocol_end() const { 
+    if (!hasDefinition())
+      return protocol_iterator();
+    
+    return data().ReferencedProtocols.end(); 
+  }
   typedef ObjCProtocolList::loc_iterator protocol_loc_iterator;
   protocol_loc_iterator protocol_loc_begin() const {
-    return ReferencedProtocols.loc_begin();
+    if (!hasDefinition())
+      return protocol_loc_iterator();
+    
+    return data().ReferencedProtocols.loc_begin();
   }
   protocol_loc_iterator protocol_loc_end() const {
-    return ReferencedProtocols.loc_end();
+    if (!hasDefinition())
+      return protocol_loc_iterator();
+    
+    return data().ReferencedProtocols.loc_end();
   }
-  unsigned protocol_size() const { return ReferencedProtocols.size(); }
+  unsigned protocol_size() const { 
+    if (!hasDefinition())
+      return 0;
+    
+    return data().ReferencedProtocols.size(); 
+  }
 
   /// setProtocolList - Set the list of protocols that this interface
   /// implements.
   void setProtocolList(ObjCProtocolDecl *const*List, unsigned Num,
                        const SourceLocation *Locs, ASTContext &C) {
-    ReferencedProtocols.set(List, Num, Locs, C);
+    assert(Data && "Protocol is not defined");
+    data().ReferencedProtocols.set(List, Num, Locs, C);
   }
 
   ObjCProtocolDecl *lookupProtocolNamed(IdentifierInfo *PName);
@@ -1123,12 +1158,32 @@ public:
     return lookupMethod(Sel, false/*isInstance*/);
   }
 
+  /// \brief Determine whether this protocol has a definition.
+  bool hasDefinition() const { return Data != 0; }
+
+  /// \brief Retrieve the definition of this protocol, if any.
+  ObjCProtocolDecl *getDefinition() {
+    return hasDefinition()? this : 0;
+  }
+
+  /// \brief Retrieve the definition of this protocol, if any.
+  const ObjCProtocolDecl *getDefinition() const {
+    return hasDefinition()? this : 0;
+  }
+
+  /// \brief Determine whether this particular declaration is also the 
+  /// definition.
+  bool isThisDeclarationADefinition() const {
+    return getDefinition() == this;
+  }
+  
+  /// \brief Starts the definition of this Objective-C protocol.
+  void startDefinition();
+
   /// \brief True if it was initially a forward reference.
   /// Differs with \see isForwardDecl in that \see isForwardDecl will change to
   /// false when we see the definition, but this will remain true.
   bool isInitiallyForwardDecl() const { return InitiallyForwardDecl; }
-
-  bool isForwardDecl() const { return isForwardProtoDecl; }
 
   void completedForwardDecl();
 
@@ -1149,6 +1204,7 @@ public:
   static bool classof(const ObjCProtocolDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == ObjCProtocol; }
 
+  friend class ASTReader;
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
 };

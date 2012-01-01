@@ -4126,8 +4126,8 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
     return clang_getNullCursor();
 
   case Decl::ObjCProtocol:
-    if (!cast<ObjCProtocolDecl>(D)->isForwardDecl())
-      return C;
+    if (ObjCProtocolDecl *Def = cast<ObjCProtocolDecl>(D)->getDefinition())
+      return MakeCXCursor(Def, TU);
     return clang_getNullCursor();
 
   case Decl::ObjCInterface: {

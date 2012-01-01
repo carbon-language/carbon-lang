@@ -1003,9 +1003,19 @@ ObjCMethodDecl *ObjCProtocolDecl::lookupMethod(Selector Sel,
   return NULL;
 }
 
+void ObjCProtocolDecl::allocateDefinitionData() {
+  assert(!Data && "Protocol already has a definition!");
+  Data = new (getASTContext()) DefinitionData;  
+}
+
+void ObjCProtocolDecl::startDefinition() {
+  allocateDefinitionData();
+}
+
 void ObjCProtocolDecl::completedForwardDecl() {
-  assert(isForwardDecl() && "Only valid to call for forward refs");
+  assert(!hasDefinition() && "Only valid to call for forward refs");
   isForwardProtoDecl = false;
+  startDefinition();
   if (ASTMutationListener *L = getASTContext().getASTMutationListener())
     L->CompletedObjCForwardRef(this);
 }

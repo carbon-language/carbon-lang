@@ -5171,7 +5171,7 @@ void RewriteObjCFragileABI::RewriteObjCProtocolMetaData(
   static bool objc_protocol_methods = false;
   
   // Output struct protocol_methods holder of method selector and type.
-  if (!objc_protocol_methods && !PDecl->isForwardDecl()) {
+  if (!objc_protocol_methods && PDecl->hasDefinition()) {
     /* struct protocol_methods {
      SEL _cmd;
      char *method_types;

@@ -102,7 +102,7 @@ public:
 
   bool VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
     // Forward decls are handled at VisitObjCForwardProtocolDecl.
-    if (D->isForwardDecl())
+    if (!D->isThisDeclarationADefinition())
       return true;
 
     IndexCtx.handleObjCProtocol(D);
