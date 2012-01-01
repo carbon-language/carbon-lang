@@ -167,6 +167,9 @@ def pp_out_of_date_dependency : Warning<
 def pp_undef_builtin_macro : Warning<"undefining builtin macro">;
 def pp_redef_builtin_macro : Warning<"redefining builtin macro">,
   InGroup<DiagGroup<"builtin-macro-redefined">>;
+def pp_disabled_macro_expansion : Warning<
+  "disabled expansion of recursive macro">, DefaultIgnore,
+  InGroup<DiagGroup<"disabled-macro-expansion">>;
 def pp_macro_not_used : Warning<"macro is not used">, DefaultIgnore,
   InGroup<DiagGroup<"unused-macros">>;
 def warn_pp_undef_identifier : Warning<
