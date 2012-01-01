@@ -583,8 +583,7 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
     // FIXME: Can we turn this into an error?
     PDecl = ObjCProtocolDecl::Create(Context, CurContext, ProtocolName,
                                      ProtocolLoc, AtProtoInterfaceLoc,
-                                     /*PrevDecl=*/0,
-                                     /*isForwardDecl=*/false);
+                                     /*PrevDecl=*/0);
     PDecl->startDefinition();
   } else {
     if (PrevDecl) {
@@ -599,8 +598,7 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
     // Create the new declaration.
     PDecl = ObjCProtocolDecl::Create(Context, CurContext, ProtocolName,
                                      ProtocolLoc, AtProtoInterfaceLoc,
-                                     /*PrevDecl=*/PrevDecl, 
-                                     /*isForwardDecl=*/false);
+                                     /*PrevDecl=*/PrevDecl);
     
     PushOnScopeChains(PDecl, TUScope);
     PDecl->startDefinition();
@@ -707,7 +705,7 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
     ObjCProtocolDecl *PDecl
       = ObjCProtocolDecl::Create(Context, CurContext, Ident, 
                                  IdentList[i].second, AtProtocolLoc,
-                                 PrevDecl, /*isForwardDecl=*/true);
+                                 PrevDecl);
         
     PushOnScopeChains(PDecl, TUScope);
     CheckObjCDeclScope(PDecl);

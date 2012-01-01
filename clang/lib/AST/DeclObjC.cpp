@@ -970,12 +970,8 @@ void ObjCProtocolDecl::anchor() { }
 ObjCProtocolDecl::ObjCProtocolDecl(DeclContext *DC, IdentifierInfo *Id,
                                    SourceLocation nameLoc, 
                                    SourceLocation atStartLoc,
-                                   ObjCProtocolDecl *PrevDecl,
-                                   bool isForwardDecl)
-  : ObjCContainerDecl(ObjCProtocol, DC, Id, nameLoc, atStartLoc),
-    Data(0),
-    InitiallyForwardDecl(isForwardDecl),
-    isForwardProtoDecl(isForwardDecl) 
+                                   ObjCProtocolDecl *PrevDecl)
+  : ObjCContainerDecl(ObjCProtocol, DC, Id, nameLoc, atStartLoc), Data()
 {
   setPreviousDeclaration(PrevDecl);
   if (PrevDecl)
@@ -986,11 +982,9 @@ ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, DeclContext *DC,
                                            IdentifierInfo *Id,
                                            SourceLocation nameLoc,
                                            SourceLocation atStartLoc,
-                                           ObjCProtocolDecl *PrevDecl,
-                                           bool isForwardDecl) {
+                                           ObjCProtocolDecl *PrevDecl) {
   ObjCProtocolDecl *Result 
-    = new (C) ObjCProtocolDecl(DC, Id, nameLoc, atStartLoc, PrevDecl,
-                               isForwardDecl);
+    = new (C) ObjCProtocolDecl(DC, Id, nameLoc, atStartLoc, PrevDecl);
   
   return Result;
 }

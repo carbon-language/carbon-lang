@@ -1077,9 +1077,6 @@ class ObjCProtocolDecl : public ObjCContainerDecl,
   
   DefinitionData *Data;
 
-  bool InitiallyForwardDecl : 1;
-  bool isForwardProtoDecl : 1; // declared with @protocol.
-
   SourceLocation EndLoc; // marks the '>' or identifier.
 
   DefinitionData &data() const {
@@ -1089,8 +1086,7 @@ class ObjCProtocolDecl : public ObjCContainerDecl,
   
   ObjCProtocolDecl(DeclContext *DC, IdentifierInfo *Id,
                    SourceLocation nameLoc, SourceLocation atStartLoc,
-                   ObjCProtocolDecl *PrevDecl,
-                   bool isForwardDecl);
+                   ObjCProtocolDecl *PrevDecl);
 
   void allocateDefinitionData();
 
@@ -1104,8 +1100,7 @@ public:
                                   IdentifierInfo *Id,
                                   SourceLocation nameLoc,
                                   SourceLocation atStartLoc,
-                                  ObjCProtocolDecl *PrevDecl,
-                                  bool isForwardDecl);
+                                  ObjCProtocolDecl *PrevDecl);
 
   const ObjCProtocolList &getReferencedProtocols() const {
     assert(hasDefinition() && "No definition available!");
@@ -1185,11 +1180,6 @@ public:
   
   /// \brief Starts the definition of this Objective-C protocol.
   void startDefinition();
-
-  /// \brief True if it was initially a forward reference.
-  /// Differs with \see isForwardDecl in that \see isForwardDecl will change to
-  /// false when we see the definition, but this will remain true.
-  bool isInitiallyForwardDecl() const { return InitiallyForwardDecl; }
 
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const { return getAtStartLoc(); } // '@'protocol

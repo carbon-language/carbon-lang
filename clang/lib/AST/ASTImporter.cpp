@@ -3123,8 +3123,7 @@ Decl *ASTNodeImporter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
       ToProto = ObjCProtocolDecl::Create(Importer.getToContext(), DC,
                                          Name.getAsIdentifierInfo(), Loc,
                                          Importer.Import(D->getAtStartLoc()),
-                                         /*PrevDecl=*/0,
-                                         D->isInitiallyForwardDecl());
+                                         /*PrevDecl=*/0);
       ToProto->setLexicalDeclContext(LexicalDC);
       LexicalDC->addDeclInternal(ToProto);
     }
