@@ -811,8 +811,6 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
   }
 
   // ObjCProtocolDecl
-  void visitObjCProtocolDeclAttrs(ObjCProtocolDecl *D) {
-  }
   void visitObjCProtocolDeclChildren(ObjCProtocolDecl *D) {
     if (!D->isThisDeclarationADefinition())
       return;
