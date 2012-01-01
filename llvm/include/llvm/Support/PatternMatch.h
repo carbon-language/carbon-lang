@@ -31,6 +31,7 @@
 
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/Operator.h"
 
 namespace llvm {
 namespace PatternMatch {
@@ -529,10 +530,8 @@ struct CastClass_match {
 
   template<typename OpTy>
   bool match(OpTy *V) {
-    if (CastInst *I = dyn_cast<CastInst>(V))
-      return I->getOpcode() == Opcode && Op.match(I->getOperand(0));
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-      return CE->getOpcode() == Opcode && Op.match(CE->getOperand(0));
+    if (Operator *O = dyn_cast<Operator>(V))
+      return O->getOpcode() == Opcode && Op.match(O->getOperand(0));
     return false;
   }
 };
@@ -585,12 +584,9 @@ struct not_match {
 
   template<typename OpTy>
   bool match(OpTy *V) {
-    if (Instruction *I = dyn_cast<Instruction>(V))
-      if (I->getOpcode() == Instruction::Xor)
-        return matchIfNot(I->getOperand(0), I->getOperand(1));
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-      if (CE->getOpcode() == Instruction::Xor)
-        return matchIfNot(CE->getOperand(0), CE->getOperand(1));
+    if (Operator *O = dyn_cast<Operator>(V))
+      if (O->getOpcode() == Instruction::Xor)
+        return matchIfNot(O->getOperand(0), O->getOperand(1));
     return false;
   }
 private:
@@ -615,12 +611,9 @@ struct neg_match {
 
   template<typename OpTy>
   bool match(OpTy *V) {
-    if (Instruction *I = dyn_cast<Instruction>(V))
-      if (I->getOpcode() == Instruction::Sub)
-        return matchIfNeg(I->getOperand(0), I->getOperand(1));
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-      if (CE->getOpcode() == Instruction::Sub)
-        return matchIfNeg(CE->getOperand(0), CE->getOperand(1));
+    if (Operator *O = dyn_cast<Operator>(V))
+      if (O->getOpcode() == Instruction::Sub)
+        return matchIfNeg(O->getOperand(0), O->getOperand(1));
     return false;
   }
 private:
@@ -644,12 +637,9 @@ struct fneg_match {
 
   template<typename OpTy>
   bool match(OpTy *V) {
-    if (Instruction *I = dyn_cast<Instruction>(V))
-      if (I->getOpcode() == Instruction::FSub)
-        return matchIfFNeg(I->getOperand(0), I->getOperand(1));
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-      if (CE->getOpcode() == Instruction::FSub)
-        return matchIfFNeg(CE->getOperand(0), CE->getOperand(1));
+    if (Operator *O = dyn_cast<Operator>(V))
+      if (O->getOpcode() == Instruction::FSub)
+        return matchIfFNeg(O->getOperand(0), O->getOperand(1));
     return false;
   }
 private:
