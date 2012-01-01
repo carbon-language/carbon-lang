@@ -454,3 +454,15 @@ namespace test22 {
   // CHECK-HIDDEN: declare void @_ZN6test221BINS_2A2EE3fooEv()
   // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test221BINS_2A2EE3barEv()
 }
+
+namespace PR10113 {
+  namespace foo __attribute__ ((__visibility__ ("default"))) {
+    template<typename T>
+      class bar {
+      void zed() {}
+    };
+  }
+  template class foo::bar<char>;
+  // CHECK: define weak_odr void @_ZN7PR101133foo3barIcE3zedEv
+  // CHECK-HIDDEN: define weak_odr void @_ZN7PR101133foo3barIcE3zedEv
+}
