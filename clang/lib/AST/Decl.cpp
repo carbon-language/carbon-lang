@@ -297,9 +297,9 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
       for (const DeclContext *DC = D->getDeclContext();
            !isa<TranslationUnitDecl>(DC);
            DC = DC->getParent()) {
-        if (!isa<NamespaceDecl>(DC)) continue;
-        if (llvm::Optional<Visibility> Vis
-                           = cast<NamespaceDecl>(DC)->getExplicitVisibility()) {
+        const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(DC);
+        if (!ND) continue;
+        if (llvm::Optional<Visibility> Vis = ND->getExplicitVisibility()) {
           LV.setVisibility(*Vis, false);
           F.ConsiderGlobalVisibility = false;
           break;
