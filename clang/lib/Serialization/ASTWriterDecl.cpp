@@ -531,7 +531,6 @@ void ASTDeclWriter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
            PLEnd = D->protocol_loc_end();
          PL != PLEnd; ++PL)
       Writer.AddSourceLocation(*PL, Record);
-    Writer.AddSourceLocation(D->getEndOfDefinitionLoc(), Record);
   }
   
   Code = serialization::DECL_OBJC_PROTOCOL;

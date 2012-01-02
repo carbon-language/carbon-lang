@@ -615,7 +615,6 @@ Sema::ActOnStartProtocolInterface(SourceLocation AtProtoInterfaceLoc,
     /// Check then save referenced protocols.
     PDecl->setProtocolList((ObjCProtocolDecl**)ProtoRefs, NumProtoRefs,
                            ProtoLocs, Context);
-    PDecl->setEndOfDefinitionLoc(EndProtoLoc);
   }
 
   CheckObjCDeclScope(PDecl);

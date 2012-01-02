@@ -1073,9 +1073,6 @@ class ObjCProtocolDecl : public ObjCContainerDecl,
 
     /// \brief Referenced protocols
     ObjCProtocolList ReferencedProtocols;    
-
-    /// \brief Marks the '>' or identifier.
-    SourceLocation EndLoc; 
   };
   
   DefinitionData *Data;
@@ -1189,15 +1186,6 @@ public:
     return SourceRange(getAtStartLoc(), getLocation());
   }
                            
-  SourceLocation getEndOfDefinitionLoc() const { 
-    if (!hasDefinition())
-      return getLocation();
-   
-    return data().EndLoc; 
-  }
-   
-  void setEndOfDefinitionLoc(SourceLocation LE) { data().EndLoc = LE; }
-
   typedef redeclarable_base::redecl_iterator redecl_iterator;
   redecl_iterator redecls_begin() const {
     return redeclarable_base::redecls_begin();
