@@ -115,7 +115,7 @@ struct LVFlags {
 
 /// \brief Get the most restrictive linkage for the types in the given
 /// template parameter list.
-static LVPair 
+static LVPair
 getLVForTemplateParameterList(const TemplateParameterList *Params) {
   LVPair LV(ExternalLinkage, DefaultVisibility);
   for (TemplateParameterList::const_iterator P = Params->begin(),
@@ -130,7 +130,7 @@ getLVForTemplateParameterList(const TemplateParameterList *Params) {
         }
         continue;
       }
-      
+
       if (!NTTP->getType()->isDependentType()) {
         LV = merge(LV, NTTP->getType()->getLinkageAndVisibility());
         continue;
@@ -162,7 +162,7 @@ static LVPair getLVForTemplateArgumentList(const TemplateArgument *Args,
     case TemplateArgument::Integral:
     case TemplateArgument::Expression:
       break;
-      
+
     case TemplateArgument::Type:
       LV = merge(LV, Args[I].getAsType()->getLinkageAndVisibility());
       break;
@@ -178,7 +178,7 @@ static LVPair getLVForTemplateArgumentList(const TemplateArgument *Args,
 
     case TemplateArgument::Template:
     case TemplateArgument::TemplateExpansion:
-      if (TemplateDecl *Template 
+      if (TemplateDecl *Template
                 = Args[I].getAsTemplateOrTemplatePattern().getAsTemplateDecl())
         LV = merge(LV, getLVForDecl(Template, F));
       break;

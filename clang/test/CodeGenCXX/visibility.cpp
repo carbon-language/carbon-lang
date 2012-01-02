@@ -456,7 +456,7 @@ namespace test22 {
 }
 
 namespace PR10113 {
-  namespace foo __attribute__ ((__visibility__ ("default"))) {
+  namespace foo DEFAULT {
     template<typename T>
       class bar {
       void zed() {}
