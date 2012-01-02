@@ -990,7 +990,8 @@ void RewriteObjC::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
 
 void RewriteObjC::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
   SourceLocation LocStart = PDecl->getLocStart();
-
+  assert(PDecl->isThisDeclarationADefinition());
+  
   // FIXME: handle protocol headers that are declared across multiple lines.
   ReplaceText(LocStart, 0, "// ");
 
@@ -5222,6 +5223,9 @@ void RewriteObjCFragileABI::RewriteObjCProtocolMetaData(
   // Do not synthesize the protocol more than once.
   if (ObjCSynthesizedProtocols.count(PDecl->getCanonicalDecl()))
     return;
+  
+  if (ObjCProtocolDecl *Def = PDecl->getDefinition())
+    PDecl = Def;
   
   if (PDecl->instmeth_begin() != PDecl->instmeth_end()) {
     unsigned NumMethods = std::distance(PDecl->instmeth_begin(),

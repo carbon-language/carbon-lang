@@ -2710,8 +2710,12 @@ static bool areSortedAndUniqued(ObjCProtocolDecl * const *Protocols,
                                 unsigned NumProtocols) {
   if (NumProtocols == 0) return true;
 
+  if (Protocols[0]->getCanonicalDecl() != Protocols[0])
+    return false;
+  
   for (unsigned i = 1; i != NumProtocols; ++i)
-    if (!CmpProtocolNames(Protocols[i-1], Protocols[i]))
+    if (!CmpProtocolNames(Protocols[i-1], Protocols[i]) ||
+        Protocols[i]->getCanonicalDecl() != Protocols[i])
       return false;
   return true;
 }
@@ -2723,6 +2727,10 @@ static void SortAndUniqueProtocols(ObjCProtocolDecl **Protocols,
   // Sort protocols, keyed by name.
   std::sort(Protocols, Protocols+NumProtocols, CmpProtocolNames);
 
+  // Canonicalize.
+  for (unsigned I = 0, N = NumProtocols; I != N; ++I)
+    Protocols[I] = Protocols[I]->getCanonicalDecl();
+  
   // Remove duplicates.
   ProtocolsEnd = std::unique(Protocols, ProtocolsEnd);
   NumProtocols = ProtocolsEnd-Protocols;
