@@ -208,7 +208,7 @@ suite.
 
 The test succeeded, but it was expected to fail. This is used for tests which
 were specified as expected to fail, but are now succeeding (generally because
-the feautre they test was broken and has been fixed).
+the feature they test was broken and has been fixed).
 
 =item B<FAIL>
 
