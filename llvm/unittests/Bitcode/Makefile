@@ -1,4 +1,4 @@
-##===- unittests/VMCore/Makefile ---------------------------*- Makefile -*-===##
+##===- unittests/Bitcode/Makefile --------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,8 +8,8 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
-TESTNAME = VMCore
-LINK_COMPONENTS := core support target ipa
+TESTNAME = Bitcode
+LINK_COMPONENTS := core support bitreader bitwriter
 
 include $(LEVEL)/Makefile.config
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest

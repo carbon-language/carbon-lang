@@ -112,7 +112,6 @@ set(VMCoreSources
   VMCore/PassManagerTest.cpp
   VMCore/ValueMapTest.cpp
   VMCore/VerifierTest.cpp
-  VMCore/pr11677.cpp
   )
 
 # MSVC9 and 8 cannot compile ValueMapTest.cpp due to their bug.
@@ -122,6 +121,10 @@ if(MSVC AND MSVC_VERSION LESS 1600)
 endif()
 
 add_llvm_unittest(VMCore ${VMCoreSources})
+
+add_llvm_unittest(Bitcode
+  Bitcode/BitReaderTest.cpp
+  )
 
 set(LLVM_LINK_COMPONENTS
   Support

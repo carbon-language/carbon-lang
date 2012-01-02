@@ -1,4 +1,4 @@
-//===- llvm/unittest/VMCore/pr11677.cpp - Test for blockaddr --------------===//
+//===- llvm/unittest/Bitcode/BitReaderTest.cpp - Tests for BitReader ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -49,7 +49,7 @@ static void writeModuleToBuffer(std::vector<unsigned char> &Buffer) {
   WriteBitcodeToStream(Mod, Stream);
 }
 
-TEST(PR11677, BlockAddr) {
+TEST(BitReaderTest, MaterializeFunctionsForBlockAddr) { // PR11677
   std::vector<unsigned char> Mem;
   writeModuleToBuffer(Mem);
   StringRef Data((const char*)&Mem[0], Mem.size());
@@ -60,5 +60,6 @@ TEST(PR11677, BlockAddr) {
   passes.add(createVerifierPass());
   passes.run(*m);
 }
+
 }
 }
