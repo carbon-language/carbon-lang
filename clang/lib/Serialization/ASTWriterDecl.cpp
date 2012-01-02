@@ -518,7 +518,6 @@ void ASTDeclWriter::VisitObjCIvarDecl(ObjCIvarDecl *D) {
 void ASTDeclWriter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
   VisitRedeclarable(D);
   VisitObjCContainerDecl(D);
-  Writer.AddSourceLocation(D->getLocEnd(), Record);
   
   ObjCProtocolDecl *Def = D->getDefinition();
   Writer.AddDeclRef(Def, Record);
@@ -532,6 +531,7 @@ void ASTDeclWriter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
            PLEnd = D->protocol_loc_end();
          PL != PLEnd; ++PL)
       Writer.AddSourceLocation(*PL, Record);
+    Writer.AddSourceLocation(D->getEndOfDefinitionLoc(), Record);
   }
   
   Code = serialization::DECL_OBJC_PROTOCOL;

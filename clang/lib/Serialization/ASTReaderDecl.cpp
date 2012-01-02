@@ -764,7 +764,6 @@ void ASTDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
   
   RedeclarableResult Redecl = VisitRedeclarable(PD);
   VisitObjCContainerDecl(PD);
-  PD->setLocEnd(ReadSourceLocation(Record, Idx));
   
   // Determine whether we need to merge this declaration with another @protocol
   // with the same name.
@@ -822,6 +821,8 @@ void ASTDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
     PD->setProtocolList(ProtoRefs.data(), NumProtoRefs, ProtoLocs.data(),
                         Reader.getContext());
     
+    PD->setEndOfDefinitionLoc(ReadSourceLocation(Record, Idx));
+
     // Note that we have deserialized a definition.
     Reader.PendingDefinitions.insert(PD);
   } else if (Def && Def->Data) {

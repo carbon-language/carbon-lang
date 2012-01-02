@@ -1071,13 +1071,14 @@ class ObjCProtocolDecl : public ObjCContainerDecl,
     // \brief The declaration that defines this protocol.
     ObjCProtocolDecl *Definition;
 
-    /// Referenced protocols
+    /// \brief Referenced protocols
     ObjCProtocolList ReferencedProtocols;    
+
+    /// \brief Marks the '>' or identifier.
+    SourceLocation EndLoc; 
   };
   
   DefinitionData *Data;
-
-  SourceLocation EndLoc; // marks the '>' or identifier.
 
   DefinitionData &data() const {
     assert(Data && "Objective-C protocol has no definition!");
@@ -1181,10 +1182,21 @@ public:
   /// \brief Starts the definition of this Objective-C protocol.
   void startDefinition();
 
-  // Location information, modeled after the Stmt API.
-  SourceLocation getLocStart() const { return getAtStartLoc(); } // '@'protocol
-  SourceLocation getLocEnd() const { return EndLoc; }
-  void setLocEnd(SourceLocation LE) { EndLoc = LE; }
+  virtual SourceRange getSourceRange() const {
+    if (isThisDeclarationADefinition())
+      return ObjCContainerDecl::getSourceRange();
+   
+    return SourceRange(getAtStartLoc(), getLocation());
+  }
+                           
+  SourceLocation getEndOfDefinitionLoc() const { 
+    if (!hasDefinition())
+      return getLocation();
+   
+    return data().EndLoc; 
+  }
+   
+  void setEndOfDefinitionLoc(SourceLocation LE) { data().EndLoc = LE; }
 
   typedef redeclarable_base::redecl_iterator redecl_iterator;
   redecl_iterator redecls_begin() const {
