@@ -83,7 +83,9 @@ constexpr char c8 = get(u8"test\0\\\"\t\a\b\234"); // \
   expected-error {{}} expected-note {{u8"test\000\\\"\t\a\b\234"}}
 constexpr char16_t c16 = get(u"test\0\\\"\t\a\b\234\u1234"); // \
   expected-error {{}} expected-note {{u"test\000\\\"\t\a\b\234\u1234"}}
-constexpr char32_t c32 = get(U"test\0\\\"\t\a\b\234\u1234\U00101234"); // \
-  expected-error {{}} expected-note {{U"test\000\\\"\t\a\b\234\u1234\U00101234"}}
+constexpr char32_t c32 = get(U"test\0\\\"\t\a\b\234\u1234\U0010ffff"); // \
+  expected-error {{}} expected-note {{U"test\000\\\"\t\a\b\234\u1234\U0010FFFF"}}
 constexpr wchar_t wc = get(L"test\0\\\"\t\a\b\234\u1234"); // \
   expected-error {{}} expected-note {{L"test\000\\\"\t\a\b\234\u1234"}}
+
+constexpr char32_t c32_err = get(U"\U00110000"); // expected-error {{invalid universal character}}

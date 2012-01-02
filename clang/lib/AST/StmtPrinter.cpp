@@ -717,7 +717,7 @@ void StmtPrinter::VisitStringLiteral(StringLiteral *Str) {
     default:
       // FIXME: Is this the best way to print wchar_t?
       if (Char > 0xff) {
-        // char32_t values are <= 0x10ffff.
+        assert(Char <= 0x10ffff && "invalid unicode codepoint");
         if (Char > 0xffff)
           OS << "\\U00"
              << Hex[(Char >> 20) & 15]
