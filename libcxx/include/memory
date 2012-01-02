@@ -1677,6 +1677,114 @@ public:
     _LIBCPP_INLINE_VISIBILITY void destroy(pointer __p) {__p->~_Tp();}
 };
 
+template <class _Tp>
+class _LIBCPP_VISIBLE allocator<const _Tp>
+{
+public:
+    typedef size_t            size_type;
+    typedef ptrdiff_t         difference_type;
+    typedef const _Tp*        pointer;
+    typedef const _Tp*        const_pointer;
+    typedef const _Tp&        reference;
+    typedef const _Tp&        const_reference;
+    typedef _Tp               value_type;
+
+    typedef true_type propagate_on_container_move_assignment;
+
+    template <class _Up> struct rebind {typedef allocator<_Up> other;};
+
+    _LIBCPP_INLINE_VISIBILITY allocator() _NOEXCEPT {}
+    template <class _Up> _LIBCPP_INLINE_VISIBILITY allocator(const allocator<_Up>&) _NOEXCEPT {}
+    _LIBCPP_INLINE_VISIBILITY const_pointer address(const_reference __x) const _NOEXCEPT
+        {return _VSTD::addressof(__x);}
+    _LIBCPP_INLINE_VISIBILITY pointer allocate(size_type __n, allocator<void>::const_pointer = 0)
+        {return static_cast<pointer>(::operator new(__n * sizeof(_Tp)));}
+    _LIBCPP_INLINE_VISIBILITY void deallocate(pointer __p, size_type) _NOEXCEPT
+        {::operator delete((void*)__p);}
+    _LIBCPP_INLINE_VISIBILITY size_type max_size() const _NOEXCEPT
+        {return size_type(~0) / sizeof(_Tp);}
+#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
+    template <class _Up, class... _Args>
+        _LIBCPP_INLINE_VISIBILITY
+        void
+        construct(_Up* __p, _Args&&... __args)
+        {
+            ::new((void*)__p) _Up(_VSTD::forward<_Args>(__args)...);
+        }
+#else  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
+        _LIBCPP_INLINE_VISIBILITY
+        void
+        construct(pointer __p)
+        {
+            ::new((void*)__p) _Tp();
+        }
+# if defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
+    template <class _A0>
+        _LIBCPP_INLINE_VISIBILITY
+        typename enable_if
+        <
+            !is_convertible<_A0, __rv<_A0> >::value,
+            void
+        >::type
+        construct(pointer __p, _A0& __a0)
+        {
+            ::new((void*)__p) _Tp(__a0);
+        }
+    template <class _A0>
+        _LIBCPP_INLINE_VISIBILITY
+        typename enable_if
+        <
+            !is_convertible<_A0, __rv<_A0> >::value,
+            void
+        >::type
+        construct(pointer __p, const _A0& __a0)
+        {
+            ::new((void*)__p) _Tp(__a0);
+        }
+    template <class _A0>
+        _LIBCPP_INLINE_VISIBILITY
+        typename enable_if
+        <
+            is_convertible<_A0, __rv<_A0> >::value,
+            void
+        >::type
+        construct(pointer __p, _A0 __a0)
+        {
+            ::new((void*)__p) _Tp(_VSTD::move(__a0));
+        }
+# endif  // defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
+    template <class _A0, class _A1>
+        _LIBCPP_INLINE_VISIBILITY
+        void
+        construct(pointer __p, _A0& __a0, _A1& __a1)
+        {
+            ::new((void*)__p) _Tp(__a0, __a1);
+        }
+    template <class _A0, class _A1>
+        _LIBCPP_INLINE_VISIBILITY
+        void
+        construct(pointer __p, const _A0& __a0, _A1& __a1)
+        {
+            ::new((void*)__p) _Tp(__a0, __a1);
+        }
+    template <class _A0, class _A1>
+        _LIBCPP_INLINE_VISIBILITY
+        void
+        construct(pointer __p, _A0& __a0, const _A1& __a1)
+        {
+            ::new((void*)__p) _Tp(__a0, __a1);
+        }
+    template <class _A0, class _A1>
+        _LIBCPP_INLINE_VISIBILITY
+        void
+        construct(pointer __p, const _A0& __a0, const _A1& __a1)
+        {
+            ::new((void*)__p) _Tp(__a0, __a1);
+        }
+#endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
+    _LIBCPP_INLINE_VISIBILITY void destroy(pointer __p) {__p->~_Tp();}
+};
+
 template <class _Tp, class _Up>
 inline _LIBCPP_INLINE_VISIBILITY
 bool operator==(const allocator<_Tp>&, const allocator<_Up>&) _NOEXCEPT {return true;}
@@ -1838,9 +1946,9 @@ public:
     typedef const typename remove_reference<_T2>::type& _T2_const_reference;
 
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp() {}
-    _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T1_param __t1, int = 0)
+    _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T1_param __t1)
         : __first_(_VSTD::forward<_T1_param>(__t1)) {}
-    _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T2_param __t2, int* = 0)
+    _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T2_param __t2)
         : __second_(_VSTD::forward<_T2_param>(__t2)) {}
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(_T1_param __t1, _T2_param __t2)
         : __first_(_VSTD::forward<_T1_param>(__t1)), __second_(_VSTD::forward<_T2_param>(__t2)) {}
@@ -1935,9 +2043,9 @@ public:
     typedef const typename remove_reference<_T2>::type& _T2_const_reference;
 
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp() {}
-    _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T1_param __t1, int = 0)
+    _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T1_param __t1)
         : _T1(_VSTD::forward<_T1_param>(__t1)) {}
-    _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T2_param __t2, int* = 0)
+    _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T2_param __t2)
         : __second_(_VSTD::forward<_T2_param>(__t2)) {}
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(_T1_param __t1, _T2_param __t2)
         : _T1(_VSTD::forward<_T1_param>(__t1)), __second_(_VSTD::forward<_T2_param>(__t2)) {}
@@ -2216,9 +2324,9 @@ public:
     typedef typename base::_T2_const_reference _T2_const_reference;
 
     _LIBCPP_INLINE_VISIBILITY __compressed_pair() {}
-    _LIBCPP_INLINE_VISIBILITY explicit __compressed_pair(_T1_param __t1, int = 0)
+    _LIBCPP_INLINE_VISIBILITY explicit __compressed_pair(_T1_param __t1)
         : base(_VSTD::forward<_T1_param>(__t1)) {}
-    _LIBCPP_INLINE_VISIBILITY explicit __compressed_pair(_T2_param __t2, int* = 0)
+    _LIBCPP_INLINE_VISIBILITY explicit __compressed_pair(_T2_param __t2)
         : base(_VSTD::forward<_T2_param>(__t2)) {}
     _LIBCPP_INLINE_VISIBILITY __compressed_pair(_T1_param __t1, _T2_param __t2)
         : base(_VSTD::forward<_T1_param>(__t1), _VSTD::forward<_T2_param>(__t2)) {}
@@ -2262,7 +2370,7 @@ public:
         _LIBCPP_INLINE_VISIBILITY
         __compressed_pair(piecewise_construct_t __pc, tuple<_Args1...> __first_args,
                                                       tuple<_Args2...> __second_args)
-            : base(__pc, __first_args, __second_args,
+            : base(__pc, _VSTD::move(__first_args), _VSTD::move(__second_args),
                    typename __make_tuple_indices<sizeof...(_Args1)>::type(),
                    typename __make_tuple_indices<sizeof...(_Args2) >::type())
             {}
@@ -2293,6 +2401,31 @@ swap(__compressed_pair<_T1, _T2>& __x, __compressed_pair<_T1, _T2>& __y)
                    __is_nothrow_swappable<_T1>::value)
     {__x.swap(__y);}
 
+// __same_or_less_cv_qualified
+
+template <class _Ptr1, class _Ptr2,
+          bool = is_same<typename remove_cv<typename pointer_traits<_Ptr1>::element_type>::type,
+                         typename remove_cv<typename pointer_traits<_Ptr2>::element_type>::type
+                        >::value
+         >
+struct __same_or_less_cv_qualified_imp
+    : is_convertible<_Ptr1, _Ptr2> {};
+
+template <class _Ptr1, class _Ptr2>
+struct __same_or_less_cv_qualified_imp<_Ptr1, _Ptr2, false>
+    : false_type {};
+
+template <class _Ptr1, class _Ptr2, bool = is_scalar<_Ptr1>::value &&
+                                         !is_pointer<_Ptr1>::value>
+struct __same_or_less_cv_qualified
+    : __same_or_less_cv_qualified_imp<_Ptr1, _Ptr2> {};
+
+template <class _Ptr1, class _Ptr2>
+struct __same_or_less_cv_qualified<_Ptr1, _Ptr2, true>
+    : false_type {};
+
+// default_delete
+
 template <class _Tp>
 struct _LIBCPP_VISIBLE default_delete
 {
@@ -2310,33 +2443,15 @@ struct _LIBCPP_VISIBLE default_delete
 template <class _Tp>
 struct _LIBCPP_VISIBLE default_delete<_Tp[]>
 {
-private:
-    template <class _P1,
-              bool = is_same<typename remove_cv<typename pointer_traits<_P1>::element_type>::type,
-                             typename remove_cv<_Tp>::type>::value>
-    struct __same_or_less_cv_qualified_imp
-        : is_convertible<_P1, _Tp*> {};
-    template <class _P1>
-    struct __same_or_less_cv_qualified_imp<_P1, false>
-        : false_type {};
-    
-    template <class _P1, bool = is_scalar<_P1>::value && !is_pointer<_P1>::value>
-    struct __same_or_less_cv_qualified
-        : __same_or_less_cv_qualified_imp<_P1> {};
-    
-    template <class _P1>
-    struct __same_or_less_cv_qualified<_P1, true>
-        : false_type {};
-
 public:
     _LIBCPP_INLINE_VISIBILITY default_delete() _NOEXCEPT {}
     template <class _Up>
         _LIBCPP_INLINE_VISIBILITY default_delete(const default_delete<_Up[]>&,
-             typename enable_if<__same_or_less_cv_qualified<_Up*>::value>::type* = 0) _NOEXCEPT {}
+             typename enable_if<__same_or_less_cv_qualified<_Up*, _Tp*>::value>::type* = 0) _NOEXCEPT {}
     template <class _Up>
         _LIBCPP_INLINE_VISIBILITY
         void operator() (_Up* __ptr,
-                         typename enable_if<__same_or_less_cv_qualified<_Up*>::value>::type* = 0) const _NOEXCEPT
+                         typename enable_if<__same_or_less_cv_qualified<_Up*, _Tp*>::value>::type* = 0) const _NOEXCEPT
         {
             static_assert(sizeof(_Tp) > 0, "default_delete can not delete incomplete type");
             delete [] __ptr;
@@ -2353,14 +2468,7 @@ public:
 private:
     __compressed_pair<pointer, deleter_type> __ptr_;
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    unique_ptr(const unique_ptr&);
-    unique_ptr& operator=(const unique_ptr&);
-    template <class _Up, class _Ep>
-        unique_ptr(const unique_ptr<_Up, _Ep>&);
-    template <class _Up, class _Ep>
-        unique_ptr& operator=(const unique_ptr<_Up, _Ep>&);
-#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifdef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unique_ptr(unique_ptr&);
     template <class _Up, class _Ep>
         unique_ptr(unique_ptr<_Up, _Ep>&);
@@ -2447,7 +2555,9 @@ public:
             _LIBCPP_INLINE_VISIBILITY
             typename enable_if
             <
-                !is_array<_Up>::value,
+                !is_array<_Up>::value &&
+                is_convertible<typename unique_ptr<_Up, _Ep>::pointer, pointer>::value &&
+                is_assignable<deleter_type&, _Ep&&>::value,
                 unique_ptr&
             >::type
             operator=(unique_ptr<_Up, _Ep>&& __u) _NOEXCEPT
@@ -2537,28 +2647,7 @@ public:
 private:
     __compressed_pair<pointer, deleter_type> __ptr_;
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    unique_ptr(const unique_ptr&);
-    unique_ptr& operator=(const unique_ptr&);
-
-    template <class _P1,
-              bool = is_same<typename remove_cv<typename pointer_traits<_P1>::element_type>::type,
-                             typename remove_cv<element_type>::type>::value>
-    struct __same_or_less_cv_qualified_imp
-        : is_convertible<_P1, pointer> {};
-    template <class _P1>
-    struct __same_or_less_cv_qualified_imp<_P1, false>
-        : false_type {};
-    
-    template <class _P1, bool = is_scalar<_P1>::value && !is_pointer<_P1>::value>
-    struct __same_or_less_cv_qualified
-        : __same_or_less_cv_qualified_imp<_P1> {};
-    
-    template <class _P1>
-    struct __same_or_less_cv_qualified<_P1, true>
-        : false_type {};
-
-#else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifdef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unique_ptr(unique_ptr&);
     template <class _Up>
         unique_ptr(unique_ptr<_Up>&);
@@ -2586,7 +2675,7 @@ public:
         }
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _Pp,
-              class = typename enable_if<__same_or_less_cv_qualified<_Pp>::value>::type
+              class = typename enable_if<__same_or_less_cv_qualified<_Pp, pointer>::value>::type
              >
     _LIBCPP_INLINE_VISIBILITY explicit unique_ptr(_Pp __p) _NOEXCEPT
         : __ptr_(__p)
@@ -2596,7 +2685,7 @@ public:
         }
 
     template <class _Pp,
-              class = typename enable_if<__same_or_less_cv_qualified<_Pp>::value>::type
+              class = typename enable_if<__same_or_less_cv_qualified<_Pp, pointer>::value>::type
              >
     _LIBCPP_INLINE_VISIBILITY unique_ptr(_Pp __p, typename conditional<
                                        is_reference<deleter_type>::value,
@@ -2613,8 +2702,7 @@ public:
         : __ptr_(pointer(), __d) {}
 
     template <class _Pp,
-              class = typename enable_if<__same_or_less_cv_qualified<_Pp>::value ||
-                                         is_same<_Pp, nullptr_t>::value>::type
+              class = typename enable_if<__same_or_less_cv_qualified<_Pp, pointer>::value>::type
              >
     _LIBCPP_INLINE_VISIBILITY unique_ptr(_Pp __p, typename remove_reference<deleter_type>::type&& __d)
              _NOEXCEPT
@@ -2646,7 +2734,7 @@ public:
                    typename enable_if
                             <
                                 is_array<_Up>::value &&
-                                __same_or_less_cv_qualified<typename unique_ptr<_Up, _Ep>::pointer>::value
+                                __same_or_less_cv_qualified<typename unique_ptr<_Up, _Ep>::pointer, pointer>::value
                                 && is_convertible<_Ep, deleter_type>::value &&
                                 (
                                     !is_reference<deleter_type>::value ||
@@ -2663,8 +2751,8 @@ public:
             typename enable_if
             <
                 is_array<_Up>::value &&
-                __same_or_less_cv_qualified<typename unique_ptr<_Up, _Ep>::pointer>::value &&
-                is_assignable<deleter_type, _Ep>::value,
+                __same_or_less_cv_qualified<typename unique_ptr<_Up, _Ep>::pointer, pointer>::value &&
+                is_assignable<deleter_type&, _Ep&&>::value,
                 unique_ptr&
             >::type
             operator=(unique_ptr<_Up, _Ep>&& __u) _NOEXCEPT
@@ -2731,7 +2819,7 @@ public:
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _Pp,
-              class = typename enable_if<__same_or_less_cv_qualified<_Pp>::value>::type
+              class = typename enable_if<__same_or_less_cv_qualified<_Pp, pointer>::value>::type
              >
     _LIBCPP_INLINE_VISIBILITY void reset(_Pp __p) _NOEXCEPT
     {
@@ -3492,9 +3580,27 @@ private:
 public:
     shared_ptr() _NOEXCEPT;
     shared_ptr(nullptr_t) _NOEXCEPT;
-    template<class _Yp> explicit shared_ptr(_Yp* __p);
-    template<class _Yp, class _Dp> shared_ptr(_Yp* __p, _Dp __d);
-    template<class _Yp, class _Dp, class _Alloc> shared_ptr(_Yp* __p, _Dp __d, _Alloc __a);
+    template<class _Yp,
+             class = typename enable_if
+                     <
+                        is_convertible<_Yp*, element_type*>::value
+                     >::type
+            >
+        explicit shared_ptr(_Yp* __p);
+    template<class _Yp, class _Dp,
+             class = typename enable_if
+                     <
+                        is_convertible<_Yp*, element_type*>::value
+                     >::type
+            >
+        shared_ptr(_Yp* __p, _Dp __d);
+    template<class _Yp, class _Dp, class _Alloc,
+             class = typename enable_if
+                     <
+                        is_convertible<_Yp*, element_type*>::value
+                     >::type
+            >
+        shared_ptr(_Yp* __p, _Dp __d, _Alloc __a);
     template <class _Dp> shared_ptr(nullptr_t __p, _Dp __d);
     template <class _Dp, class _Alloc> shared_ptr(nullptr_t __p, _Dp __d, _Alloc __a);
     template<class _Yp> shared_ptr(const shared_ptr<_Yp>& __r, element_type* __p) _NOEXCEPT;
@@ -3512,50 +3618,134 @@ public:
     template<class _Yp> explicit shared_ptr(const weak_ptr<_Yp>& __r,
                    typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type= __nat());
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template<class _Yp> shared_ptr(auto_ptr<_Yp>&& __r);
+    template<class _Yp,
+             class = typename enable_if
+                     <
+                        is_convertible<_Yp*, element_type*>::value
+                     >::type
+            >
+        shared_ptr(auto_ptr<_Yp>&& __r);
 #else
-    template<class _Yp> shared_ptr(auto_ptr<_Yp> __r);
+    template<class _Yp,
+             class = typename enable_if
+                     <
+                        is_convertible<_Yp*, element_type*>::value
+                     >::type
+            >
+        shared_ptr(auto_ptr<_Yp> __r);
 #endif
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-private:
-    template <class _Yp, class _Dp> shared_ptr(const unique_ptr<_Yp, _Dp>& __r);// = delete;
-public:
-    template <class _Yp, class _Dp> shared_ptr(unique_ptr<_Yp, _Dp>&&,
+    template <class _Yp, class _Dp,
+                 class = typename enable_if
+                 <
+                    !is_array<_Yp>::value &&
+                    is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, element_type*>::value
+                 >::type
+             >
+       shared_ptr(unique_ptr<_Yp, _Dp>&&,
        typename enable_if<!is_lvalue_reference<_Dp>::value, __nat>::type = __nat());
-    template <class _Yp, class _Dp> shared_ptr(unique_ptr<_Yp, _Dp>&&,
+    template <class _Yp, class _Dp,
+                 class = typename enable_if
+                 <
+                    !is_array<_Yp>::value &&
+                    is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, element_type*>::value
+                 >::type
+             >
+       shared_ptr(unique_ptr<_Yp, _Dp>&&,
        typename enable_if<is_lvalue_reference<_Dp>::value, __nat>::type = __nat());
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template <class _Yp, class _Dp> shared_ptr(unique_ptr<_Yp, _Dp>,
+    template <class _Yp, class _Dp,
+                 class = typename enable_if
+                 <
+                    !is_array<_Yp>::value &&
+                    is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, element_type*>::value
+                 >::type
+             > shared_ptr(unique_ptr<_Yp, _Dp>,
        typename enable_if<!is_lvalue_reference<_Dp>::value, __nat>::type = __nat());
-    template <class _Yp, class _Dp> shared_ptr(unique_ptr<_Yp, _Dp>,
+    template <class _Yp, class _Dp,
+                 class = typename enable_if
+                 <
+                    !is_array<_Yp>::value &&
+                    is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, element_type*>::value
+                 >::type
+             >
+       shared_ptr(unique_ptr<_Yp, _Dp>,
        typename enable_if<is_lvalue_reference<_Dp>::value, __nat>::type = __nat());
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     ~shared_ptr();
 
     shared_ptr& operator=(const shared_ptr& __r) _NOEXCEPT;
-    template<class _Yp> shared_ptr& operator=(const shared_ptr<_Yp>& __r) _NOEXCEPT;
+    template<class _Yp>
+        typename enable_if
+        <
+            is_convertible<_Yp*, element_type*>::value,
+            shared_ptr&
+        >::type
+        operator=(const shared_ptr<_Yp>& __r) _NOEXCEPT;
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     shared_ptr& operator=(shared_ptr&& __r) _NOEXCEPT;
-    template<class _Yp> shared_ptr& operator=(shared_ptr<_Yp>&& __r);
-    template<class _Yp> shared_ptr& operator=(auto_ptr<_Yp>&& __r);
+    template<class _Yp>
+        typename enable_if
+        <
+            is_convertible<_Yp*, element_type*>::value,
+            shared_ptr<_Tp>&
+        >::type
+        operator=(shared_ptr<_Yp>&& __r);
+    template<class _Yp>
+        typename enable_if
+        <
+            !is_array<_Yp>::value &&
+            is_convertible<_Yp*, element_type*>::value,
+            shared_ptr&
+        >::type
+        operator=(auto_ptr<_Yp>&& __r);
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template<class _Yp> shared_ptr& operator=(auto_ptr<_Yp> __r);
+    template<class _Yp>
+        typename enable_if
+        <
+            !is_array<_Yp>::value &&
+            is_convertible<_Yp*, element_type*>::value,
+            shared_ptr&
+        >::type
+        operator=(auto_ptr<_Yp> __r);
 #endif
+    template <class _Yp, class _Dp>
+        typename enable_if
+        <
+            !is_array<_Yp>::value &&
+            is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, element_type*>::value,
+            shared_ptr&
+        >::type
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-private:
-    template <class _Yp, class _Dp> shared_ptr& operator=(const unique_ptr<_Yp, _Dp>& __r);// = delete;
-public:
-    template <class _Yp, class _Dp> shared_ptr& operator=(unique_ptr<_Yp, _Dp>&& __r);
+        operator=(unique_ptr<_Yp, _Dp>&& __r);
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    template <class _Yp, class _Dp> shared_ptr& operator=(unique_ptr<_Yp, _Dp> __r);
+        operator=(unique_ptr<_Yp, _Dp> __r);
 #endif
 
     void swap(shared_ptr& __r) _NOEXCEPT;
     void reset() _NOEXCEPT;
-    template<class _Yp> void reset(_Yp* __p);
-    template<class _Yp, class _Dp> void reset(_Yp* __p, _Dp __d);
-    template<class _Yp, class _Dp, class _Alloc> void reset(_Yp* __p, _Dp __d, _Alloc __a);
+    template<class _Yp>
+        typename enable_if
+        <
+            is_convertible<_Yp*, element_type*>::value,
+            void
+        >::type
+        reset(_Yp* __p);
+    template<class _Yp, class _Dp>
+        typename enable_if
+        <
+            is_convertible<_Yp*, element_type*>::value,
+            void
+        >::type
+        reset(_Yp* __p, _Dp __d);
+    template<class _Yp, class _Dp, class _Alloc>
+        typename enable_if
+        <
+            is_convertible<_Yp*, element_type*>::value,
+            void
+        >::type
+        reset(_Yp* __p, _Dp __d, _Alloc __a);
 
     _LIBCPP_INLINE_VISIBILITY
     element_type* get() const _NOEXCEPT {return __ptr_;}
@@ -3664,7 +3854,7 @@ shared_ptr<_Tp>::shared_ptr(nullptr_t) _NOEXCEPT
 }
 
 template<class _Tp>
-template<class _Yp>
+template<class _Yp, class>
 shared_ptr<_Tp>::shared_ptr(_Yp* __p)
     : __ptr_(__p)
 {
@@ -3676,7 +3866,7 @@ shared_ptr<_Tp>::shared_ptr(_Yp* __p)
 }
 
 template<class _Tp>
-template<class _Yp, class _Dp>
+template<class _Yp, class _Dp, class>
 shared_ptr<_Tp>::shared_ptr(_Yp* __p, _Dp __d)
     : __ptr_(__p)
 {
@@ -3719,7 +3909,7 @@ shared_ptr<_Tp>::shared_ptr(nullptr_t __p, _Dp __d)
 }
 
 template<class _Tp>
-template<class _Yp, class _Dp, class _Alloc>
+template<class _Yp, class _Dp, class _Alloc, class>
 shared_ptr<_Tp>::shared_ptr(_Yp* __p, _Dp __d, _Alloc __a)
     : __ptr_(__p)
 {
@@ -3833,7 +4023,7 @@ shared_ptr<_Tp>::shared_ptr(shared_ptr<_Yp>&& __r,
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template<class _Tp>
-template<class _Yp>
+template<class _Yp, class>
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 shared_ptr<_Tp>::shared_ptr(auto_ptr<_Yp>&& __r)
 #else
@@ -3848,7 +4038,7 @@ shared_ptr<_Tp>::shared_ptr(auto_ptr<_Yp> __r)
 }
 
 template<class _Tp>
-template <class _Yp, class _Dp>
+template <class _Yp, class _Dp, class>
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp>&& __r,
 #else
@@ -3864,7 +4054,7 @@ shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp> __r,
 }
 
 template<class _Tp>
-template <class _Yp, class _Dp>
+template <class _Yp, class _Dp, class>
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 shared_ptr<_Tp>::shared_ptr(unique_ptr<_Yp, _Dp>&& __r,
 #else
@@ -4085,7 +4275,11 @@ shared_ptr<_Tp>::operator=(const shared_ptr& __r) _NOEXCEPT
 template<class _Tp>
 template<class _Yp>
 inline _LIBCPP_INLINE_VISIBILITY
-shared_ptr<_Tp>&
+typename enable_if
+<
+    is_convertible<_Yp*, _Tp*>::value,
+    shared_ptr<_Tp>&
+>::type
 shared_ptr<_Tp>::operator=(const shared_ptr<_Yp>& __r) _NOEXCEPT
 {
     shared_ptr(__r).swap(*this);
@@ -4106,7 +4300,11 @@ shared_ptr<_Tp>::operator=(shared_ptr&& __r) _NOEXCEPT
 template<class _Tp>
 template<class _Yp>
 inline _LIBCPP_INLINE_VISIBILITY
-shared_ptr<_Tp>&
+typename enable_if
+<
+    is_convertible<_Yp*, _Tp*>::value,
+    shared_ptr<_Tp>&
+>::type
 shared_ptr<_Tp>::operator=(shared_ptr<_Yp>&& __r)
 {
     shared_ptr(_VSTD::move(__r)).swap(*this);
@@ -4116,7 +4314,12 @@ shared_ptr<_Tp>::operator=(shared_ptr<_Yp>&& __r)
 template<class _Tp>
 template<class _Yp>
 inline _LIBCPP_INLINE_VISIBILITY
-shared_ptr<_Tp>&
+typename enable_if
+<
+    !is_array<_Yp>::value &&
+    is_convertible<_Yp*, _Tp*>::value,
+    shared_ptr<_Tp>&
+>::type
 shared_ptr<_Tp>::operator=(auto_ptr<_Yp>&& __r)
 {
     shared_ptr(_VSTD::move(__r)).swap(*this);
@@ -4126,7 +4329,12 @@ shared_ptr<_Tp>::operator=(auto_ptr<_Yp>&& __r)
 template<class _Tp>
 template <class _Yp, class _Dp>
 inline _LIBCPP_INLINE_VISIBILITY
-shared_ptr<_Tp>&
+typename enable_if
+<
+    !is_array<_Yp>::value &&
+    is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, _Tp*>::value,
+    shared_ptr<_Tp>&
+>::type
 shared_ptr<_Tp>::operator=(unique_ptr<_Yp, _Dp>&& __r)
 {
     shared_ptr(_VSTD::move(__r)).swap(*this);
@@ -4138,7 +4346,12 @@ shared_ptr<_Tp>::operator=(unique_ptr<_Yp, _Dp>&& __r)
 template<class _Tp>
 template<class _Yp>
 inline _LIBCPP_INLINE_VISIBILITY
-shared_ptr<_Tp>&
+typename enable_if
+<
+    !is_array<_Yp>::value &&
+    is_convertible<_Yp*, _Tp*>::value,
+    shared_ptr<_Tp>&
+>::type
 shared_ptr<_Tp>::operator=(auto_ptr<_Yp> __r)
 {
     shared_ptr(__r).swap(*this);
@@ -4148,7 +4361,12 @@ shared_ptr<_Tp>::operator=(auto_ptr<_Yp> __r)
 template<class _Tp>
 template <class _Yp, class _Dp>
 inline _LIBCPP_INLINE_VISIBILITY
-shared_ptr<_Tp>&
+typename enable_if
+<
+    !is_array<_Yp>::value &&
+    is_convertible<typename unique_ptr<_Yp, _Dp>::pointer, _Tp*>::value,
+    shared_ptr<_Tp>&
+>::type
 shared_ptr<_Tp>::operator=(unique_ptr<_Yp, _Dp> __r)
 {
     shared_ptr(_VSTD::move(__r)).swap(*this);
@@ -4177,7 +4395,11 @@ shared_ptr<_Tp>::reset() _NOEXCEPT
 template<class _Tp>
 template<class _Yp>
 inline _LIBCPP_INLINE_VISIBILITY
-void
+typename enable_if
+<
+    is_convertible<_Yp*, _Tp*>::value,
+    void
+>::type
 shared_ptr<_Tp>::reset(_Yp* __p)
 {
     shared_ptr(__p).swap(*this);
@@ -4186,7 +4408,11 @@ shared_ptr<_Tp>::reset(_Yp* __p)
 template<class _Tp>
 template<class _Yp, class _Dp>
 inline _LIBCPP_INLINE_VISIBILITY
-void
+typename enable_if
+<
+    is_convertible<_Yp*, _Tp*>::value,
+    void
+>::type
 shared_ptr<_Tp>::reset(_Yp* __p, _Dp __d)
 {
     shared_ptr(__p, __d).swap(*this);
@@ -4195,7 +4421,11 @@ shared_ptr<_Tp>::reset(_Yp* __p, _Dp __d)
 template<class _Tp>
 template<class _Yp, class _Dp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
-void
+typename enable_if
+<
+    is_convertible<_Yp*, _Tp*>::value,
+    void
+>::type
 shared_ptr<_Tp>::reset(_Yp* __p, _Dp __d, _Alloc __a)
 {
     shared_ptr(__p, __d, __a).swap(*this);
@@ -4205,7 +4435,11 @@ shared_ptr<_Tp>::reset(_Yp* __p, _Dp __d, _Alloc __a)
 
 template<class _Tp, class ..._Args>
 inline _LIBCPP_INLINE_VISIBILITY
-shared_ptr<_Tp>
+typename enable_if
+<
+    !is_array<_Tp>::value,
+    shared_ptr<_Tp>
+>::type
 make_shared(_Args&& ...__args)
 {
     return shared_ptr<_Tp>::make_shared(_VSTD::forward<_Args>(__args)...);
@@ -4213,7 +4447,11 @@ make_shared(_Args&& ...__args)
 
 template<class _Tp, class _Alloc, class ..._Args>
 inline _LIBCPP_INLINE_VISIBILITY
-shared_ptr<_Tp>
+typename enable_if
+<
+    !is_array<_Tp>::value,
+    shared_ptr<_Tp>
+>::type
 allocate_shared(const _Alloc& __a, _Args&& ...__args)
 {
     return shared_ptr<_Tp>::allocate_shared(__a, _VSTD::forward<_Args>(__args)...);
@@ -4321,7 +4559,11 @@ swap(shared_ptr<_Tp>& __x, shared_ptr<_Tp>& __y) _NOEXCEPT
 
 template<class _Tp, class _Up>
 inline _LIBCPP_INLINE_VISIBILITY
-shared_ptr<_Tp>
+typename enable_if
+<
+    !is_array<_Tp>::value && !is_array<_Up>::value,
+    shared_ptr<_Tp>
+>::type
 static_pointer_cast(const shared_ptr<_Up>& __r) _NOEXCEPT
 {
     return shared_ptr<_Tp>(__r, static_cast<_Tp*>(__r.get()));
@@ -4329,7 +4571,11 @@ static_pointer_cast(const shared_ptr<_Up>& __r) _NOEXCEPT
 
 template<class _Tp, class _Up>
 inline _LIBCPP_INLINE_VISIBILITY
-shared_ptr<_Tp>
+typename enable_if
+<
+    !is_array<_Tp>::value && !is_array<_Up>::value,
+    shared_ptr<_Tp>
+>::type
 dynamic_pointer_cast(const shared_ptr<_Up>& __r) _NOEXCEPT
 {
     _Tp* __p = dynamic_cast<_Tp*>(__r.get());
@@ -4337,10 +4583,15 @@ dynamic_pointer_cast(const shared_ptr<_Up>& __r) _NOEXCEPT
 }
 
 template<class _Tp, class _Up>
-shared_ptr<_Tp>
+typename enable_if
+<
+    is_array<_Tp>::value == is_array<_Up>::value,
+    shared_ptr<_Tp>
+>::type
 const_pointer_cast(const shared_ptr<_Up>& __r) _NOEXCEPT
 {
-    return shared_ptr<_Tp>(__r, const_cast<_Tp*>(__r.get()));
+    typedef typename remove_extent<_Tp>::type _RTp;
+    return shared_ptr<_Tp>(__r, const_cast<_RTp*>(__r.get()));
 }
 
 #ifndef _LIBCPP_NO_RTTI
@@ -4374,11 +4625,43 @@ public:
                    typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat*>::type = 0)
                          _NOEXCEPT;
 
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    weak_ptr(weak_ptr&& __r) _NOEXCEPT;
+    template<class _Yp> weak_ptr(weak_ptr<_Yp>&& __r,
+                   typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat*>::type = 0)
+                         _NOEXCEPT;
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~weak_ptr();
 
     weak_ptr& operator=(weak_ptr const& __r) _NOEXCEPT;
-    template<class _Yp> weak_ptr& operator=(weak_ptr<_Yp> const& __r) _NOEXCEPT;
-    template<class _Yp> weak_ptr& operator=(shared_ptr<_Yp> const& __r) _NOEXCEPT;
+    template<class _Yp>
+        typename enable_if
+        <
+            is_convertible<_Yp*, element_type*>::value,
+            weak_ptr&
+        >::type
+        operator=(weak_ptr<_Yp> const& __r) _NOEXCEPT;
+
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+    weak_ptr& operator=(weak_ptr&& __r) _NOEXCEPT;
+    template<class _Yp>
+        typename enable_if
+        <
+            is_convertible<_Yp*, element_type*>::value,
+            weak_ptr&
+        >::type
+        operator=(weak_ptr<_Yp>&& __r) _NOEXCEPT;
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+    template<class _Yp>
+        typename enable_if
+        <
+            is_convertible<_Yp*, element_type*>::value,
+            weak_ptr&
+        >::type
+        operator=(shared_ptr<_Yp> const& __r) _NOEXCEPT;
 
     void swap(weak_ptr& __r) _NOEXCEPT;
     void reset() _NOEXCEPT;
@@ -4447,6 +4730,33 @@ weak_ptr<_Tp>::weak_ptr(weak_ptr<_Yp> const& __r,
         __cntrl_->__add_weak();
 }
 
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+template<class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+weak_ptr<_Tp>::weak_ptr(weak_ptr&& __r) _NOEXCEPT
+    : __ptr_(__r.__ptr_),
+      __cntrl_(__r.__cntrl_)
+{
+    __r.__ptr_ = 0;
+    __r.__cntrl_ = 0;
+}
+
+template<class _Tp>
+template<class _Yp>
+inline _LIBCPP_INLINE_VISIBILITY
+weak_ptr<_Tp>::weak_ptr(weak_ptr<_Yp>&& __r,
+                        typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat*>::type)
+         _NOEXCEPT
+    : __ptr_(__r.__ptr_),
+      __cntrl_(__r.__cntrl_)
+{
+    __r.__ptr_ = 0;
+    __r.__cntrl_ = 0;
+}
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
 template<class _Tp>
 weak_ptr<_Tp>::~weak_ptr()
 {
@@ -4466,17 +4776,52 @@ weak_ptr<_Tp>::operator=(weak_ptr const& __r) _NOEXCEPT
 template<class _Tp>
 template<class _Yp>
 inline _LIBCPP_INLINE_VISIBILITY
-weak_ptr<_Tp>&
+typename enable_if
+<
+    is_convertible<_Yp*, _Tp*>::value,
+    weak_ptr<_Tp>&
+>::type
 weak_ptr<_Tp>::operator=(weak_ptr<_Yp> const& __r) _NOEXCEPT
 {
     weak_ptr(__r).swap(*this);
     return *this;
 }
 
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+template<class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+weak_ptr<_Tp>&
+weak_ptr<_Tp>::operator=(weak_ptr&& __r) _NOEXCEPT
+{
+    weak_ptr(_VSTD::move(__r)).swap(*this);
+    return *this;
+}
+
 template<class _Tp>
 template<class _Yp>
 inline _LIBCPP_INLINE_VISIBILITY
-weak_ptr<_Tp>&
+typename enable_if
+<
+    is_convertible<_Yp*, _Tp*>::value,
+    weak_ptr<_Tp>&
+>::type
+weak_ptr<_Tp>::operator=(weak_ptr<_Yp>&& __r) _NOEXCEPT
+{
+    weak_ptr(_VSTD::move(__r)).swap(*this);
+    return *this;
+}
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+template<class _Tp>
+template<class _Yp>
+inline _LIBCPP_INLINE_VISIBILITY
+typename enable_if
+<
+    is_convertible<_Yp*, _Tp*>::value,
+    weak_ptr<_Tp>&
+>::type
 weak_ptr<_Tp>::operator=(shared_ptr<_Yp> const& __r) _NOEXCEPT
 {
     weak_ptr(__r).swap(*this);
