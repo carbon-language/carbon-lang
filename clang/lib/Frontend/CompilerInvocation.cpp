@@ -735,6 +735,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fheinous-gnu-extensions");
   // Optimize is implicit.
   // OptimizeSize is implicit.
+  if (Opts.FastMath)
+    Res.push_back("-ffast-math");
   if (Opts.Static)
     Res.push_back("-static-define");
   if (Opts.DumpRecordLayouts)
@@ -1117,7 +1119,8 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.NoDwarf2CFIAsm = Args.hasArg(OPT_fno_dwarf2_cfi_asm);
   Opts.NoDwarfDirectoryAsm = Args.hasArg(OPT_fno_dwarf_directory_asm);
   Opts.SoftFloat = Args.hasArg(OPT_msoft_float);
-  Opts.UnsafeFPMath = Args.hasArg(OPT_cl_unsafe_math_optimizations) ||
+  Opts.UnsafeFPMath = Args.hasArg(OPT_menable_unsafe_fp_math) ||
+                      Args.hasArg(OPT_cl_unsafe_math_optimizations) ||
                       Args.hasArg(OPT_cl_fast_relaxed_math);
   Opts.UnwindTables = Args.hasArg(OPT_munwind_tables);
   Opts.RelocationModel = Args.getLastArgValue(OPT_mrelocation_model, "pic");
@@ -1873,6 +1876,8 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   //
   // FIXME: This is affected by other options (-fno-inline).
   Opts.NoInline = !Opt;
+
+  Opts.FastMath = Args.hasArg(OPT_ffast_math);
 
   unsigned SSP = Args.getLastArgIntValue(OPT_stack_protector, 0, Diags);
   switch (SSP) {

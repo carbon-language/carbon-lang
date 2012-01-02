@@ -170,6 +170,9 @@ def menable_no_infinities : Flag<"-menable-no-infs">,
   HelpText<"Allow optimization to assume there are no infinities.">;
 def menable_no_nans : Flag<"-menable-no-nans">,
   HelpText<"Allow optimization to assume there are no NaNs.">;
+def menable_unsafe_fp_math : Flag<"-menable-unsafe-fp-math">,
+  HelpText<"Allow unsafe floating-point math optimizations which may decrease "
+           "precision">;
 def mfloat_abi : Separate<"-mfloat-abi">,
   HelpText<"The float ABI to use">;
 def mno_global_merge : Flag<"-mno-global-merge">,
@@ -482,6 +485,10 @@ def fcxx_exceptions : Flag<"-fcxx-exceptions">,
   HelpText<"Enable C++ exceptions">;
 def fsjlj_exceptions : Flag<"-fsjlj-exceptions">,
   HelpText<"Use SjLj style exceptions">;
+def ffast_math : Flag<"-ffast-math">,
+  HelpText<"Enable the *frontend*'s 'fast-math' mode. This has no effect on "
+           "optimizations, but provides a preprocessor macro __FAST_MATH__ the "
+           "same as GCC's -ffast-math flag.">;
 def ffreestanding : Flag<"-ffreestanding">,
   HelpText<"Assert that the compilation takes place in a freestanding environment">;
 def fgnu_runtime : Flag<"-fgnu-runtime">,

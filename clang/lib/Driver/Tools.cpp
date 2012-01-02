@@ -1435,18 +1435,90 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     getToolChain().IsStrictAliasingDefault()))
     CmdArgs.push_back("-relaxed-aliasing");
 
-  // Handle -f{no-}honor-infinities, -f{no-}honor-nans, and -ffinite-math-only.
-  bool HonorInfinities = Args.hasFlag(options::OPT_fhonor_infinities,
-                                      options::OPT_fno_honor_infinities);
-  bool HonorNaNs = Args.hasFlag(options::OPT_fhonor_nans,
-                                options::OPT_fno_honor_nans);
-  if (Args.hasArg(options::OPT_ffinite_math_only))
-    HonorInfinities = HonorNaNs = false;
-  if (!HonorInfinities)
-    CmdArgs.push_back("-menable-no-infs");
-  if (!HonorNaNs)
-    CmdArgs.push_back("-menable-no-nans");
-    
+  // Handle various floating point optimization flags, mapping them to the
+  // appropriate LLVM code generation flags. The pattern for all of these is to
+  // default off the codegen optimizations, and if any flag enables them and no
+  // flag disables them after the flag enabling them, enable the codegen
+  // optimization. This is complicated by several "umbrella" flags.
+  if (Arg *A = Args.getLastArg(options::OPT_ffast_math,
+                               options::OPT_ffinite_math_only,
+                               options::OPT_fno_finite_math_only,
+                               options::OPT_fhonor_infinities,
+                               options::OPT_fno_honor_infinities))
+    if (A->getOption().getID() != options::OPT_fno_finite_math_only &&
+        A->getOption().getID() != options::OPT_fhonor_infinities)
+      CmdArgs.push_back("-menable-no-infs");
+  if (Arg *A = Args.getLastArg(options::OPT_ffast_math,
+                               options::OPT_ffinite_math_only,
+                               options::OPT_fno_finite_math_only,
+                               options::OPT_fhonor_nans,
+                               options::OPT_fno_honor_nans))
+    if (A->getOption().getID() != options::OPT_fno_finite_math_only &&
+        A->getOption().getID() != options::OPT_fhonor_nans)
+      CmdArgs.push_back("-menable-no-nans");
+
+  // -fno-math-errno is default.
+  bool MathErrno = false;
+  if (Arg *A = Args.getLastArg(options::OPT_ffast_math,
+                               options::OPT_fmath_errno,
+                               options::OPT_fno_math_errno)) {
+    if (A->getOption().getID() == options::OPT_fmath_errno) {
+      CmdArgs.push_back("-fmath-errno");
+      MathErrno = true;
+    }
+  }
+
+  // There are several flags which require disabling very specific
+  // optimizations. Any of these being disabled forces us to turn off the
+  // entire set of LLVM optimizations, so collect them through all the flag
+  // madness.
+  bool AssociativeMath = false;
+  if (Arg *A = Args.getLastArg(options::OPT_ffast_math,
+                               options::OPT_funsafe_math_optimizations,
+                               options::OPT_fno_unsafe_math_optimizations,
+                               options::OPT_fassociative_math,
+                               options::OPT_fno_associative_math))
+    if (A->getOption().getID() != options::OPT_fno_unsafe_math_optimizations &&
+        A->getOption().getID() != options::OPT_fno_associative_math)
+      AssociativeMath = true;
+  bool ReciprocalMath = false;
+  if (Arg *A = Args.getLastArg(options::OPT_ffast_math,
+                               options::OPT_funsafe_math_optimizations,
+                               options::OPT_fno_unsafe_math_optimizations,
+                               options::OPT_freciprocal_math,
+                               options::OPT_fno_reciprocal_math))
+    if (A->getOption().getID() != options::OPT_fno_unsafe_math_optimizations &&
+        A->getOption().getID() != options::OPT_fno_reciprocal_math)
+      ReciprocalMath = true;
+  bool SignedZeros = true;
+  if (Arg *A = Args.getLastArg(options::OPT_ffast_math,
+                               options::OPT_funsafe_math_optimizations,
+                               options::OPT_fno_unsafe_math_optimizations,
+                               options::OPT_fsigned_zeros,
+                               options::OPT_fno_signed_zeros))
+    if (A->getOption().getID() != options::OPT_fno_unsafe_math_optimizations &&
+        A->getOption().getID() != options::OPT_fsigned_zeros)
+      SignedZeros = false;
+  bool TrappingMath = true;
+  if (Arg *A = Args.getLastArg(options::OPT_ffast_math,
+                               options::OPT_funsafe_math_optimizations,
+                               options::OPT_fno_unsafe_math_optimizations,
+                               options::OPT_ftrapping_math,
+                               options::OPT_fno_trapping_math))
+    if (A->getOption().getID() != options::OPT_fno_unsafe_math_optimizations &&
+        A->getOption().getID() != options::OPT_ftrapping_math)
+      TrappingMath = false;
+  if (!MathErrno && AssociativeMath && ReciprocalMath && !SignedZeros &&
+      !TrappingMath)
+    CmdArgs.push_back("-menable-unsafe-fp-math");
+
+  // We separately look for the '-ffast-math' flag, and if we find it, tell the
+  // frontend to provide the appropriate preprocessor macros. This is distinct
+  // from enabling any optimizations as it induces a language change which must
+  // survive serialization and deserialization, etc.
+  if (Args.hasArg(options::OPT_ffast_math))
+    CmdArgs.push_back("-ffast-math");
+
   // Decide whether to use verbose asm. Verbose assembly is the default on
   // toolchains which have the integrated assembler on by default.
   bool IsVerboseAsmDefault = getToolChain().IsIntegratedAssemblerDefault();
@@ -1547,12 +1619,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    options::OPT_mno_omit_leaf_frame_pointer,
                    !getToolChain().getTriple().isOSDarwin()))
     CmdArgs.push_back("-momit-leaf-frame-pointer");
-
-  // -fno-math-errno is default.
-  if (Args.hasFlag(options::OPT_fmath_errno,
-                   options::OPT_fno_math_errno,
-                   false))
-    CmdArgs.push_back("-fmath-errno");
 
   // Explicitly error on some things we know we don't support and can't just
   // ignore.

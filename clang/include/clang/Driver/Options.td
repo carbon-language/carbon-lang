@@ -319,8 +319,23 @@ def ferror_limit_EQ : Joined<"-ferror-limit=">, Group<f_Group>;
 def fexceptions : Flag<"-fexceptions">, Group<f_Group>;
 def fextdirs_EQ : Joined<"-fextdirs=">, Group<f_Group>;
 def fhosted : Flag<"-fhosted">, Group<f_Group>;
-def ffast_math : Flag<"-ffast-math">, Group<clang_ignored_f_Group>;
+def ffast_math : Flag<"-ffast-math">, Group<f_Group>;
+def fmath_errno : Flag<"-fmath-errno">, Group<f_Group>;
+def fno_math_errno : Flag<"-fno-math-errno">, Group<f_Group>;
+def fsignaling_math : Flag<"-fsignaling-math">, Group<f_Group>;
+def fno_signaling_math : Flag<"-fno-signaling-math">, Group<f_Group>;
+def funsafe_math_optimizations : Flag<"-funsafe-math-optimizations">,
+  Group<f_Group>;
+def fno_unsafe_math_optimizations : Flag<"-fno-unsafe-math-optimizations">,
+  Group<f_Group>;
+def fassociative_math : Flag<"-fassociative-math">, Group<f_Group>;
+def fno_associative_math : Flag<"-fno-associative-math">, Group<f_Group>;
+def freciprocal_math : Flag<"-freciprocal-math">, Group<f_Group>;
+def fno_reciprocal_math : Flag<"-fno-reciprocal-math">, Group<f_Group>;
 def ffinite_math_only : Flag<"-ffinite-math-only">, Group<f_Group>;
+def fno_finite_math_only : Flag<"-fno-finite-math-only">, Group<f_Group>;
+def fsigned_zeros : Flag<"-fsigned-zeros">, Group<f_Group>;
+def fno_signed_zeros : Flag<"-fno-signed-zeros">, Group<f_Group>;
 def fhonor_nans : Flag<"-fhonor-nans">, Group<f_Group>;
 def fno_honor_nans : Flag<"-fno-honor-nans">, Group<f_Group>;
 def fhonor_infinities : Flag<"-fhonor-infinities">, Group<f_Group>;
@@ -330,6 +345,8 @@ def fhonor_infinites : Flag<"-fhonor-infinites">, Group<f_Group>,
     Alias<fhonor_infinities>;
 def fno_honor_infinites : Flag<"-fno-honor-infinites">, Group<f_Group>,
     Alias<fno_honor_infinities>;
+def ftrapping_math : Flag<"-ftrapping-math">, Group<f_Group>;
+def fno_trapping_math : Flag<"-fno-trapping-math">, Group<f_Group>;
 
 def ffor_scope : Flag<"-ffor-scope">, Group<f_Group>;
 def fno_for_scope : Flag<"-fno-for-scope">, Group<f_Group>;
@@ -355,7 +372,6 @@ def flto : Flag<"-flto">, Group<f_Group>;
 def fno_lto : Flag<"-fno-lto">, Group<f_Group>;
 def fmacro_backtrace_limit_EQ : Joined<"-fmacro-backtrace-limit=">,
                                 Group<f_Group>;
-def fmath_errno : Flag<"-fmath-errno">, Group<f_Group>;
 def fmerge_all_constants : Flag<"-fmerge-all-constants">, Group<f_Group>;
 def fmessage_length_EQ : Joined<"-fmessage-length=">, Group<f_Group>;
 def fms_extensions : Flag<"-fms-extensions">, Group<f_Group>;
@@ -394,7 +410,6 @@ def fno_dollars_in_identifiers : Flag<"-fno-dollars-in-identifiers">, Group<f_Gr
 def fno_elide_constructors : Flag<"-fno-elide-constructors">, Group<f_Group>;
 def fno_eliminate_unused_debug_symbols : Flag<"-fno-eliminate-unused-debug-symbols">, Group<f_Group>;
 def fno_exceptions : Flag<"-fno-exceptions">, Group<f_Group>;
-def fno_finite_math_only : Flag<"-fno-finite-math-only">, Group<clang_ignored_f_Group>;
 def fno_gnu_keywords : Flag<"-fno-gnu-keywords">, Group<f_Group>;
 def fno_inline_functions : Flag<"-fno-inline-functions">, Group<clang_ignored_f_Group>;
 def fno_inline : Flag<"-fno-inline">, Group<clang_ignored_f_Group>;
@@ -402,7 +417,6 @@ def fno_keep_inline_functions : Flag<"-fno-keep-inline-functions">, Group<clang_
 def fno_lax_vector_conversions : Flag<"-fno-lax-vector-conversions">, Group<f_Group>;
 def fno_limit_debug_info : Flag<"-fno-limit-debug-info">, Group<f_Group>,
   HelpText<"Do not limit debug information produced to reduce size of debug binary">;
-def fno_math_errno : Flag<"-fno-math-errno">, Group<f_Group>;
 def fno_merge_all_constants : Flag<"-fno-merge-all-constants">, Group<f_Group>;
 def fno_ms_extensions : Flag<"-fno-ms-extensions">, Group<f_Group>;
 def fno_ms_compatibility : Flag<"-fno-ms-compatibility">, Group<f_Group>;

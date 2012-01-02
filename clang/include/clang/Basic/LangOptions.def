@@ -100,6 +100,7 @@ VALUE_LANGOPT(PICLevel          , 2, 0, "__PIC__ level")
 LANGOPT(GNUInline         , 1, 0, "GNU inline semantics")
 LANGOPT(NoInline          , 1, 0, "__NO_INLINE__ predefined macro")
 LANGOPT(Deprecated        , 1, 0, "__DEPRECATED predefined macro")
+LANGOPT(FastMath          , 1, 0, "__FAST_MATH__ predefined macro")
 
 BENIGN_LANGOPT(ObjCGCBitmapPrint , 1, 0, "printing of GC's bitmap layout for __weak/__strong ivars")
 
