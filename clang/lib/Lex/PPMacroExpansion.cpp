@@ -305,8 +305,10 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     // unexpandable.
     if (IdentifierInfo *NewII = Identifier.getIdentifierInfo()) {
       if (MacroInfo *NewMI = getMacroInfo(NewII))
-        if (!NewMI->isEnabled() || NewMI == MI)
+        if (!NewMI->isEnabled() || NewMI == MI) {
           Identifier.setFlag(Token::DisableExpand);
+          Diag(Identifier, diag::pp_disabled_macro_expansion);
+        }
     }
 
     // Since this is not an identifier token, it can't be macro expanded, so
