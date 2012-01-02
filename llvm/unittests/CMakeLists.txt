@@ -112,6 +112,7 @@ set(VMCoreSources
   VMCore/PassManagerTest.cpp
   VMCore/ValueMapTest.cpp
   VMCore/VerifierTest.cpp
+  VMCore/pr11677.cpp
   )
 
 # MSVC9 and 8 cannot compile ValueMapTest.cpp due to their bug.

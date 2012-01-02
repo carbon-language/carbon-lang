@@ -184,7 +184,9 @@ public:
   ~BitcodeReader() {
     FreeState();
   }
-  
+
+  void materializeForwardReferencedFunctions();
+
   void FreeState();
   
   /// setBufferOwned - If this is true, the reader will destroy the MemoryBuffer

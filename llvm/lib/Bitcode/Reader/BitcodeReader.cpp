@@ -27,6 +27,13 @@
 #include "llvm/OperandTraits.h"
 using namespace llvm;
 
+void BitcodeReader::materializeForwardReferencedFunctions() {
+  while (!BlockAddrFwdRefs.empty()) {
+    Function *F = BlockAddrFwdRefs.begin()->first;
+    F->Materialize();
+  }
+}
+
 void BitcodeReader::FreeState() {
   if (BufferOwned)
     delete Buffer;
@@ -2779,6 +2786,9 @@ Module *llvm::getLazyBitcodeModule(MemoryBuffer *Buffer,
   }
   // Have the BitcodeReader dtor delete 'Buffer'.
   R->setBufferOwned(true);
+
+  R->materializeForwardReferencedFunctions();
+
   return M;
 }
 
