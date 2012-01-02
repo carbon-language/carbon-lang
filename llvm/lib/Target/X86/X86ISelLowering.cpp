@@ -3194,12 +3194,11 @@ static bool isPSHUFHWMask(const SmallVectorImpl<int> &Mask, EVT VT) {
     return false;
 
   // Lower quadword copied in order or undef.
-  for (int i = 0; i != 4; ++i)
-    if (Mask[i] >= 0 && Mask[i] != i)
-      return false;
+  if (!isSequentialOrUndefInRange(Mask, 0, 4, 0))
+    return false;
 
   // Upper quadword shuffled.
-  for (int i = 4; i != 8; ++i)
+  for (unsigned i = 4; i != 8; ++i)
     if (Mask[i] >= 0 && (Mask[i] < 4 || Mask[i] > 7))
       return false;
 
@@ -3219,12 +3218,11 @@ static bool isPSHUFLWMask(const SmallVectorImpl<int> &Mask, EVT VT) {
     return false;
 
   // Upper quadword copied in order.
-  for (int i = 4; i != 8; ++i)
-    if (Mask[i] >= 0 && Mask[i] != i)
-      return false;
+  if (!isSequentialOrUndefInRange(Mask, 4, 4, 4))
+    return false;
 
   // Lower quadword shuffled.
-  for (int i = 0; i != 4; ++i)
+  for (unsigned i = 0; i != 4; ++i)
     if (Mask[i] >= 4)
       return false;
 
@@ -3321,7 +3319,7 @@ static bool isVSHUFPYMask(const SmallVectorImpl<int> &Mask, EVT VT,
         // VPERMILPS works with masks.
         if (NumElems == 4 || l == 0 || Mask[i+QuarterStart] < 0)
           continue;
-        if (!isUndefOrEqual(Idx, Mask[i+QuarterStart]+HalfSize))
+        if (!isUndefOrEqual(Idx, Mask[i+QuarterStart]+LaneStart))
           return false;
       }
     }
@@ -3332,18 +3330,17 @@ static bool isVSHUFPYMask(const SmallVectorImpl<int> &Mask, EVT VT,
 
 /// getShuffleVSHUFPYImmediate - Return the appropriate immediate to shuffle
 /// the specified VECTOR_MASK mask with VSHUFPSY/VSHUFPDY instructions.
-static unsigned getShuffleVSHUFPYImmediate(SDNode *N) {
-  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
+static unsigned getShuffleVSHUFPYImmediate(ShuffleVectorSDNode *SVOp) {
   EVT VT = SVOp->getValueType(0);
-  int NumElems = VT.getVectorNumElements();
+  unsigned NumElems = VT.getVectorNumElements();
 
   assert(VT.getSizeInBits() == 256 && "Only supports 256-bit types");
   assert((NumElems == 4 || NumElems == 8) && "Only supports v4 and v8 types");
 
-  int HalfSize = NumElems/2;
+  unsigned HalfSize = NumElems/2;
   unsigned Mul = (NumElems == 8) ? 2 : 1;
   unsigned Mask = 0;
-  for (int i = 0; i != NumElems; ++i) {
+  for (unsigned i = 0; i != NumElems; ++i) {
     int Elt = SVOp->getMaskElt(i);
     if (Elt < 0)
       continue;
@@ -3672,12 +3669,12 @@ static bool isMOVLMask(const SmallVectorImpl<int> &Mask, EVT VT) {
   if (VT.getSizeInBits() == 256)
     return false;
 
-  int NumElts = VT.getVectorNumElements();
+  unsigned NumElts = VT.getVectorNumElements();
 
   if (!isUndefOrEqual(Mask[0], NumElts))
     return false;
 
-  for (int i = 1; i < NumElts; ++i)
+  for (unsigned i = 1; i != NumElts; ++i)
     if (!isUndefOrEqual(Mask[i], i))
       return false;
 
@@ -3704,11 +3701,11 @@ static bool isVPERM2X128Mask(const SmallVectorImpl<int> &Mask, EVT VT,
   // The shuffle result is divided into half A and half B. In total the two
   // sources have 4 halves, namely: C, D, E, F. The final values of A and
   // B must come from C, D, E or F.
-  int HalfSize = VT.getVectorNumElements()/2;
+  unsigned HalfSize = VT.getVectorNumElements()/2;
   bool MatchA = false, MatchB = false;
 
   // Check if A comes from one of C, D, E, F.
-  for (int Half = 0; Half < 4; ++Half) {
+  for (unsigned Half = 0; Half != 4; ++Half) {
     if (isSequentialOrUndefInRange(Mask, 0, HalfSize, Half*HalfSize)) {
       MatchA = true;
       break;
@@ -3716,7 +3713,7 @@ static bool isVPERM2X128Mask(const SmallVectorImpl<int> &Mask, EVT VT,
   }
 
   // Check if B comes from one of C, D, E, F.
-  for (int Half = 0; Half < 4; ++Half) {
+  for (unsigned Half = 0; Half != 4; ++Half) {
     if (isSequentialOrUndefInRange(Mask, HalfSize, HalfSize, Half*HalfSize)) {
       MatchB = true;
       break;
@@ -3731,16 +3728,16 @@ static bool isVPERM2X128Mask(const SmallVectorImpl<int> &Mask, EVT VT,
 static unsigned getShuffleVPERM2X128Immediate(ShuffleVectorSDNode *SVOp) {
   EVT VT = SVOp->getValueType(0);
 
-  int HalfSize = VT.getVectorNumElements()/2;
+  unsigned HalfSize = VT.getVectorNumElements()/2;
 
-  int FstHalf = 0, SndHalf = 0;
-  for (int i = 0; i < HalfSize; ++i) {
+  unsigned FstHalf = 0, SndHalf = 0;
+  for (unsigned i = 0; i < HalfSize; ++i) {
     if (SVOp->getMaskElt(i) > 0) {
       FstHalf = SVOp->getMaskElt(i)/HalfSize;
       break;
     }
   }
-  for (int i = HalfSize; i < HalfSize*2; ++i) {
+  for (unsigned i = HalfSize; i < HalfSize*2; ++i) {
     if (SVOp->getMaskElt(i) > 0) {
       SndHalf = SVOp->getMaskElt(i)/HalfSize;
       break;
@@ -3759,20 +3756,19 @@ static unsigned getShuffleVPERM2X128Immediate(ShuffleVectorSDNode *SVOp) {
 /// with the same restriction that lanes can't be crossed.
 static bool isVPERMILPMask(const SmallVectorImpl<int> &Mask, EVT VT,
                            bool HasAVX) {
-  int NumElts = VT.getVectorNumElements();
-  int NumLanes = VT.getSizeInBits()/128;
-
   if (!HasAVX)
     return false;
 
+  unsigned NumElts = VT.getVectorNumElements();
   // Only match 256-bit with 32/64-bit types
   if (VT.getSizeInBits() != 256 || (NumElts != 4 && NumElts != 8))
     return false;
 
-  int LaneSize = NumElts/NumLanes;
-  for (int l = 0; l != NumLanes; ++l) {
-    int LaneStart = l*LaneSize;
-    for (int i = 0; i != LaneSize; ++i) {
+  unsigned NumLanes = VT.getSizeInBits()/128;
+  unsigned LaneSize = NumElts/NumLanes;
+  for (unsigned l = 0; l != NumLanes; ++l) {
+    unsigned LaneStart = l*LaneSize;
+    for (unsigned i = 0; i != LaneSize; ++i) {
       if (!isUndefOrInRange(Mask[i+LaneStart], LaneStart, LaneStart+LaneSize))
         return false;
       if (NumElts == 4 || l == 0)
@@ -3780,7 +3776,7 @@ static bool isVPERMILPMask(const SmallVectorImpl<int> &Mask, EVT VT,
       // VPERMILPS handling
       if (Mask[i] < 0)
         continue;
-      if (!isUndefOrEqual(Mask[i+LaneStart], Mask[i]+LaneSize))
+      if (!isUndefOrEqual(Mask[i+LaneStart], Mask[i]+LaneStart))
         return false;
     }
   }
@@ -3793,9 +3789,9 @@ static bool isVPERMILPMask(const SmallVectorImpl<int> &Mask, EVT VT,
 static unsigned getShuffleVPERMILPImmediate(ShuffleVectorSDNode *SVOp) {
   EVT VT = SVOp->getValueType(0);
 
-  int NumElts = VT.getVectorNumElements();
-  int NumLanes = VT.getSizeInBits()/128;
-  int LaneSize = NumElts/NumLanes;
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned NumLanes = VT.getSizeInBits()/128;
+  unsigned LaneSize = NumElts/NumLanes;
 
   // Although the mask is equal for both lanes do it twice to get the cases
   // where a mask will match because the same mask element is undef on the
@@ -3803,7 +3799,7 @@ static unsigned getShuffleVPERMILPImmediate(ShuffleVectorSDNode *SVOp) {
   // such as: shuffle <u, 0, 1, 2, 4, 4, 5, 6>, which is completely valid.
   unsigned Shift = (LaneSize == 4) ? 2 : 1;
   unsigned Mask = 0;
-  for (int i = 0; i != NumElts; ++i) {
+  for (unsigned i = 0; i != NumElts; ++i) {
     int MaskElt = SVOp->getMaskElt(i);
     if (MaskElt < 0)
       continue;
@@ -3822,14 +3818,14 @@ static unsigned getShuffleVPERMILPImmediate(ShuffleVectorSDNode *SVOp) {
 /// element of vector 2 and the other elements to come from vector 1 in order.
 static bool isCommutedMOVLMask(const SmallVectorImpl<int> &Mask, EVT VT,
                                bool V2IsSplat = false, bool V2IsUndef = false) {
-  int NumOps = VT.getVectorNumElements();
+  unsigned NumOps = VT.getVectorNumElements();
   if (NumOps != 2 && NumOps != 4 && NumOps != 8 && NumOps != 16)
     return false;
 
   if (!isUndefOrEqual(Mask[0], 0))
     return false;
 
-  for (int i = 1; i < NumOps; ++i)
+  for (unsigned i = 1; i != NumOps; ++i)
     if (!(isUndefOrEqual(Mask[i], i+NumOps) ||
           (V2IsUndef && isUndefOrInRange(Mask[i], NumOps, NumOps*2)) ||
           (V2IsSplat && isUndefOrEqual(Mask[i], NumOps))))
@@ -3893,7 +3889,7 @@ bool X86::isMOVSLDUPMask(ShuffleVectorSDNode *N,
     return false;
 
   // "i" is the value the indexed mask element must have
-  for (unsigned i = 0; i < NumElems; i += 2)
+  for (unsigned i = 0; i != NumElems; i += 2)
     if (!isUndefOrEqual(N->getMaskElt(i), i) ||
         !isUndefOrEqual(N->getMaskElt(i+1), i))
       return false;
@@ -3906,15 +3902,15 @@ bool X86::isMOVSLDUPMask(ShuffleVectorSDNode *N,
 /// version of MOVDDUP.
 static bool isMOVDDUPYMask(const SmallVectorImpl<int> &Mask, EVT VT,
                            bool HasAVX) {
-  int NumElts = VT.getVectorNumElements();
+  unsigned NumElts = VT.getVectorNumElements();
 
   if (!HasAVX || VT.getSizeInBits() != 256 || NumElts != 4)
     return false;
 
-  for (int i = 0; i != NumElts/2; ++i)
+  for (unsigned i = 0; i != NumElts/2; ++i)
     if (!isUndefOrEqual(Mask[i], 0))
       return false;
-  for (int i = NumElts/2; i != NumElts; ++i)
+  for (unsigned i = NumElts/2; i != NumElts; ++i)
     if (!isUndefOrEqual(Mask[i], NumElts/2))
       return false;
   return true;
@@ -3929,11 +3925,11 @@ bool X86::isMOVDDUPMask(ShuffleVectorSDNode *N) {
   if (VT.getSizeInBits() != 128)
     return false;
 
-  int e = VT.getVectorNumElements() / 2;
-  for (int i = 0; i < e; ++i)
+  unsigned e = VT.getVectorNumElements() / 2;
+  for (unsigned i = 0; i != e; ++i)
     if (!isUndefOrEqual(N->getMaskElt(i), i))
       return false;
-  for (int i = 0; i < e; ++i)
+  for (unsigned i = 0; i != e; ++i)
     if (!isUndefOrEqual(N->getMaskElt(e+i), i))
       return false;
   return true;
@@ -3981,14 +3977,14 @@ bool X86::isVINSERTF128Index(SDNode *N) {
 /// the specified VECTOR_SHUFFLE mask with PSHUF* and SHUFP* instructions.
 unsigned X86::getShuffleSHUFImmediate(SDNode *N) {
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
-  int NumOperands = SVOp->getValueType(0).getVectorNumElements();
+  unsigned NumOperands = SVOp->getValueType(0).getVectorNumElements();
 
   unsigned Shift = (NumOperands == 4) ? 2 : 1;
   unsigned Mask = 0;
-  for (int i = 0; i < NumOperands; ++i) {
+  for (unsigned i = 0; i != NumOperands; ++i) {
     int Val = SVOp->getMaskElt(NumOperands-i-1);
     if (Val < 0) Val = 0;
-    if (Val >= NumOperands) Val -= NumOperands;
+    if (Val >= (int)NumOperands) Val -= NumOperands;
     Mask |= Val;
     if (i != NumOperands - 1)
       Mask <<= Shift;
