@@ -252,13 +252,10 @@ public:
       setLinkage(minLinkage(linkage(), L));
     }
     void mergeLinkage(LinkageInfo Other) {
-      setLinkage(minLinkage(linkage(), Other.linkage()));
+      mergeLinkage(Other.linkage());
     }
 
-    void mergeVisibility(Visibility V) {
-      setVisibility(minVisibility(visibility(), V));
-    }
-    void mergeVisibility(Visibility V, bool E) {
+    void mergeVisibility(Visibility V, bool E = false) {
       setVisibility(minVisibility(visibility(), V), visibilityExplicit() || E);
     }
     void mergeVisibility(LinkageInfo Other) {
