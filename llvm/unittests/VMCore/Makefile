@@ -9,7 +9,7 @@
 
 LEVEL = ../..
 TESTNAME = VMCore
-LINK_COMPONENTS := core support target ipa
+LINK_COMPONENTS := core support bitreader bitwriter target ipa
 
 include $(LEVEL)/Makefile.config
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
