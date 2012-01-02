@@ -1236,10 +1236,10 @@ let Predicates = [HasAVX] in {
 
   // Store patterns
   def : Pat<(store (f64 (vector_extract
-            (v2f64 (X86Unpckh VR128:$src, (undef))), (iPTR 0))), addr:$dst),
+            (v2f64 (X86Unpckh VR128:$src, VR128:$src)), (iPTR 0))), addr:$dst),
             (VMOVHPSmr addr:$dst, VR128:$src)>;
   def : Pat<(store (f64 (vector_extract
-            (v2f64 (X86Unpckh VR128:$src, (undef))), (iPTR 0))), addr:$dst),
+            (v2f64 (X86Unpckh VR128:$src, VR128:$src)), (iPTR 0))), addr:$dst),
             (VMOVHPDmr addr:$dst, VR128:$src)>;
 }
 
@@ -1259,7 +1259,7 @@ let Predicates = [HasSSE1] in {
 
   // Store patterns
   def : Pat<(store (f64 (vector_extract
-            (v2f64 (X86Unpckh VR128:$src, (undef))), (iPTR 0))), addr:$dst),
+            (v2f64 (X86Unpckh VR128:$src, VR128:$src)), (iPTR 0))), addr:$dst),
             (MOVHPSmr addr:$dst, VR128:$src)>;
 }
 
@@ -1279,7 +1279,7 @@ let Predicates = [HasSSE2] in {
 
   // Store patterns
   def : Pat<(store (f64 (vector_extract
-            (v2f64 (X86Unpckh VR128:$src, (undef))), (iPTR 0))),addr:$dst),
+            (v2f64 (X86Unpckh VR128:$src, VR128:$src)), (iPTR 0))),addr:$dst),
             (MOVHPDmr addr:$dst, VR128:$src)>;
 }
 

@@ -6268,31 +6268,27 @@ bool CanXFormVExtractWithShuffleIntoLoad(SDValue V, SelectionDAG &DAG,
   if (V.getOpcode() == ISD::BITCAST)
     V = V.getOperand(0);
 
-  if (ISD::isNormalLoad(V.getNode())) {
-    // Is the original load suitable?
-    LoadSDNode *LN0 = cast<LoadSDNode>(V);
+  if (!ISD::isNormalLoad(V.getNode()))
+    return false;
 
-    // FIXME: avoid the multi-use bug that is preventing lots of
-    // of foldings to be detected, this is still wrong of course, but
-    // give the temporary desired behavior, and if it happens that
-    // the load has real more uses, during isel it will not fold, and
-    // will generate poor code.
-    if (!LN0 || LN0->isVolatile()) // || !LN0->hasOneUse()
-      return false;
+  // Is the original load suitable?
+  LoadSDNode *LN0 = cast<LoadSDNode>(V);
 
-    if (!HasShuffleIntoBitcast)
-      return true;
+  if (!LN0 || !LN0->hasNUsesOfValue(1,0) || LN0->isVolatile())
+    return false;
 
-    // If there's a bitcast before the shuffle, check if the load type and
-    // alignment is valid.
-    unsigned Align = LN0->getAlignment();
-    unsigned NewAlign =
-      TLI.getTargetData()->getABITypeAlignment(
-                                    VT.getTypeForEVT(*DAG.getContext()));
+  if (!HasShuffleIntoBitcast)
+    return true;
 
-    if (NewAlign > Align || !TLI.isOperationLegalOrCustom(ISD::LOAD, VT))
-      return false;
-  }
+  // If there's a bitcast before the shuffle, check if the load type and
+  // alignment is valid.
+  unsigned Align = LN0->getAlignment();
+  unsigned NewAlign =
+    TLI.getTargetData()->getABITypeAlignment(
+                                  VT.getTypeForEVT(*DAG.getContext()));
+
+  if (NewAlign > Align || !TLI.isOperationLegalOrCustom(ISD::LOAD, VT))
+    return false;
 
   return true;
 }
