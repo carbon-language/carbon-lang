@@ -13133,6 +13133,24 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
       }
   }
 
+  // The VSELECT instruction is lowered to SSE blend instructions. In many cases
+  // the mask is sign-extended to fill the entire lane. However, we only care
+  // for the highest bit. Convert sign_extend to srl because it is cheaper.
+  // (vselect(sign_extend(x))) ->  vselect(srl(x))
+  if (N->getOpcode() == ISD::VSELECT &&
+      Cond.getOpcode() == ISD::SIGN_EXTEND_INREG && Cond.hasOneUse()) {
+    EVT CondVT = Cond.getValueType();
+    EVT SExtTy = cast<VTSDNode>(Cond.getOperand(1))->getVT();
+    unsigned BitsDiff = CondVT.getScalarType().getSizeInBits() -
+                        SExtTy.getScalarType().getSizeInBits();
+
+    EVT ShiftType = EVT::getVectorVT(*DAG.getContext(),
+                MVT::i32, CondVT.getVectorNumElements());
+    SDValue SHL = DAG.getNode(ISD::SHL, DL, CondVT, Cond.getOperand(0),
+                DAG.getConstant(BitsDiff, ShiftType));
+    return DAG.getNode(ISD::VSELECT, DL, VT, SHL, LHS, RHS);
+  }
+
   return SDValue();
 }
 

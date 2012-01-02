@@ -28,10 +28,10 @@ define void@vsel_i32(<4 x i32>* %v1, <4 x i32>* %v2) {
 
 ; Without forcing instructions, fall back to the preferred PS domain.
 ; CHECK: vsel_i64
-; CHECK: xorps
-; CHECK: andps
-; CHECK: andnps
-; CHECK: orps
+; CHECK: pxor
+; CHECK: and
+; CHECK: andn
+; CHECK: or
 ; CHECK: ret
 
 define void@vsel_i64(<4 x i64>* %v1, <4 x i64>* %v2) {
@@ -44,10 +44,10 @@ define void@vsel_i64(<4 x i64>* %v1, <4 x i64>* %v2) {
 
 ; Without forcing instructions, fall back to the preferred PS domain.
 ; CHECK: vsel_double
-; CHECK: xorps
-; CHECK: andps
-; CHECK: andnps
-; CHECK: orps
+; CHECK: xor
+; CHECK: and
+; CHECK: andn
+; CHECK: or
 ; CHECK: ret
 
 define void@vsel_double(<4 x double>* %v1, <4 x double>* %v2) {

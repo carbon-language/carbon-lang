@@ -36,6 +36,7 @@ define <4 x i32> @vsel_i32(<4 x i32> %v1, <4 x i32> %v2) {
 
 
 ;CHECK: vsel_double
+;CHECK-NOT: sra
 ;CHECK: blendvpd
 ;CHECK: ret
 define <4 x double> @vsel_double(<4 x double> %v1, <4 x double> %v2) {
@@ -54,6 +55,7 @@ define <4 x i64> @vsel_i64(<4 x i64> %v1, <4 x i64> %v2) {
 
 
 ;CHECK: vsel_i8
+;CHECK-NOT: sra
 ;CHECK: pblendvb
 ;CHECK: ret
 define <16 x i8> @vsel_i8(<16 x i8> %v1, <16 x i8> %v2) {
@@ -65,6 +67,7 @@ define <16 x i8> @vsel_i8(<16 x i8> %v1, <16 x i8> %v2) {
 ; CHECK: A
 define <2 x double> @A(<2 x double> %x, <2 x double> %y) {
   ; CHECK: cmplepd
+  ; CHECK-NOT: sra
   ; CHECK: blendvpd
   %max_is_x = fcmp oge <2 x double> %x, %y
   %max = select <2 x i1> %max_is_x, <2 x double> %x, <2 x double> %y
@@ -74,6 +77,7 @@ define <2 x double> @A(<2 x double> %x, <2 x double> %y) {
 ; CHECK: B
 define <2 x double> @B(<2 x double> %x, <2 x double> %y) {
   ; CHECK: cmpnlepd
+  ; CHECK-NOT: sra
   ; CHECK: blendvpd
   %min_is_x = fcmp ult <2 x double> %x, %y
   %min = select <2 x i1> %min_is_x, <2 x double> %x, <2 x double> %y
