@@ -1443,6 +1443,12 @@ Value *SCEVExpander::expand(const SCEV *S) {
       if (!L) break;
       if (BasicBlock *Preheader = L->getLoopPreheader())
         InsertPt = Preheader->getTerminator();
+      else {
+        // LSR sets the insertion point for AddRec start/step values to the
+        // block start to simplify value reuse, even though it's an invalid
+        // position. SCEVExpander must correct for this in all cases.
+        InsertPt = L->getHeader()->getFirstInsertionPt();
+      }
     } else {
       // If the SCEV is computable at this level, insert it into the header
       // after the PHIs (and after any other instructions that we've inserted
