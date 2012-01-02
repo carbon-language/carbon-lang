@@ -5167,6 +5167,8 @@ def err_module_private_local : Error<
 def err_module_private_local_class : Error<
   "local %select{struct|union|class|enum}0 cannot be declared "
   "__module_private__">;
+def err_module_private_definition : Error<
+  "definition of %0 must be imported before it is required">;
 }
 
 } // end of sema component.

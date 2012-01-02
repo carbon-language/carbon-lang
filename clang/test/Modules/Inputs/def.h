@@ -1,4 +1,11 @@
-@interface A
+
+
+
+
+@interface A {
+@public
+  int ivar;
+}
 @end
 
 struct B {

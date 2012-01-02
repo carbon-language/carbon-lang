@@ -1084,6 +1084,11 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
       goto fail;
     }
 
+    if (RequireCompleteType(OpLoc, BaseType, 
+                            PDiag(diag::err_typecheck_incomplete_tag)
+                              << BaseExpr.get()->getSourceRange()))
+      return ExprError();
+    
     ObjCInterfaceDecl *ClassDeclared;
     ObjCIvarDecl *IV = IDecl->lookupInstanceVariable(Member, ClassDeclared);
 

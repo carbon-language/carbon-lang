@@ -247,6 +247,12 @@ public:
   /// This is only necessary for issuing pretty diagnostics.
   ExtVectorDeclsType ExtVectorDecls;
 
+  /// \brief The set of types for which we have already complained about the
+  /// definitions being hidden.
+  ///
+  /// This set is used to suppress redundant diagnostics.
+  llvm::SmallPtrSet<NamedDecl *, 4> HiddenDefinitions;
+  
   /// FieldCollector - Collects CXXFieldDecls during parsing of C++ classes.
   llvm::OwningPtr<CXXFieldCollector> FieldCollector;
 

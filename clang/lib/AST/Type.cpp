@@ -897,37 +897,56 @@ bool Type::isConstantSizeType() const {
 /// isIncompleteType - Return true if this is an incomplete type (C99 6.2.5p1)
 /// - a type that can describe objects, but which lacks information needed to
 /// determine its size.
-bool Type::isIncompleteType() const {
+bool Type::isIncompleteType(NamedDecl **Def) const {
+  if (Def)
+    *Def = 0;
+  
   switch (CanonicalType->getTypeClass()) {
   default: return false;
   case Builtin:
     // Void is the only incomplete builtin type.  Per C99 6.2.5p19, it can never
     // be completed.
     return isVoidType();
-  case Enum:
+  case Enum: {
+    EnumDecl *EnumD = cast<EnumType>(CanonicalType)->getDecl();
+    if (Def)
+      *Def = EnumD;
+    
     // An enumeration with fixed underlying type is complete (C++0x 7.2p3).
-    if (cast<EnumType>(CanonicalType)->getDecl()->isFixed())
-        return false;
-    // Fall through.
-  case Record:
+    if (EnumD->isFixed())
+      return false;
+    
+    return !EnumD->isCompleteDefinition();
+  }
+  case Record: {
     // A tagged type (struct/union/enum/class) is incomplete if the decl is a
     // forward declaration, but not a full definition (C99 6.2.5p22).
-    return !cast<TagType>(CanonicalType)->getDecl()->isCompleteDefinition();
+    RecordDecl *Rec = cast<RecordType>(CanonicalType)->getDecl();
+    if (Def)
+      *Def = Rec;
+    return !Rec->isCompleteDefinition();
+  }
   case ConstantArray:
     // An array is incomplete if its element type is incomplete
     // (C++ [dcl.array]p1).
     // We don't handle variable arrays (they're not allowed in C++) or
     // dependent-sized arrays (dependent types are never treated as incomplete).
-    return cast<ArrayType>(CanonicalType)->getElementType()->isIncompleteType();
+    return cast<ArrayType>(CanonicalType)->getElementType()
+             ->isIncompleteType(Def);
   case IncompleteArray:
     // An array of unknown size is an incomplete type (C99 6.2.5p22).
     return true;
   case ObjCObject:
     return cast<ObjCObjectType>(CanonicalType)->getBaseType()
-                                                         ->isIncompleteType();
-  case ObjCInterface:
+             ->isIncompleteType(Def);
+  case ObjCInterface: {
     // ObjC interfaces are incomplete if they are @class, not @interface.
-    return !cast<ObjCInterfaceType>(CanonicalType)->getDecl()->hasDefinition();
+    ObjCInterfaceDecl *Interface
+      = cast<ObjCInterfaceType>(CanonicalType)->getDecl();
+    if (Def)
+      *Def = Interface;
+    return !Interface->hasDefinition();
+  }
   }
 }
 

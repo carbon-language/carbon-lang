@@ -27,6 +27,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/DelayedDiagnostic.h"
+#include "clang/Sema/Lookup.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;
@@ -4059,8 +4060,23 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
   //         "Can't ask whether a dependent type is complete");
 
   // If we have a complete type, we're done.
-  if (!T->isIncompleteType())
+  NamedDecl *Def = 0;
+  if (!T->isIncompleteType(&Def)) {
+    // If we know about the definition but it is not visible, complain.
+    if (diag != 0 && Def && !LookupResult::isVisible(Def)) {
+      // Suppress this error outside of a SFINAE context if we've already
+      // emitted the error once for this type. There's no usefulness in 
+      // repeating the diagnostic.
+      // FIXME: Add a Fix-It that imports the corresponding module or includes
+      // the header.
+      if (isSFINAEContext() || HiddenDefinitions.insert(Def)) {
+        Diag(Loc, diag::err_module_private_definition) << T;
+        Diag(Def->getLocation(), diag::note_previous_definition);
+      }
+    }
+    
     return false;
+  }
 
   const TagType *Tag = T->getAs<TagType>();
   const ObjCInterfaceType *IFace = 0;
