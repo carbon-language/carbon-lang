@@ -864,6 +864,18 @@ public:
    return false;
   }
 
+  /// isObjCSuppressAutosynthesis - Checks that a class or one of its super 
+  /// classes must not be auto-synthesized. Returns true if it must not be.
+  bool isObjCSuppressAutosynthesis() const {
+    const ObjCInterfaceDecl *Class = this;
+    while (Class) {
+      if (Class->hasAttr<ObjCSuppressAutosynthesisAttr>())
+        return true;
+      Class = Class->getSuperClass();
+   }
+   return false;
+  }
+
   ObjCIvarDecl *lookupInstanceVariable(IdentifierInfo *IVarName,
                                        ObjCInterfaceDecl *&ClassDeclared);
   ObjCIvarDecl *lookupInstanceVariable(IdentifierInfo *IVarName) {

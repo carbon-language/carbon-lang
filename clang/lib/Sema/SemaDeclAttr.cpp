@@ -1579,6 +1579,18 @@ static void handleArcWeakrefUnavailableAttr(Sema &S, Decl *D,
                                           Attr.getRange(), S.Context));
 }
 
+static void handleObjCSuppressAutosynthesisAttr(Sema &S, Decl *D, 
+                                            const AttributeList &Attr) {
+  unsigned NumArgs = Attr.getNumArgs();
+  if (NumArgs > 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 0;
+    return;
+  }
+  
+  D->addAttr(::new (S.Context) ObjCSuppressAutosynthesisAttr(
+                                 Attr.getRange(), S.Context));
+}
+
 static void handleAvailabilityAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
   IdentifierInfo *Platform = Attr.getParameterName();
@@ -3602,6 +3614,9 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_unavailable: handleUnavailableAttr (S, D, Attr); break;
   case AttributeList::AT_arc_weakref_unavailable: 
     handleArcWeakrefUnavailableAttr (S, D, Attr); 
+    break;
+  case AttributeList::AT_objc_suppress_autosynthesis: 
+    handleObjCSuppressAutosynthesisAttr (S, D, Attr); 
     break;
   case AttributeList::AT_unused:      handleUnusedAttr      (S, D, Attr); break;
   case AttributeList::AT_returns_twice:
