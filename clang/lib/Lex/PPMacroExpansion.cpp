@@ -617,6 +617,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
                  LangOpts.ObjCRuntimeHasWeak)
            .Case("objc_fixed_enum", LangOpts.ObjC2)
            .Case("objc_instancetype", LangOpts.ObjC2)
+           .Case("objc_modules", LangOpts.Modules)
            .Case("objc_nonfragile_abi", LangOpts.ObjCNonFragileABI)
            .Case("objc_weak_class", LangOpts.ObjCNonFragileABI)
            .Case("ownership_holds", true)
