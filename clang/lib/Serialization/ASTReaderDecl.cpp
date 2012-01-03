@@ -182,6 +182,10 @@ namespace clang {
       
       ~FindExistingResult();
       
+      /// \brief Suppress the addition of this result into the known set of
+      /// names.
+      void suppress() { AddResult = false; }
+      
       operator NamedDecl*() const { return Existing; }
       
       template<typename T>
@@ -412,20 +416,27 @@ void ASTDeclReader::VisitTypeAliasDecl(TypeAliasDecl *TD) {
 }
 
 void ASTDeclReader::VisitTagDecl(TagDecl *TD) {
-  VisitRedeclarable(TD);
+  // Record the declaration -> global ID mapping.
+  Reader.DeclToID[TD] = ThisDeclID;
+    
+  RedeclarableResult Redecl = VisitRedeclarable(TD);
   VisitTypeDecl(TD);
+  
   TD->IdentifierNamespace = Record[Idx++];
   TD->setTagKind((TagDecl::TagKind)Record[Idx++]);
   TD->setCompleteDefinition(Record[Idx++]);
   TD->setEmbeddedInDeclarator(Record[Idx++]);
   TD->setFreeStanding(Record[Idx++]);
   TD->setRBraceLoc(ReadSourceLocation(Record, Idx));
+  
   if (Record[Idx++]) { // hasExtInfo
     TagDecl::ExtInfo *Info = new (Reader.getContext()) TagDecl::ExtInfo();
     ReadQualifierInfo(*Info, Record, Idx);
     TD->TypedefNameDeclOrQualifier = Info;
   } else
     TD->setTypedefNameForAnonDecl(ReadDeclAs<TypedefNameDecl>(Record, Idx));
+
+  mergeRedeclarable(TD, Redecl);  
 }
 
 void ASTDeclReader::VisitEnumDecl(EnumDecl *ED) {
@@ -1547,6 +1558,14 @@ void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *D,
           if (std::find(Merged.begin(), Merged.end(), Redecl.getFirstID())
                 == Merged.end())
             Merged.push_back(Redecl.getFirstID());
+          
+          // If ExistingCanon did not come from a module file, introduce the
+          // first declaration that *does* come from a module file is in the 
+          // set of pending declaration chains, so that we merge this 
+          // declaration.
+          if (!ExistingCanon->isFromASTFile() &&
+              Reader.PendingDeclChainsKnown.insert(Redecl.getFirstID()))
+            Reader.PendingDeclChains.push_back(Merged[0]);
         }
       }
     }
@@ -1662,6 +1681,15 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
   if (isa<ObjCInterfaceDecl>(X) || isa<ObjCProtocolDecl>(X))
     return true;
   
+  // Compatible tags match.
+  if (TagDecl *TagX = dyn_cast<TagDecl>(X)) {
+    TagDecl *TagY = cast<TagDecl>(Y);
+    if ((TagX->getTagKind() == TagY->getTagKind()) ||
+        ((TagX->getTagKind() == TTK_Struct || TagX->getTagKind() == TTK_Class)&&
+         (TagY->getTagKind() == TTK_Struct || TagY->getTagKind() == TTK_Class)))
+      return true;
+  }
+        
   // FIXME: Many other cases to implement.
   return false;
 }
@@ -1679,13 +1707,21 @@ ASTDeclReader::FindExistingResult::~FindExistingResult() {
 }
 
 ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
+  DeclarationName Name = D->getDeclName();
+  if (!Name) {
+    // Don't bother trying to find unnamed declarations.
+    FindExistingResult Result(Reader, D, /*Existing=*/0);
+    Result.suppress();
+    return Result;
+  }
+  
   DeclContext *DC = D->getDeclContext()->getRedeclContext();
   if (!DC->isFileContext())
     return FindExistingResult(Reader);
   
   if (DC->isTranslationUnit() && Reader.SemaObj) {
     IdentifierResolver &IdResolver = Reader.SemaObj->IdResolver;
-    for (IdentifierResolver::iterator I = IdResolver.begin(D->getDeclName()), 
+    for (IdentifierResolver::iterator I = IdResolver.begin(Name), 
                                    IEnd = IdResolver.end();
          I != IEnd; ++I) {
       if (isSameEntity(*I, D))

@@ -32,6 +32,29 @@ void testProtoMerge(id<P1> p1, id<P2> p2) {
   [p2 protoMethod2];
 }
 
+struct S1 {
+  int s1_field;
+};
+
+struct S3 {
+  int s3_field;
+};
+
+void testTagMerge() {
+  consume_S1(produce_S1());
+  struct S2 s2;
+  s2.field = 0;
+  consume_S2(produce_S2());
+  struct S1 s1;
+  s1.s1_field = 0;
+  consume_S3(produce_S3());
+  struct S4 s4;
+  s4.field = 0;
+  consume_S4(produce_S4());
+  struct S3 s3;
+  s3.s3_field = 0;
+}
+
 // Test redeclarations of entities in explicit submodules, to make
 // sure we're maintaining the declaration chains even when normal name
 // lookup can't see what we're looking for.

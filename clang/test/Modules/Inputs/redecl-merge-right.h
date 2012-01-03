@@ -21,6 +21,12 @@
 
 @protocol P2;
 
+struct S1;
+struct S2;
+
+void consume_S1(struct S1*);
+struct S2 *produce_S2(void);
+
 // Test declarations in different modules with no common initial
 // declaration.
 @class C;
@@ -46,6 +52,12 @@ struct explicit_struct;
 @protocol P3;
 @protocol P3;
 @protocol P3;
+
+struct S3;
+struct S4;
+
+void consume_S3(struct S3*);
+struct S4 *produce_S4(void);
 
 #ifdef __cplusplus
 template<typename T> class Vector { 
