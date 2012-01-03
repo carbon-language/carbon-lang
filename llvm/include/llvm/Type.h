@@ -16,6 +16,7 @@
 #define LLVM_TYPE_H
 
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 
@@ -75,21 +76,32 @@ private:
   /// Context - This refers to the LLVMContext in which this type was uniqued.
   LLVMContext &Context;
 
-  TypeID   ID : 8;            // The current base type of this type.
-  unsigned SubclassData : 24; // Space for subclasses to store data
+  // Due to Ubuntu GCC bug 910363:
+  // https://bugs.launchpad.net/ubuntu/+source/gcc-4.5/+bug/910363
+  // Bitpack ID and SubclassData manually.
+  // Note: TypeID : low 8 bit; SubclassData : high 24 bit.
+  uint32_t IDAndSubclassData;
 
 protected:
   friend class LLVMContextImpl;
   explicit Type(LLVMContext &C, TypeID tid)
-    : Context(C), ID(tid), SubclassData(0),
-      NumContainedTys(0), ContainedTys(0) {}
+    : Context(C), IDAndSubclassData(0),
+      NumContainedTys(0), ContainedTys(0) {
+    setTypeID(tid);
+  }
   ~Type() {}
-
-  unsigned getSubclassData() const { return SubclassData; }
+  
+  void setTypeID(TypeID ID) {
+    IDAndSubclassData = (ID & 0xFF) | (IDAndSubclassData & 0xFFFFFF00);
+    assert(getTypeID() == ID && "TypeID data too large for field");
+  }
+  
+  unsigned getSubclassData() const { return IDAndSubclassData >> 8; }
+  
   void setSubclassData(unsigned val) {
-    SubclassData = val;
+    IDAndSubclassData = (IDAndSubclassData & 0xFF) | (val << 8);
     // Ensure we don't have any accidental truncation.
-    assert(SubclassData == val && "Subclass data too large for field");
+    assert(getSubclassData() == val && "Subclass data too large for field");
   }
 
   /// NumContainedTys - Keeps track of how many Type*'s there are in the
@@ -117,7 +129,7 @@ public:
   /// getTypeID - Return the type id for the type.  This will return one
   /// of the TypeID enum elements defined above.
   ///
-  TypeID getTypeID() const { return ID; }
+  TypeID getTypeID() const { return (TypeID)(IDAndSubclassData & 0xFF); }
 
   /// isVoidTy - Return true if this is 'void'.
   bool isVoidTy() const { return getTypeID() == VoidTyID; }
