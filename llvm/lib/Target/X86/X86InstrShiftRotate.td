@@ -27,7 +27,7 @@ def SHL32rCL : I<0xD3, MRM4r, (outs GR32:$dst), (ins GR32:$src1),
                  "shl{l}\t{%cl, $dst|$dst, CL}",
                  [(set GR32:$dst, (shl GR32:$src1, CL))]>;
 def SHL64rCL : RI<0xD3, MRM4r, (outs GR64:$dst), (ins GR64:$src1),
-                  "shl{q}\t{%cl, $dst|$dst, %CL}",
+                  "shl{q}\t{%cl, $dst|$dst, CL}",
                   [(set GR64:$dst, (shl GR64:$src1, CL))]>;
 } // Uses = [CL]
 
@@ -74,7 +74,7 @@ def SHL32mCL : I<0xD3, MRM4m, (outs), (ins i32mem:$dst),
                  "shl{l}\t{%cl, $dst|$dst, CL}",
                  [(store (shl (loadi32 addr:$dst), CL), addr:$dst)]>;
 def SHL64mCL : RI<0xD3, MRM4m, (outs), (ins i64mem:$dst),
-                  "shl{q}\t{%cl, $dst|$dst, %CL}",
+                  "shl{q}\t{%cl, $dst|$dst, CL}",
                   [(store (shl (loadi64 addr:$dst), CL), addr:$dst)]>;
 }
 def SHL8mi   : Ii8<0xC0, MRM4m, (outs), (ins i8mem :$dst, i8imm:$src),
@@ -118,7 +118,7 @@ def SHR32rCL : I<0xD3, MRM5r, (outs GR32:$dst), (ins GR32:$src1),
                  "shr{l}\t{%cl, $dst|$dst, CL}",
                  [(set GR32:$dst, (srl GR32:$src1, CL))]>;
 def SHR64rCL : RI<0xD3, MRM5r, (outs GR64:$dst), (ins GR64:$src1),
-                  "shr{q}\t{%cl, $dst|$dst, %CL}",
+                  "shr{q}\t{%cl, $dst|$dst, CL}",
                   [(set GR64:$dst, (srl GR64:$src1, CL))]>;
 }
 
@@ -163,7 +163,7 @@ def SHR32mCL : I<0xD3, MRM5m, (outs), (ins i32mem:$dst),
                  "shr{l}\t{%cl, $dst|$dst, CL}",
                  [(store (srl (loadi32 addr:$dst), CL), addr:$dst)]>;
 def SHR64mCL : RI<0xD3, MRM5m, (outs), (ins i64mem:$dst),
-                  "shr{q}\t{%cl, $dst|$dst, %CL}",
+                  "shr{q}\t{%cl, $dst|$dst, CL}",
                   [(store (srl (loadi64 addr:$dst), CL), addr:$dst)]>;
 }
 def SHR8mi   : Ii8<0xC0, MRM5m, (outs), (ins i8mem :$dst, i8imm:$src),
@@ -206,7 +206,7 @@ def SAR32rCL : I<0xD3, MRM7r, (outs GR32:$dst), (ins GR32:$src1),
                  "sar{l}\t{%cl, $dst|$dst, CL}",
                  [(set GR32:$dst, (sra GR32:$src1, CL))]>;
 def SAR64rCL : RI<0xD3, MRM7r, (outs GR64:$dst), (ins GR64:$src1),
-                 "sar{q}\t{%cl, $dst|$dst, %CL}",
+                 "sar{q}\t{%cl, $dst|$dst, CL}",
                  [(set GR64:$dst, (sra GR64:$src1, CL))]>;
 }
 
@@ -252,7 +252,7 @@ def SAR32mCL : I<0xD3, MRM7m, (outs), (ins i32mem:$dst),
                  "sar{l}\t{%cl, $dst|$dst, CL}",
                  [(store (sra (loadi32 addr:$dst), CL), addr:$dst)]>;
 def SAR64mCL : RI<0xD3, MRM7m, (outs), (ins i64mem:$dst), 
-                 "sar{q}\t{%cl, $dst|$dst, %CL}",
+                 "sar{q}\t{%cl, $dst|$dst, CL}",
                  [(store (sra (loadi64 addr:$dst), CL), addr:$dst)]>;
 }
 def SAR8mi   : Ii8<0xC0, MRM7m, (outs), (ins i8mem :$dst, i8imm:$src),
@@ -424,7 +424,7 @@ def ROL32rCL : I<0xD3, MRM0r, (outs GR32:$dst), (ins GR32:$src1),
                  "rol{l}\t{%cl, $dst|$dst, CL}",
                  [(set GR32:$dst, (rotl GR32:$src1, CL))]>;
 def ROL64rCL : RI<0xD3, MRM0r, (outs GR64:$dst), (ins GR64:$src1),
-                  "rol{q}\t{%cl, $dst|$dst, %CL}",
+                  "rol{q}\t{%cl, $dst|$dst, CL}",
                   [(set GR64:$dst, (rotl GR64:$src1, CL))]>;
 }
 
@@ -469,7 +469,7 @@ def ROL32mCL : I<0xD3, MRM0m, (outs), (ins i32mem:$dst),
                  "rol{l}\t{%cl, $dst|$dst, CL}",
                  [(store (rotl (loadi32 addr:$dst), CL), addr:$dst)]>;
 def ROL64mCL :  RI<0xD3, MRM0m, (outs), (ins i64mem:$dst),
-                   "rol{q}\t{%cl, $dst|$dst, %CL}",
+                   "rol{q}\t{%cl, $dst|$dst, %cl}",
                    [(store (rotl (loadi64 addr:$dst), CL), addr:$dst)]>;
 }
 def ROL8mi   : Ii8<0xC0, MRM0m, (outs), (ins i8mem :$dst, i8imm:$src1),
@@ -513,7 +513,7 @@ def ROR32rCL : I<0xD3, MRM1r, (outs GR32:$dst), (ins GR32:$src1),
                  "ror{l}\t{%cl, $dst|$dst, CL}",
                  [(set GR32:$dst, (rotr GR32:$src1, CL))]>;
 def ROR64rCL : RI<0xD3, MRM1r, (outs GR64:$dst), (ins GR64:$src1),
-                  "ror{q}\t{%cl, $dst|$dst, %CL}",
+                  "ror{q}\t{%cl, $dst|$dst, CL}",
                   [(set GR64:$dst, (rotr GR64:$src1, CL))]>;
 }
 
@@ -558,7 +558,7 @@ def ROR32mCL : I<0xD3, MRM1m, (outs), (ins i32mem:$dst),
                  "ror{l}\t{%cl, $dst|$dst, CL}",
                  [(store (rotr (loadi32 addr:$dst), CL), addr:$dst)]>;
 def ROR64mCL : RI<0xD3, MRM1m, (outs), (ins i64mem:$dst), 
-                  "ror{q}\t{%cl, $dst|$dst, %CL}",
+                  "ror{q}\t{%cl, $dst|$dst, CL}",
                   [(store (rotr (loadi64 addr:$dst), CL), addr:$dst)]>;
 }
 def ROR8mi   : Ii8<0xC0, MRM1m, (outs), (ins i8mem :$dst, i8imm:$src),
@@ -618,12 +618,12 @@ def SHRD32rrCL : I<0xAD, MRMDestReg, (outs GR32:$dst),
                    [(set GR32:$dst, (X86shrd GR32:$src1, GR32:$src2, CL))]>, TB;
 def SHLD64rrCL : RI<0xA5, MRMDestReg, (outs GR64:$dst), 
                     (ins GR64:$src1, GR64:$src2),
-                    "shld{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}",
+                    "shld{q}\t{%cl, $src2, $dst|$dst, $src2, CL}",
                     [(set GR64:$dst, (X86shld GR64:$src1, GR64:$src2, CL))]>, 
                     TB;
 def SHRD64rrCL : RI<0xAD, MRMDestReg, (outs GR64:$dst), 
                     (ins GR64:$src1, GR64:$src2),
-                    "shrd{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}",
+                    "shrd{q}\t{%cl, $src2, $dst|$dst, $src2, CL}",
                     [(set GR64:$dst, (X86shrd GR64:$src1, GR64:$src2, CL))]>, 
                     TB;
 }
@@ -694,11 +694,11 @@ def SHRD32mrCL : I<0xAD, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
                     addr:$dst)]>, TB;
                     
 def SHLD64mrCL : RI<0xA5, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
-                    "shld{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}",
+                    "shld{q}\t{%cl, $src2, $dst|$dst, $src2, CL}",
                     [(store (X86shld (loadi64 addr:$dst), GR64:$src2, CL),
                       addr:$dst)]>, TB;
 def SHRD64mrCL : RI<0xAD, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
-                    "shrd{q}\t{%cl, $src2, $dst|$dst, $src2, %CL}",
+                    "shrd{q}\t{%cl, $src2, $dst|$dst, $src2, CL}",
                     [(store (X86shrd (loadi64 addr:$dst), GR64:$src2, CL),
                       addr:$dst)]>, TB;
 }
