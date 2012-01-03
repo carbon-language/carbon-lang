@@ -1,10 +1,10 @@
-__import_module__ category_left;
+@import category_left;
 
 @interface Foo(Bottom)
 -(void)bottom;
 @end
 
-__import_module__ category_right;
+@import category_right;
 
 @interface LeftFoo(Bottom)
 -(void)bottom;

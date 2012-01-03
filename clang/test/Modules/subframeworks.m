@@ -2,13 +2,13 @@
 // RUN: %clang_cc1 -Wauto-import -fmodule-cache-path %t -fmodules -F %S/Inputs %s -verify
 // RUN: %clang_cc1 -x objective-c++ -Wauto-import -fmodule-cache-path %t -fmodules -F %S/Inputs %s -verify
 
-__import_module__ DependsOnModule;
+@import DependsOnModule;
 
 void testSubFramework() {
   float *sf1 = sub_framework; // expected-error{{use of undeclared identifier 'sub_framework'}}
 }
 
-__import_module__ DependsOnModule.SubFramework;
+@import DependsOnModule.SubFramework;
 
 void testSubFrameworkAgain() {
   float *sf2 = sub_framework;
@@ -16,7 +16,7 @@ void testSubFrameworkAgain() {
 }
 
 #ifdef __cplusplus
-__import_module__ DependsOnModule.CXX;
+@import DependsOnModule.CXX;
 
 CXXOnly cxxonly;
 #endif

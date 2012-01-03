@@ -2127,7 +2127,7 @@ private:
 
   //===--------------------------------------------------------------------===//
   // Modules
-  DeclGroupPtrTy ParseModuleImport();
+  DeclGroupPtrTy ParseModuleImport(SourceLocation AtLoc);
 
   //===--------------------------------------------------------------------===//
   // GNU G++: Type Traits [Type-Traits.html in the GCC manual]

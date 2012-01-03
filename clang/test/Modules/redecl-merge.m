@@ -4,12 +4,12 @@
 @class C2;
 @class C3;
 @class C3;
-__import_module__ redecl_merge_left;
+@import redecl_merge_left;
 
 @protocol P4;
 @class C3;
 @class C3;
-__import_module__ redecl_merge_right;
+@import redecl_merge_right;
 
 @implementation A
 - (Super*)init { return self; }
@@ -62,14 +62,14 @@ void test_C3(C3 *c3) {
 }
 
 C4 *global_C4;
-__import_module__ redecl_merge_left_left;
+@import redecl_merge_left_left;
 
 void test_C4a(C4 *c4) {
   global_C4 = c4 = get_a_C4();
   accept_a_C4(c4);
 }
 
-__import_module__ redecl_merge_bottom;
+@import redecl_merge_bottom;
 
 void test_C4b() {
   if (&refers_to_C4) {

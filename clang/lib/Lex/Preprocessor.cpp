@@ -548,9 +548,10 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   if (II.isExtensionToken() && !DisableMacroExpansion)
     Diag(Identifier, diag::ext_token_used);
   
-  // If this is the '__import_module__' keyword, note that the next token
-  // indicates a module name.
-  if (II.getTokenID() == tok::kw___import_module__ &&
+  // If this is the '__import_module__' or 'import' keyword, note that the next 
+  // token indicates a module name.
+  if ((II.getTokenID() == tok::kw___import_module__ ||
+       II.getObjCKeywordID() == tok::objc_import) &&
       !InMacroArgs && !DisableMacroExpansion) {
     ModuleImportLoc = Identifier.getLocation();
     ModuleImportPath.clear();
@@ -559,7 +560,8 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   }
 }
 
-/// \brief Lex a token following the __import_module__ keyword.
+/// \brief Lex a token following the __import_module__ or 'import' keyword.
+///
 void Preprocessor::LexAfterModuleImport(Token &Result) {
   // Figure out what kind of lexer we actually have.
   if (CurLexer)
@@ -578,8 +580,12 @@ void Preprocessor::LexAfterModuleImport(Token &Result) {
   //
   //   __import_module__ identifier (. identifier)*
   //
+  // or
+  //
+  //   import identifier (. identifier)*
+  //
   // indicates a module import directive. We already saw the __import_module__
-  // keyword, so now we're looking for the identifiers.
+  // or 'import' keyword, so now we're looking for the identifiers.
   if (ModuleImportExpectsIdentifier && Result.getKind() == tok::identifier) {
     // We expected to see an identifier here, and we did; continue handling
     // identifiers.

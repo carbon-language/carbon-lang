@@ -1,5 +1,5 @@
-__import_module__ redeclarations_left;
-__import_module__ redeclarations_right;
+@import redeclarations_left;
+@import redeclarations_right;
 
 @interface MyObject : NSObject
 @end

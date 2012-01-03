@@ -295,7 +295,8 @@ private:
     NeedsHandleIdentifier =
       (isPoisoned() | hasMacroDefinition() | isCPlusPlusOperatorKeyword() |
        isExtensionToken() | isCXX11CompatKeyword() || isOutOfDate() ||
-       (getTokenID() == tok::kw___import_module__));
+       (getTokenID() == tok::kw___import_module__) ||
+       (getObjCKeywordID() == tok::objc_import));
   }
 };
 

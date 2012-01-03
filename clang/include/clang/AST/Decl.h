@@ -3058,7 +3058,7 @@ public:
 ///
 /// An import declaration imports the named module (or submodule). For example:
 /// \code
-///   __import_module__ std.vector;
+///   @import std.vector;
 /// \endcode
 ///
 /// Import declarations can also be implicitly generated from #include/#import 
@@ -3080,10 +3080,10 @@ class ImportDecl : public Decl {
   friend class ASTDeclReader;
   friend class ASTContext;
   
-  ImportDecl(DeclContext *DC, SourceLocation ImportLoc, Module *Imported,
+  ImportDecl(DeclContext *DC, SourceLocation StartLoc, Module *Imported,
              ArrayRef<SourceLocation> IdentifierLocs);
 
-  ImportDecl(DeclContext *DC, SourceLocation ImportLoc, Module *Imported,
+  ImportDecl(DeclContext *DC, SourceLocation StartLoc, Module *Imported,
              SourceLocation EndLoc);
 
   ImportDecl(EmptyShell Empty) : Decl(Import, Empty), NextLocalImport() { }
@@ -3091,13 +3091,13 @@ class ImportDecl : public Decl {
 public:
   /// \brief Create a new module import declaration.
   static ImportDecl *Create(ASTContext &C, DeclContext *DC, 
-                            SourceLocation ImportLoc, Module *Imported,
+                            SourceLocation StartLoc, Module *Imported,
                             ArrayRef<SourceLocation> IdentifierLocs);
   
   /// \brief Create a new module import declaration for an implicitly-generated
   /// import.
   static ImportDecl *CreateImplicit(ASTContext &C, DeclContext *DC, 
-                                    SourceLocation ImportLoc, Module *Imported, 
+                                    SourceLocation StartLoc, Module *Imported, 
                                     SourceLocation EndLoc);
   
   /// \brief Create a new module import declaration.

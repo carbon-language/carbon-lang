@@ -1,4 +1,4 @@
-__import_module__ category_top;
+@import category_top;
 
 @interface Foo(Right1)
 -(void)right1;

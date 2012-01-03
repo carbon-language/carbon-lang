@@ -9896,7 +9896,9 @@ Decl *Sema::ActOnFileScopeAsmDecl(Expr *expr,
   return New;
 }
 
-DeclResult Sema::ActOnModuleImport(SourceLocation ImportLoc, ModuleIdPath Path) {
+DeclResult Sema::ActOnModuleImport(SourceLocation AtLoc, 
+                                   SourceLocation ImportLoc, 
+                                   ModuleIdPath Path) {
   Module *Mod = PP.getModuleLoader().loadModule(ImportLoc, Path, 
                                                 Module::AllVisible,
                                                 /*IsIncludeDirective=*/false);
@@ -9917,8 +9919,8 @@ DeclResult Sema::ActOnModuleImport(SourceLocation ImportLoc, ModuleIdPath Path) 
 
   ImportDecl *Import = ImportDecl::Create(Context, 
                                           Context.getTranslationUnitDecl(),
-                                          ImportLoc, Mod,
-                                          IdentifierLocs);
+                                          AtLoc.isValid()? AtLoc : ImportLoc, 
+                                          Mod, IdentifierLocs);
   Context.getTranslationUnitDecl()->addDecl(Import);
   return Import;
 }

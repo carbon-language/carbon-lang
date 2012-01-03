@@ -1120,10 +1120,14 @@ public:
 
   /// \brief The parser has processed a module import declaration.
   ///
-  /// \param ImportLoc The location of the '__import_module__' keyword.
+  /// \param AtLoc The location of the '@' symbol, if present.
+  ///
+  /// \param ImportLoc The location of the '__import_module__' or 'import' 
+  /// keyword.
   ///
   /// \param Path The module access path.
-  DeclResult ActOnModuleImport(SourceLocation ImportLoc, ModuleIdPath Path);
+  DeclResult ActOnModuleImport(SourceLocation AtLoc, SourceLocation ImportLoc, 
+                               ModuleIdPath Path);
 
   /// \brief Retrieve a suitable printing policy.
   PrintingPolicy getPrintingPolicy() const;

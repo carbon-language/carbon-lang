@@ -689,7 +689,7 @@ def err_seh___finally_block : Error<
 
 let CategoryName = "Modules Issue" in {
 def err_module_expected_ident : Error<
-  "expected a module name after '__import_module__'">;
+  "expected a module name after module import">;
 def err_module_expected_semi : Error<
   "expected a semicolon name after module name">;
 }

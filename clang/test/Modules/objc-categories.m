@@ -5,7 +5,7 @@
 // RUN: %clang_cc1 -fmodule-cache-path %t -x objective-c -fmodule-name=category_bottom -emit-module %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodule-cache-path %t %s -verify
 
-__import_module__ category_bottom;
+@import category_bottom;
 
 
 // in category_left.h: expected-note {{previous definition}}
