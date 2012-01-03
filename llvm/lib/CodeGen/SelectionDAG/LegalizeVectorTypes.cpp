@@ -1571,6 +1571,12 @@ SDValue DAGTypeLegalizer::WidenVecRes_BITCAST(SDNode *N) {
   case TargetLowering::TypeLegal:
     break;
   case TargetLowering::TypePromoteInteger:
+    // If the incoming type is a vector that is being promoted, then
+    // we know that the elements are arranged differently and that we
+    // must perform the conversion using a stack slot.
+    if (InVT.isVector())
+      break;
+
     // If the InOp is promoted to the same size, convert it.  Otherwise,
     // fall out of the switch and widen the promoted input.
     InOp = GetPromotedInteger(InOp);

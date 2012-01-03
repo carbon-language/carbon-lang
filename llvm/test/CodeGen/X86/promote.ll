@@ -29,3 +29,14 @@ entry:
   ret i32 0
 ; CHECK: ret
 }
+
+; CHECK: bitcast_widen
+define <2 x float> @bitcast_widen(<4 x i32> %in) nounwind readnone {
+entry:
+; CHECK-NOT: pshufd
+ %x = shufflevector <4 x i32> %in, <4 x i32> undef, <2 x i32> <i32 0, i32 1>
+ %y = bitcast <2 x i32> %x to <2 x float>
+ ret <2 x float> %y
+; CHECK: ret
+}
+
