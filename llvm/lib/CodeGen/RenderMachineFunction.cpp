@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/RenderMachineFunction.cpp - MF->HTML -----s-----------===//
+//===-- llvm/CodeGen/RenderMachineFunction.cpp - MF->HTML -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
