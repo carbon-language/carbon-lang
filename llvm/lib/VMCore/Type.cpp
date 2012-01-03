@@ -66,7 +66,7 @@ bool Type::isIntegerTy(unsigned Bitwidth) const {
 bool Type::isIntOrIntVectorTy() const {
   if (isIntegerTy())
     return true;
-  if (ID != Type::VectorTyID) return false;
+  if (getTypeID() != Type::VectorTyID) return false;
   
   return cast<VectorType>(this)->getElementType()->isIntegerTy();
 }
@@ -74,11 +74,12 @@ bool Type::isIntOrIntVectorTy() const {
 /// isFPOrFPVectorTy - Return true if this is a FP type or a vector of FP types.
 ///
 bool Type::isFPOrFPVectorTy() const {
-  if (ID == Type::HalfTyID || ID == Type::FloatTyID || ID == Type::DoubleTyID ||
-      ID == Type::FP128TyID || ID == Type::X86_FP80TyID || 
-      ID == Type::PPC_FP128TyID)
+  if (getTypeID() == Type::HalfTyID || getTypeID() == Type::FloatTyID ||
+      getTypeID() == Type::DoubleTyID ||
+      getTypeID() == Type::FP128TyID || getTypeID() == Type::X86_FP80TyID || 
+      getTypeID() == Type::PPC_FP128TyID)
     return true;
-  if (ID != Type::VectorTyID) return false;
+  if (getTypeID() != Type::VectorTyID) return false;
   
   return cast<VectorType>(this)->getElementType()->isFloatingPointTy();
 }
@@ -167,12 +168,12 @@ int Type::getFPMantissaWidth() const {
   if (const VectorType *VTy = dyn_cast<VectorType>(this))
     return VTy->getElementType()->getFPMantissaWidth();
   assert(isFloatingPointTy() && "Not a floating point type!");
-  if (ID == HalfTyID) return 11;
-  if (ID == FloatTyID) return 24;
-  if (ID == DoubleTyID) return 53;
-  if (ID == X86_FP80TyID) return 64;
-  if (ID == FP128TyID) return 113;
-  assert(ID == PPC_FP128TyID && "unknown fp type");
+  if (getTypeID() == HalfTyID) return 11;
+  if (getTypeID() == FloatTyID) return 24;
+  if (getTypeID() == DoubleTyID) return 53;
+  if (getTypeID() == X86_FP80TyID) return 64;
+  if (getTypeID() == FP128TyID) return 113;
+  assert(getTypeID() == PPC_FP128TyID && "unknown fp type");
   return -1;
 }
 
