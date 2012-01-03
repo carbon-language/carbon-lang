@@ -2128,12 +2128,10 @@ public:
     return StmtVisitorTy::Visit(E->getInitializer());
   }
   RetTy VisitInitListExpr(const InitListExpr *E) {
-    if (Info.getLangOpts().CPlusPlus0x) {
-      if (E->getNumInits() == 0)
-        return DerivedZeroInitialization(E);
-      if (E->getNumInits() == 1)
-        return StmtVisitorTy::Visit(E->getInit(0));
-    }
+    if (E->getNumInits() == 0)
+      return DerivedZeroInitialization(E);
+    if (E->getNumInits() == 1)
+      return StmtVisitorTy::Visit(E->getInit(0));
     return Error(E);
   }
   RetTy VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E) {
