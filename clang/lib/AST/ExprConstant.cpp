@@ -3181,53 +3181,42 @@ VectorExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
   QualType EltTy = VT->getElementType();
   SmallVector<APValue, 4> Elements;
 
-  // If a vector is initialized with a single element, that value
-  // becomes every element of the vector, not just the first.
-  // This is the behavior described in the IBM AltiVec documentation.
-  if (NumInits == 1) {
-
-    // Handle the case where the vector is initialized by another
-    // vector (OpenCL 6.1.6).
-    if (E->getInit(0)->getType()->isVectorType())
-      return Visit(E->getInit(0));
-
-    APValue InitValue;
-    if (EltTy->isIntegerType()) {
+  // The number of initializers can be less than the number of
+  // vector elements. For OpenCL, this can be due to nested vector
+  // initialization. For GCC compatibility, missing trailing elements 
+  // should be initialized with zeroes.
+  unsigned CountInits = 0, CountElts = 0;
+  while (CountElts < NumElements) {
+    // Handle nested vector initialization.
+    if (CountInits < NumInits 
+        && E->getInit(CountInits)->getType()->isExtVectorType()) {
+      APValue v;
+      if (!EvaluateVector(E->getInit(CountInits), v, Info))
+        return Error(E);
+      unsigned vlen = v.getVectorLength();
+      for (unsigned j = 0; j < vlen; j++) 
+        Elements.push_back(v.getVectorElt(j));
+      CountElts += vlen;
+    } else if (EltTy->isIntegerType()) {
       llvm::APSInt sInt(32);
-      if (!EvaluateInteger(E->getInit(0), sInt, Info))
-        return false;
-      InitValue = APValue(sInt);
+      if (CountInits < NumInits) {
+        if (!EvaluateInteger(E->getInit(CountInits), sInt, Info))
+          return Error(E);
+      } else // trailing integer zero.
+        sInt = Info.Ctx.MakeIntValue(0, EltTy);
+      Elements.push_back(APValue(sInt));
+      CountElts++;
     } else {
       llvm::APFloat f(0.0);
-      if (!EvaluateFloat(E->getInit(0), f, Info))
-        return false;
-      InitValue = APValue(f);
+      if (CountInits < NumInits) {
+        if (!EvaluateFloat(E->getInit(CountInits), f, Info))
+          return Error(E);
+      } else // trailing float zero.
+        f = APFloat::getZero(Info.Ctx.getFloatTypeSemantics(EltTy));
+      Elements.push_back(APValue(f));
+      CountElts++;
     }
-    for (unsigned i = 0; i < NumElements; i++) {
-      Elements.push_back(InitValue);
-    }
-  } else {
-    for (unsigned i = 0; i < NumElements; i++) {
-      if (EltTy->isIntegerType()) {
-        llvm::APSInt sInt(32);
-        if (i < NumInits) {
-          if (!EvaluateInteger(E->getInit(i), sInt, Info))
-            return false;
-        } else {
-          sInt = Info.Ctx.MakeIntValue(0, EltTy);
-        }
-        Elements.push_back(APValue(sInt));
-      } else {
-        llvm::APFloat f(0.0);
-        if (i < NumInits) {
-          if (!EvaluateFloat(E->getInit(i), f, Info))
-            return false;
-        } else {
-          f = APFloat::getZero(Info.Ctx.getFloatTypeSemantics(EltTy));
-        }
-        Elements.push_back(APValue(f));
-      }
-    }
+    CountInits++;
   }
   return Success(Elements, E);
 }
