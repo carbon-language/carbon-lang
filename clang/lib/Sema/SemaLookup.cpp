@@ -1196,7 +1196,7 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
           if (!(*LastI)->isInIdentifierNamespace(IDNS))
             continue;
           
-          D = getVisibleDecl(*LastI);
+          D = R.isForRedeclaration()? *LastI : getVisibleDecl(*LastI);
           if (D)
             R.addDecl(D);
         }
