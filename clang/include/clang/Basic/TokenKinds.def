@@ -90,8 +90,8 @@ PPKEYWORD(assert)
 PPKEYWORD(unassert)
 
 // Clang extensions
-PPKEYWORD(public)
-PPKEYWORD(private)
+PPKEYWORD(__public_macro)
+PPKEYWORD(__private_macro)
 
 //===----------------------------------------------------------------------===//
 // Language keywords.

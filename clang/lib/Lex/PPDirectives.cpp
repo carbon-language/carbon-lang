@@ -682,12 +682,12 @@ TryAgain:
       //isExtension = true;  // FIXME: implement #unassert
       break;
         
-    case tok::pp_public:
+    case tok::pp___public_macro:
       if (getLangOptions().Modules)
         return HandleMacroPublicDirective(Result);
       break;
         
-    case tok::pp_private:
+    case tok::pp___private_macro:
       if (getLangOptions().Modules)
         return HandleMacroPrivateDirective(Result);
       break;
@@ -1052,8 +1052,8 @@ void Preprocessor::HandleMacroPublicDirective(Token &Tok) {
   if (MacroNameTok.is(tok::eod))
     return;
 
-  // Check to see if this is the last token on the #public line.
-  CheckEndOfDirective("public");
+  // Check to see if this is the last token on the #__public_macro line.
+  CheckEndOfDirective("__public_macro");
 
   // Okay, we finally have a valid identifier to undef.
   MacroInfo *MI = getMacroInfo(MacroNameTok.getIdentifierInfo());
@@ -1083,8 +1083,8 @@ void Preprocessor::HandleMacroPrivateDirective(Token &Tok) {
   if (MacroNameTok.is(tok::eod))
     return;
   
-  // Check to see if this is the last token on the #private line.
-  CheckEndOfDirective("private");
+  // Check to see if this is the last token on the #__private_macro line.
+  CheckEndOfDirective("__private_macro");
   
   // Okay, we finally have a valid identifier to undef.
   MacroInfo *MI = getMacroInfo(MacroNameTok.getIdentifierInfo());

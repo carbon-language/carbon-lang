@@ -22,7 +22,7 @@
 double d;
 DOUBLE *dp = &d;
 
-#public WIBBLE // expected-error{{no macro named 'WIBBLE'}}
+#__public_macro WIBBLE // expected-error{{no macro named 'WIBBLE'}}
 
 void f() {
   // CHECK-PREPROCESSED: int i = INTEGER;
