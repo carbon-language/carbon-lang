@@ -395,8 +395,6 @@ void Clang::AddPreprocessingOptions(Compilation &C,
     CmdArgs.push_back(Args.MakeArgString(DefaultModuleCache));
   }
   
-  Args.AddAllArgs(CmdArgs, options::OPT_fmodules);
-
   // Parse additional include paths from environment variables.
   // FIXME: We should probably sink the logic for handling these from the
   // frontend into the driver. It will allow deleting 4 otherwise unused flags.
@@ -2022,6 +2020,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         !getToolChain().hasBlocksRuntime())
       CmdArgs.push_back("-fblocks-runtime-optional");
   }
+
+  if (Args.hasFlag(options::OPT_fmodules, options::OPT_fno_modules, false))
+    CmdArgs.push_back("-fmodules");
 
   // -faccess-control is default.
   if (Args.hasFlag(options::OPT_fno_access_control,
