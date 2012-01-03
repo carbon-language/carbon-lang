@@ -5,10 +5,8 @@ target triple = "x86_64-apple-darwin11.2.0"
 
 ; CHECK: @foo8
 ; CHECK: psll
-; CHECK-NOT: sra
-; CHECK: pandn
-; CHECK: pand
-; CHECK: or
+; CHECK: psraw
+; CHECK: pblendvb
 ; CHECK: ret
 define void @foo8(float* nocapture %RET) nounwind {
 allocas:
