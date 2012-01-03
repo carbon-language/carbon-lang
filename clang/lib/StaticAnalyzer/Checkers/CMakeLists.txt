@@ -62,6 +62,7 @@ add_clang_library(clangStaticAnalyzerCheckers
   UnixAPIChecker.cpp
   UnreachableCodeChecker.cpp
   VLASizeChecker.cpp
+  VirtualCallChecker.cpp
   )
 
 add_dependencies(clangStaticAnalyzerCheckers

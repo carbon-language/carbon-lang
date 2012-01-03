@@ -164,6 +164,10 @@ def IteratorsChecker : Checker<"Iterators">,
   HelpText<"Check improper uses of STL vector iterators">,
   DescFile<"IteratorsChecker.cpp">;
 
+def VirtualCallChecker : Checker<"VirtualCall">,
+  HelpText<"Check virtual function calls during construction or destruction">, 
+  DescFile<"VirtualCallChecker.cpp">;
+
 } // end: "cplusplus.experimental"
 
 //===----------------------------------------------------------------------===//
