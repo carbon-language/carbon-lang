@@ -7438,9 +7438,9 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
 }
 
 
-/// LowerShiftParts - Lower SRA_PARTS and friends, which return two i32 values and
-/// take a 2 x i32 value to shift plus a shift amount.
-SDValue X86TargetLowering::LowerShiftParts(SDValue Op, SelectionDAG &DAG) const {
+/// LowerShiftParts - Lower SRA_PARTS and friends, which return two i32 values
+/// and take a 2 x i32 value to shift plus a shift amount.
+SDValue X86TargetLowering::LowerShiftParts(SDValue Op, SelectionDAG &DAG) const{
   assert(Op.getNumOperands() == 3 && "Not a double-shift!");
   EVT VT = Op.getValueType();
   unsigned VTBits = VT.getSizeInBits();
@@ -13958,7 +13958,8 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
 
     // Bitcast the loaded value to a vector of the original element type, in
     // the size of the target vector type.
-    SDValue SlicedVec = DAG.getNode(ISD::BITCAST, dl, WideVecVT, ScalarInVector);
+    SDValue SlicedVec = DAG.getNode(ISD::BITCAST, dl, WideVecVT,
+                                    ScalarInVector);
     unsigned SizeRatio = RegSz/MemSz;
 
     // Redistribute the loaded elements into the different locations.
