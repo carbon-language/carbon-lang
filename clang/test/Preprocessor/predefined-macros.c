@@ -1,12 +1,14 @@
-// This test verifies that the correct macros are predefined. It currently
-// only checks for Microsoft macros.
-
-// RUN: %clang_cc1 %s -E -dM -triple i686-pc-win32 -fms-extensions -fmsc-version=1300 -o - | FileCheck %s
-
-
-// CHECK: #define _INTEGRAL_MAX_BITS 64
-// CHECK: #define _MSC_EXTENSIONS 1
-// CHECK: #define _MSC_VER 1300
-// CHECK: #define _M_IX86 600
-// CHECK: #define _M_IX86_FP
-// CHECK: #define _WIN32 1
+// This test verifies that the correct macros are predefined.
+//
+// RUN: %clang_cc1 %s -E -dM -triple i686-pc-win32 -fms-extensions \
+// RUN:     -fmsc-version=1300 -o - | FileCheck %s --check-prefix=CHECK-MS
+// CHECK-MS: #define _INTEGRAL_MAX_BITS 64
+// CHECK-MS: #define _MSC_EXTENSIONS 1
+// CHECK-MS: #define _MSC_VER 1300
+// CHECK-MS: #define _M_IX86 600
+// CHECK-MS: #define _M_IX86_FP
+// CHECK-MS: #define _WIN32 1
+//
+// RUN: %clang_cc1 %s -E -dM -ffast-math -o - \
+// RUN:   | FileCheck %s --check-prefix=CHECK-FAST-MATH
+// CHECK-FAST-MATH: #define __FAST_MATH__

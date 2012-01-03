@@ -411,6 +411,9 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (LangOpts.OptimizeSize)
     Builder.defineMacro("__OPTIMIZE_SIZE__");
 
+  if (LangOpts.FastMath)
+    Builder.defineMacro("__FAST_MATH__");
+
   // Initialize target-specific preprocessor defines.
 
   // Define type sizing macros based on the target properties.
