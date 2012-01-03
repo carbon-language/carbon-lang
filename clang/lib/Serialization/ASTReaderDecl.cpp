@@ -269,9 +269,12 @@ namespace clang {
 
     std::pair<uint64_t, uint64_t> VisitDeclContext(DeclContext *DC);
     
-    template <typename T> 
+    template<typename T> 
     RedeclarableResult VisitRedeclarable(Redeclarable<T> *D);
 
+    template<typename T>
+    void mergeRedeclarable(Redeclarable<T> *D, RedeclarableResult &Redecl);
+    
     // FIXME: Reorder according to DeclNodes.td?
     void VisitObjCMethodDecl(ObjCMethodDecl *D);
     void VisitObjCContainerDecl(ObjCContainerDecl *D);
@@ -655,44 +658,7 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   RedeclarableResult Redecl = VisitRedeclarable(ID);
   VisitObjCContainerDecl(ID);
   TypeIDForTypeDecl = Reader.getGlobalTypeID(F, Record[Idx++]);
-                  
-  // Determine whether we need to merge this declaration with another @interface
-  // with the same name.
-  // FIXME: Not needed unless the module file graph is a DAG.
-  if (FindExistingResult ExistingRes = findExisting(ID)) {
-    if (ObjCInterfaceDecl *Existing = ExistingRes) {
-      ObjCInterfaceDecl *ExistingCanon = Existing->getCanonicalDecl();
-      ObjCInterfaceDecl *IDCanon = ID->getCanonicalDecl();
-      if (ExistingCanon != IDCanon) {
-        // Have our redeclaration link point back at the canonical declaration
-        // of the existing declaration, so that this declaration has the 
-        // appropriate canonical declaration.
-        ID->RedeclLink = ObjCInterfaceDecl::PreviousDeclLink(ExistingCanon);
-        
-        // Don't introduce IDCanon into the set of pending declaration chains.
-        Redecl.suppress();
-        
-        // Introduce ExistingCanon into the set of pending declaration chains,
-        // if in fact it came from a module file.
-        if (ExistingCanon->isFromASTFile()) {
-          GlobalDeclID ExistingCanonID = Reader.DeclToID[ExistingCanon];
-          assert(ExistingCanonID && "Unrecorded canonical declaration ID?");
-          if (Reader.PendingDeclChainsKnown.insert(ExistingCanonID))
-            Reader.PendingDeclChains.push_back(ExistingCanonID);
-        }
-        
-        // If this declaration was the canonical declaration, make a note of 
-        // that. We accept the linear algorithm here because the number of 
-        // unique canonical declarations of an entity should always be tiny.
-        if (IDCanon == ID) {
-          SmallVectorImpl<DeclID> &Merged = Reader.MergedDecls[ExistingCanon];
-          if (std::find(Merged.begin(), Merged.end(), Redecl.getFirstID())
-                == Merged.end())
-            Merged.push_back(Redecl.getFirstID());
-        }
-      }
-    }
-  }
+  mergeRedeclarable(ID, Redecl);
   
   ObjCInterfaceDecl *Def = ReadDeclAs<ObjCInterfaceDecl>(Record, Idx);
   if (ID == Def) {
@@ -764,45 +730,7 @@ void ASTDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
   
   RedeclarableResult Redecl = VisitRedeclarable(PD);
   VisitObjCContainerDecl(PD);
-  
-  // Determine whether we need to merge this declaration with another @protocol
-  // with the same name.
-  // FIXME: Not needed unless the module file graph is a DAG.
-  if (FindExistingResult ExistingRes = findExisting(PD)) {
-    if (ObjCProtocolDecl *Existing = ExistingRes) {
-      ObjCProtocolDecl *ExistingCanon = Existing->getCanonicalDecl();
-      ObjCProtocolDecl *PDCanon = PD->getCanonicalDecl();
-      if (ExistingCanon != PDCanon) {
-        // Have our redeclaration link point back at the canonical declaration
-        // of the existing declaration, so that this declaration has the 
-        // appropriate canonical declaration.
-        PD->RedeclLink = ObjCProtocolDecl::PreviousDeclLink(ExistingCanon);
-        
-        // Don't introduce IDCanon into the set of pending declaration chains.
-        Redecl.suppress();
-        
-        // Introduce ExistingCanon into the set of pending declaration chains,
-        // if in fact it came from a module file.
-        if (ExistingCanon->isFromASTFile()) {
-          GlobalDeclID ExistingCanonID = Reader.DeclToID[ExistingCanon];
-          assert(ExistingCanonID && "Unrecorded canonical declaration ID?");
-          if (Reader.PendingDeclChainsKnown.insert(ExistingCanonID))
-            Reader.PendingDeclChains.push_back(ExistingCanonID);
-        }
-        
-        // If this declaration was the canonical declaration, make a note of 
-        // that. We accept the linear algorithm here because the number of 
-        // unique canonical declarations of an entity should always be tiny.
-        if (PDCanon == PD) {
-          SmallVectorImpl<DeclID> &Merged = Reader.MergedDecls[ExistingCanon];
-          if (std::find(Merged.begin(), Merged.end(), Redecl.getFirstID())
-                == Merged.end())
-            Merged.push_back(Redecl.getFirstID());
-        }
-      }
-    }
-  }
-
+  mergeRedeclarable(PD, Redecl);
   
   ObjCProtocolDecl *Def = ReadDeclAs<ObjCProtocolDecl>(Record, Idx);
   if (PD == Def) {
@@ -1577,6 +1505,48 @@ ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
   // The result structure takes care of note that we need to load the 
   // other declaration chains for this ID.
   return RedeclarableResult(Reader, FirstDeclID);
+}
+
+/// \brief Attempts to merge the given declaration (D) with another declaration
+/// of the same entity.
+template<typename T>
+void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *D, 
+                                      RedeclarableResult &Redecl) {
+  if (FindExistingResult ExistingRes = findExisting(static_cast<T*>(D))) {
+    if (T *Existing = ExistingRes) {
+      T *ExistingCanon = Existing->getCanonicalDecl();
+      T *DCanon = static_cast<T*>(D)->getCanonicalDecl();
+      if (ExistingCanon != DCanon) {
+        // Have our redeclaration link point back at the canonical declaration
+        // of the existing declaration, so that this declaration has the 
+        // appropriate canonical declaration.
+        D->RedeclLink 
+          = typename Redeclarable<T>::PreviousDeclLink(ExistingCanon);
+        
+        // Don't introduce DCanon into the set of pending declaration chains.
+        Redecl.suppress();
+        
+        // Introduce ExistingCanon into the set of pending declaration chains,
+        // if in fact it came from a module file.
+        if (ExistingCanon->isFromASTFile()) {
+          GlobalDeclID ExistingCanonID = Reader.DeclToID[ExistingCanon];
+          assert(ExistingCanonID && "Unrecorded canonical declaration ID?");
+          if (Reader.PendingDeclChainsKnown.insert(ExistingCanonID))
+            Reader.PendingDeclChains.push_back(ExistingCanonID);
+        }
+        
+        // If this declaration was the canonical declaration, make a note of 
+        // that. We accept the linear algorithm here because the number of 
+        // unique canonical declarations of an entity should always be tiny.
+        if (DCanon == static_cast<T*>(D)) {
+          SmallVectorImpl<DeclID> &Merged = Reader.MergedDecls[ExistingCanon];
+          if (std::find(Merged.begin(), Merged.end(), Redecl.getFirstID())
+                == Merged.end())
+            Merged.push_back(Redecl.getFirstID());
+        }
+      }
+    }
+  }
 }
 
 //===----------------------------------------------------------------------===//
