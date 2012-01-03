@@ -6138,9 +6138,13 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
 
       // Copy the output from the appropriate register.  Find a register that
       // we can use.
-      if (OpInfo.AssignedRegs.Regs.empty())
-        report_fatal_error("Couldn't allocate output reg for constraint '" +
-                           Twine(OpInfo.ConstraintCode) + "'!");
+      if (OpInfo.AssignedRegs.Regs.empty()) {
+        LLVMContext &Ctx = *DAG.getContext();
+        Ctx.emitError(CS.getInstruction(),  
+                      "couldn't allocate output register for constraint '" +
+                           Twine(OpInfo.ConstraintCode) + "'");
+        break;
+      }
 
       // If this is an indirect operand, store through the pointer after the
       // asm.
@@ -6240,9 +6244,13 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
         std::vector<SDValue> Ops;
         TLI.LowerAsmOperandForConstraint(InOperandVal, OpInfo.ConstraintCode,
                                          Ops, DAG);
-        if (Ops.empty())
-          report_fatal_error("Invalid operand for inline asm constraint '" +
-                             Twine(OpInfo.ConstraintCode) + "'!");
+        if (Ops.empty()) {
+          LLVMContext &Ctx = *DAG.getContext();
+          Ctx.emitError(CS.getInstruction(),
+                        "invalid operand for inline asm constraint '" +
+                        Twine(OpInfo.ConstraintCode) + "'");
+          break;
+        }
 
         // Add information to the INLINEASM node to know about this input.
         unsigned ResOpType =
@@ -6273,9 +6281,13 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
              "Don't know how to handle indirect register inputs yet!");
 
       // Copy the input into the appropriate registers.
-      if (OpInfo.AssignedRegs.Regs.empty())
-        report_fatal_error("Couldn't allocate input reg for constraint '" +
-                           Twine(OpInfo.ConstraintCode) + "'!");
+      if (OpInfo.AssignedRegs.Regs.empty()) {
+        LLVMContext &Ctx = *DAG.getContext();
+        Ctx.emitError(CS.getInstruction(), 
+                      "couldn't allocate input reg for constraint '" +
+                           Twine(OpInfo.ConstraintCode) + "'");
+        break;
+      }
 
       OpInfo.AssignedRegs.getCopyToRegs(InOperandVal, DAG, getCurDebugLoc(),
                                         Chain, &Flag);
