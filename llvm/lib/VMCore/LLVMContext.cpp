@@ -83,11 +83,11 @@ void *LLVMContext::getInlineAsmDiagnosticContext() const {
   return pImpl->InlineAsmDiagContext;
 }
 
-void LLVMContext::emitError(StringRef ErrorStr) {
+void LLVMContext::emitError(const Twine &ErrorStr) {
   emitError(0U, ErrorStr);
 }
 
-void LLVMContext::emitError(const Instruction *I, StringRef ErrorStr) {
+void LLVMContext::emitError(const Instruction *I, const Twine &ErrorStr) {
   unsigned LocCookie = 0;
   if (const MDNode *SrcLoc = I->getMetadata("srcloc")) {
     if (SrcLoc->getNumOperands() != 0)
@@ -97,7 +97,7 @@ void LLVMContext::emitError(const Instruction *I, StringRef ErrorStr) {
   return emitError(LocCookie, ErrorStr);
 }
 
-void LLVMContext::emitError(unsigned LocCookie, StringRef ErrorStr) {
+void LLVMContext::emitError(unsigned LocCookie, const Twine &ErrorStr) {
   // If there is no error handler installed, just print the error and exit.
   if (pImpl->InlineAsmDiagHandler == 0) {
     errs() << "error: " << ErrorStr << "\n";
