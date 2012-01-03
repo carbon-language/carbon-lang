@@ -1,9 +1,10 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules -emit-module -fmodule-cache-path %t -fmodule-name=macros %S/Inputs/module.map
-// RUN: %clang_cc1 -fmodules -verify -fmodule-cache-path %t %s
-// RUN: %clang_cc1 -E -fmodules -fmodule-cache-path %t %s | FileCheck -check-prefix CHECK-PREPROCESSED %s
+// RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodule-cache-path %t -fmodule-name=macros %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodules -x objective-c -verify -fmodule-cache-path %t %s
+// RUN: %clang_cc1 -E -fmodules -x objective-c -fmodule-cache-path %t %s | FileCheck -check-prefix CHECK-PREPROCESSED %s
+// FIXME: When we have a syntax for modules in C, use that.
 
-__import_module__ macros;
+@import macros;
 
 #ifndef INTEGER
 #  error INTEGER macro should be visible

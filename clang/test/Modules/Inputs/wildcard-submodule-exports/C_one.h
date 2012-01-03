@@ -1,4 +1,4 @@
-__import_module__ A.One;
-__import_module__ B.One;
+@import A.One;
+@import B.One;
 
 long *C1;

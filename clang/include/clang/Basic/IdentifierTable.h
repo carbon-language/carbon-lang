@@ -69,7 +69,9 @@ class IdentifierInfo {
   bool OutOfDate              : 1; // True if there may be additional
                                    // information about this identifier
                                    // stored externally.
-  // 2 bits left in 32-bit word.
+  bool IsImport               : 1; // True if this is the 'import' contextual
+                                   // keyword.
+  // 1 bit left in 32-bit word.
   
   void *FETokenInfo;               // Managed by the language front-end.
   llvm::StringMapEntry<IdentifierInfo*> *Entry;
@@ -283,6 +285,18 @@ public:
       RecomputeNeedsHandleIdentifier();
   }
   
+  /// \brief Determine whether this is the contextual keyword 'import'.
+  bool isImport() const { return IsImport; }
+  
+  /// \brief Set whether this identifier is the contextual keyword 'import'.
+  void setImport(bool I) {
+    IsImport = I;
+    if (I)
+      NeedsHandleIdentifier = true;
+    else
+      RecomputeNeedsHandleIdentifier();
+  }
+  
 private:
   /// RecomputeNeedsHandleIdentifier - The Preprocessor::HandleIdentifier does
   /// several special (but rare) things to identifiers of various sorts.  For
@@ -295,8 +309,7 @@ private:
     NeedsHandleIdentifier =
       (isPoisoned() | hasMacroDefinition() | isCPlusPlusOperatorKeyword() |
        isExtensionToken() | isCXX11CompatKeyword() || isOutOfDate() ||
-       (getTokenID() == tok::kw___import_module__) ||
-       (getObjCKeywordID() == tok::objc_import));
+       isImport());
   }
 };
 
@@ -447,6 +460,10 @@ public:
     // contents.
     II->Entry = &Entry;
 
+    // If this is the 'import' contextual keyword, mark it as such.
+    if (Name.equals("import"))
+      II->setImport(true);
+
     return *II;
   }
 
@@ -478,6 +495,10 @@ public:
       // Make sure getName() knows how to find the IdentifierInfo
       // contents.
       II->Entry = &Entry;
+      
+      // If this is the 'import' contextual keyword, mark it as such.
+      if (Name.equals("import"))
+        II->setImport(true);
     }
 
     return *II;

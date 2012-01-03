@@ -666,9 +666,6 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
   case tok::kw___if_not_exists:
     ParseMicrosoftIfExistsExternalDeclaration();
     return DeclGroupPtrTy();
-
-  case tok::kw___import_module__:
-    return ParseModuleImport(SourceLocation());
       
   default:
   dont_know:
@@ -1570,8 +1567,7 @@ void Parser::ParseMicrosoftIfExistsExternalDeclaration() {
 }
 
 Parser::DeclGroupPtrTy Parser::ParseModuleImport(SourceLocation AtLoc) {
-  assert((Tok.is(tok::kw___import_module__) || 
-          Tok.isObjCAtKeyword(tok::objc_import)) && 
+  assert(Tok.isObjCAtKeyword(tok::objc_import) && 
          "Improper start to module import");
   SourceLocation ImportLoc = ConsumeToken();
   

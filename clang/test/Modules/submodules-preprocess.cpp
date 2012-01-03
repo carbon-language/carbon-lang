@@ -1,7 +1,8 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -Eonly -fmodule-cache-path %t -fmodules -I %S/Inputs/submodules %s -verify
+// RUN: %clang_cc1 -fmodules -x objective-c++ -Eonly -fmodule-cache-path %t -I %S/Inputs/submodules %s -verify
+// FIXME: When we have a syntax for modules in C++, use that.
 
-__import_module__ std.vector;
+@import std.vector;
 
 #ifndef HAVE_VECTOR
 #  error HAVE_VECTOR macro is not available (but should be)
@@ -15,7 +16,7 @@ __import_module__ std.vector;
 #  error HAVE_HASH_MAP macro is available (but shouldn't be)
 #endif
 
-__import_module__ std.typetraits; // expected-error{{no submodule named 'typetraits' in module 'std'; did you mean 'type_traits'?}}
+@import std.typetraits; // expected-error{{no submodule named 'typetraits' in module 'std'; did you mean 'type_traits'?}}
 
 #ifndef HAVE_VECTOR
 #  error HAVE_VECTOR macro is not available (but should be)
@@ -29,9 +30,9 @@ __import_module__ std.typetraits; // expected-error{{no submodule named 'typetra
 #  error HAVE_HASH_MAP macro is available (but shouldn't be)
 #endif
 
-__import_module__ std.vector.compare; // expected-error{{no submodule named 'compare' in module 'std.vector'}}
+@import std.vector.compare; // expected-error{{no submodule named 'compare' in module 'std.vector'}}
 
-__import_module__ std; // import everything in 'std'
+@import std; // import everything in 'std'
 
 #ifndef HAVE_VECTOR
 #  error HAVE_VECTOR macro is not available (but should be)
@@ -45,7 +46,7 @@ __import_module__ std; // import everything in 'std'
 #  error HAVE_HASH_MAP macro is available (but shouldn't be)
 #endif
 
-__import_module__ std.hash_map;
+@import std.hash_map;
 
 #ifndef HAVE_VECTOR
 #  error HAVE_VECTOR macro is not available (but should be)

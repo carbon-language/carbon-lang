@@ -3,7 +3,7 @@
 
 // in diamond-bottom.h: expected-note{{passing argument to parameter 'x' here}}
 
-__import_module__ diamond_bottom;
+@import diamond_bottom;
 
 void test_diamond(int i, float f, double d, char c) {
   top(&i);
@@ -21,8 +21,9 @@ void test_diamond(int i, float f, double d, char c) {
 }
 
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -emit-module -fmodule-cache-path %t -fmodule-name=diamond_top %S/Inputs/module.map
-// RUN: %clang_cc1 -emit-module -fmodule-cache-path %t -fmodule-name=diamond_left %S/Inputs/module.map
-// RUN: %clang_cc1 -emit-module -fmodule-cache-path %t -fmodule-name=diamond_right %S/Inputs/module.map
-// RUN: %clang_cc1 -emit-module -fmodule-cache-path %t -fmodule-name=diamond_bottom %S/Inputs/module.map
-// RUN: %clang_cc1 -fmodule-cache-path %t %s -verify
+// RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodule-cache-path %t -fmodule-name=diamond_top %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodule-cache-path %t -fmodule-name=diamond_left %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodule-cache-path %t -fmodule-name=diamond_right %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodule-cache-path %t -fmodule-name=diamond_bottom %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodules -x objective-c -fmodule-cache-path %t %s -verify
+// FIXME: When we have a syntax for modules in C, use that.

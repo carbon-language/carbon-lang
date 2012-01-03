@@ -1120,10 +1120,9 @@ public:
 
   /// \brief The parser has processed a module import declaration.
   ///
-  /// \param AtLoc The location of the '@' symbol, if present.
+  /// \param AtLoc The location of the '@' symbol, if any.
   ///
-  /// \param ImportLoc The location of the '__import_module__' or 'import' 
-  /// keyword.
+  /// \param ImportLoc The location of the 'import' keyword.
   ///
   /// \param Path The module access path.
   DeclResult ActOnModuleImport(SourceLocation AtLoc, SourceLocation ImportLoc, 

@@ -40,6 +40,7 @@ IdentifierInfo::IdentifierInfo() {
   ChangedAfterLoad = false;
   RevertedTokenID = false;
   OutOfDate = false;
+  IsImport = false;
   FETokenInfo = 0;
   Entry = 0;
 }

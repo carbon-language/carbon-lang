@@ -1378,15 +1378,16 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     bool BuildingImportedModule
       = Path[0].first->getName() == getLangOptions().CurrentModule;
     
-    if (!BuildingImportedModule) {
+    if (!BuildingImportedModule && getLangOptions().ObjC2) {
       // If we're not building the imported module, warn that we're going
       // to automatically turn this inclusion directive into a module import.
+      // We only do this in Objective-C, where we have a module-import syntax.
       CharSourceRange ReplaceRange(SourceRange(HashLoc, CharEnd), 
                                    /*IsTokenRange=*/false);
       Diag(HashLoc, diag::warn_auto_module_import)
         << IncludeKind << PathString 
         << FixItHint::CreateReplacement(ReplaceRange,
-             "__import_module__ " + PathString.str().str() + ";");
+             "@import " + PathString.str().str() + ";");
     }
     
     // Load the module.

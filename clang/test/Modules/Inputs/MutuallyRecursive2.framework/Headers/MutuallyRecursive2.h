@@ -1,6 +1,6 @@
 
 
-__import_module__ MutuallyRecursive1;
+@import MutuallyRecursive1;
 
 
 

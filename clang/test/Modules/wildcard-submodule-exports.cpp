@@ -1,7 +1,8 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodule-cache-path %t -fmodules -I %S/Inputs/wildcard-submodule-exports %s -verify
+// RUN: %clang_cc1 -x objective-c++ -fmodule-cache-path %t -fmodules -I %S/Inputs/wildcard-submodule-exports %s -verify
+// FIXME: When we have a syntax for modules in C++, use that.
 
-__import_module__ C.One;
+@import C.One;
 
 void test_C_One() {
   int *A1_ptr = A1;
@@ -9,7 +10,7 @@ void test_C_One() {
   (void)B1; // expected-error{{use of undeclared identifier 'B1'}}
 }
 
-__import_module__ C.Two;
+@import C.Two;
 
 void test_C_Two() {
   unsigned int *A2_ptr = A2;
@@ -17,7 +18,7 @@ void test_C_Two() {
   unsigned long *C2_ptr = C2;
 }
 
-__import_module__ B.One;
+@import B.One;
 
 void test_B_One() {
   short *B1_ptr = B1;

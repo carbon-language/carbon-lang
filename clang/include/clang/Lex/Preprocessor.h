@@ -162,8 +162,8 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   /// for preprocessing.
   SourceLocation CodeCompletionFileLoc;
 
-  /// \brief The source location of the __import_module__ or 'import' keyword we 
-  /// just lexed, if any.
+  /// \brief The source location of the 'import' contextual keyword we just 
+  /// lexed, if any.
   SourceLocation ModuleImportLoc;
 
   /// \brief The module import path that we're currently processing.

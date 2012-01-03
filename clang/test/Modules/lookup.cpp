@@ -1,7 +1,8 @@
 
-#define import __import_module__
+#define import @import
 import lookup_left_cxx;
-#define IMPORT(X) __import_module__ X
+#undef import
+#define IMPORT(X) @import X
 IMPORT(lookup_right_cxx);
 
 void test(int i, float f) {
@@ -15,10 +16,11 @@ void test(int i, float f) {
 }
 
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -emit-module -fmodule-cache-path %t -fmodule-name=lookup_left_cxx -x c++ %S/Inputs/module.map -verify
-// RUN: %clang_cc1 -emit-module -fmodule-cache-path %t -fmodule-name=lookup_right_cxx -x c++ %S/Inputs/module.map -verify
-// RUN: %clang_cc1 -x c++ -fmodule-cache-path %t %s -verify
-// RUN: %clang_cc1 -ast-print -x c++ -fmodule-cache-path %t %s | FileCheck -check-prefix=CHECK-PRINT %s
+// RUN: %clang_cc1 -fmodules -x objective-c++ -emit-module -fmodule-cache-path %t -fmodule-name=lookup_left_cxx %S/Inputs/module.map -verify
+// RUN: %clang_cc1 -fmodules -x objective-c++ -emit-module -fmodule-cache-path %t -fmodule-name=lookup_right_cxx %S/Inputs/module.map -verify
+// RUN: %clang_cc1 -fmodules -x objective-c++ -fmodule-cache-path %t %s -verify
+// RUN: %clang_cc1 -fmodules -ast-print -x objective-c++ -fmodule-cache-path %t %s | FileCheck -check-prefix=CHECK-PRINT %s
+// FIXME: When we have a syntax for modules in C++, use that.
 
 // CHECK-PRINT: int *f0(int *);
 // CHECK-PRINT: float *f0(float *);

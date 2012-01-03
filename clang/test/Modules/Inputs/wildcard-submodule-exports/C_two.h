@@ -1,4 +1,4 @@
-__import_module__ A.Two;
-__import_module__ B.Two;
+@import A.Two;
+@import B.Two;
 
 unsigned long *C2;
