@@ -20,7 +20,7 @@ extern void __clear_cache(void* start, void* end);
  * and then jumps to the target nested function.
  */
 
-#if __ppc__
+#if __ppc__ && !defined(__powerpc64__)
 void __trampoline_setup(uint32_t* trampOnStack, int trampSizeAllocated, 
                                 const void* realFunc, void* localsPtr)
 {
@@ -44,4 +44,4 @@ void __trampoline_setup(uint32_t* trampOnStack, int trampSizeAllocated,
     /* clear instruction cache */
     __clear_cache(trampOnStack, &trampOnStack[10]);
 }
-#endif /* __ppc__ */
+#endif /* __ppc__ && !defined(__powerpc64__) */
