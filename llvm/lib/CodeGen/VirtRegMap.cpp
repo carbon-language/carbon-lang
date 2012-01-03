@@ -112,6 +112,9 @@ void VirtRegMap::rewrite(SlotIndexes *Indexes) {
   SmallVector<unsigned, 8> SuperDeads;
   SmallVector<unsigned, 8> SuperDefs;
   SmallVector<unsigned, 8> SuperKills;
+#ifndef NDEBUG
+  BitVector Reserved = TRI->getReservedRegs(*MF);
+#endif
 
   for (MachineFunction::iterator MBBI = MF->begin(), MBBE = MF->end();
        MBBI != MBBE; ++MBBI) {
@@ -129,6 +132,7 @@ void VirtRegMap::rewrite(SlotIndexes *Indexes) {
         unsigned VirtReg = MO.getReg();
         unsigned PhysReg = getPhys(VirtReg);
         assert(PhysReg != NO_PHYS_REG && "Instruction uses unmapped VirtReg");
+        assert(!Reserved.test(PhysReg) && "Reserved register assignment");
 
         // Preserve semantics of sub-register operands.
         if (MO.getSubReg()) {
