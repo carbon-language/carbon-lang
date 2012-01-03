@@ -107,7 +107,6 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   bool KeepComments : 1;
   bool KeepMacroComments : 1;
   bool SuppressIncludeNotFoundError : 1;
-  bool AutoModuleImport : 1;
 
   // State that changes while the preprocessor runs:
   bool InMacroArgs : 1;            // True if parsing fn macro invocation args.
@@ -395,11 +394,6 @@ public:
 
   bool GetSuppressIncludeNotFoundError() {
     return SuppressIncludeNotFoundError;
-  }
-
-  /// \brief Specify whether automatic module imports are enabled.
-  void setAutoModuleImport(bool AutoModuleImport = true) {
-    this->AutoModuleImport = AutoModuleImport;
   }
 
   /// isCurrentLexer - Return true if we are lexing directly from the specified

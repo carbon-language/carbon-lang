@@ -1294,7 +1294,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   const FileEntry *File = LookupFile(
       Filename, isAngled, LookupFrom, CurDir,
       Callbacks ? &SearchPath : NULL, Callbacks ? &RelativePath : NULL,
-      AutoModuleImport? &SuggestedModule : 0);
+      getLangOptions().Modules? &SuggestedModule : 0);
 
   if (Callbacks) {
     if (!File) {
@@ -1308,7 +1308,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
           
           // Try the lookup again, skipping the cache.
           File = LookupFile(Filename, isAngled, LookupFrom, CurDir, 0, 0,
-                            AutoModuleImport ? &SuggestedModule : 0,
+                            getLangOptions().Modules? &SuggestedModule : 0,
                             /*SkipCache*/true);
         }
       }
