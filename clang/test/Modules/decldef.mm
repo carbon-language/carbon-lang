@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -I %S/Inputs -fmodule-cache-path %t %s -verify
+// RUN: %clang_cc1 -fmodules -I %S/Inputs -fmodule-cache-path %t %s -verify
 
 
 // in other file: expected-note{{previous definition is here}}

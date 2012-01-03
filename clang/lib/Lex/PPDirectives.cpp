@@ -682,10 +682,15 @@ TryAgain:
       //isExtension = true;  // FIXME: implement #unassert
       break;
         
-    case tok::pp___export_macro__:
-      return HandleMacroExportDirective(Result);
-    case tok::pp___private_macro__:
-      return HandleMacroPrivateDirective(Result);
+    case tok::pp_public:
+      if (getLangOptions().Modules)
+        return HandleMacroPublicDirective(Result);
+      break;
+        
+    case tok::pp_private:
+      if (getLangOptions().Modules)
+        return HandleMacroPrivateDirective(Result);
+      break;
     }
     break;
   }
@@ -1038,8 +1043,8 @@ void Preprocessor::HandleIdentSCCSDirective(Token &Tok) {
   }
 }
 
-/// \brief Handle a #__export_macro__ directive.
-void Preprocessor::HandleMacroExportDirective(Token &Tok) {
+/// \brief Handle a #public directive.
+void Preprocessor::HandleMacroPublicDirective(Token &Tok) {
   Token MacroNameTok;
   ReadMacroName(MacroNameTok, 2);
   
@@ -1047,8 +1052,8 @@ void Preprocessor::HandleMacroExportDirective(Token &Tok) {
   if (MacroNameTok.is(tok::eod))
     return;
 
-  // Check to see if this is the last token on the #__export_macro__ line.
-  CheckEndOfDirective("__export_macro__");
+  // Check to see if this is the last token on the #public line.
+  CheckEndOfDirective("public");
 
   // Okay, we finally have a valid identifier to undef.
   MacroInfo *MI = getMacroInfo(MacroNameTok.getIdentifierInfo());
@@ -1069,7 +1074,7 @@ void Preprocessor::HandleMacroExportDirective(Token &Tok) {
     MI->setChangedAfterLoad();
 }
 
-/// \brief Handle a #__private_macro__ directive.
+/// \brief Handle a #private directive.
 void Preprocessor::HandleMacroPrivateDirective(Token &Tok) {
   Token MacroNameTok;
   ReadMacroName(MacroNameTok, 2);
@@ -1078,8 +1083,8 @@ void Preprocessor::HandleMacroPrivateDirective(Token &Tok) {
   if (MacroNameTok.is(tok::eod))
     return;
   
-  // Check to see if this is the last token on the #__private_macro__ line.
-  CheckEndOfDirective("__private_macro__");
+  // Check to see if this is the last token on the #private line.
+  CheckEndOfDirective("private");
   
   // Okay, we finally have a valid identifier to undef.
   MacroInfo *MI = getMacroInfo(MacroNameTok.getIdentifierInfo());

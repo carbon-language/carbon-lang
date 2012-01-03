@@ -1,7 +1,7 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fno-objc-infer-related-result-type -Werror -Wno-error=incomplete-umbrella -fmodule-cache-path %t -F %S/Inputs -verify %s
-// RUN: %clang_cc1 -fno-objc-infer-related-result-type -Werror -Wno-error=incomplete-umbrella -x objective-c++ -fmodule-cache-path %t -F %S/Inputs -verify %s
-// RUN: %clang_cc1 -fno-objc-infer-related-result-type -Werror -Wno-error=incomplete-umbrella -fmodule-cache-path %t -F %S/Inputs -verify %s
+// RUN: %clang_cc1 -fmodules -fno-objc-infer-related-result-type -Werror -Wno-error=incomplete-umbrella -fmodule-cache-path %t -F %S/Inputs -verify %s
+// RUN: %clang_cc1 -fmodules -fno-objc-infer-related-result-type -Werror -Wno-error=incomplete-umbrella -x objective-c++ -fmodule-cache-path %t -F %S/Inputs -verify %s
+// RUN: %clang_cc1 -fmodules -fno-objc-infer-related-result-type -Werror -Wno-error=incomplete-umbrella -fmodule-cache-path %t -F %S/Inputs -verify %s
 #define FOO
 @import Module;
 @interface OtherClass

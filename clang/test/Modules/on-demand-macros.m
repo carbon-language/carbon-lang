@@ -1,6 +1,6 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodule-cache-path %t -F %S/Inputs -DFOO_RETURNS_INT_PTR -verify %s
-// RUN: %clang_cc1 -fmodule-cache-path %t -F %S/Inputs -verify %s
+// RUN: %clang_cc1 -fmodules -fmodule-cache-path %t -F %S/Inputs -DFOO_RETURNS_INT_PTR -verify %s
+// RUN: %clang_cc1 -fmodules -fmodule-cache-path %t -F %S/Inputs -verify %s
 
 @import CmdLine;
 

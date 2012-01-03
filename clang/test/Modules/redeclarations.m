@@ -5,7 +5,7 @@
 @end
 
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -x objective-c -fmodule-cache-path %t -emit-module -fmodule-name=redeclarations_left %S/Inputs/module.map
-// RUN: %clang_cc1 -x objective-c -fmodule-cache-path %t -emit-module -fmodule-name=redeclarations_right %S/Inputs/module.map
-// RUN: %clang_cc1 -fmodule-cache-path %t %s -verify
+// RUN: %clang_cc1 -fmodules -x objective-c -fmodule-cache-path %t -emit-module -fmodule-name=redeclarations_left %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodules -x objective-c -fmodule-cache-path %t -emit-module -fmodule-name=redeclarations_right %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodules -fmodule-cache-path %t %s -verify
 

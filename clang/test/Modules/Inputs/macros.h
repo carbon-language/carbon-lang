@@ -3,8 +3,8 @@
 #define FLOAT float
 #define DOUBLE double
 
-#__export_macro__ INTEGER
-#__private_macro__ FLOAT
-#__private_macro__ MODULE
+#public INTEGER
+#private FLOAT
+#private MODULE
 
 int (INTEGER);

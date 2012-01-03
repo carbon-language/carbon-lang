@@ -1,7 +1,7 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -emit-module -fmodule-cache-path %t -fmodule-name=macros %S/Inputs/module.map
-// RUN: %clang_cc1 -verify -fmodule-cache-path %t %s
-// RUN: %clang_cc1 -E -fmodule-cache-path %t %s | FileCheck -check-prefix CHECK-PREPROCESSED %s
+// RUN: %clang_cc1 -fmodules -emit-module -fmodule-cache-path %t -fmodule-name=macros %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodules -verify -fmodule-cache-path %t %s
+// RUN: %clang_cc1 -E -fmodules -fmodule-cache-path %t %s | FileCheck -check-prefix CHECK-PREPROCESSED %s
 
 __import_module__ macros;
 
@@ -21,7 +21,7 @@ __import_module__ macros;
 double d;
 DOUBLE *dp = &d;
 
-#__export_macro__ WIBBLE // expected-error{{no macro named 'WIBBLE'}}
+#public WIBBLE // expected-error{{no macro named 'WIBBLE'}}
 
 void f() {
   // CHECK-PREPROCESSED: int i = INTEGER;
