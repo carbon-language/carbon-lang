@@ -1177,30 +1177,31 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
                 
         R.addDecl(D);
 
-        if ((*I)->getAttr<OverloadableAttr>()) {
-          // If this declaration has the "overloadable" attribute, we
-          // might have a set of overloaded functions.
+        // Check whether there are any other declarations with the same name
+        // and in the same scope.
 
-          // Figure out what scope the identifier is in.
-          while (!(S->getFlags() & Scope::DeclScope) ||
-                 !S->isDeclScope(*I))
-            S = S->getParent();
+        // Figure out what scope the identifier is in.
+        while (S->getParent() &&
+               (!(S->getFlags() & Scope::DeclScope) ||
+                !S->isDeclScope(*I)))
+          S = S->getParent();
 
-          // Find the last declaration in this scope (with the same
-          // name, naturally).
-          IdentifierResolver::iterator LastI = I;
-          for (++LastI; LastI != IEnd; ++LastI) {
-            if (!S->isDeclScope(*LastI))
-              break;
-            
-            D = getVisibleDecl(*LastI);
-            if (D)
-              R.addDecl(D);
-          }
+        // Find the last declaration in this scope (with the same
+        // name, naturally).
+        IdentifierResolver::iterator LastI = I;
+        for (++LastI; LastI != IEnd; ++LastI) {
+          if (!S->isDeclScope(*LastI))
+            break;
+          
+          if (!(*LastI)->isInIdentifierNamespace(IDNS))
+            continue;
+          
+          D = getVisibleDecl(*LastI);
+          if (D)
+            R.addDecl(D);
         }
 
         R.resolveKind();
-
         return true;
       }
   } else {

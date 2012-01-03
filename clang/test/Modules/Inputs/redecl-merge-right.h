@@ -59,6 +59,9 @@ struct S4;
 void consume_S3(struct S3*);
 struct S4 *produce_S4(void);
 
+typedef int T1;
+typedef double T2;
+
 #ifdef __cplusplus
 template<typename T> class Vector { 
 public:

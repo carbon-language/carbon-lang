@@ -938,6 +938,12 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
                                         cast<UsingDecl>(OldD)->getQualifier());
   }
 
+  // A typedef of an Objective-C class type can replace an Objective-C class
+  // declaration or definition, and vice versa.
+  if ((isa<TypedefNameDecl>(this) && isa<ObjCInterfaceDecl>(OldD)) ||
+      (isa<ObjCInterfaceDecl>(this) && isa<TypedefNameDecl>(OldD)))
+    return true;
+  
   // For non-function declarations, if the declarations are of the
   // same kind then this must be a redeclaration, or semantic analysis
   // would not have given us the new declaration.

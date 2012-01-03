@@ -56,6 +56,9 @@ struct S4 {
 struct S3 *produce_S3(void);
 void consume_S4(struct S4*);
 
+typedef int T1;
+typedef float T2;
+
 #ifdef __cplusplus
 template<typename T> class Vector;
 

@@ -8010,8 +8010,6 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     // lookup.  This is only actually possible in C++, where a few
     // things like templates still live in the tag namespace.
     } else {
-      assert(getLangOptions().CPlusPlus);
-
       // Use a better diagnostic if an elaborated-type-specifier
       // found the wrong kind of type on the first
       // (non-redeclaration) lookup.

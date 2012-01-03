@@ -55,6 +55,15 @@ void testTagMerge() {
   s3.s3_field = 0;
 }
 
+void testTypedefMerge(int i, double d) {
+  T1 *ip = &i;
+  // in other file: expected-note{{candidate found by name lookup is 'T2'}}
+  // FIXME: Typedefs aren't actually merged in the sense of other merges, because
+  // we should only merge them when the types are identical.
+  // in other file: expected-note{{candidate found by name lookup is 'T2'}}
+  T2 *dp = &d; // expected-error{{reference to 'T2' is ambiguous}}
+}
+
 // Test redeclarations of entities in explicit submodules, to make
 // sure we're maintaining the declaration chains even when normal name
 // lookup can't see what we're looking for.
