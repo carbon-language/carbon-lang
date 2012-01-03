@@ -6192,7 +6192,7 @@ processInstruction(MCInst &Inst,
     ARM_AM::ShiftOpc SOpc = ARM_AM::getSORegShOp(Inst.getOperand(3).getImm());
     if (SOpc == ARM_AM::rrx) return false;
     switch (Inst.getOpcode()) {
-    default: assert("unexpected opcode!");
+    default: assert(0 && "unexpected opcode!");
     case ARM::ANDrsi: newOpc = ARM::ANDrr; break;
     case ARM::ORRrsi: newOpc = ARM::ORRrr; break;
     case ARM::EORrsi: newOpc = ARM::EORrr; break;
