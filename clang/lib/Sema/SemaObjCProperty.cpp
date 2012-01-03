@@ -856,7 +856,8 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     }
     IC->addPropertyImplementation(PIDecl);
     if (getLangOptions().ObjCDefaultSynthProperties &&
-        getLangOptions().ObjCNonFragileABI2) {
+        getLangOptions().ObjCNonFragileABI2 &&
+        !IDecl->isObjCSuppressAutosynthesis()) {
       // Diagnose if an ivar was lazily synthesdized due to a previous
       // use and if 1) property is @dynamic or 2) property is synthesized
       // but it requires an ivar of different name.
@@ -1355,7 +1356,8 @@ void Sema::DefaultSynthesizeProperties(Scope *S, Decl *D) {
   if (!IC)
     return;
   if (ObjCInterfaceDecl* IDecl = IC->getClassInterface())
-    DefaultSynthesizeProperties(S, IC, IDecl);
+    if (!IDecl->isObjCSuppressAutosynthesis())
+      DefaultSynthesizeProperties(S, IC, IDecl);
 }
 
 void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,

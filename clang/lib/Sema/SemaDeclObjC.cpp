@@ -1665,9 +1665,10 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
   // Check and see if properties declared in the interface have either 1)
   // an implementation or 2) there is a @synthesize/@dynamic implementation
   // of the property in the @implementation.
-  if (isa<ObjCInterfaceDecl>(CDecl) &&
-        !(LangOpts.ObjCDefaultSynthProperties && LangOpts.ObjCNonFragileABI2))
-    DiagnoseUnimplementedProperties(S, IMPDecl, CDecl, InsMap);
+  if (const ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl))
+    if  (!(LangOpts.ObjCDefaultSynthProperties && LangOpts.ObjCNonFragileABI2) ||
+      IDecl->isObjCSuppressAutosynthesis())
+      DiagnoseUnimplementedProperties(S, IMPDecl, CDecl, InsMap);
       
   llvm::DenseSet<Selector> ClsMap;
   for (ObjCImplementationDecl::classmeth_iterator
