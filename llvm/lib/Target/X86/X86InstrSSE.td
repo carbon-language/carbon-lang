@@ -4719,6 +4719,11 @@ let Predicates = [HasAVX], AddedComplexity = 20 in {
             (VMOVZQI2PQIrm addr:$src)>;
 }
 
+let Predicates = [HasAVX] in {
+def : Pat<(v4i64 (X86vzload addr:$src)),
+          (SUBREG_TO_REG (i32 0), (VMOVAPSrm addr:$src), sub_xmm)>;
+}
+
 //===---------------------------------------------------------------------===//
 // Moving from XMM to XMM and clear upper 64 bits. Note, there is a bug in
 // IA32 document. movq xmm1, xmm2 does clear the high bits.

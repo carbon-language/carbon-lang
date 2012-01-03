@@ -32,3 +32,26 @@ define <8 x float> @test4(float %a) nounwind {
 ; CHECK: test4:
 ; CHECK: vinsertf128
 }
+
+; rdar://10594409
+define <8 x float> @test5(float* nocapture %f) nounwind uwtable readonly ssp {
+entry:
+  %0 = bitcast float* %f to <4 x float>*
+  %1 = load <4 x float>* %0, align 16
+; CHECK: vmovaps
+; CHECK-NOT: vxorps
+; CHECK-NOT: vinsertf128
+  %shuffle.i = shufflevector <4 x float> %1, <4 x float> <float 0.000000e+00, float undef, float undef, float undef>, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 4, i32 4, i32 4>
+  ret <8 x float> %shuffle.i
+}
+
+define <4 x double> @test6(double* nocapture %d) nounwind uwtable readonly ssp {
+entry:
+  %0 = bitcast double* %d to <2 x double>*
+  %1 = load <2 x double>* %0, align 16
+; CHECK: vmovaps
+; CHECK-NOT: vxorps
+; CHECK-NOT: vinsertf128
+  %shuffle.i = shufflevector <2 x double> %1, <2 x double> <double 0.000000e+00, double undef>, <4 x i32> <i32 0, i32 1, i32 2, i32 2>
+  ret <4 x double> %shuffle.i
+}

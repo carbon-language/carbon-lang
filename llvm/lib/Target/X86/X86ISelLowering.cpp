@@ -12731,6 +12731,20 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
           !isUndefOrEqual(SVOp->getMaskElt(i+NumElems/2), NumElems))
         return SDValue();
 
+    // If V1 is coming from a vector load then just fold to a VZEXT_LOAD.
+    if (LoadSDNode *Ld = dyn_cast<LoadSDNode>(V1.getOperand(0))) {
+      SDVTList Tys = DAG.getVTList(MVT::v4i64, MVT::Other);
+      SDValue Ops[] = { Ld->getChain(), Ld->getBasePtr() };
+      SDValue ResNode =
+        DAG.getMemIntrinsicNode(X86ISD::VZEXT_LOAD, dl, Tys, Ops, 2,
+                                Ld->getMemoryVT(),
+                                Ld->getPointerInfo(),
+                                Ld->getAlignment(),
+                                false/*isVolatile*/, true/*ReadMem*/,
+                                false/*WriteMem*/);
+      return DAG.getNode(ISD::BITCAST, dl, VT, ResNode);
+    } 
+
     // Emit a zeroed vector and insert the desired subvector on its
     // first half.
     SDValue Zeros = getZeroVector(VT, true /* HasXMMInt */, DAG, dl);
