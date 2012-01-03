@@ -5988,6 +5988,9 @@ Sema::ActOnExplicitInstantiation(Scope *S,
   Specialization->setExternLoc(ExternLoc);
   Specialization->setTemplateKeywordLoc(TemplateLoc);
 
+  if (Attr)
+    ProcessDeclAttributeList(S, Specialization, Attr);
+
   // Add the explicit instantiation into its lexical context. However,
   // since explicit instantiations are never found by name lookup, we
   // just put it into the declaration context directly.

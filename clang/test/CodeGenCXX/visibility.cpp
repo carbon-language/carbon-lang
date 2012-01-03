@@ -466,3 +466,13 @@ namespace PR10113 {
   // CHECK: define weak_odr void @_ZN7PR101133foo3barIcE3zedEv
   // CHECK-HIDDEN: define weak_odr void @_ZN7PR101133foo3barIcE3zedEv
 }
+
+namespace PR11690 {
+  template<class T> struct Class {
+    void size() const {
+    }
+  };
+  template class DEFAULT Class<char>;
+  // CHECK: define weak_odr void @_ZNK7PR116905ClassIcE4sizeEv
+  // CHECK-HIDDEN: define weak_odr void @_ZNK7PR116905ClassIcE4sizeEv
+}
