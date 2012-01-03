@@ -1581,6 +1581,11 @@ static void handleArcWeakrefUnavailableAttr(Sema &S, Decl *D,
 
 static void handleObjCSuppressAutosynthesisAttr(Sema &S, Decl *D, 
                                             const AttributeList &Attr) {
+  if (!isa<ObjCInterfaceDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::err_suppress_autosynthesis);
+    return;
+  }
+  
   unsigned NumArgs = Attr.getNumArgs();
   if (NumArgs > 0) {
     S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 0;

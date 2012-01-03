@@ -31,3 +31,9 @@ __attribute ((objc_suppress_autosynthesis))  // redundant, just for testing
 - (id) DeepMustSynthProperty { return 0; }
 @end
 
+__attribute ((objc_suppress_autosynthesis)) 
+@interface Deep(CAT)  // expected-error {{attributes may not be specified on a category}}
+@end
+
+__attribute ((objc_suppress_autosynthesis)) // expected-error {{objc_suppress_autosynthesis attribute may only be specified on a class}} 
+@protocol P @end
