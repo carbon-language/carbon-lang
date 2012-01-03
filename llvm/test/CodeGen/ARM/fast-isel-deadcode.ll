@@ -15,7 +15,8 @@ entry:
 ; THUMB-NOT: sxtb
 ; THUMB: movs r0, #0
 ; THUMB: movt r0, #0
-; THUMB: pop
+; THUMB: add sp, #32
+; THUMb: pop {r7, pc}
   ret i32 0
 }
 
