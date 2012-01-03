@@ -386,7 +386,7 @@ void*
 __cxa_current_primary_exception() throw()
 {
 //  get the current exception
-    __cxa_eh_globals* globals = __cxa_get_globals();
+    __cxa_eh_globals* globals = __cxa_get_globals_fast();
     if (NULL == globals)
         return NULL;        //  Never has been an exception
     __cxa_exception* current_exception = globals->caughtExceptions;
