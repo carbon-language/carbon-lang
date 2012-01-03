@@ -3508,19 +3508,11 @@ void SelectionDAGBuilder::visitTargetIntrinsic(const CallInst &I,
   // Add all operands of the call to the operand list.
   for (unsigned i = 0, e = I.getNumArgOperands(); i != e; ++i) {
     SDValue Op = getValue(I.getArgOperand(i));
-    assert(TLI.isTypeLegal(Op.getValueType()) &&
-           "Intrinsic uses a non-legal type?");
     Ops.push_back(Op);
   }
 
   SmallVector<EVT, 4> ValueVTs;
   ComputeValueVTs(TLI, I.getType(), ValueVTs);
-#ifndef NDEBUG
-  for (unsigned Val = 0, E = ValueVTs.size(); Val != E; ++Val) {
-    assert(TLI.isTypeLegal(ValueVTs[Val]) &&
-           "Intrinsic uses a non-legal type?");
-  }
-#endif // NDEBUG
 
   if (HasChain)
     ValueVTs.push_back(MVT::Other);
