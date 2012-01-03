@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -Eonly -fmodule-cache-path %t -fauto-module-import -I %S/Inputs/submodules %s -verify
+// RUN: %clang_cc1 -Eonly -fmodule-cache-path %t -fmodules -I %S/Inputs/submodules %s -verify
 
 __import_module__ std.vector;
 

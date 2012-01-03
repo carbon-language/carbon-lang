@@ -395,7 +395,7 @@ void Clang::AddPreprocessingOptions(Compilation &C,
     CmdArgs.push_back(Args.MakeArgString(DefaultModuleCache));
   }
   
-  Args.AddAllArgs(CmdArgs, options::OPT_fauto_module_import);
+  Args.AddAllArgs(CmdArgs, options::OPT_fmodules);
 
   // Parse additional include paths from environment variables.
   // FIXME: We should probably sink the logic for handling these from the

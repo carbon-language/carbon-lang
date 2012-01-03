@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodule-cache-path %t -fauto-module-import -I %S/Inputs/wildcard-submodule-exports %s -verify
+// RUN: %clang_cc1 -fmodule-cache-path %t -fmodules -I %S/Inputs/wildcard-submodule-exports %s -verify
 
 __import_module__ C.One;
 

@@ -650,9 +650,8 @@ def fmodule_name : Joined<"-fmodule-name=">,
   HelpText<"Specify the name of the module to build">;           
 def fdisable_module_hash : Flag<"-fdisable-module-hash">,
   HelpText<"Disable the module hash">;
-def fauto_module_import : Flag<"-fauto-module-import">,
-  HelpText<"Automatically translate #include/#import into module imports "
-           "when possible">;
+def fmodules : Flag<"-fmodules">,
+  HelpText<"Enable the 'modules' language feature">;
            
 def F : JoinedOrSeparate<"-F">, MetaVarName<"<directory>">,
   HelpText<"Add directory to framework include search path">;
