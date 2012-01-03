@@ -1,6 +1,6 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodule-cache-path %t -I %S/Inputs %s -verify
-// RUN: %clang_cc1 -x objective-c++ -fmodule-cache-path %t -I %S/Inputs %s -verify
+// RUN: %clang_cc1 -fmodules -fmodule-cache-path %t -I %S/Inputs %s -verify
+// RUN: %clang_cc1 -x objective-c++ -fmodules -fmodule-cache-path %t -I %S/Inputs %s -verify
 @class C2;
 @class C3;
 @class C3;
