@@ -7254,15 +7254,63 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
   unsigned NumElts = VT.getVectorNumElements();
 
   SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
 
   assert(N0.getValueType().getVectorNumElements() == NumElts &&
         "Vector shuffle must be normalized in DAG");
 
-  // FIXME: implement canonicalizations from DAG.getVectorShuffle()
+  // Canonicalize shuffle undef, undef -> undef
+  if (N0.getOpcode() == ISD::UNDEF && N1.getOpcode() == ISD::UNDEF)
+    return DAG.getUNDEF(VT);
+
+  ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(N);
+
+  // Canonicalize shuffle v, v -> v, undef
+  if (N0 == N1) {
+    SmallVector<int, 8> NewMask;
+    for (unsigned i = 0; i != NumElts; ++i) {
+      int Idx = SVN->getMaskElt(i);
+      if (Idx >= (int)NumElts) Idx -= NumElts;
+      NewMask.push_back(Idx);
+    }
+    return DAG.getVectorShuffle(VT, N->getDebugLoc(), N0, DAG.getUNDEF(VT),
+                                &NewMask[0]);
+  }
+
+  // Canonicalize shuffle undef, v -> v, undef.  Commute the shuffle mask.
+  if (N0.getOpcode() == ISD::UNDEF) {
+    SmallVector<int, 8> NewMask;
+    for (unsigned i = 0; i != NumElts; ++i) {
+      int Idx = SVN->getMaskElt(i);
+      if (Idx < 0)
+        NewMask.push_back(Idx);
+      else if (Idx < (int)NumElts)
+        NewMask.push_back(Idx + NumElts);
+      else
+        NewMask.push_back(Idx - NumElts);
+    }
+    return DAG.getVectorShuffle(VT, N->getDebugLoc(), N1, DAG.getUNDEF(VT),
+                                &NewMask[0]);
+  }
+
+  // Remove references to rhs if it is undef
+  if (N1.getOpcode() == ISD::UNDEF) {
+    bool Changed = false;
+    SmallVector<int, 8> NewMask;
+    for (unsigned i = 0; i != NumElts; ++i) {
+      int Idx = SVN->getMaskElt(i);
+      if (Idx >= (int)NumElts) {
+        Idx = -1;
+        Changed = true;
+      }
+      NewMask.push_back(Idx);
+    }
+    if (Changed)
+      return DAG.getVectorShuffle(VT, N->getDebugLoc(), N0, N1, &NewMask[0]);
+  }
 
   // If it is a splat, check if the argument vector is another splat or a
   // build_vector with all scalar elements the same.
-  ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(N);
   if (SVN->isSplat() && SVN->getSplatIndex() < (int)NumElts) {
     SDNode *V = N0.getNode();
 
