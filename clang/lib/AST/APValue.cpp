@@ -149,6 +149,8 @@ const APValue &APValue::operator=(const APValue &RHS) {
       MakeMemberPointer(RHS.getMemberPointerDecl(),
                         RHS.isMemberPointerToDerivedMember(),
                         RHS.getMemberPointerPath());
+    else if (RHS.isAddrLabelDiff())
+      MakeAddrLabelDiff();
   }
   if (isInt())
     setInt(RHS.getInt());
@@ -177,8 +179,11 @@ const APValue &APValue::operator=(const APValue &RHS) {
       getStructBase(I) = RHS.getStructBase(I);
     for (unsigned I = 0, N = RHS.getStructNumFields(); I != N; ++I)
       getStructField(I) = RHS.getStructField(I);
-  } else if (isUnion())
+  } else if (isUnion()) {
     setUnion(RHS.getUnionField(), RHS.getUnionValue());
+  } else if (isAddrLabelDiff()) {
+    setAddrLabelDiff(RHS.getAddrLabelDiffLHS(), RHS.getAddrLabelDiffRHS());
+  }
   return *this;
 }
 
@@ -203,6 +208,8 @@ void APValue::MakeUninit() {
     ((UnionData*)(char*)Data)->~UnionData();
   else if (Kind == MemberPointer)
     ((MemberPointerData*)(char*)Data)->~MemberPointerData();
+  else if (Kind == AddrLabelDiff)
+    ((AddrLabelDiffData*)(char*)Data)->~AddrLabelDiffData();
   Kind = Uninitialized;
 }
 
@@ -284,6 +291,9 @@ void APValue::dump(raw_ostream &OS) const {
     return;
   case MemberPointer:
     OS << "MemberPointer: <todo>";
+    return;
+  case AddrLabelDiff:
+    OS << "AddrLabelDiff: <todo>";
     return;
   }
   llvm_unreachable("Unknown APValue kind!");
@@ -471,6 +481,11 @@ void APValue::printPretty(raw_ostream &Out, ASTContext &Ctx, QualType Ty) const{
       return;
     }
     Out << "0";
+    return;
+  case APValue::AddrLabelDiff:
+    Out << "&&" << getAddrLabelDiffLHS()->getLabel()->getName();
+    Out << " - ";
+    Out << "&&" << getAddrLabelDiffRHS()->getLabel()->getName();
     return;
   }
   llvm_unreachable("Unknown APValue kind!");

@@ -3239,7 +3239,7 @@ IntRange GetValueRange(ASTContext &C, APValue &result, QualType Ty,
   // FIXME: The only reason we need to pass the type in here is to get
   // the sign right on this one case.  It would be nice if APValue
   // preserved this.
-  assert(result.isLValue());
+  assert(result.isLValue() || result.isAddrLabelDiff());
   return IntRange(MaxWidth, Ty->isUnsignedIntegerOrEnumerationType());
 }
 

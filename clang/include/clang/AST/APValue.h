@@ -21,6 +21,7 @@
 #include "llvm/ADT/PointerUnion.h"
 
 namespace clang {
+  class AddrLabelExpr;
   class ASTContext;
   class CharUnits;
   class DiagnosticBuilder;
@@ -49,7 +50,8 @@ public:
     Array,
     Struct,
     Union,
-    MemberPointer
+    MemberPointer,
+    AddrLabelDiff
   };
   typedef llvm::PointerUnion<const ValueDecl *, const Expr *> LValueBase;
   typedef llvm::PointerIntPair<const Decl *, 1, bool> BaseOrMemberType;
@@ -99,6 +101,10 @@ private:
     APValue *Value;
     UnionData();
     ~UnionData();
+  };
+  struct AddrLabelDiffData {
+    const AddrLabelExpr* LHSExpr;
+    const AddrLabelExpr* RHSExpr;
   };
   struct MemberPointerData;
 
@@ -155,6 +161,10 @@ public:
           ArrayRef<const CXXRecordDecl*> Path) : Kind(Uninitialized) {
     MakeMemberPointer(Member, IsDerivedMember, Path);
   }
+  APValue(const AddrLabelExpr* LHSExpr, const AddrLabelExpr* RHSExpr)
+      : Kind(Uninitialized) {
+    MakeAddrLabelDiff(); setAddrLabelDiff(LHSExpr, RHSExpr);
+  }
 
   ~APValue() {
     MakeUninit();
@@ -172,6 +182,7 @@ public:
   bool isStruct() const { return Kind == Struct; }
   bool isUnion() const { return Kind == Union; }
   bool isMemberPointer() const { return Kind == MemberPointer; }
+  bool isAddrLabelDiff() const { return Kind == AddrLabelDiff; }
 
   void dump() const;
   void dump(raw_ostream &OS) const;
@@ -316,6 +327,15 @@ public:
   bool isMemberPointerToDerivedMember() const;
   ArrayRef<const CXXRecordDecl*> getMemberPointerPath() const;
 
+  const AddrLabelExpr* getAddrLabelDiffLHS() const {
+    assert(isAddrLabelDiff() && "Invalid accessor");
+    return ((AddrLabelDiffData*)(char*)Data)->LHSExpr;
+  }
+  const AddrLabelExpr* getAddrLabelDiffRHS() const {
+    assert(isAddrLabelDiff() && "Invalid accessor");
+    return ((AddrLabelDiffData*)(char*)Data)->RHSExpr;
+  }
+
   void setInt(const APSInt &I) {
     assert(isInt() && "Invalid accessor");
     *(APSInt*)(char*)Data = I;
@@ -352,6 +372,11 @@ public:
     assert(isUnion() && "Invalid accessor");
     ((UnionData*)(char*)Data)->Field = Field;
     *((UnionData*)(char*)Data)->Value = Value;
+  }
+  void setAddrLabelDiff(const AddrLabelExpr* LHSExpr,
+                        const AddrLabelExpr* RHSExpr) {
+    ((AddrLabelDiffData*)(char*)Data)->LHSExpr = LHSExpr;
+    ((AddrLabelDiffData*)(char*)Data)->RHSExpr = RHSExpr;
   }
 
   const APValue &operator=(const APValue &RHS);
@@ -397,6 +422,11 @@ private:
   }
   void MakeMemberPointer(const ValueDecl *Member, bool IsDerivedMember,
                          ArrayRef<const CXXRecordDecl*> Path);
+  void MakeAddrLabelDiff() {
+    assert(isUninit() && "Bad state change");
+    new ((void*)(char*)Data) AddrLabelDiffData();
+    Kind = AddrLabelDiff;
+  }
 };
 
 } // end namespace clang.

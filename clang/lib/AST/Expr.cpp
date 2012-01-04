@@ -2530,16 +2530,6 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
       return Exp->getSubExpr()->isConstantInitializer(Ctx, false);
     break;
   }
-  case BinaryOperatorClass: {
-    // Special case &&foo - &&bar.  It would be nice to generalize this somehow
-    // but this handles the common case.
-    const BinaryOperator *Exp = cast<BinaryOperator>(this);
-    if (Exp->getOpcode() == BO_Sub &&
-        isa<AddrLabelExpr>(Exp->getLHS()->IgnoreParenNoopCasts(Ctx)) &&
-        isa<AddrLabelExpr>(Exp->getRHS()->IgnoreParenNoopCasts(Ctx)))
-      return true;
-    break;
-  }
   case CXXFunctionalCastExprClass:
   case CXXStaticCastExprClass:
   case ImplicitCastExprClass:
@@ -2557,23 +2547,6 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
         CE->getCastKind() == CK_ToUnion ||
         CE->getCastKind() == CK_ConstructorConversion)
       return CE->getSubExpr()->isConstantInitializer(Ctx, false);
-
-    // Handle things like (int)(&&x-&&y). It's a bit nasty, but we support it.
-    if (CE->getCastKind() == CK_IntegralCast) {
-      const Expr *E = CE->getSubExpr()->IgnoreParenNoopCasts(Ctx);
-      while (const CastExpr *InnerCE = dyn_cast<CastExpr>(E)) {
-        if (InnerCE->getCastKind() != CK_IntegralCast)
-          break;
-        E = InnerCE->getSubExpr()->IgnoreParenNoopCasts(Ctx);
-      }
-
-      if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
-        if (BO->getOpcode() == BO_Sub &&
-            isa<AddrLabelExpr>(BO->getLHS()->IgnoreParenNoopCasts(Ctx)) &&
-            isa<AddrLabelExpr>(BO->getRHS()->IgnoreParenNoopCasts(Ctx)))
-          return true;
-      }
-    }
 
     break;
   }

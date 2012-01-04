@@ -210,6 +210,8 @@ namespace {
     CCValue(const ValueDecl *D, bool IsDerivedMember,
             ArrayRef<const CXXRecordDecl*> Path) :
       APValue(D, IsDerivedMember, Path) {}
+    CCValue(const AddrLabelExpr* LHSExpr, const AddrLabelExpr* RHSExpr) :
+      APValue(LHSExpr, RHSExpr) {}
 
     CallStackFrame *getLValueFrame() const {
       assert(getKind() == LValue);
@@ -856,6 +858,7 @@ static bool HandleConversionToBool(const CCValue &Val, bool &Result) {
   case APValue::Array:
   case APValue::Struct:
   case APValue::Union:
+  case APValue::AddrLabelDiff:
     return false;
   }
 
@@ -3997,6 +4000,23 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       // Reject differing bases from the normal codepath; we special-case
       // comparisons to null.
       if (!HasSameBase(LHSValue, RHSValue)) {
+        if (E->getOpcode() == BO_Sub) {
+          // Handle &&A - &&B.
+          // FIXME: We're missing a check that both labels have the same
+          // associated function; I'm not sure how to write this check.
+          if (!LHSValue.Offset.isZero() || !RHSValue.Offset.isZero())
+            return false;
+          const Expr *LHSExpr = LHSValue.Base.dyn_cast<const Expr*>();
+          const Expr *RHSExpr = LHSValue.Base.dyn_cast<const Expr*>();
+          if (!LHSExpr || !RHSExpr)
+            return false;
+          const AddrLabelExpr *LHSAddrExpr = dyn_cast<AddrLabelExpr>(LHSExpr);
+          const AddrLabelExpr *RHSAddrExpr = dyn_cast<AddrLabelExpr>(RHSExpr);
+          if (!LHSAddrExpr || !RHSAddrExpr)
+            return false;
+          Result = CCValue(LHSAddrExpr, RHSAddrExpr);
+          return true;
+        }
         // Inequalities and subtractions between unrelated pointers have
         // unspecified or undefined behavior.
         if (!E->isEqualityOp())
@@ -4088,6 +4108,25 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     RHSVal.getLValueOffset() += CharUnits::fromQuantity(
                                     LHSVal.getInt().getZExtValue());
     // Note that RHSVal is Result.
+    return true;
+  }
+
+  if (E->getOpcode() == BO_Sub && LHSVal.isLValue() && RHSVal.isLValue()) {
+    // Handle (intptr_t)&&A - (intptr_t)&&B.
+    // FIXME: We're missing a check that both labels have the same
+    // associated function; I'm not sure how to write this check.
+    if (!LHSVal.getLValueOffset().isZero() ||
+        !RHSVal.getLValueOffset().isZero())
+      return false;
+    const Expr *LHSExpr = LHSVal.getLValueBase().dyn_cast<const Expr*>();
+    const Expr *RHSExpr = RHSVal.getLValueBase().dyn_cast<const Expr*>();
+    if (!LHSExpr || !RHSExpr)
+      return false;
+    const AddrLabelExpr *LHSAddrExpr = dyn_cast<AddrLabelExpr>(LHSExpr);
+    const AddrLabelExpr *RHSAddrExpr = dyn_cast<AddrLabelExpr>(RHSExpr);
+    if (!LHSAddrExpr || !RHSAddrExpr)
+      return false;
+    Result = CCValue(LHSAddrExpr, RHSAddrExpr);
     return true;
   }
 
@@ -4398,6 +4437,13 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
       return false;
 
     if (!Result.isInt()) {
+      // Allow casts of address-of-label differences if they are no-ops
+      // or narrowing.  (The narrowing case isn't actually guaranteed to
+      // be constant-evaluatable except in some narrow cases which are hard
+      // to detect here.  We let it through on the assumption the user knows
+      // what they are doing.)
+      if (Result.isAddrLabelDiff())
+        return Info.Ctx.getTypeSize(DestType) <= Info.Ctx.getTypeSize(SrcType);
       // Only allow casts of lvalues if they are lossless.
       return Info.Ctx.getTypeSize(DestType) == Info.Ctx.getTypeSize(SrcType);
     }
