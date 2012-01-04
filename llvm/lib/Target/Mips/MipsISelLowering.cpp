@@ -92,17 +92,20 @@ MipsTargetLowering(MipsTargetMachine &TM)
 
   // Set up the register classes
   addRegisterClass(MVT::i32, Mips::CPURegsRegisterClass);
-  addRegisterClass(MVT::f32, Mips::FGR32RegisterClass);
 
   if (HasMips64)
     addRegisterClass(MVT::i64, Mips::CPU64RegsRegisterClass);
 
-  // When dealing with single precision only, use libcalls
-  if (!Subtarget->isSingleFloat()) {
-    if (HasMips64)
-      addRegisterClass(MVT::f64, Mips::FGR64RegisterClass);
-    else
-      addRegisterClass(MVT::f64, Mips::AFGR64RegisterClass);
+  if (!TM.Options.UseSoftFloat) {
+    addRegisterClass(MVT::f32, Mips::FGR32RegisterClass);
+
+    // When dealing with single precision only, use libcalls
+    if (!Subtarget->isSingleFloat()) {
+      if (HasMips64)
+        addRegisterClass(MVT::f64, Mips::FGR64RegisterClass);
+      else
+        addRegisterClass(MVT::f64, Mips::AFGR64RegisterClass);
+    }
   }
 
   // Load extented operations for i1 types must be promoted
