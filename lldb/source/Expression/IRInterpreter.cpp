@@ -653,6 +653,16 @@ public:
                     if (ref_encoder->PutAddress(0, data_region.m_base) == UINT32_MAX)
                         return Memory::Region();
                     
+                    if (log)
+                    {
+                        log->Printf("Made an allocation for register variable %s", PrintValue(value).c_str());
+                        log->Printf("  Data contents  : %s", m_memory.PrintData(data_region.m_base, data_region.m_extent).c_str());
+                        log->Printf("  Data region    : %llx", (unsigned long long)data_region.m_base);
+                        log->Printf("  Ref region     : %llx", (unsigned long long)ref_region.m_base);
+                        if (indirect_variable)
+                            log->Printf("  Pointer region : %llx", (unsigned long long)pointer_region.m_base);
+                    }
+                    
                     if (indirect_variable)
                     {
                         DataEncoderSP pointer_encoder = m_memory.GetEncoder(pointer_region);
