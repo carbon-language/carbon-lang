@@ -55,5 +55,5 @@ void test4(float4align64 *p) {
   p[0] = (float4align64){ 3.2f, 2.3f, 0.1f, 0.0f };
 }
 // CHECK: @test4(
-// CHECK: store <4 x float> {{.*}}, <4 x float>* %arrayidx, align 64
+// CHECK: store <4 x float> {{.*}}, <4 x float>* {{.*}}, align 64
 
