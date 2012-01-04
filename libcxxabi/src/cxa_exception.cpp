@@ -388,7 +388,7 @@ __cxa_current_primary_exception() throw()
 //  get the current exception
     __cxa_eh_globals* globals = __cxa_get_globals_fast();
     if (NULL == globals)
-        return NULL;        //  Never has been an exception
+        return NULL;        //  If there are no globals, there is no exception
     __cxa_exception* current_exception = globals->caughtExceptions;
     if (NULL == current_exception)
         return NULL;        //  No current exception
