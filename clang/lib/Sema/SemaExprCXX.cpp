@@ -4774,3 +4774,38 @@ Sema::CheckMicrosoftIfExistsSymbol(Scope *S, SourceLocation KeywordLoc,
   return CheckMicrosoftIfExistsSymbol(S, SS, TargetNameInfo);
 }
 
+//===----------------------------------------------------------------------===//
+// Lambdas.
+//===----------------------------------------------------------------------===//
+
+void Sema::ActOnLambdaStart(SourceLocation StartLoc, Scope *CurScope) {
+  // FIXME: Add lambda-scope
+  // FIXME: Build lambda-decl
+  // FIXME: PushDeclContext
+
+  // Enter a new evaluation context to insulate the block from any
+  // cleanups from the enclosing full-expression.
+  PushExpressionEvaluationContext(PotentiallyEvaluated);  
+}
+
+void Sema::ActOnLambdaArguments(Declarator &ParamInfo, Scope *CurScope) {
+  // FIXME: Implement
+}
+
+void Sema::ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope) {
+  // Leave the expression-evaluation context.
+  DiscardCleanupsInEvaluationContext();
+  PopExpressionEvaluationContext();
+
+  // Leave the context of the lambda.
+  // FIXME: PopDeclContext
+  // FIXME: Pop lambda-scope
+}
+
+ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
+                                 Stmt *Body, Scope *CurScope) {
+  // FIXME: Implement
+  Diag(StartLoc, diag::err_lambda_unsupported);
+  ActOnLambdaError(StartLoc, CurScope);
+  return ExprError();
+}

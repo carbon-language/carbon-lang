@@ -20,7 +20,7 @@ int scope_attr [[foo::]]; // expected-error {{expected identifier}}
 unsigned [[]] int attr_in_decl_spec; // expected-error {{expected unqualified-id}}
 int & [[]] ref_attr = after_attr; // expected-error {{an attribute list cannot appear here}}
 class foo {
-  void after_const_attr () const [[]]; // expected-error {{expected body of lambda expression}} expected-error {{array has incomplete element type 'void'}}
+  void after_const_attr () const [[]]; // expected-error {{expected body of lambda expression}}
 };
 extern "C++" [[]] { } // expected-error {{an attribute list cannot appear here}}
 [[]] template <typename T> void before_template_attr (); // expected-error {{an attribute list cannot appear here}}

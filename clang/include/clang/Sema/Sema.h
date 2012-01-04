@@ -3449,6 +3449,23 @@ public:
   /// initializer for the declaration 'Dcl'.
   void ActOnCXXExitDeclInitializer(Scope *S, Decl *Dcl);
 
+  /// ActOnLambdaStart - This callback is invoked when a lambda expression is
+  /// started.
+  void ActOnLambdaStart(SourceLocation StartLoc, Scope *CurScope);
+
+  /// ActOnLambdaArguments - This callback allows processing of lambda arguments.
+  /// If there are no arguments, this is still invoked.
+  void ActOnLambdaArguments(Declarator &ParamInfo, Scope *CurScope);
+
+  /// ActOnLambdaError - If there is an error parsing a lambda, this callback
+  /// is invoked to pop the information about the lambda from the action impl.
+  void ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope);
+
+  /// ActOnLambdaExpr - This is called when the body of a lambda expression
+  /// was successfully completed.
+  ExprResult ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
+                             Scope *CurScope);
+
   // ParseObjCStringLiteral - Parse Objective-C string literals.
   ExprResult ParseObjCStringLiteral(SourceLocation *AtLocs,
                                     Expr **Strings,

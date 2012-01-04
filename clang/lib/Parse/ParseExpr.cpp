@@ -1132,8 +1132,13 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::l_square:
     if (getLang().CPlusPlus0x) {
       if (getLang().ObjC1) {
+        // C++11 lambda expressions and Objective-C message sends both start with a
+        // square bracket.  There are three possibilities here:
+        // we have a valid lambda expression, we have an invalid lambda
+        // expression, or we have something that doesn't appear to be a lambda.
+        // If we're in the last case, we fall back to ParseObjCMessageExpression.
         Res = TryParseLambdaExpression();
-        if (Res.isInvalid())
+        if (!Res.isInvalid() && !Res.get())
           Res = ParseObjCMessageExpression();
         break;
       }

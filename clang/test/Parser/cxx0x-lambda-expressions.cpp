@@ -12,13 +12,13 @@ class C {
     [&this] {}; // expected-error {{'this' cannot be captured by reference}}
     [&,] {}; // expected-error {{expected variable name or 'this' in lambda capture list}}
     [=,] {}; // expected-error {{expected variable name or 'this' in lambda capture list}}
-    [] {};
-    [=] (int i) {};
-    [&] (int) mutable -> void {};
-    [foo,bar] () { return 3; };
-    [=,&foo] () {};
-    [&,foo] () {};
-    [this] () {};
+    [] {}; // expected-error {{lambda expressions are not supported yet}}
+    [=] (int i) {}; // expected-error {{lambda expressions are not supported yet}}
+    [&] (int) mutable -> void {}; // expected-error {{lambda expressions are not supported yet}}
+    [foo,bar] () { return 3; }; // expected-error {{lambda expressions are not supported yet}}
+    [=,&foo] () {}; // expected-error {{lambda expressions are not supported yet}}
+    [&,foo] () {}; // expected-error {{lambda expressions are not supported yet}}
+    [this] () {}; // expected-error {{lambda expressions are not supported yet}}
 
     return 1;
   }

@@ -34,7 +34,8 @@ namespace TemplateParsing {
 }
 
 void Lambda() {
-  []{}; // expected-warning {{lambda expressions are incompatible with C++98}}
+  // FIXME: Enable when lambdas are minimally working.
+  //[]{}; // FIXME-warning {{lambda expressions are incompatible with C++98}}
 }
 
 int InitList() {
