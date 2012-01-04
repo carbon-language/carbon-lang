@@ -683,6 +683,10 @@ public:
       CachedTokens[CachedLexPos-1] = Tok;
   }
 
+  /// \brief Recompute the current lexer kind based on the CurLexer/CurPTHLexer/
+  /// CurTokenLexer pointers.
+  void recomputeCurLexerKind();
+  
   /// \brief Specify the point at which code-completion will be performed.
   ///
   /// \param File the file in which code completion should occur. If

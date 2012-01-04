@@ -266,6 +266,17 @@ Preprocessor::macro_end(bool IncludeExternalMacros) const {
   return Macros.end();
 }
 
+void Preprocessor::recomputeCurLexerKind() {
+  if (CurLexer)
+    CurLexerKind = CLK_Lexer;
+  else if (CurPTHLexer)
+    CurLexerKind = CLK_PTHLexer;
+  else if (CurTokenLexer)
+    CurLexerKind = CLK_TokenLexer;
+  else 
+    CurLexerKind = CLK_CachingLexer;
+}
+
 bool Preprocessor::SetCodeCompletionPoint(const FileEntry *File,
                                           unsigned CompleteLine,
                                           unsigned CompleteColumn) {
@@ -550,7 +561,12 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   
   // If this is the 'import' contextual keyword, note that the next token 
   // indicates a module name.
-  if (II.isImport() && !InMacroArgs && !DisableMacroExpansion) {
+  //
+  // Note that we do not treat 'import' as a contextual keyword when we're
+  // in a caching lexer, because caching lexers only get used in contexts where
+  // import declarations are disallowed.
+  if (II.isImport() && !InMacroArgs && !DisableMacroExpansion &&
+      getLangOptions().Modules && CurLexerKind != CLK_CachingLexer) {
     ModuleImportLoc = Identifier.getLocation();
     ModuleImportPath.clear();
     ModuleImportExpectsIdentifier = true;
@@ -562,14 +578,7 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
 ///
 void Preprocessor::LexAfterModuleImport(Token &Result) {
   // Figure out what kind of lexer we actually have.
-  if (CurLexer)
-    CurLexerKind = CLK_Lexer;
-  else if (CurPTHLexer)
-    CurLexerKind = CLK_PTHLexer;
-  else if (CurTokenLexer)
-    CurLexerKind = CLK_TokenLexer;
-  else 
-    CurLexerKind = CLK_CachingLexer;
+  recomputeCurLexerKind();
   
   // Lex the next token.
   Lex(Result);

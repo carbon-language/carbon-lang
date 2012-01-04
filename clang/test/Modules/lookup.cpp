@@ -15,6 +15,12 @@ void test(int i, float f) {
   ::f0(&f);
 }
 
+int import;
+
+void f() {
+ int import;
+}
+
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -fmodules -x objective-c++ -emit-module -fmodule-cache-path %t -fmodule-name=lookup_left_cxx %S/Inputs/module.map -verify
 // RUN: %clang_cc1 -fmodules -x objective-c++ -emit-module -fmodule-cache-path %t -fmodule-name=lookup_right_cxx %S/Inputs/module.map -verify

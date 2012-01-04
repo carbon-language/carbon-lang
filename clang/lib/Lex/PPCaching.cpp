@@ -42,6 +42,7 @@ void Preprocessor::Backtrack() {
          && "EnableBacktrackAtThisPos was not called!");
   CachedLexPos = BacktrackPositions.back();
   BacktrackPositions.pop_back();
+  recomputeCurLexerKind();
 }
 
 void Preprocessor::CachingLex(Token &Result) {
@@ -74,8 +75,7 @@ void Preprocessor::EnterCachingLexMode() {
     return;
 
   PushIncludeMacroStack();
-  if (CurLexerKind != CLK_LexAfterModuleImport)
-    CurLexerKind = CLK_CachingLexer;
+  CurLexerKind = CLK_CachingLexer;
 }
 
 
