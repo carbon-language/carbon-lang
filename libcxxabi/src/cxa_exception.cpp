@@ -451,12 +451,6 @@ __cxa_rethrow_primary_exception(void* thrown_object)
     // If we return client will call terminate()
 }
 
-_Unwind_Reason_Code
-__gxx_personality_v0(int version, _Unwind_Action actions, uint64_t exceptionClass,
-                     _Unwind_Exception* exceptionObject, _Unwind_Context* context)
-{
-}
-
 }  // extern "C"
 
 }  // abi
