@@ -336,7 +336,8 @@ public:
       , ContentType ct
       , SectionChoice sc
       , bool internalName
-      , bool md
+      , bool mergeDupes
+      , bool autoHide
       , DeadStripKind ds
       , bool IsThumb
       , bool IsAlias
@@ -344,16 +345,18 @@ public:
     : _address(ord)
     , _alignmentModulus(a.modulus)
     , _alignmentPowerOf2(a.powerOf2)
+    , _contentType(ct)
     , _definition(d)
+    , _scope(s)
+    , _sectionChoice(sc) 
     , _internalName(internalName)
     , _deadStrip(ds)
     , _mode(modeOrdinal)
-    , _mergeDuplicates(md)
+    , _mergeDuplicates(mergeDupes)
     , _thumb(IsThumb)
+	, _autoHide(autoHide)
     , _alias(IsAlias)
-    , _contentType(ct)
-    , _scope(s)
-    , _sectionChoice(sc) {}
+    {}
 
 
 protected:

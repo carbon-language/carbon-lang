@@ -28,6 +28,7 @@ public:
           , Atom::sectionBasedOnContent
           , false
           , false
+		  , false
           , deadStripNormal
           , false
           , false

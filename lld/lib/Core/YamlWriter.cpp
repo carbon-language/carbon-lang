@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "YamlKeyValues.h"
+
 #include "lld/Core/YamlWriter.h"
 #include "lld/Core/Atom.h"
 #include "lld/Core/File.h"
@@ -24,26 +26,121 @@ namespace yaml {
 
 class Handler : public File::AtomHandler {
 public:
-  Handler(llvm::raw_ostream &out) : _out(out) { }
+  Handler(llvm::raw_ostream &out) : _out(out), _firstAtom(true) { }
 
-  virtual void doFile(const class File &) { }
+  virtual void doFile(const class File &) { _firstAtom = true; }
+  
   virtual void doAtom(const class Atom &atom) {
-    _out << "    - name:             " << atom.name() << "\n";
+      // add blank line between atoms for readability
+      if ( !_firstAtom )
+        _out << "\n";
+      _firstAtom = false;
+        
+      _out  << "    - "
+            << KeyValues::nameKeyword
+            << ":"
+            << spacePadding(KeyValues::nameKeyword)
+            << atom.name() 
+            << "\n";
     
-    if ( atom.internalName() )
-      _out << "      internal-name:     true\n";
-      
-    if ( atom.definition() != Atom::definitionRegular )
-      _out << "      definition:       " << definitionString(atom.definition()) <<"\n";
-      
-    if ( atom.scope() != Atom::scopeTranslationUnit )
-      _out << "      scope:            " << scopeString(atom.scope()) << "\n";
-      
-    _out << "      type:             " << typeString(atom.contentType()) << "\n";
+    if ( atom.internalName() != KeyValues::internalNameDefault ) {
+      _out  << "      " 
+            << KeyValues::internalNameKeyword 
+            << ":"
+            << spacePadding(KeyValues::internalNameKeyword)
+            << KeyValues::internalName(atom.internalName()) 
+            << "\n";
+    }
     
-    if ( atom.mergeDuplicates() )
-      _out << "      merge-duplicates: true\n";
-      
+    if ( atom.definition() != KeyValues::definitionDefault ) {
+      _out  << "      " 
+            << KeyValues::definitionKeyword 
+            << ":"
+            << spacePadding(KeyValues::definitionKeyword)
+            << KeyValues::definition(atom.definition()) 
+            << "\n";
+    }
+    
+    if ( atom.scope() != KeyValues::scopeDefault ) {
+      _out  << "      " 
+            << KeyValues::scopeKeyword 
+            << ":"
+            << spacePadding(KeyValues::scopeKeyword)
+            << KeyValues::scope(atom.scope()) 
+            << "\n";
+    }
+    
+    if ( atom.contentType() != KeyValues::contentTypeDefault ) {
+      _out  << "      " 
+            << KeyValues::contentTypeKeyword 
+            << ":"
+            << spacePadding(KeyValues::contentTypeKeyword)
+            << KeyValues::contentType(atom.contentType()) 
+            << "\n";
+    }
+
+    if ( atom.deadStrip() != KeyValues::deadStripKindDefault ) {
+      _out  << "      " 
+            << KeyValues::deadStripKindKeyword 
+            << ":"
+            << spacePadding(KeyValues::deadStripKindKeyword)
+            << KeyValues::deadStripKind(atom.deadStrip()) 
+            << "\n";
+    }
+
+    if ( atom.sectionChoice() != KeyValues::sectionChoiceDefault ) {
+      _out  << "      " 
+            << KeyValues::sectionChoiceKeyword 
+            << ":"
+            << spacePadding(KeyValues::sectionChoiceKeyword)
+            << KeyValues::sectionChoice(atom.sectionChoice()) 
+            << "\n";
+      assert( ! atom.customSectionName().empty() );
+      _out  << "      " 
+            << KeyValues::sectionNameKeyword 
+            << ":"
+            << spacePadding(KeyValues::sectionNameKeyword)
+            << atom.customSectionName()
+            << "\n";
+    }
+
+    if ( atom.mergeDuplicates() != KeyValues::mergeDuplicatesDefault ) {
+      _out  << "      " 
+            << KeyValues::mergeDuplicatesKeyword 
+            << ":"
+            << spacePadding(KeyValues::mergeDuplicatesKeyword)
+            << KeyValues::mergeDuplicates(atom.mergeDuplicates()) 
+            << "\n";
+    }
+
+    if ( atom.autoHide() != KeyValues::autoHideDefault ) {
+      _out  << "      " 
+            << KeyValues::autoHideKeyword 
+            << ":"
+            << spacePadding(KeyValues::autoHideKeyword)
+            << KeyValues::autoHide(atom.autoHide()) 
+            << "\n";
+    }
+
+    if ( atom.isThumb() != KeyValues::isThumbDefault ) {
+      _out  << "      " 
+            << KeyValues::isThumbKeyword 
+            << ":"
+            << spacePadding(KeyValues::isThumbKeyword)
+            << KeyValues::isThumb(atom.isThumb()) 
+            << "\n";
+    }
+
+    if ( atom.isAlias() != KeyValues::isAliasDefault ) {
+      _out  << "      " 
+            << KeyValues::isAliasKeyword 
+            << ":"
+            << spacePadding(KeyValues::isAliasKeyword)
+            << KeyValues::isAlias(atom.isAlias()) 
+            << "\n";
+    }
+
+     
     if (atom.referencesBegin() != atom.referencesEnd()) {
       _out << "      fixups:\n";
       for (Reference::iterator it = atom.referencesBegin(),
@@ -56,49 +153,17 @@ public:
   }
 
 private:
-  const char *scopeString(Atom::Scope scope) {
-    switch (scope) {
-    case Atom::scopeTranslationUnit:
-      return "static";
-    case Atom::scopeLinkageUnit:
-      return "hidden";
-    case Atom::scopeGlobal:
-      return "global";
-    }
-    return "???";
+  // return a string of the correct number of spaces to align value
+  const char* spacePadding(const char* key) {
+    const char* spaces = "                  ";
+    assert(strlen(spaces) > strlen(key));
+    return &spaces[strlen(key)];
   }
 
-  const char *typeString(Atom::ContentType type) {
-    switch (type) {
-    case Atom::typeCode:
-      return "code";
-    case Atom::typeCString:
-      return "c-string";
-    case Atom::typeZeroFill:
-      return "zero-fill";
-    case Atom::typeData:
-      return "data";
-    default:
-      return "???";
-    }
-  }
 
-  const char *definitionString(Atom::Definition def) {
-    switch (def) {
-    case Atom::definitionRegular:
-      return "regular";
-    case Atom::definitionWeak:
-      return "weak";
-    case Atom::definitionTentative:
-      return "tentative";
-    case Atom::definitionAbsolute:
-      return "absolute";
-    default:
-      return "???";
-    }
-  }
 
-  llvm::raw_ostream &_out;
+  llvm::raw_ostream&  _out;
+  bool                _firstAtom;
 };
 
 void writeObjectText(File &file, llvm::raw_ostream &out) {

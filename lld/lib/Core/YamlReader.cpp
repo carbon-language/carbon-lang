@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "YamlKeyValues.h"
+
 #include "lld/Core/YamlReader.h"
 #include "lld/Core/Atom.h"
 #include "lld/Core/File.h"
@@ -21,10 +23,46 @@
 
 #include <vector>
 
-namespace { const llvm::error_code success; }
+
 
 namespace lld {
 namespace yaml {
+
+enum yaml_reader_errors {
+  success = 0,
+  unknown_keyword,
+  illegal_value
+};
+
+class reader_error_category : public llvm::_do_message {
+public:
+  virtual const char* name() const {
+    return "lld.yaml.reader";
+  }
+  virtual std::string message(int ev) const;
+};
+
+const reader_error_category reader_error_category_singleton;
+
+std::string reader_error_category::message(int ev) const {
+  switch (ev) {
+  case success: 
+    return "Success";
+  case unknown_keyword:
+    return "Unknown keyword found in yaml file";
+  case illegal_value: 
+    return "Bad value found in yaml file";
+  default:
+    llvm_unreachable("An enumerator of yaml_reader_errors does not have a "
+                     "message defined.");
+  }
+}
+
+inline llvm::error_code make_error_code(yaml_reader_errors e) {
+  return llvm::error_code(static_cast<int>(e), reader_error_category_singleton);
+}
+
+
 class YAML {
 public:
   struct Entry {
@@ -137,6 +175,7 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
         state = inTriplePeriod;
       } else if (c == '\n') {
         // ignore empty lines
+        depth = 0;
       } else if (c == '\t') {
         llvm::report_fatal_error("TAB character found in yaml file");
       } else {
@@ -176,6 +215,8 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
         state = inValueSequence;
       } else if (c == ' ') {
         // eat space
+      } else if (c == '\t') {
+        llvm::report_fatal_error("TAB character found in yaml file");
       } else {
         return;
       }
@@ -247,16 +288,20 @@ public:
           , SectionChoice sc
           , bool intn
           , bool md
+          , bool ah
           , DeadStripKind dsk
           , bool tb
           , bool al
           , Alignment a
           , YAMLFile& f
-          , const char *n)
-    : Atom(ord, d, s, ct, sc, intn, md, dsk, tb, al, a)
+          , const char *n
+          , const char* sn
+          , uint64_t sz)
+    : Atom(ord, d, s, ct, sc, intn, md, ah, dsk, tb, al, a)
     , _file(f)
     , _name(n)
-    , _size(0)
+    , _sectionName(sn)
+    , _size(sz)
     , _refStartIndex(f._lastRefIndex)
     , _refEndIndex(f._references.size()) {
     f._lastRefIndex = _refEndIndex;
@@ -273,6 +318,10 @@ public:
   virtual llvm::StringRef name() const {
     return _name;
   }
+  
+  virtual llvm::StringRef customSectionName() const {
+    return _sectionName;
+  }
 
   virtual uint64_t objectAddress() const {
     return 0;
@@ -286,11 +335,12 @@ public:
   virtual Reference::iterator referencesBegin() const;
   virtual Reference::iterator referencesEnd() const;
 private:
-  YAMLFile& _file;
-  const char *_name;
-  unsigned long _size;
-  unsigned int _refStartIndex;
-  unsigned int _refEndIndex;
+  YAMLFile&      _file;
+  const char *   _name;
+  const char *   _sectionName;
+  unsigned long  _size;
+  unsigned int   _refStartIndex;
+  unsigned int   _refEndIndex;
 };
 
 Reference::iterator YAMLAtom::referencesBegin() const {
@@ -310,11 +360,7 @@ public:
   YAMLAtomState();
 
   void setName(const char *n);
-  void setScope(const char *n);
-  void setType(const char *n);
   void setAlign2(const char *n);
-  void setDefinition(const char *n);
-  void setMergeDuplicates(const char *n);
 
   void setFixupKind(const char *n);
   void setFixupOffset(const char *n);
@@ -323,8 +369,8 @@ public:
 
   void makeAtom(YAMLFile&);
 
-private:
   uint64_t  _ordinal;
+  long long _size;
   const char *_name;
   Atom::Alignment _align;
   Atom::ContentType _type;
@@ -333,23 +379,29 @@ private:
   Atom::SectionChoice _sectionChoice;
   bool _internalName;
   bool _mergeDuplicates;
-  Atom::DeadStripKind _dontDeadStrip;
+  Atom::DeadStripKind _deadStrip;
   bool _thumb;
   bool _alias;
+  bool _autoHide;
+  const char *_sectionName;
   Reference _ref;
 };
 
 YAMLAtomState::YAMLAtomState()
   : _ordinal(0)
+  , _size(0)
   , _name(NULL)
   , _align(0, 0)
-  , _type(Atom::typeData)
-  , _scope(Atom::scopeGlobal)
-  , _internalName(false)
-  , _mergeDuplicates(false)
-  , _dontDeadStrip(Atom::deadStripNormal)
-  , _thumb(false)
-  , _alias(false) {
+  , _type(KeyValues::contentTypeDefault)
+  , _scope(KeyValues::scopeDefault)
+  , _def(KeyValues::definitionDefault)
+  , _internalName(KeyValues::internalNameDefault)
+  , _mergeDuplicates(KeyValues::mergeDuplicatesDefault)
+  , _deadStrip(KeyValues::deadStripKindDefault)
+  , _thumb(KeyValues::isThumbDefault)
+  , _alias(KeyValues::isAliasDefault) 
+  , _autoHide(KeyValues::autoHideDefault)
+  , _sectionName(NULL) {
   _ref.target       = NULL;
   _ref.addend       = 0;
   _ref.offsetInAtom = 0;
@@ -359,8 +411,9 @@ YAMLAtomState::YAMLAtomState()
 
 void YAMLAtomState::makeAtom(YAMLFile& f) {
   Atom *a = new YAMLAtom(_ordinal, _def, _scope, _type, _sectionChoice,
-                         _internalName, _mergeDuplicates, _dontDeadStrip, 
-                         _thumb, _alias, _align, f, _name);
+                         _internalName, _mergeDuplicates, _autoHide,  
+                         _deadStrip, _thumb, _alias, _align, f, 
+                         _name, _sectionName, _size);
 
   f._atoms.push_back(a);
   ++_ordinal;
@@ -369,15 +422,17 @@ void YAMLAtomState::makeAtom(YAMLFile& f) {
   _name             = NULL;
   _align.powerOf2   = 0;
   _align.modulus    = 0;
-  _type             = Atom::typeData;
-  _scope            = Atom::scopeGlobal;
-  _def              = Atom::definitionRegular;
-  _sectionChoice    = Atom::sectionBasedOnContent;
-  _internalName     = false;
-  _mergeDuplicates  = false;
-  _dontDeadStrip    = Atom::deadStripNormal;
-  _thumb            = false;
-  _alias            = false;
+  _type             = KeyValues::contentTypeDefault;
+  _scope            = KeyValues::scopeDefault;
+  _def              = KeyValues::definitionDefault;
+  _sectionChoice    = KeyValues::sectionChoiceDefault;
+  _internalName     = KeyValues::internalNameDefault;
+  _mergeDuplicates  = KeyValues::mergeDuplicatesDefault;
+  _deadStrip        = KeyValues::deadStripKindDefault;
+  _thumb            = KeyValues::isThumbDefault;
+  _alias            = KeyValues::isAliasDefault;
+  _autoHide         = KeyValues::autoHideDefault;
+  _sectionName      = NULL;
   _ref.target       = NULL;
   _ref.addend       = 0;
   _ref.offsetInAtom = 0;
@@ -389,29 +444,6 @@ void YAMLAtomState::setName(const char *n) {
   _name = n;
 }
 
-void YAMLAtomState::setScope(const char *s) {
-  if (strcmp(s, "global") == 0)
-    _scope = Atom::scopeGlobal;
-  else if (strcmp(s, "hidden") == 0)
-    _scope = Atom::scopeLinkageUnit;
-  else if (strcmp(s, "static") == 0)
-    _scope = Atom::scopeTranslationUnit;
-  else
-    llvm::report_fatal_error("bad scope value");
-}
-
-void YAMLAtomState::setType(const char *s) {
-  if (strcmp(s, "code") == 0)
-    _type = Atom::typeCode;
-  else if (strcmp(s, "c-string") == 0)
-    _type = Atom::typeCString;
-  else if (strcmp(s, "zero-fill") == 0)
-    _type = Atom::typeZeroFill;
-  else if (strcmp(s, "data") == 0)
-    _type = Atom::typeData;
-  else
-    llvm::report_fatal_error("bad type value");
-}
 
 void YAMLAtomState::setAlign2(const char *s) {
   llvm::StringRef str(s);
@@ -420,27 +452,6 @@ void YAMLAtomState::setAlign2(const char *s) {
   _align.powerOf2 = static_cast<uint16_t>(res);
 }
 
-void YAMLAtomState::setDefinition(const char *s) {
-  if (strcmp(s, "regular") == 0)
-    _def = Atom::definitionRegular;
-  else if (strcmp(s, "tentative") == 0)
-    _def = Atom::definitionTentative;
-  else if (strcmp(s, "weak") == 0)
-    _def = Atom::definitionWeak;
-  else if (strcmp(s, "absolute") == 0)
-    _def = Atom::definitionAbsolute;
-  else
-    llvm::report_fatal_error("bad definition value");
-}
-
-void YAMLAtomState::setMergeDuplicates(const char *s) {
-  if (strcmp(s, "true") == 0)
-    _mergeDuplicates = true;
-  else if (strcmp(s, "false") == 0)
-    _mergeDuplicates = false;
-  else
-    llvm::report_fatal_error("bad merge-duplicates value");
-}
 
 void YAMLAtomState::setFixupKind(const char *s) {
   if (strcmp(s, "pcrel32") == 0)
@@ -527,28 +538,76 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
             haveAtom = false;
           }
         }
-        if (strcmp(entry->key, "name") == 0) {
+        if (strcmp(entry->key, KeyValues::nameKeyword) == 0) {
           atomState.setName(entry->value);
           haveAtom = true;
-        } else if (strcmp(entry->key, "scope") == 0) {
-          atomState.setScope(entry->value);
+        } 
+        else if (strcmp(entry->key, KeyValues::internalNameKeyword) == 0) {
+          atomState._internalName = KeyValues::internalName(entry->value);
           haveAtom = true;
-        } else if (strcmp(entry->key, "type") == 0) {
-          atomState.setType(entry->value);
+        }
+        else if (strcmp(entry->key, KeyValues::definitionKeyword) == 0) {
+          atomState._def = KeyValues::definition(entry->value);
           haveAtom = true;
-        } else if (strcmp(entry->key, "align2") == 0) {
+        } 
+        else if (strcmp(entry->key, KeyValues::scopeKeyword) == 0) {
+          atomState._scope = KeyValues::scope(entry->value);
+          haveAtom = true;
+        }
+        else if (strcmp(entry->key, KeyValues::contentTypeKeyword) == 0) {
+          atomState._type = KeyValues::contentType(entry->value);
+          haveAtom = true;
+        }
+        else if (strcmp(entry->key, KeyValues::deadStripKindKeyword) == 0) {
+          atomState._deadStrip = KeyValues::deadStripKind(entry->value);
+          haveAtom = true;
+        }
+        else if (strcmp(entry->key, KeyValues::sectionChoiceKeyword) == 0) {
+          atomState._sectionChoice = KeyValues::sectionChoice(entry->value);
+          haveAtom = true;
+        }
+        else if (strcmp(entry->key, KeyValues::mergeDuplicatesKeyword) == 0) {
+          atomState._mergeDuplicates = KeyValues::mergeDuplicates(entry->value);
+          haveAtom = true;
+        }
+        else if (strcmp(entry->key, KeyValues::autoHideKeyword) == 0) {
+          atomState._autoHide = KeyValues::autoHide(entry->value);
+          haveAtom = true;
+        }
+        else if (strcmp(entry->key, KeyValues::isThumbKeyword) == 0) {
+          atomState._thumb = KeyValues::isThumb(entry->value);
+          haveAtom = true;
+        }
+        else if (strcmp(entry->key, KeyValues::isAliasKeyword) == 0) {
+          atomState._alias = KeyValues::isAlias(entry->value);
+          haveAtom = true;
+        }
+        else if (strcmp(entry->key, KeyValues::sectionNameKeyword) == 0) {
+          atomState._sectionName = entry->value;
+          haveAtom = true;
+        } 
+        else if (strcmp(entry->key, KeyValues::sizeKeyword) == 0) {
+          llvm::StringRef val = entry->value;
+          if ( val.getAsInteger(0, atomState._size) ) 
+            return make_error_code(illegal_value);
+          haveAtom = true;
+        } 
+        else if (strcmp(entry->key, KeyValues::contentKeyword) == 0) {
+          // TO DO: switch to content mode
+          haveAtom = true;
+        } 
+        else if (strcmp(entry->key, "align2") == 0) {
           atomState.setAlign2(entry->value);
           haveAtom = true;
-        } else if (strcmp(entry->key, "definition") == 0) {
-          atomState.setDefinition(entry->value);
-          haveAtom = true;
-        } else if (strcmp(entry->key, "merge-duplicates") == 0) {
-          atomState.setMergeDuplicates(entry->value);
-          haveAtom = true;
-        } else if (strcmp(entry->key, "fixups") == 0) {
+        } 
+        else if (strcmp(entry->key, "fixups") == 0) {
           inFixups = true;
         }
-      } else if (depthForFixups == entry->depth) {
+        else {
+          return make_error_code(unknown_keyword);
+        }
+      } 
+      else if (depthForFixups == entry->depth) {
         if (entry->beginSequence) {
           if (haveFixup) {
             atomState.addFixup(file);
@@ -574,7 +633,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
   }
 
   result.push_back(file);
-  return success;
+  return make_error_code(success);
 }
 
 //

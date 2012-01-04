@@ -84,40 +84,48 @@ void SymbolTable::addByName(const Atom & newAtom) {
   llvm::StringRef name = newAtom.name();
   const Atom *existing = this->findByName(name);
   if (existing == NULL) {
-    // name is not in symbol table yet, add it associate with this atom
+    // Name is not in symbol table yet, add it associate with this atom.
     _nameTable[name] = &newAtom;
-  } else {
-    // name is already in symbol table and associated with another atom
+  } 
+  else {
+    // Name is already in symbol table and associated with another atom.
+    bool useNew = true;
     switch (collide(existing->definition(), newAtom.definition())) {
     case NCR_First:
-      // using first, just add new to _replacedAtoms
-      _replacedAtoms[&newAtom] = existing;
+      useNew = false;
       break;
     case NCR_Second:
-      // using second, update tables
-      _nameTable[name] = &newAtom;
-      _replacedAtoms[existing] = &newAtom;
+      useNew = true;
       break;
     case NCR_Dup:
       if ( existing->mergeDuplicates() && newAtom.mergeDuplicates() ) {
-          // using existing atom, add new atom to _replacedAtoms
-        _replacedAtoms[&newAtom] = existing;
+        // Both mergeable.  Use auto-hide bit as tie breaker
+        if ( existing->autoHide() != newAtom.autoHide() ) {
+          // They have different autoHide values, keep non-autohide one
+          useNew = existing->autoHide();
+        }
+        else {
+          // They have same autoHide, so just keep using existing
+          useNew = false;
+        }
       }
       else {
         const Atom& use = _platform.handleMultipleDefinitions(*existing, newAtom);
-        if ( &use == existing ) {
-          // using existing atom, add new atom to _replacedAtoms
-          _replacedAtoms[&newAtom] = existing;
-        }
-        else {
-          // using new atom, update tables
-          _nameTable[name] = &newAtom;
-          _replacedAtoms[existing] = &newAtom;
-        }
+        useNew = ( &use != existing ); 
       }
       break;
     default:
       llvm::report_fatal_error("SymbolTable::addByName(): unhandled switch clause");
+    }
+    if ( useNew ) {
+      // Update name table to use new atom.
+      _nameTable[name] = &newAtom;
+      // Add existing atom to replacement table.
+      _replacedAtoms[existing] = &newAtom;
+    }
+    else {
+      // New atom is not being used.  Add it to replacement table.
+      _replacedAtoms[&newAtom] = existing;
     }
   }
 }

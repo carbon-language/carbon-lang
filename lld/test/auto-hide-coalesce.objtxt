@@ -1,0 +1,76 @@
+# RUN: lld-core %s | FileCheck %s
+
+#
+# Tests auto-hide bit during coalescing
+#
+
+---
+atoms:
+    - name:              _inlineFunc1
+      scope:             global
+      definition:        regular
+      type:              code
+      merge-duplicates:  true
+      auto-hide:         true
+     
+    - name:              _inlineFunc2
+      scope:             global
+      definition:        regular
+      type:              code
+      merge-duplicates:  true
+      auto-hide:         true
+    
+    - name:              _inlineFunc3
+      scope:             global
+      definition:        regular
+      type:              code
+      merge-duplicates:  true
+      auto-hide:         false
+    
+    - name:              _inlineFunc4
+      scope:             global
+      definition:        regular
+      type:              code
+      merge-duplicates:  true
+      auto-hide:         false
+---
+atoms:
+    - name:              _inlineFunc1
+      scope:             global
+      definition:        regular
+      type:              code
+      merge-duplicates:  true
+      auto-hide:         true
+    
+    - name:              _inlineFunc2
+      scope:             global
+      definition:        regular
+      type:              code
+      merge-duplicates:  true
+      auto-hide:         false
+   
+    - name:              _inlineFunc3
+      scope:             global
+      definition:        regular
+      type:              code
+      merge-duplicates:  true
+      auto-hide:         true
+  
+    - name:              _inlineFunc4
+      scope:             global
+      definition:        regular
+      type:              code
+      merge-duplicates:  true
+      auto-hide:         false
+...
+
+
+# CHECK:       name: _inlineFunc1
+# CHECK:       auto-hide: true
+# CHECK:       name: _inlineFunc3
+# CHECK-NOT:   auto-hide: true
+# CHECK:       name: _inlineFunc4
+# CHECK-NOT:   auto-hide: true
+# CHECK:       name: _inlineFunc2
+# CHECK-NOT:   auto-hide: true
+# CHECK:       ...

@@ -1,0 +1,27 @@
+# RUN: lld-core %s | FileCheck %s
+
+#
+# Test that internal-name attributes are preserved
+#
+
+---
+atoms:
+    - name:          foo
+      internal-name: false
+    - name:          L0 
+      internal-name: true
+    - name:          L1 
+      internal-name: true
+    - name:          bar 
+...
+
+
+# CHECK:       name: foo
+# CHECK-NOT:   internal-name: false
+# CHECK:       name: L0
+# CHECK:       internal-name: true
+# CHECK:       name: L1
+# CHECK:       internal-name: true
+# CHECK:       name: bar
+# CHECK-NOT:   internal-name: false
+# CHECK:       ...

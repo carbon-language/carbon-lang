@@ -8,11 +8,13 @@
 atoms:
     - name:         _foo
       definition:   regular
+      scope:        global
       type:         data
 ---
 atoms:
     - name:         _foo
       definition:   regular
+      scope:        global
       type:         data
 ...
 
