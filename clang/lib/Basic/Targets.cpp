@@ -1568,8 +1568,7 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     break;
   case CK_Penryn:
     setFeatureEnabled(Features, "mmx", true);
-    setFeatureEnabled(Features, "sse4", true);
-    Features["sse42"] = false;
+    setFeatureEnabled(Features, "sse4.1", true);
     break;
   case CK_Atom:
     setFeatureEnabled(Features, "mmx", true);
