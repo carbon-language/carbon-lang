@@ -358,15 +358,15 @@ class RetainSummary {
 
   /// DefaultArgEffect - The default ArgEffect to apply to arguments that
   ///  do not have an entry in Args.
-  ArgEffect   DefaultArgEffect;
+  ArgEffect DefaultArgEffect;
 
   /// Receiver - If this summary applies to an Objective-C message expression,
   ///  this is the effect applied to the state of the receiver.
-  ArgEffect   Receiver;
+  ArgEffect Receiver;
 
   /// Ret - The effect on the return value.  Used to indicate if the
   ///  function/method call returns a new tracked symbol.
-  RetEffect   Ret;
+  RetEffect Ret;
 
 public:
   RetainSummary(ArgEffects A, RetEffect R, ArgEffect defaultEff,
@@ -436,7 +436,7 @@ public:
   ObjCSummaryKey(Selector s)
     : II(0), S(s) {}
 
-  IdentifierInfo* getIdentifier() const { return II; }
+  IdentifierInfo *getIdentifier() const { return II; }
   Selector getSelector() const { return S; }
 };
 }
@@ -516,7 +516,7 @@ public:
     return Summ;
   }
 
-  const RetainSummary * find(IdentifierInfo* II, Selector S) {
+  const RetainSummary *find(IdentifierInfo* II, Selector S) {
     // FIXME: Class method lookup.  Right now we dont' have a good way
     // of going between IdentifierInfo* and the class hierarchy.
     MapTy::iterator I = M.find(ObjCSummaryKey(II, S));
@@ -584,7 +584,7 @@ class RetainSummaryManager {
   ArgEffects::Factory AF;
 
   /// ScratchArgs - A holding buffer for construct ArgEffects.
-  ArgEffects ScratchArgs;
+  ArgEffects ScratchArgs; 
 
   /// ObjCAllocRetE - Default return effect for methods returning Objective-C
   ///  objects.
@@ -614,18 +614,18 @@ public:
     return &DefaultSummary;
   }
   
-  const RetainSummary * getUnarySummary(const FunctionType* FT,
+  const RetainSummary *getUnarySummary(const FunctionType* FT,
                                        UnaryFuncKind func);
 
-  const RetainSummary * getCFSummaryCreateRule(const FunctionDecl *FD);
-  const RetainSummary * getCFSummaryGetRule(const FunctionDecl *FD);
-  const RetainSummary * getCFCreateGetRuleSummary(const FunctionDecl *FD);
+  const RetainSummary *getCFSummaryCreateRule(const FunctionDecl *FD);
+  const RetainSummary *getCFSummaryGetRule(const FunctionDecl *FD);
+  const RetainSummary *getCFCreateGetRuleSummary(const FunctionDecl *FD);
 
-  const RetainSummary * getPersistentSummary(ArgEffects AE, RetEffect RetEff,
+  const RetainSummary *getPersistentSummary(ArgEffects AE, RetEffect RetEff,
                                             ArgEffect ReceiverEff = DoNothing,
                                             ArgEffect DefaultEff = MayEscape);
 
-  const RetainSummary * getPersistentSummary(RetEffect RE,
+  const RetainSummary *getPersistentSummary(RetEffect RE,
                                             ArgEffect ReceiverEff = DoNothing,
                                             ArgEffect DefaultEff = MayEscape) {
     return getPersistentSummary(getArgEffects(), RE, ReceiverEff, DefaultEff);
@@ -729,19 +729,19 @@ public:
     InitializeMethodSummaries();
   }
 
-  const RetainSummary * getSummary(const FunctionDecl *FD);
+  const RetainSummary *getSummary(const FunctionDecl *FD);
 
   const RetainSummary *getInstanceMethodSummary(const ObjCMessage &msg,
                                                 const ProgramState *state,
                                                 const LocationContext *LC);
 
-  const RetainSummary * getInstanceMethodSummary(const ObjCMessage &msg,
+  const RetainSummary *getInstanceMethodSummary(const ObjCMessage &msg,
                                                 const ObjCInterfaceDecl *ID) {
     return getInstanceMethodSummary(msg.getSelector(), 0,
                             ID, msg.getMethodDecl(), msg.getType(Ctx));
   }
 
-  const RetainSummary * getInstanceMethodSummary(Selector S,
+  const RetainSummary *getInstanceMethodSummary(Selector S,
                                                 IdentifierInfo *ClsName,
                                                 const ObjCInterfaceDecl *ID,
                                                 const ObjCMethodDecl *MD,
@@ -779,7 +779,7 @@ public:
       return getClassMethodSummary(S, ClsName, ID, MD, ResultTy);
   }
 
-  const RetainSummary * getCommonMethodSummary(const ObjCMethodDecl *MD,
+  const RetainSummary *getCommonMethodSummary(const ObjCMethodDecl *MD,
                                               Selector S, QualType RetTy);
 
   void updateSummaryFromAnnotations(const RetainSummary *&Summ,
@@ -2105,7 +2105,7 @@ namespace {
     }
 
     operator bool() { return First && Binding; }
-    const MemRegion* getRegion() { return Binding; }
+    const MemRegion *getRegion() { return Binding; }
   };
 }
 
