@@ -379,6 +379,8 @@ def note_implementation_declared : Note<
   "class implementation is declared here">;
 def note_class_declared : Note<
   "class is declared here">;
+def note_suppressed_class_declare : Note<
+  "class with specified objc_suppress_autosynthesis attribute is declared here">;
 def warn_dup_category_def : Warning<
   "duplicate definition of category %1 on interface %0">;
 def err_conflicting_super_class : Error<"conflicting super class name %0">;

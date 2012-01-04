@@ -1394,6 +1394,11 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
       << Prop->getDeclName() << Prop->getGetterName();
       Diag(Prop->getLocation(),
            diag::note_property_declare);
+      if (LangOpts.ObjCDefaultSynthProperties && LangOpts.ObjCNonFragileABI2)
+        if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(CDecl))
+          if (const ObjCInterfaceDecl *RID = ID->isObjCSuppressAutosynthesis())
+            Diag(RID->getLocation(), diag::note_suppressed_class_declare);
+            
     }
 
     if (!Prop->isReadOnly() && !InsMap.count(Prop->getSetterName())) {
@@ -1404,6 +1409,10 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
       << Prop->getDeclName() << Prop->getSetterName();
       Diag(Prop->getLocation(),
            diag::note_property_declare);
+      if (LangOpts.ObjCDefaultSynthProperties && LangOpts.ObjCNonFragileABI2)
+        if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(CDecl))
+          if (const ObjCInterfaceDecl *RID = ID->isObjCSuppressAutosynthesis())
+            Diag(RID->getLocation(), diag::note_suppressed_class_declare);
     }
   }
 }
