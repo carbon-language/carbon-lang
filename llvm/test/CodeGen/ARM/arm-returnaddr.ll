@@ -1,7 +1,7 @@
-; RUN: llc < %s -mtriple=arm-apple-darwin | FileCheck %s
-; RUN: llc < %s -mtriple=thumbv6-apple-darwin | FileCheck %s
-; RUN: llc < %s -mtriple=arm-apple-darwin -regalloc=basic | FileCheck %s
-; RUN: llc < %s -mtriple=thumbv6-apple-darwin -regalloc=basic | FileCheck %s
+; RUN: llc < %s -mtriple=arm-apple-ios | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv6-apple-ios | FileCheck %s
+; RUN: llc < %s -mtriple=arm-apple-ios -regalloc=basic | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv6-apple-ios -regalloc=basic | FileCheck %s
 ; rdar://8015977
 ; rdar://8020118
 

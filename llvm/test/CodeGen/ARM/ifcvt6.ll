@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=armv7-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=armv7-apple-ios | FileCheck %s
 
 define void @foo(i32 %X, i32 %Y) {
 entry:

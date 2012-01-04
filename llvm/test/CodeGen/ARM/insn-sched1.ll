@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=arm -mattr=+v6
-; RUN: llc < %s -mtriple=arm-apple-darwin -mattr=+v6 |\
+; RUN: llc < %s -mtriple=arm-apple-ios -mattr=+v6 |\
 ; RUN:   grep mov | count 3
 
 define i32 @test(i32 %x) {

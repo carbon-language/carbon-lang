@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumb-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=thumb-apple-ios | FileCheck %s
 
 define void @test1() {
 ; CHECK: test1:

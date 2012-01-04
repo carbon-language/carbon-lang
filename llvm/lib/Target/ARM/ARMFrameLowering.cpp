@@ -41,8 +41,8 @@ skipAlignedDPRCS2Spills(MachineBasicBlock::iterator MI,
 bool ARMFrameLowering::hasFP(const MachineFunction &MF) const {
   const TargetRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
 
-  // Mac OS X requires FP not to be clobbered for backtracing purpose.
-  if (STI.isTargetDarwin())
+  // iOS requires FP not to be clobbered for backtracing purpose.
+  if (STI.isTargetIOS())
     return true;
 
   const MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -183,7 +183,7 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
     case ARM::R11:
       if (Reg == FramePtr)
         FramePtrSpillFI = FI;
-      if (STI.isTargetDarwin()) {
+      if (STI.isTargetIOS()) {
         AFI->addGPRCalleeSavedArea2Frame(FI);
         GPRCS2Size += 4;
       } else {
@@ -206,8 +206,8 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   if (GPRCS1Size > 0) MBBI++;
 
   // Set FP to point to the stack slot that contains the previous FP.
-  // For Darwin, FP is R7, which has now been stored in spill area 1.
-  // Otherwise, if this is not Darwin, all the callee-saved registers go
+  // For iOS, FP is R7, which has now been stored in spill area 1.
+  // Otherwise, if this is not iOS, all the callee-saved registers go
   // into spill area 1, including the FP in R11.  In either case, it is
   // now safe to emit this assignment.
   bool HasFP = hasFP(MF);
@@ -383,7 +383,7 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
                                   ARMCC::AL, 0, TII);
         else {
           // It's not possible to restore SP from FP in a single instruction.
-          // For Darwin, this looks like:
+          // For iOS, this looks like:
           // mov sp, r7
           // sub sp, #24
           // This is bad, if an interrupt is taken after the mov, sp is in an
@@ -583,7 +583,7 @@ void ARMFrameLowering::emitPushInst(MachineBasicBlock &MBB,
     unsigned LastReg = 0;
     for (; i != 0; --i) {
       unsigned Reg = CSI[i-1].getReg();
-      if (!(Func)(Reg, STI.isTargetDarwin())) continue;
+      if (!(Func)(Reg, STI.isTargetIOS())) continue;
 
       // D-registers in the aligned area DPRCS2 are NOT spilled here.
       if (Reg >= ARM::D8 && Reg < ARM::D8 + NumAlignedDPRCS2Regs)
@@ -656,7 +656,7 @@ void ARMFrameLowering::emitPopInst(MachineBasicBlock &MBB,
     bool DeleteRet = false;
     for (; i != 0; --i) {
       unsigned Reg = CSI[i-1].getReg();
-      if (!(Func)(Reg, STI.isTargetDarwin())) continue;
+      if (!(Func)(Reg, STI.isTargetIOS())) continue;
 
       // The aligned reloads from area DPRCS2 are not inserted here.
       if (Reg >= ARM::D8 && Reg < ARM::D8 + NumAlignedDPRCS2Regs)
@@ -1256,7 +1256,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     if (Spilled) {
       NumGPRSpills++;
 
-      if (!STI.isTargetDarwin()) {
+      if (!STI.isTargetIOS()) {
         if (Reg == ARM::LR)
           LRSpilled = true;
         CS1Spilled = true;
@@ -1276,7 +1276,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
         break;
       }
     } else {
-      if (!STI.isTargetDarwin()) {
+      if (!STI.isTargetIOS()) {
         UnspilledCS1GPRs.push_back(Reg);
         continue;
       }

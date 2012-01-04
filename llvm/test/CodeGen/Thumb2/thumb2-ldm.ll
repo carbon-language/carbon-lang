@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mattr=+thumb2 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-ios -mattr=+thumb2 | FileCheck %s
 
 @X = external global [0 x i32]          ; <[0 x i32]*> [#uses=5]
 

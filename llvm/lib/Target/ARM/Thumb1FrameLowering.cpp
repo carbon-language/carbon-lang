@@ -101,7 +101,7 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
     case ARM::R11:
       if (Reg == FramePtr)
         FramePtrSpillFI = FI;
-      if (STI.isTargetDarwin()) {
+      if (STI.isTargetIOS()) {
         AFI->addGPRCalleeSavedArea2Frame(FI);
         GPRCS2Size += 4;
       } else {

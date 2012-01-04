@@ -2,7 +2,7 @@
 ; Test to check argument y's debug info uses FI
 ; Radar 10048772
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:32:64-v128:32:128-a0:0:32-n32"
-target triple = "thumbv7-apple-macosx10.7.0"
+target triple = "thumbv7-apple-ios"
 
 %struct.tag_s = type { i32, i32, i32 }
 

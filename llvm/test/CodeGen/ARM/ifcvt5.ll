@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=armv7-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=armv7-apple-ios | FileCheck %s
 
 @x = external global i32*		; <i32**> [#uses=1]
 
