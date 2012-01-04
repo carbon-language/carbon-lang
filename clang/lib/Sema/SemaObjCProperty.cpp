@@ -1797,6 +1797,14 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
         // not specified; including when property is 'readonly'.
         PropertyDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_strong);
       else if (!(Attributes & ObjCDeclSpec::DQ_PR_readonly)) {
+        bool isAnyClassTy = 
+          (PropertyTy->isObjCClassType() || 
+           PropertyTy->isObjCQualifiedClassType());
+        // In non-gc, non-arc mode, 'Class' is treated as a 'void *' no need to
+        // issue any warning.
+        if (isAnyClassTy && getLangOptions().getGC() == LangOptions::NonGC)
+          ;
+        else {
           // Skip this warning in gc-only mode.
           if (getLangOptions().getGC() != LangOptions::GCOnly)
             Diag(Loc, diag::warn_objc_property_no_assignment_attribute);
@@ -1804,6 +1812,7 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
           // If non-gc code warn that this is likely inappropriate.
           if (getLangOptions().getGC() == LangOptions::NonGC)
             Diag(Loc, diag::warn_objc_property_default_assign_on_object);
+        }
       }
 
     // FIXME: Implement warning dependent on NSCopying being
