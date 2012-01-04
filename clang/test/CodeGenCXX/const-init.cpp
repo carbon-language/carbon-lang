@@ -67,5 +67,5 @@ __int128_t PR11705 = (__int128_t)&PR11705;
 void UnfoldableAddrLabelDiff() { static __int128_t x = (long)&&a-(long)&&b; a:b:return;}
 
 // But make sure we do fold this.
-// CHECK: @_ZZ21FoldableAddrLabelDiffvE1x = internal global i64 sub (i64 ptrtoint (i8* blockaddress(@_Z21FoldableAddrLabelDiffv, %a)
+// CHECK: @_ZZ21FoldableAddrLabelDiffvE1x = internal global i64 sub (i64 ptrtoint (i8* blockaddress(@_Z21FoldableAddrLabelDiffv
 void FoldableAddrLabelDiff() { static long x = (long)&&a-(long)&&b; a:b:return;}
