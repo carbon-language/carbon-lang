@@ -1179,29 +1179,28 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
 
         // Check whether there are any other declarations with the same name
         // and in the same scope.
+        if (I != IEnd) {
+          DeclContext *DC = (*I)->getDeclContext()->getRedeclContext();
+          IdentifierResolver::iterator LastI = I;
+          for (++LastI; LastI != IEnd; ++LastI) {
+            DeclContext *LastDC 
+              = (*LastI)->getDeclContext()->getRedeclContext();
+            if (!(*LastI)->isInIdentifierNamespace(IDNS))
+              continue;
+            
+            if (!LastDC->Equals(DC))
+              break;
+            
+            if (!LastDC->isFileContext() && !S->isDeclScope(*LastI))
+              break;
+            
+            D = R.isForRedeclaration()? *LastI : getVisibleDecl(*LastI);
+            if (D)
+              R.addDecl(D);
+          }
 
-        // Figure out what scope the identifier is in.
-        while (S->getParent() &&
-               (!(S->getFlags() & Scope::DeclScope) ||
-                !S->isDeclScope(*I)))
-          S = S->getParent();
-
-        // Find the last declaration in this scope (with the same
-        // name, naturally).
-        IdentifierResolver::iterator LastI = I;
-        for (++LastI; LastI != IEnd; ++LastI) {
-          if (!S->isDeclScope(*LastI))
-            break;
-          
-          if (!(*LastI)->isInIdentifierNamespace(IDNS))
-            continue;
-          
-          D = R.isForRedeclaration()? *LastI : getVisibleDecl(*LastI);
-          if (D)
-            R.addDecl(D);
+          R.resolveKind();
         }
-
-        R.resolveKind();
         return true;
       }
   } else {

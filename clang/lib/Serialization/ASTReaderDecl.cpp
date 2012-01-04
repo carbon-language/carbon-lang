@@ -402,9 +402,14 @@ void ASTDeclReader::VisitTypeDecl(TypeDecl *TD) {
 }
 
 void ASTDeclReader::VisitTypedefNameDecl(TypedefNameDecl *TD) {
-  VisitRedeclarable(TD);
+  // Record the declaration -> global ID mapping.
+  Reader.DeclToID[TD] = ThisDeclID;
+  
+  RedeclarableResult Redecl = VisitRedeclarable(TD);
   VisitTypeDecl(TD);
-  TD->setTypeSourceInfo(GetTypeSourceInfo(Record, Idx));  
+  
+  TD->setTypeSourceInfo(GetTypeSourceInfo(Record, Idx));
+  mergeRedeclarable(TD, Redecl);
 }
 
 void ASTDeclReader::VisitTypedefDecl(TypedefDecl *TD) {
@@ -1668,15 +1673,22 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
   if (X == Y)
     return true;
   
-  // Must have the same kind.
-  if (X->getKind() != Y->getKind())
-    return false;
-  
   // Must be in the same context.
   if (!X->getDeclContext()->getRedeclContext()->Equals(
          Y->getDeclContext()->getRedeclContext()))
     return false;
+
+  // Two typedefs refer to the same entity if they have the same underlying
+  // type.
+  if (TypedefNameDecl *TypedefX = dyn_cast<TypedefNameDecl>(X))
+    if (TypedefNameDecl *TypedefY = dyn_cast<TypedefNameDecl>(Y))
+      return X->getASTContext().hasSameType(TypedefX->getUnderlyingType(),
+                                            TypedefY->getUnderlyingType());
   
+  // Must have the same kind.
+  if (X->getKind() != Y->getKind())
+    return false;
+    
   // Objective-C classes and protocols with the same name always match.
   if (isa<ObjCInterfaceDecl>(X) || isa<ObjCProtocolDecl>(X))
     return true;
