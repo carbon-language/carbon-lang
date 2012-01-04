@@ -682,8 +682,9 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
       if (BitWidth <= ShiftAmt || KnownZero[BitWidth-ShiftAmt-1] || 
           (HighBits & ~DemandedMask) == HighBits) {
         // Perform the logical shift right.
-        Instruction *NewVal = BinaryOperator::CreateLShr(
-                          I->getOperand(0), SA, I->getName());
+        BinaryOperator *NewVal = BinaryOperator::CreateLShr(I->getOperand(0),
+                                                            SA, I->getName());
+        NewVal->setIsExact(cast<BinaryOperator>(I)->isExact());
         return InsertNewInstWith(NewVal, *I);
       } else if ((KnownOne & SignBit) != 0) { // New bits are known one.
         KnownOne |= HighBits;
