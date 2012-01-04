@@ -108,7 +108,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("weak", AT_weak)
     .Case("weakref", AT_weakref)
     .Case("objc_arc_weak_reference_unavailable", AT_arc_weakref_unavailable)
-    .Case("objc_suppress_autosynthesis", AT_objc_suppress_autosynthesis)
+    .Case("objc_disable_automatic_synthesis", AT_objc_disable_automatic_synthesis)
     .Case("pure", AT_pure)
     .Case("mode", AT_mode)
     .Case("used", AT_used)

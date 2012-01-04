@@ -3620,7 +3620,7 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_arc_weakref_unavailable: 
     handleArcWeakrefUnavailableAttr (S, D, Attr); 
     break;
-  case AttributeList::AT_objc_suppress_autosynthesis: 
+  case AttributeList::AT_objc_disable_automatic_synthesis: 
     handleObjCSuppressAutosynthesisAttr (S, D, Attr); 
     break;
   case AttributeList::AT_unused:      handleUnusedAttr      (S, D, Attr); break;
