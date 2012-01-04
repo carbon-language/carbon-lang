@@ -793,8 +793,8 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
                                            TrailingReturnType),
                   Attr, DeclEndLoc);
 
-     // Inform sema that we are starting a block.
-     Actions.ActOnLambdaArguments(D, getCurScope());
+    // Inform sema that we are starting a block.
+    Actions.ActOnLambdaArguments(D, getCurScope());
   }
 
   // Parse compound-statement.
@@ -812,12 +812,12 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
   StmtResult Stmt(ParseCompoundStatementBody());
   BodyScope.Exit();
 
-   if (!Stmt.isInvalid())
-     return Actions.ActOnLambdaExpr(LambdaBeginLoc, Stmt.take(),
-                                    getCurScope());
+  if (!Stmt.isInvalid())
+    return Actions.ActOnLambdaExpr(LambdaBeginLoc, Stmt.take(),
+                                   getCurScope());
  
-   Actions.ActOnLambdaError(LambdaBeginLoc, getCurScope());
-   return ExprError();
+  Actions.ActOnLambdaError(LambdaBeginLoc, getCurScope());
+  return ExprError();
 }
 
 /// ParseCXXCasts - This handles the various ways to cast expressions to another
