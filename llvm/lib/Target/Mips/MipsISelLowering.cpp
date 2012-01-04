@@ -2871,14 +2871,19 @@ getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const
     case 'd': // Address register. Same as 'r' unless generating MIPS16 code.
     case 'y': // Same as 'r'. Exists for compatibility.
     case 'r':
-      return std::make_pair(0U, Mips::CPURegsRegisterClass);
+      if (VT == MVT::i32)
+        return std::make_pair(0U, Mips::CPURegsRegisterClass);
+      assert(VT == MVT::i64 && "Unexpected type.");
+      return std::make_pair(0U, Mips::CPU64RegsRegisterClass);
     case 'f':
       if (VT == MVT::f32)
         return std::make_pair(0U, Mips::FGR32RegisterClass);
-      if (VT == MVT::f64)
-        if ((!Subtarget->isSingleFloat()) && (!Subtarget->isFP64bit()))
+      if ((VT == MVT::f64) && (!Subtarget->isSingleFloat())) {
+        if (Subtarget->isFP64bit())
+          return std::make_pair(0U, Mips::FGR64RegisterClass);
+        else
           return std::make_pair(0U, Mips::AFGR64RegisterClass);
-      break;
+      }
     }
   }
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
