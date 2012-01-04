@@ -475,4 +475,9 @@ namespace PR11690 {
   template class DEFAULT Class<char>;
   // CHECK: define weak_odr void @_ZNK7PR116905ClassIcE4sizeEv
   // CHECK-HIDDEN: define weak_odr void @_ZNK7PR116905ClassIcE4sizeEv
+
+  template<class T> void Method() {}
+  template  __attribute__((visibility("default"))) void Method<char>();
+  // CHECK: define weak_odr void @_ZN7PR116906MethodIcEEvv
+  // CHECK-HIDDEN: define weak_odr void @_ZN7PR116906MethodIcEEvv
 }

@@ -6407,6 +6407,9 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   }
 
   Specialization->setTemplateSpecializationKind(TSK, D.getIdentifierLoc());
+  AttributeList *Attr = D.getDeclSpec().getAttributes().getList();
+  if (Attr)
+    ProcessDeclAttributeList(S, Specialization, Attr);
 
   if (TSK == TSK_ExplicitInstantiationDefinition)
     InstantiateFunctionDefinition(D.getIdentifierLoc(), Specialization);
