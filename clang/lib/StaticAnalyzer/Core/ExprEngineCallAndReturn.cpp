@@ -200,7 +200,7 @@ ExprEngine::invalidateArguments(const ProgramState *State,
   //  global variables.
   return State->invalidateRegions(RegionsToInvalidate,
                                   Call.getOriginExpr(), Count,
-                                  &IS, doesInvalidateGlobals(Call));
+                                  &IS, &Call);
 
 }
 

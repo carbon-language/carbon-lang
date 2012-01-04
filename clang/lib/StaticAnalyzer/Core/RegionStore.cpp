@@ -20,6 +20,7 @@
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h"
@@ -235,11 +236,16 @@ public:
   //===-------------------------------------------------------------------===//
   // Binding values to regions.
   //===-------------------------------------------------------------------===//
+  RegionBindings invalidateGlobalRegion(MemRegion::Kind K,
+                                        const Expr *Ex,
+                                        unsigned Count,
+                                        RegionBindings B,
+                                        InvalidatedRegions *Invalidated);
 
   StoreRef invalidateRegions(Store store, ArrayRef<const MemRegion *> Regions,
                              const Expr *E, unsigned Count,
                              InvalidatedSymbols &IS,
-                             bool invalidateGlobals,
+                             const CallOrObjCMessage *Call,
                              InvalidatedRegions *Invalidated);
 
 public:   // Made public for helper classes.
@@ -718,15 +724,39 @@ void invalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
   B = RM.addBinding(B, baseR, BindingKey::Direct, V);
 }
 
+RegionBindings RegionStoreManager::invalidateGlobalRegion(MemRegion::Kind K,
+                                                          const Expr *Ex,
+                                                          unsigned Count,
+                                                          RegionBindings B,
+                                            InvalidatedRegions *Invalidated) {
+  // Bind the globals memory space to a new symbol that we will use to derive
+  // the bindings for all globals.
+  const GlobalsSpaceRegion *GS = MRMgr.getGlobalsRegion(K);
+  SVal V =
+      svalBuilder.getConjuredSymbolVal(/* SymbolTag = */ (void*) GS, Ex,
+          /* symbol type, doesn't matter */ Ctx.IntTy,
+          Count);
+
+  B = removeBinding(B, GS);
+  B = addBinding(B, BindingKey::Make(GS, BindingKey::Default), V);
+
+  // Even if there are no bindings in the global scope, we still need to
+  // record that we touched it.
+  if (Invalidated)
+    Invalidated->push_back(GS);
+
+  return B;
+}
+
 StoreRef RegionStoreManager::invalidateRegions(Store store,
                                             ArrayRef<const MemRegion *> Regions,
                                                const Expr *Ex, unsigned Count,
                                                InvalidatedSymbols &IS,
-                                               bool invalidateGlobals,
+                                               const CallOrObjCMessage *Call,
                                               InvalidatedRegions *Invalidated) {
   invalidateRegionsWorker W(*this, StateMgr,
                             RegionStoreManager::GetRegionBindings(store),
-                            Ex, Count, IS, Invalidated, invalidateGlobals);
+                            Ex, Count, IS, Invalidated, false);
 
   // Scan the bindings and generate the clusters.
   W.GenerateClusters();
@@ -741,20 +771,20 @@ StoreRef RegionStoreManager::invalidateRegions(Store store,
   // Return the new bindings.
   RegionBindings B = W.getRegionBindings();
 
-  if (invalidateGlobals) {
-    // Bind the non-static globals memory space to a new symbol that we will
-    // use to derive the bindings for all non-static globals.
-    const GlobalsSpaceRegion *GS = MRMgr.getGlobalsRegion();
-    SVal V =
-      svalBuilder.getConjuredSymbolVal(/* SymbolTag = */ (void*) GS, Ex,
-                                  /* symbol type, doesn't matter */ Ctx.IntTy,
-                                  Count);
-    B = addBinding(B, BindingKey::Make(GS, BindingKey::Default), V);
-
-    // Even if there are no bindings in the global scope, we still need to
-    // record that we touched it.
-    if (Invalidated)
-      Invalidated->push_back(GS);
+  // For all globals which are not static nor immutable: determine which global
+  // regions should be invalidated and invalidate them.
+  // TODO: This could possibly be more precise with modules.
+  //
+  // System calls invalidate only system globals.
+  if (Call && Call->isInSystemHeader()) {
+    B = invalidateGlobalRegion(MemRegion::GlobalSystemSpaceRegionKind,
+                               Ex, Count, B, Invalidated);
+  // Internal calls might invalidate both system and internal globals.
+  } else {
+    B = invalidateGlobalRegion(MemRegion::GlobalSystemSpaceRegionKind,
+                               Ex, Count, B, Invalidated);
+    B = invalidateGlobalRegion(MemRegion::GlobalInternalSpaceRegionKind,
+                               Ex, Count, B, Invalidated);
   }
 
   return StoreRef(B.getRootWithoutRetain(), *this);

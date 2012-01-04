@@ -407,8 +407,7 @@ bool MallocChecker::SummarizeRegion(raw_ostream &os,
   default: {
     const MemSpaceRegion *MS = MR->getMemorySpace();
     
-    switch (MS->getKind()) {
-    case MemRegion::StackLocalsSpaceRegionKind: {
+    if (isa<StackLocalsSpaceRegion>(MS)) {
       const VarRegion *VR = dyn_cast<VarRegion>(MR);
       const VarDecl *VD;
       if (VR)
@@ -422,7 +421,8 @@ bool MallocChecker::SummarizeRegion(raw_ostream &os,
         os << "the address of a local stack variable";
       return true;
     }
-    case MemRegion::StackArgumentsSpaceRegionKind: {
+
+    if (isa<StackArgumentsSpaceRegion>(MS)) {
       const VarRegion *VR = dyn_cast<VarRegion>(MR);
       const VarDecl *VD;
       if (VR)
@@ -436,8 +436,8 @@ bool MallocChecker::SummarizeRegion(raw_ostream &os,
         os << "the address of a parameter";
       return true;
     }
-    case MemRegion::NonStaticGlobalSpaceRegionKind:
-    case MemRegion::StaticGlobalSpaceRegionKind: {
+
+    if (isa<GlobalsSpaceRegion>(MS)) {
       const VarRegion *VR = dyn_cast<VarRegion>(MR);
       const VarDecl *VD;
       if (VR)
@@ -454,9 +454,8 @@ bool MallocChecker::SummarizeRegion(raw_ostream &os,
         os << "the address of a global variable";
       return true;
     }
-    default:
-      return false;
-    }
+
+    return false;
   }
   }
 }

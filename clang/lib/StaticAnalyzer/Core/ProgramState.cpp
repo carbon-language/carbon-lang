@@ -136,20 +136,20 @@ const ProgramState *
 ProgramState::invalidateRegions(ArrayRef<const MemRegion *> Regions,
                                 const Expr *E, unsigned Count,
                                 StoreManager::InvalidatedSymbols *IS,
-                                bool invalidateGlobals) const {
+                                const CallOrObjCMessage *Call) const {
   if (!IS) {
     StoreManager::InvalidatedSymbols invalidated;
     return invalidateRegionsImpl(Regions, E, Count,
-                                 invalidated, invalidateGlobals);
+                                 invalidated, Call);
   }
-  return invalidateRegionsImpl(Regions, E, Count, *IS, invalidateGlobals);
+  return invalidateRegionsImpl(Regions, E, Count, *IS, Call);
 }
 
 const ProgramState *
 ProgramState::invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
                                     const Expr *E, unsigned Count,
                                     StoreManager::InvalidatedSymbols &IS,
-                                    bool invalidateGlobals) const {
+                                    const CallOrObjCMessage *Call) const {
   ProgramStateManager &Mgr = getStateManager();
   SubEngine* Eng = Mgr.getOwningEngine();
  
@@ -157,14 +157,14 @@ ProgramState::invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
     StoreManager::InvalidatedRegions Invalidated;
     const StoreRef &newStore
       = Mgr.StoreMgr->invalidateRegions(getStore(), Regions, E, Count, IS,
-                                        invalidateGlobals, &Invalidated);
+                                        Call, &Invalidated);
     const ProgramState *newState = makeWithStore(newStore);
     return Eng->processRegionChanges(newState, &IS, Regions, Invalidated);
   }
 
   const StoreRef &newStore =
     Mgr.StoreMgr->invalidateRegions(getStore(), Regions, E, Count, IS,
-                                    invalidateGlobals, NULL);
+                                    Call, NULL);
   return makeWithStore(newStore);
 }
 

@@ -73,12 +73,16 @@ public:
     StackArgumentsSpaceRegionKind,
     HeapSpaceRegionKind,
     UnknownSpaceRegionKind,
-    NonStaticGlobalSpaceRegionKind,
     StaticGlobalSpaceRegionKind,
-    BEG_GLOBAL_MEMSPACES = NonStaticGlobalSpaceRegionKind,
-    END_GLOBAL_MEMSPACES = StaticGlobalSpaceRegionKind,
+    GlobalInternalSpaceRegionKind,
+    GlobalSystemSpaceRegionKind,
+    GlobalImmutableSpaceRegionKind,
+    BEG_NON_STATIC_GLOBAL_MEMSPACES = GlobalInternalSpaceRegionKind,
+    END_NON_STATIC_GLOBAL_MEMSPACES = GlobalImmutableSpaceRegionKind,
+    BEG_GLOBAL_MEMSPACES = StaticGlobalSpaceRegionKind,
+    END_GLOBAL_MEMSPACES = GlobalImmutableSpaceRegionKind,
     BEG_MEMSPACES = GenericMemSpaceRegionKind,
-    END_MEMSPACES = StaticGlobalSpaceRegionKind,
+    END_MEMSPACES = GlobalImmutableSpaceRegionKind,
     // Untyped regions.
     SymbolicRegionKind,
     AllocaRegionKind,
@@ -150,7 +154,7 @@ public:
   static bool classof(const MemRegion*) { return true; }
 };
 
-/// MemSpaceRegion - A memory region that represents and "memory space";
+/// MemSpaceRegion - A memory region that represents a "memory space";
 ///  for example, the set of global variables, the stack frame, etc.
 class MemSpaceRegion : public MemRegion {
 protected:
@@ -187,7 +191,11 @@ public:
     return k >= BEG_GLOBAL_MEMSPACES && k <= END_GLOBAL_MEMSPACES;
   }
 };
-  
+
+/// \class The region of the static variables within the current CodeTextRegion
+/// scope.
+/// Currently, only the static locals are placed there, so we know that these
+/// variables do not get invalidated by calls to other functions.
 class StaticGlobalSpaceRegion : public GlobalsSpaceRegion {
   friend class MemRegionManager;
 
@@ -207,22 +215,86 @@ public:
     return R->getKind() == StaticGlobalSpaceRegionKind;
   }
 };
-  
+
+/// \class The region for all the non-static global variables.
+///
+/// This class is further split into subclasses for efficient implementation of
+/// invalidating a set of related global values as is done in
+/// RegionStoreManager::invalidateRegions (instead of finding all the dependent
+/// globals, we invalidate the whole parent region).
 class NonStaticGlobalSpaceRegion : public GlobalsSpaceRegion {
   friend class MemRegionManager;
   
-  NonStaticGlobalSpaceRegion(MemRegionManager *mgr)
-    : GlobalsSpaceRegion(mgr, NonStaticGlobalSpaceRegionKind) {}
+protected:
+  NonStaticGlobalSpaceRegion(MemRegionManager *mgr, Kind k)
+    : GlobalsSpaceRegion(mgr, k) {}
   
 public:
 
   void dumpToStream(raw_ostream &os) const;
 
   static bool classof(const MemRegion *R) {
-    return R->getKind() == NonStaticGlobalSpaceRegionKind;
+    Kind k = R->getKind();
+    return k >= BEG_NON_STATIC_GLOBAL_MEMSPACES &&
+           k <= END_NON_STATIC_GLOBAL_MEMSPACES;
   }
 };
-  
+
+/// \class The region containing globals which are defined in system/external
+/// headers and are considered modifiable by system calls (ex: errno).
+class GlobalSystemSpaceRegion : public NonStaticGlobalSpaceRegion {
+  friend class MemRegionManager;
+
+  GlobalSystemSpaceRegion(MemRegionManager *mgr)
+    : NonStaticGlobalSpaceRegion(mgr, GlobalSystemSpaceRegionKind) {}
+
+public:
+
+  void dumpToStream(raw_ostream &os) const;
+
+  static bool classof(const MemRegion *R) {
+    return R->getKind() == GlobalSystemSpaceRegionKind;
+  }
+};
+
+/// \class The region containing globals which are considered not to be modified
+/// or point to data which could be modified as a result of a function call
+/// (system or internal). Ex: Const global scalars would be modeled as part of
+/// this region. This region also includes most system globals since they have
+/// low chance of being modified.
+class GlobalImmutableSpaceRegion : public NonStaticGlobalSpaceRegion {
+  friend class MemRegionManager;
+
+  GlobalImmutableSpaceRegion(MemRegionManager *mgr)
+    : NonStaticGlobalSpaceRegion(mgr, GlobalImmutableSpaceRegionKind) {}
+
+public:
+
+  void dumpToStream(raw_ostream &os) const;
+
+  static bool classof(const MemRegion *R) {
+    return R->getKind() == GlobalImmutableSpaceRegionKind;
+  }
+};
+
+/// \class The region containing globals which can be modified by calls to
+/// "internally" defined functions - (for now just) functions other then system
+/// calls.
+class GlobalInternalSpaceRegion : public NonStaticGlobalSpaceRegion {
+  friend class MemRegionManager;
+
+  GlobalInternalSpaceRegion(MemRegionManager *mgr)
+    : NonStaticGlobalSpaceRegion(mgr, GlobalInternalSpaceRegionKind) {}
+
+public:
+
+  void dumpToStream(raw_ostream &os) const;
+
+  static bool classof(const MemRegion *R) {
+    return R->getKind() == GlobalInternalSpaceRegionKind;
+  }
+};
+
 class HeapSpaceRegion : public MemSpaceRegion {
   virtual void anchor();
   friend class MemRegionManager;
@@ -927,7 +999,10 @@ class MemRegionManager {
   llvm::BumpPtrAllocator& A;
   llvm::FoldingSet<MemRegion> Regions;
 
-  NonStaticGlobalSpaceRegion *globals;
+  GlobalInternalSpaceRegion *InternalGlobals;
+  GlobalSystemSpaceRegion *SystemGlobals;
+  GlobalImmutableSpaceRegion *ImmutableGlobals;
+
   
   llvm::DenseMap<const StackFrameContext *, StackLocalsSpaceRegion *> 
     StackLocalsSpaceRegions;
@@ -942,7 +1017,8 @@ class MemRegionManager {
 
 public:
   MemRegionManager(ASTContext &c, llvm::BumpPtrAllocator& a)
-    : C(c), A(a), globals(0), heap(0), unknown(0), code(0) {}
+    : C(c), A(a), InternalGlobals(0), SystemGlobals(0), ImmutableGlobals(0),
+      heap(0), unknown(0), code(0) {}
 
   ~MemRegionManager();
 
@@ -962,7 +1038,9 @@ public:
 
   /// getGlobalsRegion - Retrieve the memory region associated with
   ///  global variables.
-  const GlobalsSpaceRegion *getGlobalsRegion(const CodeTextRegion *R = 0);
+  const GlobalsSpaceRegion *getGlobalsRegion(
+      MemRegion::Kind K = MemRegion::GlobalInternalSpaceRegionKind,
+      const CodeTextRegion *R = 0);
 
   /// getHeapRegion - Retrieve the memory region associated with the
   ///  generic "heap".
@@ -1059,11 +1137,6 @@ public:
   const BlockDataRegion *getBlockDataRegion(const BlockTextRegion *bc,
                                             const LocationContext *lc = NULL);
 
-  bool isGlobalsRegion(const MemRegion* R) {
-    assert(R);
-    return R == globals;
-  }
-  
 private:
   template <typename RegionTy, typename A1>
   RegionTy* getRegion(const A1 a1);

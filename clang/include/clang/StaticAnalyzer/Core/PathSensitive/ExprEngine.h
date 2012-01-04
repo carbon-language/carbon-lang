@@ -470,13 +470,6 @@ private:
                     const ProgramPointTag *tag, bool isLoad);
 
   bool InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, ExplodedNode *Pred);
-  
-  
-public:
-  /// Returns true if calling the specific function or method would possibly
-  /// cause global variables to be invalidated.
-  bool doesInvalidateGlobals(const CallOrObjCMessage &callOrMessage) const;
-  
 };
 
 } // end ento namespace

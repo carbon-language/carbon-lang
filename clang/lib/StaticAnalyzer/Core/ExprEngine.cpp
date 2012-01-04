@@ -24,7 +24,6 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Basic/SourceManager.h"
 #include "clang/Basic/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/ImmutableList.h"
@@ -156,27 +155,6 @@ const ProgramState *ExprEngine::getInitialState(const LocationContext *InitLoc) 
   }
     
   return state;
-}
-
-bool
-ExprEngine::doesInvalidateGlobals(const CallOrObjCMessage &callOrMessage) const
-{
-  if (callOrMessage.isFunctionCall() && !callOrMessage.isCXXCall()) {
-    SVal calleeV = callOrMessage.getFunctionCallee();
-    if (const FunctionTextRegion *codeR =
-          dyn_cast_or_null<FunctionTextRegion>(calleeV.getAsRegion())) {
-      
-      const FunctionDecl *fd = codeR->getDecl();
-      if (const IdentifierInfo *ii = fd->getIdentifier()) {
-        StringRef fname = ii->getName();
-        if (fname == "strlen")
-          return false;
-      }
-    }
-  }
-  
-  // The conservative answer: invalidates globals.
-  return true;
 }
 
 //===----------------------------------------------------------------------===//

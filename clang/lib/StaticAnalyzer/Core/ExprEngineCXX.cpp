@@ -294,15 +294,17 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
     if (ObjTy->isRecordType()) {
       regionsToInvalidate.push_back(EleReg);
       // Invalidate the regions.
+      // TODO: Pass the call to new information as the last argument, to limit
+      // the globals which will get invalidated.
       state = state->invalidateRegions(regionsToInvalidate,
-                                       CNE, blockCount, 0,
-                                       /* invalidateGlobals = */ true);
+                                       CNE, blockCount, 0, 0);
       
     } else {
       // Invalidate the regions.
+      // TODO: Pass the call to new information as the last argument, to limit
+      // the globals which will get invalidated.
       state = state->invalidateRegions(regionsToInvalidate,
-                                       CNE, blockCount, 0,
-                                       /* invalidateGlobals = */ true);
+                                       CNE, blockCount, 0, 0);
 
       if (CNE->hasInitializer()) {
         SVal V = state->getSVal(*CNE->constructor_arg_begin());

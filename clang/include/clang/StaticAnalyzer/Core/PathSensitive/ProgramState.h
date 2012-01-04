@@ -34,8 +34,8 @@ class ASTContext;
 
 namespace ento {
 
+class CallOrObjCMessage;
 class ProgramStateManager;
-
 typedef ConstraintManager* (*ConstraintManagerCreator)(ProgramStateManager&,
                                                        SubEngine&);
 typedef StoreManager* (*StoreManagerCreator)(ProgramStateManager&);
@@ -219,9 +219,9 @@ public:
   ///  cleared from the store. The regions are provided as a continuous array
   ///  from Begin to End. Optionally invalidates global regions as well.
   const ProgramState *invalidateRegions(ArrayRef<const MemRegion *> Regions,
-                                   const Expr *E, unsigned BlockCount,
-                                   StoreManager::InvalidatedSymbols *IS = 0,
-                                   bool invalidateGlobals = false) const;
+                               const Expr *E, unsigned BlockCount,
+                               StoreManager::InvalidatedSymbols *IS = 0,
+                               const CallOrObjCMessage *Call = 0) const;
 
   /// enterStackFrame - Returns the state for entry to the given stack frame,
   ///  preserving the current state.
@@ -384,7 +384,7 @@ private:
   invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
                         const Expr *E, unsigned BlockCount,
                         StoreManager::InvalidatedSymbols &IS,
-                        bool invalidateGlobals) const;
+                        const CallOrObjCMessage *Call) const;
 };
 
 class ProgramStateSet {

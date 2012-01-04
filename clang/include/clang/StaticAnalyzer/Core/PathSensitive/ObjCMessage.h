@@ -19,6 +19,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/PointerUnion.h"
 
 namespace clang {
@@ -231,6 +232,16 @@ public:
   bool isCXXCall() const {
     const CallExpr *ActualCallE = CallE.dyn_cast<const CallExpr *>();
     return ActualCallE && isa<CXXMemberCallExpr>(ActualCallE);
+  }
+
+  /// Check if the callee is declared in the system header.
+  bool isInSystemHeader() const {
+    if (const Decl *FD = getDecl()) {
+      const SourceManager &SM =
+        State->getStateManager().getContext().getSourceManager();
+      return SM.isInSystemHeader(FD->getLocation());
+    }
+    return false;
   }
 
   const Expr *getOriginExpr() const {

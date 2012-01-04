@@ -29,6 +29,7 @@ class StackFrameContext;
 
 namespace ento {
 
+class CallOrObjCMessage;
 class ProgramState;
 class ProgramStateManager;
 class SubRegionMap;
@@ -180,8 +181,8 @@ public:
   ///   symbols to mark the values of invalidated regions.
   /// \param[in,out] IS A set to fill with any symbols that are no longer
   ///   accessible. Pass \c NULL if this information will not be used.
-  /// \param[in] invalidateGlobals If \c true, any non-static global regions
-  ///   are invalidated as well.
+  /// \param[in] Call The call expression which will be used to determine which
+  ///   globals should get invalidated.
   /// \param[in,out] Regions A vector to fill with any regions being
   ///   invalidated. This should include any regions explicitly invalidated
   ///   even if they do not currently have bindings. Pass \c NULL if this
@@ -190,7 +191,7 @@ public:
                                      ArrayRef<const MemRegion *> Regions,
                                      const Expr *E, unsigned Count,
                                      InvalidatedSymbols &IS,
-                                     bool invalidateGlobals,
+                                     const CallOrObjCMessage *Call,
                                      InvalidatedRegions *Invalidated) = 0;
 
   /// enterStackFrame - Let the StoreManager to do something when execution
