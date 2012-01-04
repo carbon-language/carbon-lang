@@ -298,8 +298,7 @@ def checkBuild(SBOutputDir):
     finally:
         SummaryLog.close()
     
-    print "Error: analysis failed. See ", \
-          os.path.join(SBOutputDir, FailuresSummaryFileName)
+    print "Error: analysis failed. See ", SummaryPath
     sys.exit(-1)       
 
 # Auxiliary object to discard stdout.
