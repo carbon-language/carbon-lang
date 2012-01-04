@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 | FileCheck %s
+; RUN: llc < %s -march=x86 -mcpu=pentiumpro | FileCheck %s
 
 define i32 @f(i32 %X) {
 entry:
