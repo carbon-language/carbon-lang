@@ -617,7 +617,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
                  LangOpts.ObjCRuntimeHasWeak)
            .Case("objc_fixed_enum", LangOpts.ObjC2)
            .Case("objc_instancetype", LangOpts.ObjC2)
-           .Case("objc_modules", LangOpts.Modules)
+           .Case("objc_modules", LangOpts.ObjC2 && LangOpts.Modules)
            .Case("objc_nonfragile_abi", LangOpts.ObjCNonFragileABI)
            .Case("objc_weak_class", LangOpts.ObjCNonFragileABI)
            .Case("ownership_holds", true)
@@ -698,6 +698,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("is_trivial", LangOpts.CPlusPlus)
            .Case("is_trivially_copyable", LangOpts.CPlusPlus)
            .Case("is_union", LangOpts.CPlusPlus)
+           .Case("modules", LangOpts.Modules)
            .Case("tls", PP.getTargetInfo().isTLSSupported())
            .Case("underlying_type", LangOpts.CPlusPlus)
            .Default(false);
