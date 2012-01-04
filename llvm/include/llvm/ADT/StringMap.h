@@ -280,13 +280,13 @@ public:
   iterator find(StringRef Key) {
     int Bucket = FindKey(Key);
     if (Bucket == -1) return end();
-    return iterator(TheTable+Bucket);
+    return iterator(TheTable+Bucket, true);
   }
 
   const_iterator find(StringRef Key) const {
     int Bucket = FindKey(Key);
     if (Bucket == -1) return end();
-    return const_iterator(TheTable+Bucket);
+    return const_iterator(TheTable+Bucket, true);
   }
 
    /// lookup - Return the entry for the specified key, or a default
