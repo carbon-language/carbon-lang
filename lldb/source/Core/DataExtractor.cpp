@@ -1577,12 +1577,42 @@ DataExtractor::Dump (Stream *s,
         case eFormatCString:
             {
                 const char *cstr = GetCStr(&offset);
-                if (cstr)
-                    s->Printf("\"%s\"", cstr);
-                else
+                
+                if (!cstr)
                 {
                     s->Printf("NULL");
                     offset = UINT32_MAX;
+                }
+                else
+                {
+                    s->PutChar('\"');
+                    
+                    while (const char c = *cstr)
+                    {                    
+                        if (isprint(c))
+                        {
+                            s->PutChar(c);
+                        }
+                        else
+                        {
+                            switch (c)
+                            {
+                            case '\033': s->Printf ("\\e"); break;
+                            case '\a': s->Printf ("\\a"); break;
+                            case '\b': s->Printf ("\\b"); break;
+                            case '\f': s->Printf ("\\f"); break;
+                            case '\n': s->Printf ("\\n"); break;
+                            case '\r': s->Printf ("\\r"); break;
+                            case '\t': s->Printf ("\\t"); break;
+                            case '\v': s->Printf ("\\v"); break;
+                            default:   s->Printf ("\\x%2.2x", c); break;
+                            }
+                        }
+                        
+                        ++cstr;
+                    }
+                    
+                    s->PutChar('\"');
                 }
             }
             break;
