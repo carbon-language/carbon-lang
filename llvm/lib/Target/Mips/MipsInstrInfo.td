@@ -522,26 +522,26 @@ class JumpFR<bits<6> op, bits<6> func, string instr_asm, RegisterClass RC>:
 }
 
 // Jump and Link (Call)
-let isCall=1, hasDelaySlot=1,
-  // All calls clobber the non-callee saved registers...
-  Defs = [AT, V0, V1, A0, A1, A2, A3, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9,
-          K0, K1, D0, D1, D2, D3, D4, D5, D6, D7, D8, D9], Uses = [GP] in {
+let isCall=1, hasDelaySlot=1 in {
   class JumpLink<bits<6> op, string instr_asm>:
     FJ<op, (outs), (ins calltarget:$target, variable_ops),
        !strconcat(instr_asm, "\t$target"), [(MipsJmpLink imm:$target)],
        IIBranch>;
 
-  class JumpLinkReg<bits<6> op, bits<6> func, string instr_asm>:
-    FR<op, func, (outs), (ins CPURegs:$rs, variable_ops),
-       !strconcat(instr_asm, "\t$rs"), [(MipsJmpLink CPURegs:$rs)], IIBranch> {
+  class JumpLinkReg<bits<6> op, bits<6> func, string instr_asm,
+                    RegisterClass RC>:
+    FR<op, func, (outs), (ins RC:$rs, variable_ops),
+       !strconcat(instr_asm, "\t$rs"), [(MipsJmpLink RC:$rs)], IIBranch> {
     let rt = 0;
     let rd = 31;
     let shamt = 0;
   }
 
-  class BranchLink<string instr_asm>:
-    FI<0x1, (outs), (ins CPURegs:$rs, brtarget:$imm16, variable_ops),
-       !strconcat(instr_asm, "\t$rs, $imm16"), [], IIBranch>;
+  class BranchLink<string instr_asm, bits<5> _rt, RegisterClass RC>:
+    FI<0x1, (outs), (ins RC:$rs, brtarget:$imm16, variable_ops),
+       !strconcat(instr_asm, "\t$rs, $imm16"), [], IIBranch> {
+    let rt = _rt;
+  }
 }
 
 // Mul, Div
@@ -855,8 +855,6 @@ def SC_P8 : SCBase<0x38, "sc", CPURegs, mem64>, Requires<[IsN64]>;
 /// Jump and Branch Instructions
 def J       : JumpFJ<0x02, "j">;
 def JR      : JumpFR<0x00, 0x08, "jr", CPURegs>;
-def JAL     : JumpLink<0x03, "jal">;
-def JALR    : JumpLinkReg<0x00, 0x09, "jalr">;
 def B       : UncondBranch<0x04, "b">;
 def BEQ     : CBranch<0x04, "beq", seteq, CPURegs>;
 def BNE     : CBranch<0x05, "bne", setne, CPURegs>;
@@ -865,10 +863,14 @@ def BGTZ    : CBranchZero<0x07, 0, "bgtz", setgt, CPURegs>;
 def BLEZ    : CBranchZero<0x06, 0, "blez", setle, CPURegs>;
 def BLTZ    : CBranchZero<0x01, 0, "bltz", setlt, CPURegs>;
 
-let rt=0x11 in
-  def BGEZAL  : BranchLink<"bgezal">;
-let rt=0x10 in
-  def BLTZAL  : BranchLink<"bltzal">;
+// All calls clobber the non-callee saved registers...
+let Defs = [AT, V0, V1, A0, A1, A2, A3, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9,
+            K0, K1, GP, D0, D1, D2, D3, D4, D5, D6, D7, D8, D9] in {
+  def JAL  : JumpLink<0x03, "jal">;
+  def JALR : JumpLinkReg<0x00, 0x09, "jalr", CPURegs>;
+  def BGEZAL  : BranchLink<"bgezal", 0x11, CPURegs>;
+  def BLTZAL  : BranchLink<"bltzal", 0x10, CPURegs>;
+}
 
 let isReturn=1, isTerminator=1, hasDelaySlot=1,
     isBarrier=1, hasCtrlDep=1, rd=0, rt=0, shamt=0 in
