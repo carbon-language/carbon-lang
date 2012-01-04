@@ -35,13 +35,9 @@ static std::string getOSVersion() {
   return info.release;
 }
 
-std::string sys::getDefaultTargetTriple() {
-  StringRef TargetTripleString(LLVM_DEFAULT_TARGET_TRIPLE);
-  std::pair<StringRef, StringRef> ArchSplit = TargetTripleString.split('-');
-
-  // Normalize the arch, since the target triple may not actually match the target.
+std::string getTriple(StringRef &TripleString) {
+  std::pair<StringRef, StringRef> ArchSplit = TripleString.split('-');
   std::string Arch = ArchSplit.first;
-
   std::string Triple(Arch);
   Triple += '-';
   Triple += ArchSplit.second;
@@ -60,4 +56,14 @@ std::string sys::getDefaultTargetTriple() {
   }
 
   return Triple;
+}
+
+std::string sys::getDefaultTargetTriple() {
+  StringRef TargetTripleString(LLVM_DEFAULT_TARGET_TRIPLE);
+  return getTriple(TargetTripleString);
+}
+
+std::string sys::getHostTriple() {
+  StringRef HostTripleString(LLVM_HOST_TRIPLE);
+  return getTriple(HostTripleString);
 }

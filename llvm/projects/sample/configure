@@ -8854,7 +8854,7 @@ dgux*)
   shlibpath_var=LD_LIBRARY_PATH
   ;;
 
-freebsd1*)
+freebsd1.*)
   dynamic_linker=no
   ;;
 
@@ -8877,7 +8877,7 @@ freebsd* | dragonfly*)
     objformat=`/usr/bin/objformat`
   else
     case $host_os in
-    freebsd[123]*) objformat=aout ;;
+    freebsd[123].*) objformat=aout ;;
     *) objformat=elf ;;
     esac
   fi
@@ -8895,7 +8895,7 @@ freebsd* | dragonfly*)
   esac
   shlibpath_var=LD_LIBRARY_PATH
   case $host_os in
-  freebsd2*)
+  freebsd2.*)
     shlibpath_overrides_runpath=yes
     ;;
   freebsd3.[01]* | freebsdelf3.[01]*)
@@ -10409,7 +10409,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10423 "configure"
+#line 10412 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -20815,6 +20815,11 @@ _ACEOF
 
 cat >>confdefs.h <<_ACEOF
 #define LLVM_CONFIGTIME "$LLVM_CONFIGTIME"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define LLVM_HOST_TRIPLE "$host"
 _ACEOF
 
 

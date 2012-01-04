@@ -40,6 +40,9 @@
 /* Has gcc/MSVC atomic intrinsics */
 #cmakedefine01 LLVM_HAS_ATOMICS
 
+/* Host triple LLVM will run on */
+#cmakedefine LLVM_HOST_TRIPLE "${LLVM_HOST_TRIPLE}"
+
 /* Installation directory for include files */
 #cmakedefine LLVM_INCLUDEDIR "${LLVM_INCLUDEDIR}"
 
