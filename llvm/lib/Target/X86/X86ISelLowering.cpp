@@ -13139,6 +13139,37 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
       }
   }
 
+  // Canonicalize max and min:
+  // (x > y) ? x : y -> (x >= y) ? x : y
+  // (x < y) ? x : y -> (x <= y) ? x : y
+  // This allows use of COND_S / COND_NS (see TranslateX86CC) which eliminates
+  // the need for an extra compare
+  // against zero. e.g.
+  // (x - y) > 0 : (x - y) ? 0 -> (x - y) >= 0 : (x - y) ? 0
+  // subl   %esi, %edi
+  // testl  %edi, %edi
+  // movl   $0, %eax
+  // cmovgl %edi, %eax
+  // =>
+  // xorl   %eax, %eax
+  // subl   %esi, $edi
+  // cmovsl %eax, %edi
+  if (N->getOpcode() == ISD::SELECT && Cond.getOpcode() == ISD::SETCC &&
+      DAG.isEqualTo(LHS, Cond.getOperand(0)) &&
+      DAG.isEqualTo(RHS, Cond.getOperand(1))) {
+    ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
+    switch (CC) {
+    default: break;
+    case ISD::SETLT:
+    case ISD::SETGT: {
+      ISD::CondCode NewCC = (CC == ISD::SETLT) ? ISD::SETLE : ISD::SETGE;
+      Cond = DAG.getSetCC(Cond.getDebugLoc(), Cond.getValueType(),
+                          Cond.getOperand(0), Cond.getOperand(1), NewCC);
+      return DAG.getNode(ISD::SELECT, DL, VT, Cond, LHS, RHS);
+    }
+    }
+  }
+
   return SDValue();
 }
 
