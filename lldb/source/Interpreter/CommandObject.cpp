@@ -89,6 +89,8 @@ CommandObject::GetSyntax ()
         if (m_arguments.size() > 0)
         {
             syntax_str.Printf (" ");
+            if (WantsRawCommandString())
+                syntax_str.Printf("-- ");
             GetFormattedCommandArguments (syntax_str);
         }
         m_cmd_syntax = syntax_str.GetData ();

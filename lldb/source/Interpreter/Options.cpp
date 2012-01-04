@@ -555,9 +555,24 @@ Options::GenerateOptionUsage
                 }
             }
         }
+        
         if (arguments_str.GetSize() > 0)
+        {
+            if (cmd->WantsRawCommandString())
+                strm.Printf(" --");
+            
             strm.Printf (" %s", arguments_str.GetData());
+        }
     }
+    
+    if (cmd->WantsRawCommandString() &&
+        arguments_str.GetSize() > 0)
+    {        
+        strm.PutChar('\n');
+        strm.Indent(name);
+        strm.Printf(" %s", arguments_str.GetData());
+    }
+    
     strm.Printf ("\n\n");
 
     // Now print out all the detailed information about the various options:  long form, short form and help text:
