@@ -4,7 +4,7 @@
 #if __has_attribute(objc_suppress_autosynthesis)
 __attribute ((objc_suppress_autosynthesis)) 
 #endif
-@interface NoAuto
+@interface NoAuto // expected-note 2 {{class with specified objc_suppress_autosynthesis attribute is declared here}}
 @property int NoAutoProp; // expected-note 2 {{property declared here}}
 @end
 
@@ -13,7 +13,7 @@ __attribute ((objc_suppress_autosynthesis))
 @end
 
 __attribute ((objc_suppress_autosynthesis))  // redundant, just for testing
-@interface Sub : NoAuto 
+@interface Sub : NoAuto  // expected-note 3 {{class with specified objc_suppress_autosynthesis attribute is declared here}}
 @property (copy) id SubProperty; // expected-note 2 {{property declared here}}
 @end
 
