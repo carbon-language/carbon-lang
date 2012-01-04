@@ -640,7 +640,10 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     
     // If this is a missing declspec in a block literal return context, then it
     // is inferred from the return statements inside the block.
-    if (isOmittedBlockReturnType(declarator)) {
+    // The declspec is always missing in a lambda expr context; it is either
+    // specified with a trailing return type or inferred.
+    if (declarator.getContext() == Declarator::LambdaExprContext ||
+        isOmittedBlockReturnType(declarator)) {
       Result = Context.DependentTy;
       break;
     }
@@ -1785,6 +1788,9 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
     case Declarator::KNRTypeListContext:
       llvm_unreachable("K&R type lists aren't allowed in C++");
       break;
+    case Declarator::LambdaExprContext:
+      llvm_unreachable("Can't specify a type specifier in lambda grammar");
+      break;
     case Declarator::ObjCParameterContext:
     case Declarator::ObjCResultContext:
     case Declarator::PrototypeContext:
@@ -1875,6 +1881,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
     case Declarator::BlockContext:
     case Declarator::ForContext:
     case Declarator::BlockLiteralContext:
+    case Declarator::LambdaExprContext:
       // C++0x [dcl.type]p3:
       //   A type-specifier-seq shall not define a class or enumeration unless
       //   it appears in the type-id of an alias-declaration (7.1.3) that is not
@@ -2058,7 +2065,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
                  diag::err_trailing_return_in_parens)
               << T << D.getDeclSpec().getSourceRange();
             D.setInvalidType(true);
-          } else if (T.hasQualifiers() || !isa<AutoType>(T)) {
+          } else if (D.getContext() != Declarator::LambdaExprContext &&
+                     (T.hasQualifiers() || !isa<AutoType>(T))) {
             S.Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
                  diag::err_trailing_return_without_auto)
               << T << D.getDeclSpec().getSourceRange();
@@ -2578,6 +2586,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
     case Declarator::CXXCatchContext:
     case Declarator::ObjCCatchContext:
     case Declarator::BlockLiteralContext:
+    case Declarator::LambdaExprContext:
     case Declarator::TemplateTypeArgContext:
       // FIXME: We may want to allow parameter packs in block-literal contexts
       // in the future.

@@ -1416,6 +1416,7 @@ public:
     CXXCatchContext,     // C++ catch exception-declaration
     ObjCCatchContext,    // Objective-C catch exception-declaration
     BlockLiteralContext,  // Block literal declarator.
+    LambdaExprContext,   // Lambda-expression declarator.
     TemplateTypeArgContext, // Template type argument.
     AliasDeclContext,    // C++0x alias-declaration.
     AliasTemplateContext // C++0x alias-declaration template.
@@ -1582,6 +1583,7 @@ public:
     case CXXCatchContext:
     case ObjCCatchContext:
     case BlockLiteralContext:
+    case LambdaExprContext:
     case TemplateTypeArgContext:
       return true;
     }
@@ -1612,6 +1614,7 @@ public:
     case ObjCParameterContext:
     case ObjCResultContext:
     case BlockLiteralContext:
+    case LambdaExprContext:
     case TemplateTypeArgContext:
       return false;
     }
@@ -1643,6 +1646,7 @@ public:
     case AliasDeclContext:
     case AliasTemplateContext:
     case BlockLiteralContext:
+    case LambdaExprContext:
     case TemplateTypeArgContext:
       return false;
     }

@@ -4780,7 +4780,6 @@ Sema::CheckMicrosoftIfExistsSymbol(Scope *S, SourceLocation KeywordLoc,
 
 void Sema::ActOnLambdaStart(SourceLocation StartLoc, Scope *CurScope) {
   // FIXME: Add lambda-scope
-  // FIXME: Build lambda-decl
   // FIXME: PushDeclContext
 
   // Enter a new evaluation context to insulate the block from any
@@ -4789,7 +4788,10 @@ void Sema::ActOnLambdaStart(SourceLocation StartLoc, Scope *CurScope) {
 }
 
 void Sema::ActOnLambdaArguments(Declarator &ParamInfo, Scope *CurScope) {
-  // FIXME: Implement
+  TypeSourceInfo *MethodTyInfo;
+  MethodTyInfo = GetTypeForDeclarator(ParamInfo, CurScope);
+
+  // FIXME: Build CXXMethodDecl
 }
 
 void Sema::ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope) {

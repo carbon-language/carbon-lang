@@ -715,7 +715,7 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
 
   // Parse lambda-declarator[opt].
   DeclSpec DS(AttrFactory);
-  Declarator D(DS, Declarator::BlockLiteralContext);
+  Declarator D(DS, Declarator::LambdaExprContext);
 
   if (Tok.is(tok::l_paren)) {
     ParseScope PrototypeScope(this,
