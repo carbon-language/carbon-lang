@@ -3635,13 +3635,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
 
   // Newer linkers support -demangle, pass it if supported and not disabled by
   // the user.
-  //
-  // FIXME: We temporarily avoid passing -demangle to any iOS linker, because
-  // unfortunately we can't be guaranteed that the linker version used there
-  // will match the linker version detected at configure time. We need the
-  // universal driver.
-  if (Version[0] >= 100 && !Args.hasArg(options::OPT_Z_Xlinker__no_demangle) &&
-      !DarwinTC.isTargetIPhoneOS()) {
+  if (Version[0] >= 100 && !Args.hasArg(options::OPT_Z_Xlinker__no_demangle)) {
     // Don't pass -demangle to ld_classic.
     //
     // FIXME: This is a temporary workaround, ld should be handling this.
