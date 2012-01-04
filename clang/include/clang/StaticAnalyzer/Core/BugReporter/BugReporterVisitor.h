@@ -159,6 +159,12 @@ public:
                                      const bool tookTrue,
                                      BugReporterContext &BRC,
                                      const LocationContext *LC);
+  
+  PathDiagnosticPiece *VisitConditionVariable(StringRef LhsString,
+                                              const Expr *CondVarExpr,
+                                              const bool tookTrue,
+                                              BugReporterContext &BRC,
+                                              const LocationContext *LC);
 
   bool patternMatch(const Expr *Ex,
                     llvm::raw_ostream &Out,
