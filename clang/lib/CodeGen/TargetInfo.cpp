@@ -3041,6 +3041,7 @@ class MipsABIInfo : public ABIInfo {
   bool IsO32;
   unsigned MinABIStackAlignInBytes;
   llvm::Type* HandleStructTy(QualType Ty) const;
+  llvm::Type* returnAggregateInRegs(QualType RetTy, uint64_t Size) const;
 public:
   MipsABIInfo(CodeGenTypes &CGT, bool _IsO32) :
     ABIInfo(CGT), IsO32(_IsO32), MinABIStackAlignInBytes(IsO32 ? 4 : 8) {}
@@ -3157,14 +3158,64 @@ ABIArgInfo MipsABIInfo::classifyArgumentType(QualType Ty) const {
           ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
 }
 
+llvm::Type*
+MipsABIInfo::returnAggregateInRegs(QualType RetTy, uint64_t Size) const {
+  const RecordType *RT = RetTy->getAsStructureType();
+  SmallVector<llvm::Type*, 2> RTList;
+
+  if (RT) {
+    const RecordDecl *RD = RT->getDecl();
+    RecordDecl::field_iterator b = RD->field_begin(), e = RD->field_end(), i;
+
+    for (i = b; (i != e) && (std::distance(b, i) < 2); ++i) {
+      const BuiltinType *BT = (*i)->getType()->getAs<BuiltinType>();
+
+      if (!BT || !BT->isFloatingPoint())
+        break;
+
+      switch (BT->getKind()) {
+      case BuiltinType::Float:
+        RTList.push_back(llvm::Type::getFloatTy(getVMContext()));
+        break;
+      case BuiltinType::Double:
+        RTList.push_back(llvm::Type::getDoubleTy(getVMContext()));
+        break;
+      case BuiltinType::LongDouble:
+        RTList.push_back(llvm::Type::getFP128Ty(getVMContext()));
+        break;
+      default:
+        assert(false && "Unexpexted floating point type.");
+      }
+    }
+
+    if (i == e)
+      return llvm::StructType::get(getVMContext(), RTList,
+                                   RD->hasAttr<PackedAttr>());
+
+    RTList.clear();
+  }
+
+  RTList.push_back(llvm::IntegerType::get(getVMContext(),
+                                          std::min(Size, (uint64_t)64)));
+  if (Size > 64)
+    RTList.push_back(llvm::IntegerType::get(getVMContext(), Size - 64));
+
+  return llvm::StructType::get(getVMContext(), RTList);
+}
+
 ABIArgInfo MipsABIInfo::classifyReturnType(QualType RetTy) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
   if (isAggregateTypeForABI(RetTy)) {
-    if ((IsO32 && RetTy->isAnyComplexType()) ||
-        (!IsO32 && (getContext().getTypeSize(RetTy) <= 128)))
-      return ABIArgInfo::getDirect();
+    uint64_t Size = getContext().getTypeSize(RetTy);
+    if (Size <= 128) {
+      if (RetTy->isAnyComplexType())
+        return ABIArgInfo::getDirect();
+
+      if (!IsO32)
+        return ABIArgInfo::getDirect(returnAggregateInRegs(RetTy, Size));
+    }
 
     return ABIArgInfo::getIndirect(0);
   }
