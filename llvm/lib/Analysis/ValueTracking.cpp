@@ -1879,8 +1879,12 @@ bool llvm::onlyUsedByLifetimeMarkers(const Value *V) {
   return true;
 }
 
-bool llvm::isSafeToSpeculativelyExecute(const Instruction *Inst,
+bool llvm::isSafeToSpeculativelyExecute(const Value *V,
                                         const TargetData *TD) {
+  const Operator *Inst = dyn_cast<Operator>(V);
+  if (!Inst)
+    return false;
+
   for (unsigned i = 0, e = Inst->getNumOperands(); i != e; ++i)
     if (Constant *C = dyn_cast<Constant>(Inst->getOperand(i)))
       if (C->canTrap())

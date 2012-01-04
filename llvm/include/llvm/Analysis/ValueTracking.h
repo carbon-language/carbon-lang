@@ -174,7 +174,7 @@ namespace llvm {
   /// the correct dominance relationships for the operands and users hold.
   /// However, this method can return true for instructions that read memory;
   /// for such instructions, moving them may change the resulting value.
-  bool isSafeToSpeculativelyExecute(const Instruction *Inst,
+  bool isSafeToSpeculativelyExecute(const Value *V,
                                     const TargetData *TD = 0);
 
 } // end namespace llvm
