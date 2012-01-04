@@ -1502,8 +1502,8 @@ static int readOperands(struct InternalInstruction* insn) {
       return -1;
     case ENCODING_IB:
       if (sawRegImm) {
-        // Saw a register immediate so don't read again and instead split the
-        // previous immediate.  FIXME: This is a hack
+        /* Saw a register immediate so don't read again and instead split the
+           previous immediate.  FIXME: This is a hack. */
         insn->immediates[insn->numImmediatesConsumed] =
           insn->immediates[insn->numImmediatesConsumed - 1] & 0xf;
         ++insn->numImmediatesConsumed;
