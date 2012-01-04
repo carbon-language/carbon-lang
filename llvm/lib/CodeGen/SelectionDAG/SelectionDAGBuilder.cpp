@@ -2778,12 +2778,13 @@ void SelectionDAGBuilder::visitExtractElement(const User &I) {
                            TLI.getValueType(I.getType()), InVec, InIdx));
 }
 
-// Utility for visitShuffleVector - Returns true if the mask is mask starting
-// from SIndx and increasing to the element length (undefs are allowed).
-static bool SequentialMask(SmallVectorImpl<int> &Mask, unsigned SIndx) {
-  unsigned MaskNumElts = Mask.size();
-  for (unsigned i = 0; i != MaskNumElts; ++i)
-    if ((Mask[i] >= 0) && (Mask[i] != (int)(i + SIndx)))
+// Utility for visitShuffleVector - Return true if every element in Mask,
+// begining // from position Pos and ending in Pos+Size, falls within the
+// specified sequential range [L, L+Pos). or is undef.
+static bool isSequentialInRange(const SmallVectorImpl<int> &Mask,
+                                int Pos, int Size, int Low) {
+  for (int i = Pos, e = Pos+Size; i != e; ++i, ++Low)
+    if (Mask[i] >= 0 && Mask[i] != Low)
       return false;
   return true;
 }
@@ -2820,11 +2821,23 @@ void SelectionDAGBuilder::visitShuffleVector(const User &I) {
     // Mask is longer than the source vectors and is a multiple of the source
     // vectors.  We can use concatenate vector to make the mask and vectors
     // lengths match.
-    if (SrcNumElts*2 == MaskNumElts && SequentialMask(Mask, 0)) {
-      // The shuffle is concatenating two vectors together.
-      setValue(&I, DAG.getNode(ISD::CONCAT_VECTORS, getCurDebugLoc(),
-                               VT, Src1, Src2));
-      return;
+    if (SrcNumElts*2 == MaskNumElts) {
+      // First check for Src1 in low and Src2 in high
+      if (isSequentialInRange(Mask, 0, SrcNumElts, 0) &&
+          isSequentialInRange(Mask, SrcNumElts, SrcNumElts, SrcNumElts)) {
+        // The shuffle is concatenating two vectors together.
+        setValue(&I, DAG.getNode(ISD::CONCAT_VECTORS, getCurDebugLoc(),
+                                 VT, Src1, Src2));
+        return;
+      }
+      // Then check for Src2 in low and Src1 in high
+      if (isSequentialInRange(Mask, 0, SrcNumElts, SrcNumElts) &&
+          isSequentialInRange(Mask, SrcNumElts, SrcNumElts, 0)) {
+        // The shuffle is concatenating two vectors together.
+        setValue(&I, DAG.getNode(ISD::CONCAT_VECTORS, getCurDebugLoc(),
+                                 VT, Src2, Src1));
+        return;
+      }
     }
 
     // Pad both vectors with undefs to make them the same length as the mask.
