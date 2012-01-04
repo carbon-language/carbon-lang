@@ -22,6 +22,7 @@
 #include "llvm/ADT/StringRef.h"
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace llvm {
   class raw_ostream;
@@ -53,9 +54,15 @@ public:
   /// \brief The umbrella header or directory.
   llvm::PointerUnion<const DirectoryEntry *, const FileEntry *> Umbrella;
   
+private:
   /// \brief The submodules of this module, indexed by name.
-  llvm::StringMap<Module *> SubModules;
+  std::vector<Module *> SubModules;
   
+  /// \brief A mapping from the submodule name to the index into the 
+  /// \c SubModules vector at which that submodule resides.
+  llvm::StringMap<unsigned> SubModuleIndex;
+  
+public:
   /// \brief The headers that are part of this module.
   llvm::SmallVector<const FileEntry *, 2> Headers;
 
@@ -152,16 +159,7 @@ public:
   
   /// \brief Construct  a new module or submodule.
   Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent, 
-         bool IsFramework, bool IsExplicit)
-    : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent), 
-      Umbrella(), IsAvailable(true), IsFromModuleFile(false), 
-      IsFramework(IsFramework), IsExplicit(IsExplicit), InferSubmodules(false), 
-      InferExplicitSubmodules(false), InferExportWildcard(false),
-      NameVisibility(Hidden) 
-  { 
-    if (Parent && !Parent->isAvailable())
-      IsAvailable = false;
-  }
+         bool IsFramework, bool IsExplicit);
   
   ~Module();
   
@@ -245,6 +243,19 @@ public:
   /// evaluate the availability of this feature.
   void addRequirement(StringRef Feature, const LangOptions &LangOpts);
 
+  /// \brief Find the submodule with the given name.
+  ///
+  /// \returns The submodule if found, or NULL otherwise.
+  Module *findSubmodule(StringRef Name) const;
+  
+  typedef std::vector<Module *>::iterator submodule_iterator;
+  typedef std::vector<Module *>::const_iterator submodule_const_iterator;
+  
+  submodule_iterator submodule_begin() { return SubModules.begin(); }
+  submodule_const_iterator submodule_begin() const {return SubModules.begin();}
+  submodule_iterator submodule_end()   { return SubModules.end(); }
+  submodule_const_iterator submodule_end() const { return SubModules.end(); }
+  
   /// \brief Print the module map for this module to the given stream. 
   ///
   void print(llvm::raw_ostream &OS, unsigned Indent = 0) const;

@@ -186,11 +186,10 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
   }
   
   // Recurse into submodules.
-  for (llvm::StringMap<clang::Module *>::iterator
-            Sub = Module->SubModules.begin(),
-         SubEnd = Module->SubModules.end();
+  for (clang::Module::submodule_iterator Sub = Module->submodule_begin(),
+                                      SubEnd = Module->submodule_end();
        Sub != SubEnd; ++Sub)
-    collectModuleHeaderIncludes(LangOpts, Sub->getValue(), Includes);
+    collectModuleHeaderIncludes(LangOpts, *Sub, Includes);
 }
 
 bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI, 

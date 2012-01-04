@@ -503,10 +503,10 @@ void Sema::ActOnEndOfTranslationUnit() {
         ModMap.resolveExports(Mod, /*Complain=*/false);
         
         // Queue the submodules, so their exports will also be resolved.
-        for (llvm::StringMap<Module *>::iterator Sub = Mod->SubModules.begin(),
-             SubEnd = Mod->SubModules.end();
+        for (Module::submodule_iterator Sub = Mod->submodule_begin(),
+                                     SubEnd = Mod->submodule_end();
              Sub != SubEnd; ++Sub) {
-          Stack.push_back(Sub->getValue());
+          Stack.push_back(*Sub);
         }
       }
     }

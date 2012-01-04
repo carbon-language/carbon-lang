@@ -263,26 +263,20 @@ Module *ModuleMap::lookupModuleQualified(StringRef Name, Module *Context) {
   if (!Context)
     return findModule(Name);
   
-  llvm::StringMap<Module *>::iterator Sub = Context->SubModules.find(Name);
-  if (Sub != Context->SubModules.end())
-    return Sub->getValue();
-
-  return 0;
+  return Context->findSubmodule(Name);
 }
 
 std::pair<Module *, bool> 
 ModuleMap::findOrCreateModule(StringRef Name, Module *Parent, bool IsFramework,
                               bool IsExplicit) {
   // Try to find an existing module with this name.
-  if (Module *Found = Parent? Parent->SubModules[Name] : Modules[Name])
-    return std::make_pair(Found, false);
+  if (Module *Sub = lookupModuleQualified(Name, Parent))
+    return std::make_pair(Sub, false);
   
   // Create a new module with this name.
   Module *Result = new Module(Name, SourceLocation(), Parent, IsFramework, 
                               IsExplicit);
-  if (Parent)
-    Parent->SubModules[Name] = Result;
-  else
+  if (!Parent)
     Modules[Name] = Result;
   return std::make_pair(Result, true);
 }
@@ -311,12 +305,9 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   
   Module *Result = new Module(ModuleName, SourceLocation(), Parent,
                               /*IsFramework=*/true, /*IsExplicit=*/false);
-  
-  if (Parent)
-    Parent->SubModules[ModuleName] = Result;
-  else
+  if (!Parent)
     Modules[ModuleName] = Result;
-
+  
   // umbrella header "umbrella-header-name"
   Result->Umbrella = UmbrellaHeader;
   Headers[UmbrellaHeader] = Result;
@@ -798,15 +789,10 @@ void ModuleMapParser::parseModuleDecl() {
   SourceLocation LBraceLoc = consumeToken();
   
   // Determine whether this (sub)module has already been defined.
-  llvm::StringMap<Module *> &ModuleSpace
-    = ActiveModule? ActiveModule->SubModules : Map.Modules;
-  llvm::StringMap<Module *>::iterator ExistingModule
-    = ModuleSpace.find(ModuleName);
-  if (ExistingModule != ModuleSpace.end()) {
+  if (Module *Existing = Map.lookupModuleQualified(ModuleName, ActiveModule)) {
     Diags.Report(ModuleNameLoc, diag::err_mmap_module_redefinition)
       << ModuleName;
-    Diags.Report(ExistingModule->getValue()->DefinitionLoc,
-                 diag::note_mmap_prev_definition);
+    Diags.Report(Existing->DefinitionLoc, diag::note_mmap_prev_definition);
     
     // Skip the module definition.
     skipUntil(MMToken::RBrace);
@@ -818,9 +804,9 @@ void ModuleMapParser::parseModuleDecl() {
   }
 
   // Start defining this module.
-  ActiveModule = new Module(ModuleName, ModuleNameLoc, ActiveModule, Framework,
-                            Explicit);
-  ModuleSpace[ModuleName] = ActiveModule;
+  ActiveModule = Map.findOrCreateModule(ModuleName, ActiveModule, Framework,
+                                        Explicit).first;
+  ActiveModule->DefinitionLoc = ModuleNameLoc;
   
   bool Done = false;
   do {

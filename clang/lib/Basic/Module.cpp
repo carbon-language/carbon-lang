@@ -20,11 +20,27 @@
 #include "llvm/ADT/StringSwitch.h"
 using namespace clang;
 
+Module::Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent, 
+               bool IsFramework, bool IsExplicit)
+  : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent), 
+    Umbrella(), IsAvailable(true), IsFromModuleFile(false), 
+    IsFramework(IsFramework), IsExplicit(IsExplicit), InferSubmodules(false), 
+    InferExplicitSubmodules(false), InferExportWildcard(false),
+    NameVisibility(Hidden) 
+{ 
+  if (Parent) {
+    if (!Parent->isAvailable())
+      IsAvailable = false;
+    
+    Parent->SubModuleIndex[Name] = Parent->SubModules.size();
+    Parent->SubModules.push_back(this);
+  }
+}
+
 Module::~Module() {
-  for (llvm::StringMap<Module *>::iterator I = SubModules.begin(), 
-                                        IEnd = SubModules.end();
+  for (submodule_iterator I = submodule_begin(), IEnd = submodule_end();
        I != IEnd; ++I) {
-    delete I->getValue();
+    delete *I;
   }
   
 }
@@ -126,13 +142,21 @@ void Module::addRequirement(StringRef Feature, const LangOptions &LangOpts) {
       continue;
 
     Current->IsAvailable = false;
-    for (llvm::StringMap<Module *>::iterator Sub = Current->SubModules.begin(),
-                                          SubEnd = Current->SubModules.end();
+    for (submodule_iterator Sub = Current->submodule_begin(),
+                         SubEnd = Current->submodule_end();
          Sub != SubEnd; ++Sub) {
-      if (Sub->second->IsAvailable)
-        Stack.push_back(Sub->second);
+      if ((*Sub)->IsAvailable)
+        Stack.push_back(*Sub);
     }
   }
+}
+
+Module *Module::findSubmodule(StringRef Name) const {
+  llvm::StringMap<unsigned>::const_iterator Pos = SubModuleIndex.find(Name);
+  if (Pos == SubModuleIndex.end())
+    return 0;
+  
+  return SubModules[Pos->getValue()];
 }
 
 static void printModuleId(llvm::raw_ostream &OS, const ModuleId &Id) {
@@ -181,10 +205,9 @@ void Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
     OS << "\"\n";
   }
   
-  for (llvm::StringMap<Module *>::const_iterator MI = SubModules.begin(), 
-                                              MIEnd = SubModules.end();
+  for (submodule_const_iterator MI = submodule_begin(), MIEnd = submodule_end();
        MI != MIEnd; ++MI)
-    MI->getValue()->print(OS, Indent + 2);
+    (*MI)->print(OS, Indent + 2);
   
   for (unsigned I = 0, N = Exports.size(); I != N; ++I) {
     OS.indent(Indent + 2);

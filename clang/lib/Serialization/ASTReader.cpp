@@ -2541,11 +2541,11 @@ void ASTReader::makeModuleVisible(Module *Mod,
     
     // Push any non-explicit submodules onto the stack to be marked as
     // visible.
-    for (llvm::StringMap<Module *>::iterator Sub = Mod->SubModules.begin(),
-                                          SubEnd = Mod->SubModules.end();
+    for (Module::submodule_iterator Sub = Mod->submodule_begin(),
+                                 SubEnd = Mod->submodule_end();
          Sub != SubEnd; ++Sub) {
-      if (!Sub->getValue()->IsExplicit && Visited.insert(Sub->getValue()))
-        Stack.push_back(Sub->getValue());
+      if (!(*Sub)->IsExplicit && Visited.insert(*Sub))
+        Stack.push_back(*Sub);
     }
     
     // Push any exported modules onto the stack to be marked as visible.

@@ -1859,10 +1859,10 @@ unsigned ASTWriter::getSubmoduleID(Module *Mod) {
 /// given module).
 static unsigned getNumberOfModules(Module *Mod) {
   unsigned ChildModules = 0;
-  for (llvm::StringMap<Module *>::iterator Sub = Mod->SubModules.begin(),
-                                        SubEnd = Mod->SubModules.end();
+  for (Module::submodule_iterator Sub = Mod->submodule_begin(),
+                               SubEnd = Mod->submodule_end();
        Sub != SubEnd; ++Sub)
-    ChildModules += getNumberOfModules(Sub->getValue());
+    ChildModules += getNumberOfModules(*Sub);
   
   return ChildModules + 1;
 }
@@ -2010,19 +2010,10 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
     }
     
     // Queue up the submodules of this module.
-    llvm::SmallVector<StringRef, 2> SubModules;
-    
-    // Sort the submodules first, so we get a predictable ordering in the AST
-    // file.
-    for (llvm::StringMap<Module *>::iterator 
-              Sub = Mod->SubModules.begin(),
-           SubEnd = Mod->SubModules.end();
+    for (Module::submodule_iterator Sub = Mod->submodule_begin(),
+                                 SubEnd = Mod->submodule_end();
          Sub != SubEnd; ++Sub)
-      SubModules.push_back(Sub->getKey());
-    llvm::array_pod_sort(SubModules.begin(), SubModules.end());
-    
-    for (unsigned I = 0, N = SubModules.size(); I != N; ++I)
-      Q.push(Mod->SubModules[SubModules[I]]);
+      Q.push(*Sub);
   }
   
   Stream.ExitBlock();
