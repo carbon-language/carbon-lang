@@ -595,7 +595,6 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       // (X << C1) >>u C2  --> X >>u (C2-C1) & (-1 >> C2)
       if (I.getOpcode() == Instruction::LShr &&
           ShiftOp->getOpcode() == Instruction::Shl) {
-        assert(ShiftOp->getOpcode() == Instruction::Shl);
         ConstantInt *ShiftDiffCst = ConstantInt::get(Ty, ShiftDiff);
         // (X <<nuw C1) >>u C2 --> X >>u (C2-C1)
         if (ShiftOp->hasNoUnsignedWrap()) {
@@ -615,7 +614,6 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       // we can handle (X <<nsw C1) >>s C2 since it only shifts in sign bits.
       if (I.getOpcode() == Instruction::AShr &&
           ShiftOp->getOpcode() == Instruction::Shl) {
-        assert(ShiftOp->getOpcode() == Instruction::Shl);
         if (ShiftOp->hasNoSignedWrap()) {
           // (X <<nsw C1) >>s C2 --> X >>s (C2-C1)
           ConstantInt *ShiftDiffCst = ConstantInt::get(Ty, ShiftDiff);
