@@ -72,6 +72,14 @@ void testFuncMerge(int i) {
   func2(i); // expected-error{{call to 'func2' is ambiguous}}
 }
 
+void testVarMerge(int i) {
+  var1 = i;
+  // in other files: expected-note 2{{candidate found by name lookup is 'var2'}}
+  var2 = i; // expected-error{{reference to 'var2' is ambiguous}}
+  // in other files: expected-note 2{{candidate found by name lookup is 'var3'}}
+  var3 = i; // expected-error{{reference to 'var3' is ambiguous}}
+}
+
 // Test redeclarations of entities in explicit submodules, to make
 // sure we're maintaining the declaration chains even when normal name
 // lookup can't see what we're looking for.

@@ -69,6 +69,15 @@ int func1(int);
 int func1(int);
 static int func2(int);
 
+
+
+
+// Spacing matters!
+extern int var1;
+extern int var2;
+
+static double var3;
+
 #ifdef __cplusplus
 template<typename T> class Vector { 
 public:

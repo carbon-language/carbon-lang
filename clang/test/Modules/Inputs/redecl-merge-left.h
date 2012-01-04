@@ -63,6 +63,21 @@ int func0(int);
 int func1(int);
 int func2(int);
 
+
+
+
+
+
+
+
+
+
+// Spacing matters!
+extern int var1;
+extern float var2;
+
+extern double var3;
+
 #ifdef __cplusplus
 template<typename T> class Vector;
 

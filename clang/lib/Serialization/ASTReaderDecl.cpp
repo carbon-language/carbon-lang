@@ -880,8 +880,12 @@ void ASTDeclReader::VisitIndirectFieldDecl(IndirectFieldDecl *FD) {
 }
 
 void ASTDeclReader::VisitVarDecl(VarDecl *VD) {
-  VisitRedeclarable(VD);
+  // Record the declaration -> global ID mapping.
+  Reader.DeclToID[VD] = ThisDeclID;
+  
+  RedeclarableResult Redecl = VisitRedeclarable(VD);
   VisitDeclaratorDecl(VD);
+  
   VD->VarDeclBits.SClass = (StorageClass)Record[Idx++];
   VD->VarDeclBits.SClassAsWritten = (StorageClass)Record[Idx++];
   VD->VarDeclBits.ThreadSpecified = Record[Idx++];
@@ -890,6 +894,9 @@ void ASTDeclReader::VisitVarDecl(VarDecl *VD) {
   VD->VarDeclBits.NRVOVariable = Record[Idx++];
   VD->VarDeclBits.CXXForRangeDecl = Record[Idx++];
   VD->VarDeclBits.ARCPseudoStrong = Record[Idx++];
+  
+  mergeRedeclarable(VD, Redecl);
+  
   if (uint64_t Val = Record[Idx++]) {
     VD->setInit(Reader.ReadExpr(F));
     if (Val > 1) {
@@ -1707,12 +1714,20 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
   }
   
   // Functions with the same type and linkage match.
+  // FIXME: This needs to cope with function templates, merging of 
+  //prototyped/non-prototyped functions, etc.
   if (FunctionDecl *FuncX = dyn_cast<FunctionDecl>(X)) {
     FunctionDecl *FuncY = cast<FunctionDecl>(Y);
     return (FuncX->getLinkage() == FuncY->getLinkage()) &&
       FuncX->getASTContext().hasSameType(FuncX->getType(), FuncY->getType());
   }
   
+  // Variables with the same type and linkage match.
+  if (VarDecl *VarX = dyn_cast<VarDecl>(X)) {
+    VarDecl *VarY = cast<VarDecl>(Y);
+    return (VarX->getLinkage() == VarY->getLinkage()) &&
+      VarX->getASTContext().hasSameType(VarX->getType(), VarY->getType());
+  }
   
   // FIXME: Many other cases to implement.
   return false;
