@@ -220,7 +220,7 @@ def immZExt16  : PatLeaf<(imm), [{
 }], LO16>;
 
 // Immediate can be loaded with LUi (32-bit int with lower 16-bit cleared).
-def immLUiOpnd : PatLeaf<(imm), [{
+def immLow16Zero : PatLeaf<(imm), [{
   int64_t Val = N->getSExtValue();
   return isInt<32>(Val) && !(Val & 0xffff);
 }]>;
@@ -940,7 +940,7 @@ def : Pat<(i32 immSExt16:$in),
           (ADDiu ZERO, imm:$in)>;
 def : Pat<(i32 immZExt16:$in),
           (ORi ZERO, imm:$in)>;
-def : Pat<(i32 immLUiOpnd:$in),
+def : Pat<(i32 immLow16Zero:$in),
           (LUi (HI16 imm:$in))>;
 
 // Arbitrary immediates
