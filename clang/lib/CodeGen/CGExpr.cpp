@@ -1702,13 +1702,17 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   assert(!T.isNull() &&
          "CodeGenFunction::EmitArraySubscriptExpr(): Illegal base type");
 
+  
   // Limit the alignment to that of the result type.
+  LValue LV;
   if (!ArrayAlignment.isZero()) {
     CharUnits Align = getContext().getTypeAlignInChars(T);
     ArrayAlignment = std::min(Align, ArrayAlignment);
+    LV = MakeAddrLValue(Address, T, ArrayAlignment);
+  } else {
+    LV = MakeNaturalAlignAddrLValue(Address, T);
   }
 
-  LValue LV = MakeAddrLValue(Address, T, ArrayAlignment);
   LV.getQuals().setAddressSpace(E->getBase()->getType().getAddressSpace());
 
   if (getContext().getLangOptions().ObjC1 &&
