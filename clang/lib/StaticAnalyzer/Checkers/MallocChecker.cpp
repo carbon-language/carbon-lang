@@ -64,8 +64,14 @@ public:
 
 class RegionState {};
 
-class MallocChecker : public Checker<eval::Call, check::DeadSymbols, check::EndPath, check::PreStmt<ReturnStmt>, check::Location,
-                               check::Bind, eval::Assume> {
+class MallocChecker : public Checker<eval::Call,
+                                     check::DeadSymbols,
+                                     check::EndPath,
+                                     check::PreStmt<ReturnStmt>,
+                                     check::Location,
+                                     check::Bind,
+                                     eval::Assume>
+{
   mutable llvm::OwningPtr<BuiltinBug> BT_DoubleFree;
   mutable llvm::OwningPtr<BuiltinBug> BT_Leak;
   mutable llvm::OwningPtr<BuiltinBug> BT_UseFree;
@@ -104,7 +110,8 @@ private:
   void FreeMemAttr(CheckerContext &C, const CallExpr *CE,
                    const OwnershipAttr* Att) const;
   const ProgramState *FreeMemAux(CheckerContext &C, const CallExpr *CE,
-                           const ProgramState *state, unsigned Num, bool Hold) const;
+                                 const ProgramState *state, unsigned Num,
+                                 bool Hold) const;
 
   void ReallocMem(CheckerContext &C, const CallExpr *CE) const;
   static void CallocMem(CheckerContext &C, const CallExpr *CE);
@@ -221,7 +228,8 @@ const ProgramState *MallocChecker::MallocMemAux(CheckerContext &C,
   SValBuilder &svalBuilder = C.getSValBuilder();
 
   // Set the return value.
-  SVal retVal = svalBuilder.getConjuredSymbolVal(NULL, CE, CE->getType(), Count);
+  SVal retVal = svalBuilder.getConjuredSymbolVal(NULL, CE,
+                                                 CE->getType(), Count);
   state = state->BindExpr(CE, retVal);
 
   // Fill the region with the initialization value.
@@ -258,16 +266,19 @@ void MallocChecker::FreeMemAttr(CheckerContext &C, const CallExpr *CE,
 
   for (OwnershipAttr::args_iterator I = Att->args_begin(), E = Att->args_end();
        I != E; ++I) {
-    const ProgramState *state = FreeMemAux(C, CE, C.getState(), *I,
-                                      Att->getOwnKind() == OwnershipAttr::Holds);
+    const ProgramState *state =
+      FreeMemAux(C, CE, C.getState(), *I,
+                 Att->getOwnKind() == OwnershipAttr::Holds);
     if (state)
       C.addTransition(state);
   }
 }
 
-const ProgramState *MallocChecker::FreeMemAux(CheckerContext &C, const CallExpr *CE,
-                                         const ProgramState *state, unsigned Num,
-                                         bool Hold) const {
+const ProgramState *MallocChecker::FreeMemAux(CheckerContext &C,
+                                              const CallExpr *CE,
+                                              const ProgramState *state,
+                                              unsigned Num,
+                                              bool Hold) const {
   const Expr *ArgExpr = CE->getArg(Num);
   SVal ArgVal = state->getSVal(ArgExpr);
 
@@ -532,14 +543,16 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) const {
 
   if (const ProgramState *stateNotEqual = state->assume(PtrEQ, false)) {
     // If the size is 0, free the memory.
-    if (const ProgramState *stateSizeZero = stateNotEqual->assume(SizeZero, true))
+    if (const ProgramState *stateSizeZero =
+          stateNotEqual->assume(SizeZero, true))
       if (const ProgramState *stateFree = 
           FreeMemAux(C, CE, stateSizeZero, 0, false)) {
 
         // Bind the return value to NULL because it is now free.
         C.addTransition(stateFree->BindExpr(CE, svalBuilder.makeNull(), true));
       }
-    if (const ProgramState *stateSizeNotZero = stateNotEqual->assume(SizeZero,false))
+    if (const ProgramState *stateSizeNotZero =
+          stateNotEqual->assume(SizeZero,false))
       if (const ProgramState *stateFree = FreeMemAux(C, CE, stateSizeNotZero,
                                                 0, false)) {
         // FIXME: We should copy the content of the original buffer.
@@ -641,8 +654,9 @@ void MallocChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
   C.addTransition(state);
 }
 
-const ProgramState *MallocChecker::evalAssume(const ProgramState *state, SVal Cond, 
-                                         bool Assumption) const {
+const ProgramState *MallocChecker::evalAssume(const ProgramState *state,
+                                              SVal Cond, 
+                                              bool Assumption) const {
   // If a symblic region is assumed to NULL, set its state to AllocateFailed.
   // FIXME: should also check symbols assumed to non-null.
 
