@@ -488,7 +488,7 @@ namespace llvm {
     /// Returns true if the given machine instr is mapped to an index,
     /// otherwise returns false.
     bool hasIndex(const MachineInstr *instr) const {
-      return (mi2iMap.find(instr) != mi2iMap.end());
+      return mi2iMap.count(instr);
     }
 
     /// Returns the base index for the given instruction.

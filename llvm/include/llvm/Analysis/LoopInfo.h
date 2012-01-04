@@ -655,9 +655,7 @@ public:
   /// block is in no loop (for example the entry node), null is returned.
   ///
   LoopT *getLoopFor(const BlockT *BB) const {
-    typename DenseMap<BlockT *, LoopT *>::const_iterator I=
-      BBMap.find(const_cast<BlockT*>(BB));
-    return I != BBMap.end() ? I->second : 0;
+    return BBMap.lookup(const_cast<BlockT*>(BB));
   }
 
   /// operator[] - same as getLoopFor...
@@ -696,9 +694,7 @@ public:
   /// the loop hierarchy tree.
   void changeLoopFor(BlockT *BB, LoopT *L) {
     if (!L) {
-      typename DenseMap<BlockT *, LoopT *>::iterator I = BBMap.find(BB);
-      if (I != BBMap.end())
-        BBMap.erase(I);
+      BBMap.erase(BB);
       return;
     }
     BBMap[BB] = L;
@@ -755,7 +751,7 @@ public:
   }
 
   LoopT *ConsiderForLoop(BlockT *BB, DominatorTreeBase<BlockT> &DT) {
-    if (BBMap.find(BB) != BBMap.end()) return 0;// Haven't processed this node?
+    if (BBMap.count(BB)) return 0; // Haven't processed this node?
 
     std::vector<BlockT *> TodoStack;
 
