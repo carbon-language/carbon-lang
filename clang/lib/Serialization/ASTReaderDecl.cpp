@@ -490,14 +490,38 @@ void ASTDeclReader::VisitDeclaratorDecl(DeclaratorDecl *DD) {
 }
 
 void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
-  VisitRedeclarable(FD);
+  // Record the declaration -> global ID mapping.
+  Reader.DeclToID[FD] = ThisDeclID;
+  
+  RedeclarableResult Redecl = VisitRedeclarable(FD);
   VisitDeclaratorDecl(FD);
 
   ReadDeclarationNameLoc(FD->DNLoc, FD->getDeclName(), Record, Idx);
   FD->IdentifierNamespace = Record[Idx++];
+  
+  // FunctionDecl's body is handled last at ASTDeclReader::Visit,
+  // after everything else is read.
+  
+  FD->SClass = (StorageClass)Record[Idx++];
+  FD->SClassAsWritten = (StorageClass)Record[Idx++];
+  FD->IsInline = Record[Idx++];
+  FD->IsInlineSpecified = Record[Idx++];
+  FD->IsVirtualAsWritten = Record[Idx++];
+  FD->IsPure = Record[Idx++];
+  FD->HasInheritedPrototype = Record[Idx++];
+  FD->HasWrittenPrototype = Record[Idx++];
+  FD->IsDeleted = Record[Idx++];
+  FD->IsTrivial = Record[Idx++];
+  FD->IsDefaulted = Record[Idx++];
+  FD->IsExplicitlyDefaulted = Record[Idx++];
+  FD->HasImplicitReturnZero = Record[Idx++];
+  FD->IsConstexpr = Record[Idx++];
+  FD->EndRangeLoc = ReadSourceLocation(Record, Idx);
+
   switch ((FunctionDecl::TemplatedKind)Record[Idx++]) {
   default: llvm_unreachable("Unhandled TemplatedKind!");
   case FunctionDecl::TK_NonTemplate:
+    mergeRedeclarable(FD, Redecl);      
     break;
   case FunctionDecl::TK_FunctionTemplate:
     FD->setDescribedFunctionTemplate(ReadDeclAs<FunctionTemplateDecl>(Record, 
@@ -590,25 +614,6 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     break;
   }
   }
-
-  // FunctionDecl's body is handled last at ASTDeclReader::Visit,
-  // after everything else is read.
-
-  FD->SClass = (StorageClass)Record[Idx++];
-  FD->SClassAsWritten = (StorageClass)Record[Idx++];
-  FD->IsInline = Record[Idx++];
-  FD->IsInlineSpecified = Record[Idx++];
-  FD->IsVirtualAsWritten = Record[Idx++];
-  FD->IsPure = Record[Idx++];
-  FD->HasInheritedPrototype = Record[Idx++];
-  FD->HasWrittenPrototype = Record[Idx++];
-  FD->IsDeleted = Record[Idx++];
-  FD->IsTrivial = Record[Idx++];
-  FD->IsDefaulted = Record[Idx++];
-  FD->IsExplicitlyDefaulted = Record[Idx++];
-  FD->HasImplicitReturnZero = Record[Idx++];
-  FD->IsConstexpr = Record[Idx++];
-  FD->EndRangeLoc = ReadSourceLocation(Record, Idx);
 
   // Read in the parameters.
   unsigned NumParams = Record[Idx++];
@@ -1696,12 +1701,19 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
   // Compatible tags match.
   if (TagDecl *TagX = dyn_cast<TagDecl>(X)) {
     TagDecl *TagY = cast<TagDecl>(Y);
-    if ((TagX->getTagKind() == TagY->getTagKind()) ||
-        ((TagX->getTagKind() == TTK_Struct || TagX->getTagKind() == TTK_Class)&&
-         (TagY->getTagKind() == TTK_Struct || TagY->getTagKind() == TTK_Class)))
-      return true;
+    return (TagX->getTagKind() == TagY->getTagKind()) ||
+      ((TagX->getTagKind() == TTK_Struct || TagX->getTagKind() == TTK_Class) &&
+       (TagY->getTagKind() == TTK_Struct || TagY->getTagKind() == TTK_Class));
   }
-        
+  
+  // Functions with the same type and linkage match.
+  if (FunctionDecl *FuncX = dyn_cast<FunctionDecl>(X)) {
+    FunctionDecl *FuncY = cast<FunctionDecl>(Y);
+    return (FuncX->getLinkage() == FuncY->getLinkage()) &&
+      FuncX->getASTContext().hasSameType(FuncX->getType(), FuncY->getType());
+  }
+  
+  
   // FIXME: Many other cases to implement.
   return false;
 }

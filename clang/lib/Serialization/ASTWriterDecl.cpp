@@ -302,6 +302,26 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
 
   Writer.AddDeclarationNameLoc(D->DNLoc, D->getDeclName(), Record);
   Record.push_back(D->getIdentifierNamespace());
+  
+  // FunctionDecl's body is handled last at ASTWriterDecl::Visit,
+  // after everything else is written.
+  
+  Record.push_back(D->getStorageClass()); // FIXME: stable encoding
+  Record.push_back(D->getStorageClassAsWritten());
+  Record.push_back(D->IsInline);
+  Record.push_back(D->isInlineSpecified());
+  Record.push_back(D->isVirtualAsWritten());
+  Record.push_back(D->isPure());
+  Record.push_back(D->hasInheritedPrototype());
+  Record.push_back(D->hasWrittenPrototype());
+  Record.push_back(D->isDeletedAsWritten());
+  Record.push_back(D->isTrivial());
+  Record.push_back(D->isDefaulted());
+  Record.push_back(D->isExplicitlyDefaulted());
+  Record.push_back(D->hasImplicitReturnZero());
+  Record.push_back(D->isConstexpr());
+  Writer.AddSourceLocation(D->getLocEnd(), Record);
+
   Record.push_back(D->getTemplatedKind());
   switch (D->getTemplatedKind()) {
   default: llvm_unreachable("Unhandled TemplatedKind!");
@@ -367,25 +387,6 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
     break;
   }
   }
-
-  // FunctionDecl's body is handled last at ASTWriterDecl::Visit,
-  // after everything else is written.
-
-  Record.push_back(D->getStorageClass()); // FIXME: stable encoding
-  Record.push_back(D->getStorageClassAsWritten());
-  Record.push_back(D->IsInline);
-  Record.push_back(D->isInlineSpecified());
-  Record.push_back(D->isVirtualAsWritten());
-  Record.push_back(D->isPure());
-  Record.push_back(D->hasInheritedPrototype());
-  Record.push_back(D->hasWrittenPrototype());
-  Record.push_back(D->isDeletedAsWritten());
-  Record.push_back(D->isTrivial());
-  Record.push_back(D->isDefaulted());
-  Record.push_back(D->isExplicitlyDefaulted());
-  Record.push_back(D->hasImplicitReturnZero());
-  Record.push_back(D->isConstexpr());
-  Writer.AddSourceLocation(D->getLocEnd(), Record);
 
   Record.push_back(D->param_size());
   for (FunctionDecl::param_iterator P = D->param_begin(), PEnd = D->param_end();

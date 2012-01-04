@@ -59,6 +59,10 @@ void consume_S4(struct S4*);
 typedef int T1;
 typedef float T2;
 
+int func0(int);
+int func1(int);
+int func2(int);
+
 #ifdef __cplusplus
 template<typename T> class Vector;
 

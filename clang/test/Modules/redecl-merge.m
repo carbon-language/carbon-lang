@@ -61,7 +61,15 @@ void testTypedefMerge(int i, double d) {
   // FIXME: Typedefs aren't actually merged in the sense of other merges, because
   // we should only merge them when the types are identical.
   // in other file: expected-note{{candidate found by name lookup is 'T2'}}
+  // in other file: expected-note{{candidate function}}
   T2 *dp = &d; // expected-error{{reference to 'T2' is ambiguous}}
+}
+
+void testFuncMerge(int i) {
+  func0(i);
+  // in other file: expected-note{{candidate function}}
+  func1(i);
+  func2(i); // expected-error{{call to 'func2' is ambiguous}}
 }
 
 // Test redeclarations of entities in explicit submodules, to make
