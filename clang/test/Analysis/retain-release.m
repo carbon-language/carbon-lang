@@ -42,6 +42,7 @@ typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
 typedef unsigned int UInt32;
 typedef signed long CFIndex;
+typedef CFIndex CFByteOrder;
 typedef struct {
     CFIndex location;
     CFIndex length;
@@ -1602,5 +1603,20 @@ void rdar10232019_positive() {
 
   NSString *otherString = [string stringByAppendingString:@"bar"]; // expected-warning {{Reference-counted object is used after it is release}}
   NSLog(@"%@", otherString);
+}
+
+// RetainCountChecker support for XPC.
+// <rdar://problem/9658496>
+typedef void * xpc_object_t;
+xpc_object_t _CFXPCCreateXPCObjectFromCFObject(CFTypeRef cf);
+void xpc_release(xpc_object_t object);
+
+void rdar9658496() {
+  CFStringRef cf;
+  xpc_object_t xpc;
+  cf = CFStringCreateWithCString( ((CFAllocatorRef)0), "test", kCFStringEncodingUTF8 ); // no-warning
+  xpc = _CFXPCCreateXPCObjectFromCFObject( cf );
+  CFRelease(cf);
+  xpc_release(xpc);
 }
 

@@ -68,7 +68,9 @@ bool cocoa::isRefType(QualType RetTy, StringRef Prefix,
     StringRef TDName = TD->getDecl()->getIdentifier()->getName();
     if (TDName.startswith(Prefix) && TDName.endswith("Ref"))
       return true;
-    
+    // XPC unfortunately uses CF-style function names, but aren't CF types.
+    if (TDName.startswith("xpc_"))
+      return false;
     RetTy = TD->getDecl()->getUnderlyingType();
   }
   
