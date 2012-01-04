@@ -321,8 +321,7 @@ public:
   /// block.  This is the same as using operator[] on this class.
   ///
   inline DomTreeNodeBase<NodeT> *getNode(NodeT *BB) const {
-    typename DomTreeNodeMapType::const_iterator I = DomTreeNodes.find(BB);
-    return I != DomTreeNodes.end() ? I->second : 0;
+    return DomTreeNodes.lookup(BB);
   }
 
   /// getRootNode - This returns the entry node for the CFG of the function.  If
@@ -623,9 +622,8 @@ protected:
   }
 
   DomTreeNodeBase<NodeT> *getNodeForBlock(NodeT *BB) {
-    typename DomTreeNodeMapType::iterator I = this->DomTreeNodes.find(BB);
-    if (I != this->DomTreeNodes.end() && I->second)
-      return I->second;
+    if (DomTreeNodeBase<NodeT> *Node = getNode(BB))
+      return Node;
 
     // Haven't calculated this node yet?  Get or calculate the node for the
     // immediate dominator.
@@ -641,8 +639,7 @@ protected:
   }
 
   inline NodeT *getIDom(NodeT *BB) const {
-    typename DenseMap<NodeT*, NodeT*>::const_iterator I = IDoms.find(BB);
-    return I != IDoms.end() ? I->second : 0;
+    return IDoms.lookup(BB);
   }
 
   inline void addRoot(NodeT* BB) {
