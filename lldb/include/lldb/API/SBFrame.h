@@ -16,8 +16,6 @@
 
 namespace lldb {
 
-class SBValue;
-
 class SBFrame
 {
 public:

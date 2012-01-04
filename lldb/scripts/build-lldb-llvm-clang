@@ -22,13 +22,11 @@ svn co -q -r $LLVM_REVISION http://llvm.org/svn/llvm-project/llvm/trunk llvm
 
 # change directory to "./llvm"
 cd llvm
-rm -rf test
 
 # Checkout Clang
 # change directory to "./llvm/tools"
 cd tools
 svn co -q -r $CLANG_REVISION http://llvm.org/svn/llvm-project/cfe/trunk clang
-rm -rf clang/test
 
 # change directory to "./llvm"
 cd ..
@@ -65,8 +63,11 @@ elif [ "$LLVM_CONFIGURATION" = "Release" ]; then
 	make -j8 clang-only VERBOSE=1 PROJECT_NAME='llvm'
 	make -j8 tools-only VERBOSE=1 PROJECT_NAME='llvm' EDIS_VERSION=1
 elif [ "$LLVM_CONFIGURATION" = "BuildAndIntegration" ]; then
-	# Configure "BuildAndIntegration" build
-	rm -rf ./scripts/*.diff
+	# Don't configure or build for "BuildAndIntegration", this configuration 
+	# is a preparation step for a build submission
+	
+	# Remove all patches, and the llvm and clang "test" directories
+	rm -rf ./scripts/*.diff ./llvm/test ./llvm/tools/clang/test
 else
 	echo "checked out llvm (revision $LLVM_REVISION) and clang (revision $CLANG_REVISION)."
 	exit 0

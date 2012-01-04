@@ -992,18 +992,15 @@ GetOpcodeDataSize (const DataExtractor &data, const uint32_t data_offset, const 
             }
             
         default:
-        {
-            Host::SetCrashDescriptionWithFormat ("Unhandled DW_OP_XXX opcode: %d, add support for it.", op);
-            assert (!"Unhandled DW_OP_XXX opcode - look for actual value in Crash Description string.");
-        }
-        break;
+            break;
     }
     return UINT32_MAX;
 }
 
 bool
-DWARFExpression::LocationContains_DW_OP_addr (lldb::addr_t file_addr) const
+DWARFExpression::LocationContains_DW_OP_addr (lldb::addr_t file_addr, bool &error) const
 {
+    error = false;
     if (IsLocationList())
         return false;
     uint32_t offset = 0;
@@ -1023,7 +1020,10 @@ DWARFExpression::LocationContains_DW_OP_addr (lldb::addr_t file_addr) const
         {
             const uint32_t op_arg_size = GetOpcodeDataSize (m_data, offset, op);
             if (op_arg_size == UINT32_MAX)
+            {
+                error = true;
                 break;
+            }
             offset += op_arg_size;
         }
     }

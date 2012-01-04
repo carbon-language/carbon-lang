@@ -35,9 +35,10 @@ public:
         eOpenOptionRead                 = (1u << 0),    // Open file for reading
         eOpenOptionWrite                = (1u << 1),    // Open file for writing
         eOpenOptionAppend               = (1u << 2),    // Don't truncate file when opening, append to end of file
-        eOpenOptionNonBlocking          = (1u << 3),    // File reads
-        eOpenOptionCanCreate            = (1u << 4),    // Create file if doesn't already exist
-        eOpenOptionCanCreateNewOnly     = (1u << 5)    // Can create file only if it doesn't already exist
+        eOpenOptionTruncate             = (1u << 3),    // Truncate file when opening
+        eOpenOptionNonBlocking          = (1u << 4),    // File reads
+        eOpenOptionCanCreate            = (1u << 5),    // Create file if doesn't already exist
+        eOpenOptionCanCreateNewOnly     = (1u << 6)     // Can create file only if it doesn't already exist
     };
     
     enum Permissions
@@ -361,6 +362,34 @@ public:
     Error
     Read (void *dst, size_t &num_bytes, off_t &offset);
     
+    //------------------------------------------------------------------
+    /// Read bytes from a file from the specified file offset.
+    ///
+    /// NOTE: This function is thread safe in that clients manager their
+    /// own file position markers and reads on other threads won't mess
+    /// up the current read.
+    ///
+    /// @param[in/out] num_bytes
+    ///     The number of bytes to read form the current file position
+    ///     which gets modified with the number of bytes that were read.
+    ///
+    /// @param[in/out] offset
+    ///     The offset within the file from which to read \a num_bytes
+    ///     bytes. This offset gets incremented by the number of bytes
+    ///     that were read.
+    ///
+    /// @param[out] data_buffer_sp
+    ///     A data buffer to create and fill in that will contain any
+    ///     data that is read from the file. This buffer will be reset
+    ///     if an error occurs.
+    ///
+    /// @return
+    ///     An error object that indicates success or the reason for 
+    ///     failure.
+    //------------------------------------------------------------------
+    Error
+    Read (size_t &num_bytes, off_t &offset, lldb::DataBufferSP &data_buffer_sp);
+
     //------------------------------------------------------------------
     /// Write bytes to a file at the specified file offset.
     ///

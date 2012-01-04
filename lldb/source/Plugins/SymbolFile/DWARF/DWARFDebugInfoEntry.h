@@ -300,7 +300,9 @@ public:
                     lldb_private::DWARFExpression *frame_base = NULL) const;
 
     const DWARFAbbreviationDeclaration* 
-    GetAbbreviationDeclarationPtr (const DWARFCompileUnit *cu) const;
+    GetAbbreviationDeclarationPtr (SymbolFileDWARF* dwarf2Data,
+                                   const DWARFCompileUnit *cu,
+                                   dw_offset_t &offset) const;
 
     dw_tag_t
     Tag () const 

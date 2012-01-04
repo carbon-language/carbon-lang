@@ -5553,10 +5553,19 @@ SymbolFileDWARF::ParseVariableDIE
                     scope = eValueTypeVariableArgument;
                 else
                 {
+                    bool op_error = false;
                     // Check if the location has a DW_OP_addr with any address value...
                     addr_t location_has_op_addr = false;
                     if (!location_is_const_value_data)
-                        location_has_op_addr = location.LocationContains_DW_OP_addr ();
+                    {
+                        location_has_op_addr = location.LocationContains_DW_OP_addr (LLDB_INVALID_ADDRESS, op_error);
+                        if (op_error)
+                        {
+                            StreamString strm;
+                            location.DumpLocationForAddress (&strm, eDescriptionLevelFull, 0, 0, NULL);
+                            ReportError ("0x%8.8x: %s has an invalid location: %s", die->GetOffset(), DW_TAG_value_to_name(die->Tag()), strm.GetString().c_str());
+                        }
+                    }
 
                     if (location_has_op_addr)
                     {
@@ -5584,7 +5593,7 @@ SymbolFileDWARF::ParseVariableDIE
                                 // location for the variable, and set the variable's
                                 // symbol context scope to be that of the main executable
                                 // so the file address will resolve correctly.
-                                if (location.LocationContains_DW_OP_addr (0))
+                                if (location.LocationContains_DW_OP_addr (0, op_error))
                                 {
                                     
                                     // we have a possible uninitialized extern global

@@ -720,18 +720,15 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
     std::vector<dw_offset_t> die_offsets;
     bool set_frame_base_loclist_addr = false;
     
-    const DWARFAbbreviationDeclaration* abbrevDecl = GetAbbreviationDeclarationPtr(cu);
+    dw_offset_t offset;
+    const DWARFAbbreviationDeclaration* abbrevDecl = GetAbbreviationDeclarationPtr(dwarf2Data, cu, offset);
 
     if (abbrevDecl)
     {
         const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
-        uint32_t offset = m_offset;
 
         if (!debug_info_data.ValidOffset(offset))
             return false;
-
-        // Skip the abbreviation code
-        debug_info_data.Skip_LEB128(&offset);
 
         const uint32_t numAttributes = abbrevDecl->NumAttributes();
         uint32_t i;
@@ -914,9 +911,13 @@ DWARFDebugInfoEntry::Dump
 
         s.Printf("\n0x%8.8x: ", m_offset);
         s.Indent();
-        if (abbrCode)
+        if (abbrCode != m_abbr_idx)
         {
-            const DWARFAbbreviationDeclaration* abbrevDecl = GetAbbreviationDeclarationPtr(cu);
+            s.Printf( "error: DWARF has been modified\n");
+        }
+        else if (abbrCode)
+        {
+            const DWARFAbbreviationDeclaration* abbrevDecl = cu->GetAbbreviations()->GetAbbreviationDeclaration (abbrCode);
 
             if (abbrevDecl)
             {
@@ -1156,17 +1157,15 @@ DWARFDebugInfoEntry::GetAttributes
     uint32_t curr_depth
 ) const
 {
-    const DWARFAbbreviationDeclaration* abbrevDecl = GetAbbreviationDeclarationPtr(cu);
+    uint32_t offset;
+    const DWARFAbbreviationDeclaration* abbrevDecl = GetAbbreviationDeclarationPtr(dwarf2Data, cu, offset);
 
     if (abbrevDecl)
     {
-        if (fixed_form_sizes == NULL)
-            fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize(cu->GetAddressByteSize());
-        uint32_t offset = GetOffset();
         const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
 
-        // Skip the abbreviation code so we are at the data for the attributes
-        debug_info_data.Skip_LEB128(&offset);
+        if (fixed_form_sizes == NULL)
+            fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize(cu->GetAddressByteSize());
 
         const uint32_t num_attributes = abbrevDecl->NumAttributes();
         uint32_t i;
@@ -1255,7 +1254,8 @@ DWARFDebugInfoEntry::GetAttributeValue
     dw_offset_t* end_attr_offset_ptr
 ) const
 {
-    const DWARFAbbreviationDeclaration* abbrevDecl = GetAbbreviationDeclarationPtr(cu);
+    uint32_t offset;
+    const DWARFAbbreviationDeclaration* abbrevDecl = GetAbbreviationDeclarationPtr(dwarf2Data, cu, offset);
 
     if (abbrevDecl)
     {
@@ -1263,12 +1263,7 @@ DWARFDebugInfoEntry::GetAttributeValue
 
         if (attr_idx != DW_INVALID_INDEX)
         {
-            uint32_t offset = GetOffset();
-
             const DataExtractor& debug_info_data = dwarf2Data->get_debug_info_data();
-
-            // Skip the abbreviation code so we are at the data for the attributes
-            debug_info_data.Skip_LEB128(&offset);
 
             uint32_t idx=0;
             while (idx<attr_idx)
@@ -1583,7 +1578,7 @@ DWARFDebugInfoEntry::AppendTypeName
             else
             {
                 bool result = true;
-                const DWARFAbbreviationDeclaration* abbrevDecl = die.GetAbbreviationDeclarationPtr(cu);
+                const DWARFAbbreviationDeclaration* abbrevDecl = die.GetAbbreviationDeclarationPtr(dwarf2Data, cu, offset);
 
                 switch (abbrevDecl->Tag())
                 {
@@ -2071,10 +2066,29 @@ DWARFDebugInfoEntry::LookupAddress
 }
 
 const DWARFAbbreviationDeclaration* 
-DWARFDebugInfoEntry::GetAbbreviationDeclarationPtr (const DWARFCompileUnit *cu) const
+DWARFDebugInfoEntry::GetAbbreviationDeclarationPtr (SymbolFileDWARF* dwarf2Data,
+                                                    const DWARFCompileUnit *cu,
+                                                    dw_offset_t &offset) const
 {
-    if (m_abbr_idx)
-        return cu->GetAbbreviations()->GetAbbreviationDeclaration (m_abbr_idx);
+    offset = GetOffset();
+    
+    const DWARFAbbreviationDeclaration* abbrev_decl = cu->GetAbbreviations()->GetAbbreviationDeclaration (m_abbr_idx);
+    if (abbrev_decl)
+    {
+        // Make sure the abbreviation code still matches. If it doesn't and
+        // the DWARF data was mmap'ed, the backing file might have been modified
+        // which is bad news.
+        const uint64_t abbrev_code = dwarf2Data->get_debug_info_data().GetULEB128 (&offset);
+    
+        if (abbrev_decl->Code() == abbrev_code)
+            return abbrev_decl;
+
+        dwarf2Data->ReportError ("0x%8.8x: the DWARF debug info has been modified (abbrev code was %u, and is now %u)", 
+                                 GetOffset(),
+                                 (uint32_t)abbrev_decl->Code(),
+                                 (uint32_t)abbrev_code);
+    }
+    offset = DW_INVALID_OFFSET;
     return NULL;
 }
 

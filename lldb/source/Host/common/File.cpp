@@ -10,11 +10,13 @@
 
 #include "lldb/Host/File.h"
 
+#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <sys/stat.h>
 
+#include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Host/Config.h"
 #include "lldb/Host/FileSpec.h"
@@ -135,7 +137,12 @@ File::GetStream ()
         {
             const char *mode = GetStreamOpenModeFromOptions (m_options);
             if (mode)
-                m_stream = ::fdopen (m_descriptor, mode);
+            {
+                do
+                {
+                    m_stream = ::fdopen (m_descriptor, mode);
+                } while (m_stream == NULL && errno == EINTR);
+            }
         }
     }
     return m_stream;
@@ -184,40 +191,54 @@ File::Open (const char *path, uint32_t options, uint32_t permissions)
         Close ();
 
     int oflag = 0;
-    if (options & eOpenOptionRead && 
-        options & eOpenOptionWrite )
-        oflag |= O_RDWR;
-    else if (options & eOpenOptionRead)
+    const bool read = options & eOpenOptionRead;
+    const bool write = options & eOpenOptionWrite;
+    if (write)
+    {
+        if (read)
+            oflag |= O_RDWR;
+        else
+            oflag |= O_WRONLY;
+        
+        if (options & eOpenOptionAppend)
+            oflag |= O_APPEND;
+
+        if (options & eOpenOptionTruncate)
+            oflag |= O_TRUNC;
+
+        if (options & eOpenOptionCanCreate)
+            oflag |= O_CREAT;
+        
+        if (options & eOpenOptionCanCreateNewOnly)
+            oflag |= O_CREAT | O_EXCL;
+    }
+    else if (read)
+    {
         oflag |= O_RDONLY;
-    else if (options & eOpenOptionWrite)
-        oflag |= O_WRONLY;
+    }
     
     if (options & eOpenOptionNonBlocking)
         oflag |= O_NONBLOCK;
 
-    if (options & eOpenOptionAppend)
-        oflag |= O_APPEND;
-    else
-        oflag |= O_TRUNC;
-
-    if (options & eOpenOptionCanCreate)
-        oflag |= O_CREAT;
-    
-    if (options & eOpenOptionCanCreateNewOnly)
-        oflag |= O_CREAT | O_EXCL;
-    
     mode_t mode = 0;
-    if (permissions & ePermissionsUserRead)     mode |= S_IRUSR;
-    if (permissions & ePermissionsUserWrite)    mode |= S_IWUSR;
-    if (permissions & ePermissionsUserExecute)  mode |= S_IXUSR;
-    if (permissions & ePermissionsGroupRead)    mode |= S_IRGRP;
-    if (permissions & ePermissionsGroupWrite)   mode |= S_IWGRP;
-    if (permissions & ePermissionsGroupExecute) mode |= S_IXGRP;
-    if (permissions & ePermissionsWorldRead)    mode |= S_IROTH;
-    if (permissions & ePermissionsWorldWrite)   mode |= S_IWOTH;
-    if (permissions & ePermissionsWorldExecute) mode |= S_IXOTH;
+    if (oflag & O_CREAT)
+    {
+        if (permissions & ePermissionsUserRead)     mode |= S_IRUSR;
+        if (permissions & ePermissionsUserWrite)    mode |= S_IWUSR;
+        if (permissions & ePermissionsUserExecute)  mode |= S_IXUSR;
+        if (permissions & ePermissionsGroupRead)    mode |= S_IRGRP;
+        if (permissions & ePermissionsGroupWrite)   mode |= S_IWGRP;
+        if (permissions & ePermissionsGroupExecute) mode |= S_IXGRP;
+        if (permissions & ePermissionsWorldRead)    mode |= S_IROTH;
+        if (permissions & ePermissionsWorldWrite)   mode |= S_IWOTH;
+        if (permissions & ePermissionsWorldExecute) mode |= S_IXOTH;
+    }
 
-    m_descriptor = ::open(path, oflag, mode);
+    do
+    {
+        m_descriptor = ::open(path, oflag, mode);
+    } while (m_descriptor < 0 && errno == EINTR);
+
     if (!DescriptorIsValid())
         error.SetErrorToErrno();
     else
@@ -357,7 +378,13 @@ File::Flush ()
     Error error;
     if (StreamIsValid())
     {
-        if (::fflush (m_stream) == EOF)
+        int err = 0;
+        do
+        {
+            err = ::fflush (m_stream);
+        } while (err == EOF && errno == EINTR);
+        
+        if (err == EOF)
             error.SetErrorToErrno();
     }
     else if (!DescriptorIsValid())
@@ -374,7 +401,13 @@ File::Sync ()
     Error error;
     if (DescriptorIsValid())
     {
-        if (::fsync (m_descriptor) == -1)
+        int err = 0;
+        do
+        {
+            err = ::fsync (m_descriptor);
+        } while (err == -1 && errno == EINTR);
+        
+        if (err == -1)
             error.SetErrorToErrno();
     }
     else 
@@ -388,9 +421,14 @@ Error
 File::Read (void *buf, size_t &num_bytes)
 {
     Error error;
+    ssize_t bytes_read = -1;
     if (DescriptorIsValid())
     {
-        ssize_t bytes_read = ::read (m_descriptor, buf, num_bytes);
+        do
+        {
+            bytes_read = ::read (m_descriptor, buf, num_bytes);
+        } while (bytes_read < 0 && errno == EINTR);
+
         if (bytes_read == -1)
         {
             error.SetErrorToErrno();
@@ -401,7 +439,8 @@ File::Read (void *buf, size_t &num_bytes)
     }
     else if (StreamIsValid())
     {
-        size_t bytes_read = ::fread (buf, 1, num_bytes, m_stream);
+        bytes_read = ::fread (buf, 1, num_bytes, m_stream);
+
         if (bytes_read == 0)
         {
             if (::feof(m_stream))
@@ -425,9 +464,14 @@ Error
 File::Write (const void *buf, size_t &num_bytes)
 {
     Error error;
+    ssize_t bytes_written = -1;
     if (DescriptorIsValid())
     {
-        ssize_t bytes_written = ::write (m_descriptor, buf, num_bytes);
+        do
+        {
+            bytes_written = ::write (m_descriptor, buf, num_bytes);
+        } while (bytes_written < 0 && errno == EINTR);
+
         if (bytes_written == -1)
         {
             error.SetErrorToErrno();
@@ -438,7 +482,8 @@ File::Write (const void *buf, size_t &num_bytes)
     }
     else if (StreamIsValid())
     {
-        size_t bytes_written = ::fwrite (buf, 1, num_bytes, m_stream);
+        bytes_written = ::fwrite (buf, 1, num_bytes, m_stream);
+
         if (bytes_written == 0)
         {
             if (::feof(m_stream))
@@ -467,7 +512,12 @@ File::Read (void *buf, size_t &num_bytes, off_t &offset)
     int fd = GetDescriptor();
     if (fd != kInvalidDescriptor)
     {
-        ssize_t bytes_read = ::pread (fd, buf, num_bytes, offset);
+        ssize_t bytes_read = -1;
+        do
+        {
+            bytes_read = ::pread (fd, buf, num_bytes, offset);
+        } while (bytes_read < 0 && errno == EINTR);
+
         if (bytes_read < 0)
         {
             num_bytes = 0;
@@ -488,13 +538,71 @@ File::Read (void *buf, size_t &num_bytes, off_t &offset)
 }
 
 Error
+File::Read (size_t &num_bytes, off_t &offset, DataBufferSP &data_buffer_sp)
+{
+    Error error;
+    
+    if (num_bytes > 0)
+    {
+        int fd = GetDescriptor();
+        if (fd != kInvalidDescriptor)
+        {
+            struct stat file_stats;
+            if (::fstat (fd, &file_stats) == 0)
+            {
+                if (file_stats.st_size > offset)
+                {
+                    const size_t bytes_left = file_stats.st_size - offset;
+                    if (num_bytes > bytes_left)
+                        num_bytes = bytes_left;
+                        
+                    std::auto_ptr<DataBufferHeap> data_heap_ap;
+                    data_heap_ap.reset(new DataBufferHeap(num_bytes, '\0'));
+                        
+                    if (data_heap_ap.get())
+                    {
+                        error = Read (data_heap_ap->GetBytes(), num_bytes, offset);
+                        if (error.Success())
+                        {
+                            // Make sure we read exactly what we asked for and if we got
+                            // less, adjust the array
+                            if (num_bytes < data_heap_ap->GetByteSize())
+                                data_heap_ap->SetByteSize(num_bytes);
+                            data_buffer_sp.reset(data_heap_ap.release());
+                            return error;
+                        }
+                    }
+                }
+                else 
+                    error.SetErrorString("file is empty");
+            }
+            else
+                error.SetErrorToErrno();
+        }
+        else 
+            error.SetErrorString("invalid file handle");
+    }
+    else
+        error.SetErrorString("invalid file handle");
+
+    num_bytes = 0;
+    data_buffer_sp.reset();
+    return error;
+}
+
+Error
 File::Write (const void *buf, size_t &num_bytes, off_t &offset)
 {
     Error error;
     int fd = GetDescriptor();
     if (fd != kInvalidDescriptor)
     {
-        ssize_t bytes_written = ::pwrite (m_descriptor, buf, num_bytes, offset);
+        ssize_t bytes_written = -1;
+        do
+        {
+            bytes_written = ::pwrite (m_descriptor, buf, num_bytes, offset);
+        } while (bytes_written < 0 && errno == EINTR);
+
         if (bytes_written < 0)
         {
             num_bytes = 0;

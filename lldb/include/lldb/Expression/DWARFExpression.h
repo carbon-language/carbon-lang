@@ -142,6 +142,10 @@ public:
     /// @param[in] file_addr
     ///     The file address to search for in the location. 
     ///
+    /// @param[out] error
+    ///     If the location stream contains unknown DW_OP opcodes or the
+    ///     data is missing, \a error will be set to \b true.
+    ///
     /// @return
     ///     True if IsLocationList() is false and the \a file_addr was
     ///     is contained in a DW_OP_addr location opcode or if \a file_addr
@@ -149,7 +153,7 @@ public:
     ///     otherwise.
     //------------------------------------------------------------------
     bool
-    LocationContains_DW_OP_addr (lldb::addr_t file_addr = LLDB_INVALID_ADDRESS) const;
+    LocationContains_DW_OP_addr (lldb::addr_t file_addr, bool &error) const;
 
     bool
     Update_DW_OP_addr (lldb::addr_t file_addr);

@@ -188,7 +188,10 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
         {
             // file:///PATH
             const char *path = s + strlen("file://");
-            m_fd_send = m_fd_recv = ::open (path, O_RDWR);
+            do
+            {
+                m_fd_send = m_fd_recv = ::open (path, O_RDWR);
+            } while (m_fd_send == -1 && errno == EINTR);
             if (m_fd_send == -1)
             {
                 if (error_ptr)
@@ -269,14 +272,22 @@ ConnectionFileDescriptor::Read (void *dst,
     case eFDTypeFile:       // Other FD requireing read/write
         status = BytesAvailable (timeout_usec, error_ptr);
         if (status == eConnectionStatusSuccess)
-            bytes_read = ::read (m_fd_recv, dst, dst_len);
+        {
+            do
+            {
+                bytes_read = ::read (m_fd_recv, dst, dst_len);
+            } while (bytes_read < 0 && errno == EINTR);
+        }
         break;
 
     case eFDTypeSocket:     // Socket requiring send/recv
         if (SetSocketReceiveTimeout (timeout_usec))
         {
             status = eConnectionStatusSuccess;
-            bytes_read = ::recv (m_fd_recv, dst, dst_len, 0);
+            do
+            {
+                bytes_read = ::recv (m_fd_recv, dst, dst_len, 0);
+            } while (bytes_read < 0 && errno == EINTR);
         }
         break;
 
@@ -286,7 +297,10 @@ ConnectionFileDescriptor::Read (void *dst,
             status = eConnectionStatusSuccess;
             SocketAddress from (m_udp_send_sockaddr);
             socklen_t from_len = m_udp_send_sockaddr.GetLength();
-            bytes_read = ::recvfrom (m_fd_recv, dst, dst_len, 0, (struct sockaddr *)&from, &from_len);
+            do
+            {
+                bytes_read = ::recvfrom (m_fd_recv, dst, dst_len, 0, (struct sockaddr *)&from, &from_len);
+            } while (bytes_read < 0 && errno == EINTR);
         }
         break;
     }
@@ -392,21 +406,30 @@ ConnectionFileDescriptor::Write (const void *src, size_t src_len, ConnectionStat
     switch (m_fd_send_type)
     {
         case eFDTypeFile:       // Other FD requireing read/write
-            bytes_sent = ::write (m_fd_send, src, src_len);
+            do
+            {
+                bytes_sent = ::write (m_fd_send, src, src_len);
+            } while (bytes_sent < 0 && errno == EINTR);
             break;
             
         case eFDTypeSocket:     // Socket requiring send/recv
-            bytes_sent = ::send (m_fd_send, src, src_len, 0);
+            do
+            {
+                bytes_sent = ::send (m_fd_send, src, src_len, 0);
+            } while (bytes_sent < 0 && errno == EINTR);
             break;
             
         case eFDTypeSocketUDP:  // Unconnected UDP socket requiring sendto/recvfrom
             assert (m_udp_send_sockaddr.GetFamily() != 0);
-            bytes_sent = ::sendto (m_fd_send, 
-                                   src, 
-                                   src_len, 
-                                   0, 
-                                   m_udp_send_sockaddr, 
-                                   m_udp_send_sockaddr.GetLength());
+            do
+            {
+                bytes_sent = ::sendto (m_fd_send, 
+                                       src, 
+                                       src_len, 
+                                       0, 
+                                       m_udp_send_sockaddr, 
+                                       m_udp_send_sockaddr.GetLength());
+            } while (bytes_sent < 0 && errno == EINTR);
             break;
     }
 
