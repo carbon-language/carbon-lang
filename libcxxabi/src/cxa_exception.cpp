@@ -381,6 +381,10 @@ __cxa_decrement_exception_refcount(void* thrown_object) throw()
     Returns a pointer to the thrown object (if any) at the top of the
     caughtExceptions stack.  Atommically increment the exception's referenceCount.
     If there is no such thrown object, returns null.
+
+    We can use __cxa_get_globals_fast here to get the globals because if there have
+    been no exceptions thrown, ever, on this thread, we can return NULL without 
+    the need to allocate the exception-handling globals.
 */
 void*
 __cxa_current_primary_exception() throw()
