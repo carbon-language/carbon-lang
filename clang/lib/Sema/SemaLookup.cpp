@@ -1171,7 +1171,7 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
         
         // If this declaration is module-private and it came from an AST
         // file, we can't see it.
-        NamedDecl *D = R.isForRedeclaration()? *I : getVisibleDecl(*I);
+        NamedDecl *D = R.isHiddenDeclarationVisible()? *I : getVisibleDecl(*I);
         if (!D)
           continue;
                 
@@ -1194,7 +1194,7 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
             if (!LastDC->isFileContext() && !S->isDeclScope(*LastI))
               break;
             
-            D = R.isForRedeclaration()? *LastI : getVisibleDecl(*LastI);
+            D = R.isHiddenDeclarationVisible()? *LastI : getVisibleDecl(*LastI);
             if (D)
               R.addDecl(D);
           }

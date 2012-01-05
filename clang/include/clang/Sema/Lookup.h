@@ -214,6 +214,12 @@ public:
     return Redecl;
   }
 
+  /// \brief Determine whether this lookup is permitted to see hidden
+  /// declarations, such as those in modules that have not yet been imported.
+  bool isHiddenDeclarationVisible() const {
+    return Redecl || LookupKind == Sema::LookupTagName;
+  }
+  
   /// Sets whether tag declarations should be hidden by non-tag
   /// declarations during resolution.  The default is true.
   void setHideTags(bool Hide) {
@@ -286,7 +292,7 @@ public:
     if (!D->isInIdentifierNamespace(IDNS))
       return 0;
     
-    if (Redecl == Sema::ForRedeclaration || isVisible(D))
+    if (isHiddenDeclarationVisible() || isVisible(D))
       return D;
     
     return getAcceptableDeclSlow(D);
