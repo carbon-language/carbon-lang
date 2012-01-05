@@ -72,6 +72,9 @@ TargetList::CreateTarget (Debugger &debugger,
     if (!platform_sp)
         platform_sp = debugger.GetPlatformList().GetSelectedPlatform ();
 
+    // This is purposely left empty unless it is specified by triple_cstr.
+    // If not initialized via triple_cstr, then the currently selected platform
+    // will set the architecture correctly.
     ArchSpec arch;
     
     if (triple_cstr)
