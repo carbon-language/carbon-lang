@@ -367,7 +367,10 @@ public:
 
     static Error
     LaunchProcess (ProcessLaunchInfo &launch_info);
-    
+
+    static lldb::DataBufferSP
+    GetAuxvData (lldb_private::Process *process);
+
     static lldb::TargetSP
     GetDummyTarget (Debugger &debugger);
     

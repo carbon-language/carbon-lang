@@ -132,11 +132,15 @@ public:
     LaunchProcess (lldb_private::ProcessLaunchInfo &launch_info);
 
     virtual lldb::ProcessSP
-    Attach(lldb::pid_t pid,
+    Attach(lldb_private::ProcessAttachInfo &attach_info,
            lldb_private::Debugger &debugger,
            lldb_private::Target *target,
            lldb_private::Listener &listener,
            lldb_private::Error &error);
+
+    // FreeBSD processes can not be launched by spawning and attaching.
+    virtual bool
+    CanDebugProcess () { return false; }
 
     // Only on PlatformMacOSX:
     virtual lldb_private::Error

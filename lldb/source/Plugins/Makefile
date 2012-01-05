@@ -30,7 +30,11 @@ DIRS += OperatingSystem/Darwin-Kernel
 endif
 
 ifeq ($(HOST_OS),Linux)
-DIRS += Process/Linux DynamicLoader/Linux-DYLD
+DIRS += Process/Linux Process/POSIX DynamicLoader/POSIX-DYLD
+endif
+
+ifeq ($(HOST_OS),FreeBSD)
+DIRS += Process/FreeBSD Process/POSIX DynamicLoader/POSIX-DYLD
 endif
 
 include $(LLDB_LEVEL)/Makefile

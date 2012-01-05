@@ -28,9 +28,9 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Utility/PseudoTerminal.h"
 
-#include "LinuxThread.h"
+#include "POSIXThread.h"
 #include "ProcessLinux.h"
-#include "ProcessLinuxLog.h"
+#include "ProcessPOSIXLog.h"
 #include "ProcessMonitor.h"
 
 
@@ -63,8 +63,8 @@ DisplayBytes (lldb_private::StreamString &s, void *bytes, uint32_t count)
 static void PtraceDisplayBytes(__ptrace_request &req, void *data)
 {
     StreamString buf;
-    LogSP verbose_log (ProcessLinuxLog::GetLogIfAllCategoriesSet (
-                                        LINUX_LOG_PTRACE | LINUX_LOG_VERBOSE));
+    LogSP verbose_log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (
+                                        POSIX_LOG_PTRACE | POSIX_LOG_VERBOSE));
 
     if (verbose_log)
     {
@@ -120,7 +120,7 @@ PtraceWrapper(__ptrace_request req, pid_t pid, void *addr, void *data,
 {
     long int result;
 
-    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_PTRACE));
+    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PTRACE));
 
     if (log)
         log->Printf("ptrace(%s, %u, %p, %p) called from file %s line %d",
@@ -170,10 +170,10 @@ DoReadMemory(lldb::pid_t pid, unsigned word_size,
     size_t remainder;
     long data;
 
-    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_ALL));
+    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_ALL));
     if (log)
-        ProcessLinuxLog::IncNestLevel();
-    if (log && ProcessLinuxLog::AtTopNestLevel() && log->GetMask().Test(LINUX_LOG_MEMORY))
+        ProcessPOSIXLog::IncNestLevel();
+    if (log && ProcessPOSIXLog::AtTopNestLevel() && log->GetMask().Test(POSIX_LOG_MEMORY))
         log->Printf ("ProcessMonitor::%s(%d, %d, %p, %p, %d, _)", __FUNCTION__,
                      pid, word_size, (void*)vm_addr, buf, size);
 
@@ -187,7 +187,7 @@ DoReadMemory(lldb::pid_t pid, unsigned word_size,
         {
             error.SetErrorToErrno();
             if (log)
-                ProcessLinuxLog::DecNestLevel();
+                ProcessPOSIXLog::DecNestLevel();
             return bytes_read;
         }
 
@@ -200,10 +200,10 @@ DoReadMemory(lldb::pid_t pid, unsigned word_size,
         for (unsigned i = 0; i < remainder; ++i)
             dst[i] = ((data >> i*8) & 0xFF);
 
-        if (log && ProcessLinuxLog::AtTopNestLevel() &&
-            (log->GetMask().Test(LINUX_LOG_MEMORY_DATA_LONG) ||
-             (log->GetMask().Test(LINUX_LOG_MEMORY_DATA_SHORT) &&
-              size <= LINUX_LOG_MEMORY_SHORT_BYTES)))
+        if (log && ProcessPOSIXLog::AtTopNestLevel() &&
+            (log->GetMask().Test(POSIX_LOG_MEMORY_DATA_LONG) ||
+             (log->GetMask().Test(POSIX_LOG_MEMORY_DATA_SHORT) &&
+              size <= POSIX_LOG_MEMORY_SHORT_BYTES)))
             log->Printf ("ProcessMonitor::%s() [%p]:0x%lx (0x%lx)", __FUNCTION__,
                          (void*)vm_addr, *(unsigned long*)dst, (unsigned long)data);
 
@@ -212,7 +212,7 @@ DoReadMemory(lldb::pid_t pid, unsigned word_size,
     }
 
     if (log)
-        ProcessLinuxLog::DecNestLevel();
+        ProcessPOSIXLog::DecNestLevel();
     return bytes_read;
 }
 
@@ -224,10 +224,10 @@ DoWriteMemory(lldb::pid_t pid, unsigned word_size,
     size_t bytes_written = 0;
     size_t remainder;
 
-    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_ALL));
+    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_ALL));
     if (log)
-        ProcessLinuxLog::IncNestLevel();
-    if (log && ProcessLinuxLog::AtTopNestLevel() && log->GetMask().Test(LINUX_LOG_MEMORY))
+        ProcessPOSIXLog::IncNestLevel();
+    if (log && ProcessPOSIXLog::AtTopNestLevel() && log->GetMask().Test(POSIX_LOG_MEMORY))
         log->Printf ("ProcessMonitor::%s(%d, %d, %p, %p, %d, _)", __FUNCTION__,
                      pid, word_size, (void*)vm_addr, buf, size);
 
@@ -244,10 +244,10 @@ DoWriteMemory(lldb::pid_t pid, unsigned word_size,
             for (unsigned i = 0; i < word_size; ++i)
                 data |= (unsigned long)src[i] << i*8;
 
-            if (log && ProcessLinuxLog::AtTopNestLevel() &&
-                (log->GetMask().Test(LINUX_LOG_MEMORY_DATA_LONG) ||
-                 (log->GetMask().Test(LINUX_LOG_MEMORY_DATA_SHORT) &&
-                  size <= LINUX_LOG_MEMORY_SHORT_BYTES)))
+            if (log && ProcessPOSIXLog::AtTopNestLevel() &&
+                (log->GetMask().Test(POSIX_LOG_MEMORY_DATA_LONG) ||
+                 (log->GetMask().Test(POSIX_LOG_MEMORY_DATA_SHORT) &&
+                  size <= POSIX_LOG_MEMORY_SHORT_BYTES)))
                  log->Printf ("ProcessMonitor::%s() [%p]:0x%lx (0x%lx)", __FUNCTION__,
                               (void*)vm_addr, *(unsigned long*)src, data);
 
@@ -255,7 +255,7 @@ DoWriteMemory(lldb::pid_t pid, unsigned word_size,
             {
                 error.SetErrorToErrno();
                 if (log)
-                    ProcessLinuxLog::DecNestLevel();
+                    ProcessPOSIXLog::DecNestLevel();
                 return bytes_written;
             }
         }
@@ -266,7 +266,7 @@ DoWriteMemory(lldb::pid_t pid, unsigned word_size,
                              buff, word_size, error) != word_size)
             {
                 if (log)
-                    ProcessLinuxLog::DecNestLevel();
+                    ProcessPOSIXLog::DecNestLevel();
                 return bytes_written;
             }
 
@@ -276,14 +276,14 @@ DoWriteMemory(lldb::pid_t pid, unsigned word_size,
                               buff, word_size, error) != word_size)
             {
                 if (log)
-                    ProcessLinuxLog::DecNestLevel();
+                    ProcessPOSIXLog::DecNestLevel();
                 return bytes_written;
             }
 
-            if (log && ProcessLinuxLog::AtTopNestLevel() &&
-                (log->GetMask().Test(LINUX_LOG_MEMORY_DATA_LONG) ||
-                 (log->GetMask().Test(LINUX_LOG_MEMORY_DATA_SHORT) &&
-                  size <= LINUX_LOG_MEMORY_SHORT_BYTES)))
+            if (log && ProcessPOSIXLog::AtTopNestLevel() &&
+                (log->GetMask().Test(POSIX_LOG_MEMORY_DATA_LONG) ||
+                 (log->GetMask().Test(POSIX_LOG_MEMORY_DATA_SHORT) &&
+                  size <= POSIX_LOG_MEMORY_SHORT_BYTES)))
                  log->Printf ("ProcessMonitor::%s() [%p]:0x%lx (0x%lx)", __FUNCTION__,
                               (void*)vm_addr, *(unsigned long*)src, *(unsigned long*)buff);
         }
@@ -292,7 +292,7 @@ DoWriteMemory(lldb::pid_t pid, unsigned word_size,
         src += word_size;
     }
     if (log)
-        ProcessLinuxLog::DecNestLevel();
+        ProcessPOSIXLog::DecNestLevel();
     return bytes_written;
 }
 
@@ -420,7 +420,7 @@ void
 ReadRegOperation::Execute(ProcessMonitor *monitor)
 {
     lldb::pid_t pid = monitor->GetPID();
-    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_REGISTERS));
+    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
 
     // Set errno to zero so that we can detect a failed peek.
     errno = 0;
@@ -434,7 +434,7 @@ ReadRegOperation::Execute(ProcessMonitor *monitor)
     }
     if (log)
         log->Printf ("ProcessMonitor::%s() reg %s: 0x%x", __FUNCTION__,
-                     LinuxThread::GetRegisterNameFromOffset(m_offset), data);
+                     POSIXThread::GetRegisterNameFromOffset(m_offset), data);
 }
 
 //------------------------------------------------------------------------------
@@ -460,7 +460,7 @@ WriteRegOperation::Execute(ProcessMonitor *monitor)
 {
     void* buf;
     lldb::pid_t pid = monitor->GetPID();
-    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_REGISTERS));
+    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
 
     if (sizeof(void*) == sizeof(uint64_t))
         buf = (void*) m_value.GetAsUInt64();
@@ -472,7 +472,7 @@ WriteRegOperation::Execute(ProcessMonitor *monitor)
 
     if (log)
         log->Printf ("ProcessMonitor::%s() reg %s: %p", __FUNCTION__,
-                     LinuxThread::GetRegisterNameFromOffset(m_offset), buf);
+                     POSIXThread::GetRegisterNameFromOffset(m_offset), buf);
     if (PTRACE(PTRACE_POKEUSER, pid, (void*)m_offset, buf))
         m_result = false;
     else
@@ -794,7 +794,7 @@ ProcessMonitor::AttachArgs::~AttachArgs()
 /// launching or attaching to the inferior process, and then 2) servicing
 /// operations such as register reads/writes, stepping, etc.  See the comments
 /// on the Operation class for more info as to why this is needed.
-ProcessMonitor::ProcessMonitor(ProcessLinux *process,
+ProcessMonitor::ProcessMonitor(ProcessPOSIX *process,
                                Module *module,
                                const char *argv[],
                                const char *envp[],
@@ -802,7 +802,7 @@ ProcessMonitor::ProcessMonitor(ProcessLinux *process,
                                const char *stdout_path,
                                const char *stderr_path,
                                lldb_private::Error &error)
-    : m_process(process),
+    : m_process(static_cast<ProcessLinux *>(process)),
       m_operation_thread(LLDB_INVALID_HOST_THREAD),
       m_pid(LLDB_INVALID_PROCESS_ID),
       m_terminal_fd(-1),
@@ -858,10 +858,10 @@ WAIT_AGAIN:
     }
 }
 
-ProcessMonitor::ProcessMonitor(ProcessLinux *process,
+ProcessMonitor::ProcessMonitor(ProcessPOSIX *process,
                                lldb::pid_t pid,
                                lldb_private::Error &error)
-    : m_process(process),
+  : m_process(static_cast<ProcessLinux *>(process)),
       m_operation_thread(LLDB_INVALID_HOST_THREAD),
       m_pid(LLDB_INVALID_PROCESS_ID),
       m_terminal_fd(-1),
@@ -978,7 +978,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
     lldb::pid_t pid;
 
     lldb::ThreadSP inferior;
-    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_PROCESS));
+    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
 
     // Propagate the environment if one is not supplied.
     if (envp == NULL || envp[0] == NULL)
@@ -1101,11 +1101,10 @@ ProcessMonitor::Launch(LaunchArgs *args)
     if (!EnsureFDFlags(monitor->m_terminal_fd, O_NONBLOCK, args->m_error))
         goto FINISH;
 
-    // Update the process thread list with this new thread and mark it as
-    // current.
+    // Update the process thread list with this new thread.
     // FIXME: should we be letting UpdateThreadList handle this?
     // FIXME: by using pids instead of tids, we can only support one thread.
-    inferior.reset(new LinuxThread(process, pid));
+    inferior.reset(new POSIXThread(process, pid));
     if (log)
         log->Printf ("ProcessMonitor::%s() adding pid = %i", __FUNCTION__, pid);
     process.GetThreadList().AddThread(inferior);
@@ -1167,9 +1166,8 @@ ProcessMonitor::Attach(AttachArgs *args)
 
     ProcessMonitor *monitor = args->m_monitor;
     ProcessLinux &process = monitor->GetProcess();
-
     lldb::ThreadSP inferior;
-    LogSP log (ProcessLinuxLog::GetLogIfAllCategoriesSet (LINUX_LOG_PROCESS));
+    LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
 
     if (pid <= 1)
     {
@@ -1192,13 +1190,11 @@ ProcessMonitor::Attach(AttachArgs *args)
         goto FINISH;
     }
 
-    // Update the process thread list with the attached thread and
-    // mark it as current.
-    inferior.reset(new LinuxThread(process, pid));
+    // Update the process thread list with the attached thread.
+    inferior.reset(new POSIXThread(process, pid));
     if (log)
         log->Printf ("ProcessMonitor::%s() adding tid = %i", __FUNCTION__, pid);
     process.GetThreadList().AddThread(inferior);
-    process.GetThreadList().SetSelectedThreadByID(pid);
 
     // Let our process instance know the thread has stopped.
     process.SendMessage(ProcessMessage::Trace(pid));
@@ -1568,7 +1564,7 @@ ProcessMonitor::WriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size,
 }
 
 bool
-ProcessMonitor::ReadRegisterValue(unsigned offset, RegisterValue &value)
+ProcessMonitor::ReadRegisterValue(unsigned offset, unsigned size, RegisterValue &value)
 {
     bool result;
     ReadRegOperation op(offset, value, result);

@@ -27,16 +27,13 @@ using namespace lldb_private;
 Platform *
 PlatformFreeBSD::CreateInstance ()
 {
-    // The only time we create an instance is when we are creating a remote
-    // freebsd platform
-    const bool is_host = false;
-    return new PlatformFreeBSD (is_host);
+    return new PlatformFreeBSD (true);
 }
 
 const char *
 PlatformFreeBSD::GetPluginNameStatic()
 {
-    return "PlatformFreeBSD";
+    return "plugin.platform.freebsd";
 }
 
 const char *
@@ -66,7 +63,7 @@ PlatformFreeBSD::Initialize ()
     {
 #if defined (__FreeBSD__)
         PlatformSP default_platform_sp (CreateInstance());
-        //default_platform_sp->SetSystemArchitecture (Host::GetArchitecture());
+        default_platform_sp->SetSystemArchitecture (Host::GetArchitecture());
         Platform::SetDefaultPlatform (default_platform_sp);
 #endif
         PluginManager::RegisterPlugin(PlatformFreeBSD::GetShortPluginNameStatic(false),
@@ -79,7 +76,7 @@ PlatformFreeBSD::Initialize ()
 void
 PlatformFreeBSD::Terminate ()
 {
-	PluginManager::UnregisterPlugin (PlatformFreeBSD::CreateInstance);
+    PluginManager::UnregisterPlugin (PlatformFreeBSD::CreateInstance);
 }
 
 //------------------------------------------------------------------
@@ -385,17 +382,16 @@ PlatformFreeBSD::DisconnectRemote ()
 bool
 PlatformFreeBSD::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 {
-    bool sucess = false;
+    bool success = false;
     if (IsHost())
     {
-        sucess = Platform::GetProcessInfo (pid, process_info);
+        success = Platform::GetProcessInfo (pid, process_info);
     }
-    else
+    else if (m_remote_platform_sp) 
     {
-        if (m_remote_platform_sp)
-            sucess = m_remote_platform_sp->GetProcessInfo (pid, process_info);
+        success = m_remote_platform_sp->GetProcessInfo (pid, process_info);
     }
-    return sucess;
+    return success;
 }
 
 
@@ -438,11 +434,11 @@ PlatformFreeBSD::LaunchProcess (ProcessLaunchInfo &launch_info)
 }
 
 lldb::ProcessSP
-PlatformFreeBSD::Attach(lldb::pid_t pid,
-                      Debugger &debugger,
-                      Target *target,
-                      Listener &listener,
-                      Error &error)
+PlatformFreeBSD::Attach(ProcessAttachInfo &attach_info,
+                        Debugger &debugger,
+                        Target *target,
+                        Listener &listener,
+                        Error &error)
 {
     lldb::ProcessSP process_sp;
     if (IsHost())
@@ -457,6 +453,7 @@ PlatformFreeBSD::Attach(lldb::pid_t pid,
                                                            emptyFileSpec,
                                                            emptyArchSpec,
                                                            false,
+                                                           m_remote_platform_sp,
                                                            new_target_sp);
             target = new_target_sp.get();
         }
@@ -472,13 +469,13 @@ PlatformFreeBSD::Attach(lldb::pid_t pid,
             process_sp = target->CreateProcess (listener, "gdb-remote");
 
             if (process_sp)
-                error = process_sp->Attach (pid);
+                error = process_sp->Attach (attach_info);
         }
     }
     else
     {
         if (m_remote_platform_sp)
-            process_sp = m_remote_platform_sp->Attach (pid, debugger, target, listener, error);
+            process_sp = m_remote_platform_sp->Attach (attach_info, debugger, target, listener, error);
         else
             error.SetErrorString ("the platform is not currently connected");
     }

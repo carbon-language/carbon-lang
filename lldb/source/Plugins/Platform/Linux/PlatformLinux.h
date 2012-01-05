@@ -104,6 +104,7 @@ namespace lldb_private {
         Attach(ProcessAttachInfo &attach_info, Debugger &debugger,
                Target *target, Listener &listener, Error &error);
 
+        // Linux processes can not be launched by spawning and attaching.
         virtual bool
         CanDebugProcess ()
         {
