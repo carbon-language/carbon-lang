@@ -750,13 +750,19 @@ public:
     if (MyInvalid || !Entry.isFile())
       return 0;
 
-    return Entry.getFile().getContentCache()->OrigEntry;
+    const SrcMgr::ContentCache *Content = Entry.getFile().getContentCache();
+    if (!Content)
+      return 0;
+    return Content->OrigEntry;
   }
 
   /// Returns the FileEntry record for the provided SLocEntry.
   const FileEntry *getFileEntryForSLocEntry(const SrcMgr::SLocEntry &sloc) const
   {
-    return sloc.getFile().getContentCache()->OrigEntry;
+    const SrcMgr::ContentCache *Content = sloc.getFile().getContentCache();
+    if (!Content)
+      return 0;
+    return Content->OrigEntry;
   }
 
   /// getBufferData - Return a StringRef to the source buffer data for the
