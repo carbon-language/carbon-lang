@@ -18,6 +18,7 @@
 #include "asan_interceptors.h"
 
 #include <stdarg.h>
+#include <stdio.h>
 
 namespace __asan {
 
@@ -176,6 +177,14 @@ void Report(const char *format, ...) {
   va_end(args);
   RAW_CHECK_MSG(needed_length < kLen, "Buffer in Report is too short!\n");
   RawWrite(buffer);
+}
+
+int SScanf(const char *str, const char *format, ...) {
+  va_list args;
+  va_start(args, format);
+  int res = vsscanf(str, format, args);
+  va_end(args);
+  return res;
 }
 
 }  // namespace __asan

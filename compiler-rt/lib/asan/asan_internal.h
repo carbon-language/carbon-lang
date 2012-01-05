@@ -45,7 +45,11 @@
 
 // If set, sysinfo/sysinfo.h will be used to iterate over /proc/maps.
 #ifndef ASAN_USE_SYSINFO
+#ifdef __linux__
+# define ASAN_USE_SYSINFO 0
+#else
 # define ASAN_USE_SYSINFO 1
+#endif
 #endif
 
 // If set, asan will install its own SEGV signal handler.
@@ -99,10 +103,18 @@ ssize_t AsanRead(int fd, void *buf, size_t count);
 ssize_t AsanWrite(int fd, const void *buf, size_t count);
 int AsanClose(int fd);
 
+// Opens the file 'file_name" and reads up to 'max_len' bytes.
+// The resulting buffer is mmaped and stored in '*buff'.
+// The size of the mmaped region is stored in '*buff_size',
+// Returns the number of read bytes or -1 if file can not be opened.
+ssize_t ReadFileToBuffer(const char *file_name, char **buff,
+                         size_t *buff_size, size_t max_len);
+
 // asan_printf.cc
 void RawWrite(const char *buffer);
 int SNPrint(char *buffer, size_t length, const char *format, ...);
 void Printf(const char *format, ...);
+int SScanf(const char *str, const char *format, ...);
 void Report(const char *format, ...);
 
 // Don't use std::min and std::max, to minimize dependency on libstdc++.

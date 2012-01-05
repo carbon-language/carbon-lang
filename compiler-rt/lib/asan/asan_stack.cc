@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 #include "asan_interceptors.h"
 #include "asan_lock.h"
+#include "asan_procmaps.h"
 #include "asan_stack.h"
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
@@ -128,9 +129,27 @@ void AsanStackTrace::PrintStack(uintptr_t *addr, size_t size) {
 
 #else  // ASAN_USE_SYSINFO
 void AsanStackTrace::PrintStack(uintptr_t *addr, size_t size) {
+  AsanProcMaps proc_maps;
   for (size_t i = 0; i < size && addr[i]; i++) {
+    proc_maps.Reset();
     uintptr_t pc = addr[i];
-    Printf("  #%ld 0x%lx\n", i, pc);
+    uint64_t start, end, offset;
+    char filename[4096];
+    bool found = 0;
+    int map_idx = 0;
+    while (proc_maps.Next(&start, &end, &offset,
+                          filename, sizeof(filename))) {
+      if (pc >= start && pc <= end) {
+        found = true;
+        uintptr_t relative_pc = (map_idx == 0) ? pc : (pc - start);
+        Printf("    #%ld 0x%lx (%s+0x%lx)\n", i, pc, filename, relative_pc);
+        break;
+      }
+      map_idx++;
+    }
+    if (!found) {
+      Printf("    #%ld 0x%lx\n", i, pc);
+    }
   }
 }
 #endif  // ASAN_USE_SYSINFO

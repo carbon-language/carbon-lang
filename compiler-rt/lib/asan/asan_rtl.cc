@@ -18,6 +18,7 @@
 #include "asan_lock.h"
 #include "asan_mac.h"
 #include "asan_mapping.h"
+#include "asan_procmaps.h"
 #include "asan_stack.h"
 #include "asan_stats.h"
 #include "asan_thread.h"
@@ -119,22 +120,19 @@ static void PrintBytes(const char *before, uintptr_t *a) {
   Printf("\n");
 }
 
-// Opens the file 'file_name" and reads up to 'max_len' bytes.
-// The resulting buffer is mmaped and stored in '*buff'.
-// Returns the number of read bytes or -1 if file can not be opened.
-static ssize_t ReadFileToBuffer(const char *file_name, char **buff,
-                                size_t max_len) {
+ssize_t ReadFileToBuffer(const char *file_name, char **buff,
+                         size_t *buff_size, size_t max_len) {
   const size_t kMinFileLen = kPageSize;
   ssize_t read_len = -1;
   *buff = 0;
-  size_t maped_size = 0;
+  *buff_size = 0;
   // The files we usually open are not seekable, so try different buffer sizes.
   for (size_t size = kMinFileLen; size <= max_len; size *= 2) {
     int fd = AsanOpenReadonly(file_name);
     if (fd < 0) return -1;
-    AsanUnmapOrDie(*buff, maped_size);
-    maped_size = size;
+    AsanUnmapOrDie(*buff, *buff_size);
     *buff = (char*)AsanMmapSomewhereOrDie(size, __FUNCTION__);
+    *buff_size = size;
     read_len = AsanRead(fd, *buff, size);
     AsanClose(fd);
     if (read_len < size)  // We've read the whole file.
@@ -151,7 +149,9 @@ static const char* GetEnvFromProcSelfEnviron(const char* name) {
   static bool inited;
   if (!inited) {
     inited = true;
-    len = ReadFileToBuffer("/proc/self/environ", &environ, 1 << 20);
+    size_t environ_size;
+    len = ReadFileToBuffer("/proc/self/environ",
+                           &environ, &environ_size, 1 << 20);
   }
   if (!environ || len <= 0) return NULL;
   size_t namelen = internal_strlen(name);

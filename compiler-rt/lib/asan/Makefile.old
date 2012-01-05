@@ -264,7 +264,6 @@ $(BIN)/%_test$(SUFF).o: tests/%_test.mm $(RTL_HDR) $(MAKEFILE)
 $(BIN)/%$(SUFF).o: %.cc $(RTL_HDR) $(MAKEFILE)
 	$(CXX) $(PIE) $(CFLAGS) -fPIC -c -O2 -fno-exceptions -funwind-tables \
 		-o $@ -g $< -Ithird_party \
-		-DASAN_USE_SYSINFO=1 \
 		-DASAN_NEEDS_SEGV=$(ASAN_NEEDS_SEGV) \
 		-DASAN_HAS_EXCEPTIONS=$(ASAN_HAS_EXCEPTIONS) \
 		-DASAN_FLEXIBLE_MAPPING_AND_OFFSET=$(ASAN_FLEXIBLE_MAPPING_AND_OFFSET) \
@@ -272,7 +271,6 @@ $(BIN)/%$(SUFF).o: %.cc $(RTL_HDR) $(MAKEFILE)
 
 $(BIN)/%$(SUFF).o: %.c $(RTL_HDR) $(MAKEFILE)
 	$(CC) $(PIE) $(CFLAGS) -fPIC -c -O2 -o $@ -g $< -Ithird_party \
-		-DASAN_USE_SYSINFO=1 \
 		$(ASAN_FLAGS)
 
 ifeq ($(OS),darwin)

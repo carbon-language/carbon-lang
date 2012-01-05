@@ -13,12 +13,15 @@
 //===----------------------------------------------------------------------===//
 #ifdef __linux__
 
+#include "asan_interceptors.h"
 #include "asan_internal.h"
+#include "asan_procmaps.h"
 
 #include <sys/mman.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <unistd.h>
 
 extern char _DYNAMIC[];
@@ -94,6 +97,57 @@ ssize_t AsanRead(int fd, void *buf, size_t count) {
 
 int AsanClose(int fd) {
   return close(fd);
+}
+
+AsanProcMaps::AsanProcMaps() {
+  proc_self_maps_buff_len_ =
+      ReadFileToBuffer("/proc/self/maps", &proc_self_maps_buff_,
+                       &proc_self_maps_buff_mmaped_size_, 1 << 20);
+  CHECK(proc_self_maps_buff_len_ > 0);
+  // AsanWrite(2, proc_self_maps_buff_, proc_self_maps_buff_len_);
+  Reset();
+}
+
+AsanProcMaps::~AsanProcMaps() {
+  AsanUnmapOrDie(proc_self_maps_buff_, proc_self_maps_buff_mmaped_size_);
+}
+
+void AsanProcMaps::Reset() {
+  current_ = proc_self_maps_buff_;
+}
+
+bool AsanProcMaps::Next(uint64_t *start, uint64_t *end,
+                        uint64_t *offset, char filename[],
+                        size_t filename_size) {
+  char *last = proc_self_maps_buff_ + proc_self_maps_buff_len_;
+  if (current_ >= last) return false;
+  int consumed = 0;
+  char flags[10];
+  int major, minor;
+  uint64_t inode;
+  char *next_line = (char*)internal_memchr(current_, '\n', last - current_);
+  if (next_line == NULL)
+    next_line = last;
+  if (SScanf(current_,
+             "%llx-%llx %4s %llx %x:%x %lld %n",
+             start, end, flags, offset, &major, &minor,
+             &inode, &consumed) != 7)
+    return false;
+  current_ += consumed;
+  // Skip spaces.
+  while (current_ < next_line && *current_ == ' ')
+    current_++;
+  // Fill in the filename.
+  size_t i = 0;
+  while (current_ < next_line) {
+    if (filename && i < filename_size - 1)
+      filename[i++] = *current_;
+    current_++;
+  }
+  if (filename && i < filename_size)
+    filename[i] = 0;
+  current_ = next_line + 1;
+  return true;
 }
 
 }  // namespace __asan
