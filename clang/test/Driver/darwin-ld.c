@@ -95,3 +95,17 @@
 //
 // FORCE_LOAD: {{ld(.exe)?"}}
 // FORCE_LOAD: "-force_load" "a" "-force_load" "b"
+
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -### %t.o \
+// RUN:   -lazy_framework Framework 2> %t.log
+//
+// RUN: FileCheck -check-prefix=LINK_LAZY_FRAMEWORK %s < %t.log
+// LINK_LAZY_FRAMEWORK: {{ld(.exe)?"}}
+// LINK_LAZY_FRAMEWORK: "-lazy_framework" "Framework"
+
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -### %t.o \
+// RUN:   -lazy_library Library 2> %t.log
+//
+// RUN: FileCheck -check-prefix=LINK_LAZY_LIBRARY %s < %t.log
+// LINK_LAZY_LIBRARY: {{ld(.exe)?"}}
+// LINK_LAZY_LIBRARY: "-lazy_library" "Library"

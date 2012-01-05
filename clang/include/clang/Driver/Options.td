@@ -574,6 +574,8 @@ def iwithsysroot : JoinedOrSeparate<"-iwithsysroot">, Group<clang_i_Group>;
 def i : Joined<"-i">, Group<i_Group>;
 def keep__private__externs : Flag<"-keep_private_externs">;
 def l : JoinedOrSeparate<"-l">, Flags<[LinkerInput, RenderJoined]>;
+def lazy__framework : Separate<"-lazy_framework">, Flags<[LinkerInput]>;
+def lazy__library : Separate<"-lazy_library">, Flags<[LinkerInput]>;
 def m32 : Flag<"-m32">, Group<m_Group>, Flags<[DriverOption]>;
 def mv2 : Flag<"-mv2">, Group<m_Group>, Flags<[DriverOption]>;
 def mv3 : Flag<"-mv3">, Group<m_Group>, Flags<[DriverOption]>;
