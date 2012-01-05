@@ -461,7 +461,7 @@ bool FunctionAttrs::AddNoCaptureAttrs(const CallGraphSCC &SCC) {
     }
     if (SCCCaptured) continue;
 
-    for (unsigned i = 0, e = ArgumentSCC.size(); i != e && !SCCCaptured; ++i) {
+    for (unsigned i = 0, e = ArgumentSCC.size(); i != e; ++i) {
       Argument *A = ArgumentSCC[i]->Definition;
       A->addAttr(Attribute::NoCapture);
       ++NumNoCapture;
