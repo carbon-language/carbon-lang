@@ -329,11 +329,11 @@ public:
 
   const AddrLabelExpr* getAddrLabelDiffLHS() const {
     assert(isAddrLabelDiff() && "Invalid accessor");
-    return ((AddrLabelDiffData*)(char*)Data)->LHSExpr;
+    return ((const AddrLabelDiffData*)(const char*)Data)->LHSExpr;
   }
   const AddrLabelExpr* getAddrLabelDiffRHS() const {
     assert(isAddrLabelDiff() && "Invalid accessor");
-    return ((AddrLabelDiffData*)(char*)Data)->RHSExpr;
+    return ((const AddrLabelDiffData*)(const char*)Data)->RHSExpr;
   }
 
   void setInt(const APSInt &I) {
