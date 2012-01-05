@@ -555,6 +555,9 @@ public:
   /// The AsmParser "RegisterPrefix" value.
   std::string RegisterPrefix;
 
+  /// The AsmParser variant number.
+  int AsmVariantNo;
+
   /// The classes which are needed for matching.
   std::vector<ClassInfo*> Classes;
 
@@ -643,7 +646,8 @@ void MatchableInfo::dump() {
 void MatchableInfo::Initialize(const AsmMatcherInfo &Info,
                                SmallPtrSet<Record*, 16> &SingletonRegisters) {
   // TODO: Eventually support asmparser for Variant != 0.
-  AsmString = CodeGenInstruction::FlattenAsmStringVariants(AsmString, 0);
+  AsmString = 
+    CodeGenInstruction::FlattenAsmStringVariants(AsmString, Info.AsmVariantNo);
 
   TokenizeAsmString(Info);
 
@@ -1105,7 +1109,8 @@ AsmMatcherInfo::AsmMatcherInfo(Record *asmParser,
                                CodeGenTarget &target,
                                RecordKeeper &records)
   : Records(records), AsmParser(asmParser), Target(target),
-    RegisterPrefix(AsmParser->getValueAsString("RegisterPrefix")) {
+    RegisterPrefix(AsmParser->getValueAsString("RegisterPrefix")),
+    AsmVariantNo(AsmParser->getValueAsInt("Variant")) {
 }
 
 /// BuildOperandMatchInfo - Build the necessary information to handle user
