@@ -256,7 +256,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::UINT_TO_FP     , MVT::i32  , Promote);
-    setOperationAction(ISD::UINT_TO_FP     , MVT::i64  , Expand);
+    setOperationAction(ISD::UINT_TO_FP     , MVT::i64  , Custom);
   } else if (!TM.Options.UseSoftFloat) {
     // We have an algorithm for SSE2->double, and we turn this into a
     // 64-bit FILD followed by conditional FADD for other targets.
@@ -7581,38 +7581,17 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
 // LowerUINT_TO_FP_i64 - 64-bit unsigned integer to double expansion.
 SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op,
                                                SelectionDAG &DAG) const {
-  // This algorithm is not obvious. Here it is in C code, more or less:
+  // This algorithm is not obvious. Here it is what we're trying to output:
   /*
-    double uint64_to_double( uint32_t hi, uint32_t lo ) {
-      static const __m128i exp = { 0x4330000045300000ULL, 0 };
-      static const __m128d bias = { 0x1.0p84, 0x1.0p52 };
-
-      // Copy ints to xmm registers.
-      __m128i xh = _mm_cvtsi32_si128( hi );
-      __m128i xl = _mm_cvtsi32_si128( lo );
-
-      // Combine into low half of a single xmm register.
-      __m128i x = _mm_unpacklo_epi32( xh, xl );
-      __m128d d;
-      double sd;
-
-      // Merge in appropriate exponents to give the integer bits the right
-      // magnitude.
-      x = _mm_unpacklo_epi32( x, exp );
-
-      // Subtract away the biases to deal with the IEEE-754 double precision
-      // implicit 1.
-      d = _mm_sub_pd( (__m128d) x, bias );
-
-      // All conversions up to here are exact. The correctly rounded result is
-      // calculated using the current rounding mode using the following
-      // horizontal add.
-      d = _mm_add_sd( d, _mm_unpackhi_pd( d, d ) );
-      _mm_store_sd( &sd, d );   // Because we are returning doubles in XMM, this
-                                // store doesn't really need to be here (except
-                                // maybe to zero the other double)
-      return sd;
-    }
+     movq       %rax,  %xmm0
+     punpckldq  (c0),  %xmm0  // c0: (uint4){ 0x43300000U, 0x45300000U, 0U, 0U }
+     subpd      (c1),  %xmm0  // c1: (double2){ 0x1.0p52, 0x1.0p52 * 0x1.0p32 }
+     #ifdef __SSE3__
+       haddpd   %xmm0, %xmm0          
+     #else
+       pshufd   $0x4e, %xmm0, %xmm1 
+       addpd    %xmm1, %xmm0
+     #endif
   */
 
   DebugLoc dl = Op.getDebugLoc();
@@ -7620,8 +7599,8 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op,
 
   // Build some magic constants.
   SmallVector<Constant*,4> CV0;
-  CV0.push_back(ConstantInt::get(*Context, APInt(32, 0x45300000)));
   CV0.push_back(ConstantInt::get(*Context, APInt(32, 0x43300000)));
+  CV0.push_back(ConstantInt::get(*Context, APInt(32, 0x45300000)));
   CV0.push_back(ConstantInt::get(*Context, APInt(32, 0)));
   CV0.push_back(ConstantInt::get(*Context, APInt(32, 0)));
   Constant *C0 = ConstantVector::get(CV0);
@@ -7629,37 +7608,42 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op,
 
   SmallVector<Constant*,2> CV1;
   CV1.push_back(
-    ConstantFP::get(*Context, APFloat(APInt(64, 0x4530000000000000ULL))));
-  CV1.push_back(
     ConstantFP::get(*Context, APFloat(APInt(64, 0x4330000000000000ULL))));
+  CV1.push_back(
+    ConstantFP::get(*Context, APFloat(APInt(64, 0x4530000000000000ULL))));
   Constant *C1 = ConstantVector::get(CV1);
   SDValue CPIdx1 = DAG.getConstantPool(C1, getPointerTy(), 16);
 
-  SDValue XR1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4i32,
-                            DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
-                                        Op.getOperand(0),
-                                        DAG.getIntPtrConstant(1)));
-  SDValue XR2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4i32,
-                            DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32,
-                                        Op.getOperand(0),
-                                        DAG.getIntPtrConstant(0)));
-  SDValue Unpck1 = getUnpackl(DAG, dl, MVT::v4i32, XR1, XR2);
+  // Load the 64-bit value into an XMM register.
+  SDValue XR1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v2i64,
+                            Op.getOperand(0));
   SDValue CLod0 = DAG.getLoad(MVT::v4i32, dl, DAG.getEntryNode(), CPIdx0,
                               MachinePointerInfo::getConstantPool(),
                               false, false, false, 16);
-  SDValue Unpck2 = getUnpackl(DAG, dl, MVT::v4i32, Unpck1, CLod0);
-  SDValue XR2F = DAG.getNode(ISD::BITCAST, dl, MVT::v2f64, Unpck2);
+  SDValue Unpck1 = getUnpackl(DAG, dl, MVT::v4i32,
+                              DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, XR1),
+                              CLod0);
+
   SDValue CLod1 = DAG.getLoad(MVT::v2f64, dl, CLod0.getValue(1), CPIdx1,
                               MachinePointerInfo::getConstantPool(),
                               false, false, false, 16);
+  SDValue XR2F = DAG.getNode(ISD::BITCAST, dl, MVT::v2f64, Unpck1);
   SDValue Sub = DAG.getNode(ISD::FSUB, dl, MVT::v2f64, XR2F, CLod1);
+  SDValue Result;
 
-  // Add the halves; easiest way is to swap them into another reg first.
-  int ShufMask[2] = { 1, -1 };
-  SDValue Shuf = DAG.getVectorShuffle(MVT::v2f64, dl, Sub,
-                                      DAG.getUNDEF(MVT::v2f64), ShufMask);
-  SDValue Add = DAG.getNode(ISD::FADD, dl, MVT::v2f64, Shuf, Sub);
-  return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64, Add,
+  if (Subtarget->hasSSE3()) {
+    // FIXME: The 'haddpd' instruction may be slower than 'movhlps + addsd'.
+    Result = DAG.getNode(X86ISD::FHADD, dl, MVT::v2f64, Sub, Sub);
+  } else {
+    SDValue S2F = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, Sub);
+    SDValue Shuffle = getTargetShuffleNode(X86ISD::PSHUFD, dl, MVT::v4i32,
+                                           S2F, 0x4E, DAG);
+    Result = DAG.getNode(ISD::FADD, dl, MVT::v2f64,
+                         DAG.getNode(ISD::BITCAST, dl, MVT::v2f64, Shuffle),
+                         Sub);
+  }
+
+  return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64, Result,
                      DAG.getIntPtrConstant(0));
 }
 
@@ -7729,6 +7713,8 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
     return LowerUINT_TO_FP_i64(Op, DAG);
   else if (SrcVT == MVT::i32 && X86ScalarSSEf64)
     return LowerUINT_TO_FP_i32(Op, DAG);
+  else if (SrcVT == MVT::i64 && DstVT == MVT::f32)
+    return SDValue();
 
   // Make a 64-bit buffer, and use it to build an FILD.
   SDValue StackSlot = DAG.CreateStackTemporary(MVT::i64);
