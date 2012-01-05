@@ -57,7 +57,7 @@ namespace llvm {
     /// The ID number of this value.
     unsigned id;
 
-    /// The index of the defining instruction (if isDefAccurate() returns true).
+    /// The index of the defining instruction.
     SlotIndex def;
 
     /// VNInfo constructor.
