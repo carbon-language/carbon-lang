@@ -288,16 +288,13 @@ include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-Wno-variadic-macros" SUPPORTS_NO_VARIADIC_MACROS_FLAG)
 
 include(GetTargetTriple)
-get_target_triple(LLVM_HOST_TRIPLE)
 get_target_triple(LLVM_DEFAULT_TARGET_TRIPLE)
 
-set(HOST_TRIPLE "${LLVM_HOST_TRIPLE}")
 set(TARGET_TRIPLE "${LLVM_DEFAULT_TARGET_TRIPLE}")
 
 # Determine the native architecture.
 string(TOLOWER "${LLVM_TARGET_ARCH}" LLVM_NATIVE_ARCH)
 if( LLVM_NATIVE_ARCH STREQUAL "host" )
-  string(REGEX MATCH "^[^-]*" LLVM_NATIVE_ARCH ${LLVM_HOST_TRIPLE})
   string(REGEX MATCH "^[^-]*" LLVM_NATIVE_ARCH ${LLVM_DEFAULT_TARGET_TRIPLE})
 endif ()
 

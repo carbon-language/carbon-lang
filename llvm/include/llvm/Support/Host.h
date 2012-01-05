@@ -33,14 +33,6 @@ namespace sys {
     return !isLittleEndianHost();
   }
 
-  /// getHostTriple() - Return the host where the compiler will be running.
-  ///
-  /// The host triple is a string in the format of:
-  ///   CPU_TYPE-VENDOR-OPERATING_SYSTEM
-  /// or
-  ///   CPU_TYPE-VENDOR-KERNEL-OPERATING_SYSTEM
-  std::string getHostTriple();
-
   /// getDefaultTargetTriple() - Return the default target triple the compiler
   /// has been configured to produce code for.
   ///

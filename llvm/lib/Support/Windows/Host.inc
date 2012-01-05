@@ -20,7 +20,3 @@ using namespace llvm;
 std::string sys::getDefaultTargetTriple() {
   return LLVM_DEFAULT_TARGET_TRIPLE;
 }
-
-std::string sys::getHostTriple() {
-  return LLVM_HOST_TRIPLE;
-}

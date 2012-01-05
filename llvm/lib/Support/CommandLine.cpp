@@ -1373,7 +1373,6 @@ public:
        << "  Built " << __DATE__ << " (" << __TIME__ << ").\n"
 #endif
        << "  Default target: " << sys::getDefaultTargetTriple() << '\n'
-       << "  Host: " << sys::getHostTriple() << '\n'
        << "  Host CPU: " << CPU << '\n';
   }
   void operator=(bool OptionWasSpecified) {
