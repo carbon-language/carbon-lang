@@ -2914,7 +2914,7 @@ void ASTWriter::WriteMergedDecls() {
   for (ASTReader::MergedDeclsMap::iterator I = Chain->MergedDecls.begin(),
                                         IEnd = Chain->MergedDecls.end();
        I != IEnd; ++I) {
-    DeclID CanonID = I->first->isFromASTFile()? Chain->DeclToID[I->first]
+    DeclID CanonID = I->first->isFromASTFile()? I->first->getGlobalID()
                                               : getDeclID(I->first);
     assert(CanonID && "Merged declaration not known?");
     

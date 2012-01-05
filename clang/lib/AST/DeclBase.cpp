@@ -44,7 +44,20 @@ static bool StatSwitch = false;
 void *Decl::AllocateDeserializedDecl(const ASTContext &Context, 
                                      unsigned ID,
                                      unsigned Size) {
-  return Context.Allocate(Size);
+  // Allocate an extra pointer's worth of storage, which ensures that 
+  //   (1) We have enough storage to stash the global declaration ID, and
+  //   (2) We maintain pointer alignment.
+  //
+  // Note that this wastes 4 bytes on x86-64, which we'll undoubtedly end up
+  // finding a use for later.
+  void *Start = Context.Allocate(Size + sizeof(void*));
+  void *Result = (char*)Start + sizeof(void*);
+  
+  // Store the global declaration ID 
+  unsigned *IDPtr = (unsigned*)Result - 1;
+  *IDPtr = ID;
+  
+  return Result;
 }
 
 const char *Decl::getDeclKindName() const {

@@ -402,9 +402,6 @@ void ASTDeclReader::VisitTypeDecl(TypeDecl *TD) {
 }
 
 void ASTDeclReader::VisitTypedefNameDecl(TypedefNameDecl *TD) {
-  // Record the declaration -> global ID mapping.
-  Reader.DeclToID[TD] = ThisDeclID;
-  
   RedeclarableResult Redecl = VisitRedeclarable(TD);
   VisitTypeDecl(TD);
   
@@ -421,9 +418,6 @@ void ASTDeclReader::VisitTypeAliasDecl(TypeAliasDecl *TD) {
 }
 
 void ASTDeclReader::VisitTagDecl(TagDecl *TD) {
-  // Record the declaration -> global ID mapping.
-  Reader.DeclToID[TD] = ThisDeclID;
-    
   RedeclarableResult Redecl = VisitRedeclarable(TD);
   VisitTypeDecl(TD);
   
@@ -490,9 +484,6 @@ void ASTDeclReader::VisitDeclaratorDecl(DeclaratorDecl *DD) {
 }
 
 void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
-  // Record the declaration -> global ID mapping.
-  Reader.DeclToID[FD] = ThisDeclID;
-  
   RedeclarableResult Redecl = VisitRedeclarable(FD);
   VisitDeclaratorDecl(FD);
 
@@ -673,9 +664,6 @@ void ASTDeclReader::VisitObjCContainerDecl(ObjCContainerDecl *CD) {
 }
 
 void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
-  // Record the declaration -> global ID mapping.
-  Reader.DeclToID[ID] = ThisDeclID;
-  
   RedeclarableResult Redecl = VisitRedeclarable(ID);
   VisitObjCContainerDecl(ID);
   TypeIDForTypeDecl = Reader.getGlobalTypeID(F, Record[Idx++]);
@@ -746,9 +734,6 @@ void ASTDeclReader::VisitObjCIvarDecl(ObjCIvarDecl *IVD) {
 }
 
 void ASTDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
-  // Record the declaration -> global ID mapping.
-  Reader.DeclToID[PD] = ThisDeclID;
-  
   RedeclarableResult Redecl = VisitRedeclarable(PD);
   VisitObjCContainerDecl(PD);
   mergeRedeclarable(PD, Redecl);
@@ -880,9 +865,6 @@ void ASTDeclReader::VisitIndirectFieldDecl(IndirectFieldDecl *FD) {
 }
 
 void ASTDeclReader::VisitVarDecl(VarDecl *VD) {
-  // Record the declaration -> global ID mapping.
-  Reader.DeclToID[VD] = ThisDeclID;
-  
   RedeclarableResult Redecl = VisitRedeclarable(VD);
   VisitDeclaratorDecl(VD);
   
@@ -1561,7 +1543,7 @@ void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *D,
         // Introduce ExistingCanon into the set of pending declaration chains,
         // if in fact it came from a module file.
         if (ExistingCanon->isFromASTFile()) {
-          GlobalDeclID ExistingCanonID = Reader.DeclToID[ExistingCanon];
+          GlobalDeclID ExistingCanonID = ExistingCanon->getGlobalID();
           assert(ExistingCanonID && "Unrecorded canonical declaration ID?");
           if (Reader.PendingDeclChainsKnown.insert(ExistingCanonID))
             Reader.PendingDeclChains.push_back(ExistingCanonID);

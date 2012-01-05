@@ -532,6 +532,14 @@ public:
   /// a precompiled header or module) rather than having been parsed.
   bool isFromASTFile() const { return FromASTFile; }
 
+  /// \brief Retrieve the global declaration ID associated with this 
+  /// declaration, which specifies where in the 
+  unsigned getGlobalID() const { 
+    if (isFromASTFile())
+      return *((const unsigned*)this - 1);
+    return 0;
+  }
+              
   unsigned getIdentifierNamespace() const {
     return IdentifierNamespace;
   }
