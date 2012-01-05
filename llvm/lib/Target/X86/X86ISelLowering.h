@@ -836,6 +836,7 @@ namespace llvm {
     SDValue LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerATOMIC_FENCE(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
+    SDValue PerformBrcondCombine(SDNode* N, SelectionDAG &DAG, DAGCombinerInfo &DCI) const;
 
     // Utility functions to help LowerVECTOR_SHUFFLE
     SDValue LowerVECTOR_SHUFFLEv8i16(SDValue Op, SelectionDAG &DAG) const;

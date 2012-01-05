@@ -14611,6 +14611,146 @@ static SDValue PerformSubCombine(SDNode *N, SelectionDAG &DAG,
   return OptimizeConditionalInDecrement(N, DAG);
 }
 
+// Helper which returns index of constant operand of a two-operand node.
+static inline int GetConstOpIndexFor2OpNode(SDValue Op) {
+  if (isa<ConstantSDNode>(Op.getOperand(0)))
+    return 0;
+  if (isa<ConstantSDNode>(Op.getOperand(1)))
+    return 1;
+  return -1;
+}
+
+SDValue X86TargetLowering::PerformBrcondCombine(SDNode* N, SelectionDAG &DAG,
+                                                DAGCombinerInfo &DCI) const {
+  // Simplification of the PTEST-and-BRANCH pattern.
+  //
+  // The LLVM IR patterns targeted are:
+  //     %res = call i32 @llvm.x86.<func>(...)
+  //     %one = icmp {ne|eq} i32 %res, {0|1}
+  //     br i1 %one, label %bb1, label %bb2
+  //                  and
+  //     %res = call i32 @llvm.x86.<func>(...)
+  //     %one = trunc i32 %res to i1
+  //     br i1 %one, label %bb1, label %bb2
+  //           where <func> is one of:
+  //             sse41.ptestz
+  //             sse41.ptestc
+  //             avx.ptestz.256
+  //             avx.ptestc.256
+  //
+  // The simplification is in folding of the following SDNode sequence:
+  //    X86ISD::PTEST
+  //    {X86ISD::SETCC | X86ISD::SETCC_CARRY}
+  //    [ISD::ZERO_EXTEND][[[ISD::AND,]ISD::TRUNCATE,]ISD::AND]
+  //    X86ISD::CMP
+  //    X86ISD::BRCOND(cond)
+  // to the code sequence:
+  //    X86ISD::PTEST
+  //    X86ISD::BRCOND(!cond)
+
+  // The optimization is relevant only once the DAG contains x86 ISA (i.e. after
+  // operation legalization).
+  if (DCI.isBeforeLegalize() || DCI.isBeforeLegalizeOps() || DCI.isCalledByLegalizer())
+    return SDValue();
+
+  // Below we iterate through DAG upwards, starting from BRCOND node and finishing
+  // at PTEST node. We stop the iteration once we cannot find match with any of 
+  // the patterns which we are able to simplify.
+
+  // Indices for constant and variable operands in two-operand nodes
+  int ConstOpIdx;
+  unsigned int VarOpIdx;
+
+  // Validate that we're starting from the BRCOND node.
+  assert(N->getOpcode() == X86ISD::BRCOND && "Should start from conditional branch!");
+  // Check that the BRCOND condition is ZF.
+  if (!isa<ConstantSDNode>(N->getOperand(2)))
+    return SDValue();
+  uint64_t BranchCond = N->getConstantOperandVal(2);
+  if (BranchCond != X86::COND_NE && BranchCond != X86::COND_E)
+    return SDValue();
+
+  // 1st step upwards: verify CMP use.
+  SDValue CmpValue = N->getOperand(3);
+  if (CmpValue.getOpcode() != X86ISD::CMP)
+    return SDValue();
+  // Check that the CMP comparison is with 0.
+  if ((ConstOpIdx = GetConstOpIndexFor2OpNode(CmpValue)) == -1)
+    return SDValue();
+  VarOpIdx = (ConstOpIdx == 0)? 1:0;
+  uint64_t CompareWith = CmpValue.getConstantOperandVal((unsigned int)ConstOpIdx);
+  if (CompareWith != 0 && CompareWith != 1)
+    return SDValue();
+
+  // 2rd step upwards: cover alternative paths between pre-BRCOND CMP and PTEST 
+  // return value analysis.
+  
+  SDValue SVOp = CmpValue.getOperand(VarOpIdx);
+  // Verify optional AND use.
+  if (SVOp.getOpcode() == ISD::AND) {
+    // Check that the AND is with 0x1.
+    if ((ConstOpIdx = GetConstOpIndexFor2OpNode(SVOp)) == -1)
+      return SDValue();
+    VarOpIdx = (ConstOpIdx == 0)? 1:0;
+    if (SVOp.getConstantOperandVal((unsigned int)ConstOpIdx) != 1)
+      return SDValue();
+    // Step upwards: verify optional TRUNCATE use.
+    SVOp = SVOp.getOperand(VarOpIdx);
+    if (SVOp.getOpcode() == ISD::TRUNCATE) {
+      // Step upwards: verify optional AND or ZERO_EXTEND use.
+      SVOp = SVOp.getOperand(0);
+      if (SVOp.getOpcode() == ISD::AND) {
+        // Check that the AND is with 0x1.
+        if ((ConstOpIdx = GetConstOpIndexFor2OpNode(SVOp)) == -1)
+          return SDValue();
+        VarOpIdx = (ConstOpIdx == 0)? 1:0;
+        if (SVOp.getConstantOperandVal((unsigned int)ConstOpIdx) != 1)
+            return SDValue();
+        // Step upwards.
+        SVOp = SVOp.getOperand(VarOpIdx);
+      }
+    }
+  }
+  // Verify optional ZERO_EXTEND use
+  if (SVOp.getOpcode() == ISD::ZERO_EXTEND) {
+    // Step upwards.
+    SVOp = SVOp.getOperand(0);
+  }
+
+  // 3rd step upwards: verify SETCC or SETCC_CARRY use.
+  unsigned SetCcOP = SVOp.getOpcode();
+  if (SetCcOP != X86ISD::SETCC && SetCcOP != X86ISD::SETCC_CARRY)
+    return SDValue();
+  // Check that the SETCC/SETCC_CARRY flag is 'COND_E' (for ptestz) or 'COND_B' (for ptestc)
+  if ((ConstOpIdx = GetConstOpIndexFor2OpNode(SVOp)) == -1)
+    return SDValue();
+  VarOpIdx = (ConstOpIdx == 0)? 1:0;
+  uint64_t SetCond = SVOp.getConstantOperandVal((unsigned int)ConstOpIdx);
+  if (SetCond != X86::COND_E && SetCond != X86::COND_B)
+    return SDValue();
+
+  // 4th step upwards: verify PTEST use.
+  SDValue PtestValue = SVOp.getOperand(VarOpIdx);
+  if (PtestValue.getOpcode() != X86ISD::PTEST)
+    return SDValue();
+
+  // The chain to be folded is recognized. We can fold it now.
+
+  // At first - select the branch condition.
+  SDValue CC = DAG.getConstant(SetCond, MVT::i8);
+  if ((CompareWith == 1 && BranchCond == X86::COND_NE) ||
+      (CompareWith == 0 && BranchCond == X86::COND_E)) {
+    // Invert branch condition.
+    CC = (SetCond == X86::COND_E? DAG.getConstant(X86::COND_NE, MVT::i8):
+                                   DAG.getConstant(X86::COND_AE, MVT::i8));
+  }
+  // Then - update the BRCOND node. 
+  // Resno is set to 0 as X86ISD::BRCOND has single return value.
+  return SDValue(DAG.UpdateNodeOperands(N, N->getOperand(0), N->getOperand(1),
+                                        CC, PtestValue), 0);
+
+}
+
 SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -14657,6 +14797,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::VPERMILP:
   case X86ISD::VPERM2X128:
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, DCI,Subtarget);
+  case X86ISD::BRCOND: return PerformBrcondCombine(N, DAG, DCI); 
   }
 
   return SDValue();
