@@ -1579,7 +1579,7 @@ static void handleArcWeakrefUnavailableAttr(Sema &S, Decl *D,
                                           Attr.getRange(), S.Context));
 }
 
-static void handleObjCSuppressAutosynthesisAttr(Sema &S, Decl *D, 
+static void handleObjCRequiresPropertyDefsAttr(Sema &S, Decl *D, 
                                             const AttributeList &Attr) {
   if (!isa<ObjCInterfaceDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::err_suppress_autosynthesis);
@@ -1592,7 +1592,7 @@ static void handleObjCSuppressAutosynthesisAttr(Sema &S, Decl *D,
     return;
   }
   
-  D->addAttr(::new (S.Context) ObjCSuppressAutosynthesisAttr(
+  D->addAttr(::new (S.Context) ObjCRequiresPropertyDefsAttr(
                                  Attr.getRange(), S.Context));
 }
 
@@ -3620,8 +3620,8 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_arc_weakref_unavailable: 
     handleArcWeakrefUnavailableAttr (S, D, Attr); 
     break;
-  case AttributeList::AT_objc_disable_automatic_synthesis: 
-    handleObjCSuppressAutosynthesisAttr (S, D, Attr); 
+  case AttributeList::AT_objc_requires_property_definitions: 
+    handleObjCRequiresPropertyDefsAttr (S, D, Attr); 
     break;
   case AttributeList::AT_unused:      handleUnusedAttr      (S, D, Attr); break;
   case AttributeList::AT_returns_twice:

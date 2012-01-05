@@ -857,7 +857,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     IC->addPropertyImplementation(PIDecl);
     if (getLangOptions().ObjCDefaultSynthProperties &&
         getLangOptions().ObjCNonFragileABI2 &&
-        !IDecl->isObjCSuppressAutosynthesis()) {
+        !IDecl->isObjCRequiresPropertyDefs()) {
       // Diagnose if an ivar was lazily synthesdized due to a previous
       // use and if 1) property is @dynamic or 2) property is synthesized
       // but it requires an ivar of different name.
@@ -1356,7 +1356,7 @@ void Sema::DefaultSynthesizeProperties(Scope *S, Decl *D) {
   if (!IC)
     return;
   if (ObjCInterfaceDecl* IDecl = IC->getClassInterface())
-    if (!IDecl->isObjCSuppressAutosynthesis())
+    if (!IDecl->isObjCRequiresPropertyDefs())
       DefaultSynthesizeProperties(S, IC, IDecl);
 }
 
@@ -1396,7 +1396,7 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
            diag::note_property_declare);
       if (LangOpts.ObjCDefaultSynthProperties && LangOpts.ObjCNonFragileABI2)
         if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(CDecl))
-          if (const ObjCInterfaceDecl *RID = ID->isObjCSuppressAutosynthesis())
+          if (const ObjCInterfaceDecl *RID = ID->isObjCRequiresPropertyDefs())
             Diag(RID->getLocation(), diag::note_suppressed_class_declare);
             
     }
@@ -1411,7 +1411,7 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
            diag::note_property_declare);
       if (LangOpts.ObjCDefaultSynthProperties && LangOpts.ObjCNonFragileABI2)
         if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(CDecl))
-          if (const ObjCInterfaceDecl *RID = ID->isObjCSuppressAutosynthesis())
+          if (const ObjCInterfaceDecl *RID = ID->isObjCRequiresPropertyDefs())
             Diag(RID->getLocation(), diag::note_suppressed_class_declare);
     }
   }

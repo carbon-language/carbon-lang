@@ -1667,7 +1667,7 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
   // of the property in the @implementation.
   if (const ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl))
     if  (!(LangOpts.ObjCDefaultSynthProperties && LangOpts.ObjCNonFragileABI2) ||
-      IDecl->isObjCSuppressAutosynthesis())
+      IDecl->isObjCRequiresPropertyDefs())
       DiagnoseUnimplementedProperties(S, IMPDecl, CDecl, InsMap);
       
   llvm::DenseSet<Selector> ClsMap;

@@ -866,13 +866,13 @@ public:
    return false;
   }
 
-  /// isObjCSuppressAutosynthesis - Checks that a class or one of its super 
+  /// isObjCRequiresPropertyDefs - Checks that a class or one of its super 
   /// classes must not be auto-synthesized. Returns class decl. if it must not be;
   /// 0, otherwise.
-  const ObjCInterfaceDecl *isObjCSuppressAutosynthesis() const {
+  const ObjCInterfaceDecl *isObjCRequiresPropertyDefs() const {
     const ObjCInterfaceDecl *Class = this;
     while (Class) {
-      if (Class->hasAttr<ObjCSuppressAutosynthesisAttr>())
+      if (Class->hasAttr<ObjCRequiresPropertyDefsAttr>())
         return Class;
       Class = Class->getSuperClass();
    }

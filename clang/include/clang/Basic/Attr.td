@@ -524,8 +524,8 @@ def ArcWeakrefUnavailable : InheritableAttr {
   let Spellings = ["objc_arc_weak_reference_unavailable"];
 }
 
-def ObjCSuppressAutosynthesis : InheritableAttr {
-  let Spellings = ["objc_disable_automatic_synthesis"];
+def ObjCRequiresPropertyDefs : InheritableAttr {
+  let Spellings = ["objc_requires_property_definitions"];
 }
 
 def Unused : InheritableAttr {

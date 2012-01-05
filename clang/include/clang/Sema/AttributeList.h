@@ -169,7 +169,7 @@ public:
     AT_analyzer_noreturn,
     AT_annotate,
     AT_arc_weakref_unavailable,
-    AT_objc_disable_automatic_synthesis,
+    AT_objc_requires_property_definitions,
     AT_availability,      // Clang-specific
     AT_base_check,
     AT_blocks,
