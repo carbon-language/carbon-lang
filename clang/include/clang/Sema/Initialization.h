@@ -651,6 +651,8 @@ public:
     FK_DefaultInitOfConst,
     /// \brief Initialization of an incomplete type.
     FK_Incomplete,
+    /// \brief Variable-length array must not have an initializer.
+    FK_VariableLengthArrayHasInitializer,
     /// \brief List initialization failed at some point.
     FK_ListInitializationFailed,
     /// \brief Initializer has a placeholder type which cannot be

@@ -1422,6 +1422,10 @@ bool VarDecl::evaluateValue(
 }
 
 bool VarDecl::checkInitIsICE() const {
+  // Initializers of weak variables are never ICEs.
+  if (isWeak())
+    return false;
+
   EvaluatedStmt *Eval = ensureEvaluatedStmt();
   if (Eval->CheckedICE)
     // We have already checked whether this subexpression is an

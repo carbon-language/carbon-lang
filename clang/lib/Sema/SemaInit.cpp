@@ -2427,6 +2427,7 @@ bool InitializationSequence::isAmbiguous() const {
   case FK_ArrayTypeMismatch:
   case FK_NonConstantArrayInit:
   case FK_ListInitializationFailed:
+  case FK_VariableLengthArrayHasInitializer:
   case FK_PlaceholderType:
     return false;
 
@@ -4060,6 +4061,11 @@ InitializationSequence::InitializationSequence(Sema &S,
   //     - Otherwise, if the destination type is an array, the program is
   //       ill-formed.
   if (const ArrayType *DestAT = Context.getAsArrayType(DestType)) {
+    if (Initializer && isa<VariableArrayType>(DestAT)) {
+      SetFailed(FK_VariableLengthArrayHasInitializer);
+      return;
+    }
+
     if (Initializer && IsStringInit(Initializer, DestAT, Context)) {
       TryStringLiteralInitialization(S, Entity, Kind, Initializer, *this);
       return;
@@ -5277,6 +5283,11 @@ bool InitializationSequence::Diagnose(Sema &S,
       << Args[0]->getSourceRange();
     break;
 
+  case FK_VariableLengthArrayHasInitializer:
+    S.Diag(Kind.getLocation(), diag::err_variable_object_no_init)
+      << Args[0]->getSourceRange();
+    break;
+
   case FK_AddressOfOverloadFailed: {
     DeclAccessPair Found;
     S.ResolveAddressOfOverloadedFunction(Args[0],
@@ -5657,6 +5668,10 @@ void InitializationSequence::dump(raw_ostream &OS) const {
 
     case FK_ListInitializationFailed:
       OS << "list initialization checker failure";
+      break;
+
+    case FK_VariableLengthArrayHasInitializer:
+      OS << "variable length array has an initializer";
       break;
 
     case FK_PlaceholderType:

@@ -167,7 +167,7 @@ void charArrays() {
 
 void variableArrayInit() {
   int a = 4;
-  char strlit[a] = "foo"; //expected-error{{array initializer must be an initializer list or string literal}}
+  char strlit[a] = "foo"; //expected-error{{variable-sized object may not be initialized}}
   int b[a] = { 1, 2, 4 }; //expected-error{{variable-sized object may not be initialized}}
 }
 
@@ -278,3 +278,10 @@ int a6[5] = (int[]){1, 2, 3}; // expected-error{{cannot initialize array of type
 
 int nonconst_value();
 int a7[5] = (int[5]){ 1, 2, 3, 4, nonconst_value() }; // expected-error{{initializer element is not a compile-time constant}}
+
+// <rdar://problem/10636946>
+__attribute__((weak)) const unsigned int test10_bound = 10;
+char test10_global[test10_bound]; // expected-error {{variable length array declaration not allowed at file scope}}
+void test10() {
+  char test10_local[test10_bound] = "help"; // expected-error {{variable-sized object may not be initialized}}
+}

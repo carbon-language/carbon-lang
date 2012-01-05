@@ -6045,7 +6045,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
   // If the type changed, it means we had an incomplete type that was
   // completed by the initializer. For example:
   //   int ary[] = { 1, 3, 5 };
-  // "ary" transitions from a VariableArrayType to a ConstantArrayType.
+  // "ary" transitions from an IncompleteArrayType to a ConstantArrayType.
   if (!VDecl->isInvalidDecl() && (DclT != SavT)) {
     VDecl->setType(DclT);
     Init->setType(DclT.getNonReferenceType());
