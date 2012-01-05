@@ -16,5 +16,5 @@ allocas:
 ; CHECK: f:
 ; CHECK: ldaw [[REGISTER:r[0-9]+]], {{r[0-9]+}}[-r1]
 ; CHECK: set sp, [[REGISTER]]
-; CHECK extsp 1
-; CHECK bl g
+; CHECK: extsp 1
+; CHECK: bl g

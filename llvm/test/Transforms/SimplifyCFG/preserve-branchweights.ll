@@ -3,7 +3,7 @@
 declare void @helper(i32)
 
 define void @test1(i1 %a, i1 %b) {
-; CHECK @test1
+; CHECK: @test1
 entry:
   br i1 %a, label %Y, label %X, !prof !0
 ; CHECK: br i1 %or.cond, label %Z, label %Y, !prof !0

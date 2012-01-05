@@ -524,7 +524,7 @@ define i1 @test53(i32 %a, i32 %b) nounwind {
 
 ; CHECK: @test54
 ; CHECK-NEXT: %and = and i8 %a, -64
-; CHECK-NEXT icmp eq i8 %and, -128
+; CHECK-NEXT: icmp eq i8 %and, -128
 define i1 @test54(i8 %a) nounwind {
   %ext = zext i8 %a to i32
   %and = and i32 %ext, 192
