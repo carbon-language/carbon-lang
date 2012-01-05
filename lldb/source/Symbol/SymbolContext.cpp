@@ -11,6 +11,7 @@
 
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -519,16 +520,19 @@ SymbolContext::GetParentOfInlinedScope (const Address &curr_frame_pc,
                     }
                     if (objfile)
                     {
-                        fprintf (stderr, "warning: inlined block 0x%8.8llx doesn't have a range that contains file address 0x%llx in %s/%s\n", 
-                                 curr_inlined_block->GetID(), 
-                                 curr_frame_pc.GetFileAddress(),
-                                 objfile->GetFileSpec().GetDirectory().GetCString(),
-                                 objfile->GetFileSpec().GetFilename().GetCString());
+                        Host::SystemLog (Host::eSystemLogWarning, 
+                                         "warning: inlined block 0x%8.8llx doesn't have a range that contains file address 0x%llx in %s/%s\n", 
+                                         curr_inlined_block->GetID(), 
+                                         curr_frame_pc.GetFileAddress(),
+                                         objfile->GetFileSpec().GetDirectory().GetCString(),
+                                         objfile->GetFileSpec().GetFilename().GetCString());
                     }
                     else
                     {
-                        fprintf (stderr, "warning: inlined block 0x%8.8llx doesn't have a range that contains file address 0x%llx\n", 
-                                 curr_inlined_block->GetID(), curr_frame_pc.GetFileAddress());
+                        Host::SystemLog (Host::eSystemLogWarning, 
+                                         "warning: inlined block 0x%8.8llx doesn't have a range that contains file address 0x%llx\n", 
+                                         curr_inlined_block->GetID(), 
+                                         curr_frame_pc.GetFileAddress());
                     }
                 }
 #endif

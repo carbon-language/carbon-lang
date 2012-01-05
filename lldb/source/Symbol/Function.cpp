@@ -10,6 +10,7 @@
 #include "lldb/Symbol/Function.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/CompileUnit.h"
@@ -313,12 +314,12 @@ Function::GetBlock (bool can_create)
         }
         else
         {
-            ::fprintf (stderr, 
-                       "unable to find module shared pointer for function '%s' in %s%s%s\n", 
-                       GetName().GetCString(),
-                       m_comp_unit->GetDirectory().GetCString(),
-                       m_comp_unit->GetDirectory() ? "/" : "",
-                       m_comp_unit->GetFilename().GetCString());
+            Host::SystemLog (Host::eSystemLogError, 
+                             "error: unable to find module shared pointer for function '%s' in %s%s%s\n", 
+                             GetName().GetCString(),
+                             m_comp_unit->GetDirectory().GetCString(),
+                             m_comp_unit->GetDirectory() ? "/" : "",
+                             m_comp_unit->GetFilename().GetCString());
         }
         m_block.SetBlockInfoHasBeenParsed (true, true);
     }

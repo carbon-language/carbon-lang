@@ -13,6 +13,7 @@
 
 #include <algorithm>
 
+#include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Expression/DWARFExpression.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -138,9 +139,9 @@ DWARFDebugInfoEntry::FastExtract
         
         if (abbrevDecl == NULL)
         {
-            cu->GetSymbolFileDWARF ()->ReportError ("{0x%8.8x}: invalid abbreviation code %u, please file a bug and attach the file at the start of this error message", 
-                                                    m_offset, 
-                                                    (unsigned)abbr_idx);
+            cu->GetSymbolFileDWARF()->GetObjectFile()->GetModule()->ReportError ("{0x%8.8x}: invalid abbreviation code %u, please file a bug and attach the file at the start of this error message", 
+                                                                                 m_offset, 
+                                                                                 (unsigned)abbr_idx);
             // WE can't parse anymore if the DWARF is borked...
             *offset_ptr = UINT32_MAX;
             return false;
@@ -2082,11 +2083,13 @@ DWARFDebugInfoEntry::GetAbbreviationDeclarationPtr (SymbolFileDWARF* dwarf2Data,
     
         if (abbrev_decl->Code() == abbrev_code)
             return abbrev_decl;
-
-        dwarf2Data->ReportError ("0x%8.8x: the DWARF debug info has been modified (abbrev code was %u, and is now %u)", 
-                                 GetOffset(),
-                                 (uint32_t)abbrev_decl->Code(),
-                                 (uint32_t)abbrev_code);
+        
+        // Only log if we are the one to figure out that the module was modified
+        // which is indicated by SetModified() returning false.
+        dwarf2Data->GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("0x%8.8x: the DWARF debug information has been modified (abbrev code was %u, and is now %u)", 
+                                                                               GetOffset(),
+                                                                               (uint32_t)abbrev_decl->Code(),
+                                                                               (uint32_t)abbrev_code);
     }
     offset = DW_INVALID_OFFSET;
     return NULL;

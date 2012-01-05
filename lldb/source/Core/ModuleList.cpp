@@ -15,6 +15,7 @@
 // Project includes
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Host/Symbols.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -700,11 +701,12 @@ ModuleList::GetModuleSP (const Module *module_ptr)
             char uuid_cstr[256];
             const_cast<Module *>(module_ptr)->GetUUID().GetAsCString (uuid_cstr, sizeof(uuid_cstr));
             const FileSpec &module_file_spec = module_ptr->GetFileSpec();
-            fprintf (stderr, "warning: module not in shared module list: %s (%s) \"%s/%s\"\n", 
-                     uuid_cstr,
-                     module_ptr->GetArchitecture().GetArchitectureName(),
-                     module_file_spec.GetDirectory().GetCString(),
-                     module_file_spec.GetFilename().GetCString());
+            Host::SystemLog (Host::eSystemLogWarning, 
+                             "warning: module not in shared module list: %s (%s) \"%s/%s\"\n", 
+                             uuid_cstr,
+                             module_ptr->GetArchitecture().GetArchitectureName(),
+                             module_file_spec.GetDirectory().GetCString(),
+                             module_file_spec.GetFilename().GetCString());
         }
     }
     return module_sp;

@@ -13,6 +13,7 @@
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Host/Host.h"
 #include "lldb/lldb-private-log.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
@@ -85,7 +86,8 @@ Module::Module(const FileSpec& file_spec, const ArchSpec& arch, const ConstStrin
     m_did_load_symbol_vendor (false),
     m_did_parse_uuid (false),
     m_did_init_ast (false),
-    m_is_dynamic_loader_module (false)
+    m_is_dynamic_loader_module (false),
+    m_was_modified (false)
 {
     // Scope for locker below...
     {
@@ -613,27 +615,82 @@ Module::GetDescription (Stream *s, lldb::DescriptionLevel level)
 void
 Module::ReportError (const char *format, ...)
 {
-    StreamString module_description;
-    GetDescription(&module_description, lldb::eDescriptionLevelBrief);
-    ::fprintf (stderr, "error: %s ", module_description.GetString().c_str());
-    
-    va_list args;
-    va_start (args, format);
-    vfprintf (stderr, format, args);
-    va_end (args);
+    if (format && format[0])
+    {
+        StreamString strm;
+        strm.PutCString("error: ");
+        GetDescription(&strm, lldb::eDescriptionLevelBrief);
+        
+        va_list args;
+        va_start (args, format);
+        strm.PrintfVarArg(format, args);
+        va_end (args);
+        
+        const int format_len = strlen(format);
+        if (format_len > 0)
+        {
+            const char last_char = format[format_len-1];
+            if (last_char != '\n' || last_char != '\r')
+                strm.EOL();
+        }
+        Host::SystemLog (Host::eSystemLogError, "%s", strm.GetString().c_str());
+
+    }
+}
+
+void
+Module::ReportErrorIfModifyDetected (const char *format, ...)
+{
+    if (!GetModified(true) && GetModified(false))
+    {
+        if (format)
+        {
+            StreamString strm;
+            strm.PutCString("error: the object file ");
+            GetDescription(&strm, lldb::eDescriptionLevelFull);
+            strm.PutCString (" has been modified\n");
+            
+            va_list args;
+            va_start (args, format);
+            strm.PrintfVarArg(format, args);
+            va_end (args);
+            
+            const int format_len = strlen(format);
+            if (format_len > 0)
+            {
+                const char last_char = format[format_len-1];
+                if (last_char != '\n' || last_char != '\r')
+                    strm.EOL();
+            }
+            strm.PutCString("The debug session should be aborted as the original debug information has been overwritten.\n");
+            Host::SystemLog (Host::eSystemLogError, "%s", strm.GetString().c_str());
+        }
+    }
 }
 
 void
 Module::ReportWarning (const char *format, ...)
 {
-    StreamString module_description;
-    GetDescription(&module_description, lldb::eDescriptionLevelBrief);
-    ::fprintf (stderr, "warning: %s ", module_description.GetString().c_str());
-    
-    va_list args;
-    va_start (args, format);
-    vfprintf (stderr, format, args);
-    va_end (args);
+    if (format && format[0])
+    {
+        StreamString strm;
+        strm.PutCString("warning: ");
+        GetDescription(&strm, lldb::eDescriptionLevelBrief);
+        
+        va_list args;
+        va_start (args, format);
+        strm.PrintfVarArg(format, args);
+        va_end (args);
+        
+        const int format_len = strlen(format);
+        if (format_len > 0)
+        {
+            const char last_char = format[format_len-1];
+            if (last_char != '\n' || last_char != '\r')
+                strm.EOL();
+        }
+        Host::SystemLog (Host::eSystemLogWarning, "%s", strm.GetString().c_str());        
+    }
 }
 
 void
@@ -651,6 +708,26 @@ Module::LogMessage (Log *log, const char *format, ...)
         log->PutCString(log_message.GetString().c_str());
     }
 }
+
+bool
+Module::GetModified (bool use_cached_only)
+{
+    if (m_was_modified == false && use_cached_only == false)
+    {
+        TimeValue curr_mod_time (m_file.GetModificationTime());
+        m_was_modified = curr_mod_time != m_mod_time;
+    }
+    return m_was_modified;
+}
+
+bool
+Module::SetModified (bool b)
+{
+    const bool prev_value = m_was_modified;
+    m_was_modified = b;
+    return prev_value;
+}
+
 
 void
 Module::Dump(Stream *s)

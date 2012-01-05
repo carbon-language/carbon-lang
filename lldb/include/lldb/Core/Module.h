@@ -678,6 +678,17 @@ public:
     void
     ReportError (const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 
+    // Only report an error once when the module is first detected to be modified
+    // so we don't spam the console with many messages.
+    void
+    ReportErrorIfModifyDetected (const char *format, ...) __attribute__ ((format (printf, 2, 3)));
+
+    bool
+    GetModified (bool use_cached_only);
+    
+    bool
+    SetModified (bool b);
+
 protected:
     //------------------------------------------------------------------
     // Member Variables
@@ -697,7 +708,8 @@ protected:
                                 m_did_load_symbol_vendor:1,
                                 m_did_parse_uuid:1,
                                 m_did_init_ast:1,
-                                m_is_dynamic_loader_module:1;
+                                m_is_dynamic_loader_module:1,
+                                m_was_modified:1;   /// See if the module was modified after it was initially opened.
     
     //------------------------------------------------------------------
     /// Resolve a file or load virtual address.

@@ -116,7 +116,19 @@ public:
     
     static const char *
     GetGroupName (uint32_t gid, std::string &group_name);
-    
+
+    enum SystemLogType
+    {
+        eSystemLogWarning,
+        eSystemLogError
+    };
+
+    static void
+    SystemLog (SystemLogType type, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
+
+    static void
+    SystemLog (SystemLogType type, const char *format, va_list args);
+
     //------------------------------------------------------------------
     /// Gets the host architecture.
     ///

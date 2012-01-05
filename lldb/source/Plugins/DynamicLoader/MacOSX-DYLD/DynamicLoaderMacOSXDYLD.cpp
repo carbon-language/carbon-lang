@@ -419,12 +419,12 @@ DynamicLoaderMacOSXDYLD::UpdateImageLoadAddress (Module *module, DYLDImageInfo& 
                     }
                     else
                     {
-                        fprintf (stderr, 
-                                 "warning: unable to find and load segment named '%s' at 0x%llx in '%s/%s' in macosx dynamic loader plug-in.\n",
-                                 info.segments[i].name.AsCString("<invalid>"),
-                                 (uint64_t)new_section_load_addr,
-                                 image_object_file->GetFileSpec().GetDirectory().AsCString(),
-                                 image_object_file->GetFileSpec().GetFilename().AsCString());
+                        Host::SystemLog (Host::eSystemLogWarning, 
+                                         "warning: unable to find and load segment named '%s' at 0x%llx in '%s/%s' in macosx dynamic loader plug-in.\n",
+                                         info.segments[i].name.AsCString("<invalid>"),
+                                         (uint64_t)new_section_load_addr,
+                                         image_object_file->GetFileSpec().GetDirectory().AsCString(),
+                                         image_object_file->GetFileSpec().GetFilename().AsCString());
                     }
                 }
             }
@@ -461,11 +461,11 @@ DynamicLoaderMacOSXDYLD::UnloadImageLoadAddress (Module *module, DYLDImageInfo& 
                     }
                     else
                     {
-                        fprintf (stderr, 
-                                 "warning: unable to find and unload segment named '%s' in '%s/%s' in macosx dynamic loader plug-in.\n",
-                                 info.segments[i].name.AsCString("<invalid>"),
-                                 image_object_file->GetFileSpec().GetDirectory().AsCString(),
-                                 image_object_file->GetFileSpec().GetFilename().AsCString());
+                        Host::SystemLog (Host::eSystemLogWarning, 
+                                         "warning: unable to find and unload segment named '%s' in '%s/%s' in macosx dynamic loader plug-in.\n",
+                                         info.segments[i].name.AsCString("<invalid>"),
+                                         image_object_file->GetFileSpec().GetDirectory().AsCString(),
+                                         image_object_file->GetFileSpec().GetFilename().AsCString());
                     }
                 }
             }

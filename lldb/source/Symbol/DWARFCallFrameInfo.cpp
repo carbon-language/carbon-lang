@@ -14,14 +14,15 @@
 
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Section.h"
-#include "lldb/Symbol/DWARFCallFrameInfo.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Module.h"
-#include "lldb/Symbol/ObjectFile.h"
-#include "lldb/Target/RegisterContext.h"
 #include "lldb/Core/Section.h"
-#include "lldb/Target/Thread.h"
+#include "lldb/Host/Host.h"
+#include "lldb/Symbol/DWARFCallFrameInfo.h"
+#include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/UnwindPlan.h"
+#include "lldb/Target/RegisterContext.h"
+#include "lldb/Target/Thread.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -146,7 +147,7 @@ DWARFCallFrameInfo::ParseCIE (const dw_offset_t cie_offset)
 
         if (i == CFI_AUG_MAX_SIZE && cie_sp->augmentation[CFI_AUG_MAX_SIZE-1] != '\0')
         {
-            fprintf(stderr, "CIE parse error: CIE augmentation string was too large for the fixed sized buffer of %d bytes.\n", CFI_AUG_MAX_SIZE);
+            Host::SystemLog (Host::eSystemLogError, "CIE parse error: CIE augmentation string was too large for the fixed sized buffer of %d bytes.\n", CFI_AUG_MAX_SIZE);
             return cie_sp;
         }
         cie_sp->code_align = (uint32_t)m_cfi_data.GetULEB128(&offset);
@@ -330,11 +331,11 @@ DWARFCallFrameInfo::GetFDEIndex ()
         }
         else
         {
-            fprintf (stderr, 
-                     "error: unable to find CIE at 0x%8.8x for cie_id = 0x%8.8x for entry at 0x%8.8x.\n", 
-                     cie_offset,
-                     cie_id,
-                     current_entry);
+            Host::SystemLog (Host::eSystemLogError, 
+                             "error: unable to find CIE at 0x%8.8x for cie_id = 0x%8.8x for entry at 0x%8.8x.\n", 
+                             cie_offset,
+                             cie_id,
+                             current_entry);
         }
         offset = next_entry;
     }

@@ -14,7 +14,6 @@
 
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBuffer.h"
-#include "lldb/Host/FileSpec.h"
 #include "lldb/Core/FileSpecList.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
@@ -23,6 +22,8 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/UUID.h"
+#include "lldb/Host/Host.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/ObjectFile.h"
 
@@ -705,7 +706,7 @@ public:
                 }
                 else
                 {
-                    fprintf (stderr, "error: unable to find section for section %u\n", n_sect);
+                    Host::SystemLog (Host::eSystemLogError, "error: unable to find section for section %u\n", n_sect);
                 }
             }
             if (m_section_infos[n_sect].vm_range.Contains(file_addr))
@@ -893,12 +894,12 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         // No symbol should be NULL, even the symbols with no 
                         // string values should have an offset zero which points
                         // to an empty C-string
-                        fprintf (stderr,
-                                 "error: symbol[%u] has invalid string table offset 0x%x in %s/%s, ignoring symbol\n", 
-                                 nlist_idx,
-                                 nlist.n_strx,
-                                 m_module->GetFileSpec().GetDirectory().GetCString(),
-                                 m_module->GetFileSpec().GetFilename().GetCString());
+                        Host::SystemLog (Host::eSystemLogError,
+                                         "error: symbol[%u] has invalid string table offset 0x%x in %s/%s, ignoring symbol\n", 
+                                         nlist_idx,
+                                         nlist.n_strx,
+                                         m_module->GetFileSpec().GetDirectory().GetCString(),
+                                         m_module->GetFileSpec().GetFilename().GetCString());
                         continue;
                     }
                     const char *symbol_name = &strtab_data[nlist.n_strx];

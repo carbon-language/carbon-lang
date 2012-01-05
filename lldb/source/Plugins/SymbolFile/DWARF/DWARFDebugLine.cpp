@@ -15,6 +15,7 @@
 #include "lldb/Core/FileSpecList.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Host/Host.h"
 
 #include "SymbolFileDWARF.h"
 #include "LogChannelDWARF.h"
@@ -456,8 +457,11 @@ DWARFDebugLine::ParsePrologue(const DataExtractor& debug_line_data, dw_offset_t*
 
     if (*offset_ptr != end_prologue_offset)
     {
-        fprintf (stderr, "warning: parsing line table prologue at 0x%8.8x should have ended at 0x%8.8x but it ended ad 0x%8.8x\n", 
-                 prologue_offset, end_prologue_offset, *offset_ptr);
+        Host::SystemLog (Host::eSystemLogWarning, 
+                         "warning: parsing line table prologue at 0x%8.8x should have ended at 0x%8.8x but it ended ad 0x%8.8x\n", 
+                         prologue_offset, 
+                         end_prologue_offset, 
+                         *offset_ptr);
     }
     return end_prologue_offset;
 }
@@ -539,8 +543,11 @@ DWARFDebugLine::ParseSupportFiles(const DataExtractor& debug_line_data, const ch
 
     if (offset != end_prologue_offset)
     {
-        fprintf (stderr, "warning: parsing line table prologue at 0x%8.8x should have ended at 0x%8.8x but it ended ad 0x%8.8x\n", 
-                 stmt_list, end_prologue_offset, offset);
+        Host::SystemLog (Host::eSystemLogError, 
+                         "warning: parsing line table prologue at 0x%8.8x should have ended at 0x%8.8x but it ended ad 0x%8.8x\n", 
+                         stmt_list, 
+                         end_prologue_offset, 
+                         offset);
     }
     return end_prologue_offset;
 }

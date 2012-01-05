@@ -231,7 +231,23 @@ MonitorChildProcessThreadFunction (void *arg)
     return NULL;
 }
 
+
+void
+Host::SystemLog (SystemLogType type, const char *format, va_list args)
+{
+    vfprintf (stderr, format, args);
+}
+
 #endif // #if !defined (__APPLE__)
+
+void
+Host::SystemLog (SystemLogType type, const char *format, ...)
+{
+    va_list args;
+    va_start (args, format);
+    SystemLog (type, format, args);
+    va_end (args);
+}
 
 size_t
 Host::GetPageSize()

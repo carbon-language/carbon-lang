@@ -170,9 +170,9 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
         LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
         if (log)
         {
-            m_dwarf2Data->LogMessage (log.get(), 
-                                      "DWARFCompileUnit::ExtractDIEsIfNeeded () for compile unit at .debug_info[0x%8.8x]", 
-                                      GetOffset());
+            m_dwarf2Data->GetObjectFile()->GetModule()->LogMessage (log.get(), 
+                                                                    "DWARFCompileUnit::ExtractDIEsIfNeeded () for compile unit at .debug_info[0x%8.8x]", 
+                                                                    GetOffset());
         }
     }
 
@@ -266,9 +266,9 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
     // unit header).
     if (offset > next_cu_offset)
     {
-        m_dwarf2Data->ReportWarning ("DWARF compile unit extends beyond its bounds cu 0x%8.8x at 0x%8.8x\n", 
-                                     GetOffset(), 
-                                     offset);
+        m_dwarf2Data->GetObjectFile()->GetModule()->ReportWarning ("DWARF compile unit extends beyond its bounds cu 0x%8.8x at 0x%8.8x\n", 
+                                                                   GetOffset(), 
+                                                                   offset);
     }
 
     // Since std::vector objects will double their size, we really need to
@@ -404,9 +404,9 @@ DWARFCompileUnit::GetFunctionAranges ()
 
         if (log)
         {
-            m_dwarf2Data->LogMessage (log.get(), 
-                                      "DWARFCompileUnit::GetFunctionAranges() for compile unit at .debug_info[0x%8.8x]",
-                                      GetOffset());
+            m_dwarf2Data->GetObjectFile()->GetModule()->LogMessage (log.get(), 
+                                                                    "DWARFCompileUnit::GetFunctionAranges() for compile unit at .debug_info[0x%8.8x]",
+                                                                    GetOffset());
         }
         DIE()->BuildFunctionAddressRangeTable (m_dwarf2Data, this, m_func_aranges_ap.get());
         const bool minimize = false;
@@ -577,9 +577,9 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
     
     if (log)
     {
-        m_dwarf2Data->LogMessage (log.get(), 
-                                  "DWARFCompileUnit::Index() for compile unit at .debug_info[0x%8.8x]",
-                                  GetOffset());
+        m_dwarf2Data->GetObjectFile()->GetModule()->LogMessage (log.get(), 
+                                                                "DWARFCompileUnit::Index() for compile unit at .debug_info[0x%8.8x]",
+                                                                GetOffset());
     }
 
     DWARFDebugInfoEntry::const_iterator pos;
@@ -765,8 +765,7 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                         {
                             if (specification_die_offset != DW_INVALID_OFFSET)
                             {
-                                const DWARFDebugInfoEntry *specification_die 
-                                        = m_dwarf2Data->DebugInfo()->GetDIEPtr (specification_die_offset, NULL);
+                                const DWARFDebugInfoEntry *specification_die = m_dwarf2Data->DebugInfo()->GetDIEPtr (specification_die_offset, NULL);
                                 if (specification_die)
                                 {
                                     parent = specification_die->GetParent();
