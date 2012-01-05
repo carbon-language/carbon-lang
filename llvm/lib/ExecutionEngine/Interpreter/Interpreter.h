@@ -115,6 +115,12 @@ public:
   virtual GenericValue runFunction(Function *F,
                                    const std::vector<GenericValue> &ArgValues);
 
+  virtual void *getPointerToNamedFunction(const std::string &Name,
+                                          bool AbortOnFailure = true) {
+    // FIXME: not implemented.
+    return 0;
+  };
+
   /// recompileAndRelinkFunction - For the interpreter, functions are always
   /// up-to-date.
   ///

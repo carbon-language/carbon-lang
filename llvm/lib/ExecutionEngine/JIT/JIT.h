@@ -124,8 +124,8 @@ public:
   /// found, this function silently returns a null pointer. Otherwise,
   /// it prints a message to stderr and aborts.
   ///
-  void *getPointerToNamedFunction(const std::string &Name,
-                                  bool AbortOnFailure = true);
+  virtual void *getPointerToNamedFunction(const std::string &Name,
+                                          bool AbortOnFailure = true);
 
   // CompilationCallback - Invoked the first time that a call site is found,
   // which causes lazy compilation of the target function.
