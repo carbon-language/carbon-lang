@@ -58,7 +58,6 @@ add_llvm_library(LLVMCodeGen
   MachineSSAUpdater.cpp
   MachineSink.cpp
   MachineVerifier.cpp
-  ObjectCodeEmitter.cpp
   OcamlGC.cpp
   OptimizePHIs.cpp
   PHIElimination.cpp
