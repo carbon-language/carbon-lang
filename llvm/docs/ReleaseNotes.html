@@ -351,6 +351,10 @@ Release Notes</a>.</h1>
   represent combinations of constraints from instructions and sub-registers.
   The synthetic register classes inherit most of their properties form their
   closest user-defined super-class.</li>
+  <li><code>MachineRegisterInfo</code> now allows the reserved registers to be
+  frozen when register allocation starts.  Target hooks should use the
+  <code>MRI->canReserveReg(FramePtr)</code> method to avoid accidentally
+  disabling frame pointer elimination during register allocation.</li>
 </ul>
 </div>
 

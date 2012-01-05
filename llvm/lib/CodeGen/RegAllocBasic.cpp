@@ -233,6 +233,7 @@ void RegAllocBase::init(VirtRegMap &vrm, LiveIntervals &lis) {
   MRI = &vrm.getRegInfo();
   VRM = &vrm;
   LIS = &lis;
+  MRI->freezeReservedRegs(vrm.getMachineFunction());
   RegClassInfo.runOnMachineFunction(vrm.getMachineFunction());
 
   const unsigned NumRegs = TRI->getNumRegs();

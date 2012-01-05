@@ -1047,6 +1047,7 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
   TM = &Fn.getTarget();
   TRI = TM->getRegisterInfo();
   TII = TM->getInstrInfo();
+  MRI->freezeReservedRegs(Fn);
   RegClassInfo.runOnMachineFunction(Fn);
   UsedInInstr.resize(TRI->getNumRegs());
 

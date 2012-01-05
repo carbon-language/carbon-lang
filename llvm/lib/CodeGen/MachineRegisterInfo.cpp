@@ -259,3 +259,7 @@ void MachineRegisterInfo::dumpUses(unsigned Reg) const {
     I.getOperand().getParent()->dump();
 }
 #endif
+
+void MachineRegisterInfo::freezeReservedRegs(const MachineFunction &MF) {
+  ReservedRegs = TRI->getReservedRegs(MF);
+}
