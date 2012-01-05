@@ -883,7 +883,7 @@ public:
                                       NamedDecl *Decl);
 
   /// \brief Create an empty function template node.
-  static FunctionTemplateDecl *Create(ASTContext &C, EmptyShell);
+  static FunctionTemplateDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
   // Implement isa/cast/dyncast support
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -968,7 +968,8 @@ public:
                                       unsigned D, unsigned P,
                                       IdentifierInfo *Id, bool Typename,
                                       bool ParameterPack);
-  static TemplateTypeParmDecl *Create(const ASTContext &C, EmptyShell Empty);
+  static TemplateTypeParmDecl *CreateDeserialized(const ASTContext &C, 
+                                                  unsigned ID);
 
   /// \brief Whether this template type parameter was declared with
   /// the 'typename' keyword. If not, it was declared with the 'class'
@@ -1085,6 +1086,12 @@ public:
          const QualType *ExpandedTypes, unsigned NumExpandedTypes,
          TypeSourceInfo **ExpandedTInfos);
 
+  static NonTypeTemplateParmDecl *CreateDeserialized(ASTContext &C, 
+                                                     unsigned ID);
+  static NonTypeTemplateParmDecl *CreateDeserialized(ASTContext &C, 
+                                                     unsigned ID,
+                                                     unsigned NumExpandedTypes);
+    
   using TemplateParmPosition::getDepth;
   using TemplateParmPosition::setDepth;
   using TemplateParmPosition::getPosition;
@@ -1200,8 +1207,9 @@ public:
 /// @endcode
 /// A template template parameter is a TemplateDecl because it defines the
 /// name of a template and the template parameters allowable for substitution.
-class TemplateTemplateParmDecl
-  : public TemplateDecl, protected TemplateParmPosition {
+class TemplateTemplateParmDecl : public TemplateDecl, 
+                                 protected TemplateParmPosition 
+{
   virtual void anchor();
 
   /// DefaultArgument - The default template argument, if any.
@@ -1227,6 +1235,9 @@ public:
                                           IdentifierInfo *Id,
                                           TemplateParameterList *Params);
 
+  static TemplateTemplateParmDecl *CreateDeserialized(ASTContext &C, 
+                                                      unsigned ID);
+  
   using TemplateParmPosition::getDepth;
   using TemplateParmPosition::getPosition;
   using TemplateParmPosition::getIndex;
@@ -1369,7 +1380,7 @@ public:
          unsigned NumArgs,
          ClassTemplateSpecializationDecl *PrevDecl);
   static ClassTemplateSpecializationDecl *
-  Create(ASTContext &Context, EmptyShell Empty);
+  CreateDeserialized(ASTContext &C, unsigned ID);
 
   virtual void getNameForDiagnostic(std::string &S,
                                     const PrintingPolicy &Policy,
@@ -1619,7 +1630,7 @@ public:
          unsigned SequenceNumber);
 
   static ClassTemplatePartialSpecializationDecl *
-  Create(ASTContext &Context, EmptyShell Empty);
+  CreateDeserialized(ASTContext &C, unsigned ID);
 
   ClassTemplatePartialSpecializationDecl *getMostRecentDeclaration() {
     return cast<ClassTemplatePartialSpecializationDecl>(
@@ -1812,7 +1823,7 @@ public:
                                    ClassTemplateDecl *PrevDecl);
 
   /// Create an empty class template node.
-  static ClassTemplateDecl *Create(ASTContext &C, EmptyShell);
+  static ClassTemplateDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
   /// \brief Return the specialization with the provided arguments if it exists,
   /// otherwise return the insertion point.
@@ -1989,7 +2000,7 @@ public:
                                     FriendUnion Friend,
                                     SourceLocation FriendLoc);
 
-  static FriendTemplateDecl *Create(ASTContext &Context, EmptyShell Empty);
+  static FriendTemplateDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
   /// If this friend declaration names a templated type (or
   /// a dependent member type of a templated type), return that
@@ -2088,7 +2099,7 @@ public:
                                        NamedDecl *Decl);
 
   /// \brief Create an empty alias template node.
-  static TypeAliasTemplateDecl *Create(ASTContext &C, EmptyShell);
+  static TypeAliasTemplateDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
   // Implement isa/cast/dyncast support
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -2134,11 +2145,9 @@ public:
     return new (C) ClassScopeFunctionSpecializationDecl(DC , Loc, FD);
   }
 
-  static ClassScopeFunctionSpecializationDecl *Create(ASTContext &Context,
-                                                      EmptyShell Empty) {
-    return new (Context)ClassScopeFunctionSpecializationDecl(0,
-                                                         SourceLocation(), 0);
-  }
+  static ClassScopeFunctionSpecializationDecl *
+  CreateDeserialized(ASTContext &Context, unsigned ID);
+  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) {

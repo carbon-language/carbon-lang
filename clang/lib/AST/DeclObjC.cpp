@@ -409,6 +409,12 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                 HasRelatedResultType);
 }
 
+ObjCMethodDecl *ObjCMethodDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(ObjCMethodDecl));
+  return new (Mem) ObjCMethodDecl(SourceLocation(), SourceLocation(), 
+                                  Selector(), QualType(), 0, 0);
+}
+
 void ObjCMethodDecl::setAsRedeclaration(const ObjCMethodDecl *PrevMethod) {
   assert(PrevMethod);
   getASTContext().setObjCMethodRedeclaration(PrevMethod, this);
@@ -692,9 +698,11 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
   return Result;
 }
 
-ObjCInterfaceDecl *ObjCInterfaceDecl::CreateEmpty(ASTContext &C) {
-  return new (C) ObjCInterfaceDecl(0, SourceLocation(), 0, SourceLocation(),
-                                   0, false);
+ObjCInterfaceDecl *ObjCInterfaceDecl::CreateDeserialized(ASTContext &C, 
+                                                         unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(ObjCInterfaceDecl));
+  return new (Mem) ObjCInterfaceDecl(0, SourceLocation(), 0, SourceLocation(),
+                                     0, false);
 }
 
 ObjCInterfaceDecl::
@@ -924,6 +932,12 @@ ObjCIvarDecl *ObjCIvarDecl::Create(ASTContext &C, ObjCContainerDecl *DC,
                               ac, BW, synthesized);
 }
 
+ObjCIvarDecl *ObjCIvarDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(ObjCIvarDecl));
+  return new (Mem) ObjCIvarDecl(0, SourceLocation(), SourceLocation(), 0,
+                                QualType(), 0, ObjCIvarDecl::None, 0, false);
+}
+
 const ObjCInterfaceDecl *ObjCIvarDecl::getContainingInterface() const {
   const ObjCContainerDecl *DC = cast<ObjCContainerDecl>(getDeclContext());
 
@@ -961,6 +975,13 @@ ObjCAtDefsFieldDecl
   return new (C) ObjCAtDefsFieldDecl(DC, StartLoc, IdLoc, Id, T, BW);
 }
 
+ObjCAtDefsFieldDecl *ObjCAtDefsFieldDecl::CreateDeserialized(ASTContext &C, 
+                                                             unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(ObjCAtDefsFieldDecl));
+  return new (Mem) ObjCAtDefsFieldDecl(0, SourceLocation(), SourceLocation(),
+                                       0, QualType(), 0);
+}
+
 //===----------------------------------------------------------------------===//
 // ObjCProtocolDecl
 //===----------------------------------------------------------------------===//
@@ -987,6 +1008,13 @@ ObjCProtocolDecl *ObjCProtocolDecl::Create(ASTContext &C, DeclContext *DC,
     = new (C) ObjCProtocolDecl(DC, Id, nameLoc, atStartLoc, PrevDecl);
   
   return Result;
+}
+
+ObjCProtocolDecl *ObjCProtocolDecl::CreateDeserialized(ASTContext &C, 
+                                                       unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(ObjCProtocolDecl));
+  return new (Mem) ObjCProtocolDecl(0, 0, SourceLocation(), SourceLocation(),
+                                    0);
 }
 
 ObjCProtocolDecl *ObjCProtocolDecl::lookupProtocolNamed(IdentifierInfo *Name) {
@@ -1063,9 +1091,11 @@ ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, DeclContext *DC,
   return CatDecl;
 }
 
-ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, EmptyShell Empty) {
-  return new (C) ObjCCategoryDecl(0, SourceLocation(), SourceLocation(),
-                                  SourceLocation(), 0, 0);
+ObjCCategoryDecl *ObjCCategoryDecl::CreateDeserialized(ASTContext &C, 
+                                                       unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(ObjCCategoryDecl));
+  return new (Mem) ObjCCategoryDecl(0, SourceLocation(), SourceLocation(),
+                                    SourceLocation(), 0, 0);
 }
 
 ObjCCategoryImplDecl *ObjCCategoryDecl::getImplementation() const {
@@ -1095,6 +1125,13 @@ ObjCCategoryImplDecl::Create(ASTContext &C, DeclContext *DC,
     ClassInterface = ClassInterface->getDefinition();
   return new (C) ObjCCategoryImplDecl(DC, Id, ClassInterface,
                                       nameLoc, atStartLoc, CategoryNameLoc);
+}
+
+ObjCCategoryImplDecl *ObjCCategoryImplDecl::CreateDeserialized(ASTContext &C, 
+                                                               unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(ObjCCategoryImplDecl));
+  return new (Mem) ObjCCategoryImplDecl(0, 0, 0, SourceLocation(), 
+                                        SourceLocation(), SourceLocation());
 }
 
 ObjCCategoryDecl *ObjCCategoryImplDecl::getCategoryDecl() const {
@@ -1183,6 +1220,13 @@ ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC,
                                         nameLoc, atStartLoc);
 }
 
+ObjCImplementationDecl *
+ObjCImplementationDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(ObjCImplementationDecl));
+  return new (Mem) ObjCImplementationDecl(0, 0, 0, SourceLocation(), 
+                                          SourceLocation());
+}
+
 void ObjCImplementationDecl::setIvarInitializers(ASTContext &C,
                                              CXXCtorInitializer ** initializers,
                                                  unsigned numInitializers) {
@@ -1216,6 +1260,12 @@ ObjCCompatibleAliasDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) ObjCCompatibleAliasDecl(DC, L, Id, AliasedClass);
 }
 
+ObjCCompatibleAliasDecl *
+ObjCCompatibleAliasDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(ObjCCompatibleAliasDecl));
+  return new (Mem) ObjCCompatibleAliasDecl(0, SourceLocation(), 0, 0);
+}
+
 //===----------------------------------------------------------------------===//
 // ObjCPropertyDecl
 //===----------------------------------------------------------------------===//
@@ -1229,6 +1279,13 @@ ObjCPropertyDecl *ObjCPropertyDecl::Create(ASTContext &C, DeclContext *DC,
                                            TypeSourceInfo *T,
                                            PropertyControl propControl) {
   return new (C) ObjCPropertyDecl(DC, L, Id, AtLoc, T);
+}
+
+ObjCPropertyDecl *ObjCPropertyDecl::CreateDeserialized(ASTContext &C, 
+                                                       unsigned ID) {
+  void * Mem = AllocateDeserializedDecl(C, ID, sizeof(ObjCPropertyDecl));
+  return new (Mem) ObjCPropertyDecl(0, SourceLocation(), 0, SourceLocation(),
+                                    0);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1245,6 +1302,13 @@ ObjCPropertyImplDecl *ObjCPropertyImplDecl::Create(ASTContext &C,
                                                    SourceLocation ivarLoc) {
   return new (C) ObjCPropertyImplDecl(DC, atLoc, L, property, PK, ivar,
                                       ivarLoc);
+}
+
+ObjCPropertyImplDecl *ObjCPropertyImplDecl::CreateDeserialized(ASTContext &C, 
+                                                               unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(ObjCPropertyImplDecl));
+  return new (Mem) ObjCPropertyImplDecl(0, SourceLocation(), SourceLocation(),
+                                        0, Dynamic, 0, SourceLocation());
 }
 
 SourceRange ObjCPropertyImplDecl::getSourceRange() const {

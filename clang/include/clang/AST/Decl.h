@@ -336,7 +336,8 @@ public:
   static LabelDecl *Create(ASTContext &C, DeclContext *DC,
                            SourceLocation IdentL, IdentifierInfo *II,
                            SourceLocation GnuLabelL);
-
+  static LabelDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   LabelStmt *getStmt() const { return TheStmt; }
   void setStmt(LabelStmt *T) { TheStmt = T; }
 
@@ -400,6 +401,8 @@ public:
                                SourceLocation StartLoc,
                                SourceLocation IdLoc, IdentifierInfo *Id);
 
+  static NamespaceDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   /// \brief Returns true if this is an anonymous namespace declaration.
   ///
   /// For example:
@@ -805,6 +808,8 @@ public:
                          IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
                          StorageClass S, StorageClass SCAsWritten);
 
+  static VarDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   virtual SourceRange getSourceRange() const;
 
   StorageClass getStorageClass() const {
@@ -1151,6 +1156,8 @@ public:
                                    SourceLocation IdLoc, IdentifierInfo *Id,
                                    QualType T);
 
+  static ImplicitParamDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   ImplicitParamDecl(DeclContext *DC, SourceLocation IdLoc,
                     IdentifierInfo *Id, QualType Type)
     : VarDecl(ImplicitParam, DC, IdLoc, IdLoc, Id, Type,
@@ -1190,6 +1197,8 @@ public:
                              StorageClass S, StorageClass SCAsWritten,
                              Expr *DefArg);
 
+  static ParmVarDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   virtual SourceRange getSourceRange() const;
 
   void setObjCMethodScopeInfo(unsigned parameterIndex) {
@@ -1527,6 +1536,8 @@ public:
                               bool hasWrittenPrototype = true,
                               bool isConstexprSpecified = false);
 
+  static FunctionDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+                       
   DeclarationNameInfo getNameInfo() const {
     return DeclarationNameInfo(getDeclName(), getLocation(), DNLoc);
   }
@@ -2027,6 +2038,8 @@ public:
                            TypeSourceInfo *TInfo, Expr *BW, bool Mutable,
                            bool HasInit);
 
+  static FieldDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   /// getFieldIndex - Returns the index of this field within its record,
   /// as appropriate for passing to ASTRecordLayout::getFieldOffset.
   unsigned getFieldIndex() const;
@@ -2127,7 +2140,8 @@ public:
                                   SourceLocation L, IdentifierInfo *Id,
                                   QualType T, Expr *E,
                                   const llvm::APSInt &V);
-
+  static EnumConstantDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   const Expr *getInitExpr() const { return (const Expr*) Init; }
   Expr *getInitExpr() { return (Expr*) Init; }
   const llvm::APSInt &getInitVal() const { return Val; }
@@ -2163,6 +2177,8 @@ public:
                                    SourceLocation L, IdentifierInfo *Id,
                                    QualType T, NamedDecl **CH, unsigned CHS);
 
+  static IndirectFieldDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   typedef NamedDecl * const *chain_iterator;
   chain_iterator chain_begin() const { return Chaining; }
   chain_iterator chain_end() const  { return Chaining+ChainingSize; }
@@ -2293,7 +2309,8 @@ public:
   static TypedefDecl *Create(ASTContext &C, DeclContext *DC,
                              SourceLocation StartLoc, SourceLocation IdLoc,
                              IdentifierInfo *Id, TypeSourceInfo *TInfo);
-
+  static TypedefDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   SourceRange getSourceRange() const;
 
   // Implement isa/cast/dyncast/etc.
@@ -2313,6 +2330,7 @@ public:
   static TypeAliasDecl *Create(ASTContext &C, DeclContext *DC,
                                SourceLocation StartLoc, SourceLocation IdLoc,
                                IdentifierInfo *Id, TypeSourceInfo *TInfo);
+  static TypeAliasDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
   SourceRange getSourceRange() const;
 
@@ -2628,7 +2646,7 @@ public:
                           IdentifierInfo *Id, EnumDecl *PrevDecl,
                           bool IsScoped, bool IsScopedUsingClassTag,
                           bool IsFixed);
-  static EnumDecl *Create(ASTContext &C, EmptyShell Empty);
+  static EnumDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
   /// completeDefinition - When created, the EnumDecl corresponds to a
   /// forward-declared enum. This method is used to mark the
@@ -2787,7 +2805,7 @@ public:
   static RecordDecl *Create(const ASTContext &C, TagKind TK, DeclContext *DC,
                             SourceLocation StartLoc, SourceLocation IdLoc,
                             IdentifierInfo *Id, RecordDecl* PrevDecl = 0);
-  static RecordDecl *Create(const ASTContext &C, EmptyShell Empty);
+  static RecordDecl *CreateDeserialized(const ASTContext &C, unsigned ID);
 
   const RecordDecl *getPreviousDeclaration() const {
     return cast_or_null<RecordDecl>(TagDecl::getPreviousDeclaration());
@@ -2890,6 +2908,8 @@ public:
                                   StringLiteral *Str, SourceLocation AsmLoc,
                                   SourceLocation RParenLoc);
 
+  static FileScopeAsmDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   SourceLocation getAsmLoc() const { return getLocation(); }
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
@@ -2976,8 +2996,9 @@ protected:
       SignatureAsWritten(0), Captures(0), NumCaptures(0) {}
 
 public:
-  static BlockDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L);
-
+  static BlockDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L); 
+  static BlockDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   SourceLocation getCaretLocation() const { return getLocation(); }
 
   bool isVariadic() const { return IsVariadic; }
@@ -3100,8 +3121,9 @@ public:
                                     SourceLocation StartLoc, Module *Imported, 
                                     SourceLocation EndLoc);
   
-  /// \brief Create a new module import declaration.
-  static ImportDecl *CreateEmpty(ASTContext &C, unsigned NumLocations);
+  /// \brief Create a new, deserialized module import declaration.
+  static ImportDecl *CreateDeserialized(ASTContext &C, unsigned ID, 
+                                        unsigned NumLocations);
   
   /// \brief Retrieve the module that was imported by the import declaration.
   Module *getImportedModule() const { return ImportedAndComplete.getPointer(); }

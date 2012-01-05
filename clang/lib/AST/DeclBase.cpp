@@ -41,6 +41,12 @@ using namespace clang;
 
 static bool StatSwitch = false;
 
+void *Decl::AllocateDeserializedDecl(const ASTContext &Context, 
+                                     unsigned ID,
+                                     unsigned Size) {
+  return Context.Allocate(Size);
+}
+
 const char *Decl::getDeclKindName() const {
   switch (DeclKind) {
   default: llvm_unreachable("Declaration not in DeclNodes.inc!");

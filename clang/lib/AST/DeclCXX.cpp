@@ -30,6 +30,12 @@ using namespace clang;
 
 void AccessSpecDecl::anchor() { }
 
+AccessSpecDecl *AccessSpecDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(AccessSpecDecl));
+  return new (Mem) AccessSpecDecl(EmptyShell());
+}
+
+
 CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
   : UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
     UserDeclaredMoveConstructor(false), UserDeclaredCopyAssignment(false),
@@ -76,9 +82,11 @@ CXXRecordDecl *CXXRecordDecl::Create(const ASTContext &C, TagKind TK,
   return R;
 }
 
-CXXRecordDecl *CXXRecordDecl::Create(const ASTContext &C, EmptyShell Empty) {
-  return new (C) CXXRecordDecl(CXXRecord, TTK_Struct, 0, SourceLocation(),
-                               SourceLocation(), 0, 0);
+CXXRecordDecl *
+CXXRecordDecl::CreateDeserialized(const ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(CXXRecordDecl));
+  return new (Mem) CXXRecordDecl(CXXRecord, TTK_Struct, 0, SourceLocation(),
+                                 SourceLocation(), 0, 0);
 }
 
 void
@@ -1271,6 +1279,14 @@ CXXMethodDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                                EndLocation);
 }
 
+CXXMethodDecl *CXXMethodDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(CXXMethodDecl));
+  return new (Mem) CXXMethodDecl(CXXMethod, 0, SourceLocation(), 
+                                 DeclarationNameInfo(), QualType(),
+                                 0, false, SC_None, false, false,
+                                 SourceLocation());
+}
+
 bool CXXMethodDecl::isUsualDeallocationFunction() const {
   if (getOverloadedOperator() != OO_Delete &&
       getOverloadedOperator() != OO_Array_Delete)
@@ -1511,9 +1527,10 @@ SourceRange CXXCtorInitializer::getSourceRange() const {
 void CXXConstructorDecl::anchor() { }
 
 CXXConstructorDecl *
-CXXConstructorDecl::Create(ASTContext &C, EmptyShell Empty) {
-  return new (C) CXXConstructorDecl(0, SourceLocation(), DeclarationNameInfo(),
-                                    QualType(), 0, false, false, false, false);
+CXXConstructorDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(CXXConstructorDecl));
+  return new (Mem) CXXConstructorDecl(0, SourceLocation(),DeclarationNameInfo(),
+                                      QualType(), 0, false, false, false,false);
 }
 
 CXXConstructorDecl *
@@ -1657,8 +1674,9 @@ CXXConstructorDecl::setInheritedConstructor(const CXXConstructorDecl *BaseCtor){
 void CXXDestructorDecl::anchor() { }
 
 CXXDestructorDecl *
-CXXDestructorDecl::Create(ASTContext &C, EmptyShell Empty) {
-  return new (C) CXXDestructorDecl(0, SourceLocation(), DeclarationNameInfo(),
+CXXDestructorDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(CXXDestructorDecl));
+  return new (Mem) CXXDestructorDecl(0, SourceLocation(), DeclarationNameInfo(),
                                    QualType(), 0, false, false);
 }
 
@@ -1678,10 +1696,11 @@ CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
 void CXXConversionDecl::anchor() { }
 
 CXXConversionDecl *
-CXXConversionDecl::Create(ASTContext &C, EmptyShell Empty) {
-  return new (C) CXXConversionDecl(0, SourceLocation(), DeclarationNameInfo(),
-                                   QualType(), 0, false, false, false,
-                                   SourceLocation());
+CXXConversionDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(CXXConversionDecl));
+  return new (Mem) CXXConversionDecl(0, SourceLocation(), DeclarationNameInfo(),
+                                     QualType(), 0, false, false, false,
+                                     SourceLocation());
 }
 
 CXXConversionDecl *
@@ -1710,6 +1729,12 @@ LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
   return new (C) LinkageSpecDecl(DC, ExternLoc, LangLoc, Lang, RBraceLoc);
 }
 
+LinkageSpecDecl *LinkageSpecDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(LinkageSpecDecl));
+  return new (Mem) LinkageSpecDecl(0, SourceLocation(), SourceLocation(),
+                                   lang_c, SourceLocation());
+}
+
 void UsingDirectiveDecl::anchor() { }
 
 UsingDirectiveDecl *UsingDirectiveDecl::Create(ASTContext &C, DeclContext *DC,
@@ -1725,11 +1750,37 @@ UsingDirectiveDecl *UsingDirectiveDecl::Create(ASTContext &C, DeclContext *DC,
                                     IdentLoc, Used, CommonAncestor);
 }
 
+UsingDirectiveDecl *
+UsingDirectiveDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(UsingDirectiveDecl));
+  return new (Mem) UsingDirectiveDecl(0, SourceLocation(), SourceLocation(),
+                                      NestedNameSpecifierLoc(),
+                                      SourceLocation(), 0, 0);
+}
+
 NamespaceDecl *UsingDirectiveDecl::getNominatedNamespace() {
   if (NamespaceAliasDecl *NA =
         dyn_cast_or_null<NamespaceAliasDecl>(NominatedNamespace))
     return NA->getNamespace();
   return cast_or_null<NamespaceDecl>(NominatedNamespace);
+}
+
+void NamespaceDecl::anchor() { }
+
+NamespaceDecl *NamespaceDecl::Create(ASTContext &C, DeclContext *DC,
+                                     SourceLocation StartLoc,
+                                     SourceLocation IdLoc, IdentifierInfo *Id) {
+  return new (C) NamespaceDecl(DC, StartLoc, IdLoc, Id);
+}
+
+NamespaceDecl *NamespaceDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(NamespaceDecl));
+  return new (Mem) NamespaceDecl(0, SourceLocation(), SourceLocation(), 0);
+}
+
+NamespaceDecl *NamespaceDecl::getNextNamespace() {
+  return dyn_cast_or_null<NamespaceDecl>(
+                                         NextNamespace.get(getASTContext().getExternalSource()));
 }
 
 void NamespaceAliasDecl::anchor() { }
@@ -1747,7 +1798,21 @@ NamespaceAliasDecl *NamespaceAliasDecl::Create(ASTContext &C, DeclContext *DC,
                                     QualifierLoc, IdentLoc, Namespace);
 }
 
+NamespaceAliasDecl *
+NamespaceAliasDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(NamespaceAliasDecl));
+  return new (Mem) NamespaceAliasDecl(0, SourceLocation(), SourceLocation(), 0,
+                                      NestedNameSpecifierLoc(), 
+                                      SourceLocation(), 0);
+}
+
 void UsingShadowDecl::anchor() { }
+
+UsingShadowDecl *
+UsingShadowDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(UsingShadowDecl));
+  return new (Mem) UsingShadowDecl(0, SourceLocation(), 0, 0);
+}
 
 UsingDecl *UsingShadowDecl::getUsingDecl() const {
   const UsingShadowDecl *Shadow = this;
@@ -1796,6 +1861,12 @@ UsingDecl *UsingDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation UL,
   return new (C) UsingDecl(DC, UL, QualifierLoc, NameInfo, IsTypeNameArg);
 }
 
+UsingDecl *UsingDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(UsingDecl));
+  return new (Mem) UsingDecl(0, SourceLocation(), NestedNameSpecifierLoc(),
+                             DeclarationNameInfo(), false);
+}
+
 void UnresolvedUsingValueDecl::anchor() { }
 
 UnresolvedUsingValueDecl *
@@ -1805,6 +1876,14 @@ UnresolvedUsingValueDecl::Create(ASTContext &C, DeclContext *DC,
                                  const DeclarationNameInfo &NameInfo) {
   return new (C) UnresolvedUsingValueDecl(DC, C.DependentTy, UsingLoc,
                                           QualifierLoc, NameInfo);
+}
+
+UnresolvedUsingValueDecl *
+UnresolvedUsingValueDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(UnresolvedUsingValueDecl));
+  return new (Mem) UnresolvedUsingValueDecl(0, QualType(), SourceLocation(),
+                                            NestedNameSpecifierLoc(),
+                                            DeclarationNameInfo());
 }
 
 void UnresolvedUsingTypenameDecl::anchor() { }
@@ -1821,6 +1900,17 @@ UnresolvedUsingTypenameDecl::Create(ASTContext &C, DeclContext *DC,
                                              TargetName.getAsIdentifierInfo());
 }
 
+UnresolvedUsingTypenameDecl *
+UnresolvedUsingTypenameDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, 
+                                       sizeof(UnresolvedUsingTypenameDecl));
+  return new (Mem) UnresolvedUsingTypenameDecl(0, SourceLocation(),
+                                               SourceLocation(),
+                                               NestedNameSpecifierLoc(),
+                                               SourceLocation(),
+                                               0);
+}
+
 void StaticAssertDecl::anchor() { }
 
 StaticAssertDecl *StaticAssertDecl::Create(ASTContext &C, DeclContext *DC,
@@ -1830,6 +1920,12 @@ StaticAssertDecl *StaticAssertDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation RParenLoc) {
   return new (C) StaticAssertDecl(DC, StaticAssertLoc, AssertExpr, Message,
                                   RParenLoc);
+}
+
+StaticAssertDecl *StaticAssertDecl::CreateDeserialized(ASTContext &C, 
+                                                       unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(StaticAssertDecl));
+  return new (Mem) StaticAssertDecl(0, SourceLocation(), 0, 0,SourceLocation());
 }
 
 static const char *getAccessName(AccessSpecifier AS) {

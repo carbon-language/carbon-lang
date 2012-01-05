@@ -1152,6 +1152,12 @@ VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) VarDecl(Var, DC, StartL, IdL, Id, T, TInfo, S, SCAsWritten);
 }
 
+VarDecl *VarDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(VarDecl));
+  return new (Mem) VarDecl(Var, 0, SourceLocation(), SourceLocation(), 0, 
+                           QualType(), 0, SC_None, SC_None);
+}
+
 void VarDecl::setStorageClass(StorageClass SC) {
   assert(isLegalForVariable(SC));
   if (getStorageClass() != SC)
@@ -1511,6 +1517,12 @@ ParmVarDecl *ParmVarDecl::Create(ASTContext &C, DeclContext *DC,
                                  Expr *DefArg) {
   return new (C) ParmVarDecl(ParmVar, DC, StartLoc, IdLoc, Id, T, TInfo,
                              S, SCAsWritten, DefArg);
+}
+
+ParmVarDecl *ParmVarDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(ParmVarDecl));
+  return new (Mem) ParmVarDecl(ParmVar, 0, SourceLocation(), SourceLocation(),
+                               0, QualType(), 0, SC_None, SC_None, 0);
 }
 
 SourceRange ParmVarDecl::getSourceRange() const {
@@ -2303,6 +2315,12 @@ FieldDecl *FieldDecl::Create(const ASTContext &C, DeclContext *DC,
                            BW, Mutable, HasInit);
 }
 
+FieldDecl *FieldDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(FieldDecl));
+  return new (Mem) FieldDecl(Field, 0, SourceLocation(), SourceLocation(),
+                             0, QualType(), 0, 0, false, false);
+}
+
 bool FieldDecl::isAnonymousStructOrUnion() const {
   if (!isImplicit() || getDeclName())
     return false;
@@ -2469,9 +2487,10 @@ EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC,
   return Enum;
 }
 
-EnumDecl *EnumDecl::Create(ASTContext &C, EmptyShell Empty) {
-  return new (C) EnumDecl(0, SourceLocation(), SourceLocation(), 0, 0,
-                          false, false, false);
+EnumDecl *EnumDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(EnumDecl));
+  return new (Mem) EnumDecl(0, SourceLocation(), SourceLocation(), 0, 0,
+                            false, false, false);
 }
 
 void EnumDecl::completeDefinition(QualType NewType,
@@ -2511,9 +2530,10 @@ RecordDecl *RecordDecl::Create(const ASTContext &C, TagKind TK, DeclContext *DC,
   return R;
 }
 
-RecordDecl *RecordDecl::Create(const ASTContext &C, EmptyShell Empty) {
-  return new (C) RecordDecl(Record, TTK_Struct, 0, SourceLocation(),
-                            SourceLocation(), 0, 0);
+RecordDecl *RecordDecl::CreateDeserialized(const ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(RecordDecl));
+  return new (Mem) RecordDecl(Record, TTK_Struct, 0, SourceLocation(),
+                              SourceLocation(), 0, 0);
 }
 
 bool RecordDecl::isInjectedClassName() const {
@@ -2641,17 +2661,9 @@ LabelDecl *LabelDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) LabelDecl(DC, IdentL, II, 0, GnuLabelL);
 }
 
-void NamespaceDecl::anchor() { }
-
-NamespaceDecl *NamespaceDecl::Create(ASTContext &C, DeclContext *DC,
-                                     SourceLocation StartLoc,
-                                     SourceLocation IdLoc, IdentifierInfo *Id) {
-  return new (C) NamespaceDecl(DC, StartLoc, IdLoc, Id);
-}
-
-NamespaceDecl *NamespaceDecl::getNextNamespace() {
-  return dyn_cast_or_null<NamespaceDecl>(
-                       NextNamespace.get(getASTContext().getExternalSource()));
+LabelDecl *LabelDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(LabelDecl));
+  return new (Mem) LabelDecl(0, SourceLocation(), 0, 0, SourceLocation());
 }
 
 void ValueDecl::anchor() { }
@@ -2663,6 +2675,12 @@ ImplicitParamDecl *ImplicitParamDecl::Create(ASTContext &C, DeclContext *DC,
                                              IdentifierInfo *Id,
                                              QualType Type) {
   return new (C) ImplicitParamDecl(DC, IdLoc, Id, Type);
+}
+
+ImplicitParamDecl *ImplicitParamDecl::CreateDeserialized(ASTContext &C, 
+                                                         unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(ImplicitParamDecl));
+  return new (Mem) ImplicitParamDecl(0, SourceLocation(), 0, QualType());
 }
 
 FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
@@ -2681,8 +2699,20 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
   return New;
 }
 
+FunctionDecl *FunctionDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(FunctionDecl));
+  return new (Mem) FunctionDecl(Function, 0, SourceLocation(), 
+                                DeclarationNameInfo(), QualType(), 0,
+                                SC_None, SC_None, false, false);
+}
+
 BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L) {
   return new (C) BlockDecl(DC, L);
+}
+
+BlockDecl *BlockDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(BlockDecl));
+  return new (Mem) BlockDecl(0, SourceLocation());
 }
 
 EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
@@ -2692,6 +2722,13 @@ EnumConstantDecl *EnumConstantDecl::Create(ASTContext &C, EnumDecl *CD,
   return new (C) EnumConstantDecl(CD, L, Id, T, E, V);
 }
 
+EnumConstantDecl *
+EnumConstantDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(EnumConstantDecl));
+  return new (Mem) EnumConstantDecl(0, SourceLocation(), 0, QualType(), 0, 
+                                    llvm::APSInt());
+}
+
 void IndirectFieldDecl::anchor() { }
 
 IndirectFieldDecl *
@@ -2699,6 +2736,13 @@ IndirectFieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                           IdentifierInfo *Id, QualType T, NamedDecl **CH,
                           unsigned CHS) {
   return new (C) IndirectFieldDecl(DC, L, Id, T, CH, CHS);
+}
+
+IndirectFieldDecl *IndirectFieldDecl::CreateDeserialized(ASTContext &C,
+                                                         unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(IndirectFieldDecl));
+  return new (Mem) IndirectFieldDecl(0, SourceLocation(), DeclarationName(),
+                                     QualType(), 0, 0);
 }
 
 SourceRange EnumConstantDecl::getSourceRange() const {
@@ -2718,11 +2762,21 @@ TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
 
 void TypedefNameDecl::anchor() { }
 
+TypedefDecl *TypedefDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(TypedefDecl));
+  return new (Mem) TypedefDecl(0, SourceLocation(), SourceLocation(), 0, 0);
+}
+
 TypeAliasDecl *TypeAliasDecl::Create(ASTContext &C, DeclContext *DC,
                                      SourceLocation StartLoc,
                                      SourceLocation IdLoc, IdentifierInfo *Id,
                                      TypeSourceInfo *TInfo) {
   return new (C) TypeAliasDecl(DC, StartLoc, IdLoc, Id, TInfo);
+}
+
+TypeAliasDecl *TypeAliasDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(TypeAliasDecl));
+  return new (Mem) TypeAliasDecl(0, SourceLocation(), SourceLocation(), 0, 0);
 }
 
 SourceRange TypedefDecl::getSourceRange() const {
@@ -2748,6 +2802,12 @@ FileScopeAsmDecl *FileScopeAsmDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation AsmLoc,
                                            SourceLocation RParenLoc) {
   return new (C) FileScopeAsmDecl(DC, Str, AsmLoc, RParenLoc);
+}
+
+FileScopeAsmDecl *FileScopeAsmDecl::CreateDeserialized(ASTContext &C, 
+                                                       unsigned ID) {
+  void *Mem = AllocateDeserializedDecl(C, ID, sizeof(FileScopeAsmDecl));
+  return new (Mem) FileScopeAsmDecl(0, 0, SourceLocation(), SourceLocation());
 }
 
 //===----------------------------------------------------------------------===//
@@ -2803,9 +2863,11 @@ ImportDecl *ImportDecl::CreateImplicit(ASTContext &C, DeclContext *DC,
   return Import;
 }
 
-ImportDecl *ImportDecl::CreateEmpty(ASTContext &C, unsigned NumLocations) {
-  void *Mem = C.Allocate(sizeof(ImportDecl) + 
-                         NumLocations * sizeof(SourceLocation));
+ImportDecl *ImportDecl::CreateDeserialized(ASTContext &C, unsigned ID,
+                                           unsigned NumLocations) {
+  void *Mem = AllocateDeserializedDecl(C, ID, 
+                                       (sizeof(ImportDecl) + 
+                                        NumLocations * sizeof(SourceLocation)));
   return new (Mem) ImportDecl(EmptyShell());  
 }
 

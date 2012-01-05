@@ -135,9 +135,7 @@ public:
                                 SourceLocation ColonLoc) {
     return new (C) AccessSpecDecl(AS, DC, ASLoc, ColonLoc);
   }
-  static AccessSpecDecl *Create(ASTContext &C, EmptyShell Empty) {
-    return new (C) AccessSpecDecl(Empty);
-  }
+  static AccessSpecDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -632,7 +630,7 @@ public:
                                SourceLocation StartLoc, SourceLocation IdLoc,
                                IdentifierInfo *Id, CXXRecordDecl* PrevDecl=0,
                                bool DelayTypeCreation = false);
-  static CXXRecordDecl *Create(const ASTContext &C, EmptyShell Empty);
+  static CXXRecordDecl *CreateDeserialized(const ASTContext &C, unsigned ID);
 
   bool isDynamicClass() const {
     return data().Polymorphic || data().NumVBases != 0;
@@ -1409,6 +1407,8 @@ public:
                                bool isConstexpr,
                                SourceLocation EndLocation);
 
+  static CXXMethodDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   bool isStatic() const { return getStorageClass() == SC_Static; }
   bool isInstance() const { return !isStatic(); }
 
@@ -1791,7 +1791,7 @@ class CXXConstructorDecl : public CXXMethodDecl {
   }
 
 public:
-  static CXXConstructorDecl *Create(ASTContext &C, EmptyShell Empty);
+  static CXXConstructorDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   static CXXConstructorDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                                     SourceLocation StartLoc,
                                     const DeclarationNameInfo &NameInfo,
@@ -2010,13 +2010,13 @@ class CXXDestructorDecl : public CXXMethodDecl {
   }
 
 public:
-  static CXXDestructorDecl *Create(ASTContext& C, EmptyShell Empty);
   static CXXDestructorDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                                    SourceLocation StartLoc,
                                    const DeclarationNameInfo &NameInfo,
                                    QualType T, TypeSourceInfo* TInfo,
                                    bool isInline,
                                    bool isImplicitlyDeclared);
+  static CXXDestructorDecl *CreateDeserialized(ASTContext & C, unsigned ID);
 
   /// isImplicitlyDefined - Whether this destructor was implicitly
   /// defined. If false, then this destructor was defined by the
@@ -2076,7 +2076,6 @@ class CXXConversionDecl : public CXXMethodDecl {
       IsExplicitSpecified(isExplicitSpecified) { }
 
 public:
-  static CXXConversionDecl *Create(ASTContext &C, EmptyShell Empty);
   static CXXConversionDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                                    SourceLocation StartLoc,
                                    const DeclarationNameInfo &NameInfo,
@@ -2084,6 +2083,7 @@ public:
                                    bool isInline, bool isExplicit,
                                    bool isConstexpr,
                                    SourceLocation EndLocation);
+  static CXXConversionDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
   /// IsExplicitSpecified - Whether this conversion function declaration is
   /// marked "explicit", meaning that it can only be applied when the user
@@ -2147,7 +2147,8 @@ public:
                                  SourceLocation ExternLoc,
                                  SourceLocation LangLoc, LanguageIDs Lang,
                                  SourceLocation RBraceLoc = SourceLocation());
-
+  static LinkageSpecDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   /// \brief Return the language specified by this linkage specification.
   LanguageIDs getLanguage() const { return Language; }
   /// \brief Set the language specified by this linkage specification.
@@ -2272,7 +2273,8 @@ public:
                                     SourceLocation IdentLoc,
                                     NamedDecl *Nominated,
                                     DeclContext *CommonAncestor);
-
+  static UsingDirectiveDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   SourceRange getSourceRange() const {
     return SourceRange(UsingLoc, getLocation());
   }
@@ -2363,6 +2365,8 @@ public:
                                     SourceLocation IdentLoc,
                                     NamedDecl *Namespace);
 
+  static NamespaceAliasDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   virtual SourceRange getSourceRange() const {
     return SourceRange(NamespaceLoc, IdentLoc);
   }
@@ -2413,6 +2417,8 @@ public:
     return new (C) UsingShadowDecl(DC, Loc, Using, Target);
   }
 
+  static UsingShadowDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   /// \brief Gets the underlying declaration which has been brought into the
   /// local scope.
   NamedDecl *getTargetDecl() const { return Underlying; }
@@ -2556,6 +2562,8 @@ public:
                            const DeclarationNameInfo &NameInfo,
                            bool IsTypeNameArg);
 
+  static UsingDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   SourceRange getSourceRange() const {
     return SourceRange(UsingLocation, getNameInfo().getEndLoc());
   }
@@ -2624,6 +2632,9 @@ public:
            NestedNameSpecifierLoc QualifierLoc,
            const DeclarationNameInfo &NameInfo);
 
+  static UnresolvedUsingValueDecl *
+  CreateDeserialized(ASTContext &C, unsigned ID);
+
   SourceRange getSourceRange() const {
     return SourceRange(UsingLocation, getNameInfo().getEndLoc());
   }
@@ -2689,6 +2700,9 @@ public:
            SourceLocation TypenameLoc, NestedNameSpecifierLoc QualifierLoc,
            SourceLocation TargetNameLoc, DeclarationName TargetName);
 
+  static UnresolvedUsingTypenameDecl *
+  CreateDeserialized(ASTContext &C, unsigned ID);
+
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const UnresolvedUsingTypenameDecl *D) { return true; }
   static bool classofKind(Kind K) { return K == UnresolvedUsingTypename; }
@@ -2712,7 +2726,8 @@ public:
                                   SourceLocation StaticAssertLoc,
                                   Expr *AssertExpr, StringLiteral *Message,
                                   SourceLocation RParenLoc);
-
+  static StaticAssertDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+  
   Expr *getAssertExpr() { return AssertExpr; }
   const Expr *getAssertExpr() const { return AssertExpr; }
 

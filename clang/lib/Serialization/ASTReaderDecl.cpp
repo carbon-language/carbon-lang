@@ -1877,208 +1877,160 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   case DECL_CONTEXT_VISIBLE:
     llvm_unreachable("Record cannot be de-serialized with ReadDeclRecord");
   case DECL_TYPEDEF:
-    D = TypedefDecl::Create(Context, 0, SourceLocation(), SourceLocation(),
-                            0, 0);
+    D = TypedefDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_TYPEALIAS:
-    D = TypeAliasDecl::Create(Context, 0, SourceLocation(), SourceLocation(),
-                              0, 0);
+    D = TypeAliasDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_ENUM:
-    D = EnumDecl::Create(Context, Decl::EmptyShell());
+    D = EnumDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_RECORD:
-    D = RecordDecl::Create(Context, Decl::EmptyShell());
+    D = RecordDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_ENUM_CONSTANT:
-    D = EnumConstantDecl::Create(Context, 0, SourceLocation(), 0, QualType(),
-                                 0, llvm::APSInt());
+    D = EnumConstantDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_FUNCTION:
-    D = FunctionDecl::Create(Context, 0, SourceLocation(), SourceLocation(),
-                             DeclarationName(), QualType(), 0);
+    D = FunctionDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_LINKAGE_SPEC:
-    D = LinkageSpecDecl::Create(Context, 0, SourceLocation(), SourceLocation(),
-                                (LinkageSpecDecl::LanguageIDs)0,
-                                SourceLocation());
+    D = LinkageSpecDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_LABEL:
-    D = LabelDecl::Create(Context, 0, SourceLocation(), 0);
+    D = LabelDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_NAMESPACE:
-    D = NamespaceDecl::Create(Context, 0, SourceLocation(),
-                              SourceLocation(), 0);
+    D = NamespaceDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_NAMESPACE_ALIAS:
-    D = NamespaceAliasDecl::Create(Context, 0, SourceLocation(),
-                                   SourceLocation(), 0, 
-                                   NestedNameSpecifierLoc(),
-                                   SourceLocation(), 0);
+    D = NamespaceAliasDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_USING:
-    D = UsingDecl::Create(Context, 0, SourceLocation(),
-                          NestedNameSpecifierLoc(), DeclarationNameInfo(), 
-                          false);
+    D = UsingDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_USING_SHADOW:
-    D = UsingShadowDecl::Create(Context, 0, SourceLocation(), 0, 0);
+    D = UsingShadowDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_USING_DIRECTIVE:
-    D = UsingDirectiveDecl::Create(Context, 0, SourceLocation(),
-                                   SourceLocation(), NestedNameSpecifierLoc(),
-                                   SourceLocation(), 0, 0);
+    D = UsingDirectiveDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_UNRESOLVED_USING_VALUE:
-    D = UnresolvedUsingValueDecl::Create(Context, 0, SourceLocation(),
-                                         NestedNameSpecifierLoc(), 
-                                         DeclarationNameInfo());
+    D = UnresolvedUsingValueDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_UNRESOLVED_USING_TYPENAME:
-    D = UnresolvedUsingTypenameDecl::Create(Context, 0, SourceLocation(),
-                                            SourceLocation(), 
-                                            NestedNameSpecifierLoc(),
-                                            SourceLocation(),
-                                            DeclarationName());
+    D = UnresolvedUsingTypenameDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_CXX_RECORD:
-    D = CXXRecordDecl::Create(Context, Decl::EmptyShell());
+    D = CXXRecordDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_CXX_METHOD:
-    D = CXXMethodDecl::Create(Context, 0, SourceLocation(),
-                              DeclarationNameInfo(), QualType(), 0,
-                              false, SC_None, false, false, SourceLocation());
+    D = CXXMethodDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_CXX_CONSTRUCTOR:
-    D = CXXConstructorDecl::Create(Context, Decl::EmptyShell());
+    D = CXXConstructorDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_CXX_DESTRUCTOR:
-    D = CXXDestructorDecl::Create(Context, Decl::EmptyShell());
+    D = CXXDestructorDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_CXX_CONVERSION:
-    D = CXXConversionDecl::Create(Context, Decl::EmptyShell());
+    D = CXXConversionDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_ACCESS_SPEC:
-    D = AccessSpecDecl::Create(Context, Decl::EmptyShell());
+    D = AccessSpecDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_FRIEND:
-    D = FriendDecl::Create(Context, Decl::EmptyShell());
+    D = FriendDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_FRIEND_TEMPLATE:
-    D = FriendTemplateDecl::Create(Context, Decl::EmptyShell());
+    D = FriendTemplateDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_CLASS_TEMPLATE:
-    D = ClassTemplateDecl::Create(Context, Decl::EmptyShell());
+    D = ClassTemplateDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_CLASS_TEMPLATE_SPECIALIZATION:
-    D = ClassTemplateSpecializationDecl::Create(Context, Decl::EmptyShell());
+    D = ClassTemplateSpecializationDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_CLASS_TEMPLATE_PARTIAL_SPECIALIZATION:
-    D = ClassTemplatePartialSpecializationDecl::Create(Context,
-                                                       Decl::EmptyShell());
+    D = ClassTemplatePartialSpecializationDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_CLASS_SCOPE_FUNCTION_SPECIALIZATION:
-    D = ClassScopeFunctionSpecializationDecl::Create(Context,
-                                                     Decl::EmptyShell());
+    D = ClassScopeFunctionSpecializationDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_FUNCTION_TEMPLATE:
-      D = FunctionTemplateDecl::Create(Context, Decl::EmptyShell());
+    D = FunctionTemplateDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_TEMPLATE_TYPE_PARM:
-    D = TemplateTypeParmDecl::Create(Context, Decl::EmptyShell());
+    D = TemplateTypeParmDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_NON_TYPE_TEMPLATE_PARM:
-    D = NonTypeTemplateParmDecl::Create(Context, 0, SourceLocation(),
-                                        SourceLocation(), 0, 0, 0, QualType(),
-                                        false, 0);
+    D = NonTypeTemplateParmDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_EXPANDED_NON_TYPE_TEMPLATE_PARM_PACK:
-    D = NonTypeTemplateParmDecl::Create(Context, 0, SourceLocation(),
-                                        SourceLocation(), 0, 0, 0, QualType(),
-                                        0, 0, Record[Idx++], 0);
+    D = NonTypeTemplateParmDecl::CreateDeserialized(Context, ID, Record[Idx++]);
     break;
   case DECL_TEMPLATE_TEMPLATE_PARM:
-    D = TemplateTemplateParmDecl::Create(Context, 0, SourceLocation(), 0, 0,
-                                         false, 0, 0);
+    D = TemplateTemplateParmDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_TYPE_ALIAS_TEMPLATE:
-    D = TypeAliasTemplateDecl::Create(Context, Decl::EmptyShell());
+    D = TypeAliasTemplateDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_STATIC_ASSERT:
-    D = StaticAssertDecl::Create(Context, 0, SourceLocation(), 0, 0,
-                                 SourceLocation());
+    D = StaticAssertDecl::CreateDeserialized(Context, ID);
     break;
-
   case DECL_OBJC_METHOD:
-    D = ObjCMethodDecl::Create(Context, SourceLocation(), SourceLocation(),
-                               Selector(), QualType(), 0, 0);
+    D = ObjCMethodDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_OBJC_INTERFACE:
-    D = ObjCInterfaceDecl::CreateEmpty(Context);
+    D = ObjCInterfaceDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_OBJC_IVAR:
-    D = ObjCIvarDecl::Create(Context, 0, SourceLocation(), SourceLocation(),
-                             0, QualType(), 0, ObjCIvarDecl::None);
+    D = ObjCIvarDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_OBJC_PROTOCOL:
-    D = ObjCProtocolDecl::Create(Context, 0, 0, SourceLocation(),
-                                 SourceLocation(), 0);
+    D = ObjCProtocolDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_OBJC_AT_DEFS_FIELD:
-    D = ObjCAtDefsFieldDecl::Create(Context, 0, SourceLocation(),
-                                    SourceLocation(), 0, QualType(), 0);
+    D = ObjCAtDefsFieldDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_OBJC_CATEGORY:
-    D = ObjCCategoryDecl::Create(Context, Decl::EmptyShell());
+    D = ObjCCategoryDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_OBJC_CATEGORY_IMPL:
-    D = ObjCCategoryImplDecl::Create(Context, 0, 0, 0, SourceLocation(),
-                                     SourceLocation(), SourceLocation());
+    D = ObjCCategoryImplDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_OBJC_IMPLEMENTATION:
-    D = ObjCImplementationDecl::Create(Context, 0, 0, 0, SourceLocation(),
-                                       SourceLocation());
+    D = ObjCImplementationDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_OBJC_COMPATIBLE_ALIAS:
-    D = ObjCCompatibleAliasDecl::Create(Context, 0, SourceLocation(), 0, 0);
+    D = ObjCCompatibleAliasDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_OBJC_PROPERTY:
-    D = ObjCPropertyDecl::Create(Context, 0, SourceLocation(), 0, SourceLocation(),
-                                 0);
+    D = ObjCPropertyDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_OBJC_PROPERTY_IMPL:
-    D = ObjCPropertyImplDecl::Create(Context, 0, SourceLocation(),
-                                     SourceLocation(), 0,
-                                     ObjCPropertyImplDecl::Dynamic, 0,
-                                     SourceLocation());
+    D = ObjCPropertyImplDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_FIELD:
-    D = FieldDecl::Create(Context, 0, SourceLocation(), SourceLocation(), 0,
-                          QualType(), 0, 0, false, false);
+    D = FieldDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_INDIRECTFIELD:
-    D = IndirectFieldDecl::Create(Context, 0, SourceLocation(), 0, QualType(),
-                                  0, 0);
+    D = IndirectFieldDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_VAR:
-    D = VarDecl::Create(Context, 0, SourceLocation(), SourceLocation(), 0,
-                        QualType(), 0, SC_None, SC_None);
+    D = VarDecl::CreateDeserialized(Context, ID);
     break;
-
   case DECL_IMPLICIT_PARAM:
-    D = ImplicitParamDecl::Create(Context, 0, SourceLocation(), 0, QualType());
+    D = ImplicitParamDecl::CreateDeserialized(Context, ID);
     break;
-
   case DECL_PARM_VAR:
-    D = ParmVarDecl::Create(Context, 0, SourceLocation(), SourceLocation(), 0,
-                            QualType(), 0, SC_None, SC_None, 0);
+    D = ParmVarDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_FILE_SCOPE_ASM:
-    D = FileScopeAsmDecl::Create(Context, 0, 0, SourceLocation(),
-                                 SourceLocation());
+    D = FileScopeAsmDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_BLOCK:
-    D = BlockDecl::Create(Context, 0, SourceLocation());
+    D = BlockDecl::CreateDeserialized(Context, ID);
     break;
   case DECL_CXX_BASE_SPECIFIERS:
     Error("attempt to read a C++ base-specifier record as a declaration");
@@ -2086,7 +2038,7 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   case DECL_IMPORT:
     // Note: last entry of the ImportDecl record is the number of stored source 
     // locations.
-    D = ImportDecl::CreateEmpty(Context, Record.back());
+    D = ImportDecl::CreateDeserialized(Context, ID, Record.back());
     break;
   }
 

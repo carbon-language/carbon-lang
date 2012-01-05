@@ -310,6 +310,18 @@ protected:
 
   virtual ~Decl();
 
+  /// \brief Allocate memory for a deserialized declaration.
+  ///
+  /// This routine must be used to allocate memory for any declaration that is
+  /// deserialized from a module file.
+  ///
+  /// \param Context The context in which we will allocate memory.
+  /// \param ID The global ID of the deserialized declaration.
+  /// \param Size The size of the allocated object.
+  static void *AllocateDeserializedDecl(const ASTContext &Context,
+                                        unsigned ID,
+                                        unsigned Size);
+  
 public:
 
   /// \brief Source range that this declaration covers.

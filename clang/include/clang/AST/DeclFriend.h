@@ -78,7 +78,7 @@ public:
   static FriendDecl *Create(ASTContext &C, DeclContext *DC,
                             SourceLocation L, FriendUnion Friend_,
                             SourceLocation FriendL);
-  static FriendDecl *Create(ASTContext &C, EmptyShell Empty);
+  static FriendDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
   /// If this friend declaration names an (untemplated but possibly
   /// dependent) type, return the type; otherwise return null.  This
