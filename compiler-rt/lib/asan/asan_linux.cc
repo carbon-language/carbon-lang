@@ -16,11 +16,15 @@
 #include "asan_interceptors.h"
 #include "asan_internal.h"
 #include "asan_procmaps.h"
+#include "asan_thread.h"
 
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -149,6 +153,54 @@ bool AsanProcMaps::Next(uint64_t *start, uint64_t *end,
   current_ = next_line + 1;
   return true;
 }
+
+void AsanThread::SetThreadStackTopAndBottom() {
+  if (tid() == 0) {
+    // This is the main thread. Libpthread may not be initialized yet.
+    struct rlimit rl;
+    CHECK(getrlimit(RLIMIT_STACK, &rl) == 0);
+
+    // Find the mapping that contains a stack variable.
+    AsanProcMaps proc_maps;
+    uint64_t start, end, offset;
+    uint64_t prev_end = 0;
+    while (proc_maps.Next(&start, &end, &offset, NULL, 0)) {
+      if ((uintptr_t)&rl < end)
+        break;
+      prev_end = end;
+    }
+    CHECK((uintptr_t)&rl >= start && (uintptr_t)&rl < end);
+
+    // Get stacksize from rlimit, but clip it so that it does not overlap
+    // with other mappings.
+    size_t stacksize = rl.rlim_cur;
+    if (stacksize > end - prev_end)
+      stacksize = end - prev_end;
+    if (stacksize > kMaxThreadStackSize)
+      stacksize = kMaxThreadStackSize;
+    stack_top_ = end;
+    stack_bottom_ = end - stacksize;
+    CHECK(AddrIsInStack((uintptr_t)&rl));
+    return;
+  }
+  pthread_attr_t attr;
+  CHECK(pthread_getattr_np(pthread_self(), &attr) == 0);
+  size_t stacksize = 0;
+  void *stackaddr = NULL;
+  pthread_attr_getstack(&attr, &stackaddr, &stacksize);
+  pthread_attr_destroy(&attr);
+
+  stack_top_ = (uintptr_t)stackaddr + stacksize;
+  stack_bottom_ = (uintptr_t)stackaddr;
+  // When running with unlimited stack size, we still want to set some limit.
+  // The unlimited stack size is caused by 'ulimit -s unlimited'.
+  // Also, for some reason, GNU make spawns subrocesses with unlimited stack.
+  if (stacksize > kMaxThreadStackSize) {
+    stack_bottom_ = stack_top_ - kMaxThreadStackSize;
+  }
+  CHECK(AddrIsInStack((uintptr_t)&attr));
+}
+
 
 }  // namespace __asan
 

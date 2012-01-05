@@ -22,6 +22,7 @@
 #include "asan_thread_registry.h"
 
 #include <sys/mman.h>
+#include <pthread.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -101,6 +102,15 @@ ssize_t AsanRead(int fd, void *buf, size_t count) {
 
 int AsanClose(int fd) {
   return close(fd);
+}
+
+void AsanThread::SetThreadStackTopAndBottom() {
+  size_t stacksize = pthread_get_stacksize_np(pthread_self());
+  void *stackaddr = pthread_get_stackaddr_np(pthread_self());
+  stack_top_ = (uintptr_t)stackaddr;
+  stack_bottom_ = stack_top_ - stacksize;
+  int local;
+  CHECK(AddrIsInStack((uintptr_t)&local));
 }
 
 // Support for the following functions from libdispatch on Mac OS:
