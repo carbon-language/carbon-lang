@@ -156,6 +156,7 @@ ABI::GetReturnValueObject (Thread &thread,
             // we don't do anything with these for now
             break;
         case Value::eValueTypeScalar:
+            clang_expr_variable_sp->m_flags |= ClangExpressionVariable::EVIsFreezeDried;
             clang_expr_variable_sp->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
             clang_expr_variable_sp->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
             break;
@@ -164,8 +165,8 @@ ABI::GetReturnValueObject (Thread &thread,
             clang_expr_variable_sp->m_flags |= ClangExpressionVariable::EVIsProgramReference;
             break;
         }
+        
         return_valobj_sp = clang_expr_variable_sp->GetValueObject();
-
     }
     return return_valobj_sp;
 }

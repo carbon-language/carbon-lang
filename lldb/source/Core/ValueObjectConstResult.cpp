@@ -98,6 +98,13 @@ ValueObjectConstResult::ValueObjectConstResult
     m_impl(this, address)
 {
     m_data = data;
+    
+    if (!m_data.GetSharedDataBuffer())
+    {
+        DataBufferSP shared_data_buffer(new DataBufferHeap(data.GetDataStart(), data.GetByteSize()));
+        m_data.SetData(shared_data_buffer);
+    }
+    
     m_value.GetScalar() = (uintptr_t)m_data.GetDataStart();
     m_value.SetValueType(Value::eValueTypeHostAddress);
     m_value.SetContext(Value::eContextTypeClangType, clang_type);
