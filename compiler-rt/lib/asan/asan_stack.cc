@@ -133,21 +133,12 @@ void AsanStackTrace::PrintStack(uintptr_t *addr, size_t size) {
   for (size_t i = 0; i < size && addr[i]; i++) {
     proc_maps.Reset();
     uintptr_t pc = addr[i];
-    uint64_t start, end, offset;
+    uintptr_t offset;
     char filename[4096];
-    bool found = 0;
-    int map_idx = 0;
-    while (proc_maps.Next(&start, &end, &offset,
-                          filename, sizeof(filename))) {
-      if (pc >= start && pc <= end) {
-        found = true;
-        uintptr_t relative_pc = (map_idx == 0) ? pc : (pc - start);
-        Printf("    #%ld 0x%lx (%s+0x%lx)\n", i, pc, filename, relative_pc);
-        break;
-      }
-      map_idx++;
-    }
-    if (!found) {
+    if (proc_maps.GetObjectNameAndOffset(pc, &offset,
+                                         filename, sizeof(filename))) {
+      Printf("    #%ld 0x%lx (%s+0x%lx)\n", i, pc, filename, offset);
+    } else {
       Printf("    #%ld 0x%lx\n", i, pc);
     }
   }

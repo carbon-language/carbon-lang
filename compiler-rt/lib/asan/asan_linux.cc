@@ -24,17 +24,16 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <link.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
-
-extern char _DYNAMIC[];
 
 namespace __asan {
 
 void *AsanDoesNotSupportStaticLinkage() {
   // This will fail to link with -static.
-  return &_DYNAMIC;
+  return &_DYNAMIC;  // defined in link.h
 }
 
 static void *asan_mmap(void *addr, size_t length, int prot, int flags,
@@ -120,20 +119,20 @@ void AsanProcMaps::Reset() {
   current_ = proc_self_maps_buff_;
 }
 
-bool AsanProcMaps::Next(uint64_t *start, uint64_t *end,
-                        uint64_t *offset, char filename[],
+bool AsanProcMaps::Next(uintptr_t *start, uintptr_t *end,
+                        uintptr_t *offset, char filename[],
                         size_t filename_size) {
   char *last = proc_self_maps_buff_ + proc_self_maps_buff_len_;
   if (current_ >= last) return false;
   int consumed = 0;
   char flags[10];
   int major, minor;
-  uint64_t inode;
+  uintptr_t inode;
   char *next_line = (char*)internal_memchr(current_, '\n', last - current_);
   if (next_line == NULL)
     next_line = last;
   if (SScanf(current_,
-             "%llx-%llx %4s %llx %x:%x %lld %n",
+             "%lx-%lx %4s %lx %x:%x %ld %n",
              start, end, flags, offset, &major, &minor,
              &inode, &consumed) != 7)
     return false;
@@ -154,6 +153,50 @@ bool AsanProcMaps::Next(uint64_t *start, uint64_t *end,
   return true;
 }
 
+struct DlIterateData {
+  int count;
+  uintptr_t addr;
+  uintptr_t offset;
+  char *filename;
+  size_t filename_size;
+};
+
+static int dl_iterate_phdr_callback(struct dl_phdr_info *info,
+                                    size_t size, void *raw_data) {
+  DlIterateData *data = (DlIterateData*)raw_data;
+  int count = data->count++;
+  if (info->dlpi_addr > data->addr)
+    return 0;
+  if (count == 0) {
+    // The first item (the main executable) does not have a so name,
+    // but we can just read it from /proc/self/exe.
+    ssize_t path_len = readlink("/proc/self/exe",
+                                data->filename, data->filename_size - 1);
+    data->filename[path_len] = 0;
+  } else {
+    CHECK(info->dlpi_name);
+    real_strncpy(data->filename, info->dlpi_name, data->filename_size);
+  }
+  data->offset = data->addr - info->dlpi_addr;
+  return 1;
+}
+
+// Gets the object name and the offset using dl_iterate_phdr.
+bool AsanProcMaps::GetObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
+                                          char filename[],
+                                          size_t filename_size) {
+  DlIterateData data;
+  data.count = 0;
+  data.addr = addr;
+  data.filename = filename;
+  data.filename_size = filename_size;
+  if (dl_iterate_phdr(dl_iterate_phdr_callback, &data)) {
+    *offset = data.offset;
+    return true;
+  }
+  return false;
+}
+
 void AsanThread::SetThreadStackTopAndBottom() {
   if (tid() == 0) {
     // This is the main thread. Libpthread may not be initialized yet.
@@ -162,8 +205,8 @@ void AsanThread::SetThreadStackTopAndBottom() {
 
     // Find the mapping that contains a stack variable.
     AsanProcMaps proc_maps;
-    uint64_t start, end, offset;
-    uint64_t prev_end = 0;
+    uintptr_t start, end, offset;
+    uintptr_t prev_end = 0;
     while (proc_maps.Next(&start, &end, &offset, NULL, 0)) {
       if ((uintptr_t)&rl < end)
         break;

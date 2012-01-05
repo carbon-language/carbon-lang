@@ -21,9 +21,13 @@ namespace __asan {
 class AsanProcMaps {
  public:
   AsanProcMaps();
-  bool Next(uint64_t *start, uint64_t *end, uint64_t *offset,
+  bool Next(uintptr_t *start, uintptr_t *end, uintptr_t *offset,
             char filename[], size_t filename_size);
   void Reset();
+  // Gets the object file name and the offset in that object for a given
+  // address 'addr'. Returns true on success.
+  bool GetObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
+                              char filename[], size_t filename_size);
   ~AsanProcMaps();
  private:
 #if defined __linux__
