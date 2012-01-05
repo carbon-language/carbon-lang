@@ -1,4 +1,9 @@
 framework module NoUmbrella {
   umbrella "Headers"
   module * { }
+
+  module unavailable {
+    requires unavailable
+    header "Boom.h"
+  }
 }
