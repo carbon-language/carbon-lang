@@ -528,13 +528,28 @@ bool ARMBaseRegisterInfo::hasBasePointer(const MachineFunction &MF) const {
 
 bool ARMBaseRegisterInfo::canRealignStack(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const MachineRegisterInfo *MRI = &MF.getRegInfo();
   const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   // We can't realign the stack if:
   // 1. Dynamic stack realignment is explicitly disabled,
   // 2. This is a Thumb1 function (it's not useful, so we don't bother), or
   // 3. There are VLAs in the function and the base pointer is disabled.
-  return (MF.getTarget().Options.RealignStack && !AFI->isThumb1OnlyFunction() &&
-          (!MFI->hasVarSizedObjects() || EnableBasePointer));
+  if (!MF.getTarget().Options.RealignStack)
+    return false;
+  if (AFI->isThumb1OnlyFunction())
+    return false;
+  // Stack realignment requires a frame pointer.  If we already started
+  // register allocation with frame pointer elimination, it is too late now.
+  if (!MRI->canReserveReg(FramePtr))
+    return false;
+  // We may also need a base pointer if there are dynamic allocas.
+  if (!MFI->hasVarSizedObjects())
+    return true;
+  if (!EnableBasePointer)
+    return false;
+  // A base pointer is required and allowed.  Check that it isn't too late to
+  // reserve it.
+  return MRI->canReserveReg(BasePtr);
 }
 
 bool ARMBaseRegisterInfo::
