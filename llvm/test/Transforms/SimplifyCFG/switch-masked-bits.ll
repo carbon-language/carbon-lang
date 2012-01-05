@@ -15,8 +15,8 @@ c:
   ret i32 5
 ; CHECK: @test1
 ; CHECK: %cond = icmp eq i32 %i, 24
-; CHECK: %merge = select i1 %cond, i32 5, i32 0
-; CHECK: ret i32 %merge
+; CHECK: %. = select i1 %cond, i32 5, i32 0
+; CHECK: ret i32 %.
 }
 
 

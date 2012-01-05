@@ -1,8 +1,13 @@
-; RUN: opt < %s -simplifycfg -S | grep {br i1 } | count 4
+; RUN: opt < %s -simplifycfg -S | FileCheck %s
 ; PR3354
 ; Do not merge bb1 into the entry block, it might trap.
 
 @G = extern_weak global i32
+
+; CHECK: @test(
+; CHECK: br i1 %tmp25
+; CHECK: bb1:
+; CHECK: sdiv
 
 define i32 @test(i32 %tmp21, i32 %tmp24) {
 	%tmp25 = icmp sle i32 %tmp21, %tmp24		
@@ -17,6 +22,11 @@ bb2:
 bb6:
 	ret i32 927
 }
+
+; CHECK: @test2(
+; CHECK: br i1 %tmp34
+; CHECK: bb5:
+; CHECK: sdiv
 
 define i32 @test2(i32 %tmp21, i32 %tmp24, i1 %tmp34) {
 	br i1 %tmp34, label %bb5, label %bb6

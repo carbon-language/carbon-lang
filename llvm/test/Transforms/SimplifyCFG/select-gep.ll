@@ -35,6 +35,6 @@ if.end:
   ret i8* %x.addr
 
 ; CHECK: @test2
-; CHECK: %x.addr = select i1 %cmp, i8* %incdec.ptr, i8* %y
-; CHECK: ret i8* %x.addr
+; CHECK: %incdec.ptr.y = select i1 %cmp, i8* %incdec.ptr, i8* %y
+; CHECK: ret i8* %incdec.ptr.y
 }

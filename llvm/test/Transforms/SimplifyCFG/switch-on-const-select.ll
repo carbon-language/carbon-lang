@@ -115,7 +115,7 @@ entry:
 cont:
 ; CHECK: %lt = icmp slt i64 %x, %y
     %lt = icmp slt i64 %x, %y
-; CHECK-NEXT: br i1 %lt, label %a, label %r
+; CHECK-NEXT: select i1 %lt, i32 -1, i32 1
     %qux = select i1 %lt, i32 0, i32 2
     switch i32 %qux, label %bees [
         i32 0, label %a
