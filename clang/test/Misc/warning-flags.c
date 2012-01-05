@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (268):
+CHECK: Warnings without flags (267):
 CHECK-NEXT:   ext_anon_param_requires_type_specifier
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_array_init_copy
@@ -211,7 +211,6 @@ CHECK-NEXT:   warn_octal_escape_too_large
 CHECK-NEXT:   warn_odr_tag_type_inconsistent
 CHECK-NEXT:   warn_on_superclass_use
 CHECK-NEXT:   warn_param_default_argument_redefinition
-CHECK-NEXT:   warn_parens_disambiguated_as_function_decl
 CHECK-NEXT:   warn_partial_specs_not_deducible
 CHECK-NEXT:   warn_pointer_attribute_wrong_type
 CHECK-NEXT:   warn_pp_convert_lhs_to_positive

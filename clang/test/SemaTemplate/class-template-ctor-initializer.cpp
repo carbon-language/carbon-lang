@@ -49,7 +49,7 @@ namespace PR7259 {
   int
   main (void)
   {
-    Final final();
+    Final final;
     return 0;
   }
 }

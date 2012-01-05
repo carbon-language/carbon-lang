@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -pedantic-errors %s 
+// RUN: %clang_cc1 -fsyntax-only -verify -pedantic-errors %s
 
 void f() {
   int a;
@@ -24,10 +24,15 @@ void f() {
   // Declarations.
   int fd(T(a)); // expected-warning {{parentheses were disambiguated as a function declarator}}
   T(*d)(int(p)); // expected-warning {{parentheses were disambiguated as a function declarator}} expected-note {{previous definition is here}}
+  typedef T(*td)(int(p));
+  extern T(*tp)(int(p));
+  T d3(); // expected-warning {{empty parentheses interpreted as a function declaration}}
+  typedef T d3t();
+  extern T f3();
   T(d)[5]; // expected-error {{redefinition of 'd'}}
   typeof(int[])(f) = { 1, 2 }; // expected-error {{extension used}}
   void(b)(int);
-  int(d2) __attribute__(()); 
+  int(d2) __attribute__(());
   if (int(a)=1) {}
   int(d3(int()));
 }

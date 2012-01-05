@@ -387,7 +387,11 @@ def err_expected_lparen_after_type : Error<
 def err_expected_equal_after_declarator : Error<
   "expected '=' after declarator">;
 def warn_parens_disambiguated_as_function_decl : Warning<
-  "parentheses were disambiguated as a function declarator">;
+  "parentheses were disambiguated as a function declarator">,
+  InGroup<VexingParse>;
+def warn_empty_parens_are_function_decl : Warning<
+  "empty parentheses interpreted as a function declaration">,
+  InGroup<VexingParse>;
 def warn_dangling_else : Warning<
   "add explicit braces to avoid dangling else">,
   InGroup<DanglingElse>;

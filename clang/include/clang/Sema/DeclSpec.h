@@ -1626,6 +1626,13 @@ public:
   bool mayBeFollowedByCXXDirectInit() const {
     if (hasGroupingParens()) return false;
 
+    if (getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
+      return false;
+
+    if (getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_extern &&
+        Context != FileContext)
+      return false;
+
     switch (Context) {
     case FileContext:
     case BlockContext:
