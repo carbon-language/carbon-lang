@@ -400,19 +400,23 @@ void Preprocessor::EnterMainSourceFile() {
   assert(NumEnteredSourceFiles == 0 && "Cannot reenter the main file!");
   FileID MainFileID = SourceMgr.getMainFileID();
 
-  // Enter the main file source buffer.
-  EnterSourceFile(MainFileID, 0, SourceLocation());
-
-  // If we've been asked to skip bytes in the main file (e.g., as part of a
-  // precompiled preamble), do so now.
-  if (SkipMainFilePreamble.first > 0)
-    CurLexer->SkipBytes(SkipMainFilePreamble.first, 
-                        SkipMainFilePreamble.second);
+  // If MainFileID is loaded it means we loaded an AST file, no need to enter
+  // a main file.
+  if (!SourceMgr.isLoadedFileID(MainFileID)) {
+    // Enter the main file source buffer.
+    EnterSourceFile(MainFileID, 0, SourceLocation());
   
-  // Tell the header info that the main file was entered.  If the file is later
-  // #imported, it won't be re-entered.
-  if (const FileEntry *FE = SourceMgr.getFileEntryForID(MainFileID))
-    HeaderInfo.IncrementIncludeCount(FE);
+    // If we've been asked to skip bytes in the main file (e.g., as part of a
+    // precompiled preamble), do so now.
+    if (SkipMainFilePreamble.first > 0)
+      CurLexer->SkipBytes(SkipMainFilePreamble.first, 
+                          SkipMainFilePreamble.second);
+    
+    // Tell the header info that the main file was entered.  If the file is later
+    // #imported, it won't be re-entered.
+    if (const FileEntry *FE = SourceMgr.getFileEntryForID(MainFileID))
+      HeaderInfo.IncrementIncludeCount(FE);
+  }
 
   // Preprocess Predefines to populate the initial preprocessor state.
   llvm::MemoryBuffer *SB =

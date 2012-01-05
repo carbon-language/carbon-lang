@@ -2656,14 +2656,17 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   if (DeserializationListener)
     DeserializationListener->ReaderInitialized(this);
 
-  // If this AST file is a precompiled preamble, then set the preamble file ID
-  // of the source manager to the file source file from which the preamble was
-  // built.
-  if (Type == MK_Preamble) {
-    if (!OriginalFileID.isInvalid()) {
-      OriginalFileID = FileID::get(ModuleMgr.getPrimaryModule().SLocEntryBaseID
-                                        + OriginalFileID.getOpaqueValue() - 1);
+  if (!OriginalFileID.isInvalid()) {
+    OriginalFileID = FileID::get(ModuleMgr.getPrimaryModule().SLocEntryBaseID
+                                      + OriginalFileID.getOpaqueValue() - 1);
+
+    // If this AST file is a precompiled preamble, then set the preamble file ID
+    // of the source manager to the file source file from which the preamble was
+    // built.
+    if (Type == MK_Preamble) {
       SourceMgr.setPreambleFileID(OriginalFileID);
+    } else if (Type == MK_MainFile) {
+      SourceMgr.setMainFileID(OriginalFileID);
     }
   }
   

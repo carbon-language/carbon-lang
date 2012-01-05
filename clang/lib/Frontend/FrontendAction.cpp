@@ -310,16 +310,7 @@ void FrontendAction::Execute() {
 
   // Initialize the main file entry. This needs to be delayed until after PCH
   // has loaded.
-  if (isCurrentFileAST()) {
-    // Set the main file ID to an empty file.
-    //
-    // FIXME: We probably shouldn't need this, but for now this is the
-    // simplest way to reuse the logic in ParseAST.
-    const char *EmptyStr = "";
-    llvm::MemoryBuffer *SB =
-      llvm::MemoryBuffer::getMemBuffer(EmptyStr, "<dummy input>");
-    CI.getSourceManager().createMainFileIDForMemBuffer(SB);
-  } else {
+  if (!isCurrentFileAST()) {
     if (!CI.InitializeSourceManager(getCurrentFile()))
       return;
   }
