@@ -711,8 +711,6 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
   PrettyStackTraceLoc CrashInfo(PP.getSourceManager(), LambdaBeginLoc,
                                 "lambda expression parsing");
 
-  Actions.ActOnLambdaStart(LambdaBeginLoc, getCurScope());
-
   // Parse lambda-declarator[opt].
   DeclSpec DS(AttrFactory);
   Declarator D(DS, Declarator::LambdaExprContext);
@@ -792,10 +790,9 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
                                            DeclLoc, DeclEndLoc, D,
                                            TrailingReturnType),
                   Attr, DeclEndLoc);
-
-    // Inform sema that we are starting a block.
-    Actions.ActOnLambdaArguments(D, getCurScope());
   }
+
+  Actions.ActOnStartOfLambdaDefinition(Intro, D, getCurScope());
 
   // Parse compound-statement.
   if (!Tok.is(tok::l_brace)) {

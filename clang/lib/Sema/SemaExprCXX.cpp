@@ -4778,20 +4778,68 @@ Sema::CheckMicrosoftIfExistsSymbol(Scope *S, SourceLocation KeywordLoc,
 // Lambdas.
 //===----------------------------------------------------------------------===//
 
-void Sema::ActOnLambdaStart(SourceLocation StartLoc, Scope *CurScope) {
-  // FIXME: Add lambda-scope
-  // FIXME: PushDeclContext
+void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
+                                        Declarator &ParamInfo,
+                                        Scope *CurScope) {
+  DeclContext *DC = CurContext;
+  while (!(DC->isFunctionOrMethod() || DC->isRecord() || DC->isNamespace()))
+    DC = DC->getParent();
 
-  // Enter a new evaluation context to insulate the block from any
-  // cleanups from the enclosing full-expression.
-  PushExpressionEvaluationContext(PotentiallyEvaluated);  
-}
+  // Start constructing the lambda class.
+  CXXRecordDecl *Class = CXXRecordDecl::Create(Context, TTK_Class, DC,
+                                               Intro.Range.getBegin(),
+                                               /*IdLoc=*/SourceLocation(),
+                                               /*Id=*/0);
+  Class->startDefinition();
+  CurContext->addDecl(Class);
 
-void Sema::ActOnLambdaArguments(Declarator &ParamInfo, Scope *CurScope) {
+  // Build the call operator; we don't really have all the relevant information
+  // at this point, but we need something to attach child declarations to.
   TypeSourceInfo *MethodTyInfo;
   MethodTyInfo = GetTypeForDeclarator(ParamInfo, CurScope);
 
-  // FIXME: Build CXXMethodDecl
+  DeclarationName MethodName
+    = Context.DeclarationNames.getCXXOperatorName(OO_Call);
+  CXXMethodDecl *Method
+    = CXXMethodDecl::Create(Context,
+                            Class,
+                            ParamInfo.getSourceRange().getEnd(),
+                            DeclarationNameInfo(MethodName,
+                                                /*NameLoc=*/SourceLocation()),
+                            MethodTyInfo->getType(),
+                            MethodTyInfo,
+                            /*isStatic=*/false,
+                            SC_None,
+                            /*isInline=*/true,
+                            /*isConstExpr=*/false,
+                            ParamInfo.getSourceRange().getEnd());
+  Method->setAccess(AS_public);
+  Class->addDecl(Method);
+  Method->setLexicalDeclContext(DC); // FIXME: Is this really correct?
+
+  // Set the parameters on the decl, if specified.
+  if (isa<FunctionProtoTypeLoc>(MethodTyInfo->getTypeLoc())) {
+    FunctionProtoTypeLoc Proto =
+        cast<FunctionProtoTypeLoc>(MethodTyInfo->getTypeLoc());
+    Method->setParams(Proto.getParams());
+    CheckParmsForFunctionDef(Method->param_begin(),
+                             Method->param_end(),
+                             /*CheckParameterNames=*/false);
+  }
+
+  ProcessDeclAttributes(CurScope, Method, ParamInfo);
+
+  // FIXME: There's a bunch of missing checking etc;
+  // see ActOnBlockArguments
+
+  // Introduce the lambda scope.
+  PushLambdaScope(Class);
+
+  // Enter a new evaluation context to insulate the block from any
+  // cleanups from the enclosing full-expression.
+  PushExpressionEvaluationContext(PotentiallyEvaluated);
+
+  PushDeclContext(CurScope, Method);
 }
 
 void Sema::ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope) {
@@ -4800,8 +4848,8 @@ void Sema::ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope) {
   PopExpressionEvaluationContext();
 
   // Leave the context of the lambda.
-  // FIXME: PopDeclContext
-  // FIXME: Pop lambda-scope
+  PopDeclContext();
+  PopFunctionScopeInfo();
 }
 
 ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,

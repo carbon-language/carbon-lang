@@ -6784,7 +6784,7 @@ namespace {
     
     ~ImplicitlyDefinedFunctionScope() {
       S.PopExpressionEvaluationContext();
-      S.PopFunctionOrBlockScope();
+      S.PopFunctionScopeInfo();
     }
   };
 }

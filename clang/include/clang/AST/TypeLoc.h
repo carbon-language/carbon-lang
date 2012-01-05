@@ -1078,6 +1078,10 @@ public:
     getLocalData()->TrailingReturn = Trailing;
   }
 
+  ArrayRef<ParmVarDecl *> getParams() const {
+    return ArrayRef<ParmVarDecl *>(getParmArray(), getNumArgs());
+  }
+
   // ParmVarDecls* are stored after Info, one for each argument.
   ParmVarDecl **getParmArray() const {
     return (ParmVarDecl**) getExtraLocalData();

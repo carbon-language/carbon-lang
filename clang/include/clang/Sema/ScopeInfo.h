@@ -45,11 +45,17 @@ public:
 /// \brief Retains information about a function, method, or block that is
 /// currently being parsed.
 class FunctionScopeInfo {
+protected:
+  enum ScopeKind {
+    SK_Function,
+    SK_Block,
+    SK_Lambda
+  };
+  
 public:
-
-  /// \brief Whether this scope information structure defined information for
-  /// a block.
-  bool IsBlockInfo;
+  /// \brief What kind of scope we are describing.
+  ///
+  ScopeKind Kind;
 
   /// \brief Whether this function contains a VLA, @try, try, C++
   /// initializer, or anything else that can't be jumped past.
@@ -96,7 +102,7 @@ public:
   }
   
   FunctionScopeInfo(DiagnosticsEngine &Diag)
-    : IsBlockInfo(false),
+    : Kind(SK_Function),
       HasBranchProtectedScope(false),
       HasBranchIntoScope(false),
       HasIndirectGoto(false),
@@ -141,13 +147,53 @@ public:
     : FunctionScopeInfo(Diag), TheDecl(Block), TheScope(BlockScope),
       CapturesCXXThis(false)
   {
-    IsBlockInfo = true;
+    Kind = SK_Block;
   }
 
   virtual ~BlockScopeInfo();
 
-  static bool classof(const FunctionScopeInfo *FSI) { return FSI->IsBlockInfo; }
+  static bool classof(const FunctionScopeInfo *FSI) { 
+    return FSI->Kind == SK_Block; 
+  }
   static bool classof(const BlockScopeInfo *BSI) { return true; }
+};
+
+class LambdaScopeInfo : public FunctionScopeInfo {
+public:
+  /// \brief The class that describes the lambda.
+  CXXRecordDecl *Lambda;
+  
+  /// \brief A mapping from the set of captured variables to the 
+  /// fields (within the lambda class) that represent the captured variables.
+  llvm::DenseMap<VarDecl *, FieldDecl *> CapturedVariables;
+  
+  /// \brief The list of captured variables, starting with the explicit 
+  /// captures and then finishing with any implicit captures.
+  // TODO: This is commented out until an implementation of LambdaExpr is
+  // committed.
+  //  llvm::SmallVector<LambdaExpr::Capture, 4> Captures;
+  
+  /// \brief The number of captures in the \c Captures list that are 
+  /// explicit captures.
+  unsigned NumExplicitCaptures;
+  
+  /// \brief The field associated with the captured 'this' pointer.
+  FieldDecl *ThisCapture;
+
+  LambdaScopeInfo(DiagnosticsEngine &Diag, CXXRecordDecl *Lambda) 
+    : FunctionScopeInfo(Diag), Lambda(Lambda), 
+      NumExplicitCaptures(0), ThisCapture(0) 
+  {
+    Kind = SK_Lambda;
+  }
+    
+  virtual ~LambdaScopeInfo();
+  
+  static bool classof(const FunctionScopeInfo *FSI) { 
+    return FSI->Kind == SK_Lambda; 
+  }
+  static bool classof(const LambdaScopeInfo *BSI) { return true; }
+
 };
 
 }

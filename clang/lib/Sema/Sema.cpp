@@ -55,6 +55,7 @@ void FunctionScopeInfo::Clear() {
 }
 
 BlockScopeInfo::~BlockScopeInfo() { }
+LambdaScopeInfo::~LambdaScopeInfo() { }
 
 PrintingPolicy Sema::getPrintingPolicy() const {
   PrintingPolicy Policy = Context.getPrintingPolicy();
@@ -828,8 +829,12 @@ void Sema::PushBlockScope(Scope *BlockScope, BlockDecl *Block) {
                                               BlockScope, Block));
 }
 
-void Sema::PopFunctionOrBlockScope(const AnalysisBasedWarnings::Policy *WP,
-                                   const Decl *D, const BlockExpr *blkExpr) {
+void Sema::PushLambdaScope(CXXRecordDecl *Lambda) {
+  FunctionScopes.push_back(new LambdaScopeInfo(getDiagnostics(), Lambda));
+}
+
+void Sema::PopFunctionScopeInfo(const AnalysisBasedWarnings::Policy *WP,
+                                const Decl *D, const BlockExpr *blkExpr) {
   FunctionScopeInfo *Scope = FunctionScopes.pop_back_val();  
   assert(!FunctionScopes.empty() && "mismatched push/pop!");
   

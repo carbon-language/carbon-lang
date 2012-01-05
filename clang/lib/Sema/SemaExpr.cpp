@@ -8839,7 +8839,7 @@ void Sema::ActOnBlockError(SourceLocation CaretLoc, Scope *CurScope) {
 
   // Pop off CurBlock, handle nested blocks.
   PopDeclContext();
-  PopFunctionOrBlockScope();
+  PopFunctionScopeInfo();
 }
 
 /// ActOnBlockStmtExpr - This is called when the body of a block statement
@@ -8931,7 +8931,7 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   
   BlockExpr *Result = new (Context) BlockExpr(BSI->TheDecl, BlockTy);
   const AnalysisBasedWarnings::Policy &WP = AnalysisWarnings.getDefaultPolicy();
-  PopFunctionOrBlockScope(&WP, Result->getBlockDecl(), Result);
+  PopFunctionScopeInfo(&WP, Result->getBlockDecl(), Result);
 
   // If the block isn't obviously global, i.e. it captures anything at
   // all, mark this full-expression as needing a cleanup.

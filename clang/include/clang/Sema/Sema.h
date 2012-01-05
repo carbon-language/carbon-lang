@@ -767,8 +767,9 @@ public:
 
   void PushFunctionScope();
   void PushBlockScope(Scope *BlockScope, BlockDecl *Block);
-  void PopFunctionOrBlockScope(const sema::AnalysisBasedWarnings::Policy *WP =0,
-                               const Decl *D = 0, const BlockExpr *blkExpr = 0);
+  void PushLambdaScope(CXXRecordDecl *Lambda);
+  void PopFunctionScopeInfo(const sema::AnalysisBasedWarnings::Policy *WP =0,
+                            const Decl *D = 0, const BlockExpr *blkExpr = 0);
 
   sema::FunctionScopeInfo *getCurFunction() const {
     return FunctionScopes.back();
@@ -3449,16 +3450,15 @@ public:
   /// initializer for the declaration 'Dcl'.
   void ActOnCXXExitDeclInitializer(Scope *S, Decl *Dcl);
 
-  /// ActOnLambdaStart - This callback is invoked when a lambda expression is
-  /// started.
-  void ActOnLambdaStart(SourceLocation StartLoc, Scope *CurScope);
-
-  /// ActOnLambdaArguments - This callback allows processing of lambda arguments.
-  /// If there are no arguments, this is still invoked.
-  void ActOnLambdaArguments(Declarator &ParamInfo, Scope *CurScope);
+  /// ActOnStartOfLambdaDefinition - This is called just before we start
+  /// parsing the body of a lambda; it analyzes the explicit captures and 
+  /// arguments, and sets up various data-structures for the body of the
+  /// lambda.
+  void ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
+                                    Declarator &ParamInfo, Scope *CurScope);
 
   /// ActOnLambdaError - If there is an error parsing a lambda, this callback
-  /// is invoked to pop the information about the lambda from the action impl.
+  /// is invoked to pop the information about the lambda.
   void ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope);
 
   /// ActOnLambdaExpr - This is called when the body of a lambda expression
