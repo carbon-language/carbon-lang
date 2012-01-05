@@ -48,3 +48,23 @@ entry:
   %tmp512 = lshr i32 %tmp4, 24
   ret i32 %tmp512
 }
+
+define i64 @test5(i16 %i, i32* %arr) {
+; Ensure that we don't fold away shifts which have multiple uses, as they are
+; just re-introduced for the second use.
+; CHECK: test5:
+; CHECK-NOT: shrl
+; CHECK: shrl $11
+; CHECK-NOT: shrl
+; CHECK: ret
+
+entry:
+  %i.zext = zext i16 %i to i32
+  %index = lshr i32 %i.zext, 11
+  %index.zext = zext i32 %index to i64
+  %val.ptr = getelementptr inbounds i32* %arr, i64 %index.zext
+  %val = load i32* %val.ptr
+  %val.zext = zext i32 %val to i64
+  %sum = add i64 %val.zext, %index.zext
+  ret i64 %sum
+}

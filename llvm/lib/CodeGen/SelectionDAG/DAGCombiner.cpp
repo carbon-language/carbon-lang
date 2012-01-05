@@ -3331,7 +3331,9 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
 
   // fold (shl (srl x, c1), c2) -> (and (shl x, (sub c2, c1), MASK) or
   //                               (and (srl x, (sub c1, c2), MASK)
-  if (N1C && N0.getOpcode() == ISD::SRL &&
+  // Only fold this if the inner shift has no other uses -- if it does, folding
+  // this will increase the total number of instructions.
+  if (N1C && N0.getOpcode() == ISD::SRL && N0.hasOneUse() &&
       N0.getOperand(1).getOpcode() == ISD::Constant) {
     uint64_t c1 = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
     if (c1 < VT.getSizeInBits()) {
