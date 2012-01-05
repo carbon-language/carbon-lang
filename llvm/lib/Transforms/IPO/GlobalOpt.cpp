@@ -2069,7 +2069,8 @@ static Constant *getVal(DenseMap<Value*, Constant*> &ComputedValues, Value *V) {
 
 static inline bool 
 isSimpleEnoughValueToCommit(Constant *C,
-                            SmallPtrSet<Constant*, 8> &SimpleConstants);
+                            SmallPtrSet<Constant*, 8> &SimpleConstants,
+                            const TargetData *TD);
 
 
 /// isSimpleEnoughValueToCommit - Return true if the specified constant can be
@@ -2081,7 +2082,8 @@ isSimpleEnoughValueToCommit(Constant *C,
 /// in SimpleConstants to avoid having to rescan the same constants all the
 /// time.
 static bool isSimpleEnoughValueToCommitHelper(Constant *C,
-                                   SmallPtrSet<Constant*, 8> &SimpleConstants) {
+                                   SmallPtrSet<Constant*, 8> &SimpleConstants,
+                                   const TargetData *TD) {
   // Simple integer, undef, constant aggregate zero, global addresses, etc are
   // all supported.
   if (C->getNumOperands() == 0 || isa<BlockAddress>(C) ||
@@ -2093,7 +2095,7 @@ static bool isSimpleEnoughValueToCommitHelper(Constant *C,
       isa<ConstantVector>(C)) {
     for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i) {
       Constant *Op = cast<Constant>(C->getOperand(i));
-      if (!isSimpleEnoughValueToCommit(Op, SimpleConstants))
+      if (!isSimpleEnoughValueToCommit(Op, SimpleConstants, TD))
         return false;
     }
     return true;
@@ -2105,34 +2107,42 @@ static bool isSimpleEnoughValueToCommitHelper(Constant *C,
   ConstantExpr *CE = cast<ConstantExpr>(C);
   switch (CE->getOpcode()) {
   case Instruction::BitCast:
+    // Bitcast is fine if the casted value is fine.
+    return isSimpleEnoughValueToCommit(CE->getOperand(0), SimpleConstants, TD);
+
   case Instruction::IntToPtr:
   case Instruction::PtrToInt:
-    // These casts are always fine if the casted value is.
-    return isSimpleEnoughValueToCommit(CE->getOperand(0), SimpleConstants);
+    // int <=> ptr is fine if the int type is the same size as the
+    // pointer type.
+    if (!TD || TD->getTypeSizeInBits(CE->getType()) !=
+               TD->getTypeSizeInBits(CE->getOperand(0)->getType()))
+      return false;
+    return isSimpleEnoughValueToCommit(CE->getOperand(0), SimpleConstants, TD);
       
   // GEP is fine if it is simple + constant offset.
   case Instruction::GetElementPtr:
     for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
       if (!isa<ConstantInt>(CE->getOperand(i)))
         return false;
-    return isSimpleEnoughValueToCommit(CE->getOperand(0), SimpleConstants);
+    return isSimpleEnoughValueToCommit(CE->getOperand(0), SimpleConstants, TD);
       
   case Instruction::Add:
     // We allow simple+cst.
     if (!isa<ConstantInt>(CE->getOperand(1)))
       return false;
-    return isSimpleEnoughValueToCommit(CE->getOperand(0), SimpleConstants);
+    return isSimpleEnoughValueToCommit(CE->getOperand(0), SimpleConstants, TD);
   }
   return false;
 }
 
 static inline bool 
 isSimpleEnoughValueToCommit(Constant *C,
-                            SmallPtrSet<Constant*, 8> &SimpleConstants) {
+                            SmallPtrSet<Constant*, 8> &SimpleConstants,
+                            const TargetData *TD) {
   // If we already checked this constant, we win.
   if (!SimpleConstants.insert(C)) return true;
   // Check the constant.
-  return isSimpleEnoughValueToCommitHelper(C, SimpleConstants);
+  return isSimpleEnoughValueToCommitHelper(C, SimpleConstants, TD);
 }
 
 
@@ -2353,7 +2363,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
 
       // If this might be too difficult for the backend to handle (e.g. the addr
       // of one global variable divided by another) then we can't commit it.
-      if (!isSimpleEnoughValueToCommit(Val, SimpleConstants))
+      if (!isSimpleEnoughValueToCommit(Val, SimpleConstants, TD))
         return false;
         
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
