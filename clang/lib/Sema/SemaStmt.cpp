@@ -1791,8 +1791,7 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   QualType FnRetType = CurBlock->ReturnType;
 
   if (CurBlock->FunctionType->getAs<FunctionType>()->getNoReturnAttr()) {
-    Diag(ReturnLoc, diag::err_noreturn_block_has_return_expr)
-      << getCurFunctionOrMethodDecl()->getDeclName();
+    Diag(ReturnLoc, diag::err_noreturn_block_has_return_expr);
     return StmtError();
   }
 
@@ -1869,7 +1868,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     if (FD->hasAttr<NoReturnAttr>() ||
         FD->getType()->getAs<FunctionType>()->getNoReturnAttr())
       Diag(ReturnLoc, diag::warn_noreturn_function_has_return_expr)
-        << getCurFunctionOrMethodDecl()->getDeclName();
+        << FD->getDeclName();
   } else if (ObjCMethodDecl *MD = getCurMethodDecl()) {
     DeclaredRetType = MD->getResultType();
     if (MD->hasRelatedResultType() && MD->getClassInterface()) {
