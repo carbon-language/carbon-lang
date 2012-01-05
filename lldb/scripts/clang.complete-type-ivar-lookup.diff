@@ -1,0 +1,19 @@
+Index: lib/AST/DeclObjC.cpp
+===================================================================
+--- lib/AST/DeclObjC.cpp	(revision 146622)
++++ lib/AST/DeclObjC.cpp	(working copy)
+@@ -244,11 +244,11 @@
+ 
+ ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(IdentifierInfo *ID,
+                                               ObjCInterfaceDecl *&clsDeclared) {
+-  if (ExternallyCompleted)
+-    LoadExternalDefinition();
+-
+   ObjCInterfaceDecl* ClassDecl = this;
+   while (ClassDecl != NULL) {
++    if (ClassDecl->ExternallyCompleted)
++      ClassDecl->LoadExternalDefinition();
++      
+     if (ObjCIvarDecl *I = ClassDecl->getIvarDecl(ID)) {
+       clsDeclared = ClassDecl;
+       return I;

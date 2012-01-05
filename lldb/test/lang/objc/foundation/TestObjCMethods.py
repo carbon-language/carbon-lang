@@ -165,6 +165,10 @@ class FoundationTestCase(TestBase):
             substrs = ["(MyString) *self",
                        "(NSString *) str",
                        "(NSDate *) date"])
+        
+        # isa should be accessible.
+        self.expect("expression self->isa", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["(Class)"])
 
         # This should fail expectedly.
         self.expect("expression self->non_existent_member",
