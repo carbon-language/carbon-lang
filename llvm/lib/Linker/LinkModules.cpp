@@ -17,6 +17,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Transforms/Utils/Cloning.h"
@@ -379,7 +380,9 @@ namespace {
     /// getLinkageResult - This analyzes the two global values and determines
     /// what the result will look like in the destination module.
     bool getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
-                          GlobalValue::LinkageTypes &LT, bool &LinkFromSrc);
+                          GlobalValue::LinkageTypes &LT,
+                          GlobalValue::VisibilityTypes &Vis,
+                          bool &LinkFromSrc);
 
     /// getLinkedToGlobal - Given a global in the source module, return the
     /// global in the destination module that is being linked to, if any.
@@ -451,15 +454,27 @@ static void CopyGVAttributes(GlobalValue *DestGV, const GlobalValue *SrcGV) {
   forceRenaming(DestGV, SrcGV->getName());
 }
 
+static bool isLessConstraining(GlobalValue::VisibilityTypes a,
+                               GlobalValue::VisibilityTypes b) {
+  if (a == GlobalValue::HiddenVisibility)
+    return false;
+  if (b == GlobalValue::HiddenVisibility)
+    return true;
+  if (a == GlobalValue::ProtectedVisibility)
+    return false;
+  if (b == GlobalValue::ProtectedVisibility)
+    return true;
+  return false;
+}
+
 /// getLinkageResult - This analyzes the two global values and determines what
 /// the result will look like in the destination module.  In particular, it
-/// computes the resultant linkage type, computes whether the global in the
-/// source should be copied over to the destination (replacing the existing
-/// one), and computes whether this linkage is an error or not. It also performs
-/// visibility checks: we cannot link together two symbols with different
-/// visibilities.
+/// computes the resultant linkage type and visibility, computes whether the
+/// global in the source should be copied over to the destination (replacing
+/// the existing one), and computes whether this linkage is an error or not.
 bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
-                                    GlobalValue::LinkageTypes &LT, 
+                                    GlobalValue::LinkageTypes &LT,
+                                    GlobalValue::VisibilityTypes &Vis,
                                     bool &LinkFromSrc) {
   assert(Dest && "Must have two globals being queried");
   assert(!Src->hasLocalLinkage() &&
@@ -521,13 +536,10 @@ bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
                  "': symbol multiply defined!");
   }
 
-  // Check visibility
-  if (Src->getVisibility() != Dest->getVisibility() &&
-      !SrcIsDeclaration && !DestIsDeclaration &&
-      !Src->hasAvailableExternallyLinkage() &&
-      !Dest->hasAvailableExternallyLinkage())
-    return emitError("Linking globals named '" + Src->getName() +
-                   "': symbols have different visibilities!");
+  // Compute the visibility. We follow the rules in the System V Application
+  // Binary Interface.
+  Vis = isLessConstraining(Src->getVisibility(), Dest->getVisibility()) ?
+    Dest->getVisibility() : Src->getVisibility();
   return false;
 }
 
@@ -665,6 +677,7 @@ bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
 /// merge them into the dest module.
 bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
   GlobalValue *DGV = getLinkedToGlobal(SGV);
+  llvm::Optional<GlobalValue::VisibilityTypes> NewVisibility;
 
   if (DGV) {
     // Concatenation of appending linkage variables is magic and handled later.
@@ -674,9 +687,11 @@ bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
     // Determine whether linkage of these two globals follows the source
     // module's definition or the destination module's definition.
     GlobalValue::LinkageTypes NewLinkage = GlobalValue::InternalLinkage;
+    GlobalValue::VisibilityTypes NV;
     bool LinkFromSrc = false;
-    if (getLinkageResult(DGV, SGV, NewLinkage, LinkFromSrc))
+    if (getLinkageResult(DGV, SGV, NewLinkage, NV, LinkFromSrc))
       return true;
+    NewVisibility = NV;
 
     // If we're not linking from the source, then keep the definition that we
     // have.
@@ -686,9 +701,10 @@ bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
         if (DGVar->isDeclaration() && SGV->isConstant() && !DGVar->isConstant())
           DGVar->setConstant(true);
       
-      // Set calculated linkage.
+      // Set calculated linkage and visibility.
       DGV->setLinkage(NewLinkage);
-      
+      DGV->setVisibility(*NewVisibility);
+
       // Make sure to remember this mapping.
       ValueMap[SGV] = ConstantExpr::getBitCast(DGV,TypeMap.get(SGV->getType()));
       
@@ -711,6 +727,8 @@ bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
                        SGV->getType()->getAddressSpace());
   // Propagate alignment, visibility and section info.
   CopyGVAttributes(NewDGV, SGV);
+  if (NewVisibility)
+    NewDGV->setVisibility(*NewVisibility);
 
   if (DGV) {
     DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewDGV, DGV->getType()));
@@ -726,17 +744,21 @@ bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
 /// destination module if needed, setting up mapping information.
 bool ModuleLinker::linkFunctionProto(Function *SF) {
   GlobalValue *DGV = getLinkedToGlobal(SF);
+  llvm::Optional<GlobalValue::VisibilityTypes> NewVisibility;
 
   if (DGV) {
     GlobalValue::LinkageTypes NewLinkage = GlobalValue::InternalLinkage;
     bool LinkFromSrc = false;
-    if (getLinkageResult(DGV, SF, NewLinkage, LinkFromSrc))
+    GlobalValue::VisibilityTypes NV;
+    if (getLinkageResult(DGV, SF, NewLinkage, NV, LinkFromSrc))
       return true;
-    
+    NewVisibility = NV;
+
     if (!LinkFromSrc) {
       // Set calculated linkage
       DGV->setLinkage(NewLinkage);
-      
+      DGV->setVisibility(*NewVisibility);
+
       // Make sure to remember this mapping.
       ValueMap[SF] = ConstantExpr::getBitCast(DGV, TypeMap.get(SF->getType()));
       
@@ -753,6 +775,8 @@ bool ModuleLinker::linkFunctionProto(Function *SF) {
   Function *NewDF = Function::Create(TypeMap.get(SF->getFunctionType()),
                                      SF->getLinkage(), SF->getName(), DstM);
   CopyGVAttributes(NewDF, SF);
+  if (NewVisibility)
+    NewDF->setVisibility(*NewVisibility);
 
   if (DGV) {
     // Any uses of DF need to change to NewDF, with cast.
@@ -775,17 +799,21 @@ bool ModuleLinker::linkFunctionProto(Function *SF) {
 /// source module.
 bool ModuleLinker::linkAliasProto(GlobalAlias *SGA) {
   GlobalValue *DGV = getLinkedToGlobal(SGA);
-  
+  llvm::Optional<GlobalValue::VisibilityTypes> NewVisibility;
+
   if (DGV) {
     GlobalValue::LinkageTypes NewLinkage = GlobalValue::InternalLinkage;
+    GlobalValue::VisibilityTypes NV;
     bool LinkFromSrc = false;
-    if (getLinkageResult(DGV, SGA, NewLinkage, LinkFromSrc))
+    if (getLinkageResult(DGV, SGA, NewLinkage, NV, LinkFromSrc))
       return true;
-    
+    NewVisibility = NV;
+
     if (!LinkFromSrc) {
       // Set calculated linkage.
       DGV->setLinkage(NewLinkage);
-      
+      DGV->setVisibility(*NewVisibility);
+
       // Make sure to remember this mapping.
       ValueMap[SGA] = ConstantExpr::getBitCast(DGV,TypeMap.get(SGA->getType()));
       
@@ -802,6 +830,8 @@ bool ModuleLinker::linkAliasProto(GlobalAlias *SGA) {
                                        SGA->getLinkage(), SGA->getName(),
                                        /*aliasee*/0, DstM);
   CopyGVAttributes(NewDA, SGA);
+  if (NewVisibility)
+    NewDA->setVisibility(*NewVisibility);
 
   if (DGV) {
     // Any uses of DGV need to change to NewDA, with cast.
