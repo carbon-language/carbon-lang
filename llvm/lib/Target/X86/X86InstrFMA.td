@@ -87,11 +87,11 @@ multiclass fma3s_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
   defm SDr231 : fma3s_rm<opc231, !strconcat(OpcodeStr, "231sd"), f64mem>, VEX_W;
 }
 
-defm VFMADD : fma3s_forms<0x99, 0xA9, 0xB9, "vfmadd">;
-defm VFMSUB : fma3s_forms<0x9B, 0xAB, 0xBB, "vfmsub">;
+defm VFMADD : fma3s_forms<0x99, 0xA9, 0xB9, "vfmadd">, VEX_LIG;
+defm VFMSUB : fma3s_forms<0x9B, 0xAB, 0xBB, "vfmsub">, VEX_LIG;
 
-defm VFNMADD : fma3s_forms<0x9D, 0xAD, 0xBD, "vfnmadd">;
-defm VFNMSUB : fma3s_forms<0x9F, 0xAF, 0xBF, "vfnmsub">;
+defm VFNMADD : fma3s_forms<0x9D, 0xAD, 0xBD, "vfnmadd">, VEX_LIG;
+defm VFNMSUB : fma3s_forms<0x9F, 0xAF, 0xBF, "vfnmsub">, VEX_LIG;
 
 //===----------------------------------------------------------------------===//
 // FMA4 - AMD 4 operand Fused Multiply-Add instructions
