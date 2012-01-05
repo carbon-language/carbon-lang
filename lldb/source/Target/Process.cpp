@@ -3796,7 +3796,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             real_timeout.OffsetWithMicroSeconds(500000);
             timeout_ptr = &real_timeout;
             
-            got_event = listener.WaitForEvent(NULL, event_sp);
+            got_event = listener.WaitForEvent(timeout_ptr, event_sp);
             if (!got_event) 
             {
                 if (log)
