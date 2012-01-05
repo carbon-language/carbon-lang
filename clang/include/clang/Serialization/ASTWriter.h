@@ -668,7 +668,6 @@ public:
   void ReaderInitialized(ASTReader *Reader);
   void IdentifierRead(serialization::IdentID ID, IdentifierInfo *II);
   void TypeRead(serialization::TypeIdx Idx, QualType T);
-  void DeclRead(serialization::DeclID ID, const Decl *D);
   void SelectorRead(serialization::SelectorID ID, Selector Sel);
   void MacroDefinitionRead(serialization::PreprocessedEntityID ID,
                            MacroDefinition *MD);

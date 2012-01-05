@@ -1679,12 +1679,18 @@ void ASTWriter::WriteDecl(ASTContext &Context, Decl *D) {
     VisibleOffset = WriteDeclContextVisibleBlock(Context, DC);
   }
 
-  // Determine the ID for this declaration
-  serialization::DeclID &IDR = DeclIDs[D];
-  if (IDR == 0)
-    IDR = NextDeclID++;
-  serialization::DeclID ID = IDR;
-
+  // Determine the ID for this declaration.
+  serialization::DeclID ID;
+  if (D->isFromASTFile())
+    ID = getDeclID(D);
+  else {
+    serialization::DeclID &IDR = DeclIDs[D];
+    if (IDR == 0)
+      IDR = NextDeclID++;
+    
+    ID= IDR;
+  }
+  
   if (ID < FirstDeclID) {
     // We're replacing a decl in a previous file.
     ReplacedDecls.push_back(ReplacedDeclInfo(ID, Stream.GetCurrentBitNo(),
