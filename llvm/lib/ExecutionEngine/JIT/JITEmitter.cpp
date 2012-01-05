@@ -14,7 +14,6 @@
 
 #define DEBUG_TYPE "jit"
 #include "JIT.h"
-#include "JITDebugRegisterer.h"
 #include "JITDwarfEmitter.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Constants.h"
@@ -324,9 +323,6 @@ namespace {
     /// DE - The dwarf emitter for the jit.
     OwningPtr<JITDwarfEmitter> DE;
 
-    /// DR - The debug registerer for the jit.
-    OwningPtr<JITDebugRegisterer> DR;
-
     /// LabelLocations - This vector is a mapping from Label ID's to their
     /// address.
     DenseMap<MCSymbol*, uintptr_t> LabelLocations;
@@ -364,25 +360,19 @@ namespace {
 
     bool JITExceptionHandling;
 
-    bool JITEmitDebugInfo;
-
   public:
     JITEmitter(JIT &jit, JITMemoryManager *JMM, TargetMachine &TM)
       : SizeEstimate(0), Resolver(jit, *this), MMI(0), CurFn(0),
         EmittedFunctions(this), TheJIT(&jit),
-        JITExceptionHandling(TM.Options.JITExceptionHandling),
-        JITEmitDebugInfo(TM.Options.JITEmitDebugInfo) {
+        JITExceptionHandling(TM.Options.JITExceptionHandling) {
       MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
       if (jit.getJITInfo().needsGOT()) {
         MemMgr->AllocateGOT();
         DEBUG(dbgs() << "JIT is managing a GOT\n");
       }
 
-      if (JITExceptionHandling || JITEmitDebugInfo) {
+      if (JITExceptionHandling) {
         DE.reset(new JITDwarfEmitter(jit));
-      }
-      if (JITEmitDebugInfo) {
-        DR.reset(new JITDebugRegisterer(TM));
       }
     }
     ~JITEmitter() {
@@ -974,7 +964,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
       }
     });
 
-  if (JITExceptionHandling || JITEmitDebugInfo) {
+  if (JITExceptionHandling) {
     uintptr_t ActualSize = 0;
     SavedBufferBegin = BufferBegin;
     SavedBufferEnd = BufferEnd;
@@ -989,22 +979,12 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
                                                 EhStart);
     MemMgr->endExceptionTable(F.getFunction(), BufferBegin, CurBufferPtr,
                               FrameRegister);
-    uint8_t *EhEnd = CurBufferPtr;
     BufferBegin = SavedBufferBegin;
     BufferEnd = SavedBufferEnd;
     CurBufferPtr = SavedCurBufferPtr;
 
     if (JITExceptionHandling) {
       TheJIT->RegisterTable(F.getFunction(), FrameRegister);
-    }
-
-    if (JITEmitDebugInfo) {
-      DebugInfo I;
-      I.FnStart = FnStart;
-      I.FnEnd = FnEnd;
-      I.EhStart = EhStart;
-      I.EhEnd = EhEnd;
-      DR->RegisterFunction(F.getFunction(), I);
     }
   }
 
@@ -1045,10 +1025,6 @@ void JITEmitter::deallocateMemForFunction(const Function *F) {
 
   if (JITExceptionHandling) {
     TheJIT->DeregisterTable(F);
-  }
-
-  if (JITEmitDebugInfo) {
-    DR->UnregisterFunction(F);
   }
 }
 

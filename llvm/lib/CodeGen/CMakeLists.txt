@@ -12,8 +12,6 @@ add_llvm_library(LLVMCodeGen
   DFAPacketizer.cpp
   DwarfEHPrepare.cpp
   EdgeBundles.cpp
-  ELFCodeEmitter.cpp
-  ELFWriter.cpp
   ExecutionDepsFix.cpp
   ExpandISelPseudos.cpp
   ExpandPostRAPseudos.cpp
