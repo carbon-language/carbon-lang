@@ -13,8 +13,8 @@ bb1:            ; preds = %entry
 	%tmp2 = icmp sgt i32 %c, 1
 	br i1 %tmp2, label %bb2, label %bb3
 ; CHECK: bb1:
-; CHECK-NEXT: add i32 %a, 1
 ; CHECK-NEXT: icmp sgt i32 %c, 1
+; CHECK-NEXT: add i32 %a, 1
 ; CHECK-NEXT: select i1 %tmp2, i32 %tmp3, i32 %a
 ; CHECK-NEXT: br label %bb3
 
