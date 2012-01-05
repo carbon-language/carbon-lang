@@ -37,7 +37,8 @@ template void initializer_list_expansion<1, 2, 3, 4, 5, 6>(); // expected-note{{
 namespace PR8977 {
   struct A { };
   template<typename T, typename... Args> void f(Args... args) {
-    T t(args...);
+    // An empty expression-list performs value initialization.
+    constexpr T t(args...);
   };
 
   template void f<A>();

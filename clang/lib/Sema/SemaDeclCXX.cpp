@@ -8898,8 +8898,6 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
                                          MultiExprArg Exprs,
                                          SourceLocation RParenLoc,
                                          bool TypeMayContainAuto) {
-  assert(Exprs.size() != 0 && Exprs.get() && "missing expressions");
-
   // If there is no declaration, there was an error parsing it.  Just ignore
   // the initializer.
   if (RealDecl == 0)
@@ -8912,9 +8910,18 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
     return;
   }
 
-  // C++0x [decl.spec.auto]p6. Deduce the type which 'auto' stands in for.
+  // C++0x [dcl.spec.auto]p6. Deduce the type which 'auto' stands in for.
   if (TypeMayContainAuto && VDecl->getType()->getContainedAutoType()) {
-    // FIXME: n3225 doesn't actually seem to indicate this is ill-formed
+    if (Exprs.size() == 0) {
+      // It isn't possible to write this directly, but it is possible to
+      // end up in this situation with "auto x(some_pack...);"
+      Diag(LParenLoc, diag::err_auto_var_init_no_expression)
+        << VDecl->getDeclName() << VDecl->getType()
+        << VDecl->getSourceRange();
+      RealDecl->setInvalidDecl();
+      return;
+    }
+
     if (Exprs.size() > 1) {
       Diag(Exprs.get()[1]->getSourceRange().getBegin(),
            diag::err_auto_var_init_multiple_expressions)
