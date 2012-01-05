@@ -267,7 +267,6 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
       // TODO: Using a latency of 1 here for output dependencies assumes
       //       there's no cost for reusing registers.
       SDep::Kind Kind = MO.isUse() ? SDep::Anti : SDep::Output;
-      unsigned AOLatency = (Kind == SDep::Anti) ? 0 : 1;
       for (const unsigned *Alias = TRI->getOverlaps(Reg); *Alias; ++Alias) {
         std::vector<SUnit *> &DefList = Defs[*Alias];
         for (unsigned i = 0, e = DefList.size(); i != e; ++i) {
