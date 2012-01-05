@@ -1034,7 +1034,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       RHS = llvm::ConstantExpr::getPtrToInt(RHS, IntPtrTy);
       llvm::Constant *AddrLabelDiff = llvm::ConstantExpr::getSub(LHS, RHS);
 
-      // LLVM os a bit sensitive about the exact format of the
+      // LLVM is a bit sensitive about the exact format of the
       // address-of-label difference; make sure to truncate after
       // the subtraction.
       return llvm::ConstantExpr::getTruncOrBitCast(AddrLabelDiff, ResultType);
