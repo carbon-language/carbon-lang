@@ -451,7 +451,7 @@ bool RuntimeDyldMachO::loadObject(MemoryBuffer *InputBuffer) {
   if (!SymtabLCI)
     return Error("no symbol table found in object");
   if (!SegmentLCI)
-    return Error("no symbol table found in object");
+    return Error("no segments found in object");
 
   // Read and register the symbol table data.
   InMemoryStruct<macho::SymtabLoadCommand> SymtabLC;
