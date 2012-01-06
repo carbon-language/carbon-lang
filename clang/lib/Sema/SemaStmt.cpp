@@ -152,7 +152,8 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
 
   SourceLocation Loc;
   SourceRange R1, R2;
-  if (!E->isUnusedResultAWarning(Loc, R1, R2, Context))
+  if (SourceMgr.isInSystemMacro(E->getExprLoc()) ||
+      !E->isUnusedResultAWarning(Loc, R1, R2, Context))
     return;
 
   // Okay, we have an unused result.  Depending on what the base expression is,

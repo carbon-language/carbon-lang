@@ -1087,6 +1087,11 @@ public:
     return getFileCharacteristic(Loc) == SrcMgr::C_ExternCSystem;
   }
 
+  /// \brief Returns whether \p Loc is expanded from a macro in a system header.
+  bool isInSystemMacro(SourceLocation loc) {
+    return loc.isMacroID() && isInSystemHeader(getSpellingLoc(loc));
+  }
+
   /// \brief The size of the SLocEnty that \p FID represents.
   unsigned getFileIDSize(FileID FID) const;
 
