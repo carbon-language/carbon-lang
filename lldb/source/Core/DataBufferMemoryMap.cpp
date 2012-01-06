@@ -16,6 +16,7 @@
 
 #include "lldb/Core/DataBufferMemoryMap.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Host/File.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
 
@@ -106,24 +107,17 @@ DataBufferMemoryMap::MemoryMapFromFileSpec (const FileSpec* file,
         char path[PATH_MAX];
         if (file->GetPath(path, sizeof(path)))
         {
-            int oflag = 0;
+            uint32_t options = File::eOpenOptionRead;
             if (writeable)
-                oflag = O_RDWR;
-            else
-                oflag = O_RDONLY;
+                options |= File::eOpenOptionWrite;
 
-            int fd = ::open(path, oflag, 0);
-            if (fd >= 0)
+            File file;
+            Error error (file.Open(path, options));
+            if (error.Success())
             {
                 const bool fd_is_file = true;
-                MemoryMapFromFileDescriptor (fd, offset, length, writeable, fd_is_file);
-                ::close(fd);
+                MemoryMapFromFileDescriptor (file.GetDescriptor(), offset, length, writeable, fd_is_file);
                 return GetByteSize();
-            }
-            else
-            {
-                //error.SetErrorToErrno();
-                return 0;
             }
         }
     }
@@ -225,8 +219,6 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd,
                 }
             }
         }
-
-        ::close (fd);
     }
     return GetByteSize ();
 }
