@@ -65,7 +65,7 @@ class CompileUnit {
   StringMap<std::vector<DIE*> > AccelNames;
   StringMap<std::vector<DIE*> > AccelObjC;
   StringMap<std::vector<DIE*> > AccelNamespace;
-  StringMap<std::vector<DIE*> > AccelTypes;
+  StringMap<std::vector<std::pair<DIE*, unsigned> > > AccelTypes;
 
   /// DIEBlocks - A list of all the DIEBlocks in use.
   std::vector<DIEBlock *> DIEBlocks;
@@ -93,7 +93,8 @@ public:
   const StringMap<std::vector<DIE*> > &getAccelNamespace() const {
     return AccelNamespace;
   }
-  const StringMap<std::vector<DIE*> > &getAccelTypes() const {
+  const StringMap<std::vector<std::pair<DIE*, unsigned > > >
+  &getAccelTypes() const {
     return AccelTypes;
   }
   
@@ -119,8 +120,8 @@ public:
     std::vector<DIE*> &DIEs = AccelNamespace[Name];
     DIEs.push_back(Die);
   }
-  void addAccelType(StringRef Name, DIE *Die) {
-    std::vector<DIE*> &DIEs = AccelTypes[Name];
+  void addAccelType(StringRef Name, std::pair<DIE *, unsigned> Die) {
+    std::vector<std::pair<DIE*, unsigned > > &DIEs = AccelTypes[Name];
     DIEs.push_back(Die);
   }
   

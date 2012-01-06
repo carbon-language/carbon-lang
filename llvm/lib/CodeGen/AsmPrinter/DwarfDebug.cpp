@@ -1844,19 +1844,26 @@ void DwarfDebug::emitAccelNamespaces() {
 
 /// emitAccelTypes() - Emit type dies into a hashed accelerator table.
 void DwarfDebug::emitAccelTypes() {
-  DwarfAccelTable AT(DwarfAccelTable::Atom(DwarfAccelTable::eAtomTypeDIEOffset,
-                                           dwarf::DW_FORM_data4));
+  std::vector<DwarfAccelTable::Atom> Atoms;
+  Atoms.push_back(DwarfAccelTable::Atom(DwarfAccelTable::eAtomTypeDIEOffset,
+                                        dwarf::DW_FORM_data4));
+  Atoms.push_back(DwarfAccelTable::Atom(DwarfAccelTable::eAtomTypeTag,
+                                        dwarf::DW_FORM_data2));
+  Atoms.push_back(DwarfAccelTable::Atom(DwarfAccelTable::eAtomTypeTypeFlags,
+                                        dwarf::DW_FORM_data1));
+  DwarfAccelTable AT(Atoms);
   for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
          E = CUMap.end(); I != E; ++I) {
     CompileUnit *TheCU = I->second;
-    const StringMap<std::vector<DIE*> > &Names = TheCU->getAccelTypes();
-    for (StringMap<std::vector<DIE*> >::const_iterator
+    const StringMap<std::vector<std::pair<DIE*, unsigned > > > &Names
+      = TheCU->getAccelTypes();
+    for (StringMap<std::vector<std::pair<DIE*, unsigned> > >::const_iterator
            GI = Names.begin(), GE = Names.end(); GI != GE; ++GI) {
       const char *Name = GI->getKeyData();
-      std::vector<DIE *> Entities = GI->second;
-      for (std::vector<DIE *>::const_iterator DI = Entities.begin(),
-             DE= Entities.end(); DI !=DE; ++DI)
-        AT.AddName(Name, (*DI));
+      std::vector<std::pair<DIE *, unsigned> > Entities = GI->second;
+      for (std::vector<std::pair<DIE *, unsigned> >::const_iterator DI
+             = Entities.begin(), DE = Entities.end(); DI !=DE; ++DI)
+        AT.AddName(Name, (*DI).first, (*DI).second);
     }
   }
 

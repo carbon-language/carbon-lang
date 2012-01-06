@@ -22,6 +22,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
+#include "DIE.h"
 #include <vector>
 #include <map>
 
@@ -134,6 +135,14 @@ public:
     eAtomTypeTypeFlags  = 5u    // Flags from enum TypeFlags
   };
 
+  enum TypeFlags {
+    eTypeFlagClassMask = 0x0000000fu,
+    
+    // Always set for C++, only set for ObjC if this is the
+    // @implementation for a class.
+    eTypeFlagClassIsImplementation  = ( 1u << 1 )
+  };  
+  
   // Make these public so that they can be used as a general interface to
   // the class.
   struct Atom {
@@ -144,7 +153,7 @@ public:
     static const char * AtomTypeString(enum AtomType);
 #ifndef NDEBUG
     void print(raw_ostream &O) {
-      O << "Type: " << dwarf::TagString(type) << "\n"
+      O << "Type: " << AtomTypeString(type) << "\n"
         << "Form: " << dwarf::FormEncodingString(form) << "\n";
     }
     void dump() {
@@ -159,6 +168,13 @@ public:
     uint32_t die_offset_base;
     std::vector<Atom> Atoms;
 
+    TableHeaderData(std::vector<DwarfAccelTable::Atom> &AtomList,
+                    uint32_t offset = 0) :
+      die_offset_base(offset) {
+      for (size_t i = 0, e = AtomList.size(); i != e; ++i)
+        Atoms.push_back(AtomList[i]);
+    }
+    
     TableHeaderData(DwarfAccelTable::Atom Atom, uint32_t offset = 0)
     : die_offset_base(offset) {
       Atoms.push_back(Atom);
@@ -184,15 +200,32 @@ public:
   // uint32_t str_offset
   // uint32_t hash_data_count
   // HashData[hash_data_count]
+public:
+  struct HashDataContents {
+    DIE *Die; // Offsets
+    char Flags; // Specific flags to output
+
+    HashDataContents(DIE *D, char Flags) :
+      Die(D),
+      Flags(Flags) { };
+    #ifndef NDEBUG
+    void print(raw_ostream &O) const {
+      O << "  Offset: " << Die->getOffset() << "\n";
+      O << "  Tag: " << dwarf::TagString(Die->getTag()) << "\n";
+      O << "  Flags: " << Flags << "\n";
+    }
+    #endif
+  };
+private:
   struct HashData {
     StringRef Str;
     uint32_t HashValue;
     MCSymbol *Sym;
-    std::vector<uint32_t> DIEOffsets; // offsets
+    std::vector<struct HashDataContents*> Data; // offsets
     HashData(StringRef S) : Str(S) {
       HashValue = DwarfAccelTable::HashDJB(S);
     }
-    void addOffset(uint32_t off) { DIEOffsets.push_back(off); }
+    void addData(struct HashDataContents *Datum) { Data.push_back(Datum); }
     #ifndef NDEBUG
     void print(raw_ostream &O) {
       O << "Name: " << Str << "\n";
@@ -201,8 +234,11 @@ public:
       if (Sym) Sym->print(O);
       else O << "<none>";
       O << "\n";
-      for (size_t i = 0; i < DIEOffsets.size(); i++)
-        O << "  Offset: " << DIEOffsets[i] << "\n";
+      for (size_t i = 0; i < Data.size(); i++) {
+        O << "  Offset: " << Data[i]->Die->getOffset() << "\n";
+        O << "  Tag: " << dwarf::TagString(Data[i]->Die->getTag()) << "\n";
+        O << "  Flags: " << Data[i]->Flags << "\n";
+      }
     }
     void dump() {
       print(dbgs());
@@ -226,8 +262,8 @@ public:
   std::vector<HashData*> Data;
 
   // String Data
-  typedef std::vector<DIE*> DIEArray;
-  typedef StringMap<DIEArray> StringEntries;
+  typedef std::vector<struct HashDataContents*> DataArray;
+  typedef StringMap<DataArray> StringEntries;
   StringEntries Entries;
 
   // Buckets/Hashes/Offsets
@@ -238,9 +274,10 @@ public:
   
   // Public Implementation
  public:
-  DwarfAccelTable(DwarfAccelTable::Atom Atom);
+  DwarfAccelTable(DwarfAccelTable::Atom);
+  DwarfAccelTable(std::vector<DwarfAccelTable::Atom> &);
   ~DwarfAccelTable();
-  void AddName(StringRef, DIE*);
+  void AddName(StringRef, DIE*, char = 0);
   void FinalizeTable(AsmPrinter *, const char *);
   void Emit(AsmPrinter *, MCSymbol *, DwarfDebug *);
 #ifndef NDEBUG

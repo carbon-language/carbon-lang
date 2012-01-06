@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "dwarfdebug"
 
+#include "DwarfAccelTable.h"
 #include "DwarfCompileUnit.h"
 #include "DwarfDebug.h"
 #include "llvm/Constants.h"
@@ -608,8 +609,20 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
   }
   // If this is a named finished type then include it in the list of types
   // for the accelerator tables.
-  if (!Ty.getName().empty() && !Ty.isForwardDecl())
-    addAccelType(Ty.getName(), TyDIE);
+  if (!Ty.getName().empty() && !Ty.isForwardDecl()) {
+    bool IsImplementation = 0;
+    if (Ty.isCompositeType()) {
+      DICompositeType CT(Ty);
+      IsImplementation = (CT.getRunTimeLang() == 0) ||
+        CT.isObjcClassComplete();;
+    }
+    
+    addAccelType(Ty.getName(),
+                 std::make_pair(TyDIE,
+                                (IsImplementation ?
+                               DwarfAccelTable::eTypeFlagClassIsImplementation :
+                                 0)));
+  }
   
   addToContextOwner(TyDIE, Ty.getContext());
   return TyDIE;
