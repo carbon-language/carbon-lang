@@ -51,7 +51,8 @@ static void DestroyAsanTsd(void *tsd) {
     // The pointer is valid.
     AsanThread *t = (AsanThread*)tsd;
     if (t != asanThreadRegistry().GetMain()) {
-      delete t;
+      asanThreadRegistry().UnregisterThread(t);
+      t->Destroy();
     }
     iter = 1;
   } else {

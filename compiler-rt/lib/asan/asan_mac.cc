@@ -28,8 +28,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <new>
-
 namespace __asan {
 
 extern dispatch_async_f_f real_dispatch_async_f;
@@ -190,9 +188,8 @@ void asan_dispatch_call_block_and_release(void *block) {
     // It's incorrect to assert that the current thread is not dying: at least
     // the callbacks from dispatch_sync() are sometimes called after the TSD is
     // destroyed.
-    t = (AsanThread*)asan_malloc(sizeof(AsanThread), &stack);
-    new(t) AsanThread(context->parent_tid,
-                      /*start_routine*/NULL, /*arg*/NULL, &stack);
+    AsanThread *t = AsanThread::Create(context->parent_tid, NULL, NULL);
+    asanThreadRegistry().RegisterThread(t, context->parent_tid, &stack);
     t->Init();
     asanThreadRegistry().SetCurrent(t);
   }

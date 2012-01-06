@@ -62,9 +62,9 @@ class AsanThreadSummary {
 class AsanThread {
  public:
   explicit AsanThread(LinkerInitialized);  // for T0.
-  AsanThread(int parent_tid, void *(*start_routine) (void *),
-             void *arg, AsanStackTrace *stack);
-  ~AsanThread();
+  static AsanThread *Create(int parent_tid, void *(*start_routine) (void *),
+                            void *arg);
+  void Destroy();
 
   void Init();  // Should be called from the thread itself.
   void *ThreadStart();

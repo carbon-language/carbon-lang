@@ -15,7 +15,6 @@
 #include "asan_interceptors.h"
 #include "asan_procmaps.h"
 #include "asan_thread.h"
-#include "asan_thread_registry.h"
 #include "asan_mapping.h"
 
 #include <pthread.h>
@@ -29,20 +28,23 @@ AsanThread::AsanThread(LinkerInitialized x)
       malloc_storage_(x),
       stats_(x) { }
 
-AsanThread::AsanThread(int parent_tid, void *(*start_routine) (void *),
-                       void *arg, AsanStackTrace *stack)
-    : start_routine_(start_routine),
-      arg_(arg) {
-  asanThreadRegistry().RegisterThread(this, parent_tid, stack);
+AsanThread *AsanThread::Create(int parent_tid, void *(*start_routine) (void *),
+                               void *arg) {
+  size_t size = RoundUpTo(sizeof(AsanThread), kPageSize);
+  AsanThread *res = (AsanThread*)AsanMmapSomewhereOrDie(size, __FUNCTION__);
+  res->start_routine_ = start_routine;
+  res->arg_ = arg;
+  return res;
 }
 
-AsanThread::~AsanThread() {
-  asanThreadRegistry().UnregisterThread(this);
+void AsanThread::Destroy() {
   fake_stack().Cleanup();
   // We also clear the shadow on thread destruction because
   // some code may still be executing in later TSD destructors
   // and we don't want it to have any poisoned stack.
   ClearShadowForThreadStack();
+  size_t size = RoundUpTo(sizeof(AsanThread), kPageSize);
+  AsanUnmapOrDie(this, size);
 }
 
 void AsanThread::ClearShadowForThreadStack() {
