@@ -38,7 +38,7 @@ public:
         Blocks                              = (1 << 11),
         GlobalVariables                     = (1 << 12),
         LocalVariables                      = (1 << 13),
-        VariableTypes                       = (1 << 14),
+        VariableTypes                       = (1 << 14)
     };
 
     static SymbolFile *

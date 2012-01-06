@@ -110,7 +110,7 @@ public:
         allocate_memory,                // '_M'
         deallocate_memory,              // '_m'
 
-        unknown_type,
+        unknown_type
     } PacketEnum;
 
     typedef rnb_err_t (RNBRemote::*HandlePacketCallback)(const char *p);

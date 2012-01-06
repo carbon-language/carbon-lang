@@ -103,7 +103,7 @@ struct DWARFMappedHash
         
         // Always set for C++, only set for ObjC if this is the 
         // @implementation for class
-        eTypeFlagClassIsImplementation  = ( 1u << 1 ),        
+        eTypeFlagClassIsImplementation  = ( 1u << 1 )
     };
 
     struct Atom
