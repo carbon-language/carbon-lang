@@ -714,8 +714,10 @@ void Preprocessor::RemovePragmaHandler(StringRef Namespace,
 
   // If this is a non-default namespace and it is now empty, remove
   // it.
-  if (NS != PragmaHandlers && NS->IsEmpty())
+  if (NS != PragmaHandlers && NS->IsEmpty()) {
     PragmaHandlers->RemovePragmaHandler(NS);
+    delete NS;
+  }
 }
 
 bool Preprocessor::LexOnOffSwitch(tok::OnOffSwitch &Result) {
