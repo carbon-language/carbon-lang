@@ -792,6 +792,12 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
                   Attr, DeclEndLoc);
   }
 
+  // FIXME: Rename BlockScope -> ClosureScope if we decide to continue using
+  // it.
+  ParseScope BodyScope(this, Scope::BlockScope | Scope::FnScope |
+                             Scope::BreakScope | Scope::ContinueScope |
+                             Scope::DeclScope);
+
   Actions.ActOnStartOfLambdaDefinition(Intro, D, getCurScope());
 
   // Parse compound-statement.
@@ -801,11 +807,6 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
     return ExprError();
   }
 
-  // FIXME: Rename BlockScope -> ClosureScope if we decide to continue using
-  // it.
-  ParseScope BodyScope(this, Scope::BlockScope | Scope::FnScope |
-                             Scope::BreakScope | Scope::ContinueScope |
-                             Scope::DeclScope);
   StmtResult Stmt(ParseCompoundStatementBody());
   BodyScope.Exit();
 

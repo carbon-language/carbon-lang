@@ -180,9 +180,15 @@ public:
   /// \brief The field associated with the captured 'this' pointer.
   FieldDecl *ThisCapture;
 
+  /// \brief - Whether the return type of the lambda is implicit
+  bool HasImplicitReturnType;
+
+  /// ReturnType - The return type of the lambda, or null if unknown.
+  QualType ReturnType;
+
   LambdaScopeInfo(DiagnosticsEngine &Diag, CXXRecordDecl *Lambda) 
     : FunctionScopeInfo(Diag), Lambda(Lambda), 
-      NumExplicitCaptures(0), ThisCapture(0) 
+      NumExplicitCaptures(0), ThisCapture(0) , HasImplicitReturnType(false)
   {
     Kind = SK_Lambda;
   }

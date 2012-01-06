@@ -869,6 +869,13 @@ BlockScopeInfo *Sema::getCurBlock() {
   return dyn_cast<BlockScopeInfo>(FunctionScopes.back());  
 }
 
+LambdaScopeInfo *Sema::getCurLambda() {
+  if (FunctionScopes.empty())
+    return 0;
+  
+  return dyn_cast<LambdaScopeInfo>(FunctionScopes.back());  
+}
+
 // Pin this vtable to this file.
 ExternalSemaSource::~ExternalSemaSource() {}
 

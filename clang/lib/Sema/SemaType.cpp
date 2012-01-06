@@ -2378,7 +2378,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
     // top-level template type arguments.
     bool FreeFunction;
     if (!D.getCXXScopeSpec().isSet()) {
-      FreeFunction = (D.getContext() != Declarator::MemberContext ||
+      FreeFunction = ((D.getContext() != Declarator::MemberContext &&
+                       D.getContext() != Declarator::LambdaExprContext) ||
                       D.getDeclSpec().isFriendSpecified());
     } else {
       DeclContext *DC = S.computeDeclContext(D.getCXXScopeSpec());

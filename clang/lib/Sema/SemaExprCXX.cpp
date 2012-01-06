@@ -4782,7 +4782,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
                                         Declarator &ParamInfo,
                                         Scope *CurScope) {
   DeclContext *DC = CurContext;
-  while (!(DC->isFunctionOrMethod() || DC->isRecord() || DC->isNamespace()))
+  while (!(DC->isFunctionOrMethod() || DC->isRecord() || DC->isFileContext()))
     DC = DC->getParent();
 
   // Start constructing the lambda class.
@@ -4795,8 +4795,26 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
 
   // Build the call operator; we don't really have all the relevant information
   // at this point, but we need something to attach child declarations to.
+  QualType MethodTy;
   TypeSourceInfo *MethodTyInfo;
-  MethodTyInfo = GetTypeForDeclarator(ParamInfo, CurScope);
+  if (ParamInfo.getNumTypeObjects() == 0) {
+    FunctionProtoType::ExtProtoInfo EPI;
+    EPI.TypeQuals |= DeclSpec::TQ_const;
+    MethodTy = Context.getFunctionType(Context.DependentTy,
+                                       /*Args=*/0, /*NumArgs=*/0, EPI);
+    MethodTyInfo = Context.getTrivialTypeSourceInfo(MethodTy);
+  } else {
+    assert(ParamInfo.isFunctionDeclarator() &&
+           "lambda-declarator is a function");
+    DeclaratorChunk::FunctionTypeInfo &FTI = ParamInfo.getFunctionTypeInfo();
+    if (!FTI.hasMutableQualifier())
+      FTI.TypeQuals |= DeclSpec::TQ_const;
+    MethodTyInfo = GetTypeForDeclarator(ParamInfo, CurScope);
+    // FIXME: Can these asserts actually fail?
+    assert(MethodTyInfo && "no type from lambda-declarator");
+    MethodTy = MethodTyInfo->getType();
+    assert(!MethodTy.isNull() && "no type from lambda declarator");
+  }
 
   DeclarationName MethodName
     = Context.DeclarationNames.getCXXOperatorName(OO_Call);
@@ -4806,7 +4824,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
                             ParamInfo.getSourceRange().getEnd(),
                             DeclarationNameInfo(MethodName,
                                                 /*NameLoc=*/SourceLocation()),
-                            MethodTyInfo->getType(),
+                            MethodTy,
                             MethodTyInfo,
                             /*isStatic=*/false,
                             SC_None,
@@ -4817,20 +4835,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   Class->addDecl(Method);
   Method->setLexicalDeclContext(DC); // FIXME: Is this really correct?
 
-  // Set the parameters on the decl, if specified.
-  if (isa<FunctionProtoTypeLoc>(MethodTyInfo->getTypeLoc())) {
-    FunctionProtoTypeLoc Proto =
-        cast<FunctionProtoTypeLoc>(MethodTyInfo->getTypeLoc());
-    Method->setParams(Proto.getParams());
-    CheckParmsForFunctionDef(Method->param_begin(),
-                             Method->param_end(),
-                             /*CheckParameterNames=*/false);
-  }
-
   ProcessDeclAttributes(CurScope, Method, ParamInfo);
-
-  // FIXME: There's a bunch of missing checking etc;
-  // see ActOnBlockArguments
 
   // Introduce the lambda scope.
   PushLambdaScope(Class);
@@ -4840,6 +4845,41 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   PushExpressionEvaluationContext(PotentiallyEvaluated);
 
   PushDeclContext(CurScope, Method);
+
+  LambdaScopeInfo *LSI = getCurLambda();
+
+  // Set the parameters on the decl, if specified.
+  if (isa<FunctionProtoTypeLoc>(MethodTyInfo->getTypeLoc())) {
+    FunctionProtoTypeLoc Proto =
+        cast<FunctionProtoTypeLoc>(MethodTyInfo->getTypeLoc());
+    Method->setParams(Proto.getParams());
+    CheckParmsForFunctionDef(Method->param_begin(),
+                             Method->param_end(),
+                             /*CheckParameterNames=*/false);
+
+    // Introduce our parameters into the function scope
+    for (unsigned p = 0, NumParams = Method->getNumParams(); p < NumParams; ++p) {
+      ParmVarDecl *Param = Method->getParamDecl(p);
+      Param->setOwningFunction(Method);
+
+      // If this has an identifier, add it to the scope stack.
+      if (Param->getIdentifier()) {
+        CheckShadow(CurScope, Param);
+
+        PushOnScopeChains(Param, CurScope);
+      }
+    }
+  }
+
+  const FunctionType *Fn = MethodTy->getAs<FunctionType>();
+  QualType RetTy = Fn->getResultType();
+  if (RetTy != Context.DependentTy) {
+    LSI->ReturnType = RetTy;
+    LSI->HasImplicitReturnType = true;
+  }
+
+  // FIXME: Check return type is complete, !isObjCObjectType
+  
 }
 
 void Sema::ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope) {
