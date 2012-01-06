@@ -903,6 +903,10 @@ static bool isFoldedOrDeadInstruction(const Instruction *I,
 }
 
 #ifndef NDEBUG
+// Collect per Instruction statistics for fast-isel misses.  Only those
+// instructions that cause the bail are accounted for.  It does not account for
+// instructions higher in the block.  Thus, summing the per instructions stats
+// will not add up to what is reported by NumFastIselFailures.
 static void collectFailStats(const Instruction *I) {
   switch (I->getOpcode()) {
   default: assert (0 && "<Invalid operator> ");
