@@ -2483,7 +2483,7 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
   TestAndClearIgnoreResultAssign();
 
   // Bind the common expression if necessary.
-  CodeGenFunction::OpaqueValueMapping binding(CGF, E);
+  CodeGenFunction::OpaqueValueMapping(CGF, E);
 
   Expr *condExpr = E->getCond();
   Expr *lhsExpr = E->getTrueExpr();
