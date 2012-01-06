@@ -212,6 +212,48 @@ class SBDataAPICase(TestBase):
         self.assertTrue(data.GetUnsignedInt8(error, offset) == 68, 'made-up data == 68')
         offset += 1
 
+        # check the new API calls introduced per LLVM bugzilla enhancement request
+        # 11619 (Allow creating SBData values from arrays or primitives in Python)
+
+        data2 = process.GetDataFromCString('hello!')
+        self.assertTrue(data2.GetUnsignedInt8(error,0) == 104, 'h == 104')
+        self.assertTrue(data2.GetUnsignedInt8(error,1) == 101, 'e == 101')
+        self.assertTrue(data2.GetUnsignedInt8(error,2) == 108, 'l == 108')
+        self.assertTrue(data2.GetUnsignedInt8(error,3) == 108, 'l == 108')
+        self.assertTrue(data2.GetUnsignedInt8(error,4) == 111, 'o == 111')
+        self.assertTrue(data2.GetUnsignedInt8(error,5) == 33, '! == 33')
+        self.assertTrue(data2.GetUnsignedInt8(error,6) == 0, 'binary 0 terminator')
+        
+        data2 = process.GetDataFromUnsignedInt64Array([1,2,3,4,5])
+        self.assertTrue(data2.GetUnsignedInt64(error,0) == 1, 'data2[0] = 1')
+        self.assertTrue(data2.GetUnsignedInt64(error,8) == 2, 'data2[1] = 2')
+        self.assertTrue(data2.GetUnsignedInt64(error,16) == 3, 'data2[2] = 3')
+        self.assertTrue(data2.GetUnsignedInt64(error,24) == 4, 'data2[3] = 4')
+        self.assertTrue(data2.GetUnsignedInt64(error,32) == 5, 'data2[4] = 5')
+        
+        data2 = process.GetDataFromSignedInt32Array([2, -2])
+        self.assertTrue(data2.GetSignedInt32(error,0) == 2, 'signed32 data2[0] = 2')
+        self.assertTrue(data2.GetSignedInt32(error,4) == -2, 'signed32 data2[1] = -2')
+        
+        data2.Append(process.GetDataFromSignedInt64Array([2, -2]))
+        self.assertTrue(data2.GetSignedInt32(error,0) == 2, 'signed32 data2[0] = 2')
+        self.assertTrue(data2.GetSignedInt32(error,4) == -2, 'signed32 data2[1] = -2')
+        self.assertTrue(data2.GetSignedInt64(error,8) == 2, 'signed64 data2[0] = 2')
+        self.assertTrue(data2.GetSignedInt64(error,16) == -2, 'signed64 data2[1] = -2')
+        
+        data2 = process.GetDataFromUnsignedInt32Array([1,2,3,4,5])
+        self.assertTrue(data2.GetUnsignedInt32(error,0) == 1, '32-bit data2[0] = 1')
+        self.assertTrue(data2.GetUnsignedInt32(error,4) == 2, '32-bit data2[1] = 2')
+        self.assertTrue(data2.GetUnsignedInt32(error,8) == 3, '32-bit data2[2] = 3')
+        self.assertTrue(data2.GetUnsignedInt32(error,12) == 4, '32-bit data2[3] = 4')
+        self.assertTrue(data2.GetUnsignedInt32(error,16) == 5, '32-bit data2[4] = 5')
+        
+        data2 = process.GetDataFromDoubleArray([3.14,6.28,2.71])
+        self.assertTrue( fabs(data2.GetDouble(error,0) - 3.14) < 0.5, 'double data2[0] = 3.14')
+        self.assertTrue( fabs(data2.GetDouble(error,8) - 6.28) < 0.5, 'double data2[1] = 6.28')
+        self.assertTrue( fabs(data2.GetDouble(error,16) - 2.71) < 0.5, 'double data2[2] = 2.71')
+        
+
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()

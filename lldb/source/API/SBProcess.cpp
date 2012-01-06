@@ -919,4 +919,129 @@ SBProcess::UnloadImage (uint32_t image_token)
     return sb_error;
 }
 
+lldb::SBData
+SBProcess::GetDataFromCString(const char* data)
+{
+    if (!IsValid())
+        return SBData();
+    
+    if (!data || !data[0])
+        return SBData();
+    
+    uint32_t data_len = strlen(data);
+    lldb::ByteOrder byte_order = GetByteOrder();
+    uint8_t addr_size = GetAddressByteSize();
+    
+    lldb::DataBufferSP buffer_sp(new DataBufferHeap(data, data_len));
+    lldb::DataExtractorSP data_sp(new DataExtractor(buffer_sp, byte_order, addr_size));
+    
+    SBData ret(data_sp);
+    
+    return ret;
+}
+
+lldb::SBData
+SBProcess::GetDataFromUnsignedInt64Array(uint64_t* array, size_t array_len)
+{
+    if (!IsValid())
+        return SBData();
+    
+    if (!array || array_len == 0)
+        return SBData();
+    
+    lldb::ByteOrder byte_order = GetByteOrder();
+    uint8_t addr_size = GetAddressByteSize();
+    size_t data_len = array_len * sizeof(uint64_t);
+
+    lldb::DataBufferSP buffer_sp(new DataBufferHeap(array, data_len));
+    lldb::DataExtractorSP data_sp(new DataExtractor(buffer_sp, byte_order, addr_size));
+    
+    SBData ret(data_sp);
+    
+    return ret;
+}
+
+lldb::SBData
+SBProcess::GetDataFromUnsignedInt32Array(uint32_t* array, size_t array_len)
+{
+    if (!IsValid())
+        return SBData();
+    
+    if (!array || array_len == 0)
+        return SBData();
+    
+    lldb::ByteOrder byte_order = GetByteOrder();
+    uint8_t addr_size = GetAddressByteSize();
+    size_t data_len = array_len * sizeof(uint32_t);
+    
+    lldb::DataBufferSP buffer_sp(new DataBufferHeap(array, data_len));
+    lldb::DataExtractorSP data_sp(new DataExtractor(buffer_sp, byte_order, addr_size));
+    
+    SBData ret(data_sp);
+    
+    return ret;
+}
+
+lldb::SBData
+SBProcess::GetDataFromSignedInt64Array(int64_t* array, size_t array_len)
+{
+    if (!IsValid())
+        return SBData();
+    
+    if (!array || array_len == 0)
+        return SBData();
+    
+    lldb::ByteOrder byte_order = GetByteOrder();
+    uint8_t addr_size = GetAddressByteSize();
+    size_t data_len = array_len * sizeof(int64_t);
+    
+    lldb::DataBufferSP buffer_sp(new DataBufferHeap(array, data_len));
+    lldb::DataExtractorSP data_sp(new DataExtractor(buffer_sp, byte_order, addr_size));
+    
+    SBData ret(data_sp);
+    
+    return ret;
+}
+
+lldb::SBData
+SBProcess::GetDataFromSignedInt32Array(int32_t* array, size_t array_len)
+{
+    if (!IsValid())
+        return SBData();
+    
+    if (!array || array_len == 0)
+        return SBData();
+    
+    lldb::ByteOrder byte_order = GetByteOrder();
+    uint8_t addr_size = GetAddressByteSize();
+    size_t data_len = array_len * sizeof(int32_t);
+    
+    lldb::DataBufferSP buffer_sp(new DataBufferHeap(array, data_len));
+    lldb::DataExtractorSP data_sp(new DataExtractor(buffer_sp, byte_order, addr_size));
+    
+    SBData ret(data_sp);
+    
+    return ret;
+}
+
+lldb::SBData
+SBProcess::GetDataFromDoubleArray(double* array, size_t array_len)
+{
+    if (!IsValid())
+        return SBData();
+        
+    if (!array || array_len == 0)
+        return SBData();
+        
+    lldb::ByteOrder byte_order = GetByteOrder();
+    uint8_t addr_size = GetAddressByteSize();
+    size_t data_len = array_len * sizeof(double);
+    
+    lldb::DataBufferSP buffer_sp(new DataBufferHeap(array, data_len));
+    lldb::DataExtractorSP data_sp(new DataExtractor(buffer_sp, byte_order, addr_size));
+    
+    SBData ret(data_sp);
+    
+    return ret;
+}
 

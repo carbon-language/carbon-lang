@@ -126,6 +126,7 @@ protected:
 
 private:
     friend class SBInstruction;
+    friend class SBProcess;
     friend class SBSection;
     friend class SBValue;
 

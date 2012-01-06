@@ -185,7 +185,25 @@ public:
     
     lldb::SBError
     UnloadImage (uint32_t image_token);
+    
+    lldb::SBData
+    GetDataFromCString(const char* data);
+    
+    lldb::SBData
+    GetDataFromUnsignedInt64Array(uint64_t* array, size_t array_len);
 
+    lldb::SBData
+    GetDataFromUnsignedInt32Array(uint32_t* array, size_t array_len);
+
+    lldb::SBData
+    GetDataFromSignedInt64Array(int64_t* array, size_t array_len);
+    
+    lldb::SBData
+    GetDataFromSignedInt32Array(int32_t* array, size_t array_len);
+
+    lldb::SBData
+    GetDataFromDoubleArray(double* array, size_t array_len);
+    
 protected:
     friend class SBAddress;
     friend class SBBreakpoint;
