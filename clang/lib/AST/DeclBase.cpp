@@ -853,7 +853,7 @@ DeclContext *DeclContext::getNextContext() {
 std::pair<Decl *, Decl *>
 DeclContext::BuildDeclChain(const SmallVectorImpl<Decl*> &Decls,
                             bool FieldsAlreadyLoaded) {
-  // Build up a chain of declarations via the Decl::NextDeclInContext field.
+  // Build up a chain of declarations via the Decl::NextInContextAndBits field.
   Decl *FirstNewDecl = 0;
   Decl *PrevDecl = 0;
   for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
@@ -862,7 +862,7 @@ DeclContext::BuildDeclChain(const SmallVectorImpl<Decl*> &Decls,
 
     Decl *D = Decls[I];
     if (PrevDecl)
-      PrevDecl->NextDeclInContext = D;
+      PrevDecl->NextInContextAndBits.setPointer(D);
     else
       FirstNewDecl = D;
 
@@ -908,7 +908,7 @@ DeclContext::LoadLexicalDeclsFromExternalStorage() const {
   Decl *ExternalFirst, *ExternalLast;
   llvm::tie(ExternalFirst, ExternalLast) = BuildDeclChain(Decls,
                                                           FieldsAlreadyLoaded);
-  ExternalLast->NextDeclInContext = FirstDecl;
+  ExternalLast->NextInContextAndBits.setPointer(FirstDecl);
   FirstDecl = ExternalFirst;
   if (!LastDecl)
     LastDecl = ExternalLast;
@@ -983,7 +983,7 @@ bool DeclContext::decls_empty() const {
 void DeclContext::removeDecl(Decl *D) {
   assert(D->getLexicalDeclContext() == this &&
          "decl being removed from non-lexical context");
-  assert((D->NextDeclInContext || D == LastDecl) &&
+  assert((D->NextInContextAndBits.getPointer() || D == LastDecl) &&
          "decl is not in decls list");
 
   // Remove D from the decl chain.  This is O(n) but hopefully rare.
@@ -991,12 +991,12 @@ void DeclContext::removeDecl(Decl *D) {
     if (D == LastDecl)
       FirstDecl = LastDecl = 0;
     else
-      FirstDecl = D->NextDeclInContext;
+      FirstDecl = D->NextInContextAndBits.getPointer();
   } else {
-    for (Decl *I = FirstDecl; true; I = I->NextDeclInContext) {
+    for (Decl *I = FirstDecl; true; I = I->NextInContextAndBits.getPointer()) {
       assert(I && "decl not found in linked list");
-      if (I->NextDeclInContext == D) {
-        I->NextDeclInContext = D->NextDeclInContext;
+      if (I->NextInContextAndBits.getPointer() == D) {
+        I->NextInContextAndBits.setPointer(D->NextInContextAndBits.getPointer());
         if (D == LastDecl) LastDecl = I;
         break;
       }
@@ -1004,7 +1004,7 @@ void DeclContext::removeDecl(Decl *D) {
   }
   
   // Mark that D is no longer in the decl chain.
-  D->NextDeclInContext = 0;
+  D->NextInContextAndBits.setPointer(0);
 
   // Remove D from the lookup table if necessary.
   if (isa<NamedDecl>(D)) {
@@ -1030,7 +1030,7 @@ void DeclContext::addHiddenDecl(Decl *D) {
          "Decl already inserted into a DeclContext");
 
   if (FirstDecl) {
-    LastDecl->NextDeclInContext = D;
+    LastDecl->NextInContextAndBits.setPointer(D);
     LastDecl = D;
   } else {
     FirstDecl = LastDecl = D;

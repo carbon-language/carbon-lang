@@ -154,9 +154,9 @@ void ASTDeclWriter::VisitDecl(Decl *D) {
   Record.push_back(D->isImplicit());
   Record.push_back(D->isUsed(false));
   Record.push_back(D->isReferenced());
-  Record.push_back(D->TopLevelDeclInObjCContainer);
+  Record.push_back(D->isTopLevelDeclInObjCContainer());
   Record.push_back(D->getAccess());
-  Record.push_back(D->ModulePrivate);
+  Record.push_back(D->isModulePrivate());
   Record.push_back(Writer.inferSubmoduleIDFromLocation(D->getLocation()));
 }
 

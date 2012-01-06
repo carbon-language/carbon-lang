@@ -180,12 +180,28 @@ public:
     OBJC_TQ_Oneway = 0x20
   };
 
-private:
-  /// NextDeclInContext - The next declaration within the same lexical
+protected:
+  // Enumeration values used in the bits stored in NextInContextAndBits.
+  enum {
+    /// \brief Whether this declaration is a top-level declaration (function,
+    /// global variable, etc.) that is lexically inside an objc container
+    /// definition.
+    TopLevelDeclInObjCContainerFlag = 0x01,
+    
+    /// \brief Whether this declaration is private to the module in which it was
+    /// defined.
+    ModulePrivateFlag = 0x02
+  };
+  
+  /// \brief The next declaration within the same lexical
   /// DeclContext. These pointers form the linked list that is
   /// traversed via DeclContext's decls_begin()/decls_end().
-  Decl *NextDeclInContext;
+  ///
+  /// The extra two bits are used for the TopLevelDeclInObjCContainer and
+  /// ModulePrivate bits.
+  llvm::PointerIntPair<Decl *, 2, unsigned> NextInContextAndBits;
 
+private:
   friend class DeclContext;
 
   struct MultipleDC {
@@ -244,12 +260,6 @@ private:
   /// are regarded as "referenced" but not "used".
   unsigned Referenced : 1;
 
-  /// \brief Whether this declaration is a top-level declaration (function,
-  /// global variable, etc.) that is lexically inside an objc container
-  /// definition.
-  /// FIXME: Consider setting the lexical context to the objc container.
-  unsigned TopLevelDeclInObjCContainer : 1;
-
 protected:
   /// Access - Used by C++ decls for the access specifier.
   // NOTE: VC++ treats enums as signed, avoid using the AccessSpecifier enum
@@ -258,10 +268,6 @@ protected:
 
   /// \brief Whether this declaration was loaded from an AST file.
   unsigned FromASTFile : 1;
-
-  /// \brief Whether this declaration is private to the module in which it was
-  /// defined.
-  unsigned ModulePrivate : 1;
 
   /// \brief Whether this declaration is hidden from normal name lookup, e.g.,
   /// because it is was loaded from an AST file is either module-private or
@@ -291,11 +297,10 @@ private:
 protected:
 
   Decl(Kind DK, DeclContext *DC, SourceLocation L)
-    : NextDeclInContext(0), DeclCtx(DC),
+    : NextInContextAndBits(), DeclCtx(DC),
       Loc(L), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false), Referenced(false),
-      TopLevelDeclInObjCContainer(false), Access(AS_none), FromASTFile(0),
-      ModulePrivate(0), Hidden(0),
+      Access(AS_none), FromASTFile(0), Hidden(0),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
       HasCachedLinkage(0)
   {
@@ -303,10 +308,9 @@ protected:
   }
 
   Decl(Kind DK, EmptyShell Empty)
-    : NextDeclInContext(0), DeclKind(DK), InvalidDecl(0),
+    : NextInContextAndBits(), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false), Referenced(false),
-      TopLevelDeclInObjCContainer(false), Access(AS_none), FromASTFile(0),
-      ModulePrivate(0), Hidden(0),
+      Access(AS_none), FromASTFile(0), Hidden(0),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
       HasCachedLinkage(0)
   {
@@ -342,8 +346,8 @@ public:
   Kind getKind() const { return static_cast<Kind>(DeclKind); }
   const char *getDeclKindName() const;
 
-  Decl *getNextDeclInContext() { return NextDeclInContext; }
-  const Decl *getNextDeclInContext() const { return NextDeclInContext; }
+  Decl *getNextDeclInContext() { return NextInContextAndBits.getPointer(); }
+  const Decl *getNextDeclInContext() const {return NextInContextAndBits.getPointer();}
 
   DeclContext *getDeclContext() {
     if (isInSemaDC())
@@ -480,13 +484,38 @@ public:
   /// global variable, etc.) that is lexically inside an objc container
   /// definition.
   bool isTopLevelDeclInObjCContainer() const {
-    return TopLevelDeclInObjCContainer;
+    return NextInContextAndBits.getInt() & TopLevelDeclInObjCContainerFlag;
   }
 
   void setTopLevelDeclInObjCContainer(bool V = true) {
-    TopLevelDeclInObjCContainer = V;
+    unsigned Bits = NextInContextAndBits.getInt();
+    if (V)
+      Bits |= TopLevelDeclInObjCContainerFlag;
+    else
+      Bits &= ~TopLevelDeclInObjCContainerFlag;
+    NextInContextAndBits.setInt(Bits);
   }
 
+protected:
+  /// \brief Whether this declaration was marked as being private to the
+  /// module in which it was defined.
+  bool isModulePrivate() const { 
+    return NextInContextAndBits.getInt() & ModulePrivateFlag;
+  }
+  
+  /// \brief Specify whether this declaration was marked as being private
+  /// to the module in which it was defined.
+  void setModulePrivate(bool MP = true) {
+    unsigned Bits = NextInContextAndBits.getInt();
+    if (MP)
+      Bits |= ModulePrivateFlag;
+    else
+      Bits &= ~ModulePrivateFlag;
+    NextInContextAndBits.setInt(Bits);
+  }
+
+public:
+  
   /// \brief Determine the availability of the given declaration.
   ///
   /// This routine will determine the most restrictive availability of
@@ -1396,7 +1425,8 @@ public:
   /// \brief Determine whether the given declaration is stored in the list of
   /// declarations lexically within this context.
   bool isDeclInLexicalTraversal(const Decl *D) const {
-    return D && (D->NextDeclInContext || D == FirstDecl || D == LastDecl);
+    return D && (D->NextInContextAndBits.getPointer() || D == FirstDecl || 
+                 D == LastDecl);
   }
 
   static bool classof(const Decl *D);
