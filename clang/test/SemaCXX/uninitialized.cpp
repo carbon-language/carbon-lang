@@ -41,6 +41,7 @@ class A {
     A(int x) {}
     A(int *x) {}
     A(A *a) {}
+    ~A();
 };
 
 A getA() { return A(); }

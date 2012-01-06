@@ -1107,7 +1107,7 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
     return false;
 
   // Types of valid local variables should be complete, so this should succeed.
-  if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
 
     // White-list anything with an __attribute__((unused)) type.
     QualType Ty = VD->getType();
@@ -1129,11 +1129,18 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
         return false;
 
       if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(Tag)) {
-        // FIXME: Checking for the presence of a user-declared constructor
-        // isn't completely accurate; we'd prefer to check that the initializer
-        // has no side effects.
-        if (RD->hasUserDeclaredConstructor() || !RD->hasTrivialDestructor())
+        if (!RD->hasTrivialDestructor())
           return false;
+
+        if (const Expr *Init = VD->getInit()) {
+          const CXXConstructExpr *Construct =
+            dyn_cast<CXXConstructExpr>(Init);
+          if (Construct && !Construct->isElidable()) {
+            CXXConstructorDecl *CD = Construct->getConstructor();
+            if (!CD->isTrivial())
+              return false;
+          }
+        }
       }
     }
 
