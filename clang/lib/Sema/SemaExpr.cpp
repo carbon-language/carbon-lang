@@ -8806,12 +8806,6 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   // Finally we can process decl attributes.
   ProcessDeclAttributes(CurScope, CurBlock->TheDecl, ParamInfo);
 
-  if (!isVariadic && CurBlock->TheDecl->getAttr<SentinelAttr>()) {
-    Diag(ParamInfo.getAttributes()->getLoc(),
-         diag::warn_attribute_sentinel_not_variadic) << 1;
-    // FIXME: remove the attribute.
-  }
-
   // Put the parameter variables in scope.  We can bail out immediately
   // if we don't have any.
   if (Params.empty())

@@ -1878,10 +1878,11 @@ static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
       S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic) << 0;
       return;
     }
-  } else if (isa<BlockDecl>(D)) {
-    // Note! BlockDecl is typeless. Variadic diagnostics will be issued by the
-    // caller.
-    ;
+  } else if (BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
+    if (!BD->isVariadic()) {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic) << 1;
+      return;
+    }
   } else if (const VarDecl *V = dyn_cast<VarDecl>(D)) {
     QualType Ty = V->getType();
     if (Ty->isBlockPointerType() || Ty->isFunctionPointerType()) {

@@ -3,7 +3,8 @@
 void (^e) (int arg, const char * format, ...) __attribute__ ((__sentinel__ (1,1)));
 
 int main() {
-  void (^bbad) (int arg, const char * format) __attribute__ ((__sentinel__)) ; // expected-warning {{sentinel' attribute only supported for variadic blocks}}
+  void (^bbad) (int arg, const char * format) __attribute__ ((__sentinel__)) ; // expected-warning {{'sentinel' attribute only supported for variadic blocks}}
+  bbad = ^void (int arg, const char * format) __attribute__ ((__sentinel__)) {} ; // expected-warning {{'sentinel' attribute only supported for variadic blocks}}
   void (^b) (int arg, const char * format, ...) __attribute__ ((__sentinel__)) =  // expected-note {{block has been explicitly marked sentinel here}}
     ^ __attribute__ ((__sentinel__)) (int arg, const char * format, ...) {};
   void (^z) (int arg, const char * format, ...) __attribute__ ((__sentinel__ (2))) = ^ __attribute__ ((__sentinel__ (2))) (int arg, const char * format, ...) {}; // expected-note {{block has been explicitly marked sentinel here}}
