@@ -99,6 +99,8 @@ void *AsanMprotect(uintptr_t fixed_addr, size_t size);
 void *AsanMmapSomewhereOrDie(size_t size, const char *where);
 void AsanUnmapOrDie(void *ptr, size_t size);
 
+void AsanDisableCoreDumper();
+
 ssize_t AsanRead(int fd, void *buf, size_t count);
 ssize_t AsanWrite(int fd, const void *buf, size_t count);
 int AsanClose(int fd);

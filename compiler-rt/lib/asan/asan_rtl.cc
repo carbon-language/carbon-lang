@@ -26,7 +26,6 @@
 
 #include <new>
 #include <dlfcn.h>
-#include <execinfo.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
@@ -40,9 +39,6 @@
 #ifndef ANDROID
 #include <sys/ucontext.h>
 #endif
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <unistd.h>
 // must not include <setjmp.h> on Linux
 
 namespace __asan {
@@ -775,10 +771,7 @@ void __asan_init() {
 
   if (__WORDSIZE == 64) {
     // Disable core dumper -- it makes little sense to dump 16T+ core.
-    struct rlimit nocore;
-    nocore.rlim_cur = 0;
-    nocore.rlim_max = 0;
-    setrlimit(RLIMIT_CORE, &nocore);
+    AsanDisableCoreDumper();
   }
 
   {

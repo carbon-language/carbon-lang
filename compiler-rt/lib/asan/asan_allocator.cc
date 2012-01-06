@@ -35,10 +35,6 @@
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
-
 namespace __asan {
 
 #define  REDZONE FLAG_redzone

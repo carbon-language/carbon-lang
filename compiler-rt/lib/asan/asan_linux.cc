@@ -244,6 +244,12 @@ void AsanThread::SetThreadStackTopAndBottom() {
   CHECK(AddrIsInStack((uintptr_t)&attr));
 }
 
+void AsanDisableCoreDumper() {
+  struct rlimit nocore;
+  nocore.rlim_cur = 0;
+  nocore.rlim_max = 0;
+  setrlimit(RLIMIT_CORE, &nocore);
+}
 
 }  // namespace __asan
 

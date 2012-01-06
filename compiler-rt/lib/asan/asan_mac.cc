@@ -22,6 +22,7 @@
 #include "asan_thread_registry.h"
 
 #include <sys/mman.h>
+#include <sys/resource.h>
 #include <pthread.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -111,6 +112,13 @@ void AsanThread::SetThreadStackTopAndBottom() {
   stack_bottom_ = stack_top_ - stacksize;
   int local;
   CHECK(AddrIsInStack((uintptr_t)&local));
+}
+
+void AsanDisableCoreDumper() {
+  struct rlimit nocore;
+  nocore.rlim_cur = 0;
+  nocore.rlim_max = 0;
+  setrlimit(RLIMIT_CORE, &nocore);
 }
 
 // Support for the following functions from libdispatch on Mac OS:
