@@ -1053,26 +1053,6 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
   return !R.empty();
 }
 
-/// \brief Retrieve the previous declaration of D.
-static NamedDecl *getPreviousDeclaration(NamedDecl *D) {
-  if (TagDecl *TD = dyn_cast<TagDecl>(D))
-    return TD->getPreviousDeclaration();
-  if (VarDecl *VD = dyn_cast<VarDecl>(D))
-    return VD->getPreviousDeclaration();
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-    return FD->getPreviousDeclaration();
-  if (RedeclarableTemplateDecl *RTD = dyn_cast<RedeclarableTemplateDecl>(D))
-    return RTD->getPreviousDeclaration();
-  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D))
-    return TD->getPreviousDeclaration();
-  if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D))
-    return ID->getPreviousDeclaration();
-  if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D))
-    return PD->getPreviousDeclaration();
-  
-  return 0;
-}
-
 /// \brief Retrieve the visible declaration corresponding to D, if any.
 ///
 /// This routine determines whether the declaration D is visible in the current
@@ -1085,9 +1065,12 @@ static NamedDecl *getVisibleDecl(NamedDecl *D) {
   if (LookupResult::isVisible(D))
     return D;
   
-  while ((D = getPreviousDeclaration(D))) {
-    if (LookupResult::isVisible(D))
-      return D;
+  for (Decl::redecl_iterator RD = D->redecls_begin(), RDEnd = D->redecls_end();
+       RD != RDEnd; ++RD) {
+    if (NamedDecl *ND = dyn_cast<NamedDecl>(*RD)) {
+      if (LookupResult::isVisible(ND))
+        return ND;
+    }
   }
   
   return 0;

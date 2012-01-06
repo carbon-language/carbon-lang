@@ -255,7 +255,7 @@ namespace clang {
     void VisitParmVarDecl(ParmVarDecl *PD);
     void VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
     void VisitTemplateDecl(TemplateDecl *D);
-    void VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D);
+    RedeclarableResult VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D);
     void VisitClassTemplateDecl(ClassTemplateDecl *D);
     void VisitFunctionTemplateDecl(FunctionTemplateDecl *D);
     void VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
@@ -1219,7 +1219,8 @@ void ASTDeclReader::VisitTemplateDecl(TemplateDecl *D) {
   D->init(TemplatedDecl, TemplateParams);
 }
 
-void ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
+ASTDeclReader::RedeclarableResult 
+ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
   // Initialize CommonOrPrev before VisitTemplateDecl so that getCommonPtr()
   // can be used while this is still initializing.
   enum RedeclKind { FirstDeclaration, FirstInFile, PointsToPrevious };
@@ -1278,6 +1279,8 @@ void ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
   
   VisitTemplateDecl(D);
   D->IdentifierNamespace = Record[Idx++];
+  
+  return RedeclarableResult(Reader, FirstDeclID);
 }
 
 void ASTDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
