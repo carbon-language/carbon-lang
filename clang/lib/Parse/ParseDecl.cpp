@@ -1111,21 +1111,6 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
   if (FirstDecl)
     DeclsInGroup.push_back(FirstDecl);
 
-  // In C++, "T var();" at block scope is probably an attempt to initialize a
-  // variable, not a function declaration. We don't catch this case earlier,
-  // since there is no ambiguity here.
-  if (getLang().CPlusPlus && Context != Declarator::FileContext &&
-      D.getNumTypeObjects() == 1 && D.isFunctionDeclarator() &&
-      D.getDeclSpec().getStorageClassSpecAsWritten()
-        == DeclSpec::SCS_unspecified &&
-      D.getDeclSpec().getTypeSpecType() != DeclSpec::TST_void) {
-    DeclaratorChunk &C = D.getTypeObject(0);
-    if (C.Fun.NumArgs == 0 && !C.Fun.isVariadic && !C.Fun.TrailingReturnType &&
-        C.Fun.getExceptionSpecType() == EST_None)
-      Diag(C.Loc, diag::warn_empty_parens_are_function_decl)
-        << SourceRange(C.Loc, C.EndLoc);
-  }
-
   bool ExpectSemi = Context != Declarator::ForContext;
 
   // If we don't have a comma, it is either the end of the list (a ';') or an

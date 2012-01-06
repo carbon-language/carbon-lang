@@ -26,9 +26,13 @@ void f() {
   T(*d)(int(p)); // expected-warning {{parentheses were disambiguated as a function declarator}} expected-note {{previous definition is here}}
   typedef T(*td)(int(p));
   extern T(*tp)(int(p));
-  T d3(); // expected-warning {{empty parentheses interpreted as a function declaration}}
-  typedef T d3t();
-  extern T f3();
+  S d3(); // expected-warning {{empty parentheses interpreted as a function declaration}}
+  S d3v(void);
+  typedef S d3t();
+  extern S f3();
+  __typeof(*T()) f4(); // expected-warning {{empty parentheses interpreted as a function declaration}}
+  S multi1,
+    multi2(); // expected-warning {{empty parentheses interpreted as a function declaration}}
   T(d)[5]; // expected-error {{redefinition of 'd'}}
   typeof(int[])(f) = { 1, 2 }; // expected-error {{extension used}}
   void(b)(int);

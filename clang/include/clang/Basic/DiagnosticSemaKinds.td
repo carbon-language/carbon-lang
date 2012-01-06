@@ -112,6 +112,9 @@ def warn_unused_exception_param : Warning<"unused exception parameter %0">,
   InGroup<UnusedExceptionParameter>, DefaultIgnore;
 def warn_decl_in_param_list : Warning<
   "declaration of %0 will not be visible outside of this function">;
+def warn_empty_parens_are_function_decl : Warning<
+  "empty parentheses interpreted as a function declaration">,
+  InGroup<VexingParse>;
 def warn_unused_function : Warning<"unused function %0">,
   InGroup<UnusedFunction>, DefaultIgnore;
 def warn_unused_member_function : Warning<"unused member function %0">,

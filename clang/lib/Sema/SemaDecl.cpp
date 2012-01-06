@@ -4904,6 +4904,25 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         FunctionTemplate->setInvalidDecl();
     }
 
+    // If we see "T var();" at block scope, where T is a class type, it is
+    // probably an attempt to initialize a variable, not a function declaration.
+    // We don't catch this case earlier, since there is no ambiguity here.
+    if (!FunctionTemplate && D.getFunctionDefinitionKind() == FDK_Declaration &&
+        CurContext->isFunctionOrMethod() &&
+        D.getNumTypeObjects() == 1 && D.isFunctionDeclarator() &&
+        D.getDeclSpec().getStorageClassSpecAsWritten()
+          == DeclSpec::SCS_unspecified) {
+      QualType T = R->getAs<FunctionType>()->getResultType();
+      DeclaratorChunk &C = D.getTypeObject(0);
+      if ((T->isDependentType() || T->isRecordType()) &&
+          C.Fun.NumArgs == 0 && !C.Fun.isVariadic &&
+          !C.Fun.TrailingReturnType &&
+          C.Fun.getExceptionSpecType() == EST_None) {
+        Diag(C.Loc, diag::warn_empty_parens_are_function_decl)
+          << SourceRange(C.Loc, C.EndLoc);
+      }
+    }
+
     // C++ [dcl.fct.spec]p5:
     //   The virtual specifier shall only be used in declarations of
     //   nonstatic class member functions that appear within a
