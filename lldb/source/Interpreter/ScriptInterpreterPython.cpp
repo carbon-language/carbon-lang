@@ -594,14 +594,26 @@ ScriptInterpreterPython::InputReaderCallback
         break;
 
     case eInputReaderDeactivate:
-        script_interpreter->LeaveSession ();
+			// When another input reader is pushed, don't leave the session...
+            //script_interpreter->LeaveSession ();
         break;
 
     case eInputReaderReactivate:
         {
-            ScriptInterpreterPython::Locker locker(script_interpreter,
-                                                   ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
-                                                   ScriptInterpreterPython::Locker::FreeAcquiredLock);
+            // Don't try and acquire the interpreter lock here because code like
+            // this:
+            //
+            // (lldb) script
+            // >>> v = lldb.frame.EvaluateExpression("collection->get_at_index(12)")
+            //
+            // This will cause the process to run. The interpreter lock is taken
+            // by the input reader for the "script" command. If we try and acquire
+            // the lock here, when the process runs it might deactivate this input
+            // reader (if STDIN is hooked up to the inferior process) and 
+            // reactivate it when the process stops which will deadlock.
+            //ScriptInterpreterPython::Locker locker(script_interpreter,
+            //                                       ScriptInterpreterPython::Locker::AcquireLock | ScriptInterpreterPython::Locker::InitSession,
+            //                                       ScriptInterpreterPython::Locker::FreeAcquiredLock);
         }
         break;
         
