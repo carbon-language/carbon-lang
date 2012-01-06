@@ -425,7 +425,8 @@ def isExpectedFail(xfails, xtargets, target_triple):
 
     return True
 
-def parseIntegratedTestScript(test, normalize_slashes=False):
+def parseIntegratedTestScript(test, normalize_slashes=False,
+                              extra_substitutions=[]):
     """parseIntegratedTestScript - Scan an LLVM/Clang style integrated test
     script and extract the lines to 'RUN' as well as 'XFAIL' and 'XTARGET'
     information. The RUN lines also will have variable substitution performed.
@@ -452,7 +453,8 @@ def parseIntegratedTestScript(test, normalize_slashes=False):
         tmpBase = tmpBase.replace('\\', '/')
 
     # We use #_MARKER_# to hide %% while we do the other substitutions.
-    substitutions = [('%%', '#_MARKER_#')]
+    substitutions = list(extra_substitutions)
+    substitutions.extend([('%%', '#_MARKER_#')])
     substitutions.extend(test.config.substitutions)
     substitutions.extend([('%s', sourcepath),
                           ('%S', sourcedir),
@@ -599,11 +601,12 @@ def executeTclTest(test, litConfig):
 
     return formatTestOutput(status, out, err, exitCode, failDueToStderr, script)
 
-def executeShTest(test, litConfig, useExternalSh):
+def executeShTest(test, litConfig, useExternalSh,
+                  extra_substitutions=[]):
     if test.config.unsupported:
         return (Test.UNSUPPORTED, 'Test is unsupported')
 
-    res = parseIntegratedTestScript(test, useExternalSh)
+    res = parseIntegratedTestScript(test, useExternalSh, extra_substitutions)
     if len(res) == 2:
         return res
 
