@@ -51,6 +51,11 @@ DwarfAccelTable::DwarfAccelTable(std::vector<DwarfAccelTable::Atom> &atomList) :
 DwarfAccelTable::~DwarfAccelTable() {
   for (size_t i = 0, e = Data.size(); i < e; ++i)
     delete Data[i];
+  for (StringMap<DataArray>::iterator
+         EI = Entries.begin(), EE = Entries.end(); EI != EE; ++EI)
+    for (DataArray::iterator DI = (*EI).second.begin(),
+           DE = (*EI).second.end(); DI != DE; ++DI)
+      delete (*DI);
 }
 
 void DwarfAccelTable::AddName(StringRef Name, DIE* die, char Flags) {
