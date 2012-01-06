@@ -776,6 +776,44 @@ static void emitStructSetterCall(CodeGenFunction &CGF, ObjCMethodDecl *OMD,
                copyStructFn, ReturnValueSlot(), args);
 }
 
+/// emitCPPObjectAtomicSetterCall - Call the runtime function to store 
+/// the value from the first formal parameter into the given ivar, using 
+/// the Cpp API for atomic Cpp objects with non-trivial copy assignment.
+static void emitCPPObjectAtomicSetterCall(CodeGenFunction &CGF, 
+                                          ObjCMethodDecl *OMD,
+                                          ObjCIvarDecl *ivar,
+                                          llvm::Constant *AtomicHelperFn) {
+  // objc_copyCppObjectAtomic (&CppObjectIvar, &Arg, 
+  //                           AtomicHelperFn);
+  CallArgList args;
+  
+  // The first argument is the address of the ivar.
+  llvm::Value *ivarAddr = 
+    CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(), 
+                          CGF.LoadObjCSelf(), ivar, 0).getAddress();
+  ivarAddr = CGF.Builder.CreateBitCast(ivarAddr, CGF.Int8PtrTy);
+  args.add(RValue::get(ivarAddr), CGF.getContext().VoidPtrTy);
+  
+  // The second argument is the address of the parameter variable.
+  ParmVarDecl *argVar = *OMD->param_begin();
+  DeclRefExpr argRef(argVar, argVar->getType().getNonReferenceType(), 
+                     VK_LValue, SourceLocation());
+  llvm::Value *argAddr = CGF.EmitLValue(&argRef).getAddress();
+  argAddr = CGF.Builder.CreateBitCast(argAddr, CGF.Int8PtrTy);
+  args.add(RValue::get(argAddr), CGF.getContext().VoidPtrTy);
+  
+  // Third argument is the helper function.
+  args.add(RValue::get(AtomicHelperFn), CGF.getContext().VoidPtrTy);
+  
+  llvm::Value *copyCppAtomicObjectFn = 
+    CGF.CGM.getObjCRuntime().GetCppAtomicObjectFunction();
+  CGF.EmitCall(CGF.getTypes().getFunctionInfo(CGF.getContext().VoidTy, args,
+                                              FunctionType::ExtInfo()),
+               copyCppAtomicObjectFn, ReturnValueSlot(), args);
+  
+
+}
+
 static bool hasTrivialSetExpr(const ObjCPropertyImplDecl *PID) {
   Expr *setter = PID->getSetterCXXAssignment();
   if (!setter) return true;
@@ -802,17 +840,24 @@ static bool hasTrivialSetExpr(const ObjCPropertyImplDecl *PID) {
 
 void
 CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
-                                        const ObjCPropertyImplDecl *propImpl) {
-  // Just use the setter expression if Sema gave us one and it's
-  // non-trivial.  There's no way to do this atomically.
-  if (!hasTrivialSetExpr(propImpl)) {
-    EmitStmt(propImpl->getSetterCXXAssignment());
-    return;
-  }
-  
+                                        const ObjCPropertyImplDecl *propImpl,
+                                        llvm::Constant *AtomicHelperFn) {
   const ObjCPropertyDecl *prop = propImpl->getPropertyDecl();
   ObjCIvarDecl *ivar = propImpl->getPropertyIvarDecl();
   ObjCMethodDecl *setterMethod = prop->getSetterMethodDecl();
+  
+  // Just use the setter expression if Sema gave us one and it's
+  // non-trivial.
+  if (!hasTrivialSetExpr(propImpl)) {
+    if (!AtomicHelperFn)
+      // If non-atomic, assignment is called directly.
+      EmitStmt(propImpl->getSetterCXXAssignment());
+    else
+      // If atomic, assignment is called via a locking api.
+      emitCPPObjectAtomicSetterCall(*this, setterMethod, ivar,
+                                    AtomicHelperFn);
+    return;
+  }
 
   PropertyImplStrategy strategy(CGM, propImpl);
   switch (strategy.getKind()) {
@@ -944,13 +989,13 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
 /// is illegal within a category.
 void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
                                          const ObjCPropertyImplDecl *PID) {
-  GenerateObjCAtomicCopyHelperFunction(PID);
+  llvm::Constant *AtomicHelperFn = GenerateObjCAtomicCopyHelperFunction(PID);
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getSetterMethodDecl();
   assert(OMD && "Invalid call to generate setter (empty method)");
   StartObjCMethod(OMD, IMP->getClassInterface(), PID->getLocStart());
 
-  generateObjCSetterBody(IMP, PID);
+  generateObjCSetterBody(IMP, PID, AtomicHelperFn);
 
   FinishFunction();
 }
@@ -2489,15 +2534,21 @@ void CodeGenFunction::EmitExtendGCLifetime(llvm::Value *object) {
 llvm::Constant *
 CodeGenFunction::GenerateObjCAtomicCopyHelperFunction(
                                         const ObjCPropertyImplDecl *PID) {
-  if (!getLangOptions().CPlusPlus)
+  // FIXME. This api is for NeXt runtime only for now.
+  if (!getLangOptions().CPlusPlus || !getLangOptions().NeXTRuntime)
     return 0;
   QualType Ty = PID->getPropertyIvarDecl()->getType();
   if (!Ty->isRecordType())
     return 0;
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   if (!(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_atomic) ||
-      hasTrivialSetExpr(PID))
+      hasTrivialSetExpr(PID) || /* temporary */ true)
     return 0;
+  
+  llvm::Constant * HelperFn = CGM.getAtomicHelperFnMap(Ty);
+  if (HelperFn)
+    return HelperFn;
+    
   assert(PID->getSetterCXXAssignment() && "SetterCXXAssignment - null");
   
   ASTContext &C = getContext();
@@ -2562,8 +2613,9 @@ CodeGenFunction::GenerateObjCAtomicCopyHelperFunction(
   EmitStmt(TheCall);
 
   FinishFunction();
-  
-  return llvm::ConstantExpr::getBitCast(Fn, VoidPtrTy);
+  HelperFn = llvm::ConstantExpr::getBitCast(Fn, VoidPtrTy);
+  CGM.setAtomicHelperFnMap(Ty, HelperFn);
+  return HelperFn;
   
 }
 

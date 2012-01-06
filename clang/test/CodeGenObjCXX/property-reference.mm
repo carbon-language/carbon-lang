@@ -35,7 +35,7 @@ namespace test1 {
 @interface Test1 {
   test1::A ivar;
 }
-@property const test1::A &prop1;
+@property (nonatomic) const test1::A &prop1;
 @end
 @implementation Test1
 @synthesize prop1 = ivar;
