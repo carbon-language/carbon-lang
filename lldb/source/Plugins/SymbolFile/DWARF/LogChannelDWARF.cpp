@@ -204,6 +204,16 @@ LogChannelDWARF::GetLogIfAll (uint32_t mask)
     return LogSP();
 }
 
+LogSP
+LogChannelDWARF::GetLogIfAny (uint32_t mask)
+{
+    if (g_log_channel && g_log_channel->m_log_sp)
+    {
+        if (g_log_channel->m_log_sp->GetMask().AnySet(mask))
+            return g_log_channel->m_log_sp;
+    }
+    return LogSP();
+}
 
 void
 LogChannelDWARF::LogIf (uint32_t mask, const char *format, ...)

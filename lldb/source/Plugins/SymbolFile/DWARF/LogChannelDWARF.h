@@ -79,7 +79,10 @@ public:
 
     static lldb::LogSP
     GetLogIfAll (uint32_t mask);
-
+    
+    static lldb::LogSP
+    GetLogIfAny (uint32_t mask);
+    
     static void
     LogIf (uint32_t mask, const char *format, ...);
 };

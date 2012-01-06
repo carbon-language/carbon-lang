@@ -3984,11 +3984,7 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
         {
             if (m_apple_types_ap->GetHeader().header_data.atoms.size() > 1)
             {
-                std::string qualified_name;
-                const char *qualified_cstr = die->GetQualifiedName(this, cu, qualified_name);
-                DWARFMappedHash::DIEInfoArray hash_data_array;
-                m_apple_types_ap->FindByName (qualified_cstr, hash_data_array);
-                DWARFMappedHash::ExtractDIEArray (hash_data_array, die_offsets);                
+                m_apple_types_ap->FindByNameAndTag (type_name.GetCString(), die->Tag(), die_offsets);
             }
             else
             {

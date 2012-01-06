@@ -167,7 +167,7 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
         // Keep a flat array of the DIE for binary lookup by DIE offset
     if (!cu_die_only)
     {
-        LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
+        LogSP log (LogChannelDWARF::GetLogIfAny(DWARF_LOG_DEBUG_INFO | DWARF_LOG_LOOKUPS));
         if (log)
         {
             m_dwarf2Data->GetObjectFile()->GetModule()->LogMessage (log.get(), 

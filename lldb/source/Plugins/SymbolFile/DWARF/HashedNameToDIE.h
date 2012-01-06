@@ -71,6 +71,27 @@ struct DWARFMappedHash
     }
 
     static void
+    ExtractDIEArray (const DIEInfoArray &die_info_array,
+                     const dw_tag_t tag,
+                     DIEArray &die_offsets)
+    {
+        if (tag == 0)
+        {
+            ExtractDIEArray (die_info_array, die_offsets);
+        }
+        else
+        {
+            const size_t count = die_info_array.size();
+            for (size_t i=0; i<count; ++i)
+            {
+                const dw_tag_t die_tag = die_info_array[i].tag;
+                if (die_tag == 0 || tag == die_tag)
+                    die_offsets.push_back (die_info_array[i].offset);
+            }
+        }
+    }
+
+    static void
     ExtractTypesFromDIEArray (const DIEInfoArray &die_info_array,
                               uint32_t type_flag_mask,
                               uint32_t type_flag_value,
@@ -716,6 +737,17 @@ struct DWARFMappedHash
             DIEInfoArray die_info_array;
             if (FindByName(name, die_info_array))
                 DWARFMappedHash::ExtractDIEArray (die_info_array, die_offsets);
+            return die_info_array.size();
+        }
+
+        size_t
+        FindByNameAndTag (const char *name, 
+                          const dw_tag_t tag, 
+                          DIEArray &die_offsets)
+        {
+            DIEInfoArray die_info_array;
+            if (FindByName(name, die_info_array))
+                DWARFMappedHash::ExtractDIEArray (die_info_array, tag, die_offsets);
             return die_info_array.size();
         }
 
