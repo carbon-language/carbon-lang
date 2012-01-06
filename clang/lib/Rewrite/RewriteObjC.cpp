@@ -1288,7 +1288,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(PseudoObjectExpr *PseudoOp) {
   SmallVector<SourceLocation, 1> SelLocs;
   OldMsg->getSelectorLocs(SelLocs);
 
-  ObjCMessageExpr *NewMsg;
+  ObjCMessageExpr *NewMsg = 0;
   switch (OldMsg->getReceiverKind()) {
   case ObjCMessageExpr::Class:
     NewMsg = ObjCMessageExpr::Create(*Context, OldMsg->getType(),
@@ -1361,7 +1361,7 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(PseudoObjectExpr *PseudoOp) {
   SmallVector<SourceLocation, 1> SelLocs;
   SmallVector<Expr*, 1> Args;
 
-  ObjCMessageExpr *NewMsg;
+  ObjCMessageExpr *NewMsg = 0;
   switch (OldMsg->getReceiverKind()) {
   case ObjCMessageExpr::Class:
     NewMsg = ObjCMessageExpr::Create(*Context, OldMsg->getType(),
