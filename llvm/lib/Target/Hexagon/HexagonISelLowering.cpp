@@ -645,7 +645,7 @@ bool HexagonTargetLowering::getPostIndexedAddressParts(SDNode *N, SDNode *Op,
     return false;
   }
 
-  bool isInc;
+  bool isInc = 0;
   bool isLegal = getIndexedAddressParts(Op, VT, isSEXTLoad, Base, Offset,
                                         isInc, DAG);
   // ShiftAmount = number of left-shifted bits in the Hexagon instruction.
