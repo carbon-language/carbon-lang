@@ -53,8 +53,8 @@ DwarfAccelTable::~DwarfAccelTable() {
     delete Data[i];
   for (StringMap<DataArray>::iterator
          EI = Entries.begin(), EE = Entries.end(); EI != EE; ++EI)
-    for (DataArray::iterator DI = (*EI).second.begin(),
-           DE = (*EI).second.end(); DI != DE; ++DI)
+    for (DataArray::iterator DI = EI->second.begin(),
+           DE = EI->second.end(); DI != DE; ++DI)
       delete (*DI);
 }
 
@@ -101,12 +101,12 @@ void DwarfAccelTable::FinalizeTable(AsmPrinter *Asm, const char *Prefix) {
     struct HashData *Entry = new HashData((*EI).getKeyData());
 
     // Unique the entries.
-    std::stable_sort((*EI).second.begin(), (*EI).second.end(), DIESorter());
-    (*EI).second.erase(std::unique((*EI).second.begin(), (*EI).second.end()),
-                       (*EI).second.end());
+    std::stable_sort(EI->second.begin(), EI->second.end(), DIESorter());
+    EI->second.erase(std::unique(EI->second.begin(), EI->second.end()),
+                       EI->second.end());
 
-    for (DataArray::const_iterator DI = (*EI).second.begin(),
-           DE = (*EI).second.end();
+    for (DataArray::const_iterator DI = EI->second.begin(),
+           DE = EI->second.end();
          DI != DE; ++DI)
       Entry->addData((*DI));
     Data.push_back(Entry);
@@ -263,9 +263,9 @@ void DwarfAccelTable::print(raw_ostream &O) {
   O << "Entries: \n";
   for (StringMap<DataArray>::const_iterator
          EI = Entries.begin(), EE = Entries.end(); EI != EE; ++EI) {
-    O << "Name: " << (*EI).getKeyData() << "\n";
-    for (DataArray::const_iterator DI = (*EI).second.begin(),
-           DE = (*EI).second.end();
+    O << "Name: " << EI->getKeyData() << "\n";
+    for (DataArray::const_iterator DI = EI->second.begin(),
+           DE = EI->second.end();
          DI != DE; ++DI)
       (*DI)->print(O);
   }
