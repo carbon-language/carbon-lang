@@ -809,9 +809,9 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
     EmitStmt(propImpl->getSetterCXXAssignment());
     return;
   }
-
+  
   const ObjCPropertyDecl *prop = propImpl->getPropertyDecl();
-  ObjCIvarDecl *ivar = propImpl->getPropertyIvarDecl();  
+  ObjCIvarDecl *ivar = propImpl->getPropertyIvarDecl();
   ObjCMethodDecl *setterMethod = prop->getSetterMethodDecl();
 
   PropertyImplStrategy strategy(CGM, propImpl);
@@ -944,6 +944,7 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
 /// is illegal within a category.
 void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
                                          const ObjCPropertyImplDecl *PID) {
+  GenerateObjCAtomicCopyHelperFunction(PID);
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getSetterMethodDecl();
   assert(OMD && "Invalid call to generate setter (empty method)");
@@ -2480,5 +2481,91 @@ void CodeGenFunction::EmitExtendGCLifetime(llvm::Value *object) {
   object = Builder.CreateBitCast(object, VoidPtrTy);
   Builder.CreateCall(extender, object)->setDoesNotThrow();
 }
+
+/// GenerateObjCAtomicCopyHelperFunction - Given a c++ object type with
+/// non-trivial copy assignment function, produce following helper function.
+/// static void copyHelper(Ty *dest, const Ty *source) { *dest = *source; }
+///
+llvm::Constant *
+CodeGenFunction::GenerateObjCAtomicCopyHelperFunction(
+                                        const ObjCPropertyImplDecl *PID) {
+  if (!getLangOptions().CPlusPlus)
+    return 0;
+  QualType Ty = PID->getPropertyIvarDecl()->getType();
+  if (!Ty->isRecordType())
+    return 0;
+  const ObjCPropertyDecl *PD = PID->getPropertyDecl();
+  if (!(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_atomic) ||
+      hasTrivialSetExpr(PID))
+    return 0;
+  assert(PID->getSetterCXXAssignment() && "SetterCXXAssignment - null");
+  
+  ASTContext &C = getContext();
+  IdentifierInfo *II
+    = &CGM.getContext().Idents.get("__copy_helper_atomic_property_");
+  FunctionDecl *FD = FunctionDecl::Create(C,
+                                          C.getTranslationUnitDecl(),
+                                          SourceLocation(),
+                                          SourceLocation(), II, C.VoidTy, 0,
+                                          SC_Static,
+                                          SC_None,
+                                          false,
+                                          true);
+  
+  QualType DestTy = C.getPointerType(Ty);
+  QualType SrcTy = Ty;
+  SrcTy.addConst();
+  SrcTy = C.getPointerType(SrcTy);
+  
+  FunctionArgList args;
+  ImplicitParamDecl dstDecl(FD, SourceLocation(), 0, DestTy);
+  args.push_back(&dstDecl);
+  ImplicitParamDecl srcDecl(FD, SourceLocation(), 0, SrcTy);
+  args.push_back(&srcDecl);
+  
+  const CGFunctionInfo &FI =
+    CGM.getTypes().getFunctionInfo(C.VoidTy, args, FunctionType::ExtInfo());
+  
+  llvm::FunctionType *LTy = CGM.getTypes().GetFunctionType(FI, false);
+  
+  llvm::Function *Fn =
+    llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
+                           "__copy_helper_atomic_property_", &CGM.getModule());
+  
+  if (CGM.getModuleDebugInfo())
+    DebugInfo = CGM.getModuleDebugInfo();
+  
+  
+  StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
+  
+  DeclRefExpr *DstExpr = 
+    new (C) DeclRefExpr(&dstDecl, DestTy,
+                              VK_RValue, SourceLocation());
+  
+  Expr* DST = new (C) UnaryOperator(DstExpr, UO_Deref, DestTy->getPointeeType(),
+                                    VK_LValue, OK_Ordinary, SourceLocation());
+  
+  DeclRefExpr *SrcExpr = 
+    new (C) DeclRefExpr(&srcDecl, SrcTy,
+                        VK_RValue, SourceLocation());
+  
+  Expr* SRC = new (C) UnaryOperator(SrcExpr, UO_Deref, SrcTy->getPointeeType(),
+                                    VK_LValue, OK_Ordinary, SourceLocation());
+  
+  Expr *Args[2] = { DST, SRC };
+  CallExpr *CalleeExp = cast<CallExpr>(PID->getSetterCXXAssignment());
+  CXXOperatorCallExpr *TheCall =
+    new (C) CXXOperatorCallExpr(C, OO_Equal, CalleeExp->getCallee(),
+                                Args, 2, DestTy->getPointeeType(), 
+                                VK_LValue, SourceLocation());
+
+  EmitStmt(TheCall);
+
+  FinishFunction();
+  
+  return llvm::ConstantExpr::getBitCast(Fn, VoidPtrTy);
+  
+}
+
 
 CGObjCRuntime::~CGObjCRuntime() {}
