@@ -77,7 +77,6 @@ ARCH=x86_64
 
 ASAN_STACK=1
 ASAN_GLOBALS=1
-ASAN_USE_CALL=1
 ASAN_SCALE=0  # default will be used
 ASAN_OFFSET=-1  #default will be used
 ASAN_UAR=0
@@ -140,7 +139,6 @@ CLANG_ASAN_CXX=$(CLANG_CXX) \
 		$(BLACKLIST)  \
 		-mllvm -asan-stack=$(ASAN_STACK)      \
 		-mllvm -asan-globals=$(ASAN_GLOBALS)  \
-		-mllvm -asan-use-call=$(ASAN_USE_CALL) \
 		-mllvm -asan-mapping-scale=$(ASAN_SCALE) \
 		-mllvm -asan-mapping-offset-log=$(ASAN_OFFSET) \
 		-mllvm -asan-use-after-return=$(ASAN_UAR) \

@@ -60,7 +60,6 @@ size_t FLAG_malloc_context_size = kMallocContextSize;
 uintptr_t FLAG_large_malloc;
 bool   FLAG_lazy_shadow;
 bool   FLAG_handle_segv;
-bool   FLAG_handle_sigill;
 bool   FLAG_replace_str;
 bool   FLAG_replace_intrin;
 bool   FLAG_replace_cfallocator;  // Used on Mac only.
@@ -335,23 +334,6 @@ static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
   ShowStatsAndAbort();
 }
 
-static void     ASAN_OnSIGILL(int, siginfo_t *siginfo, void *context) {
-  // Write the first message using the bullet-proof write.
-  if (12 != AsanWrite(2, "ASAN:SIGILL\n", 12)) ASAN_DIE;
-  uintptr_t pc, sp, bp, ax;
-  GetPcSpBpAx(context, &pc, &sp, &bp, &ax);
-
-  uintptr_t addr = ax;
-
-  uint8_t *insn = (uint8_t*)pc;
-  CHECK(insn[0] == 0x0f && insn[1] == 0x0b);  // ud2
-  unsigned access_size_and_type = insn[2] - 0x50;
-  CHECK(access_size_and_type < 16);
-  bool is_write = access_size_and_type & 8;
-  int access_size = 1 << (access_size_and_type & 7);
-  __asan_report_error(pc, bp, sp, addr, is_write, access_size);
-}
-
 // exported functions
 #define ASAN_REPORT_ERROR(type, is_write, size)                     \
 extern "C" void __asan_report_ ## type ## size(uintptr_t addr)      \
@@ -465,7 +447,6 @@ int WRAP(pthread_create)(pthread_t *thread, const pthread_attr_t *attr,
 }
 
 static bool MySignal(int signum) {
-  if (FLAG_handle_sigill && signum == SIGILL) return true;
   if (FLAG_handle_segv && signum == SIGSEGV) return true;
 #ifdef __APPLE__
   if (FLAG_handle_segv && signum == SIGBUS) return true;
@@ -692,7 +673,6 @@ void __asan_init() {
   FLAG_report_globals = IntFlagValue(options, "report_globals=", 1);
   FLAG_lazy_shadow = IntFlagValue(options, "lazy_shadow=", 0);
   FLAG_handle_segv = IntFlagValue(options, "handle_segv=", ASAN_NEEDS_SEGV);
-  FLAG_handle_sigill = IntFlagValue(options, "handle_sigill=", 0);
   FLAG_symbolize = IntFlagValue(options, "symbolize=", 1);
   FLAG_demangle = IntFlagValue(options, "demangle=", 1);
   FLAG_debug = IntFlagValue(options, "debug=", 0);
@@ -743,7 +723,6 @@ void __asan_init() {
 
   MaybeInstallSigaction(SIGSEGV, ASAN_OnSIGSEGV);
   MaybeInstallSigaction(SIGBUS, ASAN_OnSIGSEGV);
-  MaybeInstallSigaction(SIGILL, ASAN_OnSIGILL);
 
   if (FLAG_v) {
     Printf("|| `[%p, %p]` || HighMem    ||\n", kHighMemBeg, kHighMemEnd);
