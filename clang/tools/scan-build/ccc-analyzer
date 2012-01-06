@@ -27,17 +27,27 @@ use Text::ParseWords;
 
 my $Compiler;
 my $Clang;
+my $DefaultCCompiler;
+my $DefaultCXXCompiler;
+
+if (`uname -a` =~ m/Darwin/) { 
+	$DefaultCCompiler = 'clang';
+	$DefaultCXXCompiler = 'clang++'; 
+} else {
+    $DefaultCCompiler = 'gcc';
+    $DefaultCXXCompiler = 'g++'; 	
+}
 
 if ($FindBin::Script =~ /c\+\+-analyzer/) {
   $Compiler = $ENV{'CCC_CXX'};
-  if (!defined $Compiler) { $Compiler = "g++"; }
+  if (!defined $Compiler) { $Compiler = $DefaultCXXCompiler; }
   
   $Clang = $ENV{'CLANG_CXX'};
   if (!defined $Clang) { $Clang = 'clang++'; }
 }
 else {
   $Compiler = $ENV{'CCC_CC'};
-  if (!defined $Compiler) { $Compiler = "gcc"; }
+  if (!defined $Compiler) { $Compiler = $DefaultCCompiler; }
 
   $Clang = $ENV{'CLANG'};
   if (!defined $Clang) { $Clang = 'clang'; }
