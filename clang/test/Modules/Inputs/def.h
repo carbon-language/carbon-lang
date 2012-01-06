@@ -1,4 +1,4 @@
-
+#include "def-include.h"
 
 
 
@@ -8,7 +8,4 @@
 }
 @end
 
-struct B {
-  int b1;
-};
 

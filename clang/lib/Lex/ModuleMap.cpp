@@ -426,12 +426,23 @@ Module *ModuleMap::inferModuleFromLocation(FullSourceLoc Loc) {
   
   const SourceManager &SrcMgr = Loc.getManager();
   FileID ExpansionFileID = ExpansionLoc.getFileID();
-  const FileEntry *ExpansionFile = SrcMgr.getFileEntryForID(ExpansionFileID);
-  if (!ExpansionFile)
-    return 0;
   
-  // Find the module that owns this header.
-  return findModuleForHeader(ExpansionFile);
+  while (const FileEntry *ExpansionFile
+           = SrcMgr.getFileEntryForID(ExpansionFileID)) {
+    // Find the module that owns this header (if any).
+    if (Module *Mod = findModuleForHeader(ExpansionFile))
+      return Mod;
+    
+    // No module owns this header, so look up the inclusion chain to see if
+    // any included header has an associated module.
+    SourceLocation IncludeLoc = SrcMgr.getIncludeLoc(ExpansionFileID);
+    if (IncludeLoc.isInvalid())
+      return 0;
+    
+    ExpansionFileID = SrcMgr.getFileID(IncludeLoc);
+  }
+  
+  return 0;
 }
 
 //----------------------------------------------------------------------------//
