@@ -137,6 +137,27 @@ namespace UndefinedBehavior {
   struct T {
     int n : f(p); // expected-error {{not an integer constant expression}} expected-note {{in call to 'f(&s.m + 1)'}}
   };
+
+  namespace Ptr {
+    struct A {};
+    struct B : A { int n; };
+    B a[3][3];
+    constexpr B *p = a[0] + 4; // expected-error {{constant expression}} expected-note {{element 4 of array of 3 elements}}
+    B b = {};
+    constexpr A *pa = &b + 1; // expected-error {{constant expression}} expected-note {{base class of pointer past the end}}
+    constexpr B *pb = (B*)((A*)&b + 1); // expected-error {{constant expression}} expected-note {{derived class of pointer past the end}}
+    constexpr const int *pn = &(&b + 1)->n; // expected-error {{constant expression}} expected-note {{field of pointer past the end}}
+    constexpr B *parr = &a[3][0]; // expected-error {{constant expression}} expected-note {{array element of pointer past the end}}
+
+    constexpr A *na = nullptr;
+    constexpr B *nb = nullptr;
+    constexpr A &ra = *nb; // expected-error {{constant expression}} expected-note {{cannot access base class of null pointer}}
+    constexpr B &rb = (B&)*na; // expected-error {{constant expression}} expected-note {{cannot access derived class of null pointer}}
+    static_assert((A*)nb == 0, "");
+    static_assert((B*)na == 0, "");
+    constexpr const int &nf = nb->n; // expected-error {{constant expression}} expected-note {{cannot access field of null pointer}}
+    constexpr const int &np = (*(int(*)[4])nullptr)[2]; // expected-error {{constant expression}} expected-note {{cannot access array element of null pointer}}
+  }
 }
 
 // - a lambda-expression (5.1.2);

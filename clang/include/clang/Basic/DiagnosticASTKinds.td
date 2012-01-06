@@ -16,6 +16,8 @@ def note_expr_divide_by_zero : Note<"division by zero">;
 def note_constexpr_invalid_cast : Note<
   "%select{reinterpret_cast|dynamic_cast|cast which performs the conversions of"
   " a reinterpret_cast|cast from %1}0 is not allowed in a constant expression">;
+def note_constexpr_invalid_downcast : Note<
+  "cannot cast object of dynamic type %0 to type %1">;
 def note_constexpr_overflow : Note<
   "value %0 is outside the range of representable values of type %1">;
 def note_constexpr_invalid_function : Note<
@@ -28,9 +30,20 @@ def note_constexpr_non_global : Note<
   "%select{temporary|%4}2 %select{is not a constant expression|"
   "cannot be returned from a constexpr function|"
   "cannot be used to initialize a member in a constant expression}3">;
+def note_constexpr_array_index : Note<"cannot refer to element %0 of "
+  "%select{array of %2 elements|non-array object}1 in a constant expression">;
+def note_constexpr_pointer_arithmetic : Note<
+  "cannot refer to element %0 of non-array object in a constant "
+  "expression">;
 def note_constexpr_past_end : Note<
-  "dereferenced pointer past the end of %select{|subobject of}0 "
+  "dereferenced pointer past the end of %select{|subobject of }0"
   "%select{temporary|%2}1 is not a constant expression">;
+def note_constexpr_past_end_subobject : Note<
+  "cannot access %select{base class|derived class|field|array element}0 of "
+  "pointer past the end of object">;
+def note_constexpr_null_subobject : Note<
+  "cannot %select{access base class of|access derived class of|access field of|"
+  "access array element of|perform pointer arithmetic on}0 null pointer">;
 def note_constexpr_var_init_non_constant : Note<
   "initializer of %0 is not a constant expression">;
 def note_constexpr_typeid_polymorphic : Note<
