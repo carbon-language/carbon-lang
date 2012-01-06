@@ -1035,14 +1035,22 @@ static bool BBIsJumpedOver(MachineBasicBlock *MBB) {
 #endif // NDEBUG
 
 void ARMConstantIslands::AdjustBBOffsetsAfter(MachineBasicBlock *BB) {
-  for(unsigned i = BB->getNumber() + 1, e = MF->getNumBlockIDs(); i < e; ++i) {
+  unsigned BBNum = BB->getNumber();
+  for(unsigned i = BBNum + 1, e = MF->getNumBlockIDs(); i < e; ++i) {
     // Get the offset and known bits at the end of the layout predecessor.
     // Include the alignment of the current block.
     unsigned LogAlign = MF->getBlockNumbered(i)->getAlignment();
     unsigned Offset = BBInfo[i - 1].postOffset(LogAlign);
     unsigned KnownBits = BBInfo[i - 1].postKnownBits(LogAlign);
 
-    // This is where block i begins.
+    // This is where block i begins.  Stop if the offset is already correct,
+    // and we have updated 2 blocks.  This is the maximum number of blocks
+    // changed before calling this function.
+    if (i > BBNum + 2 &&
+        BBInfo[i].Offset == Offset &&
+        BBInfo[i].KnownBits == KnownBits)
+      break;
+
     BBInfo[i].Offset = Offset;
     BBInfo[i].KnownBits = KnownBits;
   }
