@@ -32,7 +32,9 @@
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
+#include <utility>
 #include <vector>
 
 using namespace clang;
@@ -283,6 +285,498 @@ struct LockData {
 /// A Lockset maps each MutexID (defined above) to information about how it has
 /// been locked.
 typedef llvm::ImmutableMap<MutexID, LockData> Lockset;
+typedef llvm::ImmutableMap<NamedDecl*, unsigned> LocalVarContext;
+
+class LocalVariableMap;
+
+
+/// CFGBlockInfo is a struct which contains all the information that is
+/// maintained for each block in the CFG.  See LocalVariableMap for more
+/// information about the contexts.
+struct CFGBlockInfo {
+  Lockset EntrySet;             // Lockset held at entry to block
+  Lockset ExitSet;              // Lockset held at exit from block
+  LocalVarContext EntryContext; // Context held at entry to block
+  LocalVarContext ExitContext;  // Context held at exit from block
+  unsigned EntryIndex;          // Used to replay contexts later
+
+private:
+  CFGBlockInfo(Lockset EmptySet, LocalVarContext EmptyCtx)
+    : EntrySet(EmptySet), ExitSet(EmptySet),
+      EntryContext(EmptyCtx), ExitContext(EmptyCtx)
+  { }
+
+public:
+  static CFGBlockInfo getEmptyBlockInfo(Lockset::Factory &F,
+                                        LocalVariableMap &M);
+};
+
+
+
+// A LocalVariableMap maintains a map from local variables to their currently
+// valid definitions.  It provides SSA-like functionality when traversing the
+// CFG.  Like SSA, each definition or assignment to a variable is assigned a
+// unique name (an integer), which acts as the SSA name for that definition.
+// The total set of names is shared among all CFG basic blocks.
+// Unlike SSA, we do not rewrite expressions to replace local variables declrefs
+// with their SSA-names.  Instead, we compute a Context for each point in the
+// code, which maps local variables to the appropriate SSA-name.  This map
+// changes with each assignment.
+//
+// The map is computed in a single pass over the CFG.  Subsequent analyses can
+// then query the map to find the appropriate Context for a statement, and use
+// that Context to look up the definitions of variables.
+class LocalVariableMap {
+public:
+  typedef LocalVarContext Context;
+
+  /// A VarDefinition consists of an expression, representing the value of the
+  /// variable, along with the context in which that expression should be
+  /// interpreted.  A reference VarDefinition does not itself contain this
+  /// information, but instead contains a pointer to a previous VarDefinition.
+  struct VarDefinition {
+  public:
+    friend class LocalVariableMap;
+
+    NamedDecl *Dec;       // The original declaration for this variable.
+    Expr *Exp;            // The expression for this variable, OR
+    unsigned Ref;         // Reference to another VarDefinition
+    Context Ctx;          // The map with which Exp should be interpreted.
+
+    bool isReference() { return !Exp; }
+
+  private:
+    // Create ordinary variable definition
+    VarDefinition(NamedDecl *D, Expr *E, Context C)
+      : Dec(D), Exp(E), Ref(0), Ctx(C)
+    { }
+
+    // Create reference to previous definition
+    VarDefinition(NamedDecl *D, unsigned R, Context C)
+      : Dec(D), Exp(0), Ref(R), Ctx(C)
+    { }
+  };
+
+private:
+  Context::Factory ContextFactory;
+  std::vector<VarDefinition> VarDefinitions;
+  std::vector<unsigned> CtxIndices;
+  std::vector<std::pair<Stmt*, Context> > SavedContexts;
+
+public:
+  LocalVariableMap() {
+    // index 0 is a placeholder for undefined variables (aka phi-nodes).
+    VarDefinitions.push_back(VarDefinition(0, 0u, getEmptyContext()));
+  }
+
+  /// Look up a definition, within the given context.
+  const VarDefinition* lookup(NamedDecl *D, Context Ctx) {
+    const unsigned *i = Ctx.lookup(D);
+    if (!i)
+      return 0;
+    assert(*i < VarDefinitions.size());
+    return &VarDefinitions[*i];
+  }
+
+  /// Look up the definition for D within the given context.  Returns
+  /// NULL if the expression is not statically known.
+  Expr* lookupExpr(NamedDecl *D, Context Ctx) {
+    const unsigned *P = Ctx.lookup(D);
+    if (!P)
+      return 0;
+
+    unsigned i = *P;
+    while (i > 0) {
+      if (VarDefinitions[i].Exp)
+        return VarDefinitions[i].Exp;
+      i = VarDefinitions[i].Ref;
+    }
+    return 0;
+  }
+
+  Context getEmptyContext() { return ContextFactory.getEmptyMap(); }
+
+  /// Return the next context after processing S.  This function is used by
+  /// clients of the class to get the appropriate context when traversing the
+  /// CFG.  It must be called for every assignment or DeclStmt.
+  Context getNextContext(unsigned &CtxIndex, Stmt *S, Context C) {
+    if (SavedContexts[CtxIndex+1].first == S) {
+      CtxIndex++;
+      Context Result = SavedContexts[CtxIndex].second;
+      return Result;
+    }
+    return C;
+  }
+
+  void dumpVarDefinitionName(unsigned i) {
+    if (i == 0) {
+      llvm::errs() << "Undefined";
+      return;
+    }
+    NamedDecl *Dec = VarDefinitions[i].Dec;
+    if (!Dec) {
+      llvm::errs() << "<<NULL>>";
+      return;
+    }
+    Dec->printName(llvm::errs());
+    llvm::errs() << "." << i << " " << ((void*) Dec);
+  }
+
+  /// Dumps an ASCII representation of the variable map to llvm::errs()
+  void dump() {
+    for (unsigned i = 1, e = VarDefinitions.size(); i < e; ++i) {
+      Expr *Exp = VarDefinitions[i].Exp;
+      unsigned Ref = VarDefinitions[i].Ref;
+
+      dumpVarDefinitionName(i);
+      llvm::errs() << " = ";
+      if (Exp) Exp->dump();
+      else {
+        dumpVarDefinitionName(Ref);
+        llvm::errs() << "\n";
+      }
+    }
+  }
+
+  /// Dumps an ASCII representation of a Context to llvm::errs()
+  void dumpContext(Context C) {
+    for (Context::iterator I = C.begin(), E = C.end(); I != E; ++I) {
+      NamedDecl *D = I.getKey();
+      D->printName(llvm::errs());
+      const unsigned *i = C.lookup(D);
+      llvm::errs() << " -> ";
+      dumpVarDefinitionName(*i);
+      llvm::errs() << "\n";
+    }
+  }
+
+  /// Builds the variable map.
+  void traverseCFG(CFG *CFGraph, PostOrderCFGView *SortedGraph,
+                     std::vector<CFGBlockInfo> &BlockInfo);
+
+protected:
+  // Get the current context index
+  unsigned getContextIndex() { return SavedContexts.size()-1; }
+
+  // Save the current context for later replay
+  void saveContext(Stmt *S, Context C) {
+    SavedContexts.push_back(std::make_pair(S,C));
+  }
+
+  // Adds a new definition to the given context, and returns a new context.
+  // This method should be called when declaring a new variable.
+  Context addDefinition(NamedDecl *D, Expr *Exp, Context Ctx) {
+    assert(!Ctx.contains(D));
+    unsigned newID = VarDefinitions.size();
+    Context NewCtx = ContextFactory.add(Ctx, D, newID);
+    VarDefinitions.push_back(VarDefinition(D, Exp, Ctx));
+    return NewCtx;
+  }
+
+  // Add a new reference to an existing definition.
+  Context addReference(NamedDecl *D, unsigned i, Context Ctx) {
+    unsigned newID = VarDefinitions.size();
+    Context NewCtx = ContextFactory.add(Ctx, D, newID);
+    VarDefinitions.push_back(VarDefinition(D, i, Ctx));
+    return NewCtx;
+  }
+
+  // Updates a definition only if that definition is already in the map.
+  // This method should be called when assigning to an existing variable.
+  Context updateDefinition(NamedDecl *D, Expr *Exp, Context Ctx) {
+    if (Ctx.contains(D)) {
+      unsigned newID = VarDefinitions.size();
+      Context NewCtx = ContextFactory.remove(Ctx, D);
+      NewCtx = ContextFactory.add(NewCtx, D, newID);
+      VarDefinitions.push_back(VarDefinition(D, Exp, Ctx));
+      return NewCtx;
+    }
+    return Ctx;
+  }
+
+  // Removes a definition from the context, but keeps the variable name
+  // as a valid variable.  The index 0 is a placeholder for cleared definitions.
+  Context clearDefinition(NamedDecl *D, Context Ctx) {
+    Context NewCtx = Ctx;
+    if (NewCtx.contains(D)) {
+      NewCtx = ContextFactory.remove(NewCtx, D);
+      NewCtx = ContextFactory.add(NewCtx, D, 0);
+    }
+    return NewCtx;
+  }
+
+  // Remove a definition entirely frmo the context.
+  Context removeDefinition(NamedDecl *D, Context Ctx) {
+    Context NewCtx = Ctx;
+    if (NewCtx.contains(D)) {
+      NewCtx = ContextFactory.remove(NewCtx, D);
+    }
+    return NewCtx;
+  }
+
+  Context intersectContexts(Context C1, Context C2);
+  Context createReferenceContext(Context C);
+  void intersectBackEdge(Context C1, Context C2);
+
+  friend class VarMapBuilder;
+};
+
+
+// This has to be defined after LocalVariableMap.
+CFGBlockInfo CFGBlockInfo::getEmptyBlockInfo(Lockset::Factory &F,
+                                             LocalVariableMap &M) {
+  return CFGBlockInfo(F.getEmptyMap(), M.getEmptyContext());
+}
+
+
+/// Visitor which builds a LocalVariableMap
+class VarMapBuilder : public StmtVisitor<VarMapBuilder> {
+public:
+  LocalVariableMap* VMap;
+  LocalVariableMap::Context Ctx;
+
+  VarMapBuilder(LocalVariableMap *VM, LocalVariableMap::Context C)
+    : VMap(VM), Ctx(C) {}
+
+  void VisitDeclStmt(DeclStmt *S);
+  void VisitBinaryOperator(BinaryOperator *BO);
+};
+
+
+// Add new local variables to the variable map
+void VarMapBuilder::VisitDeclStmt(DeclStmt *S) {
+  bool modifiedCtx = false;
+  DeclGroupRef DGrp = S->getDeclGroup();
+  for (DeclGroupRef::iterator I = DGrp.begin(), E = DGrp.end(); I != E; ++I) {
+    if (VarDecl *VD = dyn_cast_or_null<VarDecl>(*I)) {
+      Expr *E = VD->getInit();
+
+      // Add local variables with trivial type to the variable map
+      QualType T = VD->getType();
+      if (T.isTrivialType(VD->getASTContext())) {
+        Ctx = VMap->addDefinition(VD, E, Ctx);
+        modifiedCtx = true;
+      }
+    }
+  }
+  if (modifiedCtx)
+    VMap->saveContext(S, Ctx);
+}
+
+// Update local variable definitions in variable map
+void VarMapBuilder::VisitBinaryOperator(BinaryOperator *BO) {
+  if (!BO->isAssignmentOp())
+    return;
+
+  Expr *LHSExp = BO->getLHS()->IgnoreParenCasts();
+
+  // Update the variable map and current context.
+  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(LHSExp)) {
+    ValueDecl *VDec = DRE->getDecl();
+    if (Ctx.lookup(VDec)) {
+      if (BO->getOpcode() == BO_Assign)
+        Ctx = VMap->updateDefinition(VDec, BO->getRHS(), Ctx);
+      else
+        // FIXME -- handle compound assignment operators
+        Ctx = VMap->clearDefinition(VDec, Ctx);
+      VMap->saveContext(BO, Ctx);
+    }
+  }
+}
+
+
+// Computes the intersection of two contexts.  The intersection is the
+// set of variables which have the same definition in both contexts;
+// variables with different definitions are discarded.
+LocalVariableMap::Context
+LocalVariableMap::intersectContexts(Context C1, Context C2) {
+  Context Result = C1;
+  for (Context::iterator I = C1.begin(), E = C1.end(); I != E; ++I) {
+    NamedDecl *Dec = I.getKey();
+    unsigned i1 = I.getData();
+    const unsigned *i2 = C2.lookup(Dec);
+    if (!i2)             // variable doesn't exist on second path
+      Result = removeDefinition(Dec, Result);
+    else if (*i2 != i1)  // variable exists, but has different definition
+      Result = clearDefinition(Dec, Result);
+  }
+  return Result;
+}
+
+// For every variable in C, create a new variable that refers to the
+// definition in C.  Return a new context that contains these new variables.
+// (We use this for a naive implementation of SSA on loop back-edges.)
+LocalVariableMap::Context LocalVariableMap::createReferenceContext(Context C) {
+  Context Result = getEmptyContext();
+  for (Context::iterator I = C.begin(), E = C.end(); I != E; ++I) {
+    NamedDecl *Dec = I.getKey();
+    unsigned i = I.getData();
+    Result = addReference(Dec, i, Result);
+  }
+  return Result;
+}
+
+// This routine also takes the intersection of C1 and C2, but it does so by
+// altering the VarDefinitions.  C1 must be the result of an earlier call to
+// createReferenceContext.
+void LocalVariableMap::intersectBackEdge(Context C1, Context C2) {
+  for (Context::iterator I = C1.begin(), E = C1.end(); I != E; ++I) {
+    NamedDecl *Dec = I.getKey();
+    unsigned i1 = I.getData();
+    VarDefinition *VDef = &VarDefinitions[i1];
+    assert(VDef->isReference());
+
+    const unsigned *i2 = C2.lookup(Dec);
+    if (!i2 || (*i2 != i1))
+      VDef->Ref = 0;    // Mark this variable as undefined
+  }
+}
+
+
+// Traverse the CFG in topological order, so all predecessors of a block
+// (excluding back-edges) are visited before the block itself.  At
+// each point in the code, we calculate a Context, which holds the set of
+// variable definitions which are visible at that point in execution.
+// Visible variables are mapped to their definitions using an array that
+// contains all definitions.
+//
+// At join points in the CFG, the set is computed as the intersection of
+// the incoming sets along each edge, E.g.
+//
+//                       { Context                 | VarDefinitions }
+//   int x = 0;          { x -> x1                 | x1 = 0 }
+//   int y = 0;          { x -> x1, y -> y1        | y1 = 0, x1 = 0 }
+//   if (b) x = 1;       { x -> x2, y -> y1        | x2 = 1, y1 = 0, ... }
+//   else   x = 2;       { x -> x3, y -> y1        | x3 = 2, x2 = 1, ... }
+//   ...                 { y -> y1  (x is unknown) | x3 = 2, x2 = 1, ... }
+//
+// This is essentially a simpler and more naive version of the standard SSA
+// algorithm.  Those definitions that remain in the intersection are from blocks
+// that strictly dominate the current block.  We do not bother to insert proper
+// phi nodes, because they are not used in our analysis; instead, wherever
+// a phi node would be required, we simply remove that definition from the
+// context (E.g. x above).
+//
+// The initial traversal does not capture back-edges, so those need to be
+// handled on a separate pass.  Whenever the first pass encounters an
+// incoming back edge, it duplicates the context, creating new definitions
+// that refer back to the originals.  (These correspond to places where SSA
+// might have to insert a phi node.)  On the second pass, these definitions are
+// set to NULL if the the variable has changed on the back-edge (i.e. a phi
+// node was actually required.)  E.g.
+//
+//                       { Context           | VarDefinitions }
+//   int x = 0, y = 0;   { x -> x1, y -> y1  | y1 = 0, x1 = 0 }
+//   while (b)           { x -> x2, y -> y1  | [1st:] x2=x1; [2nd:] x2=NULL; }
+//     x = x+1;          { x -> x3, y -> y1  | x3 = x2 + 1, ... }
+//   ...                 { y -> y1           | x3 = 2, x2 = 1, ... }
+//
+void LocalVariableMap::traverseCFG(CFG *CFGraph,
+                                   PostOrderCFGView *SortedGraph,
+                                   std::vector<CFGBlockInfo> &BlockInfo) {
+  PostOrderCFGView::CFGBlockSet VisitedBlocks(CFGraph);
+
+  CtxIndices.resize(CFGraph->getNumBlockIDs());
+
+  for (PostOrderCFGView::iterator I = SortedGraph->begin(),
+       E = SortedGraph->end(); I!= E; ++I) {
+    const CFGBlock *CurrBlock = *I;
+    int CurrBlockID = CurrBlock->getBlockID();
+    CFGBlockInfo *CurrBlockInfo = &BlockInfo[CurrBlockID];
+
+    VisitedBlocks.insert(CurrBlock);
+
+    // Calculate the entry context for the current block
+    bool HasBackEdges = false;
+    bool CtxInit = true;
+    for (CFGBlock::const_pred_iterator PI = CurrBlock->pred_begin(),
+         PE  = CurrBlock->pred_end(); PI != PE; ++PI) {
+      // if *PI -> CurrBlock is a back edge, so skip it
+      if (*PI == 0 || !VisitedBlocks.alreadySet(*PI)) {
+        HasBackEdges = true;
+        continue;
+      }
+
+      int PrevBlockID = (*PI)->getBlockID();
+      CFGBlockInfo *PrevBlockInfo = &BlockInfo[PrevBlockID];
+
+      if (CtxInit) {
+        CurrBlockInfo->EntryContext = PrevBlockInfo->ExitContext;
+        CtxInit = false;
+      }
+      else {
+        CurrBlockInfo->EntryContext =
+          intersectContexts(CurrBlockInfo->EntryContext,
+                            PrevBlockInfo->ExitContext);
+      }
+    }
+
+    // Duplicate the context if we have back-edges, so we can call
+    // intersectBackEdges later.
+    if (HasBackEdges)
+      CurrBlockInfo->EntryContext =
+        createReferenceContext(CurrBlockInfo->EntryContext);
+
+    // Create a starting context index for the current block
+    saveContext(0, CurrBlockInfo->EntryContext);
+    CurrBlockInfo->EntryIndex = getContextIndex();
+
+    // Visit all the statements in the basic block.
+    VarMapBuilder VMapBuilder(this, CurrBlockInfo->EntryContext);
+    for (CFGBlock::const_iterator BI = CurrBlock->begin(),
+         BE = CurrBlock->end(); BI != BE; ++BI) {
+      switch (BI->getKind()) {
+        case CFGElement::Statement: {
+          const CFGStmt *CS = cast<CFGStmt>(&*BI);
+          VMapBuilder.Visit(const_cast<Stmt*>(CS->getStmt()));
+          break;
+        }
+        default:
+          break;
+      }
+    }
+    CurrBlockInfo->ExitContext = VMapBuilder.Ctx;
+
+    // Mark variables on back edges as "unknown" if they've been changed.
+    for (CFGBlock::const_succ_iterator SI = CurrBlock->succ_begin(),
+         SE  = CurrBlock->succ_end(); SI != SE; ++SI) {
+      // if CurrBlock -> *SI is *not* a back edge
+      if (*SI == 0 || !VisitedBlocks.alreadySet(*SI))
+        continue;
+
+      CFGBlock *FirstLoopBlock = *SI;
+      Context LoopBegin = BlockInfo[FirstLoopBlock->getBlockID()].EntryContext;
+      Context LoopEnd   = CurrBlockInfo->ExitContext;
+      intersectBackEdge(LoopBegin, LoopEnd);
+    }
+  }
+
+  // Put an extra entry at the end of the indexed context array
+  unsigned exitID = CFGraph->getExit().getBlockID();
+  saveContext(0, BlockInfo[exitID].ExitContext);
+}
+
+
+/// \brief Class which implements the core thread safety analysis routines.
+class ThreadSafetyAnalyzer {
+  friend class BuildLockset;
+
+  ThreadSafetyHandler &Handler;
+  Lockset::Factory    LocksetFactory;
+  LocalVariableMap    LocalVarMap;
+
+public:
+  ThreadSafetyAnalyzer(ThreadSafetyHandler &H) : Handler(H) {}
+
+  Lockset intersectAndWarn(const Lockset LSet1, const Lockset LSet2,
+                           LockErrorKind LEK);
+
+  Lockset addLock(Lockset &LSet, Expr *MutexExp, const NamedDecl *D,
+                  LockKind LK, SourceLocation Loc);
+
+  void runAnalysis(AnalysisDeclContext &AC);
+};
+
 
 /// \brief We use this class to visit different types of expressions in
 /// CFGBlocks, and build up the lockset.
@@ -293,8 +787,12 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
   friend class ThreadSafetyAnalyzer;
 
   ThreadSafetyHandler &Handler;
-  Lockset LSet;
   Lockset::Factory &LocksetFactory;
+  LocalVariableMap &LocalVarMap;
+
+  Lockset LSet;
+  LocalVariableMap::Context LVarCtx;
+  unsigned CtxIndex;
 
   // Helper functions
   void addLock(const MutexID &Mutex, const LockData &LDat);
@@ -342,13 +840,15 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
   }
 
 public:
-  BuildLockset(ThreadSafetyHandler &Handler, Lockset LS, Lockset::Factory &F)
-    : StmtVisitor<BuildLockset>(), Handler(Handler), LSet(LS),
-      LocksetFactory(F) {}
-
-  Lockset getLockset() {
-    return LSet;
-  }
+  BuildLockset(ThreadSafetyAnalyzer *analyzer, CFGBlockInfo &Info)
+    : StmtVisitor<BuildLockset>(),
+      Handler(analyzer->Handler),
+      LocksetFactory(analyzer->LocksetFactory),
+      LocalVarMap(analyzer->LocalVarMap),
+      LSet(Info.EntrySet),
+      LVarCtx(Info.EntryContext),
+      CtxIndex(Info.EntryIndex)
+  {}
 
   void VisitUnaryOperator(UnaryOperator *UO);
   void VisitBinaryOperator(BinaryOperator *BO);
@@ -633,6 +1133,10 @@ void BuildLockset::VisitUnaryOperator(UnaryOperator *UO) {
 void BuildLockset::VisitBinaryOperator(BinaryOperator *BO) {
   if (!BO->isAssignmentOp())
     return;
+
+  // adjust the context
+  LVarCtx = LocalVarMap.getNextContext(CtxIndex, BO, LVarCtx);
+
   Expr *LHSExp = BO->getLHS()->IgnoreParenCasts();
   checkAccess(LHSExp, AK_Written);
   checkDereference(LHSExp, AK_Written);
@@ -662,6 +1166,9 @@ void BuildLockset::VisitCXXConstructExpr(CXXConstructExpr *Exp) {
 }
 
 void BuildLockset::VisitDeclStmt(DeclStmt *S) {
+  // adjust the context
+  LVarCtx = LocalVarMap.getNextContext(CtxIndex, S, LVarCtx);
+
   DeclGroupRef DGrp = S->getDeclGroup();
   for (DeclGroupRef::iterator I = DGrp.begin(), E = DGrp.end(); I != E; ++I) {
     Decl *D = *I;
@@ -677,23 +1184,6 @@ void BuildLockset::VisitDeclStmt(DeclStmt *S) {
   }
 }
 
-
-/// \brief Class which implements the core thread safety analysis routines.
-class ThreadSafetyAnalyzer {
-  ThreadSafetyHandler &Handler;
-  Lockset::Factory    LocksetFactory;
-
-public:
-  ThreadSafetyAnalyzer(ThreadSafetyHandler &H) : Handler(H) {}
-
-  Lockset intersectAndWarn(const Lockset LSet1, const Lockset LSet2,
-                           LockErrorKind LEK);
-
-  Lockset addLock(Lockset &LSet, Expr *MutexExp, const NamedDecl *D,
-                  LockKind LK, SourceLocation Loc);
-
-  void runAnalysis(AnalysisDeclContext &AC);
-};
 
 /// \brief Compute the intersection of two locksets and issue warnings for any
 /// locks in the symmetric difference.
@@ -764,11 +1254,8 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
   if (D->getAttr<NoThreadSafetyAnalysisAttr>())
     return;
 
-  // FIXME: Switch to SmallVector? Otherwise improve performance impact?
-  std::vector<Lockset> EntryLocksets(CFGraph->getNumBlockIDs(),
-                                     LocksetFactory.getEmptyMap());
-  std::vector<Lockset> ExitLocksets(CFGraph->getNumBlockIDs(),
-                                    LocksetFactory.getEmptyMap());
+  std::vector<CFGBlockInfo> BlockInfo(CFGraph->getNumBlockIDs(),
+    CFGBlockInfo::getEmptyBlockInfo(LocksetFactory, LocalVarMap));
 
   // We need to explore the CFG via a "topological" ordering.
   // That way, we will be guaranteed to have information about required
@@ -776,11 +1263,14 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
   PostOrderCFGView *SortedGraph = AC.getAnalysis<PostOrderCFGView>();
   PostOrderCFGView::CFGBlockSet VisitedBlocks(CFGraph);
 
+  // Compute SSA names for local variables
+  LocalVarMap.traverseCFG(CFGraph, SortedGraph, BlockInfo);
+
   // Add locks from exclusive_locks_required and shared_locks_required
   // to initial lockset.
   if (!SortedGraph->empty() && D->hasAttrs()) {
     const CFGBlock *FirstBlock = *SortedGraph->begin();
-    Lockset &InitialLockset = EntryLocksets[FirstBlock->getBlockID()];
+    Lockset &InitialLockset = BlockInfo[FirstBlock->getBlockID()].EntrySet;
     const AttrVec &ArgAttrs = D->getAttrs();
     for(unsigned i = 0; i < ArgAttrs.size(); ++i) {
       Attr *Attr = ArgAttrs[i];
@@ -809,12 +1299,10 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
        E = SortedGraph->end(); I!= E; ++I) {
     const CFGBlock *CurrBlock = *I;
     int CurrBlockID = CurrBlock->getBlockID();
-
-    VisitedBlocks.insert(CurrBlock);
+    CFGBlockInfo *CurrBlockInfo = &BlockInfo[CurrBlockID];
 
     // Use the default initial lockset in case there are no predecessors.
-    Lockset &Entryset = EntryLocksets[CurrBlockID];
-    Lockset &Exitset = ExitLocksets[CurrBlockID];
+    VisitedBlocks.insert(CurrBlock);
 
     // Iterate through the predecessor blocks and warn if the lockset for all
     // predecessors is not the same. We take the entry lockset of the current
@@ -838,16 +1326,20 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
         continue;
 
       int PrevBlockID = (*PI)->getBlockID();
+      CFGBlockInfo *PrevBlockInfo = &BlockInfo[PrevBlockID];
+
       if (!LocksetInitialized) {
-        Entryset = ExitLocksets[PrevBlockID];
+        CurrBlockInfo->EntrySet = PrevBlockInfo->ExitSet;
         LocksetInitialized = true;
       } else {
-        Entryset = intersectAndWarn(Entryset, ExitLocksets[PrevBlockID],
-                                    LEK_LockedSomePredecessors);
+        CurrBlockInfo->EntrySet =
+          intersectAndWarn(CurrBlockInfo->EntrySet, PrevBlockInfo->ExitSet,
+                           LEK_LockedSomePredecessors);
       }
     }
 
-    BuildLockset LocksetBuilder(Handler, Entryset, LocksetFactory);
+    BuildLockset LocksetBuilder(this, *CurrBlockInfo);
+    // Visit all the statements in the basic block.
     for (CFGBlock::const_iterator BI = CurrBlock->begin(),
          BE = CurrBlock->end(); BI != BE; ++BI) {
       switch (BI->getKind()) {
@@ -875,7 +1367,7 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
           break;
       }
     }
-    Exitset = LocksetBuilder.getLockset();
+    CurrBlockInfo->ExitSet = LocksetBuilder.LSet;
 
     // For every back edge from CurrBlock (the end of the loop) to another block
     // (FirstLoopBlock) we need to check that the Lockset of Block is equal to
@@ -889,14 +1381,14 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
         continue;
 
       CFGBlock *FirstLoopBlock = *SI;
-      Lockset PreLoop = EntryLocksets[FirstLoopBlock->getBlockID()];
-      Lockset LoopEnd = ExitLocksets[CurrBlockID];
+      Lockset PreLoop = BlockInfo[FirstLoopBlock->getBlockID()].EntrySet;
+      Lockset LoopEnd = BlockInfo[CurrBlockID].ExitSet;
       intersectAndWarn(LoopEnd, PreLoop, LEK_LockedSomeLoopIterations);
     }
   }
 
-  Lockset InitialLockset = EntryLocksets[CFGraph->getEntry().getBlockID()];
-  Lockset FinalLockset = ExitLocksets[CFGraph->getExit().getBlockID()];
+  Lockset InitialLockset = BlockInfo[CFGraph->getEntry().getBlockID()].EntrySet;
+  Lockset FinalLockset = BlockInfo[CFGraph->getExit().getBlockID()].ExitSet;
 
   // FIXME: Should we call this function for all blocks which exit the function?
   intersectAndWarn(InitialLockset, FinalLockset, LEK_LockedAtEndOfFunction);
