@@ -44,8 +44,9 @@ void ExprEngine::processCallExit(CallExitNodeBuilder &B) {
   // If the callee returns an expression, bind its value to CallExpr.
   const Stmt *ReturnedExpr = state->get<ReturnExpr>();
   if (ReturnedExpr) {
-    SVal RetVal = state->getSVal(ReturnedExpr);
-    state = state->BindExpr(CE, RetVal);
+    const LocationContext *LCtx = Pred->getLocationContext();
+    SVal RetVal = state->getSVal(ReturnedExpr, LCtx);
+    state = state->BindExpr(CE, LCtx, RetVal);
     // Clear the return expr GDM.
     state = state->remove<ReturnExpr>();
   }
@@ -57,7 +58,7 @@ void ExprEngine::processCallExit(CallExitNodeBuilder &B) {
     
     SVal ThisV = state->getSVal(ThisR);
     // Always bind the region to the CXXConstructExpr.
-    state = state->BindExpr(CCE, ThisV);
+    state = state->BindExpr(CCE, Pred->getLocationContext(), ThisV);
   }
   
   B.generateNode(state);
@@ -231,7 +232,7 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
       // Get the callee.
       const Expr *Callee = CE->getCallee()->IgnoreParens();
       const ProgramState *state = Pred->getState();
-      SVal L = state->getSVal(Callee);
+      SVal L = state->getSVal(Callee, Pred->getLocationContext());
 
       // Figure out the result type. We do this dance to handle references.
       QualType ResultTy;
@@ -249,11 +250,12 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
       SVal RetVal = SVB.getConjuredSymbolVal(0, CE, ResultTy, Count);
 
       // Generate a new state with the return value set.
-      state = state->BindExpr(CE, RetVal);
+      const LocationContext *LCtx = Pred->getLocationContext();
+      state = state->BindExpr(CE, LCtx, RetVal);
 
       // Invalidate the arguments.
-      const LocationContext *LC = Pred->getLocationContext();
-      state = Eng.invalidateArguments(state, CallOrObjCMessage(CE, state), LC);
+      state = Eng.invalidateArguments(state, CallOrObjCMessage(CE, state, LCtx),
+                                      LCtx);
 
       // And make the result node.
       Bldr.generateNode(CE, Pred, state);

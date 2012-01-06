@@ -142,9 +142,9 @@ void IdempotentOperationChecker::checkPreStmt(const BinaryOperator *B,
   }
 
   const ProgramState *state = C.getState();
-
-  SVal LHSVal = state->getSVal(LHS);
-  SVal RHSVal = state->getSVal(RHS);
+  const LocationContext *LCtx = C.getLocationContext();
+  SVal LHSVal = state->getSVal(LHS, LCtx);
+  SVal RHSVal = state->getSVal(RHS, LCtx);
 
   // If either value is unknown, we can't be 100% sure of all paths.
   if (LHSVal.isUnknownOrUndef() || RHSVal.isUnknownOrUndef()) {

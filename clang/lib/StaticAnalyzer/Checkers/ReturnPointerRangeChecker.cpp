@@ -39,7 +39,7 @@ void ReturnPointerRangeChecker::checkPreStmt(const ReturnStmt *RS,
   if (!RetE)
     return;
  
-  SVal V = state->getSVal(RetE);
+  SVal V = state->getSVal(RetE, C.getLocationContext());
   const MemRegion *R = V.getAsRegion();
 
   const ElementRegion *ER = dyn_cast_or_null<ElementRegion>(R);

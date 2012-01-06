@@ -343,7 +343,7 @@ static const VarDecl* GetMostRecentVarDeclBinding(const ExplodedNode *N,
     if (!DR)
       continue;
 
-    SVal Y = N->getState()->getSVal(DR);
+    SVal Y = N->getState()->getSVal(DR, N->getLocationContext());
 
     if (X != Y)
       continue;

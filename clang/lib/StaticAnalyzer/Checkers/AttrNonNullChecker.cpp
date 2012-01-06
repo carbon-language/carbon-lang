@@ -34,9 +34,10 @@ public:
 void AttrNonNullChecker::checkPreStmt(const CallExpr *CE,
                                       CheckerContext &C) const {
   const ProgramState *state = C.getState();
+  const LocationContext *LCtx = C.getLocationContext();
 
   // Check if the callee has a 'nonnull' attribute.
-  SVal X = state->getSVal(CE->getCallee());
+  SVal X = state->getSVal(CE->getCallee(), LCtx);
 
   const FunctionDecl *FD = X.getAsFunctionDecl();
   if (!FD)
@@ -55,7 +56,7 @@ void AttrNonNullChecker::checkPreStmt(const CallExpr *CE,
     if (!Att->isNonNull(idx))
       continue;
 
-    SVal V = state->getSVal(*I);
+    SVal V = state->getSVal(*I, LCtx);
     DefinedSVal *DV = dyn_cast<DefinedSVal>(&V);
 
     // If the value is unknown or undefined, we can't perform this check.

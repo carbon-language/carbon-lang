@@ -38,7 +38,7 @@ void ReturnUndefChecker::checkPreStmt(const ReturnStmt *RS,
   if (!RetE)
     return;
   
-  if (!C.getState()->getSVal(RetE).isUndef())
+  if (!C.getState()->getSVal(RetE, C.getLocationContext()).isUndef())
     return;
   
   ExplodedNode *N = C.generateSink();

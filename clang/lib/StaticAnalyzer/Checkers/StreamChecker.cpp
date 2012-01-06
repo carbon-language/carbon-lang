@@ -223,7 +223,7 @@ void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) const {
   SValBuilder &svalBuilder = C.getSValBuilder();
   DefinedSVal RetVal =
     cast<DefinedSVal>(svalBuilder.getConjuredSymbolVal(0, CE, Count));
-  state = state->BindExpr(CE, RetVal);
+  state = state->BindExpr(CE, C.getLocationContext(), RetVal);
   
   ConstraintManager &CM = C.getConstraintManager();
   // Bifurcate the state into two: one with a valid FILE* pointer, the other
@@ -251,22 +251,25 @@ void StreamChecker::Fclose(CheckerContext &C, const CallExpr *CE) const {
 
 void StreamChecker::Fread(CheckerContext &C, const CallExpr *CE) const {
   const ProgramState *state = C.getState();
-  if (!CheckNullStream(state->getSVal(CE->getArg(3)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(3), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Fwrite(CheckerContext &C, const CallExpr *CE) const {
   const ProgramState *state = C.getState();
-  if (!CheckNullStream(state->getSVal(CE->getArg(3)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(3), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) const {
   const ProgramState *state = C.getState();
-  if (!(state = CheckNullStream(state->getSVal(CE->getArg(0)), state, C)))
+  if (!(state = CheckNullStream(state->getSVal(CE->getArg(0),
+                                               C.getLocationContext()), state, C)))
     return;
   // Check the legality of the 'whence' argument of 'fseek'.
-  SVal Whence = state->getSVal(CE->getArg(2));
+  SVal Whence = state->getSVal(CE->getArg(2), C.getLocationContext());
   const nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&Whence);
 
   if (!CI)
@@ -289,49 +292,57 @@ void StreamChecker::Fseek(CheckerContext &C, const CallExpr *CE) const {
 
 void StreamChecker::Ftell(CheckerContext &C, const CallExpr *CE) const {
   const ProgramState *state = C.getState();
-  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Rewind(CheckerContext &C, const CallExpr *CE) const {
   const ProgramState *state = C.getState();
-  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Fgetpos(CheckerContext &C, const CallExpr *CE) const {
   const ProgramState *state = C.getState();
-  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Fsetpos(CheckerContext &C, const CallExpr *CE) const {
   const ProgramState *state = C.getState();
-  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Clearerr(CheckerContext &C, const CallExpr *CE) const {
   const ProgramState *state = C.getState();
-  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Feof(CheckerContext &C, const CallExpr *CE) const {
   const ProgramState *state = C.getState();
-  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Ferror(CheckerContext &C, const CallExpr *CE) const {
   const ProgramState *state = C.getState();
-  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0), C.getLocationContext()),
+                       state, C))
     return;
 }
 
 void StreamChecker::Fileno(CheckerContext &C, const CallExpr *CE) const {
   const ProgramState *state = C.getState();
-  if (!CheckNullStream(state->getSVal(CE->getArg(0)), state, C))
+  if (!CheckNullStream(state->getSVal(CE->getArg(0), C.getLocationContext()),
+                       state, C))
     return;
 }
 
@@ -361,7 +372,8 @@ const ProgramState *StreamChecker::CheckNullStream(SVal SV, const ProgramState *
 const ProgramState *StreamChecker::CheckDoubleClose(const CallExpr *CE,
                                                const ProgramState *state,
                                                CheckerContext &C) const {
-  SymbolRef Sym = state->getSVal(CE->getArg(0)).getAsSymbol();
+  SymbolRef Sym =
+    state->getSVal(CE->getArg(0), C.getLocationContext()).getAsSymbol();
   if (!Sym)
     return state;
   
@@ -442,7 +454,7 @@ void StreamChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
     return;
   
   const ProgramState *state = C.getState();
-  SymbolRef Sym = state->getSVal(RetE).getAsSymbol();
+  SymbolRef Sym = state->getSVal(RetE, C.getLocationContext()).getAsSymbol();
   
   if (!Sym)
     return;

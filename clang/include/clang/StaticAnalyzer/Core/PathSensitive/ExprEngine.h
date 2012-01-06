@@ -433,8 +433,10 @@ protected:
                                           const CallOrObjCMessage &Call,
                                           const LocationContext *LC);
 
-  const ProgramState *MarkBranch(const ProgramState *St, const Stmt *Terminator,
-                            bool branchTaken);
+  const ProgramState *MarkBranch(const ProgramState *state,
+                                 const Stmt *Terminator,
+                                 const LocationContext *LCtx,
+                                 bool branchTaken);
 
   /// evalBind - Handle the semantics of binding a value to a specific location.
   ///  This method is used by evalStore, VisitDeclStmt, and others.

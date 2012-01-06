@@ -45,7 +45,7 @@ void CastSizeChecker::checkPreStmt(const CastExpr *CE,CheckerContext &C) const {
     return;
 
   const ProgramState *state = C.getState();
-  const MemRegion *R = state->getSVal(E).getAsRegion();
+  const MemRegion *R = state->getSVal(E, C.getLocationContext()).getAsRegion();
   if (R == 0)
     return;
 

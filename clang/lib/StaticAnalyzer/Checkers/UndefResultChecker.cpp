@@ -36,7 +36,8 @@ public:
 void UndefResultChecker::checkPostStmt(const BinaryOperator *B,
                                        CheckerContext &C) const {
   const ProgramState *state = C.getState();
-  if (state->getSVal(B).isUndef()) {
+  const LocationContext *LCtx = C.getLocationContext();
+  if (state->getSVal(B, LCtx).isUndef()) {
     // Generate an error node.
     ExplodedNode *N = C.generateSink();
     if (!N)
@@ -50,11 +51,11 @@ void UndefResultChecker::checkPostStmt(const BinaryOperator *B,
     const Expr *Ex = NULL;
     bool isLeft = true;
     
-    if (state->getSVal(B->getLHS()).isUndef()) {
+    if (state->getSVal(B->getLHS(), LCtx).isUndef()) {
       Ex = B->getLHS()->IgnoreParenCasts();
       isLeft = true;
     }
-    else if (state->getSVal(B->getRHS()).isUndef()) {
+    else if (state->getSVal(B->getRHS(), LCtx).isUndef()) {
       Ex = B->getRHS()->IgnoreParenCasts();
       isLeft = false;
     }

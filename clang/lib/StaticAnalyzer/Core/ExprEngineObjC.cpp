@@ -22,12 +22,13 @@ void ExprEngine::VisitLvalObjCIvarRefExpr(const ObjCIvarRefExpr *Ex,
                                           ExplodedNode *Pred,
                                           ExplodedNodeSet &Dst) {
   const ProgramState *state = Pred->getState();
-  SVal baseVal = state->getSVal(Ex->getBase());
+  const LocationContext *LCtx = Pred->getLocationContext();
+  SVal baseVal = state->getSVal(Ex->getBase(), LCtx);
   SVal location = state->getLValue(Ex->getDecl(), baseVal);
   
   ExplodedNodeSet dstIvar;
   StmtNodeBuilder Bldr(Pred, dstIvar, *currentBuilderContext);
-  Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, location));
+  Bldr.generateNode(Ex, Pred, state->BindExpr(Ex, LCtx, location));
   
   // Perform the post-condition check of the ObjCIvarRefExpr and store
   // the created nodes in 'Dst'.
@@ -80,7 +81,7 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
     elementV = state->getLValue(elemD, Pred->getLocationContext());
   }
   else {
-    elementV = state->getSVal(elem);
+    elementV = state->getSVal(elem, Pred->getLocationContext());
   }
   
   ExplodedNodeSet dstLocation;
@@ -92,14 +93,15 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
        NE = dstLocation.end(); NI!=NE; ++NI) {
     Pred = *NI;
     const ProgramState *state = Pred->getState();
+    const LocationContext *LCtx = Pred->getLocationContext();
     
     // Handle the case where the container still has elements.
     SVal TrueV = svalBuilder.makeTruthVal(1);
-    const ProgramState *hasElems = state->BindExpr(S, TrueV);
+    const ProgramState *hasElems = state->BindExpr(S, LCtx, TrueV);
     
     // Handle the case where the container has no elements.
     SVal FalseV = svalBuilder.makeTruthVal(0);
-    const ProgramState *noElems = state->BindExpr(S, FalseV);
+    const ProgramState *noElems = state->BindExpr(S, LCtx, FalseV);
     
     if (loc::MemRegionVal *MV = dyn_cast<loc::MemRegionVal>(&elementV))
       if (const TypedValueRegion *R = 
@@ -146,7 +148,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
     
     if (const Expr *Receiver = msg.getInstanceReceiver()) {
       const ProgramState *state = Pred->getState();
-      SVal recVal = state->getSVal(Receiver);
+      SVal recVal = state->getSVal(Receiver, Pred->getLocationContext());
       if (!recVal.isUndef()) {
         // Bifurcate the state into nil and non-nil ones.
         DefinedOrUnknownSVal receiverVal = cast<DefinedOrUnknownSVal>(recVal);
@@ -241,7 +243,7 @@ void ExprEngine::evalObjCMessage(StmtNodeBuilder &Bldr,
     // These methods return their receivers.
     const Expr *ReceiverE = msg.getInstanceReceiver();
     if (ReceiverE)
-      ReturnValue = state->getSVal(ReceiverE);
+      ReturnValue = state->getSVal(ReceiverE, Pred->getLocationContext());
     break;
   }
   }
@@ -256,11 +258,11 @@ void ExprEngine::evalObjCMessage(StmtNodeBuilder &Bldr,
   }
 
   // Bind the return value.
-  state = state->BindExpr(currentStmt, ReturnValue);
+  const LocationContext *LCtx = Pred->getLocationContext();
+  state = state->BindExpr(currentStmt, LCtx, ReturnValue);
 
   // Invalidate the arguments (and the receiver)
-  const LocationContext *LC = Pred->getLocationContext();
-  state = invalidateArguments(state, CallOrObjCMessage(msg, state), LC);
+  state = invalidateArguments(state, CallOrObjCMessage(msg, state, LCtx), LCtx);
 
   // And create the new node.
   Bldr.generateNode(msg.getOriginExpr(), Pred, state, GenSink);

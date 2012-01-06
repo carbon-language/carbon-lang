@@ -220,7 +220,7 @@ static bool isBadDeallocationArgument(const MemRegion *Arg) {
 static SymbolRef getAsPointeeSymbol(const Expr *Expr,
                                     CheckerContext &C) {
   const ProgramState *State = C.getState();
-  SVal ArgV = State->getSVal(Expr);
+  SVal ArgV = State->getSVal(Expr, C.getLocationContext());
 
   if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&ArgV)) {
     StoreManager& SM = C.getStoreManager();
@@ -325,7 +325,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
 
   // Check the argument to the deallocator.
   const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
-  SVal ArgSVal = State->getSVal(ArgExpr);
+  SVal ArgSVal = State->getSVal(ArgExpr, C.getLocationContext());
 
   // Undef is reported by another checker.
   if (ArgSVal.isUndef())
@@ -462,7 +462,8 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
     // allocated value symbol, since our diagnostics depend on the value
     // returned by the call. Ex: Data should only be freed if noErr was
     // returned during allocation.)
-    SymbolRef RetStatusSymbol = State->getSVal(CE).getAsSymbol();
+    SymbolRef RetStatusSymbol =
+      State->getSVal(CE, C.getLocationContext()).getAsSymbol();
     C.getSymbolManager().addSymbolDependency(V, RetStatusSymbol);
 
     // Track the allocated value in the checker state.
@@ -481,7 +482,8 @@ void MacOSKeychainAPIChecker::checkPreStmt(const ReturnStmt *S,
 
   // Check  if the value is escaping through the return.
   const ProgramState *state = C.getState();
-  const MemRegion *V = state->getSVal(retExpr).getAsRegion();
+  const MemRegion *V =
+    state->getSVal(retExpr, C.getLocationContext()).getAsRegion();
   if (!V)
     return;
   state = state->remove<AllocatedData>(getSymbolForRegion(C, V));

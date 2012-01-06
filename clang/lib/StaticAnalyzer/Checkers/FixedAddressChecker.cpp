@@ -45,8 +45,7 @@ void FixedAddressChecker::checkPreStmt(const BinaryOperator *B,
     return;
 
   const ProgramState *state = C.getState();
-
-  SVal RV = state->getSVal(B->getRHS());
+  SVal RV = state->getSVal(B->getRHS(), C.getLocationContext());
 
   if (!RV.isConstant() || RV.isZeroConstant())
     return;

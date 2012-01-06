@@ -95,7 +95,7 @@ public:
     if (!isInstanceMessage())
       return UndefinedVal();
     if (const Expr *Ex = getInstanceReceiver())
-      return State->getSValAsScalarOrLoc(Ex);
+      return State->getSValAsScalarOrLoc(Ex, LC);
 
     // An instance message with no expression means we are sending to super.
     // In this case the object reference is the same as 'self'.
@@ -141,11 +141,13 @@ public:
     return isPropertySetter() ? 1 : 0;
   }
 
-  SVal getArgSVal(unsigned i, const ProgramState *state) const {
+  SVal getArgSVal(unsigned i,
+                  const LocationContext *LCtx,
+                  const ProgramState *state) const {
     assert(isValid() && "This ObjCMessage is uninitialized!");
     assert(i < getNumArgs() && "Invalid index for argument");
     if (const ObjCMessageExpr *msgE = dyn_cast<ObjCMessageExpr>(MsgOrPropE))
-      return state->getSVal(msgE->getArg(i));
+      return state->getSVal(msgE->getArg(i), LCtx);
     assert(isPropertySetter());
     return SetterArgV;
   }
@@ -207,13 +209,17 @@ class CallOrObjCMessage {
   llvm::PointerUnion<const CallExpr *, const CXXConstructExpr *> CallE;
   ObjCMessage Msg;
   const ProgramState *State;
+  const LocationContext *LCtx;
 public:
-  CallOrObjCMessage(const CallExpr *callE, const ProgramState *state)
-    : CallE(callE), State(state) {}
-  CallOrObjCMessage(const CXXConstructExpr *consE, const ProgramState *state)
-    : CallE(consE), State(state) {}
-  CallOrObjCMessage(const ObjCMessage &msg, const ProgramState *state)
-    : CallE((CallExpr *)0), Msg(msg), State(state) {}
+  CallOrObjCMessage(const CallExpr *callE, const ProgramState *state,
+                    const LocationContext *lctx)
+    : CallE(callE), State(state), LCtx(lctx) {}
+  CallOrObjCMessage(const CXXConstructExpr *consE, const ProgramState *state,
+                    const LocationContext *lctx)
+    : CallE(consE), State(state), LCtx(lctx) {}
+  CallOrObjCMessage(const ObjCMessage &msg, const ProgramState *state,
+                    const LocationContext *lctx)
+    : CallE((CallExpr *)0), Msg(msg), State(state), LCtx(lctx) {}
 
   QualType getResultType(ASTContext &ctx) const;
   
@@ -272,8 +278,8 @@ public:
   SVal getArgSVal(unsigned i) const {
     assert(i < getNumArgs());
     if (!CallE)
-      return Msg.getArgSVal(i, State);
-    return State->getSVal(getArg(i));
+      return Msg.getArgSVal(i, LCtx, State);
+    return State->getSVal(getArg(i), LCtx);
   }
 
   const Expr *getArg(unsigned i) const {

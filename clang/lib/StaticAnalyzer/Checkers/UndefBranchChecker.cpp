@@ -28,8 +28,10 @@ class UndefBranchChecker : public Checker<check::BranchCondition> {
 
   struct FindUndefExpr {
     const ProgramState *St;
+    const LocationContext *LCtx;
 
-    FindUndefExpr(const ProgramState *S) : St(S) {}
+    FindUndefExpr(const ProgramState *S, const LocationContext *L) 
+      : St(S), LCtx(L) {}
 
     const Expr *FindExpr(const Expr *Ex) {
       if (!MatchesCriteria(Ex))
@@ -45,7 +47,9 @@ class UndefBranchChecker : public Checker<check::BranchCondition> {
       return Ex;
     }
 
-    bool MatchesCriteria(const Expr *Ex) { return St->getSVal(Ex).isUndef(); }
+    bool MatchesCriteria(const Expr *Ex) { 
+      return St->getSVal(Ex, LCtx).isUndef();
+    }
   };
 
 public:
@@ -56,7 +60,7 @@ public:
 
 void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
                                               CheckerContext &Ctx) const {
-  SVal X = Ctx.getState()->getSVal(Condition);
+  SVal X = Ctx.getState()->getSVal(Condition, Ctx.getLocationContext());
   if (X.isUndef()) {
     // Generate a sink node, which implicitly marks both outgoing branches as
     // infeasible.
@@ -90,7 +94,7 @@ void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
         if (PS->getStmt() == Ex)
           St = PrevN->getState();
 
-      FindUndefExpr FindIt(St);
+      FindUndefExpr FindIt(St, Ctx.getLocationContext());
       Ex = FindIt.FindExpr(Ex);
 
       // Emit the bug report.

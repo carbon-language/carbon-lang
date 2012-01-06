@@ -239,9 +239,12 @@ SVal ProgramState::getSVal(Loc location, QualType T) const {
   return V;
 }
 
-const ProgramState *ProgramState::BindExpr(const Stmt *S, SVal V, bool Invalidate) const{
-  Environment NewEnv = getStateManager().EnvMgr.bindExpr(Env, S, V,
-                                                         Invalidate);
+const ProgramState *ProgramState::BindExpr(const Stmt *S,
+                                           const LocationContext *LCtx,
+                                           SVal V, bool Invalidate) const{
+  Environment NewEnv =
+    getStateManager().EnvMgr.bindExpr(Env, EnvironmentEntry(S, LCtx), V,
+                                      Invalidate);
   if (NewEnv == Env)
     return this;
 
@@ -250,10 +253,14 @@ const ProgramState *ProgramState::BindExpr(const Stmt *S, SVal V, bool Invalidat
   return getStateManager().getPersistentState(NewSt);
 }
 
-const ProgramState *ProgramState::bindExprAndLocation(const Stmt *S, SVal location,
-                                            SVal V) const {
+const ProgramState *
+ProgramState::bindExprAndLocation(const Stmt *S, const LocationContext *LCtx,
+                                  SVal location,
+                                  SVal V) const {
   Environment NewEnv =
-    getStateManager().EnvMgr.bindExprAndLocation(Env, S, location, V);
+    getStateManager().EnvMgr.bindExprAndLocation(Env,
+                                                 EnvironmentEntry(S, LCtx),
+                                                 location, V);
 
   if (NewEnv == Env)
     return this;
@@ -380,114 +387,28 @@ void ProgramState::setStore(const StoreRef &newStore) {
 //  State pretty-printing.
 //===----------------------------------------------------------------------===//
 
-static bool IsEnvLoc(const Stmt *S) {
-  // FIXME: This is a layering violation.  Should be in environment.
-  return (bool) (((uintptr_t) S) & 0x1);
-}
-
-void ProgramState::print(raw_ostream &Out, CFG *C,
+void ProgramState::print(raw_ostream &Out,
                          const char *NL, const char *Sep) const {
   // Print the store.
   ProgramStateManager &Mgr = getStateManager();
   Mgr.getStoreManager().print(getStore(), Out, NL, Sep);
-  bool isFirst = true;
 
-  // FIXME: All environment printing should be moved inside Environment.
-  if (C) {
-    // Print Subexpression bindings.
-    for (Environment::iterator I = Env.begin(), E = Env.end(); I != E; ++I) {
-      if (C->isBlkExpr(I.getKey()) || IsEnvLoc(I.getKey()))
-        continue;
+  // Print out the environment.
+  Env.print(Out, NL, Sep);
 
-      if (isFirst) {
-        Out << NL << NL << "Sub-Expressions:" << NL;
-        isFirst = false;
-      } else {
-        Out << NL;
-      }
-
-      Out << " (" << (void*) I.getKey() << ") ";
-      LangOptions LO; // FIXME.
-      I.getKey()->printPretty(Out, 0, PrintingPolicy(LO));
-      Out << " : " << I.getData();
-    }
-
-    // Print block-expression bindings.
-    isFirst = true;
-    for (Environment::iterator I = Env.begin(), E = Env.end(); I != E; ++I) {
-      if (!C->isBlkExpr(I.getKey()))
-        continue;
-
-      if (isFirst) {
-        Out << NL << NL << "Block-level Expressions:" << NL;
-        isFirst = false;
-      } else {
-        Out << NL;
-      }
-
-      Out << " (" << (void*) I.getKey() << ") ";
-      LangOptions LO; // FIXME.
-      I.getKey()->printPretty(Out, 0, PrintingPolicy(LO));
-      Out << " : " << I.getData();
-    }
-  } else {
-    // Print All bindings - no info to differentiate block from subexpressions.
-    for (Environment::iterator I = Env.begin(), E = Env.end(); I != E; ++I) {
-      if (IsEnvLoc(I.getKey()))
-        continue;
-
-      if (isFirst) {
-        Out << NL << NL << "Expressions:" << NL;
-        isFirst = false;
-      } else {
-        Out << NL;
-      }
-
-      Out << " (" << (void*) I.getKey() << ") ";
-      LangOptions LO; // FIXME.
-      I.getKey()->printPretty(Out, 0, PrintingPolicy(LO));
-      Out << " : " << I.getData();
-    }
-  }
-
-  // Print locations.
-  isFirst = true;
-  
-  for (Environment::iterator I = Env.begin(), E = Env.end(); I != E; ++I) {
-    if (!IsEnvLoc(I.getKey()))
-      continue;
-    
-    if (isFirst) {
-      Out << NL << NL << "Load/store locations:" << NL;
-      isFirst = false;
-    } else {
-      Out << NL;
-    }
-
-    const Stmt *S = (Stmt*) (((uintptr_t) I.getKey()) & ((uintptr_t) ~0x1));
-    
-    Out << " (" << (void*) S << ") ";
-    LangOptions LO; // FIXME.
-    S->printPretty(Out, 0, PrintingPolicy(LO));
-    Out << " : " << I.getData();
-  }
-
+  // Print out the constraints.
   Mgr.getConstraintManager().print(this, Out, NL, Sep);
 
   // Print checker-specific data.
   Mgr.getOwningEngine()->printState(Out, this, NL, Sep);
 }
 
-void ProgramState::printDOT(raw_ostream &Out, CFG &C) const {
-  print(Out, &C, "\\l", "\\|");
-}
-
-void ProgramState::dump(CFG &C) const {
-  print(llvm::errs(), &C);
+void ProgramState::printDOT(raw_ostream &Out) const {
+  print(Out, "\\l", "\\|");
 }
 
 void ProgramState::dump() const {
-  print(llvm::errs(), 0);
+  print(llvm::errs());
 }
 
 //===----------------------------------------------------------------------===//
@@ -654,15 +575,16 @@ bool ProgramState::scanReachableSymbols(const MemRegion * const *I,
 }
 
 const ProgramState* ProgramState::addTaint(const Stmt *S,
+                                           const LocationContext *LCtx,
                                            TaintTagType Kind) const {
   if (const Expr *E = dyn_cast_or_null<Expr>(S))
     S = E->IgnoreParens();
 
-  SymbolRef Sym = getSVal(S).getAsSymbol();
+  SymbolRef Sym = getSVal(S, LCtx).getAsSymbol();
   if (Sym)
     return addTaint(Sym, Kind);
 
-  const MemRegion *R = getSVal(S).getAsRegion();
+  const MemRegion *R = getSVal(S, LCtx).getAsRegion();
   addTaint(R, Kind);
 
   // Cannot add taint, so just return the state.
@@ -683,11 +605,12 @@ const ProgramState* ProgramState::addTaint(SymbolRef Sym,
   return NewState;
 }
 
-bool ProgramState::isTainted(const Stmt *S, TaintTagType Kind) const {
+bool ProgramState::isTainted(const Stmt *S, const LocationContext *LCtx,
+                             TaintTagType Kind) const {
   if (const Expr *E = dyn_cast_or_null<Expr>(S))
     S = E->IgnoreParens();
 
-  SVal val = getSVal(S);
+  SVal val = getSVal(S, LCtx);
   return isTainted(val, Kind);
 }
 

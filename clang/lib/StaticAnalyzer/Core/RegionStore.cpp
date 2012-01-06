@@ -1863,7 +1863,7 @@ StoreRef RegionStoreManager::enterStackFrame(const ProgramState *state,
     // PI != PE because the actual number of arguments may be different than
     // the function declaration.
     for (; AI != AE && PI != PE; ++AI, ++PI) {
-      SVal ArgVal = state->getSVal(*AI);
+      SVal ArgVal = state->getSVal(*AI, frame);
       store = Bind(store.getStore(),
                    svalBuilder.makeLoc(MRMgr.getVarRegion(*PI, frame)), ArgVal);
     }
@@ -1874,7 +1874,7 @@ StoreRef RegionStoreManager::enterStackFrame(const ProgramState *state,
 
     // Copy the arg expression value to the arg variables.
     for (; AI != AE; ++AI, ++PI) {
-      SVal ArgVal = state->getSVal(*AI);
+      SVal ArgVal = state->getSVal(*AI, frame);
       store = Bind(store.getStore(),
                    svalBuilder.makeLoc(MRMgr.getVarRegion(*PI,frame)), ArgVal);
     }

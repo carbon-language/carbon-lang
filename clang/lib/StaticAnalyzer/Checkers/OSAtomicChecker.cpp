@@ -36,9 +36,10 @@ private:
 }
 
 static StringRef getCalleeName(const ProgramState *State,
-                               const CallExpr *CE) {
+                               const CallExpr *CE,
+                               const LocationContext *LCtx) {
   const Expr *Callee = CE->getCallee();
-  SVal L = State->getSVal(Callee);
+  SVal L = State->getSVal(Callee, LCtx);
   const FunctionDecl *funDecl =  L.getAsFunctionDecl();
   if (!funDecl)
     return StringRef();
@@ -52,7 +53,8 @@ bool OSAtomicChecker::inlineCall(const CallExpr *CE,
                                  ExprEngine &Eng,
                                  ExplodedNode *Pred,
                                  ExplodedNodeSet &Dst) const {
-  StringRef FName = getCalleeName(Pred->getState(), CE);
+  StringRef FName = getCalleeName(Pred->getState(),
+                                  CE, Pred->getLocationContext());
   if (FName.empty())
     return false;
 
@@ -103,8 +105,9 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
   
   // Load 'theValue'.
   const ProgramState *state = Pred->getState();
+  const LocationContext *LCtx = Pred->getLocationContext();
   ExplodedNodeSet Tmp;
-  SVal location = state->getSVal(theValueExpr);
+  SVal location = state->getSVal(theValueExpr, LCtx);
   // Here we should use the value type of the region as the load type, because
   // we are simulating the semantics of the function, not the semantics of 
   // passing argument. So the type of theValue expr is not we are loading.
@@ -135,9 +138,9 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
     // Use direct bindings from the environment since we are forcing a load
     // from a location that the Environment would typically not be used
     // to bind a value.
-    SVal theValueVal_untested = stateLoad->getSVal(theValueExpr, true);
+    SVal theValueVal_untested = stateLoad->getSVal(theValueExpr, LCtx, true);
 
-    SVal oldValueVal_untested = stateLoad->getSVal(oldValueExpr);
+    SVal oldValueVal_untested = stateLoad->getSVal(oldValueExpr, LCtx);
 
     // FIXME: Issue an error.
     if (theValueVal_untested.isUndef() || oldValueVal_untested.isUndef()) {
@@ -161,7 +164,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
     if (stateEqual) {
       // Perform the store.
       ExplodedNodeSet TmpStore;
-      SVal val = stateEqual->getSVal(newValueExpr);
+      SVal val = stateEqual->getSVal(newValueExpr, LCtx);
 
       // Handle implicit value casts.
       if (const TypedValueRegion *R =
@@ -189,7 +192,8 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
         QualType T = CE->getType();
         if (!T->isVoidType())
           Res = Eng.getSValBuilder().makeTruthVal(true, T);
-        B.generateNode(CE, predNew, stateNew->BindExpr(CE, Res), false, this);
+        B.generateNode(CE, predNew, stateNew->BindExpr(CE, LCtx, Res),
+                       false, this);
       }
     }
 
@@ -201,7 +205,8 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
       if (!T->isVoidType())
         Res = Eng.getSValBuilder().makeTruthVal(false, CE->getType());
       StmtNodeBuilder B(N, Dst, Eng.getBuilderContext());    
-      B.generateNode(CE, N, stateNotEqual->BindExpr(CE, Res), false, this);
+      B.generateNode(CE, N, stateNotEqual->BindExpr(CE, LCtx, Res),
+                     false, this);
     }
   }
 

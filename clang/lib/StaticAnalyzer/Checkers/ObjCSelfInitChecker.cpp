@@ -156,7 +156,7 @@ static bool hasSelfFlag(SVal val, SelfFlagEnum flag, CheckerContext &C) {
 /// points to and is an object that did not come from the result of calling
 /// an initializer.
 static bool isInvalidSelf(const Expr *E, CheckerContext &C) {
-  SVal exprVal = C.getState()->getSVal(E);
+  SVal exprVal = C.getState()->getSVal(E, C.getLocationContext());
   if (!hasSelfFlag(exprVal, SelfFlag_Self, C))
     return false; // value did not come from 'self'.
   if (hasSelfFlag(exprVal, SelfFlag_InitRes, C))
@@ -206,7 +206,7 @@ void ObjCSelfInitChecker::checkPostObjCMessage(ObjCMessage msg,
     // value out when we return from this method.
     state = state->set<CalledInit>(true);
     
-    SVal V = state->getSVal(msg.getOriginExpr());
+    SVal V = state->getSVal(msg.getOriginExpr(), C.getLocationContext());
     addSelfFlag(state, V, SelfFlag_InitRes, C);
     return;
   }
@@ -262,7 +262,7 @@ void ObjCSelfInitChecker::checkPreStmt(const CallExpr *CE,
   const ProgramState *state = C.getState();
   for (CallExpr::const_arg_iterator
          I = CE->arg_begin(), E = CE->arg_end(); I != E; ++I) {
-    SVal argV = state->getSVal(*I);
+    SVal argV = state->getSVal(*I, C.getLocationContext());
     if (isSelfVar(argV, C)) {
       unsigned selfFlags = getSelfFlags(state->getSVal(cast<Loc>(argV)), C);
       C.addTransition(state->set<PreCallSelfFlags>(selfFlags));
@@ -278,9 +278,10 @@ void ObjCSelfInitChecker::checkPreStmt(const CallExpr *CE,
 void ObjCSelfInitChecker::checkPostStmt(const CallExpr *CE,
                                         CheckerContext &C) const {
   const ProgramState *state = C.getState();
+  const LocationContext *LCtx = C.getLocationContext();
   for (CallExpr::const_arg_iterator
          I = CE->arg_begin(), E = CE->arg_end(); I != E; ++I) {
-    SVal argV = state->getSVal(*I);
+    SVal argV = state->getSVal(*I, LCtx);
     if (isSelfVar(argV, C)) {
       SelfFlagEnum prevFlags = (SelfFlagEnum)state->get<PreCallSelfFlags>();
       state = state->remove<PreCallSelfFlags>();
@@ -289,7 +290,7 @@ void ObjCSelfInitChecker::checkPostStmt(const CallExpr *CE,
     } else if (hasSelfFlag(argV, SelfFlag_Self, C)) {
       SelfFlagEnum prevFlags = (SelfFlagEnum)state->get<PreCallSelfFlags>();
       state = state->remove<PreCallSelfFlags>();
-      addSelfFlag(state, state->getSVal(CE), prevFlags, C);
+      addSelfFlag(state, state->getSVal(CE, LCtx), prevFlags, C);
       return;
     }
   }

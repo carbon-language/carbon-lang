@@ -16,6 +16,7 @@
 #define LLVM_CLANG_GR_COREENGINE
 
 #include "clang/AST/Expr.h"
+#include "clang/Analysis/AnalysisContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/WorkList.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/BlockCounter.h"
@@ -469,6 +470,10 @@ public:
   const Expr *getTarget() const { return E; }
 
   const ProgramState *getState() const { return Pred->State; }
+  
+  const LocationContext *getLocationContext() const {
+    return Pred->getLocationContext();
+  }
 };
 
 class SwitchNodeBuilder {
@@ -518,6 +523,10 @@ public:
   const Expr *getCondition() const { return Condition; }
 
   const ProgramState *getState() const { return Pred->State; }
+  
+  const LocationContext *getLocationContext() const {
+    return Pred->getLocationContext();
+  }
 };
 
 class CallEnterNodeBuilder {

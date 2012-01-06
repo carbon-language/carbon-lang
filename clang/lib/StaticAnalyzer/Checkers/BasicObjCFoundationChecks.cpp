@@ -129,7 +129,7 @@ void NilArgChecker::checkPreObjCMessage(ObjCMessage msg,
         Name == "compare:options:range:locale:" ||
         Name == "componentsSeparatedByCharactersInSet:" ||
         Name == "initWithFormat:") {
-      if (isNil(msg.getArgSVal(0, C.getState())))
+      if (isNil(msg.getArgSVal(0, C.getLocationContext(), C.getState())))
         WarnNilArg(C, msg, 0);
     }
   }
@@ -262,7 +262,8 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
     return;
 
   // Get the value of the "theType" argument.
-  SVal TheTypeVal = state->getSVal(CE->getArg(1));
+  const LocationContext *LCtx = C.getLocationContext();
+  SVal TheTypeVal = state->getSVal(CE->getArg(1), LCtx);
 
   // FIXME: We really should allow ranges of valid theType values, and
   //   bifurcate the state appropriately.
@@ -280,7 +281,7 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
   // Look at the value of the integer being passed by reference.  Essentially
   // we want to catch cases where the value passed in is not equal to the
   // size of the type being created.
-  SVal TheValueExpr = state->getSVal(CE->getArg(2));
+  SVal TheValueExpr = state->getSVal(CE->getArg(2), LCtx);
 
   // FIXME: Eventually we should handle arbitrary locations.  We can do this
   //  by having an enhanced memory model that does low-level typing.
@@ -382,7 +383,7 @@ void CFRetainReleaseChecker::checkPreStmt(const CallExpr *CE,
 
   // Get the argument's value.
   const Expr *Arg = CE->getArg(0);
-  SVal ArgVal = state->getSVal(Arg);
+  SVal ArgVal = state->getSVal(Arg, C.getLocationContext());
   DefinedSVal *DefArgVal = dyn_cast<DefinedSVal>(&ArgVal);
   if (!DefArgVal)
     return;
@@ -593,7 +594,8 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
       continue;
 
     // Ignore pointer constants.
-    if (isa<loc::ConcreteInt>(msg.getArgSVal(I, state)))
+    if (isa<loc::ConcreteInt>(msg.getArgSVal(I, C.getLocationContext(),
+                                             state)))
       continue;
     
     // Ignore pointer types annotated with 'NSObject' attribute.

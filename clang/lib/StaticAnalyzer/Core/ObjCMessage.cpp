@@ -125,7 +125,7 @@ QualType CallOrObjCMessage::getResultType(ASTContext &ctx) const {
 
     isLVal = FunctionCall->isLValue();
     const Expr *Callee = FunctionCall->getCallee();
-    if (const FunctionDecl *FD = State->getSVal(Callee).getAsFunctionDecl())
+    if (const FunctionDecl *FD = State->getSVal(Callee, LCtx).getAsFunctionDecl())
       resultTy = FD->getResultType();
     else
       resultTy = FunctionCall->getType();
@@ -141,7 +141,7 @@ SVal CallOrObjCMessage::getFunctionCallee() const {
   assert(isFunctionCall());
   assert(!isCXXCall());
   const Expr *Fun = CallE.get<const CallExpr *>()->getCallee()->IgnoreParens();
-  return State->getSVal(Fun);
+  return State->getSVal(Fun, LCtx);
 }
 
 SVal CallOrObjCMessage::getCXXCallee() const {
@@ -155,7 +155,7 @@ SVal CallOrObjCMessage::getCXXCallee() const {
   if (!callee)
     return UnknownVal();
   
-  return State->getSVal(callee);
+  return State->getSVal(callee, LCtx);
 }
 
 SVal

@@ -37,8 +37,9 @@ void PointerArithChecker::checkPreStmt(const BinaryOperator *B,
     return;
 
   const ProgramState *state = C.getState();
-  SVal LV = state->getSVal(B->getLHS());
-  SVal RV = state->getSVal(B->getRHS());
+  const LocationContext *LCtx = C.getLocationContext();
+  SVal LV = state->getSVal(B->getLHS(), LCtx);
+  SVal RV = state->getSVal(B->getRHS(), LCtx);
 
   const MemRegion *LR = LV.getAsRegion();
 

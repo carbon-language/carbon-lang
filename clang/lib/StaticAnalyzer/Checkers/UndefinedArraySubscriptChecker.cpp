@@ -34,7 +34,7 @@ public:
 void 
 UndefinedArraySubscriptChecker::checkPreStmt(const ArraySubscriptExpr *A,
                                              CheckerContext &C) const {
-  if (C.getState()->getSVal(A->getIdx()).isUndef()) {
+  if (C.getState()->getSVal(A->getIdx(), C.getLocationContext()).isUndef()) {
     if (ExplodedNode *N = C.generateSink()) {
       if (!BT)
         BT.reset(new BuiltinBug("Array subscript is undefined"));

@@ -154,7 +154,7 @@ SymbolRef GenericTaintChecker::getPointedToSymbol(CheckerContext &C,
                                                   const Expr* Arg,
                                                   bool IssueWarning) const {
   const ProgramState *State = C.getState();
-  SVal AddrVal = State->getSVal(Arg->IgnoreParens());
+  SVal AddrVal = State->getSVal(Arg->IgnoreParens(), C.getLocationContext());
   if (AddrVal.isUnknownOrUndef())
     return 0;
 
@@ -185,7 +185,8 @@ const ProgramState *GenericTaintChecker::preFscanf(const CallExpr *CE,
   const ProgramState *State = C.getState();
 
   // Check is the file descriptor is tainted.
-  if (State->isTainted(CE->getArg(0)) || isStdin(CE->getArg(0), C))
+  if (State->isTainted(CE->getArg(0), C.getLocationContext()) ||
+      isStdin(CE->getArg(0), C))
     return State->set<TaintOnPreVisit>(PrevisitTaintArgs);
   return 0;
 }
@@ -196,7 +197,8 @@ const ProgramState * GenericTaintChecker::preAnyArgs(const CallExpr *CE,
   for (unsigned int i = 0; i < CE->getNumArgs(); ++i) {
     const ProgramState *State = C.getState();
     const Expr *Arg = CE->getArg(i);
-    if (State->isTainted(Arg) || State->isTainted(getPointedToSymbol(C, Arg)))
+    if (State->isTainted(Arg, C.getLocationContext()) ||
+        State->isTainted(getPointedToSymbol(C, Arg)))
       return State = State->set<TaintOnPreVisit>(PrevisitTaintRet);
   }
   return 0;
@@ -209,7 +211,7 @@ const ProgramState *GenericTaintChecker::postDefault(const CallExpr *CE,
   // Check if we know that the result needs to be tainted based on the
   // pre-visit analysis.
   if (State->get<TaintOnPreVisit>() == PrevisitTaintRet) {
-    State = State->addTaint(CE);
+    State = State->addTaint(CE, C.getLocationContext());
     return State->set<TaintOnPreVisit>(PrevisitNone);
   }
 
@@ -220,7 +222,7 @@ const ProgramState *GenericTaintChecker::postScanf(const CallExpr *CE,
                                                    CheckerContext &C) const {
   const ProgramState *State = C.getState();
   assert(CE->getNumArgs() >= 2);
-  SVal x = State->getSVal(CE->getArg(1));
+  SVal x = State->getSVal(CE->getArg(1), C.getLocationContext());
   // All arguments except for the very first one should get taint.
   for (unsigned int i = 1; i < CE->getNumArgs(); ++i) {
     // The arguments are pointer arguments. The data they are pointing at is
@@ -262,13 +264,13 @@ const ProgramState *GenericTaintChecker::postFscanf(const CallExpr *CE,
 
 const ProgramState *GenericTaintChecker::postRetTaint(const CallExpr *CE,
                                                       CheckerContext &C) const {
-  return C.getState()->addTaint(CE);
+  return C.getState()->addTaint(CE, C.getLocationContext());
 }
 
 bool GenericTaintChecker::isStdin(const Expr *E,
                                   CheckerContext &C) const {
   const ProgramState *State = C.getState();
-  SVal Val = State->getSVal(E);
+  SVal Val = State->getSVal(E, C.getLocationContext());
 
   // stdin is a pointer, so it would be a region.
   const MemRegion *MemReg = Val.getAsRegion();

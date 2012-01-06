@@ -119,7 +119,7 @@ void StackAddrEscapeChecker::checkPreStmt(const ReturnStmt *RS,
   if (!RetE)
     return;
  
-  SVal V = C.getState()->getSVal(RetE);
+  SVal V = C.getState()->getSVal(RetE, C.getLocationContext());
   const MemRegion *R = V.getAsRegion();
 
   if (!R || !R->hasStackStorage())

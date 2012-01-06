@@ -339,7 +339,7 @@ bugreporter::getTrackNullOrUndefValueVisitor(const ExplodedNode *N,
     }
   }
 
-  SVal V = state->getSValAsScalarOrLoc(S);
+  SVal V = state->getSValAsScalarOrLoc(S, N->getLocationContext());
 
   // Uncomment this to find cases where we aren't properly getting the
   // base value that was dereferenced.
@@ -389,7 +389,7 @@ PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
   if (!Receiver)
     return 0;
   const ProgramState *state = N->getState();
-  const SVal &V = state->getSVal(Receiver);
+  const SVal &V = state->getSVal(Receiver, N->getLocationContext());
   const DefinedOrUnknownSVal *DV = dyn_cast<DefinedOrUnknownSVal>(&V);
   if (!DV)
     return 0;
@@ -428,7 +428,7 @@ void FindLastStoreBRVisitor::registerStatementVarDecls(BugReport &BR,
         StateMgr.getRegionManager().getVarRegion(VD, N->getLocationContext());
 
         // What did we load?
-        SVal V = state->getSVal(S);
+        SVal V = state->getSVal(S, N->getLocationContext());
 
         if (isa<loc::ConcreteInt>(V) || isa<nonloc::ConcreteInt>(V)) {
           // Register a new visitor with the BugReport.

@@ -1312,7 +1312,7 @@ RetainSummaryManager::getInstanceMethodSummary(const ObjCMessage &msg,
   SVal receiverV;
 
   if (Receiver) {
-    receiverV = state->getSValAsScalarOrLoc(Receiver);
+    receiverV = state->getSValAsScalarOrLoc(Receiver, LC);
 
     // FIXME: Eventually replace the use of state->get<RefBindings> with
     // a generic API for reasoning about the Objective-C types of symbolic
@@ -1841,6 +1841,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
   // Check if the type state has changed.
   const ProgramState *PrevSt = PrevN->getState();
   const ProgramState *CurrSt = N->getState();
+  const LocationContext *LCtx = N->getLocationContext();
 
   const RefVal* CurrT = CurrSt->get<RefBindings>(Sym);
   if (!CurrT) return NULL;
@@ -1860,7 +1861,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
 
     if (const CallExpr *CE = dyn_cast<CallExpr>(S)) {
       // Get the name of the callee (if it is available).
-      SVal X = CurrSt->getSValAsScalarOrLoc(CE->getCallee());
+      SVal X = CurrSt->getSValAsScalarOrLoc(CE->getCallee(), LCtx);
       if (const FunctionDecl *FD = X.getAsFunctionDecl())
         os << "Call to function '" << *FD << '\'';
       else
@@ -1920,7 +1921,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
 
         // Retrieve the value of the argument.  Is it the symbol
         // we are interested in?
-        if (CurrSt->getSValAsScalarOrLoc(*AI).getAsLocSymbol() != Sym)
+        if (CurrSt->getSValAsScalarOrLoc(*AI, LCtx).getAsLocSymbol() != Sym)
           continue;
 
         // We have an argument.  Get the effect!
@@ -1929,7 +1930,8 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
     }
     else if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S)) {
       if (const Expr *receiver = ME->getInstanceReceiver())
-        if (CurrSt->getSValAsScalarOrLoc(receiver).getAsLocSymbol() == Sym) {
+        if (CurrSt->getSValAsScalarOrLoc(receiver, LCtx)
+              .getAsLocSymbol() == Sym) {
           // The symbol we are tracking is the receiver.
           AEffects.push_back(Summ->getReceiverEffect());
         }
@@ -1957,7 +1959,8 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
     if (contains(AEffects, MakeCollectable)) {
       // Get the name of the function.
       const Stmt *S = cast<StmtPoint>(N->getLocation()).getStmt();
-      SVal X = CurrSt->getSValAsScalarOrLoc(cast<CallExpr>(S)->getCallee());
+      SVal X =
+        CurrSt->getSValAsScalarOrLoc(cast<CallExpr>(S)->getCallee(), LCtx);
       const FunctionDecl *FD = X.getAsFunctionDecl();
 
       if (GCEnabled) {
@@ -2069,7 +2072,7 @@ PathDiagnosticPiece *CFRefReportVisitor::VisitNode(const ExplodedNode *N,
   for (Stmt::const_child_iterator I = S->child_begin(), E = S->child_end();
        I!=E; ++I)
     if (const Expr *Exp = dyn_cast_or_null<Expr>(*I))
-      if (CurrSt->getSValAsScalarOrLoc(Exp).getAsLocSymbol() == Sym) {
+      if (CurrSt->getSValAsScalarOrLoc(Exp, LCtx).getAsLocSymbol() == Sym) {
         P->addRange(Exp->getSourceRange());
         break;
       }
@@ -2505,7 +2508,8 @@ void RetainCountChecker::checkPostStmt(const BlockExpr *BE,
 
   const ProgramState *state = C.getState();
   const BlockDataRegion *R =
-    cast<BlockDataRegion>(state->getSVal(BE).getAsRegion());
+    cast<BlockDataRegion>(state->getSVal(BE,
+                                         C.getLocationContext()).getAsRegion());
 
   BlockDataRegion::referenced_vars_iterator I = R->referenced_vars_begin(),
                                             E = R->referenced_vars_end();
@@ -2555,7 +2559,7 @@ void RetainCountChecker::checkPostStmt(const CastExpr *CE,
   }
   
   const ProgramState *state = C.getState();
-  SymbolRef Sym = state->getSVal(CE).getAsLocSymbol();
+  SymbolRef Sym = state->getSVal(CE, C.getLocationContext()).getAsLocSymbol();
   if (!Sym)
     return;
   const RefVal* T = state->get<RefBindings>(Sym);
@@ -2579,7 +2583,7 @@ void RetainCountChecker::checkPostStmt(const CallExpr *CE,
   // Get the callee.
   const ProgramState *state = C.getState();
   const Expr *Callee = CE->getCallee();
-  SVal L = state->getSVal(Callee);
+  SVal L = state->getSVal(Callee, C.getLocationContext());
 
   RetainSummaryManager &Summaries = getSummaryManager(C);
   const RetainSummary *Summ = 0;
@@ -2599,7 +2603,7 @@ void RetainCountChecker::checkPostStmt(const CallExpr *CE,
   if (!Summ)
     Summ = Summaries.getDefaultSummary();
 
-  checkSummary(*Summ, CallOrObjCMessage(CE, state), C);
+  checkSummary(*Summ, CallOrObjCMessage(CE, state, C.getLocationContext()), C);
 }
 
 void RetainCountChecker::checkPostStmt(const CXXConstructExpr *CE,
@@ -2616,7 +2620,7 @@ void RetainCountChecker::checkPostStmt(const CXXConstructExpr *CE,
     return;
 
   const ProgramState *state = C.getState();
-  checkSummary(*Summ, CallOrObjCMessage(CE, state), C);
+  checkSummary(*Summ, CallOrObjCMessage(CE, state, C.getLocationContext()), C);
 }
 
 void RetainCountChecker::checkPostObjCMessage(const ObjCMessage &Msg, 
@@ -2637,7 +2641,7 @@ void RetainCountChecker::checkPostObjCMessage(const ObjCMessage &Msg,
   if (!Summ)
     return;
 
-  checkSummary(*Summ, CallOrObjCMessage(Msg, state), C);
+  checkSummary(*Summ, CallOrObjCMessage(Msg, state, C.getLocationContext()), C);
 }
 
 /// GetReturnType - Used to get the return type of a message expression or
@@ -2737,7 +2741,8 @@ void RetainCountChecker::checkSummary(const RetainSummary &Summ,
 
     case RetEffect::OwnedAllocatedSymbol:
     case RetEffect::OwnedSymbol: {
-      SymbolRef Sym = state->getSVal(CallOrMsg.getOriginExpr()).getAsSymbol();
+      SymbolRef Sym = state->getSVal(CallOrMsg.getOriginExpr(),
+                                     C.getLocationContext()).getAsSymbol();
       if (!Sym)
         break;
 
@@ -2764,7 +2769,7 @@ void RetainCountChecker::checkSummary(const RetainSummary &Summ,
     case RetEffect::ARCNotOwnedSymbol:
     case RetEffect::NotOwnedSymbol: {
       const Expr *Ex = CallOrMsg.getOriginExpr();
-      SymbolRef Sym = state->getSVal(Ex).getAsSymbol();
+      SymbolRef Sym = state->getSVal(Ex, C.getLocationContext()).getAsSymbol();
       if (!Sym)
         break;
 
@@ -3030,14 +3035,15 @@ bool RetainCountChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
     return false;
 
   // Bind the return value.
-  SVal RetVal = state->getSVal(CE->getArg(0));
+  const LocationContext *LCtx = C.getLocationContext();
+  SVal RetVal = state->getSVal(CE->getArg(0), LCtx);
   if (RetVal.isUnknown()) {
     // If the receiver is unknown, conjure a return value.
     SValBuilder &SVB = C.getSValBuilder();
     unsigned Count = C.getCurrentBlockCount();
     SVal RetVal = SVB.getConjuredSymbolVal(0, CE, ResultTy, Count);
   }
-  state = state->BindExpr(CE, RetVal, false);
+  state = state->BindExpr(CE, LCtx, RetVal, false);
 
   // FIXME: This should not be necessary, but otherwise the argument seems to be
   // considered alive during the next statement.
@@ -3072,7 +3078,8 @@ void RetainCountChecker::checkPreStmt(const ReturnStmt *S,
     return;
 
   const ProgramState *state = C.getState();
-  SymbolRef Sym = state->getSValAsScalarOrLoc(RetE).getAsLocSymbol();
+  SymbolRef Sym =
+    state->getSValAsScalarOrLoc(RetE, C.getLocationContext()).getAsLocSymbol();
   if (!Sym)
     return;
 

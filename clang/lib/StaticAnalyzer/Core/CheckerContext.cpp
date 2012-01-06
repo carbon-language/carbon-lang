@@ -19,7 +19,7 @@ using namespace ento;
 const FunctionDecl *CheckerContext::getCalleeDecl(const CallExpr *CE) const {
   const ProgramState *State = getState();
   const Expr *Callee = CE->getCallee();
-  SVal L = State->getSVal(Callee);
+  SVal L = State->getSVal(Callee, Pred->getLocationContext());
   return L.getAsFunctionDecl();
 }
 

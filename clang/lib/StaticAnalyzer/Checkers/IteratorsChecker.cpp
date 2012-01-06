@@ -254,7 +254,7 @@ const ProgramState *IteratorsChecker::handleAssign(const ProgramState *state,
     lexp = M->GetTemporaryExpr();
   if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(lexp))
     lexp = ICE->getSubExpr();
-  SVal sv = state->getSVal(lexp);
+  SVal sv = state->getSVal(lexp, LC);
   const MemRegion *MR = sv.getAsRegion();
   if (!MR)
     return state;
@@ -574,7 +574,7 @@ void IteratorsChecker::checkPreStmt(const CXXMemberCallExpr *MCE,
   const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ME->getBase());
   if (!DRE || getTemplateKind(DRE->getType()) != VectorKind)
     return;
-  SVal tsv = C.getState()->getSVal(DRE);
+  SVal tsv = C.getState()->getSVal(DRE, C.getLocationContext());
   // Get the MemRegion associated with the container instance.
   const MemRegion *MR = tsv.getAsRegion();
   if (!MR)
