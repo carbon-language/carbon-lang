@@ -967,11 +967,11 @@ OPTIONS:
                   exit status of $Prog to be 1 if it found potential bugs
                   and 0 otherwise.
 
- --use-cc [compiler path]   - By default, $Prog uses 'gcc' to compile and link
+ --use-cc [compiler path]   - $Prog attempts to guess the default compiler for
  --use-cc=[compiler path]     your C and Objective-C code. Use this option
                               to specify an alternate compiler.
 
- --use-c++ [compiler path]  - By default, $Prog uses 'g++' to compile and link
+ --use-c++ [compiler path]  - $Prog attempts to guess the default compiler for
  --use-c++=[compiler path]    your C++ and Objective-C++ code. Use this option
                               to specify an alternate compiler.
 
