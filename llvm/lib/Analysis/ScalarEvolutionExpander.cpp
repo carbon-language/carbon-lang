@@ -1564,7 +1564,7 @@ bool SCEVExpander::hoistStep(Instruction *IncV, Instruction *InsertPos,
   for (User::op_iterator OI = IncV->op_begin(), OE = IncV->op_end();
        OI != OE; ++OI) {
     Instruction *OInst = dyn_cast<Instruction>(OI);
-    if (OInst && !DT->dominates(OInst, InsertPos))
+    if (OInst && (OInst == InsertPos || !DT->dominates(OInst, InsertPos)))
       return false;
   }
   IncV->moveBefore(InsertPos);
