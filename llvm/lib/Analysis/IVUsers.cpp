@@ -83,6 +83,11 @@ static bool isInteresting(const SCEV *S, const Instruction *I, const Loop *L,
 /// reducible SCEV, recursively add its users to the IVUsesByStride set and
 /// return true.  Otherwise, return false.
 bool IVUsers::AddUsersIfInteresting(Instruction *I) {
+  // Add this IV user to the Processed set before returning false to ensure that
+  // all IV users are members of the set. See IVUsers::isIVUserOrOperand.
+  if (!Processed.insert(I))
+    return true;    // Instruction already handled.
+
   if (!SE->isSCEVable(I->getType()))
     return false;   // Void and FP expressions cannot be reduced.
 
@@ -92,9 +97,6 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
   uint64_t Width = SE->getTypeSizeInBits(I->getType());
   if (Width > 64 || (TD && !TD->isLegalInteger(Width)))
     return false;
-
-  if (!Processed.insert(I))
-    return true;    // Instruction already handled.
 
   // Get the symbolic expression for this instruction.
   const SCEV *ISE = SE->getSCEV(I);
@@ -268,6 +270,7 @@ void IVStrideUse::transformToPostInc(const Loop *L) {
 
 void IVStrideUse::deleted() {
   // Remove this user from the list.
+  Parent->Processed.erase(this->getUser());
   Parent->IVUses.erase(this);
   // this now dangles!
 }

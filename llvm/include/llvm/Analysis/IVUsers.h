@@ -166,6 +166,10 @@ public:
   const_iterator end() const   { return IVUses.end(); }
   bool empty() const { return IVUses.empty(); }
 
+  bool isIVUserOrOperand(Instruction *Inst) const {
+    return Processed.count(Inst);
+  }
+
   void print(raw_ostream &OS, const Module* = 0) const;
 
   /// dump - This method is used for debugging.
