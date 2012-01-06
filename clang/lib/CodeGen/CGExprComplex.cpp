@@ -680,7 +680,7 @@ VisitAbstractConditionalOperator(const AbstractConditionalOperator *E) {
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("cond.end");
 
   // Bind the common expression if necessary.
-  CodeGenFunction::OpaqueValueMapping(CGF, E);
+  CodeGenFunction::OpaqueValueMapping binding(CGF, E);
 
   CodeGenFunction::ConditionalEvaluation eval(CGF);
   CGF.EmitBranchOnBoolExpr(E->getCond(), LHSBlock, RHSBlock);

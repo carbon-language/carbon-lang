@@ -1226,7 +1226,7 @@ void ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
   RedeclKind Kind = (RedeclKind)Record[Idx++];
   
   // Determine the first declaration ID.
-  DeclID FirstDeclID = 0;
+  DeclID FirstDeclID;
   switch (Kind) {
   case FirstDeclaration: {
     FirstDeclID = ThisDeclID;
@@ -1481,7 +1481,7 @@ ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
   enum RedeclKind { FirstDeclaration = 0, FirstInFile, PointsToPrevious };
   RedeclKind Kind = (RedeclKind)Record[Idx++];
   
-  DeclID FirstDeclID = 0;
+  DeclID FirstDeclID;
   switch (Kind) {
   case FirstDeclaration:
     FirstDeclID = ThisDeclID;

@@ -737,7 +737,7 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
   const Driver &D = getToolChain().getDriver();
 
   StringRef ArchName;
-  const char *CPUName = 0;
+  const char *CPUName;
 
   // Set target cpu and architecture.
   if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {

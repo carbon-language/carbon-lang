@@ -490,8 +490,8 @@ double FloatingLiteral::getValueAsApproximateDouble() const {
   return V.convertToDouble();
 }
 
-int StringLiteral::mapCharByteWidth(TargetInfo const &target, StringKind k) {
-  int CharByteWidth = 0;
+int StringLiteral::mapCharByteWidth(TargetInfo const &target,StringKind k) {
+  int CharByteWidth;
   switch(k) {
     case Ascii:
     case UTF8:
