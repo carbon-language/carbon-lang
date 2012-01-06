@@ -22,7 +22,6 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Function.h"
-#include "llvm/InlineAsm.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
@@ -93,9 +92,6 @@ static cl::opt<bool> ClMemIntrin("asan-memintrin",
 static cl::opt<std::string>  ClBlackListFile("asan-blacklist",
        cl::desc("File containing the list of functions to ignore "
                 "during instrumentation"), cl::Hidden);
-static cl::opt<bool> ClUseCall("asan-use-call",
-       cl::desc("Use function call to generate a crash"), cl::Hidden,
-       cl::init(true));
 
 // These flags allow to change the shadow mapping.
 // The shadow mapping looks like
@@ -332,70 +328,14 @@ void AddressSanitizer::instrumentMop(Instruction *I) {
 
 Instruction *AddressSanitizer::generateCrashCode(
     IRBuilder<> &IRB, Value *Addr, bool IsWrite, uint32_t TypeSize) {
-
-  if (ClUseCall) {
-    // Here we use a call instead of arch-specific asm to report an error.
-    // This is almost always slower (because the codegen needs to generate
-    // prologue/epilogue for otherwise leaf functions) and generates more code.
-    // This mode could be useful if we can not use SIGILL for some reason.
-    //
-    // IsWrite and TypeSize are encoded in the function name.
-    std::string FunctionName = std::string(kAsanReportErrorTemplate) +
-        (IsWrite ? "store" : "load") + itostr(TypeSize / 8);
-    Value *ReportWarningFunc = CurrentModule->getOrInsertFunction(
-        FunctionName, IRB.getVoidTy(), IntptrTy, NULL);
-    CallInst *Call = IRB.CreateCall(ReportWarningFunc, Addr);
-    Call->setDoesNotReturn();
-    return Call;
-  }
-
-  uint32_t LogOfSizeInBytes = CountTrailingZeros_32(TypeSize / 8);
-  assert(8U * (1 << LogOfSizeInBytes) == TypeSize);
-  uint8_t TelltaleValue = IsWrite * 8 + LogOfSizeInBytes;
-  assert(TelltaleValue < 16);
-
-  // Move the failing address to %rax/%eax
-  FunctionType *Fn1Ty = FunctionType::get(
-      IRB.getVoidTy(), ArrayRef<Type*>(IntptrTy), false);
-  const char *MovStr = LongSize == 32
-      ? "mov $0, %eax" : "mov $0, %rax";
-  Value *AsmMov = InlineAsm::get(
-      Fn1Ty, StringRef(MovStr), StringRef("r"), true);
-  IRB.CreateCall(AsmMov, Addr);
-
-  // crash with ud2; could use int3, but it is less friendly to gdb.
-  // after ud2 put a 1-byte instruction that encodes the access type and size.
-
-  const char *TelltaleInsns[16] = {
-    "push   %eax",  // 0x50
-    "push   %ecx",  // 0x51
-    "push   %edx",  // 0x52
-    "push   %ebx",  // 0x53
-    "push   %esp",  // 0x54
-    "push   %ebp",  // 0x55
-    "push   %esi",  // 0x56
-    "push   %edi",  // 0x57
-    "pop    %eax",  // 0x58
-    "pop    %ecx",  // 0x59
-    "pop    %edx",  // 0x5a
-    "pop    %ebx",  // 0x5b
-    "pop    %esp",  // 0x5c
-    "pop    %ebp",  // 0x5d
-    "pop    %esi",  // 0x5e
-    "pop    %edi"   // 0x5f
-  };
-
-  std::string AsmStr = "ud2;";
-  AsmStr += TelltaleInsns[TelltaleValue];
-  Value *MyAsm = InlineAsm::get(FunctionType::get(Type::getVoidTy(*C), false),
-                                StringRef(AsmStr), StringRef(""), true);
-  CallInst *AsmCall = IRB.CreateCall(MyAsm);
-
-  // This saves us one jump, but triggers a bug in RA (or somewhere else):
-  // while building 483.xalancbmk the compiler goes into infinite loop in
-  // llvm::SpillPlacement::iterate() / RAGreedy::growRegion
-  // AsmCall->setDoesNotReturn();
-  return AsmCall;
+  // IsWrite and TypeSize are encoded in the function name.
+  std::string FunctionName = std::string(kAsanReportErrorTemplate) +
+      (IsWrite ? "store" : "load") + itostr(TypeSize / 8);
+  Value *ReportWarningFunc = CurrentModule->getOrInsertFunction(
+      FunctionName, IRB.getVoidTy(), IntptrTy, NULL);
+  CallInst *Call = IRB.CreateCall(ReportWarningFunc, Addr);
+  Call->setDoesNotReturn();
+  return Call;
 }
 
 void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
