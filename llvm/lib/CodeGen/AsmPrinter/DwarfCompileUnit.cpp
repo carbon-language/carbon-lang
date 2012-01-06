@@ -613,15 +613,14 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
     bool IsImplementation = 0;
     if (Ty.isCompositeType()) {
       DICompositeType CT(Ty);
+      // A runtime language of 0 actually means C/C++ and that any
+      // non-negative value is some version of Objective-C/C++.
       IsImplementation = (CT.getRunTimeLang() == 0) ||
         CT.isObjcClassComplete();;
     }
-    
-    addAccelType(Ty.getName(),
-                 std::make_pair(TyDIE,
-                                (IsImplementation ?
-                               DwarfAccelTable::eTypeFlagClassIsImplementation :
-                                 0)));
+    unsigned Flags = IsImplementation ?
+                     DwarfAccelTable::eTypeFlagClassIsImplementation : 0;
+    addAccelType(Ty.getName(), std::make_pair(TyDIE, Flags));
   }
   
   addToContextOwner(TyDIE, Ty.getContext());
