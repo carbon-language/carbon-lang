@@ -48,6 +48,8 @@ Follow the <a href="../get_started.html">clang build instructions</a>.
 <h2 id="intro">Usage</h2>
 Simply compile and link your program with <tt>-faddress-sanitizer</tt> flag. <BR>
 To get a reasonable performance add <tt>-O1</tt> or higher. <BR>
+To get nicer stack traces in error messages add
+<tt>-fno-omit-frame-pointer</tt>. <BR>
 
 <pre>
 % cat example_UseAfterFree.cc
@@ -59,7 +61,7 @@ int main(int argc, char **argv) {
 </pre>
 
 <pre>
-% clang -O1 -g -faddress-sanitizer example_UseAfterFree.cc
+% clang -O1 -g -faddress-sanitizer -fno-omit-frame-pointer example_UseAfterFree.cc
 </pre>
 
 If a bug is detected, the program will print an error message to stderr and exit with a
