@@ -379,16 +379,19 @@ public:
   }
 
   /// Look up the definition for D within the given context.  Returns
-  /// NULL if the expression is not statically known.
-  Expr* lookupExpr(NamedDecl *D, Context Ctx) {
+  /// NULL if the expression is not statically known.  If successful, also
+  /// modifies Ctx to hold the context of the return Expr.
+  Expr* lookupExpr(NamedDecl *D, Context &Ctx) {
     const unsigned *P = Ctx.lookup(D);
     if (!P)
       return 0;
 
     unsigned i = *P;
     while (i > 0) {
-      if (VarDefinitions[i].Exp)
+      if (VarDefinitions[i].Exp) {
+        Ctx = VarDefinitions[i].Ctx;
         return VarDefinitions[i].Exp;
+      }
       i = VarDefinitions[i].Ref;
     }
     return 0;
@@ -811,6 +814,15 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
   void checkDereference(Expr *Exp, AccessKind AK);
   void handleCall(Expr *Exp, NamedDecl *D, VarDecl *VD = 0);
 
+  template <class AttrType>
+  void addTrylock(LockKind LK, AttrType *Attr, Expr *Exp, NamedDecl *FunDecl,
+                  const CFGBlock* PredBlock, const CFGBlock *CurrBlock,
+                  Expr *BrE, bool Neg);
+  CallExpr* getTrylockCallExpr(Stmt *Cond, LocalVariableMap::Context C,
+                               bool &Negate);
+  void handleTrylock(Stmt *Cond, const CFGBlock* PredBlock,
+                     const CFGBlock *CurrBlock);
+
   /// \brief Returns true if the lockset contains a lock, regardless of whether
   /// the lock is held exclusively or shared.
   bool locksetContains(const MutexID &Lock) const {
@@ -1108,6 +1120,104 @@ void BuildLockset::handleCall(Expr *Exp, NamedDecl *D, VarDecl *VD) {
   }
 }
 
+
+/// \brief Add lock to set, if the current block is in the taken branch of a
+/// trylock.
+template <class AttrType>
+void BuildLockset::addTrylock(LockKind LK, AttrType *Attr, Expr *Exp,
+                              NamedDecl *FunDecl, const CFGBlock *PredBlock,
+                              const CFGBlock *CurrBlock, Expr *BrE, bool Neg) {
+  // Find out which branch has the lock
+  bool branch = 0;
+  if (CXXBoolLiteralExpr *BLE = dyn_cast_or_null<CXXBoolLiteralExpr>(BrE)) {
+    branch = BLE->getValue();
+  }
+  else if (IntegerLiteral *ILE = dyn_cast_or_null<IntegerLiteral>(BrE)) {
+    branch = ILE->getValue().getBoolValue();
+  }
+  int branchnum = branch ? 0 : 1;
+  if (Neg) branchnum = !branchnum;
+
+  // If we've taken the trylock branch, then add the lock
+  int i = 0;
+  for (CFGBlock::const_succ_iterator SI = PredBlock->succ_begin(),
+       SE = PredBlock->succ_end(); SI != SE && i < 2; ++SI, ++i) {
+    if (*SI == CurrBlock && i == branchnum) {
+      addLocksToSet(LK, Attr, Exp, FunDecl, 0);
+    }
+  }
+}
+
+
+// If Cond can be traced back to a function call, return the call expression.
+// The negate variable should be called with false, and will be set to true
+// if the function call is negated, e.g. if (!mu.tryLock(...))
+CallExpr* BuildLockset::getTrylockCallExpr(Stmt *Cond,
+                               LocalVariableMap::Context C,
+                               bool &Negate) {
+  if (!Cond)
+    return 0;
+
+  if (CallExpr *CallExp = dyn_cast<CallExpr>(Cond)) {
+    return CallExp;
+  }
+  else if (ImplicitCastExpr *CE = dyn_cast<ImplicitCastExpr>(Cond)) {
+    return getTrylockCallExpr(CE->getSubExpr(), C, Negate);
+  }
+  else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Cond)) {
+    Expr *E = LocalVarMap.lookupExpr(DRE->getDecl(), C);
+    return getTrylockCallExpr(E, C, Negate);
+  }
+  else if (UnaryOperator *UOP = dyn_cast<UnaryOperator>(Cond)) {
+    if (UOP->getOpcode() == UO_LNot) {
+      Negate = !Negate;
+      return getTrylockCallExpr(UOP->getSubExpr(), C, Negate);
+    }
+  }
+  // FIXME -- handle && and || as well.
+  return NULL;
+}
+
+
+/// \brief Process a conditional branch from a previous block to the current
+/// block, looking for trylock calls.
+void BuildLockset::handleTrylock(Stmt *Cond, const CFGBlock *PredBlock,
+                                 const CFGBlock *CurrBlock) {
+  bool Negate = false;
+  CallExpr *Exp = getTrylockCallExpr(Cond, LVarCtx, Negate);
+  if (!Exp)
+    return;
+
+  NamedDecl *FunDecl = dyn_cast_or_null<NamedDecl>(Exp->getCalleeDecl());
+  if(!FunDecl || !FunDecl->hasAttrs())
+    return;
+
+  // If the condition is a call to a Trylock function, then grab the attributes
+  AttrVec &ArgAttrs = FunDecl->getAttrs();
+  for (unsigned i = 0; i < ArgAttrs.size(); ++i) {
+    Attr *Attr = ArgAttrs[i];
+    switch (Attr->getKind()) {
+      case attr::ExclusiveTrylockFunction: {
+        ExclusiveTrylockFunctionAttr *A =
+          cast<ExclusiveTrylockFunctionAttr>(Attr);
+        addTrylock(LK_Exclusive, A, Exp, FunDecl, PredBlock, CurrBlock,
+                   A->getSuccessValue(), Negate);
+        break;
+      }
+      case attr::SharedTrylockFunction: {
+        SharedTrylockFunctionAttr *A =
+          cast<SharedTrylockFunctionAttr>(Attr);
+        addTrylock(LK_Shared, A, Exp, FunDecl, PredBlock, CurrBlock,
+                   A->getSuccessValue(), Negate);
+        break;
+      }
+      default:
+        break;
+    }
+  }
+}
+
+
 /// \brief For unary operations which read and write a variable, we need to
 /// check whether we hold any required mutexes. Reads are checked in
 /// VisitCastExpr.
@@ -1339,6 +1449,16 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
     }
 
     BuildLockset LocksetBuilder(this, *CurrBlockInfo);
+    CFGBlock::const_pred_iterator PI = CurrBlock->pred_begin(),
+                                  PE = CurrBlock->pred_end();
+    if (PI != PE) {
+      // If the predecessor ended in a branch, then process any trylocks.
+      // FIXME -- check to make sure there's only one predecessor.
+      if (Stmt *TCE = (*PI)->getTerminatorCondition()) {
+        LocksetBuilder.handleTrylock(TCE, *PI, CurrBlock);
+      }
+    }
+
     // Visit all the statements in the basic block.
     for (CFGBlock::const_iterator BI = CurrBlock->begin(),
          BE = CurrBlock->end(); BI != BE; ++BI) {

@@ -1605,6 +1605,7 @@ struct TestScopedLockable {
 } // end namespace test_scoped_lockable
 
 
+
 namespace FunctionAttrTest {
 
 class Foo {
@@ -1625,5 +1626,105 @@ void bar() {
 }
 
 };  // end namespace FunctionAttrTest
+
+
+struct TestTryLock {
+  Mutex mu;
+  int a GUARDED_BY(mu);
+  bool cond;
+
+  void foo1() {
+    if (mu.TryLock()) {
+      a = 1;
+      mu.Unlock();
+    }
+  }
+
+  void foo2() {
+    if (!mu.TryLock()) return;
+    a = 2;
+    mu.Unlock();
+  }
+
+  void foo3() {
+    bool b = mu.TryLock();
+    if (b) {
+      a = 3;
+      mu.Unlock();
+    }
+  }
+
+  void foo4() {
+    bool b = mu.TryLock();
+    if (!b) return;
+    a = 4;
+    mu.Unlock();
+  }
+
+  void foo5() {
+    while (mu.TryLock()) {
+      a = a + 1;
+      mu.Unlock();
+    }
+  }
+
+  void foo6() {
+    bool b = mu.TryLock();
+    b = !b;
+    if (b) return;
+    a = 6;
+    mu.Unlock();
+  }
+
+  void foo7() {
+    bool b1 = mu.TryLock();
+    bool b2 = !b1;
+    bool b3 = !b2;
+    if (b3) {
+      a = 7;
+      mu.Unlock();
+    }
+  }
+
+  // Test use-def chains: join points
+  void foo8() {
+    bool b  = mu.TryLock();
+    bool b2 = b;
+    if (cond)
+      b = true;
+    if (b) {    // b should be unknown at this point, becuase of the join point
+      a = 8;    // expected-warning {{writing variable 'a' requires locking 'mu' exclusively}}
+    }
+    if (b2) {   // b2 should be known at this point.
+      a = 8;
+      mu.Unlock();
+    }
+  }
+
+  // Test use-def-chains: back edges
+  void foo9() {
+    bool b = mu.TryLock();
+
+    for (int i = 0; i < 10; ++i);
+
+    if (b) {  // b is still known, because the loop doesn't alter it
+      a = 9;
+      mu.Unlock();
+    }
+  }
+
+  // Test use-def chains: back edges
+  void foo10() {
+    bool b = mu.TryLock();
+
+    while (cond) {
+      if (b) {   // b should be uknown at this point b/c of the loop
+        a = 10;  // expected-warning {{writing variable 'a' requires locking 'mu' exclusively}}
+      }
+      b = !b;
+    }
+  }
+};  // end TestTrylock
+
 
 
