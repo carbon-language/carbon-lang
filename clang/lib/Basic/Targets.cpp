@@ -2185,6 +2185,20 @@ public:
 } // end anonymous namespace
 
 namespace {
+class NetBSDI386TargetInfo : public NetBSDTargetInfo<X86_32TargetInfo> {
+public:
+  NetBSDI386TargetInfo(const std::string &triple) :
+    NetBSDTargetInfo<X86_32TargetInfo>(triple) {
+  }
+
+  virtual unsigned getFloatEvalMethod() const {
+    // NetBSD defaults to "double" rounding
+    return 1;
+  }
+};
+} // end anonymous namespace
+
+namespace {
 class OpenBSDI386TargetInfo : public OpenBSDTargetInfo<X86_32TargetInfo> {
 public:
   OpenBSDI386TargetInfo(const std::string& triple) :
@@ -3889,7 +3903,7 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     case llvm::Triple::DragonFly:
       return new DragonFlyBSDTargetInfo<X86_32TargetInfo>(T);
     case llvm::Triple::NetBSD:
-      return new NetBSDTargetInfo<X86_32TargetInfo>(T);
+      return new NetBSDI386TargetInfo(T);
     case llvm::Triple::OpenBSD:
       return new OpenBSDI386TargetInfo(T);
     case llvm::Triple::FreeBSD:
