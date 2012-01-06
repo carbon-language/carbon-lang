@@ -184,7 +184,7 @@ SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset) {
 std::pair<SDNode*, SDNode*>
 MipsDAGToDAGISel::SelectMULT(SDNode *N, unsigned Opc, DebugLoc dl, EVT Ty, 
                              bool HasLo, bool HasHi) {
-  SDNode *Lo, *Hi;
+  SDNode *Lo = 0, *Hi = 0;
   SDNode *Mul = CurDAG->getMachineNode(Opc, dl, MVT::Glue, N->getOperand(0),
                                        N->getOperand(1));
   SDValue InFlag = SDValue(Mul, 0);
