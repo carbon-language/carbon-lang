@@ -2433,6 +2433,7 @@ DWARFExpression::Evaluate
                 {
                     int64_t breg_offset = opcodes.GetSLEB128(&offset);
                     tmp.ResolveValue(exe_ctx, ast_context) += (uint64_t)breg_offset;
+                    tmp.ClearContext();
                     stack.push_back(tmp);
                     stack.back().SetValueType (Value::eValueTypeLoadAddress);
                 }
@@ -2456,6 +2457,7 @@ DWARFExpression::Evaluate
                 {
                     int64_t breg_offset = opcodes.GetSLEB128(&offset);
                     tmp.ResolveValue(exe_ctx, ast_context) += (uint64_t)breg_offset;
+                    tmp.ClearContext();
                     stack.push_back(tmp);
                     stack.back().SetValueType (Value::eValueTypeLoadAddress);
                 }
