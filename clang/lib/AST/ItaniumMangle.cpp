@@ -2899,11 +2899,26 @@ void CXXNameMangler::mangleTemplateArg(const NamedDecl *P,
     Out << "Dp";
     mangleType(A.getAsTemplateOrTemplatePattern());
     break;
-  case TemplateArgument::Expression:
+  case TemplateArgument::Expression: {
+    // It's possible to end up with a DeclRefExpr here in certain
+    // dependent cases, in which case we should mangle as a
+    // declaration.
+    const Expr *E = A.getAsExpr()->IgnoreParens();
+    if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+      const ValueDecl *D = DRE->getDecl();
+      if (isa<VarDecl>(D) || isa<FunctionDecl>(D)) {
+        Out << "L";
+        mangle(D, "_Z");
+        Out << 'E';
+        break;
+      }
+    }
+    
     Out << 'X';
-    mangleExpression(A.getAsExpr());
+    mangleExpression(E);
     Out << 'E';
     break;
+  }
   case TemplateArgument::Integral:
     mangleIntegerLiteral(A.getIntegralType(), *A.getAsIntegral());
     break;

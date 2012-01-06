@@ -144,3 +144,12 @@ namespace test10 {
     f(i, d);
   }
 }
+
+// Report from Jason Merrill on cxx-abi-dev, 2012.01.04.
+namespace test11 {
+  int cmp(char a, char b);
+  template <typename T, int (*cmp)(T, T)> struct A {};
+  template <typename T> void f(A<T,cmp> &) {}
+  template void f<char>(A<char,cmp> &);
+  // CHECK: @_ZN6test111fIcEEvRNS_1AIT_L_ZNS_3cmpEccEEE(
+}
