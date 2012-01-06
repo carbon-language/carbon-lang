@@ -263,6 +263,11 @@ protected:
   /// defined.
   unsigned ModulePrivate : 1;
 
+  /// \brief Whether this declaration is hidden from normal name lookup, e.g.,
+  /// because it is was loaded from an AST file is either module-private or
+  /// because its submodule has not been made visible.
+  unsigned Hidden : 1;
+  
   /// IdentifierNamespace - This specifies what IDNS_* namespace this lives in.
   unsigned IdentifierNamespace : 12;
 
@@ -290,7 +295,7 @@ protected:
       Loc(L), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false), Referenced(false),
       TopLevelDeclInObjCContainer(false), Access(AS_none), FromASTFile(0),
-      ModulePrivate(0),
+      ModulePrivate(0), Hidden(0),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
       HasCachedLinkage(0)
   {
@@ -301,7 +306,7 @@ protected:
     : NextDeclInContext(0), DeclKind(DK), InvalidDecl(0),
       HasAttrs(false), Implicit(false), Used(false), Referenced(false),
       TopLevelDeclInObjCContainer(false), Access(AS_none), FromASTFile(0),
-      ModulePrivate(0),
+      ModulePrivate(0), Hidden(0),
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
       HasCachedLinkage(0)
   {

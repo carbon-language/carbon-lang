@@ -275,9 +275,8 @@ public:
   /// \brief Determine whether the given declaration is visible to the
   /// program.
   static bool isVisible(NamedDecl *D) {
-    // So long as this declaration is not module-private or was parsed as
-    // part of this translation unit (i.e., in the module), it's visible.
-    if (!D->isModulePrivate() || !D->isFromASTFile())
+    // If this declaration is not hidden, it's visible.
+    if (!D->isHidden())
       return true;
     
     // FIXME: We should be allowed to refer to a module-private name from 

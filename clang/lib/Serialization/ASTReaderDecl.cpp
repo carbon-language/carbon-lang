@@ -364,7 +364,8 @@ void ASTDeclReader::VisitDecl(Decl *D) {
   D->setAccess((AccessSpecifier)Record[Idx++]);
   D->FromASTFile = true;
   D->ModulePrivate = Record[Idx++];
-
+  D->Hidden = D->ModulePrivate;
+  
   // Determine whether this declaration is part of a (sub)module. If so, it
   // may not yet be visible.
   if (unsigned SubmoduleID = readSubmoduleID(Record, Idx)) {
@@ -372,9 +373,8 @@ void ASTDeclReader::VisitDecl(Decl *D) {
     if (!D->ModulePrivate) {
       if (Module *Owner = Reader.getSubmodule(SubmoduleID)) {
         if (Owner->NameVisibility != Module::AllVisible) {
-          // The owning module is not visible. Mark this declaration as
-          // module-private, 
-          D->ModulePrivate = true;
+          // The owning module is not visible. Mark this declaration as hidden.
+          D->Hidden = true;
           
           // Note that this declaration was hidden because its owning module is 
           // not yet visible.

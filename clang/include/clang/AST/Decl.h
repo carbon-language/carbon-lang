@@ -195,6 +195,9 @@ public:
     ModulePrivate = MP;
   }
 
+  /// \brief Determine whether this declaration is hidden from name lookup.
+  bool isHidden() const { return Hidden; }
+  
   /// \brief Determine whether this declaration is a C++ class member.
   bool isCXXClassMember() const {
     const DeclContext *DC = getDeclContext();
