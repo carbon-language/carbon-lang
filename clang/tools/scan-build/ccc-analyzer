@@ -367,7 +367,8 @@ my %IgnoredOptionMap = (
   '-multiply_defined' => 1,
   '-sectorder' => 3,
   '--param' => 1,
-  '-u' => 1
+  '-u' => 1,
+  '--serialize-diagnostics' => 1
 );
 
 my %LangMap = (
