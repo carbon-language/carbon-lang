@@ -15,6 +15,7 @@
 
 #include "clang/Basic/OnDiskHashTable.h"
 #include "clang/AST/DeclarationName.h"
+#include "llvm/Support/Endian.h"
 #include <utility>
 #include <sys/stat.h>
 
@@ -41,7 +42,8 @@ public:
   ///
   /// Note that these declaration IDs are local to the module that contains this
   /// particular lookup t
-  typedef std::pair<DeclID *, DeclID *> data_type;
+  typedef llvm::support::ulittle32_t LE32DeclID;
+  typedef std::pair<LE32DeclID *, LE32DeclID *> data_type;
 
   /// \brief Special internal key for declaration names.
   /// The hash table creates keys for comparison; we do not create
