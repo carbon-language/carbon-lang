@@ -36,9 +36,6 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#ifndef ANDROID
-#include <sys/ucontext.h>
-#endif
 // must not include <setjmp.h> on Linux
 
 namespace __asan {
@@ -271,45 +268,6 @@ static void DescribeAddress(uintptr_t addr, uintptr_t access_size) {
 }
 
 // -------------------------- Run-time entry ------------------- {{{1
-void GetPcSpBpAx(void *context,
-                 uintptr_t *pc, uintptr_t *sp, uintptr_t *bp, uintptr_t *ax) {
-#ifndef ANDROID
-  ucontext_t *ucontext = (ucontext_t*)context;
-#endif
-#ifdef __APPLE__
-# if __WORDSIZE == 64
-  *pc = ucontext->uc_mcontext->__ss.__rip;
-  *bp = ucontext->uc_mcontext->__ss.__rbp;
-  *sp = ucontext->uc_mcontext->__ss.__rsp;
-  *ax = ucontext->uc_mcontext->__ss.__rax;
-# else
-  *pc = ucontext->uc_mcontext->__ss.__eip;
-  *bp = ucontext->uc_mcontext->__ss.__ebp;
-  *sp = ucontext->uc_mcontext->__ss.__esp;
-  *ax = ucontext->uc_mcontext->__ss.__eax;
-# endif  // __WORDSIZE
-#else  // assume linux
-# if defined (ANDROID)
-  *pc = *sp = *bp = *ax = 0;
-# elif defined(__arm__)
-  *pc = ucontext->uc_mcontext.arm_pc;
-  *bp = ucontext->uc_mcontext.arm_fp;
-  *sp = ucontext->uc_mcontext.arm_sp;
-  *ax = ucontext->uc_mcontext.arm_r0;
-# elif __WORDSIZE == 64
-  *pc = ucontext->uc_mcontext.gregs[REG_RIP];
-  *bp = ucontext->uc_mcontext.gregs[REG_RBP];
-  *sp = ucontext->uc_mcontext.gregs[REG_RSP];
-  *ax = ucontext->uc_mcontext.gregs[REG_RAX];
-# else
-  *pc = ucontext->uc_mcontext.gregs[REG_EIP];
-  *bp = ucontext->uc_mcontext.gregs[REG_EBP];
-  *sp = ucontext->uc_mcontext.gregs[REG_ESP];
-  *ax = ucontext->uc_mcontext.gregs[REG_EAX];
-# endif  // __WORDSIZE
-#endif
-}
-
 static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
   uintptr_t addr = (uintptr_t)siginfo->si_addr;
   if (AddrIsInShadow(addr) && FLAG_lazy_shadow) {
@@ -322,11 +280,11 @@ static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
   }
   // Write the first message using the bullet-proof write.
   if (13 != AsanWrite(2, "ASAN:SIGSEGV\n", 13)) ASAN_DIE;
-  uintptr_t pc, sp, bp, ax;
-  GetPcSpBpAx(context, &pc, &sp, &bp, &ax);
+  uintptr_t pc, sp, bp;
+  GetPcSpBp(context, &pc, &sp, &bp);
   Report("ERROR: AddressSanitizer crashed on unknown address %p"
-         " (pc %p sp %p bp %p ax %p T%d)\n",
-         addr, pc, sp, bp, ax,
+         " (pc %p sp %p bp %p T%d)\n",
+         addr, pc, sp, bp,
          asanThreadRegistry().GetCurrentTidOrMinusOne());
   Printf("AddressSanitizer can not provide additional info. ABORTING\n");
   GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, false, pc, bp);

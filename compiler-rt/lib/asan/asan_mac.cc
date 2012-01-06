@@ -23,6 +23,7 @@
 
 #include <sys/mman.h>
 #include <sys/resource.h>
+#include <sys/ucontext.h>
 #include <pthread.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -37,6 +38,20 @@ extern dispatch_after_f_f real_dispatch_after_f;
 extern dispatch_barrier_async_f_f real_dispatch_barrier_async_f;
 extern dispatch_group_async_f_f real_dispatch_group_async_f;
 extern pthread_workqueue_additem_np_f real_pthread_workqueue_additem_np;
+
+void GetPcSpBp(void *context, uintptr_t *pc, uintptr_t *sp, uintptr_t *bp) {
+  ucontext_t *ucontext = (ucontext_t*)context;
+# if __WORDSIZE == 64
+  *pc = ucontext->uc_mcontext->__ss.__rip;
+  *bp = ucontext->uc_mcontext->__ss.__rbp;
+  *sp = ucontext->uc_mcontext->__ss.__rsp;
+# else
+  *pc = ucontext->uc_mcontext->__ss.__eip;
+  *bp = ucontext->uc_mcontext->__ss.__ebp;
+  *sp = ucontext->uc_mcontext->__ss.__esp;
+# endif  // __WORDSIZE
+}
+
 
 // No-op. Mac does not support static linkage anyway.
 void *AsanDoesNotSupportStaticLinkage() {

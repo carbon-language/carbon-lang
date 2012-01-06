@@ -100,6 +100,7 @@ void *AsanMmapSomewhereOrDie(size_t size, const char *where);
 void AsanUnmapOrDie(void *ptr, size_t size);
 
 void AsanDisableCoreDumper();
+void GetPcSpBp(void *context, uintptr_t *pc, uintptr_t *sp, uintptr_t *bp);
 
 ssize_t AsanRead(int fd, void *buf, size_t count);
 ssize_t AsanWrite(int fd, const void *buf, size_t count);

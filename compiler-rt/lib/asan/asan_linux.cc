@@ -29,11 +29,39 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#ifndef ANDROID
+// FIXME: where to get ucontext on Android?
+#include <sys/ucontext.h>
+#endif
+
 namespace __asan {
 
 void *AsanDoesNotSupportStaticLinkage() {
   // This will fail to link with -static.
   return &_DYNAMIC;  // defined in link.h
+}
+
+void GetPcSpBp(void *context, uintptr_t *pc, uintptr_t *sp, uintptr_t *bp) {
+#ifdef ANDROID
+  *pc = *sp = *bp = 0;
+#elif defined(__arm__)
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.arm_pc;
+  *bp = ucontext->uc_mcontext.arm_fp;
+  *sp = ucontext->uc_mcontext.arm_sp;
+# elif defined(__x86_64__)
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.gregs[REG_RIP];
+  *bp = ucontext->uc_mcontext.gregs[REG_RBP];
+  *sp = ucontext->uc_mcontext.gregs[REG_RSP];
+# elif defined(__i386__)
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.gregs[REG_EIP];
+  *bp = ucontext->uc_mcontext.gregs[REG_EBP];
+  *sp = ucontext->uc_mcontext.gregs[REG_ESP];
+#else
+# error "Unsupported arch"
+#endif
 }
 
 static void *asan_mmap(void *addr, size_t length, int prot, int flags,
