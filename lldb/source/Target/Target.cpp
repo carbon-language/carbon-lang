@@ -2308,6 +2308,8 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
             case eVarSetOperationAssign:
             case eVarSetOperationAppend:
                 {
+                    m_expr_prefix_contents.clear();
+
                     if (!m_expr_prefix_file.GetCurrentValue().Exists())
                     {
                         err.SetErrorToGenericError ();
@@ -2315,15 +2317,19 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
                         return;
                     }
             
-                    DataBufferSP file_contents = m_expr_prefix_file.GetCurrentValue().ReadFileContents();
+                    DataBufferSP file_data_sp (m_expr_prefix_file.GetCurrentValue().ReadFileContents(0, SIZE_MAX, &err));
                     
-                    if (!file_contents && file_contents->GetByteSize() == 0)
+                    if (err.Success())
                     {
-                        err.SetErrorStringWithFormat ("couldn't read data from '%s'", value);
-                        m_expr_prefix_contents.clear();
+                        if (file_data_sp && file_data_sp->GetByteSize() > 0)
+                        {
+                            m_expr_prefix_contents.assign((const char*)file_data_sp->GetBytes(), file_data_sp->GetByteSize());
+                        }
+                        else
+                        {
+                            err.SetErrorStringWithFormat ("couldn't read data from '%s'", value);
+                        }
                     }
-                    
-                    m_expr_prefix_contents.assign((const char*)file_contents->GetBytes(), file_contents->GetByteSize());
                 }
                 break;
             case eVarSetOperationClear:

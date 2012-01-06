@@ -234,7 +234,7 @@ PlatformRemoteiOS::GetDeviceSupportDirectory()
                 xcode_dir_path.append (xcode_select_prefix_dir);
             xcode_dir_path.append ("/usr/share/xcode-select/xcode_dir_path");
             temp_file_spec.SetFile(xcode_dir_path.c_str(), false);
-            size_t bytes_read = temp_file_spec.ReadFileContents(0, developer_dir_path, sizeof(developer_dir_path));
+            size_t bytes_read = temp_file_spec.ReadFileContents(0, developer_dir_path, sizeof(developer_dir_path), NULL);
             if (bytes_read > 0)
             {
                 developer_dir_path[bytes_read] = '\0';

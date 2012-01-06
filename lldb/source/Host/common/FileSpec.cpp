@@ -771,13 +771,13 @@ FileSpec::MemorySize() const
 
 
 size_t
-FileSpec::ReadFileContents (off_t file_offset, void *dst, size_t dst_len) const
+FileSpec::ReadFileContents (off_t file_offset, void *dst, size_t dst_len, Error *error_ptr) const
 {
+    Error error;
     size_t bytes_read = 0;
     char resolved_path[PATH_MAX];
     if (GetPath(resolved_path, sizeof(resolved_path)))
     {
-        Error error;
         File file;
         error = file.Open(resolved_path, File::eOpenOptionRead);
         if (error.Success())
@@ -787,6 +787,12 @@ FileSpec::ReadFileContents (off_t file_offset, void *dst, size_t dst_len) const
             error = file.Read(dst, bytes_read, file_offset_after_seek);
         }
     }
+    else
+    {
+        error.SetErrorString("invalid file specification");
+    }
+    if (error_ptr)
+        *error_ptr = error;
     return bytes_read;
 }
 
@@ -802,18 +808,24 @@ FileSpec::ReadFileContents (off_t file_offset, void *dst, size_t dst_len) const
 // verified using the DataBuffer::GetByteSize() function.
 //------------------------------------------------------------------
 DataBufferSP
-FileSpec::ReadFileContents (off_t file_offset, size_t file_size) const
+FileSpec::ReadFileContents (off_t file_offset, size_t file_size, Error *error_ptr) const
 {
+    Error error;
     DataBufferSP data_sp;
     char resolved_path[PATH_MAX];
     if (GetPath(resolved_path, sizeof(resolved_path)))
     {
-        Error error;
         File file;
         error = file.Open(resolved_path, File::eOpenOptionRead);
         if (error.Success())
             error = file.Read (file_size, file_offset, data_sp);
     }
+    else
+    {
+        error.SetErrorString("invalid file specification");
+    }
+    if (error_ptr)
+        *error_ptr = error;
     return data_sp;
 }
 

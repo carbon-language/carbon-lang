@@ -339,7 +339,7 @@ Section::ReadSectionDataFromObjectFile (const ObjectFile* objfile, off_t section
             if (section_offset < file_size)
             {
                 off_t section_file_offset = objfile->GetOffset() + GetFileOffset() + section_offset;
-                bytes_read = file.ReadFileContents (section_file_offset, dst, dst_len);
+                bytes_read = file.ReadFileContents (section_file_offset, dst, dst_len, NULL);
                 if (bytes_read >= dst_len)
                     return bytes_read;
                 bytes_left -= bytes_read;
