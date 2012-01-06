@@ -206,6 +206,15 @@ public:
 
     void
     ValueUpdated ();
+    
+    // this function is used to copy the address-of m_live_sp into m_frozen_sp
+    // this is necessary because the results of certain cast and pointer-arithmetic
+    // operations (such as those described in bugzilla issues 11588 and 11618) generate
+    // frozen objcts that do not have a valid address-of, which can be troublesome when
+    // using synthetic children providers. transferring the address-of the live object
+    // solves these issues and provides the expected user-level behavior
+    void
+    TransferAddress (bool force = false);
 
     typedef lldb::SharedPtr<ValueObjectConstResult>::Type ValueObjectConstResultSP;
 

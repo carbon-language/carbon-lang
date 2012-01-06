@@ -133,3 +133,15 @@ ClangExpressionVariable::ValueUpdated ()
     m_frozen_sp->ValueUpdated ();
 }
 
+void
+ClangExpressionVariable::TransferAddress (bool force)
+{
+    if (m_live_sp.get() == NULL)
+        return;
+
+    if (m_frozen_sp.get() == NULL)
+        return;
+    
+    if (force || (m_frozen_sp->GetLiveAddress() == LLDB_INVALID_ADDRESS))
+        m_frozen_sp->SetLiveAddress(m_live_sp->GetLiveAddress());
+}

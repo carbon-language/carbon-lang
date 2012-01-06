@@ -525,6 +525,9 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
         return false;
     }
     
+    if (result)
+        result->TransferAddress();
+    
     return true;
 }        
 

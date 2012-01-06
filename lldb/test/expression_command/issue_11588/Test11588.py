@@ -42,9 +42,31 @@ class Issue11581TestCase(TestBase):
 
         self.expect("print *((StgClosure*)(r14-1))",
             substrs = ["(StgClosure) $",
-            "(StgClosure *) &$0 = 0x",
+            "(StgClosure *) &$","0x",
             "(long) addr = ",
             "(long) load_address = "])
+
+
+        target = lldb.debugger.GetSelectedTarget()
+        process = target.GetProcess()
+# register r14 does not exist on 32-bit architectures, it is an x86_64 extension
+# let's skip this part of the test if we are in 32-bit mode
+        if process.GetAddressByteSize() == 8:
+                frame = process.GetSelectedThread().GetSelectedFrame()
+                pointer = frame.FindVariable("r14")
+                addr = pointer.GetValueAsUnsigned(0)
+                self.assertTrue(addr != 0, "could not read pointer to StgClosure")
+                addr = addr - 1
+                self.runCmd("register write r14 %d" % addr)
+                self.expect("register read r14",
+                    substrs = ["0x",hex(addr)[2:]])
+                self.expect("print *(StgClosure*)$r14",
+                    substrs = ["(StgClosure) $",
+                    "(StgClosure *) &$","0x",
+                    "(long) addr = ",
+                    "(long) load_address = ",
+                    hex(addr)[2:],
+                    str(addr)])
 
 
 if __name__ == '__main__':

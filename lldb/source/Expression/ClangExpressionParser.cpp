@@ -500,6 +500,8 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
         
         if (execution_policy != eExecutionPolicyAlways && ir_for_target.interpretSuccess())
         {
+            if (const_result)
+                const_result->TransferAddress();
             evaluated_statically = true;
             err.Clear();
             return err;

@@ -406,13 +406,6 @@ ClangExpressionDeclMap::CompleteResultVariable (lldb::ClangExpressionVariableSP 
                                                             address,
                                                             address_type,
                                                             pvar_sp->GetByteSize());
-        
-        // if the frozen object does not yet have a valid live address we replicate the live_sp address
-        // to it. this solves the issue where synthetic children providers are unable to access
-        // the address-of result for objects obtained by casting the result of pointer arithmetic
-        // performed by the expression parser, as in: print *((ClassType*)(value-1))
-        if (pvar_sp->m_frozen_sp->GetLiveAddress() == LLDB_INVALID_ADDRESS)
-            pvar_sp->m_frozen_sp->SetLiveAddress(address);
     }
     
     if (pvar_sp->m_flags & ClangExpressionVariable::EVNeedsFreezeDry)
