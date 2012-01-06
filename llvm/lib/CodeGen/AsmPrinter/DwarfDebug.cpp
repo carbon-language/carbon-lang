@@ -1767,7 +1767,7 @@ void DwarfDebug::emitAccelNames() {
     for (StringMap<std::vector<DIE*> >::const_iterator
            GI = Names.begin(), GE = Names.end(); GI != GE; ++GI) {
       const char *Name = GI->getKeyData();
-      std::vector<DIE *> Entities = GI->second;
+      const std::vector<DIE *> &Entities = GI->second;
       for (std::vector<DIE *>::const_iterator DI = Entities.begin(),
              DE = Entities.end(); DI != DE; ++DI)
         AT.AddName(Name, (*DI));
@@ -1796,7 +1796,7 @@ void DwarfDebug::emitAccelObjC() {
     for (StringMap<std::vector<DIE*> >::const_iterator
            GI = Names.begin(), GE = Names.end(); GI != GE; ++GI) {
       const char *Name = GI->getKeyData();
-      std::vector<DIE *> Entities = GI->second;
+      const std::vector<DIE *> &Entities = GI->second;
       for (std::vector<DIE *>::const_iterator DI = Entities.begin(),
              DE = Entities.end(); DI != DE; ++DI)
         AT.AddName(Name, (*DI));
@@ -1825,7 +1825,7 @@ void DwarfDebug::emitAccelNamespaces() {
     for (StringMap<std::vector<DIE*> >::const_iterator
            GI = Names.begin(), GE = Names.end(); GI != GE; ++GI) {
       const char *Name = GI->getKeyData();
-      std::vector<DIE *> Entities = GI->second;
+      const std::vector<DIE *> &Entities = GI->second;
       for (std::vector<DIE *>::const_iterator DI = Entities.begin(),
              DE = Entities.end(); DI != DE; ++DI)
         AT.AddName(Name, (*DI));
@@ -1860,7 +1860,7 @@ void DwarfDebug::emitAccelTypes() {
     for (StringMap<std::vector<std::pair<DIE*, unsigned> > >::const_iterator
            GI = Names.begin(), GE = Names.end(); GI != GE; ++GI) {
       const char *Name = GI->getKeyData();
-      std::vector<std::pair<DIE *, unsigned> > Entities = GI->second;
+      const std::vector<std::pair<DIE *, unsigned> > &Entities = GI->second;
       for (std::vector<std::pair<DIE *, unsigned> >::const_iterator DI
              = Entities.begin(), DE = Entities.end(); DI !=DE; ++DI)
         AT.AddName(Name, (*DI).first, (*DI).second);
