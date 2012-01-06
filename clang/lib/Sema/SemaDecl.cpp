@@ -4914,8 +4914,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
           == DeclSpec::SCS_unspecified) {
       QualType T = R->getAs<FunctionType>()->getResultType();
       DeclaratorChunk &C = D.getTypeObject(0);
-      if ((T->isDependentType() || T->isRecordType()) &&
-          C.Fun.NumArgs == 0 && !C.Fun.isVariadic &&
+      if (!T->isVoidType() && C.Fun.NumArgs == 0 && !C.Fun.isVariadic &&
           !C.Fun.TrailingReturnType &&
           C.Fun.getExceptionSpecType() == EST_None) {
         Diag(C.Loc, diag::warn_empty_parens_are_function_decl)
