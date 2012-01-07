@@ -185,7 +185,7 @@ public:
   void processEndOfFunction(NodeBuilderContext& BC);
 
   /// Generate the entry node of the callee.
-  void processCallEnter(CallEnterNodeBuilder &builder);
+  void processCallEnter(CallEnter CE, ExplodedNode *Pred);
 
   /// Generate the first post callsite node.
   void processCallExit(ExplodedNode *Pred);

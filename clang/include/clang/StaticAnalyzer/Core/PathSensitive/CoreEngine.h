@@ -46,8 +46,6 @@ class CoreEngine {
   friend class IndirectGotoNodeBuilder;
   friend class SwitchNodeBuilder;
   friend class EndOfFunctionNodeBuilder;
-  friend class CallEnterNodeBuilder;
-
 public:
   typedef std::vector<std::pair<BlockEdge, const ExplodedNode*> >
             BlocksExhausted;
@@ -91,9 +89,6 @@ private:
 
   void HandleBranch(const Stmt *Cond, const Stmt *Term, const CFGBlock *B,
                     ExplodedNode *Pred);
-  void HandleCallEnter(const CallEnter &L, const CFGBlock *Block,
-                       unsigned Index, ExplodedNode *Pred);
-  void HandleCallExit(const CallExit &L, ExplodedNode *Pred);
 
 private:
   CoreEngine(const CoreEngine&); // Do not implement.
@@ -528,49 +523,7 @@ public:
   }
 };
 
-class CallEnterNodeBuilder {
-  CoreEngine &Eng;
-
-  const ExplodedNode *Pred;
-
-  // The call site. For implicit automatic object dtor, this is the trigger 
-  // statement.
-  const Stmt *CE;
-
-  // The context of the callee.
-  const StackFrameContext *CalleeCtx;
-
-  // The parent block of the CallExpr.
-  const CFGBlock *Block;
-
-  // The CFGBlock index of the CallExpr.
-  unsigned Index;
-
-public:
-  CallEnterNodeBuilder(CoreEngine &eng, const ExplodedNode *pred, 
-                         const Stmt *s, const StackFrameContext *callee, 
-                         const CFGBlock *blk, unsigned idx)
-    : Eng(eng), Pred(pred), CE(s), CalleeCtx(callee), Block(blk), Index(idx) {}
-
-  const ProgramState *getState() const { return Pred->getState(); }
-
-  const LocationContext *getLocationContext() const { 
-    return Pred->getLocationContext();
-  }
-
-  const Stmt *getCallExpr() const { return CE; }
-
-  const StackFrameContext *getCalleeContext() const { return CalleeCtx; }
-
-  const CFGBlock *getBlock() const { return Block; }
-
-  unsigned getIndex() const { return Index; }
-
-  void generateNode(const ProgramState *state);
-};
-
-} // end GR namespace
-
+} // end ento namespace
 } // end clang namespace
 
 #endif

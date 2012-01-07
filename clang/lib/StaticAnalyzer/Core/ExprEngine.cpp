@@ -1616,7 +1616,8 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE,
     const StackFrameContext *stackFrame = 
       AMgr.getStackFrame(AMgr.getAnalysisDeclContext(FD), 
                          Pred->getLocationContext(),
-                         CE, currentBuilderContext->getBlock(), currentStmtIdx);
+                         CE, currentBuilderContext->getBlock(),
+                         currentStmtIdx);
     // Now we have the definition of the callee, create a CallEnter node.
     CallEnter Loc(CE, stackFrame, Pred->getLocationContext());
 

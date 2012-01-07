@@ -28,10 +28,32 @@ namespace {
   int ReturnExpr::TagInt; 
 }
 
-void ExprEngine::processCallEnter(CallEnterNodeBuilder &B) {
-  const ProgramState *state =
-    B.getState()->enterStackFrame(B.getCalleeContext());
-  B.generateNode(state);
+void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
+  // Get the entry block in the CFG of the callee.
+  const StackFrameContext *SFC = CE.getCalleeContext();
+  const CFG *CalleeCFG = SFC->getCFG();
+  const CFGBlock *Entry = &(CalleeCFG->getEntry());
+  
+  // Validate the CFG.
+  assert(Entry->empty());
+  assert(Entry->succ_size() == 1);
+  
+  // Get the solitary sucessor.
+  const CFGBlock *Succ = *(Entry->succ_begin());
+  
+  // Construct an edge representing the starting location in the callee.
+  BlockEdge Loc(Entry, Succ, SFC);
+
+  // Construct a new state which contains the mapping from actual to
+  // formal arguments.
+  const ProgramState *state = Pred->getState()->enterStackFrame(SFC);
+  
+  // Construct a new node and add it to the worklist.
+  bool isNew;
+  ExplodedNode *Node = G.getNode(Loc, state, false, &isNew);
+  Node->addPredecessor(Pred, G);
+  if (isNew)
+    Engine.getWorkList()->enqueue(Node);
 }
 
 void ExprEngine::processCallExit(ExplodedNode *Pred) {
@@ -59,7 +81,6 @@ void ExprEngine::processCallExit(ExplodedNode *Pred) {
     // Always bind the region to the CXXConstructExpr.
     state = state->BindExpr(CCE, Pred->getLocationContext(), ThisV);
   }
-
   
   PostStmt Loc(CE, calleeCtx->getParent());
   bool isNew;

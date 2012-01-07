@@ -37,7 +37,6 @@ class BranchNodeBuilder;
 class IndirectGotoNodeBuilder;
 class SwitchNodeBuilder;
 class EndOfFunctionNodeBuilder;
-class CallEnterNodeBuilder;
 class NodeBuilderWithSinks;
 class MemRegion;
 
@@ -84,7 +83,7 @@ public:
   virtual void processEndOfFunction(NodeBuilderContext& BC) = 0;
 
   // Generate the entry node of the callee.
-  virtual void processCallEnter(CallEnterNodeBuilder &builder) = 0;
+  virtual void processCallEnter(CallEnter CE, ExplodedNode *Pred) = 0;
 
   // Generate the first post callsite node.
   virtual void processCallExit(ExplodedNode *Pred) = 0;
