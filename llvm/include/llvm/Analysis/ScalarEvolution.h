@@ -119,6 +119,10 @@ namespace llvm {
     ///
     bool isAllOnesValue() const;
 
+    /// isNonConstantNegative - Return true if the specified scev is negated,
+    /// but not a constant.
+    bool isNonConstantNegative() const;
+
     /// print - Print out the internal representation of this scalar to the
     /// specified stream.  This should really only be used for debugging
     /// purposes.

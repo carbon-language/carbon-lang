@@ -284,6 +284,20 @@ bool SCEV::isAllOnesValue() const {
   return false;
 }
 
+/// isNonConstantNegative - Return true if the specified scev is negated, but
+/// not a constant.
+bool SCEV::isNonConstantNegative() const {
+  const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(this);
+  if (!Mul) return false;
+
+  // If there is a constant factor, it will be first.
+  const SCEVConstant *SC = dyn_cast<SCEVConstant>(Mul->getOperand(0));
+  if (!SC) return false;
+
+  // Return true if the value is negative, this matches things like (-42 * V).
+  return SC->getValue()->getValue().isNegative();
+}
+
 SCEVCouldNotCompute::SCEVCouldNotCompute() :
   SCEV(FoldingSetNodeIDRef(), scCouldNotCompute) {}
 

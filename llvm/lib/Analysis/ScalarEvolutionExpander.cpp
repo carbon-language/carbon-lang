@@ -593,20 +593,6 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
   return expand(SE.getAddExpr(Ops));
 }
 
-/// isNonConstantNegative - Return true if the specified scev is negated, but
-/// not a constant.
-static bool isNonConstantNegative(const SCEV *F) {
-  const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(F);
-  if (!Mul) return false;
-
-  // If there is a constant factor, it will be first.
-  const SCEVConstant *SC = dyn_cast<SCEVConstant>(Mul->getOperand(0));
-  if (!SC) return false;
-
-  // Return true if the value is negative, this matches things like (-42 * V).
-  return SC->getValue()->getValue().isNegative();
-}
-
 /// PickMostRelevantLoop - Given two loops pick the one that's most relevant for
 /// SCEV expansion. If they are nested, this is the most nested. If they are
 /// neighboring, pick the later.
@@ -685,10 +671,10 @@ public:
     // If one operand is a non-constant negative and the other is not,
     // put the non-constant negative on the right so that a sub can
     // be used instead of a negate and add.
-    if (isNonConstantNegative(LHS.second)) {
-      if (!isNonConstantNegative(RHS.second))
+    if (LHS.second->isNonConstantNegative()) {
+      if (!RHS.second->isNonConstantNegative())
         return false;
-    } else if (isNonConstantNegative(RHS.second))
+    } else if (RHS.second->isNonConstantNegative())
       return true;
 
     // Otherwise they are equivalent according to this comparison.
@@ -749,7 +735,7 @@ Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
       for (++I; I != E && I->first == CurLoop; ++I)
         NewOps.push_back(I->second);
       Sum = expandAddToGEP(NewOps.begin(), NewOps.end(), PTy, Ty, expand(Op));
-    } else if (isNonConstantNegative(Op)) {
+    } else if (Op->isNonConstantNegative()) {
       // Instead of doing a negate and add, just do a subtract.
       Value *W = expandCodeFor(SE.getNegativeSCEV(Op), Ty);
       Sum = InsertNoopCastOfTo(Sum, Ty);
@@ -1044,7 +1030,7 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
   // If the stride is negative, insert a sub instead of an add for the increment
   // (unless it's a constant, because subtracts of constants are canonicalized
   // to adds).
-  bool useSubtract = !ExpandTy->isPointerTy() && isNonConstantNegative(Step);
+  bool useSubtract = !ExpandTy->isPointerTy() && Step->isNonConstantNegative();
   if (useSubtract)
     Step = SE.getNegativeSCEV(Step);
   // Expand the step somewhere that dominates the loop header.
@@ -1167,7 +1153,7 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
       // inserting an extra IV increment. StepV might fold into PostLoopOffset,
       // but hopefully expandCodeFor handles that.
       bool useSubtract =
-        !ExpandTy->isPointerTy() && isNonConstantNegative(Step);
+        !ExpandTy->isPointerTy() && Step->isNonConstantNegative();
       if (useSubtract)
         Step = SE.getNegativeSCEV(Step);
       // Expand the step somewhere that dominates the loop header.
