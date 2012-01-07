@@ -15098,7 +15098,8 @@ TargetLowering::ConstraintWeight
       break;
   case 'x':
   case 'Y':
-    if ((type->getPrimitiveSizeInBits() == 128) && Subtarget->hasXMM())
+    if (((type->getPrimitiveSizeInBits() == 128) && Subtarget->hasXMM()) ||
+        ((type->getPrimitiveSizeInBits() == 256) && Subtarget->hasAVX()))
       weight = CW_Register;
     break;
   case 'I':
@@ -15378,8 +15379,8 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     case 'Y':   // SSE_REGS if SSE2 allowed
       if (!Subtarget->hasXMMInt()) break;
       // FALL THROUGH.
-    case 'x':   // SSE_REGS if SSE1 allowed
-      if (!Subtarget->hasXMM()) break;
+    case 'x':   // SSE_REGS if SSE1 allowed or AVX_REGS if AVX allowed
+      if (!Subtarget->hasXMM() && !Subtarget->hasAVX()) break;
 
       switch (VT.getSimpleVT().SimpleTy) {
       default: break;
@@ -15398,6 +15399,15 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       case MVT::v4f32:
       case MVT::v2f64:
         return std::make_pair(0U, X86::VR128RegisterClass);
+      // AVX types.
+      case MVT::v32i8:
+      case MVT::v16i16:
+      case MVT::v8i32:
+      case MVT::v4i64:
+      case MVT::v8f32:
+      case MVT::v4f64:
+        return std::make_pair(0U, X86::VR256RegisterClass);
+        
       }
       break;
     }

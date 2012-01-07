@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64
+; RUN: llc < %s -march=x86-64 -mattr=+avx
 ; rdar://7066579
 
 	%0 = type { i64, i64, i64, i64, i64 }		; type %0
@@ -27,3 +27,11 @@ entry:
   %0 = tail call { i8, i8, i8, i8, i8 } asm "foo $1, $2, $3, $4, $1\0Axchgb ${0:b}, ${0:h}", "=q,={ax},={bx},={cx},={dx},0,1,2,3,4,~{dirflag},~{fpsr},~{flags}"(i8 %val, i8 %a, i8 %b, i8 %c, i8 %d) nounwind
   ret void
 }
+
+; rdar://10614894
+define <8 x float> @test5(<8 x float> %a, <8 x float> %b) nounwind {
+entry:
+  %0 = tail call <8 x float> asm "vperm2f128 $3, $2, $1, $0", "=x,x,x,i,~{dirflag},~{fpsr},~{flags}"(<8 x float> %a, <8 x float> %b, i32 16) nounwind
+  ret <8 x float> %0
+}
+
