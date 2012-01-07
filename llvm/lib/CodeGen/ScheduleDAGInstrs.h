@@ -120,11 +120,6 @@ namespace llvm {
     ///
     LoopDependencies LoopRegs;
 
-    /// LoopLiveInRegs - Track which regs are live into a loop, to help guide
-    /// back-edge-aware scheduling.
-    ///
-    SmallSet<unsigned, 8> LoopLiveInRegs;
-
   protected:
 
     /// DbgValues - Remember instruction that preceeds DBG_VALUE.

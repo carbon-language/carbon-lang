@@ -193,6 +193,10 @@ namespace llvm {
   /// instructions.
   FunctionPass *createMachineSinkingPass();
 
+  /// createMachineCopyPropagationPass - This pass performs copy propagation on
+  /// machine instructions.
+  FunctionPass *createMachineCopyPropagationPass();
+
   /// createPeepholeOptimizerPass - This pass performs peephole optimizations -
   /// like extension and comparison eliminations.
   FunctionPass *createPeepholeOptimizerPass();

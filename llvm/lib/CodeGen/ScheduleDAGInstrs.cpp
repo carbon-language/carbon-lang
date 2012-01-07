@@ -136,13 +136,8 @@ static const Value *getUnderlyingObjectForInstr(const MachineInstr *MI,
 void ScheduleDAGInstrs::StartBlock(MachineBasicBlock *BB) {
   LoopRegs.Deps.clear();
   if (MachineLoop *ML = MLI.getLoopFor(BB))
-    if (BB == ML->getLoopLatch()) {
-      MachineBasicBlock *Header = ML->getHeader();
-      for (MachineBasicBlock::livein_iterator I = Header->livein_begin(),
-           E = Header->livein_end(); I != E; ++I)
-        LoopLiveInRegs.insert(*I);
+    if (BB == ML->getLoopLatch())
       LoopRegs.VisitLoop(ML);
-    }
 }
 
 /// AddSchedBarrierDeps - Add dependencies from instructions in the current

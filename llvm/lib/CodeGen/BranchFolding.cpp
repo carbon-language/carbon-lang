@@ -180,7 +180,7 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
   TRI = tri;
   MMI = mmi;
 
-  RS = TRI->requiresRegisterScavenging(MF) ? new RegScavenger() : NULL;
+  RS = new RegScavenger();
 
   // Fix CFG.  The later algorithms expect it to be right.
   bool MadeChange = false;
@@ -368,16 +368,14 @@ static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
 
 void BranchFolder::MaintainLiveIns(MachineBasicBlock *CurMBB,
                                    MachineBasicBlock *NewMBB) {
-  if (RS) {
-    RS->enterBasicBlock(CurMBB);
-    if (!CurMBB->empty())
-      RS->forward(prior(CurMBB->end()));
-    BitVector RegsLiveAtExit(TRI->getNumRegs());
-    RS->getRegsUsed(RegsLiveAtExit, false);
-    for (unsigned int i = 0, e = TRI->getNumRegs(); i != e; i++)
-      if (RegsLiveAtExit[i])
-        NewMBB->addLiveIn(i);
-  }
+  RS->enterBasicBlock(CurMBB);
+  if (!CurMBB->empty())
+    RS->forward(prior(CurMBB->end()));
+  BitVector RegsLiveAtExit(TRI->getNumRegs());
+  RS->getRegsUsed(RegsLiveAtExit, false);
+  for (unsigned int i = 0, e = TRI->getNumRegs(); i != e; i++)
+    if (RegsLiveAtExit[i])
+      NewMBB->addLiveIn(i);
 }
 
 /// ReplaceTailWithBranchTo - Delete the instruction OldInst and everything

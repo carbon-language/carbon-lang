@@ -452,22 +452,9 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   if (addPostRegAlloc(PM))
     printAndVerify(PM, "After PostRegAlloc passes");
 
-  PM.add(createExpandPostRAPseudosPass());
-  printAndVerify(PM, "After ExpandPostRAPseudos");
-
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
   PM.add(createPrologEpilogCodeInserter());
   printAndVerify(PM, "After PrologEpilogCodeInserter");
-
-  // Run pre-sched2 passes.
-  if (addPreSched2(PM))
-    printAndVerify(PM, "After PreSched2 passes");
-
-  // Second pass scheduler.
-  if (getOptLevel() != CodeGenOpt::None && !DisablePostRA) {
-    PM.add(createPostRAScheduler(getOptLevel()));
-    printAndVerify(PM, "After PostRAScheduler");
-  }
 
   // Branch folding must be run after regalloc and prolog/epilog insertion.
   if (getOptLevel() != CodeGenOpt::None && !DisableBranchFold) {
@@ -479,6 +466,26 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   if (getOptLevel() != CodeGenOpt::None && !DisableTailDuplicate) {
     PM.add(createTailDuplicatePass(false));
     printNoVerify(PM, "After TailDuplicate");
+  }
+
+  // Copy propagation.
+  if (getOptLevel() != CodeGenOpt::None) {
+    PM.add(createMachineCopyPropagationPass());
+    printNoVerify(PM, "After copy propagation pass");
+  }
+
+  // Expand pseudo instructions before second scheduling pass.
+  PM.add(createExpandPostRAPseudosPass());
+  printNoVerify(PM, "After ExpandPostRAPseudos");
+
+  // Run pre-sched2 passes.
+  if (addPreSched2(PM))
+    printNoVerify(PM, "After PreSched2 passes");
+
+  // Second pass scheduler.
+  if (getOptLevel() != CodeGenOpt::None && !DisablePostRA) {
+    PM.add(createPostRAScheduler(getOptLevel()));
+    printNoVerify(PM, "After PostRAScheduler");
   }
 
   PM.add(createGCMachineCodeAnalysisPass());
