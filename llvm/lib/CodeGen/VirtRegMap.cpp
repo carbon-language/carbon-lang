@@ -16,7 +16,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "virtregmap"
+#define DEBUG_TYPE "regalloc"
 #include "VirtRegMap.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
