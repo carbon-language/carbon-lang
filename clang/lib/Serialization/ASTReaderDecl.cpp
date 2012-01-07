@@ -967,17 +967,22 @@ void ASTDeclReader::VisitLabelDecl(LabelDecl *D) {
 
 
 void ASTDeclReader::VisitNamespaceDecl(NamespaceDecl *D) {
+  RedeclarableResult Redecl = VisitRedeclarable(D);
   VisitNamedDecl(D);
-  D->IsInline = Record[Idx++];
+  D->setInline(Record[Idx++]);
   D->LocStart = ReadSourceLocation(Record, Idx);
   D->RBraceLoc = ReadSourceLocation(Record, Idx);
-  D->NextNamespace = Record[Idx++];
-
-  bool IsOriginal = Record[Idx++];
-  // FIXME: Modules will likely have trouble with pointing directly at
-  // the original namespace.
-  D->OrigOrAnonNamespace.setInt(IsOriginal);
-  D->OrigOrAnonNamespace.setPointer(ReadDeclAs<NamespaceDecl>(Record, Idx));
+  
+  if (Redecl.getFirstID() == ThisDeclID) {
+    // FIXME: If there's already an anonymous namespace, do we merge it with
+    // this one? Or do we, when loading modules, just forget about anonymous
+    // namespace entirely?
+    D->setAnonymousNamespace(ReadDeclAs<NamespaceDecl>(Record, Idx));
+  } else {
+    // Link this namespace back to the first declaration, which has already
+    // been deserialized.
+    D->AnonOrFirstNamespaceAndInline.setPointer(D->getFirstDeclaration());
+  }
 }
 
 void ASTDeclReader::VisitNamespaceAliasDecl(NamespaceAliasDecl *D) {
@@ -1772,6 +1777,8 @@ void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *previous) {
     ID->RedeclLink.setPointer(cast<ObjCInterfaceDecl>(previous));
   } else if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D)) {
     PD->RedeclLink.setPointer(cast<ObjCProtocolDecl>(previous));
+  } else if (NamespaceDecl *ND = dyn_cast<NamespaceDecl>(D)) {
+    ND->RedeclLink.setPointer(cast<NamespaceDecl>(previous));
   } else {
     RedeclarableTemplateDecl *TD = cast<RedeclarableTemplateDecl>(D);
     TD->CommonOrPrev = cast<RedeclarableTemplateDecl>(previous);
@@ -1801,6 +1808,10 @@ void ASTDeclReader::attachLatestDecl(Decl *D, Decl *Latest) {
     PD->RedeclLink
       = Redeclarable<ObjCProtocolDecl>::LatestDeclLink(
                                                 cast<ObjCProtocolDecl>(Latest));
+  } else if (NamespaceDecl *ND = dyn_cast<NamespaceDecl>(D)) {
+    ND->RedeclLink
+      = Redeclarable<NamespaceDecl>::LatestDeclLink(
+                                                   cast<NamespaceDecl>(Latest));
   } else {
     RedeclarableTemplateDecl *TD = cast<RedeclarableTemplateDecl>(D);
     TD->getCommonPtr()->Latest = cast<RedeclarableTemplateDecl>(Latest);
@@ -2216,6 +2227,8 @@ static Decl *getPreviousDecl(Decl *D) {
     return ID->getPreviousDeclaration();
   if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D))
     return PD->getPreviousDeclaration();
+  if (NamespaceDecl *ND = dyn_cast<NamespaceDecl>(D))
+    return ND->getPreviousDeclaration();
   
   return cast<RedeclarableTemplateDecl>(D)->getPreviousDeclaration();
 }
@@ -2234,7 +2247,9 @@ static Decl *getMostRecentDecl(Decl *D) {
     return ID->getMostRecentDeclaration();
   if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D))
     return PD->getMostRecentDeclaration();
-  
+  if (NamespaceDecl *ND = dyn_cast<NamespaceDecl>(D))
+    return ND->getMostRecentDeclaration();
+
   return cast<RedeclarableTemplateDecl>(D)->getMostRecentDeclaration();
 }
 
@@ -2446,15 +2461,10 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
     case UPD_CXX_ADDED_ANONYMOUS_NAMESPACE: {
       NamespaceDecl *Anon
         = Reader.ReadDeclAs<NamespaceDecl>(ModuleFile, Record, Idx);
-      // Guard against these being loaded out of original order. Don't use
-      // getNextNamespace(), since it tries to access the context and can't in
-      // the middle of deserialization.
-      if (!Anon->NextNamespace) {
-        if (TranslationUnitDecl *TU = dyn_cast<TranslationUnitDecl>(D))
-          TU->setAnonymousNamespace(Anon);
-        else
-          cast<NamespaceDecl>(D)->OrigOrAnonNamespace.setPointer(Anon);
-      }
+      if (TranslationUnitDecl *TU = dyn_cast<TranslationUnitDecl>(D))
+        TU->setAnonymousNamespace(Anon);
+      else
+        cast<NamespaceDecl>(D)->setAnonymousNamespace(Anon);
       break;
     }
 

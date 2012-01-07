@@ -839,15 +839,21 @@ DeclContext *DeclContext::getPrimaryContext() {
   }
 }
 
-DeclContext *DeclContext::getNextContext() {
-  switch (DeclKind) {
-  case Decl::Namespace:
-    // Return the next namespace
-    return static_cast<NamespaceDecl*>(this)->getNextNamespace();
-
-  default:
-    return 0;
+void 
+DeclContext::collectAllContexts(llvm::SmallVectorImpl<DeclContext *> &Contexts){
+  Contexts.clear();
+  
+  if (DeclKind != Decl::Namespace) {
+    Contexts.push_back(this);
+    return;
   }
+  
+  NamespaceDecl *Self = static_cast<NamespaceDecl *>(this);
+  for (NamespaceDecl *N = Self->getMostRecentDeclaration(); N;
+       N = N->getPreviousDeclaration())
+    Contexts.push_back(N);
+  
+  std::reverse(Contexts.begin(), Contexts.end());
 }
 
 std::pair<Decl *, Decl *>
@@ -1067,15 +1073,17 @@ void DeclContext::addDeclInternal(Decl *D) {
 /// declarations in DCtx (and any other contexts linked to it or
 /// transparent contexts nested within it).
 void DeclContext::buildLookup(DeclContext *DCtx) {
-  for (; DCtx; DCtx = DCtx->getNextContext()) {
-    for (decl_iterator D = DCtx->decls_begin(),
-                    DEnd = DCtx->decls_end();
+  llvm::SmallVector<DeclContext *, 2> Contexts;
+  DCtx->collectAllContexts(Contexts);
+  for (unsigned I = 0, N = Contexts.size(); I != N; ++I) {
+    for (decl_iterator D = Contexts[I]->decls_begin(),
+                    DEnd = Contexts[I]->decls_end();
          D != DEnd; ++D) {
       // Insert this declaration into the lookup structure, but only
       // if it's semantically in its decl context.  During non-lazy
       // lookup building, this is implicitly enforced by addDecl.
       if (NamedDecl *ND = dyn_cast<NamedDecl>(*D))
-        if (D->getDeclContext() == DCtx)
+        if (D->getDeclContext() == Contexts[I])
           makeDeclVisibleInContextImpl(ND, false);
 
       // If this declaration is itself a transparent declaration context or

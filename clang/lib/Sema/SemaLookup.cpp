@@ -2740,8 +2740,10 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
     Result.getSema().ForceDeclarationOfImplicitMembers(Class);
 
   // Enumerate all of the results in this context.
-  for (DeclContext *CurCtx = Ctx->getPrimaryContext(); CurCtx;
-       CurCtx = CurCtx->getNextContext()) {
+  llvm::SmallVector<DeclContext *, 2> Contexts;
+  Ctx->collectAllContexts(Contexts);
+  for (unsigned I = 0, N = Contexts.size(); I != N; ++I) {
+    DeclContext *CurCtx = Contexts[I];
     for (DeclContext::decl_iterator D = CurCtx->decls_begin(),
                                  DEnd = CurCtx->decls_end();
          D != DEnd; ++D) {

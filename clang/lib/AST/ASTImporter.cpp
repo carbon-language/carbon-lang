@@ -2083,8 +2083,10 @@ Decl *ASTNodeImporter::VisitNamespaceDecl(NamespaceDecl *D) {
   NamespaceDecl *ToNamespace = MergeWithNamespace;
   if (!ToNamespace) {
     ToNamespace = NamespaceDecl::Create(Importer.getToContext(), DC,
+                                        D->isInline(),
                                         Importer.Import(D->getLocStart()),
-                                        Loc, Name.getAsIdentifierInfo());
+                                        Loc, Name.getAsIdentifierInfo(),
+                                        /*PrevDecl=*/0);
     ToNamespace->setLexicalDeclContext(LexicalDC);
     LexicalDC->addDeclInternal(ToNamespace);
     

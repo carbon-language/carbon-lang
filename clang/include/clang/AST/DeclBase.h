@@ -1082,24 +1082,30 @@ public:
   /// inline, its enclosing namespace, recursively.
   bool InEnclosingNamespaceSetOf(const DeclContext *NS) const;
 
-  /// getNextContext - If this is a DeclContext that may have other
-  /// DeclContexts that are semantically connected but syntactically
-  /// different, such as C++ namespaces, this routine retrieves the
-  /// next DeclContext in the link. Iteration through the chain of
-  /// DeclContexts should begin at the primary DeclContext and
-  /// continue until this function returns NULL. For example, given:
-  /// @code
+  /// \\brief Collects all of the declaration contexts that are semantically
+  /// connected to this declaration context.
+  ///
+  /// For declaration contexts that have multiple semantically connected but
+  /// syntactically distinct contexts, such as C++ namespaces, this routine 
+  /// retrieves the complete set of such declaration contexts in source order.
+  /// For example, given:
+  ///
+  /// \code
   /// namespace N {
   ///   int x;
   /// }
   /// namespace N {
   ///   int y;
   /// }
-  /// @endcode
-  /// The first occurrence of namespace N will be the primary
-  /// DeclContext. Its getNextContext will return the second
-  /// occurrence of namespace N.
-  DeclContext *getNextContext();
+  /// \endcode
+  ///
+  /// The \c Contexts parameter will contain both definitions of N.
+  ///
+  /// \param Contexts Will be cleared and set to the set of declaration
+  /// contexts that are semanticaly connected to this declaration context,
+  /// in source order, including this context (which may be the only result,
+  /// for non-namespace contexts).
+  void collectAllContexts(llvm::SmallVectorImpl<DeclContext *> &Contexts);
 
   /// decl_iterator - Iterates through the declarations stored
   /// within this context.

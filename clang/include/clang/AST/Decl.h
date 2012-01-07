@@ -351,9 +351,10 @@ public:
 };
 
 /// NamespaceDecl - Represent a C++ namespace.
-class NamespaceDecl : public NamedDecl, public DeclContext {
+class NamespaceDecl : public NamedDecl, public DeclContext, 
+                      public Redeclarable<NamespaceDecl> 
+{
   virtual void anchor();
-  bool IsInline : 1;
 
   /// LocStart - The starting location of the source range, pointing
   /// to either the namespace or the inline keyword.
@@ -361,44 +362,37 @@ class NamespaceDecl : public NamedDecl, public DeclContext {
   /// RBraceLoc - The ending location of the source range.
   SourceLocation RBraceLoc;
 
-  // For extended namespace definitions:
-  //
-  // namespace A { int x; }
-  // namespace A { int y; }
-  //
-  // there will be one NamespaceDecl for each declaration.
-  // NextNamespace points to the next extended declaration.
-  // OrigNamespace points to the original namespace declaration.
-  // OrigNamespace of the first namespace decl points to its anonymous namespace
-  LazyDeclPtr NextNamespace;
+  /// \brief A pointer to either the anonymous namespace that lives just inside
+  /// this namespace or to the first namespace in the chain (the latter case
+  /// only when this is not the first in the chain), along with a 
+  /// boolean value indicating whether this is an inline namespace.
+  llvm::PointerIntPair<NamespaceDecl *, 1, bool> AnonOrFirstNamespaceAndInline;
 
-  /// \brief A pointer to either the original namespace definition for
-  /// this namespace (if the boolean value is false) or the anonymous
-  /// namespace that lives just inside this namespace (if the boolean
-  /// value is true).
-  ///
-  /// We can combine these two notions because the anonymous namespace
-  /// must only be stored in one of the namespace declarations (so all
-  /// of the namespace declarations can find it). We therefore choose
-  /// the original namespace declaration, since all of the namespace
-  /// declarations have a link directly to it; the original namespace
-  /// declaration itself only needs to know that it is the original
-  /// namespace declaration (which the boolean indicates).
-  llvm::PointerIntPair<NamespaceDecl *, 1, bool> OrigOrAnonNamespace;
-
-  NamespaceDecl(DeclContext *DC, SourceLocation StartLoc,
-                SourceLocation IdLoc, IdentifierInfo *Id)
-    : NamedDecl(Namespace, DC, IdLoc, Id), DeclContext(Namespace),
-      IsInline(false), LocStart(StartLoc), RBraceLoc(),
-      NextNamespace(), OrigOrAnonNamespace(0, true) { }
+  NamespaceDecl(DeclContext *DC, bool Inline, SourceLocation StartLoc,
+                SourceLocation IdLoc, IdentifierInfo *Id,
+                NamespaceDecl *PrevDecl);
+  
+  typedef Redeclarable<NamespaceDecl> redeclarable_base;
+  virtual NamespaceDecl *getNextRedeclaration() {
+    return RedeclLink.getNext();
+  }
 
 public:
   static NamespaceDecl *Create(ASTContext &C, DeclContext *DC,
-                               SourceLocation StartLoc,
-                               SourceLocation IdLoc, IdentifierInfo *Id);
+                               bool Inline, SourceLocation StartLoc,
+                               SourceLocation IdLoc, IdentifierInfo *Id,
+                               NamespaceDecl *PrevDecl);
 
   static NamespaceDecl *CreateDeserialized(ASTContext &C, unsigned ID);
   
+  typedef redeclarable_base::redecl_iterator redecl_iterator;
+  redecl_iterator redecls_begin() const {
+    return redeclarable_base::redecls_begin();
+  }
+  redecl_iterator redecls_end() const {
+    return redeclarable_base::redecls_end();
+  }
+
   /// \brief Returns true if this is an anonymous namespace declaration.
   ///
   /// For example:
@@ -414,62 +408,55 @@ public:
 
   /// \brief Returns true if this is an inline namespace declaration.
   bool isInline() const {
-    return IsInline;
+    return AnonOrFirstNamespaceAndInline.getInt();
   }
 
   /// \brief Set whether this is an inline namespace declaration.
   void setInline(bool Inline) {
-    IsInline = Inline;
+    AnonOrFirstNamespaceAndInline.setInt(Inline);
   }
-
-  /// \brief Return the next extended namespace declaration or null if there
-  /// is none.
-  NamespaceDecl *getNextNamespace();
-  const NamespaceDecl *getNextNamespace() const {
-    return const_cast<NamespaceDecl *>(this)->getNextNamespace();
-  }
-
-  /// \brief Set the next extended namespace declaration.
-  void setNextNamespace(NamespaceDecl *ND) { NextNamespace = ND; }
 
   /// \brief Get the original (first) namespace declaration.
-  NamespaceDecl *getOriginalNamespace() const {
-    if (OrigOrAnonNamespace.getInt())
-      return const_cast<NamespaceDecl *>(this);
+  NamespaceDecl *getOriginalNamespace() {
+    return getCanonicalDecl();
+  }
 
-    return OrigOrAnonNamespace.getPointer();
+  /// \brief Get the original (first) namespace declaration.
+  const NamespaceDecl *getOriginalNamespace() const {
+    return getCanonicalDecl();
   }
 
   /// \brief Return true if this declaration is an original (first) declaration
   /// of the namespace. This is false for non-original (subsequent) namespace
   /// declarations and anonymous namespaces.
   bool isOriginalNamespace() const {
-    return getOriginalNamespace() == this;
+    return isFirstDeclaration();
   }
 
-  /// \brief Set the original (first) namespace declaration.
-  void setOriginalNamespace(NamespaceDecl *ND) {
-    if (ND != this) {
-      OrigOrAnonNamespace.setPointer(ND);
-      OrigOrAnonNamespace.setInt(false);
-    }
-  }
-
+  /// \brief Retrieve the anonymous namespace nested inside this namespace,
+  /// if any.
   NamespaceDecl *getAnonymousNamespace() const {
-    return getOriginalNamespace()->OrigOrAnonNamespace.getPointer();
+    return getOriginalNamespace()->AnonOrFirstNamespaceAndInline.getPointer();
   }
 
   void setAnonymousNamespace(NamespaceDecl *D) {
-    assert(!D || D->isAnonymousNamespace());
-    assert(!D || D->getParent()->getRedeclContext() == this);
-    getOriginalNamespace()->OrigOrAnonNamespace.setPointer(D);
+    getOriginalNamespace()->AnonOrFirstNamespaceAndInline.setPointer(D);
   }
 
-  virtual NamespaceDecl *getCanonicalDecl() { return getOriginalNamespace(); }
+  /// Retrieves the canonical declaration of this namespace.
+  NamespaceDecl *getCanonicalDecl() {
+    if (isFirstDeclaration())
+      return this;
+    
+    return AnonOrFirstNamespaceAndInline.getPointer();
+  }
   const NamespaceDecl *getCanonicalDecl() const {
-    return getOriginalNamespace();
+    if (isFirstDeclaration())
+      return this;
+    
+    return AnonOrFirstNamespaceAndInline.getPointer();
   }
-
+  
   virtual SourceRange getSourceRange() const {
     return SourceRange(LocStart, RBraceLoc);
   }

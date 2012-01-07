@@ -802,18 +802,14 @@ void ASTDeclWriter::VisitLabelDecl(LabelDecl *D) {
 
 
 void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
+  VisitRedeclarable(D);
   VisitNamedDecl(D);
   Record.push_back(D->isInline());
   Writer.AddSourceLocation(D->getLocStart(), Record);
   Writer.AddSourceLocation(D->getRBraceLoc(), Record);
-  Writer.AddDeclRef(D->getNextNamespace(), Record);
 
-  // Only write one reference--original or anonymous
-  Record.push_back(D->isOriginalNamespace());
   if (D->isOriginalNamespace())
     Writer.AddDeclRef(D->getAnonymousNamespace(), Record);
-  else
-    Writer.AddDeclRef(D->getOriginalNamespace(), Record);
   Code = serialization::DECL_NAMESPACE;
 
   if (Writer.hasChain() && !D->isOriginalNamespace() &&
@@ -836,7 +832,8 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
     }
   }
 
-  if (Writer.hasChain() && D->isAnonymousNamespace() && !D->getNextNamespace()){
+  if (Writer.hasChain() && D->isAnonymousNamespace() && 
+      D == D->getMostRecentDeclaration()) {
     // This is a most recent reopening of the anonymous namespace. If its parent
     // is in a previous PCH (or is the TU), mark that parent for update, because
     // the original namespace always points to the latest re-opening of its

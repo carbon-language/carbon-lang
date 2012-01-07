@@ -5531,17 +5531,13 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
   SourceLocation StartLoc = InlineLoc.isValid() ? InlineLoc : NamespaceLoc;
   // For anonymous namespace, take the location of the left brace.
   SourceLocation Loc = II ? IdentLoc : LBrace;
-  NamespaceDecl *Namespc = NamespaceDecl::Create(Context, CurContext,
-                                                 StartLoc, Loc, II);
-  Namespc->setInline(InlineLoc.isValid());
-
+  bool IsInline = InlineLoc.isValid();
+  bool IsInvalid = false;
+  bool IsStd = false;
+  bool AddToKnown = false;
   Scope *DeclRegionScope = NamespcScope->getParent();
 
-  ProcessDeclAttributeList(DeclRegionScope, Namespc, AttrList);
-
-  if (const VisibilityAttr *Attr = Namespc->getAttr<VisibilityAttr>())
-    PushNamespaceVisibilityAttr(Attr);
-
+  NamespaceDecl *PrevNS = 0;
   if (II) {
     // C++ [namespace.def]p2:
     //   The identifier in an original-namespace-definition shall not
@@ -5555,11 +5551,11 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
     // look through using directives, just look for any ordinary names.
     
     const unsigned IDNS = Decl::IDNS_Ordinary | Decl::IDNS_Member | 
-      Decl::IDNS_Type | Decl::IDNS_Using | Decl::IDNS_Tag | 
-      Decl::IDNS_Namespace;
+    Decl::IDNS_Type | Decl::IDNS_Using | Decl::IDNS_Tag | 
+    Decl::IDNS_Namespace;
     NamedDecl *PrevDecl = 0;
     for (DeclContext::lookup_result R 
-            = CurContext->getRedeclContext()->lookup(II);
+         = CurContext->getRedeclContext()->lookup(II);
          R.first != R.second; ++R.first) {
       if ((*R.first)->getIdentifierNamespace() & IDNS) {
         PrevDecl = *R.first;
@@ -5567,100 +5563,90 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
       }
     }
     
-    if (NamespaceDecl *OrigNS = dyn_cast_or_null<NamespaceDecl>(PrevDecl)) {
+    PrevNS = dyn_cast_or_null<NamespaceDecl>(PrevDecl);
+    
+    if (PrevNS) {
       // This is an extended namespace definition.
-      if (Namespc->isInline() != OrigNS->isInline()) {
+      if (IsInline != PrevNS->isInline()) {
         // inline-ness must match
-        if (OrigNS->isInline()) {
+        if (PrevNS->isInline()) {
           // The user probably just forgot the 'inline', so suggest that it
           // be added back.
-          Diag(Namespc->getLocation(), 
-               diag::warn_inline_namespace_reopened_noninline)
+          Diag(Loc, diag::warn_inline_namespace_reopened_noninline)
             << FixItHint::CreateInsertion(NamespaceLoc, "inline ");
         } else {
-          Diag(Namespc->getLocation(), diag::err_inline_namespace_mismatch)
-            << Namespc->isInline();
+          Diag(Loc, diag::err_inline_namespace_mismatch)
+            << IsInline;
         }
-        Diag(OrigNS->getLocation(), diag::note_previous_definition);
-
-        // Recover by ignoring the new namespace's inline status.
-        Namespc->setInline(OrigNS->isInline());
-      }
-
-      // Attach this namespace decl to the chain of extended namespace
-      // definitions.
-      OrigNS->setNextNamespace(Namespc);
-      Namespc->setOriginalNamespace(OrigNS->getOriginalNamespace());
-
-      // Remove the previous declaration from the scope.
-      if (DeclRegionScope->isDeclScope(OrigNS)) {
-        IdResolver.RemoveDecl(OrigNS);
-        DeclRegionScope->RemoveDecl(OrigNS);
-      }
+        Diag(PrevNS->getLocation(), diag::note_previous_definition);
+        
+        IsInline = PrevNS->isInline();
+      }      
     } else if (PrevDecl) {
       // This is an invalid name redefinition.
-      Diag(Namespc->getLocation(), diag::err_redefinition_different_kind)
-       << Namespc->getDeclName();
+      Diag(Loc, diag::err_redefinition_different_kind)
+        << II;
       Diag(PrevDecl->getLocation(), diag::note_previous_definition);
-      Namespc->setInvalidDecl();
+      IsInvalid = true;
       // Continue on to push Namespc as current DeclContext and return it.
-    } else if (II->isStr("std") && 
+    } else if (II->isStr("std") &&
                CurContext->getRedeclContext()->isTranslationUnit()) {
       // This is the first "real" definition of the namespace "std", so update
       // our cache of the "std" namespace to point at this definition.
-      if (NamespaceDecl *StdNS = getStdNamespace()) {
-        // We had already defined a dummy namespace "std". Link this new 
-        // namespace definition to the dummy namespace "std".
-        StdNS->setNextNamespace(Namespc);
-        StdNS->setLocation(IdentLoc);
-        Namespc->setOriginalNamespace(StdNS->getOriginalNamespace());
-      }
-      
-      // Make our StdNamespace cache point at the first real definition of the
-      // "std" namespace.
-      StdNamespace = Namespc;
-
-      // Add this instance of "std" to the set of known namespaces
-      KnownNamespaces[Namespc] = false;
-    } else if (!Namespc->isInline()) {
-      // Since this is an "original" namespace, add it to the known set of
-      // namespaces if it is not an inline namespace.
-      KnownNamespaces[Namespc] = false;
+      PrevNS = getStdNamespace();
+      IsStd = true;
+      AddToKnown = !IsInline;
+    } else {
+      // We've seen this namespace for the first time.
+      AddToKnown = !IsInline;
     }
-
-    PushOnScopeChains(Namespc, DeclRegionScope);
   } else {
     // Anonymous namespaces.
-    assert(Namespc->isAnonymousNamespace());
-
-    // Link the anonymous namespace into its parent.
-    NamespaceDecl *PrevDecl;
+    
+    // Determine whether the parent already has an anonymous namespace.
     DeclContext *Parent = CurContext->getRedeclContext();
     if (TranslationUnitDecl *TU = dyn_cast<TranslationUnitDecl>(Parent)) {
-      PrevDecl = TU->getAnonymousNamespace();
-      TU->setAnonymousNamespace(Namespc);
+      PrevNS = TU->getAnonymousNamespace();
     } else {
       NamespaceDecl *ND = cast<NamespaceDecl>(Parent);
-      PrevDecl = ND->getAnonymousNamespace();
-      ND->setAnonymousNamespace(Namespc);
+      PrevNS = ND->getAnonymousNamespace();
     }
 
-    // Link the anonymous namespace with its previous declaration.
-    if (PrevDecl) {
-      assert(PrevDecl->isAnonymousNamespace());
-      assert(!PrevDecl->getNextNamespace());
-      Namespc->setOriginalNamespace(PrevDecl->getOriginalNamespace());
-      PrevDecl->setNextNamespace(Namespc);
+    if (PrevNS && IsInline != PrevNS->isInline()) {
+      // inline-ness must match
+      Diag(Loc, diag::err_inline_namespace_mismatch)
+        << IsInline;
+      Diag(PrevNS->getLocation(), diag::note_previous_definition);
+      IsInvalid = true;
+      
+      // Recover by ignoring the new namespace's inline status.
+      IsInline = PrevNS->isInline();
+    }
+  }
+  
+  NamespaceDecl *Namespc = NamespaceDecl::Create(Context, CurContext, IsInline,
+                                                 StartLoc, Loc, II, PrevNS);
+  
+  ProcessDeclAttributeList(DeclRegionScope, Namespc, AttrList);
 
-      if (Namespc->isInline() != PrevDecl->isInline()) {
-        // inline-ness must match
-        Diag(Namespc->getLocation(), diag::err_inline_namespace_mismatch)
-          << Namespc->isInline();
-        Diag(PrevDecl->getLocation(), diag::note_previous_definition);
-        Namespc->setInvalidDecl();
-        // Recover by ignoring the new namespace's inline status.
-        Namespc->setInline(PrevDecl->isInline());
-      }
+  // FIXME: Should we be merging attributes?
+  if (const VisibilityAttr *Attr = Namespc->getAttr<VisibilityAttr>())
+    PushNamespaceVisibilityAttr(Attr);
+
+  if (IsStd)
+    StdNamespace = Namespc;
+  if (AddToKnown)
+    KnownNamespaces[Namespc] = false;
+  
+  if (II) {
+    PushOnScopeChains(Namespc, DeclRegionScope);
+  } else {
+    // Link the anonymous namespace into its parent.
+    DeclContext *Parent = CurContext->getRedeclContext();
+    if (TranslationUnitDecl *TU = dyn_cast<TranslationUnitDecl>(Parent)) {
+      TU->setAnonymousNamespace(Namespc);
+    } else {
+      cast<NamespaceDecl>(Parent)->setAnonymousNamespace(Namespc);
     }
 
     CurContext->addDecl(Namespc);
@@ -5681,7 +5667,7 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
     // declarations semantically contained within an anonymous
     // namespace internal linkage.
 
-    if (!PrevDecl) {
+    if (!PrevNS) {
       UsingDirectiveDecl* UD
         = UsingDirectiveDecl::Create(Context, CurContext,
                                      /* 'using' */ LBrace,
@@ -5740,8 +5726,10 @@ NamespaceDecl *Sema::getOrCreateStdNamespace() {
     // The "std" namespace has not yet been defined, so build one implicitly.
     StdNamespace = NamespaceDecl::Create(Context, 
                                          Context.getTranslationUnitDecl(),
+                                         /*Inline=*/false,
                                          SourceLocation(), SourceLocation(),
-                                         &PP.getIdentifierTable().get("std"));
+                                         &PP.getIdentifierTable().get("std"),
+                                         /*PrevDecl=*/0);
     getStdNamespace()->setImplicit(true);
   }
   

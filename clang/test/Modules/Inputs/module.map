@@ -63,3 +63,15 @@ module redecl_merge_bottom {
   header "redecl-merge-bottom.h" 
   export *
 }
+module namespaces_top { 
+  header "namespaces-top.h"
+  export *
+}
+module namespaces_left { 
+  header "namespaces-left.h"
+  export *
+}
+module namespaces_right { 
+  header "namespaces-right.h"
+  export *
+}
