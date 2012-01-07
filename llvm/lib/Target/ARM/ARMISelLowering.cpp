@@ -2166,7 +2166,8 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
   MachineFunction &MF = DAG.getMachineFunction();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
 
-  // FIXME: Enable this for static codegen when tool issues are fixed.
+  // FIXME: Enable this for static codegen when tool issues are fixed.  Also
+  // update ARMFastISel::ARMMaterializeGV.
   if (Subtarget->useMovt() && RelocM != Reloc::Static) {
     ++NumMovwMovt;
     // FIXME: Once remat is capable of dealing with instructions with register

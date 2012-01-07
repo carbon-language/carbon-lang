@@ -620,7 +620,11 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, EVT VT) {
   unsigned DestReg = createResultReg(TLI.getRegClassFor(VT));
 
   // Use movw+movt when possible, it avoids constant pool entries.
-  if (Subtarget->isTargetDarwin() && Subtarget->useMovt()) {
+  // Darwin targets don't support movt with Reloc::Static, see
+  // ARMTargetLowering::LowerGlobalAddressDarwin.  Other targets only support
+  // static movt relocations.
+  if (Subtarget->useMovt() &&
+      Subtarget->isTargetDarwin() == (RelocM != Reloc::Static)) {
     unsigned Opc;
     switch (RelocM) {
     case Reloc::PIC_:
