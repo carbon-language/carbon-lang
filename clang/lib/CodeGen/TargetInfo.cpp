@@ -3047,7 +3047,7 @@ public:
     ABIInfo(CGT), IsO32(_IsO32), MinABIStackAlignInBytes(IsO32 ? 4 : 8) {}
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
-  ABIArgInfo classifyArgumentType(QualType RetTy) const;
+  ABIArgInfo classifyArgumentType(QualType RetTy, uint64_t &Offset) const;
   virtual void computeInfo(CGFunctionInfo &FI) const;
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
@@ -3132,28 +3132,41 @@ llvm::Type* MipsABIInfo::HandleStructTy(QualType Ty) const {
   return llvm::StructType::get(getVMContext(), ArgList);
 }
 
-ABIArgInfo MipsABIInfo::classifyArgumentType(QualType Ty) const {
+ABIArgInfo
+MipsABIInfo::classifyArgumentType(QualType Ty, uint64_t &Offset) const {
   if (isAggregateTypeForABI(Ty)) {
     // Ignore empty aggregates.
-    if (getContext().getTypeSize(Ty) == 0)
+    uint64_t TySize = getContext().getTypeSize(Ty);
+    if (TySize == 0)
       return ABIArgInfo::getIgnore();
 
     // Records with non trivial destructors/constructors should not be passed
     // by value.
-    if (isRecordWithNonTrivialDestructorOrCopyConstructor(Ty))
+    if (isRecordWithNonTrivialDestructorOrCopyConstructor(Ty)) {
+      Offset += 8;
       return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+    }
 
-    llvm::Type *ResType;
-    if ((ResType = HandleStructTy(Ty)))
-      return ABIArgInfo::getDirect(ResType);
-
-    return ABIArgInfo::getIndirect(0);
+    // If we have reached here, aggregates are passed either indirectly via a
+    // byval pointer or directly by coercing to another structure type. In the
+    // latter case, padding is inserted if the offset of the aggregate is
+    // unaligned.
+    llvm::Type *ResType = HandleStructTy(Ty);
+    uint64_t Align = getContext().getTypeAlign(Ty) / 8;
+    assert(Align <= 16 && "Alignment larger than 16 not handled.");
+    llvm::Type *PaddingTy = (ResType && Align == 16 && Offset & 0xf) ?
+      llvm::IntegerType::get(getVMContext(), 64) : 0;
+    Offset = llvm::RoundUpToAlignment(Offset, std::max(Align, (uint64_t)8));
+    Offset += llvm::RoundUpToAlignment(TySize, 8);
+    return ResType ? ABIArgInfo::getDirect(ResType, 0, PaddingTy) :
+                     ABIArgInfo::getIndirect(0);
   }
 
   // Treat an enum type as its underlying type.
   if (const EnumType *EnumTy = Ty->getAs<EnumType>())
     Ty = EnumTy->getDecl()->getIntegerType();
 
+  Offset += 8;
   return (Ty->isPromotableIntegerType() ?
           ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
 }
@@ -3230,9 +3243,10 @@ ABIArgInfo MipsABIInfo::classifyReturnType(QualType RetTy) const {
 
 void MipsABIInfo::computeInfo(CGFunctionInfo &FI) const {
   FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
+  uint64_t Offset = 0;
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it)
-    it->info = classifyArgumentType(it->type);
+    it->info = classifyArgumentType(it->type, Offset);
 }
 
 llvm::Value* MipsABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
