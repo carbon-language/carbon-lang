@@ -1501,7 +1501,7 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
   EVT VT = N0.getValueType();
 
   // If the flag result is dead, turn this into an ADD.
-  if (N->hasNUsesOfValue(0, 1))
+  if (!N->hasAnyUseOfValue(1))
     return CombineTo(N, DAG.getNode(ISD::ADD, N->getDebugLoc(), VT, N0, N1),
                      DAG.getNode(ISD::CARRY_FALSE,
                                  N->getDebugLoc(), MVT::Glue));
@@ -1668,7 +1668,7 @@ SDValue DAGCombiner::visitSUBC(SDNode *N) {
   EVT VT = N0.getValueType();
 
   // If the flag result is dead, turn this into an SUB.
-  if (N->hasNUsesOfValue(0, 1))
+  if (!N->hasAnyUseOfValue(1))
     return CombineTo(N, DAG.getNode(ISD::SUB, N->getDebugLoc(), VT, N0, N1),
                      DAG.getNode(ISD::CARRY_FALSE, N->getDebugLoc(),
                                  MVT::Glue));
@@ -6240,7 +6240,7 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
   if (!LD->isVolatile()) {
     if (N->getValueType(1) == MVT::Other) {
       // Unindexed loads.
-      if (N->hasNUsesOfValue(0, 0)) {
+      if (!N->hasAnyUseOfValue(0)) {
         // It's not safe to use the two value CombineTo variant here. e.g.
         // v1, chain2 = load chain1, loc
         // v2, chain3 = load chain2, loc
@@ -6265,7 +6265,7 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
     } else {
       // Indexed loads.
       assert(N->getValueType(2) == MVT::Other && "Malformed indexed loads?");
-      if (N->hasNUsesOfValue(0, 0) && N->hasNUsesOfValue(0, 1)) {
+      if (!N->hasAnyUseOfValue(0) && !N->hasAnyUseOfValue(1)) {
         SDValue Undef = DAG.getUNDEF(N->getValueType(0));
         DEBUG(dbgs() << "\nReplacing.7 ";
               N->dump(&DAG);
