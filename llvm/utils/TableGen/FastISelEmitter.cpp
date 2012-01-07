@@ -280,7 +280,7 @@ struct OperandsSignature {
       } else if (Operands[i].isImm()) {
         OS << "uint64_t imm" << i;
       } else if (Operands[i].isFP()) {
-        OS << "ConstantFP *f" << i;
+        OS << "const ConstantFP *f" << i;
       } else {
         llvm_unreachable("Unknown operand kind!");
       }
