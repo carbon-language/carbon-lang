@@ -1146,8 +1146,6 @@ public:
                                    DeclSpec &DS,
                                    MultiTemplateParamsArg TemplateParams);
 
-  StmtResult ActOnVlaStmt(const DeclSpec &DS);
-
   Decl *BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
                                     AccessSpecifier AS,
                                     RecordDecl *Record);

@@ -116,9 +116,6 @@ int test4(unsigned n, char (*p)[n][n+1][6]) {
   // CHECK-NEXT: [[T0:%.*]] = load i32* [[N]], align 4
   // CHECK-NEXT: [[DIM1:%.*]] = add i32 [[T0]], 1
 
-  // __typeof.  FIXME: does this really need to be loaded?
-  // CHECK-NEXT: load [6 x i8]** [[P]]
-
   // CHECK-NEXT: [[T0:%.*]] = load [6 x i8]** [[P]], align 4
   // CHECK-NEXT: [[T1:%.*]] = load i32* [[N]], align 4
   // CHECK-NEXT: [[T2:%.*]] = udiv i32 [[T1]], 2

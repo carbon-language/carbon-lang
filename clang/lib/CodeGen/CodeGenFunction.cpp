@@ -929,19 +929,33 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
 
   // We're going to walk down into the type and look for VLA
   // expressions.
-  type = type.getCanonicalType();
   do {
     assert(type->isVariablyModifiedType());
 
     const Type *ty = type.getTypePtr();
     switch (ty->getTypeClass()) {
+
+    default:
+      // Only sugared types (different from typeof_expr) can reach this point.
+      assert(!type.isCanonical() && "unhandled canonical type!");
+      type = type.getSingleStepDesugaredType(getContext());
+      break;
+
+    case Type::TypeOfExpr: {
+      // This is the only sugared type requiring special treatment.
+      // Emit typeof expression and we are done.
+      Expr *E = cast<TypeOfExprType>(ty)->getUnderlyingExpr();
+      EmitIgnoredExpr(E);
+      return;
+    }
+
 #define TYPE(Class, Base)
 #define ABSTRACT_TYPE(Class, Base)
-#define NON_CANONICAL_TYPE(Class, Base) case Type::Class:
+#define NON_CANONICAL_TYPE(Class, Base)
 #define DEPENDENT_TYPE(Class, Base) case Type::Class:
-#define NON_CANONICAL_UNLESS_DEPENDENT_TYPE(Class, Base) case Type::Class:
+#define NON_CANONICAL_UNLESS_DEPENDENT_TYPE(Class, Base)
 #include "clang/AST/TypeNodes.def"
-      llvm_unreachable("unexpected dependent or non-canonical type!");
+      llvm_unreachable("unexpected dependent type!");
 
     // These types are never variably-modified.
     case Type::Builtin:
@@ -999,7 +1013,7 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
       break;
     }
 
-    case Type::FunctionProto: 
+    case Type::FunctionProto:
     case Type::FunctionNoProto:
       type = cast<FunctionType>(ty)->getResultType();
       break;
