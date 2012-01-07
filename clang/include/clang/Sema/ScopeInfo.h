@@ -160,6 +160,29 @@ public:
 
 class LambdaScopeInfo : public FunctionScopeInfo {
 public:
+
+  class Capture {
+    llvm::PointerIntPair<VarDecl*, 2, LambdaCaptureKind> InitAndKind;
+
+  public:
+    Capture(VarDecl *Var, LambdaCaptureKind Kind)
+      : InitAndKind(Var, Kind) {}
+
+    enum IsThisCapture { ThisCapture };
+    Capture(IsThisCapture)
+      : InitAndKind(0, LCK_This) {}
+
+    bool isThisCapture() const { return InitAndKind.getInt() == LCK_This; }
+    bool isVariableCapture() const { return !isThisCapture(); }
+    bool isCopyCapture() const { return InitAndKind.getInt() == LCK_ByCopy; }
+    bool isReferenceCapture() const { return InitAndKind.getInt() == LCK_ByRef; }
+
+    VarDecl *getVariable() const {
+      return InitAndKind.getPointer();
+    }
+
+  };
+
   /// \brief The class that describes the lambda.
   CXXRecordDecl *Lambda;
   
@@ -169,9 +192,7 @@ public:
   
   /// \brief The list of captured variables, starting with the explicit 
   /// captures and then finishing with any implicit captures.
-  // TODO: This is commented out until an implementation of LambdaExpr is
-  // committed.
-  //  llvm::SmallVector<LambdaExpr::Capture, 4> Captures;
+  llvm::SmallVector<Capture, 4> Captures;
   
   /// \brief The number of captures in the \c Captures list that are 
   /// explicit captures.

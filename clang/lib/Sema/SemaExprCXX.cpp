@@ -4793,6 +4793,84 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   Class->startDefinition();
   CurContext->addDecl(Class);
 
+  // Introduce the lambda scope.
+  PushLambdaScope(Class);
+
+  LambdaScopeInfo *LSI = getCurLambda();
+
+  QualType ThisCaptureType;
+  llvm::DenseMap<const IdentifierInfo*, SourceLocation> CapturesSoFar;
+  for (llvm::SmallVector<LambdaCapture, 4>::const_iterator
+       C = Intro.Captures.begin(), E = Intro.Captures.end(); C != E; ++C) {
+    if (C->Kind == LCK_This) {
+      if (!ThisCaptureType.isNull()) {
+        Diag(C->Loc, diag::err_capture_more_than_once) << "'this'";
+        continue;
+      }
+
+      if (Intro.Default == LCD_ByCopy) {
+        Diag(C->Loc, diag::err_this_capture_with_copy_default);
+        continue;
+      }
+
+      ThisCaptureType = getCurrentThisType();
+
+      if (ThisCaptureType.isNull()) {
+        Diag(C->Loc, diag::err_invalid_this_use);
+        continue;
+      }
+      LSI->Captures.push_back(LambdaScopeInfo::Capture::ThisCapture);
+      continue;
+    }
+
+    assert(C->Id && "missing identifier for capture");
+
+    if (C->Kind == LCK_ByRef && Intro.Default == LCD_ByRef) {
+      Diag(C->Loc, diag::err_reference_capture_with_reference_default);
+      continue;
+    } else if (C->Kind == LCK_ByCopy && Intro.Default == LCD_ByCopy) {
+      Diag(C->Loc, diag::err_copy_capture_with_copy_default);
+      continue;
+    }
+
+    llvm::DenseMap<const IdentifierInfo*, SourceLocation>::iterator Appearance;
+    bool IsFirstAppearance;
+    llvm::tie(Appearance, IsFirstAppearance)
+      = CapturesSoFar.insert(std::make_pair(C->Id, C->Loc));
+
+    if (!IsFirstAppearance) {
+      Diag(C->Loc, diag::err_capture_more_than_once) << C->Id;
+      continue;
+    }
+
+    DeclarationNameInfo Name(C->Id, C->Loc);
+    LookupResult R(*this, Name, LookupOrdinaryName);
+    CXXScopeSpec ScopeSpec;
+    LookupParsedName(R, CurScope, &ScopeSpec);
+    if (R.isAmbiguous())
+      continue;
+    if (R.empty())
+      if (DiagnoseEmptyLookup(CurScope, ScopeSpec, R, CTC_Unknown))
+        continue;
+
+    VarDecl *Var = R.getAsSingle<VarDecl>();
+    if (!Var) {
+      Diag(C->Loc, diag::err_capture_does_not_name_variable) << C->Id;
+      continue;
+    }
+
+    if (!Var->hasLocalStorage()) {
+      Diag(C->Loc, diag::err_capture_non_automatic_variable) << C->Id;
+      continue;
+    }
+
+    // FIXME: Actually capturing a variable is much more complicated than this
+    // in the general case; see shouldCaptureValueReference.
+    // FIXME: Should we be building a DeclRefExpr here?  We don't really need
+    // it until the point where we're actually building the LambdaExpr.
+    LSI->Captures.push_back(LambdaScopeInfo::Capture(Var, C->Kind));
+  }
+
   // Build the call operator; we don't really have all the relevant information
   // at this point, but we need something to attach child declarations to.
   QualType MethodTy;
@@ -4837,16 +4915,11 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
 
   ProcessDeclAttributes(CurScope, Method, ParamInfo);
 
-  // Introduce the lambda scope.
-  PushLambdaScope(Class);
-
   // Enter a new evaluation context to insulate the block from any
   // cleanups from the enclosing full-expression.
   PushExpressionEvaluationContext(PotentiallyEvaluated);
 
   PushDeclContext(CurScope, Method);
-
-  LambdaScopeInfo *LSI = getCurLambda();
 
   // Set the parameters on the decl, if specified.
   if (isa<FunctionProtoTypeLoc>(MethodTyInfo->getTypeLoc())) {

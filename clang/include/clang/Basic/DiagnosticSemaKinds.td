@@ -3992,6 +3992,18 @@ def err_return_in_constructor_handler : Error<
   "return in the catch of a function try block of a constructor is illegal">;
 
 def err_lambda_unsupported : Error<"lambda expressions are not supported yet">;
+def err_capture_more_than_once : Error<
+  "%0 can appear only once in a capture list">;
+def err_reference_capture_with_reference_default : Error<
+  "'&' cannot precede a capture when the capture default is '&'">;
+def err_this_capture_with_copy_default : Error<
+  "'this' cannot appear in a capture list when the capture default is '='">;
+def err_copy_capture_with_copy_default : Error<
+  "'&' must precede a capture when the capture default is '='">;
+def err_capture_does_not_name_variable : Error<
+  "%0 in capture list does not name a variable">;
+def err_capture_non_automatic_variable : Error<
+  "%0 cannot be captured because it does not have automatic storage duration">;
 
 def err_operator_arrow_circular : Error<
   "circular pointer delegation detected">;
