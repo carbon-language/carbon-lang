@@ -61,6 +61,7 @@ private:
   bool needsSet(const MCExpr *Value);
 
   void EmitRegisterName(int64_t Register);
+  virtual void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame);
 
 public:
   MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
@@ -209,7 +210,6 @@ public:
                                      StringRef FileName);
 
   virtual void EmitCFISections(bool EH, bool Debug);
-  virtual void EmitCFIStartProc();
   virtual void EmitCFIEndProc();
   virtual void EmitCFIDefCfa(int64_t Register, int64_t Offset);
   virtual void EmitCFIDefCfaOffset(int64_t Offset);
@@ -841,11 +841,11 @@ void MCAsmStreamer::EmitCFISections(bool EH, bool Debug) {
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitCFIStartProc() {
-  MCStreamer::EmitCFIStartProc();
-
-  if (!UseCFI)
+void MCAsmStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
+  if (!UseCFI) {
+    RecordProcStart(Frame);
     return;
+  }
 
   OS << "\t.cfi_startproc";
   EmitEOL();

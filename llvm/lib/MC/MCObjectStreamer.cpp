@@ -105,6 +105,10 @@ void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
   DF->getContents().resize(DF->getContents().size() + Size, 0);
 }
 
+void MCObjectStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
+  RecordProcStart(Frame);
+}
+
 void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
   MCStreamer::EmitLabel(Symbol);
 

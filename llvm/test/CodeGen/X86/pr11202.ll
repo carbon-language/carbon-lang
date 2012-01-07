@@ -15,5 +15,5 @@ l2:                                               ; preds = %l1
   br label %l1
 }
 
-; CHECK: .Ltmp1:                                 # Address of block that was removed by CodeGen
-; CHECK: .quad	.Ltmp1
+; CHECK: .Ltmp0:                                 # Address of block that was removed by CodeGen
+; CHECK: .quad	.Ltmp0

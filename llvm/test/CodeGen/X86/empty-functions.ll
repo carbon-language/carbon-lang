@@ -6,14 +6,12 @@ entry:
   unreachable
 }
 ; CHECK-NO-FP:     _func:
-; CHECK-NO-FP-NEXT: :
 ; CHECK-NO-FP-NEXT: .cfi_startproc
 ; CHECK-NO-FP:     nop
 ; CHECK-NO-FP-NEXT: :
 ; CHECK-NO-FP-NEXT: .cfi_endproc
 
 ; CHECK-FP:      _func:
-; CHECK-FP-NEXT: :
 ; CHECK-FP-NEXT: .cfi_startproc
 ; CHECK-FP-NEXT: :
 ; CHECK-FP-NEXT: pushq %rbp

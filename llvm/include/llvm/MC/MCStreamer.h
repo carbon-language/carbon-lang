@@ -94,6 +94,8 @@ namespace llvm {
 
     const MCExpr *ForceExpAbs(const MCExpr* Expr);
 
+    void RecordProcStart(MCDwarfFrameInfo &Frame);
+    virtual void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame);
     void EmitFrames(bool usingCFI);
 
     MCWin64EHUnwindInfo *getCurrentW64UnwindInfo(){return CurrentW64UnwindInfo;}
@@ -536,7 +538,7 @@ namespace llvm {
 
     virtual void EmitCompactUnwindEncoding(uint32_t CompactUnwindEncoding);
     virtual void EmitCFISections(bool EH, bool Debug);
-    virtual void EmitCFIStartProc();
+    void EmitCFIStartProc();
     virtual void EmitCFIEndProc();
     virtual void EmitCFIDefCfa(int64_t Register, int64_t Offset);
     virtual void EmitCFIDefCfaOffset(int64_t Offset);

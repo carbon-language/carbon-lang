@@ -276,8 +276,17 @@ void MCStreamer::EmitCFIStartProc() {
     report_fatal_error("Starting a frame before finishing the previous one!");
 
   MCDwarfFrameInfo Frame;
-  Frame.Function = LastSymbol;
+  EmitCFIStartProcImpl(Frame);
 
+  FrameInfos.push_back(Frame);
+  RegionIndicator = Code;
+}
+
+void MCStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
+}
+
+void MCStreamer::RecordProcStart(MCDwarfFrameInfo &Frame) {
+  Frame.Function = LastSymbol;
   // If the function is externally visible, we need to create a local
   // symbol to avoid relocations.
   StringRef Prefix = getContext().getAsmInfo().getPrivateGlobalPrefix();
@@ -287,9 +296,6 @@ void MCStreamer::EmitCFIStartProc() {
     Frame.Begin = getContext().CreateTempSymbol();
     EmitLabel(Frame.Begin);
   }
-
-  FrameInfos.push_back(Frame);
-  RegionIndicator = Code;
 }
 
 void MCStreamer::EmitCFIEndProc() {

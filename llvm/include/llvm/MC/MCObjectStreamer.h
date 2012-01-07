@@ -34,6 +34,7 @@ class MCObjectStreamer : public MCStreamer {
   MCSectionData *CurSectionData;
 
   virtual void EmitInstToData(const MCInst &Inst) = 0;
+  virtual void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame);
 
 protected:
   MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB,
