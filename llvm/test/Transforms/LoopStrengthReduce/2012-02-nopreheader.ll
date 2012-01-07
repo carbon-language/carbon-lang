@@ -1,6 +1,7 @@
 ; RUN: opt -loop-reduce -S < %s | FileCheck %s
 ;
 ; <rdar://10619599> "SelectionDAGBuilder shouldn't visit PHI nodes!" assert.
+; <rdar://10655343> SCEVExpander segfault on simple test case
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128-f128:128:128-n8:16:32"
 target triple = "i386-apple-darwin"
@@ -9,11 +10,12 @@ target triple = "i386-apple-darwin"
 ; This involves a nested AddRec, the outer AddRec's loop invariant components
 ; cannot find a preheader, so they should be expanded in the loop header
 ; (bb7.lr.ph.us) below the existing phi i.12.us.
+; Currently, LSR won't kick in on such loops.
 ; CHECK: @nopreheader
-; CHECK: bb7.lr.ph.us:
-; CHECK: %lsr.iv = phi float*
 ; CHECK: bb7.us:
-; CHECK: %lsr.iv2 = phi float*
+; CHECK-NOT: phi float*
+; CHECK: %j.01.us = phi i32
+; CHECK-NOT: phi float*
 define void @nopreheader(float* nocapture %a, i32 %n) nounwind {
 entry:
   %0 = sdiv i32 %n, undef
@@ -46,5 +48,41 @@ bb9:                                              ; preds = %bb9, %bb8.preheader
   indirectbr i8* undef, [label %bb9, label %return]
 
 return:                                           ; preds = %bb9, %bb9.us, %bb10.preheader
+  ret void
+}
+
+; In this case, SCEVExpander simply cannot materialize the AddRecExpr
+; that LSR picks. We must detect that %bb8.preheader does not have a
+; preheader and avoid performing LSR on %bb7.
+; CHECK: @nopreheader2
+; CHECK: bb7:
+; CHECK: %indvar = phi i32
+define fastcc void @nopreheader2([200 x i32]* nocapture %Array2) nounwind {
+entry:
+  indirectbr i8* undef, [label %bb]
+
+bb:                                               ; preds = %bb, %entry
+  indirectbr i8* undef, [label %bb3, label %bb]
+
+bb3:                                              ; preds = %bb3, %bb
+  indirectbr i8* undef, [label %bb8.preheader, label %bb3]
+
+bb8.preheader:                                    ; preds = %bb9, %bb3
+  %indvar5 = phi i32 [ %indvar.next6, %bb9 ], [ 0, %bb3 ]
+  %tmp26 = add i32 %indvar5, 13
+  indirectbr i8* null, [label %bb7]
+
+bb7:                                              ; preds = %bb8.preheader, %bb7
+  %indvar = phi i32 [ 0, %bb8.preheader ], [ %indvar.next, %bb7 ]
+  %scevgep = getelementptr [200 x i32]* %Array2, i32 %tmp26, i32 %indvar
+  store i32 undef, i32* %scevgep, align 4
+  %indvar.next = add i32 %indvar, 1
+  indirectbr i8* undef, [label %bb9, label %bb7]
+
+bb9:                                              ; preds = %bb7
+  %indvar.next6 = add i32 %indvar5, 1
+  indirectbr i8* undef, [label %return, label %bb8.preheader]
+
+return:                                           ; preds = %bb9
   ret void
 }

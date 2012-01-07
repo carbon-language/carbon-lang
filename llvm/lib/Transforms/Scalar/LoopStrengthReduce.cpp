@@ -3842,8 +3842,15 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
     TLI(tli), L(l), Changed(false), IVIncInsertPos(0) {
 
   // If LoopSimplify form is not available, stay out of trouble.
-  if (!L->isLoopSimplifyForm()) return;
+  if (!L->isLoopSimplifyForm())
+    return;
 
+  // All outer loops must have preheaders, or SCEVExpander may not be able to
+  // materialize an AddRecExpr whose Start is an outer AddRecExpr.
+  for (const Loop *OuterLoop = L; (OuterLoop = OuterLoop->getParentLoop());) {
+    if (!OuterLoop->getLoopPreheader())
+      return;
+  }
   // If there's no interesting work to be done, bail early.
   if (IU.empty()) return;
 
