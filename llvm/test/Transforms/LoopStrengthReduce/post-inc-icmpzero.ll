@@ -1,7 +1,7 @@
 ; RUN: opt -loop-reduce -S < %s | FileCheck %s
 ; PR9939
 
-; LSR should property handle the post-inc offset when folding the
+; LSR should properly handle the post-inc offset when folding the
 ; non-IV operand of an icmp into the IV.
 
 ; CHECK:   %4 = sub i64 %sub.ptr.lhs.cast, %sub.ptr.rhs.cast
