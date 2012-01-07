@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -arcmt-check -verify -triple x86_64-apple-darwin10 -fsyntax-only -fblocks -Warc-abi  %s
+// DISABLE: mingw32
 
 // Classes that have an Objective-C object pointer.
 struct HasObjectMember0 { // expected-warning{{'HasObjectMember0' cannot be shared between ARC and non-ARC code; add a copy constructor, a copy assignment operator, and a destructor to make it ABI-compatible}}
