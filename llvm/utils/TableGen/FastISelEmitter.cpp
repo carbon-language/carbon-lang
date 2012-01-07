@@ -21,7 +21,6 @@
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/VectorExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;

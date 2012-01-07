@@ -17,7 +17,6 @@
 #include "PPCTargetMachine.h"
 #include "MCTargetDesc/PPCPredicates.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/VectorExtras.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"

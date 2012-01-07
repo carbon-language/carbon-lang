@@ -16,7 +16,6 @@
 
 #include <utility>
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/VectorExtras.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 

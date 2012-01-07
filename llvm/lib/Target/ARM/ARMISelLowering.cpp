@@ -43,7 +43,6 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/ADT/VectorExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
