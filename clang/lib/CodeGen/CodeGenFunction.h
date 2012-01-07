@@ -1300,7 +1300,8 @@ public:
   void GenerateObjCGetter(ObjCImplementationDecl *IMP,
                           const ObjCPropertyImplDecl *PID);
   void generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
-                              const ObjCPropertyImplDecl *propImpl);
+                              const ObjCPropertyImplDecl *propImpl,
+                              llvm::Constant *AtomicHelperFn);
 
   void GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
                                   ObjCMethodDecl *MD, bool ctor);
@@ -1335,7 +1336,8 @@ public:
   llvm::Constant *GenerateCopyHelperFunction(const CGBlockInfo &blockInfo);
   llvm::Constant *GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo);
   llvm::Constant *GenerateObjCAtomicCopyHelperFunction(
-                                             const ObjCPropertyImplDecl *PID);
+                                             const ObjCPropertyImplDecl *PID,
+                                             bool forSetter);
 
   void BuildBlockRelease(llvm::Value *DeclPtr, BlockFieldFlags flags);
 

@@ -564,12 +564,14 @@ PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
 /// is illegal within a category.
 void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
                                          const ObjCPropertyImplDecl *PID) {
+  llvm::Constant *AtomicHelperFn = 
+    GenerateObjCAtomicCopyHelperFunction(PID, false);
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getGetterMethodDecl();
   assert(OMD && "Invalid call to generate getter (empty method)");
   StartObjCMethod(OMD, IMP->getClassInterface(), PID->getLocStart());
 
-  generateObjCGetterBody(IMP, PID);
+  generateObjCGetterBody(IMP, PID, AtomicHelperFn);
 
   FinishFunction();
 }
@@ -599,7 +601,8 @@ static bool hasTrivialGetExpr(const ObjCPropertyImplDecl *propImpl) {
 
 void
 CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
-                                        const ObjCPropertyImplDecl *propImpl) {
+                                        const ObjCPropertyImplDecl *propImpl,
+                                        llvm::Constant *AtomicHelperFn) {
   // If there's a non-trivial 'get' expression, we just have to emit that.
   if (!hasTrivialGetExpr(propImpl)) {
     ReturnStmt ret(SourceLocation(), propImpl->getGetterCXXConstructor(),
@@ -989,7 +992,8 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
 /// is illegal within a category.
 void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
                                          const ObjCPropertyImplDecl *PID) {
-  llvm::Constant *AtomicHelperFn = GenerateObjCAtomicCopyHelperFunction(PID);
+  llvm::Constant *AtomicHelperFn = 
+    GenerateObjCAtomicCopyHelperFunction(PID, true);
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getSetterMethodDecl();
   assert(OMD && "Invalid call to generate setter (empty method)");
@@ -2533,7 +2537,8 @@ void CodeGenFunction::EmitExtendGCLifetime(llvm::Value *object) {
 ///
 llvm::Constant *
 CodeGenFunction::GenerateObjCAtomicCopyHelperFunction(
-                                        const ObjCPropertyImplDecl *PID) {
+                                        const ObjCPropertyImplDecl *PID,
+                                        bool forSetter) {
   // FIXME. This api is for NeXt runtime only for now.
   if (!getLangOptions().CPlusPlus || !getLangOptions().NeXTRuntime)
     return 0;
@@ -2541,10 +2546,16 @@ CodeGenFunction::GenerateObjCAtomicCopyHelperFunction(
   if (!Ty->isRecordType())
     return 0;
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
-  if (!(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_atomic) ||
-      hasTrivialSetExpr(PID) || /* temporary */ true)
+  if ((!(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_atomic))
+      || /* temporary */ true) 
     return 0;
-  
+  if (forSetter) {
+    if (hasTrivialSetExpr(PID))
+      return 0;
+  }
+  else 
+    if (hasTrivialGetExpr(PID))
+      return 0;
   llvm::Constant * HelperFn = CGM.getAtomicHelperFnMap(Ty);
   if (HelperFn)
     return HelperFn;
