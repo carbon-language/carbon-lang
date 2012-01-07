@@ -176,7 +176,7 @@ public:
   /// indicated by the hasRawTextSupport() predicate.
   virtual void EmitRawText(StringRef String);
 
-  virtual void Finish();
+  virtual void FinishImpl();
 
   /// @}
 
@@ -540,7 +540,7 @@ void PTXMCAsmStreamer::EmitRawText(StringRef String) {
   EmitEOL();
 }
 
-void PTXMCAsmStreamer::Finish() {}
+void PTXMCAsmStreamer::FinishImpl() {}
 
 namespace llvm {
   MCStreamer *createPTXAsmStreamer(MCContext &Context,

@@ -255,7 +255,7 @@ public:
   /// indicated by the hasRawTextSupport() predicate.
   virtual void EmitRawText(StringRef String);
 
-  virtual void Finish();
+  virtual void FinishImpl();
 
   /// @}
 };
@@ -1285,7 +1285,7 @@ void MCAsmStreamer::EmitRawText(StringRef String) {
   EmitEOL();
 }
 
-void MCAsmStreamer::Finish() {
+void MCAsmStreamer::FinishImpl() {
   // Dump out the dwarf file & directory tables and line tables.
   if (getContext().hasDwarfFiles() && !UseLoc)
     MCDwarfFileTable::Emit(this);

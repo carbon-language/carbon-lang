@@ -94,7 +94,7 @@ public:
 
   virtual void EmitFileDirective(StringRef Filename);
 
-  virtual void Finish();
+  virtual void FinishImpl();
 
 private:
   virtual void EmitInstToFragment(const MCInst &Inst);

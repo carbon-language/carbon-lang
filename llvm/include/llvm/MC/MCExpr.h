@@ -204,7 +204,9 @@ private:
   const VariantKind Kind;
 
   explicit MCSymbolRefExpr(const MCSymbol *_Symbol, VariantKind _Kind)
-    : MCExpr(MCExpr::SymbolRef), Symbol(_Symbol), Kind(_Kind) {}
+    : MCExpr(MCExpr::SymbolRef), Symbol(_Symbol), Kind(_Kind) {
+    assert(Symbol);
+  }
 
 public:
   /// @name Construction

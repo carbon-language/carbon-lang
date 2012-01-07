@@ -652,3 +652,10 @@ void MCStreamer::EmitW64Tables() {
 
   MCWin64EHUnwindEmitter::Emit(*this);
 }
+
+void MCStreamer::Finish() {
+  if (!FrameInfos.empty() && !FrameInfos.back().End)
+    report_fatal_error("Unfinished frame!");
+
+  FinishImpl();
+}

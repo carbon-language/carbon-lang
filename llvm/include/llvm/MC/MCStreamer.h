@@ -590,8 +590,10 @@ namespace llvm {
     virtual void EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
                              bool isVector);
 
+    /// FinishImpl - Streamer specific finalization.
+    virtual void FinishImpl() = 0;
     /// Finish - Finish emission of machine code.
-    virtual void Finish() = 0;
+    void Finish();
   };
 
   /// createNullStreamer - Create a dummy machine code streamer, which does

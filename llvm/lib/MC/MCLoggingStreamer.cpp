@@ -243,9 +243,9 @@ public:
     return Child->EmitRawText(String);
   }
 
-  virtual void Finish() {
-    LogCall("Finish");
-    return Child->Finish();
+  virtual void FinishImpl() {
+    LogCall("FinishImpl");
+    return Child->FinishImpl();
   }
 
 };

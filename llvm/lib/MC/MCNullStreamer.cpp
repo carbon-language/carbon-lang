@@ -94,7 +94,7 @@ namespace {
                                        StringRef FileName) {}
     virtual void EmitInstruction(const MCInst &Inst) {}
 
-    virtual void Finish() {}
+    virtual void FinishImpl() {}
     
     /// @}
   };

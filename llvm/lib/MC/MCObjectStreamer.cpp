@@ -255,7 +255,7 @@ void MCObjectStreamer::EmitGPRel32Value(const MCExpr *Value) {
   DF->getContents().resize(DF->getContents().size() + 4, 0);
 }
 
-void MCObjectStreamer::Finish() {
+void MCObjectStreamer::FinishImpl() {
   // Dump out the dwarf file & directory tables and line tables.
   if (getContext().hasDwarfFiles())
     MCDwarfFileTable::Emit(this);

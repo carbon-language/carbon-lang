@@ -48,7 +48,7 @@ public:
                                  unsigned MaxBytesToEmit = 0);
   virtual void EmitValueToOffset(const MCExpr *Offset,
                                  unsigned char Value = 0);
-  virtual void Finish();
+  virtual void FinishImpl();
 
 
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) {
@@ -224,10 +224,10 @@ void MCPureStreamer::EmitInstToData(const MCInst &Inst) {
   DF->getContents().append(Code.begin(), Code.end());
 }
 
-void MCPureStreamer::Finish() {
+void MCPureStreamer::FinishImpl() {
   // FIXME: Handle DWARF tables?
 
-  this->MCObjectStreamer::Finish();
+  this->MCObjectStreamer::FinishImpl();
 }
 
 MCStreamer *llvm::createPureStreamer(MCContext &Context, MCAsmBackend &MAB,

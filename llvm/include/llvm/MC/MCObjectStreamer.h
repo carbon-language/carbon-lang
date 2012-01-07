@@ -78,7 +78,7 @@ public:
   virtual void EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
                                          const MCSymbol *Label);
   virtual void EmitGPRel32Value(const MCExpr *Value);
-  virtual void Finish();
+  virtual void FinishImpl();
 
   /// @}
 };

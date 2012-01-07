@@ -603,7 +603,7 @@ namespace {
         if (Inst.getOperand(i).isExpr())
           AddValueSymbols(Inst.getOperand(i).getExpr());
     }
-    virtual void Finish() {}
+    virtual void FinishImpl() {}
   };
 }
 

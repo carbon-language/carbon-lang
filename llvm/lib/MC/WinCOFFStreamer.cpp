@@ -79,7 +79,7 @@ public:
   virtual void EmitFileDirective(StringRef Filename);
   virtual void EmitInstruction(const MCInst &Instruction);
   virtual void EmitWin64EHHandlerData();
-  virtual void Finish();
+  virtual void FinishImpl();
 
 private:
   virtual void EmitInstToFragment(const MCInst &Inst) {
@@ -401,9 +401,9 @@ void WinCOFFStreamer::EmitWin64EHHandlerData() {
   MCWin64EHUnwindEmitter::EmitUnwindInfo(*this, getCurrentW64UnwindInfo());
 }
 
-void WinCOFFStreamer::Finish() {
+void WinCOFFStreamer::FinishImpl() {
   EmitW64Tables();
-  MCObjectStreamer::Finish();
+  MCObjectStreamer::FinishImpl();
 }
 
 namespace llvm

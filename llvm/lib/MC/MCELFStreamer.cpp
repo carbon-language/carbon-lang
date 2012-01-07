@@ -356,7 +356,7 @@ void MCELFStreamer::EmitInstToData(const MCInst &Inst) {
   DF->getContents().append(Code.begin(), Code.end());
 }
 
-void MCELFStreamer::Finish() {
+void MCELFStreamer::FinishImpl() {
   EmitFrames(true);
 
   for (std::vector<LocalCommon>::const_iterator i = LocalCommons.begin(),
@@ -379,7 +379,7 @@ void MCELFStreamer::Finish() {
       SectData.setAlignment(ByteAlignment);
   }
 
-  this->MCObjectStreamer::Finish();
+  this->MCObjectStreamer::FinishImpl();
 }
 
 MCStreamer *llvm::createELFStreamer(MCContext &Context, MCAsmBackend &MAB,
