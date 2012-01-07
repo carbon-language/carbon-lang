@@ -15380,7 +15380,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       if (!Subtarget->hasXMMInt()) break;
       // FALL THROUGH.
     case 'x':   // SSE_REGS if SSE1 allowed or AVX_REGS if AVX allowed
-      if (!Subtarget->hasXMM() && !Subtarget->hasAVX()) break;
+      if (!Subtarget->hasXMM()) break;
 
       switch (VT.getSimpleVT().SimpleTy) {
       default: break;
