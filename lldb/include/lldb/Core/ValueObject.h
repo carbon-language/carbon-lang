@@ -951,7 +951,7 @@ public:
         m_forced_summary_format = format;
         m_user_id_of_forced_summary = m_update_point.GetModID();
         m_summary_str.clear();
-        m_trying_summary_already = false;
+        m_is_getting_summary = false;
     }
     
     lldb::SummaryFormatSP
@@ -987,7 +987,7 @@ public:
     {
         m_last_summary_format = format;
         m_summary_str.clear();
-        m_trying_summary_already = false;
+        m_is_getting_summary = false;
     }
     
     void
@@ -1109,7 +1109,7 @@ protected:
                         m_is_bitfield_for_scalar:1,
                         m_is_expression_path_child:1,
                         m_is_child_at_offset:1,
-                        m_trying_summary_already:1; // used to prevent endless recursion in printing summaries
+                        m_is_getting_summary:1;
     
     friend class ClangExpressionDeclMap;  // For GetValue
     friend class ClangExpressionVariable; // For SetName

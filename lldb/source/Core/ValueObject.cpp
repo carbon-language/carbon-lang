@@ -95,7 +95,7 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_is_bitfield_for_scalar(false),
     m_is_expression_path_child(false),
     m_is_child_at_offset(false),
-    m_trying_summary_already(false)
+    m_is_getting_summary(false)
 {
     m_manager->ManageObject(this);
 }
@@ -141,7 +141,7 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope,
     m_is_bitfield_for_scalar(false),
     m_is_expression_path_child(false),
     m_is_child_at_offset(false),
-    m_trying_summary_already(false)
+    m_is_getting_summary(false)
 {
     m_manager = new ValueObjectManager();
     m_manager->ManageObject (this);
@@ -564,6 +564,13 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
 const char *
 ValueObject::GetSummaryAsCString ()
 {
+    // Watch for recursion which can happen with summary strings and other
+    // variable formatting options.
+    if (m_is_getting_summary)
+        return NULL;
+    
+    m_is_getting_summary = true;
+
     if (UpdateValueIfNeeded (true))
     {        
         if (m_summary_str.empty())
@@ -635,6 +642,7 @@ ValueObject::GetSummaryAsCString ()
             }
         }
     }
+    m_is_getting_summary = false;
     if (m_summary_str.empty())
         return NULL;
     return m_summary_str.c_str();
@@ -1129,33 +1137,32 @@ ValueObject::GetPrintableRepresentation(Stream& s,
         case eDisplayValue:
             return_value = GetValueAsCString();
             break;
+
         case eDisplaySummary:
-            if (m_trying_summary_already)
-                return_value = NULL;
-            else
-            {
-                m_trying_summary_already = true;
-                return_value = GetSummaryAsCString();
-                m_trying_summary_already = false;
-                break;
-            }
+            return_value = GetSummaryAsCString();
+            break;
+
         case eDisplayLanguageSpecific:
             return_value = GetObjectDescription();
             break;
+
         case eDisplayLocation:
             return_value = GetLocationAsCString();
             break;
+
         case eDisplayChildrenCount:
-        {
-            alloc_mem.resize(512);
-            return_value = &alloc_mem[0];
-            int count = GetNumChildren();
-            snprintf((char*)return_value, 512, "%d", count);
+            {
+                alloc_mem.resize(512);
+                return_value = &alloc_mem[0];
+                int count = GetNumChildren();
+                snprintf((char*)return_value, 512, "%d", count);
+            }
             break;
-        }
+
         case eDisplayType:
             return_value = GetTypeName().AsCString();
             break;
+
         default:
             break;
     }
@@ -3742,7 +3749,7 @@ ValueObject::ClearUserVisibleData()
     m_value_str.clear();
     m_summary_str.clear();
     m_object_desc_str.clear();
-    m_trying_summary_already = false;
+    m_is_getting_summary = false;
 }
 
 SymbolContextScope *
