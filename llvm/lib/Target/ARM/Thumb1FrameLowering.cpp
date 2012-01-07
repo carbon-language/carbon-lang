@@ -350,6 +350,7 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
         continue;
       Reg = ARM::PC;
       (*MIB).setDesc(TII.get(ARM::tPOP_RET));
+      MIB->copyImplicitOps(&*MI);
       MI = MBB.erase(MI);
     }
     MIB.addReg(Reg, getDefRegState(true));
