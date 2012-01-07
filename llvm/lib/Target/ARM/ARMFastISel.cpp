@@ -865,16 +865,6 @@ bool ARMFastISel::ARMComputeAddress(const Value *Obj, Address &Addr) {
     }
   }
 
-  // Materialize the global variable's address into a reg which can
-  // then be used later to load the variable.
-  if (const GlobalValue *GV = dyn_cast<GlobalValue>(Obj)) {
-    unsigned Tmp = ARMMaterializeGV(GV, TLI.getValueType(Obj->getType()));
-    if (Tmp == 0) return false;
-
-    Addr.Base.Reg = Tmp;
-    return true;
-  }
-
   // Try to get this in a register if nothing else has worked.
   if (Addr.Base.Reg == 0) Addr.Base.Reg = getRegForValue(Obj);
   return Addr.Base.Reg != 0;

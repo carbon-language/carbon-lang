@@ -145,22 +145,16 @@ define void @test4() {
 ; THUMB: movw r0, :lower16:L_test4g$non_lazy_ptr
 ; THUMB: movt r0, :upper16:L_test4g$non_lazy_ptr
 ; THUMB: ldr r0, [r0]
-; THUMB: ldr r0, [r0]
-; THUMB: adds r0, #1
-; THUMB: movw r1, :lower16:L_test4g$non_lazy_ptr
-; THUMB: movt r1, :upper16:L_test4g$non_lazy_ptr
-; THUMB: ldr r1, [r1]
-; THUMB: str r0, [r1]
+; THUMB: ldr r1, [r0]
+; THUMB: adds r1, #1
+; THUMB: str r1, [r0]
 
 ; ARM: movw r0, :lower16:L_test4g$non_lazy_ptr
 ; ARM: movt r0, :upper16:L_test4g$non_lazy_ptr
 ; ARM: ldr r0, [r0]
-; ARM: ldr r0, [r0]
-; ARM: add r0, r0, #1
-; ARM: movw r1, :lower16:L_test4g$non_lazy_ptr
-; ARM: movt r1, :upper16:L_test4g$non_lazy_ptr
-; ARM: ldr r1, [r1]
-; ARM: str r0, [r1]
+; ARM: ldr r1, [r0]
+; ARM: add r1, r1, #1
+; ARM: str r1, [r0]
 }
 
 ; Check unaligned stores

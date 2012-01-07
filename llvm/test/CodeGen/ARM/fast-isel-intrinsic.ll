@@ -86,27 +86,21 @@ define void @t4() nounwind ssp {
 ; ARM: movw r0, :lower16:L_temp$non_lazy_ptr
 ; ARM: movt r0, :upper16:L_temp$non_lazy_ptr
 ; ARM: ldr r0, [r0]
-; ARM: movw r1, :lower16:L_temp$non_lazy_ptr
-; ARM: movt r1, :upper16:L_temp$non_lazy_ptr
-; ARM: ldr r1, [r1]
-; ARM: ldr r2, [r1, #16]
-; ARM: str r2, [r0, #4]
-; ARM: ldr r2, [r1, #20]
-; ARM: str r2, [r0, #8]
-; ARM: ldrh r1, [r1, #24]
+; ARM: ldr r1, [r0, #16]
+; ARM: str r1, [r0, #4]
+; ARM: ldr r1, [r0, #20]
+; ARM: str r1, [r0, #8]
+; ARM: ldrh r1, [r0, #24]
 ; ARM: strh r1, [r0, #12]
 ; ARM: bx lr
 ; THUMB: movw r0, :lower16:L_temp$non_lazy_ptr
 ; THUMB: movt r0, :upper16:L_temp$non_lazy_ptr
 ; THUMB: ldr r0, [r0]
-; THUMB: movw r1, :lower16:L_temp$non_lazy_ptr
-; THUMB: movt r1, :upper16:L_temp$non_lazy_ptr
-; THUMB: ldr r1, [r1]
-; THUMB: ldr r2, [r1, #16]
-; THUMB: str r2, [r0, #4]
-; THUMB: ldr r2, [r1, #20]
-; THUMB: str r2, [r0, #8]
-; THUMB: ldrh r1, [r1, #24]
+; THUMB: ldr r1, [r0, #16]
+; THUMB: str r1, [r0, #4]
+; THUMB: ldr r1, [r0, #20]
+; THUMB: str r1, [r0, #8]
+; THUMB: ldrh r1, [r0, #24]
 ; THUMB: strh r1, [r0, #12]
 ; THUMB: bx lr
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 4), i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 16), i32 10, i32 1, i1 false)
