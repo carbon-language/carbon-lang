@@ -181,7 +181,6 @@ bool GenericTaintChecker::checkPre(const CallExpr *CE, CheckerContext &C) const{
   if (checkUncontrolledFormatString(CE, C))
     return true;
 
-  StringRef Name = C.getCalleeName(CE);
   return false;
 }
 
