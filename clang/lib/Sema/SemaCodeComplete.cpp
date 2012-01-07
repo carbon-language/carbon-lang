@@ -1751,7 +1751,7 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
   case Sema::PCC_Expression: {
     if (SemaRef.getLangOptions().CPlusPlus) {
       // 'this', if we're in a non-static member function.
-      QualType ThisTy = SemaRef.getCurrentThisType(false);
+      QualType ThisTy = SemaRef.getCurrentThisType();
       if (!ThisTy.isNull()) {
         Builder.AddResultTypeChunk(GetCompletionTypeString(ThisTy, 
                                                            SemaRef.Context, 

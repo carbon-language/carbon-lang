@@ -500,6 +500,9 @@ class CXXRecordDecl : public RecordDecl {
     /// declared but would have been deleted.
     bool FailedImplicitMoveAssignment : 1;
 
+    /// \brief Whether this class describes a C++ lambda.
+    bool IsLambda : 1;
+
     /// NumBases - The number of base class specifiers in Bases.
     unsigned NumBases;
 
@@ -907,6 +910,11 @@ public:
   ///
   /// This value is used for lazy creation of destructors.
   bool hasDeclaredDestructor() const { return data().DeclaredDestructor; }
+
+  /// \brief Determine whether this class describes a lambda function object.
+  bool isLambda() const { return data().IsLambda; }
+  
+  void setLambda(bool Lambda = true) { data().IsLambda = Lambda; }
 
   /// getConversions - Retrieve the overload set containing all of the
   /// conversion functions in this class.

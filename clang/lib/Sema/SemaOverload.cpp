@@ -10401,6 +10401,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
         SourceLocation Loc = MemExpr->getMemberLoc();
         if (MemExpr->getQualifier())
           Loc = MemExpr->getQualifierLoc().getBeginLoc();
+        CheckCXXThisCapture(Loc);
         Base = new (Context) CXXThisExpr(Loc,
                                          MemExpr->getBaseType(),
                                          /*isImplicit=*/true);

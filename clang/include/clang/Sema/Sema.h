@@ -3099,7 +3099,12 @@ public:
   /// \param Capture If true, capture 'this' in this context.
   ///
   /// \returns The type of 'this', if possible. Otherwise, returns a NULL type.
-  QualType getCurrentThisType(bool Capture = true);
+  QualType getCurrentThisType();
+
+  /// \brief Make sure the value of 'this' is actually available in the current
+  /// context, if it is a potentially evaluated context. This check can be
+  /// delayed in PotentiallyPotentiallyEvaluated contexts.
+  void CheckCXXThisCapture(SourceLocation Loc);
 
   /// ActOnCXXBoolLiteral - Parse {true,false} literals.
   ExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind);

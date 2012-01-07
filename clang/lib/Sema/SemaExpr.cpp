@@ -1544,6 +1544,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
             Diag(R.getNameLoc(), diagnostic) << Name
               << FixItHint::CreateInsertion(R.getNameLoc(), "this->");
             QualType DepThisType = DepMethod->getThisType(Context);
+            CheckCXXThisCapture(R.getNameLoc());
             CXXThisExpr *DepThis = new (Context) CXXThisExpr(
                                        R.getNameLoc(), DepThisType, false);
             TemplateArgumentListInfo TList;

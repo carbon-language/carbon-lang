@@ -653,22 +653,8 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
   return Owned(E);
 }
 
-QualType Sema::getCurrentThisType(bool Capture) {
-  // Ignore block scopes: we can capture through them.
-  // Ignore nested enum scopes: we'll diagnose non-constant expressions
-  // where they're invalid, and other uses are legitimate.
-  // Don't ignore nested class scopes: you can't use 'this' in a local class.
-  DeclContext *DC = CurContext;
-  unsigned NumBlocks = 0;
-  while (true) {
-    if (isa<BlockDecl>(DC)) {
-      DC = cast<BlockDecl>(DC)->getDeclContext();
-      ++NumBlocks;
-    } else if (isa<EnumDecl>(DC))
-      DC = cast<EnumDecl>(DC)->getDeclContext();
-    else break;
-  }
-
+QualType Sema::getCurrentThisType() {
+  DeclContext *DC = getFunctionLevelDeclContext();
   QualType ThisTy;
   if (CXXMethodDecl *method = dyn_cast<CXXMethodDecl>(DC)) {
     if (method && method->isInstance())
@@ -683,15 +669,61 @@ QualType Sema::getCurrentThisType(bool Capture) {
       ThisTy = Context.getPointerType(Context.getRecordType(RD));
   }
 
-  if (!Capture || ThisTy.isNull())
-    return ThisTy;
-  
-  // Mark that we're closing on 'this' in all the block scopes we ignored.
-  for (unsigned idx = FunctionScopes.size() - 1;
-       NumBlocks; --idx, --NumBlocks)
-    cast<BlockScopeInfo>(FunctionScopes[idx])->CapturesCXXThis = true;
-
   return ThisTy;
+}
+
+void Sema::CheckCXXThisCapture(SourceLocation Loc) {
+  // We don't need to capture this in an unevaluated context.
+  if (ExprEvalContexts.back().Context == Unevaluated)
+    return;
+
+  // Otherwise, check that we can capture 'this'.
+  unsigned NumClosures = 0;
+  for (unsigned idx = FunctionScopes.size() - 1; idx != 0; idx--) {
+    if (LambdaScopeInfo *LSI = dyn_cast<LambdaScopeInfo>(FunctionScopes[idx])) {
+      if (LSI->CapturesCXXThis) {
+        // This lambda already captures 'this'; there isn't anything more to do.
+        break;
+      }
+      if (LSI->Default == LCD_ByRef) {
+        // This lambda can implicitly capture 'this'; continue looking upwards.
+        // FIXME: Is this check correct?  The rules in the standard are a bit
+        // unclear.
+        NumClosures++;
+        continue;
+      }
+      // This lambda can't implicitly capture 'this'; fail out.
+      // (We need to delay the diagnostic in the
+      // PotentiallyPotentiallyEvaluated case because it doesn't apply to
+      // unevaluated contexts.)
+      if (ExprEvalContexts.back().Context == PotentiallyPotentiallyEvaluated)
+        ExprEvalContexts.back()
+            .addDiagnostic(Loc, PDiag(diag::err_implicit_this_capture));
+      else
+        Diag(Loc, diag::err_implicit_this_capture);
+      return;
+    }
+    if (isa<BlockScopeInfo>(FunctionScopes[idx])) {
+      NumClosures++;
+      continue;
+    }
+    break;
+  }
+
+  // Mark that we're implicitly capturing 'this' in all the scopes we skipped.
+  // FIXME: We need to delay this marking in PotentiallyPotentiallyEvaluated
+  // contexts.
+  for (unsigned idx = FunctionScopes.size() - 1;
+       NumClosures; --idx, --NumClosures) {
+    if (BlockScopeInfo *BSI = dyn_cast<BlockScopeInfo>(FunctionScopes[idx])) {
+      BSI->CapturesCXXThis = true;
+    } else {
+      LambdaScopeInfo *LSI = dyn_cast<LambdaScopeInfo>(FunctionScopes[idx]);
+      assert(LSI && "Unexpected closure");
+      LSI->CapturesCXXThis = true;
+      LSI->Captures.push_back(LambdaScopeInfo::Capture::ThisCapture);
+    }
+  }
 }
 
 ExprResult Sema::ActOnCXXThis(SourceLocation Loc) {
@@ -702,6 +734,7 @@ ExprResult Sema::ActOnCXXThis(SourceLocation Loc) {
   QualType ThisTy = getCurrentThisType();
   if (ThisTy.isNull()) return Diag(Loc, diag::err_invalid_this_use);
 
+  CheckCXXThisCapture(Loc);
   return Owned(new (Context) CXXThisExpr(Loc, ThisTy, /*isImplicit=*/false));
 }
 
@@ -4791,14 +4824,11 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
                                                /*IdLoc=*/SourceLocation(),
                                                /*Id=*/0);
   Class->startDefinition();
+  Class->setLambda(true);
   CurContext->addDecl(Class);
 
-  // Introduce the lambda scope.
-  PushLambdaScope(Class);
-
-  LambdaScopeInfo *LSI = getCurLambda();
-
   QualType ThisCaptureType;
+  llvm::SmallVector<LambdaScopeInfo::Capture, 4> Captures;
   llvm::DenseMap<const IdentifierInfo*, SourceLocation> CapturesSoFar;
   for (llvm::SmallVector<LambdaCapture, 4>::const_iterator
        C = Intro.Captures.begin(), E = Intro.Captures.end(); C != E; ++C) {
@@ -4814,12 +4844,13 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       }
 
       ThisCaptureType = getCurrentThisType();
-
       if (ThisCaptureType.isNull()) {
         Diag(C->Loc, diag::err_invalid_this_use);
         continue;
       }
-      LSI->Captures.push_back(LambdaScopeInfo::Capture::ThisCapture);
+      CheckCXXThisCapture(C->Loc);
+
+      Captures.push_back(LambdaScopeInfo::Capture::ThisCapture);
       continue;
     }
 
@@ -4868,7 +4899,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     // in the general case; see shouldCaptureValueReference.
     // FIXME: Should we be building a DeclRefExpr here?  We don't really need
     // it until the point where we're actually building the LambdaExpr.
-    LSI->Captures.push_back(LambdaScopeInfo::Capture(Var, C->Kind));
+    Captures.push_back(LambdaScopeInfo::Capture(Var, C->Kind));
   }
 
   // Build the call operator; we don't really have all the relevant information
@@ -4943,6 +4974,15 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       }
     }
   }
+
+  // Introduce the lambda scope.
+  PushLambdaScope(Class);
+
+  LambdaScopeInfo *LSI = getCurLambda();
+  LSI->Default = Intro.Default;
+  if (!ThisCaptureType.isNull())
+    LSI->CapturesCXXThis = true;
+  std::swap(LSI->Captures, Captures);
 
   const FunctionType *Fn = MethodTy->getAs<FunctionType>();
   QualType RetTy = Fn->getResultType();
