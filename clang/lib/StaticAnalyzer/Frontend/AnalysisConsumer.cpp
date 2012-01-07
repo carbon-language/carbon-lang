@@ -236,13 +236,16 @@ void AnalysisConsumer::HandleDeclContextDecl(ASTContext &C, Decl *D) {
 }
 
 void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
-  BugReporter BR(*Mgr);
-  TranslationUnitDecl *TU = C.getTranslationUnitDecl();
-  checkerMgr->runCheckersOnASTDecl(TU, *Mgr, BR);
-  HandleDeclContext(C, TU);
+  {
+    // Introduce a scope to destroy BR before Mgr.
+    BugReporter BR(*Mgr);
+    TranslationUnitDecl *TU = C.getTranslationUnitDecl();
+    checkerMgr->runCheckersOnASTDecl(TU, *Mgr, BR);
+    HandleDeclContext(C, TU);
 
-  // After all decls handled, run checkers on the entire TranslationUnit.
-  checkerMgr->runCheckersOnEndOfTranslationUnit(TU, *Mgr, BR);
+    // After all decls handled, run checkers on the entire TranslationUnit.
+    checkerMgr->runCheckersOnEndOfTranslationUnit(TU, *Mgr, BR);
+  }
 
   // Explicitly destroy the PathDiagnosticConsumer.  This will flush its output.
   // FIXME: This should be replaced with something that doesn't rely on
