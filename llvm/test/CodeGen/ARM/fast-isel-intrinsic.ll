@@ -6,14 +6,16 @@
 
 define void @t1() nounwind ssp {
 ; ARM: t1
-; ARM: ldr r0, LCPI0_0
+; ARM: movw r0, :lower16:_message1
+; ARM: movt r0, :upper16:_message1
 ; ARM: add r0, r0, #5
 ; ARM: movw r1, #64
 ; ARM: movw r2, #10
 ; ARM: uxtb r1, r1
 ; ARM: bl _memset
 ; THUMB: t1
-; THUMB: ldr.n r0, LCPI0_0
+; THUMB: movw r0, :lower16:_message1
+; THUMB: movt r0, :upper16:_message1
 ; THUMB: adds r0, #5
 ; THUMB: movs r1, #64
 ; THUMB: movt r1, #0
@@ -29,7 +31,8 @@ declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
 
 define void @t2() nounwind ssp {
 ; ARM: t2
-; ARM: ldr r0, LCPI1_0
+; ARM: movw r0, :lower16:L_temp$non_lazy_ptr
+; ARM: movt r0, :upper16:L_temp$non_lazy_ptr
 ; ARM: ldr r0, [r0]
 ; ARM: add r1, r0, #4
 ; ARM: add r0, r0, #16
@@ -39,7 +42,8 @@ define void @t2() nounwind ssp {
 ; ARM: ldr r1, [sp]                @ 4-byte Reload
 ; ARM: bl _memcpy
 ; THUMB: t2
-; THUMB: ldr.n r0, LCPI1_0
+; THUMB: movw r0, :lower16:L_temp$non_lazy_ptr
+; THUMB: movt r0, :upper16:L_temp$non_lazy_ptr
 ; THUMB: ldr r0, [r0]
 ; THUMB: adds r1, r0, #4
 ; THUMB: adds r0, #16
@@ -55,7 +59,8 @@ declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, 
 
 define void @t3() nounwind ssp {
 ; ARM: t3
-; ARM: ldr r0, LCPI2_0
+; ARM: movw r0, :lower16:L_temp$non_lazy_ptr
+; ARM: movt r0, :upper16:L_temp$non_lazy_ptr
 ; ARM: ldr r0, [r0]
 ; ARM: add r1, r0, #4
 ; ARM: add r0, r0, #16
@@ -63,7 +68,8 @@ define void @t3() nounwind ssp {
 ; ARM: mov r0, r1
 ; ARM: bl _memmove
 ; THUMB: t3
-; THUMB: ldr.n r0, LCPI2_0
+; THUMB: movw r0, :lower16:L_temp$non_lazy_ptr
+; THUMB: movt r0, :upper16:L_temp$non_lazy_ptr
 ; THUMB: ldr r0, [r0]
 ; THUMB: adds r1, r0, #4
 ; THUMB: adds r0, #16
@@ -77,9 +83,11 @@ define void @t3() nounwind ssp {
 
 define void @t4() nounwind ssp {
 ; ARM: t4
-; ARM: ldr r0, LCPI3_0
+; ARM: movw r0, :lower16:L_temp$non_lazy_ptr
+; ARM: movt r0, :upper16:L_temp$non_lazy_ptr
 ; ARM: ldr r0, [r0]
-; ARM: ldr r1, LCPI3_1
+; ARM: movw r1, :lower16:L_temp$non_lazy_ptr
+; ARM: movt r1, :upper16:L_temp$non_lazy_ptr
 ; ARM: ldr r1, [r1]
 ; ARM: ldr r2, [r1, #16]
 ; ARM: str r2, [r0, #4]
@@ -88,9 +96,11 @@ define void @t4() nounwind ssp {
 ; ARM: ldrh r1, [r1, #24]
 ; ARM: strh r1, [r0, #12]
 ; ARM: bx lr
-; THUMB: ldr.n r0, LCPI3_0
+; THUMB: movw r0, :lower16:L_temp$non_lazy_ptr
+; THUMB: movt r0, :upper16:L_temp$non_lazy_ptr
 ; THUMB: ldr r0, [r0]
-; THUMB: ldr.n r1, LCPI3_1
+; THUMB: movw r1, :lower16:L_temp$non_lazy_ptr
+; THUMB: movt r1, :upper16:L_temp$non_lazy_ptr
 ; THUMB: ldr r1, [r1]
 ; THUMB: ldr r2, [r1, #16]
 ; THUMB: str r2, [r0, #4]

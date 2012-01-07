@@ -617,40 +617,61 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, EVT VT) {
   // TODO: Need more magic for ARM PIC.
   if (!isThumb2 && (RelocM == Reloc::PIC_)) return 0;
 
-  // MachineConstantPool wants an explicit alignment.
-  unsigned Align = TD.getPrefTypeAlignment(GV->getType());
-  if (Align == 0) {
-    // TODO: Figure out if this is correct.
-    Align = TD.getTypeAllocSize(GV->getType());
-  }
-
-  // Grab index.
-  unsigned PCAdj = (RelocM != Reloc::PIC_) ? 0 : (Subtarget->isThumb() ? 4 : 8);
-  unsigned Id = AFI->createPICLabelUId();
-  ARMConstantPoolValue *CPV = ARMConstantPoolConstant::Create(GV, Id,
-                                                              ARMCP::CPValue,
-                                                              PCAdj);
-  unsigned Idx = MCP.getConstantPoolIndex(CPV, Align);
-
-  // Load value.
-  MachineInstrBuilder MIB;
   unsigned DestReg = createResultReg(TLI.getRegClassFor(VT));
-  if (isThumb2) {
-    unsigned Opc = (RelocM != Reloc::PIC_) ? ARM::t2LDRpci : ARM::t2LDRpci_pic;
-    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), DestReg)
-          .addConstantPoolIndex(Idx);
-    if (RelocM == Reloc::PIC_)
-      MIB.addImm(Id);
+
+  // Use movw+movt when possible, it avoids constant pool entries.
+  if (Subtarget->isTargetDarwin() && Subtarget->useMovt()) {
+    unsigned Opc;
+    switch (RelocM) {
+    case Reloc::PIC_:
+      Opc = isThumb2 ? ARM::t2MOV_ga_pcrel : ARM::MOV_ga_pcrel;
+      break;
+    case Reloc::DynamicNoPIC:
+      Opc = isThumb2 ? ARM::t2MOV_ga_dyn : ARM::MOV_ga_dyn;
+      break;
+    default:
+      Opc = isThumb2 ? ARM::t2MOVi32imm : ARM::MOVi32imm;
+      break;
+    }
+    AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
+                            DestReg).addGlobalAddress(GV));
   } else {
-    // The extra immediate is for addrmode2.
-    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(ARM::LDRcp),
-                  DestReg)
-          .addConstantPoolIndex(Idx)
-          .addImm(0);
+    // MachineConstantPool wants an explicit alignment.
+    unsigned Align = TD.getPrefTypeAlignment(GV->getType());
+    if (Align == 0) {
+      // TODO: Figure out if this is correct.
+      Align = TD.getTypeAllocSize(GV->getType());
+    }
+
+    // Grab index.
+    unsigned PCAdj = (RelocM != Reloc::PIC_) ? 0 :
+      (Subtarget->isThumb() ? 4 : 8);
+    unsigned Id = AFI->createPICLabelUId();
+    ARMConstantPoolValue *CPV = ARMConstantPoolConstant::Create(GV, Id,
+                                                                ARMCP::CPValue,
+                                                                PCAdj);
+    unsigned Idx = MCP.getConstantPoolIndex(CPV, Align);
+
+    // Load value.
+    MachineInstrBuilder MIB;
+    if (isThumb2) {
+      unsigned Opc = (RelocM!=Reloc::PIC_) ? ARM::t2LDRpci : ARM::t2LDRpci_pic;
+      MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), DestReg)
+        .addConstantPoolIndex(Idx);
+      if (RelocM == Reloc::PIC_)
+        MIB.addImm(Id);
+    } else {
+      // The extra immediate is for addrmode2.
+      MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(ARM::LDRcp),
+                    DestReg)
+        .addConstantPoolIndex(Idx)
+        .addImm(0);
+    }
+    AddOptionalDefs(MIB);
   }
-  AddOptionalDefs(MIB);
 
   if (Subtarget->GVIsIndirectSymbol(GV, RelocM)) {
+    MachineInstrBuilder MIB;
     unsigned NewDestReg = createResultReg(TLI.getRegClassFor(VT));
     if (isThumb2)
       MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
