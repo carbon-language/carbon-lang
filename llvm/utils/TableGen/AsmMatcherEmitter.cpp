@@ -740,7 +740,8 @@ void MatchableInfo::TokenizeAsmString(const AsmMatcherInfo &Info) {
     throw TGError(TheDef->getLoc(),
                   "Instruction '" + TheDef->getName() + "' has no tokens");
   Mnemonic = AsmOperands[0].Token;
-  if (Mnemonic[0] == '$' || getSingletonRegisterForAsmOperand(0, Info))
+  // FIXME : Check and raise an error if it is register.
+  if (Mnemonic[0] == '$')
     throw TGError(TheDef->getLoc(),
                   "Invalid instruction mnemonic '" + Mnemonic.str() + "'!");
 
