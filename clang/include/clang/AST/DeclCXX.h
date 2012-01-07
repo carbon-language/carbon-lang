@@ -19,6 +19,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/AST/UnresolvedSet.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 namespace clang {
@@ -2472,18 +2473,16 @@ class UsingDecl : public NamedDecl {
   DeclarationNameLoc DNLoc;
 
   /// \brief The first shadow declaration of the shadow decl chain associated
-  /// with this using declaration.
-  UsingShadowDecl *FirstUsingShadow;
-
-  // \brief Has 'typename' keyword.
-  bool IsTypeName;
+  /// with this using declaration. The bool member of the pair store whether
+  /// this decl has the 'typename' keyword.
+  llvm::PointerIntPair<UsingShadowDecl *, 1, bool> FirstUsingShadow;
 
   UsingDecl(DeclContext *DC, SourceLocation UL,
             NestedNameSpecifierLoc QualifierLoc,
             const DeclarationNameInfo &NameInfo, bool IsTypeNameArg)
     : NamedDecl(Using, DC, NameInfo.getLoc(), NameInfo.getName()),
       UsingLocation(UL), QualifierLoc(QualifierLoc),
-      DNLoc(NameInfo.getInfo()), FirstUsingShadow(0),IsTypeName(IsTypeNameArg) {
+      DNLoc(NameInfo.getInfo()), FirstUsingShadow(0, IsTypeNameArg) {
   }
 
 public:
@@ -2507,10 +2506,10 @@ public:
   }
 
   /// \brief Return true if the using declaration has 'typename'.
-  bool isTypeName() const { return IsTypeName; }
+  bool isTypeName() const { return FirstUsingShadow.getInt(); }
 
   /// \brief Sets whether the using declaration has 'typename'.
-  void setTypeName(bool TN) { IsTypeName = TN; }
+  void setTypeName(bool TN) { FirstUsingShadow.setInt(TN); }
 
   /// \brief Iterates through the using shadow declarations assosiated with
   /// this using declaration.
@@ -2551,7 +2550,7 @@ public:
   };
 
   shadow_iterator shadow_begin() const {
-    return shadow_iterator(FirstUsingShadow);
+    return shadow_iterator(FirstUsingShadow.getPointer());
   }
   shadow_iterator shadow_end() const { return shadow_iterator(); }
 

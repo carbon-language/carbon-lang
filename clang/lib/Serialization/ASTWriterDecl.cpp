@@ -862,7 +862,7 @@ void ASTDeclWriter::VisitUsingDecl(UsingDecl *D) {
   Writer.AddSourceLocation(D->getUsingLocation(), Record);
   Writer.AddNestedNameSpecifierLoc(D->getQualifierLoc(), Record);
   Writer.AddDeclarationNameLoc(D->DNLoc, D->getDeclName(), Record);
-  Writer.AddDeclRef(D->FirstUsingShadow, Record);
+  Writer.AddDeclRef(D->FirstUsingShadow.getPointer(), Record);
   Record.push_back(D->isTypeName());
   Writer.AddDeclRef(Context.getInstantiatedFromUsingDecl(D), Record);
   Code = serialization::DECL_USING;

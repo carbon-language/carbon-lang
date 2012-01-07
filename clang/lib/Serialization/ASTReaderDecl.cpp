@@ -998,7 +998,7 @@ void ASTDeclReader::VisitUsingDecl(UsingDecl *D) {
   D->setUsingLocation(ReadSourceLocation(Record, Idx));
   D->QualifierLoc = Reader.ReadNestedNameSpecifierLoc(F, Record, Idx);
   ReadDeclarationNameLoc(D->DNLoc, D->getDeclName(), Record, Idx);
-  D->FirstUsingShadow = ReadDeclAs<UsingShadowDecl>(Record, Idx);
+  D->FirstUsingShadow.setPointer(ReadDeclAs<UsingShadowDecl>(Record, Idx));
   D->setTypeName(Record[Idx++]);
   if (NamedDecl *Pattern = ReadDeclAs<NamedDecl>(Record, Idx))
     Reader.getContext().setInstantiatedFromUsingDecl(D, Pattern);

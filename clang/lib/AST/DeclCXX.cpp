@@ -1839,9 +1839,9 @@ void UsingDecl::addShadowDecl(UsingShadowDecl *S) {
          "declaration already in set");
   assert(S->getUsingDecl() == this);
 
-  if (FirstUsingShadow)
-    S->UsingOrNextShadow = FirstUsingShadow;
-  FirstUsingShadow = S;
+  if (FirstUsingShadow.getPointer())
+    S->UsingOrNextShadow = FirstUsingShadow.getPointer();
+  FirstUsingShadow.setPointer(S);
 }
 
 void UsingDecl::removeShadowDecl(UsingShadowDecl *S) {
@@ -1851,13 +1851,14 @@ void UsingDecl::removeShadowDecl(UsingShadowDecl *S) {
 
   // Remove S from the shadow decl chain. This is O(n) but hopefully rare.
 
-  if (FirstUsingShadow == S) {
-    FirstUsingShadow = dyn_cast<UsingShadowDecl>(S->UsingOrNextShadow);
+  if (FirstUsingShadow.getPointer() == S) {
+    FirstUsingShadow.setPointer(
+      dyn_cast<UsingShadowDecl>(S->UsingOrNextShadow));
     S->UsingOrNextShadow = this;
     return;
   }
 
-  UsingShadowDecl *Prev = FirstUsingShadow;
+  UsingShadowDecl *Prev = FirstUsingShadow.getPointer();
   while (Prev->UsingOrNextShadow != S)
     Prev = cast<UsingShadowDecl>(Prev->UsingOrNextShadow);
   Prev->UsingOrNextShadow = S->UsingOrNextShadow;
