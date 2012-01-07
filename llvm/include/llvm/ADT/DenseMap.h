@@ -86,13 +86,13 @@ public:
     return empty() ? end() : iterator(Buckets, Buckets+NumBuckets);
   }
   inline iterator end() {
-    return iterator(Buckets+NumBuckets, Buckets+NumBuckets);
+    return iterator(Buckets+NumBuckets, Buckets+NumBuckets, true);
   }
   inline const_iterator begin() const {
     return empty() ? end() : const_iterator(Buckets, Buckets+NumBuckets);
   }
   inline const_iterator end() const {
-    return const_iterator(Buckets+NumBuckets, Buckets+NumBuckets);
+    return const_iterator(Buckets+NumBuckets, Buckets+NumBuckets, true);
   }
 
   bool empty() const { return NumEntries == 0; }
@@ -137,13 +137,13 @@ public:
   iterator find(const KeyT &Val) {
     BucketT *TheBucket;
     if (LookupBucketFor(Val, TheBucket))
-      return iterator(TheBucket, Buckets+NumBuckets);
+      return iterator(TheBucket, Buckets+NumBuckets, true);
     return end();
   }
   const_iterator find(const KeyT &Val) const {
     BucketT *TheBucket;
     if (LookupBucketFor(Val, TheBucket))
-      return const_iterator(TheBucket, Buckets+NumBuckets);
+      return const_iterator(TheBucket, Buckets+NumBuckets, true);
     return end();
   }
 
@@ -162,13 +162,12 @@ public:
   std::pair<iterator, bool> insert(const std::pair<KeyT, ValueT> &KV) {
     BucketT *TheBucket;
     if (LookupBucketFor(KV.first, TheBucket))
-      return std::make_pair(iterator(TheBucket, Buckets+NumBuckets),
+      return std::make_pair(iterator(TheBucket, Buckets+NumBuckets, true),
                             false); // Already in map.
 
     // Otherwise, insert the new element.
     TheBucket = InsertIntoBucket(KV.first, KV.second, TheBucket);
-    return std::make_pair(iterator(TheBucket, Buckets+NumBuckets),
-                          true);
+    return std::make_pair(iterator(TheBucket, Buckets+NumBuckets, true), true);
   }
 
   /// insert - Range insertion of pairs.
@@ -495,8 +494,9 @@ private:
 public:
   DenseMapIterator() : Ptr(0), End(0) {}
 
-  DenseMapIterator(pointer Pos, pointer E) : Ptr(Pos), End(E) {
-    AdvancePastEmptyBuckets();
+  DenseMapIterator(pointer Pos, pointer E, bool NoAdvance = false)
+    : Ptr(Pos), End(E) {
+    if (!NoAdvance) AdvancePastEmptyBuckets();
   }
 
   // If IsConst is true this is a converting constructor from iterator to
