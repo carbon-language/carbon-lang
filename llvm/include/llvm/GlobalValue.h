@@ -59,19 +59,18 @@ public:
 protected:
   GlobalValue(Type *ty, ValueTy vty, Use *Ops, unsigned NumOps,
               LinkageTypes linkage, const Twine &Name)
-    : Constant(ty, vty, Ops, NumOps), Parent(0),
-      Linkage(linkage), Visibility(DefaultVisibility), Alignment(0),
-      UnnamedAddr(0) {
+    : Constant(ty, vty, Ops, NumOps), Linkage(linkage),
+      Visibility(DefaultVisibility), Alignment(0), UnnamedAddr(0), Parent(0) {
     setName(Name);
   }
 
-  Module *Parent;
   // Note: VC++ treats enums as signed, so an extra bit is required to prevent
   // Linkage and Visibility from turning into negative values.
   LinkageTypes Linkage : 5;   // The linkage of this global
   unsigned Visibility : 2;    // The visibility style of this global
   unsigned Alignment : 16;    // Alignment of this symbol, must be power of two
   unsigned UnnamedAddr : 1;   // This value's address is not significant
+  Module *Parent;             // The containing module.
   std::string Section;        // Section to emit this into, empty mean default
 public:
   ~GlobalValue() {
