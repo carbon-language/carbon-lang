@@ -180,7 +180,7 @@ AppleObjCRuntime::CouldHaveDynamicValue (ValueObject &in_value)
 {
     lldb::LanguageType known_type = in_value.GetObjectRuntimeLanguage();
     if (known_type == lldb::eLanguageTypeObjC)
-        return true;
+        return in_value.IsPossibleDynamicType ();
     else
         return in_value.IsPointerType();
 }
