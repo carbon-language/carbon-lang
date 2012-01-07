@@ -56,7 +56,7 @@ cmovs, we should expand to a conditional branch like GCC produces.
 
 Some isel ideas:
 
-1. Dynamic programming based approach when compile time if not an
+1. Dynamic programming based approach when compile time is not an
    issue.
 2. Code duplication (addressing mode) during isel.
 3. Other ideas from "Register-Sensitive Selection, Duplication, and
