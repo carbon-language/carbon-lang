@@ -3865,7 +3865,7 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
       // Remove any extra phis created by processing inner loops.
       SmallVector<WeakVH, 16> DeadInsts;
       SCEVExpander Rewriter(SE, "lsr");
-      Changed |= (bool)Rewriter.replaceCongruentIVs(L, &DT, DeadInsts);
+      Changed |= (bool)Rewriter.replaceCongruentIVs(L, &DT, DeadInsts, TLI);
       Changed |= (bool)DeleteTriviallyDeadInstructions(DeadInsts);
     }
     DEBUG(dbgs() << "LSR skipping outer loop " << *L << "\n");
@@ -3918,7 +3918,7 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
     // Remove any extra phis created by processing inner loops.
     SmallVector<WeakVH, 16> DeadInsts;
     SCEVExpander Rewriter(SE, "lsr");
-    Changed |= (bool)Rewriter.replaceCongruentIVs(L, &DT, DeadInsts);
+    Changed |= (bool)Rewriter.replaceCongruentIVs(L, &DT, DeadInsts, TLI);
     Changed |= (bool)DeleteTriviallyDeadInstructions(DeadInsts);
   }
 }

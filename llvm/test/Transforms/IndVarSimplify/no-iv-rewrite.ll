@@ -333,9 +333,9 @@ entry:
 
 ; CHECK: loop:
 ; CHECK: phi %structIF*
-; CHECK: phi i32*
+; CHECK-NOT: phi
 ; CHECK: getelementptr inbounds
-; CHECK: getelementptr inbounds
+; CHECK-NOT: getelementptr
 ; CHECK: exit:
 loop:
   %ptr.iv = phi %structIF* [ %ptr.inc, %latch ], [ %base, %entry ]

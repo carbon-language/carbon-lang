@@ -19,6 +19,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/ADT/STLExtras.h"
 
 using namespace llvm;
@@ -1557,6 +1558,15 @@ bool SCEVExpander::hoistStep(Instruction *IncV, Instruction *InsertPos,
   return true;
 }
 
+/// Sort Phis by integer width for replaceCongruentIVs.
+static bool width_descending(PHINode *lhs, PHINode *rhs) {
+  // Put pointers at the back and make sure pointer < pointer = false.
+  if (!lhs->getType()->isIntegerTy() || !rhs->getType()->isIntegerTy())
+    return rhs->getType()->isIntegerTy() && !lhs->getType()->isIntegerTy();
+  return rhs->getType()->getPrimitiveSizeInBits()
+    < lhs->getType()->getPrimitiveSizeInBits();
+}
+
 /// replaceCongruentIVs - Check for congruent phis in this loop header and
 /// replace them with their most canonical representative. Return the number of
 /// phis eliminated.
@@ -1564,23 +1574,45 @@ bool SCEVExpander::hoistStep(Instruction *IncV, Instruction *InsertPos,
 /// This does not depend on any SCEVExpander state but should be used in
 /// the same context that SCEVExpander is used.
 unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
-                                           SmallVectorImpl<WeakVH> &DeadInsts) {
+                                           SmallVectorImpl<WeakVH> &DeadInsts,
+                                           const TargetLowering *TLI) {
+  // Find integer phis in order of increasing width.
+  SmallVector<PHINode*, 8> Phis;
+  for (BasicBlock::iterator I = L->getHeader()->begin();
+       PHINode *Phi = dyn_cast<PHINode>(I); ++I) {
+    Phis.push_back(Phi);
+  }
+  if (TLI)
+    std::sort(Phis.begin(), Phis.end(), width_descending);
+
   unsigned NumElim = 0;
   DenseMap<const SCEV *, PHINode *> ExprToIVMap;
-  for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I) {
-    PHINode *Phi = cast<PHINode>(I);
+  // Process phis from wide to narrow. Mapping wide phis to the their truncation
+  // so narrow phis can reuse them.
+  for (SmallVectorImpl<PHINode*>::const_iterator PIter = Phis.begin(),
+         PEnd = Phis.end(); PIter != PEnd; ++PIter) {
+    PHINode *Phi = *PIter;
+
     if (!SE.isSCEVable(Phi->getType()))
       continue;
 
     PHINode *&OrigPhiRef = ExprToIVMap[SE.getSCEV(Phi)];
     if (!OrigPhiRef) {
       OrigPhiRef = Phi;
+      if (Phi->getType()->isIntegerTy() && TLI
+          && TLI->isTruncateFree(Phi->getType(), Phis.back()->getType())) {
+        // This phi can be freely truncated to the narrowest phi type. Map the
+        // truncated expression to it so it will be reused for narrow types.
+        const SCEV *TruncExpr =
+          SE.getTruncateExpr(SE.getSCEV(Phi), Phis.back()->getType());
+        ExprToIVMap[TruncExpr] = Phi;
+      }
       continue;
     }
 
-    // If one phi derives from the other via GEPs, types may differ.
-    // We could consider adding a bitcast here to handle it.
-    if (OrigPhiRef->getType() != Phi->getType())
+    // Replacing a pointer phi with an integer phi or vice-versa doesn't make
+    // sense.
+    if (OrigPhiRef->getType()->isPointerTy() != Phi->getType()->isPointerTy())
       continue;
 
     if (BasicBlock *LatchBlock = L->getLoopLatch()) {
@@ -1589,8 +1621,10 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
       Instruction *IsomorphicInc =
         cast<Instruction>(Phi->getIncomingValueForBlock(LatchBlock));
 
-      // If this phi is more canonical, swap it with the original.
-      if (!isExpandedAddRecExprPHI(OrigPhiRef, OrigInc, L)
+      // If this phi has the same width but is more canonical, replace the
+      // original with it.
+      if (OrigPhiRef->getType() == Phi->getType()
+          && !isExpandedAddRecExprPHI(OrigPhiRef, OrigInc, L)
           && isExpandedAddRecExprPHI(Phi, IsomorphicInc, L)) {
         std::swap(OrigPhiRef, Phi);
         std::swap(OrigInc, IsomorphicInc);
@@ -1600,21 +1634,35 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
       // that a phi is congruent, it's often the head of an IV user cycle that
       // is isomorphic with the original phi. So it's worth eagerly cleaning up
       // the common case of a single IV increment.
-      if (OrigInc != IsomorphicInc &&
-          OrigInc->getType() == IsomorphicInc->getType() &&
-          SE.getSCEV(OrigInc) == SE.getSCEV(IsomorphicInc) &&
+      const SCEV *TruncExpr = SE.getTruncateOrNoop(SE.getSCEV(OrigInc),
+                                                   IsomorphicInc->getType());
+      if (OrigInc != IsomorphicInc
+          && TruncExpr == SE.getSCEV(IsomorphicInc) &&
           hoistStep(OrigInc, IsomorphicInc, DT)) {
         DEBUG_WITH_TYPE(DebugType, dbgs()
                         << "INDVARS: Eliminated congruent iv.inc: "
                         << *IsomorphicInc << '\n');
-        IsomorphicInc->replaceAllUsesWith(OrigInc);
+        Value *NewInc = OrigInc;
+        if (OrigInc->getType() != IsomorphicInc->getType()) {
+          IRBuilder<> Builder(OrigInc->getNextNode());
+          Builder.SetCurrentDebugLocation(IsomorphicInc->getDebugLoc());
+          NewInc = Builder.
+            CreateTruncOrBitCast(OrigInc, IsomorphicInc->getType(), IVName);
+        }
+        IsomorphicInc->replaceAllUsesWith(NewInc);
         DeadInsts.push_back(IsomorphicInc);
       }
     }
     DEBUG_WITH_TYPE(DebugType, dbgs()
                     << "INDVARS: Eliminated congruent iv: " << *Phi << '\n');
     ++NumElim;
-    Phi->replaceAllUsesWith(OrigPhiRef);
+    Value *NewIV = OrigPhiRef;
+    if (OrigPhiRef->getType() != Phi->getType()) {
+      IRBuilder<> Builder(L->getHeader()->getFirstInsertionPt());
+      Builder.SetCurrentDebugLocation(Phi->getDebugLoc());
+      NewIV = Builder.CreateTruncOrBitCast(OrigPhiRef, Phi->getType(), IVName);
+    }
+    Phi->replaceAllUsesWith(NewIV);
     DeadInsts.push_back(Phi);
   }
   return NumElim;

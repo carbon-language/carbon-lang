@@ -22,6 +22,8 @@
 #include <set>
 
 namespace llvm {
+  class TargetLowering;
+
   /// SCEVExpander - This class uses information about analyze scalars to
   /// rewrite expressions in canonical form.
   ///
@@ -115,7 +117,8 @@ namespace llvm {
     /// replaceCongruentIVs - replace congruent phis with their most canonical
     /// representative. Return the number of phis eliminated.
     unsigned replaceCongruentIVs(Loop *L, const DominatorTree *DT,
-                                 SmallVectorImpl<WeakVH> &DeadInsts);
+                                 SmallVectorImpl<WeakVH> &DeadInsts,
+                                 const TargetLowering *TLI = NULL);
 
     /// expandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the
