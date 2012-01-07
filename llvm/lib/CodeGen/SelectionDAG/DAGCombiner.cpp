@@ -158,7 +158,9 @@ namespace {
     SDValue visitADD(SDNode *N);
     SDValue visitSUB(SDNode *N);
     SDValue visitADDC(SDNode *N);
+    SDValue visitSUBC(SDNode *N);
     SDValue visitADDE(SDNode *N);
+    SDValue visitSUBE(SDNode *N);
     SDValue visitMUL(SDNode *N);
     SDValue visitSDIV(SDNode *N);
     SDValue visitUDIV(SDNode *N);
@@ -1059,7 +1061,9 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::ADD:                return visitADD(N);
   case ISD::SUB:                return visitSUB(N);
   case ISD::ADDC:               return visitADDC(N);
+  case ISD::SUBC:               return visitSUBC(N);
   case ISD::ADDE:               return visitADDE(N);
+  case ISD::SUBE:               return visitSUBE(N);
   case ISD::MUL:                return visitMUL(N);
   case ISD::SDIV:               return visitSDIV(N);
   case ISD::UDIV:               return visitUDIV(N);
@@ -1498,7 +1502,7 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
 
   // If the flag result is dead, turn this into an ADD.
   if (N->hasNUsesOfValue(0, 1))
-    return CombineTo(N, DAG.getNode(ISD::ADD, N->getDebugLoc(), VT, N1, N0),
+    return CombineTo(N, DAG.getNode(ISD::ADD, N->getDebugLoc(), VT, N0, N1),
                      DAG.getNode(ISD::CARRY_FALSE,
                                  N->getDebugLoc(), MVT::Glue));
 
@@ -1546,7 +1550,7 @@ SDValue DAGCombiner::visitADDE(SDNode *N) {
 
   // fold (adde x, y, false) -> (addc x, y)
   if (CarryIn.getOpcode() == ISD::CARRY_FALSE)
-    return DAG.getNode(ISD::ADDC, N->getDebugLoc(), N->getVTList(), N1, N0);
+    return DAG.getNode(ISD::ADDC, N->getDebugLoc(), N->getVTList(), N0, N1);
 
   return SDValue();
 }
@@ -1652,6 +1656,51 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
           return DAG.getConstant((uint64_t)GA->getOffset() - GB->getOffset(),
                                  VT);
     }
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitSUBC(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+  EVT VT = N0.getValueType();
+
+  // If the flag result is dead, turn this into an SUB.
+  if (N->hasNUsesOfValue(0, 1))
+    return CombineTo(N, DAG.getNode(ISD::SUB, N->getDebugLoc(), VT, N0, N1),
+                     DAG.getNode(ISD::CARRY_FALSE, N->getDebugLoc(),
+                                 MVT::Glue));
+
+  // fold (subc x, x) -> 0 + no borrow
+  if (N0 == N1)
+    return CombineTo(N, DAG.getConstant(0, VT),
+                     DAG.getNode(ISD::CARRY_FALSE, N->getDebugLoc(),
+                                 MVT::Glue));
+
+  // fold (subc x, 0) -> x + no borrow
+  if (N1C && N1C->isNullValue())
+    return CombineTo(N, N0, DAG.getNode(ISD::CARRY_FALSE, N->getDebugLoc(),
+                                        MVT::Glue));
+
+  // Canonicalize (sub -1, x) -> ~x, i.e. (xor x, -1) + no borrow
+  if (N0C && N0C->isAllOnesValue())
+    return CombineTo(N, DAG.getNode(ISD::XOR, N->getDebugLoc(), VT, N1, N0),
+                     DAG.getNode(ISD::CARRY_FALSE, N->getDebugLoc(),
+                                 MVT::Glue));
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitSUBE(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  SDValue CarryIn = N->getOperand(2);
+
+  // fold (sube x, y, false) -> (subc x, y)
+  if (CarryIn.getOpcode() == ISD::CARRY_FALSE)
+    return DAG.getNode(ISD::SUBC, N->getDebugLoc(), N->getVTList(), N0, N1);
 
   return SDValue();
 }
