@@ -1558,8 +1558,8 @@ bool SCEVExpander::hoistStep(Instruction *IncV, Instruction *InsertPos,
   return true;
 }
 
-/// Sort Phis by integer width for replaceCongruentIVs.
-static bool width_descending(PHINode *lhs, PHINode *rhs) {
+/// Sort values by integer width for replaceCongruentIVs.
+static bool width_descending(Value *lhs, Value *rhs) {
   // Put pointers at the back and make sure pointer < pointer = false.
   if (!lhs->getType()->isIntegerTy() || !rhs->getType()->isIntegerTy())
     return rhs->getType()->isIntegerTy() && !lhs->getType()->isIntegerTy();
@@ -1632,8 +1632,9 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
       // Replacing the congruent phi is sufficient because acyclic redundancy
       // elimination, CSE/GVN, should handle the rest. However, once SCEV proves
       // that a phi is congruent, it's often the head of an IV user cycle that
-      // is isomorphic with the original phi. So it's worth eagerly cleaning up
-      // the common case of a single IV increment.
+      // is isomorphic with the original phi. It's worth eagerly cleaning up the
+      // common case of a single IV increment so that DeleteDeadPHIs can remove
+      // cycles that had postinc uses.
       const SCEV *TruncExpr = SE.getTruncateOrNoop(SE.getSCEV(OrigInc),
                                                    IsomorphicInc->getType());
       if (OrigInc != IsomorphicInc
