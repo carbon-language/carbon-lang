@@ -33,6 +33,9 @@ public:
     GetAddressByteSize ();
     
     void
+    SetAddressByteSize (uint8_t addr_byte_size);
+    
+    void
     Clear ();
     
     bool
@@ -43,6 +46,9 @@ public:
     
     lldb::ByteOrder
     GetByteOrder();
+    
+    void
+    SetByteOrder (lldb::ByteOrder endian);
     
     float
     GetFloat (lldb::SBError& error, uint32_t offset);
@@ -96,11 +102,50 @@ public:
     // inferred from the existing DataExtractor, but having two SetData() signatures triggers a SWIG bug where
     // the typemap isn't applied before resolving the overload, and thus the right function never gets called
     void
-    SetData(lldb::SBError& error, const void *buf, size_t size, lldb::ByteOrder endian, uint8_t addr_size);
+    SetData (lldb::SBError& error, const void *buf, size_t size, lldb::ByteOrder endian, uint8_t addr_size);
     
     // see SetData() for why we don't have Append(const void* buf, size_t size)
     bool
-    Append(const SBData& rhs);
+    Append (const SBData& rhs);
+    
+    static lldb::SBData
+    CreateDataFromCString (lldb::ByteOrder endian, uint32_t addr_byte_size, const char* data);
+    
+    // in the following CreateData*() and SetData*() prototypes, the two parameters array and array_len
+    // should not be renamed or rearranged, because doing so will break the SWIG typemap
+    static lldb::SBData
+    CreateDataFromUInt64Array (lldb::ByteOrder endian, uint32_t addr_byte_size, uint64_t* array, size_t array_len);
+    
+    static lldb::SBData
+    CreateDataFromUInt32Array (lldb::ByteOrder endian, uint32_t addr_byte_size, uint32_t* array, size_t array_len);
+    
+    static lldb::SBData
+    CreateDataFromSInt64Array (lldb::ByteOrder endian, uint32_t addr_byte_size, int64_t* array, size_t array_len);
+    
+    static lldb::SBData
+    CreateDataFromSInt32Array (lldb::ByteOrder endian, uint32_t addr_byte_size, int32_t* array, size_t array_len);
+    
+    static lldb::SBData
+    CreateDataFromDoubleArray (lldb::ByteOrder endian, uint32_t addr_byte_size, double* array, size_t array_len);
+    
+    bool
+    SetDataFromCString (const char* data);
+    
+    bool
+    SetDataFromUInt64Array (uint64_t* array, size_t array_len);
+    
+    bool
+    SetDataFromUInt32Array (uint32_t* array, size_t array_len);
+    
+    bool
+    SetDataFromSInt64Array (int64_t* array, size_t array_len);
+    
+    bool
+    SetDataFromSInt32Array (int32_t* array, size_t array_len);
+    
+    bool
+    SetDataFromDoubleArray (double* array, size_t array_len);
+
     
 protected:
     
