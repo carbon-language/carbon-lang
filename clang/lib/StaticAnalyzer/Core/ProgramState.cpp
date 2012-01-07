@@ -640,7 +640,7 @@ bool ProgramState::isTainted(const MemRegion *Reg, TaintTagType K) const {
   return false;
 }
 
-bool ProgramState::isTainted(const SymExpr* Sym, TaintTagType Kind) const {
+bool ProgramState::isTainted(SymbolRef Sym, TaintTagType Kind) const {
   if (!Sym)
     return false;
   

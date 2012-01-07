@@ -308,7 +308,7 @@ public:
   bool isTainted(const Stmt *S, const LocationContext *LCtx,
                  TaintTagType Kind = TaintTagGeneric) const;
   bool isTainted(SVal V, TaintTagType Kind = TaintTagGeneric) const;
-  bool isTainted(const SymExpr* Sym, TaintTagType Kind = TaintTagGeneric) const;
+  bool isTainted(SymbolRef Sym, TaintTagType Kind = TaintTagGeneric) const;
   bool isTainted(const MemRegion *Reg, TaintTagType Kind=TaintTagGeneric) const;
 
   //==---------------------------------------------------------------------==//
