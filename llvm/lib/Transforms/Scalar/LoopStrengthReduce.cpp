@@ -3860,14 +3860,6 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
 
   // Skip nested loops until we can model them better with formulae.
   if (!EnableNested && !L->empty()) {
-
-    if (EnablePhiElim) {
-      // Remove any extra phis created by processing inner loops.
-      SmallVector<WeakVH, 16> DeadInsts;
-      SCEVExpander Rewriter(SE, "lsr");
-      Changed |= (bool)Rewriter.replaceCongruentIVs(L, &DT, DeadInsts, TLI);
-      Changed |= (bool)DeleteTriviallyDeadInstructions(DeadInsts);
-    }
     DEBUG(dbgs() << "LSR skipping outer loop " << *L << "\n");
     return;
   }
@@ -3913,14 +3905,6 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
 
   // Now that we've decided what we want, make it so.
   ImplementSolution(Solution, P);
-
-  if (EnablePhiElim) {
-    // Remove any extra phis created by processing inner loops.
-    SmallVector<WeakVH, 16> DeadInsts;
-    SCEVExpander Rewriter(SE, "lsr");
-    Changed |= (bool)Rewriter.replaceCongruentIVs(L, &DT, DeadInsts, TLI);
-    Changed |= (bool)DeleteTriviallyDeadInstructions(DeadInsts);
-  }
 }
 
 void LSRInstance::print_factors_and_types(raw_ostream &OS) const {
@@ -4046,9 +4030,21 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager & /*LPM*/) {
   // Run the main LSR transformation.
   Changed |= LSRInstance(TLI, L, this).getChanged();
 
-  // At this point, it is worth checking to see if any recurrence PHIs are also
-  // dead, so that we can remove them as well.
+  // Remove any extra phis created by processing inner loops.
   Changed |= DeleteDeadPHIs(L->getHeader());
-
+  if (EnablePhiElim) {
+    SmallVector<WeakVH, 16> DeadInsts;
+    SCEVExpander Rewriter(getAnalysis<ScalarEvolution>(), "lsr");
+#ifndef NDEBUG
+    Rewriter.setDebugType(DEBUG_TYPE);
+#endif
+    unsigned numFolded = Rewriter.
+      replaceCongruentIVs(L, &getAnalysis<DominatorTree>(), DeadInsts, TLI);
+    if (numFolded) {
+      Changed = true;
+      DeleteTriviallyDeadInstructions(DeadInsts);
+      DeleteDeadPHIs(L->getHeader());
+    }
+  }
   return Changed;
 }
