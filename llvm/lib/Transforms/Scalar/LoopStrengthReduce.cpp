@@ -86,8 +86,10 @@ static cl::opt<bool> EnableRetry(
 // Temporary flag to cleanup congruent phis after LSR phi expansion.
 // It's currently disabled until we can determine whether it's truly useful or
 // not. The flag should be removed after the v3.0 release.
+// This is now needed for ivchains.
 static cl::opt<bool> EnablePhiElim(
-  "enable-lsr-phielim", cl::Hidden, cl::desc("Enable LSR phi elimination"));
+  "enable-lsr-phielim", cl::Hidden, cl::init(true),
+  cl::desc("Enable LSR phi elimination"));
 
 namespace {
 
