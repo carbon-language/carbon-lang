@@ -37,7 +37,7 @@ the options specified on the command line, see L<"SELECTION OPTIONS"> for
 more information.
 
 Users interested in the B<lit> architecture or designing a B<lit> testing
-implementation should see L<"LIT ARCHITECTURE">
+implementation should see L<"LIT INFRASTRUCTURE">
 
 =head1 GENERAL OPTIONS
 
