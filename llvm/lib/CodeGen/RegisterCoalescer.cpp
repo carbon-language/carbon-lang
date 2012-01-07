@@ -1431,6 +1431,31 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
   // than the full interfeence check below. We allow overlapping live ranges
   // only when one is a copy of the other.
   if (CP.isPhys()) {
+    // Optimization for reserved registers like ESP.
+    // We can only merge with a reserved physreg if RHS has a single value that
+    // is a copy of CP.DstReg().  The live range of the reserved register will
+    // look like a set of dead defs - we don't properly track the live range of
+    // reserved registers.
+    if (RegClassInfo.isReserved(CP.getDstReg())) {
+      assert(CP.isFlipped() && RHS.containsOneValue() &&
+             "Invalid join with reserved register");
+      // Deny any overlapping intervals.  This depends on all the reserved
+      // register live ranges to look like dead defs.
+      for (const unsigned *AS = TRI->getOverlaps(CP.getDstReg()); *AS; ++AS) {
+        if (!LIS->hasInterval(*AS))
+          continue;
+        if (RHS.overlaps(LIS->getInterval(*AS))) {
+          DEBUG(dbgs() << "\t\tInterference: " << PrintReg(*AS, TRI) << '\n');
+          return false;
+        }
+      }
+      // Skip any value computations, we are not adding new values to the
+      // reserved register.  Also skip merging the live ranges, the reserved
+      // register live range doesn't need to be accurate as long as all the
+      // defs are there.
+      return true;
+    }
+
     for (const unsigned *AS = TRI->getAliasSet(CP.getDstReg()); *AS; ++AS){
       if (!LIS->hasInterval(*AS))
         continue;
