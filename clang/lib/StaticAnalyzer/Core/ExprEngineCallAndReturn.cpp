@@ -72,8 +72,12 @@ void ExprEngine::processCallExit(ExplodedNode *Pred) {
   ExplodedNodeSet Dst;
   getCheckerManager().runCheckersForPostStmt(Dst, N, CE, *this);
   
-  // Enqueue nodes in Dst on the worklist.
-  Engine.enqueue(Dst);
+  // Enqueue the next element in the block.
+  for (ExplodedNodeSet::iterator I = Dst.begin(), E = Dst.end(); I != E; ++I) {
+    Engine.getWorkList()->enqueue(*I,
+                                  calleeCtx->getCallSiteBlock(),
+                                  calleeCtx->getIndex()+1);
+  }
 }
 
 static bool isPointerToConst(const ParmVarDecl *ParamDecl) {
