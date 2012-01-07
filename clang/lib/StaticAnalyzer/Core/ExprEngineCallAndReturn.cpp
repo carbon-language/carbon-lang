@@ -34,11 +34,10 @@ void ExprEngine::processCallEnter(CallEnterNodeBuilder &B) {
   B.generateNode(state);
 }
 
-void ExprEngine::processCallExit(CallExitNodeBuilder &B) {
-  const ProgramState *state = B.getState();
-  const ExplodedNode *Pred = B.getPredecessor();
+void ExprEngine::processCallExit(ExplodedNode *Pred) {
+  const ProgramState *state = Pred->getState();
   const StackFrameContext *calleeCtx = 
-    cast<StackFrameContext>(Pred->getLocationContext());
+    Pred->getLocationContext()->getCurrentStackFrame();
   const Stmt *CE = calleeCtx->getCallSite();
   
   // If the callee returns an expression, bind its value to CallExpr.
@@ -60,8 +59,21 @@ void ExprEngine::processCallExit(CallExitNodeBuilder &B) {
     // Always bind the region to the CXXConstructExpr.
     state = state->BindExpr(CCE, Pred->getLocationContext(), ThisV);
   }
+
   
-  B.generateNode(state);
+  PostStmt Loc(CE, calleeCtx->getParent());
+  bool isNew;
+  ExplodedNode *N = G.getNode(Loc, state, false, &isNew);
+  N->addPredecessor(Pred, G);
+  if (!isNew)
+    return;
+  
+  // Perform the post-condition check of the CallExpr.
+  ExplodedNodeSet Dst;
+  getCheckerManager().runCheckersForPostStmt(Dst, N, CE, *this);
+  
+  // Enqueue nodes in Dst on the worklist.
+  Engine.enqueue(Dst);
 }
 
 static bool isPointerToConst(const ParmVarDecl *ParamDecl) {

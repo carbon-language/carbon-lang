@@ -188,7 +188,7 @@ public:
   void processCallEnter(CallEnterNodeBuilder &builder);
 
   /// Generate the first post callsite node.
-  void processCallExit(CallExitNodeBuilder &builder);
+  void processCallExit(ExplodedNode *Pred);
 
   /// Called by CoreEngine when the analysis worklist has terminated.
   void processEndWorklist(bool hasWorkRemaining);

@@ -254,8 +254,7 @@ void CoreEngine::HandleCallEnter(const CallEnter &L, const CFGBlock *Block,
 }
 
 void CoreEngine::HandleCallExit(const CallExit &L, ExplodedNode *Pred) {
-  CallExitNodeBuilder Builder(*this, Pred);
-  SubEng.processCallExit(Builder);
+  SubEng.processCallExit(Pred);
 }
 
 void CoreEngine::HandleBlockEdge(const BlockEdge &L, ExplodedNode *Pred) {
@@ -706,19 +705,4 @@ void CallEnterNodeBuilder::generateNode(const ProgramState *state) {
 
   if (isNew)
     Eng.WList->enqueue(Node);
-}
-
-void CallExitNodeBuilder::generateNode(const ProgramState *state) {
-  // Get the callee's location context.
-  const StackFrameContext *LocCtx 
-                         = cast<StackFrameContext>(Pred->getLocationContext());
-  // When exiting an implicit automatic obj dtor call, the callsite is the Stmt
-  // that triggers the dtor.
-  PostStmt Loc(LocCtx->getCallSite(), LocCtx->getParent());
-  bool isNew;
-  ExplodedNode *Node = Eng.G->getNode(Loc, state, false, &isNew);
-  Node->addPredecessor(const_cast<ExplodedNode*>(Pred), *Eng.G);
-  if (isNew)
-    Eng.WList->enqueue(Node, LocCtx->getCallSiteBlock(),
-                       LocCtx->getIndex() + 1);
 }

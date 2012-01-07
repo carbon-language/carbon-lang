@@ -38,7 +38,6 @@ class IndirectGotoNodeBuilder;
 class SwitchNodeBuilder;
 class EndOfFunctionNodeBuilder;
 class CallEnterNodeBuilder;
-class CallExitNodeBuilder;
 class NodeBuilderWithSinks;
 class MemRegion;
 
@@ -88,7 +87,7 @@ public:
   virtual void processCallEnter(CallEnterNodeBuilder &builder) = 0;
 
   // Generate the first post callsite node.
-  virtual void processCallExit(CallExitNodeBuilder &builder) = 0;
+  virtual void processCallExit(ExplodedNode *Pred) = 0;
 
   /// Called by ConstraintManager. Used to call checker-specific
   /// logic for handling assumptions on symbolic values.

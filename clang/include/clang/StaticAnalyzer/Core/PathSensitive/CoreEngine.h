@@ -47,7 +47,6 @@ class CoreEngine {
   friend class SwitchNodeBuilder;
   friend class EndOfFunctionNodeBuilder;
   friend class CallEnterNodeBuilder;
-  friend class CallExitNodeBuilder;
 
 public:
   typedef std::vector<std::pair<BlockEdge, const ExplodedNode*> >
@@ -569,21 +568,6 @@ public:
 
   void generateNode(const ProgramState *state);
 };
-
-class CallExitNodeBuilder {
-  CoreEngine &Eng;
-  const ExplodedNode *Pred;
-
-public:
-  CallExitNodeBuilder(CoreEngine &eng, const ExplodedNode *pred)
-    : Eng(eng), Pred(pred) {}
-
-  const ExplodedNode *getPredecessor() const { return Pred; }
-
-  const ProgramState *getState() const { return Pred->getState(); }
-
-  void generateNode(const ProgramState *state);
-}; 
 
 } // end GR namespace
 
