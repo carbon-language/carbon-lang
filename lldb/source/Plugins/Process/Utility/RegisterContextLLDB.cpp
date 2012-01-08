@@ -87,6 +87,8 @@ RegisterContextLLDB::InitializeZerothFrame()
 {
     StackFrameSP frame_sp (m_thread.GetStackFrameAtIndex (0));
 
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+
     if (m_thread.GetRegisterContext() == NULL)
     {
         m_frame_type = eNotAValidFrame;
@@ -149,6 +151,13 @@ RegisterContextLLDB::InitializeZerothFrame()
     {
         active_row = m_full_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
         row_register_kind = m_full_unwind_plan_sp->GetRegisterKind ();
+        if (active_row && log)
+        {
+            StreamString active_row_strm;
+            active_row->Dump(active_row_strm, m_full_unwind_plan_sp.get(), &m_thread, m_start_pc.GetLoadAddress(&m_thread.GetProcess().GetTarget()));
+            log->Printf("%*sFrame %u active row: %s",
+                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number, active_row_strm.GetString().c_str());
+        }
     }
 
     if (active_row == NULL)
@@ -157,6 +166,7 @@ RegisterContextLLDB::InitializeZerothFrame()
         return;
     }
 
+    
     addr_t cfa_regval;
     if (!ReadGPRValue (row_register_kind, active_row->GetCFARegister(), cfa_regval))
     {
@@ -170,7 +180,13 @@ RegisterContextLLDB::InitializeZerothFrame()
 
     m_cfa = cfa_regval + cfa_offset;
 
-    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+    if (log)
+    {
+        log->Printf("%*sFrame %u cfa_regval = 0x%16.16llx (cfa_regval = 0x%16.16llx, cfa_offset = %i)",
+                    m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
+                    m_cfa, cfa_regval, cfa_offset);
+    }
+    
 
     // A couple of sanity checks..
     if (cfa_regval == LLDB_INVALID_ADDRESS || cfa_regval == 0 || cfa_regval == 1)
@@ -232,6 +248,20 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         m_frame_type = eNotAValidFrame;
         return;
     }
+    
+    if (log)
+    {
+        log->Printf("%*sFrame %u pc = 0x%16.16llx",
+                    m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number, pc);
+        addr_t reg_val;
+        if (ReadGPRValue (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FP, reg_val))
+            log->Printf("%*sFrame %u fp = 0x%16.16llx",
+                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number, reg_val);
+
+        if (ReadGPRValue (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, reg_val))
+            log->Printf("%*sFrame %u sp = 0x%16.16llx",
+                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number, reg_val);
+    }
 
     // A pc of 0x0 means it's the end of the stack crawl
     if (pc == 0)
@@ -239,6 +269,12 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         m_frame_type = eNotAValidFrame;
         return;
     }
+    
+    // Let ABIs fixup code addresses to make sure they are valid. In ARM ABIs
+    // this will strip bit zero in case we read a PC from memory or from the LR.   
+    ABI *abi = m_thread.GetProcess().GetABI().get();
+    if (abi)
+        pc = abi->FixCodeAddress(pc);
 
     // Test the pc value to see if we know it's in an unmapped/non-executable region of memory.
     uint32_t permissions;
@@ -277,7 +313,6 @@ RegisterContextLLDB::InitializeNonZerothFrame()
             log->Printf("%*sFrame %u using architectural default unwind method",
                         m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
         }
-        ABI *abi = m_thread.GetProcess().GetABI().get();
         if (abi)
         {
             m_fast_unwind_plan_sp.reset ();
@@ -452,6 +487,13 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     {
         active_row = m_fast_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
         row_register_kind = m_fast_unwind_plan_sp->GetRegisterKind ();
+        if (active_row && log)
+        {
+            StreamString active_row_strm;
+            active_row->Dump(active_row_strm, m_full_unwind_plan_sp.get(), &m_thread, m_start_pc.GetLoadAddress(&m_thread.GetProcess().GetTarget()));
+            log->Printf("%*sFrame %u active row: %s",
+                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number, active_row_strm.GetString().c_str());
+        }
     }
     else 
     {
@@ -460,6 +502,13 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         {
             active_row = m_full_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
             row_register_kind = m_full_unwind_plan_sp->GetRegisterKind ();
+            if (active_row && log)
+            {
+                StreamString active_row_strm;
+                active_row->Dump(active_row_strm, m_full_unwind_plan_sp.get(), &m_thread, m_start_pc.GetLoadAddress(&m_thread.GetProcess().GetTarget()));
+                log->Printf("%*sFrame %u active row: %s",
+                            m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number, active_row_strm.GetString().c_str());
+            }
         }
     }
 
@@ -484,6 +533,13 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     cfa_offset = active_row->GetCFAOffset ();
 
     m_cfa = cfa_regval + cfa_offset;
+
+    if (log)
+    {
+        log->Printf("%*sFrame %u cfa_regval = 0x%16.16llx (cfa_regval = 0x%16.16llx, cfa_offset = %i)",
+                    m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
+                    m_cfa, cfa_regval, cfa_offset);
+    }
 
     // A couple of sanity checks..
     if (cfa_regval == LLDB_INVALID_ADDRESS || cfa_regval == 0 || cfa_regval == 1)

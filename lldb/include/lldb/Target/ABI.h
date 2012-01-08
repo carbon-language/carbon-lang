@@ -76,6 +76,15 @@ public:
     virtual bool
     CodeAddressIsValid (lldb::addr_t pc) = 0;    
 
+    virtual bool
+    FixCodeAddress (lldb::addr_t pc)
+    {
+        // Some targets might use bits in a code address to indicate
+        // a mode switch. ARM uses bit zero to signify a code address is
+        // thumb, so any ARM ABI plug-ins would strip those bits.
+        return pc;
+    }
+
     virtual const RegisterInfo *
     GetRegisterInfoArray (uint32_t &count) = 0;
 
