@@ -107,6 +107,10 @@ static
 uintptr_t
 readEncodedPointer(const uint8_t** data, uint8_t encoding)
 {
+// TODO:  Not quite rgiht.  This should be able to read a 0 from the TType table
+//                          and not dereference it.  Pasted in temporayr workaround
+// TODO:  Sometimes this is clearly not always reading an encoded pointer, for
+//        example a length in the call site table.  Needs new name?
     uintptr_t result = 0;
     const uint8_t* p = *data;
     if (encoding == DW_EH_PE_omit) 
@@ -160,7 +164,8 @@ readEncodedPointer(const uint8_t** data, uint8_t encoding)
         // do nothing 
         break;
     case DW_EH_PE_pcrel:
-        result += (uintptr_t)(*data);
+        if (result)
+            result += (uintptr_t)(*data);
         break;
     case DW_EH_PE_textrel:
     case DW_EH_PE_datarel:
@@ -172,10 +177,35 @@ readEncodedPointer(const uint8_t** data, uint8_t encoding)
         break;
     }
     // then apply indirection 
-    if (encoding & DW_EH_PE_indirect)
+    if (result && (encoding & DW_EH_PE_indirect))
         result = *((uintptr_t*)result);
     *data = p;
     return result;
+}
+
+static
+const uint8_t*
+getTTypeEntry(int64_t typeOffset, const uint8_t* classInfo, uint8_t ttypeEncoding)
+{
+    switch (ttypeEncoding & 0x0F)
+    {
+    case DW_EH_PE_absptr:
+        typeOffset *= sizeof(void*);
+        break;
+    case DW_EH_PE_udata2:
+    case DW_EH_PE_sdata2:
+        typeOffset *= 2;
+        break;
+    case DW_EH_PE_udata4:
+    case DW_EH_PE_sdata4:
+        typeOffset *= 4;
+        break;
+    case DW_EH_PE_udata8:
+    case DW_EH_PE_sdata8:
+        typeOffset *= 8;
+        break;
+    }
+    return classInfo - typeOffset;
 }
 
 /// Deals with Dwarf actions matching our type infos 
@@ -195,29 +225,43 @@ readEncodedPointer(const uint8_t** data, uint8_t encoding)
 ///          a cleanup was found
 static
 bool
-handleActionValue(const std::type_info** classInfo, uintptr_t actionEntry,
-                  _Unwind_Exception* exceptionObject)
+handleActionValue(const uint8_t* classInfo, uintptr_t actionEntry,
+                  _Unwind_Exception* exceptionObject, uint8_t ttypeEncoding)
 {
     __cxa_exception* excp = (__cxa_exception*)(exceptionObject+1) - 1;
     const std::type_info* excpType = excp->exceptionType;
     const uint8_t* actionPos = (uint8_t*)actionEntry;
-    for (int i = 0; true; ++i)
+    while (true)
     {
         // Each emitted dwarf action corresponds to a 2 tuple of
         // type info address offset, and action offset to the next
         // emitted action.
+        const uint8_t* SactionPos = actionPos;
         int64_t typeOffset = readSLEB128(&actionPos);
         const uint8_t* tempActionPos = actionPos;
         int64_t actionOffset = readSLEB128(&tempActionPos);
-        assert((typeOffset >= 0) && "handleActionValue(...):filters are not supported.");
-        // Note: A typeOffset == 0 implies that a cleanup llvm.eh.selector
-        //       argument has been matched.
-        if ((typeOffset > 0) && (excpType == classInfo[-typeOffset]))
+        if (typeOffset > 0)  // a catch handler
         {
-            excp->handlerSwitchValue = i + 1;
-            return true;
+            const uint8_t* TTypeEntry = getTTypeEntry(typeOffset, classInfo,
+                                                      ttypeEncoding);
+            const std::type_info* catchType =
+                       (const std::type_info*)readEncodedPointer(&TTypeEntry,
+                                                                 ttypeEncoding);
+            // catchType == 0 -> catch (...)
+            if (catchType == 0 || excpType == catchType)
+            {
+                excp->handlerSwitchValue = typeOffset;
+                excp->actionRecord = SactionPos;
+                return true;
+            }
         }
-        if (!actionOffset)
+        else if (typeOffset < 0)  // an exception spec
+        {
+        }
+        else  // typeOffset == 0  // a clean up
+        {
+        }
+        if (actionOffset == 0)
             break;
         actionPos += actionOffset;
     }
@@ -231,7 +275,12 @@ static
 bool
 contains_handler(_Unwind_Exception* exceptionObject, _Unwind_Context* context)
 {
+    __cxa_exception* excp = (__cxa_exception*)(exceptionObject+1) - 1;
     const uint8_t* lsda = (const uint8_t*)_Unwind_GetLanguageSpecificData(context);
+    excp->languageSpecificData = lsda;
+    // set adjustedPtr!  __cxa_get_exception_ptr and __cxa_begin_catch use it.
+    // TODO:  Put it where it is supposed to be and adjust it properly
+    excp->adjustedPtr = exceptionObject+1;
     if (lsda)
     {
         // Get the current instruction pointer and offset it before next
@@ -241,7 +290,7 @@ contains_handler(_Unwind_Exception* exceptionObject, _Unwind_Context* context)
         // emitted dwarf code)
         uintptr_t funcStart = _Unwind_GetRegionStart(context);
         uintptr_t pcOffset = pc - funcStart;
-        const std::type_info** classInfo = NULL;
+        const uint8_t* classInfo = NULL;
         // Note: See JITDwarfEmitter::EmitExceptionTable(...) for corresponding
         //       dwarf emission
         // Parse LSDA header.
@@ -249,13 +298,14 @@ contains_handler(_Unwind_Exception* exceptionObject, _Unwind_Context* context)
         if (lpStartEncoding != DW_EH_PE_omit)
             (void)readEncodedPointer(&lsda, lpStartEncoding); 
         uint8_t ttypeEncoding = *lsda++;
+        // TODO:  preflight ttypeEncoding here and return error if there's a problem
         if (ttypeEncoding != DW_EH_PE_omit)
         {
             // Calculate type info locations in emitted dwarf code which
             // were flagged by type info arguments to llvm.eh.selector
             // intrinsic
             uintptr_t classInfoOffset = readULEB128(&lsda);
-            classInfo = (const std::type_info**)(lsda + classInfoOffset);
+            classInfo = lsda + classInfoOffset;
         }
         // Walk call-site table looking for range that 
         // includes current PC. 
@@ -265,7 +315,6 @@ contains_handler(_Unwind_Exception* exceptionObject, _Unwind_Context* context)
         const uint8_t* callSiteTableEnd = callSiteTableStart + callSiteTableLength;
         const uint8_t* actionTableStart = callSiteTableEnd;
         const uint8_t* callSitePtr = callSiteTableStart;
-        __cxa_exception* excp = (__cxa_exception*)(exceptionObject+1) - 1;
         while (callSitePtr < callSiteTableEnd)
         {
             uintptr_t start = readEncodedPointer(&callSitePtr, callSiteEncoding);
@@ -277,21 +326,22 @@ contains_handler(_Unwind_Exception* exceptionObject, _Unwind_Context* context)
                 continue; // no landing pad for this entry
             if (actionEntry)
                 actionEntry += ((uintptr_t)actionTableStart) - 1;
-            bool exceptionMatched = false;
             if ((start <= pcOffset) && (pcOffset < (start + length)))
             {
-                excp->actionRecord = (const unsigned char*)(funcStart + landingPad);
+                excp->catchTemp = (void*)(funcStart + landingPad);
                 if (actionEntry)
                     return handleActionValue(classInfo, 
                                              actionEntry, 
-                                             exceptionObject);
+                                             exceptionObject,
+                                             ttypeEncoding);
                 // Note: Only non-clean up handlers are marked as
                 //       found. Otherwise the clean up handlers will be 
                 //       re-found and executed during the clean up 
                 //       phase.
-                break;
+                return true;  //?
             }
         }
+        // Not found, need to properly terminate
     }
     return false;
 }
@@ -304,7 +354,7 @@ transfer_control_to_landing_pad(_Unwind_Exception* exceptionObject,
     __cxa_exception* excp = (__cxa_exception*)(exceptionObject+1) - 1;
     _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)exceptionObject);
     _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), excp->handlerSwitchValue);
-    _Unwind_SetIP(context, (uintptr_t)excp->actionRecord);
+    _Unwind_SetIP(context, (uintptr_t)excp->catchTemp);
     return _URC_INSTALL_CONTEXT;
 }
 
@@ -315,7 +365,7 @@ perform_cleanup(_Unwind_Exception* exceptionObject, _Unwind_Context* context)
     __cxa_exception* excp = (__cxa_exception*)(exceptionObject+1) - 1;
     _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)exceptionObject);
     _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), 0);
-    _Unwind_SetIP(context, (uintptr_t)excp->actionRecord);
+    _Unwind_SetIP(context, (uintptr_t)excp->catchTemp);
     return _URC_INSTALL_CONTEXT;
 }
 
@@ -334,7 +384,7 @@ __gxx_personality_v0(int version, _Unwind_Action actions, uint64_t exceptionClas
 {
     if (version == 1 && exceptionObject != 0 && context != 0)
     {
-        bool native_exception = (exceptionClass & 0xFFF0) == 0x432B2B00;
+        bool native_exception = (exceptionClass & 0xFFFFFF00) == 0x432B2B00;
         bool force_unwind = actions & _UA_FORCE_UNWIND;
         if (native_exception && !force_unwind)
         {
