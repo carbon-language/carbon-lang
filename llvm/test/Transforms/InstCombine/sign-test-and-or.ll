@@ -77,3 +77,83 @@ if.then:
 if.end:
   ret void
 }
+
+define void @test5(i32 %a) nounwind {
+  %and = and i32 %a, 134217728
+  %1 = icmp eq i32 %and, 0
+  %2 = icmp sgt i32 %a, -1
+  %or.cond = and i1 %1, %2
+  br i1 %or.cond, label %if.then, label %if.end
+
+; CHECK: @test5
+; CHECK-NEXT: %and = and i32 %a, -2013265920
+; CHECK-NEXT: %1 = icmp eq i32 %and, 0
+; CHECK-NEXT: br i1 %1, label %if.then, label %if.end
+
+if.then:
+  tail call void @foo() nounwind
+  ret void
+
+if.end:
+  ret void
+}
+
+define void @test6(i32 %a) nounwind {
+  %1 = icmp sgt i32 %a, -1
+  %and = and i32 %a, 134217728
+  %2 = icmp eq i32 %and, 0
+  %or.cond = and i1 %1, %2
+  br i1 %or.cond, label %if.then, label %if.end
+
+; CHECK: @test6
+; CHECK-NEXT: %and = and i32 %a, -2013265920
+; CHECK-NEXT: %1 = icmp eq i32 %and, 0
+; CHECK-NEXT: br i1 %1, label %if.then, label %if.end
+
+if.then:
+  tail call void @foo() nounwind
+  ret void
+
+if.end:
+  ret void
+}
+
+define void @test7(i32 %a) nounwind {
+  %and = and i32 %a, 134217728
+  %1 = icmp ne i32 %and, 0
+  %2 = icmp slt i32 %a, 0
+  %or.cond = or i1 %1, %2
+  br i1 %or.cond, label %if.then, label %if.end
+
+; CHECK: @test7
+; CHECK-NEXT: %and = and i32 %a, -2013265920
+; CHECK-NEXT: %1 = icmp eq i32 %and, 0
+; CHECK-NEXT: br i1 %1, label %if.end, label %if.the
+
+if.then:
+  tail call void @foo() nounwind
+  ret void
+
+if.end:
+  ret void
+}
+
+define void @test8(i32 %a) nounwind {
+  %1 = icmp slt i32 %a, 0
+  %and = and i32 %a, 134217728
+  %2 = icmp ne i32 %and, 0
+  %or.cond = or i1 %1, %2
+  br i1 %or.cond, label %if.then, label %if.end
+
+; CHECK: @test8
+; CHECK-NEXT: %and = and i32 %a, -2013265920
+; CHECK-NEXT: %1 = icmp eq i32 %and, 0
+; CHECK-NEXT: br i1 %1, label %if.end, label %if.the
+
+if.then:
+  tail call void @foo() nounwind
+  ret void
+
+if.end:
+  ret void
+}
