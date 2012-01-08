@@ -499,7 +499,7 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters()
     { "r4",   NULL,   4,   0, eEncodingUint,    eFormatHex,   { gcc_r4,              dwarf_r4,            LLDB_INVALID_REGNUM,     4,      4 }},
     { "r5",   NULL,   4,   0, eEncodingUint,    eFormatHex,   { gcc_r5,              dwarf_r5,            LLDB_INVALID_REGNUM,     5,      5 }},
     { "r6",   NULL,   4,   0, eEncodingUint,    eFormatHex,   { gcc_r6,              dwarf_r6,            LLDB_INVALID_REGNUM,     6,      6 }},
-    { "r7",   NULL,   4,   0, eEncodingUint,    eFormatHex,   { gcc_r7,              dwarf_r7,            LLDB_REGNUM_GENERIC_FP,  7,      7 }},
+    { "r7",   "fp",   4,   0, eEncodingUint,    eFormatHex,   { gcc_r7,              dwarf_r7,            LLDB_REGNUM_GENERIC_FP,  7,      7 }},
     { "r8",   NULL,   4,   0, eEncodingUint,    eFormatHex,   { gcc_r8,              dwarf_r8,            LLDB_INVALID_REGNUM,     8,      8 }},
     { "r9",   NULL,   4,   0, eEncodingUint,    eFormatHex,   { gcc_r9,              dwarf_r9,            LLDB_INVALID_REGNUM,     9,      9 }},
     { "r10",  NULL,   4,   0, eEncodingUint,    eFormatHex,   { gcc_r10,             dwarf_r10,           LLDB_INVALID_REGNUM,    10,     10 }},
