@@ -2549,18 +2549,22 @@ CodeGenFunction::GenerateObjCAtomicCopyHelperFunction(
   if ((!(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_atomic))
       || /* temporary */ true) 
     return 0;
+  llvm::Constant * HelperFn = 0;
   if (forSetter) {
     if (hasTrivialSetExpr(PID))
       return 0;
+    assert(PID->getSetterCXXAssignment() && "SetterCXXAssignment - null");
+    if ((HelperFn = CGM.getAtomicSetterHelperFnMap(Ty)))
+      return HelperFn;
   }
-  else 
+  else  {
     if (hasTrivialGetExpr(PID))
       return 0;
-  llvm::Constant * HelperFn = CGM.getAtomicHelperFnMap(Ty);
-  if (HelperFn)
-    return HelperFn;
+    assert(PID->getGetterCXXConstructor() && "getGetterCXXConstructor - null");
+    if ((HelperFn = CGM.getAtomicGetterHelperFnMap(Ty)))
+      return HelperFn;
+  }
     
-  assert(PID->getSetterCXXAssignment() && "SetterCXXAssignment - null");
   
   ASTContext &C = getContext();
   IdentifierInfo *II
@@ -2615,7 +2619,8 @@ CodeGenFunction::GenerateObjCAtomicCopyHelperFunction(
                                     VK_LValue, OK_Ordinary, SourceLocation());
   
   Expr *Args[2] = { DST, SRC };
-  CallExpr *CalleeExp = cast<CallExpr>(PID->getSetterCXXAssignment());
+  CallExpr *CalleeExp = forSetter ? cast<CallExpr>(PID->getSetterCXXAssignment())
+                                  : cast<CallExpr>(PID->getGetterCXXConstructor());
   CXXOperatorCallExpr *TheCall =
     new (C) CXXOperatorCallExpr(C, OO_Equal, CalleeExp->getCallee(),
                                 Args, 2, DestTy->getPointeeType(), 
@@ -2625,7 +2630,10 @@ CodeGenFunction::GenerateObjCAtomicCopyHelperFunction(
 
   FinishFunction();
   HelperFn = llvm::ConstantExpr::getBitCast(Fn, VoidPtrTy);
-  CGM.setAtomicHelperFnMap(Ty, HelperFn);
+  if (forSetter)
+    CGM.setAtomicSetterHelperFnMap(Ty, HelperFn);
+  else
+    CGM.setAtomicGetterHelperFnMap(Ty, HelperFn);
   return HelperFn;
   
 }

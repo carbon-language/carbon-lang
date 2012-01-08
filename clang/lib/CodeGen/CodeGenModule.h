@@ -277,7 +277,8 @@ class CodeGenModule : public CodeGenTypeCache {
   llvm::StringMap<llvm::GlobalVariable*> ConstantStringMap;
   llvm::DenseMap<const Decl*, llvm::Value*> StaticLocalDeclMap;
   
-  llvm::DenseMap<QualType, llvm::Constant *> AtomicHelperFnMap;
+  llvm::DenseMap<QualType, llvm::Constant *> AtomicSetterHelperFnMap;
+  llvm::DenseMap<QualType, llvm::Constant *> AtomicGetterHelperFnMap;
 
   /// CXXGlobalInits - Global variables with initializers that need to run
   /// before main.
@@ -400,12 +401,20 @@ public:
     StaticLocalDeclMap[D] = GV;
   }
 
-  llvm::Constant *getAtomicHelperFnMap(QualType Ty) {
-    return AtomicHelperFnMap[Ty];
+  llvm::Constant *getAtomicSetterHelperFnMap(QualType Ty) {
+    return AtomicSetterHelperFnMap[Ty];
   }
-  void setAtomicHelperFnMap(QualType Ty,
+  void setAtomicSetterHelperFnMap(QualType Ty,
                             llvm::Constant *Fn) {
-    AtomicHelperFnMap[Ty] = Fn;
+    AtomicSetterHelperFnMap[Ty] = Fn;
+  }
+
+  llvm::Constant *getAtomicGetterHelperFnMap(QualType Ty) {
+    return AtomicGetterHelperFnMap[Ty];
+  }
+  void setAtomicGetterHelperFnMap(QualType Ty,
+                            llvm::Constant *Fn) {
+    AtomicGetterHelperFnMap[Ty] = Fn;
   }
 
   CGDebugInfo *getModuleDebugInfo() { return DebugInfo; }
