@@ -214,6 +214,7 @@ __cxa_throw(void * thrown_exception, std::type_info * tinfo, void (*dest)(void *
 
 // 2.5.3 Exception Handlers
 extern void * __cxa_get_exception_ptr(void * exceptionObject) throw() {
+//    TODO:  This must return the *adjusted* pointer to the exception object.
     return exception_from_exception_object(exceptionObject);
 }
     
@@ -243,7 +244,7 @@ void * __cxa_begin_catch(void * exceptionObject) throw() {
     }
         
     globals->uncaughtExceptions -= 1;   // Not atomically, since globals are thread-local
-    return thrown_object_from_exception(exception);
+    return __cxa_get_exception_ptr(exceptionObject);
 }
 
 
@@ -295,6 +296,8 @@ void __cxa_end_catch() {
 
 
 std::type_info * __cxa_current_exception_type() {
+// FIXME:  I don't think we need to drill down into __cxa_dependent_exception
+//         because the exceptionType is replicated in the __cxa_dependent_exception
 //  get the current exception
     __cxa_eh_globals *globals = __cxa_get_globals_fast();
     if (NULL == globals)
