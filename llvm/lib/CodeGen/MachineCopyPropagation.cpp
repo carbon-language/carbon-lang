@@ -83,6 +83,25 @@ MachineCopyPropagation::SourceNoLongerAvailable(unsigned Reg,
   }
 }
 
+static bool NoInterveningSideEffect(const MachineInstr *CopyMI,
+                                    const MachineInstr *MI) {
+  const MachineBasicBlock *MBB = CopyMI->getParent();
+  if (MI->getParent() != MBB)
+    return false;
+  MachineBasicBlock::const_iterator I = CopyMI;
+  MachineBasicBlock::const_iterator E = MBB->end();
+  MachineBasicBlock::const_iterator E2 = MI;
+
+  ++I;
+  while (I != E && I != E2) {
+    if (I->hasUnmodeledSideEffects() || I->isCall() ||
+        I->isTerminator())
+      return false;
+    ++I;
+  }
+  return true;
+}
+
 bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
   SmallSetVector<MachineInstr*, 8> MaybeDeadCopies; // Candidates for deletion
   DenseMap<unsigned, MachineInstr*> AvailCopyMap;   // Def -> available copies map
@@ -108,6 +127,7 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
         MachineInstr *CopyMI = CI->second;
         unsigned SrcSrc = CopyMI->getOperand(1).getReg();
         if (!ReservedRegs.test(Def) &&
+            (!ReservedRegs.test(Src) || NoInterveningSideEffect(CopyMI, MI)) &&
             (SrcSrc == Def || TRI->isSubRegister(SrcSrc, Def))) {
           // The two copies cancel out and the source of the first copy
           // hasn't been overridden, eliminate the second one. e.g.
@@ -116,6 +136,12 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
           //  %EAX<def> = COPY %ECX
           // =>
           //  %ECX<def> = COPY %EAX
+          //
+          // Also avoid eliminating a copy from reserved registers unless the
+          // definition is proven not clobbered. e.g.
+          // %RSP<def> = COPY %RAX
+          // CALL
+          // %RAX<def> = COPY %RSP
           CopyMI->getOperand(1).setIsKill(false);
           MI->eraseFromParent();
           Changed = true;
