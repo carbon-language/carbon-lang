@@ -278,8 +278,11 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
 
     emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, VARegSaveSize);
 
-    AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tBX_RET_vararg))
-      .addReg(ARM::R3, RegState::Kill));
+    MachineInstrBuilder MIB =
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::tBX_RET_vararg))
+      .addReg(ARM::R3, RegState::Kill);
+    AddDefaultPred(MIB);
+    MIB->copyImplicitOps(&*MBBI);
     // erase the old tBX_RET instruction
     MBB.erase(MBBI);
   }
