@@ -745,18 +745,17 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
   }
 
   // (X & C) == 0 & X > -1  ->  (X & (C | SignBit)) == 0
-  if (LHS->hasOneUse() && RHS->hasOneUse() &&
-      ((LHSCC == ICmpInst::ICMP_EQ && LHSCst->isZero() &&
-        RHSCC == ICmpInst::ICMP_SGT && RHSCst->isAllOnesValue()) ||
-       (RHSCC == ICmpInst::ICMP_EQ && RHSCst->isZero() &&
-        LHSCC == ICmpInst::ICMP_SGT && LHSCst->isAllOnesValue()))) {
-    BinaryOperator *BO =
-      dyn_cast<BinaryOperator>(LHSCC == ICmpInst::ICMP_EQ ? Val : Val2);
-    ConstantInt *AndCst;
-    if (BO && match(BO, m_OneUse(m_And(m_Value(), m_ConstantInt(AndCst))))) {
-      APInt New = AndCst->getValue() | APInt::getSignBit(AndCst->getBitWidth());
-      BO->setOperand(1, ConstantInt::get(AndCst->getContext(), New));
-      return BO == Val ? LHS : RHS;
+  if ((LHSCC == ICmpInst::ICMP_EQ  && LHSCst->isZero() &&
+       RHSCC == ICmpInst::ICMP_SGT && RHSCst->isAllOnesValue()) ||
+      (RHSCC == ICmpInst::ICMP_EQ  && RHSCst->isZero() &&
+       LHSCC == ICmpInst::ICMP_SGT && LHSCst->isAllOnesValue())) {
+    ICmpInst *I = LHSCC == ICmpInst::ICMP_EQ ? LHS : RHS;
+    Value *X; ConstantInt *C;
+    if (I->hasOneUse() &&
+        match(I->getOperand(0), m_OneUse(m_And(m_Value(X), m_ConstantInt(C))))){
+      APInt New = C->getValue() | APInt::getSignBit(C->getBitWidth());
+      return Builder->CreateICmpEQ(Builder->CreateAnd(X, Builder->getInt(New)),
+                                   I->getOperand(1));
     }
   }
   
@@ -1458,19 +1457,18 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
     }
   }
 
-  // (X & C) != 0 & X < 0  ->  (X & (C | SignBit)) != 0
-  if (LHS->hasOneUse() && RHS->hasOneUse() &&
-      ((LHSCC == ICmpInst::ICMP_NE && LHSCst->isZero() &&
-        RHSCC == ICmpInst::ICMP_SLT && RHSCst->isZero()) ||
-       (RHSCC == ICmpInst::ICMP_NE && RHSCst->isZero() &&
-        LHSCC == ICmpInst::ICMP_SLT && LHSCst->isZero()))) {
-    BinaryOperator *BO =
-      dyn_cast<BinaryOperator>(LHSCC == ICmpInst::ICMP_NE ? Val : Val2);
-    ConstantInt *AndCst;
-    if (BO && match(BO, m_OneUse(m_And(m_Value(), m_ConstantInt(AndCst))))) {
-      APInt New = AndCst->getValue() | APInt::getSignBit(AndCst->getBitWidth());
-      BO->setOperand(1, ConstantInt::get(AndCst->getContext(), New));
-      return BO == Val ? LHS : RHS;
+  // (X & C) != 0 | X < 0  ->  (X & (C | SignBit)) != 0
+  if ((LHSCC == ICmpInst::ICMP_NE  && LHSCst->isZero() &&
+       RHSCC == ICmpInst::ICMP_SLT && RHSCst->isZero()) ||
+      (RHSCC == ICmpInst::ICMP_NE  && RHSCst->isZero() &&
+       LHSCC == ICmpInst::ICMP_SLT && LHSCst->isZero())) {
+    ICmpInst *I = LHSCC == ICmpInst::ICMP_NE ? LHS : RHS;
+    Value *X; ConstantInt *C;
+    if (I->hasOneUse() &&
+        match(I->getOperand(0), m_OneUse(m_And(m_Value(X), m_ConstantInt(C))))){
+      APInt New = C->getValue() | APInt::getSignBit(C->getBitWidth());
+      return Builder->CreateICmpNE(Builder->CreateAnd(X, Builder->getInt(New)),
+                                   I->getOperand(1));
     }
   }
 

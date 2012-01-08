@@ -86,9 +86,9 @@ define void @test5(i32 %a) nounwind {
   br i1 %or.cond, label %if.then, label %if.end
 
 ; CHECK: @test5
-; CHECK-NEXT: %and = and i32 %a, -2013265920
-; CHECK-NEXT: %1 = icmp eq i32 %and, 0
-; CHECK-NEXT: br i1 %1, label %if.then, label %if.end
+; CHECK-NEXT: %1 = and i32 %a, -2013265920
+; CHECK-NEXT: %2 = icmp eq i32 %1, 0
+; CHECK-NEXT: br i1 %2, label %if.then, label %if.end
 
 if.then:
   tail call void @foo() nounwind
@@ -106,9 +106,9 @@ define void @test6(i32 %a) nounwind {
   br i1 %or.cond, label %if.then, label %if.end
 
 ; CHECK: @test6
-; CHECK-NEXT: %and = and i32 %a, -2013265920
-; CHECK-NEXT: %1 = icmp eq i32 %and, 0
-; CHECK-NEXT: br i1 %1, label %if.then, label %if.end
+; CHECK-NEXT: %1 = and i32 %a, -2013265920
+; CHECK-NEXT: %2 = icmp eq i32 %1, 0
+; CHECK-NEXT: br i1 %2, label %if.then, label %if.end
 
 if.then:
   tail call void @foo() nounwind
@@ -126,9 +126,9 @@ define void @test7(i32 %a) nounwind {
   br i1 %or.cond, label %if.then, label %if.end
 
 ; CHECK: @test7
-; CHECK-NEXT: %and = and i32 %a, -2013265920
-; CHECK-NEXT: %1 = icmp eq i32 %and, 0
-; CHECK-NEXT: br i1 %1, label %if.end, label %if.the
+; CHECK-NEXT: %1 = and i32 %a, -2013265920
+; CHECK-NEXT: %2 = icmp eq i32 %1, 0
+; CHECK-NEXT: br i1 %2, label %if.end, label %if.the
 
 if.then:
   tail call void @foo() nounwind
@@ -146,9 +146,9 @@ define void @test8(i32 %a) nounwind {
   br i1 %or.cond, label %if.then, label %if.end
 
 ; CHECK: @test8
-; CHECK-NEXT: %and = and i32 %a, -2013265920
-; CHECK-NEXT: %1 = icmp eq i32 %and, 0
-; CHECK-NEXT: br i1 %1, label %if.end, label %if.the
+; CHECK-NEXT: %1 = and i32 %a, -2013265920
+; CHECK-NEXT: %2 = icmp eq i32 %1, 0
+; CHECK-NEXT: br i1 %2, label %if.end, label %if.the
 
 if.then:
   tail call void @foo() nounwind
