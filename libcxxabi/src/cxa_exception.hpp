@@ -64,10 +64,8 @@ namespace __cxxabiv1 {
         void* primaryException;
 #endif
     
-    // Unused dummy data (should be set to null)
         std::type_info *exceptionType;
         void (*exceptionDestructor)(void *); 
-    
         std::unexpected_handler unexpectedHandler;
         std::terminate_handler terminateHandler;
     
