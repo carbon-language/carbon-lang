@@ -1171,88 +1171,92 @@ void AsmMatcherInfo::BuildInfo() {
     assert(FeatureNo < 32 && "Too many subtarget features!");
   }
 
-  std::string CommentDelimiter = AsmParser->getValueAsString("CommentDelimiter");
-  std::string RegisterPrefix = AsmParser->getValueAsString("RegisterPrefix");
-  int AsmVariantNo = AsmParser->getValueAsInt("Variant");
-
   // Parse the instructions; we need to do this first so that we can gather the
   // singleton register classes.
   SmallPtrSet<Record*, 16> SingletonRegisters;
-  for (CodeGenTarget::inst_iterator I = Target.inst_begin(),
-       E = Target.inst_end(); I != E; ++I) {
-    const CodeGenInstruction &CGI = **I;
-
-    // If the tblgen -match-prefix option is specified (for tblgen hackers),
-    // filter the set of instructions we consider.
-    if (!StringRef(CGI.TheDef->getName()).startswith(MatchPrefix))
-      continue;
-
-    // Ignore "codegen only" instructions.
-    if (CGI.TheDef->getValueAsBit("isCodeGenOnly"))
-      continue;
-
-    // Validate the operand list to ensure we can handle this instruction.
-    for (unsigned i = 0, e = CGI.Operands.size(); i != e; ++i) {
-      const CGIOperandList::OperandInfo &OI = CGI.Operands[i];
-
-      // Validate tied operands.
-      if (OI.getTiedRegister() != -1) {
-        // If we have a tied operand that consists of multiple MCOperands,
-        // reject it.  We reject aliases and ignore instructions for now.
-        if (OI.MINumOperands != 1) {
-          // FIXME: Should reject these.  The ARM backend hits this with $lane
-          // in a bunch of instructions. It is unclear what the right answer is.
-          DEBUG({
-            errs() << "warning: '" << CGI.TheDef->getName() << "': "
-            << "ignoring instruction with multi-operand tied operand '"
-            << OI.Name << "'\n";
-          });
-          continue;
-        }
+  unsigned VariantCount = Target.getAsmParserVariantCount();
+  for (unsigned VC = 0; VC != VariantCount; ++VC) {
+    Record *AsmVariant = Target.getAsmParserVariant(VC);
+    std::string CommentDelimiter = AsmVariant->getValueAsString("CommentDelimiter");
+    std::string RegisterPrefix = AsmVariant->getValueAsString("RegisterPrefix");
+    int AsmVariantNo = AsmVariant->getValueAsInt("Variant");
+    
+    for (CodeGenTarget::inst_iterator I = Target.inst_begin(),
+	   E = Target.inst_end(); I != E; ++I) {
+      const CodeGenInstruction &CGI = **I;
+      
+      // If the tblgen -match-prefix option is specified (for tblgen hackers),
+      // filter the set of instructions we consider.
+      if (!StringRef(CGI.TheDef->getName()).startswith(MatchPrefix))
+	continue;
+      
+      // Ignore "codegen only" instructions.
+      if (CGI.TheDef->getValueAsBit("isCodeGenOnly"))
+	continue;
+      
+      // Validate the operand list to ensure we can handle this instruction.
+      for (unsigned i = 0, e = CGI.Operands.size(); i != e; ++i) {
+	const CGIOperandList::OperandInfo &OI = CGI.Operands[i];
+	
+	// Validate tied operands.
+	if (OI.getTiedRegister() != -1) {
+	  // If we have a tied operand that consists of multiple MCOperands,
+	  // reject it.  We reject aliases and ignore instructions for now.
+	  if (OI.MINumOperands != 1) {
+	    // FIXME: Should reject these.  The ARM backend hits this with $lane
+	    // in a bunch of instructions. It is unclear what the right answer is.
+	    DEBUG({
+		errs() << "warning: '" << CGI.TheDef->getName() << "': "
+		       << "ignoring instruction with multi-operand tied operand '"
+		       << OI.Name << "'\n";
+	      });
+	    continue;
+	  }
+	}
       }
+      
+      OwningPtr<MatchableInfo> II(new MatchableInfo(CGI));
+      
+      II->Initialize(*this, SingletonRegisters, AsmVariantNo, RegisterPrefix);
+      
+      // Ignore instructions which shouldn't be matched and diagnose invalid
+      // instruction definitions with an error.
+      if (!II->Validate(CommentDelimiter, true))
+	continue;
+      
+      // Ignore "Int_*" and "*_Int" instructions, which are internal aliases.
+      //
+      // FIXME: This is a total hack.
+      if (StringRef(II->TheDef->getName()).startswith("Int_") ||
+	  StringRef(II->TheDef->getName()).endswith("_Int"))
+	continue;
+      
+      Matchables.push_back(II.take());
     }
-
-    OwningPtr<MatchableInfo> II(new MatchableInfo(CGI));
-
-    II->Initialize(*this, SingletonRegisters, AsmVariantNo, RegisterPrefix);
-
-    // Ignore instructions which shouldn't be matched and diagnose invalid
-    // instruction definitions with an error.
-    if (!II->Validate(CommentDelimiter, true))
-      continue;
-
-    // Ignore "Int_*" and "*_Int" instructions, which are internal aliases.
-    //
-    // FIXME: This is a total hack.
-    if (StringRef(II->TheDef->getName()).startswith("Int_") ||
-        StringRef(II->TheDef->getName()).endswith("_Int"))
-      continue;
-
-     Matchables.push_back(II.take());
-  }
-
-  // Parse all of the InstAlias definitions and stick them in the list of
-  // matchables.
-  std::vector<Record*> AllInstAliases =
-    Records.getAllDerivedDefinitions("InstAlias");
-  for (unsigned i = 0, e = AllInstAliases.size(); i != e; ++i) {
-    CodeGenInstAlias *Alias = new CodeGenInstAlias(AllInstAliases[i], Target);
-
-    // If the tblgen -match-prefix option is specified (for tblgen hackers),
-    // filter the set of instruction aliases we consider, based on the target
-    // instruction.
-    if (!StringRef(Alias->ResultInst->TheDef->getName()).startswith(
-          MatchPrefix))
-      continue;
-
-    OwningPtr<MatchableInfo> II(new MatchableInfo(Alias));
-
-    II->Initialize(*this, SingletonRegisters, AsmVariantNo, RegisterPrefix);
-
-    // Validate the alias definitions.
-    II->Validate(CommentDelimiter, false);
-
-    Matchables.push_back(II.take());
+    
+    // Parse all of the InstAlias definitions and stick them in the list of
+    // matchables.
+    std::vector<Record*> AllInstAliases =
+      Records.getAllDerivedDefinitions("InstAlias");
+    for (unsigned i = 0, e = AllInstAliases.size(); i != e; ++i) {
+      CodeGenInstAlias *Alias = new CodeGenInstAlias(AllInstAliases[i], Target);
+      
+      // If the tblgen -match-prefix option is specified (for tblgen hackers),
+      // filter the set of instruction aliases we consider, based on the target
+      // instruction.
+      if (!StringRef(Alias->ResultInst->TheDef->getName()).startswith(
+								      MatchPrefix))
+	continue;
+      
+      OwningPtr<MatchableInfo> II(new MatchableInfo(Alias));
+      
+      II->Initialize(*this, SingletonRegisters, AsmVariantNo, RegisterPrefix);
+      
+      // Validate the alias definitions.
+      II->Validate(CommentDelimiter, false);
+      
+      Matchables.push_back(II.take());
+    }
   }
 
   // Build info for the register classes.

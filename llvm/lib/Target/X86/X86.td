@@ -246,6 +246,9 @@ include "X86CallingConv.td"
 // Currently the X86 assembly parser only supports ATT syntax.
 def ATTAsmParser : AsmParser {
   string AsmParserClassName = "ATTAsmParser";
+}
+
+def ATTAsmParserVariant : AsmParserVariant {
   int Variant = 0;
 
   // Discard comments in assembly strings.
@@ -275,8 +278,7 @@ def IntelAsmWriter : AsmWriter {
 def X86 : Target {
   // Information about the instructions...
   let InstructionSet = X86InstrInfo;
-
   let AssemblyParsers = [ATTAsmParser];
-
+  let AssemblyParserVariants = [ATTAsmParserVariant];
   let AssemblyWriters = [ATTAsmWriter, IntelAsmWriter];
 }

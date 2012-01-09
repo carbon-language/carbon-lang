@@ -712,7 +712,15 @@ class AsmParser {
   // function of the AsmParser class to call on every matched instruction.
   // This can be used to perform target specific instruction post-processing.
   string AsmParserInstCleanup  = "";
+}
+def DefaultAsmParser : AsmParser;
 
+//===----------------------------------------------------------------------===//
+// AsmParserVariant - Subtargets can have multiple different assembly parsers 
+// (e.g. AT&T vs Intel syntax on X86 for example). This class can be
+// implemented by targets to describe such variants.
+//
+class AsmParserVariant {
   // Variant - AsmParsers can be of multiple different variants.  Variants are
   // used to support targets that need to parser multiple formats for the
   // assembly language.
@@ -729,7 +737,7 @@ class AsmParser {
   // purposes of matching.
   string RegisterPrefix = "";
 }
-def DefaultAsmParser : AsmParser;
+def DefaultAsmParserVariant : AsmParserVariant;
 
 /// AssemblerPredicate - This is a Predicate that can be used when the assembler
 /// matches instructions and aliases.
@@ -839,6 +847,10 @@ class Target {
 
   // AssemblyParsers - The AsmParser instances available for this target.
   list<AsmParser> AssemblyParsers = [DefaultAsmParser];
+
+  /// AssemblyParserVariants - The AsmParserVariant instances available for 
+  /// this target.
+  list<AsmParserVariant> AssemblyParserVariants = [DefaultAsmParserVariant];
 
   // AssemblyWriters - The AsmWriter instances available for this target.
   list<AsmWriter> AssemblyWriters = [DefaultAsmWriter];
