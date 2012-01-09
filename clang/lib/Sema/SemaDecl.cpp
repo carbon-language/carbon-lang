@@ -7253,7 +7253,7 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   // Extension in C99.  Legal in C90, but warn about it.
   unsigned diag_id;
   if (II.getName().startswith("__builtin_"))
-    diag_id = diag::err_builtin_unknown;
+    diag_id = diag::warn_builtin_unknown;
   else if (getLangOptions().C99)
     diag_id = diag::ext_implicit_function_decl;
   else

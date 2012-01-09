@@ -273,7 +273,8 @@ def warn_redecl_library_builtin : Warning<
 def err_builtin_definition : Error<"definition of builtin function %0">;
 def err_types_compatible_p_in_cplusplus : Error<
   "__builtin_types_compatible_p is not valid in C++">;
-def err_builtin_unknown : Error<"use of unknown builtin %0">;
+def warn_builtin_unknown : Warning<"use of unknown builtin %0">,
+  InGroup<ImplicitFunctionDeclare>, DefaultError;
 def warn_dyn_class_memaccess : Warning<
   "%select{destination for|source of|first operand of|second operand of}0 this "
   "%1 call is a pointer to dynamic class %2; vtable pointer will be "
