@@ -2651,6 +2651,69 @@ let Predicates = [HasAVX] in {
              OpSize, VEX;
 }
 
+//===---------------------------------------------------------------------===//
+// SSE2 - Packed Integer Logical Instructions
+//===---------------------------------------------------------------------===//
+
+let ExeDomain = SSEPackedInt in { // SSE integer instructions
+
+/// PDI_binop_rm - Simple SSE2 binary operator.
+multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                        ValueType OpVT, RegisterClass RC, PatFrag memop_frag,
+                        X86MemOperand x86memop, bit IsCommutable = 0,
+                        bit Is2Addr = 1> {
+  let isCommutable = IsCommutable in
+  def rr : PDI<opc, MRMSrcReg, (outs RC:$dst),
+       (ins RC:$src1, RC:$src2),
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst, (OpVT (OpNode RC:$src1, RC:$src2)))]>;
+  def rm : PDI<opc, MRMSrcMem, (outs RC:$dst),
+       (ins RC:$src1, x86memop:$src2),
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst, (OpVT (OpNode RC:$src1,
+                                     (bitconvert (memop_frag addr:$src2)))))]>;
+}
+} // ExeDomain = SSEPackedInt
+
+// These are ordered here for pattern ordering requirements with the fp versions
+
+let Predicates = [HasAVX] in {
+defm VPAND : PDI_binop_rm<0xDB, "vpand", and, v2i64, VR128, memopv2i64,
+                          i128mem, 1, 0>, VEX_4V;
+defm VPOR  : PDI_binop_rm<0xEB, "vpor" , or, v2i64, VR128, memopv2i64,
+                          i128mem, 1, 0>, VEX_4V;
+defm VPXOR : PDI_binop_rm<0xEF, "vpxor", xor, v2i64, VR128, memopv2i64,
+                          i128mem, 1, 0>, VEX_4V;
+defm VPANDN : PDI_binop_rm<0xDF, "vpandn", X86andnp, v2i64, VR128, memopv2i64,
+                          i128mem, 0, 0>, VEX_4V;
+}
+
+let Constraints = "$src1 = $dst" in {
+defm PAND : PDI_binop_rm<0xDB, "pand", and, v2i64, VR128, memopv2i64,
+                         i128mem, 1>;
+defm POR  : PDI_binop_rm<0xEB, "por" , or, v2i64, VR128, memopv2i64,
+                         i128mem, 1>;
+defm PXOR : PDI_binop_rm<0xEF, "pxor", xor, v2i64, VR128, memopv2i64,
+                         i128mem, 1>;
+defm PANDN : PDI_binop_rm<0xDF, "pandn", X86andnp, v2i64, VR128, memopv2i64,
+                          i128mem, 0>;
+} // Constraints = "$src1 = $dst"
+
+let Predicates = [HasAVX2] in {
+defm VPANDY : PDI_binop_rm<0xDB, "vpand", and, v4i64, VR256, memopv4i64,
+                           i256mem, 1, 0>, VEX_4V;
+defm VPORY  : PDI_binop_rm<0xEB, "vpor", or, v4i64, VR256, memopv4i64,
+                           i256mem, 1, 0>, VEX_4V;
+defm VPXORY : PDI_binop_rm<0xEF, "vpxor", xor, v4i64, VR256, memopv4i64,
+                           i256mem, 1, 0>, VEX_4V;
+defm VPANDNY : PDI_binop_rm<0xDF, "vpandn", X86andnp, v4i64, VR256, memopv4i64,
+                            i256mem, 0, 0>, VEX_4V;
+}
+
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Logical Instructions
 //===----------------------------------------------------------------------===//
@@ -3463,26 +3526,6 @@ multiclass PDI_binop_rmi_int<bits<8> opc, bits<8> opc2, Format ImmForm,
        [(set RC:$dst, (IntId2 RC:$src1, (i32 imm:$src2)))]>;
 }
 
-/// PDI_binop_rm - Simple SSE2 binary operator.
-multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                        ValueType OpVT, RegisterClass RC, PatFrag memop_frag,
-                        X86MemOperand x86memop, bit IsCommutable = 0,
-                        bit Is2Addr = 1> {
-  let isCommutable = IsCommutable in
-  def rr : PDI<opc, MRMSrcReg, (outs RC:$dst),
-       (ins RC:$src1, RC:$src2),
-       !if(Is2Addr,
-           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (OpVT (OpNode RC:$src1, RC:$src2)))]>;
-  def rm : PDI<opc, MRMSrcMem, (outs RC:$dst),
-       (ins RC:$src1, x86memop:$src2),
-       !if(Is2Addr,
-           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
-           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (OpVT (OpNode RC:$src1,
-                                     (bitconvert (memop_frag addr:$src2)))))]>;
-}
 } // ExeDomain = SSEPackedInt
 
 // 128-bit Integer Arithmetic
@@ -3703,15 +3746,6 @@ defm VPSRAD : PDI_binop_rmi_int<0xE2, 0x72, MRM4r, "vpsrad",
                                 int_x86_sse2_psra_d, int_x86_sse2_psrai_d,
                                 VR128, 0>, VEX_4V;
 
-defm VPAND : PDI_binop_rm<0xDB, "vpand", and, v2i64, VR128, memopv2i64,
-                          i128mem, 1, 0>, VEX_4V;
-defm VPOR  : PDI_binop_rm<0xEB, "vpor" , or, v2i64, VR128, memopv2i64,
-                          i128mem, 1, 0>, VEX_4V;
-defm VPXOR : PDI_binop_rm<0xEF, "vpxor", xor, v2i64, VR128, memopv2i64,
-                          i128mem, 1, 0>, VEX_4V;
-defm VPANDN : PDI_binop_rm<0xDF, "vpandn", X86andnp, v2i64, VR128, memopv2i64,
-                          i128mem, 0, 0>, VEX_4V;
-
 let ExeDomain = SSEPackedInt in {
   let neverHasSideEffects = 1 in {
     // 128-bit logical shifts.
@@ -3756,15 +3790,6 @@ defm VPSRADY : PDI_binop_rmi_int<0xE2, 0x72, MRM4r, "vpsrad",
                                  int_x86_avx2_psra_d, int_x86_avx2_psrai_d,
                                  VR256, 0>, VEX_4V;
 
-defm VPANDY : PDI_binop_rm<0xDB, "vpand", and, v4i64, VR256, memopv4i64,
-                           i256mem, 1, 0>, VEX_4V;
-defm VPORY  : PDI_binop_rm<0xEB, "vpor", or, v4i64, VR256, memopv4i64,
-                           i256mem, 1, 0>, VEX_4V;
-defm VPXORY : PDI_binop_rm<0xEF, "vpxor", xor, v4i64, VR256, memopv4i64,
-                           i256mem, 1, 0>, VEX_4V;
-defm VPANDNY : PDI_binop_rm<0xDF, "vpandn", X86andnp, v4i64, VR256, memopv4i64,
-                            i256mem, 0, 0>, VEX_4V;
-
 let ExeDomain = SSEPackedInt in {
   let neverHasSideEffects = 1 in {
     // 128-bit logical shifts.
@@ -3808,15 +3833,6 @@ defm PSRAW : PDI_binop_rmi_int<0xE1, 0x71, MRM4r, "psraw",
 defm PSRAD : PDI_binop_rmi_int<0xE2, 0x72, MRM4r, "psrad",
                                int_x86_sse2_psra_d, int_x86_sse2_psrai_d,
                                VR128>;
-
-defm PAND : PDI_binop_rm<0xDB, "pand", and, v2i64, VR128, memopv2i64,
-                         i128mem, 1>;
-defm POR  : PDI_binop_rm<0xEB, "por" , or, v2i64, VR128, memopv2i64,
-                         i128mem, 1>;
-defm PXOR : PDI_binop_rm<0xEF, "pxor", xor, v2i64, VR128, memopv2i64,
-                         i128mem, 1>;
-defm PANDN : PDI_binop_rm<0xDF, "pandn", X86andnp, v2i64, VR128, memopv2i64,
-                          i128mem, 0>;
 
 let ExeDomain = SSEPackedInt in {
   let neverHasSideEffects = 1 in {
