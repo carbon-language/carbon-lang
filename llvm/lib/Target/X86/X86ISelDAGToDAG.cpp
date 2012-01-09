@@ -996,7 +996,7 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     // allows us to convert the shift and and into an h-register extract and
     // a scaled index.
     if (Shift.getOpcode() == ISD::SRL && Shift.hasOneUse()) {
-      unsigned ScaleLog = 8 - C1->getZExtValue();
+      int ScaleLog = 8 - C1->getZExtValue();
       if (ScaleLog > 0 && ScaleLog < 4 &&
           C2->getZExtValue() == (UINT64_C(0xff) << ScaleLog)) {
         SDValue Eight = CurDAG->getConstant(8, MVT::i8);
