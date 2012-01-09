@@ -3234,17 +3234,12 @@ let AddedComplexity = 400 in { // Prefer non-temporal versions
                        "movntpd\t{$src, $dst|$dst, $src}",
                        [(alignednontemporalstore (v2f64 VR128:$src),
                                                  addr:$dst)]>, VEX;
-  def VMOVNTDQ_64mr : VPDI<0xE7, MRMDestMem, (outs),
-                        (ins f128mem:$dst, VR128:$src),
-                        "movntdq\t{$src, $dst|$dst, $src}",
-                        [(alignednontemporalstore (v2f64 VR128:$src),
-                                                  addr:$dst)]>, VEX;
 
   let ExeDomain = SSEPackedInt in
   def VMOVNTDQmr    : VPDI<0xE7, MRMDestMem, (outs),
                            (ins f128mem:$dst, VR128:$src),
                            "movntdq\t{$src, $dst|$dst, $src}",
-                           [(alignednontemporalstore (v4f32 VR128:$src),
+                           [(alignednontemporalstore (v2i64 VR128:$src),
                                                      addr:$dst)]>, VEX;
 
   def : Pat<(alignednontemporalstore (v2i64 VR128:$src), addr:$dst),
@@ -3260,16 +3255,11 @@ let AddedComplexity = 400 in { // Prefer non-temporal versions
                        "movntpd\t{$src, $dst|$dst, $src}",
                        [(alignednontemporalstore (v4f64 VR256:$src),
                                                  addr:$dst)]>, VEX;
-  def VMOVNTDQY_64mr : VPDI<0xE7, MRMDestMem, (outs),
-                        (ins f256mem:$dst, VR256:$src),
-                        "movntdq\t{$src, $dst|$dst, $src}",
-                        [(alignednontemporalstore (v4f64 VR256:$src),
-                                                  addr:$dst)]>, VEX;
   let ExeDomain = SSEPackedInt in
   def VMOVNTDQYmr : VPDI<0xE7, MRMDestMem, (outs),
                       (ins f256mem:$dst, VR256:$src),
                       "movntdq\t{$src, $dst|$dst, $src}",
-                      [(alignednontemporalstore (v8f32 VR256:$src),
+                      [(alignednontemporalstore (v4i64 VR256:$src),
                                                 addr:$dst)]>, VEX;
 }
 
@@ -3288,14 +3278,10 @@ def MOVNTPDmr : PDI<0x2B, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                     "movntpd\t{$src, $dst|$dst, $src}",
                     [(alignednontemporalstore(v2f64 VR128:$src), addr:$dst)]>;
 
-def MOVNTDQ_64mr : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
-                    "movntdq\t{$src, $dst|$dst, $src}",
-                    [(alignednontemporalstore (v2f64 VR128:$src), addr:$dst)]>;
-
 let ExeDomain = SSEPackedInt in
 def MOVNTDQmr : PDI<0xE7, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                     "movntdq\t{$src, $dst|$dst, $src}",
-                    [(alignednontemporalstore (v4f32 VR128:$src), addr:$dst)]>;
+                    [(alignednontemporalstore (v2i64 VR128:$src), addr:$dst)]>;
 
 def : Pat<(alignednontemporalstore (v2i64 VR128:$src), addr:$dst),
           (MOVNTDQmr addr:$dst, VR128:$src)>, Requires<[HasSSE2]>;
