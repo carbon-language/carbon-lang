@@ -3042,6 +3042,7 @@ class MipsABIInfo : public ABIInfo {
   unsigned MinABIStackAlignInBytes;
   llvm::Type* HandleStructTy(QualType Ty) const;
   llvm::Type* returnAggregateInRegs(QualType RetTy, uint64_t Size) const;
+  llvm::Type* getPaddingType(uint64_t Align, uint64_t Offset) const;
 public:
   MipsABIInfo(CodeGenTypes &CGT, bool _IsO32) :
     ABIInfo(CGT), IsO32(_IsO32), MinABIStackAlignInBytes(IsO32 ? 4 : 8) {}
@@ -3132,18 +3133,34 @@ llvm::Type* MipsABIInfo::HandleStructTy(QualType Ty) const {
   return llvm::StructType::get(getVMContext(), ArgList);
 }
 
+llvm::Type *MipsABIInfo::getPaddingType(uint64_t Align, uint64_t Offset) const {
+  // Padding is inserted only for N32/64.
+  if (IsO32)
+    return 0;
+
+  assert(Align <= 16 && "Alignment larger than 16 not handled.");
+  return (Align == 16 && Offset & 0xf) ?
+    llvm::IntegerType::get(getVMContext(), 64) : 0;
+}
+ 
 ABIArgInfo
 MipsABIInfo::classifyArgumentType(QualType Ty, uint64_t &Offset) const {
+  uint64_t OrigOffset = Offset;
+  uint64_t TySize =
+    llvm::RoundUpToAlignment(getContext().getTypeSize(Ty), 64) / 8;
+  uint64_t Align = getContext().getTypeAlign(Ty) / 8;
+  Offset = llvm::RoundUpToAlignment(Offset, std::max(Align, (uint64_t)8));
+  Offset += TySize;
+
   if (isAggregateTypeForABI(Ty)) {
     // Ignore empty aggregates.
-    uint64_t TySize = getContext().getTypeSize(Ty);
     if (TySize == 0)
       return ABIArgInfo::getIgnore();
 
     // Records with non trivial destructors/constructors should not be passed
     // by value.
     if (isRecordWithNonTrivialDestructorOrCopyConstructor(Ty)) {
-      Offset += 8;
+      Offset = OrigOffset + 8;
       return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
     }
 
@@ -3152,23 +3169,21 @@ MipsABIInfo::classifyArgumentType(QualType Ty, uint64_t &Offset) const {
     // latter case, padding is inserted if the offset of the aggregate is
     // unaligned.
     llvm::Type *ResType = HandleStructTy(Ty);
-    uint64_t Align = getContext().getTypeAlign(Ty) / 8;
-    assert(Align <= 16 && "Alignment larger than 16 not handled.");
-    llvm::Type *PaddingTy = (ResType && Align == 16 && Offset & 0xf) ?
-      llvm::IntegerType::get(getVMContext(), 64) : 0;
-    Offset = llvm::RoundUpToAlignment(Offset, std::max(Align, (uint64_t)8));
-    Offset += llvm::RoundUpToAlignment(TySize, 8);
-    return ResType ? ABIArgInfo::getDirect(ResType, 0, PaddingTy) :
-                     ABIArgInfo::getIndirect(0);
+    
+    if (!ResType)
+      return ABIArgInfo::getIndirect(0);
+
+    return ABIArgInfo::getDirect(ResType, 0, getPaddingType(Align, OrigOffset));
   }
 
   // Treat an enum type as its underlying type.
   if (const EnumType *EnumTy = Ty->getAs<EnumType>())
     Ty = EnumTy->getDecl()->getIntegerType();
 
-  Offset += 8;
-  return (Ty->isPromotableIntegerType() ?
-          ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+  if (Ty->isPromotableIntegerType())
+    return ABIArgInfo::getExtend();
+
+  return ABIArgInfo::getDirect(0, 0, getPaddingType(Align, OrigOffset));
 }
 
 llvm::Type*
