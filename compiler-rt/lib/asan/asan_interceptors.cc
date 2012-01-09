@@ -25,8 +25,6 @@
 #include <new>
 #include <ctype.h>
 #include <dlfcn.h>
-#include <string.h>
-#include <strings.h>
 
 namespace __asan {
 
@@ -330,6 +328,7 @@ static inline int CharCaseCmp(unsigned char c1, unsigned char c2) {
   return c1_low - c2_low;
 }
 
+extern "C"
 int WRAP(memcmp)(const void *a1, const void *a2, size_t size) {
   ENSURE_ASAN_INITED();
   unsigned char c1 = 0, c2 = 0;
@@ -346,6 +345,7 @@ int WRAP(memcmp)(const void *a1, const void *a2, size_t size) {
   return CharCmp(c1, c2);
 }
 
+extern "C"
 void *WRAP(memcpy)(void *to, const void *from, size_t size) {
   // memcpy is called during __asan_init() from the internals
   // of printf(...).
@@ -361,6 +361,7 @@ void *WRAP(memcpy)(void *to, const void *from, size_t size) {
   return real_memcpy(to, from, size);
 }
 
+extern "C"
 void *WRAP(memmove)(void *to, const void *from, size_t size) {
   ENSURE_ASAN_INITED();
   if (FLAG_replace_intrin) {
@@ -370,6 +371,7 @@ void *WRAP(memmove)(void *to, const void *from, size_t size) {
   return real_memmove(to, from, size);
 }
 
+extern "C"
 void *WRAP(memset)(void *block, int c, size_t size) {
   // memset is called inside INTERCEPT_FUNCTION on Mac.
   if (asan_init_is_running) {
@@ -382,15 +384,13 @@ void *WRAP(memset)(void *block, int c, size_t size) {
   return real_memset(block, c, size);
 }
 
-// Note that on Linux index and strchr are definined differently depending on
-// the compiler (gcc vs clang).
-// see __CORRECT_ISO_CPP_STRING_H_PROTO in /usr/include/string.h
-
 #ifndef __APPLE__
+extern "C"
 char *WRAP(index)(const char *str, int c)
   __attribute__((alias(WRAPPER_NAME(strchr))));
 #endif
 
+extern "C"
 char *WRAP(strchr)(const char *str, int c) {
   ENSURE_ASAN_INITED();
   char *result = real_strchr(str, c);
@@ -401,6 +401,7 @@ char *WRAP(strchr)(const char *str, int c) {
   return result;
 }
 
+extern "C"
 int WRAP(strcasecmp)(const char *s1, const char *s2) {
   ENSURE_ASAN_INITED();
   unsigned char c1, c2;
@@ -415,6 +416,7 @@ int WRAP(strcasecmp)(const char *s1, const char *s2) {
   return CharCaseCmp(c1, c2);
 }
 
+extern "C"
 char *WRAP(strcat)(char *to, const char *from) {  // NOLINT
   ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
@@ -430,6 +432,7 @@ char *WRAP(strcat)(char *to, const char *from) {  // NOLINT
   return real_strcat(to, from);
 }
 
+extern "C"
 int WRAP(strcmp)(const char *s1, const char *s2) {
   // strcmp is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
@@ -448,6 +451,7 @@ int WRAP(strcmp)(const char *s1, const char *s2) {
   return CharCmp(c1, c2);
 }
 
+extern "C"
 char *WRAP(strcpy)(char *to, const char *from) {  // NOLINT
   // strcpy is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
@@ -464,6 +468,7 @@ char *WRAP(strcpy)(char *to, const char *from) {  // NOLINT
   return real_strcpy(to, from);
 }
 
+extern "C"
 char *WRAP(strdup)(const char *s) {
   ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
@@ -473,6 +478,7 @@ char *WRAP(strdup)(const char *s) {
   return real_strdup(s);
 }
 
+extern "C"
 size_t WRAP(strlen)(const char *s) {
   // strlen is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
@@ -487,6 +493,7 @@ size_t WRAP(strlen)(const char *s) {
   return length;
 }
 
+extern "C"
 int WRAP(strncasecmp)(const char *s1, const char *s2, size_t size) {
   ENSURE_ASAN_INITED();
   unsigned char c1 = 0, c2 = 0;
@@ -501,6 +508,7 @@ int WRAP(strncasecmp)(const char *s1, const char *s2, size_t size) {
   return CharCaseCmp(c1, c2);
 }
 
+extern "C"
 int WRAP(strncmp)(const char *s1, const char *s2, size_t size) {
   // strncmp is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
@@ -519,6 +527,7 @@ int WRAP(strncmp)(const char *s1, const char *s2, size_t size) {
   return CharCmp(c1, c2);
 }
 
+extern "C"
 char *WRAP(strncpy)(char *to, const char *from, size_t size) {
   ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
@@ -531,6 +540,7 @@ char *WRAP(strncpy)(char *to, const char *from, size_t size) {
 }
 
 #ifndef __APPLE__
+extern "C"
 size_t WRAP(strnlen)(const char *s, size_t maxlen) {
   ENSURE_ASAN_INITED();
   size_t length = real_strnlen(s, maxlen);
