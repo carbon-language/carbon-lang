@@ -1345,6 +1345,36 @@ struct UseMapDenseMapInfo {
   }
 };
 
+/// IVInc - An individual increment in a Chain of IV increments.
+/// Relate an IV user to an expression that computes the IV it uses from the IV
+/// used by the previous link in the Chain.
+///
+/// For the head of a chain, IncExpr holds the absolute SCEV expression for the
+/// original IVOperand. The head of the chain's IVOperand is only valid during
+/// chain collection, before LSR replaces IV users. During chain generation,
+/// IncExpr can be used to find the new IVOperand that computes the same
+/// expression.
+struct IVInc {
+  Instruction *UserInst;
+  Value* IVOperand;
+  const SCEV *IncExpr;
+
+  IVInc(Instruction *U, Value *O, const SCEV *E):
+    UserInst(U), IVOperand(O), IncExpr(E) {}
+};
+
+// IVChain - The list of IV increments in program order.
+// We typically add the head of a chain without finding subsequent links.
+typedef SmallVector<IVInc,1> IVChain;
+
+/// ChainUsers - Helper for CollectChains to track multiple IV increment uses.
+/// Distinguish between FarUsers that definitely cross IV increments and
+/// NearUsers that may be used between IV increments.
+struct ChainUsers {
+  SmallPtrSet<Instruction*, 4> FarUsers;
+  SmallPtrSet<Instruction*, 4> NearUsers;
+};
+
 /// LSRInstance - This class holds state for the main loop strength reduction
 /// logic.
 class LSRInstance {
@@ -1377,10 +1407,22 @@ class LSRInstance {
   /// RegUses - Track which uses use which register candidates.
   RegUseTracker RegUses;
 
+  // Limit the number of chains to avoid quadratic behavior. We don't expect to
+  // have more than a few IV increment chains in a loop. Missing a Chain falls
+  // back to normal LSR behavior for those uses.
+  static const unsigned MaxChains = 8;
+
+  /// IVChainVec - IV users can form a chain of IV increments.
+  SmallVector<IVChain, MaxChains> IVChainVec;
+
   void OptimizeShadowIV();
   bool FindIVUserForCond(ICmpInst *Cond, IVStrideUse *&CondUse);
   ICmpInst *OptimizeMax(ICmpInst *Cond, IVStrideUse* &CondUse);
   void OptimizeLoopTermCond();
+
+  void ChainInstruction(Instruction *UserInst, Instruction *IVOper,
+                        SmallVectorImpl<ChainUsers> &ChainUsersVec);
+  void CollectChains();
 
   void CollectInterestingTypesAndFactors();
   void CollectFixupsAndInitialFormulae();
@@ -2108,6 +2150,205 @@ void LSRInstance::CollectInterestingTypesAndFactors() {
     Types.clear();
 
   DEBUG(print_factors_and_types(dbgs()));
+}
+
+/// findIVOperand - Helper for CollectChains that finds an IV operand (computed
+/// by an AddRec in this loop) within [OI,OE) or returns OE. If IVUsers mapped
+/// Instructions to IVStrideUses, we could partially skip this.
+static User::op_iterator
+findIVOperand(User::op_iterator OI, User::op_iterator OE,
+              Loop *L, ScalarEvolution &SE) {
+  for(; OI != OE; ++OI) {
+    if (Instruction *Oper = dyn_cast<Instruction>(*OI)) {
+      if (!SE.isSCEVable(Oper->getType()))
+        continue;
+
+      if (const SCEVAddRecExpr *AR =
+          dyn_cast<SCEVAddRecExpr>(SE.getSCEV(Oper))) {
+        if (AR->getLoop() == L)
+          break;
+      }
+    }
+  }
+  return OI;
+}
+
+/// getWideOperand - IVChain logic must consistenctly peek base TruncInst
+/// operands, so wrap it in a convenient helper.
+static Value *getWideOperand(Value *Oper) {
+  if (TruncInst *Trunc = dyn_cast<TruncInst>(Oper))
+    return Trunc->getOperand(0);
+  return Oper;
+}
+
+/// isCompatibleIVType - Return true if we allow an IV chain to include both
+/// types.
+static bool isCompatibleIVType(Value *LVal, Value *RVal) {
+  Type *LType = LVal->getType();
+  Type *RType = RVal->getType();
+  return (LType == RType) || (LType->isPointerTy() && RType->isPointerTy());
+}
+
+/// ChainInstruction - Add this IV user to an existing chain or make it the head
+/// of a new chain.
+void LSRInstance::ChainInstruction(Instruction *UserInst, Instruction *IVOper,
+                                   SmallVectorImpl<ChainUsers> &ChainUsersVec) {
+  // When IVs are used as types of varying widths, they are generally converted
+  // to a wider type with some uses remaining narrow under a (free) trunc.
+  Value *NextIV = getWideOperand(IVOper);
+
+  // Visit all existing chains. Check if its IVOper can be computed as a
+  // profitable loop invariant increment from the last link in the Chain.
+  unsigned ChainIdx = 0, NChains = IVChainVec.size();
+  const SCEV *LastIncExpr = 0;
+  for (; ChainIdx < NChains; ++ChainIdx) {
+    Value *PrevIV = getWideOperand(IVChainVec[ChainIdx].back().IVOperand);
+    if (!isCompatibleIVType(PrevIV, NextIV))
+      continue;
+
+    // A phi nodes terminates a chain.
+    if (isa<PHINode>(UserInst)
+        && isa<PHINode>(IVChainVec[ChainIdx].back().UserInst))
+      continue;
+
+    const SCEV *IncExpr = SE.getMinusSCEV(SE.getSCEV(NextIV),
+                                          SE.getSCEV(PrevIV));
+    if (SE.isLoopInvariant(IncExpr, L)) {
+      LastIncExpr = IncExpr;
+      break;
+    }
+  }
+  // If we haven't found a chain, create a new one, unless we hit the max. Don't
+  // bother for phi nodes, because they must be last in the chain.
+  if (ChainIdx == NChains) {
+    if (isa<PHINode>(UserInst))
+      return;
+    if (NChains >= MaxChains) {
+      DEBUG(dbgs() << "IV Chain Limit\n");
+      return;
+    }
+    ++NChains;
+    IVChainVec.resize(NChains);
+    ChainUsersVec.resize(NChains);
+    LastIncExpr = SE.getSCEV(NextIV);
+    assert(isa<SCEVAddRecExpr>(LastIncExpr) && "expect recurrence at IV user");
+    DEBUG(dbgs() << "IV Head: (" << *UserInst << ") IV=" << *LastIncExpr
+          << "\n");
+  }
+  else
+    DEBUG(dbgs() << "IV  Inc: (" << *UserInst << ") IV+" << *LastIncExpr
+          << "\n");
+
+  // Add this IV user to the end of the chain.
+  IVChainVec[ChainIdx].push_back(IVInc(UserInst, IVOper, LastIncExpr));
+
+  SmallPtrSet<Instruction*,4> &NearUsers = ChainUsersVec[ChainIdx].NearUsers;
+  // This chain's NearUsers become FarUsers.
+  if (!LastIncExpr->isZero()) {
+    ChainUsersVec[ChainIdx].FarUsers.insert(NearUsers.begin(),
+                                            NearUsers.end());
+    NearUsers.clear();
+  }
+
+  // All other uses of IVOperand become near uses of the chain.
+  // We currently ignore intermediate values within SCEV expressions, assuming
+  // they will eventually be used be the current chain, or can be computed
+  // from one of the chain increments. To be more precise we could
+  // transitively follow its user and only add leaf IV users to the set.
+  for (Value::use_iterator UseIter = IVOper->use_begin(),
+         UseEnd = IVOper->use_end(); UseIter != UseEnd; ++UseIter) {
+    Instruction *OtherUse = dyn_cast<Instruction>(*UseIter);
+    if (SE.isSCEVable(OtherUse->getType())
+        && !isa<SCEVUnknown>(SE.getSCEV(OtherUse))
+        && IU.isIVUserOrOperand(OtherUse)) {
+      continue;
+    }
+    if (OtherUse && OtherUse != UserInst)
+      NearUsers.insert(OtherUse);
+  }
+
+  // Since this user is part of the chain, it's no longer considered a use
+  // of the chain.
+  ChainUsersVec[ChainIdx].FarUsers.erase(UserInst);
+}
+
+/// CollectChains - Populate the vector of Chains.
+///
+/// This decreases ILP at the architecture level. Targets with ample registers,
+/// multiple memory ports, and no register renaming probably don't want
+/// this. However, such targets should probably disable LSR altogether.
+///
+/// The job of LSR is to make a reasonable choice of induction variables across
+/// the loop. Subsequent passes can easily "unchain" computation exposing more
+/// ILP *within the loop* if the target wants it.
+///
+/// Finding the best IV chain is potentially a scheduling problem. Since LSR
+/// will not reorder memory operations, it will recognize this as a chain, but
+/// will generate redundant IV increments. Ideally this would be corrected later
+/// by a smart scheduler:
+///        = A[i]
+///        = A[i+x]
+/// A[i]   =
+/// A[i+x] =
+///
+/// TODO: Walk the entire domtree within this loop, not just the path to the
+/// loop latch. This will discover chains on side paths, but requires
+/// maintaining multiple copies of the Chains state.
+void LSRInstance::CollectChains() {
+  SmallVector<ChainUsers, 8> ChainUsersVec;
+
+  SmallVector<BasicBlock *,8> LatchPath;
+  BasicBlock *LoopHeader = L->getHeader();
+  for (DomTreeNode *Rung = DT.getNode(L->getLoopLatch());
+       Rung->getBlock() != LoopHeader; Rung = Rung->getIDom()) {
+    LatchPath.push_back(Rung->getBlock());
+  }
+  LatchPath.push_back(LoopHeader);
+
+  // Walk the instruction stream from the loop header to the loop latch.
+  for (SmallVectorImpl<BasicBlock *>::reverse_iterator
+         BBIter = LatchPath.rbegin(), BBEnd = LatchPath.rend();
+       BBIter != BBEnd; ++BBIter) {
+    for (BasicBlock::iterator I = (*BBIter)->begin(), E = (*BBIter)->end();
+         I != E; ++I) {
+      // Skip instructions that weren't seen by IVUsers analysis.
+      if (isa<PHINode>(I) || !IU.isIVUserOrOperand(I))
+        continue;
+
+      // Ignore users that are part of a SCEV expression. This way we only
+      // consider leaf IV Users. This effectively rediscovers a portion of
+      // IVUsers analysis but in program order this time.
+      if (SE.isSCEVable(I->getType()) && !isa<SCEVUnknown>(SE.getSCEV(I)))
+        continue;
+
+      // Remove this instruction from any NearUsers set it may be in.
+      for (unsigned ChainIdx = 0, NChains = IVChainVec.size();
+           ChainIdx < NChains; ++ChainIdx) {
+        ChainUsersVec[ChainIdx].NearUsers.erase(I);
+      }
+      // Search for operands that can be chained.
+      SmallPtrSet<Instruction*, 4> UniqueOperands;
+      User::op_iterator IVOpEnd = I->op_end();
+      User::op_iterator IVOpIter = findIVOperand(I->op_begin(), IVOpEnd, L, SE);
+      while (IVOpIter != IVOpEnd) {
+        Instruction *IVOpInst = cast<Instruction>(*IVOpIter);
+        if (UniqueOperands.insert(IVOpInst))
+          ChainInstruction(I, IVOpInst, ChainUsersVec);
+        IVOpIter = findIVOperand(llvm::next(IVOpIter), IVOpEnd, L, SE);
+      }
+    } // Continue walking down the instructions.
+  } // Continue walking down the domtree.
+  // Visit phi backedges to determine if the chain can generate the IV postinc.
+  for (BasicBlock::iterator I = L->getHeader()->begin();
+       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+    if (!SE.isSCEVable(PN->getType()))
+      continue;
+
+    Instruction *IncV =
+      dyn_cast<Instruction>(PN->getIncomingValueForBlock(L->getLoopLatch()));
+    if (IncV)
+      ChainInstruction(PN, IncV, ChainUsersVec);
+  }
 }
 
 void LSRInstance::CollectFixupsAndInitialFormulae() {
@@ -3877,6 +4118,7 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
   }
 
   // Start collecting data and preparing for the solver.
+  CollectChains();
   CollectInterestingTypesAndFactors();
   CollectFixupsAndInitialFormulae();
   CollectLoopInvariantFixupsAndFormulae();
