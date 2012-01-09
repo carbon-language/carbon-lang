@@ -16,6 +16,8 @@
 #include "lld/Platform/Platform.h"
 
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/ADT/DenseMapInfo.h"
+#include "llvm/ADT/ArrayRef.h"
 
 #include <algorithm>
 #include <cassert>
@@ -34,7 +36,7 @@ void SymbolTable::add(const Atom &atom) {
     this->addByName(atom);
   }
   else if ( atom.mergeDuplicates() ) {
-    // TO DO: support constants merging
+    this->addByContent(atom);
   }
 }
 
@@ -129,6 +131,58 @@ void SymbolTable::addByName(const Atom & newAtom) {
     }
   }
 }
+
+
+unsigned SymbolTable::MyMappingInfo::getHashValue(const Atom * const atom) {
+  unsigned hash = atom->size();
+  if ( atom->contentType() != Atom::typeZeroFill ) {
+    llvm::ArrayRef<uint8_t> content = atom->rawContent();
+    for (unsigned int i=0; i < content.size(); ++i) {
+      hash = hash * 33 + content[i];
+    }
+  }
+  hash &= 0x00FFFFFF;
+  hash |= ((unsigned)atom->contentType()) << 24;
+  //fprintf(stderr, "atom=%p, hash=0x%08X\n", atom, hash);
+  return hash;
+}
+
+
+bool SymbolTable::MyMappingInfo::isEqual(const Atom * const l, 
+                                         const Atom * const r) {
+  if ( l == r )
+    return true;
+  if ( l == getEmptyKey() )
+    return false;
+  if ( r == getEmptyKey() )
+    return false;
+  if ( l == getTombstoneKey() )
+    return false;
+  if ( r == getTombstoneKey() )
+    return false;
+    
+  if ( l->contentType() != r->contentType() )
+    return false;
+  if ( l->size() != r->size() )
+    return false;
+  llvm::ArrayRef<uint8_t> lc = l->rawContent();
+  llvm::ArrayRef<uint8_t> rc = r->rawContent();
+  return lc.equals(rc);
+}
+
+
+void SymbolTable::addByContent(const Atom & newAtom) {
+  AtomContentSet::iterator pos = _contentTable.find(&newAtom);
+  if ( pos == _contentTable.end() ) {
+    _contentTable.insert(&newAtom);
+    return;
+  }
+  const Atom* existing = *pos;
+    // New atom is not being used.  Add it to replacement table.
+    _replacedAtoms[&newAtom] = existing;
+}
+
+
 
 const Atom *SymbolTable::findByName(llvm::StringRef sym) {
   NameToAtom::iterator pos = _nameTable.find(sym);

@@ -15,6 +15,8 @@
 #include "lld/Core/Reference.h"
 
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/system_error.h"
@@ -141,6 +143,24 @@ public:
     }
 
      
+    if ( atom.contentType() != Atom::typeZeroFill ) {
+      _out  << "      " 
+            << KeyValues::contentKeyword 
+            << ":"
+            << spacePadding(KeyValues::contentKeyword)
+            << "[ ";
+      llvm::ArrayRef<uint8_t> arr = atom.rawContent();
+      bool needComma = false;
+      for (unsigned int i=0; i < arr.size(); ++i) {
+        if ( needComma )
+          _out << ", ";
+        _out << hexdigit(arr[i] >> 4);
+        _out << hexdigit(arr[i] & 0x0F);
+        needComma = true;
+      }
+      _out << " ]\n";
+    }
+
     if (atom.referencesBegin() != atom.referencesEnd()) {
       _out << "      fixups:\n";
       for (Reference::iterator it = atom.referencesBegin(),
@@ -160,7 +180,12 @@ private:
     return &spaces[strlen(key)];
   }
 
-
+  char hexdigit(uint8_t nibble) {
+    if ( nibble < 0x0A )
+      return '0' + nibble;
+    else
+      return 'A' + nibble - 0x0A;
+  }
 
   llvm::raw_ostream&  _out;
   bool                _firstAtom;

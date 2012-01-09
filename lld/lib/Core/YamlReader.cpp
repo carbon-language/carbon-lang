@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -66,18 +67,21 @@ inline llvm::error_code make_error_code(yaml_reader_errors e) {
 class YAML {
 public:
   struct Entry {
-    Entry(const char *k, const char *v, int d, bool bd, bool bs)
+    Entry(const char *k, const char *v, std::vector<uint8_t>* vs, 
+          int d, bool bd, bool bs)
       : key(strdup(k))
-      , value(strdup(v))
+      , value(v ? strdup(v) : NULL)
+      , valueSequenceBytes(vs)
       , depth(d)
       , beginSequence(bs)
       , beginDocument(bd) {}
 
-    const char *key;
-    const char *value;
-    int         depth;
-    bool        beginSequence;
-    bool        beginDocument;
+    const char *          key;
+    const char *          value;
+    std::vector<uint8_t>* valueSequenceBytes;
+    int                   depth;
+    bool                  beginSequence;
+    bool                  beginDocument;
   };
 
   static void parse(llvm::MemoryBuffer *mb, std::vector<const Entry *>&);
@@ -107,6 +111,8 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
   int depth = 0;
   bool nextKeyIsStartOfDocument = false;
   bool nextKeyIsStartOfSequence = false;
+  std::vector<uint8_t>* sequenceBytes = NULL;
+  unsigned contentByte = 0;
   for (const char *s = mb->getBufferStart(); s < mb->getBufferEnd(); ++s) {
     char c = *s;
     if (c == '\n')
@@ -204,7 +210,7 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
         *p++ = c;
         state = inValue;
       } else if (c == '\n') {
-        entries.push_back(new Entry(key, "", depth,
+        entries.push_back(new Entry(key, "", NULL, depth,
                                     nextKeyIsStartOfDocument,
                                     nextKeyIsStartOfSequence));
         nextKeyIsStartOfSequence = false;
@@ -212,6 +218,8 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
         state = inDocument;
         depth = 0;
       } else if (c == '[') {
+        contentByte = 0;
+        sequenceBytes = new std::vector<uint8_t>();
         state = inValueSequence;
       } else if (c == ' ') {
         // eat space
@@ -226,7 +234,7 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
         *p++ = c;
       } else if (c == '\n') {
         *p = '\0';
-        entries.push_back(new Entry(key, value, depth,
+        entries.push_back(new Entry(key, value, NULL, depth,
                                     nextKeyIsStartOfDocument,
                                     nextKeyIsStartOfSequence));
         nextKeyIsStartOfSequence = false;
@@ -236,11 +244,33 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
       }
       break;
     case inValueSequence:
-      if (c == ']')
+      if (c == ']') {
+        sequenceBytes->push_back(contentByte);
         state = inValueSequenceEnd;
+      }
+      else if (c == ' ') {
+        // eat white space
+      }
+      else if (c == ',') {
+        sequenceBytes->push_back(contentByte);
+      }
+      else if ( isdigit(c) ) {
+        contentByte = (contentByte << 4) | (c-'0');
+      } 
+      else if ( ('a' <= tolower(c)) && (tolower(c) <= 'f') ) {
+        contentByte = (contentByte << 4) | (tolower(c)-'a'+10);
+      }
+      else {
+        llvm::report_fatal_error("non-hex digit found in content [ ]");
+      }
       break;
     case inValueSequenceEnd:
       if (c == '\n') {
+        entries.push_back(new Entry(key, NULL, sequenceBytes, depth,
+                                    nextKeyIsStartOfDocument,
+                                    nextKeyIsStartOfSequence));
+        nextKeyIsStartOfSequence = false;
+        nextKeyIsStartOfDocument = false;
         state = inDocument;
         depth = 0;
       }
@@ -296,11 +326,13 @@ public:
           , YAMLFile& f
           , const char *n
           , const char* sn
-          , uint64_t sz)
+          , uint64_t sz
+          , std::vector<uint8_t>* c)
     : Atom(ord, d, s, ct, sc, intn, md, ah, dsk, tb, al, a)
     , _file(f)
     , _name(n)
     , _sectionName(sn)
+    , _content(c)
     , _size(sz)
     , _refStartIndex(f._lastRefIndex)
     , _refEndIndex(f._references.size()) {
@@ -320,7 +352,7 @@ public:
   }
   
   virtual llvm::StringRef customSectionName() const {
-    return _sectionName;
+    return (_sectionName ? _sectionName : llvm::StringRef());
   }
 
   virtual uint64_t objectAddress() const {
@@ -328,19 +360,26 @@ public:
   }
 
   virtual uint64_t size() const {
-    return _size;
+    return (_content ? _content->size() : _size);
   }
 
-  virtual void copyRawContent(uint8_t buffer[]) const { }
+  llvm::ArrayRef<uint8_t> rawContent() const {
+    if ( _content != NULL ) 
+      return llvm::ArrayRef<uint8_t>(*_content);
+    else
+      return llvm::ArrayRef<uint8_t>();
+  }
+  
   virtual Reference::iterator referencesBegin() const;
   virtual Reference::iterator referencesEnd() const;
 private:
-  YAMLFile&      _file;
-  const char *   _name;
-  const char *   _sectionName;
-  unsigned long  _size;
-  unsigned int   _refStartIndex;
-  unsigned int   _refEndIndex;
+  YAMLFile&             _file;
+  const char *          _name;
+  const char *          _sectionName;
+  std::vector<uint8_t>* _content;
+  unsigned long         _size;
+  unsigned int          _refStartIndex;
+  unsigned int          _refEndIndex;
 };
 
 Reference::iterator YAMLAtom::referencesBegin() const {
@@ -384,6 +423,7 @@ public:
   bool _alias;
   bool _autoHide;
   const char *_sectionName;
+  std::vector<uint8_t>* _content;
   Reference _ref;
 };
 
@@ -395,13 +435,15 @@ YAMLAtomState::YAMLAtomState()
   , _type(KeyValues::contentTypeDefault)
   , _scope(KeyValues::scopeDefault)
   , _def(KeyValues::definitionDefault)
+  , _sectionChoice(KeyValues::sectionChoiceDefault)
   , _internalName(KeyValues::internalNameDefault)
   , _mergeDuplicates(KeyValues::mergeDuplicatesDefault)
   , _deadStrip(KeyValues::deadStripKindDefault)
   , _thumb(KeyValues::isThumbDefault)
   , _alias(KeyValues::isAliasDefault) 
   , _autoHide(KeyValues::autoHideDefault)
-  , _sectionName(NULL) {
+  , _sectionName(NULL)
+  , _content(NULL) {
   _ref.target       = NULL;
   _ref.addend       = 0;
   _ref.offsetInAtom = 0;
@@ -413,7 +455,7 @@ void YAMLAtomState::makeAtom(YAMLFile& f) {
   Atom *a = new YAMLAtom(_ordinal, _def, _scope, _type, _sectionChoice,
                          _internalName, _mergeDuplicates, _autoHide,  
                          _deadStrip, _thumb, _alias, _align, f, 
-                         _name, _sectionName, _size);
+                         _name, _sectionName, _size, _content);
 
   f._atoms.push_back(a);
   ++_ordinal;
@@ -433,6 +475,7 @@ void YAMLAtomState::makeAtom(YAMLFile& f) {
   _alias            = KeyValues::isAliasDefault;
   _autoHide         = KeyValues::autoHideDefault;
   _sectionName      = NULL;
+  _content          = NULL;
   _ref.target       = NULL;
   _ref.addend       = 0;
   _ref.offsetInAtom = 0;
@@ -593,7 +636,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
           haveAtom = true;
         } 
         else if (strcmp(entry->key, KeyValues::contentKeyword) == 0) {
-          // TO DO: switch to content mode
+          atomState._content = entry->valueSequenceBytes;
           haveAtom = true;
         } 
         else if (strcmp(entry->key, "align2") == 0) {

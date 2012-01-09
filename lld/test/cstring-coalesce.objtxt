@@ -1,0 +1,45 @@
+# RUN: lld-core %s | FileCheck %s
+
+#
+# Test that duplicate c-strings are coalesced
+#
+
+---
+atoms:
+    - name:              L0
+      internal-name:     true
+      scope:             hidden
+      type:              c-string
+      merge-duplicates:  true
+      content:           [ 68, 65, 6c, 6c, 6f, 00 ]
+      
+    - name:              L1
+      internal-name:     true
+      scope:             hidden
+      type:              c-string
+      merge-duplicates:  true
+      content:           [ 74, 68, 65, 72, 65, 00 ]
+---
+atoms:
+    - name:              L2
+      internal-name:     true
+      scope:             hidden
+      type:              c-string
+      merge-duplicates:  true
+      content:           [ 68, 65, 6c, 6c, 6f, 00 ]
+---
+atoms:
+    - name:              L2
+      internal-name:     true
+      scope:             hidden
+      type:              c-string
+      merge-duplicates:  true
+      content:           [ 74, 68, 65, 72, 65, 00 ]
+...
+
+# CHECK:       type:       c-string
+# CHECK:       content:    [ 68, 65, 6C, 6C, 6F, 00 ]
+# CHECK:       type:       c-string
+# CHECK:       content:    [ 74, 68, 65, 72, 65, 00 ]
+# CHECK-NOT:   name:
+# CHECK:       ...

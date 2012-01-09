@@ -14,7 +14,9 @@
 #include <map>
 #include <vector>
 
-namespace llvm { class StringRef; }
+#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/DenseSet.h"
+
 
 namespace lld {
 
@@ -52,12 +54,21 @@ public:
 private:
   typedef std::map<llvm::StringRef, const Atom *> NameToAtom;
   typedef std::map<const Atom *, const Atom *> AtomToAtom;
+  struct MyMappingInfo {
+    static const Atom * getEmptyKey() { return NULL; }
+    static const Atom * getTombstoneKey() { return (Atom*)(-1); }
+    static unsigned getHashValue(const Atom * const Val);
+    static bool isEqual(const Atom * const LHS, const Atom * const RHS);
+  };
+  typedef llvm::DenseSet<const Atom*, MyMappingInfo> AtomContentSet;
 
   void addByName(const Atom &);
+  void addByContent(const Atom &);
 
   Platform&  _platform;
   AtomToAtom _replacedAtoms;
   NameToAtom _nameTable;
+  AtomContentSet _contentTable;
 };
 
 } // namespace lld
