@@ -994,8 +994,14 @@ bool Parser::MightBeDeclarator(unsigned Context) {
 
   case tok::amp:
   case tok::ampamp:
-  case tok::colon: // Might be a typo for '::'.
     return getLang().CPlusPlus;
+
+  case tok::l_square: // Might be an attribute on an unnamed bit-field.
+    return Context == Declarator::MemberContext && getLang().CPlusPlus0x &&
+           NextToken().is(tok::l_square);
+
+  case tok::colon: // Might be a typo for '::' or an unnamed bit-field.
+    return Context == Declarator::MemberContext || getLang().CPlusPlus;
 
   case tok::identifier:
     switch (NextToken().getKind()) {
@@ -1019,8 +1025,13 @@ bool Parser::MightBeDeclarator(unsigned Context) {
 
     case tok::colon:
       // At namespace scope, 'identifier:' is probably a typo for 'identifier::'
-      // and in block scope it's probably a label.
-      return getLang().CPlusPlus && Context == Declarator::FileContext;
+      // and in block scope it's probably a label. Inside a class definition,
+      // this is a bit-field.
+      return Context == Declarator::MemberContext ||
+             (getLang().CPlusPlus && Context == Declarator::FileContext);
+
+    case tok::identifier: // Possible virt-specifier.
+      return getLang().CPlusPlus0x && isCXX0XVirtSpecifier(NextToken());
 
     default:
       return false;

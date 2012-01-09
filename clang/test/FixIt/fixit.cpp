@@ -125,6 +125,19 @@ AD oopsMoreCommas() {
   AD ad, // expected-error {{expected ';' at end of declaration}}
   return ad;
 }
+struct MoreAccidentalCommas {
+  int a : 5,
+      b : 7,
+        : 4, // expected-error {{expected ';' at end of declaration}}
+  char c, // expected-error {{expected ';' at end of declaration}}
+  double d, // expected-error {{expected ';' at end of declaration}}
+  MoreAccidentalCommas *next, // expected-error {{expected ';' at end of declaration}}
+public:
+  int k, // expected-error {{expected ';' at end of declaration}}
+  friend void f(MoreAccidentalCommas) {}
+  int k2, // expected-error {{expected ';' at end of declaration}}
+  virtual void g(), // expected-error {{expected ';' at end of declaration}}
+};
 
 template<class T> struct Mystery;
 template<class T> typedef Mystery<T>::type getMysteriousThing() { // \

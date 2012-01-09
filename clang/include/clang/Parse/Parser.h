@@ -1924,7 +1924,10 @@ private:
   void ParseAlignmentSpecifier(ParsedAttributes &Attrs,
                                SourceLocation *endLoc = 0);
 
-  VirtSpecifiers::Specifier isCXX0XVirtSpecifier() const;
+  VirtSpecifiers::Specifier isCXX0XVirtSpecifier(const Token &Tok) const;
+  VirtSpecifiers::Specifier isCXX0XVirtSpecifier() const {
+    return isCXX0XVirtSpecifier(Tok);
+  }
   void ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS);
 
   bool isCXX0XFinalKeyword() const;

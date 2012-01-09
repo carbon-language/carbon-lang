@@ -22,4 +22,18 @@ namespace SemiCommaTypo {
   int m {},
   n [[]], // expected-error {{expected ';' at end of declaration}}
   int o;
+
+  struct Base {
+    virtual void f2(), f3();
+  };
+  struct MemberDeclarator : Base {
+    int k : 4,
+        //[[]] : 1, FIXME: test this once we support attributes here
+        : 9, // expected-error {{expected ';' at end of declaration}}
+    char c, // expected-error {{expected ';' at end of declaration}}
+    typedef void F(), // expected-error {{expected ';' at end of declaration}}
+    F f1,
+      f2 final,
+      f3 override, // expected-error {{expected ';' at end of declaration}}
+  };
 }
