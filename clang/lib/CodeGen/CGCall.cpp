@@ -988,6 +988,10 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
 
     case ABIArgInfo::Extend:
     case ABIArgInfo::Direct: {
+      // Skip the dummy padding argument.
+      if (ArgI.getPaddingType())
+        ++AI;
+
       // If we have the trivial case, handle it with no muss and fuss.
       if (!isa<llvm::StructType>(ArgI.getCoerceToType()) &&
           ArgI.getCoerceToType() == ConvertType(Ty) &&
@@ -1029,10 +1033,6 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         Ptr = Builder.CreateBitCast(Ptr,
                           llvm::PointerType::getUnqual(ArgI.getCoerceToType()));
       }
-
-      // Skip the dummy padding argument.
-      if (ArgI.getPaddingType())
-        ++AI;
 
       // If the coerce-to type is a first class aggregate, we flatten it and
       // pass the elements. Either way is semantically identical, but fast-isel
