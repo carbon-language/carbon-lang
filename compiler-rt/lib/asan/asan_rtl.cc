@@ -24,8 +24,6 @@
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 
-#include <string.h>
-
 namespace __asan {
 
 // -------------------------- Flags ------------------------- {{{1
@@ -172,8 +170,9 @@ static bool DescribeStackAddress(uintptr_t addr, uintptr_t access_size) {
   const char *name_end = real_strchr(frame_descr, ' ');
   CHECK(name_end);
   buf[0] = 0;
-  strncat(buf, frame_descr,
-          Min(kBufSize, static_cast<intptr_t>(name_end - frame_descr)));
+  internal_strncat(buf, frame_descr,
+                   Min(kBufSize,
+                       static_cast<intptr_t>(name_end - frame_descr)));
   Printf("Address %p is located at offset %ld "
          "in frame <%s> of T%d's stack:\n",
          addr, offset, buf, t->tid());
@@ -196,7 +195,7 @@ static bool DescribeStackAddress(uintptr_t addr, uintptr_t access_size) {
     }
     p++;
     buf[0] = 0;
-    strncat(buf, p, Min(kBufSize, len));
+    internal_strncat(buf, p, Min(kBufSize, len));
     p += len;
     Printf("    [%ld, %ld) '%s'\n", beg, beg + size, buf);
   }
@@ -269,7 +268,7 @@ static void force_interface_symbols() {
 static int64_t IntFlagValue(const char *flags, const char *flag,
                             int64_t default_val) {
   if (!flags) return default_val;
-  const char *str = strstr(flags, flag);
+  const char *str = internal_strstr(flags, flag);
   if (!str) return default_val;
   return atoll(str + internal_strlen(flag));
 }
