@@ -91,6 +91,15 @@ static cl::opt<bool> EnablePhiElim(
   "enable-lsr-phielim", cl::Hidden, cl::init(true),
   cl::desc("Enable LSR phi elimination"));
 
+#ifndef NDEBUG
+// Stress test IV chain generation.
+static cl::opt<bool> StressIVChain(
+  "stress-ivchain", cl::Hidden, cl::init(false),
+  cl::desc("Stress test LSR IV chains"));
+#else
+static bool StressIVChain = false;
+#endif
+
 namespace {
 
 /// RegSortData - This class holds data which is used to order reuse candidates.
@@ -1415,6 +1424,9 @@ class LSRInstance {
   /// IVChainVec - IV users can form a chain of IV increments.
   SmallVector<IVChain, MaxChains> IVChainVec;
 
+  /// IVIncSet - IV users that belong to profitable IVChains.
+  SmallPtrSet<Use*, MaxChains> IVIncSet;
+
   void OptimizeShadowIV();
   bool FindIVUserForCond(ICmpInst *Cond, IVStrideUse *&CondUse);
   ICmpInst *OptimizeMax(ICmpInst *Cond, IVStrideUse* &CondUse);
@@ -1422,7 +1434,10 @@ class LSRInstance {
 
   void ChainInstruction(Instruction *UserInst, Instruction *IVOper,
                         SmallVectorImpl<ChainUsers> &ChainUsersVec);
+  void FinalizeChain(IVChain &Chain);
   void CollectChains();
+  void GenerateIVChain(const IVChain &Chain, SCEVExpander &Rewriter,
+                       SmallVectorImpl<WeakVH> &DeadInsts);
 
   void CollectInterestingTypesAndFactors();
   void CollectFixupsAndInitialFormulae();
@@ -2189,6 +2204,48 @@ static bool isCompatibleIVType(Value *LVal, Value *RVal) {
   return (LType == RType) || (LType->isPointerTy() && RType->isPointerTy());
 }
 
+/// Return true if the chain increment is profitable to expand into a loop
+/// invariant value, which may require its own register. A profitable chain
+/// increment will be an offset relative to the same base. We allow such offsets
+/// to potentially be used as chain increment as long as it's not obviously
+/// expensive to expand using real instructions.
+static const SCEV *
+getProfitableChainIncrement(Value *NextIV, Value *PrevIV,
+                            const IVChain &Chain, Loop *L,
+                            ScalarEvolution &SE, const TargetLowering *TLI) {
+  const SCEV *IncExpr = SE.getMinusSCEV(SE.getSCEV(NextIV), SE.getSCEV(PrevIV));
+  if (!SE.isLoopInvariant(IncExpr, L))
+    return 0;
+
+  // We are not able to expand an increment unless it is loop invariant,
+  // however, the following checks are purely for profitability.
+  if (StressIVChain)
+    return IncExpr;
+
+  // Unimplemented
+  return 0;
+}
+
+/// Return true if the number of registers needed for the chain is estimated to
+/// be less than the number required for the individual IV users. First prohibit
+/// any IV users that keep the IV live across increments (the Users set should
+/// be empty). Next count the number and type of increments in the chain.
+///
+/// Chaining IVs can lead to considerable code bloat if ISEL doesn't
+/// effectively use postinc addressing modes. Only consider it profitable it the
+/// increments can be computed in fewer registers when chained.
+///
+/// TODO: Consider IVInc free if it's already used in another chains.
+static bool
+isProfitableChain(IVChain &Chain, SmallPtrSet<Instruction*, 4> &Users,
+                  ScalarEvolution &SE, const TargetLowering *TLI) {
+  if (StressIVChain)
+    return true;
+
+  // Unimplemented
+  return false;
+}
+
 /// ChainInstruction - Add this IV user to an existing chain or make it the head
 /// of a new chain.
 void LSRInstance::ChainInstruction(Instruction *UserInst, Instruction *IVOper,
@@ -2211,9 +2268,9 @@ void LSRInstance::ChainInstruction(Instruction *UserInst, Instruction *IVOper,
         && isa<PHINode>(IVChainVec[ChainIdx].back().UserInst))
       continue;
 
-    const SCEV *IncExpr = SE.getMinusSCEV(SE.getSCEV(NextIV),
-                                          SE.getSCEV(PrevIV));
-    if (SE.isLoopInvariant(IncExpr, L)) {
+    if (const SCEV *IncExpr =
+        getProfitableChainIncrement(NextIV, PrevIV, IVChainVec[ChainIdx],
+                                    L, SE, TLI)) {
       LastIncExpr = IncExpr;
       break;
     }
@@ -2223,7 +2280,7 @@ void LSRInstance::ChainInstruction(Instruction *UserInst, Instruction *IVOper,
   if (ChainIdx == NChains) {
     if (isa<PHINode>(UserInst))
       return;
-    if (NChains >= MaxChains) {
+    if (NChains >= MaxChains && !StressIVChain) {
       DEBUG(dbgs() << "IV Chain Limit\n");
       return;
     }
@@ -2349,13 +2406,173 @@ void LSRInstance::CollectChains() {
     if (IncV)
       ChainInstruction(PN, IncV, ChainUsersVec);
   }
+  // Remove any unprofitable chains.
+  unsigned ChainIdx = 0;
+  for (unsigned UsersIdx = 0, NChains = IVChainVec.size();
+       UsersIdx < NChains; ++UsersIdx) {
+    if (!isProfitableChain(IVChainVec[UsersIdx],
+                           ChainUsersVec[UsersIdx].FarUsers, SE, TLI))
+      continue;
+    // Preserve the chain at UsesIdx.
+    if (ChainIdx != UsersIdx)
+      IVChainVec[ChainIdx] = IVChainVec[UsersIdx];
+    FinalizeChain(IVChainVec[ChainIdx]);
+    ++ChainIdx;
+  }
+  IVChainVec.resize(ChainIdx);
+}
+
+void LSRInstance::FinalizeChain(IVChain &Chain) {
+  assert(!Chain.empty() && "empty IV chains are not allowed");
+  DEBUG(dbgs() << "Final Chain: " << *Chain[0].UserInst << "\n");
+
+  for (IVChain::const_iterator I = llvm::next(Chain.begin()), E = Chain.end();
+       I != E; ++I) {
+    DEBUG(dbgs() << "        Inc: " << *I->UserInst << "\n");
+    User::op_iterator UseI =
+      std::find(I->UserInst->op_begin(), I->UserInst->op_end(), I->IVOperand);
+    assert(UseI != I->UserInst->op_end() && "cannot find IV operand");
+    IVIncSet.insert(UseI);
+  }
+}
+
+/// Return true if the IVInc can be folded into an addressing mode.
+static bool canFoldIVIncExpr(const SCEV *IncExpr, Instruction *UserInst,
+                             Value *Operand, const TargetLowering *TLI) {
+  const SCEVConstant *IncConst = dyn_cast<SCEVConstant>(IncExpr);
+  if (!IncConst || !isAddressUse(UserInst, Operand))
+    return false;
+
+  if (IncConst->getValue()->getValue().getMinSignedBits() > 64)
+    return false;
+
+  int64_t IncOffset = IncConst->getValue()->getSExtValue();
+  if (!isAlwaysFoldable(IncOffset, /*BaseGV=*/0, /*HaseBaseReg=*/false,
+                       LSRUse::Address, getAccessType(UserInst), TLI))
+    return false;
+
+  return true;
+}
+
+/// GenerateIVChains - Generate an add or subtract for each IVInc in a chain to
+/// materialize the IV user's operand from the previous IV user's operand.
+void LSRInstance::GenerateIVChain(const IVChain &Chain, SCEVExpander &Rewriter,
+                                  SmallVectorImpl<WeakVH> &DeadInsts) {
+  // Find the new IVOperand for the head of the chain. It may have been replaced
+  // by LSR.
+  const IVInc &Head = Chain[0];
+  User::op_iterator IVOpEnd = Head.UserInst->op_end();
+  User::op_iterator IVOpIter = findIVOperand(Head.UserInst->op_begin(),
+                                             IVOpEnd, L, SE);
+  Value *IVSrc = 0;
+  while (IVOpIter != IVOpEnd) {
+    IVSrc = getWideOperand(*IVOpIter);
+
+    // If this operand computes the expression that the chain needs, we may use
+    // it. (Check this after setting IVSrc which is used below.)
+    //
+    // Note that if Head.IncExpr is wider than IVSrc, then this phi is too
+    // narrow for the chain, so we can no longer use it. We do allow using a
+    // wider phi, assuming the LSR checked for free truncation. In that case we
+    // should already have a truncate on this operand such that
+    // getSCEV(IVSrc) == IncExpr.
+    if (SE.getSCEV(*IVOpIter) == Head.IncExpr
+        || SE.getSCEV(IVSrc) == Head.IncExpr) {
+      break;
+    }
+    IVOpIter = findIVOperand(llvm::next(IVOpIter), IVOpEnd, L, SE);
+  }
+  if (IVOpIter == IVOpEnd) {
+    // Gracefully give up on this chain.
+    DEBUG(dbgs() << "Concealed chain head: " << *Head.UserInst << "\n");
+    return;
+  }
+
+  DEBUG(dbgs() << "Generate chain at: " << *IVSrc << "\n");
+  Type *IVTy = IVSrc->getType();
+  Type *IntTy = SE.getEffectiveSCEVType(IVTy);
+  const SCEV *LeftOverExpr = 0;
+  for (IVChain::const_iterator IncI = llvm::next(Chain.begin()),
+         IncE = Chain.end(); IncI != IncE; ++IncI) {
+
+    Instruction *InsertPt = IncI->UserInst;
+    if (isa<PHINode>(InsertPt))
+      InsertPt = L->getLoopLatch()->getTerminator();
+
+    // IVOper will replace the current IV User's operand. IVSrc is the IV
+    // value currently held in a register.
+    Value *IVOper = IVSrc;
+    if (!IncI->IncExpr->isZero()) {
+      // IncExpr was the result of subtraction of two narrow values, so must
+      // be signed.
+      const SCEV *IncExpr = SE.getNoopOrSignExtend(IncI->IncExpr, IntTy);
+      LeftOverExpr = LeftOverExpr ?
+        SE.getAddExpr(LeftOverExpr, IncExpr) : IncExpr;
+    }
+    if (LeftOverExpr && !LeftOverExpr->isZero()) {
+      // Expand the IV increment.
+      Rewriter.clearPostInc();
+      Value *IncV = Rewriter.expandCodeFor(LeftOverExpr, IntTy, InsertPt);
+      const SCEV *IVOperExpr = SE.getAddExpr(SE.getUnknown(IVSrc),
+                                             SE.getUnknown(IncV));
+      IVOper = Rewriter.expandCodeFor(IVOperExpr, IVTy, InsertPt);
+
+      // If an IV increment can't be folded, use it as the next IV value.
+      if (!canFoldIVIncExpr(LeftOverExpr, IncI->UserInst, IncI->IVOperand,
+                            TLI)) {
+        assert(IVTy == IVOper->getType() && "inconsistent IV increment type");
+        IVSrc = IVOper;
+        LeftOverExpr = 0;
+      }
+    }
+    Type *OperTy = IncI->IVOperand->getType();
+    if (IVTy != OperTy) {
+      assert(SE.getTypeSizeInBits(IVTy) >= SE.getTypeSizeInBits(OperTy) &&
+             "cannot extend a chained IV");
+      IRBuilder<> Builder(InsertPt);
+      IVOper = Builder.CreateTruncOrBitCast(IVOper, OperTy, "lsr.chain");
+    }
+    IncI->UserInst->replaceUsesOfWith(IncI->IVOperand, IVOper);
+    DeadInsts.push_back(IncI->IVOperand);
+  }
+  // If LSR created a new, wider phi, we may also replace its postinc. We only
+  // do this if we also found a wide value for the head of the chain.
+  if (isa<PHINode>(Chain.back().UserInst)) {
+    for (BasicBlock::iterator I = L->getHeader()->begin();
+         PHINode *Phi = dyn_cast<PHINode>(I); ++I) {
+      if (!isCompatibleIVType(Phi, IVSrc))
+        continue;
+      Instruction *PostIncV = dyn_cast<Instruction>(
+        Phi->getIncomingValueForBlock(L->getLoopLatch()));
+      if (!PostIncV || (SE.getSCEV(PostIncV) != SE.getSCEV(IVSrc)))
+        continue;
+      Value *IVOper = IVSrc;
+      Type *PostIncTy = PostIncV->getType();
+      if (IVTy != PostIncTy) {
+        assert(PostIncTy->isPointerTy() && "mixing int/ptr IV types");
+        IRBuilder<> Builder(L->getLoopLatch()->getTerminator());
+        Builder.SetCurrentDebugLocation(PostIncV->getDebugLoc());
+        IVOper = Builder.CreatePointerCast(IVSrc, PostIncTy, "lsr.chain");
+      }
+      Phi->replaceUsesOfWith(PostIncV, IVOper);
+      DeadInsts.push_back(PostIncV);
+    }
+  }
 }
 
 void LSRInstance::CollectFixupsAndInitialFormulae() {
   for (IVUsers::const_iterator UI = IU.begin(), E = IU.end(); UI != E; ++UI) {
+    Instruction *UserInst = UI->getUser();
+    // Skip IV users that are part of profitable IV Chains.
+    User::op_iterator UseI = std::find(UserInst->op_begin(), UserInst->op_end(),
+                                       UI->getOperandValToReplace());
+    assert(UseI != UserInst->op_end() && "cannot find IV operand");
+    if (IVIncSet.count(UseI))
+      continue;
+
     // Record the uses.
     LSRFixup &LF = getNewFixup();
-    LF.UserInst = UI->getUser();
+    LF.UserInst = UserInst;
     LF.OperandValToReplace = UI->getOperandValToReplace();
     LF.PostIncLoops = UI->getPostIncLoops();
 
@@ -4073,6 +4290,11 @@ LSRInstance::ImplementSolution(const SmallVectorImpl<const Formula *> &Solution,
     Changed = true;
   }
 
+  for (SmallVectorImpl<IVChain>::const_iterator ChainI = IVChainVec.begin(),
+         ChainE = IVChainVec.end(); ChainI != ChainE; ++ChainI) {
+    GenerateIVChain(*ChainI, Rewriter, DeadInsts);
+    Changed = true;
+  }
   // Clean up after ourselves. This must be done before deleting any
   // instructions.
   Rewriter.clear();
@@ -4123,6 +4345,7 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
   CollectFixupsAndInitialFormulae();
   CollectLoopInvariantFixupsAndFormulae();
 
+  assert(!Uses.empty() && "IVUsers reported at least one use");
   DEBUG(dbgs() << "LSR found " << Uses.size() << " uses:\n";
         print_uses(dbgs()));
 
