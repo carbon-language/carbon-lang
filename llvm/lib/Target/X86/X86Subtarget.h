@@ -42,7 +42,7 @@ enum Style {
 class X86Subtarget : public X86GenSubtargetInfo {
 protected:
   enum X86SSEEnum {
-    NoMMXSSE, MMX, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42
+    NoMMXSSE, MMX, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, AVX, AVX2
   };
 
   enum X863DNowEnum {
@@ -74,12 +74,6 @@ protected:
 
   /// HasSSE4A - True if the processor supports SSE4A instructions.
   bool HasSSE4A;
-
-  /// HasAVX - Target has AVX instructions
-  bool HasAVX;
-
-  /// HasAVX2 - Target has AVX2 instructions
-  bool HasAVX2;
 
   /// HasAES - Target has AES instructions
   bool HasAES;
@@ -179,24 +173,24 @@ public:
 
   bool hasCMov() const { return HasCMov; }
   bool hasMMX() const { return X86SSELevel >= MMX; }
-  bool hasSSE1() const { return X86SSELevel >= SSE1; }
-  bool hasSSE2() const { return X86SSELevel >= SSE2; }
-  bool hasSSE3() const { return X86SSELevel >= SSE3; }
-  bool hasSSSE3() const { return X86SSELevel >= SSSE3; }
-  bool hasSSE41() const { return X86SSELevel >= SSE41; }
-  bool hasSSE42() const { return X86SSELevel >= SSE42; }
+  bool hasSSE1() const { return X86SSELevel >= SSE1 && !hasAVX(); }
+  bool hasSSE2() const { return X86SSELevel >= SSE2 && !hasAVX(); }
+  bool hasSSE3() const { return X86SSELevel >= SSE3 && !hasAVX(); }
+  bool hasSSSE3() const { return X86SSELevel >= SSSE3 && !hasAVX(); }
+  bool hasSSE41() const { return X86SSELevel >= SSE41 && !hasAVX(); }
+  bool hasSSE42() const { return X86SSELevel >= SSE42 && !hasAVX(); }
   bool hasSSE4A() const { return HasSSE4A; }
   bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
   bool hasPOPCNT() const { return HasPOPCNT; }
-  bool hasAVX() const { return HasAVX; }
-  bool hasAVX2() const { return HasAVX2; }
-  bool hasXMM() const { return hasSSE1() || hasAVX(); }
-  bool hasXMMInt() const { return hasSSE2() || hasAVX(); }
-  bool hasSSE3orAVX() const { return hasSSE3() || hasAVX(); }
-  bool hasSSSE3orAVX() const { return hasSSSE3() || hasAVX(); }
-  bool hasSSE41orAVX() const { return hasSSE41() || hasAVX(); }
-  bool hasSSE42orAVX() const { return hasSSE42() || hasAVX(); }
+  bool hasAVX() const { return X86SSELevel >= AVX; }
+  bool hasAVX2() const { return X86SSELevel >= AVX2; }
+  bool hasXMM() const { return X86SSELevel >= SSE1; }
+  bool hasXMMInt() const { return X86SSELevel >= SSE2; }
+  bool hasSSE3orAVX() const { return X86SSELevel >= SSE3; }
+  bool hasSSSE3orAVX() const { return X86SSELevel >= SSSE3; }
+  bool hasSSE41orAVX() const { return X86SSELevel >= SSE41; }
+  bool hasSSE42orAVX() const { return X86SSELevel >= SSE42; }
   bool hasAES() const { return HasAES; }
   bool hasCLMUL() const { return HasCLMUL; }
   bool hasFMA3() const { return HasFMA3; }

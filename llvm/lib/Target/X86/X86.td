@@ -80,9 +80,10 @@ def FeatureSSE4A   : SubtargetFeature<"sse4a", "HasSSE4A", "true",
                                       "Support SSE 4a instructions",
                                       [FeatureSSE3]>;
 
-def FeatureAVX     : SubtargetFeature<"avx", "HasAVX", "true",
-                                      "Enable AVX instructions">;
-def FeatureAVX2    : SubtargetFeature<"avx2", "HasAVX2", "true",
+def FeatureAVX     : SubtargetFeature<"avx", "X86SSELevel", "AVX",
+                                      "Enable AVX instructions",
+                                      [FeatureSSE42]>;
+def FeatureAVX2    : SubtargetFeature<"avx2", "X86SSELevel", "AVX2",
                                       "Enable AVX2 instructions",
                                       [FeatureAVX]>;
 def FeatureCLMUL   : SubtargetFeature<"clmul", "HasCLMUL", "true",

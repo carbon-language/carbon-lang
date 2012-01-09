@@ -198,7 +198,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
   if ((ECX >> 19) & 1) { X86SSELevel = SSE41; ToggleFeature(X86::FeatureSSE41);}
   if ((ECX >> 20) & 1) { X86SSELevel = SSE42; ToggleFeature(X86::FeatureSSE42);}
   // FIXME: AVX codegen support is not ready.
-  //if ((ECX >> 28) & 1) { HasAVX = true;  ToggleFeature(X86::FeatureAVX); }
+  //if ((ECX >> 28) & 1) { X86SSELevel = AVX;  ToggleFeature(X86::FeatureAVX); }
 
   bool IsIntel = memcmp(text.c, "GenuineIntel", 12) == 0;
   bool IsAMD   = !IsIntel && memcmp(text.c, "AuthenticAMD", 12) == 0;
@@ -295,7 +295,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
       }
       // FIXME: AVX2 codegen support is not ready.
       //if ((EBX >> 5) & 0x1) {
-      //  HasAVX2 = true;
+      //  X86SSELevel = AVX2;;
       //  ToggleFeature(X86::FeatureAVX2);
       //}
       if ((EBX >> 8) & 0x1) {
@@ -317,8 +317,6 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   , HasX86_64(false)
   , HasPOPCNT(false)
   , HasSSE4A(false)
-  , HasAVX(false)
-  , HasAVX2(false)
   , HasAES(false)
   , HasCLMUL(false)
   , HasFMA3(false)
@@ -372,7 +370,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
       HasX86_64 = true; ToggleFeature(X86::Feature64Bit);
       HasCMov = true;   ToggleFeature(X86::FeatureCMOV);
 
-      if (!HasAVX && X86SSELevel < SSE2) {
+      if (X86SSELevel < SSE2) {
         X86SSELevel = SSE2;
         ToggleFeature(X86::FeatureSSE1);
         ToggleFeature(X86::FeatureSSE2);
@@ -385,9 +383,6 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   if (In64BitMode)
     ToggleFeature(X86::Mode64Bit);
 
-  if (HasAVX)
-    X86SSELevel = MMX;
-    
   DEBUG(dbgs() << "Subtarget features: SSELevel " << X86SSELevel
                << ", 3DNowLevel " << X863DNowLevel
                << ", 64bit " << HasX86_64 << "\n");
