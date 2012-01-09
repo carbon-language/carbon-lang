@@ -21,6 +21,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <unistd.h>
 
 namespace __asan {
 
@@ -38,7 +39,7 @@ static void MaybeInstallSigaction(int signum,
 static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
   uintptr_t addr = (uintptr_t)siginfo->si_addr;
   // Write the first message using the bullet-proof write.
-  if (13 != AsanWrite(2, "ASAN:SIGSEGV\n", 13)) ASAN_DIE;
+  if (13 != AsanWrite(2, "ASAN:SIGSEGV\n", 13)) AsanDie();
   uintptr_t pc, sp, bp;
   GetPcSpBp(context, &pc, &sp, &bp);
   Report("ERROR: AddressSanitizer crashed on unknown address %p"
@@ -61,6 +62,14 @@ void AsanDisableCoreDumper() {
   nocore.rlim_cur = 0;
   nocore.rlim_max = 0;
   setrlimit(RLIMIT_CORE, &nocore);
+}
+
+void AsanDie() {
+  _exit(FLAG_exitcode);
+}
+
+int GetPid() {
+  return getpid();
 }
 
 }  // namespace __asan

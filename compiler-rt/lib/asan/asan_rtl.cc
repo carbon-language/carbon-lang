@@ -57,7 +57,7 @@ bool asan_init_is_running;
 // -------------------------- Misc ---------------- {{{1
 void ShowStatsAndAbort() {
   __asan_print_accumulated_stats();
-  ASAN_DIE;
+  AsanDie();
 }
 
 static void PrintBytes(const char *before, uintptr_t *a) {
@@ -70,10 +70,10 @@ static void PrintBytes(const char *before, uintptr_t *a) {
   Printf("\n");
 }
 
-ssize_t ReadFileToBuffer(const char *file_name, char **buff,
+size_t ReadFileToBuffer(const char *file_name, char **buff,
                          size_t *buff_size, size_t max_len) {
   const size_t kMinFileLen = kPageSize;
-  ssize_t read_len = -1;
+  size_t read_len = 0;
   *buff = 0;
   *buff_size = 0;
   // The files we usually open are not seekable, so try different buffer sizes.
@@ -386,7 +386,7 @@ void __asan_report_error(uintptr_t pc, uintptr_t bp, uintptr_t sp,
   PrintBytes("  ", (uintptr_t*)(aligned_shadow+2*kWordSize));
   PrintBytes("  ", (uintptr_t*)(aligned_shadow+3*kWordSize));
   PrintBytes("  ", (uintptr_t*)(aligned_shadow+4*kWordSize));
-  ASAN_DIE;
+  AsanDie();
 }
 
 void __asan_init() {

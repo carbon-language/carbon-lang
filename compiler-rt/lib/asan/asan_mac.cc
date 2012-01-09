@@ -50,7 +50,6 @@ void GetPcSpBp(void *context, uintptr_t *pc, uintptr_t *sp, uintptr_t *bp) {
 # endif  // __WORDSIZE
 }
 
-
 // No-op. Mac does not support static linkage anyway.
 void *AsanDoesNotSupportStaticLinkage() {
   return NULL;
@@ -65,7 +64,7 @@ static void *asan_mmap(void *addr, size_t length, int prot, int flags,
   return mmap(addr, length, prot, flags, fd, offset);
 }
 
-ssize_t AsanWrite(int fd, const void *buf, size_t count) {
+size_t AsanWrite(int fd, const void *buf, size_t count) {
   return write(fd, buf, count);
 }
 
@@ -106,7 +105,7 @@ void AsanUnmapOrDie(void *addr, size_t size) {
   int res = munmap(addr, size);
   if (res != 0) {
     Report("Failed to unmap\n");
-    ASAN_DIE;
+    AsanDie();
   }
 }
 
@@ -114,7 +113,7 @@ int AsanOpenReadonly(const char* filename) {
   return open(filename, O_RDONLY);
 }
 
-ssize_t AsanRead(int fd, void *buf, size_t count) {
+size_t AsanRead(int fd, void *buf, size_t count) {
   return read(fd, buf, count);
 }
 

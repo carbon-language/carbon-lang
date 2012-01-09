@@ -114,20 +114,20 @@ void AsanUnmapOrDie(void *addr, size_t size) {
   int res = syscall(__NR_munmap, addr, size);
   if (res != 0) {
     Report("Failed to unmap\n");
-    ASAN_DIE;
+    AsanDie();
   }
 }
 
-ssize_t AsanWrite(int fd, const void *buf, size_t count) {
-  return (ssize_t)syscall(__NR_write, fd, buf, count);
+size_t AsanWrite(int fd, const void *buf, size_t count) {
+  return (size_t)syscall(__NR_write, fd, buf, count);
 }
 
 int AsanOpenReadonly(const char* filename) {
   return open(filename, O_RDONLY);
 }
 
-ssize_t AsanRead(int fd, void *buf, size_t count) {
-  return (ssize_t)syscall(__NR_read, fd, buf, count);
+size_t AsanRead(int fd, void *buf, size_t count) {
+  return (size_t)syscall(__NR_read, fd, buf, count);
 }
 
 int AsanClose(int fd) {
@@ -202,8 +202,8 @@ static int dl_iterate_phdr_callback(struct dl_phdr_info *info,
   if (count == 0) {
     // The first item (the main executable) does not have a so name,
     // but we can just read it from /proc/self/exe.
-    ssize_t path_len = readlink("/proc/self/exe",
-                                data->filename, data->filename_size - 1);
+    size_t path_len = readlink("/proc/self/exe",
+                               data->filename, data->filename_size - 1);
     data->filename[path_len] = 0;
   } else {
     CHECK(info->dlpi_name);

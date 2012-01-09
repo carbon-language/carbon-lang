@@ -24,10 +24,10 @@ namespace __asan {
 
 void RawWrite(const char *buffer) {
   static const char *kRawWriteError = "RawWrite can't output requested buffer!";
-  ssize_t length = (ssize_t)internal_strlen(buffer);
+  size_t length = (size_t)internal_strlen(buffer);
   if (length != AsanWrite(2, buffer, length)) {
     AsanWrite(2, kRawWriteError, internal_strlen(kRawWriteError));
-    ASAN_DIE;
+    AsanDie();
   }
 }
 
@@ -168,7 +168,7 @@ int SNPrintf(char *buffer, size_t length, const char *format, ...) {
 void Report(const char *format, ...) {
   const int kLen = 1024 * 4;
   char buffer[kLen];
-  int needed_length = SNPrintf(buffer, kLen, "==%d== ", getpid());
+  int needed_length = SNPrintf(buffer, kLen, "==%d== ", GetPid());
   RAW_CHECK_MSG(needed_length < kLen, "Buffer in Report is too short!\n");
   va_list args;
   va_start(args, format);

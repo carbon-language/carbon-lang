@@ -20,7 +20,6 @@
 
 #include <stdint.h>  // for __WORDSIZE
 #include <stdlib.h>  // for size_t
-#include <unistd.h>  // for _exit
 
 // If __WORDSIZE was undefined by the platform, define it in terms of the
 // compiler built-in __LP64__.
@@ -102,19 +101,20 @@ void AsanUnmapOrDie(void *ptr, size_t size);
 void AsanDisableCoreDumper();
 void GetPcSpBp(void *context, uintptr_t *pc, uintptr_t *sp, uintptr_t *bp);
 
-ssize_t AsanRead(int fd, void *buf, size_t count);
-ssize_t AsanWrite(int fd, const void *buf, size_t count);
+size_t AsanRead(int fd, void *buf, size_t count);
+size_t AsanWrite(int fd, const void *buf, size_t count);
 int AsanClose(int fd);
 
 bool AsanInterceptsSignal(int signum);
 void InstallSignalHandlers();
+int GetPid();
 
 // Opens the file 'file_name" and reads up to 'max_len' bytes.
 // The resulting buffer is mmaped and stored in '*buff'.
 // The size of the mmaped region is stored in '*buff_size',
-// Returns the number of read bytes or -1 if file can not be opened.
-ssize_t ReadFileToBuffer(const char *file_name, char **buff,
-                         size_t *buff_size, size_t max_len);
+// Returns the number of read bytes or 0 if file can not be opened.
+size_t ReadFileToBuffer(const char *file_name, char **buff,
+                        size_t *buff_size, size_t max_len);
 
 // asan_printf.cc
 void RawWrite(const char *buffer);
@@ -162,9 +162,7 @@ extern bool asan_init_is_running;
 
 enum LinkerInitialized { LINKER_INITIALIZED = 0 };
 
-#ifndef ASAN_DIE
-#define ASAN_DIE _exit(FLAG_exitcode)
-#endif  // ASAN_DIE
+void AsanDie();
 
 #define CHECK(cond) do { if (!(cond)) { \
   CheckFailed(#cond, __FILE__, __LINE__); \
@@ -173,7 +171,7 @@ enum LinkerInitialized { LINKER_INITIALIZED = 0 };
 #define RAW_CHECK_MSG(expr, msg) do { \
   if (!(expr)) { \
     RawWrite(msg); \
-    ASAN_DIE; \
+    AsanDie(); \
   } \
 } while (0)
 
