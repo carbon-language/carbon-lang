@@ -157,3 +157,23 @@ if.then:
 if.end:
   ret void
 }
+
+define void @test9(i32 %a) nounwind {
+  %1 = and i32 %a, 1073741824
+  %2 = icmp ne i32 %1, 0
+  %3 = icmp sgt i32 %a, -1
+  %or.cond = and i1 %2, %3
+  br i1 %or.cond, label %if.then, label %if.end
+
+; CHECK: @test9
+; CHECK-NEXT: %1 = and i32 %a, -1073741824
+; CHECK-NEXT: %2 = icmp eq i32 %1, 1073741824
+; CHECK-NEXT: br i1 %2, label %if.then, label %if.end
+
+if.then:
+  tail call void @foo() nounwind
+  ret void
+
+if.end:
+  ret void
+}
