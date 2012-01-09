@@ -6777,7 +6777,7 @@ void Sema::DiagnoseSizeOfParametersAndReturnValue(ParmVarDecl * const *Param,
 
   // Warn if the return value is pass-by-value and larger than the specified
   // threshold.
-  if (ReturnTy.isPODType(Context)) {
+  if (!ReturnTy->isDependentType() && ReturnTy.isPODType(Context)) {
     unsigned Size = Context.getTypeSizeInChars(ReturnTy).getQuantity();
     if (Size > LangOpts.NumLargeByValueCopy)
       Diag(D->getLocation(), diag::warn_return_value_size)
@@ -6788,7 +6788,7 @@ void Sema::DiagnoseSizeOfParametersAndReturnValue(ParmVarDecl * const *Param,
   // threshold.
   for (; Param != ParamEnd; ++Param) {
     QualType T = (*Param)->getType();
-    if (!T.isPODType(Context))
+    if (T->isDependentType() || !T.isPODType(Context))
       continue;
     unsigned Size = Context.getTypeSizeInChars(T).getQuantity();
     if (Size > LangOpts.NumLargeByValueCopy)

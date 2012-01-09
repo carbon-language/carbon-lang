@@ -40,3 +40,8 @@ void g() {
 }
 
 }
+
+template<typename T> class DependentPOD {
+  enum b { x };
+  b foo() { return x; }
+};
