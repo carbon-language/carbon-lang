@@ -516,6 +516,7 @@ size_t WRAP(strnlen)(const char *s, size_t maxlen) {
   }
   return length;
 }
+#endif
 
 // ---------------------- InitializeAsanInterceptors ---------------- {{{1
 namespace __asan {
@@ -574,5 +575,3 @@ void InitializeAsanInterceptors() {
 }
 
 }  // namespace __asan
-
-#endif
