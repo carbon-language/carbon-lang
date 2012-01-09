@@ -26,6 +26,9 @@
 #include <ctype.h>
 #include <dlfcn.h>
 
+#include <string.h>
+#include <strings.h>
+
 namespace __asan {
 
 typedef void (*longjmp_f)(void *env, int val);
