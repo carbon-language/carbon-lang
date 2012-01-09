@@ -76,7 +76,7 @@ public:
     virtual bool
     CodeAddressIsValid (lldb::addr_t pc) = 0;    
 
-    virtual bool
+    virtual lldb::addr_t
     FixCodeAddress (lldb::addr_t pc)
     {
         // Some targets might use bits in a code address to indicate

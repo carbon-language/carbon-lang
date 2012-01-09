@@ -82,7 +82,7 @@ public:
         return pc <= UINT32_MAX;
     }
     
-    virtual bool
+    virtual lldb::addr_t
     FixCodeAddress (lldb::addr_t pc)
     {
         // ARM uses bit zero to signify a code address is thumb, so we must
