@@ -27,8 +27,14 @@ void f() {
   typedef T(*td)(int(p));
   extern T(*tp)(int(p));
   T d3(); // expected-warning {{empty parentheses interpreted as a function declaration}}
+  T d3v(void);
   typedef T d3t();
   extern T f3();
+  __typeof(*T()) f4(); // expected-warning {{empty parentheses interpreted as a function declaration}}
+  typedef void *V;
+  __typeof(*V()) f5();
+  T multi1,
+    multi2(); // expected-warning {{empty parentheses interpreted as a function declaration}}
   T(d)[5]; // expected-error {{redefinition of 'd'}}
   typeof(int[])(f) = { 1, 2 }; // expected-error {{extension used}}
   void(b)(int);
