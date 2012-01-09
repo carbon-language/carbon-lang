@@ -806,20 +806,17 @@ bool MatchableInfo::Validate(StringRef CommentDelimiter, bool Hack) const {
   return true;
 }
 
-/// extractSingletonRegisterForAsmOperand - Extract singleton register, if present,
-/// from specified token.
+/// extractSingletonRegisterForAsmOperand - Extract singleton register, 
+/// if present, from specified token.
 void MatchableInfo::
-extractSingletonRegisterForAsmOperand(unsigned i, const AsmMatcherInfo &Info,
+extractSingletonRegisterForAsmOperand(unsigned OperandNo, 
+                                      const AsmMatcherInfo &Info,
 				      std::string &RegisterPrefix) {
-  StringRef Tok = AsmOperands[i].Token;
+  StringRef Tok = AsmOperands[OperandNo].Token;
   if (RegisterPrefix.empty()) {
-    if (i) {
-      std::string LoweredTok = Tok.lower();
-      if (const CodeGenRegister *Reg = Info.Target.getRegisterByName(LoweredTok))
-	AsmOperands[i].SingletonReg = Reg->TheDef;
-    } else
-      if (const CodeGenRegister *Reg = Info.Target.getRegisterByName(Tok))
-	AsmOperands[i].SingletonReg = Reg->TheDef;
+    std::string LoweredTok = Tok.lower();
+    if (const CodeGenRegister *Reg = Info.Target.getRegisterByName(LoweredTok))
+      AsmOperands[OperandNo].SingletonReg = Reg->TheDef;
     return;
   } 
 
@@ -828,7 +825,7 @@ extractSingletonRegisterForAsmOperand(unsigned i, const AsmMatcherInfo &Info,
 
   StringRef RegName = Tok.substr(RegisterPrefix.size());
   if (const CodeGenRegister *Reg = Info.Target.getRegisterByName(RegName))
-    AsmOperands[i].SingletonReg = Reg->TheDef;
+    AsmOperands[OperandNo].SingletonReg = Reg->TheDef;
 
   // If there is no register prefix (i.e. "%" in "%eax"), then this may
   // be some random non-register token, just ignore it.
