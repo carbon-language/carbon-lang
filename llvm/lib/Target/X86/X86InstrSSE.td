@@ -7223,6 +7223,7 @@ let Predicates = [HasAVX2] in
 def VBROADCASTI128 : avx_broadcast<0x5A, "vbroadcasti128", VR256, i128mem,
                                    int_x86_avx2_vbroadcasti128>;
 
+let Predicates = [HasAVX] in
 def : Pat<(int_x86_avx_vbroadcastf128_ps_256 addr:$src),
           (VBROADCASTF128 addr:$src)>;
 
@@ -7242,12 +7243,14 @@ def VINSERTF128rm : AVXAIi8<0x18, MRMSrcMem, (outs VR256:$dst),
           []>, VEX_4V;
 }
 
+let Predicates = [HasAVX] in {
 def : Pat<(int_x86_avx_vinsertf128_pd_256 VR256:$src1, VR128:$src2, imm:$src3),
           (VINSERTF128rr VR256:$src1, VR128:$src2, imm:$src3)>;
 def : Pat<(int_x86_avx_vinsertf128_ps_256 VR256:$src1, VR128:$src2, imm:$src3),
           (VINSERTF128rr VR256:$src1, VR128:$src2, imm:$src3)>;
 def : Pat<(int_x86_avx_vinsertf128_si_256 VR256:$src1, VR128:$src2, imm:$src3),
           (VINSERTF128rr VR256:$src1, VR128:$src2, imm:$src3)>;
+}
 
 //===----------------------------------------------------------------------===//
 // VEXTRACTF128 - Extract packed floating-point values
@@ -7264,12 +7267,14 @@ def VEXTRACTF128mr : AVXAIi8<0x19, MRMDestMem, (outs),
           []>, VEX;
 }
 
+let Predicates = [HasAVX] in {
 def : Pat<(int_x86_avx_vextractf128_pd_256 VR256:$src1, imm:$src2),
           (VEXTRACTF128rr VR256:$src1, imm:$src2)>;
 def : Pat<(int_x86_avx_vextractf128_ps_256 VR256:$src1, imm:$src2),
           (VEXTRACTF128rr VR256:$src1, imm:$src2)>;
 def : Pat<(int_x86_avx_vextractf128_si_256 VR256:$src1, imm:$src2),
           (VEXTRACTF128rr VR256:$src1, imm:$src2)>;
+}
 
 //===----------------------------------------------------------------------===//
 // VMASKMOV - Conditional SIMD Packed Loads and Stores
@@ -7358,6 +7363,7 @@ let ExeDomain = SSEPackedDouble in {
                                int_x86_avx_vpermil_pd_256>;
 }
 
+let Predicates = [HasAVX] in {
 def : Pat<(v8f32 (X86VPermilp VR256:$src1, (i8 imm:$imm))),
           (VPERMILPSYri VR256:$src1, imm:$imm)>;
 def : Pat<(v4f64 (X86VPermilp VR256:$src1, (i8 imm:$imm))),
@@ -7375,6 +7381,7 @@ def : Pat<(v8i32 (X86VPermilp (bc_v8i32 (memopv4i64 addr:$src1)),
           (VPERMILPSYmi addr:$src1, imm:$imm)>;
 def : Pat<(v4i64 (X86VPermilp (memopv4i64 addr:$src1), (i8 imm:$imm))),
           (VPERMILPDYmi addr:$src1, imm:$imm)>;
+}
 
 //===----------------------------------------------------------------------===//
 // VPERM2F128 - Permute Floating-Point Values in 128-bit chunks
@@ -7391,6 +7398,7 @@ def VPERM2F128rm : AVXAIi8<0x06, MRMSrcMem, (outs VR256:$dst),
           []>, VEX_4V;
 }
 
+let Predicates = [HasAVX] in {
 def : Pat<(int_x86_avx_vperm2f128_ps_256 VR256:$src1, VR256:$src2, imm:$src3),
           (VPERM2F128rr VR256:$src1, VR256:$src2, imm:$src3)>;
 def : Pat<(int_x86_avx_vperm2f128_pd_256 VR256:$src1, VR256:$src2, imm:$src3),
@@ -7407,6 +7415,7 @@ def : Pat<(int_x86_avx_vperm2f128_pd_256
 def : Pat<(int_x86_avx_vperm2f128_si_256
                   VR256:$src1, (bc_v8i32 (memopv4i64 addr:$src2)), imm:$src3),
           (VPERM2F128rm VR256:$src1, addr:$src2, imm:$src3)>;
+}
 
 //===----------------------------------------------------------------------===//
 // VZERO - Zero YMM registers
@@ -7545,6 +7554,7 @@ let Predicates = [HasAVX2] in {
 }
 
 // AVX1 broadcast patterns
+let Predicates = [HasAVX] in {
 def : Pat<(v8i32 (X86VBroadcast (loadi32 addr:$src))),
           (VBROADCASTSSYrm addr:$src)>;
 def : Pat<(v4i64 (X86VBroadcast (loadi64 addr:$src))),
@@ -7558,6 +7568,7 @@ def : Pat<(v4f32 (X86VBroadcast (loadf32 addr:$src))),
           (VBROADCASTSSrm addr:$src)>;
 def : Pat<(v4i32 (X86VBroadcast (loadi32 addr:$src))),
           (VBROADCASTSSrm addr:$src)>;
+}
 
 //===----------------------------------------------------------------------===//
 // VPERM - Permute instructions
@@ -7646,6 +7657,7 @@ def : Pat<(v4i64 (X86VPerm2x128 VR256:$src1, (memopv4i64 addr:$src2),
 }
 
 // AVX1 patterns
+let Predicates = [HasAVX] in {
 def : Pat<(v8f32 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
           (VPERM2F128rr VR256:$src1, VR256:$src2, imm:$imm)>;
 def : Pat<(v8i32 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
@@ -7677,6 +7689,7 @@ def : Pat<(v32i8 (X86VPerm2x128 VR256:$src1,
 def : Pat<(v16i16 (X86VPerm2x128 VR256:$src1,
                   (bc_v16i16 (memopv4i64 addr:$src2)), (i8 imm:$imm))),
           (VPERM2F128rm VR256:$src1, addr:$src2, imm:$imm)>;
+}
 
 
 //===----------------------------------------------------------------------===//
@@ -7715,6 +7728,7 @@ def : Pat<(vinsertf128_insert:$ins (v16i16 VR256:$src1), (v8i16 VR128:$src2),
 }
 
 // AVX1 patterns
+let Predicates = [HasAVX] in {
 def : Pat<(vinsertf128_insert:$ins (v8f32 VR256:$src1), (v4f32 VR128:$src2),
                                    (i32 imm)),
           (VINSERTF128rr VR256:$src1, VR128:$src2,
@@ -7739,6 +7753,7 @@ def : Pat<(vinsertf128_insert:$ins (v16i16 VR256:$src1), (v8i16 VR128:$src2),
                                    (i32 imm)),
           (VINSERTF128rr VR256:$src1, VR128:$src2,
                          (INSERT_get_vinsertf128_imm VR256:$ins))>;
+}
 
 //===----------------------------------------------------------------------===//
 // VEXTRACTI128 - Extract packed integer values
@@ -7774,6 +7789,7 @@ def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
 }
 
 // AVX1 patterns
+let Predicates = [HasAVX] in {
 def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
           (v4f32 (VEXTRACTF128rr
                     (v8f32 VR256:$src1),
@@ -7798,6 +7814,7 @@ def : Pat<(vextractf128_extract:$ext VR256:$src1, (i32 imm)),
           (v16i8 (VEXTRACTF128rr
                     (v32i8 VR256:$src1),
                     (EXTRACT_get_vextractf128_imm VR128:$ext)))>;
+}
 
 //===----------------------------------------------------------------------===//
 // VPMASKMOV - Conditional SIMD Integer Packed Loads and Stores
