@@ -24,8 +24,6 @@
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 
-#include <pthread.h>
-#include <signal.h>
 #include <string.h>
 
 namespace __asan {
@@ -45,7 +43,6 @@ bool   FLAG_poison_shadow;
 int    FLAG_report_globals;
 size_t FLAG_malloc_context_size = kMallocContextSize;
 uintptr_t FLAG_large_malloc;
-bool   FLAG_lazy_shadow;
 bool   FLAG_handle_segv;
 bool   FLAG_replace_str;
 bool   FLAG_replace_intrin;
@@ -122,17 +119,6 @@ static const char* GetEnvFromProcSelfEnviron(const char* name) {
     p = endp + 1;
   }
   return NULL;  // Not found.
-}
-
-static void MaybeInstallSigaction(int signum,
-                                  void (*handler)(int, siginfo_t *, void *)) {
-  if (!AsanInterceptsSignal(signum))
-    return;
-  struct sigaction sigact;
-  real_memset(&sigact, 0, sizeof(sigact));
-  sigact.sa_sigaction = handler;
-  sigact.sa_flags = SA_SIGINFO;
-  CHECK(0 == real_sigaction(signum, &sigact, 0));
 }
 
 // ---------------------- mmap -------------------- {{{1
@@ -235,30 +221,6 @@ static void DescribeAddress(uintptr_t addr, uintptr_t access_size) {
 }
 
 // -------------------------- Run-time entry ------------------- {{{1
-static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
-  uintptr_t addr = (uintptr_t)siginfo->si_addr;
-  if (AddrIsInShadow(addr) && FLAG_lazy_shadow) {
-    // We traped on access to a shadow address. Just map a large chunk around
-    // this address.
-    const uintptr_t chunk_size = kPageSize << 10;  // 4M
-    uintptr_t chunk = addr & ~(chunk_size - 1);
-    AsanMmapFixedReserve(chunk, chunk_size);
-    return;
-  }
-  // Write the first message using the bullet-proof write.
-  if (13 != AsanWrite(2, "ASAN:SIGSEGV\n", 13)) ASAN_DIE;
-  uintptr_t pc, sp, bp;
-  GetPcSpBp(context, &pc, &sp, &bp);
-  Report("ERROR: AddressSanitizer crashed on unknown address %p"
-         " (pc %p sp %p bp %p T%d)\n",
-         addr, pc, sp, bp,
-         asanThreadRegistry().GetCurrentTidOrMinusOne());
-  Printf("AddressSanitizer can not provide additional info. ABORTING\n");
-  GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, false, pc, bp);
-  stack.PrintStack();
-  ShowStatsAndAbort();
-}
-
 // exported functions
 #define ASAN_REPORT_ERROR(type, is_write, size)                     \
 extern "C" void __asan_report_ ## type ## size(uintptr_t addr)      \
@@ -318,8 +280,7 @@ static void asan_atexit() {
 }
 
 void CheckFailed(const char *cond, const char *file, int line) {
-  Report("CHECK failed: %s at %s:%d, pthread_self=%p\n",
-         cond, file, line, pthread_self());
+  Report("CHECK failed: %s at %s:%d\n", cond, file, line);
   PRINT_CURRENT_STACK();
   ShowStatsAndAbort();
 }
@@ -454,7 +415,6 @@ void __asan_init() {
   FLAG_atexit = IntFlagValue(options, "atexit=", 0);
   FLAG_poison_shadow = IntFlagValue(options, "poison_shadow=", 1);
   FLAG_report_globals = IntFlagValue(options, "report_globals=", 1);
-  FLAG_lazy_shadow = IntFlagValue(options, "lazy_shadow=", 0);
   FLAG_handle_segv = IntFlagValue(options, "handle_segv=", ASAN_NEEDS_SEGV);
   FLAG_symbolize = IntFlagValue(options, "symbolize=", 1);
   FLAG_demangle = IntFlagValue(options, "demangle=", 1);
@@ -479,9 +439,7 @@ void __asan_init() {
   InitializeAsanInterceptors();
 
   ReplaceSystemMalloc();
-
-  MaybeInstallSigaction(SIGSEGV, ASAN_OnSIGSEGV);
-  MaybeInstallSigaction(SIGBUS, ASAN_OnSIGSEGV);
+  InstallSignalHandlers();
 
   if (FLAG_v) {
     Printf("|| `[%p, %p]` || HighMem    ||\n", kHighMemBeg, kHighMemEnd);
@@ -513,14 +471,12 @@ void __asan_init() {
   }
 
   {
-    if (!FLAG_lazy_shadow) {
-      if (kLowShadowBeg != kLowShadowEnd) {
-        // mmap the low shadow plus one page.
-        ReserveShadowMemoryRange(kLowShadowBeg - kPageSize, kLowShadowEnd);
-      }
-      // mmap the high shadow.
-      ReserveShadowMemoryRange(kHighShadowBeg, kHighShadowEnd);
+    if (kLowShadowBeg != kLowShadowEnd) {
+      // mmap the low shadow plus one page.
+      ReserveShadowMemoryRange(kLowShadowBeg - kPageSize, kLowShadowEnd);
     }
+    // mmap the high shadow.
+    ReserveShadowMemoryRange(kHighShadowBeg, kHighShadowEnd);
     // protect the gap
     void *prot = AsanMprotect(kShadowGapBeg, kShadowGapEnd - kShadowGapBeg + 1);
     CHECK(prot == (void*)kShadowGapBeg);

@@ -17,10 +17,6 @@
 #include "asan_thread.h"
 #include "asan_mapping.h"
 
-#include <pthread.h>
-#include <stdlib.h>
-#include <string.h>
-
 namespace __asan {
 
 AsanThread::AsanThread(LinkerInitialized x)
@@ -58,9 +54,9 @@ void AsanThread::Init() {
   fake_stack_.Init(stack_size());
   if (FLAG_v >= 1) {
     int local = 0;
-    Report("T%d: stack [%p,%p) size 0x%lx; local=%p, pthread_self=%p\n",
+    Report("T%d: stack [%p,%p) size 0x%lx; local=%p\n",
            tid(), stack_bottom_, stack_top_,
-           stack_top_ - stack_bottom_, &local, pthread_self());
+           stack_top_ - stack_bottom_, &local);
   }
 
   CHECK(AddrIsInMem(stack_bottom_));

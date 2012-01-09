@@ -107,6 +107,7 @@ ssize_t AsanWrite(int fd, const void *buf, size_t count);
 int AsanClose(int fd);
 
 bool AsanInterceptsSignal(int signum);
+void InstallSignalHandlers();
 
 // Opens the file 'file_name" and reads up to 'max_len' bytes.
 // The resulting buffer is mmaped and stored in '*buff'.

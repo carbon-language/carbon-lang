@@ -131,13 +131,6 @@ void AsanThread::SetThreadStackTopAndBottom() {
   CHECK(AddrIsInStack((uintptr_t)&local));
 }
 
-void AsanDisableCoreDumper() {
-  struct rlimit nocore;
-  nocore.rlim_cur = 0;
-  nocore.rlim_max = 0;
-  setrlimit(RLIMIT_CORE, &nocore);
-}
-
 // Support for the following functions from libdispatch on Mac OS:
 //   dispatch_async_f()
 //   dispatch_async()
