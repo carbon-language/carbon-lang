@@ -1186,15 +1186,13 @@ const TargetInfo::AddlRegName AddlRegNames[] = {
 // most of the implementation can be shared.
 class X86TargetInfo : public TargetInfo {
   enum X86SSEEnum {
-    NoSSE, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42
+    NoSSE, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42, AVX, AVX2
   } SSELevel;
   enum MMX3DNowEnum {
     NoMMX3DNow, MMX, AMD3DNow, AMD3DNowAthlon
   } MMX3DNowLevel;
 
   bool HasAES;
-  bool HasAVX;
-  bool HasAVX2;
   bool HasLZCNT;
   bool HasBMI;
   bool HasBMI2;
@@ -1336,9 +1334,8 @@ class X86TargetInfo : public TargetInfo {
 public:
   X86TargetInfo(const std::string& triple)
     : TargetInfo(triple), SSELevel(NoSSE), MMX3DNowLevel(NoMMX3DNow),
-      HasAES(false), HasAVX(false), HasAVX2(false), HasLZCNT(false),
-      HasBMI(false), HasBMI2(false), HasPOPCNT(false), HasFMA4(false),
-      CPU(CK_Generic) {
+      HasAES(false), HasLZCNT(false), HasBMI(false), HasBMI2(false),
+      HasPOPCNT(false), HasFMA4(false), CPU(CK_Generic) {
     BigEndian = false;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
@@ -1380,7 +1377,7 @@ public:
   virtual void getDefaultFeatures(llvm::StringMap<bool> &Features) const;
   virtual void HandleTargetFeatures(std::vector<std::string> &Features);
   virtual const char* getABI() const {
-    if (PointerWidth == 64 && HasAVX)
+    if (PointerWidth == 64 && SSELevel >= AVX)
       return "avx";
     else if (PointerWidth == 32 && MMX3DNowLevel == NoMMX3DNow)
       return "no-mmx";
@@ -1792,19 +1789,10 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
       continue;
     }
 
-    // FIXME: Not sure yet how to treat AVX in regard to SSE levels.
-    // For now let it be enabled together with other SSE levels.
-    if (Features[i].substr(1) == "avx2") {
-      HasAVX2 = true;
-      continue;
-    }
-    if (Features[i].substr(1) == "avx") {
-      HasAVX = true;
-      continue;
-    }
-
     assert(Features[i][0] == '+' && "Invalid target feature!");
     X86SSEEnum Level = llvm::StringSwitch<X86SSEEnum>(Features[i].substr(1))
+      .Case("avx2", AVX2)
+      .Case("avx", AVX)
       .Case("sse42", SSE42)
       .Case("sse41", SSE41)
       .Case("ssse3", SSSE3)
@@ -2008,11 +1996,6 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (HasAES)
     Builder.defineMacro("__AES__");
 
-  if (HasAVX)
-    Builder.defineMacro("__AVX__");
-  if (HasAVX2)
-    Builder.defineMacro("__AVX2__");
-
   if (HasLZCNT)
     Builder.defineMacro("__LZCNT__");
 
@@ -2030,6 +2013,10 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
 
   // Each case falls through to the previous one here.
   switch (SSELevel) {
+  case AVX2:
+    Builder.defineMacro("__AVX2__");
+  case AVX:
+    Builder.defineMacro("__AVX__");
   case SSE42:
     Builder.defineMacro("__SSE4_2__");
   case SSE41:
@@ -2050,6 +2037,8 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
 
   if (Opts.MicrosoftExt && PointerWidth == 32) {
     switch (SSELevel) {
+    case AVX2:
+    case AVX:
     case SSE42:
     case SSE41:
     case SSSE3:
