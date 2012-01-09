@@ -25,3 +25,15 @@ namespace N6 {
 namespace N7 {
   int &f(int);
 }
+
+namespace N8 {
+  int &f(int);
+}
+
+namespace N9 {
+  int &f(int);
+}
+
+namespace N10 {
+  int &f(int);
+}

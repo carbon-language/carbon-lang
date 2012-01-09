@@ -1741,14 +1741,14 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
 }
 
 ASTDeclReader::FindExistingResult::~FindExistingResult() {
-  if (!AddResult)
+  if (!AddResult || Existing)
     return;
   
   DeclContext *DC = New->getDeclContext()->getRedeclContext();
   if (DC->isTranslationUnit() && Reader.SemaObj) {
-    if (!Existing) {
-      Reader.SemaObj->IdResolver.tryAddTopLevelDecl(New, New->getDeclName());
-    }
+    Reader.SemaObj->IdResolver.tryAddTopLevelDecl(New, New->getDeclName());
+  } else if (DC->isNamespace()) {
+    DC->addDecl(New);
   }
 }
 
@@ -1775,7 +1775,13 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
     }
   }
 
-  // FIXME: Search in the DeclContext.
+  if (DC->isNamespace()) {
+    for (DeclContext::lookup_result R = DC->lookup(Name);
+         R.first != R.second; ++R.first) {
+      if (isSameEntity(*R.first, D))
+        return FindExistingResult(Reader, D, *R.first);
+    }
+  }
   
   return FindExistingResult(Reader, D, /*Existing=*/0);
 }

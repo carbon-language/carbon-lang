@@ -5,6 +5,8 @@ namespace N6 {
   char &f(char);
 }
 
+namespace N8 { }
+
 @import namespaces_left;
 @import namespaces_right;
 
@@ -23,6 +25,10 @@ namespace N5 {
   char &f(char);
 }
 
+namespace N10 { 
+  int &f(int);
+}
+
 void testMerged() {
   int &ir1 = N5::f(17);
   int &ir2 = N6::f(17);
@@ -34,3 +40,10 @@ void testMerged() {
   char &cr2 = N6::f('b');
 }
 
+// Test merging of declarations within namespaces that themselves were
+// merged without a common first declaration.
+void testMergedMerged() {
+  int &ir1 = N8::f(17);
+  int &ir2 = N9::f(17);
+  int &ir3 = N10::f(17);
+}

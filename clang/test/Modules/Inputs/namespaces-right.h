@@ -27,3 +27,15 @@ namespace N6 {
 namespace N7 {
   double &f(double);
 }
+
+namespace N8 {
+  int &f(int);
+}
+
+namespace N9 {
+  int &f(int);
+}
+
+namespace N10 {
+  int &f(int);
+}
