@@ -302,15 +302,12 @@ namespace spec_vs_expl_inst {
 
   // And some more random tests.
 
-// FIXME: Enable this test. The error is printed fine, but the note is at some
-// weird source location that causes "previous explicit instantiation is here"
-// without anything after it to be printed. That happened before this patch too.
-//  namespace SII_WithDefinedTemplate {
-//    template <typename STRING_TYPE> class BasicStringPiece {};
-//    template <> class BasicStringPiece<int> { };
-//    template class BasicStringPiece<int>;
-//    template class BasicStringPiece<int>;
-//  }
+  namespace SII_WithDefinedTemplate {
+    template <typename STRING_TYPE> class BasicStringPiece {};
+    template <> class BasicStringPiece<int> { };
+    template class BasicStringPiece<int>;  // expected-note {{previous explicit instantiation is here}}
+    template class BasicStringPiece<int>;  // expected-error {{duplicate explicit instantiation of 'BasicStringPiece<int>'}}
+  }
 
   namespace SIS {
     template <typename STRING_TYPE> class BasicStringPiece;

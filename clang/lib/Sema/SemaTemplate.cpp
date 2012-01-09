@@ -5234,6 +5234,23 @@ static void StripImplicitInstantiation(NamedDecl *D) {
   }
 }
 
+/// \brief Compute the diagnostic location for an explicit instantiation
+//  declaration or definition.
+static SourceLocation DiagLocForExplicitInstantiation(
+    NamedDecl* Decl, SourceLocation PointOfInstantiation) {
+  // Explicit instantiations following a specialization have no effect and
+  // hence no PointOfInstantiation. In that case, walk decl backwards
+  // until a valid name loc is found.
+  SourceLocation PrevDiagLoc = PointOfInstantiation;
+  for (NamedDecl *Prev = Decl; Prev && !PrevDiagLoc.isValid();
+      Prev = getPreviousDecl(Prev)) {
+    PrevDiagLoc = Prev->getLocation();
+  }
+  assert(PrevDiagLoc.isValid() &&
+         "Explicit instantiation without point of instantiation?");
+  return PrevDiagLoc;
+}
+
 /// \brief Diagnose cases where we have an explicit template specialization
 /// before/after an explicit template instantiation, producing diagnostics
 /// for those cases where they are required and determining whether the
@@ -5348,14 +5365,8 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
       // Explicit instantiations following a specialization have no effect and
       // hence no PrevPointOfInstantiation. In that case, walk decl backwards
       // until a valid name loc is found.
-      SourceLocation PrevDiagLoc = PrevPointOfInstantiation;
-      for (NamedDecl *Prev = PrevDecl; Prev && !PrevDiagLoc.isValid();
-          Prev = getPreviousDecl(Prev)) {
-        PrevDiagLoc = Prev->getLocation();
-      }
-      Diag(PrevDiagLoc, diag::note_explicit_instantiation_definition_here);
-      assert(PrevDiagLoc.isValid() &&
-             "Explicit instantiation without point of instantiation?");
+      Diag(DiagLocForExplicitInstantiation(PrevDecl, PrevPointOfInstantiation),
+           diag::note_explicit_instantiation_definition_here);
       HasNoEffect = true;
       return false;
     }
@@ -5414,7 +5425,7 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
       //       in a program,
       Diag(NewLoc, diag::err_explicit_instantiation_duplicate)
         << PrevDecl;
-      Diag(PrevPointOfInstantiation,
+      Diag(DiagLocForExplicitInstantiation(PrevDecl, PrevPointOfInstantiation),
            diag::note_previous_explicit_instantiation);
       HasNoEffect = true;
       return false;
