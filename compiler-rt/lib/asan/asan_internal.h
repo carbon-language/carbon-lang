@@ -106,6 +106,8 @@ ssize_t AsanRead(int fd, void *buf, size_t count);
 ssize_t AsanWrite(int fd, const void *buf, size_t count);
 int AsanClose(int fd);
 
+bool AsanInterceptsSignal(int signum);
+
 // Opens the file 'file_name" and reads up to 'max_len' bytes.
 // The resulting buffer is mmaped and stored in '*buff'.
 // The size of the mmaped region is stored in '*buff_size',
@@ -151,6 +153,7 @@ extern bool   FLAG_use_fake_stack;
 extern size_t FLAG_max_malloc_fill_size;
 extern int    FLAG_exitcode;
 extern bool   FLAG_allow_user_poisoning;
+extern bool   FLAG_handle_segv;
 
 extern int asan_inited;
 // Used to avoid infinite recursion in __asan_init().

@@ -64,6 +64,10 @@ void GetPcSpBp(void *context, uintptr_t *pc, uintptr_t *sp, uintptr_t *bp) {
 #endif
 }
 
+bool AsanInterceptsSignal(int signum) {
+  return signum == SIGSEGV && FLAG_handle_segv;
+}
+
 static void *asan_mmap(void *addr, size_t length, int prot, int flags,
                 int fd, uint64_t offset) {
 # if __WORDSIZE == 64

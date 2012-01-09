@@ -19,13 +19,38 @@
 #include "asan_mapping.h"
 #include "asan_stack.h"
 #include "asan_stats.h"
+#include "asan_thread_registry.h"
 
+#include <new>
 #include <ctype.h>
 #include <dlfcn.h>
 #include <string.h>
 #include <strings.h>
 
 namespace __asan {
+
+typedef void (*longjmp_f)(void *env, int val);
+typedef longjmp_f _longjmp_f;
+typedef longjmp_f siglongjmp_f;
+typedef void (*__cxa_throw_f)(void *, void *, void *);
+typedef int (*pthread_create_f)(pthread_t *thread, const pthread_attr_t *attr,
+                                void *(*start_routine) (void *), void *arg);
+#ifdef __APPLE__
+dispatch_async_f_f real_dispatch_async_f;
+dispatch_sync_f_f real_dispatch_sync_f;
+dispatch_after_f_f real_dispatch_after_f;
+dispatch_barrier_async_f_f real_dispatch_barrier_async_f;
+dispatch_group_async_f_f real_dispatch_group_async_f;
+pthread_workqueue_additem_np_f real_pthread_workqueue_additem_np;
+#endif
+
+sigaction_f             real_sigaction;
+signal_f                real_signal;
+longjmp_f               real_longjmp;
+_longjmp_f              real__longjmp;
+siglongjmp_f            real_siglongjmp;
+__cxa_throw_f           real___cxa_throw;
+pthread_create_f        real_pthread_create;
 
 index_f       real_index;
 memcmp_f      real_memcmp;
@@ -156,6 +181,32 @@ void InitializeAsanInterceptors() {
   INTERCEPT_FUNCTION(strncasecmp);
   INTERCEPT_FUNCTION(strncmp);
   INTERCEPT_FUNCTION(strncpy);
+
+  INTERCEPT_FUNCTION(sigaction);
+  INTERCEPT_FUNCTION(signal);
+  INTERCEPT_FUNCTION(longjmp);
+  INTERCEPT_FUNCTION(_longjmp);
+  INTERCEPT_FUNCTION_IF_EXISTS(__cxa_throw);
+  INTERCEPT_FUNCTION(pthread_create);
+
+#ifdef __APPLE__
+  INTERCEPT_FUNCTION(dispatch_async_f);
+  INTERCEPT_FUNCTION(dispatch_sync_f);
+  INTERCEPT_FUNCTION(dispatch_after_f);
+  INTERCEPT_FUNCTION(dispatch_barrier_async_f);
+  INTERCEPT_FUNCTION(dispatch_group_async_f);
+  // We don't need to intercept pthread_workqueue_additem_np() to support the
+  // libdispatch API, but it helps us to debug the unsupported functions. Let's
+  // intercept it only during verbose runs.
+  if (FLAG_v >= 2) {
+    INTERCEPT_FUNCTION(pthread_workqueue_additem_np);
+  }
+#else
+  // On Darwin siglongjmp tailcalls longjmp, so we don't want to intercept it
+  // there.
+  INTERCEPT_FUNCTION(siglongjmp);
+#endif
+
 #ifndef __APPLE__
   INTERCEPT_FUNCTION(strnlen);
 #endif
@@ -168,6 +219,136 @@ void InitializeAsanInterceptors() {
 
 // ---------------------- Wrappers ---------------- {{{1
 using namespace __asan;  // NOLINT
+
+#define OPERATOR_NEW_BODY \
+  GET_STACK_TRACE_HERE_FOR_MALLOC;\
+  return asan_memalign(0, size, &stack);
+
+#ifdef ANDROID
+void *operator new(size_t size) { OPERATOR_NEW_BODY; }
+void *operator new[](size_t size) { OPERATOR_NEW_BODY; }
+#else
+void *operator new(size_t size) throw(std::bad_alloc) { OPERATOR_NEW_BODY; }
+void *operator new[](size_t size) throw(std::bad_alloc) { OPERATOR_NEW_BODY; }
+void *operator new(size_t size, std::nothrow_t const&) throw()
+{ OPERATOR_NEW_BODY; }
+void *operator new[](size_t size, std::nothrow_t const&) throw()
+{ OPERATOR_NEW_BODY; }
+#endif
+
+#define OPERATOR_DELETE_BODY \
+  GET_STACK_TRACE_HERE_FOR_FREE(ptr);\
+  asan_free(ptr, &stack);
+
+void operator delete(void *ptr) throw() { OPERATOR_DELETE_BODY; }
+void operator delete[](void *ptr) throw() { OPERATOR_DELETE_BODY; }
+void operator delete(void *ptr, std::nothrow_t const&) throw()
+{ OPERATOR_DELETE_BODY; }
+void operator delete[](void *ptr, std::nothrow_t const&) throw()
+{ OPERATOR_DELETE_BODY;}
+
+static void *asan_thread_start(void *arg) {
+  AsanThread *t = (AsanThread*)arg;
+  asanThreadRegistry().SetCurrent(t);
+  return t->ThreadStart();
+}
+
+extern "C"
+#ifndef __APPLE__
+__attribute__((visibility("default")))
+#endif
+int WRAP(pthread_create)(pthread_t *thread, const pthread_attr_t *attr,
+                         void *(*start_routine) (void *), void *arg) {
+  GET_STACK_TRACE_HERE(kStackTraceMax, /*fast_unwind*/false);
+  AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
+  CHECK(curr_thread || asanThreadRegistry().IsCurrentThreadDying());
+  int current_tid = asanThreadRegistry().GetCurrentTidOrMinusOne();
+  AsanThread *t = AsanThread::Create(current_tid, start_routine, arg);
+  asanThreadRegistry().RegisterThread(t, current_tid, &stack);
+  return real_pthread_create(thread, attr, asan_thread_start, t);
+}
+
+extern "C"
+void *WRAP(signal)(int signum, void *handler) {
+  if (!AsanInterceptsSignal(signum)) {
+    return real_signal(signum, handler);
+  }
+  return NULL;
+}
+
+extern "C"
+int WRAP(sigaction)(int signum, const struct sigaction *act,
+                    struct sigaction *oldact) {
+  if (!AsanInterceptsSignal(signum)) {
+    return real_sigaction(signum, act, oldact);
+  }
+  return 0;
+}
+
+
+static void UnpoisonStackFromHereToTop() {
+  int local_stack;
+  AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
+  CHECK(curr_thread);
+  uintptr_t top = curr_thread->stack_top();
+  uintptr_t bottom = ((uintptr_t)&local_stack - kPageSize) & ~(kPageSize-1);
+  PoisonShadow(bottom, top - bottom, 0);
+}
+
+extern "C" void WRAP(longjmp)(void *env, int val) {
+  UnpoisonStackFromHereToTop();
+  real_longjmp(env, val);
+}
+
+extern "C" void WRAP(_longjmp)(void *env, int val) {
+  UnpoisonStackFromHereToTop();
+  real__longjmp(env, val);
+}
+
+extern "C" void WRAP(siglongjmp)(void *env, int val) {
+  UnpoisonStackFromHereToTop();
+  real_siglongjmp(env, val);
+}
+
+extern "C" void __cxa_throw(void *a, void *b, void *c);
+
+#if ASAN_HAS_EXCEPTIONS == 1
+extern "C" void WRAP(__cxa_throw)(void *a, void *b, void *c) {
+  CHECK(&real___cxa_throw);
+  UnpoisonStackFromHereToTop();
+  real___cxa_throw(a, b, c);
+}
+#endif
+
+extern "C" {
+// intercept mlock and friends.
+// Since asan maps 16T of RAM, mlock is completely unfriendly to asan.
+// All functions return 0 (success).
+static void MlockIsUnsupported() {
+  static bool printed = 0;
+  if (printed) return;
+  printed = true;
+  Printf("INFO: AddressSanitizer ignores mlock/mlockall/munlock/munlockall\n");
+}
+int mlock(const void *addr, size_t len) {
+  MlockIsUnsupported();
+  return 0;
+}
+int munlock(const void *addr, size_t len) {
+  MlockIsUnsupported();
+  return 0;
+}
+int mlockall(int flags) {
+  MlockIsUnsupported();
+  return 0;
+}
+int munlockall(void) {
+  MlockIsUnsupported();
+  return 0;
+}
+}  // extern "C"
+
+
 
 static inline int CharCmp(unsigned char c1, unsigned char c2) {
   return (c1 == c2) ? 0 : (c1 < c2) ? -1 : 1;

@@ -101,6 +101,8 @@ typedef int (*strncasecmp_f)(const char *s1, const char *s2, size_t n);
 typedef int (*strncmp_f)(const char *s1, const char *s2, size_t size);
 typedef char* (*strncpy_f)(char *to, const char *from, size_t size);
 typedef size_t (*strnlen_f)(const char *s, size_t maxlen);
+typedef void *(*signal_f)(int signum, void *handler);
+typedef int (*sigaction_f)(int signum, const void *act, void *oldact);
 
 // __asan::real_X() holds pointer to library implementation of X().
 extern index_f          real_index;
@@ -119,6 +121,8 @@ extern strncasecmp_f    real_strncasecmp;
 extern strncmp_f        real_strncmp;
 extern strncpy_f        real_strncpy;
 extern strnlen_f        real_strnlen;
+extern signal_f         real_signal;
+extern sigaction_f      real_sigaction;
 
 // __asan::internal_X() is the implementation of X() for use in RTL.
 size_t internal_strlen(const char *s);
