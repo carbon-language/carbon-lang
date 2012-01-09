@@ -3357,7 +3357,7 @@ retry:
           VisitedRegs.insert(F.ScaledReg ? F.ScaledReg : F.BaseRegs[0]);
       } else {
         DEBUG(dbgs() << "New best at "; NewCost.print(dbgs());
-              dbgs() << ". Regs:";
+              dbgs() << ".\n Regs:";
               for (SmallPtrSet<const SCEV *, 16>::const_iterator
                    I = NewRegs.begin(), E = NewRegs.end(); I != E; ++I)
                 dbgs() << ' ' << **I;
@@ -3815,6 +3815,9 @@ LSRInstance::ImplementSolution(const SmallVectorImpl<const Formula *> &Solution,
   SmallVector<WeakVH, 16> DeadInsts;
 
   SCEVExpander Rewriter(SE, "lsr");
+#ifndef NDEBUG
+  Rewriter.setDebugType(DEBUG_TYPE);
+#endif
   Rewriter.disableCanonicalMode();
   Rewriter.enableLSRMode();
   Rewriter.setIVIncInsertPos(L, IVIncInsertPos);
