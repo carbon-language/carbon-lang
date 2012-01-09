@@ -148,7 +148,7 @@ class GenericTester(TestBase):
             self.runCmd("expression %s" % var)
             output = self.res.GetOutput()
             
-            # The input type is in a canonical form as a set named atoms.
+            # The input type is in a canonical form as a set of named atoms.
             # The display type string must conatin each and every element.
             #
             # Example:
