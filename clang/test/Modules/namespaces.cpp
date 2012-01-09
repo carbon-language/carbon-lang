@@ -47,3 +47,14 @@ void testMergedMerged() {
   int &ir2 = N9::f(17);
   int &ir3 = N10::f(17);
 }
+
+// Test merging when using anonymous namespaces, which does not
+// actually perform any merging.
+// other file: expected-note{{passing argument to parameter here}}
+void testAnonymousNotMerged() {
+  N11::consumeFoo(N11::getFoo()); // expected-error{{cannot initialize a parameter of type 'N11::<anonymous>::Foo *' with an rvalue of type 'N11::<anonymous>::Foo *'}}
+  N12::consumeFoo(N12::getFoo()); // expected-error{{cannot initialize a parameter of type 'N12::<anonymous>::Foo *' with an rvalue of type 'N12::<anonymous>::Foo *'}}  
+}
+
+
+// other file: expected-note{{passing argument to parameter here}}

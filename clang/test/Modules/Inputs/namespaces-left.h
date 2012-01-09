@@ -37,3 +37,17 @@ namespace N9 {
 namespace N10 {
   int &f(int);
 }
+
+namespace N11 {
+  namespace {
+    class Foo;
+  }
+  Foo *getFoo();
+}
+
+namespace N12 {
+  namespace {
+    class Foo;
+  }
+  Foo *getFoo();
+}

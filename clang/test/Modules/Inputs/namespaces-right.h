@@ -39,3 +39,23 @@ namespace N9 {
 namespace N10 {
   int &f(int);
 }
+
+
+
+
+
+
+
+namespace N11 {
+  namespace {
+    class Foo;
+  }
+  void consumeFoo(Foo*);
+}
+
+namespace N12 {
+  namespace {
+    class Foo;
+  }
+  void consumeFoo(Foo*);
+}

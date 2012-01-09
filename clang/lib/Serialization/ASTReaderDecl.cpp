@@ -978,10 +978,12 @@ void ASTDeclReader::VisitNamespaceDecl(NamespaceDecl *D) {
   mergeRedeclarable(D, Redecl);
 
   if (Redecl.getFirstID() == ThisDeclID) {
-    // FIXME: If there's already an anonymous namespace, do we merge it with
-    // this one? Or do we, when loading modules, just forget about anonymous
-    // namespace entirely?
-    D->setAnonymousNamespace(ReadDeclAs<NamespaceDecl>(Record, Idx));
+    // Each module has its own anonymous namespace, which is disjoint from
+    // any other module's anonymous namespaces, so don't attach the anonymous
+    // namespace at all.
+    NamespaceDecl *Anon = ReadDeclAs<NamespaceDecl>(Record, Idx);
+    if (F.Kind != MK_Module)
+      D->setAnonymousNamespace(Anon);
   } else {
     // Link this namespace back to the first declaration, which has already
     // been deserialized.
@@ -2484,10 +2486,16 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
     case UPD_CXX_ADDED_ANONYMOUS_NAMESPACE: {
       NamespaceDecl *Anon
         = Reader.ReadDeclAs<NamespaceDecl>(ModuleFile, Record, Idx);
-      if (TranslationUnitDecl *TU = dyn_cast<TranslationUnitDecl>(D))
-        TU->setAnonymousNamespace(Anon);
-      else
-        cast<NamespaceDecl>(D)->setAnonymousNamespace(Anon);
+      
+      // Each module has its own anonymous namespace, which is disjoint from
+      // any other module's anonymous namespaces, so don't attach the anonymous
+      // namespace at all.
+      if (ModuleFile.Kind != MK_Module) {
+        if (TranslationUnitDecl *TU = dyn_cast<TranslationUnitDecl>(D))
+          TU->setAnonymousNamespace(Anon);
+        else
+          cast<NamespaceDecl>(D)->setAnonymousNamespace(Anon);
+      }
       break;
     }
 

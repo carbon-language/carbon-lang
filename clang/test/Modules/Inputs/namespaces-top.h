@@ -9,3 +9,6 @@ namespace N2 {
 namespace N3 { 
   int& f(int);
 }
+
+namespace N12 { }
+
