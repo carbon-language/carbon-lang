@@ -16,6 +16,7 @@
 #include "asan_allocator.h"
 #include "asan_interface.h"
 #include "asan_internal.h"
+#include "asan_mac.h"
 #include "asan_mapping.h"
 #include "asan_stack.h"
 #include "asan_stats.h"
@@ -161,59 +162,6 @@ int internal_memcmp(const void* s1, const void* s2, size_t n) {
   return 0;
 }
 
-void InitializeAsanInterceptors() {
-#ifndef __APPLE__
-  INTERCEPT_FUNCTION(index);
-#else
-  OVERRIDE_FUNCTION(index, WRAP(strchr));
-#endif
-  INTERCEPT_FUNCTION(memcmp);
-  INTERCEPT_FUNCTION(memcpy);
-  INTERCEPT_FUNCTION(memmove);
-  INTERCEPT_FUNCTION(memset);
-  INTERCEPT_FUNCTION(strcasecmp);
-  INTERCEPT_FUNCTION(strcat);  // NOLINT
-  INTERCEPT_FUNCTION(strchr);
-  INTERCEPT_FUNCTION(strcmp);
-  INTERCEPT_FUNCTION(strcpy);  // NOLINT
-  INTERCEPT_FUNCTION(strdup);
-  INTERCEPT_FUNCTION(strlen);
-  INTERCEPT_FUNCTION(strncasecmp);
-  INTERCEPT_FUNCTION(strncmp);
-  INTERCEPT_FUNCTION(strncpy);
-
-  INTERCEPT_FUNCTION(sigaction);
-  INTERCEPT_FUNCTION(signal);
-  INTERCEPT_FUNCTION(longjmp);
-  INTERCEPT_FUNCTION(_longjmp);
-  INTERCEPT_FUNCTION_IF_EXISTS(__cxa_throw);
-  INTERCEPT_FUNCTION(pthread_create);
-
-#ifdef __APPLE__
-  INTERCEPT_FUNCTION(dispatch_async_f);
-  INTERCEPT_FUNCTION(dispatch_sync_f);
-  INTERCEPT_FUNCTION(dispatch_after_f);
-  INTERCEPT_FUNCTION(dispatch_barrier_async_f);
-  INTERCEPT_FUNCTION(dispatch_group_async_f);
-  // We don't need to intercept pthread_workqueue_additem_np() to support the
-  // libdispatch API, but it helps us to debug the unsupported functions. Let's
-  // intercept it only during verbose runs.
-  if (FLAG_v >= 2) {
-    INTERCEPT_FUNCTION(pthread_workqueue_additem_np);
-  }
-#else
-  // On Darwin siglongjmp tailcalls longjmp, so we don't want to intercept it
-  // there.
-  INTERCEPT_FUNCTION(siglongjmp);
-#endif
-
-#ifndef __APPLE__
-  INTERCEPT_FUNCTION(strnlen);
-#endif
-  if (FLAG_v > 0) {
-    Printf("AddressSanitizer: libc interceptors initialized\n");
-  }
-}
 
 }  // namespace __asan
 
@@ -277,8 +225,7 @@ void *WRAP(signal)(int signum, void *handler) {
 }
 
 extern "C"
-int WRAP(sigaction)(int signum, const struct sigaction *act,
-                    struct sigaction *oldact) {
+int WRAP(sigaction)(int signum, const void *act, void *oldact) {
   if (!AsanInterceptsSignal(signum)) {
     return real_sigaction(signum, act, oldact);
   }
@@ -569,4 +516,63 @@ size_t WRAP(strnlen)(const char *s, size_t maxlen) {
   }
   return length;
 }
+
+// ---------------------- InitializeAsanInterceptors ---------------- {{{1
+namespace __asan {
+void InitializeAsanInterceptors() {
+#ifndef __APPLE__
+  INTERCEPT_FUNCTION(index);
+#else
+  OVERRIDE_FUNCTION(index, WRAP(strchr));
+#endif
+  INTERCEPT_FUNCTION(memcmp);
+  INTERCEPT_FUNCTION(memcpy);
+  INTERCEPT_FUNCTION(memmove);
+  INTERCEPT_FUNCTION(memset);
+  INTERCEPT_FUNCTION(strcasecmp);
+  INTERCEPT_FUNCTION(strcat);  // NOLINT
+  INTERCEPT_FUNCTION(strchr);
+  INTERCEPT_FUNCTION(strcmp);
+  INTERCEPT_FUNCTION(strcpy);  // NOLINT
+  INTERCEPT_FUNCTION(strdup);
+  INTERCEPT_FUNCTION(strlen);
+  INTERCEPT_FUNCTION(strncasecmp);
+  INTERCEPT_FUNCTION(strncmp);
+  INTERCEPT_FUNCTION(strncpy);
+
+  INTERCEPT_FUNCTION(sigaction);
+  INTERCEPT_FUNCTION(signal);
+  INTERCEPT_FUNCTION(longjmp);
+  INTERCEPT_FUNCTION(_longjmp);
+  INTERCEPT_FUNCTION_IF_EXISTS(__cxa_throw);
+  INTERCEPT_FUNCTION(pthread_create);
+
+#ifdef __APPLE__
+  INTERCEPT_FUNCTION(dispatch_async_f);
+  INTERCEPT_FUNCTION(dispatch_sync_f);
+  INTERCEPT_FUNCTION(dispatch_after_f);
+  INTERCEPT_FUNCTION(dispatch_barrier_async_f);
+  INTERCEPT_FUNCTION(dispatch_group_async_f);
+  // We don't need to intercept pthread_workqueue_additem_np() to support the
+  // libdispatch API, but it helps us to debug the unsupported functions. Let's
+  // intercept it only during verbose runs.
+  if (FLAG_v >= 2) {
+    INTERCEPT_FUNCTION(pthread_workqueue_additem_np);
+  }
+#else
+  // On Darwin siglongjmp tailcalls longjmp, so we don't want to intercept it
+  // there.
+  INTERCEPT_FUNCTION(siglongjmp);
+#endif
+
+#ifndef __APPLE__
+  INTERCEPT_FUNCTION(strnlen);
+#endif
+  if (FLAG_v > 0) {
+    Printf("AddressSanitizer: libc interceptors initialized\n");
+  }
+}
+
+}  // namespace __asan
+
 #endif

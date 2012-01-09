@@ -66,22 +66,6 @@
   do { real_##func = (func##_f)dlsym(RTLD_NEXT, #func); } while (0)
 #endif
 
-#ifdef __APPLE__
-int WRAP(memcmp)(const void *a1, const void *a2, size_t size);
-void *WRAP(memcpy)(void *to, const void *from, size_t size);
-void *WRAP(memmove)(void *to, const void *from, size_t size);
-void *WRAP(memset)(void *block, int c, size_t size);
-int WRAP(strcasecmp)(const char *s1, const char *s2);
-char *WRAP(strcat)(char *to, const char *from);  // NOLINT
-char *WRAP(strchr)(const char *string, int c);
-int WRAP(strcmp)(const char *s1, const char *s2);
-char *WRAP(strcpy)(char *to, const char *from);  // NOLINT
-char *WRAP(strdup)(const char *s);
-size_t WRAP(strlen)(const char *s);
-int WRAP(strncasecmp)(const char *s1, const char *s2, size_t n);
-int WRAP(strncmp)(const char *s1, const char *s2, size_t size);
-char *WRAP(strncpy)(char *to, const char *from, size_t size);
-#endif
 
 namespace __asan {
 
