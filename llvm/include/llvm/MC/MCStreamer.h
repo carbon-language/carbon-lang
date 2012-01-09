@@ -96,6 +96,8 @@ namespace llvm {
 
     void RecordProcStart(MCDwarfFrameInfo &Frame);
     virtual void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame);
+    void RecordProcEnd(MCDwarfFrameInfo &Frame);
+    virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &CurFrame);
     void EmitFrames(bool usingCFI);
 
     MCWin64EHUnwindInfo *getCurrentW64UnwindInfo(){return CurrentW64UnwindInfo;}
@@ -539,7 +541,7 @@ namespace llvm {
     virtual void EmitCompactUnwindEncoding(uint32_t CompactUnwindEncoding);
     virtual void EmitCFISections(bool EH, bool Debug);
     void EmitCFIStartProc();
-    virtual void EmitCFIEndProc();
+    void EmitCFIEndProc();
     virtual void EmitCFIDefCfa(int64_t Register, int64_t Offset);
     virtual void EmitCFIDefCfaOffset(int64_t Offset);
     virtual void EmitCFIDefCfaRegister(int64_t Register);

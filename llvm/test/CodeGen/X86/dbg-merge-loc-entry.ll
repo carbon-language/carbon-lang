@@ -10,7 +10,7 @@ target triple = "x86_64-apple-darwin8"
 ;CHECK-NEXT:    .short  Lset
 ;CHECK-NEXT: Ltmp
 ;CHECK-NEXT:	.byte	85                      ## DW_OP_reg5
-;CHECK-NEXT: Ltmp6
+;CHECK-NEXT: Ltmp5
 ;CHECK-NEXT:	.quad	0
 ;CHECK-NEXT:	.quad	0
 

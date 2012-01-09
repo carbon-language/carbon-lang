@@ -6,9 +6,9 @@ target triple = "thumbv7-apple-macosx10.6.7"
 ;CHECK: Ldebug_loc0:
 ;CHECK-NEXT:        .long   Ltmp0
 ;CHECK-NEXT:        .long   Ltmp1
-;CHECK-NEXT: Lset[[N:[0-9]+]] = Ltmp9-Ltmp8        @ Loc expr size
+;CHECK-NEXT: Lset[[N:[0-9]+]] = Ltmp8-Ltmp7        @ Loc expr size
 ;CHECK-NEXT:        .short  Lset[[N]]
-;CHECK-NEXT: Ltmp8:
+;CHECK-NEXT: Ltmp7:
 ;CHECK-NEXT:        .byte   144                     @ DW_OP_regx for S register
 
 define void @_Z3foov() optsize ssp {

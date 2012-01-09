@@ -109,6 +109,10 @@ void MCObjectStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
   RecordProcStart(Frame);
 }
 
+void MCObjectStreamer::EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {
+  RecordProcEnd(Frame);
+}
+
 void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
   MCStreamer::EmitLabel(Symbol);
 

@@ -62,6 +62,7 @@ private:
 
   void EmitRegisterName(int64_t Register);
   virtual void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame);
+  virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame);
 
 public:
   MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
@@ -210,7 +211,6 @@ public:
                                      StringRef FileName);
 
   virtual void EmitCFISections(bool EH, bool Debug);
-  virtual void EmitCFIEndProc();
   virtual void EmitCFIDefCfa(int64_t Register, int64_t Offset);
   virtual void EmitCFIDefCfaOffset(int64_t Offset);
   virtual void EmitCFIDefCfaRegister(int64_t Register);
@@ -851,11 +851,15 @@ void MCAsmStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitCFIEndProc() {
-  MCStreamer::EmitCFIEndProc();
-
-  if (!UseCFI)
+void MCAsmStreamer::EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {
+  if (!UseCFI) {
+    RecordProcEnd(Frame);
     return;
+  }
+
+  // Put a dummy non-null value in Frame.End to mark that this frame has been
+  // closed.
+  Frame.End = (MCSymbol *) 1;
 
   OS << "\t.cfi_endproc";
   EmitEOL();

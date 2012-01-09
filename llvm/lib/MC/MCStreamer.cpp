@@ -301,8 +301,15 @@ void MCStreamer::RecordProcStart(MCDwarfFrameInfo &Frame) {
 void MCStreamer::EmitCFIEndProc() {
   EnsureValidFrame();
   MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
-  CurFrame->End = getContext().CreateTempSymbol();
-  EmitLabel(CurFrame->End);
+  EmitCFIEndProcImpl(*CurFrame);
+}
+
+void MCStreamer::EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {
+}
+
+void MCStreamer::RecordProcEnd(MCDwarfFrameInfo &Frame) {
+  Frame.End = getContext().CreateTempSymbol();
+  EmitLabel(Frame.End);
 }
 
 void MCStreamer::EmitCFIDefCfa(int64_t Register, int64_t Offset) {
