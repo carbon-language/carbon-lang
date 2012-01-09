@@ -1509,6 +1509,10 @@ void Sema::MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls) {
     return New->setInvalidDecl();
   }
 
+  // Modules always permit redefinition of typedefs.
+  if (getLangOptions().Modules)
+    return;
+  
   // If we have a redefinition of a typedef in C, emit a warning.  This warning
   // is normally mapped to an error, but can be controlled with
   // -Wtypedef-redefinition.  If either the original or the redefinition is
