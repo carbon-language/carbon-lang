@@ -369,6 +369,9 @@ void ASTDeclReader::VisitDecl(Decl *D) {
   // Determine whether this declaration is part of a (sub)module. If so, it
   // may not yet be visible.
   if (unsigned SubmoduleID = readSubmoduleID(Record, Idx)) {
+    // Store the owning submodule ID in the declaration.
+    D->setOwningModuleID(SubmoduleID);
+    
     // Module-private declarations are never visible, so there is no work to do.
     if (!D->isModulePrivate()) {
       if (Module *Owner = Reader.getSubmodule(SubmoduleID)) {
@@ -972,7 +975,8 @@ void ASTDeclReader::VisitNamespaceDecl(NamespaceDecl *D) {
   D->setInline(Record[Idx++]);
   D->LocStart = ReadSourceLocation(Record, Idx);
   D->RBraceLoc = ReadSourceLocation(Record, Idx);
-  
+  mergeRedeclarable(D, Redecl);
+
   if (Redecl.getFirstID() == ThisDeclID) {
     // FIXME: If there's already an anonymous namespace, do we merge it with
     // this one? Or do we, when loading modules, just forget about anonymous
@@ -1232,7 +1236,7 @@ ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
   RedeclKind Kind = (RedeclKind)Record[Idx++];
   
   // Determine the first declaration ID.
-  DeclID FirstDeclID;
+  DeclID FirstDeclID = 0;
   switch (Kind) {
   case FirstDeclaration: {
     FirstDeclID = ThisDeclID;
@@ -1489,7 +1493,7 @@ ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
   enum RedeclKind { FirstDeclaration = 0, FirstInFile, PointsToPrevious };
   RedeclKind Kind = (RedeclKind)Record[Idx++];
   
-  DeclID FirstDeclID;
+  DeclID FirstDeclID = 0;
   switch (Kind) {
   case FirstDeclaration:
     FirstDeclID = ThisDeclID;
@@ -1544,6 +1548,13 @@ void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *D,
         // appropriate canonical declaration.
         D->RedeclLink 
           = typename Redeclarable<T>::PreviousDeclLink(ExistingCanon);
+        
+        // When we merge a namespace, update its pointer to the first namespace.
+        if (NamespaceDecl *Namespace
+              = dyn_cast<NamespaceDecl>(static_cast<T*>(D))) {
+          Namespace->AnonOrFirstNamespaceAndInline.setPointer(
+            static_cast<NamespaceDecl *>(static_cast<void*>(ExistingCanon)));
+        }
         
         // Don't introduce DCanon into the set of pending declaration chains.
         Redecl.suppress();
@@ -1719,6 +1730,12 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
       VarX->getASTContext().hasSameType(VarX->getType(), VarY->getType());
   }
   
+  // Namespaces with the same name and inlinedness match.
+  if (NamespaceDecl *NamespaceX = dyn_cast<NamespaceDecl>(X)) {
+    NamespaceDecl *NamespaceY = cast<NamespaceDecl>(Y);
+    return NamespaceX->isInline() == NamespaceY->isInline();
+  }
+      
   // FIXME: Many other cases to implement.
   return false;
 }

@@ -16,3 +16,14 @@ namespace N3 {
   double& f(double);
 }
 
+namespace N5 {
+  double &f(double);
+}
+
+namespace N6 {
+  double &f(double);
+}
+
+namespace N7 {
+  double &f(double);
+}

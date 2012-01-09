@@ -4808,15 +4808,17 @@ namespace {
   /// declaration context.
   class DeclContextNameLookupVisitor {
     ASTReader &Reader;
+    llvm::SmallVectorImpl<const DeclContext *> &Contexts;
     const DeclContext *DC;
     DeclarationName Name;
     SmallVectorImpl<NamedDecl *> &Decls;
 
   public:
     DeclContextNameLookupVisitor(ASTReader &Reader, 
-                                 const DeclContext *DC, DeclarationName Name,
+                                 SmallVectorImpl<const DeclContext *> &Contexts, 
+                                 DeclarationName Name,
                                  SmallVectorImpl<NamedDecl *> &Decls)
-      : Reader(Reader), DC(DC), Name(Name), Decls(Decls) { }
+      : Reader(Reader), Contexts(Contexts), Name(Name), Decls(Decls) { }
 
     static bool visit(ModuleFile &M, void *UserData) {
       DeclContextNameLookupVisitor *This
@@ -4824,11 +4826,20 @@ namespace {
 
       // Check whether we have any visible declaration information for
       // this context in this module.
-      ModuleFile::DeclContextInfosMap::iterator Info
-        = M.DeclContextInfos.find(This->DC);
-      if (Info == M.DeclContextInfos.end() || !Info->second.NameLookupTableData)
-        return false;
+      ModuleFile::DeclContextInfosMap::iterator Info;
+      bool FoundInfo = false;
+      for (unsigned I = 0, N = This->Contexts.size(); I != N; ++I) {
+        Info = M.DeclContextInfos.find(This->Contexts[I]);
+        if (Info != M.DeclContextInfos.end() && 
+            Info->second.NameLookupTableData) {
+          FoundInfo = true;
+          break;
+        }
+      }
 
+      if (!FoundInfo)
+        return false;
+      
       // Look for this name within this module.
       ASTDeclContextNameLookupTable *LookupTable =
         (ASTDeclContextNameLookupTable*)Info->second.NameLookupTableData;
@@ -4870,7 +4881,24 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
                                       DeclContext::lookup_iterator(0));
 
   SmallVector<NamedDecl *, 64> Decls;
-  DeclContextNameLookupVisitor Visitor(*this, DC, Name, Decls);
+  
+  // Compute the declaration contexts we need to look into. Multiple such
+  // declaration contexts occur when two declaration contexts from disjoint
+  // modules get merged, e.g., when two namespaces with the same name are 
+  // independently defined in separate modules.
+  SmallVector<const DeclContext *, 2> Contexts;
+  Contexts.push_back(DC);
+  
+  if (DC->isNamespace()) {
+    MergedDeclsMap::iterator Merged
+      = MergedDecls.find(const_cast<Decl *>(cast<Decl>(DC)));
+    if (Merged != MergedDecls.end()) {
+      for (unsigned I = 0, N = Merged->second.size(); I != N; ++I)
+        Contexts.push_back(cast<DeclContext>(GetDecl(Merged->second[I])));
+    }
+  }
+  
+  DeclContextNameLookupVisitor Visitor(*this, Contexts, Name, Decls);
   ModuleMgr.visit(&DeclContextNameLookupVisitor::visit, &Visitor);
   ++NumVisibleDeclContextsRead;
   SetExternalVisibleDeclsForName(DC, Name, Decls);

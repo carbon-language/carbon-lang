@@ -514,6 +514,12 @@ protected:
     NextInContextAndBits.setInt(Bits);
   }
 
+  /// \brief Set the owning module ID.
+  void setOwningModuleID(unsigned ID) {
+    assert(isFromASTFile() && "Only works on a deserialized declaration");
+    *((unsigned*)this - 2) = ID;
+  }
+  
 public:
   
   /// \brief Determine the availability of the given declaration.
@@ -573,7 +579,16 @@ public:
       return *((const unsigned*)this - 1);
     return 0;
   }
-              
+  
+  /// \brief Retrieve the global ID of the module that owns this particular
+  /// declaration.
+  unsigned getOwningModuleID() const {
+    if (isFromASTFile())
+      return *((const unsigned*)this - 2);
+    
+    return 0;
+  }
+  
   unsigned getIdentifierNamespace() const {
     return IdentifierNamespace;
   }
