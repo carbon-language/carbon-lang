@@ -60,8 +60,8 @@ public:
   explicit X86FastISel(FunctionLoweringInfo &funcInfo) : FastISel(funcInfo) {
     Subtarget = &TM.getSubtarget<X86Subtarget>();
     StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
-    X86ScalarSSEf64 = Subtarget->hasSSE2() || Subtarget->hasAVX();
-    X86ScalarSSEf32 = Subtarget->hasSSE1() || Subtarget->hasAVX();
+    X86ScalarSSEf64 = Subtarget->hasXMMInt();
+    X86ScalarSSEf32 = Subtarget->hasXMM();
   }
 
   virtual bool TargetSelectInstruction(const Instruction *I);
@@ -837,8 +837,8 @@ bool X86FastISel::X86SelectLoad(const Instruction *I)  {
 
 static unsigned X86ChooseCmpOpcode(EVT VT, const X86Subtarget *Subtarget) {
   bool HasAVX = Subtarget->hasAVX();
-  bool X86ScalarSSEf32 = HasAVX || Subtarget->hasSSE1();
-  bool X86ScalarSSEf64 = HasAVX || Subtarget->hasSSE2();
+  bool X86ScalarSSEf32 = Subtarget->hasXMM();
+  bool X86ScalarSSEf64 = Subtarget->hasXMMInt();
 
   switch (VT.getSimpleVT().SimpleTy) {
   default:       return 0;

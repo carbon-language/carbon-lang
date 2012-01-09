@@ -7630,7 +7630,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op,
   SDValue Sub = DAG.getNode(ISD::FSUB, dl, MVT::v2f64, XR2F, CLod1);
   SDValue Result;
 
-  if (Subtarget->hasSSE3()) {
+  if (Subtarget->hasSSE3orAVX()) {
     // FIXME: The 'haddpd' instruction may be slower than 'movhlps + addsd'.
     Result = DAG.getNode(X86ISD::FHADD, dl, MVT::v2f64, Sub, Sub);
   } else {
@@ -12894,7 +12894,7 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   if (Cond.getOpcode() == ISD::SETCC && VT.isFloatingPoint() &&
       VT != MVT::f80 && DAG.getTargetLoweringInfo().isTypeLegal(VT) &&
       (Subtarget->hasXMMInt() ||
-       (Subtarget->hasSSE1() && VT.getScalarType() == MVT::f32))) {
+       (Subtarget->hasXMM() && VT.getScalarType() == MVT::f32))) {
     ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
 
     unsigned Opcode = 0;
