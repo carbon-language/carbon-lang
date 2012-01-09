@@ -636,9 +636,9 @@ static Value* foldLogOpOfMaskedICmps(ICmpInst *LHS, ICmpInst *RHS,
   ICmpInst::Predicate LHSCC = LHS->getPredicate(), RHSCC = RHS->getPredicate();
   unsigned mask = foldLogOpOfMaskedICmpsHelper(A, B, C, D, E, LHS, RHS,
                                                LHSCC, RHSCC);
+  if (mask == 0) return 0;
   assert(ICmpInst::isEquality(LHSCC) && ICmpInst::isEquality(RHSCC) &&
          "foldLogOpOfMaskedICmpsHelper must return an equality predicate.");
-  if (mask == 0) return 0;
 
   if (NEWCC == ICmpInst::ICMP_NE)
     mask >>= 1; // treat "Not"-states as normal states
