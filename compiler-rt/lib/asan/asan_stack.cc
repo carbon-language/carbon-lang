@@ -18,8 +18,6 @@
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 
-#include <string.h>
-
 #if ASAN_USE_SYSINFO == 1
 #include "sysinfo/sysinfo.h"
 #endif

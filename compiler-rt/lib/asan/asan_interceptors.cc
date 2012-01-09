@@ -225,6 +225,9 @@ void *WRAP(signal)(int signum, void *handler) {
 }
 
 extern "C"
+extern int (sigaction)(int signum, const void *act, void *oldact);
+
+extern "C"
 int WRAP(sigaction)(int signum, const void *act, void *oldact) {
   if (!AsanInterceptsSignal(signum)) {
     return real_sigaction(signum, act, oldact);
