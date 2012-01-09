@@ -399,12 +399,12 @@ class S3I<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
 //   SS3AI - SSSE3 instructions with TA prefix.
 //
 // Note: SSSE3 instructions have 64-bit and 128-bit versions. The 64-bit version
-// uses the MMX registers. We put those instructions here because they better
-// fit into the SSSE3 instruction category rather than the MMX category.
+// uses the MMX registers. The 64-bit versions are grouped with the MMX
+// classes. They need to be enabled even if AVX is enabled.
 
 class SS38I<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern>
-      : Ii8<o, F, outs, ins, asm, pattern, SSEPackedInt>, T8,
+      : I<o, F, outs, ins, asm, pattern, SSEPackedInt>, T8,
         Requires<[HasSSSE3]>;
 class SS3AI<bits<8> o, Format F, dag outs, dag ins, string asm,
             list<dag> pattern>
@@ -569,6 +569,11 @@ class VRPDI<bits<8> o, Format F, dag outs, dag ins, string asm,
 // MMXIi8 - MMX instructions with ImmT == Imm8 and TB prefix.
 // MMXID  - MMX instructions with XD prefix.
 // MMXIS  - MMX instructions with XS prefix.
+// MMXPI  - SSE 1 & 2 packed instructions for MMX with no AVX equivalents
+// MMXSDIi8  - SSE2 instructions with ImmT == Imm8 and XD prefix. No AVX equiv.
+// MMXSSDIi8 - SSE2 instructions with ImmT == Imm8 and XS prefix. No AVX equiv.
+// MMXSS38I - SSSE3 instructions with T8 prefix for MMX registers. No AVX equiv.
+// MMXSS3AI - SSSE3 instructions with TA prefix for MMX registers. No AVX equiv.
 class MMXI<bits<8> o, Format F, dag outs, dag ins, string asm, 
            list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, TB, Requires<[HasMMX]>;
@@ -590,3 +595,21 @@ class MMXID<bits<8> o, Format F, dag outs, dag ins, string asm,
 class MMXIS<bits<8> o, Format F, dag outs, dag ins, string asm, 
             list<dag> pattern>
       : Ii8<o, F, outs, ins, asm, pattern>, XS, Requires<[HasMMX]>;
+
+class MMXPI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern,
+            Domain d>
+      : I<o, F, outs, ins, asm, pattern, d> {
+  let Predicates = !if(hasOpSizePrefix /* OpSize */, [HasXMMInt], [HasXMM]);
+}
+class MMXSDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
+               list<dag> pattern>
+      : Ii8<o, F, outs, ins, asm, pattern>, XD, Requires<[HasXMMInt]>;
+class MMXSSDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
+               list<dag> pattern>
+      : Ii8<o, F, outs, ins, asm, pattern>, XS, Requires<[HasXMMInt]>;
+class MMXSS38I<bits<8> o, Format F, dag outs, dag ins, string asm,
+               list<dag> pattern>
+      : I<o, F, outs, ins, asm, pattern>, T8, Requires<[HasSSSE3orAVX]>;
+class MMXSS3AI<bits<8> o, Format F, dag outs, dag ins, string asm,
+               list<dag> pattern>
+      : Ii8<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSSE3orAVX]>;

@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=x86 -mattr=+mmx,+ssse3 | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+avx | FileCheck %s
 
 declare x86_mmx @llvm.x86.ssse3.phadd.w(x86_mmx, x86_mmx) nounwind readnone
 

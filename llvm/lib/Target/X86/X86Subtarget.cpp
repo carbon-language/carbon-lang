@@ -386,7 +386,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
     ToggleFeature(X86::Mode64Bit);
 
   if (HasAVX)
-    X86SSELevel = NoMMXSSE;
+    X86SSELevel = MMX;
     
   DEBUG(dbgs() << "Subtarget features: SSELevel " << X86SSELevel
                << ", 3DNowLevel " << X863DNowLevel
