@@ -435,7 +435,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &mf) {
     for (unsigned i = 0, e = CPUsers.size(); i != e; ++i)
       CPChange |= HandleConstantPoolUser(i);
     if (CPChange && ++NoCPIters > 30)
-      llvm_unreachable("Constant Island pass failed to converge!");
+      report_fatal_error("Constant Island pass failed to converge!");
     DEBUG(dumpBBs());
 
     // Clear NewWaterList now.  If we split a block for branches, it should
@@ -447,7 +447,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &mf) {
     for (unsigned i = 0, e = ImmBranches.size(); i != e; ++i)
       BRChange |= FixUpImmediateBr(ImmBranches[i]);
     if (BRChange && ++NoBRIters > 30)
-      llvm_unreachable("Branch Fix Up pass failed to converge!");
+      report_fatal_error("Branch Fix Up pass failed to converge!");
     DEBUG(dumpBBs());
 
     if (!CPChange && !BRChange)
