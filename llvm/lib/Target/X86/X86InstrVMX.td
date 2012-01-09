@@ -60,5 +60,5 @@ def VMWRITE32rr : I<0x79, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src),
 // 0F 01 C4
 def VMXOFF : I<0x01, MRM_C4, (outs), (ins), "vmxoff", []>, TB;
 def VMXON : I<0xC7, MRM6m, (outs), (ins i64mem:$vmxon),
-  "vmxon\t{$vmxon}", []>, XS;
+  "vmxon\t$vmxon", []>, XS;
 
