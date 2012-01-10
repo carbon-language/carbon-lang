@@ -913,7 +913,7 @@ public:
   bool hasDeclaredDestructor() const { return data().DeclaredDestructor; }
 
   /// \brief Determine whether this class describes a lambda function object.
-  bool isLambda() const { return data().IsLambda; }
+  bool isLambda() const { return hasDefinition() && data().IsLambda; }
   
   void setLambda(bool Lambda = true) { data().IsLambda = Lambda; }
 
