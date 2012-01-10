@@ -1337,15 +1337,13 @@ LookupAddressInModule
                 return false;
         }
         
-        // If an offset was given, print out the address we ended up looking up
-        if (offset)
-            strm.Printf("File Address: 0x%llx\n", addr);
-        
         ExecutionContextScope *exe_scope = interpreter.GetExecutionContext().GetBestExecutionContextScope();
         strm.IndentMore();
         strm.Indent ("    Address: ");
+        so_addr.Dump (&strm, exe_scope, Address::DumpStyleModuleWithFileAddress);
+        strm.PutCString (" (");
         so_addr.Dump (&strm, exe_scope, Address::DumpStyleSectionNameOffset);
-        strm.EOL();
+        strm.PutCString (")\n");
         strm.Indent ("    Summary: ");
         const uint32_t save_indent = strm.GetIndentLevel ();
         strm.SetIndentLevel (save_indent + 13);
