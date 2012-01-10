@@ -2549,6 +2549,7 @@ bool LLParser::ConvertValIDToValue(Type *Ty, ValID &ID, Value *&V,
       return Error(ID.Loc, "constant expression type mismatch");
     return false;
   }
+  llvm_unreachable("Invalid ValID");
 }
 
 bool LLParser::ParseValue(Type *Ty, Value *&V, PerFunctionState *PFS) {

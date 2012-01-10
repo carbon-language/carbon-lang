@@ -240,6 +240,7 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
   case Constant::GlobalRelocations:
     return SectionKind::getDataRel();
   }
+  llvm_unreachable("Invalid relocation");
 }
 
 /// SectionForGlobal - This method computes the appropriate section to emit

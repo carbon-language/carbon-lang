@@ -96,6 +96,7 @@ static bool getVerboseAsm() {
   case cl::BOU_TRUE:  return true;
   case cl::BOU_FALSE: return false;
   }
+  llvm_unreachable("Invalid verbose asm state");
 }
 
 // Enable or disable FastISel. Both options are needed, because

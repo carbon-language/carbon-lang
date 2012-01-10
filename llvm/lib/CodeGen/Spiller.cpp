@@ -194,4 +194,5 @@ llvm::Spiller* llvm::createSpiller(MachineFunctionPass &pass,
   case trivial: return new TrivialSpiller(pass, mf, vrm);
   case inline_: return createInlineSpiller(pass, mf, vrm);
   }
+  llvm_unreachable("Invalid spiller optimization");
 }

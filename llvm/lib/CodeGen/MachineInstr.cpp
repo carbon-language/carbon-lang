@@ -221,6 +221,7 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
   case MachineOperand::MO_Metadata:
     return getMetadata() == Other.getMetadata();
   }
+  llvm_unreachable("Invalid machine operand type");
 }
 
 /// print - Print the specified machine operand.

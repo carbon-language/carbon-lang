@@ -134,6 +134,7 @@ static unsigned GetEncodedOrdering(AtomicOrdering Ordering) {
   case AcquireRelease: return bitc::ORDERING_ACQREL;
   case SequentiallyConsistent: return bitc::ORDERING_SEQCST;
   }
+  llvm_unreachable("Invalid ordering");
 }
 
 static unsigned GetEncodedSynchScope(SynchronizationScope SynchScope) {
@@ -141,6 +142,7 @@ static unsigned GetEncodedSynchScope(SynchronizationScope SynchScope) {
   case SingleThread: return bitc::SYNCHSCOPE_SINGLETHREAD;
   case CrossThread: return bitc::SYNCHSCOPE_CROSSTHREAD;
   }
+  llvm_unreachable("Invalid synch scope");
 }
 
 static void WriteStringRecord(unsigned Code, StringRef Str,
@@ -372,6 +374,7 @@ static unsigned getEncodedLinkage(const GlobalValue *GV) {
   case GlobalValue::LinkerPrivateWeakLinkage:        return 14;
   case GlobalValue::LinkerPrivateWeakDefAutoLinkage: return 15;
   }
+  llvm_unreachable("Invalid linkage");
 }
 
 static unsigned getEncodedVisibility(const GlobalValue *GV) {
@@ -380,6 +383,7 @@ static unsigned getEncodedVisibility(const GlobalValue *GV) {
   case GlobalValue::HiddenVisibility:    return 1;
   case GlobalValue::ProtectedVisibility: return 2;
   }
+  llvm_unreachable("Invalid visibility");
 }
 
 // Emit top-level description of module, including target triple, inline asm,

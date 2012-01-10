@@ -148,6 +148,7 @@ static const char *DescKind(GC::PointKind Kind) {
     case GC::PreCall:  return "pre-call";
     case GC::PostCall: return "post-call";
   }
+  llvm_unreachable("Invalid point kind");
 }
 
 bool Printer::runOnFunction(Function &F) {

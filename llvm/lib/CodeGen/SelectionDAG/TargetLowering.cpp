@@ -3016,6 +3016,7 @@ static unsigned getConstraintGenerality(TargetLowering::ConstraintType CT) {
   case TargetLowering::C_Memory:
     return 3;
   }
+  llvm_unreachable("Invalid constraint type");
 }
 
 /// Examine constraint type and operand type and determine a weight value.

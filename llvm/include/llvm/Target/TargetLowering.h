@@ -117,6 +117,7 @@ public:
       // Extend by copying the sign bit.
       return ISD::SIGN_EXTEND;
     }
+    llvm_unreachable("Invalid content kind");
   }
 
   /// NOTE: The constructor takes ownership of TLOF.

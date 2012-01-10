@@ -20,6 +20,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 
 namespace llvm {
@@ -122,6 +123,7 @@ public:
     case Blob:
       return false;
     }
+    llvm_unreachable("Invalid encoding");
   }
 
   /// isChar6 - Return true if this character is legal in the Char6 encoding.

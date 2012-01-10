@@ -238,6 +238,7 @@ namespace {
         MessagesStr << "compilation terminated.\n";
         return true;
       }
+      llvm_unreachable("Invalid action");
     }
 
 

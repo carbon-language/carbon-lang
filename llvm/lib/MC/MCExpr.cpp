@@ -17,6 +17,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -216,6 +217,7 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_Mips_GOT_PAGE: return "GOT_PAGE";
   case VK_Mips_GOT_OFST: return "GOT_OFST";
   }
+  llvm_unreachable("Invalid variant kind");
 }
 
 MCSymbolRefExpr::VariantKind
