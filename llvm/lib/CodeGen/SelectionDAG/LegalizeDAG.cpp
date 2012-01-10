@@ -2862,8 +2862,10 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
                                   Op1,
                                   DAG.getIntPtrConstant(Idx - NumElems)));
     }
-    
+
     Tmp1 = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Ops[0], Ops.size());
+    // We may have changed the BUILD_VECTOR type. Cast it back to the Node type.
+    Tmp1 = DAG.getNode(ISD::BITCAST, dl, Node->getValueType(0), Tmp1);
     Results.push_back(Tmp1);
     break;
   }
