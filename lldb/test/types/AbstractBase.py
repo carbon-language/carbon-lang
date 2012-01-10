@@ -57,6 +57,7 @@ class GenericTester(TestBase):
         self.build_and_run_with_source_atoms_expr(source, atoms, expr=True, dsym=dsym, bc=bc, qd=qd)
 
     def build_and_run_with_source_atoms_expr(self, source, atoms, expr, dsym=True, bc=False, qd=False):
+        # See also Makefile and basic_type.cpp:177.
         if bc:
             d = {'CXX_SOURCES': source, 'EXE': self.exe_name, 'CFLAGS_EXTRAS': '-DTEST_BLOCK_CAPTURED_VARS'}
         else:

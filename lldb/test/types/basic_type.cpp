@@ -175,8 +175,6 @@ main (int argc, char const *argv[])
     puts("About to exit, break here to check values..."); // Here is the line we will break on to check variables.
 
 #ifdef TEST_BLOCK_CAPTURED_VARS
-#include <dispatch/dispatch.h>
-
     void (^myBlock)() = ^() {
         printf ("%s: a = '" T_PRINTF_FORMAT "'\n", T_CSTR, a);
         printf ("%s*: %p => *a_ptr = '" T_PRINTF_FORMAT "'\n", T_CSTR, a_ptr, *a_ptr);
