@@ -365,6 +365,9 @@ struct MatchableInfo {
     }
   };
 
+  /// AsmVariantID - Target's assembly syntax variant no.
+  int AsmVariantID;
+
   /// TheDef - This is the definition of the instruction or InstAlias that this
   /// matchable came from.
   Record *const TheDef;
@@ -405,11 +408,13 @@ struct MatchableInfo {
   std::string ConversionFnKind;
 
   MatchableInfo(const CodeGenInstruction &CGI)
-    : TheDef(CGI.TheDef), DefRec(&CGI), AsmString(CGI.AsmString) {
+    : AsmVariantID(0), TheDef(CGI.TheDef), DefRec(&CGI), 
+      AsmString(CGI.AsmString) {
   }
 
   MatchableInfo(const CodeGenInstAlias *Alias)
-    : TheDef(Alias->TheDef), DefRec(Alias), AsmString(Alias->AsmString) {
+    : AsmVariantID(0), TheDef(Alias->TheDef), DefRec(Alias), 
+      AsmString(Alias->AsmString) {
   }
 
   void Initialize(const AsmMatcherInfo &Info,
@@ -646,7 +651,7 @@ void MatchableInfo::dump() {
 void MatchableInfo::Initialize(const AsmMatcherInfo &Info,
                                SmallPtrSet<Record*, 16> &SingletonRegisters,
                                int AsmVariantNo, std::string &RegisterPrefix) {
-  // TODO: Eventually support asmparser for Variant != 0.
+  AsmVariantID = AsmVariantNo;
   AsmString = 
     CodeGenInstruction::FlattenAsmStringVariants(AsmString, AsmVariantNo);
 
@@ -2222,7 +2227,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  bool MnemonicIsValid(StringRef Mnemonic);\n";
   OS << "  unsigned MatchInstructionImpl(\n";
   OS << "    const SmallVectorImpl<MCParsedAsmOperand*> &Operands,\n";
-  OS << "    MCInst &Inst, unsigned &ErrorInfo);\n";
+  OS << "    MCInst &Inst, unsigned &ErrorInfo, unsigned VariantID = 0);\n";
 
   if (Info.OperandMatchInfo.size()) {
     OS << "\n  enum OperandMatchResultTy {\n";
@@ -2304,6 +2309,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
                << " Classes[" << MaxNumOperands << "];\n";
   OS << "    " << getMinimalTypeForRange(1ULL << Info.SubtargetFeatures.size())
                << " RequiredFeatures;\n";
+  OS << "    unsigned AsmVariantID;\n";
   OS << "  };\n\n";
 
   OS << "  // Predicate for searching for an opcode.\n";
@@ -2348,7 +2354,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
       }
     } else
       OS << "0";
-
+    OS << ", " << II.AsmVariantID;
     OS << "},\n";
   }
 
@@ -2369,7 +2375,8 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << Target.getName() << ClassName << "::\n"
      << "MatchInstructionImpl(const SmallVectorImpl<MCParsedAsmOperand*>"
      << " &Operands,\n";
-  OS << "                     MCInst &Inst, unsigned &ErrorInfo) {\n";
+  OS << "                     MCInst &Inst, unsigned &ErrorInfo,\n";
+  OS << "                     unsigned VariantID) {\n";
 
   // Emit code to get the available features.
   OS << "  // Get the current feature set.\n";
@@ -2417,6 +2424,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    assert(Mnemonic == it->Mnemonic);\n";
 
   // Emit check that the subclasses match.
+  OS << "    if (VariantID != it->AsmVariantID) continue;\n";
   OS << "    bool OperandsValid = true;\n";
   OS << "    for (unsigned i = 0; i != " << MaxNumOperands << "; ++i) {\n";
   OS << "      if (i + 1 >= Operands.size()) {\n";
