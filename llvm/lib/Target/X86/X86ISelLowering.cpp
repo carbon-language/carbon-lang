@@ -7714,7 +7714,8 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
     return LowerUINT_TO_FP_i64(Op, DAG);
   else if (SrcVT == MVT::i32 && X86ScalarSSEf64)
     return LowerUINT_TO_FP_i32(Op, DAG);
-  else if (SrcVT == MVT::i64 && DstVT == MVT::f32)
+  else if (Subtarget->is64Bit() &&
+           SrcVT == MVT::i64 && DstVT == MVT::f32)
     return SDValue();
 
   // Make a 64-bit buffer, and use it to build an FILD.
@@ -7735,7 +7736,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
 
   assert(SrcVT == MVT::i64 && "Unexpected type in UINT_TO_FP");
   SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, Op.getOperand(0),
-                                StackSlot, MachinePointerInfo(),
+                               StackSlot, MachinePointerInfo(),
                                false, false, 0);
   // For i64 source, we need to add the appropriate power of 2 if the input
   // was negative.  This is the same as the optimization in
