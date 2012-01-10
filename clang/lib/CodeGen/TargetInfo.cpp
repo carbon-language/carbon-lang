@@ -3142,7 +3142,7 @@ llvm::Type *MipsABIInfo::getPaddingType(uint64_t Align, uint64_t Offset) const {
   return (Align == 16 && Offset & 0xf) ?
     llvm::IntegerType::get(getVMContext(), 64) : 0;
 }
- 
+
 ABIArgInfo
 MipsABIInfo::classifyArgumentType(QualType Ty, uint64_t &Offset) const {
   uint64_t OrigOffset = Offset;
@@ -3169,7 +3169,7 @@ MipsABIInfo::classifyArgumentType(QualType Ty, uint64_t &Offset) const {
     // latter case, padding is inserted if the offset of the aggregate is
     // unaligned.
     llvm::Type *ResType = HandleStructTy(Ty);
-    
+
     if (!ResType)
       return ABIArgInfo::getIndirect(0);
 
