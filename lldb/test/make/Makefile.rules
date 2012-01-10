@@ -42,7 +42,7 @@ endif
 # Change any build/tool options needed
 #----------------------------------------------------------------------
 CFLAGS ?= -gdwarf-2 -O0
-CFLAGS += $(FRAMEWORK_INCLUDES)
+CFLAGS += $(FRAMEWORK_INCLUDES) $(CFLAGS_EXTRAS)
 ifeq "$(OS)" "Darwin"
 	CFLAGS += -arch $(ARCH)
 	DS := dsymutil
@@ -122,24 +122,36 @@ endif
 
 
 #----------------------------------------------------------------------
+# DYLIB_ONLY variable can be used to skip the building of a.out.
+# See the sections below regarding dSYM file as well as the building of
+# EXE from all the objects.
+#----------------------------------------------------------------------
+
+#----------------------------------------------------------------------
 # Make the dSYM file from the executable if $(MAKE_DSYM) != "NO"
 #----------------------------------------------------------------------
 ifeq "$(OS)" "Darwin"
 ifneq "$(MAKE_DSYM)" "NO"
+ifeq "$(DYLIB_ONLY)" ""
 $(DSYM) : $(EXE)
 	$(DS) $(DSFLAGS) -o "$(DSYM)" "$(EXE)"
+endif
 endif
 endif
 
 #----------------------------------------------------------------------
 # Compile the executable from all the objects.
 #----------------------------------------------------------------------
-ifeq "$(DYLIB_NAME)" ""
-$(EXE) : $(OBJECTS)
-	$(LD) $(LDFLAGS) $(OBJECTS) -o "$(EXE)"
-else
+ifneq "$(DYLIB_NAME)" ""
+ifeq "$(DYLIB_ONLY)" ""
 $(EXE) : $(OBJECTS) $(DYLIB_FILENAME)
 	$(LD) $(LDFLAGS) $(OBJECTS) -L. -l$(DYLIB_NAME) -o "$(EXE)"
+else
+EXE = $(DYLIB_FILENAME)
+endif
+else
+$(EXE) : $(OBJECTS)
+	$(LD) $(LDFLAGS) $(OBJECTS) -o "$(EXE)"
 endif
 
 #----------------------------------------------------------------------
