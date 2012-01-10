@@ -1703,7 +1703,7 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
         Features["popcnt"] = Features["avx"] = Features["fma4"] = true;
     else if (Name == "sse4a")
       Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
-        Features["sse4a"] = true;
+        Features["lzcnt"] = Features["popcnt"] = Features["sse4a"] = true;
     else if (Name == "lzcnt")
       Features["lzcnt"] = true;
     else if (Name == "bmi")
