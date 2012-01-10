@@ -5532,6 +5532,7 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
   // For anonymous namespace, take the location of the left brace.
   SourceLocation Loc = II ? IdentLoc : LBrace;
   bool IsInline = InlineLoc.isValid();
+  bool IsInvalid = false;
   bool IsStd = false;
   bool AddToKnown = false;
   Scope *DeclRegionScope = NamespcScope->getParent();
@@ -5586,6 +5587,7 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
       Diag(Loc, diag::err_redefinition_different_kind)
         << II;
       Diag(PrevDecl->getLocation(), diag::note_previous_definition);
+      IsInvalid = true;
       // Continue on to push Namespc as current DeclContext and return it.
     } else if (II->isStr("std") &&
                CurContext->getRedeclContext()->isTranslationUnit()) {
@@ -5615,7 +5617,7 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
       Diag(Loc, diag::err_inline_namespace_mismatch)
         << IsInline;
       Diag(PrevNS->getLocation(), diag::note_previous_definition);
-
+      
       // Recover by ignoring the new namespace's inline status.
       IsInline = PrevNS->isInline();
     }
@@ -5623,6 +5625,8 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
   
   NamespaceDecl *Namespc = NamespaceDecl::Create(Context, CurContext, IsInline,
                                                  StartLoc, Loc, II, PrevNS);
+  if (IsInvalid)
+    Namespc->setInvalidDecl();
   
   ProcessDeclAttributeList(DeclRegionScope, Namespc, AttrList);
 
