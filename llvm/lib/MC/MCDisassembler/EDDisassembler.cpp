@@ -79,19 +79,18 @@ static int getLLVMSyntaxVariant(Triple::ArchType arch,
   case EDDisassembler::kEDAssemblySyntaxX86ATT:
     if (arch == Triple::x86 || arch == Triple::x86_64)
       return 0;
-    else
-      return -1;
+    break;
   case EDDisassembler::kEDAssemblySyntaxX86Intel:
     if (arch == Triple::x86 || arch == Triple::x86_64)
       return 1;
-    else
-      return -1;
+    break;
   case EDDisassembler::kEDAssemblySyntaxARMUAL:
     if (arch == Triple::arm || arch == Triple::thumb)
       return 0;
-    else
-      return -1;
+    break;
   }
+
+  return -1;
 }
 
 EDDisassembler *EDDisassembler::getDisassembler(Triple::ArchType arch,

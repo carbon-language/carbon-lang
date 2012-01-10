@@ -18,7 +18,6 @@
 #include "MCTargetDesc/SparcMCTargetDesc.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
-#include <cassert>
 
 namespace llvm {
   class FunctionPass;
@@ -102,7 +101,8 @@ namespace llvm {
     case SPCC::FCC_LE:  return "le";
     case SPCC::FCC_ULE: return "ule";
     case SPCC::FCC_O:   return "o";
-    }       
+    }
+    llvm_unreachable("Invalid cond code");
   }
 }  // end namespace llvm
 #endif

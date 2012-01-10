@@ -64,4 +64,5 @@ std::string PTXSubtarget::getPTXVersionString() const {
     case PTX_VERSION_2_2: return "2.2";
     case PTX_VERSION_2_3: return "2.3";
   }
+  llvm_unreachable("Invalid PTX version");
 }

@@ -109,6 +109,7 @@ static SPCC::CondCodes GetOppositeBranchCondition(SPCC::CondCodes CC)
   case SPCC::FCC_NE:   return SPCC::FCC_E;
   case SPCC::FCC_E:    return SPCC::FCC_NE;
   }
+  llvm_unreachable("Invalid cond code");
 }
 
 MachineInstr *
