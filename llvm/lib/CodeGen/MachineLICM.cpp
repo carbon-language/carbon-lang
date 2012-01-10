@@ -633,8 +633,8 @@ void MachineLICM::ExitScope(MachineBasicBlock *MBB) {
 /// dominator tree node if its a leaf or all of its children are done. Walk
 /// up the dominator tree to destroy ancestors which are now done.
 void MachineLICM::ExitScopeIfDone(MachineDomTreeNode *Node,
-                                  DenseMap<MachineDomTreeNode*, unsigned> &OpenChildren,
-                                  DenseMap<MachineDomTreeNode*, MachineDomTreeNode*> &ParentMap) {
+                DenseMap<MachineDomTreeNode*, unsigned> &OpenChildren,
+                DenseMap<MachineDomTreeNode*, MachineDomTreeNode*> &ParentMap) {
   if (OpenChildren[Node])
     return;
 
