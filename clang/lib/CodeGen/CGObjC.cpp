@@ -565,7 +565,7 @@ PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
 void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
                                          const ObjCPropertyImplDecl *PID) {
   llvm::Constant *AtomicHelperFn = 
-    GenerateObjCAtomicCopyHelperFunction(PID, false);
+    GenerateObjCAtomicGetterCopyHelperFunction(PID);
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getGetterMethodDecl();
   assert(OMD && "Invalid call to generate getter (empty method)");
@@ -599,15 +599,52 @@ static bool hasTrivialGetExpr(const ObjCPropertyImplDecl *propImpl) {
   return false;
 }
 
+/// emitCPPObjectAtomicGetterCall - Call the runtime function to 
+/// copy the ivar into the resturn slot.
+static void emitCPPObjectAtomicGetterCall(CodeGenFunction &CGF, 
+                                          llvm::Value *returnAddr,
+                                          ObjCIvarDecl *ivar,
+                                          llvm::Constant *AtomicHelperFn) {
+  // objc_copyCppObjectAtomic (&returnSlot, &CppObjectIvar,
+  //                           AtomicHelperFn);
+  CallArgList args;
+  
+  // The 1st argument is the return Slot.
+  args.add(RValue::get(returnAddr), CGF.getContext().VoidPtrTy);
+  
+  // The 2nd argument is the address of the ivar.
+  llvm::Value *ivarAddr = 
+  CGF.EmitLValueForIvar(CGF.TypeOfSelfObject(), 
+                        CGF.LoadObjCSelf(), ivar, 0).getAddress();
+  ivarAddr = CGF.Builder.CreateBitCast(ivarAddr, CGF.Int8PtrTy);
+  args.add(RValue::get(ivarAddr), CGF.getContext().VoidPtrTy);
+  
+  // Third argument is the helper function.
+  args.add(RValue::get(AtomicHelperFn), CGF.getContext().VoidPtrTy);
+  
+  llvm::Value *copyCppAtomicObjectFn = 
+  CGF.CGM.getObjCRuntime().GetCppAtomicObjectFunction();
+  CGF.EmitCall(CGF.getTypes().getFunctionInfo(CGF.getContext().VoidTy, args,
+                                              FunctionType::ExtInfo()),
+               copyCppAtomicObjectFn, ReturnValueSlot(), args);
+}
+
 void
 CodeGenFunction::generateObjCGetterBody(const ObjCImplementationDecl *classImpl,
                                         const ObjCPropertyImplDecl *propImpl,
                                         llvm::Constant *AtomicHelperFn) {
   // If there's a non-trivial 'get' expression, we just have to emit that.
   if (!hasTrivialGetExpr(propImpl)) {
-    ReturnStmt ret(SourceLocation(), propImpl->getGetterCXXConstructor(),
-                   /*nrvo*/ 0);
-    EmitReturnStmt(ret);
+    if (!AtomicHelperFn) {
+      ReturnStmt ret(SourceLocation(), propImpl->getGetterCXXConstructor(),
+                     /*nrvo*/ 0);
+      EmitReturnStmt(ret);
+    }
+    else {
+      ObjCIvarDecl *ivar = propImpl->getPropertyIvarDecl();
+      emitCPPObjectAtomicGetterCall(*this, ReturnValue, 
+                                    ivar, AtomicHelperFn);
+    }
     return;
   }
 
@@ -817,6 +854,7 @@ static void emitCPPObjectAtomicSetterCall(CodeGenFunction &CGF,
 
 }
 
+
 static bool hasTrivialSetExpr(const ObjCPropertyImplDecl *PID) {
   Expr *setter = PID->getSetterCXXAssignment();
   if (!setter) return true;
@@ -993,7 +1031,7 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
 void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
                                          const ObjCPropertyImplDecl *PID) {
   llvm::Constant *AtomicHelperFn = 
-    GenerateObjCAtomicCopyHelperFunction(PID, true);
+    GenerateObjCAtomicSetterCopyHelperFunction(PID);
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getSetterMethodDecl();
   assert(OMD && "Invalid call to generate setter (empty method)");
@@ -2531,14 +2569,13 @@ void CodeGenFunction::EmitExtendGCLifetime(llvm::Value *object) {
   Builder.CreateCall(extender, object)->setDoesNotThrow();
 }
 
-/// GenerateObjCAtomicCopyHelperFunction - Given a c++ object type with
+/// GenerateObjCAtomicSetterCopyHelperFunction - Given a c++ object type with
 /// non-trivial copy assignment function, produce following helper function.
 /// static void copyHelper(Ty *dest, const Ty *source) { *dest = *source; }
 ///
 llvm::Constant *
-CodeGenFunction::GenerateObjCAtomicCopyHelperFunction(
-                                        const ObjCPropertyImplDecl *PID,
-                                        bool forSetter) {
+CodeGenFunction::GenerateObjCAtomicSetterCopyHelperFunction(
+                                        const ObjCPropertyImplDecl *PID) {
   // FIXME. This api is for NeXt runtime only for now.
   if (!getLangOptions().CPlusPlus || !getLangOptions().NeXTRuntime)
     return 0;
@@ -2546,29 +2583,18 @@ CodeGenFunction::GenerateObjCAtomicCopyHelperFunction(
   if (!Ty->isRecordType())
     return 0;
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
-  if ((!(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_atomic))
-      || /* temporary */ true) 
+  if ((!(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_atomic)))
     return 0;
   llvm::Constant * HelperFn = 0;
-  if (forSetter) {
-    if (hasTrivialSetExpr(PID))
-      return 0;
-    assert(PID->getSetterCXXAssignment() && "SetterCXXAssignment - null");
-    if ((HelperFn = CGM.getAtomicSetterHelperFnMap(Ty)))
-      return HelperFn;
-  }
-  else  {
-    if (hasTrivialGetExpr(PID))
-      return 0;
-    assert(PID->getGetterCXXConstructor() && "getGetterCXXConstructor - null");
-    if ((HelperFn = CGM.getAtomicGetterHelperFnMap(Ty)))
-      return HelperFn;
-  }
-    
+  if (hasTrivialSetExpr(PID))
+    return 0;
+  assert(PID->getSetterCXXAssignment() && "SetterCXXAssignment - null");
+  if ((HelperFn = CGM.getAtomicSetterHelperFnMap(Ty)))
+    return HelperFn;
   
   ASTContext &C = getContext();
   IdentifierInfo *II
-    = &CGM.getContext().Idents.get("__copy_helper_atomic_property_");
+    = &CGM.getContext().Idents.get("__assign_helper_atomic_property_");
   FunctionDecl *FD = FunctionDecl::Create(C,
                                           C.getTranslationUnitDecl(),
                                           SourceLocation(),
@@ -2596,7 +2622,7 @@ CodeGenFunction::GenerateObjCAtomicCopyHelperFunction(
   
   llvm::Function *Fn =
     llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
-                           "__copy_helper_atomic_property_", &CGM.getModule());
+                           "__assign_helper_atomic_property_", &CGM.getModule());
   
   if (CGM.getModuleDebugInfo())
     DebugInfo = CGM.getModuleDebugInfo();
@@ -2619,8 +2645,7 @@ CodeGenFunction::GenerateObjCAtomicCopyHelperFunction(
                                     VK_LValue, OK_Ordinary, SourceLocation());
   
   Expr *Args[2] = { DST, SRC };
-  CallExpr *CalleeExp = forSetter ? cast<CallExpr>(PID->getSetterCXXAssignment())
-                                  : cast<CallExpr>(PID->getGetterCXXConstructor());
+  CallExpr *CalleeExp = cast<CallExpr>(PID->getSetterCXXAssignment());
   CXXOperatorCallExpr *TheCall =
     new (C) CXXOperatorCallExpr(C, OO_Equal, CalleeExp->getCallee(),
                                 Args, 2, DestTy->getPointeeType(), 
@@ -2630,12 +2655,113 @@ CodeGenFunction::GenerateObjCAtomicCopyHelperFunction(
 
   FinishFunction();
   HelperFn = llvm::ConstantExpr::getBitCast(Fn, VoidPtrTy);
-  if (forSetter)
-    CGM.setAtomicSetterHelperFnMap(Ty, HelperFn);
-  else
-    CGM.setAtomicGetterHelperFnMap(Ty, HelperFn);
+  CGM.setAtomicSetterHelperFnMap(Ty, HelperFn);
   return HelperFn;
+}
+
+llvm::Constant *
+CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
+                                            const ObjCPropertyImplDecl *PID) {
+  // FIXME. This api is for NeXt runtime only for now.
+  if (!getLangOptions().CPlusPlus || !getLangOptions().NeXTRuntime)
+    return 0;
+  const ObjCPropertyDecl *PD = PID->getPropertyDecl();
+  QualType Ty = PD->getType();
+  if (!Ty->isRecordType())
+    return 0;
+  if ((!(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_atomic)))
+    return 0;
+  llvm::Constant * HelperFn = 0;
   
+  if (hasTrivialGetExpr(PID))
+    return 0;
+  assert(PID->getGetterCXXConstructor() && "getGetterCXXConstructor - null");
+  if ((HelperFn = CGM.getAtomicGetterHelperFnMap(Ty)))
+    return HelperFn;
+  
+  
+  ASTContext &C = getContext();
+  IdentifierInfo *II
+  = &CGM.getContext().Idents.get("__copy_helper_atomic_property_");
+  FunctionDecl *FD = FunctionDecl::Create(C,
+                                          C.getTranslationUnitDecl(),
+                                          SourceLocation(),
+                                          SourceLocation(), II, C.VoidTy, 0,
+                                          SC_Static,
+                                          SC_None,
+                                          false,
+                                          true);
+  
+  QualType DestTy = C.getPointerType(Ty);
+  QualType SrcTy = Ty;
+  SrcTy.addConst();
+  SrcTy = C.getPointerType(SrcTy);
+  
+  FunctionArgList args;
+  ImplicitParamDecl dstDecl(FD, SourceLocation(), 0, DestTy);
+  args.push_back(&dstDecl);
+  ImplicitParamDecl srcDecl(FD, SourceLocation(), 0, SrcTy);
+  args.push_back(&srcDecl);
+  
+  const CGFunctionInfo &FI =
+  CGM.getTypes().getFunctionInfo(C.VoidTy, args, FunctionType::ExtInfo());
+  
+  llvm::FunctionType *LTy = CGM.getTypes().GetFunctionType(FI, false);
+  
+  llvm::Function *Fn =
+  llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
+                         "__copy_helper_atomic_property_", &CGM.getModule());
+  
+  if (CGM.getModuleDebugInfo())
+    DebugInfo = CGM.getModuleDebugInfo();
+  
+  
+  StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
+  
+  DeclRefExpr *SrcExpr = 
+  new (C) DeclRefExpr(&srcDecl, SrcTy,
+                      VK_RValue, SourceLocation());
+  
+  Expr* SRC = new (C) UnaryOperator(SrcExpr, UO_Deref, SrcTy->getPointeeType(),
+                                    VK_LValue, OK_Ordinary, SourceLocation());
+  
+  CXXConstructExpr *CXXConstExpr = 
+    cast<CXXConstructExpr>(PID->getGetterCXXConstructor());
+  
+  SmallVector<Expr*, 4> ConstructorArgs;
+  ConstructorArgs.push_back(SRC);
+  CXXConstructExpr::arg_iterator A = CXXConstExpr->arg_begin();
+  ++A;
+  
+  for (CXXConstructExpr::arg_iterator AEnd = CXXConstExpr->arg_end();
+       A != AEnd; ++A)
+    ConstructorArgs.push_back(*A);
+  
+  CXXConstructExpr *TheCXXConstructExpr =
+    CXXConstructExpr::Create(C, Ty, SourceLocation(),
+                             CXXConstExpr->getConstructor(),
+                             CXXConstExpr->isElidable(),
+                             &ConstructorArgs[0], ConstructorArgs.size(),
+                             CXXConstExpr->hadMultipleCandidates(), 
+                             CXXConstExpr->requiresZeroInitialization(),
+                             CXXConstExpr->getConstructionKind(), SourceRange());
+  
+  DeclRefExpr *DstExpr = 
+    new (C) DeclRefExpr(&dstDecl, DestTy,
+                        VK_RValue, SourceLocation());
+  
+  RValue DV = EmitAnyExpr(DstExpr);
+  CharUnits Alignment = getContext().getTypeAlignInChars(TheCXXConstructExpr->getType());
+  EmitAggExpr(TheCXXConstructExpr, 
+              AggValueSlot::forAddr(DV.getScalarVal(), Alignment, Qualifiers(),
+                                    AggValueSlot::IsDestructed,
+                                    AggValueSlot::DoesNotNeedGCBarriers,
+                                    AggValueSlot::IsNotAliased));
+  
+  FinishFunction();
+  HelperFn = llvm::ConstantExpr::getBitCast(Fn, VoidPtrTy);
+  CGM.setAtomicGetterHelperFnMap(Ty, HelperFn);
+  return HelperFn;
 }
 
 

@@ -830,9 +830,13 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
               dyn_cast_or_null<CXXOperatorCallExpr>(callExpr))
           if (const FunctionDecl *FuncDecl = CXXCE->getDirectCallee())
             if (!FuncDecl->isTrivial())
-              Diag(PropertyLoc, 
-                   diag::warn_atomic_property_nontrivial_assign_op) 
+              if (property->getType()->isReferenceType()) {
+                Diag(PropertyLoc, 
+                     diag::err_atomic_property_nontrivial_assign_op)
                     << property->getType();
+                Diag(FuncDecl->getLocStart(), 
+                     diag::note_callee_decl) << FuncDecl;
+              }
       }
       PIDecl->setSetterCXXAssignment(Res.takeAs<Expr>());
     }

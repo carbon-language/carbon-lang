@@ -38,7 +38,7 @@ public:
  TCPPObject(const TCPPObject& inObj);
  TCPPObject();
  ~TCPPObject();
- TCPPObject& operator=(const TCPPObject& inObj);
+ TCPPObject& operator=(const TCPPObject& inObj); // expected-note {{'operator=' declared here}}
 private:
  void* fData;
 };
@@ -67,7 +67,7 @@ private:
 
 @implementation MyDocument
 
-@synthesize cppObject = _cppObject; // expected-warning {{atomic property of type 'const TCPPObject &' synthesizing setter using non-trivial assignment operator}}
+@synthesize cppObject = _cppObject; // expected-error {{atomic property of reference type 'const TCPPObject &' cannot have non-trivial assignment operator}}
 @synthesize ncppObject = _ncppObject;
 
 @synthesize tcppObject = _tcppObject;
