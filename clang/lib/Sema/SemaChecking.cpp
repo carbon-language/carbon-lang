@@ -4458,7 +4458,7 @@ static bool considerVariable(VarDecl *var, Expr *ref, RetainCycleOwner &owner) {
   return true;
 }
 
-static bool findRetainCycleOwner(Expr *e, RetainCycleOwner &owner) {
+static bool findRetainCycleOwner(Sema &S, Expr *e, RetainCycleOwner &owner) {
   while (true) {
     e = e->IgnoreParens();
     if (CastExpr *cast = dyn_cast<CastExpr>(e)) {
@@ -4481,7 +4481,7 @@ static bool findRetainCycleOwner(Expr *e, RetainCycleOwner &owner) {
         return false;
 
       // Try to find a retain cycle in the base.
-      if (!findRetainCycleOwner(ref->getBase(), owner))
+      if (!findRetainCycleOwner(S, ref->getBase(), owner))
         return false;
 
       if (ref->isFreeIvar()) owner.setLocsFrom(ref);
@@ -4524,6 +4524,14 @@ static bool findRetainCycleOwner(Expr *e, RetainCycleOwner &owner) {
           return false;
 
       owner.Indirect = true;
+      if (pre->isSuperReceiver()) {
+        owner.Variable = S.getCurMethodDecl()->getSelfDecl();
+        if (!owner.Variable)
+          return false;
+        owner.Loc = pre->getLocation();
+        owner.Range = pre->getSourceRange();
+        return true;
+      }
       e = const_cast<Expr*>(cast<OpaqueValueExpr>(pre->getBase())
                               ->getSourceExpr());
       continue;
@@ -4626,7 +4634,7 @@ void Sema::checkRetainCycles(ObjCMessageExpr *msg) {
   // Try to find a variable that the receiver is strongly owned by.
   RetainCycleOwner owner;
   if (msg->getReceiverKind() == ObjCMessageExpr::Instance) {
-    if (!findRetainCycleOwner(msg->getInstanceReceiver(), owner))
+    if (!findRetainCycleOwner(*this, msg->getInstanceReceiver(), owner))
       return;
   } else {
     assert(msg->getReceiverKind() == ObjCMessageExpr::SuperInstance);
@@ -4644,7 +4652,7 @@ void Sema::checkRetainCycles(ObjCMessageExpr *msg) {
 /// Check a property assign to see if it's likely to cause a retain cycle.
 void Sema::checkRetainCycles(Expr *receiver, Expr *argument) {
   RetainCycleOwner owner;
-  if (!findRetainCycleOwner(receiver, owner))
+  if (!findRetainCycleOwner(*this, receiver, owner))
     return;
 
   if (Expr *capturer = findCapturingExpr(*this, argument, owner))

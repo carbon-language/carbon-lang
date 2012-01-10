@@ -125,3 +125,27 @@
 @synthesize controllerClass = _controllerClass;
 @synthesize controllerId = _controllerId;
 @end
+
+// rdar://10630891
+@interface UIView @end
+@class UIColor;
+
+@interface UIView(UIViewRendering)
+@property(nonatomic,copy) UIColor *backgroundColor;
+@end
+
+@interface UILabel : UIView
+@end
+
+@interface MyView 
+@property (strong) UILabel *label;
+@end
+
+@interface MyView2 : MyView @end
+
+@implementation MyView2
+- (void)foo {
+  super.label.backgroundColor = 0;
+}
+@end
+
