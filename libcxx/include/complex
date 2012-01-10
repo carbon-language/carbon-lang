@@ -282,7 +282,8 @@ public:
     _LIBCPP_INLINE_VISIBILITY void real(value_type __re) {__re_ = __re;}
     _LIBCPP_INLINE_VISIBILITY void imag(value_type __im) {__im_ = __im;}
 
-    _LIBCPP_INLINE_VISIBILITY complex& operator= (const value_type& __re) {__re_ = __re; return *this;}
+    _LIBCPP_INLINE_VISIBILITY complex& operator= (const value_type& __re)
+        {__re_ = __re; __im_ = value_type(); return *this;}
     _LIBCPP_INLINE_VISIBILITY complex& operator+=(const value_type& __re) {__re_ += __re; return *this;}
     _LIBCPP_INLINE_VISIBILITY complex& operator-=(const value_type& __re) {__re_ -= __re; return *this;}
     _LIBCPP_INLINE_VISIBILITY complex& operator*=(const value_type& __re) {__re_ *= __re; __im_ *= __re; return *this;}
@@ -340,7 +341,8 @@ public:
     _LIBCPP_INLINE_VISIBILITY void real(value_type __re) {__re_ = __re;}
     _LIBCPP_INLINE_VISIBILITY void imag(value_type __im) {__im_ = __im;}
 
-    _LIBCPP_INLINE_VISIBILITY complex& operator= (float __re) {__re_ = __re; return *this;}
+    _LIBCPP_INLINE_VISIBILITY complex& operator= (float __re)
+        {__re_ = __re; __im_ = value_type(); return *this;}
     _LIBCPP_INLINE_VISIBILITY complex& operator+=(float __re) {__re_ += __re; return *this;}
     _LIBCPP_INLINE_VISIBILITY complex& operator-=(float __re) {__re_ -= __re; return *this;}
     _LIBCPP_INLINE_VISIBILITY complex& operator*=(float __re) {__re_ *= __re; __im_ *= __re; return *this;}
@@ -395,7 +397,8 @@ public:
     _LIBCPP_INLINE_VISIBILITY void real(value_type __re) {__re_ = __re;}
     _LIBCPP_INLINE_VISIBILITY void imag(value_type __im) {__im_ = __im;}
 
-    _LIBCPP_INLINE_VISIBILITY complex& operator= (double __re) {__re_ = __re; return *this;}
+    _LIBCPP_INLINE_VISIBILITY complex& operator= (double __re)
+        {__re_ = __re; __im_ = value_type(); return *this;}
     _LIBCPP_INLINE_VISIBILITY complex& operator+=(double __re) {__re_ += __re; return *this;}
     _LIBCPP_INLINE_VISIBILITY complex& operator-=(double __re) {__re_ -= __re; return *this;}
     _LIBCPP_INLINE_VISIBILITY complex& operator*=(double __re) {__re_ *= __re; __im_ *= __re; return *this;}
@@ -450,7 +453,8 @@ public:
     _LIBCPP_INLINE_VISIBILITY void real(value_type __re) {__re_ = __re;}
     _LIBCPP_INLINE_VISIBILITY void imag(value_type __im) {__im_ = __im;}
 
-    _LIBCPP_INLINE_VISIBILITY complex& operator= (long double __re) {__re_ = __re; return *this;}
+    _LIBCPP_INLINE_VISIBILITY complex& operator= (long double __re)
+        {__re_ = __re; __im_ = value_type(); return *this;}
     _LIBCPP_INLINE_VISIBILITY complex& operator+=(long double __re) {__re_ += __re; return *this;}
     _LIBCPP_INLINE_VISIBILITY complex& operator-=(long double __re) {__re_ -= __re; return *this;}
     _LIBCPP_INLINE_VISIBILITY complex& operator*=(long double __re) {__re_ *= __re; __im_ *= __re; return *this;}
