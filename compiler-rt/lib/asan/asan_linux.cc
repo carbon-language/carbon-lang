@@ -15,6 +15,7 @@
 
 #include "asan_interceptors.h"
 #include "asan_internal.h"
+#include "asan_lock.h"
 #include "asan_procmaps.h"
 #include "asan_thread.h"
 
@@ -274,6 +275,26 @@ void AsanThread::SetThreadStackTopAndBottom() {
     stack_bottom_ = stack_top_ - kMaxThreadStackSize;
   }
   CHECK(AddrIsInStack((uintptr_t)&attr));
+}
+
+AsanLock::AsanLock(LinkerInitialized) {
+  // We assume that pthread_mutex_t initialized to all zeroes is a valid
+  // unlocked mutex. We can not use PTHREAD_MUTEX_INITIALIZER as it triggers
+  // a gcc warning:
+  // extended initializer lists only available with -std=c++0x or -std=gnu++0x
+}
+
+void AsanLock::Lock() {
+  CHECK(sizeof(pthread_mutex_t) <= sizeof(opaque_storage_));
+  pthread_mutex_lock((pthread_mutex_t*)&opaque_storage_);
+  CHECK(!owner_);
+  owner_ = (uintptr_t)pthread_self();
+}
+
+void AsanLock::Unlock() {
+  CHECK(owner_ == (uintptr_t)pthread_self());
+  owner_ = 0;
+  pthread_mutex_unlock((pthread_mutex_t*)&opaque_storage_);
 }
 
 }  // namespace __asan

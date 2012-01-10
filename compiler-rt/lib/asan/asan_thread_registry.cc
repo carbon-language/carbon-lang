@@ -18,6 +18,7 @@
 #include "asan_thread_registry.h"
 
 #include <limits.h>
+#include <pthread.h>
 
 namespace __asan {
 

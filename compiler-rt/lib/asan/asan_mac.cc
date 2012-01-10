@@ -27,6 +27,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <libkern/OSAtomic.h>
 
 namespace __asan {
 
@@ -129,6 +130,27 @@ void AsanThread::SetThreadStackTopAndBottom() {
   int local;
   CHECK(AddrIsInStack((uintptr_t)&local));
 }
+
+
+AsanLock::AsanLock(LinkerInitialized) {
+  // We assume that OS_SPINLOCK_INIT is zero
+}
+
+void AsanLock::Lock() {
+  CHECK(sizeof(OSSpinLock) <= sizeof(opaque_storage_));
+  CHECK(OS_SPINLOCK_INIT == 0);
+  CHECK(owner_ != (uintptr_t)pthread_self());
+  OSSpinLockLock((OSSpinLock*)&opaque_storage_);
+  CHECK(!owner_);
+  owner_ = (uintptr_t)pthread_self();
+}
+
+void AsanLock::Unlock() {
+  CHECK(owner_ == (uintptr_t)pthread_self());
+  owner_ = 0;
+  OSSpinLockUnlock((OSSpinLock*)&opaque_storage_);
+}
+
 
 // Support for the following functions from libdispatch on Mac OS:
 //   dispatch_async_f()

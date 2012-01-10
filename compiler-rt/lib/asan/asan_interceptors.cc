@@ -35,7 +35,7 @@ typedef void (*longjmp_f)(void *env, int val);
 typedef longjmp_f _longjmp_f;
 typedef longjmp_f siglongjmp_f;
 typedef void (*__cxa_throw_f)(void *, void *, void *);
-typedef int (*pthread_create_f)(pthread_t *thread, const pthread_attr_t *attr,
+typedef int (*pthread_create_f)(void *thread, const void *attr,
                                 void *(*start_routine) (void *), void *arg);
 #ifdef __APPLE__
 dispatch_async_f_f real_dispatch_async_f;
@@ -223,10 +223,13 @@ static void *asan_thread_start(void *arg) {
 }
 
 extern "C"
+int pthread_create(void *thread, const void *attr,
+                   void *(*start_routine) (void *), void *arg);
+extern "C"
 #ifndef __APPLE__
 __attribute__((visibility("default")))
 #endif
-int WRAP(pthread_create)(pthread_t *thread, const pthread_attr_t *attr,
+int WRAP(pthread_create)(void *thread, const void *attr,
                          void *(*start_routine) (void *), void *arg) {
   GET_STACK_TRACE_HERE(kStackTraceMax, /*fast_unwind*/false);
   AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
