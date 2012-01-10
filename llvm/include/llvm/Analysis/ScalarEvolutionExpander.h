@@ -60,6 +60,9 @@ namespace llvm {
     /// insert the IV increment at this position.
     Instruction *IVIncInsertPos;
 
+    /// Phis that complete an IV chain. Reuse
+    std::set<AssertingVH<PHINode> > ChainedPhis;
+
     /// CanonicalMode - When true, expressions are expanded in "canonical"
     /// form. In particular, addrecs are expanded as arithmetic based on
     /// a canonical induction variable. When false, expression are expanded
@@ -102,6 +105,7 @@ namespace llvm {
       InsertedExpressions.clear();
       InsertedValues.clear();
       InsertedPostIncValues.clear();
+      ChainedPhis.clear();
     }
 
     /// getOrInsertCanonicalInductionVariable - This method returns the
@@ -164,6 +168,9 @@ namespace llvm {
     void clearInsertPoint() {
       Builder.ClearInsertionPoint();
     }
+
+    void setChainedPhi(PHINode *PN) { ChainedPhis.insert(PN); }
+
   private:
     LLVMContext &getContext() const { return SE.getContext(); }
 

@@ -874,6 +874,9 @@ bool SCEVExpander::isNormalAddRecExprPHI(PHINode *PN, Instruction *IncV,
 /// expandAddtoGEP.
 bool SCEVExpander::isExpandedAddRecExprPHI(PHINode *PN, Instruction *IncV,
                                            const Loop *L) {
+  if (ChainedPhis.count(PN))
+    return true;
+
   switch (IncV->getOpcode()) {
   // Check for a simple Add/Sub or GEP of a loop invariant step.
   case Instruction::Add:
@@ -1638,8 +1641,8 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
       const SCEV *TruncExpr = SE.getTruncateOrNoop(SE.getSCEV(OrigInc),
                                                    IsomorphicInc->getType());
       if (OrigInc != IsomorphicInc
-          && TruncExpr == SE.getSCEV(IsomorphicInc) &&
-          hoistStep(OrigInc, IsomorphicInc, DT)) {
+          && TruncExpr == SE.getSCEV(IsomorphicInc)
+          && hoistStep(OrigInc, IsomorphicInc, DT)) {
         DEBUG_WITH_TYPE(DebugType, dbgs()
                         << "INDVARS: Eliminated congruent iv.inc: "
                         << *IsomorphicInc << '\n');

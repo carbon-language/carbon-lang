@@ -658,6 +658,77 @@ static bool isExistingPhi(const SCEVAddRecExpr *AR, ScalarEvolution &SE) {
   return false;
 }
 
+/// Check if expanding this expression is likely to incur significant cost. This
+/// is tricky because SCEV doesn't track which expressions are actually computed
+/// by the current IR.
+///
+/// We currently allow expansion of IV increments that involve adds,
+/// multiplication by constants, and AddRecs from existing phis.
+///
+/// TODO: Allow UDivExpr if we can find an existing IV increment that is an
+/// obvious multiple of the UDivExpr.
+static bool isHighCostExpansion(const SCEV *S,
+                                SmallPtrSet<const SCEV*, 8> &Processed,
+                                ScalarEvolution &SE) {
+  // Zero/One operand expressions
+  switch (S->getSCEVType()) {
+  case scUnknown:
+  case scConstant:
+    return false;
+  case scTruncate:
+    return isHighCostExpansion(cast<SCEVTruncateExpr>(S)->getOperand(),
+                               Processed, SE);
+  case scZeroExtend:
+    return isHighCostExpansion(cast<SCEVZeroExtendExpr>(S)->getOperand(),
+                               Processed, SE);
+  case scSignExtend:
+    return isHighCostExpansion(cast<SCEVSignExtendExpr>(S)->getOperand(),
+                               Processed, SE);
+  }
+
+  if (!Processed.insert(S))
+    return false;
+
+  if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
+    for (SCEVAddExpr::op_iterator I = Add->op_begin(), E = Add->op_end();
+         I != E; ++I) {
+      if (isHighCostExpansion(*I, Processed, SE))
+        return true;
+    }
+    return false;
+  }
+
+  if (const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(S)) {
+    if (Mul->getNumOperands() == 2) {
+      // Multiplication by a constant is ok
+      if (isa<SCEVConstant>(Mul->getOperand(0)))
+        return isHighCostExpansion(Mul->getOperand(1), Processed, SE);
+
+      // If we have the value of one operand, check if an existing
+      // multiplication already generates this expression.
+      if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(Mul->getOperand(1))) {
+        Value *UVal = U->getValue();
+        for (Value::use_iterator UI = UVal->use_begin(), UE = UVal->use_end();
+             UI != UE; ++UI) {
+          Instruction *User = cast<Instruction>(*UI);
+          if (User->getOpcode() == Instruction::Mul
+              && SE.isSCEVable(User->getType())) {
+            return SE.getSCEV(User) == Mul;
+          }
+        }
+      }
+    }
+  }
+
+  if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
+    if (isExistingPhi(AR, SE))
+      return false;
+  }
+
+  // Fow now, consider any other type of expression (div/mul/min/max) high cost.
+  return true;
+}
+
 /// DeleteTriviallyDeadInstructions - If any of the instructions is the
 /// specified set are trivially dead, delete them and see if this makes any of
 /// their operands subsequently dead.
@@ -2204,6 +2275,49 @@ static bool isCompatibleIVType(Value *LVal, Value *RVal) {
   return (LType == RType) || (LType->isPointerTy() && RType->isPointerTy());
 }
 
+/// getExprBase - Return an approximation of this SCEV expression's "base", or
+/// NULL for any constant. Returning the expression itself is
+/// conservative. Returning a deeper subexpression is more precise and valid as
+/// long as it isn't less complex than another subexpression. For expressions
+/// involving multiple unscaled values, we need to return the pointer-type
+/// SCEVUnknown. This avoids forming chains across objects, such as:
+/// PrevOper==a[i], IVOper==b[i], IVInc==b-a.
+///
+/// Since SCEVUnknown is the rightmost type, and pointers are the rightmost
+/// SCEVUnknown, we simply return the rightmost SCEV operand.
+static const SCEV *getExprBase(const SCEV *S) {
+  switch (S->getSCEVType()) {
+  default: // uncluding scUnknown.
+    return S;
+  case scConstant:
+    return 0;
+  case scTruncate:
+    return getExprBase(cast<SCEVTruncateExpr>(S)->getOperand());
+  case scZeroExtend:
+    return getExprBase(cast<SCEVZeroExtendExpr>(S)->getOperand());
+  case scSignExtend:
+    return getExprBase(cast<SCEVSignExtendExpr>(S)->getOperand());
+  case scAddExpr: {
+    // Skip over scaled operands (scMulExpr) to follow add operands as long as
+    // there's nothing more complex.
+    // FIXME: not sure if we want to recognize negation.
+    const SCEVAddExpr *Add = cast<SCEVAddExpr>(S);
+    for (std::reverse_iterator<SCEVAddExpr::op_iterator> I(Add->op_end()),
+           E(Add->op_begin()); I != E; ++I) {
+      const SCEV *SubExpr = *I;
+      if (SubExpr->getSCEVType() == scAddExpr)
+        return getExprBase(SubExpr);
+
+      if (SubExpr->getSCEVType() != scMulExpr)
+        return SubExpr;
+    }
+    return S; // all operands are scaled, be conservative.
+  }
+  case scAddRecExpr:
+    return getExprBase(cast<SCEVAddRecExpr>(S)->getStart());
+  }
+}
+
 /// Return true if the chain increment is profitable to expand into a loop
 /// invariant value, which may require its own register. A profitable chain
 /// increment will be an offset relative to the same base. We allow such offsets
@@ -2213,7 +2327,16 @@ static const SCEV *
 getProfitableChainIncrement(Value *NextIV, Value *PrevIV,
                             const IVChain &Chain, Loop *L,
                             ScalarEvolution &SE, const TargetLowering *TLI) {
-  const SCEV *IncExpr = SE.getMinusSCEV(SE.getSCEV(NextIV), SE.getSCEV(PrevIV));
+  // Prune the solution space aggressively by checking that both IV operands
+  // are expressions that operate on the same unscaled SCEVUnknown. This
+  // "base" will be canceled by the subsequent getMinusSCEV call. Checking first
+  // avoids creating extra SCEV expressions.
+  const SCEV *OperExpr = SE.getSCEV(NextIV);
+  const SCEV *PrevExpr = SE.getSCEV(PrevIV);
+  if (getExprBase(OperExpr) != getExprBase(PrevExpr) && !StressIVChain)
+    return 0;
+
+  const SCEV *IncExpr = SE.getMinusSCEV(OperExpr, PrevExpr);
   if (!SE.isLoopInvariant(IncExpr, L))
     return 0;
 
@@ -2222,8 +2345,19 @@ getProfitableChainIncrement(Value *NextIV, Value *PrevIV,
   if (StressIVChain)
     return IncExpr;
 
-  // Unimplemented
-  return 0;
+  // Do not replace a constant offset from IV head with a nonconstant IV
+  // increment.
+  if (!isa<SCEVConstant>(IncExpr)) {
+    const SCEV *HeadExpr = SE.getSCEV(getWideOperand(Chain[0].IVOperand));
+    if (isa<SCEVConstant>(SE.getMinusSCEV(OperExpr, HeadExpr)))
+      return 0;
+  }
+
+  SmallPtrSet<const SCEV*, 8> Processed;
+  if (isHighCostExpansion(IncExpr, Processed, SE))
+    return 0;
+
+  return IncExpr;
 }
 
 /// Return true if the number of registers needed for the chain is estimated to
@@ -2242,8 +2376,72 @@ isProfitableChain(IVChain &Chain, SmallPtrSet<Instruction*, 4> &Users,
   if (StressIVChain)
     return true;
 
-  // Unimplemented
-  return false;
+  if (Chain.size() <= 2)
+    return false;
+
+  if (!Users.empty()) {
+    DEBUG(dbgs() << "Chain: " << *Chain[0].UserInst << " users:\n";
+          for (SmallPtrSet<Instruction*, 4>::const_iterator I = Users.begin(),
+                 E = Users.end(); I != E; ++I) {
+            dbgs() << "  " << **I << "\n";
+          });
+    return false;
+  }
+  assert(!Chain.empty() && "empty IV chains are not allowed");
+
+  // The chain itself may require a register, so intialize cost to 1.
+  int cost = 1;
+
+  // A complete chain likely eliminates the need for keeping the original IV in
+  // a register. LSR does not currently know how to form a complete chain unless
+  // the header phi already exists.
+  if (isa<PHINode>(Chain.back().UserInst)
+      && SE.getSCEV(Chain.back().UserInst) == Chain[0].IncExpr) {
+    --cost;
+  }
+  const SCEV *LastIncExpr = 0;
+  unsigned NumConstIncrements = 0;
+  unsigned NumVarIncrements = 0;
+  unsigned NumReusedIncrements = 0;
+  for (IVChain::const_iterator I = llvm::next(Chain.begin()), E = Chain.end();
+       I != E; ++I) {
+
+    if (I->IncExpr->isZero())
+      continue;
+
+    // Incrementing by zero or some constant is neutral. We assume constants can
+    // be folded into an addressing mode or an add's immediate operand.
+    if (isa<SCEVConstant>(I->IncExpr)) {
+      ++NumConstIncrements;
+      continue;
+    }
+
+    if (I->IncExpr == LastIncExpr)
+      ++NumReusedIncrements;
+    else
+      ++NumVarIncrements;
+
+    LastIncExpr = I->IncExpr;
+  }
+  // An IV chain with a single increment is handled by LSR's postinc
+  // uses. However, a chain with multiple increments requires keeping the IV's
+  // value live longer than it needs to be if chained.
+  if (NumConstIncrements > 1)
+    --cost;
+
+  // Materializing increment expressions in the preheader that didn't exist in
+  // the original code may cost a register. For example, sign-extended array
+  // indices can produce ridiculous increments like this:
+  // IV + ((sext i32 (2 * %s) to i64) + (-1 * (sext i32 %s to i64)))
+  cost += NumVarIncrements;
+
+  // Reusing variable increments likely saves a register to hold the multiple of
+  // the stride.
+  cost -= NumReusedIncrements;
+
+  DEBUG(dbgs() << "Chain: " << *Chain[0].UserInst << " Cost: " << cost << "\n");
+
+  return cost < 0;
 }
 
 /// ChainInstruction - Add this IV user to an existing chain or make it the head
@@ -4279,6 +4477,13 @@ LSRInstance::ImplementSolution(const SmallVectorImpl<const Formula *> &Solution,
   Rewriter.disableCanonicalMode();
   Rewriter.enableLSRMode();
   Rewriter.setIVIncInsertPos(L, IVIncInsertPos);
+
+  // Mark phi nodes that terminate chains so the expander tries to reuse them.
+  for (SmallVectorImpl<IVChain>::const_iterator ChainI = IVChainVec.begin(),
+         ChainE = IVChainVec.end(); ChainI != ChainE; ++ChainI) {
+    if (PHINode *PN = dyn_cast<PHINode>(ChainI->back().UserInst))
+      Rewriter.setChainedPhi(PN);
+  }
 
   // Expand the new value definitions and update the users.
   for (SmallVectorImpl<LSRFixup>::const_iterator I = Fixups.begin(),
