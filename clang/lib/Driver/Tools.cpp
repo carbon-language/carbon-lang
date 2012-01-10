@@ -2571,9 +2571,8 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   // -g to clang. I guess if it is wrong there then it is wrong here too :) .
   Args.ClaimAllArgs(options::OPT_g_Group);
   if (Arg *A = Args.getLastArg(options::OPT_g_Group))
-    if (!A->getOption().matches(options::OPT_g0)) {
+    if (!A->getOption().matches(options::OPT_g0))
       CmdArgs.push_back("-g");
-    }
 
   // Optionally embed the -cc1as level arguments into the debug info, for build
   // analysis.
