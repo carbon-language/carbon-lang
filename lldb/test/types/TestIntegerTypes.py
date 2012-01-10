@@ -14,122 +14,114 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_char_type_with_dsym(self):
         """Test that char-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'char.cpp', 'EXE': self.exe_name}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.char_type(self.exe_name)
+        self.build_and_run('char.cpp', set(['char']), qd=True)
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_char_type_from_block_with_dsym(self):
+        """Test that char-type variables are displayed correctly from a block."""
+        self.build_and_run('char.cpp', set(['char']), bc=True, qd=True)
 
     def test_char_type_with_dwarf(self):
         """Test that char-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'char.cpp', 'EXE': self.exe_name}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.char_type(self.exe_name)
+        self.build_and_run('char.cpp', set(['char']), dsym=False, qd=True)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_unsigned_char_type_with_dsym(self):
         """Test that 'unsigned_char'-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'unsigned_char.cpp', 'EXE': self.exe_name}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.unsigned_char_type(self.exe_name)
+        self.build_and_run('unsigned_char.cpp', set(['unsigned', 'char']), qd=True)
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_unsigned_char_type_from_block_with_dsym(self):
+        """Test that 'unsigned char'-type variables are displayed correctly from a block."""
+        self.build_and_run('unsigned_char.cpp', set(['unsigned', 'char']), bc=True, qd=True)
 
     def test_unsigned_char_type_with_dwarf(self):
         """Test that 'unsigned char'-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'unsigned_char.cpp', 'EXE': self.exe_name}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.unsigned_char_type(self.exe_name)
+        self.build_and_run('unsigned_char.cpp', set(['unsigned', 'char']), dsym=False, qd=True)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_short_type_with_dsym(self):
         """Test that short-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'short.cpp', 'EXE': self.exe_name}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.short_type(self.exe_name)
+        self.build_and_run('short.cpp', set(['short']))
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_short_type_from_block_with_dsym(self):
+        """Test that short-type variables are displayed correctly from a block."""
+        self.build_and_run('short.cpp', set(['short']), bc=True)
 
     def test_short_type_with_dwarf(self):
         """Test that short-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'short.cpp', 'EXE': self.exe_name}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.short_type(self.exe_name)
+        self.build_and_run('short.cpp', set(['short']), dsym=False)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_unsigned_short_type_with_dsym(self):
         """Test that 'unsigned_short'-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'unsigned_short.cpp', 'EXE': self.exe_name}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.unsigned_short_type(self.exe_name)
+        self.build_and_run('unsigned_short.cpp', set(['unsigned', 'short']))
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_unsigned_short_type_from_block_with_dsym(self):
+        """Test that 'unsigned short'-type variables are displayed correctly from a block."""
+        self.build_and_run('unsigned_short.cpp', set(['unsigned', 'short']), bc=True)
 
     def test_unsigned_short_type_with_dwarf(self):
         """Test that 'unsigned short'-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'unsigned_short.cpp', 'EXE': self.exe_name}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.unsigned_short_type(self.exe_name)
+        self.build_and_run('unsigned_short.cpp', set(['unsigned', 'short']), dsym=False)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_int_type_with_dsym(self):
         """Test that int-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'int.cpp', 'EXE': self.exe_name}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.int_type(self.exe_name)
+        self.build_and_run('int.cpp', set(['int']))
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_int_type_from_block_with_dsym(self):
+        """Test that int-type variables are displayed correctly from a block."""
+        self.build_and_run('int.cpp', set(['int']), dsym=False)
 
     def test_int_type_with_dwarf(self):
         """Test that int-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'int.cpp', 'EXE': self.exe_name}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.int_type(self.exe_name)
+        self.build_and_run('int.cpp', set(['int']), dsym=False)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_unsigned_int_type_with_dsym(self):
         """Test that 'unsigned_int'-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'unsigned_int.cpp', 'EXE': self.exe_name}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.unsigned_int_type(self.exe_name)
+        self.build_and_run('unsigned_int.cpp', set(['unsigned', 'int']))
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_unsigned_int_type_from_block_with_dsym(self):
+        """Test that 'unsigned int'-type variables are displayed correctly from a block."""
+        self.build_and_run('unsigned_int.cpp', set(['unsigned', 'int']), bc=True)
 
     def test_unsigned_int_type_with_dwarf(self):
         """Test that 'unsigned int'-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'unsigned_int.cpp', 'EXE': self.exe_name}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.unsigned_int_type(self.exe_name)
+        self.build_and_run('unsigned_int.cpp', set(['unsigned', 'int']), dsym=False)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_long_type_with_dsym(self):
         """Test that long-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'long.cpp', 'EXE': self.exe_name}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.long_type(self.exe_name)
+        self.build_and_run('long.cpp', set(['long']))
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_long_type_from_block_with_dsym(self):
+        """Test that long-type variables are displayed correctly from a block."""
+        self.build_and_run('long.cpp', set(['long']), bc=True)
 
     def test_long_type_with_dwarf(self):
         """Test that long-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'long.cpp', 'EXE': self.exe_name}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.long_type(self.exe_name)
+        self.build_and_run('long.cpp', set(['long']), dsym=False)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_unsigned_long_type_with_dsym(self):
         """Test that 'unsigned long'-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'unsigned_long.cpp', 'EXE': self.exe_name}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.unsigned_long_type(self.exe_name)
+        self.build_and_run('unsigned_long.cpp', set(['unsigned', 'long']))
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_unsigned_long_type_from_block_with_dsym(self):
+        """Test that 'unsigned_long'-type variables are displayed correctly from a block."""
+        self.build_and_run('unsigned_long.cpp', set(['unsigned', 'long']), bc=True)
 
     def test_unsigned_long_type_with_dwarf(self):
         """Test that 'unsigned long'-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'unsigned_long.cpp', 'EXE': self.exe_name}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.unsigned_long_type(self.exe_name)
+        self.build_and_run('unsigned_long.cpp', set(['unsigned', 'long']), dsym=False)
 
     # rdar://problem/8482903
     # test suite failure for types dir -- "long long" and "unsigned long long"
@@ -137,72 +129,30 @@ class IntegerTypesTestCase(AbstractBase.GenericTester):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_long_long_type_with_dsym(self):
         """Test that 'long long'-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'long_long.cpp', 'EXE': self.exe_name}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.long_long_type(self.exe_name)
+        self.build_and_run('long_long.cpp', set(['long long']))
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_long_long_type_from_block_with_dsym(self):
+        """Test that 'long_long'-type variables are displayed correctly from a block."""
+        self.build_and_run('long_long.cpp', set(['long long']), bc=True)
 
     def test_long_long_type_with_dwarf(self):
         """Test that 'long long'-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'long_long.cpp', 'EXE': self.exe_name}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.long_long_type(self.exe_name)
+        self.build_and_run('long_long.cpp', set(['long long']), dsym=False)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_unsigned_long_long_type_with_dsym(self):
         """Test that 'unsigned long long'-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'unsigned_long_long.cpp', 'EXE': self.exe_name}
-        self.buildDsym(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.unsigned_long_long_type(self.exe_name)
+        self.build_and_run('unsigned_long_long.cpp', set(['unsigned', 'long long']))
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_unsigned_long_long_type_from_block_with_dsym(self):
+        """Test that 'unsigned_long_long'-type variables are displayed correctly from a block."""
+        self.build_and_run('unsigned_long_long.cpp', set(['unsigned', 'long long']), bc=True)
 
     def test_unsigned_long_long_type_with_dwarf(self):
         """Test that 'unsigned long long'-type variables are displayed correctly."""
-        d = {'CXX_SOURCES': 'unsigned_long_long.cpp', 'EXE': self.exe_name}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-        self.unsigned_long_long_type(self.exe_name)
-
-    def char_type(self, exe_name):
-        """Test that char-type variables are displayed correctly."""
-        self.generic_type_tester(exe_name, set(['char']), quotedDisplay=True)
-
-    def unsigned_char_type(self, exe_name):
-        """Test that 'unsigned char'-type variables are displayed correctly."""
-        self.generic_type_tester(exe_name, set(['unsigned', 'char']), quotedDisplay=True)
-
-    def short_type(self, exe_name):
-        """Test that short-type variables are displayed correctly."""
-        self.generic_type_tester(exe_name, set(['short']))
-
-    def unsigned_short_type(self, exe_name):
-        """Test that 'unsigned short'-type variables are displayed correctly."""
-        self.generic_type_tester(exe_name, set(['unsigned', 'short']))
-
-    def int_type(self, exe_name):
-        """Test that int-type variables are displayed correctly."""
-        self.generic_type_tester(exe_name, set(['int']))
-
-    def unsigned_int_type(self, exe_name):
-        """Test that 'unsigned int'-type variables are displayed correctly."""
-        self.generic_type_tester(exe_name, set(['unsigned', 'int']))
-
-    def long_type(self, exe_name):
-        """Test that long-type variables are displayed correctly."""
-        self.generic_type_tester(exe_name, set(['long']))
-
-    def unsigned_long_type(self, exe_name):
-        """Test that 'unsigned long'-type variables are displayed correctly."""
-        self.generic_type_tester(exe_name, set(['unsigned', 'long']))
-
-    def long_long_type(self, exe_name):
-        """Test that long long-type variables are displayed correctly."""
-        self.generic_type_tester(exe_name, set(['long long']))
-
-    def unsigned_long_long_type(self, exe_name):
-        """Test that 'unsigned long long'-type variables are displayed correctly."""
-        self.generic_type_tester(exe_name, set(['unsigned', 'long long']))
+        self.build_and_run('unsigned_long_long.cpp', set(['unsigned', 'long long']), dsym=False)
 
 
 if __name__ == '__main__':
