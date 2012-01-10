@@ -69,7 +69,7 @@ endif
 cxx_compiler = $(if $(findstring clang,$(1)), $(subst clang,clang++,$(1)), $(if $(findstring llvm-gcc,$(1)), $(subst llvm-gcc,llvm-g++,$(1)), $(subst gcc,g++,$(1))))
 
 # Function that returns the C++ linker, given $(CC) as arg.
-cxx_linker = $(if $(findstring clang,$(1)), $(subst clang,g++,$(1)), $(if $(findstring llvm-gcc,$(1)), $(subst llvm-gcc,g++,$(1)), $(subst gcc,g++,$(1))))
+cxx_linker = $(if $(findstring clang,$(1)), $(subst clang,clang++,$(1)), $(if $(findstring llvm-gcc,$(1)), $(subst llvm-gcc,llvm-g++,$(1)), $(subst gcc,g++,$(1))))
 
 #----------------------------------------------------------------------
 # dylib settings
@@ -78,6 +78,11 @@ ifneq "$(strip $(DYLIB_C_SOURCES))" ""
 	DYLIB_OBJECTS +=$(strip $(DYLIB_C_SOURCES:.c=.o))
 endif
 
+ifneq "$(strip $(DYLIB_CXX_SOURCES))" ""
+    DYLIB_OBJECTS +=$(strip $(DYLIB_CXX_SOURCES:.cpp=.o))
+    CXX = $(call cxx_compiler,$(CC))
+    LD = $(call cxx_linker,$(CC))
+endif
 
 #----------------------------------------------------------------------
 # Check if we have any C source files
