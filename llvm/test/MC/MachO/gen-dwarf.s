@@ -7,6 +7,7 @@ _bar:
 L1:	leave
 	ret
 _foo:
+_baz:
 	nop
 .data
 _x:	.long 1
@@ -24,12 +25,11 @@ _x:	.long 1
 // CHECK: 	DW_AT_producer	DW_FORM_string
 // CHECK: 	DW_AT_language	DW_FORM_data2
 
-// CHECK: [2] DW_TAG_subprogram	DW_CHILDREN_yes
+// CHECK: [2] DW_TAG_label	DW_CHILDREN_yes
 // CHECK: 	DW_AT_name	DW_FORM_string
 // CHECK: 	DW_AT_decl_file	DW_FORM_data4
 // CHECK: 	DW_AT_decl_line	DW_FORM_data4
 // CHECK: 	DW_AT_low_pc	DW_FORM_addr
-// CHECK: 	DW_AT_high_pc	DW_FORM_addr
 // CHECK: 	DW_AT_prototyped	DW_FORM_flag
 
 // CHECK: [3] DW_TAG_unspecified_parameters	DW_CHILDREN_no
@@ -48,24 +48,33 @@ _x:	.long 1
 // CHECK:    DW_AT_producer [DW_FORM_string]	("llvm-mc (based on {{.*}})")
 // CHECK:    DW_AT_language [DW_FORM_data2]	(0x8001)
 
-// CHECK:    DW_TAG_subprogram [2] *
+// CHECK:    DW_TAG_label [2] *
 // CHECK:      DW_AT_name [DW_FORM_string]	("bar")
 // CHECK:      DW_AT_decl_file [DW_FORM_data4]	(0x00000001)
 // CHECK:      DW_AT_decl_line [DW_FORM_data4]	(0x00000005)
 // CHECK:      DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
-// CHECK:      DW_AT_high_pc [DW_FORM_addr]	(0x0000000000000007)
 // CHECK:      DW_AT_prototyped [DW_FORM_flag]	(0x00)
 
 // CHECK:      DW_TAG_unspecified_parameters [3]  
 
 // CHECK:      NULL
 
-// CHECK:    DW_TAG_subprogram [2] *
+// CHECK:    DW_TAG_label [2] *
 // CHECK:      DW_AT_name [DW_FORM_string]	("foo")
 // CHECK:      DW_AT_decl_file [DW_FORM_data4]	(0x00000001)
 // CHECK:      DW_AT_decl_line [DW_FORM_data4]	(0x00000009)
 // CHECK:      DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000007)
-// CHECK:      DW_AT_high_pc [DW_FORM_addr]	(0x0000000000000008)
+// CHECK:      DW_AT_prototyped [DW_FORM_flag]	(0x00)
+
+// CHECK:      DW_TAG_unspecified_parameters [3]  
+
+// CHECK:      NULL
+
+// CHECK:    DW_TAG_label [2] *
+// CHECK:      DW_AT_name [DW_FORM_string]	("baz")
+// CHECK:      DW_AT_decl_file [DW_FORM_data4]	(0x00000001)
+// CHECK:      DW_AT_decl_line [DW_FORM_data4]	(0x0000000a)
+// CHECK:      DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000007)
 // CHECK:      DW_AT_prototyped [DW_FORM_flag]	(0x00)
 
 // CHECK:      DW_TAG_unspecified_parameters [3]  
@@ -109,5 +118,5 @@ _x:	.long 1
 // CHECK: 0x0000000000000000      6      0      1   0  is_stmt
 // CHECK: 0x0000000000000005      7      0      1   0  is_stmt
 // CHECK: 0x0000000000000006      8      0      1   0  is_stmt
-// CHECK: 0x0000000000000007     10      0      1   0  is_stmt
-// CHECK: 0x0000000000000008     10      0      1   0  is_stmt end_sequence
+// CHECK: 0x0000000000000007     11      0      1   0  is_stmt
+// CHECK: 0x0000000000000008     11      0      1   0  is_stmt end_sequence

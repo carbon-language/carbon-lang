@@ -454,15 +454,14 @@ static void EmitGenDwarfAbbrev(MCStreamer *MCOS) {
   EmitAbbrev(MCOS, dwarf::DW_AT_language, dwarf::DW_FORM_data2);
   EmitAbbrev(MCOS, 0, 0);
 
-  // DW_TAG_subprogram DIE abbrev (2).
+  // DW_TAG_label DIE abbrev (2).
   MCOS->EmitULEB128IntValue(2);
-  MCOS->EmitULEB128IntValue(dwarf::DW_TAG_subprogram);
+  MCOS->EmitULEB128IntValue(dwarf::DW_TAG_label);
   MCOS->EmitIntValue(dwarf::DW_CHILDREN_yes, 1);
   EmitAbbrev(MCOS, dwarf::DW_AT_name, dwarf::DW_FORM_string);
   EmitAbbrev(MCOS, dwarf::DW_AT_decl_file, dwarf::DW_FORM_data4);
   EmitAbbrev(MCOS, dwarf::DW_AT_decl_line, dwarf::DW_FORM_data4);
   EmitAbbrev(MCOS, dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr);
-  EmitAbbrev(MCOS, dwarf::DW_AT_high_pc, dwarf::DW_FORM_addr);
   EmitAbbrev(MCOS, dwarf::DW_AT_prototyped, dwarf::DW_FORM_flag);
   EmitAbbrev(MCOS, 0, 0);
 
@@ -545,7 +544,7 @@ static void EmitGenDwarfAranges(MCStreamer *MCOS) {
 
 // When generating dwarf for assembly source files this emits the data for
 // .debug_info section which contains three parts.  The header, the compile_unit
-// DIE and a list of subprogram DIEs.
+// DIE and a list of label DIEs.
 static void EmitGenDwarfInfo(MCStreamer *MCOS) {
   MCContext &context = MCOS->getContext();
 
@@ -630,7 +629,7 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS) {
   // draft has no standard code for assembler.
   MCOS->EmitIntValue(dwarf::DW_LANG_Mips_Assembler, 2);
 
-  // Third part: the list of subprogram DIEs.
+  // Third part: the list of label DIEs.
 
   // Loop on saved info for dwarf subprograms and create the DIEs for them.
   const std::vector<const MCGenDwarfSubprogramEntry *> &Entries =
@@ -640,7 +639,7 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS) {
        ++it) {
     const MCGenDwarfSubprogramEntry *Entry = *it;
 
-    // The DW_TAG_subprogram DIE abbrev (2).
+    // The DW_TAG_label DIE abbrev (2).
     MCOS->EmitULEB128IntValue(2);
 
     // AT_name, of the label without any leading underbar.
@@ -657,17 +656,6 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS) {
     const MCExpr *AT_low_pc = MCSymbolRefExpr::Create(Entry->getLabel(),
                                              MCSymbolRefExpr::VK_None, context);
     MCOS->EmitAbsValue(AT_low_pc, AddrSize);
-
-    // AT_high_pc, end address which is the next label or end of the section.
-    std::vector<const MCGenDwarfSubprogramEntry *>::const_iterator next = it+1;
-    if (next != Entries.end()){
-      const MCGenDwarfSubprogramEntry *NextEntry = *next;
-      const MCExpr *AT_high_pc = MCSymbolRefExpr::Create(NextEntry->getLabel(),
-                                             MCSymbolRefExpr::VK_None, context);
-      MCOS->EmitAbsValue(AT_high_pc, AddrSize);
-    } else {
-      MCOS->EmitAbsValue(End, AddrSize);
-    }
 
     // DW_AT_prototyped, a one byte flag value of 0 saying we have no prototype.
     MCOS->EmitIntValue(0, 1);
