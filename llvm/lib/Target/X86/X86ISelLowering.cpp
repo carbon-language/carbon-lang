@@ -13750,7 +13750,7 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
     // Canonicalize pandn to RHS
     if (N0.getOpcode() == X86ISD::ANDNP)
       std::swap(N0, N1);
-    // or (and (m, x), (pandn m, y))
+    // or (and (m, y), (pandn m, x))
     if (N0.getOpcode() == ISD::AND && N1.getOpcode() == X86ISD::ANDNP) {
       SDValue Mask = N1.getOperand(0);
       SDValue X    = N1.getOperand(1);
