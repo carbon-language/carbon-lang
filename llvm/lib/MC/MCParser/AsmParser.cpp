@@ -1076,10 +1076,10 @@ bool AsmParser::ParseStatement() {
     Out.EmitLabel(Sym);
 
     // If we are generating dwarf for assembly source files then gather the
-    // info to make a dwarf subprogram entry for this label if needed.
+    // info to make a dwarf label entry for this label if needed.
     if (getContext().getGenDwarfForAssembly())
-      MCGenDwarfSubprogramEntry::Make(Sym, &getStreamer(), getSourceManager(),
-                                      IDLoc);
+      MCGenDwarfLabelEntry::Make(Sym, &getStreamer(), getSourceManager(),
+                                 IDLoc);
 
     // Consume any end of statement token, if present, to avoid spurious
     // AddBlankLine calls().

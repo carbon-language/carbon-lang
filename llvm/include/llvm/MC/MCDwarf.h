@@ -239,8 +239,8 @@ namespace llvm {
   };
 
   // When generating dwarf for assembly source files this is the info that is
-  // needed to be gathered for each symbol that will have a dwarf2_subprogram.
-  class MCGenDwarfSubprogramEntry {
+  // needed to be gathered for each symbol that will have a dwarf label.
+  class MCGenDwarfLabelEntry {
   private:
     // Name of the symbol without a leading underbar, if any.
     StringRef Name;
@@ -248,14 +248,12 @@ namespace llvm {
     unsigned FileNumber;
     // The line number this symbol is at.
     unsigned LineNumber;
-    // The low_pc for the dwarf2_subprogram is taken from this symbol.  The
-    // high_pc is taken from the next symbol's value or the end of the section
-    // for the last symbol
+    // The low_pc for the dwarf label is taken from this symbol.
     MCSymbol *Label;
 
   public:
-    MCGenDwarfSubprogramEntry(StringRef name, unsigned fileNumber,
-                              unsigned lineNumber, MCSymbol *label) :
+    MCGenDwarfLabelEntry(StringRef name, unsigned fileNumber,
+                         unsigned lineNumber, MCSymbol *label) :
       Name(name), FileNumber(fileNumber), LineNumber(lineNumber), Label(label){}
 
     StringRef getName() const { return Name; }

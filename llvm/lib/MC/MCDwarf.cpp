@@ -631,13 +631,13 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS) {
 
   // Third part: the list of label DIEs.
 
-  // Loop on saved info for dwarf subprograms and create the DIEs for them.
-  const std::vector<const MCGenDwarfSubprogramEntry *> &Entries =
-    MCOS->getContext().getMCGenDwarfSubprogramEntries();
-  for (std::vector<const MCGenDwarfSubprogramEntry *>::const_iterator it =
+  // Loop on saved info for dwarf labels and create the DIEs for them.
+  const std::vector<const MCGenDwarfLabelEntry *> &Entries =
+    MCOS->getContext().getMCGenDwarfLabelEntries();
+  for (std::vector<const MCGenDwarfLabelEntry *>::const_iterator it =
        Entries.begin(), ie = Entries.end(); it != ie;
        ++it) {
-    const MCGenDwarfSubprogramEntry *Entry = *it;
+    const MCGenDwarfLabelEntry *Entry = *it;
 
     // The DW_TAG_label DIE abbrev (2).
     MCOS->EmitULEB128IntValue(2);
@@ -666,12 +666,12 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS) {
     // Add the NULL DIE terminating the DW_TAG_unspecified_parameters DIE's.
     MCOS->EmitIntValue(0, 1);
   }
-  // Deallocate the MCGenDwarfSubprogramEntry classes that saved away the info
-  // for the dwarf subprograms.
-  for (std::vector<const MCGenDwarfSubprogramEntry *>::const_iterator it =
+  // Deallocate the MCGenDwarfLabelEntry classes that saved away the info
+  // for the dwarf labels.
+  for (std::vector<const MCGenDwarfLabelEntry *>::const_iterator it =
        Entries.begin(), ie = Entries.end(); it != ie;
        ++it) {
-    const MCGenDwarfSubprogramEntry *Entry = *it;
+    const MCGenDwarfLabelEntry *Entry = *it;
     delete Entry;
   }
 
@@ -711,11 +711,11 @@ void MCGenDwarfInfo::Emit(MCStreamer *MCOS) {
 // When generating dwarf for assembly source files this is called when symbol
 // for a label is created.  If this symbol is not a temporary and is in the
 // section that dwarf is being generated for, save the needed info to create
-// a dwarf subprogram.
+// a dwarf label.
 //
-void MCGenDwarfSubprogramEntry::Make(MCSymbol *Symbol, MCStreamer *MCOS,
+void MCGenDwarfLabelEntry::Make(MCSymbol *Symbol, MCStreamer *MCOS,
                                      SourceMgr &SrcMgr, SMLoc &Loc) {
-  // We won't create dwarf subprogram's for temporary symbols or symbols not in
+  // We won't create dwarf label's for temporary symbols or symbols not in
   // the default text.
   if (Symbol->isTemporary())
     return;
@@ -723,17 +723,17 @@ void MCGenDwarfSubprogramEntry::Make(MCSymbol *Symbol, MCStreamer *MCOS,
   if (context.getGenDwarfSection() != MCOS->getCurrentSection())
     return;
 
-  // The dwarf subprogram's name does not have the symbol name's leading
+  // The dwarf label's name does not have the symbol name's leading
   // underbar if any.
   StringRef Name = Symbol->getName();
   if (Name.startswith("_"))
     Name = Name.substr(1, Name.size()-1);
 
-  // Get the dwarf file number to be used for the dwarf subprogram.
+  // Get the dwarf file number to be used for the dwarf label.
   unsigned FileNumber = context.getGenDwarfFileNumber();
 
   // Finding the line number is the expensive part which is why we just don't
-  // pass it in as for some symbols we won't create a dwarf subprogram.
+  // pass it in as for some symbols we won't create a dwarf label.
   int CurBuffer = SrcMgr.FindBufferContainingLoc(Loc);
   unsigned LineNumber = SrcMgr.FindLineNumber(Loc, CurBuffer);
 
@@ -745,9 +745,9 @@ void MCGenDwarfSubprogramEntry::Make(MCSymbol *Symbol, MCStreamer *MCOS,
   MCOS->EmitLabel(Label);
 
   // Create and entry for the info and add it to the other entries.
-  MCGenDwarfSubprogramEntry *Entry = 
-    new MCGenDwarfSubprogramEntry(Name, FileNumber, LineNumber, Label);
-  MCOS->getContext().addMCGenDwarfSubprogramEntry(Entry);
+  MCGenDwarfLabelEntry *Entry = 
+    new MCGenDwarfLabelEntry(Name, FileNumber, LineNumber, Label);
+  MCOS->getContext().addMCGenDwarfLabelEntry(Entry);
 }
 
 static int getDataAlignmentFactor(MCStreamer &streamer) {

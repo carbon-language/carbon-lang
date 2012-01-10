@@ -111,9 +111,9 @@ namespace llvm {
     /// Symbols created for the start and end of this section.
     MCSymbol *GenDwarfSectionStartSym, *GenDwarfSectionEndSym;
 
-    /// The information gathered from labels that will have dwarf subprogram
+    /// The information gathered from labels that will have dwarf label
     /// entries when generating dwarf assembly source files.
-    std::vector<const MCGenDwarfSubprogramEntry *> MCGenDwarfSubprogramEntries;
+    std::vector<const MCGenDwarfLabelEntry *> MCGenDwarfLabelEntries;
 
     /// The string to embed in the debug information for the compile unit, if
     /// non-empty.
@@ -287,12 +287,12 @@ namespace llvm {
     void setGenDwarfSectionEndSym(MCSymbol *Sym) {
       GenDwarfSectionEndSym = Sym;
     }
-    const std::vector<const MCGenDwarfSubprogramEntry *>
-      &getMCGenDwarfSubprogramEntries() const {
-      return MCGenDwarfSubprogramEntries;
+    const std::vector<const MCGenDwarfLabelEntry *>
+      &getMCGenDwarfLabelEntries() const {
+      return MCGenDwarfLabelEntries;
     }
-    void addMCGenDwarfSubprogramEntry(const MCGenDwarfSubprogramEntry *E) {
-      MCGenDwarfSubprogramEntries.push_back(E);
+    void addMCGenDwarfLabelEntry(const MCGenDwarfLabelEntry *E) {
+      MCGenDwarfLabelEntries.push_back(E);
     }
 
     void setDwarfDebugFlags(StringRef S) { DwarfDebugFlags = S; }
