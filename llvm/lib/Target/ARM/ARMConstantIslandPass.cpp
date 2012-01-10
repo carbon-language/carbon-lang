@@ -309,6 +309,7 @@ namespace {
     bool FixUpConditionalBr(ImmBranch &Br);
     bool FixUpUnconditionalBr(ImmBranch &Br);
     bool UndoLRSpillRestore();
+    bool mayOptimizeThumb2Instruction(const MachineInstr *MI) const;
     bool OptimizeThumb2Instructions();
     bool OptimizeThumb2Branches();
     bool ReorderThumb2JumpTables();
@@ -347,10 +348,8 @@ void ARMConstantIslands::verify() {
   for (unsigned i = 0, e = CPUsers.size(); i != e; ++i) {
     CPUser &U = CPUsers[i];
     unsigned UserOffset = GetUserOffset(U);
-    unsigned CPEOffset  = GetOffsetOf(U.CPEMI);
-    unsigned Disp = UserOffset < CPEOffset ? CPEOffset - UserOffset :
-      UserOffset - CPEOffset;
-    assert(Disp <= U.getMaxDisp() || "Constant pool entry out of range!");
+    assert(CPEIsInRange(U.MI, UserOffset, U.CPEMI, U.getMaxDisp(), U.NegOk) &&
+           "Constant pool entry out of range!");
   }
 #endif
 }
@@ -807,6 +806,9 @@ void ARMConstantIslands::ComputeBlockSize(MachineBasicBlock *MBB) {
     // The actual size may be smaller, but still a multiple of the instr size.
     if (I->isInlineAsm())
       BBI.Unalign = isThumb ? 1 : 2;
+    // Also consider instructions that may be shrunk later.
+    else if (isThumb && mayOptimizeThumb2Instruction(I))
+      BBI.Unalign = 1;
   }
 
   // tBR_JTr contains a .align 2 directive.
@@ -1674,6 +1676,25 @@ bool ARMConstantIslands::UndoLRSpillRestore() {
     }
   }
   return MadeChange;
+}
+
+// mayOptimizeThumb2Instruction - Returns true if OptimizeThumb2Instructions
+// below may shrink MI.
+bool
+ARMConstantIslands::mayOptimizeThumb2Instruction(const MachineInstr *MI) const {
+  switch(MI->getOpcode()) {
+    // OptimizeThumb2Instructions.
+    case ARM::t2LEApcrel:
+    case ARM::t2LDRpci:
+    // OptimizeThumb2Branches.
+    case ARM::t2B:
+    case ARM::t2Bcc:
+    case ARM::tBcc:
+    // OptimizeThumb2JumpTables.
+    case ARM::t2BR_JT:
+      return true;
+  }
+  return false;
 }
 
 bool ARMConstantIslands::OptimizeThumb2Instructions() {
