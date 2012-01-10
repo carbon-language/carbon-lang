@@ -333,7 +333,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   , IsUAMemFast(false)
   , HasVectorUAMem(false)
   , HasCmpxchg16b(false)
-  , stackAlignment(8)
+  , stackAlignment(4)
   // FIXME: this is a known good value for Yonah. How about others?
   , MaxInlineSizeThreshold(128)
   , TargetTriple(TT)
