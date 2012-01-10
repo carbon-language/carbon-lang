@@ -237,9 +237,15 @@ FullSourceLoc
     case RangeK:
       break;
     case StmtK:
+      // Defensive checking.
+      if (!S)
+        break;
       return FullSourceLoc(getValidSourceLocation(S, LAC),
                            const_cast<SourceManager&>(*SM));
     case DeclK:
+      // Defensive checking.
+      if (!D)
+        break;
       return FullSourceLoc(D->getLocation(), const_cast<SourceManager&>(*SM));
   }
 
