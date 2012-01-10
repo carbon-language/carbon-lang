@@ -535,7 +535,7 @@ def err_ctor_init_missing_comma : Error<
   "missing ',' between base or member initializers">;
 
 // C++ declarations
-def err_friend_decl_defines_class : Error<
+def err_friend_decl_defines_type : Error<
   "cannot define a type in a friend declaration">;
 def err_missing_whitespace_digraph : Error<
   "found '<::' after a "

@@ -37,3 +37,12 @@ namespace SemiCommaTypo {
       f3 override, // expected-error {{expected ';' at end of declaration}}
   };
 }
+
+namespace ScopedEnum {
+  enum class E { a };
+
+  enum class E b = E::a; // expected-error {{must use 'enum' not 'enum class'}}
+  struct S {
+    friend enum class E; // expected-error {{must use 'enum' not 'enum class'}}
+  };
+}

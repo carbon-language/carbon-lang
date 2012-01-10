@@ -1171,7 +1171,8 @@ public:
                  AttributeList *Attr, AccessSpecifier AS,
                  SourceLocation ModulePrivateLoc,
                  MultiTemplateParamsArg TemplateParameterLists,
-                 bool &OwnedDecl, bool &IsDependent, bool ScopedEnum,
+                 bool &OwnedDecl, bool &IsDependent,
+                 SourceLocation ScopedEnumKWLoc,
                  bool ScopedEnumUsesClassTag, TypeResult UnderlyingType);
 
   Decl *ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,

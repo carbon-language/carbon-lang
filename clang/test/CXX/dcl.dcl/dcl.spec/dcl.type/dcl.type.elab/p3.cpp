@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-class A {}; // expected-note 3 {{previous use is here}}
+class A {}; // expected-note 4 {{previous use is here}}
+enum E {};
 
 void a1(struct A);
 void a2(class A);
@@ -12,8 +13,8 @@ class A1 {
   friend class A;
   friend union A; // expected-error {{use of 'A' with tag type that does not match previous declaration}}
 
-  friend enum A; // expected-error {{ISO C++ forbids forward references to 'enum' types}} \
-                 // expected-warning {{cannot be a friend}}
+  friend enum A; // expected-error {{use of 'A' with tag type that does not match previous declaration}}
+  friend enum E; // expected-warning {{cannot be a friend}}
 };
 
 template <class T> struct B { // expected-note {{previous use is here}}

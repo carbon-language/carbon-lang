@@ -7580,7 +7580,8 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                      SourceLocation ModulePrivateLoc,
                      MultiTemplateParamsArg TemplateParameterLists,
                      bool &OwnedDecl, bool &IsDependent,
-                     bool ScopedEnum, bool ScopedEnumUsesClassTag,
+                     SourceLocation ScopedEnumKWLoc,
+                     bool ScopedEnumUsesClassTag,
                      TypeResult UnderlyingType) {
   // If this is not a definition, it must have a name.
   assert((Name != 0 || TUK == TUK_Definition) &&
@@ -7589,6 +7590,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
 
   OwnedDecl = false;
   TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForTypeSpec(TagSpec);
+  bool ScopedEnum = ScopedEnumKWLoc.isValid();
 
   // FIXME: Check explicit specializations more carefully.
   bool isExplicitSpecialization = false;
@@ -7918,6 +7920,16 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
 
         if (Kind == TTK_Enum && PrevTagDecl->getTagKind() == TTK_Enum) {
           const EnumDecl *PrevEnum = cast<EnumDecl>(PrevTagDecl);
+
+          // If this is an elaborated-type-specifier for a scoped enumeration,
+          // the 'class' keyword is not necessary and not permitted.
+          if (TUK == TUK_Reference || TUK == TUK_Friend) {
+            if (ScopedEnum)
+              Diag(ScopedEnumKWLoc, diag::err_enum_class_reference)
+                << PrevEnum->isScoped()
+                << FixItHint::CreateRemoval(ScopedEnumKWLoc);
+            return PrevTagDecl;
+          }
 
           // All conflicts with previous declarations are recovered by
           // returning the previous declaration.

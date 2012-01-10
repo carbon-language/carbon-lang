@@ -9851,7 +9851,7 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
                       Attr, AS_public, 
                       /*ModulePrivateLoc=*/SourceLocation(),
                       MultiTemplateParamsArg(), Owned, IsDependent, 
-                      /*ScopedEnum=*/false,
+                      /*ScopedEnumKWLoc=*/SourceLocation(),
                       /*ScopedEnumUsesClassTag=*/false,
                       /*UnderlyingType=*/TypeResult());          
     }

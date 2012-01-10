@@ -2865,15 +2865,14 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     return cutOffParsing();
   }
 
-  bool IsScopedEnum = false;
+  SourceLocation ScopedEnumKWLoc;
   bool IsScopedUsingClassTag = false;
 
   if (getLang().CPlusPlus0x &&
       (Tok.is(tok::kw_class) || Tok.is(tok::kw_struct))) {
     Diag(Tok, diag::warn_cxx98_compat_scoped_enum);
-    IsScopedEnum = true;
     IsScopedUsingClassTag = Tok.is(tok::kw_class);
-    ConsumeToken();
+    ScopedEnumKWLoc = ConsumeToken();
   }
   
   // If attributes exist after tag, parse them.
@@ -2922,11 +2921,11 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     NameLoc = ConsumeToken();
   }
 
-  if (!Name && IsScopedEnum) {
+  if (!Name && ScopedEnumKWLoc.isValid()) {
     // C++0x 7.2p2: The optional identifier shall not be omitted in the
     // declaration of a scoped enumeration.
     Diag(Tok, diag::err_scoped_enum_missing_identifier);
-    IsScopedEnum = false;
+    ScopedEnumKWLoc = SourceLocation();
     IsScopedUsingClassTag = false;
   }
 
@@ -2993,16 +2992,20 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     }
   }
 
-  // There are three options here.  If we have 'enum foo;', then this is a
-  // forward declaration.  If we have 'enum foo {...' then this is a
-  // definition. Otherwise we have something like 'enum foo xyz', a reference.
+  // There are four options here.  If we have 'friend enum foo;' then this is a
+  // friend declaration, and cannot have an accompanying definition. If we have
+  // 'enum foo;', then this is a forward declaration.  If we have
+  // 'enum foo {...' then this is a definition. Otherwise we have something
+  // like 'enum foo xyz', a reference.
   //
   // This is needed to handle stuff like this right (C99 6.7.2.3p11):
   // enum foo {..};  void bar() { enum foo; }    <- new foo in bar.
   // enum foo {..};  void bar() { enum foo x; }  <- use of old foo.
   //
   Sema::TagUseKind TUK;
-  if (Tok.is(tok::l_brace))
+  if (DS.isFriendSpecified())
+    TUK = Sema::TUK_Friend;
+  else if (Tok.is(tok::l_brace))
     TUK = Sema::TUK_Definition;
   else if (Tok.is(tok::semi))
     TUK = Sema::TUK_Declaration;
@@ -3036,7 +3039,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
                                    StartLoc, SS, Name, NameLoc, attrs.getList(),
                                    AS, DS.getModulePrivateSpecLoc(),
                                    MultiTemplateParamsArg(Actions),
-                                   Owned, IsDependent, IsScopedEnum,
+                                   Owned, IsDependent, ScopedEnumKWLoc,
                                    IsScopedUsingClassTag, BaseType);
 
   if (IsDependent) {
@@ -3075,9 +3078,13 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     DS.SetTypeSpecError();
     return;
   }
-  
-  if (Tok.is(tok::l_brace))
+
+  if (Tok.is(tok::l_brace)) {
+    if (TUK == Sema::TUK_Friend)
+      Diag(Tok, diag::err_friend_decl_defines_type)
+        << SourceRange(DS.getFriendSpecLoc());
     ParseEnumBody(StartLoc, TagDecl);
+  }
 
   if (DS.SetTypeSpecType(DeclSpec::TST_enum, StartLoc,
                          NameLoc.isValid() ? NameLoc : StartLoc,

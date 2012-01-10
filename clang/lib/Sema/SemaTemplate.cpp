@@ -6070,7 +6070,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                         KWLoc, SS, Name, NameLoc, Attr, AS_none,
                         /*ModulePrivateLoc=*/SourceLocation(),
                         MultiTemplateParamsArg(*this, 0, 0),
-                        Owned, IsDependent, false, false,
+                        Owned, IsDependent, SourceLocation(), false,
                         TypeResult());
   assert(!IsDependent && "explicit instantiation of dependent name not yet handled");
 

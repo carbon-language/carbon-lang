@@ -1115,7 +1115,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     if (DS.isFriendSpecified()) {
       // C++ [class.friend]p2:
       //   A class shall not be defined in a friend declaration.
-      Diag(Tok.getLocation(), diag::err_friend_decl_defines_class)
+      Diag(Tok.getLocation(), diag::err_friend_decl_defines_type)
         << SourceRange(DS.getFriendSpecLoc());
 
       // Skip everything up to the semicolon, so that this looks like a proper
@@ -1277,8 +1277,9 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     TagOrTempResult = Actions.ActOnTag(getCurScope(), TagType, TUK, StartLoc,
                                        SS, Name, NameLoc, attrs.getList(), AS,
                                        DS.getModulePrivateSpecLoc(),
-                                       TParams, Owned, IsDependent, false,
-                                       false, clang::TypeResult());
+                                       TParams, Owned, IsDependent,
+                                       SourceLocation(), false,
+                                       clang::TypeResult());
 
     // If ActOnTag said the type was dependent, try again with the
     // less common call.
