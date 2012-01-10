@@ -95,7 +95,11 @@ RegisterContextLLDB::InitializeZerothFrame()
         return;
     }
     m_sym_ctx = frame_sp->GetSymbolContext (eSymbolContextFunction | eSymbolContextSymbol);
-    m_sym_ctx_valid = true;
+    
+    // We require that eSymbolContextSymbol be successfully filled in or this context is of no use to us.
+    if ((m_sym_ctx.GetResolvedMask() & eSymbolContextSymbol) == eSymbolContextSymbol)
+        m_sym_ctx_valid = true;
+
     AddressRange addr_range;
     m_sym_ctx.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, 0, false, addr_range);
     
@@ -276,32 +280,6 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     if (abi)
         pc = abi->FixCodeAddress(pc);
 
-    // Test the pc value to see if we know it's in an unmapped/non-executable region of memory.
-    uint32_t permissions;
-    if (m_thread.GetProcess().GetLoadAddressPermissions(pc, permissions)
-        && (permissions & ePermissionsExecutable) == 0)
-    {
-        // If this is the second frame off the stack, we may have unwound the first frame
-        // incorrectly.  But using the architecture default unwind plan may get us back on
-        // track -- albeit possibly skipping a real frame.  Give this frame a clearly-invalid
-        // pc and see if we can get any further.
-        if (GetNextFrame().get() && GetNextFrame()->IsValid() && GetNextFrame()->IsFrameZero())
-        {
-            if (log)
-            {
-                log->Printf("%*sFrame %u had a pc of 0x%llx which is not in executable memory but on frame 1 -- allowing it once.",
-                            m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number, (uint64_t) pc);
-            }
-            m_frame_type = eSkipFrame;
-        }
-        else
-        {
-            // anywhere other than the second frame, a non-executable pc means we're off in the weeds -- stop now.
-            m_frame_type = eNotAValidFrame;
-            return;
-        }
-    }
-
     m_thread.GetProcess().GetTarget().GetSectionLoadList().ResolveLoadAddress (pc, m_current_pc);
 
     // If we don't have a Module for some reason, we're not going to find symbol/function information - just
@@ -313,6 +291,33 @@ RegisterContextLLDB::InitializeNonZerothFrame()
             log->Printf("%*sFrame %u using architectural default unwind method",
                         m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
         }
+        
+        // Test the pc value to see if we know it's in an unmapped/non-executable region of memory.
+        uint32_t permissions;
+        if (m_thread.GetProcess().GetLoadAddressPermissions(pc, permissions)
+            && (permissions & ePermissionsExecutable) == 0)
+        {
+            // If this is the second frame off the stack, we may have unwound the first frame
+            // incorrectly.  But using the architecture default unwind plan may get us back on
+            // track -- albeit possibly skipping a real frame.  Give this frame a clearly-invalid
+            // pc and see if we can get any further.
+            if (GetNextFrame().get() && GetNextFrame()->IsValid() && GetNextFrame()->IsFrameZero())
+            {
+                if (log)
+                {
+                    log->Printf("%*sFrame %u had a pc of 0x%llx which is not in executable memory but on frame 1 -- allowing it once.",
+                                m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number, (uint64_t) pc);
+                }
+                m_frame_type = eSkipFrame;
+            }
+            else
+            {
+                // anywhere other than the second frame, a non-executable pc means we're off in the weeds -- stop now.
+                m_frame_type = eNotAValidFrame;
+                return;
+            }
+        }
+
         if (abi)
         {
             m_fast_unwind_plan_sp.reset ();
@@ -689,8 +694,9 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     // in the zeroth frame, we need to use the "unwind at first instruction" arch default UnwindPlan
     // Also, if this Process can report on memory region attributes, any non-executable region means
     // we jumped through a bad function pointer - handle the same way as 0x0.
+    // Note, if the symbol context has a function for the symbol, then we don't need to do this check. 
 
-    if (behaves_like_zeroth_frame && m_current_pc.IsValid())
+    if ((!m_sym_ctx_valid  || m_sym_ctx.function == NULL) && behaves_like_zeroth_frame && m_current_pc.IsValid())
     {
         uint32_t permissions;
         addr_t current_pc_addr = m_current_pc.GetLoadAddress (&m_thread.GetProcess().GetTarget());
