@@ -95,8 +95,13 @@ MachThread::SetSuspendCountBeforeResume(bool others_stopped)
         
     if (others_stopped)
     {
-        times_to_resume = GetBasicInfo()->suspend_count;
-        m_suspend_count = - (times_to_resume - m_suspend_count);
+        if (GetBasicInfo())
+        {
+            times_to_resume = m_basic_info.suspend_count;
+            m_suspend_count = - (times_to_resume - m_suspend_count);
+        }
+        else
+            times_to_resume = 0;
     }
     else
     {
