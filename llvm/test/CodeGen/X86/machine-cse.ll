@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=x86_64-apple-darwin < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-macosx < %s | FileCheck %s
 ; rdar://7610418
 
 %ptr = type { i8* }
@@ -76,4 +76,26 @@ bb.nph743.us:                                     ; preds = %for.body53.us, %if.
 
 sw.bb307:                                         ; preds = %sw.bb, %entry
   ret void
+}
+
+; CSE physical register defining instruction across MBB boundary.
+; rdar://10660865
+define i32 @cross_mbb_phys_cse(i32 %a, i32 %b) nounwind ssp {
+entry:
+; CHECK: cross_mbb_phys_cse:
+; CHECK: cmpl
+; CHECK: ja
+  %cmp = icmp ugt i32 %a, %b
+  br i1 %cmp, label %return, label %if.end
+
+if.end:                                           ; preds = %entry
+; CHECK-NOT: cmpl
+; CHECK: sbbl
+  %cmp1 = icmp ult i32 %a, %b
+  %. = sext i1 %cmp1 to i32
+  br label %return
+
+return:                                           ; preds = %if.end, %entry
+  %retval.0 = phi i32 [ 1, %entry ], [ %., %if.end ]
+  ret i32 %retval.0
 }

@@ -26,13 +26,14 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/RecyclingAllocator.h"
-
 using namespace llvm;
 
 STATISTIC(NumCoalesces, "Number of copies coalesced");
 STATISTIC(NumCSEs,      "Number of common subexpression eliminated");
 STATISTIC(NumPhysCSEs,
           "Number of physreg referencing common subexpr eliminated");
+STATISTIC(NumCrossBBCSEs,
+          "Number of cross-MBB physreg referencing CS eliminated");
 STATISTIC(NumCommutes,  "Number of copies coalesced after commuting");
 
 namespace {
@@ -82,9 +83,11 @@ namespace {
                                 MachineBasicBlock::const_iterator E) const ;
     bool hasLivePhysRegDefUses(const MachineInstr *MI,
                                const MachineBasicBlock *MBB,
-                               SmallSet<unsigned,8> &PhysRefs) const;
+                               SmallSet<unsigned,8> &PhysRefs,
+                               SmallVector<unsigned,2> &PhysDefs) const;
     bool PhysRegDefsReach(MachineInstr *CSMI, MachineInstr *MI,
-                          SmallSet<unsigned,8> &PhysRefs) const;
+                          SmallSet<unsigned,8> &PhysRefs,
+                          bool &NonLocal) const;
     bool isCSECandidate(MachineInstr *MI);
     bool isProfitableToCSE(unsigned CSReg, unsigned Reg,
                            MachineInstr *CSMI, MachineInstr *MI);
@@ -189,7 +192,8 @@ MachineCSE::isPhysDefTriviallyDead(unsigned Reg,
 /// instruction does not uses a physical register.
 bool MachineCSE::hasLivePhysRegDefUses(const MachineInstr *MI,
                                        const MachineBasicBlock *MBB,
-                                       SmallSet<unsigned,8> &PhysRefs) const {
+                                       SmallSet<unsigned,8> &PhysRefs,
+                                       SmallVector<unsigned,2> &PhysDefs) const{
   MachineBasicBlock::const_iterator I = MI; I = llvm::next(I);
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
@@ -207,6 +211,8 @@ bool MachineCSE::hasLivePhysRegDefUses(const MachineInstr *MI,
         (MO.isDead() || isPhysDefTriviallyDead(Reg, I, MBB->end())))
       continue;
     PhysRefs.insert(Reg);
+    if (MO.isDef())
+      PhysDefs.push_back(Reg);
     for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias)
       PhysRefs.insert(*Alias);
   }
@@ -215,19 +221,38 @@ bool MachineCSE::hasLivePhysRegDefUses(const MachineInstr *MI,
 }
 
 bool MachineCSE::PhysRegDefsReach(MachineInstr *CSMI, MachineInstr *MI,
-                                  SmallSet<unsigned,8> &PhysRefs) const {
+                                  SmallSet<unsigned,8> &PhysRefs,
+                                  bool &NonLocal) const {
   // For now conservatively returns false if the common subexpression is
-  // not in the same basic block as the given instruction.
-  MachineBasicBlock *MBB = MI->getParent();
-  if (CSMI->getParent() != MBB)
-    return false;
+  // not in the same basic block as the given instruction. The only exception
+  // is if the common subexpression is in the sole predecessor block.
+  const MachineBasicBlock *MBB = MI->getParent();
+  const MachineBasicBlock *CSMBB = CSMI->getParent();
+
+  bool CrossMBB = false;
+  if (CSMBB != MBB) {
+    if (MBB->pred_size() == 1 && *MBB->pred_begin() == CSMBB)
+      CrossMBB = true;
+    else
+      return false;
+  }
   MachineBasicBlock::const_iterator I = CSMI; I = llvm::next(I);
   MachineBasicBlock::const_iterator E = MI;
+  MachineBasicBlock::const_iterator EE = CSMBB->end();
   unsigned LookAheadLeft = LookAheadLimit;
   while (LookAheadLeft) {
     // Skip over dbg_value's.
-    while (I != E && I->isDebugValue())
+    while (I != E && I != EE && I->isDebugValue())
       ++I;
+
+    if (I == EE) {
+      assert(CrossMBB && "Reaching end-of-MBB without finding MI?");
+      CrossMBB = false;
+      NonLocal = true;
+      I = MBB->begin();
+      EE = MBB->end();
+      continue;
+    }
 
     if (I == E)
       return true;
@@ -393,16 +418,18 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
     // If the instruction defines physical registers and the values *may* be
     // used, then it's not safe to replace it with a common subexpression.
     // It's also not safe if the instruction uses physical registers.
+    bool CrossMBBPhysDef = false;
     SmallSet<unsigned,8> PhysRefs;
-    if (FoundCSE && hasLivePhysRegDefUses(MI, MBB, PhysRefs)) {
+    SmallVector<unsigned, 2> PhysDefs;
+    if (FoundCSE && hasLivePhysRegDefUses(MI, MBB, PhysRefs, PhysDefs)) {
       FoundCSE = false;
 
-      // ... Unless the CS is local and it also defines the physical register
-      // which is not clobbered in between and the physical register uses 
-      // were not clobbered.
+      // ... Unless the CS is local or is in the sole predecessor block
+      // and it also defines the physical register which is not clobbered
+      // in between and the physical register uses were not clobbered.
       unsigned CSVN = VNT.lookup(MI);
       MachineInstr *CSMI = Exps[CSVN];
-      if (PhysRegDefsReach(CSMI, MI, PhysRefs))
+      if (PhysRegDefsReach(CSMI, MI, PhysRefs, CrossMBBPhysDef))
         FoundCSE = true;
     }
 
@@ -457,6 +484,18 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
         MRI->replaceRegWith(CSEPairs[i].first, CSEPairs[i].second);
         MRI->clearKillFlags(CSEPairs[i].second);
       }
+
+      if (CrossMBBPhysDef) {
+        // Add physical register defs now coming in from a predecessor to MBB
+        // livein list.
+        while (!PhysDefs.empty()) {
+          unsigned LiveIn = PhysDefs.pop_back_val();
+          if (!MBB->isLiveIn(LiveIn))
+            MBB->addLiveIn(LiveIn);
+        }
+        ++NumCrossBBCSEs;
+      }
+
       MI->eraseFromParent();
       ++NumCSEs;
       if (!PhysRefs.empty())
