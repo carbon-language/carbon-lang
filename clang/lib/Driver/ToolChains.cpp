@@ -1164,7 +1164,10 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(const Driver &D)
     SmallVectorImpl<StringRef> &Triples) {
   if (HostArch == llvm::Triple::arm || HostArch == llvm::Triple::thumb) {
     static const char *const ARMLibDirs[] = { "/lib" };
-    static const char *const ARMTriples[] = { "arm-linux-gnueabi" };
+    static const char *const ARMTriples[] = {
+      "arm-linux-gnueabi",
+      "arm-linux-androideabi"
+    };
     LibDirs.append(ARMLibDirs, ARMLibDirs + llvm::array_lengthof(ARMLibDirs));
     Triples.append(ARMTriples, ARMTriples + llvm::array_lengthof(ARMTriples));
   } else if (HostArch == llvm::Triple::x86_64) {
