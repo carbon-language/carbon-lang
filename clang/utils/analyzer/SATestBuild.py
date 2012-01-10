@@ -78,6 +78,16 @@ Verbose = 1
 
 IsReferenceBuild = False
 
+# Make sure we flush the output after every print statement.
+class flushfile(object):
+    def __init__(self, f):
+        self.f = f
+    def write(self, x):
+        self.f.write(x)
+        self.f.flush()
+
+sys.stdout = flushfile(sys.stdout)
+
 def getProjectMapPath():
     ProjectMapPath = os.path.join(os.path.abspath(os.curdir), 
                                   ProjectMapFile)
@@ -397,7 +407,6 @@ def testAll(InIsReferenceBuild = False):
                 print "Error: Second entry in the ProjectMapFile should be 0 or 1."
                 raise Exception()              
             testProject(I[0], InIsReferenceBuild, int(I[1]))
-            sys.stdout.flush()
     except:
         print "Error occurred. Premature termination."
         raise                            
