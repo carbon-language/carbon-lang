@@ -187,10 +187,6 @@ public:
   bool hasAVX2() const { return X86SSELevel >= AVX2; }
   bool hasXMM() const { return X86SSELevel >= SSE1; }
   bool hasXMMInt() const { return X86SSELevel >= SSE2; }
-  bool hasSSE3orAVX() const { return X86SSELevel >= SSE3; }
-  bool hasSSSE3orAVX() const { return X86SSELevel >= SSSE3; }
-  bool hasSSE41orAVX() const { return X86SSELevel >= SSE41; }
-  bool hasSSE42orAVX() const { return X86SSELevel >= SSE42; }
   bool hasAES() const { return HasAES; }
   bool hasCLMUL() const { return HasCLMUL; }
   bool hasFMA3() const { return HasFMA3; }
