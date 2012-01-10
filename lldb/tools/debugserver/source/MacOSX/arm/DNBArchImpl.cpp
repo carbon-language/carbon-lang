@@ -423,10 +423,13 @@ DNBArchMachARM::ThreadDidStop()
                     }
                     m_sw_single_step_itblock_break_count = 0;
 
+#if defined (USE_ARM_DISASSEMBLER_FRAMEWORK)
+
                     // Decode instructions up to the current PC to ensure the internal decoder state is valid for the IT block
                     // The decoder has to decode each instruction in the IT block even if it is not executed so that
                     // the fields are correctly updated
                     DecodeITBlockInstructions(m_state.context.gpr.__pc);
+#endif
                 }
 
             }
@@ -465,6 +468,8 @@ DNBArchMachARM::StepNotComplete ()
     return false;
 }
 
+
+#if defined (USE_ARM_DISASSEMBLER_FRAMEWORK)
 
 void
 DNBArchMachARM::DecodeITBlockInstructions(nub_addr_t curr_pc)
@@ -520,7 +525,7 @@ DNBArchMachARM::DecodeITBlockInstructions(nub_addr_t curr_pc)
         DNBLogThreadedIf(LOG_STEP | LOG_VERBOSE, "%s: next_pc_in_itblock=0x%8.8x", __FUNCTION__, next_pc_in_itblock);
     }
 }
-
+#endif
 
 // Set the single step bit in the processor status register.
 kern_return_t
@@ -684,6 +689,8 @@ DNBArchMachARM::ConditionPassed(uint8_t condition, uint32_t cpsr)
 
     return false;
 }
+
+#if defined (USE_ARM_DISASSEMBLER_FRAMEWORK)
 
 bool
 DNBArchMachARM::ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t decodedInstruction, bool currentPCIsThumb, nub_addr_t *targetPC)
@@ -1830,6 +1837,8 @@ DNBArchMachARM::DecodeInstructionUsingDisassembler(nub_addr_t curr_pc, uint32_t 
     return decodeReturnCode;
 }
 
+#endif
+
 nub_bool_t
 DNBArchMachARM::BreakpointHit (nub_process_t pid, nub_thread_t tid, nub_break_t breakID, void *baton)
 {
@@ -1847,6 +1856,8 @@ kern_return_t
 DNBArchMachARM::SetSingleStepSoftwareBreakpoints()
 {
     DNBError err;
+
+#if defined (USE_ARM_DISASSEMBLER_FRAMEWORK)
     err = GetGPRState(false);
 
     if (err.Fail())
@@ -2043,7 +2054,9 @@ DNBArchMachARM::SetSingleStepSoftwareBreakpoints()
         }
 #endif
     }
-
+#else
+    err.LogThreaded("%s: ARMDisassembler.framework support is disabled", __FUNCTION__);
+#endif
     return err.Error();
 }
 

@@ -557,8 +557,6 @@
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-framework",
 					SpringBoardServices,
-					"-framework",
-					ARMDisassembler,
 					"-llockdown",
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
@@ -600,8 +598,6 @@
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-framework",
 					SpringBoardServices,
-					"-framework",
-					ARMDisassembler,
 					"-llockdown",
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
@@ -643,8 +639,6 @@
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-framework",
 					SpringBoardServices,
-					"-framework",
-					ARMDisassembler,
 					"-llockdown",
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";

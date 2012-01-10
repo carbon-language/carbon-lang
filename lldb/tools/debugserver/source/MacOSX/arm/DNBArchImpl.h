@@ -17,7 +17,9 @@
 #if defined (__arm__)
 
 #include "DNBArch.h"
+#if defined (USE_ARM_DISASSEMBLER_FRAMEWORK)
 #include <ARMDisassembler/ARMDisassembler.h>
+#endif
 
 class MachThread;
 
@@ -36,7 +38,9 @@ public:
         m_last_decode_pc(INVALID_NUB_ADDRESS)
     {
         memset(&m_dbg_save, 0, sizeof(m_dbg_save));
+#if defined (USE_ARM_DISASSEMBLER_FRAMEWORK)
         ThumbStaticsInit(&m_last_decode_thumb);
+#endif
         for (int i = 0; i < kMaxNumThumbITBreakpoints; i++)
             m_sw_single_step_itblock_break_id[i] = INVALID_NUB_BREAK_ID;
     }
@@ -85,10 +89,12 @@ protected:
     kern_return_t           SetSingleStepSoftwareBreakpoints ();
 
     bool                    ConditionPassed(uint8_t condition, uint32_t cpsr);
+#if defined (USE_ARM_DISASSEMBLER_FRAMEWORK)
     bool                    ComputeNextPC(nub_addr_t currentPC, arm_decoded_instruction_t decodedInstruction, bool currentPCIsThumb, nub_addr_t *targetPC);
-    void                    EvaluateNextInstructionForSoftwareBreakpointSetup(nub_addr_t currentPC, uint32_t cpsr, bool currentPCIsThumb, nub_addr_t *nextPC, bool *nextPCIsThumb);
-    void                    DecodeITBlockInstructions(nub_addr_t curr_pc);
     arm_error_t             DecodeInstructionUsingDisassembler(nub_addr_t curr_pc, uint32_t curr_cpsr, arm_decoded_instruction_t *decodedInstruction, thumb_static_data_t *thumbStaticData, nub_addr_t *next_pc);
+    void                    DecodeITBlockInstructions(nub_addr_t curr_pc);
+#endif
+    void                    EvaluateNextInstructionForSoftwareBreakpointSetup(nub_addr_t currentPC, uint32_t cpsr, bool currentPCIsThumb, nub_addr_t *nextPC, bool *nextPCIsThumb);
     static nub_bool_t       BreakpointHit (nub_process_t pid, nub_thread_t tid, nub_break_t breakID, void *baton);
 
     typedef enum RegisterSetTag
@@ -233,8 +239,10 @@ protected:
     nub_break_t     m_sw_single_step_itblock_break_id[kMaxNumThumbITBreakpoints];
     nub_addr_t      m_sw_single_step_itblock_break_count;
     // Disassembler state
+#if defined (USE_ARM_DISASSEMBLER_FRAMEWORK)
     thumb_static_data_t m_last_decode_thumb;
     arm_decoded_instruction_t m_last_decode_arm;
+#endif
     nub_addr_t      m_last_decode_pc;
 
 };
