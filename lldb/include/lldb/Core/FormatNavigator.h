@@ -375,8 +375,11 @@ protected:
         return Get_Impl(type, entry, Types<KeyType,ValueType>());
     }
     
+    #define LLDB_MAX_REASONABLE_OBJC_CLASS_DEPTH 100
+    
     bool Get_ObjC(ValueObject& valobj,
              ObjCLanguageRuntime::ObjCISA isa,
+             std::set<ObjCLanguageRuntime::ObjCISA> &found_values,
              MapValueType& entry,
              uint32_t& reason)
     {
@@ -397,6 +400,7 @@ protected:
                 log->Printf("invalid ISA, bailing out");
             return false;
         }
+        
         ConstString name = runtime->GetActualTypeName(isa);
         if (log)
             log->Printf("looking for formatter for %s", name.GetCString());
@@ -415,13 +419,29 @@ protected:
                 log->Printf("invalid parent ISA, bailing out");
             return false;
         }
-        if (parent == isa)
+        
+        // Put the isa value in our map.  Then check the new_value, if it was already there, we've got a 
+        // loop in the inheritance hierarchy, and should bag out.
+        std::pair<std::set<ObjCLanguageRuntime::ObjCISA>::iterator, bool> new_value = found_values.insert (isa);
+        if (new_value.second == false)
         {
+            //Our value already existed in the map.
             if (log)
-                log->Printf("parent-child loop, bailing out");
+                log->Printf ("ISA: 0x%llx already found in inheritance chain.", isa);
             return false;
         }
-        if (Get_ObjC(valobj, parent, entry, reason))
+        
+        if (found_values.size() > LLDB_MAX_REASONABLE_OBJC_CLASS_DEPTH)
+        {
+            // ObjC hierarchies are usually pretty shallow, if we've gone this far, we are probably chasing
+            // uninitialized memory.
+            if (log)
+                log->Printf("Parent-child depth of %d, we are probably off in the weeds, bailing out.",
+                            LLDB_MAX_REASONABLE_OBJC_CLASS_DEPTH);
+            return false;
+        }
+                
+        if (Get_ObjC(valobj, parent, found_values, entry, reason))
         {
             reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
             return true;
@@ -512,7 +532,8 @@ protected:
             }
             else
             {
-                if (Get_ObjC(valobj, runtime->GetISA(valobj), entry, reason))
+                std::set<ObjCLanguageRuntime::ObjCISA> found_values;
+                if (Get_ObjC(valobj, runtime->GetISA(valobj), found_values, entry, reason))
                 {
                     reason |= lldb_private::eFormatterChoiceCriterionDynamicObjCHierarchy;
                     return true;
@@ -555,7 +576,8 @@ protected:
                 }
                 else
                 {
-                    if (Get_ObjC(valobj, runtime->GetISA(valobj), entry, reason))
+                    std::set<ObjCLanguageRuntime::ObjCISA> found_values;
+                    if (Get_ObjC(valobj, runtime->GetISA(valobj), found_values, entry, reason))
                     {
                         reason |= lldb_private::eFormatterChoiceCriterionDynamicObjCHierarchy;
                         return true;
