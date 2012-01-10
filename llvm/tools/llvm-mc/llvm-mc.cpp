@@ -70,9 +70,6 @@ RelaxAll("mc-relax-all", cl::desc("Relax all fixups"));
 static cl::opt<bool>
 NoExecStack("mc-no-exec-stack", cl::desc("File doesn't need an exec stack"));
 
-static cl::opt<bool>
-EnableLogging("enable-api-logging", cl::desc("Enable MC API logging"));
-
 enum OutputFileType {
   OFT_Null,
   OFT_AssemblyFile,
@@ -441,10 +438,6 @@ static int AssembleInput(const char *ProgName) {
     Str.reset(TheTarget->createMCObjectStreamer(TripleName, Ctx, *MAB,
                                                 FOS, CE, RelaxAll,
                                                 NoExecStack));
-  }
-
-  if (EnableLogging) {
-    Str.reset(createLoggingStreamer(Str.take(), errs()));
   }
 
   OwningPtr<MCAsmParser> Parser(createMCAsmParser(SrcMgr, Ctx,

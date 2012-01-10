@@ -657,12 +657,6 @@ namespace llvm {
                                 raw_ostream &OS, MCCodeEmitter *CE,
                                 bool RelaxAll, bool NoExecStack);
 
-  /// createLoggingStreamer - Create a machine code streamer which just logs the
-  /// API calls and then dispatches to another streamer.
-  ///
-  /// The new streamer takes ownership of the \arg Child.
-  MCStreamer *createLoggingStreamer(MCStreamer *Child, raw_ostream &OS);
-
   /// createPureStreamer - Create a machine code streamer which will generate
   /// "pure" MC object files, for use with MC-JIT and testing tools.
   ///

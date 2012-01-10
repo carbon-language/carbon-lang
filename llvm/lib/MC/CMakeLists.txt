@@ -20,7 +20,6 @@ add_llvm_library(LLVMMC
   MCInstPrinter.cpp
   MCInstrAnalysis.cpp
   MCLabel.cpp
-  MCLoggingStreamer.cpp
   MCMachOStreamer.cpp
   MCMachObjectTargetWriter.cpp
   MCModule.cpp

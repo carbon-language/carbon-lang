@@ -166,9 +166,6 @@ bool PTXTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     break;
   }
 
-  // MC Logging
-  //AsmStreamer.reset(createLoggingStreamer(AsmStreamer.take(), errs()));
-
   // Create the AsmPrinter, which takes ownership of AsmStreamer if successful.
   FunctionPass *Printer = getTarget().createAsmPrinter(*this, *AsmStreamer);
   if (Printer == 0)
