@@ -142,7 +142,6 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "llvm MC-JIT tool\n");
 
   switch (Action) {
-  default:
   case AC_Execute:
     return executeInput();
   }

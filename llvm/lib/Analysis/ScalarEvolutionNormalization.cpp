@@ -118,7 +118,6 @@ TransformImpl(const SCEV *S, Instruction *User, Value *OperandValToReplace) {
     // Conservatively use AnyWrap until/unless we need FlagNW.
     const SCEV *Result = SE.getAddRecExpr(Operands, L, SCEV::FlagAnyWrap);
     switch (Kind) {
-    default: llvm_unreachable("Unexpected transform name!");
     case NormalizeAutodetect:
       if (IVUseShouldUsePostIncValue(User, OperandValToReplace, L, &DT)) {
         const SCEV *TransformedStep =

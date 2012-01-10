@@ -106,9 +106,6 @@ static InstrUID decode(OpcodeType type,
   const struct ModRMDecision* dec;
   
   switch (type) {
-  default:
-    debug("Unknown opcode type");
-    return 0;
   case ONEBYTE:
     dec = &ONEBYTE_SYM.opcodeDecisions[insnContext].modRMDecisions[opcode];
     break;

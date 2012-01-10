@@ -222,8 +222,6 @@ bool DAGTypeLegalizer::run() {
     for (unsigned i = 0, NumResults = N->getNumValues(); i < NumResults; ++i) {
       EVT ResultVT = N->getValueType(i);
       switch (getTypeAction(ResultVT)) {
-      default:
-        assert(false && "Unknown action!");
       case TargetLowering::TypeLegal:
         break;
       // The following calls must take care of *all* of the node's results,
@@ -275,8 +273,6 @@ ScanOperands:
 
       EVT OpVT = N->getOperand(i).getValueType();
       switch (getTypeAction(OpVT)) {
-      default:
-        assert(false && "Unknown action!");
       case TargetLowering::TypeLegal:
         continue;
       // The following calls must either replace all of the node's results

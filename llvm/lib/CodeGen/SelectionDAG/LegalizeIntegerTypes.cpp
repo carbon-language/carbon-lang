@@ -212,9 +212,6 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BITCAST(SDNode *N) {
   DebugLoc dl = N->getDebugLoc();
 
   switch (getTypeAction(InVT)) {
-  default:
-    assert(false && "Unknown type action!");
-    break;
   case TargetLowering::TypeLegal:
     break;
   case TargetLowering::TypePromoteInteger:

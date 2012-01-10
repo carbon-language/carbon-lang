@@ -114,7 +114,6 @@ public:
   bool hasEncodingData() const { return hasEncodingData(getEncoding()); }
   static bool hasEncodingData(Encoding E) {
     switch (E) {
-    default: assert(0 && "Unknown encoding");
     case Fixed:
     case VBR:
       return true;

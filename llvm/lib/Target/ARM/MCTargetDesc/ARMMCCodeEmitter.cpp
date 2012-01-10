@@ -177,7 +177,6 @@ public:
   ///
   unsigned getShiftOp(ARM_AM::ShiftOpc ShOpc) const {
     switch (ShOpc) {
-    default: llvm_unreachable("Unknown shift opc!");
     case ARM_AM::no_shift:
     case ARM_AM::lsl: return 0;
     case ARM_AM::lsr: return 1;

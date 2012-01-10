@@ -160,7 +160,6 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
     // relocation, then we may have to drop this into a wriable data section
     // even though it is marked const.
     switch (C->getRelocationInfo()) {
-    default: assert(0 && "unknown relocation info kind");
     case Constant::NoRelocation:
       // If the global is required to have a unique address, it can't be put
       // into a mergable section: just drop it into the general read-only
@@ -234,7 +233,6 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
     return SectionKind::getDataNoRel();
 
   switch (C->getRelocationInfo()) {
-  default: assert(0 && "unknown relocation info kind");
   case Constant::NoRelocation:
     return SectionKind::getDataNoRel();
   case Constant::LocalRelocation:

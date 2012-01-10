@@ -136,7 +136,6 @@ bool PTXTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   OwningPtr<MCStreamer> AsmStreamer;
 
   switch (FileType) {
-  default: return true;
   case CGFT_AssemblyFile: {
     MCInstPrinter *InstPrinter =
       getTarget().createMCInstPrinter(MAI.getAssemblerDialect(), MAI, STI);

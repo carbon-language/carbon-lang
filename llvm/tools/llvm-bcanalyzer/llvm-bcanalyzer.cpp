@@ -534,7 +534,6 @@ static int AnalyzeBitcode() {
   errs() << "\n";
   errs() << "        Stream type: ";
   switch (CurStreamType) {
-  default: assert(0 && "Unknown bitstream type");
   case UnknownBitstream: errs() << "unknown\n"; break;
   case LLVMIRBitstream:  errs() << "LLVM IR\n"; break;
   }

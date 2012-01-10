@@ -1059,8 +1059,6 @@ LLVMBool LLVMIsDeclaration(LLVMValueRef Global) {
 
 LLVMLinkage LLVMGetLinkage(LLVMValueRef Global) {
   switch (unwrap<GlobalValue>(Global)->getLinkage()) {
-  default:
-    assert(false && "Unhandled Linkage Type.");
   case GlobalValue::ExternalLinkage:
     return LLVMExternalLinkage;
   case GlobalValue::AvailableExternallyLinkage:
@@ -1103,8 +1101,6 @@ void LLVMSetLinkage(LLVMValueRef Global, LLVMLinkage Linkage) {
   GlobalValue *GV = unwrap<GlobalValue>(Global);
 
   switch (Linkage) {
-  default:
-    assert(false && "Unhandled Linkage Type.");
   case LLVMExternalLinkage:
     GV->setLinkage(GlobalValue::ExternalLinkage);
     break;

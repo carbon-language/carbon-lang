@@ -75,8 +75,6 @@ static const char *tripleFromArch(Triple::ArchType arch) {
 static int getLLVMSyntaxVariant(Triple::ArchType arch,
                                 EDDisassembler::AssemblySyntax syntax) {
   switch (syntax) {
-  default:
-    return -1;
   // Mappings below from X86AsmPrinter.cpp
   case EDDisassembler::kEDAssemblySyntaxX86ATT:
     if (arch == Triple::x86 || arch == Triple::x86_64)

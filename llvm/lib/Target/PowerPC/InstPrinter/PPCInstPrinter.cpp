@@ -94,7 +94,6 @@ void PPCInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNo,
   unsigned Code = MI->getOperand(OpNo).getImm();
   if (StringRef(Modifier) == "cc") {
     switch ((PPC::Predicate)Code) {
-    default: assert(0 && "Invalid predicate");
     case PPC::PRED_ALWAYS: return; // Don't print anything for always.
     case PPC::PRED_LT: O << "lt"; return;
     case PPC::PRED_LE: O << "le"; return;

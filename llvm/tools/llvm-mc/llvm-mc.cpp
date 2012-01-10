@@ -517,7 +517,6 @@ int main(int argc, char **argv) {
   setDwarfDebugFlags(argc, argv);
 
   switch (Action) {
-  default:
   case AC_AsLex:
     return AsLexInput(argv[0]);
   case AC_Assemble:

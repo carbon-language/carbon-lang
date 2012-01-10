@@ -92,7 +92,6 @@ AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
 
 static bool getVerboseAsm() {
   switch (AsmVerbose) {
-  default:
   case cl::BOU_UNSET: return TargetMachine::getAsmVerbosityDefault();
   case cl::BOU_TRUE:  return true;
   case cl::BOU_FALSE: return false;
@@ -141,7 +140,6 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   OwningPtr<MCStreamer> AsmStreamer;
 
   switch (FileType) {
-  default: return true;
   case CGFT_AssemblyFile: {
     MCInstPrinter *InstPrinter =
       getTarget().createMCInstPrinter(MAI.getAssemblerDialect(), MAI, STI);

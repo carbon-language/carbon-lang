@@ -74,7 +74,6 @@ namespace llvm {
   
   inline static const char *SPARCCondCodeToString(SPCC::CondCodes CC) {
     switch (CC) {
-    default: llvm_unreachable("Unknown condition code");
     case SPCC::ICC_NE:  return "ne";
     case SPCC::ICC_E:   return "e";
     case SPCC::ICC_G:   return "g";

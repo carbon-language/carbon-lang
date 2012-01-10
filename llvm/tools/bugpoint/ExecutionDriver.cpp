@@ -209,9 +209,6 @@ bool BugDriver::initializeExecutionEnvironment() {
     Interpreter =
       AbstractInterpreter::createCustomExecutor(Message, CustomExecCommand);
     break;
-  default:
-    Message = "Sorry, this back-end is not supported by bugpoint right now!\n";
-    break;
   }
   if (!Interpreter)
     errs() << Message;

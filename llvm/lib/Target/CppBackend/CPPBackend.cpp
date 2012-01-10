@@ -301,7 +301,6 @@ void CppWriter::printLinkageType(GlobalValue::LinkageTypes LT) {
 
 void CppWriter::printVisibilityType(GlobalValue::VisibilityTypes VisType) {
   switch (VisType) {
-  default: llvm_unreachable("Unknown GVar visibility");
   case GlobalValue::DefaultVisibility:
     Out << "GlobalValue::DefaultVisibility";
     break;
@@ -2049,8 +2048,6 @@ bool CppWriter::runOnModule(Module &M) {
       fname = "makeLLVMType";
     printType(fname,tgtname);
     break;
-   default:
-    error("Invalid generation option");
   }
 
   return false;

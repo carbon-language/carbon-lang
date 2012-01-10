@@ -193,8 +193,6 @@ bool AAEval::runOnFunction(Function &F) {
       case AliasAnalysis::MustAlias:
         PrintResults("MustAlias", PrintMustAlias, *I1, *I2, F.getParent());
         ++MustAlias; break;
-      default:
-        errs() << "Unknown alias query result!\n";
       }
     }
   }
@@ -223,8 +221,6 @@ bool AAEval::runOnFunction(Function &F) {
       case AliasAnalysis::ModRef:
         PrintModRefResults("Both ModRef", PrintModRef, I, *V, F.getParent());
         ++ModRef; break;
-      default:
-        errs() << "Unknown alias query result!\n";
       }
     }
   }

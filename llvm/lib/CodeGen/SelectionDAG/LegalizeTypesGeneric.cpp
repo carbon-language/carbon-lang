@@ -45,8 +45,6 @@ void DAGTypeLegalizer::ExpandRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi) {
 
   // Handle some special cases efficiently.
   switch (getTypeAction(InVT)) {
-    default:
-      assert(false && "Unknown type action!");
     case TargetLowering::TypeLegal:
     case TargetLowering::TypePromoteInteger:
       break;

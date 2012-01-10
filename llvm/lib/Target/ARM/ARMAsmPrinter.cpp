@@ -817,7 +817,6 @@ static MCSymbol *getPICLabel(const char *Prefix, unsigned FunctionNumber,
 static MCSymbolRefExpr::VariantKind
 getModifierVariantKind(ARMCP::ARMCPModifier Modifier) {
   switch (Modifier) {
-  default: llvm_unreachable("Unknown modifier!");
   case ARMCP::no_modifier: return MCSymbolRefExpr::VK_None;
   case ARMCP::TLSGD:       return MCSymbolRefExpr::VK_ARM_TLSGD;
   case ARMCP::TPOFF:       return MCSymbolRefExpr::VK_ARM_TPOFF;

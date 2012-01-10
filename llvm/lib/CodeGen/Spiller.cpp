@@ -191,7 +191,6 @@ llvm::Spiller* llvm::createSpiller(MachineFunctionPass &pass,
                                    MachineFunction &mf,
                                    VirtRegMap &vrm) {
   switch (spillerOpt) {
-  default: assert(0 && "unknown spiller");
   case trivial: return new TrivialSpiller(pass, mf, vrm);
   case inline_: return createInlineSpiller(pass, mf, vrm);
   }

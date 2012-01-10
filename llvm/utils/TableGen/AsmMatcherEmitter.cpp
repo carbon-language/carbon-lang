@@ -1482,7 +1482,6 @@ void MatchableInfo::BuildAliasResultOperands() {
       // Find out what operand from the asmparser that this MCInst operand
       // comes from.
       switch (CGA.ResultOperands[AliasOpNo].Kind) {
-      default: assert(0 && "unexpected InstAlias operand kind");
       case CodeGenInstAlias::ResultOperand::K_Record: {
         StringRef Name = CGA.ResultOperands[AliasOpNo].getName();
         int SrcOperand = FindAsmOperand(Name, SubIdx);

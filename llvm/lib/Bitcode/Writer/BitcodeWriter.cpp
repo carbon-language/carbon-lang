@@ -126,7 +126,6 @@ static unsigned GetEncodedRMWOperation(AtomicRMWInst::BinOp Op) {
 
 static unsigned GetEncodedOrdering(AtomicOrdering Ordering) {
   switch (Ordering) {
-  default: llvm_unreachable("Unknown atomic ordering");
   case NotAtomic: return bitc::ORDERING_NOTATOMIC;
   case Unordered: return bitc::ORDERING_UNORDERED;
   case Monotonic: return bitc::ORDERING_MONOTONIC;
@@ -139,7 +138,6 @@ static unsigned GetEncodedOrdering(AtomicOrdering Ordering) {
 
 static unsigned GetEncodedSynchScope(SynchronizationScope SynchScope) {
   switch (SynchScope) {
-  default: llvm_unreachable("Unknown synchronization scope");
   case SingleThread: return bitc::SYNCHSCOPE_SINGLETHREAD;
   case CrossThread: return bitc::SYNCHSCOPE_CROSSTHREAD;
   }
@@ -357,7 +355,6 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
 
 static unsigned getEncodedLinkage(const GlobalValue *GV) {
   switch (GV->getLinkage()) {
-  default: llvm_unreachable("Invalid linkage!");
   case GlobalValue::ExternalLinkage:                 return 0;
   case GlobalValue::WeakAnyLinkage:                  return 1;
   case GlobalValue::AppendingLinkage:                return 2;
@@ -379,7 +376,6 @@ static unsigned getEncodedLinkage(const GlobalValue *GV) {
 
 static unsigned getEncodedVisibility(const GlobalValue *GV) {
   switch (GV->getVisibility()) {
-  default: llvm_unreachable("Invalid visibility!");
   case GlobalValue::DefaultVisibility:   return 0;
   case GlobalValue::HiddenVisibility:    return 1;
   case GlobalValue::ProtectedVisibility: return 2;

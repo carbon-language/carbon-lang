@@ -225,7 +225,6 @@ namespace {
       if (!Broken) return false;
       MessagesStr << "Broken module found, ";
       switch (action) {
-      default: llvm_unreachable("Unknown action");
       case AbortProcessAction:
         MessagesStr << "compilation aborted!\n";
         dbgs() << MessagesStr.str();

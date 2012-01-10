@@ -858,7 +858,6 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
         const CodeGenInstAlias::ResultOperand &RO = CGA->ResultOperands[i];
 
         switch (RO.Kind) {
-        default: assert(0 && "unexpected InstAlias operand kind");
         case CodeGenInstAlias::ResultOperand::K_Record: {
           const Record *Rec = RO.getRecord();
           StringRef ROName = RO.getName();

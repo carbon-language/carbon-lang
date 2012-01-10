@@ -176,8 +176,6 @@ void PseudoLoweringEmitter::emitLoweringEmitter(raw_ostream &o) {
       for (unsigned i = 0, e = Dest.Operands[OpNo].MINumOperands;
            i != e; ++i) {
         switch (Expansion.OperandMap[MIOpNo + i].Kind) {
-        default:
-          llvm_unreachable("Unknown operand type?!");
         case OpData::Operand:
           o << "      lowerOperand(MI->getOperand("
             << Source.Operands[Expansion.OperandMap[MIOpNo].Data

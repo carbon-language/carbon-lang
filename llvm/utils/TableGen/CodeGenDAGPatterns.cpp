@@ -839,7 +839,6 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
   TreePatternNode *NodeToApply = getOperandNum(OperandNo, N, NodeInfo, ResNo);
 
   switch (ConstraintType) {
-  default: assert(0 && "Unknown constraint type!");
   case SDTCisVT:
     // Operand must be a particular type.
     return NodeToApply->UpdateNodeType(ResNo, x.SDTCisVT_Info.VT, TP);

@@ -67,7 +67,6 @@ namespace ARMCC {
 
 inline static const char *ARMCondCodeToString(ARMCC::CondCodes CC) {
   switch (CC) {
-  default: llvm_unreachable("Unknown condition code");
   case ARMCC::EQ:  return "eq";
   case ARMCC::NE:  return "ne";
   case ARMCC::HS:  return "hs";
@@ -237,7 +236,6 @@ namespace ARMII {
 
   inline static const char *AddrModeToString(AddrMode addrmode) {
     switch (addrmode) {
-    default: llvm_unreachable("Unknown memory operation");
     case AddrModeNone:    return "AddrModeNone";
     case AddrMode1:       return "AddrMode1";
     case AddrMode2:       return "AddrMode2";

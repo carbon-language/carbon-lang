@@ -107,8 +107,6 @@ public:
 
   static ISD::NodeType getExtendForContent(BooleanContent Content) {
     switch (Content) {
-    default:
-      assert(false && "Unknown BooleanContent!");
     case UndefinedBooleanContent:
       // Extend by adding rubbish bits.
       return ISD::ANY_EXTEND;

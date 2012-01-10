@@ -129,7 +129,6 @@ AliasAnalysisCounter::alias(const Location &LocA, const Location &LocB) {
 
   const char *AliasString;
   switch (R) {
-  default: llvm_unreachable("Unknown alias type!");
   case NoAlias:   No++;   AliasString = "No alias"; break;
   case MayAlias:  May++;  AliasString = "May alias"; break;
   case PartialAlias: Partial++; AliasString = "Partial alias"; break;
@@ -156,7 +155,6 @@ AliasAnalysisCounter::getModRefInfo(ImmutableCallSite CS,
 
   const char *MRString;
   switch (R) {
-  default:       llvm_unreachable("Unknown mod/ref type!");
   case NoModRef: NoMR++;     MRString = "NoModRef"; break;
   case Ref:      JustRef++;  MRString = "JustRef"; break;
   case Mod:      JustMod++;  MRString = "JustMod"; break;

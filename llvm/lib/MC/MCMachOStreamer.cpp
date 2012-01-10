@@ -150,8 +150,6 @@ void MCMachOStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   case MCAF_SubsectionsViaSymbols:
     getAssembler().setSubsectionsViaSymbols(true);
     return;
-  default:
-    llvm_unreachable("invalid assembler flag!");
   }
 }
 

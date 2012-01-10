@@ -70,7 +70,6 @@ void MCExpr::print(raw_ostream &OS) const {
   case MCExpr::Unary: {
     const MCUnaryExpr &UE = cast<MCUnaryExpr>(*this);
     switch (UE.getOpcode()) {
-    default: assert(0 && "Invalid opcode!");
     case MCUnaryExpr::LNot:  OS << '!'; break;
     case MCUnaryExpr::Minus: OS << '-'; break;
     case MCUnaryExpr::Not:   OS << '~'; break;
@@ -91,7 +90,6 @@ void MCExpr::print(raw_ostream &OS) const {
     }
 
     switch (BE.getOpcode()) {
-    default: assert(0 && "Invalid opcode!");
     case MCBinaryExpr::Add:
       // Print "X-42" instead of "X+-42".
       if (const MCConstantExpr *RHSC = dyn_cast<MCConstantExpr>(BE.getRHS())) {
@@ -171,7 +169,6 @@ const MCSymbolRefExpr *MCSymbolRefExpr::Create(StringRef Name, VariantKind Kind,
 
 StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   switch (Kind) {
-  default:
   case VK_Invalid: return "<<invalid>>";
   case VK_None: return "<<none>>";
 

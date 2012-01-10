@@ -89,7 +89,6 @@ enum PrefixType {
 static void PrintLLVMName(raw_ostream &OS, StringRef Name, PrefixType Prefix) {
   assert(!Name.empty() && "Cannot get empty name!");
   switch (Prefix) {
-  default: llvm_unreachable("Bad prefix!");
   case NoPrefix: break;
   case GlobalPrefix: OS << '@'; break;
   case LabelPrefix:  break;
@@ -1167,7 +1166,6 @@ void AssemblyWriter::writeAtomic(AtomicOrdering Ordering,
     return;
 
   switch (SynchScope) {
-  default: Out << " <bad scope " << int(SynchScope) << ">"; break;
   case SingleThread: Out << " singlethread"; break;
   case CrossThread: break;
   }
