@@ -29,8 +29,26 @@ class GenericTester(TestBase):
         # used for all the test cases.
         self.exe_name = self.testMethodName
 
-    # bc -> blockCaptured
-    # qd -> quotedDisplay
+    #==========================================================================#
+    # Functions build_and_run() and build_and_run_expr() are generic functions #
+    # which are called from the Test*Types*.py test cases.  The API client is  #
+    # responsible for supplying two mandatory arguments: the source file, e.g.,#
+    # 'int.cpp', and the atoms, e.g., set(['unsigned', 'long long']) to the    #
+    # functions.  There are also three optional keyword arguments of interest, #
+    # as follows:                                                              #
+    #                                                                          #
+    # dsym -> build for dSYM (defaulted to True)                               #
+    #         True: build dSYM file                                            #
+    #         False: build DWARF map                                           #
+    # bc -> blockCaptured (defaulted to False)                                 #
+    #         True: testing vars of various basic types from isnide a block    #
+    #         False: testing vars of various basic types from a function       #
+    # qd -> quotedDisplay (defaulted to False)                                 #
+    #         True: the output from 'frame var' or 'expr var' contains a pair  #
+    #               of single quotes around the value                          #
+    #         False: no single quotes are to be found around the value of      #
+    #                variable                                                  #
+    #==========================================================================#
 
     def build_and_run(self, source, atoms, dsym=True, bc=False, qd=False):
         self.build_and_run_with_source_atoms_expr(source, atoms, expr=False, dsym=dsym, bc=bc, qd=qd)
@@ -101,7 +119,7 @@ class GenericTester(TestBase):
         for var, val in gl:
             self.runCmd("frame variable -T %s" % var)
             output = self.res.GetOutput()
-            
+
             # The input type is in a canonical form as a set of named atoms.
             # The display type string must conatin each and every element.
             #
@@ -183,7 +201,7 @@ class GenericTester(TestBase):
 
             self.runCmd("expression %s" % var)
             output = self.res.GetOutput()
-            
+
             # The input type is in a canonical form as a set of named atoms.
             # The display type string must conatin each and every element.
             #
