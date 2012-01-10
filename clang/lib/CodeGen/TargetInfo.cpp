@@ -3225,19 +3225,7 @@ MipsABIInfo::returnAggregateInRegs(QualType RetTy, uint64_t Size) const {
       if (!BT || !BT->isFloatingPoint())
         break;
 
-      switch (BT->getKind()) {
-      case BuiltinType::Float:
-        RTList.push_back(llvm::Type::getFloatTy(getVMContext()));
-        break;
-      case BuiltinType::Double:
-        RTList.push_back(llvm::Type::getDoubleTy(getVMContext()));
-        break;
-      case BuiltinType::LongDouble:
-        RTList.push_back(llvm::Type::getFP128Ty(getVMContext()));
-        break;
-      default:
-        assert(false && "Unexpexted floating point type.");
-      }
+      RTList.push_back(GetFloatingPointTy(BT));
     }
 
     if (i == e)
