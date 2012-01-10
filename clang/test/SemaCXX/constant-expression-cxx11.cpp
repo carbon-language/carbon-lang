@@ -976,3 +976,12 @@ namespace ExternConstexpr {
     constexpr int k; // expected-error {{default initialization of an object of const type}}
   }
 }
+
+namespace ComplexConstexpr {
+  constexpr _Complex float test1 = {};
+  constexpr _Complex float test2 = {1};
+  constexpr _Complex double test3 = {1,2};
+  constexpr _Complex int test4 = {4};
+  constexpr _Complex int test5 = 4;
+  constexpr _Complex int test6 = {5,6};
+}

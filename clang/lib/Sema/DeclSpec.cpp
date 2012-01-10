@@ -867,7 +867,8 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP) {
       TypeSpecType = TST_double;   // _Complex -> _Complex double.
     } else if (TypeSpecType == TST_int || TypeSpecType == TST_char) {
       // Note that this intentionally doesn't include _Complex _Bool.
-      Diag(D, TSTLoc, diag::ext_integer_complex);
+      if (!PP.getLangOptions().CPlusPlus)
+        Diag(D, TSTLoc, diag::ext_integer_complex);
     } else if (TypeSpecType != TST_float && TypeSpecType != TST_double) {
       Diag(D, TSCLoc, diag::err_invalid_complex_spec)
         << getSpecifierName((TST)TypeSpecType);

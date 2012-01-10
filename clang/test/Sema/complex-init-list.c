@@ -43,3 +43,6 @@ _Complex float sizetest1[] = { {1.0f, 1.0f}, {1.0f, 1.0f} }; // expected-warning
 _Complex float sizecheck1[(sizeof(sizetest1) == sizeof(*sizetest1)*2) ? 1 : -1];
 _Complex float sizetest2[] = { 1.0f, 1.0f, {1.0f, 1.0f} };  // expected-warning {{specifying real and imaginary components is an extension}}
 _Complex float sizecheck2[(sizeof(sizetest2) == sizeof(*sizetest2)*3) ? 1 : -1];
+
+// Constant-folding with init list.
+_Complex float x = 2 + (_Complex float) { 1, 2 };  // expected-warning {{specifying real and imaginary components is an extension}}

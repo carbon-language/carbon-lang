@@ -3191,8 +3191,6 @@ namespace {
     // FIXME: Missing: unary -, unary ~, binary add/sub/mul/div,
     //                 binary comparisons, binary and/or/xor,
     //                 shufflevector, ExtVectorElementExpr
-    //        (Note that these require implementing conversions
-    //         between vector types.)
   };
 } // end anonymous namespace
 
@@ -4884,17 +4882,17 @@ public:
     return true;
   }
 
+  bool ZeroInitialization(const Expr *E);
+
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods
   //===--------------------------------------------------------------------===//
 
   bool VisitImaginaryLiteral(const ImaginaryLiteral *E);
-
   bool VisitCastExpr(const CastExpr *E);
-
   bool VisitBinaryOperator(const BinaryOperator *E);
   bool VisitUnaryOperator(const UnaryOperator *E);
-  // FIXME Missing: ImplicitValueInitExpr, InitListExpr
+  bool VisitInitListExpr(const InitListExpr *E);
 };
 } // end anonymous namespace
 
@@ -4902,6 +4900,22 @@ static bool EvaluateComplex(const Expr *E, ComplexValue &Result,
                             EvalInfo &Info) {
   assert(E->isRValue() && E->getType()->isAnyComplexType());
   return ComplexExprEvaluator(Info, Result).Visit(E);
+}
+
+bool ComplexExprEvaluator::ZeroInitialization(const Expr *E) {
+  QualType ElemTy = cast<ComplexType>(E->getType())->getElementType();
+  if (ElemTy->isRealFloatingType()) {
+    Result.makeComplexFloat();
+    APFloat Zero = APFloat::getZero(Info.Ctx.getFloatTypeSemantics(ElemTy));
+    Result.FloatReal = Zero;
+    Result.FloatImag = Zero;
+  } else {
+    Result.makeComplexInt();
+    APSInt Zero = Info.Ctx.MakeIntValue(0, ElemTy);
+    Result.IntReal = Zero;
+    Result.IntImag = Zero;
+  }
+  return true;
 }
 
 bool ComplexExprEvaluator::VisitImaginaryLiteral(const ImaginaryLiteral *E) {
@@ -5205,6 +5219,26 @@ bool ComplexExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
       Result.getComplexIntImag() = -Result.getComplexIntImag();
     return true;
   }
+}
+
+bool ComplexExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
+  if (E->getNumInits() == 2) {
+    if (E->getType()->isComplexType()) {
+      Result.makeComplexFloat();
+      if (!EvaluateFloat(E->getInit(0), Result.FloatReal, Info))
+        return false;
+      if (!EvaluateFloat(E->getInit(1), Result.FloatImag, Info))
+        return false;
+    } else {
+      Result.makeComplexInt();
+      if (!EvaluateInteger(E->getInit(0), Result.IntReal, Info))
+        return false;
+      if (!EvaluateInteger(E->getInit(1), Result.IntImag, Info))
+        return false;
+    }
+    return true;
+  }
+  return ExprEvaluatorBaseTy::VisitInitListExpr(E);
 }
 
 //===----------------------------------------------------------------------===//

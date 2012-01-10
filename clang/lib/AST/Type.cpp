@@ -1148,8 +1148,10 @@ bool Type::isLiteralType() const {
   // C++0x [basic.types]p10:
   //   A type is a literal type if it is:
   //    -- a scalar type; or
-  // As an extension, Clang treats vector types as literal types.
-  if (BaseTy->isScalarType() || BaseTy->isVectorType())
+  // As an extension, Clang treats vector types and complex types as
+  // literal types.
+  if (BaseTy->isScalarType() || BaseTy->isVectorType() ||
+      BaseTy->isAnyComplexType())
     return true;
   //    -- a reference type; or
   if (BaseTy->isReferenceType())

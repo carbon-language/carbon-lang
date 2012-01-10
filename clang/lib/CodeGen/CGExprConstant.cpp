@@ -681,31 +681,6 @@ public:
   }
 
   llvm::Constant *VisitInitListExpr(InitListExpr *ILE) {
-    if (ILE->getType()->isAnyComplexType() && ILE->getNumInits() == 2) {
-      // Complex type with element initializers
-      Expr *Real = ILE->getInit(0);
-      Expr *Imag = ILE->getInit(1);
-      llvm::Constant *Complex[2];
-      Complex[0] = CGM.EmitConstantExpr(Real, Real->getType(), CGF);
-      if (!Complex[0])
-        return 0;
-      Complex[1] = CGM.EmitConstantExpr(Imag, Imag->getType(), CGF);
-      if (!Complex[1])
-        return 0;
-      llvm::StructType *STy =
-          cast<llvm::StructType>(ConvertType(ILE->getType()));
-      return llvm::ConstantStruct::get(STy, Complex);
-    }
-
-    if (ILE->getType()->isScalarType()) {
-      // We have a scalar in braces. Just use the first element.
-      if (ILE->getNumInits() > 0) {
-        Expr *Init = ILE->getInit(0);
-        return CGM.EmitConstantExpr(Init, Init->getType(), CGF);
-      }
-      return CGM.EmitNullConstant(ILE->getType());
-    }
-
     if (ILE->getType()->isArrayType())
       return EmitArrayInitialization(ILE);
 
@@ -715,11 +690,7 @@ public:
     if (ILE->getType()->isUnionType())
       return EmitUnionInitialization(ILE);
 
-    // If ILE was a constant vector, we would have handled it already.
-    if (ILE->getType()->isVectorType())
-      return 0;
-
-    llvm_unreachable("Unable to handle InitListExpr");
+    return 0;
   }
 
   llvm::Constant *VisitCXXConstructExpr(CXXConstructExpr *E) {
