@@ -143,6 +143,7 @@ public:
   virtual MCAsmLexer &getLexer() { return Lexer; }
   virtual MCContext &getContext() { return Ctx; }
   virtual MCStreamer &getStreamer() { return Out; }
+  virtual unsigned getAssemblerDialect() { return MAI.getAssemblerDialect(); }
 
   virtual bool Warning(SMLoc L, const Twine &Msg,
                        ArrayRef<SMRange> Ranges = ArrayRef<SMRange>());
