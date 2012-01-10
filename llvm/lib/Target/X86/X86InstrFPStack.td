@@ -437,33 +437,26 @@ def IST_FP64m : FPI<0xDF, MRM7m, (outs), (ins i64mem:$dst), "fistp{ll}\t$dst">;
 }
 
 // FISTTP requires SSE3 even though it's a FPStack op.
+let Predicates = [HasSSE3] in {
 def ISTT_Fp16m32 : FpI_<(outs), (ins i16mem:$op, RFP32:$src), OneArgFP,
-                    [(X86fp_to_i16mem RFP32:$src, addr:$op)]>,
-                    Requires<[HasSSE3orAVX]>;
+                    [(X86fp_to_i16mem RFP32:$src, addr:$op)]>;
 def ISTT_Fp32m32 : FpI_<(outs), (ins i32mem:$op, RFP32:$src), OneArgFP,
-                    [(X86fp_to_i32mem RFP32:$src, addr:$op)]>,
-                    Requires<[HasSSE3orAVX]>;
+                    [(X86fp_to_i32mem RFP32:$src, addr:$op)]>;
 def ISTT_Fp64m32 : FpI_<(outs), (ins i64mem:$op, RFP32:$src), OneArgFP,
-                    [(X86fp_to_i64mem RFP32:$src, addr:$op)]>,
-                    Requires<[HasSSE3orAVX]>;
+                    [(X86fp_to_i64mem RFP32:$src, addr:$op)]>;
 def ISTT_Fp16m64 : FpI_<(outs), (ins i16mem:$op, RFP64:$src), OneArgFP,
-                    [(X86fp_to_i16mem RFP64:$src, addr:$op)]>,
-                    Requires<[HasSSE3orAVX]>;
+                    [(X86fp_to_i16mem RFP64:$src, addr:$op)]>;
 def ISTT_Fp32m64 : FpI_<(outs), (ins i32mem:$op, RFP64:$src), OneArgFP,
-                    [(X86fp_to_i32mem RFP64:$src, addr:$op)]>,
-                    Requires<[HasSSE3orAVX]>;
+                    [(X86fp_to_i32mem RFP64:$src, addr:$op)]>;
 def ISTT_Fp64m64 : FpI_<(outs), (ins i64mem:$op, RFP64:$src), OneArgFP,
-                    [(X86fp_to_i64mem RFP64:$src, addr:$op)]>,
-                    Requires<[HasSSE3orAVX]>;
+                    [(X86fp_to_i64mem RFP64:$src, addr:$op)]>;
 def ISTT_Fp16m80 : FpI_<(outs), (ins i16mem:$op, RFP80:$src), OneArgFP,
-                    [(X86fp_to_i16mem RFP80:$src, addr:$op)]>,
-                    Requires<[HasSSE3orAVX]>;
+                    [(X86fp_to_i16mem RFP80:$src, addr:$op)]>;
 def ISTT_Fp32m80 : FpI_<(outs), (ins i32mem:$op, RFP80:$src), OneArgFP,
-                    [(X86fp_to_i32mem RFP80:$src, addr:$op)]>,
-                    Requires<[HasSSE3orAVX]>;
+                    [(X86fp_to_i32mem RFP80:$src, addr:$op)]>;
 def ISTT_Fp64m80 : FpI_<(outs), (ins i64mem:$op, RFP80:$src), OneArgFP,
-                    [(X86fp_to_i64mem RFP80:$src, addr:$op)]>,
-                    Requires<[HasSSE3orAVX]>;
+                    [(X86fp_to_i64mem RFP80:$src, addr:$op)]>;
+} // Predicates = [HasSSE3]
 
 let mayStore = 1 in {
 def ISTT_FP16m : FPI<0xDF, MRM1m, (outs), (ins i16mem:$dst), "fisttp{s}\t$dst">;

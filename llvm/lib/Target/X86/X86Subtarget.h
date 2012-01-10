@@ -173,12 +173,12 @@ public:
 
   bool hasCMov() const { return HasCMov; }
   bool hasMMX() const { return X86SSELevel >= MMX; }
-  bool hasSSE1() const { return X86SSELevel >= SSE1 && !hasAVX(); }
-  bool hasSSE2() const { return X86SSELevel >= SSE2 && !hasAVX(); }
-  bool hasSSE3() const { return X86SSELevel >= SSE3 && !hasAVX(); }
-  bool hasSSSE3() const { return X86SSELevel >= SSSE3 && !hasAVX(); }
-  bool hasSSE41() const { return X86SSELevel >= SSE41 && !hasAVX(); }
-  bool hasSSE42() const { return X86SSELevel >= SSE42 && !hasAVX(); }
+  bool hasSSE1() const { return X86SSELevel >= SSE1; }
+  bool hasSSE2() const { return X86SSELevel >= SSE2; }
+  bool hasSSE3() const { return X86SSELevel >= SSE3; }
+  bool hasSSSE3() const { return X86SSELevel >= SSSE3; }
+  bool hasSSE41() const { return X86SSELevel >= SSE41; }
+  bool hasSSE42() const { return X86SSELevel >= SSE42; }
   bool hasSSE4A() const { return HasSSE4A; }
   bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }

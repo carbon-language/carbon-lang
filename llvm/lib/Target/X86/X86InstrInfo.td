@@ -470,14 +470,8 @@ def HasSSSE3     : Predicate<"Subtarget->hasSSSE3()">;
 def HasSSE41     : Predicate<"Subtarget->hasSSE41()">;
 def HasSSE42     : Predicate<"Subtarget->hasSSE42()">;
 def HasSSE4A     : Predicate<"Subtarget->hasSSE4A()">;
-
 def HasAVX       : Predicate<"Subtarget->hasAVX()">;
 def HasAVX2      : Predicate<"Subtarget->hasAVX2()">;
-def HasXMM       : Predicate<"Subtarget->hasXMM()">;
-def HasXMMInt    : Predicate<"Subtarget->hasXMMInt()">;
-def HasSSE3orAVX : Predicate<"Subtarget->hasSSE3orAVX()">;
-def HasSSSE3orAVX : Predicate<"Subtarget->hasSSSE3orAVX()">;
-def HasSSE42orAVX : Predicate<"Subtarget->hasSSE42orAVX()">;
 
 def HasPOPCNT    : Predicate<"Subtarget->hasPOPCNT()">;
 def HasAES       : Predicate<"Subtarget->hasAES()">;
@@ -492,8 +486,8 @@ def HasFSGSBase  : Predicate<"Subtarget->hasFSGSBase()">;
 def HasLZCNT     : Predicate<"Subtarget->hasLZCNT()">;
 def HasBMI       : Predicate<"Subtarget->hasBMI()">;
 def HasBMI2      : Predicate<"Subtarget->hasBMI2()">;
-def FPStackf32   : Predicate<"!Subtarget->hasXMM()">;
-def FPStackf64   : Predicate<"!Subtarget->hasXMMInt()">;
+def FPStackf32   : Predicate<"!Subtarget->hasSSE1()">;
+def FPStackf64   : Predicate<"!Subtarget->hasSSE2()">;
 def HasCmpxchg16b: Predicate<"Subtarget->hasCmpxchg16b()">;
 def In32BitMode  : Predicate<"!Subtarget->is64Bit()">,
                              AssemblerPredicate<"!Mode64Bit">;

@@ -436,7 +436,7 @@ class SS428I<bits<8> o, Format F, dag outs, dag ins, string asm,
 //   SS42FI - SSE 4.2 instructions with T8XD prefix.
 class SS42FI<bits<8> o, Format F, dag outs, dag ins, string asm,
               list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, T8XD, Requires<[HasSSE42orAVX]>;
+      : I<o, F, outs, ins, asm, pattern>, T8XD, Requires<[HasSSE42]>;
 
 //   SS42AI = SSE 4.2 instructions with TA prefix
 class SS42AI<bits<8> o, Format F, dag outs, dag ins, string asm,
@@ -569,11 +569,6 @@ class VRPDI<bits<8> o, Format F, dag outs, dag ins, string asm,
 // MMXIi8 - MMX instructions with ImmT == Imm8 and TB prefix.
 // MMXID  - MMX instructions with XD prefix.
 // MMXIS  - MMX instructions with XS prefix.
-// MMXPI  - SSE 1 & 2 packed instructions for MMX with no AVX equivalents
-// MMXSDIi8  - SSE2 instructions with ImmT == Imm8 and XD prefix. No AVX equiv.
-// MMXSSDIi8 - SSE2 instructions with ImmT == Imm8 and XS prefix. No AVX equiv.
-// MMXSS38I - SSSE3 instructions with T8 prefix for MMX registers. No AVX equiv.
-// MMXSS3AI - SSSE3 instructions with TA prefix for MMX registers. No AVX equiv.
 class MMXI<bits<8> o, Format F, dag outs, dag ins, string asm, 
            list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, TB, Requires<[HasMMX]>;
@@ -595,21 +590,3 @@ class MMXID<bits<8> o, Format F, dag outs, dag ins, string asm,
 class MMXIS<bits<8> o, Format F, dag outs, dag ins, string asm, 
             list<dag> pattern>
       : Ii8<o, F, outs, ins, asm, pattern>, XS, Requires<[HasMMX]>;
-
-class MMXPI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern,
-            Domain d>
-      : I<o, F, outs, ins, asm, pattern, d> {
-  let Predicates = !if(hasOpSizePrefix /* OpSize */, [HasXMMInt], [HasXMM]);
-}
-class MMXSDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
-               list<dag> pattern>
-      : Ii8<o, F, outs, ins, asm, pattern>, XD, Requires<[HasXMMInt]>;
-class MMXSSDIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
-               list<dag> pattern>
-      : Ii8<o, F, outs, ins, asm, pattern>, XS, Requires<[HasXMMInt]>;
-class MMXSS38I<bits<8> o, Format F, dag outs, dag ins, string asm,
-               list<dag> pattern>
-      : I<o, F, outs, ins, asm, pattern>, T8, Requires<[HasSSSE3orAVX]>;
-class MMXSS3AI<bits<8> o, Format F, dag outs, dag ins, string asm,
-               list<dag> pattern>
-      : Ii8<o, F, outs, ins, asm, pattern>, TA, Requires<[HasSSSE3orAVX]>;
