@@ -168,8 +168,8 @@ static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
 X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   : TargetLowering(TM, createTLOF(TM)) {
   Subtarget = &TM.getSubtarget<X86Subtarget>();
-  X86ScalarSSEf64 = Subtarget->hasXMMInt();
-  X86ScalarSSEf32 = Subtarget->hasXMM();
+  X86ScalarSSEf64 = Subtarget->hasSSE2();
+  X86ScalarSSEf32 = Subtarget->hasSSE1();
   X86StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
 
   RegInfo = TM.getRegisterInfo();
@@ -480,7 +480,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SRL_PARTS     , MVT::i64  , Custom);
   }
 
-  if (Subtarget->hasXMM())
+  if (Subtarget->hasSSE1())
     setOperationAction(ISD::PREFETCH      , MVT::Other, Legal);
 
   setOperationAction(ISD::MEMBARRIER    , MVT::Other, Custom);
@@ -814,7 +814,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::BITCAST,            MVT::v2i32, Expand);
   setOperationAction(ISD::BITCAST,            MVT::v1i64, Expand);
 
-  if (!TM.Options.UseSoftFloat && Subtarget->hasXMM()) {
+  if (!TM.Options.UseSoftFloat && Subtarget->hasSSE1()) {
     addRegisterClass(MVT::v4f32, X86::VR128RegisterClass);
 
     setOperationAction(ISD::FADD,               MVT::v4f32, Legal);
@@ -831,7 +831,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SETCC,              MVT::v4f32, Custom);
   }
 
-  if (!TM.Options.UseSoftFloat && Subtarget->hasXMMInt()) {
+  if (!TM.Options.UseSoftFloat && Subtarget->hasSSE2()) {
     addRegisterClass(MVT::v2f64, X86::VR128RegisterClass);
 
     // FIXME: Unfortunately -soft-float and -no-implicit-float means XMM
@@ -980,7 +980,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     }
   }
 
-  if (Subtarget->hasXMMInt()) {
+  if (Subtarget->hasSSE2()) {
     setOperationAction(ISD::SRL,               MVT::v8i16, Custom);
     setOperationAction(ISD::SRL,               MVT::v16i8, Custom);
 
@@ -1293,7 +1293,7 @@ unsigned X86TargetLowering::getByValTypeAlignment(Type *Ty) const {
   }
 
   unsigned Align = 4;
-  if (Subtarget->hasXMM())
+  if (Subtarget->hasSSE1())
     getMaxByValAlign(Ty, Align);
   return Align;
 }
@@ -1330,14 +1330,14 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
       if (Subtarget->hasAVX() &&
           Subtarget->getStackAlignment() >= 32)
         return MVT::v8f32;
-      if (Subtarget->hasXMMInt())
+      if (Subtarget->hasSSE2())
         return MVT::v4i32;
-      if (Subtarget->hasXMM())
+      if (Subtarget->hasSSE1())
         return MVT::v4f32;
     } else if (!MemcpyStrSrc && Size >= 8 &&
                !Subtarget->is64Bit() &&
                Subtarget->getStackAlignment() >= 8 &&
-               Subtarget->hasXMMInt()) {
+               Subtarget->hasSSE2()) {
       // Do not use f64 to lower memcpy if source is string constant. It's
       // better to use i32 to avoid the loads.
       return MVT::f64;
@@ -1502,14 +1502,14 @@ X86TargetLowering::LowerReturn(SDValue Chain,
     // or SSE or MMX vectors.
     if ((ValVT == MVT::f32 || ValVT == MVT::f64 ||
          VA.getLocReg() == X86::XMM0 || VA.getLocReg() == X86::XMM1) &&
-          (Subtarget->is64Bit() && !Subtarget->hasXMM())) {
+          (Subtarget->is64Bit() && !Subtarget->hasSSE1())) {
       report_fatal_error("SSE register return with SSE disabled");
     }
     // Likewise we can't return F64 values with SSE1 only.  gcc does so, but
     // llvm-gcc has never done it right and no one has noticed, so this
     // should be OK for now.
     if (ValVT == MVT::f64 &&
-        (Subtarget->is64Bit() && !Subtarget->hasXMMInt()))
+        (Subtarget->is64Bit() && !Subtarget->hasSSE2()))
       report_fatal_error("SSE2 register return with SSE2 disabled");
 
     // Returns in ST0/ST1 are handled specially: these are pushed as operands to
@@ -1535,7 +1535,7 @@ X86TargetLowering::LowerReturn(SDValue Chain,
                                   ValToCopy);
           // If we don't have SSE2 available, convert to v4f32 so the generated
           // register is legal.
-          if (!Subtarget->hasXMMInt())
+          if (!Subtarget->hasSSE2())
             ValToCopy = DAG.getNode(ISD::BITCAST, dl, MVT::v4f32,ValToCopy);
         }
       }
@@ -1635,7 +1635,7 @@ X86TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 
     // If this is x86-64, and we disabled SSE, we can't return FP values
     if ((CopyVT == MVT::f32 || CopyVT == MVT::f64) &&
-        ((Is64Bit || Ins[i].Flags.isInReg()) && !Subtarget->hasXMM())) {
+        ((Is64Bit || Ins[i].Flags.isInReg()) && !Subtarget->hasSSE1())) {
       report_fatal_error("SSE register return with SSE disabled");
     }
 
@@ -1949,13 +1949,13 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
                                                        TotalNumIntRegs);
 
       bool NoImplicitFloatOps = Fn->hasFnAttr(Attribute::NoImplicitFloat);
-      assert(!(NumXMMRegs && !Subtarget->hasXMM()) &&
+      assert(!(NumXMMRegs && !Subtarget->hasSSE1()) &&
              "SSE register cannot be used when SSE is disabled!");
       assert(!(NumXMMRegs && MF.getTarget().Options.UseSoftFloat &&
                NoImplicitFloatOps) &&
              "SSE register cannot be used when SSE is disabled!");
       if (MF.getTarget().Options.UseSoftFloat || NoImplicitFloatOps ||
-          !Subtarget->hasXMM())
+          !Subtarget->hasSSE1())
         // Kernel mode asks for SSE to be disabled, so don't push them
         // on the stack.
         TotalNumXMMRegs = 0;
@@ -2318,7 +2318,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
     };
     unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs, 8);
-    assert((Subtarget->hasXMM() || !NumXMMRegs)
+    assert((Subtarget->hasSSE1() || !NumXMMRegs)
            && "SSE registers cannot be used when SSE is disabled");
 
     Chain = DAG.getCopyToReg(Chain, dl, X86::AL,
@@ -4234,7 +4234,7 @@ static bool isZeroShuffle(ShuffleVectorSDNode *N) {
 
 /// getZeroVector - Returns a vector of specified type with all zero elements.
 ///
-static SDValue getZeroVector(EVT VT, bool HasXMMInt, SelectionDAG &DAG,
+static SDValue getZeroVector(EVT VT, bool HasSSE2, SelectionDAG &DAG,
                              DebugLoc dl) {
   assert(VT.isVector() && "Expected a vector type");
 
@@ -4242,7 +4242,7 @@ static SDValue getZeroVector(EVT VT, bool HasXMMInt, SelectionDAG &DAG,
   // to their dest type. This ensures they get CSE'd.
   SDValue Vec;
   if (VT.getSizeInBits() == 128) {  // SSE
-    if (HasXMMInt) {  // SSE2
+    if (HasSSE2) {  // SSE2
       SDValue Cst = DAG.getTargetConstant(0, MVT::i32);
       Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, Cst, Cst, Cst, Cst);
     } else { // SSE1
@@ -4445,11 +4445,11 @@ static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG) {
 /// element of V2 is swizzled into the zero/undef vector, landing at element
 /// Idx.  This produces a shuffle mask like 4,1,2,3 (idx=0) or  0,1,2,4 (idx=3).
 static SDValue getShuffleVectorZeroOrUndef(SDValue V2, unsigned Idx,
-                                           bool isZero, bool HasXMMInt,
+                                           bool isZero, bool HasSSE2,
                                            SelectionDAG &DAG) {
   EVT VT = V2.getValueType();
   SDValue V1 = isZero
-    ? getZeroVector(VT, HasXMMInt, DAG, V2.getDebugLoc()) : DAG.getUNDEF(VT);
+    ? getZeroVector(VT, HasSSE2, DAG, V2.getDebugLoc()) : DAG.getUNDEF(VT);
   unsigned NumElems = VT.getVectorNumElements();
   SmallVector<int, 16> MaskVec;
   for (unsigned i = 0; i != NumElems; ++i)
@@ -5063,7 +5063,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
         Op.getValueType() == MVT::v8i32)
       return Op;
 
-    return getZeroVector(Op.getValueType(), Subtarget->hasXMMInt(), DAG, dl);
+    return getZeroVector(Op.getValueType(), Subtarget->hasSSE2(), DAG, dl);
   }
 
   // Vectors containing all ones can be matched by pcmpeqd on 128-bit width
@@ -5131,7 +5131,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
         Item = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, Item);
         Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VecVT, Item);
         Item = getShuffleVectorZeroOrUndef(Item, 0, true,
-                                           Subtarget->hasXMMInt(), DAG);
+                                           Subtarget->hasSSE2(), DAG);
 
         // Now we have our 32-bit value zero extended in the low element of
         // a vector.  If Idx != 0, swizzle it into place.
@@ -5169,7 +5169,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
         Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Item);
         // Turn it into a MOVL (i.e. movss, movsd, or movd) to a zero vector.
         return getShuffleVectorZeroOrUndef(Item, 0, true,
-                                           Subtarget->hasXMMInt(), DAG);
+                                           Subtarget->hasSSE2(), DAG);
       }
 
       if (ExtVT == MVT::i16 || ExtVT == MVT::i8) {
@@ -5182,7 +5182,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
         } else {
           assert(VT.getSizeInBits() == 128 && "Expected an SSE value type!");
           Item = getShuffleVectorZeroOrUndef(Item, 0, true,
-                                             Subtarget->hasXMMInt(), DAG);
+                                             Subtarget->hasSSE2(), DAG);
         }
         return DAG.getNode(ISD::BITCAST, dl, VT, Item);
       }
@@ -5212,7 +5212,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
 
       // Turn it into a shuffle of zero and zero-extended scalar to vector.
       Item = getShuffleVectorZeroOrUndef(Item, 0, NumZero > 0,
-                                         Subtarget->hasXMMInt(), DAG);
+                                         Subtarget->hasSSE2(), DAG);
       SmallVector<int, 8> MaskVec;
       for (unsigned i = 0; i < NumElems; i++)
         MaskVec.push_back(i == Idx ? 0 : 1);
@@ -5269,7 +5269,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       SDValue V2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT,
                                  Op.getOperand(Idx));
       return getShuffleVectorZeroOrUndef(V2, Idx, true,
-                                         Subtarget->hasXMMInt(), DAG);
+                                         Subtarget->hasSSE2(), DAG);
     }
     return SDValue();
   }
@@ -5294,7 +5294,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     for (unsigned i = 0; i < 4; ++i) {
       bool isZero = !(NonZeros & (1 << i));
       if (isZero)
-        V[i] = getZeroVector(VT, Subtarget->hasXMMInt(), DAG, dl);
+        V[i] = getZeroVector(VT, Subtarget->hasSSE2(), DAG, dl);
       else
         V[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Op.getOperand(i));
     }
@@ -6301,14 +6301,14 @@ SDValue getMOVDDup(SDValue &Op, DebugLoc &dl, SDValue V1, SelectionDAG &DAG) {
 
 static
 SDValue getMOVLowToHigh(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG,
-                        bool HasXMMInt) {
+                        bool HasSSE2) {
   SDValue V1 = Op.getOperand(0);
   SDValue V2 = Op.getOperand(1);
   EVT VT = Op.getValueType();
 
   assert(VT != MVT::v2i64 && "unsupported shuffle type");
 
-  if (HasXMMInt && VT == MVT::v2f64)
+  if (HasSSE2 && VT == MVT::v2f64)
     return getTargetShuffleNode(X86ISD::MOVLHPD, dl, VT, V1, V2, DAG);
 
   // v4f32 or v4i32: canonizalized to v4f32 (which is legal for SSE1)
@@ -6335,7 +6335,7 @@ SDValue getMOVHighToLow(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG) {
 }
 
 static
-SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasXMMInt) {
+SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
   SDValue V1 = Op.getOperand(0);
   SDValue V2 = Op.getOperand(1);
   EVT VT = Op.getValueType();
@@ -6361,7 +6361,7 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasXMMInt) {
 
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   if (CanFoldLoad) {
-    if (HasXMMInt && NumElems == 2)
+    if (HasSSE2 && NumElems == 2)
       return getTargetShuffleNode(X86ISD::MOVLPD, dl, VT, V1, V2, DAG);
 
     if (NumElems == 4)
@@ -6376,7 +6376,7 @@ SDValue getMOVLP(SDValue &Op, DebugLoc &dl, SelectionDAG &DAG, bool HasXMMInt) {
   // this is horrible, but will stay like this until we move all shuffle
   // matching to x86 specific nodes. Note that for the 1st condition all
   // types are matched with movsd.
-  if (HasXMMInt) {
+  if (HasSSE2) {
     // FIXME: isMOVLMask should be checked and matched before getMOVLP,
     // as to remove this logic from here, as much as possible
     if (NumElems == 2 || !X86::isMOVLMask(SVOp))
@@ -6402,7 +6402,7 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
   SDValue V2 = Op.getOperand(1);
 
   if (isZeroShuffle(SVOp))
-    return getZeroVector(VT, Subtarget->hasXMMInt(), DAG, dl);
+    return getZeroVector(VT, Subtarget->hasSSE2(), DAG, dl);
 
   // Handle splat operations
   if (SVOp->isSplat()) {
@@ -6436,7 +6436,7 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
     if (NewOp.getNode())
       return DAG.getNode(ISD::BITCAST, dl, VT, NewOp);
   } else if ((VT == MVT::v4i32 ||
-             (VT == MVT::v4f32 && Subtarget->hasXMMInt()))) {
+             (VT == MVT::v4f32 && Subtarget->hasSSE2()))) {
     // FIXME: Figure out a cleaner way to do this.
     // Try to make use of movq to zero out the top part.
     if (ISD::isBuildVectorAllZeros(V2.getNode())) {
@@ -6467,7 +6467,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   bool V2IsUndef = V2.getOpcode() == ISD::UNDEF;
   bool V1IsSplat = false;
   bool V2IsSplat = false;
-  bool HasXMMInt = Subtarget->hasXMMInt();
+  bool HasSSE2 = Subtarget->hasSSE2();
   bool HasAVX    = Subtarget->hasAVX();
   bool HasAVX2   = Subtarget->hasAVX2();
   MachineFunction &MF = DAG.getMachineFunction();
@@ -6513,7 +6513,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getMOVHighToLow(Op, dl, DAG);
 
   // Use to match splats
-  if (HasXMMInt && X86::isUNPCKHMask(SVOp, HasAVX2) && V2IsUndef &&
+  if (HasSSE2 && X86::isUNPCKHMask(SVOp, HasAVX2) && V2IsUndef &&
       (VT == MVT::v2f64 || VT == MVT::v2i64))
     return getTargetShuffleNode(X86ISD::UNPCKH, dl, VT, V1, V1, DAG);
 
@@ -6526,7 +6526,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
     unsigned TargetMask = X86::getShuffleSHUFImmediate(SVOp);
 
-    if (HasXMMInt && (VT == MVT::v4f32 || VT == MVT::v4i32))
+    if (HasSSE2 && (VT == MVT::v4f32 || VT == MVT::v4i32))
       return getTargetShuffleNode(X86ISD::PSHUFD, dl, VT, V1, TargetMask, DAG);
 
     return getTargetShuffleNode(X86ISD::SHUFP, dl, VT, V1, V1,
@@ -6537,7 +6537,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   bool isLeft = false;
   unsigned ShAmt = 0;
   SDValue ShVal;
-  bool isShift = HasXMMInt && isVectorShift(SVOp, DAG, isLeft, ShVal, ShAmt);
+  bool isShift = HasSSE2 && isVectorShift(SVOp, DAG, isLeft, ShVal, ShAmt);
   if (isShift && ShVal.hasOneUse()) {
     // If the shifted value has multiple uses, it may be cheaper to use
     // v_set0 + movlhps or movhlps, etc.
@@ -6550,7 +6550,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     if (ISD::isBuildVectorAllZeros(V1.getNode()))
       return getVZextMovL(VT, VT, V2, DAG, Subtarget, dl);
     if (!X86::isMOVLPMask(SVOp)) {
-      if (HasXMMInt && (VT == MVT::v2i64 || VT == MVT::v2f64))
+      if (HasSSE2 && (VT == MVT::v2i64 || VT == MVT::v2f64))
         return getTargetShuffleNode(X86ISD::MOVSD, dl, VT, V1, V2, DAG);
 
       if (VT == MVT::v4i32 || VT == MVT::v4f32)
@@ -6560,7 +6560,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   // FIXME: fold these into legal mask.
   if (X86::isMOVLHPSMask(SVOp) && !X86::isUNPCKLMask(SVOp, HasAVX2))
-    return getMOVLowToHigh(Op, dl, DAG, HasXMMInt);
+    return getMOVLowToHigh(Op, dl, DAG, HasSSE2);
 
   if (X86::isMOVHLPSMask(SVOp))
     return getMOVHighToLow(Op, dl, DAG);
@@ -6572,7 +6572,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getTargetShuffleNode(X86ISD::MOVSLDUP, dl, VT, V1, DAG);
 
   if (X86::isMOVLPMask(SVOp))
-    return getMOVLP(Op, dl, DAG, HasXMMInt);
+    return getMOVLP(Op, dl, DAG, HasSSE2);
 
   if (ShouldXformToMOVHLPS(SVOp) ||
       ShouldXformToMOVLP(V1.getNode(), V2.getNode(), SVOp))
@@ -7659,7 +7659,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i32(SDValue Op,
                              Op.getOperand(0));
 
   // Zero out the upper parts of the register.
-  Load = getShuffleVectorZeroOrUndef(Load, 0, true, Subtarget->hasXMMInt(),
+  Load = getShuffleVectorZeroOrUndef(Load, 0, true, Subtarget->hasSSE2(),
                                      DAG);
 
   Load = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64,
@@ -9118,7 +9118,7 @@ SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
     assert(!getTargetMachine().Options.UseSoftFloat &&
            !(DAG.getMachineFunction()
                 .getFunction()->hasFnAttr(Attribute::NoImplicitFloat)) &&
-           Subtarget->hasXMM());
+           Subtarget->hasSSE1());
   }
 
   // Insert VAARG_64 node into the DAG
@@ -10021,7 +10021,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
   SDValue Amt = Op.getOperand(1);
   LLVMContext *Context = DAG.getContext();
 
-  if (!Subtarget->hasXMMInt())
+  if (!Subtarget->hasSSE2())
     return SDValue();
 
   // Optimize shl/srl/sra with constant shift amount.
@@ -10099,7 +10099,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
       if (VT == MVT::v16i8 && Op.getOpcode() == ISD::SRA) {
         if (ShiftAmt == 7) {
           // R s>> 7  ===  R s< 0
-          SDValue Zeros = getZeroVector(VT, true /* HasXMMInt */, DAG, dl);
+          SDValue Zeros = getZeroVector(VT, true /* HasSSE2 */, DAG, dl);
           return DAG.getNode(X86ISD::PCMPGTB, dl, VT, Zeros, R);
         }
 
@@ -10141,7 +10141,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
         if (Op.getOpcode() == ISD::SRA) {
           if (ShiftAmt == 7) {
             // R s>> 7  ===  R s< 0
-            SDValue Zeros = getZeroVector(VT, true /* HasXMMInt */, DAG, dl);
+            SDValue Zeros = getZeroVector(VT, true /* HasSSE2 */, DAG, dl);
             return DAG.getNode(X86ISD::PCMPGTB, dl, VT, Zeros, R);
           }
 
@@ -10356,7 +10356,7 @@ SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
   EVT ExtraVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
   EVT VT = Op.getValueType();
 
-  if (Subtarget->hasXMMInt() && VT.isVector()) {
+  if (Subtarget->hasSSE2() && VT.isVector()) {
     unsigned BitsDiff = VT.getScalarType().getSizeInBits() -
                         ExtraVT.getScalarType().getSizeInBits();
     SDValue ShAmt = DAG.getConstant(BitsDiff, MVT::i32);
@@ -10430,7 +10430,7 @@ SDValue X86TargetLowering::LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG) const{
 
   // Go ahead and emit the fence on x86-64 even if we asked for no-sse2.
   // There isn't any reason to disable it if the target processor supports it.
-  if (!Subtarget->hasXMMInt() && !Subtarget->is64Bit()) {
+  if (!Subtarget->hasSSE2() && !Subtarget->is64Bit()) {
     SDValue Chain = Op.getOperand(0);
     SDValue Zero = DAG.getConstant(0, MVT::i32);
     SDValue Ops[] = {
@@ -10484,7 +10484,7 @@ SDValue X86TargetLowering::LowerATOMIC_FENCE(SDValue Op,
     // Use mfence if we have SSE2 or we're on x86-64 (even if we asked for
     // no-sse2). There isn't any reason to disable it if the target processor
     // supports it.
-    if (Subtarget->hasXMMInt() || Subtarget->is64Bit())
+    if (Subtarget->hasSSE2() || Subtarget->is64Bit())
       return DAG.getNode(X86ISD::MFENCE, dl, MVT::Other, Op.getOperand(0));
 
     SDValue Chain = Op.getOperand(0);
@@ -10564,7 +10564,7 @@ SDValue X86TargetLowering::LowerBITCAST(SDValue Op,
                                             SelectionDAG &DAG) const {
   EVT SrcVT = Op.getOperand(0).getValueType();
   EVT DstVT = Op.getValueType();
-  assert(Subtarget->is64Bit() && !Subtarget->hasXMMInt() &&
+  assert(Subtarget->is64Bit() && !Subtarget->hasSSE2() &&
          Subtarget->hasMMX() && "Unexpected custom BITCAST");
   assert((DstVT == MVT::i64 ||
           (DstVT.isVector() && DstVT.getSizeInBits()==64)) &&
@@ -12732,7 +12732,7 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
 
     // Emit a zeroed vector and insert the desired subvector on its
     // first half.
-    SDValue Zeros = getZeroVector(VT, true /* HasXMMInt */, DAG, dl);
+    SDValue Zeros = getZeroVector(VT, true /* HasSSE2 */, DAG, dl);
     SDValue InsV = Insert128BitVector(Zeros, V1.getOperand(0),
                          DAG.getConstant(0, MVT::i32), DAG, dl);
     return DCI.CombineTo(N, InsV);
@@ -12893,8 +12893,8 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   // ignored in unsafe-math mode).
   if (Cond.getOpcode() == ISD::SETCC && VT.isFloatingPoint() &&
       VT != MVT::f80 && DAG.getTargetLoweringInfo().isTypeLegal(VT) &&
-      (Subtarget->hasXMMInt() ||
-       (Subtarget->hasXMM() && VT.getScalarType() == MVT::f32))) {
+      (Subtarget->hasSSE2() ||
+       (Subtarget->hasSSE1() && VT.getScalarType() == MVT::f32))) {
     ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
 
     unsigned Opcode = 0;
@@ -13399,7 +13399,7 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
   // all elements are shifted by the same amount.  We can't do this in legalize
   // because the a constant vector is typically transformed to a constant pool
   // so we have no knowledge of the shift amount.
-  if (!Subtarget->hasXMMInt())
+  if (!Subtarget->hasSSE2())
     return SDValue();
 
   if (VT != MVT::v2i64 && VT != MVT::v4i32 && VT != MVT::v8i16 &&
@@ -13549,7 +13549,7 @@ static SDValue CMPEQCombine(SDNode *N, SelectionDAG &DAG,
 
   // SSE1 supports CMP{eq|ne}SS, and SSE2 added CMP{eq|ne}SD, but
   // we're requiring SSE2 for both.
-  if (Subtarget->hasXMMInt() && isAndOrOfSetCCs(SDValue(N, 0U), opcode)) {
+  if (Subtarget->hasSSE2() && isAndOrOfSetCCs(SDValue(N, 0U), opcode)) {
     SDValue N0 = N->getOperand(0);
     SDValue N1 = N->getOperand(1);
     SDValue CMP0 = N0->getOperand(1);
@@ -14118,7 +14118,7 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
   const Function *F = DAG.getMachineFunction().getFunction();
   bool NoImplicitFloatOps = F->hasFnAttr(Attribute::NoImplicitFloat);
   bool F64IsLegal = !DAG.getTarget().Options.UseSoftFloat && !NoImplicitFloatOps
-                     && Subtarget->hasXMMInt();
+                     && Subtarget->hasSSE2();
   if ((VT.isVector() ||
        (VT == MVT::i64 && F64IsLegal && !Subtarget->is64Bit())) &&
       isa<LoadSDNode>(St->getValue()) &&
@@ -14956,7 +14956,7 @@ TargetLowering::ConstraintWeight
       break;
   case 'x':
   case 'Y':
-    if (((type->getPrimitiveSizeInBits() == 128) && Subtarget->hasXMM()) ||
+    if (((type->getPrimitiveSizeInBits() == 128) && Subtarget->hasSSE1()) ||
         ((type->getPrimitiveSizeInBits() == 256) && Subtarget->hasAVX()))
       weight = CW_Register;
     break;
@@ -15027,9 +15027,9 @@ LowerXConstraint(EVT ConstraintVT) const {
   // FP X constraints get lowered to SSE1/2 registers if available, otherwise
   // 'f' like normal targets.
   if (ConstraintVT.isFloatingPoint()) {
-    if (Subtarget->hasXMMInt())
+    if (Subtarget->hasSSE2())
       return "Y";
-    if (Subtarget->hasXMM())
+    if (Subtarget->hasSSE1())
       return "x";
   }
 
@@ -15235,10 +15235,10 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       if (!Subtarget->hasMMX()) break;
       return std::make_pair(0U, X86::VR64RegisterClass);
     case 'Y':   // SSE_REGS if SSE2 allowed
-      if (!Subtarget->hasXMMInt()) break;
+      if (!Subtarget->hasSSE2()) break;
       // FALL THROUGH.
     case 'x':   // SSE_REGS if SSE1 allowed or AVX_REGS if AVX allowed
-      if (!Subtarget->hasXMM()) break;
+      if (!Subtarget->hasSSE1()) break;
 
       switch (VT.getSimpleVT().SimpleTy) {
       default: break;

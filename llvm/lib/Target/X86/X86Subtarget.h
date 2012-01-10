@@ -179,14 +179,12 @@ public:
   bool hasSSSE3() const { return X86SSELevel >= SSSE3; }
   bool hasSSE41() const { return X86SSELevel >= SSE41; }
   bool hasSSE42() const { return X86SSELevel >= SSE42; }
+  bool hasAVX() const { return X86SSELevel >= AVX; }
+  bool hasAVX2() const { return X86SSELevel >= AVX2; }
   bool hasSSE4A() const { return HasSSE4A; }
   bool has3DNow() const { return X863DNowLevel >= ThreeDNow; }
   bool has3DNowA() const { return X863DNowLevel >= ThreeDNowA; }
   bool hasPOPCNT() const { return HasPOPCNT; }
-  bool hasAVX() const { return X86SSELevel >= AVX; }
-  bool hasAVX2() const { return X86SSELevel >= AVX2; }
-  bool hasXMM() const { return X86SSELevel >= SSE1; }
-  bool hasXMMInt() const { return X86SSELevel >= SSE2; }
   bool hasAES() const { return HasAES; }
   bool hasCLMUL() const { return HasCLMUL; }
   bool hasFMA3() const { return HasFMA3; }

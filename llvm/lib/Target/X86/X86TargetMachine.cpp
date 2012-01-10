@@ -142,7 +142,7 @@ bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM) {
 
 bool X86TargetMachine::addPreEmitPass(PassManagerBase &PM) {
   bool ShouldPrint = false;
-  if (getOptLevel() != CodeGenOpt::None && Subtarget.hasXMMInt()) {
+  if (getOptLevel() != CodeGenOpt::None && Subtarget.hasSSE2()) {
     PM.add(createExecutionDependencyFixPass(&X86::VR128RegClass));
     ShouldPrint = true;
   }
