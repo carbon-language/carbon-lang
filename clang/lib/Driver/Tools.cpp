@@ -2567,12 +2567,21 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   // Ignore explicit -force_cpusubtype_ALL option.
   (void) Args.hasArg(options::OPT_force__cpusubtype__ALL);
 
-  // Same as Clang::ConstructJob() we special case debug options to only pass
-  // -g to clang. I guess if it is wrong there then it is wrong here too :) .
-  Args.ClaimAllArgs(options::OPT_g_Group);
-  if (Arg *A = Args.getLastArg(options::OPT_g_Group))
-    if (!A->getOption().matches(options::OPT_g0))
-      CmdArgs.push_back("-g");
+  // Determine the original source input.
+  const Action *SourceAction = &JA;
+  while (SourceAction->getKind() != Action::InputClass) {
+    assert(!SourceAction->getInputs().empty() && "unexpected root action!");
+    SourceAction = SourceAction->getInputs()[0];
+  }
+
+  // Forward -g, assuming we are dealing with an actual assembly file.
+  if (SourceAction->getType() == types::TY_Asm ||
+      SourceAction->getType() == types::TY_PP_Asm) {
+    Args.ClaimAllArgs(options::OPT_g_Group);
+    if (Arg *A = Args.getLastArg(options::OPT_g_Group))
+      if (!A->getOption().matches(options::OPT_g0))
+        CmdArgs.push_back("-g");
+  }
 
   // Optionally embed the -cc1as level arguments into the debug info, for build
   // analysis.

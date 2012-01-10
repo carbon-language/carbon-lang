@@ -5,6 +5,7 @@
 // RUN: %clang -### -c -g3 %s 2>&1 | FileCheck -check-prefix=G3 %s
 // RUN: %clang -### -c -ganything %s 2>&1 | FileCheck -check-prefix=GANY %s
 // RUN: %clang -### -c -gfoo %s 2>&1 | FileCheck -check-prefix=GFOO %s
+// RUN: %clang -### -c -save-temps -g %s 2>&1 | FileCheck -check-prefix=SAVE %s
 //
 // G: "-cc1"
 // G: "-g"
@@ -17,3 +18,6 @@
 //
 // GFOO: "-cc1"
 // GFOO-NOT: "-g"
+//
+// SAVE: "-cc1as"
+// SAVE-NOT: "-g"
