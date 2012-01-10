@@ -110,6 +110,15 @@ define void @vst2Qf(float* %A, <4 x float>* %B) nounwind {
 	ret void
 }
 
+define i8* @vst2update(i8* %out, <4 x i16>* %B) nounwind {
+;CHECK: vst2update
+;CHECK: vst2.16 {d16, d17}, [r0]!
+	%tmp1 = load <4 x i16>* %B
+	tail call void @llvm.arm.neon.vst2.v4i16(i8* %out, <4 x i16> %tmp1, <4 x i16> %tmp1, i32 2)
+	%t5 = getelementptr inbounds i8* %out, i32 16
+	ret i8* %t5
+}
+
 declare void @llvm.arm.neon.vst2.v8i8(i8*, <8 x i8>, <8 x i8>, i32) nounwind
 declare void @llvm.arm.neon.vst2.v4i16(i8*, <4 x i16>, <4 x i16>, i32) nounwind
 declare void @llvm.arm.neon.vst2.v2i32(i8*, <2 x i32>, <2 x i32>, i32) nounwind

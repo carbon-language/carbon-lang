@@ -1673,12 +1673,12 @@ defm VST2q8wb    : VST2QWB<{0,0,?,?}, "8">;
 defm VST2q16wb   : VST2QWB<{0,1,?,?}, "16">;
 defm VST2q32wb   : VST2QWB<{1,0,?,?}, "32">;
 
-def VST2d8PseudoWB_fixed     : VSTQWBPseudo<IIC_VST2u>;
-def VST2d16PseudoWB_fixed    : VSTQWBPseudo<IIC_VST2u>;
-def VST2d32PseudoWB_fixed    : VSTQWBPseudo<IIC_VST2u>;
-def VST2d8PseudoWB_register  : VSTQWBPseudo<IIC_VST2u>;
-def VST2d16PseudoWB_register : VSTQWBPseudo<IIC_VST2u>;
-def VST2d32PseudoWB_register : VSTQWBPseudo<IIC_VST2u>;
+def VST2d8PseudoWB_fixed     : VSTQWBfixedPseudo<IIC_VST2u>;
+def VST2d16PseudoWB_fixed    : VSTQWBfixedPseudo<IIC_VST2u>;
+def VST2d32PseudoWB_fixed    : VSTQWBfixedPseudo<IIC_VST2u>;
+def VST2d8PseudoWB_register  : VSTQWBregisterPseudo<IIC_VST2u>;
+def VST2d16PseudoWB_register : VSTQWBregisterPseudo<IIC_VST2u>;
+def VST2d32PseudoWB_register : VSTQWBregisterPseudo<IIC_VST2u>;
 
 def VST2q8PseudoWB_fixed     : VSTQQWBPseudo<IIC_VST2x2u>;
 def VST2q16PseudoWB_fixed    : VSTQQWBPseudo<IIC_VST2x2u>;

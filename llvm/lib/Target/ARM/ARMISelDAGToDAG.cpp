@@ -1822,7 +1822,7 @@ SDNode *ARMDAGToDAGISel::SelectVST(SDNode *N, bool isUpdating, unsigned NumVecs,
         Opc = getVLDSTRegisterUpdateOpcode(Opc);
       // We use a VST1 for v1i64 even if the pseudo says vld2/3/4, so
       // check for that explicitly too. Horribly hacky, but temporary.
-      if ((NumVecs != 1 && Opc != ARM::VST1q64PseudoWB_fixed) ||
+      if ((NumVecs > 2 && Opc != ARM::VST1q64PseudoWB_fixed) ||
           !isa<ConstantSDNode>(Inc.getNode()))
         Ops.push_back(isa<ConstantSDNode>(Inc.getNode()) ? Reg0 : Inc);
     }
