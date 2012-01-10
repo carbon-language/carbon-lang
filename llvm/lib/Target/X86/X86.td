@@ -263,6 +263,16 @@ def ATTAsmParserVariant : AsmParserVariant {
   string RegisterPrefix = "%";
 }
 
+def IntelAsmParserVariant : AsmParserVariant {
+  int Variant = 1;
+
+  // Discard comments in assembly strings.
+  string CommentDelimiter = ";";
+
+  // Recognize hard coded registers.
+  string RegisterPrefix = "";
+}
+
 //===----------------------------------------------------------------------===//
 // Assembly Printers
 //===----------------------------------------------------------------------===//
@@ -284,6 +294,6 @@ def X86 : Target {
   // Information about the instructions...
   let InstructionSet = X86InstrInfo;
   let AssemblyParsers = [ATTAsmParser];
-  let AssemblyParserVariants = [ATTAsmParserVariant];
+  let AssemblyParserVariants = [ATTAsmParserVariant, IntelAsmParserVariant];
   let AssemblyWriters = [ATTAsmWriter, IntelAsmWriter];
 }
