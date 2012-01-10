@@ -125,6 +125,7 @@ const char *Triple::getEnvironmentTypeName(EnvironmentType Kind) {
   case GNUEABI: return "gnueabi";
   case EABI: return "eabi";
   case MachO: return "macho";
+  case ANDROIDEABI: return "androideabi";
   }
 
   return "<invalid>";
@@ -387,6 +388,8 @@ Triple::EnvironmentType Triple::ParseEnvironment(StringRef EnvironmentName) {
     return GNU;
   else if (EnvironmentName.startswith("macho"))
     return MachO;
+  else if (EnvironmentName.startswith("androideabi"))
+    return ANDROIDEABI;
   else
     return UnknownEnvironment;
 }

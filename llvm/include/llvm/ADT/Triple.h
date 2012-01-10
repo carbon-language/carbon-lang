@@ -105,7 +105,8 @@ public:
     GNU,
     GNUEABI,
     EABI,
-    MachO
+    MachO,
+    ANDROIDEABI
   };
 
 private:
