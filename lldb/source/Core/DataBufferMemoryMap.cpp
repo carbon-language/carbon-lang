@@ -171,7 +171,7 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd,
                     if (writeable)
                         prot |= PROT_WRITE;
 
-                    int flags = MAP_SHARED;
+                    int flags = MAP_PRIVATE;
                     if (fd_is_file)
                         flags |= MAP_FILE;
 
