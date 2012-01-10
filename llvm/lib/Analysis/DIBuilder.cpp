@@ -76,11 +76,11 @@ void DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
                                   StringRef Directory, StringRef Producer,
                                   bool isOptimized, StringRef Flags,
                                   unsigned RunTimeVer) {
-  assert ((Lang <= dwarf::DW_LANG_Python && Lang >= dwarf::DW_LANG_C89
-	  || Lang <= dwarf::DW_LANG_hi_user && Lang >= dwarf::DW_LANG_lo_user)
-	  && "Invalid Language tag");
-  assert (!Filename.empty() 
-	  && "Unable to create compile unit without filename");
+  assert(((Lang <= dwarf::DW_LANG_Python && Lang >= dwarf::DW_LANG_C89) ||
+          (Lang <= dwarf::DW_LANG_hi_user && Lang >= dwarf::DW_LANG_lo_user)) &&
+         "Invalid Language tag");
+  assert(!Filename.empty() &&
+         "Unable to create compile unit without filename");
   Value *TElts[] = { GetTagConstant(VMContext, DW_TAG_base_type) };
   TempEnumTypes = MDNode::getTemporary(VMContext, TElts);
   Value *THElts[] = { TempEnumTypes };
