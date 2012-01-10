@@ -298,6 +298,8 @@ std::string sys::getHostCPUName() {
         }
       case 16:
         return "amdfam10";
+      case 20:
+        return "btver1";
       case 21:
         return "bdver1";
     default:

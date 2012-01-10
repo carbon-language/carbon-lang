@@ -204,10 +204,15 @@ def : Proc<"athlon64-sse3",   [FeatureSSE3,   Feature3DNowA, FeatureCMPXCHG16B,
 def : Proc<"amdfam10",        [FeatureSSE3,   FeatureSSE4A,
                                Feature3DNowA, FeatureCMPXCHG16B, FeatureLZCNT,
                                FeaturePOPCNT, FeatureSlowBTMem]>;
+// Bobcat
+def : Proc<"btver1",          [FeatureSSSE3, FeatureSSE4A, FeatureCMPXCHG16B,
+                               FeatureLZCNT, FeaturePOPCNT]>;
 // FIXME: Disabling AVX/FMA4 for now since it's not ready.
+// Bulldozer
 def : Proc<"bdver1",          [FeatureSSE42, FeatureSSE4A, FeatureCMPXCHG16B,
                                FeatureAES, FeatureCLMUL,
                                FeatureXOP, FeatureLZCNT, FeaturePOPCNT]>;
+// Enhanced Bulldozer
 def : Proc<"bdver2",          [FeatureSSE42, FeatureSSE4A, FeatureCMPXCHG16B,
                                FeatureAES, FeatureCLMUL,
                                FeatureXOP, FeatureF16C, FeatureLZCNT,
