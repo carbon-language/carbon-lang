@@ -1854,8 +1854,22 @@ static bool HandleConstructorCall(const Expr *CallExpr, const LValue &This,
     return EvaluateConstantExpression(Result, Info, This, (*I)->getInit());
   }
 
-  // Reserve space for the struct members.
+  // For a trivial copy or move constructor, perform an APValue copy. This is
+  // essential for unions, where the operations performed by the constructor
+  // cannot be represented by ctor-initializers.
   const CXXRecordDecl *RD = Definition->getParent();
+  if (Definition->isDefaulted() &&
+      ((Definition->isCopyConstructor() && RD->hasTrivialCopyConstructor()) ||
+       (Definition->isMoveConstructor() && RD->hasTrivialMoveConstructor()))) {
+    LValue RHS;
+    RHS.setFrom(ArgValues[0]);
+    CCValue Value;
+    return HandleLValueToRValueConversion(Info, Args[0], Args[0]->getType(),
+                                          RHS, Value) &&
+           CheckConstantExpression(Info, CallExpr, Value, Result);
+  }
+
+  // Reserve space for the struct members.
   if (!RD->isUnion() && Result.isUninit())
     Result = APValue(APValue::UninitStruct(), RD->getNumBases(),
                      std::distance(RD->field_begin(), RD->field_end()));
@@ -3073,7 +3087,7 @@ bool RecordExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
   if (!CheckConstexprFunction(Info, E->getExprLoc(), FD, Definition))
     return false;
 
-  // FIXME: Elide the copy/move construction wherever we can.
+  // Avoid materializing a temporary for an elidable copy/move constructor.
   if (E->isElidable() && !ZeroInit)
     if (const MaterializeTemporaryExpr *ME
           = dyn_cast<MaterializeTemporaryExpr>(E->getArg(0)))
