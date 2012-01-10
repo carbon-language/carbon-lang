@@ -1319,12 +1319,20 @@ class X86TargetInfo : public TargetInfo {
     CK_Opteron,
     CK_OpteronSSE3,
     CK_AMDFAM10,
+    //@}
 
-    /// \name K10
-    /// K10 architecture processors.
+    /// \name Bobcat
+    /// Bobcat architecture processors.
+    //@{
+    CK_BTVER1,
+    //@}
+
+    /// \name Bulldozer
+    /// Bulldozer architecture processors.
     //@{
     CK_BDVER1,
     CK_BDVER2,
+    //@}
 
     /// This specification is deprecated and will be removed in the future.
     /// Users should prefer \see CK_K8.
@@ -1436,6 +1444,7 @@ public:
       .Case("opteron", CK_Opteron)
       .Case("opteron-sse3", CK_OpteronSSE3)
       .Case("amdfam10", CK_AMDFAM10)
+      .Case("btver1", CK_BTVER1)
       .Case("bdver1", CK_BDVER1)
       .Case("bdver2", CK_BDVER2)
       .Case("x86-64", CK_x86_64)
@@ -1500,6 +1509,7 @@ public:
     case CK_Opteron:
     case CK_OpteronSSE3:
     case CK_AMDFAM10:
+    case CK_BTVER1:
     case CK_BDVER1:
     case CK_BDVER2:
     case CK_x86_64:
@@ -1639,6 +1649,9 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabled(Features, "sse4a", true);
     setFeatureEnabled(Features, "3dnowa", true);
     break;
+  case CK_BTVER1:
+    setFeatureEnabled(Features, "ssse3", true);
+    setFeatureEnabled(Features, "sse4a", true);
   case CK_BDVER1:
   case CK_BDVER2:
     setFeatureEnabled(Features, "sse4", true);
@@ -1950,6 +1963,9 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     break;
   case CK_AMDFAM10:
     defineCPUMacros(Builder, "amdfam10");
+    break;
+  case CK_BTVER1:
+    defineCPUMacros(Builder, "btver1");
     break;
   case CK_BDVER1:
     defineCPUMacros(Builder, "bdver1");
