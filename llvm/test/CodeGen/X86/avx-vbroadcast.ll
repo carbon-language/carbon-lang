@@ -89,3 +89,13 @@ define <4 x i32> @H(<4 x i32> %a) {
   ret <4 x i32> %x
 }
 
+; CHECK: _I
+; CHECK-NOT: vbroadcastsd (%
+; CHECK: ret
+define <2 x double> @I(double* %ptr) nounwind uwtable readnone ssp {
+entry:
+  %q = load double* %ptr, align 4
+  %vecinit.i = insertelement <2 x double> undef, double %q, i32 0
+  %vecinit2.i = insertelement <2 x double> %vecinit.i, double %q, i32 1
+  ret <2 x double> %vecinit2.i
+}

@@ -4963,7 +4963,10 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
 /// a scalar load.
 /// The scalar load node is returned when a pattern is found,
 /// or SDValue() otherwise.
-static SDValue isVectorBroadcast(SDValue &Op, bool hasAVX2) {
+static SDValue isVectorBroadcast(SDValue &Op, const X86Subtarget *Subtarget) {
+  if (!Subtarget->hasAVX())
+    return SDValue();
+
   EVT VT = Op.getValueType();
   SDValue V = Op;
 
@@ -5022,18 +5025,6 @@ static SDValue isVectorBroadcast(SDValue &Op, bool hasAVX2) {
   bool Is128 = VT.getSizeInBits() == 128;
   unsigned ScalarSize = Ld.getValueType().getSizeInBits();
 
-  if (hasAVX2) {
-    // VBroadcast to YMM
-    if (Is256 && (ScalarSize == 8  || ScalarSize == 16 ||
-                  ScalarSize == 32 || ScalarSize == 64 ))
-      return Ld;
-
-    // VBroadcast to XMM
-    if (Is128 && (ScalarSize ==  8 || ScalarSize == 32 ||
-                  ScalarSize == 16 || ScalarSize == 64 ))
-      return Ld;
-  }
-
   // VBroadcast to YMM
   if (Is256 && (ScalarSize == 32 || ScalarSize == 64))
     return Ld;
@@ -5042,6 +5033,17 @@ static SDValue isVectorBroadcast(SDValue &Op, bool hasAVX2) {
   if (Is128 && (ScalarSize == 32))
     return Ld;
 
+  // The integer check is needed for the 64-bit into 128-bit so it doesn't match
+  // double since there is vbroadcastsd xmm
+  if (Subtarget->hasAVX2() && Ld.getValueType().isInteger()) {
+    // VBroadcast to YMM
+    if (Is256 && (ScalarSize == 8 || ScalarSize == 16))
+      return Ld;
+
+    // VBroadcast to XMM
+    if (Is128 && (ScalarSize ==  8 || ScalarSize == 16 || ScalarSize == 64))
+      return Ld;
+  }
 
   // Unsupported broadcast.
   return SDValue();
@@ -5077,9 +5079,9 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     return getOnesVector(Op.getValueType(), Subtarget->hasAVX2(), DAG, dl);
   }
 
-  SDValue LD = isVectorBroadcast(Op, Subtarget->hasAVX2());
-  if (Subtarget->hasAVX() && LD.getNode())
-      return DAG.getNode(X86ISD::VBROADCAST, dl, VT, LD);
+  SDValue LD = isVectorBroadcast(Op, Subtarget);
+  if (LD.getNode())
+    return DAG.getNode(X86ISD::VBROADCAST, dl, VT, LD);
 
   unsigned EVTBits = ExtVT.getSizeInBits();
 
@@ -6416,8 +6418,8 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
       return Op;
 
     // Use vbroadcast whenever the splat comes from a foldable load
-    SDValue LD = isVectorBroadcast(Op, Subtarget->hasAVX2());
-    if (Subtarget->hasAVX() && LD.getNode())
+    SDValue LD = isVectorBroadcast(Op, Subtarget);
+    if (LD.getNode())
       return DAG.getNode(X86ISD::VBROADCAST, dl, VT, LD);
 
     // Handle splats by matching through known shuffle masks

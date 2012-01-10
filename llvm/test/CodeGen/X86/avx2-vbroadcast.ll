@@ -140,3 +140,13 @@ entry:
   %q3 = insertelement <4 x i64> %q2, i64 %q, i32 3
   ret <4 x i64> %q3
 }
+
+; make sure that we still don't support broadcast double into 128-bit vector
+; this used to crash
+define <2 x double> @I(double* %ptr) nounwind uwtable readnone ssp {
+entry:
+  %q = load double* %ptr, align 4
+  %vecinit.i = insertelement <2 x double> undef, double %q, i32 0
+  %vecinit2.i = insertelement <2 x double> %vecinit.i, double %q, i32 1
+  ret <2 x double> %vecinit2.i
+}
