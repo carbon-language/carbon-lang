@@ -22,6 +22,7 @@
 #include "clang/AST/ASTVector.h"
 #include "clang/AST/TemplateBase.h"
 #include "clang/AST/UsuallyTinyPtrVector.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TypeTraits.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
@@ -1063,7 +1064,9 @@ public:
 
 class APFloatStorage : public APNumericStorage {
 public:
-  llvm::APFloat getValue() const { return llvm::APFloat(getIntValue()); }
+  llvm::APFloat getValue(bool IsIEEE) const {
+    return llvm::APFloat(getIntValue(), IsIEEE);
+  }
   void setValue(ASTContext &C, const llvm::APFloat &Val) {
     setIntValue(C, Val.bitcastToAPInt());
   }
@@ -1165,6 +1168,7 @@ public:
 
 class FloatingLiteral : public Expr {
   APFloatStorage Num;
+  bool IsIEEE : 1; // Distinguishes between PPC128 and IEEE128.
   bool IsExact : 1;
   SourceLocation Loc;
 
@@ -1172,20 +1176,25 @@ class FloatingLiteral : public Expr {
                   QualType Type, SourceLocation L)
     : Expr(FloatingLiteralClass, Type, VK_RValue, OK_Ordinary, false, false,
            false, false),
+      IsIEEE(&C.getTargetInfo().getLongDoubleFormat() ==
+             &llvm::APFloat::IEEEquad),
       IsExact(isexact), Loc(L) {
     setValue(C, V);
   }
 
   /// \brief Construct an empty floating-point literal.
-  explicit FloatingLiteral(EmptyShell Empty)
-    : Expr(FloatingLiteralClass, Empty), IsExact(false) { }
+  explicit FloatingLiteral(ASTContext &C, EmptyShell Empty)
+    : Expr(FloatingLiteralClass, Empty),
+      IsIEEE(&C.getTargetInfo().getLongDoubleFormat() ==
+             &llvm::APFloat::IEEEquad),
+      IsExact(false) { }
 
 public:
   static FloatingLiteral *Create(ASTContext &C, const llvm::APFloat &V,
                                  bool isexact, QualType Type, SourceLocation L);
   static FloatingLiteral *Create(ASTContext &C, EmptyShell Empty);
 
-  llvm::APFloat getValue() const { return Num.getValue(); }
+  llvm::APFloat getValue() const { return Num.getValue(IsIEEE); }
   void setValue(ASTContext &C, const llvm::APFloat &Val) {
     Num.setValue(C, Val);
   }

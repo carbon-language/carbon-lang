@@ -476,7 +476,7 @@ FloatingLiteral::Create(ASTContext &C, const llvm::APFloat &V,
 
 FloatingLiteral *
 FloatingLiteral::Create(ASTContext &C, EmptyShell Empty) {
-  return new (C) FloatingLiteral(Empty);
+  return new (C) FloatingLiteral(C, Empty);
 }
 
 /// getValueAsApproximateDouble - This returns the value as an inaccurate
