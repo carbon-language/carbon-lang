@@ -11,6 +11,7 @@
 #define liblldb_Host_h_
 #if defined(__cplusplus)
 
+#include <stdarg.h>
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/StringList.h"
