@@ -3,8 +3,8 @@
 // RUN: touch %t.s
 // RUN: %clang -### -c -g %t.s 2>&1 | FileCheck -check-prefix=S %s
 //
-// mingw has not supported integrated-as yet.
-// XFAIL: mingw32
+// cygming have not supported integrated-as yet.
+// XFAIL: cygwin,mingw32
 //
 // S: "-cc1as"
 // S: "-g"
