@@ -39,11 +39,11 @@ define i32 @t3(i16* %i.ptr, i32* %arr) {
 ; To make matters worse, because of the two-phase zext of %i and their reuse in
 ; the function, the DAG can get confusing trying to re-use both of them and
 ; prevent easy analysis of the mask in order to match this.
-; BROKEN: t3:
-; BROKEN-NOT: and
-; BROKEN: shrl
-; BROKEN: addl (%{{...}},%{{...}},4),
-; BROKEN: ret
+; CHECK: t3:
+; CHECK-NOT: and
+; CHECK: shrl
+; CHECK: addl (%{{...}},%{{...}},4),
+; CHECK: ret
 
 entry:
   %i = load i16* %i.ptr
@@ -58,11 +58,11 @@ entry:
 define i32 @t4(i16* %i.ptr, i32* %arr) {
 ; A version of @t3 that has more zero extends and more re-use of intermediate
 ; values. This exercise slightly different bits of canonicalization.
-; BROKEN: t4:
-; BROKEN-NOT: and
-; BROKEN: shrl
-; BROKEN: addl (%{{...}},%{{...}},4),
-; BROKEN: ret
+; CHECK: t4:
+; CHECK-NOT: and
+; CHECK: shrl
+; CHECK: addl (%{{...}},%{{...}},4),
+; CHECK: ret
 
 entry:
   %i = load i16* %i.ptr
