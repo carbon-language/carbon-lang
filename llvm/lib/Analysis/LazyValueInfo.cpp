@@ -29,7 +29,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
-#include <map>
 #include <stack>
 using namespace llvm;
 
@@ -360,7 +359,7 @@ namespace {
     /// ValueCacheEntryTy - This is all of the cached block information for
     /// exactly one Value*.  The entries are sorted by the BasicBlock* of the
     /// entries, allowing us to do a lookup with a binary search.
-    typedef std::map<AssertingVH<BasicBlock>, LVILatticeVal> ValueCacheEntryTy;
+    typedef DenseMap<AssertingVH<BasicBlock>, LVILatticeVal> ValueCacheEntryTy;
 
     /// ValueCache - This is all of the cached information for all values,
     /// mapped from Value* to key information.
