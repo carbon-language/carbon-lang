@@ -107,6 +107,15 @@ public:
   /// Perform register allocation.
   virtual bool runOnMachineFunction(MachineFunction &mf);
 
+  // Helper for spilling all live virtual registers currently unified under preg
+  // that interfere with the most recently queried lvr.  Return true if spilling
+  // was successful, and append any new spilled/split intervals to splitLVRs.
+  bool spillInterferences(LiveInterval &VirtReg, unsigned PhysReg,
+                          SmallVectorImpl<LiveInterval*> &SplitVRegs);
+
+  void spillReg(LiveInterval &VirtReg, unsigned PhysReg,
+                SmallVectorImpl<LiveInterval*> &SplitVRegs);
+
   static char ID;
 };
 
@@ -155,6 +164,59 @@ void RABasic::getAnalysisUsage(AnalysisUsage &AU) const {
 void RABasic::releaseMemory() {
   SpillerInstance.reset(0);
   RegAllocBase::releaseMemory();
+}
+
+// Helper for spillInterferences() that spills all interfering vregs currently
+// assigned to this physical register.
+void RABasic::spillReg(LiveInterval& VirtReg, unsigned PhysReg,
+                       SmallVectorImpl<LiveInterval*> &SplitVRegs) {
+  LiveIntervalUnion::Query &Q = query(VirtReg, PhysReg);
+  assert(Q.seenAllInterferences() && "need collectInterferences()");
+  const SmallVectorImpl<LiveInterval*> &PendingSpills = Q.interferingVRegs();
+
+  for (SmallVectorImpl<LiveInterval*>::const_iterator I = PendingSpills.begin(),
+         E = PendingSpills.end(); I != E; ++I) {
+    LiveInterval &SpilledVReg = **I;
+    DEBUG(dbgs() << "extracting from " <<
+          TRI->getName(PhysReg) << " " << SpilledVReg << '\n');
+
+    // Deallocate the interfering vreg by removing it from the union.
+    // A LiveInterval instance may not be in a union during modification!
+    unassign(SpilledVReg, PhysReg);
+
+    // Spill the extracted interval.
+    LiveRangeEdit LRE(SpilledVReg, SplitVRegs, 0, &PendingSpills);
+    spiller().spill(LRE);
+  }
+  // After extracting segments, the query's results are invalid. But keep the
+  // contents valid until we're done accessing pendingSpills.
+  Q.clear();
+}
+
+// Spill or split all live virtual registers currently unified under PhysReg
+// that interfere with VirtReg. The newly spilled or split live intervals are
+// returned by appending them to SplitVRegs.
+bool RABasic::spillInterferences(LiveInterval &VirtReg, unsigned PhysReg,
+                                 SmallVectorImpl<LiveInterval*> &SplitVRegs) {
+  // Record each interference and determine if all are spillable before mutating
+  // either the union or live intervals.
+  unsigned NumInterferences = 0;
+  // Collect interferences assigned to any alias of the physical register.
+  for (const unsigned *asI = TRI->getOverlaps(PhysReg); *asI; ++asI) {
+    LiveIntervalUnion::Query &QAlias = query(VirtReg, *asI);
+    NumInterferences += QAlias.collectInterferingVRegs();
+    if (QAlias.seenUnspillableVReg()) {
+      return false;
+    }
+  }
+  DEBUG(dbgs() << "spilling " << TRI->getName(PhysReg) <<
+        " interferences with " << VirtReg << "\n");
+  assert(NumInterferences > 0 && "expect interference");
+
+  // Spill each interfering vreg allocated to PhysReg or an alias.
+  for (const unsigned *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI)
+    spillReg(VirtReg, *AliasI, SplitVRegs);
+  return true;
 }
 
 // Driver for the register assignment and splitting heuristics.

@@ -151,12 +151,6 @@ protected:
   /// allocation is making progress.
   void unassign(LiveInterval &VirtReg, unsigned PhysReg);
 
-  // Helper for spilling all live virtual registers currently unified under preg
-  // that interfere with the most recently queried lvr.  Return true if spilling
-  // was successful, and append any new spilled/split intervals to splitLVRs.
-  bool spillInterferences(LiveInterval &VirtReg, unsigned PhysReg,
-                          SmallVectorImpl<LiveInterval*> &SplitVRegs);
-
   /// addMBBLiveIns - Add physreg liveins to basic blocks.
   void addMBBLiveIns(MachineFunction *);
 
@@ -174,9 +168,6 @@ public:
 
 private:
   void seedLiveRegs();
-
-  void spillReg(LiveInterval &VirtReg, unsigned PhysReg,
-                SmallVectorImpl<LiveInterval*> &SplitVRegs);
 };
 
 } // end namespace llvm
