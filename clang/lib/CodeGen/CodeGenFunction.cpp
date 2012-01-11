@@ -935,20 +935,6 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
     const Type *ty = type.getTypePtr();
     switch (ty->getTypeClass()) {
 
-    default:
-      // Only sugared types (different from typeof_expr) can reach this point.
-      assert(!type.isCanonical() && "unhandled canonical type!");
-      type = type.getSingleStepDesugaredType(getContext());
-      break;
-
-    case Type::TypeOfExpr: {
-      // This is the only sugared type requiring special treatment.
-      // Emit typeof expression and we are done.
-      Expr *E = cast<TypeOfExprType>(ty)->getUnderlyingExpr();
-      EmitIgnoredExpr(E);
-      return;
-    }
-
 #define TYPE(Class, Base)
 #define ABSTRACT_TYPE(Class, Base)
 #define NON_CANONICAL_TYPE(Class, Base)
@@ -964,6 +950,8 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
     case Type::ExtVector:
     case Type::Record:
     case Type::Enum:
+    case Type::Elaborated:
+    case Type::TemplateSpecialization:
     case Type::ObjCObject:
     case Type::ObjCInterface:
     case Type::ObjCObjectPointer:
@@ -1017,6 +1005,26 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
     case Type::FunctionNoProto:
       type = cast<FunctionType>(ty)->getResultType();
       break;
+
+    case Type::Paren:
+    case Type::TypeOf:
+    case Type::UnaryTransform:
+    case Type::Attributed:
+    case Type::SubstTemplateTypeParm:
+      // Keep walking after single level desugaring.
+      type = type.getSingleStepDesugaredType(getContext());
+      break;
+
+    case Type::Typedef:
+    case Type::Decltype:
+    case Type::Auto:
+      // Stop walking: nothing to do.
+      return;
+
+    case Type::TypeOfExpr:
+      // Stop walking: emit typeof expression.
+      EmitIgnoredExpr(cast<TypeOfExprType>(ty)->getUnderlyingExpr());
+      return;
 
     case Type::Atomic:
       type = cast<AtomicType>(ty)->getValueType();
