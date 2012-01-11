@@ -1916,8 +1916,18 @@ SymbolFileDWARF::ResolveType (DWARFCompileUnit* curr_cu, const DWARFDebugInfoEnt
             type = GetTypeForDIE (curr_cu, type_die).get();
 
         if (assert_not_being_parsed)
-            assert (type != DIE_IS_BEING_PARSED);
-        return type;
+        { 
+            if (type != DIE_IS_BEING_PARSED)
+                return type;
+            
+            GetObjectFile()->GetModule()->ReportError ("Parsing a die that is being parsed die: 0x%8.8x: %s %s",
+                                                                       type_die->GetOffset(), 
+                                                                       DW_TAG_value_to_name(type_die->Tag()), 
+                                                                       type_die->GetName(this, curr_cu));
+
+        }
+        else
+            return type;
     }
     return NULL;
 }
