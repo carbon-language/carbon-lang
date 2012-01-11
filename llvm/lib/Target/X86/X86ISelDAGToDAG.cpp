@@ -725,6 +725,69 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM) {
   return false;
 }
 
+// Transform "(X >> (8-C1)) & C2" to "(X >> 8) & 0xff)" if safe. This
+// allows us to convert the shift and and into an h-register extract and
+// a scaled index. Returns false if the simplification is performed.
+static bool FoldMaskAndShiftToExtract(SelectionDAG &DAG, SDValue N,
+                                      uint64_t Mask,
+                                      SDValue Shift, SDValue X,
+                                      X86ISelAddressMode &AM) {
+  if (Shift.getOpcode() != ISD::SRL ||
+      !isa<ConstantSDNode>(Shift.getOperand(1)) ||
+      !Shift.hasOneUse())
+    return true;
+
+  int ScaleLog = 8 - Shift.getConstantOperandVal(1);
+  if (ScaleLog <= 0 || ScaleLog >= 4 ||
+      Mask != (0xffu << ScaleLog))
+    return true;
+
+  EVT VT = N.getValueType();
+  DebugLoc DL = N.getDebugLoc();
+  SDValue Eight = DAG.getConstant(8, MVT::i8);
+  SDValue NewMask = DAG.getConstant(0xff, VT);
+  SDValue Srl = DAG.getNode(ISD::SRL, DL, VT, X, Eight);
+  SDValue And = DAG.getNode(ISD::AND, DL, VT, Srl, NewMask);
+  SDValue ShlCount = DAG.getConstant(ScaleLog, MVT::i8);
+  SDValue Shl = DAG.getNode(ISD::SHL, DL, VT, And, ShlCount);
+
+  // Insert the new nodes into the topological ordering.
+  if (Eight.getNode()->getNodeId() == -1 ||
+      Eight.getNode()->getNodeId() > X.getNode()->getNodeId()) {
+    DAG.RepositionNode(X.getNode(), Eight.getNode());
+    Eight.getNode()->setNodeId(X.getNode()->getNodeId());
+  }
+  if (NewMask.getNode()->getNodeId() == -1 ||
+      NewMask.getNode()->getNodeId() > X.getNode()->getNodeId()) {
+    DAG.RepositionNode(X.getNode(), NewMask.getNode());
+    NewMask.getNode()->setNodeId(X.getNode()->getNodeId());
+  }
+  if (Srl.getNode()->getNodeId() == -1 ||
+      Srl.getNode()->getNodeId() > Shift.getNode()->getNodeId()) {
+    DAG.RepositionNode(Shift.getNode(), Srl.getNode());
+    Srl.getNode()->setNodeId(Shift.getNode()->getNodeId());
+  }
+  if (And.getNode()->getNodeId() == -1 ||
+      And.getNode()->getNodeId() > N.getNode()->getNodeId()) {
+    DAG.RepositionNode(N.getNode(), And.getNode());
+    And.getNode()->setNodeId(N.getNode()->getNodeId());
+  }
+  if (ShlCount.getNode()->getNodeId() == -1 ||
+      ShlCount.getNode()->getNodeId() > X.getNode()->getNodeId()) {
+    DAG.RepositionNode(X.getNode(), ShlCount.getNode());
+    ShlCount.getNode()->setNodeId(N.getNode()->getNodeId());
+  }
+  if (Shl.getNode()->getNodeId() == -1 ||
+      Shl.getNode()->getNodeId() > N.getNode()->getNodeId()) {
+    DAG.RepositionNode(N.getNode(), Shl.getNode());
+    Shl.getNode()->setNodeId(N.getNode()->getNodeId());
+  }
+  DAG.ReplaceAllUsesWith(N, Shl);
+  AM.IndexReg = And;
+  AM.Scale = (1 << ScaleLog);
+  return false;
+}
+
 // Implement some heroics to detect shifts of masked values where the mask can
 // be replaced by extending the shift and undoing that in the addressing mode
 // scale. Patterns such as (shl (srl x, c1), c2) are canonicalized into (and
@@ -1133,63 +1196,12 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     ConstantSDNode *C1 = dyn_cast<ConstantSDNode>(Shift.getOperand(1));
     if (!C1 || !C2) break;
 
-    // Handle "(X >> (8-C1)) & C2" as "(X >> 8) & 0xff)" if safe. This
-    // allows us to convert the shift and and into an h-register extract and
-    // a scaled index.
-    if (Shift.getOpcode() == ISD::SRL && Shift.hasOneUse()) {
-      int ScaleLog = 8 - C1->getZExtValue();
-      if (ScaleLog > 0 && ScaleLog < 4 &&
-          C2->getZExtValue() == (UINT64_C(0xff) << ScaleLog)) {
-        SDValue Eight = CurDAG->getConstant(8, MVT::i8);
-        SDValue Mask = CurDAG->getConstant(0xff, N.getValueType());
-        SDValue Srl = CurDAG->getNode(ISD::SRL, dl, N.getValueType(),
-                                      X, Eight);
-        SDValue And = CurDAG->getNode(ISD::AND, dl, N.getValueType(),
-                                      Srl, Mask);
-        SDValue ShlCount = CurDAG->getConstant(ScaleLog, MVT::i8);
-        SDValue Shl = CurDAG->getNode(ISD::SHL, dl, N.getValueType(),
-                                      And, ShlCount);
+    // Try to fold the mask and shift into an extract and scale.
+    if (!FoldMaskAndShiftToExtract(*CurDAG, N, C2->getZExtValue(),
+                                   Shift, X, AM))
+      return false;
 
-        // Insert the new nodes into the topological ordering.
-        if (Eight.getNode()->getNodeId() == -1 ||
-            Eight.getNode()->getNodeId() > X.getNode()->getNodeId()) {
-          CurDAG->RepositionNode(X.getNode(), Eight.getNode());
-          Eight.getNode()->setNodeId(X.getNode()->getNodeId());
-        }
-        if (Mask.getNode()->getNodeId() == -1 ||
-            Mask.getNode()->getNodeId() > X.getNode()->getNodeId()) {
-          CurDAG->RepositionNode(X.getNode(), Mask.getNode());
-          Mask.getNode()->setNodeId(X.getNode()->getNodeId());
-        }
-        if (Srl.getNode()->getNodeId() == -1 ||
-            Srl.getNode()->getNodeId() > Shift.getNode()->getNodeId()) {
-          CurDAG->RepositionNode(Shift.getNode(), Srl.getNode());
-          Srl.getNode()->setNodeId(Shift.getNode()->getNodeId());
-        }
-        if (And.getNode()->getNodeId() == -1 ||
-            And.getNode()->getNodeId() > N.getNode()->getNodeId()) {
-          CurDAG->RepositionNode(N.getNode(), And.getNode());
-          And.getNode()->setNodeId(N.getNode()->getNodeId());
-        }
-        if (ShlCount.getNode()->getNodeId() == -1 ||
-            ShlCount.getNode()->getNodeId() > X.getNode()->getNodeId()) {
-          CurDAG->RepositionNode(X.getNode(), ShlCount.getNode());
-          ShlCount.getNode()->setNodeId(N.getNode()->getNodeId());
-        }
-        if (Shl.getNode()->getNodeId() == -1 ||
-            Shl.getNode()->getNodeId() > N.getNode()->getNodeId()) {
-          CurDAG->RepositionNode(N.getNode(), Shl.getNode());
-          Shl.getNode()->setNodeId(N.getNode()->getNodeId());
-        }
-        CurDAG->ReplaceAllUsesWith(N, Shl);
-        AM.IndexReg = And;
-        AM.Scale = (1 << ScaleLog);
-        return false;
-      }
-    }
-
-    // Try to fold the mask and shift into the scale, and return false if we
-    // succeed.
+    // Try to fold the mask and shift directly into the scale.
     if (!FoldMaskAndShiftToScale(*CurDAG, N, AM))
       return false;
 
