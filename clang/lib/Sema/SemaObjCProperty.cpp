@@ -642,9 +642,9 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     QualType PropertyIvarType = PropType.getNonReferenceType();
     
     if (getLangOptions().ObjCAutoRefCount &&
-        PropertyIvarType->isObjCRetainableType() &&
         (property->getPropertyAttributesAsWritten() &
-         ObjCPropertyDecl::OBJC_PR_readonly)) {
+         ObjCPropertyDecl::OBJC_PR_readonly) &&
+        PropertyIvarType->isObjCRetainableType()) {
       setImpliedPropertyAttributeForReadOnlyProperty(property, Ivar);    
     }
     
