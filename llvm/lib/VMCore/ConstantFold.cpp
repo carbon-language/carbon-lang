@@ -104,7 +104,8 @@ static Constant *FoldBitCast(Constant *V, Type *DestTy) {
   // the first element.  If so, return the appropriate GEP instruction.
   if (PointerType *PTy = dyn_cast<PointerType>(V->getType()))
     if (PointerType *DPTy = dyn_cast<PointerType>(DestTy))
-      if (PTy->getAddressSpace() == DPTy->getAddressSpace()) {
+      if (PTy->getAddressSpace() == DPTy->getAddressSpace()
+          && DPTy->getElementType()->isSized()) {
         SmallVector<Value*, 8> IdxList;
         Value *Zero =
           Constant::getNullValue(Type::getInt32Ty(DPTy->getContext()));
