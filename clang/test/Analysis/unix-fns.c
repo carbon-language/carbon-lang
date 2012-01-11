@@ -12,6 +12,8 @@ typedef __darwin_size_t size_t;
 void *calloc(size_t, size_t);
 void *malloc(size_t);
 void *realloc(void *, size_t);
+void *alloca(size_t);
+void *valloc(size_t);
 
 typedef void (^dispatch_block_t)(void);
 typedef long dispatch_once_t;
@@ -95,6 +97,42 @@ void test_realloc(char *ptr) {
 void test_realloc_nowarn(char *ptr, size_t size) {
   char *foo = realloc(ptr, size); // no-warning
   for (unsigned i = 0; i < 100; i++) {
+    foo[i] = 0;
+  }
+}
+void test_alloca() {
+  char *foo = alloca(0); // expected-warning{{Call to 'alloca' has an allocation size of 0 bytes}}
+  for(unsigned i = 0; i < 100; i++) {
+    foo[i] = 0; 
+  }
+}
+void test_alloca_nowarn(size_t sz) {
+  char *foo = alloca(sz); // no-warning
+  for(unsigned i = 0; i < 100; i++) {
+    foo[i] = 0;
+  }
+}
+void test_builtin_alloca() {
+  char *foo2 = __builtin_alloca(0); // expected-warning{{Call to 'alloca' has an allocation size of 0 bytes}}
+  for(unsigned i = 0; i < 100; i++) {
+    foo2[i] = 0; 
+  }
+}
+void test_builtin_alloca_nowarn(size_t sz) {
+  char *foo2 = __builtin_alloca(sz); // no-warning
+  for(unsigned i = 0; i < 100; i++) {
+    foo2[i] = 0;
+  }
+}
+void test_valloc() {
+  char *foo = valloc(0); // expected-warning{{Call to 'valloc' has an allocation size of 0 bytes}}
+  for(unsigned i = 0; i < 100; i++) {
+    foo[i] = 0; 
+  }
+}
+void test_valloc_nowarn(size_t sz) {
+  char *foo = valloc(sz); // no-warning
+  for(unsigned i = 0; i < 100; i++) {
     foo[i] = 0;
   }
 }

@@ -39,6 +39,8 @@ public:
   void CheckCallocZero(CheckerContext &C, const CallExpr *CE) const;
   void CheckMallocZero(CheckerContext &C, const CallExpr *CE) const;
   void CheckReallocZero(CheckerContext &C, const CallExpr *CE) const;
+  void CheckAllocaZero(CheckerContext &C, const CallExpr *CE) const;
+  void CheckVallocZero(CheckerContext &C, const CallExpr *CE) const;
 
   typedef void (UnixAPIChecker::*SubChecker)(CheckerContext &,
                                              const CallExpr *) const;
@@ -47,6 +49,11 @@ private:
                                 const ProgramState *falseState,
                                 const Expr *arg,
                                 const char *fn_name) const;
+  void BasicAllocationCheck(CheckerContext &C,
+                            const CallExpr *CE,
+                            const unsigned numArgs,
+                            const unsigned sizeArg,
+                            const char *fn) const;
 };
 } //end anonymous namespace
 
@@ -178,8 +185,10 @@ void UnixAPIChecker::CheckPthreadOnce(CheckerContext &C,
 }
 
 //===----------------------------------------------------------------------===//
-// "calloc",  "malloc" and "realloc" with allocation size 0
+// "calloc", "malloc", "realloc", "alloca" and "valloc" with allocation size 0
 //===----------------------------------------------------------------------===//
+// FIXME: Eventually these should be rolled into the MallocChecker, but right now
+// they're more basic and valuable for widespread use.
 
 // Returns true if we try to do a zero byte allocation, false otherwise.
 // Fills in trueState and falseState.
@@ -187,7 +196,9 @@ static bool IsZeroByteAllocation(const ProgramState *state,
                                 const SVal argVal,
                                 const ProgramState **trueState,
                                 const ProgramState **falseState) {
-  llvm::tie(*trueState, *falseState) = state->assume(cast<DefinedSVal>(argVal));
+  llvm::tie(*trueState, *falseState) =
+    state->assume(cast<DefinedSVal>(argVal));
+  
   return (*falseState && !*trueState);
 }
 
@@ -202,9 +213,8 @@ bool UnixAPIChecker::ReportZeroByteAllocation(CheckerContext &C,
   if (!N)
     return false;
 
-  // FIXME: Add reference to CERT advisory, and/or C99 standard in bug
-  // output.
-  LazyInitialize(BT_mallocZero, "Undefined allocation of 0 bytes");
+  LazyInitialize(BT_mallocZero,
+    "Undefined allocation of 0 bytes (CERT MEM04-C; CWE-131)");
 
   llvm::SmallString<256> S;
   llvm::raw_svector_ostream os(S);    
@@ -216,6 +226,37 @@ bool UnixAPIChecker::ReportZeroByteAllocation(CheckerContext &C,
   C.EmitReport(report);
 
   return true;
+}
+
+// Does a basic check for 0-sized allocations suitable for most of the below
+// functions (modulo "calloc")
+void UnixAPIChecker::BasicAllocationCheck(CheckerContext &C,
+                                          const CallExpr *CE,
+                                          const unsigned numArgs,
+                                          const unsigned sizeArg,
+                                          const char *fn) const {
+  // Sanity check for the correct number of arguments
+  if (CE->getNumArgs() != numArgs)
+    return;
+
+  // Check if the allocation size is 0.
+  const ProgramState *state = C.getState();
+  const ProgramState *trueState = NULL, *falseState = NULL;
+  const Expr *arg = CE->getArg(sizeArg);
+  SVal argVal = state->getSVal(arg, C.getLocationContext());
+
+  if (argVal.isUnknownOrUndef())
+    return;
+
+  // Is the value perfectly constrained to zero?
+  if (IsZeroByteAllocation(state, argVal, &trueState, &falseState)) {
+    (void) ReportZeroByteAllocation(C, falseState, arg, fn); 
+    return;
+  }
+  // Assume the the value is non-zero going forward.
+  assert(trueState);
+  if (trueState != state)
+    C.addTransition(trueState);                           
 }
 
 void UnixAPIChecker::CheckCallocZero(CheckerContext &C,
@@ -254,63 +295,33 @@ void UnixAPIChecker::CheckCallocZero(CheckerContext &C,
     C.addTransition(trueState);
 }
 
-// FIXME: Eventually this should be rolled into the MallocChecker, but this
-// check is more basic and is valuable for widespread use.
 void UnixAPIChecker::CheckMallocZero(CheckerContext &C,
                                      const CallExpr *CE) const {
-  // Sanity check that malloc takes one argument.
-  if (CE->getNumArgs() != 1)
-    return;
-
-  // Check if the allocation size is 0.
-  const ProgramState *state = C.getState();
-  const ProgramState *trueState = NULL, *falseState = NULL;
-  const Expr *arg = CE->getArg(0);
-  SVal argVal = state->getSVal(arg, C.getLocationContext());
-
-  if (argVal.isUnknownOrUndef())
-    return;
-
-  // Is the value perfectly constrained to zero?
-  if (IsZeroByteAllocation(state, argVal, &trueState, &falseState)) {
-    (void) ReportZeroByteAllocation(C, falseState, arg, "malloc"); 
-    return;
-  }
-  // Assume the the value is non-zero going forward.
-  assert(trueState);
-  if (trueState != state)
-    C.addTransition(trueState);
+  BasicAllocationCheck(C, CE, 1, 0, "malloc");
 }
 
 void UnixAPIChecker::CheckReallocZero(CheckerContext &C,
                                       const CallExpr *CE) const {
-  if (CE->getNumArgs() != 2)
-    return;
-
-  const ProgramState *state = C.getState();
-  const ProgramState *trueState = NULL, *falseState = NULL;
-  const Expr *arg = CE->getArg(1);
-  SVal argVal = state->getSVal(arg, C.getLocationContext());
-
-  if (argVal.isUnknownOrUndef())
-    return;
-
-  if (IsZeroByteAllocation(state, argVal, &trueState, &falseState)) {
-    ReportZeroByteAllocation(C, falseState, arg, "realloc");
-    return;
-  }
-
-  // Assume the the value is non-zero going forward.
-  assert(trueState);
-  if (trueState != state)
-    C.addTransition(trueState);
+  BasicAllocationCheck(C, CE, 2, 1, "realloc");
 }
-  
+
+void UnixAPIChecker::CheckAllocaZero(CheckerContext &C,
+                                     const CallExpr *CE) const {
+  BasicAllocationCheck(C, CE, 1, 0, "alloca");
+}
+
+void UnixAPIChecker::CheckVallocZero(CheckerContext &C,
+                                     const CallExpr *CE) const {
+  BasicAllocationCheck(C, CE, 1, 0, "valloc");
+}
+
+
 //===----------------------------------------------------------------------===//
 // Central dispatch function.
 //===----------------------------------------------------------------------===//
 
-void UnixAPIChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
+void UnixAPIChecker::checkPreStmt(const CallExpr *CE,
+                                  CheckerContext &C) const {
   StringRef FName = C.getCalleeName(CE);
   if (FName.empty())
     return;
@@ -322,6 +333,8 @@ void UnixAPIChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
       .Case("calloc", &UnixAPIChecker::CheckCallocZero)
       .Case("malloc", &UnixAPIChecker::CheckMallocZero)
       .Case("realloc", &UnixAPIChecker::CheckReallocZero)
+      .Cases("alloca", "__builtin_alloca", &UnixAPIChecker::CheckAllocaZero)
+      .Case("valloc", &UnixAPIChecker::CheckVallocZero)
       .Default(NULL);
 
   if (SC)
