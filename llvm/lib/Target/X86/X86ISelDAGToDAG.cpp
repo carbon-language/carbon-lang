@@ -847,6 +847,10 @@ static bool FoldMaskAndShiftToScale(SelectionDAG &DAG, SDValue N,
                                     uint64_t Mask,
                                     SDValue Shift, SDValue X,
                                     X86ISelAddressMode &AM) {
+  // FIXME!! Hack to disable this and see if it is responsible for a miscompile
+  // on llvm-gcc's selfhost.
+  return true;
+
   if (Shift.getOpcode() != ISD::SRL || !Shift.hasOneUse() ||
       !isa<ConstantSDNode>(Shift.getOperand(1)))
     return true;
