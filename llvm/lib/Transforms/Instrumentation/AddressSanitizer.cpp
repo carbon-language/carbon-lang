@@ -617,6 +617,7 @@ bool AddressSanitizer::handleFunction(Module &M, Function &F) {
     TempsToInstrument.clear();
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end();
          BI != BE; ++BI) {
+      if (LooksLikeCodeInBug11395(BI)) return false;
       if ((isa<LoadInst>(BI) && ClInstrumentReads) ||
           (isa<StoreInst>(BI) && ClInstrumentWrites)) {
         Value *Addr = getLDSTOperand(BI);
@@ -792,7 +793,6 @@ bool AddressSanitizer::poisonStackInFunction(Module &M, Function &F) {
     BasicBlock &BB = *FI;
     for (BasicBlock::iterator BI = BB.begin(), BE = BB.end();
          BI != BE; ++BI) {
-      if (LooksLikeCodeInBug11395(BI)) return false;
       if (isa<ReturnInst>(BI)) {
           RetVec.push_back(BI);
           continue;
