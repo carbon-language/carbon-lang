@@ -5161,11 +5161,9 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       if (ExtVT == MVT::i32 || ExtVT == MVT::f32 || ExtVT == MVT::f64 ||
           (ExtVT == MVT::i64 && Subtarget->is64Bit())) {
         if (VT.getSizeInBits() == 256) {
-          EVT VT128 = EVT::getVectorVT(*DAG.getContext(), ExtVT, NumElems / 2);
-          Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT128, Item);
           SDValue ZeroVec = getZeroVector(VT, true, DAG, dl);
-          return Insert128BitVector(ZeroVec, Item, DAG.getConstant(0, MVT::i32),
-                              DAG, dl);
+          return DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, ZeroVec,
+                             Item, DAG.getIntPtrConstant(0));
         }
         assert(VT.getSizeInBits() == 128 && "Expected an SSE value type!");
         Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Item);

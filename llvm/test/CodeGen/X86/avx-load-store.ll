@@ -25,20 +25,26 @@ declare void @dummy(<4 x double>, <8 x float>, <4 x i64>)
 
 ;;
 ;; The two tests below check that we must fold load + scalar_to_vector
-;; + ins_subvec+ zext into only a single vmovss or vmovsd
+;; + ins_subvec+ zext into only a single vmovss or vmovsd or vinsertps from memory
 
-; CHECK: vmovss (%
+; CHECK: mov00
 define <8 x float> @mov00(<8 x float> %v, float * %ptr) nounwind {
   %val = load float* %ptr
+; CHECK: vinsertps
+; CHECK: vinsertf128
   %i0 = insertelement <8 x float> zeroinitializer, float %val, i32 0
   ret <8 x float> %i0
+; CHECK: ret
 }
 
-; CHECK: vmovsd (%
+; CHECK: mov01
 define <4 x double> @mov01(<4 x double> %v, double * %ptr) nounwind {
   %val = load double* %ptr
+; CHECK: vmovlpd
+; CHECK: vinsertf128
   %i0 = insertelement <4 x double> zeroinitializer, double %val, i32 0
   ret <4 x double> %i0
+; CHECK: ret
 }
 
 ; CHECK: vmovaps  %ymm
