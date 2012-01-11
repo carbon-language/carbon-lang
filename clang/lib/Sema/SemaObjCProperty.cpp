@@ -518,6 +518,33 @@ static void checkARCPropertyImpl(Sema &S, SourceLocation propertyImplLoc,
   S.Diag(property->getLocation(), diag::note_property_declare);
 }
 
+/// setImpliedPropertyAttributeForReadOnlyProperty -
+/// This routine evaludates life-time attributes for a 'readonly'
+/// property with no known lifetime of its own, using backing
+/// 'ivar's attribute, if any. If no backing 'ivar', property's
+/// life-time is assumed 'strong'.
+static void setImpliedPropertyAttributeForReadOnlyProperty(
+              ObjCPropertyDecl *property, ObjCIvarDecl *ivar) {
+  Qualifiers::ObjCLifetime propertyLifetime = 
+    getImpliedARCOwnership(property->getPropertyAttributes(),
+                           property->getType());
+  if (propertyLifetime != Qualifiers::OCL_None)
+    return;
+  
+  if (!ivar) {
+    // if no backing ivar, make property 'strong'.
+    property->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_strong);
+    return;
+  }
+  // property assumes owenership of backing ivar.
+  QualType ivarType = ivar->getType();
+  Qualifiers::ObjCLifetime ivarLifetime = ivarType.getObjCLifetime();
+  if (ivarLifetime == Qualifiers::OCL_Strong)
+    property->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_strong);
+  else if (ivarLifetime == Qualifiers::OCL_Weak)
+    property->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_weak);
+  return;
+}
 
 /// ActOnPropertyImplDecl - This routine performs semantic checks and
 /// builds the AST node for a property implementation declaration; declared
@@ -608,11 +635,21 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     // @synthesize
     if (!PropertyIvar)
       PropertyIvar = PropertyId;
+    // Check that this is a previously declared 'ivar' in 'IDecl' interface
+    ObjCInterfaceDecl *ClassDeclared;
+    Ivar = IDecl->lookupInstanceVariable(PropertyIvar, ClassDeclared);
+    QualType PropType = property->getType();
+    QualType PropertyIvarType = PropType.getNonReferenceType();
+    
+    if (getLangOptions().ObjCAutoRefCount &&
+        PropertyIvarType->isObjCRetainableType() &&
+        (property->getPropertyAttributesAsWritten() &
+         ObjCPropertyDecl::OBJC_PR_readonly)) {
+      setImpliedPropertyAttributeForReadOnlyProperty(property, Ivar);    
+    }
+    
     ObjCPropertyDecl::PropertyAttributeKind kind 
       = property->getPropertyAttributes();
-    QualType PropType = property->getType();
-
-    QualType PropertyIvarType = PropType.getNonReferenceType();
 
     // Add GC __weak to the ivar type if the property is weak.
     if ((kind & ObjCPropertyDecl::OBJC_PR_weak) && 
@@ -627,9 +664,6 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       }
     }
 
-    // Check that this is a previously declared 'ivar' in 'IDecl' interface
-    ObjCInterfaceDecl *ClassDeclared;
-    Ivar = IDecl->lookupInstanceVariable(PropertyIvar, ClassDeclared);
     if (!Ivar) {
       // In ARC, give the ivar a lifetime qualifier based on the
       // property attributes.
@@ -1681,6 +1715,21 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
   ObjCPropertyDecl *PropertyDecl = cast<ObjCPropertyDecl>(PDecl);
   QualType PropertyTy = PropertyDecl->getType(); 
 
+  if (getLangOptions().ObjCAutoRefCount &&
+      (Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
+      PropertyTy->isObjCRetainableType()) {
+    // 'readonly' property with no obvious lifetime.
+    // its life time will be determined by its backing ivar.
+    unsigned rel = (ObjCDeclSpec::DQ_PR_unsafe_unretained |
+                    ObjCDeclSpec::DQ_PR_copy |
+                    ObjCDeclSpec::DQ_PR_retain |
+                    ObjCDeclSpec::DQ_PR_strong |
+                    ObjCDeclSpec::DQ_PR_weak |
+                    ObjCDeclSpec::DQ_PR_assign);
+    if ((Attributes & rel) == 0)
+      return;
+  }
+  
   // readonly and readwrite/assign/retain/copy conflict.
   if ((Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
       (Attributes & (ObjCDeclSpec::DQ_PR_readwrite |
