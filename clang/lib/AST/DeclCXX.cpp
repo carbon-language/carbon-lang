@@ -243,7 +243,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
         data().HasTrivialMoveAssignment = false;
 
       // C++11 [class.ctor]p6:
-      //   If that user-written default cosntructor would satisfy the
+      //   If that user-written default constructor would satisfy the
       //   requirements of a constexpr constructor, the implicitly-defined
       //   default constructor is constexpr.
       if (!BaseClassDecl->hasConstexprDefaultConstructor())
@@ -264,7 +264,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
         // would be ill-formed, the implicit move constructor generated for the
         // derived class calls the base class' copy constructor.
         data().DefaultedMoveConstructorIsConstexpr &=
-          !BaseClassDecl->hasConstexprMoveConstructor();
+          BaseClassDecl->hasConstexprMoveConstructor();
       else if (!BaseClassDecl->hasConstexprCopyConstructor())
         data().DefaultedMoveConstructorIsConstexpr = false;
     }

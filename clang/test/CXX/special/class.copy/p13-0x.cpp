@@ -53,3 +53,8 @@ constexpr NonConstexprDefault ncd = NonConstexprDefault(NonConstexprDefault(1));
 constexpr Constexpr4 c4a = { ncd };
 constexpr Constexpr4 c4b = Constexpr4(c4a);
 constexpr Constexpr4 c4c = Constexpr4(static_cast<Constexpr4&&>(const_cast<Constexpr4&>(c4b)));
+
+struct Constexpr5Base {};
+struct Constexpr5 : Constexpr5Base { constexpr Constexpr5() {} };
+constexpr Constexpr5 ce5move = Constexpr5();
+constexpr Constexpr5 ce5copy = ce5move;
