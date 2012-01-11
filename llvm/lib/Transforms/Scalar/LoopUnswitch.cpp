@@ -56,12 +56,13 @@ STATISTIC(NumSwitches, "Number of switches unswitched");
 STATISTIC(NumSelects , "Number of selects unswitched");
 STATISTIC(NumTrivial , "Number of unswitches that are trivial");
 STATISTIC(NumSimplify, "Number of simplifications of unswitched code");
+STATISTIC(TotalInsts,  "Total number of instructions analyzed");
 
 // The specific value of 50 here was chosen based only on intuition and a
 // few specific examples.
 static cl::opt<unsigned>
 Threshold("loop-unswitch-threshold", cl::desc("Max loop size to unswitch"),
-          cl::init(50), cl::Hidden);
+          cl::init(100), cl::Hidden);
   
 namespace {
   class LoopUnswitch : public LoopPass {
@@ -71,6 +72,18 @@ namespace {
     // LoopProcessWorklist - Used to check if second loop needs processing
     // after RewriteLoopBodyWithConditionConstant rewrites first loop.
     std::vector<Loop*> LoopProcessWorklist;
+    
+    struct LoopProperties {
+      unsigned CanBeUnswitchedCount;
+      unsigned SizeEstimation;
+    };
+    
+    typedef DenseMap<const Loop*, LoopProperties> LoopPropsMap;
+    typedef LoopPropsMap::iterator LoopPropsMapIt;
+    LoopPropsMap LoopsProperties;
+    
+    // Max size of code we can produce on remained iterations.
+    unsigned MaxSize;
     
     // FIXME: Consider custom class for this.
     std::map<const SwitchInst*, SmallPtrSet<const Value *,8> > UnswitchedVals;
@@ -93,7 +106,7 @@ namespace {
   public:
     static char ID; // Pass ID, replacement for typeid
     explicit LoopUnswitch(bool Os = false) : 
-      LoopPass(ID), OptimizeForSize(Os), redoLoop(false), 
+      LoopPass(ID), MaxSize(Threshold), OptimizeForSize(Os), redoLoop(false), 
       currentLoop(NULL), DT(NULL), loopHeader(NULL),
       loopPreheader(NULL) {
         initializeLoopUnswitchPass(*PassRegistry::getPassRegistry());
@@ -119,6 +132,15 @@ namespace {
   private:
 
     virtual void releaseMemory() {
+      
+      LoopPropsMapIt LIt = LoopsProperties.find(currentLoop);
+
+      if (LIt != LoopsProperties.end()) {
+        LoopProperties& Props = LIt->second;
+        MaxSize += Props.CanBeUnswitchedCount * Props.SizeEstimation;
+        LoopsProperties.erase(LIt);
+      }
+      
       // We need to forget about all switches in the current loop.
       // FIXME: Do it better than enumerating all blocks of code
       // and see if it is a switch instruction.
@@ -143,7 +165,10 @@ namespace {
     /// already unswitched and has redundant successors.
     /// Note, that new loop data is stored inside the VMap.
     void CloneUnswitchedVals(const ValueToValueMapTy& VMap,
-                                    const BasicBlock* SrcBB);     
+                                    const BasicBlock* SrcBB);
+    
+    bool CountLoop(const Loop* L);
+    void CloneLoopProperties(const Loop* NewLoop, const Loop* OldLoop);
 
     void initLoopData() {
       loopHeader = currentLoop->getHeader();
@@ -193,6 +218,10 @@ Pass *llvm::createLoopUnswitchPass(bool Os) {
 /// invariant in the loop, or has an invariant piece, return the invariant.
 /// Otherwise, return null.
 static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
+  
+  // We started analyze new instruction, increment scanned instructions counter.
+  ++TotalInsts;
+  
   // We can never unswitch on vector conditions.
   if (Cond->getType()->isVectorTy())
     return 0;
@@ -246,7 +275,19 @@ bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
 /// and profitable.
 bool LoopUnswitch::processCurrentLoop() {
   bool Changed = false;
-  LLVMContext &Context = currentLoop->getHeader()->getContext();
+
+  initLoopData();
+  
+  // If LoopSimplify was unable to form a preheader, don't do any unswitching.
+  if (!loopPreheader)
+    return false;
+  
+  LLVMContext &Context = loopHeader->getContext();
+  
+  // Probably we reach the quota of branches for this loop. If so
+  // stop unswitching.
+  if (!CountLoop(currentLoop))
+    return false;
 
   // Loop over all of the basic blocks in the loop.  If we find an interior
   // block that is branching on a loop-invariant condition, we can unswitch this
@@ -330,6 +371,58 @@ void LoopUnswitch::CloneUnswitchedVals(const ValueToValueMapTy& VMap,
     assert(I && "All instructions that are in SrcBB must be in VMap.");
     UnswitchedVals[cast<SwitchInst>(I)] = UnswitchedVals[SI];
   }
+}
+
+bool LoopUnswitch::CountLoop(const Loop* L) {
+  std::pair<LoopPropsMapIt, bool> InsertRes =
+      LoopsProperties.insert(std::make_pair(L, LoopProperties()));
+  
+  LoopProperties& Props = InsertRes.first->second;
+   
+  if (InsertRes.second) {
+    // New loop.
+
+    // Limit the number of instructions to avoid causing significant code
+    // expansion, and the number of basic blocks, to avoid loops with
+    // large numbers of branches which cause loop unswitching to go crazy.
+    // This is a very ad-hoc heuristic.
+    
+    // FIXME: This is overly conservative because it does not take into
+    // consideration code simplification opportunities and code that can
+    // be shared by the resultant unswitched loops.
+    CodeMetrics Metrics;
+    for (Loop::block_iterator I = L->block_begin(), 
+           E = L->block_end();
+         I != E; ++I)
+      Metrics.analyzeBasicBlock(*I);    
+
+    Props.SizeEstimation = std::min(Metrics.NumInsts, Metrics.NumBlocks * 5);
+    Props.CanBeUnswitchedCount = MaxSize / (Props.SizeEstimation);
+    MaxSize -= Props.SizeEstimation * Props.CanBeUnswitchedCount;
+  }
+   
+  if (!Props.CanBeUnswitchedCount) {
+    DEBUG(dbgs() << "NOT unswitching loop %"
+          << L->getHeader()->getName() << ", cost too high: "
+          << L->getBlocks().size() << "\n");
+    
+    return false;
+  }
+  return true;
+}
+
+void LoopUnswitch::CloneLoopProperties(
+    const Loop* NewLoop, const Loop* OldLoop) {
+  
+  LoopProperties& OldLoopProps = LoopsProperties[OldLoop];
+  LoopProperties& NewLoopProps = LoopsProperties[NewLoop];
+  
+  --OldLoopProps.CanBeUnswitchedCount;
+  unsigned Quota = OldLoopProps.CanBeUnswitchedCount;
+  NewLoopProps.CanBeUnswitchedCount = Quota / 2;
+  OldLoopProps.CanBeUnswitchedCount = Quota - Quota / 2;
+  
+  NewLoopProps.SizeEstimation = OldLoopProps.SizeEstimation;  
 }
 
 /// isTrivialLoopExitBlock - Check to see if all paths from BB exit the
@@ -468,12 +561,6 @@ bool LoopUnswitch::IsTrivialUnswitchCondition(Value *Cond, Constant **Val,
 /// unswitch the loop, reprocess the pieces, then return true.
 bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val) {
 
-  initLoopData();
-
-  // If LoopSimplify was unable to form a preheader, don't do any unswitching.
-  if (!loopPreheader)
-    return false;
-
   Function *F = loopHeader->getParent();
 
   Constant *CondVal = 0;
@@ -490,34 +577,6 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val) {
   // Do not do non-trivial unswitch while optimizing for size.
   if (OptimizeForSize || F->hasFnAttr(Attribute::OptimizeForSize))
     return false;
-
-  // FIXME: This is overly conservative because it does not take into
-  // consideration code simplification opportunities and code that can
-  // be shared by the resultant unswitched loops.
-  CodeMetrics Metrics;
-  for (Loop::block_iterator I = currentLoop->block_begin(), 
-         E = currentLoop->block_end();
-       I != E; ++I)
-    Metrics.analyzeBasicBlock(*I);
-
-  // Limit the number of instructions to avoid causing significant code
-  // expansion, and the number of basic blocks, to avoid loops with
-  // large numbers of branches which cause loop unswitching to go crazy.
-  // This is a very ad-hoc heuristic.
-  
-  unsigned NumUnswitched =
-      (NumSwitches + NumBranches) + 1 /*take in account current iteration*/;
-  
-  unsigned NumInsts = Metrics.NumInsts * NumUnswitched;
-  unsigned NumBlocks = Metrics.NumBlocks * NumUnswitched;
-  
-  if (NumInsts > Threshold || NumBlocks * 5 > Threshold ||
-      Metrics.containsIndirectBr || Metrics.isRecursive) {
-    DEBUG(dbgs() << "NOT unswitching loop %"
-          << currentLoop->getHeader()->getName() << ", cost too high: "
-          << currentLoop->getBlocks().size() << "\n");
-    return false;
-  }
 
   UnswitchNontrivialCondition(LoopCond, Val, currentLoop);
   return true;
@@ -701,6 +760,7 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
 
   // Now we create the new Loop object for the versioned loop.
   Loop *NewLoop = CloneLoop(L, L->getParentLoop(), VMap, LI, LPM);
+  CloneLoopProperties(NewLoop, L);
   Loop *ParentLoop = L->getParentLoop();
   if (ParentLoop) {
     // Make sure to add the cloned preheader and exit blocks to the parent loop
