@@ -36,7 +36,8 @@ MCCodeEmitter *createMipsMCCodeEmitter(const MCInstrInfo &MCII,
                                        const MCSubtargetInfo &STI,
                                        MCContext &Ctx);
 
-MCAsmBackend *createMipsAsmBackend(const Target &T, StringRef TT);
+MCAsmBackend *createMipsBEAsmBackend(const Target &T, StringRef TT);
+MCAsmBackend *createMipsLEAsmBackend(const Target &T, StringRef TT);
 
 MCObjectWriter *createMipsELFObjectWriter(raw_ostream &OS,
                                           bool IsLittleEndian,

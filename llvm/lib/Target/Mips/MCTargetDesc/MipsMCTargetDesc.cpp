@@ -136,10 +136,14 @@ extern "C" void LLVMInitializeMipsTargetMC() {
   TargetRegistry::RegisterMCObjectStreamer(TheMips64elTarget, createMCStreamer);
 
   // Register the asm backend.
-  TargetRegistry::RegisterMCAsmBackend(TheMipsTarget, createMipsAsmBackend);
-  TargetRegistry::RegisterMCAsmBackend(TheMipselTarget, createMipsAsmBackend);
-  TargetRegistry::RegisterMCAsmBackend(TheMips64Target, createMipsAsmBackend);
-  TargetRegistry::RegisterMCAsmBackend(TheMips64elTarget, createMipsAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheMipsTarget,
+                                       createMipsBEAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheMipselTarget,
+                                       createMipsLEAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheMips64Target,
+                                       createMipsBEAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheMips64elTarget,
+                                       createMipsLEAsmBackend);
 
   TargetRegistry::RegisterMCCodeEmitter(TheMipsTarget, createMipsMCCodeEmitter);
   TargetRegistry::RegisterMCCodeEmitter(TheMipselTarget,
