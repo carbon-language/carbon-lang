@@ -25,6 +25,7 @@ false:
 ; X32:      test_basic:
 
 ; X32:      cmpl %gs:48, %esp
+; X32-NEXT: ja      .LBB0_2
 
 ; X32:      pushl $4
 ; X32-NEXT: pushl $12
@@ -45,6 +46,7 @@ false:
 ; X64:      test_basic:
 
 ; X64:      cmpq %fs:112, %rsp
+; X64-NEXT: ja      .LBB0_2
 
 ; X64:      movabsq $24, %r10
 ; X64-NEXT: movabsq $0, %r11
@@ -69,6 +71,7 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) {
        ret i32 %result
 
 ; X32:      cmpl %gs:48, %esp
+; X32-NEXT: ja      .LBB1_2
 
 ; X32:      pushl $4
 ; X32-NEXT: pushl $0
@@ -76,6 +79,7 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) {
 ; X32-NEXT: ret
 
 ; X64:      cmpq %fs:112, %rsp
+; X64-NEXT: ja      .LBB1_2
 
 ; X64:      movq %r10, %rax
 ; X64-NEXT: movabsq $0, %r10
@@ -93,6 +97,7 @@ define void @test_large() {
 
 ; X32:      leal -40012(%esp), %ecx
 ; X32-NEXT: cmpl %gs:48, %ecx
+; X32-NEXT: ja      .LBB2_2
 
 ; X32:      pushl $0
 ; X32-NEXT: pushl $40012
@@ -101,6 +106,7 @@ define void @test_large() {
 
 ; X64:      leaq -40008(%rsp), %r11
 ; X64-NEXT: cmpq %fs:112, %r11
+; X64-NEXT: ja      .LBB2_2
 
 ; X64:      movabsq $40008, %r10
 ; X64-NEXT: movabsq $0, %r11
