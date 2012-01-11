@@ -62,7 +62,6 @@ class RegAllocBase {
   // registers may have changed.
   unsigned UserTag;
 
-protected:
   // Array of LiveIntervalUnions indexed by physical register.
   class LiveUnionArray {
     unsigned NumRegs;
@@ -83,16 +82,18 @@ protected:
     }
   };
 
-  const TargetRegisterInfo *TRI;
-  MachineRegisterInfo *MRI;
-  VirtRegMap *VRM;
-  LiveIntervals *LIS;
-  RegisterClassInfo RegClassInfo;
   LiveUnionArray PhysReg2LiveUnion;
 
   // Current queries, one per physreg. They must be reinitialized each time we
   // query on a new live virtual register.
   OwningArrayPtr<LiveIntervalUnion::Query> Queries;
+
+protected:
+  const TargetRegisterInfo *TRI;
+  MachineRegisterInfo *MRI;
+  VirtRegMap *VRM;
+  LiveIntervals *LIS;
+  RegisterClassInfo RegClassInfo;
 
   RegAllocBase(): UserTag(0), TRI(0), MRI(0), VRM(0), LIS(0) {}
 
@@ -108,6 +109,11 @@ protected:
   LiveIntervalUnion::Query &query(LiveInterval &VirtReg, unsigned PhysReg) {
     Queries[PhysReg].init(UserTag, &VirtReg, &PhysReg2LiveUnion[PhysReg]);
     return Queries[PhysReg];
+  }
+
+  // Get direct access to the underlying LiveIntervalUnion for PhysReg.
+  LiveIntervalUnion &getLiveUnion(unsigned PhysReg) {
+    return PhysReg2LiveUnion[PhysReg];
   }
 
   // Invalidate all cached information about virtual registers - live ranges may

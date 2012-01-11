@@ -1288,7 +1288,7 @@ void RAGreedy::calcGapWeights(unsigned PhysReg,
     // surrounding the instruction. The exception is interference before
     // StartIdx and after StopIdx.
     //
-    LiveIntervalUnion::SegmentIter IntI = PhysReg2LiveUnion[*AI].find(StartIdx);
+    LiveIntervalUnion::SegmentIter IntI = getLiveUnion(*AI).find(StartIdx);
     for (unsigned Gap = 0; IntI.valid() && IntI.start() < StopIdx; ++IntI) {
       // Skip the gaps before IntI.
       while (Uses[Gap+1].getBoundaryIndex() < IntI.start())
@@ -1624,7 +1624,7 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   ExtraRegInfo.clear();
   ExtraRegInfo.resize(MRI->getNumVirtRegs());
   NextCascade = 1;
-  IntfCache.init(MF, &PhysReg2LiveUnion[0], Indexes, TRI);
+  IntfCache.init(MF, &getLiveUnion(0), Indexes, TRI);
   GlobalCand.resize(32);  // This will grow as needed.
 
   allocatePhysRegs();

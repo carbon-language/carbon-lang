@@ -250,9 +250,9 @@ unsigned RABasic::selectOrSplit(LiveInterval &VirtReg,
       // Found an available register.
       return PhysReg;
     }
-    Queries[interfReg].collectInterferingVRegs(1);
-    LiveInterval *interferingVirtReg =
-      Queries[interfReg].interferingVRegs().front();
+    LiveIntervalUnion::Query &IntfQ = query(VirtReg, interfReg);
+    IntfQ.collectInterferingVRegs(1);
+    LiveInterval *interferingVirtReg = IntfQ.interferingVRegs().front();
 
     // The current VirtReg must either be spillable, or one of its interferences
     // must have less spill weight.
