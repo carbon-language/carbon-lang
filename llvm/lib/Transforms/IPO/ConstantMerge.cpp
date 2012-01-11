@@ -140,18 +140,21 @@ bool ConstantMerge::runOnModule(Module &M) {
           UsedGlobals.count(GV))
         continue;
 
+      // Ignore any constants which may be removed by the linker.
+      if (GV->mayBeRemovedByLinker())
+        continue;
+
       Constant *Init = GV->getInitializer();
 
       // Check to see if the initializer is already known.
       PointerIntPair<Constant*, 1, bool> Pair(Init, hasKnownAlignment(GV));
       GlobalVariable *&Slot = CMap[Pair];
 
-      // If this is the first constant we find or if the old on is local,
-      // replace with the current one. It the current is externally visible
+      // If this is the first constant we find or if the old one is local,
+      // replace with the current one. If the current is externally visible
       // it cannot be replace, but can be the canonical constant we merge with.
-      if (Slot == 0 || IsBetterCannonical(*GV, *Slot)) {
+      if (Slot == 0 || IsBetterCannonical(*GV, *Slot))
         Slot = GV;
-      }
     }
 
     // Second: identify all globals that can be merged together, filling in
@@ -169,8 +172,9 @@ bool ConstantMerge::runOnModule(Module &M) {
           UsedGlobals.count(GV))
         continue;
 
-      // We can only replace constant with local linkage.
-      if (!GV->hasLocalLinkage())
+      // We can only replace constants with local linkage and which aren't
+      // removed by the linker.
+      if (!GV->hasLocalLinkage() || GV->mayBeRemovedByLinker())
         continue;
 
       Constant *Init = GV->getInitializer();
