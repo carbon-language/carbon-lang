@@ -863,35 +863,24 @@ static bool FoldMaskedShiftToScaledMask(SelectionDAG &DAG, SDValue N,
 //   andl $124, %rcx
 //   addl (%rsi,%rcx), %eax
 //
+// Note that this function assumes the mask is provided as a mask *after* the
+// value is shifted. The input chain may or may not match that, but computing
+// such a mask is trivial.
 static bool FoldMaskAndShiftToScale(SelectionDAG &DAG, SDValue N,
+                                    uint64_t Mask,
+                                    SDValue Shift, SDValue X,
                                     X86ISelAddressMode &AM) {
-  // Scale must not be used already.
-  if (AM.IndexReg.getNode() != 0 || AM.Scale != 1) return true;
-
-  SDValue Shift = N;
-  SDValue And = N.getOperand(0);
-  if (N.getOpcode() != ISD::SRL)
-    std::swap(Shift, And);
-  if (Shift.getOpcode() != ISD::SRL || And.getOpcode() != ISD::AND ||
-      !Shift.hasOneUse() ||
-      !isa<ConstantSDNode>(Shift.getOperand(1)) ||
-      !isa<ConstantSDNode>(And.getOperand(1)))
+  if (Shift.getOpcode() != ISD::SRL || !Shift.hasOneUse() ||
+      !isa<ConstantSDNode>(Shift.getOperand(1)))
     return true;
-  SDValue X = (N == Shift ? And.getOperand(0) : Shift.getOperand(0));
 
-  // We only handle up to 64-bit values here as those are what matter for
-  // addressing mode optimizations.
-  if (X.getValueSizeInBits() > 64) return true;
-
-  uint64_t Mask = And.getConstantOperandVal(1);
   unsigned ShiftAmt = Shift.getConstantOperandVal(1);
   unsigned MaskLZ = CountLeadingZeros_64(Mask);
   unsigned MaskTZ = CountTrailingZeros_64(Mask);
 
   // The amount of shift we're trying to fit into the addressing mode is taken
-  // from the trailing zeros of the mask. If the mask is pre-shift, we subtract
-  // the shift amount.
-  int AMShiftAmt = MaskTZ - (N == Shift ? ShiftAmt : 0);
+  // from the trailing zeros of the mask.
+  unsigned AMShiftAmt = MaskTZ;
 
   // There is nothing we can do here unless the mask is removing some bits.
   // Also, the addressing mode can only represent shifts of 1, 2, or 3 bits.
@@ -901,9 +890,8 @@ static bool FoldMaskAndShiftToScale(SelectionDAG &DAG, SDValue N,
   if (CountTrailingOnes_64(Mask >> MaskTZ) + MaskTZ + MaskLZ != 64) return true;
 
   // Scale the leading zero count down based on the actual size of the value.
-  // Also scale it down based on the size of the shift if it was applied
-  // before the mask.
-  MaskLZ -= (64 - X.getValueSizeInBits()) + (N == Shift ? 0 : ShiftAmt);
+  // Also scale it down based on the size of the shift.
+  MaskLZ -= (64 - X.getValueSizeInBits()) + ShiftAmt;
 
   // The final check is to ensure that any masked out high bits of X are
   // already known to be zero. Otherwise, the mask has a semantic impact
@@ -1062,12 +1050,32 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     break;
     }
 
-  case ISD::SRL:
+  case ISD::SRL: {
+    // Scale must not be used already.
+    if (AM.IndexReg.getNode() != 0 || AM.Scale != 1) break;
+
+    SDValue And = N.getOperand(0);
+    if (And.getOpcode() != ISD::AND) break;
+    SDValue X = And.getOperand(0);
+
+    // We only handle up to 64-bit values here as those are what matter for
+    // addressing mode optimizations.
+    if (X.getValueSizeInBits() > 64) break;
+
+    // The mask used for the transform is expected to be post-shift, but we
+    // found the shift first so just apply the shift to the mask before passing
+    // it down.
+    if (!isa<ConstantSDNode>(N.getOperand(1)) ||
+        !isa<ConstantSDNode>(And.getOperand(1)))
+      break;
+    uint64_t Mask = And.getConstantOperandVal(1) >> N.getConstantOperandVal(1);
+
     // Try to fold the mask and shift into the scale, and return false if we
     // succeed.
-    if (!FoldMaskAndShiftToScale(*CurDAG, N, AM))
+    if (!FoldMaskAndShiftToScale(*CurDAG, N, Mask, N, X, AM))
       return false;
     break;
+  }
 
   case ISD::SMUL_LOHI:
   case ISD::UMUL_LOHI:
@@ -1257,7 +1265,7 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
       return false;
 
     // Try to fold the mask and shift directly into the scale.
-    if (!FoldMaskAndShiftToScale(*CurDAG, N, AM))
+    if (!FoldMaskAndShiftToScale(*CurDAG, N, C2->getZExtValue(), Shift, X, AM))
       return false;
 
     // Try to swap the mask and shift to place shifts which can be done as
