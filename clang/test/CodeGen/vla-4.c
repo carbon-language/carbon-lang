@@ -18,7 +18,7 @@ void t2() {
 }
 
 void t3(typeof((int (*)[f()]) h()) v) {
-  // CHECK:      store i32* %v, i32** %v.addr, align 4
+  // CHECK:      store i32* %v, i32** %{{[.0-9A-Za-z]+}}, align 4
   // CHECK-NEXT: [[P:%.*]] = call i32 bitcast (i32 (...)* @f to i32 ()*)()
   // CHECK-NEXT: [[P:%.*]] = call i32 bitcast (i32 (...)* @h to i32 ()*)()
 }
