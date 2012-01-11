@@ -788,6 +788,57 @@ static bool FoldMaskAndShiftToExtract(SelectionDAG &DAG, SDValue N,
   return false;
 }
 
+// Transforms "(X << C1) & C2" to "(X & (C2>>C1)) << C1" if safe and if this
+// allows us to fold the shift into this addressing mode. Returns false if the
+// transform succeeded.
+static bool FoldMaskedShiftToScaledMask(SelectionDAG &DAG, SDValue N,
+                                        uint64_t Mask,
+                                        SDValue Shift, SDValue X,
+                                        X86ISelAddressMode &AM) {
+  if (Shift.getOpcode() != ISD::SHL ||
+      !isa<ConstantSDNode>(Shift.getOperand(1)))
+    return true;
+
+  // Not likely to be profitable if either the AND or SHIFT node has more
+  // than one use (unless all uses are for address computation). Besides,
+  // isel mechanism requires their node ids to be reused.
+  if (!N.hasOneUse() || !Shift.hasOneUse())
+    return true;
+
+  // Verify that the shift amount is something we can fold.
+  unsigned ShiftAmt = Shift.getConstantOperandVal(1);
+  if (ShiftAmt != 1 && ShiftAmt != 2 && ShiftAmt != 3)
+    return true;
+
+  EVT VT = N.getValueType();
+  DebugLoc DL = N.getDebugLoc();
+  SDValue NewMask = DAG.getConstant(Mask >> ShiftAmt, VT);
+  SDValue NewAnd = DAG.getNode(ISD::AND, DL, VT, X, NewMask);
+  SDValue NewShift = DAG.getNode(ISD::SHL, DL, VT, NewAnd, Shift.getOperand(1));
+
+  // Insert the new nodes into the topological ordering.
+  if (NewMask.getNode()->getNodeId() == -1 ||
+      NewMask.getNode()->getNodeId() > X.getNode()->getNodeId()) {
+    DAG.RepositionNode(X.getNode(), NewMask.getNode());
+    NewMask.getNode()->setNodeId(X.getNode()->getNodeId());
+  }
+  if (NewAnd.getNode()->getNodeId() == -1 ||
+      NewAnd.getNode()->getNodeId() > Shift.getNode()->getNodeId()) {
+    DAG.RepositionNode(Shift.getNode(), NewAnd.getNode());
+    NewAnd.getNode()->setNodeId(Shift.getNode()->getNodeId());
+  }
+  if (NewShift.getNode()->getNodeId() == -1 ||
+      NewShift.getNode()->getNodeId() > N.getNode()->getNodeId()) {
+    DAG.RepositionNode(N.getNode(), NewShift.getNode());
+    NewShift.getNode()->setNodeId(N.getNode()->getNodeId());
+  }
+  DAG.ReplaceAllUsesWith(N, NewShift);
+
+  AM.Scale = 1 << ShiftAmt;
+  AM.IndexReg = NewAnd;
+  return false;
+}
+
 // Implement some heroics to detect shifts of masked values where the mask can
 // be replaced by extending the shift and undoing that in the addressing mode
 // scale. Patterns such as (shl (srl x, c1), c2) are canonicalized into (and
@@ -1185,13 +1236,17 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     // Perform some heroic transforms on an and of a constant-count shift
     // with a constant to enable use of the scaled offset field.
 
-    SDValue Shift = N.getOperand(0);
-    if (Shift.getNumOperands() != 2) break;
-
     // Scale must not be used already.
     if (AM.IndexReg.getNode() != 0 || AM.Scale != 1) break;
 
+    SDValue Shift = N.getOperand(0);
+    if (Shift.getOpcode() != ISD::SRL && Shift.getOpcode() != ISD::SHL) break;
     SDValue X = Shift.getOperand(0);
+
+    // We only handle up to 64-bit values here as those are what matter for
+    // addressing mode optimizations.
+    if (X.getValueSizeInBits() > 64) break;
+
     ConstantSDNode *C2 = dyn_cast<ConstantSDNode>(N.getOperand(1));
     ConstantSDNode *C1 = dyn_cast<ConstantSDNode>(Shift.getOperand(1));
     if (!C1 || !C2) break;
@@ -1205,55 +1260,12 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     if (!FoldMaskAndShiftToScale(*CurDAG, N, AM))
       return false;
 
-    // Handle "(X << C1) & C2" as "(X & (C2>>C1)) << C1" if safe and if this
-    // allows us to fold the shift into this addressing mode.
-    if (Shift.getOpcode() != ISD::SHL) break;
-
-    // Not likely to be profitable if either the AND or SHIFT node has more
-    // than one use (unless all uses are for address computation). Besides,
-    // isel mechanism requires their node ids to be reused.
-    if (!N.hasOneUse() || !Shift.hasOneUse())
-      break;
-    
-    // Verify that the shift amount is something we can fold.
-    unsigned ShiftCst = C1->getZExtValue();
-    if (ShiftCst != 1 && ShiftCst != 2 && ShiftCst != 3)
-      break;
-    
-    // Get the new AND mask, this folds to a constant.
-    SDValue NewANDMask = CurDAG->getNode(ISD::SRL, dl, N.getValueType(),
-                                         SDValue(C2, 0), SDValue(C1, 0));
-    SDValue NewAND = CurDAG->getNode(ISD::AND, dl, N.getValueType(), X, 
-                                     NewANDMask);
-    SDValue NewSHIFT = CurDAG->getNode(ISD::SHL, dl, N.getValueType(),
-                                       NewAND, SDValue(C1, 0));
-
-    // Insert the new nodes into the topological ordering.
-    if (C1->getNodeId() > X.getNode()->getNodeId()) {
-      CurDAG->RepositionNode(X.getNode(), C1);
-      C1->setNodeId(X.getNode()->getNodeId());
-    }
-    if (NewANDMask.getNode()->getNodeId() == -1 ||
-        NewANDMask.getNode()->getNodeId() > X.getNode()->getNodeId()) {
-      CurDAG->RepositionNode(X.getNode(), NewANDMask.getNode());
-      NewANDMask.getNode()->setNodeId(X.getNode()->getNodeId());
-    }
-    if (NewAND.getNode()->getNodeId() == -1 ||
-        NewAND.getNode()->getNodeId() > Shift.getNode()->getNodeId()) {
-      CurDAG->RepositionNode(Shift.getNode(), NewAND.getNode());
-      NewAND.getNode()->setNodeId(Shift.getNode()->getNodeId());
-    }
-    if (NewSHIFT.getNode()->getNodeId() == -1 ||
-        NewSHIFT.getNode()->getNodeId() > N.getNode()->getNodeId()) {
-      CurDAG->RepositionNode(N.getNode(), NewSHIFT.getNode());
-      NewSHIFT.getNode()->setNodeId(N.getNode()->getNodeId());
-    }
-
-    CurDAG->ReplaceAllUsesWith(N, NewSHIFT);
-    
-    AM.Scale = 1 << ShiftCst;
-    AM.IndexReg = NewAND;
-    return false;
+    // Try to swap the mask and shift to place shifts which can be done as
+    // a scale on the outside of the mask.
+    if (!FoldMaskedShiftToScaledMask(*CurDAG, N, C2->getZExtValue(),
+                                     Shift, X, AM))
+      return false;
+    break;
   }
   }
 
