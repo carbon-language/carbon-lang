@@ -1639,8 +1639,9 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
         LastOp = Op;
       }
 
-      unsigned Opcode = Op->getOpcode();
-      if (LastOpcode && Opcode != LastOpcode)
+      unsigned LSMOpcode
+        = getLoadStoreMultipleOpcode(Op->getOpcode(), ARM_AM::ia);
+      if (LastOpcode && LSMOpcode != LastOpcode)
         break;
 
       int Offset = getMemoryOpOffset(Op);
@@ -1651,7 +1652,7 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
       }
       LastOffset = Offset;
       LastBytes = Bytes;
-      LastOpcode = Opcode;
+      LastOpcode = LSMOpcode;
       if (++NumMove == 8) // FIXME: Tune this limit.
         break;
     }
