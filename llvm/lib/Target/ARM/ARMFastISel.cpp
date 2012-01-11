@@ -2275,9 +2275,9 @@ bool ARMFastISel::ARMTryEmitSmallMemCpy(Address Dest, Address Src, uint64_t Len)
     bool RV;
     unsigned ResultReg;
     RV = ARMEmitLoad(VT, ResultReg, Src);
-    assert (RV = true && "Should be able to handle this load.");
+    assert (RV == true && "Should be able to handle this load.");
     RV = ARMEmitStore(VT, ResultReg, Dest);
-    assert (RV = true && "Should be able to handle this store.");
+    assert (RV == true && "Should be able to handle this store.");
 
     unsigned Size = VT.getSizeInBits()/8;
     Len -= Size;
