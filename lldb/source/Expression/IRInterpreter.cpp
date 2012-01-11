@@ -274,10 +274,10 @@ public:
     {
         MemoryMap::iterator i = LookupInternal(addr);
         
-        if (i == m_memory.end())
+        if (i == m_memory.end() || !type->isSized())
             return Region();
-        
-        size_t size = (type->isSized() ? m_target_data.getTypeStoreSize(type) : m_target_data.getPointerSize());
+    
+        size_t size = m_target_data.getTypeStoreSize(type);
                 
         return Region(*i, addr, size);
     }
