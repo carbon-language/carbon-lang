@@ -114,3 +114,58 @@ define void @test_large() {
 ; X64-NEXT: ret
 
 }
+
+define fastcc void @test_fastcc() {
+        %mem = alloca i32, i32 10
+        call void @dummy_use (i32* %mem, i32 10)
+        ret void
+
+; X32:      test_fastcc:
+
+; X32:      cmpl %gs:48, %esp
+; X32-NEXT: ja      .LBB3_2
+
+; X32:      pushl $0
+; X32-NEXT: pushl $60
+; X32-NEXT: calll __morestack
+; X32-NEXT: ret
+
+; X64:      test_fastcc:
+
+; X64:      cmpq %fs:112, %rsp
+; X64-NEXT: ja      .LBB3_2
+
+; X64:      movabsq $40, %r10
+; X64-NEXT: movabsq $0, %r11
+; X64-NEXT: callq __morestack
+; X64-NEXT: ret
+
+}
+
+define fastcc void @test_fastcc_large() {
+        %mem = alloca i32, i32 10000
+        call void @dummy_use (i32* %mem, i32 0)
+        ret void
+
+; X32:      test_fastcc_large:
+
+; X32:      leal -40012(%esp), %eax
+; X32-NEXT: cmpl %gs:48, %eax
+; X32-NEXT: ja      .LBB4_2
+
+; X32:      pushl $0
+; X32-NEXT: pushl $40012
+; X32-NEXT: calll __morestack
+; X32-NEXT: ret
+
+; X64:      test_fastcc_large:
+
+; X64:      leaq -40008(%rsp), %r11
+; X64-NEXT: cmpq %fs:112, %r11
+; X64-NEXT: ja      .LBB4_2
+
+; X64:      movabsq $40008, %r10
+; X64-NEXT: movabsq $0, %r11
+; X64-NEXT: callq __morestack
+; X64-NEXT: ret
+}
