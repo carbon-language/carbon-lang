@@ -45,9 +45,7 @@ void AsanThread::Destroy() {
 }
 
 void AsanThread::ClearShadowForThreadStack() {
-  uintptr_t shadow_bot = MemToShadow(stack_bottom_);
-  uintptr_t shadow_top = MemToShadow(stack_top_);
-  real_memset((void*)shadow_bot, 0, shadow_top - shadow_bot);
+  PoisonShadow(stack_bottom_, stack_top_ - stack_bottom_, 0);
 }
 
 void AsanThread::Init() {
