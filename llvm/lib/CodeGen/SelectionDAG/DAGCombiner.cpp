@@ -4254,6 +4254,29 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     return DAG.getNode(ISD::ZERO_EXTEND, N->getDebugLoc(), VT,
                        N0.getOperand(0));
 
+  // fold (zext (truncate x)) -> (zext x) or
+  //      (zext (truncate x)) -> (truncate x)
+  // This is valid when the truncated bits of x are already zero.
+  // FIXME: We should extend this to work for vectors too.
+  if (N0.getOpcode() == ISD::TRUNCATE && !VT.isVector()) {
+    SDValue Op = N0.getOperand(0);
+    APInt TruncatedBits
+      = APInt::getBitsSet(Op.getValueSizeInBits(),
+                          N0.getValueSizeInBits(),
+                          std::min(Op.getValueSizeInBits(),
+                                   VT.getSizeInBits()));
+    APInt KnownZero, KnownOne;
+    DAG.ComputeMaskedBits(Op, TruncatedBits, KnownZero, KnownOne);
+    if (TruncatedBits == KnownZero) {
+      if (VT.bitsGT(Op.getValueType()))
+        return DAG.getNode(ISD::ZERO_EXTEND, N->getDebugLoc(), VT, Op);
+      if (VT.bitsLT(Op.getValueType()))
+        return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), VT, Op);
+
+      return Op;
+    }
+  }
+
   // fold (zext (truncate (load x))) -> (zext (smaller load x))
   // fold (zext (truncate (srl (load x), c))) -> (zext (small load (x+c/n)))
   if (N0.getOpcode() == ISD::TRUNCATE) {
