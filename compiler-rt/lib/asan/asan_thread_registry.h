@@ -39,7 +39,6 @@ class AsanThreadRegistry {
   AsanThread *GetCurrent();
   void SetCurrent(AsanThread *t);
   pthread_key_t GetTlsKey();
-  bool IsCurrentThreadDying();
 
   int GetCurrentTidOrMinusOne() {
     AsanThread *t = GetCurrent();

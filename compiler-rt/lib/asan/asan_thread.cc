@@ -15,6 +15,7 @@
 #include "asan_interceptors.h"
 #include "asan_procmaps.h"
 #include "asan_thread.h"
+#include "asan_thread_registry.h"
 #include "asan_mapping.h"
 
 namespace __asan {
@@ -82,6 +83,9 @@ void *AsanThread::ThreadStart() {
   if (FLAG_v >= 1) {
     Report("T%d exited\n", tid());
   }
+
+  asanThreadRegistry().UnregisterThread(this);
+  this->Destroy();
 
   return res;
 }

@@ -191,22 +191,8 @@ void asan_dispatch_call_block_and_release(void *block) {
            block, pthread_self());
   }
   AsanThread *t = asanThreadRegistry().GetCurrent();
-  if (t) {
-    // We've already executed a job on this worker thread. Let's reuse the
-    // AsanThread object.
-    if (t != asanThreadRegistry().GetMain()) {
-      // Flush the statistics and update the current thread's tid.
-      asanThreadRegistry().UnregisterThread(t);
-      asanThreadRegistry().RegisterThread(t, context->parent_tid, &stack);
-    }
-    // Otherwise the worker is being executed on the main thread -- we are
-    // draining the dispatch queue.
-    // TODO(glider): any checks for that?
-  } else {
-    // It's incorrect to assert that the current thread is not dying: at least
-    // the callbacks from dispatch_sync() are sometimes called after the TSD is
-    // destroyed.
-    AsanThread *t = AsanThread::Create(context->parent_tid, NULL, NULL);
+  if (!t) {
+    t = AsanThread::Create(context->parent_tid, NULL, NULL);
     asanThreadRegistry().RegisterThread(t, context->parent_tid, &stack);
     t->Init();
     asanThreadRegistry().SetCurrent(t);
@@ -229,17 +215,6 @@ asan_block_context_t *alloc_asan_context(void *ctxt, dispatch_function_t func,
       (asan_block_context_t*) asan_malloc(sizeof(asan_block_context_t), stack);
   asan_ctxt->block = ctxt;
   asan_ctxt->func = func;
-  AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
-  if (FLAG_debug) {
-    // Sometimes at Chromium teardown this assertion is violated:
-    //  -- a task is created via dispatch_async() on the "CFMachPort"
-    //     thread while doing _dispatch_queue_drain();
-    //  -- a task is created via dispatch_async_f() on the
-    //     "com.apple.root.default-overcommit-priority" thread while doing
-    //     _dispatch_dispose().
-    // TODO(glider): find out what's going on.
-    CHECK(curr_thread || asanThreadRegistry().IsCurrentThreadDying());
-  }
   asan_ctxt->parent_tid = asanThreadRegistry().GetCurrentTidOrMinusOne();
   return asan_ctxt;
 }
