@@ -193,8 +193,6 @@ int main(int argc, char **argv, char * const *envp) {
     }
   }
 
-  JITMemoryManager *JMM = JITMemoryManager::CreateDefaultMemManager();
-
   EngineBuilder builder(Mod);
   builder.setMArch(MArch);
   builder.setMCPU(MCPU);
@@ -202,7 +200,7 @@ int main(int argc, char **argv, char * const *envp) {
   builder.setRelocationModel(RelocModel);
   builder.setCodeModel(CMModel);
   builder.setErrorStr(&ErrorMsg);
-  builder.setJITMemoryManager(JMM);
+  builder.setJITMemoryManager(ForceInterpreter ? 0 : JITMemoryManager::CreateDefaultMemManager());
   builder.setEngineKind(ForceInterpreter
                         ? EngineKind::Interpreter
                         : EngineKind::JIT);
