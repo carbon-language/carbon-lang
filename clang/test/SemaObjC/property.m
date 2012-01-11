@@ -74,3 +74,10 @@ Class test6_getClass();
 + (float) globalValue { return 5.0f; }
 + (float) gv { return test6_getClass().globalValue; }
 @end
+
+@interface Test7
+@property unsigned length;
+@end
+void test7(Test7 *t) {
+  char data[t.length] = {}; // expected-error {{variable-sized object may not be initialized}}
+}

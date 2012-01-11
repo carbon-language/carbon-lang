@@ -1267,6 +1267,13 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
     return QualType();
   }
 
+  // Do placeholder conversions on the array size expression.
+  if (ArraySize && ArraySize->hasPlaceholderType()) {
+    ExprResult Result = CheckPlaceholderExpr(ArraySize);
+    if (Result.isInvalid()) return QualType();
+    ArraySize = Result.take();
+  }
+
   // Do lvalue-to-rvalue conversions on the array size expression.
   if (ArraySize && !ArraySize->isRValue()) {
     ExprResult Result = DefaultLvalueConversion(ArraySize);

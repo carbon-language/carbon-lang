@@ -31,3 +31,12 @@ void test2(Test2 *a) {
   auto y = a.y; // expected-error {{expected getter method not found on object of type 'Test2 *'}} expected-error {{variable 'y' with type 'auto' has incompatible initializer of type}}
   auto z = a.z;
 }
+
+// rdar://problem/10672108
+@interface Test3
+- (int) length;
+@end
+void test3(Test3 *t) {
+  char vla[t.length] = {};
+  char *heaparray = new char[t.length]; // expected-error {{variable-sized object may not be initialized}}
+}
