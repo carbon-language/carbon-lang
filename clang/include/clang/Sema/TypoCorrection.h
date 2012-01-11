@@ -135,6 +135,32 @@ private:
   unsigned EditDistance;
 };
 
+// @brief Base class for callback objects used by Sema::CorrectTypo to check the
+// validity of a potential typo correction.
+class CorrectionCandidateCallback {
+ public:
+  CorrectionCandidateCallback()
+      : WantTypeSpecifiers(true), WantExpressionKeywords(true),
+        WantCXXNamedCasts(true), WantRemainingKeywords(true),
+        WantObjCSuper(false),
+        IsObjCIvarLookup(false) {}
+
+  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+    return true;
+  }
+
+  // Flags for context-dependent keywords.
+  // TODO: Expand these to apply to non-keywords or possibly remove them.
+  bool WantTypeSpecifiers;
+  bool WantExpressionKeywords;
+  bool WantCXXNamedCasts;
+  bool WantRemainingKeywords;
+  bool WantObjCSuper;
+  // Temporary hack for the one case where a CorrectTypoContext enum is used
+  // when looking up results.
+  bool IsObjCIvarLookup;
+};
+
 }
 
 #endif

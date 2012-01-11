@@ -29,3 +29,14 @@ public:
 inline error_condition make_error_condition(errc _e) {
   return error_condition(static_cast<int>(_e));
 }
+
+
+// Prior to the introduction of a callback object to further filter possible
+// typo corrections, this example would not trigger a suggestion as "base_type"
+// is a closer match to "basetype" than is "BaseType" but "base_type" does not
+// refer to a base class or non-static data member.
+struct BaseType { };
+struct Derived : public BaseType { // expected-note {{base class 'BaseType' specified here}}
+  static int base_type;
+  Derived() : basetype() {} // expected-error{{initializer 'basetype' does not name a non-static data member or base class; did you mean the base class 'BaseType'?}}
+};

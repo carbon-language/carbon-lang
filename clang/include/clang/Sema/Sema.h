@@ -1835,10 +1835,18 @@ public:
   TypoCorrection CorrectTypo(const DeclarationNameInfo &Typo,
                              Sema::LookupNameKind LookupKind,
                              Scope *S, CXXScopeSpec *SS,
-                             DeclContext *MemberContext = NULL,
+                             DeclContext *MemberContext = 0,
                              bool EnteringContext = false,
                              CorrectTypoContext CTC = CTC_Unknown,
-                             const ObjCObjectPointerType *OPT = NULL);
+                             const ObjCObjectPointerType *OPT = 0);
+
+  TypoCorrection CorrectTypo(const DeclarationNameInfo &Typo,
+                             Sema::LookupNameKind LookupKind,
+                             Scope *S, CXXScopeSpec *SS,
+                             CorrectionCandidateCallback *CCC,
+                             DeclContext *MemberContext = 0,
+                             bool EnteringContext = false,
+                             const ObjCObjectPointerType *OPT = 0);
 
   void FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
                                    AssociatedNamespaceSet &AssociatedNamespaces,

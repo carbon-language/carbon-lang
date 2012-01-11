@@ -3310,13 +3310,13 @@ static void LookupPotentialTypoResult(Sema &SemaRef,
                                       Scope *S, CXXScopeSpec *SS,
                                       DeclContext *MemberContext,
                                       bool EnteringContext,
-                                      Sema::CorrectTypoContext CTC) {
+                                      bool isObjCIvarLookup) {
   Res.suppressDiagnostics();
   Res.clear();
   Res.setLookupName(Name);
   if (MemberContext) {
     if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(MemberContext)) {
-      if (CTC == Sema::CTC_ObjCIvarLookup) {
+      if (isObjCIvarLookup) {
         if (ObjCIvarDecl *Ivar = Class->lookupInstanceVariable(Name)) {
           Res.addDecl(Ivar);
           Res.resolveKind();
@@ -3357,61 +3357,11 @@ static void LookupPotentialTypoResult(Sema &SemaRef,
 /// \brief Add keywords to the consumer as possible typo corrections.
 static void AddKeywordsToConsumer(Sema &SemaRef,
                                   TypoCorrectionConsumer &Consumer,
-                                  Scope *S, Sema::CorrectTypoContext CTC) {
-  // Add context-dependent keywords.
-  bool WantTypeSpecifiers = false;
-  bool WantExpressionKeywords = false;
-  bool WantCXXNamedCasts = false;
-  bool WantRemainingKeywords = false;
-  switch (CTC) {
-    case Sema::CTC_Unknown:
-      WantTypeSpecifiers = true;
-      WantExpressionKeywords = true;
-      WantCXXNamedCasts = true;
-      WantRemainingKeywords = true;
+                                  Scope *S, CorrectionCandidateCallback &CCC) {
+  if (CCC.WantObjCSuper)
+    Consumer.addKeywordResult("super");
 
-      if (ObjCMethodDecl *Method = SemaRef.getCurMethodDecl())
-        if (Method->getClassInterface() &&
-            Method->getClassInterface()->getSuperClass())
-          Consumer.addKeywordResult("super");
-
-      break;
-
-    case Sema::CTC_NoKeywords:
-      break;
-
-    case Sema::CTC_Type:
-      WantTypeSpecifiers = true;
-      break;
-
-    case Sema::CTC_ObjCMessageReceiver:
-      Consumer.addKeywordResult("super");
-      // Fall through to handle message receivers like expressions.
-
-    case Sema::CTC_Expression:
-      if (SemaRef.getLangOptions().CPlusPlus)
-        WantTypeSpecifiers = true;
-      WantExpressionKeywords = true;
-      // Fall through to get C++ named casts.
-
-    case Sema::CTC_CXXCasts:
-      WantCXXNamedCasts = true;
-      break;
-
-    case Sema::CTC_ObjCPropertyLookup:
-      // FIXME: Add "isa"?
-      break;
-
-    case Sema::CTC_MemberLookup:
-      if (SemaRef.getLangOptions().CPlusPlus)
-        Consumer.addKeywordResult("template");
-      break;
-
-    case Sema::CTC_ObjCIvarLookup:
-      break;
-  }
-
-  if (WantTypeSpecifiers) {
+  if (CCC.WantTypeSpecifiers) {
     // Add type-specifier keywords to the set of results.
     const char *CTypeSpecs[] = {
       "char", "const", "double", "enum", "float", "int", "long", "short",
@@ -3450,14 +3400,14 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
       Consumer.addKeywordResult("typeof");
   }
 
-  if (WantCXXNamedCasts && SemaRef.getLangOptions().CPlusPlus) {
+  if (CCC.WantCXXNamedCasts && SemaRef.getLangOptions().CPlusPlus) {
     Consumer.addKeywordResult("const_cast");
     Consumer.addKeywordResult("dynamic_cast");
     Consumer.addKeywordResult("reinterpret_cast");
     Consumer.addKeywordResult("static_cast");
   }
 
-  if (WantExpressionKeywords) {
+  if (CCC.WantExpressionKeywords) {
     Consumer.addKeywordResult("sizeof");
     if (SemaRef.getLangOptions().Bool || SemaRef.getLangOptions().CPlusPlus) {
       Consumer.addKeywordResult("false");
@@ -3483,7 +3433,7 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
     }
   }
 
-  if (WantRemainingKeywords) {
+  if (CCC.WantRemainingKeywords) {
     if (SemaRef.getCurFunctionOrMethodDecl() || SemaRef.getCurBlock()) {
       // Statements.
       const char *CStmts[] = {
@@ -3533,6 +3483,77 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
   }
 }
 
+namespace {
+
+// Simple CorrectionCandidateCallback class that sets the keyword flags based
+// on a given CorrectTypoContext, but does not perform any extra validation
+// of typo correction candidates.
+class CorrectTypoContextReplacementCCC : public CorrectionCandidateCallback {
+ public:
+  CorrectTypoContextReplacementCCC(
+      Sema &SemaRef, Sema::CorrectTypoContext CTC = Sema::CTC_Unknown) {
+    WantTypeSpecifiers = false;
+    WantExpressionKeywords = false;
+    WantCXXNamedCasts = false;
+    WantRemainingKeywords = false;
+    switch (CTC) {
+      case Sema::CTC_Unknown:
+        WantTypeSpecifiers = true;
+        WantExpressionKeywords = true;
+        WantCXXNamedCasts = true;
+        WantRemainingKeywords = true;
+        if (ObjCMethodDecl *Method = SemaRef.getCurMethodDecl())
+          WantObjCSuper = Method->getClassInterface() &&
+                          Method->getClassInterface()->getSuperClass();
+        break;
+
+      case Sema::CTC_Type:
+        WantTypeSpecifiers = true;
+        break;
+
+      case Sema::CTC_ObjCMessageReceiver:
+        WantObjCSuper = true;
+        // Fall through to handle message receivers like expressions.
+
+      case Sema::CTC_Expression:
+        if (SemaRef.getLangOptions().CPlusPlus)
+          WantTypeSpecifiers = true;
+        WantExpressionKeywords = true;
+        // Fall through to get C++ named casts.
+
+      case Sema::CTC_CXXCasts:
+        WantCXXNamedCasts = true;
+        break;
+
+      case Sema::CTC_MemberLookup:
+      case Sema::CTC_NoKeywords:
+      case Sema::CTC_ObjCPropertyLookup:
+        break;
+
+      case Sema::CTC_ObjCIvarLookup:
+        IsObjCIvarLookup = true;
+        break;
+    }
+  }
+};
+
+}
+
+/// \brief Compatibility wrapper for call sites that pass a CorrectTypoContext
+/// value to CorrectTypo instead of providing a callback object.
+TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
+                                 Sema::LookupNameKind LookupKind,
+                                 Scope *S, CXXScopeSpec *SS,
+                                 DeclContext *MemberContext,
+                                 bool EnteringContext,
+                                 CorrectTypoContext CTC,
+                                 const ObjCObjectPointerType *OPT) {
+  CorrectTypoContextReplacementCCC CTCVerifier(*this, CTC);
+
+  return CorrectTypo(TypoName, LookupKind, S, SS, &CTCVerifier, MemberContext,
+                     EnteringContext, OPT);
+}
+
 /// \brief Try to "correct" a typo in the source code by finding
 /// visible declarations whose names are similar to the name that was
 /// present in the source code.
@@ -3547,14 +3568,15 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
 /// \param SS the nested-name-specifier that precedes the name we're
 /// looking for, if present.
 ///
+/// \param CCC A CorrectionCandidateCallback object that provides further
+/// validation of typo correction candidates. It also provides flags for
+/// determining the set of keywords permitted.
+///
 /// \param MemberContext if non-NULL, the context in which to look for
 /// a member access expression.
 ///
 /// \param EnteringContext whether we're entering the context described by
 /// the nested-name-specifier SS.
-///
-/// \param CTC The context in which typo correction occurs, which impacts the
-/// set of keywords permitted.
 ///
 /// \param OPT when non-NULL, the search for visible declarations will
 /// also walk the protocols in the qualified interfaces of \p OPT.
@@ -3566,9 +3588,9 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
 TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
                                  Sema::LookupNameKind LookupKind,
                                  Scope *S, CXXScopeSpec *SS,
+                                 CorrectionCandidateCallback *CCC,
                                  DeclContext *MemberContext,
                                  bool EnteringContext,
-                                 CorrectTypoContext CTC,
                                  const ObjCObjectPointerType *OPT) {
   if (Diags.hasFatalErrorOccurred() || !getLangOptions().SpellChecking)
     return TypoCorrection();
@@ -3665,7 +3687,8 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
     }
   }
 
-  AddKeywordsToConsumer(*this, Consumer, S,  CTC);
+  CorrectTypoContextReplacementCCC DefaultCCC(*this);
+  AddKeywordsToConsumer(*this, Consumer, S, CCC ? *CCC : DefaultCCC);
 
   // If we haven't found anything, we're done.
   if (Consumer.empty()) {
@@ -3705,7 +3728,8 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       Namespaces.AddNamespace(KNI->first);
   }
 
-  // Weed out any names that could not be found by name lookup.
+  // Weed out any names that could not be found by name lookup or, if a
+  // CorrectionCandidateCallback object was provided, failed validation.
   llvm::SmallPtrSet<IdentifierInfo*, 16> QualifiedResults;
   LookupResult TmpRes(*this, TypoName, LookupKind);
   TmpRes.suppressDiagnostics();
@@ -3715,16 +3739,21 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
     for (TypoCorrectionConsumer::result_iterator I = DI->second->begin(),
                                               IEnd = DI->second->end();
          I != IEnd; /* Increment in loop. */) {
-      // If the item already has been looked up or is a keyword, keep it
+      // If the item already has been looked up or is a keyword, keep it.
+      // If a validator callback object was given, drop the correction
+      // unless it passes validation.
       if (I->second.isResolved()) {
+        TypoCorrectionConsumer::result_iterator Prev = I;
         ++I;
+        if (CCC && !CCC->ValidateCandidate(Prev->second))
+          DI->second->erase(Prev);
         continue;
       }
 
       // Perform name lookup on this name.
       IdentifierInfo *Name = I->second.getCorrectionAsIdentifierInfo();
       LookupPotentialTypoResult(*this, TmpRes, Name, S, SS, MemberContext,
-                                EnteringContext, CTC);
+                                EnteringContext, CCC && CCC->IsObjCIvarLookup);
 
       switch (TmpRes.getResultKind()) {
       case LookupResult::NotFound:
@@ -3746,19 +3775,27 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
         return TypoCorrection();
 
       case LookupResult::FoundOverloaded: {
+        TypoCorrectionConsumer::result_iterator Prev = I;
         // Store all of the Decls for overloaded symbols
         for (LookupResult::iterator TRD = TmpRes.begin(),
                                  TRDEnd = TmpRes.end();
              TRD != TRDEnd; ++TRD)
           I->second.addCorrectionDecl(*TRD);
         ++I;
+        if (CCC && !CCC->ValidateCandidate(Prev->second))
+          DI->second->erase(Prev);
         break;
       }
 
-      case LookupResult::Found:
+      case LookupResult::Found: {
+        TypoCorrectionConsumer::result_iterator Prev = I;
         I->second.setCorrectionDecl(TmpRes.getAsSingle<NamedDecl>());
         ++I;
+        if (CCC && !CCC->ValidateCandidate(Prev->second))
+          DI->second->erase(Prev);
         break;
+      }
+
       }
     }
 
@@ -3790,6 +3827,8 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
           TmpRes.setLookupName(*QRI);
           if (!LookupQualifiedName(TmpRes, Ctx)) continue;
 
+          // Any corrections added below will be validated in subsequent
+          // iterations of the main while() loop over the Consumer's contents.
           switch (TmpRes.getResultKind()) {
           case LookupResult::Found:
             Consumer.addName((*QRI)->getName(), TmpRes.getAsSingle<NamedDecl>(),
@@ -3863,7 +3902,12 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 
     return Result;
   }
-  else if (BestResults.size() > 1 && CTC == CTC_ObjCMessageReceiver
+  else if (BestResults.size() > 1
+           // Ugly hack equivalent to CTC == CTC_ObjCMessageReceiver;
+           // WantObjCSuper is only true for CTC_ObjCMessageReceiver and for
+           // some instances of CTC_Unknown, while WantRemainingKeywords is true
+           // for CTC_Unknown but not for CTC_ObjCMessageReceiver.
+           && CCC && CCC->WantObjCSuper && !CCC->WantRemainingKeywords
            && BestResults["super"].isKeyword()) {
     // Prefer 'super' when we're completing in a message-receiver
     // context.

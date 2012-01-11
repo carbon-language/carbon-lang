@@ -1745,6 +1745,30 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
                              EllipsisLoc);
 }
 
+namespace {
+
+// Callback to only accept typo corrections that are namespaces.
+class MemInitializerValidatorCCC : public CorrectionCandidateCallback {
+ public:
+  explicit MemInitializerValidatorCCC(CXXRecordDecl *ClassDecl)
+      : ClassDecl(ClassDecl) {}
+
+  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+    if (NamedDecl *ND = candidate.getCorrectionDecl()) {
+      if (FieldDecl *Member = dyn_cast<FieldDecl>(ND))
+        return Member->getDeclContext()->getRedeclContext()->Equals(ClassDecl);
+      else
+        return isa<TypeDecl>(ND);
+    }
+    return false;
+  }
+
+ private:
+  CXXRecordDecl *ClassDecl;
+};
+
+}
+
 /// \brief Handle a C++ member initializer.
 MemInitResult
 Sema::BuildMemInitializer(Decl *ConstructorD,
@@ -1837,24 +1861,23 @@ Sema::BuildMemInitializer(Decl *ConstructorD,
 
       // If no results were found, try to correct typos.
       TypoCorrection Corr;
+      MemInitializerValidatorCCC Validator(ClassDecl);
       if (R.empty() && BaseType.isNull() &&
           (Corr = CorrectTypo(R.getLookupNameInfo(), R.getLookupKind(), S, &SS,
-                              ClassDecl, false, CTC_NoKeywords))) {
+                              &Validator, ClassDecl))) {
         std::string CorrectedStr(Corr.getAsString(getLangOptions()));
         std::string CorrectedQuotedStr(Corr.getQuoted(getLangOptions()));
         if (FieldDecl *Member = Corr.getCorrectionDeclAs<FieldDecl>()) {
-          if (Member->getDeclContext()->getRedeclContext()->Equals(ClassDecl)) {
-            // We have found a non-static data member with a similar
-            // name to what was typed; complain and initialize that
-            // member.
-            Diag(R.getNameLoc(), diag::err_mem_init_not_member_or_class_suggest)
-              << MemberOrBase << true << CorrectedQuotedStr
-              << FixItHint::CreateReplacement(R.getNameLoc(), CorrectedStr);
-            Diag(Member->getLocation(), diag::note_previous_decl)
-              << CorrectedQuotedStr;
+          // We have found a non-static data member with a similar
+          // name to what was typed; complain and initialize that
+          // member.
+          Diag(R.getNameLoc(), diag::err_mem_init_not_member_or_class_suggest)
+            << MemberOrBase << true << CorrectedQuotedStr
+            << FixItHint::CreateReplacement(R.getNameLoc(), CorrectedStr);
+          Diag(Member->getLocation(), diag::note_previous_decl)
+            << CorrectedQuotedStr;
 
-            return BuildMemberInitializer(Member, Args, IdLoc);
-          }
+          return BuildMemberInitializer(Member, Args, IdLoc);
         } else if (TypeDecl *Type = Corr.getCorrectionDeclAs<TypeDecl>()) {
           const CXXBaseSpecifier *DirectBaseSpec;
           const CXXBaseSpecifier *VirtualBaseSpec;
@@ -5750,35 +5773,47 @@ static bool IsUsingDirectiveInToplevelContext(DeclContext *CurContext) {
   }
 }
 
+namespace {
+
+// Callback to only accept typo corrections that are namespaces.
+class NamespaceValidatorCCC : public CorrectionCandidateCallback {
+ public:
+  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+    if (NamedDecl *ND = candidate.getCorrectionDecl()) {
+      return isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND);
+    }
+    return false;
+  }
+};
+
+}
+
 static bool TryNamespaceTypoCorrection(Sema &S, LookupResult &R, Scope *Sc,
                                        CXXScopeSpec &SS,
                                        SourceLocation IdentLoc,
                                        IdentifierInfo *Ident) {
+  NamespaceValidatorCCC Validator;
   R.clear();
   if (TypoCorrection Corrected = S.CorrectTypo(R.getLookupNameInfo(),
-                                               R.getLookupKind(), Sc, &SS, NULL,
-                                               false, S.CTC_NoKeywords, NULL)) {
-    if (Corrected.getCorrectionDeclAs<NamespaceDecl>() ||
-        Corrected.getCorrectionDeclAs<NamespaceAliasDecl>()) {
-      std::string CorrectedStr(Corrected.getAsString(S.getLangOptions()));
-      std::string CorrectedQuotedStr(Corrected.getQuoted(S.getLangOptions()));
-      if (DeclContext *DC = S.computeDeclContext(SS, false))
-        S.Diag(IdentLoc, diag::err_using_directive_member_suggest)
-          << Ident << DC << CorrectedQuotedStr << SS.getRange()
-          << FixItHint::CreateReplacement(IdentLoc, CorrectedStr);
-      else
-        S.Diag(IdentLoc, diag::err_using_directive_suggest)
-          << Ident << CorrectedQuotedStr
-          << FixItHint::CreateReplacement(IdentLoc, CorrectedStr);
+                                               R.getLookupKind(), Sc, &SS,
+                                               &Validator)) {
+    std::string CorrectedStr(Corrected.getAsString(S.getLangOptions()));
+    std::string CorrectedQuotedStr(Corrected.getQuoted(S.getLangOptions()));
+    if (DeclContext *DC = S.computeDeclContext(SS, false))
+      S.Diag(IdentLoc, diag::err_using_directive_member_suggest)
+        << Ident << DC << CorrectedQuotedStr << SS.getRange()
+        << FixItHint::CreateReplacement(IdentLoc, CorrectedStr);
+    else
+      S.Diag(IdentLoc, diag::err_using_directive_suggest)
+        << Ident << CorrectedQuotedStr
+        << FixItHint::CreateReplacement(IdentLoc, CorrectedStr);
 
-      S.Diag(Corrected.getCorrectionDecl()->getLocation(),
-           diag::note_namespace_defined_here) << CorrectedQuotedStr;
+    S.Diag(Corrected.getCorrectionDecl()->getLocation(),
+         diag::note_namespace_defined_here) << CorrectedQuotedStr;
 
-      Ident = Corrected.getCorrectionAsIdentifierInfo();
-      R.addDecl(Corrected.getCorrectionDecl());
-      return true;
-    }
-    R.setLookupName(Ident);
+    Ident = Corrected.getCorrectionAsIdentifierInfo();
+    R.addDecl(Corrected.getCorrectionDecl());
+    return true;
   }
   return false;
 }
