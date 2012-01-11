@@ -16,56 +16,11 @@
 
 #include "asan_internal.h"
 
-// To replace weak system functions on Linux we just need to declare functions
-// with same names in our library and then obtain the real function pointers
-// using dlsym(). This is not so on Mac OS, where the two-level namespace makes
-// our replacement functions invisible to other libraries. This may be overcomed
-// using the DYLD_FORCE_FLAT_NAMESPACE, but some errors loading the shared
-// libraries in Chromium were noticed when doing so.
-// Instead we use mach_override, a handy framework for patching functions at
-// runtime. To avoid possible name clashes, our replacement functions have
-// the "wrap_" prefix on Mac.
-//
-// After interception, the calls to system functions will be substituted by
-// calls to our interceptors. We store pointers to system function f()
-// in __asan::real_f().
-//
-// TODO(glider): mach_override_ptr() tends to spend too much time
-// in allocateBranchIsland(). This should be ok for real-word
-// application, but slows down our tests which fork too many children.
 #ifdef __APPLE__
-#include "mach_override/mach_override.h"
-#define WRAP(x) wrap_##x
-#define WRAPPER_NAME(x) "wrap_"#x
-
-#define OVERRIDE_FUNCTION(oldfunc, newfunc)                             \
-  CHECK(0 == __asan_mach_override_ptr((void*)(oldfunc),                        \
-                                      (void*)(newfunc),                        \
-                                      (void**)&real_##oldfunc));               \
-  CHECK(real_##oldfunc != NULL);
-
-#define OVERRIDE_FUNCTION_IF_EXISTS(oldfunc, newfunc)                   \
-  do { __asan_mach_override_ptr((void*)(oldfunc),                              \
-                                (void*)(newfunc),                              \
-                                (void**)&real_##oldfunc); } while (0)
-
-#define INTERCEPT_FUNCTION(func)                                        \
-  OVERRIDE_FUNCTION(func, WRAP(func))
-
-#define INTERCEPT_FUNCTION_IF_EXISTS(func)                              \
-  OVERRIDE_FUNCTION_IF_EXISTS(func, WRAP(func))
-
-#else  // __linux__
-#define WRAP(x) x
-#define WRAPPER_NAME(x) #x
-
-#define INTERCEPT_FUNCTION(func)                                        \
-  CHECK((real_##func = (func##_f)dlsym(RTLD_NEXT, #func)));
-
-#define INTERCEPT_FUNCTION_IF_EXISTS(func)                              \
-  do { real_##func = (func##_f)dlsym(RTLD_NEXT, #func); } while (0)
+# define WRAP(x) wrap_##x
+#else
+# define WRAP(x) x
 #endif
-
 
 namespace __asan {
 
@@ -116,8 +71,6 @@ int internal_memcmp(const void* s1, const void* s2, size_t n);
 char *internal_strstr(const char *haystack, const char *needle);
 char *internal_strncat(char *dst, const char *src, size_t n);
 
-
-// Initializes pointers to str*/mem* functions.
 void InitializeAsanInterceptors();
 
 }  // namespace __asan

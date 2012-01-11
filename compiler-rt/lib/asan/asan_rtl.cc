@@ -95,7 +95,7 @@ size_t ReadFileToBuffer(const char *file_name, char **buff,
 // This function should be called first inside __asan_init.
 static const char* GetEnvFromProcSelfEnviron(const char* name) {
   static char *environ;
-  static ssize_t len;
+  static size_t len;
   static bool inited;
   if (!inited) {
     inited = true;
@@ -103,7 +103,7 @@ static const char* GetEnvFromProcSelfEnviron(const char* name) {
     len = ReadFileToBuffer("/proc/self/environ",
                            &environ, &environ_size, 1 << 20);
   }
-  if (!environ || len <= 0) return NULL;
+  if (!environ || len == 0) return NULL;
   size_t namelen = internal_strlen(name);
   const char *p = environ;
   while (*p != '\0') {  // will happen at the \0\0 that terminates the buffer
