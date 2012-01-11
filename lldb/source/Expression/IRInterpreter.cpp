@@ -277,7 +277,7 @@ public:
         if (i == m_memory.end())
             return Region();
         
-        size_t size = m_target_data.getTypeStoreSize(type);
+        size_t size = (type->isSized() ? m_target_data.getTypeStoreSize(type) : m_target_data.getPointerSize());
                 
         return Region(*i, addr, size);
     }
