@@ -17,7 +17,7 @@ BUILT_SOURCES = MipsGenRegisterInfo.inc MipsGenInstrInfo.inc \
                 MipsGenDAGISel.inc MipsGenCallingConv.inc \
                 MipsGenSubtargetInfo.inc MipsGenMCCodeEmitter.inc
 
-DIRS = InstPrinter TargetInfo MCTargetDesc
+DIRS = InstPrinter AsmParser TargetInfo MCTargetDesc
 
 include $(LEVEL)/Makefile.common
 
