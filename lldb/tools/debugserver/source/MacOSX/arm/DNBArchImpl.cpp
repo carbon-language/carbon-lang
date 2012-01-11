@@ -448,6 +448,36 @@ DNBArchMachARM::ThreadDidStop()
 }
 
 bool
+DNBArchMachARM::NotifyException(MachException::Data& exc)
+{
+    switch (exc.exc_type)
+    {
+        default:
+            break;
+        case EXC_BREAKPOINT:
+            if (exc.exc_data.size() >= 2 && exc.exc_data[0] == 1)
+            {
+                // exc_code = EXC_ARM_WATCHPOINT
+                //
+                // Check whether this corresponds to a watchpoint hit event.
+                // If yes, set the exc_sub_code to the data break address.
+                nub_addr_t addr = 0;
+                uint32_t hw_index = GetHardwareWatchpointHit(addr);
+                if (hw_index != INVALID_NUB_HW_INDEX)
+                {
+                    exc.exc_data[1] = addr;
+                    // Piggyback the hw_index in the exc.data.
+                    exc.exc_data.push_back(hw_index);
+                }
+
+                return true;
+            }
+            break;
+    }
+    return false;
+}
+
+bool
 DNBArchMachARM::StepNotComplete ()
 {
     if (m_hw_single_chained_step_addr != INVALID_NUB_ADDRESS)
@@ -2373,6 +2403,91 @@ DNBArchMachARM::DisableHardwareWatchpoint (uint32_t hw_index)
         }
     }
     return false;
+}
+
+// {0} -> __bvr[16], {0} -> __bcr[16], {0} --> __wvr[16], {0} -> __wcr{16}
+DNBArchMachARM::DBG DNBArchMachARM::Global_Debug_State = {{0},{0},{0},{0}};
+bool DNBArchMachARM::Valid_Global_Debug_State = false;
+
+// Use this callback from MachThread, which in turn was called from MachThreadList, to update
+// the global view of the hardware watchpoint state, so that when new thread comes along, they
+// get to inherit the existing hardware watchpoint state.
+void
+DNBArchMachARM::HardwareWatchpointStateChanged ()
+{
+    Global_Debug_State = m_state.dbg;
+    Valid_Global_Debug_State = true;
+}
+
+// Iterate through the debug status register; return the index of the first hit.
+uint32_t
+DNBArchMachARM::GetHardwareWatchpointHit(nub_addr_t &addr)
+{
+    // Read the debug state
+    kern_return_t kret = GetDBGState(true);
+    DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::GetHardwareWatchpointHit() GetDBGState() => 0x%8.8x.", kret);
+    if (kret == KERN_SUCCESS)
+    {
+        DBG &debug_state = m_state.dbg;
+        uint32_t i, num = NumSupportedHardwareWatchpoints();
+        for (i = 0; i < num; ++i)
+        {
+            // FIXME: IsWatchpointHit() currently returns the first enabled watchpoint,
+            //        instead of finding the watchpoint that actually triggered.
+            if (IsWatchpointHit(debug_state, i))
+            {
+                addr = GetWatchAddress(debug_state, i);
+                DNBLogThreadedIf(LOG_WATCHPOINTS,
+                                 "DNBArchMachARM::GetHardwareWatchpointHit() found => %u (addr = 0x%llx).",
+                                 i, 
+                                 (uint64_t)addr);
+                return i;
+            }
+        }
+    }
+    return INVALID_NUB_HW_INDEX;
+}
+
+// ThreadWillResume() calls this to clear bits[5:2] (Method of entry bits) of
+// the Debug Status and Control Register (DSCR).
+// 
+// b0010 = a watchpoint occurred
+// b0000 is the reset value
+void
+DNBArchMachARM::ClearWatchpointOccurred()
+{
+    // See also IsWatchpointHit().
+    uint32_t register_DBGDSCR;
+    asm("mrc p14, 0, %0, c0, c1, 0" : "=r" (register_DBGDSCR));
+    if (bits(register_DBGDSCR, 5, 2) == 0x2)
+    {
+        uint32_t mask = ~(0xF << 2);
+        register_DBGDSCR &= mask;
+        asm("mcr p14, 0, %0, c0, c1, 0" : "=r" (register_DBGDSCR));
+    }
+    return;
+}
+
+// FIXME: IsWatchpointHit() currently returns the first enabled watchpoint,
+//        instead of finding the watchpoint that actually triggered.
+bool
+DNBArchMachARM::IsWatchpointHit(const DBG &debug_state, uint32_t hw_index)
+{
+    // Watchpoint Control Registers, bitfield definitions
+    // ...
+    // Bits    Value    Description
+    // [0]	   0        Watchpoint disabled
+    //         1        Watchpoint enabled.
+    return (debug_state.__wcr[hw_index] & 1u);
+}
+
+nub_addr_t
+DNBArchMachARM::GetWatchAddress(const DBG &debug_state, uint32_t hw_index)
+{
+    // Watchpoint Value Registers, bitfield definitions
+    // Bits        Description
+    // [31:2]      Watchpoint address
+    return bits(debug_state.__wvr[hw_index], 31, 2);
 }
 
 //----------------------------------------------------------------------

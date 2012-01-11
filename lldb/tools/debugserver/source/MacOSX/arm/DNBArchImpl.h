@@ -67,6 +67,7 @@ public:
     virtual uint64_t        GetSP(uint64_t failValue);    // Get stack pointer
     virtual void            ThreadWillResume();
     virtual bool            ThreadDidStop();
+    virtual bool            NotifyException(MachException::Data& exc);
 
     static DNBArchProtocol *Create (MachThread *thread);
     static const uint8_t * const SoftwareBreakpointOpcode (nub_size_t byte_size);
@@ -79,6 +80,8 @@ public:
     virtual bool            DisableHardwareBreakpoint (uint32_t hw_break_index);
     virtual bool            DisableHardwareWatchpoint (uint32_t hw_break_index);
     virtual bool            StepNotComplete ();
+    virtual void            HardwareWatchpointStateChanged ();
+    virtual uint32_t        GetHardwareWatchpointHit(nub_addr_t &addr);
 
     typedef arm_debug_state_t DBG;
 
@@ -135,6 +138,10 @@ protected:
         FPU vfp;
         EXC exc;
     };
+
+    // See also HardwareWatchpointStateChanged() which updates this class-wide variable.
+    static DBG Global_Debug_State;
+    static bool Valid_Global_Debug_State;
 
     struct State
     {
@@ -228,10 +235,16 @@ protected:
     kern_return_t SetVFPState ();
     kern_return_t SetEXCState ();
     kern_return_t SetDBGState ();
+
+    // Helper functions for watchpoint implementaions.
+    static void ClearWatchpointOccurred();
+    static bool IsWatchpointHit(const DBG &debug_state, uint32_t hw_index);
+    static nub_addr_t GetWatchAddress(const DBG &debug_state, uint32_t hw_index);
+
 protected:
     MachThread *    m_thread;
     State           m_state;
-    arm_debug_state_t m_dbg_save;
+    DBG             m_dbg_save;
     nub_addr_t      m_hw_single_chained_step_addr;
     // Software single stepping support
     nub_addr_t      m_sw_single_step_next_pc;
