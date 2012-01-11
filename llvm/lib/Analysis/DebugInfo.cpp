@@ -492,9 +492,10 @@ uint64_t DIDerivedType::getOriginalTypeSize() const {
     if (!BaseType.isValid())
       return getSizeInBits();
     // If this is a derived type, go ahead and get the base type, unless
-    // it's a reference or pointer type, then it's just the size of the field.
-    if (BaseType.getTag() == dwarf::DW_TAG_reference_type ||
-        BaseType.getTag() == dwarf::DW_TAG_pointer_type)
+    // it's a reference then it's just the size of the field. Pointer types
+    // have no need of this since they're a different type of qualification
+    // on the type.
+    if (BaseType.getTag() == dwarf::DW_TAG_reference_type)
       return getSizeInBits();
     else if (BaseType.isDerivedType())
       return DIDerivedType(BaseType).getOriginalTypeSize();
