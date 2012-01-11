@@ -9,6 +9,8 @@
 
 #include "lld/Core/InputFiles.h"
 #include "lld/Core/Atom.h"
+#include "lld/Core/DefinedAtom.h"
+#include "lld/Core/UndefinedAtom.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Core/YamlReader.h"
 #include "lld/Core/YamlWriter.h"
@@ -58,17 +60,17 @@ public:
   virtual void atomAdded(const Atom &file) { }
 
   // give platform a chance to change each atom's scope
-  virtual void adjustScope(const Atom &atom) { }
+  virtual void adjustScope(const DefinedAtom &atom) { }
 
   // if specified atom needs alternate names, return AliasAtom(s)
   virtual bool getAliasAtoms(const Atom &atom,
-                             std::vector<const Atom *>&) {
+                             std::vector<const DefinedAtom *>&) {
     return false;
   }
 
   // give platform a chance to resolve platform-specific undefs
   virtual bool getPlatformAtoms(llvm::StringRef undefined,
-                                std::vector<const Atom *>&) {
+                                std::vector<const DefinedAtom *>&) {
     return false;
   }
 
@@ -83,7 +85,7 @@ public:
   }
 
   // if target must have some atoms, denote here
-  virtual bool getImplicitDeadStripRoots(std::vector<const Atom *>&) {
+  virtual bool getImplicitDeadStripRoots(std::vector<const DefinedAtom *>&) {
     return false;
   }
 
@@ -164,7 +166,18 @@ public:
     handler.doFile(*this);
     for (std::vector<const Atom *>::iterator it = _atoms.begin();
          it != _atoms.end(); ++it) {
-      handler.doAtom(**it);
+      const Atom* atom = *it;
+      switch ( atom->definition() ) {
+        case Atom::definitionRegular:
+          handler.doDefinedAtom(*(DefinedAtom*)atom);
+          break;
+        case Atom::definitionUndefined:
+          handler.doUndefinedAtom(*(UndefinedAtom*)atom);
+          break;
+        default:
+          // TO DO
+          break;
+      }
     }
     return true;
   }

@@ -10,67 +10,59 @@ atoms:
       scope:             global
       definition:        regular
       type:              code
-      merge-duplicates:  true
-      auto-hide:         true
+      merge:             asWeak
      
     - name:              _inlineFunc2
       scope:             global
       definition:        regular
       type:              code
-      merge-duplicates:  true
-      auto-hide:         true
+      merge:             asWeak
     
     - name:              _inlineFunc3
       scope:             global
       definition:        regular
       type:              code
-      merge-duplicates:  true
-      auto-hide:         false
+      merge:             asAddressedWeak
     
     - name:              _inlineFunc4
       scope:             global
       definition:        regular
       type:              code
-      merge-duplicates:  true
-      auto-hide:         false
+      merge:             asAddressedWeak
 ---
 atoms:
     - name:              _inlineFunc1
       scope:             global
       definition:        regular
       type:              code
-      merge-duplicates:  true
-      auto-hide:         true
+      merge:             asWeak
     
     - name:              _inlineFunc2
       scope:             global
       definition:        regular
       type:              code
-      merge-duplicates:  true
-      auto-hide:         false
+      merge:             asAddressedWeak
    
     - name:              _inlineFunc3
       scope:             global
       definition:        regular
       type:              code
-      merge-duplicates:  true
-      auto-hide:         true
+      merge:             asWeak
   
     - name:              _inlineFunc4
       scope:             global
       definition:        regular
       type:              code
-      merge-duplicates:  true
-      auto-hide:         false
+      merge:             asAddressedWeak
 ...
 
 
 # CHECK:       name: _inlineFunc1
-# CHECK:       auto-hide: true
+# CHECK:       merge: asWeak
 # CHECK:       name: _inlineFunc3
-# CHECK-NOT:   auto-hide: true
+# CHECK:       merge: asAddressedWeak
 # CHECK:       name: _inlineFunc4
-# CHECK-NOT:   auto-hide: true
+# CHECK:       merge: asAddressedWeak
 # CHECK:       name: _inlineFunc2
-# CHECK-NOT:   auto-hide: true
+# CHECK:       merge: asAddressedWeak
 # CHECK:       ...

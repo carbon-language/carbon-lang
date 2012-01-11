@@ -14,6 +14,7 @@
 
 namespace lld {
 class Atom;
+class DefinedAtom;
 
 /// The Platform class encapsulated plaform specific linking knowledge.
 ///
@@ -29,15 +30,15 @@ public:
   virtual void atomAdded(const Atom &file) = 0;
 
   /// @brief give platform a chance to change each atom's scope
-  virtual void adjustScope(const Atom &atom) = 0;
+  virtual void adjustScope(const DefinedAtom &atom) = 0;
 
   /// @brief if specified atom needs alternate names, return AliasAtom(s)
   virtual bool getAliasAtoms(const Atom &atom,
-                             std::vector<const Atom *>&) = 0;
+                             std::vector<const DefinedAtom *>&) = 0;
 
   /// @brief give platform a chance to resolve platform-specific undefs
   virtual bool getPlatformAtoms(llvm::StringRef undefined,
-                                std::vector<const Atom *>&) = 0;
+                                std::vector<const DefinedAtom *>&) = 0;
 
   /// @brief resolver should remove unreferenced atoms
   virtual bool deadCodeStripping() = 0;
@@ -46,7 +47,7 @@ public:
   virtual bool isDeadStripRoot(const Atom &atom) = 0;
 
   /// @brief if target must have some atoms, denote here
-  virtual bool getImplicitDeadStripRoots(std::vector<const Atom *>&) = 0;
+  virtual bool getImplicitDeadStripRoots(std::vector<const DefinedAtom *>&) = 0;
 
   /// @brief return entry point for output file (e.g. "main") or NULL
   virtual llvm::StringRef entryPointName() = 0;

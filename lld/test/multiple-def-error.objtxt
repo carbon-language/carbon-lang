@@ -1,4 +1,4 @@
-# RUN:  lld-core %s  2>&1  |  grep "multiply defined" 
+# RUN:  lld-core %s  2>&1  |  grep "duplicate symbol" 
 
 #
 # Test that multiple definitions cause an error

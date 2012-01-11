@@ -8,7 +8,8 @@
 ---
 atoms:
     - name:         _foo
-      definition:   tentative
+      definition:   regular
+      merge:        asTentative
       scope:        global
       type:         zero-fill
       size:         4
@@ -23,4 +24,4 @@ atoms:
 
 
 # CHECK:        name: _foo
-# CHECK-NOT:   definition: tentative
+# CHECK-NOT:   merge: asTentative

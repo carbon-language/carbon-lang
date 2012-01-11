@@ -19,17 +19,35 @@
 
 #include <algorithm>
 #include <cassert>
+
 #include <vector>
 
 namespace lld {
 
+/// This is used as a filter function to std::remove_if to dead strip atoms.  
 class NotLive {
 public:
+       NotLive(const llvm::DenseSet<const Atom*>& la) : _liveAtoms(la) { }
+  
   bool operator()(const Atom *atom) const {
-    return !(atom->live() || !atom->deadStrip());
+    // don't remove if live
+    if ( _liveAtoms.count(atom) )
+      return false;
+	// don't remove if marked never-dead-strip
+    if ( const DefinedAtom* defAtom = atom->definedAtom() ) {
+      if ( defAtom->deadStrip() == DefinedAtom::deadStripNever )
+        return false;
+    }
+    // do remove this atom
+    return true;
   }
+  
+private:
+  const llvm::DenseSet<const Atom*> _liveAtoms;
 };
 
+
+/// This is used as a filter function to std::remove_if to coalesced atoms.  
 class AtomCoalescedAway {
 public:
   AtomCoalescedAway(SymbolTable &sym) : _symbolTable(sym) {}
@@ -42,6 +60,9 @@ public:
 private:
   SymbolTable &_symbolTable;
 };
+
+
+
 
 void Resolver::initializeState() {
   _platform.initialize();
@@ -68,24 +89,34 @@ void Resolver::doFile(const File &file) {
   _platform.fileAdded(file);
 }
 
+
+void Resolver::doUndefinedAtom(const class UndefinedAtom& atom) {
+  // add to list of known atoms
+  _atoms.push_back(&atom);
+  
+  // tell symbol table
+  _symbolTable.add(atom);
+}
+
+
 // called on each atom when a file is added
-void Resolver::doAtom(const Atom &atom) {
+void Resolver::doDefinedAtom(const DefinedAtom &atom) {
   // notify platform
   _platform.atomAdded(atom);
 
   // add to list of known atoms
   _atoms.push_back(&atom);
-
+  
   // adjust scope (e.g. force some globals to be hidden)
   _platform.adjustScope(atom);
 
   // non-static atoms need extra handling
-  if (atom.scope() != Atom::scopeTranslationUnit) {
+  if (atom.scope() != DefinedAtom::scopeTranslationUnit) {
     // tell symbol table about non-static atoms
     _symbolTable.add(atom);
 
     // platform can add aliases for any symbol
-    std::vector<const Atom *> aliases;
+    std::vector<const DefinedAtom *> aliases;
     if (_platform.getAliasAtoms(atom, aliases))
       this->addAtoms(aliases);
   }
@@ -104,10 +135,10 @@ void Resolver::doAtom(const Atom &atom) {
 }
 
 // utility to add a vector of atoms
-void Resolver::addAtoms(const std::vector<const Atom *> &newAtoms) {
-  for (std::vector<const Atom *>::const_iterator it = newAtoms.begin();
+void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
+  for (std::vector<const DefinedAtom *>::const_iterator it = newAtoms.begin();
        it != newAtoms.end(); ++it) {
-    this->doAtom(**it);
+    this->doDefinedAtom(**it);
   }
 }
 
@@ -135,7 +166,7 @@ void Resolver::resolveUndefines() {
         // give platform a chance to instantiate platform
         // specific atoms (e.g. section boundary)
         if (!_symbolTable.isDefined(undefName)) {
-          std::vector<const Atom *> platAtoms;
+          std::vector<const DefinedAtom *> platAtoms;
           if (_platform.getPlatformAtoms(undefName, platAtoms))
             this->addAtoms(platAtoms);
         }
@@ -146,9 +177,10 @@ void Resolver::resolveUndefines() {
       std::vector<const Atom *> tents;
       for (std::vector<const Atom *>::iterator ait = _atoms.begin();
            ait != _atoms.end(); ++ait) {
-        const Atom *atom = *ait;
-        if (atom->definition() == Atom::definitionTentative)
-          tents.push_back(atom);
+        if ( const DefinedAtom* defAtom = (*ait)->definedAtom() ) {
+          if ( defAtom->merge() == DefinedAtom::mergeAsTentative )
+            tents.push_back(defAtom);
+        }
       }
       for (std::vector<const Atom *>::iterator dit = tents.begin();
            dit != tents.end(); ++dit) {
@@ -157,9 +189,10 @@ void Resolver::resolveUndefines() {
         llvm::StringRef tentName = (*dit)->name();
         const Atom *curAtom = _symbolTable.findByName(tentName);
         assert(curAtom != NULL);
-        if (curAtom->definition() == Atom::definitionTentative) {
-          _inputFiles.searchLibraries(tentName, searchDylibs, true, true,
-                                      *this);
+        if ( const DefinedAtom* curDefAtom = curAtom->definedAtom() ) {
+          if (curDefAtom->merge() == DefinedAtom::mergeAsTentative )
+            _inputFiles.searchLibraries(tentName, searchDylibs, 
+                                        true, true, *this);
         }
       }
     }
@@ -171,10 +204,11 @@ void Resolver::resolveUndefines() {
 void Resolver::updateReferences() {
   for (std::vector<const Atom *>::iterator it = _atoms.begin();
        it != _atoms.end(); ++it) {
-    const Atom *atom = *it;
-    for (Reference::iterator rit = atom->referencesBegin(),
-         end = atom->referencesEnd(); rit != end; ++rit) {
-      rit->target = _symbolTable.replacement(rit->target);
+    if ( const DefinedAtom* defAtom = (*it)->definedAtom() ) {
+      for (Reference::iterator rit = defAtom->referencesBegin(),
+         end = defAtom->referencesEnd(); rit != end; ++rit) {
+        rit->target = _symbolTable.replacement(rit->target);
+      }
     }
   }
 }
@@ -195,19 +229,21 @@ void Resolver::markLive(const Atom &atom, WhyLiveBackChain *previous) {
   }
 
   // if already marked live, then done (stop recursion)
-  if (atom.live())
+  if ( _liveAtoms.count(&atom) )
     return;
 
   // mark this atom is live
-  const_cast<Atom *>(&atom)->setLive(true);
+  _liveAtoms.insert(&atom);
 
   // mark all atoms it references as live
   WhyLiveBackChain thisChain;
   thisChain.previous = previous;
   thisChain.referer = &atom;
-  for (Reference::iterator rit = atom.referencesBegin(),
-       end = atom.referencesEnd(); rit != end; ++rit) {
-    this->markLive(*(rit->target), &thisChain);
+  if ( const DefinedAtom* defAtom = atom.definedAtom() ) {
+    for (Reference::iterator rit = defAtom->referencesBegin(),
+        end = defAtom->referencesEnd(); rit != end; ++rit) {
+      this->markLive(*(rit->target), &thisChain);
+    }
   }
 }
 
@@ -218,11 +254,7 @@ void Resolver::deadStripOptimize() {
     return;
 
   // clear liveness on all atoms
-  for (std::vector<const Atom *>::iterator it = _atoms.begin();
-       it != _atoms.end(); ++it) {
-    const Atom *atom = *it;
-    const_cast<Atom *>(atom)->setLive(0);
-  }
+  _liveAtoms.clear();
 
   // add entry point (main) to live roots
   const Atom *entry = this->entryPoint();
@@ -239,7 +271,7 @@ void Resolver::deadStripOptimize() {
   }
 
   // add platform specific helper atoms
-  std::vector<const Atom *> platRootAtoms;
+  std::vector<const DefinedAtom *> platRootAtoms;
   if (_platform.getImplicitDeadStripRoots(platRootAtoms))
     this->addAtoms(platRootAtoms);
 
@@ -254,7 +286,7 @@ void Resolver::deadStripOptimize() {
 
   // now remove all non-live atoms from _atoms
   _atoms.erase(std::remove_if(_atoms.begin(), _atoms.end(),
-                              NotLive()), _atoms.end());
+                              NotLive(_liveAtoms)), _atoms.end());
 }
 
 // error out if some undefines remain
@@ -270,7 +302,7 @@ void Resolver::checkUndefines(bool final) {
     // when dead code stripping we don't care if dead atoms are undefined
     undefinedAtoms.erase(std::remove_if(
                            undefinedAtoms.begin(), undefinedAtoms.end(),
-                           NotLive()), undefinedAtoms.end());
+                           NotLive(_liveAtoms)), undefinedAtoms.end());
   }
 
   // let platform make error message about missing symbols
@@ -289,15 +321,16 @@ void Resolver::removeCoalescedAwayAtoms() {
 void Resolver::checkDylibSymbolCollisions() {
   for (std::vector<const Atom *>::const_iterator it = _atoms.begin();
        it != _atoms.end(); ++it) {
-    const Atom *atom = *it;
-    if (atom->scope() == Atom::scopeGlobal) {
-      if (atom->definition() == Atom::definitionTentative) {
-        // See if any shared library also has symbol which
-        // collides with the tentative definition.
-        // SymbolTable will warn if needed.
-        _inputFiles.searchLibraries(atom->name(), true, false, false, *this);
-      }
-    }
+    const DefinedAtom* defAtom = (*it)->definedAtom();
+    if ( defAtom == NULL ) 
+      continue;
+    if ( defAtom->merge() != DefinedAtom::mergeAsTentative ) 
+      continue;
+    assert(defAtom->scope() != DefinedAtom::scopeTranslationUnit);
+    // See if any shared library also has symbol which
+    // collides with the tentative definition.
+    // SymbolTable will warn if needed.
+    _inputFiles.searchLibraries(defAtom->name(), true, false, false, *this);
   }
 }
 

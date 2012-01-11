@@ -289,16 +289,17 @@ public:
   virtual bool justInTimeforEachAtom(llvm::StringRef name,
                                      File::AtomHandler &) const;
 
-  std::vector<Atom *> _atoms;
+  std::vector<DefinedAtom*> _definedAtoms;
+  std::vector<UndefinedAtom*> _undefinedAtoms;
   std::vector<Reference> _references;
   unsigned int _lastRefIndex;
 };
 
 bool YAMLFile::forEachAtom(File::AtomHandler &handler) const {
   handler.doFile(*this);
-  for (std::vector<Atom *>::const_iterator it = _atoms.begin();
-       it != _atoms.end(); ++it) {
-    handler.doAtom(**it);
+  for (std::vector<DefinedAtom *>::const_iterator it = _definedAtoms.begin();
+       it != _definedAtoms.end(); ++it) {
+    handler.doDefinedAtom(**it);
   }
   return true;
 }
@@ -309,90 +310,153 @@ bool YAMLFile::justInTimeforEachAtom(llvm::StringRef name,
 }
 
 
-class YAMLAtom : public Atom {
+class YAMLDefinedAtom : public DefinedAtom {
 public:
-  YAMLAtom( uint64_t ord
-          , Definition d
-          , Scope s
-          , ContentType ct
-          , SectionChoice sc
-          , bool intn
-          , bool md
-          , bool ah
-          , DeadStripKind dsk
-          , bool tb
-          , bool al
-          , Alignment a
-          , YAMLFile& f
-          , const char *n
-          , const char* sn
-          , uint64_t sz
-          , std::vector<uint8_t>* c)
-    : Atom(ord, d, s, ct, sc, intn, md, ah, dsk, tb, al, a)
-    , _file(f)
-    , _name(n)
-    , _sectionName(sn)
-    , _content(c)
-    , _size(sz)
-    , _refStartIndex(f._lastRefIndex)
-    , _refEndIndex(f._references.size()) {
-    f._lastRefIndex = _refEndIndex;
+  YAMLDefinedAtom( uint32_t ord
+          , YAMLFile& file
+          , DefinedAtom::Scope scope
+          , DefinedAtom::ContentType type
+          , DefinedAtom::SectionChoice sectionChoice
+          , DefinedAtom::Interposable interpose
+          , DefinedAtom::Merge merge
+          , DefinedAtom::DeadStripKind deadStrip
+          , DefinedAtom::ContentPermissions perms
+          , bool internalName
+          , bool isThumb
+          , bool isAlias
+          , DefinedAtom::Alignment alignment
+          , const char* name
+          , const char* sectionName
+          , uint64_t size
+          , std::vector<uint8_t>* content)
+    : _file(file)
+    , _name(name)
+    , _sectionName(sectionName)
+    , _size(size)
+    , _ord(ord)
+    , _content(content)
+    , _alignment(alignment)
+    , _scope(scope)
+    , _type(type)
+    , _sectionChoice(sectionChoice)
+    , _interpose(interpose)
+    , _merge(merge)
+    , _deadStrip(deadStrip)
+    , _permissions(perms)
+    , _internalName(internalName)
+    , _isThumb(isThumb)
+    , _isAlias(isAlias)
+    , _refStartIndex(file._lastRefIndex)
+    , _refEndIndex(file._references.size()) {
+    file._lastRefIndex = _refEndIndex;
   }
 
   virtual const class File& file() const {
     return _file;
   }
 
-  virtual bool translationUnitSource(const char* *dir, const char* *name) const{
-    return false;
-  }
-
   virtual llvm::StringRef name() const {
     return _name;
   }
+
+  virtual bool internalName() const {
+    return _internalName;
+  }
   
-  virtual llvm::StringRef customSectionName() const {
-    return (_sectionName ? _sectionName : llvm::StringRef());
-  }
-
-  virtual uint64_t objectAddress() const {
-    return 0;
-  }
-
-  virtual uint64_t size() const {
+ virtual uint64_t size() const {
     return (_content ? _content->size() : _size);
   }
 
-  llvm::ArrayRef<uint8_t> rawContent() const {
+  virtual DefinedAtom::Scope scope() const {
+    return _scope;
+  }
+  
+  virtual DefinedAtom::Interposable interposable() const {
+    return _interpose;
+  }
+  
+  virtual DefinedAtom::Merge merge() const {
+    return _merge;
+  }
+
+  virtual DefinedAtom::ContentType contentType() const {
+    return _type;
+  }
+    
+  virtual DefinedAtom::Alignment alignment() const {
+    return _alignment;
+  }
+  
+  virtual DefinedAtom::SectionChoice sectionChoice() const {
+    return _sectionChoice;
+  }
+
+  virtual llvm::StringRef customSectionName() const {
+    return _sectionName;
+  }
+    
+  virtual DefinedAtom::DeadStripKind deadStrip() const {
+    return _deadStrip;
+  }
+    
+  virtual DefinedAtom::ContentPermissions permissions() const {
+    return _permissions;
+  }
+  
+  virtual bool isThumb() const {
+    return _isThumb;
+  }
+    
+  virtual bool isAlias() const {
+    return _isAlias;
+  }
+  
+ llvm::ArrayRef<uint8_t> rawContent() const {
     if ( _content != NULL ) 
       return llvm::ArrayRef<uint8_t>(*_content);
     else
       return llvm::ArrayRef<uint8_t>();
   }
+ 
+  virtual uint64_t ordinal() const {
+    return _ord;
+  }
+
   
-  virtual Reference::iterator referencesBegin() const;
-  virtual Reference::iterator referencesEnd() const;
+  virtual Reference::iterator referencesBegin() const {
+    if (_file._references.size() < _refStartIndex)
+      return (Reference::iterator)&_file._references[_refStartIndex];
+    return 0;
+  }
+  
+  virtual Reference::iterator referencesEnd() const {
+    if (_file._references.size() < _refEndIndex)
+      return (Reference::iterator)&_file._references[_refEndIndex];
+    return 0;
+  }
+  
 private:
-  YAMLFile&             _file;
-  const char *          _name;
-  const char *          _sectionName;
-  std::vector<uint8_t>* _content;
-  unsigned long         _size;
-  unsigned int          _refStartIndex;
-  unsigned int          _refEndIndex;
+  YAMLFile&                   _file;
+  const char *                _name;
+  const char *                _sectionName;
+  unsigned long               _size;
+  uint32_t                    _ord;
+  std::vector<uint8_t>*       _content;
+  DefinedAtom::Alignment      _alignment;
+  DefinedAtom::Scope          _scope;
+  DefinedAtom::ContentType    _type;
+  DefinedAtom::SectionChoice  _sectionChoice;
+  DefinedAtom::Interposable   _interpose;
+  DefinedAtom::Merge          _merge;
+  DefinedAtom::DeadStripKind  _deadStrip;
+  DefinedAtom::ContentPermissions _permissions;
+  bool                        _internalName;
+  bool                        _isThumb;
+  bool                        _isAlias;
+  unsigned int                _refStartIndex;
+  unsigned int                _refEndIndex;
 };
 
-Reference::iterator YAMLAtom::referencesBegin() const {
-  if (_file._references.size() < _refStartIndex)
-    return (Reference::iterator)&_file._references[_refStartIndex];
-  return 0;
-}
-
-Reference::iterator YAMLAtom::referencesEnd() const {
-  if (_file._references.size() < _refEndIndex)
-    return (Reference::iterator)&_file._references[_refEndIndex];
-  return 0;
-}
 
 class YAMLAtomState {
 public:
@@ -408,42 +472,46 @@ public:
 
   void makeAtom(YAMLFile&);
 
-  uint64_t  _ordinal;
-  long long _size;
-  const char *_name;
-  Atom::Alignment _align;
-  Atom::ContentType _type;
-  Atom::Scope _scope;
-  Atom::Definition _def;
-  Atom::SectionChoice _sectionChoice;
-  bool _internalName;
-  bool _mergeDuplicates;
-  Atom::DeadStripKind _deadStrip;
-  bool _thumb;
-  bool _alias;
-  bool _autoHide;
-  const char *_sectionName;
-  std::vector<uint8_t>* _content;
-  Reference _ref;
+  const char *                _name;
+  const char *                _sectionName;
+  unsigned long long          _size;
+  uint32_t                    _ordinal;
+  std::vector<uint8_t>*       _content;
+  DefinedAtom::Alignment      _alignment;
+  Atom::Definition            _definition;
+  DefinedAtom::Scope          _scope;
+  DefinedAtom::ContentType    _type;
+  DefinedAtom::SectionChoice  _sectionChoice;
+  DefinedAtom::Interposable   _interpose;
+  DefinedAtom::Merge          _merge;
+  DefinedAtom::DeadStripKind  _deadStrip;
+  DefinedAtom::ContentPermissions _permissions;
+  bool                        _internalName;
+  bool                        _isThumb;
+  bool                        _isAlias;
+  Reference                   _ref;
 };
 
+
 YAMLAtomState::YAMLAtomState()
-  : _ordinal(0)
-  , _size(0)
-  , _name(NULL)
-  , _align(0, 0)
-  , _type(KeyValues::contentTypeDefault)
-  , _scope(KeyValues::scopeDefault)
-  , _def(KeyValues::definitionDefault)
-  , _sectionChoice(KeyValues::sectionChoiceDefault)
-  , _internalName(KeyValues::internalNameDefault)
-  , _mergeDuplicates(KeyValues::mergeDuplicatesDefault)
-  , _deadStrip(KeyValues::deadStripKindDefault)
-  , _thumb(KeyValues::isThumbDefault)
-  , _alias(KeyValues::isAliasDefault) 
-  , _autoHide(KeyValues::autoHideDefault)
+  : _name(NULL)
   , _sectionName(NULL)
-  , _content(NULL) {
+  , _size(0)
+  , _ordinal(0)
+  , _content(NULL) 
+  , _alignment(0, 0)
+  , _definition(KeyValues::definitionDefault)
+  , _scope(KeyValues::scopeDefault)
+  , _type(KeyValues::contentTypeDefault)
+  , _sectionChoice(KeyValues::sectionChoiceDefault)
+  , _interpose(KeyValues::interposableDefault)
+  , _merge(KeyValues::mergeDefault)
+  , _deadStrip(KeyValues::deadStripKindDefault)
+  , _permissions(KeyValues::permissionsDefault)
+  , _internalName(KeyValues::internalNameDefault)
+  , _isThumb(KeyValues::isThumbDefault)
+  , _isAlias(KeyValues::isAliasDefault) 
+  {
   _ref.target       = NULL;
   _ref.addend       = 0;
   _ref.offsetInAtom = 0;
@@ -451,31 +519,36 @@ YAMLAtomState::YAMLAtomState()
   _ref.flags        = 0;
 }
 
-void YAMLAtomState::makeAtom(YAMLFile& f) {
-  Atom *a = new YAMLAtom(_ordinal, _def, _scope, _type, _sectionChoice,
-                         _internalName, _mergeDuplicates, _autoHide,  
-                         _deadStrip, _thumb, _alias, _align, f, 
-                         _name, _sectionName, _size, _content);
 
-  f._atoms.push_back(a);
-  ++_ordinal;
+void YAMLAtomState::makeAtom(YAMLFile& f) {
+  if ( _definition == Atom::definitionRegular ) {
+    DefinedAtom *a = new YAMLDefinedAtom(_ordinal, f, _scope, _type,
+                          _sectionChoice, _interpose, _merge, _deadStrip,
+                          _permissions,  _internalName, _isThumb, _isAlias, 
+                          _alignment, _name, _sectionName, _size, _content);
+
+    f._definedAtoms.push_back(a);
+    ++_ordinal;
+  }
   
   // reset state for next atom
   _name             = NULL;
-  _align.powerOf2   = 0;
-  _align.modulus    = 0;
-  _type             = KeyValues::contentTypeDefault;
-  _scope            = KeyValues::scopeDefault;
-  _def              = KeyValues::definitionDefault;
-  _sectionChoice    = KeyValues::sectionChoiceDefault;
-  _internalName     = KeyValues::internalNameDefault;
-  _mergeDuplicates  = KeyValues::mergeDuplicatesDefault;
-  _deadStrip        = KeyValues::deadStripKindDefault;
-  _thumb            = KeyValues::isThumbDefault;
-  _alias            = KeyValues::isAliasDefault;
-  _autoHide         = KeyValues::autoHideDefault;
   _sectionName      = NULL;
+  _size             = 0;
+  _ordinal          = 0;
   _content          = NULL;
+  _alignment.powerOf2= 0;
+  _alignment.modulus = 0;
+  _definition       = KeyValues::definitionDefault;
+  _scope            = KeyValues::scopeDefault;
+  _type             = KeyValues::contentTypeDefault;
+  _sectionChoice    = KeyValues::sectionChoiceDefault;
+  _interpose        = KeyValues::interposableDefault;
+  _merge            = KeyValues::mergeDefault;
+  _deadStrip        = KeyValues::deadStripKindDefault;
+  _permissions      = KeyValues::permissionsDefault;
+  _isThumb          = KeyValues::isThumbDefault;
+  _isAlias          = KeyValues::isAliasDefault;
   _ref.target       = NULL;
   _ref.addend       = 0;
   _ref.offsetInAtom = 0;
@@ -492,7 +565,7 @@ void YAMLAtomState::setAlign2(const char *s) {
   llvm::StringRef str(s);
   uint32_t res;
   str.getAsInteger(10, res);
-  _align.powerOf2 = static_cast<uint16_t>(res);
+  _alignment.powerOf2 = static_cast<uint16_t>(res);
 }
 
 
@@ -590,7 +663,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
           haveAtom = true;
         }
         else if (strcmp(entry->key, KeyValues::definitionKeyword) == 0) {
-          atomState._def = KeyValues::definition(entry->value);
+          atomState._definition = KeyValues::definition(entry->value);
           haveAtom = true;
         } 
         else if (strcmp(entry->key, KeyValues::scopeKeyword) == 0) {
@@ -609,20 +682,20 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
           atomState._sectionChoice = KeyValues::sectionChoice(entry->value);
           haveAtom = true;
         }
-        else if (strcmp(entry->key, KeyValues::mergeDuplicatesKeyword) == 0) {
-          atomState._mergeDuplicates = KeyValues::mergeDuplicates(entry->value);
+        else if (strcmp(entry->key, KeyValues::mergeKeyword) == 0) {
+          atomState._merge = KeyValues::merge(entry->value);
           haveAtom = true;
         }
-        else if (strcmp(entry->key, KeyValues::autoHideKeyword) == 0) {
-          atomState._autoHide = KeyValues::autoHide(entry->value);
+        else if (strcmp(entry->key, KeyValues::interposableKeyword) == 0) {
+          atomState._interpose = KeyValues::interposable(entry->value);
           haveAtom = true;
         }
         else if (strcmp(entry->key, KeyValues::isThumbKeyword) == 0) {
-          atomState._thumb = KeyValues::isThumb(entry->value);
+          atomState._isThumb = KeyValues::isThumb(entry->value);
           haveAtom = true;
         }
         else if (strcmp(entry->key, KeyValues::isAliasKeyword) == 0) {
-          atomState._alias = KeyValues::isAlias(entry->value);
+          atomState._isAlias = KeyValues::isAlias(entry->value);
           haveAtom = true;
         }
         else if (strcmp(entry->key, KeyValues::sectionNameKeyword) == 0) {

@@ -21,6 +21,8 @@
 namespace lld {
 
 class Atom;
+class DefinedAtom;
+class UndefinedAtom;
 class Platform;
 
 /// The SymbolTable class is responsible for coalescing atoms.
@@ -33,7 +35,10 @@ public:
       SymbolTable(Platform& plat);
 
   /// @brief add atom to symbol table
-  void add(const Atom &);
+  void add(const DefinedAtom &);
+
+  /// @brief add atom to symbol table
+  void add(const UndefinedAtom &);
 
   /// @brief checks if name is in symbol table and if so atom is not
   ///        UndefinedAtom
@@ -55,15 +60,16 @@ private:
   typedef std::map<llvm::StringRef, const Atom *> NameToAtom;
   typedef std::map<const Atom *, const Atom *> AtomToAtom;
   struct MyMappingInfo {
-    static const Atom * getEmptyKey() { return NULL; }
-    static const Atom * getTombstoneKey() { return (Atom*)(-1); }
-    static unsigned getHashValue(const Atom * const Val);
-    static bool isEqual(const Atom * const LHS, const Atom * const RHS);
+    static const DefinedAtom * getEmptyKey() { return NULL; }
+    static const DefinedAtom * getTombstoneKey() { return (DefinedAtom*)(-1); }
+    static unsigned getHashValue(const DefinedAtom * const Val);
+    static bool isEqual(const DefinedAtom * const LHS, 
+                        const DefinedAtom * const RHS);
   };
-  typedef llvm::DenseSet<const Atom*, MyMappingInfo> AtomContentSet;
+  typedef llvm::DenseSet<const DefinedAtom*, MyMappingInfo> AtomContentSet;
 
   void addByName(const Atom &);
-  void addByContent(const Atom &);
+  void addByContent(const DefinedAtom &);
 
   Platform&  _platform;
   AtomToAtom _replacedAtoms;

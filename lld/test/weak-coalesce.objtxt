@@ -7,7 +7,8 @@
 ---
 atoms:
     - name:         _foo
-      definition:   weak
+      definition:   regular
+      merge:        asWeak
       scope:        global
       type:         data
 ---
@@ -19,13 +20,14 @@ atoms:
 ---
 atoms:
     - name:         _foo
-      definition:   weak
+      definition:   regular
+      merge:        asWeak
       scope:        global
       type:         data
 ...
 
 
 # CHECK:       name: _foo
-# CHECK-NOT:   definition: weak
+# CHECK-NOT:   merge: asWeak
 # CHECK-NOT:   name: _foo
 # CHECK:       ...

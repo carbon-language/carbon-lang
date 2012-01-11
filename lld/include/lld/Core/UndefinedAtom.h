@@ -20,22 +20,9 @@ namespace lld {
 /// It exists as a place holder for a future atom.
 class UndefinedAtom : public Atom {
 public:
-  UndefinedAtom(llvm::StringRef nm, const File& f)
-    : Atom( 0,
-            Atom::definitionUndefined
-          , Atom::scopeLinkageUnit
-          , Atom::typeUnknown
-          , Atom::sectionBasedOnContent
-          , false
-          , false
-		  , false
-          , deadStripNormal
-          , false
-          , false
-          , Atom::Alignment(0))
-    , _name(nm), _file(f) {}
+  UndefinedAtom(llvm::StringRef nm, bool weakImport, const File& f)
+          : _name(nm), _file(f), _weakImport(weakImport) {}
 
-  // overrides of Atom
   virtual const File& file() const {
     return _file;
   }
@@ -43,21 +30,21 @@ public:
   virtual llvm::StringRef name() const {
     return _name;
   }
-  virtual uint64_t size() const {
-    return 0;
+
+  virtual Definition definition() const {
+    return Atom::definitionUndefined;
   }
-  virtual uint64_t objectAddress() const {
-    return 0;
+
+  virtual bool weakImport() const {
+    return _weakImport;
   }
-  virtual void copyRawContent(uint8_t buffer[]) const { }
-  virtual void setScope(Scope) { }
-  bool weakImport();
 
 protected:
   virtual ~UndefinedAtom() {}
 
   llvm::StringRef _name;
   const File&     _file;
+  bool            _weakImport;
 };
 
 } // namespace lld

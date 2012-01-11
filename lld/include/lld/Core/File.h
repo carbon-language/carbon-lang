@@ -12,6 +12,9 @@
 
 #include "llvm/ADT/StringRef.h"
 
+#include "lld/Core/DefinedAtom.h"
+#include "lld/Core/UndefinedAtom.h"
+
 namespace lld {
 
 class File {
@@ -22,7 +25,8 @@ public:
   class AtomHandler {
   public:
     virtual ~AtomHandler() {}
-    virtual void doAtom(const class Atom &) = 0;
+    virtual void doDefinedAtom(const class DefinedAtom &) = 0;
+    virtual void doUndefinedAtom(const class UndefinedAtom &) = 0;
     virtual void doFile(const class File &) = 0;
   };
 

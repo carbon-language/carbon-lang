@@ -13,6 +13,8 @@
 #include "lld/Core/File.h"
 #include "lld/Core/SymbolTable.h"
 
+#include "llvm/ADT/DenseSet.h"
+
 #include <vector>
 #include <set>
 
@@ -39,8 +41,9 @@ public:
     , _completedInitialObjectFiles(false) {}
 
   // AtomHandler methods
-  virtual void doAtom(const Atom &);
-  virtual void doFile(const File &);
+  virtual void doDefinedAtom(const class DefinedAtom&);
+  virtual void doUndefinedAtom(const class UndefinedAtom&);
+  virtual void doFile(const File&);
 
   /// @brief do work of merging and resolving and return list
   std::vector<const Atom *> &resolve();
@@ -65,7 +68,7 @@ private:
 
   const Atom *entryPoint();
   void markLive(const Atom &atom, WhyLiveBackChain *previous);
-  void addAtoms(const std::vector<const Atom *>&);
+  void addAtoms(const std::vector<const DefinedAtom *>&);
 
   Platform &_platform;
   const InputFiles &_inputFiles;
@@ -73,6 +76,7 @@ private:
   std::vector<const Atom *> _atoms;
   std::set<const Atom *> _deadStripRoots;
   std::vector<const Atom *> _atomsWithUnresolvedReferences;
+  llvm::DenseSet<const Atom *> _liveAtoms;
   bool _haveLLVMObjs;
   bool _addToFinalSection;
   bool _completedInitialObjectFiles;

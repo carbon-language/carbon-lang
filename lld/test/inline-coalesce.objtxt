@@ -10,25 +10,25 @@ atoms:
       scope:             global
       definition:        regular
       type:              code
-      merge-duplicates:  true
+      merge:             asWeak
 ---
 atoms:
     - name:              _inlineFunc
       scope:             global
       definition:        regular
       type:              code
-      merge-duplicates:  true
+      merge:             asWeak
 ---
 atoms:
     - name:              _inlineFunc
       scope:             global
       definition:        regular
       type:              code
-      merge-duplicates:  true
+      merge:             asWeak
 ...
 
 
 # CHECK:       name: _inlineFunc
-# CHECK:       merge-duplicates: true
+# CHECK:       merge: asWeak
 # CHECK-NOT:   name: _inlineFunc
 # CHECK:       ...

@@ -32,7 +32,7 @@ public:
 
   virtual void doFile(const class File &) { _firstAtom = true; }
   
-  virtual void doAtom(const class Atom &atom) {
+  virtual void doDefinedAtom(const class DefinedAtom &atom) {
       // add blank line between atoms for readability
       if ( !_firstAtom )
         _out << "\n";
@@ -72,6 +72,24 @@ public:
             << "\n";
     }
     
+     if ( atom.interposable() != KeyValues::interposableDefault ) {
+      _out  << "      " 
+            << KeyValues::interposableKeyword 
+            << ":"
+            << spacePadding(KeyValues::interposableKeyword)
+            << KeyValues::interposable(atom.interposable()) 
+            << "\n";
+    }
+    
+	if ( atom.merge() != KeyValues::mergeDefault ) {
+      _out  << "      " 
+            << KeyValues::mergeKeyword 
+            << ":"
+            << spacePadding(KeyValues::mergeKeyword)
+            << KeyValues::merge(atom.merge()) 
+            << "\n";
+    }
+    
     if ( atom.contentType() != KeyValues::contentTypeDefault ) {
       _out  << "      " 
             << KeyValues::contentTypeKeyword 
@@ -106,25 +124,7 @@ public:
             << "\n";
     }
 
-    if ( atom.mergeDuplicates() != KeyValues::mergeDuplicatesDefault ) {
-      _out  << "      " 
-            << KeyValues::mergeDuplicatesKeyword 
-            << ":"
-            << spacePadding(KeyValues::mergeDuplicatesKeyword)
-            << KeyValues::mergeDuplicates(atom.mergeDuplicates()) 
-            << "\n";
-    }
-
-    if ( atom.autoHide() != KeyValues::autoHideDefault ) {
-      _out  << "      " 
-            << KeyValues::autoHideKeyword 
-            << ":"
-            << spacePadding(KeyValues::autoHideKeyword)
-            << KeyValues::autoHide(atom.autoHide()) 
-            << "\n";
-    }
-
-    if ( atom.isThumb() != KeyValues::isThumbDefault ) {
+	if ( atom.isThumb() != KeyValues::isThumbDefault ) {
       _out  << "      " 
             << KeyValues::isThumbKeyword 
             << ":"
@@ -142,8 +142,7 @@ public:
             << "\n";
     }
 
-     
-    if ( atom.contentType() != Atom::typeZeroFill ) {
+    if ( atom.contentType() != DefinedAtom::typeZeroFill ) {
       _out  << "      " 
             << KeyValues::contentKeyword 
             << ":"
@@ -171,6 +170,11 @@ public:
     }
 
   }
+
+	virtual void doUndefinedAtom(const class UndefinedAtom &atom) {
+
+	}
+
 
 private:
   // return a string of the correct number of spaces to align value

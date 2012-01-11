@@ -9,6 +9,8 @@
 
 #include "lld/Core/SymbolTable.h"
 #include "lld/Core/Atom.h"
+#include "lld/Core/DefinedAtom.h"
+#include "lld/Core/UndefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
 #include "lld/Core/Resolver.h"
@@ -30,12 +32,16 @@ SymbolTable::SymbolTable(Platform& plat)
   : _platform(plat) {
 }
 
-void SymbolTable::add(const Atom &atom) {
-  assert(atom.scope() != Atom::scopeTranslationUnit);
+void SymbolTable::add(const UndefinedAtom &atom) {
+  this->addByName(atom);
+}
+
+void SymbolTable::add(const DefinedAtom &atom) {
+  assert(atom.scope() != DefinedAtom::scopeTranslationUnit);
   if ( !atom.internalName() ) {
     this->addByName(atom);
   }
-  else if ( atom.mergeDuplicates() ) {
+  else {
     this->addByContent(atom);
   }
 }
@@ -43,37 +49,27 @@ void SymbolTable::add(const Atom &atom) {
 enum NameCollisionResolution {
   NCR_First,
   NCR_Second,
-  NCR_Weak,
-  NCR_Larger,
   NCR_Dup,
   NCR_Error
 };
 
-static NameCollisionResolution cases[6][6] = {
-  //regular     weak         tentative   absolute    undef      sharedLib
+static NameCollisionResolution cases[4][4] = {
+  //regular     absolute    undef      sharedLib
   {
     // first is regular
-    NCR_Dup,    NCR_First,   NCR_First,  NCR_Error,  NCR_First, NCR_First
-  },
-  {
-    // first is weak
-    NCR_Second, NCR_Weak,   NCR_Larger, NCR_Error,  NCR_First, NCR_First
-  },
-  {
-    // first is tentative
-    NCR_Second, NCR_Second, NCR_Larger, NCR_Error,  NCR_First, NCR_First
+    NCR_Dup,   NCR_Error,   NCR_First, NCR_First
   },
   {
     // first is absolute
-    NCR_Error,  NCR_Error,  NCR_Error,  NCR_Error,  NCR_First, NCR_First
+    NCR_Error,  NCR_Error,  NCR_First, NCR_First
   },
   {
     // first is undef
-    NCR_Second, NCR_Second, NCR_Second, NCR_Second, NCR_First, NCR_Second
+    NCR_Second, NCR_Second, NCR_First, NCR_Second
   },
   {
     // first is sharedLib
-    NCR_Second, NCR_Second, NCR_Second, NCR_Second, NCR_First, NCR_First
+    NCR_Second, NCR_Second, NCR_First, NCR_First
   }
 };
 
@@ -81,6 +77,40 @@ static NameCollisionResolution collide(Atom::Definition first,
                                        Atom::Definition second) {
   return cases[first][second];
 }
+
+
+enum MergeResolution {
+  MCR_First,
+  MCR_Second,
+  MCR_Largest,
+  MCR_Error
+};
+
+static MergeResolution mergeCases[4][4] = {
+  // no        tentative     weak       weakAddressUsed
+  {
+    // first is no
+    MCR_Error,  MCR_First,   MCR_First, MCR_First
+  },
+  {
+    // first is tentative
+    MCR_Second, MCR_Largest, MCR_Second, MCR_Second
+  },
+  {
+    // first is weak
+    MCR_Second, MCR_First,   MCR_First, MCR_Second
+  },
+  {
+    // first is weakAddressUsed
+    MCR_Second, MCR_First,   MCR_First, MCR_First
+  }
+};
+
+static MergeResolution mergeSelect(DefinedAtom::Merge first, 
+                                   DefinedAtom::Merge second) {
+  return mergeCases[first][second];
+}
+
 
 void SymbolTable::addByName(const Atom & newAtom) {
   llvm::StringRef name = newAtom.name();
@@ -93,31 +123,33 @@ void SymbolTable::addByName(const Atom & newAtom) {
     // Name is already in symbol table and associated with another atom.
     bool useNew = true;
     switch (collide(existing->definition(), newAtom.definition())) {
-    case NCR_First:
-      useNew = false;
-      break;
-    case NCR_Second:
-      useNew = true;
-      break;
-    case NCR_Dup:
-      if ( existing->mergeDuplicates() && newAtom.mergeDuplicates() ) {
-        // Both mergeable.  Use auto-hide bit as tie breaker
-        if ( existing->autoHide() != newAtom.autoHide() ) {
-          // They have different autoHide values, keep non-autohide one
-          useNew = existing->autoHide();
+      case NCR_First:
+        useNew = false;
+        break;
+      case NCR_Second:
+        useNew = true;
+        break;
+      case NCR_Dup:
+        assert(existing->definition() == Atom::definitionRegular);
+        assert(newAtom.definition() == Atom::definitionRegular);
+        switch ( mergeSelect(((DefinedAtom*)existing)->merge(), 
+                            ((DefinedAtom*)(&newAtom))->merge()) ) {
+          case MCR_First:
+            useNew = false;
+            break;
+          case MCR_Second:
+            useNew = true;
+            break;
+          case MCR_Largest:
+            useNew = true;
+            break;
+          case MCR_Error:
+            llvm::report_fatal_error("duplicate symbol error");
+            break;
         }
-        else {
-          // They have same autoHide, so just keep using existing
-          useNew = false;
-        }
-      }
-      else {
-        const Atom& use = _platform.handleMultipleDefinitions(*existing, newAtom);
-        useNew = ( &use != existing ); 
-      }
-      break;
-    default:
-      llvm::report_fatal_error("SymbolTable::addByName(): unhandled switch clause");
+        break;
+      default:
+        llvm::report_fatal_error("SymbolTable::addByName(): unhandled switch clause");
     }
     if ( useNew ) {
       // Update name table to use new atom.
@@ -133,9 +165,9 @@ void SymbolTable::addByName(const Atom & newAtom) {
 }
 
 
-unsigned SymbolTable::MyMappingInfo::getHashValue(const Atom * const atom) {
+unsigned SymbolTable::MyMappingInfo::getHashValue(const DefinedAtom * const atom) {
   unsigned hash = atom->size();
-  if ( atom->contentType() != Atom::typeZeroFill ) {
+  if ( atom->contentType() != DefinedAtom::typeZeroFill ) {
     llvm::ArrayRef<uint8_t> content = atom->rawContent();
     for (unsigned int i=0; i < content.size(); ++i) {
       hash = hash * 33 + content[i];
@@ -148,8 +180,8 @@ unsigned SymbolTable::MyMappingInfo::getHashValue(const Atom * const atom) {
 }
 
 
-bool SymbolTable::MyMappingInfo::isEqual(const Atom * const l, 
-                                         const Atom * const r) {
+bool SymbolTable::MyMappingInfo::isEqual(const DefinedAtom * const l, 
+                                         const DefinedAtom * const r) {
   if ( l == r )
     return true;
   if ( l == getEmptyKey() )
@@ -171,7 +203,7 @@ bool SymbolTable::MyMappingInfo::isEqual(const Atom * const l,
 }
 
 
-void SymbolTable::addByContent(const Atom & newAtom) {
+void SymbolTable::addByContent(const DefinedAtom & newAtom) {
   AtomContentSet::iterator pos = _contentTable.find(&newAtom);
   if ( pos == _contentTable.end() ) {
     _contentTable.insert(&newAtom);

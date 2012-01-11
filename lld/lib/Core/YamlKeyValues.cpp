@@ -18,61 +18,33 @@ namespace yaml {
 
 
 const char* const KeyValues::nameKeyword            = "name";
-const char* const KeyValues::scopeKeyword           = "scope";
 const char* const KeyValues::definitionKeyword      = "definition";
+const char* const KeyValues::scopeKeyword           = "scope";
 const char* const KeyValues::contentTypeKeyword     = "type";
 const char* const KeyValues::deadStripKindKeyword   = "dead-strip";
 const char* const KeyValues::sectionChoiceKeyword   = "section-choice";
 const char* const KeyValues::internalNameKeyword    = "internal-name";
-const char* const KeyValues::mergeDuplicatesKeyword = "merge-duplicates";
-const char* const KeyValues::autoHideKeyword        = "auto-hide";
+const char* const KeyValues::interposableKeyword    = "interposable";
+const char* const KeyValues::mergeKeyword           = "merge";
 const char* const KeyValues::isThumbKeyword         = "is-thumb";
 const char* const KeyValues::isAliasKeyword         = "is-alias";
 const char* const KeyValues::sectionNameKeyword     = "section-name";
 const char* const KeyValues::contentKeyword         = "content";
 const char* const KeyValues::sizeKeyword            = "size";
+const char* const KeyValues::permissionsKeyword      = "permissions";
 
 
-const Atom::Scope         KeyValues::scopeDefault = Atom::scopeTranslationUnit;
-const Atom::Definition    KeyValues::definitionDefault = Atom::definitionRegular;
-const Atom::ContentType   KeyValues::contentTypeDefault = Atom::typeData;
-const Atom::DeadStripKind KeyValues::deadStripKindDefault = Atom::deadStripNormal;
-const Atom::SectionChoice KeyValues::sectionChoiceDefault = Atom::sectionBasedOnContent;
-const bool                KeyValues::internalNameDefault = false;
-const bool                KeyValues::mergeDuplicatesDefault = false;
-const bool                KeyValues::autoHideDefault = false;
-const bool                KeyValues::isThumbDefault = false;
-const bool                KeyValues::isAliasDefault = false;
-
-
-struct ScopeMapping {
-	const char* string;
-	Atom::Scope value;
-};
-
-static const ScopeMapping scopeMappings[] = {
-	{ "global", Atom::scopeGlobal },
-	{ "hidden", Atom::scopeLinkageUnit },
-	{ "static", Atom::scopeTranslationUnit },
-  { NULL,     Atom::scopeGlobal }
-};
-  
-Atom::Scope KeyValues::scope(const char* s)
-{
-	for (const ScopeMapping* p = scopeMappings; p->string != NULL; ++p) {
-    if ( strcmp(p->string, s) == 0 )
-      return p->value;
-  }
-  llvm::report_fatal_error("bad scope value");
-}
-
-const char* KeyValues::scope(Atom::Scope s) {
-	for (const ScopeMapping* p = scopeMappings; p->string != NULL; ++p) {
-    if ( p->value == s )
-      return p->string;
-  }
-  llvm::report_fatal_error("bad scope value");
-}
+const DefinedAtom::Definition         KeyValues::definitionDefault = Atom::definitionRegular;
+const DefinedAtom::Scope              KeyValues::scopeDefault = DefinedAtom::scopeTranslationUnit;
+const DefinedAtom::ContentType        KeyValues::contentTypeDefault = DefinedAtom::typeData;
+const DefinedAtom::DeadStripKind      KeyValues::deadStripKindDefault = DefinedAtom::deadStripNormal;
+const DefinedAtom::SectionChoice      KeyValues::sectionChoiceDefault = DefinedAtom::sectionBasedOnContent;
+const DefinedAtom::Interposable       KeyValues::interposableDefault = DefinedAtom::interposeNo;
+const DefinedAtom::Merge              KeyValues::mergeDefault = DefinedAtom::mergeNo;
+const DefinedAtom::ContentPermissions KeyValues::permissionsDefault = DefinedAtom::permR__;
+const bool                            KeyValues::internalNameDefault = false;
+const bool                            KeyValues::isThumbDefault = false;
+const bool                            KeyValues::isAliasDefault = false;
 
 
 
@@ -85,8 +57,6 @@ struct DefinitionMapping {
 
 static const DefinitionMapping defMappings[] = {
 	{ "regular",        Atom::definitionRegular },
-	{ "weak",           Atom::definitionWeak },
-	{ "tentative",      Atom::definitionTentative },
 	{ "absolute",       Atom::definitionAbsolute },
 	{ "undefined",      Atom::definitionUndefined },
 	{ "shared-library", Atom::definitionSharedLibrary },
@@ -114,40 +84,76 @@ const char* KeyValues::definition(Atom::Definition s) {
 
 
 
+struct ScopeMapping {
+	const char* string;
+	DefinedAtom::Scope value;
+};
+
+static const ScopeMapping scopeMappings[] = {
+	{ "global", DefinedAtom::scopeGlobal },
+	{ "hidden", DefinedAtom::scopeLinkageUnit },
+	{ "static", DefinedAtom::scopeTranslationUnit },
+  { NULL,     DefinedAtom::scopeGlobal }
+};
+  
+DefinedAtom::Scope KeyValues::scope(const char* s)
+{
+	for (const ScopeMapping* p = scopeMappings; p->string != NULL; ++p) {
+    if ( strcmp(p->string, s) == 0 )
+      return p->value;
+  }
+  llvm::report_fatal_error("bad scope value");
+}
+
+const char* KeyValues::scope(DefinedAtom::Scope s) {
+	for (const ScopeMapping* p = scopeMappings; p->string != NULL; ++p) {
+    if ( p->value == s )
+      return p->string;
+  }
+  llvm::report_fatal_error("bad scope value");
+}
+
+
+
+
+
+
+
+
 struct ContentTypeMapping {
 	const char*       string;
-	Atom::ContentType  value;
+	DefinedAtom::ContentType  value;
 };
 
 static const ContentTypeMapping typeMappings[] = {
-	{ "unknown",        Atom::typeUnknown },
-	{ "code",           Atom::typeCode },
-	{ "resolver",       Atom::typeResolver },
-	{ "constant",       Atom::typeConstant },
-	{ "c-string",       Atom::typeCString },
-	{ "utf16-string",   Atom::typeUTF16String },
-	{ "CFI",            Atom::typeCFI },
-	{ "LSDA",           Atom::typeLSDA },
-	{ "literal-4",      Atom::typeLiteral4 },
-	{ "literal-8",      Atom::typeLiteral8 },
-	{ "literal-16",     Atom::typeLiteral16 },
-	{ "data",           Atom::typeData },
-	{ "zero-fill",      Atom::typeZeroFill },
-	{ "cf-string",      Atom::typeCFString },
-	{ "initializer-ptr",Atom::typeInitializerPtr },
-	{ "terminator-ptr", Atom::typeTerminatorPtr },
-	{ "c-string-ptr",   Atom::typeCStringPtr },
-	{ "objc1-class",    Atom::typeObjC1Class },
-	{ "objc1-class-ptr",Atom::typeObjCClassPtr },
-	{ "objc2-cat-ptr",  Atom::typeObjC2CategoryList },
-	{ "tlv-thunk",      Atom::typeThunkTLV },
-	{ "tlv-data",       Atom::typeTLVInitialData },
-	{ "tlv-zero-fill",  Atom::typeTLVInitialZeroFill },
-	{ "tlv-init-ptr",   Atom::typeTLVInitializerPtr },
-  { NULL,             Atom::typeUnknown }
+	{ "unknown",        DefinedAtom::typeUnknown },
+	{ "code",           DefinedAtom::typeCode },
+	{ "resolver",       DefinedAtom::typeResolver },
+	{ "constant",       DefinedAtom::typeConstant },
+	{ "c-string",       DefinedAtom::typeCString },
+	{ "utf16-string",   DefinedAtom::typeUTF16String },
+	{ "CFI",            DefinedAtom::typeCFI },
+	{ "LSDA",           DefinedAtom::typeLSDA },
+	{ "literal-4",      DefinedAtom::typeLiteral4 },
+	{ "literal-8",      DefinedAtom::typeLiteral8 },
+	{ "literal-16",     DefinedAtom::typeLiteral16 },
+	{ "data",           DefinedAtom::typeData },
+	{ "zero-fill",      DefinedAtom::typeZeroFill },
+	{ "cf-string",      DefinedAtom::typeCFString },
+	{ "initializer-ptr",DefinedAtom::typeInitializerPtr },
+	{ "terminator-ptr", DefinedAtom::typeTerminatorPtr },
+	{ "c-string-ptr",   DefinedAtom::typeCStringPtr },
+	{ "objc1-class",    DefinedAtom::typeObjC1Class },
+	{ "objc1-class-ptr",DefinedAtom::typeObjCClassPtr },
+	{ "objc2-cat-ptr",  DefinedAtom::typeObjC2CategoryList },
+	{ "tlv-thunk",      DefinedAtom::typeThunkTLV },
+	{ "tlv-data",       DefinedAtom::typeTLVInitialData },
+	{ "tlv-zero-fill",  DefinedAtom::typeTLVInitialZeroFill },
+	{ "tlv-init-ptr",   DefinedAtom::typeTLVInitializerPtr },
+  { NULL,             DefinedAtom::typeUnknown }
 };
 
-Atom::ContentType KeyValues::contentType(const char* s)
+DefinedAtom::ContentType KeyValues::contentType(const char* s)
 {
 	for (const ContentTypeMapping* p = typeMappings; p->string != NULL; ++p) {
     if ( strcmp(p->string, s) == 0 )
@@ -156,7 +162,7 @@ Atom::ContentType KeyValues::contentType(const char* s)
   llvm::report_fatal_error("bad content type value");
 }
 
-const char* KeyValues::contentType(Atom::ContentType s) {
+const char* KeyValues::contentType(DefinedAtom::ContentType s) {
 	for (const ContentTypeMapping* p = typeMappings; p->string != NULL; ++p) {
     if ( p->value == s )
       return p->string;
@@ -172,17 +178,17 @@ const char* KeyValues::contentType(Atom::ContentType s) {
 
 struct DeadStripMapping {
 	const char*           string;
-	Atom::DeadStripKind   value;
+	DefinedAtom::DeadStripKind   value;
 };
 
 static const DeadStripMapping deadStripMappings[] = {
-	{ "normal",         Atom::deadStripNormal },
-	{ "never",          Atom::deadStripNever },
-	{ "always",         Atom::deadStripAlways },
-  { NULL,             Atom::deadStripNormal }
+	{ "normal",         DefinedAtom::deadStripNormal },
+	{ "never",          DefinedAtom::deadStripNever },
+	{ "always",         DefinedAtom::deadStripAlways },
+  { NULL,             DefinedAtom::deadStripNormal }
 };
 
-Atom::DeadStripKind KeyValues::deadStripKind(const char* s)
+DefinedAtom::DeadStripKind KeyValues::deadStripKind(const char* s)
 {
 	for (const DeadStripMapping* p = deadStripMappings; p->string != NULL; ++p) {
     if ( strcmp(p->string, s) == 0 )
@@ -191,7 +197,7 @@ Atom::DeadStripKind KeyValues::deadStripKind(const char* s)
   llvm::report_fatal_error("bad dead strip value");
 }
 
-const char* KeyValues::deadStripKind(Atom::DeadStripKind dsk) {
+const char* KeyValues::deadStripKind(DefinedAtom::DeadStripKind dsk) {
 	for (const DeadStripMapping* p = deadStripMappings; p->string != NULL; ++p) {
     if ( p->value == dsk )
       return p->string;
@@ -203,20 +209,88 @@ const char* KeyValues::deadStripKind(Atom::DeadStripKind dsk) {
 
 
 
+struct InterposableMapping {
+	const char*           string;
+	DefinedAtom::Interposable   value;
+};
+
+static const InterposableMapping interMappings[] = {
+	{ "no",           DefinedAtom::interposeNo },
+	{ "yes",          DefinedAtom::interposeYes },
+	{ "yesAndWeak",   DefinedAtom::interposeYesAndRuntimeWeak },
+  { NULL,           DefinedAtom::interposeNo }
+};
+
+DefinedAtom::Interposable KeyValues::interposable(const char* s)
+{
+	for (const InterposableMapping* p = interMappings; p->string != NULL; ++p) {
+    if ( strcmp(p->string, s) == 0 )
+      return p->value;
+  }
+  llvm::report_fatal_error("bad interposable value");
+}
+
+const char* KeyValues::interposable(DefinedAtom::Interposable in) {
+	for (const InterposableMapping* p = interMappings; p->string != NULL; ++p) {
+    if ( p->value == in )
+      return p->string;
+  }
+  llvm::report_fatal_error("bad interposable value");
+}
+
+
+
+
+
+
+struct MergeMapping {
+	const char*          string;
+	DefinedAtom::Merge   value;
+};
+
+static const MergeMapping mergeMappings[] = {
+	{ "no",             DefinedAtom::mergeNo },
+	{ "asTentative",    DefinedAtom::mergeAsTentative },
+	{ "asWeak",         DefinedAtom::mergeAsWeak },
+	{ "asAddressedWeak",DefinedAtom::mergeAsWeakAndAddressUsed },
+  { NULL,             DefinedAtom::mergeNo }
+};
+
+DefinedAtom::Merge KeyValues::merge(const char* s)
+{
+	for (const MergeMapping* p = mergeMappings; p->string != NULL; ++p) {
+    if ( strcmp(p->string, s) == 0 )
+      return p->value;
+  }
+  llvm::report_fatal_error("bad merge value");
+}
+
+const char* KeyValues::merge(DefinedAtom::Merge in) {
+	for (const MergeMapping* p = mergeMappings; p->string != NULL; ++p) {
+    if ( p->value == in )
+      return p->string;
+  }
+  llvm::report_fatal_error("bad merge value");
+}
+
+
+
+
+
 
 struct SectionChoiceMapping {
-	const char*           string;
-	Atom::SectionChoice   value;
+	const char*                 string;
+	DefinedAtom::SectionChoice  value;
 };
 
 static const SectionChoiceMapping sectMappings[] = {
-	{ "content",         Atom::sectionBasedOnContent },
-	{ "custom",          Atom::sectionCustomPreferred },
-	{ "custom-required", Atom::sectionCustomRequired },
-  { NULL,              Atom::sectionBasedOnContent }
+	{ "content",         DefinedAtom::sectionBasedOnContent },
+	{ "custom",          DefinedAtom::sectionCustomPreferred },
+	{ "custom-required", DefinedAtom::sectionCustomRequired },
+  { NULL,              DefinedAtom::sectionBasedOnContent }
 };
 
-Atom::SectionChoice KeyValues::sectionChoice(const char* s)
+DefinedAtom::SectionChoice KeyValues::sectionChoice(const char* s)
 {
 	for (const SectionChoiceMapping* p = sectMappings; p->string != NULL; ++p) {
     if ( strcmp(p->string, s) == 0 )
@@ -225,12 +299,49 @@ Atom::SectionChoice KeyValues::sectionChoice(const char* s)
   llvm::report_fatal_error("bad dead strip value");
 }
 
-const char* KeyValues::sectionChoice(Atom::SectionChoice s) {
+const char* KeyValues::sectionChoice(DefinedAtom::SectionChoice s) {
 	for (const SectionChoiceMapping* p = sectMappings; p->string != NULL; ++p) {
     if ( p->value == s )
       return p->string;
   }
   llvm::report_fatal_error("bad dead strip value");
+}
+
+
+
+
+
+
+
+struct PermissionsMapping {
+	const char*                      string;
+	DefinedAtom::ContentPermissions  value;
+};
+
+static const PermissionsMapping permMappings[] = {
+	{ "content",         DefinedAtom::perm___ },
+	{ "custom",          DefinedAtom::permR__ },
+	{ "custom-required", DefinedAtom::permR_X },
+	{ "custom-required", DefinedAtom::permRW_ },
+	{ "custom-required", DefinedAtom::permRW_L },
+  { NULL,              DefinedAtom::perm___ }
+};
+
+DefinedAtom::ContentPermissions KeyValues::permissions(const char* s)
+{
+	for (const PermissionsMapping* p = permMappings; p->string != NULL; ++p) {
+    if ( strcmp(p->string, s) == 0 )
+      return p->value;
+  }
+  llvm::report_fatal_error("bad permissions value");
+}
+
+const char* KeyValues::permissions(DefinedAtom::ContentPermissions s) {
+	for (const PermissionsMapping* p = permMappings; p->string != NULL; ++p) {
+    if ( p->value == s )
+      return p->string;
+  }
+  llvm::report_fatal_error("bad permissions value");
 }
 
 
@@ -251,43 +362,6 @@ bool KeyValues::internalName(const char* s)
 const char* KeyValues::internalName(bool b) {
   return b ? "true" : "false";
 }
-
-
-
-
-
-
-bool KeyValues::mergeDuplicates(const char* s)
-{
-  if ( strcmp(s, "true") == 0 )
-    return true;
-  else if ( strcmp(s, "false") == 0 )
-    return false;
-  llvm::report_fatal_error("bad merge-duplicates value");
-}
-
-const char* KeyValues::mergeDuplicates(bool b) {
-  return b ? "true" : "false";
-}
-
-
-
-
-
-
-bool KeyValues::autoHide(const char* s)
-{
-  if ( strcmp(s, "true") == 0 )
-    return true;
-  else if ( strcmp(s, "false") == 0 )
-    return false;
-  llvm::report_fatal_error("bad auto-hide value");
-}
-
-const char* KeyValues::autoHide(bool b) {
-  return b ? "true" : "false";
-}
-
 
 
 

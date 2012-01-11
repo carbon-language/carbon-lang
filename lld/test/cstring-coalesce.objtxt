@@ -10,14 +10,12 @@ atoms:
       internal-name:     true
       scope:             hidden
       type:              c-string
-      merge-duplicates:  true
       content:           [ 68, 65, 6c, 6c, 6f, 00 ]
       
     - name:              L1
       internal-name:     true
       scope:             hidden
       type:              c-string
-      merge-duplicates:  true
       content:           [ 74, 68, 65, 72, 65, 00 ]
 ---
 atoms:
@@ -25,7 +23,6 @@ atoms:
       internal-name:     true
       scope:             hidden
       type:              c-string
-      merge-duplicates:  true
       content:           [ 68, 65, 6c, 6c, 6f, 00 ]
 ---
 atoms:
@@ -33,7 +30,6 @@ atoms:
       internal-name:     true
       scope:             hidden
       type:              c-string
-      merge-duplicates:  true
       content:           [ 74, 68, 65, 72, 65, 00 ]
 ...
 
