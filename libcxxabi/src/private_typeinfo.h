@@ -43,13 +43,17 @@ public:
     virtual ~__enum_type_info();
 };
 
+// Has no base class
 class __class_type_info
     : public std::type_info
 {
 public:
     virtual ~__class_type_info();
+
+    virtual void display(const void* obj) const;
 };
 
+// Has one non-virtual public base class at offset zero
 class __si_class_type_info
     : public __class_type_info
 {
@@ -57,6 +61,8 @@ public:
     const __class_type_info* __base_type;
 
     virtual ~__si_class_type_info();
+
+    virtual void display(const void* obj) const;
 };
 
 struct __base_class_type_info
@@ -68,11 +74,14 @@ public:
     enum __offset_flags_masks
     {
         __virtual_mask = 0x1,
-        __public_mask  = 0x2,
+        __public_mask  = 0x2, // base is public
         __offset_shift = 8
     };
+
+    void display(const void* obj) const;
 };
 
+// Has one or more base classes
 class __vmi_class_type_info
     : public __class_type_info
 {
@@ -83,11 +92,15 @@ public:
 
     enum __flags_masks
     {
-        __non_diamond_repeat_mask = 0x1,
-        __diamond_shaped_mask     = 0x2
+        __non_diamond_repeat_mask = 0x1,  // has two or more distinct base class
+                                          //    objects of the same type
+        __diamond_shaped_mask     = 0x2   // has base class object with two or
+                                          //    more derived objects
     };
 
     virtual ~__vmi_class_type_info();
+
+    virtual void display(const void* obj) const;
 };
 
 class __pbase_type_info
