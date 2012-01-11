@@ -1747,7 +1747,8 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
 
 namespace {
 
-// Callback to only accept typo corrections that are namespaces.
+// Callback to only accept typo corrections that can be a valid C++ member
+// intializer: either a non-static field member or a base class.
 class MemInitializerValidatorCCC : public CorrectionCandidateCallback {
  public:
   explicit MemInitializerValidatorCCC(CXXRecordDecl *ClassDecl)

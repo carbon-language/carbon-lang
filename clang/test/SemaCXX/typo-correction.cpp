@@ -40,3 +40,10 @@ struct Derived : public BaseType { // expected-note {{base class 'BaseType' spec
   static int base_type;
   Derived() : basetype() {} // expected-error{{initializer 'basetype' does not name a non-static data member or base class; did you mean the base class 'BaseType'?}}
 };
+
+// In this example, somename should not be corrected to the cached correction
+// "some_name" since "some_name" is a class and a namespace name is needed.
+class some_name {}; // expected-note {{'some_name' declared here}}
+somename Foo; // expected-error {{unknown type name 'somename'; did you mean 'some_name'?}}
+namespace SomeName {} // expected-note {{namespace 'SomeName' defined here}}
+using namespace somename; // expected-error {{no namespace named 'somename'; did you mean 'SomeName'?}}

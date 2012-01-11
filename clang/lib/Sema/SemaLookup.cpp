@@ -3650,7 +3650,8 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
     IsUnqualifiedLookup = true;
     UnqualifiedTyposCorrectedMap::iterator Cached
       = UnqualifiedTyposCorrected.find(Typo);
-    if (Cached == UnqualifiedTyposCorrected.end()) {
+    if (Cached == UnqualifiedTyposCorrected.end() ||
+        (Cached->second && CCC && !CCC->ValidateCandidate(Cached->second))) {
       // Provide a stop gap for files that are just seriously broken.  Trying
       // to correct all typos can turn into a HUGE performance penalty, causing
       // some files to take minutes to get rejected by the parser.
