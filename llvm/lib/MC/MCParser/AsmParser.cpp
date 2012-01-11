@@ -2424,13 +2424,13 @@ bool GenericAsmParser::ParseDirectiveFile(StringRef, SMLoc DirectiveLoc) {
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.file' directive");
 
-  if (getContext().getGenDwarfForAssembly() == true)
-    Error(DirectiveLoc, "input can't have .file dwarf directives when -g is "
-                        "used to generate dwarf debug info for assembly code");
-
   if (FileNumber == -1)
     getStreamer().EmitFileDirective(Filename);
   else {
+    if (getContext().getGenDwarfForAssembly() == true)
+      Error(DirectiveLoc, "input can't have .file dwarf directives when -g is "
+                        "used to generate dwarf debug info for assembly code");
+
     if (getStreamer().EmitDwarfFileDirective(FileNumber, Directory, Filename))
       Error(FileNumberLoc, "file number already allocated");
   }
