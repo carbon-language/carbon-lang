@@ -680,19 +680,21 @@ void Sema::CheckCXXThisCapture(SourceLocation Loc) {
   // Otherwise, check that we can capture 'this'.
   unsigned NumClosures = 0;
   for (unsigned idx = FunctionScopes.size() - 1; idx != 0; idx--) {
-    if (LambdaScopeInfo *LSI = dyn_cast<LambdaScopeInfo>(FunctionScopes[idx])) {
-      if (LSI->CapturesCXXThis) {
-        // This lambda already captures 'this'; there isn't anything more to do.
+    if (CapturingScopeInfo *CSI =
+            dyn_cast<CapturingScopeInfo>(FunctionScopes[idx])) {
+      if (CSI->CXXThisCaptureIndex != 0) {
+        // 'this' is already being captured; there isn't anything more to do.
         break;
       }
-      if (LSI->Default == LCD_ByRef) {
-        // This lambda can implicitly capture 'this'; continue looking upwards.
+      if (CSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_LambdaByref ||
+          CSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_Block) {
+        // This closure can implicitly capture 'this'; continue looking upwards.
         // FIXME: Is this check correct?  The rules in the standard are a bit
         // unclear.
         NumClosures++;
         continue;
       }
-      // This lambda can't implicitly capture 'this'; fail out.
+      // This context can't implicitly capture 'this'; fail out.
       // (We need to delay the diagnostic in the
       // PotentiallyPotentiallyEvaluated case because it doesn't apply to
       // unevaluated contexts.)
@@ -703,10 +705,6 @@ void Sema::CheckCXXThisCapture(SourceLocation Loc) {
         Diag(Loc, diag::err_implicit_this_capture);
       return;
     }
-    if (isa<BlockScopeInfo>(FunctionScopes[idx])) {
-      NumClosures++;
-      continue;
-    }
     break;
   }
 
@@ -715,14 +713,9 @@ void Sema::CheckCXXThisCapture(SourceLocation Loc) {
   // contexts.
   for (unsigned idx = FunctionScopes.size() - 1;
        NumClosures; --idx, --NumClosures) {
-    if (BlockScopeInfo *BSI = dyn_cast<BlockScopeInfo>(FunctionScopes[idx])) {
-      BSI->CapturesCXXThis = true;
-    } else {
-      LambdaScopeInfo *LSI = dyn_cast<LambdaScopeInfo>(FunctionScopes[idx]);
-      assert(LSI && "Unexpected closure");
-      LSI->CapturesCXXThis = true;
-      LSI->Captures.push_back(LambdaScopeInfo::Capture::ThisCapture);
-    }
+    CapturingScopeInfo *CSI = cast<CapturingScopeInfo>(FunctionScopes[idx]);
+    bool isNested = NumClosures > 1;
+    CSI->AddThisCapture(isNested);
   }
 }
 
@@ -4831,8 +4824,9 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   CurContext->addDecl(Class);
 
   QualType ThisCaptureType;
+  llvm::DenseMap<VarDecl*, unsigned> CaptureMap;
+  unsigned CXXThisCaptureIndex = 0;
   llvm::SmallVector<LambdaScopeInfo::Capture, 4> Captures;
-  llvm::DenseMap<const IdentifierInfo*, SourceLocation> CapturesSoFar;
   for (llvm::SmallVector<LambdaCapture, 4>::const_iterator
        C = Intro.Captures.begin(), E = Intro.Captures.end(); C != E; ++C) {
     if (C->Kind == LCK_This) {
@@ -4853,7 +4847,12 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       }
       CheckCXXThisCapture(C->Loc);
 
-      Captures.push_back(LambdaScopeInfo::Capture::ThisCapture);
+      // FIXME: Need getCurCapture().
+      bool isNested = getCurBlock() || getCurLambda();
+      CapturingScopeInfo::Capture Cap(CapturingScopeInfo::Capture::ThisCapture,
+                                      isNested);
+      Captures.push_back(Cap);
+      CXXThisCaptureIndex = Captures.size();
       continue;
     }
 
@@ -4864,16 +4863,6 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       continue;
     } else if (C->Kind == LCK_ByCopy && Intro.Default == LCD_ByCopy) {
       Diag(C->Loc, diag::err_copy_capture_with_copy_default);
-      continue;
-    }
-
-    llvm::DenseMap<const IdentifierInfo*, SourceLocation>::iterator Appearance;
-    bool IsFirstAppearance;
-    llvm::tie(Appearance, IsFirstAppearance)
-      = CapturesSoFar.insert(std::make_pair(C->Id, C->Loc));
-
-    if (!IsFirstAppearance) {
-      Diag(C->Loc, diag::err_capture_more_than_once) << C->Id;
       continue;
     }
 
@@ -4893,16 +4882,22 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       continue;
     }
 
+    if (CaptureMap.count(Var)) {
+      Diag(C->Loc, diag::err_capture_more_than_once) << C->Id;
+      continue;
+    }
+
     if (!Var->hasLocalStorage()) {
       Diag(C->Loc, diag::err_capture_non_automatic_variable) << C->Id;
       continue;
     }
 
-    // FIXME: Actually capturing a variable is much more complicated than this
-    // in the general case; see shouldCaptureValueReference.
-    // FIXME: Should we be building a DeclRefExpr here?  We don't really need
-    // it until the point where we're actually building the LambdaExpr.
-    Captures.push_back(LambdaScopeInfo::Capture(Var, C->Kind));
+    // FIXME: This is completely wrong for nested captures and variables
+    // with a non-trivial constructor.
+    // FIXME: We should refuse to capture __block variables.
+    Captures.push_back(LambdaScopeInfo::Capture(Var, C->Kind == LCK_ByRef,
+                                                /*isNested*/false, 0));
+    CaptureMap[Var] = Captures.size();
   }
 
   // Build the call operator; we don't really have all the relevant information
@@ -4982,15 +4977,20 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   PushLambdaScope(Class);
 
   LambdaScopeInfo *LSI = getCurLambda();
-  LSI->Default = Intro.Default;
-  if (!ThisCaptureType.isNull())
-    LSI->CapturesCXXThis = true;
+  LSI->CXXThisCaptureIndex = CXXThisCaptureIndex;
+  std::swap(LSI->CaptureMap, CaptureMap);
   std::swap(LSI->Captures, Captures);
+  LSI->NumExplicitCaptures = Captures.size();
+  if (Intro.Default == LCD_ByCopy)
+    LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByval;
+  else if (Intro.Default == LCD_ByRef)
+    LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByref;
 
   const FunctionType *Fn = MethodTy->getAs<FunctionType>();
   QualType RetTy = Fn->getResultType();
   if (RetTy != Context.DependentTy) {
     LSI->ReturnType = RetTy;
+  } else {
     LSI->HasImplicitReturnType = true;
   }
 

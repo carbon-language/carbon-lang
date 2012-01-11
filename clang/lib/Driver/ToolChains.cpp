@@ -533,24 +533,15 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   Arg *iOSVersion = Args.getLastArg(options::OPT_miphoneos_version_min_EQ);
   Arg *iOSSimVersion = Args.getLastArg(
     options::OPT_mios_simulator_version_min_EQ);
-
-  // FIXME: HACK! When compiling for the simulator we don't get a
-  // '-miphoneos-version-min' to help us know whether there is an ARC runtime
-  // or not; try to parse a __IPHONE_OS_VERSION_MIN_REQUIRED
-  // define passed in command-line.
-  if (!iOSVersion && !iOSSimVersion) {
+ 
+  if (!iOSSimVersion) {
+    // As a legacy hack, treat -D__IPHONE_OS_VERSION_MIN_REQUIRED=40201 as
+    // equivalent to -mios-simulator-version-min.
     for (arg_iterator it = Args.filtered_begin(options::OPT_D),
            ie = Args.filtered_end(); it != ie; ++it) {
       StringRef define = (*it)->getValue(Args);
       if (define.startswith(SimulatorVersionDefineName())) {
-        unsigned Major = 0, Minor = 0, Micro = 0;
-        if (GetVersionFromSimulatorDefine(define, Major, Minor, Micro) &&
-            Major < 10 && Minor < 100 && Micro < 100) {
-          ARCRuntimeForSimulator = Major < 5 ? ARCSimulator_NoARCRuntime
-                                             : ARCSimulator_HasARCRuntime;
-          LibCXXForSimulator = Major < 5 ? LibCXXSimulator_NotAvailable
-                                         : LibCXXSimulator_Available;
-        }
+        iOSSimVersion = *it;
         break;
       }
     }
@@ -661,11 +652,21 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   } else {
     const Arg *Version = iOSVersion ? iOSVersion : iOSSimVersion;
     assert(Version && "Unknown target platform!");
-    if (!Driver::GetReleaseVersion(Version->getValue(Args), Major, Minor,
-                                   Micro, HadExtra) || HadExtra ||
-        Major >= 10 || Minor >= 100 || Micro >= 100)
-      getDriver().Diag(diag::err_drv_invalid_version_number)
-        << Version->getAsString(Args);
+    if (Version->getOption().getID() == options::OPT_D) {
+      // If the simulator version comes from a define, parse that.
+      if (!GetVersionFromSimulatorDefine(Version->getValue(Args), Major,
+                                         Minor, Micro) ||
+          Major >= 10 || Minor >= 100 || Micro >= 100)
+        getDriver().Diag(diag::err_drv_invalid_version_number)
+          << Version->getAsString(Args);
+    } else {
+      // Otherwise, use the normal version parsing code.
+      if (!Driver::GetReleaseVersion(Version->getValue(Args), Major, Minor,
+                                     Micro, HadExtra) ||
+          HadExtra || Major >= 10 || Minor >= 100 || Micro >= 100)
+        getDriver().Diag(diag::err_drv_invalid_version_number)
+          << Version->getAsString(Args);
+    }
   }
 
   bool IsIOSSim = bool(iOSSimVersion);

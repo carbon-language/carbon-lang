@@ -1248,20 +1248,16 @@ diagnoseUncapturableValueReference(Sema &S, SourceLocation loc,
 /// There is a well-formed capture at a particular scope level;
 /// propagate it through all the nested blocks.
 static CaptureResult propagateCapture(Sema &S, unsigned ValidScopeIndex,
-                                      const BlockDecl::Capture &Capture) {
-  VarDecl *var = Capture.getVariable();
-
+                                      const CapturingScopeInfo::Capture &Cap) {
   // Update all the inner blocks with the capture information.
   for (unsigned i = ValidScopeIndex + 1, e = S.FunctionScopes.size();
          i != e; ++i) {
     BlockScopeInfo *innerBlock = cast<BlockScopeInfo>(S.FunctionScopes[i]);
-    innerBlock->Captures.push_back(
-      BlockDecl::Capture(Capture.getVariable(), Capture.isByRef(),
-                         /*nested*/ true, Capture.getCopyExpr()));
-    innerBlock->CaptureMap[var] = innerBlock->Captures.size(); // +1
+    innerBlock->AddCapture(Cap.getVariable(), Cap.isReferenceCapture(),
+                           /*nested*/ true, Cap.getCopyExpr());
   }
 
-  return Capture.isByRef() ? CR_CaptureByRef : CR_Capture;
+  return Cap.isReferenceCapture() ? CR_CaptureByRef : CR_Capture;
 }
 
 /// shouldCaptureValueReference - Determine if a reference to the
@@ -1372,9 +1368,7 @@ static CaptureResult shouldCaptureValueReference(Sema &S, SourceLocation loc,
     cast<BlockScopeInfo>(S.FunctionScopes[functionScopesIndex]);
 
   // Build a valid capture in this scope.
-  blockScope->Captures.push_back(
-                 BlockDecl::Capture(var, byRef, /*nested*/ false, copyExpr));
-  blockScope->CaptureMap[var] = blockScope->Captures.size(); // +1
+  blockScope->AddCapture(var, byRef, /*nested*/ false, copyExpr);
 
   // Propagate that to inner captures if necessary.
   return propagateCapture(S, functionScopesIndex,
@@ -8861,8 +8855,18 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   QualType BlockTy;
 
   // Set the captured variables on the block.
-  BSI->TheDecl->setCaptures(Context, BSI->Captures.begin(), BSI->Captures.end(),
-                            BSI->CapturesCXXThis);
+  // FIXME: Share capture structure between BlockDecl and CapturingScopeInfo!
+  SmallVector<BlockDecl::Capture, 4> Captures;
+  for (unsigned i = 0, e = BSI->Captures.size(); i != e; i++) {
+    CapturingScopeInfo::Capture &Cap = BSI->Captures[i];
+    if (Cap.isThisCapture())
+      continue;
+    BlockDecl::Capture NewCap(Cap.getVariable(), Cap.isReferenceCapture(),
+                              Cap.isNested(), Cap.getCopyExpr());
+    Captures.push_back(NewCap);
+  }
+  BSI->TheDecl->setCaptures(Context, Captures.begin(), Captures.end(),
+                            BSI->CXXThisCaptureIndex != 0);
 
   // If the user wrote a function type in some form, try to use that.
   if (!BSI->FunctionType.isNull()) {

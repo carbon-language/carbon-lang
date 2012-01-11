@@ -1890,6 +1890,7 @@ public:
   ExprResult RebuildCXXThisExpr(SourceLocation ThisLoc,
                                 QualType ThisType,
                                 bool isImplicit) {
+    getSema().CheckCXXThisCapture(ThisLoc);
     return getSema().Owned(
                       new (getSema().Context) CXXThisExpr(ThisLoc, ThisType,
                                                           isImplicit));
@@ -8114,10 +8115,6 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
   BlockScopeInfo *blockScope = SemaRef.getCurBlock();
 
   blockScope->TheDecl->setIsVariadic(oldBlock->isVariadic());
-  // We built a new blockScopeInfo in call to ActOnBlockStart
-  // in above, CapturesCXXThis need be set here from the block
-  // expression.
-  blockScope->CapturesCXXThis = oldBlock->capturesCXXThis();
   blockScope->TheDecl->setBlockMissingReturnType(
                          oldBlock->blockMissingReturnType());
   

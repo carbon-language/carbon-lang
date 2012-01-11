@@ -265,8 +265,7 @@ ObjCMethodDecl *Sema::tryCaptureObjCSelf() {
     if (captureIndex) break;
 
     bool nested = isa<BlockScopeInfo>(FunctionScopes[idx-1]);
-    blockScope->Captures.push_back(
-              BlockDecl::Capture(self, /*byref*/ false, nested, /*copy*/ 0));
+    blockScope->AddCapture(self, /*byref*/ false, nested, /*copy*/ 0);
     captureIndex = blockScope->Captures.size(); // +1
   }
 
