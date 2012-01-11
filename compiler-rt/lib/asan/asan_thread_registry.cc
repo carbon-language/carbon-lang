@@ -17,9 +17,6 @@
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 
-#include <limits.h>
-#include <pthread.h>
-
 namespace __asan {
 
 static AsanThreadRegistry asan_thread_registry(__asan::LINKER_INITIALIZED);
@@ -35,8 +32,7 @@ AsanThreadRegistry::AsanThreadRegistry(LinkerInitialized x)
       mu_(x) { }
 
 void AsanThreadRegistry::Init() {
-  CHECK(0 == pthread_key_create(&tls_key_, 0));
-  tls_key_created_ = true;
+  AsanTSDInit();
   main_thread_.set_summary(&main_thread_summary_);
   main_thread_summary_.set_thread(&main_thread_);
   SetCurrent(&main_thread_);
@@ -70,9 +66,7 @@ AsanThread *AsanThreadRegistry::GetMain() {
 }
 
 AsanThread *AsanThreadRegistry::GetCurrent() {
-  CHECK(tls_key_created_);
-  AsanThreadSummary *summary =
-      (AsanThreadSummary *)pthread_getspecific(tls_key_);
+  AsanThreadSummary *summary = (AsanThreadSummary *)AsanTSDGet();
   if (!summary) return 0;
   return summary->thread();
 }
@@ -80,17 +74,12 @@ AsanThread *AsanThreadRegistry::GetCurrent() {
 void AsanThreadRegistry::SetCurrent(AsanThread *t) {
   CHECK(t->summary());
   if (FLAG_v >= 2) {
-    Report("SetCurrent: %p for thread %p\n", t->summary(), pthread_self());
+    Report("SetCurrent: %p for thread %p\n", t->summary(), GetThreadSelf());
   }
   // Make sure we do not reset the current AsanThread.
-  intptr_t old_key = (intptr_t)pthread_getspecific(tls_key_);
-  CHECK(!old_key);
-  CHECK(0 == pthread_setspecific(tls_key_, t->summary()));
-  CHECK(pthread_getspecific(tls_key_) == t->summary());
-}
-
-pthread_key_t AsanThreadRegistry::GetTlsKey() {
-  return tls_key_;
+  CHECK(AsanTSDGet() == 0);
+  AsanTSDSet(t->summary());
+  CHECK(AsanTSDGet() == t->summary());
 }
 
 AsanStats &AsanThreadRegistry::GetCurrentThreadStats() {

@@ -108,6 +108,12 @@ int AsanClose(int fd);
 bool AsanInterceptsSignal(int signum);
 void InstallSignalHandlers();
 int GetPid();
+uintptr_t GetThreadSelf();
+
+// Wrapper for TLS/TSD.
+void AsanTSDInit();
+void *AsanTSDGet();
+void AsanTSDSet(void *tsd);
 
 // Opens the file 'file_name" and reads up to 'max_len' bytes.
 // The resulting buffer is mmaped and stored in '*buff'.

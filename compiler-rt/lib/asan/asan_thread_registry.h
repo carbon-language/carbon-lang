@@ -38,7 +38,6 @@ class AsanThreadRegistry {
   // Get the current thread. May return NULL.
   AsanThread *GetCurrent();
   void SetCurrent(AsanThread *t);
-  pthread_key_t GetTlsKey();
 
   int GetCurrentTidOrMinusOne() {
     AsanThread *t = GetCurrent();
@@ -71,12 +70,6 @@ class AsanThreadRegistry {
   AsanStats accumulated_stats_;
   int n_threads_;
   AsanLock mu_;
-  // For each thread tls_key_ stores the pointer to the corresponding
-  // AsanThread.
-  pthread_key_t tls_key_;
-  // This flag is updated only once at program startup, and then read
-  // by concurrent threads.
-  bool tls_key_created_;
 };
 
 // Returns a single instance of registry.

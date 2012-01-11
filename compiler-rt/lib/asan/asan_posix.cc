@@ -18,6 +18,7 @@
 #include "asan_stack.h"
 #include "asan_thread_registry.h"
 
+#include <pthread.h>
 #include <signal.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -70,6 +71,30 @@ void AsanDie() {
 
 int GetPid() {
   return getpid();
+}
+
+uintptr_t GetThreadSelf() {
+  return (uintptr_t)pthread_self();
+}
+
+// ---------------------- TSD ---------------- {{{1
+
+static pthread_key_t tsd_key;
+static bool tsd_key_inited = false;
+void AsanTSDInit() {
+  CHECK(!tsd_key_inited);
+  tsd_key_inited = true;
+  CHECK(0 == pthread_key_create(&tsd_key, 0));
+}
+
+void *AsanTSDGet() {
+  CHECK(tsd_key_inited);
+  return pthread_getspecific(tsd_key);
+}
+
+void AsanTSDSet(void *tsd) {
+  CHECK(tsd_key_inited);
+  pthread_setspecific(tsd_key, tsd);
 }
 
 }  // namespace __asan
