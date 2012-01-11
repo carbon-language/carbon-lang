@@ -1255,23 +1255,21 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     // addressing mode optimizations.
     if (X.getValueSizeInBits() > 64) break;
 
-    ConstantSDNode *C2 = dyn_cast<ConstantSDNode>(N.getOperand(1));
-    ConstantSDNode *C1 = dyn_cast<ConstantSDNode>(Shift.getOperand(1));
-    if (!C1 || !C2) break;
+    if (!isa<ConstantSDNode>(N.getOperand(1)))
+      break;
+    uint64_t Mask = N.getConstantOperandVal(1);
 
     // Try to fold the mask and shift into an extract and scale.
-    if (!FoldMaskAndShiftToExtract(*CurDAG, N, C2->getZExtValue(),
-                                   Shift, X, AM))
+    if (!FoldMaskAndShiftToExtract(*CurDAG, N, Mask, Shift, X, AM))
       return false;
 
     // Try to fold the mask and shift directly into the scale.
-    if (!FoldMaskAndShiftToScale(*CurDAG, N, C2->getZExtValue(), Shift, X, AM))
+    if (!FoldMaskAndShiftToScale(*CurDAG, N, Mask, Shift, X, AM))
       return false;
 
     // Try to swap the mask and shift to place shifts which can be done as
     // a scale on the outside of the mask.
-    if (!FoldMaskedShiftToScaledMask(*CurDAG, N, C2->getZExtValue(),
-                                     Shift, X, AM))
+    if (!FoldMaskedShiftToScaledMask(*CurDAG, N, Mask, Shift, X, AM))
       return false;
     break;
   }
