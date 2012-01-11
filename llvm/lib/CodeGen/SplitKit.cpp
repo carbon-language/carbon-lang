@@ -62,13 +62,14 @@ SlotIndex SplitAnalysis::computeLastSplitPoint(unsigned Num) {
   const MachineBasicBlock *MBB = MF.getBlockNumbered(Num);
   const MachineBasicBlock *LPad = MBB->getLandingPadSuccessor();
   std::pair<SlotIndex, SlotIndex> &LSP = LastSplitPoint[Num];
+  SlotIndex MBBEnd = LIS.getMBBEndIdx(MBB);
 
   // Compute split points on the first call. The pair is independent of the
   // current live interval.
   if (!LSP.first.isValid()) {
     MachineBasicBlock::const_iterator FirstTerm = MBB->getFirstTerminator();
     if (FirstTerm == MBB->end())
-      LSP.first = LIS.getMBBEndIdx(MBB);
+      LSP.first = MBBEnd;
     else
       LSP.first = LIS.getInstructionIndex(FirstTerm);
 
@@ -89,10 +90,24 @@ SlotIndex SplitAnalysis::computeLastSplitPoint(unsigned Num) {
 
   // If CurLI is live into a landing pad successor, move the last split point
   // back to the call that may throw.
-  if (LPad && LSP.second.isValid() && LIS.isLiveInToMBB(*CurLI, LPad))
-    return LSP.second;
-  else
+  if (!LPad || !LSP.second || !LIS.isLiveInToMBB(*CurLI, LPad))
     return LSP.first;
+
+  // Find the value leaving MBB.
+  const VNInfo *VNI = CurLI->getVNInfoBefore(MBBEnd);
+  if (!VNI)
+    return LSP.first;
+
+  // If the value leaving MBB was defined after the call in MBB, it can't
+  // really be live-in to the landing pad.  This can happen if the landing pad
+  // has a PHI, and this register is undef on the exceptional edge.
+  // <rdar://problem/10664933>
+  if (!SlotIndex::isEarlierInstr(VNI->def, LSP.second) && VNI->def < MBBEnd)
+    return LSP.first;
+
+  // Value is properly live-in to the landing pad.
+  // Only allow splits before the call.
+  return LSP.second;
 }
 
 MachineBasicBlock::iterator
