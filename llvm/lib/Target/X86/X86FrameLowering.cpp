@@ -458,7 +458,7 @@ encodeCompactUnwindRegistersWithFrame(unsigned SavedRegs[CU_NUM_SAVED_REGS],
   // Encode the registers in the order they were saved, 3-bits per register. The
   // registers are numbered from 1 to 6.
   uint32_t RegEnc = 0;
-  for (int I = 0; I != 6; --I) {
+  for (int I = 0; I != 6; ++I) {
     unsigned Reg = SavedRegs[I];
     if (Reg == 0) break;
     int CURegNum = getCompactUnwindRegNum(CURegs, Reg);
@@ -470,7 +470,7 @@ encodeCompactUnwindRegistersWithFrame(unsigned SavedRegs[CU_NUM_SAVED_REGS],
     RegEnc |= (CURegNum & 0x7) << ((5 - I) * 3);
   }
 
-  assert((RegEnc & 0x7FFF) == RegEnc && "Invalid compact register encoding!");
+  assert((RegEnc & 0x3FFFF) == RegEnc && "Invalid compact register encoding!");
   return RegEnc;
 }
 
