@@ -37,6 +37,6 @@ void test2(Test2 *a) {
 - (int) length;
 @end
 void test3(Test3 *t) {
-  char vla[t.length] = {};
-  char *heaparray = new char[t.length]; // expected-error {{variable-sized object may not be initialized}}
+  char vla[t.length] = {}; // expected-error {{variable-sized object may not be initialized}}
+  char *heaparray = new char[t.length];
 }
