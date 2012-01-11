@@ -620,7 +620,7 @@ Module::ReportError (const char *format, ...)
         StreamString strm;
         strm.PutCString("error: ");
         GetDescription(&strm, lldb::eDescriptionLevelBrief);
-        
+        strm.PutChar (' ');
         va_list args;
         va_start (args, format);
         strm.PrintfVarArg(format, args);
@@ -675,7 +675,8 @@ Module::ReportWarning (const char *format, ...)
     {
         StreamString strm;
         strm.PutCString("warning: ");
-        GetDescription(&strm, lldb::eDescriptionLevelBrief);
+        GetDescription(&strm, lldb::eDescriptionLevelFull);
+        strm.PutChar (' ');
         
         va_list args;
         va_start (args, format);
@@ -699,7 +700,7 @@ Module::LogMessage (Log *log, const char *format, ...)
     if (log)
     {
         StreamString log_message;
-        GetDescription(&log_message, lldb::eDescriptionLevelBrief);
+        GetDescription(&log_message, lldb::eDescriptionLevelFull);
         log_message.PutCString (": ");
         va_list args;
         va_start (args, format);
