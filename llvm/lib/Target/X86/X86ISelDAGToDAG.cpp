@@ -725,6 +725,19 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM) {
   return false;
 }
 
+// Insert a node into the DAG at least before the Pos node's position. This
+// will reposition the node as needed, and will assign it a node ID that is <=
+// the Pos node's ID. Note that this does *not* preserve the uniqueness of node
+// IDs! The selection DAG must no longer depend on their uniqueness when this
+// is used.
+static void InsertDAGNode(SelectionDAG &DAG, SDValue Pos, SDValue N) {
+  if (N.getNode()->getNodeId() == -1 ||
+      N.getNode()->getNodeId() > Pos.getNode()->getNodeId()) {
+    DAG.RepositionNode(Pos.getNode(), N.getNode());
+    N.getNode()->setNodeId(Pos.getNode()->getNodeId());
+  }
+}
+
 // Transform "(X >> (8-C1)) & C2" to "(X >> 8) & 0xff)" if safe. This
 // allows us to convert the shift and and into an h-register extract and
 // a scaled index. Returns false if the simplification is performed.
@@ -752,36 +765,12 @@ static bool FoldMaskAndShiftToExtract(SelectionDAG &DAG, SDValue N,
   SDValue Shl = DAG.getNode(ISD::SHL, DL, VT, And, ShlCount);
 
   // Insert the new nodes into the topological ordering.
-  if (Eight.getNode()->getNodeId() == -1 ||
-      Eight.getNode()->getNodeId() > X.getNode()->getNodeId()) {
-    DAG.RepositionNode(X.getNode(), Eight.getNode());
-    Eight.getNode()->setNodeId(X.getNode()->getNodeId());
-  }
-  if (NewMask.getNode()->getNodeId() == -1 ||
-      NewMask.getNode()->getNodeId() > X.getNode()->getNodeId()) {
-    DAG.RepositionNode(X.getNode(), NewMask.getNode());
-    NewMask.getNode()->setNodeId(X.getNode()->getNodeId());
-  }
-  if (Srl.getNode()->getNodeId() == -1 ||
-      Srl.getNode()->getNodeId() > Shift.getNode()->getNodeId()) {
-    DAG.RepositionNode(Shift.getNode(), Srl.getNode());
-    Srl.getNode()->setNodeId(Shift.getNode()->getNodeId());
-  }
-  if (And.getNode()->getNodeId() == -1 ||
-      And.getNode()->getNodeId() > N.getNode()->getNodeId()) {
-    DAG.RepositionNode(N.getNode(), And.getNode());
-    And.getNode()->setNodeId(N.getNode()->getNodeId());
-  }
-  if (ShlCount.getNode()->getNodeId() == -1 ||
-      ShlCount.getNode()->getNodeId() > X.getNode()->getNodeId()) {
-    DAG.RepositionNode(X.getNode(), ShlCount.getNode());
-    ShlCount.getNode()->setNodeId(N.getNode()->getNodeId());
-  }
-  if (Shl.getNode()->getNodeId() == -1 ||
-      Shl.getNode()->getNodeId() > N.getNode()->getNodeId()) {
-    DAG.RepositionNode(N.getNode(), Shl.getNode());
-    Shl.getNode()->setNodeId(N.getNode()->getNodeId());
-  }
+  InsertDAGNode(DAG, X, Eight);
+  InsertDAGNode(DAG, X, NewMask);
+  InsertDAGNode(DAG, Shift, Srl);
+  InsertDAGNode(DAG, N, And);
+  InsertDAGNode(DAG, X, ShlCount);
+  InsertDAGNode(DAG, N, Shl);
   DAG.ReplaceAllUsesWith(N, Shl);
   AM.IndexReg = And;
   AM.Scale = (1 << ScaleLog);
@@ -817,21 +806,9 @@ static bool FoldMaskedShiftToScaledMask(SelectionDAG &DAG, SDValue N,
   SDValue NewShift = DAG.getNode(ISD::SHL, DL, VT, NewAnd, Shift.getOperand(1));
 
   // Insert the new nodes into the topological ordering.
-  if (NewMask.getNode()->getNodeId() == -1 ||
-      NewMask.getNode()->getNodeId() > X.getNode()->getNodeId()) {
-    DAG.RepositionNode(X.getNode(), NewMask.getNode());
-    NewMask.getNode()->setNodeId(X.getNode()->getNodeId());
-  }
-  if (NewAnd.getNode()->getNodeId() == -1 ||
-      NewAnd.getNode()->getNodeId() > Shift.getNode()->getNodeId()) {
-    DAG.RepositionNode(Shift.getNode(), NewAnd.getNode());
-    NewAnd.getNode()->setNodeId(Shift.getNode()->getNodeId());
-  }
-  if (NewShift.getNode()->getNodeId() == -1 ||
-      NewShift.getNode()->getNodeId() > N.getNode()->getNodeId()) {
-    DAG.RepositionNode(N.getNode(), NewShift.getNode());
-    NewShift.getNode()->setNodeId(N.getNode()->getNodeId());
-  }
+  InsertDAGNode(DAG, X, NewMask);
+  InsertDAGNode(DAG, Shift, NewAnd);
+  InsertDAGNode(DAG, N, NewShift);
   DAG.ReplaceAllUsesWith(N, NewShift);
 
   AM.Scale = 1 << ShiftAmt;
@@ -922,11 +899,7 @@ static bool FoldMaskAndShiftToScale(SelectionDAG &DAG, SDValue N,
     assert(X.getValueType() != VT);
     // We looked through an ANY_EXTEND node, insert a ZERO_EXTEND.
     SDValue NewX = DAG.getNode(ISD::ZERO_EXTEND, X.getDebugLoc(), VT, X);
-    if (NewX.getNode()->getNodeId() == -1 ||
-        NewX.getNode()->getNodeId() > N.getNode()->getNodeId()) {
-      DAG.RepositionNode(N.getNode(), NewX.getNode());
-      NewX.getNode()->setNodeId(N.getNode()->getNodeId());
-    }
+    InsertDAGNode(DAG, N, NewX);
     X = NewX;
   }
   DebugLoc DL = N.getDebugLoc();
@@ -934,26 +907,10 @@ static bool FoldMaskAndShiftToScale(SelectionDAG &DAG, SDValue N,
   SDValue NewSRL = DAG.getNode(ISD::SRL, DL, VT, X, NewSRLAmt);
   SDValue NewSHLAmt = DAG.getConstant(AMShiftAmt, MVT::i8);
   SDValue NewSHL = DAG.getNode(ISD::SHL, DL, VT, NewSRL, NewSHLAmt);
-  if (NewSRLAmt.getNode()->getNodeId() == -1 ||
-      NewSRLAmt.getNode()->getNodeId() > N.getNode()->getNodeId()) {
-    DAG.RepositionNode(N.getNode(), NewSRLAmt.getNode());
-    NewSRLAmt.getNode()->setNodeId(N.getNode()->getNodeId());
-  }
-  if (NewSRL.getNode()->getNodeId() == -1 ||
-      NewSRL.getNode()->getNodeId() > N.getNode()->getNodeId()) {
-    DAG.RepositionNode(N.getNode(), NewSRL.getNode());
-    NewSRL.getNode()->setNodeId(N.getNode()->getNodeId());
-  }
-  if (NewSHLAmt.getNode()->getNodeId() == -1 ||
-      NewSHLAmt.getNode()->getNodeId() > N.getNode()->getNodeId()) {
-    DAG.RepositionNode(N.getNode(), NewSHLAmt.getNode());
-    NewSHLAmt.getNode()->setNodeId(N.getNode()->getNodeId());
-  }
-  if (NewSHL.getNode()->getNodeId() == -1 ||
-      NewSHL.getNode()->getNodeId() > N.getNode()->getNodeId()) {
-    DAG.RepositionNode(N.getNode(), NewSHL.getNode());
-    NewSHL.getNode()->setNodeId(N.getNode()->getNodeId());
-  }
+  InsertDAGNode(DAG, N, NewSRLAmt);
+  InsertDAGNode(DAG, N, NewSRL);
+  InsertDAGNode(DAG, N, NewSHLAmt);
+  InsertDAGNode(DAG, N, NewSHL);
   DAG.ReplaceAllUsesWith(N, NewSHL);
 
   AM.Scale = 1 << AMShiftAmt;
@@ -1180,16 +1137,8 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     AM.Scale = 1;
 
     // Insert the new nodes into the topological ordering.
-    if (Zero.getNode()->getNodeId() == -1 ||
-        Zero.getNode()->getNodeId() > N.getNode()->getNodeId()) {
-      CurDAG->RepositionNode(N.getNode(), Zero.getNode());
-      Zero.getNode()->setNodeId(N.getNode()->getNodeId());
-    }
-    if (Neg.getNode()->getNodeId() == -1 ||
-        Neg.getNode()->getNodeId() > N.getNode()->getNodeId()) {
-      CurDAG->RepositionNode(N.getNode(), Neg.getNode());
-      Neg.getNode()->setNodeId(N.getNode()->getNodeId());
-    }
+    InsertDAGNode(*CurDAG, N, Zero);
+    InsertDAGNode(*CurDAG, N, Neg);
     return false;
   }
 
