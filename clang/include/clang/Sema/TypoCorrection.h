@@ -145,6 +145,8 @@ class CorrectionCandidateCallback {
         WantObjCSuper(false),
         IsObjCIvarLookup(false) {}
 
+  virtual ~CorrectionCandidateCallback() {}
+
   virtual bool ValidateCandidate(const TypoCorrection &candidate) {
     return true;
   }
