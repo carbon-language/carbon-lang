@@ -11,6 +11,7 @@
 #define __PRIVATE_TYPEINFO_H_
 
 #include <typeinfo>
+#include <cstddef>
 
 namespace __cxxabiv1
 {
@@ -43,6 +44,49 @@ public:
     virtual ~__enum_type_info();
 };
 
+enum
+{
+    unknown = 0,
+    public_path,
+    not_public_path
+};
+
+class __class_type_info;
+
+struct __dynamic_cast_info
+{
+    // const data supplied to the search
+
+    const __class_type_info* const dst_type;
+    const void* const static_ptr;
+    const __class_type_info* const static_type;
+    const std::ptrdiff_t src2dst_offset;
+
+    // non-const data learned during the search
+
+    // pointer to a dst_type which has (static_ptr, static_type) above it
+    const void* dst_ptr_leading_to_static_ptr;
+    // pointer to a dst_type which does not have (static_ptr, static_type) above it
+    const void* dst_ptr_not_leading_to_static_ptr;
+    // access of path from dst_ptr_leading_to_static_ptr to (static_ptr, static_type)
+    int path_dst_ptr_to_static_ptr;
+    // access of path from (dynamic_ptr, dynamic_type) to (static_ptr, static_type)
+    //    when there is no dst_type along the path
+    int path_dynamic_ptr_to_static_ptr;
+    // access of path from (dynamic_ptr, dynamic_type) to dst_type
+    //    (not used if there is a (static_ptr, static_type) above a dst_type).
+    int path_dynamic_ptr_to_dst_ptr;
+    // Number of dst_types below (static_ptr, static_type)
+    int number_to_static_ptr;
+    // Number of dst_types not below (static_ptr, static_type)
+    int number_to_dst_ptr;
+    // true when the search is above a dst_type, else false
+    bool above_dst_ptr;
+    // communicates to a dst_type node that (static_ptr, static_type) was found
+    //    above it.
+    bool found_static_ptr;
+};
+
 // Has no base class
 class __class_type_info
     : public std::type_info
@@ -50,6 +94,8 @@ class __class_type_info
 public:
     virtual ~__class_type_info();
 
+    virtual int search1(__dynamic_cast_info*, const void*, int) const;
+    virtual int search2(__dynamic_cast_info*, const void*, int) const;
     virtual void display(const void* obj) const;
 };
 
@@ -62,6 +108,8 @@ public:
 
     virtual ~__si_class_type_info();
 
+    virtual int search1(__dynamic_cast_info*, const void*, int) const;
+    virtual int search2(__dynamic_cast_info*, const void*, int) const;
     virtual void display(const void* obj) const;
 };
 
@@ -78,6 +126,8 @@ public:
         __offset_shift = 8
     };
 
+    int search1(__dynamic_cast_info*, const void*, int) const;
+    int search2(__dynamic_cast_info*, const void*, int) const;
     void display(const void* obj) const;
 };
 
@@ -100,6 +150,8 @@ public:
 
     virtual ~__vmi_class_type_info();
 
+    virtual int search1(__dynamic_cast_info*, const void*, int) const;
+    virtual int search2(__dynamic_cast_info*, const void*, int) const;
     virtual void display(const void* obj) const;
 };
 
