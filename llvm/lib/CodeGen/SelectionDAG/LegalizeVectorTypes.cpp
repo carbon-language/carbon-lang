@@ -2329,19 +2329,37 @@ SDValue DAGTypeLegalizer::GenWidenVectorLoads(SmallVector<SDValue, 16> &LdChain,
     BasePtr = DAG.getNode(ISD::ADD, dl, BasePtr.getValueType(), BasePtr,
                           DAG.getIntPtrConstant(Increment));
 
+    SDValue L;
     if (LdWidth < NewVTWidth) {
       // Our current type we are using is too large, find a better size
       NewVT = FindMemType(DAG, TLI, LdWidth, WidenVT, LdAlign, WidthDiff);
       NewVTWidth = NewVT.getSizeInBits();
-    }
-
-    SDValue LdOp = DAG.getLoad(NewVT, dl, Chain, BasePtr,
+      L = DAG.getLoad(NewVT, dl, Chain, BasePtr,
                                LD->getPointerInfo().getWithOffset(Offset),
                                isVolatile,
                                isNonTemporal, isInvariant,
                                MinAlign(Align, Increment));
-    LdChain.push_back(LdOp.getValue(1));
-    LdOps.push_back(LdOp);
+      LdChain.push_back(L.getValue(1));
+      if (L->getValueType(0).isVector()) {
+        SmallVector<SDValue, 16> Loads;
+        Loads.push_back(L);
+        unsigned size = L->getValueSizeInBits(0);
+        while (size < LdOp->getValueSizeInBits(0)) {
+          Loads.push_back(DAG.getUNDEF(L->getValueType(0)));
+          size += L->getValueSizeInBits(0);
+        }
+        L = DAG.getNode(ISD::CONCAT_VECTORS, dl, LdOp->getValueType(0),
+                        &Loads[0], Loads.size());
+      }
+    } else {
+      L = DAG.getLoad(NewVT, dl, Chain, BasePtr,
+                      LD->getPointerInfo().getWithOffset(Offset), isVolatile,
+                      isNonTemporal, isInvariant, MinAlign(Align, Increment));
+      LdChain.push_back(L.getValue(1));
+    }
+
+    LdOps.push_back(L);
+
 
     LdWidth -= NewVTWidth;
   }
