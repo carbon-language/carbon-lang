@@ -24,6 +24,10 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
+#ifdef ANDROID
+#include <sys/atomics.h>
+#endif
+
 namespace __asan {
 
 static void MaybeInstallSigaction(int signum,
@@ -75,6 +79,14 @@ int GetPid() {
 
 uintptr_t GetThreadSelf() {
   return (uintptr_t)pthread_self();
+}
+
+int AtomicInc(int *a) {
+#ifdef ANDROID
+  return __atomic_inc(a) + 1;
+#else
+  return __sync_add_and_fetch(a, 1);
+#endif
 }
 
 // ---------------------- TSD ---------------- {{{1

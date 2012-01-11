@@ -31,10 +31,6 @@
 #endif
 #endif
 
-#ifdef ANDROID
-#include <sys/atomics.h>
-#endif
-
 #if defined(__has_feature) && __has_feature(address_sanitizer)
 # error "The AddressSanitizer run-time should not be"
         " instrumented by AddressSanitizer"
@@ -109,6 +105,7 @@ bool AsanInterceptsSignal(int signum);
 void InstallSignalHandlers();
 int GetPid();
 uintptr_t GetThreadSelf();
+int AtomicInc(int *a);
 
 // Wrapper for TLS/TSD.
 void AsanTSDInit();
@@ -239,23 +236,6 @@ class LowLevelAllocator {
   char *allocated_end_;
   char *allocated_current_;
 };
-
-// -------------------------- Atomic ---------------- {{{1
-static inline int AtomicInc(int *a) {
-#ifdef ANDROID
-  return __atomic_inc(a) + 1;
-#else
-  return __sync_add_and_fetch(a, 1);
-#endif
-}
-
-static inline int AtomicDec(int *a) {
-#ifdef ANDROID
-  return __atomic_dec(a) - 1;
-#else
-  return __sync_add_and_fetch(a, -1);
-#endif
-}
 
 }  // namespace __asan
 
