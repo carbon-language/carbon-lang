@@ -12,6 +12,10 @@
 # the building of the a.out executable program.  For example,
 # DYLIB_ONLY := YES
 #
+# And also might be of interest:
+# FRAMEWORK_INCLUDES (Darwin only) :=
+# CFLAGS_EXTRAS :=
+# LD_EXTRAS :=
 
 # Uncomment line below for debugging shell commands
 # SHELL = /bin/sh -x
