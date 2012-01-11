@@ -1463,8 +1463,6 @@ void Sema::MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls) {
 
   // The types match.  Link up the redeclaration chain if the old
   // declaration was a typedef.
-  // FIXME: this is a potential source of weirdness if the type
-  // spellings don't match exactly.
   if (TypedefNameDecl *Typedef = dyn_cast<TypedefNameDecl>(Old))
     New->setPreviousDeclaration(Typedef);
 
@@ -1509,8 +1507,8 @@ void Sema::MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls) {
     return New->setInvalidDecl();
   }
 
-  // Modules always permit redefinition of typedefs.
-  if (getLangOptions().Modules)
+  // Modules always permit redefinition of typedefs, as does C11.
+  if (getLangOptions().Modules || getLangOptions().C11)
     return;
   
   // If we have a redefinition of a typedef in C, emit a warning.  This warning

@@ -2751,9 +2751,9 @@ def warn_undefined_internal : Warning<
   DiagGroup<"undefined-internal">;
 def note_used_here : Note<"used here">;
 
-def warn_redefinition_of_typedef : Warning<
-  "redefinition of typedef %0 is invalid in C">,
-  InGroup<DiagGroup<"typedef-redefinition"> >, DefaultError;
+def warn_redefinition_of_typedef : ExtWarn<
+  "redefinition of typedef %0 is a C11 feature">,
+  InGroup<DiagGroup<"typedef-redefinition"> >;
 
 def err_inline_declaration_block_scope : Error<
   "inline declaration of %0 not allowed in block scope">;
