@@ -12066,7 +12066,7 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI, MachineBasicBlock *BB,
   BuildMI(BB, DL, TII->get(Is64Bit ? X86::SUB64rr:X86::SUB32rr), SPLimitVReg)
     .addReg(tmpSPVReg).addReg(sizeVReg);
   BuildMI(BB, DL, TII->get(Is64Bit ? X86::CMP64mr:X86::CMP32mr))
-    .addReg(0).addImm(0).addReg(0).addImm(TlsOffset).addReg(TlsReg)
+    .addReg(0).addImm(1).addReg(0).addImm(TlsOffset).addReg(TlsReg)
     .addReg(SPLimitVReg);
   BuildMI(BB, DL, TII->get(X86::JG_4)).addMBB(mallocMBB);
 
