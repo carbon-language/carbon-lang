@@ -1,3 +1,12 @@
+// Test that different values of -mfpu pick correct ARM FPU target-feature(s).
+
+// RUN: %clang -ccc-host-triple arm-linux-eabi %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-DEFAULT %s
+// CHECK-DEFAULT-NOT: "-target-feature" "+vfp2"
+// CHECK-DEFAULT-NOT: "-target-feature" "+vfp3"
+// CHECK-DEFAULT-NOT: "-target-feature" "+d16"
+// CHECK-DEFAULT-NOT: "-target-feature" "+neon"
+
 // RUN: %clang -ccc-host-triple arm-linux-eabi -mfpu=fpa %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-FPA %s
 // RUN: %clang -ccc-host-triple arm-linux-eabi -mfpu=fpe2 %s -### -o %t.o 2>&1 \
@@ -34,3 +43,6 @@
 // RUN:   | FileCheck --check-prefix=CHECK-NEON %s
 // CHECK-NEON: "-target-feature" "+neon"
 
+// RUN: %clang -ccc-host-triple arm-linux-eabi -msoft-float %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-SOFT-FLOAT %s
+// CHECK-SOFT-FLOAT: "-target-feature" "-neon"
