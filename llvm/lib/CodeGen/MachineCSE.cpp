@@ -87,6 +87,7 @@ namespace {
                                SmallVector<unsigned,2> &PhysDefs) const;
     bool PhysRegDefsReach(MachineInstr *CSMI, MachineInstr *MI,
                           SmallSet<unsigned,8> &PhysRefs,
+                          SmallVector<unsigned,2> &PhysDefs,
                           bool &NonLocal) const;
     bool isCSECandidate(MachineInstr *MI);
     bool isProfitableToCSE(unsigned CSReg, unsigned Reg,
@@ -222,6 +223,7 @@ bool MachineCSE::hasLivePhysRegDefUses(const MachineInstr *MI,
 
 bool MachineCSE::PhysRegDefsReach(MachineInstr *CSMI, MachineInstr *MI,
                                   SmallSet<unsigned,8> &PhysRefs,
+                                  SmallVector<unsigned,2> &PhysDefs,
                                   bool &NonLocal) const {
   // For now conservatively returns false if the common subexpression is
   // not in the same basic block as the given instruction. The only exception
@@ -231,10 +233,16 @@ bool MachineCSE::PhysRegDefsReach(MachineInstr *CSMI, MachineInstr *MI,
 
   bool CrossMBB = false;
   if (CSMBB != MBB) {
-    if (MBB->pred_size() == 1 && *MBB->pred_begin() == CSMBB)
-      CrossMBB = true;
-    else
+    if (MBB->pred_size() != 1 || *MBB->pred_begin() != CSMBB)
       return false;
+
+    for (unsigned i = 0, e = PhysDefs.size(); i != e; ++i) {
+      if (TRI->isInAllocatableClass(PhysDefs[i]))
+        // Avoid extending live range of physical registers unless
+        // they are unallocatable.
+        return false;
+    }
+    CrossMBB = true;
   }
   MachineBasicBlock::const_iterator I = CSMI; I = llvm::next(I);
   MachineBasicBlock::const_iterator E = MI;
@@ -429,7 +437,7 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
       // in between and the physical register uses were not clobbered.
       unsigned CSVN = VNT.lookup(MI);
       MachineInstr *CSMI = Exps[CSVN];
-      if (PhysRegDefsReach(CSMI, MI, PhysRefs, CrossMBBPhysDef))
+      if (PhysRegDefsReach(CSMI, MI, PhysRefs, PhysDefs, CrossMBBPhysDef))
         FoundCSE = true;
     }
 
