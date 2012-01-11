@@ -102,9 +102,6 @@ X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT,
   // default to hard float ABI
   if (Options.FloatABIType == FloatABI::Default)
     this->Options.FloatABIType = FloatABI::Hard;   
-
-  if (Options.EnableSegmentedStacks && !Subtarget.isTargetELF())
-    report_fatal_error("Segmented stacks are only implemented on ELF.");
 }
 
 //===----------------------------------------------------------------------===//
