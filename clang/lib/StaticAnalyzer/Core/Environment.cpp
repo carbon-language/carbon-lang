@@ -90,6 +90,14 @@ SVal Environment::getSVal(const EnvironmentEntry &Entry,
         continue;
       case Stmt::ObjCPropertyRefExprClass:
         return loc::ObjCPropRef(cast<ObjCPropertyRefExpr>(E));
+      case Stmt::ReturnStmtClass: {
+        const ReturnStmt *RS = cast<ReturnStmt>(E);
+        if (const Expr *RE = RS->getRetValue()) {
+          E = RE;
+          continue;
+        }
+        return UndefinedVal();        
+      }
         
       // Handle all other Stmt* using a lookup.
       default:

@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-inline-call -analyzer-store region -verify %s
-// XFAIL: *
 
 int test1_f1() {
   int y = 1;

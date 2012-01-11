@@ -14,19 +14,11 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
+#include "clang/Analysis/Support/SaveAndRestore.h"
 #include "clang/AST/DeclCXX.h"
 
 using namespace clang;
 using namespace ento;
-
-namespace {
-  // Trait class for recording returned expression in the state.
-  struct ReturnExpr {
-    static int TagInt;
-    typedef const Stmt *data_type;
-  };
-  int ReturnExpr::TagInt; 
-}
 
 void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
   // Get the entry block in the CFG of the callee.
@@ -56,20 +48,36 @@ void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
     Engine.getWorkList()->enqueue(Node);
 }
 
+static const ReturnStmt *getReturnStmt(const ExplodedNode *Node) {
+  while (Node) {
+    const ProgramPoint &PP = Node->getLocation();
+    // Skip any BlockEdges.
+    if (isa<BlockEdge>(PP) || isa<CallExit>(PP)) {
+      assert(Node->pred_size() == 1);
+      Node = *Node->pred_begin();
+      continue;
+    } 
+    if (const StmtPoint *SP = dyn_cast<StmtPoint>(&PP)) {
+      const Stmt *S = SP->getStmt();
+      return dyn_cast<ReturnStmt>(S);
+    }
+    break;
+  }
+  return 0;
+}
+
 void ExprEngine::processCallExit(ExplodedNode *Pred) {
   const ProgramState *state = Pred->getState();
   const StackFrameContext *calleeCtx = 
     Pred->getLocationContext()->getCurrentStackFrame();
+  const LocationContext *callerCtx = calleeCtx->getParent();
   const Stmt *CE = calleeCtx->getCallSite();
   
   // If the callee returns an expression, bind its value to CallExpr.
-  const Stmt *ReturnedExpr = state->get<ReturnExpr>();
-  if (ReturnedExpr) {
+  if (const ReturnStmt *RS = getReturnStmt(Pred)) {
     const LocationContext *LCtx = Pred->getLocationContext();
-    SVal RetVal = state->getSVal(ReturnedExpr, LCtx);
-    state = state->BindExpr(CE, LCtx, RetVal);
-    // Clear the return expr GDM.
-    state = state->remove<ReturnExpr>();
+    SVal V = state->getSVal(RS, LCtx);
+    state = state->BindExpr(CE, callerCtx, V);
   }
   
   // Bind the constructed object value to CXXConstructExpr.
@@ -82,7 +90,8 @@ void ExprEngine::processCallExit(ExplodedNode *Pred) {
     state = state->BindExpr(CCE, Pred->getLocationContext(), ThisV);
   }
   
-  PostStmt Loc(CE, calleeCtx->getParent());
+  static SimpleProgramPointTag returnTag("ExprEngine : Call Return");
+  PostStmt Loc(CE, callerCtx, &returnTag);
   bool isNew;
   ExplodedNode *N = G.getNode(Loc, state, false, &isNew);
   N->addPredecessor(Pred, G);
@@ -91,6 +100,11 @@ void ExprEngine::processCallExit(ExplodedNode *Pred) {
   
   // Perform the post-condition check of the CallExpr.
   ExplodedNodeSet Dst;
+  NodeBuilderContext Ctx(Engine, calleeCtx->getCallSiteBlock(), N);
+  SaveAndRestore<const NodeBuilderContext*> NBCSave(currentBuilderContext,
+                                                    &Ctx);
+  SaveAndRestore<unsigned> CBISave(currentStmtIdx, calleeCtx->getIndex());
+  
   getCheckerManager().runCheckersForPostStmt(Dst, N, CE, *this);
   
   // Enqueue the next element in the block.
@@ -99,6 +113,42 @@ void ExprEngine::processCallExit(ExplodedNode *Pred) {
                                   calleeCtx->getCallSiteBlock(),
                                   calleeCtx->getIndex()+1);
   }
+}
+
+bool ExprEngine::InlineCall(ExplodedNodeSet &Dst,
+                            const CallExpr *CE, 
+                            ExplodedNode *Pred) {
+  const ProgramState *state = Pred->getState();
+  const Expr *Callee = CE->getCallee();
+  const FunctionDecl *FD =
+  state->getSVal(Callee, Pred->getLocationContext()).getAsFunctionDecl();
+  if (!FD || !FD->hasBody(FD))
+    return false;
+  
+  switch (CE->getStmtClass()) {
+    default:
+      // FIXME: Handle C++.
+      break;
+    case Stmt::CallExprClass: {
+      // Construct a new stack frame for the callee.
+      AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(FD);
+      const StackFrameContext *CallerSFC =
+      Pred->getLocationContext()->getCurrentStackFrame();
+      const StackFrameContext *CalleeSFC =
+      CalleeADC->getStackFrame(CallerSFC, CE,
+                               currentBuilderContext->getBlock(),
+                               currentStmtIdx);
+      
+      CallEnter Loc(CE, CalleeSFC, Pred->getLocationContext());
+      bool isNew;
+      ExplodedNode *N = G.getNode(Loc, state, false, &isNew);
+      N->addPredecessor(Pred, G);
+      if (isNew)
+        Engine.getWorkList()->enqueue(N);
+      return true;
+    }
+  }
+  return false;
 }
 
 static bool isPointerToConst(const ParmVarDecl *ParamDecl) {
@@ -315,27 +365,19 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
 
 void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
                                  ExplodedNodeSet &Dst) {
-  ExplodedNodeSet Src;
-  {
-    StmtNodeBuilder Bldr(Pred, Src, *currentBuilderContext);
-    if (const Expr *RetE = RS->getRetValue()) {
-      // Record the returned expression in the state. It will be used in
-      // processCallExit to bind the return value to the call expr.
-      {
-        static SimpleProgramPointTag tag("ExprEngine: ReturnStmt");
-        const ProgramState *state = Pred->getState();
-        state = state->set<ReturnExpr>(RetE);
-        Pred = Bldr.generateNode(RetE, Pred, state, false, &tag);
-      }
-      // We may get a NULL Pred because we generated a cached node.
-      if (Pred) {
-        Bldr.takeNodes(Pred);
-        ExplodedNodeSet Tmp;
-        Visit(RetE, Pred, Tmp);
-        Bldr.addNodes(Tmp);
-      }
+  
+  ExplodedNodeSet dstPreVisit;
+  getCheckerManager().runCheckersForPreStmt(dstPreVisit, Pred, RS, *this);
+
+  StmtNodeBuilder B(dstPreVisit, Dst, *currentBuilderContext);
+  
+  if (RS->getRetValue()) {
+    for (ExplodedNodeSet::iterator it = dstPreVisit.begin(),
+                                  ei = dstPreVisit.end(); it != ei; ++it) {
+      B.generateNode(RS, *it, (*it)->getState());
     }
   }
-  
-  getCheckerManager().runCheckersForPreStmt(Dst, Src, RS, *this);
+  else {
+    B.takeNodes(dstPreVisit);
+  }
 }
