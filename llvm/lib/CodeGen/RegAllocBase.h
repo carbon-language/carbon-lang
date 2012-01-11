@@ -49,11 +49,6 @@ class VirtRegMap;
 class LiveIntervals;
 class Spiller;
 
-// Forward declare a priority queue of live virtual registers. If an
-// implementation needs to prioritize by anything other than spill weight, then
-// this will become an abstract base class with virtual calls to push/get.
-class LiveVirtRegQueue;
-
 /// RegAllocBase provides the register allocation driver and interface that can
 /// be extended to add interesting heuristics.
 ///
@@ -121,10 +116,6 @@ protected:
 
   // The top-level driver. The output is a VirtRegMap that us updated with
   // physical register assignments.
-  //
-  // If an implementation wants to override the LiveInterval comparator, we
-  // should modify this interface to allow passing in an instance derived from
-  // LiveVirtRegQueue.
   void allocatePhysRegs();
 
   // Get a temporary reference to a Spiller instance.
