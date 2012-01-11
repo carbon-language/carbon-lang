@@ -140,8 +140,11 @@ bool ConstantMerge::runOnModule(Module &M) {
           UsedGlobals.count(GV))
         continue;
 
-      // Ignore any constants which may be removed by the linker.
-      if (GV->mayBeRemovedByLinker())
+      // This transformation is legal for weak ODR globals in the sense it
+      // doesn't change semantics, but we really don't want to perform it
+      // anyway; it's likely to pessimize code generation, and some tools
+      // (like the Darwin linker in cases involving CFString) don't expect it.
+      if (GV->isWeakForLinker())
         continue;
 
       Constant *Init = GV->getInitializer();
@@ -172,9 +175,8 @@ bool ConstantMerge::runOnModule(Module &M) {
           UsedGlobals.count(GV))
         continue;
 
-      // We can only replace constants with local linkage and which aren't
-      // removed by the linker.
-      if (!GV->hasLocalLinkage() || GV->mayBeRemovedByLinker())
+      // We can only replace constant with local linkage.
+      if (!GV->hasLocalLinkage())
         continue;
 
       Constant *Init = GV->getInitializer();

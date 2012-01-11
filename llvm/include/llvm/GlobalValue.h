@@ -192,14 +192,6 @@ public:
            Linkage == LinkerPrivateWeakDefAutoLinkage;
   }
 
-  /// mayBeRemovedByLinker - Whether the definition of this global may be
-  /// removed at link time.
-  static bool mayBeRemovedByLinker(LinkageTypes Linkage) {
-    return isLinkerPrivateLinkage(Linkage) ||
-      isLinkerPrivateWeakLinkage(Linkage) ||
-      isLinkerPrivateWeakDefAutoLinkage(Linkage);
-  }
-
   bool hasExternalLinkage() const { return isExternalLinkage(Linkage); }
   bool hasAvailableExternallyLinkage() const {
     return isAvailableExternallyLinkage(Linkage);
@@ -232,8 +224,6 @@ public:
   bool mayBeOverridden() const { return mayBeOverridden(Linkage); }
 
   bool isWeakForLinker() const { return isWeakForLinker(Linkage); }
-
-  bool mayBeRemovedByLinker() const { return mayBeRemovedByLinker(Linkage); }
 
   /// copyAttributesFrom - copy all additional attributes (those not needed to
   /// create a GlobalValue) from the GlobalValue Src to this one.
