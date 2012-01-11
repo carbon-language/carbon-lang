@@ -660,12 +660,23 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
       CmdArgs.push_back("-vfp3");
       CmdArgs.push_back("-target-feature");
       CmdArgs.push_back("-neon");
+    } else if (FPU == "vfp3-d16" || FPU == "vfpv3-d16") {
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("+vfp3");
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("+d16");
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("-neon");
     } else if (FPU == "vfp") {
       CmdArgs.push_back("-target-feature");
       CmdArgs.push_back("+vfp2");
-    } else if (FPU == "vfp3") {
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("-neon");
+    } else if (FPU == "vfp3" || FPU == "vfpv3") {
       CmdArgs.push_back("-target-feature");
       CmdArgs.push_back("+vfp3");
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("-neon");
     } else if (FPU == "neon") {
       CmdArgs.push_back("-target-feature");
       CmdArgs.push_back("+neon");
