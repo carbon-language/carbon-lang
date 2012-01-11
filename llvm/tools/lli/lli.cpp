@@ -200,7 +200,8 @@ int main(int argc, char **argv, char * const *envp) {
   builder.setRelocationModel(RelocModel);
   builder.setCodeModel(CMModel);
   builder.setErrorStr(&ErrorMsg);
-  builder.setJITMemoryManager(ForceInterpreter ? 0 : JITMemoryManager::CreateDefaultMemManager());
+  builder.setJITMemoryManager(ForceInterpreter ? 0 :
+                              JITMemoryManager::CreateDefaultMemManager());
   builder.setEngineKind(ForceInterpreter
                         ? EngineKind::Interpreter
                         : EngineKind::JIT);
