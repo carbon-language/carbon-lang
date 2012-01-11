@@ -239,7 +239,7 @@ static void RegisterHandler() {
   SetConsoleCtrlHandler(LLVMConsoleCtrlHandler, TRUE);
 
   // Environment variable to disable any kind of crash dialog.
-  if (getenv("LLVM_DISABLE_CRT_DEBUG")) {
+  if (getenv("LLVM_DISABLE_CRASH_REPORT")) {
 #ifdef _MSC_VER
     _CrtSetReportHook(CRTReportHook);
 #endif

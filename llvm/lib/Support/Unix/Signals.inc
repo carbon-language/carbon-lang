@@ -30,6 +30,10 @@
 #include <dlfcn.h>
 #include <cxxabi.h>
 #endif
+#if HAVE_MACH_MACH_H
+#include <mach/mach.h>
+#endif
+
 using namespace llvm;
 
 static RETSIGTYPE SignalHandler(int Sig);  // defined below.
@@ -261,6 +265,22 @@ static void PrintStackTrace(void *) {
 /// SIGSEGV) is delivered to the process, print a stack trace and then exit.
 void llvm::sys::PrintStackTraceOnErrorSignal() {
   AddSignalHandler(PrintStackTrace, 0);
+
+#if defined(__APPLE__)
+  // Environment variable to disable any kind of crash dialog.
+  if (getenv("LLVM_DISABLE_CRASH_REPORT")) {
+    mach_port_t self = mach_task_self();
+
+    exception_mask_t mask = EXC_MASK_CRASH;
+
+    kern_return_t ret = task_set_exception_ports(self, 
+                             mask,
+                             NULL,
+                             EXCEPTION_STATE_IDENTITY | MACH_EXCEPTION_CODES, 
+                             NULL);
+    (void)ret;
+  }
+#endif
 }
 
 
