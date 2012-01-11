@@ -10,5 +10,5 @@ void f(int N) {
   typedef int type2;
 
   typedef int vla[N]; // expected-note{{previous definition is here}}
-  typedef int vla[N]; // expected-error{{typedef redefinition with different types ('int [N]' vs 'int [N]')}}
+  typedef int vla[N]; // expected-error{{redefinition of typedef for variably-modified type 'int [N]'}}
 }

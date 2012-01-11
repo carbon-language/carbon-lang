@@ -1383,10 +1383,21 @@ bool Sema::isIncompatibleTypedef(TypeDecl *Old, TypedefNameDecl *New) {
     OldType = Context.getTypeDeclType(Old);
   QualType NewType = New->getUnderlyingType();
 
+  if (NewType->isVariablyModifiedType()) {
+    // Must not redefine a typedef with a variably-modified type.
+    int Kind = isa<TypeAliasDecl>(Old) ? 1 : 0;
+    Diag(New->getLocation(), diag::err_redefinition_variably_modified_typedef)
+      << Kind << NewType;
+    if (Old->getLocation().isValid())
+      Diag(Old->getLocation(), diag::note_previous_definition);
+    New->setInvalidDecl();
+    return true;    
+  }
+  
   if (OldType != NewType &&
       !OldType->isDependentType() &&
       !NewType->isDependentType() &&
-      !Context.hasSameType(OldType, NewType)) {
+      !Context.hasSameType(OldType, NewType)) { 
     int Kind = isa<TypeAliasDecl>(Old) ? 1 : 0;
     Diag(New->getLocation(), diag::err_redefinition_different_typedef)
       << Kind << NewType << OldType;

@@ -2754,6 +2754,8 @@ def note_used_here : Note<"used here">;
 def warn_redefinition_of_typedef : ExtWarn<
   "redefinition of typedef %0 is a C11 feature">,
   InGroup<DiagGroup<"typedef-redefinition"> >;
+def err_redefinition_variably_modified_typedef : Error<
+  "redefinition of %select{typedef|type alias}0 for variably-modified type %1">;
 
 def err_inline_declaration_block_scope : Error<
   "inline declaration of %0 not allowed in block scope">;
