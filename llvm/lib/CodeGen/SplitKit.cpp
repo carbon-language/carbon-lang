@@ -95,6 +95,14 @@ SlotIndex SplitAnalysis::computeLastSplitPoint(unsigned Num) {
     return LSP.first;
 }
 
+MachineBasicBlock::iterator
+SplitAnalysis::getLastSplitPointIter(MachineBasicBlock *MBB) {
+  SlotIndex LSP = getLastSplitPoint(MBB->getNumber());
+  if (LSP == LIS.getMBBEndIdx(MBB))
+    return MBB->end();
+  return LIS.getInstructionFromIndex(LSP);
+}
+
 /// analyzeUses - Count instructions, basic blocks, and loops using CurLI.
 void SplitAnalysis::analyzeUses() {
   assert(UseSlots.empty() && "Call clear first");
@@ -497,7 +505,7 @@ SlotIndex SplitEditor::enterIntvAtEnd(MachineBasicBlock &MBB) {
   }
   DEBUG(dbgs() << ": valno " << ParentVNI->id);
   VNInfo *VNI = defFromParent(OpenIdx, ParentVNI, Last, MBB,
-                              LIS.getLastSplitPoint(Edit->getParent(), &MBB));
+                              SA.getLastSplitPointIter(&MBB));
   RegAssign.insert(VNI->def, End, OpenIdx);
   DEBUG(dump());
   return VNI->def;
@@ -780,7 +788,7 @@ void SplitEditor::hoistCopiesForSize() {
     SlotIndex Last = LIS.getMBBEndIdx(Dom.first).getPrevSlot();
     Dom.second =
       defFromParent(0, ParentVNI, Last, *Dom.first,
-                    LIS.getLastSplitPoint(Edit->getParent(), Dom.first))->def;
+                    SA.getLastSplitPointIter(Dom.first))->def;
   }
 
   // Remove redundant back-copies that are now known to be dominated by another

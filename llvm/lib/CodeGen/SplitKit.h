@@ -135,7 +135,7 @@ public:
   /// getParent - Return the last analyzed interval.
   const LiveInterval &getParent() const { return *CurLI; }
 
-  /// getLastSplitPoint - Return that base index of the last valid split point
+  /// getLastSplitPoint - Return the base index of the last valid split point
   /// in the basic block numbered Num.
   SlotIndex getLastSplitPoint(unsigned Num) {
     // Inline the common simple case.
@@ -144,6 +144,9 @@ public:
       return LastSplitPoint[Num].first;
     return computeLastSplitPoint(Num);
   }
+
+  /// getLastSplitPointIter - Returns the last split point as an iterator.
+  MachineBasicBlock::iterator getLastSplitPointIter(MachineBasicBlock*);
 
   /// isOriginalEndpoint - Return true if the original live range was killed or
   /// (re-)defined at Idx. Idx should be the 'def' slot for a normal kill/def,
