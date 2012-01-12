@@ -10,7 +10,6 @@
 #include "IndexingContext.h"
 
 #include "clang/AST/RecursiveASTVisitor.h"
-#include "clang/Analysis/Support/SaveAndRestore.h"
 
 using namespace clang;
 using namespace cxindex;
@@ -21,14 +20,12 @@ class BodyIndexer : public RecursiveASTVisitor<BodyIndexer> {
   IndexingContext &IndexCtx;
   const NamedDecl *Parent;
   const DeclContext *ParentDC;
-  bool InPseudoObject;
 
   typedef RecursiveASTVisitor<BodyIndexer> base;
 public:
   BodyIndexer(IndexingContext &indexCtx,
               const NamedDecl *Parent, const DeclContext *DC)
-    : IndexCtx(indexCtx), Parent(Parent), ParentDC(DC),
-      InPseudoObject(false) { }
+    : IndexCtx(indexCtx), Parent(Parent), ParentDC(DC) { }
   
   bool shouldWalkTypesOfTypeLocs() const { return false; }
 
@@ -62,8 +59,8 @@ public:
     if (ObjCMethodDecl *MD = E->getMethodDecl())
       IndexCtx.handleReference(MD, E->getSelectorStartLoc(),
                                Parent, ParentDC, E,
-                               InPseudoObject ? CXIdxEntityRef_Implicit
-                                              : CXIdxEntityRef_Direct);
+                               E->isImplicit() ? CXIdxEntityRef_Implicit
+                                               : CXIdxEntityRef_Direct);
     return true;
   }
 
@@ -80,11 +77,6 @@ public:
                                Parent, ParentDC, E);
     }
     return true;
-  }
-
-  bool TraversePseudoObjectExpr(PseudoObjectExpr *E) {
-    SaveAndRestore<bool> InPseudo(InPseudoObject, true);
-    return base::TraversePseudoObjectExpr(E);
   }
 
   bool VisitCXXConstructExpr(CXXConstructExpr *E) {

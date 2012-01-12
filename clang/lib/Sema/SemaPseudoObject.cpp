@@ -492,11 +492,9 @@ ExprResult ObjCPropertyOpBuilder::buildGet() {
   assert(Getter);
   
   QualType receiverType;
-  SourceLocation superLoc;
   if (RefExpr->isClassReceiver()) {
     receiverType = S.Context.getObjCInterfaceType(RefExpr->getClassReceiver());
   } else if (RefExpr->isSuperReceiver()) {
-    superLoc = RefExpr->getReceiverLocation();
     receiverType = RefExpr->getSuperReceiverType();
   } else {
     assert(InstanceReceiver);
@@ -507,19 +505,14 @@ ExprResult ObjCPropertyOpBuilder::buildGet() {
   ExprResult msg;
   if (Getter->isInstanceMethod() || RefExpr->isObjectReceiver()) {
     assert(InstanceReceiver || RefExpr->isSuperReceiver());
-    msg = S.BuildInstanceMessage(InstanceReceiver, receiverType, superLoc,
-                                 Getter->getSelector(), Getter,
-                                 GenericLoc, GenericLoc, GenericLoc,
-                                 MultiExprArg());
+    msg = S.BuildInstanceMessageImplicit(InstanceReceiver, receiverType,
+                                         GenericLoc, Getter->getSelector(),
+                                         Getter, MultiExprArg());
   } else {
-    TypeSourceInfo *receiverTypeInfo = 0;
-    if (!RefExpr->isSuperReceiver())
-      receiverTypeInfo = S.Context.getTrivialTypeSourceInfo(receiverType);
-
-    msg = S.BuildClassMessage(receiverTypeInfo, receiverType, superLoc,
-                              Getter->getSelector(), Getter,
-                              GenericLoc, GenericLoc, GenericLoc,
-                              MultiExprArg());
+    msg = S.BuildClassMessageImplicit(receiverType, RefExpr->isSuperReceiver(),
+                                      GenericLoc,
+                                      Getter->getSelector(), Getter,
+                                      MultiExprArg());
   }
   return msg;
 }
@@ -534,11 +527,9 @@ ExprResult ObjCPropertyOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
   assert(hasSetter); (void) hasSetter;
 
   QualType receiverType;
-  SourceLocation superLoc;
   if (RefExpr->isClassReceiver()) {
     receiverType = S.Context.getObjCInterfaceType(RefExpr->getClassReceiver());
   } else if (RefExpr->isSuperReceiver()) {
-    superLoc = RefExpr->getReceiverLocation();
     receiverType = RefExpr->getSuperReceiverType();
   } else {
     assert(InstanceReceiver);
@@ -570,19 +561,14 @@ ExprResult ObjCPropertyOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
   // Build a message-send.
   ExprResult msg;
   if (Setter->isInstanceMethod() || RefExpr->isObjectReceiver()) {
-    msg = S.BuildInstanceMessage(InstanceReceiver, receiverType, superLoc,
-                                 SetterSelector, Setter,
-                                 GenericLoc, GenericLoc, GenericLoc,
-                                 MultiExprArg(args, 1));
+    msg = S.BuildInstanceMessageImplicit(InstanceReceiver, receiverType,
+                                         GenericLoc, SetterSelector, Setter,
+                                         MultiExprArg(args, 1));
   } else {
-    TypeSourceInfo *receiverTypeInfo = 0;
-    if (!RefExpr->isSuperReceiver())
-      receiverTypeInfo = S.Context.getTrivialTypeSourceInfo(receiverType);
-
-    msg = S.BuildClassMessage(receiverTypeInfo, receiverType, superLoc,
-                              SetterSelector, Setter,
-                              GenericLoc, GenericLoc, GenericLoc,
-                              MultiExprArg(args, 1));
+    msg = S.BuildClassMessageImplicit(receiverType, RefExpr->isSuperReceiver(),
+                                      GenericLoc,
+                                      SetterSelector, Setter,
+                                      MultiExprArg(args, 1));
   }
 
   if (!msg.isInvalid() && captureSetValueAsResult) {

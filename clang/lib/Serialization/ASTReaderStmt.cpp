@@ -879,6 +879,7 @@ void ASTStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   unsigned NumStoredSelLocs = Record[Idx++];
   E->SelLocsKind = Record[Idx++]; 
   E->setDelegateInitCall(Record[Idx++]);
+  E->IsImplicit = Record[Idx++];
   ObjCMessageExpr::ReceiverKind Kind
     = static_cast<ObjCMessageExpr::ReceiverKind>(Record[Idx++]);
   switch (Kind) {

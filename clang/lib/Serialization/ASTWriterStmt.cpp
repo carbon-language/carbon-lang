@@ -848,6 +848,7 @@ void ASTStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   Record.push_back(E->getNumStoredSelLocs());
   Record.push_back(E->SelLocsKind);
   Record.push_back(E->isDelegateInitCall());
+  Record.push_back(E->IsImplicit);
   Record.push_back((unsigned)E->getReceiverKind()); // FIXME: stable encoding
   switch (E->getReceiverKind()) {
   case ObjCMessageExpr::Instance:

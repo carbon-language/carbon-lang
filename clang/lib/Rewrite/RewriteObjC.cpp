@@ -1299,7 +1299,8 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(PseudoObjectExpr *PseudoOp) {
                                      SelLocs,
                                      OldMsg->getMethodDecl(),
                                      RHS,
-                                     OldMsg->getRightLoc());
+                                     OldMsg->getRightLoc(),
+                                     OldMsg->isImplicit());
     break;
 
   case ObjCMessageExpr::Instance:
@@ -1311,7 +1312,8 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(PseudoObjectExpr *PseudoOp) {
                                      SelLocs,
                                      OldMsg->getMethodDecl(),
                                      RHS,
-                                     OldMsg->getRightLoc());
+                                     OldMsg->getRightLoc(),
+                                     OldMsg->isImplicit());
     break;
 
   case ObjCMessageExpr::SuperClass:
@@ -1326,7 +1328,8 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitSetter(PseudoObjectExpr *PseudoOp) {
                                      SelLocs,
                                      OldMsg->getMethodDecl(),
                                      RHS,
-                                     OldMsg->getRightLoc());
+                                     OldMsg->getRightLoc(),
+                                     OldMsg->isImplicit());
     break;
   }
 
@@ -1372,7 +1375,8 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(PseudoObjectExpr *PseudoOp) {
                                      SelLocs,
                                      OldMsg->getMethodDecl(),
                                      Args,
-                                     OldMsg->getRightLoc());
+                                     OldMsg->getRightLoc(),
+                                     OldMsg->isImplicit());
     break;
 
   case ObjCMessageExpr::Instance:
@@ -1384,7 +1388,8 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(PseudoObjectExpr *PseudoOp) {
                                      SelLocs,
                                      OldMsg->getMethodDecl(),
                                      Args,
-                                     OldMsg->getRightLoc());
+                                     OldMsg->getRightLoc(),
+                                     OldMsg->isImplicit());
     break;
 
   case ObjCMessageExpr::SuperClass:
@@ -1399,7 +1404,8 @@ Stmt *RewriteObjC::RewritePropertyOrImplicitGetter(PseudoObjectExpr *PseudoOp) {
                                      SelLocs,
                                      OldMsg->getMethodDecl(),
                                      Args,
-                                     OldMsg->getRightLoc());
+                                     OldMsg->getRightLoc(),
+                                     OldMsg->isImplicit());
     break;
   }
 

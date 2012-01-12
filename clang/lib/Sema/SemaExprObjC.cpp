@@ -1010,6 +1010,24 @@ ExprResult Sema::ActOnSuperMessage(Scope *S,
                            LBracLoc, SelectorLocs, RBracLoc, move(Args));
 }
 
+
+ExprResult Sema::BuildClassMessageImplicit(QualType ReceiverType,
+                                           bool isSuperReceiver,
+                                           SourceLocation Loc,
+                                           Selector Sel,
+                                           ObjCMethodDecl *Method,
+                                           MultiExprArg Args) {
+  TypeSourceInfo *receiverTypeInfo = 0;
+  if (!ReceiverType.isNull())
+    receiverTypeInfo = Context.getTrivialTypeSourceInfo(ReceiverType);
+
+  return BuildClassMessage(receiverTypeInfo, ReceiverType,
+                          /*SuperLoc=*/isSuperReceiver ? Loc : SourceLocation(),
+                           Sel, Method, Loc, Loc, Loc, Args,
+                           /*isImplicit=*/true);
+
+}
+
 /// \brief Build an Objective-C class message expression.
 ///
 /// This routine takes care of both normal class messages and
@@ -1046,7 +1064,8 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
                                    SourceLocation LBracLoc, 
                                    ArrayRef<SourceLocation> SelectorLocs,
                                    SourceLocation RBracLoc,
-                                   MultiExprArg ArgsIn) {
+                                   MultiExprArg ArgsIn,
+                                   bool isImplicit) {
   SourceLocation Loc = SuperLoc.isValid()? SuperLoc
     : ReceiverTypeInfo->getTypeLoc().getSourceRange().getBegin();
   if (LBracLoc.isInvalid()) {
@@ -1064,7 +1083,8 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
     return Owned(ObjCMessageExpr::Create(Context, ReceiverType,
                                          VK_RValue, LBracLoc, ReceiverTypeInfo,
                                          Sel, SelectorLocs, /*Method=*/0,
-                                         makeArrayRef(Args, NumArgs),RBracLoc));
+                                         makeArrayRef(Args, NumArgs),RBracLoc,
+                                         isImplicit));
   }
   
   // Find the class to which we are sending this message.
@@ -1130,12 +1150,12 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
                                      SuperLoc, /*IsInstanceSuper=*/false, 
                                      ReceiverType, Sel, SelectorLocs,
                                      Method, makeArrayRef(Args, NumArgs),
-                                     RBracLoc);
+                                     RBracLoc, isImplicit);
   else
     Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc, 
                                      ReceiverTypeInfo, Sel, SelectorLocs,
                                      Method, makeArrayRef(Args, NumArgs),
-                                     RBracLoc);
+                                     RBracLoc, isImplicit);
   return MaybeBindToTemporary(Result);
 }
 
@@ -1161,6 +1181,18 @@ ExprResult Sema::ActOnClassMessage(Scope *S,
   return BuildClassMessage(ReceiverTypeInfo, ReceiverType, 
                            /*SuperLoc=*/SourceLocation(), Sel, /*Method=*/0,
                            LBracLoc, SelectorLocs, RBracLoc, move(Args));
+}
+
+ExprResult Sema::BuildInstanceMessageImplicit(Expr *Receiver,
+                                              QualType ReceiverType,
+                                              SourceLocation Loc,
+                                              Selector Sel,
+                                              ObjCMethodDecl *Method,
+                                              MultiExprArg Args) {
+  return BuildInstanceMessage(Receiver, ReceiverType,
+                              /*SuperLoc=*/!Receiver ? Loc : SourceLocation(),
+                              Sel, Method, Loc, Loc, Loc, Args,
+                              /*isImplicit=*/true);
 }
 
 /// \brief Build an Objective-C instance message expression.
@@ -1199,7 +1231,8 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                                       SourceLocation LBracLoc, 
                                       ArrayRef<SourceLocation> SelectorLocs,
                                       SourceLocation RBracLoc,
-                                      MultiExprArg ArgsIn) {
+                                      MultiExprArg ArgsIn,
+                                      bool isImplicit) {
   // The location of the receiver.
   SourceLocation Loc = SuperLoc.isValid()? SuperLoc : Receiver->getLocStart();
   
@@ -1232,7 +1265,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                                            VK_RValue, LBracLoc, Receiver, Sel, 
                                            SelectorLocs, /*Method=*/0,
                                            makeArrayRef(Args, NumArgs),
-                                           RBracLoc));
+                                           RBracLoc, isImplicit));
     }
 
     // If necessary, apply function/array conversion to the receiver.
@@ -1522,11 +1555,13 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc,
                                      SuperLoc,  /*IsInstanceSuper=*/true,
                                      ReceiverType, Sel, SelectorLocs, Method, 
-                                     makeArrayRef(Args, NumArgs), RBracLoc);
+                                     makeArrayRef(Args, NumArgs), RBracLoc,
+                                     isImplicit);
   else
     Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc,
                                      Receiver, Sel, SelectorLocs, Method,
-                                     makeArrayRef(Args, NumArgs), RBracLoc);
+                                     makeArrayRef(Args, NumArgs), RBracLoc,
+                                     isImplicit);
 
   if (getLangOptions().ObjCAutoRefCount) {
     // In ARC, annotate delegate init calls.

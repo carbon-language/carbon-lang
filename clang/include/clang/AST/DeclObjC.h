@@ -288,7 +288,11 @@ public:
     return SourceRange(getLocation(), EndLoc);
   }
 
-  SourceLocation getSelectorStartLoc() const { return getSelectorLoc(0); }
+  SourceLocation getSelectorStartLoc() const {
+    if (isImplicit())
+      return getLocStart();
+    return getSelectorLoc(0);
+  }
   SourceLocation getSelectorLoc(unsigned Index) const {
     assert(Index < getNumSelectorLocs() && "Index out of range!");
     if (hasStandardSelLocs())
