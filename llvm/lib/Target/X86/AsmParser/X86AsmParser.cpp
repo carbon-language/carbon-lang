@@ -46,6 +46,8 @@ private:
   }
 
   X86Operand *ParseOperand();
+  X86Operand *ParseATTOperand();
+  X86Operand *ParseIntelOperand();
   X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
 
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
@@ -495,6 +497,99 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
 }
 
 X86Operand *X86ATTAsmParser::ParseOperand() {
+  if (getParser().getAssemblerDialect())
+    return ParseIntelOperand();
+  return ParseATTOperand();
+}
+
+/// getIntelRegister - If this is an intel register operand
+/// then return register number, otherwise return 0;
+static unsigned getIntelRegisterOperand(StringRef Str) {
+  unsigned RegNo = MatchRegisterName(Str);
+  // If the match failed, try the register name as lowercase.
+  if (RegNo == 0)
+    RegNo = MatchRegisterName(Str.lower());
+  return RegNo;
+}
+
+/// isIntelMemOperand - If this is an intel memory operand
+/// then return true.
+static bool isIntelMemOperand(StringRef OpStr, unsigned &Size) {
+  Size = 0;
+  if (OpStr == "BYTE") Size = 8;
+  if (OpStr == "WORD") Size = 16;
+  if (OpStr == "DWORD") Size = 32;
+  if (OpStr == "QWORD") Size = 64;
+  if (OpStr == "XWORD") Size = 80;
+  if (OpStr == "XMMWORD") Size = 128;
+  if (OpStr == "YMMWORD") Size = 256;
+  return Size != 0;
+}
+
+X86Operand *X86ATTAsmParser::ParseIntelOperand() {
+
+  const AsmToken &Tok = Parser.getTok();
+  SMLoc Start = Parser.getTok().getLoc(), End;
+
+  // register
+  if(unsigned RegNo = getIntelRegisterOperand(Tok.getString())) {
+    Parser.Lex();
+    End = Parser.getTok().getLoc();
+    return X86Operand::CreateReg(RegNo, Start, End);
+  }
+
+  // mem operand
+  unsigned SegReg = 0, BaseReg = 0, IndexReg = 0, Scale = 1;
+  StringRef OpStr = Tok.getString();
+  unsigned Size = 0;
+  if (isIntelMemOperand(OpStr, Size)) {
+    Parser.Lex();
+    if (Tok.getString() == "PTR")
+      Parser.Lex();
+    else {
+      Error(Start, "unexpected token!");
+      return 0;
+    }
+
+    if (Tok.getString() == "[")
+      Parser.Lex();
+    else {
+      Error(Start, "unexpected token!");
+      return 0;
+    }
+
+    SMLoc LParenLoc = Parser.getTok().getLoc();
+    BaseReg = getIntelRegisterOperand(Tok.getString());
+    if (BaseReg == 0) {
+      Error(LParenLoc, "unexpected token!");
+      return 0;
+    }
+    Parser.Lex();
+    const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
+    SMLoc ExprEnd;
+    if (getParser().ParseExpression(Disp, ExprEnd)) return 0;
+    End = Parser.getTok().getLoc();
+    if (Tok.getString() == "]")
+      Parser.Lex();
+    if (BaseReg == 0) {
+      Error(End, "unexpected token!");
+      return 0;
+    }
+    return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
+				 Start, End);
+  }
+
+  // immediate.
+  const MCExpr *Val;
+  if (!getParser().ParseExpression(Val, End)) {
+    End = Parser.getTok().getLoc();
+    return X86Operand::CreateImm(Val, Start, End);
+  }
+
+  return 0;
+}
+
+X86Operand *X86ATTAsmParser::ParseATTOperand() {
   switch (getLexer().getKind()) {
   default:
     // Parse a memory operand with no segment register.
@@ -990,7 +1085,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   MCInst Inst;
 
   // First, try a direct match.
-  switch (MatchInstructionImpl(Operands, Inst, OrigErrorInfo)) {
+  switch (MatchInstructionImpl(Operands, Inst, OrigErrorInfo, 
+                               getParser().getAssemblerDialect())) {
   default: break;
   case Match_Success:
     Out.EmitInstruction(Inst);
