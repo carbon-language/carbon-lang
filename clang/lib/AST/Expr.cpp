@@ -2872,9 +2872,11 @@ void ObjCMessageExpr::initArgsAndSelLocs(ArrayRef<Expr *> Args,
     MyArgs[I] = Args[I];
   }
 
-  SelLocsKind = SelLocsK;
-  if (SelLocsK == SelLoc_NonStandard)
-    std::copy(SelLocs.begin(), SelLocs.end(), getStoredSelLocs());
+  if (!isImplicit()) {
+    SelLocsKind = SelLocsK;
+    if (SelLocsK == SelLoc_NonStandard)
+      std::copy(SelLocs.begin(), SelLocs.end(), getStoredSelLocs());
+  }
 }
 
 ObjCMessageExpr *ObjCMessageExpr::Create(ASTContext &Context, QualType T,
