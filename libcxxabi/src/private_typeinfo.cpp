@@ -62,6 +62,11 @@ __class_type_info::~__class_type_info()
 // __dynamic_cast notes:
 // Up or above refers to base classes and base objects.
 // Down or below refers to derived classes/objects.
+// There are two search algorithms, search1 and search2.
+// search1 is nothing but an optimization of search2 for a special case.
+// Take it away and things should still work correctly.
+// Both algorithms return 1 if the search should continue below the current node
+//    and 0 if the search should be aborted (because the answer is now known).
 
 // search1 is a search algorithm used by __dynamic_cast.
 // If a static_type is found
@@ -73,9 +78,34 @@ __class_type_info::~__class_type_info()
 // Else
 //     Continue search above and below this node.
 
+// search2 is a search algorithm used by __dynamic_cast.
+// if this is a dst_type
+//     if this node has already been classified then
+//        If the path to get here is public, overwrite existing path_dynamic_ptr_to_dst_ptr.
+//     else we haven't been to this (ptr, dst_type) before.
+//        Record the path to get here in path_dynamic_ptr_to_dst_ptr.
+//        For each base is (static_ptr, static_type) above this dst_type?
+//           Yes:
+//             Record it as dst_ptr_leading_to_static_ptr and increment the
+//                number of such recordings.
+//             If this is not the first of such recordings, then stop searching.
+//             Otherwise continue searching both above and below this node.
+//           No:
+//             record it as dst_ptr_not_leading_to_static_ptr and increment
+//                 the number of such recordings.
+//             Continue searching both above and below this node.
+// else if this is a static_type
+//     if this is *our* static_type
+//        if we found it above a dst_type, record the path from the dst_type
+//        else record the path from the dynamic_type being careful not to overwrite a
+//           previous public path in this latter case.
+//        Record that we found our static_type.
+//     Continue searching only below this node
+// else 
+//     Continue searching above and below this node.
+
 // __class_type_info::search1
 // There are no nodes to search above this node
-// Returns:  1 if search should be continued, otherwise 0
 int
 __class_type_info::search1(__dynamic_cast_info* info, const void* dynamic_ptr,
                            int path_below) const
@@ -95,30 +125,8 @@ __class_type_info::search1(__dynamic_cast_info* info, const void* dynamic_ptr,
     return 1;
 }
 
-// search2 is a search algorithm used by __dynamic_cast.
-// if this is a dst_type
-//     if this has already been classified then
-//        If the path to get here is public, overwrite existing path_dynamic_ptr_to_dst_ptr.
-//     else we haven't been to this dst_type before.
-//        Record the path to get here in path_dynamic_ptr_to_dst_ptr.
-//        Is (static_ptr, static_type) above this dst_type?
-//           Yes:
-//             Record it as dst_ptr_leading_to_static_ptr and increment the
-//                number of such recordings.
-//             If this is not the first of such recordings, then stop searching.
-//             Otherwise continue searching both above and below this node.
-//           No:
-//             record it as dst_ptr_not_leading_to_static_ptr and increment
-//                 the number of such recordings.
-// else if this is a static_type
-//     if this is *our* static_type
-//        if we found it above a dst_type, record the path from the dst_type
-//        else record the path from the dynamic_type being careful not to overwrite a
-//           previous public path in this latter case.
-//        Record that we found our static_type.
-//     Continue searching only below this node
-// else 
-//     Continue searching above and below this node.
+// __class_type_info::search2
+// There are no nodes to search above this node
 int
 __class_type_info::search2(__dynamic_cast_info* info, const void* dynamic_ptr,
                            int path_below) const
@@ -160,6 +168,9 @@ __si_class_type_info::~__si_class_type_info()
 {
 }
 
+// __si_class_type_info::search1
+// There is one node to search above this node.  The path to it is public
+//  and dynamic_ptr needs no adjustment in moving to that node.
 int
 __si_class_type_info::search1(__dynamic_cast_info* info, const void* dynamic_ptr,
                               int path_below) const
@@ -179,6 +190,9 @@ __si_class_type_info::search1(__dynamic_cast_info* info, const void* dynamic_ptr
     return __base_type->search1(info, dynamic_ptr, path_below);
 }
 
+// __si_class_type_info::search2
+// There is one node to search above this node.  The path to it is public
+//  and dynamic_ptr needs no adjustment in moving to that node.
 int
 __si_class_type_info::search2(__dynamic_cast_info* info, const void* dynamic_ptr,
                               int path_below) const
@@ -237,6 +251,11 @@ __vmi_class_type_info::~__vmi_class_type_info()
 {
 }
 
+// __vmi_class_type_info::search1
+// There are one or more nodes to search above this node.  The path to it
+//  may be public or not and the dynamic_ptr may need to be adjusted.  Both
+//  of these details are handled by a pseudo-node in __base_class_type_info
+//  which has no type associated with it.
 int
 __vmi_class_type_info::search1(__dynamic_cast_info* info, const void* dynamic_ptr,
                                int path_below) const
@@ -263,21 +282,11 @@ __vmi_class_type_info::search1(__dynamic_cast_info* info, const void* dynamic_pt
     return 1;
 }
 
-int
-__base_class_type_info::search1(__dynamic_cast_info* info, const void* dynamic_ptr,
-                                int path_below) const
-{
-    ptrdiff_t offset_to_base = __offset_flags >> __offset_shift;
-    if (__offset_flags & __virtual_mask)
-    {
-        char* vtable = *(char**)dynamic_ptr;
-        offset_to_base = (ptrdiff_t)vtable[offset_to_base];
-    }
-    return __base_type->search1(info, (char*)dynamic_ptr + offset_to_base,
-                                (__offset_flags & __public_mask) ? path_below :
-                                                                   not_public_path);
-}
-
+// __vmi_class_type_info::search2
+// There are one or more nodes to search above this node.  The path to it
+//  may be public or not and the dynamic_ptr may need to be adjusted.  Both
+//  of these details are handled by a pseudo-node in __base_class_type_info
+//  which has no type associated with it.
 int
 __vmi_class_type_info::search2(__dynamic_cast_info* info, const void* dynamic_ptr,
                                int path_below) const
@@ -297,10 +306,10 @@ __vmi_class_type_info::search2(__dynamic_cast_info* info, const void* dynamic_pt
             for (Iter p = __base_info, e = __base_info + __base_count; p < e; ++p)
             {
                 info->above_dst_ptr = true;
-                int r = p->search2(info, dynamic_ptr, public_path);
+                // Only a dst_type can abort the search, and one can't be
+                //   above here.  So it is safe to ignore return.
+                (void)p->search2(info, dynamic_ptr, public_path);
                 info->above_dst_ptr = false;
-                if (r == 0)
-                    return 0;
                 if (info->found_static_ptr)
                 {
                     info->found_static_ptr = false;
@@ -339,6 +348,35 @@ __vmi_class_type_info::search2(__dynamic_cast_info* info, const void* dynamic_pt
     return 1;
 }
 
+// __base_class_type_info::search1
+// This is a psuedo-node which does nothing but adjust the path access and
+//  dynamic_ptr prior to calling the base node above.
+//  The dynamic_ptr adjustment depends upon whether or not this node is marked
+//     virtual.
+//  If the path up is public, no change is made to the path (it may already be
+//     marked private from below).  If the path up is private, it is forced so.
+int
+__base_class_type_info::search1(__dynamic_cast_info* info, const void* dynamic_ptr,
+                                int path_below) const
+{
+    ptrdiff_t offset_to_base = __offset_flags >> __offset_shift;
+    if (__offset_flags & __virtual_mask)
+    {
+        char* vtable = *(char**)dynamic_ptr;
+        offset_to_base = *(ptrdiff_t*)(vtable + offset_to_base);
+    }
+    return __base_type->search1(info, (char*)dynamic_ptr + offset_to_base,
+                                (__offset_flags & __public_mask) ? path_below :
+                                                                   not_public_path);
+}
+
+// __base_class_type_info::search2
+// This is a psuedo-node which does nothing but adjust the path access and
+//  dynamic_ptr prior to calling the base node above.
+//  The dynamic_ptr adjustment depends upon whether or not this node is marked
+//     virtual.
+//  If the path up is public, no change is made to the path (it may already be
+//     marked private from below).  If the path up is private, it is forced so.
 int
 __base_class_type_info::search2(__dynamic_cast_info* info, const void* dynamic_ptr,
                                 int path_below) const
@@ -347,7 +385,7 @@ __base_class_type_info::search2(__dynamic_cast_info* info, const void* dynamic_p
     if (__offset_flags & __virtual_mask)
     {
         char* vtable = *(char**)dynamic_ptr;
-        offset_to_base = (ptrdiff_t)vtable[offset_to_base];
+        offset_to_base = *(ptrdiff_t*)(vtable + offset_to_base);
     }
     return __base_type->search2(info, (char*)dynamic_ptr + offset_to_base,
                                 (__offset_flags & __public_mask) ? path_below :
@@ -378,7 +416,7 @@ __base_class_type_info::display(const void* obj) const
     if (__offset_flags & __virtual_mask)
     {
         char* vtable = *(char**)obj;
-        offset_to_base = (ptrdiff_t)vtable[offset_to_base];
+        offset_to_base = *(ptrdiff_t*)(vtable + offset_to_base);
     }
     __base_type->display((char*)obj + offset_to_base);
 }
@@ -426,7 +464,7 @@ __pointer_to_member_type_info::~__pointer_to_member_type_info()
 //        ambiguity, or
 //    3.  nullptr
 // Knowns:
-//     (dynamic_ptr, dynamic_type) can be derived from static_ptr.
+//     (dynamic_ptr, dynamic_type) can be extracted from static_ptr.
 //     dynamic_ptr is a pointer to the complete run time object.
 //     dynamic_type is the type of the complete run time object.
 //     The type hierarchy is a DAG rooted at (dynamic_ptr, dynamic_type) and
@@ -448,6 +486,27 @@ __pointer_to_member_type_info::~__pointer_to_member_type_info()
 //           (dynamic_ptr, dynamic_type) to (static_ptr, static_type),
 //           else returns nullptr.
 //        This check is purely an optimization and does not impact correctness.
+// Algorithm:
+//    Extract (dynamic_ptr, dynamic_type) from static_ptr.
+//    If dynamic_type == dst_type
+//       If there is a public path from (dynamic_ptr, dynamic_type) to
+//          (static_ptr, static_type), return dynamic_ptr else return nullptr.
+//    Else dynamic_type != dst_type
+//       If there is a single dst_type derived (below) (static_ptr, static_type)
+//           If the path from that unique dst_type to (static_ptr, static_type)
+//              is public, return a pointer to that dst_type else return nullptr.
+//           Else if there are no dst_type's which don't point to (static_ptr, static_type)
+//              and if there is a pubic path from (dynamic_ptr, dynamic_type) to
+//              (static_ptr, static_type) and a public path from (dynamic_ptr, dynamic_type)
+//              to the single dst_type, then return a pointer to that dst_type,
+//           Else return nullptr.
+//       Else if there are no dst_type derived (below) (static_ptr, static_type)
+//           And if there is a single dst_type base of (above)
+//               (dynamic_ptr, dynamic_type), and if that single dst_type has a
+//               public path to it.  And if there is a public path
+//               from (dynamic_ptr, dynamic_type) to (static_ptr, static_type)
+//               then return a pointer to that single dst_type, else return nullptr.
+//       Else return nullptr.
 extern "C"
 void*
 __dynamic_cast(const void* static_ptr,
@@ -487,7 +546,13 @@ dynamic_type->display(dynamic_ptr);
                 dst_ptr = info.dst_ptr_not_leading_to_static_ptr;
             break;
         case 1:
-            if (info.path_dst_ptr_to_static_ptr == public_path)
+            if (info.path_dst_ptr_to_static_ptr == public_path ||
+                   (
+                       info.number_to_dst_ptr == 0 &&
+                       info.path_dynamic_ptr_to_static_ptr == public_path &&
+                       info.path_dynamic_ptr_to_dst_ptr == public_path
+                   )
+               )
                 dst_ptr = info.dst_ptr_leading_to_static_ptr;
             break;
         }
