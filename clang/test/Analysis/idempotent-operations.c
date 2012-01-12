@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-constraints=range -fblocks -analyzer-opt-analyze-nested-blocks -analyzer-checker=deadcode.IdempotentOperations -verify %s
-// RUN: %clang --analyze -Xclang -analyzer-disable-checker=deadcode.DeadStores -fblocks -Xclang -verify %s -o %t
 
 // Basic tests
 
