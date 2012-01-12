@@ -133,7 +133,7 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
                 return true;
             }
             else {
-              const SVal &V = StoreMgr.Retrieve(store, loc::MemRegionVal(FR));
+              const SVal &V = StoreMgr.getBinding(store, loc::MemRegionVal(FR));
               if (V.isUndef())
                 return true;
             }

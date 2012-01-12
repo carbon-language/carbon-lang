@@ -224,7 +224,7 @@ static SymbolRef getAsPointeeSymbol(const Expr *Expr,
 
   if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(&ArgV)) {
     StoreManager& SM = C.getStoreManager();
-    const MemRegion *V = SM.Retrieve(State->getStore(), *X).getAsRegion();
+    const MemRegion *V = SM.getBinding(State->getStore(), *X).getAsRegion();
     if (V)
       return getSymbolForRegion(C, V);
   }

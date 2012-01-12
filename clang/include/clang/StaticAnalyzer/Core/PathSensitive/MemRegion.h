@@ -887,6 +887,7 @@ public:
   void dump() const;
 };
 
+/// \brief ElementRegin is used to represent both array elements and casts.
 class ElementRegion : public TypedValueRegion {
   friend class MemRegionManager;
 

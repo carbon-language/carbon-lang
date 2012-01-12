@@ -55,7 +55,7 @@ public:
   ///   expected type of the returned value.  This is used if the value is
   ///   lazily computed.
   /// \return The value bound to the location \c loc.
-  virtual SVal Retrieve(Store store, Loc loc, QualType T = QualType()) = 0;
+  virtual SVal getBinding(Store store, Loc loc, QualType T = QualType()) = 0;
 
   /// Return a state with the specified value bound to the given location.
   /// \param[in] state The analysis state.

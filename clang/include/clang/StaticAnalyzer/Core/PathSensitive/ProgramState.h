@@ -728,11 +728,12 @@ ProgramState::getSValAsScalarOrLoc(const Stmt *S,
 }
 
 inline SVal ProgramState::getRawSVal(Loc LV, QualType T) const {
-  return getStateManager().StoreMgr->Retrieve(getStore(), LV, T);
+  return getStateManager().StoreMgr->getBinding(getStore(), LV, T);
 }
 
 inline SVal ProgramState::getSVal(const MemRegion* R) const {
-  return getStateManager().StoreMgr->Retrieve(getStore(), loc::MemRegionVal(R));
+  return getStateManager().StoreMgr->getBinding(getStore(),
+                                                loc::MemRegionVal(R));
 }
 
 inline BasicValueFactory &ProgramState::getBasicVals() const {
