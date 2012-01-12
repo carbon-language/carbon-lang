@@ -59,3 +59,11 @@ struct st {
   double FieldA; // expected-note{{'FieldA' declared here}}
 };
 st var = { .fielda = 0.0 }; // expected-error{{field designator 'fielda' does not refer to any field in type 'st'; did you mean 'FieldA'?}}
+
+// Test the improvement from passing a  callback object to CorrectTypo in
+// Sema::BuildCXXNestedNameSpecifier.
+typedef char* another_str;
+namespace AnotherStd { // expected-note{{'AnotherStd' declared here}}
+  class string {};
+}
+another_std::string str; // expected-error{{use of undeclared identifier 'another_std'; did you mean 'AnotherStd'?}}

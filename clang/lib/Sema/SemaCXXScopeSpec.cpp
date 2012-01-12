@@ -363,6 +363,25 @@ bool Sema::isNonTypeNestedNameSpecifier(Scope *S, CXXScopeSpec &SS,
   return false;
 }
 
+namespace {
+
+// Callback to only accept typo corrections that can be a valid C++ member
+// intializer: either a non-static field member or a base class.
+class NestedNameSpecifierValidatorCCC : public CorrectionCandidateCallback {
+ public:
+  explicit NestedNameSpecifierValidatorCCC(Sema &SRef)
+      : SRef(SRef) {}
+
+  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+    return SRef.isAcceptableNestedNameSpecifier(candidate.getCorrectionDecl());
+  }
+
+ private:
+  Sema &SRef;
+};
+
+}
+
 /// \brief Build a new nested-name-specifier for "identifier::", as described
 /// by ActOnCXXNestedNameSpecifier.
 ///
@@ -478,12 +497,12 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
     // We haven't found anything, and we're not recovering from a
     // different kind of error, so look for typos.
     DeclarationName Name = Found.getLookupName();
+    NestedNameSpecifierValidatorCCC Validator(*this);
     TypoCorrection Corrected;
     Found.clear();
     if ((Corrected = CorrectTypo(Found.getLookupNameInfo(),
-                                 Found.getLookupKind(), S, &SS, LookupCtx,
-                                 EnteringContext, CTC_NoKeywords)) &&
-        isAcceptableNestedNameSpecifier(Corrected.getCorrectionDecl())) {
+                                 Found.getLookupKind(), S, &SS, &Validator,
+                                 LookupCtx, EnteringContext))) {
       std::string CorrectedStr(Corrected.getAsString(getLangOptions()));
       std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOptions()));
       if (LookupCtx)
