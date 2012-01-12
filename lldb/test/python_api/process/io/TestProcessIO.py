@@ -49,10 +49,10 @@ class ProcessIOTestCase(TestBase):
             error = process.GetSTDERR(500)
             if self.TraceOn():
                 print "output->|%s|" % output
-                print "error->|%s|" % error
-            # We are satisfied once "input line=>1" appears in stderr.
+            # Since we launched the process without specifying stdin/out/err,
+            # a pseudo terminal is used for stdout/err, and we are satisfied
+            # once "input line=>1" appears in stdout.
             # See also main.c.
-            #if "input line=>1" in error:
             if "input line=>1" in output:
                 return
             time.sleep(5)
