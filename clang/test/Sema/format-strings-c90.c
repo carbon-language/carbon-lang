@@ -7,6 +7,7 @@ int printf(const char *restrict, ...);
 void foo(char **sp, float *fp, int *ip) {
   /* TODO: Warn that the 'a' length modifier is an extension. */
   scanf("%as", sp);
+  scanf("%a[abc]", sp);
 
   /* TODO: Warn that the 'a' conversion specifier is a C99 feature. */
   scanf("%a", fp);

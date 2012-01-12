@@ -550,6 +550,7 @@ bool FormatSpecifier::hasValidLengthModifier() const {
       switch (CS.getKind()) {
         case ConversionSpecifier::sArg:
         case ConversionSpecifier::SArg:
+        case ConversionSpecifier::ScanListArg:
           return true;
         default:
           return false;

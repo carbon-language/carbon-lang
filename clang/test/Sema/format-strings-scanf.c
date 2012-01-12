@@ -68,8 +68,9 @@ void test_variants(int *i, const char *s, ...) {
   vsscanf(buf, "%[abc", ap); // expected-warning{{no closing ']' for '%[' in scanf format string}}
 }
 
-void test_scanlist(int *ip) {
+void test_scanlist(int *ip, char *sp) {
   scanf("%[abc]", ip); // expected-warning{{conversion specifies type 'char *' but the argument has type 'int *'}}
+  scanf("%h[abc]", sp); // expected-warning{{length modifier 'h' results in undefined behavior or no effect with '[' conversion specifier}}
 }
 
 void test_alloc_extension(char **sp, wchar_t **lsp) {
