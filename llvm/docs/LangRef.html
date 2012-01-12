@@ -106,6 +106,11 @@
           <li><a href="#fpaccuracy">'<tt>fpaccuracy</tt>' Metadata</a></li>
         </ol>
       </li>
+      <li><a href="#module_flags">Module Flags Metadata</a>
+        <ol>
+          <li><a href="#objc_metadata">Objective-C Metadata</a></li>
+        </ol>
+      </li>
     </ol>
   </li>
   <li><a href="#intrinsic_globals">Intrinsic Global Variables</a>
@@ -3023,6 +3028,138 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
 </div>
 
 </div>
+
+</div>
+
+<!-- ======================================================================= -->
+<h3>
+  <a name="module_flags">Module Flags Metadata</a>
+</h3>
+ 
+<div>
+
+<p>Occasionally, the front-end needs to transmit data to the linker which
+   affects its behavior. The LLVM IR isn't sufficient to transmit this
+   information, so one should use the <tt>llvm.module.flags</tt> named
+   metadata.</p>
+
+<p>The <tt>llvm.module.flags</tt> metadata is a named metadata, whose elements
+   consist of metadata triplets. For example:</p>
+
+<pre class="doc_code">
+!0 = metadata !{ i32 0, metadata !"foo", i32 1 }
+!1 = metadata !{ i32 1, metadata !"bar", i32 37 }
+
+!llvm.module.flags = !{ !0, !1 }
+</pre>
+
+<p>The first field specifies the behavior of the linker upon encountering two of
+   the same values. Behavior could range from: emitting an error if some of the
+   modules' flags disagree, emitting a warning, etc. The second field is the
+   name of the metadata. The third field is the value of the metadata.</p>
+
+<p>When two modules are linked together, the <tt>llvm.module.flags</tt> metadata
+   are unioned together.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="objc_metadata">Objective-C Metadata</a>
+</h4>
+ 
+<div>
+
+<p>The following module flags are used to convey Objective-C metadata to the
+   linker.</p>
+
+<table border="1" cellspacing="0" cellpadding="4">
+  <tbody>
+    <tr>
+      <th>Value</th>
+      <th>Behavior</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td align="left">
+        <dl>
+          <dt><tt>Error</tt></dt>
+          <dd>Causes the linker to emit an error when two values disagree.</dd>
+        </dl>
+      </td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td align="left">
+        <dl>
+          <dt><tt>Require</tt></dt>
+          <dd>Causes the linker to emit an error when the specified value is not
+              present.</dd>
+        </dl>
+      </td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td align="left">
+        <dl>
+          <dt><tt>Override</tt></dt>
+          <dd>Causes the linker to use the specified value if the two values
+              disagree. It's an error if two pieces of the same metadata have
+              the <tt>Override</tt> behavior but different values.</dd>
+        </dl>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The names are:</p>
+
+<ul>
+  <li><tt>Objective-C Version</tt></li>
+  <li><tt>Objective-C Garbage Collection</tt></li>
+  <li><tt>Objective-C GC Only</tt></li>
+  <li><tt>Objective-C Image Info Section</tt></li>
+</ul>
+
+<p>
+
+<p>Here is an example of how to use the Objective-C metadata:</p>
+
+<pre class="doc_code">
+<u>Module A</u>
+!0 = metadata !{ i32 1, metadata !"Objective-C Version", i32 2 }
+!1 = metadata !{ i32 1, metadata !"Objective-C Garbage Collection", i32 2 }
+!2 = metadata !{ i32 1, metadata !"Objective-C Image Info Section",
+                 metadata !"__DATA, __objc_imageinfo, regular, no_dead_strip" }
+!llvm.module.flags = !{ !0, !1, !2 }
+
+<u>Module B</u>
+!0 = metadata !{ i32 1, metadata !"Objective-C Version", i32 2 }
+!1 = metadata !{ i32 1, metadata !"Objective-C Garbage Collection", i32 2 }
+!2 = metadata !{ i32 1, metadata !"Objective-C GC Only", i32 4 }
+!3 = metadata !{ i32 1, metadata !"Objective-C Image Info Section",
+                 metadata !"__DATA, __objc_imageinfo, regular, no_dead_strip" }
+!4 = metadata !{ i32 2, metadata !"Objective-C GC Only",
+  metadata !{
+    metadata !"Objective-C Garbage Collection", i32 2
+  }
+}
+!llvm.module.flags = !{ !0, !1, !2, !3, !4 }
+
+<u>Linked Module</u>
+!0 = metadata !{ i32 1, metadata !"Objective-C Version", i32 2 }
+!1 = metadata !{ i32 3, metadata !"Objective-C Garbage Collection", i32 2 }
+!2 = metadata !{ i32 1, metadata !"Objective-C GC Only", i32 4 }
+!3 = metadata !{ i32 1, metadata !"Objective-C Image Info Section",
+                 metadata !"__DATA, __objc_imageinfo, regular, no_dead_strip" }
+!4 = metadata !{ i32 2, metadata !"Objective-C GC Only",
+  metadata !{
+    metadata !"Objective-C Garbage Collection", i32 2
+  }
+}
+!llvm.module.flags = !{ !0, !1, !2, !3, !4 }
+</pre>
+
 
 </div>
 

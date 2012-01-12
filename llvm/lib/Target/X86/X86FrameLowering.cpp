@@ -455,26 +455,19 @@ encodeCompactUnwindRegistersWithFrame(unsigned SavedRegs[CU_NUM_SAVED_REGS],
   };
   const unsigned *CURegs = (Is64Bit ? CU64BitRegs : CU32BitRegs);
 
-  // FIXME: The code below is WRONG and breaks tests on i386, see
-  // SingleSource/Regression/C++/EH/ctor_dtor_count.exec
-  // SingleSource/Regression/C++/EH/exception_spec_test.exec
-  // SingleSource/Regression/C++/EH/function_try_block.exec
-  // SingleSource/Regression/C++/EH/throw_rethrow_test.exec
-  return ~0U;
-
   // Encode the registers in the order they were saved, 3-bits per register. The
-  // registers are numbered from 1 to 6.
+  // registers are numbered from 1 to CU_NUM_SAVED_REGS.
   uint32_t RegEnc = 0;
-  for (int I = 0; I != 6; ++I) {
+  for (int I = CU_NUM_SAVED_REGS, Idx = 0; I != -1; --I) {
     unsigned Reg = SavedRegs[I];
-    if (Reg == 0) break;
+    if (Reg == 0) continue;
+
     int CURegNum = getCompactUnwindRegNum(CURegs, Reg);
-    if (CURegNum == -1)
-      return ~0U;
+    if (CURegNum == -1) return ~0U;
 
     // Encode the 3-bit register number in order, skipping over 3-bits for each
     // register.
-    RegEnc |= (CURegNum & 0x7) << ((5 - I) * 3);
+    RegEnc |= (CURegNum & 0x7) << (Idx++ * 3);
   }
 
   assert((RegEnc & 0x3FFFF) == RegEnc && "Invalid compact register encoding!");
