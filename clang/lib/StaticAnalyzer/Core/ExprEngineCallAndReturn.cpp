@@ -22,8 +22,8 @@ using namespace ento;
 
 void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
   // Get the entry block in the CFG of the callee.
-  const StackFrameContext *SFC = CE.getCalleeContext();
-  const CFG *CalleeCFG = SFC->getCFG();
+  const StackFrameContext *calleeCtx = CE.getCalleeContext();
+  const CFG *CalleeCFG = calleeCtx->getCFG();
   const CFGBlock *Entry = &(CalleeCFG->getEntry());
   
   // Validate the CFG.
@@ -34,11 +34,13 @@ void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
   const CFGBlock *Succ = *(Entry->succ_begin());
   
   // Construct an edge representing the starting location in the callee.
-  BlockEdge Loc(Entry, Succ, SFC);
+  BlockEdge Loc(Entry, Succ, calleeCtx);
 
   // Construct a new state which contains the mapping from actual to
   // formal arguments.
-  const ProgramState *state = Pred->getState()->enterStackFrame(SFC);
+  const LocationContext *callerCtx = Pred->getLocationContext();
+  const ProgramState *state = Pred->getState()->enterStackFrame(callerCtx,
+                                                                calleeCtx);
   
   // Construct a new node and add it to the worklist.
   bool isNew;
@@ -115,6 +117,16 @@ void ExprEngine::processCallExit(ExplodedNode *Pred) {
   }
 }
 
+static unsigned getNumberStackFrames(const LocationContext *LCtx) {
+  unsigned count = 0;
+  while (LCtx) {
+    if (isa<StackFrameContext>(LCtx))
+      ++count;
+    LCtx = LCtx->getParent();
+  }
+  return count;  
+}
+
 bool ExprEngine::InlineCall(ExplodedNodeSet &Dst,
                             const CallExpr *CE, 
                             ExplodedNode *Pred) {
@@ -130,6 +142,11 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst,
       // FIXME: Handle C++.
       break;
     case Stmt::CallExprClass: {
+      // Cap the stack depth at 4 calls (5 stack frames, base + 4 calls).
+      // These heuristics are a WIP.
+      if (getNumberStackFrames(Pred->getLocationContext()) == 5)
+        return false;
+      
       // Construct a new stack frame for the callee.
       AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(FD);
       const StackFrameContext *CallerSFC =

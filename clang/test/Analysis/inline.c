@@ -28,3 +28,33 @@ void test2_f3() {
   test2_f1(test2_f2()); // expected-warning{{too many arguments in call to 'test2_f1'}}
 }
 
+// Test that inlining works with recursive functions.
+
+unsigned factorial(unsigned x) {
+  if (x <= 1)
+    return 1;
+  return x * factorial(x - 1);
+}
+
+void test_factorial() {
+  if (factorial(3) == 6) {
+    int *p = 0;
+    *p = 0xDEADBEEF;  // expected-warning {{null}}
+  }
+  else {
+    int *p = 0;
+    *p = 0xDEADBEEF; // no-warning
+  }
+}
+
+void test_factorial_2() {
+  unsigned x = factorial(3);
+  if (x == factorial(3)) {
+    int *p = 0;
+    *p = 0xDEADBEEF;  // expected-warning {{null}}
+  }
+  else {
+    int *p = 0;
+    *p = 0xDEADBEEF; // no-warning
+  }
+}

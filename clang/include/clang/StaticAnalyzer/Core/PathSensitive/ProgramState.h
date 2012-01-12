@@ -227,7 +227,8 @@ public:
 
   /// enterStackFrame - Returns the state for entry to the given stack frame,
   ///  preserving the current state.
-  const ProgramState *enterStackFrame(const StackFrameContext *frame) const;
+  const ProgramState *enterStackFrame(const LocationContext *callerCtx,
+                                      const StackFrameContext *calleeCtx) const;
 
   /// Get the lvalue for a variable reference.
   Loc getLValue(const VarDecl *D, const LocationContext *LC) const;

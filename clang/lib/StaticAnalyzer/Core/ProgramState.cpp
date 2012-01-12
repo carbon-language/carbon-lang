@@ -180,9 +180,11 @@ const ProgramState *ProgramState::unbindLoc(Loc LV) const {
   return makeWithStore(newStore);
 }
 
-const ProgramState *ProgramState::enterStackFrame(const StackFrameContext *frame) const {
+const ProgramState *
+ProgramState::enterStackFrame(const LocationContext *callerCtx,
+                              const StackFrameContext *calleeCtx) const {
   const StoreRef &new_store =
-    getStateManager().StoreMgr->enterStackFrame(this, frame);
+    getStateManager().StoreMgr->enterStackFrame(this, callerCtx, calleeCtx);
   return makeWithStore(new_store);
 }
 

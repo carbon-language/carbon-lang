@@ -197,7 +197,8 @@ public:
   /// enterStackFrame - Let the StoreManager to do something when execution
   /// engine is about to execute into a callee.
   virtual StoreRef enterStackFrame(const ProgramState *state,
-                                   const StackFrameContext *frame);
+                                   const LocationContext *callerCtx,
+                                   const StackFrameContext *calleeCtx);
 
   virtual void print(Store store, raw_ostream &Out,
                      const char* nl, const char *sep) = 0;

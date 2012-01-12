@@ -380,7 +380,8 @@ public: // Part of public interface to class.
                               SymbolReaper& SymReaper);
 
   StoreRef enterStackFrame(const ProgramState *state,
-                           const StackFrameContext *frame);
+                           const LocationContext *callerCtx,
+                           const StackFrameContext *calleeCtx);
 
   //===------------------------------------------------------------------===//
   // Region "extents".
@@ -1855,36 +1856,40 @@ StoreRef RegionStoreManager::removeDeadBindings(Store store,
 
 
 StoreRef RegionStoreManager::enterStackFrame(const ProgramState *state,
-                                             const StackFrameContext *frame) {
-  FunctionDecl const *FD = cast<FunctionDecl>(frame->getDecl());
+                                             const LocationContext *callerCtx,
+                                             const StackFrameContext *calleeCtx)
+{
+  FunctionDecl const *FD = cast<FunctionDecl>(calleeCtx->getDecl());
   FunctionDecl::param_const_iterator PI = FD->param_begin(), 
                                      PE = FD->param_end();
   StoreRef store = StoreRef(state->getStore(), *this);
 
-  if (CallExpr const *CE = dyn_cast<CallExpr>(frame->getCallSite())) {
+  if (CallExpr const *CE = dyn_cast<CallExpr>(calleeCtx->getCallSite())) {
     CallExpr::const_arg_iterator AI = CE->arg_begin(), AE = CE->arg_end();
 
     // Copy the arg expression value to the arg variables.  We check that
     // PI != PE because the actual number of arguments may be different than
     // the function declaration.
     for (; AI != AE && PI != PE; ++AI, ++PI) {
-      SVal ArgVal = state->getSVal(*AI, frame);
+      SVal ArgVal = state->getSVal(*AI, callerCtx);
       store = Bind(store.getStore(),
-                   svalBuilder.makeLoc(MRMgr.getVarRegion(*PI, frame)), ArgVal);
+                   svalBuilder.makeLoc(MRMgr.getVarRegion(*PI, calleeCtx)),
+                   ArgVal);
     }
   } else if (const CXXConstructExpr *CE =
-               dyn_cast<CXXConstructExpr>(frame->getCallSite())) {
+               dyn_cast<CXXConstructExpr>(calleeCtx->getCallSite())) {
     CXXConstructExpr::const_arg_iterator AI = CE->arg_begin(),
       AE = CE->arg_end();
 
     // Copy the arg expression value to the arg variables.
     for (; AI != AE; ++AI, ++PI) {
-      SVal ArgVal = state->getSVal(*AI, frame);
+      SVal ArgVal = state->getSVal(*AI, callerCtx);
       store = Bind(store.getStore(),
-                   svalBuilder.makeLoc(MRMgr.getVarRegion(*PI,frame)), ArgVal);
+                   svalBuilder.makeLoc(MRMgr.getVarRegion(*PI, calleeCtx)),
+                   ArgVal);
     }
   } else
-    assert(isa<CXXDestructorDecl>(frame->getDecl()));
+    assert(isa<CXXDestructorDecl>(calleeCtx->getDecl()));
 
   return store;
 }
