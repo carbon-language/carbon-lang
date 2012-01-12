@@ -863,7 +863,7 @@ CGDebugInfo::CreateCXXMemberFunction(const CXXMethodDecl *Method,
 }
 
 /// CollectCXXMemberFunctions - A helper function to collect debug info for
-/// C++ member functions.This is used while creating debug info entry for 
+/// C++ member functions. This is used while creating debug info entry for 
 /// a Record.
 void CGDebugInfo::
 CollectCXXMemberFunctions(const CXXRecordDecl *RD, llvm::DIFile Unit,
