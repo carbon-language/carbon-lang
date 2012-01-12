@@ -1618,6 +1618,11 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
           IsSafe = false;
           break;
         }
+
+        if (MO.isKill() && Uses.count(Reg))
+          // Kills a register that's read by the instruction at the point of
+          // insertion. Remove the kill marker.
+          MO.setIsKill(false);
       }
     }
     if (!IsSafe)
