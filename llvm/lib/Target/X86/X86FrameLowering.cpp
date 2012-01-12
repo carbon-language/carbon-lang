@@ -1357,8 +1357,8 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
 
   if (MF.getFunction()->isVarArg())
     report_fatal_error("Segmented stacks do not support vararg functions.");
-  if (!ST->isTargetLinux() && !ST->isTargetDarwin())
-    report_fatal_error("Segmented stacks supported only on linux and darwin.");
+  if (!ST->isTargetLinux() && !ST->isTargetDarwin() && !ST->isTargetWin32())
+    report_fatal_error("Segmented stacks supported only on linux, darwin and win32.");
 
   MachineBasicBlock *allocMBB = MF.CreateMachineBasicBlock();
   MachineBasicBlock *checkMBB = MF.CreateMachineBasicBlock();
@@ -1401,6 +1401,8 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
     } else if (ST->isTargetDarwin()) {
       TlsReg = X86::GS;
       TlsOffset = 0x60 + 90*8; // See pthread_machdep.h. Steal TLS slot 90.
+    } else {
+      report_fatal_error("Segmented stacks not supported on this platform.");
     }
 
     if (CompareStackPointer)
@@ -1412,7 +1414,18 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
     BuildMI(checkMBB, DL, TII.get(X86::CMP64rm)).addReg(ScratchReg)
       .addReg(0).addImm(1).addReg(0).addImm(TlsOffset).addReg(TlsReg);
   } else {
-    TlsReg = X86::GS;
+    if (ST->isTargetLinux()) {
+      TlsReg = X86::GS;
+      TlsOffset = 0x30;
+    } else if (ST->isTargetDarwin()) {
+      TlsReg = X86::GS;
+      TlsOffset = 0x48 + 90*4;
+    } else if (ST->isTargetWin32()) {
+      TlsReg = X86::FS;
+      TlsOffset = 0x14; // pvArbitrary, reserved for application use
+    } else {
+      report_fatal_error("Segmented stacks not supported on this platform.");
+    }
 
     if (CompareStackPointer)
       ScratchReg = X86::ESP;
@@ -1420,13 +1433,10 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
       BuildMI(checkMBB, DL, TII.get(X86::LEA32r), ScratchReg).addReg(X86::ESP)
         .addImm(1).addReg(0).addImm(-StackSize).addReg(0);
 
-    if (ST->isTargetLinux()) {
-      TlsOffset = 0x30;
-
+    if (ST->isTargetLinux() || ST->isTargetWin32()) {
       BuildMI(checkMBB, DL, TII.get(X86::CMP32rm)).addReg(ScratchReg)
         .addReg(0).addImm(0).addReg(0).addImm(TlsOffset).addReg(TlsReg);
     } else if (ST->isTargetDarwin()) {
-      TlsOffset = 0x48 + 90*4;
 
       // TlsOffset doesn't fit into a mod r/m byte so we need an extra register
       unsigned ScratchReg2;
