@@ -5304,7 +5304,9 @@ checkObjCPointerTypesForAssignment(Sema &S, QualType LHSType,
   QualType lhptee = LHSType->getAs<ObjCObjectPointerType>()->getPointeeType();
   QualType rhptee = RHSType->getAs<ObjCObjectPointerType>()->getPointeeType();
 
-  if (!lhptee.isAtLeastAsQualifiedAs(rhptee))
+  if (!lhptee.isAtLeastAsQualifiedAs(rhptee) &&
+      // make an exception for id<P>
+      !LHSType->isObjCQualifiedIdType())
     return Sema::CompatiblePointerDiscardsQualifiers;
 
   if (S.Context.typesAreCompatible(LHSType, RHSType))
