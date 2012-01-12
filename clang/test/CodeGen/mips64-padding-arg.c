@@ -31,13 +31,13 @@ void foo3(int a0, long double a1) {
 
 // Insert padding after hidden argument.
 //
-// CHECK: define void @foo5(%struct.S0* noalias nocapture sret %agg.result, i64, fp128 %a0)
-// CHECK: call void @foo6(%struct.S0* sret %tmp, i32 1, i32 2, i64 undef, fp128 %a0)
+// CHECK: define void @foo5(%struct.S0* noalias sret %agg.result, i64, fp128 %a0)
+// CHECK: call void @foo6(%struct.S0* sret %agg.result, i32 1, i32 2, i64 undef, fp128 %a0)
 // CHECK: declare void @foo6(%struct.S0* sret, i32, i32, i64, fp128)
 
 extern S0 foo6(int, int, long double);
 
 S0 foo5(long double a0) {
-  foo6(1, 2, a0);
+  return foo6(1, 2, a0);
 }
 
