@@ -176,7 +176,7 @@ static ScanfSpecifierResult ParseScanfSpecifier(FormatStringHandler &H,
   }
   ScanfConversionSpecifier CS(conversionPosition, k);
   if (k == ScanfConversionSpecifier::ScanListArg) {
-    if (!ParseScanList(H, CS, I, E))
+    if (ParseScanList(H, CS, I, E))
       return true;
   }
   FS.setConversionSpecifier(CS);

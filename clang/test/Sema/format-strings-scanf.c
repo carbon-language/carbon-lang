@@ -68,6 +68,10 @@ void test_variants(int *i, const char *s, ...) {
   vsscanf(buf, "%[abc", ap); // expected-warning{{no closing ']' for '%[' in scanf format string}}
 }
 
+void test_scanlist(int *ip) {
+  scanf("%[abc]", ip); // expected-warning{{conversion specifies type 'char *' but the argument has type 'int *'}}
+}
+
 void test_alloc_extension(char **sp, wchar_t **lsp) {
   /* Make sure "%a" gets parsed as a conversion specifier for float,
    * even when followed by an 's', 'S' or '[', which would cause it to be
