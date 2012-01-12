@@ -46,9 +46,6 @@ public:
   const MachineLoopInfo &Loops;
   const TargetInstrInfo &TII;
 
-  // Sorted slot indexes of using instructions.
-  SmallVector<SlotIndex, 8> UseSlots;
-
   /// Additional information about basic blocks where the current variable is
   /// live. Such a block will look like one of these templates:
   ///
@@ -84,6 +81,9 @@ public:
 private:
   // Current live interval.
   const LiveInterval *CurLI;
+
+  // Sorted slot indexes of using instructions.
+  SmallVector<SlotIndex, 8> UseSlots;
 
   /// LastSplitPoint - Last legal split point in each basic block in the current
   /// function. The first entry is the first terminator, the second entry is the
@@ -154,6 +154,10 @@ public:
   /// This can be used to recognize code inserted by earlier live range
   /// splitting.
   bool isOriginalEndpoint(SlotIndex Idx) const;
+
+  /// getUseSlots - Return an array of SlotIndexes of instructions using CurLI.
+  /// This include both use and def operands, at most one entry per instruction.
+  ArrayRef<SlotIndex> getUseSlots() const { return UseSlots; }
 
   /// getUseBlocks - Return an array of BlockInfo objects for the basic blocks
   /// where CurLI has uses.

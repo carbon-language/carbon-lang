@@ -1264,7 +1264,7 @@ void RAGreedy::calcGapWeights(unsigned PhysReg,
                               SmallVectorImpl<float> &GapWeight) {
   assert(SA->getUseBlocks().size() == 1 && "Not a local interval");
   const SplitAnalysis::BlockInfo &BI = SA->getUseBlocks().front();
-  const SmallVectorImpl<SlotIndex> &Uses = SA->UseSlots;
+  ArrayRef<SlotIndex> Uses = SA->getUseSlots();
   const unsigned NumGaps = Uses.size()-1;
 
   // Start and end points for the interference check.
@@ -1325,7 +1325,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   // that the interval is continuous from FirstInstr to LastInstr. We should
   // make sure that we don't do anything illegal to such an interval, though.
 
-  const SmallVectorImpl<SlotIndex> &Uses = SA->UseSlots;
+  ArrayRef<SlotIndex> Uses = SA->getUseSlots();
   if (Uses.size() <= 2)
     return 0;
   const unsigned NumGaps = Uses.size()-1;
@@ -1333,7 +1333,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   DEBUG({
     dbgs() << "tryLocalSplit: ";
     for (unsigned i = 0, e = Uses.size(); i != e; ++i)
-      dbgs() << ' ' << SA->UseSlots[i];
+      dbgs() << ' ' << Uses[i];
     dbgs() << '\n';
   });
 
