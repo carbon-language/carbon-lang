@@ -40,3 +40,12 @@ void test3(Test3 *t) {
   char vla[t.length] = {}; // expected-error {{variable-sized object may not be initialized}}
   char *heaparray = new char[t.length];
 }
+
+@interface Test4
+- (X&) prop;
+@end
+void test4(Test4 *t) {
+  (void)const_cast<const X&>(t.prop);
+  (void)dynamic_cast<X&>(t.prop);
+  (void)reinterpret_cast<int&>(t.prop);
+}
