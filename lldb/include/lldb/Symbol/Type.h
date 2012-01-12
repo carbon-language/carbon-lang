@@ -262,7 +262,9 @@ public:
     // For C++0x references (&&)
     void *
     CreateClangRValueReferenceType (Type *type);
-
+    
+    bool
+    IsRealObjCClass();
 
 protected:
     ConstString m_name;

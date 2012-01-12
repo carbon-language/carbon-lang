@@ -332,6 +332,7 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
             class_type_or_name.SetName (class_name);
             
             TypeList class_types;
+            SymbolContext sc;
             uint32_t num_matches = target.GetImages().FindTypes (sc, 
                                                                  class_type_or_name.GetName(),
                                                                  true,
@@ -349,7 +350,10 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
                     TypeSP this_type(class_types.GetTypeAtIndex(i));
                     if (this_type)
                     {
-                        if (ClangASTContext::IsObjCClassType(this_type->GetClangFullType()))
+                        // Only consider "real" ObjC classes.  For now this means avoiding
+                        // the Type objects that are made up from the OBJC_CLASS_$_<NAME> symbols.
+                        // we don't want to use them since they are empty and useless.
+                        if (this_type->IsRealObjCClass())
                         {
                             // There can only be one type with a given name,
                             // so we've just found duplicate definitions, and this

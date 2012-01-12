@@ -673,6 +673,18 @@ Type::CreateClangRValueReferenceType (Type *type)
     return GetClangASTContext().CreateRValueReferenceType (type->GetClangForwardType());
 }
 
+bool
+Type::IsRealObjCClass()
+{
+    // For now we are just skipping ObjC classes that get made by hand from the runtime, because
+    // those don't have any information.  We could extend this to only return true for "full 
+    // definitions" if we can figure that out.
+    
+    if (ClangASTContext::IsObjCClassType(m_clang_type) && GetByteSize() != 0)
+        return true;
+    else
+        return false;
+}
 
 TypeAndOrName::TypeAndOrName () : m_type_sp(), m_type_name()
 {
