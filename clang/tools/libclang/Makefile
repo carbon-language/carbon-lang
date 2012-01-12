@@ -15,8 +15,6 @@ EXPORTED_SYMBOL_FILE = $(PROJ_SRC_DIR)/libclang.exports
 LINK_LIBS_IN_SHARED = 1
 SHARED_LIBRARY = 1
 
-LDFLAGS+= -Wl,-soname,libclang.so.1
-
 LINK_COMPONENTS := support mc
 USEDLIBS = clangARCMigrate.a clangRewrite.a clangFrontend.a clangDriver.a \
      clangSerialization.a \
