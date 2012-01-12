@@ -50,16 +50,17 @@ def v2i64  : ValueType<128, 26>;   //  2 x i64 vector value
 def v4i64  : ValueType<256, 27>;   //  4 x i64 vector value
 def v8i64  : ValueType<512, 28>;   //  8 x i64 vector value
 
-def v2f32  : ValueType<64 , 29>;   //  2 x f32 vector value
-def v4f32  : ValueType<128, 30>;   //  4 x f32 vector value
-def v8f32  : ValueType<256, 31>;   //  8 x f32 vector value
-def v2f64  : ValueType<128, 32>;   //  2 x f64 vector value
-def v4f64  : ValueType<256, 33>;   //  4 x f64 vector value
+def v2f16  : ValueType<32 , 29>;   //  2 x f16 vector value
+def v2f32  : ValueType<64 , 30>;   //  2 x f32 vector value
+def v4f32  : ValueType<128, 31>;   //  4 x f32 vector value
+def v8f32  : ValueType<256, 32>;   //  8 x f32 vector value
+def v2f64  : ValueType<128, 33>;   //  2 x f64 vector value
+def v4f64  : ValueType<256, 34>;   //  4 x f64 vector value
 
-def x86mmx : ValueType<64 , 34>;   // X86 MMX value
-def FlagVT : ValueType<0  , 35>;   // Pre-RA sched glue
-def isVoid : ValueType<0  , 36>;   // Produces no value
-def untyped: ValueType<8  , 37>;   // Produces an untyped value
+def x86mmx : ValueType<64 , 35>;   // X86 MMX value
+def FlagVT : ValueType<0  , 36>;   // Pre-RA sched glue
+def isVoid : ValueType<0  , 37>;   // Produces no value
+def untyped: ValueType<8  , 38>;   // Produces an untyped value
 
 def MetadataVT: ValueType<0, 250>; // Metadata
 

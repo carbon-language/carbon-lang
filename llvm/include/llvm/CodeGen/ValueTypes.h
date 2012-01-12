@@ -69,26 +69,27 @@ namespace llvm {
       v4i64          =  27,   //  4 x i64
       v8i64          =  28,   //  8 x i64
 
-      v2f32          =  29,   //  2 x f32
-      v4f32          =  30,   //  4 x f32
-      v8f32          =  31,   //  8 x f32
-      v2f64          =  32,   //  2 x f64
-      v4f64          =  33,   //  4 x f64
+      v2f16          =  29,   //  2 x f32
+      v2f32          =  30,   //  2 x f32
+      v4f32          =  31,   //  4 x f32
+      v8f32          =  32,   //  8 x f32
+      v2f64          =  33,   //  2 x f64
+      v4f64          =  34,   //  4 x f64
 
       FIRST_VECTOR_VALUETYPE = v2i8,
       LAST_VECTOR_VALUETYPE  = v4f64,
 
-      x86mmx         =  34,   // This is an X86 MMX value
+      x86mmx         =  35,   // This is an X86 MMX value
 
-      Glue           =  35,   // This glues nodes together during pre-RA sched
+      Glue           =  36,   // This glues nodes together during pre-RA sched
 
-      isVoid         =  36,   // This has no value
+      isVoid         =  37,   // This has no value
 
-      Untyped        =  37,   // This value takes a register, but has
+      Untyped        =  38,   // This value takes a register, but has
                               // unspecified type.  The register class
                               // will be determined by the opcode.
 
-      LAST_VALUETYPE =  38,   // This always remains at the end of the list.
+      LAST_VALUETYPE =  39,   // This always remains at the end of the list.
 
       // This is the current maximum for LAST_VALUETYPE.
       // MVT::MAX_ALLOWED_VALUETYPE is used for asserts and to size bit vectors
@@ -204,6 +205,7 @@ namespace llvm {
       case v2i64:
       case v4i64:
       case v8i64: return i64;
+      case v2f16: return f16;
       case v2f32:
       case v4f32:
       case v8f32: return f32;
@@ -234,6 +236,7 @@ namespace llvm {
       case v2i16:
       case v2i32:
       case v2i64:
+      case v2f16:
       case v2f32:
       case v2f64: return 2;
       case v1i64: return 1;
@@ -258,7 +261,8 @@ namespace llvm {
       case f32 :
       case i32 :
       case v4i8:
-      case v2i16: return 32;
+      case v2i16:
+      case v2f16: return 32;
       case x86mmx:
       case f64 :
       case i64 :
@@ -362,6 +366,9 @@ namespace llvm {
         if (NumElements == 2)  return MVT::v2i64;
         if (NumElements == 4)  return MVT::v4i64;
         if (NumElements == 8)  return MVT::v8i64;
+        break;
+      case MVT::f16:
+        if (NumElements == 2)  return MVT::v2f16;
         break;
       case MVT::f32:
         if (NumElements == 2)  return MVT::v2f32;
