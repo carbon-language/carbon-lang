@@ -4294,21 +4294,26 @@ Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
       }
     }
 
-    if (BaseType->isPointerType())
+    if (BaseType->isPointerType() || BaseType->isObjCObjectPointerType())
       BaseType = BaseType->getPointeeType();
   }
 
-  // We could end up with various non-record types here, such as extended
-  // vector types or Objective-C interfaces. Just return early and let
-  // ActOnMemberReferenceExpr do the work.
-  if (!BaseType->isRecordType()) {
-    // C++ [basic.lookup.classref]p2:
-    //   [...] If the type of the object expression is of pointer to scalar
-    //   type, the unqualified-id is looked up in the context of the complete
-    //   postfix-expression.
-    //
-    // This also indicates that we should be parsing a
-    // pseudo-destructor-name.
+  // Objective-C properties allow "." access on Objective-C pointer types,
+  // so adjust the base type to the object type itself.
+  if (BaseType->isObjCObjectPointerType())
+    BaseType = BaseType->getPointeeType();
+  
+  // C++ [basic.lookup.classref]p2:
+  //   [...] If the type of the object expression is of pointer to scalar
+  //   type, the unqualified-id is looked up in the context of the complete
+  //   postfix-expression.
+  //
+  // This also indicates that we could be parsing a pseudo-destructor-name.
+  // Note that Objective-C class and object types can be pseudo-destructor
+  // expressions or normal member (ivar or property) access expressions.
+  if (BaseType->isObjCObjectOrInterfaceType()) {
+    MayBePseudoDestructor = true;
+  } else if (!BaseType->isRecordType()) {
     ObjectType = ParsedType();
     MayBePseudoDestructor = true;
     return Owned(Base);

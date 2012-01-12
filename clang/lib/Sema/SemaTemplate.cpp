@@ -249,6 +249,12 @@ void Sema::LookupTemplateName(LookupResult &Found,
     isDependent = ObjectType->isDependentType();
     assert((isDependent || !ObjectType->isIncompleteType()) &&
            "Caller should have completed object type");
+    
+    // Template names cannot appear inside an Objective-C class or object type.
+    if (ObjectType->isObjCObjectOrInterfaceType()) {
+      Found.clear();
+      return;
+    }
   } else if (SS.isSet()) {
     // This nested-name-specifier occurs after another nested-name-specifier,
     // so long into the context associated with the prior nested-name-specifier.
