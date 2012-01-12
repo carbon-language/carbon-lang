@@ -1255,8 +1255,11 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *&Id,
       Id = IDecl->getIdentifier();
     }
   }
-
-  return dyn_cast_or_null<ObjCInterfaceDecl>(IDecl);
+  ObjCInterfaceDecl *Def = dyn_cast_or_null<ObjCInterfaceDecl>(IDecl);
+  // This routine must always return a class definition, if any.
+  if (Def && Def->getDefinition())
+      Def = Def->getDefinition();
+  return Def;
 }
 
 /// getNonFieldDeclScope - Retrieves the innermost scope, starting

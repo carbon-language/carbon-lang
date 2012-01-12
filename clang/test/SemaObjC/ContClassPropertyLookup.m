@@ -16,3 +16,23 @@
 @implementation MyObject
 @synthesize foo = _foo;
 @end
+
+// rdar://10666594
+@interface MPMediaItem
+@end
+
+@class MPMediaItem;
+
+@interface MPMediaItem ()
+@property (nonatomic, readonly) id title;
+@end
+
+@interface PodcastEpisodesViewController
+@end
+
+@implementation PodcastEpisodesViewController
+- (id) Meth {
+    MPMediaItem *episode;
+    return episode.title;
+}
+@end
