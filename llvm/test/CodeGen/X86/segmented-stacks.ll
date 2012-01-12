@@ -13,6 +13,17 @@
 ; RUN: llc < %s -mtriple=i686-mingw32 -segmented-stacks -filetype=obj
 ; RUN: llc < %s -mtriple=x86_64-freebsd -segmented-stacks -filetype=obj
 
+; RUN: not llc < %s -mtriple=x86_64-solaris -segmented-stacks 2> %t.log
+; RUN: FileCheck %s -input-file=%t.log -check-prefix=X64-Solaris
+; RUN: not llc < %s -mtriple=x86_64-mingw32 -segmented-stacks 2> %t.log
+; RUN: FileCheck %s -input-file=%t.log -check-prefix=X64-MinGW
+; RUN: not llc < %s -mtriple=i686-freebsd -segmented-stacks 2> %t.log
+; RUN: FileCheck %s -input-file=%t.log -check-prefix=X32-FreeBSD
+
+; X64-Solaris: Segmented stacks not supported on this platform
+; X64-MinGW: Segmented stacks not supported on this platform
+; X32-FreeBSD: Segmented stacks not supported on FreeBSD i386
+
 ; Just to prevent the alloca from being optimized away
 declare void @dummy_use(i32*, i32)
 
