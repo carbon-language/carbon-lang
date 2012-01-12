@@ -115,6 +115,12 @@ def warn_decl_in_param_list : Warning<
 def warn_empty_parens_are_function_decl : Warning<
   "empty parentheses interpreted as a function declaration">,
   InGroup<VexingParse>;
+def note_empty_parens_function_call : Note<
+  "change this ',' to a ';' to call %0">;
+def note_empty_parens_default_ctor : Note<
+  "remove parentheses to declare a variable">;
+def note_empty_parens_zero_initialize : Note<
+  "replace parentheses with an initializer to declare a variable">;
 def warn_unused_function : Warning<"unused function %0">,
   InGroup<UnusedFunction>, DefaultIgnore;
 def warn_unused_member_function : Warning<"unused member function %0">,

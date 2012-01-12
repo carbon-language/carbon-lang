@@ -158,3 +158,31 @@ bool ConversionFixItGenerator::tryToFixConversion(const Expr *FullExpr,
 
   return false;
 }
+
+const char *Sema::getFixItZeroInitializerForType(QualType T) const {
+  // Suggest 'nil' if it's defined and appropriate.
+  if ((T->isObjCObjectPointerType() || T->isBlockPointerType()) &&
+      PP.getMacroInfo(&getASTContext().Idents.get("nil")))
+    return " = nil";
+  if (T->isRealFloatingType())
+    return " = 0.0";
+  if (T->isBooleanType() && LangOpts.CPlusPlus)
+    return " = false";
+  if (T->isPointerType() || T->isMemberPointerType()) {
+    if (LangOpts.CPlusPlus0x)
+      return " = nullptr";
+    // Check if 'NULL' is defined.
+    else if (PP.getMacroInfo(&getASTContext().Idents.get("NULL")))
+      return " = NULL";
+  }
+  if (T->isEnumeralType())
+    return 0;
+  if (T->isScalarType())
+    return " = 0";
+  const CXXRecordDecl *RD = T->getAsCXXRecordDecl();
+  if (LangOpts.CPlusPlus0x && RD && !RD->hasUserProvidedDefaultConstructor())
+    return "{}";
+  if (T->isAggregateType())
+    return " = {}";
+  return 0;
+}

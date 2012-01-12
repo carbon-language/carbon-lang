@@ -96,8 +96,8 @@ void test()
   (void)(i1 ? BadDerived() : BadBase());
 
   // b2.1 (hierarchy stuff)
-  const Base constret(); // expected-warning {{interpreted as a function declaration}}
-  const Derived constder(); // expected-warning {{interpreted as a function declaration}}
+  extern const Base constret();
+  extern const Derived constder();
   // should use const overload
   A a1((i1 ? constret() : Base()).trick());
   A a2((i1 ? Base() : constret()).trick());

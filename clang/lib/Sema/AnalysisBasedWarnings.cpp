@@ -415,42 +415,15 @@ static bool SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
     return false;
 
   // Suggest possible initialization (if any).
-  const char *initialization = 0;
   QualType VariableTy = VD->getType().getCanonicalType();
-
-  if (VariableTy->isObjCObjectPointerType() ||
-      VariableTy->isBlockPointerType()) {
-    // Check if 'nil' is defined.
-    if (S.PP.getMacroInfo(&S.getASTContext().Idents.get("nil")))
-      initialization = " = nil";
-    else
-      initialization = " = 0";
-  }
-  else if (VariableTy->isRealFloatingType())
-    initialization = " = 0.0";
-  else if (VariableTy->isBooleanType() && S.Context.getLangOptions().CPlusPlus)
-    initialization = " = false";
-  else if (VariableTy->isEnumeralType())
+  const char *Init = S.getFixItZeroInitializerForType(VariableTy);
+  if (!Init)
     return false;
-  else if (VariableTy->isPointerType() || VariableTy->isMemberPointerType()) {
-    if (S.Context.getLangOptions().CPlusPlus0x)
-      initialization = " = nullptr";
-    // Check if 'NULL' is defined.
-    else if (S.PP.getMacroInfo(&S.getASTContext().Idents.get("NULL")))
-      initialization = " = NULL";
-    else
-      initialization = " = 0";
-  }
-  else if (VariableTy->isScalarType())
-    initialization = " = 0";
 
-  if (initialization) {
-    SourceLocation loc = S.PP.getLocForEndOfToken(VD->getLocEnd());
-    S.Diag(loc, diag::note_var_fixit_add_initialization) << VD->getDeclName()
-      << FixItHint::CreateInsertion(loc, initialization);
-    return true;
-  }
-  return false;
+  SourceLocation Loc = S.PP.getLocForEndOfToken(VD->getLocEnd());
+  S.Diag(Loc, diag::note_var_fixit_add_initialization) << VD->getDeclName()
+    << FixItHint::CreateInsertion(Loc, Init);
+  return true;
 }
 
 /// DiagnoseUninitializedUse -- Helper function for diagnosing uses of an

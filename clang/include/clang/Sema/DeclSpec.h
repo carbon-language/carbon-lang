@@ -1468,6 +1468,10 @@ private:
   /// Extension - true if the declaration is preceded by __extension__.
   bool Extension : 1;
 
+  /// \brief If this is the second or subsequent declarator in this declaration,
+  /// the location of the comma before this declarator.
+  SourceLocation CommaLoc;
+
   /// \brief If provided, the source location of the ellipsis used to describe
   /// this declarator as a parameter pack.
   SourceLocation EllipsisLoc;
@@ -1557,6 +1561,8 @@ public:
     Attrs.clear();
     AsmLabel = 0;
     InlineParamsUsed = false;
+    CommaLoc = SourceLocation();
+    EllipsisLoc = SourceLocation();
   }
 
   /// mayOmitIdentifier - Return true if the identifier is either optional or
@@ -1846,7 +1852,11 @@ public:
 
   void setGroupingParens(bool flag) { GroupingParens = flag; }
   bool hasGroupingParens() const { return GroupingParens; }
-  
+
+  bool isFirstDeclarator() const { return !CommaLoc.isValid(); }
+  SourceLocation getCommaLoc() const { return CommaLoc; }
+  void setCommaLoc(SourceLocation CL) { CommaLoc = CL; }
+
   bool hasEllipsis() const { return EllipsisLoc.isValid(); }
   SourceLocation getEllipsisLoc() const { return EllipsisLoc; }
   void setEllipsisLoc(SourceLocation EL) { EllipsisLoc = EL; }

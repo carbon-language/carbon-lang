@@ -4921,8 +4921,39 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       if (!T->isVoidType() && C.Fun.NumArgs == 0 && !C.Fun.isVariadic &&
           !C.Fun.TrailingReturnType &&
           C.Fun.getExceptionSpecType() == EST_None) {
-        Diag(C.Loc, diag::warn_empty_parens_are_function_decl)
-          << SourceRange(C.Loc, C.EndLoc);
+        SourceRange ParenRange(C.Loc, C.EndLoc);
+        Diag(C.Loc, diag::warn_empty_parens_are_function_decl) << ParenRange;
+
+        // If the declaration looks like:
+        //   T var1,
+        //   f();
+        // and name lookup finds a function named 'f', then the ',' was
+        // probably intended to be a ';'.
+        if (!D.isFirstDeclarator() && D.getIdentifier()) {
+          FullSourceLoc Comma(D.getCommaLoc(), SourceMgr);
+          FullSourceLoc Name(D.getIdentifierLoc(), SourceMgr);
+          if (Comma.getFileID() != Name.getFileID() ||
+              Comma.getSpellingLineNumber() != Name.getSpellingLineNumber()) {
+            LookupResult Result(*this, D.getIdentifier(), SourceLocation(),
+                                LookupOrdinaryName);
+            if (LookupName(Result, S))
+              Diag(D.getCommaLoc(), diag::note_empty_parens_function_call)
+                << FixItHint::CreateReplacement(D.getCommaLoc(), ";") << NewFD;
+          }
+        }
+        const CXXRecordDecl *RD = T->getAsCXXRecordDecl();
+        // Empty parens mean value-initialization, and no parens mean default
+        // initialization. These are equivalent if the default constructor is
+        // user-provided, or if zero-initialization is a no-op.
+        if (RD && (RD->isEmpty() || RD->hasUserProvidedDefaultConstructor()))
+          Diag(C.Loc, diag::note_empty_parens_default_ctor)
+            << FixItHint::CreateRemoval(ParenRange);
+        else if (const char *Init = getFixItZeroInitializerForType(T))
+          Diag(C.Loc, diag::note_empty_parens_zero_initialize)
+            << FixItHint::CreateReplacement(ParenRange, Init);
+        else if (LangOpts.CPlusPlus0x)
+          Diag(C.Loc, diag::note_empty_parens_zero_initialize)
+            << FixItHint::CreateReplacement(ParenRange, "{}");
       }
     }
 

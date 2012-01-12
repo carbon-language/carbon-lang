@@ -1138,6 +1138,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
 
     // Parse the next declarator.
     D.clear();
+    D.setCommaLoc(CommaLoc);
 
     // Accept attributes in an init-declarator.  In the first declarator in a
     // declaration, these would be part of the declspec.  In subsequent
@@ -2665,9 +2666,11 @@ ParseStructDeclaration(DeclSpec &DS, FieldCallback &Fields) {
 
   // Read struct-declarators until we find the semicolon.
   bool FirstDeclarator = true;
+  SourceLocation CommaLoc;
   while (1) {
     ParsingDeclRAIIObject PD(*this);
     FieldDeclarator DeclaratorInfo(DS);
+    DeclaratorInfo.D.setCommaLoc(CommaLoc);
 
     // Attributes are only allowed here on successive declarators.
     if (!FirstDeclarator)
@@ -2703,7 +2706,7 @@ ParseStructDeclaration(DeclSpec &DS, FieldCallback &Fields) {
       return;
 
     // Consume the comma.
-    ConsumeToken();
+    CommaLoc = ConsumeToken();
 
     FirstDeclarator = false;
   }

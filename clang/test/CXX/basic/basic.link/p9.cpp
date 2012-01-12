@@ -6,5 +6,5 @@ namespace N { } // expected-note{{here}}
 // First bullet: two names with external linkage that refer to
 // different kinds of entities.
 void f() {
-  int N(); // expected-error{{redefinition}} expected-warning{{interpreted as a function declaration}}
+  int N(); // expected-error{{redefinition}} expected-warning{{interpreted as a function declaration}} expected-note {{replace parentheses with an initializer}}
 }

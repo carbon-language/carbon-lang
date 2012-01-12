@@ -2044,6 +2044,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     BitfieldSize = true;
     Init = true;
     HasInitializer = false;
+    DeclaratorInfo.setCommaLoc(CommaLoc);
 
     // Attributes are only allowed on the second declarator.
     MaybeParseGNUAttributes(DeclaratorInfo);

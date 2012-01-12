@@ -1067,11 +1067,12 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
       if (Tok.isNot(tok::comma))
         break;
 
+      ParmDeclarator.clear();
+
       // Consume the comma.
-      ConsumeToken();
+      ParmDeclarator.setCommaLoc(ConsumeToken());
 
       // Parse the next declarator.
-      ParmDeclarator.clear();
       ParseDeclarator(ParmDeclarator);
     }
 

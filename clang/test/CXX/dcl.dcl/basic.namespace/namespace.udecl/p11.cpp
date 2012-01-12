@@ -12,26 +12,26 @@
 
 namespace test0 {
   namespace ns { void foo(); } // expected-note {{target of using declaration}}
-  int foo(); // expected-note {{conflicting declaration}}
+  int foo(void); // expected-note {{conflicting declaration}}
   using ns::foo; // expected-error {{target of using declaration conflicts with declaration already in scope}}
 }
 
 namespace test1 {
   namespace ns { void foo(); } // expected-note {{target of using declaration}}
   using ns::foo; //expected-note {{using declaration}}
-  int foo(); // expected-error {{declaration conflicts with target of using declaration already in scope}}
+  int foo(void); // expected-error {{declaration conflicts with target of using declaration already in scope}}
 }
 
 namespace test2 {
   namespace ns { void foo(); } // expected-note 2 {{target of using declaration}}
   void test0() {
-    int foo(); // expected-note {{conflicting declaration}} expected-warning{{function declaration}}
+    int foo(void); // expected-note {{conflicting declaration}}
     using ns::foo; // expected-error {{target of using declaration conflicts with declaration already in scope}}
   }
 
   void test1() {
     using ns::foo; //expected-note {{using declaration}}
-    int foo(); // expected-error {{declaration conflicts with target of using declaration already in scope}} expected-warning{{function declaration}}
+    int foo(void); // expected-error {{declaration conflicts with target of using declaration already in scope}}
   }
 }
 
@@ -39,7 +39,7 @@ namespace test3 {
   namespace ns { void foo(); } // expected-note 2 {{target of using declaration}}
   class Test0 {
     void test() {
-      int foo(); // expected-note {{conflicting declaration}} expected-warning{{function declaration}}
+      int foo(void); // expected-note {{conflicting declaration}}
       using ns::foo; // expected-error {{target of using declaration conflicts with declaration already in scope}}
     }
   };
@@ -47,7 +47,7 @@ namespace test3 {
   class Test1 {
     void test() {
       using ns::foo; //expected-note {{using declaration}}
-      int foo(); // expected-error {{declaration conflicts with target of using declaration already in scope}} expected-warning{{function declaration}}
+      int foo(void); // expected-error {{declaration conflicts with target of using declaration already in scope}}
     }
   };
 }
@@ -56,7 +56,7 @@ namespace test4 {
   namespace ns { void foo(); } // expected-note 2 {{target of using declaration}}
   template <typename> class Test0 {
     void test() {
-      int foo(); // expected-note {{conflicting declaration}} expected-warning{{function declaration}}
+      int foo(void); // expected-note {{conflicting declaration}}
       using ns::foo; // expected-error {{target of using declaration conflicts with declaration already in scope}}
     }
   };
@@ -64,7 +64,7 @@ namespace test4 {
   template <typename> class Test1 {
     void test() {
       using ns::foo; //expected-note {{using declaration}}
-      int foo(); // expected-error {{declaration conflicts with target of using declaration already in scope}} expected-warning{{function declaration}}
+      int foo(void); // expected-error {{declaration conflicts with target of using declaration already in scope}}
     }
   };
 }
