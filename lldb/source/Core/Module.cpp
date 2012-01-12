@@ -531,8 +531,13 @@ Module::FindTypes (const SymbolContext& sc,  const ConstString &name, const Clan
     
     if (retval == 0)
     {
-        const char *stripped = StripTypeName(name.GetCString());
-        return FindTypes_Impl(sc, ConstString(stripped), namespace_decl, append, max_matches, types);
+        const char *orig_name = name.GetCString();
+        const char *stripped = StripTypeName(orig_name);
+        // Only do this lookup if StripTypeName has stripped the name:
+        if (stripped != orig_name)
+           return FindTypes_Impl(sc, ConstString(stripped), namespace_decl, append, max_matches, types);
+        else
+            return 0;
     }
     else
         return retval;
