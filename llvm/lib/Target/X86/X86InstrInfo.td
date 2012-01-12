@@ -251,10 +251,31 @@ def ptr_rc_nosp : PointerLikeRegClass<1>;
 
 // *mem - Operand definitions for the funky X86 addressing mode operands.
 //
-def X86MemAsmOperand : AsmOperandClass {
-  let Name = "Mem";
-  let SuperClasses = [];
+def X86MemAsmOperand : AsmOperandClass { 
+ let Name = "Mem"; let PredicateMethod = "isMem"; 
 }
+def X86Mem8AsmOperand : AsmOperandClass { 
+  let Name = "Mem8"; let PredicateMethod = "isMem8";
+}
+def X86Mem16AsmOperand : AsmOperandClass { 
+  let Name = "Mem16"; let PredicateMethod = "isMem16";
+}
+def X86Mem32AsmOperand : AsmOperandClass { 
+  let Name = "Mem32"; let PredicateMethod = "isMem32";
+}
+def X86Mem64AsmOperand : AsmOperandClass { 
+  let Name = "Mem64"; let PredicateMethod = "isMem64";
+}
+def X86Mem80AsmOperand : AsmOperandClass { 
+  let Name = "Mem80"; let PredicateMethod = "isMem80";
+}
+def X86Mem128AsmOperand : AsmOperandClass { 
+  let Name = "Mem128"; let PredicateMethod = "isMem128";
+}
+def X86Mem256AsmOperand : AsmOperandClass { 
+  let Name = "Mem256"; let PredicateMethod = "isMem256";
+}
+
 def X86AbsMemAsmOperand : AsmOperandClass {
   let Name = "AbsMem";
   let SuperClasses = [X86MemAsmOperand];
@@ -271,17 +292,28 @@ def opaque48mem : X86MemOperand<"printopaquemem">;
 def opaque80mem : X86MemOperand<"printopaquemem">;
 def opaque512mem : X86MemOperand<"printopaquemem">;
 
-def i8mem   : X86MemOperand<"printi8mem">;
-def i16mem  : X86MemOperand<"printi16mem">;
-def i32mem  : X86MemOperand<"printi32mem">;
-def i64mem  : X86MemOperand<"printi64mem">;
-def i128mem : X86MemOperand<"printi128mem">;
-def i256mem : X86MemOperand<"printi256mem">;
-def f32mem  : X86MemOperand<"printf32mem">;
-def f64mem  : X86MemOperand<"printf64mem">;
-def f80mem  : X86MemOperand<"printf80mem">;
-def f128mem : X86MemOperand<"printf128mem">;
-def f256mem : X86MemOperand<"printf256mem">;
+def i8mem   : X86MemOperand<"printi8mem"> { 
+  let ParserMatchClass = X86Mem8AsmOperand; }
+def i16mem  : X86MemOperand<"printi16mem"> { 
+  let ParserMatchClass = X86Mem16AsmOperand; }
+def i32mem  : X86MemOperand<"printi32mem"> { 
+  let ParserMatchClass = X86Mem32AsmOperand; }
+def i64mem  : X86MemOperand<"printi64mem"> { 
+  let ParserMatchClass = X86Mem64AsmOperand; }
+def i128mem : X86MemOperand<"printi128mem"> { 
+  let ParserMatchClass = X86Mem128AsmOperand; }
+def i256mem : X86MemOperand<"printi256mem"> { 
+  let ParserMatchClass = X86Mem256AsmOperand; }
+def f32mem  : X86MemOperand<"printf32mem"> { 
+  let ParserMatchClass = X86Mem32AsmOperand; }
+def f64mem  : X86MemOperand<"printf64mem"> { 
+  let ParserMatchClass = X86Mem64AsmOperand; }
+def f80mem  : X86MemOperand<"printf80mem"> { 
+  let ParserMatchClass = X86Mem80AsmOperand; }
+def f128mem : X86MemOperand<"printf128mem"> { 
+  let ParserMatchClass = X86Mem128AsmOperand; }
+def f256mem : X86MemOperand<"printf256mem">{ 
+  let ParserMatchClass = X86Mem256AsmOperand; }
 }
 
 // A version of i8mem for use on x86-64 that uses GR64_NOREX instead of

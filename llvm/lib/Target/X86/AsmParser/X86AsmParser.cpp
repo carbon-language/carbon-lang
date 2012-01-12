@@ -139,6 +139,7 @@ struct X86Operand : public MCParsedAsmOperand {
       unsigned BaseReg;
       unsigned IndexReg;
       unsigned Scale;
+      unsigned Size;
     } Mem;
   };
 
@@ -282,6 +283,27 @@ struct X86Operand : public MCParsedAsmOperand {
   }
 
   bool isMem() const { return Kind == Memory; }
+  bool isMem8() const { 
+    return Kind == Memory && (!Mem.Size || Mem.Size == 8);
+  }
+  bool isMem16() const { 
+    return Kind == Memory && (!Mem.Size || Mem.Size == 16);
+  }
+  bool isMem32() const { 
+    return Kind == Memory && (!Mem.Size || Mem.Size == 32);
+  }
+  bool isMem64() const { 
+    return Kind == Memory && (!Mem.Size || Mem.Size == 64);
+  }
+  bool isMem80() const { 
+    return Kind == Memory && (!Mem.Size || Mem.Size == 80);
+  }
+  bool isMem128() const { 
+    return Kind == Memory && (!Mem.Size || Mem.Size == 128);
+  }
+  bool isMem256() const { 
+    return Kind == Memory && (!Mem.Size || Mem.Size == 256);
+  }
 
   bool isAbsMem() const {
     return Kind == Memory && !getMemSegReg() && !getMemBaseReg() &&
@@ -306,6 +328,28 @@ struct X86Operand : public MCParsedAsmOperand {
   void addImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
+  }
+
+  void addMem8Operands(MCInst &Inst, unsigned N) const { 
+    addMemOperands(Inst, N); 
+  }
+  void addMem16Operands(MCInst &Inst, unsigned N) const { 
+    addMemOperands(Inst, N); 
+  }
+  void addMem32Operands(MCInst &Inst, unsigned N) const { 
+    addMemOperands(Inst, N); 
+  }
+  void addMem64Operands(MCInst &Inst, unsigned N) const { 
+    addMemOperands(Inst, N); 
+  }
+  void addMem80Operands(MCInst &Inst, unsigned N) const { 
+    addMemOperands(Inst, N); 
+  }
+  void addMem128Operands(MCInst &Inst, unsigned N) const { 
+    addMemOperands(Inst, N); 
+  }
+  void addMem256Operands(MCInst &Inst, unsigned N) const { 
+    addMemOperands(Inst, N); 
   }
 
   void addMemOperands(MCInst &Inst, unsigned N) const {
@@ -344,20 +388,22 @@ struct X86Operand : public MCParsedAsmOperand {
 
   /// Create an absolute memory operand.
   static X86Operand *CreateMem(const MCExpr *Disp, SMLoc StartLoc,
-                               SMLoc EndLoc) {
+                               SMLoc EndLoc, unsigned Size = 0) {
     X86Operand *Res = new X86Operand(Memory, StartLoc, EndLoc);
     Res->Mem.SegReg   = 0;
     Res->Mem.Disp     = Disp;
     Res->Mem.BaseReg  = 0;
     Res->Mem.IndexReg = 0;
     Res->Mem.Scale    = 1;
+    Res->Mem.Size     = Size;
     return Res;
   }
 
   /// Create a generalized memory operand.
   static X86Operand *CreateMem(unsigned SegReg, const MCExpr *Disp,
                                unsigned BaseReg, unsigned IndexReg,
-                               unsigned Scale, SMLoc StartLoc, SMLoc EndLoc) {
+                               unsigned Scale, SMLoc StartLoc, SMLoc EndLoc,
+                               unsigned Size = 0) {
     // We should never just have a displacement, that should be parsed as an
     // absolute memory operand.
     assert((SegReg || BaseReg || IndexReg) && "Invalid memory operand!");
@@ -371,6 +417,7 @@ struct X86Operand : public MCParsedAsmOperand {
     Res->Mem.BaseReg  = BaseReg;
     Res->Mem.IndexReg = IndexReg;
     Res->Mem.Scale    = Scale;
+    Res->Mem.Size     = Size;
     return Res;
   }
 };
@@ -576,7 +623,7 @@ X86Operand *X86ATTAsmParser::ParseIntelOperand() {
       return 0;
     }
     return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
-				 Start, End);
+                                 Start, End, Size);
   }
 
   // immediate.
