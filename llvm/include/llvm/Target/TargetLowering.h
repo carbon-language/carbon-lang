@@ -56,6 +56,7 @@ namespace llvm {
   namespace Sched {
     enum Preference {
       None,             // No preference
+      Source,           // Follow source order.
       RegPressure,      // Scheduling for lowest register pressure.
       Hybrid,           // Scheduling for both latency and register pressure.
       ILP               // Scheduling for ILP in low register pressure mode.

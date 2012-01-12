@@ -218,7 +218,8 @@ namespace llvm {
                                              CodeGenOpt::Level OptLevel) {
     const TargetLowering &TLI = IS->getTargetLowering();
 
-    if (OptLevel == CodeGenOpt::None)
+    if (OptLevel == CodeGenOpt::None ||
+        TLI.getSchedulingPreference() == Sched::Source)
       return createSourceListDAGScheduler(IS, OptLevel);
     if (TLI.getSchedulingPreference() == Sched::RegPressure)
       return createBURRListDAGScheduler(IS, OptLevel);
