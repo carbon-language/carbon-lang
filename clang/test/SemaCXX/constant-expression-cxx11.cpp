@@ -357,6 +357,8 @@ constexpr int MangleChars(const Char *p) {
 }
 
 static_assert(MangleChars("constexpr!") == 1768383, "");
+static_assert(MangleChars(u8"constexpr!") == 1768383, "");
+static_assert(MangleChars(L"constexpr!") == 1768383, "");
 static_assert(MangleChars(u"constexpr!") == 1768383, "");
 static_assert(MangleChars(U"constexpr!") == 1768383, "");
 
@@ -403,6 +405,12 @@ static_assert(t.c[3] == 0, "");
 static_assert(t.c[4] == 0, "");
 static_assert(t.c[5] == 0, "");
 static_assert(t.c[6] == 0, ""); // expected-error {{constant expression}} expected-note {{one-past-the-end}}
+
+struct U {
+  wchar_t chars[6];
+  int n;
+} constexpr u = { { L"test" }, 0 };
+static_assert(u.chars[2] == L's', "");
 
 }
 
@@ -725,6 +733,12 @@ static_assert(u[1].b == 1, "");
 static_assert((&u[1].b)[1] == 2, ""); // expected-error {{constant expression}} expected-note {{read of dereferenced one-past-the-end pointer}}
 static_assert(*(&(u[1].b) + 1 + 1) == 3, ""); // expected-error {{constant expression}} expected-note {{cannot refer to element 2 of non-array object}}
 static_assert((&(u[1]) + 1 + 1)->b == 3, "");
+
+constexpr U v = {};
+static_assert(v.a == 0, "");
+
+union Empty {};
+constexpr Empty e = {};
 
 // Make sure we handle trivial copy constructors for unions.
 constexpr U x = {42};

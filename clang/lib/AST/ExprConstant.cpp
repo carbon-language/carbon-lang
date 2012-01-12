@@ -3015,14 +3015,20 @@ bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
   const ASTRecordLayout &Layout = Info.Ctx.getASTRecordLayout(RD);
 
   if (RD->isUnion()) {
-    Result = APValue(E->getInitializedFieldInUnion());
-    if (!E->getNumInits())
+    const FieldDecl *Field = E->getInitializedFieldInUnion();
+    Result = APValue(Field);
+    if (!Field)
       return true;
+
+    // If the initializer list for a union does not contain any elements, the
+    // first element of the union is value-initialized.
+    ImplicitValueInitExpr VIE(Field->getType());
+    const Expr *InitExpr = E->getNumInits() ? E->getInit(0) : &VIE;
+
     LValue Subobject = This;
-    HandleLValueMember(Info, E->getInit(0), Subobject,
-                       E->getInitializedFieldInUnion(), &Layout);
+    HandleLValueMember(Info, InitExpr, Subobject, Field, &Layout);
     return EvaluateConstantExpression(Result.getUnionValue(), Info,
-                                      Subobject, E->getInit(0));
+                                      Subobject, InitExpr);
   }
 
   assert((!isa<CXXRecordDecl>(RD) || !cast<CXXRecordDecl>(RD)->getNumBases()) &&
@@ -3065,6 +3071,10 @@ bool RecordExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
   const CXXConstructorDecl *FD = E->getConstructor();
   bool ZeroInit = E->requiresZeroInitialization();
   if (CheckTrivialDefaultConstructor(Info, E->getExprLoc(), FD, ZeroInit)) {
+    // If we've already performed zero-initialization, we're already done.
+    if (!Result.isUninit())
+      return true;
+
     if (ZeroInit)
       return ZeroInitialization(E);
 
@@ -3391,7 +3401,7 @@ bool ArrayExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
 
   // C++11 [dcl.init.string]p1: A char array [...] can be initialized by [...]
   // an appropriately-typed string literal enclosed in braces.
-  if (E->getNumInits() == 1 && CAT->getElementType()->isAnyCharacterType() &&
+  if (E->getNumInits() == 1 && E->getInit(0)->isGLValue() &&
       Info.Ctx.hasSameUnqualifiedType(E->getType(), E->getInit(0)->getType())) {
     LValue LV;
     if (!EvaluateLValue(E->getInit(0), LV, Info))
@@ -3446,7 +3456,9 @@ bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
   if (!CAT)
     return Error(E);
 
-  Result = APValue(APValue::UninitArray(), 0, CAT->getSize().getZExtValue());
+  bool HadZeroInit = !Result.isUninit();
+  if (!HadZeroInit)
+    Result = APValue(APValue::UninitArray(), 0, CAT->getSize().getZExtValue());
   if (!Result.hasArrayFiller())
     return true;
 
@@ -3454,6 +3466,9 @@ bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
 
   bool ZeroInit = E->requiresZeroInitialization();
   if (CheckTrivialDefaultConstructor(Info, E->getExprLoc(), FD, ZeroInit)) {
+    if (HadZeroInit)
+      return true;
+
     if (ZeroInit) {
       LValue Subobject = This;
       Subobject.addArray(Info, E, CAT);
@@ -3485,7 +3500,7 @@ bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
   LValue Subobject = This;
   Subobject.addArray(Info, E, CAT);
 
-  if (ZeroInit) {
+  if (ZeroInit && !HadZeroInit) {
     ImplicitValueInitExpr VIE(CAT->getElementType());
     if (!EvaluateConstantExpression(Result.getArrayFiller(), Info, Subobject,
                                     &VIE))
