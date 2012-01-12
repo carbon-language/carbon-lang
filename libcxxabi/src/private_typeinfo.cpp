@@ -9,9 +9,10 @@
 
 #include "private_typeinfo.h"
 
+#ifdef DEBUG
 // temporary headers
 #include <iostream>
-#include <cassert>
+#endif
 
 namespace std
 {
@@ -156,11 +157,13 @@ __class_type_info::search2(__dynamic_cast_info* info, const void* dynamic_ptr,
     return 1;
 }
 
+#ifdef DEBUG
 void
 __class_type_info::display(const void* obj) const
 {
     std::cout << "\n__class_type_info::this = " << obj << "  " << name() << '\n';
 }
+#endif
 
 // __si_class_type_info
 
@@ -238,12 +241,14 @@ __si_class_type_info::search2(__dynamic_cast_info* info, const void* dynamic_ptr
     return __base_type->search2(info, dynamic_ptr, path_below);
 }
 
+#ifdef DEBUG
 void
 __si_class_type_info::display(const void* obj) const
 {
     std::cout << "\n__si_class_type_info::this = " << obj << "  " << name() << '\n';
     __base_type->display(obj);
 }
+#endif
 
 // __vmi_class_type_info
 
@@ -392,6 +397,8 @@ __base_class_type_info::search2(__dynamic_cast_info* info, const void* dynamic_p
                                                                    not_public_path);
 }
 
+#ifdef DEBUG
+
 void
 __vmi_class_type_info::display(const void* obj) const
 {
@@ -420,6 +427,8 @@ __base_class_type_info::display(const void* obj) const
     }
     __base_type->display((char*)obj + offset_to_base);
 }
+
+#endif
 
 // __pbase_type_info
 
@@ -514,18 +523,21 @@ __dynamic_cast(const void* static_ptr,
 			   const __class_type_info* dst_type,
 			   std::ptrdiff_t src2dst_offset)
 {
+#ifdef DEBUG
 std::cout << "static_ptr = " << static_ptr << '\n';
 std::cout << "static_type = " << static_type << '\n';
 std::cout << "dst_type = " << dst_type << '\n';
 std::cout << "src2dst_offset = " << src2dst_offset << '\n';
+#endif
     void** vtable = *(void***)static_ptr;
     ptrdiff_t offset_to_derived = (ptrdiff_t)vtable[-2];
     const void* dynamic_ptr = (const char*)static_ptr + offset_to_derived;
     const __class_type_info* dynamic_type = (const __class_type_info*)vtable[-1];
+#ifdef DEBUG
 std::cout << "dynamic_ptr = " << dynamic_ptr << '\n';
 std::cout << "dynamic_type = " << dynamic_type << '\n';
 dynamic_type->display(dynamic_ptr);
-
+#endif
     const void* dst_ptr = 0;
     __dynamic_cast_info info = {dst_type, static_ptr, static_type, src2dst_offset, 0};
     if (dynamic_type == dst_type)

@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <iostream>
 #include <cassert>
 
 /*
@@ -22,7 +21,7 @@ namespace t1
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -30,7 +29,7 @@ struct A1
 struct A2
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A2* getA2() {return this;}
 };
@@ -38,7 +37,7 @@ struct A2
 struct A3
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A3* getA3() {return this;}
 };
@@ -75,7 +74,7 @@ namespace t2
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -83,7 +82,7 @@ struct A1
 struct A2
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A2* getA2() {return this;}
 };
@@ -92,7 +91,7 @@ struct A3
     : public A1
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A3* getA3() {return this;}
 };
@@ -126,7 +125,7 @@ namespace t3
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -134,7 +133,7 @@ struct A1
 struct A2
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A2* getA2() {return this;}
 };
@@ -143,7 +142,7 @@ struct A3
     : public virtual A1
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A3* getA3() {return this;}
 };
@@ -177,7 +176,7 @@ namespace t4
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -185,7 +184,7 @@ struct A1
 struct A2
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A2* getA2() {return this;}
 };
@@ -194,7 +193,7 @@ struct A3
     : private A1
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return this;}
     A3* getA3() {return this;}
@@ -228,7 +227,7 @@ namespace t5
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -236,7 +235,7 @@ struct A1
 struct A2
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A2* getA2() {return this;}
 };
@@ -245,7 +244,7 @@ struct A3
     : private virtual A1
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return this;}
     A3* getA3() {return this;}
@@ -287,7 +286,7 @@ namespace t6
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -295,7 +294,7 @@ struct A1
 struct A2
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A2* getA2() {return this;}
 };
@@ -305,7 +304,7 @@ struct A3
       public A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -344,7 +343,7 @@ namespace t7
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -352,7 +351,7 @@ struct A1
 struct A2
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A2* getA2() {return this;}
 };
@@ -362,7 +361,7 @@ struct A3
       public A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -401,7 +400,7 @@ namespace t8
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -409,7 +408,7 @@ struct A1
 struct A2
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A2* getA2() {return this;}
 };
@@ -419,7 +418,7 @@ struct A3
       public A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -457,7 +456,7 @@ namespace t9
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -465,7 +464,7 @@ struct A1
 struct A2
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A2* getA2() {return this;}
 };
@@ -475,7 +474,7 @@ struct A3
       public A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -513,7 +512,7 @@ namespace t10
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -521,7 +520,7 @@ struct A1
 struct A2
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A2* getA2() {return this;}
 };
@@ -531,7 +530,7 @@ struct A3
       public virtual A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -570,7 +569,7 @@ namespace t11
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -578,7 +577,7 @@ struct A1
 struct A2
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A2* getA2() {return this;}
 };
@@ -588,7 +587,7 @@ struct A3
       public virtual A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -626,7 +625,7 @@ namespace t12
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -634,7 +633,7 @@ struct A1
 struct A2
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A2* getA2() {return this;}
 };
@@ -644,7 +643,7 @@ struct A3
       public virtual A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -682,7 +681,7 @@ namespace t13
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -690,7 +689,7 @@ struct A1
 struct A2
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A2* getA2() {return this;}
 };
@@ -700,7 +699,7 @@ struct A3
       private A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -737,7 +736,7 @@ namespace t14
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -745,7 +744,7 @@ struct A1
 struct A2
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A2* getA2() {return this;}
 };
@@ -755,7 +754,7 @@ struct A3
       private A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -792,7 +791,7 @@ namespace t15
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -800,7 +799,7 @@ struct A1
 struct A2
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A2* getA2() {return this;}
 };
@@ -810,7 +809,7 @@ struct A3
       private virtual A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -857,7 +856,7 @@ namespace t16
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -866,7 +865,7 @@ struct A2
     : public A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -876,7 +875,7 @@ struct A3
     : public A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -918,7 +917,7 @@ namespace t17
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -927,7 +926,7 @@ struct A2
     : public virtual A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -937,7 +936,7 @@ struct A3
     : public A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -979,7 +978,7 @@ namespace t18
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -988,7 +987,7 @@ struct A2
     : private A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -998,7 +997,7 @@ struct A3
     : public A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A2* getA2() {return this;}
     A3* getA3() {return this;}
@@ -1036,7 +1035,7 @@ namespace t19
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -1045,7 +1044,7 @@ struct A2
     : private virtual A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1055,7 +1054,7 @@ struct A3
     : public A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A2* getA2() {return this;}
     A3* getA3() {return this;}
@@ -1093,7 +1092,7 @@ namespace t20
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -1102,7 +1101,7 @@ struct A2
     : public virtual A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1112,7 +1111,7 @@ struct A3
     : public virtual A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1154,7 +1153,7 @@ namespace t21
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -1163,7 +1162,7 @@ struct A2
     : private A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1173,7 +1172,7 @@ struct A3
     : public virtual A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A2* getA2() {return this;}
     A3* getA3() {return this;}
@@ -1211,7 +1210,7 @@ namespace t22
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -1220,7 +1219,7 @@ struct A2
     : private virtual A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1230,7 +1229,7 @@ struct A3
     : public virtual A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A2* getA2() {return this;}
     A3* getA3() {return this;}
@@ -1268,7 +1267,7 @@ namespace t23
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -1277,7 +1276,7 @@ struct A2
     : private A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1287,7 +1286,7 @@ struct A3
     : private A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     t23::A1* getA1() {return A2::getA1();}
     A2* getA2() {return this;}
@@ -1325,7 +1324,7 @@ namespace t24
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -1334,7 +1333,7 @@ struct A2
     : private virtual A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1344,7 +1343,7 @@ struct A3
     : private A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     t24::A1* getA1() {return A2::getA1();}
     A2* getA2() {return this;}
@@ -1382,7 +1381,7 @@ namespace t25
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -1391,7 +1390,7 @@ struct A2
     : private virtual A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1401,7 +1400,7 @@ struct A3
     : private virtual A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     t25::A1* getA1() {return A2::getA1();}
     A2* getA2() {return this;}
@@ -1449,7 +1448,7 @@ namespace t26
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -1458,7 +1457,7 @@ struct A2
     : public A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1469,7 +1468,7 @@ struct A3
       public A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA12() {return A2::getA1();}
     A2* getA2() {return this;}
@@ -1510,7 +1509,7 @@ namespace t27
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -1519,7 +1518,7 @@ struct A2
     : private A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1530,7 +1529,7 @@ struct A3
       public A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA12() {return A2::getA1();}
     A2* getA2() {return this;}
@@ -1569,7 +1568,7 @@ namespace t28
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -1578,7 +1577,7 @@ struct A2
     : public A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1589,7 +1588,7 @@ struct A3
       public A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA12() {return A2::getA1();}
     A2* getA2() {return this;}
@@ -1629,7 +1628,7 @@ namespace t29
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -1638,7 +1637,7 @@ struct A2
     : public A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1649,7 +1648,7 @@ struct A3
       private A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA12() {return A2::getA1();}
     A2* getA2() {return this;}
@@ -1688,7 +1687,7 @@ namespace t30
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -1697,7 +1696,7 @@ struct A2
     : public A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1708,7 +1707,7 @@ struct A3
       private A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA12() {return A2::getA1();}
     A2* getA2() {return this;}
@@ -1748,7 +1747,7 @@ namespace t31
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -1757,7 +1756,7 @@ struct A2
     : private A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1768,7 +1767,7 @@ struct A3
       private A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA12() {return A2::getA1();}
     A2* getA2() {return this;}
@@ -1806,7 +1805,7 @@ namespace t32
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -1815,7 +1814,7 @@ struct A2
     : private A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1826,7 +1825,7 @@ struct A3
       public A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA12() {return A2::getA1();}
     A2* getA2() {return this;}
@@ -1864,7 +1863,7 @@ namespace t33
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -1873,7 +1872,7 @@ struct A2
     : private A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1884,7 +1883,7 @@ struct A3
       private A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA12() {return A2::getA1();}
     A2* getA2() {return this;}
@@ -1932,7 +1931,7 @@ namespace t34
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -1941,7 +1940,7 @@ struct A2
     : public virtual A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -1952,7 +1951,7 @@ struct A3
       public A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return A1::getA1();}
     A2* getA2() {return this;}
@@ -1994,7 +1993,7 @@ namespace t35
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -2003,7 +2002,7 @@ struct A2
     : private virtual A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -2014,7 +2013,7 @@ struct A3
       public A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return A1::getA1();}
     A2* getA2() {return this;}
@@ -2054,7 +2053,7 @@ namespace t36
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -2063,7 +2062,7 @@ struct A2
     : public virtual A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -2074,7 +2073,7 @@ struct A3
       public A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return A1::getA1();}
     A2* getA2() {return this;}
@@ -2116,7 +2115,7 @@ namespace t37
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -2125,7 +2124,7 @@ struct A2
     : public virtual A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -2136,7 +2135,7 @@ struct A3
       private A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return A1::getA1();}
     A2* getA2() {return this;}
@@ -2177,7 +2176,7 @@ namespace t38
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -2186,7 +2185,7 @@ struct A2
     : public virtual A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -2197,7 +2196,7 @@ struct A3
       private A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return A1::getA1();}
     A2* getA2() {return this;}
@@ -2237,7 +2236,7 @@ namespace t39
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -2246,7 +2245,7 @@ struct A2
     : private virtual A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -2257,7 +2256,7 @@ struct A3
       private A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return A1::getA1();}
     A2* getA2() {return this;}
@@ -2296,7 +2295,7 @@ namespace t40
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -2305,7 +2304,7 @@ struct A2
     : private virtual A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -2316,7 +2315,7 @@ struct A3
       public A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return A1::getA1();}
     A2* getA2() {return this;}
@@ -2355,7 +2354,7 @@ namespace t41
 struct A1
 {
     char _[43981];
-    virtual ~A1() {std::cout << this << "  ~A1()\n";}
+    virtual ~A1() {}
 
     A1* getA1() {return this;}
 };
@@ -2364,7 +2363,7 @@ struct A2
     : private virtual A1
 {
     char _[34981];
-    virtual ~A2() {std::cout << this << "  ~A2()\n";}
+    virtual ~A2() {}
 
     A1* getA1() {return this;}
     A2* getA2() {return this;}
@@ -2375,7 +2374,7 @@ struct A3
       private A2
 {
     char _[93481];
-    virtual ~A3() {std::cout << this << "  ~A3()\n";}
+    virtual ~A3() {}
 
     A1* getA1() {return A1::getA1();}
     A2* getA2() {return this;}

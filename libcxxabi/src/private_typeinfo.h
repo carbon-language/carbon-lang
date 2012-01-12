@@ -96,7 +96,9 @@ public:
 
     virtual int search1(__dynamic_cast_info*, const void*, int) const;
     virtual int search2(__dynamic_cast_info*, const void*, int) const;
+#ifdef DEBUG
     virtual void display(const void* obj) const;
+#endif
 };
 
 // Has one non-virtual public base class at offset zero
@@ -110,7 +112,9 @@ public:
 
     virtual int search1(__dynamic_cast_info*, const void*, int) const;
     virtual int search2(__dynamic_cast_info*, const void*, int) const;
+#ifdef DEBUG
     virtual void display(const void* obj) const;
+#endif
 };
 
 struct __base_class_type_info
@@ -128,7 +132,9 @@ public:
 
     int search1(__dynamic_cast_info*, const void*, int) const;
     int search2(__dynamic_cast_info*, const void*, int) const;
+#ifdef DEBUG
     void display(const void* obj) const;
+#endif
 };
 
 // Has one or more base classes
@@ -152,7 +158,9 @@ public:
 
     virtual int search1(__dynamic_cast_info*, const void*, int) const;
     virtual int search2(__dynamic_cast_info*, const void*, int) const;
+#ifdef DEBUG
     virtual void display(const void* obj) const;
+#endif
 };
 
 class __pbase_type_info
