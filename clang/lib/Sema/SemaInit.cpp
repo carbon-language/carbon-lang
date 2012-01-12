@@ -1529,6 +1529,26 @@ static DesignatedInitExpr *CloneDesignatedInitExpr(Sema &SemaRef,
                                     DIE->usesGNUSyntax(), DIE->getInit());
 }
 
+namespace {
+
+// Callback to only accept typo corrections that are for field members of
+// the given struct or union.
+class FieldInitializerValidatorCCC : public CorrectionCandidateCallback {
+ public:
+  explicit FieldInitializerValidatorCCC(RecordDecl *RD)
+      : Record(RD) {}
+
+  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+    FieldDecl *FD = candidate.getCorrectionDeclAs<FieldDecl>();
+    return FD && FD->getDeclContext()->getRedeclContext()->Equals(Record);
+  }
+
+ private:
+  RecordDecl *Record;
+};
+
+}
+
 /// @brief Check the well-formedness of a C99 designated initializer.
 ///
 /// Determines whether the designated initializer @p DIE, which
@@ -1687,19 +1707,17 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       if (Lookup.first == Lookup.second) {
         // Name lookup didn't find anything. Determine whether this
         // was a typo for another field name.
-        LookupResult R(SemaRef, FieldName, D->getFieldLoc(),
-                       Sema::LookupMemberName);
+        FieldInitializerValidatorCCC Validator(RT->getDecl());
         TypoCorrection Corrected = SemaRef.CorrectTypo(
             DeclarationNameInfo(FieldName, D->getFieldLoc()),
-            Sema::LookupMemberName, /*Scope=*/NULL, /*SS=*/NULL,
-            RT->getDecl(), false, Sema::CTC_NoKeywords);
-        if ((ReplacementField = Corrected.getCorrectionDeclAs<FieldDecl>()) &&
-            ReplacementField->getDeclContext()->getRedeclContext()
-                                                      ->Equals(RT->getDecl())) {
+            Sema::LookupMemberName, /*Scope=*/0, /*SS=*/0, &Validator,
+            RT->getDecl());
+        if (Corrected) {
           std::string CorrectedStr(
               Corrected.getAsString(SemaRef.getLangOptions()));
           std::string CorrectedQuotedStr(
               Corrected.getQuoted(SemaRef.getLangOptions()));
+          ReplacementField = Corrected.getCorrectionDeclAs<FieldDecl>();
           SemaRef.Diag(D->getFieldLoc(),
                        diag::err_field_designator_unknown_suggest)
             << FieldName << CurrentObjectType << CorrectedQuotedStr
