@@ -1867,13 +1867,14 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
                     Context.toBits(UnpackedFieldAlign), FieldPacked, D);
 
   // Reserve space for this field.
+  uint64_t FieldSizeInBits = Context.toBits(FieldSize);
   if (IsUnion)
-    setDataSize(std::max(getDataSize(), FieldSize));
+    setSize(std::max(getSizeInBits(), FieldSizeInBits));
   else
-    setDataSize(FieldOffset + FieldSize);
+    setSize(FieldOffset + FieldSize);
 
-  // Update the size.
-  setSize(std::max(getSize(), getDataSize()));
+  // Update the data size.
+  setDataSize(getSizeInBits());
 
   // Remember max struct/class alignment.
   UpdateAlignment(FieldAlign, UnpackedFieldAlign);
