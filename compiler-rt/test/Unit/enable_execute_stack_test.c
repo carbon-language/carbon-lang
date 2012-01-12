@@ -11,12 +11,27 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#if defined(_WIN32)
+#include <windows.h>
+void __clear_cache(void* start, void* end)
+{
+    if (!FlushInstructionCache(GetCurrentProcess(), start, end-start))
+        exit(1);
+}
+void __enable_execute_stack(void *addr)
+{
+    MEMORY_BASIC_INFORMATION b;
+
+    if (!VirtualQuery(addr, &b, sizeof(b)))
+        exit(1);
+    if (!VirtualProtect(b.BaseAddress, b.RegionSize, PAGE_EXECUTE_READWRITE, &b.Protect))
+        exit(1);
+}
+#else
 #include <sys/mman.h>
-
-
-
 extern void __clear_cache(void* start, void* end);
 extern void __enable_execute_stack(void* addr);
+#endif
 
 typedef int (*pfunc)(void);
 
@@ -43,14 +58,14 @@ int main()
     memcpy(execution_buffer, (void *)(uintptr_t)&func1, 128);
     __clear_cache(execution_buffer, &execution_buffer[128]);
     pfunc f1 = (pfunc)(uintptr_t)execution_buffer;
-    if ( (*f1)() != 1 )
+    if ((*f1)() != 1)
         return 1;
 
     // verify you can overwrite a function with another
     memcpy(execution_buffer, (void *)(uintptr_t)&func2, 128);
     __clear_cache(execution_buffer, &execution_buffer[128]);
     pfunc f2 = (pfunc)(uintptr_t)execution_buffer;
-    if ( (*f2)() != 2 )
+    if ((*f2)() != 2)
         return 1;
 
     return 0;

@@ -80,6 +80,13 @@
 
 #endif /* GNU/Linux */
 
+#if defined(_WIN32)
+
+#define _YUGA_LITTLE_ENDIAN 1
+#define _YUGA_BIG_ENDIAN    0
+
+#endif /* Windows */
+
 /* . */
 
 #if !defined(_YUGA_LITTLE_ENDIAN) || !defined(_YUGA_BIG_ENDIAN)
