@@ -455,6 +455,13 @@ encodeCompactUnwindRegistersWithFrame(unsigned SavedRegs[CU_NUM_SAVED_REGS],
   };
   const unsigned *CURegs = (Is64Bit ? CU64BitRegs : CU32BitRegs);
 
+  // FIXME: The code below is WRONG and breaks tests on i386, see
+  // SingleSource/Regression/C++/EH/ctor_dtor_count.exec
+  // SingleSource/Regression/C++/EH/exception_spec_test.exec
+  // SingleSource/Regression/C++/EH/function_try_block.exec
+  // SingleSource/Regression/C++/EH/throw_rethrow_test.exec
+  return ~0U;
+
   // Encode the registers in the order they were saved, 3-bits per register. The
   // registers are numbered from 1 to 6.
   uint32_t RegEnc = 0;
