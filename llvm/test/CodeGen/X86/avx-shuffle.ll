@@ -55,3 +55,11 @@ entry:
   %shuffle.i = shufflevector <2 x double> %1, <2 x double> <double 0.000000e+00, double undef>, <4 x i32> <i32 0, i32 1, i32 2, i32 2>
   ret <4 x double> %shuffle.i
 }
+
+define <16 x i16> @test7(<4 x i16> %a) nounwind {
+; CHECK: test7
+
+  %b = shufflevector <4 x i16> %a, <4 x i16> undef, <16 x i32> <i32 1, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  ret <16 x i16> %b
+}
+

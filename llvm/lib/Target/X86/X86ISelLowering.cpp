@@ -6464,6 +6464,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
   unsigned NumElems = VT.getVectorNumElements();
+  bool V1IsUndef = V1.getOpcode() == ISD::UNDEF;
   bool V2IsUndef = V2.getOpcode() == ISD::UNDEF;
   bool V1IsSplat = false;
   bool V2IsSplat = false;
@@ -6475,7 +6476,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   assert(VT.getSizeInBits() != 64 && "Can't lower MMX shuffles");
 
-  assert(V1.getOpcode() != ISD::UNDEF && "Op 1 of shuffle should not be undef");
+  if (V1IsUndef && V2IsUndef)
+    return DAG.getUNDEF(VT);
+
+  assert(!V1IsUndef && "Op 1 of shuffle should not be undef");
 
   // Vector shuffle lowering takes 3 steps:
   //
