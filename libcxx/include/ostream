@@ -1218,12 +1218,12 @@ typename enable_if
 <
     !is_lvalue_reference<_Stream>::value &&
     is_base_of<ios_base, _Stream>::value,
-    _Stream&
+    _Stream&&
 >::type
 operator<<(_Stream&& __os, const _Tp& __x)
 {
     __os << __x;
-    return __os;
+    return _VSTD::move(__os);
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES

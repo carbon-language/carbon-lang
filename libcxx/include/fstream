@@ -549,7 +549,7 @@ basic_filebuf<_CharT, _Traits>::close()
     {
         __rt = this;
         unique_ptr<FILE, int(*)(FILE*)> __h(__file_, fclose);
-        if ((__cm_ & ios_base::out) && sync())
+        if (sync())
             __rt = 0;
         if (fclose(__h.release()) == 0)
             __file_ = 0;
