@@ -450,7 +450,7 @@ LocateDSYMInVincinityOfExecutable (const FileSpec *exec_fspec, const ArchSpec* a
 
                 dsym_fspec.SetFile(path, false);
 
-                if (FileAtPathContainsArchAndUUID (dsym_fspec, arch, uuid))
+                if (dsym_fspec.Exists() && FileAtPathContainsArchAndUUID (dsym_fspec, arch, uuid))
                 {
                     return true;
                 }
@@ -468,7 +468,7 @@ LocateDSYMInVincinityOfExecutable (const FileSpec *exec_fspec, const ArchSpec* a
                             strncat(path, ".dSYM/Contents/Resources/DWARF/", sizeof(path));
                             strncat(path, exec_fspec->GetFilename().AsCString(), sizeof(path));
                             dsym_fspec.SetFile(path, false);
-                            if (dsym_fspec.Exists())
+                            if (dsym_fspec.Exists() && FileAtPathContainsArchAndUUID (dsym_fspec, arch, uuid))
                                 return true;
                             else
                             {

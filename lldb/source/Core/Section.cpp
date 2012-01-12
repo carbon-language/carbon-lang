@@ -228,7 +228,7 @@ Section::Dump (Stream *s, Target *target, uint32_t depth) const
 {
 //    s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
     s->Indent();
-    s->Printf("0x%8.8llx %-14s ", GetID(), GetSectionTypeAsCString (m_type));
+    s->Printf("0x%8.8llx %-16s ", GetID(), GetSectionTypeAsCString (m_type));
     bool resolved = true;
     addr_t addr = LLDB_INVALID_ADDRESS;
 
@@ -307,53 +307,12 @@ Section::DumpName (Stream *s) const
     m_name.Dump(s);
 }
 
-//----------------------------------------------------------------------
-// Get the section data from a complete contiguous copy of the
-// entire executable image.
-//----------------------------------------------------------------------
-size_t
-Section::GetSectionDataFromImage (const DataExtractor& image_data, DataExtractor& section_data) const
-{
-    size_t file_size = GetByteSize();
-    if (file_size > 0)
-    {
-        off_t file_offset = GetFileOffset();
-        if (section_data.SetData (image_data, file_offset, file_size) == file_size)
-            return true;
-    }
-    return false;
-}
-
 size_t
 Section::ReadSectionDataFromObjectFile (const ObjectFile* objfile, off_t section_offset, void *dst, size_t dst_len) const
 {
-    if (objfile && dst && dst_len)
-    {
-        const FileSpec& file = objfile->GetFileSpec();
-
-        if (file)
-        {
-            size_t bytes_left = dst_len;
-            size_t bytes_read = 0;
-            const uint64_t file_size = GetFileSize();
-            if (section_offset < file_size)
-            {
-                off_t section_file_offset = objfile->GetOffset() + GetFileOffset() + section_offset;
-                bytes_read = file.ReadFileContents (section_file_offset, dst, dst_len, NULL);
-                if (bytes_read >= dst_len)
-                    return bytes_read;
-                bytes_left -= bytes_read;
-            }
-            
-            const uint64_t byte_size = GetByteSize();
-            if (section_offset + bytes_read < byte_size)
-            {
-                memset ((uint8_t*)dst + bytes_read, 0, bytes_left);
-                bytes_read += bytes_left;
-            }
-            return bytes_read;
-        }
-    }
+	// The object file now contains a full mmap'ed copy of the object file data, so just use this
+    if (objfile)
+        return objfile->CopyData (GetFileOffset() + section_offset, dst_len, dst);
     return 0;
 }
 
@@ -363,47 +322,17 @@ Section::ReadSectionDataFromObjectFile (const ObjectFile* objfile, off_t section
 size_t
 Section::ReadSectionDataFromObjectFile(const ObjectFile* objfile, DataExtractor& section_data) const
 {
-    if (objfile == NULL)
-        return 0;
-
-    const FileSpec& file = objfile->GetFileSpec();
-
-    if (file)
-    {
-        size_t section_file_size = GetByteSize();
-        if (section_file_size > 0)
-        {
-            off_t section_file_offset = GetFileOffset() + objfile->GetOffset();
-            DataBufferSP section_data_sp(file.ReadFileContents(section_file_offset, section_file_size));
-
-            section_data.SetByteOrder(objfile->GetByteOrder());
-            section_data.SetAddressByteSize(objfile->GetAddressByteSize());
-            return section_data.SetData (section_data_sp);
-        }
-    }
-    return 0;
+	// The object file now contains a full mmap'ed copy of the object file data, so just use this
+    return MemoryMapSectionDataFromObjectFile (objfile, section_data);
 }
 
 size_t
 Section::MemoryMapSectionDataFromObjectFile(const ObjectFile* objfile, DataExtractor& section_data) const
 {
-    if (objfile == NULL)
-        return 0;
-
-    const FileSpec& file = objfile->GetFileSpec();
-
-    if (file)
-    {
-        size_t section_file_size = GetFileSize();
-        if (section_file_size > 0)
-        {
-            off_t section_file_offset = GetFileOffset() + objfile->GetOffset();
-            DataBufferSP section_data_sp(file.MemoryMapFileContents(section_file_offset, section_file_size));
-            section_data.SetByteOrder(objfile->GetByteOrder());
-            section_data.SetAddressByteSize(objfile->GetAddressByteSize());
-            return section_data.SetData (section_data_sp);
-        }
-    }
+	// The object file now contains a full mmap'ed copy of the object file data, so just use this
+    if (objfile)
+        return objfile->GetData(GetFileOffset(), GetByteSize(), section_data);
+    section_data.Clear();
     return 0;
 }
 
@@ -691,16 +620,10 @@ SectionList::Dump (Stream *s, Target *target, bool show_header, uint32_t depth) 
     bool target_has_loaded_sections = target && !target->GetSectionLoadList().IsEmpty();
     if (show_header && !m_sections.empty())
     {
-//        s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
-//        s->Indent();
-//        s->PutCString(  "SectionList\n");
-//        s->IndentMore();
-//        s->Printf("%*s", 2*(sizeof(void *) + 2), "");
         s->Indent();
-        s->Printf("SectID     Type           %s Address                             File Off.  File Size  Flags      Section Name\n", target_has_loaded_sections ? "Load" : "File");
-//        s->Printf("%*s", 2*(sizeof(void *) + 2), "");
+        s->Printf(    "SectID     Type             %s Address                             File Off.  File Size  Flags      Section Name\n", target_has_loaded_sections ? "Load" : "File");
         s->Indent();
-        s->PutCString("---------- -------------- ---------------------------------------  ---------- ---------- ---------- ----------------------------\n");
+        s->PutCString("---------- ---------------- ---------------------------------------  ---------- ---------- ---------- ----------------------------\n");
     }
 
 

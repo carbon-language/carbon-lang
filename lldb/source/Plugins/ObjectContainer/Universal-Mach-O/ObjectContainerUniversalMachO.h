@@ -42,7 +42,7 @@ public:
                     lldb::addr_t length);
 
     static bool
-    MagicBytesMatch (lldb::DataBufferSP& dataSP);
+    MagicBytesMatch (const lldb_private::DataExtractor &data);
 
     //------------------------------------------------------------------
     // Member Functions

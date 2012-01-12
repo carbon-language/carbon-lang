@@ -48,7 +48,9 @@ public:
                     lldb::addr_t length);
 
     static bool
-    MagicBytesMatch (lldb::DataBufferSP& dataSP);
+    MagicBytesMatch (lldb::DataBufferSP& dataSP, 
+                     lldb::addr_t offset, 
+                     lldb::addr_t length);
 
     //------------------------------------------------------------------
     // Member Functions

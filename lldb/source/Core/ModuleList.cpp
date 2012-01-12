@@ -878,6 +878,8 @@ ModuleList::GetSharedModule
         if (!file_spec.Exists())
         {
             file_spec.GetPath(path, sizeof(path));
+            if (path[0] == '\0')
+                in_file_spec.GetPath(path, sizeof(path));
             if (file_spec.Exists())
             {
                 if (uuid_ptr && uuid_ptr->IsValid())

@@ -146,7 +146,8 @@ public:
     FindPlugin (Module* module,
                 const FileSpec* file_spec,
                 lldb::addr_t file_offset,
-                lldb::addr_t file_size);
+                lldb::addr_t file_size,
+                lldb::DataBufferSP &data_sp);
 
     //------------------------------------------------------------------
     /// Gets the address size in bytes for the current object file.
@@ -423,7 +424,12 @@ public:
         return m_strata;
     }
     
-
+    size_t
+    GetData (off_t offset, size_t length, DataExtractor &data) const;
+    
+    size_t
+    CopyData (off_t offset, size_t length, void *dst) const;
+    
 protected:
     //------------------------------------------------------------------
     // Member variables.

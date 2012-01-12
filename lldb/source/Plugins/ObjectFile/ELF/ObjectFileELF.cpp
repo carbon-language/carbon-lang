@@ -473,14 +473,10 @@ ObjectFileELF::ParseProgramHeaders()
         return 0;
 
     const size_t ph_size = m_header.e_phnum * m_header.e_phentsize;
-    const elf_off ph_offset = m_offset + m_header.e_phoff;
-    DataBufferSP buffer_sp(m_file.ReadFileContents(ph_offset, ph_size));
-
-    if (buffer_sp.get() == NULL || buffer_sp->GetByteSize() != ph_size)
+    const elf_off ph_offset = m_header.e_phoff;
+    DataExtractor data;
+    if (GetData (ph_offset, ph_size, data) != ph_size)
         return 0;
-
-    DataExtractor data(buffer_sp, m_data.GetByteOrder(),
-                       m_data.GetAddressByteSize());
 
     uint32_t idx;
     uint32_t offset;
@@ -515,15 +511,10 @@ ObjectFileELF::ParseSectionHeaders()
         return 0;
 
     const size_t sh_size = m_header.e_shnum * m_header.e_shentsize;
-    const elf_off sh_offset = m_offset + m_header.e_shoff;
-    DataBufferSP buffer_sp(m_file.ReadFileContents(sh_offset, sh_size));
-
-    if (buffer_sp.get() == NULL || buffer_sp->GetByteSize() != sh_size)
+    const elf_off sh_offset = m_header.e_shoff;
+    DataExtractor data;
+    if (GetData (sh_offset, sh_size, data) != sh_size)
         return 0;
-
-    DataExtractor data(buffer_sp,
-                       m_data.GetByteOrder(),
-                       m_data.GetAddressByteSize());
 
     uint32_t idx;
     uint32_t offset;
@@ -549,13 +540,11 @@ ObjectFileELF::GetSectionHeaderStringTable()
         {
             const ELFSectionHeader &sheader = m_section_headers[strtab_idx];
             const size_t byte_size = sheader.sh_size;
-            const Elf64_Off offset = m_offset + sheader.sh_offset;
-            DataBufferSP buffer_sp(m_file.ReadFileContents(offset, byte_size));
+            const Elf64_Off offset = sheader.sh_offset;
+            m_shstr_data.SetData (m_data, offset, byte_size);
 
-            if (buffer_sp.get() == NULL || buffer_sp->GetByteSize() != byte_size)
+            if (m_shstr_data.GetByteSize() != byte_size)
                 return 0;
-
-            m_shstr_data.SetData(buffer_sp);
         }
     }
     return m_shstr_data.GetByteSize();

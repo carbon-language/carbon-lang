@@ -199,9 +199,6 @@ public:
         m_byte_size = byte_size;
     }
     
-    size_t
-    GetSectionDataFromImage (const DataExtractor& image_data, DataExtractor& section_data) const;
-
     bool
     IsFake() const
     {

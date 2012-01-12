@@ -63,11 +63,11 @@ ObjectFileMachO::GetPluginDescriptionStatic()
 
 
 ObjectFile *
-ObjectFileMachO::CreateInstance (Module* module, DataBufferSP& dataSP, const FileSpec* file, addr_t offset, addr_t length)
+ObjectFileMachO::CreateInstance (Module* module, DataBufferSP& data_sp, const FileSpec* file, addr_t offset, addr_t length)
 {
-    if (ObjectFileMachO::MagicBytesMatch(dataSP))
+    if (ObjectFileMachO::MagicBytesMatch(data_sp, offset, length))
     {
-        std::auto_ptr<ObjectFile> objfile_ap(new ObjectFileMachO (module, dataSP, file, offset, length));
+        std::auto_ptr<ObjectFile> objfile_ap(new ObjectFileMachO (module, data_sp, file, offset, length));
         if (objfile_ap.get() && objfile_ap->ParseHeader())
             return objfile_ap.release();
     }
@@ -97,17 +97,20 @@ MachHeaderSizeFromMagic(uint32_t magic)
 
 
 bool
-ObjectFileMachO::MagicBytesMatch (DataBufferSP& dataSP)
+ObjectFileMachO::MagicBytesMatch (DataBufferSP& data_sp, 
+                                  lldb::addr_t data_offset, 
+                                  lldb::addr_t data_length)
 {
-    DataExtractor data(dataSP, lldb::endian::InlHostByteOrder(), 4);
+    DataExtractor data;
+    data.SetData (data_sp, data_offset, data_length);
     uint32_t offset = 0;
     uint32_t magic = data.GetU32(&offset);
     return MachHeaderSizeFromMagic(magic) != 0;
 }
 
 
-ObjectFileMachO::ObjectFileMachO(Module* module, DataBufferSP& dataSP, const FileSpec* file, addr_t offset, addr_t length) :
-    ObjectFile(module, file, offset, length, dataSP),
+ObjectFileMachO::ObjectFileMachO(Module* module, DataBufferSP& data_sp, const FileSpec* file, addr_t offset, addr_t length) :
+    ObjectFile(module, file, offset, length, data_sp),
     m_mutex (Mutex::eMutexTypeRecursive),
     m_header(),
     m_sections_ap(),
@@ -170,12 +173,7 @@ ObjectFileMachO::ParseHeader ()
         ArchSpec mach_arch(eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
         
         if (SetModulesArchitecture (mach_arch))
-        {
-            // Read in all only the load command data
-            DataBufferSP data_sp(m_file.ReadFileContents(m_offset, m_header.sizeofcmds + MachHeaderSizeFromMagic(m_header.magic)));
-            m_data.SetData (data_sp);
             return true;
-        }
     }
     else
     {
@@ -802,36 +800,26 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     return 0;
 
                 const size_t addr_byte_size = m_data.GetAddressByteSize();
-                const ByteOrder byte_order = m_data.GetByteOrder();
                 bool bit_width_32 = addr_byte_size == 4;
                 const size_t nlist_byte_size = bit_width_32 ? sizeof(struct nlist) : sizeof(struct nlist_64);
 
-                DataBufferSP symtab_data_sp(m_file.ReadFileContents (m_offset + symtab_load_command.symoff, 
-                                                                     symtab_load_command.nsyms * nlist_byte_size));
+                DataExtractor nlist_data (m_data, symtab_load_command.symoff, symtab_load_command.nsyms * nlist_byte_size);
 
-                if (symtab_data_sp.get() == NULL || 
-                    symtab_data_sp->GetBytes() == NULL ||
-                    symtab_data_sp->GetByteSize() == 0)
+                if (nlist_data.GetByteSize() == 0)
                 {
                     if (log)
                         GetModule()->LogMessage(log.get(), "failed to read nlist data");
                     return 0;
                 }
 
-                DataBufferSP strtab_data_sp(m_file.ReadFileContents (m_offset + symtab_load_command.stroff, 
-                                                                     symtab_load_command.strsize));
+                DataExtractor strtab_data (m_data, symtab_load_command.stroff, symtab_load_command.strsize);
 
-                if (strtab_data_sp.get() == NULL || 
-                    strtab_data_sp->GetBytes() == NULL ||
-                    strtab_data_sp->GetByteSize() == 0)
+                if (strtab_data.GetByteSize() == 0)
                 {
                     if (log)
                         GetModule()->LogMessage(log.get(), "failed to read strtab data");
                     return 0;
                 }
-
-                const char *strtab_data = (const char *)strtab_data_sp->GetBytes();
-                const size_t strtab_data_len = strtab_data_sp->GetByteSize();
 
                 static ConstString g_segment_name_TEXT ("__TEXT");
                 static ConstString g_segment_name_DATA ("__DATA");
@@ -847,11 +835,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     eh_frame_section_sp = section_list->FindSectionByName (g_section_name_eh_frame);
 
                 uint8_t TEXT_eh_frame_sectID = eh_frame_section_sp.get() ? eh_frame_section_sp->GetID() : NListSectionNoSection;
-                //uint32_t symtab_offset = 0;
-                assert (symtab_data_sp->GetByteSize()/nlist_byte_size >= symtab_load_command.nsyms);
 
                 uint32_t nlist_data_offset = 0;
-                DataExtractor nlist_data (symtab_data_sp, byte_order, addr_byte_size);
 
                 uint32_t N_SO_index = UINT32_MAX;
 
@@ -889,7 +874,8 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     nlist.n_value = nlist_data.GetAddress_unchecked (&nlist_data_offset);
 
                     SymbolType type = eSymbolTypeInvalid;
-                    if (nlist.n_strx >= strtab_data_len)
+                    const char *symbol_name = strtab_data.PeekCStr(nlist.n_strx);
+                    if (symbol_name == NULL)
                     {
                         // No symbol should be NULL, even the symbols with no 
                         // string values should have an offset zero which points
@@ -902,7 +888,6 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                          m_module->GetFileSpec().GetFilename().GetCString());
                         continue;
                     }
-                    const char *symbol_name = &strtab_data[nlist.n_strx];
                     const char *symbol_name_non_abi_mangled = NULL;
 
                     if (symbol_name[0] == '\0')
@@ -1517,12 +1502,11 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 // Now synthesize indirect symbols
                 if (m_dysymtab.nindirectsyms != 0)
                 {
-                    DataBufferSP indirect_symbol_indexes_sp(m_file.ReadFileContents(m_offset + m_dysymtab.indirectsymoff, m_dysymtab.nindirectsyms * 4));
+                    DataExtractor indirect_symbol_index_data (m_data, m_dysymtab.indirectsymoff, m_dysymtab.nindirectsyms * 4);
 
-                    if (indirect_symbol_indexes_sp && indirect_symbol_indexes_sp->GetByteSize())
+                    if (indirect_symbol_index_data.GetByteSize())
                     {
                         NListIndexToSymbolIndexMap::const_iterator end_index_pos = m_nlist_idx_to_sym_idx.end();
-                        DataExtractor indirect_symbol_index_data (indirect_symbol_indexes_sp, m_data.GetByteOrder(), m_data.GetAddressByteSize());
 
                         for (uint32_t sect_idx = 1; sect_idx < m_mach_sections.size(); ++sect_idx)
                         {

@@ -148,7 +148,8 @@ SymbolVendorMacOSX::CreateInstance(Module* module)
 
                 if (dsym_fspec)
                 {
-                    dsym_objfile_sp = ObjectFile::FindPlugin(module, &dsym_fspec, 0, dsym_fspec.GetByteSize());
+                    DataBufferSP dsym_file_data_sp;
+                    dsym_objfile_sp = ObjectFile::FindPlugin(module, &dsym_fspec, 0, dsym_fspec.GetByteSize(), dsym_file_data_sp);
                     if (UUIDsMatch(module, dsym_objfile_sp.get()))
                     {
                         ReplaceDSYMSectionsWithExecutableSections (obj_file, dsym_objfile_sp.get());
