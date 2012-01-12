@@ -1458,58 +1458,62 @@ def : Pat<(shl GR16:$src1, (i8 1)), (ADD16rr GR16:$src1, GR16:$src1)>;
 def : Pat<(shl GR32:$src1, (i8 1)), (ADD32rr GR32:$src1, GR32:$src1)>;
 def : Pat<(shl GR64:$src1, (i8 1)), (ADD64rr GR64:$src1, GR64:$src1)>;
 
+// Helper imms that check if a mask doesn't change significant shift bits.
+def immShift32 : ImmLeaf<i8, [{ return CountTrailingOnes_32(Imm) >= 5; }]>;
+def immShift64 : ImmLeaf<i8, [{ return CountTrailingOnes_32(Imm) >= 6; }]>;
+
 // (shl x (and y, 31)) ==> (shl x, y)
-def : Pat<(shl GR8:$src1, (and CL, 31)),
+def : Pat<(shl GR8:$src1, (and CL, immShift32)),
           (SHL8rCL GR8:$src1)>;
-def : Pat<(shl GR16:$src1, (and CL, 31)),
+def : Pat<(shl GR16:$src1, (and CL, immShift32)),
           (SHL16rCL GR16:$src1)>;
-def : Pat<(shl GR32:$src1, (and CL, 31)),
+def : Pat<(shl GR32:$src1, (and CL, immShift32)),
           (SHL32rCL GR32:$src1)>;
-def : Pat<(store (shl (loadi8 addr:$dst), (and CL, 31)), addr:$dst),
+def : Pat<(store (shl (loadi8 addr:$dst), (and CL, immShift32)), addr:$dst),
           (SHL8mCL addr:$dst)>;
-def : Pat<(store (shl (loadi16 addr:$dst), (and CL, 31)), addr:$dst),
+def : Pat<(store (shl (loadi16 addr:$dst), (and CL, immShift32)), addr:$dst),
           (SHL16mCL addr:$dst)>;
-def : Pat<(store (shl (loadi32 addr:$dst), (and CL, 31)), addr:$dst),
+def : Pat<(store (shl (loadi32 addr:$dst), (and CL, immShift32)), addr:$dst),
           (SHL32mCL addr:$dst)>;
 
-def : Pat<(srl GR8:$src1, (and CL, 31)),
+def : Pat<(srl GR8:$src1, (and CL, immShift32)),
           (SHR8rCL GR8:$src1)>;
-def : Pat<(srl GR16:$src1, (and CL, 31)),
+def : Pat<(srl GR16:$src1, (and CL, immShift32)),
           (SHR16rCL GR16:$src1)>;
-def : Pat<(srl GR32:$src1, (and CL, 31)),
+def : Pat<(srl GR32:$src1, (and CL, immShift32)),
           (SHR32rCL GR32:$src1)>;
-def : Pat<(store (srl (loadi8 addr:$dst), (and CL, 31)), addr:$dst),
+def : Pat<(store (srl (loadi8 addr:$dst), (and CL, immShift32)), addr:$dst),
           (SHR8mCL addr:$dst)>;
-def : Pat<(store (srl (loadi16 addr:$dst), (and CL, 31)), addr:$dst),
+def : Pat<(store (srl (loadi16 addr:$dst), (and CL, immShift32)), addr:$dst),
           (SHR16mCL addr:$dst)>;
-def : Pat<(store (srl (loadi32 addr:$dst), (and CL, 31)), addr:$dst),
+def : Pat<(store (srl (loadi32 addr:$dst), (and CL, immShift32)), addr:$dst),
           (SHR32mCL addr:$dst)>;
 
-def : Pat<(sra GR8:$src1, (and CL, 31)),
+def : Pat<(sra GR8:$src1, (and CL, immShift32)),
           (SAR8rCL GR8:$src1)>;
-def : Pat<(sra GR16:$src1, (and CL, 31)),
+def : Pat<(sra GR16:$src1, (and CL, immShift32)),
           (SAR16rCL GR16:$src1)>;
-def : Pat<(sra GR32:$src1, (and CL, 31)),
+def : Pat<(sra GR32:$src1, (and CL, immShift32)),
           (SAR32rCL GR32:$src1)>;
-def : Pat<(store (sra (loadi8 addr:$dst), (and CL, 31)), addr:$dst),
+def : Pat<(store (sra (loadi8 addr:$dst), (and CL, immShift32)), addr:$dst),
           (SAR8mCL addr:$dst)>;
-def : Pat<(store (sra (loadi16 addr:$dst), (and CL, 31)), addr:$dst),
+def : Pat<(store (sra (loadi16 addr:$dst), (and CL, immShift32)), addr:$dst),
           (SAR16mCL addr:$dst)>;
-def : Pat<(store (sra (loadi32 addr:$dst), (and CL, 31)), addr:$dst),
+def : Pat<(store (sra (loadi32 addr:$dst), (and CL, immShift32)), addr:$dst),
           (SAR32mCL addr:$dst)>;
 
 // (shl x (and y, 63)) ==> (shl x, y)
-def : Pat<(shl GR64:$src1, (and CL, 63)),
+def : Pat<(shl GR64:$src1, (and CL, immShift64)),
           (SHL64rCL GR64:$src1)>;
 def : Pat<(store (shl (loadi64 addr:$dst), (and CL, 63)), addr:$dst),
           (SHL64mCL addr:$dst)>;
 
-def : Pat<(srl GR64:$src1, (and CL, 63)),
+def : Pat<(srl GR64:$src1, (and CL, immShift64)),
           (SHR64rCL GR64:$src1)>;
 def : Pat<(store (srl (loadi64 addr:$dst), (and CL, 63)), addr:$dst),
           (SHR64mCL addr:$dst)>;
 
-def : Pat<(sra GR64:$src1, (and CL, 63)),
+def : Pat<(sra GR64:$src1, (and CL, immShift64)),
           (SAR64rCL GR64:$src1)>;
 def : Pat<(store (sra (loadi64 addr:$dst), (and CL, 63)), addr:$dst),
           (SAR64mCL addr:$dst)>;
