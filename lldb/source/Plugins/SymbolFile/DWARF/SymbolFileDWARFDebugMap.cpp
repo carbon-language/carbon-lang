@@ -651,8 +651,8 @@ SymbolFileDWARFDebugMap::ResolveSymbolContext (const FileSpec& file_spec, uint32
             if (FileSpec::Compare (file_spec, so_file_spec, false) == 0)
             {
                 SymbolFileDWARF *oso_dwarf = GetSymbolFileByOSOIndex (i);
-
-                oso_dwarf->ResolveSymbolContext(file_spec, line, check_inlines, resolve_scope, sc_list);
+                if (oso_dwarf)
+                    oso_dwarf->ResolveSymbolContext(file_spec, line, check_inlines, resolve_scope, sc_list);
             }
         }
     }
