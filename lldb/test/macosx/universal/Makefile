@@ -1,7 +1,4 @@
-CC ?= gcc
-ifeq "$(CC)" "cc"
-	CC = gcc
-endif
+CC ?= clang
 
 testit: testit.i386 testit.x86_64
 	lipo -create -o testit testit.i386 testit.x86_64

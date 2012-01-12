@@ -1,9 +1,6 @@
 all: a.out liba.dylib libb.dylib libc.dylib libd.dylib
 
-CC ?= gcc
-ifeq "$(CC)" "cc"
-	CC = gcc
-endif
+CC ?= clang
 CFLAGS ?=-arch x86_64 -gdwarf-2 -O0
 CWD := $(shell pwd)
 
