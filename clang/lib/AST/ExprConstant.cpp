@@ -832,7 +832,8 @@ static bool IsGlobalLValue(APValue::LValueBase B) {
 
 /// Check that this reference or pointer core constant expression is a valid
 /// value for an address or reference constant expression. Type T should be
-/// either LValue or CCValue.
+/// either LValue or CCValue. Return true if we can fold this expression,
+/// whether or not it's a constant expression.
 template<typename T>
 static bool CheckLValueConstantExpression(EvalInfo &Info, const Expr *E,
                                           const T &LVal, APValue &Value,
@@ -854,19 +855,15 @@ static bool CheckLValueConstantExpression(EvalInfo &Info, const Expr *E,
     } else {
       Info.Diag(E->getExprLoc());
     }
+    // Don't allow references to temporaries to escape.
     return false;
   }
 
   bool IsReferenceType = E->isGLValue();
 
   if (Designator.Invalid) {
-    // This is not a core constant expression. A diagnostic will have already
-    // been produced.
-    if (IsReferenceType)
-      return false;
-
-    // Allow this for pointers, so we can fold things like integers cast to
-    // pointers.
+    // This is not a core constant expression. An appropriate diagnostic will
+    // have already been produced.
     Value = APValue(LVal.getLValueBase(), LVal.getLValueOffset(),
                     APValue::NoLValuePath());
     return true;
@@ -884,7 +881,7 @@ static bool CheckLValueConstantExpression(EvalInfo &Info, const Expr *E,
   if (!Base) {
     // FIXME: diagnostic
     Info.CCEDiag(E->getExprLoc());
-    return false;
+    return true;
   }
 
   // Does this refer one past the end of some object?
@@ -897,7 +894,6 @@ static bool CheckLValueConstantExpression(EvalInfo &Info, const Expr *E,
     else
       Info.Note(Base.dyn_cast<const Expr*>()->getExprLoc(),
                 diag::note_constexpr_temporary_here);
-    return false;
   }
 
   return true;

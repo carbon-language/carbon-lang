@@ -134,8 +134,9 @@ namespace UndefinedBehavior {
   constexpr const int &f(const int *q) {
     return q[0]; // expected-note {{dereferenced pointer past the end of subobject of 's' is not a constant expression}}
   }
+  constexpr int n = (f(p), 0); // expected-error {{constant expression}} expected-note {{in call to 'f(&s.m + 1)'}}
   struct T {
-    int n : f(p); // expected-error {{not an integer constant expression}} expected-note {{in call to 'f(&s.m + 1)'}}
+    int n : f(p); // expected-error {{not an integer constant expression}} expected-note {{read of dereferenced one-past-the-end pointer}}
   };
 
   namespace Ptr {
