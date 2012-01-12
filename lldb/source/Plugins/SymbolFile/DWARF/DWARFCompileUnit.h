@@ -18,6 +18,15 @@ class NameToDIE;
 class DWARFCompileUnit
 {
 public:
+    enum Producer 
+    {
+        eProducerInvalid = 0,
+        eProducerClang,
+        eProducerGCC,
+        eProcucerLLVMGCC,
+        eProcucerOther
+    };
+
     DWARFCompileUnit(SymbolFileDWARF* dwarf2Data);
 
     bool        Extract(const lldb_private::DataExtractor &debug_info, uint32_t* offset_ptr);
@@ -129,6 +138,11 @@ public:
         m_user_data = d;
     }
 
+    bool
+    Supports_DW_AT_APPLE_objc_complete_type ();
+
+    bool
+    DW_AT_decl_file_attributes_are_invalid();
 
 //    void
 //    AddGlobalDIEByIndex (uint32_t die_idx);
@@ -155,6 +169,10 @@ public:
     {
         return m_dwarf2Data;
     }
+    
+    Producer
+    GetProducer ();
+    
 
 protected:
     SymbolFileDWARF*    m_dwarf2Data;
@@ -167,6 +185,7 @@ protected:
     uint32_t            m_length;
     uint16_t            m_version;
     uint8_t             m_addr_size;
+    Producer            m_producer;
 private:
     DISALLOW_COPY_AND_ASSIGN (DWARFCompileUnit);
 };

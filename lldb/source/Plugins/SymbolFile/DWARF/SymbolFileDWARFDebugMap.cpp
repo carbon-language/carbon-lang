@@ -65,7 +65,8 @@ SymbolFileDWARFDebugMap::SymbolFileDWARFDebugMap (ObjectFile* ofile) :
     m_flags(),
     m_compile_unit_infos(),
     m_func_indexes(),
-    m_glob_indexes()
+    m_glob_indexes(),
+    m_supports_DW_AT_APPLE_objc_complete_type (eLazyBoolCalculate)
 {
 }
 
@@ -952,16 +953,36 @@ SymbolFileDWARFDebugMap::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
 }
 
 
+
+bool
+SymbolFileDWARFDebugMap::Supports_DW_AT_APPLE_objc_complete_type (SymbolFileDWARF *skip_dwarf_oso)
+{
+    if (m_supports_DW_AT_APPLE_objc_complete_type == eLazyBoolCalculate)
+    {
+        m_supports_DW_AT_APPLE_objc_complete_type = eLazyBoolNo;
+        SymbolFileDWARF *oso_dwarf;
+        for (uint32_t oso_idx = 0; ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx)) != NULL); ++oso_idx)
+        {
+            if (skip_dwarf_oso != oso_dwarf && oso_dwarf->Supports_DW_AT_APPLE_objc_complete_type(NULL))
+            {
+                m_supports_DW_AT_APPLE_objc_complete_type = eLazyBoolYes;
+                break;
+            }
+        }
+    }
+    return m_supports_DW_AT_APPLE_objc_complete_type == eLazyBoolYes;
+}
+
 TypeSP
-SymbolFileDWARFDebugMap::FindCompleteObjCDefinitionTypeForDIE (DWARFCompileUnit* cu, 
-                                                               const DWARFDebugInfoEntry *die, 
-                                                               const ConstString &type_name)
+SymbolFileDWARFDebugMap::FindCompleteObjCDefinitionTypeForDIE (const DWARFDebugInfoEntry *die, 
+                                                               const ConstString &type_name,
+                                                               bool must_be_implementation)
 {
     TypeSP type_sp;
     SymbolFileDWARF *oso_dwarf;
     for (uint32_t oso_idx = 0; ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx)) != NULL); ++oso_idx)
     {
-        type_sp = oso_dwarf->FindCompleteObjCDefinitionTypeForDIE (cu, die, type_name);
+        type_sp = oso_dwarf->FindCompleteObjCDefinitionTypeForDIE (die, type_name, must_be_implementation);
         if (type_sp)
             break;
     }

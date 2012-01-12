@@ -216,10 +216,13 @@ protected:
                               const DWARFDebugInfoEntry *die, 
                               const lldb_private::ConstString &type_name);    
 
+    bool
+    Supports_DW_AT_APPLE_objc_complete_type (SymbolFileDWARF *skip_dwarf_oso);
+
     lldb::TypeSP
-    FindCompleteObjCDefinitionTypeForDIE (DWARFCompileUnit* cu, 
-                                          const DWARFDebugInfoEntry *die, 
-                                          const lldb_private::ConstString &type_name);
+    FindCompleteObjCDefinitionTypeForDIE (const DWARFDebugInfoEntry *die, 
+                                          const lldb_private::ConstString &type_name,
+                                          bool must_be_implementation);
     
 
     UniqueDWARFASTTypeMap &
@@ -235,6 +238,7 @@ protected:
     std::vector<uint32_t> m_func_indexes;   // Sorted by address
     std::vector<uint32_t> m_glob_indexes;
     UniqueDWARFASTTypeMap m_unique_ast_type_map;
+    lldb_private::LazyBool m_supports_DW_AT_APPLE_objc_complete_type;
 };
 
 #endif // #ifndef SymbolFileDWARF_SymbolFileDWARFDebugMap_h_

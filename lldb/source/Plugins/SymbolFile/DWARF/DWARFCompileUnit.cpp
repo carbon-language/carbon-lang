@@ -42,7 +42,8 @@ DWARFCompileUnit::DWARFCompileUnit(SymbolFileDWARF* dwarf2Data) :
     m_offset        (DW_INVALID_OFFSET),
     m_length        (0),
     m_version       (0),
-    m_addr_size     (DWARFCompileUnit::GetDefaultAddressSize())
+    m_addr_size     (DWARFCompileUnit::GetDefaultAddressSize()),
+    m_producer      (eProducerInvalid)
 {
 }
 
@@ -58,6 +59,7 @@ DWARFCompileUnit::Clear()
     m_die_array.clear();
     m_func_aranges_ap.reset();
     m_user_data     = NULL;
+    m_producer      = eProducerInvalid;
 }
 
 bool
@@ -875,5 +877,48 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
         }
     }
 }
+
+bool
+DWARFCompileUnit::Supports_DW_AT_APPLE_objc_complete_type ()
+{
+    if (GetProducer() == eProcucerLLVMGCC)
+        return false;
+    return true;
+}
+
+bool
+DWARFCompileUnit::DW_AT_decl_file_attributes_are_invalid()
+{
+    // llvm-gcc makes completely invalid decl file attributes and won't ever
+    // be fixed, so we need to know to ignore these.
+    return GetProducer() == eProcucerLLVMGCC;
+}
+
+DWARFCompileUnit::Producer
+DWARFCompileUnit::GetProducer ()
+{
+    if (m_producer == eProducerInvalid)
+    {
+        const DWARFDebugInfoEntry *die = GetCompileUnitDIEOnly();
+        if (die)
+        {
+            const char *producer_cstr = die->GetAttributeValueAsString(m_dwarf2Data, this, DW_AT_producer, NULL);
+            if (producer_cstr)
+            {
+                RegularExpression g_llvm_gcc_regex("^4\\.[012]\\.[01] \\(Based on Apple Inc\\. build [0-9]+\\) \\(LLVM build [\\.0-9]+\\)$");
+                if (g_llvm_gcc_regex.Execute (producer_cstr))
+                    m_producer = eProcucerLLVMGCC;
+                else if (strstr(producer_cstr, "clang"))
+                    m_producer = eProducerClang;
+                else if (strstr(producer_cstr, "GNU"))
+                    m_producer = eProducerGCC;
+            }
+        }
+        if (m_producer == eProducerInvalid)
+            m_producer = eProcucerOther;
+    }
+    return m_producer;
+}
+
 
 

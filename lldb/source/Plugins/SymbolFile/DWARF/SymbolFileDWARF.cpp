@@ -202,6 +202,7 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
     m_indexed (false),
     m_is_external_ast_source (false),
     m_using_apple_tables (false),
+    m_supports_DW_AT_APPLE_objc_complete_type (eLazyBoolCalculate),
     m_ranges(),
     m_unique_ast_type_map ()
 {
@@ -3852,18 +3853,50 @@ SymbolFileDWARF::GetObjCClassSymbol (const ConstString &objc_class_name)
     return objc_class_symbol;
 }
 
+// Some compilers don't emit the DW_AT_APPLE_objc_complete_type attribute. If they don't
+// then we can end up looking through all class types for a complete type and never find
+// the full definition. We need to know if this attribute is supported, so we determine
+// this here and cache th result. We also need to worry about the debug map DWARF file
+// if we are doing darwin DWARF in .o file debugging.
+bool
+SymbolFileDWARF::Supports_DW_AT_APPLE_objc_complete_type (DWARFCompileUnit *cu)
+{
+    if (m_supports_DW_AT_APPLE_objc_complete_type == eLazyBoolCalculate)
+    {
+        m_supports_DW_AT_APPLE_objc_complete_type = eLazyBoolNo;
+        if (cu && cu->Supports_DW_AT_APPLE_objc_complete_type())
+            m_supports_DW_AT_APPLE_objc_complete_type = eLazyBoolYes;
+        else
+        {
+            DWARFDebugInfo* debug_info = DebugInfo();
+            const uint32_t num_compile_units = GetNumCompileUnits();
+            for (uint32_t cu_idx = 0; cu_idx < num_compile_units; ++cu_idx)
+            {
+                DWARFCompileUnit* curr_cu = debug_info->GetCompileUnitAtIndex(cu_idx);
+                if (curr_cu != cu && curr_cu->Supports_DW_AT_APPLE_objc_complete_type())
+                {
+                    m_supports_DW_AT_APPLE_objc_complete_type = eLazyBoolYes;
+                    break;
+                }
+            }
+        }
+        if (m_supports_DW_AT_APPLE_objc_complete_type == eLazyBoolNo && m_debug_map_symfile)
+            return m_debug_map_symfile->Supports_DW_AT_APPLE_objc_complete_type (this);
+    }
+    return m_supports_DW_AT_APPLE_objc_complete_type == eLazyBoolYes;
+}
 
 // This function can be used when a DIE is found that is a forward declaration
 // DIE and we want to try and find a type that has the complete definition.
 TypeSP
-SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (DWARFCompileUnit* cu, 
-                                                       const DWARFDebugInfoEntry *die, 
-                                                       const ConstString &type_name)
+SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (const DWARFDebugInfoEntry *die, 
+                                                       const ConstString &type_name,
+                                                       bool must_be_implementation)
 {
     
     TypeSP type_sp;
     
-    if (cu == NULL || die == NULL || !type_name || !GetObjCClassSymbol (type_name))
+    if (!type_name || (must_be_implementation && !GetObjCClassSymbol (type_name)))
         return type_sp;
     
     DIEArray die_offsets;
@@ -3886,8 +3919,6 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (DWARFCompileUnit* cu,
     
     const size_t num_matches = die_offsets.size();
     
-    const dw_tag_t die_tag = die->Tag();
-    
     DWARFCompileUnit* type_cu = NULL;
     const DWARFDebugInfoEntry* type_die = NULL;
     if (num_matches)
@@ -3905,40 +3936,21 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (DWARFCompileUnit* cu,
                 // Don't try and resolve the DIE we are looking for with the DIE itself!
                 if (type_die != die)
                 {
-                    const dw_tag_t type_die_tag = type_die->Tag();
-                    // Make sure the tags match
-                    if (type_die_tag == die_tag)
+                    switch (type_die->Tag())
                     {
-                        // The tags match, lets try resolving this type
-                        try_resolving_type = true;
-                    }
-                    else
-                    {
-                        // The tags don't match, but we need to watch our for a
-                        // forward declaration for a struct and ("struct foo")
-                        // ends up being a class ("class foo { ... };") or
-                        // vice versa.
-                        switch (type_die_tag)
-                        {
-                            case DW_TAG_class_type:
-                                // We had a "class foo", see if we ended up with a "struct foo { ... };"
-                                try_resolving_type = (die_tag == DW_TAG_structure_type);
-                                break;
-                            case DW_TAG_structure_type:
-                                // We had a "struct foo", see if we ended up with a "class foo { ... };"
-                                try_resolving_type = (die_tag == DW_TAG_class_type);
-                                break;
-                            default:
-                                // Tags don't match, don't event try to resolve
-                                // using this type whose name matches....
-                                break;
-                        }
+                        case DW_TAG_class_type:
+                        case DW_TAG_structure_type:
+                            try_resolving_type = true;
+                            break;
+                        default:
+                            break;
                     }
                 }
                 
                 if (try_resolving_type)
                 {
-                    try_resolving_type = type_die->GetAttributeValueAsUnsigned (this, type_cu, DW_AT_APPLE_objc_complete_type, 0);
+					if (type_cu->Supports_DW_AT_APPLE_objc_complete_type())
+	                    try_resolving_type = type_die->GetAttributeValueAsUnsigned (this, type_cu, DW_AT_APPLE_objc_complete_type, 0);
                     
                     if (try_resolving_type)
                     {
@@ -3952,7 +3964,8 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (DWARFCompileUnit* cu,
                                           MakeUserID(type_die->GetOffset()), 
                                           MakeUserID(type_cu->GetOffset()));
                             
-                            m_die_to_type[die] = resolved_type;
+                            if (die)
+                                m_die_to_type[die] = resolved_type;
                             type_sp = resolved_type;
                             break;
                         }
@@ -4232,28 +4245,52 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     case DW_TAG_volatile_type:  encoding_data_type = Type::eEncodingIsVolatileUID;          break;
                     }
 
-                    if (type_name_cstr != NULL && sc.comp_unit != NULL && 
-                        (sc.comp_unit->GetLanguage() == eLanguageTypeObjC || sc.comp_unit->GetLanguage() == eLanguageTypeObjC_plus_plus))
+                    if (clang_type == NULL && (encoding_data_type == Type::eEncodingIsPointerUID || encoding_data_type == Type::eEncodingIsTypedefUID))
                     {
-                        static ConstString g_objc_type_name_id("id");
-                        static ConstString g_objc_type_name_Class("Class");
-                        static ConstString g_objc_type_name_selector("SEL");
-                        
-                        if (type_name_const_str == g_objc_type_name_id)
+                        if (type_name_cstr != NULL && sc.comp_unit != NULL && 
+                            (sc.comp_unit->GetLanguage() == eLanguageTypeObjC || sc.comp_unit->GetLanguage() == eLanguageTypeObjC_plus_plus))
                         {
-                            clang_type = ast.GetBuiltInType_objc_id();
-                            resolve_state = Type::eResolveStateFull;
+                            static ConstString g_objc_type_name_id("id");
+                            static ConstString g_objc_type_name_Class("Class");
+                            static ConstString g_objc_type_name_selector("SEL");
+                            
+                            if (type_name_const_str == g_objc_type_name_id)
+                            {
+                                if (log)
+                                    GetObjectFile()->GetModule()->LogMessage (log.get(), "SymbolFileDWARF::ParseType (die = 0x%8.8x) %s '%s' is Objective C 'id' built-in type.", 
+                                                                              die->GetOffset(), 
+                                                                              DW_TAG_value_to_name(die->Tag()), 
+                                                                              die->GetName(this, dwarf_cu));
+                                clang_type = ast.GetBuiltInType_objc_id();
+                                encoding_data_type = Type::eEncodingIsUID;
+                                encoding_uid = LLDB_INVALID_UID;
+                                resolve_state = Type::eResolveStateFull;
 
-                        }
-                        else if (type_name_const_str == g_objc_type_name_Class)
-                        {
-                            clang_type = ast.GetBuiltInType_objc_Class();
-                            resolve_state = Type::eResolveStateFull;
-                        }
-                        else if (type_name_const_str == g_objc_type_name_selector)
-                        {
-                            clang_type = ast.GetBuiltInType_objc_selector();
-                            resolve_state = Type::eResolveStateFull;
+                            }
+                            else if (type_name_const_str == g_objc_type_name_Class)
+                            {
+                                if (log)
+                                    GetObjectFile()->GetModule()->LogMessage (log.get(), "SymbolFileDWARF::ParseType (die = 0x%8.8x) %s '%s' is Objective C 'Class' built-in type.", 
+                                                                              die->GetOffset(), 
+                                                                              DW_TAG_value_to_name(die->Tag()), 
+                                                                              die->GetName(this, dwarf_cu));
+                                clang_type = ast.GetBuiltInType_objc_Class();
+                                encoding_data_type = Type::eEncodingIsUID;
+                                encoding_uid = LLDB_INVALID_UID;
+                                resolve_state = Type::eResolveStateFull;
+                            }
+                            else if (type_name_const_str == g_objc_type_name_selector)
+                            {
+                                if (log)
+                                    GetObjectFile()->GetModule()->LogMessage (log.get(), "SymbolFileDWARF::ParseType (die = 0x%8.8x) %s '%s' is Objective C 'selector' built-in type.", 
+                                                                              die->GetOffset(), 
+                                                                              DW_TAG_value_to_name(die->Tag()), 
+                                                                              die->GetName(this, dwarf_cu));
+                                clang_type = ast.GetBuiltInType_objc_selector();
+                                encoding_data_type = Type::eEncodingIsUID;
+                                encoding_uid = LLDB_INVALID_UID;
+                                resolve_state = Type::eResolveStateFull;
+                            }
                         }
                     }
                         
@@ -4304,7 +4341,15 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 switch (attr)
                                 {
                                 case DW_AT_decl_file:
-                                    decl.SetFile(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(form_value.Unsigned())); 
+                                    if (dwarf_cu->DW_AT_decl_file_attributes_are_invalid())
+									{
+										// llvm-gcc outputs invalid DW_AT_decl_file attributes that always
+										// point to the compile unit file, so we clear this invalid value
+										// so that we can still unique types efficiently.
+                                        decl.SetFile(FileSpec ("<invalid>", false));
+									}
+                                    else
+                                        decl.SetFile(sc.comp_unit->GetSupportFiles().GetFileSpecAtIndex(form_value.Unsigned())); 
                                     break;
 
                                 case DW_AT_decl_line:
@@ -4420,21 +4465,21 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                     if (class_language == eLanguageTypeObjC)
                     {
-                        if (!is_complete_objc_class)
+                        if (!is_complete_objc_class && Supports_DW_AT_APPLE_objc_complete_type(dwarf_cu))
                         {
                             // We have a valid eSymbolTypeObjCClass class symbol whose
                             // name matches the current objective C class that we
                             // are trying to find and this DIE isn't the complete
                             // definition (we checked is_complete_objc_class above and
                             // know it is false), so the real definition is in here somewhere
-                            type_sp = FindCompleteObjCDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
+                            type_sp = FindCompleteObjCDefinitionTypeForDIE (die, type_name_const_str, true);
 
                             if (!type_sp && m_debug_map_symfile)
                             {
                                 // We weren't able to find a full declaration in
                                 // this DWARF, see if we have a declaration anywhere    
                                 // else...
-                                type_sp = m_debug_map_symfile->FindCompleteObjCDefinitionTypeForDIE (dwarf_cu, die, type_name_const_str);
+                                type_sp = m_debug_map_symfile->FindCompleteObjCDefinitionTypeForDIE (die, type_name_const_str, true);
                             }
                             
                             if (type_sp)
@@ -4865,19 +4910,16 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                 {
                                     ConstString class_name (class_name_start, class_name_end - class_name_start);
                                     TypeList types;
-                                    const uint32_t match_count = FindTypes (empty_sc, class_name, NULL, true, UINT32_MAX, types);
-                                    if (match_count > 0)
+                                    
+                                    TypeSP complete_objc_class_type_sp (FindCompleteObjCDefinitionTypeForDIE (NULL, class_name, true));
+                                    if (!complete_objc_class_type_sp)
+                                        complete_objc_class_type_sp = FindCompleteObjCDefinitionTypeForDIE (NULL, class_name, false);
+
+                                    if (complete_objc_class_type_sp)
                                     {
-                                        for (uint32_t i=0; i<match_count; ++i)
-                                        {
-                                            Type *type = types.GetTypeAtIndex (i).get();
-                                            clang_type_t type_clang_forward_type = type->GetClangForwardType();
-                                            if (ClangASTContext::IsObjCClassType (type_clang_forward_type))
-                                            {
-                                                class_opaque_type = type_clang_forward_type;
-                                                break;
-                                            }
-                                        }
+                                        clang_type_t type_clang_forward_type = complete_objc_class_type_sp->GetClangForwardType();
+                                        if (ClangASTContext::IsObjCClassType (type_clang_forward_type))
+                                            class_opaque_type = type_clang_forward_type;
                                     }
                                 }
 
