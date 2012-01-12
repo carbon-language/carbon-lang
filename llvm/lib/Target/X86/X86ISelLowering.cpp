@@ -4413,7 +4413,7 @@ static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG) {
   // Extract the 128-bit part containing the splat element and update
   // the splat element index when it refers to the higher register.
   if (Size == 256) {
-    unsigned Idx = (EltNo > NumElems/2) ? NumElems/2 : 0;
+    unsigned Idx = (EltNo >= NumElems/2) ? NumElems/2 : 0;
     V1 = Extract128BitVector(V1, DAG.getConstant(Idx, MVT::i32), DAG, dl);
     if (Idx > 0)
       EltNo -= NumElems/2;
