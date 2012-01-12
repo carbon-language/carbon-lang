@@ -364,7 +364,7 @@ namespace {
 
     /// ValueCache - This is all of the cached information for all values,
     /// mapped from Value* to key information.
-    DenseMap<LVIValueHandle, ValueCacheEntryTy> ValueCache;
+    std::map<LVIValueHandle, ValueCacheEntryTy> ValueCache;
     
     /// OverDefinedCache - This tracks, on a per-block basis, the set of 
     /// values that are over-defined at the end of that block.  This is required
@@ -492,7 +492,7 @@ void LazyValueInfoCache::eraseBlock(BasicBlock *BB) {
        E = ToErase.end(); I != E; ++I)
     OverDefinedCache.erase(*I);
 
-  for (DenseMap<LVIValueHandle, ValueCacheEntryTy>::iterator
+  for (std::map<LVIValueHandle, ValueCacheEntryTy>::iterator
        I = ValueCache.begin(), E = ValueCache.end(); I != E; ++I)
     I->second.erase(BB);
 }
