@@ -887,7 +887,7 @@ void CGDebugInfo::
 CollectCXXFriends(const CXXRecordDecl *RD, llvm::DIFile Unit,
                 SmallVectorImpl<llvm::Value *> &EltTys,
                 llvm::DIType RecordTy) {
-  for (CXXRecordDecl::friend_iterator BI =  RD->friend_begin(),
+  for (CXXRecordDecl::friend_iterator BI = RD->friend_begin(),
          BE = RD->friend_end(); BI != BE; ++BI) {
     if ((*BI)->isUnsupportedFriend())
       continue;
