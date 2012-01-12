@@ -5684,6 +5684,8 @@ public:
   // type.
   ExprResult DefaultLvalueConversion(Expr *E);
 
+  void MarkLValueReferenced(Expr *E);
+
   // DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that
   // do not have a prototype. Integer promotions are performed on each
   // argument, and arguments that have type float are promoted to double.
