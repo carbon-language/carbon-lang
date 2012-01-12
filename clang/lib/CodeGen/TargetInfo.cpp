@@ -3248,8 +3248,12 @@ ABIArgInfo MipsABIInfo::classifyReturnType(QualType RetTy) const {
 }
 
 void MipsABIInfo::computeInfo(CGFunctionInfo &FI) const {
-  FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
-  uint64_t Offset = 0;
+  ABIArgInfo &RetInfo = FI.getReturnInfo();
+  RetInfo = classifyReturnType(FI.getReturnType());
+
+  // Check if a pointer to an aggregate is passed as a hidden argument.  
+  uint64_t Offset = RetInfo.isIndirect() ? 8 : 0;
+
   for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
        it != ie; ++it)
     it->info = classifyArgumentType(it->type, Offset);
