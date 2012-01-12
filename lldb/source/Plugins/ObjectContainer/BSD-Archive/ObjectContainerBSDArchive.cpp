@@ -266,8 +266,8 @@ ObjectContainerBSDArchive::CreateInstance
     Module* module,
     DataBufferSP& data_sp,
     const FileSpec *file,
-    addr_t file_offset,
-    addr_t file_size)
+    addr_t offset,
+    addr_t length)
 {
     if (file && data_sp && ObjectContainerBSDArchive::MagicBytesMatch(data_sp))
     {
@@ -275,30 +275,28 @@ ObjectContainerBSDArchive::CreateInstance
                             "ObjectContainerBSDArchive::CreateInstance (module = %s/%s, file = %p, file_offset = 0x%z8.8x, file_size = 0x%z8.8x)",
                             module->GetFileSpec().GetDirectory().AsCString(),
                             module->GetFileSpec().GetFilename().AsCString(),
-                            file, file_offset, file_size);
+                            file, offset, length);
 
-        std::auto_ptr<ObjectContainerBSDArchive> container_ap(new ObjectContainerBSDArchive (module, data_sp, file, file_offset, file_size));
-
-        if (container_ap.get())
+        Archive::shared_ptr archive_sp (Archive::FindCachedArchive (*file, module->GetArchitecture(), module->GetModificationTime()));
+        
+        if (archive_sp)
         {
-            Archive::shared_ptr archive_sp (Archive::FindCachedArchive (*file, module->GetArchitecture(), module->GetModificationTime()));
-            
-            if (archive_sp)
+            // We already have this archive in our cache, use it
+            std::auto_ptr<ObjectContainerBSDArchive> container_ap(new ObjectContainerBSDArchive (module, data_sp, file, offset, length));
+            if (container_ap.get())
             {
-                // We already have this archive in our cache, use it
                 container_ap->SetArchive (archive_sp);
                 return container_ap.release();
             }
-            else
-            {
-                // Read everything since we need that in order to index all the
-                // objects in the archive
-                data_sp = file->MemoryMapFileContents (file_offset, file_size);
-                
-                if (container_ap->ParseHeader())
-                    return container_ap.release();                
-            }
         }
+        
+        // Read everything since we need that in order to index all the
+        // objects in the archive
+        data_sp = file->MemoryMapFileContents (offset, length);
+
+        std::auto_ptr<ObjectContainerBSDArchive> container_ap(new ObjectContainerBSDArchive (module, data_sp, file, offset, length));
+        if (container_ap->ParseHeader())
+            return container_ap.release();
     }
     return NULL;
 }
