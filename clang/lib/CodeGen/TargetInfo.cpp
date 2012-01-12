@@ -3040,7 +3040,6 @@ namespace {
 class MipsABIInfo : public ABIInfo {
   bool IsO32;
   unsigned MinABIStackAlignInBytes;
-  llvm::Type* GetFloatingPointTy(const BuiltinType *BT) const;
   llvm::Type* HandleAggregates(QualType Ty) const;
   llvm::Type* returnAggregateInRegs(QualType RetTy, uint64_t Size) const;
   llvm::Type* getPaddingType(uint64_t Align, uint64_t Offset) const;
@@ -3075,35 +3074,14 @@ public:
 };
 }
 
-llvm::Type *MipsABIInfo::GetFloatingPointTy(const BuiltinType *BT) const {
-  switch (BT->getKind()) {
-  case BuiltinType::Float:
-    return llvm::Type::getFloatTy(getVMContext());
-  case BuiltinType::Double:
-    return llvm::Type::getDoubleTy(getVMContext());
-  case BuiltinType::LongDouble:
-    return llvm::Type::getFP128Ty(getVMContext());
-  default:
-    assert(false && "Unexpected floating point type.");
-    return 0;
-  }
-}
-
 // In N32/64, an aligned double precision floating point field is passed in
 // a register.
 llvm::Type* MipsABIInfo::HandleAggregates(QualType Ty) const {
   if (IsO32)
     return 0;
 
-  SmallVector<llvm::Type*, 8> ArgList;
-
-  if (Ty->isComplexType()) {
-    const ComplexType *CT = Ty->getAs<ComplexType>();
-    const BuiltinType *BT = CT->getElementType()->getAs<BuiltinType>();
-    llvm::Type *FT = GetFloatingPointTy(BT);
-    ArgList.append(2, FT);
-    return llvm::StructType::get(getVMContext(), ArgList);
-  }
+  if (Ty->isComplexType())
+    return CGT.ConvertType(Ty);
 
   const RecordType *RT = Ty->getAsStructureType();
 
@@ -3118,6 +3096,7 @@ llvm::Type* MipsABIInfo::HandleAggregates(QualType Ty) const {
   uint64_t LastOffset = 0;
   unsigned idx = 0;
   llvm::IntegerType *I64 = llvm::IntegerType::get(getVMContext(), 64);
+  SmallVector<llvm::Type*, 8> ArgList;
 
   for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
        i != e; ++i, ++idx) {
@@ -3225,7 +3204,7 @@ MipsABIInfo::returnAggregateInRegs(QualType RetTy, uint64_t Size) const {
       if (!BT || !BT->isFloatingPoint())
         break;
 
-      RTList.push_back(GetFloatingPointTy(BT));
+      RTList.push_back(CGT.ConvertType((*i)->getType()));
     }
 
     if (i == e)
