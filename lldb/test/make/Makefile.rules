@@ -58,6 +58,8 @@ ifeq "$(OS)" "Darwin"
 	DS := dsymutil
 	DSFLAGS =
 	DSYM = $(EXE).dSYM
+	AR := libtool
+	ARFLAGS := -static -o
 endif
 
 CXXFLAGS +=$(CFLAGS)
@@ -130,6 +132,42 @@ ifneq "$(strip $(OBJCXX_SOURCES))" ""
 	endif
 endif
 
+#----------------------------------------------------------------------
+# Check if we have any C source files for archive
+#----------------------------------------------------------------------
+ifneq "$(strip $(ARCHIVE_C_SOURCES))" ""
+	ARCHIVE_OBJECTS +=$(strip $(ARCHIVE_C_SOURCES:.c=.o))
+endif
+
+#----------------------------------------------------------------------
+# Check if we have any C++ source files for archive
+#----------------------------------------------------------------------
+ifneq "$(strip $(ARCHIVE_CXX_SOURCES))" ""
+	ARCHIVE_OBJECTS +=$(strip $(ARCHIVE_CXX_SOURCES:.cpp=.o))
+	CXX = $(call cxx_compiler,$(CC))
+	LD = $(call cxx_linker,$(CC))
+endif
+
+#----------------------------------------------------------------------
+# Check if we have any ObjC source files for archive
+#----------------------------------------------------------------------
+ifneq "$(strip $(ARCHIVE_OBJC_SOURCES))" ""
+	ARCHIVE_OBJECTS +=$(strip $(ARCHIVE_OBJC_SOURCES:.m=.o))
+	LDFLAGS +=-lobjc
+endif
+
+#----------------------------------------------------------------------
+# Check if we have any ObjC++ source files for archive
+#----------------------------------------------------------------------
+ifneq "$(strip $(ARCHIVE_OBJCXX_SOURCES))" ""
+	ARCHIVE_OBJECTS +=$(strip $(ARCHIVE_OBJCXX_SOURCES:.mm=.o))
+	CXX = $(call cxx_compiler,$(CC))
+	LD = $(call cxx_linker,$(CC))
+	ifeq $(findstring lobjc,$(LDFLAGS)) ""
+		LDFLAGS +=-lobjc
+	endif
+endif
+
 
 #----------------------------------------------------------------------
 # DYLIB_ONLY variable can be used to skip the building of a.out.
@@ -154,14 +192,27 @@ endif
 #----------------------------------------------------------------------
 ifneq "$(DYLIB_NAME)" ""
 ifeq "$(DYLIB_ONLY)" ""
-$(EXE) : $(OBJECTS) $(DYLIB_FILENAME)
-	$(LD) $(LDFLAGS) $(OBJECTS) -L. -l$(DYLIB_NAME) -o "$(EXE)"
+$(EXE) : $(OBJECTS) $(ARCHIVE_NAME) $(DYLIB_FILENAME)
+	$(LD) $(LDFLAGS) $(OBJECTS) $(ARCHIVE_NAME) -L. -l$(DYLIB_NAME) -o "$(EXE)"
 else
 EXE = $(DYLIB_FILENAME)
 endif
 else
-$(EXE) : $(OBJECTS)
-	$(LD) $(LDFLAGS) $(OBJECTS) -o "$(EXE)"
+$(EXE) : $(OBJECTS) $(ARCHIVE_NAME)
+	$(LD) $(LDFLAGS) $(OBJECTS) $(ARCHIVE_NAME) -o "$(EXE)"
+endif
+
+#----------------------------------------------------------------------
+# Make the archive
+#----------------------------------------------------------------------
+ifneq "$(ARCHIVE_NAME)" ""
+ifeq "$(OS)" "Darwin"
+$(ARCHIVE_NAME) : $(ARCHIVE_OBJECTS)
+	$(AR) $(ARFLAGS) $(ARCHIVE_NAME) $(ARCHIVE_OBJECTS)
+	$(RM) $(ARCHIVE_OBJECTS)
+else
+$(ARCHIVE_NAME) : $(foreach ar_obj,$(ARCHIVE_OBJECTS),$(ARCHIVE_NAME)($(ar_obj)))
+endif
 endif
 
 #----------------------------------------------------------------------
@@ -228,9 +279,9 @@ dsym:	$(DSYM)
 all:	$(EXE) $(DSYM)
 clean::
 ifeq "$(DYLIB_NAME)" ""
-	rm -rf "$(EXE)" "$(DSYM)" $(OBJECTS) $(PREREQS)
+	rm -rf "$(EXE)" "$(DSYM)" $(OBJECTS) $(PREREQS) $(ARCHIVE_NAME) $(ARCHIVE_OBJECTS)
 else
-	rm -rf "$(EXE)" "$(DSYM)" $(OBJECTS) $(PREREQS) $(DYLIB_OBJECTS) $(DYLIB_PREREQS) $(DYLIB_FILENAME) $(DYLIB_FILENAME).dSYM
+	rm -rf "$(EXE)" "$(DSYM)" $(OBJECTS) $(PREREQS) $(ARCHIVE_NAME) $(ARCHIVE_OBJECTS) $(DYLIB_OBJECTS) $(DYLIB_PREREQS) $(DYLIB_FILENAME) $(DYLIB_FILENAME).dSYM
 endif
 
 #----------------------------------------------------------------------
