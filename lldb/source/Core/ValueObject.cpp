@@ -3594,7 +3594,7 @@ ValueObject::EvaluationPoint::SyncWithProcessState(ExecutionContextScope *&exe_s
     {
         if (m_mod_id == current_mod_id)
         {
-            // Everything is already up to date in this object, no need do 
+            // Everything is already up to date in this object, no need to 
             // update the execution context scope.
             changed = false;
         }
