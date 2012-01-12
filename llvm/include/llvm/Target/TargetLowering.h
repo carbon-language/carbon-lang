@@ -53,6 +53,15 @@ namespace llvm {
   class TargetLoweringObjectFile;
   class Value;
 
+  namespace Sched {
+    enum Preference {
+      None,             // No preference
+      RegPressure,      // Scheduling for lowest register pressure.
+      Hybrid,           // Scheduling for both latency and register pressure.
+      ILP               // Scheduling for ILP in low register pressure mode.
+    };
+  }
+
   // FIXME: should this be here?
   namespace TLSModel {
     enum Model {

@@ -16,7 +16,7 @@
 #define LLVM_CODEGEN_SCHEDULEDAG_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/GraphTraits.h"

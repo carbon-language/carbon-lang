@@ -44,15 +44,6 @@ class TargetSubtargetInfo;
 class formatted_raw_ostream;
 class raw_ostream;
 
-namespace Sched {
-  enum Preference {
-    None,             // No preference
-    RegPressure,      // Scheduling for lowest register pressure.
-    Hybrid,           // Scheduling for both latency and register pressure.
-    ILP               // Scheduling for ILP in low register pressure mode.
-  };
-}
-
 //===----------------------------------------------------------------------===//
 ///
 /// TargetMachine - Primary interface to the complete machine description for
