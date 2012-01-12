@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -arcmt-check -verify -triple x86_64-apple-darwin10 %s
-// XFAIL: mingw
+// DISABLE: mingw32
 
 #if __has_feature(objc_arr)
 #define NS_AUTOMATED_REFCOUNT_UNAVAILABLE __attribute__((unavailable("not available in automatic reference counting mode")))
