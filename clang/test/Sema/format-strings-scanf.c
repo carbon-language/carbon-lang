@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wformat-nonliteral %s
+// RUN: %clang_cc1 -fsyntax-only -verify -triple i386-apple-darwin9 -Wformat-nonliteral %s
 
 #include <stdarg.h>
 typedef __typeof(sizeof(int)) size_t;
@@ -73,11 +73,27 @@ void test_scanlist(int *ip, char *sp) {
   scanf("%h[abc]", sp); // expected-warning{{length modifier 'h' results in undefined behavior or no effect with '[' conversion specifier}}
 }
 
-void test_alloc_extension(char **sp, wchar_t **lsp) {
+void test_alloc_extension(char **sp, wchar_t **lsp, float *fp) {
   /* Make sure "%a" gets parsed as a conversion specifier for float,
    * even when followed by an 's', 'S' or '[', which would cause it to be
    * parsed as a length modifier in C90. */
   scanf("%as", sp); // expected-warning{{conversion specifies type 'float *' but the argument has type 'char **'}}
   scanf("%aS", lsp); // expected-warning{{conversion specifies type 'float *' but the argument has type 'wchar_t **'}}
   scanf("%a[bcd]", sp); // expected-warning{{conversion specifies type 'float *' but the argument has type 'char **'}}
+
+  // Test that the 'm' length modifier is only allowed with s, S, c, C or [.
+  // TODO: Warn that 'm' is an extension.
+  scanf("%ms", sp); // No warning.
+  scanf("%mS", lsp); // No warning.
+  scanf("%mc", sp); // No warning.
+  scanf("%mC", lsp); // No warning.
+  scanf("%m[abc]", sp); // No warning.
+  scanf("%md", sp); // expected-warning{{length modifier 'm' results in undefined behavior or no effect with 'd' conversion specifier}}
+
+  // Test argument type check for the 'm' length modifier.
+  scanf("%ms", fp); // expected-warning{{conversion specifies type 'char **' but the argument has type 'float *'}}
+  scanf("%mS", fp); // expected-warning{{conversion specifies type 'wchar_t **' (aka 'int **') but the argument has type 'float *'}}
+  scanf("%mc", fp); // expected-warning{{conversion specifies type 'char **' but the argument has type 'float *'}}
+  scanf("%mC", fp); // expected-warning{{conversion specifies type 'wchar_t **' (aka 'int **') but the argument has type 'float *'}}
+  scanf("%m[abc]", fp); // expected-warning{{conversion specifies type 'char **' but the argument has type 'float *'}}
 }

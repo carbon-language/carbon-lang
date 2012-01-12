@@ -71,7 +71,8 @@ public:
     AsSizeT,      // 'z'
     AsPtrDiff,    // 't'
     AsLongDouble, // 'L'
-    AsAllocate,    // for '%as', GNU extension to C90 scanf
+    AsAllocate,   // for '%as', GNU extension to C90 scanf
+    AsMAllocate,  // for '%ms', GNU extension to scanf
     AsWideChar = AsLong // for '%ls', only makes sense for printf
   };
 

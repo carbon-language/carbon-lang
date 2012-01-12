@@ -220,6 +220,7 @@ ScanfArgTypeResult ScanfSpecifier::getArgType(ASTContext &Ctx) const {
           return ScanfArgTypeResult(Ctx.getPointerDiffType(), "ptrdiff_t *");
         case LengthModifier::AsLongDouble: return ScanfArgTypeResult::Invalid();
         case LengthModifier::AsAllocate: return ScanfArgTypeResult::Invalid();
+        case LengthModifier::AsMAllocate: return ScanfArgTypeResult::Invalid();
       }
 
     // Unsigned int.
@@ -243,6 +244,7 @@ ScanfArgTypeResult ScanfSpecifier::getArgType(ASTContext &Ctx) const {
           return ScanfArgTypeResult();
         case LengthModifier::AsLongDouble: return ScanfArgTypeResult::Invalid();
         case LengthModifier::AsAllocate: return ScanfArgTypeResult::Invalid();
+        case LengthModifier::AsMAllocate: return ScanfArgTypeResult::Invalid();
       }
 
     // Float.
@@ -271,15 +273,24 @@ ScanfArgTypeResult ScanfSpecifier::getArgType(ASTContext &Ctx) const {
         case LengthModifier::None: return ScanfArgTypeResult::CStrTy;
         case LengthModifier::AsLong:
           return ScanfArgTypeResult(ScanfArgTypeResult::WCStrTy, "wchar_t *");
+        case LengthModifier::AsAllocate:
+        case LengthModifier::AsMAllocate:
+          return ScanfArgTypeResult(ArgTypeResult::CStrTy);
         default:
           return ScanfArgTypeResult::Invalid();
       }
     case ConversionSpecifier::CArg:
     case ConversionSpecifier::SArg:
       // FIXME: Mac OS X specific?
-      if (LM.getKind() == LengthModifier::None)
-        return ScanfArgTypeResult(ScanfArgTypeResult::WCStrTy, "wchar_t *");
-      return ScanfArgTypeResult::Invalid();
+      switch (LM.getKind()) {
+        case LengthModifier::None:
+          return ScanfArgTypeResult(ScanfArgTypeResult::WCStrTy, "wchar_t *");
+        case LengthModifier::AsAllocate:
+        case LengthModifier::AsMAllocate:
+          return ScanfArgTypeResult(ArgTypeResult::WCStrTy, "wchar_t **");
+        default:
+          return ScanfArgTypeResult::Invalid();
+      }
 
     // Pointer.
     case ConversionSpecifier::pArg:

@@ -273,6 +273,7 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
       case LengthModifier::AsPtrDiff:
         return ArgTypeResult(Ctx.getPointerDiffType(), "ptrdiff_t");
       case LengthModifier::AsAllocate:
+      case LengthModifier::AsMAllocate:
         return ArgTypeResult::Invalid();
     }
 
@@ -294,6 +295,7 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
         // version of ptrdiff_t?
         return ArgTypeResult();
       case LengthModifier::AsAllocate:
+      case LengthModifier::AsMAllocate:
         return ArgTypeResult::Invalid();
     }
 
