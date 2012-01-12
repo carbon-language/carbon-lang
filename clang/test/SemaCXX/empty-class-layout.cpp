@@ -144,3 +144,14 @@ struct B : Empty, A { };
 SA(0, sizeof(B) == 16);
 
 }
+
+namespace Test7 {
+  // Make sure we reserve enough space for both bases; PR11745.
+  struct Empty { };
+  struct Base1 : Empty { };
+  struct Base2 : Empty { };
+  struct Test : Base1, Base2 {
+    char c;
+  };
+  SA(0, sizeof(Test) == 2);
+}
