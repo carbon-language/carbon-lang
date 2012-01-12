@@ -31,7 +31,7 @@ using namespace llvm;
 namespace {
 struct X86Operand;
 
-class X86ATTAsmParser : public MCTargetAsmParser {
+class X86AsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
 
@@ -83,7 +83,7 @@ private:
   /// }
 
 public:
-  X86ATTAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser)
+  X86AsmParser(MCSubtargetInfo &sti, MCAsmParser &parser)
     : MCTargetAsmParser(), STI(sti), Parser(parser) {
 
     // Initialize the set of available features.
@@ -424,7 +424,7 @@ struct X86Operand : public MCParsedAsmOperand {
 
 } // end anonymous namespace.
 
-bool X86ATTAsmParser::isSrcOp(X86Operand &Op) {
+bool X86AsmParser::isSrcOp(X86Operand &Op) {
   unsigned basereg = is64BitMode() ? X86::RSI : X86::ESI;
 
   return (Op.isMem() &&
@@ -434,7 +434,7 @@ bool X86ATTAsmParser::isSrcOp(X86Operand &Op) {
     Op.Mem.BaseReg == basereg && Op.Mem.IndexReg == 0);
 }
 
-bool X86ATTAsmParser::isDstOp(X86Operand &Op) {
+bool X86AsmParser::isDstOp(X86Operand &Op) {
   unsigned basereg = is64BitMode() ? X86::RDI : X86::EDI;
 
   return Op.isMem() && Op.Mem.SegReg == X86::ES &&
@@ -443,8 +443,8 @@ bool X86ATTAsmParser::isDstOp(X86Operand &Op) {
     Op.Mem.BaseReg == basereg && Op.Mem.IndexReg == 0;
 }
 
-bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
-                                    SMLoc &StartLoc, SMLoc &EndLoc) {
+bool X86AsmParser::ParseRegister(unsigned &RegNo,
+                                 SMLoc &StartLoc, SMLoc &EndLoc) {
   RegNo = 0;
   const AsmToken &TokPercent = Parser.getTok();
   assert(TokPercent.is(AsmToken::Percent) && "Invalid token kind!");
@@ -543,7 +543,7 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
   return false;
 }
 
-X86Operand *X86ATTAsmParser::ParseOperand() {
+X86Operand *X86AsmParser::ParseOperand() {
   if (getParser().getAssemblerDialect())
     return ParseIntelOperand();
   return ParseATTOperand();
@@ -573,7 +573,7 @@ static bool isIntelMemOperand(StringRef OpStr, unsigned &Size) {
   return Size != 0;
 }
 
-X86Operand *X86ATTAsmParser::ParseIntelOperand() {
+X86Operand *X86AsmParser::ParseIntelOperand() {
 
   const AsmToken &Tok = Parser.getTok();
   SMLoc Start = Parser.getTok().getLoc(), End;
@@ -636,7 +636,7 @@ X86Operand *X86ATTAsmParser::ParseIntelOperand() {
   return 0;
 }
 
-X86Operand *X86ATTAsmParser::ParseATTOperand() {
+X86Operand *X86AsmParser::ParseATTOperand() {
   switch (getLexer().getKind()) {
   default:
     // Parse a memory operand with no segment register.
@@ -675,7 +675,7 @@ X86Operand *X86ATTAsmParser::ParseATTOperand() {
 
 /// ParseMemOperand: segment: disp(basereg, indexreg, scale).  The '%ds:' prefix
 /// has already been parsed if present.
-X86Operand *X86ATTAsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
+X86Operand *X86AsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
 
   // We have to disambiguate a parenthesized expression "(4+5)" from the start
   // of a memory operand with a missing displacement "(%ebx)" or "(,%eax)".  The
@@ -806,7 +806,7 @@ X86Operand *X86ATTAsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
                                MemStart, MemEnd);
 }
 
-bool X86ATTAsmParser::
+bool X86AsmParser::
 ParseInstruction(StringRef Name, SMLoc NameLoc,
                  SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   StringRef PatchedName = Name;
@@ -1091,7 +1091,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   return false;
 }
 
-bool X86ATTAsmParser::
+bool X86AsmParser::
 MatchAndEmitInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCStreamer &Out) {
@@ -1273,7 +1273,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
 }
 
 
-bool X86ATTAsmParser::ParseDirective(AsmToken DirectiveID) {
+bool X86AsmParser::ParseDirective(AsmToken DirectiveID) {
   StringRef IDVal = DirectiveID.getIdentifier();
   if (IDVal == ".word")
     return ParseDirectiveWord(2, DirectiveID.getLoc());
@@ -1284,7 +1284,7 @@ bool X86ATTAsmParser::ParseDirective(AsmToken DirectiveID) {
 
 /// ParseDirectiveWord
 ///  ::= .word [ expression (, expression)* ]
-bool X86ATTAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
+bool X86AsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
       const MCExpr *Value;
@@ -1309,7 +1309,7 @@ bool X86ATTAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
 
 /// ParseDirectiveCode
 ///  ::= .code32 | .code64
-bool X86ATTAsmParser::ParseDirectiveCode(StringRef IDVal, SMLoc L) {
+bool X86AsmParser::ParseDirectiveCode(StringRef IDVal, SMLoc L) {
   if (IDVal == ".code32") {
     Parser.Lex();
     if (is64BitMode()) {
@@ -1334,8 +1334,8 @@ extern "C" void LLVMInitializeX86AsmLexer();
 
 // Force static initialization.
 extern "C" void LLVMInitializeX86AsmParser() {
-  RegisterMCAsmParser<X86ATTAsmParser> X(TheX86_32Target);
-  RegisterMCAsmParser<X86ATTAsmParser> Y(TheX86_64Target);
+  RegisterMCAsmParser<X86AsmParser> X(TheX86_32Target);
+  RegisterMCAsmParser<X86AsmParser> Y(TheX86_64Target);
   LLVMInitializeX86AsmLexer();
 }
 

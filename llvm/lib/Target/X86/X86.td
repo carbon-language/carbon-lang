@@ -248,9 +248,8 @@ include "X86CallingConv.td"
 // Assembly Parser
 //===----------------------------------------------------------------------===//
 
-// Currently the X86 assembly parser only supports ATT syntax.
 def ATTAsmParser : AsmParser {
-  string AsmParserClassName = "ATTAsmParser";
+  string AsmParserClassName = "AsmParser";
 }
 
 def ATTAsmParserVariant : AsmParserVariant {
