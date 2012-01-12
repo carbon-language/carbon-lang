@@ -764,12 +764,16 @@ static bool FoldMaskAndShiftToExtract(SelectionDAG &DAG, SDValue N,
   SDValue ShlCount = DAG.getConstant(ScaleLog, MVT::i8);
   SDValue Shl = DAG.getNode(ISD::SHL, DL, VT, And, ShlCount);
 
-  // Insert the new nodes into the topological ordering.
-  InsertDAGNode(DAG, X, Eight);
-  InsertDAGNode(DAG, X, NewMask);
-  InsertDAGNode(DAG, Shift, Srl);
+  // Insert the new nodes into the topological ordering. We must do this in
+  // a valid topological ordering as nothing is going to go back and re-sort
+  // these nodes. We continually insert before 'N' in sequence as this is
+  // essentially a pre-flattened and pre-sorted sequence of nodes. There is no
+  // hierarchy left to express.
+  InsertDAGNode(DAG, N, Eight);
+  InsertDAGNode(DAG, N, Srl);
+  InsertDAGNode(DAG, N, NewMask);
   InsertDAGNode(DAG, N, And);
-  InsertDAGNode(DAG, X, ShlCount);
+  InsertDAGNode(DAG, N, ShlCount);
   InsertDAGNode(DAG, N, Shl);
   DAG.ReplaceAllUsesWith(N, Shl);
   AM.IndexReg = And;
@@ -805,9 +809,13 @@ static bool FoldMaskedShiftToScaledMask(SelectionDAG &DAG, SDValue N,
   SDValue NewAnd = DAG.getNode(ISD::AND, DL, VT, X, NewMask);
   SDValue NewShift = DAG.getNode(ISD::SHL, DL, VT, NewAnd, Shift.getOperand(1));
 
-  // Insert the new nodes into the topological ordering.
-  InsertDAGNode(DAG, X, NewMask);
-  InsertDAGNode(DAG, Shift, NewAnd);
+  // Insert the new nodes into the topological ordering. We must do this in
+  // a valid topological ordering as nothing is going to go back and re-sort
+  // these nodes. We continually insert before 'N' in sequence as this is
+  // essentially a pre-flattened and pre-sorted sequence of nodes. There is no
+  // hierarchy left to express.
+  InsertDAGNode(DAG, N, NewMask);
+  InsertDAGNode(DAG, N, NewAnd);
   InsertDAGNode(DAG, N, NewShift);
   DAG.ReplaceAllUsesWith(N, NewShift);
 
@@ -907,6 +915,12 @@ static bool FoldMaskAndShiftToScale(SelectionDAG &DAG, SDValue N,
   SDValue NewSRL = DAG.getNode(ISD::SRL, DL, VT, X, NewSRLAmt);
   SDValue NewSHLAmt = DAG.getConstant(AMShiftAmt, MVT::i8);
   SDValue NewSHL = DAG.getNode(ISD::SHL, DL, VT, NewSRL, NewSHLAmt);
+
+  // Insert the new nodes into the topological ordering. We must do this in
+  // a valid topological ordering as nothing is going to go back and re-sort
+  // these nodes. We continually insert before 'N' in sequence as this is
+  // essentially a pre-flattened and pre-sorted sequence of nodes. There is no
+  // hierarchy left to express.
   InsertDAGNode(DAG, N, NewSRLAmt);
   InsertDAGNode(DAG, N, NewSRL);
   InsertDAGNode(DAG, N, NewSHLAmt);
