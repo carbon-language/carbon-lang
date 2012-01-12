@@ -1357,8 +1357,9 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
 
   if (MF.getFunction()->isVarArg())
     report_fatal_error("Segmented stacks do not support vararg functions.");
-  if (!ST->isTargetLinux() && !ST->isTargetDarwin() && !ST->isTargetWin32())
-    report_fatal_error("Segmented stacks supported only on linux, darwin and win32.");
+  if (!ST->isTargetLinux() && !ST->isTargetDarwin() &&
+      !ST->isTargetWin32() && !ST->isTargetFreeBSD())
+    report_fatal_error("Segmented stacks not supported on this platform.");
 
   MachineBasicBlock *allocMBB = MF.CreateMachineBasicBlock();
   MachineBasicBlock *checkMBB = MF.CreateMachineBasicBlock();
@@ -1401,6 +1402,9 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
     } else if (ST->isTargetDarwin()) {
       TlsReg = X86::GS;
       TlsOffset = 0x60 + 90*8; // See pthread_machdep.h. Steal TLS slot 90.
+    } else if (ST->isTargetFreeBSD()) {
+      TlsReg = X86::FS;
+      TlsOffset = 0x18;
     } else {
       report_fatal_error("Segmented stacks not supported on this platform.");
     }
@@ -1423,6 +1427,8 @@ X86FrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
     } else if (ST->isTargetWin32()) {
       TlsReg = X86::FS;
       TlsOffset = 0x14; // pvArbitrary, reserved for application use
+    } else if (ST->isTargetFreeBSD()) {
+      report_fatal_error("Segmented stacks not supported on FreeBSD i386.");
     } else {
       report_fatal_error("Segmented stacks not supported on this platform.");
     }

@@ -3,6 +3,7 @@
 ; RUN: llc < %s -mtriple=i686-darwin -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X32-Darwin
 ; RUN: llc < %s -mtriple=x86_64-darwin -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X64-Darwin
 ; RUN: llc < %s -mtriple=i686-mingw32 -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X32-MinGW
+; RUN: llc < %s -mtriple=x86_64-freebsd -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X64-FreeBSD
 
 ; We used to crash with filetype=obj
 ; RUN: llc < %s -mtriple=i686-linux -segmented-stacks -filetype=obj
@@ -10,6 +11,7 @@
 ; RUN: llc < %s -mtriple=i686-darwin -segmented-stacks -filetype=obj
 ; RUN: llc < %s -mtriple=x86_64-darwin -segmented-stacks -filetype=obj
 ; RUN: llc < %s -mtriple=i686-mingw32 -segmented-stacks -filetype=obj
+; RUN: llc < %s -mtriple=x86_64-freebsd -segmented-stacks -filetype=obj
 
 ; Just to prevent the alloca from being optimized away
 declare void @dummy_use(i32*, i32)
@@ -70,6 +72,16 @@ define void @test_basic() {
 ; X32-MinGW-NEXT:  calll ___morestack
 ; X32-MinGW-NEXT:  ret
 
+; X64-FreeBSD:       test_basic:
+
+; X64-FreeBSD:       cmpq %fs:24, %rsp
+; X64-FreeBSD-NEXT:  ja      .LBB0_2
+
+; X64-FreeBSD:       movabsq $40, %r10
+; X64-FreeBSD-NEXT:  movabsq $0, %r11
+; X64-FreeBSD-NEXT:  callq __morestack
+; X64-FreeBSD-NEXT:  ret
+
 }
 
 define i32 @test_nested(i32 * nest %closure, i32 %other) {
@@ -121,6 +133,16 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) {
 ; X32-MinGW-NEXT:  pushl $0
 ; X32-MinGW-NEXT:  calll ___morestack
 ; X32-MinGW-NEXT:  ret
+
+; X64-FreeBSD:       cmpq %fs:24, %rsp
+; X64-FreeBSD-NEXT:  ja      .LBB1_2
+
+; X64-FreeBSD:       movq %r10, %rax
+; X64-FreeBSD-NEXT:  movabsq $0, %r10
+; X64-FreeBSD-NEXT:  movabsq $0, %r11
+; X64-FreeBSD-NEXT:  callq __morestack
+; X64-FreeBSD-NEXT:  ret
+; X64-FreeBSD-NEXT:  movq %rax, %r10
 
 }
 
@@ -174,6 +196,15 @@ define void @test_large() {
 ; X32-MinGW-NEXT:  pushl $40008
 ; X32-MinGW-NEXT:  calll ___morestack
 ; X32-MinGW-NEXT:  ret
+
+; X64-FreeBSD:       leaq -40008(%rsp), %r11
+; X64-FreeBSD-NEXT:  cmpq %fs:24, %r11
+; X64-FreeBSD-NEXT:  ja      .LBB2_2
+
+; X64-FreeBSD:       movabsq $40008, %r10
+; X64-FreeBSD-NEXT:  movabsq $0, %r11
+; X64-FreeBSD-NEXT:  callq __morestack
+; X64-FreeBSD-NEXT:  ret
 
 }
 
@@ -232,6 +263,16 @@ define fastcc void @test_fastcc() {
 ; X32-MinGW-NEXT:  pushl $48
 ; X32-MinGW-NEXT:  calll ___morestack
 ; X32-MinGW-NEXT:  ret
+
+; X64-FreeBSD:       test_fastcc:
+
+; X64-FreeBSD:       cmpq %fs:24, %rsp
+; X64-FreeBSD-NEXT:  ja      .LBB3_2
+
+; X64-FreeBSD:       movabsq $40, %r10
+; X64-FreeBSD-NEXT:  movabsq $0, %r11
+; X64-FreeBSD-NEXT:  callq __morestack
+; X64-FreeBSD-NEXT:  ret
 
 }
 
@@ -295,6 +336,17 @@ define fastcc void @test_fastcc_large() {
 ; X32-MinGW-NEXT:  pushl $40008
 ; X32-MinGW-NEXT:  calll ___morestack
 ; X32-MinGW-NEXT:  ret
+
+; X64-FreeBSD:       test_fastcc_large:
+
+; X64-FreeBSD:       leaq -40008(%rsp), %r11
+; X64-FreeBSD-NEXT:  cmpq %fs:24, %r11
+; X64-FreeBSD-NEXT:  ja      .LBB4_2
+
+; X64-FreeBSD:       movabsq $40008, %r10
+; X64-FreeBSD-NEXT:  movabsq $0, %r11
+; X64-FreeBSD-NEXT:  callq __morestack
+; X64-FreeBSD-NEXT:  ret
 
 }
 
