@@ -86,6 +86,7 @@ namespace {
     UnswitchedValsMap* CurLoopInstructions;
     LoopProperties* CurrentLoopProperties;
     
+    // Max size of code we can produce on remained iterations.
     unsigned MaxSize;
       
     public:
@@ -124,19 +125,6 @@ namespace {
     // LoopProcessWorklist - Used to check if second loop needs processing
     // after RewriteLoopBodyWithConditionConstant rewrites first loop.
     std::vector<Loop*> LoopProcessWorklist;
-    
-    // TODO: This few lines are here for cosmetic purposes only.
-    // Will be removed with the next commit.
-    struct LoopProperties {
-      unsigned CanBeUnswitchedCount;
-      unsigned SizeEstimation;
-    };
-    
-    // TODO: This few lines are here for cosmetic purposes only.
-    // Will be removed with the next commit.
-    typedef DenseMap<const Loop*, LoopProperties> LoopPropsMap;
-    typedef LoopPropsMap::iterator LoopPropsMapIt;
-    LoopPropsMap LoopsProperties;
     
     LUAnalysisCache BranchesInfo;
     
