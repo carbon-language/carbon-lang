@@ -37,9 +37,13 @@ inline error_condition make_error_condition(errc _e) {
 // refer to a base class or non-static data member.
 struct BaseType { };
 struct Derived : public BaseType { // expected-note {{base class 'BaseType' specified here}}
-  static int base_type;
+  static int base_type; // expected-note {{'base_type' declared here}}
   Derived() : basetype() {} // expected-error{{initializer 'basetype' does not name a non-static data member or base class; did you mean the base class 'BaseType'?}}
 };
+
+int get_type(struct Derived *st) {
+  return st->Base_Type; // expected-error{{no member named 'Base_Type' in 'Derived'; did you mean 'base_type'?}}
+}
 
 // In this example, somename should not be corrected to the cached correction
 // "some_name" since "some_name" is a class and a namespace name is needed.

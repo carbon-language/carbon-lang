@@ -509,6 +509,20 @@ bool Sema::CheckQualifiedMemberReference(Expr *BaseExpr,
   return true;
 }
 
+namespace {
+
+// Callback to only accept typo corrections that are either a ValueDecl or a
+// FunctionTemplateDecl.
+class RecordMemberExprValidatorCCC : public CorrectionCandidateCallback {
+ public:
+  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+    NamedDecl *ND = candidate.getCorrectionDecl();
+    return ND && (isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND));
+  }
+};
+
+}
+
 static bool
 LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
                          SourceRange BaseRange, const RecordType *RTy,
@@ -559,13 +573,12 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
   // We didn't find anything with the given name, so try to correct
   // for typos.
   DeclarationName Name = R.getLookupName();
+  RecordMemberExprValidatorCCC Validator;
   TypoCorrection Corrected = SemaRef.CorrectTypo(R.getLookupNameInfo(),
                                                  R.getLookupKind(), NULL,
-                                                 &SS, DC, false,
-                                                 Sema::CTC_MemberLookup);
-  NamedDecl *ND = Corrected.getCorrectionDecl();
+                                                 &SS, &Validator, DC);
   R.clear();
-  if (ND && (isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND))) {
+  if (NamedDecl *ND = Corrected.getCorrectionDecl()) {
     std::string CorrectedStr(
         Corrected.getAsString(SemaRef.getLangOptions()));
     std::string CorrectedQuotedStr(
@@ -1094,12 +1107,12 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
 
     if (!IV) {
       // Attempt to correct for typos in ivar names.
-      LookupResult Res(*this, R.getLookupName(), R.getNameLoc(),
-                       LookupMemberName);
-      TypoCorrection Corrected = CorrectTypo(
-          R.getLookupNameInfo(), LookupMemberName, NULL, NULL, IDecl, false,
-          IsArrow ? CTC_ObjCIvarLookup : CTC_ObjCPropertyLookup);
-      if ((IV = Corrected.getCorrectionDeclAs<ObjCIvarDecl>())) {
+      DeclFilterCCC<ObjCIvarDecl> Validator;
+      Validator.IsObjCIvarLookup = IsArrow;
+      if (TypoCorrection Corrected = CorrectTypo(R.getLookupNameInfo(),
+                                                 LookupMemberName, NULL, NULL,
+                                                 &Validator, IDecl)) {
+        IV = Corrected.getCorrectionDeclAs<ObjCIvarDecl>();
         Diag(R.getNameLoc(),
              diag::err_typecheck_member_reference_ivar_suggest)
           << IDecl->getDeclName() << MemberName << IV->getDeclName()
@@ -1115,8 +1128,6 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
           << FixItHint::CreateReplacement(OpLoc, ".");
           return ExprError();
         }
-        Res.clear();
-        Res.setLookupName(Member);
 
         Diag(MemberLoc, diag::err_typecheck_member_reference_ivar)
           << IDecl->getDeclName() << MemberName

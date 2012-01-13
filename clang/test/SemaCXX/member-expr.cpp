@@ -94,11 +94,11 @@ namespace test5 {
 namespace PR7508 {
   struct A {
     struct CleanupScope {};
-    void PopCleanupBlock();
+    void PopCleanupBlock(); // expected-note{{'PopCleanupBlock' declared here}}
   };
 
   void foo(A &a) {
-    a.PopCleanupScope(); // expected-error{{no member named 'PopCleanupScope' in 'PR7508::A'}}
+    a.PopCleanupScope(); // expected-error{{no member named 'PopCleanupScope' in 'PR7508::A'; did you mean 'PopCleanupBlock'?}}
   }
 }
 
