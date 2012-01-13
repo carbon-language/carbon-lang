@@ -180,9 +180,11 @@ const char *Sema::getFixItZeroInitializerForType(QualType T) const {
   if (T->isScalarType())
     return " = 0";
   const CXXRecordDecl *RD = T->getAsCXXRecordDecl();
-  if (LangOpts.CPlusPlus0x && RD && !RD->hasUserProvidedDefaultConstructor())
+  if (!RD || !RD->hasDefinition())
+    return 0;
+  if (LangOpts.CPlusPlus0x && !RD->hasUserProvidedDefaultConstructor())
     return "{}";
-  if (T->isAggregateType())
+  if (RD->isAggregate())
     return " = {}";
   return 0;
 }

@@ -50,10 +50,14 @@ struct RAII {
 
 void func();
 namespace N {
+  struct S;
+
   void emptyParens() {
     RAII raii(); // expected-warning {{function declaration}} expected-note {{remove parentheses to declare a variable}}
     int a, b, c, d, e, // expected-note {{change this ',' to a ';' to call 'func'}}
     func(); // expected-warning {{function declaration}} expected-note {{replace parentheses with an initializer}}
+
+    S s(); // expected-warning {{function declaration}}
   }
 }
 

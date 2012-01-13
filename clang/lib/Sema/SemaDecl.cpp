@@ -4945,7 +4945,8 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         // Empty parens mean value-initialization, and no parens mean default
         // initialization. These are equivalent if the default constructor is
         // user-provided, or if zero-initialization is a no-op.
-        if (RD && (RD->isEmpty() || RD->hasUserProvidedDefaultConstructor()))
+        if (RD && RD->hasDefinition() &&
+            (RD->isEmpty() || RD->hasUserProvidedDefaultConstructor()))
           Diag(C.Loc, diag::note_empty_parens_default_ctor)
             << FixItHint::CreateRemoval(ParenRange);
         else if (const char *Init = getFixItZeroInitializerForType(T))
