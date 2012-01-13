@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=armv7-apple-ios -mcpu=cortex-a9 -stress-ivchain | FileCheck %s
+; REQUIRES: asserts
 
 ; @sharedidx is an unrolled variant of this loop:
 ;  for (unsigned long i = 0; i < len; i += s) {
