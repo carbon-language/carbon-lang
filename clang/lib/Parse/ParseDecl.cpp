@@ -1150,11 +1150,12 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
     MaybeParseGNUAttributes(D);
 
     ParseDeclarator(D);
-
-    Decl *ThisDecl = ParseDeclarationAfterDeclarator(D);
-    D.complete(ThisDecl);
-    if (ThisDecl)
-      DeclsInGroup.push_back(ThisDecl);    
+    if (!D.isInvalidType()) {
+      Decl *ThisDecl = ParseDeclarationAfterDeclarator(D);
+      D.complete(ThisDecl);
+      if (ThisDecl)
+        DeclsInGroup.push_back(ThisDecl);   
+    }
   }
 
   if (DeclEnd)
