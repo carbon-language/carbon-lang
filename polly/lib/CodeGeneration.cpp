@@ -377,9 +377,6 @@ public:
   /// @brief Get the memory access offset to be added to the base address
   std::vector <Value*> getMemoryAccessIndex(__isl_keep isl_map *AccessRelation,
                                             Value *BaseAddress) {
-    isl_int OffsetMPZ;
-    isl_int_init(OffsetMPZ);
-
     assert((isl_map_dim(AccessRelation, isl_dim_out) == 1)
            && "Only single dimensional access functions supported");
 
@@ -396,8 +393,6 @@ public:
     Value *NullValue = Constant::getNullValue(ArrayElementType);
     IndexArray.push_back(NullValue);
     IndexArray.push_back(OffsetValue);
-
-    isl_int_clear(OffsetMPZ);
     return IndexArray;
   }
 
