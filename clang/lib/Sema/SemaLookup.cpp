@@ -1163,20 +1163,40 @@ bool Sema::LookupName(LookupResult &R, Scope *S, bool AllowBuiltinCreation) {
         // Check whether there are any other declarations with the same name
         // and in the same scope.
         if (I != IEnd) {
-          DeclContext *DC = (*I)->getDeclContext()->getRedeclContext();
+          // Find the scope in which this declaration was declared (if it
+          // actually exists in a Scope).
+          while (S && !S->isDeclScope(D))
+            S = S->getParent();
+          
+          // If the scope containing the declaration is the translation unit,
+          // then we'll need to perform our checks based on the matching
+          // DeclContexts rather than matching scopes.
+          if (S && isNamespaceOrTranslationUnitScope(S))
+            S = 0;
+
+          // Compute the DeclContext, if we need it.
+          DeclContext *DC = 0;
+          if (!S)
+            DC = (*I)->getDeclContext()->getRedeclContext();
+            
           IdentifierResolver::iterator LastI = I;
           for (++LastI; LastI != IEnd; ++LastI) {
-            DeclContext *LastDC 
-              = (*LastI)->getDeclContext()->getRedeclContext();
+            if (S) {
+              // Match based on scope.
+              if (!S->isDeclScope(*LastI))
+                break;
+            } else {
+              // Match based on DeclContext.
+              DeclContext *LastDC 
+                = (*LastI)->getDeclContext()->getRedeclContext();
+              if (!LastDC->Equals(DC))
+                break;
+            }
+            
+            // If the declaration isn't in the right namespace, skip it.
             if (!(*LastI)->isInIdentifierNamespace(IDNS))
               continue;
-            
-            if (!LastDC->Equals(DC))
-              break;
-            
-            if (!LastDC->isFileContext() && !S->isDeclScope(*LastI))
-              break;
-            
+                        
             D = R.isHiddenDeclarationVisible()? *LastI : getVisibleDecl(*LastI);
             if (D)
               R.addDecl(D);

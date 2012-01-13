@@ -89,3 +89,6 @@ unknown_type t19(int* P) {   // expected-error {{unknown type name 'unknown_type
 
 // missing ',' before '...'
 void t20(int i...) { } // expected-error {{requires a comma}}
+
+int n;
+void t21(int n, int (*array)[n]);
