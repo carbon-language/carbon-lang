@@ -14575,7 +14575,7 @@ static SDValue PerformAddCombine(SDNode *N, SelectionDAG &DAG,
 
   // Try to synthesize horizontal adds from adds of shuffles.
   if (((Subtarget->hasSSSE3() && (VT == MVT::v8i16 || VT == MVT::v4i32)) ||
-       (Subtarget->hasAVX2() && (VT == MVT::v16i16 || MVT::v8i32))) &&
+       (Subtarget->hasAVX2() && (VT == MVT::v16i16 || VT == MVT::v8i32))) &&
       isHorizontalBinOp(Op0, Op1, true))
     return DAG.getNode(X86ISD::HADD, N->getDebugLoc(), VT, Op0, Op1);
 
