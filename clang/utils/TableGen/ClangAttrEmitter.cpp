@@ -33,8 +33,6 @@ getValueAsListOfStrings(Record &R, StringRef FieldName) {
     assert(*i && "Got a null element in a ListInit");
     if (StringInit *S = dynamic_cast<StringInit *>(*i))
       Strings.push_back(S->getValue());
-    else if (CodeInit *C = dynamic_cast<CodeInit *>(*i))
-      Strings.push_back(C->getValue());
     else
       assert(false && "Got a non-string, non-code element in a ListInit");
   }
@@ -625,7 +623,7 @@ void ClangAttrClassEmitter::run(raw_ostream &OS) {
       OS << "\n\n";
     }
 
-    OS << R.getValueAsCode("AdditionalMembers");
+    OS << R.getValueAsString("AdditionalMembers");
     OS << "\n\n";
 
     OS << "  static bool classof(const Attr *A) { return A->getKind() == "
