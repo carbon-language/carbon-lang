@@ -458,7 +458,7 @@ encodeCompactUnwindRegistersWithFrame(unsigned SavedRegs[CU_NUM_SAVED_REGS],
   // Encode the registers in the order they were saved, 3-bits per register. The
   // registers are numbered from 1 to CU_NUM_SAVED_REGS.
   uint32_t RegEnc = 0;
-  for (int I = CU_NUM_SAVED_REGS, Idx = 0; I != -1; --I) {
+  for (int I = CU_NUM_SAVED_REGS - 1, Idx = 0; I != -1; --I) {
     unsigned Reg = SavedRegs[I];
     if (Reg == 0) continue;
 
