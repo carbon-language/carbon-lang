@@ -289,6 +289,14 @@ def AVX_SET0PDY : PDI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
 
 // AVX has no support for 256-bit integer instructions, but since the 128-bit
 // VPXOR instruction writes zero to its upper part, it's safe build zeros.
+def : Pat<(v32i8 immAllZerosV), (SUBREG_TO_REG (i8 0), (V_SET0), sub_xmm)>;
+def : Pat<(bc_v32i8 (v8f32 immAllZerosV)),
+          (SUBREG_TO_REG (i8 0), (V_SET0), sub_xmm)>;
+
+def : Pat<(v16i16 immAllZerosV), (SUBREG_TO_REG (i16 0), (V_SET0), sub_xmm)>;
+def : Pat<(bc_v16i16 (v8f32 immAllZerosV)),
+          (SUBREG_TO_REG (i16 0), (V_SET0), sub_xmm)>;
+
 def : Pat<(v8i32 immAllZerosV), (SUBREG_TO_REG (i32 0), (V_SET0), sub_xmm)>;
 def : Pat<(bc_v8i32 (v8f32 immAllZerosV)),
           (SUBREG_TO_REG (i32 0), (V_SET0), sub_xmm)>;

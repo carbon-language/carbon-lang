@@ -231,7 +231,7 @@ define <32 x i8> @sra_v32i8_7(<32 x i8> %A) nounwind {
   %B = ashr <32 x i8> %A, <i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7>
   ret <32 x i8> %B
 ; CHECK: sra_v32i8_7:
-; CHECK: vxorps
+; CHECK: vpxor
 ; CHECK: vpcmpgtb
 ; CHECK: ret
 }
