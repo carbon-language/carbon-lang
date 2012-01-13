@@ -30,3 +30,9 @@ namespace std_example {
     { return x * 2 + 3 * y; }
 
 }
+
+// The constexpr specifier is allowed for static member functions of non-literal types.
+class NonLiteralClass {
+  NonLiteralClass(bool);
+  static constexpr bool isDebugFlag();
+};

@@ -3675,7 +3675,7 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     for (CXXRecordDecl::method_iterator M = Record->method_begin(),
                                      MEnd = Record->method_end();
          M != MEnd; ++M) {
-      if ((*M)->isConstexpr()) {
+      if (M->isConstexpr() && M->isInstance()) {
         switch (Record->getTemplateSpecializationKind()) {
         case TSK_ImplicitInstantiation:
         case TSK_ExplicitInstantiationDeclaration:
