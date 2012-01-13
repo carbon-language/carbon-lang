@@ -350,6 +350,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
                                          /*IsFramework=*/false, 
                                          /*IsExplicit=*/true).first;
     setUmbrellaDir(Private, Dir);
+    Private->addRequirement("private", LangOpts);
     Private->InferSubmodules = true;
     Private->InferExplicitSubmodules = true;
     Private->InferExportWildcard = true;
