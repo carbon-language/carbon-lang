@@ -146,3 +146,6 @@ void testVector() {
 }
 #endif
 
+// Make sure we don't get conflicts with 'id'.
+funcptr_with_id fid;
+id id_global;

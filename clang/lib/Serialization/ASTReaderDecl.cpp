@@ -879,8 +879,10 @@ void ASTDeclReader::VisitVarDecl(VarDecl *VD) {
   VD->VarDeclBits.NRVOVariable = Record[Idx++];
   VD->VarDeclBits.CXXForRangeDecl = Record[Idx++];
   VD->VarDeclBits.ARCPseudoStrong = Record[Idx++];
-  
-  mergeRedeclarable(VD, Redecl);
+
+  // Only true variables (not parameters or implicit parameters) can be merged.
+  if (VD->getKind() == Decl::Var)
+    mergeRedeclarable(VD, Redecl);
   
   if (uint64_t Val = Record[Idx++]) {
     VD->setInit(Reader.ReadExpr(F));

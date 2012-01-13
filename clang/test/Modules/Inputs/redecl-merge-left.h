@@ -83,3 +83,8 @@ template<typename T> class Vector;
 
 template<typename T> class Vector;
 #endif
+
+// Make sure this doesn't introduce an ambiguity-creating 'id' at the
+// top level.
+typedef void funcptr_with_id(int id);
+
