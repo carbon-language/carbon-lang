@@ -1,4 +1,4 @@
-//===-- InterferenceCache.cpp - Caching per-block interference -*- C++ -*--===//
+//===-- InterferenceCache.cpp - Caching per-block interference ---------*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
