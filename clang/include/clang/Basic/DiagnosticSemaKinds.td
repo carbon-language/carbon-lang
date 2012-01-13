@@ -1308,11 +1308,13 @@ def note_constexpr_redecl_mismatch : Note<
 def err_constexpr_virtual : Error<"virtual function cannot be constexpr">;
 def note_constexpr_tmpl_virtual : Note<"function template instantiation is not "
   "constexpr because it is virtual">;
-def err_constexpr_virtual_base : Error<"constexpr constructor not allowed in "
-  "%select{class|struct}0 with virtual base %plural{1:class|:classes}1">;
-def note_constexpr_tmpl_virtual_base : Note<"constructor template instantiation is "
-  "not constexpr because %select{class|struct}0 has virtual base "
-  "%plural{1:class|:classes}1">;
+def err_constexpr_virtual_base : Error<
+  "constexpr %select{member function|constructor}0 not allowed in "
+  "%select{class|struct}1 with virtual base %plural{1:class|:classes}2">;
+def note_constexpr_tmpl_virtual_base : Note<
+  "%select{function|constructor}0 template instantiation is "
+  "not constexpr because %select{class|struct}1 has virtual base "
+  "%plural{1:class|:classes}2">;
 def note_non_literal_virtual_base : Note<"%select{class|struct}0 with virtual "
   "base %plural{1:class|:classes}1 is not a literal type">;
 def note_constexpr_virtual_base_here : Note<"virtual base class declared here">;

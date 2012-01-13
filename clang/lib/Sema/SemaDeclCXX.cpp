@@ -648,7 +648,7 @@ static bool CheckConstexprParameterTypes(Sema &SemaRef, const FunctionDecl *FD,
 // the requirements of a constexpr function declaration or a constexpr
 // constructor declaration. Return true if it does, false if not.
 //
-// This implements C++0x [dcl.constexpr]p3,4, as amended by N3308.
+// This implements C++11 [dcl.constexpr]p3,4, as amended by N3308.
 //
 // \param CCK Specifies whether to produce diagnostics if the function does not
 // satisfy the requirements.
@@ -659,17 +659,16 @@ bool Sema::CheckConstexprFunctionDecl(const FunctionDecl *NewFD,
            NewFD->getTemplateInstantiationPattern()->isConstexpr())) &&
          "only constexpr templates can be instantiated non-constexpr");
 
-  if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(NewFD)) {
-    // C++0x [dcl.constexpr]p4:
-    //  In the definition of a constexpr constructor, each of the parameter
-    //  types shall be a literal type.
-    if (!CheckConstexprParameterTypes(*this, NewFD, CCK))
-      return false;
-
+  const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(NewFD);
+  if (MD && MD->isInstance()) {
+    // C++11 [dcl.constexpr]p4: In the definition of a constexpr constructor...
     //  In addition, either its function-body shall be = delete or = default or
     //  it shall satisfy the following constraints:
     //  - the class shall not have any virtual base classes;
-    const CXXRecordDecl *RD = CD->getParent();
+    //
+    // We apply this to constexpr member functions too: the class cannot be a
+    // literal type, so the members are not permitted to be constexpr.
+    const CXXRecordDecl *RD = MD->getParent();
     if (RD->getNumVBases()) {
       // Note, this is still illegal if the body is = default, since the
       // implicit body does not satisfy the requirements of a constexpr
@@ -679,7 +678,8 @@ bool Sema::CheckConstexprFunctionDecl(const FunctionDecl *NewFD,
         Diag(NewFD->getLocation(),
              CCK == CCK_Declaration ? diag::err_constexpr_virtual_base
                                     : diag::note_constexpr_tmpl_virtual_base)
-          << RD->isStruct() << RD->getNumVBases();
+          << isa<CXXConstructorDecl>(NewFD) << RD->isStruct()
+          << RD->getNumVBases();
         for (CXXRecordDecl::base_class_const_iterator I = RD->vbases_begin(),
                E = RD->vbases_end(); I != E; ++I)
           Diag(I->getSourceRange().getBegin(),
@@ -687,8 +687,10 @@ bool Sema::CheckConstexprFunctionDecl(const FunctionDecl *NewFD,
       }
       return false;
     }
-  } else {
-    // C++0x [dcl.constexpr]p3:
+  }
+
+  if (!isa<CXXConstructorDecl>(NewFD)) {
+    // C++11 [dcl.constexpr]p3:
     //  The definition of a constexpr function shall satisfy the following
     //  constraints:
     // - it shall not be virtual;
@@ -705,7 +707,7 @@ bool Sema::CheckConstexprFunctionDecl(const FunctionDecl *NewFD,
         while (!WrittenVirtual->isVirtualAsWritten())
           WrittenVirtual = *WrittenVirtual->begin_overridden_methods();
         if (WrittenVirtual != Method)
-          Diag(WrittenVirtual->getLocation(), 
+          Diag(WrittenVirtual->getLocation(),
                diag::note_overridden_virtual_function);
       }
       return false;
@@ -723,11 +725,11 @@ bool Sema::CheckConstexprFunctionDecl(const FunctionDecl *NewFD,
              diag::note_constexpr_tmpl_non_literal_return) << RT;
       return false;
     }
-
-    // - each of its parameter types shall be a literal type;
-    if (!CheckConstexprParameterTypes(*this, NewFD, CCK))
-      return false;
   }
+
+  // - each of its parameter types shall be a literal type;
+  if (!CheckConstexprParameterTypes(*this, NewFD, CCK))
+    return false;
 
   return true;
 }

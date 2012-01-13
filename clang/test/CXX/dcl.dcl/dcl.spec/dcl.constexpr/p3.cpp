@@ -63,6 +63,10 @@ struct U {
   constexpr int SelfParam(U);
 };
 
+struct V : virtual U { // expected-note {{here}}
+  constexpr int F(); // expected-error {{constexpr member function not allowed in struct with virtual base class}}
+};
+
 //  or a compound-statememt that contains only
 constexpr int AllowedStmts() {
   //  - null statements
