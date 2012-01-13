@@ -918,8 +918,12 @@ SVal RegionStoreManager::getBinding(Store store, Loc L, QualType T) {
       isa<SymbolicRegion>(MR) ||
       isa<CodeTextRegion>(MR)) {
     if (T.isNull()) {
-      const SymbolicRegion *SR = cast<SymbolicRegion>(MR);
-      T = SR->getSymbol()->getType(Ctx);
+      if (const TypedRegion *TR = dyn_cast<TypedRegion>(MR))
+        T = TR->getLocationType();
+      else {
+        const SymbolicRegion *SR = cast<SymbolicRegion>(MR);
+        T = SR->getSymbol()->getType(Ctx);
+      }
     }
     MR = GetElementZeroRegion(MR, T);
   }
