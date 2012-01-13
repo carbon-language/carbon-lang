@@ -840,8 +840,6 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
                 }
             }
         }
-        
-        m_ast_importer_ap.reset(new ClangASTImporter());
     }
 
     UpdateInstanceName();
