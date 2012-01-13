@@ -215,6 +215,9 @@ struct TupleExpander : SetTheory::Expander {
       for (unsigned i = 0, e = Proto->getValues().size(); i != e; ++i) {
         RecordVal RV = Proto->getValues()[i];
 
+        if (RV.getName() == "NAME")
+          continue;
+
         // Replace the sub-register list with Tuple.
         if (RV.getName() == "SubRegs")
           RV.setValue(ListInit::get(Tuple, RegisterRecTy));
