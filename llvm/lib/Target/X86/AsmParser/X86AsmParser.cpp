@@ -48,7 +48,6 @@ private:
   X86Operand *ParseOperand();
   X86Operand *ParseATTOperand();
   X86Operand *ParseIntelOperand();
-  X86Operand *ParseIntelMemOperand(StringRef TokenString, unsigned Size);
   X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
 
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
@@ -574,63 +573,58 @@ static bool isIntelMemOperand(StringRef OpStr, unsigned &Size) {
   return Size != 0;
 }
 
-/// ParseIntelMemOperand - Parse intel style memory operand.
-X86Operand *X86AsmParser::ParseIntelMemOperand(StringRef TokenString, 
-                                               unsigned Size) {
-  SMLoc Start = Parser.getTok().getLoc(), End;
-  unsigned SegReg = 0, BaseReg = 0, IndexReg = 0, Scale = 1;
-  Parser.Lex();
-  if (TokenString == "PTR")
-    Parser.Lex();
-    else {
-      Error(Start, "unexpected token!");
-      return 0;
-    }
-  
-  if (TokenString == "[")
-    Parser.Lex();
-  else {
-    Error(Start, "unexpected token!");
-    return 0;
-  }
-  
-  SMLoc LParenLoc = Parser.getTok().getLoc();
-  BaseReg = getIntelRegisterOperand(TokenString);
-  if (BaseReg == 0) {
-    Error(LParenLoc, "unexpected token!");
-    return 0;
-  }
-  Parser.Lex();
-  const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
-  SMLoc ExprEnd;
-  if (getParser().ParseExpression(Disp, ExprEnd)) return 0;
-  End = Parser.getTok().getLoc();
-  if (TokenString == "]")
-    Parser.Lex();
-  if (BaseReg == 0) {
-    Error(End, "unexpected token!");
-    return 0;
-  }
-  return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
-			       Start, End, Size);
-}
-
 X86Operand *X86AsmParser::ParseIntelOperand() {
 
-  StringRef TokenString = Parser.getTok().getString();
+  const AsmToken &Tok = Parser.getTok();
   SMLoc Start = Parser.getTok().getLoc(), End;
 
   // register
-  if(unsigned RegNo = getIntelRegisterOperand(TokenString)) {
+  if(unsigned RegNo = getIntelRegisterOperand(Tok.getString())) {
     Parser.Lex();
     End = Parser.getTok().getLoc();
     return X86Operand::CreateReg(RegNo, Start, End);
   }
 
   // mem operand
+  unsigned SegReg = 0, BaseReg = 0, IndexReg = 0, Scale = 1;
+  StringRef OpStr = Tok.getString();
   unsigned Size = 0;
-  if (isIntelMemOperand(TokenString, Size))
-    ParseIntelMemOperand(TokenString, Size);
+  if (isIntelMemOperand(OpStr, Size)) {
+    Parser.Lex();
+    if (Tok.getString() == "PTR")
+      Parser.Lex();
+    else {
+      Error(Start, "unexpected token!");
+      return 0;
+    }
+
+    if (Tok.getString() == "[")
+      Parser.Lex();
+    else {
+      Error(Start, "unexpected token!");
+      return 0;
+    }
+
+    SMLoc LParenLoc = Parser.getTok().getLoc();
+    BaseReg = getIntelRegisterOperand(Tok.getString());
+    if (BaseReg == 0) {
+      Error(LParenLoc, "unexpected token!");
+      return 0;
+    }
+    Parser.Lex();
+    const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
+    SMLoc ExprEnd;
+    if (getParser().ParseExpression(Disp, ExprEnd)) return 0;
+    End = Parser.getTok().getLoc();
+    if (Tok.getString() == "]")
+      Parser.Lex();
+    if (BaseReg == 0) {
+      Error(End, "unexpected token!");
+      return 0;
+    }
+    return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
+                                 Start, End, Size);
+  }
 
   // immediate.
   const MCExpr *Val;
