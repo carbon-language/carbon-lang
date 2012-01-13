@@ -86,8 +86,8 @@ public:
   /// If the standard library is used
   bool UseStdLib;
 
-  /// Default host triple.
-  std::string DefaultHostTriple;
+  /// Default target triple.
+  std::string DefaultTargetTriple;
 
   /// Default name for linked images (e.g., "a.out").
   std::string DefaultImageName;
@@ -187,7 +187,7 @@ private:
 
 public:
   Driver(StringRef _ClangExecutable,
-         StringRef _DefaultHostTriple,
+         StringRef _DefaultTargetTriple,
          StringRef _DefaultImageName,
          bool IsProduction,
          DiagnosticsEngine &_Diags);

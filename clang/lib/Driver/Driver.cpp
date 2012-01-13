@@ -47,13 +47,13 @@ using namespace clang::driver;
 using namespace clang;
 
 Driver::Driver(StringRef ClangExecutable,
-               StringRef DefaultHostTriple,
+               StringRef DefaultTargetTriple,
                StringRef DefaultImageName,
                bool IsProduction,
                DiagnosticsEngine &Diags)
   : Opts(createDriverOptTable()), Diags(Diags),
     ClangExecutable(ClangExecutable), UseStdLib(true),
-    DefaultHostTriple(DefaultHostTriple), DefaultImageName(DefaultImageName),
+    DefaultTargetTriple(DefaultTargetTriple), DefaultImageName(DefaultImageName),
     DriverTitle("clang \"gcc-compatible\" driver"),
     Host(0),
     CCPrintOptionsFilename(0), CCPrintHeadersFilename(0),
@@ -306,7 +306,7 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   // FIXME: We shouldn't overwrite the default host triple here, but we have
   // nowhere else to put this currently.
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_host_triple))
-    DefaultHostTriple = A->getValue(*Args);
+    DefaultTargetTriple = A->getValue(*Args);
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_install_dir))
     Dir = InstalledDir = A->getValue(*Args);
   for (arg_iterator it = Args->filtered_begin(options::OPT_B),
@@ -320,7 +320,7 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   if (Args->hasArg(options::OPT_nostdlib))
     UseStdLib = false;
 
-  Host = GetHostInfo(DefaultHostTriple.c_str());
+  Host = GetHostInfo(DefaultTargetTriple.c_str());
 
   // Perform the default argument translations.
   DerivedArgList *TranslatedArgs = TranslateInputArgs(*Args);
@@ -1507,7 +1507,7 @@ static bool isPathExecutable(llvm::sys::Path &P, bool WantFile) {
 
 std::string Driver::GetProgramPath(const char *Name, const ToolChain &TC,
                                    bool WantFile) const {
-  std::string TargetSpecificExecutable(DefaultHostTriple + "-" + Name);
+  std::string TargetSpecificExecutable(DefaultTargetTriple + "-" + Name);
   // Respect a limited subset of the '-Bprefix' functionality in GCC by
   // attempting to use this prefix when lokup up program paths.
   for (Driver::prefix_list::const_iterator it = PrefixDirs.begin(),
