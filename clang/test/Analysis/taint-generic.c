@@ -79,6 +79,9 @@ void testUncontrolledFormatString(char **p) {
   strcpy(scpy, s);
   sprintf(buf,scpy); // expected-warning {{Uncontrolled Format String}}
 
+  stpcpy(*(++p), s); // this generates __inline.
+  setproctitle(*(p), 3); // expected-warning {{Uncontrolled Format String}}
+
   char spcpy[80];
   stpcpy(spcpy, s);
   setproctitle(spcpy, 3); // expected-warning {{Uncontrolled Format String}}
