@@ -6179,8 +6179,8 @@ freestanding environments and non-C-based languages.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;resultval&gt; = landingpad &lt;somety&gt; personality &lt;type&gt; &lt;pers_fn&gt; &lt;clause&gt;+
-  &lt;resultval&gt; = landingpad &lt;somety&gt; personality &lt;type&gt; &lt;pers_fn&gt; cleanup &lt;clause&gt;*
+  &lt;resultval&gt; = landingpad &lt;resultty&gt; personality &lt;type&gt; &lt;pers_fn&gt; &lt;clause&gt;+
+  &lt;resultval&gt; = landingpad &lt;resultty&gt; personality &lt;type&gt; &lt;pers_fn&gt; cleanup &lt;clause&gt;*
 
   &lt;clause&gt; := catch &lt;type&gt; &lt;value&gt;
   &lt;clause&gt; := filter &lt;array constant type&gt; &lt;array constant&gt;
@@ -6194,7 +6194,7 @@ freestanding environments and non-C-based languages.</p>
    <i><tt>catch</tt></i> portion of a <i><tt>try/catch</tt></i> sequence. It
    defines values supplied by the personality function (<tt>pers_fn</tt>) upon
    re-entry to the function. The <tt>resultval</tt> has the
-   type <tt>somety</tt>.</p>
+   type <tt>resultty</tt>.</p>
 
 <h5>Arguments:</h5>
 <p>This instruction takes a <tt>pers_fn</tt> value. This is the personality
@@ -6218,7 +6218,11 @@ freestanding environments and non-C-based languages.</p>
 
 <p>The clauses are applied in order from top to bottom. If two
    <tt>landingpad</tt> instructions are merged together through inlining, the
-   clauses from the calling function are appended to the list of clauses.</p>
+   clauses from the calling function are appended to the list of clauses.
+   When the call stack is being unwound due to an exception being thrown, the
+   exception is compared against each <tt>clause</tt> in turn.  If it doesn't
+   match any of the clauses, and the <tt>cleanup</tt> flag is not set, then
+   unwinding continues further up the call stack.</p>
 
 <p>The <tt>landingpad</tt> instruction has several restrictions:</p>
 
