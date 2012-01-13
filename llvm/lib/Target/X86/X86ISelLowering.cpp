@@ -1327,9 +1327,12 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
          ((DstAlign == 0 || DstAlign >= 16) &&
           (SrcAlign == 0 || SrcAlign >= 16))) &&
         Subtarget->getStackAlignment() >= 16) {
-      if (Subtarget->hasAVX() &&
-          Subtarget->getStackAlignment() >= 32)
-        return MVT::v8f32;
+      if (Subtarget->getStackAlignment() >= 32) {
+        if (Subtarget->hasAVX2())
+          return MVT::v8i32;
+        if (Subtarget->hasAVX())
+          return MVT::v8f32;
+      }
       if (Subtarget->hasSSE2())
         return MVT::v4i32;
       if (Subtarget->hasSSE1())
