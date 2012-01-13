@@ -1119,6 +1119,9 @@ ClangASTContext::CreateRecordType (DeclContext *decl_ctx, AccessType access_type
                                                  SourceLocation(),
                                                  SourceLocation(),
                                                  name && name[0] ? &ast->Idents.get(name) : NULL);
+    
+    if (!name)
+        decl->setAnonymousStructOrUnion(true);
 
     if (decl_ctx)
     {
