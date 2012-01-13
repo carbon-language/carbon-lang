@@ -279,13 +279,24 @@ def : Pat<(v16i8 immAllZerosV), (V_SET0)>;
 // JIT implementatioan, it does not expand the instructions below like
 // X86MCInstLower does.
 let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
-    isCodeGenOnly = 1, Predicates = [HasAVX] in {
+    isCodeGenOnly = 1 in {
+let Predicates = [HasAVX] in {
 def AVX_SET0PSY : PSI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
                    [(set VR256:$dst, (v8f32 immAllZerosV))]>, VEX_4V;
 def AVX_SET0PDY : PDI<0x57, MRMInitReg, (outs VR256:$dst), (ins), "",
                    [(set VR256:$dst, (v4f64 immAllZerosV))]>, VEX_4V;
 }
+let Predicates = [HasAVX2], neverHasSideEffects = 1 in
+def AVX2_SET0   : PDI<0xef, MRMInitReg, (outs VR256:$dst), (ins), "",
+                   []>, VEX_4V;
+}
 
+let Predicates = [HasAVX2], AddedComplexity = 5 in {
+  def : Pat<(v4i64 immAllZerosV), (AVX2_SET0)>;
+  def : Pat<(v8i32 immAllZerosV), (AVX2_SET0)>;
+  def : Pat<(v16i16 immAllZerosV), (AVX2_SET0)>;
+  def : Pat<(v32i8 immAllZerosV), (AVX2_SET0)>;
+}
 
 // AVX has no support for 256-bit integer instructions, but since the 128-bit
 // VPXOR instruction writes zero to its upper part, it's safe build zeros.

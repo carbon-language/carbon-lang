@@ -4234,8 +4234,8 @@ static bool isZeroShuffle(ShuffleVectorSDNode *N) {
 
 /// getZeroVector - Returns a vector of specified type with all zero elements.
 ///
-static SDValue getZeroVector(EVT VT, bool HasSSE2, SelectionDAG &DAG,
-                             DebugLoc dl) {
+static SDValue getZeroVector(EVT VT, bool HasSSE2, bool HasAVX2,
+                             SelectionDAG &DAG, DebugLoc dl) {
   assert(VT.isVector() && "Expected a vector type");
 
   // Always build SSE zero vectors as <4 x i32> bitcasted
@@ -4250,12 +4250,17 @@ static SDValue getZeroVector(EVT VT, bool HasSSE2, SelectionDAG &DAG,
       Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4f32, Cst, Cst, Cst, Cst);
     }
   } else if (VT.getSizeInBits() == 256) { // AVX
-    // 256-bit logic and arithmetic instructions in AVX are
-    // all floating-point, no support for integer ops. Default
-    // to emitting fp zeroed vectors then.
-    SDValue Cst = DAG.getTargetConstantFP(+0.0, MVT::f32);
-    SDValue Ops[] = { Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst };
-    Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8f32, Ops, 8);
+    if (HasAVX2) { // AVX2
+      SDValue Cst = DAG.getTargetConstant(0, MVT::i32);
+      SDValue Ops[] = { Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst };
+      Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8i32, Ops, 8);
+    } else {
+      // 256-bit logic and arithmetic instructions in AVX are all
+      // floating-point, no support for integer ops. Emit fp zeroed vectors.
+      SDValue Cst = DAG.getTargetConstantFP(+0.0, MVT::f32);
+      SDValue Ops[] = { Cst, Cst, Cst, Cst, Cst, Cst, Cst, Cst };
+      Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v8f32, Ops, 8);
+    }
   }
   return DAG.getNode(ISD::BITCAST, dl, VT, Vec);
 }
@@ -4445,11 +4450,13 @@ static SDValue PromoteSplat(ShuffleVectorSDNode *SV, SelectionDAG &DAG) {
 /// element of V2 is swizzled into the zero/undef vector, landing at element
 /// Idx.  This produces a shuffle mask like 4,1,2,3 (idx=0) or  0,1,2,4 (idx=3).
 static SDValue getShuffleVectorZeroOrUndef(SDValue V2, unsigned Idx,
-                                           bool isZero, bool HasSSE2,
+                                           bool IsZero,
+                                           const X86Subtarget *Subtarget,
                                            SelectionDAG &DAG) {
   EVT VT = V2.getValueType();
-  SDValue V1 = isZero
-    ? getZeroVector(VT, HasSSE2, DAG, V2.getDebugLoc()) : DAG.getUNDEF(VT);
+  SDValue V1 = IsZero
+    ? getZeroVector(VT, Subtarget->hasSSE2(), Subtarget->hasAVX2(), DAG,
+                    V2.getDebugLoc()) : DAG.getUNDEF(VT);
   unsigned NumElems = VT.getVectorNumElements();
   SmallVector<int, 16> MaskVec;
   for (unsigned i = 0; i != NumElems; ++i)
@@ -4729,7 +4736,8 @@ static SDValue LowerBuildVectorv16i8(SDValue Op, unsigned NonZeros,
     bool ThisIsNonZero = (NonZeros & (1 << i)) != 0;
     if (ThisIsNonZero && First) {
       if (NumZero)
-        V = getZeroVector(MVT::v8i16, true, DAG, dl);
+        V = getZeroVector(MVT::v8i16, /*HasSSE2*/ true, /*HasAVX2*/ false,
+                          DAG, dl);
       else
         V = DAG.getUNDEF(MVT::v8i16);
       First = false;
@@ -4777,7 +4785,8 @@ static SDValue LowerBuildVectorv8i16(SDValue Op, unsigned NonZeros,
     if (isNonZero) {
       if (First) {
         if (NumZero)
-          V = getZeroVector(MVT::v8i16, true, DAG, dl);
+          V = getZeroVector(MVT::v8i16, /*HasSSE2*/ true, /*HasAVX2*/ false,
+                            DAG, dl);
         else
           V = DAG.getUNDEF(MVT::v8i16);
         First = false;
@@ -5065,7 +5074,8 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
         Op.getValueType() == MVT::v8i32)
       return Op;
 
-    return getZeroVector(Op.getValueType(), Subtarget->hasSSE2(), DAG, dl);
+    return getZeroVector(Op.getValueType(), Subtarget->hasSSE2(),
+                         Subtarget->hasAVX2(), DAG, dl);
   }
 
   // Vectors containing all ones can be matched by pcmpeqd on 128-bit width
@@ -5132,8 +5142,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
         // convert it to a vector with movd (S2V+shuffle to zero extend).
         Item = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, Item);
         Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VecVT, Item);
-        Item = getShuffleVectorZeroOrUndef(Item, 0, true,
-                                           Subtarget->hasSSE2(), DAG);
+        Item = getShuffleVectorZeroOrUndef(Item, 0, true, Subtarget, DAG);
 
         // Now we have our 32-bit value zero extended in the low element of
         // a vector.  If Idx != 0, swizzle it into place.
@@ -5161,28 +5170,28 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       if (ExtVT == MVT::i32 || ExtVT == MVT::f32 || ExtVT == MVT::f64 ||
           (ExtVT == MVT::i64 && Subtarget->is64Bit())) {
         if (VT.getSizeInBits() == 256) {
-          SDValue ZeroVec = getZeroVector(VT, true, DAG, dl);
+          SDValue ZeroVec = getZeroVector(VT, Subtarget->hasSSE2(),
+                                          Subtarget->hasAVX2(), DAG, dl);
           return DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, ZeroVec,
                              Item, DAG.getIntPtrConstant(0));
         }
         assert(VT.getSizeInBits() == 128 && "Expected an SSE value type!");
         Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Item);
         // Turn it into a MOVL (i.e. movss, movsd, or movd) to a zero vector.
-        return getShuffleVectorZeroOrUndef(Item, 0, true,
-                                           Subtarget->hasSSE2(), DAG);
+        return getShuffleVectorZeroOrUndef(Item, 0, true, Subtarget, DAG);
       }
 
       if (ExtVT == MVT::i16 || ExtVT == MVT::i8) {
         Item = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, Item);
         Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4i32, Item);
         if (VT.getSizeInBits() == 256) {
-          SDValue ZeroVec = getZeroVector(MVT::v8i32, true, DAG, dl);
+          SDValue ZeroVec = getZeroVector(MVT::v8i32, Subtarget->hasSSE2(),
+                                          Subtarget->hasAVX2(), DAG, dl);
           Item = Insert128BitVector(ZeroVec, Item, DAG.getConstant(0, MVT::i32),
                                     DAG, dl);
         } else {
           assert(VT.getSizeInBits() == 128 && "Expected an SSE value type!");
-          Item = getShuffleVectorZeroOrUndef(Item, 0, true,
-                                             Subtarget->hasSSE2(), DAG);
+          Item = getShuffleVectorZeroOrUndef(Item, 0, true, Subtarget, DAG);
         }
         return DAG.getNode(ISD::BITCAST, dl, VT, Item);
       }
@@ -5211,8 +5220,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Item);
 
       // Turn it into a shuffle of zero and zero-extended scalar to vector.
-      Item = getShuffleVectorZeroOrUndef(Item, 0, NumZero > 0,
-                                         Subtarget->hasSSE2(), DAG);
+      Item = getShuffleVectorZeroOrUndef(Item, 0, NumZero > 0, Subtarget, DAG);
       SmallVector<int, 8> MaskVec;
       for (unsigned i = 0; i < NumElems; i++)
         MaskVec.push_back(i == Idx ? 0 : 1);
@@ -5268,8 +5276,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       unsigned Idx = CountTrailingZeros_32(NonZeros);
       SDValue V2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT,
                                  Op.getOperand(Idx));
-      return getShuffleVectorZeroOrUndef(V2, Idx, true,
-                                         Subtarget->hasSSE2(), DAG);
+      return getShuffleVectorZeroOrUndef(V2, Idx, true, Subtarget, DAG);
     }
     return SDValue();
   }
@@ -5294,7 +5301,8 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     for (unsigned i = 0; i < 4; ++i) {
       bool isZero = !(NonZeros & (1 << i));
       if (isZero)
-        V[i] = getZeroVector(VT, Subtarget->hasSSE2(), DAG, dl);
+        V[i] = getZeroVector(VT, Subtarget->hasSSE2(), Subtarget->hasAVX2(),
+                             DAG, dl);
       else
         V[i] = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Op.getOperand(i));
     }
@@ -6402,7 +6410,8 @@ SDValue NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG,
   SDValue V2 = Op.getOperand(1);
 
   if (isZeroShuffle(SVOp))
-    return getZeroVector(VT, Subtarget->hasSSE2(), DAG, dl);
+    return getZeroVector(VT, Subtarget->hasSSE2(), Subtarget->hasAVX2(),
+                         DAG, dl);
 
   // Handle splat operations
   if (SVOp->isSplat()) {
@@ -7663,8 +7672,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i32(SDValue Op,
                              Op.getOperand(0));
 
   // Zero out the upper parts of the register.
-  Load = getShuffleVectorZeroOrUndef(Load, 0, true, Subtarget->hasSSE2(),
-                                     DAG);
+  Load = getShuffleVectorZeroOrUndef(Load, 0, true, Subtarget, DAG);
 
   Load = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64,
                      DAG.getNode(ISD::BITCAST, dl, MVT::v2f64, Load),
@@ -10104,7 +10112,8 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
       if (VT == MVT::v16i8 && Op.getOpcode() == ISD::SRA) {
         if (ShiftAmt == 7) {
           // R s>> 7  ===  R s< 0
-          SDValue Zeros = getZeroVector(VT, true /* HasSSE2 */, DAG, dl);
+          SDValue Zeros = getZeroVector(VT, /* HasSSE2 */true,
+                                        /* HasAVX2 */false, DAG, dl);
           return DAG.getNode(X86ISD::PCMPGTB, dl, VT, Zeros, R);
         }
 
@@ -10146,7 +10155,8 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
         if (Op.getOpcode() == ISD::SRA) {
           if (ShiftAmt == 7) {
             // R s>> 7  ===  R s< 0
-            SDValue Zeros = getZeroVector(VT, true /* HasSSE2 */, DAG, dl);
+            SDValue Zeros = getZeroVector(VT, true /* HasSSE2 */,
+                                          true /* HasAVX2 */, DAG, dl);
             return DAG.getNode(X86ISD::PCMPGTB, dl, VT, Zeros, R);
           }
 
@@ -12685,7 +12695,8 @@ static bool isShuffleLow128VectorInsertHigh(ShuffleVectorSDNode *SVOp) {
 
 /// PerformShuffleCombine256 - Performs shuffle combines for 256-bit vectors.
 static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
-                                        TargetLowering::DAGCombinerInfo &DCI) {
+                                        TargetLowering::DAGCombinerInfo &DCI,
+                                        bool HasAVX2) {
   DebugLoc dl = N->getDebugLoc();
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
   SDValue V1 = SVOp->getOperand(0);
@@ -12737,7 +12748,7 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
 
     // Emit a zeroed vector and insert the desired subvector on its
     // first half.
-    SDValue Zeros = getZeroVector(VT, true /* HasSSE2 */, DAG, dl);
+    SDValue Zeros = getZeroVector(VT, true /* HasSSE2 */, HasAVX2, DAG, dl);
     SDValue InsV = Insert128BitVector(Zeros, V1.getOperand(0),
                          DAG.getConstant(0, MVT::i32), DAG, dl);
     return DCI.CombineTo(N, InsV);
@@ -12782,7 +12793,7 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   // Combine 256-bit vector shuffles. This is only profitable when in AVX mode
   if (Subtarget->hasAVX() && VT.getSizeInBits() == 256 &&
       N->getOpcode() == ISD::VECTOR_SHUFFLE)
-    return PerformShuffleCombine256(N, DAG, DCI);
+    return PerformShuffleCombine256(N, DAG, DCI, Subtarget->hasAVX2());
 
   // Only handle 128 wide vector from here on.
   if (VT.getSizeInBits() != 128)
