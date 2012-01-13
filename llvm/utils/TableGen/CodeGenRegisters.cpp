@@ -330,7 +330,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
   SpillAlignment = R->getValueAsInt("Alignment");
   CopyCost = R->getValueAsInt("CopyCost");
   Allocatable = R->getValueAsBit("isAllocatable");
-  AltOrderSelect = R->getValueAsCode("AltOrderSelect");
+  AltOrderSelect = R->getValueAsString("AltOrderSelect");
 }
 
 // Create an inferred register class that was missing from the .td files.

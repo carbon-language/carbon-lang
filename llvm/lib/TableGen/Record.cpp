@@ -78,7 +78,6 @@ template<> struct DenseMapInfo<TableGenStringKey> {
 BitRecTy BitRecTy::Shared;
 IntRecTy IntRecTy::Shared;
 StringRecTy StringRecTy::Shared;
-CodeRecTy CodeRecTy::Shared;
 DagRecTy DagRecTy::Shared;
 
 void RecTy::anchor() { }
@@ -313,12 +312,6 @@ Init *ListRecTy::convertValue(TypedInit *TI) {
   if (ListRecTy *LRT = dynamic_cast<ListRecTy*>(TI->getType()))
     if (LRT->getElementType()->typeIsConvertibleTo(getElementType()))
       return TI;
-  return 0;
-}
-
-Init *CodeRecTy::convertValue(TypedInit *TI) {
-  if (TI->getType()->typeIsConvertibleTo(this))
-    return TI;
   return 0;
 }
 
@@ -579,17 +572,6 @@ StringInit *StringInit::get(StringRef V) {
 
   StringInit *&I = ThePool[V];
   if (!I) I = new StringInit(V);
-  return I;
-}
-
-void CodeInit::anchor() { }
-
-CodeInit *CodeInit::get(StringRef V) {
-  typedef StringMap<CodeInit *> Pool;
-  static Pool ThePool;
-
-  CodeInit *&I = ThePool[V];
-  if (!I) I = new CodeInit(V);
   return I;
 }
 
@@ -1991,18 +1973,6 @@ DagInit *Record::getValueAsDag(StringRef FieldName) const {
     return DI;
   throw "Record `" + getName() + "', field `" + FieldName.str() +
         "' does not have a dag initializer!";
-}
-
-std::string Record::getValueAsCode(StringRef FieldName) const {
-  const RecordVal *R = getValue(FieldName);
-  if (R == 0 || R->getValue() == 0)
-    throw "Record `" + getName() + "' does not have a field named `" +
-      FieldName.str() + "'!\n";
-
-  if (CodeInit *CI = dynamic_cast<CodeInit*>(R->getValue()))
-    return CI->getValue();
-  throw "Record `" + getName() + "', field `" + FieldName.str() +
-    "' does not have a code initializer!";
 }
 
 

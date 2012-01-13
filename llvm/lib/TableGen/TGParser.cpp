@@ -595,11 +595,11 @@ bool TGParser::ParseOptionalBitList(std::vector<unsigned> &Ranges) {
 /// ParseType - Parse and return a tblgen type.  This returns null on error.
 ///
 ///   Type ::= STRING                       // string type
+///   Type ::= CODE                         // code type
 ///   Type ::= BIT                          // bit type
 ///   Type ::= BITS '<' INTVAL '>'          // bits<x> type
 ///   Type ::= INT                          // int type
 ///   Type ::= LIST '<' Type '>'            // list<x> type
-///   Type ::= CODE                         // code type
 ///   Type ::= DAG                          // dag type
 ///   Type ::= ClassID                      // Record Type
 ///
@@ -607,9 +607,9 @@ RecTy *TGParser::ParseType() {
   switch (Lex.getCode()) {
   default: TokError("Unknown token when expecting a type"); return 0;
   case tgtok::String: Lex.Lex(); return StringRecTy::get();
+  case tgtok::Code:   Lex.Lex(); return StringRecTy::get();
   case tgtok::Bit:    Lex.Lex(); return BitRecTy::get();
   case tgtok::Int:    Lex.Lex(); return IntRecTy::get();
-  case tgtok::Code:   Lex.Lex(); return CodeRecTy::get();
   case tgtok::Dag:    Lex.Lex(); return DagRecTy::get();
   case tgtok::Id:
     if (Record *R = ParseClassID()) return RecordRecTy::get(R);
@@ -1104,7 +1104,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
     break;
   }
   case tgtok::CodeFragment:
-    R = CodeInit::get(Lex.getCurStrVal());
+    R = StringInit::get(Lex.getCurStrVal());
     Lex.Lex();
     break;
   case tgtok::question:

@@ -629,11 +629,11 @@ TreePredicateFn::TreePredicateFn(TreePattern *N) : PatFragRec(N) {
 }
 
 std::string TreePredicateFn::getPredCode() const {
-  return PatFragRec->getRecord()->getValueAsCode("PredicateCode");
+  return PatFragRec->getRecord()->getValueAsString("PredicateCode");
 }
 
 std::string TreePredicateFn::getImmCode() const {
-  return PatFragRec->getRecord()->getValueAsCode("ImmediateCode");
+  return PatFragRec->getRecord()->getValueAsString("ImmediateCode");
 }
 
 
@@ -2070,7 +2070,7 @@ void CodeGenDAGPatterns::ParseNodeTransforms() {
   while (!Xforms.empty()) {
     Record *XFormNode = Xforms.back();
     Record *SDNode = XFormNode->getValueAsDef("Opcode");
-    std::string Code = XFormNode->getValueAsCode("XFormFunction");
+    std::string Code = XFormNode->getValueAsString("XFormFunction");
     SDNodeXForms.insert(std::make_pair(XFormNode, NodeXForm(SDNode, Code)));
 
     Xforms.pop_back();
