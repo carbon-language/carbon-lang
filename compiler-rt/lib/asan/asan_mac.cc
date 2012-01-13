@@ -32,6 +32,8 @@
 
 namespace __asan {
 
+void *island_allocator_pos = NULL;
+
 extern dispatch_async_f_f real_dispatch_async_f;
 extern dispatch_sync_f_f real_dispatch_sync_f;
 extern dispatch_after_f_f real_dispatch_after_f;
@@ -172,6 +174,37 @@ void AsanLock::Unlock() {
   OSSpinLockUnlock((OSSpinLock*)&opaque_storage_);
 }
 
+// The range of pages to be used by __asan_mach_override_ptr for escape
+// islands.
+// TODO(glider): instead of mapping a fixed range we must find a range of
+// unmapped pages in vmmap and take them.
+#define kIslandEnd (0x7fffffdf0000 - kPageSize)
+#define kIslandBeg (kIslandEnd - 256 * kPageSize)
+
+extern "C"
+mach_error_t __asan_allocate_island(void **ptr,
+                                    size_t unused_size,
+                                    void *unused_hint) {
+  if (!island_allocator_pos) {
+    if ((void*)-1 == asan_mmap((void*)kIslandBeg, kIslandEnd - kIslandBeg,
+                               PROT_READ | PROT_WRITE | PROT_EXEC,
+                               MAP_PRIVATE | MAP_ANON | MAP_FIXED,
+                               -1, 0)) {
+      return KERN_NO_SPACE;
+    }
+    island_allocator_pos = (void*)kIslandBeg;
+  };
+  *ptr = island_allocator_pos;
+  island_allocator_pos = (char*)island_allocator_pos + kPageSize;
+  return err_none;
+}
+
+extern "C"
+mach_error_t __asan_deallocate_island(void *ptr) {
+  // Do nothing.
+  // TODO(glider): allow to free and reuse the island memory.
+  return err_none;
+}
 
 // Support for the following functions from libdispatch on Mac OS:
 //   dispatch_async_f()

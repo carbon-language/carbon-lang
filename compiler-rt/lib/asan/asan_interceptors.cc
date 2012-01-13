@@ -43,24 +43,25 @@
 // After interception, the calls to system functions will be substituted by
 // calls to our interceptors. We store pointers to system function f()
 // in __asan::real_f().
-//
-// TODO(glider): mach_override_ptr() tends to spend too much time
-// in allocateBranchIsland(). This should be ok for real-word
-// application, but slows down our tests which fork too many children.
 #ifdef __APPLE__
 #include "mach_override/mach_override.h"
 #define WRAPPER_NAME(x) "wrap_"#x
 
-#define OVERRIDE_FUNCTION(oldfunc, newfunc)                             \
-  CHECK(0 == __asan_mach_override_ptr((void*)(oldfunc),                        \
-                                      (void*)(newfunc),                        \
-                                      (void**)&real_##oldfunc));               \
-  CHECK(real_##oldfunc != NULL);
+#define OVERRIDE_FUNCTION(oldfunc, newfunc)                                   \
+  do {CHECK(0 == __asan_mach_override_ptr_custom((void*)(oldfunc),            \
+                                                 (void*)(newfunc),            \
+                                                 (void**)&real_##oldfunc,     \
+                                                 __asan_allocate_island,      \
+                                                 __asan_deallocate_island));  \
+  CHECK(real_##oldfunc != NULL);   } while(0)
 
-#define OVERRIDE_FUNCTION_IF_EXISTS(oldfunc, newfunc)                   \
-  do { __asan_mach_override_ptr((void*)(oldfunc),                              \
-                                (void*)(newfunc),                              \
-                                (void**)&real_##oldfunc); } while (0)
+#define OVERRIDE_FUNCTION_IF_EXISTS(oldfunc, newfunc)               \
+  do { __asan_mach_override_ptr_custom((void*)(oldfunc),            \
+                                       (void*)(newfunc),            \
+                                       (void**)&real_##oldfunc,     \
+                                       __asan_allocate_island,      \
+                                       __asan_deallocate_island);   \
+  } while (0)
 
 #define INTERCEPT_FUNCTION(func)                                        \
   OVERRIDE_FUNCTION(func, WRAP(func))
