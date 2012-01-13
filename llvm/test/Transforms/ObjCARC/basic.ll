@@ -786,7 +786,7 @@ C:
 @__block_holder_tmp_1 = external constant %block1
 define void @test23() {
 entry:
-  %0 = call i8* @objc_retainBlock(i8* bitcast (%block1* @__block_holder_tmp_1 to i8*)) nounwind
+  %0 = call i8* @objc_retainBlock(i8* bitcast (%block1* @__block_holder_tmp_1 to i8*)) nounwind, !clang.arc.copy_on_escape !0
   call void @bar(i32 ()* bitcast (%block1* @__block_holder_tmp_1 to i32 ()*))
   call void @bar(i32 ()* bitcast (%block1* @__block_holder_tmp_1 to i32 ()*))
   call void @objc_release(i8* bitcast (%block1* @__block_holder_tmp_1 to i8*)) nounwind
@@ -801,10 +801,25 @@ entry:
 ; CHECK: }
 define void @test23b(i8* %p) {
 entry:
-  %0 = call i8* @objc_retainBlock(i8* %p) nounwind
+  %0 = call i8* @objc_retainBlock(i8* %p) nounwind, !clang.arc.copy_on_escape !0
   call void @callee()
   call void @use_pointer(i8* %p)
   call void @objc_release(i8* %p) nounwind
+  ret void
+}
+
+; Don't optimize objc_retainBlock, because there's no copy_on_escape metadata.
+
+; CHECK: define void @test23c(
+; CHECK: @objc_retainBlock
+; CHECK: @objc_release
+; CHECK: }
+define void @test23c() {
+entry:
+  %0 = call i8* @objc_retainBlock(i8* bitcast (%block1* @__block_holder_tmp_1 to i8*)) nounwind
+  call void @bar(i32 ()* bitcast (%block1* @__block_holder_tmp_1 to i32 ()*))
+  call void @bar(i32 ()* bitcast (%block1* @__block_holder_tmp_1 to i32 ()*))
+  call void @objc_release(i8* bitcast (%block1* @__block_holder_tmp_1 to i8*)) nounwind
   ret void
 }
 

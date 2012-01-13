@@ -601,6 +601,36 @@ static bool ModuleHasARC(const Module &M) {
     M.getNamedValue("objc_unretainedPointer");
 }
 
+/// DoesObjCBlockEscape - Test whether the given pointer, which is an
+/// Objective C block pointer, does not "escape". This differs from regular
+/// escape analysis in that a use as an argument to a call is not considered
+/// an escape.
+static bool DoesObjCBlockEscape(const Value *BlockPtr) {
+  // Walk the def-use chains.
+  SmallVector<const Value *, 4> Worklist;
+  Worklist.push_back(BlockPtr);
+  do {
+    const Value *V = Worklist.pop_back_val();
+    for (Value::const_use_iterator UI = V->use_begin(), UE = V->use_end();
+         UI != UE; ++UI) {
+      const User *UUser = *UI;
+      // Special - Use by a call (callee or argument) is not considered
+      // to be an escape.
+      if (ImmutableCallSite CS = cast<Value>(UUser))
+        continue;
+      if (isa<BitCastInst>(UUser) || isa<GetElementPtrInst>(UUser) ||
+          isa<PHINode>(UUser) || isa<SelectInst>(UUser)) {
+        Worklist.push_back(UUser);
+        continue;
+      }
+      return true;
+    }
+  } while (!Worklist.empty());
+
+  // No escapes found.
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // ARC AliasAnalysis.
 //===----------------------------------------------------------------------===//
@@ -1159,10 +1189,6 @@ namespace {
     /// opposed to objc_retain calls).
     bool IsRetainBlock;
 
-    /// CopyOnEscape - True if this the Calls are objc_retainBlock calls
-    /// which all have the !clang.arc.copy_on_escape metadata.
-    bool CopyOnEscape;
-
     /// IsTailCallRelease - True of the objc_release calls are all marked
     /// with the "tail" keyword.
     bool IsTailCallRelease;
@@ -1186,7 +1212,7 @@ namespace {
     SmallPtrSet<Instruction *, 2> ReverseInsertPts;
 
     RRInfo() :
-      KnownSafe(false), IsRetainBlock(false), CopyOnEscape(false),
+      KnownSafe(false), IsRetainBlock(false),
       IsTailCallRelease(false), Partial(false),
       ReleaseMetadata(0) {}
 
@@ -1197,7 +1223,6 @@ namespace {
 void RRInfo::clear() {
   KnownSafe = false;
   IsRetainBlock = false;
-  CopyOnEscape = false;
   IsTailCallRelease = false;
   Partial = false;
   ReleaseMetadata = 0;
@@ -1295,7 +1320,6 @@ PtrState::Merge(const PtrState &Other, bool TopDown) {
     if (RRI.ReleaseMetadata != Other.RRI.ReleaseMetadata)
       RRI.ReleaseMetadata = 0;
 
-    RRI.CopyOnEscape = RRI.CopyOnEscape && Other.RRI.CopyOnEscape;
     RRI.KnownSafe = RRI.KnownSafe && Other.RRI.KnownSafe;
     RRI.IsTailCallRelease = RRI.IsTailCallRelease && Other.RRI.IsTailCallRelease;
     RRI.Calls.insert(Other.RRI.Calls.begin(), Other.RRI.Calls.end());
@@ -1495,6 +1519,8 @@ namespace {
     Constant *getRetainBlockCallee(Module *M);
     Constant *getAutoreleaseCallee(Module *M);
 
+    bool IsRetainBlockOptimizable(const Instruction *Inst);
+
     void OptimizeRetainCall(Function &F, Instruction *Retain);
     bool OptimizeRetainRVCall(Function &F, Instruction *RetainRV);
     void OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV);
@@ -1560,6 +1586,22 @@ void ObjCARCOpt::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<AliasAnalysis>();
   // ARC optimization doesn't currently split critical edges.
   AU.setPreservesCFG();
+}
+
+bool ObjCARCOpt::IsRetainBlockOptimizable(const Instruction *Inst) {
+  // Without the magic metadata tag, we have to assume this might be an
+  // objc_retainBlock call inserted to convert a block pointer to an id,
+  // in which case it really is needed.
+  if (!Inst->getMetadata(CopyOnEscapeMDKind))
+    return false;
+
+  // If the pointer "escapes" (not including being used in a call),
+  // the copy may be needed.
+  if (DoesObjCBlockEscape(Inst))
+    return false;
+
+  // Otherwise, it's not needed.
+  return true;
 }
 
 Constant *ObjCARCOpt::getRetainRVCallee(Module *M) {
@@ -2362,6 +2404,11 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
       break;
     }
     case IC_RetainBlock:
+      // An objc_retainBlock call with just a use may need to be kept,
+      // because it may be copying a block from the stack to the heap.
+      if (!IsRetainBlockOptimizable(Inst))
+        break;
+      // FALLTHROUGH
     case IC_Retain:
     case IC_RetainRV: {
       Arg = GetObjCArg(Inst);
@@ -2370,14 +2417,6 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
       S.DecrementRefCount();
       S.SetAtLeastOneRefCount();
       S.DecrementNestCount();
-
-      // An non-copy-on-escape objc_retainBlock call with just a use still
-      // needs to be kept, because it may be copying a block from the stack
-      // to the heap.
-      if (Class == IC_RetainBlock &&
-          !Inst->getMetadata(CopyOnEscapeMDKind) &&
-          S.GetSeq() == S_Use)
-        S.SetSeq(S_CanRelease);
 
       switch (S.GetSeq()) {
       case S_Stop:
@@ -2391,8 +2430,6 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
         // better to let it remain as the first instruction after a call.
         if (Class != IC_RetainRV) {
           S.RRI.IsRetainBlock = Class == IC_RetainBlock;
-          if (S.RRI.IsRetainBlock)
-            S.RRI.CopyOnEscape = !!Inst->getMetadata(CopyOnEscapeMDKind);
           Retains[Inst] = S.RRI;
         }
         S.ClearSequenceProgress();
@@ -2519,6 +2556,11 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
 
     switch (Class) {
     case IC_RetainBlock:
+      // An objc_retainBlock call with just a use may need to be kept,
+      // because it may be copying a block from the stack to the heap.
+      if (!IsRetainBlockOptimizable(Inst))
+        break;
+      // FALLTHROUGH
     case IC_Retain:
     case IC_RetainRV: {
       Arg = GetObjCArg(Inst);
@@ -2541,8 +2583,6 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
         S.SetSeq(S_Retain);
         S.RRI.clear();
         S.RRI.IsRetainBlock = Class == IC_RetainBlock;
-        if (S.RRI.IsRetainBlock)
-          S.RRI.CopyOnEscape = !!Inst->getMetadata(CopyOnEscapeMDKind);
         // Don't check S.IsKnownIncremented() here because it's not
         // sufficient.
         S.RRI.KnownSafe = S.IsKnownNested();
@@ -2634,17 +2674,6 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
           S.SetSeq(S_Use);
         break;
       case S_Retain:
-        // A non-copy-on-scape objc_retainBlock call may be responsible for
-        // copying the block data from the stack to the heap. Model this by
-        // moving it straight from S_Retain to S_Use.
-        if (S.RRI.IsRetainBlock &&
-            !S.RRI.CopyOnEscape &&
-            CanUse(Inst, Ptr, PA, Class)) {
-          assert(S.RRI.ReverseInsertPts.empty());
-          S.RRI.ReverseInsertPts.insert(Inst);
-          S.SetSeq(S_Use);
-        }
-        break;
       case S_Use:
       case S_None:
         break;
@@ -2787,10 +2816,10 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
                          getRetainBlockCallee(M) : getRetainCallee(M),
                        MyArg, "", InsertPt);
     Call->setDoesNotThrow();
-    if (RetainsToMove.CopyOnEscape)
+    if (RetainsToMove.IsRetainBlock)
       Call->setMetadata(CopyOnEscapeMDKind,
                         MDNode::get(M->getContext(), ArrayRef<Value *>()));
-    if (!RetainsToMove.IsRetainBlock)
+    else
       Call->setTailCall();
   }
   for (SmallPtrSet<Instruction *, 2>::const_iterator
@@ -2864,18 +2893,11 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
     Instruction *Retain = cast<Instruction>(V);
     Value *Arg = GetObjCArg(Retain);
 
-    // If the object being released is in static storage, we know it's
+    // If the object being released is in static or stack storage, we know it's
     // not being managed by ObjC reference counting, so we can delete pairs
     // regardless of what possible decrements or uses lie between them.
-    bool KnownSafe = isa<Constant>(Arg);
+    bool KnownSafe = isa<Constant>(Arg) || isa<AllocaInst>(Arg);
    
-    // Same for stack storage, unless this is a non-copy-on-escape
-    // objc_retainBlock call, which is responsible for copying the block data
-    // from the stack to the heap.
-    if ((!I->second.IsRetainBlock || I->second.CopyOnEscape) &&
-        isa<AllocaInst>(Arg))
-      KnownSafe = true;
-
     // A constant pointer can't be pointing to an object on the heap. It may
     // be reference-counted, but it won't be deleted.
     if (const LoadInst *LI = dyn_cast<LoadInst>(Arg))
@@ -2983,16 +3005,12 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
             // Merge the IsRetainBlock values.
             if (FirstRetain) {
               RetainsToMove.IsRetainBlock = NewReleaseRetainRRI.IsRetainBlock;
-              RetainsToMove.CopyOnEscape = NewReleaseRetainRRI.CopyOnEscape;
               FirstRetain = false;
             } else if (ReleasesToMove.IsRetainBlock !=
                        NewReleaseRetainRRI.IsRetainBlock)
               // It's not possible to merge the sequences if one uses
               // objc_retain and the other uses objc_retainBlock.
               goto next_retain;
-
-            // Merge the CopyOnEscape values.
-            RetainsToMove.CopyOnEscape &= NewReleaseRetainRRI.CopyOnEscape;
 
             // Collect the optimal insertion points.
             if (!KnownSafe)
