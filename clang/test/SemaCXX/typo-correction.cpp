@@ -41,6 +41,8 @@ struct Derived : public BaseType { // expected-note {{base class 'BaseType' spec
   Derived() : basetype() {} // expected-error{{initializer 'basetype' does not name a non-static data member or base class; did you mean the base class 'BaseType'?}}
 };
 
+// Test the improvement from passing a callback object to CorrectTypo in
+// the helper function LookupMemberExprInRecord.
 int get_type(struct Derived *st) {
   return st->Base_Type; // expected-error{{no member named 'Base_Type' in 'Derived'; did you mean 'base_type'?}}
 }
@@ -64,10 +66,17 @@ struct st {
 };
 st var = { .fielda = 0.0 }; // expected-error{{field designator 'fielda' does not refer to any field in type 'st'; did you mean 'FieldA'?}}
 
-// Test the improvement from passing a  callback object to CorrectTypo in
+// Test the improvement from passing a callback object to CorrectTypo in
 // Sema::BuildCXXNestedNameSpecifier.
 typedef char* another_str;
 namespace AnotherStd { // expected-note{{'AnotherStd' declared here}}
   class string {};
 }
 another_std::string str; // expected-error{{use of undeclared identifier 'another_std'; did you mean 'AnotherStd'?}}
+
+// Test the improvement from passing a callback object to CorrectTypo in
+// Sema::ActOnSizeofParameterPackExpr.
+char* TireNames;
+template<typename ...TypeNames> struct count { // expected-note{{parameter pack 'TypeNames' declared here}}
+  static const unsigned value = sizeof...(TyreNames); // expected-error{{'TyreNames' does not refer to the name of a parameter pack; did you mean 'TypeNames'?}}
+};

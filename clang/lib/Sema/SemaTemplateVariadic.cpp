@@ -708,6 +708,19 @@ bool Sema::containsUnexpandedParameterPacks(Declarator &D) {
   return false;
 }
 
+namespace {
+
+// Callback to only accept typo corrections that refer to parameter packs.
+class ParameterPackValidatorCCC : public CorrectionCandidateCallback {
+ public:
+  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+    NamedDecl *ND = candidate.getCorrectionDecl();
+    return ND && ND->isParameterPack();
+  }
+};
+
+}
+
 /// \brief Called when an expression computing the size of a parameter pack
 /// is parsed.
 ///
@@ -733,6 +746,7 @@ ExprResult Sema::ActOnSizeofParameterPackExpr(Scope *S,
   LookupName(R, S);
   
   NamedDecl *ParameterPack = 0;
+  ParameterPackValidatorCCC Validator;
   switch (R.getResultKind()) {
   case LookupResult::Found:
     ParameterPack = R.getFoundDecl();
@@ -741,19 +755,16 @@ ExprResult Sema::ActOnSizeofParameterPackExpr(Scope *S,
   case LookupResult::NotFound:
   case LookupResult::NotFoundInCurrentInstantiation:
     if (TypoCorrection Corrected = CorrectTypo(R.getLookupNameInfo(),
-                                               R.getLookupKind(), S, 0, 0,
-                                               false, CTC_NoKeywords)) {
-      if (NamedDecl *CorrectedResult = Corrected.getCorrectionDecl())
-        if (CorrectedResult->isParameterPack()) {
-          std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOptions()));
-          ParameterPack = CorrectedResult;
-          Diag(NameLoc, diag::err_sizeof_pack_no_pack_name_suggest)
-            << &Name << CorrectedQuotedStr
-            << FixItHint::CreateReplacement(
-                NameLoc, Corrected.getAsString(getLangOptions()));
-          Diag(ParameterPack->getLocation(), diag::note_parameter_pack_here)
-            << CorrectedQuotedStr;
-        }
+                                               R.getLookupKind(), S, 0,
+                                               &Validator)) {
+      std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOptions()));
+      ParameterPack = Corrected.getCorrectionDecl();
+      Diag(NameLoc, diag::err_sizeof_pack_no_pack_name_suggest)
+        << &Name << CorrectedQuotedStr
+        << FixItHint::CreateReplacement(
+            NameLoc, Corrected.getAsString(getLangOptions()));
+      Diag(ParameterPack->getLocation(), diag::note_parameter_pack_here)
+        << CorrectedQuotedStr;
     }
       
   case LookupResult::FoundOverloaded:

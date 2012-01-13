@@ -301,10 +301,15 @@ void Sema::LookupTemplateName(LookupResult &Found,
     // If we did not find any names, attempt to correct any typos.
     DeclarationName Name = Found.getLookupName();
     Found.clear();
+    // Simple filter callback that, for keywords, only accepts the C++ *_cast
+    CorrectionCandidateCallback FilterCCC;
+    FilterCCC.WantTypeSpecifiers = false;
+    FilterCCC.WantExpressionKeywords = false;
+    FilterCCC.WantRemainingKeywords = false;
+    FilterCCC.WantCXXNamedCasts = true;
     if (TypoCorrection Corrected = CorrectTypo(Found.getLookupNameInfo(),
                                                Found.getLookupKind(), S, &SS,
-                                               LookupCtx, false,
-                                               CTC_CXXCasts)) {
+                                               &FilterCCC, LookupCtx)) {
       Found.setLookupName(Corrected.getCorrection());
       if (Corrected.getCorrectionDecl())
         Found.addDecl(Corrected.getCorrectionDecl());
