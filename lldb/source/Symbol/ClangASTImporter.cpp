@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
@@ -93,11 +94,15 @@ ClangASTImporter::DeportType (clang::ASTContext *dst_ctx,
         {
             MinionSP minion_sp (GetMinion (dst_ctx, src_ctx));
 
-            minion_sp->ImportDefinition(tag_decl);
+            minion_sp->ImportDefinitionTo(result_tag_decl, tag_decl);
             
             ASTContextMetadataSP to_context_md = GetContextMetadata(dst_ctx);
             
-            to_context_md->m_origins.erase(result_tag_decl);
+            OriginMap::iterator oi = to_context_md->m_origins.find(result_tag_decl);
+            
+            if (oi != to_context_md->m_origins.end() &&
+                oi->second.ctx == src_ctx)
+                to_context_md->m_origins.erase(oi);
         }
     }
     
@@ -119,11 +124,15 @@ ClangASTImporter::DeportDecl (clang::ASTContext *dst_ctx,
     MinionSP minion_sp (GetMinion (dst_ctx, src_ctx));
     
     if (minion_sp && isa<TagDecl>(decl))
-        minion_sp->ImportDefinition(decl);
+        minion_sp->ImportDefinitionTo(result, decl);
     
     ASTContextMetadataSP to_context_md = GetContextMetadata(dst_ctx);
 
-    to_context_md->m_origins.erase(result);
+    OriginMap::iterator oi = to_context_md->m_origins.find(decl);
+    
+    if (oi != to_context_md->m_origins.end() &&
+        oi->second.ctx == src_ctx)
+        to_context_md->m_origins.erase(oi);
     
     return result;
 }
@@ -142,8 +151,8 @@ ClangASTImporter::CompleteTagDecl (clang::TagDecl *decl)
     MinionSP minion_sp (GetMinion(&decl->getASTContext(), decl_origin.ctx));
     
     if (minion_sp)
-        minion_sp->ImportDefinition(decl_origin.decl);
-    
+        minion_sp->ImportDefinitionTo(decl, decl_origin.decl);
+        
     return true;
 }
 
@@ -158,8 +167,8 @@ ClangASTImporter::CompleteTagDeclWithOrigin(clang::TagDecl *decl, clang::TagDecl
     MinionSP minion_sp (GetMinion(&decl->getASTContext(), origin_ast_ctx));
     
     if (minion_sp)
-        minion_sp->ImportDefinition(origin_decl);
-    
+        minion_sp->ImportDefinitionTo(decl, origin_decl);
+        
     ASTContextMetadataSP context_md = GetContextMetadata(&decl->getASTContext());
 
     OriginMap &origins = context_md->m_origins;
@@ -185,8 +194,8 @@ ClangASTImporter::CompleteObjCInterfaceDecl (clang::ObjCInterfaceDecl *interface
     MinionSP minion_sp (GetMinion(&interface_decl->getASTContext(), decl_origin.ctx));
     
     if (minion_sp)
-        minion_sp->ImportDefinition(decl_origin.decl);
-    
+        minion_sp->ImportDefinitionTo(interface_decl, decl_origin.decl);
+        
     return true;
 }
 
@@ -258,6 +267,11 @@ ClangASTImporter::BuildNamespaceMap(const clang::NamespaceDecl *decl)
 void 
 ClangASTImporter::ForgetDestination (clang::ASTContext *dst_ast)
 {
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    if (log)
+        log->Printf("    [ClangASTImporter] Forgetting destination (ASTContext*)%p", dst_ast); 
+
     m_metadata_map.erase(dst_ast);
 }
 
@@ -265,6 +279,11 @@ void
 ClangASTImporter::ForgetSource (clang::ASTContext *dst_ast, clang::ASTContext *src_ast)
 {
     ASTContextMetadataSP md = MaybeGetContextMetadata (dst_ast);
+    
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    if (log)
+        log->Printf("    [ClangASTImporter] Forgetting source->dest (ASTContext*)%p->(ASTContext*)%p", src_ast, dst_ast); 
     
     if (!md)
         return;
@@ -317,6 +336,14 @@ ClangASTImporter::BuildObjCInterfaceMap (const clang::ObjCInterfaceDecl *decl)
     }
     
     context_md->m_objc_interface_maps[decl] = new_map;
+}
+
+void
+ClangASTImporter::Minion::ImportDefinitionTo (clang::Decl *to, clang::Decl *from)
+{
+    ASTImporter::Imported(from, to);
+    
+    ImportDefinition(from);
 }
 
 clang::Decl 
