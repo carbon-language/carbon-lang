@@ -3096,7 +3096,7 @@ def t2CLREX : T2I<(outs), (ins), NoItinerary, "clrex", "", []>,
 //   $val is a scratch register for our use.
 let Defs =
   [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR, CPSR,
-    QQQQ0, QQQQ1, QQQQ2, QQQQ3 ],
+    Q0, Q1, Q2, Q3, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15],
   hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1,
   usesCustomInserter = 1 in {
   def t2Int_eh_sjlj_setjmp : Thumb2XI<(outs), (ins tGPR:$src, tGPR:$val),
@@ -3216,7 +3216,8 @@ def t2Bcc : T2I<(outs), (ins brtarget:$target), IIC_Br,
 // it goes here.
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   // IOS version.
-  let Defs = [R0, R1, R2, R3, R9, R12, QQQQ0, QQQQ2, QQQQ3, PC],
+  let Defs = [R0, R1, R2, R3, R9, R12, PC,
+              Q0, Q1, Q2, Q3, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15],
       Uses = [SP] in
   def tTAILJMPd: tPseudoExpand<(outs),
                    (ins uncondbrtarget:$dst, pred:$p, variable_ops),

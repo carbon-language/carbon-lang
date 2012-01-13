@@ -1900,7 +1900,9 @@ let isCall = 1,
   // FIXME:  Do we really need a non-predicated version? If so, it should
   // at least be a pseudo instruction expanding to the predicated version
   // at MC lowering time.
-  Defs = [R0,  R1,  R2,  R3,  R12, LR, QQQQ0, QQQQ2, QQQQ3, CPSR, FPSCR],
+  Defs = [R0,  R1,  R2,  R3,  R12, LR,
+          Q0, Q1, Q2, Q3, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15,
+          CPSR, FPSCR],
   Uses = [SP] in {
   def BL  : ABXI<0b1011, (outs), (ins bl_target:$func, variable_ops),
                 IIC_Br, "bl\t$func",
@@ -1956,7 +1958,9 @@ let isCall = 1,
   // On IOS R9 is call-clobbered.
   // R7 is marked as a use to prevent frame-pointer assignments from being
   // moved above / below calls.
-  Defs = [R0,  R1,  R2,  R3,  R9,  R12, LR, QQQQ0, QQQQ2, QQQQ3, CPSR, FPSCR],
+  Defs = [R0,  R1,  R2,  R3,  R9,  R12, LR,
+          Q0, Q1, Q2, Q3, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15,
+          CPSR, FPSCR],
   Uses = [R7, SP] in {
   def BLr9  : ARMPseudoExpand<(outs), (ins bl_target:$func, variable_ops),
                 4, IIC_Br,
@@ -2061,7 +2065,8 @@ def BXJ : ABI<0b0001, (outs), (ins GPR:$func), NoItinerary, "bxj", "\t$func",
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   // IOS versions.
-  let Defs = [R0, R1, R2, R3, R9, R12, QQQQ0, QQQQ2, QQQQ3, PC],
+  let Defs = [R0, R1, R2, R3, R9, R12,
+              Q0, Q1, Q2, Q3, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15, PC],
       Uses = [SP] in {
     def TCRETURNdi : PseudoInst<(outs), (ins i32imm:$dst, variable_ops),
                        IIC_Br, []>, Requires<[IsIOS]>;
@@ -2082,7 +2087,8 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   }
 
   // Non-IOS versions (the difference is R9).
-  let Defs = [R0, R1, R2, R3, R12, QQQQ0, QQQQ2, QQQQ3, PC],
+  let Defs = [R0, R1, R2, R3, R12,
+              Q0, Q1, Q2, Q3, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15, PC],
       Uses = [SP] in {
     def TCRETURNdiND : PseudoInst<(outs), (ins i32imm:$dst, variable_ops),
                        IIC_Br, []>, Requires<[IsNotIOS]>;
@@ -4711,8 +4717,8 @@ let isCall = 1,
 // no encoding information is necessary.
 let Defs =
   [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR, CPSR,
-    QQQQ0, QQQQ1, QQQQ2, QQQQ3 ], hasSideEffects = 1, isBarrier = 1,
-  usesCustomInserter = 1 in {
+    Q0, Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15 ],
+  hasSideEffects = 1, isBarrier = 1, usesCustomInserter = 1 in {
   def Int_eh_sjlj_setjmp : PseudoInst<(outs), (ins GPR:$src, GPR:$val),
                                NoItinerary,
                          [(set R0, (ARMeh_sjlj_setjmp GPR:$src, GPR:$val))]>,
@@ -4743,7 +4749,8 @@ def Int_eh_sjlj_longjmp : PseudoInst<(outs), (ins GPR:$src, GPR:$scratch),
 // that need the instruction size).
 let Defs =
   [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR, CPSR,
-    QQQQ0, QQQQ1, QQQQ2, QQQQ3 ], isBarrier = 1 in
+    Q0, Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15 ],
+  isBarrier = 1 in
 def Int_eh_sjlj_dispatchsetup : PseudoInst<(outs), (ins), NoItinerary, []>;
 
 let Defs =

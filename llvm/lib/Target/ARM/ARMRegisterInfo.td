@@ -150,36 +150,6 @@ def Q14 : ARMReg<14, "q14", [D28, D29]>;
 def Q15 : ARMReg<15, "q15", [D30, D31]>;
 }
 
-// Pseudo 256-bit registers to represent pairs of Q registers. These should
-// never be present in the emitted code.
-// These are used for NEON load / store instructions, e.g., vld4, vst3.
-// NOTE: It's possible to define more QQ registers since technically the
-// starting D register number doesn't have to be multiple of 4, e.g.,
-// D1, D2, D3, D4 would be a legal quad, but that would make the subregister
-// stuff very messy.
-let SubRegIndices = [qsub_0, qsub_1],
- CompositeIndices = [(dsub_2 qsub_1, dsub_0), (dsub_3 qsub_1, dsub_1)] in {
-def QQ0 : ARMReg<0, "qq0", [Q0,  Q1]>;
-def QQ1 : ARMReg<1, "qq1", [Q2,  Q3]>;
-def QQ2 : ARMReg<2, "qq2", [Q4,  Q5]>;
-def QQ3 : ARMReg<3, "qq3", [Q6,  Q7]>;
-def QQ4 : ARMReg<4, "qq4", [Q8,  Q9]>;
-def QQ5 : ARMReg<5, "qq5", [Q10, Q11]>;
-def QQ6 : ARMReg<6, "qq6", [Q12, Q13]>;
-def QQ7 : ARMReg<7, "qq7", [Q14, Q15]>;
-}
-
-// Pseudo 512-bit registers to represent four consecutive Q registers.
-let SubRegIndices = [qqsub_0, qqsub_1],
- CompositeIndices = [(qsub_2  qqsub_1, qsub_0), (qsub_3  qqsub_1, qsub_1),
-                     (dsub_4  qqsub_1, dsub_0), (dsub_5  qqsub_1, dsub_1),
-                     (dsub_6  qqsub_1, dsub_2), (dsub_7  qqsub_1, dsub_3)] in {
-def QQQQ0 : ARMReg<0, "qqqq0", [QQ0, QQ1]>;
-def QQQQ1 : ARMReg<1, "qqqq1", [QQ2, QQ3]>;
-def QQQQ2 : ARMReg<2, "qqqq2", [QQ4, QQ5]>;
-def QQQQ3 : ARMReg<3, "qqqq3", [QQ6, QQ7]>;
-}
-
 // Current Program Status Register.
 def CPSR    : ARMReg<0, "cpsr">;
 def APSR    : ARMReg<1, "apsr">;
@@ -316,9 +286,22 @@ def QPR_8 : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
                        (DPR_8 dsub_0, dsub_1)];
 }
 
+// Pseudo 256-bit registers to represent pairs of Q registers. These should
+// never be present in the emitted code.
+// These are used for NEON load / store instructions, e.g., vld4, vst3.
+// NOTE: It's possible to define more QQ registers since technically the
+// starting D register number doesn't have to be multiple of 4, e.g.,
+// D1, D2, D3, D4 would be a legal quad, but that would make the subregister
+// stuff very messy.
+def Tuples2Q : RegisterTuples<[qsub_0, qsub_1],
+                              [(decimate QPR, 2),
+                               (decimate (shl QPR, 1), 2)]> {
+ let CompositeIndices = [(dsub_2 qsub_1, dsub_0), (dsub_3 qsub_1, dsub_1)];
+}
+
 // Pseudo 256-bit vector register class to model pairs of Q registers
 // (4 consecutive D registers).
-def QQPR : RegisterClass<"ARM", [v4i64], 256, (sequence "QQ%u", 0, 7)> {
+def QQPR : RegisterClass<"ARM", [v4i64], 256, (add Tuples2Q)> {
   let SubRegClasses = [(DPR dsub_0, dsub_1, dsub_2, dsub_3),
                        (QPR qsub_0, qsub_1)];
   // Allocate non-VFP2 aliases first.
@@ -326,9 +309,18 @@ def QQPR : RegisterClass<"ARM", [v4i64], 256, (sequence "QQ%u", 0, 7)> {
   let AltOrderSelect = [{ return 1; }];
 }
 
+// Pseudo 512-bit registers to represent four consecutive Q registers.
+def Tuples2QQ : RegisterTuples<[qqsub_0, qqsub_1],
+                               [(decimate QQPR, 2),
+                                (decimate (shl QQPR, 1), 2)]> {
+ let CompositeIndices = [(qsub_2  qqsub_1, qsub_0), (qsub_3  qqsub_1, qsub_1),
+                         (dsub_4  qqsub_1, dsub_0), (dsub_5  qqsub_1, dsub_1),
+                         (dsub_6  qqsub_1, dsub_2), (dsub_7  qqsub_1, dsub_3)];
+}
+
 // Pseudo 512-bit vector register class to model 4 consecutive Q registers
 // (8 consecutive D registers).
-def QQQQPR : RegisterClass<"ARM", [v8i64], 256, (sequence "QQQQ%u", 0, 3)> {
+def QQQQPR : RegisterClass<"ARM", [v8i64], 256, (add Tuples2QQ)> {
   let SubRegClasses = [(DPR dsub_0, dsub_1, dsub_2, dsub_3,
                             dsub_4, dsub_5, dsub_6, dsub_7),
                        (QPR qsub_0, qsub_1, qsub_2, qsub_3)];
