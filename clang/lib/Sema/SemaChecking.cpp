@@ -480,88 +480,15 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
                           TheCall->getCallee()->getLocStart());
   }
 
-  // Builtin handling
-  int CMF = -1;
-  switch (FDecl->getBuiltinID()) {
-  case Builtin::BI__builtin_memset:
-  case Builtin::BI__builtin___memset_chk:
-  case Builtin::BImemset:
-    CMF = CMF_Memset;
-    break;
-    
-  case Builtin::BI__builtin_memcpy:
-  case Builtin::BI__builtin___memcpy_chk:
-  case Builtin::BImemcpy:
-    CMF = CMF_Memcpy;
-    break;
-    
-  case Builtin::BI__builtin_memmove:
-  case Builtin::BI__builtin___memmove_chk:
-  case Builtin::BImemmove:
-    CMF = CMF_Memmove;
-    break;
+  FunctionDecl::MemoryFunctionKind CMF = FDecl->getMemoryFunctionKind();
+  if (CMF == FunctionDecl::MFK_Invalid)
+    return false;
 
-  case Builtin::BIstrlcpy:
-  case Builtin::BIstrlcat:
+  // Handle memory setting and copying functions.
+  if (CMF == FunctionDecl::MFK_Strlcpy || CMF == FunctionDecl::MFK_Strlcat)
     CheckStrlcpycatArguments(TheCall, FnInfo);
-    break;
-    
-  case Builtin::BI__builtin_memcmp:
-    CMF = CMF_Memcmp;
-    break;
-    
-  case Builtin::BI__builtin_strncpy:
-  case Builtin::BI__builtin___strncpy_chk:
-  case Builtin::BIstrncpy:
-    CMF = CMF_Strncpy;
-    break;
-
-  case Builtin::BI__builtin_strncmp:
-    CMF = CMF_Strncmp;
-    break;
-
-  case Builtin::BI__builtin_strncasecmp:
-    CMF = CMF_Strncasecmp;
-    break;
-
-  case Builtin::BI__builtin_strncat:
-  case Builtin::BIstrncat:
-    CMF = CMF_Strncat;
-    break;
-
-  case Builtin::BI__builtin_strndup:
-  case Builtin::BIstrndup:
-    CMF = CMF_Strndup;
-    break;
-
-  default:
-    if (FDecl->getLinkage() == ExternalLinkage &&
-        (!getLangOptions().CPlusPlus || FDecl->isExternC())) {
-      if (FnInfo->isStr("memset"))
-        CMF = CMF_Memset;
-      else if (FnInfo->isStr("memcpy"))
-        CMF = CMF_Memcpy;
-      else if (FnInfo->isStr("memmove"))
-        CMF = CMF_Memmove;
-      else if (FnInfo->isStr("memcmp"))
-        CMF = CMF_Memcmp;
-      else if (FnInfo->isStr("strncpy"))
-        CMF = CMF_Strncpy;
-      else if (FnInfo->isStr("strncmp"))
-        CMF = CMF_Strncmp;
-      else if (FnInfo->isStr("strncasecmp"))
-        CMF = CMF_Strncasecmp;
-      else if (FnInfo->isStr("strncat"))
-        CMF = CMF_Strncat;
-      else if (FnInfo->isStr("strndup"))
-        CMF = CMF_Strndup;
-    }
-    break;
-  }
-   
-  // Memset/memcpy/memmove handling
-  if (CMF != -1)
-    CheckMemaccessArguments(TheCall, CheckedMemoryFunction(CMF), FnInfo);
+  else
+    CheckMemaccessArguments(TheCall, CMF, FnInfo);
 
   return false;
 }
@@ -2500,16 +2427,17 @@ static QualType getSizeOfArgType(const Expr* E) {
 ///
 /// \param Call The call expression to diagnose.
 void Sema::CheckMemaccessArguments(const CallExpr *Call,
-                                   CheckedMemoryFunction CMF,
+                                   FunctionDecl::MemoryFunctionKind CMF,
                                    IdentifierInfo *FnName) {
   // It is possible to have a non-standard definition of memset.  Validate
   // we have enough arguments, and if not, abort further checking.
-  unsigned ExpectedNumArgs = (CMF == CMF_Strndup ? 2 : 3);
+  unsigned ExpectedNumArgs = (CMF == FunctionDecl::MFK_Strndup ? 2 : 3);
   if (Call->getNumArgs() < ExpectedNumArgs)
     return;
 
-  unsigned LastArg = (CMF == CMF_Memset || CMF == CMF_Strndup ? 1 : 2);
-  unsigned LenArg = (CMF == CMF_Strndup ? 1 : 2);
+  unsigned LastArg = (CMF == FunctionDecl::MFK_Memset ||
+                      CMF == FunctionDecl::MFK_Strndup ? 1 : 2);
+  unsigned LenArg = (CMF == FunctionDecl::MFK_Strndup ? 1 : 2);
   const Expr *LenExpr = Call->getArg(LenArg)->IgnoreParenImpCasts();
 
   // We have special checking when the length is a sizeof expression.
@@ -2553,7 +2481,8 @@ void Sema::CheckMemaccessArguments(const CallExpr *Call,
           if (Context.getTypeSize(PointeeTy) == Context.getCharWidth())
             ActionIdx = 2; // If the pointee's size is sizeof(char),
                            // suggest an explicit length.
-          unsigned DestSrcSelect = (CMF == CMF_Strndup ? 1 : ArgIdx);
+          unsigned DestSrcSelect =
+            (CMF == FunctionDecl::MFK_Strndup ? 1 : ArgIdx);
           DiagRuntimeBehavior(SizeOfArg->getExprLoc(), Dest,
                               PDiag(diag::warn_sizeof_pointer_expr_memaccess)
                                 << FnName << DestSrcSelect << ActionIdx
@@ -2583,12 +2512,15 @@ void Sema::CheckMemaccessArguments(const CallExpr *Call,
         DiagRuntimeBehavior(
           Dest->getExprLoc(), Dest,
           PDiag(diag::warn_dyn_class_memaccess)
-            << (CMF == CMF_Memcmp ? ArgIdx + 2 : ArgIdx) << FnName << PointeeTy
+            << (CMF == FunctionDecl::MFK_Memcmp ? ArgIdx + 2 : ArgIdx)
+            << FnName << PointeeTy
             // "overwritten" if we're warning about the destination for any call
             // but memcmp; otherwise a verb appropriate to the call.
-            << (ArgIdx == 0 && CMF != CMF_Memcmp ? 0 : (unsigned)CMF)
+            << (ArgIdx == 0 &&
+                CMF != FunctionDecl::MFK_Memcmp ? 0 : (unsigned)CMF)
             << Call->getCallee()->getSourceRange());
-      else if (PointeeTy.hasNonTrivialObjCLifetime() && CMF != CMF_Memset)
+      else if (PointeeTy.hasNonTrivialObjCLifetime() &&
+               CMF != FunctionDecl::MFK_Memset)
         DiagRuntimeBehavior(
           Dest->getExprLoc(), Dest,
           PDiag(diag::warn_arc_object_memaccess)

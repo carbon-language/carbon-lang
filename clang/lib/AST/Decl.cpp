@@ -2302,6 +2302,83 @@ SourceRange FunctionDecl::getSourceRange() const {
   return SourceRange(getOuterLocStart(), EndRangeLoc);
 }
 
+FunctionDecl::MemoryFunctionKind FunctionDecl::getMemoryFunctionKind() {
+  IdentifierInfo *FnInfo = getIdentifier();
+
+  if (!FnInfo)
+    return MFK_Invalid;
+    
+  // Builtin handling.
+  switch (getBuiltinID()) {
+  case Builtin::BI__builtin_memset:
+  case Builtin::BI__builtin___memset_chk:
+  case Builtin::BImemset:
+    return MFK_Memset;
+
+  case Builtin::BI__builtin_memcpy:
+  case Builtin::BI__builtin___memcpy_chk:
+  case Builtin::BImemcpy:
+    return MFK_Memcpy;
+
+  case Builtin::BI__builtin_memmove:
+  case Builtin::BI__builtin___memmove_chk:
+  case Builtin::BImemmove:
+    return MFK_Memmove;
+
+  case Builtin::BIstrlcpy:
+    return MFK_Strlcpy;
+  case Builtin::BIstrlcat:
+    return MFK_Strlcat;
+
+  case Builtin::BI__builtin_memcmp:
+    return MFK_Memcmp;
+
+  case Builtin::BI__builtin_strncpy:
+  case Builtin::BI__builtin___strncpy_chk:
+  case Builtin::BIstrncpy:
+    return MFK_Strncpy;
+
+  case Builtin::BI__builtin_strncmp:
+    return MFK_Strncmp;
+
+  case Builtin::BI__builtin_strncasecmp:
+    return MFK_Strncasecmp;
+
+  case Builtin::BI__builtin_strncat:
+  case Builtin::BIstrncat:
+    return MFK_Strncat;
+
+  case Builtin::BI__builtin_strndup:
+  case Builtin::BIstrndup:
+    return MFK_Strndup;
+
+  default:
+    if (getLinkage() == ExternalLinkage &&
+        (!getASTContext().getLangOptions().CPlusPlus || isExternC())) {
+      if (FnInfo->isStr("memset"))
+        return MFK_Memset;
+      else if (FnInfo->isStr("memcpy"))
+        return MFK_Memcpy;
+      else if (FnInfo->isStr("memmove"))
+        return MFK_Memmove;
+      else if (FnInfo->isStr("memcmp"))
+        return MFK_Memcmp;
+      else if (FnInfo->isStr("strncpy"))
+        return MFK_Strncpy;
+      else if (FnInfo->isStr("strncmp"))
+        return MFK_Strncmp;
+      else if (FnInfo->isStr("strncasecmp"))
+        return MFK_Strncasecmp;
+      else if (FnInfo->isStr("strncat"))
+        return MFK_Strncat;
+      else if (FnInfo->isStr("strndup"))
+        return MFK_Strndup;
+    }
+    break;
+  }
+  return MFK_Invalid;
+}
+
 //===----------------------------------------------------------------------===//
 // FieldDecl Implementation
 //===----------------------------------------------------------------------===//
