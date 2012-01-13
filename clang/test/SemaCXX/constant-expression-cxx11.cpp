@@ -998,4 +998,6 @@ namespace ComplexConstexpr {
   constexpr _Complex int test4 = {4};
   constexpr _Complex int test5 = 4;
   constexpr _Complex int test6 = {5,6};
+  typedef _Complex float fcomplex;
+  constexpr fcomplex test7 = fcomplex();
 }

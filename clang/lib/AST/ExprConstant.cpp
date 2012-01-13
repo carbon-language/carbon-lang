@@ -4914,7 +4914,7 @@ static bool EvaluateComplex(const Expr *E, ComplexValue &Result,
 }
 
 bool ComplexExprEvaluator::ZeroInitialization(const Expr *E) {
-  QualType ElemTy = cast<ComplexType>(E->getType())->getElementType();
+  QualType ElemTy = E->getType()->getAs<ComplexType>()->getElementType();
   if (ElemTy->isRealFloatingType()) {
     Result.makeComplexFloat();
     APFloat Zero = APFloat::getZero(Info.Ctx.getFloatTypeSemantics(ElemTy));
