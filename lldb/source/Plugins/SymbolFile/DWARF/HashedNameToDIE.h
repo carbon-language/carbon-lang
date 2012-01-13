@@ -85,7 +85,13 @@ struct DWARFMappedHash
             for (size_t i=0; i<count; ++i)
             {
                 const dw_tag_t die_tag = die_info_array[i].tag;
-                if (die_tag == 0 || tag == die_tag)
+                bool tag_matches = die_tag == 0 || tag == die_tag;
+                if (!tag_matches)
+                {
+                    if (die_tag == DW_TAG_class_type || die_tag == DW_TAG_structure_type)
+                        tag_matches = tag == DW_TAG_structure_type || tag == DW_TAG_class_type;
+                }
+                if (tag_matches)
                     die_offsets.push_back (die_info_array[i].offset);
             }
         }
