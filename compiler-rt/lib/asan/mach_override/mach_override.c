@@ -114,6 +114,14 @@ allocateBranchIsland(
 freeBranchIsland(
 		BranchIsland	*island ) __attribute__((visibility("hidden")));
 
+	mach_error_t
+defaultIslandMalloc(
+	  void **ptr, size_t unused_size, void *hint) __attribute__((visibility("hidden")));
+
+	mach_error_t
+defaultIslandFree(
+   	void *ptr) __attribute__((visibility("hidden")));
+
 #if defined(__ppc__) || defined(__POWERPC__)
 	mach_error_t
 setBranchIslandTarget(
@@ -175,11 +183,37 @@ mach_error_t makeIslandExecutable(void *address) {
 }
 #endif
 
+		mach_error_t
+defaultIslandMalloc(
+	void **ptr, size_t unused_size, void *hint) {
+  return allocateBranchIsland( (BranchIsland**)ptr, kAllocateHigh, hint );
+}
+		mach_error_t
+defaultIslandFree(
+	void *ptr) {
+	return freeBranchIsland(ptr);
+}
+
     mach_error_t
 __asan_mach_override_ptr(
 	void *originalFunctionAddress,
     const void *overrideFunctionAddress,
     void **originalFunctionReentryIsland )
+{
+  return __asan_mach_override_ptr_custom(originalFunctionAddress,
+		overrideFunctionAddress,
+		originalFunctionReentryIsland,
+		defaultIslandMalloc,
+		defaultIslandFree);
+}
+
+    mach_error_t
+__asan_mach_override_ptr_custom(
+	void *originalFunctionAddress,
+    const void *overrideFunctionAddress,
+    void **originalFunctionReentryIsland,
+		island_malloc *alloc,
+		island_free *dealloc)
 {
 	assert( originalFunctionAddress );
 	assert( overrideFunctionAddress );
@@ -276,10 +310,9 @@ __asan_mach_override_ptr(
 	
 	//	Allocate and target the escape island to the overriding function.
 	BranchIsland	*escapeIsland = NULL;
-	if( !err )	
-		err = allocateBranchIsland( &escapeIsland, kAllocateHigh, originalFunctionAddress );
-		if (err) fprintf(stderr, "err = %x %s:%d\n", err, __FILE__, __LINE__);
-
+	if( !err )
+		err = alloc( (void**)&escapeIsland, sizeof(BranchIsland), originalFunctionAddress );
+	if ( err ) fprintf(stderr, "err = %x %s:%d\n", err, __FILE__, __LINE__);
 	
 #if defined(__ppc__) || defined(__POWERPC__)
 	if( !err )
@@ -319,7 +352,7 @@ __asan_mach_override_ptr(
 	//  technically our original function.
 	BranchIsland	*reentryIsland = NULL;
 	if( !err && originalFunctionReentryIsland ) {
-		err = allocateBranchIsland( &reentryIsland, kAllocateHigh, escapeIsland);
+		err = alloc( (void**)&reentryIsland, sizeof(BranchIsland), escapeIsland);
 		if( !err )
 			*originalFunctionReentryIsland = reentryIsland;
 	}
@@ -383,9 +416,9 @@ __asan_mach_override_ptr(
 	//	Clean up on error.
 	if( err ) {
 		if( reentryIsland )
-			freeBranchIsland( reentryIsland );
+			dealloc( reentryIsland );
 		if( escapeIsland )
-			freeBranchIsland( escapeIsland );
+			dealloc( escapeIsland );
 	}
 
 #ifdef DEBUG_DISASM

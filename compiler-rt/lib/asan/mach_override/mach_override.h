@@ -85,6 +85,19 @@ __asan_mach_override_ptr(
     const void *overrideFunctionAddress,
     void **originalFunctionReentryIsland );
 
+// Allow to use custom allocation and deallocation routines with mach_override_ptr().
+// This should help to speed up the things on x86_64.
+typedef mach_error_t island_malloc( void **ptr, size_t size, void *hint );
+typedef mach_error_t island_free( void *ptr );
+
+    mach_error_t
+__asan_mach_override_ptr_custom(
+	void *originalFunctionAddress,
+    const void *overrideFunctionAddress,
+    void **originalFunctionReentryIsland,
+    island_malloc *alloc,
+    island_free *dealloc );
+
 /************************************************************************************//**
 	
 
