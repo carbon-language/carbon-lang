@@ -127,6 +127,34 @@ int AsanOpenReadonly(const char* filename) {
   return open(filename, O_RDONLY);
 }
 
+// Like getenv, but reads env directly from /proc and does not use libc.
+// This function should be called first inside __asan_init.
+const char* AsanGetEnv(const char* name) {
+  static char *environ;
+  static size_t len;
+  static bool inited;
+  if (!inited) {
+    inited = true;
+    size_t environ_size;
+    len = ReadFileToBuffer("/proc/self/environ",
+                           &environ, &environ_size, 1 << 20);
+  }
+  if (!environ || len == 0) return NULL;
+  size_t namelen = internal_strlen(name);
+  const char *p = environ;
+  while (*p != '\0') {  // will happen at the \0\0 that terminates the buffer
+    // proc file has the format NAME=value\0NAME=value\0NAME=value\0...
+    const char* endp =
+        (char*)internal_memchr(p, '\0', len - (p - environ));
+    if (endp == NULL)  // this entry isn't NUL terminated
+      return NULL;
+    else if (!internal_memcmp(p, name, namelen) && p[namelen] == '=')  // Match.
+      return p + namelen + 1;  // point after =
+    p = endp + 1;
+  }
+  return NULL;  // Not found.
+}
+
 size_t AsanRead(int fd, void *buf, size_t count) {
   return (size_t)syscall(__NR_read, fd, buf, count);
 }

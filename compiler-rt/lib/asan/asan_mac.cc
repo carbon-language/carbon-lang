@@ -21,6 +21,7 @@
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 
+#include <crt_externs.h>  // for _NSGetEnviron
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/ucontext.h>
@@ -112,6 +113,26 @@ void AsanUnmapOrDie(void *addr, size_t size) {
 
 int AsanOpenReadonly(const char* filename) {
   return open(filename, O_RDONLY);
+}
+
+const char *AsanGetEnv(const char *name) {
+  char ***env_ptr = _NSGetEnviron();
+  CHECK(env_ptr);
+  char **environ = *env_ptr;
+  CHECK(environ);
+  size_t name_len = internal_strlen(name);
+  while (*environ != NULL) {
+    size_t len = internal_strlen(*environ);
+    if (len > name_len) {
+      const char *p = *environ;
+      if (!internal_memcmp(p, name, name_len) &&
+          p[name_len] == '=') {  // Match.
+        return *environ + name_len + 1;  // String starting after =. 
+      }
+    }
+    environ++;
+  }
+  return NULL;
 }
 
 size_t AsanRead(int fd, void *buf, size_t count) {

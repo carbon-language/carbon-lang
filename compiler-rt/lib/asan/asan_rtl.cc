@@ -91,34 +91,6 @@ size_t ReadFileToBuffer(const char *file_name, char **buff,
   return read_len;
 }
 
-// Like getenv, but reads env directly from /proc and does not use libc.
-// This function should be called first inside __asan_init.
-static const char* GetEnvFromProcSelfEnviron(const char* name) {
-  static char *environ;
-  static size_t len;
-  static bool inited;
-  if (!inited) {
-    inited = true;
-    size_t environ_size;
-    len = ReadFileToBuffer("/proc/self/environ",
-                           &environ, &environ_size, 1 << 20);
-  }
-  if (!environ || len == 0) return NULL;
-  size_t namelen = internal_strlen(name);
-  const char *p = environ;
-  while (*p != '\0') {  // will happen at the \0\0 that terminates the buffer
-    // proc file has the format NAME=value\0NAME=value\0NAME=value\0...
-    const char* endp =
-        (char*)internal_memchr(p, '\0', len - (p - environ));
-    if (endp == NULL)  // this entry isn't NUL terminated
-      return NULL;
-    else if (!internal_memcmp(p, name, namelen) && p[namelen] == '=')  // Match.
-      return p + namelen + 1;  // point after =
-    p = endp + 1;
-  }
-  return NULL;  // Not found.
-}
-
 // ---------------------- mmap -------------------- {{{1
 void OutOfMemoryMessageAndDie(const char *mem_type, size_t size) {
   Report("ERROR: AddressSanitizer failed to allocate "
@@ -397,7 +369,7 @@ void __asan_init() {
   AsanDoesNotSupportStaticLinkage();
 
   // flags
-  const char *options = GetEnvFromProcSelfEnviron("ASAN_OPTIONS");
+  const char *options = AsanGetEnv("ASAN_OPTIONS");
   FLAG_malloc_context_size =
       IntFlagValue(options, "malloc_context_size=", kMallocContextSize);
   CHECK(FLAG_malloc_context_size <= kMallocContextSize);
