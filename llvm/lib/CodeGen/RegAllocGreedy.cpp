@@ -309,6 +309,7 @@ RAGreedy::RAGreedy(): MachineFunctionPass(ID) {
   initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
   initializeStrongPHIEliminationPass(*PassRegistry::getPassRegistry());
   initializeRegisterCoalescerPass(*PassRegistry::getPassRegistry());
+  initializeMachineSchedulerPassPass(*PassRegistry::getPassRegistry());
   initializeCalculateSpillWeightsPass(*PassRegistry::getPassRegistry());
   initializeLiveStacksPass(*PassRegistry::getPassRegistry());
   initializeMachineDominatorTreePass(*PassRegistry::getPassRegistry());
@@ -330,6 +331,8 @@ void RAGreedy::getAnalysisUsage(AnalysisUsage &AU) const {
   if (StrongPHIElim)
     AU.addRequiredID(StrongPHIEliminationID);
   AU.addRequiredTransitiveID(RegisterCoalescerPassID);
+  if (EnableMachineSched)
+    AU.addRequiredID(MachineSchedulerPassID);
   AU.addRequired<CalculateSpillWeights>();
   AU.addRequired<LiveStacks>();
   AU.addPreserved<LiveStacks>();

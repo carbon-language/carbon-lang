@@ -57,6 +57,7 @@ add_llvm_library(LLVMCodeGen
   MachinePassRegistry.cpp
   MachineRegisterInfo.cpp
   MachineSSAUpdater.cpp
+  MachineScheduler.cpp
   MachineSink.cpp
   MachineVerifier.cpp
   OcamlGC.cpp
