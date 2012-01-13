@@ -966,49 +966,39 @@ static Arg* getLastHexagonArchArg (const ArgList &Args)
 {
   Arg * A = NULL;
 
-  for (ArgList::const_iterator it = Args.begin(), ie = Args.end(); it != ie; ++it) {
-    if ((*it)->getOption().matches(options::OPT_mv2) ||
-        (*it)->getOption().matches(options::OPT_mv3) ||
-        (*it)->getOption().matches(options::OPT_mv4) ||
-        (*it)->getOption().matches(options::OPT_march_EQ) ||
+  for (ArgList::const_iterator it = Args.begin(), ie = Args.end();
+       it != ie; ++it) {
+    if ((*it)->getOption().matches(options::OPT_march_EQ) ||
         (*it)->getOption().matches(options::OPT_mcpu_EQ)) {
       A = *it;
       A->claim();
+    }
+    else if ((*it)->getOption().matches(options::OPT_m_Joined)){
+      StringRef Value = (*it)->getValue(Args,0);
+      if (Value.startswith("v")) {
+        A = *it;
+        A->claim();
+      }
     }
   }
   return A;
 }
 
-static const char *getHexagonTargetCPU(const ArgList &Args)
+static StringRef getHexagonTargetCPU(const ArgList &Args)
 {
   Arg *A;
   llvm::StringRef WhichHexagon;
 
+  // Select the default CPU (v4) if none was given or detection failed.
   if ((A = getLastHexagonArchArg (Args))) {
-    if ((A->getOption().matches(options::OPT_march_EQ)) ||
-        (A->getOption().matches(options::OPT_mcpu_EQ))) {
-      WhichHexagon = A->getValue(Args);
-      if (WhichHexagon == "v2")
-        return "hexagonv2";
-      else if (WhichHexagon == "v3")
-        return "hexagonv3";
-      else if (WhichHexagon == "v4")
-        return "hexagonv4";
-      else
-        assert (0 && "Unknown -march or -mcpu value");
-    }
-    else {
-      if (A->getOption().matches(options::OPT_mv2))
-        return "hexagonv2";
-      else if (A->getOption().matches(options::OPT_mv3))
-        return "hexagonv3";
-      else if (A->getOption().matches(options::OPT_mv4))
-        return "hexagonv4";
-      else
-        assert(0 && "Unknown -m argument.");
-    }
+    WhichHexagon = A->getValue(Args);
+    if (WhichHexagon == "")
+      return "v4";
+    else
+      return WhichHexagon;
   }
-  return "hexagonv2";
+  else
+    return "v4";
 }
 
 void Clang::AddHexagonTargetArgs(const ArgList &Args,
@@ -1016,7 +1006,7 @@ void Clang::AddHexagonTargetArgs(const ArgList &Args,
   llvm::Triple Triple = getToolChain().getTriple();
 
   CmdArgs.push_back("-target-cpu");
-  CmdArgs.push_back(getHexagonTargetCPU(Args));
+  CmdArgs.push_back(Args.MakeArgString("hexagon" + getHexagonTargetCPU(Args)));
   CmdArgs.push_back("-fno-signed-char");
   CmdArgs.push_back("-nobuiltininc");
 
@@ -2898,29 +2888,16 @@ void hexagon::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Add Arch Information
   Arg *A;
-  if ((A = getLastHexagonArchArg (Args))) {
-    if ((A->getOption().matches(options::OPT_march_EQ)) ||
-        (A->getOption().matches(options::OPT_mcpu_EQ))) {
-    llvm::StringRef WhichHexagon = A->getValue(Args);
-    if (WhichHexagon == "v2")
-      CmdArgs.push_back("-mv2");
-    else if (WhichHexagon == "v3")
-      CmdArgs.push_back ("-mv3");
-    else if (WhichHexagon == "v4")
-      CmdArgs.push_back ("-mv4");
+  if ((A = getLastHexagonArchArg(Args))) {
+    if (A->getOption().matches(options::OPT_m_Joined))
+      A->render(Args, CmdArgs);
     else
-      assert (0 && "Unknown -march or -mcpu value");
-    }
-    else {
-      if (A->getOption().matches(options::OPT_mv2) ||
-          A->getOption().matches(options::OPT_mv3) ||
-          A->getOption().matches(options::OPT_mv4))
-        A->render(Args, CmdArgs);
-      else
-        assert(0 && "Unknown -m argument.");
-    }
-
+      CmdArgs.push_back (Args.MakeArgString("-m" + getHexagonTargetCPU(Args)));
   }
+  else {
+    CmdArgs.push_back (Args.MakeArgString("-m" + getHexagonTargetCPU(Args)));
+  }
+
   CmdArgs.push_back("-mqdsp6-compat");
 
   const char *GCCName;

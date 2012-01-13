@@ -2963,7 +2963,19 @@ public:
   virtual const char *getClobbers() const {
     return "";
   }
+
+  static const char *getHexagonCPUSuffix(StringRef Name) {
+    return llvm::StringSwitch<const char*>(Name)
+      .Case("hexagonv2", "2")
+      .Case("hexagonv3", "3")
+      .Case("hexagonv4", "4")
+      .Default(0);
+  }
+
   virtual bool setCPU(const std::string &Name) {
+    if (!getHexagonCPUSuffix(Name))
+      return false;
+
     CPU = Name;
     return true;
   }
