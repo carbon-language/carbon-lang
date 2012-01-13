@@ -154,9 +154,10 @@ ClangASTSource::CompleteType (TagDecl *tag_decl)
     
     if (log)
     {
-        log->Printf("    CompleteTagDecl[%u] on (ASTContext*)%p Completing a TagDecl named %s", 
-                    invocation_id, 
+        log->Printf("    CompleteTagDecl[%u] on (ASTContext*)%p Completing (TagDecl*)%p named %s", 
+                    current_id, 
                     m_ast_context, 
+                    tag_decl,
                     tag_decl->getName().str().c_str());
         
         log->Printf("      CTD[%u] Before:", current_id);
@@ -349,7 +350,7 @@ ClangASTSource::FindExternalLexicalDecls (const DeclContext *decl_context,
     
     if (log)
     {       
-        log->Printf("  FELD[%u] Original decl:", current_id);
+        log->Printf("  FELD[%u] Original decl (Decl*)%p:", current_id, original_decl);
         ASTDumper(original_decl).ToLog(log, "    ");
     }
     
@@ -407,7 +408,7 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context)
     if (log)
     {
         if (!context.m_decl_context)
-            log->Printf("ClangASTSource::FindExternalVisibleDecls[%u] on (ASTContext*)%p for '%s' in a NULL DeclContext", current_id,                         m_ast_context, name.GetCString());
+            log->Printf("ClangASTSource::FindExternalVisibleDecls[%u] on (ASTContext*)%p for '%s' in a NULL DeclContext", current_id, m_ast_context, name.GetCString());
         else if (const NamedDecl *context_named_decl = dyn_cast<NamedDecl>(context.m_decl_context))
             log->Printf("ClangASTSource::FindExternalVisibleDecls[%u] on (ASTContext*)%p for '%s' in '%s'", current_id, m_ast_context, name.GetCString(), context_named_decl->getNameAsString().c_str());
         else
