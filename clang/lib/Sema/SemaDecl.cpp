@@ -1095,7 +1095,7 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
   if (D->isInvalidDecl())
     return false;
 
-  if (D->isUsed() || D->hasAttr<UnusedAttr>())
+  if (D->isReferenced() || D->isUsed() || D->hasAttr<UnusedAttr>())
     return false;
 
   if (isa<LabelDecl>(D))
@@ -6804,7 +6804,7 @@ void Sema::DiagnoseUnusedParameters(ParmVarDecl * const *Param,
     return;
 
   for (; Param != ParamEnd; ++Param) {
-    if (!(*Param)->isUsed() && (*Param)->getDeclName() &&
+    if (!(*Param)->isReferenced() && (*Param)->getDeclName() &&
         !(*Param)->hasAttr<UnusedAttr>()) {
       Diag((*Param)->getLocation(), diag::warn_unused_parameter)
         << (*Param)->getDeclName();

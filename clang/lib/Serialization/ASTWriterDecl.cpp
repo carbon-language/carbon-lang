@@ -729,6 +729,7 @@ void ASTDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
       !D->hasExtInfo() &&
       !D->isImplicit() &&
       !D->isUsed(false) &&
+      !D->isReferenced() &&
       D->getAccess() == AS_none &&
       !D->isModulePrivate() &&
       D->getStorageClass() == 0 &&
