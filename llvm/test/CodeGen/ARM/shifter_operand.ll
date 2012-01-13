@@ -54,12 +54,12 @@ declare i8* @malloc(...)
 define fastcc void @test4(i16 %addr) nounwind {
 entry:
 ; A8: test4:
-; A8: ldr [[REG:r[0-9]+]], [r0, r1, lsl #2]
-; A8: str [[REG]], [r0, r1, lsl #2]
+; A8: ldr [[REG:r[0-9]+]], [r0, r1, lsl #2]!
+; A8: str [[REG]], [r0]
 
 ; A9: test4:
-; A9: ldr [[REG:r[0-9]+]], [r0, r1, lsl #2]
-; A9: str [[REG]], [r0, r1, lsl #2]
+; A9: ldr [[REG:r[0-9]+]], [r0, r1, lsl #2]!
+; A9: str [[REG]], [r0]
   %0 = tail call i8* (...)* @malloc(i32 undef) nounwind
   %1 = bitcast i8* %0 to i32*
   %2 = sext i16 %addr to i32

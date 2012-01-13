@@ -5984,6 +5984,44 @@ SDValue DAGCombiner::visitBR_CC(SDNode *N) {
   return SDValue();
 }
 
+/// canFoldInAddressingMode - Return true if 'Use' is a load or a store that
+/// uses N as its base pointer and that N may be folded in the load / store
+/// addressing mode. FIXME: This currently only looks for folding of
+/// [reg +/- imm] addressing modes.
+static bool canFoldInAddressingMode(SDNode *N, SDNode *Use,
+                                    SelectionDAG &DAG,
+                                    const TargetLowering &TLI) {
+  EVT VT;
+  if (LoadSDNode *LD  = dyn_cast<LoadSDNode>(Use)) {
+    if (LD->isIndexed() || LD->getBasePtr().getNode() != N)
+      return false;
+    VT = Use->getValueType(0);
+  } else if (StoreSDNode *ST  = dyn_cast<StoreSDNode>(Use)) {
+    if (ST->isIndexed() || ST->getBasePtr().getNode() != N)
+      return false;
+    VT = ST->getValue().getValueType();
+  } else
+    return false;
+
+  TargetLowering::AddrMode AM;
+  if (N->getOpcode() == ISD::ADD) {
+    ConstantSDNode *Offset = dyn_cast<ConstantSDNode>(N->getOperand(1));
+    if (Offset)
+      AM.BaseOffs = Offset->getSExtValue();
+    else
+      return false;
+  } else if (N->getOpcode() == ISD::SUB) {
+    ConstantSDNode *Offset = dyn_cast<ConstantSDNode>(N->getOperand(1));
+    if (Offset)
+      AM.BaseOffs = -Offset->getSExtValue();
+    else
+      return false;
+  } else
+    return false;
+
+  return TLI.isLegalAddressingMode(AM, VT.getTypeForEVT(*DAG.getContext()));
+}
+
 /// CombineToPreIndexedLoadStore - Try turning a load / store into a
 /// pre-indexed load / store when the base pointer is an add or subtract
 /// and it has other uses besides the load / store. After the
@@ -6070,10 +6108,9 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
     if (N->hasPredecessorHelper(Use, Visited, Worklist))
       return false;
 
-    if (!((Use->getOpcode() == ISD::LOAD &&
-           cast<LoadSDNode>(Use)->getBasePtr() == Ptr) ||
-          (Use->getOpcode() == ISD::STORE &&
-           cast<StoreSDNode>(Use)->getBasePtr() == Ptr)))
+    // If Ptr may be folded in addressing mode of other use, then it's
+    // not profitable to do this transformation.
+    if (!canFoldInAddressingMode(Ptr.getNode(), Use, DAG, TLI))
       RealUse = true;
   }
 
@@ -6170,7 +6207,8 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
         continue;
 
       // Try turning it into a post-indexed load / store except when
-      // 1) All uses are load / store ops that use it as base ptr.
+      // 1) All uses are load / store ops that use it as base ptr (and
+      //    it may be folded as addressing mmode).
       // 2) Op must be independent of N, i.e. Op is neither a predecessor
       //    nor a successor of N. Otherwise, if Op is folded that would
       //    create a cycle.
@@ -6193,10 +6231,7 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
           for (SDNode::use_iterator III = Use->use_begin(),
                  EEE = Use->use_end(); III != EEE; ++III) {
             SDNode *UseUse = *III;
-            if (!((UseUse->getOpcode() == ISD::LOAD &&
-                   cast<LoadSDNode>(UseUse)->getBasePtr().getNode() == Use) ||
-                  (UseUse->getOpcode() == ISD::STORE &&
-                   cast<StoreSDNode>(UseUse)->getBasePtr().getNode() == Use)))
+            if (!canFoldInAddressingMode(Use, UseUse, DAG, TLI)) 
               RealUse = true;
           }
 
