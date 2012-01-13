@@ -379,7 +379,7 @@ void PlistDiagnostics::FlushDiagnostics(SmallVectorImpl<std::string>
   std::string ErrMsg;
   llvm::raw_fd_ostream o(OutputFile.c_str(), ErrMsg);
   if (!ErrMsg.empty()) {
-    llvm::errs() << "warning: could not creat file: " << OutputFile << '\n';
+    llvm::errs() << "warning: could not create file: " << OutputFile << '\n';
     return;
   }
 
