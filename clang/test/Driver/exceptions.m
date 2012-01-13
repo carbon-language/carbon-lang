@@ -1,4 +1,4 @@
-// RUN: %clang -ccc-host-triple x86_64-apple-darwin9 \
+// RUN: %clang -target x86_64-apple-darwin9 \
 // RUN:   -fsyntax-only -fno-exceptions %s
 
 void f1() {

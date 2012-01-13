@@ -1,6 +1,6 @@
-// RUN: %clangxx -ccc-host-triple x86_64-apple-darwin10 %s -flto -S -o - |\
+// RUN: %clangxx -target x86_64-apple-darwin10 %s -flto -S -o - |\
 // RUN:   FileCheck --check-prefix=CHECK-NO-KEXT %s
-// RUN: %clangxx -ccc-host-triple x86_64-apple-darwin10 %s -fapple-kext -flto -S -o - |\
+// RUN: %clangxx -target x86_64-apple-darwin10 %s -fapple-kext -flto -S -o - |\
 // RUN:   FileCheck --check-prefix=CHECK-KEXT %s
 
 // CHECK-NO-KEXT-NOT: _GLOBAL__D_a

@@ -1,7 +1,7 @@
 // Check that we verify debug output properly with multiple -arch options.
 //
 // REQUIRES: asserts
-// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -ccc-print-phases \
+// RUN: %clang -target x86_64-apple-darwin10 -ccc-print-phases \
 // RUN:   -verify -arch i386 -arch x86_64 %s -g 2> %t
 // RUN: FileCheck -check-prefix=CHECK-MULTIARCH-ACTIONS < %t %s
 //
@@ -9,7 +9,7 @@
 // CHECK-MULTIARCH-ACTIONS: 8: dsymutil, {7}, dSYM
 // CHECK-MULTIARCH-ACTIONS: 9: verify, {8}, none
 //
-// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -ccc-print-bindings \
+// RUN: %clang -target x86_64-apple-darwin10 -ccc-print-bindings \
 // RUN:   -verify -arch i386 -arch x86_64 %s -g 2> %t
 // RUN: FileCheck -check-prefix=CHECK-MULTIARCH-BINDINGS < %t %s
 //
@@ -18,7 +18,7 @@
 
 // Check output name derivation.
 //
-// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -ccc-print-bindings \
+// RUN: %clang -target x86_64-apple-darwin10 -ccc-print-bindings \
 // RUN:   -verify -o foo %s -g 2> %t
 // RUN: FileCheck -check-prefix=CHECK-OUTPUT-NAME < %t %s
 //
@@ -29,6 +29,6 @@
 // Check that we only verify when needed.
 //
 // RUN: touch %t.o
-// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -ccc-print-bindings \
+// RUN: %clang -target x86_64-apple-darwin10 -ccc-print-bindings \
 // RUN:   -verify -o foo %t.o -g 2> %t
 // RUN: grep "Verify" %t | count 0

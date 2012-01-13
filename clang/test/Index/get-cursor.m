@@ -30,7 +30,7 @@
 // CHECK-PROP: ObjCPropertyDecl=foo1:4:26
 // CHECK-PROP: ObjCPropertyDecl=foo2:5:27
 
-// RUN: c-index-test -cursor-at=%s:11:11 %s -ccc-host-triple x86_64-apple-macosx10.7.0 | FileCheck -check-prefix=CHECK-WITH-WEAK %s
+// RUN: c-index-test -cursor-at=%s:11:11 %s -target x86_64-apple-macosx10.7.0 | FileCheck -check-prefix=CHECK-WITH-WEAK %s
 // CHECK-WITH-WEAK: ObjCClassRef=Foo:8:8
 
 // RUN: c-index-test -cursor-at=%s:20:10 %s | FileCheck -check-prefix=CHECK-METHOD %s

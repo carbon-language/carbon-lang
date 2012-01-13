@@ -1,5 +1,5 @@
 // REQUIRES: x86-registered-target
-// RUN: %clang -ccc-host-triple i386-apple-darwin10 -flto -S -g %s -o - | FileCheck %s
+// RUN: %clang -target i386-apple-darwin10 -flto -S -g %s -o - | FileCheck %s
 int global;
 int main() { 
   static int localstatic;

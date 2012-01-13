@@ -1,10 +1,10 @@
 // RUN: %clang -fsyntax-only  %s 2>&1 | FileCheck %s -check-prefix=DEFAULT
 // RUN: %clang -fsyntax-only -fdiagnostics-format=clang %s 2>&1 | FileCheck %s -check-prefix=DEFAULT
-// RUN: %clang -fsyntax-only -fdiagnostics-format=clang -ccc-host-triple x86_64-pc-win32 %s 2>&1 | FileCheck %s -check-prefix=DEFAULT
+// RUN: %clang -fsyntax-only -fdiagnostics-format=clang -target x86_64-pc-win32 %s 2>&1 | FileCheck %s -check-prefix=DEFAULT
 //
 // RUN: %clang -fsyntax-only -fdiagnostics-format=msvc  %s 2>&1 | FileCheck %s -check-prefix=MSVC
-// RUN: %clang -fsyntax-only -fdiagnostics-format=msvc -ccc-host-triple x86_64-pc-win32 %s 2>&1 | FileCheck %s -check-prefix=MSVC
-// RUN: %clang -fsyntax-only -fdiagnostics-format=msvc -ccc-host-triple x86_64-pc-win32 -fshow-column %s 2>&1 | FileCheck %s -check-prefix=MSVC
+// RUN: %clang -fsyntax-only -fdiagnostics-format=msvc -target x86_64-pc-win32 %s 2>&1 | FileCheck %s -check-prefix=MSVC
+// RUN: %clang -fsyntax-only -fdiagnostics-format=msvc -target x86_64-pc-win32 -fshow-column %s 2>&1 | FileCheck %s -check-prefix=MSVC
 //
 // RUN: %clang -fsyntax-only -fdiagnostics-format=vi    %s 2>&1 | FileCheck %s -check-prefix=VI
 //

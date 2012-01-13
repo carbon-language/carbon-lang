@@ -305,7 +305,7 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   }
   // FIXME: We shouldn't overwrite the default host triple here, but we have
   // nowhere else to put this currently.
-  if (const Arg *A = Args->getLastArg(options::OPT_ccc_host_triple))
+  if (const Arg *A = Args->getLastArg(options::OPT_target))
     DefaultTargetTriple = A->getValue(*Args);
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_install_dir))
     Dir = InstalledDir = A->getValue(*Args);
