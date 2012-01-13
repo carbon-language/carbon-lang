@@ -2985,6 +2985,8 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       Ty = Type::getDoubleTy(MF.getFunction()->getContext());
     else if (Opc == X86::AVX_SET0PSY || Opc == X86::AVX_SET0PDY)
       Ty = VectorType::get(Type::getFloatTy(MF.getFunction()->getContext()), 8);
+    else if (Opc == X86::AVX2_SETALLONES)
+      Ty = VectorType::get(Type::getInt32Ty(MF.getFunction()->getContext()), 8);
     else
       Ty = VectorType::get(Type::getInt32Ty(MF.getFunction()->getContext()), 4);
 
