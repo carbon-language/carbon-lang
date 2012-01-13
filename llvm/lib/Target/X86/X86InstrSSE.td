@@ -2330,7 +2330,8 @@ let Constraints = "$src1 = $dst" in {
                     TB;
   defm SHUFPD : sse12_shuffle<VR128, f128mem, v2f64,
                     "shufpd\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                    memopv2f64, SSEPackedDouble>, TB, OpSize;
+                    memopv2f64, SSEPackedDouble, 1 /* cvt to pshufd */>,
+                    TB, OpSize;
 }
 
 let Predicates = [HasAVX] in {

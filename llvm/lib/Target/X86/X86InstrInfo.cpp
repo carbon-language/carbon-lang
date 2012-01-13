@@ -1605,6 +1605,24 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       .addReg(B, getKillRegState(isKill)).addImm(M);
     break;
   }
+  case X86::SHUFPDrri: {
+    assert(MI->getNumOperands() == 4 && "Unknown shufpd instruction!");
+    if (!TM.getSubtarget<X86Subtarget>().hasSSE2()) return 0;
+
+    unsigned B = MI->getOperand(1).getReg();
+    unsigned C = MI->getOperand(2).getReg();
+    if (B != C) return 0;
+    unsigned A = MI->getOperand(0).getReg();
+    unsigned M = MI->getOperand(3).getImm();
+
+    // Convert to PSHUFD mask.
+    M = ((M & 1) << 1) | ((M & 1) << 3) | ((M & 2) << 4) | ((M & 2) << 6)| 0x44;
+
+    NewMI = BuildMI(MF, MI->getDebugLoc(), get(X86::PSHUFDri))
+      .addReg(A, RegState::Define | getDeadRegState(isDead))
+      .addReg(B, getKillRegState(isKill)).addImm(M);
+    break;
+  }
   case X86::SHL64ri: {
     assert(MI->getNumOperands() >= 3 && "Unknown shift instruction!");
     // NOTE: LEA doesn't produce flags like shift does, but LLVM never uses
