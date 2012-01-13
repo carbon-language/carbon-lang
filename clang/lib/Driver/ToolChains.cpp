@@ -1918,11 +1918,14 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
                       Arch == llvm::Triple::mips64 ||
                       Arch == llvm::Triple::mips64el;
 
+  const bool IsAndroid = Triple.getEnvironment() == llvm::Triple::ANDROIDEABI;
+
   // Do not use 'gnu' hash style for Mips targets because .gnu.hash
   // and the MIPS ABI require .dynsym to be sorted in different ways.
   // .gnu.hash needs symbols to be grouped by hash code whereas the MIPS
   // ABI requires a mapping between the GOT and the symbol table.
-  if (!IsMips) {
+  // Android loader does not support .gnu.hash.
+  if (!IsMips && !IsAndroid) {
     if (IsRedhat(Distro) || IsOpenSuse(Distro) || Distro == UbuntuMaverick ||
         Distro == UbuntuNatty || Distro == UbuntuOneiric)
       ExtraOpts.push_back("--hash-style=gnu");
