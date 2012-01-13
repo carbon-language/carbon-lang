@@ -24,8 +24,10 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
+#include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Host/Terminal.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/TargetList.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
@@ -1881,6 +1883,108 @@ Debugger::FormatPrompt
                                                 }
                                             }
                                             var_success = true;
+                                        }
+                                    }
+                                    else if (::strncmp (var_name_begin, "name-with-args}", strlen("name-with-args}")) == 0)
+                                    {
+                                        // Print the function name with arguments in it
+
+                                        if (sc->function)
+                                        {
+                                            var_success = true;
+                                            ExecutionContextScope *exe_scope = exe_ctx ? exe_ctx->GetBestExecutionContextScope() : NULL;
+                                            cstr = sc->function->GetName().AsCString (NULL);
+                                            if (cstr)
+                                            {
+                                                const InlineFunctionInfo *inline_info = NULL;
+                                                VariableListSP variable_list_sp;
+                                                bool get_function_vars = true;
+                                                if (sc->block)
+                                                {
+                                                    Block *inline_block = sc->block->GetContainingInlinedBlock ();
+
+                                                    if (inline_block)
+                                                    {
+                                                        get_function_vars = false;
+                                                        inline_info = sc->block->GetInlinedFunctionInfo();
+                                                        if (inline_info)
+                                                            variable_list_sp = inline_block->GetBlockVariableList (true);
+                                                    }
+                                                }
+                                                
+                                                if (get_function_vars)
+                                                {
+                                                    variable_list_sp = sc->function->GetBlock(true).GetBlockVariableList (true);
+                                                }
+                                                
+                                                if (inline_info)
+                                                {
+                                                    s.PutCString (cstr);
+                                                    s.PutCString (" [inlined] ");
+                                                    cstr = inline_info->GetName().GetCString();
+                                                }
+                                                
+                                                VariableList args;
+                                                if (variable_list_sp)
+                                                {
+                                                    const size_t num_variables = variable_list_sp->GetSize();
+                                                    for (size_t var_idx = 0; var_idx < num_variables; ++var_idx)
+                                                    {
+                                                        VariableSP var_sp (variable_list_sp->GetVariableAtIndex(var_idx));
+                                                        if (var_sp->GetScope() == eValueTypeVariableArgument)
+                                                            args.AddVariable (var_sp);
+                                                    }
+
+                                                }
+                                                if (args.GetSize() > 0)
+                                                {
+                                                    const char *open_paren = strchr (cstr, '(');
+                                                    const char *close_paren = NULL;
+                                                    if (open_paren)
+                                                        close_paren = strchr (open_paren, ')');
+                                                    
+                                                    if (open_paren)
+                                                        s.Write(cstr, open_paren - cstr + 1);
+                                                    else
+                                                    {
+                                                        s.PutCString (cstr);
+                                                        s.PutChar ('(');
+                                                    }
+                                                    const size_t num_args = variable_list_sp->GetSize();
+                                                    for (size_t arg_idx = 0; arg_idx < num_args; ++arg_idx)
+                                                    {
+                                                        VariableSP var_sp (args.GetVariableAtIndex (arg_idx));
+                                                        ValueObjectSP var_value_sp (ValueObjectVariable::Create (exe_scope, var_sp));
+                                                        const char *var_name = var_value_sp->GetName().GetCString();
+                                                        const char *var_value = var_value_sp->GetValueAsCString();
+                                                        if (var_value_sp->GetError().Success())
+                                                        {
+                                                            if (arg_idx > 0)
+                                                                s.PutCString (", ");
+                                                            s.Printf ("%s=%s", var_name, var_value);
+                                                        }
+                                                    }
+                                                    
+                                                    if (close_paren)
+                                                        s.PutCString (close_paren);
+                                                    else
+                                                        s.PutChar(')');
+
+                                                }
+                                                else
+                                                {
+                                                    s.PutCString(cstr);
+                                                }
+                                            }
+                                        }
+                                        else if (sc->symbol)
+                                        {
+                                            cstr = sc->symbol->GetName().AsCString (NULL);
+                                            if (cstr)
+                                            {
+                                                s.PutCString(cstr);
+                                                var_success = true;
+                                            }
                                         }
                                     }
                                     else if (::strncmp (var_name_begin, "addr-offset}", strlen("addr-offset}")) == 0)
