@@ -64,7 +64,7 @@ bool TGParser::AddValue(Record *CurRec, SMLoc Loc, const RecordVal &RV) {
   if (CurRec == 0)
     CurRec = &CurMultiClass->Rec;
 
-  if (RecordVal *ERV = CurRec->getValue(RV.getName())) {
+  if (RecordVal *ERV = CurRec->getValue(RV.getNameInit())) {
     // The value already exists in the class, treat this as a set.
     if (ERV->setValue(RV.getValue()))
       return Error(Loc, "New definition of '" + RV.getName() + "' of type '" +

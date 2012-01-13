@@ -757,7 +757,7 @@ class StringInit : public TypedInit {
   virtual void anchor();
 
 public:
-  static StringInit *get(const std::string &V);
+  static StringInit *get(StringRef);
 
   const std::string &getValue() const { return Value; }
 
@@ -800,7 +800,7 @@ class CodeInit : public Init {
   virtual void anchor();
 
 public:
-  static CodeInit *get(const std::string &V);
+  static CodeInit *get(StringRef);
 
   const std::string &getValue() const { return Value; }
 
@@ -1454,19 +1454,22 @@ public:
     return isTemplateArg(StringInit::get(Name.str()));
   }
 
-  const RecordVal *getValue(StringRef Name) const {
+  const RecordVal *getValue(const Init *Name) const {
     for (unsigned i = 0, e = Values.size(); i != e; ++i)
-      if (Values[i].getName() == Name) return &Values[i];
+      if (Values[i].getNameInit() == Name) return &Values[i];
+    return 0;
+  }
+  const RecordVal *getValue(StringRef Name) const {
+    return getValue(StringInit::get(Name));
+  }
+  RecordVal *getValue(const Init *Name) {
+    for (unsigned i = 0, e = Values.size(); i != e; ++i)
+      if (Values[i].getNameInit() == Name) return &Values[i];
     return 0;
   }
   RecordVal *getValue(StringRef Name) {
-    for (unsigned i = 0, e = Values.size(); i != e; ++i)
-      if (Values[i].getName() == Name) return &Values[i];
-    return 0;
+    return getValue(StringInit::get(Name));
   }
-
-  const RecordVal *getValue(Init *Name) const;
-  RecordVal *getValue(Init *Name);
 
   void addTemplateArg(Init *Name) {
     assert(!isTemplateArg(Name) && "Template arg already defined!");
@@ -1477,7 +1480,7 @@ public:
   }
 
   void addValue(const RecordVal &RV) {
-    assert(getValue(RV.getName()) == 0 && "Value already added!");
+    assert(getValue(RV.getNameInit()) == 0 && "Value already added!");
     Values.push_back(RV);
     if (Values.size() > 1)
       // Keep NAME at the end of the list.  It makes record dumps a

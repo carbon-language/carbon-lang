@@ -573,7 +573,7 @@ IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
 
 void StringInit::anchor() { }
 
-StringInit *StringInit::get(const std::string &V) {
+StringInit *StringInit::get(StringRef V) {
   typedef StringMap<StringInit *> Pool;
   static Pool ThePool;
 
@@ -584,7 +584,7 @@ StringInit *StringInit::get(const std::string &V) {
 
 void CodeInit::anchor() { }
 
-CodeInit *CodeInit::get(const std::string &V) {
+CodeInit *CodeInit::get(StringRef V) {
   typedef StringMap<CodeInit *> Pool;
   static Pool ThePool;
 
@@ -1336,10 +1336,10 @@ const std::string &VarInit::getName() const {
 
 Init *VarInit::resolveBitReference(Record &R, const RecordVal *IRV,
                                    unsigned Bit) const {
-  if (R.isTemplateArg(getName())) return 0;
-  if (IRV && IRV->getName() != getName()) return 0;
+  if (R.isTemplateArg(getNameInit())) return 0;
+  if (IRV && IRV->getNameInit() != getNameInit()) return 0;
 
-  RecordVal *RV = R.getValue(getName());
+  RecordVal *RV = R.getValue(getNameInit());
   assert(RV && "Reference to a non-existent variable?");
   assert(dynamic_cast<BitsInit*>(RV->getValue()));
   BitsInit *BI = (BitsInit*)RV->getValue();
@@ -1358,10 +1358,10 @@ Init *VarInit::resolveBitReference(Record &R, const RecordVal *IRV,
 Init *VarInit::resolveListElementReference(Record &R,
                                            const RecordVal *IRV,
                                            unsigned Elt) const {
-  if (R.isTemplateArg(getName())) return 0;
-  if (IRV && IRV->getName() != getName()) return 0;
+  if (R.isTemplateArg(getNameInit())) return 0;
+  if (IRV && IRV->getNameInit() != getNameInit()) return 0;
 
-  RecordVal *RV = R.getValue(getName());
+  RecordVal *RV = R.getValue(getNameInit());
   assert(RV && "Reference to a non-existent variable?");
   ListInit *LI = dynamic_cast<ListInit*>(RV->getValue());
   if (!LI) {
@@ -1757,18 +1757,6 @@ void Record::setName(Init *NewName) {
 
 void Record::setName(const std::string &Name) {
   setName(StringInit::get(Name));
-}
-
-const RecordVal *Record::getValue(Init *Name) const {
-  for (unsigned i = 0, e = Values.size(); i != e; ++i)
-    if (Values[i].getNameInit() == Name) return &Values[i];
-  return 0;
-}
-
-RecordVal *Record::getValue(Init *Name) {
-  for (unsigned i = 0, e = Values.size(); i != e; ++i)
-    if (Values[i].getNameInit() == Name) return &Values[i];
-  return 0;
 }
 
 /// resolveReferencesTo - If anything in this record refers to RV, replace the
