@@ -52,70 +52,136 @@ BreakpointResolverFileLine::SearchCallback
 )
 {
     SymbolContextList sc_list;
-    uint32_t sc_list_size;
-    CompileUnit *cu = context.comp_unit;
 
     assert (m_breakpoint != NULL);
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
-
-    sc_list_size = cu->ResolveSymbolContext (m_file_spec, m_line_number, m_inlines, false, eSymbolContextEverything, sc_list);
-    for (uint32_t i = 0; i < sc_list_size; i++)
+    
+    // There is a tricky bit here.  You can have two compilation units that #include the same file, and
+    // in one of them the function at m_line_number is used (and so code and a line entry for it is generated) but in the
+    // other it isn't.  If we considered the CU's independently, then in the second inclusion, we'd move the breakpoint 
+    // to the next function that actually generated code in the header file.  That would end up being confusing.
+    // So instead, we do the CU iterations by hand here, then scan through the complete list of matches, and figure out 
+    // the closest line number match, and only set breakpoints on that match.
+    
+    // Note also that if file_spec only had a file name and not a directory, there may be many different file spec's in
+    // the resultant list.  The closest line match for one will not be right for some totally different file.
+    // So we go through the match list and pull out the sets that have the same file spec in their line_entry
+    // and treat each set separately.
+    
+    uint32_t num_comp_units = context.module_sp->GetNumCompileUnits();
+    for (uint32_t i = 0; i < num_comp_units; i++)
     {
+        CompUnitSP cu_sp (context.module_sp->GetCompileUnitAtIndex (i));
+        if (filter.CompUnitPasses(*(cu_sp.get())))
+            cu_sp->ResolveSymbolContext (m_file_spec, m_line_number, m_inlines, false, eSymbolContextEverything, sc_list);
+    }
+    
+    while (sc_list.GetSize() > 0)
+    {
+        SymbolContextList tmp_sc_list;
+        int current_idx = 0;
         SymbolContext sc;
-        if (sc_list.GetContextAtIndex(i, sc))
+        bool first_entry = true;
+        
+        FileSpec match_file_spec;
+        uint32_t closest_line_number = UINT32_MAX;
+
+        // Pull out the first entry, and all the others that match its file spec, and stuff them in the tmp list.
+        while (current_idx < sc_list.GetSize())
         {
-            Address line_start = sc.line_entry.range.GetBaseAddress();
-            if (line_start.IsValid())
+            bool matches;
+            
+            sc_list.GetContextAtIndex (current_idx, sc);
+            if (first_entry)
             {
-                if (filter.AddressPasses(line_start))
-                {
-                    BreakpointLocationSP bp_loc_sp (m_breakpoint->AddLocation(line_start));
-                    if (log && bp_loc_sp && !m_breakpoint->IsInternal())
-                    {
-                        StreamString s;
-                        bp_loc_sp->GetDescription (&s, lldb::eDescriptionLevelVerbose);
-                        log->Printf ("Added location: %s\n", s.GetData());
-                    }
-                }
-                else if (log)
-                {
-                    log->Printf ("Breakpoint at file address 0x%llx for %s:%d didn't pass the filter.\n",
-                                 line_start.GetFileAddress(),
-                                 m_file_spec.GetFilename().AsCString("<Unknown>"),
-                                 m_line_number);
-                }
+                match_file_spec = sc.line_entry.file;
+                matches = true;
+                first_entry = false;
             }
             else
+                matches = (sc.line_entry.file == match_file_spec);
+            
+            if (matches)
             {
-                if (log)
-                    log->Printf ("error: Unable to set breakpoint at file address 0x%llx for %s:%d\n",
-                                 line_start.GetFileAddress(),
-                                 m_file_spec.GetFilename().AsCString("<Unknown>"),
-                                 m_line_number);
+                tmp_sc_list.Append (sc);
+                sc_list.RemoveContextAtIndex(current_idx);
+                
+                // ResolveSymbolContext will always return a number that is >= the line number you pass in.
+                // So the smaller line number is always better.
+                if (sc.line_entry.line < closest_line_number)
+                    closest_line_number = sc.line_entry.line;
+            }
+            else
+                current_idx++;
+        }
+            
+        // Okay, we've found the closest line number match, now throw away all the others, 
+        // and make breakpoints out of the closest line number match.
+        
+        uint32_t tmp_sc_list_size = tmp_sc_list.GetSize();
+        
+        for (uint32_t i = 0; i < tmp_sc_list_size; i++)
+        {
+            SymbolContext sc;
+            if (tmp_sc_list.GetContextAtIndex(i, sc))
+            {
+                if (sc.line_entry.line == closest_line_number)
+                {
+                    Address line_start = sc.line_entry.range.GetBaseAddress();
+                    if (line_start.IsValid())
+                    {
+                        if (filter.AddressPasses(line_start))
+                        {
+                            BreakpointLocationSP bp_loc_sp (m_breakpoint->AddLocation(line_start));
+                            if (log && bp_loc_sp && !m_breakpoint->IsInternal())
+                            {
+                                StreamString s;
+                                bp_loc_sp->GetDescription (&s, lldb::eDescriptionLevelVerbose);
+                                log->Printf ("Added location: %s\n", s.GetData());
+                            }
+                        }
+                        else if (log)
+                        {
+                            log->Printf ("Breakpoint at file address 0x%llx for %s:%d didn't pass the filter.\n",
+                                         line_start.GetFileAddress(),
+                                         m_file_spec.GetFilename().AsCString("<Unknown>"),
+                                         m_line_number);
+                        }
+                    }
+                    else
+                    {
+                        if (log)
+                            log->Printf ("error: Unable to set breakpoint at file address 0x%llx for %s:%d\n",
+                                         line_start.GetFileAddress(),
+                                         m_file_spec.GetFilename().AsCString("<Unknown>"),
+                                         m_line_number);
+                    }
+                }
+                else
+                {
+        #if 0
+                    s << "error: Breakpoint at '" << pos->c_str() << "' isn't resolved yet: \n";
+                    if (sc.line_entry.address.Dump(&s, Address::DumpStyleSectionNameOffset))
+                        s.EOL();
+                    if (sc.line_entry.address.Dump(&s, Address::DumpStyleSectionPointerOffset))
+                        s.EOL();
+                    if (sc.line_entry.address.Dump(&s, Address::DumpStyleFileAddress))
+                        s.EOL();
+                    if (sc.line_entry.address.Dump(&s, Address::DumpStyleLoadAddress))
+                        s.EOL();
+        #endif
+                }
             }
         }
-        else
-        {
-#if 0
-            s << "error: Breakpoint at '" << pos->c_str() << "' isn't resolved yet: \n";
-            if (sc.line_entry.address.Dump(&s, Address::DumpStyleSectionNameOffset))
-                s.EOL();
-            if (sc.line_entry.address.Dump(&s, Address::DumpStyleSectionPointerOffset))
-                s.EOL();
-            if (sc.line_entry.address.Dump(&s, Address::DumpStyleFileAddress))
-                s.EOL();
-            if (sc.line_entry.address.Dump(&s, Address::DumpStyleLoadAddress))
-                s.EOL();
-#endif
-        }
     }
+        
     return Searcher::eCallbackReturnContinue;
 }
 
 Searcher::Depth
 BreakpointResolverFileLine::GetDepth()
 {
-    return Searcher::eDepthCompUnit;
+    return Searcher::eDepthModule;
 }
 
 void
