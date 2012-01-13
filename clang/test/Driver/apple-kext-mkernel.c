@@ -1,4 +1,4 @@
-// RUN: %clang -target x86_64-apple-darwin10 \
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 \
 // RUN:   -mkernel -### -fsyntax-only %s 2> %t
 // RUN: FileCheck --check-prefix=CHECK-X86 < %t %s
 
@@ -7,7 +7,7 @@
 // CHECK-X86: "-fno-rtti"
 // CHECK-X86: "-fno-common"
 
-// RUN: %clang -target x86_64-apple-darwin10 \
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 \
 // RUN:   -arch armv7 -mkernel -### -fsyntax-only %s 2> %t
 // RUN: FileCheck --check-prefix=CHECK-ARM < %t %s
 

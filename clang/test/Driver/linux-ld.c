@@ -2,7 +2,7 @@
 // sysroot to make these tests independent of the host system.
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target i386-unknown-linux \
+// RUN:     -ccc-host-triple i386-unknown-linux \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-LD-32 %s
 // CHECK-LD-32: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
@@ -14,7 +14,7 @@
 // CHECK-LD-32: "-L[[SYSROOT]]/usr/lib"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target x86_64-unknown-linux \
+// RUN:     -ccc-host-triple x86_64-unknown-linux \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-LD-64 %s
 // CHECK-LD-64: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
@@ -26,7 +26,7 @@
 // CHECK-LD-64: "-L[[SYSROOT]]/usr/lib"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target i386-unknown-linux -m32 \
+// RUN:     -ccc-host-triple i386-unknown-linux -m32 \
 // RUN:     --sysroot=%S/Inputs/multilib_32bit_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-32-TO-32 %s
 // CHECK-32-TO-32: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
@@ -42,7 +42,7 @@
 // CHECK-32-TO-32: "-L[[SYSROOT]]/usr/lib"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target i386-unknown-linux -m64 \
+// RUN:     -ccc-host-triple i386-unknown-linux -m64 \
 // RUN:     --sysroot=%S/Inputs/multilib_32bit_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-32-TO-64 %s
 // CHECK-32-TO-64: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
@@ -59,7 +59,7 @@
 // CHECK-32-TO-64: "-L[[SYSROOT]]/usr/lib"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target x86_64-unknown-linux -m64 \
+// RUN:     -ccc-host-triple x86_64-unknown-linux -m64 \
 // RUN:     --sysroot=%S/Inputs/multilib_64bit_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-64-TO-64 %s
 // CHECK-64-TO-64: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
@@ -75,7 +75,7 @@
 // CHECK-64-TO-64: "-L[[SYSROOT]]/usr/lib"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target x86_64-unknown-linux -m32 \
+// RUN:     -ccc-host-triple x86_64-unknown-linux -m32 \
 // RUN:     --sysroot=%S/Inputs/multilib_64bit_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-64-TO-32 %s
 // CHECK-64-TO-32: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
@@ -92,7 +92,7 @@
 // CHECK-64-TO-32: "-L[[SYSROOT]]/usr/lib"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target i386-unknown-linux -m32 \
+// RUN:     -ccc-host-triple i386-unknown-linux -m32 \
 // RUN:     -ccc-install-dir %S/Inputs/fake_install_tree/bin \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-INSTALL-DIR-32 %s
@@ -103,7 +103,7 @@
 // Check that with 64-bit builds, we don't actually use the install directory
 // as its version of GCC is lower than our sysrooted version.
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target x86_64-unknown-linux -m64 \
+// RUN:     -ccc-host-triple x86_64-unknown-linux -m64 \
 // RUN:     -ccc-install-dir %S/Inputs/fake_install_tree/bin \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-INSTALL-DIR-64 %s
@@ -114,7 +114,7 @@
 // Check that we support unusual patch version formats, including missing that
 // component.
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target i386-unknown-linux -m32 \
+// RUN:     -ccc-host-triple i386-unknown-linux -m32 \
 // RUN:     -ccc-install-dir %S/Inputs/gcc_version_parsing1/bin \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-GCC-VERSION1 %s
@@ -122,7 +122,7 @@
 // CHECK-GCC-VERSION1: "{{.*}}/Inputs/gcc_version_parsing1/bin/../lib/gcc/i386-unknown-linux/4.7/crtbegin.o"
 // CHECK-GCC-VERSION1: "-L{{.*}}/Inputs/gcc_version_parsing1/bin/../lib/gcc/i386-unknown-linux/4.7"
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target i386-unknown-linux -m32 \
+// RUN:     -ccc-host-triple i386-unknown-linux -m32 \
 // RUN:     -ccc-install-dir %S/Inputs/gcc_version_parsing2/bin \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-GCC-VERSION2 %s
@@ -130,7 +130,7 @@
 // CHECK-GCC-VERSION2: "{{.*}}/Inputs/gcc_version_parsing2/bin/../lib/gcc/i386-unknown-linux/4.7.x/crtbegin.o"
 // CHECK-GCC-VERSION2: "-L{{.*}}/Inputs/gcc_version_parsing2/bin/../lib/gcc/i386-unknown-linux/4.7.x"
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target i386-unknown-linux -m32 \
+// RUN:     -ccc-host-triple i386-unknown-linux -m32 \
 // RUN:     -ccc-install-dir %S/Inputs/gcc_version_parsing3/bin \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-GCC-VERSION3 %s
@@ -138,7 +138,7 @@
 // CHECK-GCC-VERSION3: "{{.*}}/Inputs/gcc_version_parsing3/bin/../lib/gcc/i386-unknown-linux/4.7.99-rc5/crtbegin.o"
 // CHECK-GCC-VERSION3: "-L{{.*}}/Inputs/gcc_version_parsing3/bin/../lib/gcc/i386-unknown-linux/4.7.99-rc5"
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target i386-unknown-linux -m32 \
+// RUN:     -ccc-host-triple i386-unknown-linux -m32 \
 // RUN:     -ccc-install-dir %S/Inputs/gcc_version_parsing4/bin \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-GCC-VERSION4 %s
@@ -148,7 +148,7 @@
 //
 // Test a very broken version of multiarch that shipped in Ubuntu 11.04.
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target i386-unknown-linux \
+// RUN:     -ccc-host-triple i386-unknown-linux \
 // RUN:     --sysroot=%S/Inputs/ubuntu_11.04_multiarch_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-UBUNTU-11-04 %s
 // CHECK-UBUNTU-11-04: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
@@ -162,7 +162,7 @@
 //
 // Test the setup that shipped in SUSE 10.3 on ppc64.
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
-// RUN:     -target powerpc64-suse-linux \
+// RUN:     -ccc-host-triple powerpc64-suse-linux \
 // RUN:     --sysroot=%S/Inputs/suse_10.3_ppc64_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-SUSE-10-3-PPC64 %s
 // CHECK-SUSE-10-3-PPC64: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
@@ -175,22 +175,22 @@
 // Check that we do not pass --hash-style=gnu and --hash-style=both to linker
 // when build for MIPS platforms.
 // RUN: %clang %s -### -o %t.o 2>&1 \
-// RUN:     -target mips-linux-gnu -ccc-clang-archs mips \
+// RUN:     -ccc-host-triple mips-linux-gnu -ccc-clang-archs mips \
 // RUN:   | FileCheck --check-prefix=CHECK-MIPS %s
 // CHECK-MIPS: "{{.*}}ld{{(.exe)?}}"
 // CHECK-MIPS-NOT: "--hash-style={{gnu|both}}"
 // RUN: %clang %s -### -o %t.o 2>&1 \
-// RUN:     -target mipsel-linux-gnu -ccc-clang-archs mipsel \
+// RUN:     -ccc-host-triple mipsel-linux-gnu -ccc-clang-archs mipsel \
 // RUN:   | FileCheck --check-prefix=CHECK-MIPSEL %s
 // CHECK-MIPSEL: "{{.*}}ld{{(.exe)?}}"
 // CHECK-MIPSEL-NOT: "--hash-style={{gnu|both}}"
 // RUN: %clang %s -### -o %t.o 2>&1 \
-// RUN:     -target mips64-linux-gnu -ccc-clang-archs mips64 \
+// RUN:     -ccc-host-triple mips64-linux-gnu -ccc-clang-archs mips64 \
 // RUN:   | FileCheck --check-prefix=CHECK-MIPS64 %s
 // CHECK-MIPS64: "{{.*}}ld{{(.exe)?}}"
 // CHECK-MIPS64-NOT: "--hash-style={{gnu|both}}"
 // RUN: %clang %s -### -o %t.o 2>&1 \
-// RUN:     -target mips64el-linux-gnu -ccc-clang-archs mips64el \
+// RUN:     -ccc-host-triple mips64el-linux-gnu -ccc-clang-archs mips64el \
 // RUN:   | FileCheck --check-prefix=CHECK-MIPS64EL %s
 // CHECK-MIPS64EL: "{{.*}}ld{{(.exe)?}}"
 // CHECK-MIPS64EL-NOT: "--hash-style={{gnu|both}}"

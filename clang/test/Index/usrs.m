@@ -88,7 +88,7 @@ int test_multi_declaration(void) {
 @property (assign) id pro_ext;
 @end
 
-// RUN: c-index-test -test-load-source-usrs all -target x86_64-apple-macosx10.7 %s | FileCheck %s
+// RUN: c-index-test -test-load-source-usrs all -ccc-host-triple x86_64-apple-macosx10.7 %s | FileCheck %s
 // CHECK: usrs.m c:usrs.m@67@F@my_helper Extent=[3:1 - 3:60]
 // CHECK: usrs.m c:usrs.m@95@F@my_helper@x Extent=[3:29 - 3:34]
 // CHECK: usrs.m c:usrs.m@102@F@my_helper@y Extent=[3:36 - 3:41]

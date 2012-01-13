@@ -148,7 +148,7 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
     }
   }
 
-  // If -target arch-pc-win32-macho option specified, we're
+  // If -ccc-host-triple arch-pc-win32-macho option specified, we're
   // generating code for Win32 ABI. No need to emit
   // __ENVIRONMENT_XX_OS_VERSION_MIN_REQUIRED__.
   if (PlatformName == "win32") {
