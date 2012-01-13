@@ -3442,7 +3442,7 @@ def err_typecheck_member_reference_unknown : Error<
   "cannot refer to member %0 in %1 with '%select{.|->}2'">;
 def err_member_reference_needs_call : Error<
   "base of member reference is a function; perhaps you meant to call "
-  "it%select{| with no arguments}?">;
+  "it%select{| with no arguments}0?">;
 def warn_subscript_is_char : Warning<"array subscript is of type 'char'">,
   InGroup<CharSubscript>, DefaultIgnore;
 

@@ -147,3 +147,13 @@ namespace PR9025 {
     return fun5.x; // expected-error{{reference to overloaded function could not be resolved; did you mean to call it?}}
   }
 }
+
+namespace FuncInMemberExpr {
+  struct Vec { int size(); };
+  Vec fun1();
+  int test1() { return fun1.size(); } // expected-error {{base of member reference is a function; perhaps you meant to call it with no arguments}}
+  Vec *fun2();
+  int test2() { return fun2->size(); } // expected-error {{base of member reference is a function; perhaps you meant to call it with no arguments}}
+  Vec fun3(int x = 0);
+  int test3() { return fun3.size(); } // expected-error {{base of member reference is a function; perhaps you meant to call it with no arguments}}
+}

@@ -976,12 +976,10 @@ static bool isPointerToRecordType(QualType T) {
 /// Perform conversions on the LHS of a member access expression.
 ExprResult
 Sema::PerformMemberExprBaseConversion(Expr *Base, bool IsArrow) {
-  ExprResult BaseResult = DefaultFunctionArrayConversion(Base);
+  if (IsArrow && !Base->getType()->isFunctionType())
+    return DefaultFunctionArrayLvalueConversion(Base);
 
-  if (!BaseResult.isInvalid() && IsArrow)
-    BaseResult = DefaultLvalueConversion(BaseResult.take());
-
-  return BaseResult;
+  return CheckPlaceholderExpr(Base);
 }
 
 /// Look up the given member of the given non-type-dependent
@@ -1033,7 +1031,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
         << BaseType << int(IsArrow) << BaseExpr.get()->getSourceRange()
         << FixItHint::CreateReplacement(OpLoc, ".");
       IsArrow = false;
-    } else if (BaseType == Context.BoundMemberTy) {
+    } else if (BaseType->isFunctionType()) {
       goto fail;
     } else {
       Diag(MemberLoc, diag::err_typecheck_member_reference_arrow)
@@ -1365,7 +1363,7 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
   if (tryToRecoverWithCall(BaseExpr,
                            PDiag(diag::err_member_reference_needs_call),
                            /*complain*/ false,
-                           IsArrow ? &isRecordType : &isPointerToRecordType)) {
+                           IsArrow ? &isPointerToRecordType : &isRecordType)) {
     if (BaseExpr.isInvalid())
       return ExprError();
     BaseExpr = DefaultFunctionArrayConversion(BaseExpr.take());
