@@ -159,26 +159,32 @@ bool ConversionFixItGenerator::tryToFixConversion(const Expr *FullExpr,
   return false;
 }
 
+static bool isMacroDefined(const Sema &S, StringRef Name) {
+  return S.PP.getMacroInfo(&S.getASTContext().Idents.get(Name));
+}
+
 const char *Sema::getFixItZeroInitializerForType(QualType T) const {
-  // Suggest 'nil' if it's defined and appropriate.
-  if ((T->isObjCObjectPointerType() || T->isBlockPointerType()) &&
-      PP.getMacroInfo(&getASTContext().Idents.get("nil")))
-    return " = nil";
-  if (T->isRealFloatingType())
-    return " = 0.0";
-  if (T->isBooleanType() && LangOpts.CPlusPlus)
-    return " = false";
-  if (T->isPointerType() || T->isMemberPointerType()) {
-    if (LangOpts.CPlusPlus0x)
-      return " = nullptr";
-    // Check if 'NULL' is defined.
-    else if (PP.getMacroInfo(&getASTContext().Idents.get("NULL")))
-      return " = NULL";
-  }
-  if (T->isEnumeralType())
-    return 0;
-  if (T->isScalarType())
+  if (T->isScalarType()) {
+    // Suggest " = 0" for non-enumeration scalar types, unless we can find a
+    // better initializer.
+    if (T->isEnumeralType())
+      return 0;
+    if ((T->isObjCObjectPointerType() || T->isBlockPointerType()) &&
+        isMacroDefined(*this, "nil"))
+      return " = nil";
+    if (T->isRealFloatingType())
+      return " = 0.0";
+    if (T->isBooleanType() && LangOpts.CPlusPlus)
+      return " = false";
+    if (T->isPointerType() || T->isMemberPointerType()) {
+      if (LangOpts.CPlusPlus0x)
+        return " = nullptr";
+      else if (isMacroDefined(*this, "NULL"))
+        return " = NULL";
+    }
     return " = 0";
+  }
+
   const CXXRecordDecl *RD = T->getAsCXXRecordDecl();
   if (!RD || !RD->hasDefinition())
     return 0;
