@@ -341,20 +341,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
                            Result);
     }
   }
-  
-  // Look for private headers.
-  llvm::SmallString<128> PrivateHeadersDirName(FrameworkDir->getName());
-  llvm::sys::path::append(PrivateHeadersDirName, "PrivateHeaders");
-  if (const DirectoryEntry *Dir = FileMgr.getDirectory(PrivateHeadersDirName)) {
-    Module *Private = findOrCreateModule("Private", Result, 
-                                         /*IsFramework=*/false, 
-                                         /*IsExplicit=*/true).first;
-    setUmbrellaDir(Private, Dir);
-    Private->InferSubmodules = true;
-    Private->InferExplicitSubmodules = true;
-    Private->InferExportWildcard = true;
-  }
-  
+
   return Result;
 }
 
