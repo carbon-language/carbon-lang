@@ -703,11 +703,12 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
   }
 
   // Attempt to correct for typos in property names.
-  TypoCorrection Corrected = CorrectTypo(
+  DeclFilterCCC<ObjCPropertyDecl> Validator;
+  if (TypoCorrection Corrected = CorrectTypo(
       DeclarationNameInfo(MemberName, MemberLoc), LookupOrdinaryName, NULL,
-      NULL, IFace, false, CTC_NoKeywords, OPT);
-  if (ObjCPropertyDecl *Property =
-      Corrected.getCorrectionDeclAs<ObjCPropertyDecl>()) {
+      NULL, &Validator, IFace, false, OPT)) {
+    ObjCPropertyDecl *Property =
+        Corrected.getCorrectionDeclAs<ObjCPropertyDecl>();
     DeclarationName TypoResult = Corrected.getCorrection();
     Diag(MemberLoc, diag::err_property_not_found_suggest)
       << MemberName << QualType(OPT, 0) << TypoResult
@@ -847,6 +848,24 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
                      << &propertyName << Context.getObjCInterfaceType(IFace));
 }
 
+namespace {
+
+class ObjCInterfaceOrSuperCCC : public CorrectionCandidateCallback {
+ public:
+  ObjCInterfaceOrSuperCCC(ObjCMethodDecl *Method) {
+    // Determine whether "super" is acceptable in the current context.
+    if (Method && Method->getClassInterface())
+      WantObjCSuper = Method->getClassInterface()->getSuperClass();
+  }
+
+  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+    return candidate.getCorrectionDeclAs<ObjCInterfaceDecl>() ||
+        candidate.isKeyword("super");
+  }
+};
+
+}
+
 Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
                                                IdentifierInfo *Name,
                                                SourceLocation NameLoc,
@@ -916,39 +935,32 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
   }
   }
 
-  // Determine our typo-correction context.
-  CorrectTypoContext CTC = CTC_Expression;
-  if (ObjCMethodDecl *Method = getCurMethodDecl())
-    if (Method->getClassInterface() &&
-        Method->getClassInterface()->getSuperClass())
-      CTC = CTC_ObjCMessageReceiver;
-      
+  ObjCInterfaceOrSuperCCC Validator(getCurMethodDecl());
   if (TypoCorrection Corrected = CorrectTypo(Result.getLookupNameInfo(),
                                              Result.getLookupKind(), S, NULL,
-                                             NULL, false, CTC)) {
-    if (NamedDecl *ND = Corrected.getCorrectionDecl()) {
-      // If we found a declaration, correct when it refers to an Objective-C
-      // class.
-      if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(ND)) {
-        Diag(NameLoc, diag::err_unknown_receiver_suggest)
-          << Name << Corrected.getCorrection()
-          << FixItHint::CreateReplacement(SourceRange(NameLoc),
-                                          ND->getNameAsString());
-        Diag(ND->getLocation(), diag::note_previous_decl)
-          << Corrected.getCorrection();
-
-        QualType T = Context.getObjCInterfaceType(Class);
-        TypeSourceInfo *TSInfo = Context.getTrivialTypeSourceInfo(T, NameLoc);
-        ReceiverType = CreateParsedType(T, TSInfo);
-        return ObjCClassMessage;
-      }
-    } else if (Corrected.isKeyword() &&
-               Corrected.getCorrectionAsIdentifierInfo()->isStr("super")) {
-      // If we've found the keyword "super", this is a send to super.
+                                             &Validator)) {
+    if (Corrected.isKeyword()) {
+      // If we've found the keyword "super" (the only keyword that would be
+      // returned by CorrectTypo), this is a send to super.
       Diag(NameLoc, diag::err_unknown_receiver_suggest)
         << Name << Corrected.getCorrection()
         << FixItHint::CreateReplacement(SourceRange(NameLoc), "super");
       return ObjCSuperMessage;
+    } else if (ObjCInterfaceDecl *Class =
+               Corrected.getCorrectionDeclAs<ObjCInterfaceDecl>()) {
+      // If we found a declaration, correct when it refers to an Objective-C
+      // class.
+      Diag(NameLoc, diag::err_unknown_receiver_suggest)
+        << Name << Corrected.getCorrection()
+        << FixItHint::CreateReplacement(SourceRange(NameLoc),
+                                        Class->getNameAsString());
+      Diag(Class->getLocation(), diag::note_previous_decl)
+        << Corrected.getCorrection();
+
+      QualType T = Context.getObjCInterfaceType(Class);
+      TypeSourceInfo *TSInfo = Context.getTrivialTypeSourceInfo(T, NameLoc);
+      ReceiverType = CreateParsedType(T, TSInfo);
+      return ObjCClassMessage;
     }
   }
   

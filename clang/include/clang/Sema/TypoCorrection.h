@@ -110,6 +110,12 @@ public:
         CorrectionDecls.front() == 0;
   }
 
+  // Check if this TypoCorrection is the given keyword.
+  template<std::size_t StrLen>
+  bool isKeyword(const char (&Str)[StrLen]) const {
+    return isKeyword() && getCorrectionAsIdentifierInfo()->isStr(Str);
+  }
+
   // Returns true if the correction either is a keyword or has a known decl.
   bool isResolved() const { return !CorrectionDecls.empty(); }
 
@@ -135,8 +141,8 @@ private:
   unsigned EditDistance;
 };
 
-// @brief Base class for callback objects used by Sema::CorrectTypo to check the
-// validity of a potential typo correction.
+/// @brief Base class for callback objects used by Sema::CorrectTypo to check
+/// the validity of a potential typo correction.
 class CorrectionCandidateCallback {
  public:
   CorrectionCandidateCallback()
@@ -161,6 +167,16 @@ class CorrectionCandidateCallback {
   // Temporary hack for the one case where a CorrectTypoContext enum is used
   // when looking up results.
   bool IsObjCIvarLookup;
+};
+
+/// @brief Simple template class for restricting typo correction candidates
+/// to ones having a single Decl* of the given type.
+template <class C>
+class DeclFilterCCC : public CorrectionCandidateCallback {
+ public:
+  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+    return candidate.getCorrectionDeclAs<C>();
+  }
 };
 
 }

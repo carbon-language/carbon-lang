@@ -347,6 +347,28 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
   }
 }
 
+namespace {
+
+// Callback to only accept typo corrections that are Objective-C classes.
+// If an ObjCInterfaceDecl* is given to the constructor, then the validation
+// function will reject corrections to that class.
+class ObjCInterfaceValidatorCCC : public CorrectionCandidateCallback {
+ public:
+  ObjCInterfaceValidatorCCC() : CurrentIDecl(0) {}
+  explicit ObjCInterfaceValidatorCCC(ObjCInterfaceDecl *IDecl)
+      : CurrentIDecl(IDecl) {}
+
+  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+    ObjCInterfaceDecl *ID = candidate.getCorrectionDeclAs<ObjCInterfaceDecl>();
+    return ID && !declaresSameEntity(ID, CurrentIDecl);
+  }
+
+ private:
+  ObjCInterfaceDecl *CurrentIDecl;
+};
+
+}
+
 Decl *Sema::
 ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                          IdentifierInfo *ClassName, SourceLocation ClassLoc,
@@ -396,20 +418,17 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                                 LookupOrdinaryName);
 
     if (!PrevDecl) {
-      // Try to correct for a typo in the superclass name.
-      TypoCorrection Corrected = CorrectTypo(
+      // Try to correct for a typo in the superclass name without correcting
+      // to the class we're defining.
+      ObjCInterfaceValidatorCCC Validator(IDecl);
+      if (TypoCorrection Corrected = CorrectTypo(
           DeclarationNameInfo(SuperName, SuperLoc), LookupOrdinaryName, TUScope,
-          NULL, NULL, false, CTC_NoKeywords);
-      if ((PrevDecl = Corrected.getCorrectionDeclAs<ObjCInterfaceDecl>())) {
-        if (declaresSameEntity(PrevDecl, IDecl)) {
-          // Don't correct to the class we're defining.
-          PrevDecl = 0;
-        } else {
-          Diag(SuperLoc, diag::err_undef_superclass_suggest)
-            << SuperName << ClassName << PrevDecl->getDeclName();
-          Diag(PrevDecl->getLocation(), diag::note_previous_decl)
-            << PrevDecl->getDeclName();
-        }
+          NULL, &Validator)) {
+        PrevDecl = Corrected.getCorrectionDeclAs<ObjCInterfaceDecl>();
+        Diag(SuperLoc, diag::err_undef_superclass_suggest)
+          << SuperName << ClassName << PrevDecl->getDeclName();
+        Diag(PrevDecl->getLocation(), diag::note_previous_decl)
+          << PrevDecl->getDeclName();
       }
     }
 
@@ -633,9 +652,10 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
     ObjCProtocolDecl *PDecl = LookupProtocol(ProtocolId[i].first,
                                              ProtocolId[i].second);
     if (!PDecl) {
+      DeclFilterCCC<ObjCProtocolDecl> Validator;
       TypoCorrection Corrected = CorrectTypo(
           DeclarationNameInfo(ProtocolId[i].first, ProtocolId[i].second),
-          LookupObjCProtocolName, TUScope, NULL, NULL, false, CTC_NoKeywords);
+          LookupObjCProtocolName, TUScope, NULL, &Validator);
       if ((PDecl = Corrected.getCorrectionDeclAs<ObjCProtocolDecl>())) {
         Diag(ProtocolId[i].second, diag::err_undeclared_protocol_suggest)
           << ProtocolId[i].first << Corrected.getCorrection();
@@ -870,15 +890,16 @@ Decl *Sema::ActOnStartClassImplementation(
   } else {
     // We did not find anything with the name ClassName; try to correct for 
     // typos in the class name.
-    TypoCorrection Corrected = CorrectTypo(
+    ObjCInterfaceValidatorCCC Validator;
+    if (TypoCorrection Corrected = CorrectTypo(
         DeclarationNameInfo(ClassName, ClassLoc), LookupOrdinaryName, TUScope,
-        NULL, NULL, false, CTC_NoKeywords);
-    if ((IDecl = Corrected.getCorrectionDeclAs<ObjCInterfaceDecl>())) {
+        NULL, &Validator)) {
       // Suggest the (potentially) correct interface name. However, put the
       // fix-it hint itself in a separate note, since changing the name in 
       // the warning would make the fix-it change semantics.However, don't
       // provide a code-modification hint or use the typo name for recovery,
       // because this is just a warning. The program may actually be correct.
+      IDecl = Corrected.getCorrectionDeclAs<ObjCInterfaceDecl>();
       DeclarationName CorrectedName = Corrected.getCorrection();
       Diag(ClassLoc, diag::warn_undef_interface_suggest)
         << ClassName << CorrectedName;
