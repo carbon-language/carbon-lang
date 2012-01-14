@@ -2702,6 +2702,10 @@ Decl *Sema::ActOnMethodDeclaration(
     // Apply the attributes to the parameter.
     ProcessDeclAttributeList(TUScope, Param, ArgInfo[i].ArgAttrs);
 
+    if (Param->hasAttr<BlocksAttr>()) {
+      Diag(Param->getLocation(), diag::err_block_on_nonlocal);
+      Param->setInvalidDecl();
+    }
     S->AddDecl(Param);
     IdResolver.AddDecl(Param);
 
