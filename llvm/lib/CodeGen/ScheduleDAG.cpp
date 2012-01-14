@@ -321,7 +321,7 @@ void SUnit::dumpAll(const ScheduleDAG *G) const {
         dbgs() << " *";
       dbgs() << ": Latency=" << I->getLatency();
       if (I->isAssignedRegDep())
-        dbgs() << " Reg=" << G->TRI->getName(I->getReg());
+        dbgs() << " Reg=" << PrintReg(I->getReg());
       dbgs() << "\n";
     }
   }

@@ -166,8 +166,10 @@ void ScheduleDAGInstrs::AddSchedBarrierDeps() {
       unsigned Reg = MO.getReg();
       if (Reg == 0) continue;
 
-      assert(TRI->isPhysicalRegister(Reg) && "Virtual register encountered!");
-      Uses[Reg].push_back(&ExitSU);
+      if (TRI->isPhysicalRegister(Reg))
+        Uses[Reg].push_back(&ExitSU);
+      else
+        assert(!IsPostRA && "Virtual register encountered after regalloc.");
     }
   } else {
     // For others, e.g. fallthrough, conditional branch, assume the exit
@@ -343,11 +345,73 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
   }
 }
 
-/// addVirtRegDeps - Add register dependencies (data, anti, and output) from
-/// this SUnit to following instructions in the same scheduling region that
-/// depend the virtual register referenced at OperIdx.
-void ScheduleDAGInstrs::addVirtRegDeps(SUnit *SU, unsigned OperIdx) {
-  assert(false && "unimplemented");
+/// addVRegDefDeps - Add register output and data dependencies from this SUnit
+/// to instructions that occur later in the same scheduling region if they read
+/// from or write to the virtual register defined at OperIdx.
+///
+/// TODO: Hoist loop induction variable increments. This has to be
+/// reevaluated. Generally, IV scheduling should be done before coalescing.
+void ScheduleDAGInstrs::addVRegDefDeps(SUnit *SU, unsigned OperIdx) {
+  const MachineInstr *MI = SU->getInstr();
+  unsigned Reg = MI->getOperand(OperIdx).getReg();
+
+  const TargetSubtargetInfo &ST = TM.getSubtarget<TargetSubtargetInfo>();
+
+  // Add output dependence to the next nearest def of this vreg.
+  //
+  // Unless this definition is dead, the output dependence should be
+  // transitively redundant with antidependencies from this definition's
+  // uses. We're conservative for now until we have a way to guarantee the uses
+  // are not eliminated sometime during scheduling. The output dependence edge
+  // is also useful if output latency exceeds def-use latency.
+  SUnit *DefSU = VRegDefs[Reg];
+  if (DefSU && DefSU != SU && DefSU != &ExitSU) {
+    unsigned OutLatency = TII->getOutputLatency(InstrItins, MI, OperIdx,
+                                                DefSU->getInstr());
+    DefSU->addPred(SDep(SU, SDep::Output, OutLatency, Reg));
+  }
+  VRegDefs[Reg] = SU;
+
+  // Add data dependence to any uses of this vreg before the next nearest def.
+  //
+  // TODO: Handle ExitSU properly.
+  //
+  // TODO: Data dependence could be handled more efficiently at the use-side.
+  std::vector<SUnit*> &UseList = VRegUses[Reg];
+  for (std::vector<SUnit*>::const_iterator UI = UseList.begin(),
+         UE = UseList.end(); UI != UE; ++UI) {
+    SUnit *UseSU = *UI;
+    if (UseSU == SU) continue;
+
+    // TODO: Handle "special" address latencies cleanly.
+    const SDep& dep = SDep(SU, SDep::Data, SU->Latency, Reg);
+    if (!UnitLatencies) {
+      // Adjust the dependence latency using operand def/use information, then
+      // allow the target to perform its own adjustments.
+      ComputeOperandLatency(SU, UseSU, const_cast<SDep &>(dep));
+      ST.adjustSchedDependency(SU, UseSU, const_cast<SDep &>(dep));
+    }
+    UseSU->addPred(dep);
+  }
+  UseList.clear();
+}
+
+/// addVRegUseDeps - Add register antidependencies from this SUnit to
+/// instructions that occur later in the same scheduling region if they
+/// write the virtual register referenced at OperIdx.
+void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
+  unsigned Reg = SU->getInstr()->getOperand(OperIdx).getReg();
+
+  // Add antidependence to the following def of the vreg it uses.
+  SUnit *DefSU = VRegDefs[Reg];
+  if (DefSU && DefSU != SU)
+    DefSU->addPred(SDep(SU, SDep::Anti, 0, Reg));
+
+  // Add this SUnit to the use list of the vreg it uses.
+  //
+  // TODO: pinch the DAG before we see too many uses to avoid quadratic
+  // behavior. Limiting the scheduling window can accomplish the same thing.
+  VRegUses[Reg].push_back(SU);
 }
 
 void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
@@ -380,6 +444,15 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
   for (int i = 0, e = TRI->getNumRegs(); i != e; ++i) {
     assert(Defs[i].empty() && "Only BuildGraph should push/pop Defs");
   }
+
+  // Reinitialize the large VReg vectors, while reusing the memory.
+  //
+  // Note: this can be an expensive part of DAG building. We may want to be more
+  // clever. Reevaluate after VRegUses goes away.
+  assert(VRegDefs.size() == 0 && VRegUses.size() == 0 &&
+         "Only BuildSchedGraph should access VRegDefs/Uses");
+  VRegDefs.resize(MF.getRegInfo().getNumVirtRegs());
+  VRegUses.resize(MF.getRegInfo().getNumVirtRegs());
 
   // Walk the list of instructions, from bottom moving up.
   MachineInstr *PrevMI = NULL;
@@ -420,7 +493,10 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
         addPhysRegDeps(SU, j);
       else {
         assert(!IsPostRA && "Virtual register encountered!");
-        addVirtRegDeps(SU, j);
+        if (MO.isDef())
+          addVRegDefDeps(SU, j);
+        else
+          addVRegUseDeps(SU, j);
       }
     }
 
@@ -578,6 +654,8 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
     Defs[i].clear();
     Uses[i].clear();
   }
+  VRegDefs.clear();
+  VRegUses.clear();
   PendingLoads.clear();
 }
 

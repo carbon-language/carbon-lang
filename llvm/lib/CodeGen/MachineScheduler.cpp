@@ -214,22 +214,26 @@ bool MachineSchedulerPass::runOnMachineFunction(MachineFunction &mf) {
       // The next region starts above the previous region. Look backward in the
       // instruction stream until we find the nearest boundary.
       MachineBasicBlock::iterator I = RegionEnd;
-      for(;I != MBB->begin(); --I) {
+      for(;I != MBB->begin(); --I, --RemainingCount) {
         if (TII->isSchedulingBoundary(llvm::prior(I), MBB, *MF))
           break;
       }
-      if (I == RegionEnd || I == llvm::prior(RegionEnd)) {
-        // Skip empty or single instruction scheduling regions.
+      if (I == RegionEnd) {
+        // Skip empty scheduling regions.
         RegionEnd = llvm::prior(RegionEnd);
+        --RemainingCount;
         continue;
       }
-      DEBUG(dbgs() << "MachineScheduling " << MF->getFunction()->getName()
-            << ":BB#" << MBB->getNumber() << "\n  From: " << *I << " To: "
-            << *RegionEnd << " Remaining: " << RemainingCount << "\n");
+      // Schedule regions with more than one instruction.
+      if (I != llvm::prior(RegionEnd)) {
+        DEBUG(dbgs() << "MachineScheduling " << MF->getFunction()->getName()
+              << ":BB#" << MBB->getNumber() << "\n  From: " << *I << "    To: "
+              << *RegionEnd << " Remaining: " << RemainingCount << "\n");
 
-      // Inform ScheduleDAGInstrs of the region being scheduler. It calls back
-      // to our Schedule() method.
-      Scheduler->Run(MBB, I, RegionEnd, MBB->size());
+        // Inform ScheduleDAGInstrs of the region being scheduled. It calls back
+        // to our Schedule() method.
+        Scheduler->Run(MBB, I, RegionEnd, MBB->size());
+      }
       RegionEnd = I;
     }
     assert(RemainingCount == 0 && "Instruction count mismatch!");

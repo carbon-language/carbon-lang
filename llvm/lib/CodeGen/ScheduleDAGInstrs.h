@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include <map>
 
@@ -107,7 +108,8 @@ namespace llvm {
     /// isPostRA flag indicates vregs cannot be present.
     bool IsPostRA;
 
-    /// UnitLatencies flag forces single-cycle data dependencies.
+    /// UnitLatencies (misnamed) flag avoids computing def-use latencies, using
+    /// the def-side latency only.
     bool UnitLatencies;
 
     /// Defs, Uses - Remember where defs and uses of each register are as we
@@ -116,6 +118,13 @@ namespace llvm {
     /// destructed for each block.
     std::vector<std::vector<SUnit *> > Defs;
     std::vector<std::vector<SUnit *> > Uses;
+
+    // Virtual register Defs and Uses.
+    //
+    // TODO: Eliminate VRegUses by creating SUnits in a prepass and looking up
+    // the live range's reaching def.
+    IndexedMap<SUnit*, VirtReg2IndexFunctor> VRegDefs;
+    IndexedMap<std::vector<SUnit*>, VirtReg2IndexFunctor> VRegUses;
 
     /// PendingLoads - Remember where unknown loads are after the most recent
     /// unknown store, as we iterate. As with Defs and Uses, this is here
@@ -211,7 +220,8 @@ namespace llvm {
 
   protected:
     void addPhysRegDeps(SUnit *SU, unsigned OperIdx);
-    void addVirtRegDeps(SUnit *SU, unsigned OperIdx);
+    void addVRegDefDeps(SUnit *SU, unsigned OperIdx);
+    void addVRegUseDeps(SUnit *SU, unsigned OperIdx);
   };
 }
 
