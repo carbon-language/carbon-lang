@@ -659,11 +659,6 @@ namespace clang {
       StandardConversionSequence FinalConversion;
     };
 
-    ~OverloadCandidate() {
-      for (unsigned i = 0, e = NumConversions; i != e; ++i)
-        Conversions[i].~ImplicitConversionSequence();
-    }
-
     /// hasAmbiguousConversion - Returns whether this overload
     /// candidate requires an ambiguous conversion or not.
     bool hasAmbiguousConversion() const {
@@ -696,7 +691,8 @@ namespace clang {
 
     // Allocator for OverloadCandidate::Conversions. We store the first few
     // elements inline to avoid allocation for small sets.
-    llvm::BumpPtrAllocator ConversionSequenceAllocator;
+    llvm::SpecificBumpPtrAllocator<ImplicitConversionSequence>
+      ConversionSequenceAllocator;
 
     SourceLocation Loc;
 
@@ -708,10 +704,6 @@ namespace clang {
     
   public:
     OverloadCandidateSet(SourceLocation Loc) : Loc(Loc), NumInlineSequences(0){}
-    ~OverloadCandidateSet() {
-      // Destroy OverloadCandidates before the allocator is destroyed.
-      Candidates.clear();
-    }
 
     SourceLocation getLocation() const { return Loc; }
 
@@ -746,8 +738,7 @@ namespace clang {
         NumInlineSequences += NumConversions;
       } else {
         // Otherwise get memory from the allocator.
-        C.Conversions = ConversionSequenceAllocator
-                          .Allocate<ImplicitConversionSequence>(NumConversions);
+        C.Conversions = ConversionSequenceAllocator.Allocate(NumConversions);
       }
 
       // Construct the new objects.

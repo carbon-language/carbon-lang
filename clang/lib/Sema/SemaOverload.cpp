@@ -541,9 +541,13 @@ OverloadCandidate::DeductionFailureInfo::getSecondArg() {
 }
 
 void OverloadCandidateSet::clear() {
+  for (unsigned i = 0, e = NumInlineSequences; i != e; ++i)
+    reinterpret_cast<ImplicitConversionSequence*>(InlineSpace)[i]
+                                                 .~ImplicitConversionSequence();
+  NumInlineSequences = 0;
+  ConversionSequenceAllocator.DestroyAll();
   Candidates.clear();
   Functions.clear();
-  NumInlineSequences = 0;
 }
 
 namespace {
