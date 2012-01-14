@@ -359,13 +359,16 @@ Debugger::Clear()
     int num_targets = m_target_list.GetNumTargets();
     for (int i = 0; i < num_targets; i++)
     {
-        ProcessSP process_sp (m_target_list.GetTargetAtIndex (i)->GetProcessSP());
-        if (process_sp)
+        TargetSP target_sp (m_target_list.GetTargetAtIndex (i));
+        if (target_sp)
         {
-            if (process_sp->GetShouldDetach())
-                process_sp->Detach();
-            else
-                process_sp->Destroy();
+            ProcessSP process_sp (target_sp->GetProcessSP());
+            if (process_sp)
+            {
+                if (process_sp->GetShouldDetach())
+                    process_sp->Detach();
+            }
+            target_sp->Destroy();
         }
     }
     DisconnectInput();
@@ -776,6 +779,7 @@ TestPromptFormats (StackFrame *frame)
     "{frame.reg.carp = '${frame.reg.carp}'\n}"
     "{function.id = '${function.id}'\n}"
     "{function.name = '${function.name}'\n}"
+    "{function.name-with-args = '${function.name-with-args}'\n}"
     "{function.addr-offset = '${function.addr-offset}'\n}"
     "{function.line-offset = '${function.line-offset}'\n}"
     "{function.pc-offset = '${function.pc-offset}'\n}"
