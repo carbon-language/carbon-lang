@@ -707,7 +707,7 @@ namespace clang {
     OverloadCandidateSet &operator=(const OverloadCandidateSet &);
     
   public:
-    OverloadCandidateSet(SourceLocation Loc) : NumInlineSequences(0), Loc(Loc){}
+    OverloadCandidateSet(SourceLocation Loc) : Loc(Loc), NumInlineSequences(0){}
     ~OverloadCandidateSet() {
       // Destroy OverloadCandidates before the allocator is destroyed.
       Candidates.clear();
@@ -739,7 +739,7 @@ namespace clang {
 
       // Assign space from the inline array if there are enough free slots
       // available.
-      if (NumConversions + NumInlineSequences < 16) {
+      if (NumConversions + NumInlineSequences <= 16) {
         ImplicitConversionSequence *I =
           (ImplicitConversionSequence*)InlineSpace;
         C.Conversions = &I[NumInlineSequences];
