@@ -157,7 +157,7 @@ class MachineScheduler : public ScheduleDAGInstrs {
   MachineSchedulerPass *Pass;
 public:
   MachineScheduler(MachineSchedulerPass *P):
-    ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT), Pass(P) {}
+    ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT, /*IsPostRA=*/false), Pass(P) {}
 
   /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
   /// time to do some work.
@@ -252,7 +252,7 @@ class InstructionShuffler : public ScheduleDAGInstrs {
   MachineSchedulerPass *Pass;
 public:
   InstructionShuffler(MachineSchedulerPass *P):
-    ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT), Pass(P) {}
+    ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT, /*IsPostRA=*/false), Pass(P) {}
 
   /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
   /// time to do some work.

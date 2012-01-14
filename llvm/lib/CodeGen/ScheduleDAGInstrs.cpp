@@ -33,9 +33,10 @@ using namespace llvm;
 
 ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
                                      const MachineLoopInfo &mli,
-                                     const MachineDominatorTree &mdt)
+                                     const MachineDominatorTree &mdt,
+                                     bool IsPostRAFlag)
   : ScheduleDAG(mf), MLI(mli), MDT(mdt), MFI(mf.getFrameInfo()),
-    InstrItins(mf.getTarget().getInstrItineraryData()),
+    InstrItins(mf.getTarget().getInstrItineraryData()), IsPostRA(IsPostRAFlag),
     Defs(TRI->getNumRegs()), Uses(TRI->getNumRegs()),
     LoopRegs(MLI, MDT), FirstDbgValue(0) {
   DbgValues.clear();
@@ -253,7 +254,8 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
       unsigned Reg = MO.getReg();
       if (Reg == 0) continue;
 
-      assert(TRI->isPhysicalRegister(Reg) && "Virtual register encountered!");
+      assert(!IsPostRA || TRI->isPhysicalRegister(Reg) &&
+             "Virtual register encountered!");
 
       // Optionally add output and anti dependencies. For anti
       // dependencies we use a latency of 0 because for a multi-issue

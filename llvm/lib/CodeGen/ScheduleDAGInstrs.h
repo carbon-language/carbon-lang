@@ -104,10 +104,13 @@ namespace llvm {
     const MachineFrameInfo *MFI;
     const InstrItineraryData *InstrItins;
 
-    /// Defs, Uses - Remember where defs and uses of each physical register
-    /// are as we iterate upward through the instructions. This is allocated
-    /// here instead of inside BuildSchedGraph to avoid the need for it to be
-    /// initialized and destructed for each block.
+    /// isPostRA flag indicates vregs cannot be present.
+    bool IsPostRA;
+
+    /// Defs, Uses - Remember where defs and uses of each register are as we
+    /// iterate upward through the instructions. This is allocated here instead
+    /// of inside BuildSchedGraph to avoid the need for it to be initialized and
+    /// destructed for each block.
     std::vector<std::vector<SUnit *> > Defs;
     std::vector<std::vector<SUnit *> > Uses;
 
@@ -136,7 +139,8 @@ namespace llvm {
 
     explicit ScheduleDAGInstrs(MachineFunction &mf,
                                const MachineLoopInfo &mli,
-                               const MachineDominatorTree &mdt);
+                               const MachineDominatorTree &mdt,
+                               bool IsPostRAFlag);
 
     virtual ~ScheduleDAGInstrs() {}
 
