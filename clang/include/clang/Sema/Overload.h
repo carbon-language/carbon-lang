@@ -680,8 +680,8 @@ namespace clang {
 
   /// OverloadCandidateSet - A set of overload candidates, used in C++
   /// overload resolution (C++ 13.3).
-  class OverloadCandidateSet : public SmallVector<OverloadCandidate, 16> {
-    typedef SmallVector<OverloadCandidate, 16> inherited;
+  class OverloadCandidateSet {
+    SmallVector<OverloadCandidate, 16> Candidates;
     llvm::SmallPtrSet<Decl *, 16> Functions;
 
     SourceLocation Loc;    
@@ -702,6 +702,21 @@ namespace clang {
 
     /// \brief Clear out all of the candidates.
     void clear();
+
+    typedef SmallVector<OverloadCandidate, 16>::iterator iterator;
+    iterator begin() { return Candidates.begin(); }
+    iterator end() { return Candidates.end(); }
+
+    size_t size() const { return Candidates.size(); }
+    bool empty() const { return Candidates.empty(); }
+
+    /// \brief Add a new candidate with NumConversions conversion sequence slots
+    /// to the overload set.
+    OverloadCandidate &addCandidate(unsigned NumConversions = 0) {
+      Candidates.push_back(OverloadCandidate());
+      Candidates.back().Conversions.resize(NumConversions);
+      return Candidates.back();
+    }
 
     /// Find the best viable function on this overload set, if it exists.
     OverloadingResult BestViableFunction(Sema &S, SourceLocation Loc,

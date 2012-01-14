@@ -541,7 +541,7 @@ OverloadCandidate::DeductionFailureInfo::getSecondArg() {
 }
 
 void OverloadCandidateSet::clear() {
-  inherited::clear();
+  Candidates.clear();
   Functions.clear();
 }
 
@@ -4647,8 +4647,7 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   }
 
   // Add this candidate
-  CandidateSet.push_back(OverloadCandidate());
-  OverloadCandidate& Candidate = CandidateSet.back();
+  OverloadCandidate &Candidate = CandidateSet.addCandidate(NumArgs);
   Candidate.FoundDecl = FoundDecl;
   Candidate.Function = Function;
   Candidate.Viable = true;
@@ -4692,7 +4691,6 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
 
   // Determine the implicit conversion sequences for each of the
   // arguments.
-  Candidate.Conversions.resize(NumArgs);
   for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
     if (ArgIdx < NumArgsInProto) {
       // (C++ 13.3.2p3): for F to be a viable function, there shall
@@ -4815,8 +4813,7 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, DeclAccessPair FoundDecl,
   EnterExpressionEvaluationContext Unevaluated(*this, Sema::Unevaluated);
 
   // Add this candidate
-  CandidateSet.push_back(OverloadCandidate());
-  OverloadCandidate& Candidate = CandidateSet.back();
+  OverloadCandidate &Candidate = CandidateSet.addCandidate(NumArgs + 1);
   Candidate.FoundDecl = FoundDecl;
   Candidate.Function = Method;
   Candidate.IsSurrogate = false;
@@ -4848,7 +4845,6 @@ Sema::AddMethodCandidate(CXXMethodDecl *Method, DeclAccessPair FoundDecl,
   }
 
   Candidate.Viable = true;
-  Candidate.Conversions.resize(NumArgs + 1);
 
   if (Method->isStatic() || ObjectType.isNull())
     // The implicit object argument is ignored.
@@ -4925,8 +4921,7 @@ Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
   if (TemplateDeductionResult Result
       = DeduceTemplateArguments(MethodTmpl, ExplicitTemplateArgs,
                                 Args, NumArgs, Specialization, Info)) {
-    CandidateSet.push_back(OverloadCandidate());
-    OverloadCandidate &Candidate = CandidateSet.back();
+    OverloadCandidate &Candidate = CandidateSet.addCandidate();
     Candidate.FoundDecl = FoundDecl;
     Candidate.Function = MethodTmpl->getTemplatedDecl();
     Candidate.Viable = false;
@@ -4976,8 +4971,7 @@ Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
   if (TemplateDeductionResult Result
         = DeduceTemplateArguments(FunctionTemplate, ExplicitTemplateArgs,
                                   Args, NumArgs, Specialization, Info)) {
-    CandidateSet.push_back(OverloadCandidate());
-    OverloadCandidate &Candidate = CandidateSet.back();
+    OverloadCandidate &Candidate = CandidateSet.addCandidate();
     Candidate.FoundDecl = FoundDecl;
     Candidate.Function = FunctionTemplate->getTemplatedDecl();
     Candidate.Viable = false;
@@ -5019,8 +5013,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   EnterExpressionEvaluationContext Unevaluated(*this, Sema::Unevaluated);
 
   // Add this candidate
-  CandidateSet.push_back(OverloadCandidate());
-  OverloadCandidate& Candidate = CandidateSet.back();
+  OverloadCandidate &Candidate = CandidateSet.addCandidate(1);
   Candidate.FoundDecl = FoundDecl;
   Candidate.Function = Conversion;
   Candidate.IsSurrogate = false;
@@ -5029,7 +5022,6 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
   Candidate.FinalConversion.setFromType(ConvType);
   Candidate.FinalConversion.setAllToTypes(ToType);
   Candidate.Viable = true;
-  Candidate.Conversions.resize(1);
   Candidate.ExplicitCallArguments = 1;
 
   // C++ [over.match.funcs]p4:
@@ -5163,8 +5155,7 @@ Sema::AddTemplateConversionCandidate(FunctionTemplateDecl *FunctionTemplate,
   if (TemplateDeductionResult Result
         = DeduceTemplateArguments(FunctionTemplate, ToType,
                                   Specialization, Info)) {
-    CandidateSet.push_back(OverloadCandidate());
-    OverloadCandidate &Candidate = CandidateSet.back();
+    OverloadCandidate &Candidate = CandidateSet.addCandidate();
     Candidate.FoundDecl = FoundDecl;
     Candidate.Function = FunctionTemplate->getTemplatedDecl();
     Candidate.Viable = false;
@@ -5202,15 +5193,13 @@ void Sema::AddSurrogateCandidate(CXXConversionDecl *Conversion,
   // Overload resolution is always an unevaluated context.
   EnterExpressionEvaluationContext Unevaluated(*this, Sema::Unevaluated);
 
-  CandidateSet.push_back(OverloadCandidate());
-  OverloadCandidate& Candidate = CandidateSet.back();
+  OverloadCandidate &Candidate = CandidateSet.addCandidate(NumArgs + 1);
   Candidate.FoundDecl = FoundDecl;
   Candidate.Function = 0;
   Candidate.Surrogate = Conversion;
   Candidate.Viable = true;
   Candidate.IsSurrogate = true;
   Candidate.IgnoreObjectArgument = false;
-  Candidate.Conversions.resize(NumArgs + 1);
   Candidate.ExplicitCallArguments = NumArgs;
 
   // Determine the implicit conversion sequence for the implicit
@@ -5355,8 +5344,7 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
   EnterExpressionEvaluationContext Unevaluated(*this, Sema::Unevaluated);
 
   // Add this candidate
-  CandidateSet.push_back(OverloadCandidate());
-  OverloadCandidate& Candidate = CandidateSet.back();
+  OverloadCandidate &Candidate = CandidateSet.addCandidate(NumArgs);
   Candidate.FoundDecl = DeclAccessPair::make(0, AS_none);
   Candidate.Function = 0;
   Candidate.IsSurrogate = false;
@@ -5368,7 +5356,6 @@ void Sema::AddBuiltinCandidate(QualType ResultTy, QualType *ParamTys,
   // Determine the implicit conversion sequences for each of the
   // arguments.
   Candidate.Viable = true;
-  Candidate.Conversions.resize(NumArgs);
   Candidate.ExplicitCallArguments = NumArgs;
   for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx) {
     // C++ [over.match.oper]p4:
