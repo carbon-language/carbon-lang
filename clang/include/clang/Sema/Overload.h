@@ -24,6 +24,7 @@
 #include "clang/Sema/SemaFixItUtils.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Allocator.h"
 
 namespace clang {
   class ASTContext;
@@ -582,11 +583,16 @@ namespace clang {
     CXXConversionDecl *Surrogate;
 
     /// Conversions - The conversion sequences used to convert the
-    /// function arguments to the function parameters.
-    SmallVector<ImplicitConversionSequence, 4> Conversions;
+    /// function arguments to the function parameters, the pointer points to a
+    /// fixed size array with NumConversions elements. The memory is owned by
+    /// the OverloadCandidateSet.
+    ImplicitConversionSequence *Conversions;
 
     /// The FixIt hints which can be used to fix the Bad candidate.
     ConversionFixItGenerator Fix;
+
+    /// NumConversions - The number of elements in the Conversions array.
+    unsigned NumConversions;
 
     /// Viable - True to indicate that this overload candidate is viable.
     bool Viable;
@@ -653,13 +659,17 @@ namespace clang {
       StandardConversionSequence FinalConversion;
     };
 
+    ~OverloadCandidate() {
+      for (unsigned i = 0, e = NumConversions; i != e; ++i)
+        Conversions[i].~ImplicitConversionSequence();
+    }
+
     /// hasAmbiguousConversion - Returns whether this overload
     /// candidate requires an ambiguous conversion or not.
     bool hasAmbiguousConversion() const {
-      for (SmallVectorImpl<ImplicitConversionSequence>::const_iterator
-             I = Conversions.begin(), E = Conversions.end(); I != E; ++I) {
-        if (!I->isInitialized()) return false;
-        if (I->isAmbiguous()) return true;
+      for (unsigned i = 0, e = NumConversions; i != e; ++i) {
+        if (!Conversions[i].isInitialized()) return false;
+        if (Conversions[i].isAmbiguous()) return true;
       }
       return false;
     }
@@ -684,13 +694,19 @@ namespace clang {
     SmallVector<OverloadCandidate, 16> Candidates;
     llvm::SmallPtrSet<Decl *, 16> Functions;
 
+    // Allocator for OverloadCandidate::Conversions. We store the first few
+    // elements inline to avoid allocation for small sets.
+    llvm::BumpPtrAllocator ConversionSequenceAllocator;
+    size_t InlineSpace[16*sizeof(ImplicitConversionSequence) / sizeof(size_t)];
+    unsigned NumInlineSequences;
+
     SourceLocation Loc;    
     
     OverloadCandidateSet(const OverloadCandidateSet &);
     OverloadCandidateSet &operator=(const OverloadCandidateSet &);
     
   public:
-    OverloadCandidateSet(SourceLocation Loc) : Loc(Loc) {}
+    OverloadCandidateSet(SourceLocation Loc) : NumInlineSequences(0), Loc(Loc){}
 
     SourceLocation getLocation() const { return Loc; }
 
@@ -714,8 +730,27 @@ namespace clang {
     /// to the overload set.
     OverloadCandidate &addCandidate(unsigned NumConversions = 0) {
       Candidates.push_back(OverloadCandidate());
-      Candidates.back().Conversions.resize(NumConversions);
-      return Candidates.back();
+      OverloadCandidate &C = Candidates.back();
+
+      // Assign space from the inline array if there are enough free slots
+      // available.
+      if (NumConversions + NumInlineSequences < 16) {
+        ImplicitConversionSequence *I =
+          (ImplicitConversionSequence*)InlineSpace;
+        C.Conversions = &I[NumInlineSequences];
+        NumInlineSequences += NumConversions;
+      } else {
+        // Otherwise get memory from the allocator.
+        C.Conversions = ConversionSequenceAllocator
+                          .Allocate<ImplicitConversionSequence>(NumConversions);
+      }
+
+      // Construct the new objects.
+      for (unsigned i = 0; i != NumConversions; ++i)
+        new (&C.Conversions[i]) ImplicitConversionSequence();
+
+      C.NumConversions = NumConversions;
+      return C;
     }
 
     /// Find the best viable function on this overload set, if it exists.

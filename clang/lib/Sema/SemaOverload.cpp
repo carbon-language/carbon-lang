@@ -543,6 +543,7 @@ OverloadCandidate::DeductionFailureInfo::getSecondArg() {
 void OverloadCandidateSet::clear() {
   Candidates.clear();
   Functions.clear();
+  NumInlineSequences = 0;
 }
 
 namespace {
@@ -7018,8 +7019,8 @@ isBetterOverloadCandidate(Sema &S,
   //   A viable function F1 is defined to be a better function than another
   //   viable function F2 if for all arguments i, ICSi(F1) is not a worse
   //   conversion sequence than ICSi(F2), and then...
-  unsigned NumArgs = Cand1.Conversions.size();
-  assert(Cand2.Conversions.size() == NumArgs && "Overload candidate mismatch");
+  unsigned NumArgs = Cand1.NumConversions;
+  assert(Cand2.NumConversions == NumArgs && "Overload candidate mismatch");
   bool HasBetterConversion = false;
   for (unsigned ArgIdx = StartArg; ArgIdx < NumArgs; ++ArgIdx) {
     switch (CompareImplicitConversionSequences(S,
@@ -7718,7 +7719,7 @@ void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
 
   case ovl_fail_bad_conversion: {
     unsigned I = (Cand->IgnoreObjectArgument ? 1 : 0);
-    for (unsigned N = Cand->Conversions.size(); I != N; ++I)
+    for (unsigned N = Cand->NumConversions; I != N; ++I)
       if (Cand->Conversions[I].isBad())
         return DiagnoseBadConversion(S, Cand, I);
 
@@ -7770,12 +7771,12 @@ void NoteBuiltinOperatorCandidate(Sema &S,
                                   const char *Opc,
                                   SourceLocation OpLoc,
                                   OverloadCandidate *Cand) {
-  assert(Cand->Conversions.size() <= 2 && "builtin operator is not binary");
+  assert(Cand->NumConversions <= 2 && "builtin operator is not binary");
   std::string TypeStr("operator");
   TypeStr += Opc;
   TypeStr += "(";
   TypeStr += Cand->BuiltinTypes.ParamTypes[0].getAsString();
-  if (Cand->Conversions.size() == 1) {
+  if (Cand->NumConversions == 1) {
     TypeStr += ")";
     S.Diag(OpLoc, diag::note_ovl_builtin_unary_candidate) << TypeStr;
   } else {
@@ -7788,7 +7789,7 @@ void NoteBuiltinOperatorCandidate(Sema &S,
 
 void NoteAmbiguousUserConversions(Sema &S, SourceLocation OpLoc,
                                   OverloadCandidate *Cand) {
-  unsigned NoOperands = Cand->Conversions.size();
+  unsigned NoOperands = Cand->NumConversions;
   for (unsigned ArgIdx = 0; ArgIdx < NoOperands; ++ArgIdx) {
     const ImplicitConversionSequence &ICS = Cand->Conversions[ArgIdx];
     if (ICS.isBad()) break; // all meaningless after first invalid
@@ -7892,11 +7893,11 @@ struct CompareOverloadCandidatesForDisplay {
 
         // If there's any ordering between the defined conversions...
         // FIXME: this might not be transitive.
-        assert(L->Conversions.size() == R->Conversions.size());
+        assert(L->NumConversions == R->NumConversions);
 
         int leftBetter = 0;
         unsigned I = (L->IgnoreObjectArgument || R->IgnoreObjectArgument);
-        for (unsigned E = L->Conversions.size(); I != E; ++I) {
+        for (unsigned E = L->NumConversions; I != E; ++I) {
           switch (CompareImplicitConversionSequences(S,
                                                      L->Conversions[I],
                                                      R->Conversions[I])) {
@@ -7959,7 +7960,7 @@ void CompleteNonViableCandidate(Sema &S, OverloadCandidate *Cand,
 
   // Skip forward to the first bad conversion.
   unsigned ConvIdx = (Cand->IgnoreObjectArgument ? 1 : 0);
-  unsigned ConvCount = Cand->Conversions.size();
+  unsigned ConvCount = Cand->NumConversions;
   while (true) {
     assert(ConvIdx != ConvCount && "no bad conversion in candidate");
     ConvIdx++;
