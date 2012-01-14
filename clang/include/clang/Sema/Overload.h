@@ -697,11 +697,12 @@ namespace clang {
     // Allocator for OverloadCandidate::Conversions. We store the first few
     // elements inline to avoid allocation for small sets.
     llvm::BumpPtrAllocator ConversionSequenceAllocator;
-    size_t InlineSpace[16*sizeof(ImplicitConversionSequence) / sizeof(size_t)];
-    unsigned NumInlineSequences;
 
-    SourceLocation Loc;    
-    
+    SourceLocation Loc;
+
+    unsigned NumInlineSequences;
+    char InlineSpace[16 * sizeof(ImplicitConversionSequence)];
+
     OverloadCandidateSet(const OverloadCandidateSet &);
     OverloadCandidateSet &operator=(const OverloadCandidateSet &);
     
