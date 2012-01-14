@@ -115,15 +115,11 @@ __class_type_info::search1(__dynamic_cast_info* info, const void* dynamic_ptr,
     {
         if (dynamic_ptr == info->static_ptr)
         {
-            if (path_below == public_path)
-            {
-                info->path_dynamic_ptr_to_static_ptr = public_path;
-                return 0;
-            }
-            info->path_dynamic_ptr_to_static_ptr = not_public_path;
+            if (info->path_dynamic_ptr_to_static_ptr != public_path)
+                info->path_dynamic_ptr_to_static_ptr = path_below;
         }
     }
-    return 1;
+    return info->path_dynamic_ptr_to_static_ptr != public_path;
 }
 
 // __class_type_info::search2
@@ -145,13 +141,13 @@ std::cout << "__class_type_info::search2\n";
             {
                 if (info->path_dst_ptr_to_static_ptr != public_path)
                     info->path_dst_ptr_to_static_ptr = path_below;
+                info->found_static_ptr = true;
             }
             else  // not above a dst_type
             {
                 if (info->path_dynamic_ptr_to_static_ptr != public_path)
                     info->path_dynamic_ptr_to_static_ptr = path_below;
             }
-            info->found_static_ptr = true;
         }
     }
     else if (this == info->dst_type)
@@ -202,13 +198,10 @@ __si_class_type_info::search1(__dynamic_cast_info* info, const void* dynamic_ptr
     {
         if (dynamic_ptr == info->static_ptr)
         {
-            if (path_below == public_path)
-            {
-                info->path_dynamic_ptr_to_static_ptr = public_path;
-                return 0;
-            }
+            if (info->path_dynamic_ptr_to_static_ptr != public_path)
+                info->path_dynamic_ptr_to_static_ptr = path_below;
         }
-        return 1;
+        return info->path_dynamic_ptr_to_static_ptr != public_path;
     }
     return __base_type->search1(info, dynamic_ptr, path_below);
 }
@@ -233,13 +226,13 @@ std::cout << "__si_class_type_info::search2\n";
             {
                 if (info->path_dst_ptr_to_static_ptr != public_path)
                     info->path_dst_ptr_to_static_ptr = path_below;
+                info->found_static_ptr = true;
             }
             else  // not above a dst_type
             {
                 if (info->path_dynamic_ptr_to_static_ptr != public_path)
                     info->path_dynamic_ptr_to_static_ptr = path_below;
             }
-            info->found_static_ptr = true;
         }
         return 1;
     }
@@ -270,7 +263,7 @@ std::cout << "__si_class_type_info::search2\n";
                 //    and if other dst_type's have been found, even if they
                 //    don't point to (static_ptr, static_type), then upcast
                 //    from (dynamic_ptr, dynamic_type) to dst_type is ambiguous.
-                if (info->path_dst_ptr_to_static_ptr != public_path &&
+                if (info->path_dst_ptr_to_static_ptr == not_public_path &&
                     info->number_to_dst_ptr != 0)
                     return 0;
             }
@@ -320,19 +313,15 @@ __vmi_class_type_info::search1(__dynamic_cast_info* info, const void* dynamic_pt
     {
         if (dynamic_ptr == info->static_ptr)
         {
-            if (path_below == public_path)
-            {
-                info->path_dynamic_ptr_to_static_ptr = public_path;
-                return 0;
-            }
+            if (info->path_dynamic_ptr_to_static_ptr != public_path)
+                info->path_dynamic_ptr_to_static_ptr = path_below;
         }
-        return 1;
+        return info->path_dynamic_ptr_to_static_ptr != public_path;
     }
     const Iter e = __base_info + __base_count;
     for (Iter p = __base_info; p < e; ++p)
     {
-        int r = p->search1(info, dynamic_ptr, path_below);
-        if (r == 0)
+        if (p->search1(info, dynamic_ptr, path_below) == 0)
             return 0;
     }
     return 1;
@@ -361,13 +350,13 @@ std::cout << "__vmi_class_type_info::search2\n";
             {
                 if (info->path_dst_ptr_to_static_ptr != public_path)
                     info->path_dst_ptr_to_static_ptr = path_below;
+                info->found_static_ptr = true;
             }
             else  // not above a dst_type
             {
                 if (info->path_dynamic_ptr_to_static_ptr != public_path)
                     info->path_dynamic_ptr_to_static_ptr = path_below;
             }
-            info->found_static_ptr = true;
         }
         return 1;
     }
@@ -399,19 +388,19 @@ std::cout << "__vmi_class_type_info::search2\n";
                 if (info->found_static_ptr)
                 {
                     info->found_static_ptr = false;
-                    info->dst_ptr_leading_to_static_ptr = dynamic_ptr;
-                    info->number_to_static_ptr += 1;
+                    if (info->dst_ptr_leading_to_static_ptr != dynamic_ptr)
+                    {
+                        info->dst_ptr_leading_to_static_ptr = dynamic_ptr;
+                        info->number_to_static_ptr += 1;
+                    }
                     // If more than one dst_type points to (static_ptr, static_type)
                     //   then the cast is ambiguous so abort search.
                     if (info->number_to_static_ptr != 1)
                         return 0;
-                    // If the path above to (static_ptr, static_type) isn't public
-                    //    and if other dst_type's have been found, even if they
-                    //    don't point to (static_ptr, static_type), then upcast
-                    //    from (dynamic_ptr, dynamic_type) to dst_type is ambiguous.
-                    if (info->path_dst_ptr_to_static_ptr != public_path &&
-                        info->number_to_dst_ptr != 0)
-                        return 0;
+                    // If we've found a public path to (static_ptr, static_type)
+                    //   then we no longer need to search above this node
+                    if (info->path_dst_ptr_to_static_ptr == public_path)
+                        break;
                 }
                 else
                 {
@@ -425,6 +414,14 @@ std::cout << "__vmi_class_type_info::search2\n";
                         return 0;
                 }
             }
+            // The path above to (static_ptr, static_type) isn't public
+            //    and multiple dst_type's have been found, even if they
+            //    don't point to (static_ptr, static_type), then upcast
+            //    from (dynamic_ptr, dynamic_type) to dst_type is ambiguous.
+            if (info->number_to_static_ptr == 1 &&
+                    info->path_dst_ptr_to_static_ptr == not_public_path &&
+                    info->number_to_dst_ptr != 0)
+                return 0;
         }
         return 1;
     }
@@ -449,7 +446,7 @@ std::cout << "__vmi_class_type_info::search2\n";
             if (p->search2(info, dynamic_ptr, path_below) == 0)
                 return 0;
             // If we just found a dst_type with a public path to (static_ptr, static_type),
-            //    then the only reason to continue the search is to make sure sure
+            //    then the only reason to continue the search is to make sure
             //    no other dst_type points to (static_ptr, static_type).
             //    If !diamond, then we don't need to search here.
             if (info->number_to_static_ptr == 1 &&
@@ -472,7 +469,7 @@ std::cout << "__vmi_class_type_info::search2\n";
             //    no other dst_type points to (static_ptr, static_type).
             //    If !diamond, then we don't need to search here.
             // if we just found a dst_type with a private path to (static_ptr, static_type),
-            //    then we're only looking for a path to (static_ptr, static_type)
+            //    then we're only looking for a public path to (static_ptr, static_type)
             //    and to check for other dst_types.
             //    If !diamond & !repeat, then there is not a pointer to (static_ptr, static_type)
             //    and not a dst_type under here.
