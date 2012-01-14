@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachinePassRegistry.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -175,9 +176,12 @@ SchedDefaultRegistry("default", "Activate the scheduler pass, "
 /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
 /// time to do some work.
 void MachineScheduler::Schedule() {
+  BuildSchedGraph(&Pass->getAnalysis<AliasAnalysis>());
+
   DEBUG(dbgs() << "********** MI Scheduling **********\n");
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(this));
+
   // TODO: Put interesting things here.
 }
 
@@ -202,12 +206,33 @@ bool MachineSchedulerPass::runOnMachineFunction(MachineFunction &mf) {
   for (MachineFunction::iterator MBB = MF->begin(), MBBEnd = MF->end();
        MBB != MBBEnd; ++MBB) {
 
-    DEBUG(dbgs() << "MachineScheduling " << MF->getFunction()->getName()
-          << ":BB#" << MBB->getNumber() << "\n");
+    // Break the block into scheduling regions [I, RegionEnd), and schedule each
+    // region as soon as it is discovered.
+    unsigned RemainingCount = MBB->size();
+    for(MachineBasicBlock::iterator RegionEnd = MBB->end();
+        RegionEnd != MBB->begin();) {
+      // The next region starts above the previous region. Look backward in the
+      // instruction stream until we find the nearest boundary.
+      MachineBasicBlock::iterator I = RegionEnd;
+      for(;I != MBB->begin(); --I) {
+        if (TII->isSchedulingBoundary(llvm::prior(I), MBB, *MF))
+          break;
+      }
+      if (I == RegionEnd || I == llvm::prior(RegionEnd)) {
+        // Skip empty or single instruction scheduling regions.
+        RegionEnd = llvm::prior(RegionEnd);
+        continue;
+      }
+      DEBUG(dbgs() << "MachineScheduling " << MF->getFunction()->getName()
+            << ":BB#" << MBB->getNumber() << "\n  From: " << *I << " To: "
+            << *RegionEnd << " Remaining: " << RemainingCount << "\n");
 
-    // Inform ScheduleDAGInstrs of the region being scheduler. It calls back
-    // to our Schedule() method.
-    Scheduler->Run(MBB, MBB->begin(), MBB->end(), MBB->size());
+      // Inform ScheduleDAGInstrs of the region being scheduler. It calls back
+      // to our Schedule() method.
+      Scheduler->Run(MBB, I, RegionEnd, MBB->size());
+      RegionEnd = I;
+    }
+    assert(RemainingCount == 0 && "Instruction count mismatch!");
   }
   return true;
 }
