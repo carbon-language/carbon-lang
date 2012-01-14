@@ -90,3 +90,11 @@ void testUncontrolledFormatString(char **p) {
   strncpy(sncpy, s, 20);
   setproctitle(sncpy, 3); // expected-warning {{Uncontrolled Format String}}
 }
+
+int system(const char *command);
+void testTaintSystemCall() {
+  char buffer[156];
+  char addr[128];
+  scanf("%s", addr);
+  system(addr); // expected-warning {{Tainted data passed to a system call}}
+}

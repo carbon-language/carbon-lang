@@ -29,9 +29,16 @@ namespace {
 class GenericTaintChecker : public Checker< check::PostStmt<CallExpr>,
                                             check::PreStmt<CallExpr> > {
 public:
-  static const unsigned ReturnValueIndex = UINT_MAX;
+  static void *getTag() { static int Tag; return &Tag; }
+
+  void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
+  void checkPostStmt(const DeclRefExpr *DRE, CheckerContext &C) const;
+
+  void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
 
 private:
+  static const unsigned ReturnValueIndex = UINT_MAX;
+
   mutable llvm::OwningPtr<BugType> BT;
   void initBugType() const;
 
@@ -71,18 +78,30 @@ private:
   bool isStdin(const Expr *E, CheckerContext &C) const;
 
   /// Check for CWE-134: Uncontrolled Format String.
+  static const char MsgUncontrolledFormatString[];
   bool checkUncontrolledFormatString(const CallExpr *CE,
                                      CheckerContext &C) const;
 
-public:
-  static void *getTag() { static int Tag; return &Tag; }
+  /// Check for:
+  /// CERT/STR02-C. "Sanitize data passed to complex subsystems"
+  /// CWE-78, "Failure to Sanitize Data into an OS Command"
+  static const char MsgSanitizeSystemArgs[];
+  bool checkSystemCall(const CallExpr *CE, StringRef Name,
+                       CheckerContext &C) const;
 
-  void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
-  void checkPostStmt(const DeclRefExpr *DRE, CheckerContext &C) const;
-
-  void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
+  /// Generate a report if the expression is tainted or points to tainted data.
+  bool generateReportIfTainted(const Expr *E, const char Msg[],
+                               CheckerContext &C) const;
 
 };
+// TODO: We probably could use TableGen here.
+const char GenericTaintChecker::MsgUncontrolledFormatString[] =
+  "Tainted format string (CWE-134: Uncontrolled Format String)";
+
+const char GenericTaintChecker::MsgSanitizeSystemArgs[] =
+  "Tainted data passed to a system call "
+  "(CERT/STR02-C. Sanitize data passed to complex subsystems)";
+
 }
 
 /// A set which is used to pass information from call pre-visit instruction
@@ -215,6 +234,13 @@ bool GenericTaintChecker::checkPre(const CallExpr *CE, CheckerContext &C) const{
   if (checkUncontrolledFormatString(CE, C))
     return true;
 
+  StringRef Name = C.getCalleeName(CE);
+  if (Name.empty())
+    return false;
+
+  if (checkSystemCall(CE, Name, C))
+    return true;
+
   return false;
 }
 
@@ -269,7 +295,7 @@ const ProgramState *GenericTaintChecker::preFscanf(const CallExpr *CE,
   return 0;
 }
 
-// If any other arguments are tainted, mark state as tainted on pre-visit.
+// If any arguments are tainted, mark the return value as tainted on post-visit.
 const ProgramState * GenericTaintChecker::preAnyArgs(const CallExpr *CE,
                                                      CheckerContext &C) const {
   for (unsigned int i = 0; i < CE->getNumArgs(); ++i) {
@@ -377,6 +403,28 @@ static bool getPrintfFormatArgumentNum(const CallExpr *CE,
   return false;
 }
 
+bool GenericTaintChecker::generateReportIfTainted(const Expr *E,
+                                                  const char Msg[],
+                                                  CheckerContext &C) const {
+  assert(E);
+
+  // Check for taint.
+  const ProgramState *State = C.getState();
+  if (!State->isTainted(getPointedToSymbol(C, E)) &&
+      !State->isTainted(E, C.getLocationContext()))
+    return false;
+
+  // Generate diagnostic.
+  if (ExplodedNode *N = C.addTransition()) {
+    initBugType();
+    BugReport *report = new BugReport(*BT, Msg, N);
+    report->addRange(E->getSourceRange());
+    C.EmitReport(report);
+    return true;
+  }
+  return false;
+}
+
 bool GenericTaintChecker::checkUncontrolledFormatString(const CallExpr *CE,
                                                         CheckerContext &C) const{
   // Check if the function contains a format string argument.
@@ -385,18 +433,27 @@ bool GenericTaintChecker::checkUncontrolledFormatString(const CallExpr *CE,
     return false;
 
   // If either the format string content or the pointer itself are tainted, warn.
-  const ProgramState *State = C.getState();
-  const Expr *Arg = CE->getArg(ArgNum);
-  if (State->isTainted(getPointedToSymbol(C, Arg)) ||
-      State->isTainted(Arg, C.getLocationContext()))
-    if (ExplodedNode *N = C.addTransition()) {
-      initBugType();
-      BugReport *report = new BugReport(*BT,
-        "Tainted format string (CWE-134: Uncontrolled Format String)", N);
-      report->addRange(Arg->getSourceRange());
-      C.EmitReport(report);
-      return true;
-    }
+  if (generateReportIfTainted(CE->getArg(ArgNum),
+                              MsgUncontrolledFormatString, C))
+    return true;
+  return false;
+}
+
+bool GenericTaintChecker::checkSystemCall(const CallExpr *CE,
+                                          StringRef Name,
+                                          CheckerContext &C) const {
+  unsigned ArgNum = llvm::StringSwitch<unsigned>(Name)
+    .Case("system", 0)
+    .Case("popen", 0)
+    .Default(UINT_MAX);
+
+  if (ArgNum == UINT_MAX)
+    return false;
+
+  if (generateReportIfTainted(CE->getArg(ArgNum),
+                              MsgSanitizeSystemArgs, C))
+    return true;
+
   return false;
 }
 
