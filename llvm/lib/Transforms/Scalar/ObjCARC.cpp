@@ -616,7 +616,7 @@ static bool DoesObjCBlockEscape(const Value *BlockPtr) {
       const User *UUser = *UI;
       // Special - Use by a call (callee or argument) is not considered
       // to be an escape.
-      if (ImmutableCallSite CS = cast<Value>(UUser))
+      if (isa<CallInst>(UUser) || isa<InvokeInst>(UUser))
         continue;
       if (isa<BitCastInst>(UUser) || isa<GetElementPtrInst>(UUser) ||
           isa<PHINode>(UUser) || isa<SelectInst>(UUser)) {
