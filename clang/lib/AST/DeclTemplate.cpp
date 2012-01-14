@@ -127,8 +127,12 @@ RedeclarableTemplateDecl::CommonBase *RedeclarableTemplateDecl::getCommonPtr() {
     }
 
     // If we never found a common pointer, allocate one now.
-    if (!Common)
+    if (!Common) {
+      // FIXME: If any of the declarations is from an AST file, we probably
+      // need an update record to add the common data.
+      
       Common = newCommon(getASTContext());
+    }
     
     // Update any previous declarations we saw with the common pointer.
     for (unsigned I = 0, N = PrevDecls.size(); I != N; ++I)
