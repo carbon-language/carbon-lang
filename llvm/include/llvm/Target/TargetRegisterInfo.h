@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/CallingConv.h"
 #include <cassert>
 #include <functional>
 
@@ -357,10 +358,30 @@ public:
   /// getCalleeSavedRegs - Return a null-terminated list of all of the
   /// callee saved registers on this target. The register should be in the
   /// order of desired callee-save stack frame offset. The first register is
-  /// closed to the incoming stack pointer if stack grows down, and vice versa.
+  /// closest to the incoming stack pointer if stack grows down, and vice versa.
+  ///
   virtual const unsigned* getCalleeSavedRegs(const MachineFunction *MF = 0)
                                                                       const = 0;
 
+  /// getCallPreservedMask - Return a mask of call-preserved registers for the
+  /// given calling convention on the current sub-target.  The mask should
+  /// include all call-preserved aliases.  This is used by the register
+  /// allocator to determine which registers can be live across a call.
+  ///
+  /// The mask is an array containing (TRI::getNumRegs()+31)/32 entries.
+  /// A set bit indicates that all bits of the corresponding register are
+  /// preserved across the function call.  The bit mask is expected to be
+  /// sub-register complete, i.e. if A is preserved, so are all its
+  /// sub-registers.
+  ///
+  /// Bits are numbered from the LSB, so the bit for physical register Reg can
+  /// be found as (Mask[Reg / 32] >> Reg % 32) & 1.
+  /// NULL pointer is equivalent to an all-zero mask.
+  ///
+  virtual const uint32_t *getCallPreservedMask(CallingConv::ID) const {
+    // The default mask clobbers everything.  All targets should override.
+    return 0;
+  }
 
   /// getReservedRegs - Returns a bitset indexed by physical register number
   /// indicating if a register is a special register that has particular uses
