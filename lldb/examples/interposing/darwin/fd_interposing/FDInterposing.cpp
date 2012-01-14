@@ -314,7 +314,8 @@ static int g_log_all_calls = 1;
 // We compact the file descriptor events by default. Set the environment
 // varible "FileDescriptorStackLoggingNoCompact" to keep a full history.
 static int g_compact = 1;
-
+// The name of the process
+static char g_program_path[PATH_MAX] = {0};
 //----------------------------------------------------------------------
 // Mutex class that will lock a mutex when it is constructed, and unlock
 // it when is goes out of scope
@@ -376,10 +377,7 @@ static int
 get_logging_fd ()
 {
     static int g_log_fd = STDOUT_FILENO;
-    static char program_fullpath[PATH_MAX];
     static int initialized = 0;
-    
-    const int pid = getpid();
     
     if (!initialized) 
     {
@@ -396,10 +394,10 @@ get_logging_fd ()
 
         char program_basename[PATH_MAX];
         // If DST is NULL, then return the number of bytes needed.
-        uint32_t len = sizeof(program_fullpath);
-        if (_NSGetExecutablePath (program_fullpath, &len) == 0)
+        uint32_t len = sizeof(g_program_path);
+        if (_NSGetExecutablePath (g_program_path, &len) == 0)
         {
-            strncpy (program_basename, program_fullpath, sizeof(program_basename));
+            strncpy (program_basename, g_program_path, sizeof(program_basename));
             const char *program_basename_cstr = basename(program_basename);
             if (program_basename_cstr)
             {
@@ -411,7 +409,7 @@ get_logging_fd ()
                 if (log_path)
                     g_log_fd = ::creat (log_path, 0660);
                 if (g_log_fd >= 0)
-                    log ("Logging file descriptor functions process '%s' (pid = %i)\n", program_fullpath, pid);
+                    log ("Logging file descriptor functions process '%s' (pid = %i)\n", g_program_path, getpid());
             }
         }
     }
@@ -508,7 +506,7 @@ backtrace_log (const char *format, ...)
         }
         
         Frames frames;
-        if (get_backtrace(frames, 3))
+        if (get_backtrace(frames, 2))
             ::backtrace_symbols_fd (frames.data(), frames.size(), log_fd);
     }
 
@@ -785,18 +783,19 @@ extern "C" int
 dup2$__interposed__ (int fd1, int fd2)
 {
     Locker locker (&g_mutex);
-
-    const int fd = dup2(fd1, fd2);
-    InvalidFDErrno fd_errno(fd);
-    StringSP description_sp(new String ("dup2 fd1=%i, fd2=%i) -> fd=%i", fd1, fd2, fd));
-    if (g_log_all_calls)
-        description_sp->log (get_logging_fd());
     // If "fd2" is already opened, it will be closed during the
     // dup2 call below, so we need to see if we have fd2 in our
     // open map and treat it as a close(fd2)
     FDEventMap::iterator pos = g_fd_event_map.find (fd2);
+    StringSP dup2_close_description_sp(new String ("dup2 (fd1=%i, fd2=%i) -> will close (fd=%i)", fd1, fd2, fd2));
     if (pos != g_fd_event_map.end() && pos->second.back()->IsCreateEvent())
-        save_backtrace (fd2, 0, description_sp, false);
+        save_backtrace (fd2, 0, dup2_close_description_sp, false);
+
+    const int fd = dup2(fd1, fd2);
+    InvalidFDErrno fd_errno(fd);
+    StringSP description_sp(new String ("dup2 (fd1=%i, fd2=%i) -> fd=%i", fd1, fd2, fd));
+    if (g_log_all_calls)
+        description_sp->log (get_logging_fd());
 
     if (fd >= 0)
         save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
@@ -829,12 +828,12 @@ close$__interposed__ (int fd)
     {
         if (err_errno.get_errno() == EBADF && fd != -1) 
         {
-            backtrace_log ("\nerror: close on fd=%d resulted in EBADF in process %i\n", fd, getpid());
+            backtrace_log ("\nerror: close on fd=%d resulted in EBADF in process %s (pid = %i)\n", fd, g_program_path, getpid());
 
             FDEventMap::iterator pos = g_fd_event_map.find (fd);
             if (pos != g_fd_event_map.end())
             {
-                log (get_logging_fd(), pos->second.back().get(), "\nfd=%d was previously closed with this event:\n", fd);
+                log (get_logging_fd(), pos->second.back().get(), "\nfd=%d was previously %s with this event:\n", fd, pos->second.back()->IsCreateEvent() ? "opened" : "closed");
             }
         }
     }
@@ -868,12 +867,12 @@ close$NOCANCEL$__interposed__ (int fd)
     {
         if (err_errno.get_errno() == EBADF && fd != -1) 
         {
-            backtrace_log ("\nInvoking close$NOCANCEL (fd=%d) in process %i resulted in %i %s\n", fd, getpid(), err_errno.get_errno(), err_errno.get_errno() ? strerror (err_errno.get_errno()) : "");
+            backtrace_log ("\nerror: close$NOCANCEL on fd=%d resulted in EBADF in process %s (pid = %i)\n", fd, g_program_path, getpid());
             
             FDEventMap::iterator pos = g_fd_event_map.find (fd);
             if (pos != g_fd_event_map.end())
             {
-                log (get_logging_fd(), pos->second.back().get(), "\nPrevious close(fd=%d) was done here:\n", fd);
+                log (get_logging_fd(), pos->second.back().get(), "\nfd=%d was previously %s with this event:\n", fd, pos->second.back()->IsCreateEvent() ? "opened" : "closed");
             }
         }
     }
