@@ -1137,7 +1137,7 @@ private:
   };
   SmallVector<BreakContinue, 8> BreakContinueStack;
 
-  /// SwitchInsn - This is nearest current switch instruction. It is null if if
+  /// SwitchInsn - This is nearest current switch instruction. It is null if
   /// current context is not in a switch.
   llvm::SwitchInst *SwitchInsn;
 
