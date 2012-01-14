@@ -107,6 +107,9 @@ namespace llvm {
     /// isPostRA flag indicates vregs cannot be present.
     bool IsPostRA;
 
+    /// UnitLatencies flag forces single-cycle data dependencies.
+    bool UnitLatencies;
+
     /// Defs, Uses - Remember where defs and uses of each register are as we
     /// iterate upward through the instructions. This is allocated here instead
     /// of inside BuildSchedGraph to avoid the need for it to be initialized and
@@ -205,6 +208,10 @@ namespace llvm {
     virtual void dumpNode(const SUnit *SU) const;
 
     virtual std::string getGraphNodeLabel(const SUnit *SU) const;
+
+  protected:
+    void addPhysRegDeps(SUnit *SU, unsigned OperIdx);
+    void addVirtRegDeps(SUnit *SU, unsigned OperIdx);
   };
 }
 
