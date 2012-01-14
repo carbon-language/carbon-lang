@@ -84,6 +84,12 @@ public:
                              Parent, ParentDC, E);
     return true;
   }
+
+  bool VisitDeclStmt(DeclStmt *S) {
+    if (IndexCtx.indexFunctionLocalSymbols())
+      IndexCtx.indexDeclGroupRef(S->getDeclGroup());
+    return true;
+  }
 };
 
 } // anonymous namespace

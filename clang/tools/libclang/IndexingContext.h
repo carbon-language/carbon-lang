@@ -324,6 +324,10 @@ public:
     return IndexOptions & CXIndexOpt_SuppressRedundantRefs;
   }
 
+  bool indexFunctionLocalSymbols() const {
+    return IndexOptions & CXIndexOpt_IndexFunctionLocalSymbols;
+  }
+
   bool shouldAbort();
 
   bool hasDiagnosticCallback() const { return CB.diagnostic; }

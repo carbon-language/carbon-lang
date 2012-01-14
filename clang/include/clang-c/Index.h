@@ -4455,7 +4455,13 @@ typedef enum {
    * for only one reference of an entity per source file that does not also
    * include a declaration/definition of the entity.
    */
-  CXIndexOpt_SuppressRedundantRefs = 0x1
+  CXIndexOpt_SuppressRedundantRefs = 0x1,
+
+  /**
+   * \brief Function-local symbols should be indexed. If this is not set
+   * function-local symbols will be ignored.
+   */
+  CXIndexOpt_IndexFunctionLocalSymbols = 0x2
 } CXIndexOptFlags;
 
 /**

@@ -551,7 +551,7 @@ bool IndexingContext::handleReference(const NamedDecl *D, SourceLocation Loc,
     return false;
   if (Loc.isInvalid())
     return false;
-  if (D->getParentFunctionOrMethod())
+  if (!indexFunctionLocalSymbols() && D->getParentFunctionOrMethod())
     return false;
   if (isNotFromSourceFile(D->getLocation()))
     return false;

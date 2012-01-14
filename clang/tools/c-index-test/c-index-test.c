@@ -1911,6 +1911,17 @@ static IndexerCallbacks IndexCB = {
   index_indexEntityReference
 };
 
+static unsigned getIndexOptions(void) {
+  unsigned index_opts;
+  index_opts = 0;
+  if (getenv("CINDEXTEST_SUPPRESSREFS"))
+    index_opts |= CXIndexOpt_SuppressRedundantRefs;
+  if (getenv("CINDEXTEST_INDEXLOCALSYMBOLS"))
+    index_opts |= CXIndexOpt_IndexFunctionLocalSymbols;
+
+  return index_opts;
+}
+
 static int index_file(int argc, const char **argv) {
   const char *check_prefix;
   CXIndex Idx;
@@ -1946,10 +1957,7 @@ static int index_file(int argc, const char **argv) {
   index_data.fail_for_error = 0;
   index_data.abort = 0;
 
-  index_opts = 0;
-  if (getenv("CINDEXTEST_SUPPRESSREFS"))
-    index_opts |= CXIndexOpt_SuppressRedundantRefs;
-
+  index_opts = getIndexOptions();
   idxAction = clang_IndexAction_create(Idx);
   result = clang_indexSourceFile(idxAction, &index_data,
                                  &IndexCB,sizeof(IndexCB), index_opts,
@@ -2001,10 +2009,7 @@ static int index_tu(int argc, const char **argv) {
   index_data.fail_for_error = 0;
   index_data.abort = 0;
 
-  index_opts = 0;
-  if (getenv("CINDEXTEST_SUPPRESSREFS"))
-    index_opts |= CXIndexOpt_SuppressRedundantRefs;
-
+  index_opts = getIndexOptions();
   idxAction = clang_IndexAction_create(Idx);
   result = clang_indexTranslationUnit(idxAction, &index_data,
                                       &IndexCB,sizeof(IndexCB),
