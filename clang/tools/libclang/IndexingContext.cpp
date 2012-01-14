@@ -261,7 +261,8 @@ bool IndexingContext::handleDecl(const NamedDecl *D,
 
   ScratchAlloc SA(*this);
   getEntityInfo(D, DInfo.EntInfo, SA);
-  if (!DInfo.EntInfo.USR || Loc.isInvalid())
+  if ((!indexFunctionLocalSymbols() && !DInfo.EntInfo.USR)
+      || Loc.isInvalid())
     return false;
 
   if (suppressRefs())
@@ -828,6 +829,9 @@ void IndexingContext::getEntityInfo(const NamedDecl *D,
       EntityInfo.kind = CXIdxEntity_Typedef; break;
     case Decl::Function:
       EntityInfo.kind = CXIdxEntity_Function;
+      break;
+    case Decl::ParmVar:
+      EntityInfo.kind = CXIdxEntity_Variable;
       break;
     case Decl::Var:
       EntityInfo.kind = CXIdxEntity_Variable;

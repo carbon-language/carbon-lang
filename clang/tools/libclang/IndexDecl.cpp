@@ -25,8 +25,20 @@ public:
 
   void handleDeclarator(DeclaratorDecl *D, const NamedDecl *Parent = 0) {
     if (!Parent) Parent = D;
-    IndexCtx.indexTypeSourceInfo(D->getTypeSourceInfo(), Parent);
-    IndexCtx.indexNestedNameSpecifierLoc(D->getQualifierLoc(), Parent);
+
+    if (!IndexCtx.indexFunctionLocalSymbols()) {
+      IndexCtx.indexTypeSourceInfo(D->getTypeSourceInfo(), Parent);
+      IndexCtx.indexNestedNameSpecifierLoc(D->getQualifierLoc(), Parent);
+    } else {
+      if (ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(D)) {
+        IndexCtx.handleVar(Parm);
+      } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+        for (FunctionDecl::param_iterator
+               PI = FD->param_begin(), PE = FD->param_end(); PI != PE; ++PI) {
+          IndexCtx.handleVar(*PI);
+        }
+      }
+    }
   }
 
   bool VisitFunctionDecl(FunctionDecl *D) {
