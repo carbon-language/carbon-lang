@@ -125,6 +125,9 @@ public:
   virtual llvm::Constant *EmitMemberDataPointer(const MemberPointerType *MPT,
                                                 CharUnits offset);
 
+  /// Create a member pointer for the given member pointer constant.
+  virtual llvm::Constant *EmitMemberPointer(const APValue &MP, QualType MPT);
+
   /// Emit a comparison between two member pointers.  Returns an i1.
   virtual llvm::Value *
   EmitMemberPointerComparison(CodeGenFunction &CGF,

@@ -27,6 +27,7 @@ extern long bork(FuncPtr handler, const struct E *list);
 static long hndlr()
 {
   struct H cmd = { 4, 412 };
+  struct H cmd2 = { 4, 412, 0 };
   return 0;
 }
 void foo(void *inWindow) {
@@ -35,4 +36,3 @@ void foo(void *inWindow) {
   };
   bork(hndlr, events);
 }
-

@@ -2153,6 +2153,28 @@ const CXXMethodDecl *ASTContext::getKeyFunction(const CXXRecordDecl *RD) {
   return Entry;
 }
 
+static uint64_t getFieldOffset(const ASTContext &C, const FieldDecl *FD) {
+  const ASTRecordLayout &Layout = C.getASTRecordLayout(FD->getParent());
+  return Layout.getFieldOffset(FD->getFieldIndex());
+}
+
+uint64_t ASTContext::getFieldOffset(const ValueDecl *VD) const {
+  uint64_t OffsetInBits;
+  if (const FieldDecl *FD = dyn_cast<FieldDecl>(VD)) {
+    OffsetInBits = ::getFieldOffset(*this, FD);
+  } else {
+    const IndirectFieldDecl *IFD = cast<IndirectFieldDecl>(VD);
+
+    OffsetInBits = 0;
+    for (IndirectFieldDecl::chain_iterator CI = IFD->chain_begin(),
+                                           CE = IFD->chain_end();
+         CI != CE; ++CI)
+      OffsetInBits += ::getFieldOffset(*this, cast<FieldDecl>(*CI));
+  }
+
+  return OffsetInBits;
+}
+
 /// getObjCLayout - Get or compute information about the layout of the
 /// given interface.
 ///

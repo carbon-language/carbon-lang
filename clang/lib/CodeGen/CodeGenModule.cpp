@@ -1354,7 +1354,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   QualType ASTTy = D->getType();
   bool NonConstInit = false;
 
-  const Expr *InitExpr = D->getAnyInitializer();
+  const VarDecl *InitDecl;
+  const Expr *InitExpr = D->getAnyInitializer(InitDecl);
   
   if (!InitExpr) {
     // This is a tentative definition; tentative definitions are
@@ -1369,12 +1370,12 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     assert(!ASTTy->isIncompleteType() && "Unexpected incomplete type");
     Init = EmitNullConstant(D->getType());
   } else {
-    Init = EmitConstantExpr(InitExpr, D->getType());       
+    Init = EmitConstantInit(*InitDecl);
     if (!Init) {
       QualType T = InitExpr->getType();
       if (D->getType()->isReferenceType())
         T = D->getType();
-      
+
       if (getLangOptions().CPlusPlus) {
         Init = EmitNullConstant(T);
         NonConstInit = true;

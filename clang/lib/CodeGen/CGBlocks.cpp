@@ -215,6 +215,7 @@ static bool isSafeForCXXConstantCapture(QualType type) {
 /// acceptable because we make no promises about address stability of
 /// captured variables.
 static llvm::Constant *tryCaptureAsConstant(CodeGenModule &CGM,
+                                            CodeGenFunction *CGF,
                                             const VarDecl *var) {
   QualType type = var->getType();
 
@@ -235,7 +236,7 @@ static llvm::Constant *tryCaptureAsConstant(CodeGenModule &CGM,
   const Expr *init = var->getInit();
   if (!init) return 0;
 
-  return CGM.EmitConstantExpr(init, var->getType());
+  return CGM.EmitConstantInit(*var, CGF);
 }
 
 /// Get the low bit of a nonzero character count.  This is the
@@ -278,7 +279,8 @@ static void initializeForBlockHeader(CodeGenModule &CGM, CGBlockInfo &info,
 
 /// Compute the layout of the given block.  Attempts to lay the block
 /// out with minimal space requirements.
-static void computeBlockInfo(CodeGenModule &CGM, CGBlockInfo &info) {
+static void computeBlockInfo(CodeGenModule &CGM, CodeGenFunction *CGF,
+                             CGBlockInfo &info) {
   ASTContext &C = CGM.getContext();
   const BlockDecl *block = info.getBlockDecl();
 
@@ -342,7 +344,7 @@ static void computeBlockInfo(CodeGenModule &CGM, CGBlockInfo &info) {
 
     // Otherwise, build a layout chunk with the size and alignment of
     // the declaration.
-    if (llvm::Constant *constant = tryCaptureAsConstant(CGM, variable)) {
+    if (llvm::Constant *constant = tryCaptureAsConstant(CGM, CGF, variable)) {
       info.Captures[variable] = CGBlockInfo::Capture::makeConstant(constant);
       continue;
     }
@@ -497,7 +499,7 @@ static void enterBlockScope(CodeGenFunction &CGF, BlockDecl *block) {
 
   // Compute information about the layout, etc., of this block,
   // pushing cleanups as necessary.
-  computeBlockInfo(CGF.CGM, blockInfo);
+  computeBlockInfo(CGF.CGM, &CGF, blockInfo);
 
   // Nothing else to do if it can be global.
   if (blockInfo.CanBeGlobal) return;
@@ -604,7 +606,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
   // layout for it.
   if (!blockExpr->getBlockDecl()->hasCaptures()) {
     CGBlockInfo blockInfo(blockExpr->getBlockDecl(), CurFn->getName());
-    computeBlockInfo(CGM, blockInfo);
+    computeBlockInfo(CGM, this, blockInfo);
     blockInfo.BlockExpression = blockExpr;
     return EmitBlockLiteral(blockInfo);
   }
@@ -911,7 +913,7 @@ CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *blockExpr,
   blockInfo.BlockExpression = blockExpr;
 
   // Compute information about the layout, etc., of this block.
-  computeBlockInfo(*this, blockInfo);
+  computeBlockInfo(*this, 0, blockInfo);
 
   // Using that metadata, generate the actual block function.
   llvm::Constant *blockFn;

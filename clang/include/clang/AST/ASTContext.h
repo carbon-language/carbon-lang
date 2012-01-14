@@ -1309,6 +1309,9 @@ public:
   /// of class definition.
   const CXXMethodDecl *getKeyFunction(const CXXRecordDecl *RD);
 
+  /// Get the offset of a FieldDecl or IndirectFieldDecl, in bits.
+  uint64_t getFieldOffset(const ValueDecl *FD) const;
+
   bool isNearlyEmpty(const CXXRecordDecl *RD) const;
 
   MangleContext *createMangleContext();

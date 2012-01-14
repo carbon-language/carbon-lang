@@ -203,3 +203,11 @@ namespace test6 {
   // CHECK-NEXT: call void @_ZN5test63barEv()
   // CHECK-NEXT: ret void
 }
+
+namespace test7 {
+  int f() {
+    static int n;
+    int *const p = &n;
+    return ^{ return *p; }();
+  }
+}

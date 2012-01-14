@@ -82,6 +82,9 @@ public:
   llvm::Constant *EmitMemberPointer(const CXXMethodDecl *MD);
   llvm::Constant *EmitMemberDataPointer(const MemberPointerType *MPT,
                                         CharUnits offset);
+  llvm::Constant *EmitMemberPointer(const APValue &MP, QualType MPT);
+  llvm::Constant *BuildMemberPointer(const CXXMethodDecl *MD,
+                                     CharUnits ThisAdjustment);
 
   llvm::Value *EmitMemberPointerComparison(CodeGenFunction &CGF,
                                            llvm::Value *L,
@@ -500,6 +503,11 @@ ItaniumCXXABI::EmitMemberDataPointer(const MemberPointerType *MPT,
 }
 
 llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
+  return BuildMemberPointer(MD, CharUnits::Zero());
+}
+
+llvm::Constant *ItaniumCXXABI::BuildMemberPointer(const CXXMethodDecl *MD,
+                                                  CharUnits ThisAdjustment) {
   assert(MD->isInstance() && "Member function must not be static!");
   MD = MD->getCanonicalDecl();
 
@@ -524,14 +532,16 @@ llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
       //   discrimination as the least significant bit of ptr does for
       //   Itanium.
       MemPtr[0] = llvm::ConstantInt::get(ptrdiff_t, VTableOffset);
-      MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, 1);
+      MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t,
+                                         2 * ThisAdjustment.getQuantity() + 1);
     } else {
       // Itanium C++ ABI 2.3:
       //   For a virtual function, [the pointer field] is 1 plus the
       //   virtual table offset (in bytes) of the function,
       //   represented as a ptrdiff_t.
       MemPtr[0] = llvm::ConstantInt::get(ptrdiff_t, VTableOffset + 1);
-      MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, 0);
+      MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t,
+                                         ThisAdjustment.getQuantity());
     }
   } else {
     const FunctionProtoType *FPT = MD->getType()->castAs<FunctionProtoType>();
@@ -549,10 +559,43 @@ llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
     llvm::Constant *addr = CGM.GetAddrOfFunction(MD, Ty);
 
     MemPtr[0] = llvm::ConstantExpr::getPtrToInt(addr, ptrdiff_t);
-    MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, 0);
+    MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, (IsARM ? 2 : 1) *
+                                       ThisAdjustment.getQuantity());
   }
   
   return llvm::ConstantStruct::getAnon(MemPtr);
+}
+
+llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const APValue &MP,
+                                                 QualType MPType) {
+  const MemberPointerType *MPT = MPType->castAs<MemberPointerType>();
+  const ValueDecl *MPD = MP.getMemberPointerDecl();
+  if (!MPD)
+    return EmitNullMemberPointer(MPT);
+
+  // Compute the this-adjustment.
+  CharUnits ThisAdjustment = CharUnits::Zero();
+  ArrayRef<const CXXRecordDecl*> Path = MP.getMemberPointerPath();
+  bool DerivedMember = MP.isMemberPointerToDerivedMember();
+  const CXXRecordDecl *RD = cast<CXXRecordDecl>(MPD->getDeclContext());
+  for (unsigned I = 0, N = Path.size(); I != N; ++I) {
+    const CXXRecordDecl *Base = RD;
+    const CXXRecordDecl *Derived = Path[I];
+    if (DerivedMember)
+      std::swap(Base, Derived);
+    ThisAdjustment +=
+      getContext().getASTRecordLayout(Derived).getBaseClassOffset(Base);
+    RD = Path[I];
+  }
+  if (DerivedMember)
+    ThisAdjustment = -ThisAdjustment;
+
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(MPD))
+    return BuildMemberPointer(MD, ThisAdjustment);
+
+  CharUnits FieldOffset =
+    getContext().toCharUnitsFromBits(getContext().getFieldOffset(MPD));
+  return EmitMemberDataPointer(MPT, ThisAdjustment + FieldOffset);
 }
 
 /// The comparison algorithm is pretty easy: the member pointers are

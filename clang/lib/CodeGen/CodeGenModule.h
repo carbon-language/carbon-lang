@@ -687,11 +687,21 @@ public:
 
   llvm::Constant *getMemberPointerConstant(const UnaryOperator *e);
 
+  /// EmitConstantInit - Try to emit the initializer for the given declaration
+  /// as a constant; returns 0 if the expression cannot be emitted as a
+  /// constant.
+  llvm::Constant *EmitConstantInit(const VarDecl &D, CodeGenFunction *CGF = 0);
+
   /// EmitConstantExpr - Try to emit the given expression as a
   /// constant; returns 0 if the expression cannot be emitted as a
   /// constant.
   llvm::Constant *EmitConstantExpr(const Expr *E, QualType DestType,
                                    CodeGenFunction *CGF = 0);
+
+  /// EmitConstantValue - Try to emit the given constant value as a
+  /// constant; returns 0 if the value cannot be emitted as a constant.
+  llvm::Constant *EmitConstantValue(const APValue &Value, QualType DestType,
+                                    CodeGenFunction *CGF = 0);
 
   /// EmitNullConstant - Return the result of value-initializing the given
   /// type, i.e. a null expression of the given type.  This is usually,

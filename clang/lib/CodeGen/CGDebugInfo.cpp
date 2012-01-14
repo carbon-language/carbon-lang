@@ -1112,9 +1112,8 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   for (RecordDecl::decl_iterator I = RD->decls_begin(), E = RD->decls_end();
        I != E; ++I)
     if (const VarDecl *V = dyn_cast<VarDecl>(*I)) {
-      llvm::SmallVector<PartialDiagnosticAt, 8> Notes;
-      if (V->getInit() && V->evaluateValue(Notes)) {
-        APValue *Value = V->getEvaluatedValue();
+      if (V->getInit()) {
+        const APValue *Value = V->evaluateValue();
         if (Value && Value->isInt()) {
           llvm::ConstantInt *CI
             = llvm::ConstantInt::get(CGM.getLLVMContext(), Value->getInt());

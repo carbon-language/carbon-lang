@@ -1024,9 +1024,11 @@ public:
 
   /// \brief Attempt to evaluate the value of the initializer attached to this
   /// declaration, and produce notes explaining why it cannot be evaluated or is
-  /// not a constant expression. Returns true if evaluation succeeded.
-  /// The value can be obtained by calling getEvaluatedValue.
-  bool evaluateValue(llvm::SmallVectorImpl<PartialDiagnosticAt> &Notes) const;
+  /// not a constant expression. Returns a pointer to the value if evaluation
+  /// succeeded, 0 otherwise.
+  APValue *evaluateValue() const;
+  APValue *evaluateValue(
+    llvm::SmallVectorImpl<PartialDiagnosticAt> &Notes) const;
 
   /// \brief Return the already-evaluated value of this variable's
   /// initializer, or NULL if the value is not yet known. Returns pointer

@@ -3,6 +3,7 @@ template<typename T>
 struct X
 {
     X() = default;
+    ~X() {} // not a literal type
 };
 
 X<int> x;

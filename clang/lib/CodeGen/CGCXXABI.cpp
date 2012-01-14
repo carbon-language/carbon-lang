@@ -110,6 +110,10 @@ llvm::Constant *CGCXXABI::EmitMemberDataPointer(const MemberPointerType *MPT,
   return GetBogusMemberPointer(CGM, QualType(MPT, 0));
 }
 
+llvm::Constant *CGCXXABI::EmitMemberPointer(const APValue &MP, QualType MPT) {
+  return GetBogusMemberPointer(CGM, MPT);
+}
+
 bool CGCXXABI::isZeroInitializable(const MemberPointerType *MPT) {
   // Fake answer.
   return true;

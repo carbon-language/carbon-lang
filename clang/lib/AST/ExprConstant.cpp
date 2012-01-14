@@ -5413,15 +5413,12 @@ bool Expr::EvaluateAsRValue(EvalResult &Result, const ASTContext &Ctx) const {
     return true;
   }
 
-  // FIXME: Evaluating initializers for large arrays can cause performance
-  // problems, and we don't use such values yet. Once we have a more efficient
-  // array representation, this should be reinstated, and used by CodeGen.
-  // The same problem affects large records.
+  // FIXME: Evaluating values of large array and record types can cause
+  // performance problems. Only do so in C++11 for now.
   if (isRValue() && (getType()->isArrayType() || getType()->isRecordType()) &&
       !Ctx.getLangOptions().CPlusPlus0x)
     return false;
 
-  // FIXME: If this is the initializer for an lvalue, pass that in.
   EvalInfo Info(Ctx, Result);
   return ::EvaluateAsRValue(Info, this, Result.Val);
 }
@@ -5461,6 +5458,12 @@ bool Expr::EvaluateAsLValue(EvalResult &Result, const ASTContext &Ctx) const {
 bool Expr::EvaluateAsInitializer(APValue &Value, const ASTContext &Ctx,
                                  const VarDecl *VD,
                       llvm::SmallVectorImpl<PartialDiagnosticAt> &Notes) const {
+  // FIXME: Evaluating initializers for large array and record types can cause
+  // performance problems. Only do so in C++11 for now.
+  if (isRValue() && (getType()->isArrayType() || getType()->isRecordType()) &&
+      !Ctx.getLangOptions().CPlusPlus0x)
+    return false;
+
   Expr::EvalStatus EStatus;
   EStatus.Diag = &Notes;
 

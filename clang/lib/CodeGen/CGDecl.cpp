@@ -203,7 +203,7 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
 llvm::GlobalVariable *
 CodeGenFunction::AddInitializerToStaticVarDecl(const VarDecl &D,
                                                llvm::GlobalVariable *GV) {
-  llvm::Constant *Init = CGM.EmitConstantExpr(D.getInit(), D.getType(), this);
+  llvm::Constant *Init = CGM.EmitConstantInit(D, this);
 
   // If constant emission failed, then this should be a C++ static
   // initializer.
@@ -972,7 +972,7 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
   llvm::Constant *constant = 0;
   if (emission.IsConstantAggregate) {
     assert(!capturedByInit && "constant init contains a capturing block?");
-    constant = CGM.EmitConstantExpr(D.getInit(), type, this);
+    constant = CGM.EmitConstantInit(D, this);
   }
 
   if (!constant) {

@@ -1379,15 +1379,20 @@ EvaluatedStmt *VarDecl::ensureEvaluatedStmt() const {
   return Eval;
 }
 
-bool VarDecl::evaluateValue(
-                      llvm::SmallVectorImpl<PartialDiagnosticAt> &Notes) const {
+APValue *VarDecl::evaluateValue() const {
+  llvm::SmallVector<PartialDiagnosticAt, 8> Notes;
+  return evaluateValue(Notes);
+}
+
+APValue *VarDecl::evaluateValue(
+    llvm::SmallVectorImpl<PartialDiagnosticAt> &Notes) const {
   EvaluatedStmt *Eval = ensureEvaluatedStmt();
 
   // We only produce notes indicating why an initializer is non-constant the
   // first time it is evaluated. FIXME: The notes won't always be emitted the
   // first time we try evaluation, so might not be produced at all.
   if (Eval->WasEvaluated)
-    return !Eval->Evaluated.isUninit();
+    return Eval->Evaluated.isUninit() ? 0 : &Eval->Evaluated;
 
   const Expr *Init = cast<Expr>(Eval->Value);
   assert(!Init->isValueDependent());
@@ -1396,7 +1401,7 @@ bool VarDecl::evaluateValue(
     // FIXME: Produce a diagnostic for self-initialization.
     Eval->CheckedICE = true;
     Eval->IsICE = false;
-    return false;
+    return 0;
   }
 
   Eval->IsEvaluating = true;
@@ -1418,7 +1423,7 @@ bool VarDecl::evaluateValue(
     Eval->IsICE = Notes.empty();
   }
 
-  return Result;
+  return Result ? &Eval->Evaluated : 0;
 }
 
 bool VarDecl::checkInitIsICE() const {
