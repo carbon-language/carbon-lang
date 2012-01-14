@@ -708,14 +708,14 @@ NotASpecialMember:;
       // hasn't been set yet.  That's really just a misdesign in Sema.
 
       if (FunTmpl) {
-        if (FunTmpl->getPreviousDeclaration())
-          data().Conversions.replace(FunTmpl->getPreviousDeclaration(),
+        if (FunTmpl->getPreviousDecl())
+          data().Conversions.replace(FunTmpl->getPreviousDecl(),
                                      FunTmpl);
         else
           data().Conversions.addDecl(FunTmpl);
       } else {
-        if (Conversion->getPreviousDeclaration())
-          data().Conversions.replace(Conversion->getPreviousDeclaration(),
+        if (Conversion->getPreviousDecl())
+          data().Conversions.replace(Conversion->getPreviousDecl(),
                                      Conversion);
         else
           data().Conversions.addDecl(Conversion);        

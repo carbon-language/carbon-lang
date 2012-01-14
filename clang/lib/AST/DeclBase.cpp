@@ -852,8 +852,8 @@ DeclContext::collectAllContexts(llvm::SmallVectorImpl<DeclContext *> &Contexts){
   }
   
   NamespaceDecl *Self = static_cast<NamespaceDecl *>(this);
-  for (NamespaceDecl *N = Self->getMostRecentDeclaration(); N;
-       N = N->getPreviousDeclaration())
+  for (NamespaceDecl *N = Self->getMostRecentDecl(); N;
+       N = N->getPreviousDecl())
     Contexts.push_back(N);
   
   std::reverse(Contexts.begin(), Contexts.end());

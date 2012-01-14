@@ -2130,7 +2130,7 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
       // Always skip the injected-class-name, along with any
       // redeclarations of nested classes, since both would cause us
       // to try to instantiate the members of a class twice.
-      if (Record->isInjectedClassName() || Record->getPreviousDeclaration())
+      if (Record->isInjectedClassName() || Record->getPreviousDecl())
         continue;
       
       MemberSpecializationInfo *MSInfo = Record->getMemberSpecializationInfo();
@@ -2297,7 +2297,7 @@ LocalInstantiationScope::findInstantiationOf(const Decl *D) {
       // If this is a tag declaration, it's possible that we need to look for
       // a previous declaration.
       if (const TagDecl *Tag = dyn_cast<TagDecl>(CheckD))
-        CheckD = Tag->getPreviousDeclaration();
+        CheckD = Tag->getPreviousDecl();
       else
         CheckD = 0;
     } while (CheckD);

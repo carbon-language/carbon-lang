@@ -411,7 +411,7 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
   }
 
   template <class T> void visitRedeclarableAttrs(T *D) {
-    if (T *Prev = D->getPreviousDeclaration())
+    if (T *Prev = D->getPreviousDecl())
       setPointer("previous", Prev);
   }
 

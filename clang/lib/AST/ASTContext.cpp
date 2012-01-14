@@ -2195,7 +2195,7 @@ QualType ASTContext::getInjectedClassNameType(CXXRecordDecl *Decl,
   assert(NeedsInjectedClassNameType(Decl));
   if (Decl->TypeForDecl) {
     assert(isa<InjectedClassNameType>(Decl->TypeForDecl));
-  } else if (CXXRecordDecl *PrevDecl = Decl->getPreviousDeclaration()) {
+  } else if (CXXRecordDecl *PrevDecl = Decl->getPreviousDecl()) {
     assert(PrevDecl->TypeForDecl && "previous declaration has no type");
     Decl->TypeForDecl = PrevDecl->TypeForDecl;
     assert(isa<InjectedClassNameType>(Decl->TypeForDecl));
@@ -2221,12 +2221,12 @@ QualType ASTContext::getTypeDeclTypeSlow(const TypeDecl *Decl) const {
          "Template type parameter types are always available.");
 
   if (const RecordDecl *Record = dyn_cast<RecordDecl>(Decl)) {
-    assert(!Record->getPreviousDeclaration() &&
+    assert(!Record->getPreviousDecl() &&
            "struct/union has previous declaration");
     assert(!NeedsInjectedClassNameType(Record));
     return getRecordType(Record);
   } else if (const EnumDecl *Enum = dyn_cast<EnumDecl>(Decl)) {
-    assert(!Enum->getPreviousDeclaration() &&
+    assert(!Enum->getPreviousDecl() &&
            "enum has previous declaration");
     return getEnumType(Enum);
   } else if (const UnresolvedUsingTypenameDecl *Using =
@@ -2259,7 +2259,7 @@ ASTContext::getTypedefType(const TypedefNameDecl *Decl,
 QualType ASTContext::getRecordType(const RecordDecl *Decl) const {
   if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
 
-  if (const RecordDecl *PrevDecl = Decl->getPreviousDeclaration())
+  if (const RecordDecl *PrevDecl = Decl->getPreviousDecl())
     if (PrevDecl->TypeForDecl)
       return QualType(Decl->TypeForDecl = PrevDecl->TypeForDecl, 0); 
 
@@ -2272,7 +2272,7 @@ QualType ASTContext::getRecordType(const RecordDecl *Decl) const {
 QualType ASTContext::getEnumType(const EnumDecl *Decl) const {
   if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
 
-  if (const EnumDecl *PrevDecl = Decl->getPreviousDeclaration())
+  if (const EnumDecl *PrevDecl = Decl->getPreviousDecl())
     if (PrevDecl->TypeForDecl)
       return QualType(Decl->TypeForDecl = PrevDecl->TypeForDecl, 0); 
 

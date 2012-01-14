@@ -380,7 +380,13 @@ class NamespaceDecl : public NamedDecl, public DeclContext,
   virtual NamespaceDecl *getNextRedeclaration() {
     return RedeclLink.getNext();
   }
-
+  virtual NamespaceDecl *getPreviousDeclImpl() {
+    return getPreviousDecl();
+  }
+  virtual NamespaceDecl *getMostRecentDeclImpl() {
+    return getMostRecentDecl();
+  }
+  
 public:
   static NamespaceDecl *Create(ASTContext &C, DeclContext *DC,
                                bool Inline, SourceLocation StartLoc,
@@ -388,14 +394,12 @@ public:
                                NamespaceDecl *PrevDecl);
 
   static NamespaceDecl *CreateDeserialized(ASTContext &C, unsigned ID);
-  
-  typedef redeclarable_base::redecl_iterator redecl_iterator;
-  redecl_iterator redecls_begin() const {
-    return redeclarable_base::redecls_begin();
-  }
-  redecl_iterator redecls_end() const {
-    return redeclarable_base::redecls_end();
-  }
+
+  using redeclarable_base::redecl_iterator;
+  using redeclarable_base::redecls_begin;
+  using redeclarable_base::redecls_end;
+  using redeclarable_base::getPreviousDecl;
+  using redeclarable_base::getMostRecentDecl;
 
   /// \brief Returns true if this is an anonymous namespace declaration.
   ///
@@ -461,14 +465,6 @@ public:
     return AnonOrFirstNamespaceAndInline.getPointer();
   }
   
-  virtual NamespaceDecl *getPreviousDecl() {
-    return redeclarable_base::getPreviousDeclaration();
-  }
-
-  virtual NamespaceDecl *getMostRecentDecl() {
-    return redeclarable_base::getMostRecentDeclaration();
-  }
-
   virtual SourceRange getSourceRange() const {
     return SourceRange(LocStart, RBraceLoc);
   }
@@ -788,23 +784,19 @@ protected:
 
   typedef Redeclarable<VarDecl> redeclarable_base;
   virtual VarDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
+  virtual VarDecl *getPreviousDeclImpl() {
+    return getPreviousDecl();
+  }
+  virtual VarDecl *getMostRecentDeclImpl() {
+    return getMostRecentDecl();
+  }
 
 public:
-  typedef redeclarable_base::redecl_iterator redecl_iterator;
-  redecl_iterator redecls_begin() const {
-    return redeclarable_base::redecls_begin();
-  }
-  redecl_iterator redecls_end() const {
-    return redeclarable_base::redecls_end();
-  }
-
-  virtual VarDecl *getPreviousDecl() {
-    return redeclarable_base::getPreviousDeclaration();
-  }
-  
-  virtual VarDecl *getMostRecentDecl() {
-    return redeclarable_base::getMostRecentDeclaration();
-  }
+  using redeclarable_base::redecl_iterator;
+  using redeclarable_base::redecls_begin;
+  using redeclarable_base::redecls_end;
+  using redeclarable_base::getPreviousDecl;
+  using redeclarable_base::getMostRecentDecl;
 
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation StartLoc, SourceLocation IdLoc,
@@ -1375,7 +1367,7 @@ private:
 /// FunctionDecl (e.g., the translation unit); this FunctionDecl
 /// contains all of the information known about the function. Other,
 /// previous declarations of the function are available via the
-/// getPreviousDeclaration() chain.
+/// getPreviousDecl() chain.
 class FunctionDecl : public DeclaratorDecl, public DeclContext,
                      public Redeclarable<FunctionDecl> {
 public:
@@ -1505,23 +1497,19 @@ protected:
 
   typedef Redeclarable<FunctionDecl> redeclarable_base;
   virtual FunctionDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
+  virtual FunctionDecl *getPreviousDeclImpl() {
+    return getPreviousDecl();
+  }
+  virtual FunctionDecl *getMostRecentDeclImpl() {
+    return getMostRecentDecl();
+  }
 
 public:
-  typedef redeclarable_base::redecl_iterator redecl_iterator;
-  redecl_iterator redecls_begin() const {
-    return redeclarable_base::redecls_begin();
-  }
-  redecl_iterator redecls_end() const {
-    return redeclarable_base::redecls_end();
-  }
-
-  virtual FunctionDecl *getPreviousDecl() {
-    return redeclarable_base::getPreviousDeclaration();
-  }
- 
-  virtual FunctionDecl *getMostRecentDecl() {
-    return redeclarable_base::getMostRecentDeclaration();
-  }
+  using redeclarable_base::redecl_iterator;
+  using redeclarable_base::redecls_begin;
+  using redeclarable_base::redecls_end;
+  using redeclarable_base::getPreviousDecl;
+  using redeclarable_base::getMostRecentDecl;
 
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC,
                               SourceLocation StartLoc, SourceLocation NLoc,
@@ -2295,23 +2283,19 @@ protected:
   virtual TypedefNameDecl *getNextRedeclaration() {
     return RedeclLink.getNext();
   }
+  virtual TypedefNameDecl *getPreviousDeclImpl() {
+    return getPreviousDecl();
+  }
+  virtual TypedefNameDecl *getMostRecentDeclImpl() {
+    return getMostRecentDecl();
+  }
 
 public:
-  typedef redeclarable_base::redecl_iterator redecl_iterator;
-  redecl_iterator redecls_begin() const {
-    return redeclarable_base::redecls_begin();
-  }
-  redecl_iterator redecls_end() const {
-    return redeclarable_base::redecls_end();
-  }
-
-  virtual TypedefNameDecl *getPreviousDecl() {
-    return redeclarable_base::getPreviousDeclaration();
-  }
-  
-  virtual TypedefNameDecl *getMostRecentDecl() {
-    return redeclarable_base::getMostRecentDeclaration();
-  }
+  using redeclarable_base::redecl_iterator;
+  using redeclarable_base::redecls_begin;
+  using redeclarable_base::redecls_end;
+  using redeclarable_base::getPreviousDecl;
+  using redeclarable_base::getMostRecentDecl;
 
   TypeSourceInfo *getTypeSourceInfo() const {
     return TInfo;
@@ -2466,6 +2450,12 @@ protected:
 
   typedef Redeclarable<TagDecl> redeclarable_base;
   virtual TagDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
+  virtual TagDecl *getPreviousDeclImpl() {
+    return getPreviousDecl();
+  }
+  virtual TagDecl *getMostRecentDeclImpl() {
+    return getMostRecentDecl();
+  }
 
   /// @brief Completes the definition of this tag declaration.
   ///
@@ -2473,21 +2463,11 @@ protected:
   void completeDefinition();
 
 public:
-  typedef redeclarable_base::redecl_iterator redecl_iterator;
-  redecl_iterator redecls_begin() const {
-    return redeclarable_base::redecls_begin();
-  }
-  redecl_iterator redecls_end() const {
-    return redeclarable_base::redecls_end();
-  }
-
-  virtual TagDecl *getPreviousDecl() {
-    return redeclarable_base::getPreviousDeclaration();
-  }
-  
-  virtual TagDecl *getMostRecentDecl() {
-    return redeclarable_base::getMostRecentDeclaration();
-  }
+  using redeclarable_base::redecl_iterator;
+  using redeclarable_base::redecls_begin;
+  using redeclarable_base::redecls_end;
+  using redeclarable_base::getPreviousDecl;
+  using redeclarable_base::getMostRecentDecl;
 
   SourceLocation getRBraceLoc() const { return RBraceLoc; }
   void setRBraceLoc(SourceLocation L) { RBraceLoc = L; }
@@ -2684,11 +2664,18 @@ public:
     return cast<EnumDecl>(TagDecl::getCanonicalDecl());
   }
 
-  const EnumDecl *getPreviousDeclaration() const {
-    return cast_or_null<EnumDecl>(TagDecl::getPreviousDeclaration());
+  const EnumDecl *getPreviousDecl() const {
+    return cast_or_null<EnumDecl>(TagDecl::getPreviousDecl());
   }
-  EnumDecl *getPreviousDeclaration() {
-    return cast_or_null<EnumDecl>(TagDecl::getPreviousDeclaration());
+  EnumDecl *getPreviousDecl() {
+    return cast_or_null<EnumDecl>(TagDecl::getPreviousDecl());
+  }
+
+  const EnumDecl *getMostRecentDecl() const {
+    return cast<EnumDecl>(TagDecl::getMostRecentDecl());
+  }
+  EnumDecl *getMostRecentDecl() {
+    return cast<EnumDecl>(TagDecl::getMostRecentDecl());
   }
 
   static EnumDecl *Create(ASTContext &C, DeclContext *DC,
@@ -2857,11 +2844,18 @@ public:
                             IdentifierInfo *Id, RecordDecl* PrevDecl = 0);
   static RecordDecl *CreateDeserialized(const ASTContext &C, unsigned ID);
 
-  const RecordDecl *getPreviousDeclaration() const {
-    return cast_or_null<RecordDecl>(TagDecl::getPreviousDeclaration());
+  const RecordDecl *getPreviousDecl() const {
+    return cast_or_null<RecordDecl>(TagDecl::getPreviousDecl());
   }
-  RecordDecl *getPreviousDeclaration() {
-    return cast_or_null<RecordDecl>(TagDecl::getPreviousDeclaration());
+  RecordDecl *getPreviousDecl() {
+    return cast_or_null<RecordDecl>(TagDecl::getPreviousDecl());
+  }
+
+  const RecordDecl *getMostRecentDecl() const {
+    return cast<RecordDecl>(TagDecl::getMostRecentDecl());
+  }
+  RecordDecl *getMostRecentDecl() {
+    return cast<RecordDecl>(TagDecl::getMostRecentDecl());
   }
 
   bool hasFlexibleArrayMember() const { return HasFlexibleArrayMember; }
@@ -3220,7 +3214,7 @@ void Redeclarable<decl_type>::setPreviousDeclaration(decl_type *PrevDecl) {
     // redeclaration, or we can build invalid chains. If the most recent
     // redeclaration is invalid, it won't be PrevDecl, but we want it anyway.
     RedeclLink = PreviousDeclLink(
-                   llvm::cast<decl_type>(PrevDecl->getMostRecentDeclaration()));
+                   llvm::cast<decl_type>(PrevDecl->getMostRecentDecl()));
     First = PrevDecl->getFirstDeclaration();
     assert(First->RedeclLink.NextIsLatest() && "Expected first");
   } else {

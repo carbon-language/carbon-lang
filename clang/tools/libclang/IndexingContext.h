@@ -127,7 +127,7 @@ struct ObjCInterfaceDeclInfo : public ObjCContainerDeclInfo {
   ObjCInterfaceDeclInfo(const ObjCInterfaceDecl *D)
     : ObjCContainerDeclInfo(Info_ObjCInterface,
                             /*isForwardRef=*/false,
-                          /*isRedeclaration=*/D->getPreviousDeclaration() != 0,
+                          /*isRedeclaration=*/D->getPreviousDecl() != 0,
                             /*isImplementation=*/false) { }
 
   static bool classof(const DeclInfo *D) {
@@ -142,7 +142,7 @@ struct ObjCProtocolDeclInfo : public ObjCContainerDeclInfo {
   ObjCProtocolDeclInfo(const ObjCProtocolDecl *D)
     : ObjCContainerDeclInfo(Info_ObjCProtocol,
                             /*isForwardRef=*/false,
-                            /*isRedeclaration=*/D->getPreviousDeclaration(),
+                            /*isRedeclaration=*/D->getPreviousDecl(),
                             /*isImplementation=*/false) { }
 
   static bool classof(const DeclInfo *D) {

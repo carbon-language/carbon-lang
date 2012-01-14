@@ -5330,7 +5330,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     if (isFriend && D.isRedeclaration()) {
       AccessSpecifier Access = AS_public;
       if (!NewFD->isInvalidDecl())
-        Access = NewFD->getPreviousDeclaration()->getAccess();
+        Access = NewFD->getPreviousDecl()->getAccess();
 
       NewFD->setAccess(Access);
       if (FunctionTemplate) FunctionTemplate->setAccess(Access);
@@ -5346,7 +5346,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     // list. This will check and merge default template arguments.
     if (FunctionTemplate) {
       FunctionTemplateDecl *PrevTemplate = 
-                                     FunctionTemplate->getPreviousDeclaration();
+                                     FunctionTemplate->getPreviousDecl();
       CheckTemplateParameterList(FunctionTemplate->getTemplateParameters(),
                        PrevTemplate ? PrevTemplate->getTemplateParameters() : 0,
                             D.getDeclSpec().isFriendSpecified()
@@ -5993,7 +5993,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
 
     // If this is a redeclaration, check that the type we just deduced matches
     // the previously declared type.
-    if (VarDecl *Old = VDecl->getPreviousDeclaration())
+    if (VarDecl *Old = VDecl->getPreviousDecl())
       MergeVarDeclTypes(VDecl, Old);
   }
 
@@ -6353,7 +6353,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
           // is accepted by gcc. Hence here we issue a warning instead of
           // an error and we do not invalidate the static declaration.
           // NOTE: to avoid multiple warnings, only check the first declaration.
-          if (Var->getPreviousDeclaration() == 0)
+          if (Var->getPreviousDecl() == 0)
             RequireCompleteType(Var->getLocation(), Type,
                                 diag::ext_typecheck_decl_incomplete_type);
         }
@@ -6981,8 +6981,8 @@ static bool ShouldWarnAboutMissingPrototype(const FunctionDecl *FD) {
     return false;
 
   bool MissingPrototype = true;
-  for (const FunctionDecl *Prev = FD->getPreviousDeclaration();
-       Prev; Prev = Prev->getPreviousDeclaration()) {
+  for (const FunctionDecl *Prev = FD->getPreviousDecl();
+       Prev; Prev = Prev->getPreviousDecl()) {
     // Ignore any declarations that occur in function or method
     // scope, because they aren't visible from the header.
     if (Prev->getDeclContext()->isFunctionOrMethod())

@@ -1054,7 +1054,7 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
           break;
         }
       }
-      FD = FD->getPreviousDeclaration();
+      FD = FD->getPreviousDecl();
     } while (FD);
   }
 

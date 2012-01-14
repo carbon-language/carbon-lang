@@ -420,8 +420,8 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
       
       // Look for the function declaration where the default argument was
       // actually written, which may be a declaration prior to Old.
-      for (FunctionDecl *Older = Old->getPreviousDeclaration();
-           Older; Older = Older->getPreviousDeclaration()) {
+      for (FunctionDecl *Older = Old->getPreviousDecl();
+           Older; Older = Older->getPreviousDecl()) {
         if (!Older->getParamDecl(p)->hasDefaultArg())
           break;
         
@@ -8977,7 +8977,7 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
 
     // If this is a redeclaration, check that the type we just deduced matches
     // the previously declared type.
-    if (VarDecl *Old = VDecl->getPreviousDeclaration())
+    if (VarDecl *Old = VDecl->getPreviousDecl())
       MergeVarDeclTypes(VDecl, Old);
   }
 
@@ -10310,7 +10310,7 @@ void Sema::SetDeclDeleted(Decl *Dcl, SourceLocation DelLoc) {
     Diag(DelLoc, diag::err_deleted_non_function);
     return;
   }
-  if (const FunctionDecl *Prev = Fn->getPreviousDeclaration()) {
+  if (const FunctionDecl *Prev = Fn->getPreviousDecl()) {
     Diag(DelLoc, diag::err_deleted_decl_not_first);
     Diag(Prev->getLocation(), diag::note_previous_declaration);
     // If the declaration wasn't the first, we delete the function anyway for

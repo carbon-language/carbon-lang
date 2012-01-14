@@ -486,13 +486,19 @@ class RedeclarableTemplateDecl : public TemplateDecl,
   virtual RedeclarableTemplateDecl *getNextRedeclaration() {
     return RedeclLink.getNext();
   }
+  virtual RedeclarableTemplateDecl *getPreviousDeclImpl() {
+    return getPreviousDecl();
+  }
+  virtual RedeclarableTemplateDecl *getMostRecentDeclImpl() {
+    return getMostRecentDecl();
+  }
 
 protected:
   template <typename EntryType> struct SpecEntryTraits {
     typedef EntryType DeclType;
 
-    static DeclType *getMostRecentDeclaration(EntryType *D) {
-      return D->getMostRecentDeclaration();
+    static DeclType *getMostRecentDecl(EntryType *D) {
+      return D->getMostRecentDecl();
     }
   };
 
@@ -514,7 +520,7 @@ protected:
     SpecIterator(SetIteratorType SetIter) : SetIter(SetIter) {}
 
     DeclType *operator*() const {
-      return SETraits::getMostRecentDeclaration(&*SetIter);
+      return SETraits::getMostRecentDecl(&*SetIter);
     }
     DeclType *operator->() const { return **this; }
 
@@ -622,21 +628,11 @@ public:
     getCommonPtr()->InstantiatedFromMember.setPointer(TD);
   }
 
-  typedef redeclarable_base::redecl_iterator redecl_iterator;
-  redecl_iterator redecls_begin() const {
-    return redeclarable_base::redecls_begin();
-  }
-  redecl_iterator redecls_end() const {
-    return redeclarable_base::redecls_end();
-  }
-
-  virtual RedeclarableTemplateDecl *getPreviousDecl() {
-    return redeclarable_base::getPreviousDeclaration();
-  }
-  
-  virtual RedeclarableTemplateDecl *getMostRecentDecl() {
-    return redeclarable_base::getMostRecentDeclaration();
-  }
+  using redeclarable_base::redecl_iterator;
+  using redeclarable_base::redecls_begin;
+  using redeclarable_base::redecls_end;
+  using redeclarable_base::getPreviousDecl;
+  using redeclarable_base::getMostRecentDecl;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -658,8 +654,8 @@ SpecEntryTraits<FunctionTemplateSpecializationInfo> {
   typedef FunctionDecl DeclType;
 
   static DeclType *
-  getMostRecentDeclaration(FunctionTemplateSpecializationInfo *I) {
-    return I->Function->getMostRecentDeclaration();
+  getMostRecentDecl(FunctionTemplateSpecializationInfo *I) {
+    return I->Function->getMostRecentDecl();
   }
 };
 
@@ -740,16 +736,16 @@ public:
 
   /// \brief Retrieve the previous declaration of this function template, or
   /// NULL if no such declaration exists.
-  FunctionTemplateDecl *getPreviousDeclaration() {
+  FunctionTemplateDecl *getPreviousDecl() {
     return cast_or_null<FunctionTemplateDecl>(
-             RedeclarableTemplateDecl::getPreviousDeclaration());
+             RedeclarableTemplateDecl::getPreviousDecl());
   }
 
   /// \brief Retrieve the previous declaration of this function template, or
   /// NULL if no such declaration exists.
-  const FunctionTemplateDecl *getPreviousDeclaration() const {
+  const FunctionTemplateDecl *getPreviousDecl() const {
     return cast_or_null<FunctionTemplateDecl>(
-             RedeclarableTemplateDecl::getPreviousDeclaration());
+             RedeclarableTemplateDecl::getPreviousDecl());
   }
 
   FunctionTemplateDecl *getInstantiatedFromMemberTemplate() {
@@ -1287,13 +1283,13 @@ public:
                                     const PrintingPolicy &Policy,
                                     bool Qualified) const;
 
-  ClassTemplateSpecializationDecl *getMostRecentDeclaration() {
+  ClassTemplateSpecializationDecl *getMostRecentDecl() {
     CXXRecordDecl *Recent
-        = cast<CXXRecordDecl>(CXXRecordDecl::getMostRecentDeclaration());
+        = cast<CXXRecordDecl>(CXXRecordDecl::getMostRecentDecl());
     if (!isa<ClassTemplateSpecializationDecl>(Recent)) {
       // FIXME: Does injected class name need to be in the redeclarations chain?
-      assert(Recent->isInjectedClassName() && Recent->getPreviousDeclaration());
-      Recent = Recent->getPreviousDeclaration();
+      assert(Recent->isInjectedClassName() && Recent->getPreviousDecl());
+      Recent = Recent->getPreviousDecl();
     }
     return cast<ClassTemplateSpecializationDecl>(Recent);
   }
@@ -1533,9 +1529,9 @@ public:
   static ClassTemplatePartialSpecializationDecl *
   CreateDeserialized(ASTContext &C, unsigned ID);
 
-  ClassTemplatePartialSpecializationDecl *getMostRecentDeclaration() {
+  ClassTemplatePartialSpecializationDecl *getMostRecentDecl() {
     return cast<ClassTemplatePartialSpecializationDecl>(
-                   ClassTemplateSpecializationDecl::getMostRecentDeclaration());
+                   ClassTemplateSpecializationDecl::getMostRecentDecl());
   }
 
   /// Get the list of template parameters
@@ -1744,16 +1740,16 @@ public:
 
   /// \brief Retrieve the previous declaration of this class template, or
   /// NULL if no such declaration exists.
-  ClassTemplateDecl *getPreviousDeclaration() {
+  ClassTemplateDecl *getPreviousDecl() {
     return cast_or_null<ClassTemplateDecl>(
-             RedeclarableTemplateDecl::getPreviousDeclaration());
+             RedeclarableTemplateDecl::getPreviousDecl());
   }
 
   /// \brief Retrieve the previous declaration of this class template, or
   /// NULL if no such declaration exists.
-  const ClassTemplateDecl *getPreviousDeclaration() const {
+  const ClassTemplateDecl *getPreviousDecl() const {
     return cast_or_null<ClassTemplateDecl>(
-             RedeclarableTemplateDecl::getPreviousDeclaration());
+             RedeclarableTemplateDecl::getPreviousDecl());
   }
 
   ClassTemplateDecl *getInstantiatedFromMemberTemplate() {
@@ -1978,16 +1974,16 @@ public:
 
   /// \brief Retrieve the previous declaration of this function template, or
   /// NULL if no such declaration exists.
-  TypeAliasTemplateDecl *getPreviousDeclaration() {
+  TypeAliasTemplateDecl *getPreviousDecl() {
     return cast_or_null<TypeAliasTemplateDecl>(
-             RedeclarableTemplateDecl::getPreviousDeclaration());
+             RedeclarableTemplateDecl::getPreviousDecl());
   }
 
   /// \brief Retrieve the previous declaration of this function template, or
   /// NULL if no such declaration exists.
-  const TypeAliasTemplateDecl *getPreviousDeclaration() const {
+  const TypeAliasTemplateDecl *getPreviousDecl() const {
     return cast_or_null<TypeAliasTemplateDecl>(
-             RedeclarableTemplateDecl::getPreviousDeclaration());
+             RedeclarableTemplateDecl::getPreviousDecl());
   }
 
   TypeAliasTemplateDecl *getInstantiatedFromMemberTemplate() {

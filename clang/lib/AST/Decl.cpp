@@ -229,9 +229,9 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
         Var->getStorageClass() != SC_Extern &&
         Var->getStorageClass() != SC_PrivateExtern) {
       bool FoundExtern = false;
-      for (const VarDecl *PrevVar = Var->getPreviousDeclaration();
+      for (const VarDecl *PrevVar = Var->getPreviousDecl();
            PrevVar && !FoundExtern; 
-           PrevVar = PrevVar->getPreviousDeclaration())
+           PrevVar = PrevVar->getPreviousDecl())
         if (isExternalLinkage(PrevVar->getLinkage()))
           FoundExtern = true;
       
@@ -239,8 +239,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
         return LinkageInfo::internal();
     }
     if (Var->getStorageClass() == SC_None) {
-      const VarDecl *PrevVar = Var->getPreviousDeclaration();
-      for (; PrevVar; PrevVar = PrevVar->getPreviousDeclaration())
+      const VarDecl *PrevVar = Var->getPreviousDecl();
+      for (; PrevVar; PrevVar = PrevVar->getPreviousDecl())
         if (PrevVar->getStorageClass() == SC_PrivateExtern)
           break;
         if (PrevVar)
@@ -354,7 +354,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
       //   specified at the prior declaration. If no prior declaration
       //   is visible, or if the prior declaration specifies no
       //   linkage, then the identifier has external linkage.
-      if (const VarDecl *PrevVar = Var->getPreviousDeclaration()) {
+      if (const VarDecl *PrevVar = Var->getPreviousDecl()) {
         LinkageInfo PrevLV = getLVForDecl(PrevVar, F);
         if (PrevLV.linkage()) LV.setLinkage(PrevLV.linkage());
         LV.mergeVisibility(PrevLV);
@@ -389,7 +389,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
       //   specified at the prior declaration. If no prior declaration
       //   is visible, or if the prior declaration specifies no
       //   linkage, then the identifier has external linkage.
-      if (const FunctionDecl *PrevFunc = Function->getPreviousDeclaration()) {
+      if (const FunctionDecl *PrevFunc = Function->getPreviousDecl()) {
         LinkageInfo PrevLV = getLVForDecl(PrevFunc, F);
         if (PrevLV.linkage()) LV.setLinkage(PrevLV.linkage());
         LV.mergeVisibility(PrevLV);
@@ -681,13 +681,13 @@ LinkageInfo NamedDecl::getLinkageAndVisibility() const {
 llvm::Optional<Visibility> NamedDecl::getExplicitVisibility() const {
   // Use the most recent declaration of a variable.
   if (const VarDecl *var = dyn_cast<VarDecl>(this))
-    return getVisibilityOf(var->getMostRecentDeclaration());
+    return getVisibilityOf(var->getMostRecentDecl());
 
   // Use the most recent declaration of a function, and also handle
   // function template specializations.
   if (const FunctionDecl *fn = dyn_cast<FunctionDecl>(this)) {
     if (llvm::Optional<Visibility> V
-                            = getVisibilityOf(fn->getMostRecentDeclaration())) 
+                            = getVisibilityOf(fn->getMostRecentDecl())) 
       return V;
 
     // If the function is a specialization of a template with an
@@ -771,7 +771,7 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
           LV.setVisibility(*Vis);
       }
       
-      if (const FunctionDecl *Prev = Function->getPreviousDeclaration()) {
+      if (const FunctionDecl *Prev = Function->getPreviousDecl()) {
         LinkageInfo PrevLV = getLVForDecl(Prev, Flags);
         if (PrevLV.linkage()) LV.setLinkage(PrevLV.linkage());
         LV.mergeVisibility(PrevLV);
@@ -794,7 +794,7 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
             LV.setVisibility(*Vis);
         }
         
-        if (const VarDecl *Prev = Var->getPreviousDeclaration()) {
+        if (const VarDecl *Prev = Var->getPreviousDecl()) {
           LinkageInfo PrevLV = getLVForDecl(Prev, Flags);
           if (PrevLV.linkage()) LV.setLinkage(PrevLV.linkage());
           LV.mergeVisibility(PrevLV);
@@ -903,7 +903,7 @@ bool NamedDecl::declarationReplaces(NamedDecl *OldD) const {
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(this))
     // For function declarations, we keep track of redeclarations.
-    return FD->getPreviousDeclaration() == OldD;
+    return FD->getPreviousDecl() == OldD;
 
   // For function templates, the underlying function declarations are linked.
   if (const FunctionTemplateDecl *FunctionTemplate
@@ -1225,8 +1225,8 @@ VarDecl::DefinitionKind VarDecl::isThisDeclarationADefinition() const {
   
   if (getStorageClassAsWritten() == SC_Extern ||
        getStorageClassAsWritten() == SC_PrivateExtern) {
-    for (const VarDecl *PrevVar = getPreviousDeclaration();
-         PrevVar; PrevVar = PrevVar->getPreviousDeclaration()) {
+    for (const VarDecl *PrevVar = getPreviousDecl();
+         PrevVar; PrevVar = PrevVar->getPreviousDecl()) {
       if (PrevVar->getLinkage() == InternalLinkage && PrevVar->hasInit())
         return DeclarationOnly;
     }

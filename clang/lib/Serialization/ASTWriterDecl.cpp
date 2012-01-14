@@ -186,7 +186,7 @@ void ASTDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
   if (!D->hasAttrs() &&
       !D->isImplicit() &&
       !D->isUsed(false) &&
-      !D->getPreviousDeclaration() &&
+      !D->getPreviousDecl() &&
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       !D->isTopLevelDeclInObjCContainer() &&
@@ -236,7 +236,7 @@ void ASTDeclWriter::VisitEnumDecl(EnumDecl *D) {
       !D->isImplicit() &&
       !D->isUsed(false) &&
       !D->hasExtInfo() &&
-      !D->getPreviousDeclaration() &&
+      !D->getPreviousDecl() &&
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       !D->isTopLevelDeclInObjCContainer() &&
@@ -260,7 +260,7 @@ void ASTDeclWriter::VisitRecordDecl(RecordDecl *D) {
       !D->isImplicit() &&
       !D->isUsed(false) &&
       !D->hasExtInfo() &&
-      !D->getPreviousDeclaration() &&
+      !D->getPreviousDecl() &&
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       !D->isTopLevelDeclInObjCContainer() &&
@@ -692,7 +692,7 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
       !D->isModulePrivate() &&
       D->getDeclName().getNameKind() == DeclarationName::Identifier &&
       !D->hasExtInfo() &&
-      !D->getPreviousDeclaration() &&
+      !D->getPreviousDecl() &&
       !D->hasCXXDirectInitializer() &&
       D->getInit() == 0 &&
       !isa<ParmVarDecl>(D) &&
@@ -748,7 +748,7 @@ void ASTDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
   assert(!D->isThreadSpecified() && "PARM_VAR_DECL can't be __thread");
   assert(D->getAccess() == AS_none && "PARM_VAR_DECL can't be public/private");
   assert(!D->isExceptionVariable() && "PARM_VAR_DECL can't be exception var");
-  assert(D->getPreviousDeclaration() == 0 && "PARM_VAR_DECL can't be redecl");
+  assert(D->getPreviousDecl() == 0 && "PARM_VAR_DECL can't be redecl");
   assert(!D->isStaticDataMember() &&
          "PARM_VAR_DECL can't be static data member");
 }
@@ -834,7 +834,7 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
   }
 
   if (Writer.hasChain() && D->isAnonymousNamespace() && 
-      D == D->getMostRecentDeclaration()) {
+      D == D->getMostRecentDecl()) {
     // This is a most recent reopening of the anonymous namespace. If its parent
     // is in a previous PCH (or is the TU), mark that parent for update, because
     // the original namespace always points to the latest re-opening of its
@@ -1118,7 +1118,7 @@ void ASTDeclWriter::VisitClassTemplatePartialSpecializationDecl(
   Record.push_back(D->getSequenceNumber());
 
   // These are read/set from/to the first declaration.
-  if (D->getPreviousDeclaration() == 0) {
+  if (D->getPreviousDecl() == 0) {
     Writer.AddDeclRef(D->getInstantiatedFromMember(), Record);
     Record.push_back(D->isMemberSpecialization());
   }
@@ -1238,7 +1238,7 @@ void ASTDeclWriter::VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
 template <typename T>
 void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
   enum { FirstDeclaration = 0, FirstInFile, PointsToPrevious };
-  T *Prev = D->getPreviousDeclaration();
+  T *Prev = D->getPreviousDecl();
   T *First = D->getFirstDeclaration();
   
   if (!Prev) {
@@ -1246,7 +1246,7 @@ void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
   } else {  
     Record.push_back(Prev->isFromASTFile()? FirstInFile : PointsToPrevious);
     Writer.AddDeclRef(First, Record);
-    Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
+    Writer.AddDeclRef(D->getPreviousDecl(), Record);
   }
   
   if (D->RedeclLink.getPointer() != D && (!Prev || Prev->isFromASTFile())) {
@@ -1254,7 +1254,7 @@ void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
     LocalRedeclarationsInfo LocalInfo = {
       Writer.GetDeclRef(First),
       Writer.GetDeclRef(static_cast<T*>(D)),
-      Writer.GetDeclRef(D->getMostRecentDeclaration())
+      Writer.GetDeclRef(D->getMostRecentDecl())
     };
     Writer.LocalRedeclarations.push_back(LocalInfo);    
   }

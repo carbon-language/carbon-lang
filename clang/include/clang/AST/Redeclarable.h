@@ -64,22 +64,22 @@ public:
 
   /// \brief Return the previous declaration of this declaration or NULL if this
   /// is the first declaration.
-  decl_type *getPreviousDeclaration() {
+  decl_type *getPreviousDecl() {
     if (RedeclLink.NextIsPrevious())
       return RedeclLink.getNext();
     return 0;
   }
-  const decl_type *getPreviousDeclaration() const {
+  const decl_type *getPreviousDecl() const {
     return const_cast<decl_type *>(
-                 static_cast<const decl_type*>(this))->getPreviousDeclaration();
+                 static_cast<const decl_type*>(this))->getPreviousDecl();
   }
 
   /// \brief Return the first declaration of this declaration or itself if this
   /// is the only declaration.
   decl_type *getFirstDeclaration() {
     decl_type *D = static_cast<decl_type*>(this);
-    while (D->getPreviousDeclaration())
-      D = D->getPreviousDeclaration();
+    while (D->getPreviousDecl())
+      D = D->getPreviousDecl();
     return D;
   }
 
@@ -87,8 +87,8 @@ public:
   /// is the only declaration.
   const decl_type *getFirstDeclaration() const {
     const decl_type *D = static_cast<const decl_type*>(this);
-    while (D->getPreviousDeclaration())
-      D = D->getPreviousDeclaration();
+    while (D->getPreviousDecl())
+      D = D->getPreviousDecl();
     return D;
   }
 
@@ -98,12 +98,12 @@ public:
   }
 
   /// \brief Returns the most recent (re)declaration of this declaration.
-  decl_type *getMostRecentDeclaration() {
+  decl_type *getMostRecentDecl() {
     return getFirstDeclaration()->RedeclLink.getNext();
   }
 
   /// \brief Returns the most recent (re)declaration of this declaration.
-  const decl_type *getMostRecentDeclaration() const {
+  const decl_type *getMostRecentDecl() const {
     return getFirstDeclaration()->RedeclLink.getNext();
   }
   

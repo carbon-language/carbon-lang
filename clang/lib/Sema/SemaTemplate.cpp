@@ -6117,7 +6117,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
 
   // Verify that it is okay to explicitly instantiate here.
   CXXRecordDecl *PrevDecl
-    = cast_or_null<CXXRecordDecl>(Record->getPreviousDeclaration());
+    = cast_or_null<CXXRecordDecl>(Record->getPreviousDecl());
   if (!PrevDecl && Record->getDefinition())
     PrevDecl = Record;
   if (PrevDecl) {
@@ -6392,7 +6392,7 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     return true;
   }
 
-  FunctionDecl *PrevDecl = Specialization->getPreviousDeclaration();
+  FunctionDecl *PrevDecl = Specialization->getPreviousDecl();
   if (!PrevDecl && Specialization->isThisDeclarationADefinition())
     PrevDecl = Specialization;
 

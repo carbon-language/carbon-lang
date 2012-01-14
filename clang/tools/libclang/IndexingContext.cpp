@@ -343,7 +343,7 @@ bool IndexingContext::handleObjCInterface(const ObjCInterfaceDecl *D) {
       return false; // already occurred.
 
     // FIXME: This seems like the wrong definition for redeclaration.
-    bool isRedeclaration = D->hasDefinition() || D->getPreviousDeclaration();
+    bool isRedeclaration = D->hasDefinition() || D->getPreviousDecl();
     ObjCContainerDeclInfo ContDInfo(/*isForwardRef=*/true, isRedeclaration,
                                     /*isImplementation=*/false);
     return handleObjCContainer(D, D->getLocation(),
@@ -397,7 +397,7 @@ bool IndexingContext::handleObjCProtocol(const ObjCProtocolDecl *D) {
       return false; // already occurred.
     
     // FIXME: This seems like the wrong definition for redeclaration.
-    bool isRedeclaration = D->hasDefinition() || D->getPreviousDeclaration();
+    bool isRedeclaration = D->hasDefinition() || D->getPreviousDecl();
     ObjCContainerDeclInfo ContDInfo(/*isForwardRef=*/true,
                                     isRedeclaration,
                                     /*isImplementation=*/false);

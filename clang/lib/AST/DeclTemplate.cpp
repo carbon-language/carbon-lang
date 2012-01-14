@@ -116,8 +116,8 @@ RedeclarableTemplateDecl::CommonBase *RedeclarableTemplateDecl::getCommonPtr() {
     // Walk the previous-declaration chain until we either find a declaration
     // with a common pointer or we run out of previous declarations.
     llvm::SmallVector<RedeclarableTemplateDecl *, 2> PrevDecls;
-    for (RedeclarableTemplateDecl *Prev = getPreviousDeclaration(); Prev;
-         Prev = Prev->getPreviousDeclaration()) {
+    for (RedeclarableTemplateDecl *Prev = getPreviousDecl(); Prev;
+         Prev = Prev->getPreviousDecl()) {
       if (Prev->Common) {
         Common = Prev->Common;
         break;
@@ -152,7 +152,7 @@ RedeclarableTemplateDecl::findSpecializationImpl(
   llvm::FoldingSetNodeID ID;
   EntryType::Profile(ID,Args,NumArgs, getASTContext());
   EntryType *Entry = Specs.FindNodeOrInsertPos(ID, InsertPos);
-  return Entry ? SETraits::getMostRecentDeclaration(Entry) : 0;
+  return Entry ? SETraits::getMostRecentDecl(Entry) : 0;
 }
 
 /// \brief Generate the injected template arguments for the given template
@@ -353,7 +353,7 @@ void ClassTemplateDecl::getPartialSpecializations(
        P = PartialSpecs.begin(), PEnd = PartialSpecs.end();
        P != PEnd; ++P) {
     assert(!PS[P->getSequenceNumber()]);
-    PS[P->getSequenceNumber()] = P->getMostRecentDeclaration();
+    PS[P->getSequenceNumber()] = P->getMostRecentDecl();
   }
 }
 
@@ -366,7 +366,7 @@ ClassTemplateDecl::findPartialSpecialization(QualType T) {
                           PEnd = getPartialSpecializations().end();
        P != PEnd; ++P) {
     if (Context.hasSameType(P->getInjectedSpecializationType(), T))
-      return P->getMostRecentDeclaration();
+      return P->getMostRecentDecl();
   }
 
   return 0;
@@ -381,7 +381,7 @@ ClassTemplateDecl::findPartialSpecInstantiatedFromMember(
          PEnd = getPartialSpecializations().end();
        P != PEnd; ++P) {
     if (P->getInstantiatedFromMember()->getCanonicalDecl() == DCanon)
-      return P->getMostRecentDeclaration();
+      return P->getMostRecentDecl();
   }
 
   return 0;

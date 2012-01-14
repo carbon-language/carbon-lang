@@ -2542,7 +2542,7 @@ void ADLResult::insert(NamedDecl *New) {
 
   FunctionDecl *Cursor = NewFD;
   while (true) {
-    Cursor = Cursor->getPreviousDeclaration();
+    Cursor = Cursor->getPreviousDecl();
 
     // If we got to the end without finding OldFD, OldFD is the newer
     // declaration;  leave things as they are.

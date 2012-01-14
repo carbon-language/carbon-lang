@@ -666,6 +666,14 @@ protected:
   /// Decl::redecl_iterator can iterate over them.
   virtual Decl *getNextRedeclaration() { return this; }
 
+  /// \brief Implementation of getPreviousDecl(), to be overridden by any
+  /// subclass that has a redeclaration chain.
+  virtual Decl *getPreviousDeclImpl() { return 0; }
+  
+  /// \brief Implementation of getMostRecentDecl(), to be overridden by any
+  /// subclass that has a redeclaration chain.  
+  virtual Decl *getMostRecentDeclImpl() { return this; }
+  
 public:
   /// \brief Iterates through all the redeclarations of the same decl.
   class redecl_iterator {
@@ -718,12 +726,24 @@ public:
 
   /// \brief Retrieve the previous declaration that declares the same entity
   /// as this declaration, or NULL if there is no previous declaration.
-  virtual Decl *getPreviousDecl() { return 0; }
+  Decl *getPreviousDecl() { return getPreviousDeclImpl(); }
+  
+  /// \brief Retrieve the most recent declaration that declares the same entity
+  /// as this declaration, or NULL if there is no previous declaration.
+  const Decl *getPreviousDecl() const { 
+    return const_cast<Decl *>(this)->getPreviousDeclImpl();
+  }
   
   /// \brief Retrieve the most recent declaration that declares the same entity
   /// as this declaration (which may be this declaration).
-  virtual Decl *getMostRecentDecl() { return this; }
-  
+  Decl *getMostRecentDecl() { return getMostRecentDeclImpl(); }
+
+  /// \brief Retrieve the most recent declaration that declares the same entity
+  /// as this declaration (which may be this declaration).
+  const Decl *getMostRecentDecl() const { 
+    return const_cast<Decl *>(this)->getMostRecentDeclImpl();
+  }
+
   /// getBody - If this Decl represents a declaration for a body of code,
   ///  such as a function or method definition, this method returns the
   ///  top-level Stmt* of that body.  Otherwise this method returns null.

@@ -616,11 +616,18 @@ public:
     return cast<CXXRecordDecl>(RecordDecl::getCanonicalDecl());
   }
 
-  const CXXRecordDecl *getPreviousDeclaration() const {
-    return cast_or_null<CXXRecordDecl>(RecordDecl::getPreviousDeclaration());
+  const CXXRecordDecl *getPreviousDecl() const {
+    return cast_or_null<CXXRecordDecl>(RecordDecl::getPreviousDecl());
   }
-  CXXRecordDecl *getPreviousDeclaration() {
-    return cast_or_null<CXXRecordDecl>(RecordDecl::getPreviousDeclaration());
+  CXXRecordDecl *getPreviousDecl() {
+    return cast_or_null<CXXRecordDecl>(RecordDecl::getPreviousDecl());
+  }
+
+  const CXXRecordDecl *getMostRecentDecl() const {
+    return cast_or_null<CXXRecordDecl>(RecordDecl::getMostRecentDecl());
+  }
+  CXXRecordDecl *getMostRecentDecl() {
+    return cast_or_null<CXXRecordDecl>(RecordDecl::getMostRecentDecl());
   }
 
   CXXRecordDecl *getDefinition() const {

@@ -1370,7 +1370,7 @@ void ASTDeclReader::VisitClassTemplatePartialSpecializationDecl(
   D->SequenceNumber = Record[Idx++];
 
   // These are read/set from/to the first declaration.
-  if (D->getPreviousDeclaration() == 0) {
+  if (D->getPreviousDecl() == 0) {
     D->InstantiatedFromMember.setPointer(
       ReadDeclAs<ClassTemplatePartialSpecializationDecl>(Record, Idx));
     D->InstantiatedFromMember.setInt(Record[Idx++]);

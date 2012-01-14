@@ -1020,15 +1020,15 @@ static void DiagnoseAccessPath(Sema &S,
       while (D->isOutOfLine()) {
         NamedDecl *PrevDecl = 0;
         if (VarDecl *VD = dyn_cast<VarDecl>(D))
-          PrevDecl = VD->getPreviousDeclaration();
+          PrevDecl = VD->getPreviousDecl();
         else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-          PrevDecl = FD->getPreviousDeclaration();
+          PrevDecl = FD->getPreviousDecl();
         else if (TypedefNameDecl *TND = dyn_cast<TypedefNameDecl>(D))
-          PrevDecl = TND->getPreviousDeclaration();
+          PrevDecl = TND->getPreviousDecl();
         else if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
           if (isa<RecordDecl>(D) && cast<RecordDecl>(D)->isInjectedClassName())
             break;
-          PrevDecl = TD->getPreviousDeclaration();
+          PrevDecl = TD->getPreviousDecl();
         }
         if (!PrevDecl) break;
         D = PrevDecl;
