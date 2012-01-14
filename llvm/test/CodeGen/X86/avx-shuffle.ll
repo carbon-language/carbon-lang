@@ -38,6 +38,7 @@ define <8 x float> @test5(float* nocapture %f) nounwind uwtable readonly ssp {
 entry:
   %0 = bitcast float* %f to <4 x float>*
   %1 = load <4 x float>* %0, align 16
+; CHECK: test5
 ; CHECK: vmovaps
 ; CHECK-NOT: vxorps
 ; CHECK-NOT: vinsertf128
@@ -49,6 +50,7 @@ define <4 x double> @test6(double* nocapture %d) nounwind uwtable readonly ssp {
 entry:
   %0 = bitcast double* %d to <2 x double>*
   %1 = load <2 x double>* %0, align 16
+; CHECK: test6
 ; CHECK: vmovaps
 ; CHECK-NOT: vxorps
 ; CHECK-NOT: vinsertf128
@@ -62,4 +64,3 @@ define <16 x i16> @test7(<4 x i16> %a) nounwind {
   %b = shufflevector <4 x i16> %a, <4 x i16> undef, <16 x i32> <i32 1, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   ret <16 x i16> %b
 }
-
