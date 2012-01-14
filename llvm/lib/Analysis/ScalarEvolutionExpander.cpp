@@ -1541,6 +1541,13 @@ SCEVExpander::getOrInsertCanonicalInductionVariable(const Loop *L,
 /// general code-insertion helper.
 bool SCEVExpander::hoistStep(Instruction *IncV, Instruction *InsertPos,
                              const DominatorTree *DT) {
+  // Phi nodes are strangely positional but don't follow normal rules for
+  // instruction dominance. Handle them immediately.
+  if (isa<PHINode>(InsertPos))
+    return isa<PHINode>(IncV);
+  else if (isa<PHINode>(IncV))
+    return false;
+
   if (DT->dominates(IncV, InsertPos))
     return true;
 
@@ -1648,7 +1655,10 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
                         << *IsomorphicInc << '\n');
         Value *NewInc = OrigInc;
         if (OrigInc->getType() != IsomorphicInc->getType()) {
-          IRBuilder<> Builder(OrigInc->getNextNode());
+          Instruction *IP = isa<PHINode>(OrigInc)
+            ? (Instruction*)L->getHeader()->getFirstInsertionPt()
+            : OrigInc->getNextNode();
+          IRBuilder<> Builder(IP);
           Builder.SetCurrentDebugLocation(IsomorphicInc->getDebugLoc());
           NewInc = Builder.
             CreateTruncOrBitCast(OrigInc, IsomorphicInc->getType(), IVName);
