@@ -707,6 +707,10 @@ namespace clang {
     
   public:
     OverloadCandidateSet(SourceLocation Loc) : NumInlineSequences(0), Loc(Loc){}
+    ~OverloadCandidateSet() {
+      // Destroy OverloadCandidates before the allocator is destroyed.
+      Candidates.clear();
+    }
 
     SourceLocation getLocation() const { return Loc; }
 
