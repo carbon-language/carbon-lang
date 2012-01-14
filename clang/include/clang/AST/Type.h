@@ -1088,6 +1088,9 @@ private:
     /// LangOptions::VisibilityMode+1.
     mutable unsigned CacheValidAndVisibility : 2;
 
+    /// \brief True if the visibility was set explicitly in the source code.
+    mutable unsigned CachedExplicitVisibility : 1;
+
     /// \brief Linkage of this type.
     mutable unsigned CachedLinkage : 2;
 
@@ -1104,6 +1107,10 @@ private:
       assert(isCacheValid() && "getting linkage from invalid cache");
       return static_cast<Visibility>(CacheValidAndVisibility-1);
     }
+    bool isVisibilityExplicit() const {
+      assert(isCacheValid() && "getting linkage from invalid cache");
+      return CachedExplicitVisibility;
+    }
     Linkage getLinkage() const {
       assert(isCacheValid() && "getting linkage from invalid cache");
       return static_cast<Linkage>(CachedLinkage);
@@ -1113,7 +1120,7 @@ private:
       return CachedLocalOrUnnamed;
     }
   };
-  enum { NumTypeBits = 18 };
+  enum { NumTypeBits = 19 };
 
 protected:
   // These classes allow subclasses to somewhat cleanly pack bitfields
@@ -1267,6 +1274,7 @@ protected:
     TypeBits.VariablyModified = VariablyModified;
     TypeBits.ContainsUnexpandedParameterPack = ContainsUnexpandedParameterPack;
     TypeBits.CacheValidAndVisibility = 0;
+    TypeBits.CachedExplicitVisibility = false;
     TypeBits.CachedLocalOrUnnamed = false;
     TypeBits.CachedLinkage = NoLinkage;
     TypeBits.FromAST = false;
@@ -1642,6 +1650,9 @@ public:
 
   /// \brief Determine the visibility of this type.
   Visibility getVisibility() const;
+
+  /// \brief Return true if the visibility was explicitly set is the code.
+  bool isVisibilityExplicit() const;
 
   /// \brief Determine the linkage and visibility of this type.
   std::pair<Linkage,Visibility> getLinkageAndVisibility() const;

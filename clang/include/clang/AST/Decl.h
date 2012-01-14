@@ -252,6 +252,14 @@ public:
     }
 
     void mergeVisibility(Visibility V, bool E = false) {
+      // If one has explicit visibility and the other doesn't, keep the
+      // explicit one.
+      if (visibilityExplicit() && !E)
+        return;
+      if (!visibilityExplicit() && E)
+        setVisibility(V, E);
+
+      // If both are explicit or both are implicit, keep the minimum.
       setVisibility(minVisibility(visibility(), V), visibilityExplicit() || E);
     }
     void mergeVisibility(LinkageInfo Other) {
@@ -261,10 +269,6 @@ public:
     void merge(LinkageInfo Other) {
       mergeLinkage(Other);
       mergeVisibility(Other);
-    }
-    void merge(std::pair<Linkage,Visibility> LV) {
-      mergeLinkage(LV.first);
-      mergeVisibility(LV.second);
     }
 
     friend LinkageInfo merge(LinkageInfo L, LinkageInfo R) {

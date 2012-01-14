@@ -403,10 +403,7 @@ namespace Test20 {
     B<A<2> >::test4();
   }
 
-  // CHECK: declare void @_ZN6Test201BINS_1AILj2EEEE5test5Ev()
-  // (but explicit visibility on a template argument doesn't count as
-  //  explicit visibility for the template for purposes of deciding
-  //  whether an external symbol gets visibility)
+  // CHECK: declare hidden void @_ZN6Test201BINS_1AILj2EEEE5test5Ev()
   void test5() {
     B<A<2> >::test5();
   }
@@ -465,6 +462,12 @@ namespace PR10113 {
   template class foo::bar<char>;
   // CHECK: define weak_odr void @_ZN7PR101133foo3barIcE3zedEv
   // CHECK-HIDDEN: define weak_odr void @_ZN7PR101133foo3barIcE3zedEv
+
+  struct zed {
+  };
+  template class foo::bar<zed>;
+  // CHECK: define weak_odr void @_ZN7PR101133foo3barINS_3zedEE3zedEv
+  // CHECK-HIDDEN: define weak_odr void @_ZN7PR101133foo3barINS_3zedEE3zedEv
 }
 
 namespace PR11690 {
@@ -477,7 +480,23 @@ namespace PR11690 {
   // CHECK-HIDDEN: define weak_odr void @_ZNK7PR116905ClassIcE4sizeEv
 
   template<class T> void Method() {}
-  template  __attribute__((visibility("default"))) void Method<char>();
+  template  DEFAULT void Method<char>();
   // CHECK: define weak_odr void @_ZN7PR116906MethodIcEEvv
   // CHECK-HIDDEN: define weak_odr void @_ZN7PR116906MethodIcEEvv
+}
+
+namespace PR11690_2 {
+  namespace foo DEFAULT {
+    class bar;
+    template<typename T1, typename T2 = bar>
+    class zed {
+      void bar() {
+      }
+    };
+  }
+  struct baz {
+  };
+  template class foo::zed<baz>;
+  // CHECK: define weak_odr void @_ZN9PR11690_23foo3zedINS_3bazENS0_3barEE3barEv
+  // CHECK-HIDDEN: define weak_odr void @_ZN9PR11690_23foo3zedINS_3bazENS0_3barEE3barEv
 }

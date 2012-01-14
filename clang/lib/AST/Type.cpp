@@ -1990,21 +1990,22 @@ namespace {
 
 /// \brief The cached properties of a type.
 class CachedProperties {
-  char linkage;
-  char visibility;
+  NamedDecl::LinkageInfo LV;
   bool local;
   
 public:
-  CachedProperties(Linkage linkage, Visibility visibility, bool local)
-    : linkage(linkage), visibility(visibility), local(local) {}
+  CachedProperties(NamedDecl::LinkageInfo LV, bool local)
+    : LV(LV), local(local) {}
   
-  Linkage getLinkage() const { return (Linkage) linkage; }
-  Visibility getVisibility() const { return (Visibility) visibility; }
+  Linkage getLinkage() const { return LV.linkage(); }
+  Visibility getVisibility() const { return LV.visibility(); }
+  bool isVisibilityExplicit() const { return LV.visibilityExplicit(); }
   bool hasLocalOrUnnamedType() const { return local; }
   
   friend CachedProperties merge(CachedProperties L, CachedProperties R) {
-    return CachedProperties(minLinkage(L.getLinkage(), R.getLinkage()),
-                            minVisibility(L.getVisibility(), R.getVisibility()),
+    NamedDecl::LinkageInfo MergedLV = L.LV;
+    MergedLV.merge(R.LV);
+    return CachedProperties(MergedLV,
                          L.hasLocalOrUnnamedType() | R.hasLocalOrUnnamedType());
   }
 };
@@ -2024,9 +2025,10 @@ public:
 
   static CachedProperties get(const Type *T) {
     ensure(T);
-    return CachedProperties(T->TypeBits.getLinkage(),
-                            T->TypeBits.getVisibility(),
-                            T->TypeBits.hasLocalOrUnnamedType());
+    NamedDecl::LinkageInfo LV(T->TypeBits.getLinkage(),
+                              T->TypeBits.getVisibility(),
+                              T->TypeBits.isVisibilityExplicit());
+    return CachedProperties(LV, T->TypeBits.hasLocalOrUnnamedType());
   }
 
   static void ensure(const Type *T) {
@@ -2040,6 +2042,8 @@ public:
       ensure(CT);
       T->TypeBits.CacheValidAndVisibility =
         CT->TypeBits.CacheValidAndVisibility;
+      T->TypeBits.CachedExplicitVisibility =
+        CT->TypeBits.CachedExplicitVisibility;
       T->TypeBits.CachedLinkage = CT->TypeBits.CachedLinkage;
       T->TypeBits.CachedLocalOrUnnamed = CT->TypeBits.CachedLocalOrUnnamed;
       return;
@@ -2048,6 +2052,7 @@ public:
     // Compute the cached properties and then set the cache.
     CachedProperties Result = computeCachedProperties(T);
     T->TypeBits.CacheValidAndVisibility = Result.getVisibility() + 1U;
+    T->TypeBits.CachedExplicitVisibility = Result.isVisibilityExplicit();
     assert(T->TypeBits.isCacheValid() &&
            T->TypeBits.getVisibility() == Result.getVisibility());
     T->TypeBits.CachedLinkage = Result.getLinkage();
@@ -2075,13 +2080,13 @@ static CachedProperties computeCachedProperties(const Type *T) {
 #include "clang/AST/TypeNodes.def"
     // Treat instantiation-dependent types as external.
     assert(T->isInstantiationDependentType());
-    return CachedProperties(ExternalLinkage, DefaultVisibility, false);
+    return CachedProperties(NamedDecl::LinkageInfo(), false);
 
   case Type::Builtin:
     // C++ [basic.link]p8:
     //   A type is said to have linkage if and only if:
     //     - it is a fundamental type (3.9.1); or
-    return CachedProperties(ExternalLinkage, DefaultVisibility, false);
+    return CachedProperties(NamedDecl::LinkageInfo(), false);
 
   case Type::Record:
   case Type::Enum: {
@@ -2095,7 +2100,7 @@ static CachedProperties computeCachedProperties(const Type *T) {
     bool IsLocalOrUnnamed =
       Tag->getDeclContext()->isFunctionOrMethod() ||
       (!Tag->getIdentifier() && !Tag->getTypedefNameForAnonDecl());
-    return CachedProperties(LV.linkage(), LV.visibility(), IsLocalOrUnnamed);
+    return CachedProperties(LV, IsLocalOrUnnamed);
   }
 
     // C++ [basic.link]p8:
@@ -2135,7 +2140,7 @@ static CachedProperties computeCachedProperties(const Type *T) {
   case Type::ObjCInterface: {
     NamedDecl::LinkageInfo LV =
       cast<ObjCInterfaceType>(T)->getDecl()->getLinkageAndVisibility();
-    return CachedProperties(LV.linkage(), LV.visibility(), false);
+    return CachedProperties(LV, false);
   }
   case Type::ObjCObject:
     return Cache::get(cast<ObjCObjectType>(T)->getBaseType());
@@ -2149,7 +2154,8 @@ static CachedProperties computeCachedProperties(const Type *T) {
 
   // C++ [basic.link]p8:
   //   Names not covered by these rules have no linkage.
-  return CachedProperties(NoLinkage, DefaultVisibility, false);
+  NamedDecl::LinkageInfo LV(NoLinkage, DefaultVisibility, false);
+  return CachedProperties(LV, false);
 }
 
 /// \brief Determine the linkage of this type.
@@ -2162,6 +2168,11 @@ Linkage Type::getLinkage() const {
 Visibility Type::getVisibility() const {
   Cache::ensure(this);
   return TypeBits.getVisibility();
+}
+
+bool Type::isVisibilityExplicit() const {
+  Cache::ensure(this);
+  return TypeBits.isVisibilityExplicit();
 }
 
 bool Type::hasUnnamedOrLocalType() const {

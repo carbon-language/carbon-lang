@@ -67,17 +67,6 @@ static llvm::Optional<Visibility> getVisibilityOf(const Decl *D) {
 }
 
 typedef NamedDecl::LinkageInfo LinkageInfo;
-typedef std::pair<Linkage,Visibility> LVPair;
-
-static LVPair merge(LVPair L, LVPair R) {
-  return LVPair(minLinkage(L.first, R.first),
-                minVisibility(L.second, R.second));
-}
-
-static LVPair merge(LVPair L, LinkageInfo R) {
-  return LVPair(minLinkage(L.first, R.linkage()),
-                minVisibility(L.second, R.visibility()));
-}
 
 namespace {
 /// Flags controlling the computation of linkage and visibility.
@@ -113,11 +102,16 @@ struct LVFlags {
 }; 
 } // end anonymous namespace
 
+static LinkageInfo getLVForType(QualType T) {
+  std::pair<Linkage,Visibility> P = T->getLinkageAndVisibility();
+  return LinkageInfo(P.first, P.second, T->isVisibilityExplicit());
+}
+
 /// \brief Get the most restrictive linkage for the types in the given
 /// template parameter list.
-static LVPair
+static LinkageInfo
 getLVForTemplateParameterList(const TemplateParameterList *Params) {
-  LVPair LV(ExternalLinkage, DefaultVisibility);
+  LinkageInfo LV(ExternalLinkage, DefaultVisibility, false);
   for (TemplateParameterList::const_iterator P = Params->begin(),
                                           PEnd = Params->end();
        P != PEnd; ++P) {
@@ -126,20 +120,20 @@ getLVForTemplateParameterList(const TemplateParameterList *Params) {
         for (unsigned I = 0, N = NTTP->getNumExpansionTypes(); I != N; ++I) {
           QualType T = NTTP->getExpansionType(I);
           if (!T->isDependentType())
-            LV = merge(LV, T->getLinkageAndVisibility());
+            LV.merge(getLVForType(T));
         }
         continue;
       }
 
       if (!NTTP->getType()->isDependentType()) {
-        LV = merge(LV, NTTP->getType()->getLinkageAndVisibility());
+        LV.merge(getLVForType(NTTP->getType()));
         continue;
       }
     }
 
     if (TemplateTemplateParmDecl *TTP
                                    = dyn_cast<TemplateTemplateParmDecl>(*P)) {
-      LV = merge(LV, getLVForTemplateParameterList(TTP->getTemplateParameters()));
+      LV.merge(getLVForTemplateParameterList(TTP->getTemplateParameters()));
     }
   }
 
@@ -151,10 +145,10 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags F);
 
 /// \brief Get the most restrictive linkage for the types and
 /// declarations in the given template argument list.
-static LVPair getLVForTemplateArgumentList(const TemplateArgument *Args,
-                                           unsigned NumArgs,
-                                           LVFlags &F) {
-  LVPair LV(ExternalLinkage, DefaultVisibility);
+static LinkageInfo getLVForTemplateArgumentList(const TemplateArgument *Args,
+                                                unsigned NumArgs,
+                                                LVFlags &F) {
+  LinkageInfo LV(ExternalLinkage, DefaultVisibility, false);
 
   for (unsigned I = 0; I != NumArgs; ++I) {
     switch (Args[I].getKind()) {
@@ -164,7 +158,7 @@ static LVPair getLVForTemplateArgumentList(const TemplateArgument *Args,
       break;
 
     case TemplateArgument::Type:
-      LV = merge(LV, Args[I].getAsType()->getLinkageAndVisibility());
+      LV.merge(getLVForType(Args[I].getAsType()));
       break;
 
     case TemplateArgument::Declaration:
@@ -180,13 +174,13 @@ static LVPair getLVForTemplateArgumentList(const TemplateArgument *Args,
     case TemplateArgument::TemplateExpansion:
       if (TemplateDecl *Template
                 = Args[I].getAsTemplateOrTemplatePattern().getAsTemplateDecl())
-        LV = merge(LV, getLVForDecl(Template, F));
+        LV.merge(getLVForDecl(Template, F));
       break;
 
     case TemplateArgument::Pack:
-      LV = merge(LV, getLVForTemplateArgumentList(Args[I].pack_begin(),
-                                                  Args[I].pack_size(),
-                                                  F));
+      LV.merge(getLVForTemplateArgumentList(Args[I].pack_begin(),
+                                            Args[I].pack_size(),
+                                            F));
       break;
     }
   }
@@ -194,7 +188,7 @@ static LVPair getLVForTemplateArgumentList(const TemplateArgument *Args,
   return LV;
 }
 
-static LVPair
+static LinkageInfo
 getLVForTemplateArgumentList(const TemplateArgumentList &TArgs,
                              LVFlags &F) {
   return getLVForTemplateArgumentList(TArgs.data(), TArgs.size(), F);
@@ -337,11 +331,11 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
     // Note that we don't want to make the variable non-external
     // because of this, but unique-external linkage suits us.
     if (Context.getLangOptions().CPlusPlus && !Var->isExternC()) {
-      LVPair TypeLV = Var->getType()->getLinkageAndVisibility();
-      if (TypeLV.first != ExternalLinkage)
+      LinkageInfo TypeLV = getLVForType(Var->getType());
+      if (TypeLV.linkage() != ExternalLinkage)
         return LinkageInfo::uniqueExternal();
       if (!LV.visibilityExplicit())
-        LV.mergeVisibility(TypeLV.second);
+        LV.mergeVisibility(TypeLV.visibility(), TypeLV.visibilityExplicit());
     }
 
     if (Var->getStorageClass() == SC_PrivateExtern)
@@ -599,11 +593,11 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
   } else if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     // Modify the variable's linkage by its type, but ignore the
     // type's visibility unless it's a definition.
-    LVPair TypeLV = VD->getType()->getLinkageAndVisibility();
-    if (TypeLV.first != ExternalLinkage)
+    LinkageInfo TypeLV = getLVForType(VD->getType());
+    if (TypeLV.linkage() != ExternalLinkage)
       LV.mergeLinkage(UniqueExternalLinkage);
     if (!LV.visibilityExplicit())
-      LV.mergeVisibility(TypeLV.second);
+      LV.mergeVisibility(TypeLV.visibility(), TypeLV.visibilityExplicit());
   }
 
   F.ConsiderGlobalVisibility &= !LV.visibilityExplicit();
