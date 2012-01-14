@@ -174,7 +174,16 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
                     bool is_socket = GetSocketOption (m_fd_send, SOL_SOCKET, SO_REUSEADDR, resuse) == 0;
                     if (is_socket)
                         m_fd_send_type = m_fd_recv_type = eFDTypeSocket;
-                    m_should_close_fd = true;
+                    // Don't take ownership of a file descriptor that gets passed
+                    // to us since someone else opened the file descriptor and
+                    // handed it to us. 
+                    // TODO: Since are using a URL to open connection we should 
+                    // eventually parse options using the web standard where we
+                    // have "fd://123?opt1=value;opt2=value" and we can have an
+                    // option be "owns=1" or "owns=0" or something like this to
+                    // allow us to specify this. For now, we assume we must 
+                    // assume we don't own it.
+                    m_should_close_fd = false;
                     return eConnectionStatusSuccess;
                 }
             }

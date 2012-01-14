@@ -410,7 +410,10 @@ Debugger::SetInputFileHandle (FILE *fh, bool tranfer_ownership)
 
     // Disconnect from any old connection if we had one
     m_input_comm.Disconnect ();
-    m_input_comm.SetConnection (new ConnectionFileDescriptor (in_file.GetDescriptor(), true));
+    // Pass false as the second argument to ConnectionFileDescriptor below because
+    // our "in_file" above will already take ownership if requested and we don't
+    // want to objects trying to own and close a file descriptor.
+    m_input_comm.SetConnection (new ConnectionFileDescriptor (in_file.GetDescriptor(), false));
     m_input_comm.SetReadThreadBytesReceivedCallback (Debugger::DispatchInputCallback, this);
 
     Error error;
