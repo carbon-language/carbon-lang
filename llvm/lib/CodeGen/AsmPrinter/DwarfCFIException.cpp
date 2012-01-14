@@ -142,14 +142,12 @@ void DwarfCFIException::EndFunction() {
 
   Asm->OutStreamer.EmitCFIEndProc();
 
-  if (!shouldEmitPersonality)
-    return;
-
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_end",
                                                 Asm->getFunctionNumber()));
 
   // Map all labels and get rid of any dead landing pads.
   MMI->TidyLandingPads();
 
-  EmitExceptionTable();
+  if (shouldEmitPersonality)
+    EmitExceptionTable();
 }
