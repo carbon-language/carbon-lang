@@ -552,11 +552,11 @@ let Predicates = [HasAVX] in {
                       (EXTRACT_SUBREG (v4f32 VR128:$src2), sub_ss))>;
 
   // 256-bit variants
-  def : Pat<(v8i32 (X86Movsd VR256:$src1, VR256:$src2)),
+  def : Pat<(v8i32 (X86Movss VR256:$src1, VR256:$src2)),
             (SUBREG_TO_REG (i32 0),
                 (VMOVSSrr (EXTRACT_SUBREG (v8i32 VR256:$src1), sub_ss),
                           (EXTRACT_SUBREG (v8i32 VR256:$src2), sub_ss)), sub_xmm)>;
-  def : Pat<(v8f32 (X86Movsd VR256:$src1, VR256:$src2)),
+  def : Pat<(v8f32 (X86Movss VR256:$src1, VR256:$src2)),
             (SUBREG_TO_REG (i32 0),
                 (VMOVSSrr (EXTRACT_SUBREG (v8f32 VR256:$src1), sub_ss),
                           (EXTRACT_SUBREG (v8f32 VR256:$src2), sub_ss)), sub_xmm)>;
