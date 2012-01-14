@@ -2128,7 +2128,7 @@ multiclass sse12_cmp_scalar_int<RegisterClass RC, X86MemOperand x86memop,
                         [(set VR128:$dst, (Int VR128:$src1,
                                                VR128:$src, imm:$cc))]>;
   def rm : SIi8<0xC2, MRMSrcMem, (outs VR128:$dst),
-                      (ins VR128:$src1, f32mem:$src, SSECC:$cc), asm,
+                      (ins VR128:$src1, x86memop:$src, SSECC:$cc), asm,
                         [(set VR128:$dst, (Int VR128:$src1,
                                                (load addr:$src), imm:$cc))]>;
 }
@@ -2217,7 +2217,7 @@ multiclass sse12_cmp_packed<RegisterClass RC, X86MemOperand x86memop,
                (outs RC:$dst), (ins RC:$src1, RC:$src2, SSECC:$cc), asm,
                [(set RC:$dst, (Int RC:$src1, RC:$src2, imm:$cc))], d>;
     def rmi : PIi8<0xC2, MRMSrcMem,
-               (outs RC:$dst), (ins RC:$src1, f128mem:$src2, SSECC:$cc), asm,
+               (outs RC:$dst), (ins RC:$src1, x86memop:$src2, SSECC:$cc), asm,
                [(set RC:$dst, (Int RC:$src1, (memop addr:$src2), imm:$cc))], d>;
   }
 
@@ -2226,7 +2226,7 @@ multiclass sse12_cmp_packed<RegisterClass RC, X86MemOperand x86memop,
              (outs RC:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
              asm_alt, [], d>;
   def rmi_alt : PIi8<0xC2, MRMSrcMem,
-             (outs RC:$dst), (ins RC:$src1, f128mem:$src2, i8imm:$cc),
+             (outs RC:$dst), (ins RC:$src1, x86memop:$src2, i8imm:$cc),
              asm_alt, [], d>;
 }
 
@@ -2300,7 +2300,7 @@ multiclass sse12_shuffle<RegisterClass RC, X86MemOperand x86memop,
                          ValueType vt, string asm, PatFrag mem_frag,
                          Domain d, bit IsConvertibleToThreeAddress = 0> {
   def rmi : PIi8<0xC6, MRMSrcMem, (outs RC:$dst),
-                   (ins RC:$src1, f128mem:$src2, i8imm:$src3), asm,
+                   (ins RC:$src1, x86memop:$src2, i8imm:$src3), asm,
                    [(set RC:$dst, (vt (shufp:$src3
                             RC:$src1, (mem_frag addr:$src2))))], d>;
   let isConvertibleToThreeAddress = IsConvertibleToThreeAddress in
