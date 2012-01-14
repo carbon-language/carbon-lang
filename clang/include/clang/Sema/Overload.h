@@ -691,8 +691,7 @@ namespace clang {
 
     // Allocator for OverloadCandidate::Conversions. We store the first few
     // elements inline to avoid allocation for small sets.
-    llvm::SpecificBumpPtrAllocator<ImplicitConversionSequence>
-      ConversionSequenceAllocator;
+    llvm::BumpPtrAllocator ConversionSequenceAllocator;
 
     SourceLocation Loc;
 
@@ -704,6 +703,11 @@ namespace clang {
     
   public:
     OverloadCandidateSet(SourceLocation Loc) : Loc(Loc), NumInlineSequences(0){}
+    ~OverloadCandidateSet() {
+      for (iterator i = begin(), e = end(); i != e; ++i)
+        for (unsigned ii = 0, ie = i->NumConversions; ii != ie; ++ii)
+          i->Conversions[ii].~ImplicitConversionSequence();
+    }
 
     SourceLocation getLocation() const { return Loc; }
 
@@ -738,7 +742,8 @@ namespace clang {
         NumInlineSequences += NumConversions;
       } else {
         // Otherwise get memory from the allocator.
-        C.Conversions = ConversionSequenceAllocator.Allocate(NumConversions);
+        C.Conversions = ConversionSequenceAllocator
+                          .Allocate<ImplicitConversionSequence>(NumConversions);
       }
 
       // Construct the new objects.
