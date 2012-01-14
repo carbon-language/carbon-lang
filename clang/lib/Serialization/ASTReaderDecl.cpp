@@ -2211,46 +2211,6 @@ namespace {
   };
 }
 
-/// \brief Retrieve the previous declaration to D.
-static Decl *getPreviousDecl(Decl *D) {
-  if (TagDecl *TD = dyn_cast<TagDecl>(D))
-    return TD->getPreviousDeclaration();
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-    return FD->getPreviousDeclaration();
-  if (VarDecl *VD = dyn_cast<VarDecl>(D))
-    return VD->getPreviousDeclaration();
-  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D))
-    return TD->getPreviousDeclaration();
-  if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D))
-    return ID->getPreviousDeclaration();
-  if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D))
-    return PD->getPreviousDeclaration();
-  if (NamespaceDecl *ND = dyn_cast<NamespaceDecl>(D))
-    return ND->getPreviousDeclaration();
-  
-  return cast<RedeclarableTemplateDecl>(D)->getPreviousDeclaration();
-}
-
-/// \brief Retrieve the most recent declaration of D.
-static Decl *getMostRecentDecl(Decl *D) {
-  if (TagDecl *TD = dyn_cast<TagDecl>(D))
-    return TD->getMostRecentDeclaration();
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-    return FD->getMostRecentDeclaration();
-  if (VarDecl *VD = dyn_cast<VarDecl>(D))
-    return VD->getMostRecentDeclaration();
-  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D))
-    return TD->getMostRecentDeclaration();
-  if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D))
-    return ID->getMostRecentDeclaration();
-  if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D))
-    return PD->getMostRecentDeclaration();
-  if (NamespaceDecl *ND = dyn_cast<NamespaceDecl>(D))
-    return ND->getMostRecentDeclaration();
-
-  return cast<RedeclarableTemplateDecl>(D)->getMostRecentDeclaration();
-}
-
 void ASTReader::loadPendingDeclChain(serialization::GlobalDeclID ID) {
   Decl *D = GetDecl(ID);  
   Decl *CanonDecl = D->getCanonicalDecl();
@@ -2276,11 +2236,11 @@ void ASTReader::loadPendingDeclChain(serialization::GlobalDeclID ID) {
     return;
     
   // Capture all of the parsed declarations and put them at the end.
-  Decl *MostRecent = getMostRecentDecl(CanonDecl);
+  Decl *MostRecent = CanonDecl->getMostRecentDecl();
   Decl *FirstParsed = MostRecent;
   if (CanonDecl != MostRecent && !MostRecent->isFromASTFile()) {
     Decl *Current = MostRecent;
-    while (Decl *Prev = getPreviousDecl(Current)) {
+    while (Decl *Prev = Current->getPreviousDecl()) {
       if (Prev == CanonDecl)
         break;
       

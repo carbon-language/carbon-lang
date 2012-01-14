@@ -4489,7 +4489,7 @@ Sema::CheckTemplateDeclScope(Scope *S, TemplateParameterList *TemplateParams) {
 
 /// \brief Determine what kind of template specialization the given declaration
 /// is.
-static TemplateSpecializationKind getTemplateSpecializationKind(NamedDecl *D) {
+static TemplateSpecializationKind getTemplateSpecializationKind(Decl *D) {
   if (!D)
     return TSK_Undeclared;
 
@@ -4765,23 +4765,6 @@ static bool CheckClassTemplatePartialSpecializationArgs(Sema &S,
   }
 
   return false;
-}
-
-/// \brief Retrieve the previous declaration of the given declaration.
-static NamedDecl *getPreviousDecl(NamedDecl *ND) {
-  if (VarDecl *VD = dyn_cast<VarDecl>(ND))
-    return VD->getPreviousDeclaration();
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(ND))
-    return FD->getPreviousDeclaration();
-  if (TagDecl *TD = dyn_cast<TagDecl>(ND))
-    return TD->getPreviousDeclaration();
-  if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(ND))
-    return TD->getPreviousDeclaration();
-  if (FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(ND))
-    return FTD->getPreviousDeclaration();
-  if (ClassTemplateDecl *CTD = dyn_cast<ClassTemplateDecl>(ND))
-    return CTD->getPreviousDeclaration();
-  return 0;
 }
 
 DeclResult
@@ -5114,7 +5097,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   //   use occurs; no diagnostic is required.
   if (PrevDecl && PrevDecl->getPointOfInstantiation().isValid()) {
     bool Okay = false;
-    for (NamedDecl *Prev = PrevDecl; Prev; Prev = getPreviousDecl(Prev)) {
+    for (Decl *Prev = PrevDecl; Prev; Prev = Prev->getPreviousDecl()) {
       // Is there any previous explicit specialization declaration?
       if (getTemplateSpecializationKind(Prev) == TSK_ExplicitSpecialization) {
         Okay = true;
@@ -5248,13 +5231,13 @@ static void StripImplicitInstantiation(NamedDecl *D) {
 /// \brief Compute the diagnostic location for an explicit instantiation
 //  declaration or definition.
 static SourceLocation DiagLocForExplicitInstantiation(
-    NamedDecl* Decl, SourceLocation PointOfInstantiation) {
+    NamedDecl* D, SourceLocation PointOfInstantiation) {
   // Explicit instantiations following a specialization have no effect and
   // hence no PointOfInstantiation. In that case, walk decl backwards
   // until a valid name loc is found.
   SourceLocation PrevDiagLoc = PointOfInstantiation;
-  for (NamedDecl *Prev = Decl; Prev && !PrevDiagLoc.isValid();
-      Prev = getPreviousDecl(Prev)) {
+  for (Decl *Prev = D; Prev && !PrevDiagLoc.isValid();
+       Prev = Prev->getPreviousDecl()) {
     PrevDiagLoc = Prev->getLocation();
   }
   assert(PrevDiagLoc.isValid() &&
@@ -5328,7 +5311,7 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
       //   before the first use of that specialization that would cause an
       //   implicit instantiation to take place, in every translation unit in
       //   which such a use occurs; no diagnostic is required.
-      for (NamedDecl *Prev = PrevDecl; Prev; Prev = getPreviousDecl(Prev)) {
+      for (Decl *Prev = PrevDecl; Prev; Prev = Prev->getPreviousDecl()) {
         // Is there any previous explicit specialization declaration?
         if (getTemplateSpecializationKind(Prev) == TSK_ExplicitSpecialization)
           return false;
@@ -5419,7 +5402,7 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
       //   of a template appears after a declaration of an explicit
       //   specialization for that template, the explicit instantiation has no
       //   effect.
-      for (NamedDecl *Prev = PrevDecl; Prev; Prev = getPreviousDecl(Prev)) {
+      for (Decl *Prev = PrevDecl; Prev; Prev = Prev->getPreviousDecl()) {
         // Is there any previous explicit specialization declaration?
         if (getTemplateSpecializationKind(Prev) == TSK_ExplicitSpecialization) {
           HasNoEffect = true;

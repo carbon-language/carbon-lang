@@ -461,6 +461,14 @@ public:
     return AnonOrFirstNamespaceAndInline.getPointer();
   }
   
+  virtual NamespaceDecl *getPreviousDecl() {
+    return redeclarable_base::getPreviousDeclaration();
+  }
+
+  virtual NamespaceDecl *getMostRecentDecl() {
+    return redeclarable_base::getMostRecentDeclaration();
+  }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(LocStart, RBraceLoc);
   }
@@ -788,6 +796,14 @@ public:
   }
   redecl_iterator redecls_end() const {
     return redeclarable_base::redecls_end();
+  }
+
+  virtual VarDecl *getPreviousDecl() {
+    return redeclarable_base::getPreviousDeclaration();
+  }
+  
+  virtual VarDecl *getMostRecentDecl() {
+    return redeclarable_base::getMostRecentDeclaration();
   }
 
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
@@ -1497,6 +1513,14 @@ public:
   }
   redecl_iterator redecls_end() const {
     return redeclarable_base::redecls_end();
+  }
+
+  virtual FunctionDecl *getPreviousDecl() {
+    return redeclarable_base::getPreviousDeclaration();
+  }
+ 
+  virtual FunctionDecl *getMostRecentDecl() {
+    return redeclarable_base::getMostRecentDeclaration();
   }
 
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC,
@@ -2281,6 +2305,14 @@ public:
     return redeclarable_base::redecls_end();
   }
 
+  virtual TypedefNameDecl *getPreviousDecl() {
+    return redeclarable_base::getPreviousDeclaration();
+  }
+  
+  virtual TypedefNameDecl *getMostRecentDecl() {
+    return redeclarable_base::getMostRecentDeclaration();
+  }
+
   TypeSourceInfo *getTypeSourceInfo() const {
     return TInfo;
   }
@@ -2447,6 +2479,14 @@ public:
   }
   redecl_iterator redecls_end() const {
     return redeclarable_base::redecls_end();
+  }
+
+  virtual TagDecl *getPreviousDecl() {
+    return redeclarable_base::getPreviousDeclaration();
+  }
+  
+  virtual TagDecl *getMostRecentDecl() {
+    return redeclarable_base::getMostRecentDeclaration();
   }
 
   SourceLocation getRBraceLoc() const { return RBraceLoc; }

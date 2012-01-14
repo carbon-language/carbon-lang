@@ -630,6 +630,14 @@ public:
     return redeclarable_base::redecls_end();
   }
 
+  virtual RedeclarableTemplateDecl *getPreviousDecl() {
+    return redeclarable_base::getPreviousDeclaration();
+  }
+  
+  virtual RedeclarableTemplateDecl *getMostRecentDecl() {
+    return redeclarable_base::getMostRecentDeclaration();
+  }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const RedeclarableTemplateDecl *D) { return true; }

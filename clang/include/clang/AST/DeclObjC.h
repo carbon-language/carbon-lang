@@ -938,6 +938,14 @@ public:
     return redeclarable_base::redecls_end();
   }
 
+  virtual ObjCInterfaceDecl *getPreviousDecl() {
+    return redeclarable_base::getPreviousDeclaration();
+  }
+  
+  virtual ObjCInterfaceDecl *getMostRecentDecl() {
+    return redeclarable_base::getMostRecentDeclaration();
+  }
+
   /// Retrieves the canonical declaration of this Objective-C class.
   ObjCInterfaceDecl *getCanonicalDecl() {
     return getFirstDeclaration();
@@ -1218,7 +1226,15 @@ public:
   redecl_iterator redecls_end() const {
     return redeclarable_base::redecls_end();
   }
-                           
+   
+  virtual ObjCProtocolDecl *getPreviousDecl() {
+    return redeclarable_base::getPreviousDeclaration();
+  }
+ 
+  virtual ObjCProtocolDecl *getMostRecentDecl() {
+    return redeclarable_base::getMostRecentDeclaration();
+  }
+
   /// Retrieves the canonical declaration of this Objective-C protocol.
   ObjCProtocolDecl *getCanonicalDecl() {
     return getFirstDeclaration();

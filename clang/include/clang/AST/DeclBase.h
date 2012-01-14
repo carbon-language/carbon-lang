@@ -716,6 +716,14 @@ public:
   }
   redecl_iterator redecls_end() const { return redecl_iterator(); }
 
+  /// \brief Retrieve the previous declaration that declares the same entity
+  /// as this declaration, or NULL if there is no previous declaration.
+  virtual Decl *getPreviousDecl() { return 0; }
+  
+  /// \brief Retrieve the most recent declaration that declares the same entity
+  /// as this declaration (which may be this declaration).
+  virtual Decl *getMostRecentDecl() { return this; }
+  
   /// getBody - If this Decl represents a declaration for a body of code,
   ///  such as a function or method definition, this method returns the
   ///  top-level Stmt* of that body.  Otherwise this method returns null.
