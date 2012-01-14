@@ -261,12 +261,11 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
           Processed.insert(*SS);
       }
     }
-  }
-  else if (LastDef && !PhysRegUse[Reg] &&
-           !LastDef->findRegisterDefOperand(Reg))
+  } else if (LastDef && !PhysRegUse[Reg] &&
+             !LastDef->findRegisterDefOperand(Reg))
     // Last def defines the super register, add an implicit def of reg.
-    LastDef->addOperand(MachineOperand::CreateReg(Reg,
-                                                 true/*IsDef*/, true/*IsImp*/));
+    LastDef->addOperand(MachineOperand::CreateReg(Reg, true/*IsDef*/,
+                                                  true/*IsImp*/));
 
   // Remember this use.
   PhysRegUse[Reg]  = MI;
@@ -607,10 +606,27 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
       }
     }
 
+    // MachineCSE may CSE instructions which write to non-allocatable physical
+    // registers across MBBs. Remember if any reserved register is liveout.
+    SmallSet<unsigned, 4> LiveOuts;
+    for (MachineBasicBlock::const_succ_iterator SI = MBB->succ_begin(),
+           SE = MBB->succ_end(); SI != SE; ++SI) {
+      MachineBasicBlock *SuccMBB = *SI;
+      if (SuccMBB->isLandingPad())
+        continue;
+      for (MachineBasicBlock::livein_iterator LI = SuccMBB->livein_begin(),
+             LE = SuccMBB->livein_end(); LI != LE; ++LI) {
+        unsigned LReg = *LI;
+        if (!TRI->isInAllocatableClass(LReg))
+          // Ignore other live-ins, e.g. those that are live into landing pads.
+          LiveOuts.insert(LReg);
+      }
+    }
+
     // Loop over PhysRegDef / PhysRegUse, killing any registers that are
     // available at the end of the basic block.
     for (unsigned i = 0; i != NumRegs; ++i)
-      if (PhysRegDef[i] || PhysRegUse[i])
+      if ((PhysRegDef[i] || PhysRegUse[i]) && !LiveOuts.count(i))
         HandlePhysRegDef(i, 0, Defs);
 
     std::fill(PhysRegDef,  PhysRegDef  + NumRegs, (MachineInstr*)0);

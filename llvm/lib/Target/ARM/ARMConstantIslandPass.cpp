@@ -1791,6 +1791,11 @@ bool ARMConstantIslands::OptimizeThumb2Branches() {
     if (Opcode != ARM::tBcc)
       continue;
 
+    // If the conditional branch doesn't kill CPSR, then CPSR can be liveout
+    // so this transformation is not safe.
+    if (!Br.MI->killsRegister(ARM::CPSR))
+      continue;
+
     NewOpc = 0;
     unsigned PredReg = 0;
     ARMCC::CondCodes Pred = llvm::getInstrPredicate(Br.MI, PredReg);
