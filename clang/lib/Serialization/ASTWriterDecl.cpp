@@ -1237,11 +1237,9 @@ void ASTDeclWriter::VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
 
 template <typename T>
 void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
-  T *First = D->getFirstDeclaration();
-  Writer.AddDeclRef(First);
-  
   enum { FirstDeclaration = 0, FirstInFile, PointsToPrevious };
   T *Prev = D->getPreviousDeclaration();
+  T *First = D->getFirstDeclaration();
   
   if (!Prev) {
     Record.push_back(FirstDeclaration);
