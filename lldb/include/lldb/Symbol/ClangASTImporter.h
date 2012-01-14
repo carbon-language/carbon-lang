@@ -199,6 +199,8 @@ private:
         {
         }
         
+        void ImportDefinitionTo (clang::Decl *to, clang::Decl *from);
+        
         clang::Decl *Imported (clang::Decl *from, clang::Decl *to);
         
         ClangASTImporter   &m_master;
