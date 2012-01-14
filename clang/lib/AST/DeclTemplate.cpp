@@ -112,42 +112,30 @@ static void AdoptTemplateParameterList(TemplateParameterList *Params,
 //===----------------------------------------------------------------------===//
 
 RedeclarableTemplateDecl::CommonBase *RedeclarableTemplateDecl::getCommonPtr() {
-  // Find the first declaration of this function template.
-  RedeclarableTemplateDecl *First = getCanonicalDecl();
+  if (!Common) {
+    // Walk the previous-declaration chain until we either find a declaration
+    // with a common pointer or we run out of previous declarations.
+    llvm::SmallVector<RedeclarableTemplateDecl *, 2> PrevDecls;
+    for (RedeclarableTemplateDecl *Prev = getPreviousDeclaration(); Prev;
+         Prev = Prev->getPreviousDeclaration()) {
+      if (Prev->Common) {
+        Common = Prev->Common;
+        break;
+      }
+      
+      PrevDecls.push_back(Prev);
+    }
 
-  if (First->CommonOrPrev.isNull()) {
-    CommonBase *CommonPtr = First->newCommon(getASTContext());
-    First->CommonOrPrev = CommonPtr;
-    CommonPtr->Latest = First;
+    // If we never found a common pointer, allocate one now.
+    if (!Common)
+      Common = newCommon(getASTContext());
+    
+    // Update any previous declarations we saw with the common pointer.
+    for (unsigned I = 0, N = PrevDecls.size(); I != N; ++I)
+      PrevDecls[I]->Common = Common;
   }
-  return First->CommonOrPrev.get<CommonBase*>();
-}
 
-
-RedeclarableTemplateDecl *RedeclarableTemplateDecl::getCanonicalDeclImpl() {
-  RedeclarableTemplateDecl *Tmpl = this;
-  while (Tmpl->getPreviousDeclaration())
-    Tmpl = Tmpl->getPreviousDeclaration();
-  return Tmpl;
-}
-
-void RedeclarableTemplateDecl::setPreviousDeclarationImpl(
-                                               RedeclarableTemplateDecl *Prev) {
-  if (Prev) {
-    CommonBase *Common = Prev->getCommonPtr();
-    Prev = Common->Latest;
-    Common->Latest = this;
-    CommonOrPrev = Prev;
-  } else {
-    assert(CommonOrPrev.is<CommonBase*>() && "Cannot reset TemplateDecl Prev");
-  }
-}
-
-RedeclarableTemplateDecl *RedeclarableTemplateDecl::getNextRedeclaration() {
-  if (CommonOrPrev.is<RedeclarableTemplateDecl*>())
-    return CommonOrPrev.get<RedeclarableTemplateDecl*>();
-  CommonBase *Common = CommonOrPrev.get<CommonBase*>();
-  return Common ? Common->Latest : this;
+  return Common;
 }
 
 template <class EntryType>

@@ -1031,38 +1031,17 @@ void ASTDeclWriter::VisitTemplateDecl(TemplateDecl *D) {
 }
 
 void ASTDeclWriter::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
+  VisitRedeclarable(D);
+
   // Emit data to initialize CommonOrPrev before VisitTemplateDecl so that
   // getCommonPtr() can be used while this is still initializing.
-  enum { FirstDeclaration, FirstInFile, PointsToPrevious };
-  RedeclarableTemplateDecl *Prev = D->getPreviousDeclaration();
-  RedeclarableTemplateDecl *First = 0;
-  if (!Prev) {
-    Record.push_back(FirstDeclaration);
-    
+  if (D->isFirstDeclaration()) {
     // This declaration owns the 'common' pointer, so serialize that data now.
     Writer.AddDeclRef(D->getInstantiatedFromMemberTemplate(), Record);
     if (D->getInstantiatedFromMemberTemplate())
       Record.push_back(D->isMemberSpecialization());
-  } else {
-    First = D->getFirstDeclaration();
-    Record.push_back(Prev->isFromASTFile()? FirstInFile : PointsToPrevious);
-    Writer.AddDeclRef(First, Record);
-    Writer.AddDeclRef(Prev, Record);    
   }
   
-  if (D->getMostRecentDeclaration() != D && (!Prev || Prev->isFromASTFile())) {
-    if (!First)
-      First = D->getFirstDeclaration();
-    
-    // Capture the set of redeclarations in this file.
-    LocalRedeclarationsInfo LocalInfo = {
-      Writer.GetDeclRef(First),
-      Writer.GetDeclRef(D),
-      Writer.GetDeclRef(D->getMostRecentDeclaration())
-    };
-    Writer.LocalRedeclarations.push_back(LocalInfo);
-  }
-
   VisitTemplateDecl(D);
   Record.push_back(D->getIdentifierNamespace());
 }
@@ -1070,7 +1049,7 @@ void ASTDeclWriter::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
 void ASTDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   VisitRedeclarableTemplateDecl(D);
 
-  if (D->getPreviousDeclaration() == 0) {
+  if (D->isFirstDeclaration()) {
     typedef llvm::FoldingSet<ClassTemplateSpecializationDecl> CTSDSetTy;
     CTSDSetTy &CTSDSet = D->getSpecializations();
     Record.push_back(CTSDSet.size());
@@ -1158,7 +1137,7 @@ void ASTDeclWriter::VisitClassScopeFunctionSpecializationDecl(
 void ASTDeclWriter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   VisitRedeclarableTemplateDecl(D);
 
-  if (D->getPreviousDeclaration() == 0) {
+  if (D->isFirstDeclaration()) {
     // This FunctionTemplateDecl owns the CommonPtr; write it.
 
     // Write the function specialization declarations.
