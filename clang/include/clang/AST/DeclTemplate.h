@@ -628,7 +628,7 @@ public:
     getCommonPtr()->InstantiatedFromMember.setPointer(TD);
   }
 
-  using redeclarable_base::redecl_iterator;
+  typedef redeclarable_base::redecl_iterator redecl_iterator;
   using redeclarable_base::redecls_begin;
   using redeclarable_base::redecls_end;
   using redeclarable_base::getPreviousDecl;

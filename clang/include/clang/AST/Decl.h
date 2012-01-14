@@ -395,7 +395,7 @@ public:
 
   static NamespaceDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
-  using redeclarable_base::redecl_iterator;
+  typedef redeclarable_base::redecl_iterator redecl_iterator;
   using redeclarable_base::redecls_begin;
   using redeclarable_base::redecls_end;
   using redeclarable_base::getPreviousDecl;
@@ -792,7 +792,7 @@ protected:
   }
 
 public:
-  using redeclarable_base::redecl_iterator;
+  typedef redeclarable_base::redecl_iterator redecl_iterator;
   using redeclarable_base::redecls_begin;
   using redeclarable_base::redecls_end;
   using redeclarable_base::getPreviousDecl;
@@ -1505,7 +1505,7 @@ protected:
   }
 
 public:
-  using redeclarable_base::redecl_iterator;
+  typedef redeclarable_base::redecl_iterator redecl_iterator;
   using redeclarable_base::redecls_begin;
   using redeclarable_base::redecls_end;
   using redeclarable_base::getPreviousDecl;
@@ -2291,7 +2291,7 @@ protected:
   }
 
 public:
-  using redeclarable_base::redecl_iterator;
+  typedef redeclarable_base::redecl_iterator redecl_iterator;
   using redeclarable_base::redecls_begin;
   using redeclarable_base::redecls_end;
   using redeclarable_base::getPreviousDecl;
@@ -2463,7 +2463,7 @@ protected:
   void completeDefinition();
 
 public:
-  using redeclarable_base::redecl_iterator;
+  typedef redeclarable_base::redecl_iterator redecl_iterator;
   using redeclarable_base::redecls_begin;
   using redeclarable_base::redecls_end;
   using redeclarable_base::getPreviousDecl;
