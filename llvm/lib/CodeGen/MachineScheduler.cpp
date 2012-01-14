@@ -28,11 +28,16 @@
 
 using namespace llvm;
 
+//===----------------------------------------------------------------------===//
+// Machine Instruction Scheduling Pass and Registry
+//===----------------------------------------------------------------------===//
+
 namespace {
 /// MachineSchedulerPass runs after coalescing and before register allocation.
 class MachineSchedulerPass : public MachineFunctionPass {
 public:
   MachineFunction *MF;
+  const TargetInstrInfo *TII;
   const MachineLoopInfo *MLI;
   const MachineDominatorTree *MDT;
 
@@ -92,22 +97,6 @@ void MachineSchedulerPass::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 namespace {
-/// Currently force DAG building but don't reschedule anything.  This is a
-/// temporarily useful framework that provides a place to hook in experimental
-/// code that requires a dependence graph prior to register allocation.
-class MachineScheduler : public ScheduleDAGInstrs {
-public:
-  MachineScheduler(MachineSchedulerPass *P)
-    : ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT)
-  {}
-
-  /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
-  /// time to do some work.
-  virtual void Schedule();
-};
-} // namespace
-
-namespace {
 /// MachineSchedRegistry provides a selection of available machine instruction
 /// schedulers.
 class MachineSchedRegistry : public MachinePassRegistryNode {
@@ -156,6 +145,25 @@ MachineSchedOpt("misched",
                 cl::init(&createDefaultMachineSched), cl::Hidden,
                 cl::desc("Machine instruction scheduler to use"));
 
+//===----------------------------------------------------------------------===//
+// Machine Instruction Scheduling Implementation
+//===----------------------------------------------------------------------===//
+
+namespace {
+/// MachineScheduler is an implementation of ScheduleDAGInstrs that schedules
+/// machine instructions while updating LiveIntervals.
+class MachineScheduler : public ScheduleDAGInstrs {
+  MachineSchedulerPass *Pass;
+public:
+  MachineScheduler(MachineSchedulerPass *P):
+    ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT), Pass(P) {}
+
+  /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
+  /// time to do some work.
+  virtual void Schedule();
+};
+} // namespace
+
 static ScheduleDAGInstrs *createDefaultMachineSched(MachineSchedulerPass *P) {
   return new MachineScheduler(P);
 }
@@ -178,6 +186,7 @@ bool MachineSchedulerPass::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
   MLI = &getAnalysis<MachineLoopInfo>();
   MDT = &getAnalysis<MachineDominatorTree>();
+  TII = MF->getTarget().getInstrInfo();
 
   // Select the scheduler, or set the default.
   MachineSchedRegistry::ScheduleDAGCtor Ctor =
@@ -207,14 +216,18 @@ void MachineSchedulerPass::print(raw_ostream &O, const Module* m) const {
   // unimplemented
 }
 
+//===----------------------------------------------------------------------===//
+// Machine Instruction Shuffler for Correctness Testing
+//===----------------------------------------------------------------------===//
+
 #ifndef NDEBUG
 namespace {
 /// Reorder instructions as much as possible.
 class InstructionShuffler : public ScheduleDAGInstrs {
+  MachineSchedulerPass *Pass;
 public:
-  InstructionShuffler(MachineSchedulerPass *P)
-    : ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT)
-  {}
+  InstructionShuffler(MachineSchedulerPass *P):
+    ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT), Pass(P) {}
 
   /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
   /// time to do some work.
