@@ -39,7 +39,7 @@ struct ConversionFixItGenerator {
                                  ExprValueKind FromVK);
 
   /// The list of Hints generated so far.
-  SmallVector<FixItHint, 1> Hints;
+  std::vector<FixItHint> Hints;
 
   /// The number of Conversions fixed. This can be different from the size
   /// of the Hints vector since we allow multiple FixIts per conversion.

@@ -9212,9 +9212,8 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   // If we can fix the conversion, suggest the FixIts.
   assert(ConvHints.isNull() || Hint.isNull());
   if (!ConvHints.isNull()) {
-    for (llvm::SmallVector<FixItHint, 1>::iterator
-        HI = ConvHints.Hints.begin(), HE = ConvHints.Hints.end();
-        HI != HE; ++HI)
+    for (std::vector<FixItHint>::iterator HI = ConvHints.Hints.begin(),
+         HE = ConvHints.Hints.end(); HI != HE; ++HI)
       FDiag << *HI;
   } else {
     FDiag << Hint;

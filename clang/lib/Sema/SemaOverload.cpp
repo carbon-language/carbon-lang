@@ -7477,9 +7477,8 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
     << (unsigned) (Cand->Fix.Kind);
 
   // If we can fix the conversion, suggest the FixIts.
-  for (SmallVector<FixItHint, 1>::iterator
-      HI = Cand->Fix.Hints.begin(), HE = Cand->Fix.Hints.end();
-      HI != HE; ++HI)
+  for (std::vector<FixItHint>::iterator HI = Cand->Fix.Hints.begin(),
+       HE = Cand->Fix.Hints.end(); HI != HE; ++HI)
     FDiag << *HI;
   S.Diag(Fn->getLocation(), FDiag);
 
