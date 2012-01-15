@@ -138,9 +138,6 @@ namespace sys {
 
       /// Resets the terminals colors, or returns an escape sequence to do so.
       static const char *ResetColor();
-
-      /// Change the program working directory to that given by \arg Path.
-      static void SetWorkingDirectory(std::string Path);
     /// @}
   };
 }

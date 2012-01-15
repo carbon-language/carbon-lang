@@ -220,8 +220,4 @@ const char *Process::ResetColor() {
   return 0;
 }
 
-void Process::SetWorkingDirectory(std::string Path) {
-  ::_chdir(Path.c_str());
-}
-
 }
