@@ -2571,17 +2571,18 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
            "Vector element count mismatch!");
     if (OpOpcode == ISD::TRUNCATE)
       return getNode(ISD::TRUNCATE, DL, VT, Operand.getNode()->getOperand(0));
-    else if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND ||
-             OpOpcode == ISD::ANY_EXTEND) {
+    if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND ||
+        OpOpcode == ISD::ANY_EXTEND) {
       // If the source is smaller than the dest, we still need an extend.
       if (Operand.getNode()->getOperand(0).getValueType().getScalarType()
             .bitsLT(VT.getScalarType()))
         return getNode(OpOpcode, DL, VT, Operand.getNode()->getOperand(0));
-      else if (Operand.getNode()->getOperand(0).getValueType().bitsGT(VT))
+      if (Operand.getNode()->getOperand(0).getValueType().bitsGT(VT))
         return getNode(ISD::TRUNCATE, DL, VT, Operand.getNode()->getOperand(0));
-      else
-        return Operand.getNode()->getOperand(0);
+      return Operand.getNode()->getOperand(0);
     }
+    if (OpOpcode == ISD::UNDEF)
+      return getUNDEF(VT);
     break;
   case ISD::BITCAST:
     // Basic sanity checking.
