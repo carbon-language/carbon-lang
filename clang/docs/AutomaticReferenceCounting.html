@@ -1,8 +1,10 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
 <title>Objective-C Automatic Reference Counting (ARC)</title>
-<link type="text/css" rel="stylesheet" href="../menu.css" />
-<link type="text/css" rel="stylesheet" href="../content.css" />
+<link type="text/css" rel="stylesheet" href="../menu.css">
+<link type="text/css" rel="stylesheet" href="../content.css">
 <style type="text/css">
 /* Collapse the items in the ToC to the left. */
 div#toc ul {
@@ -26,7 +28,7 @@ div div div div h1 { margin: 1.12em 0 }
 span.term { font-style: italic; font-weight: bold  }
 </style>
 
-<script lang="javascript">
+<script type="text/javascript">
 /// A little script to recursively build a table of contents.
 function buildTOC(div, toc, ancestry) {
   var children = div.childNodes;
@@ -739,7 +741,7 @@ semantics as the respective operation would have on an <tt>void*</tt>
 lvalue with the same alignment and non-ownership qualification.</p>
 
 <p><span class="term">Reading</span> occurs when performing a
-lvalue-to-rvalue conversion on an object lvalue.
+lvalue-to-rvalue conversion on an object lvalue.</p>
 
 <ul>
 <li>For <tt>__weak</tt> objects, the current pointee is retained and
@@ -749,10 +751,9 @@ release of the pointee.</li>
 <li>For all other objects, the lvalue is loaded with primitive
 semantics.</li>
 </ul>
-</p>
 
 <p><span class="term">Assignment</span> occurs when evaluating
-an assignment operator.  The semantics vary based on the qualification:
+an assignment operator.  The semantics vary based on the qualification:</p>
 <ul>
 <li>For <tt>__strong</tt> objects, the new pointee is first retained;
 second, the lvalue is loaded with primitive semantics; third, the new
@@ -771,11 +772,10 @@ stored into the lvalue using primitive semantics.</li>
 <li>For <tt>__autoreleasing</tt> objects, the new pointee is retained,
 autoreleased, and stored into the lvalue using primitive semantics.</li>
 </ul>
-</p>
 
 <p><span class="term">Initialization</span> occurs when an object's
 lifetime begins, which depends on its storage duration.
-Initialization proceeds in two stages:
+Initialization proceeds in two stages:</p>
 <ol>
 <li>First, a null pointer is stored into the lvalue using primitive
 semantics.  This step is skipped if the object
@@ -784,7 +784,6 @@ is <tt>__unsafe_unretained</tt>.</li>
 evaluated and then assigned into the object using the usual assignment
 semantics.</li>
 </ol>
-</p>
 
 <p><span class="term">Destruction</span> occurs when an object's
 lifetime ends.  In all cases it is semantically equivalent to
@@ -863,7 +862,7 @@ is left.</p>
 <p>A program is ill-formed if an expression of type <tt>T*</tt> is
 converted, explicitly or implicitly, to the type <tt>U*</tt>,
 where <tt>T</tt> and <tt>U</tt> have different ownership
-qualification, unless:
+qualification, unless:</p>
 <ul>
 <li><tt>T</tt> is qualified with <tt>__strong</tt>,
  <tt>__autoreleasing</tt>, or <tt>__unsafe_unretained</tt>, and
@@ -876,9 +875,8 @@ qualification, unless:
 <li>the conversion is a
 well-formed <a href="#ownership.restrictions.pass_by_writeback">pass-by-writeback</a>.</li>
 </ul>
-</p>
 
-<p>The analogous rule applies to <tt>T&</tt> and <tt>U&</tt> in
+<p>The analogous rule applies to <tt>T&amp;</tt> and <tt>U&amp;</tt> in
 Objective-C++.</p>
 
 <div class="rationale"><p>Rationale: these rules provide a reasonable
@@ -933,7 +931,7 @@ where <tt>oq</tt> is an ownership qualifier, then the argument is a
 candidate for <span class="term">pass-by-writeback</span> if:</p>
 
 <ul>
-<li><tt>oq</tt> is <tt>__strong</tt> or <tt>__weak</tt>, and
+<li><tt>oq</tt> is <tt>__strong</tt> or <tt>__weak</tt>, and</li>
 <li>it would be legal to initialize a <tt>T __strong *</tt> with
 a <tt>U __strong *</tt>.</li>
 </ul>
@@ -946,7 +944,7 @@ implicit conversion sequence not requiring a pass-by-writeback.</p>
 not have a legal form:</p>
 
 <ul>
-<li><tt>&var</tt>, where <tt>var</tt> is a scalar variable of
+<li><tt>&amp;var</tt>, where <tt>var</tt> is a scalar variable of
 automatic storage duration with retainable object pointer type</li>
 <li>a conditional expression where the second and third operands are
 both legal forms</li>
@@ -963,7 +961,7 @@ that the user will see confusing aliasing problems due to the
 implementation, below, where their store to the writeback temporary is
 not immediately seen in the original argument variable.</p></div>
 
-<p>A pass-by-writeback is evaluated as follows:
+<p>A pass-by-writeback is evaluated as follows:</p>
 <ol>
 <li>The argument is evaluated to yield a pointer <tt>p</tt> of
  type <tt>U oq *</tt>.</li>
@@ -978,7 +976,7 @@ not immediately seen in the original argument variable.</p></div>
  actual call.</li>
 <li>After the call completes, the temporary is loaded with primitive
  semantics, and that value is assigned into <tt>*p</tt>.</li>
-</ol></p>
+</ol>
 
 <div class="rationale"><p>Rationale: this is all admittedly
 convoluted.  In an ideal world, we would see that a local variable is
@@ -1055,7 +1053,6 @@ it is implicitly qualified with <tt>__unsafe_unretained</tt>;</li>
 <li>otherwise, it is implicitly qualified
 with <tt>__autoreleasing</tt>.</li>
 </ul>
-</p>
 
 <div class="rationale"><p>Rationale: <tt>__autoreleasing</tt> exists
 mostly for this case, the Cocoa convention for out-parameters.  Since
@@ -1101,7 +1098,7 @@ template argument was deduced or explicitly specified. </p>
 family</span>, which is a conventional set of behaviors ascribed to it
 by the Cocoa conventions.</p>
 
-<p>A method is in a certain method family if:
+<p>A method is in a certain method family if:</p>
 <ul>
 <li>it has a <tt>objc_method_family</tt> attribute placing it in that
  family; or if not that,</li>
@@ -1109,7 +1106,7 @@ by the Cocoa conventions.</p>
  it in a different or no family, and</li>
 <li>its selector falls into the corresponding selector family, and</li>
 <li>its signature obeys the added restrictions of the method family.</li>
-</ul></p>
+</ul>
 
 <p>A selector is in a certain selector family if, ignoring any leading
 underscores, the first component of the selector either consists
@@ -1132,7 +1129,7 @@ declares or contains a call to an <tt>init</tt> method whose return
 type is neither <tt>id</tt> nor a pointer to a super-class or
 sub-class of the declaring class (if the method was declared on
 a class) or the static receiver type of the call (if it was declared
-on a protocol).</p>
+on a protocol).
 
 <div class="rationale"><p>Rationale: there are a fair number of existing
 methods with <tt>init</tt>-like selectors which nonetheless don't
@@ -1361,14 +1358,13 @@ clearer.</p></div>
 
 <p>A program is ill-formed if it contains a method definition, message
 send, or <tt>@selector</tt> expression for any of the following
-selectors:
+selectors:</p>
 <ul>
 <li><tt>autorelease</tt></li>
 <li><tt>release</tt></li>
 <li><tt>retain</tt></li>
 <li><tt>retainCount</tt></li>
 </ul>
-</p>
 
 <div class="rationale"><p>Rationale: <tt>retainCount</tt> is banned
 because ARC robs it of consistent semantics.  The others were banned
@@ -1519,7 +1515,7 @@ retained during enumeration, and the collection itself cannot be
 synchronously modified.  It can be overridden by explicitly qualifying
 the variable with <tt>__strong</tt>, which will make the variable
 mutable again and cause the loop to retain the objects it
-encounters.</div>
+encounters.</p></div>
 
 </div>
 
@@ -1540,7 +1536,7 @@ retain during capture.</p>
 
 <p><tt>__block</tt> variables of retainable object owner type are
 moved off the stack by initializing the heap copy with the result of
-moving from the stack copy.</tt></p>
+moving from the stack copy.</p>
 
 <p>With the exception of retains done as part of initializing
 a <tt>__strong</tt> parameter variable or reading a <tt>__weak</tt>
@@ -1555,7 +1551,7 @@ used only as an argument to a call.</p>
 <h1>Exceptions</h1>
 
 <p>By default in Objective C, ARC is not exception-safe for normal
-releases:
+releases:</p>
 <ul>
 <li>It does not end the lifetime of <tt>__strong</tt> variables when
 their scopes are abnormally terminated by an exception.</li>

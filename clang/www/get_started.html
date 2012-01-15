@@ -2,10 +2,10 @@
           "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
   <title>Clang - Getting Started</title>
-  <link type="text/css" rel="stylesheet" href="menu.css" />
-  <link type="text/css" rel="stylesheet" href="content.css" />
+  <link type="text/css" rel="stylesheet" href="menu.css">
+  <link type="text/css" rel="stylesheet" href="content.css">
 </head>
 <body>
 
@@ -45,23 +45,26 @@ follows:</p>
       http://www.python.org/download</a></li>
   </ul>
 
-  <li>Checkout LLVM:</li>
+  <li>Checkout LLVM:
   <ul>
     <li>Change directory to where you want the llvm directory placed.</li>
     <li><tt>svn co http://llvm.org/svn/llvm-project/llvm/trunk llvm</tt></li>
   </ul>
-  <li>Checkout Clang:</li>
+  </li>
+  <li>Checkout Clang:
   <ul>
     <li><tt>cd llvm/tools</tt>
     <li><tt>svn co http://llvm.org/svn/llvm-project/cfe/trunk clang</tt></li>
   </ul>
-  <li>Checkout Compiler-RT:</li>
+  </li>
+  <li>Checkout Compiler-RT:
   <ul>
     <li><tt>cd llvm/projects</tt>
     <li><tt>svn co http://llvm.org/svn/llvm-project/compiler-rt/trunk
         compiler-rt</tt></li>
   </ul>
-  <li>Build LLVM and Clang:</li>
+  </li>
+  <li>Build LLVM and Clang:
   <ul>
     <li><tt>cd ../..</tt>  (back to where you started)</li>
     <li><tt>mkdir build</tt> (for building without polluting the source dir)
@@ -72,15 +75,15 @@ follows:</p>
     <li>This builds both LLVM and Clang for debug mode.</li>
     <li>Note: For subsequent Clang development, you can just do make at the
     clang directory level.</li>
+    <li>It is also possible to use CMake instead of the makefiles. With CMake
+    it is also possible to generate project files for several IDEs: Eclipse
+    CDT4, CodeBlocks, Qt-Creator (use the CodeBlocks generator), KDevelop3.</li>
   </ul>
-
-  <p>It is also possible to use CMake instead of the makefiles. With CMake it 
-     is also possible to generate project files for several IDEs: Eclipse CDT4,
-     CodeBlocks, Qt-Creator (use the CodeBlocks generator), KDevelop3.</p>
+  </li>
 
   <li>If you intend to work on Clang C++ support, you may need to tell it how
       to find your C++ standard library headers.  If Clang cannot find your 
-      system libstdc++ headers, please follow these instructions:</li>
+      system libstdc++ headers, please follow these instructions:
   <ul>
     <li>'<tt>gcc -v -x c++ /dev/null -fsyntax-only</tt>' to get the
     path.</li>
@@ -88,7 +91,8 @@ follows:</p>
     hard-coded paths" in <tt>clang/lib/Frontend/InitHeaderSearch.cpp</tt> and
     change the lines below to include that path.</li>
   </ul>
-  <li>Try it out (assuming you add llvm/Debug+Asserts/bin to your path):</li>
+  </li>
+  <li>Try it out (assuming you add llvm/Debug+Asserts/bin to your path):
   <ul>
     <li><tt>clang --help</tt></li>
     <li><tt>clang file.c -fsyntax-only</tt> (check for correctness)</li>
@@ -96,6 +100,7 @@ follows:</p>
     <li><tt>clang file.c -S -emit-llvm -o - -O3</tt></li>
     <li><tt>clang file.c -S -O3 -o -</tt> (output native machine code)</li>
   </ul>
+  </li>
 </ol>
 
 <p>Note that the C front-end uses LLVM, but does not depend on llvm-gcc. If you
@@ -122,7 +127,7 @@ to subversion. </p>
 Visual Studio:</p>
 
 <ol>
-  <li>Get the required tools:</li>
+  <li>Get the required tools:
   <ul>
     <li><b>Subversion</b>.  Source code control program.  Get it from:
         <a href="http://subversion.tigris.org/getting.html">
@@ -145,17 +150,20 @@ Visual Studio:</p>
         Get them from <a href="http://getgnuwin32.sourceforge.net/">
         http://getgnuwin32.sourceforge.net/</a>.</li>
   </ul>
+  </li>
 
-  <li>Checkout LLVM:</li>
+  <li>Checkout LLVM:
   <ul>
     <li><tt>svn co http://llvm.org/svn/llvm-project/llvm/trunk llvm</tt></li>
   </ul>
-  <li>Checkout Clang:</li>
+  </li>
+  <li>Checkout Clang:
   <ul>
      <li><tt>cd llvm\tools</tt>
      <li><tt>svn co http://llvm.org/svn/llvm-project/cfe/trunk clang</tt></li>
   </ul>
-  <li>Run cmake to generate the Visual Studio solution and project files:</li>
+  </li>
+  <li>Run cmake to generate the Visual Studio solution and project files:
   <ul>
     <li><tt>cd ..\..</tt>  (back to where you started)</li>
     <li><tt>mkdir build</tt> (for building without polluting the source dir)</li>
@@ -168,16 +176,17 @@ Visual Studio:</p>
         definition in CMakeLists.txt.</li>
     <li>See the <a href="http://www.llvm.org/docs/CMake.html">LLVM CMake guide</a> for
         more information on other configuration options for cmake.</li>
-</li>
     <li>The above, if successful, will have created an LLVM.sln file in the
        <tt>build</tt> directory.
   </ul>
-  <li>Build Clang:</li>
+  </li>
+  <li>Build Clang:
   <ul>
     <li>Open LLVM.sln in Visual Studio.</li>
     <li>Build the "clang" project for just the compiler driver and front end, or
       the "ALL_BUILD" project to build everything, including tools.</li>
   </ul>
+  </li>
   <li>Try it out (assuming you added llvm/debug/bin to your path).  (See the
     running examples from above.)</li>
   <li>See <a href="hacking.html#testingWindows">
@@ -189,7 +198,7 @@ Visual Studio:</p>
 to the latest code base, use the <tt>svn update</tt> command in both the
 llvm and llvm\tools\clang directories, as they are separate repositories.</p>
 
-<a name="driver"><h2>Clang Compiler Driver (Drop-in Substitute for GCC)</h2></a>
+<h2 id="driver">Clang Compiler Driver (Drop-in Substitute for GCC)</h2>
 
 <p>The <tt>clang</tt> tool is the compiler driver and front-end, which is
 designed to be a drop-in replacement for the <tt>gcc</tt> command.  Here are
@@ -248,9 +257,9 @@ $ <b>clang -fsyntax-only ~/t.c</b>
 
 <pre class="code">
 $ <b>clang -fsyntax-only ~/t.c -pedantic</b>
-/Users/sabre/t.c:2:17: <font color="magenta">warning:</font> extension used
-<font color="darkgreen">typedef float V __attribute__((vector_size(16)));</font>
-<font color="blue">                ^</font>
+/Users/sabre/t.c:2:17: <span style="color:magenta">warning:</span> extension used
+<span style="color:darkgreen">typedef float V __attribute__((vector_size(16)));</span>
+<span style="color:blue">                ^</span>
 1 diagnostic generated.
 </pre>
 

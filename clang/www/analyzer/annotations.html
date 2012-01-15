@@ -3,8 +3,8 @@
 <html>
 <head>
   <title>Source Annotations</title>
-  <link type="text/css" rel="stylesheet" href="menu.css" />
-  <link type="text/css" rel="stylesheet" href="content.css" />
+  <link type="text/css" rel="stylesheet" href="menu.css">
+  <link type="text/css" rel="stylesheet" href="content.css">
   <script type="text/javascript" src="scripts/menu.js"></script>
 </head>
 <body>
@@ -106,7 +106,7 @@ int foo(int *p, int *q) {
 <p>Running <tt>scan-build</tt> over this source produces the following
 output:</p>
 
-<img src="images/example_attribute_nonnull.png">
+<img src="images/example_attribute_nonnull.png" alt="example attribute nonnull">
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 <h2 id="macosx">Mac OS X API Annotations</h2>
@@ -192,7 +192,7 @@ use 'cf_returns_retained'.</p>
 
 <p>Running <tt>scan-build</tt> on this source file produces the following output:</p>
 
-<img src="images/example_ns_returns_retained.png">
+<img src="images/example_ns_returns_retained.png" alt="example returns retained">
 
 <h4 id="attr_ns_returns_not_retained">Attribute 'ns_returns_not_retained'
 (Clang-specific)</h4>
@@ -242,7 +242,7 @@ Cocoa object. This distinction is important for two reasons:</p>
   <li>Because Core Foundation is a C API, the analyzer cannot always tell that a
   pointer return value refers to a Core Foundation object. In contrast, it is
   trivial for the analyzer to recognize if a pointer refers to a Cocoa object
-  (given the Objective-C type system).</p>
+  (given the Objective-C type system).
 </ul>
 
 <p><b>Placing on C functions</b>: When placing the attribute
@@ -311,16 +311,16 @@ CFDateRef returnsRetainedCFDate()  {
 
 <p>Running <tt>scan-build</tt> on this example produces the following output:</p>
 
-<img src="images/example_cf_returns_retained.png">
+<img src="images/example_cf_returns_retained.png" alt="example returns retained">
 
-</p>When the above code is compiled using Objective-C garbage collection (i.e.,
+<p>When the above code is compiled using Objective-C garbage collection (i.e.,
 code is compiled with the flag <tt>-fobjc-gc</tt> or <tt>-fobjc-gc-only</tt>),
 <tt>scan-build</tt> produces both the above error (with slightly different text
 to indicate the code uses garbage collection) as well as the following warning,
 which indicates a leak that occurs <em>only</em> when using garbage
 collection:</p>
 
-<img src="images/example_cf_returns_retained_gc.png">
+<img src="images/example_cf_returns_retained_gc.png" alt="example returns retained gc">
 
 <h4 id="attr_cf_returns_not_retained">Attribute 'cf_returns_not_retained'
 (Clang-specific)</h4>

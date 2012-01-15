@@ -1,8 +1,10 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
 <title>Clang Compiler User's Manual</title>
-<link type="text/css" rel="stylesheet" href="../menu.css" />
-<link type="text/css" rel="stylesheet" href="../content.css" />
+<link type="text/css" rel="stylesheet" href="../menu.css">
+<link type="text/css" rel="stylesheet" href="../content.css">
 <style type="text/css">
 td {
 	vertical-align: top;
@@ -263,10 +265,10 @@ when this is enabled, Clang will print something like:
   When this option is enabled, Clang will use colors to highlight
   specific parts of the diagnostic, e.g.,
  <pre>
-  <b><font color="black">test.c:28:8: <font color="magenta">warning</font>: extra tokens at end of #endif directive [-Wextra-tokens]</font></b>
+  <b><span style="color:black">test.c:28:8: <span style="color:magenta">warning</span>: extra tokens at end of #endif directive [-Wextra-tokens]</span></b>
   #endif bad
-         <font color="green">^</font>
-         <font color="green">//</font>
+         <span style="color:green">^</span>
+         <span style="color:green">//</span>
 </pre>
 
 <p>When this is disabled, Clang will just print:</p>
@@ -305,8 +307,7 @@ Changes diagnostic output format to better match IDEs and command line tools.</d
 <dt id="opt_fdiagnostics-show-name"><b>-f[no-]diagnostics-show-name</b>:
 Enable the display of the diagnostic name.</dt>
 <dd>This option, which defaults to off, controls whether or not
-Clang prints the associated name.</dd>
-<br>
+Clang prints the associated name.<p></p></dd>
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 <dt id="opt_fdiagnostics-show-option"><b>-f[no-]diagnostics-show-option</b>:
 Enable <tt>[-Woption]</tt> information in diagnostic line.</dt>

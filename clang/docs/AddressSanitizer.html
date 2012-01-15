@@ -45,7 +45,7 @@ Typical slowdown introduced by AddressSanitizer is <b>2x</b>.
 <h2 id="howtobuild">How to build</h2>
 Follow the <a href="../get_started.html">clang build instructions</a>.
 
-<h2 id="intro">Usage</h2>
+<h2 id="usage">Usage</h2>
 Simply compile and link your program with <tt>-faddress-sanitizer</tt> flag. <BR>
 To get a reasonable performance add <tt>-O1</tt> or higher. <BR>
 To get nicer stack traces in error messages add
@@ -93,7 +93,7 @@ AddressSanitizer is enabled.
 <a href="LanguageExtensions.html#__has_feature_extension">__has_feature</a>
 can be used for this purpose.
 <pre>
-#if defined(__has_feature) && __has_feature(address_sanitizer)
+#if defined(__has_feature) &amp;&amp; __has_feature(address_sanitizer)
   code that runs only under AddressSanitizer
 #else
   code that does not run under AddressSanitizer

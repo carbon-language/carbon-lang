@@ -1,8 +1,10 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
 <html>
   <head>
     <title>Clang Driver Manual</title>
-    <link type="text/css" rel="stylesheet" href="../menu.css" />
-    <link type="text/css" rel="stylesheet" href="../content.css" />
+    <link type="text/css" rel="stylesheet" href="../menu.css">
+    <link type="text/css" rel="stylesheet" href="../content.css">
     <style type="text/css">
       td {
       vertical-align: top;
@@ -19,26 +21,29 @@
 
       <ul>
         <li><a href="#intro">Introduction</a></li>
-        <li><a href="#features">Features and Goals</a></li>
+        <li><a href="#features">Features and Goals</a>
         <ul>
           <li><a href="#gcccompat">GCC Compatibility</a></li>
           <li><a href="#components">Flexible</a></li>
           <li><a href="#performance">Low Overhead</a></li>
           <li><a href="#simple">Simple</a></li>
         </ul>
-        <li><a href="#design">Design</a></li>
+        </li>
+        <li><a href="#design">Design</a>
         <ul>
           <li><a href="#int_intro">Internals Introduction</a></li>
           <li><a href="#int_overview">Design Overview</a></li>
-          <li><a href="#int_notes">Additional Notes</a></li>
+          <li><a href="#int_notes">Additional Notes</a>
           <ul>
             <li><a href="#int_compilation">The Compilation Object</a></li>
             <li><a href="#int_unified_parsing">Unified Parsing &amp; Pipelining</a></li>
             <li><a href="#int_toolchain_translation">ToolChain Argument Translation</a></li>
             <li><a href="#int_unused_warnings">Unused Argument Warnings</a></li>
           </ul>
+          </li>
           <li><a href="#int_gcc_concepts">Relation to GCC Driver Concepts</a></li>
         </ul>
+        </li>
       </ul>
 
 
@@ -168,11 +173,12 @@
         distinct stages which manipulate these data structures, and
         the blue components are important helper classes. </p>
 
-      <center>
-        <a href="DriverArchitecture.png" alt="Driver Architecture Diagram">
-          <img width=400 src="DriverArchitecture.png">
+      <div style="text-align:center">
+        <a href="DriverArchitecture.png">
+          <img width=400 src="DriverArchitecture.png"
+               alt="Driver Architecture Diagram">
         </a>
-      </center>
+      </div>
 
       <!--=======================================================================-->
       <h3><a name="int_stages">Driver Stages</a></h3>
@@ -495,7 +501,7 @@
             embedded in specs is in the Tool specific argument
             translation routines. The parts of specs which control the
             compilation pipeline are generally part of
-            the <ii>Pipeline</ii> stage.</p>
+            the <i>Pipeline</i> stage.</p>
         </li>
 
         <li>

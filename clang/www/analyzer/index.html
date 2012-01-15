@@ -3,38 +3,10 @@
 <html>
 <head>
   <title>Clang Static Analyzer</title>
-  <link type="text/css" rel="stylesheet" href="content.css" />
-  <link type="text/css" rel="stylesheet" href="menu.css" />
+  <link type="text/css" rel="stylesheet" href="content.css">
+  <link type="text/css" rel="stylesheet" href="menu.css">
   <script type="text/javascript" src="scripts/menu.js"></script>  
-</head>
-<body>
-
-<div id="page">
-<!--#include virtual="menu.html.incl"-->
-<div id="content">
-
-
-<table style="margin-top:0px" width="100%" border="0" cellpadding="0px" cellspacing="0">
-<tr><td>
-
-<h1>Clang Static Analyzer</h1>  
-
-<p>The Clang Static Analyzer is source code analysis tool that find bugs in C
-and Objective-C programs.</p>
-
-<p>Currently it can be run either as a <a href="/scan-build.html">standalone
-tool</a> or <a href="/xcode.html">within Xcode</a>. The standalone tool is
-invoked from the command-line, and is intended to be run in tandem with a build
-of a codebase.</p>
-
-<p>The analyzer is 100% open source and is part of the <a
-href="http://clang.llvm.org">Clang</a> project. Like the rest of Clang, the
-analyzer is implemented as a C++ library that can be used by other tools and
-applications.</p>
-
-<h2>Download</h2>
-
-<!-- Generated from: http://www.spiffycorners.com/index.php -->
+  <!-- Generated from: http://www.spiffycorners.com/index.php -->
 
 <style type="text/css">
 .spiffy{display:block}
@@ -77,15 +49,40 @@ applications.</p>
 .spiffyfg h2 {
   margin:0px;  padding:10px;
 }
-</style>
 
-<style type="text/css">
   #left { float:left; }
   #left h2 { margin:1px; padding-top:0px; }
   #right { float:left; margin-left:20px; margin-right:20px; padding:0px ;}
   #right h2 { padding:0px; margin:0px; }
   #wrappedcontent { padding:15px;}
 </style>
+</head>
+<body>
+
+<div id="page">
+<!--#include virtual="menu.html.incl"-->
+<div id="content">
+
+
+<table style="margin-top:0px" width="100%" border="0" cellpadding="0px" cellspacing="0">
+<tr><td>
+
+<h1>Clang Static Analyzer</h1>  
+
+<p>The Clang Static Analyzer is source code analysis tool that find bugs in C
+and Objective-C programs.</p>
+
+<p>Currently it can be run either as a <a href="/scan-build.html">standalone
+tool</a> or <a href="/xcode.html">within Xcode</a>. The standalone tool is
+invoked from the command-line, and is intended to be run in tandem with a build
+of a codebase.</p>
+
+<p>The analyzer is 100% open source and is part of the <a
+href="http://clang.llvm.org">Clang</a> project. Like the rest of Clang, the
+analyzer is implemented as a C++ library that can be used by other tools and
+applications.</p>
+
+<h2>Download</h2>
 
 <div style="padding:0px; font-size: 90%">
  <b class="spiffy">
@@ -101,7 +98,7 @@ applications.</p>
     <li>Latest build (Intel-only binary, 10.5+):<br>
      <!--#include virtual="latest_checker.html.incl"-->
     </li>
-    <li><a href="/release_notes.html">Release notes</a></li></li>
+    <li><a href="/release_notes.html">Release notes</a></li>
     <li>This build can be used both from the command line and from within Xcode</li>
     <li><a href="/installation.html">Installation</a> and <a href="/scan-build.html">usage</a></li>
    </ul>
@@ -140,10 +137,10 @@ applications.</p>
 
 
 </td><td style="padding-left:10px">
-<a href="images/analyzer_xcode.png"><img src="images/analyzer_xcode.png" width="450x" border=0></a>
-<center><b>Viewing static analyzer results in Xcode 3.2</b></center>
-<a href="images/analyzer_html.png"><img src="images/analyzer_html.png" width="450px" border=0></a>
-<center><b>Viewing static analyzer results in a web browser</b></center>
+<a href="images/analyzer_xcode.png"><img src="images/analyzer_xcode.png" width="450" alt="analyzer in xcode"></a>
+<div style="text-align:center"><b>Viewing static analyzer results in Xcode 3.2</b></div>
+<a href="images/analyzer_html.png"><img src="images/analyzer_html.png" width="450" alt="analyzer in browser"></a>
+<div style="text-align:center"><b>Viewing static analyzer results in a web browser</b></div>
 </td></tr></table>
 
 <h2 id="StaticAnalysis">What is Static Analysis?</h2>
@@ -198,7 +195,7 @@ bugs require in the worst case exponential time.</p>
 
 <p>The Clang Static Analyzer runs in a reasonable amount of time by both
 bounding the amount of checking work it will do as well as using clever
-algorithms to reduce the amount of work it must do to find bugs.</p></li>
+algorithms to reduce the amount of work it must do to find bugs.</p>
 
 <h3>False Positives</h3>
 

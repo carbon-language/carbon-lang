@@ -1,3 +1,5 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
 <title>Static Analyzer Design Document: Memory Regions</title>
@@ -59,7 +61,7 @@ of structures) then the StoreManager can simply return 'unknown' (represented by
 concerns not only isolates the core analysis engine from the details of
 reasoning about program memory but also facilities the option of a client of the
 path-sensitive engine to easily swap in different StoreManager implementations
-that internally reason about program memory in very different ways.</pp>
+that internally reason about program memory in very different ways.</p>
 
 <p>The rest of this document is divided into two parts. We first discuss region
 taxonomy and the semantics of regions. We then discuss the StoreManager
@@ -102,7 +104,7 @@ typedef struct s my_type;
 void *p;
 int *q = (int*) p;
 char *r = (char*) p;
-</pre
+</pre>
 
 <p>Thus we need to canonicalize the MemRegion which is used in binding and
 retrieving.</p>

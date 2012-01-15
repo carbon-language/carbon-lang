@@ -2,10 +2,10 @@
           "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
   <title>Language Compatibility</title>
-  <link type="text/css" rel="stylesheet" href="menu.css" />
-  <link type="text/css" rel="stylesheet" href="content.css" />
+  <link type="text/css" rel="stylesheet" href="menu.css">
+  <link type="text/css" rel="stylesheet" href="content.css">
   <style type="text/css">
 </style>
 </head>
@@ -47,7 +47,7 @@
       <li><a href="#c_variables-class">C variables in @class or @protocol</a></li>
     </ul>
   </li>
-  <li><a href="#c++">C++ compatibility</a>
+  <li><a href="#cxx">C++ compatibility</a>
     <ul>
       <li><a href="#vla">Variable-length arrays</a></li>
       <li><a href="#dep_lookup">Unqualified lookup in templates</a></li>
@@ -60,13 +60,13 @@
       <li><a href="#param_name_lookup">Parameter name lookup</a></li>
     </ul>
   </li>
-  <li><a href="#c++11">C++11 compatibility</a>
+  <li><a href="#cxx11">C++11 compatibility</a>
     <ul>
       <li><a href="#deleted-special-func">Deleted special member
   functions</a></li>
     </ul>
   </li>
-  <li><a href="#objective-c++">Objective-C++ compatibility</a>
+  <li><a href="#objective-cxx">Objective-C++ compatibility</a>
     <ul>
       <li><a href="#implicit-downcasts">Implicit downcasts</a></li>
     </ul>
@@ -77,7 +77,7 @@
 </ul>
 
 <!-- ======================================================================= -->
-<h2 id="c">C compatibility</h3>
+<h2 id="c">C compatibility</h2>
 <!-- ======================================================================= -->
 
 <!-- ======================================================================= -->
@@ -318,7 +318,7 @@ add $4, (%rax)
 this makes your code more clear and is compatible with both GCC and Clang.</p>
 
 <!-- ======================================================================= -->
-<h2 id="objective-c">Objective-C compatibility</h3>
+<h2 id="objective-c">Objective-C compatibility</h2>
 <!-- ======================================================================= -->
 
 <!-- ======================================================================= -->
@@ -409,7 +409,7 @@ extern int c;  // allowed
 </pre>
 
 <!-- ======================================================================= -->
-<h2 id="c++">C++ compatibility</h3>
+<h2 id="cxx">C++ compatibility</h2>
 <!-- ======================================================================= -->
 
 <!-- ======================================================================= -->
@@ -761,7 +761,7 @@ void f(int a, int a);
 <p>Clang diagnoses this error (where the parameter name has been redeclared). To fix this problem, rename one of the parameters.</p>
 
 <!-- ======================================================================= -->
-<h2 id="c++11">C++11 compatibility</h2>
+<h2 id="cxx11">C++11 compatibility</h2>
 <!-- ======================================================================= -->
 
 <!-- ======================================================================= -->
@@ -794,7 +794,7 @@ up to version 1.47.0. The fix for Boost's <tt>shared_ptr</tt> is
 <a href="https://svn.boost.org/trac/boost/changeset/73202">available here</a>.</p>
 
 <!-- ======================================================================= -->
-<h2 id="objective-c++">Objective-C++ compatibility</h2>
+<h2 id="objective-cxx">Objective-C++ compatibility</h2>
 <!-- ======================================================================= -->
 
 <!-- ======================================================================= -->
@@ -860,7 +860,7 @@ int cls;
 @implementation  I
 - (int) Meth { return I.class; }
 @end
-<pre>
+</pre>
 
 <p>Use explicit message-send syntax instead, i.e. <code>[I class]</code>.</p>
 

@@ -3,10 +3,13 @@
 <!-- Material used from: HTML 4.01 specs: http://www.w3.org/TR/html401/ -->
 <html>
 <head>
-  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
   <title>Hacking on clang</title>
-  <link type="text/css" rel="stylesheet" href="menu.css" />
-  <link type="text/css" rel="stylesheet" href="content.css" />
+  <link type="text/css" rel="stylesheet" href="menu.css">
+  <link type="text/css" rel="stylesheet" href="content.css">
+  <style type="text/css">
+  pre { margin-left: 1.5em; }
+  </style>
 </head>
 <body>
 <!--#include virtual="menu.html.incl"-->
@@ -22,18 +25,19 @@
       <li><a href="#style">Coding Standards</a></li>
       <li><a href="#docs">Developer Documentation</a></li>
       <li><a href="#debugging">Debugging</a></li>
-      <li><a href="#testing">Testing</a></li>
+      <li><a href="#testing">Testing</a>
       <ul>
         <li><a href="#testingNonWindows">Testing on Unix-like Systems</a></li>
         <li><a href="#testingWindows">Testing using Visual Studio on Windows</a></li>
         <li><a href="#testingCommands">Testing on the Command Line</a></li>
       </ul>
+      </li>
       <li><a href="#patches">Creating Patch Files</a></li>
       <li><a href="#irgen">LLVM IR Generation</a></li>
     </ul>
 
   <!--=====================================================================-->
-  <h2 id="docs">Coding Standards</h2>
+  <h2 id="style">Coding Standards</h2>
   <!--=====================================================================-->
 
   <p>Clang follows the
@@ -139,7 +143,7 @@
   <p>During the run of <tt>make test</tt>, the terminal output will
   display a line similar to the following:</p>
 
-  <ul><tt>--- Running clang tests for i686-pc-linux-gnu ---</tt></ul>
+  <pre>--- Running clang tests for i686-pc-linux-gnu ---</pre>
 
   <p>followed by a line continually overwritten with the current test
   file being compiled, and an overall completion percentage.</p>
@@ -150,12 +154,12 @@
   <tt>Failing Tests (count):</tt> message will be followed by a list
   of the test source file paths that failed.  For example:</p>
 
-  <tt><pre>
+  <pre>
   Failing Tests (3):
       /home/john/llvm/tools/clang/test/SemaCXX/member-name-lookup.cpp
       /home/john/llvm/tools/clang/test/SemaCXX/namespace-alias.cpp
       /home/john/llvm/tools/clang/test/SemaCXX/using-directive.cpp
-  </pre></tt>
+</pre>
 
   <p>If you used the <tt>make VERBOSE=1</tt> option, the terminal
   output will reflect the error messages from the compiler and
@@ -210,10 +214,10 @@
   <p>To run all the tests from the command line, execute a command like
   the following:</p>
 
-  <tt>
+  <pre>
   python (path to llvm)/llvm/utils/lit/lit.py -sv --no-progress-bar
  (path to llvm)/llvm/tools/clang/test
-  </tt>
+</pre>
 
   <p>For CMake builds e.g. on Windows with Visual Studio, you will need
   to specify your build configuration (Debug, Release, etc.) via
@@ -221,31 +225,31 @@
 
   <p>To run a single test:</p>
 
-  <tt>
+  <pre>
   python (path to llvm)/llvm/utils/lit/lit.py -sv --no-progress-bar
  (path to llvm)/llvm/tools/clang/test/(dir)/(test)
-  </tt>
+</pre>
 
   <p>For example:</p>
 
-  <tt>
+  <pre>
   python C:/Tools/llvm/utils/lit/lit.py -sv --no-progress-bar
   C:/Tools/llvm/tools/clang/test/Sema/wchar.c
-  </tt>
+</pre>
 
   <p>The -sv option above tells the runner to show the test output if
   any tests failed, to help you determine the cause of failure.</p>
 
   <p>Your output might look something like this:</p>
 
-<tt><pre>lit.py: lit.cfg:152: note: using clang: 'C:/Tools/llvm/bin/Release\\clang.EXE'
+  <pre>lit.py: lit.cfg:152: note: using clang: 'C:/Tools/llvm/bin/Release\\clang.EXE'
 -- Testing: Testing: 2534 tests, 4 threads --
 Testing: 0 .. 10.. 20.. 30.. 40.. 50.. 60.. 70.. 80.. 90..
 Testing Time: 81.52s
   Expected Passes    : 2503
   Expected Failures  : 28
   Unsupported Tests  : 3
-</pre></tt>
+</pre>
 
   <p>The statistic, "Unexpected Failures" (not shown if all tests pass), is the important one.</p>
 
@@ -263,15 +267,15 @@ Testing Time: 81.52s
   <p>To create these patch files, change directory
   to the llvm/tools/clang root and run:</p>
 
-  <ul><tt>svn diff (relative path) >(patch file name)</tt></ul>
+  <pre>svn diff (relative path) >(patch file name)</pre>
 
   <p>For example, for getting the diffs of all of clang:</p>
 
-  <ul><tt>svn diff . >~/mypatchfile.patch</tt></ul>
+  <pre>svn diff . >~/mypatchfile.patch</pre>
 
   <p>For example, for getting the diffs of a single file:</p>
 
-  <ul><tt>svn diff lib/Parse/ParseDeclCXX.cpp >~/ParseDeclCXX.patch</tt></ul>
+  <pre>svn diff lib/Parse/ParseDeclCXX.cpp >~/ParseDeclCXX.patch</pre>
 
   <p>Note that the paths embedded in the patch depend on where you run it,
   so changing directory to the llvm/tools/clang directory is recommended.</p>

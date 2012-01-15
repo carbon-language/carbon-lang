@@ -2,10 +2,10 @@
           "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
   <title>Clang - Performance</title>
-  <link type="text/css" rel="stylesheet" href="menu.css" />
-  <link type="text/css" rel="stylesheet" href="content.css" />
+  <link type="text/css" rel="stylesheet" href="menu.css">
+  <link type="text/css" rel="stylesheet" href="content.css">
   <style type="text/css">
 </style>
 </head>
@@ -20,7 +20,7 @@
 <!--*************************************************************************-->
 
 <p>This page tracks the compile time performance of Clang on two
-interesting benchmarks:
+interesting benchmarks:</p>
 <ul>
   <li><i>Sketch</i>: The Objective-C example application shipped on
     Mac OS X as part of Xcode. <i>Sketch</i> is indicative of a
@@ -37,7 +37,6 @@ interesting benchmarks:
   dependencies. This stresses the back-end's performance on generating
   assembly code and debug information.</li>
 </ul>
-</p>
 
 <!--*************************************************************************-->
 <h2><a name="enduser">Experiments</a></h2>
@@ -46,7 +45,7 @@ interesting benchmarks:
 <p>Measurements are done by serially processing each file in the
 respective benchmark, using Clang, gcc, and llvm-gcc as compilers. In
 order to track the performance of various subsystems the timings have
-been broken down into separate stages where possible:
+been broken down into separate stages where possible:</p>
 
 <ul>
   <li><tt>-Eonly</tt>: This option runs the preprocessor but does not
@@ -65,7 +64,6 @@ been broken down into separate stages where possible:
   <li><tt>-S -O0 -g</tt>: This adds emission of debug information to
     the assembly output.</li>
 </ul>
-</p>
 
 <p>This set of stages is chosen to be approximately additive, that is
 each subsequent stage simply adds some additional processing. The
@@ -94,9 +92,9 @@ compile time here.</p>
 <h3><a name="2008-10-31">2008-10-31</a></h3>
 <!--=======================================================================-->
 
-<center><h4>Sketch</h4></center>
+<h4 style="text-align:center">Sketch</h4>
 <img class="img_slide" 
-     src="timing-data/2008-10-31/sketch.png" alt="Sketch Timings"/>
+     src="timing-data/2008-10-31/sketch.png" alt="Sketch Timings">
 
 <p>This shows Clang's substantial performance improvements in
 preprocessing and semantic analysis; over 90% faster on
@@ -112,9 +110,9 @@ with PCH; about 4x in wall time. Unfortunately, Clang does not yet
 have an implementation of PCH-style optimizations, but we are actively
 working to address this.</p>
 
-<center><h4>176.gcc</h4></center>
+<h4 style="text-align:center">176.gcc</h4>
 <img class="img_slide" 
-     src="timing-data/2008-10-31/176.gcc.png" alt="176.gcc Timings"/>
+     src="timing-data/2008-10-31/176.gcc.png" alt="176.gcc Timings">
 
 <p>Unlike the <i>Sketch</i> timings, compilation of <i>176.gcc</i>
 involves a large amount of code generation. The time spent in Clang's

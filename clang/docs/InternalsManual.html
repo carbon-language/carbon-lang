@@ -1,8 +1,10 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
 <title>"Clang" CFE Internals Manual</title>
-<link type="text/css" rel="stylesheet" href="../menu.css" />
-<link type="text/css" rel="stylesheet" href="../content.css" />
+<link type="text/css" rel="stylesheet" href="../menu.css">
+<link type="text/css" rel="stylesheet" href="../content.css">
 <style type="text/css">
 td {
 	vertical-align: top;
@@ -29,13 +31,9 @@ td {
   </ul>
 </li>
 <li><a href="#libdriver">The Driver Library</a>
-  <ul>
-  </ul>
 </li>
 <li><a href="#pch">Precompiled Headers</a>
 <li><a href="#libfrontend">The Frontend Library</a>
-  <ul>
-  </ul>
 </li>
 <li><a href="#liblex">The Lexer and Preprocessor Library</a>
   <ul>
@@ -47,8 +45,6 @@ td {
   </ul>
 </li>
 <li><a href="#libparse">The Parser Library</a>
-  <ul>
-  </ul>
 </li>
 <li><a href="#libast">The AST Library</a>
   <ul>
@@ -135,8 +131,8 @@ implemented.  A representative example of a diagnostic is:</p>
 
 <pre>
 t.c:38:15: error: invalid operands to binary expression ('int *' and '_Complex float')
-   <font color="darkgreen">P = (P-42) + Gamma*4;</font>
-       <font color="blue">~~~~~~ ^ ~~~~~~~</font>
+   <span style="color:darkgreen">P = (P-42) + Gamma*4;</span>
+       <span style="color:blue">~~~~~~ ^ ~~~~~~~</span>
 </pre>
 
 <p>In this example, you can see the English translation, the severity (error),
@@ -265,7 +261,7 @@ including variable names, types, labels, etc.  The 'select' format can be
 used to achieve this sort of thing in a localizable way, see below.</p>
 
 <!-- ==================================== -->
-<h4>Formatting a Diagnostic Argument</a></h4>
+<h4>Formatting a Diagnostic Argument</h4>
 <!-- ==================================== -->
 
 <p>Arguments to diagnostics are fully typed internally, and come from a couple
@@ -575,7 +571,7 @@ the <code>CharSourceRange</code> class.</p>
 <!-- ======================================================================= -->
 
 <p>The clang Driver and library are documented <a
-href="DriverInternals.html">here<a>.<p>
+href="DriverInternals.html">here</a>.<p>
 
 <!-- ======================================================================= -->
 <h2 id="pch">Precompiled Headers</h2>
@@ -685,7 +681,6 @@ lexer/preprocessor system on a per-token basis:
   <li><b>NeedsCleaning</b> - This flag is set if the original spelling for the
       token includes a trigraph or escaped newline.  Since this is uncommon,
       many pieces of code can fast-path on tokens that did not need cleaning.
-      </p>
    </ol>
 </li>
 </ul>
@@ -905,13 +900,13 @@ on the annotated lines.  In this example, we expect to get:</p>
 <pre>
 <b>test.c:6:1: error: indirection requires pointer operand ('foo' invalid)</b>
 *X; // error
-<font color="blue">^~</font>
+<span style="color:blue">^~</span>
 <b>test.c:7:1: error: indirection requires pointer operand ('foo' invalid)</b>
 **Y; // error
-<font color="blue">^~~</font>
+<span style="color:blue">^~~</span>
 <b>test.c:8:1: error: indirection requires pointer operand ('foo' invalid)</b>
 **Z; // error
-<font color="blue">^~~</font>
+<span style="color:blue">^~~</span>
 </pre>
 
 <p>While this example is somewhat silly, it illustrates the point: we want to
@@ -1726,7 +1721,7 @@ interacts with constant evaluation:</p>
 
 <p>To add an attribute, you'll have to add it to the list of attributes, add it
 to the parsing phase, and look for it in the AST scan.
-<a href="http://llvm.org/viewvc/llvm-project?view=rev&revision=124217">r124217</a>
+<a href="http://llvm.org/viewvc/llvm-project?view=rev&amp;revision=124217">r124217</a>
 has a good example of adding a warning attribute.</p>
 
 <p>(Beware that this hasn't been reviewed/fixed by the people who designed the

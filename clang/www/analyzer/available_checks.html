@@ -3,9 +3,12 @@
 <html>
 <head>
   <title>Available Checks</title>
-  <link type="text/css" rel="stylesheet" href="menu.css" />
-  <link type="text/css" rel="stylesheet" href="content.css" />
+  <link type="text/css" rel="stylesheet" href="menu.css">
+  <link type="text/css" rel="stylesheet" href="content.css">
   <script type="text/javascript" src="scripts/menu.js"></script>
+  <style type="text/css">
+  tr:first-child { width:20%; }
+  </style>
 </head>
 <body>
 
@@ -24,103 +27,103 @@
 <th><h4>Description</h4></th>
 </tr>-->
 <tr>
-<td width="20%"><b>core.AdjustedReturnValue</b></td><td>Check to see if the return value of a function call is different than the caller expects (e.g., from calls through function pointers).</td>
+<td><b>core.AdjustedReturnValue</b></td><td>Check to see if the return value of a function call is different than the caller expects (e.g., from calls through function pointers).</td>
 </tr>
 <tr>
-<td width="20%"><b>core.AttributeNonNull</b></td><td>Check for null pointers passed as arguments to a function whose arguments are marked with the 'nonnull' attribute.</td>
+<td><b>core.AttributeNonNull</b></td><td>Check for null pointers passed as arguments to a function whose arguments are marked with the 'nonnull' attribute.</td>
 </tr>
 <tr>
-<td width="20%"><b>core.CallAndMessage</b></td><td>Check for logical errors for function calls and Objective-C message expressions (e.g., uninitialized arguments, null function pointers).</td>
+<td><b>core.CallAndMessage</b></td><td>Check for logical errors for function calls and Objective-C message expressions (e.g., uninitialized arguments, null function pointers).</td>
 </tr>
 <tr>
-<td width="20%"><b>core.DivideZero</b></td><td>Check for division by zero.</td>
+<td><b>core.DivideZero</b></td><td>Check for division by zero.</td>
 </tr>
 <tr>
-<td width="20%"><b>core.NullDereference</b></td><td>Check for dereferences of null pointers.</td>
+<td><b>core.NullDereference</b></td><td>Check for dereferences of null pointers.</td>
 </tr>
 <tr>
-<td width="20%"><b>core.StackAddressEscape</b></td><td>Check that addresses to stack memory do not escape the function.</td>
+<td><b>core.StackAddressEscape</b></td><td>Check that addresses to stack memory do not escape the function.</td>
 </tr>
 <tr>
-<td width="20%"><b>core.UndefinedBinaryOperatorResult</b></td><td>Check for undefined results of binary operators.</td>
+<td><b>core.UndefinedBinaryOperatorResult</b></td><td>Check for undefined results of binary operators.</td>
 </tr>
 <tr>
-<td width="20%"><b>core.VLASize</b></td><td>Check for declarations of VLA of undefined or zero size.</td>
+<td><b>core.VLASize</b></td><td>Check for declarations of VLA of undefined or zero size.</td>
 </tr>
 <tr>
-<td width="20%"><b>core.builtin.BuiltinFunctions</b></td><td>Evaluate compiler builtin functions (e.g., alloca()).</td>
+<td><b>core.builtin.BuiltinFunctions</b></td><td>Evaluate compiler builtin functions (e.g., alloca()).</td>
 </tr>
 <tr>
-<td width="20%"><b>core.builtin.NoReturnFunctions</b></td><td>Evaluate "panic" functions that are known to not return to the caller.</td>
+<td><b>core.builtin.NoReturnFunctions</b></td><td>Evaluate "panic" functions that are known to not return to the caller.</td>
 </tr>
 <tr>
-<td width="20%"><b>core.uninitialized.ArraySubscript</b></td><td>Check for uninitialized values used as array subscripts.</td>
+<td><b>core.uninitialized.ArraySubscript</b></td><td>Check for uninitialized values used as array subscripts.</td>
 </tr>
 <tr>
-<td width="20%"><b>core.uninitialized.Assign</b></td><td>Check for assigning uninitialized values.</td>
+<td><b>core.uninitialized.Assign</b></td><td>Check for assigning uninitialized values.</td>
 </tr>
 <tr>
-<td width="20%"><b>core.uninitialized.Branch</b></td><td>Check for uninitialized values used as branch conditions.</td>
+<td><b>core.uninitialized.Branch</b></td><td>Check for uninitialized values used as branch conditions.</td>
 </tr>
 <tr>
-<td width="20%"><b>core.uninitialized.CapturedBlockVariable</b></td><td>Check for blocks that capture uninitialized values.</td>
+<td><b>core.uninitialized.CapturedBlockVariable</b></td><td>Check for blocks that capture uninitialized values.</td>
 </tr>
 <tr>
-<td width="20%"><b>core.uninitialized.UndefReturn</b></td><td>Check for uninitialized values being returned to the caller.</td>
+<td><b>core.uninitialized.UndefReturn</b></td><td>Check for uninitialized values being returned to the caller.</td>
 </tr>
 <tr>
-<td width="20%"><b>deadcode.DeadStores</b></td><td>Check for values stored to variables that are never read afterwards.</td>
+<td><b>deadcode.DeadStores</b></td><td>Check for values stored to variables that are never read afterwards.</td>
 </tr>
 <tr>
-<td width="20%"><b>deadcode.IdempotentOperations</b></td><td>Warn about idempotent operations.</td>
+<td><b>deadcode.IdempotentOperations</b></td><td>Warn about idempotent operations.</td>
 </tr>
 <tr>
-<td width="20%"><b>osx.API</b></td><td>Check for proper uses of various Mac OS X APIs.</td>
+<td><b>osx.API</b></td><td>Check for proper uses of various Mac OS X APIs.</td>
 </tr>
 <tr>
-<td width="20%"><b>osx.AtomicCAS</b></td><td>Evaluate calls to OSAtomic functions.</td>
+<td><b>osx.AtomicCAS</b></td><td>Evaluate calls to OSAtomic functions.</td>
 </tr>
 <tr>
-<td width="20%"><b>osx.SecKeychainAPI</b></td><td>Check for proper uses of Secure Keychain APIs.</td>
+<td><b>osx.SecKeychainAPI</b></td><td>Check for proper uses of Secure Keychain APIs.</td>
 </tr>
 <tr>
-<td width="20%"><b>osx.cocoa.AtSync</b></td><td>Check for null pointers used as mutexes for @synchronized.</td>
+<td><b>osx.cocoa.AtSync</b></td><td>Check for null pointers used as mutexes for @synchronized.</td>
 </tr>
 <tr>
-<td width="20%"><b>osx.cocoa.ClassRelease</b></td><td>Check for sending 'retain', 'release', or 'autorelease' directly to a Class.</td>
+<td><b>osx.cocoa.ClassRelease</b></td><td>Check for sending 'retain', 'release', or 'autorelease' directly to a Class.</td>
 </tr>
 <tr>
-<td width="20%"><b>osx.cocoa.IncompatibleMethodTypes</b></td><td>Warn about Objective-C method signatures with type incompatibilities.</td>
+<td><b>osx.cocoa.IncompatibleMethodTypes</b></td><td>Warn about Objective-C method signatures with type incompatibilities.</td>
 </tr>
 <tr>
-<td width="20%"><b>osx.cocoa.NSAutoreleasePool</b></td><td>Warn for suboptimal uses of NSAutoreleasePool in Objective-C GC mode.</td>
+<td><b>osx.cocoa.NSAutoreleasePool</b></td><td>Warn for suboptimal uses of NSAutoreleasePool in Objective-C GC mode.</td>
 </tr>
 <tr>
-<td width="20%"><b>osx.cocoa.NSError</b></td><td>Check usage of NSError** parameters.</td>
+<td><b>osx.cocoa.NSError</b></td><td>Check usage of NSError** parameters.</td>
 </tr>
 <tr>
-<td width="20%"><b>osx.cocoa.NilArg</b></td><td>Check for prohibited nil arguments to ObjC method calls.</td>
+<td><b>osx.cocoa.NilArg</b></td><td>Check for prohibited nil arguments to ObjC method calls.</td>
 </tr>
 <tr>
-<td width="20%"><b>osx.cocoa.RetainCount</b></td><td>Check for leaks and improper reference count management.</td>
+<td><b>osx.cocoa.RetainCount</b></td><td>Check for leaks and improper reference count management.</td>
 </tr>
 <tr>
-<td width="20%"><b>osx.cocoa.UnusedIvars</b></td><td>Warn about private ivars that are never used.</td>
+<td><b>osx.cocoa.UnusedIvars</b></td><td>Warn about private ivars that are never used.</td>
 </tr>
 <tr>
-<td width="20%"><b>osx.cocoa.VariadicMethodTypes</b></td><td>Check for passing non-Objective-C types to variadic methods that expect only Objective-C types.</td>
+<td><b>osx.cocoa.VariadicMethodTypes</b></td><td>Check for passing non-Objective-C types to variadic methods that expect only Objective-C types.</td>
 </tr>
 <tr>
-<td width="20%"><b>osx.coreFoundation.CFError</b></td><td>Check usage of CFErrorRef* parameters.</td>
+<td><b>osx.coreFoundation.CFError</b></td><td>Check usage of CFErrorRef* parameters.</td>
 </tr>
 <tr>
-<td width="20%"><b>osx.coreFoundation.CFNumber</b></td><td>Check for proper uses of CFNumberCreate.</td>
+<td><b>osx.coreFoundation.CFNumber</b></td><td>Check for proper uses of CFNumberCreate.</td>
 </tr>
 <tr>
-<td width="20%"><b>osx.coreFoundation.CFRetainRelease</b></td><td>Check for null arguments to CFRetain/CFRelease.</td>
+<td><b>osx.coreFoundation.CFRetainRelease</b></td><td>Check for null arguments to CFRetain/CFRelease.</td>
 </tr>
 <tr>
-<td width="20%"><b>unix.API</b></td><td>Check calls to various UNIX/Posix functions.</td>
+<td><b>unix.API</b></td><td>Check calls to various UNIX/Posix functions.</td>
 </tr>
 </table>
 

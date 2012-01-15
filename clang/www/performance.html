@@ -2,10 +2,10 @@
           "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
   <title>Clang - Performance</title>
-  <link type="text/css" rel="stylesheet" href="menu.css" />
-  <link type="text/css" rel="stylesheet" href="content.css" />
+  <link type="text/css" rel="stylesheet" href="menu.css">
+  <link type="text/css" rel="stylesheet" href="content.css">
   <style type="text/css">
 </style>
 </head>
@@ -20,7 +20,7 @@
 <!--*************************************************************************-->
 
 <p>This page shows the compile time performance of Clang on two
-interesting benchmarks:
+interesting benchmarks:</p>
 <ul>
   <li><i>Sketch</i>: The Objective-C example application shipped on
     Mac OS X as part of Xcode. <i>Sketch</i> is indicative of a
@@ -37,7 +37,6 @@ interesting benchmarks:
     dependencies. This stresses the back-end's performance on generating
     assembly code and debug information.</li>
 </ul>
-</p>
 
 <p>
 For previous performance numbers, please
@@ -56,7 +55,7 @@ compilers.</p>
 have been broken down into separate stages where possible. This is
 done by over-riding the CC environment variable used during the build
 to point to one of a few simple shell scripts which may skip part of
-the build.
+the build.</p>
 
 <ul>
   <li><tt>non-compiler</tt>: The overhead of the build system itself;
@@ -73,7 +72,6 @@ the build.
   <li><tt>+ assembler</tt>: Add assembler time to generate .o files.</li>
   <li><tt>+ linker</tt>: Add linker time.</li>
 </ul>
-</p>
 
 <p>This set of stages is chosen to be approximately additive, that is each
 subsequent stage simply adds some additional processing. The timings measure the
@@ -93,12 +91,12 @@ semantic analysis after PCH generation is done.</p>
 
 <a href="timing-data/2009-06-26/sketch.pdf">
 <img class="img_slide" 
-     src="timing-data/2009-06-26/sketch.png" alt="Sketch Timings"/>
+     src="timing-data/2009-06-26/sketch.png" alt="Sketch Timings">
 </a>
 
 <a href="timing-data/2009-06-26/176.gcc.pdf">
 <img class="img_slide" 
-     src="timing-data/2009-06-26/176.gcc.png" alt="176.gcc Timings"/>
+     src="timing-data/2009-06-26/176.gcc.png" alt="176.gcc Timings">
 </a>
 
 </div>

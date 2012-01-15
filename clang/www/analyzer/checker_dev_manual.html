@@ -3,8 +3,8 @@
 <html>
 <head>
   <title>Checker Developer Manual</title>
-  <link type="text/css" rel="stylesheet" href="menu.css" />
-  <link type="text/css" rel="stylesheet" href="content.css" />
+  <link type="text/css" rel="stylesheet" href="menu.css">
+  <link type="text/css" rel="stylesheet" href="content.css">
   <script type="text/javascript" src="scripts/menu.js"></script>
 </head>
 <body>
@@ -14,7 +14,7 @@
 
 <div id="content">
 
-<h1><font color=red>This Page Is Under Construction</font></h1>
+<h1 style="color:red">This Page Is Under Construction</h1>
 
 <h1>Checker Developer Manual</h1>
 
@@ -196,7 +196,8 @@ values (e.g., the number 1).
     inter-procedural analysis). Also, it uses a simple range tracking based 
     solver to model symbolic execution.</li>
     
-    <li>Consult the <a href="http://llvm.org/bugs/buglist.cgi?query_format=advanced&bug_status=NEW&bug_status=REOPENED&version=trunk&component=Static%20Analyzer&product=clang">Bugzilla database</a> 
+    <li>Consult the <a
+    href="http://llvm.org/bugs/buglist.cgi?query_format=advanced&amp;bug_status=NEW&amp;bug_status=REOPENED&amp;version=trunk&amp;component=Static%20Analyzer&amp;product=clang">Bugzilla database</a> 
     to get some ideas for new checkers and consider starting with improving/fixing  
     bugs in the existing checkers.</li>
   </ul>
@@ -211,13 +212,13 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-class NewChecker: public Checker< check::PreStmt<CallExpr> > {
+class NewChecker: public Checker< check::PreStmt&lt;CallExpr> > {
 public:
-  void checkPreStmt(const CallExpr *CE, CheckerContext &Ctx) const {}
+  void checkPreStmt(const CallExpr *CE, CheckerContext &amp;Ctx) const {}
 }
 }
-void ento::registerNewChecker(CheckerManager &mgr) {
-  mgr.registerChecker<NewChecker>();
+void ento::registerNewChecker(CheckerManager &amp;mgr) {
+  mgr.registerChecker&lt;NewChecker>();
 }
 </pre>
 

@@ -3,8 +3,8 @@
 <html>
 <head>
   <title>scan-build: running the analyzer from the command line</title>
-  <link type="text/css" rel="stylesheet" href="content.css" />
-  <link type="text/css" rel="stylesheet" href="menu.css" />
+  <link type="text/css" rel="stylesheet" href="content.css">
+  <link type="text/css" rel="stylesheet" href="menu.css">
   <script type="text/javascript" src="scripts/menu.js"></script>
   <script type="text/javascript" src="scripts/dbtree.js"></script>
 </head>
@@ -16,7 +16,7 @@
 
 <h1>scan-build: running the analyzer from the command line</h1>
 
-<table style="margin-top:0px" width="100%" border="0" cellpadding="0px" cellspacing="0">
+<table style="margin-top:0px" width="100%" cellpadding="0px" cellspacing="0">
 <tr><td>
 
 <h3>What is it?</h3>
@@ -45,11 +45,10 @@ the best use of <b>scan-build</b>, which includes getting it to work when the
 aforementioned hack fails to work.</p>
 
 </td>
-<td style="padding-left:10px">
-<center>
-  <img src="images/scan_build_cmd.png" width="450px" border=0><br>
-  <a href="images/analyzer_html.png"><img src="images/analyzer_html.png" width="450px" border=0></a>
-<br><b>Viewing static analyzer results in a web browser</b></center>
+<td style="padding-left:10px; text-align:center">
+  <img src="images/scan_build_cmd.png" width="450px" alt="scan-build"><br>
+  <a href="images/analyzer_html.png"><img src="images/analyzer_html.png" width="450px" alt="analyzer in browser"></a>
+<br><b>Viewing static analyzer results in a web browser</b>
 </td></tr></table>
 
 <h2>Contents</h2>
@@ -101,7 +100,7 @@ $ <span class="code_highlight">scan-build</span> <i>[scan-build options]</i> <sp
 </pre>
 
 <p>Operationally, <tt>scan-build</tt> literally runs &lt;command&gt; with all of the
-subsequent options passed to it. For example, one can pass <nobr><tt>-j4</tt></nobr> to
+subsequent options passed to it. For example, one can pass <tt>-j4</tt> to
 <tt>make</tt> get a parallel build over 4 cores:</p>
 
 <pre class="code_example">
@@ -141,17 +140,17 @@ options prefix the build command. For example:</p>
 <tr><td><b>-o</b></td><td>Target directory for HTML report files. Subdirectories
 will be created as needed to represent separate "runs" of the analyzer. If this
 option is not specified, a directory is created in <tt>/tmp</tt> to store the
-reports.</td><tr>
+reports.</td></tr>
 
-<tr><td><b>-h</b><br><i><nobr>(or no arguments)</nobr></i></td><td>Display all
+<tr><td><b>-h</b><br><i>(or&nbsp;no&nbsp;arguments)</i></td><td>Display all
 <tt>scan-build</tt> options.</td></tr>
 
-<tr><td><b>-k</b><br><nobr><b>--keep-going</b></nobr></td><td>Add a "keep on
+<tr><td><b>-k</b><br><b>--keep-going</b></td><td>Add a "keep on
 going" option to the specified build command. <p>This option currently supports
 <tt>make</tt> and <tt>xcodebuild</tt>.</p> <p>This is a convenience option; one
 can specify this behavior directly using build options.</p></td></tr>
 
-<tr><td><b>-v<b></td><td>Verbose output from scan-build and the analyzer. <b>A
+<tr><td><b>-v</b></td><td>Verbose output from scan-build and the analyzer. <b>A
 second and third "-v" increases verbosity</b>, and is useful for filing bug
 reports against the analyzer.</td></tr>
 
@@ -222,7 +221,7 @@ regular compilation and <tt>clang</tt> to perform static analysis.</p>
 
 <p>Running <tt>configure</tt> typically generates makefiles that have hardwired
 paths to the compiler, and by running <tt>configure</tt> through
-<tt>scan-build</tt> that path is set to <tt>ccc-analyzer</tt>.</p.>
+<tt>scan-build</tt> that path is set to <tt>ccc-analyzer</tt>.</p>
 
 <!-- 
 <h2 id="Debugging">Debugging the Analyzer</h2>

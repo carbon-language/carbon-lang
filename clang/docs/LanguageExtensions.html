@@ -103,11 +103,12 @@
   </ul>
 </li>
 <li><a href="#analyzerspecific">Static Analysis-Specific Extensions</a></li>
-<li><a href="#dynamicanalyzerspecific">Dynamic Analysis-Specific Extensions</a></li>
+<li><a href="#dynamicanalyzerspecific">Dynamic Analysis-Specific Extensions</a>
   <ul>
   <li><a href="#address_sanitizer">AddressSanitizer</a></li>
   </ul>
-<li><a href="#threadsafety">Thread Safety Annotation Checking</a></li>
+</li>
+<li><a href="#threadsafety">Thread Safety Annotation Checking</a>
     <ul>
     <li><a href="#ts_noanal"><tt>no_thread_safety_analysis</tt></a></li>   
     <li><a href="#ts_lockable"><tt>lockable</tt></a></li>  
@@ -128,6 +129,7 @@
     <li><a href="#ts_elr"><tt>exclusive_locks_required(...)</tt></a></li>   
     <li><a href="#ts_slr"><tt>shared_locks_required(...)</tt></a></li>   
     </ul>
+</li>
 </ul>
 
 <!-- ======================================================================= -->
@@ -541,7 +543,7 @@ support for delegating constructors is enabled.</p>
 <tt>__has_extension(cxx_deleted_functions)</tt> to determine if support for
 deleted function definitions (with <tt>= delete</tt>) is enabled.</p>
 
-<h4 id="cxx_explicit_conversions">C++11 explicit conversion functions</h3>
+<h4 id="cxx_explicit_conversions">C++11 explicit conversion functions</h4>
 <p>Use <tt>__has_feature(cxx_explicit_conversions)</tt> to determine if support for <tt>explicit</tt> conversion functions is enabled.</p>
 
 <h4 id="cxx_generalized_initializers">C++11 generalized initializers</h4>

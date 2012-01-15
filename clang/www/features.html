@@ -2,10 +2,10 @@
           "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
   <title>Clang - Features and Goals</title>
-  <link type="text/css" rel="stylesheet" href="menu.css" />
-  <link type="text/css" rel="stylesheet" href="content.css" />
+  <link type="text/css" rel="stylesheet" href="menu.css">
+  <link type="text/css" rel="stylesheet" href="content.css">
   <style type="text/css">
 </style>
 </head>
@@ -71,7 +71,8 @@ options for performance analysis.</p>
 is significantly quicker than gcc and uses less memory  For example, when
 compiling "Carbon.h" on Mac OS/X, we see that clang is 2.5x faster than GCC:</p>
 
-<img class="img_slide" src="feature-compile1.png" width="400" height="300" />
+<img class="img_slide" src="feature-compile1.png" width="400" height="300"
+     alt="Time to parse carbon.h: -fsyntax-only">
 
 <p>Carbon.h is a monster: it transitively includes 558 files, 12.3M of code,
 declares 10000 functions, has 2000 struct definitions, 8000 fields, 20000 enum
@@ -94,7 +95,8 @@ memory use is even moreso: the less memory the code takes the more code you can
 fit into memory at a time (useful for whole program analysis tools, for
 example).</p>
 
-<img class="img_slide" src="feature-memory1.png" width="400" height="300" />
+<img class="img_slide" src="feature-memory1.png" width="400" height="300"
+     alt="Space">
 
 <p>Here we see a huge advantage of clang: its ASTs take <b>5x less memory</b>
 than GCC's syntax trees, despite the fact that clang's ASTs capture far more 
@@ -107,7 +109,8 @@ architecture</a> that makes it relatively easy to adapt it and build new tools
 with it.  This means that it is often possible to apply out-of-the-box thinking
 and novel techniques to improve compilation in various ways.</p> 
   
-<img class="img_slide" src="feature-compile2.png" width="400" height="300" />
+<img class="img_slide" src="feature-compile2.png" width="400" height="300"
+     alt="Preprocessor Speeds: GCC 4.2 vs clang-all">
 
 <p>This slide shows how the clang preprocessor can be used to make "distcc"
 parallelization <b>3x</b> more scalable than when using the GCC preprocessor.
@@ -149,8 +152,8 @@ GCC and Clang diagnostic:</p>
   t.c:7: error: invalid operands to binary + (have 'int' and 'struct A')
   $ <b>clang -fsyntax-only t.c</b>
   t.c:7:39: error: invalid operands to binary expression ('int' and 'struct A')
-  <font color="darkgreen">  return y + func(y ? ((SomeA.X + 40) + SomeA) / 42 + SomeA.X : SomeA.X);</font>
-  <font color="blue">                       ~~~~~~~~~~~~~~ ^ ~~~~~</font>
+  <span style="color:darkgreen">  return y + func(y ? ((SomeA.X + 40) + SomeA) / 42 + SomeA.X : SomeA.X);</span>
+  <span style="color:blue">                       ~~~~~~~~~~~~~~ ^ ~~~~~</span>
 </pre>
 
 <p>Here you can see that you don't even need to see the original source code to
@@ -200,13 +203,13 @@ and uses.  In addition, the library-based approach encourages good interfaces
 and makes it easier for new developers to get involved (because they only need
 to understand small pieces of the big picture).</p>
 
-<blockquote>
+<blockquote><p>
 "The world needs better compiler tools, tools which are built as libraries.
 This design point allows reuse of the tools in new and novel ways. However,
 building the tools as libraries isn't enough: they must have clean APIs, be as
 decoupled from each other as possible, and be easy to modify/extend. This
 requires clean layering, decent design, and keeping the libraries independent of
-any specific client."</blockquote>
+any specific client."</p></blockquote>
 
 <p>
 Currently, clang is divided into the following libraries and tool:
@@ -295,7 +298,7 @@ hard, and we don't always get it right the first time, but we fix any problems
 when we realize we made a mistake.</p>
 
 <!--=======================================================================-->
-<h3><a name="ideintegration">Integration with IDEs</h3>
+<h3 id="ideintegration">Integration with IDEs</h3>
 <!--=======================================================================-->
 
 <p>
