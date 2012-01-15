@@ -42,107 +42,75 @@ bool RWMutexImpl::writer_release() { return true; }
 namespace llvm {
 using namespace sys;
 
-
-// This variable is useful for situations where the pthread library has been
-// compiled with weak linkage for its interface symbols. This allows the
-// threading support to be turned off by simply not linking against -lpthread.
-// In that situation, the value of pthread_mutex_init will be 0 and
-// consequently pthread_enabled will be false. In such situations, all the
-// pthread operations become no-ops and the functions all return false. If
-// pthread_rwlock_init does have an address, then rwlock support is enabled.
-// Note: all LLVM tools will link against -lpthread if its available since it
-//       is configured into the LIBS variable.
-// Note: this line of code generates a warning if pthread_rwlock_init is not
-//       declared with weak linkage. It's safe to ignore the warning.
-static const bool pthread_enabled = true;
-
 // Construct a RWMutex using pthread calls
 RWMutexImpl::RWMutexImpl()
   : data_(0)
 {
-  if (pthread_enabled)
-  {
-    // Declare the pthread_rwlock data structures
-    pthread_rwlock_t* rwlock =
-      static_cast<pthread_rwlock_t*>(malloc(sizeof(pthread_rwlock_t)));
+  // Declare the pthread_rwlock data structures
+  pthread_rwlock_t* rwlock =
+    static_cast<pthread_rwlock_t*>(malloc(sizeof(pthread_rwlock_t)));
 
 #ifdef __APPLE__
-    // Workaround a bug/mis-feature in Darwin's pthread_rwlock_init.
-    bzero(rwlock, sizeof(pthread_rwlock_t));
+  // Workaround a bug/mis-feature in Darwin's pthread_rwlock_init.
+  bzero(rwlock, sizeof(pthread_rwlock_t));
 #endif
 
-    // Initialize the rwlock
-    int errorcode = pthread_rwlock_init(rwlock, NULL);
-    (void)errorcode;
-    assert(errorcode == 0);
+  // Initialize the rwlock
+  int errorcode = pthread_rwlock_init(rwlock, NULL);
+  (void)errorcode;
+  assert(errorcode == 0);
 
-    // Assign the data member
-    data_ = rwlock;
-  }
+  // Assign the data member
+  data_ = rwlock;
 }
 
 // Destruct a RWMutex
 RWMutexImpl::~RWMutexImpl()
 {
-  if (pthread_enabled)
-  {
-    pthread_rwlock_t* rwlock = static_cast<pthread_rwlock_t*>(data_);
-    assert(rwlock != 0);
-    pthread_rwlock_destroy(rwlock);
-    free(rwlock);
-  }
+  pthread_rwlock_t* rwlock = static_cast<pthread_rwlock_t*>(data_);
+  assert(rwlock != 0);
+  pthread_rwlock_destroy(rwlock);
+  free(rwlock);
 }
 
 bool
 RWMutexImpl::reader_acquire()
 {
-  if (pthread_enabled)
-  {
-    pthread_rwlock_t* rwlock = static_cast<pthread_rwlock_t*>(data_);
-    assert(rwlock != 0);
+  pthread_rwlock_t* rwlock = static_cast<pthread_rwlock_t*>(data_);
+  assert(rwlock != 0);
 
-    int errorcode = pthread_rwlock_rdlock(rwlock);
-    return errorcode == 0;
-  } else return false;
+  int errorcode = pthread_rwlock_rdlock(rwlock);
+  return errorcode == 0;
 }
 
 bool
 RWMutexImpl::reader_release()
 {
-  if (pthread_enabled)
-  {
-    pthread_rwlock_t* rwlock = static_cast<pthread_rwlock_t*>(data_);
-    assert(rwlock != 0);
+  pthread_rwlock_t* rwlock = static_cast<pthread_rwlock_t*>(data_);
+  assert(rwlock != 0);
 
-    int errorcode = pthread_rwlock_unlock(rwlock);
-    return errorcode == 0;
-  } else return false;
+  int errorcode = pthread_rwlock_unlock(rwlock);
+  return errorcode == 0;
 }
 
 bool
 RWMutexImpl::writer_acquire()
 {
-  if (pthread_enabled)
-  {
-    pthread_rwlock_t* rwlock = static_cast<pthread_rwlock_t*>(data_);
-    assert(rwlock != 0);
+  pthread_rwlock_t* rwlock = static_cast<pthread_rwlock_t*>(data_);
+  assert(rwlock != 0);
 
-    int errorcode = pthread_rwlock_wrlock(rwlock);
-    return errorcode == 0;
-  } else return false;
+  int errorcode = pthread_rwlock_wrlock(rwlock);
+  return errorcode == 0;
 }
 
 bool
 RWMutexImpl::writer_release()
 {
-  if (pthread_enabled)
-  {
-    pthread_rwlock_t* rwlock = static_cast<pthread_rwlock_t*>(data_);
-    assert(rwlock != 0);
+  pthread_rwlock_t* rwlock = static_cast<pthread_rwlock_t*>(data_);
+  assert(rwlock != 0);
 
-    int errorcode = pthread_rwlock_unlock(rwlock);
-    return errorcode == 0;
-  } else return false;
+  int errorcode = pthread_rwlock_unlock(rwlock);
+  return errorcode == 0;
 }
 
 }
