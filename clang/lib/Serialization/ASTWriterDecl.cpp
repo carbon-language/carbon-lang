@@ -454,10 +454,8 @@ void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   VisitObjCContainerDecl(D);
   Writer.AddTypeRef(QualType(D->getTypeForDecl(), 0), Record);
 
-  ObjCInterfaceDecl *Def = D->getDefinition();
-  Writer.AddDeclRef(Def, Record);
-  
-  if (D == Def) {
+  Record.push_back(D->isThisDeclarationADefinition());
+  if (D->isThisDeclarationADefinition()) {
     // Write the DefinitionData
     ObjCInterfaceDecl::DefinitionData &Data = D->data();
     
@@ -520,10 +518,8 @@ void ASTDeclWriter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
   VisitRedeclarable(D);
   VisitObjCContainerDecl(D);
   
-  ObjCProtocolDecl *Def = D->getDefinition();
-  Writer.AddDeclRef(Def, Record);
-
-  if (D == Def) {
+  Record.push_back(D->isThisDeclarationADefinition());
+  if (D->isThisDeclarationADefinition()) {
     Record.push_back(D->protocol_size());
     for (ObjCProtocolDecl::protocol_iterator
          I = D->protocol_begin(), IEnd = D->protocol_end(); I != IEnd; ++I)
@@ -905,12 +901,8 @@ void ASTDeclWriter::VisitUnresolvedUsingTypenameDecl(
 
 void ASTDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
   VisitRecordDecl(D);
-
-  CXXRecordDecl *DefinitionDecl = 0;
-  if (D->DefinitionData)
-    DefinitionDecl = D->DefinitionData->Definition;
-  Writer.AddDeclRef(DefinitionDecl, Record);
-  if (D == DefinitionDecl)
+  Record.push_back(D->isThisDeclarationADefinition());
+  if (D->isThisDeclarationADefinition())
     Writer.AddCXXDefinitionData(D, Record);
 
   enum {

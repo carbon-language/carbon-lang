@@ -103,10 +103,6 @@ namespace clang {
     void ReadCXXDefinitionData(struct CXXRecordDecl::DefinitionData &Data,
                                const RecordData &R, unsigned &I);
 
-    void InitializeCXXDefinitionData(CXXRecordDecl *D,
-                                     CXXRecordDecl *DefinitionDecl,
-                                     const RecordData &Record, unsigned &Idx);
-    
     /// \brief RAII class used to capture the first ID within a redeclaration
     /// chain and to introduce it into the list of pending redeclaration chains
     /// on destruction.
@@ -672,8 +668,7 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   TypeIDForTypeDecl = Reader.getGlobalTypeID(F, Record[Idx++]);
   mergeRedeclarable(ID, Redecl);
   
-  ObjCInterfaceDecl *Def = ReadDeclAs<ObjCInterfaceDecl>(Record, Idx);
-  if (ID == Def) {
+  if (Record[Idx++]) {
     // Read the definition.
     ID->allocateDefinitionData();
     
@@ -745,8 +740,7 @@ void ASTDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
   VisitObjCContainerDecl(PD);
   mergeRedeclarable(PD, Redecl);
   
-  ObjCProtocolDecl *Def = ReadDeclAs<ObjCProtocolDecl>(Record, Idx);
-  if (PD == Def) {
+  if (Record[Idx++]) {
     // Read the definition.
     PD->allocateDefinitionData();
     
@@ -1104,13 +1098,11 @@ void ASTDeclReader::ReadCXXDefinitionData(
   Data.FirstFriend = ReadDeclAs<FriendDecl>(Record, Idx);
 }
 
-void ASTDeclReader::InitializeCXXDefinitionData(CXXRecordDecl *D,
-                                                CXXRecordDecl *DefinitionDecl,
-                                                const RecordData &Record,
-                                                unsigned &Idx) {
-  ASTContext &C = Reader.getContext();
+void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
+  VisitRecordDecl(D);
 
-  if (D == DefinitionDecl) {
+  ASTContext &C = Reader.getContext();
+  if (Record[Idx++]) {
     D->DefinitionData = new (C) struct CXXRecordDecl::DefinitionData(D);
     
     // Propagate the DefinitionData pointer to the canonical declaration, so
@@ -1119,24 +1111,15 @@ void ASTDeclReader::InitializeCXXDefinitionData(CXXRecordDecl *D,
     D->getCanonicalDecl()->DefinitionData = D->DefinitionData;
     
     ReadCXXDefinitionData(*D->DefinitionData, Record, Idx);
-
+    
     // Note that we have deserialized a definition. Any declarations 
     // deserialized before this one will be be given the DefinitionData pointer
     // at the end.
     Reader.PendingDefinitions.insert(D);
   } else {
     // Propagate DefinitionData pointer from the canonical declaration.
-    D->DefinitionData = D->getCanonicalDecl()->DefinitionData;
+    D->DefinitionData = D->getCanonicalDecl()->DefinitionData;    
   }
-}
-
-void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
-  VisitRecordDecl(D);
-
-  CXXRecordDecl *DefinitionDecl = ReadDeclAs<CXXRecordDecl>(Record, Idx);
-  InitializeCXXDefinitionData(D, DefinitionDecl, Record, Idx);
-
-  ASTContext &C = Reader.getContext();
 
   enum CXXRecKind {
     CXXRecNotTemplate = 0, CXXRecTemplate, CXXRecMemberSpecialization
