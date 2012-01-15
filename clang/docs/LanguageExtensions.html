@@ -384,10 +384,11 @@ is used in the file argument.</p>
 <h2 id="vectors">Vectors and Extended Vectors</h2>
 <!-- ======================================================================= -->
 
-<p>Supports the GCC vector extensions, plus some stuff like V[1].</p>
+<p>Supports the GCC, OpenCL, AltiVec and NEON vector extensions.</p>
 
-<p>Also supports <tt>ext_vector</tt>, which additionally support for V.xyzw
-syntax and other tidbits as seen in OpenCL. An example is:</p>
+OpenCL vector types are created using <tt>ext_vector_type</tt> attribute. It 
+support for V.xyzw syntax and other tidbits as seen in OpenCL. An example 
+is:</p>
 
 <blockquote>
 <pre>
@@ -404,6 +405,159 @@ float4 foo(float2 a, float2 b) {
 </blockquote>
 
 <p>Query for this feature with __has_extension(attribute_ext_vector_type).</p>
+
+<p>Giving -faltivec option to clang enables support for AltiVec vector syntax 
+and functions. For example:</p>
+
+<blockquote>
+<pre>
+vector float foo(vector int a) { 
+  vector int b;
+  b = vec_add(a, a) + a; 
+  return (vector float)b;
+}
+</pre>
+</blockquote>
+
+<p>NEON vector types are created using <tt>neon_vector_type</tt> and 
+<tt>neon_polyvector_type</tt> attributes. For example:</p>
+
+<blockquote>
+<pre>
+typedef <b>__attribute__((neon_vector_type(8)))</b> int8_t int8x8_t;
+typedef <b>__attribute__((neon_polyvector_type(16)))</b> poly8_t poly8x16_t;
+
+int8x8_t foo(int8x8_t a) {
+  int8x8_t v;
+  v = a;
+  return v;
+}
+</pre>
+</blockquote>
+
+<!-- ======================================================================= -->
+<h3><a name="vector_literals">Vector Literals</a></h3>
+<!-- ======================================================================= -->
+
+<p>Vector literals can be used to create vectors from a set of scalars, or 
+vectors. Either parentheses or braces form can be used. In the parentheses form 
+the number of literal values specified must be one, i.e. referring to a scalar 
+value, or must match the size of the vector type being created. If a single 
+scalar literal value is specified, the scalar literal value will be replicated 
+to all the components of the vector type. In the brackets form any number of 
+literals can be specified. For example:</p>
+
+<blockquote>
+<pre>
+typedef int v4si __attribute__((__vector_size__(16)));
+typedef float float4 __attribute__((ext_vector_type(4)));
+typedef float float2 __attribute__((ext_vector_type(2)));
+
+v4si vsi = (v4si){1, 2, 3, 4};
+float4 vf = (float4)(1.0f, 2.0f, 3.0f, 4.0f);
+vector int vi1 = (vector int)(1);    // vi1 will be (1, 1, 1, 1).
+vector int vi2 = (vector int){1};    // vi2 will be (1, 0, 0, 0).
+vector int vi3 = (vector int)(1, 2); // error
+vector int vi4 = (vector int){1, 2}; // vi4 will be (1, 2, 0, 0).
+vector int vi5 = (vector int)(1, 2, 3, 4);
+float4 vf = (float4)((float2)(1.0f, 2.0f), (float2)(3.0f, 4.0f));
+</pre>
+</blockquote>
+
+<!-- ======================================================================= -->
+<h3><a name="vector_operations">Vector Operations</a></h3>
+<!-- ======================================================================= -->
+
+<p>The table below shows the support for each operation by vector extension.
+A dash indicates that an operation is not accepted according to a corresponding 
+specification.</p>
+
+<table width="500" border="1" cellspacing="0">
+ <tr>
+    <th bgcolor="#ffddaa">Operator</th>
+    <th bgcolor="#ffddaa">OpenCL</th>
+    <th bgcolor="#ffddaa">AltiVec</th>
+    <th bgcolor="#ffddaa">GCC</th>
+    <th bgcolor="#ffddaa">NEON</th>
+ </tr>
+     <tr>
+      <td>[]</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+      <td align="center">-</td>
+    </tr>
+    <tr>
+      <td>unary operators +, -</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+      <td align="center">-</td>
+    </tr>
+    <tr>
+      <td>++, --</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+      <td align="center">-</td>
+      <td align="center">-</td>
+    </tr>
+    <tr>
+      <td>+, -, *, /, %</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+      <td align="center">-</td>
+    </tr>
+    <tr>
+      <td>bitwise operators &, |, ^, ~</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+      <td align="center">-</td>
+    </tr>
+    <tr>
+      <td>&gt&gt, &lt&lt</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+      <td align="center">-</td>
+    </tr>
+    <tr>
+      <td>!, &&,||</td>
+      <td align="center">no</td>
+      <td align="center">-</td>
+      <td align="center">-</td>
+      <td align="center">-</td>
+    </tr>
+    <tr>
+      <td>==,!=, >, <, >=, <=</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+      <td align="center">-</td>
+      <td align="center">-</td>
+    </tr>
+    <tr>
+      <td>=</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+    </tr>
+    <tr>
+      <td>:?</td>
+      <td align="center">yes</td>
+      <td align="center">-</td>
+      <td align="center">-</td>
+      <td align="center">-</td>
+    </tr>
+    <tr>
+      <td>sizeof</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+      <td align="center">yes</td>
+    </tr>
+</table>
 
 <p>See also <a href="#__builtin_shufflevector">__builtin_shufflevector</a>.</p>
 
