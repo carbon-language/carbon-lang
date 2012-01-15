@@ -21,3 +21,10 @@ namespace pr10154 {
       A(decltype(nullptr) param);
   };
 }
+
+template<typename T> struct S {};
+template<typename T> auto f(T t) -> decltype(S<int>(t)) {
+  using U = decltype(S<int>(t));
+  using U = S<int>;
+  return S<int>(t);
+}

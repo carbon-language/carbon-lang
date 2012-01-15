@@ -1739,7 +1739,10 @@ void DependentTypeOfExprType::Profile(llvm::FoldingSetNodeID &ID,
 }
 
 DecltypeType::DecltypeType(Expr *E, QualType underlyingType, QualType can)
-  : Type(Decltype, can, E->isTypeDependent(), 
+  // C++11 [temp.type]p2: "If an expression e involves a template parameter,
+  // decltype(e) denotes a unique dependent type." Hence a decltype type is
+  // type-dependent even if its expression is only instantiation-dependent.
+  : Type(Decltype, can, E->isInstantiationDependent(),
          E->isInstantiationDependent(),
          E->getType()->isVariablyModifiedType(), 
          E->containsUnexpandedParameterPack()), 
