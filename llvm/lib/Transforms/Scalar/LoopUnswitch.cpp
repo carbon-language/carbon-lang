@@ -129,19 +129,6 @@ namespace {
     // after RewriteLoopBodyWithConditionConstant rewrites first loop.
     std::vector<Loop*> LoopProcessWorklist;
 
-    // TODO: This few lines are here for cosmetic purposes only.
-    // Will be removed with the next commit.
-    struct LoopProperties {
-      unsigned CanBeUnswitchedCount;
-      unsigned SizeEstimation;
-    };
-    
-    // TODO: This few lines are here for cosmetic purposes only.
-    // Will be removed with the next commit.
-    typedef DenseMap<const Loop*, LoopProperties> LoopPropsMap;
-    typedef LoopPropsMap::iterator LoopPropsMapIt;
-    LoopPropsMap LoopsProperties;    
-    
     LUAnalysisCache BranchesInfo;
     
     bool OptimizeForSize;
