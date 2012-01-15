@@ -11,6 +11,7 @@
     td {
             vertical-align: top;
     }
+    th { background-color: #ffddaa; }
   </style>
 </head>
 <body>
@@ -386,9 +387,9 @@ is used in the file argument.</p>
 
 <p>Supports the GCC, OpenCL, AltiVec and NEON vector extensions.</p>
 
-OpenCL vector types are created using <tt>ext_vector_type</tt> attribute. It 
-support for V.xyzw syntax and other tidbits as seen in OpenCL. An example 
-is:</p>
+<p>OpenCL vector types are created using <tt>ext_vector_type</tt> attribute. It
+support for <tt>V.xyzw</tt> syntax and other tidbits as seen in OpenCL. An
+example is:</p>
 
 <blockquote>
 <pre>
@@ -404,10 +405,11 @@ float4 foo(float2 a, float2 b) {
 </pre>
 </blockquote>
 
-<p>Query for this feature with __has_extension(attribute_ext_vector_type).</p>
+<p>Query for this feature with
+<tt>__has_extension(attribute_ext_vector_type)</tt>.</p>
 
-<p>Giving -faltivec option to clang enables support for AltiVec vector syntax 
-and functions. For example:</p>
+<p>Giving <tt>-faltivec</tt> option to clang enables support for AltiVec vector
+syntax and functions. For example:</p>
 
 <blockquote>
 <pre>
@@ -474,11 +476,11 @@ specification.</p>
 
 <table width="500" border="1" cellspacing="0">
  <tr>
-    <th bgcolor="#ffddaa">Operator</th>
-    <th bgcolor="#ffddaa">OpenCL</th>
-    <th bgcolor="#ffddaa">AltiVec</th>
-    <th bgcolor="#ffddaa">GCC</th>
-    <th bgcolor="#ffddaa">NEON</th>
+    <th>Operator</th>
+    <th>OpenCL</th>
+    <th>AltiVec</th>
+    <th>GCC</th>
+    <th>NEON</th>
  </tr>
      <tr>
       <td>[]</td>
