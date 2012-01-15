@@ -3747,7 +3747,7 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
   return DAG.getTargetConstant(EncodedVal, MVT::i32);
 }
 
-static bool isVEXTMask(const SmallVectorImpl<int> &M, EVT VT,
+static bool isVEXTMask(ArrayRef<int> M, EVT VT,
                        bool &ReverseVEXT, unsigned &Imm) {
   unsigned NumElts = VT.getVectorNumElements();
   ReverseVEXT = false;
@@ -3786,8 +3786,7 @@ static bool isVEXTMask(const SmallVectorImpl<int> &M, EVT VT,
 /// isVREVMask - Check if a vector shuffle corresponds to a VREV
 /// instruction with the specified blocksize.  (The order of the elements
 /// within each block of the vector is reversed.)
-static bool isVREVMask(const SmallVectorImpl<int> &M, EVT VT,
-                       unsigned BlockSize) {
+static bool isVREVMask(ArrayRef<int> M, EVT VT, unsigned BlockSize) {
   assert((BlockSize==16 || BlockSize==32 || BlockSize==64) &&
          "Only possible block sizes for VREV are: 16, 32, 64");
 
@@ -3813,15 +3812,14 @@ static bool isVREVMask(const SmallVectorImpl<int> &M, EVT VT,
   return true;
 }
 
-static bool isVTBLMask(const SmallVectorImpl<int> &M, EVT VT) {
+static bool isVTBLMask(ArrayRef<int> M, EVT VT) {
   // We can handle <8 x i8> vector shuffles. If the index in the mask is out of
   // range, then 0 is placed into the resulting vector. So pretty much any mask
   // of 8 elements can work here.
   return VT == MVT::v8i8 && M.size() == 8;
 }
 
-static bool isVTRNMask(const SmallVectorImpl<int> &M, EVT VT,
-                       unsigned &WhichResult) {
+static bool isVTRNMask(ArrayRef<int> M, EVT VT, unsigned &WhichResult) {
   unsigned EltSz = VT.getVectorElementType().getSizeInBits();
   if (EltSz == 64)
     return false;
@@ -3839,8 +3837,7 @@ static bool isVTRNMask(const SmallVectorImpl<int> &M, EVT VT,
 /// isVTRN_v_undef_Mask - Special case of isVTRNMask for canonical form of
 /// "vector_shuffle v, v", i.e., "vector_shuffle v, undef".
 /// Mask is e.g., <0, 0, 2, 2> instead of <0, 4, 2, 6>.
-static bool isVTRN_v_undef_Mask(const SmallVectorImpl<int> &M, EVT VT,
-                                unsigned &WhichResult) {
+static bool isVTRN_v_undef_Mask(ArrayRef<int> M, EVT VT, unsigned &WhichResult){
   unsigned EltSz = VT.getVectorElementType().getSizeInBits();
   if (EltSz == 64)
     return false;
@@ -3855,8 +3852,7 @@ static bool isVTRN_v_undef_Mask(const SmallVectorImpl<int> &M, EVT VT,
   return true;
 }
 
-static bool isVUZPMask(const SmallVectorImpl<int> &M, EVT VT,
-                       unsigned &WhichResult) {
+static bool isVUZPMask(ArrayRef<int> M, EVT VT, unsigned &WhichResult) {
   unsigned EltSz = VT.getVectorElementType().getSizeInBits();
   if (EltSz == 64)
     return false;
@@ -3879,8 +3875,7 @@ static bool isVUZPMask(const SmallVectorImpl<int> &M, EVT VT,
 /// isVUZP_v_undef_Mask - Special case of isVUZPMask for canonical form of
 /// "vector_shuffle v, v", i.e., "vector_shuffle v, undef".
 /// Mask is e.g., <0, 2, 0, 2> instead of <0, 2, 4, 6>,
-static bool isVUZP_v_undef_Mask(const SmallVectorImpl<int> &M, EVT VT,
-                                unsigned &WhichResult) {
+static bool isVUZP_v_undef_Mask(ArrayRef<int> M, EVT VT, unsigned &WhichResult){
   unsigned EltSz = VT.getVectorElementType().getSizeInBits();
   if (EltSz == 64)
     return false;
@@ -3904,8 +3899,7 @@ static bool isVUZP_v_undef_Mask(const SmallVectorImpl<int> &M, EVT VT,
   return true;
 }
 
-static bool isVZIPMask(const SmallVectorImpl<int> &M, EVT VT,
-                       unsigned &WhichResult) {
+static bool isVZIPMask(ArrayRef<int> M, EVT VT, unsigned &WhichResult) {
   unsigned EltSz = VT.getVectorElementType().getSizeInBits();
   if (EltSz == 64)
     return false;
@@ -3930,8 +3924,7 @@ static bool isVZIPMask(const SmallVectorImpl<int> &M, EVT VT,
 /// isVZIP_v_undef_Mask - Special case of isVZIPMask for canonical form of
 /// "vector_shuffle v, v", i.e., "vector_shuffle v, undef".
 /// Mask is e.g., <0, 0, 1, 1> instead of <0, 4, 1, 5>.
-static bool isVZIP_v_undef_Mask(const SmallVectorImpl<int> &M, EVT VT,
-                                unsigned &WhichResult) {
+static bool isVZIP_v_undef_Mask(ArrayRef<int> M, EVT VT, unsigned &WhichResult){
   unsigned EltSz = VT.getVectorElementType().getSizeInBits();
   if (EltSz == 64)
     return false;
@@ -4363,7 +4356,7 @@ static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
 }
 
 static SDValue LowerVECTOR_SHUFFLEv8i8(SDValue Op,
-                                       SmallVectorImpl<int> &ShuffleMask,
+                                       ArrayRef<int> ShuffleMask,
                                        SelectionDAG &DAG) {
   // Check to see if we can use the VTBL instruction.
   SDValue V1 = Op.getOperand(0);
@@ -4371,7 +4364,7 @@ static SDValue LowerVECTOR_SHUFFLEv8i8(SDValue Op,
   DebugLoc DL = Op.getDebugLoc();
 
   SmallVector<SDValue, 8> VTBLMask;
-  for (SmallVectorImpl<int>::iterator
+  for (ArrayRef<int>::iterator
          I = ShuffleMask.begin(), E = ShuffleMask.end(); I != E; ++I)
     VTBLMask.push_back(DAG.getConstant(*I, MVT::i32));
 
@@ -4391,7 +4384,6 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   EVT VT = Op.getValueType();
   ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(Op.getNode());
-  SmallVector<int, 8> ShuffleMask;
 
   // Convert shuffles that are directly supported on NEON to target-specific
   // DAG nodes, instead of keeping them as shuffles and matching them again
@@ -4399,7 +4391,7 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   // of inconsistencies between legalization and selection.
   // FIXME: floating-point vectors should be canonicalized to integer vectors
   // of the same time so that they get CSEd properly.
-  SVN->getMask(ShuffleMask);
+  ArrayRef<int> ShuffleMask = SVN->getMask();
 
   unsigned EltSize = VT.getVectorElementType().getSizeInBits();
   if (EltSize <= 32) {

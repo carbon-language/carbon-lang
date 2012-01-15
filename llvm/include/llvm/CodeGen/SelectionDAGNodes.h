@@ -1114,11 +1114,9 @@ protected:
   }
 public:
 
-  void getMask(SmallVectorImpl<int> &M) const {
+  ArrayRef<int> getMask() const {
     EVT VT = getValueType(0);
-    M.clear();
-    for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i)
-      M.push_back(Mask[i]);
+    return makeArrayRef(Mask, VT.getVectorNumElements());
   }
   int getMaskElt(unsigned Idx) const {
     assert(Idx < getValueType(0).getVectorNumElements() && "Idx out of range!");

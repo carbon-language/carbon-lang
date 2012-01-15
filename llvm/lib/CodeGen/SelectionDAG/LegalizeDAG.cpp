@@ -85,7 +85,7 @@ private:
   /// e.g. <v4i32> <0, 1, 0, 1> -> v8i16 <0, 1, 2, 3, 0, 1, 2, 3>
   SDValue ShuffleWithNarrowerEltType(EVT NVT, EVT VT, DebugLoc dl,
                                      SDValue N1, SDValue N2,
-                                     SmallVectorImpl<int> &Mask) const;
+                                     ArrayRef<int> Mask) const;
 
   void LegalizeSetCCCondCode(EVT VT, SDValue &LHS, SDValue &RHS, SDValue &CC,
                              DebugLoc dl);
@@ -177,7 +177,7 @@ public:
 SDValue
 SelectionDAGLegalize::ShuffleWithNarrowerEltType(EVT NVT, EVT VT,  DebugLoc dl,
                                                  SDValue N1, SDValue N2,
-                                             SmallVectorImpl<int> &Mask) const {
+                                                 ArrayRef<int> Mask) const {
   unsigned NumMaskElts = VT.getVectorNumElements();
   unsigned NumDestElts = NVT.getVectorNumElements();
   unsigned NumEltsGrowth = NumDestElts / NumMaskElts;
@@ -2795,8 +2795,8 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
                                               Node->getOperand(2), dl));
     break;
   case ISD::VECTOR_SHUFFLE: {
-    SmallVector<int, 32> Mask;
-    cast<ShuffleVectorSDNode>(Node)->getMask(Mask);
+    SmallVector<int, 32> NewMask;
+    ArrayRef<int> Mask = cast<ShuffleVectorSDNode>(Node)->getMask();
 
     EVT VT = Node->getValueType(0);
     EVT EltVT = VT.getVectorElementType();
@@ -2828,7 +2828,6 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
 
         // EltVT gets smaller
         assert(factor > 0);
-        SmallVector<int, 32> NewMask;
 
         for (unsigned i = 0; i < VT.getVectorNumElements(); ++i) {
           if (Mask[i] < 0) {
@@ -3566,8 +3565,7 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
     break;
   }
   case ISD::VECTOR_SHUFFLE: {
-    SmallVector<int, 8> Mask;
-    cast<ShuffleVectorSDNode>(Node)->getMask(Mask);
+    ArrayRef<int> Mask = cast<ShuffleVectorSDNode>(Node)->getMask();
 
     // Cast the two input vectors.
     Tmp1 = DAG.getNode(ISD::BITCAST, dl, NVT, Node->getOperand(0));

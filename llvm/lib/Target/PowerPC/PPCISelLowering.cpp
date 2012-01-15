@@ -4258,8 +4258,7 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
 
   // Check to see if this is a shuffle of 4-byte values.  If so, we can use our
   // perfect shuffle table to emit an optimal matching sequence.
-  SmallVector<int, 16> PermMask;
-  SVOp->getMask(PermMask);
+  ArrayRef<int> PermMask = SVOp->getMask();
 
   unsigned PFIndexes[4];
   bool isFourElementShuffle = true;
