@@ -88,10 +88,10 @@ enum {
 
 void diags(int n) {
   switch (n) {
-    case (1/0, 1): // expected-error {{not an integer constant expression}} expected-note {{division by zero}}
-    case (int)(1/0, 2.0): // expected-error {{not an integer constant expression}} expected-note {{division by zero}}
-    case __imag(1/0): // expected-error {{not an integer constant expression}} expected-note {{division by zero}}
-    case (int)__imag((double)(1/0)): // expected-error {{not an integer constant expression}} expected-note {{division by zero}}
+    case (1/0, 1): // expected-error {{not an integral constant expression}} expected-note {{division by zero}}
+    case (int)(1/0, 2.0): // expected-error {{not an integral constant expression}} expected-note {{division by zero}}
+    case __imag(1/0): // expected-error {{not an integral constant expression}} expected-note {{division by zero}}
+    case (int)__imag((double)(1/0)): // expected-error {{not an integral constant expression}} expected-note {{division by zero}}
       ;
   }
 }

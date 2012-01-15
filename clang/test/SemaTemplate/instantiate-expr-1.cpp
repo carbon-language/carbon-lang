@@ -34,7 +34,7 @@ void test_BitfieldMinus() {
 
 template<int I, int J>
 struct BitfieldDivide {
-  int bitfield : I / J; // expected-error{{expression is not an integer constant expression}} \
+  int bitfield : I / J; // expected-error{{expression is not an integral constant expression}} \
                         // expected-note{{division by zero}}
 };
 

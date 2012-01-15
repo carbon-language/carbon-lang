@@ -88,7 +88,7 @@ typedef enum { }; // expected-warning{{typedef requires a name}}
 
 // PR7921
 enum PR7921E {
-    PR7921V = (PR7921E)(123) // expected-error {{expression is not an integer constant expression}}
+    PR7921V = (PR7921E)(123) // expected-error {{expression is not an integral constant expression}}
 };
 
 void PR8089() {

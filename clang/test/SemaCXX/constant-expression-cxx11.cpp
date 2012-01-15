@@ -93,7 +93,7 @@ namespace CaseStatements {
   void f(int n) {
     switch (n) {
     // FIXME: Produce the 'add ()' fixit for this.
-    case MemberZero().zero: // desired-error {{did you mean to call it with no arguments?}} expected-error {{not an integer constant expression}} expected-note {{non-literal type '<bound member function type>'}}
+    case MemberZero().zero: // desired-error {{did you mean to call it with no arguments?}} expected-error {{not an integral constant expression}} expected-note {{non-literal type '<bound member function type>'}}
     case id(1):
       return;
     }
@@ -299,27 +299,26 @@ constexpr S* sptr = &s;
 constexpr bool dyncast = sptr == dynamic_cast<S*>(sptr); // expected-error {{constant expression}} expected-note {{dynamic_cast}}
 
 struct Str {
-  // FIXME: In C++ mode, we should say 'integral' not 'integer'
   int a : dynamic_cast<S*>(sptr) == dynamic_cast<S*>(sptr); // \
-    expected-warning {{not integer constant expression}} \
+    expected-warning {{not an integral constant expression}} \
     expected-note {{dynamic_cast is not allowed in a constant expression}}
   int b : reinterpret_cast<S*>(sptr) == reinterpret_cast<S*>(sptr); // \
-    expected-warning {{not integer constant expression}} \
+    expected-warning {{not an integral constant expression}} \
     expected-note {{reinterpret_cast is not allowed in a constant expression}}
   int c : (S*)(long)(sptr) == (S*)(long)(sptr); // \
-    expected-warning {{not integer constant expression}} \
+    expected-warning {{not an integral constant expression}} \
     expected-note {{cast which performs the conversions of a reinterpret_cast is not allowed in a constant expression}}
   int d : (S*)(42) == (S*)(42); // \
-    expected-warning {{not integer constant expression}} \
+    expected-warning {{not an integral constant expression}} \
     expected-note {{cast which performs the conversions of a reinterpret_cast is not allowed in a constant expression}}
   int e : (Str*)(sptr) == (Str*)(sptr); // \
-    expected-warning {{not integer constant expression}} \
+    expected-warning {{not an integral constant expression}} \
     expected-note {{cast which performs the conversions of a reinterpret_cast is not allowed in a constant expression}}
   int f : &(Str&)(*sptr) == &(Str&)(*sptr); // \
-    expected-warning {{not integer constant expression}} \
+    expected-warning {{not an integral constant expression}} \
     expected-note {{cast which performs the conversions of a reinterpret_cast is not allowed in a constant expression}}
   int g : (S*)(void*)(sptr) == sptr; // \
-    expected-warning {{not integer constant expression}} \
+    expected-warning {{not an integral constant expression}} \
     expected-note {{cast from 'void *' is not allowed in a constant expression}}
 };
 

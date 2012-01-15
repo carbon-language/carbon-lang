@@ -14,5 +14,5 @@ struct X {
 
 struct Y {
   enum E : int(2);
-  enum E : Z(); // expected-error{{not an integer constant}}
+  enum E : Z(); // expected-error{{not an integral constant}}
 };

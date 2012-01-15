@@ -136,7 +136,7 @@ namespace UndefinedBehavior {
   }
   constexpr int n = (f(p), 0); // expected-error {{constant expression}} expected-note {{in call to 'f(&s.m + 1)'}}
   struct T {
-    int n : f(p); // expected-error {{not an integer constant expression}} expected-note {{read of dereferenced one-past-the-end pointer}}
+    int n : f(p); // expected-error {{not an integral constant expression}} expected-note {{read of dereferenced one-past-the-end pointer}}
   };
 
   namespace Ptr {

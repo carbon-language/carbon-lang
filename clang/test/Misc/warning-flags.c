@@ -17,7 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (267):
+CHECK: Warnings without flags (266):
 CHECK-NEXT:   ext_anon_param_requires_type_specifier
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_array_init_copy
@@ -35,7 +35,6 @@ CHECK-NEXT:   ext_enumerator_list_comma
 CHECK-NEXT:   ext_expected_semi_decl_list
 CHECK-NEXT:   ext_explicit_instantiation_without_qualified_id
 CHECK-NEXT:   ext_explicit_specialization_storage_class
-CHECK-NEXT:   ext_expr_not_ice
 CHECK-NEXT:   ext_extra_ivar_semi
 CHECK-NEXT:   ext_extra_struct_semi
 CHECK-NEXT:   ext_forward_ref_enum

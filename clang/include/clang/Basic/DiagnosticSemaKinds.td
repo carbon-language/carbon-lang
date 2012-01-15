@@ -16,10 +16,10 @@ let CategoryName = "Semantic Issue" in {
 
 // Constant expressions
 def err_expr_not_ice : Error<
-  "expression is not an integer constant expression">;
+  "expression is not an %select{integer|integral}0 constant expression">;
 def ext_expr_not_ice : Extension<
-  "expression is not integer constant expression "
-  "(but is allowed as an extension)">;
+  "expression is not an %select{integer|integral}0 constant expression; "
+  "folding it to a constant is a GNU extension">, InGroup<GNU>;
 
 // Semantic analysis of constant literals.
 def ext_predef_outside_function : Warning<
