@@ -269,7 +269,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
   if (D->isInAnonymousNamespace()) {
     const VarDecl *Var = dyn_cast<VarDecl>(D);
     const FunctionDecl *Func = dyn_cast<FunctionDecl>(D);
-    if ((!Var || !Var->isExternC()) && (!Func || !Func->isExternC()))
+    if ((!Var || !Var->getDeclContext()->isExternCContext()) &&
+        (!Func || !Func->getDeclContext()->isExternCContext()))
       return LinkageInfo::uniqueExternal();
   }
 
@@ -330,7 +331,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
     //
     // Note that we don't want to make the variable non-external
     // because of this, but unique-external linkage suits us.
-    if (Context.getLangOptions().CPlusPlus && !Var->isExternC()) {
+    if (Context.getLangOptions().CPlusPlus &&
+        !Var->getDeclContext()->isExternCContext()) {
       LinkageInfo TypeLV = getLVForType(Var->getType());
       if (TypeLV.linkage() != ExternalLinkage)
         return LinkageInfo::uniqueExternal();
@@ -400,7 +402,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
     // unique-external linkage, it's not legally usable from outside
     // this translation unit.  However, we should use the C linkage
     // rules instead for extern "C" declarations.
-    if (Context.getLangOptions().CPlusPlus && !Function->isExternC() &&
+    if (Context.getLangOptions().CPlusPlus &&
+        !Function->getDeclContext()->isExternCContext() &&
         Function->getType()->getLinkage() == UniqueExternalLinkage)
       return LinkageInfo::uniqueExternal();
 
@@ -762,7 +765,8 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
   //   external linkage.
   if (D->getLexicalDeclContext()->isFunctionOrMethod()) {
     if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
-      if (Function->isInAnonymousNamespace() && !Function->isExternC())
+      if (Function->isInAnonymousNamespace() &&
+          !Function->getDeclContext()->isExternCContext())
         return LinkageInfo::uniqueExternal();
 
       LinkageInfo LV;
@@ -783,7 +787,8 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
     if (const VarDecl *Var = dyn_cast<VarDecl>(D))
       if (Var->getStorageClass() == SC_Extern ||
           Var->getStorageClass() == SC_PrivateExtern) {
-        if (Var->isInAnonymousNamespace() && !Var->isExternC())
+        if (Var->isInAnonymousNamespace() &&
+            !Var->getDeclContext()->isExternCContext())
           return LinkageInfo::uniqueExternal();
 
         LinkageInfo LV;
@@ -1167,27 +1172,17 @@ SourceRange VarDecl::getSourceRange() const {
 }
 
 bool VarDecl::isExternC() const {
-  ASTContext &Context = getASTContext();
-  if (!Context.getLangOptions().CPlusPlus)
-    return (getDeclContext()->isTranslationUnit() &&
-            getStorageClass() != SC_Static) ||
-      (getDeclContext()->isFunctionOrMethod() && hasExternalStorage());
-
-  const DeclContext *DC = getDeclContext();
-  if (DC->isFunctionOrMethod())
+  if (getLinkage() != ExternalLinkage)
     return false;
 
-  for (; !DC->isTranslationUnit(); DC = DC->getParent()) {
-    if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))  {
-      if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
-        return getStorageClass() != SC_Static;
+  const DeclContext *DC = getDeclContext();
+  if (DC->isRecord())
+    return false;
 
-      break;
-    }
-
-  }
-
-  return false;
+  ASTContext &Context = getASTContext();
+  if (!Context.getLangOptions().CPlusPlus)
+    return true;
+  return DC->isExternCContext();
 }
 
 VarDecl *VarDecl::getCanonicalDecl() {
@@ -1687,27 +1682,21 @@ bool FunctionDecl::isReservedGlobalPlacementOperator() const {
 }
 
 bool FunctionDecl::isExternC() const {
-  ASTContext &Context = getASTContext();
-  // In C, any non-static, non-overloadable function has external
-  // linkage.
-  if (!Context.getLangOptions().CPlusPlus)
-    return getStorageClass() != SC_Static && !getAttr<OverloadableAttr>();
+  if (getLinkage() != ExternalLinkage)
+    return false;
+
+  if (getAttr<OverloadableAttr>())
+    return false;
 
   const DeclContext *DC = getDeclContext();
   if (DC->isRecord())
     return false;
 
-  for (; !DC->isTranslationUnit(); DC = DC->getParent()) {
-    if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))  {
-      if (Linkage->getLanguage() == LinkageSpecDecl::lang_c)
-        return getStorageClass() != SC_Static &&
-               !getAttr<OverloadableAttr>();
+  ASTContext &Context = getASTContext();
+  if (!Context.getLangOptions().CPlusPlus)
+    return true;
 
-      break;
-    }
-  }
-
-  return isMain();
+  return isMain() || DC->isExternCContext();
 }
 
 bool FunctionDecl::isGlobal() const {
@@ -2352,8 +2341,7 @@ FunctionDecl::MemoryFunctionKind FunctionDecl::getMemoryFunctionKind() {
     return MFK_Strndup;
 
   default:
-    if (getLinkage() == ExternalLinkage &&
-        (!getASTContext().getLangOptions().CPlusPlus || isExternC())) {
+    if (isExternC()) {
       if (FnInfo->isStr("memset"))
         return MFK_Memset;
       else if (FnInfo->isStr("memcpy"))

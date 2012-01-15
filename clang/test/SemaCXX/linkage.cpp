@@ -76,15 +76,13 @@ extern "C" {
     struct X {
       int f() {
         extern int g();
-        // FIXME: We don't compute the correct linkage for this variable
-        // at the moment
-        // extern int a;
+        extern int a;
 
         // Test both for mangling in the code generation and warnings from use
         // of internal, undefined names via -Werror.
         // CHECK: call i32 @g(
-        // FIXME: load i32* @a,
-        return g();// + a;
+        // CHECK: load i32* @a,
+        return g() + a;
       }
     };
   }
