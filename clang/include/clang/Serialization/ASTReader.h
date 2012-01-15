@@ -660,10 +660,10 @@ private:
   /// Objective-C protocols.
   std::deque<Decl *> InterestingDecls;
 
-  /// \brief We delay loading of the previous declaration chain to avoid
-  /// deeply nested calls when there are many redeclarations.
-  std::deque<std::pair<Decl *, serialization::DeclID> > PendingPreviousDecls;
-
+  /// \brief The set of redeclarable declaraations that have been deserialized
+  /// since the last time the declaration chains were linked.
+  llvm::SmallPtrSet<Decl *, 16> RedeclsDeserialized;
+  
   /// \brief The list of redeclaration chains that still need to be 
   /// reconstructed.
   ///

@@ -186,7 +186,7 @@ void ASTDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
   if (!D->hasAttrs() &&
       !D->isImplicit() &&
       !D->isUsed(false) &&
-      !D->getPreviousDecl() &&
+      D->getFirstDeclaration() == D->getMostRecentDecl() &&
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       !D->isTopLevelDeclInObjCContainer() &&
@@ -236,7 +236,7 @@ void ASTDeclWriter::VisitEnumDecl(EnumDecl *D) {
       !D->isImplicit() &&
       !D->isUsed(false) &&
       !D->hasExtInfo() &&
-      !D->getPreviousDecl() &&
+      D->getFirstDeclaration() == D->getMostRecentDecl() &&
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       !D->isTopLevelDeclInObjCContainer() &&
@@ -260,7 +260,7 @@ void ASTDeclWriter::VisitRecordDecl(RecordDecl *D) {
       !D->isImplicit() &&
       !D->isUsed(false) &&
       !D->hasExtInfo() &&
-      !D->getPreviousDecl() &&
+      D->getFirstDeclaration() == D->getMostRecentDecl() &&
       !D->isInvalidDecl() &&
       !D->isReferenced() &&
       !D->isTopLevelDeclInObjCContainer() &&
@@ -692,7 +692,7 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
       !D->isModulePrivate() &&
       D->getDeclName().getNameKind() == DeclarationName::Identifier &&
       !D->hasExtInfo() &&
-      !D->getPreviousDecl() &&
+      D->getFirstDeclaration() == D->getMostRecentDecl() &&
       !D->hasCXXDirectInitializer() &&
       D->getInit() == 0 &&
       !isa<ParmVarDecl>(D) &&
@@ -1237,27 +1237,23 @@ void ASTDeclWriter::VisitDeclContext(DeclContext *DC, uint64_t LexicalOffset,
 
 template <typename T>
 void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
-  enum { FirstDeclaration = 0, FirstInFile, PointsToPrevious };
-  T *Prev = D->getPreviousDecl();
   T *First = D->getFirstDeclaration();
-  
-  if (!Prev) {
-    Record.push_back(FirstDeclaration);
-  } else {  
-    Record.push_back(Prev->isFromASTFile()? FirstInFile : PointsToPrevious);
+  if (First->getMostRecentDecl() != First) {
+    // There is more than one declaration of this entity, so we will need to 
+    // write a redeclaration chain.
     Writer.AddDeclRef(First, Record);
-    Writer.AddDeclRef(D->getPreviousDecl(), Record);
+    Writer.Redeclarations.insert(First);
+
+    // Make sure that we serialize both the previous and the most-recent 
+    // declarations, which (transitively) ensures that all declarations in the
+    // chain get serialized.
+    (void)Writer.GetDeclRef(D->getPreviousDecl());
+    (void)Writer.GetDeclRef(First->getMostRecentDecl());
+  } else {
+    // We use the sentinel value 0 to indicate an only declaration.
+    Record.push_back(0);
   }
   
-  if (D->RedeclLink.getPointer() != D && (!Prev || Prev->isFromASTFile())) {
-    // Capture the set of redeclarations in this file.
-    LocalRedeclarationsInfo LocalInfo = {
-      Writer.GetDeclRef(First),
-      Writer.GetDeclRef(static_cast<T*>(D)),
-      Writer.GetDeclRef(D->getMostRecentDecl())
-    };
-    Writer.LocalRedeclarations.push_back(LocalInfo);    
-  }
 }
 
 //===----------------------------------------------------------------------===//

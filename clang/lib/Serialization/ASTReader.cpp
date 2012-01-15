@@ -2396,15 +2396,20 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
       }
       break;
     }
-        
+
     case LOCAL_REDECLARATIONS: {
-      if (F.LocalNumRedeclarationsInfos != 0) {
-        Error("duplicate LOCAL_REDECLARATIONS record in AST file");
+      F.RedeclarationChains.swap(Record);
+      break;
+    }
+        
+    case LOCAL_REDECLARATIONS_MAP: {
+      if (F.LocalNumRedeclarationsInMap != 0) {
+        Error("duplicate LOCAL_REDECLARATIONS_MAP record in AST file");
         return Failure;
       }
       
-      F.LocalNumRedeclarationsInfos = Record[0];
-      F.RedeclarationsInfo = (const LocalRedeclarationsInfo *)BlobStart;
+      F.LocalNumRedeclarationsInMap = Record[0];
+      F.RedeclarationsMap = (const LocalRedeclarationsInfo *)BlobStart;
       break;
     }
         
@@ -6118,7 +6123,6 @@ void ASTReader::ClearSwitchCaseIDs() {
 
 void ASTReader::finishPendingActions() {
   while (!PendingIdentifierInfos.empty() ||
-         !PendingPreviousDecls.empty() ||
          !PendingDeclChains.empty() ||
          !PendingChainedObjCCategories.empty()) {
 
@@ -6128,13 +6132,6 @@ void ASTReader::finishPendingActions() {
       SetGloballyVisibleDecls(PendingIdentifierInfos.front().II,
                               PendingIdentifierInfos.front().DeclIDs, true);
       PendingIdentifierInfos.pop_front();
-    }
-  
-    // Ready to load previous declarations of Decls that were delayed.
-    while (!PendingPreviousDecls.empty()) {
-      loadAndAttachPreviousDecl(PendingPreviousDecls.front().first,
-                                PendingPreviousDecls.front().second);
-      PendingPreviousDecls.pop_front();
     }
   
     // Load pending declaration chains.

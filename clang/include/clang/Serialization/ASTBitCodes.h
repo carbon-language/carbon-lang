@@ -367,9 +367,10 @@ namespace clang {
       /// declarations.
       TU_UPDATE_LEXICAL = 28,
       
-      /// \brief Record code for the array describing the first/last local
-      /// redeclarations of each entity.
-      LOCAL_REDECLARATIONS = 29,
+      /// \brief Record code for the array describing the locations (in the
+      /// LOCAL_REDECLARATIONS record) of the redeclaration chains, indexed by
+      /// the first known ID.
+      LOCAL_REDECLARATIONS_MAP = 29,
 
       /// \brief Record code for declarations that Sema keeps references of.
       SEMA_DECL_REFS = 30,
@@ -455,7 +456,13 @@ namespace clang {
       IMPORTED_MODULES = 51,
       
       /// \brief Record code for the set of merged declarations in an AST file.
-      MERGED_DECLARATIONS = 52
+      MERGED_DECLARATIONS = 52,
+      
+      /// \brief Record code for the array of redeclaration chains.
+      ///
+      /// This array can only be interpreted properly using the local 
+      /// redeclarations map.
+      LOCAL_REDECLARATIONS = 53
     };
 
     /// \brief Record types used within a source manager block.
@@ -1194,8 +1201,7 @@ namespace clang {
     /// \brief Describes the redeclarations of a declaration.
     struct LocalRedeclarationsInfo {
       DeclID FirstID;      // The ID of the first declaration
-      DeclID FirstLocalID; // The ID of the first local declaration
-      DeclID LastLocalID;  // The ID of the last local declaration
+      unsigned Offset;     // Offset into the array of redeclaration chains.
       
       friend bool operator<(const LocalRedeclarationsInfo &X,
                             const LocalRedeclarationsInfo &Y) {

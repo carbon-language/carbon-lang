@@ -25,6 +25,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include <map>
 #include <queue>
@@ -312,11 +313,12 @@ private:
   /// serialized again. In this case, it is registered here, so that the reader
   /// knows to read the updated version.
   SmallVector<ReplacedDeclInfo, 16> ReplacedDecls;
-                    
-  /// \brief The list of local redeclarations of entities that were
-  /// first declared non-locally.
-  SmallVector<serialization::LocalRedeclarationsInfo, 2> LocalRedeclarations;
-                  
+                 
+  /// \brief The set of declarations that may have redeclaration chains that
+  /// need to be serialized.
+  llvm::SetVector<Decl *, llvm::SmallVector<Decl *, 4>, 
+                  llvm::SmallPtrSet<Decl *, 4> > Redeclarations;
+                                      
   /// \brief Statements that we've encountered while serializing a
   /// declaration or type.
   SmallVector<Stmt *, 16> StmtsToEmit;
@@ -415,6 +417,7 @@ private:
   void WriteDeclContextVisibleUpdate(const DeclContext *DC);
   void WriteFPPragmaOptions(const FPOptions &Opts);
   void WriteOpenCLExtensions(Sema &SemaRef);
+  void WriteRedeclarations();
   void WriteMergedDecls();
                         
   unsigned DeclParmVarAbbrev;

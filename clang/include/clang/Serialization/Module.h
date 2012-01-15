@@ -295,12 +295,16 @@ public:
   /// \brief Array of file-level DeclIDs sorted by file.
   const serialization::DeclID *FileSortedDecls;
 
-  /// \brief Array of redeclaration information within this module file,
-  /// sorted by the first declaration ID.
-  const serialization::LocalRedeclarationsInfo *RedeclarationsInfo;
+  /// \brief Array of redeclaration chain location information within this 
+  /// module file, sorted by the first declaration ID.
+  const serialization::LocalRedeclarationsInfo *RedeclarationsMap;
 
   /// \brief The number of redeclaration info entries in RedeclarationsInfo.
-  unsigned LocalNumRedeclarationsInfos;
+  unsigned LocalNumRedeclarationsInMap;
+  
+  /// \brief The redeclaration chains for declarations local to this
+  /// module file.
+  SmallVector<uint64_t, 1> RedeclarationChains;
   
   // === Types ===
 
