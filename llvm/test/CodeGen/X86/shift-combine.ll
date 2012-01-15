@@ -1,15 +1,19 @@
-; RUN: llc < %s | not grep shrl
+; RUN: llc -march=x86 < %s | FileCheck %s
 
-target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
-target triple = "i686-apple-darwin8"
-@array = weak global [4 x i32] zeroinitializer		; <[4 x i32]*> [#uses=1]
+@array = weak global [4 x i32] zeroinitializer
 
-define i32 @foo(i32 %x) {
+define i32 @test_lshr_and(i32 %x) {
+; CHECK: test_lshr_and:
+; CHECK-NOT: shrl
+; CHECK: andl $12,
+; CHECK: movl array(%{{...}}),
+; CHECK: ret
+
 entry:
-	%tmp2 = lshr i32 %x, 2		; <i32> [#uses=1]
-	%tmp3 = and i32 %tmp2, 3		; <i32> [#uses=1]
-	%tmp4 = getelementptr [4 x i32]* @array, i32 0, i32 %tmp3		; <i32*> [#uses=1]
-	%tmp5 = load i32* %tmp4, align 4		; <i32> [#uses=1]
-	ret i32 %tmp5
+  %tmp2 = lshr i32 %x, 2
+  %tmp3 = and i32 %tmp2, 3
+  %tmp4 = getelementptr [4 x i32]* @array, i32 0, i32 %tmp3
+  %tmp5 = load i32* %tmp4, align 4
+  ret i32 %tmp5
 }
 
