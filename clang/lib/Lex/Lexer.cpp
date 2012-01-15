@@ -489,11 +489,11 @@ SourceLocation Lexer::GetBeginningOfToken(SourceLocation Loc,
  SourceLocation FileLoc = SM.getSpellingLoc(Loc);
  SourceLocation BeginFileLoc = getBeginningOfFileToken(FileLoc, SM, LangOpts);
  std::pair<FileID, unsigned> FileLocInfo = SM.getDecomposedLoc(FileLoc);
- std::pair<FileID, unsigned> BeginFileLocInfo= SM.getDecomposedLoc(BeginFileLoc);
+ std::pair<FileID, unsigned> BeginFileLocInfo
+   = SM.getDecomposedLoc(BeginFileLoc);
  assert(FileLocInfo.first == BeginFileLocInfo.first &&
         FileLocInfo.second >= BeginFileLocInfo.second);
- return Loc.getLocWithOffset(SM.getDecomposedLoc(BeginFileLoc).second -
-                                 SM.getDecomposedLoc(FileLoc).second);
+ return Loc.getLocWithOffset(BeginFileLocInfo.second - FileLocInfo.second);
 }
 
 namespace {
