@@ -6,7 +6,7 @@ define i32 @test_lshr_and(i32 %x) {
 ; CHECK: test_lshr_and:
 ; CHECK-NOT: shrl
 ; CHECK: andl $12,
-; CHECK: movl array(%{{...}}),
+; CHECK: movl {{.*}}array{{.*}},
 ; CHECK: ret
 
 entry:
