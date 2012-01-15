@@ -12868,6 +12868,7 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
 /// PerformSELECTCombine - Do target-specific dag combines on SELECT and VSELECT
 /// nodes.
 static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
+                                    TargetLowering::DAGCombinerInfo &DCI,
                                     const X86Subtarget *Subtarget) {
   DebugLoc DL = N->getDebugLoc();
   SDValue Cond = N->getOperand(0);
@@ -13142,6 +13143,26 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
       return DAG.getNode(ISD::SELECT, DL, VT, Cond, LHS, RHS);
     }
     }
+  }
+
+  // If we know that this node is legal then we know that it is going to be
+  // matched by one of the SSE/AVX BLEND instructions. These instructions only
+  // depend on the highest bit in each word. Try to use SimplifyDemandedBits
+  // to simplify previous instructions.
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  if (N->getOpcode() == ISD::VSELECT && DCI.isBeforeLegalizeOps() &&
+      !DCI.isBeforeLegalize() &&
+      TLI.isOperationLegal(ISD::VSELECT, VT)) {
+    unsigned BitWidth = Cond.getValueType().getScalarType().getSizeInBits();
+    assert(BitWidth >= 8 && BitWidth <= 64 && "Invalid mask size");
+    APInt DemandedMask = APInt::getHighBitsSet(BitWidth, 1);
+
+    APInt KnownZero, KnownOne;
+    TargetLowering::TargetLoweringOpt TLO(DAG, DCI.isBeforeLegalize(),
+                                          DCI.isBeforeLegalizeOps());
+    if (TLO.ShrinkDemandedConstant(Cond, DemandedMask) ||
+        TLI.SimplifyDemandedBits(Cond, DemandedMask, KnownZero, KnownOne, TLO))
+      DCI.CommitTargetLoweringOpt(TLO);
   }
 
   return SDValue();
@@ -14609,7 +14630,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::EXTRACT_VECTOR_ELT:
     return PerformEXTRACT_VECTOR_ELTCombine(N, DAG, *this);
   case ISD::VSELECT:
-  case ISD::SELECT:         return PerformSELECTCombine(N, DAG, Subtarget);
+  case ISD::SELECT:         return PerformSELECTCombine(N, DAG, DCI, Subtarget);
   case X86ISD::CMOV:        return PerformCMOVCombine(N, DAG, DCI);
   case ISD::ADD:            return PerformAddCombine(N, DAG, Subtarget);
   case ISD::SUB:            return PerformSubCombine(N, DAG, Subtarget);

@@ -1608,23 +1608,40 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     }
     break;
   case ISD::SIGN_EXTEND_INREG: {
-    EVT EVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
+    EVT ExVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
+
+    APInt MsbMask = APInt::getHighBitsSet(BitWidth, 1);
+    // If we only care about the highest bit, don't bother shifting right.
+    if (MsbMask ==  DemandedMask) {
+      unsigned ShAmt = ExVT.getScalarType().getSizeInBits();
+      SDValue InOp = Op.getOperand(0);
+      EVT InVT = Op.getOperand(0).getValueType();
+      EVT ShTy = getShiftAmountTy(InVT);
+      // In this code we may handle vector types. We can't use the
+      // getShiftAmountTy API because it only works on scalars.
+      // We use the shift value type because we know that its an integer
+      // with enough bits.
+      SDValue ShiftAmt = TLO.DAG.getConstant(BitWidth - ShAmt,
+                                             Op.getValueType());
+      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SHL, dl,
+                                            Op.getValueType(), InOp, ShiftAmt));
+    }
 
     // Sign extension.  Compute the demanded bits in the result that are not
     // present in the input.
     APInt NewBits =
       APInt::getHighBitsSet(BitWidth,
-                            BitWidth - EVT.getScalarType().getSizeInBits());
+                            BitWidth - ExVT.getScalarType().getSizeInBits());
 
     // If none of the extended bits are demanded, eliminate the sextinreg.
     if ((NewBits & NewMask) == 0)
       return TLO.CombineTo(Op, Op.getOperand(0));
 
     APInt InSignBit =
-      APInt::getSignBit(EVT.getScalarType().getSizeInBits()).zext(BitWidth);
+      APInt::getSignBit(ExVT.getScalarType().getSizeInBits()).zext(BitWidth);
     APInt InputDemandedBits =
       APInt::getLowBitsSet(BitWidth,
-                           EVT.getScalarType().getSizeInBits()) &
+                           ExVT.getScalarType().getSizeInBits()) &
       NewMask;
 
     // Since the sign extended bits are demanded, we know that the sign
@@ -1642,7 +1659,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // If the input sign bit is known zero, convert this into a zero extension.
     if (KnownZero.intersects(InSignBit))
       return TLO.CombineTo(Op,
-                           TLO.DAG.getZeroExtendInReg(Op.getOperand(0),dl,EVT));
+                          TLO.DAG.getZeroExtendInReg(Op.getOperand(0),dl,ExVT));
 
     if (KnownOne.intersects(InSignBit)) {    // Input sign bit known set
       KnownOne |= NewBits;
