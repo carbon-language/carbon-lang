@@ -527,7 +527,7 @@ struct D {
 static_assert(D().c.n == 42, "");
 
 struct E {
-  constexpr E() : p(&p) {} // expected-note {{pointer to temporary cannot be used to initialize a member in a constant expression}}
+  constexpr E() : p(&p) {} // expected-note {{pointer to subobject of temporary cannot be used to initialize a member in a constant expression}}
   void *p;
 };
 constexpr const E &e1 = E(); // expected-error {{constant expression}} expected-note {{in call to 'E()'}} expected-note {{temporary created here}}
