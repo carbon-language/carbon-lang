@@ -8208,30 +8208,20 @@ bool DAGCombiner::isAlias(SDValue Ptr1, int64_t Size1,
 /// FindAliasInfo - Extracts the relevant alias information from the memory
 /// node.  Returns true if the operand was a load.
 bool DAGCombiner::FindAliasInfo(SDNode *N,
-                        SDValue &Ptr, int64_t &Size,
-                        const Value *&SrcValue,
-                        int &SrcValueOffset,
-                        unsigned &SrcValueAlign,
-                        const MDNode *&TBAAInfo) const {
-  if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
-    Ptr = LD->getBasePtr();
-    Size = LD->getMemoryVT().getSizeInBits() >> 3;
-    SrcValue = LD->getSrcValue();
-    SrcValueOffset = LD->getSrcValueOffset();
-    SrcValueAlign = LD->getOriginalAlignment();
-    TBAAInfo = LD->getTBAAInfo();
-    return true;
-  }
-  if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
-    Ptr = ST->getBasePtr();
-    Size = ST->getMemoryVT().getSizeInBits() >> 3;
-    SrcValue = ST->getSrcValue();
-    SrcValueOffset = ST->getSrcValueOffset();
-    SrcValueAlign = ST->getOriginalAlignment();
-    TBAAInfo = ST->getTBAAInfo();
-    return false;
-  }
-  llvm_unreachable("FindAliasInfo expected a memory operand");
+                                SDValue &Ptr, int64_t &Size,
+                                const Value *&SrcValue,
+                                int &SrcValueOffset,
+                                unsigned &SrcValueAlign,
+                                const MDNode *&TBAAInfo) const {
+  LSBaseSDNode *LS = cast<LSBaseSDNode>(N);
+
+  Ptr = LS->getBasePtr();
+  Size = LS->getMemoryVT().getSizeInBits() >> 3;
+  SrcValue = LS->getSrcValue();
+  SrcValueOffset = LS->getSrcValueOffset();
+  SrcValueAlign = LS->getOriginalAlignment();
+  TBAAInfo = LS->getTBAAInfo();
+  return isa<LoadSDNode>(LS);
 }
 
 /// GatherAllAliases - Walk up chain skipping non-aliasing memory nodes,
