@@ -110,11 +110,18 @@ void test_C3(C3 *c3) {
 }
 
 C4 *global_C4;
+
+ClassWithDef *cwd1;
+
 @import redecl_merge_left_left;
 
 void test_C4a(C4 *c4) {
   global_C4 = c4 = get_a_C4();
   accept_a_C4(c4);
+}
+
+void test_ClassWithDef(ClassWithDef *cwd) {
+  [cwd method];
 }
 
 @import redecl_merge_bottom;

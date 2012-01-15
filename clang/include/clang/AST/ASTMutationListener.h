@@ -63,9 +63,6 @@ public:
   virtual void AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
                                             const ObjCInterfaceDecl *IFD) {}
 
-  /// \brief A objc interface or protocol forward reference was completed.
-  virtual void CompletedObjCForwardRef(const ObjCContainerDecl *D) {}
-
   /// \brief A objc class extension redeclared or introduced a property.
   ///
   /// \param Prop the property in the class extension

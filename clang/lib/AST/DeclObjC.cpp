@@ -245,9 +245,6 @@ void ObjCInterfaceDecl::startDefinition() {
     if (*RD != this)
       RD->Data = Data;
   }
-
-  if (ASTMutationListener *L = getASTContext().getASTMutationListener())
-    L->CompletedObjCForwardRef(this);
 }
 
 /// getFirstClassExtension - Find first class extension of the given class.
@@ -1058,9 +1055,6 @@ void ObjCProtocolDecl::startDefinition() {
   for (redecl_iterator RD = redecls_begin(), RDEnd = redecls_end();
        RD != RDEnd; ++RD)
     RD->Data = this->Data;
-  
-  if (ASTMutationListener *L = getASTContext().getASTMutationListener())
-    L->CompletedObjCForwardRef(this);
 }
 
 //===----------------------------------------------------------------------===//

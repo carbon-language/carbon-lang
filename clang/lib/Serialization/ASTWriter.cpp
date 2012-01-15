@@ -3519,12 +3519,9 @@ void ASTWriter::ResolveDeclUpdatesBlocks() {
     unsigned Idx = 0, N = URec.size();
     while (Idx < N) {
       switch ((DeclUpdateKind)URec[Idx++]) {
-      case UPD_CXX_SET_DEFINITIONDATA:
       case UPD_CXX_ADDED_IMPLICIT_MEMBER:
       case UPD_CXX_ADDED_TEMPLATE_SPECIALIZATION:
       case UPD_CXX_ADDED_ANONYMOUS_NAMESPACE:
-      case UPD_OBJC_SET_CLASS_DEFINITIONDATA:
-      case UPD_OBJC_SET_PROTOCOL_DEFINITIONDATA:
         URec[Idx] = GetDeclRef(reinterpret_cast<Decl *>(URec[Idx]));
         ++Idx;
         break;
@@ -4365,22 +4362,6 @@ void ASTWriter::CompletedTagDefinition(const TagDecl *D) {
       // have created a new definition decl instead ?
       RewriteDecl(RD);
     }
-
-    for (CXXRecordDecl::redecl_iterator
-           I = RD->redecls_begin(), E = RD->redecls_end(); I != E; ++I) {
-      CXXRecordDecl *Redecl = cast<CXXRecordDecl>(*I);
-      if (Redecl == RD)
-        continue;
-
-      // We are interested when a PCH decl is modified.
-      if (Redecl->isFromASTFile()) {
-        UpdateRecord &Record = DeclUpdates[Redecl];
-        Record.push_back(UPD_CXX_SET_DEFINITIONDATA);
-        assert(Redecl->DefinitionData);
-        assert(Redecl->DefinitionData->Definition == D);
-        Record.push_back(reinterpret_cast<uint64_t>(D)); // the DefinitionDecl
-      }
-    }
   }
 }
 void ASTWriter::AddedVisibleDecl(const DeclContext *DC, const Decl *D) {
@@ -4474,45 +4455,6 @@ void ASTWriter::AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
   LocalChainedObjCCategories.push_back(Data);
 }
 
-void ASTWriter::CompletedObjCForwardRef(const ObjCContainerDecl *D) {
-  assert(!WritingAST && "Already writing the AST!");
-
-  if (const ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D)) {
-    for (ObjCInterfaceDecl::redecl_iterator I = ID->redecls_begin(), 
-                                            E = ID->redecls_end(); 
-         I != E; ++I) {
-      if (*I == ID)
-        continue;
-      
-      // We are interested when a PCH decl is modified.
-      if (I->isFromASTFile()) {
-        UpdateRecord &Record = DeclUpdates[*I];
-        Record.push_back(UPD_OBJC_SET_CLASS_DEFINITIONDATA);
-        assert((*I)->hasDefinition());
-        assert((*I)->getDefinition() == D);
-        Record.push_back(reinterpret_cast<uint64_t>(D)); // the DefinitionDecl
-      }
-    }
-  }
-
-  if (const ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D)) {
-    for (ObjCProtocolDecl::redecl_iterator I = PD->redecls_begin(), 
-                                           E = PD->redecls_end(); 
-         I != E; ++I) {
-      if (*I == PD)
-        continue;
-      
-      // We are interested when a PCH decl is modified.
-      if (I->isFromASTFile()) {
-        UpdateRecord &Record = DeclUpdates[*I];
-        Record.push_back(UPD_OBJC_SET_PROTOCOL_DEFINITIONDATA);
-        assert((*I)->hasDefinition());
-        assert((*I)->getDefinition() == D);
-        Record.push_back(reinterpret_cast<uint64_t>(D)); // the DefinitionDecl
-      }
-    }
-  }
-}
 
 void ASTWriter::AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
                                           const ObjCPropertyDecl *OrigProp,

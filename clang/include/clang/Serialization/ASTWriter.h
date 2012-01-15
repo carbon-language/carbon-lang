@@ -689,7 +689,6 @@ public:
   virtual void StaticDataMemberInstantiated(const VarDecl *D);
   virtual void AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
                                             const ObjCInterfaceDecl *IFD);
-  virtual void CompletedObjCForwardRef(const ObjCContainerDecl *D);
   virtual void AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
                                             const ObjCPropertyDecl *OrigProp,
                                             const ObjCCategoryDecl *ClassExt);

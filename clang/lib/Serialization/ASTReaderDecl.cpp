@@ -677,6 +677,10 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
     // Read the definition.
     ID->allocateDefinitionData();
     
+    // Set the definition data of the canonical declaration, so other
+    // redeclarations will see it.
+    ID->getCanonicalDecl()->Data = ID->Data;
+    
     ObjCInterfaceDecl::DefinitionData &Data = ID->data();
     
     // Read the superclass.
@@ -722,8 +726,8 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
     
     // Note that we have deserialized a definition.
     Reader.PendingDefinitions.insert(ID);
-  } else if (Def && Def->Data) {
-    ID->Data = Def->Data;
+  } else {
+    ID->Data = ID->getCanonicalDecl()->Data;
   }
 }
 
@@ -746,6 +750,10 @@ void ASTDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
     // Read the definition.
     PD->allocateDefinitionData();
     
+    // Set the definition data of the canonical declaration, so other
+    // redeclarations will see it.
+    PD->getCanonicalDecl()->Data = PD->Data;
+
     unsigned NumProtoRefs = Record[Idx++];
     SmallVector<ObjCProtocolDecl *, 16> ProtoRefs;
     ProtoRefs.reserve(NumProtoRefs);
@@ -760,8 +768,8 @@ void ASTDeclReader::VisitObjCProtocolDecl(ObjCProtocolDecl *PD) {
     
     // Note that we have deserialized a definition.
     Reader.PendingDefinitions.insert(PD);
-  } else if (Def && Def->Data) {
-    PD->Data = Def->Data;
+  } else {
+    PD->Data = PD->getCanonicalDecl()->Data;
   }
 }
 
@@ -1104,12 +1112,21 @@ void ASTDeclReader::InitializeCXXDefinitionData(CXXRecordDecl *D,
 
   if (D == DefinitionDecl) {
     D->DefinitionData = new (C) struct CXXRecordDecl::DefinitionData(D);
+    
+    // Propagate the DefinitionData pointer to the canonical declaration, so
+    // that all other deserialized declarations will see it.
+    // FIXME: Complain if there already is a DefinitionData!
+    D->getCanonicalDecl()->DefinitionData = D->DefinitionData;
+    
     ReadCXXDefinitionData(*D->DefinitionData, Record, Idx);
 
-    // Note that we have deserialized a definition.
+    // Note that we have deserialized a definition. Any declarations 
+    // deserialized before this one will be be given the DefinitionData pointer
+    // at the end.
     Reader.PendingDefinitions.insert(D);
-  } else if (DefinitionDecl && DefinitionDecl->DefinitionData) {
-    D->DefinitionData = DefinitionDecl->DefinitionData;
+  } else {
+    // Propagate DefinitionData pointer from the canonical declaration.
+    D->DefinitionData = D->getCanonicalDecl()->DefinitionData;
   }
 }
 
@@ -1513,8 +1530,6 @@ void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *D,
           Namespace->AnonOrFirstNamespaceAndInline.setPointer(
             static_cast<NamespaceDecl *>(static_cast<void*>(ExistingCanon)));
         }
-        
-        // FIXME: Update common pointer for RedeclarableTemplateDecls?
         
         // Don't introduce DCanon into the set of pending declaration chains.
         Redecl.suppress();
@@ -2372,15 +2387,6 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
   unsigned Idx = 0;
   while (Idx < Record.size()) {
     switch ((DeclUpdateKind)Record[Idx++]) {
-    case UPD_CXX_SET_DEFINITIONDATA: {
-      CXXRecordDecl *RD = cast<CXXRecordDecl>(D);
-      CXXRecordDecl *DefinitionDecl
-        = Reader.ReadDeclAs<CXXRecordDecl>(ModuleFile, Record, Idx);
-      assert(!RD->DefinitionData && "DefinitionData is already set!");
-      InitializeCXXDefinitionData(RD, DefinitionDecl, Record, Idx);
-      break;
-    }
-
     case UPD_CXX_ADDED_IMPLICIT_MEMBER:
       cast<CXXRecordDecl>(D)->addedMember(Reader.ReadDecl(ModuleFile, Record, Idx));
       break;
@@ -2410,24 +2416,6 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
       cast<VarDecl>(D)->getMemberSpecializationInfo()->setPointOfInstantiation(
           Reader.ReadSourceLocation(ModuleFile, Record, Idx));
       break;
-    
-    case UPD_OBJC_SET_CLASS_DEFINITIONDATA: {
-      ObjCInterfaceDecl *ID = cast<ObjCInterfaceDecl>(D);
-      ObjCInterfaceDecl *Def
-        = Reader.ReadDeclAs<ObjCInterfaceDecl>(ModuleFile, Record, Idx);
-      if (Def->Data)
-        ID->Data = Def->Data;
-      break;
-    }
-
-    case UPD_OBJC_SET_PROTOCOL_DEFINITIONDATA: {
-      ObjCProtocolDecl *ID = cast<ObjCProtocolDecl>(D);
-      ObjCProtocolDecl *Def
-        = Reader.ReadDeclAs<ObjCProtocolDecl>(ModuleFile, Record, Idx);
-      if (Def->Data)
-        ID->Data = Def->Data;
-      break;
-    }
     }
   }
 }
