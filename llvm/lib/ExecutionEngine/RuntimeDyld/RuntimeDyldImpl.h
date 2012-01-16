@@ -16,6 +16,7 @@
 
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
 #include "llvm/Object/MachOObject.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
@@ -45,9 +46,13 @@ protected:
   // Indexed by SectionID.
   SmallVector<sys::MemoryBlock, 32> Sections;
   // For each section, the address it will be considered to live at for
-  // relocations. The same as the pointer the above memory block for hosted
+  // relocations. The same as the pointer to the above memory block for hosted
   // JITs. Indexed by SectionID.
   SmallVector<uint64_t, 32> SectionLoadAddress;
+
+  // Keep a map of starting local address to the SectionID which references it.
+  // Lookup function for when we assign virtual addresses.
+  DenseMap<void *, unsigned> SectionLocalMemToID;
 
   // Master symbol table. As modules are loaded and external symbols are
   // resolved, their addresses are stored here as a SectionID/Offset pair.
@@ -89,6 +94,8 @@ public:
   virtual void resolveRelocations();
 
   virtual void reassignSectionAddress(unsigned SectionID, uint64_t Addr) = 0;
+
+  void mapSectionAddress(void *LocalAddress, uint64_t TargetAddress);
 
   // Is the linker in an error state?
   bool hasError() { return HasError; }

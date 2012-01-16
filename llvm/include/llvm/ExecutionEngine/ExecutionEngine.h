@@ -239,6 +239,14 @@ public:
   virtual void *getPointerToNamedFunction(const std::string &Name,
                                           bool AbortOnFailure = true) = 0;
 
+  /// mapSectionAddress - map a section to its target address space value.
+  /// Map the address of a JIT section as returned from the memory manager
+  /// to the address in the target process as the running code will see it.
+  /// This is the address which will be used for relocation resolution.
+  virtual void mapSectionAddress(void *LocalAddress, uint64_t TargetAddress) {
+    assert(0 && "Re-mapping of section addresses not supported with this EE!");
+  }
+
   /// runStaticConstructorsDestructors - This method is used to execute all of
   /// the static constructors or destructors for a program.
   ///

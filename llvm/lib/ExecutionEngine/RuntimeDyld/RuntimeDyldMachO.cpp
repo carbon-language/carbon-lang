@@ -172,6 +172,7 @@ loadSegment32(const MachOObject *Obj,
 
     // Remember what got allocated for this SectionID.
     Sections.push_back(sys::MemoryBlock(Buffer, Sect->Size));
+    SectionLocalMemToID[Buffer] = SectionID;
 
     // By default, the load address of a section is its memory buffer.
     SectionLoadAddress.push_back((uint64_t)Buffer);
@@ -291,6 +292,7 @@ loadSegment64(const MachOObject *Obj,
 
     // Remember what got allocated for this SectionID.
     Sections.push_back(sys::MemoryBlock(Buffer, Sect->Size));
+    SectionLocalMemToID[Buffer] = SectionID;
 
     // By default, the load address of a section is its memory buffer.
     SectionLoadAddress.push_back((uint64_t)Buffer);

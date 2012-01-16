@@ -54,6 +54,14 @@ void RuntimeDyldImpl::resolveRelocations() {
   }
 }
 
+void RuntimeDyldImpl::mapSectionAddress(void *LocalAddress,
+                                        uint64_t TargetAddress) {
+  assert(SectionLocalMemToID.count(LocalAddress) &&
+         "Attempting to remap address of unknown section!");
+  unsigned SectionID = SectionLocalMemToID[LocalAddress];
+  reassignSectionAddress(SectionID, TargetAddress);
+}
+
 //===----------------------------------------------------------------------===//
 // RuntimeDyld class implementation
 RuntimeDyld::RuntimeDyld(RTDyldMemoryManager *mm) {
@@ -114,6 +122,11 @@ void RuntimeDyld::resolveRelocations() {
 void RuntimeDyld::reassignSectionAddress(unsigned SectionID,
                                          uint64_t Addr) {
   Dyld->reassignSectionAddress(SectionID, Addr);
+}
+
+void RuntimeDyld::mapSectionAddress(void *LocalAddress,
+                                    uint64_t TargetAddress) {
+  Dyld->mapSectionAddress(LocalAddress, TargetAddress);
 }
 
 StringRef RuntimeDyld::getErrorString() {
