@@ -172,13 +172,15 @@ TEST(AddressSanitizer, VariousMallocsTest) {
   *c = 0;
   delete c;
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(ANDROID)
   // fprintf(stderr, "posix_memalign\n");
   int *pm;
   int pm_res = posix_memalign((void**)&pm, kPageSize, kPageSize);
   EXPECT_EQ(0, pm_res);
   free(pm);
+#endif
 
+#if !defined(APPLE)
   int *ma = (int*)memalign(kPageSize, kPageSize);
   EXPECT_EQ(0, (uintptr_t)ma % kPageSize);
   ma[123] = 0;
