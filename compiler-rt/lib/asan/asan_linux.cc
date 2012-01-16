@@ -214,6 +214,27 @@ bool AsanProcMaps::Next(uintptr_t *start, uintptr_t *end,
   return true;
 }
 
+#ifdef __arm__
+
+// Gets the object name and the offset by walking AsanProcMaps.
+bool AsanProcMaps::GetObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
+                                          char filename[],
+                                          size_t filename_size) {
+  AsanProcMaps proc_maps;
+  uintptr_t start, end, file_offset;
+  while (proc_maps.Next(&start, &end, &file_offset, filename, filename_size)) {
+    if (addr >= start && addr < end) {
+      *offset = (addr - start) + file_offset;
+      return true;
+    }
+  }
+  if (filename_size)
+    filename[0] = '\0';
+  return false;
+}
+
+#else // __arm__
+
 struct DlIterateData {
   int count;
   uintptr_t addr;
@@ -257,6 +278,8 @@ bool AsanProcMaps::GetObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
   }
   return false;
 }
+
+#endif // __arm__
 
 void AsanThread::SetThreadStackTopAndBottom() {
   if (tid() == 0) {
