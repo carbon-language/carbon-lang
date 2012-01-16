@@ -59,7 +59,7 @@ STATISTIC(NumTrivial , "Number of unswitches that are trivial");
 STATISTIC(NumSimplify, "Number of simplifications of unswitched code");
 STATISTIC(TotalInsts,  "Total number of instructions analyzed");
 
-// The specific value of 50 here was chosen based only on intuition and a
+// The specific value of 100 here was chosen based only on intuition and a
 // few specific examples.
 static cl::opt<unsigned>
 Threshold("loop-unswitch-threshold", cl::desc("Max loop size to unswitch"),
