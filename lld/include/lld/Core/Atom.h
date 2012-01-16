@@ -1,4 +1,4 @@
-//===- Core/Atom.h - The Fundimental Unit of Linking ----------------------===//
+//===- Core/Atom.h - A node in linking graph ------------------------------===//
 //
 //                             The LLVM Linker
 //

@@ -20,7 +20,7 @@ namespace lld {
 class File {
 public:
   File(llvm::StringRef p) : _path(p) {}
-  ~File();
+  virtual ~File();
 
   class AtomHandler {
   public:

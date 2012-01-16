@@ -1,4 +1,4 @@
-//===- Core/YamlWriter.h - Writes YAML ------------------------------------===//
+//===- Core/YamlWriter.h - Writes YAML formatted object files -------------===//
 //
 //                             The LLVM Linker
 //
@@ -11,13 +11,14 @@
 #define LLD_CORE_YAML_WRITER_H_
 
 #include "lld/Core/File.h"
-
 #include "llvm/Support/raw_ostream.h"
 
 namespace lld {
 namespace yaml {
 
-void writeObjectText(lld::File &, llvm::raw_ostream &);
+  /// writeObjectText - writes the lld::File object as in YAML
+  /// format to the specified stream.
+  void writeObjectText(const lld::File &, llvm::raw_ostream &);
 
 } // namespace yaml
 } // namespace lld

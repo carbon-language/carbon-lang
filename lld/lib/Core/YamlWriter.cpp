@@ -195,7 +195,7 @@ private:
   bool                _firstAtom;
 };
 
-void writeObjectText(File &file, llvm::raw_ostream &out) {
+void writeObjectText(const File &file, llvm::raw_ostream &out) {
   Handler h(out);
   out << "---\n";
   out << "atoms:\n";

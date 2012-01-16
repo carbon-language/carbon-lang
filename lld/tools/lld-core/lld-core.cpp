@@ -14,15 +14,20 @@
 #include "lld/Core/Resolver.h"
 #include "lld/Core/YamlReader.h"
 #include "lld/Core/YamlWriter.h"
+#include "lld/Core/NativeReader.h"
+#include "lld/Core/NativeWriter.h"
 #include "lld/Platform/Platform.h"
 
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileSystem.h"
 
 #include <vector>
 
@@ -207,6 +212,28 @@ int main(int argc, const char *argv[]) {
   // write new atom graph out as YAML doc
   std::string errorInfo;
   llvm::raw_fd_ostream out("-", errorInfo);
-  yaml::writeObjectText(outFile, out);
+//  yaml::writeObjectText(outFile, out);
+
+  // make unique temp .o file to put generated object file
+  int fd;
+  llvm::SmallString<128> tempPath;
+  llvm::sys::fs::unique_file("temp%%%%%.o", fd, tempPath);
+  llvm::raw_fd_ostream  binaryOut(fd, /*shouldClose=*/true);
+  
+  // write native file
+  writeNativeObjectFile(outFile, binaryOut);
+  binaryOut.close();  // manually close so that file can be read next
+
+  // read native file
+  lld::File* natFile;
+  parseNativeObjectFileOrSTDIN(tempPath, natFile);
+  
+  // delete temp .o file
+  bool existed;
+  llvm::sys::fs::remove(tempPath.str(), existed);
+
+  // write new atom graph out as YAML doc
+  yaml::writeObjectText(*natFile, out);
+
   return 0;
 }
