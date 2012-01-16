@@ -6,7 +6,13 @@ int main(void){
 	// Make sure we don't crash when constant folding the case 4
 	// statement due to the case 5 statement contained in the do loop
 	switch (4) {
-		case 4: do { case 5: x++;} while (x < 100);
+		case 4: do { 
+                     switch (6)  {
+                       case 6: {
+                         case 5: x++;
+                       };
+                     };
+                } while (x < 100);
 	}
 	return x;
 }
