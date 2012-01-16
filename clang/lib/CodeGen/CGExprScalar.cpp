@@ -1478,6 +1478,15 @@ Value *ScalarExprEmitter::VisitUnaryNot(const UnaryOperator *E) {
 }
 
 Value *ScalarExprEmitter::VisitUnaryLNot(const UnaryOperator *E) {
+  
+  // Perform vector logical not on comparison with zero vector.
+  if (E->getType()->isExtVectorType()) {
+    Value *Oper = Visit(E->getSubExpr());
+    Value *Zero = llvm::Constant::getNullValue(Oper->getType());
+    Value *Result = Builder.CreateICmp(llvm::CmpInst::ICMP_EQ, Oper, Zero, "cmp");
+    return Builder.CreateSExt(Result, ConvertType(E->getType()), "sext");
+  }
+  
   // Compare operand to zero.
   Value *BoolVal = CGF.EvaluateExprAsBool(E->getSubExpr());
 
@@ -2386,6 +2395,18 @@ Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
 }
 
 Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
+  
+  // Perform vector logical and on comparisons with zero vectors.
+  if (E->getType()->isVectorType()) {
+    Value *LHS = Visit(E->getLHS());
+    Value *RHS = Visit(E->getRHS());
+    Value *Zero = llvm::ConstantAggregateZero::get(LHS->getType());
+    LHS = Builder.CreateICmp(llvm::CmpInst::ICMP_NE, LHS, Zero, "cmp");
+    RHS = Builder.CreateICmp(llvm::CmpInst::ICMP_NE, RHS, Zero, "cmp");
+    Value *And = Builder.CreateAnd(LHS, RHS);
+    return Builder.CreateSExt(And, Zero->getType(), "sext");
+  }
+  
   llvm::Type *ResTy = ConvertType(E->getType());
   
   // If we have 0 && RHS, see if we can elide RHS, if so, just return 0.
@@ -2441,6 +2462,18 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
 }
 
 Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
+  
+  // Perform vector logical or on comparisons with zero vectors.
+  if (E->getType()->isVectorType()) {
+    Value *LHS = Visit(E->getLHS());
+    Value *RHS = Visit(E->getRHS());
+    Value *Zero = llvm::ConstantAggregateZero::get(LHS->getType());
+    LHS = Builder.CreateICmp(llvm::CmpInst::ICMP_NE, LHS, Zero, "cmp");
+    RHS = Builder.CreateICmp(llvm::CmpInst::ICMP_NE, RHS, Zero, "cmp");
+    Value *Or = Builder.CreateOr(LHS, RHS);
+    return Builder.CreateSExt(Or, Zero->getType(), "sext");
+  }
+  
   llvm::Type *ResTy = ConvertType(E->getType());
   
   // If we have 1 || RHS, see if we can elide RHS, if so, just return 1.

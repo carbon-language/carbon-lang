@@ -277,3 +277,12 @@ void test14(uint4 *ap, uint4 *bp, unsigned c) {
   d = a == b;
   d = a != b;
 }
+
+// CHECK: @test15
+int4 test15(uint4 V0) {
+  // CHECK: icmp eq <4 x i32>
+  int4 V = !V0;
+  V = V && V;
+  V = V || V;
+  return V;
+}

@@ -5925,8 +5925,11 @@ public:
   /// type checking for vector binary operators.
   QualType CheckVectorOperands(ExprResult &LHS, ExprResult &RHS,
                                SourceLocation Loc, bool IsCompAssign);
+  QualType GetSignedVectorType(QualType V);
   QualType CheckVectorCompareOperands(ExprResult &LHS, ExprResult &RHS,
                                       SourceLocation Loc, bool isRelational);
+  QualType CheckVectorLogicalOperands(ExprResult LHS, ExprResult RHS,
+                                      SourceLocation Loc);
 
   /// type checking declaration initializers (C99 6.7.8)
   bool CheckForConstantInitializer(Expr *e, QualType t);

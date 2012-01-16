@@ -6882,6 +6882,26 @@ QualType Sema::CheckCompareOperands(ExprResult &LHS, ExprResult &RHS,
   return InvalidOperands(Loc, LHS, RHS);
 }
 
+
+// Return a signed type that is of identical size and number of elements.
+// For floating point vectors, return an integer type of identical size 
+// and number of elements.
+QualType Sema::GetSignedVectorType(QualType V) {
+  const VectorType *VTy = V->getAs<VectorType>();
+  unsigned TypeSize = Context.getTypeSize(VTy->getElementType());
+  if (TypeSize == Context.getTypeSize(Context.CharTy))
+    return Context.getExtVectorType(Context.CharTy, VTy->getNumElements());
+  else if (TypeSize == Context.getTypeSize(Context.ShortTy))
+    return Context.getExtVectorType(Context.ShortTy, VTy->getNumElements());
+  else if (TypeSize == Context.getTypeSize(Context.IntTy))
+    return Context.getExtVectorType(Context.IntTy, VTy->getNumElements());
+  else if (TypeSize == Context.getTypeSize(Context.LongTy))
+    return Context.getExtVectorType(Context.LongTy, VTy->getNumElements());
+  assert(TypeSize == Context.getTypeSize(Context.LongLongTy) &&
+         "Unhandled vector element size in vector compare");
+  return Context.getExtVectorType(Context.LongLongTy, VTy->getNumElements());
+}
+
 /// CheckVectorCompareOperands - vector comparisons are a clang extension that
 /// operates on extended vector types.  Instead of producing an IntTy result,
 /// like a scalar comparison, a vector comparison produces a vector of integer
@@ -6923,23 +6943,21 @@ QualType Sema::CheckVectorCompareOperands(ExprResult &LHS, ExprResult &RHS,
     assert (RHS.get()->getType()->hasFloatingRepresentation());
     CheckFloatComparison(Loc, LHS.get(), RHS.get());
   }
+  
+  // Return a signed type for the vector.
+  return GetSignedVectorType(LHSType);
+}
 
-  // Return a signed type that is of identical size and number of elements.
-  // For floating point vectors, return an integer type of identical size 
-  // and number of elements.
-  const VectorType *VTy = LHSType->getAs<VectorType>();
-  unsigned TypeSize = Context.getTypeSize(VTy->getElementType());
-  if (TypeSize == Context.getTypeSize(Context.CharTy))
-    return Context.getExtVectorType(Context.CharTy, VTy->getNumElements());
-  else if (TypeSize == Context.getTypeSize(Context.ShortTy))
-    return Context.getExtVectorType(Context.ShortTy, VTy->getNumElements());
-  else if (TypeSize == Context.getTypeSize(Context.IntTy))
-    return Context.getExtVectorType(Context.IntTy, VTy->getNumElements());
-  else if (TypeSize == Context.getTypeSize(Context.LongTy))
-    return Context.getExtVectorType(Context.LongTy, VTy->getNumElements());
-  assert(TypeSize == Context.getTypeSize(Context.LongLongTy) &&
-         "Unhandled vector element size in vector compare");
-  return Context.getExtVectorType(Context.LongLongTy, VTy->getNumElements());
+QualType Sema::CheckVectorLogicalOperands(ExprResult LHS, ExprResult RHS,
+                                                 SourceLocation Loc)
+{
+  // Ensure that either both operands are of the same vector type, or
+  // one operand is of a vector type and the other is of its element type.
+  QualType vType = CheckVectorOperands(LHS, RHS, Loc, false);
+  if (vType.isNull() || vType->isFloatingType())
+    return InvalidOperands(Loc, LHS, RHS);
+  
+  return GetSignedVectorType(LHS.get()->getType());
 }
 
 inline QualType Sema::CheckBitwiseOperands(
@@ -6971,6 +6989,10 @@ inline QualType Sema::CheckBitwiseOperands(
 
 inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   ExprResult &LHS, ExprResult &RHS, SourceLocation Loc, unsigned Opc) {
+  
+  // Check vector operands differently.
+  if (LHS.get()->getType()->isVectorType() || RHS.get()->getType()->isVectorType())
+    return CheckVectorLogicalOperands(LHS, RHS, Loc);
   
   // Diagnose cases where the user write a logical and/or but probably meant a
   // bitwise one.  We do this when the LHS is a non-bool integer and the RHS
@@ -8261,6 +8283,12 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
         Input = ImpCastExprToType(Input.take(), Context.BoolTy,
                                   ScalarTypeToBooleanCastKind(resultType));
       }
+    }
+    else if (resultType->isExtVectorType()) {
+      // Handle vector types.
+      // Vector logical not returns the signed variant of the operand type.
+      resultType = GetSignedVectorType(resultType);
+      break;
     } else {
       return ExprError(Diag(OpLoc, diag::err_typecheck_unary_expr)
         << resultType << Input.get()->getSourceRange());
