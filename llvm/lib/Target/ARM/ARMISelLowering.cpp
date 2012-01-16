@@ -3046,8 +3046,8 @@ SDValue ARMTargetLowering::LowerBR_JT(SDValue Op, SelectionDAG &DAG) const {
 }
 
 static SDValue LowerVectorFP_TO_INT(SDValue Op, SelectionDAG &DAG) {
-  EVT VT = Op.getValueType();
-  assert(VT.getVectorElementType() == MVT::i32 && "Unexpected custom lowering");
+  assert(Op.getValueType().getVectorElementType() == MVT::i32 
+         && "Unexpected custom lowering");
 
   if (Op.getOperand(0).getValueType().getVectorElementType() == MVT::f32)
     return Op;

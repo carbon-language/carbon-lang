@@ -1615,8 +1615,6 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     if (MsbMask ==  DemandedMask) {
       unsigned ShAmt = ExVT.getScalarType().getSizeInBits();
       SDValue InOp = Op.getOperand(0);
-      EVT InVT = Op.getOperand(0).getValueType();
-      EVT ShTy = getShiftAmountTy(InVT);
       // In this code we may handle vector types. We can't use the
       // getShiftAmountTy API because it only works on scalars.
       // We use the shift value type because we know that its an integer
