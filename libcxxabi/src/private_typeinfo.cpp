@@ -87,10 +87,11 @@ __pointer_to_member_type_info::~__pointer_to_member_type_info()
 
 // __dynamic_cast
 
-// static_ptr: source address to be adjusted; nonnull, and since the
-//   source object is polymorphic, *(void**)static_ptr is a virtual table pointer.
-// static_type: static type of the source object.
-// dst_type: destination type (the "T" in "dynamic_cast<T>(v)").
+// static_ptr: pointer to an object of type static_type; nonnull, and since the
+//   object is polymorphic, *(void**)static_ptr is a virtual table pointer.
+//   static_ptr is &v in the expression dynamic_cast<T>(v).
+// static_type: static type of the object pointed to by static_ptr.
+// dst_type: destination type of the cast (the "T" in "dynamic_cast<T>(v)").
 // src2dst_offset: a static hint about the location of the
 //                 source subobject with respect to the complete object;
 //                 special negative values are:
@@ -102,20 +103,50 @@ __pointer_to_member_type_info::~__pointer_to_member_type_info()
 //                 base type of dst_type at offset src2dst_offset from the
 //                 origin of dst_type.
 //
-// (dynamic_ptr, dynamic_type) are the run time type of the complete object and
-// a pointer to it.  These can be found from static_ptr for polymorphic types.
+// (dynamic_ptr, dynamic_type) are the run time type of the complete object
+// referred to by static_ptr and a pointer to it.  These can be found from
+// static_ptr for polymorphic types.
 // static_type is guaranteed to be a polymorphic type.
 //
-// There are two classes of dst_types:
-//    1.  Those that lead to (static_ptr, static_type).
-//    2.  Those that do not lead to (static_ptr, static_type).
-// If there is exactly one dst_type of type 1, and
+// (dynamic_ptr, dynamic_type) is the root of a DAG that grows upward.  Each
+// node of the tree represents a base class/object of its parent (or parents) below.
+// Each node is uniquely represented by a pointer to the object, and a pointer
+// to a type_info - its type.  Different nodes may have the same pointer and
+// different nodes may have the same type.  But only one node has a specific
+// (pointer-value, type) pair.  In C++ two objects of the same type can not
+// share the same address.
+//
+// There are two flavors of nodes which have the type dst_type:
+//    1.  Those that are derived from (below) (static_ptr, static_type).
+//    2.  Those that are not derived from (below) (static_ptr, static_type).
+//
+// Invariants of the DAG:
+//
+// There is at least one path from the root (dynamic_ptr, dynamic_type) to
+// the node (static_ptr, static_type).  This path may or may not be public.
+// There may be more than one such path (some public some not).  Such a path may
+// or may not go through a node having type dst_type.
+//
+// No node of type T appears above a node of the same type.  That means that
+// there is only one node with dynamic_type.  And if dynamic_type == dst_type,
+// then there is only one dst_type in the DAG.
+//
+// No node of type dst_type appears above a node of type static_type.  Such
+// DAG's are possible in C++, but the compiler computes those dynamic_casts at
+// compile time, and only calls __dynamic_cast when dst_type lies below
+// static_type in the DAG.
+//
+// dst_type != static_type:  The compiler computes the dynamic_cast in this case too.
+//
+// Returns:
+//
+// If there is exactly one dst_type of flavor 1, and
 //    If there is a public path from that dst_type to (static_ptr, static_type), or
-//    If there are 0 dst_types of type 2, and there is a public path from
+//    If there are 0 dst_types of flavor 2, and there is a public path from
 //        (dynamic_ptr, dynamic_type) to (static_ptr, static_type) and a public
 //        path from (dynamic_ptr, dynamic_type) to the one dst_type, then return
 //        a pointer to that dst_type.
-// Else if there are 0 dst_types of type 1 and exactly 1 dst_type of type 2, and
+// Else if there are 0 dst_types of flavor 1 and exactly 1 dst_type of flavor 2, and
 //    if there is a public path (dynamic_ptr, dynamic_type) to
 //    (static_ptr, static_type) and a public path from (dynamic_ptr, dynamic_type)
 //    to the one dst_type, then return a pointer to that one dst_type.
@@ -135,22 +166,36 @@ __dynamic_cast(const void* static_ptr,
 			   std::ptrdiff_t src2dst_offset)
 {
     // TODO:  Take advantage of src2dst_offset
+
+    // Get (dynamic_ptr, dynamic_type) from static_ptr
     void** vtable = *(void***)static_ptr;
-    ptrdiff_t offset_to_derived = (ptrdiff_t)vtable[-2];
-    const void* dynamic_ptr = (const char*)static_ptr + offset_to_derived;
-    const __class_type_info* dynamic_type = (const __class_type_info*)vtable[-1];
+    ptrdiff_t offset_to_derived = reinterpret_cast<ptrdiff_t>(vtable[-2]);
+    const void* dynamic_ptr = static_cast<const char*>(static_ptr) + offset_to_derived;
+    const __class_type_info* dynamic_type = static_cast<const __class_type_info*>(vtable[-1]);
+
+    // Initialize answer to nullptr.  This will be changed from the search
+    //    results if a non-null answer is found.  Regardless, this is what will
+    //    be returned.
     const void* dst_ptr = 0;
+    // Initialize info struct for this search.
     __dynamic_cast_info info = {dst_type, static_ptr, static_type, src2dst_offset, 0};
+
+    // Find out if we can use a giant short cut in the search
     if (dynamic_type == dst_type)
     {
+        // Using giant short cut.  Add that information to info.
         info.number_of_dst_type = 1;
+        // Do the  search
         dynamic_type->search_above_dst(&info, dynamic_ptr, dynamic_ptr, public_path);
+        // Query the search.
         if (info.path_dst_ptr_to_static_ptr == public_path)
             dst_ptr = dynamic_ptr;
     }
     else
     {
+        // Not using giant short cut.  Do the search
         dynamic_type->search_below_dst(&info, dynamic_ptr, public_path);
+        // Query the search.
         switch (info.number_to_static_ptr)
         {
         case 0:
@@ -256,12 +301,23 @@ __class_type_info::process_static_type_below_dst(__dynamic_cast_info* info,
 // above.
 // If it finds a dst_type node it should search base classes using search_above_dst
 // to find out if this dst_type points to (static_ptr, static_type) or not.
-// Either way, the dst_type is recorded as one of two "classes":  one that does
+// Either way, the dst_type is recorded as one of two "flavors":  one that does
 // or does not point to (static_ptr, static_type).
 // If this is neither a static_type nor a dst_type node, continue searching
 // base classes above.
 // All the hoopla surrounding the search code is doing nothing but looking for
-// excuses to stop the search prematurely (break out of the for-loop).
+// excuses to stop the search prematurely (break out of the for-loop):
+//
+//             const Iter e = __base_info + __base_count;
+//             for (Iter p = __base_info; p < e; ++p)
+//                 p->search_above_dst(info, current_ptr, current_ptr, path_below);
+//
+// or:
+//
+//             const Iter e = __base_info + __base_count;
+//             for (Iter p = __base_info; p < e; ++p)
+//                 p->search_below_dst(info, current_ptr, path_below);
+//
 void
 __vmi_class_type_info::search_below_dst(__dynamic_cast_info* info,
                                         const void* current_ptr,
@@ -311,7 +367,7 @@ __vmi_class_type_info::search_below_dst(__dynamic_cast_info* info,
                     info->found_our_static_ptr = false;
                     info->found_any_static_type = false;
                     p->search_above_dst(info, current_ptr, current_ptr, public_path);
-                   if (info->search_done)
+                    if (info->search_done)
                         break;
                     if (info->found_any_static_type)
                     {
@@ -657,11 +713,11 @@ __base_class_type_info::search_above_dst(__dynamic_cast_info* info,
     ptrdiff_t offset_to_base = __offset_flags >> __offset_shift;
     if (__offset_flags & __virtual_mask)
     {
-        char* vtable = *(char**)current_ptr;
-        offset_to_base = *(ptrdiff_t*)(vtable + offset_to_base);
+        const char* vtable = *static_cast<const char*const*>(current_ptr);
+        offset_to_base = *reinterpret_cast<const ptrdiff_t*>(vtable + offset_to_base);
     }
     __base_type->search_above_dst(info, dst_ptr,
-                                  (char*)current_ptr + offset_to_base,
+                                  static_cast<const char*>(current_ptr) + offset_to_base,
                                   (__offset_flags & __public_mask) ?
                                       path_below :
                                       not_public_path);
@@ -675,11 +731,11 @@ __base_class_type_info::search_below_dst(__dynamic_cast_info* info,
     ptrdiff_t offset_to_base = __offset_flags >> __offset_shift;
     if (__offset_flags & __virtual_mask)
     {
-        char* vtable = *(char**)current_ptr;
-        offset_to_base = *(ptrdiff_t*)(vtable + offset_to_base);
+        const char* vtable = *static_cast<const char*const*>(current_ptr);
+        offset_to_base = *reinterpret_cast<const ptrdiff_t*>(vtable + offset_to_base);
     }
     __base_type->search_below_dst(info,
-                                  (char*)current_ptr + offset_to_base,
+                                  static_cast<const char*>(current_ptr) + offset_to_base,
                                   (__offset_flags & __public_mask) ?
                                       path_below :
                                       not_public_path);

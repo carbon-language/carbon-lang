@@ -57,19 +57,21 @@ class __class_type_info;
 
 struct __dynamic_cast_info
 {
-    // const data supplied to the search
+// const data supplied to the search:
 
     const __class_type_info* const dst_type;
     const void* const static_ptr;
     const __class_type_info* const static_type;
     const std::ptrdiff_t src2dst_offset;
 
-    // non-const data learned during the search
+// Data that represents the answer:
 
     // pointer to a dst_type which has (static_ptr, static_type) above it
     const void* dst_ptr_leading_to_static_ptr;
     // pointer to a dst_type which does not have (static_ptr, static_type) above it
     const void* dst_ptr_not_leading_to_static_ptr;
+
+    // The following three paths are either unknown, public_path or not_public_path.
     // access of path from dst_ptr_leading_to_static_ptr to (static_ptr, static_type)
     int path_dst_ptr_to_static_ptr;
     // access of path from (dynamic_ptr, dynamic_type) to (static_ptr, static_type)
@@ -78,11 +80,15 @@ struct __dynamic_cast_info
     // access of path from (dynamic_ptr, dynamic_type) to dst_type
     //    (not used if there is a (static_ptr, static_type) above a dst_type).
     int path_dynamic_ptr_to_dst_ptr;
+
     // Number of dst_types below (static_ptr, static_type)
     int number_to_static_ptr;
     // Number of dst_types not below (static_ptr, static_type)
     int number_to_dst_ptr;
-    // 
+
+// Data that helps stop the search before the entire tree is searched:
+
+    // is_dst_type_derived_from_static_type is either unknown, yes or no.
     int is_dst_type_derived_from_static_type;
     // Number of dst_type in tree.  If 0, then that means unknown.
     int number_of_dst_type;
