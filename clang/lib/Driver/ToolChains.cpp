@@ -534,28 +534,6 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   Arg *iOSSimVersion = Args.getLastArg(
     options::OPT_mios_simulator_version_min_EQ);
 
-  // FIXME: HACK! When compiling for the simulator we don't get a
-  // '-miphoneos-version-min' to help us know whether there is an ARC runtime
-  // or not; try to parse a __IPHONE_OS_VERSION_MIN_REQUIRED
-  // define passed in command-line.
-  if (!iOSVersion && !iOSSimVersion) {
-    for (arg_iterator it = Args.filtered_begin(options::OPT_D),
-           ie = Args.filtered_end(); it != ie; ++it) {
-      StringRef define = (*it)->getValue(Args);
-      if (define.startswith(SimulatorVersionDefineName())) {
-        unsigned Major = 0, Minor = 0, Micro = 0;
-        if (GetVersionFromSimulatorDefine(define, Major, Minor, Micro) &&
-            Major < 10 && Minor < 100 && Micro < 100) {
-          ARCRuntimeForSimulator = Major < 5 ? ARCSimulator_NoARCRuntime
-                                             : ARCSimulator_HasARCRuntime;
-          LibCXXForSimulator = Major < 5 ? LibCXXSimulator_NotAvailable
-                                         : LibCXXSimulator_Available;
-        }
-        break;
-      }
-    }
-  }
-
   if (OSXVersion && (iOSVersion || iOSSimVersion)) {
     getDriver().Diag(diag::err_drv_argument_not_allowed_with)
           << OSXVersion->getAsString(Args)
@@ -638,6 +616,31 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
       const Option *O = Opts.getOption(options::OPT_mmacosx_version_min_EQ);
       OSXVersion = Args.MakeJoinedArg(0, O, MacosxVersionMin);
       Args.append(OSXVersion);
+    }
+  }
+
+  // FIXME: HACK! When compiling for the simulator we can't depend
+  // on getting '-mios-simulator-version-min'; try to parse a
+  // __IPHONE_OS_VERSION_MIN_REQUIRED define passed in command-line.
+  if (OSXVersion) {
+    for (arg_iterator it = Args.filtered_begin(options::OPT_D),
+           ie = Args.filtered_end(); it != ie; ++it) {
+      StringRef define = (*it)->getValue(Args);
+      if (define.startswith(SimulatorVersionDefineName())) {
+        unsigned Major = 0, Minor = 0, Micro = 0;
+        if (GetVersionFromSimulatorDefine(define, Major, Minor, Micro) &&
+            Major < 10 && Minor < 100 && Micro < 100) {
+          std::string iOSSimTarget;
+          llvm::raw_string_ostream(iOSSimTarget)
+              << Major << '.' << Minor << '.' << Micro;
+          const Option *O = Opts.getOption(
+            options::OPT_mios_simulator_version_min_EQ);
+          iOSSimVersion = Args.MakeJoinedArg(0, O, iOSSimTarget);
+          Args.append(iOSSimVersion);
+          OSXVersion = 0;
+        }
+        break;
+      }
     }
   }
 

@@ -3,4 +3,5 @@
 // 
 
 // CHECK-OPTIONS1-NOT: -fobjc-runtime-has-weak
+// CHECK-OPTIONS2: "-triple" "i386-apple-ios5.0.0"
 // CHECK-OPTIONS2: -fobjc-runtime-has-weak
