@@ -2529,40 +2529,7 @@ let AddedComplexity = 10 in {
   } // Constraints = "$src1 = $dst"
 } // AddedComplexity
 
-let Predicates = [HasSSE1] in {
-  def : Pat<(v4f32 (X86Unpckl VR128:$src1, (memopv4f32 addr:$src2))),
-            (UNPCKLPSrm VR128:$src1, addr:$src2)>;
-  def : Pat<(v4f32 (X86Unpckl VR128:$src1, VR128:$src2)),
-            (UNPCKLPSrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4f32 (X86Unpckh VR128:$src1, (memopv4f32 addr:$src2))),
-            (UNPCKHPSrm VR128:$src1, addr:$src2)>;
-  def : Pat<(v4f32 (X86Unpckh VR128:$src1, VR128:$src2)),
-            (UNPCKHPSrr VR128:$src1, VR128:$src2)>;
-}
-
-let Predicates = [HasSSE2] in {
-  def : Pat<(v2f64 (X86Unpckl VR128:$src1, (memopv2f64 addr:$src2))),
-            (UNPCKLPDrm VR128:$src1, addr:$src2)>;
-  def : Pat<(v2f64 (X86Unpckl VR128:$src1, VR128:$src2)),
-            (UNPCKLPDrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v2f64 (X86Unpckh VR128:$src1, (memopv2f64 addr:$src2))),
-            (UNPCKHPDrm VR128:$src1, addr:$src2)>;
-  def : Pat<(v2f64 (X86Unpckh VR128:$src1, VR128:$src2)),
-            (UNPCKHPDrr VR128:$src1, VR128:$src2)>;
-
-  // FIXME: Instead of X86Movddup, there should be a X86Unpckl here, the
-  // problem is during lowering, where it's not possible to recognize the load
-  // fold cause it has two uses through a bitcast. One use disappears at isel
-  // time and the fold opportunity reappears.
-  def : Pat<(v2f64 (X86Movddup VR128:$src)),
-            (UNPCKLPDrr VR128:$src, VR128:$src)>;
-
-  let AddedComplexity = 10 in
-  def : Pat<(splat_lo (v2f64 VR128:$src), (undef)),
-            (UNPCKLPDrr VR128:$src, VR128:$src)>;
-}
-
-let Predicates = [HasAVX] in {
+let Predicates = [HasAVX], AddedComplexity = 1 in {
   def : Pat<(v4f32 (X86Unpckl VR128:$src1, (memopv4f32 addr:$src2))),
             (VUNPCKLPSrm VR128:$src1, addr:$src2)>;
   def : Pat<(v4f32 (X86Unpckl VR128:$src1, VR128:$src2)),
@@ -2608,6 +2575,39 @@ let Predicates = [HasAVX] in {
   let AddedComplexity = 10 in
   def : Pat<(splat_lo (v2f64 VR128:$src), (undef)),
             (VUNPCKLPDrr VR128:$src, VR128:$src)>;
+}
+
+let Predicates = [HasSSE1] in {
+  def : Pat<(v4f32 (X86Unpckl VR128:$src1, (memopv4f32 addr:$src2))),
+            (UNPCKLPSrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v4f32 (X86Unpckl VR128:$src1, VR128:$src2)),
+            (UNPCKLPSrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v4f32 (X86Unpckh VR128:$src1, (memopv4f32 addr:$src2))),
+            (UNPCKHPSrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v4f32 (X86Unpckh VR128:$src1, VR128:$src2)),
+            (UNPCKHPSrr VR128:$src1, VR128:$src2)>;
+}
+
+let Predicates = [HasSSE2] in {
+  def : Pat<(v2f64 (X86Unpckl VR128:$src1, (memopv2f64 addr:$src2))),
+            (UNPCKLPDrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v2f64 (X86Unpckl VR128:$src1, VR128:$src2)),
+            (UNPCKLPDrr VR128:$src1, VR128:$src2)>;
+  def : Pat<(v2f64 (X86Unpckh VR128:$src1, (memopv2f64 addr:$src2))),
+            (UNPCKHPDrm VR128:$src1, addr:$src2)>;
+  def : Pat<(v2f64 (X86Unpckh VR128:$src1, VR128:$src2)),
+            (UNPCKHPDrr VR128:$src1, VR128:$src2)>;
+
+  // FIXME: Instead of X86Movddup, there should be a X86Unpckl here, the
+  // problem is during lowering, where it's not possible to recognize the load
+  // fold cause it has two uses through a bitcast. One use disappears at isel
+  // time and the fold opportunity reappears.
+  def : Pat<(v2f64 (X86Movddup VR128:$src)),
+            (UNPCKLPDrr VR128:$src, VR128:$src)>;
+
+  let AddedComplexity = 10 in
+  def : Pat<(splat_lo (v2f64 VR128:$src), (undef)),
+            (UNPCKLPDrr VR128:$src, VR128:$src)>;
 }
 
 //===----------------------------------------------------------------------===//
