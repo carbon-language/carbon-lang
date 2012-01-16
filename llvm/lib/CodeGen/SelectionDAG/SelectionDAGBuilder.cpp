@@ -3516,7 +3516,7 @@ void SelectionDAGBuilder::visitTargetIntrinsic(const CallInst &I,
   // Add the intrinsic ID as an integer operand if it's not a target intrinsic.
   if (!IsTgtIntrinsic || Info.opc == ISD::INTRINSIC_VOID ||
       Info.opc == ISD::INTRINSIC_W_CHAIN)
-    Ops.push_back(DAG.getConstant(Intrinsic, TLI.getPointerTy()));
+    Ops.push_back(DAG.getTargetConstant(Intrinsic, TLI.getPointerTy()));
 
   // Add all operands of the call to the operand list.
   for (unsigned i = 0, e = I.getNumArgOperands(); i != e; ++i) {
