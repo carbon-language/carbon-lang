@@ -205,7 +205,12 @@ void RegScavenger::forward() {
             SubUsed = true;
             break;
           }
-        assert(SubUsed && "Using an undefined register!");
+#ifndef NDEBUG
+        if (!SubUsed) {
+          MBB->getParent()->verify(NULL, "In Register Scavenger");
+          llvm_unreachable("Using an undefined register!");
+        }
+#endif
         (void)SubUsed;
       }
       assert((!EarlyClobberRegs.test(Reg) || MI->isRegTiedToDefOperand(i)) &&
