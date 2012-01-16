@@ -780,6 +780,9 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
        I != E; --Count) {
     MachineInstr *MI = --I;
 
+    if (MI->isDebugValue())
+      continue;
+
     DEBUG(dbgs() << "Anti: ");
     DEBUG(MI->dump());
 
