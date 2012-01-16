@@ -551,7 +551,7 @@ def ATOMSWAP6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
 // Memory barriers
 
 // TODO: Get this to fold the constant into the instruction.
-let isCodeGenOnly = 1 in
+let isCodeGenOnly = 1, Defs = [EFLAGS] in
 def OR32mrLocked  : I<0x09, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$zero),
                       "lock\n\t"
                       "or{l}\t{$zero, $dst|$dst, $zero}",
