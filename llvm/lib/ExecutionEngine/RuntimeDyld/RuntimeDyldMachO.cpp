@@ -50,8 +50,13 @@ resolveX86_64Relocation(uintptr_t Address, uintptr_t Value, bool isPCRel,
   switch(Type) {
   default:
     llvm_unreachable("Invalid relocation type!");
+  case macho::RIT_X86_64_Signed1:
+  case macho::RIT_X86_64_Signed2:
+  case macho::RIT_X86_64_Signed4:
+  case macho::RIT_X86_64_Signed:
   case macho::RIT_X86_64_Unsigned:
   case macho::RIT_X86_64_Branch: {
+    Value += Addend;
     // Mask in the target value a byte at a time (we don't have an alignment
     // guarantee for the target address, so this is safest).
     uint8_t *p = (uint8_t*)Address;
@@ -61,13 +66,9 @@ resolveX86_64Relocation(uintptr_t Address, uintptr_t Value, bool isPCRel,
     }
     return false;
   }
-  case macho::RIT_X86_64_Signed:
   case macho::RIT_X86_64_GOTLoad:
   case macho::RIT_X86_64_GOT:
   case macho::RIT_X86_64_Subtractor:
-  case macho::RIT_X86_64_Signed1:
-  case macho::RIT_X86_64_Signed2:
-  case macho::RIT_X86_64_Signed4:
   case macho::RIT_X86_64_TLV:
     return Error("Relocation type not implemented yet!");
   }
