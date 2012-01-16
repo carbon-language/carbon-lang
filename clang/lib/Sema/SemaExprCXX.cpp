@@ -2043,6 +2043,9 @@ ExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar,
                                         ConditionVar->getLocation(),
                             ConditionVar->getType().getNonReferenceType(),
                               VK_LValue));
+
+  MarkDeclarationReferenced(ConditionVar->getLocation(), ConditionVar);
+
   if (ConvertToBoolean) {
     Condition = CheckBooleanCondition(Condition.take(), StmtLoc);
     if (Condition.isInvalid())
