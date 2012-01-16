@@ -6861,7 +6861,6 @@ QualType Sema::CheckVectorCompareOperands(ExprResult &LHS, ExprResult &RHS,
     return vType;
 
   QualType LHSType = LHS.get()->getType();
-  QualType RHSType = RHS.get()->getType();
 
   // If AltiVec, the comparison results in a numeric type, i.e.
   // bool for C++, int for C
@@ -6886,7 +6885,7 @@ QualType Sema::CheckVectorCompareOperands(ExprResult &LHS, ExprResult &RHS,
 
   // Check for comparisons of floating point operands using != and ==.
   if (!IsRelational && LHSType->hasFloatingRepresentation()) {
-    assert (RHSType->hasFloatingRepresentation());
+    assert (RHS.get()->getType()->hasFloatingRepresentation());
     CheckFloatComparison(Loc, LHS.get(), RHS.get());
   }
 

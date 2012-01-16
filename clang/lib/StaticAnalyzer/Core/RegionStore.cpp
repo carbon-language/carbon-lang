@@ -1314,8 +1314,7 @@ SVal RegionStoreManager::getBindingForLazySymbol(const TypedValueRegion *R) {
 
 SVal RegionStoreManager::getBindingForStruct(Store store, 
                                         const TypedValueRegion* R) {
-  QualType T = R->getValueType();
-  assert(T->isStructureOrClassType());
+  assert(R->getValueType()->isStructureOrClassType());
   return svalBuilder.makeLazyCompoundVal(StoreRef(store, *this), R);
 }
 
