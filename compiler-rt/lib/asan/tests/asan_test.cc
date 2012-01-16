@@ -180,7 +180,7 @@ TEST(AddressSanitizer, VariousMallocsTest) {
   free(pm);
 #endif
 
-#if !defined(APPLE)
+#if !defined(__APPLE__)
   int *ma = (int*)memalign(kPageSize, kPageSize);
   EXPECT_EQ(0, (uintptr_t)ma % kPageSize);
   ma[123] = 0;

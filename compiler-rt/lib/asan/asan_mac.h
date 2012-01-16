@@ -55,13 +55,13 @@ typedef struct {
 
 
 extern "C" {
-
 // Allocate memory for the escape island. This cannot be moved to
 // mach_override, because the allocator needs to know about the ASan shadow
 // mappings.
 // TODO(glider): in order to place a relative jump the allocated memory should
 // be within 2 Gb from the hint address.
-mach_error_t __asan_allocate_island(void **ptr, size_t unused_size, void *unused_hint);
+mach_error_t __asan_allocate_island(void **ptr, size_t unused_size,
+                                    void *unused_hint);
 mach_error_t __asan_deallocate_island(void *ptr);
 
 // dispatch_barrier_async_f() is not declared in <dispatch/dispatch.h>.

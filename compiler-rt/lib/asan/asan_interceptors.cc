@@ -53,7 +53,7 @@
                                                  (void**)&real_##oldfunc,     \
                                                  __asan_allocate_island,      \
                                                  __asan_deallocate_island));  \
-  CHECK(real_##oldfunc != NULL);   } while(0)
+  CHECK(real_##oldfunc != NULL);   } while (0)
 
 #define OVERRIDE_FUNCTION_IF_EXISTS(oldfunc, newfunc)               \
   do { __asan_mach_override_ptr_custom((void*)(oldfunc),            \

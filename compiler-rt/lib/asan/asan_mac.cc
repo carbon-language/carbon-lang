@@ -129,7 +129,7 @@ const char *AsanGetEnv(const char *name) {
       const char *p = *environ;
       if (!internal_memcmp(p, name, name_len) &&
           p[name_len] == '=') {  // Match.
-        return *environ + name_len + 1;  // String starting after =. 
+        return *environ + name_len + 1;  // String starting after =.
       }
     }
     environ++;
