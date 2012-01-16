@@ -48,7 +48,9 @@ enum
 {
     unknown = 0,
     public_path,
-    not_public_path
+    not_public_path,
+    yes,
+    no
 };
 
 class __class_type_info;
@@ -80,11 +82,18 @@ struct __dynamic_cast_info
     int number_to_static_ptr;
     // Number of dst_types not below (static_ptr, static_type)
     int number_to_dst_ptr;
-    // true when the search is above a dst_type, else false
-    bool above_dst_ptr;
+    // 
+    int is_dst_type_derived_from_static_type;
+    // Number of dst_type in tree.  If 0, then that means unknown.
+    int number_of_dst_type;
     // communicates to a dst_type node that (static_ptr, static_type) was found
     //    above it.
-    bool found_static_ptr;
+    bool found_our_static_ptr;
+    // communicates to a dst_type node that a static_type was found
+    //    above it, but it wasn't (static_ptr, static_type)
+    bool found_any_static_type;
+    // Set whenever a search can be stopped
+    bool search_done;
 };
 
 // Has no base class
@@ -94,11 +103,10 @@ class __class_type_info
 public:
     virtual ~__class_type_info();
 
-    virtual int search1(__dynamic_cast_info*, const void*, int) const;
-    virtual int search2(__dynamic_cast_info*, const void*, int) const;
-#ifdef DEBUG
-    virtual void display(const void* obj) const;
-#endif
+    void process_static_type_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
+    void process_static_type_below_dst(__dynamic_cast_info*, const void*, int) const;
+    virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
+    virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
 };
 
 // Has one non-virtual public base class at offset zero
@@ -110,11 +118,8 @@ public:
 
     virtual ~__si_class_type_info();
 
-    virtual int search1(__dynamic_cast_info*, const void*, int) const;
-    virtual int search2(__dynamic_cast_info*, const void*, int) const;
-#ifdef DEBUG
-    virtual void display(const void* obj) const;
-#endif
+    virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
+    virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
 };
 
 struct __base_class_type_info
@@ -130,11 +135,8 @@ public:
         __offset_shift = 8
     };
 
-    int search1(__dynamic_cast_info*, const void*, int) const;
-    int search2(__dynamic_cast_info*, const void*, int) const;
-#ifdef DEBUG
-    void display(const void* obj) const;
-#endif
+    void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
+    void search_below_dst(__dynamic_cast_info*, const void*, int) const;
 };
 
 // Has one or more base classes
@@ -156,11 +158,8 @@ public:
 
     virtual ~__vmi_class_type_info();
 
-    virtual int search1(__dynamic_cast_info*, const void*, int) const;
-    virtual int search2(__dynamic_cast_info*, const void*, int) const;
-#ifdef DEBUG
-    virtual void display(const void* obj) const;
-#endif
+    virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
+    virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
 };
 
 class __pbase_type_info
