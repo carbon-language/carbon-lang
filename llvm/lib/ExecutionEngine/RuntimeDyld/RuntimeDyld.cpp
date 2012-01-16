@@ -25,6 +25,7 @@ namespace llvm {
 
 void RuntimeDyldImpl::extractFunction(StringRef Name, uint8_t *StartAddress,
                                       uint8_t *EndAddress) {
+  // FIXME: DEPRECATED in favor of by-section allocation.
   // Allocate memory for the function via the memory manager.
   uintptr_t Size = EndAddress - StartAddress + 1;
   uintptr_t AllocSize = Size;
@@ -35,21 +36,22 @@ void RuntimeDyldImpl::extractFunction(StringRef Name, uint8_t *StartAddress,
   memcpy(Mem, StartAddress, Size);
   MemMgr->endFunctionBody(Name.data(), Mem, Mem + Size);
   // Remember where we put it.
-  Functions[Name] = sys::MemoryBlock(Mem, Size);
+  unsigned SectionID = Sections.size();
+  Sections.push_back(sys::MemoryBlock(Mem, Size));
+
   // Default the assigned address for this symbol to wherever this
   // allocated it.
-  SymbolTable[Name] = Mem;
+  SymbolTable[Name] = SymbolLoc(SectionID, 0); 
   DEBUG(dbgs() << "    allocated to [" << Mem << ", " << Mem + Size << "]\n");
 }
 
 // Resolve the relocations for all symbols we currently know about.
 void RuntimeDyldImpl::resolveRelocations() {
-  // Just iterate over the symbols in our symbol table and assign their
-  // addresses.
-  StringMap<uint8_t*>::iterator i = SymbolTable.begin();
-  StringMap<uint8_t*>::iterator e = SymbolTable.end();
-  for (;i != e; ++i)
-    reassignSymbolAddress(i->getKey(), i->getValue());
+  // Just iterate over the sections we have and resolve all the relocations
+  // in them. Gross overkill, but it gets the job done.
+  for (int i = 0, e = Sections.size(); i != e; ++i) {
+    reassignSectionAddress(i, SectionLoadAddress[i]);
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -109,8 +111,9 @@ void RuntimeDyld::resolveRelocations() {
   Dyld->resolveRelocations();
 }
 
-void RuntimeDyld::reassignSymbolAddress(StringRef Name, uint8_t *Addr) {
-  Dyld->reassignSymbolAddress(Name, Addr);
+void RuntimeDyld::reassignSectionAddress(unsigned SectionID,
+                                         uint64_t Addr) {
+  Dyld->reassignSectionAddress(SectionID, Addr);
 }
 
 StringRef RuntimeDyld::getErrorString() {

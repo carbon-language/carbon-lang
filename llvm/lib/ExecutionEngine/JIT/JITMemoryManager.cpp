@@ -441,6 +441,50 @@ namespace {
       return (uint8_t*)DataAllocator.Allocate(Size, Alignment);
     }
 
+    /// allocateCodeSection - Allocate memory for a code section.
+    uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
+                                 unsigned SectionID) {
+      // FIXME: Alignement handling.
+      FreeRangeHeader* candidateBlock = FreeMemoryList;
+      FreeRangeHeader* head = FreeMemoryList;
+      FreeRangeHeader* iter = head->Next;
+
+      uintptr_t largest = candidateBlock->BlockSize;
+
+      // Search for the largest free block.
+      while (iter != head) {
+        if (iter->BlockSize > largest) {
+          largest = iter->BlockSize;
+          candidateBlock = iter;
+        }
+        iter = iter->Next;
+      }
+
+      largest = largest - sizeof(MemoryRangeHeader);
+
+      // If this block isn't big enough for the allocation desired, allocate
+      // another block of memory and add it to the free list.
+      if (largest < Size || largest <= FreeRangeHeader::getMinBlockSize()) {
+        DEBUG(dbgs() << "JIT: Allocating another slab of memory for function.");
+        candidateBlock = allocateNewCodeSlab((size_t)Size);
+      }
+
+      // Select this candidate block for allocation
+      CurBlock = candidateBlock;
+
+      // Allocate the entire memory block.
+      FreeMemoryList = candidateBlock->AllocateBlock();
+      // Release the memory at the end of this block that isn't needed.
+      FreeMemoryList = CurBlock->TrimAllocationToSize(FreeMemoryList, Size);
+      return (uint8_t *)(CurBlock + 1);
+    }
+
+    /// allocateDataSection - Allocate memory for a data section.
+    uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
+                                 unsigned SectionID) {
+      return (uint8_t*)DataAllocator.Allocate(Size, Alignment);
+    }
+
     /// startExceptionTable - Use startFunctionBody to allocate memory for the
     /// function's exception table.
     uint8_t* startExceptionTable(const Function* F, uintptr_t &ActualSize) {

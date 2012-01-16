@@ -101,6 +101,22 @@ public:
   virtual void endFunctionBody(const Function *F, uint8_t *FunctionStart,
                                uint8_t *FunctionEnd) = 0;
 
+  /// allocateCodeSection - Allocate a memory block of (at least) the given
+  /// size suitable for executable code. The SectionID is a unique identifier
+  /// assigned by the JIT and passed through to the memory manager for
+  /// the instance class to use if it needs to communicate to the JIT about
+  /// a given section after the fact.
+  virtual uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
+                                       unsigned SectionID) = 0;
+
+  /// allocateDataSection - Allocate a memory block of (at least) the given
+  /// size suitable for data. The SectionID is a unique identifier
+  /// assigned by the JIT and passed through to the memory manager for
+  /// the instance class to use if it needs to communicate to the JIT about
+  /// a given section after the fact.
+  virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
+                                       unsigned SectionID) = 0;
+
   /// allocateSpace - Allocate a memory block of the given size.  This method
   /// cannot be called between calls to startFunctionBody and endFunctionBody.
   virtual uint8_t *allocateSpace(intptr_t Size, unsigned Alignment) = 0;

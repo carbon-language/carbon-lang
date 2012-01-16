@@ -35,6 +35,16 @@ public:
   RTDyldMemoryManager() {}
   virtual ~RTDyldMemoryManager();
 
+  /// allocateCodeSection - Allocate a memory block of (at least) the given
+  /// size suitable for executable code.
+  virtual uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
+                                       unsigned SectionID) = 0;
+
+  /// allocateDataSection - Allocate a memory block of (at least) the given
+  /// size suitable for data.
+  virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
+                                       unsigned SectionID) = 0;
+
   // Allocate ActualSize bytes, or more, for the named function. Return
   // a pointer to the allocated memory and update Size to reflect how much
   // memory was acutally allocated.
@@ -65,9 +75,9 @@ public:
   void *getSymbolAddress(StringRef Name);
   // Resolve the relocations for all symbols we currently know about.
   void resolveRelocations();
-  // Change the address associated with a symbol when resolving relocations.
+  // Change the address associated with a section when resolving relocations.
   // Any relocations already associated with the symbol will be re-resolved.
-  void reassignSymbolAddress(StringRef Name, uint8_t *Addr);
+  void reassignSectionAddress(unsigned SectionID, uint64_t Addr);
   StringRef getErrorString();
 };
 

@@ -154,17 +154,31 @@ bool RuntimeDyldELF::loadObject(MemoryBuffer *InputBuffer) {
   return false;
 }
 
+void RuntimeDyldELF::resolveRelocations() {
+  // FIXME: deprecated. should be changed to use the by-section
+  // allocation and relocation scheme.
+
+  // Just iterate over the symbols in our symbol table and assign their
+  // addresses.
+  StringMap<SymbolLoc>::iterator i = SymbolTable.begin();
+  StringMap<SymbolLoc>::iterator e = SymbolTable.end();
+  for (;i != e; ++i) {
+    assert (i->getValue().second == 0 && "non-zero offset in by-function sym!");
+    reassignSymbolAddress(i->getKey(),
+                          (uint8_t*)Sections[i->getValue().first].base());
+  }
+}
+
 void RuntimeDyldELF::resolveX86_64Relocation(StringRef Name,
                                              uint8_t *Addr,
                                              const RelocationEntry &RE) {
   uint8_t *TargetAddr;
   if (RE.IsFunctionRelative) {
-    StringMap<sys::MemoryBlock>::iterator ContainingFunc
-      = Functions.find(RE.Target);
-    assert(ContainingFunc != Functions.end()
-           && "Function for relocation not found");
-    TargetAddr = reinterpret_cast<uint8_t*>(ContainingFunc->getValue().base()) +
-                 RE.Offset;
+    StringMap<SymbolLoc>::const_iterator Loc = SymbolTable.find(RE.Target);
+    assert(Loc != SymbolTable.end() && "Function for relocation not found");
+    TargetAddr =
+      reinterpret_cast<uint8_t*>(Sections[Loc->second.first].base()) +
+      Loc->second.second + RE.Offset;
   } else {
     // FIXME: Get the address of the target section and add that to RE.Offset
     assert(0 && ("Non-function relocation not implemented yet!"));
@@ -209,12 +223,11 @@ void RuntimeDyldELF::resolveX86Relocation(StringRef Name,
                                           const RelocationEntry &RE) {
   uint8_t *TargetAddr;
   if (RE.IsFunctionRelative) {
-    StringMap<sys::MemoryBlock>::iterator ContainingFunc
-      = Functions.find(RE.Target);
-    assert(ContainingFunc != Functions.end()
-           && "Function for relocation not found");
-    TargetAddr = reinterpret_cast<uint8_t*>(
-      ContainingFunc->getValue().base()) + RE.Offset;
+    StringMap<SymbolLoc>::const_iterator Loc = SymbolTable.find(RE.Target);
+    assert(Loc != SymbolTable.end() && "Function for relocation not found");
+    TargetAddr =
+      reinterpret_cast<uint8_t*>(Sections[Loc->second.first].base()) +
+      Loc->second.second + RE.Offset;
   } else {
     // FIXME: Get the address of the target section and add that to RE.Offset
     assert(0 && ("Non-function relocation not implemented yet!"));
@@ -266,13 +279,31 @@ void RuntimeDyldELF::resolveRelocation(StringRef Name,
 }
 
 void RuntimeDyldELF::reassignSymbolAddress(StringRef Name, uint8_t *Addr) {
-  SymbolTable[Name] = Addr;
+  // FIXME: deprecated. switch to reassignSectionAddress() instead.
+  //
+  // Actually moving the symbol address requires by-section mapping.
+  assert(Sections[SymbolTable.lookup(Name).first].base() == (void*)Addr &&
+         "Unable to relocate section in by-function JIT allocation model!");
 
   RelocationList &Relocs = Relocations[Name];
   for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
     RelocationEntry &RE = Relocs[i];
     resolveRelocation(Name, Addr, RE);
   }
+}
+
+// Assign an address to a symbol name and resolve all the relocations
+// associated with it.
+void RuntimeDyldELF::reassignSectionAddress(unsigned SectionID, uint64_t Addr) {
+  // The address to use for relocation resolution is not
+  // the address of the local section buffer. We must be doing
+  // a remote execution environment of some sort. Re-apply any
+  // relocations referencing this section with the given address.
+  //
+  // Addr is a uint64_t because we can't assume the pointer width
+  // of the target is the same as that of the host. Just use a generic
+  // "big enough" type.
+  assert(0);
 }
 
 bool RuntimeDyldELF::isCompatibleFormat(const MemoryBuffer *InputBuffer) const {

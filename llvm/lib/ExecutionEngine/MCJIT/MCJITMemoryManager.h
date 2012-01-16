@@ -31,6 +31,16 @@ public:
   // We own the JMM, so make sure to delete it.
   ~MCJITMemoryManager() { delete JMM; }
 
+  uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
+                               unsigned SectionID) {
+    return JMM->allocateDataSection(Size, Alignment, SectionID);
+  }
+
+  uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
+                               unsigned SectionID) {
+    return JMM->allocateCodeSection(Size, Alignment, SectionID);
+  }
+
   // Allocate ActualSize bytes, or more, for the named function. Return
   // a pointer to the allocated memory and update Size to reflect how much
   // memory was acutally allocated.
