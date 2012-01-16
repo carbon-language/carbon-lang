@@ -48,6 +48,7 @@ public:
     MO_ExternalSymbol,         ///< Name of external global symbol
     MO_GlobalAddress,          ///< Address of a global value
     MO_BlockAddress,           ///< Address of a basic block
+    MO_RegisterMask,           ///< Mask of preserved registers.
     MO_Metadata,               ///< Metadata reference (for debug info)
     MO_MCSymbol                ///< MCSymbol reference (for debug/eh info)
   };
@@ -141,6 +142,7 @@ private:
     const ConstantFP *CFP;    // For MO_FPImmediate.
     const ConstantInt *CI;    // For MO_CImmediate. Integers > 64bit.
     int64_t ImmVal;           // For MO_Immediate.
+    const uint32_t *RegMask;  // For MO_RegisterMask.
     const MDNode *MD;         // For MO_Metadata.
     MCSymbol *Sym;            // For MO_MCSymbol
 
@@ -220,9 +222,12 @@ public:
   bool isSymbol() const { return OpKind == MO_ExternalSymbol; }
   /// isBlockAddress - Tests if this is a MO_BlockAddress operand.
   bool isBlockAddress() const { return OpKind == MO_BlockAddress; }
+  /// isRegMask - Tests if this is a MO_RegisterMask operand.
+  bool isRegMask() const { return OpKind == MO_RegisterMask; }
   /// isMetadata - Tests if this is a MO_Metadata operand.
   bool isMetadata() const { return OpKind == MO_Metadata; }
   bool isMCSymbol() const { return OpKind == MO_MCSymbol; }
+
 
   //===--------------------------------------------------------------------===//
   // Accessors for Register Operands
@@ -436,6 +441,22 @@ public:
     return Contents.OffsetedInfo.Val.SymbolName;
   }
 
+  /// clobbersPhysReg - Returns true if this RegMask operand clobbers PhysReg.
+  bool clobbersPhysReg(unsigned PhysReg) const {
+    assert(isRegMask() && "Wrong MachineOperand accessor");
+    // See TargetRegisterInfo.h.
+    assert(PhysReg < (1u << 30) && "Not a physical register");
+    return !Contents.RegMask ||
+           !(Contents.RegMask[PhysReg / 32] & (1u << PhysReg % 32));
+  }
+
+  /// getRegMask - Returns a bit mask of registers preserved by this RegMask
+  /// operand.  A NULL pointer means that all registers are clobbered.
+  const uint32_t *getRegMask() const {
+    assert(isRegMask() && "Wrong MachineOperand accessor");
+    return Contents.RegMask;
+  }
+
   const MDNode *getMetadata() const {
     assert(isMetadata() && "Wrong MachineOperand accessor");
     return Contents.MD;
@@ -580,6 +601,23 @@ public:
     Op.Contents.OffsetedInfo.Val.BA = BA;
     Op.setOffset(0); // Offset is always 0.
     Op.setTargetFlags(TargetFlags);
+    return Op;
+  }
+  /// CreateRegMask - Creates a register mask operand referencing Mask.  The
+  /// operand does not take ownership of the memory referenced by Mask, it must
+  /// remain valid for the lifetime of the operand.
+  ///
+  /// A RegMask operand represents a set of non-clobbered physical registers on
+  /// an instruction that clobbers many registers, typically a call.  The bit
+  /// mask has a bit set for each physreg that is preserved by this
+  /// instruction, as described in the documentation for
+  /// TargetRegisterInfo::getCallPreservedMask().
+  ///
+  /// Any physreg with a 0 bit in the mask is clobbered by the instruction.
+  ///
+  static MachineOperand CreateRegMask(const uint32_t *Mask) {
+    MachineOperand Op(MachineOperand::MO_RegisterMask);
+    Op.Contents.RegMask = Mask;
     return Op;
   }
   static MachineOperand CreateMetadata(const MDNode *Meta) {

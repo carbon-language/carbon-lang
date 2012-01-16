@@ -355,6 +355,10 @@ Release Notes</a>.</h1>
   frozen when register allocation starts.  Target hooks should use the
   <code>MRI->canReserveReg(FramePtr)</code> method to avoid accidentally
   disabling frame pointer elimination during register allocation.</li>
+  <li>A new kind of <code>MachineOperand</code> provides a compact
+  representation of large clobber lists on call instructions.  The register
+  mask operand references a bit mask of preserved registers. Everything else is
+  clobbered.</li>
 </ul>
 </div>
 

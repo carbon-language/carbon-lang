@@ -124,6 +124,11 @@ public:
     return *this;
   }
 
+  const MachineInstrBuilder &addRegMask(const uint32_t *Mask) const {
+    MI->addOperand(MachineOperand::CreateRegMask(Mask));
+    return *this;
+  }
+
   const MachineInstrBuilder &addMemOperand(MachineMemOperand *MMO) const {
     MI->addMemOperand(*MI->getParent()->getParent(), MMO);
     return *this;

@@ -216,6 +216,8 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
            getOffset() == Other.getOffset();
   case MachineOperand::MO_BlockAddress:
     return getBlockAddress() == Other.getBlockAddress();
+  case MO_RegisterMask:
+    return getRegMask() == Other.getRegMask();
   case MachineOperand::MO_MCSymbol:
     return getMCSymbol() == Other.getMCSymbol();
   case MachineOperand::MO_Metadata:
@@ -323,6 +325,9 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     OS << '<';
     WriteAsOperand(OS, getBlockAddress(), /*PrintType=*/false);
     OS << '>';
+    break;
+  case MachineOperand::MO_RegisterMask:
+    OS << (getRegMask() ? "<regmask>" : "<regmask:null>");
     break;
   case MachineOperand::MO_Metadata:
     OS << '<';

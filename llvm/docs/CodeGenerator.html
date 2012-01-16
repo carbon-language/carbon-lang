@@ -709,6 +709,21 @@ ret
 
 <!-- _______________________________________________________________________ -->
 <h4>
+  <a name="callclobber">Call-clobbered registers</a>
+</h4>
+
+<div>
+
+<p>Some machine instructions, like calls, clobber a large number of physical
+   registers.  Rather than adding <code>&lt;def,dead&gt;</code> operands for
+   all of them, it is possible to use an <code>MO_RegisterMask</code> operand
+   instead.  The register mask operand holds a bit mask of preserved registers,
+   and everything else is considered to be clobbered by the instruction.  </p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
   <a name="ssa">Machine code in SSA form</a>
 </h4>
 
