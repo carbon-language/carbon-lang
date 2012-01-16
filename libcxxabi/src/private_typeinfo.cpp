@@ -282,12 +282,8 @@ __class_type_info::process_static_type_below_dst(__dynamic_cast_info* info,
                                                  const void* current_ptr,
                                                  int path_below) const
 {
-    // Record that we found a static_type
-    info->found_any_static_type = true;  // TODO: Consider removing, no one is currently listening
     if (current_ptr == info->static_ptr)
     {
-        // Record that we found (static_ptr, static_type)
-        info->found_our_static_ptr = true;  // TODO: Consider removing, no one is currently listening
         // Record the most public path from (dynamic_ptr, dynamic_type) to
         //                                  (static_ptr, static_type)
         if (info->path_dynamic_ptr_to_static_ptr != public_path)
@@ -424,59 +420,64 @@ __vmi_class_type_info::search_below_dst(__dynamic_cast_info* info,
     {
         // This is not a static_type and not a dst_type.
         const Iter e = __base_info + __base_count;
-        if ((__flags & __diamond_shaped_mask) || info->number_to_static_ptr == 1)
+        Iter p = __base_info;
+        p->search_below_dst(info, current_ptr, path_below);
+        if (++p < e)
         {
-            // If there are multiple paths to a base above from here, or if
-            //    a dst_type pointing to (static_ptr, static_type) has been found,
-            //    then there is no way to break out of this loop early unless
-            //    something below detects the search is done.
-            for (Iter p = __base_info; p < e; ++p)
+            if ((__flags & __diamond_shaped_mask) || info->number_to_static_ptr == 1)
             {
-                p->search_below_dst(info, current_ptr, path_below);
-                if (info->search_done)
-                    break;
+                // If there are multiple paths to a base above from here, or if
+                //    a dst_type pointing to (static_ptr, static_type) has been found,
+                //    then there is no way to break out of this loop early unless
+                //    something below detects the search is done.
+                do
+                {
+                    if (info->search_done)
+                        break;
+                    p->search_below_dst(info, current_ptr, path_below);
+                } while (++p < e);
             }
-        }
-        else if (__flags & __non_diamond_repeat_mask)
-        {
-            // There are not multiple paths to any base class from here and a
-            //   dst_type pointing to (static_ptr, static_type) has not yet been
-            //   found.
-            for (Iter p = __base_info; p < e; ++p)
+            else if (__flags & __non_diamond_repeat_mask)
             {
-                p->search_below_dst(info, current_ptr, path_below);
-                if (info->search_done)
-                    break;
-                // If we just found a dst_type with a public path to (static_ptr, static_type),
-                //    then the only reason to continue the search is to make sure
-                //    no other dst_type points to (static_ptr, static_type).
-                //    If !diamond, then we don't need to search here.
-                if (info->number_to_static_ptr == 1 &&
-                          info->path_dst_ptr_to_static_ptr == public_path)
-                    break;
+                // There are not multiple paths to any base class from here and a
+                //   dst_type pointing to (static_ptr, static_type) has not yet been
+                //   found.
+                do
+                {
+                    if (info->search_done)
+                        break;
+                    // If we just found a dst_type with a public path to (static_ptr, static_type),
+                    //    then the only reason to continue the search is to make sure
+                    //    no other dst_type points to (static_ptr, static_type).
+                    //    If !diamond, then we don't need to search here.
+                    if (info->number_to_static_ptr == 1 &&
+                              info->path_dst_ptr_to_static_ptr == public_path)
+                        break;
+                    p->search_below_dst(info, current_ptr, path_below);
+                } while (++p < e);
             }
-        }
-        else
-        {
-            // There are no repeated types above this node.
-            // There are no nodes with multiple parents above this node.
-            // no dst_type has been found to (static_ptr, static_type)
-            for (Iter p = __base_info; p < e; ++p)
+            else
             {
-                p->search_below_dst(info, current_ptr, path_below);
-                if (info->search_done)
-                    break;
-                // If we just found a dst_type with a public path to (static_ptr, static_type),
-                //    then the only reason to continue the search is to make sure sure
-                //    no other dst_type points to (static_ptr, static_type).
-                //    If !diamond, then we don't need to search here.
-                // if we just found a dst_type with a private path to (static_ptr, static_type),
-                //    then we're only looking for a public path to (static_ptr, static_type)
-                //    and to check for other dst_types.
-                //    If !diamond & !repeat, then there is not a pointer to (static_ptr, static_type)
-                //    and not a dst_type under here.
-                if (info->number_to_static_ptr == 1)
-                    break;
+                // There are no repeated types above this node.
+                // There are no nodes with multiple parents above this node.
+                // no dst_type has been found to (static_ptr, static_type)
+                do
+                {
+                    if (info->search_done)
+                        break;
+                    // If we just found a dst_type with a public path to (static_ptr, static_type),
+                    //    then the only reason to continue the search is to make sure sure
+                    //    no other dst_type points to (static_ptr, static_type).
+                    //    If !diamond, then we don't need to search here.
+                    // if we just found a dst_type with a private path to (static_ptr, static_type),
+                    //    then we're only looking for a public path to (static_ptr, static_type)
+                    //    and to check for other dst_types.
+                    //    If !diamond & !repeat, then there is not a pointer to (static_ptr, static_type)
+                    //    and not a dst_type under here.
+                    if (info->number_to_static_ptr == 1)
+                        break;
+                    p->search_below_dst(info, current_ptr, path_below);
+                } while (++p < e);
             }
         }
     }
@@ -640,33 +641,41 @@ __vmi_class_type_info::search_above_dst(__dynamic_cast_info* info,
         //    3.  We can prove that there is no public path to (static_ptr, static_type)
         //        above here.
         const Iter e = __base_info + __base_count;
-        for (Iter p = __base_info; p < e; ++p)
+        Iter p = __base_info;
+        // Zero out found flags
+        info->found_our_static_ptr = false;
+        info->found_any_static_type = false;
+        p->search_above_dst(info, dst_ptr, current_ptr, path_below);
+        if (++p < e)
         {
-            // Zero out found flags
-            info->found_our_static_ptr = false;
-            info->found_any_static_type = false;
-            p->search_above_dst(info, dst_ptr, current_ptr, path_below);
-            if (info->search_done)
-                break;
-            if (info->found_our_static_ptr)
+            do
             {
-                // If we found what we're looking for, stop looking above.
-                if (info->path_dst_ptr_to_static_ptr == public_path)
+                if (info->search_done)
                     break;
-                // We found a private path to (static_ptr, static_type)
-                //   If there is no diamond then there is only one path
-                //   to (static_ptr, static_type) from here and we just found it.
-                if (!(__flags & __diamond_shaped_mask))
-                    break;
-            }
-            else if (info->found_any_static_type)
-            {
-                // If we found a static_type that isn't the one we're looking
-                //    for, and if there are no repeated types above here,
-                //    then stop looking.
-                if (!(__flags & __non_diamond_repeat_mask))
-                    break;
-            }
+                if (info->found_our_static_ptr)
+                {
+                    // If we found what we're looking for, stop looking above.
+                    if (info->path_dst_ptr_to_static_ptr == public_path)
+                        break;
+                    // We found a private path to (static_ptr, static_type)
+                    //   If there is no diamond then there is only one path
+                    //   to (static_ptr, static_type) from here and we just found it.
+                    if (!(__flags & __diamond_shaped_mask))
+                        break;
+                }
+                else if (info->found_any_static_type)
+                {
+                    // If we found a static_type that isn't the one we're looking
+                    //    for, and if there are no repeated types above here,
+                    //    then stop looking.
+                    if (!(__flags & __non_diamond_repeat_mask))
+                        break;
+                }
+                // Zero out found flags
+                info->found_our_static_ptr = false;
+                info->found_any_static_type = false;
+                p->search_above_dst(info, dst_ptr, current_ptr, path_below);
+            } while (++p < e);
         }
         // Restore flags
         info->found_our_static_ptr = found_our_static_ptr;

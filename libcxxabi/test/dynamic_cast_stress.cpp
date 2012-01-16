@@ -73,9 +73,9 @@ int main()
 Timing results I'm seeing (median of 3 microseconds):
 
                           libc++abi    gcc's dynamic_cast
-B<Width/2, Depth> -O3      50.694         93.190           libc++abi 84% faster
-B<Width/2, Depth> -Os      55.235         94.103           libc++abi 70% faster
-A<Width, Depth>   -O3      14.895         33.134           libc++abi 122% faster
-A<Width, Depth>   -Os      16.515         31.553           libc++abi 91% faster
+B<Width/2, Depth> -O3      48.334         93.190           libc++abi 93% faster
+B<Width/2, Depth> -Os      58.535         94.103           libc++abi 61% faster
+A<Width, Depth>   -O3      11.515         33.134           libc++abi 188% faster
+A<Width, Depth>   -Os      12.631         31.553           libc++abi 150% faster
 
 */
