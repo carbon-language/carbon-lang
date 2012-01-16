@@ -77,6 +77,13 @@
 TypeName(const TypeName&); \
 const TypeName& operator=(const TypeName&)
 
+extern "C" {
+    int accept$NOCANCEL (int, struct sockaddr * __restrict, socklen_t * __restrict);
+    int close$NOCANCEL(int);
+    int open$NOCANCEL(const char *, int, ...);
+    int __open_extended(const char *, int, uid_t, gid_t, int, struct kauth_filesec *);
+}
+
 namespace fd_interposing {
 
 //----------------------------------------------------------------------
@@ -314,8 +321,9 @@ static int g_log_all_calls = 1;
 // We compact the file descriptor events by default. Set the environment
 // varible "FileDescriptorStackLoggingNoCompact" to keep a full history.
 static int g_compact = 1;
-// The name of the process
-static char g_program_path[PATH_MAX] = {0};
+// The current process ID
+static int g_pid = -1;
+static bool g_enabled = true;
 //----------------------------------------------------------------------
 // Mutex class that will lock a mutex when it is constructed, and unlock
 // it when is goes out of scope
@@ -357,6 +365,9 @@ static void
 backtrace_log (const char *format, ...) __attribute__ ((format (printf, 1, 2)));
 
 static void
+backtrace_error (const char *format, ...) __attribute__ ((format (printf, 1, 2)));
+
+static void
 log_to_fd (int log_fd, const char *format, ...) __attribute__ ((format (printf, 2, 3)));
 
 static inline size_t
@@ -373,44 +384,87 @@ get_backtrace (Frames &frame_buffer, size_t frames_to_remove)
     return frame_buffer.size();
 }
 
+static int g_log_fd = STDOUT_FILENO;
+static int g_initialized = 0;
+
+const char *
+get_process_fullpath (bool force = false)
+{
+    static char g_process_fullpath[PATH_MAX] = {0};
+    if (force || g_process_fullpath[0] == '\0')
+    {
+        // If DST is NULL, then return the number of bytes needed.
+        uint32_t len = sizeof(g_process_fullpath);
+        if (_NSGetExecutablePath (g_process_fullpath, &len) != 0)
+            strncpy (g_process_fullpath, "<error>", sizeof(g_process_fullpath));
+    }
+    return g_process_fullpath;
+}
+
+// Returns the current process ID, or -1 if inserposing not enabled for
+// this process
+static int
+get_interposed_pid()
+{
+    if (!g_enabled)
+        return -1;
+
+    const pid_t pid = getpid();
+    if (g_pid != pid)
+    {
+        if (g_pid == -1)
+        {
+            g_pid = pid;
+            log ("Interposing file descriptor create and delete functions for %s (pid=%i)\n", get_process_fullpath (true), pid);
+        }
+        else
+        {
+            log ("pid=%i: disabling interposing file descriptor create and delete functions for child process %s (pid=%i)\n", g_pid, get_process_fullpath (true), pid);
+            g_enabled = false;
+            return -1;
+        }
+        // Log when our process changes
+    }
+    return g_pid;
+}
+
 static int
 get_logging_fd ()
 {
-    static int g_log_fd = STDOUT_FILENO;
-    static int initialized = 0;
+    if (!g_enabled)
+        return -1;
     
-    if (!initialized) 
+    if (!g_initialized) 
     {
-        initialized = 1;
+        g_initialized = 1;
 
-        // Keep all stack info around for all fd create and delete calls.
-        // Otherwise we will remove the fd create call when a corresponding
-        // fd delete call is received
-        if (getenv("FileDescriptorStackLoggingNoCompact"))
-            g_compact = 0;
+        const pid_t pid = get_interposed_pid();
 
-        if (getenv("FileDescriptorMinimalLogging"))
-            g_log_all_calls = 0;
-
-        char program_basename[PATH_MAX];
-        // If DST is NULL, then return the number of bytes needed.
-        uint32_t len = sizeof(g_program_path);
-        if (_NSGetExecutablePath (g_program_path, &len) == 0)
+        if (g_enabled)
         {
-            strncpy (program_basename, g_program_path, sizeof(program_basename));
-            const char *program_basename_cstr = basename(program_basename);
-            if (program_basename_cstr)
-            {
-                // Only let this interposing happen on the first time this matches
-                // and stop this from happening so any child processes don't also
-                // log their file descriptors
-                ::unsetenv ("DYLD_INSERT_LIBRARIES");
-                const char *log_path = getenv ("FileDescriptorLogFile");
-                if (log_path)
-                    g_log_fd = ::creat (log_path, 0660);
-                if (g_log_fd >= 0)
-                    log ("Logging file descriptor functions process '%s' (pid = %i)\n", g_program_path, getpid());
-            }
+            // Keep all stack info around for all fd create and delete calls.
+            // Otherwise we will remove the fd create call when a corresponding
+            // fd delete call is received
+            if (getenv("FileDescriptorStackLoggingNoCompact"))
+                g_compact = 0;
+
+            if (getenv("FileDescriptorMinimalLogging"))
+                g_log_all_calls = 0;
+
+            const char *log_path = getenv ("FileDescriptorLogFile");
+            if (log_path)
+                g_log_fd = ::creat (log_path, 0660);
+            else
+                g_log_fd = STDOUT_FILENO;
+
+            // Only let this interposing happen on the first time this matches
+            // and stop this from happening so any child processes don't also
+            // log their file descriptors
+            ::unsetenv ("DYLD_INSERT_LIBRARIES");
+        }
+        else
+        {
+            log ("pid=%i: logging disabled\n", getpid());
         }
     }
     return g_log_fd;
@@ -513,7 +567,30 @@ backtrace_log (const char *format, ...)
 }
 
 void
-save_backtrace (int fd, int err, const StringSP &string_sp, bool is_create);
+backtrace_error (const char *format, ...)
+{
+    const int pid = get_interposed_pid();
+    if (pid >= 0)
+    {
+        const int log_fd = get_logging_fd ();
+        if (log_fd >= 0)
+        {
+            log ("\nerror: %s (pid=%i): ", get_process_fullpath (), pid);
+
+            if (format && format[0])
+            {
+                va_list args;
+                va_start (args, format);
+                log (format, args);
+                va_end (args);
+            }
+        
+            Frames frames;
+            if (get_backtrace(frames, 2))
+                ::backtrace_symbols_fd (frames.data(), frames.size(), log_fd);
+        }
+    }
+}
 
 void
 save_backtrace (int fd, int err, const StringSP &string_sp, bool is_create)
@@ -586,19 +663,27 @@ save_backtrace (int fd, int err, const StringSP &string_sp, bool is_create)
 extern "C" int
 socket$__interposed__ (int domain, int type, int protocol)
 {
-    Locker locker (&g_mutex);
-    const int fd = ::socket (domain, type, protocol);
-    InvalidFDErrno fd_errno(fd);
-    StringSP description_sp(new String);
-    if (fd == -1)
-        description_sp->printf("socket (domain = %i, type = %i, protocol = %i) => fd=%i  errno = %i", domain, type, protocol, fd, fd_errno.get_errno());
+    const int pid = get_interposed_pid();
+    if (pid >= 0)
+    {
+        Locker locker (&g_mutex);
+        const int fd = ::socket (domain, type, protocol);
+        InvalidFDErrno fd_errno(fd);
+        StringSP description_sp(new String);
+        if (fd == -1)
+            description_sp->printf("pid=%i: socket (domain = %i, type = %i, protocol = %i) => fd=%i  errno = %i", pid, domain, type, protocol, fd, fd_errno.get_errno());
+        else
+            description_sp->printf("pid=%i: socket (domain = %i, type = %i, protocol = %i) => fd=%i", pid, domain, type, protocol, fd);
+        if (g_log_all_calls)
+            description_sp->log (get_logging_fd());
+        if (fd >= 0)
+            save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
+        return fd;
+    }
     else
-        description_sp->printf("socket (domain = %i, type = %i, protocol = %i) => fd=%i", domain, type, protocol, fd);
-    if (g_log_all_calls)
-        description_sp->log (get_logging_fd());
-    if (fd >= 0)
-        save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
-    return fd;
+    {
+        return ::socket (domain, type, protocol);
+    }
 }
 
 //----------------------------------------------------------------------
@@ -607,19 +692,27 @@ socket$__interposed__ (int domain, int type, int protocol)
 extern "C" int
 socketpair$__interposed__ (int domain, int type, int protocol, int fds[2])
 {
-    Locker locker (&g_mutex);
-    fds[0] = -1;
-    fds[1] = -1;
-    const int err = socketpair (domain, type, protocol, fds);
-    NegativeErrorErrno err_errno(err);
-    StringSP description_sp(new String ("socketpair (domain=%i, type=%i, protocol=%i, {fd=%i, fd=%i}) -> err=%i", domain, type, protocol, fds[0], fds[1], err));
-    if (g_log_all_calls)
-        description_sp->log (get_logging_fd());
-    if (fds[0] >= 0)
-        save_backtrace (fds[0], err_errno.get_errno(), description_sp, true);
-    if (fds[1] >= 0)
-        save_backtrace (fds[1], err_errno.get_errno(), description_sp, true);
-    return err;
+    const int pid = get_interposed_pid();
+    if (pid >= 0)
+    {
+        Locker locker (&g_mutex);
+        fds[0] = -1;
+        fds[1] = -1;
+        const int err = socketpair (domain, type, protocol, fds);
+        NegativeErrorErrno err_errno(err);
+        StringSP description_sp(new String ("pid=%i: socketpair (domain=%i, type=%i, protocol=%i, {fd=%i, fd=%i}) -> err=%i", pid, domain, type, protocol, fds[0], fds[1], err));
+        if (g_log_all_calls)
+            description_sp->log (get_logging_fd());
+        if (fds[0] >= 0)
+            save_backtrace (fds[0], err_errno.get_errno(), description_sp, true);
+        if (fds[1] >= 0)
+            save_backtrace (fds[1], err_errno.get_errno(), description_sp, true);
+        return err;
+    }
+    else
+    {
+        return socketpair (domain, type, protocol, fds);
+    }
 }
 
 //----------------------------------------------------------------------
@@ -628,48 +721,61 @@ socketpair$__interposed__ (int domain, int type, int protocol, int fds[2])
 extern "C" int	
 open$__interposed__ (const char *path, int oflag, int mode)
 {
-    Locker locker (&g_mutex);
-    int fd = -2;
-    StringSP description_sp(new String);
-    if (oflag & O_CREAT)
+    const int pid = get_interposed_pid();
+    if (pid >= 0)
     {
-        fd = open (path, oflag, mode);
-        description_sp->printf("open (path = '%s', oflag = %i, mode = %i) -> fd=%i", path, oflag, mode, fd);
+        Locker locker (&g_mutex);
+        int fd = -2;
+        StringSP description_sp(new String);
+        if (oflag & O_CREAT)
+        {
+            fd = ::open (path, oflag, mode);
+            description_sp->printf("pid=%i: open (path = '%s', oflag = %i, mode = %i) -> fd=%i", pid, path, oflag, mode, fd);
+        }
+        else
+        {
+            fd = ::open (path, oflag);
+            description_sp->printf("pid=%i: open (path = '%s', oflag = %i) -> fd=%i", pid, path, oflag, fd);
+        }
+    
+        InvalidFDErrno fd_errno(fd);
+        if (g_log_all_calls)
+            description_sp->log (get_logging_fd());
+        if (fd >= 0)
+            save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
+        return fd;
     }
     else
     {
-        fd = open (path, oflag);
-        description_sp->printf("open (path = '%s', oflag = %i) -> fd=%i", path, oflag, fd);
+        return ::open (path, oflag, mode);
     }
-    
-    InvalidFDErrno fd_errno(fd);
-    if (g_log_all_calls)
-        description_sp->log (get_logging_fd());
-    if (fd >= 0)
-        save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
-    return fd;
 }
 
 //----------------------------------------------------------------------
 // open$NOCANCEL() interpose function
 //----------------------------------------------------------------------
-extern "C" int open$NOCANCEL(const char *, int, ...);
-extern "C" int __open_nocancel(const char *, int, ...);
 extern "C" int	
 open$NOCANCEL$__interposed__ (const char *path, int oflag, int mode)
 {
-    Locker locker (&g_mutex);
-    const int fd = open$NOCANCEL (path, oflag, mode);
-    InvalidFDErrno fd_errno(fd);
-    StringSP description_sp(new String ("open$NOCANCEL (path = '%s', oflag = %i, mode = %i) -> fd=%i", path, oflag, mode, fd));
-    if (g_log_all_calls)
-        description_sp->log (get_logging_fd());
-    if (fd >= 0)
-        save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
-    return fd;
+    const int pid = get_interposed_pid();
+    if (pid >= 0)
+    {
+        Locker locker (&g_mutex);
+        const int fd = ::open$NOCANCEL (path, oflag, mode);
+        InvalidFDErrno fd_errno(fd);
+        StringSP description_sp(new String ("pid=%i: open$NOCANCEL (path = '%s', oflag = %i, mode = %i) -> fd=%i", pid, path, oflag, mode, fd));
+        if (g_log_all_calls)
+            description_sp->log (get_logging_fd());
+        if (fd >= 0)
+            save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
+        return fd;        
+    }
+    else
+    {
+        return ::open$NOCANCEL (path, oflag, mode);
+    }
 }
 
-extern "C" int __open_extended(const char *, int, uid_t, gid_t, int, struct kauth_filesec *);
 
 //----------------------------------------------------------------------
 // __open_extended() interpose function
@@ -677,15 +783,23 @@ extern "C" int __open_extended(const char *, int, uid_t, gid_t, int, struct kaut
 extern "C" int 
 __open_extended$__interposed__ (const char *path, int oflag, uid_t uid, gid_t gid, int mode, struct kauth_filesec *fsacl)
 {
-    Locker locker (&g_mutex);
-    const int fd = __open_extended (path, oflag, uid, gid, mode, fsacl);
-    InvalidFDErrno fd_errno(fd);
-    StringSP description_sp(new String ("__open_extended (path='%s', oflag=%i, uid=%i, gid=%i, mode=%i, fsacl=%p) -> fd=%i", path, oflag, uid, gid, mode, fsacl, fd));
-    if (g_log_all_calls)
-        description_sp->log (get_logging_fd());
-    if (fd >= 0)
-        save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
-    return fd;
+    const int pid = get_interposed_pid();
+    if (pid >= 0)
+    {
+        Locker locker (&g_mutex);
+        const int fd = ::__open_extended (path, oflag, uid, gid, mode, fsacl);
+        InvalidFDErrno fd_errno(fd);
+        StringSP description_sp(new String ("pid=%i: __open_extended (path='%s', oflag=%i, uid=%i, gid=%i, mode=%i, fsacl=%p) -> fd=%i", pid, path, oflag, uid, gid, mode, fsacl, fd));
+        if (g_log_all_calls)
+            description_sp->log (get_logging_fd());
+        if (fd >= 0)
+            save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
+        return fd;
+    }
+    else
+    {
+        return ::__open_extended (path, oflag, uid, gid, mode, fsacl);
+    }
 }
 
 //----------------------------------------------------------------------
@@ -694,16 +808,23 @@ __open_extended$__interposed__ (const char *path, int oflag, uid_t uid, gid_t gi
 extern "C" int
 kqueue$__interposed__ (void)
 {
-    Locker locker (&g_mutex);
-    const int fd = ::kqueue ();
-    InvalidFDErrno fd_errno(fd);
-    StringSP description_sp(new String ("kqueue () -> fd=%i", fd));
-    if (g_log_all_calls)
-        description_sp->log (get_logging_fd());
-    if (fd >= 0)
-        save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
-    return fd;
-    
+    const int pid = get_interposed_pid();
+    if (pid >= 0)
+    {
+        Locker locker (&g_mutex);
+        const int fd = ::kqueue ();
+        InvalidFDErrno fd_errno(fd);
+        StringSP description_sp(new String ("pid=%i: kqueue () -> fd=%i", pid, fd));
+        if (g_log_all_calls)
+            description_sp->log (get_logging_fd());
+        if (fd >= 0)
+            save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
+        return fd;
+    }
+    else
+    {
+        return ::kqueue ();
+    }
 }
 
 //----------------------------------------------------------------------
@@ -712,15 +833,23 @@ kqueue$__interposed__ (void)
 extern "C" int	
 shm_open$__interposed__ (const char *path, int oflag, int mode)
 {
-    Locker locker (&g_mutex);
-    const int fd = shm_open (path, oflag, mode);
-    InvalidFDErrno fd_errno(fd);
-    StringSP description_sp(new String ("shm_open (path = '%s', oflag = %i, mode = %i) -> fd=%i", path, oflag, mode, fd));
-    if (g_log_all_calls)
-        description_sp->log (get_logging_fd());
-    if (fd >= 0)
-        save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
-    return fd;
+    const int pid = get_interposed_pid();
+    if (pid >= 0)
+    {
+        Locker locker (&g_mutex);
+        const int fd = ::shm_open (path, oflag, mode);
+        InvalidFDErrno fd_errno(fd);
+        StringSP description_sp(new String ("pid=%i: shm_open (path = '%s', oflag = %i, mode = %i) -> fd=%i", pid, path, oflag, mode, fd));
+        if (g_log_all_calls)
+            description_sp->log (get_logging_fd());
+        if (fd >= 0)
+            save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
+        return fd;
+    }
+    else
+    {
+        return ::shm_open (path, oflag, mode);
+    }
 }
 
 //----------------------------------------------------------------------
@@ -729,34 +858,49 @@ shm_open$__interposed__ (const char *path, int oflag, int mode)
 extern "C" int
 accept$__interposed__ (int socket, struct sockaddr *address, socklen_t *address_len)
 {
-    Locker locker (&g_mutex);
-    const int fd = accept (socket, address, address_len);
-    InvalidFDErrno fd_errno(fd);
-    StringSP description_sp(new String ("accept (socket=%i, ...) -> fd=%i", socket, fd));
-    if (g_log_all_calls)
-        description_sp->log (get_logging_fd());
-    if (fd >= 0)
-        save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
-    return fd;
+    const int pid = get_interposed_pid();
+    if (pid >= 0)
+    {
+        Locker locker (&g_mutex);
+        const int fd = ::accept (socket, address, address_len);
+        InvalidFDErrno fd_errno(fd);
+        StringSP description_sp(new String ("pid=%i: accept (socket=%i, ...) -> fd=%i", pid, socket, fd));
+        if (g_log_all_calls)
+            description_sp->log (get_logging_fd());
+        if (fd >= 0)
+            save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
+        return fd;
+    }
+    else
+    {
+        return ::accept (socket, address, address_len);
+    }
 }
 
 
 //----------------------------------------------------------------------
 // accept$NOCANCEL() interpose function
 //----------------------------------------------------------------------
-extern "C" int accept$NOCANCEL (int, struct sockaddr * __restrict, socklen_t * __restrict);
 extern "C" int
 accept$NOCANCEL$__interposed__ (int socket, struct sockaddr *address, socklen_t *address_len)
 {
-    Locker locker (&g_mutex);
-    const int fd = accept$NOCANCEL (socket, address, address_len);
-    InvalidFDErrno fd_errno(fd);
-    StringSP description_sp(new String ("accept$NOCANCEL (socket=%i, ...) -> fd=%i", socket, fd));
-    if (g_log_all_calls)
-        description_sp->log (get_logging_fd());
-    if (fd >= 0)
-        save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
-    return fd;
+    const int pid = get_interposed_pid();
+    if (pid >= 0)
+    {
+        Locker locker (&g_mutex);
+        const int fd = ::accept$NOCANCEL (socket, address, address_len);
+        InvalidFDErrno fd_errno(fd);
+        StringSP description_sp(new String ("pid=%i: accept$NOCANCEL (socket=%i, ...) -> fd=%i", pid, socket, fd));
+        if (g_log_all_calls)
+            description_sp->log (get_logging_fd());
+        if (fd >= 0)
+            save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
+        return fd;
+    }
+    else
+    {
+        return ::accept$NOCANCEL (socket, address, address_len);
+    }
 }
 
 //----------------------------------------------------------------------
@@ -765,15 +909,23 @@ accept$NOCANCEL$__interposed__ (int socket, struct sockaddr *address, socklen_t 
 extern "C" int	
 dup$__interposed__ (int fd2)
 {
-    Locker locker (&g_mutex);
-    const int fd = dup (fd2);
-    InvalidFDErrno fd_errno(fd);
-    StringSP description_sp(new String ("dup (fd2=%i) -> fd=%i", fd2, fd));
-    if (g_log_all_calls)
-        description_sp->log (get_logging_fd());
-    if (fd >= 0)
-        save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
-    return fd;
+    const int pid = get_interposed_pid();
+    if (pid >= 0)
+    {
+        Locker locker (&g_mutex);
+        const int fd = ::dup (fd2);
+        InvalidFDErrno fd_errno(fd);
+        StringSP description_sp(new String ("pid=%i: dup (fd2=%i) -> fd=%i", pid, fd2, fd));
+        if (g_log_all_calls)
+            description_sp->log (get_logging_fd());
+        if (fd >= 0)
+            save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
+        return fd;
+    }
+    else
+    {
+        return ::dup (fd2);
+    }
 }
 
 //----------------------------------------------------------------------
@@ -782,24 +934,32 @@ dup$__interposed__ (int fd2)
 extern "C" int	
 dup2$__interposed__ (int fd1, int fd2)
 {
-    Locker locker (&g_mutex);
-    // If "fd2" is already opened, it will be closed during the
-    // dup2 call below, so we need to see if we have fd2 in our
-    // open map and treat it as a close(fd2)
-    FDEventMap::iterator pos = g_fd_event_map.find (fd2);
-    StringSP dup2_close_description_sp(new String ("dup2 (fd1=%i, fd2=%i) -> will close (fd=%i)", fd1, fd2, fd2));
-    if (pos != g_fd_event_map.end() && pos->second.back()->IsCreateEvent())
-        save_backtrace (fd2, 0, dup2_close_description_sp, false);
+    const int pid = get_interposed_pid();
+    if (pid >= 0)
+    {
+        Locker locker (&g_mutex);
+        // If "fd2" is already opened, it will be closed during the
+        // dup2 call below, so we need to see if we have fd2 in our
+        // open map and treat it as a close(fd2)
+        FDEventMap::iterator pos = g_fd_event_map.find (fd2);
+        StringSP dup2_close_description_sp(new String ("pid=%i: dup2 (fd1=%i, fd2=%i) -> will close (fd=%i)", pid, fd1, fd2, fd2));
+        if (pos != g_fd_event_map.end() && pos->second.back()->IsCreateEvent())
+            save_backtrace (fd2, 0, dup2_close_description_sp, false);
 
-    const int fd = dup2(fd1, fd2);
-    InvalidFDErrno fd_errno(fd);
-    StringSP description_sp(new String ("dup2 (fd1=%i, fd2=%i) -> fd=%i", fd1, fd2, fd));
-    if (g_log_all_calls)
-        description_sp->log (get_logging_fd());
+        const int fd = ::dup2(fd1, fd2);
+        InvalidFDErrno fd_errno(fd);
+        StringSP description_sp(new String ("pid=%i: dup2 (fd1=%i, fd2=%i) -> fd=%i", pid, fd1, fd2, fd));
+        if (g_log_all_calls)
+            description_sp->log (get_logging_fd());
 
-    if (fd >= 0)
-        save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
-    return fd;
+        if (fd >= 0)
+            save_backtrace (fd, fd_errno.get_errno(), description_sp, true);
+        return fd;
+    }
+    else
+    {
+        return ::dup2(fd1, fd2);
+    }
 }
 
 //----------------------------------------------------------------------
@@ -808,76 +968,90 @@ dup2$__interposed__ (int fd1, int fd2)
 extern "C" int 
 close$__interposed__ (int fd) 
 {
-    Locker locker (&g_mutex);
-    const int err = close(fd);
-    NegativeErrorErrno err_errno(err);
-    StringSP description_sp (new String);
-    if (err == -1)
-        description_sp->printf("close (fd=%i) => %i errno = %i (%s))", fd, err, err_errno.get_errno(), strerror(err_errno.get_errno()));
-    else
-        description_sp->printf("close (fd=%i) => %i", fd, err);
-    if (g_log_all_calls)
-        description_sp->log (get_logging_fd());
+    const int pid = get_interposed_pid();
+    if (pid >= 0)
+    {
+        Locker locker (&g_mutex);
+        const int err = close(fd);
+        NegativeErrorErrno err_errno(err);
+        StringSP description_sp (new String);
+        if (err == -1)
+            description_sp->printf("pid=%i: close (fd=%i) => %i errno = %i (%s))", pid, fd, err, err_errno.get_errno(), strerror(err_errno.get_errno()));
+        else
+            description_sp->printf("pid=%i: close (fd=%i) => %i", pid, fd, err);
+        if (g_log_all_calls)
+            description_sp->log (get_logging_fd());
 
-    if (err == 0)
-    {
-        if (fd >= 0)
-            save_backtrace (fd, err, description_sp, false);
-    }
-    else if (err == -1)
-    {
-        if (err_errno.get_errno() == EBADF && fd != -1) 
+        if (err == 0)
         {
-            backtrace_log ("\nerror: close on fd=%d resulted in EBADF in process %s (pid = %i)\n", fd, g_program_path, getpid());
-
-            FDEventMap::iterator pos = g_fd_event_map.find (fd);
-            if (pos != g_fd_event_map.end())
+            if (fd >= 0)
+                save_backtrace (fd, err, description_sp, false);
+        }
+        else if (err == -1)
+        {
+            if (err_errno.get_errno() == EBADF && fd != -1) 
             {
-                log (get_logging_fd(), pos->second.back().get(), "\nfd=%d was previously %s with this event:\n", fd, pos->second.back()->IsCreateEvent() ? "opened" : "closed");
+                backtrace_error ("close (fd=%d) resulted in EBADF:\n", fd);
+
+                FDEventMap::iterator pos = g_fd_event_map.find (fd);
+                if (pos != g_fd_event_map.end())
+                {
+                    log (get_logging_fd(), pos->second.back().get(), "\nfd=%d was previously %s with this event:\n", fd, pos->second.back()->IsCreateEvent() ? "opened" : "closed");
+                }
             }
         }
+        return err;
     }
-    return err;
+    else
+    {
+        return close (fd);        
+    }
 }
 
 //----------------------------------------------------------------------
 // close$NOCANCEL() interpose function
 //----------------------------------------------------------------------
-extern "C" int close$NOCANCEL(int);
 extern "C" int
 close$NOCANCEL$__interposed__ (int fd)
 {
-    Locker locker (&g_mutex);
-    const int err = close$NOCANCEL(fd);
-    NegativeErrorErrno err_errno(err);
-    StringSP description_sp (new String);
-    if (err == -1)
-        description_sp->printf("close$NOCANCEL (fd=%i) => %i errno = %i (%s))", fd, err, err_errno.get_errno(), strerror(err_errno.get_errno()));
-    else
-        description_sp->printf("close$NOCANCEL (fd=%i) => %i", fd, err);
-    if (g_log_all_calls)
-        description_sp->log (get_logging_fd());
+    const int pid = get_interposed_pid();
+    if (pid >= 0)
+    {
+        Locker locker (&g_mutex);
+        const int err = close$NOCANCEL(fd);
+        NegativeErrorErrno err_errno(err);
+        StringSP description_sp (new String);
+        if (err == -1)
+            description_sp->printf("pid=%i: close$NOCANCEL (fd=%i) => %i errno = %i (%s))", pid, fd, err, err_errno.get_errno(), strerror(err_errno.get_errno()));
+        else
+            description_sp->printf("pid=%i: close$NOCANCEL (fd=%i) => %i", pid, fd, err);
+        if (g_log_all_calls)
+            description_sp->log (get_logging_fd());
     
-    if (err == 0)
-    {
-        if (fd >= 0)
-            save_backtrace (fd, err, description_sp, false);
-    }
-    else if (err == -1)
-    {
-        if (err_errno.get_errno() == EBADF && fd != -1) 
+        if (err == 0)
         {
-            backtrace_log ("\nerror: close$NOCANCEL on fd=%d resulted in EBADF in process %s (pid = %i)\n", fd, g_program_path, getpid());
-            
-            FDEventMap::iterator pos = g_fd_event_map.find (fd);
-            if (pos != g_fd_event_map.end())
+            if (fd >= 0)
+                save_backtrace (fd, err, description_sp, false);
+        }
+        else if (err == -1)
+        {
+            if (err_errno.get_errno() == EBADF && fd != -1) 
             {
-                log (get_logging_fd(), pos->second.back().get(), "\nfd=%d was previously %s with this event:\n", fd, pos->second.back()->IsCreateEvent() ? "opened" : "closed");
+                backtrace_error ("close$NOCANCEL (fd=%d) resulted in EBADF\n:", fd);
+            
+                FDEventMap::iterator pos = g_fd_event_map.find (fd);
+                if (pos != g_fd_event_map.end())
+                {
+                    log (get_logging_fd(), pos->second.back().get(), "\nfd=%d was previously %s with this event:\n", fd, pos->second.back()->IsCreateEvent() ? "opened" : "closed");
+                }
             }
         }
+        return err;
     }
-    return err;
-    
+    else
+    {
+        return close$NOCANCEL(fd);
+    }    
 }
 
 //----------------------------------------------------------------------
@@ -886,20 +1060,28 @@ close$NOCANCEL$__interposed__ (int fd)
 extern "C" int
 pipe$__interposed__ (int fds[2])
 {
-    Locker locker (&g_mutex);
-    fds[0] = -1;
-    fds[1] = -1;
-    const int err = pipe (fds);
-    const int saved_errno = errno;
-    StringSP description_sp(new String ("pipe ({fd=%i, fd=%i}) -> err=%i", fds[0], fds[1], err));
-    if (g_log_all_calls)
-        description_sp->log (get_logging_fd());
-    if (fds[0] >= 0)
-        save_backtrace (fds[0], saved_errno, description_sp, true);
-    if (fds[1] >= 0)
-        save_backtrace (fds[1], saved_errno, description_sp, true);
-    errno = saved_errno;
-    return err;
+    const int pid = get_interposed_pid();
+    if (pid >= 0)
+    {
+        Locker locker (&g_mutex);
+        fds[0] = -1;
+        fds[1] = -1;
+        const int err = pipe (fds);
+        const int saved_errno = errno;
+        StringSP description_sp(new String ("pid=%i: pipe ({fd=%i, fd=%i}) -> err=%i", pid, fds[0], fds[1], err));
+        if (g_log_all_calls)
+            description_sp->log (get_logging_fd());
+        if (fds[0] >= 0)
+            save_backtrace (fds[0], saved_errno, description_sp, true);
+        if (fds[1] >= 0)
+            save_backtrace (fds[1], saved_errno, description_sp, true);
+        errno = saved_errno;
+        return err;
+    }
+    else
+    {
+        return pipe (fds);
+    }
 }
 
 //----------------------------------------------------------------------
@@ -955,7 +1137,6 @@ DYLD_INTERPOSE(dup2$__interposed__, dup2);
 DYLD_INTERPOSE(kqueue$__interposed__, kqueue);
 DYLD_INTERPOSE(open$__interposed__, open);
 DYLD_INTERPOSE(open$NOCANCEL$__interposed__, open$NOCANCEL);
-DYLD_INTERPOSE(open$NOCANCEL$__interposed__, __open_nocancel);
 DYLD_INTERPOSE(__open_extended$__interposed__, __open_extended);
 DYLD_INTERPOSE(pipe$__interposed__, pipe);
 DYLD_INTERPOSE(shm_open$__interposed__, shm_open);
