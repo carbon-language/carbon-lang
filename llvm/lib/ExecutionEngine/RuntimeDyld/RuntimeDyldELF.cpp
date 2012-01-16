@@ -183,9 +183,9 @@ void RuntimeDyldELF::resolveX86_64Relocation(StringRef Name,
   case ELF::R_X86_64_32S: {
     uint64_t Value = reinterpret_cast<uint64_t>(Addr) + RE.Addend;
     // FIXME: Handle the possibility of this assertion failing
-    assert((RE.Type == ELF::R_X86_64_32 && !(Value & 0xFFFFFFFF00000000)) ||
+    assert((RE.Type == ELF::R_X86_64_32 && !(Value & 0xFFFFFFFF00000000ULL)) ||
            (RE.Type == ELF::R_X86_64_32S &&
-            (Value & 0xFFFFFFFF00000000) == 0xFFFFFFFF00000000));
+            (Value & 0xFFFFFFFF00000000ULL) == 0xFFFFFFFF00000000ULL));
     uint32_t TruncatedAddr = (Value & 0xFFFFFFFF);
     uint32_t *Target = reinterpret_cast<uint32_t*>(TargetAddr);
     *Target = TruncatedAddr;
