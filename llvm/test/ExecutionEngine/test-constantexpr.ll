@@ -1,4 +1,4 @@
-; RUN: lli %s > /dev/null
+; RUN: %lli %s > /dev/null
 
 ; This tests to make sure that we can evaluate weird constant expressions
 

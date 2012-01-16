@@ -1,5 +1,6 @@
-; RUN: lli %s > /dev/null
+; RUN: %lli %s > /dev/null
 ; XFAIL: arm
+; XFAIL: mcjit
 
 @.LC0 = internal global [12 x i8] c"Hello World\00"		; <[12 x i8]*> [#uses=1]
 

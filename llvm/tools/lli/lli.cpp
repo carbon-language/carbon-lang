@@ -95,12 +95,12 @@ namespace {
                      "of the executable"),
             cl::value_desc("function"),
             cl::init("main"));
-  
+
   cl::opt<std::string>
   FakeArgv0("fake-argv0",
             cl::desc("Override the 'argv[0]' value passed into the executing"
                      " program"), cl::value_desc("executable"));
-  
+
   cl::opt<bool>
   DisableCoreFiles("disable-core-files", cl::Hidden,
                    cl::desc("Disable emission of core files if possible"));
@@ -159,7 +159,7 @@ static void do_shutdown() {
 int main(int argc, char **argv, char * const *envp) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
-  
+
   LLVMContext &Context = getGlobalContext();
   atexit(do_shutdown);  // Call llvm_shutdown() on exit.
 
@@ -174,7 +174,7 @@ int main(int argc, char **argv, char * const *envp) {
   // If the user doesn't want core files, disable them.
   if (DisableCoreFiles)
     sys::Process::PreventCoreFiles();
-  
+
   // Load the bitcode...
   SMDiagnostic Err;
   Module *Mod = ParseIRFile(InputFile, Err, Context);
@@ -210,9 +210,11 @@ int main(int argc, char **argv, char * const *envp) {
   if (!TargetTriple.empty())
     Mod->setTargetTriple(Triple::normalize(TargetTriple));
 
-  // Enable MCJIT, if desired.
-  if (UseMCJIT)
+  // Enable MCJIT if desired.
+  if (UseMCJIT && !ForceInterpreter) {
     builder.setUseMCJIT(true);
+    builder.setJITMemoryManager(JITMemoryManager::CreateDefaultMemManager());
+  }
 
   CodeGenOpt::Level OLvl = CodeGenOpt::Default;
   switch (OptLevel) {
@@ -265,15 +267,15 @@ int main(int argc, char **argv, char * const *envp) {
     return -1;
   }
 
-  // If the program doesn't explicitly call exit, we will need the Exit 
-  // function later on to make an explicit call, so get the function now. 
+  // If the program doesn't explicitly call exit, we will need the Exit
+  // function later on to make an explicit call, so get the function now.
   Constant *Exit = Mod->getOrInsertFunction("exit", Type::getVoidTy(Context),
                                                     Type::getInt32Ty(Context),
                                                     NULL);
-  
+
   // Reset errno to zero on entry to main.
   errno = 0;
- 
+
   // Run static constructors.
   EE->runStaticConstructorsDestructors(false);
 
@@ -290,8 +292,8 @@ int main(int argc, char **argv, char * const *envp) {
 
   // Run static destructors.
   EE->runStaticConstructorsDestructors(true);
-  
-  // If the program didn't call exit explicitly, we should call it now. 
+
+  // If the program didn't call exit explicitly, we should call it now.
   // This ensures that any atexit handlers get called correctly.
   if (Function *ExitF = dyn_cast<Function>(Exit)) {
     std::vector<GenericValue> Args;

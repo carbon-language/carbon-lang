@@ -1,4 +1,4 @@
-; RUN: lli %s > /dev/null
+; RUN: %lli %s > /dev/null
 
 define i32 @main() {
 	%X = fadd double 0.000000e+00, 1.000000e+00		; <double> [#uses=1]

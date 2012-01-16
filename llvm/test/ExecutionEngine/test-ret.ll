@@ -1,4 +1,4 @@
-; RUN: lli %s > /dev/null
+; RUN: %lli %s > /dev/null
 
 ; test return instructions
 define void @test1() {

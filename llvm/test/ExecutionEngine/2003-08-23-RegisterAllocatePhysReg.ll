@@ -1,4 +1,4 @@
-; RUN: lli %s > /dev/null
+; RUN: %lli %s > /dev/null
 ; XFAIL: arm
 
 ; This testcase exposes a bug in the local register allocator where it runs out

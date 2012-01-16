@@ -1,4 +1,4 @@
-; RUN: lli %s > /dev/null
+; RUN: %lli %s > /dev/null
 
 target datalayout = "e-p:32:32"
 

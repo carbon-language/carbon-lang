@@ -1,4 +1,4 @@
-; RUN: lli %s > /dev/null
+; RUN: %lli %s > /dev/null
 
 ; Testcase distilled from 256.bzip2.
 

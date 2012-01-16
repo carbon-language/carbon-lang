@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "dyld"
 #include "RuntimeDyldImpl.h"
+#include "llvm/Support/Path.h"
 using namespace llvm;
 using namespace llvm::object;
 
@@ -64,12 +65,36 @@ RuntimeDyld::~RuntimeDyld() {
 
 bool RuntimeDyld::loadObject(MemoryBuffer *InputBuffer) {
   if (!Dyld) {
-    if (RuntimeDyldMachO::isKnownFormat(InputBuffer))
-      Dyld = new RuntimeDyldMachO(MM);
-    else
-      report_fatal_error("Unknown object format!");
+    sys::LLVMFileType type = sys::IdentifyFileType(
+            InputBuffer->getBufferStart(),
+            static_cast<unsigned>(InputBuffer->getBufferSize()));
+    switch (type) {
+      case sys::ELF_Relocatable_FileType:
+      case sys::ELF_Executable_FileType:
+      case sys::ELF_SharedObject_FileType:
+      case sys::ELF_Core_FileType:
+        Dyld = new RuntimeDyldELF(MM);
+        break;
+      case sys::Mach_O_Object_FileType:
+      case sys::Mach_O_Executable_FileType:
+      case sys::Mach_O_FixedVirtualMemorySharedLib_FileType:
+      case sys::Mach_O_Core_FileType:
+      case sys::Mach_O_PreloadExecutable_FileType:
+      case sys::Mach_O_DynamicallyLinkedSharedLib_FileType:
+      case sys::Mach_O_DynamicLinker_FileType:
+      case sys::Mach_O_Bundle_FileType:
+      case sys::Mach_O_DynamicallyLinkedSharedLibStub_FileType:
+      case sys::Mach_O_DSYMCompanion_FileType:
+        Dyld = new RuntimeDyldMachO(MM);
+        break;
+      case sys::Unknown_FileType:
+      case sys::Bitcode_FileType:
+      case sys::Archive_FileType:
+      case sys::COFF_FileType:
+        report_fatal_error("Incompatible object format!");
+    }
   } else {
-    if(!Dyld->isCompatibleFormat(InputBuffer))
+    if (!Dyld->isCompatibleFormat(InputBuffer))
       report_fatal_error("Incompatible object format!");
   }
 

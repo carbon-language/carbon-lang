@@ -1,4 +1,4 @@
-; RUN: lli %s > /dev/null
+; RUN: %lli %s > /dev/null
 ; XFAIL: arm
 
 @A = global i32 0		; <i32*> [#uses=1]

@@ -1,4 +1,4 @@
-; RUN: lli %s > /dev/null
+; RUN: %lli %s > /dev/null
 
 define i32 @main() {
 	%A = add i8 0, 12		; <i8> [#uses=1]

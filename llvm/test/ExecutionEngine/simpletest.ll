@@ -1,4 +1,4 @@
-; RUN: lli %s > /dev/null
+; RUN: %lli %s > /dev/null
 ; XFAIL: arm
 
 define i32 @bar() {

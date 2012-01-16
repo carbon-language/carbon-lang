@@ -1,5 +1,6 @@
-; RUN: lli %s > /dev/null
+; RUN: %lli %s > /dev/null
 ; XFAIL: arm
+; XFAIL: mcjit
 
 ;
 ; Regression Test: EnvironmentTest.ll

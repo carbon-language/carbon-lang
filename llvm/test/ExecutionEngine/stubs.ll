@@ -1,5 +1,6 @@
-; RUN: lli -disable-lazy-compilation=false %s
+; RUN: %lli -disable-lazy-compilation=false %s
 ; XFAIL: arm
+; XFAIL: mcjit
 
 define i32 @main() nounwind {
 entry:

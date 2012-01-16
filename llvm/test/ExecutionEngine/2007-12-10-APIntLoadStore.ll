@@ -1,4 +1,4 @@
-; RUN: lli -force-interpreter %s
+; RUN: %lli -force-interpreter %s
 ; PR1836
 
 define i32 @main() {

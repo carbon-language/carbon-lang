@@ -94,6 +94,66 @@ public:
   virtual bool isCompatibleFormat(const MemoryBuffer *InputBuffer) const = 0;
 };
 
+class RuntimeDyldELF : public RuntimeDyldImpl {
+    // For each symbol, keep a list of relocations based on it. Anytime
+    // its address is reassigned (the JIT re-compiled the function, e.g.),
+    // the relocations get re-resolved.
+    struct RelocationEntry {
+      // Function or section this relocation is contained in.
+      std::string Target;
+      // Offset into the target function or section for the relocation.
+      uint32_t    Offset;
+      // Relocation type
+      uint32_t    Type;
+      // Addend encoded in the instruction itself, if any.
+      int32_t     Addend;
+      // Has the relocation been recalcuated as an offset within a function?
+      bool        IsFunctionRelative;
+      // Has this relocation been resolved previously?
+      bool        isResolved;
+
+      RelocationEntry(StringRef t,
+                      uint32_t offset,
+                      uint32_t type,
+                      int32_t addend,
+                      bool isFunctionRelative)
+        : Target(t)
+        , Offset(offset)
+        , Type(type)
+        , Addend(addend)
+        , IsFunctionRelative(isFunctionRelative)
+        , isResolved(false) { }
+    };
+    typedef SmallVector<RelocationEntry, 4> RelocationList;
+    StringMap<RelocationList> Relocations;
+    unsigned Arch;
+
+    void resolveX86_64Relocation(StringRef Name,
+                                 uint8_t *Addr,
+                                 const RelocationEntry &RE);
+
+    void resolveX86Relocation(StringRef Name,
+                              uint8_t *Addr,
+                              const RelocationEntry &RE);
+
+    void resolveArmRelocation(StringRef Name,
+                              uint8_t *Addr,
+                              const RelocationEntry &RE);
+
+    void resolveRelocation(StringRef Name,
+                           uint8_t *Addr,
+                           const RelocationEntry &RE);
+
+public:
+  RuntimeDyldELF(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
+
+  bool loadObject(MemoryBuffer *InputBuffer);
+
+  void reassignSymbolAddress(StringRef Name, uint8_t *Addr);
+
+  bool isCompatibleFormat(const MemoryBuffer *InputBuffer) const;
+};
+
 
 class RuntimeDyldMachO : public RuntimeDyldImpl {
 
