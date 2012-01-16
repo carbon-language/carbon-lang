@@ -878,6 +878,16 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
 }
 
 void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
+  // If there is no enclosing switch instance that we're aware of, then this
+  // case statement and its block can be elided.  This situation only happens
+  // when we've constant-folded the switch, are emitting the constant case,
+  // and part of the constant case includes another case statement.  For 
+  // instance: switch (4) { case 4: do { case 5: } while (1); }
+  if (!SwitchInsn) {
+    EmitStmt(S.getSubStmt());
+    return;
+  }
+
   // Handle case ranges.
   if (S.getRHS()) {
     EmitCaseStmtRange(S);
