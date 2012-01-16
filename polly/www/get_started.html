@@ -27,17 +27,26 @@ directory of the llvm sources.
 export BASE=`pwd`
 export LLVM_SRC=${BASE}/llvm
 export POLLY_SRC=${LLVM_SRC}/tools/polly
+
+# Also build the matching clang-version (optional)
+export CLANG_SRC=${LLVM_SRC}/tools/clang
 </pre>
 
 <h4>SVN</h4>
 <pre>
 svn checkout http://llvm.org/svn/llvm-project/llvm/trunk ${LLVM_SRC}
 svn checkout http://llvm.org/svn/llvm-project/polly/trunk ${POLLY_SRC}
+
+# Also build the matching clang-version (optional)
+svn checkout http://llvm.org/svn/llvm-project/clang/trunk ${CLANG_SRC}
 </pre>
 <h4>GIT</h4>
 <pre>
 git clone http://llvm.org/git/llvm.git ${LLVM_SRC}
 git clone http://llvm.org/git/polly.git ${POLLY_SRC}
+
+# Also build the matching clang-version (optional)
+git clone http://llvm.org/git/clang.git ${CLANG_SRC}
 </pre>
 <h2 id="prerequisites"> Prerequisites </h2>
 <ul>

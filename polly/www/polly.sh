@@ -3,6 +3,7 @@
 export BASE=`pwd`
 export LLVM_SRC=${BASE}/llvm
 export POLLY_SRC=${LLVM_SRC}/tools/polly
+export CLANG_SRC=${LLVM_SRC}/tools/clang
 export CLOOG_SRC=${BASE}/cloog_src
 export CLOOG_INSTALL=${BASE}/cloog_install
 export LLVM_BUILD=${BASE}/llvm_build
@@ -21,6 +22,10 @@ fi
 
 if ! test -d ${POLLY_SRC}; then
     git clone http://llvm.org/git/polly.git ${POLLY_SRC}
+fi
+
+if ! test -d ${POLLY_SRC}; then
+    git clone http://llvm.org/git/clang.git ${CLANG_SRC}
 fi
 
 ${POLLY_SRC}/utils/checkout_cloog.sh ${CLOOG_SRC}
