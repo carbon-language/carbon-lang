@@ -528,7 +528,7 @@ void PPCRegisterInfo::lowerCRRestore(MachineBasicBlock::iterator II,
   if (DestReg != PPC::CR0) {
     unsigned ShiftBits = getPPCRegisterNumbering(DestReg)*4;
     // rlwinm r11, r11, 32-ShiftBits, 0, 31.
-    BuildMI(MBB, II, dl, TII.get(PPC::RLWINM), Reg)
+    BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::RLWINM8 : PPC::RLWINM), Reg)
              .addReg(Reg).addImm(32-ShiftBits).addImm(0)
              .addImm(31);
   }
