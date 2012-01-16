@@ -1,4 +1,4 @@
-//===-- RuntimeDyld.cpp - Run-time dynamic linker for MC-JIT ------*- C++ -*-===//
+//===-- RuntimeDyld.cpp - Run-time dynamic linker for MC-JIT ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -41,7 +41,7 @@ void RuntimeDyldImpl::extractFunction(StringRef Name, uint8_t *StartAddress,
 
   // Default the assigned address for this symbol to wherever this
   // allocated it.
-  SymbolTable[Name] = SymbolLoc(SectionID, 0); 
+  SymbolTable[Name] = SymbolLoc(SectionID, 0);
   DEBUG(dbgs() << "    allocated to [" << Mem << ", " << Mem + Size << "]\n");
 }
 

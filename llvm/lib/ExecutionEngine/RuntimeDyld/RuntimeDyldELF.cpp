@@ -1,4 +1,4 @@
-//===-- RuntimeDyldELF.cpp - Run-time dynamic linker for MC-JIT ------*- C++ -*-===//
+//===-- RuntimeDyldELF.cpp - Run-time dynamic linker for MC-JIT -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

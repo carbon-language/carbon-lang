@@ -1,4 +1,4 @@
-//===-- RuntimeDyldMachO.cpp - Run-time dynamic linker for MC-JIT ------*- C++ -*-===//
+//===-- RuntimeDyldMachO.cpp - Run-time dynamic linker for MC-JIT -*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
