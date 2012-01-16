@@ -764,6 +764,9 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
     Load->setAlignment(Alignment);
   if (TBAAInfo)
     CGM.DecorateInstruction(Load, TBAAInfo);
+  // If this is an atomic type, all normal reads must be atomic
+  if (Ty->isAtomicType())
+    Load->setAtomic(llvm::SequentiallyConsistent);
 
   return EmitFromMemory(Load, Ty);
 }
@@ -800,7 +803,8 @@ llvm::Value *CodeGenFunction::EmitFromMemory(llvm::Value *Value, QualType Ty) {
 void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
                                         bool Volatile, unsigned Alignment,
                                         QualType Ty,
-                                        llvm::MDNode *TBAAInfo) {
+                                        llvm::MDNode *TBAAInfo,
+                                        bool isInit) {
   Value = EmitToMemory(Value, Ty);
   
   llvm::StoreInst *Store = Builder.CreateStore(Value, Addr, Volatile);
@@ -808,12 +812,15 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
     Store->setAlignment(Alignment);
   if (TBAAInfo)
     CGM.DecorateInstruction(Store, TBAAInfo);
+  if (!isInit && Ty->isAtomicType())
+    Store->setAtomic(llvm::SequentiallyConsistent);
 }
 
-void CodeGenFunction::EmitStoreOfScalar(llvm::Value *value, LValue lvalue) {
+void CodeGenFunction::EmitStoreOfScalar(llvm::Value *value, LValue lvalue,
+    bool isInit) {
   EmitStoreOfScalar(value, lvalue.getAddress(), lvalue.isVolatile(),
                     lvalue.getAlignment().getQuantity(), lvalue.getType(),
-                    lvalue.getTBAAInfo());
+                    lvalue.getTBAAInfo(), isInit);
 }
 
 /// EmitLoadOfLValue - Given an expression that represents a value lvalue, this
@@ -961,7 +968,7 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV) {
 /// EmitStoreThroughLValue - Store the specified rvalue into the specified
 /// lvalue, where both are guaranteed to the have the same type, and that type
 /// is 'Ty'.
-void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst) {
+void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst, bool isInit) {
   if (!Dst.isSimple()) {
     if (Dst.isVectorElt()) {
       // Read/modify/write the vector, inserting the new element.
@@ -1041,7 +1048,7 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst) {
   }
 
   assert(Src.isScalar() && "Can't emit an agg store with this method");
-  EmitStoreOfScalar(Src.getScalarVal(), Dst);
+  EmitStoreOfScalar(Src.getScalarVal(), Dst, isInit);
 }
 
 void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
@@ -2052,6 +2059,11 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
 
   case CK_Dependent:
     llvm_unreachable("dependent cast kind in IR gen!");
+ 
+  // These two casts are currently treated as no-ops, although they could
+  // potentially be real operations depending on the target's ABI.
+  case CK_NonAtomicToAtomic:
+  case CK_AtomicToNonAtomic:
 
   case CK_NoOp:
   case CK_LValueToRValue:
@@ -2541,6 +2553,7 @@ EmitAtomicOp(CodeGenFunction &CGF, AtomicExpr *E, llvm::Value *Dest,
     case AtomicExpr::CmpXchgWeak:
     case AtomicExpr::CmpXchgStrong:
     case AtomicExpr::Store:
+    case AtomicExpr::Init:
     case AtomicExpr::Load:  assert(0 && "Already handled!");
     case AtomicExpr::Add:   Op = llvm::AtomicRMWInst::Add;  break;
     case AtomicExpr::Sub:   Op = llvm::AtomicRMWInst::Sub;  break;
@@ -2588,8 +2601,20 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
       getContext().getTargetInfo().getMaxAtomicInlineWidth();
   bool UseLibcall = (Size != Align || Size > MaxInlineWidth);
 
+
+
   llvm::Value *Ptr, *Order, *OrderFail = 0, *Val1 = 0, *Val2 = 0;
   Ptr = EmitScalarExpr(E->getPtr());
+
+  if (E->getOp() == AtomicExpr::Init) {
+    assert(!Dest && "Init does not return a value");
+    Val1 = EmitScalarExpr(E->getVal1());
+    llvm::StoreInst *Store = Builder.CreateStore(Val1, Ptr);
+    Store->setAlignment(Size);
+    Store->setVolatile(E->isVolatile());
+    return RValue::get(0);
+  }
+
   Order = EmitScalarExpr(E->getOrder());
   if (E->isCmpXChg()) {
     Val1 = EmitScalarExpr(E->getVal1());
@@ -2703,7 +2728,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
       // enforce that in general.
       break; 
     }
-    if (E->getOp() == AtomicExpr::Store)
+    if (E->getOp() == AtomicExpr::Store || E->getOp() == AtomicExpr::Init)
       return RValue::get(0);
     return ConvertTempToRValue(*this, E->getType(), OrigDest);
   }

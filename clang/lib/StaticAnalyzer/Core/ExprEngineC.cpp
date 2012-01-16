@@ -218,6 +218,11 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       case CK_ARCConsumeObject:
       case CK_ARCReclaimReturnedObject:
       case CK_ARCExtendBlockObject: // Fall-through.
+        // The analyser can ignore atomic casts for now, although some future
+        // checkers may want to make certain that you're not modifying the same
+        // value through atomic and nonatomic pointers.
+      case CK_AtomicToNonAtomic:
+      case CK_NonAtomicToAtomic:
         // True no-ops.
       case CK_NoOp:
       case CK_FunctionToPointerDecay: {

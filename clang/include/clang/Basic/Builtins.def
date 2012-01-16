@@ -599,6 +599,7 @@ BUILTIN(__atomic_fetch_or, "v.", "t")
 BUILTIN(__atomic_fetch_xor, "v.", "t")
 BUILTIN(__atomic_thread_fence, "vi", "n")
 BUILTIN(__atomic_signal_fence, "vi", "n")
+BUILTIN(__atomic_init, "v.", "t")
 BUILTIN(__atomic_is_lock_free, "iz", "n")
 
 // Non-overloaded atomic builtins.

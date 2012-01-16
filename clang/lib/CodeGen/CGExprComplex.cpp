@@ -358,6 +358,10 @@ ComplexPairTy ComplexExprEmitter::EmitCast(CastExpr::CastKind CK, Expr *Op,
   switch (CK) {
   case CK_Dependent: llvm_unreachable("dependent cast kind in IR gen!");
 
+  // Atomic to non-atomic casts may be more than a no-op for some platforms and
+  // for some types.
+  case CK_AtomicToNonAtomic:
+  case CK_NonAtomicToAtomic:
   case CK_NoOp:
   case CK_LValueToRValue:
   case CK_UserDefinedConversion:

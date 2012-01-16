@@ -494,7 +494,7 @@ void CodeGenFunction::EmitScalarInit(const Expr *init,
     llvm::Value *value = EmitScalarExpr(init);
     if (capturedByInit)
       drillIntoBlockVariable(*this, lvalue, cast<VarDecl>(D));
-    EmitStoreThroughLValue(RValue::get(value), lvalue);
+    EmitStoreThroughLValue(RValue::get(value), lvalue, true);
     return;
   }
 
@@ -535,7 +535,7 @@ void CodeGenFunction::EmitScalarInit(const Expr *init,
 
     // Otherwise just do a simple store.
     else
-      EmitStoreOfScalar(zero, tempLV);
+      EmitStoreOfScalar(zero, tempLV, /* isInitialization */ true);
   }
 
   // Emit the initializer.
@@ -581,19 +581,19 @@ void CodeGenFunction::EmitScalarInit(const Expr *init,
   // both __weak and __strong, but __weak got filtered out above.
   if (accessedByInit && lifetime == Qualifiers::OCL_Strong) {
     llvm::Value *oldValue = EmitLoadOfScalar(lvalue);
-    EmitStoreOfScalar(value, lvalue);
+    EmitStoreOfScalar(value, lvalue, /* isInitialization */ true);
     EmitARCRelease(oldValue, /*precise*/ false);
     return;
   }
 
-  EmitStoreOfScalar(value, lvalue);
+  EmitStoreOfScalar(value, lvalue, /* isInitialization */ true);
 }
 
 /// EmitScalarInit - Initialize the given lvalue with the given object.
 void CodeGenFunction::EmitScalarInit(llvm::Value *init, LValue lvalue) {
   Qualifiers::ObjCLifetime lifetime = lvalue.getObjCLifetime();
   if (!lifetime)
-    return EmitStoreThroughLValue(RValue::get(init), lvalue);
+    return EmitStoreThroughLValue(RValue::get(init), lvalue, true);
 
   switch (lifetime) {
   case Qualifiers::OCL_None:
@@ -617,7 +617,7 @@ void CodeGenFunction::EmitScalarInit(llvm::Value *init, LValue lvalue) {
     break;
   }
 
-  EmitStoreOfScalar(init, lvalue);
+  EmitStoreOfScalar(init, lvalue, /* isInitialization */ true);
 }
 
 /// canEmitInitWithFewStoresAfterMemset - Decide whether we can emit the
@@ -1045,7 +1045,7 @@ void CodeGenFunction::EmitExprAsInit(const Expr *init,
     RValue rvalue = EmitReferenceBindingToExpr(init, D);
     if (capturedByInit)
       drillIntoBlockVariable(*this, lvalue, cast<VarDecl>(D));
-    EmitStoreThroughLValue(rvalue, lvalue);
+    EmitStoreThroughLValue(rvalue, lvalue, true);
   } else if (!hasAggregateLLVMType(type)) {
     EmitScalarInit(init, D, lvalue, capturedByInit);
   } else if (type->isAnyComplexType()) {
@@ -1505,7 +1505,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
     if (doStore) {
       LValue lv = MakeAddrLValue(DeclPtr, Ty,
                                  getContext().getDeclAlign(&D));
-      EmitStoreOfScalar(Arg, lv);
+      EmitStoreOfScalar(Arg, lv, /* isInitialization */ true);
     }
   }
 

@@ -624,6 +624,8 @@ public:
       return CGM.getCXXABI().EmitMemberPointerConversion(C, E);
 
     case CK_LValueToRValue:
+    case CK_AtomicToNonAtomic:
+    case CK_NonAtomicToAtomic:
     case CK_NoOp:
       return C;
 

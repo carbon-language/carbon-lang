@@ -1092,6 +1092,8 @@ void CastExpr::CheckCastConsistency() const {
   case CK_Dependent:
   case CK_LValueToRValue:
   case CK_NoOp:
+  case CK_AtomicToNonAtomic:
+  case CK_NonAtomicToAtomic:
   case CK_PointerToBoolean:
   case CK_IntegralToBoolean:
   case CK_FloatingToBoolean:
@@ -1204,6 +1206,10 @@ const char *CastExpr::getCastKindName() const {
     return "ARCReclaimReturnedObject";
   case CK_ARCExtendBlockObject:
     return "ARCCExtendBlockObject";
+  case CK_AtomicToNonAtomic:
+    return "AtomicToNonAtomic";
+  case CK_NonAtomicToAtomic:
+    return "NonAtomicToAtomic";
   }
 
   llvm_unreachable("Unhandled cast kind!");
@@ -2535,6 +2541,18 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
   case ImplicitCastExprClass:
   case CStyleCastExprClass: {
     const CastExpr *CE = cast<CastExpr>(this);
+
+    // If we're promoting an integer to an _Atomic type then this is constant
+    // if the integer is constant.  We also need to check the converse in case
+    // someone does something like:
+    //
+    // int a = (_Atomic(int))42;
+    //
+    // I doubt anyone would write code like this directly, but it's quite
+    // possible as the result of macro expansions.
+    if (CE->getCastKind() == CK_NonAtomicToAtomic ||
+        CE->getCastKind() == CK_AtomicToNonAtomic)
+      return CE->getSubExpr()->isConstantInitializer(Ctx, false);
 
     // Handle bitcasts of vector constants.
     if (getType()->isVectorType() && CE->getCastKind() == CK_BitCast)

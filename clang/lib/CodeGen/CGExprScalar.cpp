@@ -1064,6 +1064,8 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
     Value *Src = Visit(const_cast<Expr*>(E));
     return Builder.CreateBitCast(Src, ConvertType(DestTy));
   }
+  case CK_AtomicToNonAtomic:
+  case CK_NonAtomicToAtomic:
   case CK_NoOp:
   case CK_UserDefinedConversion:
     return Visit(const_cast<Expr*>(E));
@@ -1293,8 +1295,20 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
   QualType type = E->getSubExpr()->getType();
   llvm::Value *value = EmitLoadOfLValue(LV);
   llvm::Value *input = value;
+  llvm::PHINode *atomicPHI = 0;
 
   int amount = (isInc ? 1 : -1);
+
+  if (const AtomicType *atomicTy = type->getAs<AtomicType>()) {
+    llvm::BasicBlock *startBB = Builder.GetInsertBlock();
+    llvm::BasicBlock *opBB = CGF.createBasicBlock("atomic_op", CGF.CurFn);
+    Builder.CreateBr(opBB);
+    Builder.SetInsertPoint(opBB);
+    atomicPHI = Builder.CreatePHI(value->getType(), 2);
+    atomicPHI->addIncoming(value, startBB);
+    type = atomicTy->getValueType();
+    value = atomicPHI;
+  }
 
   // Special case of integer increment that we have to check first: bool++.
   // Due to promotion rules, we get:
@@ -1414,6 +1428,18 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
     else
       value = Builder.CreateInBoundsGEP(value, sizeValue, "incdec.objptr");
     value = Builder.CreateBitCast(value, input->getType());
+  }
+  
+  if (atomicPHI) {
+    llvm::BasicBlock *opBB = Builder.GetInsertBlock();
+    llvm::BasicBlock *contBB = CGF.createBasicBlock("atomic_cont", CGF.CurFn);
+    llvm::Value *old = Builder.CreateAtomicCmpXchg(LV.getAddress(), atomicPHI,
+        value, llvm::SequentiallyConsistent);
+    atomicPHI->addIncoming(old, opBB);
+    llvm::Value *success = Builder.CreateICmpEQ(old, atomicPHI);
+    Builder.CreateCondBr(success, contBB, opBB);
+    Builder.SetInsertPoint(contBB);
+    return isPre ? value : input;
   }
 
   // Store the updated result through the lvalue.
@@ -1670,12 +1696,38 @@ LValue ScalarExprEmitter::EmitCompoundAssignLValue(
   OpInfo.LHS = EmitLoadOfLValue(LHSLV);
   OpInfo.LHS = EmitScalarConversion(OpInfo.LHS, LHSTy,
                                     E->getComputationLHSType());
+
+  llvm::PHINode *atomicPHI = 0;
+  if (const AtomicType *atomicTy = OpInfo.Ty->getAs<AtomicType>()) {
+    // FIXME: For floating point types, we should be saving and restoring the
+    // floating point environment in the loop.
+    llvm::BasicBlock *startBB = Builder.GetInsertBlock();
+    llvm::BasicBlock *opBB = CGF.createBasicBlock("atomic_op", CGF.CurFn);
+    Builder.CreateBr(opBB);
+    Builder.SetInsertPoint(opBB);
+    atomicPHI = Builder.CreatePHI(OpInfo.LHS->getType(), 2);
+    atomicPHI->addIncoming(OpInfo.LHS, startBB);
+    OpInfo.Ty = atomicTy->getValueType();
+    OpInfo.LHS = atomicPHI;
+  }
   
   // Expand the binary operator.
   Result = (this->*Func)(OpInfo);
   
   // Convert the result back to the LHS type.
   Result = EmitScalarConversion(Result, E->getComputationResultType(), LHSTy);
+
+  if (atomicPHI) {
+    llvm::BasicBlock *opBB = Builder.GetInsertBlock();
+    llvm::BasicBlock *contBB = CGF.createBasicBlock("atomic_cont", CGF.CurFn);
+    llvm::Value *old = Builder.CreateAtomicCmpXchg(LHSLV.getAddress(), atomicPHI,
+        Result, llvm::SequentiallyConsistent);
+    atomicPHI->addIncoming(old, opBB);
+    llvm::Value *success = Builder.CreateICmpEQ(old, atomicPHI);
+    Builder.CreateCondBr(success, contBB, opBB);
+    Builder.SetInsertPoint(contBB);
+    return LHSLV;
+  }
   
   // Store the result value into the LHS lvalue. Bit-fields are handled
   // specially because the result is altered by the store, i.e., [C99 6.5.16p1]

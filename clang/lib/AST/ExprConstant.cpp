@@ -2277,6 +2277,8 @@ public:
     default:
       break;
 
+    case CK_AtomicToNonAtomic:
+    case CK_NonAtomicToAtomic:
     case CK_NoOp:
       return StmtVisitorTy::Visit(E->getSubExpr());
 
@@ -4531,6 +4533,8 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
     return Error(E);
 
   case CK_LValueToRValue:
+  case CK_AtomicToNonAtomic:
+  case CK_NonAtomicToAtomic:
   case CK_NoOp:
     return ExprEvaluatorBaseTy::VisitCastExpr(E);
 
@@ -4997,6 +5001,8 @@ bool ComplexExprEvaluator::VisitCastExpr(const CastExpr *E) {
     llvm_unreachable("invalid cast kind for complex value");
 
   case CK_LValueToRValue:
+  case CK_AtomicToNonAtomic:
+  case CK_NonAtomicToAtomic:
   case CK_NoOp:
     return ExprEvaluatorBaseTy::VisitCastExpr(E);
 
@@ -5855,6 +5861,8 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     }
     switch (cast<CastExpr>(E)->getCastKind()) {
     case CK_LValueToRValue:
+    case CK_AtomicToNonAtomic:
+    case CK_NonAtomicToAtomic:
     case CK_NoOp:
     case CK_IntegralToBoolean:
     case CK_IntegralCast:

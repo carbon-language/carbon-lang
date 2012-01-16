@@ -337,6 +337,8 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
 
   case CK_LValueToRValue: // hope for downstream optimization
   case CK_NoOp:
+  case CK_AtomicToNonAtomic:
+  case CK_NonAtomicToAtomic:
   case CK_UserDefinedConversion:
   case CK_ConstructorConversion:
     assert(CGF.getContext().hasSameUnqualifiedType(E->getSubExpr()->getType(),

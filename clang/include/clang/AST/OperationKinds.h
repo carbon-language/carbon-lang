@@ -267,7 +267,12 @@ enum CastKind {
   /// in ARC cause blocks to be copied; this is for cases where that
   /// would not otherwise be guaranteed, such as when casting to a
   /// non-block pointer type.
-  CK_ARCExtendBlockObject
+  CK_ARCExtendBlockObject,
+
+  /// \brief Converts from _Atomic(T) to T.
+  CK_AtomicToNonAtomic,
+  /// \brief Converts from T to _Atomic(T).
+  CK_NonAtomicToAtomic
 };
 
 #define CK_Invalid ((CastKind) -1)

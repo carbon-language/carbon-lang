@@ -1897,6 +1897,11 @@ void CastOperation::CheckCStyleCast() {
   if (SrcExpr.isInvalid())
     return;
   QualType SrcType = SrcExpr.get()->getType();
+
+  // You can cast an _Atomic(T) to anything you can cast a T to.
+  if (const AtomicType *AtomicSrcType = SrcType->getAs<AtomicType>())
+    SrcType = AtomicSrcType->getValueType();
+
   assert(!SrcType->isPlaceholderType());
 
   if (Self.RequireCompleteType(OpRange.getBegin(), DestType,

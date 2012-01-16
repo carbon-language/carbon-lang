@@ -4066,6 +4066,11 @@ CastKind Sema::PrepareScalarCast(ExprResult &Src, QualType DestTy) {
   // pointers.  Everything else should be possible.
 
   QualType SrcTy = Src.get()->getType();
+  if (const AtomicType *SrcAtomicTy = SrcTy->getAs<AtomicType>())
+    SrcTy = SrcAtomicTy->getValueType();
+  if (const AtomicType *DestAtomicTy = DestTy->getAs<AtomicType>())
+    DestTy = DestAtomicTy->getValueType();
+
   if (Context.hasSameUnqualifiedType(SrcTy, DestTy))
     return CK_NoOp;
 
@@ -5358,15 +5363,27 @@ Sema::CheckAssignmentConstraints(QualType LHSType, ExprResult &RHS,
   LHSType = Context.getCanonicalType(LHSType).getUnqualifiedType();
   RHSType = Context.getCanonicalType(RHSType).getUnqualifiedType();
 
-  // We can't do assignment from/to atomics yet.
-  if (LHSType->isAtomicType())
-    return Incompatible;
 
   // Common case: no conversion required.
   if (LHSType == RHSType) {
     Kind = CK_NoOp;
     return Compatible;
   }
+
+  if (const AtomicType *AtomicTy = dyn_cast<AtomicType>(LHSType)) {
+    if (AtomicTy->getValueType() == RHSType) {
+      Kind = CK_NonAtomicToAtomic;
+      return Compatible;
+    }
+  }
+
+  if (const AtomicType *AtomicTy = dyn_cast<AtomicType>(RHSType)) {
+    if (AtomicTy->getValueType() == LHSType) {
+      Kind = CK_AtomicToNonAtomic;
+      return Compatible;
+    }
+  }
+
 
   // If the left-hand side is a reference type, then we are in a
   // (rare!) case where we've allowed the use of references in C,
@@ -5906,9 +5923,15 @@ QualType Sema::CheckMultiplyDivideOperands(ExprResult &LHS, ExprResult &RHS,
   if (LHS.isInvalid() || RHS.isInvalid())
     return QualType();
 
+
   if (!LHS.get()->getType()->isArithmeticType() ||
-      !RHS.get()->getType()->isArithmeticType())
+      !RHS.get()->getType()->isArithmeticType()) {
+    if (IsCompAssign &&
+        LHS.get()->getType()->isAtomicType() &&
+        RHS.get()->getType()->isArithmeticType())
+      return compType;
     return InvalidOperands(Loc, LHS, RHS);
+  }
 
   // Check for division by zero.
   if (IsDiv &&
@@ -6134,6 +6157,12 @@ QualType Sema::CheckAdditionOperands( // C99 6.5.6
     return compType;
   }
 
+  if (LHS.get()->getType()->isAtomicType() &&
+      RHS.get()->getType()->isArithmeticType()) {
+    *CompLHSTy = LHS.get()->getType();
+    return compType;
+  }
+
   // Put any potential pointer into PExp
   Expr* PExp = LHS.get(), *IExp = RHS.get();
   if (IExp->getType()->isAnyPointerType())
@@ -6191,6 +6220,12 @@ QualType Sema::CheckSubtractionOperands(ExprResult &LHS, ExprResult &RHS,
   if (LHS.get()->getType()->isArithmeticType() &&
       RHS.get()->getType()->isArithmeticType()) {
     if (CompLHSTy) *CompLHSTy = compType;
+    return compType;
+  }
+
+  if (LHS.get()->getType()->isAtomicType() &&
+      RHS.get()->getType()->isArithmeticType()) {
+    *CompLHSTy = LHS.get()->getType();
     return compType;
   }
 
@@ -7290,6 +7325,12 @@ static QualType CheckIncrementDecrementOperand(Sema &S, Expr *Op,
     return S.Context.DependentTy;
 
   QualType ResType = Op->getType();
+  // Atomic types can be used for increment / decrement where the non-atomic
+  // versions can, so ignore the _Atomic() specifier for the purpose of
+  // checking.
+  if (const AtomicType *ResAtomicType = ResType->getAs<AtomicType>())
+    ResType = ResAtomicType->getValueType();
+
   assert(!ResType.isNull() && "no type for increment/decrement expression");
 
   if (S.getLangOptions().CPlusPlus && ResType->isBooleanType()) {

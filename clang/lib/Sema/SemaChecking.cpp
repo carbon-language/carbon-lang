@@ -277,6 +277,8 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
     return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Load);
   case Builtin::BI__atomic_store:
     return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Store);
+  case Builtin::BI__atomic_init:
+    return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Init);
   case Builtin::BI__atomic_exchange:
     return SemaAtomicOpsOverloaded(move(TheCallResult), AtomicExpr::Xchg);
   case Builtin::BI__atomic_compare_exchange_strong:
@@ -538,6 +540,8 @@ Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult, AtomicExpr::AtomicOp Op)
     NumVals = 2;
     NumOrders = 2;
   }
+  if (Op == AtomicExpr::Init)
+    NumOrders = 0;
 
   if (TheCall->getNumArgs() < NumVals+NumOrders+1) {
     Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
@@ -600,7 +604,7 @@ Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult, AtomicExpr::AtomicOp Op)
   }
 
   QualType ResultType = ValType;
-  if (Op == AtomicExpr::Store)
+  if (Op == AtomicExpr::Store || Op == AtomicExpr::Init)
     ResultType = Context.VoidTy;
   else if (Op == AtomicExpr::CmpXchgWeak || Op == AtomicExpr::CmpXchgStrong)
     ResultType = Context.BoolTy;
@@ -641,6 +645,8 @@ Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult, AtomicExpr::AtomicOp Op)
   SubExprs.push_back(Ptr);
   if (Op == AtomicExpr::Load) {
     SubExprs.push_back(TheCall->getArg(1)); // Order
+  } else if (Op == AtomicExpr::Init) {
+    SubExprs.push_back(TheCall->getArg(1)); // Val1
   } else if (Op != AtomicExpr::CmpXchgWeak && Op != AtomicExpr::CmpXchgStrong) {
     SubExprs.push_back(TheCall->getArg(2)); // Order
     SubExprs.push_back(TheCall->getArg(1)); // Val1

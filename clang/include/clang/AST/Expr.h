@@ -4410,7 +4410,7 @@ public:
 class AtomicExpr : public Expr {
 public:
   enum AtomicOp { Load, Store, CmpXchgStrong, CmpXchgWeak, Xchg,
-                  Add, Sub, And, Or, Xor };
+                  Add, Sub, And, Or, Xor, Init };
 private:
   enum { PTR, ORDER, VAL1, ORDER_FAIL, VAL2, END_EXPR };
   Stmt* SubExprs[END_EXPR];
@@ -4438,10 +4438,16 @@ public:
     SubExprs[ORDER] = E;
   }
   Expr *getVal1() const {
+    if (Op == Init)
+      return cast<Expr>(SubExprs[ORDER]);
     assert(NumSubExprs >= 3);
     return cast<Expr>(SubExprs[VAL1]);
   }
   void setVal1(Expr *E) {
+    if (Op == Init) {
+      SubExprs[ORDER] = E;
+      return;
+    }
     assert(NumSubExprs >= 3);
     SubExprs[VAL1] = E;
   }

@@ -1,6 +1,15 @@
 // RUN: %clang_cc1 -E -std=c1x %s -o - | FileCheck --check-prefix=CHECK-1X %s
 // RUN: %clang_cc1 -E %s -o - | FileCheck --check-prefix=CHECK-NO-1X %s
 
+#if __has_feature(c_atomic)
+int has_atomic();
+#else
+int no_atomic();
+#endif
+
+// CHECK-1X: has_atomic
+// CHECK-NO-1X: no_atomic
+
 #if __has_feature(c_static_assert)
 int has_static_assert();
 #else
