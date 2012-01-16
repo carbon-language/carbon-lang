@@ -228,9 +228,6 @@ void MipsJITInfo::relocate(void *Function, MachineRelocation *MR,
       *((unsigned*) RelocPos) |= (unsigned) ResultPtr;
       break;
     }
-
-    default:
-      llvm_unreachable("ERROR: Unknown Mips relocation.");
     }
   }
 }

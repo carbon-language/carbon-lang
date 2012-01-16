@@ -690,12 +690,11 @@ static LLVMOpcode map_to_llvmopcode(int opcode)
 static int map_from_llvmopcode(LLVMOpcode code)
 {
     switch (code) {
-      default:
-        assert(0 && "Unhandled Opcode.");
 #define HANDLE_INST(num, opc, clas) case LLVM##opc: return num;
 #include "llvm/Instruction.def"
 #undef HANDLE_INST
     }
+    llvm_unreachable("Unhandled Opcode.");
 }
 
 /*--.. Constant expressions ................................................--*/

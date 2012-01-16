@@ -24,7 +24,6 @@ using namespace llvm;
 
 const char *DwarfAccelTable::Atom::AtomTypeString(enum AtomType AT) {
   switch (AT) {
-  default: llvm_unreachable("invalid AtomType!");
   case eAtomTypeNULL: return "eAtomTypeNULL";
   case eAtomTypeDIEOffset: return "eAtomTypeDIEOffset";
   case eAtomTypeCUOffset: return "eAtomTypeCUOffset";
@@ -32,6 +31,7 @@ const char *DwarfAccelTable::Atom::AtomTypeString(enum AtomType AT) {
   case eAtomTypeNameFlags: return "eAtomTypeNameFlags";
   case eAtomTypeTypeFlags: return "eAtomTypeTypeFlags";
   } 
+  llvm_unreachable("invalid AtomType!");
 }
 
 // The general case would need to have a less hard coded size for the

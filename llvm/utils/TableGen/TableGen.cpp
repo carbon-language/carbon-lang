@@ -178,9 +178,6 @@ namespace {
         }
         break;
       }
-      default:
-        assert(1 && "Invalid Action");
-        return true;
       }
   
       return false;

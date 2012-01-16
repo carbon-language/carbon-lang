@@ -2866,8 +2866,6 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       if (Res != MatchOperand_Success)
         return Res;
       switch (LaneKind) {
-      default:
-        assert(0 && "unexpected lane kind!");
       case NoLanes:
         E = Parser.getTok().getLoc();
         Operands.push_back(ARMOperand::CreateVectorList(Reg, 1, false, S, E));
@@ -2891,8 +2889,6 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       if (Res != MatchOperand_Success)
         return Res;
       switch (LaneKind) {
-      default:
-        assert(0 && "unexpected lane kind!");
       case NoLanes:
         E = Parser.getTok().getLoc();
         Operands.push_back(ARMOperand::CreateVectorList(Reg, 2, false, S, E));
@@ -3063,8 +3059,6 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   Parser.Lex(); // Eat '}' token.
 
   switch (LaneKind) {
-  default:
-    assert(0 && "unexpected lane kind in register list.");
   case NoLanes:
     Operands.push_back(ARMOperand::CreateVectorList(FirstReg, Count,
                                                     (Spacing == 2), S, E));

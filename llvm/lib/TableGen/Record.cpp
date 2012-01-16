@@ -727,7 +727,6 @@ UnOpInit *UnOpInit::get(UnaryOp opc, Init *lhs, RecTy *Type) {
 
 Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
   switch (getOpcode()) {
-  default: assert(0 && "Unknown unop");
   case CAST: {
     if (getType()->getAsString() == "string") {
       StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
@@ -880,7 +879,6 @@ BinOpInit *BinOpInit::get(BinaryOp opc, Init *lhs,
 
 Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
   switch (getOpcode()) {
-  default: assert(0 && "Unknown binop");
   case CONCAT: {
     DagInit *LHSs = dynamic_cast<DagInit*>(LHS);
     DagInit *RHSs = dynamic_cast<DagInit*>(RHS);
@@ -1129,7 +1127,6 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
 
 Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
   switch (getOpcode()) {
-  default: assert(0 && "Unknown binop");
   case SUBST: {
     DefInit *LHSd = dynamic_cast<DefInit*>(LHS);
     VarInit *LHSv = dynamic_cast<VarInit*>(LHS);

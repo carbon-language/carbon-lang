@@ -244,7 +244,6 @@ void SMDiagnostic::print(const char *ProgName, raw_ostream &S) const {
   }
 
   switch (Kind) {
-  default: assert(0 && "Unknown diagnostic kind");
   case SourceMgr::DK_Error: S << "error: "; break;
   case SourceMgr::DK_Warning: S << "warning: "; break;
   case SourceMgr::DK_Note: S << "note: "; break;

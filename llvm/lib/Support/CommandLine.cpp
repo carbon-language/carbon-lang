@@ -292,12 +292,6 @@ static inline bool ProvideOption(Option *Handler, StringRef ArgName,
     break;
   case ValueOptional:
     break;
-
-  default:
-    errs() << ProgramName
-         << ": Bad ValueMask flag! CommandLine usage error:"
-         << Handler->getValueExpectedFlag() << "\n";
-    llvm_unreachable(0);
   }
 
   // If this isn't a multi-arg option, just run the handler.
