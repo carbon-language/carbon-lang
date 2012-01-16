@@ -81,8 +81,6 @@ namespace {
     MachineLoop *CurLoop;          // The current loop we are working on.
     MachineBasicBlock *CurPreheader; // The preheader for CurLoop.
 
-    BitVector AllocatableSet;
-
     // Track 'estimated' register pressure.
     SmallSet<unsigned, 32> RegSeen;
     SmallVector<unsigned, 8> RegPressure;
@@ -331,7 +329,6 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   MFI = MF.getFrameInfo();
   MRI = &MF.getRegInfo();
   InstrItins = TM->getInstrItineraryData();
-  AllocatableSet = TRI->getAllocatableSet(MF);
 
   if (PreRegAlloc) {
     // Estimate register pressure during pre-regalloc pass.
@@ -905,18 +902,8 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
         // If the physreg has no defs anywhere, it's just an ambient register
         // and we can freely move its uses. Alternatively, if it's allocatable,
         // it could get allocated to something with a def during allocation.
-        if (!MRI->def_empty(Reg))
+        if (!MRI->isConstantPhysReg(Reg, *I.getParent()->getParent()))
           return false;
-        if (AllocatableSet.test(Reg))
-          return false;
-        // Check for a def among the register's aliases too.
-        for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-          unsigned AliasReg = *Alias;
-          if (!MRI->def_empty(AliasReg))
-            return false;
-          if (AllocatableSet.test(AliasReg))
-            return false;
-        }
         // Otherwise it's safe to move.
         continue;
       } else if (!MO.isDead()) {

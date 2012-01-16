@@ -64,6 +64,9 @@ class MachineRegisterInfo {
   /// started.
   BitVector ReservedRegs;
 
+  /// AllocatableRegs - From TRI->getAllocatableSet.
+  mutable BitVector AllocatableRegs;
+
   /// LiveIns/LiveOuts - Keep track of the physical registers that are
   /// livein/liveout of the function.  Live in values are typically arguments in
   /// registers, live out values are typically return values in registers.
@@ -215,7 +218,12 @@ public:
 #ifndef NDEBUG
   void dumpUses(unsigned RegNo) const;
 #endif
-  
+
+  /// isConstantPhysReg - Returns true if PhysReg is unallocatable and constant
+  /// throughout the function.  It is safe to move instructions that read such
+  /// a physreg.
+  bool isConstantPhysReg(unsigned PhysReg, const MachineFunction &MF) const;
+
   //===--------------------------------------------------------------------===//
   // Virtual Register Info
   //===--------------------------------------------------------------------===//

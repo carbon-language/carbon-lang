@@ -485,21 +485,8 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
         // If the physreg has no defs anywhere, it's just an ambient register
         // and we can freely move its uses. Alternatively, if it's allocatable,
         // it could get allocated to something with a def during allocation.
-        if (!MRI->def_empty(Reg))
+        if (!MRI->isConstantPhysReg(Reg, *MBB->getParent()))
           return NULL;
-
-        if (AllocatableSet.test(Reg))
-          return NULL;
-
-        // Check for a def among the register's aliases too.
-        for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-          unsigned AliasReg = *Alias;
-          if (!MRI->def_empty(AliasReg))
-            return NULL;
-
-          if (AllocatableSet.test(AliasReg))
-            return NULL;
-        }
       } else if (!MO.isDead()) {
         // A def that isn't dead. We can't move it.
         return NULL;

@@ -380,7 +380,6 @@ isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
   const MachineRegisterInfo &MRI = MF.getRegInfo();
   const TargetMachine &TM = MF.getTarget();
   const TargetInstrInfo &TII = *TM.getInstrInfo();
-  const TargetRegisterInfo &TRI = *TM.getRegisterInfo();
 
   // Remat clients assume operand 0 is the defined register.
   if (!MI->getNumOperands() || !MI->getOperand(0).isReg())
@@ -432,19 +431,8 @@ isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
         // If the physreg has no defs anywhere, it's just an ambient register
         // and we can freely move its uses. Alternatively, if it's allocatable,
         // it could get allocated to something with a def during allocation.
-        if (!MRI.def_empty(Reg))
+        if (!MRI.isConstantPhysReg(Reg, MF))
           return false;
-        BitVector AllocatableRegs = TRI.getAllocatableSet(MF, 0);
-        if (AllocatableRegs.test(Reg))
-          return false;
-        // Check for a def among the register's aliases too.
-        for (const unsigned *Alias = TRI.getAliasSet(Reg); *Alias; ++Alias) {
-          unsigned AliasReg = *Alias;
-          if (!MRI.def_empty(AliasReg))
-            return false;
-          if (AllocatableRegs.test(AliasReg))
-            return false;
-        }
       } else {
         // A physreg def. We can't remat it.
         return false;
