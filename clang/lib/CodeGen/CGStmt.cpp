@@ -883,8 +883,10 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
   // when we've constant-folded the switch, are emitting the constant case,
   // and part of the constant case includes another case statement.  For 
   // instance: switch (4) { case 4: do { case 5: } while (1); }
-  if (!SwitchInsn)
+  if (!SwitchInsn) {
+    EmitStmt(S.getSubStmt());
     return;
+  }
 
   // Handle case ranges.
   if (S.getRHS()) {

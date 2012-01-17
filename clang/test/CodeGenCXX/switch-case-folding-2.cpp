@@ -18,4 +18,4 @@ int main(void) {
  return test(5);
 }
 
-// CHECK-NOT: call i32 (i8*, ...)* @printf(
+// CHECK: call i32 (i8*, ...)* @_Z6printfPKcz
