@@ -535,7 +535,11 @@ llvm::Constant *ConstStructBuilder::BuildStruct(CodeGenModule &CGM,
 //===----------------------------------------------------------------------===//
 //                             ConstExprEmitter
 //===----------------------------------------------------------------------===//
-  
+
+/// This class only needs to handle two cases:
+/// 1) Literals (this is used by APValue emission to emit literals).
+/// 2) Arrays, structs and unions (outside C++11 mode, we don't currently
+///    constant fold these types).
 class ConstExprEmitter :
   public StmtVisitor<ConstExprEmitter, llvm::Constant*> {
   CodeGenModule &CGM;
@@ -571,13 +575,6 @@ public:
     return Visit(E->getInitializer());
   }
 
-  llvm::Constant *VisitUnaryAddrOf(UnaryOperator *E) {
-    if (E->getType()->isMemberPointerType())
-      return CGM.getMemberPointerConstant(E);
-
-    return 0;
-  }
-    
   llvm::Constant *VisitCastExpr(CastExpr* E) {
     Expr *subExpr = E->getSubExpr();
     llvm::Constant *C = CGM.EmitConstantExpr(subExpr, subExpr->getType(), CGF);
@@ -614,14 +611,6 @@ public:
         llvm::StructType::get(C->getType()->getContext(), Types, false);
       return llvm::ConstantStruct::get(STy, Elts);
     }
-    case CK_NullToMemberPointer: {
-      const MemberPointerType *MPT = E->getType()->getAs<MemberPointerType>();
-      return CGM.getCXXABI().EmitNullMemberPointer(MPT);
-    }
-
-    case CK_DerivedToBaseMemberPointer:
-    case CK_BaseToDerivedMemberPointer:
-      return CGM.getCXXABI().EmitMemberPointerConversion(C, E);
 
     case CK_LValueToRValue:
     case CK_AtomicToNonAtomic:
@@ -633,22 +622,22 @@ public:
 
     // These will never be supported.
     case CK_ObjCObjectLValueCast:
-    case CK_ToVoid:
-    case CK_Dynamic:
     case CK_ARCProduceObject:
     case CK_ARCConsumeObject:
     case CK_ARCReclaimReturnedObject:
     case CK_ARCExtendBlockObject:
-    case CK_LValueBitCast:
-      return 0;
-
-    // These might need to be supported for constexpr.
-    case CK_UserDefinedConversion:
-    case CK_ConstructorConversion:
       return 0;
 
     // These don't need to be handled here because Evaluate knows how to
-    // evaluate all scalar expressions which can be constant-evaluated.
+    // evaluate them in the cases where they can be folded.
+    case CK_ToVoid:
+    case CK_Dynamic:
+    case CK_LValueBitCast:
+    case CK_NullToMemberPointer:
+    case CK_DerivedToBaseMemberPointer:
+    case CK_BaseToDerivedMemberPointer:
+    case CK_UserDefinedConversion:
+    case CK_ConstructorConversion:
     case CK_CPointerToObjCPointerCast:
     case CK_BlockPointerToObjCPointerCast:
     case CK_AnyPointerToBlockPointerCast:

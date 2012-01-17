@@ -106,11 +106,6 @@ public:
                                                    const CastExpr *E,
                                                    llvm::Value *Src);
 
-  /// Perform a derived-to-base or base-to-derived member pointer
-  /// conversion on a constant member pointer.
-  virtual llvm::Constant *EmitMemberPointerConversion(llvm::Constant *C,
-                                                      const CastExpr *E);
-
   /// Return true if the given member pointer can be zero-initialized
   /// (in the C++ sense) with an LLVM zeroinitializer.
   virtual bool isZeroInitializable(const MemberPointerType *MPT);

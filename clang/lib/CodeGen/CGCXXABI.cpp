@@ -90,11 +90,6 @@ CGCXXABI::EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
 }
 
 llvm::Constant *
-CGCXXABI::EmitMemberPointerConversion(llvm::Constant *C, const CastExpr *E) {
-  return GetBogusMemberPointer(CGM, E->getType());
-}
-
-llvm::Constant *
 CGCXXABI::EmitNullMemberPointer(const MemberPointerType *MPT) {
   return GetBogusMemberPointer(CGM, QualType(MPT, 0));
 }

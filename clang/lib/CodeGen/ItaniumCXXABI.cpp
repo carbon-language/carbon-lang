@@ -74,9 +74,6 @@ public:
                                            const CastExpr *E,
                                            llvm::Value *Src);
 
-  llvm::Constant *EmitMemberPointerConversion(llvm::Constant *C,
-                                              const CastExpr *E);
-
   llvm::Constant *EmitNullMemberPointer(const MemberPointerType *MPT);
 
   llvm::Constant *EmitMemberPointer(const CXXMethodDecl *MD);
@@ -342,9 +339,6 @@ ItaniumCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
   assert(E->getCastKind() == CK_DerivedToBaseMemberPointer ||
          E->getCastKind() == CK_BaseToDerivedMemberPointer);
 
-  if (isa<llvm::Constant>(Src))
-    return EmitMemberPointerConversion(cast<llvm::Constant>(Src), E);
-
   CGBuilderTy &Builder = CGF.Builder;
 
   const MemberPointerType *SrcTy =
@@ -400,84 +394,6 @@ ItaniumCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
 
   return Builder.CreateInsertValue(Src, DstAdj, 1);
 }
-
-llvm::Constant *
-ItaniumCXXABI::EmitMemberPointerConversion(llvm::Constant *C,
-                                           const CastExpr *E) {
-  const MemberPointerType *SrcTy = 
-    E->getSubExpr()->getType()->getAs<MemberPointerType>();
-  const MemberPointerType *DestTy = 
-    E->getType()->getAs<MemberPointerType>();
-
-  bool DerivedToBase =
-    E->getCastKind() == CK_DerivedToBaseMemberPointer;
-
-  const CXXRecordDecl *DerivedDecl;
-  if (DerivedToBase)
-    DerivedDecl = SrcTy->getClass()->getAsCXXRecordDecl();
-  else
-    DerivedDecl = DestTy->getClass()->getAsCXXRecordDecl();
-
-  // Calculate the offset to the base class.
-  llvm::Constant *Offset = 
-    CGM.GetNonVirtualBaseClassOffset(DerivedDecl,
-                                     E->path_begin(),
-                                     E->path_end());
-  // If there's no offset, we're done.
-  if (!Offset) return C;
-
-  // If the source is a member data pointer, we have to do a null
-  // check and then add the offset.  In the common case, we can fold
-  // away the offset.
-  if (SrcTy->isMemberDataPointer()) {
-    assert(C->getType() == getPtrDiffTy());
-
-    // If it's a constant int, just create a new constant int.
-    if (llvm::ConstantInt *CI = dyn_cast<llvm::ConstantInt>(C)) {
-      int64_t Src = CI->getSExtValue();
-
-      // Null converts to null.
-      if (Src == -1) return CI;
-
-      // Otherwise, just add the offset.
-      int64_t OffsetV = cast<llvm::ConstantInt>(Offset)->getSExtValue();
-      int64_t Dst = (DerivedToBase ? Src - OffsetV : Src + OffsetV);
-      return llvm::ConstantInt::get(CI->getType(), Dst, /*signed*/ true);
-    }
-
-    // Otherwise, we have to form a constant select expression.
-    llvm::Constant *Null = llvm::Constant::getAllOnesValue(C->getType());
-
-    llvm::Constant *IsNull =
-      llvm::ConstantExpr::getICmp(llvm::ICmpInst::ICMP_EQ, C, Null);
-
-    llvm::Constant *Dst;
-    if (DerivedToBase)
-      Dst = llvm::ConstantExpr::getNSWSub(C, Offset);
-    else
-      Dst = llvm::ConstantExpr::getNSWAdd(C, Offset);
-
-    return llvm::ConstantExpr::getSelect(IsNull, Null, Dst);
-  }
-
-  // The this-adjustment is left-shifted by 1 on ARM.
-  if (IsARM) {
-    int64_t OffsetV = cast<llvm::ConstantInt>(Offset)->getSExtValue();
-    OffsetV <<= 1;
-    Offset = llvm::ConstantInt::get(Offset->getType(), OffsetV);
-  }
-
-  llvm::ConstantStruct *CS = cast<llvm::ConstantStruct>(C);
-
-  llvm::Constant *Values[2] = { CS->getOperand(0), 0 };
-  if (DerivedToBase)
-    Values[1] = llvm::ConstantExpr::getSub(CS->getOperand(1), Offset);
-  else
-    Values[1] = llvm::ConstantExpr::getAdd(CS->getOperand(1), Offset);
-
-  return llvm::ConstantStruct::get(CS->getType(), Values);
-}        
-
 
 llvm::Constant *
 ItaniumCXXABI::EmitNullMemberPointer(const MemberPointerType *MPT) {
