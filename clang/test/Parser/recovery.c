@@ -16,7 +16,7 @@ static void f (char * (*g) (char **, int), char **p, ...) {
 
 
 // PR3172
-} // expected-error {{expected external declaration}}
+} // expected-error {{extraneous closing brace ('}')}}
 
 
 // rdar://6094870

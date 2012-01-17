@@ -119,6 +119,7 @@ def err_parse_error : Error<"parse error">;
 def err_expected_expression : Error<"expected expression">;
 def err_expected_type : Error<"expected a type">;
 def err_expected_external_declaration : Error<"expected external declaration">;
+def err_extraneous_closing_brace : Error<"extraneous closing brace ('}')">;
 def err_expected_ident : Error<"expected identifier">;
 def err_expected_ident_lparen : Error<"expected identifier or '('">;
 def err_expected_ident_lbrace : Error<"expected identifier or '{'">;

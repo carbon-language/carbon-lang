@@ -552,7 +552,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
     // TODO: Invoke action for top-level semicolon.
     return DeclGroupPtrTy();
   case tok::r_brace:
-    Diag(Tok, diag::err_expected_external_declaration);
+    Diag(Tok, diag::err_extraneous_closing_brace);
     ConsumeBrace();
     return DeclGroupPtrTy();
   case tok::eof:

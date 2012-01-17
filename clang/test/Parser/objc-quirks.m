@@ -7,7 +7,7 @@ int @"s" = 5;  // expected-error {{prefix attribute must be}}
 // rdar://6480479
 @interface A // expected-note {{class started here}}
 }; // expected-error {{missing '@end'}} \
-// expected-error {{expected external declaration}} \
+// expected-error {{extraneous closing brace ('}')}} \
 // expected-warning{{extra ';' outside of a function}}
 
 
