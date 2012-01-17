@@ -7,6 +7,8 @@ _test:
 _main:
 // CHECK:	movl	$257, -4(%rsp)
 	mov	DWORD PTR [RSP - 4], 257
+// CHECK:	movl	$258, 4(%rsp)
+	mov	DWORD PTR [RSP + 4], 258
 // CHECK:	movq	$123, -16(%rsp)
 	mov	QWORD PTR [RSP - 16], 123
 // CHECK:	movb	$97, -17(%rsp)

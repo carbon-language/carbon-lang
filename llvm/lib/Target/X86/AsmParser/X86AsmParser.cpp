@@ -634,8 +634,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned Size) {
 	Scale = Val;
       } else if (getLexer().is(AsmToken::RBrac)) {
 	const MCExpr *ValExpr = MCConstantExpr::Create(Val, getContext());
-	Disp = isPlus ? MCUnaryExpr::CreatePlus(ValExpr, getContext()) :
-	  MCUnaryExpr::CreateMinus(ValExpr, getContext());
+	Disp = isPlus ? ValExpr : MCUnaryExpr::CreateMinus(ValExpr, getContext());
       } else
 	return ErrorOperand(PlusLoc, "unexpected token after +");
     }
