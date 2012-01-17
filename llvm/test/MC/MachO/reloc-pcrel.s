@@ -36,7 +36,7 @@
 // CHECK-NEXT: ])
 
         xorl %eax,%eax
-        
+
         .globl _a
 _a:
         xorl %eax,%eax
@@ -44,7 +44,7 @@ _b:
         xorl %eax,%eax
 L0:
         xorl %eax,%eax
-L1:     
+L1:
 
         call L0
         call L0 - 1
