@@ -7142,11 +7142,13 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   // optimizations. We do not handle sign-extend because we can't fill the sign
   // using shuffles.
   EVT SourceType = MVT::Other;
-  bool allAnyExt = true;
-  for (unsigned i = 0; i < NumInScalars; ++i) {
+  bool AllAnyExt = true;
+  bool AllUndef = true;
+  for (unsigned i = 0; i != NumInScalars; ++i) {
     SDValue In = N->getOperand(i);
     // Ignore undef inputs.
     if (In.getOpcode() == ISD::UNDEF) continue;
+    AllUndef = false;
 
     bool AnyExt  = In.getOpcode() == ISD::ANY_EXTEND;
     bool ZeroExt = In.getOpcode() == ISD::ZERO_EXTEND;
@@ -7171,9 +7173,11 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     }
 
     // Check if all of the extends are ANY_EXTENDs.
-    allAnyExt &= AnyExt;
+    AllAnyExt &= AnyExt;
   }
 
+  if (AllUndef)
+    return DAG.getUNDEF(VT);
 
   // In order to have valid types, all of the inputs must be extended from the
   // same source type and all of the inputs must be any or zero extend.
@@ -7193,7 +7197,7 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     bool isLE = TLI.isLittleEndian();
     unsigned ElemRatio = OutScalarTy.getSizeInBits()/SourceType.getSizeInBits();
     assert(ElemRatio > 1 && "Invalid element size ratio");
-    SDValue Filler = allAnyExt ? DAG.getUNDEF(SourceType):
+    SDValue Filler = AllAnyExt ? DAG.getUNDEF(SourceType):
                                  DAG.getConstant(0, SourceType);
 
     unsigned NewBVElems = ElemRatio * N->getValueType(0).getVectorNumElements();
