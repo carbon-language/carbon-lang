@@ -168,6 +168,7 @@ void initializeNoAAPass(PassRegistry&);
 void initializeNoProfileInfoPass(PassRegistry&);
 void initializeNoPathProfileInfoPass(PassRegistry&);
 void initializeObjCARCAliasAnalysisPass(PassRegistry&);
+void initializeObjCARCAPElimPass(PassRegistry&);
 void initializeObjCARCExpandPass(PassRegistry&);
 void initializeObjCARCContractPass(PassRegistry&);
 void initializeObjCARCOptPass(PassRegistry&);

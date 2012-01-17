@@ -327,6 +327,12 @@ Pass *createCorrelatedValuePropagationPass();
 
 //===----------------------------------------------------------------------===//
 //
+// ObjCARCAPElim - ObjC ARC autorelease pool elimination.
+//
+Pass *createObjCARCAPElimPass();
+
+//===----------------------------------------------------------------------===//
+//
 // ObjCARCExpand - ObjC ARC preliminary simplifications.
 //
 Pass *createObjCARCExpandPass();

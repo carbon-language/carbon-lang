@@ -375,7 +375,7 @@ static InstructionClass GetBasicInstructionClass(const Value *V) {
   }
 
   // Otherwise, be conservative.
-  return IC_User;
+  return isa<InvokeInst>(V) ? IC_CallOrUser : IC_User;
 }
 
 /// IsRetain - Test if the the given class is objc_retain or
@@ -878,6 +878,122 @@ bool ObjCARCExpand::runOnFunction(Function &F) {
     default:
       break;
     }
+  }
+
+  return Changed;
+}
+
+//===----------------------------------------------------------------------===//
+// ARC autorelease pool elimination.
+//===----------------------------------------------------------------------===//
+
+namespace {
+  /// ObjCARCAPElim - Autorelease pool elimination.
+  class ObjCARCAPElim : public ModulePass {
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+    virtual bool runOnModule(Module &M);
+
+    bool MayAutorelease(CallSite CS);
+    bool OptimizeBB(BasicBlock *BB);
+
+  public:
+    static char ID;
+    ObjCARCAPElim() : ModulePass(ID) {
+      initializeObjCARCAPElimPass(*PassRegistry::getPassRegistry());
+    }
+  };
+}
+
+char ObjCARCAPElim::ID = 0;
+INITIALIZE_PASS(ObjCARCAPElim,
+                "objc-arc-apelim",
+                "ObjC ARC autorelease pool elimination",
+                false, false)
+
+Pass *llvm::createObjCARCAPElimPass() {
+  return new ObjCARCAPElim();
+}
+
+void ObjCARCAPElim::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesCFG();
+}
+
+/// MayAutorelease - Interprocedurally determine if calls made by the
+/// given call site can possibly produce autoreleases.
+bool ObjCARCAPElim::MayAutorelease(CallSite CS) {
+  if (Function *Callee = CS.getCalledFunction()) {
+    if (Callee->isDeclaration() || Callee->mayBeOverridden())
+      return true;
+    for (Function::iterator I = Callee->begin(), E = Callee->end();
+         I != E; ++I) {
+      BasicBlock *BB = I;
+      for (BasicBlock::iterator J = BB->begin(), F = BB->end(); J != F; ++J)
+        if (CallSite JCS = CallSite(J))
+          if (!JCS.onlyReadsMemory() && MayAutorelease(JCS))
+            return true;
+    }
+    return false;
+  }
+
+  return true;
+}
+
+bool ObjCARCAPElim::OptimizeBB(BasicBlock *BB) {
+  bool Changed = false;
+
+  Instruction *Push = 0;
+  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
+    Instruction *Inst = I++;
+    switch (GetBasicInstructionClass(Inst)) {
+    case IC_AutoreleasepoolPush:
+      Push = Inst;
+      break;
+    case IC_AutoreleasepoolPop:
+      // If this pop matches a push and nothing in between can autorelease,
+      // zap the pair.
+      if (Push && cast<CallInst>(Inst)->getArgOperand(0) == Push) {
+        Changed = true;
+        Inst->eraseFromParent();
+        Push->eraseFromParent();
+      }
+      Push = 0;
+      break;
+    case IC_CallOrUser:
+      if (MayAutorelease(CallSite(Inst)))
+        Push = 0;
+      break;
+    default:
+      break;
+    }
+  }
+
+  return Changed;
+}
+
+bool ObjCARCAPElim::runOnModule(Module &M) {
+  if (!EnableARCOpts)
+    return false;
+
+  // If nothing in the Module uses ARC, don't do anything.
+  if (!ModuleHasARC(M))
+    return false;
+
+  bool Changed = false;
+
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+    Function *F = I;
+    // Only look at function definitions.
+    if (F->isDeclaration())
+      continue;
+    // Only look at global constructor functions. Unfortunately,
+    // the name is the most convenient way to recognize them.
+    if (!F->getName().startswith("_GLOBAL__I_"))
+      continue;
+    // Only look at functions with one basic block.
+    if (llvm::next(F->begin()) != F->end())
+      continue;
+    // Ok, a single-block constructor function definition. Try to optimize it.
+    Changed |= OptimizeBB(F->begin());
   }
 
   return Changed;
