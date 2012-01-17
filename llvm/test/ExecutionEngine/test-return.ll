@@ -1,5 +1,4 @@
 ; RUN: %lli %s > /dev/null
-; XFAIL: arm
 
 define i32 @main() nounwind uwtable {
 entry:
