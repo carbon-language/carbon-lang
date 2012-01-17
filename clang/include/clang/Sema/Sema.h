@@ -1137,7 +1137,13 @@ public:
                                ModuleIdPath Path);
 
   /// \brief Retrieve a suitable printing policy.
-  PrintingPolicy getPrintingPolicy() const;
+  PrintingPolicy getPrintingPolicy() const {
+    return getPrintingPolicy(Context, PP);
+  }
+
+  /// \brief Retrieve a suitable printing policy.
+  static PrintingPolicy getPrintingPolicy(const ASTContext &Ctx,
+                                          const Preprocessor &PP);
 
   /// Scope actions.
   void ActOnPopScope(SourceLocation Loc, Scope *S);

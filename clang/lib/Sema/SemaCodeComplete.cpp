@@ -1374,13 +1374,18 @@ static bool WantTypesInContext(Sema::ParserCompletionContext CCC,
   return false;
 }
 
-/// \brief Retrieve a printing policy suitable for code completion.
-static PrintingPolicy getCompletionPrintingPolicy(Sema &S) {
-  PrintingPolicy Policy = S.getPrintingPolicy();
+static PrintingPolicy getCompletionPrintingPolicy(const ASTContext &Context,
+                                                  const Preprocessor &PP) {
+  PrintingPolicy Policy = Sema::getPrintingPolicy(Context, PP);
   Policy.AnonymousTagLocations = false;
   Policy.SuppressStrongLifetime = true;
   Policy.SuppressUnwrittenScope = true;
   return Policy;
+}
+
+/// \brief Retrieve a printing policy suitable for code completion.
+static PrintingPolicy getCompletionPrintingPolicy(Sema &S) {
+  return getCompletionPrintingPolicy(S.Context, S.PP);
 }
 
 /// \brief Retrieve the string representation of the given type as a string
@@ -2409,6 +2414,11 @@ static void AddTypedNameChunk(ASTContext &Context, const PrintingPolicy &Policy,
   }
 }
 
+CodeCompletionString *CodeCompletionResult::CreateCodeCompletionString(Sema &S,
+                                         CodeCompletionAllocator &Allocator) {
+  return CreateCodeCompletionString(S.Context, S.PP, Allocator);
+}
+
 /// \brief If possible, create a new code completion string for the given
 /// result.
 ///
@@ -2416,12 +2426,13 @@ static void AddTypedNameChunk(ASTContext &Context, const PrintingPolicy &Policy,
 /// how to use this result, or NULL to indicate that the string or name of the
 /// result is all that is needed.
 CodeCompletionString *
-CodeCompletionResult::CreateCodeCompletionString(Sema &S,
+CodeCompletionResult::CreateCodeCompletionString(ASTContext &Ctx,
+                                                 Preprocessor &PP,
                                            CodeCompletionAllocator &Allocator) {
   typedef CodeCompletionString::Chunk Chunk;
   CodeCompletionBuilder Result(Allocator, Priority, Availability);
   
-  PrintingPolicy Policy = getCompletionPrintingPolicy(S);
+  PrintingPolicy Policy = getCompletionPrintingPolicy(Ctx, PP);
   if (Kind == RK_Pattern) {
     Pattern->Priority = Priority;
     Pattern->Availability = Availability;
@@ -2434,7 +2445,7 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
   }
   
   if (Kind == RK_Macro) {
-    MacroInfo *MI = S.PP.getMacroInfo(Macro);
+    MacroInfo *MI = PP.getMacroInfo(Macro);
     assert(MI && "Not a macro?");
 
     Result.AddTypedTextChunk(
@@ -2505,14 +2516,14 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
     }
   }
   
-  AddResultTypeChunk(S.Context, Policy, ND, Result);
+  AddResultTypeChunk(Ctx, Policy, ND, Result);
   
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(ND)) {
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
-                                   S.Context, Policy);
-    AddTypedNameChunk(S.Context, Policy, ND, Result);
+                                   Ctx, Policy);
+    AddTypedNameChunk(Ctx, Policy, ND, Result);
     Result.AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
-    AddFunctionParameterChunks(S.Context, Policy, Function, Result);
+    AddFunctionParameterChunks(Ctx, Policy, Function, Result);
     Result.AddChunk(Chunk(CodeCompletionString::CK_RightParen));
     AddFunctionTypeQualsToCompletionString(Result, Function);
     return Result.TakeString();
@@ -2520,14 +2531,14 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
   
   if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(ND)) {
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
-                                   S.Context, Policy);
+                                   Ctx, Policy);
     FunctionDecl *Function = FunTmpl->getTemplatedDecl();
-    AddTypedNameChunk(S.Context, Policy, Function, Result);
+    AddTypedNameChunk(Ctx, Policy, Function, Result);
 
     // Figure out which template parameters are deduced (or have default
     // arguments).
     SmallVector<bool, 16> Deduced;
-    S.MarkDeducedTemplateParameters(FunTmpl, Deduced);
+    Sema::MarkDeducedTemplateParameters(Ctx, FunTmpl, Deduced);
     unsigned LastDeducibleArgument;
     for (LastDeducibleArgument = Deduced.size(); LastDeducibleArgument > 0;
          --LastDeducibleArgument) {
@@ -2559,14 +2570,14 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
       // function call, so we introduce an explicit template argument list
       // containing all of the arguments up to the first deducible argument.
       Result.AddChunk(Chunk(CodeCompletionString::CK_LeftAngle));
-      AddTemplateParameterChunks(S.Context, Policy, FunTmpl, Result, 
+      AddTemplateParameterChunks(Ctx, Policy, FunTmpl, Result, 
                                  LastDeducibleArgument);
       Result.AddChunk(Chunk(CodeCompletionString::CK_RightAngle));
     }
     
     // Add the function parameters
     Result.AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
-    AddFunctionParameterChunks(S.Context, Policy, Function, Result);
+    AddFunctionParameterChunks(Ctx, Policy, Function, Result);
     Result.AddChunk(Chunk(CodeCompletionString::CK_RightParen));
     AddFunctionTypeQualsToCompletionString(Result, Function);
     return Result.TakeString();
@@ -2574,11 +2585,11 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
   
   if (TemplateDecl *Template = dyn_cast<TemplateDecl>(ND)) {
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
-                                   S.Context, Policy);
+                                   Ctx, Policy);
     Result.AddTypedTextChunk(
                 Result.getAllocator().CopyString(Template->getNameAsString()));
     Result.AddChunk(Chunk(CodeCompletionString::CK_LeftAngle));
-    AddTemplateParameterChunks(S.Context, Policy, Template, Result);
+    AddTemplateParameterChunks(Ctx, Policy, Template, Result);
     Result.AddChunk(Chunk(CodeCompletionString::CK_RightAngle));
     return Result.TakeString();
   }
@@ -2627,7 +2638,7 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
       std::string Arg;
       
       if ((*P)->getType()->isBlockPointerType() && !DeclaringEntity)
-        Arg = FormatFunctionParameter(S.Context, Policy, *P, true);
+        Arg = FormatFunctionParameter(Ctx, Policy, *P, true);
       else {
         (*P)->getType().getAsStringInternal(Arg, Policy);
         Arg = "(" + formatObjCParamQualifiers((*P)->getObjCDeclQualifier()) 
@@ -2658,7 +2669,7 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
           Result.AddPlaceholderChunk(", ...");
       }
       
-      MaybeAddSentinel(S.Context, Method, Result);
+      MaybeAddSentinel(Ctx, Method, Result);
     }
     
     return Result.TakeString();
@@ -2666,7 +2677,7 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
 
   if (Qualifier)
     AddQualifierToCompletionString(Result, Qualifier, QualifierIsInformative, 
-                                   S.Context, Policy);
+                                   Ctx, Policy);
 
   Result.AddTypedTextChunk(
                        Result.getAllocator().CopyString(ND->getNameAsString()));

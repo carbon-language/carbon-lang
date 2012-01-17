@@ -721,6 +721,9 @@ public:
   /// string itself.
   CodeCompletionString *CreateCodeCompletionString(Sema &S,
                                            CodeCompletionAllocator &Allocator);
+  CodeCompletionString *CreateCodeCompletionString(ASTContext &Ctx,
+                                                   Preprocessor &PP,
+                                           CodeCompletionAllocator &Allocator);
 
   /// \brief Determine a base priority for the given declaration.
   static unsigned getPriorityFromDecl(NamedDecl *ND);

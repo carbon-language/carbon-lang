@@ -57,9 +57,10 @@ void FunctionScopeInfo::Clear() {
 BlockScopeInfo::~BlockScopeInfo() { }
 LambdaScopeInfo::~LambdaScopeInfo() { }
 
-PrintingPolicy Sema::getPrintingPolicy() const {
+PrintingPolicy Sema::getPrintingPolicy(const ASTContext &Context,
+                                       const Preprocessor &PP) {
   PrintingPolicy Policy = Context.getPrintingPolicy();
-  Policy.Bool = getLangOptions().Bool;
+  Policy.Bool = Context.getLangOptions().Bool;
   if (!Policy.Bool) {
     if (MacroInfo *BoolMacro = PP.getMacroInfo(&Context.Idents.get("bool"))) {
       Policy.Bool = BoolMacro->isObjectLike() && 
