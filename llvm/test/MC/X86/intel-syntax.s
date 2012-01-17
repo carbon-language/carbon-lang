@@ -23,6 +23,8 @@ _main:
 	mov	RCX, QWORD PTR [0]
 // CHECK:	movl	-24(%rsp,%rax,4), %eax	
 	mov	EAX, DWORD PTR [RSP + 4*RAX - 24]
+// CHECK:	movb	%dil, (%rdx,%rcx)
+	mov	BYTE PTR [RDX + RCX], DIL
 // CHECK:	callq	_test
 	call	_test
 	ret

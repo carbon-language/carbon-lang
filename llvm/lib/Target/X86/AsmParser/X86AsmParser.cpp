@@ -637,6 +637,10 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned Size) {
         Disp = isPlus ? ValExpr : MCUnaryExpr::CreateMinus(ValExpr, getContext());
       } else
         return ErrorOperand(PlusLoc, "unexpected token after +");
+    } else if (getLexer().is(AsmToken::Identifier)) {
+      IndexReg = getIntelRegisterOperand(Tok.getString());
+      if (IndexReg)
+	Parser.Lex();
     }
   }
 
