@@ -5777,19 +5777,29 @@ bool Sema::isStdInitializerList(QualType Ty, QualType *Element) {
   if (!StdNamespace) // If we haven't seen namespace std yet, this can't be it.
     return false;
 
-  const RecordType *RT = Ty->getAs<RecordType>();
-  if (!RT)
-    return false;
+  ClassTemplateDecl *Template = 0;
+  const TemplateArgument *Arguments = 0;
 
-  ClassTemplateSpecializationDecl *Specialization =
-      dyn_cast<ClassTemplateSpecializationDecl>(RT->getDecl());
-  if (!Specialization)
-    return false;
+  if (const RecordType *RT = Ty->getAs<RecordType>()) {
 
-  if (Specialization->getSpecializationKind() != TSK_ImplicitInstantiation)
-    return false;
+    ClassTemplateSpecializationDecl *Specialization =
+        dyn_cast<ClassTemplateSpecializationDecl>(RT->getDecl());
+    if (!Specialization)
+      return false;
 
-  ClassTemplateDecl *Template = Specialization->getSpecializedTemplate();
+    if (Specialization->getSpecializationKind() != TSK_ImplicitInstantiation)
+      return false;
+
+    Template = Specialization->getSpecializedTemplate();
+    Arguments = Specialization->getTemplateArgs().data();
+  } else if (const TemplateSpecializationType *TST =
+                 Ty->getAs<TemplateSpecializationType>()) {
+    Template = dyn_cast_or_null<ClassTemplateDecl>(
+        TST->getTemplateName().getAsTemplateDecl());
+    Arguments = TST->getArgs();
+  }
+  if (!Template)
+    return false;
 
   if (!StdInitializerList) {
     // Haven't recognized std::initializer_list yet, maybe this is it.
@@ -5814,9 +5824,8 @@ bool Sema::isStdInitializerList(QualType Ty, QualType *Element) {
     return false;
 
   // This is an instance of std::initializer_list. Find the argument type.
-  if (Element) {
-    *Element = Specialization->getTemplateArgs()[0].getAsType();
-  }
+  if (Element)
+    *Element = Arguments[0].getAsType();
   return true;
 }
 

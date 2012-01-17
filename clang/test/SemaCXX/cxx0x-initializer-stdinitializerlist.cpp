@@ -32,6 +32,11 @@ namespace std {
   };
 }
 
+template <typename T, typename U>
+struct same_type { static const bool value = false; };
+template <typename T>
+struct same_type<T, T> { static const bool value = true; };
+
 struct one { char c[1]; };
 struct two { char c[2]; };
 
@@ -86,4 +91,21 @@ void overloaded_call() {
     static_assert(sizeof(ov2({1, 2, 3})) == sizeof(one), "bad overload");
     // But here, user-defined is worst in both cases.
     ov2({1, 2, D()}); // expected-error {{ambiguous}}
+}
+
+template <typename T>
+T deduce(std::initializer_list<T>); // expected-note {{conflicting types for parameter 'T' ('int' vs. 'double')}}
+template <typename T>
+T deduce_ref(const std::initializer_list<T>&); // expected-note {{conflicting types for parameter 'T' ('int' vs. 'double')}}
+
+void argument_deduction() {
+  static_assert(same_type<decltype(deduce({1, 2, 3})), int>::value, "bad deduction");
+  static_assert(same_type<decltype(deduce({1.0, 2.0, 3.0})), double>::value, "bad deduction");
+
+  deduce({1, 2.0}); // expected-error {{no matching function}}
+
+  static_assert(same_type<decltype(deduce_ref({1, 2, 3})), int>::value, "bad deduction");
+  static_assert(same_type<decltype(deduce_ref({1.0, 2.0, 3.0})), double>::value, "bad deduction");
+
+  deduce_ref({1, 2.0}); // expected-error {{no matching function}}
 }

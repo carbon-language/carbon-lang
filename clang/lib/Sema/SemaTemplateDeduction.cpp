@@ -2971,6 +2971,28 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
       if (!hasDeducibleTemplateParameters(*this, FunctionTemplate, ParamType))
         continue;
 
+      // If the argument is an initializer list ...
+      if (InitListExpr *ILE = dyn_cast<InitListExpr>(Arg)) {
+        // ... then the parameter is an undeduced context, unless the parameter
+        // type is (reference to cv) std::initializer_list<P'>, in which case
+        // deduction is done for each element of the initializer list, and the
+        // result is the deduced type if it's the same for all elements.
+        QualType X;
+        // Removing references was already done.
+        if (!isStdInitializerList(ParamType, &X))
+          continue;
+
+        for (unsigned i = 0, e = ILE->getNumInits(); i < e; ++i) {
+          if (TemplateDeductionResult Result =
+                DeduceTemplateArgumentsByTypeMatch(*this, TemplateParams, X,
+                                                   ILE->getInit(i)->getType(),
+                                                   Info, Deduced, TDF))
+            return Result;
+        }
+        // Don't track the argument type, since an initializer list has none.
+        continue;
+      }
+
       // Keep track of the argument type and corresponding parameter index,
       // so we can check for compatibility between the deduced A and A.
       OriginalCallArgs.push_back(OriginalCallArg(OrigParamType, ArgIdx-1, 
@@ -3042,17 +3064,35 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
         break;
       }
 
-      // Keep track of the argument type and corresponding argument index,
-      // so we can check for compatibility between the deduced A and A.
-      if (hasDeducibleTemplateParameters(*this, FunctionTemplate, ParamType))
-        OriginalCallArgs.push_back(OriginalCallArg(OrigParamType, ArgIdx, 
-                                                   ArgType));
+      // As above, initializer lists need special handling.
+      if (InitListExpr *ILE = dyn_cast<InitListExpr>(Arg)) {
+        QualType X;
+        if (!isStdInitializerList(ParamType, &X)) {
+          ++ArgIdx;
+          break;
+        }
 
-      if (TemplateDeductionResult Result
-          = DeduceTemplateArgumentsByTypeMatch(*this, TemplateParams,
-                                               ParamType, ArgType, Info,
-                                               Deduced, TDF))
-        return Result;
+        for (unsigned i = 0, e = ILE->getNumInits(); i < e; ++i) {
+          if (TemplateDeductionResult Result =
+                DeduceTemplateArgumentsByTypeMatch(*this, TemplateParams, X,
+                                                   ILE->getInit(i)->getType(),
+                                                   Info, Deduced, TDF))
+            return Result;
+        }
+      } else {
+
+        // Keep track of the argument type and corresponding argument index,
+        // so we can check for compatibility between the deduced A and A.
+        if (hasDeducibleTemplateParameters(*this, FunctionTemplate, ParamType))
+          OriginalCallArgs.push_back(OriginalCallArg(OrigParamType, ArgIdx, 
+                                                     ArgType));
+
+        if (TemplateDeductionResult Result
+            = DeduceTemplateArgumentsByTypeMatch(*this, TemplateParams,
+                                                 ParamType, ArgType, Info,
+                                                 Deduced, TDF))
+          return Result;
+      }
 
       // Capture the deduced template arguments for each parameter pack expanded
       // by this pack expansion, add them to the list of arguments we've deduced
