@@ -38,6 +38,7 @@ public:
 
 private:
   static const unsigned ReturnValueIndex = UINT_MAX;
+  static const unsigned InvalidArgIndex = UINT_MAX - 1;
 
   mutable llvm::OwningPtr<BugType> BT;
   void initBugType() const;
@@ -60,6 +61,14 @@ private:
   SymbolRef getPointedToSymbol(CheckerContext &C,
                                const Expr *Arg,
                                bool IssueWarning = false) const;
+
+  inline bool isTaintedOrPointsToTainted(const Expr *E,
+                                         const ProgramState *State,
+                                         CheckerContext &C) const {
+    return (State->isTainted(E, C.getLocationContext()) ||
+            (E->getType().getTypePtr()->isPointerType() &&
+             State->isTainted(getPointedToSymbol(C, E))));
+  }
 
   /// Functions defining the attack surface.
   typedef const ProgramState *(GenericTaintChecker::*FnCheck)(const CallExpr *,
@@ -92,7 +101,45 @@ private:
   /// Generate a report if the expression is tainted or points to tainted data.
   bool generateReportIfTainted(const Expr *E, const char Msg[],
                                CheckerContext &C) const;
+                               
+  
+  typedef llvm::SmallVector<unsigned, 2> ArgVector;
 
+  /// \brief A struct used to specify taint propagation rules for a function.
+  ///
+  /// If any of the possible taint source arguments is tainted, all of the
+  /// destination arguments should also be tainted. Use InvalidArgIndex in the
+  /// src list to specify that all of the arguments can introduce taint. Use
+  /// InvalidArgIndex in the dst arguments to signify that all the non-const
+  /// pointer and reference arguments might be tainted on return. If
+  /// ReturnValueIndex is added to the dst list, the return value will be
+  /// tainted.
+  struct TaintPropagationRule {
+    /// List of arguments which can be taint sources and should be checked.
+    ArgVector SrcArgs;
+    /// List of arguments which should be tainted on function return.
+    ArgVector DstArgs;
+
+    TaintPropagationRule() {}
+
+    TaintPropagationRule(unsigned SArg, unsigned DArg) {
+      SrcArgs.push_back(SArg);
+      DstArgs.push_back(DArg);
+    }
+
+    inline void addSrcArg(unsigned A) { SrcArgs.push_back(A); }
+    inline void addDstArg(unsigned A)  { DstArgs.push_back(A); }
+
+    inline bool isNull() { return SrcArgs.empty(); }
+  };   
+  
+  /// \brief Pre-process a function which propagates taint according to the
+  /// given taint rule.
+  const ProgramState *prePropagateTaint(const CallExpr *CE,
+                                        CheckerContext &C,
+                                        const TaintPropagationRule PR) const;
+
+                              
 };
 // TODO: We probably could use TableGen here.
 const char GenericTaintChecker::MsgUncontrolledFormatString[] =
@@ -144,10 +191,23 @@ void GenericTaintChecker::addSourcesPre(const CallExpr *CE,
   StringRef Name = C.getCalleeName(CE);
   if (Name.empty())
     return;
+
+  const ProgramState *State = 0;
+
+  TaintPropagationRule Rule = llvm::StringSwitch<TaintPropagationRule>(Name)
+    .Case("atoi", TaintPropagationRule(0, ReturnValueIndex))
+    .Case("atol", TaintPropagationRule(0, ReturnValueIndex))
+    .Case("atoll", TaintPropagationRule(0, ReturnValueIndex))
+    .Default(TaintPropagationRule());
+
+  if (!Rule.isNull()) {
+    State = prePropagateTaint(CE, C, Rule);
+    if (!State)
+      return;
+    C.addTransition(State);
+  }
+
   FnCheck evalFunction = llvm::StringSwitch<FnCheck>(Name)
-    .Case("atoi", &GenericTaintChecker::preAnyArgs)
-    .Case("atol", &GenericTaintChecker::preAnyArgs)
-    .Case("atoll", &GenericTaintChecker::preAnyArgs)
     .Case("fscanf", &GenericTaintChecker::preFscanf)
     .Cases("strcpy", "__builtin___strcpy_chk",
            "__inline_strcpy_chk", &GenericTaintChecker::preStrcpy)
@@ -156,7 +216,6 @@ void GenericTaintChecker::addSourcesPre(const CallExpr *CE,
     .Default(0);
 
   // Check and evaluate the call.
-  const ProgramState *State = 0;
   if (evalFunction)
     State = (this->*evalFunction)(CE, C);
   if (!State)
@@ -275,6 +334,71 @@ SymbolRef GenericTaintChecker::getPointedToSymbol(CheckerContext &C,
   SVal Val = State->getSVal(*AddrLoc, ArgTy->getPointeeType());
   return Val.getAsSymbol();
 }
+
+const ProgramState *
+GenericTaintChecker::prePropagateTaint(const CallExpr *CE,
+                                       CheckerContext &C,
+                                       const TaintPropagationRule PR) const {
+  const ProgramState *State = C.getState();
+
+  // Check for taint in arguments.
+  bool IsTainted = false;
+  for (ArgVector::const_iterator I = PR.SrcArgs.begin(),
+                                 E = PR.SrcArgs.end(); I != E; ++I) {
+    unsigned ArgNum = *I;
+
+    if (ArgNum == InvalidArgIndex) {
+      // Check if any of the arguments is tainted.
+      for (unsigned int i = 0; i < CE->getNumArgs(); ++i)
+        if ((IsTainted = isTaintedOrPointsToTainted(CE->getArg(i), State, C)))
+          break;
+      break;
+    }
+
+    assert(ArgNum < CE->getNumArgs());
+    if ((IsTainted = isTaintedOrPointsToTainted(CE->getArg(ArgNum), State, C)))
+      break;
+  }
+  if (!IsTainted)
+    return State;
+
+  // Mark the arguments which should be tainted after the function returns.
+  for (ArgVector::const_iterator I = PR.DstArgs.begin(),
+                                 E = PR.DstArgs.end(); I != E; ++I) {
+    unsigned ArgNum = *I;
+
+    // Should we mark all arguments as tainted?
+    if (ArgNum == InvalidArgIndex) {
+      // For all pointer and references that were passed in:
+      //   If they are not pointing to const data, mark data as tainted.
+      //   TODO: So far we are just going one level down; ideally we'd need to
+      //         recurse here.
+      for (unsigned int i = 0; i < CE->getNumArgs(); ++i) {
+        const Expr *Arg = CE->getArg(i);
+        // Process pointer argument.
+        const Type *ArgTy = Arg->getType().getTypePtr();
+        QualType PType = ArgTy->getPointeeType();
+        if ((!PType.isNull() && !PType.isConstQualified())
+            || (ArgTy->isReferenceType() && !Arg->getType().isConstQualified()))
+          State = State->add<TaintArgsOnPostVisit>(i);
+      }
+      continue;
+    }
+
+    // Should mark the return value?
+    if (ArgNum == ReturnValueIndex) {
+      State = State->add<TaintArgsOnPostVisit>(ReturnValueIndex);
+      continue;
+    }
+
+    // Mark the given argument.
+    assert(ArgNum < CE->getNumArgs());
+    State = State->add<TaintArgsOnPostVisit>(ArgNum);
+  }
+
+  return State;
+}
+
 
 // If argument 0 (file descriptor) is tainted, all arguments except for arg 0
 // and arg 1 should get taint.
