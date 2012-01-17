@@ -15,7 +15,21 @@
 
 <h1>Getting Started: Building and Installing Polly</h1>
 
-<h2 id="source"> Get the code </h2>
+<h2> Automatic </h2>
+
+There is a <a href="polly.sh">script</a> available to automatically checkout,
+update, build, and test Polly. This script contains all the commands that are
+subsequently described on this webpage. The automatic installation consists
+of three simple steps:
+
+<pre>
+wget http://polly.grosser.es/polly.sh
+chmod +x polly.sh
+./polly.sh
+</pre>
+
+<h2> Manual </h2>
+<h3 id="source"> Get the code </h3>
 
 The Polly source code is available in the LLVM SVN repository as well as through
 an official git mirror. It is added to the <em>tools</em>
@@ -48,18 +62,18 @@ git clone http://llvm.org/git/polly.git ${POLLY_SRC}
 # Also build the matching clang-version (optional)
 git clone http://llvm.org/git/clang.git ${CLANG_SRC}
 </pre>
-<h2 id="prerequisites"> Prerequisites </h2>
+<h3 id="prerequisites"> Prerequisites </h3>
 <ul>
 <li>libgmp</li>
 <li>CLooG/isl</li>
 <li>PoCC (optional)</li>
 </ul>
 
-<h3> libgmp </h3>
+<h4> libgmp </h4>
 Install libgmp (library + developer package) through the package management
 system of your operating system.
 
-<h3> CLooG/isl</h3>
+<h4> CLooG/isl</h4>
 
 Polly is tested with a fixed version of <a href="http://www.cloog.org">CLooG</a>
 and isl. To obtain the source code of CLooG (including isl) use
@@ -127,7 +141,7 @@ cd scoplib-0.2.0
 make && make install
 </pre>
 
-<h2 id="build">Build Polly</h2>
+<h3 id="build">Build Polly</h3>
 
 To build Polly you can either use the autoconf or the cmake build system. At the
 moment only the autoconf build system allows to run the llvm test-suite and only
@@ -154,17 +168,11 @@ ${LLVM_SRC}/configure --with-cloog=${CLOOG_INSTALL} --with-isl=${CLOOG_INSTALL}
 make
 </pre>
 
-<h2> Test Polly</h2>
+<h3> Test Polly</h3>
 
 To check if Polly works correctly you can run <em>make polly-test</em> for the
 cmake build or <em>make polly-test -C tools/polly/test/</em> for the autoconf
 build.
-
-<h2> Automatize </h2>
-
-To automate the checkout, update, build, and test of Polly, one can
-use this <a href="polly.sh">script</a> that contains all the commands
-from this page in a single bash script.
 </div>
 </body>
 </html>
