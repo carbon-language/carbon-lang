@@ -4652,7 +4652,19 @@ bool Sema::checkUnsafeAssigns(SourceLocation Loc,
 
 void Sema::checkUnsafeExprAssigns(SourceLocation Loc,
                               Expr *LHS, Expr *RHS) {
-  QualType LHSType = LHS->getType();
+  QualType LHSType;
+  // PropertyRef on LHS type need be directly obtained from
+  // its declaration as it has a PsuedoType.
+  ObjCPropertyRefExpr *PRE
+    = dyn_cast<ObjCPropertyRefExpr>(LHS->IgnoreParens());
+  if (PRE && !PRE->isImplicitProperty()) {
+    const ObjCPropertyDecl *PD = PRE->getExplicitProperty();
+    if (PD)
+      LHSType = PD->getType();
+  }
+  
+  if (LHSType.isNull())
+    LHSType = LHS->getType();
   if (checkUnsafeAssigns(Loc, LHSType, RHS))
     return;
   Qualifiers::ObjCLifetime LT = LHSType.getObjCLifetime();
@@ -4660,8 +4672,7 @@ void Sema::checkUnsafeExprAssigns(SourceLocation Loc,
   if (LT != Qualifiers::OCL_None)
     return;
   
-  if (ObjCPropertyRefExpr *PRE
-        = dyn_cast<ObjCPropertyRefExpr>(LHS->IgnoreParens())) {
+  if (PRE) {
     if (PRE->isImplicitProperty())
       return;
     const ObjCPropertyDecl *PD = PRE->getExplicitProperty();
@@ -4669,7 +4680,15 @@ void Sema::checkUnsafeExprAssigns(SourceLocation Loc,
       return;
     
     unsigned Attributes = PD->getPropertyAttributes();
-    if (Attributes & ObjCPropertyDecl::OBJC_PR_assign)
+    if (Attributes & ObjCPropertyDecl::OBJC_PR_assign) {
+      // when 'assign' attribute was not explicitly specified
+      // by user, ignore it and rely on property type itself
+      // for lifetime info.
+      unsigned AsWrittenAttr = PD->getPropertyAttributesAsWritten();
+      if (!(AsWrittenAttr & ObjCPropertyDecl::OBJC_PR_assign) &&
+          LHSType->isObjCRetainableType())
+        return;
+        
       while (ImplicitCastExpr *cast = dyn_cast<ImplicitCastExpr>(RHS)) {
         if (cast->getCastKind() == CK_ARCConsumeObject) {
           Diag(Loc, diag::warn_arc_retained_property_assign)
@@ -4678,5 +4697,6 @@ void Sema::checkUnsafeExprAssigns(SourceLocation Loc,
         }
         RHS = cast->getSubExpr();
       }
+    }
   }
 }

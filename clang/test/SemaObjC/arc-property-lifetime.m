@@ -149,3 +149,22 @@
 }
 @end
 
+// rdar://10694932
+@interface Baz 
+@property  id prop;
+@property  __strong id strong_prop;
+@property  (strong) id strong_attr_prop;
+@property  (strong) __strong id realy_strong_attr_prop;
++ (id) alloc;
+- (id) init;
+- (id) implicit;
+- (void) setImplicit : (id) arg; 
+@end
+
+void foo(Baz *f) {
+        f.prop = [[Baz alloc] init];
+        f.strong_prop = [[Baz alloc] init];
+        f.strong_attr_prop = [[Baz alloc] init];
+        f.realy_strong_attr_prop = [[Baz alloc] init];
+        f.implicit = [[Baz alloc] init];
+}
