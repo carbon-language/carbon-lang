@@ -12,9 +12,9 @@ _f1:
 
         .data
 _d0:
-Ld0_0:  
+Ld0_0:
         .long Lsc0_0 - Ld0_0
-        
+
 	.section	__TEXT,__cstring,cstring_literals
 Lsc0_0:
         .long 0
