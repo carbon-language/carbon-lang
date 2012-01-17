@@ -12,10 +12,15 @@
 # the building of the a.out executable program.  For example,
 # DYLIB_ONLY := YES
 #
-# And also might be of interest:
+# Also might be of interest:
 # FRAMEWORK_INCLUDES (Darwin only) :=
 # CFLAGS_EXTRAS :=
 # LD_EXTRAS :=
+#
+# And test/functionalities/archives/Makefile:
+# MAKE_DSYM := NO
+# ARCHIVE_NAME := libfoo.a
+# ARCHIVE_C_SOURCES := a.c b.c
 
 # Uncomment line below for debugging shell commands
 # SHELL = /bin/sh -x
