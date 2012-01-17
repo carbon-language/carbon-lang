@@ -6982,18 +6982,51 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
 SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
   // (vextract (scalar_to_vector val, 0) -> val
   SDValue InVec = N->getOperand(0);
+  EVT VT = InVec.getValueType();
+  EVT NVT = N->getValueType(0);
 
   if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR) {
     // Check if the result type doesn't match the inserted element type. A
     // SCALAR_TO_VECTOR may truncate the inserted element and the
     // EXTRACT_VECTOR_ELT may widen the extracted vector.
     SDValue InOp = InVec.getOperand(0);
-    EVT NVT = N->getValueType(0);
     if (InOp.getValueType() != NVT) {
       assert(InOp.getValueType().isInteger() && NVT.isInteger());
       return DAG.getSExtOrTrunc(InOp, InVec.getDebugLoc(), NVT);
     }
     return InOp;
+  }
+
+  SDValue EltNo = N->getOperand(1);
+  bool ConstEltNo = isa<ConstantSDNode>(EltNo);
+
+  // Transform: (EXTRACT_VECTOR_ELT( VECTOR_SHUFFLE )) -> EXTRACT_VECTOR_ELT.
+  // We only perform this optimization before the op legalization phase because
+  // we may introduce new vector instructions which are not backed by TD patterns.
+  // For example on AVX, extracting elements from a wide vector without using
+  // extract_subvector.
+  if (InVec.getOpcode() == ISD::VECTOR_SHUFFLE
+      && ConstEltNo && !LegalOperations) {
+    int Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
+    int NumElem = VT.getVectorNumElements();
+    ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(InVec);
+    // Find the new index to extract from.
+    int OrigElt = SVOp->getMaskElt(Elt);
+
+    // Extracting an undef index is undef.
+    if (OrigElt == -1)
+      return DAG.getUNDEF(NVT);
+
+    // Select the right vector half to extract from.
+    if (OrigElt < NumElem) {
+      InVec = InVec->getOperand(0);
+    } else {
+      InVec = InVec->getOperand(1);
+      OrigElt -= NumElem;
+    }
+
+    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, N->getDebugLoc(), NVT,
+                       InVec, DAG.getConstant(OrigElt, MVT::i32));
   }
 
   // Perform only after legalization to ensure build_vector / vector_shuffle
@@ -7003,13 +7036,11 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
   // (vextract (v4f32 load $addr), c) -> (f32 load $addr+c*size)
   // (vextract (v4f32 s2v (f32 load $addr)), c) -> (f32 load $addr+c*size)
   // (vextract (v4f32 shuffle (load $addr), <1,u,u,u>), 0) -> (f32 load $addr)
-  SDValue EltNo = N->getOperand(1);
 
-  if (isa<ConstantSDNode>(EltNo)) {
+  if (ConstEltNo) {
     int Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
     bool NewLoad = false;
     bool BCNumEltsChanged = false;
-    EVT VT = InVec.getValueType();
     EVT ExtVT = VT.getVectorElementType();
     EVT LVT = ExtVT;
 
