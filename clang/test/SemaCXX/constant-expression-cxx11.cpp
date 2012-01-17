@@ -687,6 +687,28 @@ static_assert((Bottom*)nullB == 0, "");
 static_assert((Derived*)nullB == 0, "");
 static_assert((void*)(Bottom*)nullB == (void*)(Derived*)nullB, "");
 
+namespace ConversionOperators {
+
+struct T {
+  constexpr T(int n) : k(5*n - 3) {}
+  constexpr operator int() { return k; }
+  int k;
+};
+
+struct S {
+  constexpr S(int n) : k(2*n + 1) {}
+  constexpr operator int() { return k; }
+  constexpr operator T() { return T(k); }
+  int k;
+};
+
+constexpr bool check(T a, T b) { return a == b.k; }
+
+static_assert(S(5) == 11, "");
+static_assert(check(S(5), 11), "");
+
+}
+
 }
 
 namespace Temporaries {

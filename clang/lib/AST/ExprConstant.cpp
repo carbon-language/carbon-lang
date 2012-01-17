@@ -2280,6 +2280,7 @@ public:
     case CK_AtomicToNonAtomic:
     case CK_NonAtomicToAtomic:
     case CK_NoOp:
+    case CK_UserDefinedConversion:
       return StmtVisitorTy::Visit(E->getSubExpr());
 
     case CK_LValueToRValue: {
@@ -4525,13 +4526,13 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
   case CK_BitCast:
   case CK_Dependent:
   case CK_LValueBitCast:
-  case CK_UserDefinedConversion:
   case CK_ARCProduceObject:
   case CK_ARCConsumeObject:
   case CK_ARCReclaimReturnedObject:
   case CK_ARCExtendBlockObject:
     return Error(E);
 
+  case CK_UserDefinedConversion:
   case CK_LValueToRValue:
   case CK_AtomicToNonAtomic:
   case CK_NonAtomicToAtomic:
