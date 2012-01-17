@@ -197,7 +197,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc DL,
     // FP_ROUND's are always exact here.
     if (ValueVT.bitsLT(Val.getValueType()))
       return DAG.getNode(ISD::FP_ROUND, DL, ValueVT, Val,
-                         DAG.getIntPtrConstant(1));
+                         DAG.getTargetConstant(1, TLI.getPointerTy()));
 
     return DAG.getNode(ISD::FP_EXTEND, DL, ValueVT, Val);
   }
@@ -2691,7 +2691,8 @@ void SelectionDAGBuilder::visitFPTrunc(const User &I) {
   SDValue N = getValue(I.getOperand(0));
   EVT DestVT = TLI.getValueType(I.getType());
   setValue(&I, DAG.getNode(ISD::FP_ROUND, getCurDebugLoc(),
-                           DestVT, N, DAG.getIntPtrConstant(0)));
+                           DestVT, N,
+                           DAG.getTargetConstant(0, TLI.getPointerTy())));
 }
 
 void SelectionDAGBuilder::visitFPExt(const User &I){
