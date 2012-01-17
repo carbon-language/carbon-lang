@@ -34,10 +34,6 @@ namespace llvm {
   /// wth earlier copy coalescing.
   extern bool StrongPHIElim;
 
-  /// EnableMachineSched - temporary flag to enable the machine scheduling pass
-  /// until we complete the register allocation pass configuration cleanup.
-  extern bool EnableMachineSched;
-
   class TargetOptions {
   public:
     TargetOptions()

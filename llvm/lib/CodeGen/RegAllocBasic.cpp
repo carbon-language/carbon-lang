@@ -149,8 +149,6 @@ void RABasic::getAnalysisUsage(AnalysisUsage &AU) const {
   if (StrongPHIElim)
     AU.addRequiredID(StrongPHIEliminationID);
   AU.addRequiredTransitiveID(RegisterCoalescerPassID);
-  if (EnableMachineSched)
-    AU.addRequiredID(MachineSchedulerPassID);
   AU.addRequired<CalculateSpillWeights>();
   AU.addRequired<LiveStacks>();
   AU.addPreserved<LiveStacks>();

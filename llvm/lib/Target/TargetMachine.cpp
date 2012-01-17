@@ -37,14 +37,6 @@ FunctionSections("ffunction-sections",
   cl::desc("Emit functions into separate sections"),
   cl::init(false));
 
-/// EnableMachineSched - temporary flag to enable the machine scheduling pass
-/// until we complete the register allocation pass configuration cleanup.
-static cl::opt<bool, true>
-MachineSchedOpt("enable-misched",
-                cl::desc("Enable the machine instruction scheduling pass."),
-                cl::location(EnableMachineSched),
-                cl::init(false), cl::Hidden);
-
 //---------------------------------------------------------------------------
 // TargetMachine Class
 //
