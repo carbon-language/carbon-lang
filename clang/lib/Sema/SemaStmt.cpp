@@ -1164,7 +1164,7 @@ static bool FinishForRangeVarDecl(Sema &SemaRef, VarDecl *Decl, Expr *Init,
   // Deduce the type for the iterator variable now rather than leaving it to
   // AddInitializerToDecl, so we can produce a more suitable diagnostic.
   TypeSourceInfo *InitTSI = 0;
-  if (Init->getType()->isVoidType() ||
+  if ((!isa<InitListExpr>(Init) && Init->getType()->isVoidType()) ||
       !SemaRef.DeduceAutoType(Decl->getTypeSourceInfo(), Init, InitTSI))
     SemaRef.Diag(Loc, diag) << Init->getType();
   if (!InitTSI) {

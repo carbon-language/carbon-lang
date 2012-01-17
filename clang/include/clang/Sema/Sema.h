@@ -2729,6 +2729,12 @@ public:
   /// it is and Element is not NULL, assigns the element type to Element.
   bool isStdInitializerList(QualType Ty, QualType *Element);
 
+  /// \brief Looks for the std::initializer_list template and instantiates it
+  /// with Element, or emits an error if it's not found.
+  ///
+  /// \returns The instantiated template, or null on error.
+  QualType BuildStdInitializerList(QualType Element, SourceLocation Loc);
+
   Decl *ActOnUsingDirective(Scope *CurScope,
                             SourceLocation UsingLoc,
                             SourceLocation NamespcLoc,
@@ -4707,6 +4713,7 @@ public:
 
   bool DeduceAutoType(TypeSourceInfo *AutoType, Expr *&Initializer,
                       TypeSourceInfo *&Result);
+  void DiagnoseAutoDeductionFailure(VarDecl *VDecl, Expr *Init);
 
   FunctionTemplateDecl *getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,
                                                    FunctionTemplateDecl *FT2,

@@ -1196,10 +1196,17 @@ def err_trailing_return_in_parens : Error<
   "trailing return type may not be nested within parentheses">;
 def err_auto_var_deduction_failure : Error<
   "variable %0 with type %1 has incompatible initializer of type %2">;
+def err_auto_var_deduction_failure_from_init_list : Error<
+  "cannot deduce actual type for variable %0 with type %1 from initializer list">;
 def err_auto_new_deduction_failure : Error<
   "new expression for type %0 has incompatible constructor argument of type %1">;
 def err_auto_different_deductions : Error<
   "'auto' deduced as %0 in declaration of %1 and deduced as %2 in declaration of %3">;
+def err_implied_std_initializer_list_not_found : Error<
+  "cannot deduce type of initializer list because std::initializer_list was "
+  "not found; include <initializer_list>">;
+def err_malformed_std_initializer_list : Error<
+  "std::initializer_list must be a class template with a single type parameter">;
 
 // C++11 override control
 def override_keyword_only_allowed_on_virtual_member_functions : Error<

@@ -38,18 +38,6 @@ namespace std {
   };
 }
 
-namespace integral {
-
-  void initializer_list() {
-    auto l = {1, 2, 3, 4};
-    static_assert(same_type<decltype(l), std::initializer_list<int>>::value, "");
-    auto bl = {1, 2.0}; // expected-error {{cannot deduce}}
-
-    for (int i : {1, 2, 3, 4}) {}
-  }
-
-}
-
 namespace objects {
 
   struct X1 { X1(int); };

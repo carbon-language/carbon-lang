@@ -5829,6 +5829,54 @@ bool Sema::isStdInitializerList(QualType Ty, QualType *Element) {
   return true;
 }
 
+static ClassTemplateDecl *LookupStdInitializerList(Sema &S, SourceLocation Loc){
+  NamespaceDecl *Std = S.getStdNamespace();
+  if (!Std) {
+    S.Diag(Loc, diag::err_implied_std_initializer_list_not_found);
+    return 0;
+  }
+
+  LookupResult Result(S, &S.PP.getIdentifierTable().get("initializer_list"),
+                      Loc, Sema::LookupOrdinaryName);
+  if (!S.LookupQualifiedName(Result, Std)) {
+    S.Diag(Loc, diag::err_implied_std_initializer_list_not_found);
+    return 0;
+  }
+  ClassTemplateDecl *Template = Result.getAsSingle<ClassTemplateDecl>();
+  if (!Template) {
+    Result.suppressDiagnostics();
+    // We found something weird. Complain about the first thing we found.
+    NamedDecl *Found = *Result.begin();
+    S.Diag(Found->getLocation(), diag::err_malformed_std_initializer_list);
+    return 0;
+  }
+
+  // We found some template called std::initializer_list. Now verify that it's
+  // correct.
+  TemplateParameterList *Params = Template->getTemplateParameters();
+  if (Params->size() != 1 || !isa<TemplateTypeParmDecl>(Params->getParam(0))) {
+    S.Diag(Template->getLocation(), diag::err_malformed_std_initializer_list);
+    return 0;
+  }
+
+  return Template;
+}
+
+QualType Sema::BuildStdInitializerList(QualType Element, SourceLocation Loc) {
+  if (!StdInitializerList) {
+    StdInitializerList = LookupStdInitializerList(*this, Loc);
+    if (!StdInitializerList)
+      return QualType();
+  }
+
+  TemplateArgumentListInfo Args(Loc, Loc);
+  Args.addArgument(TemplateArgumentLoc(TemplateArgument(Element),
+                                       Context.getTrivialTypeSourceInfo(Element,
+                                                                        Loc)));
+  return Context.getCanonicalType(
+      CheckTemplateIdType(TemplateName(StdInitializerList), Loc, Args));
+}
+
 /// \brief Determine whether a using statement is in a context where it will be
 /// apply in all contexts.
 static bool IsUsingDirectiveInToplevelContext(DeclContext *CurContext) {
@@ -9027,9 +9075,7 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
     Expr *Init = Exprs.get()[0];
     TypeSourceInfo *DeducedType = 0;
     if (!DeduceAutoType(VDecl->getTypeSourceInfo(), Init, DeducedType))
-      Diag(VDecl->getLocation(), diag::err_auto_var_deduction_failure)
-        << VDecl->getDeclName() << VDecl->getType() << Init->getType()
-        << Init->getSourceRange();
+      DiagnoseAutoDeductionFailure(VDecl, Init);
     if (!DeducedType) {
       RealDecl->setInvalidDecl();
       return;

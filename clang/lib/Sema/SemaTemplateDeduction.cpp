@@ -3422,19 +3422,36 @@ Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init,
     return false;
 
   TemplateDeductionInfo Info(Context, Loc);
-  if (DeduceTemplateArgumentsByTypeMatch(*this, &TemplateParams, FuncParam,
-                                         InitType, Info, Deduced, TDF))
-    return false;
+
+  InitListExpr * InitList = dyn_cast<InitListExpr>(Init);
+  if (InitList) {
+    for (unsigned i = 0, e = InitList->getNumInits(); i < e; ++i) {
+      if (DeduceTemplateArgumentsByTypeMatch(*this, &TemplateParams, FuncParam,
+                                             InitList->getInit(i)->getType(),
+                                             Info, Deduced, TDF))
+        return false;
+    }
+  } else {
+    if (DeduceTemplateArgumentsByTypeMatch(*this, &TemplateParams, FuncParam,
+                                           InitType, Info, Deduced, TDF))
+      return false;
+  }
 
   QualType DeducedType = Deduced[0].getAsType();
   if (DeducedType.isNull())
     return false;
-  
+
+  if (InitList) {
+    DeducedType = BuildStdInitializerList(DeducedType, Loc);
+    if (DeducedType.isNull())
+      return false;
+  }
+
   Result = SubstituteAutoTransform(*this, DeducedType).TransformType(Type);
-  
+
   // Check that the deduced argument type is compatible with the original
   // argument type per C++ [temp.deduct.call]p4.
-  if (Result &&
+  if (!InitList && Result &&
       CheckOriginalCallArgDeduction(*this, 
                                     Sema::OriginalCallArg(FuncParam,0,InitType),
                                     Result->getType())) {
@@ -3443,6 +3460,17 @@ Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init,
   }
 
   return true;
+}
+
+void Sema::DiagnoseAutoDeductionFailure(VarDecl *VDecl, Expr *Init) {
+  if (isa<InitListExpr>(Init))
+    Diag(VDecl->getLocation(),
+         diag::err_auto_var_deduction_failure_from_init_list)
+      << VDecl->getDeclName() << VDecl->getType() << Init->getSourceRange();
+  else
+    Diag(VDecl->getLocation(), diag::err_auto_var_deduction_failure)
+      << VDecl->getDeclName() << VDecl->getType() << Init->getType()
+      << Init->getSourceRange();
 }
 
 static void

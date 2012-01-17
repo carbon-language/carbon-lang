@@ -5976,9 +5976,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
   if (TypeMayContainAuto && VDecl->getType()->getContainedAutoType()) {
     TypeSourceInfo *DeducedType = 0;
     if (!DeduceAutoType(VDecl->getTypeSourceInfo(), Init, DeducedType))
-      Diag(VDecl->getLocation(), diag::err_auto_var_deduction_failure)
-        << VDecl->getDeclName() << VDecl->getType() << Init->getType()
-        << Init->getSourceRange();
+      DiagnoseAutoDeductionFailure(VDecl, Init);
     if (!DeducedType) {
       RealDecl->setInvalidDecl();
       return;

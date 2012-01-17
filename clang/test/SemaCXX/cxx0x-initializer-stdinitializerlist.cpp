@@ -109,3 +109,11 @@ void argument_deduction() {
 
   deduce_ref({1, 2.0}); // expected-error {{no matching function}}
 }
+
+void auto_deduction() {
+  auto l = {1, 2, 3, 4};
+  static_assert(same_type<decltype(l), std::initializer_list<int>>::value, "");
+  auto bl = {1, 2.0}; // expected-error {{cannot deduce}}
+
+  for (int i : {1, 2, 3, 4}) {}
+}
