@@ -4318,6 +4318,10 @@ def err_cannot_pass_objc_interface_to_vararg : Error<
   "cannot pass object with interface type %0 by-value through variadic "
   "%select{function|block|method}1">;
 
+def err_cannot_pass_non_pod_to_vararg_ppe : Error<
+  "passing object of type %0 to variadic call in a context "
+  "which is potentially evaluatable, but not obviously "
+  "potentially evaluatable, is not yet implemented">;
 def warn_cannot_pass_non_pod_arg_to_vararg : Warning<
   "cannot pass object of %select{non-POD|non-trivial}0 type %1 through variadic"
   " %select{function|block|method|constructor}2; call will abort at runtime">,
