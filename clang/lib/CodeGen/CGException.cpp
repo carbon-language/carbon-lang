@@ -984,8 +984,23 @@ static void InitCatchParam(CodeGenFunction &CGF,
     if (CatchType->hasPointerRepresentation()) {
       llvm::Value *CastExn =
         CGF.Builder.CreateBitCast(AdjustedExn, LLVMCatchTy, "exn.casted");
-      CGF.Builder.CreateStore(CastExn, ParamAddr);
-      return;
+
+      switch (CatchType.getQualifiers().getObjCLifetime()) {
+      case Qualifiers::OCL_Strong:
+        CastExn = CGF.EmitARCRetainNonBlock(CastExn);
+        // fallthrough
+
+      case Qualifiers::OCL_None:
+      case Qualifiers::OCL_ExplicitNone:
+      case Qualifiers::OCL_Autoreleasing:
+        CGF.Builder.CreateStore(CastExn, ParamAddr);
+        return;
+
+      case Qualifiers::OCL_Weak:
+        CGF.EmitARCInitWeak(ParamAddr, CastExn);
+        return;
+      }
+      llvm_unreachable("bad ownership qualifier!");
     }
 
     // Otherwise, it returns a pointer into the exception object.
