@@ -8159,6 +8159,9 @@ ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
       if (LHSExpr->isTypeDependent() || RHSExpr->isTypeDependent())
         return BuildOverloadedBinOp(*this, S, OpLoc, Opc, LHSExpr, RHSExpr);
 
+      if (LHSExpr->getType()->isOverloadableType())
+        return BuildOverloadedBinOp(*this, S, OpLoc, Opc, LHSExpr, RHSExpr);
+
       return CreateBuiltinBinOp(OpLoc, Opc, LHSExpr, RHSExpr);
     }
 

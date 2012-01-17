@@ -408,3 +408,10 @@ class StringRef {
 };
 
 }
+
+namespace PR11784 {
+  struct A { A& operator=(void (*x)()); };
+  void f();
+  void f(int);
+  void g() { A x; x = f; }
+}
