@@ -110,6 +110,8 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   addInitialAliasAnalysisPasses(MPM);
 
   if (!DisableUnitAtATime) {
+    addExtensionsToPM(EP_ModuleOptimizerEarly, MPM);
+
     MPM.add(createGlobalOptimizerPass());     // Optimize out global vars
 
     MPM.add(createIPSCCPPass());              // IP SCCP
