@@ -181,6 +181,7 @@ where options:
        -A x86_64^i386 => launch inferior with x86_64 and i386 architectures
 -C   : specify the compiler(s) used to build the inferior executable
        -C clang => build debuggee using clang compiler
+       -C /my/full/path/to/clang => specify a full path to the clang binary
        -C clang^gcc => build debuggee using clang and gcc compilers
 -D   : dump the Python sys.path variable
 -a   : don't do lldb Python API tests
