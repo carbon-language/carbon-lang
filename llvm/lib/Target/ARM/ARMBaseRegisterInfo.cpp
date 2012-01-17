@@ -63,26 +63,12 @@ ARMBaseRegisterInfo::ARMBaseRegisterInfo(const ARMBaseInstrInfo &tii,
 
 const unsigned*
 ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  static const unsigned CalleeSavedRegs[] = {
-    ARM::LR, ARM::R11, ARM::R10, ARM::R9, ARM::R8,
-    ARM::R7, ARM::R6,  ARM::R5,  ARM::R4,
+  return (STI.isTargetIOS()) ? CSR_iOS_SaveList : CSR_AAPCS_SaveList;
+}
 
-    ARM::D15, ARM::D14, ARM::D13, ARM::D12,
-    ARM::D11, ARM::D10, ARM::D9,  ARM::D8,
-    0
-  };
-
-  static const unsigned iOSCalleeSavedRegs[] = {
-    // iOS ABI deviates from ARM standard ABI. R9 is not a callee-saved
-    // register.
-    ARM::LR,  ARM::R7,  ARM::R6, ARM::R5, ARM::R4,
-    ARM::R11, ARM::R10, ARM::R8,
-
-    ARM::D15, ARM::D14, ARM::D13, ARM::D12,
-    ARM::D11, ARM::D10, ARM::D9,  ARM::D8,
-    0
-  };
-  return (STI.isTargetIOS()) ? iOSCalleeSavedRegs : CalleeSavedRegs;
+const uint32_t*
+ARMBaseRegisterInfo::getCallPreservedMask(CallingConv::ID) const {
+  return (STI.isTargetIOS()) ? CSR_iOS_RegMask : CSR_AAPCS_RegMask;
 }
 
 BitVector ARMBaseRegisterInfo::

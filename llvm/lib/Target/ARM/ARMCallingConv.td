@@ -164,3 +164,14 @@ def RetCC_ARM_AAPCS_VFP : CallingConv<[
                                  S9, S10, S11, S12, S13, S14, S15]>>,
   CCDelegateTo<RetCC_ARM_AAPCS_Common>
 ]>;
+
+//===----------------------------------------------------------------------===//
+// Callee-saved register lists.
+//===----------------------------------------------------------------------===//
+
+def CSR_AAPCS : CalleeSavedRegs<(add LR, R11, R10, R9, R8, R7, R6, R5, R4,
+                                     (sequence "D%u", 15, 8))>;
+
+// iOS ABI deviates from ARM standard ABI. R9 is not a callee-saved register.
+// Also save R7-R4 first to match the stack frame fixed spill areas.
+def CSR_iOS : CalleeSavedRegs<(add LR, R7, R6, R5, R4, (sub CSR_AAPCS, R9))>;
