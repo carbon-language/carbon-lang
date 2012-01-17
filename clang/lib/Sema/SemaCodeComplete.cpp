@@ -2791,8 +2791,6 @@ CXCursorKind clang::getCursorKindForDecl(Decl *D) {
       return CXCursor_FunctionDecl;
     case Decl::ObjCCategory:       return CXCursor_ObjCCategoryDecl;
     case Decl::ObjCCategoryImpl:   return CXCursor_ObjCCategoryImplDecl;
-      // FIXME
-      // return CXCursor_UnexposedDecl;
     case Decl::ObjCImplementation: return CXCursor_ObjCImplementationDecl;
 
     case Decl::ObjCInterface:
