@@ -69,7 +69,7 @@ size_t mz_size(malloc_zone_t* zone, const void* ptr) {
   if (system_malloc_zone) {
     if ((system_malloc_zone->size)(system_malloc_zone, ptr)) return 0;
   }
-  return __asan_mz_size(ptr);
+  return asan_mz_size(ptr);
 }
 
 void *mz_malloc(malloc_zone_t *zone, size_t size) {
@@ -141,7 +141,7 @@ void mz_free(malloc_zone_t *zone, void *ptr) {
     system_purgeable_zone->free(system_purgeable_zone, ptr);
     return;
   }
-  if (__asan_mz_size(ptr)) {
+  if (asan_mz_size(ptr)) {
     GET_STACK_TRACE_HERE_FOR_FREE(ptr);
     asan_free(ptr, &stack);
   } else {
@@ -165,7 +165,7 @@ void cf_free(void *ptr, void *info) {
     system_purgeable_zone->free(system_purgeable_zone, ptr);
     return;
   }
-  if (__asan_mz_size(ptr)) {
+  if (asan_mz_size(ptr)) {
     GET_STACK_TRACE_HERE_FOR_FREE(ptr);
     asan_free(ptr, &stack);
   } else {
@@ -184,7 +184,7 @@ void *mz_realloc(malloc_zone_t *zone, void *ptr, size_t size) {
     GET_STACK_TRACE_HERE_FOR_MALLOC;
     return asan_malloc(size, &stack);
   } else {
-    if (__asan_mz_size(ptr)) {
+    if (asan_mz_size(ptr)) {
       GET_STACK_TRACE_HERE_FOR_MALLOC;
       return asan_realloc(ptr, size, &stack);
     } else {
@@ -207,7 +207,7 @@ void *cf_realloc(void *ptr, CFIndex size, CFOptionFlags hint, void *info) {
     GET_STACK_TRACE_HERE_FOR_MALLOC;
     return asan_malloc(size, &stack);
   } else {
-    if (__asan_mz_size(ptr)) {
+    if (asan_mz_size(ptr)) {
       GET_STACK_TRACE_HERE_FOR_MALLOC;
       return asan_realloc(ptr, size, &stack);
     } else {
@@ -279,11 +279,11 @@ void mi_log(malloc_zone_t *zone, void *address) {
 }
 
 void mi_force_lock(malloc_zone_t *zone) {
-  __asan_mz_force_lock();
+  asan_mz_force_lock();
 }
 
 void mi_force_unlock(malloc_zone_t *zone) {
-  __asan_mz_force_unlock();
+  asan_mz_force_unlock();
 }
 
 // This function is currently unused, and we build with -Werror.

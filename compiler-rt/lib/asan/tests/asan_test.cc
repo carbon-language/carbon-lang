@@ -520,6 +520,25 @@ TEST(AddressSanitizer, ReallocTest) {
   }
 }
 
+#ifndef __APPLE__
+static const char *kMallocUsableSizeErrorMsg =
+  "AddressSanitizer attempting to call malloc_usable_size()";
+
+TEST(AddressSanitizer, MallocUsableSizeTest) {
+  const size_t kArraySize = 100;
+  char *array = Ident((char*)malloc(kArraySize));
+  int *int_ptr = Ident(new int);
+  EXPECT_EQ(0, malloc_usable_size(NULL));
+  EXPECT_EQ(kArraySize, malloc_usable_size(array));
+  EXPECT_EQ(sizeof(int), malloc_usable_size(int_ptr));
+  EXPECT_DEATH(malloc_usable_size((void*)0x123), kMallocUsableSizeErrorMsg);
+  EXPECT_DEATH(malloc_usable_size(array + kArraySize / 2),
+               kMallocUsableSizeErrorMsg);
+  free(array);
+  EXPECT_DEATH(malloc_usable_size(array), kMallocUsableSizeErrorMsg);
+}
+#endif
+
 void WrongFree() {
   int *x = (int*)malloc(100 * sizeof(int));
   // Use the allocated memory, otherwise Clang will optimize it out.

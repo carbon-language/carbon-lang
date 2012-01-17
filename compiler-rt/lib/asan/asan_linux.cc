@@ -233,7 +233,7 @@ bool AsanProcMaps::GetObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
   return false;
 }
 
-#else // __arm__
+#else  // __arm__
 
 struct DlIterateData {
   int count;
@@ -279,7 +279,7 @@ bool AsanProcMaps::GetObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
   return false;
 }
 
-#endif // __arm__
+#endif  // __arm__
 
 void AsanThread::SetThreadStackTopAndBottom() {
   if (tid() == 0) {

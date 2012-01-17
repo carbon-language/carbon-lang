@@ -27,7 +27,7 @@ TEST(AddressSanitizerInterface, GetEstimatedAllocatedSize) {
 }
 
 static const char* kGetAllocatedSizeErrorMsg =
-  "__asan_get_allocated_size failed";
+  "attempting to call __asan_get_allocated_size()";
 
 TEST(AddressSanitizerInterface, GetAllocatedSizeAndOwnershipTest) {
   const size_t kArraySize = 100;

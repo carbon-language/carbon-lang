@@ -108,6 +108,12 @@ void* __libc_memalign(size_t align, size_t s)
   __attribute__((alias("memalign")));
 
 INTERCEPTOR_ATTRIBUTE
+size_t malloc_usable_size(void *ptr) {
+  GET_STACK_TRACE_HERE_FOR_MALLOC;
+  return asan_malloc_usable_size(ptr, &stack);
+}
+
+INTERCEPTOR_ATTRIBUTE
 struct mallinfo mallinfo() {
   struct mallinfo res;
   real_memset(&res, 0, sizeof(res));
