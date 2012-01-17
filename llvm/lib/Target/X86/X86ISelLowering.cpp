@@ -6245,7 +6245,7 @@ bool CanXFormVExtractWithShuffleIntoLoad(SDValue V, SelectionDAG &DAG,
   // then the EXTRACT_VECTOR_ELT is likely to be legalized to a sequence of
   // EXTRACT_SUBVECTOR + EXTRACT_VECTOR_ELT, which are not detected at this point
   // because the legalization of N did not happen yet.
-  if (Idx >= NumElems/2 && VT.getSizeInBits() == 256)
+  if (Idx >= (int)NumElems/2 && VT.getSizeInBits() == 256)
     return false;
 
   // Skip one more bit_convert if necessary
