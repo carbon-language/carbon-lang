@@ -214,7 +214,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Builder.CreateCall2(CGM.getIntrinsic(Intrinsic::vacopy),
                                            DstPtr, SrcPtr));
   }
-  case Builtin::BI__builtin_abs: {
+  case Builtin::BI__builtin_abs: 
+  case Builtin::BI__builtin_labs:
+  case Builtin::BI__builtin_llabs: {
     Value *ArgValue = EmitScalarExpr(E->getArg(0));
 
     Value *NegOp = Builder.CreateNeg(ArgValue, "neg");
