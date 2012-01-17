@@ -30,12 +30,12 @@ class DeclVisitor {
 public:
   RetTy Visit(Decl *D) {
     switch (D->getKind()) {
-      default: llvm_unreachable("Decl that isn't part of DeclNodes.inc!");
 #define DECL(DERIVED, BASE) \
       case Decl::DERIVED: DISPATCH(DERIVED##Decl, DERIVED##Decl);
 #define ABSTRACT_DECL(DECL)
 #include "clang/AST/DeclNodes.inc"
     }
+    llvm_unreachable("Decl that isn't part of DeclNodes.inc!");
   }
 
   // If the implementation chooses not to implement a certain visit

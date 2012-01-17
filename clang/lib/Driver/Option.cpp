@@ -61,8 +61,6 @@ Option::~Option() {
 void Option::dump() const {
   llvm::errs() << "<";
   switch (Kind) {
-  default:
-    llvm_unreachable("Invalid kind");
 #define P(N) case N: llvm::errs() << #N; break
     P(GroupClass);
     P(InputClass);

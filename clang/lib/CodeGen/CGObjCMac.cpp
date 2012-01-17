@@ -4756,8 +4756,6 @@ bool CGObjCNonFragileABIMac::isVTableDispatchedSelector(Selector Sel) {
   // At various points we've experimented with using vtable-based
   // dispatch for all methods.
   switch (CGM.getCodeGenOpts().getObjCDispatchMethod()) {
-  default:
-    llvm_unreachable("Invalid dispatch method!");
   case CodeGenOptions::Legacy:
     return false;
   case CodeGenOptions::NonLegacy:

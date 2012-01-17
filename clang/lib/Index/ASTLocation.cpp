@@ -41,7 +41,6 @@ Decl *ASTLocation::getReferencedDecl() {
     return 0;
 
   switch (getKind()) {
-  default: llvm_unreachable("Invalid Kind");
   case N_Type:
     return 0;
   case N_Decl:
@@ -60,7 +59,6 @@ SourceRange ASTLocation::getSourceRange() const {
     return SourceRange();
 
   switch (getKind()) {
-  default: llvm_unreachable("Invalid Kind");
   case N_Decl:
     return D->getSourceRange();
   case N_Stmt:

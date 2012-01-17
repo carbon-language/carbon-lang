@@ -1941,7 +1941,6 @@ StaticAssertDecl *StaticAssertDecl::CreateDeserialized(ASTContext &C,
 
 static const char *getAccessName(AccessSpecifier AS) {
   switch (AS) {
-    default:
     case AS_none:
       llvm_unreachable("Invalid access specifier!");
     case AS_public:
@@ -1951,6 +1950,7 @@ static const char *getAccessName(AccessSpecifier AS) {
     case AS_protected:
       return "protected";
   }
+  llvm_unreachable("Invalid access specifier!");
 }
 
 const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,

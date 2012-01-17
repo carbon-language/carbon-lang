@@ -291,7 +291,6 @@ DeclSpec::TST Sema::isTagName(IdentifierInfo &II, Scope *S) {
   if (R.getResultKind() == LookupResult::Found)
     if (const TagDecl *TD = R.getAsSingle<TagDecl>()) {
       switch (TD->getTagKind()) {
-      default:         return DeclSpec::TST_unspecified;
       case TTK_Struct: return DeclSpec::TST_struct;
       case TTK_Union:  return DeclSpec::TST_union;
       case TTK_Class:  return DeclSpec::TST_class;

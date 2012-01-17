@@ -119,7 +119,6 @@ void Decl::PrintStats() {
 
 void Decl::add(Kind k) {
   switch (k) {
-  default: llvm_unreachable("Declaration not in DeclNodes.inc!");
 #define DECL(DERIVED, BASE) case DERIVED: ++n##DERIVED##s; break;
 #define ABSTRACT_DECL(DECL)
 #include "clang/AST/DeclNodes.inc"

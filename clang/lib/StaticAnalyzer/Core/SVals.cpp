@@ -245,8 +245,6 @@ void SVal::dumpToStream(raw_ostream &os) const {
     case UndefinedKind:
       os << "Undefined";
       break;
-    default:
-      assert (false && "Invalid SVal.");
   }
 }
 

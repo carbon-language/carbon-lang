@@ -1099,7 +1099,6 @@ RetainSummaryManager::getUnarySummary(const FunctionType* FT,
     case cfretain: Effect = IncRef; break;
     case cfrelease: Effect = DecRef; break;
     case cfmakecollectable: Effect = MakeCollectable; break;
-    default: llvm_unreachable("Not a supported unary function.");
   }
 
   ScratchArgs = AF.add(ScratchArgs, 0, Effect);

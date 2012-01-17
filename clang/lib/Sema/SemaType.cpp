@@ -1972,7 +1972,6 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
     state.setCurrentChunkIndex(chunkIndex);
     DeclaratorChunk &DeclType = D.getTypeObject(chunkIndex);
     switch (DeclType.Kind) {
-    default: llvm_unreachable("Unknown decltype!");
     case DeclaratorChunk::Paren:
       T = S.BuildParenType(T);
       break;

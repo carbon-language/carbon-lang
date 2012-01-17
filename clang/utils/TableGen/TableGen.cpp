@@ -156,9 +156,6 @@ public:
     case GenArmNeonTest:
       NeonEmitter(Records).runTests(OS);
       break;
-    default:
-      assert(1 && "Invalid Action");
-      return true;
     }
 
     return false;

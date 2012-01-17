@@ -2642,7 +2642,6 @@ void InitializationSequence::AddDerivedToBaseCastStep(QualType BaseType,
   case VK_RValue: S.Kind = SK_CastDerivedToBaseRValue; break;
   case VK_XValue: S.Kind = SK_CastDerivedToBaseXValue; break;
   case VK_LValue: S.Kind = SK_CastDerivedToBaseLValue; break;
-  default: llvm_unreachable("No such category");
   }
   S.Type = BaseType;
   Steps.push_back(S);

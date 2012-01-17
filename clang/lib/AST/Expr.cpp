@@ -652,7 +652,6 @@ getLocationOfByte(unsigned ByteNo, const SourceManager &SM,
 /// corresponds to, e.g. "sizeof" or "[pre]++".
 const char *UnaryOperator::getOpcodeStr(Opcode Op) {
   switch (Op) {
-  default: llvm_unreachable("Unknown unary operator");
   case UO_PostInc: return "++";
   case UO_PostDec: return "--";
   case UO_PreInc:  return "++";
@@ -667,6 +666,7 @@ const char *UnaryOperator::getOpcodeStr(Opcode Op) {
   case UO_Imag:    return "__imag";
   case UO_Extension: return "__extension__";
   }
+  llvm_unreachable("Unknown unary operator");
 }
 
 UnaryOperatorKind

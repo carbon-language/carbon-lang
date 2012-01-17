@@ -2463,8 +2463,6 @@ ExprResult Parser::ParseArrayTypeTrait() {
     return Actions.ActOnArrayTypeTrait(ATT, Loc, Ty.get(), DimExpr.get(),
                                        T.getCloseLocation());
   }
-  default:
-    break;
   }
   return ExprError();
 }

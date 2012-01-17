@@ -28,11 +28,11 @@ public:
   RetTy Visit(const Type *T) {
     // Top switch stmt: dispatch to VisitFooType for each FooType.
     switch (T->getTypeClass()) {
-    default: llvm_unreachable("Unknown type class!");
 #define ABSTRACT_TYPE(CLASS, PARENT)
 #define TYPE(CLASS, PARENT) case Type::CLASS: DISPATCH(CLASS##Type);
 #include "clang/AST/TypeNodes.def"
     }
+    llvm_unreachable("Unknown type class!");
   }
 
   // If the implementation chooses not to implement a certain visit method, fall

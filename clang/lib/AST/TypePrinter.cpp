@@ -427,8 +427,7 @@ void TypePrinter::printFunctionProto(const FunctionProtoType *T,
 
   FunctionType::ExtInfo Info = T->getExtInfo();
   switch(Info.getCC()) {
-  case CC_Default:
-  default: break;
+  case CC_Default: break;
   case CC_C:
     S += " __attribute__((cdecl))";
     break;

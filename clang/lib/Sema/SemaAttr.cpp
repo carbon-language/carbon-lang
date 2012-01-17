@@ -263,9 +263,6 @@ void Sema::ActOnPragmaPack(PragmaPackKind Kind, IdentifierInfo *Name,
         Context->setAlignment(AlignmentVal);
     }
     break;
-
-  default:
-    llvm_unreachable("Invalid #pragma pack kind.");
   }
 }
 

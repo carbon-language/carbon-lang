@@ -1055,8 +1055,6 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
       }
       break;
     }
-    default:
-      llvm_unreachable("Unknown ownership attribute");
     } // switch
 
     // Check we don't have a conflict with another ownership attribute.

@@ -66,7 +66,6 @@ template <class Impl> struct XMLDeclVisitor {
 
   void dispatch(Decl *D) {
     switch (D->getKind()) {
-      default: llvm_unreachable("Decl that isn't part of DeclNodes.inc!");
 #define DECL(DERIVED, BASE) \
       case Decl::DERIVED: \
         DISPATCH(dispatch##DERIVED##DeclAttrs, DERIVED##Decl); \
@@ -121,7 +120,6 @@ template <class Impl> struct XMLTypeVisitor {
 
   void dispatch(Type *T) {
     switch (T->getTypeClass()) {
-      default: llvm_unreachable("Type that isn't part of TypeNodes.inc!");
 #define TYPE(DERIVED, BASE) \
       case Type::DERIVED: \
         DISPATCH(dispatch##DERIVED##TypeAttrs, DERIVED##Type); \

@@ -324,7 +324,6 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
 
   Record.push_back(D->getTemplatedKind());
   switch (D->getTemplatedKind()) {
-  default: llvm_unreachable("Unhandled TemplatedKind!");
   case FunctionDecl::TK_NonTemplate:
     break;
   case FunctionDecl::TK_FunctionTemplate:

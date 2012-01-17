@@ -1250,7 +1250,6 @@ struct DeclaratorChunk {
 
   void destroy() {
     switch (Kind) {
-    default: llvm_unreachable("Unknown decl type!");
     case DeclaratorChunk::Function:      return Fun.destroy();
     case DeclaratorChunk::Pointer:       return Ptr.destroy();
     case DeclaratorChunk::BlockPointer:  return Cls.destroy();

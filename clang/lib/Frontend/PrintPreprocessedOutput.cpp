@@ -389,7 +389,6 @@ PragmaDiagnostic(SourceLocation Loc, StringRef Namespace,
   MoveToLine(Loc);
   OS << "#pragma " << Namespace << " diagnostic ";
   switch (Map) {
-  default: llvm_unreachable("unexpected diagnostic kind");
   case diag::MAP_WARNING:
     OS << "warning";
     break;

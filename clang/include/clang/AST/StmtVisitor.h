@@ -42,7 +42,6 @@ public:
     // below.
     if (PTR(BinaryOperator) BinOp = dyn_cast<BinaryOperator>(S)) {
       switch (BinOp->getOpcode()) {
-      default: llvm_unreachable("Unknown binary operator!");
       case BO_PtrMemD:   DISPATCH(BinPtrMemD,   BinaryOperator);
       case BO_PtrMemI:   DISPATCH(BinPtrMemI,   BinaryOperator);
       case BO_Mul:       DISPATCH(BinMul,       BinaryOperator);
@@ -80,7 +79,6 @@ public:
       }
     } else if (PTR(UnaryOperator) UnOp = dyn_cast<UnaryOperator>(S)) {
       switch (UnOp->getOpcode()) {
-      default: llvm_unreachable("Unknown unary operator!");
       case UO_PostInc:   DISPATCH(UnaryPostInc,   UnaryOperator);
       case UO_PostDec:   DISPATCH(UnaryPostDec,   UnaryOperator);
       case UO_PreInc:    DISPATCH(UnaryPreInc,    UnaryOperator);

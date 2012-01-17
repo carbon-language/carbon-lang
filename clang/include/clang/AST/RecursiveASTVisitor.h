@@ -1357,8 +1357,6 @@ bool RecursiveASTVisitor<Derived>::TraverseFunctionInstantiations(
     case TSK_Undeclared:           // Declaration of the template definition.
     case TSK_ExplicitSpecialization:
       break;
-    default:
-      llvm_unreachable("Unknown specialization kind.");
     }
   }
 

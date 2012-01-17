@@ -191,8 +191,6 @@ bool MallocChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
         rv = true;
         break;
       }
-      default:
-        break;
       }
     }
   }

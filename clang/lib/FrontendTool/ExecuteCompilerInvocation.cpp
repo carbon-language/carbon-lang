@@ -32,9 +32,6 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   using namespace clang::frontend;
 
   switch (CI.getFrontendOpts().ProgramAction) {
-  default:
-    llvm_unreachable("Invalid program action!");
-
   case ASTDump:                return new ASTDumpAction();
   case ASTDumpXML:             return new ASTDumpXMLAction();
   case ASTPrint:               return new ASTPrintAction();
@@ -81,6 +78,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   case RunAnalysis:            return new ento::AnalysisAction();
   case RunPreprocessorOnly:    return new PreprocessOnlyAction();
   }
+  llvm_unreachable("Invalid program action!");
 }
 
 static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {

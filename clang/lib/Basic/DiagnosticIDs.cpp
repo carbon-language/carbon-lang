@@ -532,7 +532,6 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
     (diag::kind)DiagID);
 
   switch (MappingInfo.getMapping()) {
-  default: llvm_unreachable("Unknown mapping!");
   case diag::MAP_IGNORE:
     Result = DiagnosticIDs::Ignored;
     break;

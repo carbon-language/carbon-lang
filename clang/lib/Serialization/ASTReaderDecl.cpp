@@ -509,7 +509,6 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   FD->EndRangeLoc = ReadSourceLocation(Record, Idx);
 
   switch ((FunctionDecl::TemplatedKind)Record[Idx++]) {
-  default: llvm_unreachable("Unhandled TemplatedKind!");
   case FunctionDecl::TK_NonTemplate:
     mergeRedeclarable(FD, Redecl);      
     break;
@@ -1125,8 +1124,6 @@ void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
     CXXRecNotTemplate = 0, CXXRecTemplate, CXXRecMemberSpecialization
   };
   switch ((CXXRecKind)Record[Idx++]) {
-  default:
-    llvm_unreachable("Out of sync with ASTDeclWriter::VisitCXXRecordDecl?");
   case CXXRecNotTemplate:
     break;
   case CXXRecTemplate:

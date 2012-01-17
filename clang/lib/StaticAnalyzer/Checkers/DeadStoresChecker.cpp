@@ -109,9 +109,6 @@ public:
     const char *BugType = 0;
 
     switch (dsk) {
-      default:
-        llvm_unreachable("Impossible dead store type.");
-
       case DeadInit:
         BugType = "Dead initialization";
         os << "Value stored to '" << *V
