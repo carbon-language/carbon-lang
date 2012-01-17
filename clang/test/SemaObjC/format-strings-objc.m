@@ -63,3 +63,22 @@ void test_p_conversion_with_objc_pointer(id x, id<Foo> y) {
   printf("%p", y); // no-warning
 }
 
+// <rdar://problem/10696348>, PR 10274 - CFString and NSString formats are ignored
+extern void MyNSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));
+extern void MyCFStringCreateWithFormat(CFStringRef format, ...) __attribute__((format(__CFString__, 1, 2)));
+
+void check_mylog() {
+  MyNSLog(@"%@"); // expected-warning {{more '%' conversions than data arguments}}
+  // FIXME: find a way to test CFString too, but I don't know how to create constant CFString.
+}
+
+// PR 10275 - format function attribute isn't checked in Objective-C methods
+@interface Foo
++ (id)fooWithFormat:(NSString *)fmt, ... __attribute__((format(__NSString__, 1, 2)));
++ (id)fooWithCStringFormat:(const char *)format, ... __attribute__((format(__printf__, 1, 2)));
+@end
+
+void check_method() {
+  [Foo fooWithFormat:@"%@"]; // expected-warning {{more '%' conversions than data arguments}}
+  [Foo fooWithCStringFormat:"%@"]; // expected-warning {{invalid conversion specifier '@'}}
+}
