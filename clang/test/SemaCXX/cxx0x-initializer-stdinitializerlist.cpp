@@ -58,3 +58,32 @@ void function_call() {
   void g(std::initializer_list<B>);
   g({ {1, 2}, {2, 3}, {} });
 }
+
+struct C {
+  C(int);
+};
+
+struct D {
+  D();
+  operator int();
+  operator C();
+};
+
+void overloaded_call() {
+    one overloaded(std::initializer_list<int>);
+    two overloaded(std::initializer_list<B>);
+
+    static_assert(sizeof(overloaded({1, 2, 3})) == sizeof(one), "bad overload");
+    static_assert(sizeof(overloaded({ {1, 2}, {2, 3}, {} })) == sizeof(two), "bad overload");
+
+    void ambiguous(std::initializer_list<A>); // expected-note {{candidate}}
+    void ambiguous(std::initializer_list<B>); // expected-note {{candidate}}
+    ambiguous({ {1, 2}, {2, 3}, {3, 4} }); // expected-error {{ambiguous}}
+
+    one ov2(std::initializer_list<int>); // expected-note {{candidate}}
+    two ov2(std::initializer_list<C>); // expected-note {{candidate}}
+    // Worst sequence to int is identity, whereas to C it's user-defined.
+    static_assert(sizeof(ov2({1, 2, 3})) == sizeof(one), "bad overload");
+    // But here, user-defined is worst in both cases.
+    ov2({1, 2, D()}); // expected-error {{ambiguous}}
+}

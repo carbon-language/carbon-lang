@@ -3953,15 +3953,42 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
   Result.setBad(BadConversionSequence::no_conversion, From, ToType);
   Result.setListInitializationSequence();
 
+  // We need a complete type for what follows. Incomplete types can bever be
+  // initialized from init lists.
+  if (S.RequireCompleteType(From->getLocStart(), ToType, S.PDiag()))
+    return Result;
+
   // C++11 [over.ics.list]p2:
   //   If the parameter type is std::initializer_list<X> or "array of X" and
   //   all the elements can be implicitly converted to X, the implicit
   //   conversion sequence is the worst conversion necessary to convert an
   //   element of the list to X.
-  // FIXME: Recognize std::initializer_list.
-  // FIXME: Implement arrays.
+  QualType X;
   if (ToType->isArrayType())
+    X = S.Context.getBaseElementType(ToType);
+  else
+    (void)S.isStdInitializerList(ToType, &X);
+  if (!X.isNull()) {
+    for (unsigned i = 0, e = From->getNumInits(); i < e; ++i) {
+      Expr *Init = From->getInit(i);
+      ImplicitConversionSequence ICS =
+          TryCopyInitialization(S, Init, X, SuppressUserConversions,
+                                InOverloadResolution,
+                                AllowObjCWritebackConversion);
+      // If a single element isn't convertible, fail.
+      if (ICS.isBad()) {
+        Result = ICS;
+        break;
+      }
+      // Otherwise, look for the worst conversion.
+      if (Result.isBad() ||
+          CompareImplicitConversionSequences(S, ICS, Result) ==
+              ImplicitConversionSequence::Worse)
+        Result = ICS;
+    }
+    Result.setListInitializationSequence();
     return Result;
+  }
 
   // C++11 [over.ics.list]p3:
   //   Otherwise, if the parameter is a non-aggregate class X and overload
@@ -4078,7 +4105,6 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
     //    - if the initializer list has one element, the implicit conversion
     //      sequence is the one required to convert the element to the
     //      parameter type.
-    // FIXME: Catch narrowing here?
     unsigned NumInits = From->getNumInits();
     if (NumInits == 1)
       Result = TryCopyInitialization(S, From->getInit(0), ToType,
