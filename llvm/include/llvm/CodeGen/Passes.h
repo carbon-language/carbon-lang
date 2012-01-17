@@ -85,7 +85,7 @@ namespace llvm {
   extern char &RegisterCoalescerPassID;
 
   /// MachineScheduler pass - This pass schedules machine instructions.
-  extern char &MachineSchedulerPassID;
+  extern char &MachineSchedulerID;
 
   /// SpillPlacement analysis. Suggest optimal placement of spill code between
   /// basic blocks.
