@@ -10167,8 +10167,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
     return DAG.getNode(ISD::MUL, dl, VT, Op, R);
   }
   if (VT == MVT::v16i8 && Op->getOpcode() == ISD::SHL) {
-    assert((Subtarget->hasSSE2() || Subtarget->hasAVX()) &&
-            "Need SSE2 for pslli/pcmpeq.");
+    assert(Subtarget->hasSSE2() && "Need SSE2 for pslli/pcmpeq.");
 
     // a = a << 5;
     Op = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
