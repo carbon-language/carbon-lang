@@ -811,10 +811,22 @@ int asan_posix_memalign(void **memptr, size_t alignment, size_t size,
   return 0;
 }
 
+static void GetAllocationSizeAndOwnership(const void *ptr, size_t *size,
+                                          bool *owned) {
+  size_t allocation_size = malloc_info.AllocationSize((uintptr_t)ptr);
+  if (size != NULL) {
+    *size = allocation_size;
+  }
+  if (owned != NULL) {
+    *owned = (ptr == NULL) || (allocation_size > 0);
+  }
+}
+
 size_t asan_malloc_usable_size(void *ptr, AsanStackTrace *stack) {
-  CHECK(stack);
-  size_t usable_size = malloc_info.AllocationSize((uintptr_t)ptr);
-  if (usable_size == 0) {
+  size_t usable_size;
+  bool owned;
+  GetAllocationSizeAndOwnership(ptr, &usable_size, &owned);
+  if (!owned) {
     Report("ERROR: AddressSanitizer attempting to call malloc_usable_size() "
            "for pointer which is not owned: %p\n", ptr);
     stack->PrintStack();
@@ -825,7 +837,9 @@ size_t asan_malloc_usable_size(void *ptr, AsanStackTrace *stack) {
 }
 
 size_t asan_mz_size(const void *ptr) {
-  return malloc_info.AllocationSize((uintptr_t)ptr);
+  size_t mz_size;
+  GetAllocationSizeAndOwnership(ptr, &mz_size, NULL);
+  return mz_size;
 }
 
 void DescribeHeapAddress(uintptr_t addr, uintptr_t access_size) {
@@ -1012,13 +1026,17 @@ size_t __asan_get_estimated_allocated_size(size_t size) {
 }
 
 bool __asan_get_ownership(const void *p) {
-  return malloc_info.AllocationSize((uintptr_t)p) > 0;
+  bool owned;
+  GetAllocationSizeAndOwnership(p, NULL, &owned);
+  return owned;
 }
 
 size_t __asan_get_allocated_size(const void *p) {
-  size_t allocated_size = malloc_info.AllocationSize((uintptr_t)p);
+  size_t allocated_size;
+  bool owned;
+  GetAllocationSizeAndOwnership(p, &allocated_size, &owned);
   // Die if p is not malloced or if it is already freed.
-  if (allocated_size == 0) {
+  if (!owned) {
     Report("ERROR: AddressSanitizer attempting to call "
            "__asan_get_allocated_size() for pointer which is "
            "not owned: %p\n", p);
