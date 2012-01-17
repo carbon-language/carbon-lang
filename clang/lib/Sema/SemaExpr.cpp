@@ -486,34 +486,17 @@ ExprResult Sema::DefaultArgumentPromotion(Expr *E) {
   //     has a class type, the conversion copy-initializes a temporary
   //     of type T from the glvalue and the result of the conversion
   //     is a prvalue for the temporary.
-  // This requirement has some strange effects for
-  // PotentiallyPotentiallyEvaluated contexts; specifically, doing precisely
-  // what the standard requires involves mutating the AST once we decide
-  // whether an expression is potentially evaluated. Rather than actually try and
-  // model this correctly, we just make sure to handle the important cases:
-  // for types with a trivial copy constructor/destructor, we build the AST
-  // as if it were potentially evaluated, and we give an error in other cases
-  // if the context turns out to be potentially evaluatable.
-  // FIXME: If anyone actually cares about this case, try to implement
-  // it correctly, or at least improve the diagnostic output a bit.
-  if (getLangOptions().CPlusPlus && E->isGLValue()) {
-    if (ExprEvalContexts.back().Context == PotentiallyPotentiallyEvaluated &&
-        E->getType()->isRecordType() &&
-        (!E->getType().isTriviallyCopyableType(Context) ||
-         E->getType().isDestructedType())) {
-      ExprEvalContexts.back()
-          .addDiagnostic(E->getExprLoc(),
-              PDiag(diag::err_cannot_pass_non_pod_to_vararg_ppe)
-                  << E->getType());
-    } else if (ExprEvalContexts.back().Context != Unevaluated) {
-      ExprResult Temp = PerformCopyInitialization(
-                         InitializedEntity::InitializeTemporary(E->getType()),
-                                                  E->getExprLoc(),
-                                                  Owned(E));
-      if (Temp.isInvalid())
-        return ExprError();
-      E = Temp.get();
-    }
+  // FIXME: add some way to gate this entire thing for correctness in
+  // potentially potentially evaluated contexts.
+  if (getLangOptions().CPlusPlus && E->isGLValue() && 
+      ExprEvalContexts.back().Context != Unevaluated) {
+    ExprResult Temp = PerformCopyInitialization(
+                       InitializedEntity::InitializeTemporary(E->getType()),
+                                                E->getExprLoc(),
+                                                Owned(E));
+    if (Temp.isInvalid())
+      return ExprError();
+    E = Temp.get();
   }
 
   return Owned(E);
