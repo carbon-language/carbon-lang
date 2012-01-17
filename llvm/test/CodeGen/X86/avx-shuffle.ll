@@ -60,7 +60,18 @@ entry:
 
 define <16 x i16> @test7(<4 x i16> %a) nounwind {
 ; CHECK: test7
-
   %b = shufflevector <4 x i16> %a, <4 x i16> undef, <16 x i32> <i32 1, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+; CHECK: ret
   ret <16 x i16> %b
+}
+
+; CHECK: test8
+define void @test8() {
+entry:
+  %0 = load <16 x i64> addrspace(1)* null, align 128
+  %1 = shufflevector <16 x i64> <i64 undef, i64 undef, i64 0, i64 undef, i64 0, i64 0, i64 0, i64 0, i64 0, i64 0, i64 undef, i64 0, i64 undef, i64 undef, i64 undef, i64 undef>, <16 x i64> %0, <16 x i32> <i32 17, i32 18, i32 2, i32 undef, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 undef, i32 11, i32 undef, i32 undef, i32 undef, i32 26>
+  %2 = shufflevector <16 x i64> %1, <16 x i64> %0, <16 x i32> <i32 0, i32 1, i32 2, i32 30, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 undef, i32 11, i32 undef, i32 22, i32 20, i32 15>
+  store <16 x i64> %2, <16 x i64> addrspace(1)* undef, align 128
+; CHECK: ret
+  ret void
 }

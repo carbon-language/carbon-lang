@@ -6241,6 +6241,13 @@ bool CanXFormVExtractWithShuffleIntoLoad(SDValue V, SelectionDAG &DAG,
   int Idx = (Elt > NumElems) ? -1 : SVOp->getMaskElt(Elt);
   V = (Idx < (int)NumElems) ? V.getOperand(0) : V.getOperand(1);
 
+  // If we are accessing the upper part of a YMM register
+  // then the EXTRACT_VECTOR_ELT is likely to be legalized to a sequence of
+  // EXTRACT_SUBVECTOR + EXTRACT_VECTOR_ELT, which are not detected at this point
+  // because the legalization of N did not happen yet.
+  if (Idx >= NumElems/2 && VT.getSizeInBits() == 256)
+    return false;
+
   // Skip one more bit_convert if necessary
   if (V.getOpcode() == ISD::BITCAST)
     V = V.getOperand(0);
