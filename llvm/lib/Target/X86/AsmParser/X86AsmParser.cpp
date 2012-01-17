@@ -604,7 +604,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned Size) {
       const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
       if (getParser().ParseExpression(Disp, End)) return 0;
       if (getLexer().isNot(AsmToken::RBrac))
-	return ErrorOperand(Start, "Expected ']' token!");
+        return ErrorOperand(Start, "Expected ']' token!");
       Parser.Lex();
       return X86Operand::CreateMem(Disp, Start, End, Size);
     }
@@ -613,7 +613,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned Size) {
       const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
       if (getParser().ParseExpression(Disp, End)) return 0;
       if (getLexer().isNot(AsmToken::RBrac))
-	return ErrorOperand(Start, "Expected ']' token!");
+        return ErrorOperand(Start, "Expected ']' token!");
       Parser.Lex();
       return X86Operand::CreateMem(Disp, Start, End, Size);
   }
@@ -626,17 +626,17 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned Size) {
       int64_t Val = Parser.getTok().getIntVal();
       Parser.Lex();
       if (getLexer().is(AsmToken::Star)) {
-	Parser.Lex();
-	SMLoc IdxRegLoc = Parser.getTok().getLoc();
-	IndexReg = getIntelRegisterOperand(Parser.getTok().getString());
-	if (!IndexReg) return ErrorOperand(IdxRegLoc, "Expected register");
-	Parser.Lex(); // Eat register
-	Scale = Val;
+        Parser.Lex();
+        SMLoc IdxRegLoc = Parser.getTok().getLoc();
+        IndexReg = getIntelRegisterOperand(Parser.getTok().getString());
+        if (!IndexReg) return ErrorOperand(IdxRegLoc, "Expected register");
+        Parser.Lex(); // Eat register
+        Scale = Val;
       } else if (getLexer().is(AsmToken::RBrac)) {
-	const MCExpr *ValExpr = MCConstantExpr::Create(Val, getContext());
-	Disp = isPlus ? ValExpr : MCUnaryExpr::CreateMinus(ValExpr, getContext());
+        const MCExpr *ValExpr = MCConstantExpr::Create(Val, getContext());
+        Disp = isPlus ? ValExpr : MCUnaryExpr::CreateMinus(ValExpr, getContext());
       } else
-	return ErrorOperand(PlusLoc, "unexpected token after +");
+        return ErrorOperand(PlusLoc, "unexpected token after +");
     }
   }
 
@@ -649,7 +649,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned Size) {
   Parser.Lex();
   End = Parser.getTok().getLoc();
   return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
-			       Start, End, Size);
+                               Start, End, Size);
 }
 
 /// ParseIntelMemOperand - Parse intel style memory operand.
