@@ -13430,6 +13430,11 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
       BaseShAmt = Arg;
       break;
     }
+    // Handle the case where the build_vector is all undef
+    // FIXME: Should DAG allow this?
+    if (i == NumElts)
+      return SDValue();
+
     for (; i != NumElts; ++i) {
       SDValue Arg = ShAmtOp.getOperand(i);
       if (Arg.getOpcode() == ISD::UNDEF) continue;
