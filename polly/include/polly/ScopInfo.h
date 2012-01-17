@@ -294,6 +294,11 @@ public:
   /// @return The iteration domain of this ScopStmt.
   isl_set *getDomain() const;
 
+  /// @brief Get the space of the iteration domain
+  ///
+  /// @return The space of the iteration domain
+  isl_space *getDomainSpace() const;
+
   /// @brief Get an isl string representing this domain.
   std::string getDomainStr() const;
 

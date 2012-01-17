@@ -529,54 +529,30 @@ void ScopStmt::setScattering(isl_map *NewScattering) {
 }
 
 void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
-  unsigned NumberOfIterators = getNumIterators();
-  unsigned ScatSpace = Parent.getMaxLoopDepth() * 2 + 1;
-  isl_space *Space = isl_space_alloc(getIslCtx(), 0, NumberOfIterators,
-                                     ScatSpace);
+  unsigned NbIterators = getNumIterators();
+  unsigned NbScatteringDims = Parent.getMaxLoopDepth() * 2 + 1;
+
+  isl_space *Space = isl_space_alloc(getIslCtx(), 0, NbIterators,
+                                     NbScatteringDims);
   Space = isl_space_set_tuple_name(Space, isl_dim_out, "scattering");
   Space = isl_space_set_tuple_name(Space, isl_dim_in, getBaseName());
-  isl_local_space *LSpace = isl_local_space_from_space(isl_space_copy(Space));
-  isl_basic_map *bmap = isl_basic_map_universe(Space);
-  isl_int v;
-  isl_int_init(v);
+
+  Scattering = isl_map_universe(Space);
 
   // Loop dimensions.
-  for (unsigned i = 0; i < NumberOfIterators; ++i) {
-    isl_constraint *c = isl_equality_alloc(isl_local_space_copy(LSpace));
-    isl_int_set_si(v, 1);
-    isl_constraint_set_coefficient(c, isl_dim_out, 2 * i + 1, v);
-    isl_int_set_si(v, -1);
-    isl_constraint_set_coefficient(c, isl_dim_in, i, v);
-
-    bmap = isl_basic_map_add_constraint(bmap, c);
-  }
+  for (unsigned i = 0; i < NbIterators; ++i)
+    Scattering = isl_map_equate(Scattering, isl_dim_out, 2 * i + 1,
+                                isl_dim_in, i);
 
   // Constant dimensions
-  for (unsigned i = 0; i < NumberOfIterators + 1; ++i) {
-    isl_constraint *c = isl_equality_alloc(isl_local_space_copy(LSpace));
-    isl_int_set_si(v, -1);
-    isl_constraint_set_coefficient(c, isl_dim_out, 2 * i, v);
-    isl_int_set_si(v, Scatter[i]);
-    isl_constraint_set_constant(c, v);
-
-    bmap = isl_basic_map_add_constraint(bmap, c);
-  }
+  for (unsigned i = 0; i < NbIterators + 1; ++i)
+    Scattering = isl_map_fix_si(Scattering, isl_dim_out, 2 * i, Scatter[i]);
 
   // Fill scattering dimensions.
-  for (unsigned i = 2 * NumberOfIterators + 1; i < ScatSpace ; ++i) {
-    isl_constraint *c = isl_equality_alloc(isl_local_space_copy(LSpace));
-    isl_int_set_si(v, 1);
-    isl_constraint_set_coefficient(c, isl_dim_out, i, v);
-    isl_int_set_si(v, 0);
-    isl_constraint_set_constant(c, v);
+  for (unsigned i = 2 * NbIterators + 1; i < NbScatteringDims; ++i)
+    Scattering = isl_map_fix_si(Scattering, isl_dim_out, i, 0);
 
-    bmap = isl_basic_map_add_constraint(bmap, c);
-  }
-
-  isl_int_clear(v);
-  Scattering = isl_map_from_basic_map(bmap);
   Scattering = isl_map_align_params(Scattering, Parent.getParamSpace());
-  isl_local_space_free(LSpace);
 }
 
 void ScopStmt::buildAccesses(TempScop &tempScop, const Region &CurRegion) {
@@ -813,6 +789,10 @@ isl_ctx *ScopStmt::getIslCtx() const {
 
 isl_set *ScopStmt::getDomain() const {
   return isl_set_copy(Domain);
+}
+
+isl_space *ScopStmt::getDomainSpace() const {
+  return isl_set_get_space(Domain);
 }
 
 ScopStmt::~ScopStmt() {
