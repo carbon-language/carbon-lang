@@ -41,3 +41,23 @@ typedef struct {
 @property (readwrite) NSString *foo; // expected-error {{type of property 'NSString *' in continuation class does not match property type in primary class}}
 @property (readwrite, strong) NSRect bar; // expected-error {{type of property 'NSRect' in continuation class does not match property type in primary class}}
 @end
+
+// rdar://10655530
+struct S;
+struct S1;
+@interface STAdKitContext
+@property (nonatomic, readonly, assign) struct evhttp_request *httpRequest;
+@property (nonatomic, readonly, assign) struct S *httpRequest2;
+@property (nonatomic, readonly, assign) struct S1 *httpRequest3;
+@property (nonatomic, readonly, assign) struct S2 *httpRequest4;
+@end
+
+struct evhttp_request;
+struct S1;
+
+@interface STAdKitContext()
+@property (nonatomic, readwrite, assign) struct evhttp_request *httpRequest;
+@property (nonatomic, readwrite, assign) struct S *httpRequest2;
+@property (nonatomic, readwrite, assign) struct S1 *httpRequest3;
+@property (nonatomic, readwrite, assign) struct S2 *httpRequest4;
+@end

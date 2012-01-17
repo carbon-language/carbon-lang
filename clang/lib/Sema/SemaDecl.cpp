@@ -7872,7 +7872,8 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       // Find the context where we'll be declaring the tag.
       // FIXME: We would like to maintain the current DeclContext as the
       // lexical context,
-      while (SearchDC->isRecord() || SearchDC->isTransparentContext())
+      while (SearchDC->isRecord() || SearchDC->isTransparentContext() ||
+             SearchDC->isObjCContainer())
         SearchDC = SearchDC->getParent();
 
       // Find the scope where we'll be declaring the tag.
