@@ -488,6 +488,10 @@ public:
   /// standard library.
   LazyDeclPtr StdBadAlloc;
 
+  /// \brief The C++ "std::initializer_list" template, which is defined in
+  /// <initializer_list>.
+  ClassTemplateDecl *StdInitializerList;
+
   /// \brief The C++ "type_info" declaration, which is defined in <typeinfo>.
   RecordDecl *CXXTypeInfoDecl;
 
@@ -2720,6 +2724,10 @@ public:
   NamespaceDecl *getOrCreateStdNamespace();
 
   CXXRecordDecl *getStdBadAlloc() const;
+
+  /// \brief Tests whether Ty is an instance of std::initializer_list and, if
+  /// it is and Element is not NULL, assigns the element type to Element.
+  bool isStdInitializerList(QualType Ty, QualType *Element);
 
   Decl *ActOnUsingDirective(Scope *CurScope,
                             SourceLocation UsingLoc,

@@ -5767,6 +5767,59 @@ NamespaceDecl *Sema::getOrCreateStdNamespace() {
   return getStdNamespace();
 }
 
+bool Sema::isStdInitializerList(QualType Ty, QualType *Element) {
+  assert(getLangOptions().CPlusPlus &&
+         "Looking for std::initializer_list outside of C++.");
+
+  // We're looking for implicit instantiations of
+  // template <typename E> class std::initializer_list.
+
+  if (!StdNamespace) // If we haven't seen namespace std yet, this can't be it.
+    return false;
+
+  const RecordType *RT = Ty->getAs<RecordType>();
+  if (!RT)
+    return false;
+
+  ClassTemplateSpecializationDecl *Specialization =
+      dyn_cast<ClassTemplateSpecializationDecl>(RT->getDecl());
+  if (!Specialization)
+    return false;
+
+  if (Specialization->getSpecializationKind() != TSK_ImplicitInstantiation)
+    return false;
+
+  ClassTemplateDecl *Template = Specialization->getSpecializedTemplate();
+
+  if (!StdInitializerList) {
+    // Haven't recognized std::initializer_list yet, maybe this is it.
+    CXXRecordDecl *TemplateClass = Template->getTemplatedDecl();
+    if (TemplateClass->getIdentifier() !=
+            &PP.getIdentifierTable().get("initializer_list") ||
+        !TemplateClass->getDeclContext()->Equals(getStdNamespace()))
+      return false;
+    // This is a template called std::initializer_list, but is it the right
+    // template?
+    TemplateParameterList *Params = Template->getTemplateParameters();
+    if (Params->size() != 1)
+      return false;
+    if (!isa<TemplateTypeParmDecl>(Params->getParam(0)))
+      return false;
+
+    // It's the right template.
+    StdInitializerList = Template;
+  }
+
+  if (Template != StdInitializerList)
+    return false;
+
+  // This is an instance of std::initializer_list. Find the argument type.
+  if (Element) {
+    *Element = Specialization->getTemplateArgs()[0].getAsType();
+  }
+  return true;
+}
+
 /// \brief Determine whether a using statement is in a context where it will be
 /// apply in all contexts.
 static bool IsUsingDirectiveInToplevelContext(DeclContext *CurContext) {
