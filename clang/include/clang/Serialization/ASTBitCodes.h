@@ -733,28 +733,26 @@ namespace clang {
     enum SpecialTypeIDs {
       /// \brief __builtin_va_list
       SPECIAL_TYPE_BUILTIN_VA_LIST             = 0,
-      /// \brief Objective-C Protocol type
-      SPECIAL_TYPE_OBJC_PROTOCOL               = 1,
       /// \brief CFConstantString type
-      SPECIAL_TYPE_CF_CONSTANT_STRING          = 2,
+      SPECIAL_TYPE_CF_CONSTANT_STRING          = 1,
       /// \brief C FILE typedef type
-      SPECIAL_TYPE_FILE                        = 3,
+      SPECIAL_TYPE_FILE                        = 2,
       /// \brief C jmp_buf typedef type
-      SPECIAL_TYPE_JMP_BUF                     = 4,
+      SPECIAL_TYPE_JMP_BUF                     = 3,
       /// \brief C sigjmp_buf typedef type
-      SPECIAL_TYPE_SIGJMP_BUF                  = 5,
+      SPECIAL_TYPE_SIGJMP_BUF                  = 4,
       /// \brief Objective-C "id" redefinition type
-      SPECIAL_TYPE_OBJC_ID_REDEFINITION        = 6,
+      SPECIAL_TYPE_OBJC_ID_REDEFINITION        = 5,
       /// \brief Objective-C "Class" redefinition type
-      SPECIAL_TYPE_OBJC_CLASS_REDEFINITION     = 7,
+      SPECIAL_TYPE_OBJC_CLASS_REDEFINITION     = 6,
       /// \brief Objective-C "SEL" redefinition type
-      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 8,
+      SPECIAL_TYPE_OBJC_SEL_REDEFINITION       = 7,
       /// \brief C ucontext_t typedef type
-      SPECIAL_TYPE_UCONTEXT_T                  = 9
+      SPECIAL_TYPE_UCONTEXT_T                  = 8
     };
     
     /// \brief The number of special type IDs.
-    const unsigned NumSpecialTypeIDs = 0;
+    const unsigned NumSpecialTypeIDs = 9;
 
     /// \brief Predefined declaration IDs.
     ///
@@ -777,22 +775,25 @@ namespace clang {
       
       /// \brief The Objective-C 'Class' type.
       PREDEF_DECL_OBJC_CLASS_ID = 4,
+            
+      /// \brief The Objective-C 'Protocol' type.
+      PREDEF_DECL_OBJC_PROTOCOL_ID = 5,
       
       /// \brief The signed 128-bit integer type.
-      PREDEF_DECL_INT_128_ID = 5,
+      PREDEF_DECL_INT_128_ID = 6,
 
       /// \brief The unsigned 128-bit integer type.
-      PREDEF_DECL_UNSIGNED_INT_128_ID = 6,
+      PREDEF_DECL_UNSIGNED_INT_128_ID = 7,
       
       /// \brief The internal 'instancetype' typedef.
-      PREDEF_DECL_OBJC_INSTANCETYPE_ID = 7
+      PREDEF_DECL_OBJC_INSTANCETYPE_ID = 8
     };
 
     /// \brief The number of declaration IDs that are predefined.
     ///
     /// For more information about predefined declarations, see the
     /// \c PredefinedDeclIDs type and the PREDEF_DECL_*_ID constants.
-    const unsigned int NUM_PREDEF_DECL_IDS = 8;
+    const unsigned int NUM_PREDEF_DECL_IDS = 9;
     
     /// \brief Record codes for each kind of declaration.
     ///

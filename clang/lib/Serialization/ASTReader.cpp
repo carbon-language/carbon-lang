@@ -2813,15 +2813,10 @@ void ASTReader::InitializeContext() {
   // built-in types. Right now, we just ignore the problem.
   
   // Load the special types.
-  if (SpecialTypes.size() > NumSpecialTypeIDs) {
+  if (SpecialTypes.size() >= NumSpecialTypeIDs) {
     if (Context.getBuiltinVaListType().isNull()) {
       Context.setBuiltinVaListType(
         GetType(SpecialTypes[SPECIAL_TYPE_BUILTIN_VA_LIST]));
-    }
-    
-    if (unsigned Proto = SpecialTypes[SPECIAL_TYPE_OBJC_PROTOCOL]) {
-      if (Context.ObjCProtoType.isNull())
-        Context.ObjCProtoType = GetType(Proto);
     }
     
     if (unsigned String = SpecialTypes[SPECIAL_TYPE_CF_CONSTANT_STRING]) {
@@ -4583,6 +4578,9 @@ Decl *ASTReader::GetDecl(DeclID ID) {
 
     case PREDEF_DECL_OBJC_CLASS_ID:
       return Context.getObjCClassDecl();
+        
+    case PREDEF_DECL_OBJC_PROTOCOL_ID:
+      return Context.getObjCProtocolDecl();
         
     case PREDEF_DECL_INT_128_ID:
       return Context.getInt128Decl();

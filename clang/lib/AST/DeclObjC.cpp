@@ -682,7 +682,7 @@ ObjCInterfaceDecl *ObjCMethodDecl::getClassInterface() {
 // ObjCInterfaceDecl
 //===----------------------------------------------------------------------===//
 
-ObjCInterfaceDecl *ObjCInterfaceDecl::Create(ASTContext &C,
+ObjCInterfaceDecl *ObjCInterfaceDecl::Create(const ASTContext &C,
                                              DeclContext *DC,
                                              SourceLocation atLoc,
                                              IdentifierInfo *Id,

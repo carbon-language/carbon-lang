@@ -628,7 +628,7 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
   }
 
 public:
-  static ObjCInterfaceDecl *Create(ASTContext &C, DeclContext *DC,
+  static ObjCInterfaceDecl *Create(const ASTContext &C, DeclContext *DC,
                                    SourceLocation atLoc,
                                    IdentifierInfo *Id,
                                    ObjCInterfaceDecl *PrevDecl,

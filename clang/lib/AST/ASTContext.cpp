@@ -224,7 +224,7 @@ ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
     SubstTemplateTemplateParmPacks(this_()),
     GlobalNestedNameSpecifier(0), 
     Int128Decl(0), UInt128Decl(0),
-    ObjCIdDecl(0), ObjCSelDecl(0), ObjCClassDecl(0),
+    ObjCIdDecl(0), ObjCSelDecl(0), ObjCClassDecl(0), ObjCProtocolClassDecl(0),
     CFConstantStringTypeDecl(0), ObjCInstanceTypeDecl(0),
     FILEDecl(0), 
     jmp_bufDecl(0), sigjmp_bufDecl(0), ucontext_tDecl(0),
@@ -4906,10 +4906,6 @@ TypedefDecl *ASTContext::getObjCSelDecl() const {
   return ObjCSelDecl;
 }
 
-void ASTContext::setObjCProtoType(QualType QT) {
-  ObjCProtoType = QT;
-}
-
 TypedefDecl *ASTContext::getObjCClassDecl() const {
   if (!ObjCClassDecl) {
     QualType T = getObjCObjectType(ObjCBuiltinClassTy, 0, 0);
@@ -4922,6 +4918,19 @@ TypedefDecl *ASTContext::getObjCClassDecl() const {
   }
   
   return ObjCClassDecl;
+}
+
+ObjCInterfaceDecl *ASTContext::getObjCProtocolDecl() const {
+  if (!ObjCProtocolClassDecl) {
+    ObjCProtocolClassDecl 
+      = ObjCInterfaceDecl::Create(*this, getTranslationUnitDecl(), 
+                                  SourceLocation(),
+                                  &Idents.get("Protocol"),
+                                  /*PrevDecl=*/0,
+                                  SourceLocation(), true);    
+  }
+  
+  return ObjCProtocolClassDecl;
 }
 
 void ASTContext::setObjCConstantStringInterface(ObjCInterfaceDecl *Decl) {

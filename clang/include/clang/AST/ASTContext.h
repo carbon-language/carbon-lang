@@ -202,11 +202,12 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   /// \brief The typedef for the predefined 'SEL' type.
   mutable TypedefDecl *ObjCSelDecl;
 
-  QualType ObjCProtoType;
-
   /// \brief The typedef for the predefined 'Class' type.
   mutable TypedefDecl *ObjCClassDecl;
-  
+
+  /// \brief The typedef for the predefined 'Protocol' class in Objective-C.
+  mutable ObjCInterfaceDecl *ObjCProtocolClassDecl;
+
   // Typedefs which may be provided defining the structure of Objective-C
   // pseudo-builtins
   QualType ObjCIdRedefinitionType;
@@ -1104,9 +1105,6 @@ public:
     return getTypeDeclType(getObjCSelDecl());
   }
 
-  void setObjCProtoType(QualType QT);
-  QualType getObjCProtoType() const { return ObjCProtoType; }
-
   /// \brief Retrieve the typedef declaration corresponding to the predefined
   /// Objective-C 'Class' type.
   TypedefDecl *getObjCClassDecl() const;
@@ -1118,6 +1116,15 @@ public:
     return getTypeDeclType(getObjCClassDecl());
   }
 
+  /// \brief Retrieve the Objective-C class declaration corresponding to 
+  /// the predefined 'Protocol' class.
+  ObjCInterfaceDecl *getObjCProtocolDecl() const;
+  
+  /// \brief Retrieve the type of the Objective-C "Protocol" class.
+  QualType getObjCProtoType() const {
+    return getObjCInterfaceType(getObjCProtocolDecl());
+  }
+  
   void setBuiltinVaListType(QualType T);
   QualType getBuiltinVaListType() const { return BuiltinVaListType; }
 
