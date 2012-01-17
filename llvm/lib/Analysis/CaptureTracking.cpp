@@ -16,6 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/CaptureTracking.h"
 using namespace llvm;
 
