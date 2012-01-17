@@ -30,6 +30,17 @@ installsrc:: $(SRCROOT)
 
 clean::
 
+# The do-installhdrs target is also used by clang's runtime/libcxx makefile.
+do-installhdrs:
+	mkdir -p $(HEADER_DIR)/c++/v1/ext
+	rsync -r --exclude=".*" --exclude="support" $(SRCDIRS)/include/* \
+	  $(HEADER_DIR)/c++/v1/
+	chown -R root:wheel $(HEADER_DIR)/c++
+	chmod 755 $(HEADER_DIR)/c++/v1
+	chmod 644 $(HEADER_DIR)/c++/v1/*
+	chmod 755 $(HEADER_DIR)/c++/v1/ext
+	chmod 644 $(HEADER_DIR)/c++/v1/ext/*
+
 install::
 
 	cd lib && ./buildit
