@@ -83,6 +83,10 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
     for (unsigned i = 0, e = Opts.Warnings.size(); i != e; ++i) {
       StringRef Opt = Opts.Warnings[i];
 
+      // Treat -Wformat=0 as an alias for -Wno-format.
+      if (Opt == "format=0")
+        Opt = "no-format";
+
       // Check to see if this warning starts with "no-", if so, this is a
       // negative form of the option.
       bool isPositive = true;

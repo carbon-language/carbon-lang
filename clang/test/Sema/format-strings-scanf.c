@@ -1,5 +1,8 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -triple i386-apple-darwin9 -Wformat-nonliteral %s
 
+// Test that -Wformat=0 works:
+// RUN: %clang_cc1 -fsyntax-only -Werror -Wformat=0 %s
+
 #include <stdarg.h>
 typedef __typeof(sizeof(int)) size_t;
 typedef struct _FILE FILE;
