@@ -102,7 +102,6 @@ static inline bool inheritsFrom(InstructionContext child,
     return false;
   default:
     llvm_unreachable("Unknown instruction class");
-    return false;
   }
 }
 

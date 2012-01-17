@@ -458,7 +458,6 @@ struct ConstantCreator<ConstantExpr, Type, ExprMapKeyType> {
       return new CompareConstantExpr(Ty, Instruction::FCmp, V.subclassdata,
                                      V.operands[0], V.operands[1]);
     llvm_unreachable("Invalid ConstantExpr!");
-    return 0;
   }
 };
 

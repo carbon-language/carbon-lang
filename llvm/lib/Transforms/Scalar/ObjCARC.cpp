@@ -1886,7 +1886,6 @@ Depends(DependenceKind Flavor, Instruction *Inst, const Value *Arg,
   }
 
   llvm_unreachable("Invalid dependence flavor");
-  return true;
 }
 
 /// FindDependencies - Walk up the CFG from StartPos (which is in StartBB) and

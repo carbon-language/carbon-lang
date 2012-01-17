@@ -61,6 +61,8 @@ static bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX,
     *rECX = registers[2];
     *rEDX = registers[3];
     return false;
+  #else
+    return true;
   #endif
 #elif defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
   #if defined(__GNUC__)
@@ -87,9 +89,14 @@ static bool GetX86CpuIDAndInfo(unsigned value, unsigned *rEAX,
       mov   dword ptr [esi],edx
     }
     return false;
+// pedantic #else returns to appease -Wunreachable-code (so we don't generate
+// postprocessed code that looks like "return true; return false;")
+  #else
+    return true;
   #endif
-#endif
+#else
   return true;
+#endif
 }
 
 static void DetectX86FamilyModel(unsigned EAX, unsigned &Family,

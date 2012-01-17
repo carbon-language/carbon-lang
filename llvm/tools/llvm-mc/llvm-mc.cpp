@@ -526,6 +526,4 @@ int main(int argc, char **argv) {
   case AC_EDisassemble:
     return DisassembleInput(argv[0], true);
   }
-
-  return 0;
 }

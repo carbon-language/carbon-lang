@@ -163,6 +163,4 @@ int main(int argc, char **argv) {
   case AC_Execute:
     return executeInput();
   }
-
-  return 0;
 }

@@ -166,8 +166,6 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
 
   default: return "<Invalid operator> ";
   }
-
-  return 0;
 }
 
 /// isIdenticalTo - Return true if the specified instruction is exactly

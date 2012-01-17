@@ -18,6 +18,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <set>
 #include <algorithm>
 using namespace llvm;
@@ -912,7 +913,7 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
       EnforceVectorSubVectorTypeIs(NodeToApply->getExtType(ResNo), TP);
   }
   }
-  return false;
+  llvm_unreachable("Make GCC's unreachability happy");
 }
 
 //===----------------------------------------------------------------------===//

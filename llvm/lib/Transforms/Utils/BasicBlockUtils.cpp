@@ -249,7 +249,6 @@ unsigned llvm::GetSuccessorNumber(BasicBlock *BB, BasicBlock *Succ) {
     if (Term->getSuccessor(i) == Succ)
       return i;
   }
-  return 0;
 }
 
 /// SplitEdge -  Split the edge connecting specified block. Pass P must 

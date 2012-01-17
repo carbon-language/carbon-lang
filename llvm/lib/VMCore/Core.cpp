@@ -1092,8 +1092,7 @@ LLVMLinkage LLVMGetLinkage(LLVMValueRef Global) {
     return LLVMCommonLinkage;
   }
 
-  // Should never get here.
-  return static_cast<LLVMLinkage>(0);
+  llvm_unreachable("Make GCC's unreachability happy");
 }
 
 void LLVMSetLinkage(LLVMValueRef Global, LLVMLinkage Linkage) {

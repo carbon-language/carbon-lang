@@ -59,7 +59,6 @@ unsigned llvm::getICmpCode(const ICmpInst *ICI, bool InvertPred) {
       // True -> 7
     default:
       llvm_unreachable("Invalid ICmp predicate!");
-      return 0;
   }
 }
 
