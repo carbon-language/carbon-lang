@@ -16,7 +16,6 @@
 #include "asan_interface.h"
 #include "asan_internal.h"
 #include "asan_lock.h"
-#include "asan_mac.h"
 #include "asan_mapping.h"
 #include "asan_procmaps.h"
 #include "asan_stack.h"
@@ -83,9 +82,19 @@ size_t ReadFileToBuffer(const char *file_name, char **buff,
     AsanUnmapOrDie(*buff, *buff_size);
     *buff = (char*)AsanMmapSomewhereOrDie(size, __FUNCTION__);
     *buff_size = size;
-    read_len = AsanRead(fd, *buff, size);
+    // Read up to one page at a time.
+    read_len = 0;
+    bool reached_eof = false;
+    while (read_len + kPageSize <= size) {
+      size_t just_read = AsanRead(fd, *buff + read_len, kPageSize);
+      if (just_read == 0) {
+        reached_eof = true;
+        break;
+      }
+      read_len += just_read;
+    }
     AsanClose(fd);
-    if (read_len < size)  // We've read the whole file.
+    if (reached_eof)  // We've read the whole file.
       break;
   }
   return read_len;
