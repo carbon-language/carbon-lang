@@ -458,56 +458,28 @@ isl_set *MemoryAccess::getStride(const isl_set *domainSubset) const {
   return isl_map_deltas(nextScatt);
 }
 
-bool MemoryAccess::isStrideZero(const isl_set *domainSubset) const {
-  isl_set *stride = getStride(domainSubset);
-  isl_space *StrideSpace = isl_set_get_space(stride);
-  isl_local_space *StrideLS = isl_local_space_from_space(StrideSpace);
-  isl_constraint *c = isl_equality_alloc(StrideLS);
+bool MemoryAccess::isStrideZero(const isl_set *DomainSubset) const {
+  isl_set *Stride = getStride(DomainSubset);
+  isl_set *StrideZero = isl_set_universe(isl_set_get_space(Stride));
+  StrideZero = isl_set_fix_si(StrideZero, isl_dim_set, 0, 0);
 
-  isl_int v;
-  isl_int_init(v);
-  isl_int_set_si(v, 1);
-  isl_constraint_set_coefficient(c, isl_dim_set, 0, v);
-  isl_int_set_si(v, 0);
-  isl_constraint_set_constant(c, v);
-  isl_int_clear(v);
+  bool isStrideZero = isl_set_is_equal(Stride, StrideZero);
 
-  isl_basic_set *bset = isl_basic_set_universe(isl_set_get_space(stride));
-
-  bset = isl_basic_set_add_constraint(bset, c);
-  isl_set *strideZero = isl_set_from_basic_set(bset);
-
-  bool isStrideZero = isl_set_is_equal(stride, strideZero);
-
-  isl_set_free(strideZero);
-  isl_set_free(stride);
+  isl_set_free(StrideZero);
+  isl_set_free(Stride);
 
   return isStrideZero;
 }
 
-bool MemoryAccess::isStrideOne(const isl_set *domainSubset) const {
-  isl_set *stride = getStride(domainSubset);
-  isl_space *StrideSpace = isl_set_get_space(stride);
-  isl_local_space *StrideLSpace = isl_local_space_from_space(StrideSpace);
-  isl_constraint *c = isl_equality_alloc(StrideLSpace);
+bool MemoryAccess::isStrideOne(const isl_set *DomainSubset) const {
+  isl_set *Stride = getStride(DomainSubset);
+  isl_set *StrideOne = isl_set_universe(isl_set_get_space(Stride));
+  StrideOne = isl_set_fix_si(StrideOne, isl_dim_set, 0, 1);
 
-  isl_int v;
-  isl_int_init(v);
-  isl_int_set_si(v, 1);
-  isl_constraint_set_coefficient(c, isl_dim_set, 0, v);
-  isl_int_set_si(v, -1);
-  isl_constraint_set_constant(c, v);
-  isl_int_clear(v);
+  bool isStrideOne = isl_set_is_equal(Stride, StrideOne);
 
-  isl_basic_set *bset = isl_basic_set_universe(isl_set_get_space(stride));
-
-  bset = isl_basic_set_add_constraint(bset, c);
-  isl_set *strideOne = isl_set_from_basic_set(bset);
-
-  bool isStrideOne = isl_set_is_equal(stride, strideOne);
-
-  isl_set_free(strideOne);
-  isl_set_free(stride);
+  isl_set_free(StrideOne);
+  isl_set_free(Stride);
 
   return isStrideOne;
 }
@@ -706,22 +678,11 @@ ScopStmt::ScopStmt(Scop &parent, SmallVectorImpl<unsigned> &Scatter)
   isl_space *Space = isl_space_alloc(getIslCtx(), 0, 1, ScatSpace);
   Space = isl_space_set_tuple_name(Space, isl_dim_out, "scattering");
   Space = isl_space_set_tuple_name(Space, isl_dim_in, getBaseName());
-  isl_basic_map *bmap = isl_basic_map_universe(isl_space_copy(Space));
-  isl_int v;
-  isl_int_init(v);
-
-  isl_constraint *c = isl_equality_alloc(isl_local_space_from_space(Space));
-  isl_int_set_si(v, -1);
-  isl_constraint_set_coefficient(c, isl_dim_out, 0, v);
+  Scattering = isl_map_universe(Space);
 
   // TODO: This is incorrect. We should not use a very large number to ensure
   // that this statement is executed last.
-  isl_int_set_si(v, 200000000);
-  isl_constraint_set_constant(c, v);
-
-  bmap = isl_basic_map_add_constraint(bmap, c);
-  isl_int_clear(v);
-  Scattering = isl_map_from_basic_map(bmap);
+  Scattering = isl_map_fix_si(Scattering, isl_dim_out, 0, 200000000);
 
   // Build memory accesses, use SetVector to keep the order of memory accesses
   // and prevent the same memory access inserted more than once.
