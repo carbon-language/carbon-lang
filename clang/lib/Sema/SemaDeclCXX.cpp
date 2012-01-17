@@ -5877,6 +5877,23 @@ QualType Sema::BuildStdInitializerList(QualType Element, SourceLocation Loc) {
       CheckTemplateIdType(TemplateName(StdInitializerList), Loc, Args));
 }
 
+bool Sema::isInitListConstructor(const CXXConstructorDecl* Ctor) {
+  // C++ [dcl.init.list]p2:
+  //   A constructor is an initializer-list constructor if its first parameter
+  //   is of type std::initializer_list<E> or reference to possibly cv-qualified
+  //   std::initializer_list<E> for some type E, and either there are no other
+  //   parameters or else all other parameters have default arguments.
+  if (Ctor->getNumParams() < 1 ||
+      (Ctor->getNumParams() > 1 && !Ctor->getParamDecl(1)->hasDefaultArg()))
+    return false;
+
+  QualType ArgType = Ctor->getParamDecl(0)->getType();
+  if (const ReferenceType *RT = ArgType->getAs<ReferenceType>())
+    ArgType = RT->getPointeeType().getUnqualifiedType();
+
+  return isStdInitializerList(ArgType, 0);
+}
+
 /// \brief Determine whether a using statement is in a context where it will be
 /// apply in all contexts.
 static bool IsUsingDirectiveInToplevelContext(DeclContext *CurContext) {

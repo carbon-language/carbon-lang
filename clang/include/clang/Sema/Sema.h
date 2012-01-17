@@ -2735,6 +2735,10 @@ public:
   /// \returns The instantiated template, or null on error.
   QualType BuildStdInitializerList(QualType Element, SourceLocation Loc);
 
+  /// \brief Determine whether Ctor is an initializer-list constructor, as
+  /// defined in [dcl.init.list]p2.
+  bool isInitListConstructor(const CXXConstructorDecl *Ctor);
+
   Decl *ActOnUsingDirective(Scope *CurScope,
                             SourceLocation UsingLoc,
                             SourceLocation NamespcLoc,
