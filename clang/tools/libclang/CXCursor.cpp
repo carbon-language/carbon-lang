@@ -1021,30 +1021,28 @@ CXCompletionString clang_getCursorCompletionString(CXCursor cursor) {
     Decl *decl = getCursorDecl(cursor);
     if (NamedDecl *namedDecl = dyn_cast_or_null<NamedDecl>(decl)) {
       ASTUnit *unit = getCursorASTUnit(cursor);
-      if (unit->hasSema()) {
-        Sema &S = unit->getSema();
-        CodeCompletionAllocator *Allocator 
-          = unit->getCursorCompletionAllocator().getPtr();
-        CodeCompletionResult Result(namedDecl);
-        CodeCompletionString *String 
-          = Result.CreateCodeCompletionString(S, *Allocator);
-        return String;
-      }
+      CodeCompletionAllocator *Allocator
+        = unit->getCursorCompletionAllocator().getPtr();
+      CodeCompletionResult Result(namedDecl);
+      CodeCompletionString *String
+        = Result.CreateCodeCompletionString(unit->getASTContext(),
+                                            unit->getPreprocessor(),
+                                            *Allocator);
+      return String;
     }
   }
   else if (kind == CXCursor_MacroDefinition) {
     MacroDefinition *definition = getCursorMacroDefinition(cursor);
     const IdentifierInfo *MacroInfo = definition->getName();
     ASTUnit *unit = getCursorASTUnit(cursor);
-    if (unit->hasSema()) {
-      Sema &S = unit->getSema();
-      CodeCompletionAllocator *Allocator
-        = unit->getCursorCompletionAllocator().getPtr();
-      CodeCompletionResult Result(const_cast<IdentifierInfo *>(MacroInfo));
-      CodeCompletionString *String 
-        = Result.CreateCodeCompletionString(S, *Allocator);
-      return String;
-    }
+    CodeCompletionAllocator *Allocator
+      = unit->getCursorCompletionAllocator().getPtr();
+    CodeCompletionResult Result(const_cast<IdentifierInfo *>(MacroInfo));
+    CodeCompletionString *String
+      = Result.CreateCodeCompletionString(unit->getASTContext(),
+                                          unit->getPreprocessor(),
+                                          *Allocator);
+    return String;
   }
   return NULL;
 }
