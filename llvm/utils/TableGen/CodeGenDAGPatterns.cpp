@@ -913,7 +913,7 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
       EnforceVectorSubVectorTypeIs(NodeToApply->getExtType(ResNo), TP);
   }
   }
-  llvm_unreachable("Make GCC's unreachability happy");
+  llvm_unreachable("Invalid ConstraintType!");
 }
 
 //===----------------------------------------------------------------------===//
