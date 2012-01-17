@@ -30,8 +30,7 @@ class AsanThreadRegistry {
  public:
   explicit AsanThreadRegistry(LinkerInitialized);
   void Init();
-  void RegisterThread(AsanThread *thread, int parent_tid,
-                      AsanStackTrace *stack);
+  void RegisterThread(AsanThread *thread);
   void UnregisterThread(AsanThread *thread);
 
   AsanThread *GetMain();

@@ -75,6 +75,10 @@ struct AsanStackTrace {
     }                                               \
   }                                                 \
 
+// NOTE: A Rule of thumb is to retrieve stack trace in the interceptors
+// as early as possible (in functions exposed to the user), as we generally
+// don't want stack trace to contain functions from ASan internals.
+
 #define GET_STACK_TRACE_HERE(max_size, fast_unwind)         \
   GET_STACK_TRACE_WITH_PC_AND_BP(max_size, fast_unwind,     \
      AsanStackTrace::GetCurrentPc(), GET_CURRENT_FRAME())   \

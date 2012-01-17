@@ -246,8 +246,8 @@ void asan_dispatch_call_block_and_release(void *block) {
   }
   AsanThread *t = asanThreadRegistry().GetCurrent();
   if (!t) {
-    t = AsanThread::Create(context->parent_tid, NULL, NULL);
-    asanThreadRegistry().RegisterThread(t, context->parent_tid, &stack);
+    t = AsanThread::Create(context->parent_tid, NULL, NULL, &stack);
+    asanThreadRegistry().RegisterThread(t);
     t->Init();
     asanThreadRegistry().SetCurrent(t);
   }

@@ -35,22 +35,20 @@ void AsanThreadRegistry::Init() {
   AsanTSDInit();
   main_thread_.set_summary(&main_thread_summary_);
   main_thread_summary_.set_thread(&main_thread_);
+  RegisterThread(&main_thread_);
   SetCurrent(&main_thread_);
-  thread_summaries_[0] = &main_thread_summary_;
-  n_threads_ = 1;
 }
 
-void AsanThreadRegistry::RegisterThread(AsanThread *thread, int parent_tid,
-                                        AsanStackTrace *stack) {
+void AsanThreadRegistry::RegisterThread(AsanThread *thread) {
   ScopedLock lock(&mu_);
-  CHECK(n_threads_ > 0);
   int tid = n_threads_;
   n_threads_++;
   CHECK(n_threads_ < kMaxNumberOfThreads);
-  AsanThreadSummary *summary = new AsanThreadSummary(tid, parent_tid, stack);
-  summary->set_thread(thread);
+
+  AsanThreadSummary *summary = thread->summary();
+  CHECK(summary != NULL);
+  summary->set_tid(tid);
   thread_summaries_[tid] = summary;
-  thread->set_summary(summary);
 }
 
 void AsanThreadRegistry::UnregisterThread(AsanThread *thread) {

@@ -14,6 +14,7 @@
 #include "asan_allocator.h"
 #include "asan_interceptors.h"
 #include "asan_procmaps.h"
+#include "asan_stack.h"
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 #include "asan_mapping.h"
@@ -26,42 +27,41 @@ AsanThread::AsanThread(LinkerInitialized x)
       stats_(x) { }
 
 AsanThread *AsanThread::Create(int parent_tid, void *(*start_routine) (void *),
-                               void *arg) {
+                               void *arg, AsanStackTrace *stack) {
   size_t size = RoundUpTo(sizeof(AsanThread), kPageSize);
-  AsanThread *res = (AsanThread*)AsanMmapSomewhereOrDie(size, __FUNCTION__);
-  res->start_routine_ = start_routine;
-  res->arg_ = arg;
-  return res;
+  AsanThread *thread = (AsanThread*)AsanMmapSomewhereOrDie(size, __FUNCTION__);
+  thread->start_routine_ = start_routine;
+  thread->arg_ = arg;
+
+  AsanThreadSummary *summary = new AsanThreadSummary(parent_tid, stack);
+  summary->set_thread(thread);
+  thread->set_summary(summary);
+
+  return thread;
 }
 
 void AsanThread::Destroy() {
-  fake_stack().Cleanup();
   // We also clear the shadow on thread destruction because
   // some code may still be executing in later TSD destructors
   // and we don't want it to have any poisoned stack.
   ClearShadowForThreadStack();
+  fake_stack().Cleanup();
   size_t size = RoundUpTo(sizeof(AsanThread), kPageSize);
   AsanUnmapOrDie(this, size);
 }
 
-void AsanThread::ClearShadowForThreadStack() {
-  PoisonShadow(stack_bottom_, stack_top_ - stack_bottom_, 0);
-}
-
 void AsanThread::Init() {
   SetThreadStackTopAndBottom();
-  fake_stack_.Init(stack_size());
+  CHECK(AddrIsInMem(stack_bottom_));
+  CHECK(AddrIsInMem(stack_top_));
+  ClearShadowForThreadStack();
   if (FLAG_v >= 1) {
     int local = 0;
     Report("T%d: stack [%p,%p) size 0x%lx; local=%p\n",
            tid(), stack_bottom_, stack_top_,
            stack_top_ - stack_bottom_, &local);
   }
-
-  CHECK(AddrIsInMem(stack_bottom_));
-  CHECK(AddrIsInMem(stack_top_));
-
-  ClearShadowForThreadStack();
+  fake_stack_.Init(stack_size());
 }
 
 void *AsanThread::ThreadStart() {
@@ -86,6 +86,10 @@ void *AsanThread::ThreadStart() {
   this->Destroy();
 
   return res;
+}
+
+void AsanThread::ClearShadowForThreadStack() {
+  PoisonShadow(stack_bottom_, stack_top_ - stack_bottom_, 0);
 }
 
 const char *AsanThread::GetFrameNameByAddr(uintptr_t addr, uintptr_t *offset) {

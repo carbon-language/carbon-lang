@@ -280,8 +280,8 @@ int WRAP(pthread_create)(pthread_t *thread, const pthread_attr_t *attr,
                          void *(*start_routine) (void *), void *arg) {
   GET_STACK_TRACE_HERE(kStackTraceMax, /*fast_unwind*/false);
   int current_tid = asanThreadRegistry().GetCurrentTidOrMinusOne();
-  AsanThread *t = AsanThread::Create(current_tid, start_routine, arg);
-  asanThreadRegistry().RegisterThread(t, current_tid, &stack);
+  AsanThread *t = AsanThread::Create(current_tid, start_routine, arg, &stack);
+  asanThreadRegistry().RegisterThread(t);
   return real_pthread_create(thread, attr, asan_thread_start, t);
 }
 
