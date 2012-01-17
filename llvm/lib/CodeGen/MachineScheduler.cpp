@@ -27,6 +27,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/OwningPtr.h"
 
+#include <queue>
+
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -159,8 +161,92 @@ protected:
 public:
   ScheduleTopDownLive(MachineScheduler *P):
     ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT, /*IsPostRA=*/false), Pass(P) {}
+
+  /// ScheduleDAGInstrs callback.
+  void Schedule();
+
+  /// Interface implemented by the selected top-down liveinterval scheduler.
+  ///
+  /// Pick the next node to schedule, or return NULL.
+  virtual SUnit *pickNode() = 0;
+
+  /// When all preceeding dependencies have been resolved, free this node for
+  /// scheduling.
+  virtual void releaseNode(SUnit *SU) = 0;
+
+protected:
+  void releaseSucc(SUnit *SU, SDep *SuccEdge);
+  void releaseSuccessors(SUnit *SU);
 };
 } // namespace
+
+/// ReleaseSucc - Decrement the NumPredsLeft count of a successor. When
+/// NumPredsLeft reaches zero, release the successor node.
+void ScheduleTopDownLive::releaseSucc(SUnit *SU, SDep *SuccEdge) {
+  SUnit *SuccSU = SuccEdge->getSUnit();
+
+#ifndef NDEBUG
+  if (SuccSU->NumPredsLeft == 0) {
+    dbgs() << "*** Scheduling failed! ***\n";
+    SuccSU->dump(this);
+    dbgs() << " has been released too many times!\n";
+    llvm_unreachable(0);
+  }
+#endif
+  --SuccSU->NumPredsLeft;
+  if (SuccSU->NumPredsLeft == 0 && SuccSU != &ExitSU)
+    releaseNode(SuccSU);
+}
+
+/// releaseSuccessors - Call releaseSucc on each of SU's successors.
+void ScheduleTopDownLive::releaseSuccessors(SUnit *SU) {
+  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+       I != E; ++I) {
+    releaseSucc(SU, &*I);
+  }
+}
+
+/// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
+/// time to do some work.
+void ScheduleTopDownLive::Schedule() {
+  BuildSchedGraph(&Pass->getAnalysis<AliasAnalysis>());
+
+  DEBUG(dbgs() << "********** MI Scheduling **********\n");
+  DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
+          SUnits[su].dumpAll(this));
+
+  // Release any successors of the special Entry node. It is currently unused,
+  // but we keep up appearances.
+  releaseSuccessors(&EntrySU);
+
+  // Release all DAG roots for scheduling.
+  for (std::vector<SUnit>::iterator I = SUnits.begin(), E = SUnits.end();
+       I != E; ++I) {
+    // A SUnit is ready to schedule if it has no predecessors.
+    if (I->Preds.empty())
+      releaseNode(&(*I));
+  }
+
+  InsertPos = Begin;
+  while (SUnit *SU = pickNode()) {
+    DEBUG(dbgs() << "*** Scheduling Instruction:\n"; SU->dump(this));
+
+    // Move the instruction to its new location in the instruction stream.
+    MachineInstr *MI = SU->getInstr();
+    if (&*InsertPos == MI)
+      ++InsertPos;
+    else {
+      BB->splice(InsertPos, BB, MI);
+      if (Begin == InsertPos)
+        Begin = MI;
+    }
+
+    // TODO: Update live intervals.
+
+    // Release dependent instructions for scheduling.
+    releaseSuccessors(SU);
+  }
+}
 
 bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   // Initialize the context of the pass.
@@ -201,17 +287,19 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
         --RemainingCount;
         continue;
       }
-      // Schedule regions with more than one instruction.
-      if (I != llvm::prior(RegionEnd)) {
-        DEBUG(dbgs() << "MachineScheduling " << MF->getFunction()->getName()
-              << ":BB#" << MBB->getNumber() << "\n  From: " << *I << "    To: "
-              << *RegionEnd << " Remaining: " << RemainingCount << "\n");
-
-        // Inform ScheduleDAGInstrs of the region being scheduled. It calls back
-        // to our Schedule() method.
-        Scheduler->Run(MBB, I, RegionEnd, MBB->size());
+      // Skip regions with one instruction.
+      if (I == llvm::prior(RegionEnd)) {
+        RegionEnd = llvm::prior(RegionEnd);
+        continue;
       }
-      RegionEnd = I;
+      DEBUG(dbgs() << "MachineScheduling " << MF->getFunction()->getName()
+            << ":BB#" << MBB->getNumber() << "\n  From: " << *I << "    To: "
+            << *RegionEnd << " Remaining: " << RemainingCount << "\n");
+
+      // Inform ScheduleDAGInstrs of the region being scheduled. It calls back
+      // to our Schedule() method.
+      Scheduler->Run(MBB, I, RegionEnd, MBB->size());
+      RegionEnd = Scheduler->Begin;
     }
     assert(RemainingCount == 0 && "Instruction count mismatch!");
   }
@@ -227,11 +315,14 @@ void MachineScheduler::print(raw_ostream &O, const Module* m) const {
 //===----------------------------------------------------------------------===//
 
 namespace {
-class DefaultMachineScheduler : public ScheduleTopDownLive {
+class DefaultMachineScheduler : public ScheduleDAGInstrs {
+  MachineScheduler *Pass;
 public:
   DefaultMachineScheduler(MachineScheduler *P):
-    ScheduleTopDownLive(P) {}
+    ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT, /*IsPostRA=*/false), Pass(P) {}
 
+  /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
+  /// time to do some work.
   void Schedule();
 };
 } // namespace
@@ -255,6 +346,9 @@ void DefaultMachineScheduler::Schedule() {
           SUnits[su].dumpAll(this));
 
   // TODO: Put interesting things here.
+  //
+  // When this is fully implemented, it will become a subclass of
+  // ScheduleTopDownLive. So this driver will disappear.
 }
 
 //===----------------------------------------------------------------------===//
@@ -263,17 +357,36 @@ void DefaultMachineScheduler::Schedule() {
 
 #ifndef NDEBUG
 namespace {
+// Nodes with a higher number have lower priority. This way we attempt to
+// schedule the latest instructions earliest.
+//
+// TODO: Relies on the property of the BuildSchedGraph that results in SUnits
+// being ordered in sequence bottom-up. This will be formalized, probably be
+// constructing SUnits in a prepass.
+struct ShuffleSUnitOrder {
+  bool operator()(SUnit *A, SUnit *B) const {
+    return A->NodeNum > B->NodeNum;
+  }
+};
+
 /// Reorder instructions as much as possible.
 class InstructionShuffler : public ScheduleTopDownLive {
-  MachineScheduler *Pass;
+  std::priority_queue<SUnit*, std::vector<SUnit*>, ShuffleSUnitOrder> Queue;
 public:
   InstructionShuffler(MachineScheduler *P):
     ScheduleTopDownLive(P) {}
 
-  /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
-  /// time to do some work.
-  virtual void Schedule() {
-    llvm_unreachable("unimplemented");
+  /// ScheduleTopDownLive Interface
+
+  virtual SUnit *pickNode() {
+    if (Queue.empty()) return NULL;
+    SUnit *SU = Queue.top();
+    Queue.pop();
+    return SU;
+  }
+
+  virtual void releaseNode(SUnit *SU) {
+    Queue.push(SU);
   }
 };
 } // namespace
