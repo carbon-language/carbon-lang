@@ -2131,7 +2131,10 @@ namespace {
                        llvm::SmallPtrSet<Decl *, 16> &Deserialized,
                        GlobalDeclID CanonID)
       : Reader(Reader), SearchDecls(SearchDecls), Deserialized(Deserialized),
-        CanonID(CanonID) { }
+        CanonID(CanonID) { 
+      for (unsigned I = 0, N = SearchDecls.size(); I != N; ++I)
+        addToChain(Reader.GetDecl(SearchDecls[I]));
+    }
     
     static bool visit(ModuleFile &M, bool Preorder, void *UserData) {
       if (Preorder)
