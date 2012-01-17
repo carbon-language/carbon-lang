@@ -178,21 +178,30 @@ void AsanLock::Unlock() {
 // islands.
 // TODO(glider): instead of mapping a fixed range we must find a range of
 // unmapped pages in vmmap and take them.
+// These constants were chosen empirically and may not work if the shadow
+// memory layout changes. Unfortunately they do necessarily depend on
+// kHighMemBeg or kHighMemEnd.
+#if __WORDSIZE == 32
+#define kIslandEnd (0xffdf0000 - kPageSize)
+#define kIslandBeg (kIslandEnd - 256 * kPageSize)
+#else
 #define kIslandEnd (0x7fffffdf0000 - kPageSize)
 #define kIslandBeg (kIslandEnd - 256 * kPageSize)
+#endif
 
 extern "C"
 mach_error_t __asan_allocate_island(void **ptr,
                                     size_t unused_size,
                                     void *unused_hint) {
   if (!island_allocator_pos) {
-    if ((void*)-1 == asan_mmap((void*)kIslandBeg, kIslandEnd - kIslandBeg,
-                               PROT_READ | PROT_WRITE | PROT_EXEC,
-                               MAP_PRIVATE | MAP_ANON | MAP_FIXED,
-                               -1, 0)) {
+    island_allocator_pos =
+        asan_mmap((void*)kIslandBeg, kIslandEnd - kIslandBeg,
+                  PROT_READ | PROT_WRITE | PROT_EXEC,
+                  MAP_PRIVATE | MAP_ANON | MAP_FIXED,
+                 -1, 0);
+    if (island_allocator_pos != (void*)kIslandBeg) {
       return KERN_NO_SPACE;
     }
-    island_allocator_pos = (void*)kIslandBeg;
   };
   *ptr = island_allocator_pos;
   island_allocator_pos = (char*)island_allocator_pos + kPageSize;
