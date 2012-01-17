@@ -55,9 +55,11 @@ bool JSONParser::validate() {
 
 bool JSONParser::skip(const JSONAtom &Atom) {
   switch(Atom.getKind()) {
-    case JSONAtom::JK_Array: return skipContainer(*cast<JSONArray>(&Atom));
-    case JSONAtom::JK_Object: return skipContainer(*cast<JSONObject>(&Atom));
-    case JSONAtom::JK_String: return true;
+    case JSONAtom::JK_Array:
+    case JSONAtom::JK_Object:
+      return skipContainer(*cast<JSONContainer>(&Atom));
+    case JSONAtom::JK_String:
+      return true;
     case JSONAtom::JK_KeyValuePair:
       return skip(*cast<JSONKeyValuePair>(&Atom)->Value);
   }
@@ -218,10 +220,83 @@ JSONKeyValuePair *JSONParser::parseKeyValuePair() {
     JSONKeyValuePair(Key, Value);
 }
 
-template <> JSONValue *JSONParser::parseElement() {
-  return parseValue();
+/// \brief Parses the first element of a JSON array or object, or closes the
+/// array.
+///
+/// The method assumes that the current position is before the first character
+/// of the element, with possible white space in between. When successful, it
+/// returns the new position after parsing the element. Otherwise, if there is
+/// no next value, it returns a default constructed StringRef::iterator.
+StringRef::iterator JSONParser::parseFirstElement(JSONAtom::Kind ContainerKind,
+                                                  char StartChar, char EndChar,
+                                                  const JSONAtom *&Element) {
+  assert(*Position == StartChar);
+  Element = 0;
+  nextNonWhitespace();
+  if (errorIfAtEndOfFile("value or end of container at start of container"))
+    return StringRef::iterator();
+
+  if (*Position == EndChar)
+    return StringRef::iterator();
+
+  Element = parseElement(ContainerKind);
+  if (Element == 0)
+    return StringRef::iterator();
+
+  return Position;
 }
 
-template <> JSONKeyValuePair *JSONParser::parseElement() {
-  return parseKeyValuePair();
+/// \brief Parses the next element of a JSON array or object, or closes the
+/// array.
+///
+/// The method assumes that the current position is before the ',' which
+/// separates the next element from the current element. When successful, it
+/// returns the new position after parsing the element. Otherwise, if there is
+/// no next value, it returns a default constructed StringRef::iterator.
+StringRef::iterator JSONParser::parseNextElement(JSONAtom::Kind ContainerKind,
+                                                 char EndChar,
+                                                 const JSONAtom *&Element) {
+  Element = 0;
+  nextNonWhitespace();
+  if (errorIfAtEndOfFile("',' or end of container for next element"))
+    return 0;
+
+  if (*Position == ',') {
+    nextNonWhitespace();
+    if (errorIfAtEndOfFile("element in container"))
+      return StringRef::iterator();
+
+    Element = parseElement(ContainerKind);
+    if (Element == 0)
+      return StringRef::iterator();
+
+    return Position;
+  } else if (*Position == EndChar) {
+      return StringRef::iterator();
+  } else {
+    setExpectedError("',' or end of container for next element", *Position);
+    return StringRef::iterator();
+  }
+}
+
+const JSONAtom *JSONParser::parseElement(JSONAtom::Kind ContainerKind) {
+  switch (ContainerKind) {
+    case JSONAtom::JK_Array:
+      return parseValue();
+    case JSONAtom::JK_Object:
+      return parseKeyValuePair();
+    default:
+      llvm_unreachable("Impossible code path");
+  }
+}
+
+bool JSONParser::skipContainer(const JSONContainer &Container) {
+  for (JSONContainer::AtomIterator I = Container.atom_current(),
+                                   E = Container.atom_end();
+       I != E; ++I) {
+    assert(*I != 0);
+    if (!skip(**I))
+      return false;
+  }
+  return !failed();
 }

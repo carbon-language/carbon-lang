@@ -22,11 +22,13 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/SourceMgr.h"
 
 namespace llvm {
 
+class JSONContainer;
 class JSONString;
 class JSONValue;
 class JSONKeyValuePair;
@@ -50,10 +52,6 @@ protected:
 
 private:
   Kind MyKind;
-
-  friend class JSONParser;
-  friend class JSONKeyValuePair;
-  template <typename, char, char, JSONAtom::Kind> friend class JSONContainer;
 };
 
 /// \brief A parser for JSON text.
@@ -100,14 +98,15 @@ private:
   JSONKeyValuePair *parseKeyValuePair();
   /// @}
 
-  /// \brief Templated helpers to parse the elements out of both forms of JSON
-  /// containers.
+  /// \brief Helpers to parse the elements out of both forms of containers.
   /// @{
-  template <typename AtomT> AtomT *parseElement();
-  template <typename AtomT, char StartChar, char EndChar>
-  StringRef::iterator parseFirstElement(const AtomT *&Element);
-  template <typename AtomT, char EndChar>
-  StringRef::iterator parseNextElement(const AtomT *&Element);
+  const JSONAtom *parseElement(JSONAtom::Kind ContainerKind);
+  StringRef::iterator parseFirstElement(JSONAtom::Kind ContainerKind,
+                                        char StartChar, char EndChar,
+                                        const JSONAtom *&Element);
+  StringRef::iterator parseNextElement(JSONAtom::Kind ContainerKind,
+                                       char EndChar,
+                                       const JSONAtom *&Element);
   /// @}
 
   /// \brief Whitespace parsing.
@@ -125,17 +124,7 @@ private:
   /// }
 
   /// \brief Skips all elements in the given container.
-  template <typename ContainerT>
-  bool skipContainer(const ContainerT &Container) {
-    for (typename ContainerT::const_iterator I = Container.current(),
-                                             E = Container.end();
-         I != E; ++I) {
-      assert(*I != 0);
-      if (!skip(**I))
-        return false;
-    }
-    return !failed();
-  }
+  bool skipContainer(const JSONContainer &Container);
 
   /// \brief Skips to the next position behind the given JSON atom.
   bool skip(const JSONAtom &Atom);
@@ -160,8 +149,6 @@ private:
   /// \brief If true, an error has occurred.
   bool Failed;
 
-  template <typename AtomT, char StartChar, char EndChar,
-            JSONAtom::Kind ContainerKind>
   friend class JSONContainer;
 };
 
@@ -210,7 +197,6 @@ private:
 
   StringRef RawText;
 
-  friend class JSONAtom;
   friend class JSONParser;
 
 public:
@@ -237,9 +223,7 @@ private:
   JSONKeyValuePair(const JSONString *Key, const JSONValue *Value)
       : JSONAtom(JK_KeyValuePair), Key(Key), Value(Value) {}
 
-  friend class JSONAtom;
   friend class JSONParser;
-  template <typename, char, char, JSONAtom::Kind> friend class JSONContainer;
 
 public:
   /// \brief dyn_cast helpers
@@ -255,41 +239,43 @@ public:
 ///
 /// JSONContainers drive the lazy parsing of JSON arrays and objects via
 /// forward iterators.
-template <typename AtomT, char StartChar, char EndChar,
-          JSONAtom::Kind ContainerKind>
 class JSONContainer : public JSONValue {
-public:
+private:
   /// \brief An iterator that parses the underlying container during iteration.
   ///
   /// Iterators on the same collection use shared state, so when multiple copies
   /// of an iterator exist, only one is allowed to be used for iteration;
   /// iterating multiple copies of an iterator of the same collection will lead
   /// to undefined behavior.
-  class const_iterator : public std::iterator<std::forward_iterator_tag,
-                                              const AtomT*> {
+  class AtomIterator {
   public:
-    const_iterator(const const_iterator &I) : Container(I.Container) {}
+    AtomIterator(const AtomIterator &I) : Container(I.Container) {}
 
-    bool operator==(const const_iterator &I) const {
+    /// \brief Iterator interface.
+    ///@{
+    bool operator==(const AtomIterator &I) const {
       if (isEnd() || I.isEnd())
         return isEnd() == I.isEnd();
       return Container->Position == I.Container->Position;
     }
-    bool operator!=(const const_iterator &I) const { return !(*this == I); }
-
-    const_iterator &operator++() {
+    bool operator!=(const AtomIterator &I) const {
+      return !(*this == I);
+    }
+    AtomIterator &operator++() {
       Container->parseNextElement();
       return *this;
     }
-
-    const AtomT *operator*() { return Container->Current; }
+    const JSONAtom *operator*() {
+      return Container->Current;
+    }
+    ///@}
 
   private:
     /// \brief Create an iterator for which 'isEnd' returns true.
-    const_iterator() : Container(0) {}
+    AtomIterator() : Container(0) {}
 
     /// \brief Create an iterator for the given container.
-    const_iterator(const JSONContainer *Container) : Container(Container) {}
+    AtomIterator(const JSONContainer *Container) : Container(Container) {}
 
     bool isEnd() const {
       return Container == 0 || Container->Position == StringRef::iterator();
@@ -300,34 +286,62 @@ public:
     friend class JSONContainer;
   };
 
+protected:
+  /// \brief An iterator for the specified AtomT.
+  ///
+  /// Used for the implementation of iterators for JSONArray and JSONObject.
+  template <typename AtomT>
+  class IteratorTemplate : public std::iterator<std::forward_iterator_tag,
+                                                const AtomT*> {
+  public:
+    explicit IteratorTemplate(const AtomIterator& AtomI)
+      : AtomI(AtomI) {}
+
+    bool operator==(const IteratorTemplate &I) const {
+      return AtomI == I.AtomI;
+    }
+    bool operator!=(const IteratorTemplate &I) const { return !(*this == I); }
+
+    IteratorTemplate &operator++() {
+      ++AtomI;
+      return *this;
+    }
+
+    const AtomT *operator*() { return dyn_cast<AtomT>(*AtomI); }
+
+  private:
+    AtomIterator AtomI;
+  };
+
+  JSONContainer(JSONParser *Parser, char StartChar, char EndChar,
+                JSONAtom::Kind ContainerKind)
+    : JSONValue(ContainerKind), Parser(Parser),
+      Position(), Current(0), Started(false),
+      StartChar(StartChar), EndChar(EndChar) {}
+
   /// \brief Returns a lazy parsing iterator over the container.
   ///
   /// As the iterator drives the parse stream, begin() must only be called
   /// once per container.
-  const_iterator begin() const {
+  AtomIterator atom_begin() const {
     if (Started)
       report_fatal_error("Cannot parse container twice.");
     Started = true;
     // Set up the position and current element when we begin iterating over the
     // container.
-    Position = Parser->parseFirstElement<AtomT, StartChar, EndChar>(Current);
-    return const_iterator(this);
+    Position = Parser->parseFirstElement(getKind(), StartChar, EndChar, Current);
+    return AtomIterator(this);
   }
-
-  const_iterator end() const {
-    return const_iterator();
+  AtomIterator atom_end() const {
+    return AtomIterator();
   }
 
 private:
-  JSONContainer(JSONParser *Parser)
-    : JSONValue(ContainerKind), Parser(Parser),
-      Position(), Current(0), Started(false) {}
-
-  const_iterator current() const {
+  AtomIterator atom_current() const {
     if (!Started)
-      return begin();
+      return atom_begin();
 
-    return const_iterator(this);
+    return AtomIterator(this);
   }
 
   /// \brief Parse the next element in the container into the Current element.
@@ -337,7 +351,7 @@ private:
   /// the next atom of the container.
   void parseNextElement() const {
     Parser->skip(*Current);
-    Position = Parser->parseNextElement<AtomT, EndChar>(Current);
+    Position = Parser->parseNextElement(getKind(), EndChar, Current);
   }
 
   // For parsing, JSONContainers call back into the JSONParser.
@@ -347,95 +361,87 @@ private:
   // for iterators on the container, they don't change the container's elements
   // and are thus marked as mutable.
   mutable StringRef::iterator Position;
-  mutable const AtomT *Current;
+  mutable const JSONAtom *Current;
   mutable bool Started;
 
-  friend class JSONAtom;
+  const char StartChar;
+  const char EndChar;
+
   friend class JSONParser;
-  friend class const_iterator;
 
 public:
   /// \brief dyn_cast helpers
   ///@{
   static bool classof(const JSONAtom *Atom) {
-    return Atom->getKind() == ContainerKind;
+    switch (Atom->getKind()) {
+      case JK_Array:
+      case JK_Object:
+        return true;
+      case JK_KeyValuePair:
+      case JK_String:
+        return false;
+    };
+    llvm_unreachable("Invalid JSONAtom kind");
   }
   static bool classof(const JSONContainer *Container) { return true; }
   ///@}
 };
 
 /// \brief A simple JSON array.
-typedef JSONContainer<JSONValue, '[', ']', JSONAtom::JK_Array> JSONArray;
+class JSONArray : public JSONContainer {
+public:
+  typedef IteratorTemplate<JSONValue> const_iterator;
+
+  /// \brief Returns a lazy parsing iterator over the container.
+  ///
+  /// As the iterator drives the parse stream, begin() must only be called
+  /// once per container.
+  const_iterator begin() const { return const_iterator(atom_begin()); }
+  const_iterator end() const { return const_iterator(atom_end()); }
+
+private:
+  JSONArray(JSONParser *Parser)
+    : JSONContainer(Parser, '[', ']', JSONAtom::JK_Array) {}
+
+public:
+  /// \brief dyn_cast helpers
+  ///@{
+  static bool classof(const JSONAtom *Atom) {
+    return Atom->getKind() == JSONAtom::JK_Array;
+  }
+  static bool classof(const JSONArray *Array) { return true; }
+  ///@}
+
+  friend class JSONParser;
+};
 
 /// \brief A JSON object: an iterable list of JSON key-value pairs.
-typedef JSONContainer<JSONKeyValuePair, '{', '}', JSONAtom::JK_Object>
-    JSONObject;
+class JSONObject : public JSONContainer {
+public:
+  typedef IteratorTemplate<JSONKeyValuePair> const_iterator;
 
-/// \brief Template adaptor to dispatch element parsing for values.
-template <> JSONValue *JSONParser::parseElement();
+  /// \brief Returns a lazy parsing iterator over the container.
+  ///
+  /// As the iterator drives the parse stream, begin() must only be called
+  /// once per container.
+  const_iterator begin() const { return const_iterator(atom_begin()); }
+  const_iterator end() const { return const_iterator(atom_end()); }
 
-/// \brief Template adaptor to dispatch element parsing for key value pairs.
-template <> JSONKeyValuePair *JSONParser::parseElement();
+private:
+  JSONObject(JSONParser *Parser)
+    : JSONContainer(Parser, '{', '}', JSONAtom::JK_Object) {}
 
-/// \brief Parses the first element of a JSON array or object, or closes the
-/// array.
-///
-/// The method assumes that the current position is before the first character
-/// of the element, with possible white space in between. When successful, it
-/// returns the new position after parsing the element. Otherwise, if there is
-/// no next value, it returns a default constructed StringRef::iterator.
-template <typename AtomT, char StartChar, char EndChar>
-StringRef::iterator JSONParser::parseFirstElement(const AtomT *&Element) {
-  assert(*Position == StartChar);
-  Element = 0;
-  nextNonWhitespace();
-  if (errorIfAtEndOfFile("value or end of container at start of container"))
-    return StringRef::iterator();
-
-  if (*Position == EndChar)
-    return StringRef::iterator();
-
-  Element = parseElement<AtomT>();
-  if (Element == 0)
-    return StringRef::iterator();
-
-  return Position;
-}
-
-/// \brief Parses the next element of a JSON array or object, or closes the
-/// array.
-///
-/// The method assumes that the current position is before the ',' which
-/// separates the next element from the current element. When successful, it
-/// returns the new position after parsing the element. Otherwise, if there is
-/// no next value, it returns a default constructed StringRef::iterator.
-template <typename AtomT, char EndChar>
-StringRef::iterator JSONParser::parseNextElement(const AtomT *&Element) {
-  Element = 0;
-  nextNonWhitespace();
-  if (errorIfAtEndOfFile("',' or end of container for next element"))
-    return 0;
-
-  switch (*Position) {
-    case ',':
-      nextNonWhitespace();
-      if (errorIfAtEndOfFile("element in container"))
-        return StringRef::iterator();
-
-      Element = parseElement<AtomT>();
-      if (Element == 0)
-        return StringRef::iterator();
-
-      return Position;
-
-    case EndChar:
-      return StringRef::iterator();
-
-    default:
-      setExpectedError("',' or end of container for next element", *Position);
-      return StringRef::iterator();
+public:
+  /// \brief dyn_cast helpers
+  ///@{
+  static bool classof(const JSONAtom *Atom) {
+    return Atom->getKind() == JSONAtom::JK_Object;
   }
-}
+  static bool classof(const JSONObject *Object) { return true; }
+  ///@}
+
+  friend class JSONParser;
+};
 
 } // end namespace llvm
 
