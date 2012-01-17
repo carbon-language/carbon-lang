@@ -133,3 +133,14 @@ class CCDelegateTo<CallingConv cc> : CCAction {
 class CallingConv<list<CCAction> actions> {
   list<CCAction> Actions = actions;
 }
+
+/// CalleeSavedRegs - A list of callee saved registers for a given calling
+/// convention.  The order of registers is used by PrologEpilogInsertion when
+/// allocation stack slots for saved registers.
+///
+/// For each CalleeSavedRegs def, TableGen will emit a FOO_SaveList array for
+/// returning from getCalleeSavedRegs(), and a FOO_RegMask bit mask suitable for
+/// returning from getCallPreservedMask().
+class CalleeSavedRegs<dag saves> {
+  dag SaveList = saves;
+}

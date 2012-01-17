@@ -526,6 +526,7 @@ CodeGenRegisterClass::getSuperRegClasses(Record *SubIdx, BitVector &Out) const {
 CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
   // Configure register Sets to understand register classes and tuples.
   Sets.addFieldExpander("RegisterClass", "MemberList");
+  Sets.addFieldExpander("CalleeSavedRegs", "SaveList");
   Sets.addExpander("RegisterTuples", new TupleExpander());
 
   // Read in the user-defined (named) sub-register indices.
@@ -990,4 +991,26 @@ CodeGenRegBank::getRegClassForRegister(Record *R) {
     return 0;
   }
   return FoundRC;
+}
+
+BitVector CodeGenRegBank::computeCoveredRegisters(ArrayRef<Record*> Regs) {
+  SetVector<CodeGenRegister*> Set;
+
+  // First add Regs with all sub-registers.
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    CodeGenRegister *Reg = getReg(Regs[i]);
+    if (Set.insert(Reg))
+      // Reg is new, add all sub-registers.
+      // The pre-ordering is not important here.
+      Reg->addSubRegsPreOrder(Set);
+  }
+
+  // Second, find all super-registers that are completely covered by the set.
+  // FIXME: Implement CoveredBySubRegs bit.
+
+  // Convert to BitVector.
+  BitVector BV(Registers.size() + 1);
+  for (unsigned i = 0, e = Set.size(); i != e; ++i)
+    BV.set(Set[i]->EnumValue);
+  return BV;
 }

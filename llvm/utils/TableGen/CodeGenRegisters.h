@@ -320,6 +320,15 @@ namespace llvm {
     // If R1 is a sub-register of R2, Map[R1] is a subset of Map[R2].
     void computeOverlaps(std::map<const CodeGenRegister*,
                                   CodeGenRegister::Set> &Map);
+
+    // Compute the set of registers completely covered by the registers in Regs.
+    // The returned BitVector will have a bit set for each register in Regs,
+    // all sub-registers, and all super-registers that are covered by the
+    // registers in Regs.
+    //
+    // This is used to compute the mask of call-preserved registers from a list
+    // of callee-saves.
+    BitVector computeCoveredRegisters(ArrayRef<Record*> Regs);
   };
 }
 

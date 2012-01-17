@@ -879,6 +879,30 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   OS << "}\n\n";
 
+
+  // Emit CalleeSavedRegs information.
+  std::vector<Record*> CSRSets =
+    Records.getAllDerivedDefinitions("CalleeSavedRegs");
+  for (unsigned i = 0, e = CSRSets.size(); i != e; ++i) {
+    Record *CSRSet = CSRSets[i];
+    const SetTheory::RecVec *Regs = RegBank.getSets().expand(CSRSet);
+    assert(Regs && "Cannot expand CalleeSavedRegs instance");
+
+    // Emit the *_SaveList list of callee-saved registers.
+    OS << "static const unsigned " << CSRSet->getName()
+       << "_SaveList[] = { ";
+    for (unsigned r = 0, re = Regs->size(); r != re; ++r)
+      OS << getQualifiedName((*Regs)[r]) << ", ";
+    OS << "0 };\n";
+
+    // Emit the *_RegMask bit mask of call-preserved registers.
+    OS << "static const uint32_t " << CSRSet->getName()
+       << "_RegMask[] = { ";
+    printBitVectorAsHex(OS, RegBank.computeCoveredRegisters(*Regs), 32);
+    OS << "};\n";
+  }
+  OS << "\n\n";
+
   OS << "} // End llvm namespace \n";
   OS << "#endif // GET_REGINFO_TARGET_DESC\n\n";
 }
