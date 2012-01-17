@@ -404,3 +404,18 @@ def CC_X86 : CallingConv<[
   CCIfSubtarget<"is64Bit()", CCDelegateTo<CC_X86_64>>,
   CCDelegateTo<CC_X86_32>
 ]>;
+
+//===----------------------------------------------------------------------===//
+// Callee-saved Registers.
+//===----------------------------------------------------------------------===//
+
+def CSR_Ghc : CalleeSavedRegs<(add)>;
+
+def CSR_32 : CalleeSavedRegs<(add ESI, EDI, EBX, EBP)>;
+def CSR_64 : CalleeSavedRegs<(add RBX, R12, R13, R14, R15, RBP)>;
+
+def CSR_32EHRet : CalleeSavedRegs<(add EAX, EDX, CSR_32)>;
+def CSR_64EHRet : CalleeSavedRegs<(add RAX, RDX, CSR_64)>;
+
+def CSR_Win64 : CalleeSavedRegs<(add RBX, RBP, RDI, RSI, R12, R13, R14, R15,
+                                     (sequence "XMM%u", 6, 15))>;

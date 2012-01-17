@@ -237,45 +237,29 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     ghcCall = (F ? F->getCallingConv() == CallingConv::GHC : false);
   }
 
-  static const unsigned GhcCalleeSavedRegs[] = {
-    0
-  };
-
-  static const unsigned CalleeSavedRegs32Bit[] = {
-    X86::ESI, X86::EDI, X86::EBX, X86::EBP,  0
-  };
-
-  static const unsigned CalleeSavedRegs32EHRet[] = {
-    X86::EAX, X86::EDX, X86::ESI, X86::EDI, X86::EBX, X86::EBP,  0
-  };
-
-  static const unsigned CalleeSavedRegs64Bit[] = {
-    X86::RBX, X86::R12, X86::R13, X86::R14, X86::R15, X86::RBP, 0
-  };
-
-  static const unsigned CalleeSavedRegs64EHRet[] = {
-    X86::RAX, X86::RDX, X86::RBX, X86::R12,
-    X86::R13, X86::R14, X86::R15, X86::RBP, 0
-  };
-
-  static const unsigned CalleeSavedRegsWin64[] = {
-    X86::RBX,   X86::RBP,   X86::RDI,   X86::RSI,
-    X86::R12,   X86::R13,   X86::R14,   X86::R15,
-    X86::XMM6,  X86::XMM7,  X86::XMM8,  X86::XMM9,
-    X86::XMM10, X86::XMM11, X86::XMM12, X86::XMM13,
-    X86::XMM14, X86::XMM15, 0
-  };
-
-  if (ghcCall) {
-    return GhcCalleeSavedRegs;
-  } else if (Is64Bit) {
+  if (ghcCall)
+    return CSR_Ghc_SaveList;
+  if (Is64Bit) {
     if (IsWin64)
-      return CalleeSavedRegsWin64;
-    else
-      return (callsEHReturn ? CalleeSavedRegs64EHRet : CalleeSavedRegs64Bit);
-  } else {
-    return (callsEHReturn ? CalleeSavedRegs32EHRet : CalleeSavedRegs32Bit);
+      return CSR_Win64_SaveList;
+    if (callsEHReturn)
+      return CSR_64EHRet_SaveList;
+    return CSR_64_SaveList;
   }
+  if (callsEHReturn)
+    return CSR_32EHRet_SaveList;
+  return CSR_32_SaveList;
+}
+
+const uint32_t*
+X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
+  if (CC == CallingConv::GHC)
+    return CSR_Ghc_RegMask;
+  if (!Is64Bit)
+    return CSR_32_RegMask;
+  if (IsWin64)
+    return CSR_Win64_RegMask;
+  return CSR_64_RegMask;
 }
 
 BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
