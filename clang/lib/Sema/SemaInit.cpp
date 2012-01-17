@@ -21,6 +21,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/TypeLoc.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
@@ -2408,6 +2409,7 @@ void InitializationSequence::Step::Destroy() {
   case SK_PassByIndirectCopyRestore:
   case SK_PassByIndirectRestore:
   case SK_ProduceObjCObject:
+  case SK_StdInitializerList:
     break;
 
   case SK_ConversionSequence:
@@ -2445,6 +2447,7 @@ bool InitializationSequence::isAmbiguous() const {
   case FK_ListInitializationFailed:
   case FK_VariableLengthArrayHasInitializer:
   case FK_PlaceholderType:
+  case FK_InitListElementCopyFailure:
     return false;
 
   case FK_ReferenceInitOverloadFailed:
@@ -2777,6 +2780,13 @@ void InitializationSequence::AddProduceObjCObjectStep(QualType T) {
   Steps.push_back(S);
 }
 
+void InitializationSequence::AddStdInitializerListConstructionStep(QualType T) {
+  Step S;
+  S.Kind = SK_StdInitializerList;
+  S.Type = T;
+  Steps.push_back(S);
+}
+
 void InitializationSequence::RewrapReferenceInitList(QualType T,
                                                      InitListExpr *Syntactic) {
   assert(Syntactic->getNumInits() == 1 &&
@@ -2839,7 +2849,7 @@ static bool TryListConstructionSpecialCases(Sema &S,
                                             CXXRecordDecl *DestRecordDecl,
                                             QualType DestType,
                                             InitializationSequence &Sequence) {
-  // C++0x [dcl.init.list]p3:
+  // C++11 [dcl.init.list]p3:
   //   List-initialization of an object of type T is defined as follows:
   //   - If the initializer list has no elements and T is a class type with
   //     a default constructor, the object is value-initialized.
@@ -2876,7 +2886,28 @@ static bool TryListConstructionSpecialCases(Sema &S,
   }
 
   //   - Otherwise, if T is a specialization of std::initializer_list, [...]
-  // FIXME: Implement.
+  QualType E;
+  if (S.isStdInitializerList(DestType, &E)) {
+    // Check that each individual element can be copy-constructed. But since we
+    // have no place to store further information, we'll recalculate everything
+    // later.
+    InitializedEntity HiddenArray = InitializedEntity::InitializeTemporary(
+        S.Context.getConstantArrayType(E,
+            llvm::APInt(S.Context.getTypeSize(S.Context.getSizeType()),NumArgs),
+            ArrayType::Normal, 0));
+    InitializedEntity Element = InitializedEntity::InitializeElement(S.Context,
+        0, HiddenArray);
+    for (unsigned i = 0; i < NumArgs; ++i) {
+      Element.setElementIndex(i);
+      if (!S.CanPerformCopyInitialization(Element, Args[i])) {
+        Sequence.SetFailed(
+            InitializationSequence::FK_InitListElementCopyFailure);
+        return true;
+      }
+    }
+    Sequence.AddStdInitializerListConstructionStep(DestType);
+    return true;
+  }
 
   // Not a special case.
   return false;
@@ -4819,7 +4850,8 @@ InitializationSequence::Perform(Sema &S,
   case SK_ArrayInit:
   case SK_PassByIndirectCopyRestore:
   case SK_PassByIndirectRestore:
-  case SK_ProduceObjCObject: {
+  case SK_ProduceObjCObject:
+  case SK_StdInitializerList: {
     assert(Args.size() == 1);
     CurInit = Args.get()[0];
     if (!CurInit.get()) return ExprError();
@@ -5246,6 +5278,40 @@ InitializationSequence::Perform(Sema &S,
                                                  CK_ARCProduceObject,
                                                  CurInit.take(), 0, VK_RValue));
       break;
+
+    case SK_StdInitializerList: {
+      QualType Dest = Step->Type;
+      QualType E;
+      bool Success = S.isStdInitializerList(Dest, &E);
+      (void)Success;
+      assert(Success && "Destination type changed?");
+      InitListExpr *ILE = cast<InitListExpr>(CurInit.take());
+      unsigned NumInits = ILE->getNumInits();
+      SmallVector<Expr*, 16> Converted(NumInits);
+      InitializedEntity HiddenArray = InitializedEntity::InitializeTemporary(
+          S.Context.getConstantArrayType(E,
+              llvm::APInt(S.Context.getTypeSize(S.Context.getSizeType()),
+                          NumInits),
+              ArrayType::Normal, 0));
+      InitializedEntity Element =InitializedEntity::InitializeElement(S.Context,
+          0, HiddenArray);
+      for (unsigned i = 0; i < NumInits; ++i) {
+        Element.setElementIndex(i);
+        ExprResult Init = S.Owned(ILE->getInit(i));
+        ExprResult Res = S.PerformCopyInitialization(Element,
+                                                     Init.get()->getExprLoc(),
+                                                     Init);
+        assert(!Res.isInvalid() && "Result changed since try phase.");
+        Converted[i] = Res.take();
+      }
+      InitListExpr *Semantic = new (S.Context)
+          InitListExpr(S.Context, ILE->getLBraceLoc(),
+                       Converted.data(), NumInits, ILE->getRBraceLoc());
+      Semantic->setSyntacticForm(ILE);
+      Semantic->setType(Dest);
+      CurInit = S.Owned(Semantic);
+      break;
+    }
     }
   }
 
@@ -5584,6 +5650,37 @@ bool InitializationSequence::Diagnose(Sema &S,
     // FIXME: Already diagnosed!
     break;
   }
+
+  case FK_InitListElementCopyFailure: {
+    // Try to perform all copies again.
+    InitListExpr* InitList = cast<InitListExpr>(Args[0]);
+    unsigned NumInits = InitList->getNumInits();
+    QualType DestType = Entity.getType();
+    QualType E;
+    bool Success = S.isStdInitializerList(DestType, &E);
+    (void)Success;
+    assert(Success && "Where did the std::initializer_list go?");
+    InitializedEntity HiddenArray = InitializedEntity::InitializeTemporary(
+        S.Context.getConstantArrayType(E,
+            llvm::APInt(S.Context.getTypeSize(S.Context.getSizeType()),
+                        NumInits),
+            ArrayType::Normal, 0));
+    InitializedEntity Element = InitializedEntity::InitializeElement(S.Context,
+        0, HiddenArray);
+    // Show at most 3 errors. Otherwise, you'd get a lot of errors for errors
+    // where the init list type is wrong, e.g.
+    //   std::initializer_list<void*> list = { 1, 2, 3, 4, 5, 6, 7, 8 };
+    // FIXME: Emit a note if we hit the limit?
+    int ErrorCount = 0;
+    for (unsigned i = 0; i < NumInits && ErrorCount < 3; ++i) {
+      Element.setElementIndex(i);
+      ExprResult Init = S.Owned(InitList->getInit(i));
+      if (S.PerformCopyInitialization(Element, Init.get()->getExprLoc(), Init)
+           .isInvalid())
+        ++ErrorCount;
+    }
+    break;
+  }
   }
 
   PrintInitLocationNote(S, Entity);
@@ -5693,6 +5790,10 @@ void InitializationSequence::dump(raw_ostream &OS) const {
 
     case FK_ListConstructorOverloadFailed:
       OS << "list constructor overloading failed";
+      break;
+
+    case FK_InitListElementCopyFailure:
+      OS << "copy construction of initializer list element failed";
       break;
     }
     OS << '\n';
@@ -5814,6 +5915,10 @@ void InitializationSequence::dump(raw_ostream &OS) const {
 
     case SK_ProduceObjCObject:
       OS << "Objective-C object retension";
+      break;
+
+    case SK_StdInitializerList:
+      OS << "std::initializer_list from initializer list";
       break;
     }
   }

@@ -41,8 +41,6 @@ namespace std {
 namespace integral {
 
   void initializer_list() {
-    std::initializer_list<int> il = { 1, 2, 3 };
-    std::initializer_list<double> dl = { 1.0, 2.0, 3 };
     auto l = {1, 2, 3, 4};
     static_assert(same_type<decltype(l), std::initializer_list<int>>::value, "");
     auto bl = {1, 2.0}; // expected-error {{cannot deduce}}
@@ -152,7 +150,7 @@ namespace litb {
   C c({1, 2}); // expected-error {{}}
 
   // valid (by copy constructor).
-  C d({1, 2L}); // expected-error {{}}
+  C d({1, 2L});
 
   // valid
   C e{1, 2};

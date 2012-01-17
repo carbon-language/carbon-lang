@@ -553,7 +553,9 @@ public:
     /// \brief Pass an object by indirect restore.
     SK_PassByIndirectRestore,
     /// \brief Produce an Objective-C object pointer.
-    SK_ProduceObjCObject
+    SK_ProduceObjCObject,
+    /// \brief Construct a std::initializer_list from an initializer list.
+    SK_StdInitializerList
   };
   
   /// \brief A single step in the initialization sequence.
@@ -657,7 +659,10 @@ public:
     FK_ListInitializationFailed,
     /// \brief Initializer has a placeholder type which cannot be
     /// resolved by initialization.
-    FK_PlaceholderType
+    FK_PlaceholderType,
+    /// \brief Failed to initialize a std::initializer_list because copy
+    /// construction of some element failed.
+    FK_InitListElementCopyFailure
   };
   
 private:
@@ -866,6 +871,10 @@ public:
   /// retaining it).
   void AddProduceObjCObjectStep(QualType T);
 
+  /// \brief Add a step to construct a std::initializer_list object from an
+  /// initializer list.
+  void AddStdInitializerListConstructionStep(QualType T);
+
   /// \brief Add steps to unwrap a initializer list for a reference around a
   /// single element and rewrap it at the end.
   void RewrapReferenceInitList(QualType T, InitListExpr *Syntactic);
@@ -886,7 +895,7 @@ public:
     return FailedCandidateSet;
   }
 
-  /// brief Get the overloading result, for when the initialization
+  /// \brief Get the overloading result, for when the initialization
   /// sequence failed due to a bad overload.
   OverloadingResult getFailedOverloadResult() const {
     return FailedOverloadResult;

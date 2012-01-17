@@ -55,5 +55,4 @@ namespace integral {
     emptylist({});
     emptylist({}, {}, {});
   }
-
 }
