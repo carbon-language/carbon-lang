@@ -365,6 +365,42 @@ public:
     std::swap(Capacity, RHS.Capacity);
   }
 
+  //===--------------------------------------------------------------------===//
+  // Portable bit mask operations.
+  //===--------------------------------------------------------------------===//
+  //
+  // These methods all operate on arrays of uint32_t, each holding 32 bits. The
+  // fixed word size makes it easier to work with literal bit vector constants
+  // in portable code.
+  //
+  // The LSB in each word is the lowest numbered bit.  The size of a portable
+  // bit mask is always a whole multiple of 32 bits.  If no bit mask size is
+  // given, the bit mask is assumed to cover the entire BitVector.
+
+  /// setBitsInMask - Add '1' bits from Mask to this vector. Don't resize.
+  /// This computes "*this |= Mask".
+  void setBitsInMask(const uint32_t *Mask, unsigned MaskWords = ~0u) {
+    applyMask<true, false>(Mask, MaskWords);
+  }
+
+  /// clearBitsInMask - Clear any bits in this vector that are set in Mask.
+  /// Don't resize. This computes "*this &= ~Mask".
+  void clearBitsInMask(const uint32_t *Mask, unsigned MaskWords = ~0u) {
+    applyMask<false, false>(Mask, MaskWords);
+  }
+
+  /// setBitsNotInMask - Add a bit to this vector for every '0' bit in Mask.
+  /// Don't resize.  This computes "*this |= ~Mask".
+  void setBitsNotInMask(const uint32_t *Mask, unsigned MaskWords = ~0u) {
+    applyMask<true, true>(Mask, MaskWords);
+  }
+
+  /// clearBitsNotInMask - Clear a bit in this vector for every '0' bit in Mask.
+  /// Don't resize.  This computes "*this &= Mask".
+  void clearBitsNotInMask(const uint32_t *Mask, unsigned MaskWords = ~0u) {
+    applyMask<false, true>(Mask, MaskWords);
+  }
+
 private:
   unsigned NumBitWords(unsigned S) const {
     return (S + BITWORD_SIZE-1) / BITWORD_SIZE;
@@ -399,6 +435,33 @@ private:
 
   void init_words(BitWord *B, unsigned NumWords, bool t) {
     memset(B, 0 - (int)t, NumWords*sizeof(BitWord));
+  }
+
+  template<bool AddBits, bool InvertMask>
+  void applyMask(const uint32_t *Mask, unsigned MaskWords) {
+    assert(BITWORD_SIZE % 32 == 0 && "Unsupported BitWord size.");
+    MaskWords = std::min(MaskWords, (size() + 31) / 32);
+    const unsigned Scale = BITWORD_SIZE / 32;
+    unsigned i;
+    for (i = 0; MaskWords >= Scale; ++i, MaskWords -= Scale) {
+      BitWord BW = Bits[i];
+      // This inner loop should unroll completely when BITWORD_SIZE > 32.
+      for (unsigned b = 0; b != BITWORD_SIZE; b += 32) {
+        uint32_t M = *Mask++;
+        if (InvertMask) M = ~M;
+        if (AddBits) BW |=   BitWord(M) << b;
+        else         BW &= ~(BitWord(M) << b);
+      }
+      Bits[i] = BW;
+    }
+    for (unsigned b = 0; MaskWords; b += 32, --MaskWords) {
+      uint32_t M = *Mask++;
+      if (InvertMask) M = ~M;
+      if (AddBits) Bits[i] |=   BitWord(M) << b;
+      else         Bits[i] &= ~(BitWord(M) << b);
+    }
+    if (AddBits)
+      clear_unused_bits();
   }
 };
 
