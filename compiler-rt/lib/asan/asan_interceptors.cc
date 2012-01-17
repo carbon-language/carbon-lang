@@ -405,7 +405,11 @@ void *WRAP(memcpy)(void *to, const void *from, size_t size) {
   }
   ENSURE_ASAN_INITED();
   if (FLAG_replace_intrin) {
-    CHECK_RANGES_OVERLAP("memcpy", to, size, from, size);
+    if (to != from) {
+      // We do not treat memcpy with to==from as a bug.
+      // See http://llvm.org/bugs/show_bug.cgi?id=11763.
+      CHECK_RANGES_OVERLAP("memcpy", to, size, from, size);
+    }
     ASAN_WRITE_RANGE(from, size);
     ASAN_READ_RANGE(to, size);
   }

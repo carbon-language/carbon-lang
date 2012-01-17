@@ -1309,8 +1309,11 @@ TEST(AddressSanitizer, StrArgsOverlapTest) {
   Ident(memcpy)(str, str, 0);
   EXPECT_DEATH(Ident(memcpy)(str, str + 14, 15), OverlapErrorMessage("memcpy"));
   EXPECT_DEATH(Ident(memcpy)(str + 14, str, 15), OverlapErrorMessage("memcpy"));
-  EXPECT_DEATH(Ident(memcpy)(str + 20, str + 20, 1),
-               OverlapErrorMessage("memcpy"));
+
+  // We do not treat memcpy with to==from as a bug.
+  // See http://llvm.org/bugs/show_bug.cgi?id=11763.
+  // EXPECT_DEATH(Ident(memcpy)(str + 20, str + 20, 1),
+  //              OverlapErrorMessage("memcpy"));
 
   // Check "strcpy".
   memset(str, 'z', size);
@@ -1650,6 +1653,17 @@ TEST(AddressSanitizer, MlockTest) {
   EXPECT_EQ(0, mlock((void*)0x12345, 0x5678));
   EXPECT_EQ(0, munlockall());
   EXPECT_EQ(0, munlock((void*)0x987, 0x654));
+}
+
+struct LargeStruct {
+  int foo[100];
+};
+
+// Test for bug http://llvm.org/bugs/show_bug.cgi?id=11763.
+// Struct copy should not cause asan warning even if lhs == rhs.
+TEST(AddressSanitizer, LargeStructCopyTest) {
+  LargeStruct a;
+  *Ident(&a) = *Ident(&a);
 }
 
 // ------------------ demo tests; run each one-by-one -------------
