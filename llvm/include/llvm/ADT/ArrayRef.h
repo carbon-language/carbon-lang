@@ -14,8 +14,7 @@
 #include <vector>
 
 namespace llvm {
-  class APInt;
-  
+
   /// ArrayRef - Represent a constant reference to an array (0 or more elements
   /// consecutively in memory), i.e. a start pointer and a length.  It allows
   /// various APIs to take consecutive elements easily and conveniently.
@@ -33,33 +32,33 @@ namespace llvm {
     typedef const T *iterator;
     typedef const T *const_iterator;
     typedef size_t size_type;
-    
+
   private:
     /// The start of the array, in an external buffer.
     const T *Data;
-    
+
     /// The number of elements.
     size_type Length;
-    
+
   public:
     /// @name Constructors
     /// @{
-    
+
     /// Construct an empty ArrayRef.
     /*implicit*/ ArrayRef() : Data(0), Length(0) {}
-    
+
     /// Construct an ArrayRef from a single element.
     /*implicit*/ ArrayRef(const T &OneElt)
       : Data(&OneElt), Length(1) {}
-    
+
     /// Construct an ArrayRef from a pointer and length.
     /*implicit*/ ArrayRef(const T *data, size_t length)
       : Data(data), Length(length) {}
-    
+
     /// Construct an ArrayRef from a range.
     ArrayRef(const T *begin, const T *end)
       : Data(begin), Length(end - begin) {}
-    
+
     /// Construct an ArrayRef from a SmallVector.
     /*implicit*/ ArrayRef(const SmallVectorImpl<T> &Vec)
       : Data(Vec.data()), Length(Vec.size()) {}
@@ -67,39 +66,39 @@ namespace llvm {
     /// Construct an ArrayRef from a std::vector.
     /*implicit*/ ArrayRef(const std::vector<T> &Vec)
       : Data(Vec.empty() ? (T*)0 : &Vec[0]), Length(Vec.size()) {}
-    
+
     /// Construct an ArrayRef from a C array.
     template <size_t N>
     /*implicit*/ ArrayRef(const T (&Arr)[N])
       : Data(Arr), Length(N) {}
-    
+
     /// @}
     /// @name Simple Operations
     /// @{
 
     iterator begin() const { return Data; }
     iterator end() const { return Data + Length; }
-    
+
     /// empty - Check if the array is empty.
     bool empty() const { return Length == 0; }
-    
+
     const T *data() const { return Data; }
-    
+
     /// size - Get the array size.
     size_t size() const { return Length; }
-    
+
     /// front - Get the first element.
     const T &front() const {
       assert(!empty());
       return Data[0];
     }
-    
+
     /// back - Get the last element.
     const T &back() const {
       assert(!empty());
       return Data[Length-1];
     }
-    
+
     /// equals - Check for element-wise equality.
     bool equals(ArrayRef RHS) const {
       if (Length != RHS.Length)
@@ -122,7 +121,7 @@ namespace llvm {
       assert(N+M <= size() && "Invalid specifier");
       return ArrayRef<T>(data()+N, M);
     }
-    
+
     /// @}
     /// @name Operator Overloads
     /// @{
@@ -130,21 +129,21 @@ namespace llvm {
       assert(Index < Length && "Invalid index!");
       return Data[Index];
     }
-    
+
     /// @}
     /// @name Expensive Operations
     /// @{
     std::vector<T> vec() const {
       return std::vector<T>(Data, Data+Length);
     }
-    
+
     /// @}
     /// @name Conversion operators
     /// @{
     operator std::vector<T>() const {
       return std::vector<T>(Data, Data+Length);
     }
-    
+
     /// @}
   };
 
