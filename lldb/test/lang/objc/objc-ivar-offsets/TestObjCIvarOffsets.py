@@ -76,10 +76,6 @@ class TestObjCIvarOffsets(TestBase):
 
         mine_flag2 = mine.GetChildMemberWithName ("flag2")
         self.assertTrue(mine_flag2, "Found mine->flag2 local variable.")
-        flag2_value = int (mine_flag2.GetValue (), 0)
-        self.assertTrue (flag2_value == 7)
-
-        # GetValueAsUnsigned fails for bit-fields:
         flag2_value = mine_flag2.GetValueAsUnsigned (error)
         self.assertTrue (error.Success())
         self.assertTrue (flag2_value == 7)
