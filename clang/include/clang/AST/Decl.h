@@ -1986,26 +1986,11 @@ public:
   /// definition of a member function.
   virtual bool isOutOfLine() const;
 
-  /// \brief Enumeration used to identify memory setting or copying functions
-  /// identified by getMemoryFunctionKind().
-  enum MemoryFunctionKind {
-    MFK_Memset,
-    MFK_Memcpy,
-    MFK_Memmove,
-    MFK_Memcmp,
-    MFK_Strncpy,
-    MFK_Strncmp,
-    MFK_Strncasecmp,
-    MFK_Strncat,
-    MFK_Strndup,
-    MFK_Strlcpy,
-    MFK_Strlcat,
-    MFK_Invalid
-  };
-
-  /// \brief If the given function is a memory copy or setting function, return
-  /// it's kind. If the function is not a memory function, returns MFK_Invalid.
-  MemoryFunctionKind getMemoryFunctionKind();
+  /// \brief Identify a memory copying or setting function.
+  /// If the given function is a memory copy or setting function, returns
+  /// the corresponding Builtin ID. If the function is not a memory function,
+  /// returns 0.
+  unsigned getMemoryFunctionKind();
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

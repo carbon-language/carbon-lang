@@ -482,15 +482,15 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
                           TheCall->getCallee()->getLocStart());
   }
 
-  FunctionDecl::MemoryFunctionKind CMF = FDecl->getMemoryFunctionKind();
-  if (CMF == FunctionDecl::MFK_Invalid)
+  unsigned CMId = FDecl->getMemoryFunctionKind();
+  if (CMId == 0)
     return false;
 
   // Handle memory setting and copying functions.
-  if (CMF == FunctionDecl::MFK_Strlcpy || CMF == FunctionDecl::MFK_Strlcat)
+  if (CMId == Builtin::BIstrlcpy || CMId == Builtin::BIstrlcat)
     CheckStrlcpycatArguments(TheCall, FnInfo);
   else
-    CheckMemaccessArguments(TheCall, CMF, FnInfo);
+    CheckMemaccessArguments(TheCall, CMId, FnInfo);
 
   return false;
 }
@@ -2433,17 +2433,19 @@ static QualType getSizeOfArgType(const Expr* E) {
 ///
 /// \param Call The call expression to diagnose.
 void Sema::CheckMemaccessArguments(const CallExpr *Call,
-                                   FunctionDecl::MemoryFunctionKind CMF,
+                                   unsigned BId,
                                    IdentifierInfo *FnName) {
+  assert(BId != 0);
+
   // It is possible to have a non-standard definition of memset.  Validate
   // we have enough arguments, and if not, abort further checking.
-  unsigned ExpectedNumArgs = (CMF == FunctionDecl::MFK_Strndup ? 2 : 3);
+  unsigned ExpectedNumArgs = (BId == Builtin::BIstrndup ? 2 : 3);
   if (Call->getNumArgs() < ExpectedNumArgs)
     return;
 
-  unsigned LastArg = (CMF == FunctionDecl::MFK_Memset ||
-                      CMF == FunctionDecl::MFK_Strndup ? 1 : 2);
-  unsigned LenArg = (CMF == FunctionDecl::MFK_Strndup ? 1 : 2);
+  unsigned LastArg = (BId == Builtin::BImemset ||
+                      BId == Builtin::BIstrndup ? 1 : 2);
+  unsigned LenArg = (BId == Builtin::BIstrndup ? 1 : 2);
   const Expr *LenExpr = Call->getArg(LenArg)->IgnoreParenImpCasts();
 
   // We have special checking when the length is a sizeof expression.
@@ -2488,7 +2490,7 @@ void Sema::CheckMemaccessArguments(const CallExpr *Call,
             ActionIdx = 2; // If the pointee's size is sizeof(char),
                            // suggest an explicit length.
           unsigned DestSrcSelect =
-            (CMF == FunctionDecl::MFK_Strndup ? 1 : ArgIdx);
+            (BId == Builtin::BIstrndup ? 1 : ArgIdx);
           DiagRuntimeBehavior(SizeOfArg->getExprLoc(), Dest,
                               PDiag(diag::warn_sizeof_pointer_expr_memaccess)
                                 << FnName << DestSrcSelect << ActionIdx
@@ -2514,19 +2516,29 @@ void Sema::CheckMemaccessArguments(const CallExpr *Call,
       }
 
       // Always complain about dynamic classes.
-      if (isDynamicClassType(PointeeTy))
+      if (isDynamicClassType(PointeeTy)) {
+
+        unsigned OperationType = 0;
+        // "overwritten" if we're warning about the destination for any call
+        // but memcmp; otherwise a verb appropriate to the call.
+        if (ArgIdx != 0 || BId == Builtin::BImemcmp) {
+          if (BId == Builtin::BImemcpy)
+            OperationType = 1;
+          else if(BId == Builtin::BImemmove)
+            OperationType = 2;
+          else if (BId == Builtin::BImemcmp)
+            OperationType = 3;
+        }
+          
         DiagRuntimeBehavior(
           Dest->getExprLoc(), Dest,
           PDiag(diag::warn_dyn_class_memaccess)
-            << (CMF == FunctionDecl::MFK_Memcmp ? ArgIdx + 2 : ArgIdx)
+            << (BId == Builtin::BImemcmp ? ArgIdx + 2 : ArgIdx)
             << FnName << PointeeTy
-            // "overwritten" if we're warning about the destination for any call
-            // but memcmp; otherwise a verb appropriate to the call.
-            << (ArgIdx == 0 &&
-                CMF != FunctionDecl::MFK_Memcmp ? 0 : (unsigned)CMF)
+            << OperationType
             << Call->getCallee()->getSourceRange());
-      else if (PointeeTy.hasNonTrivialObjCLifetime() &&
-               CMF != FunctionDecl::MFK_Memset)
+      } else if (PointeeTy.hasNonTrivialObjCLifetime() &&
+               BId != Builtin::BImemset)
         DiagRuntimeBehavior(
           Dest->getExprLoc(), Dest,
           PDiag(diag::warn_arc_object_memaccess)

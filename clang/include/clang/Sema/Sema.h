@@ -6315,7 +6315,7 @@ private:
                                  bool isPrintf);
 
   void CheckMemaccessArguments(const CallExpr *Call,
-                               FunctionDecl::MemoryFunctionKind CMF,
+                               unsigned BId,
                                IdentifierInfo *FnName);
 
   void CheckStrlcpycatArguments(const CallExpr *Call,

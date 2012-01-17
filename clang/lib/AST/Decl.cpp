@@ -2290,80 +2290,83 @@ SourceRange FunctionDecl::getSourceRange() const {
   return SourceRange(getOuterLocStart(), EndRangeLoc);
 }
 
-FunctionDecl::MemoryFunctionKind FunctionDecl::getMemoryFunctionKind() {
+unsigned FunctionDecl::getMemoryFunctionKind() {
   IdentifierInfo *FnInfo = getIdentifier();
 
   if (!FnInfo)
-    return MFK_Invalid;
+    return 0;
     
   // Builtin handling.
   switch (getBuiltinID()) {
   case Builtin::BI__builtin_memset:
   case Builtin::BI__builtin___memset_chk:
   case Builtin::BImemset:
-    return MFK_Memset;
+    return Builtin::BImemset;
 
   case Builtin::BI__builtin_memcpy:
   case Builtin::BI__builtin___memcpy_chk:
   case Builtin::BImemcpy:
-    return MFK_Memcpy;
+    return Builtin::BImemcpy;
 
   case Builtin::BI__builtin_memmove:
   case Builtin::BI__builtin___memmove_chk:
   case Builtin::BImemmove:
-    return MFK_Memmove;
+    return Builtin::BImemmove;
 
   case Builtin::BIstrlcpy:
-    return MFK_Strlcpy;
+    return Builtin::BIstrlcpy;
   case Builtin::BIstrlcat:
-    return MFK_Strlcat;
+    return Builtin::BIstrlcat;
 
   case Builtin::BI__builtin_memcmp:
-    return MFK_Memcmp;
+  case Builtin::BImemcmp:
+    return Builtin::BImemcmp;
 
   case Builtin::BI__builtin_strncpy:
   case Builtin::BI__builtin___strncpy_chk:
   case Builtin::BIstrncpy:
-    return MFK_Strncpy;
+    return Builtin::BIstrncpy;
 
   case Builtin::BI__builtin_strncmp:
-    return MFK_Strncmp;
+  case Builtin::BIstrncmp:
+    return Builtin::BIstrncmp;
 
   case Builtin::BI__builtin_strncasecmp:
-    return MFK_Strncasecmp;
+  case Builtin::BIstrncasecmp:
+    return Builtin::BIstrncasecmp;
 
   case Builtin::BI__builtin_strncat:
   case Builtin::BIstrncat:
-    return MFK_Strncat;
+    return Builtin::BIstrncat;
 
   case Builtin::BI__builtin_strndup:
   case Builtin::BIstrndup:
-    return MFK_Strndup;
+    return Builtin::BIstrndup;
 
   default:
     if (isExternC()) {
       if (FnInfo->isStr("memset"))
-        return MFK_Memset;
+        return Builtin::BImemset;
       else if (FnInfo->isStr("memcpy"))
-        return MFK_Memcpy;
+        return Builtin::BImemcpy;
       else if (FnInfo->isStr("memmove"))
-        return MFK_Memmove;
+        return Builtin::BImemmove;
       else if (FnInfo->isStr("memcmp"))
-        return MFK_Memcmp;
+        return Builtin::BImemcmp;
       else if (FnInfo->isStr("strncpy"))
-        return MFK_Strncpy;
+        return Builtin::BIstrncpy;
       else if (FnInfo->isStr("strncmp"))
-        return MFK_Strncmp;
+        return Builtin::BIstrncmp;
       else if (FnInfo->isStr("strncasecmp"))
-        return MFK_Strncasecmp;
+        return Builtin::BIstrncasecmp;
       else if (FnInfo->isStr("strncat"))
-        return MFK_Strncat;
+        return Builtin::BIstrncat;
       else if (FnInfo->isStr("strndup"))
-        return MFK_Strndup;
+        return Builtin::BIstrndup;
     }
     break;
   }
-  return MFK_Invalid;
+  return 0;
 }
 
 //===----------------------------------------------------------------------===//
