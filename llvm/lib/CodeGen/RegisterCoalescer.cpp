@@ -1279,7 +1279,7 @@ bool RegisterCoalescer::JoinCopy(MachineInstr *CopyMI, bool &Again) {
     }
   }
 
-  // SrcReg is guarateed to be the register whose live interval that is
+  // SrcReg is guaranteed to be the register whose live interval that is
   // being merged.
   LIS->removeInterval(CP.getSrcReg());
 
