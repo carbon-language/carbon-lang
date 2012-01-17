@@ -85,6 +85,7 @@ MCJIT::MCJIT(Module *m, TargetMachine *tm, TargetJITInfo &tji,
 
 MCJIT::~MCJIT() {
   delete MemMgr;
+  delete TM;
 }
 
 void *MCJIT::getPointerToBasicBlock(BasicBlock *BB) {
