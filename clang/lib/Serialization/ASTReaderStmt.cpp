@@ -1447,7 +1447,6 @@ Stmt *ASTReader::ReadStmt(ModuleFile &F) {
   }
 
   llvm_unreachable("ReadingKind not set ?");
-  return 0;
 }
 
 Expr *ASTReader::ReadExpr(ModuleFile &F) {
@@ -1812,7 +1811,6 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       break;
     case EXPR_OBJC_KVC_REF_EXPR:
       llvm_unreachable("mismatching AST file");
-      break;
     case EXPR_OBJC_MESSAGE_EXPR:
       S = ObjCMessageExpr::CreateEmpty(Context,
                                      Record[ASTStmtReader::NumExprFields],

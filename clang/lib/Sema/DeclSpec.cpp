@@ -245,7 +245,6 @@ bool Declarator::isDeclarationOfFunction() const {
       return false;
     }
     llvm_unreachable("Invalid type chunk");
-    return false;
   }
   
   switch (DS.getTypeSpecType()) {
@@ -295,8 +294,8 @@ bool Declarator::isDeclarationOfFunction() const {
       return QT->isFunctionType();
     }
   }
-  
-  return false;
+
+  llvm_unreachable("Invalid TypeSpecType!");
 }
 
 /// getParsedSpecifiers - Return a bitmask of which flavors of specifiers this

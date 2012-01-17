@@ -1398,10 +1398,8 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
       Macro->AddTokenToBody(Tok);
       break;
     }
+    }
   }
-  }
-  
-  return;
 }
 
 PreprocessedEntityID 
@@ -3275,8 +3273,6 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
     }
     }
   }
-
-  return Success;
 }
 
 /// \brief Parse the record that corresponds to a LangOptions data
@@ -3413,9 +3409,8 @@ PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
     return ID;
   }
   }
-  
-  Error("invalid offset in preprocessor detail block");
-  return 0;
+
+  llvm_unreachable("Invalid PreprocessorDetailRecordTypes");
 }
 
 /// \brief \arg SLocMapI points at a chunk of a module that contains no
@@ -4101,8 +4096,7 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     return Context.getAtomicType(ValueType);
   }
   }
-  // Suppress a GCC warning
-  return QualType();
+  llvm_unreachable("Invalid TypeCode!");
 }
 
 class clang::TypeLocReader : public TypeLocVisitor<TypeLocReader> {
@@ -4483,7 +4477,6 @@ ASTReader::GetTemplateArgumentLocInfo(ModuleFile &F,
     return TemplateArgumentLocInfo();
   }
   llvm_unreachable("unexpected template argument loc");
-  return TemplateArgumentLocInfo();
 }
 
 TemplateArgumentLoc
@@ -4600,15 +4593,12 @@ Decl *ASTReader::GetDecl(DeclID ID) {
     case PREDEF_DECL_OBJC_INSTANCETYPE_ID:
       return Context.getObjCInstanceTypeDecl();
     }
-    
-    return 0;
   }
   
   unsigned Index = ID - NUM_PREDEF_DECL_IDS;
 
   if (Index >= DeclsLoaded.size()) {
     Error("declaration ID out-of-range for AST file");
-    return 0;
   }
   
   if (!DeclsLoaded[Index]) {
@@ -5636,8 +5626,7 @@ ASTReader::ReadDeclarationName(ModuleFile &F,
     return DeclarationName::getUsingDirectiveName();
   }
 
-  // Required to silence GCC warning
-  return DeclarationName();
+  llvm_unreachable("Invalid NameKind!");
 }
 
 void ASTReader::ReadDeclarationNameLoc(ModuleFile &F,

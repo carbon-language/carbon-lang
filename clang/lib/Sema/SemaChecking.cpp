@@ -342,7 +342,7 @@ static unsigned RFT(unsigned t, bool shift = false) {
     assert(!shift && "cannot shift float types!");
     return (2 << IsQuad) - 1;
   }
-  return 0;
+  llvm_unreachable("Invalid NeonTypeFlag!");
 }
 
 /// getNeonEltType - Return the QualType corresponding to the elements of
@@ -367,7 +367,7 @@ static QualType getNeonEltType(NeonTypeFlags Flags, ASTContext &Context) {
   case NeonTypeFlags::Float32:
     return Context.FloatTy;
   }
-  return QualType();
+  llvm_unreachable("Invalid NeonTypeFlag!");
 }
 
 bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {

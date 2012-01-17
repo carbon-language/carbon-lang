@@ -179,11 +179,9 @@ bool TokenConcatenation::AvoidConcat(const Token &PrevPrevTok,
   switch (PrevKind) {
   default:
     llvm_unreachable("InitAvoidConcatTokenInfo built wrong");
-    return true;
 
   case tok::raw_identifier:
     llvm_unreachable("tok::raw_identifier in non-raw lexing mode!");
-    return true;
 
   case tok::identifier:   // id+id or id+number or id+L"foo".
     // id+'.'... will not append.

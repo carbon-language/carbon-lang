@@ -2762,7 +2762,8 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
       User.After.setFromType(ThisType->getAs<PointerType>()->getPointeeType());
       User.After.setAllToTypes(ToType);
       return OR_Success;
-    } else if (CXXConversionDecl *Conversion
+    }
+    if (CXXConversionDecl *Conversion
                  = dyn_cast<CXXConversionDecl>(Best->Function)) {
       S.MarkDeclarationReferenced(From->getLocStart(), Conversion);
 
@@ -2789,10 +2790,8 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
       //   13.3.3.1).
       User.After = Best->FinalConversion;
       return OR_Success;
-    } else {
-      llvm_unreachable("Not a constructor or conversion function?");
-      return OR_No_Viable_Function;
     }
+    llvm_unreachable("Not a constructor or conversion function?");
 
   case OR_No_Viable_Function:
     return OR_No_Viable_Function;
@@ -2804,7 +2803,7 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
     return OR_Ambiguous;
   }
 
-  return OR_No_Viable_Function;
+  llvm_unreachable("Invalid OverloadResult!");
 }
 
 bool
@@ -2852,7 +2851,7 @@ CompareImplicitConversionSequences(Sema &S,
   //   from any other user-defined conversion sequence.
   if (ICS1.getKindRank() < ICS2.getKindRank())
     return ImplicitConversionSequence::Better;
-  else if (ICS2.getKindRank() < ICS1.getKindRank())
+  if (ICS2.getKindRank() < ICS1.getKindRank())
     return ImplicitConversionSequence::Worse;
 
   // The following checks require both conversion sequences to be of
@@ -3664,7 +3663,7 @@ FindConversionForRefInit(Sema &S, ImplicitConversionSequence &ICS,
     return false;
   }
 
-  return false;
+  llvm_unreachable("Invalid OverloadResult!");
 }
 
 /// \brief Compute an implicit conversion sequence for reference
@@ -8993,7 +8992,6 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
       return BuildResolvedCallExpr(Fn, FDecl, LParenLoc, Args, NumArgs,
                                    RParenLoc, ExecConfig);
     }
-    break;
   }
 
   // Overload resolution failed.
@@ -10422,7 +10420,6 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
   }
 
   llvm_unreachable("Invalid reference to overloaded function");
-  return E;
 }
 
 ExprResult Sema::FixOverloadedFunctionReference(ExprResult E,

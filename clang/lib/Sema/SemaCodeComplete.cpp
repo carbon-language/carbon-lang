@@ -596,8 +596,7 @@ SimplifiedTypeClass clang::getSimplifiedTypeClass(CanQualType T) {
       default:
         return STC_Arithmetic;
     }
-    return STC_Other;
-    
+
   case Type::Complex:
     return STC_Arithmetic;
     
@@ -1370,8 +1369,8 @@ static bool WantTypesInContext(Sema::ParserCompletionContext CCC,
   case Sema::PCC_ForInit:
     return LangOpts.CPlusPlus || LangOpts.ObjC1 || LangOpts.C99;
   }
-  
-  return false;
+
+  llvm_unreachable("Invalid ParserCompletionContext!");
 }
 
 static PrintingPolicy getCompletionPrintingPolicy(const ASTContext &Context,
@@ -2793,7 +2792,7 @@ CXCursorKind clang::getCursorKindForDecl(Decl *D) {
     case Decl::ObjCCategory:       return CXCursor_ObjCCategoryDecl;
     case Decl::ObjCCategoryImpl:   return CXCursor_ObjCCategoryImplDecl;
       // FIXME
-      return CXCursor_UnexposedDecl;
+      // return CXCursor_UnexposedDecl;
     case Decl::ObjCImplementation: return CXCursor_ObjCImplementationDecl;
 
     case Decl::ObjCInterface:
@@ -2847,7 +2846,6 @@ CXCursorKind clang::getCursorKindForDecl(Decl *D) {
       case ObjCPropertyImplDecl::Synthesize:
         return CXCursor_ObjCSynthesizeDecl;
       }
-      break;
       
     default:
       if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
@@ -2926,10 +2924,9 @@ static enum CodeCompletionContext::Kind mapCodeCompletionContext(Sema &S,
   case Sema::PCC_MemberTemplate:
     if (S.CurContext->isFileContext())
       return CodeCompletionContext::CCC_TopLevel;
-    else if (S.CurContext->isRecord())
+    if (S.CurContext->isRecord())
       return CodeCompletionContext::CCC_ClassStructUnion;
-    else 
-      return CodeCompletionContext::CCC_Other;
+    return CodeCompletionContext::CCC_Other;
       
   case Sema::PCC_RecoveryInFunction:
     return CodeCompletionContext::CCC_Recovery;
@@ -2957,8 +2954,8 @@ static enum CodeCompletionContext::Kind mapCodeCompletionContext(Sema &S,
   case Sema::PCC_LocalDeclarationSpecifiers:
     return CodeCompletionContext::CCC_Type;
   }
-  
-  return CodeCompletionContext::CCC_Other;
+
+  llvm_unreachable("Invalid ParserCompletionContext!");
 }
 
 /// \brief If we're in a C++ virtual member function, add completion results

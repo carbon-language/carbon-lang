@@ -1370,7 +1370,6 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
         
     default:
       llvm_unreachable("unknown include directive kind");
-      break;
     }
 
     // Determine whether we are actually building the module that this

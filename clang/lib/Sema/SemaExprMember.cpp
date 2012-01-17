@@ -238,7 +238,6 @@ Sema::BuildPossibleImplicitMemberExpr(const CXXScopeSpec &SS,
   }
 
   llvm_unreachable("unexpected instance member access kind");
-  return ExprError();
 }
 
 /// Check an ext-vector component access expression.

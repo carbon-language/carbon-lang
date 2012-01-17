@@ -163,8 +163,8 @@ bool Sema::ActiveTemplateInstantiation::isInstantiationRecord() const {
   case DefaultTemplateArgumentChecking:
     return false;
   }
-  
-  return true;
+
+  llvm_unreachable("Invalid InstantiationKind!");
 }
 
 Sema::InstantiatingTemplate::

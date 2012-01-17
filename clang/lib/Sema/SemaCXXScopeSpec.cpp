@@ -150,14 +150,13 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
     const TagType *Tag = NNS->getAsType()->getAs<TagType>();
     assert(Tag && "Non-tag type in nested-name-specifier");
     return Tag->getDecl();
-  } break;
+  }
 
   case NestedNameSpecifier::Global:
     return Context.getTranslationUnitDecl();
   }
 
-  // Required to silence a GCC warning.
-  return 0;
+  llvm_unreachable("Invalid NestedNameSpecifier::Kind!");
 }
 
 bool Sema::isDependentScopeSpecifier(const CXXScopeSpec &SS) {
@@ -899,8 +898,7 @@ bool Sema::ShouldEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
     return true;
   }
 
-  // Silence bogus warning.
-  return false;
+  llvm_unreachable("Invalid NestedNameSpecifier::Kind!");
 }
 
 /// ActOnCXXEnterDeclaratorScope - Called when a C++ scope specifier (global

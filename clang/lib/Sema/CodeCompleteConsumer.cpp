@@ -71,8 +71,8 @@ bool CodeCompletionContext::wantConstructorResults() const {
   case CCC_ObjCCategoryName:
     return false;
   }
-  
-  return false;
+
+  llvm_unreachable("Invalid CodeCompletionContext::Kind!");
 }
 
 //===----------------------------------------------------------------------===//
@@ -93,7 +93,6 @@ CodeCompletionString::Chunk::Chunk(ChunkKind Kind, const char *Text)
 
   case CK_Optional:
     llvm_unreachable("Optional strings cannot be created from text");
-    break;
       
   case CK_LeftParen:
     this->Text = "(";
@@ -330,8 +329,8 @@ CodeCompleteConsumer::OverloadCandidate::getFunctionType() const {
   case CK_FunctionType:
     return Type;
   }
-  
-  return 0;
+
+  llvm_unreachable("Invalid CandidateKind!");
 }
 
 //===----------------------------------------------------------------------===//

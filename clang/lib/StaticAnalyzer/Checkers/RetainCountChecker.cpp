@@ -2732,7 +2732,7 @@ void RetainCountChecker::checkSummary(const RetainSummary &Summ,
 
   switch (RE.getKind()) {
     default:
-      llvm_unreachable("Unhandled RetEffect."); break;
+      llvm_unreachable("Unhandled RetEffect.");
 
     case RetEffect::NoRet:
       // No work necessary.
@@ -2833,7 +2833,6 @@ RetainCountChecker::updateSymbol(const ProgramState *state, SymbolRef sym,
     case IncRefMsg:
     case MakeCollectable:
       llvm_unreachable("DecRefMsg/IncRefMsg/MakeCollectable already converted");
-      return state;
 
     case Dealloc:
       // Any use of -dealloc in GC is *bad*.
@@ -2846,7 +2845,6 @@ RetainCountChecker::updateSymbol(const ProgramState *state, SymbolRef sym,
       switch (V.getKind()) {
         default:
           llvm_unreachable("Invalid RefVal state for an explicit dealloc.");
-          break;
         case RefVal::Owned:
           // The object immediately transitions to the released state.
           V = V ^ RefVal::Released;
@@ -2890,7 +2888,6 @@ RetainCountChecker::updateSymbol(const ProgramState *state, SymbolRef sym,
       switch (V.getKind()) {
         default:
           llvm_unreachable("Invalid RefVal state for a retain.");
-          break;
         case RefVal::Owned:
         case RefVal::NotOwned:
           V = V + 1;
@@ -2912,7 +2909,6 @@ RetainCountChecker::updateSymbol(const ProgramState *state, SymbolRef sym,
         default:
           // case 'RefVal::Released' handled above.
           llvm_unreachable("Invalid RefVal state for a release.");
-          break;
 
         case RefVal::Owned:
           assert(V.getCount() > 0);
@@ -2956,7 +2952,6 @@ void RetainCountChecker::processNonLeakError(const ProgramState *St,
   switch (ErrorKind) {
     default:
       llvm_unreachable("Unhandled error.");
-      return;
     case RefVal::ErrorUseAfterRelease:
       if (!useAfterRelease)
         useAfterRelease.reset(new UseAfterRelease());

@@ -1934,8 +1934,6 @@ bool Parser::ParseAsmOperandsOpt(SmallVectorImpl<IdentifierInfo *> &Names,
     if (Tok.isNot(tok::comma)) return false;
     ConsumeToken();
   }
-
-  return true;
 }
 
 Decl *Parser::ParseFunctionStatementBody(Decl *Decl, ParseScope &BodyScope) {
@@ -2203,7 +2201,6 @@ void Parser::ParseMicrosoftIfExistsStatement(StmtVector &Stmts) {
       
   case IEB_Dependent:
     llvm_unreachable("Dependent case handled above");
-    break;
       
   case IEB_Skip:
     Braces.skipToEnd();

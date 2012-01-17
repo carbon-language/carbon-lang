@@ -381,7 +381,6 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, const Preprocessor &PP) {
     default: break;
     case tok::identifier:
       llvm_unreachable("tok::identifier in raw lexing mode!");
-      break;
     case tok::raw_identifier: {
       // Fill in Result.IdentifierInfo and update the token kind,
       // looking up the identifier in the identifier table.

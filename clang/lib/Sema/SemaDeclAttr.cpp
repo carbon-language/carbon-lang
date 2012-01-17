@@ -1105,7 +1105,6 @@ static bool hasEffectivelyInternalLinkage(NamedDecl *D) {
     return false;
   }
   llvm_unreachable("unknown linkage kind!");
-  return false;
 }
 
 static void handleWeakRefAttr(Sema &S, Decl *D, const AttributeList &Attr) {
@@ -3007,7 +3006,6 @@ static void handleCallConvAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
   default:
     llvm_unreachable("unexpected attribute kind");
-    return;
   }
 }
 
@@ -3056,7 +3054,7 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC) {
     }
     // FALLS THROUGH
   }
-  default: llvm_unreachable("unexpected attribute kind"); return true;
+  default: llvm_unreachable("unexpected attribute kind");
   }
 
   return false;
@@ -3242,7 +3240,7 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
   bool typeOK;
   bool cf;
   switch (Attr.getKind()) {
-  default: llvm_unreachable("invalid ownership attribute"); return;
+  default: llvm_unreachable("invalid ownership attribute");
   case AttributeList::AT_ns_returns_autoreleased:
   case AttributeList::AT_ns_returns_retained:
   case AttributeList::AT_ns_returns_not_retained:

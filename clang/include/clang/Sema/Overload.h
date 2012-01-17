@@ -469,7 +469,7 @@ namespace clang {
         return 3;
       }
 
-      return 3;
+      llvm_unreachable("Invalid ImplicitConversionSequence::Kind!");
     }
 
     bool isBad() const { return getKind() == BadConversion; }

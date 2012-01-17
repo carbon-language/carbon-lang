@@ -581,7 +581,6 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
   }
   case tok::at:
     return ParseObjCAtDirectives();
-    break;
   case tok::minus:
   case tok::plus:
     if (!getLang().ObjC1) {

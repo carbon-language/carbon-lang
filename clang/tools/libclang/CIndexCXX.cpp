@@ -46,9 +46,8 @@ enum CX_CXXAccessSpecifier clang_getCXXAccessSpecifier(CXCursor C) {
     case AS_private: return CX_CXXPrivate;
     case AS_none: return CX_CXXInvalidAccessSpecifier;
   }
-  
-  // FIXME: Clang currently thinks this is reachable.
-  return CX_CXXInvalidAccessSpecifier;
+
+  llvm_unreachable("Invalid AccessSpecifier!");
 }
 
 enum CXCursorKind clang_getTemplateCursorKind(CXCursor C) {

@@ -38,7 +38,6 @@ CXDiagnosticSeverity CXStoredDiagnostic::getSeverity() const {
   }
   
   llvm_unreachable("Invalid diagnostic level");
-  return CXDiagnostic_Ignored;
 }
 
 CXSourceLocation CXStoredDiagnostic::getLocation() const {

@@ -4786,8 +4786,8 @@ Sema::CheckMicrosoftIfExistsSymbol(Scope *S,
   case LookupResult::NotFoundInCurrentInstantiation:
     return IER_Dependent;
   }
-  
-  return IER_DoesNotExist;  
+
+  llvm_unreachable("Invalid LookupResult Kind!");
 }
 
 Sema::IfExistsResult 

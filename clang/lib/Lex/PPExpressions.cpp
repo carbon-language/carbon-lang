@@ -703,8 +703,6 @@ static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
     LHS.Val = Res;
     LHS.setEnd(RHS.getRange().getEnd());
   }
-
-  return false;
 }
 
 /// EvaluateDirectiveExpression - Evaluate an integer constant expression that

@@ -2103,7 +2103,6 @@ X86TargetInfo::validateAsmConstraint(const char *&Name,
             // x86_64 instructions.
     return true;
   }
-  return false;
 }
 
 
@@ -3397,7 +3396,6 @@ public:
       Info.setAllowsRegister();
       return true;
     }
-    return false;
   }
 
   virtual const char *getClobbers() const {

@@ -181,7 +181,7 @@ bool CursorVisitor::Visit(CXCursor Cursor, bool CheckedRegionOfInterest) {
     return VisitChildren(Cursor);
   }
 
-  return false;
+  llvm_unreachable("Invalid CXChildVisitResult!");
 }
 
 static bool visitPreprocessedEntitiesInRange(SourceRange R,
@@ -573,7 +573,6 @@ bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
 
 bool CursorVisitor::VisitTranslationUnitDecl(TranslationUnitDecl *D) {
   llvm_unreachable("Translation units are visited directly by Visit()");
-  return false;
 }
 
 bool CursorVisitor::VisitTypeAliasDecl(TypeAliasDecl *D) {
@@ -1134,8 +1133,8 @@ bool CursorVisitor::VisitDeclarationNameInfo(DeclarationNameInfo Name) {
     // FIXME: Per-identifier location info?
     return false;
   }
-  
-  return false;
+
+  llvm_unreachable("Invalid DeclarationName::Kind!");
 }
 
 bool CursorVisitor::VisitNestedNameSpecifier(NestedNameSpecifier *NNS, 
@@ -1273,8 +1272,8 @@ bool CursorVisitor::VisitTemplateName(TemplateName Name, SourceLocation Loc) {
                   Name.getAsSubstTemplateTemplateParmPack()->getParameterPack(),
                                        Loc, TU));
   }
-                 
-  return false;
+
+  llvm_unreachable("Invalid TemplateName::Kind!");
 }
 
 bool CursorVisitor::VisitTemplateArgumentLoc(const TemplateArgumentLoc &TAL) {
@@ -1307,8 +1306,8 @@ bool CursorVisitor::VisitTemplateArgumentLoc(const TemplateArgumentLoc &TAL) {
     return VisitTemplateName(TAL.getArgument().getAsTemplateOrTemplatePattern(), 
                              TAL.getTemplateNameLoc());
   }
-  
-  return false;
+
+  llvm_unreachable("Invalid TemplateArgument::Kind!");
 }
 
 bool CursorVisitor::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
@@ -3385,7 +3384,6 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   }
 
   llvm_unreachable("Unhandled CXCursorKind");
-  return createCXString((const char*) 0);
 }
 
 struct GetCursorData {
@@ -3962,11 +3960,8 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
     default:
       // We would prefer to enumerate all non-reference cursor kinds here.
       llvm_unreachable("Unhandled reference cursor kind");
-      break;
     }
   }
-
-  return clang_getNullCursor();
 }
 
 CXCursor clang_getCursorDefinition(CXCursor C) {

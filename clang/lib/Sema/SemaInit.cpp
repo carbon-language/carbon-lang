@@ -2327,8 +2327,7 @@ DeclarationName InitializedEntity::getName() const {
     return DeclarationName();
   }
 
-  // Silence GCC warning
-  return DeclarationName();
+  llvm_unreachable("Invalid EntityKind!");
 }
 
 DeclaratorDecl *InitializedEntity::getDecl() const {
@@ -2353,8 +2352,7 @@ DeclaratorDecl *InitializedEntity::getDecl() const {
     return 0;
   }
 
-  // Silence GCC warning
-  return 0;
+  llvm_unreachable("Invalid EntityKind!");
 }
 
 bool InitializedEntity::allowsNRVO() const {
@@ -2456,7 +2454,7 @@ bool InitializationSequence::isAmbiguous() const {
     return FailedOverloadResult == OR_Ambiguous;
   }
 
-  return false;
+  llvm_unreachable("Invalid EntityKind!");
 }
 
 bool InitializationSequence::isConstructorInitialization() const {
@@ -4263,7 +4261,7 @@ getAssignmentAction(const InitializedEntity &Entity) {
     return Sema::AA_Initializing;
   }
 
-  return Sema::AA_Converting;
+  llvm_unreachable("Invalid EntityKind!");
 }
 
 /// \brief Whether we should binding a created object as a temporary when
@@ -5356,7 +5354,6 @@ bool InitializationSequence::Diagnose(Sema &S,
 
     case OR_Success:
       llvm_unreachable("Conversion did not fail!");
-      break;
     }
     break;
 
@@ -5541,9 +5538,7 @@ bool InitializationSequence::Diagnose(Sema &S,
 
       case OR_Success:
         llvm_unreachable("Conversion did not fail!");
-        break;
     }
-    break;
   }
 
   case FK_DefaultInitOfConst:

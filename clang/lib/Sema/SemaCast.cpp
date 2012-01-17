@@ -295,8 +295,6 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
                                                  OpLoc, Parens.getEnd()));
   }
   }
-
-  return ExprError();
 }
 
 /// Try to diagnose a failed overloaded cast.  Returns true if
@@ -346,7 +344,6 @@ static bool tryDiagnoseOverloadedCast(Sema &S, CastType CT,
 
   switch (sequence.getFailedOverloadResult()) {
   case OR_Success: llvm_unreachable("successful failed overload");
-    return false;
   case OR_No_Viable_Function:
     if (candidates.empty())
       msg = diag::err_ovl_no_conversion_in_cast;

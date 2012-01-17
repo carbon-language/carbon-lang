@@ -84,7 +84,6 @@ CXDiagnosticSeverity CXLoadedDiagnostic::getSeverity() const {
   }
   
   llvm_unreachable("Invalid diagnostic level");
-  return CXDiagnostic_Ignored;
 }
 
 static CXSourceLocation makeLocation(const CXLoadedDiagnostic::Location *DLoc) {
@@ -297,7 +296,6 @@ CXDiagnosticSet DiagLoader::load(const char *file) {
         return 0;
       case Read_Record:
         llvm_unreachable("Top-level does not have records");
-        return 0;
       case Read_BlockEnd:
         continue;
       case Read_BlockBegin:
@@ -555,7 +553,6 @@ LoadResult DiagLoader::readDiagnosticBlock(llvm::BitstreamCursor &Stream,
     switch (Res) {
       case Read_EndOfStream:
         llvm_unreachable("EndOfStream handled in readToNextRecordOrBlock");
-        return Failure;
       case Read_Failure:
         return Failure;
       case Read_BlockBegin: {

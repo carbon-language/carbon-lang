@@ -1747,7 +1747,6 @@ public:
         return !DeclTypeInfo[i].Arr.NumElts;
       }
       llvm_unreachable("Invalid type chunk");
-      return false;
     }
     return false;
   }
@@ -1772,7 +1771,6 @@ public:
         return false;
       }
       llvm_unreachable("Invalid type chunk");
-      return false;
     }
     return false;
   }

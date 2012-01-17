@@ -502,7 +502,6 @@ static TemplateArgumentLoc translateTemplateArgument(Sema &SemaRef,
   }
 
   llvm_unreachable("Unhandled parsed template argument");
-  return TemplateArgumentLoc();
 }
 
 /// \brief Translates template arguments as provided by the parser
@@ -1139,7 +1138,7 @@ static bool DiagnoseDefaultTemplateArgument(Sema &S,
     // declaration (and it is a definition). Strange!
   }
 
-  return false;
+  llvm_unreachable("Invalid TemplateParamListContext!");
 }
 
 /// \brief Check for unexpanded parameter packs within the template parameters
@@ -2789,7 +2788,6 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
 
     case TemplateArgument::Pack:
       llvm_unreachable("Caller must expand template argument packs");
-      break;
     }
 
     return false;
@@ -2839,17 +2837,12 @@ bool Sema::CheckTemplateArgument(NamedDecl *Param,
     return true;
 
   case TemplateArgument::Declaration:
-    llvm_unreachable(
-                       "Declaration argument with template template parameter");
-    break;
+    llvm_unreachable("Declaration argument with template template parameter");
   case TemplateArgument::Integral:
-    llvm_unreachable(
-                          "Integral argument with template template parameter");
-    break;
+    llvm_unreachable("Integral argument with template template parameter");
 
   case TemplateArgument::Pack:
     llvm_unreachable("Caller must expand template argument packs");
-    break;
   }
 
   return false;
@@ -3306,7 +3299,7 @@ bool UnnamedLocalNoLinkageFinder::VisitNestedNameSpecifier(
   case NestedNameSpecifier::TypeSpecWithTemplate:
     return Visit(QualType(NNS->getAsType(), 0));
   }
-  return false;
+  llvm_unreachable("Invalid NestedNameSpecifier::Kind!");
 }
 
 
@@ -5324,7 +5317,6 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
 
       return true;
     }
-    break;
 
   case TSK_ExplicitInstantiationDeclaration:
     switch (PrevTSK) {
@@ -5364,7 +5356,6 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
       HasNoEffect = true;
       return false;
     }
-    break;
 
   case TSK_ExplicitInstantiationDefinition:
     switch (PrevTSK) {
@@ -5424,7 +5415,6 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
       HasNoEffect = true;
       return false;
     }
-    break;
   }
 
   llvm_unreachable("Missing specialization/instantiation case?");

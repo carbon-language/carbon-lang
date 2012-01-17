@@ -72,7 +72,6 @@ Module::isAvailable(const LangOptions &LangOpts, StringRef &Feature) const {
   }
 
   llvm_unreachable("could not find a reason why module is unavailable");
-  return false;
 }
 
 bool Module::isSubModuleOf(Module *Other) const {

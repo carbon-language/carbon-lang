@@ -42,7 +42,6 @@ Parser::DeclGroupPtrTy Parser::ParseObjCAtDirectives() {
   switch (Tok.getObjCKeywordID()) {
   case tok::objc_class:
     return ParseObjCAtClassDeclaration(AtLoc);
-    break;
   case tok::objc_interface: {
     ParsedAttributes attrs(AttrFactory);
     SingleDecl = ParseObjCAtInterfaceDeclaration(AtLoc, attrs);
@@ -426,7 +425,6 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteObjCAtDirective(getCurScope());
       return cutOffParsing();
-      break;
     }
 
     tok::ObjCKeywordKind DirectiveKind = Tok.getObjCKeywordID();

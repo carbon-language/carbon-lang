@@ -4846,7 +4846,7 @@ public:
 
       }
 
-      return true;
+      llvm_unreachable("Invalid InstantiationKind!");
     }
 
     friend bool operator!=(const ActiveTemplateInstantiation &X,

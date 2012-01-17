@@ -19,6 +19,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cstdio>
 
 using namespace clang;
@@ -503,5 +504,5 @@ const char *clang::getOperatorSpelling(OverloadedOperatorKind Operator) {
 #include "clang/Basic/OperatorKinds.def"
   }
 
-  return 0;
+  llvm_unreachable("Invalid OverloadedOperatorKind!");
 }

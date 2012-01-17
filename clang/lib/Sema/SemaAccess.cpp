@@ -797,7 +797,6 @@ static AccessResult HasAccess(Sema &S,
 
   // Silence bogus warnings
   llvm_unreachable("impossible friendship kind");
-  return OnFailure;
 }
 
 /// Finds the best path from the naming class to the declaring class,
@@ -1068,7 +1067,6 @@ static void DiagnoseAccessPath(Sema &S,
 
     case AR_dependent:
       llvm_unreachable("can't diagnose dependent access failures");
-      return;
     }
   }
 
@@ -1298,7 +1296,6 @@ static AccessResult CheckEffectiveAccess(Sema &S,
 
   // silence unnecessary warning
   llvm_unreachable("invalid access result");
-  return AR_accessible;
 }
 
 static Sema::AccessResult CheckAccess(Sema &S, SourceLocation Loc,
@@ -1333,7 +1330,6 @@ static Sema::AccessResult CheckAccess(Sema &S, SourceLocation Loc,
   case AR_dependent: return Sema::AR_dependent;
   }
   llvm_unreachable("falling off end");
-  return Sema::AR_accessible;
 }
 
 void Sema::HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *decl) {

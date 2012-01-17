@@ -390,7 +390,6 @@ void PreprocessingRecord::InclusionDirective(
     
   default:
     llvm_unreachable("Unknown include directive kind");
-    return;
   }
   
   clang::InclusionDirective *ID

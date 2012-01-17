@@ -193,7 +193,7 @@ CXXABI *ASTContext::createCXXABI(const TargetInfo &T) {
   case CXXABI_Microsoft:
     return CreateMicrosoftCXXABI(*this);
   }
-  return 0;
+  llvm_unreachable("Invalid CXXABI type!");
 }
 
 static const LangAS::Map *getAddressSpaceMap(const TargetInfo &T,
@@ -833,7 +833,6 @@ ASTContext::getTypeInfo(const Type *T) const {
 #define DEPENDENT_TYPE(Class, Base) case Type::Class:
 #include "clang/AST/TypeNodes.def"
     llvm_unreachable("Should not see dependent types");
-    break;
 
   case Type::FunctionNoProto:
   case Type::FunctionProto:
@@ -3407,8 +3406,7 @@ ASTContext::getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS) const {
     return NNS;
   }
 
-  // Required to silence a GCC warning
-  return 0;
+  llvm_unreachable("Invalid NestedNameSpecifier::Kind!");
 }
 
 
@@ -6087,7 +6085,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
                                           LHS->getAs<ObjCObjectPointerType>(),
                                           RHS->getAs<ObjCObjectPointerType>(),
                                           BlockReturnType))
-      return LHS;
+        return LHS;
       return QualType();
     }
     if (canAssignObjCInterfaces(LHS->getAs<ObjCObjectPointerType>(),
@@ -6095,10 +6093,10 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
       return LHS;
 
     return QualType();
-    }
+  }
   }
 
-  return QualType();
+  llvm_unreachable("Invalid Type::Class!");
 }
 
 bool ASTContext::FunctionTypesMatchOnNSConsumedAttrs(
@@ -6613,7 +6611,7 @@ GVALinkage ASTContext::GetGVALinkageForVariable(const VarDecl *VD) {
     }
   }
 
-  return GVA_StrongExternal;
+  llvm_unreachable("Invalid Linkage!");
 }
 
 bool ASTContext::DeclMustBeEmitted(const Decl *D) {

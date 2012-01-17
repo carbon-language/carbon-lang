@@ -2392,13 +2392,11 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
     case Decl::type:
 #include "clang/AST/DeclNodes.inc"
       llvm_unreachable("invalid value decl kind");
-      return ExprError();
 
     // These shouldn't make it here.
     case Decl::ObjCAtDefsField:
     case Decl::ObjCIvar:
       llvm_unreachable("forming non-member reference to ivar?");
-      return ExprError();
 
     // Enum constants are always r-values and never references.
     // Unresolved using declarations are dependent.
@@ -2519,7 +2517,6 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
   }
 
   llvm_unreachable("unknown capture result");
-  return ExprError();
 }
 
 ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc, tok::TokenKind Kind) {
@@ -4090,12 +4087,10 @@ CastKind Sema::PrepareScalarCast(ExprResult &Src, QualType DestTy) {
     case Type::STK_ObjCObjectPointer:
       if (SrcKind == Type::STK_ObjCObjectPointer)
         return CK_BitCast;
-      else if (SrcKind == Type::STK_CPointer)
+      if (SrcKind == Type::STK_CPointer)
         return CK_CPointerToObjCPointerCast;
-      else {
-        maybeExtendBlockObject(*this, Src);
-        return CK_BlockPointerToObjCPointerCast;
-      }
+      maybeExtendBlockObject(*this, Src);
+      return CK_BlockPointerToObjCPointerCast;
     case Type::STK_Bool:
       return CK_PointerToBoolean;
     case Type::STK_Integral:
@@ -4106,7 +4101,7 @@ CastKind Sema::PrepareScalarCast(ExprResult &Src, QualType DestTy) {
     case Type::STK_MemberPointer:
       llvm_unreachable("illegal cast from pointer");
     }
-    break;
+    llvm_unreachable("Should have returned before this");
 
   case Type::STK_Bool: // casting from bool is like casting from an integer
   case Type::STK_Integral:
@@ -4137,7 +4132,7 @@ CastKind Sema::PrepareScalarCast(ExprResult &Src, QualType DestTy) {
     case Type::STK_MemberPointer:
       llvm_unreachable("member pointer type in C");
     }
-    break;
+    llvm_unreachable("Should have returned before this");
 
   case Type::STK_Floating:
     switch (DestTy->getScalarTypeKind()) {
@@ -4164,7 +4159,7 @@ CastKind Sema::PrepareScalarCast(ExprResult &Src, QualType DestTy) {
     case Type::STK_MemberPointer:
       llvm_unreachable("member pointer type in C");
     }
-    break;
+    llvm_unreachable("Should have returned before this");
 
   case Type::STK_FloatingComplex:
     switch (DestTy->getScalarTypeKind()) {
@@ -4193,7 +4188,7 @@ CastKind Sema::PrepareScalarCast(ExprResult &Src, QualType DestTy) {
     case Type::STK_MemberPointer:
       llvm_unreachable("member pointer type in C");
     }
-    break;
+    llvm_unreachable("Should have returned before this");
 
   case Type::STK_IntegralComplex:
     switch (DestTy->getScalarTypeKind()) {
@@ -4222,7 +4217,7 @@ CastKind Sema::PrepareScalarCast(ExprResult &Src, QualType DestTy) {
     case Type::STK_MemberPointer:
       llvm_unreachable("member pointer type in C");
     }
-    break;
+    llvm_unreachable("Should have returned before this");
   }
 
   llvm_unreachable("Unhandled scalar cast");
@@ -7201,7 +7196,6 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
   case Expr::MLV_ReadonlyProperty:
   case Expr::MLV_NoSetterProperty:
     llvm_unreachable("readonly properties should be processed differently");
-    break;
   case Expr::MLV_InvalidMessageExpression:
     Diag = diag::error_readonly_message_assignment;
     break;
@@ -9924,7 +9918,6 @@ namespace {
 
     ExprResult VisitStmt(Stmt *S) {
       llvm_unreachable("unexpected statement!");
-      return ExprError();
     }
 
     ExprResult VisitExpr(Expr *E) {
@@ -10017,7 +10010,6 @@ namespace {
 
     ExprResult VisitStmt(Stmt *S) {
       llvm_unreachable("unexpected statement!");
-      return ExprError();
     }
 
     ExprResult VisitExpr(Expr *E) {

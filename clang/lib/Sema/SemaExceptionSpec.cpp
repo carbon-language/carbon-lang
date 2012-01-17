@@ -611,10 +611,8 @@ bool Sema::CheckExceptionSpecSubset(
       case AR_inaccessible: continue;
       case AR_dependent:
         llvm_unreachable("access check dependent for unprivileged context");
-        break;
       case AR_delayed:
         llvm_unreachable("access check delayed in non-declaration");
-        break;
       }
 
       Contained = true;

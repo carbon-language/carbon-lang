@@ -799,8 +799,6 @@ bool HeaderSearch::hasModuleMap(StringRef FileName,
     // having module maps if we eventually do find a module map.
     FixUpDirectories.push_back(Dir);
   } while (true);
-  
-  return false;
 }
 
 Module *HeaderSearch::findModuleForHeader(const FileEntry *File) {

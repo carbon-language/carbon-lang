@@ -1263,8 +1263,6 @@ bool ModuleMapParser::parseModuleMapFile() {
       break;
     }
   } while (true);
-  
-  return HadError;
 }
 
 bool ModuleMap::parseModuleMapFile(const FileEntry *File) {
