@@ -4518,11 +4518,19 @@ LSRInstance::LSRInstance(const TargetLowering *tli, Loop *l, Pass *P)
   if (!L->isLoopSimplifyForm())
     return;
 
-  // All outer loops must have preheaders, or SCEVExpander may not be able to
-  // materialize an AddRecExpr whose Start is an outer AddRecExpr.
-  for (const Loop *OuterLoop = L; (OuterLoop = OuterLoop->getParentLoop());) {
-    if (!OuterLoop->getLoopPreheader())
-      return;
+  // All dominating loops must have preheaders, or SCEVExpander may not be able
+  // to materialize an AddRecExpr whose Start is an outer AddRecExpr.
+  //
+  // FIXME: This is a little absurd. I think LoopSimplify should be taught
+  // to create a preheader under any circumstance.
+  for (DomTreeNode *Rung = DT.getNode(L->getLoopPreheader());
+       Rung; Rung = Rung->getIDom()) {
+    BasicBlock *BB = Rung->getBlock();
+    const Loop *DomLoop = LI.getLoopFor(BB);
+    if (DomLoop && DomLoop->getHeader() == BB) {
+      if (!DomLoop->getLoopPreheader())
+        return;
+    }
   }
   // If there's no interesting work to be done, bail early.
   if (IU.empty()) return;
