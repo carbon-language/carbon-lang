@@ -5540,6 +5540,7 @@ bool InitializationSequence::Diagnose(Sema &S,
         llvm_unreachable("Conversion did not fail!");
     }
   }
+  break;
 
   case FK_DefaultInitOfConst:
     if (Entity.getKind() == InitializedEntity::EK_Member &&
