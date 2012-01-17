@@ -107,11 +107,11 @@ extern "C" {
   // memory, returns the maximal possible allocation size, otherwise returns
   // "size".
   size_t __asan_get_estimated_allocated_size(size_t size);
-  // Returns true if p is NULL or if p was returned by the ASan allocator and
+  // Returns true if p was returned by the ASan allocator and
   // is not yet freed.
   bool __asan_get_ownership(const void *p);
   // Returns the number of bytes reserved for the pointer p.
-  // Requires (get_ownership(p) == true).
+  // Requires (__asan_get_ownership(p) == true).
   size_t __asan_get_allocated_size(const void *p);
   // Number of bytes, allocated and not yet freed by the application.
   size_t __asan_get_current_allocated_bytes();
