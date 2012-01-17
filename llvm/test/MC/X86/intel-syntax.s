@@ -25,6 +25,8 @@ _main:
 	mov	EAX, DWORD PTR [RSP + 4*RAX - 24]
 // CHECK:	movb	%dil, (%rdx,%rcx)
 	mov	BYTE PTR [RDX + RCX], DIL
+// CHECK:	movzwl	2(%rcx), %edi
+	movzx	EDI, WORD PTR [RCX + 2]
 // CHECK:	callq	_test
 	call	_test
 	ret
