@@ -459,29 +459,33 @@ isl_set *MemoryAccess::getStride(const isl_set *domainSubset) const {
 }
 
 bool MemoryAccess::isStrideZero(const isl_set *DomainSubset) const {
-  isl_set *Stride = getStride(DomainSubset);
-  isl_set *StrideZero = isl_set_universe(isl_set_get_space(Stride));
-  StrideZero = isl_set_fix_si(StrideZero, isl_dim_set, 0, 0);
+  isl_set *Stride, *StrideZero;
+  bool IsStrideZero;
 
-  bool isStrideZero = isl_set_is_equal(Stride, StrideZero);
+  Stride = getStride(DomainSubset);
+  StrideZero = isl_set_universe(isl_set_get_space(Stride));
+  StrideZero = isl_set_fix_si(StrideZero, isl_dim_set, 0, 0);
+  IsStrideZero = isl_set_is_equal(Stride, StrideZero);
 
   isl_set_free(StrideZero);
   isl_set_free(Stride);
 
-  return isStrideZero;
+  return IsStrideZero;
 }
 
 bool MemoryAccess::isStrideOne(const isl_set *DomainSubset) const {
-  isl_set *Stride = getStride(DomainSubset);
-  isl_set *StrideOne = isl_set_universe(isl_set_get_space(Stride));
-  StrideOne = isl_set_fix_si(StrideOne, isl_dim_set, 0, 1);
+  isl_set *Stride, *StrideOne;
+  bool IsStrideOne;
 
-  bool isStrideOne = isl_set_is_equal(Stride, StrideOne);
+  Stride = getStride(DomainSubset);
+  StrideOne = isl_set_universe(isl_set_get_space(Stride));
+  StrideOne = isl_set_fix_si(StrideOne, isl_dim_set, 0, 1);
+  IsStrideOne = isl_set_is_equal(Stride, StrideOne);
 
   isl_set_free(StrideOne);
   isl_set_free(Stride);
 
-  return isStrideOne;
+  return IsStrideOne;
 }
 
 void MemoryAccess::setNewAccessRelation(isl_map *newAccess) {
