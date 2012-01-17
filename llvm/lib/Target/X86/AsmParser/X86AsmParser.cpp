@@ -45,9 +45,16 @@ private:
     return Parser.Error(L, Msg, Ranges);
   }
 
+  X86Operand *ErrorOperand(SMLoc Loc, StringRef Msg) {
+    Error(Loc, Msg);
+    return 0;
+  }
+
   X86Operand *ParseOperand();
   X86Operand *ParseATTOperand();
   X86Operand *ParseIntelOperand();
+  X86Operand *ParseIntelMemOperand();
+  X86Operand *ParseIntelBracExpression(unsigned Size);
   X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
 
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
@@ -447,9 +454,11 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
                                  SMLoc &StartLoc, SMLoc &EndLoc) {
   RegNo = 0;
   const AsmToken &TokPercent = Parser.getTok();
-  assert(TokPercent.is(AsmToken::Percent) && "Invalid token kind!");
-  StartLoc = TokPercent.getLoc();
-  Parser.Lex(); // Eat percent token.
+  if (!getParser().getAssemblerDialect()) {
+    assert(TokPercent.is(AsmToken::Percent) && "Invalid token kind!");
+    StartLoc = TokPercent.getLoc();
+    Parser.Lex(); // Eat percent token.
+  }
 
   const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier))
@@ -559,10 +568,9 @@ static unsigned getIntelRegisterOperand(StringRef Str) {
   return RegNo;
 }
 
-/// isIntelMemOperand - If this is an intel memory operand
-/// then return true.
-static bool isIntelMemOperand(StringRef OpStr, unsigned &Size) {
-  Size = 0;
+/// getIntelMemOperandSize - Return intel memory operand size.
+static unsigned getIntelMemOperandSize(StringRef OpStr) {
+  unsigned Size = 0;
   if (OpStr == "BYTE") Size = 8;
   if (OpStr == "WORD") Size = 16;
   if (OpStr == "DWORD") Size = 32;
@@ -570,70 +578,124 @@ static bool isIntelMemOperand(StringRef OpStr, unsigned &Size) {
   if (OpStr == "XWORD") Size = 80;
   if (OpStr == "XMMWORD") Size = 128;
   if (OpStr == "YMMWORD") Size = 256;
-  return Size != 0;
+  return Size;
 }
 
-X86Operand *X86AsmParser::ParseIntelOperand() {
-
+X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned Size) {
+  unsigned SegReg = 0, BaseReg = 0, IndexReg = 0, Scale = 1;
   const AsmToken &Tok = Parser.getTok();
   SMLoc Start = Parser.getTok().getLoc(), End;
 
+  const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
+  // Parse [ BaseReg + Scale*IndexReg + Disp ] or [ symbol ]
+
+  // Eat '['
+  if (getLexer().isNot(AsmToken::LBrac))
+    return ErrorOperand(Start, "Expected '[' token!");
+  Parser.Lex();
+  
+  if (getLexer().is(AsmToken::Identifier)) {
+    // Parse BaseReg
+    BaseReg = getIntelRegisterOperand(Tok.getString());
+    if (BaseReg)
+      Parser.Lex();
+    else {
+      // Handle '[' 'symbol' ']'
+      const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
+      if (getParser().ParseExpression(Disp, End)) return 0;
+      if (getLexer().isNot(AsmToken::RBrac))
+	return ErrorOperand(Start, "Expected ']' token!");
+      Parser.Lex();
+      return X86Operand::CreateMem(Disp, Start, End, Size);
+    }
+  } else if (getLexer().is(AsmToken::Integer)) {
+      // Handle '[' number ']'
+      const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
+      if (getParser().ParseExpression(Disp, End)) return 0;
+      if (getLexer().isNot(AsmToken::RBrac))
+	return ErrorOperand(Start, "Expected ']' token!");
+      Parser.Lex();
+      return X86Operand::CreateMem(Disp, Start, End, Size);
+  }
+
+  if (getLexer().is(AsmToken::Plus) || getLexer().is(AsmToken::Minus)) {
+    bool isPlus = getLexer().is(AsmToken::Plus);
+    Parser.Lex();
+    SMLoc PlusLoc = Parser.getTok().getLoc();
+    if (getLexer().is(AsmToken::Integer)) {
+      int64_t Val = Parser.getTok().getIntVal();
+      Parser.Lex();
+      if (getLexer().is(AsmToken::Star)) {
+	Parser.Lex();
+	SMLoc IdxRegLoc = Parser.getTok().getLoc();
+	IndexReg = getIntelRegisterOperand(Parser.getTok().getString());
+	if (!IndexReg) return ErrorOperand(IdxRegLoc, "Expected register");
+	Parser.Lex(); // Eat register
+	Scale = Val;
+      } else if (getLexer().is(AsmToken::RBrac)) {
+	const MCExpr *ValExpr = MCConstantExpr::Create(Val, getContext());
+	Disp = isPlus ? MCUnaryExpr::CreatePlus(ValExpr, getContext()) :
+	  MCUnaryExpr::CreateMinus(ValExpr, getContext());
+      } else
+	return ErrorOperand(PlusLoc, "unexpected token after +");
+    }
+  }
+
+  if (getLexer().isNot(AsmToken::RBrac))
+    if (getParser().ParseExpression(Disp, End)) return 0;
+
+  End = Parser.getTok().getLoc();
+  if (getLexer().isNot(AsmToken::RBrac))
+    return ErrorOperand(End, "expected ']' token!");
+  Parser.Lex();
+  End = Parser.getTok().getLoc();
+  return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
+			       Start, End, Size);
+}
+
+/// ParseIntelMemOperand - Parse intel style memory operand.
+X86Operand *X86AsmParser::ParseIntelMemOperand() {
+  const AsmToken &Tok = Parser.getTok();
+  SMLoc Start = Parser.getTok().getLoc(), End;
+
+  unsigned Size = getIntelMemOperandSize(Tok.getString());
+  if (Size) {
+    Parser.Lex();
+    assert (Tok.getString() == "PTR" && "Unexpected token!");
+    Parser.Lex();
+  }
+
+  if (getLexer().is(AsmToken::LBrac))
+    return ParseIntelBracExpression(Size);
+
+  const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
+  if (getParser().ParseExpression(Disp, End)) return 0;
+  return X86Operand::CreateMem(Disp, Start, End, Size);
+}
+
+X86Operand *X86AsmParser::ParseIntelOperand() {
+  StringRef TokenString = Parser.getTok().getString();
+  SMLoc Start = Parser.getTok().getLoc(), End;
+
+  // immediate.
+  if (getLexer().is(AsmToken::Integer) || getLexer().is(AsmToken::Real) ||
+      getLexer().is(AsmToken::Minus)) {
+    const MCExpr *Val;
+    if (!getParser().ParseExpression(Val, End)) {
+      End = Parser.getTok().getLoc();
+      return X86Operand::CreateImm(Val, Start, End);
+    }
+  }
+
   // register
-  if(unsigned RegNo = getIntelRegisterOperand(Tok.getString())) {
+  if(unsigned RegNo = getIntelRegisterOperand(TokenString)) {
     Parser.Lex();
     End = Parser.getTok().getLoc();
     return X86Operand::CreateReg(RegNo, Start, End);
   }
 
   // mem operand
-  unsigned SegReg = 0, BaseReg = 0, IndexReg = 0, Scale = 1;
-  StringRef OpStr = Tok.getString();
-  unsigned Size = 0;
-  if (isIntelMemOperand(OpStr, Size)) {
-    Parser.Lex();
-    if (Tok.getString() == "PTR")
-      Parser.Lex();
-    else {
-      Error(Start, "unexpected token!");
-      return 0;
-    }
-
-    if (Tok.getString() == "[")
-      Parser.Lex();
-    else {
-      Error(Start, "unexpected token!");
-      return 0;
-    }
-
-    SMLoc LParenLoc = Parser.getTok().getLoc();
-    BaseReg = getIntelRegisterOperand(Tok.getString());
-    if (BaseReg == 0) {
-      Error(LParenLoc, "unexpected token!");
-      return 0;
-    }
-    Parser.Lex();
-    const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
-    SMLoc ExprEnd;
-    if (getParser().ParseExpression(Disp, ExprEnd)) return 0;
-    End = Parser.getTok().getLoc();
-    if (Tok.getString() == "]")
-      Parser.Lex();
-    if (BaseReg == 0) {
-      Error(End, "unexpected token!");
-      return 0;
-    }
-    return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
-                                 Start, End, Size);
-  }
-
-  // immediate.
-  const MCExpr *Val;
-  if (!getParser().ParseExpression(Val, End)) {
-    End = Parser.getTok().getLoc();
-    return X86Operand::CreateImm(Val, Start, End);
-  }
-
-  return 0;
+  return ParseIntelMemOperand();
 }
 
 X86Operand *X86AsmParser::ParseATTOperand() {

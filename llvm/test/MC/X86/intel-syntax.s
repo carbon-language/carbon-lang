@@ -8,3 +8,11 @@
 	mov	BYTE PTR [RSP - 17], 97
 // CHECK:	movl	-4(%rsp), %eax
 	mov	EAX, DWORD PTR [RSP - 4]
+// CHECK:	movq    (%rsp), %rax
+	mov     RAX, QWORD PTR [RSP]
+// CHECK:	movl	$-4, -4(%rsp)
+	mov	DWORD PTR [RSP - 4], -4
+// CHECK:	movq	0, %rcx
+	mov	RCX, QWORD PTR [0]
+// CHECK:	movl	-24(%rsp,%rax,4), %eax	
+	mov	EAX, DWORD PTR [RSP + 4*RAX - 24]
