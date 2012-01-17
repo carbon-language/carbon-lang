@@ -24,7 +24,7 @@ if ! test -d ${POLLY_SRC}; then
     git clone http://llvm.org/git/polly.git ${POLLY_SRC}
 fi
 
-if ! test -d ${POLLY_SRC}; then
+if ! test -d ${CLANG_SRC}; then
     git clone http://llvm.org/git/clang.git ${CLANG_SRC}
 fi
 
