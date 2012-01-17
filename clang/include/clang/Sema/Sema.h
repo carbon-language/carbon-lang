@@ -4721,7 +4721,12 @@ public:
                                   unsigned Depth,
                                   SmallVectorImpl<bool> &Used);
   void MarkDeducedTemplateParameters(FunctionTemplateDecl *FunctionTemplate,
-                                     SmallVectorImpl<bool> &Deduced);
+                                     SmallVectorImpl<bool> &Deduced) {
+    return MarkDeducedTemplateParameters(Context, FunctionTemplate, Deduced);
+  }
+  static void MarkDeducedTemplateParameters(ASTContext &Ctx,
+                                         FunctionTemplateDecl *FunctionTemplate,
+                                         SmallVectorImpl<bool> &Deduced);
 
   //===--------------------------------------------------------------------===//
   // C++ Template Instantiation

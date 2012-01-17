@@ -3409,7 +3409,7 @@ Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init,
 }
 
 static void
-MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
+MarkUsedTemplateParameters(ASTContext &Ctx, QualType T,
                            bool OnlyDeduced,
                            unsigned Level,
                            SmallVectorImpl<bool> &Deduced);
@@ -3564,23 +3564,24 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
                                   std::min(Proto1->getNumArgs(),
                                            Proto2->getNumArgs()));
     if (S.getLangOptions().CPlusPlus0x && IsNonStatic2 && !IsNonStatic1)
-      ::MarkUsedTemplateParameters(S, Method2->getThisType(S.Context), false,
+      ::MarkUsedTemplateParameters(S.Context, Method2->getThisType(S.Context),
+                                   false,
                                    TemplateParams->getDepth(), UsedParameters);
     for (unsigned I = Skip2; I < NumParams; ++I)
-      ::MarkUsedTemplateParameters(S, Proto2->getArgType(I), false,
+      ::MarkUsedTemplateParameters(S.Context, Proto2->getArgType(I), false,
                                    TemplateParams->getDepth(),
                                    UsedParameters);
     break;
   }
 
   case TPOC_Conversion:
-    ::MarkUsedTemplateParameters(S, Proto2->getResultType(), false,
+    ::MarkUsedTemplateParameters(S.Context, Proto2->getResultType(), false,
                                  TemplateParams->getDepth(),
                                  UsedParameters);
     break;
 
   case TPOC_Other:
-    ::MarkUsedTemplateParameters(S, FD2->getType(), false,
+    ::MarkUsedTemplateParameters(S.Context, FD2->getType(), false,
                                  TemplateParams->getDepth(),
                                  UsedParameters);
     break;
@@ -3933,7 +3934,7 @@ Sema::getMoreSpecializedPartialSpecialization(
 }
 
 static void
-MarkUsedTemplateParameters(Sema &SemaRef,
+MarkUsedTemplateParameters(ASTContext &Ctx,
                            const TemplateArgument &TemplateArg,
                            bool OnlyDeduced,
                            unsigned Depth,
@@ -3942,7 +3943,7 @@ MarkUsedTemplateParameters(Sema &SemaRef,
 /// \brief Mark the template parameters that are used by the given
 /// expression.
 static void
-MarkUsedTemplateParameters(Sema &SemaRef,
+MarkUsedTemplateParameters(ASTContext &Ctx,
                            const Expr *E,
                            bool OnlyDeduced,
                            unsigned Depth,
@@ -3973,7 +3974,7 @@ MarkUsedTemplateParameters(Sema &SemaRef,
 /// \brief Mark the template parameters that are used by the given
 /// nested name specifier.
 static void
-MarkUsedTemplateParameters(Sema &SemaRef,
+MarkUsedTemplateParameters(ASTContext &Ctx,
                            NestedNameSpecifier *NNS,
                            bool OnlyDeduced,
                            unsigned Depth,
@@ -3981,16 +3982,16 @@ MarkUsedTemplateParameters(Sema &SemaRef,
   if (!NNS)
     return;
 
-  MarkUsedTemplateParameters(SemaRef, NNS->getPrefix(), OnlyDeduced, Depth,
+  MarkUsedTemplateParameters(Ctx, NNS->getPrefix(), OnlyDeduced, Depth,
                              Used);
-  MarkUsedTemplateParameters(SemaRef, QualType(NNS->getAsType(), 0),
+  MarkUsedTemplateParameters(Ctx, QualType(NNS->getAsType(), 0),
                              OnlyDeduced, Depth, Used);
 }
 
 /// \brief Mark the template parameters that are used by the given
 /// template name.
 static void
-MarkUsedTemplateParameters(Sema &SemaRef,
+MarkUsedTemplateParameters(ASTContext &Ctx,
                            TemplateName Name,
                            bool OnlyDeduced,
                            unsigned Depth,
@@ -4005,17 +4006,17 @@ MarkUsedTemplateParameters(Sema &SemaRef,
   }
 
   if (QualifiedTemplateName *QTN = Name.getAsQualifiedTemplateName())
-    MarkUsedTemplateParameters(SemaRef, QTN->getQualifier(), OnlyDeduced,
+    MarkUsedTemplateParameters(Ctx, QTN->getQualifier(), OnlyDeduced,
                                Depth, Used);
   if (DependentTemplateName *DTN = Name.getAsDependentTemplateName())
-    MarkUsedTemplateParameters(SemaRef, DTN->getQualifier(), OnlyDeduced,
+    MarkUsedTemplateParameters(Ctx, DTN->getQualifier(), OnlyDeduced,
                                Depth, Used);
 }
 
 /// \brief Mark the template parameters that are used by the given
 /// type.
 static void
-MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
+MarkUsedTemplateParameters(ASTContext &Ctx, QualType T,
                            bool OnlyDeduced,
                            unsigned Depth,
                            SmallVectorImpl<bool> &Used) {
@@ -4026,10 +4027,10 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
   if (!T->isDependentType())
     return;
 
-  T = SemaRef.Context.getCanonicalType(T);
+  T = Ctx.getCanonicalType(T);
   switch (T->getTypeClass()) {
   case Type::Pointer:
-    MarkUsedTemplateParameters(SemaRef,
+    MarkUsedTemplateParameters(Ctx,
                                cast<PointerType>(T)->getPointeeType(),
                                OnlyDeduced,
                                Depth,
@@ -4037,7 +4038,7 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
     break;
 
   case Type::BlockPointer:
-    MarkUsedTemplateParameters(SemaRef,
+    MarkUsedTemplateParameters(Ctx,
                                cast<BlockPointerType>(T)->getPointeeType(),
                                OnlyDeduced,
                                Depth,
@@ -4046,7 +4047,7 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
 
   case Type::LValueReference:
   case Type::RValueReference:
-    MarkUsedTemplateParameters(SemaRef,
+    MarkUsedTemplateParameters(Ctx,
                                cast<ReferenceType>(T)->getPointeeType(),
                                OnlyDeduced,
                                Depth,
@@ -4055,29 +4056,29 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
 
   case Type::MemberPointer: {
     const MemberPointerType *MemPtr = cast<MemberPointerType>(T.getTypePtr());
-    MarkUsedTemplateParameters(SemaRef, MemPtr->getPointeeType(), OnlyDeduced,
+    MarkUsedTemplateParameters(Ctx, MemPtr->getPointeeType(), OnlyDeduced,
                                Depth, Used);
-    MarkUsedTemplateParameters(SemaRef, QualType(MemPtr->getClass(), 0),
+    MarkUsedTemplateParameters(Ctx, QualType(MemPtr->getClass(), 0),
                                OnlyDeduced, Depth, Used);
     break;
   }
 
   case Type::DependentSizedArray:
-    MarkUsedTemplateParameters(SemaRef,
+    MarkUsedTemplateParameters(Ctx,
                                cast<DependentSizedArrayType>(T)->getSizeExpr(),
                                OnlyDeduced, Depth, Used);
     // Fall through to check the element type
 
   case Type::ConstantArray:
   case Type::IncompleteArray:
-    MarkUsedTemplateParameters(SemaRef,
+    MarkUsedTemplateParameters(Ctx,
                                cast<ArrayType>(T)->getElementType(),
                                OnlyDeduced, Depth, Used);
     break;
 
   case Type::Vector:
   case Type::ExtVector:
-    MarkUsedTemplateParameters(SemaRef,
+    MarkUsedTemplateParameters(Ctx,
                                cast<VectorType>(T)->getElementType(),
                                OnlyDeduced, Depth, Used);
     break;
@@ -4085,19 +4086,19 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
   case Type::DependentSizedExtVector: {
     const DependentSizedExtVectorType *VecType
       = cast<DependentSizedExtVectorType>(T);
-    MarkUsedTemplateParameters(SemaRef, VecType->getElementType(), OnlyDeduced,
+    MarkUsedTemplateParameters(Ctx, VecType->getElementType(), OnlyDeduced,
                                Depth, Used);
-    MarkUsedTemplateParameters(SemaRef, VecType->getSizeExpr(), OnlyDeduced,
+    MarkUsedTemplateParameters(Ctx, VecType->getSizeExpr(), OnlyDeduced,
                                Depth, Used);
     break;
   }
 
   case Type::FunctionProto: {
     const FunctionProtoType *Proto = cast<FunctionProtoType>(T);
-    MarkUsedTemplateParameters(SemaRef, Proto->getResultType(), OnlyDeduced,
+    MarkUsedTemplateParameters(Ctx, Proto->getResultType(), OnlyDeduced,
                                Depth, Used);
     for (unsigned I = 0, N = Proto->getNumArgs(); I != N; ++I)
-      MarkUsedTemplateParameters(SemaRef, Proto->getArgType(I), OnlyDeduced,
+      MarkUsedTemplateParameters(Ctx, Proto->getArgType(I), OnlyDeduced,
                                  Depth, Used);
     break;
   }
@@ -4112,10 +4113,10 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
   case Type::SubstTemplateTypeParmPack: {
     const SubstTemplateTypeParmPackType *Subst
       = cast<SubstTemplateTypeParmPackType>(T);
-    MarkUsedTemplateParameters(SemaRef,
+    MarkUsedTemplateParameters(Ctx,
                                QualType(Subst->getReplacedParameter(), 0),
                                OnlyDeduced, Depth, Used);
-    MarkUsedTemplateParameters(SemaRef, Subst->getArgumentPack(),
+    MarkUsedTemplateParameters(Ctx, Subst->getArgumentPack(),
                                OnlyDeduced, Depth, Used);
     break;
   }
@@ -4127,7 +4128,7 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
   case Type::TemplateSpecialization: {
     const TemplateSpecializationType *Spec
       = cast<TemplateSpecializationType>(T);
-    MarkUsedTemplateParameters(SemaRef, Spec->getTemplateName(), OnlyDeduced,
+    MarkUsedTemplateParameters(Ctx, Spec->getTemplateName(), OnlyDeduced,
                                Depth, Used);
 
     // C++0x [temp.deduct.type]p9:
@@ -4139,28 +4140,28 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
       break;
 
     for (unsigned I = 0, N = Spec->getNumArgs(); I != N; ++I)
-      MarkUsedTemplateParameters(SemaRef, Spec->getArg(I), OnlyDeduced, Depth,
+      MarkUsedTemplateParameters(Ctx, Spec->getArg(I), OnlyDeduced, Depth,
                                  Used);
     break;
   }
 
   case Type::Complex:
     if (!OnlyDeduced)
-      MarkUsedTemplateParameters(SemaRef,
+      MarkUsedTemplateParameters(Ctx,
                                  cast<ComplexType>(T)->getElementType(),
                                  OnlyDeduced, Depth, Used);
     break;
 
   case Type::Atomic:
     if (!OnlyDeduced)
-      MarkUsedTemplateParameters(SemaRef,
+      MarkUsedTemplateParameters(Ctx,
                                  cast<AtomicType>(T)->getValueType(),
                                  OnlyDeduced, Depth, Used);
     break;
 
   case Type::DependentName:
     if (!OnlyDeduced)
-      MarkUsedTemplateParameters(SemaRef,
+      MarkUsedTemplateParameters(Ctx,
                                  cast<DependentNameType>(T)->getQualifier(),
                                  OnlyDeduced, Depth, Used);
     break;
@@ -4169,7 +4170,7 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
     const DependentTemplateSpecializationType *Spec
       = cast<DependentTemplateSpecializationType>(T);
     if (!OnlyDeduced)
-      MarkUsedTemplateParameters(SemaRef, Spec->getQualifier(),
+      MarkUsedTemplateParameters(Ctx, Spec->getQualifier(),
                                  OnlyDeduced, Depth, Used);
 
     // C++0x [temp.deduct.type]p9:
@@ -4181,47 +4182,47 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
       break;
 
     for (unsigned I = 0, N = Spec->getNumArgs(); I != N; ++I)
-      MarkUsedTemplateParameters(SemaRef, Spec->getArg(I), OnlyDeduced, Depth,
+      MarkUsedTemplateParameters(Ctx, Spec->getArg(I), OnlyDeduced, Depth,
                                  Used);
     break;
   }
 
   case Type::TypeOf:
     if (!OnlyDeduced)
-      MarkUsedTemplateParameters(SemaRef,
+      MarkUsedTemplateParameters(Ctx,
                                  cast<TypeOfType>(T)->getUnderlyingType(),
                                  OnlyDeduced, Depth, Used);
     break;
 
   case Type::TypeOfExpr:
     if (!OnlyDeduced)
-      MarkUsedTemplateParameters(SemaRef,
+      MarkUsedTemplateParameters(Ctx,
                                  cast<TypeOfExprType>(T)->getUnderlyingExpr(),
                                  OnlyDeduced, Depth, Used);
     break;
 
   case Type::Decltype:
     if (!OnlyDeduced)
-      MarkUsedTemplateParameters(SemaRef,
+      MarkUsedTemplateParameters(Ctx,
                                  cast<DecltypeType>(T)->getUnderlyingExpr(),
                                  OnlyDeduced, Depth, Used);
     break;
 
   case Type::UnaryTransform:
     if (!OnlyDeduced)
-      MarkUsedTemplateParameters(SemaRef,
+      MarkUsedTemplateParameters(Ctx,
                                cast<UnaryTransformType>(T)->getUnderlyingType(),
                                  OnlyDeduced, Depth, Used);
     break;
 
   case Type::PackExpansion:
-    MarkUsedTemplateParameters(SemaRef,
+    MarkUsedTemplateParameters(Ctx,
                                cast<PackExpansionType>(T)->getPattern(),
                                OnlyDeduced, Depth, Used);
     break;
 
   case Type::Auto:
-    MarkUsedTemplateParameters(SemaRef,
+    MarkUsedTemplateParameters(Ctx,
                                cast<AutoType>(T)->getDeducedType(),
                                OnlyDeduced, Depth, Used);
 
@@ -4247,7 +4248,7 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
 /// \brief Mark the template parameters that are used by this
 /// template argument.
 static void
-MarkUsedTemplateParameters(Sema &SemaRef,
+MarkUsedTemplateParameters(ASTContext &Ctx,
                            const TemplateArgument &TemplateArg,
                            bool OnlyDeduced,
                            unsigned Depth,
@@ -4259,19 +4260,19 @@ MarkUsedTemplateParameters(Sema &SemaRef,
     break;
 
   case TemplateArgument::Type:
-    MarkUsedTemplateParameters(SemaRef, TemplateArg.getAsType(), OnlyDeduced,
+    MarkUsedTemplateParameters(Ctx, TemplateArg.getAsType(), OnlyDeduced,
                                Depth, Used);
     break;
 
   case TemplateArgument::Template:
   case TemplateArgument::TemplateExpansion:
-    MarkUsedTemplateParameters(SemaRef,
+    MarkUsedTemplateParameters(Ctx,
                                TemplateArg.getAsTemplateOrTemplatePattern(),
                                OnlyDeduced, Depth, Used);
     break;
 
   case TemplateArgument::Expression:
-    MarkUsedTemplateParameters(SemaRef, TemplateArg.getAsExpr(), OnlyDeduced,
+    MarkUsedTemplateParameters(Ctx, TemplateArg.getAsExpr(), OnlyDeduced,
                                Depth, Used);
     break;
 
@@ -4279,7 +4280,7 @@ MarkUsedTemplateParameters(Sema &SemaRef,
     for (TemplateArgument::pack_iterator P = TemplateArg.pack_begin(),
                                       PEnd = TemplateArg.pack_end();
          P != PEnd; ++P)
-      MarkUsedTemplateParameters(SemaRef, *P, OnlyDeduced, Depth, Used);
+      MarkUsedTemplateParameters(Ctx, *P, OnlyDeduced, Depth, Used);
     break;
   }
 }
@@ -4306,14 +4307,15 @@ Sema::MarkUsedTemplateParameters(const TemplateArgumentList &TemplateArgs,
     return;
 
   for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
-    ::MarkUsedTemplateParameters(*this, TemplateArgs[I], OnlyDeduced,
+    ::MarkUsedTemplateParameters(Context, TemplateArgs[I], OnlyDeduced,
                                  Depth, Used);
 }
 
 /// \brief Marks all of the template parameters that will be deduced by a
 /// call to the given function template.
 void
-Sema::MarkDeducedTemplateParameters(FunctionTemplateDecl *FunctionTemplate,
+Sema::MarkDeducedTemplateParameters(ASTContext &Ctx,
+                                    FunctionTemplateDecl *FunctionTemplate,
                                     SmallVectorImpl<bool> &Deduced) {
   TemplateParameterList *TemplateParams
     = FunctionTemplate->getTemplateParameters();
@@ -4322,7 +4324,7 @@ Sema::MarkDeducedTemplateParameters(FunctionTemplateDecl *FunctionTemplate,
 
   FunctionDecl *Function = FunctionTemplate->getTemplatedDecl();
   for (unsigned I = 0, N = Function->getNumParams(); I != N; ++I)
-    ::MarkUsedTemplateParameters(*this, Function->getParamDecl(I)->getType(),
+    ::MarkUsedTemplateParameters(Ctx, Function->getParamDecl(I)->getType(),
                                  true, TemplateParams->getDepth(), Deduced);
 }
 
@@ -4336,7 +4338,7 @@ bool hasDeducibleTemplateParameters(Sema &S,
     = FunctionTemplate->getTemplateParameters();
   SmallVector<bool, 4> Deduced;
   Deduced.resize(TemplateParams->size());
-  ::MarkUsedTemplateParameters(S, T, true, TemplateParams->getDepth(), 
+  ::MarkUsedTemplateParameters(S.Context, T, true, TemplateParams->getDepth(), 
                                Deduced);
 
   for (unsigned I = 0, N = Deduced.size(); I != N; ++I)
