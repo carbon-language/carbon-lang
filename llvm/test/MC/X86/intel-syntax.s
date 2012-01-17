@@ -1,5 +1,10 @@
 // RUN: llvm-mc -triple x86_64-unknown-unknown -x86-asm-syntax=intel %s | FileCheck %s
 
+_test:
+	xor	EAX, EAX
+	ret
+
+_main:
 // CHECK:	movl	$257, -4(%rsp)
 	mov	DWORD PTR [RSP - 4], 257
 // CHECK:	movq	$123, -16(%rsp)
@@ -16,3 +21,6 @@
 	mov	RCX, QWORD PTR [0]
 // CHECK:	movl	-24(%rsp,%rax,4), %eax	
 	mov	EAX, DWORD PTR [RSP + 4*RAX - 24]
+// CHECK:	callq	_test
+	call	_test
+	ret

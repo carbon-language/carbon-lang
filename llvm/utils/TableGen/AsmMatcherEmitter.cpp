@@ -2388,7 +2388,9 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   if (HasMnemonicAliases) {
     OS << "  // Process all MnemonicAliases to remap the mnemonic.\n";
-    OS << "  applyMnemonicAliases(Mnemonic, AvailableFeatures);\n\n";
+    OS << "  // FIXME : Add an entry in AsmParserVariant to check this.\n";
+    OS << "  if (!VariantID)\n";
+    OS << "    applyMnemonicAliases(Mnemonic, AvailableFeatures);\n\n";
   }
 
   // Emit code to compute the class list for this operand vector.
