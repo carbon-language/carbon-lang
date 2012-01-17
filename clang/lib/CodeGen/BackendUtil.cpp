@@ -106,6 +106,11 @@ public:
 
 }
 
+static void addObjCARCAPElimPass(const PassManagerBuilder &Builder, PassManagerBase &PM) {
+  if (Builder.OptLevel > 0)
+    PM.add(createObjCARCAPElimPass());
+}
+
 static void addObjCARCExpandPass(const PassManagerBuilder &Builder, PassManagerBase &PM) {
   if (Builder.OptLevel > 0)
     PM.add(createObjCARCExpandPass());
@@ -144,6 +149,8 @@ void EmitAssemblyHelper::CreatePasses() {
   if (LangOpts.ObjCAutoRefCount) {
     PMBuilder.addExtension(PassManagerBuilder::EP_EarlyAsPossible,
                            addObjCARCExpandPass);
+    PMBuilder.addExtension(PassManagerBuilder::EP_ModuleOptimizerEarly,
+                           addObjCARCAPElimPass);
     PMBuilder.addExtension(PassManagerBuilder::EP_ScalarOptimizerLate,
                            addObjCARCOptPass);
   }
