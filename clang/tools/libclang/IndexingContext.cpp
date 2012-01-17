@@ -208,6 +208,10 @@ void IndexingContext::setASTContext(ASTContext &ctx) {
   static_cast<ASTUnit*>(CXTU->TUData)->setASTContext(&ctx);
 }
 
+void IndexingContext::setPreprocessor(Preprocessor &PP) {
+  static_cast<ASTUnit*>(CXTU->TUData)->setPreprocessor(&PP);
+}
+
 bool IndexingContext::shouldAbort() {
   if (!CB.abortQuery)
     return false;

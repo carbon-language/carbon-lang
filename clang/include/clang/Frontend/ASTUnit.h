@@ -457,6 +457,7 @@ public:
         ASTContext &getASTContext()       { return *Ctx; }
 
   void setASTContext(ASTContext *ctx) { Ctx = ctx; }
+  void setPreprocessor(Preprocessor *pp);
 
   bool hasSema() const { return TheSema; }
   Sema &getSema() const { 

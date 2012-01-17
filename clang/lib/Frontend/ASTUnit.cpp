@@ -262,6 +262,8 @@ ASTUnit::~ASTUnit() {
   }    
 }
 
+void ASTUnit::setPreprocessor(Preprocessor *pp) { PP = pp; }
+
 /// \brief Determine the set of code-completion contexts in which this 
 /// declaration should be shown.
 static unsigned getDeclShowContexts(NamedDecl *ND,

@@ -319,6 +319,7 @@ public:
   ASTContext &getASTContext() const { return *Ctx; }
 
   void setASTContext(ASTContext &ctx);
+  void setPreprocessor(Preprocessor &PP);
 
   bool suppressRefs() const {
     return IndexOptions & CXIndexOpt_SuppressRedundantRefs;

@@ -176,6 +176,7 @@ public:
     IndexCtx.setASTContext(CI.getASTContext());
     Preprocessor &PP = CI.getPreprocessor();
     PP.addPPCallbacks(new IndexPPCallbacks(PP, IndexCtx));
+    IndexCtx.setPreprocessor(PP);
     return new IndexingConsumer(IndexCtx);
   }
 
