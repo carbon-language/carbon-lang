@@ -3070,6 +3070,8 @@ class TagType : public Type {
   /// TagDecl that declares the entity.
   TagDecl * decl;
 
+  friend class ASTReader;
+  
 protected:
   TagType(TypeClass TC, const TagDecl *D, QualType can);
 
@@ -4160,6 +4162,7 @@ class ObjCInterfaceType : public ObjCObjectType {
     : ObjCObjectType(Nonce_ObjCInterface),
       Decl(const_cast<ObjCInterfaceDecl*>(D)) {}
   friend class ASTContext;  // ASTContext creates these.
+  friend class ASTReader;
   friend class ObjCInterfaceDecl;
 
 public:

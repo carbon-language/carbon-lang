@@ -2225,6 +2225,7 @@ class TypeDecl : public NamedDecl {
   friend class TagDecl;
   friend class TemplateTypeParmDecl;
   friend class TagType;
+  friend class ASTReader;
 
 protected:
   TypeDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
