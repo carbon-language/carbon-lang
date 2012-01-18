@@ -99,6 +99,12 @@ private:
   bool checkSystemCall(const CallExpr *CE, StringRef Name,
                        CheckerContext &C) const;
 
+  /// Check if tainted data is used as a buffer size ins strn.. functions,
+  /// and allocators.
+  static const char MsgTaintedBufferSize[];
+  bool checkTaintedBufferSize(const CallExpr *CE, const FunctionDecl *FDecl,
+                              CheckerContext &C) const;
+
   /// Generate a report if the expression is tainted or points to tainted data.
   bool generateReportIfTainted(const Expr *E, const char Msg[],
                                CheckerContext &C) const;
@@ -176,7 +182,13 @@ const char GenericTaintChecker::MsgUncontrolledFormatString[] =
 const char GenericTaintChecker::MsgSanitizeSystemArgs[] =
   "Tainted data passed to a system call "
   "(CERT/STR02-C. Sanitize data passed to complex subsystems)";
-}
+
+const char GenericTaintChecker::MsgTaintedBufferSize[] =
+  "Tainted data is used to specify the buffer size "
+  "(CERT/STR31-C. Guarantee that storage for strings has sufficient space for "
+  "character data and the null terminator)";
+
+} // end of anonymous namespace
 
 /// A set which is used to pass information from call pre-visit instruction
 /// to the call post-visit. The values are unsigned integers, which are either
@@ -242,8 +254,8 @@ GenericTaintChecker::TaintPropagationRule::getTaintPropagationRule(
     else if (C.isCLibraryFunction(FDecl, "strdup") ||
              C.isCLibraryFunction(FDecl, "strdupa"))
       return TaintPropagationRule(0, ReturnValueIndex);
-    else if (C.isCLibraryFunction(FDecl, "strndupa"))
-      return TaintPropagationRule(0, 1, ReturnValueIndex);
+    else if (C.isCLibraryFunction(FDecl, "wcsdup"))
+      return TaintPropagationRule(0, ReturnValueIndex);
   }
 
   // Skipping the following functions, since they might be used for cleansing
@@ -371,11 +383,15 @@ bool GenericTaintChecker::checkPre(const CallExpr *CE, CheckerContext &C) const{
   if (checkUncontrolledFormatString(CE, C))
     return true;
 
-  StringRef Name = C.getCalleeName(CE);
+  const FunctionDecl *FDecl = C.getCalleeDecl(CE);
+  StringRef Name = C.getCalleeName(FDecl);
   if (Name.empty())
     return false;
 
   if (checkSystemCall(CE, Name, C))
+    return true;
+
+  if (checkTaintedBufferSize(CE, FDecl, C))
     return true;
 
   return false;
@@ -634,6 +650,48 @@ bool GenericTaintChecker::checkSystemCall(const CallExpr *CE,
 
   if (generateReportIfTainted(CE->getArg(ArgNum),
                               MsgSanitizeSystemArgs, C))
+    return true;
+
+  return false;
+}
+
+// TODO: Should this check be a part of the CString checker?
+// If yes, should taint be a global setting?
+bool GenericTaintChecker::checkTaintedBufferSize(const CallExpr *CE,
+                                                 const FunctionDecl *FDecl,
+                                                 CheckerContext &C) const {
+  // If the function has a buffer size argument, set ArgNum.
+  unsigned ArgNum = InvalidArgIndex;
+  unsigned BId = 0;
+  if ( (BId = FDecl->getMemoryFunctionKind()) )
+    switch(BId) {
+    case Builtin::BImemcpy:
+    case Builtin::BImemmove:
+    case Builtin::BIstrncpy:
+      ArgNum = 2;
+      break;
+    case Builtin::BIstrndup:
+      ArgNum = 1;
+      break;
+    default:
+      break;
+    };
+
+  if (ArgNum == InvalidArgIndex) {
+    if (C.isCLibraryFunction(FDecl, "malloc") ||
+        C.isCLibraryFunction(FDecl, "calloc") ||
+        C.isCLibraryFunction(FDecl, "alloca"))
+      ArgNum = 0;
+    else if (C.isCLibraryFunction(FDecl, "memccpy"))
+      ArgNum = 3;
+    else if (C.isCLibraryFunction(FDecl, "realloc"))
+      ArgNum = 1;
+    else if (C.isCLibraryFunction(FDecl, "bcopy"))
+      ArgNum = 2;
+  }
+
+  if (ArgNum != InvalidArgIndex &&
+      generateReportIfTainted(CE->getArg(ArgNum), MsgTaintedBufferSize, C))
     return true;
 
   return false;

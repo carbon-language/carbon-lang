@@ -23,6 +23,11 @@ static char *__inline_strcpy_chk (char *dest, const char *src) {
 char *stpcpy(char *restrict s1, const char *restrict s2);
 char *strncpy( char * destination, const char * source, size_t num );
 char *strndup(const char *s, size_t n);
+char *strncat(char *restrict s1, const char *restrict s2, size_t n);
+
+void *malloc(size_t);
+void *calloc(size_t nmemb, size_t size);
+void bcopy(void *s1, void *s2, size_t n);
 
 #define BUFSIZE 10
 
@@ -112,6 +117,7 @@ void testTaintSystemCall() {
   sprintf(buffer, "/bin/mail %s < /tmp/email", addr);
   system(buffer); // expected-warning {{Tainted data passed to a system call}}
 }
+
 void testTaintSystemCall2() {
   // Test that snpintf transfers taint.
   char buffern[156];
@@ -120,6 +126,7 @@ void testTaintSystemCall2() {
   __builtin_snprintf(buffern, 10, "/bin/mail %s < /tmp/email", addr);
   system(buffern); // expected-warning {{Tainted data passed to a system call}}
 }
+
 void testTaintSystemCall3() {
   char buffern2[156];
   int numt;
@@ -127,4 +134,19 @@ void testTaintSystemCall3() {
   scanf("%s %d", addr, &numt);
   __builtin_snprintf(buffern2, numt, "/bin/mail %s < /tmp/email", "abcd");
   system(buffern2); // expected-warning {{Tainted data passed to a system call}}
+}
+
+void testTaintedBufferSize() {
+  size_t ts;
+  scanf("%zd", &ts);
+
+  int *buf1 = (int*)malloc(ts*sizeof(int)); // expected-warning {{Tainted data is used to specify the buffer size}}
+  char *dst = (char*)calloc(ts, sizeof(char)); //expected-warning {{Tainted data is used to specify the buffer size}}
+  bcopy(buf1, dst, ts); // expected-warning {{Tainted data is used to specify the buffer size}}
+  __builtin_memcpy(dst, buf1, (ts + 4)*sizeof(char)); // expected-warning {{Tainted data is used to specify the buffer size}}
+
+  // If both buffers are trusted, do not issue a warning.
+  char *dst2 = (char*)malloc(ts*sizeof(char)); // expected-warning {{Tainted data is used to specify the buffer size}}
+  strncat(dst2, dst, ts); // no-warning
+
 }
