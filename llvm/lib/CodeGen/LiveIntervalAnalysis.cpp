@@ -823,7 +823,7 @@ unsigned LiveIntervals::getReMatImplicitUse(const LiveInterval &li,
     assert(!RegOp &&
            "Can't rematerialize instruction with multiple register operand!");
     RegOp = MO.getReg();
-#ifndef NDEBUG
+#ifdef NDEBUG
     break;
 #endif
   }
