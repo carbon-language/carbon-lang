@@ -4880,9 +4880,11 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     LookupParsedName(R, CurScope, &ScopeSpec);
     if (R.isAmbiguous())
       continue;
-    if (R.empty())
-      if (DiagnoseEmptyLookup(CurScope, ScopeSpec, R, CTC_Unknown))
+    if (R.empty()) {
+      DeclFilterCCC<VarDecl> Validator;
+      if (DiagnoseEmptyLookup(CurScope, ScopeSpec, R, Validator))
         continue;
+    }
 
     VarDecl *Var = R.getAsSingle<VarDecl>();
     if (!Var) {

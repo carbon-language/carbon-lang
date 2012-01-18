@@ -9030,10 +9030,13 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
 
   LookupResult R(SemaRef, ULE->getName(), ULE->getNameLoc(),
                  Sema::LookupOrdinaryName);
+  CorrectionCandidateCallback Validator;
+  Validator.WantTypeSpecifiers = SemaRef.getLangOptions().CPlusPlus;
+  Validator.WantRemainingKeywords = false;
   if (!DiagnoseTwoPhaseLookup(SemaRef, Fn->getExprLoc(), SS, R,
                               ExplicitTemplateArgs, Args, NumArgs) &&
       (!EmptyLookup ||
-       SemaRef.DiagnoseEmptyLookup(S, SS, R, Sema::CTC_Expression,
+       SemaRef.DiagnoseEmptyLookup(S, SS, R, Validator,
                                    ExplicitTemplateArgs, Args, NumArgs)))
     return ExprError();
 
