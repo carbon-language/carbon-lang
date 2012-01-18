@@ -1269,8 +1269,12 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
     D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto;
 
   // Parse declarator '=' initializer.
-  if (isTokenEqualOrMistypedEqualEqual(
-                               diag::err_invalid_equalequal_after_declarator)) {
+  // If a '==' or '+=' is found, suggest a fixit to '='.
+  if (Tok.is(tok::equal) ||
+      CreateTokenReplacement(tok::equal, tok::equalequal,
+                             diag::err_invalid_equalequal_after_declarator) ||
+      CreateTokenReplacement(tok::equal, tok::plusequal,
+                             diag::err_invalid_plusequal_after_declarator)) {
     ConsumeToken();
     if (Tok.is(tok::kw_delete)) {
       if (D.isFunctionDeclarator())

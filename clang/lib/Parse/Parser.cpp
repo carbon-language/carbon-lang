@@ -1401,18 +1401,21 @@ bool Parser::TryAnnotateCXXScopeToken(bool EnteringContext) {
   return false;
 }
 
-bool Parser::isTokenEqualOrMistypedEqualEqual(unsigned DiagID) {
-  if (Tok.is(tok::equalequal)) {
-    // We have '==' in a context that we would expect a '='.
-    // The user probably made a typo, intending to type '='. Emit diagnostic,
-    // fixit hint to turn '==' -> '=' and continue as if the user typed '='.
-    Diag(Tok, DiagID)
-      << FixItHint::CreateReplacement(SourceRange(Tok.getLocation()),
-                                      getTokenSimpleSpelling(tok::equal));
-    return true;
-  }
+bool Parser::CreateTokenReplacement(tok::TokenKind ExpectedToken,
+                                    tok::TokenKind FoundToken,
+                                    unsigned DiagID) {
+  if (Tok.isNot(FoundToken))
+    return false;
 
-  return Tok.is(tok::equal);
+  // We have FoundToken in a context that we would expect an ExpectedToken.
+  // The user probably made a typo, intending to type ExpectedToken.
+  // Emit diagnostic, fixit hint to turn ReplaceToken -> ExpectedToken
+  // and continue as if the user typed ExpectedToken.
+  Tok.setKind(ExpectedToken);
+  Diag(Tok, DiagID)
+    << FixItHint::CreateReplacement(SourceRange(Tok.getLocation()),
+                                    getTokenSimpleSpelling(ExpectedToken));
+  return true;
 }
 
 SourceLocation Parser::handleUnexpectedCodeCompletionToken() {

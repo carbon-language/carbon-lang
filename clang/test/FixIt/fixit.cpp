@@ -69,12 +69,18 @@ class C {
 
 namespace rdar8488464 {
 int x == 0; // expected-error {{invalid '==' at end of declaration; did you mean '='?}}
+int y += 0; // expected-error {{invalid '+=' at end of declaration; did you mean '='?}}
 
 void f() {
     int x == 0; // expected-error {{invalid '==' at end of declaration; did you mean '='?}}
     (void)x;
+    int y += 0; // expected-error {{invalid '+=' at end of declaration; did you mean '='?}}
+    (void)y;
     if (int x == 0) { // expected-error {{invalid '==' at end of declaration; did you mean '='?}}
       (void)x;
+    }
+    if (int y += 0) { // expected-error {{invalid '+=' at end of declaration; did you mean '='?}}
+      (void)y;
     }
 }
 }
