@@ -1,6 +1,8 @@
 ; RUN: opt -S -objc-arc-apelim < %s | FileCheck %s
 ; rdar://10227311
 
+@llvm.global_ctors = appending global [2 x { i32, void ()* }] [{ i32, void ()* } { i32 65535, void ()* @_GLOBAL__I_x }, { i32, void ()* } { i32 65535, void ()* @_GLOBAL__I_y }]
+
 @x = global i32 0
 
 declare i32 @bar() nounwind

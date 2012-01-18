@@ -887,6 +887,8 @@ bool ObjCARCExpand::runOnFunction(Function &F) {
 // ARC autorelease pool elimination.
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Constants.h"
+
 namespace {
   /// ObjCARCAPElim - Autorelease pool elimination.
   class ObjCARCAPElim : public ModulePass {
@@ -978,16 +980,27 @@ bool ObjCARCAPElim::runOnModule(Module &M) {
   if (!ModuleHasARC(M))
     return false;
 
+  // Find the llvm.global_ctors variable, as the first step in
+  // identifying the global constructors.
+  GlobalVariable *GV = M.getGlobalVariable("llvm.global_ctors");
+  if (!GV)
+    return false;
+
+  assert(GV->hasDefinitiveInitializer() &&
+         "llvm.global_ctors is uncooperative!");
+
   bool Changed = false;
 
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    Function *F = I;
+  // Dig the constructor functions out of GV's initializer.
+  ConstantArray *Init = cast<ConstantArray>(GV->getInitializer());
+  for (User::op_iterator OI = Init->op_begin(), OE = Init->op_end();
+       OI != OE; ++OI) {
+    Value *Op = *OI;
+    // llvm.global_ctors is an array of pairs where the second members
+    // are constructor functions.
+    Function *F = cast<Function>(cast<ConstantStruct>(Op)->getOperand(1));
     // Only look at function definitions.
     if (F->isDeclaration())
-      continue;
-    // Only look at global constructor functions. Unfortunately,
-    // the name is the most convenient way to recognize them.
-    if (!F->getName().startswith("_GLOBAL__I_"))
       continue;
     // Only look at functions with one basic block.
     if (llvm::next(F->begin()) != F->end())
