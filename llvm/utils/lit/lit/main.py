@@ -429,6 +429,10 @@ def main(builtinParameters = {}):    # Bump the GIL check interval, its more imp
     group.add_option("", "--shuffle", dest="shuffle",
                      help="Run tests in random order",
                      action="store_true", default=False)
+    group.add_option("", "--filter", dest="filter", metavar="EXPRESSION",
+                     help=("Only run tests with paths matching the given "
+                           "regular expression"),
+                     action="store", default=None)
     parser.add_option_group(group)
 
     group = OptionGroup(parser, "Debug and Experimental Options")
@@ -540,10 +544,24 @@ def main(builtinParameters = {}):    # Bump the GIL check interval, its more imp
 
     # Select and order the tests.
     numTotalTests = len(tests)
+
+    # First, select based on the filter expression if given.
+    if opts.filter:
+        try:
+            rex = re.compile(opts.filter)
+        except:
+            parser.error("invalid regular expression for --filter: %r" % (
+                    opts.filter))
+        tests = [t for t in tests
+                 if rex.search(t.getFullName())]
+
+    # Then select the order.
     if opts.shuffle:
         random.shuffle(tests)
     else:
         tests.sort(key = lambda t: t.getFullName())
+
+    # Finally limit the number of tests, if desired.
     if opts.maxTests is not None:
         tests = tests[:opts.maxTests]
 
