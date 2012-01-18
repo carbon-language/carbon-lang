@@ -883,8 +883,9 @@ namespace {
       unsigned BuiltinID = FD->getBuiltinID();
       if (!BuiltinID)
         return true;
-      const char *BuiltinName = BI.GetName(BuiltinID) + strlen("__builtin_");
-      if (Name == BuiltinName) {
+      StringRef BuiltinName = BI.GetName(BuiltinID);
+      if (BuiltinName.startswith("__builtin_") &&
+          Name == BuiltinName.slice(strlen("__builtin_"), StringRef::npos)) {
         Result = true;
         return false;
       }
