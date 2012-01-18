@@ -1114,10 +1114,12 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
         goto fail;
       // There's an implicit 'isa' ivar on all objects.
       // But we only actually find it this way on objects of type 'id',
-      // apparently.
-      if (OTy->isObjCId() && Member->isStr("isa"))
+      // apparently.ghjg
+      if (OTy->isObjCId() && Member->isStr("isa")) {
+        Diag(MemberLoc, diag::warn_objc_isa_use);
         return Owned(new (Context) ObjCIsaExpr(BaseExpr.take(), IsArrow, MemberLoc,
                                                Context.getObjCClassType()));
+      }
 
       if (ShouldTryAgainWithRedefinitionType(*this, BaseExpr))
         return LookupMemberExpr(R, BaseExpr, IsArrow, OpLoc, SS,

@@ -511,6 +511,10 @@ def err_objc_property_requires_object : Error<
 def warn_objc_property_no_assignment_attribute : Warning<
   "no 'assign', 'retain', or 'copy' attribute is specified - "
   "'assign' is assumed">;
+def warn_objc_isa_use : Warning<
+  "direct access to objective-c's isa is deprecated "
+  "in favor of object_setClass() and object_getClass()">,
+  InGroup<DiagGroup<"deprecated-objective-c-isa-usage">>;
 def warn_objc_property_default_assign_on_object : Warning<
   "default property attribute 'assign' not appropriate for non-gc object">;
 def warn_property_attr_mismatch : Warning<

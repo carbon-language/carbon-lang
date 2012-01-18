@@ -20,10 +20,11 @@ template<unsigned N, typename T, typename U, typename V>
 void f(U value, V value2) {
   get_an_A(N)->ivar = value; // expected-error{{assigning to 'int' from incompatible type 'int *'}}
   get_an_A(N).prop = value2; // expected-error{{assigning to 'int' from incompatible type 'double *'}}
-  T c = get_an_id(N)->isa; // expected-error{{cannot initialize a variable of type 'int' with an lvalue of type 'Class'}}
+  T c = get_an_id(N)->isa; // expected-error{{cannot initialize a variable of type 'int' with an lvalue of type 'Class'}} \
+                           // expected-warning 5 {{direct access to objective-c's isa is deprecated in favor of object_setClass() and object_getClass()}}
 }
 
-template void f<6, Class>(int, int);
+template void f<6, Class>(int, int); // expected-note{{in instantiation of}}
 template void f<7, Class>(int*, int); // expected-note{{in instantiation of}}
 template void f<8, Class>(int, double*); // expected-note{{in instantiation of}}
 template void f<9, int>(int, int); // expected-note{{in instantiation of}}
@@ -44,10 +45,11 @@ template void f2(A*, int, double*); // expected-note{{instantiation of}}
 // an isa.
 template<typename T, typename U>
 void f3(U ptr) {
-  T c = ptr->isa; // expected-error{{cannot initialize a variable of type 'int' with an lvalue of type 'Class'}}
+  T c = ptr->isa; // expected-error{{cannot initialize a variable of type 'int' with an lvalue of type 'Class'}} \
+                  // expected-warning 2 {{direct access to objective-c's isa is deprecated in favor of object_setClass() and object_getClass()}}
 }
 
-template void f3<Class>(id);
+template void f3<Class>(id); // expected-note{{in instantiation of}}
 template void f3<int>(id); // expected-note{{instantiation of}}
 
 // Implicit setter/getter
