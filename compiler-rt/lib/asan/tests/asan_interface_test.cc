@@ -50,8 +50,8 @@ TEST(AddressSanitizerInterface, GetAllocatedSizeAndOwnershipTest) {
   EXPECT_DEATH(__asan_get_allocated_size(array + kArraySize / 2),
                kGetAllocatedSizeErrorMsg);
 
-  // NULL is a valid argument and is owned.
-  EXPECT_EQ(true, __asan_get_ownership(NULL));
+  // NULL is not owned, but is a valid argument for __asan_get_allocated_size().
+  EXPECT_EQ(false, __asan_get_ownership(NULL));
   EXPECT_EQ(0, __asan_get_allocated_size(NULL));
 
   // When memory is freed, it's not owned, and call to GetAllocatedSize
