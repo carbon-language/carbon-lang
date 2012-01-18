@@ -107,6 +107,9 @@ bool ARMAsmPrinter::lowerOperand(const MachineOperand &MO,
     MCOp = MCOperand::CreateFPImm(Val.convertToDouble());
     break;
   }
+  case MachineOperand::MO_RegisterMask:
+    // Ignore call clobbers.
+    return false;
   }
   return true;
 }

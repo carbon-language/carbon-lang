@@ -143,6 +143,9 @@ void MSP430MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       break;
     case MachineOperand::MO_BlockAddress:
       MCOp = LowerSymbolOperand(MO, GetBlockAddressSymbol(MO));
+      break;
+    case MachineOperand::MO_RegisterMask:
+      continue;
     }
 
     OutMI.addOperand(MCOp);

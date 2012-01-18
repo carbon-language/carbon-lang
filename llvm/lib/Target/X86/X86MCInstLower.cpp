@@ -335,6 +335,9 @@ void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       MCOp = LowerSymbolOperand(MO,
                      AsmPrinter.GetBlockAddressSymbol(MO.getBlockAddress()));
       break;
+    case MachineOperand::MO_RegisterMask:
+      // Ignore call clobbers.
+      continue;
     }
     
     OutMI.addOperand(MCOp);

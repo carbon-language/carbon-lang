@@ -150,7 +150,7 @@ void MBlazeMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     case MachineOperand::MO_BlockAddress:
       MCOp = LowerSymbolOperand(MO, GetBlockAddressSymbol(MO));
       break;
-    case MachineOperand::MO_FPImmediate:
+    case MachineOperand::MO_FPImmediate: {
       bool ignored;
       APFloat FVal = MO.getFPImm()->getValueAPF();
       FVal.convert(APFloat::IEEEsingle, APFloat::rmTowardZero, &ignored);
@@ -159,6 +159,9 @@ void MBlazeMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       uint64_t Val = *IVal.getRawData();
       MCOp = MCOperand::CreateImm(Val);
       break;
+    }
+    case MachineOperand::MO_RegisterMask:
+      continue;
     }
 
     OutMI.addOperand(MCOp);

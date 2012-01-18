@@ -192,6 +192,8 @@ MCOperand MipsMCInstLower::LowerOperand(const MachineOperand& MO,
   case MachineOperand::MO_ConstantPoolIndex:
   case MachineOperand::MO_BlockAddress:
     return LowerSymbolOperand(MO, MOTy, offset);
+  case MachineOperand::MO_RegisterMask:
+    break;
  }
 
   return MCOperand();

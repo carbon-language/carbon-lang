@@ -166,6 +166,8 @@ void llvm::LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
       MCOp = GetSymbolRef(MO,AP.GetBlockAddressSymbol(MO.getBlockAddress()),AP,
                           isDarwin);
       break;
+    case MachineOperand::MO_RegisterMask:
+      continue;
     }
     
     OutMI.addOperand(MCOp);
