@@ -940,7 +940,8 @@ multiclass T2I_ld<bit signed, bits<2> opcod, string opc,
     let DecoderMethod = "DecodeT2LoadShift";
   }
 
-  // FIXME: Is the pci variant actually needed?
+  // pci variant is very similar to i12, but supports negative offsets
+  // from the PC.
   def pci : T2Ipc <(outs target:$Rt), (ins t2ldrlabel:$addr), iii,
                    opc, ".w\t$Rt, $addr",
                    [(set target:$Rt, (opnode (ARMWrapper tconstpool:$addr)))]> {
