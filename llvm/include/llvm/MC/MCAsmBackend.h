@@ -17,12 +17,15 @@
 
 namespace llvm {
 class MCAsmLayout;
+class MCAssembler;
 class MCELFObjectTargetWriter;
 class MCFixup;
+class MCFragment;
 class MCInst;
 class MCInstFragment;
 class MCObjectWriter;
 class MCSection;
+class MCValue;
 template<typename T>
 class SmallVectorImpl;
 class raw_ostream;
@@ -86,6 +89,13 @@ public:
 
   /// getFixupKindInfo - Get information on a fixup kind.
   virtual const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const;
+
+  /// processFixupValue - Target hook to adjust the literal value of a fixup
+  /// if necessary. The default does nothing.
+  virtual void processFixupValue(const MCAssembler &Asm,
+                                 const MCAsmLayout &Layout,
+                                 const MCFixup &Fixup, const MCFragment *DF,
+                                 MCValue &Target, uint64_t &Value) {}
 
   /// @}
 

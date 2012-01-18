@@ -273,13 +273,10 @@ bool MCAssembler::evaluateFixup(const MCAsmLayout &Layout,
 
   Value = Target.getConstant();
 
-  bool IsThumb = false;
   if (const MCSymbolRefExpr *A = Target.getSymA()) {
     const MCSymbol &Sym = A->getSymbol().AliasedSymbol();
     if (Sym.isDefined())
       Value += Layout.getSymbolOffset(&getSymbolData(Sym));
-    if (isThumbFunc(&Sym))
-      IsThumb = true;
   }
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
     const MCSymbol &Sym = B->getSymbol().AliasedSymbol();
@@ -302,12 +299,8 @@ bool MCAssembler::evaluateFixup(const MCAsmLayout &Layout,
     Value -= Offset;
   }
 
-  // ARM fixups based from a thumb function address need to have the low
-  // bit set. The actual value is always at least 16-bit aligned, so the
-  // low bit is normally clear and available for use as an ISA flag for
-  // interworking.
-  if (IsThumb)
-    Value |= 1;
+  // Let the backend adjust the fixup value if necessary.
+  Backend.processFixupValue(*this, Layout, Fixup, DF, Target, Value);
 
   return IsResolved;
 }

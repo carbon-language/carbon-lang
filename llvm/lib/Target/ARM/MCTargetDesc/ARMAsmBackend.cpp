@@ -22,6 +22,7 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/Object/MachOFormat.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -99,6 +100,20 @@ public:
     assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
            "Invalid kind!");
     return Infos[Kind - FirstTargetFixupKind];
+  }
+
+  /// processFixupValue - Target hook to process the literal value of a fixup
+  /// if necessary.
+  void processFixupValue(const MCAssembler &Asm, const MCAsmLayout &Layout,
+                         const MCFixup &Fixup, const MCFragment *DF,
+                         MCValue &Target, uint64_t &Value) {
+    // Some fixups to thumb function symbols need the low bit (thumb bit)
+    // twiddled.
+    if (const MCSymbolRefExpr *A = Target.getSymA()) {
+      const MCSymbol &Sym = A->getSymbol().AliasedSymbol();
+      if (Asm.isThumbFunc(&Sym))
+        Value |= 1;
+    }
   }
 
   bool MayNeedRelaxation(const MCInst &Inst) const;
