@@ -1433,6 +1433,23 @@ public:
   }
 };
 
+class RegisterMaskSDNode : public SDNode {
+  // The memory for RegMask is not owned by the node.
+  const uint32_t *RegMask;
+  friend class SelectionDAG;
+  RegisterMaskSDNode(const uint32_t *mask)
+    : SDNode(ISD::RegisterMask, DebugLoc(), getSDVTList(MVT::Untyped)),
+      RegMask(mask) {}
+public:
+
+  const uint32_t *getRegMask() const { return RegMask; }
+
+  static bool classof(const RegisterMaskSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::RegisterMask;
+  }
+};
+
 class BlockAddressSDNode : public SDNode {
   const BlockAddress *BA;
   unsigned char TargetFlags;

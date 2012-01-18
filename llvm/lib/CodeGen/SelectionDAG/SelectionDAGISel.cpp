@@ -2206,6 +2206,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
   case ISD::EntryToken:       // These nodes remain the same.
   case ISD::BasicBlock:
   case ISD::Register:
+  case ISD::RegisterMask:
   //case ISD::VALUETYPE:
   //case ISD::CONDCODE:
   case ISD::HANDLENODE:

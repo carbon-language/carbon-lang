@@ -57,7 +57,7 @@ namespace ISD {
     AssertSext, AssertZext,
 
     // Various leaf nodes.
-    BasicBlock, VALUETYPE, CONDCODE, Register,
+    BasicBlock, VALUETYPE, CONDCODE, Register, RegisterMask,
     Constant, ConstantFP,
     GlobalAddress, GlobalTLSAddress, FrameIndex,
     JumpTable, ConstantPool, ExternalSymbol, BlockAddress,

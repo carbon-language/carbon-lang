@@ -53,6 +53,7 @@ namespace llvm {
       if (isa<ConstantSDNode>(Node))       return true;
       if (isa<ConstantFPSDNode>(Node))     return true;
       if (isa<RegisterSDNode>(Node))       return true;
+      if (isa<RegisterMaskSDNode>(Node))   return true;
       if (isa<GlobalAddressSDNode>(Node))  return true;
       if (isa<BasicBlockSDNode>(Node))     return true;
       if (isa<FrameIndexSDNode>(Node))     return true;

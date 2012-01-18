@@ -351,6 +351,8 @@ void InstrEmitter::AddOperand(MachineInstr *MI, SDValue Op,
     MI->addOperand(MachineOperand::CreateFPImm(CFP));
   } else if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateReg(R->getReg(), false));
+  } else if (RegisterMaskSDNode *RM = dyn_cast<RegisterMaskSDNode>(Op)) {
+    MI->addOperand(MachineOperand::CreateRegMask(RM->getRegMask()));
   } else if (GlobalAddressSDNode *TGA = dyn_cast<GlobalAddressSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateGA(TGA->getGlobal(), TGA->getOffset(),
                                             TGA->getTargetFlags()));
