@@ -109,10 +109,14 @@ public:
                          MCValue &Target, uint64_t &Value) {
     // Some fixups to thumb function symbols need the low bit (thumb bit)
     // twiddled.
-    if (const MCSymbolRefExpr *A = Target.getSymA()) {
-      const MCSymbol &Sym = A->getSymbol().AliasedSymbol();
-      if (Asm.isThumbFunc(&Sym))
-        Value |= 1;
+    if ((unsigned)Fixup.getKind() != ARM::fixup_arm_ldst_pcrel_12 &&
+        (unsigned)Fixup.getKind() != ARM::fixup_t2_ldst_pcrel_12 &&
+        (unsigned)Fixup.getKind() != ARM::fixup_arm_thumb_cp) {
+      if (const MCSymbolRefExpr *A = Target.getSymA()) {
+        const MCSymbol &Sym = A->getSymbol().AliasedSymbol();
+        if (Asm.isThumbFunc(&Sym))
+          Value |= 1;
+      }
     }
   }
 
