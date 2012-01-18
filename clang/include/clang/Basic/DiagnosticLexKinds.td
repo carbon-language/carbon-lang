@@ -107,6 +107,8 @@ def warn_extraneous_char_constant : Warning<
   "extraneous characters in character constant ignored">;
 def warn_char_constant_too_large : Warning<
   "character constant too long for its type">;
+def err_multichar_utf_character_literal : Error<
+  "Unicode character literals may not contain multiple characters">;
 def err_exponent_has_no_digits : Error<"exponent has no digits">;
 def ext_imaginary_constant : Extension<"imaginary constants are an extension">;
 def err_hexconstant_requires_exponent : Error<
@@ -121,8 +123,8 @@ def warn_hex_escape_too_large : ExtWarn<"hex escape sequence out of range">;
 def ext_string_too_long : Extension<"string literal of length %0 exceeds "
   "maximum length %1 that %select{C90|ISO C99|C++}2 compilers are required to "
   "support">, InGroup<OverlengthStrings>;
-def warn_ucn_escape_too_large : ExtWarn<
-  "character unicode escape sequence too long for its type">, InGroup<Unicode>;
+def err_character_too_large : Error<
+  "character too large for enclosing character literal type">;
 def warn_ucn_not_valid_in_c89 : ExtWarn<
   "unicode escape sequences are only valid in C99 or C++">, InGroup<Unicode>;
 def warn_cxx98_compat_unicode_literal : Warning<
@@ -132,6 +134,8 @@ def err_unsupported_string_concat : Error<
   "unsupported non-standard concatenation of string literals">;
 def err_bad_string_encoding : Error<
   "illegal sequence in string literal">;
+def err_bad_character_encoding : Error<
+  "illegal sequence in character literal">;
   
 //===----------------------------------------------------------------------===//
 // PTH Diagnostics

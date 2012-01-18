@@ -182,7 +182,8 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
 static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
                              uint32_t &UcnVal, unsigned short &UcnLen,
                              FullSourceLoc Loc, DiagnosticsEngine *Diags, 
-                             const LangOptions &Features) {
+                             const LangOptions &Features,
+                             bool in_char_string_literal = false) {
   if (!Features.CPlusPlus && !Features.C99 && Diags)
     Diags->Report(Loc, diag::warn_ucn_not_valid_in_c89);
 
@@ -216,11 +217,20 @@ static bool ProcessUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
     }
     return false;
   }
-  // Check UCN constraints (C99 6.4.3p2).
-  if ((UcnVal < 0xa0 &&
-      (UcnVal != 0x24 && UcnVal != 0x40 && UcnVal != 0x60 )) // $, @, `
-      || (UcnVal >= 0xD800 && UcnVal <= 0xDFFF)
-      || (UcnVal > 0x10FFFF)) /* the maximum legal UTF32 value */ {
+  // Check UCN constraints (C99 6.4.3p2) [C++11 lex.charset p2]
+  bool invalid_ucn = (0xD800<=UcnVal && UcnVal<=0xDFFF) // surrogate codepoints
+                       || 0x10FFFF < UcnVal; // maximum legal UTF32 value
+
+  // C++11 allows UCNs that refer to control characters and basic source
+  // characters inside character and string literals
+  if (!Features.CPlusPlus0x || !in_char_string_literal) {
+    if ((UcnVal < 0xa0 &&
+         (UcnVal != 0x24 && UcnVal != 0x40 && UcnVal != 0x60 ))) {  // $, @, `
+      invalid_ucn = true;
+    }
+  }
+
+  if (invalid_ucn) {
     if (Diags)
       Diags->Report(Loc, diag::err_ucn_escape_invalid);
     return false;
@@ -747,20 +757,23 @@ NumericLiteralParser::GetFloatValue(llvm::APFloat &Result) {
 CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
                                      SourceLocation Loc, Preprocessor &PP,
                                      tok::TokenKind kind) {
-  // At this point we know that the character matches the regex "L?'.*'".
+  // At this point we know that the character matches the regex "(L|u|U)?'.*'".
   HadError = false;
 
   Kind = kind;
 
-  // Determine if this is a wide or UTF character.
-  if (Kind == tok::wide_char_constant || Kind == tok::utf16_char_constant ||
-      Kind == tok::utf32_char_constant) {
+  // Skip over wide character determinant.
+  if (Kind != tok::char_constant) {
     ++begin;
   }
 
   // Skip over the entry quote.
   assert(begin[0] == '\'' && "Invalid token lexed");
   ++begin;
+
+  // Trim the ending quote.
+  assert(end[-1] == '\'' && "Invalid token lexed");
+  --end;
 
   // FIXME: The "Value" is an uint64_t so we can handle char literals of
   // up to 64-bits.
@@ -773,75 +786,113 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
   assert(PP.getTargetInfo().getWCharWidth() <= 64 &&
          "Assumes sizeof(wchar) on target is <= 64");
 
-  // This is what we will use for overflow detection
-  llvm::APInt LitVal(PP.getTargetInfo().getIntWidth(), 0);
+  SmallVector<uint32_t,4> codepoint_buffer;
+  codepoint_buffer.resize(end-begin);
+  uint32_t *buffer_begin = &codepoint_buffer.front();
+  uint32_t *buffer_end = buffer_begin + codepoint_buffer.size();
 
-  unsigned NumCharsSoFar = 0;
-  bool Warned = false;
-  while (begin[0] != '\'') {
-    uint64_t ResultChar;
-
-      // Is this a Universal Character Name escape?
-    if (begin[0] != '\\')     // If this is a normal character, consume it.
-      ResultChar = (unsigned char)*begin++;
-    else {                    // Otherwise, this is an escape character.
-      unsigned CharWidth = getCharWidth(Kind, PP.getTargetInfo());
-      // Check for UCN.
-      if (begin[1] == 'u' || begin[1] == 'U') {
-        uint32_t utf32 = 0;
-        unsigned short UcnLen = 0;
-        if (!ProcessUCNEscape(begin, end, utf32, UcnLen,
-                              FullSourceLoc(Loc, PP.getSourceManager()),
-                              &PP.getDiagnostics(), PP.getLangOptions())) {
-          HadError = 1;
-        }
-        ResultChar = utf32;
-        if (CharWidth != 32 && (ResultChar >> CharWidth) != 0) {
-          PP.Diag(Loc, diag::warn_ucn_escape_too_large);
-          ResultChar &= ~0U >> (32-CharWidth);
-        }
-      } else {
-        // Otherwise, this is a non-UCN escape character.  Process it.
-        ResultChar = ProcessCharEscape(begin, end, HadError,
-                                       FullSourceLoc(Loc,PP.getSourceManager()),
-                                       CharWidth, &PP.getDiagnostics());
-      }
-    }
-
-    // If this is a multi-character constant (e.g. 'abc'), handle it.  These are
-    // implementation defined (C99 6.4.4.4p10).
-    if (NumCharsSoFar) {
-      if (!isAscii()) {
-        // Emulate GCC's (unintentional?) behavior: L'ab' -> L'b'.
-        LitVal = 0;
-      } else {
-        // Narrow character literals act as though their value is concatenated
-        // in this implementation, but warn on overflow.
-        if (LitVal.countLeadingZeros() < 8 && !Warned) {
-          PP.Diag(Loc, diag::warn_char_constant_too_large);
-          Warned = true;
-        }
-        LitVal <<= 8;
-      }
-    }
-
-    LitVal = LitVal + ResultChar;
-    ++NumCharsSoFar;
+  // Unicode escapes representing characters that cannot be correctly
+  // represented in a single code unit are disallowed in character literals
+  // by this implementation.
+  uint32_t largest_character_for_kind;
+  if (tok::wide_char_constant == Kind) {
+    largest_character_for_kind = 0xFFFFFFFFu >> (32-PP.getTargetInfo().getWCharWidth());
+  } else if (tok::utf16_char_constant == Kind) {
+    largest_character_for_kind = 0xFFFF;
+  } else if (tok::utf32_char_constant == Kind) {
+    largest_character_for_kind = 0x10FFFF;
+  } else {
+    largest_character_for_kind = 0x7Fu;
   }
 
-  // If this is the second character being processed, do special handling.
+  while (begin!=end) {
+    // Is this a span of non-escape characters?
+    if (begin[0] != '\\') {
+      char const *start = begin;
+      do {
+        ++begin;
+      } while (begin != end && *begin != '\\');
+
+      uint32_t *tmp_begin = buffer_begin;
+      ConversionResult res =
+      ConvertUTF8toUTF32(reinterpret_cast<UTF8 const **>(&start),
+                         reinterpret_cast<UTF8 const *>(begin),
+                         &buffer_begin,buffer_end,strictConversion);
+      if (res!=conversionOK) {
+        PP.Diag(Loc, diag::err_bad_character_encoding);
+        HadError = true;
+      } else {
+        for (; tmp_begin<buffer_begin; ++tmp_begin) {
+          if (*tmp_begin > largest_character_for_kind) {
+            HadError = true;
+            PP.Diag(Loc, diag::err_character_too_large);
+          }
+        }
+      }
+
+      continue;
+    }
+    // Is this a Universal Character Name excape?
+    if (begin[1] == 'u' || begin[1] == 'U') {
+      unsigned short UcnLen = 0;
+      if (!ProcessUCNEscape(begin, end, *buffer_begin, UcnLen,
+                            FullSourceLoc(Loc, PP.getSourceManager()),
+                            &PP.getDiagnostics(), PP.getLangOptions(),
+                            true))
+      {
+        HadError = true;
+      } else if (*buffer_begin > largest_character_for_kind) {
+        HadError = true;
+        PP.Diag(Loc,diag::err_character_too_large);
+      }
+
+      ++buffer_begin;
+      continue;
+    }
+    unsigned CharWidth = getCharWidth(Kind, PP.getTargetInfo());
+    uint64_t result =
+    ProcessCharEscape(begin, end, HadError,
+                      FullSourceLoc(Loc,PP.getSourceManager()),
+                      CharWidth, &PP.getDiagnostics());
+    *buffer_begin++ = result;
+  }
+
+  unsigned NumCharsSoFar = buffer_begin-&codepoint_buffer.front();
+
   if (NumCharsSoFar > 1) {
-    // Warn about discarding the top bits for multi-char wide-character
-    // constants (L'abcd').
-    if (!isAscii())
+    if (isWide())
       PP.Diag(Loc, diag::warn_extraneous_char_constant);
-    else if (NumCharsSoFar != 4)
+    else if (isAscii() && NumCharsSoFar == 4)
+      PP.Diag(Loc, diag::ext_four_char_character_literal);
+    else if (isAscii())
       PP.Diag(Loc, diag::ext_multichar_character_literal);
     else
-      PP.Diag(Loc, diag::ext_four_char_character_literal);
+      PP.Diag(Loc, diag::err_multichar_utf_character_literal);
     IsMultiChar = true;
   } else
     IsMultiChar = false;
+
+  llvm::APInt LitVal(PP.getTargetInfo().getIntWidth(), 0);
+
+  // Narrow character literals act as though their value is concatenated
+  // in this implementation, but warn on overflow.
+  bool multi_char_too_long = false;
+  if (isAscii() && isMultiChar()) {
+    LitVal = 0;
+    for (size_t i=0;i<NumCharsSoFar;++i) {
+      // check for enough leading zeros to shift into
+      multi_char_too_long |= (LitVal.countLeadingZeros() < 8);
+      LitVal <<= 8;
+      LitVal = LitVal + (codepoint_buffer[i] & 0xFF);
+    }
+  } else if (NumCharsSoFar > 0) {
+    // otherwise just take the last character
+    LitVal = buffer_begin[-1];
+  }
+
+  if (!HadError && multi_char_too_long) {
+    PP.Diag(Loc,diag::warn_char_constant_too_large);
+  }
 
   // Transfer the value from APInt to uint64_t
   Value = LitVal.getZExtValue();
