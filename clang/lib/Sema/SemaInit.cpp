@@ -5807,7 +5807,7 @@ static void DiagnoseNarrowingInInitList(Sema &S, InitializationSequence &Seq,
 
   // C++11 [dcl.init.list]p7: Check whether this is a narrowing conversion.
   APValue ConstantValue;
-  switch (SCS->isNarrowing(S.Context, PostInit, ConstantValue)) {
+  switch (SCS->getNarrowingKind(S.Context, PostInit, ConstantValue)) {
   case NK_Not_Narrowing:
     // No narrowing occurred.
     return;

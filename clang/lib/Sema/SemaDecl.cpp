@@ -9555,18 +9555,30 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
     if (Enum->isDependentType() || Val->isTypeDependent())
       EltTy = Context.DependentTy;
     else {
-      // C99 6.7.2.2p2: Make sure we have an integer constant expression.
       SourceLocation ExpLoc;
-      if (!Val->isValueDependent() &&
-          VerifyIntegerConstantExpression(Val, &EnumVal)) {
+      if (getLangOptions().CPlusPlus0x && Enum->isFixed()) {
+        // C++11 [dcl.enum]p5: If the underlying type is fixed, [...] the
+        // constant-expression in the enumerator-definition shall be a converted
+        // constant expression of the underlying type.
+        EltTy = Enum->getIntegerType();
+        ExprResult Converted =
+          CheckConvertedConstantExpression(Val, EltTy, EnumVal,
+                                           CCEK_Enumerator);
+        if (Converted.isInvalid())
+          Val = 0;
+        else
+          Val = Converted.take();
+      } else if (!Val->isValueDependent() &&
+                 VerifyIntegerConstantExpression(Val, &EnumVal)) {
+        // C99 6.7.2.2p2: Make sure we have an integer constant expression.
         Val = 0;
-      } else {        
+      } else {
         if (!getLangOptions().CPlusPlus) {
           // C99 6.7.2.2p2:
           //   The expression that defines the value of an enumeration constant
-          //   shall be an integer constant expression that has a value 
+          //   shall be an integer constant expression that has a value
           //   representable as an int.
-          
+
           // Complain if the value is not representable in an int.
           if (!isRepresentableIntegerValue(Context, EnumVal, Context.IntTy))
             Diag(IdLoc, diag::ext_enum_value_not_int)
@@ -9577,25 +9589,24 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
             Val = ImpCastExprToType(Val, Context.IntTy, CK_IntegralCast).take();
           }
         }
-        
+
         if (Enum->isFixed()) {
           EltTy = Enum->getIntegerType();
 
-          // C++0x [dcl.enum]p5:
-          //   ... if the initializing value of an enumerator cannot be
-          //   represented by the underlying type, the program is ill-formed.
+          // In Obj-C and Microsoft mode, require the enumeration value to be
+          // representable in the underlying type of the enumeration. In C++11,
+          // we perform a non-narrowing conversion as part of converted constant
+          // expression checking.
           if (!isRepresentableIntegerValue(Context, EnumVal, EltTy)) {
             if (getLangOptions().MicrosoftExt) {
               Diag(IdLoc, diag::ext_enumerator_too_large) << EltTy;
               Val = ImpCastExprToType(Val, EltTy, CK_IntegralCast).take();
-            } else 
-              Diag(IdLoc, diag::err_enumerator_too_large)
-                << EltTy;
+            } else
+              Diag(IdLoc, diag::err_enumerator_too_large) << EltTy;
           } else
             Val = ImpCastExprToType(Val, EltTy, CK_IntegralCast).take();
-        }
-        else {
-          // C++0x [dcl.enum]p5:
+        } else {
+          // C++11 [dcl.enum]p5:
           //   If the underlying type is not fixed, the type of each enumerator
           //   is the type of its initializing value:
           //     - If an initializer is specified for an enumerator, the 
@@ -9700,11 +9711,10 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
 Decl *Sema::ActOnEnumConstant(Scope *S, Decl *theEnumDecl, Decl *lastEnumConst,
                               SourceLocation IdLoc, IdentifierInfo *Id,
                               AttributeList *Attr,
-                              SourceLocation EqualLoc, Expr *val) {
+                              SourceLocation EqualLoc, Expr *Val) {
   EnumDecl *TheEnumDecl = cast<EnumDecl>(theEnumDecl);
   EnumConstantDecl *LastEnumConst =
     cast_or_null<EnumConstantDecl>(lastEnumConst);
-  Expr *Val = static_cast<Expr*>(val);
 
   // The scope passed in may not be a decl scope.  Zip up the scope tree until
   // we find one that is.

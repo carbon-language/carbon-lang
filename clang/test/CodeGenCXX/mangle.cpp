@@ -76,9 +76,6 @@ void f(S3<true>) {}
 // CHECK: define void @_Z1f2S3ILb0EE
 void f(S3<false>) {}
 
-// CHECK: define void @_Z2f22S3ILb1EE
-void f2(S3<100>) {}
-
 struct S;
 
 // CHECK: define void @_Z1fM1SKFvvE

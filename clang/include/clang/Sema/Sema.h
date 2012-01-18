@@ -1474,6 +1474,15 @@ public:
   ExprResult PerformContextuallyConvertToBool(Expr *From);
   ExprResult PerformContextuallyConvertToObjCPointer(Expr *From);
 
+  /// Contexts in which a converted constant expression is required.
+  enum CCEKind {
+    CCEK_CaseValue,  ///< Expression in a case label.
+    CCEK_Enumerator, ///< Enumerator value with fixed underlying type.
+    CCEK_TemplateArg ///< Value of a non-type template parameter.
+  };
+  ExprResult CheckConvertedConstantExpression(Expr *From, QualType T,
+                                              llvm::APSInt &Value, CCEKind CCE);
+
   ExprResult
   ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *FromE,
                                      const PartialDiagnostic &NotIntDiag,

@@ -20,6 +20,17 @@ def err_expr_not_ice : Error<
 def ext_expr_not_ice : Extension<
   "expression is not an %select{integer|integral}0 constant expression; "
   "folding it to a constant is a GNU extension">, InGroup<GNU>;
+def err_typecheck_converted_constant_expression : Error<
+  "value of type %0 is not implicitly convertible to %1">;
+def err_typecheck_converted_constant_expression_disallowed : Error<
+  "conversion from %0 to %1 is not allowed in a converted constant expression">;
+def err_expr_not_cce : Error<
+  "%select{case value|enumerator value|non-type template argument}0 "
+  "is not a constant expression">;
+def err_cce_narrowing : Error<
+  "%select{case value|enumerator value|non-type template argument}0 "
+  "%select{cannot be narrowed from type %2 to %3|"
+  "evaluates to %2, which cannot be narrowed to type %3}1">;
 
 // Semantic analysis of constant literals.
 def ext_predef_outside_function : Warning<

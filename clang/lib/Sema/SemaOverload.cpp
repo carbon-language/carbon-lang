@@ -289,8 +289,9 @@ static const Expr *IgnoreNarrowingConversion(const Expr *Converted) {
 /// \param ConstantValue  If this is an NK_Constant_Narrowing conversion, the
 ///        value of the expression prior to the narrowing conversion.
 NarrowingKind
-StandardConversionSequence::isNarrowing(ASTContext &Ctx, const Expr *Converted,
-                                        APValue &ConstantValue) const {
+StandardConversionSequence::getNarrowingKind(ASTContext &Ctx,
+                                             const Expr *Converted,
+                                             APValue &ConstantValue) const {
   assert(Ctx.getLangOptions().CPlusPlus && "narrowing check outside C++");
 
   // C++11 [dcl.init.list]p7:
@@ -4528,6 +4529,167 @@ ExprResult Sema::PerformContextuallyConvertToBool(Expr *From) {
     return Diag(From->getSourceRange().getBegin(),
                 diag::err_typecheck_bool_condition)
                   << From->getType() << From->getSourceRange();
+  return ExprError();
+}
+
+/// Check that the specified conversion is permitted in a converted constant
+/// expression, according to C++11 [expr.const]p3. Return true if the conversion
+/// is acceptable.
+static bool CheckConvertedConstantConversions(Sema &S,
+                                              StandardConversionSequence &SCS) {
+  // Since we know that the target type is an integral or unscoped enumeration
+  // type, most conversion kinds are impossible. All possible First and Third
+  // conversions are fine.
+  switch (SCS.Second) {
+  case ICK_Identity:
+  case ICK_Integral_Promotion:
+  case ICK_Integral_Conversion:
+    return true;
+
+  case ICK_Boolean_Conversion:
+    // Conversion from an integral or unscoped enumeration type to bool is
+    // classified as ICK_Boolean_Conversion, but it's also an integral
+    // conversion, so it's permitted in a converted constant expression.
+    return SCS.getFromType()->isIntegralOrUnscopedEnumerationType() &&
+           SCS.getToType(2)->isBooleanType();
+
+  case ICK_Floating_Integral:
+  case ICK_Complex_Real:
+    return false;
+
+  case ICK_Lvalue_To_Rvalue:
+  case ICK_Array_To_Pointer:
+  case ICK_Function_To_Pointer:
+  case ICK_NoReturn_Adjustment:
+  case ICK_Qualification:
+  case ICK_Compatible_Conversion:
+  case ICK_Vector_Conversion:
+  case ICK_Vector_Splat:
+  case ICK_Derived_To_Base:
+  case ICK_Pointer_Conversion:
+  case ICK_Pointer_Member:
+  case ICK_Block_Pointer_Conversion:
+  case ICK_Writeback_Conversion:
+  case ICK_Floating_Promotion:
+  case ICK_Complex_Promotion:
+  case ICK_Complex_Conversion:
+  case ICK_Floating_Conversion:
+  case ICK_TransparentUnionConversion:
+    llvm_unreachable("unexpected second conversion kind");
+
+  case ICK_Num_Conversion_Kinds:
+    break;
+  }
+
+  llvm_unreachable("unknown conversion kind");
+}
+
+/// CheckConvertedConstantExpression - Check that the expression From is a
+/// converted constant expression of type T, perform the conversion and produce
+/// the converted expression, per C++11 [expr.const]p3.
+ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
+                                                  llvm::APSInt &Value,
+                                                  CCEKind CCE) {
+  assert(LangOpts.CPlusPlus0x && "converted constant expression outside C++11");
+  assert(T->isIntegralOrEnumerationType() && "unexpected converted const type");
+
+  if (checkPlaceholderForOverload(*this, From))
+    return ExprError();
+
+  // C++11 [expr.const]p3 with proposed wording fixes:
+  //  A converted constant expression of type T is a core constant expression,
+  //  implicitly converted to a prvalue of type T, where the converted
+  //  expression is a literal constant expression and the implicit conversion
+  //  sequence contains only user-defined conversions, lvalue-to-rvalue
+  //  conversions, integral promotions, and integral conversions other than
+  //  narrowing conversions.
+  ImplicitConversionSequence ICS =
+    TryImplicitConversion(From, T,
+                          /*SuppressUserConversions=*/false,
+                          /*AllowExplicit=*/false,
+                          /*InOverloadResolution=*/false,
+                          /*CStyle=*/false,
+                          /*AllowObjcWritebackConversion=*/false);
+  StandardConversionSequence *SCS = 0;
+  switch (ICS.getKind()) {
+  case ImplicitConversionSequence::StandardConversion:
+    if (!CheckConvertedConstantConversions(*this, ICS.Standard))
+      return Diag(From->getSourceRange().getBegin(),
+                  diag::err_typecheck_converted_constant_expression_disallowed)
+               << From->getType() << From->getSourceRange() << T;
+    SCS = &ICS.Standard;
+    break;
+  case ImplicitConversionSequence::UserDefinedConversion:
+    // We are converting from class type to an integral or enumeration type, so
+    // the Before sequence must be trivial.
+    if (!CheckConvertedConstantConversions(*this, ICS.UserDefined.After))
+      return Diag(From->getSourceRange().getBegin(),
+                  diag::err_typecheck_converted_constant_expression_disallowed)
+               << From->getType() << From->getSourceRange() << T;
+    SCS = &ICS.UserDefined.After;
+    break;
+  case ImplicitConversionSequence::AmbiguousConversion:
+  case ImplicitConversionSequence::BadConversion:
+    if (!DiagnoseMultipleUserDefinedConversion(From, T))
+      return Diag(From->getSourceRange().getBegin(),
+                  diag::err_typecheck_converted_constant_expression)
+                    << From->getType() << From->getSourceRange() << T;
+    return ExprError();
+
+  case ImplicitConversionSequence::EllipsisConversion:
+    llvm_unreachable("ellipsis conversion in converted constant expression");
+  }
+
+  ExprResult Result = PerformImplicitConversion(From, T, ICS, AA_Converting);
+  if (Result.isInvalid())
+    return Result;
+
+  // Check for a narrowing implicit conversion.
+  APValue PreNarrowingValue;
+  switch (SCS->getNarrowingKind(Context, Result.get(), PreNarrowingValue)) {
+  case NK_Variable_Narrowing:
+    // Implicit conversion to a narrower type, and the value is not a constant
+    // expression. We'll diagnose this in a moment.
+  case NK_Not_Narrowing:
+    break;
+
+  case NK_Constant_Narrowing:
+    Diag(From->getSourceRange().getBegin(), diag::err_cce_narrowing)
+      << CCE << /*Constant*/1
+      << PreNarrowingValue.getAsString(Context, QualType()) << T;
+    break;
+
+  case NK_Type_Narrowing:
+    Diag(From->getSourceRange().getBegin(), diag::err_cce_narrowing)
+      << CCE << /*Constant*/0 << From->getType() << T;
+    break;
+  }
+
+  // Check the expression is a constant expression.
+  llvm::SmallVector<PartialDiagnosticAt, 8> Notes;
+  Expr::EvalResult Eval;
+  Eval.Diag = &Notes;
+
+  if (!Result.get()->EvaluateAsRValue(Eval, Context)) {
+    // The expression can't be folded, so we can't keep it at this position in
+    // the AST.
+    Result = ExprError();
+  } else if (Notes.empty()) {
+    // It's a constant expression.
+    Value = Eval.Val.getInt();
+    return Result;
+  }
+
+  // It's not a constant expression. Produce an appropriate diagnostic.
+  if (Notes.size() == 1 &&
+      Notes[0].second.getDiagID() == diag::note_invalid_subexpr_in_const_expr)
+    Diag(Notes[0].first, diag::err_expr_not_cce) << CCE;
+  else {
+    Diag(From->getSourceRange().getBegin(), diag::err_expr_not_cce)
+      << CCE << From->getSourceRange();
+    for (unsigned I = 0; I < Notes.size(); ++I)
+      Diag(Notes[I].first, Notes[I].second);
+  }
   return ExprError();
 }
 

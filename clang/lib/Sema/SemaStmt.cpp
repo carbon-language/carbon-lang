@@ -266,22 +266,24 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, Expr *LHSVal,
                     SourceLocation ColonLoc) {
   assert((LHSVal != 0) && "missing expression in case statement");
 
-  // C99 6.8.4.2p3: The expression shall be an integer constant.
-  // However, GCC allows any evaluatable integer expression.
-  if (!LHSVal->isTypeDependent() && !LHSVal->isValueDependent() &&
-      VerifyIntegerConstantExpression(LHSVal))
-    return StmtError();
-
-  // GCC extension: The expression shall be an integer constant.
-
-  if (RHSVal && !RHSVal->isTypeDependent() && !RHSVal->isValueDependent() &&
-      VerifyIntegerConstantExpression(RHSVal)) {
-    RHSVal = 0;  // Recover by just forgetting about it.
-  }
-
   if (getCurFunction()->SwitchStack.empty()) {
     Diag(CaseLoc, diag::err_case_not_in_switch);
     return StmtError();
+  }
+
+  if (!getLangOptions().CPlusPlus0x) {
+    // C99 6.8.4.2p3: The expression shall be an integer constant.
+    // However, GCC allows any evaluatable integer expression.
+    if (!LHSVal->isTypeDependent() && !LHSVal->isValueDependent() &&
+        VerifyIntegerConstantExpression(LHSVal))
+      return StmtError();
+
+    // GCC extension: The expression shall be an integer constant.
+
+    if (RHSVal && !RHSVal->isTypeDependent() && !RHSVal->isValueDependent() &&
+        VerifyIntegerConstantExpression(RHSVal)) {
+      RHSVal = 0;  // Recover by just forgetting about it.
+    }
   }
 
   CaseStmt *CS = new (Context) CaseStmt(LHSVal, RHSVal, CaseLoc, DotDotDotLoc,
@@ -622,8 +624,6 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
     } else {
       CaseStmt *CS = cast<CaseStmt>(SC);
 
-      // We already verified that the expression has a i-c-e value (C99
-      // 6.8.4.2p3) - get that value now.
       Expr *Lo = CS->getLHS();
 
       if (Lo->isTypeDependent() || Lo->isValueDependent()) {
@@ -631,19 +631,39 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         break;
       }
 
-      llvm::APSInt LoVal = Lo->EvaluateKnownConstInt(Context);
+      llvm::APSInt LoVal;
 
-      // Convert the value to the same width/sign as the condition.
+      if (getLangOptions().CPlusPlus0x) {
+        // C++11 [stmt.switch]p2: the constant-expression shall be a converted
+        // constant expression of the promoted type of the switch condition.
+        ExprResult ConvLo =
+          CheckConvertedConstantExpression(Lo, CondType, LoVal, CCEK_CaseValue);
+        if (ConvLo.isInvalid()) {
+          CaseListIsErroneous = true;
+          continue;
+        }
+        Lo = ConvLo.take();
+      } else {
+        // We already verified that the expression has a i-c-e value (C99
+        // 6.8.4.2p3) - get that value now.
+        LoVal = Lo->EvaluateKnownConstInt(Context);
+
+        // If the LHS is not the same type as the condition, insert an implicit
+        // cast.
+        Lo = DefaultLvalueConversion(Lo).take();
+        Lo = ImpCastExprToType(Lo, CondType, CK_IntegralCast).take();
+      }
+
+      // Convert the value to the same width/sign as the condition had prior to
+      // integral promotions.
+      //
+      // FIXME: This causes us to reject valid code:
+      //   switch ((char)c) { case 256: case 0: return 0; }
+      // Here we claim there is a duplicated condition value, but there is not.
       ConvertIntegerToTypeWarnOnOverflow(LoVal, CondWidth, CondIsSigned,
                                          Lo->getLocStart(),
                                          diag::warn_case_value_overflow);
 
-      // If the LHS is not the same type as the condition, insert an implicit
-      // cast.
-      // FIXME: In C++11, the value is a converted constant expression of the
-      // promoted type of the switch condition.
-      Lo = DefaultLvalueConversion(Lo).take();
-      Lo = ImpCastExprToType(Lo, CondType, CK_IntegralCast).take();
       CS->setLHS(Lo);
 
       // If this is a case range, remember it in CaseRanges, otherwise CaseVals.
@@ -709,19 +729,33 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         llvm::APSInt &LoVal = CaseRanges[i].first;
         CaseStmt *CR = CaseRanges[i].second;
         Expr *Hi = CR->getRHS();
-        llvm::APSInt HiVal = Hi->EvaluateKnownConstInt(Context);
+        llvm::APSInt HiVal;
+
+        if (getLangOptions().CPlusPlus0x) {
+          // C++11 [stmt.switch]p2: the constant-expression shall be a converted
+          // constant expression of the promoted type of the switch condition.
+          ExprResult ConvHi =
+            CheckConvertedConstantExpression(Hi, CondType, HiVal,
+                                             CCEK_CaseValue);
+          if (ConvHi.isInvalid()) {
+            CaseListIsErroneous = true;
+            continue;
+          }
+          Hi = ConvHi.take();
+        } else {
+          HiVal = Hi->EvaluateKnownConstInt(Context);
+
+          // If the RHS is not the same type as the condition, insert an
+          // implicit cast.
+          Hi = DefaultLvalueConversion(Hi).take();
+          Hi = ImpCastExprToType(Hi, CondType, CK_IntegralCast).take();
+        }
 
         // Convert the value to the same width/sign as the condition.
         ConvertIntegerToTypeWarnOnOverflow(HiVal, CondWidth, CondIsSigned,
                                            Hi->getLocStart(),
                                            diag::warn_case_value_overflow);
 
-        // If the RHS is not the same type as the condition, insert an implicit
-        // cast.
-        // FIXME: In C++11, the value is a converted constant expression of the
-        // promoted type of the switch condition.
-        Hi = DefaultLvalueConversion(Hi).take();
-        Hi = ImpCastExprToType(Hi, CondType, CK_IntegralCast).take();
         CR->setRHS(Hi);
 
         // If the low value is bigger than the high value, the case is empty.

@@ -3737,14 +3737,70 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
   //   template-argument cannot be converted to the type of the
   //   corresponding template-parameter then the program is
   //   ill-formed.
-  //
-  //     -- for a non-type template-parameter of integral or
-  //        enumeration type, integral promotions (4.5) and integral
-  //        conversions (4.7) are applied.
   QualType ParamType = InstantiatedParamType;
   if (ParamType->isIntegralOrEnumerationType()) {
-    // FIXME: In C++11, the argument is a converted constant expression of the
-    // type of the template parameter.
+    // C++11:
+    //   -- for a non-type template-parameter of integral or
+    //      enumeration type, conversions permitted in a converted
+    //      constant expression are applied.
+    //
+    // C++98:
+    //   -- for a non-type template-parameter of integral or
+    //      enumeration type, integral promotions (4.5) and integral
+    //      conversions (4.7) are applied.
+
+    if (CTAK == CTAK_Deduced &&
+        !Context.hasSameUnqualifiedType(ParamType, Arg->getType())) {
+      // C++ [temp.deduct.type]p17:
+      //   If, in the declaration of a function template with a non-type
+      //   template-parameter, the non-type template-parameter is used
+      //   in an expression in the function parameter-list and, if the
+      //   corresponding template-argument is deduced, the
+      //   template-argument type shall match the type of the
+      //   template-parameter exactly, except that a template-argument
+      //   deduced from an array bound may be of any integral type.
+      Diag(StartLoc, diag::err_deduced_non_type_template_arg_type_mismatch)
+        << Arg->getType().getUnqualifiedType()
+        << ParamType.getUnqualifiedType();
+      Diag(Param->getLocation(), diag::note_template_param_here);
+      return ExprError();
+    }
+
+    if (getLangOptions().CPlusPlus0x) {
+      // We can't check arbitrary value-dependent arguments.
+      // FIXME: If there's no viable conversion to the template parameter type,
+      // we should be able to diagnose that prior to instantiation.
+      if (Arg->isValueDependent()) {
+        Converted = TemplateArgument(Arg);
+        return Owned(Arg);
+      }
+
+      // C++ [temp.arg.nontype]p1:
+      //   A template-argument for a non-type, non-template template-parameter
+      //   shall be one of:
+      //
+      //     -- for a non-type template-parameter of integral or enumeration
+      //        type, a converted constant expression of the type of the
+      //        template-parameter; or
+      llvm::APSInt Value;
+      ExprResult ArgResult =
+        CheckConvertedConstantExpression(Arg, ParamType, Value,
+                                         CCEK_TemplateArg);
+      if (ArgResult.isInvalid())
+        return ExprError();
+
+      // Widen the argument value to sizeof(parameter type). This is almost
+      // always a no-op, except when the parameter type is bool. In
+      // that case, this may extend the argument from 1 bit to 8 bits.
+      QualType IntegerType = ParamType;
+      if (const EnumType *Enum = IntegerType->getAs<EnumType>())
+        IntegerType = Enum->getDecl()->getIntegerType();
+      Value = Value.extOrTrunc(Context.getTypeSize(IntegerType));
+
+      Converted = TemplateArgument(Value, Context.getCanonicalType(ParamType));
+      return ArgResult;
+    }
+
     ExprResult ArgResult = DefaultLvalueConversion(Arg);
     if (ArgResult.isInvalid())
       return ExprError();
@@ -3782,19 +3838,6 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     // Try to convert the argument to the parameter's type.
     if (Context.hasSameType(ParamType, ArgType)) {
       // Okay: no conversion necessary
-    } else if (CTAK == CTAK_Deduced) {
-      // C++ [temp.deduct.type]p17:
-      //   If, in the declaration of a function template with a non-type
-      //   template-parameter, the non-type template- parameter is used
-      //   in an expression in the function parameter-list and, if the
-      //   corresponding template-argument is deduced, the
-      //   template-argument type shall match the type of the
-      //   template-parameter exactly, except that a template-argument
-      //   deduced from an array bound may be of any integral type.
-      Diag(StartLoc, diag::err_deduced_non_type_template_arg_type_mismatch)
-        << ArgType << ParamType;
-      Diag(Param->getLocation(), diag::note_template_param_here);
-      return ExprError();
     } else if (ParamType->isBooleanType()) {
       // This is an integral-to-boolean conversion.
       Arg = ImpCastExprToType(Arg, ParamType, CK_IntegralToBoolean).take();

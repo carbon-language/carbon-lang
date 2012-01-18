@@ -92,9 +92,8 @@ namespace TemplateArgumentConversion {
 namespace CaseStatements {
   void f(int n) {
     switch (n) {
-    // FIXME: Produce the 'add ()' fixit for this.
-    case MemberZero().zero: // desired-error {{did you mean to call it with no arguments?}} expected-error {{not an integral constant expression}} expected-note {{non-literal type '<bound member function type>'}}
-    case id(1):
+    case MemberZero().zero: // expected-error {{did you mean to call it with no arguments?}} expected-note {{previous}}
+    case id(0): // expected-error {{duplicate case value '0'}}
       return;
     }
   }

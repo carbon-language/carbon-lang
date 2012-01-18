@@ -120,8 +120,8 @@ namespace MutableMembers {
   // Here's one reason why allowing this would be a disaster...
   template<int n> struct Id { int k = n; };
   int f() {
-    constexpr MM m = { 0 }; // expected-error {{must be initialized by a constant expression}} expected-note {{non-literal type 'const MutableMembers::MM' cannot be used in a constant expression}}
+    constexpr MM m = { 0 }; // expected-error {{must be initialized by a constant expression}} expected-note {{non-literal type 'const MutableMembers::MM' cannot be used in a constant expression}} expected-note {{here}}
     ++m.n;
-    return Id<m.n>().k; // expected-error {{not an integral constant expression}}
+    return Id<m.n>().k; // expected-error {{not a constant expression}} expected-note {{initializer of 'm' is not a constant expression}}
   }
 }

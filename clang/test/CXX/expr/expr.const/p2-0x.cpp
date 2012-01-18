@@ -119,7 +119,7 @@ namespace UndefinedBehavior {
     switch (n) {
     case (int)4.4e9: // expected-error {{constant expression}} expected-note {{value 4.4E+9 is outside the range of representable values of type 'int'}}
     case (int)(unsigned)(long long)4.4e9: // ok
-    case (float)1e300: // expected-error {{constant expression}} expected-note {{value 1.0E+300 is outside the range of representable values of type 'float'}}
+    case (int)(float)1e300: // expected-error {{constant expression}} expected-note {{value 1.0E+300 is outside the range of representable values of type 'float'}}
     case (int)((float)1e37 / 1e30): // ok
     case (int)(__fp16)65536: // expected-error {{constant expression}} expected-note {{value 65536 is outside the range of representable values of type 'half'}}
       break;
@@ -398,7 +398,7 @@ namespace Throw {
 }
 
 // PR9999
-template<bool v>
+template<unsigned int v>
 class bitWidthHolding {
 public:
   static const
@@ -420,3 +420,6 @@ struct and_or {
 
 static const bool and_value = and_or<true>::and_value;
 static const bool or_value = and_or<true>::or_value;
+
+static_assert(and_value == false, "");
+static_assert(or_value == true, "");
