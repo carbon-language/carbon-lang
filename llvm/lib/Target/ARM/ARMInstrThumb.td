@@ -672,10 +672,9 @@ def tLDRpci : T1pIs<(outs tGPR:$Rt), (ins t_addrmode_pc:$addr), IIC_iLoad_i,
 }
 
 // FIXME: Remove this entry when the above ldr.n workaround is fixed.
-// For disassembly use only.
-def tLDRpciDIS : T1pIs<(outs tGPR:$Rt), (ins t_addrmode_pc:$addr), IIC_iLoad_i,
-                       "ldr", "\t$Rt, $addr",
-                       [/* disassembly only */]>,
+// For assembly/disassembly use only.
+def tLDRpciASM : T1pIs<(outs tGPR:$Rt), (ins t_addrmode_pc:$addr), IIC_iLoad_i,
+                       "ldr", "\t$Rt, $addr", []>,
                  T1Encoding<{0,1,0,0,1,?}> {
   // A6.2 & A8.6.59
   bits<3> Rt;
