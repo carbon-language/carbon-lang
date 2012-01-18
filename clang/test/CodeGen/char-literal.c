@@ -9,10 +9,25 @@ int main() {
   // CHECK-CPP0X: store i8 97
   char a = 'a';
 
-  // Should pick second character.
+  // Should truncate value (equal to last character).
   // CHECK-C: store i8 98
   // CHECK-CPP0X: store i8 98
   char b = 'ab';
+
+  // Should get concatonated characters
+  // CHECK-C: store i32 24930
+  // CHECK-CPP0X: store i32 24930
+  int b1 = 'ab';
+
+  // Should get concatonated characters
+  // CHECK-C: store i32 808464432
+  // CHECK-CPP0X: store i32 808464432
+  int b2 = '0000';
+
+  // Should get truncated value (last four characters concatonated)
+  // CHECK-C: store i32 1919512167
+  // CHECK-CPP0X: store i32 1919512167
+  int b3 = 'somesillylongstring';
 
   // CHECK-C: store i32 97
   // CHECK-CPP0X: store i32 97
@@ -27,25 +42,10 @@ int main() {
   // CHECK-CPP0X: store i16 97
   char16_t ua = u'a';
 
-  // Should pick second character.
-  // CHECK-CPP0X: store i16 98
-  char16_t ub = u'ab';
-
   // CHECK-CPP0X: store i32 97
   char32_t Ua = U'a';
 
-  // Should pick second character.
-  // CHECK-CPP0X: store i32 98
-  char32_t Ub = U'ab';
 #endif
-
-  // Should pick last character and store its lowest byte.
-  // This does not match gcc, which takes the last character, converts it to
-  // utf8, and then picks the second-lowest byte of that (they probably store
-  // the utf8 in uint16_ts internally and take the lower byte of that).
-  // CHECK-C: store i8 48
-  // CHECK-CPP0X: store i8 48
-  char c = '\u1120\u0220\U00102030';
 
   // CHECK-C: store i32 61451
   // CHECK-CPP0X: store i32 61451
@@ -65,13 +65,6 @@ int main() {
   wchar_t wd = L'\U0010F00B';
 
 #if __cplusplus >= 201103L
-  // Should take lower word of the 4byte UNC sequence. This does not match
-  // gcc. I don't understand what gcc does (it looks like it converts to utf16,
-  // then takes the second (!) utf16 word, swaps the lower two nibbles, and
-  // stores that?).
-  // CHECK-CPP0X: store i16 -4085
-  char16_t ud = u'\U0010F00B';  // has utf16 encoding dbc8 dcb0
-
   // CHECK-CPP0X: store i32 1110027
   char32_t Ud = U'\U0010F00B';
 #endif
@@ -80,14 +73,4 @@ int main() {
   // CHECK-C: store i32 1110027
   // CHECK-CPP0X: store i32 1110027
   wchar_t we = L'\u1234\U0010F00B';
-
-#if __cplusplus >= 201103L
-  // Should pick second character.
-  // CHECK-CPP0X: store i16 -4085
-  char16_t ue = u'\u1234\U0010F00B';
-
-  // Should pick second character.
-  // CHECK-CPP0X: store i32 1110027
-  char32_t Ue = U'\u1234\U0010F00B';
-#endif
 }

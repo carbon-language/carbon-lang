@@ -66,4 +66,4 @@ double t1[] = {
 // PR7888
 double g = 1e100000000; // expected-warning {{too large}}
 
-char h = '\u1234'; // expected-warning {{character unicode escape sequence too long for its type}}
+char h = '\u1234'; // expected-error {{character too large for enclosing character literal type}}
