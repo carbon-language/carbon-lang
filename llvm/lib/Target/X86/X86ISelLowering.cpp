@@ -45,6 +45,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/VariadicFunction.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -55,6 +56,9 @@ using namespace llvm;
 using namespace dwarf;
 
 STATISTIC(NumTailCalls, "Number of tail calls");
+
+static cl::opt<bool> UseRegMask("x86-use-regmask",
+                                cl::desc("Use register masks for x86 calls"));
 
 // Forward declarations.
 static SDValue getMOVL(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
@@ -2505,6 +2509,14 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Add an implicit use of AL for non-Windows x86 64-bit vararg functions.
   if (Is64Bit && isVarArg && !IsWin64)
     Ops.push_back(DAG.getRegister(X86::AL, MVT::i8));
+
+  // Experimental: Add a register mask operand representing the call-preserved
+  // registers.
+  if (UseRegMask) {
+    const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
+    const uint32_t *Mask = TRI->getCallPreservedMask(CallConv);
+    Ops.push_back(DAG.getRegisterMask(Mask));
+  }
 
   if (InFlag.getNode())
     Ops.push_back(InFlag);
