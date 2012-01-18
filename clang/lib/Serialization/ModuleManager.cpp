@@ -35,7 +35,8 @@ llvm::MemoryBuffer *ModuleManager::lookupBuffer(StringRef Name) {
 
 std::pair<ModuleFile *, bool>
 ModuleManager::addModule(StringRef FileName, ModuleKind Type, 
-                         ModuleFile *ImportedBy, std::string &ErrorStr) {
+                         ModuleFile *ImportedBy, unsigned Generation,
+                         std::string &ErrorStr) {
   const FileEntry *Entry = FileMgr.getFile(FileName);
   if (!Entry && FileName != "-") {
     ErrorStr = "file not found";
@@ -47,7 +48,7 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
   bool NewModule = false;
   if (!ModuleEntry) {
     // Allocate a new module.
-    ModuleFile *New = new ModuleFile(Type);
+    ModuleFile *New = new ModuleFile(Type, Generation);
     New->FileName = FileName.str();
     Chain.push_back(New);
     NewModule = true;

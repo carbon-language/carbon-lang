@@ -95,6 +95,8 @@ public:
   /// \param ImportedBy The module that is importing this module, or NULL if
   /// this module is imported directly by the user.
   ///
+  /// \param Generation The generation in which this module was loaded.
+  ///
   /// \param ErrorStr Will be set to a non-empty string if any errors occurred
   /// while trying to load the module.
   ///
@@ -102,7 +104,7 @@ public:
   /// and a boolean indicating whether the module was newly added.
   std::pair<ModuleFile *, bool> 
   addModule(StringRef FileName, ModuleKind Type, ModuleFile *ImportedBy,
-            std::string &ErrorStr);
+            unsigned Generation, std::string &ErrorStr);
   
   /// \brief Add an in-memory buffer the list of known buffers
   void addInMemoryBuffer(StringRef FileName, llvm::MemoryBuffer *Buffer);

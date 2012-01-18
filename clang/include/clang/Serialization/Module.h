@@ -57,7 +57,7 @@ struct DeclContextInfo {
 /// other modules.
 class ModuleFile {
 public:
-  ModuleFile(ModuleKind Kind);
+  ModuleFile(ModuleKind Kind, unsigned Generation);
   ~ModuleFile();
 
   // === General information ===
@@ -72,6 +72,9 @@ public:
   /// user.
   bool DirectlyImported;
 
+  /// \brief The generation of which this module file is a part.
+  unsigned Generation;
+  
   /// \brief The memory buffer that stores the data associated with
   /// this AST file.
   llvm::OwningPtr<llvm::MemoryBuffer> Buffer;

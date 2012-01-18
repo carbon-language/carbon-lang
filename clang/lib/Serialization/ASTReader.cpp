@@ -514,7 +514,7 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
       II = &Reader.getIdentifierTable().getOwn(StringRef(k.first, k.second));
     Reader.SetIdentifierInfo(ID, II);
     II->setIsFromAST();
-    II->setOutOfDate(false);
+    Reader.markIdentifierUpToDate(II);    
     return II;
   }
 
@@ -540,7 +540,7 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
   IdentifierInfo *II = KnownII;
   if (!II)
     II = &Reader.getIdentifierTable().getOwn(StringRef(k.first, k.second));
-  II->setOutOfDate(false);
+  Reader.markIdentifierUpToDate(II);
   II->setIsFromAST();
 
   // Set or check the various bits in the IdentifierInfo structure.
@@ -1560,13 +1560,19 @@ namespace {
   /// \brief Visitor class used to look up identifirs in an AST file.
   class IdentifierLookupVisitor {
     StringRef Name;
+    unsigned PriorGeneration;
     IdentifierInfo *Found;
   public:
-    explicit IdentifierLookupVisitor(StringRef Name) : Name(Name), Found() { }
+    IdentifierLookupVisitor(StringRef Name, unsigned PriorGeneration) 
+      : Name(Name), PriorGeneration(PriorGeneration), Found() { }
     
     static bool visit(ModuleFile &M, void *UserData) {
       IdentifierLookupVisitor *This
         = static_cast<IdentifierLookupVisitor *>(UserData);
+      
+      // If we've already searched this module file, skip it now.
+      if (M.Generation <= This->PriorGeneration)
+        return true;
       
       ASTIdentifierLookupTable *IdTable
         = (ASTIdentifierLookupTable *)M.IdentifierLookupTable;
@@ -1593,7 +1599,24 @@ namespace {
 }
 
 void ASTReader::updateOutOfDateIdentifier(IdentifierInfo &II) {
-  get(II.getName());
+  unsigned PriorGeneration = 0;
+  if (getContext().getLangOptions().Modules)
+    PriorGeneration = IdentifierGeneration[&II];
+  
+  IdentifierLookupVisitor Visitor(II.getName(), PriorGeneration);
+  ModuleMgr.visit(IdentifierLookupVisitor::visit, &Visitor);
+  markIdentifierUpToDate(&II);
+}
+
+void ASTReader::markIdentifierUpToDate(IdentifierInfo *II) {
+  if (!II)
+    return;
+  
+  II->setOutOfDate(false);
+
+  // Update the generation for this identifier.
+  if (getContext().getLangOptions().Modules)
+    IdentifierGeneration[II] = CurrentGeneration;
 }
 
 const FileEntry *ASTReader::getFileEntry(StringRef filenameStrRef) {
@@ -2612,6 +2635,9 @@ void ASTReader::makeModuleVisible(Module *Mod,
 
 ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
                                             ModuleKind Type) {
+  // Bump the generation number.
+  ++CurrentGeneration;
+  
   switch(ReadASTCore(FileName, Type, /*ImportedBy=*/0)) {
   case Failure: return Failure;
   case IgnorePCH: return IgnorePCH;
@@ -2619,7 +2645,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   }
 
   // Here comes stuff that we only do once the entire chain is loaded.
-  
+
   // Check the predefines buffers.
   if (!DisableValidation && Type == MK_PCH &&
       // FIXME: CheckPredefinesBuffers also sets the SuggestedPredefines;
@@ -2635,7 +2661,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
                               IdEnd = PP.getIdentifierTable().end();
        Id != IdEnd; ++Id)
     Id->second->setOutOfDate(true);
-
+  
   // Resolve any unresolved module exports.
   for (unsigned I = 0, N = UnresolvedModuleImportExports.size(); I != N; ++I) {
     UnresolvedModuleImportExport &Unresolved = UnresolvedModuleImportExports[I];
@@ -2683,7 +2709,7 @@ ASTReader::ASTReadResult ASTReader::ReadASTCore(StringRef FileName,
   bool NewModule;
   std::string ErrorStr;
   llvm::tie(M, NewModule) = ModuleMgr.addModule(FileName, Type, ImportedBy,
-                                                ErrorStr);
+                                                CurrentGeneration, ErrorStr);
 
   if (!M) {
     // We couldn't load the module.
@@ -5109,11 +5135,11 @@ void ASTReader::InitializeSema(Sema &S) {
 }
 
 IdentifierInfo* ASTReader::get(const char *NameStart, const char *NameEnd) {
-  IdentifierLookupVisitor Visitor(StringRef(NameStart, NameEnd - NameStart));
+  IdentifierLookupVisitor Visitor(StringRef(NameStart, NameEnd - NameStart),
+                                  /*PriorGeneration=*/0);
   ModuleMgr.visit(IdentifierLookupVisitor::visit, &Visitor);
   IdentifierInfo *II = Visitor.getIdentifierInfo();
-  if (II)
-    II->setOutOfDate(false);
+  markIdentifierUpToDate(II);
   return II;
 }
 
@@ -6236,7 +6262,8 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context,
     Consumer(0), ModuleMgr(FileMgr.getFileSystemOptions()),
     RelocatablePCH(false), isysroot(isysroot),
     DisableValidation(DisableValidation),
-    DisableStatCache(DisableStatCache), NumStatHits(0), NumStatMisses(0), 
+    DisableStatCache(DisableStatCache), 
+    CurrentGeneration(0), NumStatHits(0), NumStatMisses(0), 
     NumSLocEntriesRead(0), TotalNumSLocEntries(0), 
     NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0), 
     TotalNumMacros(0), NumSelectorsRead(0), NumMethodPoolEntriesRead(0), 
