@@ -149,7 +149,17 @@ public:
   const FunctionDecl *getCalleeDecl(const CallExpr *CE) const;
 
   /// \brief Get the name of the called function (path-sensitive).
-  StringRef getCalleeName(const CallExpr *CE) const;
+  StringRef getCalleeName(const FunctionDecl *FunDecl) const;
+
+  /// \brief Get the name of the called function (path-sensitive).
+  StringRef getCalleeName(const CallExpr *CE) const {
+    const FunctionDecl *FunDecl = getCalleeDecl(CE);
+    return getCalleeName(FunDecl);
+  }
+
+  /// Given a function declaration and a name checks if this is a C lib
+  /// function with the given name.
+  bool isCLibraryFunction(const FunctionDecl *FD, StringRef Name);
 
 private:
   ExplodedNode *addTransitionImpl(const ProgramState *State,

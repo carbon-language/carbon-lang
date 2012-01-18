@@ -22,6 +22,7 @@ static char *__inline_strcpy_chk (char *dest, const char *src) {
 }
 char *stpcpy(char *restrict s1, const char *restrict s2);
 char *strncpy( char * destination, const char * source, size_t num );
+char *strndup(const char *s, size_t n);
 
 #define BUFSIZE 10
 
@@ -86,9 +87,18 @@ void testUncontrolledFormatString(char **p) {
   stpcpy(spcpy, s);
   setproctitle(spcpy, 3); // expected-warning {{Uncontrolled Format String}}
 
+  char *spcpyret;
+  spcpyret = stpcpy(spcpy, s);
+  setproctitle(spcpyret, 3); // expected-warning {{Uncontrolled Format String}}
+
   char sncpy[80];
   strncpy(sncpy, s, 20);
   setproctitle(sncpy, 3); // expected-warning {{Uncontrolled Format String}}
+
+  char *dup;
+  dup = strndup(s, 20);
+  setproctitle(dup, 3); // expected-warning {{Uncontrolled Format String}}
+
 }
 
 int system(const char *command);
@@ -97,4 +107,24 @@ void testTaintSystemCall() {
   char addr[128];
   scanf("%s", addr);
   system(addr); // expected-warning {{Tainted data passed to a system call}}
+
+  // Test that spintf transfers taint.
+  sprintf(buffer, "/bin/mail %s < /tmp/email", addr);
+  system(buffer); // expected-warning {{Tainted data passed to a system call}}
+}
+void testTaintSystemCall2() {
+  // Test that snpintf transfers taint.
+  char buffern[156];
+  char addr[128];
+  scanf("%s", addr);
+  __builtin_snprintf(buffern, 10, "/bin/mail %s < /tmp/email", addr);
+  system(buffern); // expected-warning {{Tainted data passed to a system call}}
+}
+void testTaintSystemCall3() {
+  char buffern2[156];
+  int numt;
+  char addr[128];
+  scanf("%s %d", addr, &numt);
+  __builtin_snprintf(buffern2, numt, "/bin/mail %s < /tmp/email", "abcd");
+  system(buffern2); // expected-warning {{Tainted data passed to a system call}}
 }
