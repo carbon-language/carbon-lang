@@ -4984,8 +4984,8 @@ StmtResult
 TreeTransform<Derived>::TransformCaseStmt(CaseStmt *S) {
   ExprResult LHS, RHS;
   {
-    // The case value expressions are not potentially evaluated.
-    EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
+    EnterExpressionEvaluationContext Unevaluated(SemaRef,
+                                                 Sema::ConstantEvaluated);
 
     // Transform the left-hand case value.
     LHS = getDerived().TransformExpr(S->getLHS());

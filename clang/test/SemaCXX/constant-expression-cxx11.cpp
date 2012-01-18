@@ -1022,3 +1022,9 @@ namespace ComplexConstexpr {
   typedef _Complex float fcomplex;
   constexpr fcomplex test7 = fcomplex();
 }
+
+namespace InstantiateCaseStmt {
+  template<int x> constexpr int f() { return x; }
+  template<int x> int g(int c) { switch(c) { case f<x>(): return 1; } return 0; }
+  int gg(int c) { return g<4>(c); }
+}
