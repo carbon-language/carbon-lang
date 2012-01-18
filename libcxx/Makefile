@@ -30,8 +30,6 @@ installsrc:: $(SRCROOT)
 
 clean::
 
-installhdrs:: do-installhdrs
-
 # The do-installhdrs target is also used by clang's runtime/libcxx makefile.
 do-installhdrs:
 	mkdir -p $(HEADER_DIR)/c++/v1/ext
