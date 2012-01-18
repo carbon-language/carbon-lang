@@ -10,7 +10,6 @@ Makefile.mk      : Currently a stub for a proper makefile. not usable.
 Makefile.old     : Old out-of-tree makefile, the only usable one so far.
 asan_*.{cc,h}    : Sources of the asan run-time lirbary.
 mach_override/*  : Utility to override functions on Darwin (MIT License).
-sysinfo/*        : Portable utility to iterate over /proc/maps (BSD License).
 scripts/*        : Helper scripts.
 
 Temporary build instructions (verified on linux):

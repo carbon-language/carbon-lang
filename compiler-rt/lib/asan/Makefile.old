@@ -178,9 +178,7 @@ RTL_HDR=asan_allocator.h \
 	asan_stats.h \
 	asan_thread.h \
 	asan_thread_registry.h \
-	mach_override/mach_override.h \
-	sysinfo/basictypes.h \
-	sysinfo/sysinfo.h
+	mach_override/mach_override.h
 
 LIBASAN_OBJ=$(BIN)/asan_rtl$(SUFF).o \
 	    $(BIN)/asan_allocator$(SUFF).o  \
@@ -197,8 +195,7 @@ LIBASAN_OBJ=$(BIN)/asan_rtl$(SUFF).o \
 	    $(BIN)/asan_stats$(SUFF).o  \
 	    $(BIN)/asan_thread$(SUFF).o  \
 	    $(BIN)/asan_thread_registry$(SUFF).o  \
-	    $(BIN)/mach_override/mach_override$(SUFF).o \
-	    $(BIN)/sysinfo/sysinfo$(SUFF).o
+	    $(BIN)/mach_override/mach_override$(SUFF).o
 
 GTEST_ROOT=third_party/googletest
 GTEST_INCLUDE=-I$(GTEST_ROOT)/include
@@ -229,7 +226,6 @@ lib32:
 
 $(BIN):
 	mkdir -p $(BIN)
-	mkdir -p $(BIN)/sysinfo
 	mkdir -p $(BIN)/mach_override
 
 clang:

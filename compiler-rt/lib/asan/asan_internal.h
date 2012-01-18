@@ -38,16 +38,6 @@
 
 // Build-time configuration options.
 
-// If set, sysinfo/sysinfo.h will be used to iterate over /proc/maps.
-#ifndef ASAN_USE_SYSINFO
-#ifdef __linux__
-# define ASAN_USE_SYSINFO 0
-#else
-// TODO(glider): clean up sysinfo.
-# define ASAN_USE_SYSINFO 0
-#endif
-#endif
-
 // If set, asan will install its own SEGV signal handler.
 #ifndef ASAN_NEEDS_SEGV
 # define ASAN_NEEDS_SEGV 1

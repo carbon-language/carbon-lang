@@ -18,10 +18,6 @@
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 
-#if ASAN_USE_SYSINFO == 1
-#include "sysinfo/sysinfo.h"
-#endif
-
 #ifdef ASAN_USE_EXTERNAL_SYMBOLIZER
 extern bool
 ASAN_USE_EXTERNAL_SYMBOLIZER(const void *pc, char *out, int out_size);
@@ -29,93 +25,8 @@ ASAN_USE_EXTERNAL_SYMBOLIZER(const void *pc, char *out, int out_size);
 
 namespace __asan {
 
-// ----------------------- ProcSelfMaps ----------------------------- {{{1
-#if ASAN_USE_SYSINFO == 1
-class ProcSelfMaps {
- public:
-  void Init() {
-    ScopedLock lock(&mu_);
-    if (map_size_ != 0) return;  // already inited
-    if (FLAG_v >= 2) {
-      Printf("ProcSelfMaps::Init()\n");
-    }
-    ProcMapsIterator it(0, &proc_self_maps_);   // 0 means "current pid"
-
-    uint64 start, end, offset;
-    int64 inode;
-    char *flags, *filename;
-    CHECK(map_size_ == 0);
-    while (it.Next(&start, &end, &flags, &offset, &inode, &filename)) {
-      CHECK(map_size_ < kMaxProcSelfMapsSize);
-      Mapping &mapping = memory_map[map_size_];
-      mapping.beg = start;
-      mapping.end = end;
-      mapping.offset = offset;
-      real_strncpy(mapping.name,
-                   filename, ASAN_ARRAY_SIZE(mapping.name));
-      mapping.name[ASAN_ARRAY_SIZE(mapping.name) - 1] = 0;
-      if (FLAG_v >= 2) {
-        Printf("[%ld] [%p,%p] off %p %s\n", map_size_,
-               mapping.beg, mapping.end, mapping.offset, mapping.name);
-      }
-      map_size_++;
-    }
-  }
-
-  void Print() {
-    Printf("%s\n", proc_self_maps_);
-  }
-
-  void PrintPc(uintptr_t pc, int idx) {
-    for (size_t i = 0; i < map_size_; i++) {
-      Mapping &m = memory_map[i];
-      if (pc >= m.beg && pc < m.end) {
-        uintptr_t offset = pc - m.beg;
-        if (i == 0) offset = pc;
-        Printf("    #%d 0x%lx (%s+0x%lx)\n", idx, pc, m.name, offset);
-        return;
-      }
-    }
-    Printf("  #%d 0x%lx\n", idx, pc);
-  }
-
- private:
-  void copy_until_new_line(const char *str, char *dest, size_t max_size) {
-    size_t i = 0;
-    for (; str[i] && str[i] != '\n' && i < max_size - 1; i++) {
-      dest[i] = str[i];
-    }
-    dest[i] = 0;
-  }
-
-
-  struct Mapping {
-    uintptr_t beg, end, offset;
-    char name[1000];
-  };
-  static const size_t kMaxNumMapEntries = 4096;
-  static const size_t kMaxProcSelfMapsSize = 1 << 20;
-  ProcMapsIterator::Buffer proc_self_maps_;
-  size_t map_size_;
-  Mapping memory_map[kMaxNumMapEntries];
-
-  static AsanLock mu_;
-};
-
-static ProcSelfMaps proc_self_maps;
-AsanLock ProcSelfMaps::mu_(LINKER_INITIALIZED);
-
-
-void AsanStackTrace::PrintStack(uintptr_t *addr, size_t size) {
-  proc_self_maps.Init();
-  for (size_t i = 0; i < size && addr[i]; i++) {
-    uintptr_t pc = addr[i];
-    // int line;
-    proc_self_maps.PrintPc(pc, i);
-    // Printf("  #%ld 0x%lx %s\n", i, pc, rtn.c_str());
-  }
-}
-#elif defined(ASAN_USE_EXTERNAL_SYMBOLIZER)
+// ----------------------- AsanStackTrace ----------------------------- {{{1
+#if defined(ASAN_USE_EXTERNAL_SYMBOLIZER)
 void AsanStackTrace::PrintStack(uintptr_t *addr, size_t size) {
   for (size_t i = 0; i < size && addr[i]; i++) {
     uintptr_t pc = addr[i];
@@ -125,7 +36,7 @@ void AsanStackTrace::PrintStack(uintptr_t *addr, size_t size) {
   }
 }
 
-#else  // ASAN_USE_SYSINFO
+#else  // ASAN_USE_EXTERNAL_SYMBOLIZER
 void AsanStackTrace::PrintStack(uintptr_t *addr, size_t size) {
   AsanProcMaps proc_maps;
   for (size_t i = 0; i < size && addr[i]; i++) {
@@ -141,7 +52,7 @@ void AsanStackTrace::PrintStack(uintptr_t *addr, size_t size) {
     }
   }
 }
-#endif  // ASAN_USE_SYSINFO
+#endif  // ASAN_USE_EXTERNAL_SYMBOLIZER
 
 #ifdef __arm__
 #define UNWIND_STOP _URC_END_OF_STACK
@@ -151,7 +62,6 @@ void AsanStackTrace::PrintStack(uintptr_t *addr, size_t size) {
 #define UNWIND_CONTINUE _URC_NO_REASON
 #endif
 
-// ----------------------- AsanStackTrace ----------------------------- {{{1
 uintptr_t AsanStackTrace::GetCurrentPc() {
   return GET_CALLER_PC();
 }
