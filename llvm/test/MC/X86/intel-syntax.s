@@ -29,4 +29,28 @@ _main:
 	movzx	EDI, WORD PTR [RCX + 2]
 // CHECK:	callq	_test
 	call	_test
+// CHECK:	andw	$12,	%ax
+	and	ax, 12
+// CHECK:	andw	$-12,	%ax
+	and	ax, -12
+// CHECK:	andw	$257,	%ax
+	and	ax, 257
+// CHECK:	andw	$-257,	%ax
+	and	ax, -257
+// CHECK:	andl	$12,	%eax
+	and	eax, 12
+// CHECK:	andl	$-12,	%eax
+	and	eax, -12
+// CHECK:	andl	$257,	%eax
+	and	eax, 257
+// CHECK:	andl	$-257,	%eax
+	and	eax, -257
+// CHECK:	andq	$12,	%rax
+	and	rax, 12
+// CHECK:	andq	$-12,	%rax
+	and	rax, -12
+// CHECK:	andq	$257,	%rax
+	and	rax, 257
+// CHECK:	andq	$-257,	%rax
+	and	rax, -257
 	ret

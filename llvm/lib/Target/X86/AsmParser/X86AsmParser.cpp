@@ -60,6 +60,9 @@ private:
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
   bool ParseDirectiveCode(StringRef IDVal, SMLoc L);
 
+  bool processInstruction(MCInst &Inst,
+                          const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
+
   bool MatchAndEmitInstruction(SMLoc IDLoc,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer &Out);
@@ -112,6 +115,31 @@ static unsigned MatchRegisterName(StringRef Name);
 
 /// }
 
+static  bool isImmSExti16i8Value(uint64_t Value) {
+  return ((                                  Value <= 0x000000000000007FULL)||
+          (0x000000000000FF80ULL <= Value && Value <= 0x000000000000FFFFULL)||
+          (0xFFFFFFFFFFFFFF80ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
+}
+
+static bool isImmSExti32i8Value(uint64_t Value) {
+  return ((                                  Value <= 0x000000000000007FULL)||
+          (0x00000000FFFFFF80ULL <= Value && Value <= 0x00000000FFFFFFFFULL)||
+          (0xFFFFFFFFFFFFFF80ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
+}
+
+static bool isImmZExtu32u8Value(uint64_t Value) {
+    return (Value <= 0x00000000000000FFULL);
+}
+
+static bool isImmSExti64i8Value(uint64_t Value) {
+  return ((                                  Value <= 0x000000000000007FULL)||
+	  (0xFFFFFFFFFFFFFF80ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
+}
+
+static bool isImmSExti64i32Value(uint64_t Value) {
+  return ((                                  Value <= 0x000000007FFFFFFFULL)||
+	  (0xFFFFFFFF80000000ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
+}
 namespace {
 
 /// X86Operand - Instances of this class represent a parsed X86 machine
@@ -219,10 +247,7 @@ struct X86Operand : public MCParsedAsmOperand {
 
     // Otherwise, check the value is in a range that makes sense for this
     // extension.
-    uint64_t Value = CE->getValue();
-    return ((                                  Value <= 0x000000000000007FULL)||
-            (0x000000000000FF80ULL <= Value && Value <= 0x000000000000FFFFULL)||
-            (0xFFFFFFFFFFFFFF80ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
+    return isImmSExti16i8Value(CE->getValue());
   }
   bool isImmSExti32i8() const {
     if (!isImm())
@@ -236,10 +261,7 @@ struct X86Operand : public MCParsedAsmOperand {
 
     // Otherwise, check the value is in a range that makes sense for this
     // extension.
-    uint64_t Value = CE->getValue();
-    return ((                                  Value <= 0x000000000000007FULL)||
-            (0x00000000FFFFFF80ULL <= Value && Value <= 0x00000000FFFFFFFFULL)||
-            (0xFFFFFFFFFFFFFF80ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
+    return isImmSExti32i8Value(CE->getValue());
   }
   bool isImmZExtu32u8() const {
     if (!isImm())
@@ -253,8 +275,7 @@ struct X86Operand : public MCParsedAsmOperand {
 
     // Otherwise, check the value is in a range that makes sense for this
     // extension.
-    uint64_t Value = CE->getValue();
-    return (Value <= 0x00000000000000FFULL);
+    return isImmZExtu32u8Value(CE->getValue());
   }
   bool isImmSExti64i8() const {
     if (!isImm())
@@ -268,9 +289,7 @@ struct X86Operand : public MCParsedAsmOperand {
 
     // Otherwise, check the value is in a range that makes sense for this
     // extension.
-    uint64_t Value = CE->getValue();
-    return ((                                  Value <= 0x000000000000007FULL)||
-            (0xFFFFFFFFFFFFFF80ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
+    return isImmSExti64i8Value(CE->getValue());
   }
   bool isImmSExti64i32() const {
     if (!isImm())
@@ -284,9 +303,7 @@ struct X86Operand : public MCParsedAsmOperand {
 
     // Otherwise, check the value is in a range that makes sense for this
     // extension.
-    uint64_t Value = CE->getValue();
-    return ((                                  Value <= 0x000000007FFFFFFFULL)||
-            (0xFFFFFFFF80000000ULL <= Value && Value <= 0xFFFFFFFFFFFFFFFFULL));
+    return isImmSExti64i32Value(CE->getValue());
   }
 
   bool isMem() const { return Kind == Memory; }
@@ -1157,6 +1174,54 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
 }
 
 bool X86AsmParser::
+processInstruction(MCInst &Inst,
+                   const SmallVectorImpl<MCParsedAsmOperand*> &Ops) {
+  switch (Inst.getOpcode()) {
+  default: return false;
+  case X86::AND16i16: {
+    if (!Inst.getOperand(0).isImm() ||
+        !isImmSExti16i8Value(Inst.getOperand(0).getImm()))
+      return false;
+
+    MCInst TmpInst;
+    TmpInst.setOpcode(X86::AND16ri8);
+    TmpInst.addOperand(MCOperand::CreateReg(X86::AX));
+    TmpInst.addOperand(MCOperand::CreateReg(X86::AX));
+    TmpInst.addOperand(Inst.getOperand(0));
+    Inst = TmpInst;
+    return true;
+  }
+  case X86::AND32i32: {
+    if (!Inst.getOperand(0).isImm() ||
+        !isImmSExti32i8Value(Inst.getOperand(0).getImm()))
+      return false;
+
+    MCInst TmpInst;
+    TmpInst.setOpcode(X86::AND32ri8);
+    TmpInst.addOperand(MCOperand::CreateReg(X86::EAX));
+    TmpInst.addOperand(MCOperand::CreateReg(X86::EAX));
+    TmpInst.addOperand(Inst.getOperand(0));
+    Inst = TmpInst;
+    return true;
+  }
+  case X86::AND64i32: {
+    if (!Inst.getOperand(0).isImm() ||
+        !isImmSExti64i8Value(Inst.getOperand(0).getImm()))
+      return false;
+
+    MCInst TmpInst;
+    TmpInst.setOpcode(X86::AND64ri8);
+    TmpInst.addOperand(MCOperand::CreateReg(X86::RAX));
+    TmpInst.addOperand(MCOperand::CreateReg(X86::RAX));
+    TmpInst.addOperand(Inst.getOperand(0));
+    Inst = TmpInst;
+    return true;
+  }
+  }
+  return false;
+}
+
+bool X86AsmParser::
 MatchAndEmitInstruction(SMLoc IDLoc,
                         SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                         MCStreamer &Out) {
@@ -1201,6 +1266,12 @@ MatchAndEmitInstruction(SMLoc IDLoc,
                                getParser().getAssemblerDialect())) {
   default: break;
   case Match_Success:
+    // Some instructions need post-processing to, for example, tweak which
+    // encoding is selected. Loop on it while changes happen so the
+    // individual transformations can chain off each other. 
+    while (processInstruction(Inst, Operands))
+      ;
+
     Out.EmitInstruction(Inst);
     return false;
   case Match_MissingFeature:
