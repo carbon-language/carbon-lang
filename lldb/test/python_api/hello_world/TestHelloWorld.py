@@ -16,7 +16,8 @@ class HelloWorldTestCase(TestBase):
 
         Use dsym info and process launch API.
         """
-        self.buildDsym()
+        self.buildDsym(dictionary=self.d)
+        self.setTearDownCleanup(dictionary=self.d)
         self.hello_world_python()
 
     @python_api_test
@@ -25,7 +26,8 @@ class HelloWorldTestCase(TestBase):
 
         Use dwarf debug map and process launch API.
         """
-        self.buildDwarf()
+        self.buildDwarf(dictionary=self.d)
+        self.setTearDownCleanup(dictionary=self.d)
         self.hello_world_python()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
@@ -35,7 +37,8 @@ class HelloWorldTestCase(TestBase):
 
         Use dsym info and attach to process with id API.
         """
-        self.buildDsym()
+        self.buildDsym(dictionary=self.d)
+        self.setTearDownCleanup(dictionary=self.d)
         self.hello_world_attach_with_id_api()
 
     @python_api_test
@@ -44,7 +47,8 @@ class HelloWorldTestCase(TestBase):
 
         Use dwarf map (no dsym) and attach to process with id API.
         """
-        self.buildDwarf()
+        self.buildDwarf(dictionary=self.d)
+        self.setTearDownCleanup(dictionary=self.d)
         self.hello_world_attach_with_id_api()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
@@ -54,7 +58,8 @@ class HelloWorldTestCase(TestBase):
 
         Use dsym info and attach to process with name API.
         """
-        self.buildDsym()
+        self.buildDsym(dictionary=self.d)
+        self.setTearDownCleanup(dictionary=self.d)
         self.hello_world_attach_with_name_api()
 
     @python_api_test
@@ -63,14 +68,16 @@ class HelloWorldTestCase(TestBase):
 
         Use dwarf map (no dsym) and attach to process with name API.
         """
-        self.buildDwarf()
+        self.buildDwarf(dictionary=self.d)
+        self.setTearDownCleanup(dictionary=self.d)
         self.hello_world_attach_with_name_api()
 
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
-        # Get the full path to our executable to be debugged.
-        self.exe = os.path.join(os.getcwd(), "hello_world")
+        # Get the full path to our executable to be attached/debugged.
+        self.exe = os.path.join(os.getcwd(), self.testMethodName)
+        self.d = {'EXE': self.testMethodName}
         # Find a couple of the line numbers within main.c.
         self.line1 = line_number('main.c', '// Set break point at this line.')
         self.line2 = line_number('main.c', '// Waiting to be attached...')
