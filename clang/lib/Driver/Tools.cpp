@@ -2029,8 +2029,16 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-fblocks-runtime-optional");
   }
 
-  if (Args.hasFlag(options::OPT_fmodules, options::OPT_fno_modules, false))
-    CmdArgs.push_back("-fmodules");
+  // -fmodules enables modules (off by default). However, for C++/Objective-C++,
+  // users must also pass -fcxx-modules. The latter flag will disappear once the
+  // modules implementation is solid for C++/Objective-C++ programs as well.
+  if (Args.hasFlag(options::OPT_fmodules, options::OPT_fno_modules, false)) {
+    bool AllowedInCXX = Args.hasFlag(options::OPT_fcxx_modules, 
+                                     options::OPT_fno_cxx_modules, 
+                                     false);
+    if (AllowedInCXX || !types::isCXX(InputType))
+      CmdArgs.push_back("-fmodules");
+  }
 
   // -faccess-control is default.
   if (Args.hasFlag(options::OPT_fno_access_control,
