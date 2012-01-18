@@ -3480,7 +3480,7 @@ def err_member_def_does_not_match : Error<
   "out-of-line definition of %0 does not match any declaration in %1">;
 def err_member_def_does_not_match_suggest : Error<
   "out-of-line definition of %0 does not match any declaration in %1; "
-  "did you mean %2">;
+  "did you mean %2?">;
 def err_member_def_does_not_match_ret_type : Error<
   "out-of-line definition of %q0 differs from the declaration in the return type">;
 def err_nonstatic_member_out_of_line : Error<

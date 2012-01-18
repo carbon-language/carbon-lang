@@ -55,6 +55,30 @@ Sema::DeclGroupPtrTy Sema::ConvertDeclToDeclGroup(Decl *Ptr, Decl *OwnedType) {
   return DeclGroupPtrTy::make(DeclGroupRef(Ptr));
 }
 
+namespace {
+
+class TypeNameValidatorCCC : public CorrectionCandidateCallback {
+ public:
+  TypeNameValidatorCCC(bool AllowInvalid) : AllowInvalidDecl(AllowInvalid) {
+    WantExpressionKeywords = false;
+    WantCXXNamedCasts = false;
+    WantRemainingKeywords = false;
+  }
+
+  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+    if (NamedDecl *ND = candidate.getCorrectionDecl())
+      return (isa<TypeDecl>(ND) || isa<ObjCInterfaceDecl>(ND)) &&
+          (AllowInvalidDecl || !ND->isInvalidDecl());
+    else
+      return candidate.isKeyword();
+  }
+
+ private:
+  bool AllowInvalidDecl;
+};
+
+}
+
 /// \brief If the identifier refers to a type name within this scope,
 /// return the declaration of that type.
 ///
@@ -147,9 +171,9 @@ ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
   case LookupResult::NotFound:
   case LookupResult::NotFoundInCurrentInstantiation:
     if (CorrectedII) {
+      TypeNameValidatorCCC Validator(true);
       TypoCorrection Correction = CorrectTypo(Result.getLookupNameInfo(),
-                                              Kind, S, SS, 0, false,
-                                              Sema::CTC_Type);
+                                              Kind, S, SS, &Validator);
       IdentifierInfo *NewII = Correction.getCorrectionAsIdentifierInfo();
       TemplateTy Template;
       bool MemberOfUnknownSpecialization;
@@ -339,9 +363,10 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
   
   // There may have been a typo in the name of the type. Look up typo
   // results, in case we have something that we can suggest.
+  TypeNameValidatorCCC Validator(false);
   if (TypoCorrection Corrected = CorrectTypo(DeclarationNameInfo(&II, IILoc),
-                                             LookupOrdinaryName, S, SS, NULL,
-                                             false, CTC_Type)) {
+                                             LookupOrdinaryName, S, SS,
+                                             &Validator)) {
     std::string CorrectedStr(Corrected.getAsString(getLangOptions()));
     std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOptions()));
 
@@ -350,32 +375,28 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
       // FIXME: Actually recover with the keyword we suggest, and emit a fix-it.
       Diag(IILoc, diag::err_unknown_typename_suggest)
         << &II << CorrectedQuotedStr;
-      return true;      
     } else {
       NamedDecl *Result = Corrected.getCorrectionDecl();
-      if ((isa<TypeDecl>(Result) || isa<ObjCInterfaceDecl>(Result)) &&
-          !Result->isInvalidDecl()) {
-        // We found a similarly-named type or interface; suggest that.
-        if (!SS || !SS->isSet())
-          Diag(IILoc, diag::err_unknown_typename_suggest)
-            << &II << CorrectedQuotedStr
-            << FixItHint::CreateReplacement(SourceRange(IILoc), CorrectedStr);
-        else if (DeclContext *DC = computeDeclContext(*SS, false))
-          Diag(IILoc, diag::err_unknown_nested_typename_suggest) 
-            << &II << DC << CorrectedQuotedStr << SS->getRange()
-            << FixItHint::CreateReplacement(SourceRange(IILoc), CorrectedStr);
-        else
-          llvm_unreachable("could not have corrected a typo here");
+      // We found a similarly-named type or interface; suggest that.
+      if (!SS || !SS->isSet())
+        Diag(IILoc, diag::err_unknown_typename_suggest)
+          << &II << CorrectedQuotedStr
+          << FixItHint::CreateReplacement(SourceRange(IILoc), CorrectedStr);
+      else if (DeclContext *DC = computeDeclContext(*SS, false))
+        Diag(IILoc, diag::err_unknown_nested_typename_suggest)
+          << &II << DC << CorrectedQuotedStr << SS->getRange()
+          << FixItHint::CreateReplacement(SourceRange(IILoc), CorrectedStr);
+      else
+        llvm_unreachable("could not have corrected a typo here");
 
-        Diag(Result->getLocation(), diag::note_previous_decl)
-          << CorrectedQuotedStr;
-        
-        SuggestedType = getTypeName(*Result->getIdentifier(), IILoc, S, SS,
-                                    false, false, ParsedType(),
-                                    /*NonTrivialTypeSourceInfo=*/true);
-        return true;
-      }
+      Diag(Result->getLocation(), diag::note_previous_decl)
+        << CorrectedQuotedStr;
+
+      SuggestedType = getTypeName(*Result->getIdentifier(), IILoc, S, SS,
+                                  false, false, ParsedType(),
+                                  /*NonTrivialTypeSourceInfo=*/true);
     }
+    return true;
   }
 
   if (getLangOptions().CPlusPlus) {
@@ -546,9 +567,10 @@ Corrected:
     // close to this name.
     if (!SecondTry) {
       SecondTry = true;
+      CorrectionCandidateCallback DefaultValidator;
       if (TypoCorrection Corrected = CorrectTypo(Result.getLookupNameInfo(),
                                                  Result.getLookupKind(), S, 
-                                                 &SS)) {
+                                                 &SS, &DefaultValidator)) {
         unsigned UnqualifiedDiag = diag::err_undeclared_var_use_suggest;
         unsigned QualifiedDiag = diag::err_no_member_suggest;
         std::string CorrectedStr(Corrected.getAsString(getLangOptions()));
@@ -1241,10 +1263,11 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *&Id,
   if (!IDecl && DoTypoCorrection) {
     // Perform typo correction at the given location, but only if we
     // find an Objective-C class name.
-    TypoCorrection C;
-    if ((C = CorrectTypo(DeclarationNameInfo(Id, IdLoc), LookupOrdinaryName,
-                         TUScope, NULL, NULL, false, CTC_NoKeywords)) &&
-        (IDecl = C.getCorrectionDeclAs<ObjCInterfaceDecl>())) {
+    DeclFilterCCC<ObjCInterfaceDecl> Validator;
+    if (TypoCorrection C = CorrectTypo(DeclarationNameInfo(Id, IdLoc),
+                                       LookupOrdinaryName, TUScope, NULL,
+                                       &Validator)) {
+      IDecl = C.getCorrectionDeclAs<ObjCInterfaceDecl>();
       Diag(IdLoc, diag::err_undef_interface_suggest)
         << Id << IDecl->getDeclName() 
         << FixItHint::CreateReplacement(IdLoc, IDecl->getNameAsString());
@@ -4409,6 +4432,18 @@ namespace {
   };
 }
 
+namespace {
+
+// Callback to only accept typo corrections that have a non-zero edit distance.
+class DifferentNameValidatorCCC : public CorrectionCandidateCallback {
+ public:
+  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+    return candidate.getEditDistance() > 0;
+  }
+};
+
+}
+
 /// \brief Generate diagnostics for an invalid function redeclaration.
 ///
 /// This routine handles generating the diagnostic messages for an invalid
@@ -4438,6 +4473,7 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
   SemaRef.LookupQualifiedName(Prev, NewDC);
   assert(!Prev.isAmbiguous() &&
          "Cannot have an ambiguity in previous-declaration lookup");
+  DifferentNameValidatorCCC Validator;
   if (!Prev.empty()) {
     for (LookupResult::iterator Func = Prev.begin(), FuncEnd = Prev.end();
          Func != FuncEnd; ++Func) {
@@ -4453,8 +4489,8 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
     }
   // If the qualified name lookup yielded nothing, try typo correction
   } else if ((Correction = SemaRef.CorrectTypo(Prev.getLookupNameInfo(),
-                                         Prev.getLookupKind(), 0, 0, NewDC)) &&
-             Correction.getCorrection() != Name) {
+                                         Prev.getLookupKind(), 0, 0,
+                                         &Validator, NewDC))) {
     // Trap errors.
     Sema::SFINAETrap Trap(SemaRef);
 
@@ -7309,21 +7345,20 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
   // function declaration is going to be treated as an error.
   if (Diags.getDiagnosticLevel(diag_id, Loc) >= DiagnosticsEngine::Error) {
     TypoCorrection Corrected;
+    DeclFilterCCC<FunctionDecl> Validator;
     if (S && (Corrected = CorrectTypo(DeclarationNameInfo(&II, Loc),
-                                      LookupOrdinaryName, S, 0))) {
-      NamedDecl *Decl = Corrected.getCorrectionDecl();
-      if (FunctionDecl *Func = dyn_cast_or_null<FunctionDecl>(Decl)) {
-        std::string CorrectedStr = Corrected.getAsString(getLangOptions());
-        std::string CorrectedQuotedStr = Corrected.getQuoted(getLangOptions());
+                                      LookupOrdinaryName, S, 0, &Validator))) {
+      std::string CorrectedStr = Corrected.getAsString(getLangOptions());
+      std::string CorrectedQuotedStr = Corrected.getQuoted(getLangOptions());
+      FunctionDecl *Func = Corrected.getCorrectionDeclAs<FunctionDecl>();
 
-        Diag(Loc, diag::note_function_suggestion) << CorrectedQuotedStr
-            << FixItHint::CreateReplacement(Loc, CorrectedStr);
+      Diag(Loc, diag::note_function_suggestion) << CorrectedQuotedStr
+          << FixItHint::CreateReplacement(Loc, CorrectedStr);
 
-        if (Func->getLocation().isValid()
-            && !II.getName().startswith("__builtin_"))
-          Diag(Func->getLocation(), diag::note_previous_decl)
-              << CorrectedQuotedStr;
-      }
+      if (Func->getLocation().isValid()
+          && !II.getName().startswith("__builtin_"))
+        Diag(Func->getLocation(), diag::note_previous_decl)
+            << CorrectedQuotedStr;
     }
   }
 

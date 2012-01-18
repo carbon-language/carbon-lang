@@ -67,12 +67,14 @@ struct st {
 st var = { .fielda = 0.0 }; // expected-error{{field designator 'fielda' does not refer to any field in type 'st'; did you mean 'FieldA'?}}
 
 // Test the improvement from passing a callback object to CorrectTypo in
-// Sema::BuildCXXNestedNameSpecifier.
-typedef char* another_str;
+// Sema::BuildCXXNestedNameSpecifier. And also for the improvement by doing
+// so in Sema::getTypeName.
+typedef char* another_str; // expected-note{{'another_str' declared here}}
 namespace AnotherStd { // expected-note{{'AnotherStd' declared here}}
   class string {};
 }
 another_std::string str; // expected-error{{use of undeclared identifier 'another_std'; did you mean 'AnotherStd'?}}
+another_str *cstr = new AnotherStr; // expected-error{{unknown type name 'AnotherStr'; did you mean 'another_str'?}}
 
 // Test the improvement from passing a callback object to CorrectTypo in
 // Sema::ActOnSizeofParameterPackExpr.
@@ -80,3 +82,19 @@ char* TireNames;
 template<typename ...TypeNames> struct count { // expected-note{{parameter pack 'TypeNames' declared here}}
   static const unsigned value = sizeof...(TyreNames); // expected-error{{'TyreNames' does not refer to the name of a parameter pack; did you mean 'TypeNames'?}}
 };
+
+// Test the typo-correction callback in Sema::DiagnoseUnknownTypeName.
+namespace unknown_type_test {
+  class StreamOut {}; // expected-note{{'StreamOut' declared here}}
+  long stream_count;
+};
+unknown_type_test::stream_out out; // expected-error{{no type named 'stream_out' in namespace 'unknown_type_test'; did you mean 'StreamOut'?}}
+
+// Test the typo-correction callback in Sema::DiagnoseInvalidRedeclaration.
+struct BaseDecl {
+  void add_in(int i);
+};
+struct TestRedecl : public BaseDecl {
+  void add_it(int i); // expected-note{{'add_it' declared here}}
+};
+void TestRedecl::add_in(int i) {} // expected-error{{out-of-line definition of 'add_in' does not match any declaration in 'TestRedecl'; did you mean 'add_it'?}}
