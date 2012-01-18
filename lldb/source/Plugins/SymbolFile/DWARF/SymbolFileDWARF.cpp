@@ -4897,20 +4897,15 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         bool type_handled = false;
                         if (tag == DW_TAG_subprogram)
                         {
-                            if (ObjCLanguageRuntime::IsPossibleObjCMethodName (type_name_cstr))
+                            ConstString class_name;
+
+                            if (ObjCLanguageRuntime::ParseMethodName (type_name_cstr, &class_name, NULL, NULL))
                             {
-                                // We need to find the DW_TAG_class_type or 
-                                // DW_TAG_struct_type by name so we can add this
-                                // as a member function of the class.
-                                const char *class_name_start = type_name_cstr + 2;
-                                const char *class_name_end = ::strchr (class_name_start, ' ');
                                 SymbolContext empty_sc;
                                 clang_type_t class_opaque_type = NULL;
-                                if (class_name_start < class_name_end)
+                                if (class_name)
                                 {
-                                    ConstString class_name (class_name_start, class_name_end - class_name_start);
                                     TypeList types;
-                                    
                                     TypeSP complete_objc_class_type_sp (FindCompleteObjCDefinitionTypeForDIE (NULL, class_name, true));
                                     if (!complete_objc_class_type_sp)
                                         complete_objc_class_type_sp = FindCompleteObjCDefinitionTypeForDIE (NULL, class_name, false);
