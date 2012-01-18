@@ -70,7 +70,7 @@ let Namespace = "X86" in {
   def BH : Register<"bh">;
 
   // 16-bit registers
-  let SubRegIndices = [sub_8bit, sub_8bit_hi] in {
+  let SubRegIndices = [sub_8bit, sub_8bit_hi], CoveredBySubRegs = 1 in {
   def AX : RegisterWithSubRegs<"ax", [AL,AH]>;
   def DX : RegisterWithSubRegs<"dx", [DL,DH]>;
   def CX : RegisterWithSubRegs<"cx", [CL,CH]>;

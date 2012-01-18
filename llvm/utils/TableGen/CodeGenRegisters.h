@@ -36,6 +36,7 @@ namespace llvm {
     Record *TheDef;
     unsigned EnumValue;
     unsigned CostPerUse;
+    bool CoveredBySubRegs;
 
     // Map SubRegIndex -> Register.
     typedef std::map<Record*, CodeGenRegister*, LessRecord> SubRegMap;

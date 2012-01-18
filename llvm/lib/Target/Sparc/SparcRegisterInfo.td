@@ -39,6 +39,7 @@ class Rd<bits<5> num, string n, list<Register> subregs> : SparcReg<n> {
   let Num = num;
   let SubRegs = subregs;
   let SubRegIndices = [sub_even, sub_odd];
+  let CoveredBySubRegs = 1;
 }
 
 // Control Registers

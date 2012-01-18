@@ -94,7 +94,7 @@ let Namespace = "Hexagon" in {
   def GP : Ri<31, "r31">, DwarfRegNum<[33]>;
 
   // Aliases of the R* registers used to hold 64-bit int values (doubles).
-  let SubRegIndices = [subreg_loreg, subreg_hireg] in {
+  let SubRegIndices = [subreg_loreg, subreg_hireg], CoveredBySubRegs = 1 in {
   def D0  : Rd< 0,  "r1:0", [R0,   R1]>, DwarfRegNum<[32]>;
   def D1  : Rd< 2,  "r3:2", [R2,   R3]>, DwarfRegNum<[34]>;
   def D2  : Rd< 4,  "r5:4", [R4,   R5]>, DwarfRegNum<[36]>;

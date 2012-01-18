@@ -50,6 +50,7 @@ class AFPR<bits<5> num, string n, list<Register> subregs>
   : MipsRegWithSubRegs<n, subregs> {
   let Num = num;
   let SubRegIndices = [sub_fpeven, sub_fpodd];
+  let CoveredBySubRegs = 1;
 }
 
 class AFPR64<bits<5> num, string n, list<Register> subregs>
