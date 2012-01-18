@@ -1957,7 +1957,7 @@ Debugger::FormatPrompt
                                                         s.PutCString (cstr);
                                                         s.PutChar ('(');
                                                     }
-                                                    const size_t num_args = variable_list_sp->GetSize();
+                                                    const size_t num_args = args.GetSize();
                                                     for (size_t arg_idx = 0; arg_idx < num_args; ++arg_idx)
                                                     {
                                                         VariableSP var_sp (args.GetVariableAtIndex (arg_idx));
