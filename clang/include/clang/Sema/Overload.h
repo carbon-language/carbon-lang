@@ -112,6 +112,23 @@ namespace clang {
 
   ImplicitConversionRank GetConversionRank(ImplicitConversionKind Kind);
 
+  /// NarrowingKind - The kind of narrowing conversion being performed by a
+  /// standard conversion sequence according to C++11 [dcl.init.list]p7.
+  enum NarrowingKind {
+    /// Not a narrowing conversion.
+    NK_Not_Narrowing,
+
+    /// A narrowing conversion by virtue of the source and destination types.
+    NK_Type_Narrowing,
+
+    /// A narrowing conversion, because a constant expression got narrowed.
+    NK_Constant_Narrowing,
+
+    /// A narrowing conversion, because a non-constant-expression variable might
+    /// have got narrowed.
+    NK_Variable_Narrowing
+  };
+
   /// StandardConversionSequence - represents a standard conversion
   /// sequence (C++ 13.3.3.1.1). A standard conversion sequence
   /// contains between zero and three conversions. If a particular
@@ -218,6 +235,8 @@ namespace clang {
     }
     
     ImplicitConversionRank getRank() const;
+    NarrowingKind isNarrowing(ASTContext &Context, const Expr *Converted,
+                              APValue &ConstantValue) const;
     bool isPointerConversionToBool() const;
     bool isPointerConversionToVoidPointer(ASTContext& Context) const;
     void DebugPrint() const;

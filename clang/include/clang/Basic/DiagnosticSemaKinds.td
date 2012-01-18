@@ -2927,11 +2927,16 @@ def warn_cxx98_compat_empty_scalar_initializer : Warning<
 def err_illegal_initializer : Error<
   "illegal initializer (only variables can be initialized)">;
 def err_illegal_initializer_type : Error<"illegal initializer type %0">;
+def err_init_list_type_narrowing : Error<
+  "type %0 cannot be narrowed to %1 in initializer list">;
 def err_init_list_variable_narrowing : Error<
   "non-constant-expression cannot be narrowed from type %0 to %1 in "
   "initializer list">;
 def err_init_list_constant_narrowing : Error<
   "constant expression evaluates to %0 which cannot be narrowed to type %1">;
+def warn_init_list_type_narrowing : Warning<
+  "type %0 cannot be narrowed to %1 in initializer list in C++11">,
+  InGroup<CXX11Narrowing>, DefaultIgnore;
 def warn_init_list_variable_narrowing : Warning<
   "non-constant-expression cannot be narrowed from type %0 to %1 in "
   "initializer list in C++11">,

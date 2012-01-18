@@ -31,12 +31,20 @@ struct Agg {
   T t;
 };
 
+template<typename T>
+struct Convert {
+  constexpr Convert(T v) : v(v) {}
+  constexpr operator T() const { return v; }
+  T v;
+};
+template<typename T> Convert<T> ConvertVar();
+
 // C++0x [dcl.init.list]p7: A narrowing conversion is an implicit conversion
 //
 // * from a floating-point type to an integer type, or
 
 void float_to_int() {
-  Agg<char> a1 = {1.0F};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+  Agg<char> a1 = {1.0F};  // expected-error {{type 'float' cannot be narrowed to 'char'}} expected-note {{override}}
   Agg<char> a2 = {1.0};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
   Agg<char> a3 = {1.0L};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
 
@@ -46,6 +54,9 @@ void float_to_int() {
   Agg<char> a4 = {f};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
   Agg<char> a5 = {d};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
   Agg<char> a6 = {ld};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+
+  Agg<char> ce1 = { Convert<float>(1.0) }; // expected-error {{type 'float' cannot be narrowed to 'char'}} expected-note {{override}}
+  Agg<char> ce2 = { ConvertVar<double>() }; // expected-error {{type 'double' cannot be narrowed to 'char'}} expected-note {{override}}
 }
 
 // * from long double to double or float, or from double to float, except where
@@ -61,7 +72,7 @@ void shrink_float() {
 
   // Variables.
   Agg<float> f1 = {f};  // OK  (no-op)
-  Agg<float> f2 = {d};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+  Agg<float> f2 = {d};  // expected-error {{non-constant-expression cannot be narrowed from type 'double' to 'float'}} expected-note {{override}}
   Agg<float> f3 = {ld};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
   // Exact constants.
   Agg<float> f4 = {1.0};  // OK  (double constant represented exactly)
@@ -70,7 +81,7 @@ void shrink_float() {
   Agg<float> f6 = {0.1};  // OK (double constant in range but rounded)
   Agg<float> f7 = {0.1L};  // OK (long double constant in range but rounded)
   // Out of range constants.
-  Agg<float> f8 = {1E50};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+  Agg<float> f8 = {1E50};  // expected-error {{constant expression evaluates to 1.000000e+50 which cannot be narrowed to type 'float'}} expected-note {{override}}
   Agg<float> f9 = {1E50L};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
   // More complex constant expression.
   constexpr long double e40 = 1E40L, e30 = 1E30L, e39 = 1E39L;
@@ -89,6 +100,9 @@ void shrink_float() {
   // More complex constant expression.
   constexpr long double e315 = 1E315L, e305 = 1E305L, e314 = 1E314L;
   Agg<double> d7 = {e315 - 5 * e314 + e305 - 5 * e314};  // OK
+
+  Agg<float> ce1 = { Convert<double>(1e300) }; // expected-error {{constant expression evaluates to 1.000000e+300 which cannot be narrowed to type 'float'}} expected-note {{override}}
+  Agg<double> ce2 = { ConvertVar<long double>() }; // expected-error {{non-constant-expression cannot be narrowed from type 'long double' to 'double'}} expected-note {{override}}
 }
 
 // * from an integer type or unscoped enumeration type to a floating-point type,
@@ -107,6 +121,9 @@ void int_to_float() {
   // Constants.
   Agg<float> f4 = {12345678};  // OK (exactly fits in a float)
   Agg<float> f5 = {123456789};  // expected-error {{ cannot be narrowed }} expected-note {{override}}
+
+  Agg<float> ce1 = { Convert<int>(123456789) }; // expected-error {{constant expression evaluates to 123456789 which cannot be narrowed to type 'float'}} expected-note {{override}}
+  Agg<double> ce2 = { ConvertVar<long long>() }; // expected-error {{non-constant-expression cannot be narrowed from type 'long long' to 'double'}} expected-note {{override}}
 }
 
 // * from an integer type or unscoped enumeration type to an integer type that
@@ -147,6 +164,9 @@ void shrink_int() {
 
   // Conversions from pointers to booleans aren't narrowing conversions.
   Agg<bool> b = {&b1};  // OK
+
+  Agg<short> ce1 = { Convert<int>(100000) }; // expected-error {{constant expression evaluates to 100000 which cannot be narrowed to type 'short'}} expected-note {{override}} expected-warning {{changes value from 100000 to -31072}}
+  Agg<char> ce2 = { ConvertVar<short>() }; // expected-error {{non-constant-expression cannot be narrowed from type 'short' to 'char'}} expected-note {{override}}
 }
 
 // Be sure that type- and value-dependent expressions in templates get the error

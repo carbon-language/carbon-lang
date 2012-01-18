@@ -420,6 +420,11 @@ public:
                              bool isEvaluated = true) const;
   bool isIntegerConstantExpr(ASTContext &Ctx, SourceLocation *Loc = 0) const;
 
+  /// isCXX11ConstantExpr - Return true if this expression is a constant
+  /// expression in C++11. Can only be used in C++.
+  bool isCXX11ConstantExpr(ASTContext &Ctx, APValue *Result = 0,
+                           SourceLocation *Loc = 0) const;
+
   /// isConstantInitializer - Returns true if this expression can be emitted to
   /// IR as a constant, and thus can be used as a constant initializer in C.
   bool isConstantInitializer(ASTContext &Ctx, bool ForRef) const;

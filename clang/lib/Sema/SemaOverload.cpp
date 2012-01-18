@@ -258,6 +258,163 @@ isPointerConversionToVoidPointer(ASTContext& Context) const {
   return false;
 }
 
+/// Skip any implicit casts which could be either part of a narrowing conversion
+/// or after one in an implicit conversion.
+static const Expr *IgnoreNarrowingConversion(const Expr *Converted) {
+  while (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Converted)) {
+    switch (ICE->getCastKind()) {
+    case CK_NoOp:
+    case CK_IntegralCast:
+    case CK_IntegralToBoolean:
+    case CK_IntegralToFloating:
+    case CK_FloatingToIntegral:
+    case CK_FloatingToBoolean:
+    case CK_FloatingCast:
+      Converted = ICE->getSubExpr();
+      continue;
+
+    default:
+      return Converted;
+    }
+  }
+
+  return Converted;
+}
+
+/// Check if this standard conversion sequence represents a narrowing
+/// conversion, according to C++11 [dcl.init.list]p7.
+///
+/// \param Ctx  The AST context.
+/// \param Converted  The result of applying this standard conversion sequence.
+/// \param ConstantValue  If this is an NK_Constant_Narrowing conversion, the
+///        value of the expression prior to the narrowing conversion.
+NarrowingKind
+StandardConversionSequence::isNarrowing(ASTContext &Ctx, const Expr *Converted,
+                                        APValue &ConstantValue) const {
+  assert(Ctx.getLangOptions().CPlusPlus && "narrowing check outside C++");
+
+  // C++11 [dcl.init.list]p7:
+  //   A narrowing conversion is an implicit conversion ...
+  QualType FromType = getToType(0);
+  QualType ToType = getToType(1);
+  switch (Second) {
+  // -- from a floating-point type to an integer type, or
+  //
+  // -- from an integer type or unscoped enumeration type to a floating-point
+  //    type, except where the source is a constant expression and the actual
+  //    value after conversion will fit into the target type and will produce
+  //    the original value when converted back to the original type, or
+  case ICK_Floating_Integral:
+    if (FromType->isRealFloatingType() && ToType->isIntegralType(Ctx)) {
+      return NK_Type_Narrowing;
+    } else if (FromType->isIntegralType(Ctx) && ToType->isRealFloatingType()) {
+      llvm::APSInt IntConstantValue;
+      const Expr *Initializer = IgnoreNarrowingConversion(Converted);
+      if (Initializer &&
+          Initializer->isIntegerConstantExpr(IntConstantValue, Ctx)) {
+        // Convert the integer to the floating type.
+        llvm::APFloat Result(Ctx.getFloatTypeSemantics(ToType));
+        Result.convertFromAPInt(IntConstantValue, IntConstantValue.isSigned(),
+                                llvm::APFloat::rmNearestTiesToEven);
+        // And back.
+        llvm::APSInt ConvertedValue = IntConstantValue;
+        bool ignored;
+        Result.convertToInteger(ConvertedValue,
+                                llvm::APFloat::rmTowardZero, &ignored);
+        // If the resulting value is different, this was a narrowing conversion.
+        if (IntConstantValue != ConvertedValue) {
+          ConstantValue = APValue(IntConstantValue);
+          return NK_Constant_Narrowing;
+        }
+      } else {
+        // Variables are always narrowings.
+        return NK_Variable_Narrowing;
+      }
+    }
+    return NK_Not_Narrowing;
+
+  // -- from long double to double or float, or from double to float, except
+  //    where the source is a constant expression and the actual value after
+  //    conversion is within the range of values that can be represented (even
+  //    if it cannot be represented exactly), or
+  case ICK_Floating_Conversion:
+    if (FromType->isRealFloatingType() && ToType->isRealFloatingType() &&
+        Ctx.getFloatingTypeOrder(FromType, ToType) == 1) {
+      // FromType is larger than ToType.
+      const Expr *Initializer = IgnoreNarrowingConversion(Converted);
+      if (Initializer->isCXX11ConstantExpr(Ctx, &ConstantValue)) {
+        // Constant!
+        assert(ConstantValue.isFloat());
+        llvm::APFloat FloatVal = ConstantValue.getFloat();
+        // Convert the source value into the target type.
+        bool ignored;
+        llvm::APFloat::opStatus ConvertStatus = FloatVal.convert(
+          Ctx.getFloatTypeSemantics(ToType),
+          llvm::APFloat::rmNearestTiesToEven, &ignored);
+        // If there was no overflow, the source value is within the range of
+        // values that can be represented.
+        if (ConvertStatus & llvm::APFloat::opOverflow)
+          return NK_Constant_Narrowing;
+      } else {
+        return NK_Variable_Narrowing;
+      }
+    }
+    return NK_Not_Narrowing;
+
+  // -- from an integer type or unscoped enumeration type to an integer type
+  //    that cannot represent all the values of the original type, except where
+  //    the source is a constant expression and the actual value after
+  //    conversion will fit into the target type and will produce the original
+  //    value when converted back to the original type.
+  case ICK_Boolean_Conversion:  // Bools are integers too.
+    if (!FromType->isIntegralOrUnscopedEnumerationType()) {
+      // Boolean conversions can be from pointers and pointers to members
+      // [conv.bool], and those aren't considered narrowing conversions.
+      return NK_Not_Narrowing;
+    }  // Otherwise, fall through to the integral case.
+  case ICK_Integral_Conversion: {
+    assert(FromType->isIntegralOrUnscopedEnumerationType());
+    assert(ToType->isIntegralOrUnscopedEnumerationType());
+    const bool FromSigned = FromType->isSignedIntegerOrEnumerationType();
+    const unsigned FromWidth = Ctx.getIntWidth(FromType);
+    const bool ToSigned = ToType->isSignedIntegerOrEnumerationType();
+    const unsigned ToWidth = Ctx.getIntWidth(ToType);
+
+    if (FromWidth > ToWidth ||
+        (FromWidth == ToWidth && FromSigned != ToSigned)) {
+      // Not all values of FromType can be represented in ToType.
+      llvm::APSInt InitializerValue;
+      const Expr *Initializer = IgnoreNarrowingConversion(Converted);
+      if (Initializer->isIntegerConstantExpr(InitializerValue, Ctx)) {
+        ConstantValue = APValue(InitializerValue);
+
+        // Add a bit to the InitializerValue so we don't have to worry about
+        // signed vs. unsigned comparisons.
+        InitializerValue = InitializerValue.extend(
+          InitializerValue.getBitWidth() + 1);
+        // Convert the initializer to and from the target width and signed-ness.
+        llvm::APSInt ConvertedValue = InitializerValue;
+        ConvertedValue = ConvertedValue.trunc(ToWidth);
+        ConvertedValue.setIsSigned(ToSigned);
+        ConvertedValue = ConvertedValue.extend(InitializerValue.getBitWidth());
+        ConvertedValue.setIsSigned(InitializerValue.isSigned());
+        // If the result is different, this was a narrowing conversion.
+        if (ConvertedValue != InitializerValue)
+          return NK_Constant_Narrowing;
+      } else {
+        // Variables are always narrowings.
+        return NK_Variable_Narrowing;
+      }
+    }
+    return NK_Not_Narrowing;
+  }
+
+  default:
+    // Other kinds of conversions are not narrowings.
+    return NK_Not_Narrowing;
+  }
+}
+
 /// DebugPrint - Print this standard conversion sequence to standard
 /// error. Useful for debugging overloading issues.
 void StandardConversionSequence::DebugPrint() const {
