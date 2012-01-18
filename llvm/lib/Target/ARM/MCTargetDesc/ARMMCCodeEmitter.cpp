@@ -723,6 +723,7 @@ getAddrModeImm12OpValue(const MCInst &MI, unsigned OpIdx,
     } else {
       Reg = ARM::PC;
       int32_t Offset = MO.getImm();
+      // FIXME: Handle #-0.
       if (Offset < 0) {
         Offset *= -1;
         isAdd = false;

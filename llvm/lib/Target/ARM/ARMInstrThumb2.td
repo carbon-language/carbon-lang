@@ -136,6 +136,12 @@ def t2ldrlabel : Operand<i32> {
   let PrintMethod = "printT2LdrLabelOperand";
 }
 
+def t2ldr_pcrel_imm12_asmoperand : AsmOperandClass {let Name = "MemPCRelImm12";}
+def t2ldr_pcrel_imm12 : Operand<i32> {
+  let ParserMatchClass = t2ldr_pcrel_imm12_asmoperand;
+  // used for assembler pseudo instruction and maps to t2ldrlabel, so
+  // doesn't need encoder or print methods of its own.
+}
 
 // ADR instruction labels.
 def t2adrlabel : Operand<i32> {
@@ -4151,3 +4157,26 @@ def t2MOVSsr: t2AsmPseudo<"movs${p} $Rd, $shift",
 // ADR w/o the .w suffix
 def : t2InstAlias<"adr${p} $Rd, $addr",
                   (t2ADR rGPR:$Rd, t2adrlabel:$addr, pred:$p)>;
+
+// LDR(literal) w/ alternate [pc, #imm] syntax.
+def t2LDRpcrel   : t2AsmPseudo<"ldr${p} $Rt, $addr",
+                         (ins GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;
+def t2LDRBpcrel  : t2AsmPseudo<"ldrb${p} $Rt, $addr",
+                         (ins GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;
+def t2LDRHpcrel  : t2AsmPseudo<"ldrh${p} $Rt, $addr",
+                         (ins GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;
+def t2LDRSBpcrel  : t2AsmPseudo<"ldrsb${p} $Rt, $addr",
+                         (ins GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;
+def t2LDRSHpcrel  : t2AsmPseudo<"ldrsh${p} $Rt, $addr",
+                         (ins GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;
+    // Version w/ the .w suffix.
+def : t2InstAlias<"ldr${p}.w $Rt, $addr",
+                  (t2LDRpcrel GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;
+def : t2InstAlias<"ldrb${p}.w $Rt, $addr",
+                  (t2LDRBpcrel GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;
+def : t2InstAlias<"ldrh${p}.w $Rt, $addr",
+                  (t2LDRHpcrel GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;
+def : t2InstAlias<"ldrsb${p}.w $Rt, $addr",
+                  (t2LDRSBpcrel GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;
+def : t2InstAlias<"ldrsh${p}.w $Rt, $addr",
+                  (t2LDRSHpcrel GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;

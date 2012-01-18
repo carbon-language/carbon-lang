@@ -838,6 +838,17 @@ public:
     return Memory.OffsetRegNum == 0 && Memory.OffsetImm == 0 &&
      (alignOK || Memory.Alignment == 0);
   }
+  bool isMemPCRelImm12() const {
+    if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)
+      return false;
+    // Base register must be PC.
+    if (Memory.BaseRegNum != ARM::PC)
+      return false;
+    // Immediate offset in range [-4095, 4095].
+    if (!Memory.OffsetImm) return true;
+    int64_t Val = Memory.OffsetImm->getValue();
+    return (Val > -4096 && Val < 4096) || (Val == INT32_MIN);
+  }
   bool isAlignedMemory() const {
     return isMemNoOffset(true);
   }
@@ -999,6 +1010,8 @@ public:
   bool isMemImm8Offset() const {
     if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)
       return false;
+    // Base reg of PC isn't allowed for these encodings.
+    if (Memory.BaseRegNum == ARM::PC) return false;
     // Immediate offset in range [-255, 255].
     if (!Memory.OffsetImm) return true;
     int64_t Val = Memory.OffsetImm->getValue();
@@ -1015,6 +1028,8 @@ public:
   bool isMemNegImm8Offset() const {
     if (!isMemory() || Memory.OffsetRegNum != 0 || Memory.Alignment != 0)
       return false;
+    // Base reg of PC isn't allowed for these encodings.
+    if (Memory.BaseRegNum == ARM::PC) return false;
     // Immediate offset in range [-255, -1].
     if (!Memory.OffsetImm) return false;
     int64_t Val = Memory.OffsetImm->getValue();
@@ -1480,6 +1495,14 @@ public:
   void addMemNoOffsetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(Memory.BaseRegNum));
+  }
+
+  void addMemPCRelImm12Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    int32_t Imm = Memory.OffsetImm->getValue();
+    // FIXME: Handle #-0
+    if (Imm == INT32_MIN) Imm = 0;
+    Inst.addOperand(MCOperand::CreateImm(Imm));
   }
 
   void addAlignedMemoryOperands(MCInst &Inst, unsigned N) const {
@@ -5389,6 +5412,22 @@ bool ARMAsmParser::
 processInstruction(MCInst &Inst,
                    const SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   switch (Inst.getOpcode()) {
+  // Aliases for alternate PC+imm syntax of LDR instructions.
+  case ARM::t2LDRpcrel:
+    Inst.setOpcode(ARM::t2LDRpci);
+    return true;
+  case ARM::t2LDRBpcrel:
+    Inst.setOpcode(ARM::t2LDRBpci);
+    return true;
+  case ARM::t2LDRHpcrel:
+    Inst.setOpcode(ARM::t2LDRHpci);
+    return true;
+  case ARM::t2LDRSBpcrel:
+    Inst.setOpcode(ARM::t2LDRSBpci);
+    return true;
+  case ARM::t2LDRSHpcrel:
+    Inst.setOpcode(ARM::t2LDRSHpci);
+    return true;
   // Handle NEON VST complex aliases.
   case ARM::VST1LNdWB_register_Asm_8: case ARM::VST1LNdWB_register_Asm_P8:
   case ARM::VST1LNdWB_register_Asm_I8: case ARM::VST1LNdWB_register_Asm_S8:

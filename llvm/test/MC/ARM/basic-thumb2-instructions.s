@@ -3323,3 +3323,30 @@ _func:
 @ CHECK: wfelt                          @ encoding: [0x20,0xbf]
 @ CHECK: wfige                          @ encoding: [0x30,0xbf]
 @ CHECK: yieldlt                        @ encoding: [0x10,0xbf]
+
+
+@------------------------------------------------------------------------------
+@ Alternate syntax for LDR*(literal) encodings
+@------------------------------------------------------------------------------
+        ldr r11, [pc, #-22]
+        ldrb r11, [pc, #-22]
+        ldrh r11, [pc, #-22]
+        ldrsb r11, [pc, #-22]
+        ldrsh r11, [pc, #-22]
+
+        ldr.w r11, [pc, #-22]
+        ldrb.w r11, [pc, #-22]
+        ldrh.w r11, [pc, #-22]
+        ldrsb.w r11, [pc, #-22]
+        ldrsh.w r11, [pc, #-22]
+
+@ CHECK: ldr.w	r11, [pc, #-22]         @ encoding: [0x5f,0xf8,0x16,0xb0]
+@ CHECK: ldrb.w	r11, [pc, #-22]         @ encoding: [0x1f,0xf8,0x16,0xb0]
+@ CHECK: ldrh.w	r11, [pc, #-22]         @ encoding: [0x3f,0xf8,0x16,0xb0]
+@ CHECK: ldrsb.w r11, [pc, #-22]        @ encoding: [0x1f,0xf9,0x16,0xb0]
+@ CHECK: ldrsh.w r11, [pc, #-22]        @ encoding: [0x3f,0xf9,0x16,0xb0]
+@ CHECK: ldr.w	r11, [pc, #-22]         @ encoding: [0x5f,0xf8,0x16,0xb0]
+@ CHECK: ldrb.w	r11, [pc, #-22]         @ encoding: [0x1f,0xf8,0x16,0xb0]
+@ CHECK: ldrh.w	r11, [pc, #-22]         @ encoding: [0x3f,0xf8,0x16,0xb0]
+@ CHECK: ldrsb.w r11, [pc, #-22]        @ encoding: [0x1f,0xf9,0x16,0xb0]
+@ CHECK: ldrsh.w r11, [pc, #-22]        @ encoding: [0x3f,0xf9,0x16,0xb0]
