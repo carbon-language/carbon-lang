@@ -1801,25 +1801,28 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
     for (unsigned i = 1, e = MI->getNumOperands(); i < e; i += 2) {
       unsigned SrcReg = MI->getOperand(i).getReg();
       unsigned SubIdx = MI->getOperand(i+1).getImm();
-      if (MI->getOperand(i).getSubReg() ||
-          TargetRegisterInfo::isPhysicalRegister(SrcReg)) {
-        DEBUG(dbgs() << "Illegal REG_SEQUENCE instruction:" << *MI);
-        llvm_unreachable(0);
+      // DefMI of NULL means the value does not have a vreg in this block
+      // i.e., its a physical register or a subreg.
+      // In either case we force a copy to be generated.
+      MachineInstr *DefMI = NULL;
+      if (!MI->getOperand(i).getSubReg() &&
+          !TargetRegisterInfo::isPhysicalRegister(SrcReg)) {
+        DefMI = MRI->getVRegDef(SrcReg);
       }
 
-      MachineInstr *DefMI = MRI->getVRegDef(SrcReg);
-      if (DefMI->isImplicitDef()) {
+      if (DefMI && DefMI->isImplicitDef()) {
         DefMI->eraseFromParent();
         continue;
       }
       IsImpDef = false;
 
       // Remember COPY sources. These might be candidate for coalescing.
-      if (DefMI->isCopy() && DefMI->getOperand(1).getSubReg())
+      if (DefMI && DefMI->isCopy() && DefMI->getOperand(1).getSubReg())
         RealSrcs.push_back(DefMI->getOperand(1).getReg());
 
       bool isKill = MI->getOperand(i).isKill();
-      if (!Seen.insert(SrcReg) || MI->getParent() != DefMI->getParent() ||
+      if (!DefMI || !Seen.insert(SrcReg) ||
+          MI->getParent() != DefMI->getParent() ||
           !isKill || HasOtherRegSequenceUses(SrcReg, MI, MRI) ||
           !TRI->getMatchingSuperRegClass(MRI->getRegClass(DstReg),
                                          MRI->getRegClass(SrcReg), SubIdx)) {
@@ -1854,7 +1857,7 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
             .addReg(DstReg, RegState::Define, SubIdx)
             .addReg(SrcReg, getKillRegState(isKill));
         MI->getOperand(i).setReg(0);
-        if (LV && isKill)
+        if (LV && isKill && !TargetRegisterInfo::isPhysicalRegister(SrcReg))
           LV->replaceKillInstruction(SrcReg, MI, CopyMI);
         DEBUG(dbgs() << "Inserted: " << *CopyMI);
       }

@@ -574,14 +574,19 @@ void InstrEmitter::EmitRegSequence(SDNode *Node,
   for (unsigned i = 1; i != NumOps; ++i) {
     SDValue Op = Node->getOperand(i);
     if ((i & 1) == 0) {
-      unsigned SubIdx = cast<ConstantSDNode>(Op)->getZExtValue();
-      unsigned SubReg = getVR(Node->getOperand(i-1), VRBaseMap);
-      const TargetRegisterClass *TRC = MRI->getRegClass(SubReg);
-      const TargetRegisterClass *SRC =
+      RegisterSDNode *R = dyn_cast<RegisterSDNode>(Node->getOperand(i-1));
+      // Skip physical registers as they don't have a vreg to get and we'll
+      // insert copies for them in TwoAddressInstructionPass anyway.
+      if (!R || !TargetRegisterInfo::isPhysicalRegister(R->getReg())) {
+        unsigned SubIdx = cast<ConstantSDNode>(Op)->getZExtValue();
+        unsigned SubReg = getVR(Node->getOperand(i-1), VRBaseMap);
+        const TargetRegisterClass *TRC = MRI->getRegClass(SubReg);
+        const TargetRegisterClass *SRC =
         TRI->getMatchingSuperRegClass(RC, TRC, SubIdx);
-      if (SRC && SRC != RC) {
-        MRI->setRegClass(NewVReg, SRC);
-        RC = SRC;
+        if (SRC && SRC != RC) {
+          MRI->setRegClass(NewVReg, SRC);
+          RC = SRC;
+        }
       }
     }
     AddOperand(MI, Op, i+1, &II, VRBaseMap, /*IsDebug=*/false,
