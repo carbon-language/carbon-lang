@@ -281,8 +281,6 @@ static void EncodeUCNEscape(const char *&ThisTokBuf, const char *ThisTokEnd,
       ResultBuf += 2;
       return;
     }
-    // FIXME: We shouldn't print a diagnostic for UTF-16 mode.
-    if (Diags) Diags->Report(Loc, diag::warn_ucn_escape_too_large);
 
     // Convert to UTF16.
     UcnVal -= 0x10000;
