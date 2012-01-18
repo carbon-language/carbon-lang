@@ -19,3 +19,11 @@ struct T {
     int b[sizeof n]; // ok
   }
 };
+
+// Make sure the rule for unevaluated operands works correctly with typeid.
+namespace std {
+  class type_info;
+}
+class Poly { virtual ~Poly(); };
+const std::type_info& k = typeid(S::m);
+const std::type_info& m = typeid(*(Poly*)S::m); // expected-error {{invalid use of nonstatic data member}}
