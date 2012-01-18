@@ -323,6 +323,9 @@ namespace ISD {
     // and #2), returning a vector result.  All vectors have the same length.
     // Much like the scalar select and setcc, each bit in the condition selects
     // whether the corresponding result element is taken from op #1 or op #2.
+    // At first, the VSELECT condition is of vXi1 type. Later, targets may change
+    // the condition type in order to match the VSELECT node using a a pattern.
+    // The condition follows the BooleanContent format of the target.
     VSELECT,
 
     // Select with condition operator - This selects between a true value and
