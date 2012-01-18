@@ -2120,6 +2120,7 @@ CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
                              !Features.WritableStrings,
                              llvm::GlobalValue::PrivateLinkage,
                              C,".str");
+
   GV->setAlignment(Align.getQuantity());
   GV->setUnnamedAddr(true);
   
