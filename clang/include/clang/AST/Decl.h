@@ -1990,7 +1990,7 @@ public:
   /// If the given function is a memory copy or setting function, returns
   /// the corresponding Builtin ID. If the function is not a memory function,
   /// returns 0.
-  unsigned getMemoryFunctionKind();
+  unsigned getMemoryFunctionKind() const;
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

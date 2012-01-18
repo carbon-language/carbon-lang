@@ -2290,7 +2290,7 @@ SourceRange FunctionDecl::getSourceRange() const {
   return SourceRange(getOuterLocStart(), EndRangeLoc);
 }
 
-unsigned FunctionDecl::getMemoryFunctionKind() {
+unsigned FunctionDecl::getMemoryFunctionKind() const {
   IdentifierInfo *FnInfo = getIdentifier();
 
   if (!FnInfo)
