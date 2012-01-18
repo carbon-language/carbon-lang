@@ -405,7 +405,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
     // bytes left to fill use the the Value and ValueSize to fill the rest.
     // If we are aligning with nops, ask that target to emit the right data.
     if (AF.hasEmitNops()) {
-      if (!Asm.getBackend().WriteNopData(Count, OW))
+      if (!Asm.getBackend().writeNopData(Count, OW))
         report_fatal_error("unable to write nop sequence of " +
                           Twine(Count) + " bytes");
       break;
@@ -615,7 +615,7 @@ void MCAssembler::Finish() {
                ie3 = DF->fixup_end(); it3 != ie3; ++it3) {
           MCFixup &Fixup = *it3;
           uint64_t FixedValue = handleFixup(Layout, *DF, Fixup);
-          getBackend().ApplyFixup(Fixup, DF->getContents().data(),
+          getBackend().applyFixup(Fixup, DF->getContents().data(),
                                   DF->getContents().size(), FixedValue);
         }
       }
@@ -625,7 +625,7 @@ void MCAssembler::Finish() {
                ie3 = IF->fixup_end(); it3 != ie3; ++it3) {
           MCFixup &Fixup = *it3;
           uint64_t FixedValue = handleFixup(Layout, *IF, Fixup);
-          getBackend().ApplyFixup(Fixup, IF->getCode().data(),
+          getBackend().applyFixup(Fixup, IF->getCode().data(),
                                   IF->getCode().size(), FixedValue);
         }
       }
@@ -658,7 +658,7 @@ bool MCAssembler::fragmentNeedsRelaxation(const MCInstFragment *IF,
   // If this inst doesn't ever need relaxation, ignore it. This occurs when we
   // are intentionally pushing out inst fragments, or because we relaxed a
   // previous instruction to one that doesn't need relaxation.
-  if (!getBackend().MayNeedRelaxation(IF->getInst()))
+  if (!getBackend().mayNeedRelaxation(IF->getInst()))
     return false;
 
   for (MCInstFragment::const_fixup_iterator it = IF->fixup_begin(),
@@ -682,7 +682,7 @@ bool MCAssembler::relaxInstruction(MCAsmLayout &Layout,
   // Relax the fragment.
 
   MCInst Relaxed;
-  getBackend().RelaxInstruction(IF.getInst(), Relaxed);
+  getBackend().relaxInstruction(IF.getInst(), Relaxed);
 
   // Encode the new instruction.
   //

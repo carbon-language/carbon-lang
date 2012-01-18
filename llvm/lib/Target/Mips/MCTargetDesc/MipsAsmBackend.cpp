@@ -78,7 +78,7 @@ public:
   /// ApplyFixup - Apply the \arg Value for given \arg Fixup into the provided
   /// data fragment, at the offset specified by the fixup and following the
   /// fixup kind as appropriate.
-  void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
+  void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value) const {
     MCFixupKind Kind = Fixup.getKind();
     Value = adjustFixupValue((unsigned)Kind, Value);
@@ -155,7 +155,7 @@ public:
   /// relaxation.
   ///
   /// \param Inst - The instruction to test.
-  bool MayNeedRelaxation(const MCInst &Inst) const {
+  bool mayNeedRelaxation(const MCInst &Inst) const {
     return false;
   }
 
@@ -176,7 +176,7 @@ public:
   /// \param Inst - The instruction to relax, which may be the same
   /// as the output.
   /// \parm Res [output] - On return, the relaxed instruction.
-  void RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
+  void relaxInstruction(const MCInst &Inst, MCInst &Res) const {
   }
   
   /// @}
@@ -186,7 +186,7 @@ public:
   /// it should return an error.
   ///
   /// \return - True on success.
-  bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
+  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const {
     return true;
   }
 };

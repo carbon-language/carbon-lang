@@ -91,7 +91,7 @@ public:
     return Infos[Kind - FirstTargetFixupKind];
   }
 
-  void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
+  void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value) const {
     unsigned Size = 1 << getFixupKindLog2Size(Fixup.getKind());
 
@@ -109,16 +109,16 @@ public:
       Data[Fixup.getOffset() + i] = uint8_t(Value >> (i * 8));
   }
 
-  bool MayNeedRelaxation(const MCInst &Inst) const;
+  bool mayNeedRelaxation(const MCInst &Inst) const;
 
   bool fixupNeedsRelaxation(const MCFixup &Fixup,
                             uint64_t Value,
                             const MCInstFragment *DF,
                             const MCAsmLayout &Layout) const;
 
-  void RelaxInstruction(const MCInst &Inst, MCInst &Res) const;
+  void relaxInstruction(const MCInst &Inst, MCInst &Res) const;
 
-  bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const;
+  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const;
 };
 } // end anonymous namespace
 
@@ -223,7 +223,7 @@ static unsigned getRelaxedOpcode(unsigned Op) {
   return getRelaxedOpcodeBranch(Op);
 }
 
-bool X86AsmBackend::MayNeedRelaxation(const MCInst &Inst) const {
+bool X86AsmBackend::mayNeedRelaxation(const MCInst &Inst) const {
   // Branches can always be relaxed.
   if (getRelaxedOpcodeBranch(Inst.getOpcode()) != Inst.getOpcode())
     return true;
@@ -263,7 +263,7 @@ bool X86AsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
 
 // FIXME: Can tblgen help at all here to verify there aren't other instructions
 // we can relax?
-void X86AsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
+void X86AsmBackend::relaxInstruction(const MCInst &Inst, MCInst &Res) const {
   // The only relaxations X86 does is from a 1byte pcrel to a 4byte pcrel.
   unsigned RelaxedOp = getRelaxedOpcode(Inst.getOpcode());
 
@@ -279,10 +279,10 @@ void X86AsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
   Res.setOpcode(RelaxedOp);
 }
 
-/// WriteNopData - Write optimal nops to the output file for the \arg Count
+/// writeNopData - Write optimal nops to the output file for the \arg Count
 /// bytes.  This returns the number of bytes written.  It may return 0 if
 /// the \arg Count is more than the maximum optimal nops.
-bool X86AsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
+bool X86AsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
   static const uint8_t Nops[10][10] = {
     // nop
     {0x90},

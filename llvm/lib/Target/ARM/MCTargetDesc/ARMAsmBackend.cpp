@@ -120,18 +120,18 @@ public:
     }
   }
 
-  bool MayNeedRelaxation(const MCInst &Inst) const;
+  bool mayNeedRelaxation(const MCInst &Inst) const;
 
   bool fixupNeedsRelaxation(const MCFixup &Fixup,
                             uint64_t Value,
                             const MCInstFragment *DF,
                             const MCAsmLayout &Layout) const;
 
-  void RelaxInstruction(const MCInst &Inst, MCInst &Res) const;
+  void relaxInstruction(const MCInst &Inst, MCInst &Res) const;
 
-  bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const;
+  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const;
 
-  void HandleAssemblerFlag(MCAssemblerFlag Flag) {
+  void handleAssemblerFlag(MCAssemblerFlag Flag) {
     switch (Flag) {
     default: break;
     case MCAF_Code16:
@@ -156,7 +156,7 @@ static unsigned getRelaxedOpcode(unsigned Op) {
   }
 }
 
-bool ARMAsmBackend::MayNeedRelaxation(const MCInst &Inst) const {
+bool ARMAsmBackend::mayNeedRelaxation(const MCInst &Inst) const {
   if (getRelaxedOpcode(Inst.getOpcode()) != Inst.getOpcode())
     return true;
   return false;
@@ -176,7 +176,7 @@ bool ARMAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
   return Offset > 254 || Offset < -256;
 }
 
-void ARMAsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
+void ARMAsmBackend::relaxInstruction(const MCInst &Inst, MCInst &Res) const {
   unsigned RelaxedOp = getRelaxedOpcode(Inst.getOpcode());
 
   // Sanity check w/ diagnostic if we get here w/ a bogus instruction.
@@ -194,7 +194,7 @@ void ARMAsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
   Res.setOpcode(RelaxedOp);
 }
 
-bool ARMAsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
+bool ARMAsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
   const uint16_t Thumb1_16bitNopEncoding = 0x46c0; // using MOV r8,r8
   const uint16_t Thumb2_16bitNopEncoding = 0xbf00; // NOP
   const uint32_t ARMv4_NopEncoding = 0xe1a0000; // using MOV r0,r0
@@ -471,7 +471,7 @@ public:
                    uint8_t _OSABI)
     : ARMAsmBackend(T, TT), OSABI(_OSABI) { }
 
-  void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
+  void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value) const;
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
@@ -480,7 +480,7 @@ public:
 };
 
 // FIXME: Raise this to share code between Darwin and ELF.
-void ELFARMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
+void ELFARMAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
                                   unsigned DataSize, uint64_t Value) const {
   unsigned NumBytes = 4;        // FIXME: 2 for Thumb
   Value = adjustFixupValue(Fixup.getKind(), Value);
@@ -509,7 +509,7 @@ public:
                                      Subtype);
   }
 
-  void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
+  void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value) const;
 
   virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
@@ -562,7 +562,7 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   }
 }
 
-void DarwinARMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
+void DarwinARMAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
                                      unsigned DataSize, uint64_t Value) const {
   unsigned NumBytes = getFixupKindNumBytes(Fixup.getKind());
   Value = adjustFixupValue(Fixup.getKind(), Value);

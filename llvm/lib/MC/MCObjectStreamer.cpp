@@ -172,7 +172,7 @@ void MCObjectStreamer::EmitInstruction(const MCInst &Inst) {
   MCLineEntry::Make(this, getCurrentSection());
 
   // If this instruction doesn't need relaxation, just emit it as data.
-  if (!getAssembler().getBackend().MayNeedRelaxation(Inst)) {
+  if (!getAssembler().getBackend().mayNeedRelaxation(Inst)) {
     EmitInstToData(Inst);
     return;
   }
@@ -181,9 +181,9 @@ void MCObjectStreamer::EmitInstruction(const MCInst &Inst) {
   // possible and emit it as data.
   if (getAssembler().getRelaxAll()) {
     MCInst Relaxed;
-    getAssembler().getBackend().RelaxInstruction(Inst, Relaxed);
-    while (getAssembler().getBackend().MayNeedRelaxation(Relaxed))
-      getAssembler().getBackend().RelaxInstruction(Relaxed, Relaxed);
+    getAssembler().getBackend().relaxInstruction(Inst, Relaxed);
+    while (getAssembler().getBackend().mayNeedRelaxation(Relaxed))
+      getAssembler().getBackend().relaxInstruction(Relaxed, Relaxed);
     EmitInstToData(Relaxed);
     return;
   }

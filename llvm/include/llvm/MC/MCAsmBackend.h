@@ -99,10 +99,10 @@ public:
 
   /// @}
 
-  /// ApplyFixup - Apply the \arg Value for given \arg Fixup into the provided
+  /// applyFixup - Apply the \arg Value for given \arg Fixup into the provided
   /// data fragment, at the offset specified by the fixup and following the
   /// fixup kind as appropriate.
-  virtual void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
+  virtual void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                           uint64_t Value) const = 0;
 
   /// @}
@@ -110,11 +110,11 @@ public:
   /// @name Target Relaxation Interfaces
   /// @{
 
-  /// MayNeedRelaxation - Check whether the given instruction may need
+  /// mayNeedRelaxation - Check whether the given instruction may need
   /// relaxation.
   ///
   /// \param Inst - The instruction to test.
-  virtual bool MayNeedRelaxation(const MCInst &Inst) const = 0;
+  virtual bool mayNeedRelaxation(const MCInst &Inst) const = 0;
 
   /// fixupNeedsRelaxation - Target specific predicate for whether a given
   /// fixup requires the associated instruction to be relaxed.
@@ -129,20 +129,20 @@ public:
   /// \param Inst - The instruction to relax, which may be the same as the
   /// output.
   /// \parm Res [output] - On return, the relaxed instruction.
-  virtual void RelaxInstruction(const MCInst &Inst, MCInst &Res) const = 0;
+  virtual void relaxInstruction(const MCInst &Inst, MCInst &Res) const = 0;
 
   /// @}
 
-  /// WriteNopData - Write an (optimal) nop sequence of Count bytes to the given
+  /// writeNopData - Write an (optimal) nop sequence of Count bytes to the given
   /// output. If the target cannot generate such a sequence, it should return an
   /// error.
   ///
   /// \return - True on success.
-  virtual bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const = 0;
+  virtual bool writeNopData(uint64_t Count, MCObjectWriter *OW) const = 0;
 
-  /// HandleAssemblerFlag - Handle any target-specific assembler flags.
+  /// handleAssemblerFlag - Handle any target-specific assembler flags.
   /// By default, do nothing.
-  virtual void HandleAssemblerFlag(MCAssemblerFlag Flag) {}
+  virtual void handleAssemblerFlag(MCAssemblerFlag Flag) {}
 };
 
 } // End llvm namespace

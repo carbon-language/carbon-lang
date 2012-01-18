@@ -50,16 +50,16 @@ public:
     return 2;
   }
 
-  bool MayNeedRelaxation(const MCInst &Inst) const;
+  bool mayNeedRelaxation(const MCInst &Inst) const;
 
   bool fixupNeedsRelaxation(const MCFixup &Fixup,
                             uint64_t Value,
                             const MCInstFragment *DF,
                             const MCAsmLayout &Layout) const;
 
-  void RelaxInstruction(const MCInst &Inst, MCInst &Res) const;
+  void relaxInstruction(const MCInst &Inst, MCInst &Res) const;
 
-  bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const;
+  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const;
 
   unsigned getPointerSize() const {
     return 4;
@@ -75,7 +75,7 @@ static unsigned getRelaxedOpcode(unsigned Op) {
     }
 }
 
-bool MBlazeAsmBackend::MayNeedRelaxation(const MCInst &Inst) const {
+bool MBlazeAsmBackend::mayNeedRelaxation(const MCInst &Inst) const {
   if (getRelaxedOpcode(Inst.getOpcode()) == Inst.getOpcode())
     return false;
 
@@ -98,12 +98,12 @@ bool MBlazeAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
   return int64_t(Value) != int64_t(int8_t(Value));
 }
 
-void MBlazeAsmBackend::RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
+void MBlazeAsmBackend::relaxInstruction(const MCInst &Inst, MCInst &Res) const {
   Res = Inst;
   Res.setOpcode(getRelaxedOpcode(Inst.getOpcode()));
 }
 
-bool MBlazeAsmBackend::WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
+bool MBlazeAsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
   if ((Count % 4) != 0)
     return false;
 
@@ -121,7 +121,7 @@ public:
   ELFMBlazeAsmBackend(const Target &T, uint8_t _OSABI)
     : MBlazeAsmBackend(T), OSABI(_OSABI) { }
 
-  void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
+  void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value) const;
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
@@ -129,7 +129,7 @@ public:
   }
 };
 
-void ELFMBlazeAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
+void ELFMBlazeAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
                                      unsigned DataSize, uint64_t Value) const {
   unsigned Size = getFixupKindSize(Fixup.getKind());
 

@@ -82,7 +82,7 @@ public:
     return Infos[Kind - FirstTargetFixupKind];
   }
   
-  bool MayNeedRelaxation(const MCInst &Inst) const {
+  bool mayNeedRelaxation(const MCInst &Inst) const {
     // FIXME.
     return false;
   }
@@ -92,17 +92,17 @@ public:
                             const MCInstFragment *DF,
                             const MCAsmLayout &Layout) const {
     // FIXME.
-    assert(0 && "RelaxInstruction() unimplemented");
+    assert(0 && "relaxInstruction() unimplemented");
     return false;
   }
 
   
-  void RelaxInstruction(const MCInst &Inst, MCInst &Res) const {
+  void relaxInstruction(const MCInst &Inst, MCInst &Res) const {
     // FIXME.
-    assert(0 && "RelaxInstruction() unimplemented");
+    assert(0 && "relaxInstruction() unimplemented");
   }
   
-  bool WriteNopData(uint64_t Count, MCObjectWriter *OW) const {
+  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const {
     // FIXME: Zero fill for now. That's not right, but at least will get the
     // section size right.
     for (uint64_t i = 0; i != Count; ++i)
@@ -126,7 +126,7 @@ namespace {
   public:
     DarwinPPCAsmBackend(const Target &T) : PPCAsmBackend(T) { }
     
-    void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
+    void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                     uint64_t Value) const {
       assert(0 && "UNIMP");
     }
@@ -152,7 +152,7 @@ namespace {
     ELFPPCAsmBackend(const Target &T, uint8_t OSABI) :
       PPCAsmBackend(T), OSABI(OSABI) { }
     
-    void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
+    void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                     uint64_t Value) const {
       Value = adjustFixupValue(Fixup.getKind(), Value);
       if (!Value) return;           // Doesn't change encoding.
