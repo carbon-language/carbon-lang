@@ -1057,23 +1057,40 @@ static QualType inferARCLifetimeForPointee(Sema &S, QualType type,
   } else if (type->isObjCARCImplicitlyUnretainedType()) {
     implicitLifetime = Qualifiers::OCL_ExplicitNone;
 
-  // If we are in an unevaluated context, like sizeof, assume ExplicitNone and
+  // If we are in an unevaluated context, like sizeof, assume Autoreleasing and
   // don't give error.
   } else if (S.ExprEvalContexts.back().Context == Sema::Unevaluated ||
              S.ExprEvalContexts.back().Context == Sema::ConstantEvaluated) {
-    implicitLifetime = Qualifiers::OCL_ExplicitNone;
+    implicitLifetime = Qualifiers::OCL_Autoreleasing;
 
   // If that failed, give an error and recover using __autoreleasing.
   } else {
     // These types can show up in private ivars in system headers, so
     // we need this to not be an error in those cases.  Instead we
     // want to delay.
+    //
+    // Also, make sure we delay appropriately in
+    // PotentiallyPotentiallyEvaluated contexts.
     if (S.DelayedDiagnostics.shouldDelayDiagnostics()) {
-      S.DelayedDiagnostics.add(
-          sema::DelayedDiagnostic::makeForbiddenType(loc,
-              diag::err_arc_indirect_no_ownership, type, isReference));
+      if (S.ExprEvalContexts.back().Context ==
+          Sema::PotentiallyPotentiallyEvaluated) {
+        S.ExprEvalContexts.back().addDelayedDiagnostic(
+            sema::DelayedDiagnostic::makeForbiddenType(loc,
+                diag::err_arc_indirect_no_ownership, type, isReference));
+      } else {
+        S.DelayedDiagnostics.add(
+            sema::DelayedDiagnostic::makeForbiddenType(loc,
+                diag::err_arc_indirect_no_ownership, type, isReference));
+      }
     } else {
-      S.Diag(loc, diag::err_arc_indirect_no_ownership) << type << isReference;
+      if (S.ExprEvalContexts.back().Context ==
+          Sema::PotentiallyPotentiallyEvaluated) {
+        S.ExprEvalContexts.back().addDiagnostic(loc,
+            S.PDiag(diag::err_arc_indirect_no_ownership)
+                << type << isReference);
+      } else {
+        S.Diag(loc, diag::err_arc_indirect_no_ownership) << type << isReference;
+      }
     }
     implicitLifetime = Qualifiers::OCL_Autoreleasing;
   }

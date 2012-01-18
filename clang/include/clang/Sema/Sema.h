@@ -165,6 +165,7 @@ namespace sema {
   class DelayedDiagnostic;
   class FunctionScopeInfo;
   class LambdaScopeInfo;
+  class PossiblyUnreachableDiag;
   class TemplateDeductionInfo;
 }
 
@@ -519,6 +520,12 @@ public:
   typedef SmallVector<std::pair<SourceLocation, PartialDiagnostic>, 10>
     PotentiallyEmittedDiagnostics;
 
+  typedef SmallVector<sema::DelayedDiagnostic, 10>
+    PotentiallyEmittedDelayedDiag;
+
+  typedef SmallVector<sema::PossiblyUnreachableDiag, 10>
+    PotentiallyEmittedPossiblyUnreachableDiag;
+
   /// \brief Describes how the expressions currently being parsed are
   /// evaluated at run-time, if at all.
   enum ExpressionEvaluationContext {
@@ -579,16 +586,20 @@ public:
     /// evaluated.
     PotentiallyReferencedDecls *PotentiallyReferenced;
 
-    /// \brief The set of diagnostics to emit should this potentially
-    /// potentially-evaluated context become evaluated.
-    PotentiallyEmittedDiagnostics *PotentiallyDiagnosed;
+    // There are three kinds of diagnostics we care about in
+    // PotentiallyPotentiallyEvaluated contexts: regular Diag diagnostics,
+    // DelayedDiagnostics, and DiagRuntimeBehavior diagnostics.  
+    PotentiallyEmittedDiagnostics *SavedDiag;
+    PotentiallyEmittedDelayedDiag *SavedDelayedDiag;
+    PotentiallyEmittedPossiblyUnreachableDiag *SavedRuntimeDiag;
 
     ExpressionEvaluationContextRecord(ExpressionEvaluationContext Context,
                                       unsigned NumCleanupObjects,
                                       bool ParentNeedsCleanups)
       : Context(Context), ParentNeedsCleanups(ParentNeedsCleanups),
         NumCleanupObjects(NumCleanupObjects),
-        PotentiallyReferenced(0), PotentiallyDiagnosed(0) { }
+        PotentiallyReferenced(0), SavedDiag(0), SavedDelayedDiag(0), 
+        SavedRuntimeDiag(0) { }
 
     void addReferencedDecl(SourceLocation Loc, Decl *Decl) {
       if (!PotentiallyReferenced)
@@ -596,18 +607,13 @@ public:
       PotentiallyReferenced->push_back(std::make_pair(Loc, Decl));
     }
 
-    void addDiagnostic(SourceLocation Loc, const PartialDiagnostic &PD) {
-      if (!PotentiallyDiagnosed)
-        PotentiallyDiagnosed = new PotentiallyEmittedDiagnostics;
-      PotentiallyDiagnosed->push_back(std::make_pair(Loc, PD));
-    }
+    void addDiagnostic(SourceLocation Loc, const PartialDiagnostic &PD);
 
-    void Destroy() {
-      delete PotentiallyReferenced;
-      delete PotentiallyDiagnosed;
-      PotentiallyReferenced = 0;
-      PotentiallyDiagnosed = 0;
-    }
+    void addRuntimeDiagnostic(const sema::PossiblyUnreachableDiag &PUD);
+
+    void addDelayedDiagnostic(const sema::DelayedDiagnostic &DD);
+
+    void Destroy();
   };
 
   /// A stack of expression evaluation contexts.

@@ -12,8 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/SemaInternal.h"
+#include "clang/Sema/DelayedDiagnostic.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/AnalysisBasedWarnings.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTMutationListener.h"
@@ -9360,6 +9362,39 @@ bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result,
   return false;
 }
 
+void Sema::ExpressionEvaluationContextRecord::Destroy() {
+  delete PotentiallyReferenced;
+  delete SavedDiag;
+  delete SavedRuntimeDiag;
+  delete SavedDelayedDiag;
+  PotentiallyReferenced = 0;
+  SavedDiag = 0;
+  SavedRuntimeDiag = 0;
+  SavedDelayedDiag = 0;
+}
+
+void Sema::ExpressionEvaluationContextRecord::addDiagnostic(
+        SourceLocation Loc, const PartialDiagnostic &PD) {
+  if (!SavedDiag)
+    SavedDiag = new PotentiallyEmittedDiagnostics;
+  SavedDiag->push_back(std::make_pair(Loc, PD));
+}
+
+void Sema::ExpressionEvaluationContextRecord::addRuntimeDiagnostic(
+        const sema::PossiblyUnreachableDiag &PUD) {
+  if (!SavedRuntimeDiag)
+    SavedRuntimeDiag = new PotentiallyEmittedPossiblyUnreachableDiag;
+  SavedRuntimeDiag->push_back(PUD);
+}
+
+void Sema::ExpressionEvaluationContextRecord::addDelayedDiagnostic(
+        const sema::DelayedDiagnostic &DD) {
+  if (!SavedDelayedDiag)
+    SavedDelayedDiag = new PotentiallyEmittedDelayedDiag;
+  SavedDelayedDiag->push_back(DD);
+}
+
+
 void
 Sema::PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext) {
   ExprEvalContexts.push_back(
@@ -9386,13 +9421,31 @@ void Sema::PopExpressionEvaluationContext() {
         MarkDeclarationReferenced(I->first, I->second);
     }
 
-    if (Rec.PotentiallyDiagnosed) {
+    if (Rec.SavedDiag) {
       // Emit any pending diagnostics.
       for (PotentiallyEmittedDiagnostics::iterator
-                I = Rec.PotentiallyDiagnosed->begin(),
-             IEnd = Rec.PotentiallyDiagnosed->end();
+                I = Rec.SavedDiag->begin(),
+             IEnd = Rec.SavedDiag->end();
            I != IEnd; ++I)
         Diag(I->first, I->second);
+    }
+
+    if (Rec.SavedDelayedDiag) {
+      // Emit any pending delayed diagnostics.
+      for (PotentiallyEmittedDelayedDiag::iterator
+                I = Rec.SavedDelayedDiag->begin(),
+             IEnd = Rec.SavedDelayedDiag->end();
+           I != IEnd; ++I)
+        DelayedDiagnostics.add(*I);
+    }
+
+    if (Rec.SavedRuntimeDiag) {
+      // Emit any pending runtime diagnostics.
+      for (PotentiallyEmittedPossiblyUnreachableDiag::iterator
+                I = Rec.SavedRuntimeDiag->begin(),
+             IEnd = Rec.SavedRuntimeDiag->end();
+           I != IEnd; ++I)
+             FunctionScopes.back()->PossiblyUnreachableDiags.push_back(*I);
     }
   }
 
@@ -9759,7 +9812,8 @@ bool Sema::DiagRuntimeBehavior(SourceLocation Loc, const Stmt *Statement,
     return true;
 
   case PotentiallyPotentiallyEvaluated:
-    ExprEvalContexts.back().addDiagnostic(Loc, PD);
+    ExprEvalContexts.back().addRuntimeDiagnostic(
+        sema::PossiblyUnreachableDiag(PD, Loc, Statement));
     break;
   }
 
