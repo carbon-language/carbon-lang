@@ -43,7 +43,8 @@
 #ifdef __linux__
 # define ASAN_USE_SYSINFO 0
 #else
-# define ASAN_USE_SYSINFO 1
+// TODO(glider): clean up sysinfo.
+# define ASAN_USE_SYSINFO 0
 #endif
 #endif
 

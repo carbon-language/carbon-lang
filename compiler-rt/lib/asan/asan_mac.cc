@@ -17,11 +17,13 @@
 #include "asan_mac.h"
 
 #include "asan_internal.h"
+#include "asan_procmaps.h"
 #include "asan_stack.h"
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 
 #include <crt_externs.h>  // for _NSGetEnviron
+#include <mach-o/dyld.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/ucontext.h>
@@ -145,6 +147,94 @@ int AsanClose(int fd) {
   return close(fd);
 }
 
+AsanProcMaps::AsanProcMaps() {
+  Reset();
+}
+
+AsanProcMaps::~AsanProcMaps() {
+}
+
+void AsanProcMaps::Reset() {
+  // Count down from the top.
+  // TODO(glider): as per man 3 dyld, iterating over the headers with
+  // _dyld_image_count is thread-unsafe.
+  current_image_ = _dyld_image_count();
+  current_load_cmd_ = -1;
+}
+
+// Similar code is used in Google Perftools,
+// http://code.google.com/p/google-perftools.
+template<uint32_t kMagic, uint32_t kLCSegment,
+         typename MachHeader, typename SegmentCommand>
+static bool NextExtMachHelper(const mach_header* hdr,
+                              int current_image, int current_load_cmd,
+                              uintptr_t *start, uintptr_t *end,
+                              uintptr_t *offset,
+                              char filename[], size_t filename_size) {
+  if (hdr->magic != kMagic)
+    return false;
+  const char* lc = (const char *)hdr + sizeof(MachHeader);
+  // TODO(csilvers): make this not-quadradic (increment and hold state)
+  for (int j = 0; j < current_load_cmd; j++)  // advance to *our* load_cmd
+    lc += ((const load_command *)lc)->cmdsize;
+  if (((const load_command *)lc)->cmd == kLCSegment) {
+    const intptr_t dlloff = _dyld_get_image_vmaddr_slide(current_image);
+    const SegmentCommand* sc = (const SegmentCommand *)lc;
+    if (start) *start = sc->vmaddr + dlloff;
+    if (end) *end = sc->vmaddr + sc->vmsize + dlloff;
+    if (offset) *offset = sc->fileoff;
+    if (filename) {
+      real_strncpy(filename, _dyld_get_image_name(current_image),
+                   filename_size);
+    }
+    return true;
+  }
+  return false;
+}
+
+bool AsanProcMaps::Next(uintptr_t *start, uintptr_t *end,
+                        uintptr_t *offset, char filename[],
+                        size_t filename_size) {
+  // We return a separate entry for each segment in the DLL. (TODO(csilvers):
+  // can we do better?)  A DLL ("image") has load-commands, some of which
+  // talk about segment boundaries.
+  // cf image_for_address from http://svn.digium.com/view/asterisk/team/oej/minivoicemail/dlfcn.c?revision=53912
+  for (; current_image_ >= 0; current_image_--) {
+    const mach_header* hdr = _dyld_get_image_header(current_image_);
+    if (!hdr) continue;
+    if (current_load_cmd_ < 0)   // set up for this image
+      current_load_cmd_ = hdr->ncmds;  // again, go from the top down
+
+    // We start with the next load command (we've already looked at this one).
+    for (current_load_cmd_--; current_load_cmd_ >= 0; current_load_cmd_--) {
+#ifdef MH_MAGIC_64
+      if (NextExtMachHelper<MH_MAGIC_64, LC_SEGMENT_64,
+                            struct mach_header_64, struct segment_command_64>(
+                                hdr, current_image_, current_load_cmd_,
+                                start, end, offset, filename, filename_size)) {
+        return true;
+      }
+#endif
+      if (NextExtMachHelper<MH_MAGIC, LC_SEGMENT,
+                            struct mach_header, struct segment_command>(
+                                hdr, current_image_, current_load_cmd_,
+                                start, end, offset, filename, filename_size)) {
+        return true;
+      }
+    }
+    // If we get here, no more load_cmd's in this image talk about
+    // segments.  Go on to the next image.
+  }
+  // We didn't find anything.
+  return false;
+}
+
+bool AsanProcMaps::GetObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
+                                          char filename[],
+                                          size_t filename_size) {
+  return IterateForObjectNameAndOffset(addr, offset, filename, filename_size);
+}
+
 void AsanThread::SetThreadStackTopAndBottom() {
   size_t stacksize = pthread_get_stacksize_np(pthread_self());
   void *stackaddr = pthread_get_stackaddr_np(pthread_self());
@@ -153,7 +243,6 @@ void AsanThread::SetThreadStackTopAndBottom() {
   int local;
   CHECK(AddrIsInStack((uintptr_t)&local));
 }
-
 
 AsanLock::AsanLock(LinkerInitialized) {
   // We assume that OS_SPINLOCK_INIT is zero

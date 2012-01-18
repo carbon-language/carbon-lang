@@ -30,13 +30,33 @@ class AsanProcMaps {
                               char filename[], size_t filename_size);
   ~AsanProcMaps();
  private:
+  // Default implementation of GetObjectNameAndOffset.
+  // Quite slow, because it iterates through the whole process map for each
+  // lookup.
+  bool IterateForObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
+                                     char filename[], size_t filename_size) {
+    AsanProcMaps proc_maps;
+    uintptr_t start, end, file_offset;
+    while (proc_maps.Next(&start, &end, &file_offset,
+                          filename, filename_size)) {
+      if (addr >= start && addr < end) {
+        *offset = (addr - start) + file_offset;
+        return true;
+      }
+    }
+    if (filename_size)
+      filename[0] = '\0';
+    return false;
+  }
+
 #if defined __linux__
   char *proc_self_maps_buff_;
   size_t proc_self_maps_buff_mmaped_size_;
   size_t proc_self_maps_buff_len_;
   char *current_;
 #elif defined __APPLE__
-// FIXME: Mac code goes here
+  int current_image_;
+  int current_load_cmd_;
 #endif
 };
 

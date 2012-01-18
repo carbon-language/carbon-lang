@@ -220,17 +220,7 @@ bool AsanProcMaps::Next(uintptr_t *start, uintptr_t *end,
 bool AsanProcMaps::GetObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
                                           char filename[],
                                           size_t filename_size) {
-  AsanProcMaps proc_maps;
-  uintptr_t start, end, file_offset;
-  while (proc_maps.Next(&start, &end, &file_offset, filename, filename_size)) {
-    if (addr >= start && addr < end) {
-      *offset = (addr - start) + file_offset;
-      return true;
-    }
-  }
-  if (filename_size)
-    filename[0] = '\0';
-  return false;
+  return IterateForObjectNameAndOffset(addr, offset, filename, filename_size);
 }
 
 #else  // __arm__
