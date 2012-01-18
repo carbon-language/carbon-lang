@@ -62,13 +62,11 @@ private:
 
   /// \brief Given a pointer argument, get the symbol of the value it contains
   /// (points to).
-  SymbolRef getPointedToSymbol(CheckerContext &C,
-                               const Expr *Arg,
-                               bool IssueWarning = false) const;
+  static SymbolRef getPointedToSymbol(CheckerContext &C, const Expr *Arg);
 
-  inline bool isTaintedOrPointsToTainted(const Expr *E,
-                                         const ProgramState *State,
-                                         CheckerContext &C) const {
+  static inline bool isTaintedOrPointsToTainted(const Expr *E,
+                                                const ProgramState *State,
+                                                CheckerContext &C) {
     return (State->isTainted(E, C.getLocationContext()) ||
             (E->getType().getTypePtr()->isPointerType() &&
              State->isTainted(getPointedToSymbol(C, E))));
@@ -162,15 +160,12 @@ private:
       return (std::find(DstArgs.begin(),
                         DstArgs.end(), ArgNum) != DstArgs.end());
     }
-  };   
-  
-  /// \brief Pre-process a function which propagates taint according to the
-  /// given taint rule.
-  const ProgramState *prePropagateTaint(const CallExpr *CE,
-                                        CheckerContext &C,
-                                        const TaintPropagationRule PR) const;
 
-                              
+    /// \brief Pre-process a function which propagates taint according to the
+    /// taint rule.
+    const ProgramState *process(const CallExpr *CE, CheckerContext &C) const;
+
+  };
 };
 
 const unsigned GenericTaintChecker::ReturnValueIndex;
@@ -294,7 +289,7 @@ void GenericTaintChecker::addSourcesPre(const CallExpr *CE,
   TaintPropagationRule Rule =
     TaintPropagationRule::getTaintPropagationRule(FDecl, Name, C);
   if (!Rule.isNull()) {
-    State = prePropagateTaint(CE, C, Rule);
+    State = Rule.process(CE, C);
     if (!State)
       return;
     C.addTransition(State);
@@ -335,7 +330,7 @@ bool GenericTaintChecker::propagateFromPre(const CallExpr *CE,
     // The arguments are pointer arguments. The data they are pointing at is
     // tainted after the call.
     const Expr* Arg = CE->getArg(ArgNum);
-    SymbolRef Sym = getPointedToSymbol(C, Arg, true);
+    SymbolRef Sym = getPointedToSymbol(C, Arg);
     if (Sym)
       State = State->addTaint(Sym);
   }
@@ -398,29 +393,15 @@ bool GenericTaintChecker::checkPre(const CallExpr *CE, CheckerContext &C) const{
 }
 
 SymbolRef GenericTaintChecker::getPointedToSymbol(CheckerContext &C,
-                                                  const Expr* Arg,
-                                                  bool IssueWarning) const {
+                                                  const Expr* Arg) {
   const ProgramState *State = C.getState();
   SVal AddrVal = State->getSVal(Arg->IgnoreParens(), C.getLocationContext());
   if (AddrVal.isUnknownOrUndef())
     return 0;
 
   Loc *AddrLoc = dyn_cast<Loc>(&AddrVal);
-
-  if (!AddrLoc && !IssueWarning)
+  if (!AddrLoc)
     return 0;
-
-  // If the Expr is not a location, issue a warning.
-  if (!AddrLoc) {
-    assert(IssueWarning);
-    if (ExplodedNode *N = C.generateSink(State)) {
-      initBugType();
-      BugReport *report = new BugReport(*BT, "Pointer argument is expected.",N);
-      report->addRange(Arg->getSourceRange());
-      C.EmitReport(report);
-    }
-    return 0;
-  }
 
   const PointerType *ArgTy =
     dyn_cast<PointerType>(Arg->getType().getCanonicalType().getTypePtr());
@@ -430,39 +411,42 @@ SymbolRef GenericTaintChecker::getPointedToSymbol(CheckerContext &C,
 }
 
 const ProgramState *
-GenericTaintChecker::prePropagateTaint(const CallExpr *CE,
-                                       CheckerContext &C,
-                                       const TaintPropagationRule PR) const {
+GenericTaintChecker::TaintPropagationRule::process(const CallExpr *CE,
+                                                   CheckerContext &C) const {
   const ProgramState *State = C.getState();
 
   // Check for taint in arguments.
   bool IsTainted = false;
-  for (ArgVector::const_iterator I = PR.SrcArgs.begin(),
-                                 E = PR.SrcArgs.end(); I != E; ++I) {
+  for (ArgVector::const_iterator I = SrcArgs.begin(),
+                                 E = SrcArgs.end(); I != E; ++I) {
     unsigned ArgNum = *I;
 
     if (ArgNum == InvalidArgIndex) {
       // Check if any of the arguments is tainted, but skip the
       // destination arguments.
       for (unsigned int i = 0; i < CE->getNumArgs(); ++i) {
-        if (PR.isDestinationArgument(i))
+        if (isDestinationArgument(i))
           continue;
-        if ((IsTainted = isTaintedOrPointsToTainted(CE->getArg(i), State, C)))
+        if ((IsTainted =
+               GenericTaintChecker::isTaintedOrPointsToTainted(CE->getArg(i),
+                                                               State, C)))
           break;
       }
       break;
     }
 
     assert(ArgNum < CE->getNumArgs());
-    if ((IsTainted = isTaintedOrPointsToTainted(CE->getArg(ArgNum), State, C)))
+    if ((IsTainted =
+           GenericTaintChecker::isTaintedOrPointsToTainted(CE->getArg(ArgNum),
+                                                           State, C)))
       break;
   }
   if (!IsTainted)
     return State;
 
   // Mark the arguments which should be tainted after the function returns.
-  for (ArgVector::const_iterator I = PR.DstArgs.begin(),
-                                 E = PR.DstArgs.end(); I != E; ++I) {
+  for (ArgVector::const_iterator I = DstArgs.begin(),
+                                 E = DstArgs.end(); I != E; ++I) {
     unsigned ArgNum = *I;
 
     // Should we mark all arguments as tainted?
@@ -527,7 +511,7 @@ const ProgramState *GenericTaintChecker::postScanf(const CallExpr *CE,
     // The arguments are pointer arguments. The data they are pointing at is
     // tainted after the call.
     const Expr* Arg = CE->getArg(i);
-        SymbolRef Sym = getPointedToSymbol(C, Arg, true);
+        SymbolRef Sym = getPointedToSymbol(C, Arg);
     if (Sym)
       State = State->addTaint(Sym);
   }
