@@ -26,7 +26,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ValueHandle.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include <map>
@@ -305,50 +304,6 @@ namespace {
     void deleted();
     void allUsesReplacedWith(Value *V) {
       deleted();
-    }
-  };
-}
-
-namespace llvm {
-  template<>
-  struct DenseMapInfo<LVIValueHandle> {
-    typedef DenseMapInfo<Value*> PointerInfo;
-    static inline LVIValueHandle getEmptyKey() {
-      return LVIValueHandle(PointerInfo::getEmptyKey(),
-                            static_cast<LazyValueInfoCache*>(0));
-    }
-    static inline LVIValueHandle getTombstoneKey() {
-      return LVIValueHandle(PointerInfo::getTombstoneKey(),
-                            static_cast<LazyValueInfoCache*>(0));
-    }
-    static unsigned getHashValue(const LVIValueHandle &Val) {
-      return PointerInfo::getHashValue(Val);
-    }
-    static bool isEqual(const LVIValueHandle &LHS, const LVIValueHandle &RHS) {
-      return LHS == RHS;
-    }
-  };
-  
-  template<>
-  struct DenseMapInfo<std::pair<AssertingVH<BasicBlock>, Value*> > {
-    typedef std::pair<AssertingVH<BasicBlock>, Value*> PairTy;
-    typedef DenseMapInfo<AssertingVH<BasicBlock> > APointerInfo;
-    typedef DenseMapInfo<Value*> BPointerInfo;
-    static inline PairTy getEmptyKey() {
-      return std::make_pair(APointerInfo::getEmptyKey(),
-                            BPointerInfo::getEmptyKey());
-    }
-    static inline PairTy getTombstoneKey() {
-      return std::make_pair(APointerInfo::getTombstoneKey(), 
-                            BPointerInfo::getTombstoneKey());
-    }
-    static unsigned getHashValue( const PairTy &Val) {
-      return APointerInfo::getHashValue(Val.first) ^ 
-             BPointerInfo::getHashValue(Val.second);
-    }
-    static bool isEqual(const PairTy &LHS, const PairTy &RHS) {
-      return APointerInfo::isEqual(LHS.first, RHS.first) &&
-             BPointerInfo::isEqual(LHS.second, RHS.second);
     }
   };
 }
