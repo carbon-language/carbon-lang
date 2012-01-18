@@ -3906,7 +3906,7 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (const DWARFDebugInfoEntry
         if (m_apple_types_ap.get())
         {
             const char *name_cstr = type_name.GetCString();
-            m_apple_types_ap->FindCompleteObjCClassByName (name_cstr, die_offsets);
+            m_apple_types_ap->FindCompleteObjCClassByName (name_cstr, die_offsets, must_be_implementation);
         }
     }
     else

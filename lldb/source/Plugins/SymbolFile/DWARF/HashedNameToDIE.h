@@ -96,6 +96,60 @@ struct DWARFMappedHash
             }
         }
     }
+    enum AtomType
+    {
+        eAtomTypeNULL       = 0u,
+        eAtomTypeDIEOffset  = 1u,   // DIE offset, check form for encoding
+        eAtomTypeCUOffset   = 2u,   // DIE offset of the compiler unit header that contains the item in question
+        eAtomTypeTag        = 3u,   // DW_TAG_xxx value, should be encoded as DW_FORM_data1 (if no tags exceed 255) or DW_FORM_data2
+        eAtomTypeNameFlags  = 4u,   // Flags from enum NameFlags
+        eAtomTypeTypeFlags  = 5u    // Flags from enum TypeFlags
+    };
+    
+    // Bit definitions for the eAtomTypeTypeFlags flags
+    enum TypeFlags
+    {
+        // Always set for C++, only set for ObjC if this is the 
+        // @implementation for class
+        eTypeFlagClassIsImplementation  = ( 1u << 1 )
+    };
+    
+
+    static void
+    ExtractClassOrStructDIEArray (const DIEInfoArray &die_info_array,
+                                  bool return_implementation_only_if_available,
+                                  DIEArray &die_offsets)
+    {
+        const size_t count = die_info_array.size();
+        for (size_t i=0; i<count; ++i)
+        {
+            const dw_tag_t die_tag = die_info_array[i].tag;
+            if (die_tag == DW_TAG_class_type || die_tag == DW_TAG_structure_type)
+            {
+                if (die_info_array[i].type_flags & eTypeFlagClassIsImplementation)
+                {
+                    if (return_implementation_only_if_available)
+                    {
+                        // We found the one true definiton for this class, so
+                        // only return that
+                        die_offsets.clear();                        
+                        die_offsets.push_back (die_info_array[i].offset);
+                        return;
+                    }
+                    else
+                    {
+                        // Put the one true definition as the first entry so it
+                        // matches first
+                        die_offsets.insert (die_offsets.begin(), die_info_array[i].offset);
+                    }
+                }
+                else
+                {
+                    die_offsets.push_back (die_info_array[i].offset);
+                }
+            }
+        }
+    }
 
     static void
     ExtractTypesFromDIEArray (const DIEInfoArray &die_info_array,
@@ -110,28 +164,6 @@ struct DWARFMappedHash
                 die_offsets.push_back (die_info_array[i].offset);
         }
     }
-
-    enum AtomType
-    {
-        eAtomTypeNULL       = 0u,
-        eAtomTypeDIEOffset  = 1u,   // DIE offset, check form for encoding
-        eAtomTypeCUOffset   = 2u,   // DIE offset of the compiler unit header that contains the item in question
-        eAtomTypeTag        = 3u,   // DW_TAG_xxx value, should be encoded as DW_FORM_data1 (if no tags exceed 255) or DW_FORM_data2
-        eAtomTypeNameFlags  = 4u,   // Flags from enum NameFlags
-        eAtomTypeTypeFlags  = 5u    // Flags from enum TypeFlags
-    };
-    
-    // Bit definitions for the eAtomTypeTypeFlags flags
-    enum TypeFlags
-    {
-        // If the name contains the namespace and class scope or the type 
-        // exists in the global namespace, then this bits should be set
-        eTypeFlagNameIsFullyQualified   = ( 1u << 0 ),
-        
-        // Always set for C++, only set for ObjC if this is the 
-        // @implementation for class
-        eTypeFlagClassIsImplementation  = ( 1u << 1 )
-    };
 
     struct Atom
     {
@@ -172,12 +204,14 @@ struct DWARFMappedHash
         // DIE offset base so die offsets in hash_data can be CU relative
         dw_offset_t die_base_offset;
         AtomArray atoms;
+        uint32_t atom_mask;
         size_t min_hash_data_byte_size;
         bool hash_data_has_fixed_byte_size;
         
         Prologue (dw_offset_t _die_base_offset = 0) :
             die_base_offset (_die_base_offset),
             atoms(),
+            atom_mask (0),
             min_hash_data_byte_size(0),
             hash_data_has_fixed_byte_size(true)
         {
@@ -196,7 +230,14 @@ struct DWARFMappedHash
         {
             hash_data_has_fixed_byte_size = true;
             min_hash_data_byte_size = 0;
+            atom_mask = 0;
             atoms.clear();
+        }
+
+        bool
+        ContainsAtom (AtomType atom_type) const
+        {
+            return (atom_mask & (1u << atom_type)) != 0;
         }
 
         virtual void
@@ -210,6 +251,7 @@ struct DWARFMappedHash
         AppendAtom (AtomType type, dw_form_t form)
         {
             atoms.push_back (Atom(type, form));
+            atom_mask |= 1u << type;
             switch (form)
             {
                 case DW_FORM_indirect:
@@ -415,9 +457,6 @@ struct DWARFMappedHash
                         if (hash_data.type_flags)
                         {
                             strm.PutCString (" (");
-                            if (hash_data.type_flags & eTypeFlagNameIsFullyQualified)
-                                strm.PutCString (" qualified");
-                            
                             if (hash_data.type_flags & eTypeFlagClassIsImplementation)
                                 strm.PutCString (" implementation");
                             strm.PutCString (" )");
@@ -430,7 +469,6 @@ struct DWARFMappedHash
                 }
             }
         }
-
     };
     
 //    class ExportTable
@@ -758,25 +796,31 @@ struct DWARFMappedHash
         }
 
         size_t
-        FindCompleteObjCClassByName (const char *name, DIEArray &die_offsets)
+        FindCompleteObjCClassByName (const char *name, DIEArray &die_offsets, bool must_be_implementation)
         {
             DIEInfoArray die_info_array;
             if (FindByName(name, die_info_array))
             {
-                if (GetHeader().header_data.atoms.size() == 2)
+                if (must_be_implementation && GetHeader().header_data.ContainsAtom (eAtomTypeTypeFlags))
                 {
                     // If we have two atoms, then we have the DIE offset and
                     // the type flags so we can find the objective C class
                     // efficiently.
                     DWARFMappedHash::ExtractTypesFromDIEArray (die_info_array, 
                                                                UINT32_MAX,
-                                                               eTypeFlagNameIsFullyQualified | eTypeFlagClassIsImplementation,
+                                                               eTypeFlagClassIsImplementation,
                                                                die_offsets);
                 }
                 else
                 {
-                    // WE don't have the type flags, just return everything
-                    DWARFMappedHash::ExtractDIEArray (die_info_array, die_offsets);
+                    // We don't only want the one true definition, so try and see
+                    // what we can find, and only return class or struct DIEs.
+                    // If we do have the full implementation, then return it alone,
+                    // else return all possible matches.
+                    const bool return_implementation_only_if_available = true;
+                    DWARFMappedHash::ExtractClassOrStructDIEArray (die_info_array, 
+                                                                   return_implementation_only_if_available,
+                                                                   die_offsets);
                 }
             }
             return die_offsets.size();
