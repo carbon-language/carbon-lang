@@ -152,7 +152,8 @@ public:
 static unsigned getRelaxedOpcode(unsigned Op) {
   switch (Op) {
   default: return Op;
-  case ARM::tBcc: return ARM::t2Bcc;
+  case ARM::tBcc:       return ARM::t2Bcc;
+  case ARM::tLDRpciASM: return ARM::t2LDRpci;
   }
 }
 
@@ -166,14 +167,24 @@ bool ARMAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
                                          uint64_t Value,
                                          const MCInstFragment *DF,
                                          const MCAsmLayout &Layout) const {
-  // Relaxing tBcc to t2Bcc. tBcc has a signed 9-bit displacement with the
-  // low bit being an implied zero. There's an implied +4 offset for the
-  // branch, so we adjust the other way here to determine what's
-  // encodable.
-  //
-  // Relax if the value is too big for a (signed) i8.
-  int64_t Offset = int64_t(Value) - 4;
-  return Offset > 254 || Offset < -256;
+  switch (Fixup.getKind()) {
+  default: assert(0 && "Unexpected fixup kind in fixupNeedsRelaxation()!");
+  case ARM::fixup_arm_thumb_bcc: {
+    // Relaxing tBcc to t2Bcc. tBcc has a signed 9-bit displacement with the
+    // low bit being an implied zero. There's an implied +4 offset for the
+    // branch, so we adjust the other way here to determine what's
+    // encodable.
+    //
+    // Relax if the value is too big for a (signed) i8.
+    int64_t Offset = int64_t(Value) - 4;
+    return Offset > 254 || Offset < -256;
+  }
+  case ARM::fixup_arm_thumb_cp: {
+    int64_t Offset = int64_t(Value) - 4;
+    return Offset > 4095 || Offset < 0;
+  }
+  }
+  llvm_unreachable("Invalid switch/cash!?");
 }
 
 void ARMAsmBackend::relaxInstruction(const MCInst &Inst, MCInst &Res) const {
