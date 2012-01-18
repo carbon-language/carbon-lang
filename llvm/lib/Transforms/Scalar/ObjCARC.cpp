@@ -895,7 +895,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual bool runOnModule(Module &M);
 
-    bool MayAutorelease(CallSite CS);
+    bool MayAutorelease(CallSite CS, unsigned Depth = 0);
     bool OptimizeBB(BasicBlock *BB);
 
   public:
@@ -922,7 +922,7 @@ void ObjCARCAPElim::getAnalysisUsage(AnalysisUsage &AU) const {
 
 /// MayAutorelease - Interprocedurally determine if calls made by the
 /// given call site can possibly produce autoreleases.
-bool ObjCARCAPElim::MayAutorelease(CallSite CS) {
+bool ObjCARCAPElim::MayAutorelease(CallSite CS, unsigned Depth) {
   if (Function *Callee = CS.getCalledFunction()) {
     if (Callee->isDeclaration() || Callee->mayBeOverridden())
       return true;
@@ -931,7 +931,11 @@ bool ObjCARCAPElim::MayAutorelease(CallSite CS) {
       BasicBlock *BB = I;
       for (BasicBlock::iterator J = BB->begin(), F = BB->end(); J != F; ++J)
         if (CallSite JCS = CallSite(J))
-          if (!JCS.onlyReadsMemory() && MayAutorelease(JCS))
+          // This recursion depth limit is arbitrary. It's just great
+          // enough to cover known interesting testcases.
+          if (Depth < 3 &&
+              !JCS.onlyReadsMemory() &&
+              MayAutorelease(JCS, Depth + 1))
             return true;
     }
     return false;
