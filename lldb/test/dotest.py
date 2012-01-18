@@ -110,6 +110,9 @@ bmBreakpointSpec = None
 # The benchamrk iteration count, as specified by the '-y' option.
 bmIterationCount = -1
 
+# By default, don't exclude any directories.  Use '-X' to add one excluded directory.
+excluded = set(['.svn', '.git'])
+
 # By default, failfast is False.  Use '-F' to overwrite it.
 failfast = False
 
@@ -227,6 +230,9 @@ where options:
        timestamp as the session dir name
 -t   : turn on tracing of lldb command and other detailed test executions
 -v   : do verbose mode of unittest framework (print out each test case invocation)
+-X   : exclude a directory from consideration for test discovery
+       -X types => if 'types' appear in the pathname components of a potential testfile
+                   it will be ignored
 -x   : specify the breakpoint specification for the benchmark executable;
        see also '-e', which provides the full path of the executable
 -y   : specify the iteration count used to collect our benchmarks; an example is
@@ -502,6 +508,13 @@ def parseOptionsAndInitTestdirs():
             index += 1
         elif sys.argv[index].startswith('-w'):
             os.environ["LLDB_WAIT_BETWEEN_TEST_CASES"] = 'YES'
+            index += 1
+        elif sys.argv[index].startswith('-X'):
+            # Increment by 1 to fetch an excluded directory.
+            index += 1
+            if index >= len(sys.argv):
+                usage()
+            excluded.add(sys.argv[index])
             index += 1
         elif sys.argv[index].startswith('-x'):
             # Increment by 1 to fetch the breakpoint specification of the benchmark executable.
@@ -781,6 +794,11 @@ def visit(prefix, dir, names):
     global regexp
     global filters
     global fs4all
+    global excluded
+
+    if set(dir.split(os.sep)).intersection(excluded):
+        #print "Detected an excluded dir component: %s" % dir
+        return
 
     for name in names:
         if os.path.isdir(os.path.join(dir, name)):
