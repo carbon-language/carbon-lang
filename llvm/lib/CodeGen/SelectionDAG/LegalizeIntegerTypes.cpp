@@ -249,8 +249,10 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BITCAST(SDNode *N) {
     return DAG.getNode(ISD::BITCAST, dl, NOutVT, InOp);
   }
   case TargetLowering::TypeWidenVector:
-    if (NOutVT.bitsEq(NInVT))
-      // The input is widened to the same size.  Convert to the widened value.
+    // The input is widened to the same size. Convert to the widened value.
+    // Make sure that the outgoing value is not a vector, because this would
+    // make us bitcast between two vectors which are legalized in different ways.
+    if (NOutVT.bitsEq(NInVT) && !NOutVT.isVector())
       return DAG.getNode(ISD::BITCAST, dl, NOutVT, GetWidenedVector(InOp));
   }
 
