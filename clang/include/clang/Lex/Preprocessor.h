@@ -830,6 +830,17 @@ public:
     return *SourceMgr.getCharacterData(Tok.getLocation(), Invalid);
   }
 
+  /// \brief Retrieve the name of the immediate macro expansion.
+  ///
+  /// This routine starts from a source location, and finds the name of the macro
+  /// responsible for its immediate expansion. It looks through any intervening
+  /// macro argument expansions to compute this. It returns a StringRef which
+  /// refers to the SourceManager-owned buffer of the source where that macro
+  /// name is spelled. Thus, the result shouldn't out-live the SourceManager.
+  StringRef getImmediateMacroName(SourceLocation Loc) {
+    return Lexer::getImmediateMacroName(Loc, SourceMgr, getLangOptions());
+  }
+
   /// CreateString - Plop the specified string into a scratch buffer and set the
   /// specified token's location and length to it.  If specified, the source
   /// location provides a location of the expansion point of the token.

@@ -785,6 +785,27 @@ bool Lexer::isAtEndOfMacroExpansion(SourceLocation loc,
   return isAtEndOfMacroExpansion(expansionLoc, SM, LangOpts);
 }
 
+StringRef Lexer::getImmediateMacroName(SourceLocation Loc,
+                                       const SourceManager &SM,
+                                       const LangOptions &LangOpts) {
+  assert(Loc.isMacroID() && "Only reasonble to call this on macros");
+  // Walk past macro argument expanions.
+  while (SM.isMacroArgExpansion(Loc))
+    Loc = SM.getImmediateExpansionRange(Loc).first;
+
+  // Find the spelling location of the start of the non-argument expansion
+  // range. This is where the macro name was spelled in order to begin
+  // expanding this macro.
+  Loc = SM.getSpellingLoc(SM.getImmediateExpansionRange(Loc).first);
+
+  // Dig out the buffer where the macro name was spelled and the extents of the
+  // name so that we can render it into the expansion note.
+  std::pair<FileID, unsigned> ExpansionInfo = SM.getDecomposedLoc(Loc);
+  unsigned MacroTokenLength = Lexer::MeasureTokenLength(Loc, SM, LangOpts);
+  StringRef ExpansionBuffer = SM.getBufferData(ExpansionInfo.first);
+  return ExpansionBuffer.substr(ExpansionInfo.second, MacroTokenLength);
+}
+
 //===----------------------------------------------------------------------===//
 // Character information.
 //===----------------------------------------------------------------------===//
