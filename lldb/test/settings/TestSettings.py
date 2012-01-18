@@ -57,6 +57,27 @@ class SettingsCommandTestCase(TestBase):
         self.expect("settings show", SETTING_MSG("term-width"),
             substrs = ["term-width (int) = 70"])
 
+    #rdar://problem/10712130
+    @unittest2.expectedFailure
+    def test_set_frame_format(self):
+        """Test that 'set frame-format' with a backtick char in the format string works as well as fullpath."""
+        self.buildDefault()
+
+        exe = os.path.join(os.getcwd(), "a.out")
+        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+
+        format_string = "frame #${frame.index}: ${frame.pc}{ ${module.file.basename}`${function.name-with-args}{${function.pc-offset}}}{ at ${line.file.fullpath}:${line.number}}\n"
+        self.runCmd("settings set frame-format %s" % format_string)
+
+        # Immediately test the setting.
+        self.expect("settings show frame-format", SETTING_MSG("frame-format"),
+            substrs = [format_string])
+
+        self.runCmd("breakpoint set -n main")
+        self.runCmd("run")
+        self.expect("thread backtrace",
+            substrs = ["`main", os.getcwd()])
+
     def test_set_auto_confirm(self):
         """Test that after 'set auto-confirm true', manual confirmation should not kick in."""
         self.buildDefault()
