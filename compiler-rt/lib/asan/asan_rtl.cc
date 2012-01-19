@@ -28,7 +28,6 @@ namespace __asan {
 // -------------------------- Flags ------------------------- {{{1
 static const size_t kMallocContextSize = 30;
 static int    FLAG_atexit;
-bool   FLAG_fast_unwind = true;
 
 size_t FLAG_redzone;  // power of two, >= 32
 size_t FLAG_quarantine_size;
@@ -341,9 +340,7 @@ void __asan_report_error(uintptr_t pc, uintptr_t bp, uintptr_t sp,
     PrintBytes("PC: ", (uintptr_t*)pc);
   }
 
-  GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax,
-                                 false,  // FLAG_fast_unwind,
-                                 pc, bp);
+  GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, pc, bp);
   stack.PrintStack();
 
   CHECK(AddrIsInMem(addr));
@@ -400,7 +397,6 @@ void __asan_init() {
   FLAG_demangle = IntFlagValue(options, "demangle=", 1);
   FLAG_debug = IntFlagValue(options, "debug=", 0);
   FLAG_replace_cfallocator = IntFlagValue(options, "replace_cfallocator=", 1);
-  FLAG_fast_unwind = IntFlagValue(options, "fast_unwind=", 1);
   FLAG_replace_str = IntFlagValue(options, "replace_str=", 1);
   FLAG_replace_intrin = IntFlagValue(options, "replace_intrin=", 1);
   FLAG_use_fake_stack = IntFlagValue(options, "use_fake_stack=", 1);
@@ -437,7 +433,6 @@ void __asan_init() {
            MEM_TO_SHADOW(kHighShadowEnd));
     Printf("red_zone=%ld\n", FLAG_redzone);
     Printf("malloc_context_size=%ld\n", (int)FLAG_malloc_context_size);
-    Printf("fast_unwind=%d\n", (int)FLAG_fast_unwind);
 
     Printf("SHADOW_SCALE: %lx\n", SHADOW_SCALE);
     Printf("SHADOW_GRANULARITY: %lx\n", SHADOW_GRANULARITY);

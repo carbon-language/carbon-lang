@@ -54,14 +54,6 @@ void AsanStackTrace::PrintStack(uintptr_t *addr, size_t size) {
 }
 #endif  // ASAN_USE_EXTERNAL_SYMBOLIZER
 
-#ifdef __arm__
-#define UNWIND_STOP _URC_END_OF_STACK
-#define UNWIND_CONTINUE _URC_OK
-#else
-#define UNWIND_STOP _URC_NORMAL_STOP
-#define UNWIND_CONTINUE _URC_NO_REASON
-#endif
-
 uintptr_t AsanStackTrace::GetCurrentPc() {
   return GET_CALLER_PC();
 }

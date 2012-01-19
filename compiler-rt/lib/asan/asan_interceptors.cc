@@ -278,7 +278,7 @@ __attribute__((visibility("default")))
 #endif
 int WRAP(pthread_create)(pthread_t *thread, const pthread_attr_t *attr,
                          void *(*start_routine) (void *), void *arg) {
-  GET_STACK_TRACE_HERE(kStackTraceMax, /*fast_unwind*/false);
+  GET_STACK_TRACE_HERE(kStackTraceMax);
   int current_tid = asanThreadRegistry().GetCurrentTidOrMinusOne();
   AsanThread *t = AsanThread::Create(current_tid, start_routine, arg, &stack);
   asanThreadRegistry().RegisterThread(t);

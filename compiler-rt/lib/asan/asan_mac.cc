@@ -263,6 +263,15 @@ void AsanLock::Unlock() {
   OSSpinLockUnlock((OSSpinLock*)&opaque_storage_);
 }
 
+void AsanStackTrace::GetStackTrace(size_t max_s, uintptr_t pc, uintptr_t bp) {
+  size = 0;
+  trace[0] = pc;
+  if ((max_s) > 1) {
+    max_size = max_s;
+    FastUnwindStack(pc, bp);
+  }
+}
+
 // The range of pages to be used by __asan_mach_override_ptr for escape
 // islands.
 // TODO(glider): instead of mapping a fixed range we must find a range of
@@ -335,7 +344,7 @@ mach_error_t __asan_deallocate_island(void *ptr) {
 
 extern "C"
 void asan_dispatch_call_block_and_release(void *block) {
-  GET_STACK_TRACE_HERE(kStackTraceMax, /*fast_unwind*/false);
+  GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *context = (asan_block_context_t*)block;
   if (FLAG_v >= 2) {
     Report("asan_dispatch_call_block_and_release(): "
@@ -376,7 +385,7 @@ extern "C"
 int WRAP(dispatch_async_f)(dispatch_queue_t dq,
                            void *ctxt,
                            dispatch_function_t func) {
-  GET_STACK_TRACE_HERE(kStackTraceMax, /*fast_unwind*/false);
+  GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
   if (FLAG_v >= 2) {
     Report("dispatch_async_f(): context: %p, pthread_self: %p\n",
@@ -391,7 +400,7 @@ extern "C"
 int WRAP(dispatch_sync_f)(dispatch_queue_t dq,
                           void *ctxt,
                           dispatch_function_t func) {
-  GET_STACK_TRACE_HERE(kStackTraceMax, /*fast_unwind*/false);
+  GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
   if (FLAG_v >= 2) {
     Report("dispatch_sync_f(): context: %p, pthread_self: %p\n",
@@ -407,7 +416,7 @@ int WRAP(dispatch_after_f)(dispatch_time_t when,
                            dispatch_queue_t dq,
                            void *ctxt,
                            dispatch_function_t func) {
-  GET_STACK_TRACE_HERE(kStackTraceMax, /*fast_unwind*/false);
+  GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
   if (FLAG_v >= 2) {
     Report("dispatch_after_f: %p\n", asan_ctxt);
@@ -420,7 +429,7 @@ int WRAP(dispatch_after_f)(dispatch_time_t when,
 extern "C"
 void WRAP(dispatch_barrier_async_f)(dispatch_queue_t dq,
                                     void *ctxt, dispatch_function_t func) {
-  GET_STACK_TRACE_HERE(kStackTraceMax, /*fast_unwind*/false);
+  GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
   if (FLAG_v >= 2) {
     Report("dispatch_barrier_async_f(): context: %p, pthread_self: %p\n",
@@ -435,7 +444,7 @@ extern "C"
 void WRAP(dispatch_group_async_f)(dispatch_group_t group,
                                   dispatch_queue_t dq,
                                   void *ctxt, dispatch_function_t func) {
-  GET_STACK_TRACE_HERE(kStackTraceMax, /*fast_unwind*/false);
+  GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
   if (FLAG_v >= 2) {
     Report("dispatch_group_async_f(): context: %p, pthread_self: %p\n",
@@ -460,7 +469,7 @@ void *wrap_workitem_func(void *arg) {
   asan_block_context_t *ctxt = (asan_block_context_t*)arg;
   worker_t fn = (worker_t)(ctxt->func);
   void *result =  fn(ctxt->block);
-  GET_STACK_TRACE_HERE(kStackTraceMax, /*fast_unwind*/false);
+  GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_free(arg, &stack);
   return result;
 }
@@ -469,7 +478,7 @@ extern "C"
 int WRAP(pthread_workqueue_additem_np)(pthread_workqueue_t workq,
     void *(*workitem_func)(void *), void * workitem_arg,
     pthread_workitem_handle_t * itemhandlep, unsigned int *gencountp) {
-  GET_STACK_TRACE_HERE(kStackTraceMax, /*fast_unwind*/false);
+  GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *asan_ctxt =
       (asan_block_context_t*) asan_malloc(sizeof(asan_block_context_t), &stack);
   asan_ctxt->block = workitem_arg;

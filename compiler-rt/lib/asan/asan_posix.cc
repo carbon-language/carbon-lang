@@ -52,7 +52,7 @@ static void     ASAN_OnSIGSEGV(int, siginfo_t *siginfo, void *context) {
          addr, pc, sp, bp,
          asanThreadRegistry().GetCurrentTidOrMinusOne());
   Printf("AddressSanitizer can not provide additional info. ABORTING\n");
-  GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, false, pc, bp);
+  GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, pc, bp);
   stack.PrintStack();
   ShowStatsAndAbort();
 }
