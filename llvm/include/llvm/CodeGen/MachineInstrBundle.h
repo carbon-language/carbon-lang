@@ -32,8 +32,9 @@ void finalizeBundle(MachineBasicBlock &MBB,
 /// finalizeBundle - Same functionality as the previous finalizeBundle except
 /// the last instruction in the bundle is not provided as an input. This is
 /// used in cases where bundles are pre-determined by marking instructions
-/// with 'InsideBundle' marker.
-void finalizeBundle(MachineBasicBlock &MBB,
+/// with 'InsideBundle' marker. It returns the MBB instruction iterator that
+/// points to the end of the bundle.
+MachineBasicBlock::instr_iterator finalizeBundle(MachineBasicBlock &MBB,
                     MachineBasicBlock::instr_iterator FirstMI);
 
 } // End llvm namespace
