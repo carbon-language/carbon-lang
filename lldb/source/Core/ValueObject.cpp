@@ -1080,8 +1080,17 @@ ValueObject::GetValueAsCString ()
                         const RegisterInfo *reg_info = m_value.GetRegisterInfo();
                         if (reg_info)
                         {
+                            lldb::Format my_format = GetFormat();
+                            if (m_format == lldb::eFormatDefault)
+                            {
+                                if (m_last_value_format)
+                                    my_format = m_last_value_format->GetFormat();
+                                else
+                                    my_format = reg_info->format;
+                            }
+                            
                             StreamString reg_sstr;
-                            m_data.Dump(&reg_sstr, 0, reg_info->format, reg_info->byte_size, 1, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0, GetExecutionContextScope());
+                            m_data.Dump(&reg_sstr, 0, my_format, reg_info->byte_size, 1, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0, GetExecutionContextScope());
                             m_value_str.swap(reg_sstr.GetString());
                         }
                     }
