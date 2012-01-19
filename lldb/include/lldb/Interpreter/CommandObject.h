@@ -141,6 +141,12 @@ public:
     virtual bool
     WantsRawCommandString() { return false; }
 
+    // By default, WantsCompletion = !WantsRawCommandString.
+    // Subclasses who want raw command string but desire, for example,
+    // argument completion should override this method to return true.
+    virtual bool
+    WantsCompletion() { return !WantsRawCommandString(); }
+
     virtual Options *
     GetOptions ();
 

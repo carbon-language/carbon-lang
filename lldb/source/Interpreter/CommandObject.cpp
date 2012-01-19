@@ -344,7 +344,7 @@ CommandObject::HandleCompletion
     StringList &matches
 )
 {
-    if (WantsRawCommandString())
+    if (WantsRawCommandString() && !WantsCompletion())
     {
         // FIXME: Abstract telling the completion to insert the completion character.
         matches.Clear();
