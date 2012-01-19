@@ -180,8 +180,10 @@ bool ARMAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
     return Offset > 254 || Offset < -256;
   }
   case ARM::fixup_arm_thumb_cp: {
+    // If the immediate is negative, greater than 1020, or not a multiple
+    // of four, the wide version of the instruction must be used.
     int64_t Offset = int64_t(Value) - 4;
-    return Offset > 4095 || Offset < 0;
+    return Offset > 1020 || Offset < 0 || Offset & 3;
   }
   }
   llvm_unreachable("Invalid switch/cash!?");
