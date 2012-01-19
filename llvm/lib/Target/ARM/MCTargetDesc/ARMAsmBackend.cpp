@@ -168,8 +168,7 @@ bool ARMAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
                                          uint64_t Value,
                                          const MCInstFragment *DF,
                                          const MCAsmLayout &Layout) const {
-  switch (Fixup.getKind()) {
-  default: assert(0 && "Unexpected fixup kind in fixupNeedsRelaxation()!");
+  switch ((unsigned)Fixup.getKind()) {
   case ARM::fixup_arm_thumb_bcc: {
     // Relaxing tBcc to t2Bcc. tBcc has a signed 9-bit displacement with the
     // low bit being an implied zero. There's an implied +4 offset for the
@@ -188,7 +187,7 @@ bool ARMAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
     return Offset > 1020 || Offset < 0 || Offset & 3;
   }
   }
-  llvm_unreachable("Invalid switch/cash!?");
+  llvm_unreachable("Unexpected fixup kind in fixupNeedsRelaxation()!");
 }
 
 void ARMAsmBackend::relaxInstruction(const MCInst &Inst, MCInst &Res) const {
