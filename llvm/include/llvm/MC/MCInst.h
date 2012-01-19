@@ -25,6 +25,7 @@ class raw_ostream;
 class MCAsmInfo;
 class MCInstPrinter;
 class MCExpr;
+class MCInst;
 
 /// MCOperand - Instances of this class represent operands of the MCInst class.
 /// This is a simple discriminated union.
@@ -34,7 +35,8 @@ class MCOperand {
     kRegister,                ///< Register operand.
     kImmediate,               ///< Immediate operand.
     kFPImmediate,             ///< Floating-point immediate operand.
-    kExpr                     ///< Relocatable immediate operand.
+    kExpr,                    ///< Relocatable immediate operand.
+    kInst                     ///< Sub-instruction operand.
   };
   unsigned char Kind;
 
@@ -43,6 +45,7 @@ class MCOperand {
     int64_t ImmVal;
     double FPImmVal;
     const MCExpr *ExprVal;
+    const MCInst *InstVal;
   };
 public:
 
@@ -53,6 +56,7 @@ public:
   bool isImm() const { return Kind == kImmediate; }
   bool isFPImm() const { return Kind == kFPImmediate; }
   bool isExpr() const { return Kind == kExpr; }
+  bool isInst() const { return Kind == kInst; }
 
   /// getReg - Returns the register number.
   unsigned getReg() const {
@@ -94,6 +98,15 @@ public:
     ExprVal = Val;
   }
 
+  const MCInst *getInst() const {
+    assert(isInst() && "This is not a sub-instruction");
+    return InstVal;
+  }
+  void setInst(const MCInst *Val) {
+    assert(isInst() && "This is not a sub-instruction");
+    InstVal = Val;
+  }
+
   static MCOperand CreateReg(unsigned Reg) {
     MCOperand Op;
     Op.Kind = kRegister;
@@ -116,6 +129,12 @@ public:
     MCOperand Op;
     Op.Kind = kExpr;
     Op.ExprVal = Val;
+    return Op;
+  }
+  static MCOperand CreateInst(const MCInst *Val) {
+    MCOperand Op;
+    Op.Kind = kInst;
+    Op.InstVal = Val;
     return Op;
   }
 
