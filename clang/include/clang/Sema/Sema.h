@@ -1833,41 +1833,6 @@ public:
                           VisibleDeclConsumer &Consumer,
                           bool IncludeGlobalScope = true);
 
-  /// \brief The context in which typo-correction occurs.
-  ///
-  /// The typo-correction context affects which keywords (if any) are
-  /// considered when trying to correct for typos.
-  enum CorrectTypoContext {
-    /// \brief An unknown context, where any keyword might be valid.
-    CTC_Unknown,
-    /// \brief A context where no keywords are used (e.g. we expect an actual
-    /// name).
-    CTC_NoKeywords,
-    /// \brief A context where we're correcting a type name.
-    CTC_Type,
-    /// \brief An expression context.
-    CTC_Expression,
-    /// \brief A type cast, or anything else that can be followed by a '<'.
-    CTC_CXXCasts,
-    /// \brief A member lookup context.
-    CTC_MemberLookup,
-    /// \brief An Objective-C ivar lookup context (e.g., self->ivar).
-    CTC_ObjCIvarLookup,
-    /// \brief An Objective-C property lookup context (e.g., self.prop).
-    CTC_ObjCPropertyLookup,
-    /// \brief The receiver of an Objective-C message send within an
-    /// Objective-C method where 'super' is a valid keyword.
-    CTC_ObjCMessageReceiver
-  };
-
-  TypoCorrection CorrectTypo(const DeclarationNameInfo &Typo,
-                             Sema::LookupNameKind LookupKind,
-                             Scope *S, CXXScopeSpec *SS,
-                             DeclContext *MemberContext = 0,
-                             bool EnteringContext = false,
-                             CorrectTypoContext CTC = CTC_Unknown,
-                             const ObjCObjectPointerType *OPT = 0);
-
   TypoCorrection CorrectTypo(const DeclarationNameInfo &Typo,
                              Sema::LookupNameKind LookupKind,
                              Scope *S, CXXScopeSpec *SS,

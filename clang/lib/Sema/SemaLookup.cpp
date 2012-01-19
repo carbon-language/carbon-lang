@@ -3503,77 +3503,6 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
   }
 }
 
-namespace {
-
-// Simple CorrectionCandidateCallback class that sets the keyword flags based
-// on a given CorrectTypoContext, but does not perform any extra validation
-// of typo correction candidates.
-class CorrectTypoContextReplacementCCC : public CorrectionCandidateCallback {
- public:
-  CorrectTypoContextReplacementCCC(
-      Sema &SemaRef, Sema::CorrectTypoContext CTC = Sema::CTC_Unknown) {
-    WantTypeSpecifiers = false;
-    WantExpressionKeywords = false;
-    WantCXXNamedCasts = false;
-    WantRemainingKeywords = false;
-    switch (CTC) {
-      case Sema::CTC_Unknown:
-        WantTypeSpecifiers = true;
-        WantExpressionKeywords = true;
-        WantCXXNamedCasts = true;
-        WantRemainingKeywords = true;
-        if (ObjCMethodDecl *Method = SemaRef.getCurMethodDecl())
-          WantObjCSuper = Method->getClassInterface() &&
-                          Method->getClassInterface()->getSuperClass();
-        break;
-
-      case Sema::CTC_Type:
-        WantTypeSpecifiers = true;
-        break;
-
-      case Sema::CTC_ObjCMessageReceiver:
-        WantObjCSuper = true;
-        // Fall through to handle message receivers like expressions.
-
-      case Sema::CTC_Expression:
-        if (SemaRef.getLangOptions().CPlusPlus)
-          WantTypeSpecifiers = true;
-        WantExpressionKeywords = true;
-        // Fall through to get C++ named casts.
-
-      case Sema::CTC_CXXCasts:
-        WantCXXNamedCasts = true;
-        break;
-
-      case Sema::CTC_MemberLookup:
-      case Sema::CTC_NoKeywords:
-      case Sema::CTC_ObjCPropertyLookup:
-        break;
-
-      case Sema::CTC_ObjCIvarLookup:
-        IsObjCIvarLookup = true;
-        break;
-    }
-  }
-};
-
-}
-
-/// \brief Compatibility wrapper for call sites that pass a CorrectTypoContext
-/// value to CorrectTypo instead of providing a callback object.
-TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
-                                 Sema::LookupNameKind LookupKind,
-                                 Scope *S, CXXScopeSpec *SS,
-                                 DeclContext *MemberContext,
-                                 bool EnteringContext,
-                                 CorrectTypoContext CTC,
-                                 const ObjCObjectPointerType *OPT) {
-  CorrectTypoContextReplacementCCC CTCVerifier(*this, CTC);
-
-  return CorrectTypo(TypoName, LookupKind, S, SS, &CTCVerifier, MemberContext,
-                     EnteringContext, OPT);
-}
-
 /// \brief Try to "correct" a typo in the source code by finding
 /// visible declarations whose names are similar to the name that was
 /// present in the source code.
@@ -3708,7 +3637,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
     }
   }
 
-  CorrectTypoContextReplacementCCC DefaultCCC(*this);
+  CorrectionCandidateCallback DefaultCCC;
   AddKeywordsToConsumer(*this, Consumer, S, CCC ? *CCC : DefaultCCC);
 
   // If we haven't found anything, we're done.
