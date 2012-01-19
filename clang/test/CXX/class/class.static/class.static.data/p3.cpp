@@ -24,3 +24,17 @@ constexpr int S::b = 0;
 const int S::c;
 constexpr int S::d = 0;
 constexpr int S::d2;
+
+template<typename T>
+struct U {
+  static constexpr int a = 0;
+  static constexpr int b; // expected-error {{declaration of constexpr static data member 'b' requires an initializer}}
+  // FIXME: It'd be nice to error on this at template definition time.
+  static constexpr NonLit h = NonLit(); // expected-error 2{{must be initialized by a constant expression}} expected-note 2{{non-literal type}}
+  static constexpr T c = T(); // expected-error {{must be initialized by a constant expression}} expected-note {{non-literal type}}
+};
+
+U<int> u1; // expected-note {{here}}
+U<NonLit> u2; // expected-note {{here}}
+
+static_assert(U<int>::a == 0, "");

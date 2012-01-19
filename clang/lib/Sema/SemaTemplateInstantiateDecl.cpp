@@ -330,6 +330,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   Var->setThreadSpecified(D->isThreadSpecified());
   Var->setCXXDirectInitializer(D->hasCXXDirectInitializer());
   Var->setCXXForRangeDecl(D->isCXXForRangeDecl());
+  Var->setConstexpr(D->isConstexpr());
 
   // Substitute the nested name specifier, if any.
   if (SubstQualifier(D, Var))
