@@ -313,15 +313,23 @@ public:
 
   /// \brief Returns true if the given MacroID location points at the first
   /// token of the macro expansion.
+  ///
+  /// \param MacroBegin If non-null and function returns true, it is set to
+  /// begin location of the macro.
   static bool isAtStartOfMacroExpansion(SourceLocation loc,
-                                            const SourceManager &SM,
-                                            const LangOptions &LangOpts);
+                                        const SourceManager &SM,
+                                        const LangOptions &LangOpts,
+                                        SourceLocation *MacroBegin = 0);
 
   /// \brief Returns true if the given MacroID location points at the last
   /// token of the macro expansion.
+  ///
+  /// \param MacroBegin If non-null and function returns true, it is set to
+  /// end location of the macro.
   static bool isAtEndOfMacroExpansion(SourceLocation loc,
-                                          const SourceManager &SM,
-                                          const LangOptions &LangOpts);
+                                      const SourceManager &SM,
+                                      const LangOptions &LangOpts,
+                                      SourceLocation *MacroEnd = 0);
 
   /// \brief Retrieve the name of the immediate macro expansion.
   ///

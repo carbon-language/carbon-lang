@@ -720,11 +720,8 @@ SourceLocation Lexer::getLocForEndOfToken(SourceLocation Loc, unsigned Offset,
     return SourceLocation();
 
   if (Loc.isMacroID()) {
-    if (Offset > 0 || !isAtEndOfMacroExpansion(Loc, SM, Features))
+    if (Offset > 0 || !isAtEndOfMacroExpansion(Loc, SM, Features, &Loc))
       return SourceLocation(); // Points inside the macro expansion.
-
-    // Continue and find the location just after the macro expansion.
-    Loc = SM.getExpansionRange(Loc).second;
   }
 
   unsigned Len = Lexer::MeasureTokenLength(Loc, SM, Features);
@@ -740,7 +737,8 @@ SourceLocation Lexer::getLocForEndOfToken(SourceLocation Loc, unsigned Offset,
 /// token of the macro expansion.
 bool Lexer::isAtStartOfMacroExpansion(SourceLocation loc,
                                       const SourceManager &SM,
-                                      const LangOptions &LangOpts) {
+                                      const LangOptions &LangOpts,
+                                      SourceLocation *MacroBegin) {
   assert(loc.isValid() && loc.isMacroID() && "Expected a valid macro loc");
 
   std::pair<FileID, unsigned> infoLoc = SM.getDecomposedLoc(loc);
@@ -751,17 +749,22 @@ bool Lexer::isAtStartOfMacroExpansion(SourceLocation loc,
 
   SourceLocation expansionLoc =
     SM.getSLocEntry(infoLoc.first).getExpansion().getExpansionLocStart();
-  if (expansionLoc.isFileID())
-    return true; // No other macro expansions, this is the first.
+  if (expansionLoc.isFileID()) {
+    // No other macro expansions, this is the first.
+    if (MacroBegin)
+      *MacroBegin = expansionLoc;
+    return true;
+  }
 
-  return isAtStartOfMacroExpansion(expansionLoc, SM, LangOpts);
+  return isAtStartOfMacroExpansion(expansionLoc, SM, LangOpts, MacroBegin);
 }
 
 /// \brief Returns true if the given MacroID location points at the last
 /// token of the macro expansion.
 bool Lexer::isAtEndOfMacroExpansion(SourceLocation loc,
-                                        const SourceManager &SM,
-                                        const LangOptions &LangOpts) {
+                                    const SourceManager &SM,
+                                    const LangOptions &LangOpts,
+                                    SourceLocation *MacroEnd) {
   assert(loc.isValid() && loc.isMacroID() && "Expected a valid macro loc");
 
   SourceLocation spellLoc = SM.getSpellingLoc(loc);
@@ -779,10 +782,14 @@ bool Lexer::isAtEndOfMacroExpansion(SourceLocation loc,
 
   SourceLocation expansionLoc =
     SM.getSLocEntry(FID).getExpansion().getExpansionLocEnd();
-  if (expansionLoc.isFileID())
-    return true; // No other macro expansions.
+  if (expansionLoc.isFileID()) {
+    // No other macro expansions.
+    if (MacroEnd)
+      *MacroEnd = expansionLoc;
+    return true;
+  }
 
-  return isAtEndOfMacroExpansion(expansionLoc, SM, LangOpts);
+  return isAtEndOfMacroExpansion(expansionLoc, SM, LangOpts, MacroEnd);
 }
 
 StringRef Lexer::getImmediateMacroName(SourceLocation Loc,
@@ -1108,9 +1115,8 @@ SourceLocation Lexer::findLocationAfterToken(SourceLocation Loc,
                                         const LangOptions &LangOpts,
                                         bool SkipTrailingWhitespaceAndNewLine) {
   if (Loc.isMacroID()) {
-    if (!Lexer::isAtEndOfMacroExpansion(Loc, SM, LangOpts))
+    if (!Lexer::isAtEndOfMacroExpansion(Loc, SM, LangOpts, &Loc))
       return SourceLocation();
-    Loc = SM.getExpansionRange(Loc).second;
   }
   Loc = Lexer::getLocForEndOfToken(Loc, 0, SM, LangOpts);
 

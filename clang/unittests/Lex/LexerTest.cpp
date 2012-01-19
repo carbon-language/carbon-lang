@@ -91,10 +91,13 @@ TEST_F(LexerTest, LexAPI) {
   SourceLocation idLoc = toks[1].getLocation();
   SourceLocation rsqrLoc = toks[2].getLocation();
   
-  EXPECT_TRUE(Lexer::isAtStartOfMacroExpansion(lsqrLoc, SourceMgr, LangOpts));
+  SourceLocation Loc;
+  EXPECT_TRUE(Lexer::isAtStartOfMacroExpansion(lsqrLoc, SourceMgr, LangOpts, &Loc));
+  EXPECT_EQ(SourceMgr.getExpansionLoc(lsqrLoc), Loc);
   EXPECT_FALSE(Lexer::isAtStartOfMacroExpansion(idLoc, SourceMgr, LangOpts));
   EXPECT_FALSE(Lexer::isAtEndOfMacroExpansion(idLoc, SourceMgr, LangOpts));
-  EXPECT_TRUE(Lexer::isAtEndOfMacroExpansion(rsqrLoc, SourceMgr, LangOpts));
+  EXPECT_TRUE(Lexer::isAtEndOfMacroExpansion(rsqrLoc, SourceMgr, LangOpts, &Loc));
+  EXPECT_EQ(SourceMgr.getExpansionRange(rsqrLoc).second, Loc);
 }
 
 } // anonymous namespace

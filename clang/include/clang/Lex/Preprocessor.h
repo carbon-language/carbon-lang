@@ -869,14 +869,23 @@ public:
 
   /// \brief Returns true if the given MacroID location points at the first
   /// token of the macro expansion.
-  bool isAtStartOfMacroExpansion(SourceLocation loc) const {
-    return Lexer::isAtStartOfMacroExpansion(loc, SourceMgr, Features);
+  ///
+  /// \param MacroBegin If non-null and function returns true, it is set to
+  /// begin location of the macro.
+  bool isAtStartOfMacroExpansion(SourceLocation loc,
+                                 SourceLocation *MacroBegin = 0) const {
+    return Lexer::isAtStartOfMacroExpansion(loc, SourceMgr, Features,
+                                            MacroBegin);
   }
 
   /// \brief Returns true if the given MacroID location points at the last
   /// token of the macro expansion.
-  bool isAtEndOfMacroExpansion(SourceLocation loc) const {
-    return Lexer::isAtEndOfMacroExpansion(loc, SourceMgr, Features);
+  ///
+  /// \param MacroBegin If non-null and function returns true, it is set to
+  /// end location of the macro.
+  bool isAtEndOfMacroExpansion(SourceLocation loc,
+                               SourceLocation *MacroEnd = 0) const {
+    return Lexer::isAtEndOfMacroExpansion(loc, SourceMgr, Features, MacroEnd);
   }
 
   /// DumpToken - Print the token to stderr, used for debugging.
