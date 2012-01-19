@@ -330,7 +330,7 @@ def BYTE_imm  : SDNodeXForm<imm, [{
 // SHUFFLE_get_shuf_imm xform function: convert vector_shuffle mask to PSHUF*,
 // SHUFP* etc. imm.
 def SHUFFLE_get_shuf_imm : SDNodeXForm<vector_shuffle, [{
-  return getI8Imm(X86::getShuffleSHUFImmediate(N));
+  return getI8Imm(X86::getShuffleSHUFImmediate(cast<ShuffleVectorSDNode>(N)));
 }]>;
 
 // SHUFFLE_get_pshufhw_imm xform function: convert vector_shuffle mask to
@@ -410,7 +410,7 @@ def pshufd : PatFrag<(ops node:$lhs, node:$rhs),
 
 def shufp : PatFrag<(ops node:$lhs, node:$rhs),
                     (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isSHUFPMask(cast<ShuffleVectorSDNode>(N));
+  return X86::isSHUFPMask(cast<ShuffleVectorSDNode>(N), Subtarget->hasAVX());
 }], SHUFFLE_get_shuf_imm>;
 
 def pshufhw : PatFrag<(ops node:$lhs, node:$rhs),

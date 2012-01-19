@@ -373,7 +373,7 @@ namespace llvm {
 
     /// isSHUFPMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to SHUFP*.
-    bool isSHUFPMask(ShuffleVectorSDNode *N);
+    bool isSHUFPMask(ShuffleVectorSDNode *N, bool HasAVX);
 
     /// isMOVHLPSMask - Return true if the specified VECTOR_SHUFFLE operand
     /// specifies a shuffle of elements that is suitable for input to MOVHLPS.
@@ -442,8 +442,8 @@ namespace llvm {
 
     /// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
     /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUF* and SHUFP*
-    /// instructions.
-    unsigned getShuffleSHUFImmediate(SDNode *N);
+    /// instructions. Handles 128-bit and 256-bit.
+    unsigned getShuffleSHUFImmediate(ShuffleVectorSDNode *N);
 
     /// getShufflePSHUFHWImmediate - Return the appropriate immediate to shuffle
     /// the specified VECTOR_SHUFFLE mask with PSHUFHW instruction.
