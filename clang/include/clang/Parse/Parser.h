@@ -288,12 +288,9 @@ private:
            Tok.getKind() == tok::utf32_string_literal;
   }
 
-  /// \brief Returns true if the current token is FoundToken.  This token
-  /// will be assumed a typo.  A diagnostic will be emitted with DiagID with a
-  /// a fixit to replace the current token with ExpectedToken.
-  bool CreateTokenReplacement(tok::TokenKind ExpectedToken,
-                              tok::TokenKind FoundToken,
-                              unsigned DiagID);
+  /// \brief Returns true if the current token is '=' or is a type of '='.
+  /// For typos, give a fixit to '='
+  bool isTokenEqualOrEqualTypo();
 
   /// ConsumeToken - Consume the current 'peek token' and lex the next one.
   /// This does not work with all kinds of tokens: strings and specific other

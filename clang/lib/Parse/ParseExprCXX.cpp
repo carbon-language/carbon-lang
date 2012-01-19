@@ -1260,11 +1260,7 @@ bool Parser::ParseCXXCondition(ExprResult &ExprOut,
 
   // '=' assignment-expression
   // If a '==' or '+=' is found, suggest a fixit to '='.
-  if (Tok.is(tok::equal) ||
-      CreateTokenReplacement(tok::equal, tok::equalequal,
-                             diag::err_invalid_equalequal_after_declarator) ||
-      CreateTokenReplacement(tok::equal, tok::plusequal,
-                             diag::err_invalid_plusequal_after_declarator)) {
+  if (isTokenEqualOrEqualTypo()) {
     ConsumeToken();
     ExprResult AssignExpr(ParseAssignmentExpression());
     if (!AssignExpr.isInvalid()) 

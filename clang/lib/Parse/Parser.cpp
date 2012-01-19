@@ -1401,21 +1401,31 @@ bool Parser::TryAnnotateCXXScopeToken(bool EnteringContext) {
   return false;
 }
 
-bool Parser::CreateTokenReplacement(tok::TokenKind ExpectedToken,
-                                    tok::TokenKind FoundToken,
-                                    unsigned DiagID) {
-  if (Tok.isNot(FoundToken))
+bool Parser::isTokenEqualOrEqualTypo() {
+  tok::TokenKind Kind = Tok.getKind();
+  switch (Kind) {
+  default:
     return false;
-
-  // We have FoundToken in a context that we would expect an ExpectedToken.
-  // The user probably made a typo, intending to type ExpectedToken.
-  // Emit diagnostic, fixit hint to turn ReplaceToken -> ExpectedToken
-  // and continue as if the user typed ExpectedToken.
-  Tok.setKind(ExpectedToken);
-  Diag(Tok, DiagID)
-    << FixItHint::CreateReplacement(SourceRange(Tok.getLocation()),
-                                    getTokenSimpleSpelling(ExpectedToken));
-  return true;
+  case tok::ampequal:            // &=
+  case tok::starequal:           // *=
+  case tok::plusequal:           // +=
+  case tok::minusequal:          // -=
+  case tok::exclaimequal:        // !=
+  case tok::slashequal:          // /=
+  case tok::percentequal:        // %=
+  case tok::lessequal:           // <=
+  case tok::lesslessequal:       // <<=
+  case tok::greaterequal:        // >=
+  case tok::greatergreaterequal: // >>=
+  case tok::caretequal:          // ^=
+  case tok::pipeequal:           // |=
+  case tok::equalequal:          // ==
+    Diag(Tok, diag::err_invalid_token_after_declarator_suggest_equal)
+      << getTokenSimpleSpelling(Kind)
+      << FixItHint::CreateReplacement(SourceRange(Tok.getLocation()), "=");
+  case tok::equal:
+    return true;
+  }
 }
 
 SourceLocation Parser::handleUnexpectedCodeCompletionToken() {

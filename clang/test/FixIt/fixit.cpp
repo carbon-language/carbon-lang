@@ -68,20 +68,68 @@ class C {
 };
 
 namespace rdar8488464 {
-int x == 0; // expected-error {{invalid '==' at end of declaration; did you mean '='?}}
-int y += 0; // expected-error {{invalid '+=' at end of declaration; did you mean '='?}}
+int x = 0;
+int x1 &= 0; // expected-error {{invalid '&=' at end of declaration; did you mean '='?}}
+int x2 *= 0; // expected-error {{invalid '*=' at end of declaration; did you mean '='?}}
+int x3 += 0; // expected-error {{invalid '+=' at end of declaration; did you mean '='?}}
+int x4 -= 0; // expected-error {{invalid '-=' at end of declaration; did you mean '='?}}
+int x5 != 0; // expected-error {{invalid '!=' at end of declaration; did you mean '='?}}
+int x6 /= 0; // expected-error {{invalid '/=' at end of declaration; did you mean '='?}}
+int x7 %= 0; // expected-error {{invalid '%=' at end of declaration; did you mean '='?}}
+int x8 <= 0; // expected-error {{invalid '<=' at end of declaration; did you mean '='?}}
+int x9 <<= 0; // expected-error {{invalid '<<=' at end of declaration; did you mean '='?}}
+int x10 >= 0; // expected-error {{invalid '>=' at end of declaration; did you mean '='?}}
+int x11 >>= 0; // expected-error {{invalid '>>=' at end of declaration; did you mean '='?}}
+int x12 ^= 0; // expected-error {{invalid '^=' at end of declaration; did you mean '='?}}
+int x13 |= 0; // expected-error {{invalid '|=' at end of declaration; did you mean '='?}}
+int x14 == 0; // expected-error {{invalid '==' at end of declaration; did you mean '='?}}
 
 void f() {
-    int x == 0; // expected-error {{invalid '==' at end of declaration; did you mean '='?}}
+    int x = 0;
     (void)x;
-    int y += 0; // expected-error {{invalid '+=' at end of declaration; did you mean '='?}}
-    (void)y;
-    if (int x == 0) { // expected-error {{invalid '==' at end of declaration; did you mean '='?}}
-      (void)x;
-    }
-    if (int y += 0) { // expected-error {{invalid '+=' at end of declaration; did you mean '='?}}
-      (void)y;
-    }
+    int x1 &= 0; // expected-error {{invalid '&=' at end of declaration; did you mean '='?}}
+    (void)x1;
+    int x2 *= 0; // expected-error {{invalid '*=' at end of declaration; did you mean '='?}}
+    (void)x2;
+    int x3 += 0; // expected-error {{invalid '+=' at end of declaration; did you mean '='?}}
+    (void)x3;
+    int x4 -= 0; // expected-error {{invalid '-=' at end of declaration; did you mean '='?}}
+    (void)x4;
+    int x5 != 0; // expected-error {{invalid '!=' at end of declaration; did you mean '='?}}
+    (void)x5;
+    int x6 /= 0; // expected-error {{invalid '/=' at end of declaration; did you mean '='?}}
+    (void)x6;
+    int x7 %= 0; // expected-error {{invalid '%=' at end of declaration; did you mean '='?}}
+    (void)x7;
+    int x8 <= 0; // expected-error {{invalid '<=' at end of declaration; did you mean '='?}}
+    (void)x8;
+    int x9 <<= 0; // expected-error {{invalid '<<=' at end of declaration; did you mean '='?}}
+    (void)x9;
+    int x10 >= 0; // expected-error {{invalid '>=' at end of declaration; did you mean '='?}}
+    (void)x10;
+    int x11 >>= 0; // expected-error {{invalid '>>=' at end of declaration; did you mean '='?}}
+    (void)x11;
+    int x12 ^= 0; // expected-error {{invalid '^=' at end of declaration; did you mean '='?}}
+    (void)x12;
+    int x13 |= 0; // expected-error {{invalid '|=' at end of declaration; did you mean '='?}}
+    (void)x13;
+    int x14 == 0; // expected-error {{invalid '==' at end of declaration; did you mean '='?}}
+    (void)x14;
+    if (int x = 0)  { (void)x; }
+    if (int x1 &= 0) { (void)x1; } // expected-error {{invalid '&=' at end of declaration; did you mean '='?}}
+    if (int x2 *= 0) { (void)x2; } // expected-error {{invalid '*=' at end of declaration; did you mean '='?}}
+    if (int x3 += 0) { (void)x3; } // expected-error {{invalid '+=' at end of declaration; did you mean '='?}}
+    if (int x4 -= 0) { (void)x4; } // expected-error {{invalid '-=' at end of declaration; did you mean '='?}}
+    if (int x5 != 0) { (void)x5; } // expected-error {{invalid '!=' at end of declaration; did you mean '='?}}
+    if (int x6 /= 0) { (void)x6; } // expected-error {{invalid '/=' at end of declaration; did you mean '='?}}
+    if (int x7 %= 0) { (void)x7; } // expected-error {{invalid '%=' at end of declaration; did you mean '='?}}
+    if (int x8 <= 0) { (void)x8; } // expected-error {{invalid '<=' at end of declaration; did you mean '='?}}
+    if (int x9 <<= 0) { (void)x9; } // expected-error {{invalid '<<=' at end of declaration; did you mean '='?}}
+    if (int x10 >= 0) { (void)x10; } // expected-error {{invalid '>=' at end of declaration; did you mean '='?}}
+    if (int x11 >>= 0) { (void)x11; } // expected-error {{invalid '>>=' at end of declaration; did you mean '='?}}
+    if (int x12 ^= 0) { (void)x12; } // expected-error {{invalid '^=' at end of declaration; did you mean '='?}}
+    if (int x13 |= 0) { (void)x13; } // expected-error {{invalid '|=' at end of declaration; did you mean '='?}}
+    if (int x14 == 0) { (void)x14; } // expected-error {{invalid '==' at end of declaration; did you mean '='?}}
 }
 }
 
