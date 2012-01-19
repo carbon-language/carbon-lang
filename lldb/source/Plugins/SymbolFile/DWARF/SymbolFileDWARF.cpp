@@ -4898,17 +4898,14 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         if (tag == DW_TAG_subprogram)
                         {
                             ConstString class_name;
-
-                            if (ObjCLanguageRuntime::ParseMethodName (type_name_cstr, &class_name, NULL, NULL))
+                            if (ObjCLanguageRuntime::ParseMethodName (type_name_cstr, NULL, NULL, NULL, &class_name))
                             {
                                 SymbolContext empty_sc;
                                 clang_type_t class_opaque_type = NULL;
                                 if (class_name)
                                 {
                                     TypeList types;
-                                    TypeSP complete_objc_class_type_sp (FindCompleteObjCDefinitionTypeForDIE (NULL, class_name, true));
-                                    if (!complete_objc_class_type_sp)
-                                        complete_objc_class_type_sp = FindCompleteObjCDefinitionTypeForDIE (NULL, class_name, false);
+                                    TypeSP complete_objc_class_type_sp (FindCompleteObjCDefinitionTypeForDIE (NULL, class_name, false));
 
                                     if (complete_objc_class_type_sp)
                                     {

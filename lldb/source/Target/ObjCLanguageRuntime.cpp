@@ -103,13 +103,19 @@ ObjCLanguageRuntime::GetByteOffsetForIvar (ClangASTType &parent_qual_type, const
 
 bool
 ObjCLanguageRuntime::ParseMethodName (const char *name, 
-                                      ConstString *class_name, 
-                                      ConstString *selector_name, 
-                                      ConstString *name_sans_category)
+                                      ConstString *class_name,              // Class name (with category if any)
+                                      ConstString *selector_name,           // selector on its own
+                                      ConstString *name_sans_category,      // Full function prototype with no category
+                                      ConstString *class_name_sans_category)// Class name with no category (or empty if no category as answer will be in "class_name"
 {
-    if (class_name) { class_name->Clear(); }
-    if (selector_name) { selector_name->Clear(); }
-    if (name_sans_category) { name_sans_category->Clear(); }
+    if (class_name)
+        class_name->Clear();
+    if (selector_name)
+        selector_name->Clear();
+    if (name_sans_category)
+        name_sans_category->Clear();
+    if (class_name_sans_category)
+        class_name_sans_category->Clear();
     
     if (IsPossibleObjCMethodName (name))
     {
@@ -122,8 +128,7 @@ ObjCLanguageRuntime::ParseMethodName (const char *name,
         //      "]" suffix
         if (name_len >= 6 && name[name_len - 1] == ']')
         {
-            const char *selector_name_ptr;
-            selector_name_ptr = strchr (name, ' ');
+            const char *selector_name_ptr = strchr (name, ' ');
             if (selector_name_ptr)
             {
                 if (class_name)
@@ -140,18 +145,21 @@ ObjCLanguageRuntime::ParseMethodName (const char *name,
                 // Also see if this is a "category" on our class.  If so strip off the category name,
                 // and add the class name without it to the basename table. 
                 
-                if (name_sans_category)
+                if (name_sans_category || class_name_sans_category)
                 {
-                    const char *first_paren = (char *) memchr (name, '(', selector_name_ptr - name);
-                    if (first_paren)
+                    const char *open_paren = strchr (name, '(');
+                    const char *close_paren = NULL;
+                    if (open_paren)
                     {
-                        const char *second_paren = (char *) memchr (first_paren, ')', selector_name_ptr - first_paren);
-                        if (second_paren)
+                        if (class_name_sans_category)
+                            class_name_sans_category->SetCStringWithLength (name + 2, open_paren - name - 2);
+                        close_paren = strchr (name, ')');
+                        if (close_paren)
                         {
-                            std::string buffer (name, first_paren - name);
-                            buffer.append (second_paren + 1);
+                            std::string buffer (name, open_paren - name);
+                            buffer.append (close_paren + 1);
                             name_sans_category->SetCString (buffer.c_str());
-
+                            
                         }
                     }
                 }
@@ -160,6 +168,5 @@ ObjCLanguageRuntime::ParseMethodName (const char *name,
         }
         return false;
     }
-    else
-        return false;
+    return false;
 }

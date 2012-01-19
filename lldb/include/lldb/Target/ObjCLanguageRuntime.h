@@ -103,7 +103,11 @@ public:
     // sub-parts that are passed in non-NULL.  The base_name means the name stripped of
     // category attributes.
     static bool
-    ParseMethodName (const char *name, ConstString *class_name, ConstString *method_name, ConstString *base_name);
+    ParseMethodName (const char *name, 
+                     ConstString *class_name,               // Class name (with category if there is one)
+                     ConstString *selector_name,            // selector only
+                     ConstString *name_sans_category,       // full function name with no category
+                     ConstString *class_name_sans_category);// Class name without category (empty if no category)
     
     static bool
     IsPossibleObjCMethodName (const char *name)

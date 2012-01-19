@@ -313,7 +313,8 @@ Symtab::InitNameIndexes()
             if (ObjCLanguageRuntime::ParseMethodName (entry.cstring,
                                                       NULL,
                                                       NULL,
-                                                      &objc_base_name)
+                                                      &objc_base_name,
+                                                      NULL)
                 && !objc_base_name.IsEmpty())
             {
                 entry.cstring = objc_base_name.GetCString();

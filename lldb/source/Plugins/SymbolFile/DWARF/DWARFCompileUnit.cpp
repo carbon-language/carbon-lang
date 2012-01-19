@@ -737,12 +737,16 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                         ConstString objc_class_name;
                         ConstString objc_selector_name;
                         ConstString objc_fullname_no_category_name;
+                        ConstString objc_class_name_no_category;
                         if (ObjCLanguageRuntime::ParseMethodName (name,
                                                                   &objc_class_name,
                                                                   &objc_selector_name,
-                                                                  &objc_fullname_no_category_name))
+                                                                  &objc_fullname_no_category_name,
+                                                                  &objc_class_name_no_category))
                         {
                             objc_class_selectors.Insert(objc_class_name, die.GetOffset());
+                            if (objc_class_name_no_category)
+                                objc_class_selectors.Insert(objc_class_name_no_category, die.GetOffset());
                             
                             func_selectors.Insert (objc_selector_name, die.GetOffset());
                             func_fullnames.Insert (ConstString(name), die.GetOffset());
