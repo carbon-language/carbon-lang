@@ -154,37 +154,51 @@ AsanProcMaps::AsanProcMaps() {
 AsanProcMaps::~AsanProcMaps() {
 }
 
+// More information about Mach-O headers can be found in mach-o/loader.h
+// Each Mach-O image has a header (mach_header or mach_header_64) starting with
+// a magic number, and a list of linker load commands directly following the
+// header.
+// A load command is at least two 32-bit words: the command type and the
+// command size in bytes. We're interested only in segment load commands
+// (LC_SEGMENT and LC_SEGMENT_64), which tell that a part of the file is mapped
+// into the task's address space.
+// The |vmaddr|, |vmsize| and |fileoff| fields of segment_command or
+// segment_command_64 correspond to the memory address, memory size and the
+// file offset of the current memory segment.
+// Because these fields are taken from the images as is, one needs to add
+// _dyld_get_image_vmaddr_slide() to get the actual addresses at runtime.
+
 void AsanProcMaps::Reset() {
   // Count down from the top.
   // TODO(glider): as per man 3 dyld, iterating over the headers with
-  // _dyld_image_count is thread-unsafe.
+  // _dyld_image_count is thread-unsafe. We need to register callbacks for
+  // adding and removing images which will invalidate the AsanProcMaps state.
   current_image_ = _dyld_image_count();
-  current_load_cmd_ = -1;
+  current_load_cmd_count_ = -1;
+  current_load_cmd_addr_ = NULL;
 }
 
-// Similar code is used in Google Perftools,
-// http://code.google.com/p/google-perftools.
-template<uint32_t kMagic, uint32_t kLCSegment,
-         typename MachHeader, typename SegmentCommand>
-static bool NextExtMachHelper(const mach_header* hdr,
-                              int current_image, int current_load_cmd,
-                              uintptr_t *start, uintptr_t *end,
-                              uintptr_t *offset,
-                              char filename[], size_t filename_size) {
-  if (hdr->magic != kMagic)
-    return false;
-  const char* lc = (const char *)hdr + sizeof(MachHeader);
-  // TODO(csilvers): make this not-quadradic (increment and hold state)
-  for (int j = 0; j < current_load_cmd; j++)  // advance to *our* load_cmd
-    lc += ((const load_command *)lc)->cmdsize;
+// Next and NextSegmentLoad were inspired by base/sysinfo.cc in
+// Google Perftools, http://code.google.com/p/google-perftools.
+
+// NextSegmentLoad scans the current image for the next segment load command
+// and returns the start and end addresses and file offset of the corresponding
+// segment.
+// Note that the segment addresses are not necessarily sorted.
+template<uint32_t kLCSegment, typename SegmentCommand>
+bool AsanProcMaps::NextSegmentLoad(
+    uintptr_t *start, uintptr_t *end, uintptr_t *offset,
+    char filename[], size_t filename_size) {
+  const char* lc = current_load_cmd_addr_;
+  current_load_cmd_addr_ += ((const load_command *)lc)->cmdsize;
   if (((const load_command *)lc)->cmd == kLCSegment) {
-    const intptr_t dlloff = _dyld_get_image_vmaddr_slide(current_image);
+    const intptr_t dlloff = _dyld_get_image_vmaddr_slide(current_image_);
     const SegmentCommand* sc = (const SegmentCommand *)lc;
     if (start) *start = sc->vmaddr + dlloff;
     if (end) *end = sc->vmaddr + sc->vmsize + dlloff;
     if (offset) *offset = sc->fileoff;
     if (filename) {
-      real_strncpy(filename, _dyld_get_image_name(current_image),
+      real_strncpy(filename, _dyld_get_image_name(current_image_),
                    filename_size);
     }
     return true;
@@ -195,37 +209,45 @@ static bool NextExtMachHelper(const mach_header* hdr,
 bool AsanProcMaps::Next(uintptr_t *start, uintptr_t *end,
                         uintptr_t *offset, char filename[],
                         size_t filename_size) {
-  // We return a separate entry for each segment in the DLL. (TODO(csilvers):
-  // can we do better?)  A DLL ("image") has load-commands, some of which
-  // talk about segment boundaries.
-  // cf image_for_address from http://svn.digium.com/view/asterisk/team/oej/minivoicemail/dlfcn.c?revision=53912
   for (; current_image_ >= 0; current_image_--) {
     const mach_header* hdr = _dyld_get_image_header(current_image_);
     if (!hdr) continue;
-    if (current_load_cmd_ < 0)   // set up for this image
-      current_load_cmd_ = hdr->ncmds;  // again, go from the top down
+    if (current_load_cmd_count_ < 0) {
+      // Set up for this image;
+      current_load_cmd_count_ = hdr->ncmds;
+      switch (hdr->magic) {
+#ifdef MH_MAGIC_64
+        case MH_MAGIC_64: {
+          current_load_cmd_addr_ = (char*)hdr + sizeof(mach_header_64);
+          break;
+        }
+#endif
+        case MH_MAGIC: {
+          current_load_cmd_addr_ = (char*)hdr + sizeof(mach_header);
+          break;
+        }
+        default: {
+          continue;
+        }
+      }
+    }
 
     // We start with the next load command (we've already looked at this one).
-    for (current_load_cmd_--; current_load_cmd_ >= 0; current_load_cmd_--) {
+    for (current_load_cmd_count_--;
+         current_load_cmd_count_ >= 0;
+         current_load_cmd_count_--) {
 #ifdef MH_MAGIC_64
-      if (NextExtMachHelper<MH_MAGIC_64, LC_SEGMENT_64,
-                            struct mach_header_64, struct segment_command_64>(
-                                hdr, current_image_, current_load_cmd_,
-                                start, end, offset, filename, filename_size)) {
+      if (NextSegmentLoad<LC_SEGMENT_64, struct segment_command_64>(
+              start, end, offset, filename, filename_size))
         return true;
-      }
 #endif
-      if (NextExtMachHelper<MH_MAGIC, LC_SEGMENT,
-                            struct mach_header, struct segment_command>(
-                                hdr, current_image_, current_load_cmd_,
-                                start, end, offset, filename, filename_size)) {
+      if (NextSegmentLoad<LC_SEGMENT, struct segment_command>(
+              start, end, offset, filename, filename_size))
         return true;
-      }
     }
     // If we get here, no more load_cmd's in this image talk about
     // segments.  Go on to the next image.
   }
-  // We didn't find anything.
   return false;
 }
 

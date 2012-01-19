@@ -15,6 +15,9 @@
 #define ASAN_PROCMAPS_H
 
 #include "asan_internal.h"
+#if defined __APPLE__
+#include <mach-o/loader.h>
+#endif
 
 namespace __asan {
 
@@ -30,15 +33,21 @@ class AsanProcMaps {
                               char filename[], size_t filename_size);
   ~AsanProcMaps();
  private:
+#if defined __APPLE__
+  template<uint32_t kLCSegment, typename SegmentCommand>
+  bool NextSegmentLoad(uintptr_t *start, uintptr_t *end, uintptr_t *offset,
+                       char filename[], size_t filename_size);
+#endif
   // Default implementation of GetObjectNameAndOffset.
   // Quite slow, because it iterates through the whole process map for each
   // lookup.
   bool IterateForObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
                                      char filename[], size_t filename_size) {
-    AsanProcMaps proc_maps;
+    Reset();
     uintptr_t start, end, file_offset;
-    while (proc_maps.Next(&start, &end, &file_offset,
-                          filename, filename_size)) {
+    while (Next(&start, &end, &file_offset,
+                filename, filename_size)) {
+      Report("%p--%p, %s\n", start, end, filename);
       if (addr >= start && addr < end) {
         *offset = (addr - start) + file_offset;
         return true;
@@ -56,7 +65,8 @@ class AsanProcMaps {
   char *current_;
 #elif defined __APPLE__
   int current_image_;
-  int current_load_cmd_;
+  int current_load_cmd_count_;
+  char *current_load_cmd_addr_;
 #endif
 };
 
