@@ -4277,6 +4277,7 @@ parseFPImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     Parser.Lex();
   }
   const AsmToken &Tok = Parser.getTok();
+  SMLoc Loc = Tok.getLoc();
   if (Tok.is(AsmToken::Real)) {
     APFloat RealVal(APFloat::IEEEdouble, Tok.getString());
     uint64_t IntVal = RealVal.bitcastToAPInt().getZExtValue();
@@ -4285,7 +4286,7 @@ parseFPImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     int Val = ARM_AM::getFP64Imm(APInt(64, IntVal));
     Parser.Lex(); // Eat the token.
     if (Val == -1) {
-      TokError("floating point value out of range");
+      Error(Loc, "floating point value out of range");
       return MatchOperand_ParseFail;
     }
     Operands.push_back(ARMOperand::CreateFPImm(Val, S, getContext()));
@@ -4295,14 +4296,14 @@ parseFPImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     int64_t Val = Tok.getIntVal();
     Parser.Lex(); // Eat the token.
     if (Val > 255 || Val < 0) {
-      TokError("encoded floating point value out of range");
+      Error(Loc, "encoded floating point value out of range");
       return MatchOperand_ParseFail;
     }
     Operands.push_back(ARMOperand::CreateFPImm(Val, S, getContext()));
     return MatchOperand_Success;
   }
 
-  TokError("invalid floating point immediate");
+  Error(Loc, "invalid floating point immediate");
   return MatchOperand_ParseFail;
 }
 /// Parse a arm instruction operand.  For now this parses the operand regardless
