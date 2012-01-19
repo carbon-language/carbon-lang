@@ -312,6 +312,44 @@ ClangASTImporter::Minion::ImportDefinitionTo (clang::Decl *to, clang::Decl *from
     ASTImporter::Imported(from, to);
     
     ImportDefinition(from);
+    
+    // If we're dealing with an Objective-C class, ensure that the inheritance has
+    // been set up correctly.  The ASTImporter may not do this correctly if the 
+    // class was originally sourced from symbols.
+    
+    if (ObjCInterfaceDecl *to_objc_interface = dyn_cast<ObjCInterfaceDecl>(to))
+    {
+        do
+        {
+            ObjCInterfaceDecl *to_superclass = to_objc_interface->getSuperClass();
+
+            if (to_superclass)
+                break; // we're not going to override it if it's set
+            
+            ObjCInterfaceDecl *from_objc_interface = dyn_cast<ObjCInterfaceDecl>(from);
+            
+            if (!from_objc_interface)
+                break;
+            
+            ObjCInterfaceDecl *from_superclass = from_objc_interface->getSuperClass();
+            
+            if (!from_superclass)
+                break;
+            
+            Decl *imported_from_superclass_decl = Import(from_superclass);
+                
+            if (!imported_from_superclass_decl)
+                break;
+                
+            ObjCInterfaceDecl *imported_from_superclass = dyn_cast<ObjCInterfaceDecl>(imported_from_superclass_decl);
+            
+            if (!imported_from_superclass)
+                break;
+            
+            to_objc_interface->setSuperClass(imported_from_superclass);
+        }
+        while (0);
+    }
 }
 
 clang::Decl 
