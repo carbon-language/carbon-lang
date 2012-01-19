@@ -60,7 +60,7 @@ TEST_F(LexerTest, LexAPI) {
     "#define M(x) [x]\n"
     "M(foo)";
   MemoryBuffer *buf = MemoryBuffer::getMemBuffer(source);
-  FileID mainFileID = SourceMgr.createMainFileIDForMemBuffer(buf);
+  SourceMgr.createMainFileIDForMemBuffer(buf);
 
   VoidModuleLoader ModLoader;
   HeaderSearch HeaderInfo(FileMgr, Diags, LangOpts);
