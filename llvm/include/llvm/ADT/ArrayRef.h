@@ -147,6 +147,88 @@ namespace llvm {
     /// @}
   };
 
+  /// MutableArrayRef - Represent a mutable reference to an array (0 or more
+  /// elements consecutively in memory), i.e. a start pointer and a length.  It
+  /// allows various APIs to take and modify consecutive elements easily and
+  /// conveniently.
+  ///
+  /// This class does not own the underlying data, it is expected to be used in
+  /// situations where the data resides in some other buffer, whose lifetime
+  /// extends past that of the MutableArrayRef. For this reason, it is not in
+  /// general safe to store a MutableArrayRef.
+  ///
+  /// This is intended to be trivially copyable, so it should be passed by
+  /// value.
+  template<typename T>
+  class MutableArrayRef : public ArrayRef<T> {
+  public:
+    typedef T *iterator;
+
+    /// Construct an empty ArrayRef.
+    /*implicit*/ MutableArrayRef() : ArrayRef<T>() {}
+    
+    /// Construct an MutableArrayRef from a single element.
+    /*implicit*/ MutableArrayRef(T &OneElt) : ArrayRef<T>(OneElt) {}
+    
+    /// Construct an MutableArrayRef from a pointer and length.
+    /*implicit*/ MutableArrayRef(T *data, size_t length)
+      : ArrayRef<T>(data, length) {}
+    
+    /// Construct an MutableArrayRef from a range.
+    MutableArrayRef(T *begin, T *end) : ArrayRef<T>(begin, end) {}
+    
+    /// Construct an MutableArrayRef from a SmallVector.
+    /*implicit*/ MutableArrayRef(SmallVectorImpl<T> &Vec)
+    : ArrayRef<T>(Vec) {}
+    
+    /// Construct a MutableArrayRef from a std::vector.
+    /*implicit*/ MutableArrayRef(std::vector<T> &Vec)
+    : ArrayRef<T>(Vec) {}
+    
+    /// Construct an MutableArrayRef from a C array.
+    template <size_t N>
+    /*implicit*/ MutableArrayRef(T (&Arr)[N])
+      : ArrayRef<T>(Arr) {}
+    
+    T *data() const { return const_cast<T*>(ArrayRef<T>::data()); }
+
+    iterator begin() const { return data(); }
+    iterator end() const { return data() + this->size(); }
+    
+    /// front - Get the first element.
+    T &front() const {
+      assert(!this->empty());
+      return data()[0];
+    }
+    
+    /// back - Get the last element.
+    T &back() const {
+      assert(!this->empty());
+      return data()[this->size()-1];
+    }
+
+    /// slice(n) - Chop off the first N elements of the array.
+    MutableArrayRef<T> slice(unsigned N) const {
+      assert(N <= this->size() && "Invalid specifier");
+      return MutableArrayRef<T>(data()+N, this->size()-N);
+    }
+    
+    /// slice(n, m) - Chop off the first N elements of the array, and keep M
+    /// elements in the array.
+    MutableArrayRef<T> slice(unsigned N, unsigned M) const {
+      assert(N+M <= this->size() && "Invalid specifier");
+      return MutableArrayRef<T>(data()+N, M);
+    }
+    
+    /// @}
+    /// @name Operator Overloads
+    /// @{
+    T &operator[](size_t Index) const {
+      assert(Index < this->size() && "Invalid index!");
+      return data()[Index];
+    }
+  };
+
   /// @name ArrayRef Convenience constructors
   /// @{
 
@@ -214,5 +296,5 @@ namespace llvm {
     static const bool value = true;
   };
 }
-
+  
 #endif
