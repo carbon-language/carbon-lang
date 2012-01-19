@@ -55,7 +55,42 @@ typedef enum {
   _URC_CONTINUE_UNWIND = 8
 } _Unwind_Reason_Code;
 
+
+#ifdef __arm__
+
+typedef enum { 
+  _UVRSC_CORE = 0,        /* integer register */ 
+  _UVRSC_VFP = 1,         /* vfp */ 
+  _UVRSC_WMMXD = 3,       /* Intel WMMX data register */ 
+  _UVRSC_WMMXC = 4        /* Intel WMMX control register */ 
+} _Unwind_VRS_RegClass; 
+
+typedef enum { 
+  _UVRSD_UINT32 = 0,  
+  _UVRSD_VFPX = 1,  
+  _UVRSD_UINT64 = 3,  
+  _UVRSD_FLOAT = 4,  
+  _UVRSD_DOUBLE = 5 
+} _Unwind_VRS_DataRepresentation; 
+
+typedef enum { 
+  _UVRSR_OK = 0,  
+  _UVRSR_NOT_IMPLEMENTED = 1,  
+  _UVRSR_FAILED = 2  
+} _Unwind_VRS_Result; 
+
+_Unwind_VRS_Result _Unwind_VRS_Get(_Unwind_Context *context,
+  _Unwind_VRS_RegClass regclass,
+  uint32_t regno,
+  _Unwind_VRS_DataRepresentation representation,
+  void *valuep);
+
+#else
+
 uintptr_t _Unwind_GetIP(struct _Unwind_Context* context);
+
+#endif
+
 typedef _Unwind_Reason_Code (*_Unwind_Trace_Fn)(struct _Unwind_Context*, void*);
 _Unwind_Reason_Code _Unwind_Backtrace(_Unwind_Trace_Fn, void*);
 
