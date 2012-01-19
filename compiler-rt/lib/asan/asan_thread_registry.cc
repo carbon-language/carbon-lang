@@ -136,7 +136,10 @@ AsanThreadSummary *AsanThreadRegistry::FindByTid(int tid) {
 
 AsanThread *AsanThreadRegistry::FindThreadByStackAddress(uintptr_t addr) {
   ScopedLock lock(&mu_);
-  for (int tid = 0; tid < n_threads_; tid++) {
+  // Main thread (tid = 0) stack limits are pretty much guessed; for the other
+  // threads we ask libpthread, so their limits must be correct.
+  // Scanning the thread list backwards makes this function more reliable.
+  for (int tid = n_threads_ - 1; tid >= 0; tid--) {
     AsanThread *t = thread_summaries_[tid]->thread();
     if (!t) continue;
     if (t->fake_stack().AddrIsInFakeStack(addr) || t->AddrIsInStack(addr)) {
