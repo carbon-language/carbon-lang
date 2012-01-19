@@ -25,6 +25,8 @@ void MCOperand::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
     OS << "Imm:" << getImm();
   else if (isExpr()) {
     OS << "Expr:(" << *getExpr() << ")";
+  } else if (isInst()) {
+    OS << "Inst:(" << *getInst() << ")";
   } else
     OS << "UNDEFINED";
   OS << ">";
