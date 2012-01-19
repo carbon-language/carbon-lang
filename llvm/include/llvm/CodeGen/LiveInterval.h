@@ -405,6 +405,14 @@ namespace llvm {
       return I == end() ? 0 : &*I;
     }
 
+    const LiveRange *getLiveRangeBefore(SlotIndex Idx) const {
+      return getLiveRangeContaining(Idx.getPrevSlot());
+    }
+
+    LiveRange *getLiveRangeBefore(SlotIndex Idx) {
+      return getLiveRangeContaining(Idx.getPrevSlot());
+    }
+
     /// getVNInfoAt - Return the VNInfo that is live at Idx, or NULL.
     VNInfo *getVNInfoAt(SlotIndex Idx) const {
       const_iterator I = FindLiveRangeContaining(Idx);
