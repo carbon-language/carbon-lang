@@ -9,7 +9,7 @@ declare void @objc_release(i8*)
 
 ; CHECK: define void @test0(
 ; CHECK: entry:
-; CHECK-NEXT: call void @objc_storeStrong(i8** @x, i8* %p) nounwind
+; CHECK-NEXT: tail call void @objc_storeStrong(i8** @x, i8* %p) nounwind
 ; CHECK-NEXT: ret void
 define void @test0(i8* %p) {
 entry:

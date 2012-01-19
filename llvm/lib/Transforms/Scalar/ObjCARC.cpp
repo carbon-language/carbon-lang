@@ -3600,6 +3600,11 @@ namespace {
     /// RetainRV calls to make the optimization work on targets which need it.
     const MDString *RetainRVMarker;
 
+    /// StoreStrongCalls - The set of inserted objc_storeStrong calls. If
+    /// at the end of walking the function we have found no alloca
+    /// instructions, these calls can be marked "tail".
+    DenseSet<CallInst *> StoreStrongCalls;
+
     Constant *getStoreStrongCallee(Module *M);
     Constant *getRetainAutoreleaseCallee(Module *M);
     Constant *getRetainAutoreleaseRVCallee(Module *M);
@@ -3803,6 +3808,11 @@ void ObjCARCContract::ContractRelease(Instruction *Release,
   StoreStrong->setDoesNotThrow();
   StoreStrong->setDebugLoc(Store->getDebugLoc());
 
+  // We can't set the tail flag yet, because we haven't yet determined
+  // whether there are any escaping allocas. Remember this call, so that
+  // we can set the tail flag once we know it's safe.
+  StoreStrongCalls.insert(StoreStrong);
+
   if (&*Iter == Store) ++Iter;
   Store->eraseFromParent();
   Release->eraseFromParent();
@@ -3848,6 +3858,13 @@ bool ObjCARCContract::runOnFunction(Function &F) {
   DT = &getAnalysis<DominatorTree>();
 
   PA.setAA(&getAnalysis<AliasAnalysis>());
+
+  // Track whether it's ok to mark objc_storeStrong calls with the "tail"
+  // keyword. Be conservative if the function has variadic arguments.
+  // It seems that functions which "return twice" are also unsafe for the
+  // "tail" argument, because they are setjmp, which could need to
+  // return to an earlier stack state.
+  bool TailOkForStoreStrongs = !F.isVarArg() && !F.callsFunctionThatReturnsTwice();
 
   // For ObjC library calls which return their argument, replace uses of the
   // argument with uses of the call return value, if it dominates the use. This
@@ -3904,6 +3921,13 @@ bool ObjCARCContract::runOnFunction(Function &F) {
     }
     case IC_Release:
       ContractRelease(Inst, I);
+      continue;
+    case IC_User:
+      // Be conservative if the function has any alloca instructions.
+      // Technically we only care about escaping alloca instructions,
+      // but this is sufficient to handle some interesting cases.
+      if (isa<AllocaInst>(Inst))
+        TailOkForStoreStrongs = false;
       continue;
     default:
       continue;
@@ -3968,6 +3992,14 @@ bool ObjCARCContract::runOnFunction(Function &F) {
         break;
     }
   }
+
+  // If this function has no escaping allocas or suspicious vararg usage,
+  // objc_storeStrong calls can be marked with the "tail" keyword.
+  if (TailOkForStoreStrongs)
+    for (DenseSet<CallInst *>::iterator I = StoreStrongCalls.begin(),
+         E = StoreStrongCalls.end(); I != E; ++I)
+      (*I)->setTailCall();
+  StoreStrongCalls.clear();
 
   return Changed;
 }
