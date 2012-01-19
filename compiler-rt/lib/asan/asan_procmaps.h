@@ -47,7 +47,6 @@ class AsanProcMaps {
     uintptr_t start, end, file_offset;
     while (Next(&start, &end, &file_offset,
                 filename, filename_size)) {
-      Report("%p--%p, %s\n", start, end, filename);
       if (addr >= start && addr < end) {
         *offset = (addr - start) + file_offset;
         return true;
