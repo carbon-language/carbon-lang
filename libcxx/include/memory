@@ -672,6 +672,17 @@ public:
     template <class _Up> struct rebind {typedef allocator<_Up> other;};
 };
 
+template <>
+class _LIBCPP_VISIBLE allocator<const void>
+{
+public:
+    typedef const void*       pointer;
+    typedef const void*       const_pointer;
+    typedef const void        value_type;
+
+    template <class _Up> struct rebind {typedef allocator<_Up> other;};
+};
+
 // pointer_traits
 
 template <class _Tp>
