@@ -119,8 +119,8 @@ void VirtRegMap::rewrite(SlotIndexes *Indexes) {
   for (MachineFunction::iterator MBBI = MF->begin(), MBBE = MF->end();
        MBBI != MBBE; ++MBBI) {
     DEBUG(MBBI->print(dbgs(), Indexes));
-    for (MachineBasicBlock::iterator MII = MBBI->begin(), MIE = MBBI->end();
-         MII != MIE;) {
+    for (MachineBasicBlock::instr_iterator
+           MII = MBBI->instr_begin(), MIE = MBBI->instr_end(); MII != MIE;) {
       MachineInstr *MI = MII;
       ++MII;
 
