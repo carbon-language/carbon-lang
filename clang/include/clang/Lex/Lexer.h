@@ -339,6 +339,12 @@ public:
                                            const SourceManager &SM,
                                            const LangOptions &LangOpts);
 
+  /// \brief Returns a string for the source that the range encompasses.
+  static StringRef getSourceText(CharSourceRange Range,
+                                 const SourceManager &SM,
+                                 const LangOptions &LangOpts,
+                                 bool *Invalid = 0);
+
   /// \brief Retrieve the name of the immediate macro expansion.
   ///
   /// This routine starts from a source location, and finds the name of the macro

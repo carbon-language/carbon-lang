@@ -114,6 +114,11 @@ TEST_F(LexerTest, LexAPI) {
   EXPECT_EQ(range.getAsRange(),
             SourceRange(macroRange.getBegin(),
                         macroRange.getEnd().getLocWithOffset(1)));
+
+  StringRef text = Lexer::getSourceText(
+                  CharSourceRange::getTokenRange(SourceRange(lsqrLoc, rsqrLoc)),
+                  SourceMgr, LangOpts);
+  EXPECT_EQ(text, "M(foo)");
 }
 
 } // anonymous namespace

@@ -813,12 +813,54 @@ CharSourceRange Lexer::makeFileCharRange(SourceRange TokenRange,
 
   // Break down the source locations.
   std::pair<FileID, unsigned> beginInfo = SM.getDecomposedLoc(Begin);
+  if (beginInfo.first.isInvalid())
+    return CharSourceRange();
+
   unsigned EndOffs;
   if (!SM.isInFileID(End, beginInfo.first, &EndOffs) ||
       beginInfo.second > EndOffs)
     return CharSourceRange();
 
   return CharSourceRange::getCharRange(Begin, End);
+}
+
+StringRef Lexer::getSourceText(CharSourceRange Range,
+                               const SourceManager &SM,
+                               const LangOptions &LangOpts,
+                               bool *Invalid) {
+  if (Range.isTokenRange())
+    Range = makeFileCharRange(Range.getAsRange(), SM, LangOpts);
+
+  if (Range.isInvalid() ||
+      Range.getBegin().isMacroID() || Range.getEnd().isMacroID()) {
+    if (Invalid) *Invalid = true;
+    return StringRef();
+  }
+
+  // Break down the source location.
+  std::pair<FileID, unsigned> beginInfo = SM.getDecomposedLoc(Range.getBegin());
+  if (beginInfo.first.isInvalid()) {
+    if (Invalid) *Invalid = true;
+    return StringRef();
+  }
+
+  unsigned EndOffs;
+  if (!SM.isInFileID(Range.getEnd(), beginInfo.first, &EndOffs) ||
+      beginInfo.second > EndOffs) {
+    if (Invalid) *Invalid = true;
+    return StringRef();
+  }
+
+  // Try to the load the file buffer.
+  bool invalidTemp = false;
+  StringRef file = SM.getBufferData(beginInfo.first, &invalidTemp);
+  if (invalidTemp) {
+    if (Invalid) *Invalid = true;
+    return StringRef();
+  }
+
+  if (Invalid) *Invalid = false;
+  return file.substr(beginInfo.second, EndOffs - beginInfo.second);
 }
 
 StringRef Lexer::getImmediateMacroName(SourceLocation Loc,
