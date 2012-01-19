@@ -1217,6 +1217,120 @@ processInstruction(MCInst &Inst,
     Inst = TmpInst;
     return true;
   }
+  case X86::XOR16i16: {
+    if (!Inst.getOperand(0).isImm() ||
+        !isImmSExti16i8Value(Inst.getOperand(0).getImm()))
+      return false;
+
+    MCInst TmpInst;
+    TmpInst.setOpcode(X86::XOR16ri8);
+    TmpInst.addOperand(MCOperand::CreateReg(X86::AX));
+    TmpInst.addOperand(MCOperand::CreateReg(X86::AX));
+    TmpInst.addOperand(Inst.getOperand(0));
+    Inst = TmpInst;
+    return true;
+  }
+  case X86::XOR32i32: {
+    if (!Inst.getOperand(0).isImm() ||
+        !isImmSExti32i8Value(Inst.getOperand(0).getImm()))
+      return false;
+
+    MCInst TmpInst;
+    TmpInst.setOpcode(X86::XOR32ri8);
+    TmpInst.addOperand(MCOperand::CreateReg(X86::EAX));
+    TmpInst.addOperand(MCOperand::CreateReg(X86::EAX));
+    TmpInst.addOperand(Inst.getOperand(0));
+    Inst = TmpInst;
+    return true;
+  }
+  case X86::XOR64i32: {
+    if (!Inst.getOperand(0).isImm() ||
+        !isImmSExti64i8Value(Inst.getOperand(0).getImm()))
+      return false;
+
+    MCInst TmpInst;
+    TmpInst.setOpcode(X86::XOR64ri8);
+    TmpInst.addOperand(MCOperand::CreateReg(X86::RAX));
+    TmpInst.addOperand(MCOperand::CreateReg(X86::RAX));
+    TmpInst.addOperand(Inst.getOperand(0));
+    Inst = TmpInst;
+    return true;
+  }
+  case X86::OR16i16: {
+    if (!Inst.getOperand(0).isImm() ||
+        !isImmSExti16i8Value(Inst.getOperand(0).getImm()))
+      return false;
+
+    MCInst TmpInst;
+    TmpInst.setOpcode(X86::OR16ri8);
+    TmpInst.addOperand(MCOperand::CreateReg(X86::AX));
+    TmpInst.addOperand(MCOperand::CreateReg(X86::AX));
+    TmpInst.addOperand(Inst.getOperand(0));
+    Inst = TmpInst;
+    return true;
+  }
+  case X86::OR32i32: {
+    if (!Inst.getOperand(0).isImm() ||
+        !isImmSExti32i8Value(Inst.getOperand(0).getImm()))
+      return false;
+
+    MCInst TmpInst;
+    TmpInst.setOpcode(X86::OR32ri8);
+    TmpInst.addOperand(MCOperand::CreateReg(X86::EAX));
+    TmpInst.addOperand(MCOperand::CreateReg(X86::EAX));
+    TmpInst.addOperand(Inst.getOperand(0));
+    Inst = TmpInst;
+    return true;
+  }
+  case X86::OR64i32: {
+    if (!Inst.getOperand(0).isImm() ||
+        !isImmSExti64i8Value(Inst.getOperand(0).getImm()))
+      return false;
+
+    MCInst TmpInst;
+    TmpInst.setOpcode(X86::OR64ri8);
+    TmpInst.addOperand(MCOperand::CreateReg(X86::RAX));
+    TmpInst.addOperand(MCOperand::CreateReg(X86::RAX));
+    TmpInst.addOperand(Inst.getOperand(0));
+    Inst = TmpInst;
+    return true;
+  }
+  case X86::CMP16i16: {
+    if (!Inst.getOperand(0).isImm() ||
+        !isImmSExti16i8Value(Inst.getOperand(0).getImm()))
+      return false;
+
+    MCInst TmpInst;
+    TmpInst.setOpcode(X86::CMP16ri8);
+    TmpInst.addOperand(MCOperand::CreateReg(X86::AX));
+    TmpInst.addOperand(Inst.getOperand(0));
+    Inst = TmpInst;
+    return true;
+  }
+  case X86::CMP32i32: {
+    if (!Inst.getOperand(0).isImm() ||
+        !isImmSExti32i8Value(Inst.getOperand(0).getImm()))
+      return false;
+
+    MCInst TmpInst;
+    TmpInst.setOpcode(X86::CMP32ri8);
+    TmpInst.addOperand(MCOperand::CreateReg(X86::EAX));
+    TmpInst.addOperand(Inst.getOperand(0));
+    Inst = TmpInst;
+    return true;
+  }
+  case X86::CMP64i32: {
+    if (!Inst.getOperand(0).isImm() ||
+        !isImmSExti64i8Value(Inst.getOperand(0).getImm()))
+      return false;
+
+    MCInst TmpInst;
+    TmpInst.setOpcode(X86::CMP64ri8);
+    TmpInst.addOperand(MCOperand::CreateReg(X86::RAX));
+    TmpInst.addOperand(Inst.getOperand(0));
+    Inst = TmpInst;
+    return true;
+  }
   }
   return false;
 }
