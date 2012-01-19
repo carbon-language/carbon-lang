@@ -13,6 +13,13 @@
 #include <algorithm>
 #include <memory>
 
+//#define ENABLE_SP_LOGGING 1 // DON'T CHECK THIS LINE IN UNLESS COMMENTED OUT
+#if defined (ENABLE_SP_LOGGING)
+
+extern "C" void track_sp (void *sp_this, void *ptr, long count);
+
+#endif
+
 namespace lldb_private {
 
 namespace imp {
@@ -706,6 +713,10 @@ public:
     swap (IntrusiveSharingPtr& rhs) 
     {
         std::swap(ptr_, rhs.ptr_);
+#if defined (ENABLE_SP_LOGGING)
+        track_sp (this, ptr_, use_count());
+        track_sp (&rhs, rhs.ptr_, rhs.use_count());
+#endif
     }
 
     void 
@@ -730,18 +741,28 @@ public:
 
 private:
     element_type *ptr_;
-
+    
     void
     add_shared() 
     {
         if (ptr_) 
+        {
             ptr_->add_shared(); 
+#if defined (ENABLE_SP_LOGGING)
+            track_sp (this, ptr_, ptr_->use_count());
+#endif
+        }
     }
     void
     release_shared()
     { 
         if (ptr_) 
+        {
+#if defined (ENABLE_SP_LOGGING)
+            track_sp (this, NULL, ptr_->use_count() - 1);
+#endif
             ptr_->release_shared(); 
+        }
     }
 };
 
