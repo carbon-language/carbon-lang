@@ -437,7 +437,7 @@ InstructionLLVM::Dump
 }
 
 void
-InstructionLLVM::CalculateMnemonic (ExecutionContextScope *exe_scope)
+InstructionLLVM::CalculateMnemonicOperandsAndComment (ExecutionContextScope *exe_scope)
 {
     const int num_tokens = EDNumTokens(m_inst);
     if (num_tokens > 0)
@@ -558,20 +558,6 @@ InstructionLLVM::CalculateMnemonic (ExecutionContextScope *exe_scope)
 
         m_comment.swap (comment.GetString());
     }
-}
-
-void
-InstructionLLVM::CalculateOperands(ExecutionContextScope *exe_scope)
-{
-    // Do all of the work in CalculateMnemonic()
-    CalculateMnemonic (exe_scope);
-}
-
-void
-InstructionLLVM::CalculateComment(ExecutionContextScope *exe_scope)
-{
-    // Do all of the work in CalculateMnemonic()
-    CalculateMnemonic (exe_scope);    
 }
 
 bool

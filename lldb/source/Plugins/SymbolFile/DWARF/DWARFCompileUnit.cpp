@@ -744,16 +744,15 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
                                                                   &objc_fullname_no_category_name,
                                                                   &objc_class_name_no_category))
                         {
-                            objc_class_selectors.Insert(objc_class_name, die.GetOffset());
+                            func_fullnames.Insert (ConstString(name), die.GetOffset());
+                            if (objc_class_name)
+                                objc_class_selectors.Insert(objc_class_name, die.GetOffset());
                             if (objc_class_name_no_category)
                                 objc_class_selectors.Insert(objc_class_name_no_category, die.GetOffset());
-                            
-                            func_selectors.Insert (objc_selector_name, die.GetOffset());
-                            func_fullnames.Insert (ConstString(name), die.GetOffset());
+                            if (objc_selector_name)
+                                func_selectors.Insert (objc_selector_name, die.GetOffset());
                             if (objc_fullname_no_category_name)
-                            {
                                 func_fullnames.Insert (objc_fullname_no_category_name, die.GetOffset());
-                            }
                         }
                     }
                     // If we have a mangled name, then the DW_AT_name attribute

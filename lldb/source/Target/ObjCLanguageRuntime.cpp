@@ -101,7 +101,7 @@ ObjCLanguageRuntime::GetByteOffsetForIvar (ClangASTType &parent_qual_type, const
 }
 
 
-bool
+uint32_t
 ObjCLanguageRuntime::ParseMethodName (const char *name, 
                                       ConstString *class_name,              // Class name (with category if any)
                                       ConstString *selector_name,           // selector on its own
@@ -117,6 +117,8 @@ ObjCLanguageRuntime::ParseMethodName (const char *name,
     if (class_name_sans_category)
         class_name_sans_category->Clear();
     
+    uint32_t result = 0;
+
     if (IsPossibleObjCMethodName (name))
     {
         int name_len = strlen (name);
@@ -132,7 +134,10 @@ ObjCLanguageRuntime::ParseMethodName (const char *name,
             if (selector_name_ptr)
             {
                 if (class_name)
+                {
                     class_name->SetCStringWithLength (name + 2, selector_name_ptr - name - 2);
+                    ++result;
+                }    
                 
                 // Skip the space
                 ++selector_name_ptr;
@@ -140,7 +145,10 @@ ObjCLanguageRuntime::ParseMethodName (const char *name,
                 // accelerator tables
                 size_t selector_name_len = name_len - (selector_name_ptr - name) - 1;
                 if (selector_name)
+                {
                     selector_name->SetCStringWithLength (selector_name_ptr, selector_name_len);                                
+                    ++result;
+                }
                 
                 // Also see if this is a "category" on our class.  If so strip off the category name,
                 // and add the class name without it to the basename table. 
@@ -151,24 +159,26 @@ ObjCLanguageRuntime::ParseMethodName (const char *name,
                     if (open_paren)
                     {
                         if (class_name_sans_category)
+                        {
                             class_name_sans_category->SetCStringWithLength (name + 2, open_paren - name - 2);
+                            ++result;
+                        }
                         
                         if (name_sans_category)
                         {
-                            const char *close_paren = strchr (name, ')');
-                            if (close_paren)
+                            const char *close_paren = strchr (open_paren, ')');
+                            if (open_paren < close_paren)
                             {
                                 std::string buffer (name, open_paren - name);
                                 buffer.append (close_paren + 1);
                                 name_sans_category->SetCString (buffer.c_str());
+                                ++result;
                             }
                         }
                     }
                 }
             }
-            return true;
         }
-        return false;
     }
-    return false;
+    return result;
 }

@@ -4898,8 +4898,13 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         if (tag == DW_TAG_subprogram)
                         {
                             ConstString class_name;
-                            if (ObjCLanguageRuntime::ParseMethodName (type_name_cstr, NULL, NULL, NULL, &class_name))
+                            ConstString class_name_no_category;
+                            if (ObjCLanguageRuntime::ParseMethodName (type_name_cstr, &class_name, NULL, NULL, &class_name_no_category))
                             {
+                                // Use the class name with no category if there is one
+                                if (class_name_no_category)
+                                    class_name = class_name_no_category;
+
                                 SymbolContext empty_sc;
                                 clang_type_t class_opaque_type = NULL;
                                 if (class_name)

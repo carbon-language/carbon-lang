@@ -44,35 +44,26 @@ public:
     const char *
     GetMnemonic (ExecutionContextScope *exe_scope)
     {
-        if (m_opcode_name.empty())
-            CalculateMnemonic(exe_scope);
+        CalculateMnemonicOperandsAndCommentIfNeeded (exe_scope);
         return m_opcode_name.c_str();
     }
     const char *
     GetOperands (ExecutionContextScope *exe_scope)
     {
-        if (m_mnemocics.empty())
-            CalculateOperands(exe_scope);
+        CalculateMnemonicOperandsAndCommentIfNeeded (exe_scope);
         return m_mnemocics.c_str();
     }
     
     const char *
     GetComment (ExecutionContextScope *exe_scope)
     {
-        if (m_comment.empty())
-            CalculateComment(exe_scope);
+        CalculateMnemonicOperandsAndCommentIfNeeded (exe_scope);
         return m_comment.c_str();
     }
 
     virtual void
-    CalculateMnemonic (ExecutionContextScope *exe_scope) = 0;
+    CalculateMnemonicOperandsAndComment (ExecutionContextScope *exe_scope) = 0;
     
-    virtual void
-    CalculateOperands (ExecutionContextScope *exe_scope) = 0;
-    
-    virtual void
-    CalculateComment (ExecutionContextScope *exe_scope) = 0;
-
     AddressClass
     GetAddressClass ();
 
@@ -144,7 +135,17 @@ protected:
     std::string m_opcode_name;
     std::string m_mnemocics;
     std::string m_comment;
+    bool m_calculated_strings;
 
+    void
+    CalculateMnemonicOperandsAndCommentIfNeeded (ExecutionContextScope *exe_scope)
+    {
+        if (!m_calculated_strings)
+        {
+            m_calculated_strings = true;
+            CalculateMnemonicOperandsAndComment(exe_scope);
+        }
+    }
 };
 
 
@@ -205,23 +206,13 @@ public:
     DoesBranch () const;
 
     virtual void
-    CalculateMnemonic(ExecutionContextScope *exe_scope)
+    CalculateMnemonicOperandsAndComment (ExecutionContextScope *exe_scope)
     {
-        // TODO: fill this in and put opcode name into Instruction::m_opcode_name
+        // TODO: fill this in and put opcode name into Instruction::m_opcode_name,
+        // mnemonic into Instruction::m_mnemonics, and any comment into 
+        // Instruction::m_comment
     }
     
-    virtual void
-    CalculateOperands(ExecutionContextScope *exe_scope)
-    {
-        // TODO: fill this in and put opcode name into Instruction::m_mnemonics
-    }
-    
-    virtual void
-    CalculateComment(ExecutionContextScope *exe_scope)
-    {
-        // TODO: fill this in and put opcode name into Instruction::m_comment
-    }
-
     virtual size_t
     Decode (const Disassembler &disassembler,
             const DataExtractor &data,

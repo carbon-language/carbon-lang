@@ -314,8 +314,7 @@ Symtab::InitNameIndexes()
                                                       NULL,
                                                       NULL,
                                                       &objc_base_name,
-                                                      NULL)
-                && !objc_base_name.IsEmpty())
+                                                      NULL))
             {
                 entry.cstring = objc_base_name.GetCString();
                 m_name_to_index.Append (entry);

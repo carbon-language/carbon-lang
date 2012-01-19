@@ -44,14 +44,8 @@ public:
             uint32_t data_offset);
     
     virtual void
-    CalculateMnemonic (lldb_private::ExecutionContextScope *exe_scope);
+    CalculateMnemonicOperandsAndComment (lldb_private::ExecutionContextScope *exe_scope);
     
-    virtual void
-    CalculateOperands (lldb_private::ExecutionContextScope *exe_scope);
-    
-    virtual void
-    CalculateComment (lldb_private::ExecutionContextScope *exe_scope);
-
 protected:
     EDDisassemblerRef m_disassembler;
     EDInstRef m_inst;
