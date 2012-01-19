@@ -15,14 +15,14 @@ entry:
   ret i32 %call
 }
 
-;CALL: test1:
-;CALL-NOT: ret
-;CALL: callq helper
-;CALL: ret
+; CALL: test1:
+; CALL-NOT: ret
+; CALL: callq helper
+; CALL: ret
 
-;JMP: test1:
-;JMP-NOT: ret
-;JMP: jmp helper # TAILCALL
+; JMP: test1:
+; JMP-NOT: ret
+; JMP: jmp helper # TAILCALL
 
 define i32 @test2() nounwind {
 entry:
@@ -30,11 +30,11 @@ entry:
   ret i32 %call
 }
 
-;CALL: test2:
-;CALL-NOT: ret
-;CALL: callq test2
-;CALL: ret
+; CALL: test2:
+; CALL-NOT: ret
+; CALL: callq test2
+; CALL: ret
 
-;JMP: test2:
-;JMP-NOT: ret
-;JMP: jmp test2 # TAILCALL
+; JMP: test2:
+; JMP-NOT: ret
+; JMP: jmp test2 # TAILCALL
