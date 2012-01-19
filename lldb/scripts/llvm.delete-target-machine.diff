@@ -1,0 +1,12 @@
+Index: lib/ExecutionEngine/MCJIT/MCJIT.cpp
+===================================================================
+--- lib/ExecutionEngine/MCJIT/MCJIT.cpp	(revision 146622)
++++ lib/ExecutionEngine/MCJIT/MCJIT.cpp	(working copy)
+@@ -85,6 +85,7 @@
+ 
+ MCJIT::~MCJIT() {
+   delete MemMgr;
++  delete TM;
+ }
+ 
+ void *MCJIT::getPointerToBasicBlock(BasicBlock *BB) {
