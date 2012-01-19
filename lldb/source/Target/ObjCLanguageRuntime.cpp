@@ -148,18 +148,20 @@ ObjCLanguageRuntime::ParseMethodName (const char *name,
                 if (name_sans_category || class_name_sans_category)
                 {
                     const char *open_paren = strchr (name, '(');
-                    const char *close_paren = NULL;
                     if (open_paren)
                     {
                         if (class_name_sans_category)
                             class_name_sans_category->SetCStringWithLength (name + 2, open_paren - name - 2);
-                        close_paren = strchr (name, ')');
-                        if (close_paren)
+                        
+                        if (name_sans_category)
                         {
-                            std::string buffer (name, open_paren - name);
-                            buffer.append (close_paren + 1);
-                            name_sans_category->SetCString (buffer.c_str());
-                            
+                            const char *close_paren = strchr (name, ')');
+                            if (close_paren)
+                            {
+                                std::string buffer (name, open_paren - name);
+                                buffer.append (close_paren + 1);
+                                name_sans_category->SetCString (buffer.c_str());
+                            }
                         }
                     }
                 }
