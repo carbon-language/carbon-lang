@@ -3949,7 +3949,7 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (const DWARFDebugInfoEntry
                 
                 if (try_resolving_type)
                 {
-					if (type_cu->Supports_DW_AT_APPLE_objc_complete_type())
+					if (must_be_implementation && type_cu->Supports_DW_AT_APPLE_objc_complete_type())
 	                    try_resolving_type = type_die->GetAttributeValueAsUnsigned (this, type_cu, DW_AT_APPLE_objc_complete_type, 0);
                     
                     if (try_resolving_type)

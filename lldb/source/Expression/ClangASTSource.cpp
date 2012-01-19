@@ -663,107 +663,80 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
                     m_ast_context,
                     interface_decl->getNameAsString().c_str(), 
                     selector_name.AsCString());
-
-    ClangASTImporter::ObjCInterfaceMapSP interface_map = m_ast_importer->GetObjCInterfaceMap(interface_decl);
-    
-    if (interface_map)
-    {
-        for (ClangASTImporter::ObjCInterfaceMap::iterator i = interface_map->begin(), e = interface_map->end();
-             i != e;
-             ++i)
-        {
-            lldb::clang_type_t backing_type = i->GetOpaqueQualType();
-            
-            if (!backing_type)
-                continue;
-            
-            QualType backing_qual_type = QualType::getFromOpaquePtr(backing_type);
-            
-            const ObjCInterfaceType *backing_interface_type = backing_qual_type.getTypePtr()->getAs<ObjCInterfaceType>();
-            
-            if (!backing_interface_type)
-                continue;
-            
-            const ObjCInterfaceDecl *backing_interface_decl = backing_interface_type->getDecl();
-            
-            if (!backing_interface_decl)
-                continue;
-            
-            if (backing_interface_decl->decls_begin() == backing_interface_decl->decls_end())
-                continue; // don't waste time creating a DeclarationName here
-            
-            clang::ASTContext &backing_ast_context = backing_interface_decl->getASTContext();
-            
-            llvm::SmallVector<clang::IdentifierInfo *, 3> selector_components;
-            int num_arguments = 0;
-
-            if (decl_name.isObjCZeroArgSelector())
-            {
-                selector_components.push_back (&backing_ast_context.Idents.get(decl_name.getAsString().c_str()));
-            }
-            else if (decl_name.isObjCOneArgSelector())
-            {
-                selector_components.push_back (&backing_ast_context.Idents.get(decl_name.getAsString().c_str()));
-                num_arguments = 1;
-            }
-            else
-            {    
-                clang::Selector sel = decl_name.getObjCSelector();
-                
-                for (unsigned i = 0, e = sel.getNumArgs();
-                     i != e;
-                     ++i)
-                {
-                    llvm::StringRef r = sel.getNameForSlot(i);
-
-                    selector_components.push_back (&backing_ast_context.Idents.get(r.str().c_str()));
-                    num_arguments++;
-                }
-            }     
-            
-            Selector backing_selector = backing_interface_decl->getASTContext().Selectors.getSelector(num_arguments, selector_components.data());
-            DeclarationName backing_decl_name = DeclarationName(backing_selector);
-            
-            DeclContext::lookup_const_result lookup_result = backing_interface_decl->lookup(backing_decl_name);
-            
-            if (lookup_result.first == lookup_result.second)
-                continue;
-            
-            ObjCMethodDecl *method_decl = dyn_cast<ObjCMethodDecl>(*lookup_result.first);
-            
-            if (!method_decl)
-                continue;
-            
-            Decl *copied_decl = m_ast_importer->CopyDecl(m_ast_context, &backing_ast_context, *lookup_result.first);
-            
-            if (!copied_decl)
-            {
-                if (log)
-                    log->Printf("  CAS::FOMD[%d] couldn't import method from symbols", current_id);
-                continue;
-            }
-            
-            ObjCMethodDecl *copied_method_decl = dyn_cast<ObjCMethodDecl> (copied_decl);
-            
-            if (!copied_method_decl)
-                continue;
-            
-            if (log)
-            {
-                ASTDumper dumper((Decl*)copied_method_decl);
-                log->Printf("  CAS::FOMD[%d] found (in symbols) %s", current_id, dumper.GetCString());
-            }
-            
-            context.AddNamedDecl(copied_method_decl);
-        }
-    }
-    
     SymbolContextList sc_list;
     
     const bool include_symbols = false;
     const bool append = false;
     
-    m_target->GetImages().FindFunctions(selector_name, lldb::eFunctionNameTypeSelector, include_symbols, append, sc_list);
+    std::string interface_name = interface_decl->getNameAsString();
+    
+    do
+    {
+        StreamString ms;
+        ms.Printf("-[%s %s]", interface_name.c_str(), selector_name.AsCString());
+        ms.Flush();
+        ConstString instance_method_name(ms.GetData());
+        
+        m_target->GetImages().FindFunctions(instance_method_name, lldb::eFunctionNameTypeFull, include_symbols, append, sc_list);
+        
+        if (sc_list.GetSize())
+            break;
+        
+        ms.Clear();
+        ms.Printf("+[%s %s]", interface_name.c_str(), selector_name.AsCString());
+        ms.Flush();
+        ConstString class_method_name(ms.GetData());
+        
+        m_target->GetImages().FindFunctions(class_method_name, lldb::eFunctionNameTypeFull, include_symbols, append, sc_list);
+        
+        if (sc_list.GetSize())
+            break;
+        
+        // Fall back and check for methods in categories.  If we find methods this way, we need to check that they're actually in
+        // categories on the desired class.
+        
+        SymbolContextList candidate_sc_list;
+        
+        m_target->GetImages().FindFunctions(selector_name, lldb::eFunctionNameTypeSelector, include_symbols, append, candidate_sc_list);
+        
+        for (uint32_t ci = 0, ce = candidate_sc_list.GetSize();
+             ci != ce;
+             ++ci)
+        {
+            SymbolContext candidate_sc;
+            
+            if (!candidate_sc_list.GetContextAtIndex(ci, candidate_sc))
+                continue;
+            
+            if (!candidate_sc.function)
+                continue;
+            
+            const char *candidate_name = candidate_sc.function->GetName().AsCString();
+            
+            const char *cursor = candidate_name;
+            
+            if (*cursor != '+' && *cursor != '-')
+                continue;
+            
+            ++cursor;
+            
+            if (*cursor != '[')
+                continue;
+            
+            ++cursor;
+            
+            size_t interface_len = interface_name.length();
+            
+            if (strncmp(cursor, interface_name.c_str(), interface_len))
+                continue;
+            
+            cursor += interface_len;
+            
+            if (*cursor == ' ' || *cursor == '(')
+                sc_list.Append(candidate_sc);
+        }
+    }
+    while (0);
     
     for (uint32_t i = 0, e = sc_list.GetSize();
          i != e;
@@ -809,7 +782,7 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
                 ASTDumper dumper((Decl*)copied_method_decl);
                 log->Printf("  CAS::FOMD[%d] found (in debug info) %s", current_id, dumper.GetCString());
             }
-                
+            
             context.AddNamedDecl(copied_method_decl);
         }
     }
@@ -967,29 +940,6 @@ ClangASTSource::CompleteNamespaceMap (ClangASTImporter::NamespaceMapSP &namespac
                             name.GetCString(), 
                             image->GetFileSpec().GetFilename().GetCString());
         }
-    }
-}
-
-void
-ClangASTSource::CompleteObjCInterfaceMap (ClangASTImporter::ObjCInterfaceMapSP &objc_interface_map,
-                                          const ConstString &name) const
-{
-    SymbolContext null_sc;
-    
-    TypeList types;
-    
-    m_target->GetImages().FindTypes(null_sc, name, true, UINT32_MAX, types);
-    
-    for (uint32_t i = 0, e = types.GetSize();
-         i != e;
-         ++i)
-    {
-        lldb::TypeSP mapped_type_sp = types.GetTypeAtIndex(i);
-        
-        if (!mapped_type_sp || !mapped_type_sp->GetClangFullType())
-            continue;
-        
-        objc_interface_map->push_back (ClangASTType(mapped_type_sp->GetClangAST(), mapped_type_sp->GetClangFullType()));
     }
 }
 

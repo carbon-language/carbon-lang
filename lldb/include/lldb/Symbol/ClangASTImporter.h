@@ -96,18 +96,7 @@ public:
     void BuildNamespaceMap (const clang::NamespaceDecl *decl);
     
     //
-    // Objective-C interface maps
-    //
-    
-    typedef std::vector <ClangASTType> ObjCInterfaceMap;
-    typedef lldb::SharedPtr<ObjCInterfaceMap>::Type ObjCInterfaceMapSP;
-    
-    void BuildObjCInterfaceMap (const clang::ObjCInterfaceDecl *decl);
-    
-    ObjCInterfaceMapSP GetObjCInterfaceMap (const clang::ObjCInterfaceDecl *decl);
-    
-    //
-    // Completers for the namespace and Objective-C interface maps
+    // Comleters for maps
     //
     
     class MapCompleter 
@@ -118,9 +107,6 @@ public:
         virtual void CompleteNamespaceMap (NamespaceMapSP &namespace_map,
                                            const ConstString &name,
                                            NamespaceMapSP &parent_map) const = 0;
-        
-        virtual void CompleteObjCInterfaceMap (ObjCInterfaceMapSP &objc_interface_map,
-                                               const ConstString &name) const = 0;
     };
     
     void InstallMapCompleter (clang::ASTContext *dst_ctx, MapCompleter &completer)
@@ -210,7 +196,6 @@ private:
     typedef lldb::SharedPtr<Minion>::Type                                   MinionSP;
     typedef std::map<clang::ASTContext *, MinionSP>                         MinionMap;
     typedef std::map<const clang::NamespaceDecl *, NamespaceMapSP>          NamespaceMetaMap;
-    typedef std::map<const clang::ObjCInterfaceDecl *, ObjCInterfaceMapSP>  ObjCInterfaceMetaMap;
     
     struct ASTContextMetadata
     {
@@ -219,7 +204,6 @@ private:
             m_minions (),
             m_origins (),
             m_namespace_maps (),
-            m_objc_interface_maps (),
             m_map_completer (NULL)
         {
         }
@@ -230,8 +214,6 @@ private:
         
         NamespaceMetaMap        m_namespace_maps;
         MapCompleter           *m_map_completer;
-        
-        ObjCInterfaceMetaMap    m_objc_interface_maps;
     };
     
     typedef lldb::SharedPtr<ASTContextMetadata>::Type               ASTContextMetadataSP;

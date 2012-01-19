@@ -170,24 +170,6 @@ public:
                                const ConstString &name,
                                ClangASTImporter::NamespaceMapSP &parent_map) const;
     
-    //------------------------------------------------------------------
-    /// Look up all instances of a given Objective-C interface in all
-    /// symbol files and put the appropriate entries in the namespace
-    /// map.
-    ///
-    /// @param[in] namespace_map
-    ///     The map to be completed.
-    ///
-    /// @param[in] name
-    ///     The name of the namespace to be found.
-    ///
-    /// @param[in] parent_map
-    ///     The map for the namespace's parent namespace, if there is
-    ///     one.
-    //------------------------------------------------------------------
-    void CompleteObjCInterfaceMap (ClangASTImporter::ObjCInterfaceMapSP &objc_interface_map,
-                                   const ConstString &name) const;
-    
     //
     // Helper APIs
     //

@@ -306,38 +306,6 @@ ClangASTImporter::MapCompleter::~MapCompleter ()
     return;
 }
 
-ClangASTImporter::ObjCInterfaceMapSP 
-ClangASTImporter::GetObjCInterfaceMap (const clang::ObjCInterfaceDecl *decl)
-{
-    ASTContextMetadataSP context_md = GetContextMetadata(&decl->getASTContext());
-    
-    ObjCInterfaceMetaMap &objc_interface_maps = context_md->m_objc_interface_maps;
-    
-    ObjCInterfaceMetaMap::iterator iter = objc_interface_maps.find(decl);
-    
-    if (iter != objc_interface_maps.end())
-        return iter->second;
-    else
-        return ObjCInterfaceMapSP();
-}
-
-void
-ClangASTImporter::BuildObjCInterfaceMap (const clang::ObjCInterfaceDecl *decl)
-{
-    ASTContextMetadataSP context_md = GetContextMetadata(&decl->getASTContext());
-    
-    ObjCInterfaceMapSP new_map(new ObjCInterfaceMap);
-    
-    if (context_md->m_map_completer)
-    {
-        std::string namespace_string = decl->getDeclName().getAsString();
-        
-        context_md->m_map_completer->CompleteObjCInterfaceMap(new_map, ConstString(namespace_string.c_str()));
-    }
-    
-    context_md->m_objc_interface_maps[decl] = new_map;
-}
-
 void
 ClangASTImporter::Minion::ImportDefinitionTo (clang::Decl *to, clang::Decl *from)
 {
@@ -455,9 +423,7 @@ clang::Decl
     if (isa<ObjCInterfaceDecl>(from))
     {
         ObjCInterfaceDecl *to_interface_decl = dyn_cast<ObjCInterfaceDecl>(to);
-        
-        m_master.BuildObjCInterfaceMap(to_interface_decl);
-        
+                
         to_interface_decl->setHasExternalLexicalStorage();
         to_interface_decl->setHasExternalVisibleStorage();
         
