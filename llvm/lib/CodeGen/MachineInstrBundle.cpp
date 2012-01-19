@@ -71,13 +71,13 @@ bool UnpackMachineBundles::runOnMachineFunction(MachineFunction &MF) {
   return Changed;
 }
 
-/// FinalizeBundle - Finalize a machine instruction bundle which includes
+/// finalizeBundle - Finalize a machine instruction bundle which includes
 /// a sequence of instructions starting from FirstMI to LastMI (inclusive).
 /// This routine adds a BUNDLE instruction to represent the bundle, it adds
 /// IsInternalRead markers to MachineOperands which are defined inside the
 /// bundle, and it copies externally visible defs and uses to the BUNDLE
 /// instruction.
-void llvm::FinalizeBundle(MachineBasicBlock &MBB,
+void llvm::finalizeBundle(MachineBasicBlock &MBB,
                           MachineBasicBlock::instr_iterator FirstMI,
                           MachineBasicBlock::instr_iterator LastMI) {
   const TargetMachine &TM = MBB.getParent()->getTarget();
