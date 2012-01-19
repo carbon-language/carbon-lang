@@ -237,6 +237,11 @@ EnableGuaranteedTailCallOpt("tailcallopt",
   cl::desc("Turn fastcc calls into tail calls by (potentially) changing ABI."),
   cl::init(false));
 
+static cl::opt<bool>
+DisableTailCalls("disable-tail-calls",
+  cl::desc("Never emit tail calls"),
+  cl::init(false));
+
 static cl::opt<unsigned>
 OverrideStackAlignment("stack-alignment",
   cl::desc("Override default stack alignment"),
@@ -462,6 +467,7 @@ int main(int argc, char **argv) {
   Options.JITEmitDebugInfo = EmitJitDebugInfo;
   Options.JITEmitDebugInfoToDisk = EmitJitDebugInfoToDisk;
   Options.GuaranteedTailCallOpt = EnableGuaranteedTailCallOpt;
+  Options.DisableTailCalls = DisableTailCalls;
   Options.StackAlignmentOverride = OverrideStackAlignment;
   Options.RealignStack = EnableRealignStack;
   Options.DisableJumpTables = DisableSwitchTables;

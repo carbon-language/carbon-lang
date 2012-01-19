@@ -1732,7 +1732,7 @@ static bool IsTailCallConvention(CallingConv::ID CC) {
 }
 
 bool X86TargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {
-  if (!CI->isTailCall())
+  if (!CI->isTailCall() || getTargetMachine().Options.DisableTailCalls)
     return false;
 
   CallSite CS(CI);
@@ -2132,6 +2132,9 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   bool IsWin64        = Subtarget->isTargetWin64();
   bool IsStructRet    = CallIsStructReturn(Outs);
   bool IsSibcall      = false;
+
+  if (MF.getTarget().Options.DisableTailCalls)
+    isTailCall = false;
 
   if (isTailCall) {
     // Check if it's really possible to do a tail call.

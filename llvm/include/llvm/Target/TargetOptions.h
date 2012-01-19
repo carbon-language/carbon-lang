@@ -43,8 +43,9 @@ namespace llvm {
           NoNaNsFPMath(false), HonorSignDependentRoundingFPMathOption(false),
           UseSoftFloat(false), NoZerosInBSS(false), JITExceptionHandling(false),
           JITEmitDebugInfo(false), JITEmitDebugInfoToDisk(false),
-          GuaranteedTailCallOpt(false), StackAlignmentOverride(0),
-          RealignStack(true), DisableJumpTables(false), EnableFastISel(false),
+          GuaranteedTailCallOpt(false), DisableTailCalls(false),
+          StackAlignmentOverride(0), RealignStack(true),
+          DisableJumpTables(false), EnableFastISel(false),
           EnableSegmentedStacks(false), TrapFuncName(""),
           FloatABIType(FloatABI::Default)
     {}
@@ -146,6 +147,10 @@ namespace llvm {
     /// criteria (being at the end of a function, having the same return type
     /// as their parent function, etc.), using an alternate ABI if necessary.
     unsigned GuaranteedTailCallOpt : 1;
+
+    /// DisableTailCalls - This flag controls whether we will use tail calls.
+    /// Disabling them may be useful to maintain a correct call stack.
+    unsigned DisableTailCalls : 1;
 
     /// StackAlignmentOverride - Override default stack alignment for target.
     unsigned StackAlignmentOverride;
