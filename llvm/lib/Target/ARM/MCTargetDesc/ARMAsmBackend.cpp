@@ -154,6 +154,7 @@ static unsigned getRelaxedOpcode(unsigned Op) {
   default: return Op;
   case ARM::tBcc:       return ARM::t2Bcc;
   case ARM::tLDRpciASM: return ARM::t2LDRpci;
+  case ARM::tADR:       return ARM::t2ADR;
   }
 }
 
@@ -179,6 +180,7 @@ bool ARMAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
     int64_t Offset = int64_t(Value) - 4;
     return Offset > 254 || Offset < -256;
   }
+  case ARM::fixup_thumb_adr_pcrel_10:
   case ARM::fixup_arm_thumb_cp: {
     // If the immediate is negative, greater than 1020, or not a multiple
     // of four, the wide version of the instruction must be used.
