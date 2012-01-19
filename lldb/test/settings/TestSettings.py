@@ -58,7 +58,6 @@ class SettingsCommandTestCase(TestBase):
             substrs = ["term-width (int) = 70"])
 
     #rdar://problem/10712130
-    @unittest2.expectedFailure
     def test_set_frame_format(self):
         """Test that 'set frame-format' with a backtick char in the format string works as well as fullpath."""
         self.buildDefault()

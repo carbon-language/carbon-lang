@@ -108,13 +108,24 @@ CommandObjectSettingsSet::~CommandObjectSettingsSet()
 }
 
 
+#include "llvm/ADT/StringRef.h"
+static inline void StripLeadingSpaces(llvm::StringRef &Str)
+{
+    while (!Str.empty() && isspace(Str[0]))
+        Str = Str.substr(1);
+}
 bool
-CommandObjectSettingsSet::Execute (Args& command, CommandReturnObject &result)
+CommandObjectSettingsSet::ExecuteRawCommandString (const char *raw_command, CommandReturnObject &result)
 {
     UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
 
-    const int argc = command.GetArgumentCount ();
+    Args cmd_args(raw_command);
 
+    // Process possible options.
+    if (!ParseOptions (cmd_args, result))
+        return false;
+
+    const int argc = cmd_args.GetArgumentCount ();
     if ((argc < 2) && (!m_options.m_reset))
     {
         result.AppendError ("'settings set' takes more arguments");
@@ -122,8 +133,7 @@ CommandObjectSettingsSet::Execute (Args& command, CommandReturnObject &result)
         return false;
     }
 
-    const char *var_name = command.GetArgumentAtIndex (0);
-    std::string var_name_string;
+    const char *var_name = cmd_args.GetArgumentAtIndex (0);
     if ((var_name == NULL) || (var_name[0] == '\0'))
     {
         result.AppendError ("'settings set' command requires a valid variable name; No value supplied");
@@ -131,17 +141,15 @@ CommandObjectSettingsSet::Execute (Args& command, CommandReturnObject &result)
         return false;
     }
 
-    var_name_string = var_name;
-    command.Shift();
-
-    const char *var_value;
-    std::string value_string;
-
-    command.GetQuotedCommandString (value_string);
-    var_value = value_string.c_str();
+    // Split the raw command into var_name and value pair.
+    std::string var_name_string = var_name;
+    llvm::StringRef raw_str(raw_command);
+    llvm::StringRef value_str = raw_str.split(var_name_string).second;
+    StripLeadingSpaces(value_str);
+    std::string value_string = value_str.str();
 
     if (!m_options.m_reset
-        && var_value == NULL)
+        && value_string.empty())
     {
         result.AppendError ("'settings set' command requires a valid variable value unless using '--reset' option;"
                             " No value supplied");
@@ -150,7 +158,7 @@ CommandObjectSettingsSet::Execute (Args& command, CommandReturnObject &result)
     else
     {
       Error err = usc_sp->SetVariable (var_name_string.c_str(), 
-                                       var_value, 
+                                       value_string.c_str(), 
                                        eVarSetOperationAssign, 
                                        m_options.m_override, 
                                        m_interpreter.GetDebugger().GetInstanceName().AsCString());

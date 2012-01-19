@@ -1,1 +1,2 @@
-settings set prompt [old-oak] 
+settings set prompt [with-three-trailing-spaces]   
+

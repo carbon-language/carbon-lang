@@ -168,7 +168,7 @@ Args::SetCommandString (const char *command)
     if (command && command[0])
     {
         static const char *k_space_separators = " \t";
-        static const char *k_space_separators_with_slash_and_quotes = " \t \\'\"`";
+        static const char *k_space_separators_with_slash_and_quotes = " \t \\'\"";
         const char *arg_end = NULL;
         const char *arg_pos;
         for (arg_pos = command;
@@ -280,10 +280,7 @@ Args::SetCommandString (const char *command)
                             first_quote_char = quote_char;
 
                         arg_pos = arg_end;
-                        
-                        if (quote_char != '`')
-                            ++arg_pos; // Skip the quote character if it is not a backtick
-
+                        ++arg_pos;                 // Skip the quote character
                         arg_piece_start = arg_pos; // Note we are starting from later in the string
                         
                         // Skip till the next quote character
@@ -298,13 +295,7 @@ Args::SetCommandString (const char *command)
                         if (end_quote)
                         {
                             if (end_quote > arg_piece_start)
-                            {
-                                // Keep the backtick quote on commands
-                                if (quote_char == '`')
-                                    arg.append (arg_piece_start, end_quote + 1 - arg_piece_start);
-                                else
-                                    arg.append (arg_piece_start, end_quote - arg_piece_start);
-                            }
+                                arg.append (arg_piece_start, end_quote - arg_piece_start);
 
                             // If the next character is a space or the end of 
                             // string, this argument is complete...

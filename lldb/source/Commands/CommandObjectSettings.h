@@ -50,7 +50,15 @@ public:
 
     virtual bool
     Execute (Args& command,
-             CommandReturnObject &result);
+             CommandReturnObject &result)
+    { return false; }
+
+    virtual bool
+    WantsRawCommandString() { return true; }
+
+    virtual bool
+    ExecuteRawCommandString (const char *raw_command,
+                             CommandReturnObject &result);
 
     virtual Options *
     GetOptions ();

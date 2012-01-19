@@ -38,7 +38,7 @@ class AbbreviationsTestCase(TestBase):
                     patterns = ["Executing commands in '.*change_prompt.lldb'"])
 
         self.expect("settings show prompt",
-                    startstr = 'prompt (string) = "[old-oak]"')
+                    startstr = 'prompt (string) = "[with-three-trailing-spaces]   "')
 
 
         self.runCmd("settings set -r prompt")
@@ -51,7 +51,7 @@ class AbbreviationsTestCase(TestBase):
 
         self.runCmd("se se prompt Sycamore> ")
         self.expect("se sh prompt",
-                    startstr = 'prompt (string) = "Sycamore>"')
+                    startstr = 'prompt (string) = "Sycamore> "')
 
         self.runCmd("se se -r prompt")
         self.expect("set sh prompt",
