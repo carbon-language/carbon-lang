@@ -782,8 +782,18 @@ public:
     static bool
     IsFunctionPointerType (lldb::clang_type_t clang_type);
     
+    static lldb::clang_type_t
+    GetAsArrayType (lldb::clang_type_t clang_type, 
+                    lldb::clang_type_t *member_type = NULL, 
+                    uint64_t *size = NULL);
+    
     static bool
-    IsArrayType (lldb::clang_type_t clang_type, lldb::clang_type_t *member_type = NULL, uint64_t *size = NULL);
+    IsArrayType (lldb::clang_type_t clang_type,
+                 lldb::clang_type_t *member_type = NULL,
+                 uint64_t *size = NULL)
+    {
+        return GetAsArrayType(clang_type, member_type, size) != 0;
+    }
 
     //------------------------------------------------------------------
     // Typedefs

@@ -5537,7 +5537,9 @@ ClangASTContext::IsPointerToScalarType (lldb::clang_type_t clang_type)
 bool
 ClangASTContext::IsArrayOfScalarType (lldb::clang_type_t clang_type)
 {
-    if (!IsArrayType(clang_type))
+    clang_type = GetAsArrayType(clang_type);
+    
+    if (clang_type == 0)
         return false;
     
     QualType qual_type (QualType::getFromOpaquePtr(clang_type));
@@ -5708,11 +5710,11 @@ ClangASTContext::GetArraySize (clang_type_t clang_type)
     return 0;
 }
 
-bool
-ClangASTContext::IsArrayType (clang_type_t clang_type, clang_type_t*member_type, uint64_t *size)
+clang_type_t
+ClangASTContext::GetAsArrayType (clang_type_t clang_type, clang_type_t*member_type, uint64_t *size)
 {
     if (!clang_type)
-        return false;
+        return 0;
     
     QualType qual_type (QualType::getFromOpaquePtr(clang_type));
     
@@ -5727,40 +5729,40 @@ ClangASTContext::IsArrayType (clang_type_t clang_type, clang_type_t*member_type,
             *member_type = cast<ConstantArrayType>(qual_type)->getElementType().getAsOpaquePtr();
         if (size)
             *size = cast<ConstantArrayType>(qual_type)->getSize().getLimitedValue(ULLONG_MAX);
-        return true;
+        return clang_type;
 
     case clang::Type::IncompleteArray:
         if (member_type)
             *member_type = cast<IncompleteArrayType>(qual_type)->getElementType().getAsOpaquePtr();
         if (size)
             *size = 0;
-        return true;
+        return clang_type;
 
     case clang::Type::VariableArray:
         if (member_type)
             *member_type = cast<VariableArrayType>(qual_type)->getElementType().getAsOpaquePtr();
         if (size)
             *size = 0;
-        return true;
+        return clang_type;
 
     case clang::Type::DependentSizedArray:
         if (member_type)
             *member_type = cast<DependentSizedArrayType>(qual_type)->getElementType().getAsOpaquePtr();
         if (size)
             *size = 0;
-        return true;
+        return clang_type;
     
     case clang::Type::Typedef:
-        return ClangASTContext::IsArrayType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
-                                             member_type, 
-                                             size);
+        return ClangASTContext::GetAsArrayType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
+                                                member_type, 
+                                                size);
     
     case clang::Type::Elaborated:
-        return ClangASTContext::IsArrayType (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
-                                             member_type,
-                                             size);
+        return ClangASTContext::GetAsArrayType (cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
+                                                member_type,
+                                                size);
     }
-    return false;
+    return 0;
 }
 
 
