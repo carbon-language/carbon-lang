@@ -90,14 +90,30 @@ TEST_F(LexerTest, LexAPI) {
   SourceLocation lsqrLoc = toks[0].getLocation();
   SourceLocation idLoc = toks[1].getLocation();
   SourceLocation rsqrLoc = toks[2].getLocation();
-  
+  std::pair<SourceLocation,SourceLocation>
+    macroPair = SourceMgr.getExpansionRange(lsqrLoc);
+  SourceRange macroRange = SourceRange(macroPair.first, macroPair.second);
+
   SourceLocation Loc;
   EXPECT_TRUE(Lexer::isAtStartOfMacroExpansion(lsqrLoc, SourceMgr, LangOpts, &Loc));
-  EXPECT_EQ(SourceMgr.getExpansionLoc(lsqrLoc), Loc);
+  EXPECT_EQ(Loc, macroRange.getBegin());
   EXPECT_FALSE(Lexer::isAtStartOfMacroExpansion(idLoc, SourceMgr, LangOpts));
   EXPECT_FALSE(Lexer::isAtEndOfMacroExpansion(idLoc, SourceMgr, LangOpts));
   EXPECT_TRUE(Lexer::isAtEndOfMacroExpansion(rsqrLoc, SourceMgr, LangOpts, &Loc));
-  EXPECT_EQ(SourceMgr.getExpansionRange(rsqrLoc).second, Loc);
+  EXPECT_EQ(Loc, macroRange.getEnd());
+
+  CharSourceRange range = Lexer::makeFileCharRange(SourceRange(lsqrLoc, idLoc),
+                                                   SourceMgr, LangOpts);
+  EXPECT_TRUE(range.isInvalid());
+  range = Lexer::makeFileCharRange(SourceRange(idLoc, rsqrLoc),
+                                   SourceMgr, LangOpts);
+  EXPECT_TRUE(range.isInvalid());
+  range = Lexer::makeFileCharRange(SourceRange(lsqrLoc, rsqrLoc),
+                                   SourceMgr, LangOpts);
+  EXPECT_TRUE(!range.isTokenRange());
+  EXPECT_EQ(range.getAsRange(),
+            SourceRange(macroRange.getBegin(),
+                        macroRange.getEnd().getLocWithOffset(1)));
 }
 
 } // anonymous namespace

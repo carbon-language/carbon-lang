@@ -792,6 +792,35 @@ bool Lexer::isAtEndOfMacroExpansion(SourceLocation loc,
   return isAtEndOfMacroExpansion(expansionLoc, SM, LangOpts, MacroEnd);
 }
 
+/// \brief Accepts a token source range and returns a character range with
+/// file locations.
+/// Returns a null range if a part of the range resides inside a macro
+/// expansion or the range does not reside on the same FileID.
+CharSourceRange Lexer::makeFileCharRange(SourceRange TokenRange,
+                                         const SourceManager &SM,
+                                         const LangOptions &LangOpts) {
+  SourceLocation Begin = TokenRange.getBegin();
+  if (Begin.isInvalid())
+    return CharSourceRange();
+
+  if (Begin.isMacroID())
+    if (!isAtStartOfMacroExpansion(Begin, SM, LangOpts, &Begin))
+      return CharSourceRange();
+
+  SourceLocation End = getLocForEndOfToken(TokenRange.getEnd(), 0, SM,LangOpts);
+  if (End.isInvalid())
+    return CharSourceRange();
+
+  // Break down the source locations.
+  std::pair<FileID, unsigned> beginInfo = SM.getDecomposedLoc(Begin);
+  unsigned EndOffs;
+  if (!SM.isInFileID(End, beginInfo.first, &EndOffs) ||
+      beginInfo.second > EndOffs)
+    return CharSourceRange();
+
+  return CharSourceRange::getCharRange(Begin, End);
+}
+
 StringRef Lexer::getImmediateMacroName(SourceLocation Loc,
                                        const SourceManager &SM,
                                        const LangOptions &LangOpts) {
