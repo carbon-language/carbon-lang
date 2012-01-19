@@ -1107,6 +1107,7 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
       break;
     case ARM::STR_PRE_IMM:
     case ARM::STR_PRE_REG:
+    case ARM::t2STR_PRE:
       assert(MI->getOperand(2).getReg() == ARM::SP &&
              "Only stack pointer as a source reg is supported");
       RegList.push_back(SrcReg);
@@ -1122,12 +1123,14 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
         MI->dump();
         assert(0 && "Unsupported opcode for unwinding information");
       case ARM::MOVr:
+      case ARM::tMOVr:
         Offset = 0;
         break;
       case ARM::ADDri:
         Offset = -MI->getOperand(2).getImm();
         break;
       case ARM::SUBri:
+      case ARM::t2SUBri:
         Offset = MI->getOperand(2).getImm();
         break;
       case ARM::tSUBspi:
