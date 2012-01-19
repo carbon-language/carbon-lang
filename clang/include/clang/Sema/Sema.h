@@ -5938,7 +5938,7 @@ public:
   QualType GetSignedVectorType(QualType V);
   QualType CheckVectorCompareOperands(ExprResult &LHS, ExprResult &RHS,
                                       SourceLocation Loc, bool isRelational);
-  QualType CheckVectorLogicalOperands(ExprResult LHS, ExprResult RHS,
+  QualType CheckVectorLogicalOperands(ExprResult &LHS, ExprResult &RHS,
                                       SourceLocation Loc);
 
   /// type checking declaration initializers (C99 6.7.8)

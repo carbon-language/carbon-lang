@@ -6944,9 +6944,8 @@ QualType Sema::CheckVectorCompareOperands(ExprResult &LHS, ExprResult &RHS,
   return GetSignedVectorType(LHSType);
 }
 
-QualType Sema::CheckVectorLogicalOperands(ExprResult LHS, ExprResult RHS,
-                                                 SourceLocation Loc)
-{
+QualType Sema::CheckVectorLogicalOperands(ExprResult &LHS, ExprResult &RHS,
+                                          SourceLocation Loc) {
   // Ensure that either both operands are of the same vector type, or
   // one operand is of a vector type and the other is of its element type.
   QualType vType = CheckVectorOperands(LHS, RHS, Loc, false);
@@ -8281,9 +8280,7 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
         Input = ImpCastExprToType(Input.take(), Context.BoolTy,
                                   ScalarTypeToBooleanCastKind(resultType));
       }
-    }
-    else if (resultType->isExtVectorType()) {
-      // Handle vector types.
+    } else if (resultType->isExtVectorType()) {
       // Vector logical not returns the signed variant of the operand type.
       resultType = GetSignedVectorType(resultType);
       break;
