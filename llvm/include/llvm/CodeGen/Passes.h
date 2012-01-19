@@ -249,6 +249,11 @@ namespace llvm {
   ///
   FunctionPass *createUnpackMachineBundlesPass();
 
+  /// createFinalizeMachineBundles - This pass finalize machine instruction
+  /// bundles (created earlier, e.g. during pre-RA scheduling).
+  ///
+  FunctionPass *createFinalizeMachineBundlesPass();
+
 } // End llvm namespace
 
 #endif

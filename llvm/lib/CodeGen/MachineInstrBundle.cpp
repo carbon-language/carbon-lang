@@ -31,7 +31,7 @@ namespace {
 } // end anonymous namespace
 
 char UnpackMachineBundles::ID = 0;
-INITIALIZE_PASS(UnpackMachineBundles, "unpack-mi-bundle",
+INITIALIZE_PASS(UnpackMachineBundles, "unpack-mi-bundles",
                 "Unpack machine instruction bundles", false, false)
 
 FunctionPass *llvm::createUnpackMachineBundlesPass() {
@@ -70,6 +70,32 @@ bool UnpackMachineBundles::runOnMachineFunction(MachineFunction &MF) {
 
   return Changed;
 }
+
+
+namespace {
+  class FinalizeMachineBundles : public MachineFunctionPass {
+  public:
+    static char ID; // Pass identification
+    FinalizeMachineBundles() : MachineFunctionPass(ID) {
+      initializeFinalizeMachineBundlesPass(*PassRegistry::getPassRegistry());
+    }
+
+    virtual bool runOnMachineFunction(MachineFunction &MF);
+  };
+} // end anonymous namespace
+
+char FinalizeMachineBundles::ID = 0;
+INITIALIZE_PASS(FinalizeMachineBundles, "finalize-mi-bundles",
+                "Finalize machine instruction bundles", false, false)
+
+FunctionPass *llvm::createFinalizeMachineBundlesPass() {
+  return new FinalizeMachineBundles();
+}
+
+bool FinalizeMachineBundles::runOnMachineFunction(MachineFunction &MF) {
+  return llvm::finalizeBundles(MF);
+}
+
 
 /// finalizeBundle - Finalize a machine instruction bundle which includes
 /// a sequence of instructions starting from FirstMI to LastMI (exclusive).
@@ -195,4 +221,29 @@ llvm::finalizeBundle(MachineBasicBlock &MBB,
     ++LastMI;
   finalizeBundle(MBB, FirstMI, LastMI);
   return LastMI;
+}
+
+/// finalizeBundles - Finalize instruction bundles in the specified
+/// MachineFunction. Return true if any bundles are finalized.
+bool llvm::finalizeBundles(MachineFunction &MF) {
+  bool Changed = false;
+  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
+    MachineBasicBlock &MBB = *I;
+
+    MachineBasicBlock::instr_iterator MII = MBB.instr_begin();
+    assert(!MII->isInsideBundle() &&
+           "First instr cannot be inside bundle before finalization!");
+
+    MachineBasicBlock::instr_iterator MIE = MBB.instr_end();
+    for (++MII; MII != MIE; ) {
+      if (!MII->isInsideBundle())
+        ++MII;
+      else {
+        MII = finalizeBundle(MBB, llvm::prior(MII));
+        Changed = true;
+      }
+    }
+  }
+
+  return Changed;
 }

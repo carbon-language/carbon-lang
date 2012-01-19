@@ -37,6 +37,10 @@ void finalizeBundle(MachineBasicBlock &MBB,
 MachineBasicBlock::instr_iterator finalizeBundle(MachineBasicBlock &MBB,
                     MachineBasicBlock::instr_iterator FirstMI);
 
+/// finalizeBundles - Finalize instruction bundles in the specified
+/// MachineFunction. Return true if any bundles are finalized.
+bool finalizeBundles(MachineFunction &MF);
+
 } // End llvm namespace
 
 #endif
