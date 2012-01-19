@@ -72,7 +72,7 @@ bool UnpackMachineBundles::runOnMachineFunction(MachineFunction &MF) {
 }
 
 /// finalizeBundle - Finalize a machine instruction bundle which includes
-/// a sequence of instructions starting from FirstMI to LastMI (inclusive).
+/// a sequence of instructions starting from FirstMI to LastMI (exclusive).
 /// This routine adds a BUNDLE instruction to represent the bundle, it adds
 /// IsInternalRead markers to MachineOperands which are defined inside the
 /// bundle, and it copies externally visible defs and uses to the BUNDLE
@@ -80,6 +80,8 @@ bool UnpackMachineBundles::runOnMachineFunction(MachineFunction &MF) {
 void llvm::finalizeBundle(MachineBasicBlock &MBB,
                           MachineBasicBlock::instr_iterator FirstMI,
                           MachineBasicBlock::instr_iterator LastMI) {
+  assert(FirstMI != LastMI && "Empty bundle?");
+
   const TargetMachine &TM = MBB.getParent()->getTarget();
   const TargetInstrInfo *TII = TM.getInstrInfo();
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
@@ -96,7 +98,7 @@ void llvm::finalizeBundle(MachineBasicBlock &MBB,
   SmallSet<unsigned, 8> KilledUseSet;
   SmallSet<unsigned, 8> UndefUseSet;
   SmallVector<MachineOperand*, 4> Defs;
-  do {
+  for (; FirstMI != LastMI; ++FirstMI) {
     for (unsigned i = 0, e = FirstMI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = FirstMI->getOperand(i);
       if (!MO.isReg())
@@ -157,7 +159,7 @@ void llvm::finalizeBundle(MachineBasicBlock &MBB,
 
     FirstMI->setIsInsideBundle();
     Defs.clear();
-  } while (FirstMI++ != LastMI);
+  }
 
   SmallSet<unsigned, 8> Added;
   for (unsigned i = 0, e = LocalDefs.size(); i != e; ++i) {
@@ -177,4 +179,17 @@ void llvm::finalizeBundle(MachineBasicBlock &MBB,
     MIB.addReg(Reg, getKillRegState(isKill) | getUndefRegState(isUndef) |
                getImplRegState(true));
   }
+}
+
+/// finalizeBundle - Same functionality as the previous finalizeBundle except
+/// the last instruction in the bundle is not provided as an input. This is
+/// used in cases where bundles are pre-determined by marking instructions
+/// with 'InsideBundle' marker.
+void llvm::finalizeBundle(MachineBasicBlock &MBB,
+                          MachineBasicBlock::instr_iterator FirstMI) {
+  MachineBasicBlock::instr_iterator E = MBB.instr_end();
+  MachineBasicBlock::instr_iterator LastMI = llvm::next(FirstMI);
+  while (LastMI != E && LastMI->isInsideBundle())
+    ++LastMI;
+  finalizeBundle(MBB, FirstMI, LastMI);
 }
