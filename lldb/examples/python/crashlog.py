@@ -385,7 +385,7 @@ class CrashLog:
             return None # success
         # We weren't able to open the main executable as, but we can still symbolicate
         if self.idents:
-            for ident in idents:
+            for ident in self.idents:
                 image = self.find_image_with_identifier (ident)
                 if image:
                     err = image.create_target ()
