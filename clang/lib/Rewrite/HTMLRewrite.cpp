@@ -292,7 +292,7 @@ void html::AddHeaderFooterInternalBuiltinCSS(Rewriter& R, FileID FID,
       " body { font-family:Helvetica, sans-serif; font-size:10pt }\n"
       " h1 { font-size:14pt }\n"
       " .code { border-collapse:collapse; width:100%; }\n"
-      " .code { font-family: \"Andale Mono\", monospace; font-size:10pt }\n"
+      " .code { font-family: \"Monospace\", monospace; font-size:10pt }\n"
       " .code { line-height: 1.2em }\n"
       " .comment { color: green; font-style: oblique }\n"
       " .keyword { color: blue }\n"
