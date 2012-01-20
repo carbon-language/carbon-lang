@@ -101,10 +101,40 @@ bool DwarfEHPrepare::InsertUnwindResumeCalls(Function &Fn) {
          I = Resumes.begin(), E = Resumes.end(); I != E; ++I) {
     ResumeInst *RI = *I;
     BranchInst::Create(UnwindBB, RI->getParent());
-    ExtractValueInst *ExnObj = ExtractValueInst::Create(RI->getOperand(0),
-                                                        0, "exn.obj", RI);
+
+    Value *V = RI->getOperand(0);
+    Instruction *ExnObj = 0;
+    InsertValueInst *SelIVI = dyn_cast<InsertValueInst>(V);
+    LoadInst *SelLoad = 0;
+    InsertValueInst *ExcIVI = 0;
+    bool EraseIVIs = false;
+    if (SelIVI) {
+      if (SelIVI->getNumIndices() == 1 && *SelIVI->idx_begin() == 1) {
+        ExcIVI = dyn_cast<InsertValueInst>(SelIVI->getOperand(0));
+        if (ExcIVI && isa<UndefValue>(ExcIVI->getOperand(0)) &&
+            ExcIVI->getNumIndices() == 1 && *ExcIVI->idx_begin() == 0) {
+          ExnObj = cast<Instruction>(ExcIVI->getOperand(1));
+          SelLoad = dyn_cast<LoadInst>(SelIVI->getOperand(1));
+          EraseIVIs = true;
+        }
+      }
+    }
+
+    if (!ExnObj)
+      ExnObj = ExtractValueInst::Create(RI->getOperand(0), 0, "exn.obj", RI);
+
     PN->addIncoming(ExnObj, RI->getParent());
     RI->eraseFromParent();
+
+    if (EraseIVIs) {
+      if (SelIVI->getNumUses() == 0)
+        SelIVI->eraseFromParent();
+      if (ExcIVI->getNumUses() == 0)
+        ExcIVI->eraseFromParent();
+      if (SelLoad && SelLoad->getNumUses() == 0)
+        SelLoad->eraseFromParent();
+    }
+
     ++NumResumesLowered;
   }
 
