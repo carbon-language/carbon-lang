@@ -669,6 +669,11 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned Size) {
     return ErrorOperand(End, "expected ']' token!");
   Parser.Lex();
   End = Parser.getTok().getLoc();
+
+  // handle [-42]
+  if (!BaseReg && !IndexReg)
+    return X86Operand::CreateMem(Disp, Start, End, Size);
+
   return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
                                Start, End, Size);
 }
