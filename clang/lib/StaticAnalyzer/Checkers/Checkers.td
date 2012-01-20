@@ -180,14 +180,13 @@ let ParentPackage = DeadCode in {
 def DeadStoresChecker : Checker<"DeadStores">,
   HelpText<"Check for values stored to variables that are never read afterwards">,
   DescFile<"DeadStoresChecker.cpp">;
+} // end DeadCode
+
+let ParentPackage = DeadCodeExperimental in {
 
 def IdempotentOperationChecker : Checker<"IdempotentOperations">,
   HelpText<"Warn about idempotent operations">,
   DescFile<"IdempotentOperationChecker.cpp">;
-
-} // end DeadCode
-
-let ParentPackage = DeadCodeExperimental in {
 
 def UnreachableCodeChecker : Checker<"UnreachableCode">,
   HelpText<"Check unreachable code">,

@@ -1356,6 +1356,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
       if (getToolChain().getTriple().getVendor() == llvm::Triple::Apple)
         CmdArgs.push_back("-analyzer-checker=osx");
+      
+      CmdArgs.push_back("-analyzer-checker=deadcode");
     }
 
     // Set the output format. The default is plist, for (lame) historical
