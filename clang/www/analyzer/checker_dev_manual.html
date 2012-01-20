@@ -334,7 +334,8 @@ source code.
 <li>
 To dump AST of a method that the current <tt>ExplodedNode</tt> belongs to:
 <br><tt>
-(gdb) <b>p ENode->getCodeDecl().getBody()->dump(getContext().getSourceManager())</b>
+(gdb) <b>p C.getPredecessor()->getCodeDecl().getBody()->dump()</b>
+(gdb) <b>p C.getPredecessor()->getCodeDecl().getBody()->dump(getContext().getSourceManager())</b>
 </tt>
 </li>
 </ul>
