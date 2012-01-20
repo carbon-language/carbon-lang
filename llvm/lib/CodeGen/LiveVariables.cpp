@@ -130,7 +130,6 @@ void LiveVariables::HandleVirtRegUse(unsigned reg, MachineBasicBlock *MBB,
   unsigned BBNum = MBB->getNumber();
 
   VarInfo& VRInfo = getVarInfo(reg);
-  VRInfo.NumUses++;
 
   // Check to see if this basic block is already a kill block.
   if (!VRInfo.Kills.empty() && VRInfo.Kills.back()->getParent() == MBB) {

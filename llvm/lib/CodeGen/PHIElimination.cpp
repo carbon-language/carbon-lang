@@ -241,7 +241,6 @@ void PHIElimination::LowerAtomicPHINode(
       LiveVariables::VarInfo &VI = LV->getVarInfo(IncomingReg);
 
       // Increment use count of the newly created virtual register.
-      VI.NumUses++;
       LV->setPHIJoin(IncomingReg);
 
       // When we are reusing the incoming register, it may already have been
