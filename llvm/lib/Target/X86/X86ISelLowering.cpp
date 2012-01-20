@@ -1811,6 +1811,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
 
   MachineFrameInfo *MFI = MF.getFrameInfo();
   bool Is64Bit = Subtarget->is64Bit();
+  bool IsWindows = Subtarget->isTargetWindows();
   bool IsWin64 = Subtarget->isTargetWin64();
 
   assert(!(isVarArg && IsTailCallConvention(CallConv)) &&
@@ -2046,7 +2047,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   } else {
     FuncInfo->setBytesToPopOnReturn(0); // Callee pops nothing.
     // If this is an sret function, the return should pop the hidden pointer.
-    if (!Is64Bit && !IsTailCallConvention(CallConv) && ArgsAreStructReturn(Ins))
+    if (!Is64Bit && !IsTailCallConvention(CallConv) && !IsWindows &&
+        ArgsAreStructReturn(Ins))
       FuncInfo->setBytesToPopOnReturn(4);
   }
 
@@ -2130,6 +2132,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   MachineFunction &MF = DAG.getMachineFunction();
   bool Is64Bit        = Subtarget->is64Bit();
   bool IsWin64        = Subtarget->isTargetWin64();
+  bool IsWindows      = Subtarget->isTargetWindows();
   bool IsStructRet    = CallIsStructReturn(Outs);
   bool IsSibcall      = false;
 
@@ -2543,10 +2546,12 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   if (X86::isCalleePop(CallConv, Is64Bit, isVarArg,
                        getTargetMachine().Options.GuaranteedTailCallOpt))
     NumBytesForCalleeToPush = NumBytes;    // Callee pops everything
-  else if (!Is64Bit && !IsTailCallConvention(CallConv) && IsStructRet)
+  else if (!Is64Bit && !IsTailCallConvention(CallConv) && !IsWindows &&
+           IsStructRet)
     // If this is a call to a struct-return function, the callee
     // pops the hidden struct pointer, so we have to push it back.
     // This is common for Darwin/X86, Linux & Mingw32 targets.
+    // For MSVC Win32 targets, the caller pops the hidden struct pointer.
     NumBytesForCalleeToPush = 4;
   else
     NumBytesForCalleeToPush = 0;  // Callee pops nothing.

@@ -1855,7 +1855,8 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
   // Issue CALLSEQ_END
   unsigned AdjStackUp = TII.getCallFrameDestroyOpcode();
   unsigned NumBytesCallee = 0;
-  if (!Subtarget->is64Bit() && CS.paramHasAttr(1, Attribute::StructRet))
+  if (!Subtarget->is64Bit() && !Subtarget->isTargetWindows() &&
+      CS.paramHasAttr(1, Attribute::StructRet))
     NumBytesCallee = 4;
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(AdjStackUp))
     .addImm(NumBytes).addImm(NumBytesCallee);
