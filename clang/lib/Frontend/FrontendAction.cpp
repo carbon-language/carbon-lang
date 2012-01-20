@@ -115,10 +115,9 @@ FrontendAction::FrontendAction() : Instance(0) {}
 
 FrontendAction::~FrontendAction() {}
 
-void FrontendAction::setCurrentFile(StringRef Value, InputKind Kind,
-                                    ASTUnit *AST) {
-  CurrentFile = Value;
-  CurrentFileKind = Kind;
+void FrontendAction::setCurrentInput(const FrontendInputFile &CurrentInput,
+                                     ASTUnit *AST) {
+  this->CurrentInput = CurrentInput;
   CurrentASTUnit.reset(AST);
 }
 
@@ -156,11 +155,10 @@ ASTConsumer* FrontendAction::CreateWrappedASTConsumer(CompilerInstance &CI,
 }
 
 bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
-                                     StringRef Filename,
-                                     InputKind InputKind) {
+                                     const FrontendInputFile &Input) {
   assert(!Instance && "Already processing a source file!");
-  assert(!Filename.empty() && "Unexpected empty filename!");
-  setCurrentFile(Filename, InputKind);
+  assert(!Input.File.empty() && "Unexpected empty filename!");
+  setCurrentInput(Input);
   setCompilerInstance(&CI);
 
   if (!BeginInvocation(CI))
@@ -168,7 +166,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
   // AST files follow a very different path, since they share objects via the
   // AST unit.
-  if (InputKind == IK_AST) {
+  if (Input.Kind == IK_AST) {
     assert(!usesPreprocessorOnly() &&
            "Attempt to pass AST file to preprocessor only action!");
     assert(hasASTFileSupport() &&
@@ -176,12 +174,12 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
     llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags(&CI.getDiagnostics());
     std::string Error;
-    ASTUnit *AST = ASTUnit::LoadFromASTFile(Filename, Diags,
+    ASTUnit *AST = ASTUnit::LoadFromASTFile(Input.File, Diags,
                                             CI.getFileSystemOpts());
     if (!AST)
       goto failure;
 
-    setCurrentFile(Filename, InputKind, AST);
+    setCurrentInput(Input, AST);
 
     // Set the shared objects, these are reset when we finish processing the
     // file, otherwise the CompilerInstance will happily destroy them.
@@ -191,11 +189,11 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     CI.setASTContext(&AST->getASTContext());
 
     // Initialize the action.
-    if (!BeginSourceFileAction(CI, Filename))
+    if (!BeginSourceFileAction(CI, Input.File))
       goto failure;
 
     /// Create the AST consumer.
-    CI.setASTConsumer(CreateWrappedASTConsumer(CI, Filename));
+    CI.setASTConsumer(CreateWrappedASTConsumer(CI, Input.File));
     if (!CI.hasASTConsumer())
       goto failure;
 
@@ -209,7 +207,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     CI.createSourceManager(CI.getFileManager());
 
   // IR files bypass the rest of initialization.
-  if (InputKind == IK_LLVM_IR) {
+  if (Input.Kind == IK_LLVM_IR) {
     assert(hasIRSupport() &&
            "This action does not have IR file support!");
 
@@ -217,7 +215,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     CI.getDiagnosticClient().BeginSourceFile(CI.getLangOpts(), 0);
 
     // Initialize the action.
-    if (!BeginSourceFileAction(CI, Filename))
+    if (!BeginSourceFileAction(CI, Input.File))
       goto failure;
 
     return true;
@@ -231,7 +229,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
                                            &CI.getPreprocessor());
 
   // Initialize the action.
-  if (!BeginSourceFileAction(CI, Filename))
+  if (!BeginSourceFileAction(CI, Input.File))
     goto failure;
 
   /// Create the AST context and consumer unless this is a preprocessor only
@@ -240,7 +238,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     CI.createASTContext();
 
     llvm::OwningPtr<ASTConsumer> Consumer(
-        CreateWrappedASTConsumer(CI, Filename));
+                                   CreateWrappedASTConsumer(CI, Input.File));
     if (!Consumer)
       goto failure;
 
@@ -300,7 +298,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   }
 
   CI.getDiagnosticClient().EndSourceFile();
-  setCurrentFile("", IK_None);
+  setCurrentInput(FrontendInputFile());
   setCompilerInstance(0);
   return false;
 }
@@ -375,7 +373,7 @@ void FrontendAction::EndSourceFile() {
   }
 
   setCompilerInstance(0);
-  setCurrentFile("", IK_None);
+  setCurrentInput(FrontendInputFile());
 }
 
 //===----------------------------------------------------------------------===//
@@ -419,7 +417,7 @@ bool WrapperFrontendAction::BeginInvocation(CompilerInstance &CI) {
 }
 bool WrapperFrontendAction::BeginSourceFileAction(CompilerInstance &CI,
                                                   StringRef Filename) {
-  WrappedAction->setCurrentFile(getCurrentFile(), getCurrentFileKind());
+  WrappedAction->setCurrentInput(getCurrentInput());
   WrappedAction->setCompilerInstance(&CI);
   return WrappedAction->BeginSourceFileAction(CI, Filename);
 }

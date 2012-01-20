@@ -11,7 +11,6 @@
 #define LLVM_CLANG_FRONTEND_FRONTENDOPTIONS_H
 
 #include "clang/Frontend/CommandLineSourceLoc.h"
-#include "clang/Frontend/FrontendAction.h"
 #include "llvm/ADT/StringRef.h"
 #include <string>
 #include <vector>
@@ -51,6 +50,37 @@ namespace frontend {
   };
 }
 
+enum InputKind {
+  IK_None,
+  IK_Asm,
+  IK_C,
+  IK_CXX,
+  IK_ObjC,
+  IK_ObjCXX,
+  IK_PreprocessedC,
+  IK_PreprocessedCXX,
+  IK_PreprocessedObjC,
+  IK_PreprocessedObjCXX,
+  IK_OpenCL,
+  IK_CUDA,
+  IK_AST,
+  IK_LLVM_IR
+};
+
+  
+/// \brief An input file for the front end.
+struct FrontendInputFile {
+  /// \brief The file name, or "-" to read from standard input.
+  std::string File;
+
+  /// \brief The kind of input, e.g., C source, AST file, LLVM IR.
+  InputKind Kind;
+
+  FrontendInputFile() : Kind(IK_None) { }
+  FrontendInputFile(StringRef File, InputKind Kind)
+    : File(File.str()), Kind(Kind) { }
+};
+  
 /// FrontendOptions - Options for controlling the behavior of the frontend.
 class FrontendOptions {
 public:
@@ -86,7 +116,7 @@ public:
   std::string ARCMTMigrateReportOut;
 
   /// The input files and their types.
-  std::vector<std::pair<InputKind, std::string> > Inputs;
+  std::vector<FrontendInputFile> Inputs;
 
   /// The output file, if any.
   std::string OutputFile;

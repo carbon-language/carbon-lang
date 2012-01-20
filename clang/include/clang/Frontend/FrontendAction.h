@@ -12,6 +12,7 @@
 
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Frontend/FrontendOptions.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <string>
@@ -23,29 +24,10 @@ class ASTMergeAction;
 class ASTUnit;
 class CompilerInstance;
 
-enum InputKind {
-  IK_None,
-  IK_Asm,
-  IK_C,
-  IK_CXX,
-  IK_ObjC,
-  IK_ObjCXX,
-  IK_PreprocessedC,
-  IK_PreprocessedCXX,
-  IK_PreprocessedObjC,
-  IK_PreprocessedObjCXX,
-  IK_OpenCL,
-  IK_CUDA,
-  IK_AST,
-  IK_LLVM_IR
-};
-
-
 /// FrontendAction - Abstract base class for actions which can be performed by
 /// the frontend.
 class FrontendAction {
-  std::string CurrentFile;
-  InputKind CurrentFileKind;
+  FrontendInputFile CurrentInput;
   llvm::OwningPtr<ASTUnit> CurrentASTUnit;
   CompilerInstance *Instance;
   friend class ASTMergeAction;
@@ -127,18 +109,22 @@ public:
   /// @{
 
   bool isCurrentFileAST() const {
-    assert(!CurrentFile.empty() && "No current file!");
+    assert(!CurrentInput.File.empty() && "No current file!");
     return CurrentASTUnit != 0;
   }
 
+  const FrontendInputFile &getCurrentInput() const {
+    return CurrentInput;
+  }
+  
   const std::string &getCurrentFile() const {
-    assert(!CurrentFile.empty() && "No current file!");
-    return CurrentFile;
+    assert(!CurrentInput.File.empty() && "No current file!");
+    return CurrentInput.File;
   }
 
   InputKind getCurrentFileKind() const {
-    assert(!CurrentFile.empty() && "No current file!");
-    return CurrentFileKind;
+    assert(!CurrentInput.File.empty() && "No current file!");
+    return CurrentInput.Kind;
   }
 
   ASTUnit &getCurrentASTUnit() const {
@@ -150,7 +136,7 @@ public:
     return CurrentASTUnit.take();
   }
 
-  void setCurrentFile(StringRef Value, InputKind Kind, ASTUnit *AST = 0);
+  void setCurrentInput(const FrontendInputFile &CurrentInput, ASTUnit *AST = 0);
 
   /// @}
   /// @name Supported Modes
@@ -189,10 +175,7 @@ public:
   /// action may store and use this object up until the matching EndSourceFile
   /// action.
   ///
-  /// \param Filename - The input filename, which will be made available to
-  /// clients via \see getCurrentFile().
-  ///
-  /// \param InputKind - The type of input. Some input kinds are handled
+  /// \param Input - The input filename and kind. Some input kinds are handled
   /// specially, for example AST inputs, since the AST file itself contains
   /// several objects which would normally be owned by the
   /// CompilerInstance. When processing AST input files, these objects should
@@ -202,8 +185,7 @@ public:
   ///
   /// \return True on success; the compilation of this file should be aborted
   /// and neither Execute nor EndSourceFile should be called.
-  bool BeginSourceFile(CompilerInstance &CI, StringRef Filename,
-                       InputKind Kind);
+  bool BeginSourceFile(CompilerInstance &CI, const FrontendInputFile &Input);
 
   /// Execute - Set the source managers main input file, and run the action.
   void Execute();

@@ -63,7 +63,7 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
   assert(!includes.empty() && "No '-chain-include' in options!");
 
   llvm::OwningPtr<ChainedIncludesSource> source(new ChainedIncludesSource());
-  InputKind IK = CI.getFrontendOpts().Inputs[0].first;
+  InputKind IK = CI.getFrontendOpts().Inputs[0].Kind;
 
   SmallVector<llvm::MemoryBuffer *, 4> serialBufs;
   SmallVector<std::string, 4> serialBufNames;
@@ -82,7 +82,8 @@ ChainedIncludesSource *ChainedIncludesSource::create(CompilerInstance &CI) {
     CInvok->getPreprocessorOpts().Macros.clear();
     
     CInvok->getFrontendOpts().Inputs.clear();
-    CInvok->getFrontendOpts().Inputs.push_back(std::make_pair(IK, includes[i]));
+    CInvok->getFrontendOpts().Inputs.push_back(FrontendInputFile(includes[i],
+                                                                 IK));
 
     TextDiagnosticPrinter *DiagClient =
       new TextDiagnosticPrinter(llvm::errs(), DiagnosticOptions());

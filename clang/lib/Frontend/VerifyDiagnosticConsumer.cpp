@@ -40,7 +40,7 @@ VerifyDiagnosticConsumer::~VerifyDiagnosticConsumer() {
 // DiagnosticConsumer interface.
 
 void VerifyDiagnosticConsumer::BeginSourceFile(const LangOptions &LangOpts,
-                                             const Preprocessor *PP) {
+                                               const Preprocessor *PP) {
   // FIXME: Const hack, we screw up the preprocessor but in practice its ok
   // because it doesn't get reused. It would be better if we could make a copy
   // though.

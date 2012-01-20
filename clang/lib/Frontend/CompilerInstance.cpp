@@ -648,13 +648,11 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
     llvm::EnableStatistics();
 
   for (unsigned i = 0, e = getFrontendOpts().Inputs.size(); i != e; ++i) {
-    const std::string &InFile = getFrontendOpts().Inputs[i].second;
-
     // Reset the ID tables if we are reusing the SourceManager.
     if (hasSourceManager())
       getSourceManager().clearIDTables();
 
-    if (Act.BeginSourceFile(*this, InFile, getFrontendOpts().Inputs[i].first)) {
+    if (Act.BeginSourceFile(*this, getFrontendOpts().Inputs[i])) {
       Act.Execute();
       Act.EndSourceFile();
     }
@@ -1019,7 +1017,8 @@ static void compileModule(CompilerInstance &ImportingInstance,
   if (const FileEntry *ModuleMapFile
                                   = ModMap.getContainingModuleMapFile(Module)) {
     // Use the module map where this module resides.
-    FrontendOpts.Inputs.push_back(std::make_pair(IK, ModuleMapFile->getName()));
+    FrontendOpts.Inputs.push_back(FrontendInputFile(ModuleMapFile->getName(), 
+                                                    IK));
   } else {
     // Create a temporary module map file.
     TempModuleMapFileName = Module->Name;
@@ -1037,7 +1036,7 @@ static void compileModule(CompilerInstance &ImportingInstance,
     llvm::raw_fd_ostream OS(FD, /*shouldClose=*/true);
     Module->print(OS);
     FrontendOpts.Inputs.push_back(
-      std::make_pair(IK, TempModuleMapFileName.str().str()));
+      FrontendInputFile(TempModuleMapFileName.str().str(), IK));
   }
 
   // Don't free the remapped file buffers; they are owned by our caller.

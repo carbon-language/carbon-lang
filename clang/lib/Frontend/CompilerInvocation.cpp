@@ -492,17 +492,17 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
 
   bool NeedLang = false;
   for (unsigned i = 0, e = Opts.Inputs.size(); i != e; ++i)
-    if (FrontendOptions::getInputKindForExtension(Opts.Inputs[i].second) !=
-        Opts.Inputs[i].first)
+    if (FrontendOptions::getInputKindForExtension(Opts.Inputs[i].File) !=
+        Opts.Inputs[i].Kind)
       NeedLang = true;
   if (NeedLang) {
     Res.push_back("-x");
-    Res.push_back(getInputKindName(Opts.Inputs[0].first));
+    Res.push_back(getInputKindName(Opts.Inputs[0].Kind));
   }
   for (unsigned i = 0, e = Opts.Inputs.size(); i != e; ++i) {
-    assert((!NeedLang || Opts.Inputs[i].first == Opts.Inputs[0].first) &&
+    assert((!NeedLang || Opts.Inputs[i].Kind == Opts.Inputs[0].Kind) &&
            "Unable to represent this input vector!");
-    Res.push_back(Opts.Inputs[i].second);
+    Res.push_back(Opts.Inputs[i].File);
   }
 
   if (!Opts.OutputFile.empty()) {
@@ -1463,7 +1463,7 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       if (i == 0)
         DashX = IK;
     }
-    Opts.Inputs.push_back(std::make_pair(IK, Inputs[i]));
+    Opts.Inputs.push_back(FrontendInputFile(Inputs[i], IK));
   }
 
   return DashX;

@@ -129,9 +129,7 @@ static bool checkForMigration(StringRef resourcesPath,
   if (!CI.getLangOpts()->ObjC1)
     return false;
 
-  arcmt::checkForManualIssues(CI,
-                              CI.getFrontendOpts().Inputs[0].second,
-                              CI.getFrontendOpts().Inputs[0].first,
+  arcmt::checkForManualIssues(CI, CI.getFrontendOpts().Inputs[0], 
                               Diags->getClient());
   return Diags->getClient()->getNumErrors() > 0;
 }

@@ -37,7 +37,7 @@ namespace arcmt {
 ///
 /// \returns false if no error is produced, true otherwise.
 bool checkForManualIssues(CompilerInvocation &CI,
-                          StringRef Filename, InputKind Kind,
+                          const FrontendInputFile &Input,
                           DiagnosticConsumer *DiagClient,
                           bool emitPremigrationARCErrors = false,
                           StringRef plistOut = StringRef());
@@ -47,7 +47,7 @@ bool checkForManualIssues(CompilerInvocation &CI,
 ///
 /// \returns false if no error is produced, true otherwise.
 bool applyTransformations(CompilerInvocation &origCI,
-                          StringRef Filename, InputKind Kind,
+                          const FrontendInputFile &Input,
                           DiagnosticConsumer *DiagClient);
 
 /// \brief Applies automatic modifications and produces temporary files
@@ -62,7 +62,7 @@ bool applyTransformations(CompilerInvocation &origCI,
 ///
 /// \returns false if no error is produced, true otherwise.
 bool migrateWithTemporaryFiles(CompilerInvocation &origCI,
-                               StringRef Filename, InputKind Kind,
+                               const FrontendInputFile &Input,
                                DiagnosticConsumer *DiagClient,
                                StringRef outputDir,
                                bool emitPremigrationARCErrors,
