@@ -857,7 +857,7 @@ void Parser::ParseThreadSafetyAttribute(IdentifierInfo &AttrName,
     ConsumeToken(); // Eat the comma, move to the next argument
   }
   // Match the ')'.
-  if (ArgExprsOk && !T.consumeClose() && ArgExprs.size() > 0) {
+  if (ArgExprsOk && !T.consumeClose()) {
     Attrs.addNew(&AttrName, AttrNameLoc, 0, AttrNameLoc, 0, SourceLocation(),
                  ArgExprs.take(), ArgExprs.size());
   }

@@ -104,6 +104,8 @@ public:
   // Clone this attribute.
   virtual Attr* clone(ASTContext &C) const = 0;
 
+  virtual bool isLateParsed() const { return false; }
+
   // Pretty print this attribute.
   virtual void printPretty(llvm::raw_ostream &OS, ASTContext &C) const = 0;
 

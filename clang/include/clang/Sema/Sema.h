@@ -5131,8 +5131,22 @@ public:
                    TemplateSpecializationKind TSK,
                    bool Complain = true);
 
+  struct LateInstantiatedAttribute {
+    const Attr *TmplAttr;
+    LocalInstantiationScope *Scope;
+    Decl *NewDecl;
+
+    LateInstantiatedAttribute(const Attr *A, LocalInstantiationScope *S,
+                              Decl *D)
+      : TmplAttr(A), Scope(S), NewDecl(D)
+    { }
+  };
+  typedef SmallVector<LateInstantiatedAttribute, 16> LateInstantiatedAttrVec;
+
   void InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
-                        const Decl *Pattern, Decl *Inst);
+                        const Decl *Pattern, Decl *Inst,
+                        LateInstantiatedAttrVec *LateAttrs = 0,
+                        LocalInstantiationScope *OuterMostScope = 0);
 
   bool
   InstantiateClassTemplateSpecialization(SourceLocation PointOfInstantiation,

@@ -1051,14 +1051,12 @@ class Foo {
  public:
   void func(T x) {
     mu_.Lock();
-    // count_ = x;
+    count_ = x;
     mu_.Unlock();
   }
 
  private:
-  // FIXME: This test passed earlier only because thread safety was turned
-  // off for templates.
-  // T count_ GUARDED_BY(mu_);
+  T count_ GUARDED_BY(mu_);
   Bar<T> bar_;
   Mutex mu_;
 };
@@ -1790,27 +1788,15 @@ public:
   // Test dependent guarded_by
   T data GUARDED_BY(mu_);
 
-  void foo() {
-    mu_.Lock();
+  void fooEx() EXCLUSIVE_LOCKS_REQUIRED(mu_) {
     data = 0;
-    mu_.Unlock();
   }
-};
-
-
-template <class T>
-class CellDelayed {
-public:
-  // Test dependent guarded_by
-  T data GUARDED_BY(mu_);
 
   void foo() {
     mu_.Lock();
     data = 0;
     mu_.Unlock();
   }
-
-  Mutex mu_;
 };
 
 void test() {
@@ -1842,13 +1828,50 @@ void test() {
   cell.data = 0; // \
     // expected-warning {{writing variable 'data' requires locking 'mu_' exclusively}}
   cell.foo();
+  cell.mu_.Lock();
+  cell.fooEx();
+  cell.mu_.Unlock();
+}
 
-  // FIXME: This doesn't work yet
-  // CellDelayed<int> celld;
-  // celld.foo();
+
+template <class T>
+class CellDelayed {
+public:
+  // Test dependent guarded_by
+  T data GUARDED_BY(mu_);
+
+  void fooEx(CellDelayed<T> *other) EXCLUSIVE_LOCKS_REQUIRED(mu_, other->mu_) {
+    this->data = other->data;
+  }
+
+  template <class T2>
+  void fooExT(CellDelayed<T2> *otherT) EXCLUSIVE_LOCKS_REQUIRED(mu_, otherT->mu_) {
+    this->data = otherT->data;
+  }
+
+  void foo() {
+    mu_.Lock();
+    data = 0;
+    mu_.Unlock();
+  }
+
+  Mutex mu_;
+};
+
+void testDelayed() {
+  CellDelayed<int> celld;
+  CellDelayed<int> celld2;
+  celld.foo();
+  celld.mu_.Lock();
+  celld2.mu_.Lock();
+
+  celld.fooEx(&celld2);
+  celld.fooExT(&celld2);
+
+  celld2.mu_.Unlock();
+  celld.mu_.Unlock();
 }
 
 };  // end namespace TestTemplateAttributeInstantiation
-
 
 

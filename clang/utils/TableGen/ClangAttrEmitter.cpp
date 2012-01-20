@@ -349,7 +349,7 @@ namespace {
          << "Size;\n";
       OS << "  }\n";
       OS << "  unsigned " << getLowerName() << "_size() const {\n"
-         << "    return " << getLowerName() << "Size;\n;";
+         << "    return " << getLowerName() << "Size;\n";
       OS << "  }";
     }
     void writeCloneArgs(raw_ostream &OS) const {
@@ -709,6 +709,11 @@ void ClangAttrClassEmitter::run(raw_ostream &OS) {
        << "attr::" << R.getName() << "; }\n";
     OS << "  static bool classof(const " << R.getName()
        << "Attr *) { return true; }\n";
+
+    bool LateParsed = R.getValueAsBit("LateParsed");
+    OS << "  virtual bool isLateParsed() const { return "
+       << LateParsed << "; }\n";
+
     OS << "};\n\n";
   }
 

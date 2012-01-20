@@ -1654,6 +1654,10 @@ Sema::SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
   return Invalid;
 }
 
+// Defined via #include from SemaTemplateInstantiateDecl.cpp
+Attr* instantiateTemplateAttribute(const Attr *At, ASTContext &C, Sema &S,
+        const MultiLevelTemplateArgumentList &TemplateArgs);
+
 /// \brief Instantiate the definition of a class from a given pattern.
 ///
 /// \param PointOfInstantiation The point of instantiation within the
@@ -1763,6 +1767,10 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   SmallVector<Decl*, 4> Fields;
   SmallVector<std::pair<FieldDecl*, FieldDecl*>, 4>
     FieldsWithMemberInitializers;
+  // Delay instantiation of late parsed attributes.
+  LateInstantiatedAttrVec LateAttrs;
+  Instantiator.enableLateAttributeInstantiation(&LateAttrs);
+
   for (RecordDecl::decl_iterator Member = Pattern->decls_begin(),
          MemberEnd = Pattern->decls_end();
        Member != MemberEnd; ++Member) {
@@ -1821,6 +1829,21 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
       ActOnCXXInClassMemberInitializer(NewField, LParenLoc, NewArgs[0]);
     }
   }
+
+  // Instantiate late parsed attributes, and attach them to their decls.
+  // See Sema::InstantiateAttrs
+  for (LateInstantiatedAttrVec::iterator I = LateAttrs.begin(),
+       E = LateAttrs.end(); I != E; ++I) {
+    assert(CurrentInstantiationScope == Instantiator.getStartingScope());
+    CurrentInstantiationScope = I->Scope;
+    Attr *NewAttr =
+      instantiateTemplateAttribute(I->TmplAttr, Context, *this, TemplateArgs);
+    I->NewDecl->addAttr(NewAttr);
+    LocalInstantiationScope::deleteScopes(I->Scope,
+                                          Instantiator.getStartingScope());
+  }
+  Instantiator.disableLateAttributeInstantiation();
+  LateAttrs.clear();
 
   if (!FieldsWithMemberInitializers.empty())
     ActOnFinishDelayedMemberInitializers(Instantiation);

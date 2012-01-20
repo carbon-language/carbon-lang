@@ -61,10 +61,13 @@ bool TemplateDeclInstantiator::SubstQualifier(const TagDecl *OldDecl,
 #include "clang/Sema/AttrTemplateInstantiate.inc"
 
 void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
-                            const Decl *Tmpl, Decl *New) {
+                            const Decl *Tmpl, Decl *New,
+                            LateInstantiatedAttrVec *LateAttrs,
+                            LocalInstantiationScope *OuterMostScope) {
   for (AttrVec::const_iterator i = Tmpl->attr_begin(), e = Tmpl->attr_end();
        i != e; ++i) {
     const Attr *TmplAttr = *i;
+
     // FIXME: This should be generalized to more than just the AlignedAttr.
     if (const AlignedAttr *Aligned = dyn_cast<AlignedAttr>(TmplAttr)) {
       if (Aligned->isAlignmentDependent()) {
@@ -89,9 +92,18 @@ void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
       }
     }
 
-    Attr *NewAttr =
-      instantiateTemplateAttribute(TmplAttr, Context, *this, TemplateArgs);
-    New->addAttr(NewAttr);
+    if (TmplAttr->isLateParsed() && LateAttrs) {
+      // Late parsed attributes must be instantiated and attached after the
+      // enclosing class has been instantiated.  See Sema::InstantiateClass.
+      LocalInstantiationScope *Saved = 0;
+      if (CurrentInstantiationScope)
+        Saved = CurrentInstantiationScope->cloneScopes(OuterMostScope);
+      LateAttrs->push_back(LateInstantiatedAttribute(TmplAttr, Saved, New));
+    } else {
+      Attr *NewAttr =
+        instantiateTemplateAttribute(TmplAttr, Context, *this, TemplateArgs);
+      New->addAttr(NewAttr);
+    }
   }
 }
 
@@ -495,7 +507,7 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
     return 0;
   }
 
-  SemaRef.InstantiateAttrs(TemplateArgs, D, Field);
+  SemaRef.InstantiateAttrs(TemplateArgs, D, Field, LateAttrs, StartingScope);
 
   if (Invalid)
     Field->setInvalidDecl();
@@ -2378,7 +2390,8 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
   // Get the definition. Leaves the variable unchanged if undefined.
   Tmpl->isDefined(Definition);
 
-  SemaRef.InstantiateAttrs(TemplateArgs, Definition, New);
+  SemaRef.InstantiateAttrs(TemplateArgs, Definition, New,
+                           LateAttrs, StartingScope);
 
   return false;
 }

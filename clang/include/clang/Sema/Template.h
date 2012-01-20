@@ -268,6 +268,50 @@ namespace clang {
       Exited = true;
     }
 
+    /// \brief Clone this scope, and all outer scopes, down to the given
+    /// outermost scope.
+    LocalInstantiationScope *cloneScopes(LocalInstantiationScope *Outermost) {
+      if (this == Outermost) return this;
+      LocalInstantiationScope *newScope =
+        new LocalInstantiationScope(SemaRef, CombineWithOuterScope);
+
+      newScope->Outer = 0;
+      if (Outer)
+        newScope->Outer = Outer->cloneScopes(Outermost);
+
+      newScope->PartiallySubstitutedPack = PartiallySubstitutedPack;
+      newScope->ArgsInPartiallySubstitutedPack = ArgsInPartiallySubstitutedPack;
+      newScope->NumArgsInPartiallySubstitutedPack =
+        NumArgsInPartiallySubstitutedPack;
+
+      for (LocalDeclsMap::iterator I = LocalDecls.begin(), E = LocalDecls.end();
+           I != E; ++I) {
+        const Decl *D = I->first;
+        llvm::PointerUnion<Decl *, DeclArgumentPack *> &Stored =
+          newScope->LocalDecls[D];
+        if (I->second.is<Decl *>()) {
+          Stored = I->second.get<Decl *>();
+        } else {
+          DeclArgumentPack *OldPack = I->second.get<DeclArgumentPack *>();
+          DeclArgumentPack *NewPack = new DeclArgumentPack(*OldPack);
+          Stored = NewPack;
+          newScope->ArgumentPacks.push_back(NewPack);
+        }
+      }
+      return newScope;
+    }
+
+    /// \brief deletes the given scope, and all otuer scopes, down to the
+    /// given outermost scope.
+    static void deleteScopes(LocalInstantiationScope *Scope,
+                             LocalInstantiationScope *Outermost) {
+      while (Scope && Scope != Outermost) {
+        LocalInstantiationScope *Out = Scope->Outer;
+        delete Scope;
+        Scope = Out;
+      }
+    }
+
     /// \brief Find the instantiation of the declaration D within the current
     /// instantiation scope.
     ///
@@ -314,6 +358,8 @@ namespace clang {
     Sema::ArgumentPackSubstitutionIndexRAII SubstIndex;
     DeclContext *Owner;
     const MultiLevelTemplateArgumentList &TemplateArgs;
+    Sema::LateInstantiatedAttrVec* LateAttrs;
+    LocalInstantiationScope *StartingScope;
 
     /// \brief A list of out-of-line class template partial
     /// specializations that will need to be instantiated after the
@@ -326,7 +372,7 @@ namespace clang {
     TemplateDeclInstantiator(Sema &SemaRef, DeclContext *Owner,
                              const MultiLevelTemplateArgumentList &TemplateArgs)
       : SemaRef(SemaRef), SubstIndex(SemaRef, -1), Owner(Owner), 
-        TemplateArgs(TemplateArgs) { }
+        TemplateArgs(TemplateArgs), LateAttrs(0), StartingScope(0) { }
 
     // FIXME: Once we get closer to completion, replace these manually-written
     // declarations with automatically-generated ones from
@@ -382,6 +428,21 @@ namespace clang {
       return 0;
     }
     
+    // Enable late instantiation of attributes.  Late instantiated attributes
+    // will be stored in LA.
+    void enableLateAttributeInstantiation(Sema::LateInstantiatedAttrVec *LA) {
+      LateAttrs = LA;
+      StartingScope = SemaRef.CurrentInstantiationScope;
+    }
+
+    // Disable late instantiation of attributes.
+    void disableLateAttributeInstantiation() {
+      LateAttrs = 0;
+      StartingScope = 0;
+    }
+
+    LocalInstantiationScope *getStartingScope() const { return StartingScope; }
+
     typedef 
       SmallVectorImpl<std::pair<ClassTemplateDecl *,
                                      ClassTemplatePartialSpecializationDecl *> >
