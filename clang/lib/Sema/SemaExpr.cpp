@@ -1742,7 +1742,6 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
     return ActOnDependentIdExpression(SS, NameInfo, IsAddressOfOperand,
                                       TemplateArgs);
 
-  bool IvarLookupFollowUp = false;
   // Perform the required lookup.
   LookupResult R(*this, NameInfo, 
                  (Id.getKind() == UnqualifiedId::IK_ImplicitSelfParam) 
@@ -1762,7 +1761,7 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
       return ActOnDependentIdExpression(SS, NameInfo, IsAddressOfOperand,
                                         TemplateArgs);
   } else {
-    IvarLookupFollowUp = (!SS.isSet() && II && getCurMethodDecl());
+    bool IvarLookupFollowUp = II && !SS.isSet() && getCurMethodDecl();
     LookupParsedName(R, S, &SS, !IvarLookupFollowUp);
 
     // If the result might be in a dependent base class, this is a dependent 
@@ -1780,9 +1779,6 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
 
       if (Expr *Ex = E.takeAs<Expr>())
         return Owned(Ex);
-      
-      // for further use, this must be set to false if in class method.
-      IvarLookupFollowUp = getCurMethodDecl()->isInstanceMethod();
     }
   }
 
