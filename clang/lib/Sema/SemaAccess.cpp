@@ -999,8 +999,6 @@ static void DiagnoseAccessPath(Sema &S,
                                const EffectiveContext &EC,
                                AccessTarget &Entity) {
   AccessSpecifier Access = Entity.getAccess();
-  const CXXRecordDecl *NamingClass = Entity.getNamingClass();
-  NamingClass = NamingClass->getCanonicalDecl();
 
   NamedDecl *D = (Entity.isMemberAccess() ? Entity.getTargetDecl() : 0);
   const CXXRecordDecl *DeclaringClass = Entity.getDeclaringClass();
