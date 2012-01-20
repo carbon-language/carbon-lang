@@ -53,4 +53,6 @@ _main:
 	and	rax, 257
 // CHECK:	andq	$-257,	%rax
 	and	rax, -257
+// CHECK:	fld	%st(0)
+	fld	ST(0)
 	ret

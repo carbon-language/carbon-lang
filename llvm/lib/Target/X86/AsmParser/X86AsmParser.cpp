@@ -470,17 +470,20 @@ bool X86AsmParser::isDstOp(X86Operand &Op) {
 bool X86AsmParser::ParseRegister(unsigned &RegNo,
                                  SMLoc &StartLoc, SMLoc &EndLoc) {
   RegNo = 0;
-  const AsmToken &TokPercent = Parser.getTok();
-  if (!getParser().getAssemblerDialect()) {
+  bool IntelSyntax = getParser().getAssemblerDialect();
+  if (!IntelSyntax) {
+    const AsmToken &TokPercent = Parser.getTok();
     assert(TokPercent.is(AsmToken::Percent) && "Invalid token kind!");
     StartLoc = TokPercent.getLoc();
     Parser.Lex(); // Eat percent token.
   }
 
   const AsmToken &Tok = Parser.getTok();
-  if (Tok.isNot(AsmToken::Identifier))
+  if (Tok.isNot(AsmToken::Identifier)) {
+    if (IntelSyntax) return true;
     return Error(StartLoc, "invalid register name",
                  SMRange(StartLoc, Tok.getEndLoc()));
+  }
 
   RegNo = MatchRegisterName(Tok.getString());
 
@@ -560,9 +563,11 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
     }
   }
 
-  if (RegNo == 0)
+  if (RegNo == 0) {
+    if (IntelSyntax) return true;
     return Error(StartLoc, "invalid register name",
                  SMRange(StartLoc, Tok.getEndLoc()));
+  }
 
   EndLoc = Tok.getEndLoc();
   Parser.Lex(); // Eat identifier token.
@@ -573,16 +578,6 @@ X86Operand *X86AsmParser::ParseOperand() {
   if (getParser().getAssemblerDialect())
     return ParseIntelOperand();
   return ParseATTOperand();
-}
-
-/// getIntelRegister - If this is an intel register operand
-/// then return register number, otherwise return 0;
-static unsigned getIntelRegisterOperand(StringRef Str) {
-  unsigned RegNo = MatchRegisterName(Str);
-  // If the match failed, try the register name as lowercase.
-  if (RegNo == 0)
-    RegNo = MatchRegisterName(Str.lower());
-  return RegNo;
 }
 
 /// getIntelMemOperandSize - Return intel memory operand size.
@@ -613,10 +608,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned Size) {
   
   if (getLexer().is(AsmToken::Identifier)) {
     // Parse BaseReg
-    BaseReg = getIntelRegisterOperand(Tok.getString());
-    if (BaseReg)
-      Parser.Lex();
-    else {
+    if (ParseRegister(BaseReg, Start, End)) {
       // Handle '[' 'symbol' ']'
       const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
       if (getParser().ParseExpression(Disp, End)) return 0;
@@ -645,20 +637,16 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned Size) {
       if (getLexer().is(AsmToken::Star)) {
         Parser.Lex();
         SMLoc IdxRegLoc = Parser.getTok().getLoc();
-        IndexReg = getIntelRegisterOperand(Parser.getTok().getString());
-        if (!IndexReg) return ErrorOperand(IdxRegLoc, "Expected register");
-        Parser.Lex(); // Eat register
+	if (ParseRegister(IndexReg, IdxRegLoc, End))
+	  return ErrorOperand(IdxRegLoc, "Expected register");
         Scale = Val;
       } else if (getLexer().is(AsmToken::RBrac)) {
         const MCExpr *ValExpr = MCConstantExpr::Create(Val, getContext());
         Disp = isPlus ? ValExpr : MCConstantExpr::Create(0-Val, getContext());
       } else
         return ErrorOperand(PlusLoc, "unexpected token after +");
-    } else if (getLexer().is(AsmToken::Identifier)) {
-      IndexReg = getIntelRegisterOperand(Tok.getString());
-      if (IndexReg)
-	Parser.Lex();
-    }
+    } else if (getLexer().is(AsmToken::Identifier))
+      ParseRegister(IndexReg, Start, End);
   }
 
   if (getLexer().isNot(AsmToken::RBrac))
@@ -713,8 +701,8 @@ X86Operand *X86AsmParser::ParseIntelOperand() {
   }
 
   // register
-  if(unsigned RegNo = getIntelRegisterOperand(TokenString)) {
-    Parser.Lex();
+  unsigned RegNo = 0;
+  if (!ParseRegister(RegNo, Start, End)) {
     End = Parser.getTok().getLoc();
     return X86Operand::CreateReg(RegNo, Start, End);
   }
