@@ -17,6 +17,8 @@ import pprint
 import re
 import sys
 import time
+import uuid
+
 
 PARSE_MODE_NORMAL = 0
 PARSE_MODE_THREAD = 1
@@ -81,59 +83,93 @@ class CrashLog:
     class Image:
         """Class that represents a binary images in a darwin crash log"""
         dsymForUUIDBinary = os.path.expanduser('~rc/bin/dsymForUUID')
+        if not os.path.exists(dsymForUUIDBinary):
+            dsymForUUIDBinary = commands.getoutput('which dsymForUUID')
+            
+        dwarfdump_uuid_regex = re.compile('UUID: ([-0-9a-fA-F]+) \(([^\(]+)\) .*')
         
         def __init__(self, text_addr_lo, text_addr_hi, ident, version, uuid, path):
             self.text_addr_lo = text_addr_lo
             self.text_addr_hi = text_addr_hi
             self.ident = ident
             self.version = version
+            self.arch = None
             self.uuid = uuid
             self.path = path
+            self.resolved_path = None
+            self.dsym = None
             self.target = None
             self.module = None
-            self.plist = None
         
         def dump(self, prefix):
             print "%s%s" % (prefix, self)
         
         def __str__(self):
-            return "%#16.16x %s %s" % (self.text_addr_lo, self.uuid, self.path)
+            return "%#16.16x %s %s" % (self.text_addr_lo, self.uuid, self.get_resolved_path())
         
-        def basename(self):
-            if self.path:
-                return os.path.basename(self.path)
+        def get_resolved_path(self):
+            if self.resolved_path:
+                return self.resolved_path
+            elif self.path:
+                return self.path
+            return None
+
+        def get_resolved_path_basename(self):
+            path = self.get_resolved_path()
+            if path:
+                return os.path.basename(path)
+            return None
+
+        def dsym_basename(self):
+            if self.dsym:
+                return os.path.basename(self.dsym)
             return None
         
         def fetch_symboled_executable_and_dsym(self):
+            if self.resolved_path:
+                # Don't load a module twice...
+                return 0
+            print 'Locating %s %s...' % (self.uuid, self.path),
             if os.path.exists(self.dsymForUUIDBinary):
                 dsym_for_uuid_command = '%s %s' % (self.dsymForUUIDBinary, self.uuid)
-                print 'Fetching %s %s...' % (self.uuid, self.path),
                 s = commands.getoutput(dsym_for_uuid_command)
                 if s:
                     plist_root = plistlib.readPlistFromString (s)
                     if plist_root:
                         # pp = pprint.PrettyPrinter(indent=4)
                         # pp.pprint(plist_root)
-                        self.plist = plist_root[self.uuid]
-                        if self.plist:
-                            if 'DBGError' in self.plist:
-                                err = self.plist['DBGError']
-                                if isinstance(err, unicode):
-                                    err = err.encode('utf-8')
-                                print 'error: %s' % err
-                            elif 'DBGSymbolRichExecutable' in self.plist:
-                                self.path = os.path.expanduser (self.plist['DBGSymbolRichExecutable'])
-                                #print 'success: symboled exe is "%s"' % self.path
-                                print 'ok'
-                                return 1
-                        print 'error: failed to get plist dictionary entry for UUID %s: %s' % (uuid, plist_root)
-                    else:
-                        print 'error: failed to extract plist from "%s"' % (s)
-                else:
-                    print 'error: %s failed...' % (dsym_for_uuid_command)
-                return 0
+                        plist = plist_root[self.uuid]
+                        if plist:
+                            if 'DBGArchitecture' in plist:
+                                self.arch = plist['DBGArchitecture']
+                            if 'DBGDSYMPath' in plist:
+                                self.dsym = os.path.realpath(plist['DBGDSYMPath'])
+                            if 'DBGSymbolRichExecutable' in plist:
+                                self.resolved_path = os.path.expanduser (plist['DBGSymbolRichExecutable'])
+            if not self.resolved_path and os.path.exists(self.path):
+                dwarfdump_cmd_output = commands.getoutput('dwarfdump --uuid "%s"' % self.path)
+                self_uuid = uuid.UUID(self.uuid)
+                for line in dwarfdump_cmd_output.splitlines():
+                    match = self.dwarfdump_uuid_regex.search (line)
+                    if match:
+                        dwarf_uuid_str = match.group(1)
+                        dwarf_uuid = uuid.UUID(dwarf_uuid_str)
+                        if self_uuid == dwarf_uuid:
+                            self.resolved_path = self.path
+                            self.arch = match.group(2)
+                            break;
+                if not self.resolved_path:
+                    print "error: file %s '%s' doesn't match the UUID in the installed file" % (self.uuid, self.path)
+                    return 0
+            if (self.resolved_path and os.path.exists(self.resolved_path)) or (self.path and os.path.exists(self.path)):
+                print 'ok'
+                if self.path != self.resolved_path:
+                    print '  exe = "%s"' % self.resolved_path 
+                if self.dsym:
+                    print ' dsym = "%s"' % self.dsym
+                return 1
             else:
-                return 1 # no dsym locating script, just use the paths in the crash log
+                return 0
         
         def load_module(self):
             if self.module:
@@ -146,18 +182,17 @@ class CrashLog:
                     else:
                         return 'error: %s' % error.GetCString()
                 else:
-                    return 'error: unable to find "__TEXT" section in "%s"' % self.path
+                    return 'error: unable to find "__TEXT" section in "%s"' % self.get_resolved_path()
             else:
                 return 'error: invalid module'
         
         def create_target(self, debugger):
             if self.fetch_symboled_executable_and_dsym ():
-                path_spec = lldb.SBFileSpec (self.path)
-                arch = self.plist['DBGArchitecture']
-                #print 'debugger.CreateTarget (path="%s", arch="%s")  uuid=%s' % (self.path, arch, self.uuid)
+                resolved_path = self.get_resolved_path();
+                path_spec = lldb.SBFileSpec (resolved_path)
                 #result.PutCString ('plist[%s] = %s' % (uuid, self.plist))
                 error = lldb.SBError()
-                self.target = debugger.CreateTarget (self.path, arch, None, False, error);
+                self.target = debugger.CreateTarget (resolved_path, self.arch, None, False, error);
                 if self.target:
                     self.module = self.target.FindModule (path_spec)
                     if self.module:
@@ -167,19 +202,18 @@ class CrashLog:
                         else:
                             return None
                     else:
-                        return 'error: unable to get module for (%s) "%s"' % (arch, self.path)
+                        return 'error: unable to get module for (%s) "%s"' % (self.arch, resolved_path)
                 else:
-                    return 'error: unable to create target for (%s) "%s"' % (arch, self.path)
+                    return 'error: unable to create target for (%s) "%s"' % (self.arch, resolved_path)
         
         def add_target_module(self, target):
             if target:
                 self.target = target
                 if self.fetch_symboled_executable_and_dsym ():
-                    path_spec = lldb.SBFileSpec (self.path)
-                    arch = self.plist['DBGArchitecture']
-                    #result.PutCString ('plist[%s] = %s' % (uuid, self.plist))
-                    #print 'target.AddModule (path="%s", arch="%s", uuid=%s)' % (self.path, arch, self.uuid)
-                    self.module = target.AddModule (self.path, arch, self.uuid)
+                    resolved_path = self.get_resolved_path();
+                    path_spec = lldb.SBFileSpec (resolved_path)
+                    #print 'target.AddModule (path="%s", arch="%s", uuid=%s)' % (resolved_path, self.arch, self.uuid)
+                    self.module = target.AddModule (resolved_path, self.arch, self.uuid)
                     if self.module:
                         err = self.load_module()
                         if err:
@@ -187,7 +221,7 @@ class CrashLog:
                         else:
                             return None
                     else:
-                        return 'error: unable to get module for (%s) "%s"' % (arch, self.path)
+                        return 'error: unable to get module for (%s) "%s"' % (self.arch, resolved_path)
             else:
                 return 'error: invalid target'
         
