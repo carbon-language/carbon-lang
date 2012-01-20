@@ -55,8 +55,8 @@ TEST(ASTFrontendAction, Sanity) {
   CompilerInvocation *invocation = new CompilerInvocation;
   invocation->getPreprocessorOpts().addRemappedFile(
     "test.cc", MemoryBuffer::getMemBuffer("int main() { float x; }"));
-  invocation->getFrontendOpts().Inputs.push_back(
-    std::make_pair(IK_CXX, "test.cc"));
+  invocation->getFrontendOpts().Inputs.push_back(FrontendInputFile("test.cc",
+                                                                   IK_CXX));
   invocation->getFrontendOpts().ProgramAction = frontend::ParseSyntaxOnly;
   invocation->getTargetOpts().Triple = "i386-unknown-linux-gnu";
   CompilerInstance compiler;
