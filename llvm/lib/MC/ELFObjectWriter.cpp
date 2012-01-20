@@ -1380,14 +1380,10 @@ uint64_t ELFObjectWriter::GetSectionAddressSize(const MCAsmLayout &Layout,
 void ELFObjectWriter::WriteDataSectionData(MCAssembler &Asm,
                                            const MCAsmLayout &Layout,
                                            const MCSectionELF &Section) {
-  uint64_t FileOff = OS.tell();
   const MCSectionData &SD = Asm.getOrCreateSectionData(Section);
 
-  uint64_t Padding = OffsetToAlignment(FileOff, SD.getAlignment());
+  uint64_t Padding = OffsetToAlignment(OS.tell(), SD.getAlignment());
   WriteZeros(Padding);
-  FileOff += Padding;
-
-  FileOff += GetSectionFileSize(Layout, SD);
 
   if (IsELFMetaDataSection(SD)) {
     for (MCSectionData::const_iterator i = SD.begin(), e = SD.end(); i != e;
@@ -1553,15 +1549,12 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   for (unsigned i = 0; i < NumRegularSections + 1; ++i)
     WriteDataSectionData(Asm, Layout, *Sections[i]);
 
-  FileOff = OS.tell();
-  uint64_t Padding = OffsetToAlignment(FileOff, NaturalAlignment);
+  uint64_t Padding = OffsetToAlignment(OS.tell(), NaturalAlignment);
   WriteZeros(Padding);
 
   // ... then the section header table ...
   WriteSectionHeader(Asm, GroupMap, Layout, SectionIndexMap,
                      SectionOffsetMap);
-
-  FileOff = OS.tell();
 
   // ... and then the remaining sections ...
   for (unsigned i = NumRegularSections + 1; i < NumSections; ++i)

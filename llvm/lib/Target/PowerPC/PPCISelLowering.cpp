@@ -1914,12 +1914,11 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
     for (unsigned ArgNo = 0, e = Ins.size(); ArgNo != e;
          ++ArgNo) {
       EVT ObjectVT = Ins[ArgNo].VT;
-      unsigned ObjSize = ObjectVT.getSizeInBits()/8;
       ISD::ArgFlagsTy Flags = Ins[ArgNo].Flags;
 
       if (Flags.isByVal()) {
         // ObjSize is the true size, ArgSize rounded up to multiple of regs.
-        ObjSize = Flags.getByValSize();
+        unsigned ObjSize = Flags.getByValSize();
         unsigned ArgSize =
                 ((ObjSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
         VecArgOffset += ArgSize;
