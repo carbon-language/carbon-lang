@@ -2484,11 +2484,15 @@ void LSRInstance::ChainInstruction(Instruction *UserInst, Instruction *IVOper,
       DEBUG(dbgs() << "IV Chain Limit\n");
       return;
     }
+    LastIncExpr = SE.getSCEV(NextIV);
+    // IVUsers may have skipped over sign/zero extensions. We don't currently
+    // attempt to form chains involving extensions unless they can be hoisted
+    // into this loop's AddRec.
+    if (!isa<SCEVAddRecExpr>(LastIncExpr))
+      return;
     ++NChains;
     IVChainVec.resize(NChains);
     ChainUsersVec.resize(NChains);
-    LastIncExpr = SE.getSCEV(NextIV);
-    assert(isa<SCEVAddRecExpr>(LastIncExpr) && "expect recurrence at IV user");
     DEBUG(dbgs() << "IV Head: (" << *UserInst << ") IV=" << *LastIncExpr
           << "\n");
   }
