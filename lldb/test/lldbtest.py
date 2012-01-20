@@ -206,6 +206,10 @@ def CMD_MSG(str):
     '''A generic "Command '%s' returns successfully" message generator.'''
     return "Command '%s' returns successfully" % str
 
+def COMPLETIOND_MSG(str_before, str_after):
+    '''A generic message generator for the completion mechanism.'''
+    return "'%s' successfully completes to '%s'" % (str_before, str_after)
+
 def EXP_MSG(str, exe):
     '''A generic "'%s' returns expected result" message generator if exe.
     Otherwise, it generates "'%s' matches expected result" message.'''

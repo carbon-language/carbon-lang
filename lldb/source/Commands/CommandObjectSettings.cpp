@@ -188,7 +188,11 @@ CommandObjectSettingsSet::HandleArgumentCompletion (Args &input,
     completion_str.erase (cursor_char_position);
 
     // Attempting to complete variable name
-    if (cursor_index == 1)
+    llvm::StringRef prev_str(cursor_index == 2 ? input.GetArgumentAtIndex(1) : "");
+    if (cursor_index == 1 ||
+        (cursor_index == 2 && prev_str.startswith("-")) // "settings set -r th", followed by Tab.
+        )
+    {
         CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter,
                                                              CommandCompletions::eSettingsNameCompletion,
                                                              completion_str.c_str(),
@@ -197,6 +201,10 @@ CommandObjectSettingsSet::HandleArgumentCompletion (Args &input,
                                                              NULL,
                                                              word_complete,
                                                              matches);
+        // If there is only 1 match which fulfills the completion request, do an early return.
+        if (matches.GetSize() == 1 && completion_str.compare(matches.GetStringAtIndex(0)) != 0)
+            return 1;
+    }
 
     // Attempting to complete value
     if ((cursor_index == 2)   // Partly into the variable's value

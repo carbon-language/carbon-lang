@@ -1714,19 +1714,21 @@ UserSettingsController::CompleteSettingsNames (const UserSettingsControllerSP& u
             
         }
 
+        // The variable my_usc_sp keeps track of the user settings controller as
+        // we descend through the tree hierarchy.
+        UserSettingsControllerSP my_usc_sp = usc_sp;
         for (int i = 0; i < num_extra_levels; ++i)
         {
             ConstString child_level (partial_setting_name_pieces.GetArgumentAtIndex (0));
             bool found = false;
-            int num_children = usc_sp->GetNumChildren();
-            UserSettingsControllerSP child_usc_sp = usc_sp;
+            int num_children = my_usc_sp->GetNumChildren();
 
             for (int j = 0; j < num_children && !found; ++j)
             {
-                if (child_usc_sp->GetChildAtIndex (j)->GetLevelName() == child_level)
+                if (my_usc_sp->GetChildAtIndex (j)->GetLevelName() == child_level)
                 {
                     found = true;
-                    child_usc_sp = child_usc_sp->GetChildAtIndex (j);
+                    my_usc_sp = my_usc_sp->GetChildAtIndex (j);
                     partial_setting_name_pieces.Shift();
                 }
             }
@@ -1750,15 +1752,15 @@ UserSettingsController::CompleteSettingsNames (const UserSettingsControllerSP& u
             // 'next_name' is an instance name.  The last name piece must be a non-empty partial match against an
             // instance_name, assuming 'next_name' is valid.
 
-            if (usc_sp->IsLiveInstance (next_name))
+            if (my_usc_sp->IsLiveInstance (next_name))
             {
                 std::string complete_prefix;
-                usc_sp->BuildParentPrefix (complete_prefix);
+                my_usc_sp->BuildParentPrefix (complete_prefix);
 
-                num_matches = usc_sp->InstanceVariableMatches(partial_setting_name_pieces.GetArgumentAtIndex(0),
-                                                                     complete_prefix,
-                                                                     next_name.c_str(),
-                                                                     matches);
+                num_matches = my_usc_sp->InstanceVariableMatches(partial_setting_name_pieces.GetArgumentAtIndex(0),
+                                                                 complete_prefix,
+                                                                 next_name.c_str(),
+                                                                 matches);
                 word_complete = true;
                 if (num_matches > 1)
                     word_complete = false;
@@ -1772,14 +1774,14 @@ UserSettingsController::CompleteSettingsNames (const UserSettingsControllerSP& u
         {
             // 'next_name' must be a child name.  Find the correct child and pass the remaining piece to be resolved.
             bool found = false;
-            int num_children = usc_sp->GetNumChildren();
+            int num_children = my_usc_sp->GetNumChildren();
             ConstString child_level (next_name.c_str());
             for (int i = 0; i < num_children; ++i)
             {
-                if (usc_sp->GetChildAtIndex (i)->GetLevelName() == child_level)
+                if (my_usc_sp->GetChildAtIndex (i)->GetLevelName() == child_level)
                 {
                     found = true;
-                    return UserSettingsController::CompleteSettingsNames (usc_sp->GetChildAtIndex (i),
+                    return UserSettingsController::CompleteSettingsNames (my_usc_sp->GetChildAtIndex (i),
                                                                           partial_setting_name_pieces,
                                                                           word_complete, matches);
                 }
