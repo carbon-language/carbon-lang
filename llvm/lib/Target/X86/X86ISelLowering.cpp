@@ -3253,35 +3253,74 @@ bool X86::isPSHUFLWMask(ShuffleVectorSDNode *N) {
 
 /// isPALIGNRMask - Return true if the node specifies a shuffle of elements that
 /// is suitable for input to PALIGNR.
-static bool isPALIGNRMask(ArrayRef<int> Mask, EVT VT, bool hasSSSE3) {
-  int i, e = VT.getVectorNumElements();
-  if (VT.getSizeInBits() != 128)
+static bool isPALIGNRMask(ArrayRef<int> Mask, EVT VT,
+                          const X86Subtarget *Subtarget) {
+  if ((VT.getSizeInBits() == 128 && !Subtarget->hasSSSE3()) ||
+      (VT.getSizeInBits() == 256 && !Subtarget->hasAVX2()))
     return false;
 
-  // Do not handle v2i64 / v2f64 shuffles with palignr.
-  if (e < 4 || !hasSSSE3)
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned NumLanes = VT.getSizeInBits()/128;
+  unsigned NumLaneElts = NumElts/NumLanes;
+
+  // Do not handle 64-bit element shuffles with palignr.
+  if (NumLaneElts == 2)
     return false;
 
-  for (i = 0; i != e; ++i)
-    if (Mask[i] >= 0)
-      break;
+  for (unsigned l = 0; l != NumElts; l+=NumLaneElts) {
+    unsigned i;
+    for (i = 0; i != NumLaneElts; ++i) {
+      if (Mask[i+l] >= 0)
+        break;
+    }
 
-  // All undef, not a palignr.
-  if (i == e)
-    return false;
+    // Lane is all undef, go to next lane
+    if (i == NumLaneElts)
+      continue;
 
-  // Make sure we're shifting in the right direction.
-  if (Mask[i] <= i)
-    return false;
+    int Start = Mask[i+l];
 
-  int s = Mask[i] - i;
-
-  // Check the rest of the elements to see if they are consecutive.
-  for (++i; i != e; ++i) {
-    int m = Mask[i];
-    if (m >= 0 && m != s+i)
+    // Make sure its in this lane in one of the sources
+    if (!isUndefOrInRange(Start, l, l+NumLaneElts) &&
+        !isUndefOrInRange(Start, l+NumElts, l+NumElts+NumLaneElts))
       return false;
+
+    // If not lane 0, then we must match lane 0
+    if (l != 0 && Mask[i] >= 0 && !isUndefOrEqual(Start, Mask[i]+l))
+      return false;
+
+    // Correct second source to be contiguous with first source
+    if (Start >= (int)NumElts)
+      Start -= NumElts - NumLaneElts;
+
+    // Make sure we're shifting in the right direction.
+    if (Start <= (int)(i+l))
+      return false;
+
+    Start -= i;
+
+    // Check the rest of the elements to see if they are consecutive.
+    for (++i; i != NumLaneElts; ++i) {
+      int Idx = Mask[i+l];
+
+      // Make sure its in this lane
+      if (!isUndefOrInRange(Idx, l, l+NumLaneElts) &&
+          !isUndefOrInRange(Idx, l+NumElts, l+NumElts+NumLaneElts))
+        return false;
+
+      // If not lane 0, then we must match lane 0
+      if (l != 0 && Mask[i] >= 0 && !isUndefOrEqual(Idx, Mask[i]+l))
+        return false;
+
+      if (Idx >= (int)NumElts)
+        Idx -= NumElts - NumLaneElts;
+
+      if (!isUndefOrEqual(Idx, Start+i))
+        return false;
+
+    }
   }
+
   return true;
 }
 
@@ -3983,14 +4022,21 @@ unsigned X86::getShufflePSHUFLWImmediate(SDNode *N) {
 static unsigned getShufflePALIGNRImmediate(ShuffleVectorSDNode *SVOp) {
   EVT VT = SVOp->getValueType(0);
   unsigned EltSize = VT.getVectorElementType().getSizeInBits() >> 3;
-  int Val = 0;
 
-  unsigned i, e;
-  for (i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned NumLanes = VT.getSizeInBits()/128;
+  unsigned NumLaneElts = NumElts/NumLanes;
+
+  int Val = 0;
+  unsigned i;
+  for (i = 0; i != NumElts; ++i) {
     Val = SVOp->getMaskElt(i);
     if (Val >= 0)
       break;
   }
+  if (Val >= (int)NumElts)
+    Val -= NumElts - NumLaneElts;
+
   assert(Val - i > 0 && "PALIGNR imm should be positive");
   return (Val - i) * EltSize;
 }
@@ -6626,7 +6672,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   // inlined here right now to enable us to directly emit target specific
   // nodes, and remove one by one until they don't return Op anymore.
 
-  if (isPALIGNRMask(M, VT, Subtarget->hasSSSE3()))
+  if (isPALIGNRMask(M, VT, Subtarget))
     return getTargetShuffleNode(X86ISD::PALIGN, dl, VT, V1, V2,
                                 getShufflePALIGNRImmediate(SVOp),
                                 DAG);
@@ -11089,7 +11135,7 @@ X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
           isPSHUFDMask(M, VT) ||
           isPSHUFHWMask(M, VT) ||
           isPSHUFLWMask(M, VT) ||
-          isPALIGNRMask(M, VT, Subtarget->hasSSSE3()) ||
+          isPALIGNRMask(M, VT, Subtarget) ||
           isUNPCKLMask(M, VT, Subtarget->hasAVX2()) ||
           isUNPCKHMask(M, VT, Subtarget->hasAVX2()) ||
           isUNPCKL_v_undef_Mask(M, VT, Subtarget->hasAVX2()) ||

@@ -5476,6 +5476,17 @@ let Predicates = [HasAVX2] in
 let Constraints = "$src1 = $dst", Predicates = [HasSSSE3] in
   defm PALIGN : ssse3_palign<"palignr">;
 
+let Predicates = [HasAVX2] in {
+def : Pat<(v8i32 (X86PAlign VR256:$src1, VR256:$src2, (i8 imm:$imm))),
+          (VPALIGNR256rr VR256:$src2, VR256:$src1, imm:$imm)>;
+def : Pat<(v8f32 (X86PAlign VR256:$src1, VR256:$src2, (i8 imm:$imm))),
+          (VPALIGNR256rr VR256:$src2, VR256:$src1, imm:$imm)>;
+def : Pat<(v16i16 (X86PAlign VR256:$src1, VR256:$src2, (i8 imm:$imm))),
+          (VPALIGNR256rr VR256:$src2, VR256:$src1, imm:$imm)>;
+def : Pat<(v32i8 (X86PAlign VR256:$src1, VR256:$src2, (i8 imm:$imm))),
+          (VPALIGNR256rr VR256:$src2, VR256:$src1, imm:$imm)>;
+}
+
 let Predicates = [HasAVX] in {
 def : Pat<(v4i32 (X86PAlign VR128:$src1, VR128:$src2, (i8 imm:$imm))),
           (VPALIGNR128rr VR128:$src2, VR128:$src1, imm:$imm)>;
