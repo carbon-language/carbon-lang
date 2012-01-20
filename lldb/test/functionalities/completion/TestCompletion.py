@@ -62,8 +62,8 @@ class CommandLineCompletionTestCase(TestBase):
                                'target.process.thread.step-avoid-regexp',
                                'target.process.thread.trace-thread'])
 
-    def complete_from_to(self, str_before, patterns):
-        """Test the completion mechanism completes str_before to pattern, where
+    def complete_from_to(self, str_input, patterns):
+        """Test the completion mechanism completes str_input to pattern, where
         patterns could be a pattern-string or a list of pattern-strings"""
         prompt = "(lldb) "
         add_prompt = "Enter your stop hook command(s).  Type 'DONE' to end.\r\n> "
@@ -78,11 +78,10 @@ class CommandLineCompletionTestCase(TestBase):
                 child.logfile_send = f_send
                 child.logfile_read = f_read
 
-                # Test that str_before completes to str_after.
                 child.expect_exact(prompt)
                 child.setecho(True)
-                child.send("%s\t" % str_before)
-                #child.expect_exact("%s\t" % str_after)
+                # Sends str_input and a Tab to invoke the completion machinery.
+                child.send("%s\t" % str_input)
                 child.sendline('')
                 child.expect_exact(prompt)
 
@@ -100,9 +99,10 @@ class CommandLineCompletionTestCase(TestBase):
             if type(patterns) is not types.ListType:
                 patterns = [patterns]
 
+            # Test that str_input completes to our patterns.
             # If each pattern matches from_child, the completion mechanism works!
             for p in patterns:
-                self.expect(from_child, msg=COMPLETIOND_MSG(str_before, p), exe=False,
+                self.expect(from_child, msg=COMPLETIOND_MSG(str_input, p), exe=False,
                     patterns = [p])
 
         child.logfile_send = None
