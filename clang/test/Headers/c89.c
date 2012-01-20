@@ -1,4 +1,4 @@
-// RUN: %clang -ccc-host-triple i386-apple-darwin10 -fsyntax-only -Xclang -verify -std=c89 %s
+// RUN: %clang -target i386-apple-darwin10 -fsyntax-only -Xclang -verify -std=c89 %s
 
 // FIXME: Disable inclusion of mm_malloc.h, our current implementation is broken
 // on win32 since we don't generally know how to find errno.h.

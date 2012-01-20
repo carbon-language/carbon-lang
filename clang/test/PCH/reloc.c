@@ -1,8 +1,8 @@
-// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 --relocatable-pch -o %t \
+// RUN: %clang -target x86_64-apple-darwin10 --relocatable-pch -o %t \
 // RUN:   -isysroot %S/libroot %S/libroot/usr/include/reloc.h
-// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -fsyntax-only \
+// RUN: %clang -target x86_64-apple-darwin10 -fsyntax-only \
 // RUN:   -include-pch %t -isysroot %S/libroot %s -Xclang -verify
-// RUN: not %clang -ccc-host-triple x86_64-apple-darwin10 -include-pch %t %s
+// RUN: not %clang -target x86_64-apple-darwin10 -include-pch %t %s
 
 #include <reloc.h>
 

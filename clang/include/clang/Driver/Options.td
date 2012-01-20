@@ -101,8 +101,6 @@ def ccc_pch_is_pth : Flag<"-ccc-pch-is-pth">, CCCDriverOpt,
   HelpText<"Use pretokenized headers for precompiled headers">;
 
 class CCCDebugOpt : Group<ccc_debug_Group>, Flags<[DriverOption, HelpHidden]>;
-def ccc_host_triple : Separate<"-ccc-host-triple">, CCCDebugOpt,
-  HelpText<"Simulate running on the given target">;
 def ccc_install_dir : Separate<"-ccc-install-dir">, CCCDebugOpt,
   HelpText<"Simulate installation in the given directory">;
 def ccc_print_options : Flag<"-ccc-print-options">, CCCDebugOpt,
@@ -756,6 +754,10 @@ def stdlib_EQ : Joined<"-stdlib=">;
 def sub__library : JoinedOrSeparate<"-sub_library">;
 def sub__umbrella : JoinedOrSeparate<"-sub_umbrella">;
 def s : Flag<"-s">;
+def target : Separate<"-target">,
+  HelpText<"Generate code for the given target">;
+// We should deprecate the use of -ccc-host-triple, and then remove.
+def ccc_host_triple : Flag<"-ccc-host-triple">, Alias<target>;
 def time : Flag<"-time">,
   HelpText<"Time individual commands">;
 def traditional_cpp : Flag<"-traditional-cpp">;

@@ -1,6 +1,6 @@
 // Check that we run dsymutil properly with multiple -arch options.
 //
-// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -ccc-print-phases \
+// RUN: %clang -target x86_64-apple-darwin10 -ccc-print-phases \
 // RUN:   -arch i386 -arch x86_64 %s -g 2> %t
 // RUN: FileCheck -check-prefix=CHECK-MULTIARCH-ACTIONS < %t %s
 //
@@ -14,7 +14,7 @@
 // CHECK-MULTIARCH-ACTIONS: 7: lipo, {5, 6}, image
 // CHECK-MULTIARCH-ACTIONS: 8: dsymutil, {7}, dSYM
 //
-// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -ccc-print-bindings \
+// RUN: %clang -target x86_64-apple-darwin10 -ccc-print-bindings \
 // RUN:   -arch i386 -arch x86_64 %s -g 2> %t
 // RUN: FileCheck -check-prefix=CHECK-MULTIARCH-BINDINGS < %t %s
 //
@@ -23,7 +23,7 @@
 
 // Check output name derivation.
 //
-// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -ccc-print-bindings \
+// RUN: %clang -target x86_64-apple-darwin10 -ccc-print-bindings \
 // RUN:   -o foo %s -g 2> %t
 // RUN: FileCheck -check-prefix=CHECK-OUTPUT-NAME < %t %s
 //
@@ -33,12 +33,12 @@
 // Check that we only use dsymutil when needed.
 //
 // RUN: touch %t.o
-// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -ccc-print-bindings \
+// RUN: %clang -target x86_64-apple-darwin10 -ccc-print-bindings \
 // RUN:   -o foo %t.o -g 2> %t
 // RUN: grep "Dsymutil" %t | count 0
 
 // Check that we put the .dSYM in the right place.
-// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -ccc-print-bindings \
+// RUN: %clang -target x86_64-apple-darwin10 -ccc-print-bindings \
 // RUN:   -o bar/foo %s -g 2> %t
 // RUN: FileCheck -check-prefix=CHECK-LOCATION < %t %s
 

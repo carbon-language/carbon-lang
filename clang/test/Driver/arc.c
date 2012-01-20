@@ -1,8 +1,8 @@
-// RUN: %clang -ObjC -ccc-host-triple i386-apple-darwin9 -m32 -fobjc-arc %s -fsyntax-only 2>&1 | FileCheck %s
-// RUN: %clang -x objective-c -ccc-host-triple i386-apple-darwin9 -m32 -fobjc-arc %s -fsyntax-only 2>&1 | FileCheck %s
-// RUN: %clang -x objective-c++ -ccc-host-triple i386-apple-darwin9 -m32 -fobjc-arc %s -fsyntax-only 2>&1 | FileCheck %s
-// RUN: %clang -x c -ccc-host-triple i386-apple-darwin9 -m32 -fobjc-arc %s -fsyntax-only 2>&1 | FileCheck -check-prefix NOTOBJC %s
-// RUN: %clang -x c++ -ccc-host-triple i386-apple-darwin9 -m32 -fobjc-arc %s -fsyntax-only 2>&1 | FileCheck -check-prefix NOTOBJC %s
+// RUN: %clang -ObjC -target i386-apple-darwin9 -m32 -fobjc-arc %s -fsyntax-only 2>&1 | FileCheck %s
+// RUN: %clang -x objective-c -target i386-apple-darwin9 -m32 -fobjc-arc %s -fsyntax-only 2>&1 | FileCheck %s
+// RUN: %clang -x objective-c++ -target i386-apple-darwin9 -m32 -fobjc-arc %s -fsyntax-only 2>&1 | FileCheck %s
+// RUN: %clang -x c -target i386-apple-darwin9 -m32 -fobjc-arc %s -fsyntax-only 2>&1 | FileCheck -check-prefix NOTOBJC %s
+// RUN: %clang -x c++ -target i386-apple-darwin9 -m32 -fobjc-arc %s -fsyntax-only 2>&1 | FileCheck -check-prefix NOTOBJC %s
 
 // Just to test clang is working.
 # foo

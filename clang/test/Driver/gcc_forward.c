@@ -1,6 +1,6 @@
 // Check that we don't try to forward -Xclang or -mlinker-version to GCC.
 //
-// RUN: %clang -ccc-host-triple powerpc-unknown-unknown \
+// RUN: %clang -target powerpc-unknown-unknown \
 // RUN:   -ccc-clang-archs i386 -c %s \
 // RUN:   -Xclang foo-bar \
 // RUN:   -mlinker-version=10 -### 2> %t
