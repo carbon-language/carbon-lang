@@ -1,3 +1,36 @@
+//===-- head_find.c ---------------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file compiles into a dylib and can be used on darwin to find data that
+// is contained in active malloc blocks. To use this make the project, then
+// load the shared library in a debug session while you are stopped:
+//
+// (lldb) process load /path/to/libheap.dylib
+//
+// Now you can use the "find_pointer_in_heap" and "find_cstring_in_heap" 
+// functions in the expression parser.
+//
+// This will grep everything in all active allocation blocks and print and 
+// malloc blocks that contain the pointer 0x112233000000:
+//
+// (lldb) expression find_pointer_in_heap (0x112233000000)
+//
+// This will grep everything in all active allocation blocks and print and 
+// malloc blocks that contain the C string "hello" (as a substring, no
+// NULL termination included):
+//
+// (lldb) expression find_cstring_in_heap ("hello")
+//
+// The results will be printed to the STDOUT of the inferior program.
+//
+//===----------------------------------------------------------------------===//
+
 #include <assert.h>
 #include <ctype.h>
 #include <mach/mach.h>
