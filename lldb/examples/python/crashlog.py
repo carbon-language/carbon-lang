@@ -28,9 +28,9 @@ class CrashLog:
     """Class that does parses darwin crash logs"""
     thread_state_regex = re.compile('^Thread ([0-9]+) crashed with')
     thread_regex = re.compile('^Thread ([0-9]+)([^:]*):(.*)')
-    frame_regex = re.compile('^([0-9]+) +([^ ]+) +\t(0x[0-9a-fA-F]+) +(.*)')
-    image_regex_uuid = re.compile('(0x[0-9a-fA-F]+)[- ]+(0x[0-9a-fA-F]+) +([^ ]+) +([^<]+)<([-0-9a-fA-F]+)> (.*)');
-    image_regex_no_uuid = re.compile('(0x[0-9a-fA-F]+)[- ]+(0x[0-9a-fA-F]+) +([^ ]+) +([^/]+)/(.*)');
+    frame_regex = re.compile('^([0-9]+) +([^ ]+) *\t(0x[0-9a-fA-F]+) +(.*)')
+    image_regex_uuid = re.compile('(0x[0-9a-fA-F]+)[- ]+(0x[0-9a-fA-F]+) +[+]?([^ ]+) +([^<]+)<([-0-9a-fA-F]+)> (.*)');
+    image_regex_no_uuid = re.compile('(0x[0-9a-fA-F]+)[- ]+(0x[0-9a-fA-F]+) +[+]?([^ ]+) +([^/]+)/(.*)');
     empty_line_regex = re.compile('^$')
         
     class Thread:
@@ -80,6 +80,8 @@ class CrashLog:
     
     class Image:
         """Class that represents a binary images in a darwin crash log"""
+        dsymForUUIDBinary = os.path.expanduser('~rc/bin/dsymForUUID')
+        
         def __init__(self, text_addr_lo, text_addr_hi, ident, version, uuid, path):
             self.text_addr_lo = text_addr_lo
             self.text_addr_hi = text_addr_hi
@@ -103,32 +105,35 @@ class CrashLog:
             return None
         
         def fetch_symboled_executable_and_dsym(self):
-            dsym_for_uuid_command = ('~rc/bin/dsymForUUID %s' % self.uuid)
-            print 'Fetching %s %s...' % (self.uuid, self.path),
-            s = commands.getoutput(dsym_for_uuid_command)
-            if s:
-                plist_root = plistlib.readPlistFromString (s)
-                if plist_root:
-                    # pp = pprint.PrettyPrinter(indent=4)
-                    # pp.pprint(plist_root)
-                    self.plist = plist_root[self.uuid]
-                    if self.plist:
-                        if 'DBGError' in self.plist:
-                            err = self.plist['DBGError']
-                            if isinstance(err, unicode):
-                                err = err.encode('utf-8')
-                            print 'error: %s' % err
-                        elif 'DBGSymbolRichExecutable' in self.plist:
-                            self.path = os.path.expanduser (self.plist['DBGSymbolRichExecutable'])
-                            #print 'success: symboled exe is "%s"' % self.path
-                            print 'ok'
-                            return 1
-                    print 'error: failed to get plist dictionary entry for UUID %s: %s' % (uuid, plist_root)
+            if os.path.exists(self.dsymForUUIDBinary):
+                dsym_for_uuid_command = '%s %s' % (self.dsymForUUIDBinary, self.uuid)
+                print 'Fetching %s %s...' % (self.uuid, self.path),
+                s = commands.getoutput(dsym_for_uuid_command)
+                if s:
+                    plist_root = plistlib.readPlistFromString (s)
+                    if plist_root:
+                        # pp = pprint.PrettyPrinter(indent=4)
+                        # pp.pprint(plist_root)
+                        self.plist = plist_root[self.uuid]
+                        if self.plist:
+                            if 'DBGError' in self.plist:
+                                err = self.plist['DBGError']
+                                if isinstance(err, unicode):
+                                    err = err.encode('utf-8')
+                                print 'error: %s' % err
+                            elif 'DBGSymbolRichExecutable' in self.plist:
+                                self.path = os.path.expanduser (self.plist['DBGSymbolRichExecutable'])
+                                #print 'success: symboled exe is "%s"' % self.path
+                                print 'ok'
+                                return 1
+                        print 'error: failed to get plist dictionary entry for UUID %s: %s' % (uuid, plist_root)
+                    else:
+                        print 'error: failed to extract plist from "%s"' % (s)
                 else:
-                    print 'error: failed to extract plist from "%s"' % (s)
+                    print 'error: %s failed...' % (dsym_for_uuid_command)
+                return 0
             else:
-                print 'error: %s failed...' % (dsym_for_uuid_command)
-            return 0
+                return 1 # no dsym locating script, just use the paths in the crash log
         
         def load_module(self):
             if self.module:
@@ -136,7 +141,7 @@ class CrashLog:
                 if text_section:
                     error = self.target.SetSectionLoadAddress (text_section, self.text_addr_lo)
                     if error.Success():
-                        print 'Success: loaded %s.__TEXT = 0x%x' % (self.basename(), self.text_addr_lo)
+                        #print 'Success: loaded %s.__TEXT = 0x%x' % (self.basename(), self.text_addr_lo)
                         return None
                     else:
                         return 'error: %s' % error.GetCString()
@@ -286,7 +291,7 @@ class CrashLog:
                         self.idents.append(ident)
                     thread.frames.append (CrashLog.Frame(int(frame_match.group(1)), int(frame_match.group(3), 0), frame_match.group(4)))
                 else:
-                    print "error: frame regex failed"
+                    print 'error: frame regex failed for line: "%s"' % line
             elif parse_mode == PARSE_MODE_IMAGES:
                 image_match = self.image_regex_uuid.search (line)
                 if image_match:
@@ -436,7 +441,8 @@ def SymbolicateCrashLog(command_args):
         options.dependents = False
         for crash_log_file in options.crash_log_files:
             crash_log = CrashLog(crash_log_file)
-            crash_log.dump()
+            if options.verbose:
+                crash_log.dump()
             if crash_log.images:
                 err = crash_log.images[0].create_target (debugger)
                 if err:

@@ -1,0 +1,5 @@
+# source this file while being chdir'ed in the directory that contains
+# this file at the LLDB command line with:
+# (lldb) command source crashlog.lldb
+script import crashlog
+command script add -f crashlog.Symbolicate crashlog
