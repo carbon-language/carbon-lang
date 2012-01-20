@@ -57,7 +57,9 @@ bool TemplateDeclInstantiator::SubstQualifier(const TagDecl *OldDecl,
   return false;
 }
 
-// FIXME: Is this still too simple?
+// Include attribute instantiation code.
+#include "clang/Sema/AttrTemplateInstantiate.inc"
+
 void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
                             const Decl *Tmpl, Decl *New) {
   for (AttrVec::const_iterator i = Tmpl->attr_begin(), e = Tmpl->attr_end();
@@ -87,8 +89,8 @@ void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
       }
     }
 
-    // FIXME: Is cloning correct for all attributes?
-    Attr *NewAttr = TmplAttr->clone(Context);
+    Attr *NewAttr =
+      instantiateTemplateAttribute(TmplAttr, Context, *this, TemplateArgs);
     New->addAttr(NewAttr);
   }
 }

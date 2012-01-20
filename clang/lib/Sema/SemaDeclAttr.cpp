@@ -393,13 +393,11 @@ static void handleGuardedByAttr(Sema &S, Decl *D, const AttributeList &Attr,
   if (pointer && !checkIsPointer(S, D, Attr))
     return;
 
-  if (Arg->isTypeDependent())
-    // FIXME: handle attributes with dependent types
-    return;
-
-  // check that the argument is lockable object
-  if (!checkForLockableRecord(S, D, Attr, getRecordType(Arg->getType())))
-    return;
+  if (!Arg->isTypeDependent()) {
+    if (!checkForLockableRecord(S, D, Attr, getRecordType(Arg->getType())))
+      return;
+    // FIXME -- semantic checks for dependent attributes
+  }
 
   if (pointer)
     D->addAttr(::new (S.Context) PtGuardedByAttr(Attr.getRange(),

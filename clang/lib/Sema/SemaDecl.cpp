@@ -7311,6 +7311,9 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
 /// relevant Decl.
 void Sema::ActOnFinishDelayedAttribute(Scope *S, Decl *D,
                                        ParsedAttributes &Attrs) {
+  // Always attach attributes to the underlying decl.
+  if (TemplateDecl *TD = dyn_cast<TemplateDecl>(D))
+    D = TD->getTemplatedDecl();
   ProcessDeclAttributeList(S, D, Attrs.getList());
 }
 

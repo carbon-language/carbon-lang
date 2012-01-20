@@ -89,6 +89,8 @@ namespace {
     virtual void writeAccessors(raw_ostream &OS) const = 0;
     virtual void writeAccessorDefinitions(raw_ostream &OS) const {}
     virtual void writeCloneArgs(raw_ostream &OS) const = 0;
+    virtual void writeTemplateInstantiationArgs(raw_ostream &OS) const = 0;
+    virtual void writeTemplateInstantiation(raw_ostream &OS) const {};
     virtual void writeCtorBody(raw_ostream &OS) const {}
     virtual void writeCtorInitializers(raw_ostream &OS) const = 0;
     virtual void writeCtorParameters(raw_ostream &OS) const = 0;
@@ -107,6 +109,8 @@ namespace {
       : Argument(Arg, Attr), type(T)
     {}
 
+    std::string getType() const { return type; }
+
     void writeAccessors(raw_ostream &OS) const {
       OS << "  " << type << " get" << getUpperName() << "() const {\n";
       OS << "    return " << getLowerName() << ";\n";
@@ -114,6 +118,9 @@ namespace {
     }
     void writeCloneArgs(raw_ostream &OS) const {
       OS << getLowerName();
+    }
+    void writeTemplateInstantiationArgs(raw_ostream &OS) const {
+      OS << "A->get" << getUpperName() << "()";
     }
     void writeCtorInitializers(raw_ostream &OS) const {
       OS << getLowerName() << "(" << getUpperName() << ")";
@@ -175,6 +182,9 @@ namespace {
     }
     void writeCloneArgs(raw_ostream &OS) const {
       OS << "get" << getUpperName() << "()";
+    }
+    void writeTemplateInstantiationArgs(raw_ostream &OS) const {
+      OS << "A->get" << getUpperName() << "()";
     }
     void writeCtorBody(raw_ostream &OS) const {
       OS << "      std::memcpy(" << getLowerName() << ", " << getUpperName()
@@ -266,6 +276,10 @@ namespace {
          << "Expr) : " << getLowerName()
          << "Type";
     }
+    void writeTemplateInstantiationArgs(raw_ostream &OS) const {
+      // FIXME: move the definition in Sema::InstantiateAttrs to here.
+      // In the meantime, aligned attributes are cloned.
+    }
     void writeCtorBody(raw_ostream &OS) const {
       OS << "    if (is" << getLowerName() << "Expr)\n";
       OS << "       " << getLowerName() << "Expr = reinterpret_cast<Expr *>("
@@ -341,6 +355,11 @@ namespace {
     void writeCloneArgs(raw_ostream &OS) const {
       OS << getLowerName() << ", " << getLowerName() << "Size";
     }
+    void writeTemplateInstantiationArgs(raw_ostream &OS) const {
+      // This isn't elegant, but we have to go through public methods...
+      OS << "A->" << getLowerName() << "_begin(), "
+         << "A->" << getLowerName() << "_size()";
+    }
     void writeCtorBody(raw_ostream &OS) const {
       // FIXME: memcpy is not safe on non-trivial types.
       OS << "    std::memcpy(" << getLowerName() << ", " << getUpperName()
@@ -412,6 +431,9 @@ namespace {
     void writeCloneArgs(raw_ostream &OS) const {
       OS << getLowerName();
     }
+    void writeTemplateInstantiationArgs(raw_ostream &OS) const {
+      OS << "A->get" << getUpperName() << "()";
+    }
     void writeCtorInitializers(raw_ostream &OS) const {
       OS << getLowerName() << "(" << getUpperName() << ")";
     }
@@ -475,6 +497,9 @@ namespace {
     void writeCloneArgs(raw_ostream &OS) const {
       OS << "get" << getUpperName() << "()";
     }
+    void writeTemplateInstantiationArgs(raw_ostream &OS) const {
+      OS << "A->get" << getUpperName() << "()";
+    }
     void writeCtorBody(raw_ostream &OS) const {
     }
     void writeCtorInitializers(raw_ostream &OS) const {
@@ -500,6 +525,61 @@ namespace {
       OS << getLowerName() << "=\" << get" << getUpperName() << "() << \"";
     }
   };
+
+  class ExprArgument : public SimpleArgument {
+  public:
+    ExprArgument(Record &Arg, StringRef Attr)
+      : SimpleArgument(Arg, Attr, "Expr *")
+    {}
+
+    void writeTemplateInstantiationArgs(raw_ostream &OS) const {
+      OS << "tempInst" << getUpperName();
+    }
+
+    void writeTemplateInstantiation(raw_ostream &OS) const {
+      OS << "      " << getType() << " tempInst" << getUpperName() << ";\n";
+      OS << "      {\n";
+      OS << "        EnterExpressionEvaluationContext "
+         << "Unevaluated(S, Sema::Unevaluated);\n";
+      OS << "        ExprResult " << "Result = S.SubstExpr("
+         << "A->get" << getUpperName() << "(), TemplateArgs);\n";
+      OS << "        tempInst" << getUpperName() << " = "
+         << "Result.takeAs<Expr>();\n";
+      OS << "      }\n";
+    }
+  };
+
+  class VariadicExprArgument : public VariadicArgument {
+  public:
+    VariadicExprArgument(Record &Arg, StringRef Attr)
+      : VariadicArgument(Arg, Attr, "Expr *")
+    {}
+
+    void writeTemplateInstantiationArgs(raw_ostream &OS) const {
+      OS << "tempInst" << getUpperName() << ", "
+         << "A->" << getLowerName() << "_size()";
+    }
+
+    void writeTemplateInstantiation(raw_ostream &OS) const {
+      OS << "      " << getType() << " *tempInst" << getUpperName()
+         << " = new (C, 16) " << getType()
+         << "[A->" << getLowerName() << "_size()];\n";
+      OS << "      {\n";
+      OS << "        EnterExpressionEvaluationContext "
+         << "Unevaluated(S, Sema::Unevaluated);\n";
+      OS << "        " << getType() << " *TI = tempInst" << getUpperName()
+         << ";\n";
+      OS << "        " << getType() << " *I = A->" << getLowerName()
+         << "_begin();\n";
+      OS << "        " << getType() << " *E = A->" << getLowerName()
+         << "_end();\n";
+      OS << "        for (; I != E; ++I, ++TI) {\n";
+      OS << "          ExprResult Result = S.SubstExpr(*I, TemplateArgs);\n";
+      OS << "          *TI = Result.takeAs<Expr>();\n";
+      OS << "        }\n";
+      OS << "      }\n";
+    }
+  };
 }
 
 static Argument *createArgument(Record &Arg, StringRef Attr,
@@ -512,8 +592,7 @@ static Argument *createArgument(Record &Arg, StringRef Attr,
 
   if (ArgName == "AlignedArgument") Ptr = new AlignedArgument(Arg, Attr);
   else if (ArgName == "EnumArgument") Ptr = new EnumArgument(Arg, Attr);
-  else if (ArgName == "ExprArgument") Ptr = new SimpleArgument(Arg, Attr,
-                                                               "Expr *");
+  else if (ArgName == "ExprArgument") Ptr = new ExprArgument(Arg, Attr);
   else if (ArgName == "FunctionArgument")
     Ptr = new SimpleArgument(Arg, Attr, "FunctionDecl *");
   else if (ArgName == "IdentifierArgument")
@@ -531,7 +610,7 @@ static Argument *createArgument(Record &Arg, StringRef Attr,
   else if (ArgName == "VariadicUnsignedArgument")
     Ptr = new VariadicArgument(Arg, Attr, "unsigned");
   else if (ArgName == "VariadicExprArgument")
-    Ptr = new VariadicArgument(Arg, Attr, "Expr *");
+    Ptr = new VariadicExprArgument(Arg, Attr);
   else if (ArgName == "VersionArgument")
     Ptr = new VersionArgument(Arg, Attr);
 
@@ -851,3 +930,63 @@ void ClangAttrLateParsedListEmitter::run(raw_ostream &OS) {
     }
   }
 }
+
+
+void ClangAttrTemplateInstantiateEmitter::run(raw_ostream &OS) {
+  OS << "// This file is generated by TableGen. Do not edit.\n\n";
+
+  std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr");
+
+  OS << "Attr* instantiateTemplateAttribute(const Attr *At, ASTContext &C, "
+     << "Sema &S,\n"
+     << "        const MultiLevelTemplateArgumentList &TemplateArgs) {\n"
+     << "  switch (At->getKind()) {\n"
+     << "    default:\n"
+     << "      break;\n";
+
+  for (std::vector<Record*>::iterator I = Attrs.begin(), E = Attrs.end();
+       I != E; ++I) {
+    Record &R = **I;
+
+    OS << "    case attr::" << R.getName() << ": {\n";
+    OS << "      const " << R.getName() << "Attr *A = cast<"
+       << R.getName() << "Attr>(At);\n";
+    bool TDependent = R.getValueAsBit("TemplateDependent");
+
+    if (!TDependent) {
+      OS << "      return A->clone(C);\n";
+      OS << "    }\n";
+      continue;
+    }
+
+    std::vector<Record*> ArgRecords = R.getValueAsListOfDefs("Args");
+    std::vector<Argument*> Args;
+    std::vector<Argument*>::iterator ai, ae;
+    Args.reserve(ArgRecords.size());
+
+    for (std::vector<Record*>::iterator ri = ArgRecords.begin(),
+                                        re = ArgRecords.end();
+         ri != re; ++ri) {
+      Record &ArgRecord = **ri;
+      Argument *Arg = createArgument(ArgRecord, R.getName());
+      assert(Arg);
+      Args.push_back(Arg);
+    }
+    ae = Args.end();
+
+    for (ai = Args.begin(); ai != ae; ++ai) {
+      (*ai)->writeTemplateInstantiation(OS);
+    }
+    OS << "      return new (C) " << R.getName() << "Attr(A->getLocation(), C";
+    for (ai = Args.begin(); ai != ae; ++ai) {
+      OS << ", ";
+      (*ai)->writeTemplateInstantiationArgs(OS);
+    }
+    OS << ");\n    }\n";
+  }
+  OS << "  } // end switch\n"
+     << "  llvm_unreachable(\"Unknown attribute!\");\n"
+     << "  return 0;\n"
+     << "}\n\n";
+}
+

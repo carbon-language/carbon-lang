@@ -109,6 +109,19 @@ class ClangAttrLateParsedListEmitter : public TableGenBackend {
   void run(raw_ostream &OS);
 };
 
+/// ClangAttrTemplateInstantiateEmitter emits code to instantiate dependent
+/// attributes on templates.
+class ClangAttrTemplateInstantiateEmitter : public TableGenBackend {
+  RecordKeeper &Records;
+
+ public:
+  explicit ClangAttrTemplateInstantiateEmitter(RecordKeeper &R)
+    : Records(R)
+    {}
+
+  void run(raw_ostream &OS);
+};
+
 }
 
 #endif

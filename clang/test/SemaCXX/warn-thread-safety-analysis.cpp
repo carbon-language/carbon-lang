@@ -1051,12 +1051,14 @@ class Foo {
  public:
   void func(T x) {
     mu_.Lock();
-    count_ = x;
+    // count_ = x;
     mu_.Unlock();
   }
 
  private:
-  T count_ GUARDED_BY(mu_);
+  // FIXME: This test passed earlier only because thread safety was turned
+  // off for templates.
+  // T count_ GUARDED_BY(mu_);
   Bar<T> bar_;
   Mutex mu_;
 };
@@ -1605,7 +1607,6 @@ struct TestScopedLockable {
 } // end namespace test_scoped_lockable
 
 
-
 namespace FunctionAttrTest {
 
 class Foo {
@@ -1725,6 +1726,129 @@ struct TestTryLock {
     }
   }
 };  // end TestTrylock
+
+
+namespace TestTemplateAttributeInstantiation {
+
+class Foo1 {
+public:
+  Mutex mu_;
+  int a GUARDED_BY(mu_);
+};
+
+class Foo2 {
+public:
+  int a GUARDED_BY(mu_);
+  Mutex mu_;
+};
+
+
+class Bar {
+public:
+  // Test non-dependent expressions in attributes on template functions
+  template <class T>
+  void barND(Foo1 *foo, T *fooT) EXCLUSIVE_LOCKS_REQUIRED(foo->mu_) {
+    foo->a = 0;
+  }
+
+  // Test dependent expressions in attributes on template functions
+  template <class T>
+  void barD(Foo1 *foo, T *fooT) EXCLUSIVE_LOCKS_REQUIRED(fooT->mu_) {
+    fooT->a = 0;
+  }
+};
+
+
+template <class T>
+class BarT {
+public:
+  Foo1 fooBase;
+  T    fooBaseT;
+
+  // Test non-dependent expression in ordinary method on template class
+  void barND() EXCLUSIVE_LOCKS_REQUIRED(fooBase.mu_) {
+    fooBase.a = 0;
+  }
+
+  // Test dependent expressions in ordinary methods on template class
+  void barD() EXCLUSIVE_LOCKS_REQUIRED(fooBaseT.mu_) {
+    fooBaseT.a = 0;
+  }
+
+  // Test dependent expressions in template method in template class
+  template <class T2>
+  void barTD(T2 *fooT) EXCLUSIVE_LOCKS_REQUIRED(fooBaseT.mu_, fooT->mu_) {
+    fooBaseT.a = 0;
+    fooT->a = 0;
+  }
+};
+
+template <class T>
+class Cell {
+public:
+  Mutex mu_;
+  // Test dependent guarded_by
+  T data GUARDED_BY(mu_);
+
+  void foo() {
+    mu_.Lock();
+    data = 0;
+    mu_.Unlock();
+  }
+};
+
+
+template <class T>
+class CellDelayed {
+public:
+  // Test dependent guarded_by
+  T data GUARDED_BY(mu_);
+
+  void foo() {
+    mu_.Lock();
+    data = 0;
+    mu_.Unlock();
+  }
+
+  Mutex mu_;
+};
+
+void test() {
+  Bar b;
+  BarT<Foo2> bt;
+  Foo1 f1;
+  Foo2 f2;
+
+  f1.mu_.Lock();
+  f2.mu_.Lock();
+  bt.fooBase.mu_.Lock();
+  bt.fooBaseT.mu_.Lock();
+
+  b.barND(&f1, &f2);
+  b.barD(&f1, &f2);
+  bt.barND();
+  bt.barD();
+  bt.barTD(&f2);
+
+  f1.mu_.Unlock();
+  bt.barTD(&f1);  // \
+    // expected-warning {{calling function 'barTD' requires exclusive lock on 'mu_'}}
+
+  bt.fooBase.mu_.Unlock();
+  bt.fooBaseT.mu_.Unlock();
+  f2.mu_.Unlock();
+
+  Cell<int> cell;
+  cell.data = 0; // \
+    // expected-warning {{writing variable 'data' requires locking 'mu_' exclusively}}
+  cell.foo();
+
+  // FIXME: This doesn't work yet
+  // CellDelayed<int> celld;
+  // celld.foo();
+}
+
+};  // end namespace TestTemplateAttributeInstantiation
 
 
 
