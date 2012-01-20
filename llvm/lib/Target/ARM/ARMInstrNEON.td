@@ -1409,6 +1409,15 @@ class VSTQQWBPseudo<InstrItinClass itin>
   : PseudoNLdSt<(outs GPR:$wb),
                 (ins addrmode6:$addr, am6offset:$offset, QQPR:$src), itin,
                 "$addr.addr = $wb">;
+class VSTQQWBfixedPseudo<InstrItinClass itin>
+  : PseudoNLdSt<(outs GPR:$wb),
+                (ins addrmode6:$addr, QQPR:$src), itin,
+                "$addr.addr = $wb">;
+class VSTQQWBregisterPseudo<InstrItinClass itin>
+  : PseudoNLdSt<(outs GPR:$wb),
+                (ins addrmode6:$addr, rGPR:$offset, QQPR:$src), itin,
+                "$addr.addr = $wb">;
+
 class VSTQQQQPseudo<InstrItinClass itin>
   : PseudoNLdSt<(outs), (ins addrmode6:$addr, QQQQPR:$src), itin, "">;
 class VSTQQQQWBPseudo<InstrItinClass itin>
@@ -1680,12 +1689,12 @@ def VST2d8PseudoWB_register  : VSTQWBregisterPseudo<IIC_VST2u>;
 def VST2d16PseudoWB_register : VSTQWBregisterPseudo<IIC_VST2u>;
 def VST2d32PseudoWB_register : VSTQWBregisterPseudo<IIC_VST2u>;
 
-def VST2q8PseudoWB_fixed     : VSTQQWBPseudo<IIC_VST2x2u>;
-def VST2q16PseudoWB_fixed    : VSTQQWBPseudo<IIC_VST2x2u>;
-def VST2q32PseudoWB_fixed    : VSTQQWBPseudo<IIC_VST2x2u>;
-def VST2q8PseudoWB_register  : VSTQQWBPseudo<IIC_VST2x2u>;
-def VST2q16PseudoWB_register : VSTQQWBPseudo<IIC_VST2x2u>;
-def VST2q32PseudoWB_register : VSTQQWBPseudo<IIC_VST2x2u>;
+def VST2q8PseudoWB_fixed     : VSTQQWBfixedPseudo<IIC_VST2x2u>;
+def VST2q16PseudoWB_fixed    : VSTQQWBfixedPseudo<IIC_VST2x2u>;
+def VST2q32PseudoWB_fixed    : VSTQQWBfixedPseudo<IIC_VST2x2u>;
+def VST2q8PseudoWB_register  : VSTQQWBregisterPseudo<IIC_VST2x2u>;
+def VST2q16PseudoWB_register : VSTQQWBregisterPseudo<IIC_VST2x2u>;
+def VST2q32PseudoWB_register : VSTQQWBregisterPseudo<IIC_VST2x2u>;
 
 // ...with double-spaced registers
 def VST2b8      : VST2<0b1001, {0,0,?,?}, "8",  VecListTwoQ, IIC_VST2>;

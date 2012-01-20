@@ -119,6 +119,15 @@ define i8* @vst2update(i8* %out, <4 x i16>* %B) nounwind {
 	ret i8* %t5
 }
 
+define i8* @vst2update2(i8 * %out, <4 x float> * %this) nounwind optsize ssp align 2 {
+;CHECK: vst2update2
+;CHECK: vst2.32 {d16, d17, d18, d19}, [r0]!
+  %tmp1 = load <4 x float>* %this
+  call void @llvm.arm.neon.vst2.v4f32(i8* %out, <4 x float> %tmp1, <4 x float> %tmp1, i32 4) nounwind
+  %tmp2 = getelementptr inbounds i8* %out, i32  32
+  ret i8* %tmp2
+}
+
 declare void @llvm.arm.neon.vst2.v8i8(i8*, <8 x i8>, <8 x i8>, i32) nounwind
 declare void @llvm.arm.neon.vst2.v4i16(i8*, <4 x i16>, <4 x i16>, i32) nounwind
 declare void @llvm.arm.neon.vst2.v2i32(i8*, <2 x i32>, <2 x i32>, i32) nounwind
