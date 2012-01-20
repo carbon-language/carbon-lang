@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -analyze -analyzer-checker=experimental.security.taint,experimental.security.ArrayBoundV2 -Wno-format-security -verify %s
+// RUN: %clang_cc1  -analyze -analyzer-checker=experimental.security.taint,core,experimental.security.ArrayBoundV2 -Wno-format-security -verify %s
 
 int scanf(const char *restrict format, ...);
 int getchar(void);
@@ -49,7 +49,7 @@ void bufferScanfArithmetic1(int x) {
 void bufferScanfArithmetic2(int x) {
   int n;
   scanf("%d", &n);
-  int m = 100 / (n + 3) * x;
+  int m = 100 - (n + 3) * x;
   Buffer[m] = 1; // expected-warning {{Out of bound memory access }}
 }
 
@@ -64,7 +64,7 @@ void bufferScanfAssignment(int x) {
 }
 
 void scanfArg() {
-  int t;
+  int t = 0;
   scanf("%d", t); // expected-warning {{conversion specifies type 'int *' but the argument has type 'int'}}
 }
 
@@ -171,3 +171,8 @@ void testSocket() {
   execl(buffer, "filename", 0); // no-warning
 }
 
+int testDivByZero() {
+  int x;
+  scanf("%d", &x);
+  return 5/x; // expected-warning {{Division by a tainted value, possibly zero}}
+}
