@@ -98,7 +98,6 @@ class CrashLog:
             self.path = path
             self.resolved_path = None
             self.dsym = None
-            self.target = None
             self.module = None
         
         def dump(self, prefix):
@@ -172,10 +171,12 @@ class CrashLog:
                 return 0
         
         def load_module(self):
+            if not lldb.target:
+                return 'error: no target'
             if self.module:
                 text_section = self.module.FindSection ("__TEXT")
                 if text_section:
-                    error = self.target.SetSectionLoadAddress (text_section, self.text_addr_lo)
+                    error = lldb.target.SetSectionLoadAddress (text_section, self.text_addr_lo)
                     if error.Success():
                         #print 'Success: loaded %s.__TEXT = 0x%x' % (self.basename(), self.text_addr_lo)
                         return None
@@ -186,15 +187,15 @@ class CrashLog:
             else:
                 return 'error: invalid module'
         
-        def create_target(self, debugger):
+        def create_target(self):
             if self.fetch_symboled_executable_and_dsym ():
                 resolved_path = self.get_resolved_path();
                 path_spec = lldb.SBFileSpec (resolved_path)
                 #result.PutCString ('plist[%s] = %s' % (uuid, self.plist))
                 error = lldb.SBError()
-                self.target = debugger.CreateTarget (resolved_path, self.arch, None, False, error);
-                if self.target:
-                    self.module = self.target.FindModule (path_spec)
+                lldb.target = lldb.debugger.CreateTarget (resolved_path, self.arch, None, False, error);
+                if lldb.target:
+                    self.module = lldb.target.FindModule (path_spec)
                     if self.module:
                         err = self.load_module()
                         if err:
@@ -205,15 +206,16 @@ class CrashLog:
                         return 'error: unable to get module for (%s) "%s"' % (self.arch, resolved_path)
                 else:
                     return 'error: unable to create target for (%s) "%s"' % (self.arch, resolved_path)
+            else:
+                return 'error: unable to locate main executable (%s) "%s"' % (self.arch, self.path)
         
-        def add_target_module(self, target):
-            if target:
-                self.target = target
+        def add_target_module(self):
+            if lldb.target:
                 if self.fetch_symboled_executable_and_dsym ():
                     resolved_path = self.get_resolved_path();
                     path_spec = lldb.SBFileSpec (resolved_path)
                     #print 'target.AddModule (path="%s", arch="%s", uuid=%s)' % (resolved_path, self.arch, self.uuid)
-                    self.module = target.AddModule (resolved_path, self.arch, self.uuid)
+                    self.module = lldb.target.AddModule (resolved_path, self.arch, self.uuid)
                     if self.module:
                         err = self.load_module()
                         if err:
@@ -374,18 +376,39 @@ class CrashLog:
                 return image
         return None
     
-def disassemble_instructions (target, instructions, pc, insts_before_pc, insts_after_pc):
+    def create_target(self):
+        if not self.images:
+            return 'error: no images in crash log'
+        exe_path = self.images[0].get_resolved_path()
+        err = self.images[0].create_target ()
+        if not err:
+            return None # success
+        # We weren't able to open the main executable as, but we can still symbolicate
+        if self.idents:
+            for ident in idents:
+                image = self.find_image_with_identifier (ident)
+                if image:
+                    err = image.create_target ()
+                    if not err:
+                        return None # success
+        for image in self.images:
+            err = image.create_target ()
+            if not err:
+                return None # success
+        return 'error: unable to locate any executables from the crash log'
+
+def disassemble_instructions (instructions, pc, insts_before_pc, insts_after_pc):
     lines = list()
     pc_index = -1
     comment_column = 50
     for inst_idx, inst in enumerate(instructions):
-        inst_pc = inst.GetAddress().GetLoadAddress(target);
+        inst_pc = inst.GetAddress().GetLoadAddress(lldb.target);
         if pc == inst_pc:
             pc_index = inst_idx
-        mnemonic = inst.GetMnemonic (target)
-        operands =  inst.GetOperands (target)
-        comment =  inst.GetComment (target)
-        #data = inst.GetData (target)
+        mnemonic = inst.GetMnemonic (lldb.target)
+        operands =  inst.GetOperands (lldb.target)
+        comment =  inst.GetComment (lldb.target)
+        #data = inst.GetData (lldb.target)
         lines.append ("%#16.16x: %8s %s" % (inst_pc, mnemonic, operands))
         if comment:
             line_len = len(lines[-1])
@@ -439,51 +462,33 @@ def Symbolicate(debugger, command, result, dict):
     SymbolicateCrashLog (command.split())
         
 def SymbolicateCrashLog(command_args):
-    
-    parser = optparse.OptionParser(description='A script that parses skinny and universal mach-o files.')
-    parser.add_option('--arch', type='string', metavar='arch', dest='triple', help='specify one architecture or target triple')
+    print 'command_args = %s' % command_args
+    parser = optparse.OptionParser(description='Parses darwin crash log files and symbolicates them.')
     parser.add_option('--platform', type='string', metavar='platform', dest='platform', help='specify one platform by name')
     parser.add_option('--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
-    parser.add_option('--interactive', action='store_true', dest='interactive', help='enable interactive mode', default=False)
     parser.add_option('--no-images', action='store_false', dest='show_images', help='don\'t show images in stack frames', default=True)
-    parser.add_option('--no-dependents', action='store_false', dest='dependents', help='skip loading dependent modules', default=True)
-    parser.add_option('--sections', action='store_true', dest='dump_sections', help='show module sections', default=False)
-    parser.add_option('--symbols', action='store_true', dest='dump_symbols', help='show module symbols', default=False)
     parser.add_option('--image-list', action='store_true', dest='dump_image_list', help='show image list', default=False)
     parser.add_option('--debug-delay', type='int', dest='debug_delay', metavar='NSEC', help='pause for NSEC seconds for debugger', default=0)
-    parser.add_option('--section-depth', type='int', dest='section_depth', help='set the section depth to use when showing sections', default=0)
-    parser.add_option('--section-data', type='string', action='append', dest='sect_data_names', help='specify sections by name to display data for')
-    parser.add_option('--address', type='int', action='append', dest='addresses', help='specify addresses to lookup')
-    parser.add_option('--crash-log', type='string', action='append', dest='crash_log_files', help='specify crash log files to symbolicate')
-    parser.add_option('--crashed-only', action='store_true', dest='crashed_only', help='only show the crashed thread', default=False)
+    parser.add_option('--crashed-only', action='store_true', dest='crashed_only', help='only symbolicate the crashed thread', default=False)
     loaded_addresses = False
     (options, args) = parser.parse_args(command_args)
     if options.verbose:
         print 'options', options
-
     if options.debug_delay > 0:
         print "Waiting %u seconds for debugger to attach..." % options.debug_delay
         time.sleep(options.debug_delay)
-
-    # Create a new debugger instance
-    debugger = lldb.SBDebugger.Create()
-
     error = lldb.SBError()
-    
-    
-    if options.crash_log_files:
-        options.dependents = False
-        for crash_log_file in options.crash_log_files:
+    if args:
+        for crash_log_file in args:
             crash_log = CrashLog(crash_log_file)
             if options.verbose:
                 crash_log.dump()
             if crash_log.images:
-                err = crash_log.images[0].create_target (debugger)
+                err = crash_log.create_target ()
                 if err:
                     print err
                 else:
-                    target = crash_log.images[0].target
-                    exe_module = target.GetModuleAtIndex(0)
+                    exe_module = lldb.target.GetModuleAtIndex(0)
                     image_paths = list()
                     # for i in range (1, len(crash_log.images)):
                     #     image = crash_log.images[i]
@@ -493,7 +498,7 @@ def SymbolicateCrashLog(command_args):
                             if image.path in image_paths:
                                 print "warning: skipping %s loaded at %#16.16x duplicate entry (probably commpage)" % (image.path, image.text_addr_lo)
                             else:
-                                err = image.add_target_module (target)
+                                err = image.add_target_module ()
                                 if err:
                                     print err
                                 else:
@@ -514,7 +519,7 @@ def SymbolicateCrashLog(command_args):
                         # any parent frames of inlined functions
                         for frame_idx, frame in enumerate(thread.frames):
                             # Resolve the frame's pc into a section + offset address 'pc_addr'
-                            pc_addr = target.ResolveLoadAddress (frame.pc)
+                            pc_addr = lldb.target.ResolveLoadAddress (frame.pc)
                             # Check to see if we were able to resolve the address
                             if pc_addr:
                                 # We were able to resolve the frame's PC into a section offset
@@ -525,7 +530,7 @@ def SymbolicateCrashLog(command_args):
                                 # line table entry and/or symbol. If the frame has a block, then
                                 # we can look for inlined frames, which are represented by blocks
                                 # that have inlined information in them
-                                frame.sym_ctx = target.ResolveSymbolContextForAddress (pc_addr, lldb.eSymbolContextEverything);
+                                frame.sym_ctx = lldb.target.ResolveSymbolContextForAddress (pc_addr, lldb.eSymbolContextEverything);
 
                                 # dump if the verbose option was specified
                                 if options.verbose:
@@ -552,7 +557,7 @@ def SymbolicateCrashLog(command_args):
                                 while new_frame.sym_ctx:
                                     # We have a parent frame of an inlined frame, create a new frame
                                     # Convert the section + offset 'parent_pc_addr' to a load address 
-                                    new_frame.pc = parent_pc_addr.GetLoadAddress(target)
+                                    new_frame.pc = parent_pc_addr.GetLoadAddress(lldb.target)
                                     # push the new frame onto the new frame stack
                                     new_thread_frames.append (new_frame)
                                     # dump if the verbose option was specified
@@ -592,24 +597,24 @@ def SymbolicateCrashLog(command_args):
                                 inlined_block = block.GetContainingInlinedBlock();
                                 if inlined_block:
                                     function_name = inlined_block.GetInlinedName();
-                                    block_range_idx = inlined_block.GetRangeIndexForBlockAddress (target.ResolveLoadAddress (frame.pc))
+                                    block_range_idx = inlined_block.GetRangeIndexForBlockAddress (lldb.target.ResolveLoadAddress (frame.pc))
                                     if block_range_idx < lldb.UINT32_MAX:
                                         block_range_start_addr = inlined_block.GetRangeStartAddress (block_range_idx)
-                                        function_start_load_addr = block_range_start_addr.GetLoadAddress (target)
+                                        function_start_load_addr = block_range_start_addr.GetLoadAddress (lldb.target)
                                     else:
                                         function_start_load_addr = frame.pc
                                     if this_thread_crashed and frame_idx == 0:
-                                        instructions = function.GetInstructions(target)
+                                        instructions = function.GetInstructions(lldb.target)
                                 elif function:
                                     function_name = function.GetName()
-                                    function_start_load_addr = function.GetStartAddress().GetLoadAddress (target)
+                                    function_start_load_addr = function.GetStartAddress().GetLoadAddress (lldb.target)
                                     if this_thread_crashed and frame_idx == 0:
-                                        instructions = function.GetInstructions(target)
+                                        instructions = function.GetInstructions(lldb.target)
                                 elif symbol:
                                     function_name = symbol.GetName()
-                                    function_start_load_addr = symbol.GetStartAddress().GetLoadAddress (target)
+                                    function_start_load_addr = symbol.GetStartAddress().GetLoadAddress (lldb.target)
                                     if this_thread_crashed and frame_idx == 0:
-                                        instructions = symbol.GetInstructions(target)
+                                        instructions = symbol.GetInstructions(lldb.target)
 
                                 if function_name:
                                     # Print the function or symbol name and annotate if it was inlined
@@ -646,7 +651,7 @@ def SymbolicateCrashLog(command_args):
                             prev_frame_index = frame.index
                             if instructions:
                                 print
-                                disassemble_instructions (target, instructions, frame.pc, 4, 4)
+                                disassemble_instructions (instructions, frame.pc, 4, 4)
                                 print
 
                         print                
@@ -658,5 +663,10 @@ def SymbolicateCrashLog(command_args):
         
 
 if __name__ == '__main__':
-    SymbolicateCrashLog (args)
+    # Create a new debugger instance
+    lldb.debugger = lldb.SBDebugger.Create()
+    SymbolicateCrashLog (sys.argv)
+elif lldb.debugger:
+    lldb.debugger.HandleCommand('command script add -f crashlog.Symbolicate crashlog')
+    print '"crashlog" command installed, type "crashlog --help" for detailed help'
 
