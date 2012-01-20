@@ -43,8 +43,10 @@ let isBarrier = 1, isBranch = 1, isTerminator = 1 in {
                         "jmp\t$dst", [(br bb:$dst)]>;
   def JMP_1 : Ii8PCRel<0xEB, RawFrm, (outs), (ins brtarget8:$dst),
                        "jmp\t$dst", []>;
+  // FIXME : Intel syntax for JMP64pcrel32 such that it is not ambiguious
+  // with JMP_1.
   def JMP64pcrel32 : I<0xE9, RawFrm, (outs), (ins brtarget:$dst),
-                       "jmp{q}\t$dst", []>;
+                       "jmpq\t$dst", []>;
 }
 
 // Conditional Branches.

@@ -31,4 +31,7 @@
 // CHECK: encoding: [0x48,0x83,0xc0,0xf4]
 	add	rax, -12
 
-
+LBB0_3:
+// CHECK: encoding: [0xeb,A]
+	jmp	LBB0_3
+	
