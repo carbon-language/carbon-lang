@@ -173,6 +173,13 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
                  *SubRegs; ++SubRegs)
               LivePhysRegs.reset(*SubRegs);
           }
+        } else if (MO.isRegMask()) {
+          // Register mask of preserved registers. All clobbers are dead.
+          if (const uint32_t *Mask = MO.getRegMask())
+            LivePhysRegs.clearBitsNotInMask(Mask);
+          else
+            LivePhysRegs.reset();
+          LivePhysRegs |= ReservedRegs;
         }
       }
       // Record the physreg uses, after the defs, in case a physreg is
