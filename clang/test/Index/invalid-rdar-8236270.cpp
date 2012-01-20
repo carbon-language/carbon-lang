@@ -1,4 +1,4 @@
-// RUN: c-index-test -test-load-source all %s 2>&1 | FileCheck %s
+// RUN: c-index-test -test-load-source all %s | FileCheck %s
 
 // This test case previously just crashed the frontend.
 
