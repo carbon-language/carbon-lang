@@ -14,6 +14,7 @@
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/Basic/Builtins.h"
+#include "clang/Lex/Lexer.h"
 
 using namespace clang;
 using namespace ento;
@@ -53,3 +54,15 @@ bool CheckerContext::isCLibraryFunction(const FunctionDecl *FD,
 
   return false;
 }
+
+StringRef CheckerContext::getMacroNameOrSpelling(SourceLocation &Loc) {
+  if (!Loc.isMacroID()) {
+    SmallVector<char, 16> buf;
+    return Lexer::getSpelling(Loc, buf, getSourceManager(), getLangOptions());
+  } else {
+    return Lexer::getImmediateMacroName(Loc, getSourceManager(),
+                                             getLangOptions());
+  }
+  return StringRef();
+}
+
