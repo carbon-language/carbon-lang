@@ -1335,8 +1335,8 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
           SmallVector<const RecordType *, 8> ToVisit;
           ToVisit.push_back(RecordT);
           bool Successful = false;
-          SmallVectorImpl<DeducedTemplateArgument> DeducedOrig(0);
-          DeducedOrig = Deduced;
+          SmallVector<DeducedTemplateArgument, 8> DeducedOrig(Deduced.begin(),
+                                                              Deduced.end());
           while (!ToVisit.empty()) {
             // Retrieve the next class in the inheritance hierarchy.
             const RecordType *NextT = ToVisit.back();
@@ -1358,7 +1358,8 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
               // from this base class.
               if (BaseResult == Sema::TDK_Success) {
                 Successful = true;
-                DeducedOrig = Deduced;
+                DeducedOrig.clear();
+                DeducedOrig.append(Deduced.begin(), Deduced.end());
               }
               else
                 Deduced = DeducedOrig;
