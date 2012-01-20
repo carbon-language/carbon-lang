@@ -639,6 +639,14 @@ public:
   QualType withVolatile() const {
     return withFastQualifiers(Qualifiers::Volatile);
   }
+  
+  /// Add the restrict qualifier to this QualType.
+  void addRestrict() {
+    addFastQualifiers(Qualifiers::Restrict);
+  }
+  QualType withRestrict() const {
+    return withFastQualifiers(Qualifiers::Restrict);
+  }
 
   QualType withCVRQualifiers(unsigned CVR) const {
     return withFastQualifiers(CVR);
