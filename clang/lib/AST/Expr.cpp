@@ -124,7 +124,6 @@ SourceLocation Expr::getExprLoc() const {
 #include "clang/AST/StmtNodes.inc"
   }
   llvm_unreachable("unknown statement kind");
-  return SourceLocation();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1213,7 +1212,6 @@ const char *CastExpr::getCastKindName() const {
   }
 
   llvm_unreachable("Unhandled cast kind!");
-  return 0;
 }
 
 Expr *CastExpr::getSubExprAsWritten() {
@@ -1255,7 +1253,6 @@ CXXBaseSpecifier **CastExpr::path_buffer() {
 #include "clang/AST/StmtNodes.inc"
   default:
     llvm_unreachable("non-cast expressions not possible here");
-    return 0;
   }
 }
 
@@ -1343,7 +1340,7 @@ const char *BinaryOperator::getOpcodeStr(Opcode Op) {
   case BO_Comma:     return ",";
   }
 
-  return "";
+  llvm_unreachable("Invalid OpCode!");
 }
 
 BinaryOperatorKind
@@ -3015,7 +3012,7 @@ SourceRange ObjCMessageExpr::getReceiverRange() const {
     return getSuperLoc();
   }
 
-  return SourceLocation();
+  llvm_unreachable("Invalid ReceiverKind!");
 }
 
 Selector ObjCMessageExpr::getSelector() const {
@@ -3064,8 +3061,8 @@ StringRef ObjCBridgedCastExpr::getBridgeKindName() const {
   case OBC_BridgeRetained:
     return "__bridge_retained";
   }
-  
-  return "__bridge";
+
+  llvm_unreachable("Invalid BridgeKind!");
 }
 
 bool ChooseExpr::isConditionTrue(const ASTContext &C) const {

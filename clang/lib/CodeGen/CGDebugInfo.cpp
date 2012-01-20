@@ -1565,8 +1565,6 @@ static QualType UnwrapTypeForDebugInfo(QualType T) {
     if (T == LastT)
       return T;
   } while (true);
-  
-  return T;
 }
 
 /// getType - Get the type from the cache or return null type if it doesn't exist.
@@ -1677,7 +1675,6 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit) {
   case Type::UnaryTransform:
   case Type::Auto:
     llvm_unreachable("type should have been unwrapped!");
-    return llvm::DIType();      
   }
   
   assert(Diag && "Fall through without a diagnostic?");

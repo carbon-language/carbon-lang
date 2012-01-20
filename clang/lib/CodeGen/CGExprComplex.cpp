@@ -817,7 +817,6 @@ EmitComplexCompoundAssignmentLValue(const CompoundAssignOperator *E) {
 
   default:
     llvm_unreachable("unexpected complex compound assignment");
-    Op = 0;
   }
 
   ComplexPairTy Val; // ignored

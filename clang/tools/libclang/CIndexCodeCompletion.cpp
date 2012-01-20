@@ -141,8 +141,7 @@ CXString clang_getCompletionChunkText(CXCompletionString completion_string,
     return createCXString("");
   }
 
-  // Should be unreachable, but let's be careful.
-  return createCXString((const char*)0);
+  llvm_unreachable("Invalid CodeCompletionString Kind!");
 }
 
 

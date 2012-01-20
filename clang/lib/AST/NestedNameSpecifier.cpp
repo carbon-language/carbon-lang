@@ -130,7 +130,7 @@ NestedNameSpecifier::SpecifierKind NestedNameSpecifier::getKind() const {
     return TypeSpecWithTemplate;
   }
 
-  return Global;
+  llvm_unreachable("Invalid NNS Kind!");
 }
 
 /// \brief Retrieve the namespace stored in this nested name
@@ -170,8 +170,7 @@ bool NestedNameSpecifier::isDependent() const {
     return getAsType()->isDependentType();
   }
 
-  // Necessary to suppress a GCC warning.
-  return false;
+  llvm_unreachable("Invalid NNS Kind!");
 }
 
 /// \brief Whether this nested name specifier refers to a dependent
@@ -191,9 +190,8 @@ bool NestedNameSpecifier::isInstantiationDependent() const {
   case TypeSpecWithTemplate:
     return getAsType()->isInstantiationDependentType();
   }
-  
-  // Necessary to suppress a GCC warning.
-  return false;
+
+  llvm_unreachable("Invalid NNS Kind!");
 }
 
 bool NestedNameSpecifier::containsUnexpandedParameterPack() const {
@@ -211,8 +209,7 @@ bool NestedNameSpecifier::containsUnexpandedParameterPack() const {
     return getAsType()->containsUnexpandedParameterPack();
   }
 
-  // Necessary to suppress a GCC warning.
-  return false;  
+  llvm_unreachable("Invalid NNS Kind!");
 }
 
 /// \brief Print this nested name specifier to the given output
@@ -382,8 +379,8 @@ SourceRange NestedNameSpecifierLoc::getLocalSourceRange() const {
                        LoadSourceLocation(Data, Offset + sizeof(void*)));
   }
   }
-  
-  return SourceRange();
+
+  llvm_unreachable("Invalid NNS Kind!");
 }
 
 TypeLoc NestedNameSpecifierLoc::getTypeLoc() const {

@@ -59,7 +59,6 @@ SVal Environment::getSVal(const EnvironmentEntry &Entry,
       case Stmt::GenericSelectionExprClass:
         llvm_unreachable("ParenExprs and GenericSelectionExprs should "
                          "have been handled by IgnoreParens()");
-        return UnknownVal();
       case Stmt::CharacterLiteralClass: {
         const CharacterLiteral* C = cast<CharacterLiteral>(E);
         return svalBuilder.makeIntVal(C->getValue(), C->getType());

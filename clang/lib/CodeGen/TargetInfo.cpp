@@ -2847,7 +2847,6 @@ void PTXABIInfo::computeInfo(CGFunctionInfo &FI) const {
 llvm::Value *PTXABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                    CodeGenFunction &CFG) const {
   llvm_unreachable("PTX does not support varargs");
-  return 0;
 }
 
 void PTXTargetCodeGenInfo::SetTargetAttributes(const Decl *D,

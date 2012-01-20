@@ -48,8 +48,6 @@ static llvm::Optional<Visibility> getVisibilityOf(const Decl *D) {
     case VisibilityAttr::Protected:
       return ProtectedVisibility;
     }
-
-    return DefaultVisibility;
   }
 
   // If we're on Mac OS X, an 'availability' for Mac OS X attribute
@@ -1141,7 +1139,6 @@ const char *VarDecl::getStorageClassSpecifierString(StorageClass SC) {
   }
 
   llvm_unreachable("Invalid storage class");
-  return 0;
 }
 
 VarDecl *VarDecl::Create(ASTContext &C, DeclContext *DC,

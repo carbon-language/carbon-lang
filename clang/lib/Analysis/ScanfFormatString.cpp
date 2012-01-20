@@ -462,7 +462,7 @@ bool ScanfArgTypeResult::matchesType(ASTContext& C, QualType argTy) const {
     }
   }
 
-  return false; // Unreachable, but we still get a warning.
+  llvm_unreachable("Invalid ScanfArgTypeResult Kind!");
 }
 
 QualType ScanfArgTypeResult::getRepresentativeType(ASTContext &C) const {
@@ -479,7 +479,7 @@ QualType ScanfArgTypeResult::getRepresentativeType(ASTContext &C) const {
       return C.getPointerType(A.getRepresentativeType(C));
   }
 
-  return QualType(); // Not reachable.
+  llvm_unreachable("Invalid ScanfArgTypeResult Kind!");
 }
 
 std::string ScanfArgTypeResult::getRepresentativeTypeName(ASTContext& C) const {

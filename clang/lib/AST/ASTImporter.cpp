@@ -332,7 +332,6 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
   }
   
   llvm_unreachable("Invalid template argument kind");
-  return true;
 }
 
 /// \brief Determine structural equivalence for the common part of array 
@@ -1357,8 +1356,8 @@ QualType ASTNodeImporter::VisitBuiltinType(const BuiltinType *T) {
     // wchar_t?
     return Importer.getToContext().WCharTy;
   }
-  
-  return QualType();
+
+  llvm_unreachable("Invalid BuiltinType Kind!");
 }
 
 QualType ASTNodeImporter::VisitComplexType(const ComplexType *T) {
@@ -1983,7 +1982,6 @@ ASTNodeImporter::ImportTemplateArgument(const TemplateArgument &From) {
   }
   
   llvm_unreachable("Invalid template argument kind");
-  return TemplateArgument();
 }
 
 bool ASTNodeImporter::ImportTemplateArguments(const TemplateArgument *FromArgs,
@@ -4214,7 +4212,6 @@ NestedNameSpecifier *ASTImporter::Import(NestedNameSpecifier *FromNNS) {
   }
 
   llvm_unreachable("Invalid nested name specifier kind");
-  return 0;
 }
 
 NestedNameSpecifierLoc ASTImporter::Import(NestedNameSpecifierLoc FromNNS) {
@@ -4309,7 +4306,6 @@ TemplateName ASTImporter::Import(TemplateName From) {
   }
   
   llvm_unreachable("Invalid template name kind");
-  return TemplateName();
 }
 
 SourceLocation ASTImporter::Import(SourceLocation FromLoc) {
@@ -4453,8 +4449,7 @@ DeclarationName ASTImporter::Import(DeclarationName FromName) {
     return DeclarationName::getUsingDirectiveName();
   }
 
-  // Silence bogus GCC warning
-  return DeclarationName();
+  llvm_unreachable("Invalid DeclarationName Kind!");
 }
 
 IdentifierInfo *ASTImporter::Import(const IdentifierInfo *FromId) {

@@ -225,14 +225,11 @@ GenericTaintChecker::TaintPropagationRule::getTaintPropagationRule(
     case Builtin::BIstrncpy:
     case Builtin::BIstrncat:
       return TaintPropagationRule(1, 2, 0, true);
-      break;
     case Builtin::BIstrlcpy:
     case Builtin::BIstrlcat:
       return TaintPropagationRule(1, 2, 0, false);
-      break;
     case Builtin::BIstrndup:
       return TaintPropagationRule(0, 1, ReturnValueIndex);
-      break;
 
     default:
       break;

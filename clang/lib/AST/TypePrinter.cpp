@@ -934,7 +934,7 @@ void TypePrinter::printAttributed(const AttributedType *T,
   case AttributedType::attr_objc_ownership:
     S += "objc_ownership(";
     switch (T->getEquivalentType().getObjCLifetime()) {
-    case Qualifiers::OCL_None: llvm_unreachable("no ownership!"); break;
+    case Qualifiers::OCL_None: llvm_unreachable("no ownership!");
     case Qualifiers::OCL_ExplicitNone: S += "none"; break;
     case Qualifiers::OCL_Strong: S += "strong"; break;
     case Qualifiers::OCL_Weak: S += "weak"; break;

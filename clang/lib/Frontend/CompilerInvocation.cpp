@@ -395,7 +395,6 @@ static const char *getInputKindName(InputKind Kind) {
   }
 
   llvm_unreachable("Unexpected language kind!");
-  return 0;
 }
 
 static const char *getActionName(frontend::ActionKind Kind) {
@@ -433,7 +432,6 @@ static const char *getActionName(frontend::ActionKind Kind) {
   }
 
   llvm_unreachable("Unexpected language kind!");
-  return 0;
 }
 
 static void FileSystemOptsToArgs(const FileSystemOptions &Opts,

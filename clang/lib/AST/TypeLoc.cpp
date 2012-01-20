@@ -196,57 +196,54 @@ SourceRange TypeOfExprTypeLoc::getLocalSourceRange() const {
 TypeSpecifierType BuiltinTypeLoc::getWrittenTypeSpec() const {
   if (needsExtraLocalData())
     return static_cast<TypeSpecifierType>(getWrittenBuiltinSpecs().Type);
-  else {
-    switch (getTypePtr()->getKind()) {
-    case BuiltinType::Void:
-      return TST_void;
-    case BuiltinType::Bool:
-      return TST_bool;
-    case BuiltinType::Char_U:
-    case BuiltinType::Char_S:
-      return TST_char;
-    case BuiltinType::Char16:
-      return TST_char16;
-    case BuiltinType::Char32:
-      return TST_char32;
-    case BuiltinType::WChar_S:
-    case BuiltinType::WChar_U:
-      return TST_wchar;
-
-    case BuiltinType::UChar:
-    case BuiltinType::UShort:
-    case BuiltinType::UInt:
-    case BuiltinType::ULong:
-    case BuiltinType::ULongLong:
-    case BuiltinType::UInt128:
-    case BuiltinType::SChar:
-    case BuiltinType::Short:
-    case BuiltinType::Int:
-    case BuiltinType::Long:
-    case BuiltinType::LongLong:
-    case BuiltinType::Int128:
-    case BuiltinType::Half:
-    case BuiltinType::Float:
-    case BuiltinType::Double:
-    case BuiltinType::LongDouble:
-      llvm_unreachable("Builtin type needs extra local data!");
-      // Fall through, if the impossible happens.
-        
-    case BuiltinType::NullPtr:
-    case BuiltinType::Overload:
-    case BuiltinType::Dependent:
-    case BuiltinType::BoundMember:
-    case BuiltinType::UnknownAny:
-    case BuiltinType::ARCUnbridgedCast:
-    case BuiltinType::PseudoObject:
-    case BuiltinType::ObjCId:
-    case BuiltinType::ObjCClass:
-    case BuiltinType::ObjCSel:
-      return TST_unspecified;
-    }
+  switch (getTypePtr()->getKind()) {
+  case BuiltinType::Void:
+    return TST_void;
+  case BuiltinType::Bool:
+    return TST_bool;
+  case BuiltinType::Char_U:
+  case BuiltinType::Char_S:
+    return TST_char;
+  case BuiltinType::Char16:
+    return TST_char16;
+  case BuiltinType::Char32:
+    return TST_char32;
+  case BuiltinType::WChar_S:
+  case BuiltinType::WChar_U:
+    return TST_wchar;
+  case BuiltinType::UChar:
+  case BuiltinType::UShort:
+  case BuiltinType::UInt:
+  case BuiltinType::ULong:
+  case BuiltinType::ULongLong:
+  case BuiltinType::UInt128:
+  case BuiltinType::SChar:
+  case BuiltinType::Short:
+  case BuiltinType::Int:
+  case BuiltinType::Long:
+  case BuiltinType::LongLong:
+  case BuiltinType::Int128:
+  case BuiltinType::Half:
+  case BuiltinType::Float:
+  case BuiltinType::Double:
+  case BuiltinType::LongDouble:
+    llvm_unreachable("Builtin type needs extra local data!");
+    // Fall through, if the impossible happens.
+      
+  case BuiltinType::NullPtr:
+  case BuiltinType::Overload:
+  case BuiltinType::Dependent:
+  case BuiltinType::BoundMember:
+  case BuiltinType::UnknownAny:
+  case BuiltinType::ARCUnbridgedCast:
+  case BuiltinType::PseudoObject:
+  case BuiltinType::ObjCId:
+  case BuiltinType::ObjCClass:
+  case BuiltinType::ObjCSel:
+    return TST_unspecified;
   }
-  
-  return TST_unspecified;
+
+  llvm_unreachable("Invalid BuiltinType Kind!");
 }
 
 TypeLoc TypeLoc::IgnoreParensImpl(TypeLoc TL) {

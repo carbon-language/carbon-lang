@@ -231,16 +231,12 @@ static llvm::APSInt computeAdjustment(const SymExpr *LHS,
   switch (SE->getOpcode()) {
   case BO_Add:
     return SE->getRHS();
-    break;
   case BO_Sub:
     return -SE->getRHS();
-    break;
   default:
     // We cannot simplify non-additive operators.
     return DefaultAdjustment;
   }
-
-  return DefaultAdjustment;
 }
 
 const ProgramState *SimpleConstraintManager::assumeSymRel(const ProgramState *state,

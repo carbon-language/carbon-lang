@@ -2673,8 +2673,8 @@ struct BaseAndFieldInfo {
     case IIK_Default:
       return false;
     }
-    
-    return false;
+
+    llvm_unreachable("Invalid ImplicitInitializerKind!");
   }
 };
 }

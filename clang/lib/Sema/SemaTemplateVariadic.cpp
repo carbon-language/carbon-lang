@@ -388,7 +388,6 @@ Sema::ActOnPackExpansion(const ParsedTemplateArgument &Arg,
     return Arg.getTemplatePackExpansion(EllipsisLoc);
   }
   llvm_unreachable("Unhandled template argument kind?");
-  return ParsedTemplateArgument();
 }
 
 TypeResult Sema::ActOnPackExpansion(ParsedType Type, 
@@ -632,7 +631,6 @@ unsigned Sema::getNumArgumentsInExpansion(QualType T,
   }
   
   llvm_unreachable("No unexpanded parameter packs in type expansion.");
-  return 0;
 }
 
 bool Sema::containsUnexpandedParameterPacks(Declarator &D) {
@@ -695,7 +693,6 @@ bool Sema::containsUnexpandedParameterPacks(Declarator &D) {
       // declarator-id (conceptually), so the parser should not invoke this
       // routine at this time.
       llvm_unreachable("Could not have seen this kind of declarator chunk");
-      break;
         
     case DeclaratorChunk::MemberPointer:
       if (Chunk.Mem.Scope().getScopeRep() &&

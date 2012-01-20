@@ -125,8 +125,8 @@ int DeclarationName::compare(DeclarationName LHS, DeclarationName RHS) {
   case DeclarationName::CXXUsingDirective:
     return 0;
   }
-              
-  return 0;
+
+  llvm_unreachable("Invalid DeclarationName Kind!");
 }
 
 } // end namespace clang
@@ -189,7 +189,6 @@ DeclarationName::NameKind DeclarationName::getNameKind() const {
 
       return ObjCMultiArgSelector;
     }
-    break;
   }
 
   // Can't actually get here.

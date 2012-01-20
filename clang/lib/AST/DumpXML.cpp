@@ -165,7 +165,6 @@ static StringRef getTypeKindName(Type *T) {
   }
 
   llvm_unreachable("unknown type kind!");
-  return "unknown_type";
 }
 
 struct XMLDumper : public XMLDeclVisitor<XMLDumper>,

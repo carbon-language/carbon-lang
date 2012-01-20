@@ -1427,10 +1427,6 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     return EmitFunctionDeclLValue(*this, E, fn);
 
   llvm_unreachable("Unhandled DeclRefExpr");
-  
-  // an invalid LValue, but the assert will
-  // ensure that this point is never reached.
-  return LValue();
 }
 
 LValue CodeGenFunction::EmitBlockDeclRefLValue(const BlockDeclRefExpr *E) {

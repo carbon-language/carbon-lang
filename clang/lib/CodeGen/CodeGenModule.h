@@ -469,7 +469,6 @@ public:
     case ProtectedVisibility: return llvm::GlobalValue::ProtectedVisibility;
     }
     llvm_unreachable("unknown visibility!");
-    return llvm::GlobalValue::DefaultVisibility;
   }
 
   llvm::Constant *GetAddrOfGlobal(GlobalDecl GD) {

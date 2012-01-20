@@ -1167,7 +1167,6 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   case CK_ConstructorConversion:
   case CK_ToUnion:
     llvm_unreachable("scalar cast to non-scalar value");
-    break;
 
   case CK_LValueToRValue:
     assert(CGF.getContext().hasSameUnqualifiedType(E->getType(), DestTy));
@@ -1247,7 +1246,6 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   }
 
   llvm_unreachable("unknown scalar cast");
-  return 0;
 }
 
 Value *ScalarExprEmitter::VisitStmtExpr(const StmtExpr *E) {
@@ -1272,10 +1270,8 @@ EmitAddConsiderOverflowBehavior(const UnaryOperator *E,
   switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
   case LangOptions::SOB_Undefined:
     return Builder.CreateNSWAdd(InVal, NextVal, IsInc ? "inc" : "dec");
-    break;
   case LangOptions::SOB_Defined:
     return Builder.CreateAdd(InVal, NextVal, IsInc ? "inc" : "dec");
-    break;
   case LangOptions::SOB_Trapping:
     BinOpInfo BinOp;
     BinOp.LHS = InVal;
@@ -1875,7 +1871,6 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
     break;
   default:
     llvm_unreachable("Unsupported operation for overflow detection");
-    IID = 0;
   }
   OpID <<= 1;
   OpID |= 1;
@@ -2175,36 +2170,28 @@ static llvm::Intrinsic::ID GetIntrinsic(IntrinsicType IT,
   case BuiltinType::UChar:
     return (IT == VCMPEQ) ? llvm::Intrinsic::ppc_altivec_vcmpequb_p :
                             llvm::Intrinsic::ppc_altivec_vcmpgtub_p;
-    break;
   case BuiltinType::Char_S:
   case BuiltinType::SChar:
     return (IT == VCMPEQ) ? llvm::Intrinsic::ppc_altivec_vcmpequb_p :
                             llvm::Intrinsic::ppc_altivec_vcmpgtsb_p;
-    break;
   case BuiltinType::UShort:
     return (IT == VCMPEQ) ? llvm::Intrinsic::ppc_altivec_vcmpequh_p :
                             llvm::Intrinsic::ppc_altivec_vcmpgtuh_p;
-    break;
   case BuiltinType::Short:
     return (IT == VCMPEQ) ? llvm::Intrinsic::ppc_altivec_vcmpequh_p :
                             llvm::Intrinsic::ppc_altivec_vcmpgtsh_p;
-    break;
   case BuiltinType::UInt:
   case BuiltinType::ULong:
     return (IT == VCMPEQ) ? llvm::Intrinsic::ppc_altivec_vcmpequw_p :
                             llvm::Intrinsic::ppc_altivec_vcmpgtuw_p;
-    break;
   case BuiltinType::Int:
   case BuiltinType::Long:
     return (IT == VCMPEQ) ? llvm::Intrinsic::ppc_altivec_vcmpequw_p :
                             llvm::Intrinsic::ppc_altivec_vcmpgtsw_p;
-    break;
   case BuiltinType::Float:
     return (IT == VCMPEQ) ? llvm::Intrinsic::ppc_altivec_vcmpeqfp_p :
                             llvm::Intrinsic::ppc_altivec_vcmpgtfp_p;
-    break;
   }
-  return llvm::Intrinsic::not_intrinsic;
 }
 
 Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,

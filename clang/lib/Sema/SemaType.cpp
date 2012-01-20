@@ -1794,10 +1794,8 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
     switch (D.getContext()) {
     case Declarator::KNRTypeListContext:
       llvm_unreachable("K&R type lists aren't allowed in C++");
-      break;
     case Declarator::LambdaExprContext:
       llvm_unreachable("Can't specify a type specifier in lambda grammar");
-      break;
     case Declarator::ObjCParameterContext:
     case Declarator::ObjCResultContext:
     case Declarator::PrototypeContext:
@@ -2327,7 +2325,6 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         case NestedNameSpecifier::NamespaceAlias:
         case NestedNameSpecifier::Global:
           llvm_unreachable("Nested-name-specifier must name a type");
-          break;
 
         case NestedNameSpecifier::TypeSpec:
         case NestedNameSpecifier::TypeSpecWithTemplate:
@@ -2659,7 +2656,7 @@ static void transferARCOwnershipToDeclaratorChunk(TypeProcessingState &state,
 
   const char *attrStr = 0;
   switch (ownership) {
-  case Qualifiers::OCL_None: llvm_unreachable("no ownership!"); break;
+  case Qualifiers::OCL_None: llvm_unreachable("no ownership!");
   case Qualifiers::OCL_ExplicitNone: attrStr = "none"; break;
   case Qualifiers::OCL_Strong: attrStr = "strong"; break;
   case Qualifiers::OCL_Weak: attrStr = "weak"; break;
@@ -2780,7 +2777,6 @@ static AttributeList::Kind getAttrListKind(AttributedType::Kind kind) {
     return AttributeList::AT_pcs;
   }
   llvm_unreachable("unexpected attribute kind!");
-  return AttributeList::Kind();
 }
 
 static void fillAttributedTypeLoc(AttributedTypeLoc TL,
@@ -3055,7 +3051,6 @@ namespace {
       case NestedNameSpecifier::NamespaceAlias:
       case NestedNameSpecifier::Global:
         llvm_unreachable("Nested-name-specifier must name a type");
-        break;
       }
 
       // Finally fill in MemberPointerLocInfo fields.
@@ -3572,7 +3567,6 @@ namespace {
       }
 
       llvm_unreachable("unknown wrapping kind");
-      return QualType();
     }
   };
 }

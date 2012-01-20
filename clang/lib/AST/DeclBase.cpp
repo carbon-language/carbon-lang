@@ -529,7 +529,7 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
       return 0;
   }
 
-  return 0;
+  llvm_unreachable("Invalid DeclKind!");
 }
 
 void Decl::setAttrs(const AttrVec &attrs) {

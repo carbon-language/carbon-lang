@@ -3756,7 +3756,6 @@ static int EvaluateBuiltinClassifyType(const CallExpr *E) {
     return union_type_class;
   else  // FIXME: offset_type_class, method_type_class, & lang_type_class?
     llvm_unreachable("CallExpr::isBuiltinClassifyType(): unimplemented type");
-  return -1;
 }
 
 /// EvaluateBuiltinConstantPForLValue - Determine the result of
@@ -4385,7 +4384,6 @@ bool IntExprEvaluator::VisitUnaryExprOrTypeTraitExpr(
   }
 
   llvm_unreachable("unknown expr/type trait");
-  return Error(E);
 }
 
 bool IntExprEvaluator::VisitOffsetOfExpr(const OffsetOfExpr *OOE) {
@@ -4427,7 +4425,6 @@ bool IntExprEvaluator::VisitOffsetOfExpr(const OffsetOfExpr *OOE) {
 
     case OffsetOfExpr::OffsetOfNode::Identifier:
       llvm_unreachable("dependent __builtin_offsetof");
-      return Error(OOE);
 
     case OffsetOfExpr::OffsetOfNode::Base: {
       CXXBaseSpecifier *BaseSpec = ON.getBase();
@@ -4618,7 +4615,6 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
   }
 
   llvm_unreachable("unknown cast resulting in integral value");
-  return Error(E);
 }
 
 bool IntExprEvaluator::VisitUnaryReal(const UnaryOperator *E) {
@@ -4881,8 +4877,6 @@ bool FloatExprEvaluator::VisitCastExpr(const CastExpr *E) {
     return true;
   }
   }
-
-  return Error(E);
 }
 
 //===----------------------------------------------------------------------===//
@@ -5092,7 +5086,6 @@ bool ComplexExprEvaluator::VisitCastExpr(const CastExpr *E) {
   }
 
   llvm_unreachable("unknown cast resulting in complex value");
-  return Error(E);
 }
 
 bool ComplexExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
@@ -5928,8 +5921,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   }
   }
 
-  // Silence a GCC warning
-  return ICEDiag(2, E->getLocStart());
+  llvm_unreachable("Invalid StmtClass!");
 }
 
 /// Evaluate an expression as a C++11 integral constant expression.

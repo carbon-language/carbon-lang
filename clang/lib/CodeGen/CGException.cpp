@@ -636,8 +636,7 @@ static bool isNonEHScope(const EHScope &S) {
     return false;
   }
 
-  // Suppress warning.
-  return false;
+  llvm_unreachable("Invalid EHScope Kind!");
 }
 
 llvm::BasicBlock *CodeGenFunction::getInvokeDestImpl() {

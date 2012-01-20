@@ -58,7 +58,6 @@ cocoa::NamingConvention cocoa::deriveNamingConvention(Selector S,
     return CreateRule;
   }
   llvm_unreachable("unexpected naming convention");
-  return NoConvention;
 }
 
 bool cocoa::isRefType(QualType RetTy, StringRef Prefix,
@@ -176,6 +175,4 @@ bool coreFoundation::followsCreateRule(const FunctionDecl *fn) {
     // If we matched a lowercase character, it isn't the end of the
     // word.  Keep scanning.
   }
-  
-  return false;
 }

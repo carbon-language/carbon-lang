@@ -340,9 +340,7 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
       return argTy->getAs<ObjCObjectPointerType>() != NULL;
   }
 
-  // FIXME: Should be unreachable, but Clang is currently emitting
-  // a warning.
-  return false;
+  llvm_unreachable("Invalid ArgTypeResult Kind!");
 }
 
 QualType ArgTypeResult::getRepresentativeType(ASTContext &C) const {
@@ -369,9 +367,7 @@ QualType ArgTypeResult::getRepresentativeType(ASTContext &C) const {
     }
   }
 
-  // FIXME: Should be unreachable, but Clang is currently emitting
-  // a warning.
-  return QualType();
+  llvm_unreachable("Invalid ArgTypeResult Kind!");
 }
 
 std::string ArgTypeResult::getRepresentativeTypeName(ASTContext &C) const {
@@ -577,5 +573,5 @@ bool FormatSpecifier::hasValidLengthModifier() const {
           return false;
       }
   }
-  return false;
+  llvm_unreachable("Invalid LengthModifier Kind!");
 }

@@ -2086,7 +2086,6 @@ static TryEmitResult tryEmitARCRetainLoadOfScalar(CodeGenFunction &CGF,
   }
 
   llvm_unreachable("impossible lifetime!");
-  return TryEmitResult();
 }
 
 static TryEmitResult tryEmitARCRetainLoadOfScalar(CodeGenFunction &CGF,

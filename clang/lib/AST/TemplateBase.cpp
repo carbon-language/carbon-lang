@@ -100,7 +100,7 @@ bool TemplateArgument::isDependent() const {
     return false;
   }
 
-  return false;
+  llvm_unreachable("Invalid TemplateArgument Kind!");
 }
 
 bool TemplateArgument::isInstantiationDependent() const {
@@ -137,8 +137,8 @@ bool TemplateArgument::isInstantiationDependent() const {
     
     return false;
   }
-  
-  return false;
+
+  llvm_unreachable("Invalid TemplateArgument Kind!");
 }
 
 bool TemplateArgument::isPackExpansion() const {
@@ -159,8 +159,8 @@ bool TemplateArgument::isPackExpansion() const {
   case Expression:
     return isa<PackExpansionExpr>(getAsExpr());
   }
-  
-  return false;
+
+  llvm_unreachable("Invalid TemplateArgument Kind!");
 }
 
 bool TemplateArgument::containsUnexpandedParameterPack() const {
@@ -278,8 +278,7 @@ bool TemplateArgument::structurallyEquals(const TemplateArgument &Other) const {
     return true;
   }
 
-  // Suppress warnings.
-  return false;
+  llvm_unreachable("Invalid TemplateArgument Kind!");
 }
 
 TemplateArgument TemplateArgument::getPackExpansionPattern() const {
@@ -302,8 +301,8 @@ TemplateArgument TemplateArgument::getPackExpansionPattern() const {
   case Template:
     return TemplateArgument();
   }
-  
-  return TemplateArgument();
+
+  llvm_unreachable("Invalid TemplateArgument Kind!");
 }
 
 void TemplateArgument::print(const PrintingPolicy &Policy, 
@@ -412,8 +411,7 @@ SourceRange TemplateArgumentLoc::getSourceRange() const {
     return SourceRange();
   }
 
-  // Silence bonus gcc warning.
-  return SourceRange();
+  llvm_unreachable("Invalid TemplateArgument Kind!");
 }
 
 TemplateArgumentLoc 
@@ -474,8 +472,8 @@ TemplateArgumentLoc::getPackExpansionPattern(SourceLocation &Ellipsis,
   case TemplateArgument::Null:
     return TemplateArgumentLoc();
   }
-  
-  return TemplateArgumentLoc();
+
+  llvm_unreachable("Invalid TemplateArgument Kind!");
 }
 
 const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
@@ -525,8 +523,8 @@ const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
     return DB << OS.str();
   }
   }
-  
-  return DB;
+
+  llvm_unreachable("Invalid TemplateArgument Kind!");
 }
 
 const ASTTemplateArgumentListInfo *

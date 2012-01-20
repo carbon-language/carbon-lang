@@ -57,7 +57,6 @@ static CGCXXABI &createCXXABI(CodeGenModule &CGM) {
   }
 
   llvm_unreachable("invalid C++ ABI kind");
-  return *CreateItaniumCXXABI(CGM);
 }
 
 
@@ -1340,9 +1339,8 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
   case TSK_ExplicitInstantiationDefinition:
       return llvm::GlobalVariable::WeakODRLinkage;
   }
-  
-  // Silence GCC warning.
-  return llvm::GlobalVariable::LinkOnceODRLinkage;
+
+  llvm_unreachable("Invalid TemplateSpecializationKind!");
 }
 
 CharUnits CodeGenModule::GetTargetTypeStoreSize(llvm::Type *Ty) const {

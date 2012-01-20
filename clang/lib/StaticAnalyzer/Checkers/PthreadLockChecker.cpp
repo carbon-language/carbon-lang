@@ -135,7 +135,6 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
       break;
     default:
       llvm_unreachable("Unknown tryLock locking semantics");
-      break;
     }
     assert(lockFail && lockSucc);
     C.addTransition(lockFail);

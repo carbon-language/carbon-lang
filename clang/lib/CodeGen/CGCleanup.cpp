@@ -84,7 +84,6 @@ RValue DominatingValue<RValue>::saved_type::restore(CodeGenFunction &CGF) {
   }
 
   llvm_unreachable("bad saved r-value kind");
-  return RValue();
 }
 
 /// Push an entry of the given size onto this protected-scope stack.

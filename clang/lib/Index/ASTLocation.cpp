@@ -50,8 +50,8 @@ Decl *ASTLocation::getReferencedDecl() {
   case N_Stmt:
     return getDeclFromExpr(Stm);
   }
-  
-  return 0;
+
+  llvm_unreachable("Invalid ASTLocation Kind!");
 }
 
 SourceRange ASTLocation::getSourceRange() const {
@@ -68,8 +68,8 @@ SourceRange ASTLocation::getSourceRange() const {
   case N_Type:
     return AsTypeLoc().getLocalSourceRange();
   }
-  
-  return SourceRange();
+
+  llvm_unreachable("Invalid ASTLocation Kind!");
 }
 
 void ASTLocation::print(raw_ostream &OS) const {

@@ -1364,7 +1364,6 @@ TypeWithKeyword::getTagTypeKindForTypeSpec(unsigned TypeSpec) {
   }
   
   llvm_unreachable("Type specifier is not a tag type kind.");
-  return TTK_Union;
 }
 
 ElaboratedTypeKeyword
@@ -1419,7 +1418,6 @@ TypeWithKeyword::getKeywordName(ElaboratedTypeKeyword Keyword) {
   }
 
   llvm_unreachable("Unknown elaborated type keyword.");
-  return "";
 }
 
 DependentTemplateSpecializationType::DependentTemplateSpecializationType(
@@ -1479,7 +1477,6 @@ const char *Type::getTypeClassName() const {
   }
   
   llvm_unreachable("Invalid type class.");
-  return 0;
 }
 
 const char *BuiltinType::getName(const PrintingPolicy &Policy) const {
@@ -1521,7 +1518,6 @@ const char *BuiltinType::getName(const PrintingPolicy &Policy) const {
   }
   
   llvm_unreachable("Invalid builtin type.");
-  return 0;
 }
 
 QualType QualType::getNonLValueExprType(ASTContext &Context) const {
@@ -1544,7 +1540,6 @@ StringRef FunctionType::getNameForCallConv(CallingConv CC) {
   switch (CC) {
   case CC_Default: 
     llvm_unreachable("no name for default cc");
-    return "";
 
   case CC_C: return "cdecl";
   case CC_X86StdCall: return "stdcall";
@@ -1556,7 +1551,6 @@ StringRef FunctionType::getNameForCallConv(CallingConv CC) {
   }
 
   llvm_unreachable("Invalid calling convention.");
-  return "";
 }
 
 FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,

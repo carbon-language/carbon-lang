@@ -47,7 +47,6 @@ static Cl::Kinds ClassifyExprValueKind(const LangOptions &Lang,
     return Cl::CL_XValue;
   }
   llvm_unreachable("Invalid value category of implicit cast.");
-  return Cl::CL_PRValue;
 }
 
 Cl Expr::ClassifyImpl(ASTContext &Ctx, SourceLocation *Loc) const {
@@ -99,7 +98,6 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
 #define EXPR(Kind, Base)
 #include "clang/AST/StmtNodes.inc"
     llvm_unreachable("cannot classify a statement");
-    break;
 
     // First come the expressions that are always lvalues, unconditionally.
   case Expr::ObjCIsaExprClass:
@@ -371,7 +369,6 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   }
 
   llvm_unreachable("unhandled expression kind in classification");
-  return Cl::CL_LValue;
 }
 
 /// ClassifyDecl - Return the classification of an expression referencing the

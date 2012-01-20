@@ -164,7 +164,6 @@ Stmt::child_range Stmt::children() {
 #include "clang/AST/StmtNodes.inc"
   }
   llvm_unreachable("unknown statement kind!");
-  return child_range();
 }
 
 SourceRange Stmt::getSourceRange() const {
@@ -177,7 +176,6 @@ SourceRange Stmt::getSourceRange() const {
 #include "clang/AST/StmtNodes.inc"
   }
   llvm_unreachable("unknown statement kind!");
-  return SourceRange();
 }
 
 void CompoundStmt::setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts) {

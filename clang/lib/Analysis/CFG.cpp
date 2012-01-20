@@ -3090,7 +3090,6 @@ CFGImplicitDtor::getDestructorDecl(ASTContext &astContext) const {
       return 0;
   }
   llvm_unreachable("getKind() returned bogus value");
-  return 0;
 }
 
 bool CFGImplicitDtor::isNoReturn(ASTContext &astContext) const {

@@ -503,7 +503,6 @@ static Stmt::StmtClass DecodeOperatorCall(const CXXOperatorCallExpr *S,
   case OO_Conditional:
   case NUM_OVERLOADED_OPERATORS:
     llvm_unreachable("Invalid operator call kind");
-    return Stmt::ArraySubscriptExprClass;
       
   case OO_Plus:
     if (S->getNumArgs() == 1) {

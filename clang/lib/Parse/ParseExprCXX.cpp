@@ -2464,7 +2464,7 @@ ExprResult Parser::ParseArrayTypeTrait() {
                                        T.getCloseLocation());
   }
   }
-  return ExprError();
+  llvm_unreachable("Invalid ArrayTypeTrait!");
 }
 
 /// ParseExpressionTrait - Parse built-in expression-trait

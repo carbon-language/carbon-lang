@@ -207,9 +207,8 @@ static bool TypeInfoIsInStandardLibrary(const BuiltinType *Ty) {
     case BuiltinType::ObjCSel:
       llvm_unreachable("FIXME: Objective-C types are unsupported!");
   }
-  
-  // Silent gcc.
-  return false;
+
+  llvm_unreachable("Invalid BuiltinType Kind!");
 }
 
 static bool TypeInfoIsInStandardLibrary(const PointerType *PointerTy) {
@@ -345,7 +344,7 @@ getTypeInfoLinkage(CodeGenModule &CGM, QualType Ty) {
     return llvm::GlobalValue::LinkOnceODRLinkage;
   }
 
-  return llvm::GlobalValue::LinkOnceODRLinkage;
+  llvm_unreachable("Invalid linkage!");
 }
 
 // CanUseSingleInheritance - Return whether the given record decl has a "single, 
