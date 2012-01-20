@@ -479,6 +479,53 @@ llvm::DIType CGDebugInfo::CreateType(const PointerType *Ty,
                                Ty->getPointeeType(), Unit);
 }
 
+// Walk up the context chain and create forward decls for record decls,
+// and normal descriptors for namespaces.
+llvm::DIDescriptor CGDebugInfo::createContextChain(const Decl *Context) {
+  if (!Context)
+    return TheCU;
+
+  // See if we already have the parent.
+  llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator
+    I = RegionMap.find(Context);
+  if (I != RegionMap.end())
+    return llvm::DIDescriptor(dyn_cast_or_null<llvm::MDNode>(&*I->second));
+  
+  // Check namespace.
+  if (const NamespaceDecl *NSDecl = dyn_cast<NamespaceDecl>(Context))
+    return llvm::DIDescriptor(getOrCreateNameSpace(NSDecl));
+
+  if (const RecordDecl *RD = dyn_cast<RecordDecl>(Context)) {
+    if (!RD->isDependentType()) {
+      llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
+      unsigned Line = getLineNumber(RD->getLocation());
+      llvm::DIDescriptor FDContext =
+        createContextChain(cast<Decl>(RD->getDeclContext()));
+      
+      const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
+      llvm::DIType Ty = llvm::DIType();
+      
+      if (CXXDecl)
+        Ty = DBuilder.createClassType(FDContext, RD->getName(), DefUnit,
+                                      Line, 0, 0, 0,
+                                      llvm::DIType::FlagFwdDecl,
+                                      llvm::DIType(), llvm::DIArray());
+      else if (RD->isStruct())
+        Ty = DBuilder.createStructType(FDContext, RD->getName(), DefUnit,
+                                       Line, 0, 0, llvm::DIType::FlagFwdDecl,
+                                       llvm::DIArray());
+      else if (RD->isUnion())
+        Ty = DBuilder.createUnionType(FDContext, RD->getName(), DefUnit,
+                                      Line, 0, 0, llvm::DIType::FlagFwdDecl,
+                                      llvm::DIArray());
+
+      RegionMap[Context] = llvm::WeakVH(Ty);
+      return llvm::DIDescriptor(Ty);
+    }
+  }
+  return TheCU;
+}
+
 /// CreatePointeeType - Create Pointee type. If Pointee is a record
 /// then emit record's fwd if debug info size reduction is enabled.
 llvm::DIType CGDebugInfo::CreatePointeeType(QualType PointeeTy,
@@ -1073,8 +1120,12 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   // its members.  Finally, we create a descriptor for the complete type (which
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
-  llvm::DIDescriptor FDContext =
-    getContextDescriptor(cast<Decl>(RD->getDeclContext()));
+
+  llvm::DIDescriptor FDContext;
+  if (CGM.getCodeGenOpts().LimitDebugInfo)
+    FDContext = createContextChain(cast<Decl>(RD->getDeclContext()));
+  else
+    FDContext = getContextDescriptor(cast<Decl>(RD->getDeclContext()));
 
   // If this is just a forward declaration, construct an appropriately
   // marked node and just return it.
@@ -1193,7 +1244,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
   llvm::DIType(FwdDeclNode).replaceAllUsesWith(RealDecl);
-  RegionMap[RD] = llvm::WeakVH(RealDecl);
+  RegionMap[Ty->getDecl()] = llvm::WeakVH(RealDecl);
   return llvm::DIType(RealDecl);
 }
 
