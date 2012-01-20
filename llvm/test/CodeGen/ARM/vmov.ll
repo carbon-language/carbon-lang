@@ -381,3 +381,20 @@ entry:
   store <4 x float> %b, <4 x float> *%p
   ret void
 }
+
+; Vector any_extends must be selected as either vmovl.u or vmovl.s.
+; rdar://10723651
+define void @any_extend(<4 x i1> %x, <4 x i32> %y) nounwind ssp {
+entry:
+;CHECK: any_extend
+;CHECK: vmovl
+  %and.i186 = zext <4 x i1> %x to <4 x i32>
+  %add.i185 = sub <4 x i32> %and.i186, %y
+  %sub.i = sub <4 x i32> %add.i185, zeroinitializer
+  %add.i = add <4 x i32> %sub.i, zeroinitializer
+  %vmovn.i = trunc <4 x i32> %add.i to <4 x i16>
+  tail call void @llvm.arm.neon.vst1.v4i16(i8* undef, <4 x i16> %vmovn.i, i32 2)
+  unreachable
+}
+
+declare void @llvm.arm.neon.vst1.v4i16(i8*, <4 x i16>, i32) nounwind
