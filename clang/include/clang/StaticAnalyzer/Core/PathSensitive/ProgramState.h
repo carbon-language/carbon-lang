@@ -368,10 +368,12 @@ public:
   // Pretty-printing.
   void print(raw_ostream &Out, const char *nl = "\n",
              const char *sep = "") const;
-
   void printDOT(raw_ostream &Out) const;
+  void printTaint(raw_ostream &Out, const char *nl = "\n",
+                  const char *sep = "") const;
 
   void dump() const;
+  void dumpTaint() const;
 
 private:
   /// Increments the number of times this state is referenced by ExplodeNodes.

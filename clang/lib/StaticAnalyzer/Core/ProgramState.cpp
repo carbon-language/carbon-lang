@@ -413,6 +413,22 @@ void ProgramState::dump() const {
   print(llvm::errs());
 }
 
+void ProgramState::printTaint(raw_ostream &Out,
+                              const char *NL, const char *Sep) const {
+  TaintMapImpl TM = get<TaintMap>();
+
+  if (!TM.isEmpty())
+    Out <<"Tainted Symbols:" << NL;
+
+  for (TaintMapImpl::iterator I = TM.begin(), E = TM.end(); I != E; ++I) {
+    Out << I->first << " : " << I->second << NL;
+  }
+}
+
+void ProgramState::dumpTaint() const {
+  printTaint(llvm::errs());
+}
+
 //===----------------------------------------------------------------------===//
 // Generic Data Map.
 //===----------------------------------------------------------------------===//
@@ -602,6 +618,11 @@ const ProgramState* ProgramState::addTaint(const MemRegion *R,
 
 const ProgramState* ProgramState::addTaint(SymbolRef Sym,
                                            TaintTagType Kind) const {
+  // If this is a symbol cast, remove the cast before adding the taint. Taint
+  // is cast agnostic.
+  while (const SymbolCast *SC = dyn_cast<SymbolCast>(Sym))
+    Sym = SC->getOperand();
+
   const ProgramState *NewState = set<TaintMap>(Sym, Kind);
   assert(NewState);
   return NewState;
@@ -661,6 +682,10 @@ bool ProgramState::isTainted(SymbolRef Sym, TaintTagType Kind) const {
     // If memory region is tainted, data is also tainted.
     if (const SymbolRegionValue *SRV = dyn_cast<SymbolRegionValue>(*SI))
       Tainted = Tainted || isTainted(SRV->getRegion(), Kind);
+
+    // If If this is a SymbolCast from a tainted value, it's also tainted.
+    if (const SymbolCast *SC = dyn_cast<SymbolCast>(*SI))
+      Tainted = Tainted || isTainted(SC->getOperand(), Kind);
 
     if (Tainted)
       return true;
