@@ -4611,7 +4611,6 @@ GetAddressedElementFromGlobal(GlobalVariable *GV,
       } else {
         llvm_unreachable("Unknown constant aggregate type!");
       }
-      return 0;
     } else {
       return 0; // Unknown initializer type
     }
