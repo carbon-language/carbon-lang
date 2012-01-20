@@ -856,28 +856,40 @@ namespace {
 static void EmitEncodingByte(MCStreamer &Streamer, unsigned Encoding,
                              StringRef Prefix) {
   if (Streamer.isVerboseAsm()) {
-    const char *EncStr = 0;
+    const char *EncStr;
     switch (Encoding) {
-    default: EncStr = "<unknown encoding>";
-    case dwarf::DW_EH_PE_absptr: EncStr = "absptr";
-    case dwarf::DW_EH_PE_omit:   EncStr = "omit";
-    case dwarf::DW_EH_PE_pcrel:  EncStr = "pcrel";
-    case dwarf::DW_EH_PE_udata4: EncStr = "udata4";
-    case dwarf::DW_EH_PE_udata8: EncStr = "udata8";
-    case dwarf::DW_EH_PE_sdata4: EncStr = "sdata4";
-    case dwarf::DW_EH_PE_sdata8: EncStr = "sdata8";
-    case dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_udata4: EncStr = "pcrel udata4";
-    case dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_sdata4: EncStr = "pcrel sdata4";
-    case dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_udata8: EncStr = "pcrel udata8";
-    case dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_sdata8: EncStr = "pcrel sdata8";
+    default: EncStr = "<unknown encoding>"; break;
+    case dwarf::DW_EH_PE_absptr: EncStr = "absptr"; break;
+    case dwarf::DW_EH_PE_omit:   EncStr = "omit"; break;
+    case dwarf::DW_EH_PE_pcrel:  EncStr = "pcrel"; break;
+    case dwarf::DW_EH_PE_udata4: EncStr = "udata4"; break;
+    case dwarf::DW_EH_PE_udata8: EncStr = "udata8"; break;
+    case dwarf::DW_EH_PE_sdata4: EncStr = "sdata4"; break;
+    case dwarf::DW_EH_PE_sdata8: EncStr = "sdata8"; break;
+    case dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_udata4:
+      EncStr = "pcrel udata4";
+      break;
+    case dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4:
+      EncStr = "pcrel sdata4";
+      break;
+    case dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_udata8:
+      EncStr = "pcrel udata8";
+      break;
+    case dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata8:
+      EncStr = "screl sdata8";
+      break;
     case dwarf::DW_EH_PE_indirect |dwarf::DW_EH_PE_pcrel|dwarf::DW_EH_PE_udata4:
       EncStr = "indirect pcrel udata4";
+      break;
     case dwarf::DW_EH_PE_indirect |dwarf::DW_EH_PE_pcrel|dwarf::DW_EH_PE_sdata4:
       EncStr = "indirect pcrel sdata4";
+      break;
     case dwarf::DW_EH_PE_indirect |dwarf::DW_EH_PE_pcrel|dwarf::DW_EH_PE_udata8:
       EncStr = "indirect pcrel udata8";
+      break;
     case dwarf::DW_EH_PE_indirect |dwarf::DW_EH_PE_pcrel|dwarf::DW_EH_PE_sdata8:
       EncStr = "indirect pcrel sdata8";
+      break;
     }
 
     Streamer.AddComment(Twine(Prefix) + " = " + EncStr);
