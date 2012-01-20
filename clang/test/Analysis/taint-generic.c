@@ -65,7 +65,7 @@ void bufferScanfAssignment(int x) {
 
 void scanfArg() {
   int t = 0;
-  scanf("%d", t); // expected-warning {{conversion specifies type 'int *' but the argument has type 'int'}}
+  scanf("%d", t); // expected-warning {{format specifies type 'int *' but the argument has type 'int'}}
 }
 
 void bufferGetchar(int x) {

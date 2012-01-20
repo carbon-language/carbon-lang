@@ -6,7 +6,7 @@ extern int printf(const char *restrict, ...);
 }
 
 void f(char **sp, float *fp) {
-  scanf("%as", sp); // expected-warning{{conversion specifies type 'float *' but the argument has type 'char **'}}
+  scanf("%as", sp); // expected-warning{{format specifies type 'float *' but the argument has type 'char **'}}
 
   printf("%a", 1.0);
   scanf("%afoobar", fp);

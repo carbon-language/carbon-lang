@@ -47,8 +47,8 @@ extern void CFStringCreateWithFormat2(int *format, ...) __attribute__((format(CF
 // <rdar://problem/7068334> - Catch use of long long with int arguments.
 void rdar_7068334() {
   long long test = 500;  
-  printf("%i ",test); // expected-warning{{conversion specifies type 'int' but the argument has type 'long long'}}
-  NSLog(@"%i ",test); // expected-warning{{conversion specifies type 'int' but the argument has type 'long long'}}
+  printf("%i ",test); // expected-warning{{format specifies type 'int' but the argument has type 'long long'}}
+  NSLog(@"%i ",test); // expected-warning{{format specifies type 'int' but the argument has type 'long long'}}
 }
 
 // <rdar://problem/7697748>

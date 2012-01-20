@@ -21,7 +21,7 @@ void foo(char **sp, float *fp, int *ip) {
   scanf("%da", ip);
 
   /* Test argument type check for the 'a' length modifier. */
-  scanf("%as", fp); /* expected-warning{{conversion specifies type 'char **' but the argument has type 'float *'}} */
-  scanf("%aS", fp); /* expected-warning{{conversion specifies type 'wchar_t **' (aka 'int **') but the argument has type 'float *'}} */
-  scanf("%a[abc]", fp); /* expected-warning{{conversion specifies type 'char **' but the argument has type 'float *'}} */
+  scanf("%as", fp); /* expected-warning{{format specifies type 'char **' but the argument has type 'float *'}} */
+  scanf("%aS", fp); /* expected-warning{{format specifies type 'wchar_t **' (aka 'int **') but the argument has type 'float *'}} */
+  scanf("%a[abc]", fp); /* expected-warning{{format specifies type 'char **' but the argument has type 'float *'}} */
 }

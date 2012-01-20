@@ -59,9 +59,9 @@ void test_variants(int *i, const char *s, ...) {
   FILE *f = 0;
   char buf[100];
 
-  fscanf(f, "%ld", i); // expected-warning{{conversion specifies type 'long *' but the argument has type 'int *'}}
-  sscanf(buf, "%ld", i); // expected-warning{{conversion specifies type 'long *' but the argument has type 'int *'}}
-  my_scanf("%ld", i); // expected-warning{{conversion specifies type 'long *' but the argument has type 'int *'}}
+  fscanf(f, "%ld", i); // expected-warning{{format specifies type 'long *' but the argument has type 'int *'}}
+  sscanf(buf, "%ld", i); // expected-warning{{format specifies type 'long *' but the argument has type 'int *'}}
+  my_scanf("%ld", i); // expected-warning{{format specifies type 'long *' but the argument has type 'int *'}}
 
   va_list ap;
   va_start(ap, s);
@@ -72,7 +72,7 @@ void test_variants(int *i, const char *s, ...) {
 }
 
 void test_scanlist(int *ip, char *sp) {
-  scanf("%[abc]", ip); // expected-warning{{conversion specifies type 'char *' but the argument has type 'int *'}}
+  scanf("%[abc]", ip); // expected-warning{{format specifies type 'char *' but the argument has type 'int *'}}
   scanf("%h[abc]", sp); // expected-warning{{length modifier 'h' results in undefined behavior or no effect with '[' conversion specifier}}
 }
 
@@ -80,9 +80,9 @@ void test_alloc_extension(char **sp, wchar_t **lsp, float *fp) {
   /* Make sure "%a" gets parsed as a conversion specifier for float,
    * even when followed by an 's', 'S' or '[', which would cause it to be
    * parsed as a length modifier in C90. */
-  scanf("%as", sp); // expected-warning{{conversion specifies type 'float *' but the argument has type 'char **'}}
-  scanf("%aS", lsp); // expected-warning{{conversion specifies type 'float *' but the argument has type 'wchar_t **'}}
-  scanf("%a[bcd]", sp); // expected-warning{{conversion specifies type 'float *' but the argument has type 'char **'}}
+  scanf("%as", sp); // expected-warning{{format specifies type 'float *' but the argument has type 'char **'}}
+  scanf("%aS", lsp); // expected-warning{{format specifies type 'float *' but the argument has type 'wchar_t **'}}
+  scanf("%a[bcd]", sp); // expected-warning{{format specifies type 'float *' but the argument has type 'char **'}}
 
   // Test that the 'm' length modifier is only allowed with s, S, c, C or [.
   // TODO: Warn that 'm' is an extension.
@@ -94,9 +94,9 @@ void test_alloc_extension(char **sp, wchar_t **lsp, float *fp) {
   scanf("%md", sp); // expected-warning{{length modifier 'm' results in undefined behavior or no effect with 'd' conversion specifier}}
 
   // Test argument type check for the 'm' length modifier.
-  scanf("%ms", fp); // expected-warning{{conversion specifies type 'char **' but the argument has type 'float *'}}
-  scanf("%mS", fp); // expected-warning{{conversion specifies type 'wchar_t **' (aka 'int **') but the argument has type 'float *'}}
-  scanf("%mc", fp); // expected-warning{{conversion specifies type 'char **' but the argument has type 'float *'}}
-  scanf("%mC", fp); // expected-warning{{conversion specifies type 'wchar_t **' (aka 'int **') but the argument has type 'float *'}}
-  scanf("%m[abc]", fp); // expected-warning{{conversion specifies type 'char **' but the argument has type 'float *'}}
+  scanf("%ms", fp); // expected-warning{{format specifies type 'char **' but the argument has type 'float *'}}
+  scanf("%mS", fp); // expected-warning{{format specifies type 'wchar_t **' (aka 'int **') but the argument has type 'float *'}}
+  scanf("%mc", fp); // expected-warning{{format specifies type 'char **' but the argument has type 'float *'}}
+  scanf("%mC", fp); // expected-warning{{format specifies type 'wchar_t **' (aka 'int **') but the argument has type 'float *'}}
+  scanf("%m[abc]", fp); // expected-warning{{format specifies type 'char **' but the argument has type 'float *'}}
 }
