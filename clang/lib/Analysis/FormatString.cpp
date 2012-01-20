@@ -531,6 +531,7 @@ bool FormatSpecifier::hasValidLengthModifier() const {
         case ConversionSpecifier::nArg:
         case ConversionSpecifier::cArg:
         case ConversionSpecifier::sArg:
+        case ConversionSpecifier::ScanListArg:
           return true;
         default:
           return false;
