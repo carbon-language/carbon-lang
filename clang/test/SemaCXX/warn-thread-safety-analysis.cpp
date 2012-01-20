@@ -1875,3 +1875,29 @@ void testDelayed() {
 };  // end namespace TestTemplateAttributeInstantiation
 
 
+namespace FunctionDeclDefTest {
+
+class Foo {
+public:
+  Mutex mu_;
+  int a GUARDED_BY(mu_);
+
+  virtual void foo1(Foo *f_declared) EXCLUSIVE_LOCKS_REQUIRED(f_declared->mu_);
+};
+
+// EXCLUSIVE_LOCKS_REQUIRED should be applied, and rewritten to f_defined->mu_
+void Foo::foo1(Foo *f_defined) {
+  f_defined->a = 0;
+};
+
+void test() {
+  Foo myfoo;
+  myfoo.foo1(&myfoo);  // \
+    // expected-warning {{calling function 'foo1' requires exclusive lock on 'mu_'}}
+  myfoo.mu_.Lock();
+  myfoo.foo1(&myfoo);
+  myfoo.mu_.Unlock();
+}
+
+};
+

@@ -88,38 +88,46 @@ class MutexID {
   /// Recursive function that terminates on DeclRefExpr.
   /// Note: this function merely creates a MutexID; it does not check to
   /// ensure that the original expression is a valid mutex expression.
-  void buildMutexID(Expr *Exp, Expr *Parent, int NumArgs,
-                    const NamedDecl **FunArgDecls, Expr **FunArgs) {
+  void buildMutexID(Expr *Exp, const NamedDecl *D, Expr *Parent,
+                    unsigned NumArgs, Expr **FunArgs) {
     if (!Exp) {
       DeclSeq.clear();
       return;
     }
 
     if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Exp)) {
-      if (FunArgDecls) {
-        // Substitute call arguments for references to function parameters
-        for (int i = 0; i < NumArgs; ++i) {
-          if (DRE->getDecl() == FunArgDecls[i]) {
-            buildMutexID(FunArgs[i], 0, 0, 0, 0);
-            return;
-          }
-        }
-      }
       NamedDecl *ND = cast<NamedDecl>(DRE->getDecl()->getCanonicalDecl());
+      ParmVarDecl *PV = dyn_cast_or_null<ParmVarDecl>(ND);
+      if (PV) {
+        FunctionDecl *FD =
+          cast<FunctionDecl>(PV->getDeclContext())->getCanonicalDecl();
+        unsigned i = PV->getFunctionScopeIndex();
+
+        if (FunArgs && FD == D->getCanonicalDecl()) {
+          // Substitute call arguments for references to function parameters
+          assert(i < NumArgs);
+          buildMutexID(FunArgs[i], D, 0, 0, 0);
+          return;
+        }
+        // Map the param back to the param of the original function declaration.
+        DeclSeq.push_back(FD->getParamDecl(i));
+        return;
+      }
+      // Not a function parameter -- just store the reference.
       DeclSeq.push_back(ND);
     } else if (MemberExpr *ME = dyn_cast<MemberExpr>(Exp)) {
       NamedDecl *ND = ME->getMemberDecl();
       DeclSeq.push_back(ND);
-      buildMutexID(ME->getBase(), Parent, NumArgs, FunArgDecls, FunArgs);
+      buildMutexID(ME->getBase(), D, Parent, NumArgs, FunArgs);
     } else if (isa<CXXThisExpr>(Exp)) {
       if (Parent)
-        buildMutexID(Parent, 0, 0, 0, 0);
+        buildMutexID(Parent, D, 0, 0, 0);
       else
         return;  // mutexID is still valid in this case
     } else if (UnaryOperator *UOE = dyn_cast<UnaryOperator>(Exp))
-      buildMutexID(UOE->getSubExpr(), Parent, NumArgs, FunArgDecls, FunArgs);
+      buildMutexID(UOE->getSubExpr(), D, Parent, NumArgs, FunArgs);
     else if (CastExpr *CE = dyn_cast<CastExpr>(Exp))
-      buildMutexID(CE->getSubExpr(), Parent, NumArgs, FunArgDecls, FunArgs);
+      buildMutexID(CE->getSubExpr(), D, Parent, NumArgs, FunArgs);
     else
       DeclSeq.clear(); // Mark as invalid lock expression.
   }
@@ -133,11 +141,10 @@ class MutexID {
     Expr *Parent = 0;
     unsigned NumArgs = 0;
     Expr **FunArgs = 0;
-    SmallVector<const NamedDecl*, 8> FunArgDecls;
 
     // If we are processing a raw attribute expression, with no substitutions.
     if (DeclExp == 0) {
-      buildMutexID(MutexExp, 0, 0, 0, 0);
+      buildMutexID(MutexExp, D, 0, 0, 0);
       return;
     }
 
@@ -163,17 +170,11 @@ class MutexID {
 
     // If the attribute has no arguments, then assume the argument is "this".
     if (MutexExp == 0) {
-      buildMutexID(Parent, 0, 0, 0, 0);
+      buildMutexID(Parent, D, 0, 0, 0);
       return;
     }
 
-    // FIXME: handle default arguments
-    if (const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D)) {
-      for (unsigned i = 0, ni = FD->getNumParams(); i < ni && i < NumArgs; ++i) {
-        FunArgDecls.push_back(FD->getParamDecl(i));
-      }
-    }
-    buildMutexID(MutexExp, Parent, NumArgs, &FunArgDecls.front(), FunArgs);
+    buildMutexID(MutexExp, D, Parent, NumArgs, FunArgs);
   }
 
 public:
