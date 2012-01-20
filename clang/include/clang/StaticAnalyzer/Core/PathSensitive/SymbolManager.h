@@ -61,9 +61,9 @@ public:
 
   Kind getKind() const { return K; }
 
-  void dump() const;
+  virtual void dump() const;
 
-  virtual void dumpToStream(raw_ostream &os) const = 0;
+  virtual void dumpToStream(raw_ostream &os) const {};
 
   virtual QualType getType(ASTContext&) const = 0;
   virtual void Profile(llvm::FoldingSetNodeID& profile) = 0;
@@ -140,7 +140,7 @@ public:
     Profile(profile, R);
   }
 
-  void dumpToStream(raw_ostream &os) const;
+  virtual void dumpToStream(raw_ostream &os) const;
 
   QualType getType(ASTContext&) const;
 
@@ -170,7 +170,7 @@ public:
 
   QualType getType(ASTContext&) const;
 
-  void dumpToStream(raw_ostream &os) const;
+  virtual void dumpToStream(raw_ostream &os) const;
 
   static void Profile(llvm::FoldingSetNodeID& profile, const Stmt *S,
                       QualType T, unsigned Count, const void *SymbolTag) {
@@ -206,7 +206,7 @@ public:
 
   QualType getType(ASTContext&) const;
 
-  void dumpToStream(raw_ostream &os) const;
+  virtual void dumpToStream(raw_ostream &os) const;
 
   static void Profile(llvm::FoldingSetNodeID& profile, SymbolRef parent,
                       const TypedValueRegion *r) {
@@ -239,7 +239,7 @@ public:
 
   QualType getType(ASTContext&) const;
 
-  void dumpToStream(raw_ostream &os) const;
+  virtual void dumpToStream(raw_ostream &os) const;
 
   static void Profile(llvm::FoldingSetNodeID& profile, const SubRegion *R) {
     profile.AddInteger((unsigned) ExtentKind);
@@ -278,7 +278,7 @@ public:
 
   QualType getType(ASTContext&) const;
 
-  void dumpToStream(raw_ostream &os) const;
+  virtual void dumpToStream(raw_ostream &os) const;
 
   static void Profile(llvm::FoldingSetNodeID& profile, const MemRegion *R,
                       const Stmt *S, QualType T, unsigned Count,
@@ -317,7 +317,7 @@ public:
 
   const SymExpr *getOperand() const { return Operand; }
 
-  void dumpToStream(raw_ostream &os) const;
+  virtual void dumpToStream(raw_ostream &os) const;
 
   static void Profile(llvm::FoldingSetNodeID& ID,
                       const SymExpr *In, QualType From, QualType To) {
@@ -355,7 +355,7 @@ public:
 
   BinaryOperator::Opcode getOpcode() const { return Op; }
 
-  void dumpToStream(raw_ostream &os) const;
+  virtual void dumpToStream(raw_ostream &os) const;
 
   const SymExpr *getLHS() const { return LHS; }
   const llvm::APSInt &getRHS() const { return RHS; }
@@ -396,7 +396,7 @@ public:
 
   BinaryOperator::Opcode getOpcode() const { return Op; }
 
-  void dumpToStream(raw_ostream &os) const;
+  virtual void dumpToStream(raw_ostream &os) const;
 
   const SymExpr *getRHS() const { return RHS; }
   const llvm::APSInt &getLHS() const { return LHS; }
@@ -441,7 +441,7 @@ public:
   // generation of virtual functions.
   QualType getType(ASTContext &C) const { return T; }
 
-  void dumpToStream(raw_ostream &os) const;
+  virtual void dumpToStream(raw_ostream &os) const;
 
   static void Profile(llvm::FoldingSetNodeID& ID, const SymExpr *lhs,
                     BinaryOperator::Opcode op, const SymExpr *rhs, QualType t) {
@@ -650,7 +650,7 @@ public:
 
 namespace llvm {
 static inline raw_ostream &operator<<(raw_ostream &os,
-                                            const clang::ento::SymExpr *SE) {
+                                      const clang::ento::SymExpr *SE) {
   SE->dumpToStream(os);
   return os;
 }
