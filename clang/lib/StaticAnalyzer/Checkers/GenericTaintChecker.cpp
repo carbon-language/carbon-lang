@@ -76,6 +76,7 @@ private:
   typedef const ProgramState *(GenericTaintChecker::*FnCheck)(const CallExpr *,
                                                        CheckerContext &C) const;
   const ProgramState *postScanf(const CallExpr *CE, CheckerContext &C) const;
+  const ProgramState *postSocket(const CallExpr *CE, CheckerContext &C) const;
   const ProgramState *postRetTaint(const CallExpr *CE, CheckerContext &C) const;
 
   /// Taint the scanned input if the file is tainted.
@@ -207,6 +208,8 @@ GenericTaintChecker::TaintPropagationRule::getTaintPropagationRule(
     .Case("atoi", TaintPropagationRule(0, ReturnValueIndex))
     .Case("atol", TaintPropagationRule(0, ReturnValueIndex))
     .Case("atoll", TaintPropagationRule(0, ReturnValueIndex))
+    .Case("read", TaintPropagationRule(0, 2, 1, true))
+    .Case("pread", TaintPropagationRule(InvalidArgIndex, 1, true))
     .Default(TaintPropagationRule());
 
   if (!Rule.isNull())
@@ -360,6 +363,7 @@ void GenericTaintChecker::addSourcesPost(const CallExpr *CE,
     .Case("fopen", &GenericTaintChecker::postRetTaint)
     .Case("fdopen", &GenericTaintChecker::postRetTaint)
     .Case("freopen", &GenericTaintChecker::postRetTaint)
+    .Case("socket", &GenericTaintChecker::postSocket)
     .Default(0);
 
   // If the callee isn't defined, it is not of security concern.
@@ -501,6 +505,23 @@ const ProgramState *GenericTaintChecker::preFscanf(const CallExpr *CE,
   return 0;
 }
 
+
+// If argument 0(protocol domain) is network, the return value should get taint.
+const ProgramState *GenericTaintChecker::postSocket(const CallExpr *CE,
+                                                    CheckerContext &C) const {
+  assert(CE->getNumArgs() >= 3);
+  const ProgramState *State = C.getState();
+
+  SourceLocation DomLoc = CE->getArg(0)->getExprLoc();
+  StringRef DomName = C.getMacroNameOrSpelling(DomLoc);
+  // White list the internal communication protocols.
+  if (DomName.equals("AF_SYSTEM") || DomName.equals("AF_LOCAL") ||
+      DomName.equals("AF_UNIX") || DomName.equals("AF_RESERVED_36"))
+    return State;
+  State = State->addTaint(CE, C.getLocationContext());
+  return State;
+}
+
 const ProgramState *GenericTaintChecker::postScanf(const CallExpr *CE,
                                                    CheckerContext &C) const {
   const ProgramState *State = C.getState();
@@ -627,6 +648,12 @@ bool GenericTaintChecker::checkSystemCall(const CallExpr *CE,
   unsigned ArgNum = llvm::StringSwitch<unsigned>(Name)
     .Case("system", 0)
     .Case("popen", 0)
+    .Case("execl", 0)
+    .Case("execle", 0)
+    .Case("execlp", 0)
+    .Case("execv", 0)
+    .Case("execvp", 0)
+    .Case("execvP", 0)
     .Default(UINT_MAX);
 
   if (ArgNum == UINT_MAX)

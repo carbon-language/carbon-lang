@@ -148,5 +148,26 @@ void testTaintedBufferSize() {
   // If both buffers are trusted, do not issue a warning.
   char *dst2 = (char*)malloc(ts*sizeof(char)); // expected-warning {{Tainted data is used to specify the buffer size}}
   strncat(dst2, dst, ts); // no-warning
-
 }
+
+#define AF_UNIX   1   /* local to host (pipes) */
+#define AF_INET   2   /* internetwork: UDP, TCP, etc. */
+#define AF_LOCAL  AF_UNIX   /* backward compatibility */
+#define SOCK_STREAM 1
+int socket(int, int, int);
+size_t read(int, void *, size_t);
+int  execl(const char *, const char *, ...);
+
+void testSocket() {
+  int sock;
+  char buffer[100];
+
+  sock = socket(AF_INET, SOCK_STREAM, 0);
+  read(sock, buffer, 100);
+  execl(buffer, "filename", 0); // expected-warning {{Tainted data passed to a system call}}
+
+  sock = socket(AF_LOCAL, SOCK_STREAM, 0);
+  read(sock, buffer, 100);
+  execl(buffer, "filename", 0); // no-warning
+}
+
