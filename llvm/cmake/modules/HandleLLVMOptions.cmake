@@ -88,6 +88,12 @@ if( LLVM_ENABLE_PIC )
     else( SUPPORTS_FPIC_FLAG )
       message(WARNING "-fPIC not supported.")
     endif()
+
+    check_cxx_compiler_flag("-fvisibility-inlines-hidden" SUPPORTS_FVISIBILITY_INLINES_HIDDEN_FLAG)
+    if( SUPPORTS_FVISIBILITY_INLINES_HIDDEN_FLAG )
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility-inlines-hidden")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility-inlines-hidden")
+    endif()
   endif()
 endif()
 
