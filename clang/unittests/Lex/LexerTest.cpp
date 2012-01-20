@@ -58,7 +58,8 @@ class VoidModuleLoader : public ModuleLoader {
 TEST_F(LexerTest, LexAPI) {
   const char *source =
     "#define M(x) [x]\n"
-    "M(foo)";
+    "#define N(x) x\n"
+    "M(foo) N([bar])";
   MemoryBuffer *buf = MemoryBuffer::getMemBuffer(source);
   SourceMgr.createMainFileIDForMemBuffer(buf);
 
@@ -82,10 +83,13 @@ TEST_F(LexerTest, LexAPI) {
   }
 
   // Make sure we got the tokens that we expected.
-  ASSERT_EQ(3U, toks.size());
+  ASSERT_EQ(6U, toks.size());
   ASSERT_EQ(tok::l_square, toks[0].getKind());
   ASSERT_EQ(tok::identifier, toks[1].getKind());
   ASSERT_EQ(tok::r_square, toks[2].getKind());
+  ASSERT_EQ(tok::l_square, toks[3].getKind());
+  ASSERT_EQ(tok::identifier, toks[4].getKind());
+  ASSERT_EQ(tok::r_square, toks[5].getKind());
   
   SourceLocation lsqrLoc = toks[0].getLocation();
   SourceLocation idLoc = toks[1].getLocation();
@@ -119,6 +123,34 @@ TEST_F(LexerTest, LexAPI) {
                   CharSourceRange::getTokenRange(SourceRange(lsqrLoc, rsqrLoc)),
                   SourceMgr, LangOpts);
   EXPECT_EQ(text, "M(foo)");
+
+  SourceLocation macroLsqrLoc = toks[3].getLocation();
+  SourceLocation macroIdLoc = toks[4].getLocation();
+  SourceLocation macroRsqrLoc = toks[5].getLocation();
+  SourceLocation fileLsqrLoc = SourceMgr.getSpellingLoc(macroLsqrLoc);
+  SourceLocation fileIdLoc = SourceMgr.getSpellingLoc(macroIdLoc);
+  SourceLocation fileRsqrLoc = SourceMgr.getSpellingLoc(macroRsqrLoc);
+
+  range = Lexer::makeFileCharRange(SourceRange(macroLsqrLoc, macroIdLoc),
+                                   SourceMgr, LangOpts);
+  EXPECT_EQ(SourceRange(fileLsqrLoc, fileIdLoc.getLocWithOffset(3)),
+            range.getAsRange());
+
+  range = Lexer::makeFileCharRange(SourceRange(macroIdLoc, macroRsqrLoc),
+                                   SourceMgr, LangOpts);
+  EXPECT_EQ(SourceRange(fileIdLoc, fileRsqrLoc.getLocWithOffset(1)),
+            range.getAsRange());
+
+  macroPair = SourceMgr.getExpansionRange(macroLsqrLoc);
+  range = Lexer::makeFileCharRange(SourceRange(macroLsqrLoc, macroRsqrLoc),
+                                   SourceMgr, LangOpts);
+  EXPECT_EQ(SourceRange(macroPair.first, macroPair.second.getLocWithOffset(1)),
+            range.getAsRange());
+
+  text = Lexer::getSourceText(
+          CharSourceRange::getTokenRange(SourceRange(macroLsqrLoc, macroIdLoc)),
+          SourceMgr, LangOpts);
+  EXPECT_EQ(text, "[bar");
 }
 
 } // anonymous namespace

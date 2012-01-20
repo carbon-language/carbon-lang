@@ -30,6 +30,7 @@
 #include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cstring>
@@ -792,6 +793,30 @@ bool Lexer::isAtEndOfMacroExpansion(SourceLocation loc,
   return isAtEndOfMacroExpansion(expansionLoc, SM, LangOpts, MacroEnd);
 }
 
+static CharSourceRange makeRangeFromFileLocs(SourceLocation Begin,
+                                             SourceLocation End,
+                                             const SourceManager &SM,
+                                             const LangOptions &LangOpts) {
+  assert(Begin.isFileID() && End.isFileID());
+  End = Lexer::getLocForEndOfToken(End, 0, SM,LangOpts);
+  if (End.isInvalid())
+    return CharSourceRange();
+
+  // Break down the source locations.
+  FileID FID;
+  unsigned BeginOffs;
+  llvm::tie(FID, BeginOffs) = SM.getDecomposedLoc(Begin);
+  if (FID.isInvalid())
+    return CharSourceRange();
+
+  unsigned EndOffs;
+  if (!SM.isInFileID(End, FID, &EndOffs) ||
+      BeginOffs > EndOffs)
+    return CharSourceRange();
+
+  return CharSourceRange::getCharRange(Begin, End);
+}
+
 /// \brief Accepts a token source range and returns a character range with
 /// file locations.
 /// Returns a null range if a part of the range resides inside a macro
@@ -800,28 +825,53 @@ CharSourceRange Lexer::makeFileCharRange(SourceRange TokenRange,
                                          const SourceManager &SM,
                                          const LangOptions &LangOpts) {
   SourceLocation Begin = TokenRange.getBegin();
-  if (Begin.isInvalid())
+  SourceLocation End = TokenRange.getEnd();
+  if (Begin.isInvalid() || End.isInvalid())
     return CharSourceRange();
 
-  if (Begin.isMacroID())
+  if (Begin.isFileID() && End.isFileID())
+    return makeRangeFromFileLocs(Begin, End, SM, LangOpts);
+
+  if (Begin.isMacroID() && End.isFileID()) {
     if (!isAtStartOfMacroExpansion(Begin, SM, LangOpts, &Begin))
       return CharSourceRange();
+    return makeRangeFromFileLocs(Begin, End, SM, LangOpts);
+  }
 
-  SourceLocation End = getLocForEndOfToken(TokenRange.getEnd(), 0, SM,LangOpts);
-  if (End.isInvalid())
-    return CharSourceRange();
+  if (Begin.isFileID() && End.isMacroID()) {
+    if (!isAtEndOfMacroExpansion(End, SM, LangOpts, &End))
+      return CharSourceRange();
+    return makeRangeFromFileLocs(Begin, End, SM, LangOpts);
+  }
 
-  // Break down the source locations.
-  std::pair<FileID, unsigned> beginInfo = SM.getDecomposedLoc(Begin);
-  if (beginInfo.first.isInvalid())
+  assert(Begin.isMacroID() && End.isMacroID());
+  SourceLocation MacroBegin, MacroEnd;
+  if (isAtStartOfMacroExpansion(Begin, SM, LangOpts, &MacroBegin) &&
+      isAtEndOfMacroExpansion(End, SM, LangOpts, &MacroEnd))
+    return makeRangeFromFileLocs(MacroBegin, MacroEnd, SM, LangOpts);
+
+  FileID FID;
+  unsigned BeginOffs;
+  llvm::tie(FID, BeginOffs) = SM.getDecomposedLoc(Begin);
+  if (FID.isInvalid())
     return CharSourceRange();
 
   unsigned EndOffs;
-  if (!SM.isInFileID(End, beginInfo.first, &EndOffs) ||
-      beginInfo.second > EndOffs)
+  if (!SM.isInFileID(End, FID, &EndOffs) ||
+      BeginOffs > EndOffs)
     return CharSourceRange();
 
-  return CharSourceRange::getCharRange(Begin, End);
+  const SrcMgr::SLocEntry *E = &SM.getSLocEntry(FID);
+  const SrcMgr::ExpansionInfo &Expansion = E->getExpansion();
+  if (Expansion.isMacroArgExpansion() &&
+      Expansion.getSpellingLoc().isFileID()) {
+    SourceLocation SpellLoc = Expansion.getSpellingLoc();
+    return makeRangeFromFileLocs(SpellLoc.getLocWithOffset(BeginOffs),
+                                 SpellLoc.getLocWithOffset(EndOffs),
+                                 SM, LangOpts);
+  }
+
+  return CharSourceRange();
 }
 
 StringRef Lexer::getSourceText(CharSourceRange Range,
