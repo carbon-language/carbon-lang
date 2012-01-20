@@ -72,7 +72,7 @@ SBOutputDirReferencePrefix = "Ref"
 
 # The list of checkers used during analyzes.
 # Currently, consists of all the non experimental checkers.
-Checkers="core,deadcode,cplusplus,security,unix,osx,cocoa"
+Checkers="experimental.security.taint,core,deadcode,cplusplus,security,unix,osx,cocoa"
 
 Verbose = 1
 
@@ -171,7 +171,7 @@ def runAnalyzePreprocessed(Dir, SBOutputDir):
         raise Exception()       
 
     CmdPrefix = "clang -cc1 -analyze -analyzer-output=plist -w "
-    CmdPrefix += "-analyzer-checker=" + Checkers +" -fcxx-exceptions -fblocks "   
+    CmdPrefix += "-enable-checker " + Checkers +" -fcxx-exceptions -fblocks "   
     
     PlistPath = os.path.join(Dir, SBOutputDir, "date")
     FailPath = os.path.join(PlistPath, "failures");
