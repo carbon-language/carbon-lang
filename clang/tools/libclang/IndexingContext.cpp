@@ -49,7 +49,7 @@ IndexingContext::ObjCProtocolListInfo::ObjCProtocolListInfo(
 
 IBOutletCollectionInfo::IBOutletCollectionInfo(
                                           const IBOutletCollectionInfo &other)
-  : AttrInfo(CXIdxAttr_IBOutletCollection, other.cursor, other.loc, A) {
+  : AttrInfo(CXIdxAttr_IBOutletCollection, other.cursor, other.loc, other.A) {
 
   IBCollInfo.attrInfo = this;
   IBCollInfo.classCursor = other.IBCollInfo.classCursor;
