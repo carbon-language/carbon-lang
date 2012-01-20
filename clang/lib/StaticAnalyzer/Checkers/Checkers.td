@@ -209,6 +209,9 @@ let ParentPackage = InsecureAPI in {
   def mktemp : Checker<"mktemp">,
     HelpText<"Warn on uses of the 'mktemp' function">,
     DescFile<"CheckSecuritySyntaxOnly.cpp">;
+  def mkstemp : Checker<"mkstemp">,
+    HelpText<"Warn when 'mkstemp' is passed fewer than 6 X's in the format string">,
+    DescFile<"CheckSecuritySyntaxOnly.cpp">;
   def rand : Checker<"rand">,
     HelpText<"Warn on uses of the 'rand', 'random', and related functions">,
     DescFile<"CheckSecuritySyntaxOnly.cpp">;
@@ -217,6 +220,9 @@ let ParentPackage = InsecureAPI in {
     DescFile<"CheckSecuritySyntaxOnly.cpp">;
   def vfork : Checker<"vfork">,
     HelpText<"Warn on uses of the 'vfork' function">,
+    DescFile<"CheckSecuritySyntaxOnly.cpp">;
+  def UncheckedReturn : Checker<"UncheckedReturn">,
+    HelpText<"Warn on uses of functions whose return values must be always checked">,
     DescFile<"CheckSecuritySyntaxOnly.cpp">;
 }
 let ParentPackage = Security in {

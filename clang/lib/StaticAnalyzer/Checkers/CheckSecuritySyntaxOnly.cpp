@@ -45,10 +45,12 @@ struct ChecksFilter {
   DefaultBool check_gets;
   DefaultBool check_getpw;
   DefaultBool check_mktemp;
+  DefaultBool check_mkstemp;
   DefaultBool check_strcpy;
   DefaultBool check_rand;
   DefaultBool check_vfork;
   DefaultBool check_FloatLoopCounter;
+  DefaultBool check_UncheckedReturn;
 };
   
 class WalkAST : public StmtVisitor<WalkAST> {
@@ -86,6 +88,7 @@ public:
   void checkCall_gets(const CallExpr *CE, const FunctionDecl *FD);
   void checkCall_getpw(const CallExpr *CE, const FunctionDecl *FD);
   void checkCall_mktemp(const CallExpr *CE, const FunctionDecl *FD);
+  void checkCall_mkstemp(const CallExpr *CE, const FunctionDecl *FD);
   void checkCall_strcpy(const CallExpr *CE, const FunctionDecl *FD);
   void checkCall_strcat(const CallExpr *CE, const FunctionDecl *FD);
   void checkCall_rand(const CallExpr *CE, const FunctionDecl *FD);
@@ -125,6 +128,9 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
     .Case("gets", &WalkAST::checkCall_gets)
     .Case("getpw", &WalkAST::checkCall_getpw)
     .Case("mktemp", &WalkAST::checkCall_mktemp)
+    .Case("mkstemp", &WalkAST::checkCall_mkstemp)
+    .Case("mkdtemp", &WalkAST::checkCall_mkstemp)
+    .Case("mkstemps", &WalkAST::checkCall_mkstemp)
     .Cases("strcpy", "__strcpy_chk", &WalkAST::checkCall_strcpy)
     .Cases("strcat", "__strcat_chk", &WalkAST::checkCall_strcat)
     .Case("drand48", &WalkAST::checkCall_rand)
@@ -364,13 +370,17 @@ void WalkAST::checkCall_getpw(const CallExpr *CE, const FunctionDecl *FD) {
 }
 
 //===----------------------------------------------------------------------===//
-// Check: Any use of 'mktemp' is insecure.It is obsoleted by mkstemp().
+// Check: Any use of 'mktemp' is insecure.  It is obsoleted by mkstemp().
 // CWE-377: Insecure Temporary File
 //===----------------------------------------------------------------------===//
 
 void WalkAST::checkCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
-  if (!filter.check_mktemp)
+  if (!filter.check_mktemp) {
+    // Fall back to the security check of looking for enough 'X's in the
+    // format string, since that is a less severe warning.
+    checkCall_mkstemp(CE, FD);
     return;
+  }
 
   const FunctionProtoType *FPT
     = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
@@ -399,6 +409,88 @@ void WalkAST::checkCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
                      "Call to function 'mktemp' is insecure as it always "
                      "creates or uses insecure temporary file.  Use 'mkstemp' instead",
                      CELoc, &R, 1);
+}
+
+
+//===----------------------------------------------------------------------===//
+// Check: Use of 'mkstemp', 'mktemp', 'mkdtemp' should contain at least 6 X's.
+//===----------------------------------------------------------------------===//
+
+void WalkAST::checkCall_mkstemp(const CallExpr *CE, const FunctionDecl *FD) {
+  if (!filter.check_mkstemp)
+    return;
+
+  StringRef Name = FD->getIdentifier()->getName();
+  std::pair<signed, signed> ArgSuffix =
+    llvm::StringSwitch<std::pair<signed, signed> >(Name)
+      .Case("mktemp", std::make_pair(0,-1))
+      .Case("mkstemp", std::make_pair(0,-1))
+      .Case("mkdtemp", std::make_pair(0,-1))
+      .Case("mkstemps", std::make_pair(0,1))
+      .Default(std::make_pair(-1, -1));
+  
+  assert(ArgSuffix.first >= 0 && "Unsupported function");
+
+  // Check if the number of arguments is consistent with out expectations.
+  unsigned numArgs = CE->getNumArgs();
+  if ((signed) numArgs <= ArgSuffix.first)
+    return;
+  
+  const StringLiteral *strArg =
+    dyn_cast<StringLiteral>(CE->getArg((unsigned)ArgSuffix.first)
+                              ->IgnoreParenImpCasts());
+  
+  // Currently we only handle string literals.  It is possible to do better,
+  // either by looking at references to const variables, or by doing real
+  // flow analysis.
+  if (!strArg || strArg->getCharByteWidth() != 1)
+    return;
+
+  // Count the number of X's, taking into account a possible cutoff suffix.
+  StringRef str = strArg->getString();
+  unsigned numX = 0;
+  unsigned n = str.size();
+
+  // Take into account the suffix.
+  unsigned suffix = 0;
+  if (ArgSuffix.second >= 0) {
+    const Expr *suffixEx = CE->getArg((unsigned)ArgSuffix.second);
+    llvm::APSInt Result;
+    if (!suffixEx->EvaluateAsInt(Result, BR.getContext()))
+      return;
+    // FIXME: Issue a warning.
+    if (Result.isNegative())
+      return;
+    suffix = (unsigned) Result.getZExtValue();
+    n = (n > suffix) ? n - suffix : 0;
+  }
+  
+  for (unsigned i = 0; i < n; ++i)
+    if (str[i] == 'X') ++numX;
+  
+  if (numX >= 6)
+    return;
+  
+  // Issue a warning.
+  SourceRange R = strArg->getSourceRange();
+  PathDiagnosticLocation CELoc =
+    PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
+  llvm::SmallString<512> buf;
+  llvm::raw_svector_ostream out(buf);
+  out << "Call to '" << Name << "' should have at least 6 'X's in the"
+    " format string to be secure (" << numX << " 'X'";
+  if (numX != 1)
+    out << 's';
+  out << " seen";
+  if (suffix) {
+    out << ", " << suffix << " character";
+    if (suffix > 1)
+      out << 's';
+    out << " used as a suffix";
+  }
+  out << ')';
+  BR.EmitBasicReport("Insecure temporary file creation", "Security",
+                     out.str(), CELoc, &R, 1);
 }
 
 //===----------------------------------------------------------------------===//
@@ -535,7 +627,7 @@ void WalkAST::checkCall_rand(const CallExpr *CE, const FunctionDecl *FD) {
 //===----------------------------------------------------------------------===//
 
 void WalkAST::checkCall_random(const CallExpr *CE, const FunctionDecl *FD) {
-  if (!CheckRand)
+  if (!CheckRand || !filter.check_rand)
     return;
 
   const FunctionProtoType *FTP
@@ -587,6 +679,9 @@ void WalkAST::checkCall_vfork(const CallExpr *CE, const FunctionDecl *FD) {
 //===----------------------------------------------------------------------===//
 
 void WalkAST::checkUncheckedReturnValue(CallExpr *CE) {
+  if (!filter.check_UncheckedReturn)
+    return;
+  
   const FunctionDecl *FD = CE->getDirectCallee();
   if (!FD)
     return;
@@ -667,9 +762,12 @@ void ento::register##name(CheckerManager &mgr) {\
 
 REGISTER_CHECKER(gets)
 REGISTER_CHECKER(getpw)
+REGISTER_CHECKER(mkstemp)
 REGISTER_CHECKER(mktemp)
 REGISTER_CHECKER(strcpy)
 REGISTER_CHECKER(rand)
 REGISTER_CHECKER(vfork)
 REGISTER_CHECKER(FloatLoopCounter)
+REGISTER_CHECKER(UncheckedReturn)
+
 
