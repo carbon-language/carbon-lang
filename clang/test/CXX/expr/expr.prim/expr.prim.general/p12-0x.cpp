@@ -27,3 +27,4 @@ namespace std {
 class Poly { virtual ~Poly(); };
 const std::type_info& k = typeid(S::m);
 const std::type_info& m = typeid(*(Poly*)S::m); // expected-error {{invalid use of nonstatic data member}}
+const std::type_info& n = typeid(*(Poly*)(0*sizeof S::m)); 

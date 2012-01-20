@@ -511,21 +511,6 @@ public:
   /// call was found yet.
   bool ObjCShouldCallSuperFinalize;
 
-  /// \brief The set of declarations that have been referenced within
-  /// a potentially evaluated expression.
-  typedef SmallVector<std::pair<SourceLocation, Decl *>, 10>
-    PotentiallyReferencedDecls;
-
-  /// \brief A set of diagnostics that may be emitted.
-  typedef SmallVector<std::pair<SourceLocation, PartialDiagnostic>, 10>
-    PotentiallyEmittedDiagnostics;
-
-  typedef SmallVector<sema::DelayedDiagnostic, 10>
-    PotentiallyEmittedDelayedDiag;
-
-  typedef SmallVector<sema::PossiblyUnreachableDiag, 10>
-    PotentiallyEmittedPossiblyUnreachableDiag;
-
   /// \brief Describes how the expressions currently being parsed are
   /// evaluated at run-time, if at all.
   enum ExpressionEvaluationContext {
@@ -545,13 +530,6 @@ public:
     /// which means that code may be generated to evaluate the value of the
     /// expression at run time.
     PotentiallyEvaluated,
-
-    /// \brief The current expression may be potentially evaluated or it may
-    /// be unevaluated, but it is impossible to tell from the lexical context.
-    /// This evaluation context is used primary for the operand of the C++
-    /// \c typeid expression, whose argument is potentially evaluated only when
-    /// it is an lvalue of polymorphic class type (C++ [basic.def.odr]p2).
-    PotentiallyPotentiallyEvaluated,
 
     /// \brief The current expression is potentially evaluated, but any
     /// declarations referenced inside that expression are only used if
@@ -577,43 +555,11 @@ public:
     /// this expression evaluation context.
     unsigned NumCleanupObjects;
 
-    /// \brief The set of declarations referenced within a
-    /// potentially potentially-evaluated context.
-    ///
-    /// When leaving a potentially potentially-evaluated context, each
-    /// of these elements will be as referenced if the corresponding
-    /// potentially potentially evaluated expression is potentially
-    /// evaluated.
-    PotentiallyReferencedDecls *PotentiallyReferenced;
-
-    // There are three kinds of diagnostics we care about in
-    // PotentiallyPotentiallyEvaluated contexts: regular Diag diagnostics,
-    // DelayedDiagnostics, and DiagRuntimeBehavior diagnostics.  
-    PotentiallyEmittedDiagnostics *SavedDiag;
-    PotentiallyEmittedDelayedDiag *SavedDelayedDiag;
-    PotentiallyEmittedPossiblyUnreachableDiag *SavedRuntimeDiag;
-
     ExpressionEvaluationContextRecord(ExpressionEvaluationContext Context,
                                       unsigned NumCleanupObjects,
                                       bool ParentNeedsCleanups)
       : Context(Context), ParentNeedsCleanups(ParentNeedsCleanups),
-        NumCleanupObjects(NumCleanupObjects),
-        PotentiallyReferenced(0), SavedDiag(0), SavedDelayedDiag(0), 
-        SavedRuntimeDiag(0) { }
-
-    void addReferencedDecl(SourceLocation Loc, Decl *Decl) {
-      if (!PotentiallyReferenced)
-        PotentiallyReferenced = new PotentiallyReferencedDecls;
-      PotentiallyReferenced->push_back(std::make_pair(Loc, Decl));
-    }
-
-    void addDiagnostic(SourceLocation Loc, const PartialDiagnostic &PD);
-
-    void addRuntimeDiagnostic(const sema::PossiblyUnreachableDiag &PUD);
-
-    void addDelayedDiagnostic(const sema::DelayedDiagnostic &DD);
-
-    void Destroy();
+        NumCleanupObjects(NumCleanupObjects) { }
   };
 
   /// A stack of expression evaluation contexts.
@@ -2309,6 +2255,8 @@ public:
 
   void DiscardCleanupsInEvaluationContext();
 
+  ExprResult TranformToPotentiallyEvaluated(Expr *E);
+
   void MarkDeclarationReferenced(SourceLocation Loc, Decl *D);
   void MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T);
   void MarkDeclarationsReferencedInExpr(Expr *E);
@@ -3116,8 +3064,7 @@ public:
   QualType getCurrentThisType();
 
   /// \brief Make sure the value of 'this' is actually available in the current
-  /// context, if it is a potentially evaluated context. This check can be
-  /// delayed in PotentiallyPotentiallyEvaluated contexts.
+  /// context, if it is a potentially evaluated context.
   void CheckCXXThisCapture(SourceLocation Loc);
 
   /// ActOnCXXBoolLiteral - Parse {true,false} literals.

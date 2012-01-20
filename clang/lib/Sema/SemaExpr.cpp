@@ -40,6 +40,7 @@
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Sema/SemaFixItUtils.h"
 #include "clang/Sema/Template.h"
+#include "TreeTransform.h"
 using namespace clang;
 using namespace sema;
 
@@ -1207,10 +1208,6 @@ diagnoseUncapturableValueReference(Sema &S, SourceLocation loc,
 
   case Sema::PotentiallyEvaluated:
   case Sema::PotentiallyEvaluatedIfUsed:
-    break;
-
-  case Sema::PotentiallyPotentiallyEvaluated:
-    // FIXME: delay these!
     break;
   }
 
@@ -9358,38 +9355,53 @@ bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result,
   return false;
 }
 
-void Sema::ExpressionEvaluationContextRecord::Destroy() {
-  delete PotentiallyReferenced;
-  delete SavedDiag;
-  delete SavedRuntimeDiag;
-  delete SavedDelayedDiag;
-  PotentiallyReferenced = 0;
-  SavedDiag = 0;
-  SavedRuntimeDiag = 0;
-  SavedDelayedDiag = 0;
+namespace {
+  // Handle the case where we conclude a expression which we speculatively
+  // considered to be unevaluated is actually evaluated.
+  class TransformToPE : public TreeTransform<TransformToPE> {
+    typedef TreeTransform<TransformToPE> BaseTransform;
+
+  public:
+    TransformToPE(Sema &SemaRef) : BaseTransform(SemaRef) { }
+
+    // Make sure we redo semantic analysis
+    bool AlwaysRebuild() { return true; }
+
+    // We need to special-case DeclRefExprs referring to FieldDecls which
+    // are not part of a member pointer formation; normal TreeTransforming
+    // doesn't catch this case because of the way we represent them in the AST.
+    // FIXME: This is a bit ugly; is it really the best way to handle this
+    // case?
+    //
+    // Error on DeclRefExprs referring to FieldDecls.
+    ExprResult TransformDeclRefExpr(DeclRefExpr *E) {
+      if (isa<FieldDecl>(E->getDecl()) &&
+          SemaRef.ExprEvalContexts.back().Context != Sema::Unevaluated)
+        return SemaRef.Diag(E->getLocation(),
+                            diag::err_invalid_non_static_member_use)
+            << E->getDecl() << E->getSourceRange();
+
+      return BaseTransform::TransformDeclRefExpr(E);
+    }
+
+    // Exception: filter out member pointer formation
+    ExprResult TransformUnaryOperator(UnaryOperator *E) {
+      if (E->getOpcode() == UO_AddrOf && E->getType()->isMemberPointerType())
+        return E;
+
+      return BaseTransform::TransformUnaryOperator(E);
+    }
+
+  };
 }
 
-void Sema::ExpressionEvaluationContextRecord::addDiagnostic(
-        SourceLocation Loc, const PartialDiagnostic &PD) {
-  if (!SavedDiag)
-    SavedDiag = new PotentiallyEmittedDiagnostics;
-  SavedDiag->push_back(std::make_pair(Loc, PD));
+ExprResult Sema::TranformToPotentiallyEvaluated(Expr *E) {
+  ExprEvalContexts.back().Context =
+      ExprEvalContexts[ExprEvalContexts.size()-2].Context;
+  if (ExprEvalContexts.back().Context == Unevaluated)
+    return E;
+  return TransformToPE(*this).TransformExpr(E);
 }
-
-void Sema::ExpressionEvaluationContextRecord::addRuntimeDiagnostic(
-        const sema::PossiblyUnreachableDiag &PUD) {
-  if (!SavedRuntimeDiag)
-    SavedRuntimeDiag = new PotentiallyEmittedPossiblyUnreachableDiag;
-  SavedRuntimeDiag->push_back(PUD);
-}
-
-void Sema::ExpressionEvaluationContextRecord::addDelayedDiagnostic(
-        const sema::DelayedDiagnostic &DD) {
-  if (!SavedDelayedDiag)
-    SavedDelayedDiag = new PotentiallyEmittedDelayedDiag;
-  SavedDelayedDiag->push_back(DD);
-}
-
 
 void
 Sema::PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext) {
@@ -9405,46 +9417,6 @@ void Sema::PopExpressionEvaluationContext() {
   ExpressionEvaluationContextRecord Rec = ExprEvalContexts.back();
   ExprEvalContexts.pop_back();
 
-  if (Rec.Context == PotentiallyPotentiallyEvaluated) {
-    if (Rec.PotentiallyReferenced) {
-      // Mark any remaining declarations in the current position of the stack
-      // as "referenced". If they were not meant to be referenced, semantic
-      // analysis would have eliminated them (e.g., in ActOnCXXTypeId).
-      for (PotentiallyReferencedDecls::iterator
-             I = Rec.PotentiallyReferenced->begin(),
-             IEnd = Rec.PotentiallyReferenced->end();
-           I != IEnd; ++I)
-        MarkDeclarationReferenced(I->first, I->second);
-    }
-
-    if (Rec.SavedDiag) {
-      // Emit any pending diagnostics.
-      for (PotentiallyEmittedDiagnostics::iterator
-                I = Rec.SavedDiag->begin(),
-             IEnd = Rec.SavedDiag->end();
-           I != IEnd; ++I)
-        Diag(I->first, I->second);
-    }
-
-    if (Rec.SavedDelayedDiag) {
-      // Emit any pending delayed diagnostics.
-      for (PotentiallyEmittedDelayedDiag::iterator
-                I = Rec.SavedDelayedDiag->begin(),
-             IEnd = Rec.SavedDelayedDiag->end();
-           I != IEnd; ++I)
-        DelayedDiagnostics.add(*I);
-    }
-
-    if (Rec.SavedRuntimeDiag) {
-      // Emit any pending runtime diagnostics.
-      for (PotentiallyEmittedPossiblyUnreachableDiag::iterator
-                I = Rec.SavedRuntimeDiag->begin(),
-             IEnd = Rec.SavedRuntimeDiag->end();
-           I != IEnd; ++I)
-             FunctionScopes.back()->PossiblyUnreachableDiags.push_back(*I);
-    }
-  }
-
   // When are coming out of an unevaluated context, clear out any
   // temporaries that we may have created as part of the evaluation of
   // the expression in that context: they aren't relevant because they
@@ -9458,9 +9430,6 @@ void Sema::PopExpressionEvaluationContext() {
   } else {
     ExprNeedsCleanups |= Rec.ParentNeedsCleanups;
   }
-
-  // Destroy the popped expression evaluation record.
-  Rec.Destroy();
 }
 
 void Sema::DiscardCleanupsInEvaluationContext() {
@@ -9516,13 +9485,6 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
       // "used"; handle this below.
       break;
 
-    case PotentiallyPotentiallyEvaluated:
-      // We are in an expression that may be potentially evaluated; queue this
-      // declaration reference until we know whether the expression is
-      // potentially evaluated.
-      ExprEvalContexts.back().addReferencedDecl(Loc, D);
-      return;
-      
     case PotentiallyEvaluatedIfUsed:
       // Referenced declarations will only be used if the construct in the
       // containing expression is used.
@@ -9806,11 +9768,6 @@ bool Sema::DiagRuntimeBehavior(SourceLocation Loc, const Stmt *Statement,
       Diag(Loc, PD);
       
     return true;
-
-  case PotentiallyPotentiallyEvaluated:
-    ExprEvalContexts.back().addRuntimeDiagnostic(
-        sema::PossiblyUnreachableDiag(PD, Loc, Statement));
-    break;
   }
 
   return false;

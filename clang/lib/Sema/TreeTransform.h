@@ -6878,11 +6878,11 @@ TreeTransform<Derived>::TransformCXXTypeidExpr(CXXTypeidExpr *E) {
                                              E->getLocEnd());
   }
 
-  // We don't know whether the expression is potentially evaluated until
-  // after we perform semantic analysis, so the expression is potentially
+  // We don't know whether the subexpression is potentially evaluated until
+  // after we perform semantic analysis.  We speculatively assume it is
+  // unevaluated; it will get fixed later if the subexpression is in fact
   // potentially evaluated.
-  EnterExpressionEvaluationContext Unevaluated(SemaRef,
-                                      Sema::PotentiallyPotentiallyEvaluated);
+  EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
 
   ExprResult SubExpr = getDerived().TransformExpr(E->getExprOperand());
   if (SubExpr.isInvalid())

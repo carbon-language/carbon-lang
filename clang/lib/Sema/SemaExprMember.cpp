@@ -74,14 +74,10 @@ enum IMAKind {
   /// context is not an instance method.
   IMA_Unresolved_StaticContext,
 
-  // The reference is an instance data member access, which is allowed
-  // because we're in C++11 mode and the context is unevaluated.
-  IMA_Field_Uneval_StaticContext,
-
-  // The reference is an instance data member access, which may be allowed
-  // because we're in C++11 mode and the context may be unevaluated
-  // (i.e. the context is PotentiallyPotentiallyEvaluated).
-  IMA_Field_PPE_StaticContext,
+  // The reference refers to a field which is not a member of the containing
+  // class, which is allowed because we're in C++11 mode and the context is
+  // unevaluated.
+  IMA_Field_Uneval_Context,
 
   /// All possible referrents are instance members and the current
   /// context is not an instance method.
@@ -158,9 +154,7 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
       const Sema::ExpressionEvaluationContextRecord& record
         = SemaRef.ExprEvalContexts.back();
       if (record.Context == Sema::Unevaluated)
-        return IMA_Field_Uneval_StaticContext;
-      if (record.Context == Sema::PotentiallyPotentiallyEvaluated)
-        return IMA_Field_PPE_StaticContext;
+        return IMA_Field_Uneval_Context;
     }
     
     return IMA_Error_StaticContext;
@@ -196,8 +190,7 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
 static void DiagnoseInstanceReference(Sema &SemaRef,
                                       const CXXScopeSpec &SS,
                                       NamedDecl *rep,
-                                      const DeclarationNameInfo &nameInfo,
-                                      bool DelayPPEDiag = false) {
+                                      const DeclarationNameInfo &nameInfo) {
   SourceLocation Loc = nameInfo.getLoc();
   SourceRange Range(Loc);
   if (SS.isSet()) Range.setBegin(SS.getRange().getBegin());
@@ -206,28 +199,16 @@ static void DiagnoseInstanceReference(Sema &SemaRef,
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(SemaRef.CurContext)) {
       if (MD->isStatic()) {
         // "invalid use of member 'x' in static member function"
-        if (DelayPPEDiag)
-          SemaRef.ExprEvalContexts.back().addDiagnostic(Loc,
-              SemaRef.PDiag(diag::err_invalid_member_use_in_static_method)
-              << Range << nameInfo.getName());
-        else
-          SemaRef.Diag(Loc, diag::err_invalid_member_use_in_static_method)
-              << Range << nameInfo.getName();
+        SemaRef.Diag(Loc, diag::err_invalid_member_use_in_static_method)
+            << Range << nameInfo.getName();
         return;
       }
     }
 
-    if (DelayPPEDiag)
-      SemaRef.ExprEvalContexts.back().addDiagnostic(Loc,
-          SemaRef.PDiag(diag::err_invalid_non_static_member_use)
-          << nameInfo.getName() << Range);
-    else
-      SemaRef.Diag(Loc, diag::err_invalid_non_static_member_use)
-          << nameInfo.getName() << Range;
+    SemaRef.Diag(Loc, diag::err_invalid_non_static_member_use)
+        << nameInfo.getName() << Range;
     return;
   }
-
-  assert(!DelayPPEDiag && "Only need to delay diagnostic for fields");
 
   SemaRef.Diag(Loc, diag::err_member_call_without_object) << Range;
 }
@@ -246,15 +227,10 @@ Sema::BuildPossibleImplicitMemberExpr(const CXXScopeSpec &SS,
   case IMA_Unresolved:
     return BuildImplicitMemberExpr(SS, R, TemplateArgs, false);
 
-  case IMA_Field_PPE_StaticContext:
-    DiagnoseInstanceReference(*this, SS, R.getRepresentativeDecl(),
-                              R.getLookupNameInfo(), /*DelayPPEDiag*/true);
-  // FALL-THROUGH
-
   case IMA_Static:
   case IMA_Mixed_StaticContext:
   case IMA_Unresolved_StaticContext:
-  case IMA_Field_Uneval_StaticContext:
+  case IMA_Field_Uneval_Context:
     if (TemplateArgs)
       return BuildTemplateIdExpr(SS, R, false, *TemplateArgs);
     return BuildDeclarationNameExpr(SS, R, false);

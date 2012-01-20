@@ -924,10 +924,10 @@ ExprResult Parser::ParseCXXTypeid() {
     //   operand (Clause 5).
     //
     // Note that we can't tell whether the expression is an lvalue of a
-    // polymorphic class type until after we've parsed the expression, so
-    // we the expression is potentially potentially evaluated.
-    EnterExpressionEvaluationContext Unevaluated(Actions,
-                                       Sema::PotentiallyPotentiallyEvaluated);
+    // polymorphic class type until after we've parsed the expression; we
+    // speculatively assume the subexpression is unevaluated, and fix it up
+    // later.
+    EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
     Result = ParseExpression();
 
     // Match the ')'.

@@ -310,7 +310,6 @@ ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
                                 SourceLocation TypeidLoc,
                                 Expr *E,
                                 SourceLocation RParenLoc) {
-  bool isUnevaluatedOperand = true;
   if (E && !E->isTypeDependent()) {
     if (E->getType()->isPlaceholderType()) {
       ExprResult result = CheckPlaceholderExpr(E);
@@ -332,7 +331,11 @@ ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
       //   polymorphic class type [...] [the] expression is an unevaluated
       //   operand. [...]
       if (RecordD->isPolymorphic() && E->Classify(Context).isGLValue()) {
-        isUnevaluatedOperand = false;
+        // The subexpression is potentially evaluated; switch the context
+        // and recheck the subexpression.
+        ExprResult Result = TranformToPotentiallyEvaluated(E);
+        if (Result.isInvalid()) return ExprError();
+        E = Result.take();
 
         // We require a vtable to query the type at run time.
         MarkVTableUsed(TypeidLoc, RecordD);
@@ -351,12 +354,6 @@ ExprResult Sema::BuildCXXTypeId(QualType TypeInfoType,
       E = ImpCastExprToType(E, UnqualT, CK_NoOp, E->getValueKind()).take();
     }
   }
-
-  // If this is an unevaluated operand, clear out the set of
-  // declaration references we have been computing and eliminate any
-  // temporaries introduced in its computation.
-  if (isUnevaluatedOperand)
-    ExprEvalContexts.back().Context = Unevaluated;
 
   return Owned(new (Context) CXXTypeidExpr(TypeInfoType.withConst(),
                                            E,
@@ -695,14 +692,7 @@ void Sema::CheckCXXThisCapture(SourceLocation Loc) {
         continue;
       }
       // This context can't implicitly capture 'this'; fail out.
-      // (We need to delay the diagnostic in the
-      // PotentiallyPotentiallyEvaluated case because it doesn't apply to
-      // unevaluated contexts.)
-      if (ExprEvalContexts.back().Context == PotentiallyPotentiallyEvaluated)
-        ExprEvalContexts.back()
-            .addDiagnostic(Loc, PDiag(diag::err_implicit_this_capture));
-      else
-        Diag(Loc, diag::err_implicit_this_capture);
+      Diag(Loc, diag::err_implicit_this_capture);
       return;
     }
     break;
