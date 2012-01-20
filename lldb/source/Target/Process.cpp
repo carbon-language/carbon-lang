@@ -844,8 +844,18 @@ Process::Finalize()
     
     // We need to destroy the loader before the derived Process class gets destroyed
     // since it is very likely that undoing the loader will require access to the real process.
-    m_dyld_ap.reset();
+    m_dynamic_checkers_ap.reset();
+    m_abi_sp.reset();
     m_os_ap.reset();
+    m_dyld_ap.reset();
+    m_thread_list.Clear();
+    std::vector<Notifications> empty_notifications;
+    m_notifications.swap(empty_notifications);
+    m_image_tokens.clear();
+    m_memory_cache.Clear();
+    m_allocated_memory_cache.Clear();
+    m_language_runtimes.clear();
+    m_next_event_action_ap.reset();
 }
 
 void
