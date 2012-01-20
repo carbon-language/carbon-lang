@@ -730,7 +730,6 @@ InitialFunctionScan(const std::vector<MachineInstr*> &CPEMIs) {
           switch (Opc) {
           default:
             llvm_unreachable("Unknown addressing mode for CP reference!");
-            break;
 
           // Taking the address of a CP entry.
           case ARM::LEApcrel:

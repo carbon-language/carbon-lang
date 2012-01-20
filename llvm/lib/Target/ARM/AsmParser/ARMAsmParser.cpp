@@ -2500,7 +2500,7 @@ static int MatchCoprocessorOperandName(StringRef Name, char CoprocOp) {
   // Use the same layout as the tablegen'erated register name matcher. Ugly,
   // but efficient.
   switch (Name.size()) {
-  default: break;
+  default: return -1;
   case 2:
     if (Name[0] != CoprocOp)
       return -1;
@@ -2517,7 +2517,6 @@ static int MatchCoprocessorOperandName(StringRef Name, char CoprocOp) {
     case '8': return 8;
     case '9': return 9;
     }
-    break;
   case 3:
     if (Name[0] != CoprocOp || Name[1] != '1')
       return -1;
@@ -2530,10 +2529,7 @@ static int MatchCoprocessorOperandName(StringRef Name, char CoprocOp) {
     case '4': return 14;
     case '5': return 15;
     }
-    break;
   }
-
-  return -1;
 }
 
 /// parseITCondCode - Try to parse a condition code for an IT instruction.
@@ -6384,7 +6380,6 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   }
 
   llvm_unreachable("Implement any new match types added!");
-  return true;
 }
 
 /// parseDirective parses the arm specific directives

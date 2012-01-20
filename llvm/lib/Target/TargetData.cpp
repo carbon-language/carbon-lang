@@ -496,9 +496,7 @@ uint64_t TargetData::getTypeSizeInBits(Type *Ty) const {
     return cast<VectorType>(Ty)->getBitWidth();
   default:
     llvm_unreachable("TargetData::getTypeSizeInBits(): Unsupported type");
-    break;
   }
-  return 0;
 }
 
 /*!
@@ -553,7 +551,6 @@ unsigned TargetData::getAlignment(Type *Ty, bool abi_or_pref) const {
     break;
   default:
     llvm_unreachable("Bad type for getAlignment!!!");
-    break;
   }
 
   return getAlignmentInfo((AlignTypeEnum)AlignType, getTypeSizeInBits(Ty),

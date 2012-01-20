@@ -200,7 +200,6 @@ int EDOperand::evaluate(uint64_t &result,
       return 0;
     }
     } // switch (operandType)
-    break;
   case Triple::arm:
   case Triple::thumb:
     switch (operandType) {
@@ -236,10 +235,7 @@ int EDOperand::evaluate(uint64_t &result,
       return 0;
     }
     }
-    break;
   }
-  
-  return -1;
 }
 
 int EDOperand::isRegister() {

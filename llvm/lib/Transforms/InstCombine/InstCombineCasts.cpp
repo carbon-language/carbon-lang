@@ -215,7 +215,6 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, Type *Ty,
   default: 
     // TODO: Can handle more cases here.
     llvm_unreachable("Unreachable!");
-    break;
   }
   
   Res->takeName(I);

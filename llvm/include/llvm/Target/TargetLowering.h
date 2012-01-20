@@ -297,7 +297,6 @@ public:
         return VT;
       }
     }
-    return VT;
   }
 
   /// getVectorTypeBreakdown - Vector types are broken down into some number of

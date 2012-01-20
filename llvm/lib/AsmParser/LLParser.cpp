@@ -1043,13 +1043,11 @@ bool LLParser::ParseOptionalCallingConv(CallingConv::ID &CC) {
   case lltok::kw_cc: {
       unsigned ArbitraryCC;
       Lex.Lex();
-      if (ParseUInt32(ArbitraryCC)) {
+      if (ParseUInt32(ArbitraryCC))
         return true;
-      } else
-        CC = static_cast<CallingConv::ID>(ArbitraryCC);
-        return false;
+      CC = static_cast<CallingConv::ID>(ArbitraryCC);
+      return false;
     }
-    break;
   }
 
   Lex.Lex();

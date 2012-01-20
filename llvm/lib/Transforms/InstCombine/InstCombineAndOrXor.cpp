@@ -87,7 +87,6 @@ static unsigned getFCmpCode(FCmpInst::Predicate CC, bool &isOrdered) {
   default:
     // Not expecting FCMP_FALSE and FCMP_TRUE;
     llvm_unreachable("Unexpected FCmp predicate!");
-    return 0;
   }
 }
 
@@ -1555,7 +1554,6 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
     case ICmpInst::ICMP_SLT:         // (X != 13 | X s< 15) -> true
       return ConstantInt::getTrue(LHS->getContext());
     }
-    break;
   case ICmpInst::ICMP_ULT:
     switch (RHSCC) {
     default: llvm_unreachable("Unknown integer condition code!");

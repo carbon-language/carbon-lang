@@ -249,7 +249,6 @@ TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
           "TargetLowering::EmitInstrWithCustomInserter!";
 #endif
   llvm_unreachable(0);
-  return 0;
 }
 
 void TargetLowering::AdjustInstrPostInstrSelection(MachineInstr *MI,
@@ -981,7 +980,6 @@ static void collectFailStats(const Instruction *I) {
   case Instruction::InsertValue:    NumFastIselFailInsertValue++; return;
   case Instruction::LandingPad:     NumFastIselFailLandingPad++; return;
   }
-  return;
 }
 #endif
 

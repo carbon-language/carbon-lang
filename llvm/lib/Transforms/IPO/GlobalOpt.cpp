@@ -1210,7 +1210,6 @@ static Value *GetHeapSROAValue(Value *V, unsigned FieldNo,
     PHIsToRewrite.push_back(std::make_pair(PN, FieldNo));
   } else {
     llvm_unreachable("Unknown usable value");
-    Result = 0;
   }
 
   return FieldVals[FieldNo] = Result;

@@ -347,7 +347,6 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   }
 
   llvm_unreachable("Implement any new match types added!");
-  return true;
 }
 
 MBlazeOperand *MBlazeAsmParser::

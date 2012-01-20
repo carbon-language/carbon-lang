@@ -409,7 +409,6 @@ GenericValue lle_X_sprintf(FunctionType *FT,
       break;
     }
   }
-  return GV;
 }
 
 // int printf(const char *, ...) - a very rough implementation to make output

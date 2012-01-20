@@ -571,8 +571,6 @@ SDNode *HexagonDAGToDAGISel::SelectIndexedLoad(LoadSDNode *LD, DebugLoc dl) {
     ReplaceUses(Froms, Tos, 3);
     return Result_1;
   }
-
-  return SelectCode(LD);
 }
 
 

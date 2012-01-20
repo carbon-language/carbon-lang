@@ -1164,7 +1164,6 @@ X86InstrInfo::isCoalescableExtInstr(const MachineInstr &MI,
     switch (MI.getOpcode()) {
     default:
       llvm_unreachable(0);
-      break;
     case X86::MOVSX16rr8:
     case X86::MOVZX16rr8:
     case X86::MOVSX32rr8:
@@ -1207,7 +1206,8 @@ bool X86InstrInfo::isFrameOperand(const MachineInstr *MI, unsigned int Op,
 
 static bool isFrameLoadOpcode(int Opcode) {
   switch (Opcode) {
-  default: break;
+  default:
+    return false;
   case X86::MOV8rm:
   case X86::MOV16rm:
   case X86::MOV32rm:
@@ -1229,9 +1229,7 @@ static bool isFrameLoadOpcode(int Opcode) {
   case X86::MMX_MOVD64rm:
   case X86::MMX_MOVQ64rm:
     return true;
-    break;
   }
-  return false;
 }
 
 static bool isFrameStoreOpcode(int Opcode) {
@@ -1575,7 +1573,6 @@ X86InstrInfo::convertToThreeAddressWithLEA(unsigned MIOpc,
   switch (MIOpc) {
   default:
     llvm_unreachable(0);
-    break;
   case X86::SHL16ri: {
     unsigned ShAmt = MI->getOperand(2).getImm();
     MIB.addReg(0).addImm(1 << ShAmt)

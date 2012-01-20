@@ -34,6 +34,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SystemUtils.h"
@@ -111,8 +112,7 @@ bool LTOCodeGenerator::setDebugInfo(lto_debug_model debug, std::string& errMsg)
             _emitDwarfDebugInfo = true;
             return false;
     }
-    errMsg = "unknown debug format";
-    return true;
+    llvm_unreachable("Unknown debug format!");
 }
 
 
@@ -126,8 +126,7 @@ bool LTOCodeGenerator::setCodePICModel(lto_codegen_model model,
             _codeModel = model;
             return false;
     }
-    errMsg = "unknown pic model";
-    return true;
+    llvm_unreachable("Unknown PIC model!");
 }
 
 void LTOCodeGenerator::setCpu(const char* mCpu)

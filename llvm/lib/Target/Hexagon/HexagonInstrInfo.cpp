@@ -1375,7 +1375,6 @@ bool HexagonInstrInfo::isConditionalALU32 (const MachineInstr* MI) const {
     default:
       return false;
   }
-  return false;
 }
 
 
@@ -1450,5 +1449,4 @@ isConditionalLoad (const MachineInstr* MI) const {
     default:
       return false;
   }
-  return false;
 }

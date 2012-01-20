@@ -1997,7 +1997,6 @@ Depends(DependenceKind Flavor, Instruction *Inst, const Value *Arg,
       // Nothing else matters for objc_retainAutorelease formation.
       return false;
     }
-    break;
 
   case RetainAutoreleaseRVDep: {
     InstructionClass Class = GetBasicInstructionClass(Inst);
@@ -2011,7 +2010,6 @@ Depends(DependenceKind Flavor, Instruction *Inst, const Value *Arg,
       // retainAutoreleaseReturnValue formation.
       return CanInterruptRV(Class);
     }
-    break;
   }
 
   case RetainRVDep:

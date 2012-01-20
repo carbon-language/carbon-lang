@@ -2826,7 +2826,6 @@ getConstraintType(const std::string &Constraint) const
       case 'y':
       case 'f':
         return C_RegisterClass;
-        break;
     }
   }
   return TargetLowering::getConstraintType(Constraint);

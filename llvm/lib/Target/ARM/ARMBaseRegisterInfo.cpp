@@ -569,12 +569,10 @@ ARMBaseRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
 
 unsigned ARMBaseRegisterInfo::getEHExceptionRegister() const {
   llvm_unreachable("What is the exception register");
-  return 0;
 }
 
 unsigned ARMBaseRegisterInfo::getEHHandlerRegister() const {
   llvm_unreachable("What is the exception handler register");
-  return 0;
 }
 
 unsigned ARMBaseRegisterInfo::getRegisterPairEven(unsigned Reg,
@@ -823,7 +821,6 @@ getFrameIndexInstrOffset(const MachineInstr *MI, int Idx) const {
   }
   default:
     llvm_unreachable("Unsupported addressing mode!");
-    break;
   }
 
   return InstrOffs * Scale;
@@ -1019,7 +1016,6 @@ bool ARMBaseRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
     break;
   default:
     llvm_unreachable("Unsupported addressing mode!");
-    break;
   }
 
   Offset += getFrameIndexInstrOffset(MI, i);

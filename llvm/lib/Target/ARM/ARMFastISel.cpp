@@ -2340,7 +2340,6 @@ bool ARMFastISel::SelectIntrinsicCall(const IntrinsicInst &I) {
     return SelectCall(&I, "memset");
   }
   }
-  return false;    
 }
 
 bool ARMFastISel::SelectTrunc(const Instruction *I) {

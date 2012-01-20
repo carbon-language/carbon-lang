@@ -41,7 +41,6 @@ unsigned MBlazeELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
   default:
     llvm_unreachable("unknown mblaze machine relocation type");
   }
-  return 0;
 }
 
 long int MBlazeELFWriterInfo::getDefaultAddendForRelTy(unsigned RelTy,
@@ -54,7 +53,6 @@ long int MBlazeELFWriterInfo::getDefaultAddendForRelTy(unsigned RelTy,
   default:
     llvm_unreachable("unknown mblaze relocation type");
   }
-  return 0;
 }
 
 unsigned MBlazeELFWriterInfo::getRelocationTySize(unsigned RelTy) const {

@@ -827,7 +827,6 @@ bool AsmParser::ParseExpression(const MCExpr *&Res, SMLoc &EndLoc) {
     if (!ModifiedRes) {
       return TokError("invalid modifier '" + getTok().getIdentifier() +
                       "' (no symbols present)");
-      return true;
     }
 
     Res = ModifiedRes;

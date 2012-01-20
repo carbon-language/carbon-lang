@@ -144,7 +144,6 @@ static int getLoadStoreMultipleOpcode(int Opcode, ARM_AM::AMSubMode Mode) {
     case ARM_AM::db: return ARM::LDMDB;
     case ARM_AM::ib: return ARM::LDMIB;
     }
-    break;
   case ARM::STRi12:
     ++NumSTMGened;
     switch (Mode) {
@@ -154,7 +153,6 @@ static int getLoadStoreMultipleOpcode(int Opcode, ARM_AM::AMSubMode Mode) {
     case ARM_AM::db: return ARM::STMDB;
     case ARM_AM::ib: return ARM::STMIB;
     }
-    break;
   case ARM::t2LDRi8:
   case ARM::t2LDRi12:
     ++NumLDMGened;
@@ -163,7 +161,6 @@ static int getLoadStoreMultipleOpcode(int Opcode, ARM_AM::AMSubMode Mode) {
     case ARM_AM::ia: return ARM::t2LDMIA;
     case ARM_AM::db: return ARM::t2LDMDB;
     }
-    break;
   case ARM::t2STRi8:
   case ARM::t2STRi12:
     ++NumSTMGened;
@@ -172,7 +169,6 @@ static int getLoadStoreMultipleOpcode(int Opcode, ARM_AM::AMSubMode Mode) {
     case ARM_AM::ia: return ARM::t2STMIA;
     case ARM_AM::db: return ARM::t2STMDB;
     }
-    break;
   case ARM::VLDRS:
     ++NumVLDMGened;
     switch (Mode) {
@@ -180,7 +176,6 @@ static int getLoadStoreMultipleOpcode(int Opcode, ARM_AM::AMSubMode Mode) {
     case ARM_AM::ia: return ARM::VLDMSIA;
     case ARM_AM::db: return 0; // Only VLDMSDB_UPD exists.
     }
-    break;
   case ARM::VSTRS:
     ++NumVSTMGened;
     switch (Mode) {
@@ -188,7 +183,6 @@ static int getLoadStoreMultipleOpcode(int Opcode, ARM_AM::AMSubMode Mode) {
     case ARM_AM::ia: return ARM::VSTMSIA;
     case ARM_AM::db: return 0; // Only VSTMSDB_UPD exists.
     }
-    break;
   case ARM::VLDRD:
     ++NumVLDMGened;
     switch (Mode) {
@@ -196,7 +190,6 @@ static int getLoadStoreMultipleOpcode(int Opcode, ARM_AM::AMSubMode Mode) {
     case ARM_AM::ia: return ARM::VLDMDIA;
     case ARM_AM::db: return 0; // Only VLDMDDB_UPD exists.
     }
-    break;
   case ARM::VSTRD:
     ++NumVSTMGened;
     switch (Mode) {
@@ -204,10 +197,7 @@ static int getLoadStoreMultipleOpcode(int Opcode, ARM_AM::AMSubMode Mode) {
     case ARM_AM::ia: return ARM::VSTMDIA;
     case ARM_AM::db: return 0; // Only VSTMDDB_UPD exists.
     }
-    break;
   }
-
-  return 0;
 }
 
 namespace llvm {
@@ -262,8 +252,6 @@ AMSubMode getLoadStoreMultipleSubMode(int Opcode) {
   case ARM::STMIB_UPD:
     return ARM_AM::ib;
   }
-
-  return ARM_AM::bad_am_submode;
 }
 
   } // end namespace ARM_AM
@@ -606,7 +594,6 @@ static unsigned getUpdatingLSMultipleOpcode(unsigned Opc,
     case ARM_AM::da: return ARM::LDMDA_UPD;
     case ARM_AM::db: return ARM::LDMDB_UPD;
     }
-    break;
   case ARM::STMIA:
   case ARM::STMDA:
   case ARM::STMDB:
@@ -618,7 +605,6 @@ static unsigned getUpdatingLSMultipleOpcode(unsigned Opc,
     case ARM_AM::da: return ARM::STMDA_UPD;
     case ARM_AM::db: return ARM::STMDB_UPD;
     }
-    break;
   case ARM::t2LDMIA:
   case ARM::t2LDMDB:
     switch (Mode) {
@@ -626,7 +612,6 @@ static unsigned getUpdatingLSMultipleOpcode(unsigned Opc,
     case ARM_AM::ia: return ARM::t2LDMIA_UPD;
     case ARM_AM::db: return ARM::t2LDMDB_UPD;
     }
-    break;
   case ARM::t2STMIA:
   case ARM::t2STMDB:
     switch (Mode) {
@@ -634,38 +619,31 @@ static unsigned getUpdatingLSMultipleOpcode(unsigned Opc,
     case ARM_AM::ia: return ARM::t2STMIA_UPD;
     case ARM_AM::db: return ARM::t2STMDB_UPD;
     }
-    break;
   case ARM::VLDMSIA:
     switch (Mode) {
     default: llvm_unreachable("Unhandled submode!");
     case ARM_AM::ia: return ARM::VLDMSIA_UPD;
     case ARM_AM::db: return ARM::VLDMSDB_UPD;
     }
-    break;
   case ARM::VLDMDIA:
     switch (Mode) {
     default: llvm_unreachable("Unhandled submode!");
     case ARM_AM::ia: return ARM::VLDMDIA_UPD;
     case ARM_AM::db: return ARM::VLDMDDB_UPD;
     }
-    break;
   case ARM::VSTMSIA:
     switch (Mode) {
     default: llvm_unreachable("Unhandled submode!");
     case ARM_AM::ia: return ARM::VSTMSIA_UPD;
     case ARM_AM::db: return ARM::VSTMSDB_UPD;
     }
-    break;
   case ARM::VSTMDIA:
     switch (Mode) {
     default: llvm_unreachable("Unhandled submode!");
     case ARM_AM::ia: return ARM::VSTMDIA_UPD;
     case ARM_AM::db: return ARM::VSTMDDB_UPD;
     }
-    break;
   }
-
-  return 0;
 }
 
 /// MergeBaseUpdateLSMultiple - Fold proceeding/trailing inc/dec of base
@@ -786,7 +764,6 @@ static unsigned getPreIndexedLoadStoreOpcode(unsigned Opc,
     return ARM::t2STR_PRE;
   default: llvm_unreachable("Unhandled opcode!");
   }
-  return 0;
 }
 
 static unsigned getPostIndexedLoadStoreOpcode(unsigned Opc,
@@ -812,7 +789,6 @@ static unsigned getPostIndexedLoadStoreOpcode(unsigned Opc,
     return ARM::t2STR_POST;
   default: llvm_unreachable("Unhandled opcode!");
   }
-  return 0;
 }
 
 /// MergeBaseUpdateLoadStore - Fold proceeding/trailing inc/dec of base

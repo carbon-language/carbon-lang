@@ -53,11 +53,9 @@ TargetLoweringObjectFileELF::getCFIPersonalitySymbol(const GlobalValue *GV,
     report_fatal_error("We do not support this DWARF encoding yet!");
   case dwarf::DW_EH_PE_absptr:
     return  Mang->getSymbol(GV);
-    break;
   case dwarf::DW_EH_PE_pcrel: {
     return getContext().GetOrCreateSymbol(StringRef("DW.ref.") +
                                           Mang->getSymbol(GV)->getName());
-    break;
   }
   }
 }
@@ -361,8 +359,6 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
     report_fatal_error("Global variable '" + GV->getName() +
                        "' has an invalid section specifier '" +
                        GV->getSection() + "': " + ErrorCode + ".");
-    // Fall back to dropping it into the data section.
-    return DataSection;
   }
 
   // Get the section.

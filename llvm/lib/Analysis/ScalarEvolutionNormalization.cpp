@@ -190,7 +190,6 @@ TransformImpl(const SCEV *S, Instruction *User, Value *OperandValToReplace) {
   }
 
   llvm_unreachable("Unexpected SCEV kind!");
-  return 0;
 }
 
 /// Manage recursive transformation across an expression DAG. Revisiting

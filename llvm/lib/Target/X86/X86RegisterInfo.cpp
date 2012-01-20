@@ -526,12 +526,10 @@ unsigned X86RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
 
 unsigned X86RegisterInfo::getEHExceptionRegister() const {
   llvm_unreachable("What is the exception register");
-  return 0;
 }
 
 unsigned X86RegisterInfo::getEHHandlerRegister() const {
   llvm_unreachable("What is the exception handler register");
-  return 0;
 }
 
 namespace llvm {
@@ -713,8 +711,6 @@ unsigned getX86SubSuperRegister(unsigned Reg, EVT VT, bool High) {
       return X86::R15;
     }
   }
-
-  return Reg;
 }
 }
 

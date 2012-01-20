@@ -184,7 +184,7 @@ public:
     case ARM_AM::ror:
     case ARM_AM::rrx: return 3;
     }
-    return 0;
+    llvm_unreachable("Invalid ShiftOpc!");
   }
 
   /// getAddrMode2OpValue - Return encoding for addrmode2 operands.
@@ -422,7 +422,6 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   }
 
   llvm_unreachable("Unable to encode MCOperand!");
-  return 0;
 }
 
 /// getAddrModeImmOpValue - Return encoding info for 'reg +/- imm' operand.
@@ -884,7 +883,6 @@ ARMMCCodeEmitter::getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
   };
 
   llvm_unreachable("Unsupported MCExpr type in MCOperand!");
-  return 0;
 }
 
 uint32_t ARMMCCodeEmitter::

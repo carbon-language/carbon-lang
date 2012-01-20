@@ -203,8 +203,6 @@ bool DWARFDebugInfoEntryMinimal::extractFast(const DWARFCompileUnit *cu,
     AbbrevDecl = NULL;
     return true; // NULL debug tag entry
   }
-
-  return false;
 }
 
 bool

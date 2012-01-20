@@ -197,7 +197,6 @@ inline static unsigned getMipsRegisterNumbering(unsigned RegEnum)
     return 31;
   default: llvm_unreachable("Unknown register number!");
   }
-  return 0; // Not reached
 }
 }
 

@@ -1617,10 +1617,9 @@ unsigned LLVMGetInstructionCallConv(LLVMValueRef Instr) {
   Value *V = unwrap(Instr);
   if (CallInst *CI = dyn_cast<CallInst>(V))
     return CI->getCallingConv();
-  else if (InvokeInst *II = dyn_cast<InvokeInst>(V))
+  if (InvokeInst *II = dyn_cast<InvokeInst>(V))
     return II->getCallingConv();
   llvm_unreachable("LLVMGetInstructionCallConv applies only to call and invoke!");
-  return 0;
 }
 
 void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC) {

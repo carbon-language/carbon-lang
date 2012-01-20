@@ -109,17 +109,14 @@ unsigned MBlazeMCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                              const MCOperand &MO) const {
   if (MO.isReg())
     return getMBlazeRegisterNumbering(MO.getReg());
-  else if (MO.isImm())
+  if (MO.isImm())
     return static_cast<unsigned>(MO.getImm());
-  else if (MO.isExpr())
-      return 0; // The relocation has already been recorded at this point.
-  else {
+  if (MO.isExpr())
+    return 0; // The relocation has already been recorded at this point.
 #ifndef NDEBUG
-    errs() << MO;
+  errs() << MO;
 #endif
-    llvm_unreachable(0);
-  }
-  return 0;
+  llvm_unreachable(0);
 }
 
 void MBlazeMCCodeEmitter::

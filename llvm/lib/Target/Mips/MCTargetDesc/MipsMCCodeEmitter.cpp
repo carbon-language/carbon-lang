@@ -237,8 +237,6 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
     return Ret;
   }
   llvm_unreachable("Unable to encode MCOperand!");
-  // Not reached
-  return 0;
 }
 
 /// getMemEncoding - Return binary encoding of memory related operand.

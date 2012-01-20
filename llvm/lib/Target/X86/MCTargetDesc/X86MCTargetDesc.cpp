@@ -72,6 +72,8 @@ bool X86_MC::GetCpuIDAndInfo(unsigned value, unsigned *rEAX,
     *rECX = registers[2];
     *rEDX = registers[3];
     return false;
+  #else
+    return true;
   #endif
 #elif defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
   #if defined(__GNUC__)
@@ -98,9 +100,12 @@ bool X86_MC::GetCpuIDAndInfo(unsigned value, unsigned *rEAX,
       mov   dword ptr [esi],edx
     }
     return false;
+  #else
+    return true;
   #endif
-#endif
+#else
   return true;
+#endif
 }
 
 /// GetCpuIDAndInfoEx - Execute the specified cpuid with subleaf and return the
@@ -131,7 +136,11 @@ bool X86_MC::GetCpuIDAndInfoEx(unsigned value, unsigned subleaf, unsigned *rEAX,
       *rECX = registers[2];
       *rEDX = registers[3];
       return false;
+    #else
+      return true;
     #endif
+  #else
+    return true;
   #endif
 #elif defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
   #if defined(__GNUC__)
@@ -160,9 +169,12 @@ bool X86_MC::GetCpuIDAndInfoEx(unsigned value, unsigned subleaf, unsigned *rEAX,
       mov   dword ptr [esi],edx
     }
     return false;
+  #else
+    return true;
   #endif
-#endif
+#else
   return true;
+#endif
 }
 
 void X86_MC::DetectFamilyModel(unsigned EAX, unsigned &Family,

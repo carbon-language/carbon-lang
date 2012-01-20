@@ -215,7 +215,6 @@ void PTXInstPrinter::printRoundingMode(const MCInst *MI, unsigned OpNo,
     llvm_unreachable("Unknown rounding mode!");
   case PTXRoundingMode::RndDefault:
     llvm_unreachable("FP rounding-mode pass did not handle instruction!");
-    break;
   case PTXRoundingMode::RndNone:
     // Do not print anything.
     break;

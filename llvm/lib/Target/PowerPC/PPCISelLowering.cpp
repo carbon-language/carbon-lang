@@ -4569,7 +4569,6 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);
   case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
   }
-  return SDValue();
 }
 
 void PPCTargetLowering::ReplaceNodeResults(SDNode *N,

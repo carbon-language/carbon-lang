@@ -223,7 +223,6 @@ void HexagonAsmPrinter::printOp(const MachineOperand &MO, raw_ostream &O) {
   case MachineOperand::MO_Immediate:
     dbgs() << "printOp() does not handle immediate values\n";
     abort();
-    return;
 
   case MachineOperand::MO_MachineBasicBlock:
     O << *MO.getMBB()->getSymbol();

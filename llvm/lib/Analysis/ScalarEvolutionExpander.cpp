@@ -650,7 +650,6 @@ const Loop *SCEVExpander::getRelevantLoop(const SCEV *S) {
     return RelevantLoops[D] = Result;
   }
   llvm_unreachable("Unexpected SCEV type!");
-  return 0;
 }
 
 namespace {

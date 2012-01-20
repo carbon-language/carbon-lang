@@ -189,7 +189,6 @@ static std::string getTypePrefix(Type *Ty) {
   case Type::VectorTyID:   return "packed_";
   default:                 return "other_";
   }
-  return "unknown_";
 }
 
 void CppWriter::error(const std::string& msg) {

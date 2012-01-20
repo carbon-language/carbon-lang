@@ -91,8 +91,6 @@ static Value *GetPointerOperand(Value *I) {
   if (StoreInst *i = dyn_cast<StoreInst>(I))
     return i->getPointerOperand();
   llvm_unreachable("Value is no load or store instruction!");
-  // Never reached.
-  return 0;
 }
 
 static AliasAnalysis::AliasResult UnderlyingObjectsAlias(AliasAnalysis *AA,

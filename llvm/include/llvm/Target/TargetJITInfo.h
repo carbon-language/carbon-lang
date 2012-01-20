@@ -58,8 +58,6 @@ namespace llvm {
     /// Returns the maximum size and alignment for a call stub on this target.
     virtual StubLayout getStubLayout() {
       llvm_unreachable("This target doesn't implement getStubLayout!");
-      StubLayout Result = {0, 0};
-      return Result;
     }
 
     /// emitFunctionStub - Use the specified JITCodeEmitter object to emit a

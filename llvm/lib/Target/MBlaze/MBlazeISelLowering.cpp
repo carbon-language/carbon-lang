@@ -602,7 +602,6 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const {
 SDValue MBlazeTargetLowering::
 LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
   llvm_unreachable("TLS not implemented for MicroBlaze.");
-  return SDValue(); // Not reached
 }
 
 SDValue MBlazeTargetLowering::
@@ -1081,7 +1080,6 @@ getConstraintType(const std::string &Constraint) const
       case 'y':
       case 'f':
         return C_RegisterClass;
-        break;
     }
   }
   return TargetLowering::getConstraintType(Constraint);

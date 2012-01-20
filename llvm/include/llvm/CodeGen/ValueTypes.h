@@ -446,7 +446,6 @@ namespace llvm {
       case  8: return MVT::v8i8;
       case 16: return MVT::v16i8;
       }
-      return MVT::INVALID_SIMPLE_VALUE_TYPE;
     }
 
     /// changeVectorElementTypeToInteger - Return a vector with the same number

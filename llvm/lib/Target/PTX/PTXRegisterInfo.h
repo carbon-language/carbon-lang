@@ -49,7 +49,6 @@ public:
 
   virtual unsigned getFrameRegister(const MachineFunction &MF) const {
     llvm_unreachable("PTX does not have a frame register");
-    return 0;
   }
 }; // struct PTXRegisterInfo
 } // namespace llvm

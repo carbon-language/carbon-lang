@@ -1318,7 +1318,7 @@ static bool isLegalUse(const TargetLowering::AddrMode &AM,
     return AM.Scale == 0 || AM.Scale == -1;
   }
 
-  return false;
+  llvm_unreachable("Invalid LSRUse Kind!");
 }
 
 static bool isLegalUse(TargetLowering::AddrMode AM,

@@ -206,7 +206,6 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc DL,
     return DAG.getNode(ISD::BITCAST, DL, ValueVT, Val);
 
   llvm_unreachable("Unknown mismatch!");
-  return SDValue();
 }
 
 /// getCopyFromParts - Create a value that contains the specified legal parts
@@ -1128,7 +1127,6 @@ SDValue SelectionDAGBuilder::getValueImpl(const Value *V) {
   }
 
   llvm_unreachable("Can't get register for value!");
-  return SDValue();
 }
 
 void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
@@ -3379,7 +3377,7 @@ void SelectionDAGBuilder::visitAtomicRMW(const AtomicRMWInst &I) {
   DebugLoc dl = getCurDebugLoc();
   ISD::NodeType NT;
   switch (I.getOperation()) {
-  default: llvm_unreachable("Unknown atomicrmw operation"); return;
+  default: llvm_unreachable("Unknown atomicrmw operation");
   case AtomicRMWInst::Xchg: NT = ISD::ATOMIC_SWAP; break;
   case AtomicRMWInst::Add:  NT = ISD::ATOMIC_LOAD_ADD; break;
   case AtomicRMWInst::Sub:  NT = ISD::ATOMIC_LOAD_SUB; break;
@@ -5064,7 +5062,6 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   case Intrinsic::gcread:
   case Intrinsic::gcwrite:
     llvm_unreachable("GC failed to lower gcread/gcwrite intrinsics!");
-    return 0;
   case Intrinsic::flt_rounds:
     setValue(&I, DAG.getNode(ISD::FLT_ROUNDS_, dl, MVT::i32));
     return 0;
@@ -6605,7 +6602,6 @@ void TargetLowering::LowerOperationWrapper(SDNode *N,
 
 SDValue TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   llvm_unreachable("LowerOperation not implemented for this target!");
-  return SDValue();
 }
 
 void

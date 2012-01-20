@@ -1908,7 +1908,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     APInt V1 = cast<ConstantInt>(C1)->getValue();
     APInt V2 = cast<ConstantInt>(C2)->getValue();
     switch (pred) {
-    default: llvm_unreachable("Invalid ICmp Predicate"); return 0;
+    default: llvm_unreachable("Invalid ICmp Predicate");
     case ICmpInst::ICMP_EQ:  return ConstantInt::get(ResultTy, V1 == V2);
     case ICmpInst::ICMP_NE:  return ConstantInt::get(ResultTy, V1 != V2);
     case ICmpInst::ICMP_SLT: return ConstantInt::get(ResultTy, V1.slt(V2));
@@ -1925,7 +1925,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     APFloat C2V = cast<ConstantFP>(C2)->getValueAPF();
     APFloat::cmpResult R = C1V.compare(C2V);
     switch (pred) {
-    default: llvm_unreachable("Invalid FCmp Predicate"); return 0;
+    default: llvm_unreachable("Invalid FCmp Predicate");
     case FCmpInst::FCMP_FALSE: return Constant::getNullValue(ResultTy);
     case FCmpInst::FCMP_TRUE:  return Constant::getAllOnesValue(ResultTy);
     case FCmpInst::FCMP_UNO:

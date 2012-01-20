@@ -211,7 +211,6 @@ SDValue PTXTargetLowering::
   switch (CallConv) {
     default:
       llvm_unreachable("Unsupported calling convention");
-      break;
     case CallingConv::PTX_Kernel:
       MFI->setKernel(true);
       break;

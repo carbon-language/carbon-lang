@@ -329,8 +329,6 @@ getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
     
     NewLoadByteSize <<= 1;
   }
-  
-  return 0;
 }
 
 namespace {

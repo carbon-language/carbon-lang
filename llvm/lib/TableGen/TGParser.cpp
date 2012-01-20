@@ -318,7 +318,6 @@ Init *TGParser::ParseObjectName(MultiClass *CurMultiClass) {
     // Some of these can also begin values but we disallow those cases
     // because they are unlikely to be useful.
     return StringInit::get(GetNewAnonymousName());
-    break;
   default:
     break;
   }
@@ -722,7 +721,6 @@ Init *TGParser::ParseOperation(Record *CurRec) {
   default:
     TokError("unknown operation");
     return 0;
-    break;
   case tgtok::XHead:
   case tgtok::XTail:
   case tgtok::XEmpty:
@@ -1026,8 +1024,6 @@ Init *TGParser::ParseOperation(Record *CurRec) {
                                                              CurMultiClass);
   }
   }
-  TokError("could not parse operation");
-  return 0;
 }
 
 /// ParseOperatorType - Parse a type for an operator.  This returns
@@ -1088,7 +1084,6 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
     // still exists in some .td files.  Ignore it.
     Lex.Lex();  // Skip '#'.
     return ParseSimpleValue(CurRec, ItemType, Mode);
-    break;
   case tgtok::IntVal: R = IntInit::get(Lex.getCurIntVal()); Lex.Lex(); break;
   case tgtok::StrVal: {
     std::string Val = Lex.getCurStrVal();

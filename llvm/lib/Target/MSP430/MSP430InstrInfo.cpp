@@ -327,6 +327,4 @@ unsigned MSP430InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   case MSP430II::Size6Bytes:
     return 6;
   }
-
-  return 6;
 }

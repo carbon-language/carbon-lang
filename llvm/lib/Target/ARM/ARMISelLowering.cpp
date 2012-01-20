@@ -3494,7 +3494,7 @@ static SDValue LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
 
   if (Op.getOperand(1).getValueType().isFloatingPoint()) {
     switch (SetCCOpcode) {
-    default: llvm_unreachable("Illegal FP comparison"); break;
+    default: llvm_unreachable("Illegal FP comparison");
     case ISD::SETUNE:
     case ISD::SETNE:  Invert = true; // Fallthrough
     case ISD::SETOEQ:
@@ -3533,7 +3533,7 @@ static SDValue LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
   } else {
     // Integer comparisons.
     switch (SetCCOpcode) {
-    default: llvm_unreachable("Illegal integer comparison"); break;
+    default: llvm_unreachable("Illegal integer comparison");
     case ISD::SETNE:  Invert = true;
     case ISD::SETEQ:  Opc = ARMISD::VCEQ; break;
     case ISD::SETLT:  Swap = true;
@@ -3740,7 +3740,6 @@ static SDValue isNEONModifiedImm(uint64_t SplatBits, uint64_t SplatUndef,
 
   default:
     llvm_unreachable("unexpected size for isNEONModifiedImm");
-    return SDValue();
   }
 
   unsigned EncodedVal = ARM_AM::createNEONModImm(OpCmode, Imm);
@@ -5063,7 +5062,6 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ATOMIC_LOAD:
   case ISD::ATOMIC_STORE:  return LowerAtomicLoadStore(Op, DAG);
   }
-  return SDValue();
 }
 
 /// ReplaceNodeResults - Replace the results of node with an illegal result
@@ -5075,7 +5073,6 @@ void ARMTargetLowering::ReplaceNodeResults(SDNode *N,
   switch (N->getOpcode()) {
   default:
     llvm_unreachable("Don't know how to custom expand this!");
-    break;
   case ISD::BITCAST:
     Res = ExpandBITCAST(N, DAG);
     break;
@@ -8374,7 +8371,6 @@ bool ARMTargetLowering::isLegalAddressingMode(const AddrMode &AM,
       if (Scale & 1) return false;
       return isPowerOf2_32(Scale);
     }
-    break;
   }
   return true;
 }

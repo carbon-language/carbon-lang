@@ -41,15 +41,14 @@ unsigned ARMELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
   case ARM::reloc_arm_machine_cp_entry:
   case ARM::reloc_arm_jt_base:
   case ARM::reloc_arm_pic_jt:
-    assert(0 && "unsupported ARM relocation type"); break;
+    assert(0 && "unsupported ARM relocation type"); return 0;
     
-  case ARM::reloc_arm_branch: return ELF::R_ARM_CALL; break;
-  case ARM::reloc_arm_movt:   return ELF::R_ARM_MOVT_ABS; break;
-  case ARM::reloc_arm_movw:   return ELF::R_ARM_MOVW_ABS_NC; break;
+  case ARM::reloc_arm_branch: return ELF::R_ARM_CALL;
+  case ARM::reloc_arm_movt:   return ELF::R_ARM_MOVT_ABS;
+  case ARM::reloc_arm_movw:   return ELF::R_ARM_MOVW_ABS_NC;
   default:
-    llvm_unreachable("unknown ARM relocation type"); break;
+    llvm_unreachable("unknown ARM relocation type");
   }
-  return 0;
 }
 
 long int ARMELFWriterInfo::getDefaultAddendForRelTy(unsigned RelTy,

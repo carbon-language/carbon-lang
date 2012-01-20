@@ -118,10 +118,8 @@ unsigned SparcRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
 
 unsigned SparcRegisterInfo::getEHExceptionRegister() const {
   llvm_unreachable("What is the exception register");
-  return 0;
 }
 
 unsigned SparcRegisterInfo::getEHHandlerRegister() const {
   llvm_unreachable("What is the exception handler register");
-  return 0;
 }

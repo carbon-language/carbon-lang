@@ -18,6 +18,7 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
 class Target;
@@ -163,5 +164,5 @@ size_t LLVMDisasmInstruction(LLVMDisasmContextRef DCR, uint8_t *Bytes,
     return Size;
   }
   }
-  return 0;
+  llvm_unreachable("Invalid DecodeStatus!");
 }

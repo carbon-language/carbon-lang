@@ -248,7 +248,6 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO, raw_ostream &O) {
   switch (MO.getType()) {
   case MachineOperand::MO_Immediate:
     report_fatal_error("printOp() does not handle immediate values");
-    return;
 
   case MachineOperand::MO_MachineBasicBlock:
     O << *MO.getMBB()->getSymbol();

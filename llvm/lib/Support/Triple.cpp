@@ -10,6 +10,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cstring>
 using namespace llvm;
 
@@ -42,7 +43,7 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   case amdil:   return "amdil";
   }
 
-  return "<invalid>";
+  llvm_unreachable("Invalid ArchType!");
 }
 
 const char *Triple::getArchTypePrefix(ArchType Kind) {
@@ -86,7 +87,7 @@ const char *Triple::getVendorTypeName(VendorType Kind) {
   case SCEI: return "scei";
   }
 
-  return "<invalid>";
+  llvm_unreachable("Invalid VendorType!");
 }
 
 const char *Triple::getOSTypeName(OSType Kind) {
@@ -115,7 +116,7 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case NativeClient: return "nacl";
   }
 
-  return "<invalid>";
+  llvm_unreachable("Invalid OSType");
 }
 
 const char *Triple::getEnvironmentTypeName(EnvironmentType Kind) {
@@ -129,7 +130,7 @@ const char *Triple::getEnvironmentTypeName(EnvironmentType Kind) {
   case ANDROIDEABI: return "androideabi";
   }
 
-  return "<invalid>";
+  llvm_unreachable("Invalid EnvironmentType!");
 }
 
 Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {

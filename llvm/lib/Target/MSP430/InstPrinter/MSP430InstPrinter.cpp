@@ -92,7 +92,6 @@ void MSP430InstPrinter::printCCOperand(const MCInst *MI, unsigned OpNo,
   switch (CC) {
   default:
    llvm_unreachable("Unsupported CC code");
-   break;
   case MSP430CC::COND_E:
    O << "eq";
    break;

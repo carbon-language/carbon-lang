@@ -1136,7 +1136,7 @@ void AsmPrinter::EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
   const MCExpr *Value = 0;
   switch (MJTI->getEntryKind()) {
   case MachineJumpTableInfo::EK_Inline:
-    llvm_unreachable("Cannot emit EK_Inline jump table entry"); break;
+    llvm_unreachable("Cannot emit EK_Inline jump table entry");
   case MachineJumpTableInfo::EK_Custom32:
     Value = TM.getTargetLowering()->LowerCustomJumpTableEntry(MJTI, MBB, UID,
                                                               OutContext);
@@ -1439,7 +1439,6 @@ static const MCExpr *LowerConstant(const Constant *CV, AsmPrinter &AP) {
   const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV);
   if (CE == 0) {
     llvm_unreachable("Unknown constant value to lower!");
-    return MCConstantExpr::Create(0, Ctx);
   }
 
   switch (CE->getOpcode()) {
@@ -1461,7 +1460,6 @@ static const MCExpr *LowerConstant(const Constant *CV, AsmPrinter &AP) {
                      !AP.MF ? 0 : AP.MF->getFunction()->getParent());
       report_fatal_error(OS.str());
     }
-    return MCConstantExpr::Create(0, Ctx);
   case Instruction::GetElementPtr: {
     const TargetData &TD = *AP.TM.getTargetData();
     // Generate a symbolic expression for the byte address
@@ -2140,5 +2138,4 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
     }
 
   report_fatal_error("no GCMetadataPrinter registered for GC: " + Twine(Name));
-  return 0;
 }

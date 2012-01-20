@@ -194,7 +194,6 @@ SDValue MSP430TargetLowering::LowerOperation(SDValue Op,
   case ISD::FRAMEADDR:        return LowerFRAMEADDR(Op, DAG);
   default:
     llvm_unreachable("unimplemented operand");
-    return SDValue();
   }
 }
 
@@ -260,12 +259,9 @@ MSP430TargetLowering::LowerFormalArguments(SDValue Chain,
   case CallingConv::Fast:
     return LowerCCCArguments(Chain, CallConv, isVarArg, Ins, dl, DAG, InVals);
   case CallingConv::MSP430_INTR:
-   if (Ins.empty())
-     return Chain;
-   else {
+    if (Ins.empty())
+      return Chain;
     report_fatal_error("ISRs cannot have arguments");
-    return SDValue();
-   }
   }
 }
 
@@ -290,7 +286,6 @@ MSP430TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                           Outs, OutVals, Ins, dl, DAG, InVals);
   case CallingConv::MSP430_INTR:
     report_fatal_error("ISRs cannot be called directly");
-    return SDValue();
   }
 }
 
@@ -391,10 +386,8 @@ MSP430TargetLowering::LowerReturn(SDValue Chain,
   SmallVector<CCValAssign, 16> RVLocs;
 
   // ISRs cannot return any value.
-  if (CallConv == CallingConv::MSP430_INTR && !Outs.empty()) {
+  if (CallConv == CallingConv::MSP430_INTR && !Outs.empty())
     report_fatal_error("ISRs cannot return any value");
-    return SDValue();
-  }
 
   // CCState - Info about the registers and stack slot.
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),

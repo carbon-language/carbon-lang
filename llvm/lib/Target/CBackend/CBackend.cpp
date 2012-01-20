@@ -553,8 +553,6 @@ raw_ostream &CWriter::printType(raw_ostream &Out, Type *Ty,
   default:
     llvm_unreachable("Unhandled case in getTypeProps!");
   }
-
-  return Out;
 }
 
 void CWriter::printConstantArray(ConstantArray *CPA, bool Static) {
@@ -743,7 +741,6 @@ void CWriter::printCast(unsigned opc, Type *SrcTy, Type *DstTy) {
       break; // These don't need a source cast.
     default:
       llvm_unreachable("Invalid cast opcode");
-      break;
   }
 }
 

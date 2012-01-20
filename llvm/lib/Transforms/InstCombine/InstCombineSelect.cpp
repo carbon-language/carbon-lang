@@ -184,7 +184,6 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
       return BinaryOperator::Create(BO->getOpcode(), NewSI, MatchOp);
   }
   llvm_unreachable("Shouldn't get here");
-  return 0;
 }
 
 static bool isSelect01(Constant *C1, Constant *C2) {

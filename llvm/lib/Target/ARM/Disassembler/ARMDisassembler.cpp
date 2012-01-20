@@ -97,7 +97,7 @@ static bool Check(DecodeStatus &Out, DecodeStatus In) {
       Out = In;
       return false;
   }
-  return false;
+  llvm_unreachable("Invalid DecodeStatus!");
 }
 
 

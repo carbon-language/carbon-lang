@@ -358,11 +358,9 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
 void PTXAsmPrinter::EmitFunctionEntryLabel() {
   // The function label could have already been emitted if two symbols end up
   // conflicting due to asm renaming.  Detect this and emit an error.
-  if (!CurrentFnSym->isUndefined()) {
+  if (!CurrentFnSym->isUndefined())
     report_fatal_error("'" + Twine(CurrentFnSym->getName()) +
                        "' label emitted multiple times to assembly file");
-    return;
-  }
 
   const PTXMachineFunctionInfo *MFI = MF->getInfo<PTXMachineFunctionInfo>();
   const PTXParamManager &PM = MFI->getParamManager();

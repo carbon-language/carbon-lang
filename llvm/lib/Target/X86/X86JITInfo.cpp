@@ -571,6 +571,5 @@ char* X86JITInfo::allocateThreadLocalMemory(size_t size) {
   return TLSOffset;
 #else
   llvm_unreachable("Cannot allocate thread local storage on this arch!");
-  return 0;
 #endif
 }

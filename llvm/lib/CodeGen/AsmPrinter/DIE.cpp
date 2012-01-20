@@ -224,9 +224,8 @@ unsigned DIEInteger::SizeOf(AsmPrinter *AP, unsigned Form) const {
   case dwarf::DW_FORM_udata: return MCAsmInfo::getULEB128Size(Integer);
   case dwarf::DW_FORM_sdata: return MCAsmInfo::getSLEB128Size(Integer);
   case dwarf::DW_FORM_addr:  return AP->getTargetData().getPointerSize();
-  default: llvm_unreachable("DIE Value form not supported yet"); break;
+  default: llvm_unreachable("DIE Value form not supported yet");
   }
-  return 0;
 }
 
 #ifndef NDEBUG
@@ -340,9 +339,8 @@ unsigned DIEBlock::SizeOf(AsmPrinter *AP, unsigned Form) const {
   case dwarf::DW_FORM_block2: return Size + sizeof(int16_t);
   case dwarf::DW_FORM_block4: return Size + sizeof(int32_t);
   case dwarf::DW_FORM_block:  return Size + MCAsmInfo::getULEB128Size(Size);
-  default: llvm_unreachable("Improper form for block"); break;
+  default: llvm_unreachable("Improper form for block");
   }
-  return 0;
 }
 
 #ifndef NDEBUG

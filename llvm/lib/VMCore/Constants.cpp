@@ -1241,7 +1241,6 @@ Constant *ConstantExpr::getCast(unsigned oc, Constant *C, Type *Ty) {
   switch (opc) {
   default:
     llvm_unreachable("Invalid cast opcode");
-    break;
   case Instruction::Trunc:    return getTrunc(C, Ty);
   case Instruction::ZExt:     return getZExt(C, Ty);
   case Instruction::SExt:     return getSExt(C, Ty);
@@ -1255,7 +1254,6 @@ Constant *ConstantExpr::getCast(unsigned oc, Constant *C, Type *Ty) {
   case Instruction::IntToPtr: return getIntToPtr(C, Ty);
   case Instruction::BitCast:  return getBitCast(C, Ty);
   }
-  return 0;
 } 
 
 Constant *ConstantExpr::getZExtOrBitCast(Constant *C, Type *Ty) {
@@ -2174,7 +2172,6 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
     Replacement = ConstantExpr::get(getOpcode(), C1, C2, SubclassOptionalData);
   } else {
     llvm_unreachable("Unknown ConstantExpr type!");
-    return;
   }
   
   assert(Replacement != this && "I didn't contain From!");

@@ -2909,7 +2909,6 @@ static bool isTargetShuffle(unsigned Opcode) {
   case X86ISD::VPERM2X128:
     return true;
   }
-  return false;
 }
 
 static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
@@ -2921,8 +2920,6 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::MOVDDUP:
     return DAG.getNode(Opc, dl, VT, V1);
   }
-
-  return SDValue();
 }
 
 static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
@@ -2935,8 +2932,6 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::VPERMILP:
     return DAG.getNode(Opc, dl, VT, V1, DAG.getConstant(TargetMask, MVT::i8));
   }
-
-  return SDValue();
 }
 
 static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
@@ -2949,7 +2944,6 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
     return DAG.getNode(Opc, dl, VT, V1, V2,
                        DAG.getConstant(TargetMask, MVT::i8));
   }
-  return SDValue();
 }
 
 static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
@@ -2967,7 +2961,6 @@ static SDValue getTargetShuffleNode(unsigned Opc, DebugLoc dl, EVT VT,
   case X86ISD::UNPCKH:
     return DAG.getNode(Opc, dl, VT, V1, V2);
   }
-  return SDValue();
 }
 
 SDValue X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) const {
@@ -7439,11 +7432,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
                               Chain.getValue(1));
   }
 
-  assert(false &&
-         "TLS not implemented for this target.");
-
-  llvm_unreachable("Unreachable");
-  return SDValue();
+  llvm_unreachable("TLS not implemented for this target.");
 }
 
 
@@ -13501,7 +13490,6 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
   switch (N->getOpcode()) {
   default:
     llvm_unreachable("Unknown shift opcode!");
-    break;
   case ISD::SHL:
     if (VT == MVT::v2i64)
       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,

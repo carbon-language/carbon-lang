@@ -824,7 +824,7 @@ getModifierVariantKind(ARMCP::ARMCPModifier Modifier) {
   case ARMCP::GOT:         return MCSymbolRefExpr::VK_ARM_GOT;
   case ARMCP::GOTOFF:      return MCSymbolRefExpr::VK_ARM_GOTOFF;
   }
-  return MCSymbolRefExpr::VK_None;
+  llvm_unreachable("Invalid ARMCPModifier!");
 }
 
 MCSymbol *ARMAsmPrinter::GetARMGVSymbol(const GlobalValue *GV) {

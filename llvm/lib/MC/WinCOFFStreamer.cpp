@@ -253,7 +253,6 @@ void WinCOFFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
 
   default:
     llvm_unreachable("unsupported attribute");
-    break;
   }
 }
 

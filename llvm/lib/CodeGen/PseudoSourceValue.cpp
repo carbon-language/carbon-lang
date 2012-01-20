@@ -87,7 +87,6 @@ bool PseudoSourceValue::isConstant(const MachineFrameInfo *) const {
       this == getJumpTable())
     return true;
   llvm_unreachable("Unknown PseudoSourceValue!");
-  return false;
 }
 
 bool PseudoSourceValue::isAliased(const MachineFrameInfo *MFI) const {
@@ -97,7 +96,6 @@ bool PseudoSourceValue::isAliased(const MachineFrameInfo *MFI) const {
       this == getJumpTable())
     return false;
   llvm_unreachable("Unknown PseudoSourceValue!");
-  return true;
 }
 
 bool PseudoSourceValue::mayAlias(const MachineFrameInfo *MFI) const {

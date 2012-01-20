@@ -1305,28 +1305,22 @@ HasNestArgument(const MachineFunction *MF) {
 /// the first register, false for the second.
 static unsigned
 GetScratchRegister(bool Is64Bit, const MachineFunction &MF, bool Primary) {
-  if (Is64Bit) {
+  if (Is64Bit)
     return Primary ? X86::R11 : X86::R12;
-  } else {
-    CallingConv::ID CallingConvention = MF.getFunction()->getCallingConv();
-    bool IsNested = HasNestArgument(&MF);
 
-    if (CallingConvention == CallingConv::X86_FastCall ||
-        CallingConvention == CallingConv::Fast) {
-      if (IsNested) {
-        report_fatal_error("Segmented stacks does not support fastcall with "
-                           "nested function.");
-        return -1;
-      } else {
-        return Primary ? X86::EAX : X86::ECX;
-      }
-    } else {
-      if (IsNested)
-        return Primary ? X86::EDX : X86::EAX;
-      else
-        return Primary ? X86::ECX : X86::EAX;
-    }
+  CallingConv::ID CallingConvention = MF.getFunction()->getCallingConv();
+  bool IsNested = HasNestArgument(&MF);
+
+  if (CallingConvention == CallingConv::X86_FastCall ||
+      CallingConvention == CallingConv::Fast) {
+    if (IsNested)
+      report_fatal_error("Segmented stacks does not support fastcall with "
+                         "nested function.");
+    return Primary ? X86::EAX : X86::ECX;
   }
+  if (IsNested)
+    return Primary ? X86::EDX : X86::EAX;
+  return Primary ? X86::ECX : X86::EAX;
 }
 
 // The stack limit in the TCB is set to this many bytes above the actual stack

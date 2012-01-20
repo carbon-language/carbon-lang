@@ -602,7 +602,6 @@ static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool &Invert, int &Other) {
   case ISD::SETULT: return 0;
   case ISD::SETUGT: return 1;
   }
-  return 0;
 }
 
 SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {

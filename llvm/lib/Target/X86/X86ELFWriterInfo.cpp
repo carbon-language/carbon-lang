@@ -60,7 +60,6 @@ unsigned X86ELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
       llvm_unreachable("unknown x86 machine relocation type");
     }
   }
-  return 0;
 }
 
 long int X86ELFWriterInfo::getDefaultAddendForRelTy(unsigned RelTy,
@@ -83,7 +82,6 @@ long int X86ELFWriterInfo::getDefaultAddendForRelTy(unsigned RelTy,
       llvm_unreachable("unknown x86 relocation type");
     }
   }
-  return 0;
 }
 
 unsigned X86ELFWriterInfo::getRelocationTySize(unsigned RelTy) const {
@@ -107,7 +105,6 @@ unsigned X86ELFWriterInfo::getRelocationTySize(unsigned RelTy) const {
       llvm_unreachable("unknown x86 relocation type");
     }
   }
-  return 0;
 }
 
 bool X86ELFWriterInfo::isPCRelativeRel(unsigned RelTy) const {
@@ -132,7 +129,6 @@ bool X86ELFWriterInfo::isPCRelativeRel(unsigned RelTy) const {
       llvm_unreachable("unknown x86 relocation type");
     }
   }
-  return 0;
 }
 
 unsigned X86ELFWriterInfo::getAbsoluteLabelMachineRelTy() const {

@@ -72,7 +72,6 @@ resolveX86_64Relocation(uintptr_t Address, uintptr_t Value, bool isPCRel,
   case macho::RIT_X86_64_TLV:
     return Error("Relocation type not implemented yet!");
   }
-  return false;
 }
 
 bool RuntimeDyldMachO::

@@ -625,7 +625,6 @@ void ReturnInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
 
 BasicBlock *ReturnInst::getSuccessorV(unsigned idx) const {
   llvm_unreachable("ReturnInst has no successors!");
-  return 0;
 }
 
 ReturnInst::~ReturnInst() {
@@ -655,7 +654,6 @@ void UnwindInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
 
 BasicBlock *UnwindInst::getSuccessorV(unsigned idx) const {
   llvm_unreachable("UnwindInst has no successors!");
-  return 0;
 }
 
 //===----------------------------------------------------------------------===//
@@ -690,7 +688,6 @@ void ResumeInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
 
 BasicBlock *ResumeInst::getSuccessorV(unsigned idx) const {
   llvm_unreachable("ResumeInst has no successors!");
-  return 0;
 }
 
 //===----------------------------------------------------------------------===//
@@ -717,7 +714,6 @@ void UnreachableInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
 
 BasicBlock *UnreachableInst::getSuccessorV(unsigned idx) const {
   llvm_unreachable("UnwindInst has no successors!");
-  return 0;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2273,7 +2269,6 @@ unsigned CastInst::isEliminableCastPair(
       assert(0 && "Error in CastResults table!!!");
       return 0;
   }
-  return 0;
 }
 
 CastInst *CastInst::Create(Instruction::CastOps op, Value *S, Type *Ty, 
@@ -2295,8 +2290,8 @@ CastInst *CastInst::Create(Instruction::CastOps op, Value *S, Type *Ty,
     case BitCast:  return new BitCastInst  (S, Ty, Name, InsertBefore);
     default:
       assert(0 && "Invalid opcode provided");
+      return 0;
   }
-  return 0;
 }
 
 CastInst *CastInst::Create(Instruction::CastOps op, Value *S, Type *Ty,
@@ -2318,8 +2313,8 @@ CastInst *CastInst::Create(Instruction::CastOps op, Value *S, Type *Ty,
     case BitCast:  return new BitCastInst  (S, Ty, Name, InsertAtEnd);
     default:
       assert(0 && "Invalid opcode provided");
+      return 0;
   }
-  return 0;
 }
 
 CastInst *CastInst::CreateZExtOrBitCast(Value *S, Type *Ty, 

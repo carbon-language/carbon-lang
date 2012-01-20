@@ -101,7 +101,6 @@ std::string EVT::getEVTString() const {
     if (isInteger())
       return "i" + utostr(getSizeInBits());
     llvm_unreachable("Invalid EVT!");
-    return "?";
   case MVT::i1:      return "i1";
   case MVT::i8:      return "i8";
   case MVT::i16:     return "i16";
@@ -201,7 +200,6 @@ EVT EVT::getEVT(Type *Ty, bool HandleUnknown){
   default:
     if (HandleUnknown) return MVT(MVT::Other);
     llvm_unreachable("Unknown type!");
-    return MVT::isVoid;
   case Type::VoidTyID:
     return MVT::isVoid;
   case Type::IntegerTyID:

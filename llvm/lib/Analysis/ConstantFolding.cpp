@@ -1125,7 +1125,6 @@ static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
   if (Ty->isDoubleTy())
     return ConstantFP::get(Ty->getContext(), APFloat(V));
   llvm_unreachable("Can only constant fold float/double");
-  return 0; // dummy return to suppress warning
 }
 
 static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
@@ -1142,7 +1141,6 @@ static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
   if (Ty->isDoubleTy())
     return ConstantFP::get(Ty->getContext(), APFloat(V));
   llvm_unreachable("Can only constant fold float/double");
-  return 0; // dummy return to suppress warning
 }
 
 /// ConstantFoldConvertToInt - Attempt to an SSE floating point to integer

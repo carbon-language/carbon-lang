@@ -296,7 +296,6 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
   unsigned RelocType = macho::RIT_Vanilla;
   if (!getARMFixupKindMachOInfo(Fixup.getKind(), RelocType, Log2Size)) {
     report_fatal_error("unknown ARM fixup kind!");
-    return;
   }
 
   // If this is a difference or a defined symbol plus an offset, then we need a

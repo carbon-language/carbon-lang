@@ -475,7 +475,6 @@ GenericValue JIT::runFunction(Function *F,
     case Type::FP128TyID:
     case Type::PPC_FP128TyID:
       llvm_unreachable("long double not supported yet");
-      return rv;
     case Type::PointerTyID:
       return PTOGV(((void*(*)())(intptr_t)FPtr)());
     }

@@ -1072,7 +1072,6 @@ void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
     break;
   case SM_Speed:
     llvm_unreachable("Spill mode 'speed' not implemented yet");
-    break;
   }
 
   // Transfer the simply mapped values, check if any are skipped.

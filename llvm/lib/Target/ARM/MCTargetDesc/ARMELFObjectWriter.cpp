@@ -217,7 +217,7 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
     default: llvm_unreachable("invalid fixup kind!");
     case FK_Data_4:
       switch (Modifier) {
-      default: llvm_unreachable("Unsupported Modifier"); break;
+      default: llvm_unreachable("Unsupported Modifier");
       case MCSymbolRefExpr::VK_ARM_GOT:
         Type = ELF::R_ARM_GOT_BREL;
         break;

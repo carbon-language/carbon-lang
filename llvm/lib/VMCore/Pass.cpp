@@ -155,7 +155,6 @@ Pass *BasicBlockPass::createPrinterPass(raw_ostream &O,
                                         const std::string &Banner) const {
   
   llvm_unreachable("BasicBlockPass printing unsupported.");
-  return 0;
 }
 
 bool BasicBlockPass::doInitialization(Module &) {

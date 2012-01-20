@@ -259,11 +259,9 @@ Type *SCEV::getType() const {
     return cast<SCEVUnknown>(this)->getType();
   case scCouldNotCompute:
     llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
-    return 0;
-  default: break;
+  default:
+    llvm_unreachable("Unknown SCEV kind!");
   }
-  llvm_unreachable("Unknown SCEV kind!");
-  return 0;
 }
 
 bool SCEV::isZero() const {
@@ -611,11 +609,8 @@ namespace {
       }
 
       default:
-        break;
+        llvm_unreachable("Unknown SCEV kind!");
       }
-
-      llvm_unreachable("Unknown SCEV kind!");
-      return 0;
     }
   };
 }
@@ -5319,7 +5314,6 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
   }
 
   llvm_unreachable("Unknown SCEV type!");
-  return 0;
 }
 
 /// getSCEVAtScope - This is a convenience function which does
@@ -5950,7 +5944,6 @@ ScalarEvolution::isKnownPredicateWithRanges(ICmpInst::Predicate Pred,
   switch (Pred) {
   default:
     llvm_unreachable("Unexpected ICmpInst::Predicate value!");
-    break;
   case ICmpInst::ICMP_SGT:
     Pred = ICmpInst::ICMP_SLT;
     std::swap(LHS, RHS);
@@ -6801,11 +6794,8 @@ ScalarEvolution::computeLoopDisposition(const SCEV *S, const Loop *L) {
     return LoopInvariant;
   case scCouldNotCompute:
     llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
-    return LoopVariant;
-  default: break;
+  default: llvm_unreachable("Unknown SCEV kind!");
   }
-  llvm_unreachable("Unknown SCEV kind!");
-  return LoopVariant;
 }
 
 bool ScalarEvolution::isLoopInvariant(const SCEV *S, const Loop *L) {
@@ -6887,11 +6877,9 @@ ScalarEvolution::computeBlockDisposition(const SCEV *S, const BasicBlock *BB) {
     return ProperlyDominatesBlock;
   case scCouldNotCompute:
     llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
-    return DoesNotDominateBlock;
-  default: break;
+  default: 
+    llvm_unreachable("Unknown SCEV kind!");
   }
-  llvm_unreachable("Unknown SCEV kind!");
-  return DoesNotDominateBlock;
 }
 
 bool ScalarEvolution::dominates(const SCEV *S, const BasicBlock *BB) {
@@ -6937,11 +6925,9 @@ bool ScalarEvolution::hasOperand(const SCEV *S, const SCEV *Op) const {
     return false;
   case scCouldNotCompute:
     llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
-    return false;
-  default: break;
+  default:
+    llvm_unreachable("Unknown SCEV kind!");
   }
-  llvm_unreachable("Unknown SCEV kind!");
-  return false;
 }
 
 void ScalarEvolution::forgetMemoizedResults(const SCEV *S) {

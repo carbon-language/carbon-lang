@@ -214,7 +214,6 @@ MachineBasicBlock *findCorrespondingPred(const MachineInstr *MI,
   }
 
   llvm_unreachable("MachineOperand::getParent() failure?");
-  return 0;
 }
 
 /// RewriteUse - Rewrite a use of the symbolic value.  This handles PHI nodes,

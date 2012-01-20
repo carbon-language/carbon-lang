@@ -558,85 +558,84 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   if (MCID.getSize())
     return MCID.getSize();
 
-    // If this machine instr is an inline asm, measure it.
-    if (MI->getOpcode() == ARM::INLINEASM)
-      return getInlineAsmLength(MI->getOperand(0).getSymbolName(), *MAI);
-    if (MI->isLabel())
-      return 0;
-    unsigned Opc = MI->getOpcode();
-    switch (Opc) {
-    case TargetOpcode::IMPLICIT_DEF:
-    case TargetOpcode::KILL:
-    case TargetOpcode::PROLOG_LABEL:
-    case TargetOpcode::EH_LABEL:
-    case TargetOpcode::DBG_VALUE:
-      return 0;
-    case TargetOpcode::BUNDLE:
-      return getInstBundleLength(MI);
-    case ARM::MOVi16_ga_pcrel:
-    case ARM::MOVTi16_ga_pcrel:
-    case ARM::t2MOVi16_ga_pcrel:
-    case ARM::t2MOVTi16_ga_pcrel:
-      return 4;
-    case ARM::MOVi32imm:
-    case ARM::t2MOVi32imm:
-      return 8;
-    case ARM::CONSTPOOL_ENTRY:
-      // If this machine instr is a constant pool entry, its size is recorded as
-      // operand #2.
-      return MI->getOperand(2).getImm();
-    case ARM::Int_eh_sjlj_longjmp:
-      return 16;
-    case ARM::tInt_eh_sjlj_longjmp:
-      return 10;
-    case ARM::Int_eh_sjlj_setjmp:
-    case ARM::Int_eh_sjlj_setjmp_nofp:
-      return 20;
-    case ARM::tInt_eh_sjlj_setjmp:
-    case ARM::t2Int_eh_sjlj_setjmp:
-    case ARM::t2Int_eh_sjlj_setjmp_nofp:
-      return 12;
-    case ARM::BR_JTr:
-    case ARM::BR_JTm:
-    case ARM::BR_JTadd:
-    case ARM::tBR_JTr:
-    case ARM::t2BR_JT:
-    case ARM::t2TBB_JT:
-    case ARM::t2TBH_JT: {
-      // These are jumptable branches, i.e. a branch followed by an inlined
-      // jumptable. The size is 4 + 4 * number of entries. For TBB, each
-      // entry is one byte; TBH two byte each.
-      unsigned EntrySize = (Opc == ARM::t2TBB_JT)
-        ? 1 : ((Opc == ARM::t2TBH_JT) ? 2 : 4);
-      unsigned NumOps = MCID.getNumOperands();
-      MachineOperand JTOP =
-        MI->getOperand(NumOps - (MI->isPredicable() ? 3 : 2));
-      unsigned JTI = JTOP.getIndex();
-      const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
-      assert(MJTI != 0);
-      const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
-      assert(JTI < JT.size());
-      // Thumb instructions are 2 byte aligned, but JT entries are 4 byte
-      // 4 aligned. The assembler / linker may add 2 byte padding just before
-      // the JT entries.  The size does not include this padding; the
-      // constant islands pass does separate bookkeeping for it.
-      // FIXME: If we know the size of the function is less than (1 << 16) *2
-      // bytes, we can use 16-bit entries instead. Then there won't be an
-      // alignment issue.
-      unsigned InstSize = (Opc == ARM::tBR_JTr || Opc == ARM::t2BR_JT) ? 2 : 4;
-      unsigned NumEntries = getNumJTEntries(JT, JTI);
-      if (Opc == ARM::t2TBB_JT && (NumEntries & 1))
-        // Make sure the instruction that follows TBB is 2-byte aligned.
-        // FIXME: Constant island pass should insert an "ALIGN" instruction
-        // instead.
-        ++NumEntries;
-      return NumEntries * EntrySize + InstSize;
-    }
-    default:
-      // Otherwise, pseudo-instruction sizes are zero.
-      return 0;
-    }
-  return 0; // Not reached
+  // If this machine instr is an inline asm, measure it.
+  if (MI->getOpcode() == ARM::INLINEASM)
+    return getInlineAsmLength(MI->getOperand(0).getSymbolName(), *MAI);
+  if (MI->isLabel())
+    return 0;
+  unsigned Opc = MI->getOpcode();
+  switch (Opc) {
+  case TargetOpcode::IMPLICIT_DEF:
+  case TargetOpcode::KILL:
+  case TargetOpcode::PROLOG_LABEL:
+  case TargetOpcode::EH_LABEL:
+  case TargetOpcode::DBG_VALUE:
+    return 0;
+  case TargetOpcode::BUNDLE:
+    return getInstBundleLength(MI);
+  case ARM::MOVi16_ga_pcrel:
+  case ARM::MOVTi16_ga_pcrel:
+  case ARM::t2MOVi16_ga_pcrel:
+  case ARM::t2MOVTi16_ga_pcrel:
+    return 4;
+  case ARM::MOVi32imm:
+  case ARM::t2MOVi32imm:
+    return 8;
+  case ARM::CONSTPOOL_ENTRY:
+    // If this machine instr is a constant pool entry, its size is recorded as
+    // operand #2.
+    return MI->getOperand(2).getImm();
+  case ARM::Int_eh_sjlj_longjmp:
+    return 16;
+  case ARM::tInt_eh_sjlj_longjmp:
+    return 10;
+  case ARM::Int_eh_sjlj_setjmp:
+  case ARM::Int_eh_sjlj_setjmp_nofp:
+    return 20;
+  case ARM::tInt_eh_sjlj_setjmp:
+  case ARM::t2Int_eh_sjlj_setjmp:
+  case ARM::t2Int_eh_sjlj_setjmp_nofp:
+    return 12;
+  case ARM::BR_JTr:
+  case ARM::BR_JTm:
+  case ARM::BR_JTadd:
+  case ARM::tBR_JTr:
+  case ARM::t2BR_JT:
+  case ARM::t2TBB_JT:
+  case ARM::t2TBH_JT: {
+    // These are jumptable branches, i.e. a branch followed by an inlined
+    // jumptable. The size is 4 + 4 * number of entries. For TBB, each
+    // entry is one byte; TBH two byte each.
+    unsigned EntrySize = (Opc == ARM::t2TBB_JT)
+      ? 1 : ((Opc == ARM::t2TBH_JT) ? 2 : 4);
+    unsigned NumOps = MCID.getNumOperands();
+    MachineOperand JTOP =
+      MI->getOperand(NumOps - (MI->isPredicable() ? 3 : 2));
+    unsigned JTI = JTOP.getIndex();
+    const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
+    assert(MJTI != 0);
+    const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
+    assert(JTI < JT.size());
+    // Thumb instructions are 2 byte aligned, but JT entries are 4 byte
+    // 4 aligned. The assembler / linker may add 2 byte padding just before
+    // the JT entries.  The size does not include this padding; the
+    // constant islands pass does separate bookkeeping for it.
+    // FIXME: If we know the size of the function is less than (1 << 16) *2
+    // bytes, we can use 16-bit entries instead. Then there won't be an
+    // alignment issue.
+    unsigned InstSize = (Opc == ARM::tBR_JTr || Opc == ARM::t2BR_JT) ? 2 : 4;
+    unsigned NumEntries = getNumJTEntries(JT, JTI);
+    if (Opc == ARM::t2TBB_JT && (NumEntries & 1))
+      // Make sure the instruction that follows TBB is 2-byte aligned.
+      // FIXME: Constant island pass should insert an "ALIGN" instruction
+      // instead.
+      ++NumEntries;
+    return NumEntries * EntrySize + InstSize;
+  }
+  default:
+    // Otherwise, pseudo-instruction sizes are zero.
+    return 0;
+  }
 }
 
 unsigned ARMBaseInstrInfo::getInstBundleLength(const MachineInstr *MI) const {
@@ -1472,13 +1471,12 @@ llvm::getInstrPredicate(const MachineInstr *MI, unsigned &PredReg) {
 int llvm::getMatchingCondBranchOpcode(int Opc) {
   if (Opc == ARM::B)
     return ARM::Bcc;
-  else if (Opc == ARM::tB)
+  if (Opc == ARM::tB)
     return ARM::tBcc;
-  else if (Opc == ARM::t2B)
-      return ARM::t2Bcc;
+  if (Opc == ARM::t2B)
+    return ARM::t2Bcc;
 
   llvm_unreachable("Unknown unconditional branch opcode!");
-  return 0;
 }
 
 
@@ -1651,7 +1649,6 @@ bool llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
     }
     default:
       llvm_unreachable("Unsupported addressing mode!");
-      break;
     }
 
     Offset += InstrOffs * Scale;
@@ -2013,7 +2010,6 @@ ARMBaseInstrInfo::getNumMicroOps(const InstrItineraryData *ItinData,
   switch (Opc) {
   default:
     llvm_unreachable("Unexpected multi-uops instruction!");
-    break;
   case ARM::VLDMQIA:
   case ARM::VSTMQIA:
     return 2;

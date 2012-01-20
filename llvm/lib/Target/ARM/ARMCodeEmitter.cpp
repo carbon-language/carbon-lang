@@ -406,7 +406,6 @@ unsigned ARMCodeEmitter::getShiftOp(unsigned Imm) const {
   case ARM_AM::ror:
   case ARM_AM::rrx: return 3;
   }
-  return 0;
 }
 
 /// getMovi32Value - Return binary encoding of operand for movw/movt. If the
@@ -532,7 +531,6 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
   switch (MI.getDesc().TSFlags & ARMII::FormMask) {
   default: {
     llvm_unreachable("Unhandled instruction encoding format!");
-    break;
   }
   case ARMII::MiscFrm:
     if (MI.getOpcode() == ARM::LEApcrelJT) {
@@ -541,7 +539,6 @@ void ARMCodeEmitter::emitInstruction(const MachineInstr &MI) {
       break;
     }
     llvm_unreachable("Unhandled instruction encoding!");
-    break;
   case ARMII::Pseudo:
     emitPseudoInstruction(MI);
     break;

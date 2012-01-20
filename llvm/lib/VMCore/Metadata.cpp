@@ -163,12 +163,13 @@ static const Function *assertLocalFunction(const MDNode *N) {
 const Function *MDNode::getFunction() const {
 #ifndef NDEBUG
   return assertLocalFunction(this);
-#endif
+#else
   if (!isFunctionLocal()) return NULL;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
     if (const Function *F = getFunctionForValue(getOperand(i)))
       return F;
   return NULL;
+#endif
 }
 
 // destroy - Delete this node.  Only when there are no uses.

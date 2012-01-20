@@ -113,8 +113,6 @@ CC_Hexagon_VarArg (unsigned ValNo, MVT ValVT,
     return false;
   }
   llvm_unreachable(0);
-
-  return true;
 }
 
 

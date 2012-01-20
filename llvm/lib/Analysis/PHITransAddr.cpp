@@ -74,7 +74,6 @@ static bool VerifySubExpr(Value *Expr,
     errs() << *I << '\n';
     llvm_unreachable("Either something is missing from InstInputs or "
                      "CanPHITrans is wrong.");
-    return false;
   }
 
   // Validate the operands of the instruction.
@@ -101,7 +100,6 @@ bool PHITransAddr::Verify() const {
     for (unsigned i = 0, e = InstInputs.size(); i != e; ++i)
       errs() << "  InstInput #" << i << " is " << *InstInputs[i] << "\n";
     llvm_unreachable("This is unexpected.");
-    return false;
   }
 
   // a-ok.

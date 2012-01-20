@@ -483,8 +483,9 @@ BranchFolder::MergePotentialsElt::operator<(const MergePotentialsElt &o) const {
     // an object with itself.
 #ifndef _GLIBCXX_DEBUG
     llvm_unreachable("Predecessor appears twice");
-#endif
+#else
     return false;
+#endif
   }
 }
 

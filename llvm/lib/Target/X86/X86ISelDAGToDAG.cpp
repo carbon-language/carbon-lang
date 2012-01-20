@@ -1968,7 +1968,6 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     SDNode *New = CurDAG->getMachineNode(Op, dl, NVT, N0->getOperand(0),NewCst);
     return CurDAG->SelectNodeTo(Node, ShlOp, NVT, SDValue(New, 0),
                                 getI8Imm(ShlVal));
-    break;
   }
   case X86ISD::UMUL: {
     SDValue N0 = Node->getOperand(0);

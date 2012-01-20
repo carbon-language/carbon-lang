@@ -1179,7 +1179,6 @@ std::pair <SDValue, SDValue> DAGTypeLegalizer::ExpandAtomic(SDNode *Node) {
   switch (Opc) {
   default:
     llvm_unreachable("Unhandled atomic intrinsic Expand!");
-    break;
   case ISD::ATOMIC_SWAP:
     switch (VT.SimpleTy) {
     default: llvm_unreachable("Unexpected value type for atomic!");
@@ -1501,8 +1500,6 @@ ExpandShiftWithUnknownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
     Hi = DAG.getNode(ISD::SELECT, dl, NVT, isShort, HiS, HiL);
     return true;
   }
-
-  return false;
 }
 
 void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,

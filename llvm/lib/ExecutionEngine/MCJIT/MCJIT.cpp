@@ -90,7 +90,6 @@ MCJIT::~MCJIT() {
 
 void *MCJIT::getPointerToBasicBlock(BasicBlock *BB) {
   report_fatal_error("not yet implemented");
-  return 0;
 }
 
 void *MCJIT::getPointerToFunction(Function *F) {
@@ -209,7 +208,6 @@ GenericValue MCJIT::runFunction(Function *F,
     case Type::FP128TyID:
     case Type::PPC_FP128TyID:
       llvm_unreachable("long double not supported yet");
-      return rv;
     case Type::PointerTyID:
       return PTOGV(((void*(*)())(intptr_t)FPtr)());
     }

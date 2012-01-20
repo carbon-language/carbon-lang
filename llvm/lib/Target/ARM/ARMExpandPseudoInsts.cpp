@@ -1340,8 +1340,6 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::VTBX3Pseudo: ExpandVTBL(MBBI, ARM::VTBX3, true); return true;
     case ARM::VTBX4Pseudo: ExpandVTBL(MBBI, ARM::VTBX4, true); return true;
   }
-
-  return false;
 }
 
 bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {

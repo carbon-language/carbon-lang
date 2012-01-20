@@ -252,11 +252,9 @@ getFrameRegister(const MachineFunction &MF) const {
 unsigned MipsRegisterInfo::
 getEHExceptionRegister() const {
   llvm_unreachable("What is the exception register");
-  return 0;
 }
 
 unsigned MipsRegisterInfo::
 getEHHandlerRegister() const {
   llvm_unreachable("What is the exception handler register");
-  return 0;
 }

@@ -1038,7 +1038,6 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
   llvm_unreachable("LowerConstantPool: Relocation model other than static"
                    " not supported.");
-  return SDValue();
 }
 
 //! Alternate entry point for generating the address of a constant pool entry
@@ -1069,7 +1068,6 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
   llvm_unreachable("LowerJumpTable: Relocation model other than static"
                    " not supported.");
-  return SDValue();
 }
 
 static SDValue
@@ -1097,8 +1095,6 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
                       "not supported.");
     /*NOTREACHED*/
   }
-
-  return SDValue();
 }
 
 //! Custom lower double precision floating point constants
@@ -1696,7 +1692,6 @@ LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     SDValue T = DAG.getConstant(Value32, MVT::i32);
     return DAG.getNode(ISD::BITCAST, dl, MVT::v4f32,
                        DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, T,T,T,T));
-    break;
   }
   case MVT::v2f64: {
     uint64_t f64val = uint64_t(SplatBits);
@@ -1706,7 +1701,6 @@ LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     SDValue T = DAG.getConstant(f64val, MVT::i64);
     return DAG.getNode(ISD::BITCAST, dl, MVT::v2f64,
                        DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v2i64, T, T));
-    break;
   }
   case MVT::v16i8: {
    // 8-bit constants have to be expanded to 16-bits
@@ -1733,8 +1727,6 @@ LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     return SPU::LowerV2I64Splat(VT, DAG, SplatBits, dl);
   }
   }
-
-  return SDValue();
 }
 
 /*!
@@ -2008,8 +2000,6 @@ static SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
       return DAG.getNode(SPUISD::PREFSLOT2VEC, dl, Op.getValueType(), Op0, Op0);
     }
   }
-
-  return SDValue();
 }
 
 static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
@@ -2222,8 +2212,6 @@ static SDValue LowerI8Math(SDValue Op, SelectionDAG &DAG, unsigned Opc,
   switch (Opc) {
   default:
     llvm_unreachable("Unhandled i8 math operator");
-    /*NOTREACHED*/
-    break;
   case ISD::ADD: {
     // 8-bit addition: Promote the arguments up to 16-bits and truncate
     // the result:
@@ -2308,11 +2296,8 @@ static SDValue LowerI8Math(SDValue Op, SelectionDAG &DAG, unsigned Opc,
     N1 = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::i16, N1);
     return DAG.getNode(ISD::TRUNCATE, dl, MVT::i8,
                        DAG.getNode(Opc, dl, MVT::i16, N0, N1));
-    break;
   }
   }
-
-  return SDValue();
 }
 
 //! Lower byte immediate operations for v16i8 vectors:

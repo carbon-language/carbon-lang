@@ -2192,7 +2192,6 @@ SelectT2CMOVShiftOp(SDNode *N, SDValue FalseVal, SDValue TrueVal,
     case ARM_AM::ror: Opc = ARM::t2MOVCCror; break;
     default:
       llvm_unreachable("Unknown so_reg opcode!");
-      break;
     }
     SDValue SOShImm =
       CurDAG->getTargetConstant(ARM_AM::getSORegOffset(SOVal), MVT::i32);

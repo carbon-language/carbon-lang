@@ -114,14 +114,12 @@ bool GCStrategy::initializeCustomLowering(Module &M) { return false; }
 bool GCStrategy::performCustomLowering(Function &F) {
   dbgs() << "gc " << getName() << " must override performCustomLowering.\n";
   llvm_unreachable(0);
-  return 0;
 }
 
 
 bool GCStrategy::findCustomSafePoints(GCFunctionInfo& FI, MachineFunction &F) {
   dbgs() << "gc " << getName() << " must override findCustomSafePoints.\n";
   llvm_unreachable(0);
-  return 0;
 }
 
 
