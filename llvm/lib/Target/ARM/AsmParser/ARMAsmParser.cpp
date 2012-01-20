@@ -270,7 +270,6 @@ class ARMOperand : public MCParsedAsmOperand {
     k_CoprocReg,
     k_CoprocOption,
     k_Immediate,
-    k_FPImmediate,
     k_MemBarrierOpt,
     k_Memory,
     k_PostIndexRegister,
@@ -348,10 +347,6 @@ class ARMOperand : public MCParsedAsmOperand {
     struct {
       const MCExpr *Val;
     } Imm;
-
-    struct {
-      unsigned Val;       // encoded 8-bit representation
-    } FPImm;
 
     /// Combined record for all forms of ARM address expressions.
     struct {
@@ -438,9 +433,6 @@ public:
     case k_Immediate:
       Imm = o.Imm;
       break;
-    case k_FPImmediate:
-      FPImm = o.FPImm;
-      break;
     case k_MemBarrierOpt:
       MBOpt = o.MBOpt;
       break;
@@ -513,11 +505,6 @@ public:
     return Imm.Val;
   }
 
-  unsigned getFPImm() const {
-    assert(Kind == k_FPImmediate && "Invalid access!");
-    return FPImm.Val;
-  }
-
   unsigned getVectorIndex() const {
     assert(Kind == k_VectorIndex && "Invalid access!");
     return VectorIndex.Val;
@@ -546,7 +533,13 @@ public:
   bool isITMask() const { return Kind == k_ITCondMask; }
   bool isITCondCode() const { return Kind == k_CondCode; }
   bool isImm() const { return Kind == k_Immediate; }
-  bool isFPImm() const { return Kind == k_FPImmediate; }
+  bool isFPImm() const {
+    if (!isImm()) return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int Val = ARM_AM::getFP32Imm(APInt(32, CE->getValue()));
+    return Val != -1;
+  }
   bool isFBits16() const {
     if (!isImm()) return false;
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
@@ -1394,7 +1387,9 @@ public:
 
   void addFPImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getFPImm()));
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    int Val = ARM_AM::getFP32Imm(APInt(32, CE->getValue()));
+    Inst.addOperand(MCOperand::CreateImm(Val));
   }
 
   void addImm8s4Operands(MCInst &Inst, unsigned N) const {
@@ -2098,14 +2093,6 @@ public:
     return Op;
   }
 
-  static ARMOperand *CreateFPImm(unsigned Val, SMLoc S, MCContext &Ctx) {
-    ARMOperand *Op = new ARMOperand(k_FPImmediate);
-    Op->FPImm.Val = Val;
-    Op->StartLoc = S;
-    Op->EndLoc = S;
-    return Op;
-  }
-
   static ARMOperand *CreateMem(unsigned BaseRegNum,
                                const MCConstantExpr *OffsetImm,
                                unsigned OffsetRegNum,
@@ -2170,10 +2157,6 @@ public:
 
 void ARMOperand::print(raw_ostream &OS) const {
   switch (Kind) {
-  case k_FPImmediate:
-    OS << "<fpimm " << getFPImm() << "(" << ARM_AM::getFPImmFloat(getFPImm())
-       << ") >";
-    break;
   case k_CondCode:
     OS << "<ARMCC::" << ARMCondCodeToString(getCondCode()) << ">";
     break;
@@ -4247,6 +4230,15 @@ bool ARMAsmParser::parseMemRegOffsetShift(ARM_AM::ShiftOpc &St,
 /// parseFPImm - A floating point immediate expression operand.
 ARMAsmParser::OperandMatchResultTy ARMAsmParser::
 parseFPImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
+  // Anything that can accept a floating point constant as an operand
+  // needs to go through here, as the regular ParseExpression is
+  // integer only.
+  //
+  // This routine still creates a generic Immediate operand, containing
+  // a bitcast of the 64-bit floating point value. The various operands
+  // that accept floats can check whether the value is valid for them
+  // via the standard is*() predicates.
+
   SMLoc S = Parser.getTok().getLoc();
 
   if (Parser.getTok().isNot(AsmToken::Hash) &&
@@ -4279,19 +4271,18 @@ parseFPImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
   const AsmToken &Tok = Parser.getTok();
   SMLoc Loc = Tok.getLoc();
   if (Tok.is(AsmToken::Real)) {
-    APFloat RealVal(APFloat::IEEEdouble, Tok.getString());
+    APFloat RealVal(APFloat::IEEEsingle, Tok.getString());
     uint64_t IntVal = RealVal.bitcastToAPInt().getZExtValue();
     // If we had a '-' in front, toggle the sign bit.
-    IntVal ^= (uint64_t)isNegative << 63;
-    int Val = ARM_AM::getFP64Imm(APInt(64, IntVal));
+    IntVal ^= (uint64_t)isNegative << 31;
     Parser.Lex(); // Eat the token.
-    if (Val == -1) {
-      Error(Loc, "floating point value out of range");
-      return MatchOperand_ParseFail;
-    }
-    Operands.push_back(ARMOperand::CreateFPImm(Val, S, getContext()));
+    Operands.push_back(ARMOperand::CreateImm(
+          MCConstantExpr::Create(IntVal, getContext()),
+          S, Parser.getTok().getLoc()));
     return MatchOperand_Success;
   }
+  // Also handle plain integers. Instructions which allow floating point
+  // immediates also allow a raw encoded 8-bit value.
   if (Tok.is(AsmToken::Integer)) {
     int64_t Val = Tok.getIntVal();
     Parser.Lex(); // Eat the token.
@@ -4299,13 +4290,18 @@ parseFPImm(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       Error(Loc, "encoded floating point value out of range");
       return MatchOperand_ParseFail;
     }
-    Operands.push_back(ARMOperand::CreateFPImm(Val, S, getContext()));
+    double RealVal = ARM_AM::getFPImmFloat(Val);
+    Val = APFloat(APFloat::IEEEdouble, RealVal).bitcastToAPInt().getZExtValue();
+    Operands.push_back(ARMOperand::CreateImm(
+        MCConstantExpr::Create(Val, getContext()), S,
+        Parser.getTok().getLoc()));
     return MatchOperand_Success;
   }
 
   Error(Loc, "invalid floating point immediate");
   return MatchOperand_ParseFail;
 }
+
 /// Parse a arm instruction operand.  For now this parses the operand regardless
 /// of the mnemonic.
 bool ARMAsmParser::parseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,

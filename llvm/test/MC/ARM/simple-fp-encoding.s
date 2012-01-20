@@ -311,3 +311,11 @@
 @ CHECK: vcvt.f64.s32	d0, d0, #32     @ encoding: [0xc0,0x0b,0xba,0xee]
 @ CHECK: vcvt.f32.u16	s0, s0, #1      @ encoding: [0x67,0x0a,0xbb,0xee]
 @ CHECK: vcvt.f64.s16	d0, d0, #16     @ encoding: [0x40,0x0b,0xba,0xee]
+
+
+@ Use NEON to load some f32 immediates that don't fit the f8 representation.
+        vmov.f32 d4, #0.0
+        vmov.f32 d4, #32.0
+
+@ CHECK: vmov.i32	d4, #0x0        @ encoding: [0x10,0x40,0x80,0xf2]
+@ CHECK: vmov.i32	d4, #0x42000000 @ encoding: [0x12,0x46,0x84,0xf2]

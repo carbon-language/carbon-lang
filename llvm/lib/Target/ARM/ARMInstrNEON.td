@@ -6088,3 +6088,12 @@ def : NEONMnemonicAlias<"vswpq", "vswp">;
 
 def : NEONMnemonicAlias<"vrecpeq.f32", "vrecpe.f32">;
 def : NEONMnemonicAlias<"vrecpeq.u32", "vrecpe.u32">;
+
+
+// Alias for loading floating point immediates that aren't representable
+// using the vmov.f32 encoding but the bitpattern is representable using
+// the .i32 encoding.
+def : NEONInstAlias<"vmov${p}.f32 $Vd, $imm",
+                     (VMOVv4i32 QPR:$Vd, nImmVMOVI32:$imm, pred:$p)>;
+def : NEONInstAlias<"vmov${p}.f32 $Vd, $imm",
+                     (VMOVv2i32 DPR:$Vd, nImmVMOVI32:$imm, pred:$p)>;
