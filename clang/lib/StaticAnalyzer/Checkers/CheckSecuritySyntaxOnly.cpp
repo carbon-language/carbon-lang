@@ -34,6 +34,23 @@ static bool isArc4RandomAvailable(const ASTContext &Ctx) {
 }
 
 namespace {
+struct DefaultBool {
+  bool val;
+  DefaultBool() : val(false) {}
+  operator bool() const { return val; }
+  DefaultBool &operator=(bool b) { val = b; return *this; }
+};
+  
+struct ChecksFilter {
+  DefaultBool check_gets;
+  DefaultBool check_getpw;
+  DefaultBool check_mktemp;
+  DefaultBool check_strcpy;
+  DefaultBool check_rand;
+  DefaultBool check_vfork;
+  DefaultBool check_FloatLoopCounter;
+};
+  
 class WalkAST : public StmtVisitor<WalkAST> {
   BugReporter &BR;
   AnalysisDeclContext* AC;
@@ -41,11 +58,14 @@ class WalkAST : public StmtVisitor<WalkAST> {
   IdentifierInfo *II_setid[num_setids];
 
   const bool CheckRand;
+  const ChecksFilter &filter;
 
 public:
-  WalkAST(BugReporter &br, AnalysisDeclContext* ac)
+  WalkAST(BugReporter &br, AnalysisDeclContext* ac,
+          const ChecksFilter &f)
   : BR(br), AC(ac), II_setid(),
-    CheckRand(isArc4RandomAvailable(BR.getContext())) {}
+    CheckRand(isArc4RandomAvailable(BR.getContext())),
+    filter(f) {}
 
   // Statement visitor methods.
   void VisitCallExpr(CallExpr *CE);
@@ -186,6 +206,9 @@ getIncrementedVar(const Expr *expr, const VarDecl *x, const VarDecl *y) {
 ///  CERT: FLP30-C, FLP30-CPP.
 ///
 void WalkAST::checkLoopConditionForFloat(const ForStmt *FS) {
+  if (!filter.check_FloatLoopCounter)
+    return;
+
   // Does the loop have a condition?
   const Expr *condition = FS->getCond();
 
@@ -268,6 +291,9 @@ void WalkAST::checkLoopConditionForFloat(const ForStmt *FS) {
 //===----------------------------------------------------------------------===//
 
 void WalkAST::checkCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
+  if (!filter.check_gets)
+    return;
+  
   const FunctionProtoType *FPT
     = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
   if (!FPT)
@@ -302,6 +328,9 @@ void WalkAST::checkCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
 //===----------------------------------------------------------------------===//
 
 void WalkAST::checkCall_getpw(const CallExpr *CE, const FunctionDecl *FD) {
+  if (!filter.check_getpw)
+    return;
+
   const FunctionProtoType *FPT
     = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
   if (!FPT)
@@ -340,6 +369,9 @@ void WalkAST::checkCall_getpw(const CallExpr *CE, const FunctionDecl *FD) {
 //===----------------------------------------------------------------------===//
 
 void WalkAST::checkCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
+  if (!filter.check_mktemp)
+    return;
+
   const FunctionProtoType *FPT
     = dyn_cast<FunctionProtoType>(FD->getType().IgnoreParens());
   if(!FPT)
@@ -376,6 +408,9 @@ void WalkAST::checkCall_mktemp(const CallExpr *CE, const FunctionDecl *FD) {
 // the Bounds of a Memory Buffer 
 //===----------------------------------------------------------------------===//
 void WalkAST::checkCall_strcpy(const CallExpr *CE, const FunctionDecl *FD) {
+  if (!filter.check_strcpy)
+    return;
+  
   if (!checkCall_strCommon(CE, FD))
     return;
 
@@ -400,6 +435,9 @@ void WalkAST::checkCall_strcpy(const CallExpr *CE, const FunctionDecl *FD) {
 // the Bounds of a Memory Buffer 
 //===----------------------------------------------------------------------===//
 void WalkAST::checkCall_strcat(const CallExpr *CE, const FunctionDecl *FD) {
+  if (!filter.check_strcpy)
+    return;
+
   if (!checkCall_strCommon(CE, FD))
     return;
 
@@ -453,7 +491,7 @@ bool WalkAST::checkCall_strCommon(const CallExpr *CE, const FunctionDecl *FD) {
 //===----------------------------------------------------------------------===//
 
 void WalkAST::checkCall_rand(const CallExpr *CE, const FunctionDecl *FD) {
-  if (!CheckRand)
+  if (!filter.check_rand || !CheckRand)
     return;
 
   const FunctionProtoType *FTP
@@ -526,6 +564,9 @@ void WalkAST::checkCall_random(const CallExpr *CE, const FunctionDecl *FD) {
 //===----------------------------------------------------------------------===//
 
 void WalkAST::checkCall_vfork(const CallExpr *CE, const FunctionDecl *FD) {
+  if (!filter.check_vfork)
+    return;
+
   // All calls to vfork() are insecure, issue a warning.
   SourceRange R = CE->getCallee()->getSourceRange();
   PathDiagnosticLocation CELoc =
@@ -609,14 +650,26 @@ void WalkAST::checkUncheckedReturnValue(CallExpr *CE) {
 namespace {
 class SecuritySyntaxChecker : public Checker<check::ASTCodeBody> {
 public:
+  ChecksFilter filter;
+  
   void checkASTCodeBody(const Decl *D, AnalysisManager& mgr,
                         BugReporter &BR) const {
-    WalkAST walker(BR, mgr.getAnalysisDeclContext(D));
+    WalkAST walker(BR, mgr.getAnalysisDeclContext(D), filter);
     walker.Visit(D->getBody());
   }
 };
 }
 
-void ento::registerSecuritySyntaxChecker(CheckerManager &mgr) {
-  mgr.registerChecker<SecuritySyntaxChecker>();
+#define REGISTER_CHECKER(name) \
+void ento::register##name(CheckerManager &mgr) {\
+  mgr.registerChecker<SecuritySyntaxChecker>()->filter.check_##name = true;\
 }
+
+REGISTER_CHECKER(gets)
+REGISTER_CHECKER(getpw)
+REGISTER_CHECKER(mktemp)
+REGISTER_CHECKER(strcpy)
+REGISTER_CHECKER(rand)
+REGISTER_CHECKER(vfork)
+REGISTER_CHECKER(FloatLoopCounter)
+

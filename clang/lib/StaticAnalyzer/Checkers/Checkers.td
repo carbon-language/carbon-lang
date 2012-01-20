@@ -27,6 +27,7 @@ def DeadCode : Package<"deadcode">;
 def DeadCodeExperimental : Package<"deadcode">, InPackage<Experimental>, Hidden;
 
 def Security : Package <"security">;
+def InsecureAPI : Package<"insecureAPI">, InPackage<Security>;
 def SecurityExperimental : Package<"security">, InPackage<Experimental>, Hidden;
 def Taint : Package<"taint">, InPackage<SecurityExperimental>, Hidden;  
 
@@ -198,11 +199,33 @@ def UnreachableCodeChecker : Checker<"UnreachableCode">,
 // Security checkers.
 //===----------------------------------------------------------------------===//
 
-let ParentPackage = SecurityExperimental in {
+let ParentPackage = InsecureAPI in {
+  def gets : Checker<"gets">,
+    HelpText<"Warn on uses of the 'gets' function">,
+    DescFile<"CheckSecuritySyntaxOnly.cpp">;
+  def getpw : Checker<"getpw">,
+    HelpText<"Warn on uses of the 'getpw' function">,
+    DescFile<"CheckSecuritySyntaxOnly.cpp">;
+  def mktemp : Checker<"mktemp">,
+    HelpText<"Warn on uses of the 'mktemp' function">,
+    DescFile<"CheckSecuritySyntaxOnly.cpp">;
+  def rand : Checker<"rand">,
+    HelpText<"Warn on uses of the 'rand', 'random', and related functions">,
+    DescFile<"CheckSecuritySyntaxOnly.cpp">;
+  def strcpy : Checker<"strcpy">,
+    HelpText<"Warn on uses of the 'strcpy' and 'strcat' functions">,
+    DescFile<"CheckSecuritySyntaxOnly.cpp">;
+  def vfork : Checker<"vfork">,
+    HelpText<"Warn on uses of the 'vfork' function">,
+    DescFile<"CheckSecuritySyntaxOnly.cpp">;
+}
+let ParentPackage = Security in {
+  def FloatLoopCounter : Checker<"FloatLoopCounter">,
+    HelpText<"Warn on using a floating point value as a loop counter (CERT: FLP30-C, FLP30-CPP)">,
+    DescFile<"CheckSecuritySyntaxOnly.cpp">;
+}
 
-def SecuritySyntaxChecker : Checker<"SecuritySyntactic">,
-  HelpText<"Perform quick security API checks that require no data flow">,
-  DescFile<"CheckSecuritySyntaxOnly.cpp">;
+let ParentPackage = SecurityExperimental in {
 
 def ArrayBoundChecker : Checker<"ArrayBound">,
   HelpText<"Warn about buffer overflows (older checker)">,
