@@ -50,7 +50,7 @@ class PropertiesRewriter {
   
   enum PropActionKind {
     PropAction_None,
-    PropAction_RetainRemoved,
+    PropAction_RetainReplacedWithStrong,
     PropAction_AssignRemoved,
     PropAction_AssignRewritten,
     PropAction_MaybeAddWeakOrUnsafe
@@ -161,9 +161,11 @@ private:
     switch (kind) {
     case PropAction_None:
       return;
-    case PropAction_RetainRemoved:
-      removeAttribute("retain", atLoc);
+    case PropAction_RetainReplacedWithStrong: {
+      StringRef toAttr = "strong";
+      MigrateCtx.rewritePropertyAttribute("retain", toAttr, atLoc);
       return;
+    }
     case PropAction_AssignRemoved:
       return removeAssignForDefaultStrong(props, atLoc);
     case PropAction_AssignRewritten:
@@ -193,7 +195,7 @@ private:
 
     if (propAttrs & ObjCPropertyDecl::OBJC_PR_retain) {
       // strong is the default.
-      return doPropAction(PropAction_RetainRemoved, props, atLoc);
+      return doPropAction(PropAction_RetainReplacedWithStrong, props, atLoc);
     }
 
     bool HasIvarAssignedAPlusOneObject = hasIvarAssignedAPlusOneObject(props);

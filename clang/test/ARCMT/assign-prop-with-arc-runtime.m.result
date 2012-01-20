@@ -38,9 +38,9 @@ typedef _NSCachedAttributedString *BadClassForWeak;
 @property (weak) Foo *no_user_ivar1;
 @property (weak, readonly) Foo *no_user_ivar2;
 
-@property  id def1;
-@property (atomic) id def2;
-@property (atomic) id def3;
+@property (strong) id def1;
+@property (atomic,strong) id def2;
+@property (strong,atomic) id def3;
 
 @end
 
@@ -58,12 +58,12 @@ typedef _NSCachedAttributedString *BadClassForWeak;
 @end
 
 @interface TestExt
-@property (readonly) TestExt *x1;
+@property (strong,readonly) TestExt *x1;
 @property (weak, readonly) TestExt *x2;
 @end
 
 @interface TestExt()
-@property (readwrite) TestExt *x1;
+@property (strong,readwrite) TestExt *x1;
 @property (weak, readwrite) TestExt *x2;
 @end
 
