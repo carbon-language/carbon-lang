@@ -53,6 +53,11 @@ exit:                                 ; preds = %cond.true29.i, %cond.true.i
 
 @tags = external global [5000 x %struct.anon.7.91.199.307.415.475.559.643.751.835.943.1003.1111.1219.1351.1375.1399.1435.1471.1483.1519.1531.1651.1771], align 16
 
+; PR11782: SCEVExpander assert
+;
+; Test phi reuse after LSR that requires SCEVExpander to hoist an
+; interesting GEP.
+;
 ; CHECK: @test2
 ; CHECK: %entry
 ; CHECK-NOT: mov
