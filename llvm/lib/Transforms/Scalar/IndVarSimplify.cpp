@@ -846,7 +846,7 @@ protected:
 
   const SCEVAddRecExpr* GetExtendedOperandRecurrence(NarrowIVDefUse DU);
 
-  Instruction *WidenIVUse(NarrowIVDefUse DU);
+  Instruction *WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter);
 
   void pushNarrowIVUsers(Instruction *NarrowDef, Instruction *WideDef);
 };
@@ -990,7 +990,7 @@ const SCEVAddRecExpr *WidenIV::GetWideRecurrence(Instruction *NarrowUse) {
 
 /// WidenIVUse - Determine whether an individual user of the narrow IV can be
 /// widened. If so, return the wide clone of the user.
-Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU) {
+Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
 
   // Stop traversing the def-use chain at inner-loop phis or post-loop phis.
   if (isa<PHINode>(DU.NarrowUse) &&
@@ -1058,7 +1058,7 @@ Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU) {
   // NarrowUse.
   Instruction *WideUse = 0;
   if (WideAddRec == WideIncExpr
-      && SCEVExpander::hoistStep(WideInc, DU.NarrowUse, DT))
+      && Rewriter.hoistIVInc(WideInc, DU.NarrowUse))
     WideUse = WideInc;
   else {
     WideUse = CloneIVUser(DU);
@@ -1163,7 +1163,7 @@ PHINode *WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
 
     // Process a def-use edge. This may replace the use, so don't hold a
     // use_iterator across it.
-    Instruction *WideUse = WidenIVUse(DU);
+    Instruction *WideUse = WidenIVUse(DU, Rewriter);
 
     // Follow all def-use edges from the previous narrow use.
     if (WideUse)

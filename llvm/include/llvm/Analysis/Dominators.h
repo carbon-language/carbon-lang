@@ -753,6 +753,12 @@ public:
   // special checks necessary if A and B are in the same basic block.
   bool dominates(const Instruction *A, const Instruction *B) const;
 
+  /// properlyDominates - Use this instead of dominates() to determine whether a
+  /// user of A can be hoisted above B.
+  bool properlyDominates(const Instruction *A, const Instruction *B) const {
+    return A != B && dominates(A, B);
+  }
+
   bool properlyDominates(const DomTreeNode *A, const DomTreeNode *B) const {
     return DT->properlyDominates(A, B);
   }

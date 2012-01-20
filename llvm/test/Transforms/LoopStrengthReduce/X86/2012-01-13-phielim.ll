@@ -48,3 +48,40 @@ cond.false35.i:                                   ; preds = %for.end.i
 exit:                                 ; preds = %cond.true29.i, %cond.true.i
   ret i32 0
 }
+
+%struct.anon.7.91.199.307.415.475.559.643.751.835.943.1003.1111.1219.1351.1375.1399.1435.1471.1483.1519.1531.1651.1771 = type { i32, i32, i32 }
+
+@tags = external global [5000 x %struct.anon.7.91.199.307.415.475.559.643.751.835.943.1003.1111.1219.1351.1375.1399.1435.1471.1483.1519.1531.1651.1771], align 16
+
+; CHECK: @test2
+; CHECK: %entry
+; CHECK-NOT: mov
+; CHECK: jne
+define void @test2(i32 %n) nounwind uwtable {
+entry:
+  br i1 undef, label %while.end, label %for.cond468
+
+for.cond468:                                      ; preds = %if.then477, %entry
+  %indvars.iv1163 = phi i64 [ %indvars.iv.next1164, %if.then477 ], [ 1, %entry ]
+  %k.0.in = phi i32* [ %last, %if.then477 ], [ getelementptr inbounds ([5000 x %struct.anon.7.91.199.307.415.475.559.643.751.835.943.1003.1111.1219.1351.1375.1399.1435.1471.1483.1519.1531.1651.1771]* @tags, i64 0, i64 0, i32 2), %entry ]
+  %k.0 = load i32* %k.0.in, align 4
+  %0 = trunc i64 %indvars.iv1163 to i32
+  %cmp469 = icmp slt i32 %0, %n
+  br i1 %cmp469, label %for.body471, label %for.inc498
+
+for.body471:                                      ; preds = %for.cond468
+  %first = getelementptr inbounds [5000 x %struct.anon.7.91.199.307.415.475.559.643.751.835.943.1003.1111.1219.1351.1375.1399.1435.1471.1483.1519.1531.1651.1771]* @tags, i64 0, i64 %indvars.iv1163, i32 1
+  %1 = load i32* %first, align 4
+  br i1 undef, label %if.then477, label %for.inc498
+
+if.then477:                                       ; preds = %for.body471
+  %last = getelementptr inbounds [5000 x %struct.anon.7.91.199.307.415.475.559.643.751.835.943.1003.1111.1219.1351.1375.1399.1435.1471.1483.1519.1531.1651.1771]* @tags, i64 0, i64 %indvars.iv1163, i32 2
+  %indvars.iv.next1164 = add i64 %indvars.iv1163, 1
+  br label %for.cond468
+
+for.inc498:                                       ; preds = %for.inc498, %for.body471, %for.cond468
+  br label %for.inc498
+
+while.end:                                        ; preds = %entry
+  ret void
+}

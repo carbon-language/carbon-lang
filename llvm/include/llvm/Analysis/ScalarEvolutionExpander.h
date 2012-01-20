@@ -114,9 +114,12 @@ namespace llvm {
     /// starts at zero and steps by one on each iteration.
     PHINode *getOrInsertCanonicalInductionVariable(const Loop *L, Type *Ty);
 
-    /// hoistStep - Utility for hoisting an IV increment.
-    static bool hoistStep(Instruction *IncV, Instruction *InsertPos,
-                          const DominatorTree *DT);
+    /// getIVIncOperand - Return the induction variable increment's IV operand.
+    Instruction *getIVIncOperand(Instruction *IncV, Instruction *InsertPos,
+                                 bool allowScale);
+
+    /// hoistIVInc - Utility for hoisting an IV increment.
+    bool hoistIVInc(Instruction *IncV, Instruction *InsertPos);
 
     /// replaceCongruentIVs - replace congruent phis with their most canonical
     /// representative. Return the number of phis eliminated.
@@ -169,6 +172,13 @@ namespace llvm {
       Builder.ClearInsertionPoint();
     }
 
+    /// isInsertedInstruction - Return true if the specified instruction was
+    /// inserted by the code rewriter.  If so, the client should not modify the
+    /// instruction.
+    bool isInsertedInstruction(Instruction *I) const {
+      return InsertedValues.count(I) || InsertedPostIncValues.count(I);
+    }
+
     void setChainedPhi(PHINode *PN) { ChainedPhis.insert(PN); }
 
   private:
@@ -204,13 +214,6 @@ namespace llvm {
     /// SCEVExpander's current insertion point. If a type is specified, the
     /// result will be expanded to have that type, with a cast if necessary.
     Value *expandCodeFor(const SCEV *SH, Type *Ty = 0);
-
-    /// isInsertedInstruction - Return true if the specified instruction was
-    /// inserted by the code rewriter.  If so, the client should not modify the
-    /// instruction.
-    bool isInsertedInstruction(Instruction *I) const {
-      return InsertedValues.count(I) || InsertedPostIncValues.count(I);
-    }
 
     /// getRelevantLoop - Determine the most "relevant" loop for the given SCEV.
     const Loop *getRelevantLoop(const SCEV *);

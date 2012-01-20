@@ -1573,9 +1573,11 @@ class LSRInstance {
   BasicBlock::iterator
     HoistInsertPosition(BasicBlock::iterator IP,
                         const SmallVectorImpl<Instruction *> &Inputs) const;
-  BasicBlock::iterator AdjustInsertPositionForExpand(BasicBlock::iterator IP,
-                                                     const LSRFixup &LF,
-                                                     const LSRUse &LU) const;
+  BasicBlock::iterator
+    AdjustInsertPositionForExpand(BasicBlock::iterator IP,
+                                  const LSRFixup &LF,
+                                  const LSRUse &LU,
+                                  SCEVExpander &Rewriter) const;
 
   Value *Expand(const LSRFixup &LF,
                 const Formula &F,
@@ -4131,9 +4133,10 @@ LSRInstance::HoistInsertPosition(BasicBlock::iterator IP,
 /// AdjustInsertPositionForExpand - Determine an input position which will be
 /// dominated by the operands and which will dominate the result.
 BasicBlock::iterator
-LSRInstance::AdjustInsertPositionForExpand(BasicBlock::iterator IP,
+LSRInstance::AdjustInsertPositionForExpand(BasicBlock::iterator LowestIP,
                                            const LSRFixup &LF,
-                                           const LSRUse &LU) const {
+                                           const LSRUse &LU,
+                                           SCEVExpander &Rewriter) const {
   // Collect some instructions which must be dominated by the
   // expanding replacement. These must be dominated by any operands that
   // will be required in the expansion.
@@ -4168,9 +4171,13 @@ LSRInstance::AdjustInsertPositionForExpand(BasicBlock::iterator IP,
     }
   }
 
+  assert(!isa<PHINode>(LowestIP) && !isa<LandingPadInst>(LowestIP)
+         && !isa<DbgInfoIntrinsic>(LowestIP) &&
+         "Insertion point must be a normal instruction");
+
   // Then, climb up the immediate dominator tree as far as we can go while
   // still being dominated by the input positions.
-  IP = HoistInsertPosition(IP, Inputs);
+  BasicBlock::iterator IP = HoistInsertPosition(LowestIP, Inputs);
 
   // Don't insert instructions before PHI nodes.
   while (isa<PHINode>(IP)) ++IP;
@@ -4180,6 +4187,11 @@ LSRInstance::AdjustInsertPositionForExpand(BasicBlock::iterator IP,
 
   // Ignore debug intrinsics.
   while (isa<DbgInfoIntrinsic>(IP)) ++IP;
+
+  // Set IP below instructions recently inserted by SCEVExpander. This keeps the
+  // IP consistent across expansions and allows the previously inserted
+  // instructions to be reused by subsequent expansion.
+  while (Rewriter.isInsertedInstruction(IP) && IP != LowestIP) ++IP;
 
   return IP;
 }
@@ -4195,7 +4207,7 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
 
   // Determine an input position which will be dominated by the operands and
   // which will dominate the result.
-  IP = AdjustInsertPositionForExpand(IP, LF, LU);
+  IP = AdjustInsertPositionForExpand(IP, LF, LU, Rewriter);
 
   // Inform the Rewriter if we have a post-increment use, so that it can
   // perform an advantageous expansion.
