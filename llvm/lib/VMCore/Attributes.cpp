@@ -76,6 +76,8 @@ std::string Attribute::getAsString(Attributes Attrs) {
     Result += "naked ";
   if (Attrs & Attribute::NonLazyBind)
     Result += "nonlazybind ";
+  if (Attrs & Attribute::AddressSafety)
+    Result += "address_safety ";
   if (Attrs & Attribute::StackAlignment) {
     Result += "alignstack(";
     Result += utostr(Attribute::getStackAlignmentFromAttrs(Attrs));
@@ -152,8 +154,10 @@ public:
   }
   static void Profile(FoldingSetNodeID &ID, const AttributeWithIndex *Attr,
                       unsigned NumAttrs) {
-    for (unsigned i = 0; i != NumAttrs; ++i)
-      ID.AddInteger(uint64_t(Attr[i].Attrs) << 32 | unsigned(Attr[i].Index));
+    for (unsigned i = 0; i != NumAttrs; ++i) {
+      ID.AddInteger(Attr[i].Attrs.Raw());
+      ID.AddInteger(Attr[i].Index);
+    }
   }
 };
 }

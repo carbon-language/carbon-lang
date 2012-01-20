@@ -118,7 +118,8 @@ typedef enum {
     LLVMStackAlignment = 7<<26,
     LLVMReturnsTwice = 1 << 29,
     LLVMUWTable = 1 << 30,
-    LLVMNonLazyBind = 1 << 31
+    LLVMNonLazyBind = 1U << 31,
+    LLVMAddressSafety = 1ULL << 32,
 } LLVMAttribute;
 
 typedef enum {

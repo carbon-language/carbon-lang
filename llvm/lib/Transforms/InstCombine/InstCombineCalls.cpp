@@ -1063,7 +1063,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if (!CastInst::isCastable(ActTy, ParamTy))
       return false;   // Cannot transform this parameter value.
 
-    unsigned Attrs = CallerPAL.getParamAttributes(i + 1);
+    Attributes Attrs = CallerPAL.getParamAttributes(i + 1);
     if (Attrs & Attribute::typeIncompatible(ParamTy))
       return false;   // Attribute not compatible with transformed value.
     
@@ -1392,4 +1392,3 @@ InstCombiner::transformCallThroughTrampoline(CallSite CS,
   CS.setCalledFunction(NewCallee);
   return CS.getInstruction();
 }
-

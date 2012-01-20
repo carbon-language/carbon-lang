@@ -259,7 +259,7 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
   // Conservatively require the attributes of the call to match those of
   // the return. Ignore noalias because it doesn't affect the call sequence.
   const Function *F = ExitBB->getParent();
-  unsigned CallerRetAttr = F->getAttributes().getRetAttributes();
+  Attributes CallerRetAttr = F->getAttributes().getRetAttributes();
   if ((CalleeRetAttr ^ CallerRetAttr) & ~Attribute::NoAlias)
     return false;
 
@@ -299,7 +299,7 @@ bool llvm::isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
 
   // Conservatively require the attributes of the call to match those of
   // the return. Ignore noalias because it doesn't affect the call sequence.
-  unsigned CallerRetAttr = F->getAttributes().getRetAttributes();
+  Attributes CallerRetAttr = F->getAttributes().getRetAttributes();
   if (CallerRetAttr & ~Attribute::NoAlias)
     return false;
 

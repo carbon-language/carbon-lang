@@ -547,7 +547,7 @@ void Verifier::VerifyParameterAttrs(Attributes Attrs, Type *Ty,
   for (unsigned i = 0;
        i < array_lengthof(Attribute::MutuallyIncompatible); ++i) {
     Attributes MutI = Attrs & Attribute::MutuallyIncompatible[i];
-    Assert1(!(MutI & (MutI - 1)), "Attributes " +
+    Assert1(MutI.isEmptyOrSingleton(), "Attributes " +
             Attribute::getAsString(MutI) + " are incompatible!", V);
   }
 
@@ -607,7 +607,7 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT,
   for (unsigned i = 0;
        i < array_lengthof(Attribute::MutuallyIncompatible); ++i) {
     Attributes MutI = FAttrs & Attribute::MutuallyIncompatible[i];
-    Assert1(!(MutI & (MutI - 1)), "Attributes " +
+    Assert1(MutI.isEmptyOrSingleton(), "Attributes " +
             Attribute::getAsString(MutI) + " are incompatible!", V);
   }
 }

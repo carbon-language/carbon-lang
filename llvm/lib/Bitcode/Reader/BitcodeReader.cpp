@@ -461,8 +461,8 @@ bool BitcodeReader::ParseAttributeBlock() {
       // If Function attributes are using index 0 then transfer them
       // to index ~0. Index 0 is used for return value attributes but used to be
       // used for function attributes.
-      Attributes RetAttribute = Attribute::None;
-      Attributes FnAttribute = Attribute::None;
+      Attributes RetAttribute;
+      Attributes FnAttribute;
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
         // FIXME: remove in LLVM 3.0
         // The alignment is stored as a 16-bit raw value from bits 31--16.
@@ -472,23 +472,24 @@ bool BitcodeReader::ParseAttributeBlock() {
         if (Alignment && !isPowerOf2_32(Alignment))
           return Error("Alignment is not a power of two.");
 
-        Attributes ReconstitutedAttr = Record[i+1] & 0xffff;
+        Attributes ReconstitutedAttr(Record[i+1] & 0xffff);
         if (Alignment)
           ReconstitutedAttr |= Attribute::constructAlignmentFromInt(Alignment);
-        ReconstitutedAttr |= (Record[i+1] & (0xffffull << 32)) >> 11;
-        Record[i+1] = ReconstitutedAttr;
+        ReconstitutedAttr |=
+            Attributes((Record[i+1] & (0xffffull << 32)) >> 11);
 
+        Record[i+1] = ReconstitutedAttr.Raw();
         if (Record[i] == 0)
-          RetAttribute = Record[i+1];
+          RetAttribute = ReconstitutedAttr;
         else if (Record[i] == ~0U)
-          FnAttribute = Record[i+1];
+          FnAttribute = ReconstitutedAttr;
       }
 
-      unsigned OldRetAttrs = (Attribute::NoUnwind|Attribute::NoReturn|
+      Attributes OldRetAttrs = (Attribute::NoUnwind|Attribute::NoReturn|
                               Attribute::ReadOnly|Attribute::ReadNone);
 
       if (FnAttribute == Attribute::None && RetAttribute != Attribute::None &&
-          (RetAttribute & OldRetAttrs) != 0) {
+          (RetAttribute & OldRetAttrs)) {
         if (FnAttribute == Attribute::None) { // add a slot so they get added.
           Record.push_back(~0U);
           Record.push_back(0);
@@ -505,8 +506,9 @@ bool BitcodeReader::ParseAttributeBlock() {
         } else if (Record[i] == ~0U) {
           if (FnAttribute != Attribute::None)
             Attrs.push_back(AttributeWithIndex::get(~0U, FnAttribute));
-        } else if (Record[i+1] != Attribute::None)
-          Attrs.push_back(AttributeWithIndex::get(Record[i], Record[i+1]));
+        } else if (Attributes(Record[i+1]) != Attribute::None)
+          Attrs.push_back(AttributeWithIndex::get(Record[i],
+                                                  Attributes(Record[i+1])));
       }
 
       MAttributes.push_back(AttrListPtr::get(Attrs.begin(), Attrs.end()));

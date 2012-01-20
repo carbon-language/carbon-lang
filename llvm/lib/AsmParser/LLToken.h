@@ -102,6 +102,7 @@ namespace lltok {
     kw_noimplicitfloat,
     kw_naked,
     kw_nonlazybind,
+    kw_address_safety,
 
     kw_type,
     kw_opaque,

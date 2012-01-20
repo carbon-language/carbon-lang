@@ -23,7 +23,47 @@ namespace llvm {
 class Type;
 
 /// Attributes - A bitset of attributes.
-typedef unsigned Attributes;
+class Attributes {
+ public:
+  Attributes() : Bits(0) { }
+  explicit Attributes(uint64_t Val) : Bits(Val) { }
+  Attributes(const Attributes &Attrs) : Bits(Attrs.Bits) { }
+  // This is a "safe bool() operator".
+  operator const void *() const { return Bits ? this : 0; }
+  bool isEmptyOrSingleton() const { return (Bits & (Bits - 1)) == 0; }
+  Attributes &operator = (const Attributes &Attrs) {
+    Bits = Attrs.Bits;
+    return *this;
+  }
+  bool operator == (const Attributes &Attrs) const {
+    return Bits == Attrs.Bits;
+  }
+  bool operator != (const Attributes &Attrs) const {
+    return Bits != Attrs.Bits;
+  }
+  Attributes operator | (const Attributes &Attrs) const {
+    return Attributes(Bits | Attrs.Bits);
+  }
+  Attributes operator & (const Attributes &Attrs) const {
+    return Attributes(Bits & Attrs.Bits);
+  }
+  Attributes operator ^ (const Attributes &Attrs) const {
+    return Attributes(Bits ^ Attrs.Bits);
+  }
+  Attributes &operator |= (const Attributes &Attrs) {
+    Bits |= Attrs.Bits;
+    return *this;
+  }
+  Attributes &operator &= (const Attributes &Attrs) {
+    Bits &= Attrs.Bits;
+    return *this;
+  }
+  Attributes operator ~ () const { return Attributes(~Bits); }
+  uint64_t Raw() const { return Bits; }
+ private:
+  // Currently, we need less than 64 bits.
+  uint64_t Bits;
+};
 
 namespace Attribute {
 
@@ -33,44 +73,45 @@ namespace Attribute {
 /// results or the function itself.
 /// @brief Function attributes.
 
-const Attributes None      = 0;     ///< No attributes have been set
-const Attributes ZExt      = 1<<0;  ///< Zero extended before/after call
-const Attributes SExt      = 1<<1;  ///< Sign extended before/after call
-const Attributes NoReturn  = 1<<2;  ///< Mark the function as not returning
-const Attributes InReg     = 1<<3;  ///< Force argument to be passed in register
-const Attributes StructRet = 1<<4;  ///< Hidden pointer to structure to return
-const Attributes NoUnwind  = 1<<5;  ///< Function doesn't unwind stack
-const Attributes NoAlias   = 1<<6;  ///< Considered to not alias after call
-const Attributes ByVal     = 1<<7;  ///< Pass structure by value
-const Attributes Nest      = 1<<8;  ///< Nested function static chain
-const Attributes ReadNone  = 1<<9;  ///< Function does not access memory
-const Attributes ReadOnly  = 1<<10; ///< Function only reads from memory
-const Attributes NoInline        = 1<<11; ///< inline=never
-const Attributes AlwaysInline    = 1<<12; ///< inline=always
-const Attributes OptimizeForSize = 1<<13; ///< opt_size
-const Attributes StackProtect    = 1<<14; ///< Stack protection.
-const Attributes StackProtectReq = 1<<15; ///< Stack protection required.
-const Attributes Alignment = 31<<16; ///< Alignment of parameter (5 bits)
+const Attributes None      (0);     ///< No attributes have been set
+const Attributes ZExt      (1<<0);  ///< Zero extended before/after call
+const Attributes SExt      (1<<1);  ///< Sign extended before/after call
+const Attributes NoReturn  (1<<2);  ///< Mark the function as not returning
+const Attributes InReg     (1<<3);  ///< Force argument to be passed in register
+const Attributes StructRet (1<<4);  ///< Hidden pointer to structure to return
+const Attributes NoUnwind  (1<<5);  ///< Function doesn't unwind stack
+const Attributes NoAlias   (1<<6);  ///< Considered to not alias after call
+const Attributes ByVal     (1<<7);  ///< Pass structure by value
+const Attributes Nest      (1<<8);  ///< Nested function static chain
+const Attributes ReadNone  (1<<9);  ///< Function does not access memory
+const Attributes ReadOnly  (1<<10); ///< Function only reads from memory
+const Attributes NoInline        (1<<11); ///< inline=never
+const Attributes AlwaysInline    (1<<12); ///< inline=always
+const Attributes OptimizeForSize (1<<13); ///< opt_size
+const Attributes StackProtect    (1<<14); ///< Stack protection.
+const Attributes StackProtectReq (1<<15); ///< Stack protection required.
+const Attributes Alignment (31<<16); ///< Alignment of parameter (5 bits)
                                      // stored as log2 of alignment with +1 bias
                                      // 0 means unaligned different from align 1
-const Attributes NoCapture = 1<<21; ///< Function creates no aliases of pointer
-const Attributes NoRedZone = 1<<22; /// disable redzone
-const Attributes NoImplicitFloat = 1<<23; /// disable implicit floating point
+const Attributes NoCapture (1<<21); ///< Function creates no aliases of pointer
+const Attributes NoRedZone (1<<22); /// disable redzone
+const Attributes NoImplicitFloat (1<<23); /// disable implicit floating point
                                           /// instructions.
-const Attributes Naked           = 1<<24; ///< Naked function
-const Attributes InlineHint      = 1<<25; ///< source said inlining was
+const Attributes Naked           (1<<24); ///< Naked function
+const Attributes InlineHint      (1<<25); ///< source said inlining was
                                           ///desirable
-const Attributes StackAlignment  = 7<<26; ///< Alignment of stack for
+const Attributes StackAlignment  (7<<26); ///< Alignment of stack for
                                           ///function (3 bits) stored as log2
                                           ///of alignment with +1 bias
                                           ///0 means unaligned (different from
                                           ///alignstack(1))
-const Attributes ReturnsTwice    = 1<<29; ///< Function can return twice
-const Attributes UWTable     = 1<<30;     ///< Function must be in a unwind
+const Attributes ReturnsTwice    (1<<29); ///< Function can return twice
+const Attributes UWTable     (1<<30);     ///< Function must be in a unwind
                                           ///table
-const Attributes NonLazyBind = 1U<<31;    ///< Function is called early and/or
+const Attributes NonLazyBind (1U<<31);    ///< Function is called early and/or
                                           ///  often, so lazy binding isn't
                                           ///  worthwhile.
+const Attributes AddressSafety(1ULL<<32); ///< Address safety checking is on.
 
 /// Note that uwtable is about the ABI or the user mandating an entry in the
 /// unwind table. The nounwind attribute is about an exception passing by the
@@ -92,7 +133,7 @@ const Attributes ParameterOnly = ByVal | Nest | StructRet | NoCapture;
 const Attributes FunctionOnly = NoReturn | NoUnwind | ReadNone | ReadOnly |
   NoInline | AlwaysInline | OptimizeForSize | StackProtect | StackProtectReq |
   NoRedZone | NoImplicitFloat | Naked | InlineHint | StackAlignment |
-  UWTable | NonLazyBind | ReturnsTwice;
+  UWTable | NonLazyBind | ReturnsTwice | AddressSafety;
 
 /// @brief Parameter attributes that do not apply to vararg call arguments.
 const Attributes VarArgsIncompatible = StructRet;
@@ -113,20 +154,20 @@ Attributes typeIncompatible(Type *Ty);
 inline Attributes constructAlignmentFromInt(unsigned i) {
   // Default alignment, allow the target to define how to align it.
   if (i == 0)
-    return 0;
+    return None;
 
   assert(isPowerOf2_32(i) && "Alignment must be a power of two.");
   assert(i <= 0x40000000 && "Alignment too large.");
-  return (Log2_32(i)+1) << 16;
+  return Attributes((Log2_32(i)+1) << 16);
 }
 
 /// This returns the alignment field of an attribute as a byte alignment value.
 inline unsigned getAlignmentFromAttrs(Attributes A) {
   Attributes Align = A & Attribute::Alignment;
-  if (Align == 0)
+  if (!Align)
     return 0;
 
-  return 1U << ((Align >> 16) - 1);
+  return 1U << ((Align.Raw() >> 16) - 1);
 }
 
 /// This turns an int stack alignment (which must be a power of 2) into
@@ -134,21 +175,21 @@ inline unsigned getAlignmentFromAttrs(Attributes A) {
 inline Attributes constructStackAlignmentFromInt(unsigned i) {
   // Default alignment, allow the target to define how to align it.
   if (i == 0)
-    return 0;
+    return None;
 
   assert(isPowerOf2_32(i) && "Alignment must be a power of two.");
   assert(i <= 0x100 && "Alignment too large.");
-  return (Log2_32(i)+1) << 26;
+  return Attributes((Log2_32(i)+1) << 26);
 }
 
 /// This returns the stack alignment field of an attribute as a byte alignment
 /// value.
 inline unsigned getStackAlignmentFromAttrs(Attributes A) {
   Attributes StackAlign = A & Attribute::StackAlignment;
-  if (StackAlign == 0)
+  if (!StackAlign)
     return 0;
 
-  return 1U << ((StackAlign >> 26) - 1);
+  return 1U << ((StackAlign.Raw() >> 26) - 1);
 }
 
 
@@ -242,7 +283,7 @@ public:
   /// paramHasAttr - Return true if the specified parameter index has the
   /// specified attribute set.
   bool paramHasAttr(unsigned Idx, Attributes Attr) const {
-    return (getAttributes(Idx) & Attr) != 0;
+    return getAttributes(Idx) & Attr;
   }
 
   /// getParamAlignment - Return the alignment for the specified function

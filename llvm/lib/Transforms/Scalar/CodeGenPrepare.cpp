@@ -619,7 +619,7 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
   // It's not safe to eliminate the sign / zero extension of the return value.
   // See llvm::isInTailCallPosition().
   const Function *F = BB->getParent();
-  unsigned CallerRetAttr = F->getAttributes().getRetAttributes();
+  Attributes CallerRetAttr = F->getAttributes().getRetAttributes();
   if ((CallerRetAttr & Attribute::ZExt) || (CallerRetAttr & Attribute::SExt))
     return false;
 
@@ -674,7 +674,7 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(ReturnInst *RI) {
 
     // Conservatively require the attributes of the call to match those of the
     // return. Ignore noalias because it doesn't affect the call sequence.
-    unsigned CalleeRetAttr = CS.getAttributes().getRetAttributes();
+    Attributes CalleeRetAttr = CS.getAttributes().getRetAttributes();
     if ((CalleeRetAttr ^ CallerRetAttr) & ~Attribute::NoAlias)
       continue;
 

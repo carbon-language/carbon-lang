@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-c/Core.h"
+#include "llvm/Attributes.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -1350,14 +1351,14 @@ void LLVMSetGC(LLVMValueRef Fn, const char *GC) {
 void LLVMAddFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
   Function *Func = unwrap<Function>(Fn);
   const AttrListPtr PAL = Func->getAttributes();
-  const AttrListPtr PALnew = PAL.addAttr(~0U, PA);
+  const AttrListPtr PALnew = PAL.addAttr(~0U, Attributes(PA));
   Func->setAttributes(PALnew);
 }
 
 void LLVMRemoveFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
   Function *Func = unwrap<Function>(Fn);
   const AttrListPtr PAL = Func->getAttributes();
-  const AttrListPtr PALnew = PAL.removeAttr(~0U, PA);
+  const AttrListPtr PALnew = PAL.removeAttr(~0U, Attributes(PA));
   Func->setAttributes(PALnew);
 }
 
@@ -1365,7 +1366,7 @@ LLVMAttribute LLVMGetFunctionAttr(LLVMValueRef Fn) {
   Function *Func = unwrap<Function>(Fn);
   const AttrListPtr PAL = Func->getAttributes();
   Attributes attr = PAL.getFnAttributes();
-  return (LLVMAttribute)attr;
+  return (LLVMAttribute)attr.Raw();
 }
 
 /*--.. Operations on parameters ............................................--*/
@@ -1427,18 +1428,18 @@ LLVMValueRef LLVMGetPreviousParam(LLVMValueRef Arg) {
 }
 
 void LLVMAddAttribute(LLVMValueRef Arg, LLVMAttribute PA) {
-  unwrap<Argument>(Arg)->addAttr(PA);
+  unwrap<Argument>(Arg)->addAttr(Attributes(PA));
 }
 
 void LLVMRemoveAttribute(LLVMValueRef Arg, LLVMAttribute PA) {
-  unwrap<Argument>(Arg)->removeAttr(PA);
+  unwrap<Argument>(Arg)->removeAttr(Attributes(PA));
 }
 
 LLVMAttribute LLVMGetAttribute(LLVMValueRef Arg) {
   Argument *A = unwrap<Argument>(Arg);
   Attributes attr = A->getParent()->getAttributes().getParamAttributes(
     A->getArgNo()+1);
-  return (LLVMAttribute)attr;
+  return (LLVMAttribute)attr.Raw();
 }
   
 
@@ -1635,14 +1636,14 @@ void LLVMAddInstrAttribute(LLVMValueRef Instr, unsigned index,
                            LLVMAttribute PA) {
   CallSite Call = CallSite(unwrap<Instruction>(Instr));
   Call.setAttributes(
-    Call.getAttributes().addAttr(index, PA));
+    Call.getAttributes().addAttr(index, Attributes(PA)));
 }
 
 void LLVMRemoveInstrAttribute(LLVMValueRef Instr, unsigned index, 
                               LLVMAttribute PA) {
   CallSite Call = CallSite(unwrap<Instruction>(Instr));
   Call.setAttributes(
-    Call.getAttributes().removeAttr(index, PA));
+    Call.getAttributes().removeAttr(index, Attributes(PA)));
 }
 
 void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index, 
