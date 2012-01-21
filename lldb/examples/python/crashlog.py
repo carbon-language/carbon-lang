@@ -2,18 +2,36 @@
 
 #----------------------------------------------------------------------
 # Be sure to add the python path that points to the LLDB shared library.
+#
+# To use this in the embedded python interpreter using "lldb":
+#
+#   cd /path/containing/crashlog.py
+#   lldb
+#   (lldb) script import crashlog
+#   "crashlog" command installed, type "crashlog --help" for detailed help
+#   (lldb) crashlog ~/Library/Logs/DiagnosticReports/a.crash
+#
+# The benefit of running the crashlog command inside lldb in the 
+# embedded python interpreter is when the command completes, there 
+# will be a target with all of the files loaded at the locations
+# described in the crash log. Only the files that have stack frames
+# in the backtrace will be loaded unless the "--load-all" option
+# has been specified. This allows users to explore the program in the
+# state it was in right at crash time. 
+#
 # On MacOSX csh, tcsh:
-#   setenv PYTHONPATH /Developer/Library/PrivateFrameworks/LLDB.framework/Resources/Python
+#   ( setenv PYTHONPATH /path/to/LLDB.framework/Resources/Python ; ./crashlog.py ~/Library/Logs/DiagnosticReports/a.crash )
+#
 # On MacOSX sh, bash:
-#   export PYTHONPATH=/Developer/Library/PrivateFrameworks/LLDB.framework/Resources/Python
+#   PYTHONPATH=/path/to/LLDB.framework/Resources/Python ./crashlog.py ~/Library/Logs/DiagnosticReports/a.crash
 #----------------------------------------------------------------------
 
 import lldb
-import commands # commands.getoutput ('/bin/ls /tmp')
+import commands
 import optparse
 import os
 import plistlib
-import pprint
+#import pprint # pp = pprint.PrettyPrinter(indent=4); pp.pprint(command_args)
 import re
 import sys
 import time
@@ -135,8 +153,6 @@ class CrashLog:
                 if s:
                     plist_root = plistlib.readPlistFromString (s)
                     if plist_root:
-                        # pp = pprint.PrettyPrinter(indent=4)
-                        # pp.pprint(plist_root)
                         plist = plist_root[self.uuid]
                         if plist:
                             if 'DBGArchitecture' in plist:
@@ -463,10 +479,20 @@ def Symbolicate(debugger, command, result, dict):
         
 def SymbolicateCrashLog(command_args):
     print 'command_args = %s' % command_args
-    parser = optparse.OptionParser(description='Parses darwin crash log files and symbolicates them.')
+    usage = "usage: %prog [options] <FILE> [FILE ...]"
+    description='''Symbolicate one or more darwin crash log files to provide source file and line information,
+inlined stack frames back to the concrete functions, and disassemble the location of the crash
+for the first frame of the crashed thread.
+If this script is imported into the LLDB command interpreter, a "crashlog" command will be added to the interpreter
+for use at the LLDB command line. After a crash log has been parsed and symbolicated, a target will have been
+created that has all of the shared libraries loaded at the load addresses found in the crash log file. This allows
+you to explore the program as if it were stopped at the locations described in the crash log and functions can 
+be disassembled and lookups can be performed using the addresses found in the crash log.'''
+    parser = optparse.OptionParser(description=description, prog='crashlog.py',usage=usage)
     parser.add_option('--platform', type='string', metavar='platform', dest='platform', help='specify one platform by name')
     parser.add_option('--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
     parser.add_option('--no-images', action='store_false', dest='show_images', help='don\'t show images in stack frames', default=True)
+    parser.add_option('--load-all', action='store_true', dest='load_all_images', help='load all executable images, not just the images found in the crashed stack frames', default=False)
     parser.add_option('--image-list', action='store_true', dest='dump_image_list', help='show image list', default=False)
     parser.add_option('--debug-delay', type='int', dest='debug_delay', metavar='NSEC', help='pause for NSEC seconds for debugger', default=0)
     parser.add_option('--crashed-only', action='store_true', dest='crashed_only', help='only symbolicate the crashed thread', default=False)
@@ -483,184 +509,196 @@ def SymbolicateCrashLog(command_args):
             crash_log = CrashLog(crash_log_file)
             if options.verbose:
                 crash_log.dump()
-            if crash_log.images:
-                err = crash_log.create_target ()
-                if err:
-                    print err
+            if not crash_log.images:
+                print 'error: no images in crash log'
+                return
+
+            err = crash_log.create_target ()
+            if err:
+                print err
+                return
+                
+            exe_module = lldb.target.GetModuleAtIndex(0)
+            images_to_load = list()
+            loaded_image_paths = list()
+            if options.load_all_images:
+                # --load-all option was specified, load everything up
+                for image in crash_log.images:
+                    images_to_load.append(image)
+            else:
+                # Only load the images found in stack frames for the crashed threads
+                for ident in crash_log.idents:
+                    image = crash_log.find_image_with_identifier (ident)
+                    if image:
+                        images_to_load.append(image)
+                    else:
+                        print 'error: can\'t find image for identifier "%s"' % ident
+            
+            for image in images_to_load:
+                if image.path in loaded_image_paths:
+                    print "warning: skipping %s loaded at %#16.16x duplicate entry (probably commpage)" % (image.path, image.text_addr_lo)
                 else:
-                    exe_module = lldb.target.GetModuleAtIndex(0)
-                    image_paths = list()
-                    # for i in range (1, len(crash_log.images)):
-                    #     image = crash_log.images[i]
-                    for ident in crash_log.idents:
-                        image = crash_log.find_image_with_identifier (ident)
-                        if image:
-                            if image.path in image_paths:
-                                print "warning: skipping %s loaded at %#16.16x duplicate entry (probably commpage)" % (image.path, image.text_addr_lo)
+                    err = image.add_target_module ()
+                    if err:
+                        print err
+                    else:
+                        loaded_image_paths.append(image.path)
+            
+            for line in crash_log.info_lines:
+                print line
+            
+            # Reconstruct inlined frames for all threads for anything that has debug info
+            for thread in crash_log.threads:
+                if options.crashed_only and thread.did_crash() == False:
+                    continue
+                # start a new frame list that we will fixup for each thread
+                new_thread_frames = list()
+                # Iterate through all concrete frames for a thread and resolve
+                # any parent frames of inlined functions
+                for frame_idx, frame in enumerate(thread.frames):
+                    # Resolve the frame's pc into a section + offset address 'pc_addr'
+                    pc_addr = lldb.target.ResolveLoadAddress (frame.pc)
+                    # Check to see if we were able to resolve the address
+                    if pc_addr:
+                        # We were able to resolve the frame's PC into a section offset
+                        # address.
+
+                        # Resolve the frame's PC value into a symbol context. A symbol
+                        # context can resolve a module, compile unit, function, block,
+                        # line table entry and/or symbol. If the frame has a block, then
+                        # we can look for inlined frames, which are represented by blocks
+                        # that have inlined information in them
+                        frame.sym_ctx = lldb.target.ResolveSymbolContextForAddress (pc_addr, lldb.eSymbolContextEverything);
+
+                        # dump if the verbose option was specified
+                        if options.verbose:
+                            print "frame.pc = %#16.16x (file_addr = %#16.16x)" % (frame.pc, pc_addr.GetFileAddress())
+                            print "frame.pc_addr = ", pc_addr
+                            print "frame.sym_ctx = "
+                            print frame.sym_ctx
+                            print
+
+                        # Append the frame we already had from the crash log to the new
+                        # frames list
+                        new_thread_frames.append(frame)
+
+                        new_frame = CrashLog.Frame (frame.index, -1, None)
+
+                        # Try and use the current frame's symbol context to calculate a 
+                        # parent frame for an inlined function. If the curent frame is
+                        # inlined, it will return a valid symbol context for the parent 
+                        # frame of the current inlined function
+                        parent_pc_addr = lldb.SBAddress()
+                        new_frame.sym_ctx = frame.sym_ctx.GetParentOfInlinedScope (pc_addr, parent_pc_addr)
+
+                        # See if we were able to reconstruct anything?
+                        while new_frame.sym_ctx:
+                            # We have a parent frame of an inlined frame, create a new frame
+                            # Convert the section + offset 'parent_pc_addr' to a load address 
+                            new_frame.pc = parent_pc_addr.GetLoadAddress(lldb.target)
+                            # push the new frame onto the new frame stack
+                            new_thread_frames.append (new_frame)
+                            # dump if the verbose option was specified
+                            if options.verbose:
+                                print "new_frame.pc = %#16.16x (%s)" % (new_frame.pc, parent_pc_addr)
+                                print "new_frame.sym_ctx = "
+                                print new_frame.sym_ctx
+                                print
+                            # Create another new frame in case we have multiple inlined frames
+                            prev_new_frame = new_frame
+                            new_frame = CrashLog.Frame (frame.index, -1, None)
+                            # Swap the addresses so we can try another inlined lookup
+                            pc_addr = parent_pc_addr;
+                            new_frame.sym_ctx = prev_new_frame.sym_ctx.GetParentOfInlinedScope (pc_addr, parent_pc_addr)
+                # Replace our thread frames with our new list that includes parent
+                # frames for inlined functions
+                thread.frames = new_thread_frames
+            # Now iterate through all threads and display our richer stack backtraces
+            for thread in crash_log.threads:
+                this_thread_crashed = thread.did_crash()
+                if options.crashed_only and this_thread_crashed == False:
+                    continue
+                print "%s" % thread
+                prev_frame_index = -1
+                for frame_idx, frame in enumerate(thread.frames):
+                    details = '          %s' % frame.details
+                    module = frame.sym_ctx.GetModule()
+                    instructions = None
+                    if module:
+                        module_basename = module.GetFileSpec().GetFilename();
+                        function_start_load_addr = -1
+                        function_name = None
+                        function = frame.sym_ctx.GetFunction()
+                        block = frame.sym_ctx.GetBlock()
+                        line_entry = frame.sym_ctx.GetLineEntry()
+                        symbol = frame.sym_ctx.GetSymbol()
+                        inlined_block = block.GetContainingInlinedBlock();
+                        if inlined_block:
+                            function_name = inlined_block.GetInlinedName();
+                            block_range_idx = inlined_block.GetRangeIndexForBlockAddress (lldb.target.ResolveLoadAddress (frame.pc))
+                            if block_range_idx < lldb.UINT32_MAX:
+                                block_range_start_addr = inlined_block.GetRangeStartAddress (block_range_idx)
+                                function_start_load_addr = block_range_start_addr.GetLoadAddress (lldb.target)
                             else:
-                                err = image.add_target_module ()
-                                if err:
-                                    print err
-                                else:
-                                    image_paths.append(image.path)
-                        else:
-                            print 'error: can\'t find image for identifier "%s"' % ident
+                                function_start_load_addr = frame.pc
+                            if this_thread_crashed and frame_idx == 0:
+                                instructions = function.GetInstructions(lldb.target)
+                        elif function:
+                            function_name = function.GetName()
+                            function_start_load_addr = function.GetStartAddress().GetLoadAddress (lldb.target)
+                            if this_thread_crashed and frame_idx == 0:
+                                instructions = function.GetInstructions(lldb.target)
+                        elif symbol:
+                            function_name = symbol.GetName()
+                            function_start_load_addr = symbol.GetStartAddress().GetLoadAddress (lldb.target)
+                            if this_thread_crashed and frame_idx == 0:
+                                instructions = symbol.GetInstructions(lldb.target)
 
-                    for line in crash_log.info_lines:
-                        print line
-
-                    # Reconstruct inlined frames for all threads for anything that has debug info
-                    for thread in crash_log.threads:
-                        if options.crashed_only and thread.did_crash() == False:
-                            continue
-                        # start a new frame list that we will fixup for each thread
-                        new_thread_frames = list()
-                        # Iterate through all concrete frames for a thread and resolve
-                        # any parent frames of inlined functions
-                        for frame_idx, frame in enumerate(thread.frames):
-                            # Resolve the frame's pc into a section + offset address 'pc_addr'
-                            pc_addr = lldb.target.ResolveLoadAddress (frame.pc)
-                            # Check to see if we were able to resolve the address
-                            if pc_addr:
-                                # We were able to resolve the frame's PC into a section offset
-                                # address.
-
-                                # Resolve the frame's PC value into a symbol context. A symbol
-                                # context can resolve a module, compile unit, function, block,
-                                # line table entry and/or symbol. If the frame has a block, then
-                                # we can look for inlined frames, which are represented by blocks
-                                # that have inlined information in them
-                                frame.sym_ctx = lldb.target.ResolveSymbolContextForAddress (pc_addr, lldb.eSymbolContextEverything);
-
-                                # dump if the verbose option was specified
-                                if options.verbose:
-                                    print "frame.pc = %#16.16x (file_addr = %#16.16x)" % (frame.pc, pc_addr.GetFileAddress())
-                                    print "frame.pc_addr = ", pc_addr
-                                    print "frame.sym_ctx = "
-                                    print frame.sym_ctx
-                                    print
-
-                                # Append the frame we already had from the crash log to the new
-                                # frames list
-                                new_thread_frames.append(frame)
-
-                                new_frame = CrashLog.Frame (frame.index, -1, None)
-
-                                # Try and use the current frame's symbol context to calculate a 
-                                # parent frame for an inlined function. If the curent frame is
-                                # inlined, it will return a valid symbol context for the parent 
-                                # frame of the current inlined function
-                                parent_pc_addr = lldb.SBAddress()
-                                new_frame.sym_ctx = frame.sym_ctx.GetParentOfInlinedScope (pc_addr, parent_pc_addr)
-
-                                # See if we were able to reconstruct anything?
-                                while new_frame.sym_ctx:
-                                    # We have a parent frame of an inlined frame, create a new frame
-                                    # Convert the section + offset 'parent_pc_addr' to a load address 
-                                    new_frame.pc = parent_pc_addr.GetLoadAddress(lldb.target)
-                                    # push the new frame onto the new frame stack
-                                    new_thread_frames.append (new_frame)
-                                    # dump if the verbose option was specified
-                                    if options.verbose:
-                                        print "new_frame.pc = %#16.16x (%s)" % (new_frame.pc, parent_pc_addr)
-                                        print "new_frame.sym_ctx = "
-                                        print new_frame.sym_ctx
-                                        print
-                                    # Create another new frame in case we have multiple inlined frames
-                                    prev_new_frame = new_frame
-                                    new_frame = CrashLog.Frame (frame.index, -1, None)
-                                    # Swap the addresses so we can try another inlined lookup
-                                    pc_addr = parent_pc_addr;
-                                    new_frame.sym_ctx = prev_new_frame.sym_ctx.GetParentOfInlinedScope (pc_addr, parent_pc_addr)
-                        # Replace our thread frames with our new list that includes parent
-                        # frames for inlined functions
-                        thread.frames = new_thread_frames
-                    # Now iterate through all threads and display our richer stack backtraces
-                    for thread in crash_log.threads:
-                        this_thread_crashed = thread.did_crash()
-                        if options.crashed_only and this_thread_crashed == False:
-                            continue
-                        print "%s" % thread
-                        prev_frame_index = -1
-                        for frame_idx, frame in enumerate(thread.frames):
-                            details = '          %s' % frame.details
-                            module = frame.sym_ctx.GetModule()
-                            instructions = None
-                            if module:
-                                module_basename = module.GetFileSpec().GetFilename();
-                                function_start_load_addr = -1
-                                function_name = None
-                                function = frame.sym_ctx.GetFunction()
-                                block = frame.sym_ctx.GetBlock()
-                                line_entry = frame.sym_ctx.GetLineEntry()
-                                symbol = frame.sym_ctx.GetSymbol()
-                                inlined_block = block.GetContainingInlinedBlock();
-                                if inlined_block:
-                                    function_name = inlined_block.GetInlinedName();
-                                    block_range_idx = inlined_block.GetRangeIndexForBlockAddress (lldb.target.ResolveLoadAddress (frame.pc))
-                                    if block_range_idx < lldb.UINT32_MAX:
-                                        block_range_start_addr = inlined_block.GetRangeStartAddress (block_range_idx)
-                                        function_start_load_addr = block_range_start_addr.GetLoadAddress (lldb.target)
-                                    else:
-                                        function_start_load_addr = frame.pc
-                                    if this_thread_crashed and frame_idx == 0:
-                                        instructions = function.GetInstructions(lldb.target)
-                                elif function:
-                                    function_name = function.GetName()
-                                    function_start_load_addr = function.GetStartAddress().GetLoadAddress (lldb.target)
-                                    if this_thread_crashed and frame_idx == 0:
-                                        instructions = function.GetInstructions(lldb.target)
-                                elif symbol:
-                                    function_name = symbol.GetName()
-                                    function_start_load_addr = symbol.GetStartAddress().GetLoadAddress (lldb.target)
-                                    if this_thread_crashed and frame_idx == 0:
-                                        instructions = symbol.GetInstructions(lldb.target)
-
-                                if function_name:
-                                    # Print the function or symbol name and annotate if it was inlined
-                                    inline_suffix = ''
-                                    if inlined_block: 
-                                        inline_suffix = '[inlined] '
-                                    else:
-                                        inline_suffix = '          '
-                                    if options.show_images:
-                                        details = "%s%s`%s" % (inline_suffix, module_basename, function_name)
-                                    else:
-                                        details = "%s" % (function_name)
-                                    # Dump the offset from the current function or symbol if it is non zero
-                                    function_offset = frame.pc - function_start_load_addr
-                                    if function_offset > 0:
-                                        details += " + %u" % (function_offset)
-                                    elif function_offset < 0:
-                                        defaults += " %i (invalid negative offset, file a bug) " % function_offset
-                                    # Print out any line information if any is available
-                                    if line_entry.GetFileSpec():
-                                        details += ' at %s' % line_entry.GetFileSpec().GetFilename()
-                                        details += ':%u' % line_entry.GetLine ()
-                                        column = line_entry.GetColumn()
-                                        if column > 0:
-                                            details += ':%u' % column
+                        if function_name:
+                            # Print the function or symbol name and annotate if it was inlined
+                            inline_suffix = ''
+                            if inlined_block: 
+                                inline_suffix = '[inlined] '
+                            else:
+                                inline_suffix = '          '
+                            if options.show_images:
+                                details = "%s%s`%s" % (inline_suffix, module_basename, function_name)
+                            else:
+                                details = "%s" % (function_name)
+                            # Dump the offset from the current function or symbol if it is non zero
+                            function_offset = frame.pc - function_start_load_addr
+                            if function_offset > 0:
+                                details += " + %u" % (function_offset)
+                            elif function_offset < 0:
+                                defaults += " %i (invalid negative offset, file a bug) " % function_offset
+                            # Print out any line information if any is available
+                            if line_entry.GetFileSpec():
+                                details += ' at %s' % line_entry.GetFileSpec().GetFilename()
+                                details += ':%u' % line_entry.GetLine ()
+                                column = line_entry.GetColumn()
+                                if column > 0:
+                                    details += ':%u' % column
 
 
-                            # Only print out the concrete frame index if it changes.
-                            # if prev_frame_index != frame.index:
-                            #     print "[%2u] %#16.16x %s" % (frame.index, frame.pc, details)
-                            # else:
-                            #     print "     %#16.16x %s" % (frame.pc, details)
-                            print "[%2u] %#16.16x %s" % (frame.index, frame.pc, details)
-                            prev_frame_index = frame.index
-                            if instructions:
-                                print
-                                disassemble_instructions (instructions, frame.pc, 4, 4)
-                                print
+                    # Only print out the concrete frame index if it changes.
+                    # if prev_frame_index != frame.index:
+                    #     print "[%2u] %#16.16x %s" % (frame.index, frame.pc, details)
+                    # else:
+                    #     print "     %#16.16x %s" % (frame.pc, details)
+                    print "[%2u] %#16.16x %s" % (frame.index, frame.pc, details)
+                    prev_frame_index = frame.index
+                    if instructions:
+                        print
+                        disassemble_instructions (instructions, frame.pc, 4, 4)
+                        print
 
-                        print                
+                print                
 
-                    if options.dump_image_list:
-                        print "Binary Images:"
-                        for image in crash_log.images:
-                            print image
-        
+            if options.dump_image_list:
+                print "Binary Images:"
+                for image in crash_log.images:
+                    print image
+
 
 if __name__ == '__main__':
     # Create a new debugger instance
