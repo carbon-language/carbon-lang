@@ -5973,10 +5973,10 @@ LowerVECTOR_SHUFFLE_256(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
       if (MinRange[l][Input] == (int)NumElems && MaxRange[l][Input] < 0)
         continue;
 
-      if (MinRange[l][Input] >= 0 && MinRange[l][Input] < (int)NumLaneElems)
+      if (MinRange[l][Input] >= 0 && MaxRange[l][Input] < (int)NumLaneElems)
         ExtractIdx[l][Input] = 0;
       else if (MinRange[l][Input] >= (int)NumLaneElems &&
-               MinRange[l][Input] < (int)NumElems)
+               MaxRange[l][Input] < (int)NumElems)
         ExtractIdx[l][Input] = NumLaneElems;
       else
         return SDValue();
