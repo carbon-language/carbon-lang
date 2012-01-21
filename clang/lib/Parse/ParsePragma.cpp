@@ -42,13 +42,10 @@ void PragmaGCCVisibilityHandler::HandlePragma(Preprocessor &PP,
 
   const IdentifierInfo *PushPop = Tok.getIdentifierInfo();
 
-  bool IsPush;
   const IdentifierInfo *VisType;
   if (PushPop && PushPop->isStr("pop")) {
-    IsPush = false;
     VisType = 0;
   } else if (PushPop && PushPop->isStr("push")) {
-    IsPush = true;
     PP.LexUnexpandedToken(Tok);
     if (Tok.isNot(tok::l_paren)) {
       PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_lparen)
@@ -80,7 +77,7 @@ void PragmaGCCVisibilityHandler::HandlePragma(Preprocessor &PP,
     return;
   }
 
-  Actions.ActOnPragmaVisibility(IsPush, VisType, VisLoc);
+  Actions.ActOnPragmaVisibility(VisType, VisLoc);
 }
 
 // #pragma pack(...) comes in the following delicious flavors:

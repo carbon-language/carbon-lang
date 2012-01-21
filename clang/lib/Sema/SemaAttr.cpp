@@ -345,9 +345,9 @@ static void PushPragmaVisibility(Sema &S, unsigned type, SourceLocation loc) {
   Stack->push_back(std::make_pair(type, loc));
 }
 
-void Sema::ActOnPragmaVisibility(bool IsPush, const IdentifierInfo* VisType,
+void Sema::ActOnPragmaVisibility(const IdentifierInfo* VisType,
                                  SourceLocation PragmaLoc) {
-  if (IsPush) {
+  if (VisType) {
     // Compute visibility to use.
     VisibilityAttr::VisibilityType type;
     if (VisType->isStr("default"))

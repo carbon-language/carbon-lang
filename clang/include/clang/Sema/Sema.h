@@ -5553,7 +5553,7 @@ public:
                          SourceLocation PragmaLoc);
 
   /// ActOnPragmaVisibility - Called on well formed #pragma GCC visibility... .
-  void ActOnPragmaVisibility(bool IsPush, const IdentifierInfo* VisType,
+  void ActOnPragmaVisibility(const IdentifierInfo* VisType,
                              SourceLocation PragmaLoc);
 
   NamedDecl *DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II,
