@@ -1849,9 +1849,9 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
     if (DefinitionKind) {
       if (!DeclaratorInfo.isFunctionDeclarator()) {
-        Diag(Tok, diag::err_func_def_no_params);
+        Diag(DeclaratorInfo.getIdentifierLoc(), diag::err_func_def_no_params);
         ConsumeBrace();
-        SkipUntil(tok::r_brace, true);
+        SkipUntil(tok::r_brace, /*StopAtSemi*/false);
         
         // Consume the optional ';'
         if (Tok.is(tok::semi))
@@ -1860,12 +1860,13 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       }
 
       if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
-        Diag(Tok, diag::err_function_declared_typedef);
+        Diag(DeclaratorInfo.getIdentifierLoc(),
+             diag::err_function_declared_typedef);
         // This recovery skips the entire function body. It would be nice
         // to simply call ParseCXXInlineMethodDef() below, however Sema
         // assumes the declarator represents a function, not a typedef.
         ConsumeBrace();
-        SkipUntil(tok::r_brace, true);
+        SkipUntil(tok::r_brace, /*StopAtSemi*/false);
 
         // Consume the optional ';'
         if (Tok.is(tok::semi))

@@ -54,6 +54,13 @@ public; // expected-error{{expected ':'}}
   int i;
 };
 
+class F {
+    int F1 { return 1; } // expected-error{{function definition does not declare parameters}}
+    void F2 {} // expected-error{{function definition does not declare parameters}}
+    typedef int F3() { return 0; } // expected-error{{function definition declared 'typedef'}}
+    typedef void F4() {} // expected-error{{function definition declared 'typedef'}}
+};
+
 // PR11109 must appear at the end of the source file
 class pr11109r3 { // expected-note{{to match this '{'}}
   public // expected-error{{expected ':'}} expected-error{{expected '}'}} expected-error{{expected ';' after class}}
