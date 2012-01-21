@@ -1381,6 +1381,13 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
   CharUnits Alignment = getContext().getDeclAlign(ND);
   QualType T = E->getType();
 
+  // FIXME: We should be able to assert this for FunctionDecls as well!
+  // FIXME: We should be able to assert this for all DeclRefExprs, not just
+  // those with a valid source location.
+  assert((ND->isUsed(false) || !isa<VarDecl>(ND) ||
+          !E->getLocation().isValid()) &&
+         "Should not use decl without marking it used!");
+
   if (ND->hasAttr<WeakRefAttr>()) {
     const ValueDecl *VD = cast<ValueDecl>(ND);
     llvm::Constant *Aliasee = CGM.GetWeakRefReference(VD);
