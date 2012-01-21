@@ -16,7 +16,7 @@ else
 endif
 INSTALL_DIR=$(DSTROOT)/$(INSTALL_PREFIX)
 
-.PHONY: help installsrc clean installhdrs do-installhdrs install
+.PHONY: help installsrc clean installheaders do-installhdrs install
 
 help::
 	echo Use make install DSTROOT=<destination>
