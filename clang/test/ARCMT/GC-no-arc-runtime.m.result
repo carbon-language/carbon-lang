@@ -52,12 +52,12 @@ __attribute__((objc_arc_weak_reference_unavailable))
 @end
 
 @interface I4Impl {
-  I4Impl *pds2;
+  I4Impl *__strong pds2;
 }
 @property (unsafe_unretained) I4Impl * pw1, * pw2;
-@property  I4Impl * ps;
-@property  I4Impl * pds;
-@property  I4Impl * pds2;
+@property (strong) I4Impl * ps;
+@property (strong) I4Impl * pds;
+@property (strong) I4Impl * pds2;
 @end
 
 @implementation I4Impl

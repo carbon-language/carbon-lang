@@ -79,3 +79,14 @@ __attribute__((objc_arc_weak_reference_unavailable))
   id x = NSMakeCollectable(cft);
 }
 @end
+
+// rdar://10532449
+@interface rdar10532449
+@property (assign) id assign_prop;
+@property (assign, readonly) id __strong strong_readonly_prop;
+@property (assign) id __weak weak_prop;
+@end
+
+@implementation rdar10532449
+@synthesize assign_prop, strong_readonly_prop, weak_prop;
+@end
