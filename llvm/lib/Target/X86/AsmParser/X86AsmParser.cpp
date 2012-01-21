@@ -595,7 +595,6 @@ static unsigned getIntelMemOperandSize(StringRef OpStr) {
 
 X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned Size) {
   unsigned SegReg = 0, BaseReg = 0, IndexReg = 0, Scale = 1;
-  const AsmToken &Tok = Parser.getTok();
   SMLoc Start = Parser.getTok().getLoc(), End;
 
   const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
@@ -687,7 +686,6 @@ X86Operand *X86AsmParser::ParseIntelMemOperand() {
 }
 
 X86Operand *X86AsmParser::ParseIntelOperand() {
-  StringRef TokenString = Parser.getTok().getString();
   SMLoc Start = Parser.getTok().getLoc(), End;
 
   // immediate.
