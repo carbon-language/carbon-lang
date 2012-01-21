@@ -4628,9 +4628,11 @@ bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
     //
     // If either register is a high reg, it's either one of the SP
     // variants (handled above) or a 32-bit encoding, so we just
-    // check against T3.
+    // check against T3. If the second register is the PC, this is an
+    // alternate form of ADR, which uses encoding T4, so check for that too.
     if ((!isARMLowRegister(static_cast<ARMOperand*>(Operands[3])->getReg()) ||
          !isARMLowRegister(static_cast<ARMOperand*>(Operands[4])->getReg())) &&
+        static_cast<ARMOperand*>(Operands[4])->getReg() != ARM::PC &&
         static_cast<ARMOperand*>(Operands[5])->isT2SOImm())
       return false;
     // If both registers are low, we're in an IT block, and the immediate is

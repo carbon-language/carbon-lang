@@ -4180,3 +4180,6 @@ def : t2InstAlias<"ldrsb${p}.w $Rt, $addr",
                   (t2LDRSBpcrel GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;
 def : t2InstAlias<"ldrsh${p}.w $Rt, $addr",
                   (t2LDRSHpcrel GPRnopc:$Rt, t2ldr_pcrel_imm12:$addr, pred:$p)>;
+
+def : t2InstAlias<"add${p} $Rd, pc, $imm",
+                  (t2ADR rGPR:$Rd, imm0_4095:$imm, pred:$p)>;
