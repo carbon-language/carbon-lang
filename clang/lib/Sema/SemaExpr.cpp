@@ -3012,6 +3012,12 @@ Sema::CreateUnaryExprOrTypeTraitExpr(Expr *E, SourceLocation OpLoc,
   if (isInvalid)
     return ExprError();
 
+  if (ExprKind == UETT_SizeOf && E->getType()->isVariableArrayType()) {
+    PE = TranformToPotentiallyEvaluated(E);
+    if (PE.isInvalid()) return ExprError();
+    E = PE.take();
+  }
+
   // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
   return Owned(new (Context) UnaryExprOrTypeTraitExpr(
       ExprKind, E, Context.getSizeType(), OpLoc,
@@ -9433,6 +9439,12 @@ void Sema::DiscardCleanupsInEvaluationContext() {
          ExprCleanupObjects.begin() + ExprEvalContexts.back().NumCleanupObjects,
          ExprCleanupObjects.end());
   ExprNeedsCleanups = false;
+}
+
+ExprResult Sema::HandleExprEvaluationContextForTypeof(Expr *E) {
+  if (!E->getType()->isVariablyModifiedType())
+    return E;
+  return TranformToPotentiallyEvaluated(E);
 }
 
 /// \brief Note that the given declaration was referenced in the source code.

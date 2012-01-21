@@ -849,8 +849,12 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
         bool processed = false;
         if (const Stmt *stmt = i->stmt) {
           const CFGBlock *block = AC.getBlockForRegisteredExpression(stmt);
-          assert(block);
-          if (CFGReverseBlockReachabilityAnalysis *cra = AC.getCFGReachablityAnalysis()) {
+          CFGReverseBlockReachabilityAnalysis *cra =
+              AC.getCFGReachablityAnalysis();
+          // FIXME: We should be able to assert that block is non-null, but
+          // the CFG analysis can skip potentially-evaluated expressions in
+          // edge cases; see test/Sema/vla-2.c.
+          if (block && cra) {
             // Can this block be reached from the entrance?
             if (cra->isReachable(&AC.getCFG()->getEntry(), block))
               S.Diag(D.Loc, D.PD);

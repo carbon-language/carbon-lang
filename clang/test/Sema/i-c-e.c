@@ -54,24 +54,21 @@ char y[__builtin_constant_p(expr) ? -1 : 1];
 char z[__builtin_constant_p(4) ? 1 : -1];
 
 // Comma tests
-int comma1[0?1,2:3];  // expected-warning {{expression result unused}}
-int comma2[1||(1,2)]; // expected-warning {{expression result unused}} \
-                      // expected-warning {{use of logical '||' with constant operand}} \
+int comma1[0?1,2:3];
+int comma2[1||(1,2)]; // expected-warning {{use of logical '||' with constant operand}} \
                       // expected-note {{use '|' for a bitwise operation}}
-int comma3[(1,2)]; // expected-warning {{size of static array must be an integer constant expression}} \
-					// expected-warning {{expression result unused}}
+int comma3[(1,2)]; // expected-warning {{size of static array must be an integer constant expression}}
 
 // Pointer + __builtin_constant_p
 char pbcp[__builtin_constant_p(4) ? (intptr_t)&expr : 0]; // expected-error {{variable length array declaration not allowed at file scope}}
 
-int illegaldiv1a[1 || 1/0];  // expected-warning {{division by zero is undefined}}
-int illegaldiv1b[1 && 1/0];  // expected-warning {{division by zero is undefined}} expected-error{{variable length array declaration not allowed at file scope}}
+int illegaldiv1a[1 || 1/0];
+int illegaldiv1b[1 && 1/0];  //expected-error{{variable length array declaration not allowed at file scope}}
 
-int illegaldiv2[1/0]; // expected-error {{variable length array declaration not allowed at file scope}} \
-                      // expected-warning {{division by zero is undefined}}
+int illegaldiv2[1/0]; // expected-error {{variable length array declaration not allowed at file scope}}
 int illegaldiv3[INT_MIN / -1]; // expected-error {{variable length array declaration not allowed at file scope}}
 // PR9262
-int illegaldiv4[0 / (1 / 0)]; // expected-warning {{division by zero is undefined}} expected-error {{variable length array declaration not allowed at file scope}}
+int illegaldiv4[0 / (1 / 0)]; // expected-error {{variable length array declaration not allowed at file scope}}
 
 int chooseexpr[__builtin_choose_expr(1, 1, expr)];
 int realop[(__real__ 4) == 4 ? 1 : -1];

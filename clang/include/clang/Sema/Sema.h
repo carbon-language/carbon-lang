@@ -2256,6 +2256,7 @@ public:
   void DiscardCleanupsInEvaluationContext();
 
   ExprResult TranformToPotentiallyEvaluated(Expr *E);
+  ExprResult HandleExprEvaluationContextForTypeof(Expr *E);
 
   void MarkDeclarationReferenced(SourceLocation Loc, Decl *D);
   void MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T);

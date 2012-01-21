@@ -1442,14 +1442,6 @@ Parser::ParseExprAfterUnaryExprOrTypeTrait(const Token &OpTok,
       return ExprError();
     }
 
-    // C++0x [expr.sizeof]p1:
-    //   [...] The operand is either an expression, which is an unevaluated
-    //   operand (Clause 5) [...]
-    //
-    // The GNU typeof and GNU/C++11 alignof extensions also behave as
-    // unevaluated operands.
-    EnterExpressionEvaluationContext Unevaluated(Actions,
-                                                 Sema::Unevaluated);
     Operand = ParseCastExpression(true/*isUnaryExpression*/);
   } else {
     // If it starts with a '(', we know that it is either a parenthesized
@@ -1459,14 +1451,6 @@ Parser::ParseExprAfterUnaryExprOrTypeTrait(const Token &OpTok,
     ParenParseOption ExprType = CastExpr;
     SourceLocation LParenLoc = Tok.getLocation(), RParenLoc;
 
-    // C++0x [expr.sizeof]p1:
-    //   [...] The operand is either an expression, which is an unevaluated
-    //   operand (Clause 5) [...]
-    //
-    // The GNU typeof and GNU/C++11 alignof extensions also behave as
-    // unevaluated operands.
-    EnterExpressionEvaluationContext Unevaluated(Actions,
-                                                 Sema::Unevaluated);
     Operand = ParseParenExpression(ExprType, true/*stopIfCastExpr*/, 
                                    false, CastTy, RParenLoc);
     CastRange = SourceRange(LParenLoc, RParenLoc);
@@ -1554,6 +1538,8 @@ ExprResult Parser::ParseUnaryExprOrTypeTraitExpression() {
 
   if (OpTok.is(tok::kw_alignof))
     Diag(OpTok, diag::warn_cxx98_compat_alignof);
+
+  EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
 
   bool isCastExpr;
   ParsedType CastTy;
