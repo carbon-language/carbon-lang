@@ -28,7 +28,7 @@ class ArrayBoundCheckerV2 :
     public Checker<check::Location> {
   mutable llvm::OwningPtr<BuiltinBug> BT;
       
-  enum OOB_Kind { OOB_Precedes, OOB_Excedes };
+  enum OOB_Kind { OOB_Precedes, OOB_Excedes, OOB_Tainted };
   
   void reportOOB(CheckerContext &C, const ProgramState *errorState,
                  OOB_Kind kind) const;
@@ -157,7 +157,7 @@ void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
     // If we are under constrained and the index variables are tainted, report.
     if (state_exceedsUpperBound && state_withinUpperBound) {
       if (state->isTainted(rawOffset.getByteOffset()))
-        reportOOB(checkerContext, state_exceedsUpperBound, OOB_Excedes);
+        reportOOB(checkerContext, state_exceedsUpperBound, OOB_Tainted);
         return;
     }
   
@@ -193,9 +193,18 @@ void ArrayBoundCheckerV2::reportOOB(CheckerContext &checkerContext,
 
   llvm::SmallString<256> buf;
   llvm::raw_svector_ostream os(buf);
-  os << "Out of bound memory access "
-     << (kind == OOB_Precedes ? "(accessed memory precedes memory block)"
-                              : "(access exceeds upper limit of memory block)");
+  os << "Out of bound memory access ";
+  switch (kind) {
+  case OOB_Precedes:
+    os << "(accessed memory precedes memory block)";
+    break;
+  case OOB_Excedes:
+    os << "(access exceeds upper limit of memory block)";
+    break;
+  case OOB_Tainted:
+    os << "(index is tainted)";
+    break;
+  }
 
   checkerContext.EmitReport(new BugReport(*BT, os.str(), errorNode));
 }

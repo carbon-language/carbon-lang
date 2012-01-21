@@ -70,7 +70,7 @@ void scanfArg() {
 
 void bufferGetchar(int x) {
   int m = getchar();
-  Buffer[m] = 1;  //expected-warning {{Out of bound memory access }}
+  Buffer[m] = 1;  //expected-warning {{Out of bound memory access (index is tainted)}}
 }
 
 void testUncontrolledFormatString(char **p) {
@@ -175,4 +175,11 @@ int testDivByZero() {
   int x;
   scanf("%d", &x);
   return 5/x; // expected-warning {{Division by a tainted value, possibly zero}}
+}
+
+// Zero-sized VLAs.
+void testTaintedVLASize() {
+  int x;
+  scanf("%d", &x);
+  int vla[x]; // expected-warning{{Declared variable-length array (VLA) has tainted size}}
 }
