@@ -426,7 +426,7 @@ void LiveVariables::HandleRegMask(const MachineOperand &MO) {
     if (!PhysRegDef[Reg] && !PhysRegUse[Reg])
       continue;
     // Skip mask-preserved regs.
-    if (!MO.clobbersPhysReg(Reg));
+    if (!MO.clobbersPhysReg(Reg))
       continue;
     // Kill the largest clobbered super-register.
     // This avoids needless implicit operands.
