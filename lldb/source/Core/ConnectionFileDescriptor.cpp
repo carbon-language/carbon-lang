@@ -988,6 +988,13 @@ ConnectionFileDescriptor::SetSocketReceiveTimeout (uint32_t timeout_usec)
                 timeout.tv_sec = 0;
                 timeout.tv_usec = 0;
             }
+            else if (timeout_usec == 0)
+            {
+                // Sending in zero does an infinite timeout, so set this as low
+                // as we can go to get an effective zero timeout...
+                timeout.tv_sec = 0;
+                timeout.tv_usec = 1;
+            }
             else
             {
                 timeout.tv_sec = timeout_usec / TimeValue::MicroSecPerSec;
