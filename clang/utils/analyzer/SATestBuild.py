@@ -171,7 +171,7 @@ def runAnalyzePreprocessed(Dir, SBOutputDir):
         raise Exception()       
 
     CmdPrefix = "clang -cc1 -analyze -analyzer-output=plist -w "
-    CmdPrefix += "-enable-checker " + Checkers +" -fcxx-exceptions -fblocks "   
+    CmdPrefix += "-analyzer-checker=" + Checkers +" -fcxx-exceptions -fblocks "   
     
     PlistPath = os.path.join(Dir, SBOutputDir, "date")
     FailPath = os.path.join(PlistPath, "failures");
