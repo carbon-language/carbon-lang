@@ -160,6 +160,9 @@ private:   // Intermediate data structures
   /// the last use of the whole register.
   bool HandlePhysRegKill(unsigned Reg, MachineInstr *MI);
 
+  /// HandleRegMask - Call HandlePhysRegKill for all registers clobbered by Mask.
+  void HandleRegMask(const MachineOperand&);
+
   void HandlePhysRegUse(unsigned Reg, MachineInstr *MI);
   void HandlePhysRegDef(unsigned Reg, MachineInstr *MI,
                         SmallVector<unsigned, 4> &Defs);

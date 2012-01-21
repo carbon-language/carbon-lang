@@ -417,6 +417,27 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
   return true;
 }
 
+void LiveVariables::HandleRegMask(const MachineOperand &MO) {
+  // Call HandlePhysRegKill() for all live registers clobbered by Mask.
+  // Clobbered registers are always dead, sp there is no need to use
+  // HandlePhysRegDef().
+  for (unsigned Reg = 1, NumRegs = TRI->getNumRegs(); Reg != NumRegs; ++Reg) {
+    // Skip dead regs.
+    if (!PhysRegDef[Reg] && !PhysRegUse[Reg])
+      continue;
+    // Skip mask-preserved regs.
+    if (!MO.clobbersPhysReg(Reg));
+      continue;
+    // Kill the largest clobbered super-register.
+    // This avoids needless implicit operands.
+    unsigned Super = Reg;
+    for (const unsigned *SR = TRI->getSuperRegisters(Reg); *SR; ++SR)
+      if ((PhysRegDef[*SR] || PhysRegUse[*SR]) && MO.clobbersPhysReg(*SR))
+        Super = *SR;
+    HandlePhysRegKill(Super, 0);
+  }
+}
+
 void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI,
                                      SmallVector<unsigned, 4> &Defs) {
   // What parts of the register are previously defined?
@@ -534,8 +555,13 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
       // Clear kill and dead markers. LV will recompute them.
       SmallVector<unsigned, 4> UseRegs;
       SmallVector<unsigned, 4> DefRegs;
+      SmallVector<unsigned, 1> RegMasks;
       for (unsigned i = 0; i != NumOperandsToProcess; ++i) {
         MachineOperand &MO = MI->getOperand(i);
+        if (MO.isRegMask()) {
+          RegMasks.push_back(i);
+          continue;
+        }
         if (!MO.isReg() || MO.getReg() == 0)
           continue;
         unsigned MOReg = MO.getReg();
@@ -556,6 +582,10 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
         else if (!ReservedRegisters[MOReg])
           HandlePhysRegUse(MOReg, MI);
       }
+
+      // Process all masked registers. (Call clobbers).
+      for (unsigned i = 0, e = RegMasks.size(); i != e; ++i)
+        HandleRegMask(MI->getOperand(RegMasks[i]));
 
       // Process all defs.
       for (unsigned i = 0, e = DefRegs.size(); i != e; ++i) {
