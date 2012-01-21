@@ -33,6 +33,7 @@ import os
 import plistlib
 #import pprint # pp = pprint.PrettyPrinter(indent=4); pp.pprint(command_args)
 import re
+import shlex
 import sys
 import time
 import uuid
@@ -245,7 +246,7 @@ class CrashLog:
         
     def __init__(self, path):
         """CrashLog constructor that take a path to a darwin crash log file"""
-        self.path = path;
+        self.path = os.path.expanduser(path);
         self.info_lines = list()
         self.system_profile = list()
         self.threads = list()
@@ -253,8 +254,14 @@ class CrashLog:
         self.idents = list() # A list of the required identifiers for doing all stack backtraces
         self.crashed_thread_idx = -1
         self.version = -1
+        self.error = None
         # With possible initial component of ~ or ~user replaced by that user's home directory.
-        f = open(os.path.expanduser(self.path))
+        try:
+            f = open(self.path)
+        except IOError:
+            self.error = 'error: cannot open "%s"' % self.path
+            return
+
         self.file_lines = f.read().splitlines()
         parse_mode = PARSE_MODE_NORMAL
         thread = None
@@ -475,10 +482,12 @@ def usage():
     sys.exit(0)
 
 def Symbolicate(debugger, command, result, dict):
-    SymbolicateCrashLog (command.split())
-        
+    try:
+        SymbolicateCrashLog (shlex.split(command))
+    except:
+        result.PutCString ("error: python exception %s" % sys.exc_info()[0])
+                
 def SymbolicateCrashLog(command_args):
-    print 'command_args = %s' % command_args
     usage = "usage: %prog [options] <FILE> [FILE ...]"
     description='''Symbolicate one or more darwin crash log files to provide source file and line information,
 inlined stack frames back to the concrete functions, and disassemble the location of the crash
@@ -497,9 +506,16 @@ be disassembled and lookups can be performed using the addresses found in the cr
     parser.add_option('--debug-delay', type='int', dest='debug_delay', metavar='NSEC', help='pause for NSEC seconds for debugger', default=0)
     parser.add_option('--crashed-only', action='store_true', dest='crashed_only', help='only symbolicate the crashed thread', default=False)
     loaded_addresses = False
-    (options, args) = parser.parse_args(command_args)
+    try:
+        (options, args) = parser.parse_args(command_args)
+    except:
+        return
+        
     if options.verbose:
+        print 'command_args = %s' % command_args
         print 'options', options
+        print 'args', args
+        
     if options.debug_delay > 0:
         print "Waiting %u seconds for debugger to attach..." % options.debug_delay
         time.sleep(options.debug_delay)
@@ -507,6 +523,9 @@ be disassembled and lookups can be performed using the addresses found in the cr
     if args:
         for crash_log_file in args:
             crash_log = CrashLog(crash_log_file)
+            if crash_log.error:
+                print crash_log.error
+                return
             if options.verbose:
                 crash_log.dump()
             if not crash_log.images:
