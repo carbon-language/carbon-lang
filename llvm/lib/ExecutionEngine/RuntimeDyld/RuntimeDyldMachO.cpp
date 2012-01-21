@@ -272,16 +272,18 @@ loadSegment64(const MachOObject *Obj,
     // Allocate memory via the MM for the section.
     uint8_t *Buffer;
     uint32_t SectionID = Sections.size();
+    unsigned Align = 1 << Sect->Align; // .o file has log2 alignment.
     if (Sect->Flags == 0x80000400)
-      Buffer = MemMgr->allocateCodeSection(Sect->Size, Sect->Align, SectionID);
+      Buffer = MemMgr->allocateCodeSection(Sect->Size, Align, SectionID);
     else
-      Buffer = MemMgr->allocateDataSection(Sect->Size, Sect->Align, SectionID);
+      Buffer = MemMgr->allocateDataSection(Sect->Size, Align, SectionID);
 
     DEBUG(dbgs() << "Loading "
                  << ((Sect->Flags == 0x80000400) ? "text" : "data")
                  << " (ID #" << SectionID << ")"
                  << " '" << Sect->SegmentName << ","
                  << Sect->Name << "' of size " << Sect->Size
+                 << " (align " << Align << ")"
                  << " to address " << Buffer << ".\n");
 
     // Copy the payload from the object file into the allocated buffer.
