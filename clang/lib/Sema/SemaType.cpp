@@ -1059,8 +1059,7 @@ static QualType inferARCLifetimeForPointee(Sema &S, QualType type,
 
   // If we are in an unevaluated context, like sizeof, skip adding a
   // qualification.
-  } else if (S.ExprEvalContexts.back().Context == Sema::Unevaluated ||
-             S.ExprEvalContexts.back().Context == Sema::ConstantEvaluated) {
+  } else if (S.ExprEvalContexts.back().Context == Sema::Unevaluated) {
     return type;
 
   // If that failed, give an error and recover using __autoreleasing.

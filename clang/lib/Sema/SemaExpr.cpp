@@ -9477,21 +9477,16 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   switch (ExprEvalContexts.back().Context) {
     case Unevaluated:
       // We are in an expression that is not potentially evaluated; do nothing.
+      // (Depending on how you read the standard, we actually do need to do
+      // something here for null pointer constants, but the standard's
+      // definition of a null pointer constant is completely crazy.)
       return;
 
     case ConstantEvaluated:
-      // We are in an expression that will be evaluated during translation; in
-      // C++11, we need to define any functions which are used in case they're
-      // constexpr, whereas in C++98, we only need to define static data members
-      // of class templates.
-      if (!getLangOptions().CPlusPlus ||
-          (!getLangOptions().CPlusPlus0x && !isa<VarDecl>(D)))
-        return;
-      break;
-
     case PotentiallyEvaluated:
-      // We are in a potentially-evaluated expression, so this declaration is
-      // "used"; handle this below.
+      // We are in a potentially evaluated expression (or a constant-expression
+      // in C++03); we need to do implicit template instantiation, implicitly
+      // define class members, and mark most declarations as used.
       break;
 
     case PotentiallyEvaluatedIfUsed:
@@ -9616,6 +9611,8 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     // Keep track of used but undefined variables.  We make a hole in
     // the warning for static const data members with in-line
     // initializers.
+    // FIXME: The hole we make for static const data members is too wide!
+    // We need to implement the C++11 rules for odr-used.
     if (Var->hasDefinition() == VarDecl::DeclarationOnly
         && Var->getLinkage() != ExternalLinkage
         && !(Var->isStaticDataMember() && Var->hasInit())) {

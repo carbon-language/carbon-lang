@@ -521,9 +521,9 @@ public:
     /// run time.
     Unevaluated,
 
-    /// \brief The current expression and its subexpressions occur within a
-    /// constant expression. Such a context is not potentially-evaluated in
-    /// C++98, but is potentially-evaluated in C++11.
+    /// \brief The current context is "potentially evaluated" in C++11 terms,
+    /// but the expression is evaluated at compile-time (like the values of
+    /// cases in a switch statment).
     ConstantEvaluated,
 
     /// \brief The current expression is potentially evaluated at run time,
