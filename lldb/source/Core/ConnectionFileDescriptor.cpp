@@ -983,8 +983,16 @@ ConnectionFileDescriptor::SetSocketReceiveTimeout (uint32_t timeout_usec)
             //printf ("ConnectionFileDescriptor::SetSocketReceiveTimeout (timeout_usec = %u)\n", timeout_usec);
 
             struct timeval timeout;
-            timeout.tv_sec = timeout_usec / TimeValue::MicroSecPerSec;
-            timeout.tv_usec = timeout_usec % TimeValue::MicroSecPerSec;
+            if (timeout_usec == UINT32_MAX)
+            {
+                timeout.tv_sec = 0;
+                timeout.tv_usec = 0;
+            }
+            else
+            {
+                timeout.tv_sec = timeout_usec / TimeValue::MicroSecPerSec;
+                timeout.tv_usec = timeout_usec % TimeValue::MicroSecPerSec;
+            }
             if (::setsockopt (m_fd_recv, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == 0)
             {
                 m_socket_timeout_usec = timeout_usec;
