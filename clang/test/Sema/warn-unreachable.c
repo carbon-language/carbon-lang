@@ -1,4 +1,4 @@
-// RUN: %clang %s -fsyntax-only -Xclang -verify -fblocks -Wunreachable-code -Wno-unused-value
+// RUN: %clang %s -fsyntax-only -Xclang -verify -fblocks -Wunreachable-code -Wno-unused-value -Wno-switch-enum-redundant-default
 
 int halt() __attribute__((noreturn));
 int live();

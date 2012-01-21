@@ -178,7 +178,8 @@ def InvalidOffsetof : DiagGroup<"invalid-offsetof">;
 def : DiagGroup<"strict-prototypes">;
 def StrictSelector : DiagGroup<"strict-selector-match">;
 def MethodDuplicate : DiagGroup<"duplicate-method-match">;
-def SwitchEnum     : DiagGroup<"switch-enum">;
+def SwitchEnumRedundantDefault : DiagGroup<"switch-enum-redundant-default">;
+def SwitchEnum     : DiagGroup<"switch-enum", [SwitchEnumRedundantDefault]>;
 def Switch         : DiagGroup<"switch", [SwitchEnum]>;
 def Trigraphs      : DiagGroup<"trigraphs">;
 

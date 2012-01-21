@@ -288,3 +288,12 @@ void test17(int x) {
   case 0: return;
   }
 }
+
+int test18() {
+  enum { A, B } a;
+  switch (a) {
+  case A: return 0;
+  case B: return 1;
+  default: return 2; // expected-warning {{default is unreachable as all enumeration values are accounted for}}
+  }
+}

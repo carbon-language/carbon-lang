@@ -4946,19 +4946,22 @@ def warn_case_empty_range : Warning<"empty case range specified">;
 def warn_missing_case_for_condition :
   Warning<"no case matching constant switch condition '%0'">;
 def warn_missing_case1 : Warning<"enumeration value %0 not handled in switch">,
-  InGroup<DiagGroup<"switch-enum"> >;
+  InGroup<SwitchEnum>;
 def warn_missing_case2 : Warning<
   "enumeration values %0 and %1 not handled in switch">,
-  InGroup<DiagGroup<"switch-enum"> >;
+  InGroup<SwitchEnum>;
 def warn_missing_case3 : Warning<
   "enumeration values %0, %1, and %2 not handled in switch">,
-  InGroup<DiagGroup<"switch-enum"> >;
+  InGroup<SwitchEnum>;
 def warn_missing_cases : Warning<
   "%0 enumeration values not handled in switch: %1, %2, %3...">,
-  InGroup<DiagGroup<"switch-enum"> >;
+  InGroup<SwitchEnum>;
+def warn_unreachable_default : Warning<
+  "default is unreachable as all enumeration values are accounted for">,
+  InGroup<SwitchEnumRedundantDefault>;
 
 def warn_not_in_enum : Warning<"case value not in enumerated type %0">,
-  InGroup<DiagGroup<"switch-enum"> >; 
+  InGroup<SwitchEnum>; 
 def err_typecheck_statement_requires_scalar : Error<
   "statement requires expression of scalar type (%0 invalid)">;
 def err_typecheck_statement_requires_integer : Error<

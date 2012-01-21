@@ -924,9 +924,15 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 
         if (RI == CaseRanges.end() || EI->first < RI->first) {
           hasCasesNotInSwitch = true;
-          if (!TheDefaultStmt)
-            UnhandledNames.push_back(EI->second->getDeclName());
+          UnhandledNames.push_back(EI->second->getDeclName());
         }
+      }
+
+      if (TheDefaultStmt) {
+        if (UnhandledNames.size() == 0)
+          Diag(TheDefaultStmt->getDefaultLoc(), diag::warn_unreachable_default);
+        else
+          UnhandledNames.clear();
       }
 
       // Produce a nice diagnostic if multiple values aren't handled.
