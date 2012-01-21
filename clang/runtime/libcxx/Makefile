@@ -25,7 +25,7 @@ ifeq ($(shell test -d $(LIBCXX_SRC_ROOT) && echo OK),OK)
 
 install-local::
 	$(MAKE) -C $(LIBCXX_SRC_ROOT) \
-	  HEADER_DIR=$(PROJ_libcxx_hdrs) do-installhdrs
+	  HEADER_DIR=$(PROJ_libcxx_hdrs) installheaders
 
 endif
 endif
