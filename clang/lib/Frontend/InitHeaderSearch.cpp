@@ -386,8 +386,6 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOp
     AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.4");
     // g++-4 / Cygwin-1.5
     AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.2");
-    // FIXME: Do we support g++-3.4.4?
-    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "3.4.4");
     break;
   case llvm::Triple::MinGW32:
     // mingw-w64 C++ include paths (i686-w64-mingw32 and x86_64-w64-mingw32)
