@@ -406,8 +406,8 @@ SymbolRef GenericTaintChecker::getPointedToSymbol(CheckerContext &C,
 
   const PointerType *ArgTy =
     dyn_cast<PointerType>(Arg->getType().getCanonicalType().getTypePtr());
-  assert(ArgTy);
-  SVal Val = State->getSVal(*AddrLoc, ArgTy->getPointeeType());
+  SVal Val = State->getSVal(*AddrLoc,
+                            ArgTy ? ArgTy->getPointeeType(): QualType());
   return Val.getAsSymbol();
 }
 
