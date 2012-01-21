@@ -85,6 +85,10 @@ class CommandLineCompletionTestCase(TestBase):
                 child.sendline('')
                 child.expect_exact(prompt)
 
+        # Set logfile to None to stop logging.
+        child.logfile_send = None
+        child.logfile_read = None
+        
         with open('child_send.txt', 'r') as fs:
             if self.TraceOn():
                 print "\n\nContents of child_send.txt:"
@@ -105,9 +109,6 @@ class CommandLineCompletionTestCase(TestBase):
                 self.expect(from_child, msg=COMPLETIOND_MSG(str_input, p), exe=False,
                     patterns = [p])
 
-        child.logfile_send = None
-        child.logfile_read = None
-        
 
 if __name__ == '__main__':
     import atexit
