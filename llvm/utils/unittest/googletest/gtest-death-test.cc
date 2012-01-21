@@ -527,7 +527,6 @@ bool DeathTestImpl::Passed(bool status_ok) {
       }
       break;
     case IN_PROGRESS:
-    default:
       GTEST_LOG_(FATAL)
           << "DeathTest::Passed somehow called before conclusion of test";
   }

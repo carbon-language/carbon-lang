@@ -2480,8 +2480,6 @@ static const char * TestPartResultTypeToString(TestPartResult::Type type) {
 #else
       return "Failure\n";
 #endif
-    default:
-      return "Unknown result type";
   }
 }
 
