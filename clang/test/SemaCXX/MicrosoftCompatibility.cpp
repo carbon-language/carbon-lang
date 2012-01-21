@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple i686-pc-win32 -fsyntax-only -Wmicrosoft -verify -fms-compatibility -fexceptions -fcxx-exceptions
+// RUN: %clang_cc1 %s -triple i686-pc-win32 -fsyntax-only -std=c++11 -Wmicrosoft -verify -fms-compatibility -fexceptions -fcxx-exceptions
 
 
 
@@ -135,5 +135,10 @@ template void function_missing_typename<D>(const D::Type param);
 
 }
 
+enum ENUM2 {
+	ENUM2_a = (enum ENUM2) 4,
+	ENUM2_b = 0x9FFFFFFF, // expected-warning {{enumerator value is not representable in the underlying type 'int'}}
+	ENUM2_c = 0x100000000 // expected-warning {{enumerator value is not representable in the underlying type 'int'}}
+};
 
 

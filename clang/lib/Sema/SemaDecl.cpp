@@ -9559,7 +9559,8 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
       EltTy = Context.DependentTy;
     else {
       SourceLocation ExpLoc;
-      if (getLangOptions().CPlusPlus0x && Enum->isFixed()) {
+      if (getLangOptions().CPlusPlus0x && Enum->isFixed() &&
+          !getLangOptions().MicrosoftMode) {
         // C++11 [dcl.enum]p5: If the underlying type is fixed, [...] the
         // constant-expression in the enumerator-definition shall be a converted
         // constant expression of the underlying type.
