@@ -18,6 +18,10 @@ class CommandLineCompletionTestCase(TestBase):
         system(["/bin/sh", "-c", "rm -f child_send.txt"])
         system(["/bin/sh", "-c", "rm -f child_read.txt"])
 
+    def test_settings_replace_target_ru(self):
+        """Test that 'settings replace target.ru' completes to 'settings replace target.run-args'."""
+        self.complete_from_to('settings replace target.ru', 'settings replace target.run-args')
+
     def test_settings_s(self):
         """Test that 'settings s' completes to ['Available completions:', 'set', 'show']."""
         self.complete_from_to('settings s', ['Available completions:', 'set', 'show'])

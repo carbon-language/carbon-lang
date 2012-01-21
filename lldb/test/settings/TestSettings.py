@@ -27,6 +27,23 @@ class SettingsCommandTestCase(TestBase):
                        "environment variables",
                        "executable's environment"])
 
+    def test_replace_target_run_args(self):
+        """Test that 'replace target.run-args' works."""
+        # Set the run-args and then replace the index-0 element.
+        self.runCmd('settings set target.run-args a b c')
+        # And add hooks to restore the settings during tearDown().
+        self.addTearDownHook(
+            lambda: self.runCmd("settings set -r target.run-args"))
+
+        # Now replace the index-0 element with 'A', instead.
+        self.runCmd('settings replace target.run-args 0 A')
+        # Check it immediately!
+        self.expect('settings show target.run-args',
+            substrs = ['target.run-args (array) = ',
+                       '[0]: "A"',
+                       '[1]: "b"',
+                       '[2]: "c"'])
+
     def test_set_prompt(self):
         """Test that 'set prompt' actually changes the prompt."""
 

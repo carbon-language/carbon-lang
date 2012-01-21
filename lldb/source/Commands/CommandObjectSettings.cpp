@@ -690,11 +690,12 @@ CommandObjectSettingsReplace::~CommandObjectSettingsReplace ()
 }
 
 bool
-CommandObjectSettingsReplace::Execute (Args& command, CommandReturnObject &result)
+CommandObjectSettingsReplace::ExecuteRawCommandString (const char *raw_command, CommandReturnObject &result)
 {
     UserSettingsControllerSP usc_sp (Debugger::GetSettingsController ());
 
-    const int argc = command.GetArgumentCount ();
+    Args cmd_args(raw_command);
+    const int argc = cmd_args.GetArgumentCount ();
 
     if (argc < 3)
     {
@@ -703,7 +704,7 @@ CommandObjectSettingsReplace::Execute (Args& command, CommandReturnObject &resul
         return false;
     }
 
-    const char *var_name = command.GetArgumentAtIndex (0);
+    const char *var_name = cmd_args.GetArgumentAtIndex (0);
     std::string var_name_string;
     if ((var_name == NULL) || (var_name[0] == '\0'))
     {
@@ -713,9 +714,9 @@ CommandObjectSettingsReplace::Execute (Args& command, CommandReturnObject &resul
     }
 
     var_name_string = var_name;
-    command.Shift();
+    cmd_args.Shift();
 
-    const char *index_value = command.GetArgumentAtIndex (0);
+    const char *index_value = cmd_args.GetArgumentAtIndex (0);
     std::string index_value_string;
     if ((index_value == NULL) || (index_value[0] == '\0'))
     {
@@ -725,15 +726,15 @@ CommandObjectSettingsReplace::Execute (Args& command, CommandReturnObject &resul
     }
 
     index_value_string = index_value;
-    command.Shift();
+    cmd_args.Shift();
 
-    const char *var_value;
-    std::string value_string;
+    // Split the raw command into var_name, index_value, and value triple.
+    llvm::StringRef raw_str(raw_command);
+    llvm::StringRef var_value_str = raw_str.split(var_name).second.split(index_value).second;
+    StripLeadingSpaces(var_value_str);
+    std::string var_value_string = var_value_str.str();
 
-    command.GetQuotedCommandString (value_string);
-    var_value = value_string.c_str();
-
-    if ((var_value == NULL) || (var_value[0] == '\0'))
+    if (var_value_string.empty())
     {
         result.AppendError ("'settings replace' command requires a valid variable value; no value supplied");
         result.SetStatus (eReturnStatusFailed);
@@ -741,7 +742,7 @@ CommandObjectSettingsReplace::Execute (Args& command, CommandReturnObject &resul
     else
     {
         Error err = usc_sp->SetVariable (var_name_string.c_str(), 
-                                         var_value, 
+                                         var_value_string.c_str(), 
                                          eVarSetOperationReplace, 
                                          true, 
                                          m_interpreter.GetDebugger().GetInstanceName().AsCString(),
