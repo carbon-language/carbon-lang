@@ -304,42 +304,21 @@ bool Dependences::isParallelDimension(isl_set *loopDomain,
   isl_space *Space = isl_space_set_alloc(S->getIslCtx(), 0, parallelDimension);
 
   // [0, 0, 0, 0] - All zero
-  isl_basic_set *allZeroBS = isl_basic_set_universe(isl_space_copy(Space));
+  isl_set *allZero = isl_set_universe(isl_space_copy(Space));
   unsigned dimensions = isl_space_dim(Space, isl_dim_set);
-  isl_local_space *LocalSpace;
-  LocalSpace = isl_local_space_from_space(isl_space_copy(Space));
 
-  for (unsigned i = 0; i < dimensions; i++) {
-    isl_constraint *c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
-    isl_int v;
-    isl_int_init(v);
-    isl_int_set_si(v, -1);
-    isl_constraint_set_coefficient(c, isl_dim_set, i, v);
-    allZeroBS = isl_basic_set_add_constraint(allZeroBS, c);
-    isl_int_clear(v);
-  }
+  for (unsigned i = 0; i < dimensions; i++)
+    allZero = isl_set_fix_si(allZero, isl_dim_set, i, 0);
 
-  isl_set *allZero = isl_set_from_basic_set(allZeroBS);
   allZero = isl_set_align_params(allZero, S->getParamSpace());
 
   // All zero, last unknown.
   // [0, 0, 0, ?]
-  isl_basic_set *lastUnknownBS = isl_basic_set_universe(isl_space_copy(Space));
-  dimensions = isl_space_dim(Space, isl_dim_set);
+  isl_set *lastUnknown = isl_set_universe(isl_space_copy(Space));
 
-  for (unsigned i = 0; i < dimensions - 1; i++) {
-    isl_constraint *c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
-    isl_int v;
-    isl_int_init(v);
-    isl_int_set_si(v, -1);
-    isl_constraint_set_coefficient(c, isl_dim_set, i, v);
-    lastUnknownBS = isl_basic_set_add_constraint(lastUnknownBS, c);
-    isl_int_clear(v);
-  }
+  for (unsigned i = 0; i < dimensions - 1; i++)
+    lastUnknown = isl_set_fix_si(lastUnknown, isl_dim_set, i, 0);
 
-  isl_local_space_free(LocalSpace);
-
-  isl_set *lastUnknown = isl_set_from_basic_set(lastUnknownBS);
   lastUnknown = isl_set_align_params(lastUnknown, S->getParamSpace());
 
   // Valid distance vectors
