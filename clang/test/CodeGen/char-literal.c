@@ -14,17 +14,17 @@ int main() {
   // CHECK-CPP0X: store i8 98
   char b = 'ab';
 
-  // Should get concatonated characters
+  // Should get concatenated characters
   // CHECK-C: store i32 24930
   // CHECK-CPP0X: store i32 24930
   int b1 = 'ab';
 
-  // Should get concatonated characters
+  // Should get concatenated characters
   // CHECK-C: store i32 808464432
   // CHECK-CPP0X: store i32 808464432
   int b2 = '0000';
 
-  // Should get truncated value (last four characters concatonated)
+  // Should get truncated value (last four characters concatenated)
   // CHECK-C: store i32 1919512167
   // CHECK-CPP0X: store i32 1919512167
   int b3 = 'somesillylongstring';
@@ -44,6 +44,20 @@ int main() {
 
   // CHECK-CPP0X: store i32 97
   char32_t Ua = U'a';
+
+  // CHECK-CPP0X: store i16 1047
+  char16_t ua1 = u'З';
+  // CHECK-CPP0X: store i16 12538
+  char16_t ua2 = u'ヺ';
+  // CHECK-CPP0X: store i16 -27177
+  char16_t ua3 = u'闗';
+
+  // CHECK-CPP0X: store i32 181
+  char32_t Ua1 = U'µ';
+  // CHECK-CPP0X: store i32 38359
+  char32_t Ua2 = U'闗';
+  // CHECK-CPP0X: store i32 128128
+  char32_t Ua3 = U'💀';
 
 #endif
 
