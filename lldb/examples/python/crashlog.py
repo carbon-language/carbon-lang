@@ -420,7 +420,7 @@ class CrashLog:
                 return None # success
         return 'error: unable to locate any executables from the crash log'
 
-def disassemble_instructions (instructions, pc, insts_before_pc, insts_after_pc):
+def disassemble_instructions (instructions, pc, options, non_zeroeth_frame):
     lines = list()
     pc_index = -1
     comment_column = 50
@@ -440,11 +440,19 @@ def disassemble_instructions (instructions, pc, insts_before_pc, insts_after_pc)
                 lines[-1] += "; %s" % comment
 
     if pc_index >= 0:
-        if pc_index >= insts_before_pc:
-            start_idx = pc_index - insts_before_pc
-        else:
+        # If we are disassembling the non-zeroeth frame, we need to backup the PC by 1
+        if non_zeroeth_frame and pc_index > 0:
+            pc_index = pc_index - 1
+        if options.disassemble_before == -1:
             start_idx = 0
-        end_idx = pc_index + insts_after_pc
+        else:
+            start_idx = pc_index - options.disassemble_before
+        if start_idx < 0:
+            start_idx = 0
+        if options.disassemble_before == -1:
+            end_idx = inst_idx
+        else:
+            end_idx = pc_index + options.disassemble_after
         if end_idx > inst_idx:
             end_idx = inst_idx
         for i in range(start_idx, end_idx+1):
@@ -499,12 +507,16 @@ you to explore the program as if it were stopped at the locations described in t
 be disassembled and lookups can be performed using the addresses found in the crash log.'''
     parser = optparse.OptionParser(description=description, prog='crashlog.py',usage=usage)
     parser.add_option('--platform', type='string', metavar='platform', dest='platform', help='specify one platform by name')
-    parser.add_option('--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
+    parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
     parser.add_option('--no-images', action='store_false', dest='show_images', help='don\'t show images in stack frames', default=True)
-    parser.add_option('--load-all', action='store_true', dest='load_all_images', help='load all executable images, not just the images found in the crashed stack frames', default=False)
+    parser.add_option('-a', '--load-all', action='store_true', dest='load_all_images', help='load all executable images, not just the images found in the crashed stack frames', default=False)
     parser.add_option('--image-list', action='store_true', dest='dump_image_list', help='show image list', default=False)
-    parser.add_option('--debug-delay', type='int', dest='debug_delay', metavar='NSEC', help='pause for NSEC seconds for debugger', default=0)
-    parser.add_option('--crashed-only', action='store_true', dest='crashed_only', help='only symbolicate the crashed thread', default=False)
+    parser.add_option('-g', '--debug-delay', type='int', dest='debug_delay', metavar='NSEC', help='pause for NSEC seconds for debugger', default=0)
+    parser.add_option('-c', '--crashed-only', action='store_true', dest='crashed_only', help='only symbolicate the crashed thread', default=False)
+    parser.add_option('-d', '--disasm-depth', type='int', dest='disassemble_depth', help='set the depth in stack frames that should be disassembled (default is 1)', default=1)
+    parser.add_option('-D', '--disasm-all', action='store_true', dest='disassemble_all_threads', help='enabled disassembly of frames on all threads (not just the crashed thread)', default=False)
+    parser.add_option('-B', '--disasm-before', type='int', dest='disassemble_before', help='the number of instructions to disassemble before the frame PC', default=4)
+    parser.add_option('-A', '--disasm-after', type='int', dest='disassemble_after', help='the number of instructions to disassemble after the frame PC', default=4)
     loaded_addresses = False
     try:
         (options, args) = parser.parse_args(command_args)
@@ -652,6 +664,7 @@ be disassembled and lookups can be performed using the addresses found in the cr
                         line_entry = frame.sym_ctx.GetLineEntry()
                         symbol = frame.sym_ctx.GetSymbol()
                         inlined_block = block.GetContainingInlinedBlock();
+                        disassemble = (this_thread_crashed or options.disassemble_all_threads) and frame_idx < options.disassemble_depth;
                         if inlined_block:
                             function_name = inlined_block.GetInlinedName();
                             block_range_idx = inlined_block.GetRangeIndexForBlockAddress (lldb.target.ResolveLoadAddress (frame.pc))
@@ -660,17 +673,17 @@ be disassembled and lookups can be performed using the addresses found in the cr
                                 function_start_load_addr = block_range_start_addr.GetLoadAddress (lldb.target)
                             else:
                                 function_start_load_addr = frame.pc
-                            if this_thread_crashed and frame_idx == 0:
+                            if disassemble:
                                 instructions = function.GetInstructions(lldb.target)
                         elif function:
                             function_name = function.GetName()
                             function_start_load_addr = function.GetStartAddress().GetLoadAddress (lldb.target)
-                            if this_thread_crashed and frame_idx == 0:
+                            if disassemble:
                                 instructions = function.GetInstructions(lldb.target)
                         elif symbol:
                             function_name = symbol.GetName()
                             function_start_load_addr = symbol.GetStartAddress().GetLoadAddress (lldb.target)
-                            if this_thread_crashed and frame_idx == 0:
+                            if disassemble:
                                 instructions = symbol.GetInstructions(lldb.target)
 
                         if function_name:
@@ -708,7 +721,7 @@ be disassembled and lookups can be performed using the addresses found in the cr
                     prev_frame_index = frame.index
                     if instructions:
                         print
-                        disassemble_instructions (instructions, frame.pc, 4, 4)
+                        disassemble_instructions (instructions, frame.pc, options, frame.index > 0)
                         print
 
                 print                
