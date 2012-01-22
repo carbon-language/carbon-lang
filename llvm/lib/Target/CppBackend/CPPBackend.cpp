@@ -441,7 +441,7 @@ void CppWriter::printAttributes(const AttrListPtr &PAL,
     for (unsigned i = 0; i < PAL.getNumSlots(); ++i) {
       unsigned index = PAL.getSlot(i).Index;
       Attributes attrs = PAL.getSlot(i).Attrs;
-      Out << "PAWI.Index = " << index << "U; PAWI.Attrs = 0 ";
+      Out << "PAWI.Index = " << index << "U; PAWI.Attrs = Attribute::None ";
 #define HANDLE_ATTR(X)                 \
       if (attrs & Attribute::X)      \
         Out << " | Attribute::" #X;  \
