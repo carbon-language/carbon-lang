@@ -233,8 +233,7 @@ namespace llvm {
       CMPPD, CMPPS,
 
       // PCMP* - Vector integer comparisons.
-      PCMPEQB, PCMPEQW, PCMPEQD, PCMPEQQ,
-      PCMPGTB, PCMPGTW, PCMPGTD, PCMPGTQ,
+      PCMPEQ, PCMPGT,
 
       // ADD, SUB, SMUL, etc. - Arithmetic operations with FLAGS results.
       ADD, SUB, ADC, SBB, SMUL,

@@ -77,14 +77,8 @@ def X86vshldq  : SDNode<"X86ISD::VSHLDQ",    SDTIntShiftOp>;
 def X86vshrdq  : SDNode<"X86ISD::VSRLDQ",    SDTIntShiftOp>;
 def X86cmpps   : SDNode<"X86ISD::CMPPS",     SDTX86VFCMP>;
 def X86cmppd   : SDNode<"X86ISD::CMPPD",     SDTX86VFCMP>;
-def X86pcmpeqb : SDNode<"X86ISD::PCMPEQB", SDTIntBinOp, [SDNPCommutative]>;
-def X86pcmpeqw : SDNode<"X86ISD::PCMPEQW", SDTIntBinOp, [SDNPCommutative]>;
-def X86pcmpeqd : SDNode<"X86ISD::PCMPEQD", SDTIntBinOp, [SDNPCommutative]>;
-def X86pcmpeqq : SDNode<"X86ISD::PCMPEQQ", SDTIntBinOp, [SDNPCommutative]>;
-def X86pcmpgtb : SDNode<"X86ISD::PCMPGTB", SDTIntBinOp>;
-def X86pcmpgtw : SDNode<"X86ISD::PCMPGTW", SDTIntBinOp>;
-def X86pcmpgtd : SDNode<"X86ISD::PCMPGTD", SDTIntBinOp>;
-def X86pcmpgtq : SDNode<"X86ISD::PCMPGTQ", SDTIntBinOp>;
+def X86pcmpeq  : SDNode<"X86ISD::PCMPEQ", SDTIntBinOp, [SDNPCommutative]>;
+def X86pcmpgt  : SDNode<"X86ISD::PCMPGT", SDTIntBinOp>;
 
 def X86vshl    : SDNode<"X86ISD::VSHL",
                         SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,

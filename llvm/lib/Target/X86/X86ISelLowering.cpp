@@ -8419,38 +8419,30 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
   // We are handling one of the integer comparisons here.  Since SSE only has
   // GT and EQ comparisons for integer, swapping operands and multiple
   // operations may be required for some comparisons.
-  unsigned Opc = 0, EQOpc = 0, GTOpc = 0;
+  unsigned Opc = 0;
   bool Swap = false, Invert = false, FlipSigns = false;
-
-  switch (VT.getVectorElementType().getSimpleVT().SimpleTy) {
-  default: break;
-  case MVT::i8:   EQOpc = X86ISD::PCMPEQB; GTOpc = X86ISD::PCMPGTB; break;
-  case MVT::i16:  EQOpc = X86ISD::PCMPEQW; GTOpc = X86ISD::PCMPGTW; break;
-  case MVT::i32:  EQOpc = X86ISD::PCMPEQD; GTOpc = X86ISD::PCMPGTD; break;
-  case MVT::i64:  EQOpc = X86ISD::PCMPEQQ; GTOpc = X86ISD::PCMPGTQ; break;
-  }
 
   switch (SetCCOpcode) {
   default: break;
   case ISD::SETNE:  Invert = true;
-  case ISD::SETEQ:  Opc = EQOpc; break;
+  case ISD::SETEQ:  Opc = X86ISD::PCMPEQ; break;
   case ISD::SETLT:  Swap = true;
-  case ISD::SETGT:  Opc = GTOpc; break;
+  case ISD::SETGT:  Opc = X86ISD::PCMPGT; break;
   case ISD::SETGE:  Swap = true;
-  case ISD::SETLE:  Opc = GTOpc; Invert = true; break;
+  case ISD::SETLE:  Opc = X86ISD::PCMPGT; Invert = true; break;
   case ISD::SETULT: Swap = true;
-  case ISD::SETUGT: Opc = GTOpc; FlipSigns = true; break;
+  case ISD::SETUGT: Opc = X86ISD::PCMPGT; FlipSigns = true; break;
   case ISD::SETUGE: Swap = true;
-  case ISD::SETULE: Opc = GTOpc; FlipSigns = true; Invert = true; break;
+  case ISD::SETULE: Opc = X86ISD::PCMPGT; FlipSigns = true; Invert = true; break;
   }
   if (Swap)
     std::swap(Op0, Op1);
 
   // Check that the operation in question is available (most are plain SSE2,
   // but PCMPGTQ and PCMPEQQ have different requirements).
-  if (Opc == X86ISD::PCMPGTQ && !Subtarget->hasSSE42())
+  if (Opc == X86ISD::PCMPGT && VT == MVT::v2i64 && !Subtarget->hasSSE42())
     return SDValue();
-  if (Opc == X86ISD::PCMPEQQ && !Subtarget->hasSSE41())
+  if (Opc == X86ISD::PCMPEQ && VT == MVT::v2i64 && !Subtarget->hasSSE41())
     return SDValue();
 
   // Since SSE has no unsigned integer comparisons, we need to flip  the sign
@@ -10108,7 +10100,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
             // R s>> 7  ===  R s< 0
             SDValue Zeros = getZeroVector(VT, /* HasSSE2 */true,
                                           /* HasAVX2 */false, DAG, dl);
-            return DAG.getNode(X86ISD::PCMPGTB, dl, VT, Zeros, R);
+            return DAG.getNode(X86ISD::PCMPGT, dl, VT, Zeros, R);
           }
 
           // R s>> a === ((R u>> a) ^ m) - m
@@ -10152,7 +10144,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
             // R s>> 7  ===  R s< 0
             SDValue Zeros = getZeroVector(VT, true /* HasSSE2 */,
                                           true /* HasAVX2 */, DAG, dl);
-            return DAG.getNode(X86ISD::PCMPGTB, dl, VT, Zeros, R);
+            return DAG.getNode(X86ISD::PCMPGT, dl, VT, Zeros, R);
           }
 
           // R s>> a === ((R u>> a) ^ m) - m
@@ -10198,7 +10190,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
     // Turn 'a' into a mask suitable for VSELECT
     SDValue VSelM = DAG.getConstant(0x80, VT);
     SDValue OpVSel = DAG.getNode(ISD::AND, dl, VT, VSelM, Op);
-    OpVSel = DAG.getNode(X86ISD::PCMPEQB, dl, VT, OpVSel, VSelM);
+    OpVSel = DAG.getNode(X86ISD::PCMPEQ, dl, VT, OpVSel, VSelM);
 
     SDValue CM1 = DAG.getConstant(0x0f, VT);
     SDValue CM2 = DAG.getConstant(0x3f, VT);
@@ -10213,7 +10205,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
     // a += a
     Op = DAG.getNode(ISD::ADD, dl, VT, Op, Op);
     OpVSel = DAG.getNode(ISD::AND, dl, VT, VSelM, Op);
-    OpVSel = DAG.getNode(X86ISD::PCMPEQB, dl, VT, OpVSel, VSelM);
+    OpVSel = DAG.getNode(X86ISD::PCMPEQ, dl, VT, OpVSel, VSelM);
 
     // r = VSELECT(r, psllw(r & (char16)63, 2), a);
     M = DAG.getNode(ISD::AND, dl, VT, R, CM2);
@@ -10225,7 +10217,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
     // a += a
     Op = DAG.getNode(ISD::ADD, dl, VT, Op, Op);
     OpVSel = DAG.getNode(ISD::AND, dl, VT, VSelM, Op);
-    OpVSel = DAG.getNode(X86ISD::PCMPEQB, dl, VT, OpVSel, VSelM);
+    OpVSel = DAG.getNode(X86ISD::PCMPEQ, dl, VT, OpVSel, VSelM);
 
     // return VSELECT(r, r+r, a);
     R = DAG.getNode(ISD::VSELECT, dl, VT, OpVSel,
@@ -10945,14 +10937,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VSRAI:              return "X86ISD::VSRAI";
   case X86ISD::CMPPD:              return "X86ISD::CMPPD";
   case X86ISD::CMPPS:              return "X86ISD::CMPPS";
-  case X86ISD::PCMPEQB:            return "X86ISD::PCMPEQB";
-  case X86ISD::PCMPEQW:            return "X86ISD::PCMPEQW";
-  case X86ISD::PCMPEQD:            return "X86ISD::PCMPEQD";
-  case X86ISD::PCMPEQQ:            return "X86ISD::PCMPEQQ";
-  case X86ISD::PCMPGTB:            return "X86ISD::PCMPGTB";
-  case X86ISD::PCMPGTW:            return "X86ISD::PCMPGTW";
-  case X86ISD::PCMPGTD:            return "X86ISD::PCMPGTD";
-  case X86ISD::PCMPGTQ:            return "X86ISD::PCMPGTQ";
+  case X86ISD::PCMPEQ:             return "X86ISD::PCMPEQ";
+  case X86ISD::PCMPGT:             return "X86ISD::PCMPGT";
   case X86ISD::ADD:                return "X86ISD::ADD";
   case X86ISD::SUB:                return "X86ISD::SUB";
   case X86ISD::ADC:                return "X86ISD::ADC";
