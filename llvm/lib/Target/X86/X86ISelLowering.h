@@ -219,8 +219,14 @@ namespace llvm {
       // VZEXT_MOVL - Vector move low and zero extend.
       VZEXT_MOVL,
 
-      // VSHL, VSRL - Vector logical left / right shift.
-      VSHL, VSRL,
+      // VSHL, VSRL - 128-bit vector logical left / right shift
+      VSHLDQ, VSRLDQ,
+
+      // VSHL, VSRL, VSRA - Vector shift elements
+      VSHL, VSRL, VSRA,
+
+      // VSHLI, VSRLI, VSRAI - Vector shift elements by immediate
+      VSHLI, VSRLI, VSRAI,
 
       // CMPPD, CMPPS - Vector double/float comparison.
       // CMPPD, CMPPS - Vector double/float comparison.

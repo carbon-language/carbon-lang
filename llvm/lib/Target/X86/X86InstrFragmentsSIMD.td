@@ -73,8 +73,8 @@ def X86vzmovl  : SDNode<"X86ISD::VZEXT_MOVL",
                  SDTypeProfile<1, 1, [SDTCisSameAs<0,1>]>>;
 def X86vzload  : SDNode<"X86ISD::VZEXT_LOAD", SDTLoad,
                         [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
-def X86vshl    : SDNode<"X86ISD::VSHL",      SDTIntShiftOp>;
-def X86vshr    : SDNode<"X86ISD::VSRL",      SDTIntShiftOp>;
+def X86vshldq  : SDNode<"X86ISD::VSHLDQ",    SDTIntShiftOp>;
+def X86vshrdq  : SDNode<"X86ISD::VSRLDQ",    SDTIntShiftOp>;
 def X86cmpps   : SDNode<"X86ISD::CMPPS",     SDTX86VFCMP>;
 def X86cmppd   : SDNode<"X86ISD::CMPPD",     SDTX86VFCMP>;
 def X86pcmpeqb : SDNode<"X86ISD::PCMPEQB", SDTIntBinOp, [SDNPCommutative]>;
@@ -85,6 +85,20 @@ def X86pcmpgtb : SDNode<"X86ISD::PCMPGTB", SDTIntBinOp>;
 def X86pcmpgtw : SDNode<"X86ISD::PCMPGTW", SDTIntBinOp>;
 def X86pcmpgtd : SDNode<"X86ISD::PCMPGTD", SDTIntBinOp>;
 def X86pcmpgtq : SDNode<"X86ISD::PCMPGTQ", SDTIntBinOp>;
+
+def X86vshl    : SDNode<"X86ISD::VSHL",
+                        SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
+                                      SDTCisVec<2>]>>;
+def X86vsrl    : SDNode<"X86ISD::VSRL",
+                        SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
+                                      SDTCisVec<2>]>>;
+def X86vsra    : SDNode<"X86ISD::VSRA",
+                        SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisSameAs<0,1>,
+                                      SDTCisVec<2>]>>;
+
+def X86vshli   : SDNode<"X86ISD::VSHLI", SDTIntShiftOp>;
+def X86vsrli   : SDNode<"X86ISD::VSRLI", SDTIntShiftOp>;
+def X86vsrai   : SDNode<"X86ISD::VSRAI", SDTIntShiftOp>;
 
 def SDTX86CmpPTest : SDTypeProfile<1, 2, [SDTCisVT<0, i32>,
                                           SDTCisVec<1>,

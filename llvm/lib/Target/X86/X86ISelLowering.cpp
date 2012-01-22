@@ -4789,7 +4789,7 @@ static SDValue getVShift(bool isLeft, EVT VT, SDValue SrcOp,
                          const TargetLowering &TLI, DebugLoc dl) {
   assert(VT.getSizeInBits() == 128 && "Unknown type for VShift");
   EVT ShVT = MVT::v2i64;
-  unsigned Opc = isLeft ? X86ISD::VSHL : X86ISD::VSRL;
+  unsigned Opc = isLeft ? X86ISD::VSHLDQ : X86ISD::VSRLDQ;
   SrcOp = DAG.getNode(ISD::BITCAST, dl, ShVT, SrcOp);
   return DAG.getNode(ISD::BITCAST, dl, VT,
                      DAG.getNode(Opc, dl, ShVT, SrcOp,
@@ -6587,7 +6587,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return CommuteVectorShuffle(SVOp, DAG);
 
   if (isShift) {
-    // No better options. Use a vshl / vsrl.
+    // No better options. Use a vshldq / vsrldq.
     EVT EltVT = VT.getVectorElementType();
     ShAmt *= EltVT.getSizeInBits();
     return getVShift(isLeft, VT, ShVal, ShAmt, DAG, *this, dl);
@@ -10010,6 +10010,43 @@ SDValue X86TargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) const {
   return Res;
 }
 
+// getTargetVShiftNOde - Handle vector element shifts where the shift amount
+// may or may not be a constant. Takes immediate version of shift as input.
+static SDValue getTargetVShiftNode(unsigned Opc, DebugLoc dl, EVT VT,
+                                   SDValue SrcOp, SDValue ShAmt,
+                                   SelectionDAG &DAG) {
+  assert(ShAmt.getValueType() == MVT::i32 && "ShAmt is not i32");
+
+  if (isa<ConstantSDNode>(ShAmt)) {
+    switch (Opc) {
+      default: llvm_unreachable("Unknown target vector shift node");
+      case X86ISD::VSHLI:
+      case X86ISD::VSRLI:
+      case X86ISD::VSRAI:
+        return DAG.getNode(Opc, dl, VT, SrcOp, ShAmt);
+    }
+  }
+
+  // Change opcode to non-immediate version
+  switch (Opc) {
+    default: llvm_unreachable("Unknown target vector shift node");
+    case X86ISD::VSHLI: Opc = X86ISD::VSHL; break;
+    case X86ISD::VSRLI: Opc = X86ISD::VSRL; break;
+    case X86ISD::VSRAI: Opc = X86ISD::VSRA; break;
+  }
+
+  // Need to build a vector containing shift amount
+  // Shift amount is 32-bits, but SSE instructions read 64-bit, so fill with 0
+  SDValue ShOps[4];
+  ShOps[0] = ShAmt;
+  ShOps[1] = DAG.getConstant(0, MVT::i32);
+  ShOps[2] = DAG.getUNDEF(MVT::i32);
+  ShOps[3] = DAG.getUNDEF(MVT::i32);
+  ShAmt = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, &ShOps[0], 4);
+  ShAmt = DAG.getNode(ISD::BITCAST, dl, VT, ShAmt);
+  return DAG.getNode(Opc, dl, VT, SrcOp, ShAmt);
+}
+
 SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
 
   EVT VT = Op.getValueType();
@@ -10027,112 +10064,86 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(SclrAmt)) {
       uint64_t ShiftAmt = C->getZExtValue();
 
-      if (VT == MVT::v16i8 && Op.getOpcode() == ISD::SHL) {
-        // Make a large shift.
-        SDValue SHL =
-          DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                      DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32),
-                      R, DAG.getConstant(ShiftAmt, MVT::i32));
-        // Zero out the rightmost bits.
-        SmallVector<SDValue, 16> V(16, DAG.getConstant(uint8_t(-1U << ShiftAmt),
-                                                       MVT::i8));
-        return DAG.getNode(ISD::AND, dl, VT, SHL,
-                           DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &V[0], 16));
+      if (VT == MVT::v2i64 || VT == MVT::v4i32 || VT == MVT::v8i16 ||
+          (Subtarget->hasAVX2() &&
+           (VT == MVT::v4i64 || VT == MVT::v8i32 || VT == MVT::v16i16))) {
+        if (Op.getOpcode() == ISD::SHL)
+          return DAG.getNode(X86ISD::VSHLI, dl, VT, R,
+                             DAG.getConstant(ShiftAmt, MVT::i32));
+        if (Op.getOpcode() == ISD::SRL)
+          return DAG.getNode(X86ISD::VSRLI, dl, VT, R,
+                             DAG.getConstant(ShiftAmt, MVT::i32));
+        if (Op.getOpcode() == ISD::SRA && VT != MVT::v2i64 && VT != MVT::v4i64)
+          return DAG.getNode(X86ISD::VSRAI, dl, VT, R,
+                             DAG.getConstant(ShiftAmt, MVT::i32));
       }
 
-      if (VT == MVT::v2i64 && Op.getOpcode() == ISD::SHL)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_sse2_pslli_q, MVT::i32),
-                     R, DAG.getConstant(ShiftAmt, MVT::i32));
-
-      if (VT == MVT::v4i32 && Op.getOpcode() == ISD::SHL)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_sse2_pslli_d, MVT::i32),
-                     R, DAG.getConstant(ShiftAmt, MVT::i32));
-
-      if (VT == MVT::v8i16 && Op.getOpcode() == ISD::SHL)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32),
-                     R, DAG.getConstant(ShiftAmt, MVT::i32));
-
-      if (VT == MVT::v16i8 && Op.getOpcode() == ISD::SRL) {
-        // Make a large shift.
-        SDValue SRL =
-          DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                      DAG.getConstant(Intrinsic::x86_sse2_psrli_w, MVT::i32),
-                      R, DAG.getConstant(ShiftAmt, MVT::i32));
-        // Zero out the leftmost bits.
-        SmallVector<SDValue, 16> V(16, DAG.getConstant(uint8_t(-1U) >> ShiftAmt,
-                                                       MVT::i8));
-        return DAG.getNode(ISD::AND, dl, VT, SRL,
-                           DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &V[0], 16));
-      }
-
-      if (VT == MVT::v2i64 && Op.getOpcode() == ISD::SRL)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_sse2_psrli_q, MVT::i32),
-                     R, DAG.getConstant(ShiftAmt, MVT::i32));
-
-      if (VT == MVT::v4i32 && Op.getOpcode() == ISD::SRL)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_sse2_psrli_d, MVT::i32),
-                     R, DAG.getConstant(ShiftAmt, MVT::i32));
-
-      if (VT == MVT::v8i16 && Op.getOpcode() == ISD::SRL)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_sse2_psrli_w, MVT::i32),
-                     R, DAG.getConstant(ShiftAmt, MVT::i32));
-
-      if (VT == MVT::v4i32 && Op.getOpcode() == ISD::SRA)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_sse2_psrai_d, MVT::i32),
-                     R, DAG.getConstant(ShiftAmt, MVT::i32));
-
-      if (VT == MVT::v8i16 && Op.getOpcode() == ISD::SRA)
-       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_sse2_psrai_w, MVT::i32),
-                     R, DAG.getConstant(ShiftAmt, MVT::i32));
-
-      if (VT == MVT::v16i8 && Op.getOpcode() == ISD::SRA) {
-        if (ShiftAmt == 7) {
-          // R s>> 7  ===  R s< 0
-          SDValue Zeros = getZeroVector(VT, /* HasSSE2 */true,
-                                        /* HasAVX2 */false, DAG, dl);
-          return DAG.getNode(X86ISD::PCMPGTB, dl, VT, Zeros, R);
+      if (VT == MVT::v16i8) {
+        if (Op.getOpcode() == ISD::SHL) {
+          // Make a large shift.
+          SDValue SHL = DAG.getNode(X86ISD::VSHLI, dl, MVT::v8i16, R,
+                                    DAG.getConstant(ShiftAmt, MVT::i32));
+          SHL = DAG.getNode(ISD::BITCAST, dl, VT, SHL);
+          // Zero out the rightmost bits.
+          SmallVector<SDValue, 16> V(16,
+                                     DAG.getConstant(uint8_t(-1U << ShiftAmt),
+                                                     MVT::i8));
+          return DAG.getNode(ISD::AND, dl, VT, SHL,
+                             DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &V[0], 16));
         }
+        if (Op.getOpcode() == ISD::SRL) {
+          // Make a large shift.
+          SDValue SRL = DAG.getNode(X86ISD::VSRLI, dl, MVT::v8i16, R,
+                                    DAG.getConstant(ShiftAmt, MVT::i32));
+          SRL = DAG.getNode(ISD::BITCAST, dl, VT, SRL);
+          // Zero out the leftmost bits.
+          SmallVector<SDValue, 16> V(16,
+                                     DAG.getConstant(uint8_t(-1U) >> ShiftAmt,
+                                                     MVT::i8));
+          return DAG.getNode(ISD::AND, dl, VT, SRL,
+                             DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &V[0], 16));
+        }
+        if (Op.getOpcode() == ISD::SRA) {
+          if (ShiftAmt == 7) {
+            // R s>> 7  ===  R s< 0
+            SDValue Zeros = getZeroVector(VT, /* HasSSE2 */true,
+                                          /* HasAVX2 */false, DAG, dl);
+            return DAG.getNode(X86ISD::PCMPGTB, dl, VT, Zeros, R);
+          }
 
-        // R s>> a === ((R u>> a) ^ m) - m
-        SDValue Res = DAG.getNode(ISD::SRL, dl, VT, R, Amt);
-        SmallVector<SDValue, 16> V(16, DAG.getConstant(128 >> ShiftAmt,
-                                                       MVT::i8));
-        SDValue Mask = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &V[0], 16);
-        Res = DAG.getNode(ISD::XOR, dl, VT, Res, Mask);
-        Res = DAG.getNode(ISD::SUB, dl, VT, Res, Mask);
-        return Res;
+          // R s>> a === ((R u>> a) ^ m) - m
+          SDValue Res = DAG.getNode(ISD::SRL, dl, VT, R, Amt);
+          SmallVector<SDValue, 16> V(16, DAG.getConstant(128 >> ShiftAmt,
+                                                         MVT::i8));
+          SDValue Mask = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &V[0], 16);
+          Res = DAG.getNode(ISD::XOR, dl, VT, Res, Mask);
+          Res = DAG.getNode(ISD::SUB, dl, VT, Res, Mask);
+          return Res;
+        }
       }
 
       if (Subtarget->hasAVX2() && VT == MVT::v32i8) {
         if (Op.getOpcode() == ISD::SHL) {
           // Make a large shift.
-          SDValue SHL =
-            DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                        DAG.getConstant(Intrinsic::x86_avx2_pslli_w, MVT::i32),
-                        R, DAG.getConstant(ShiftAmt, MVT::i32));
+          SDValue SHL = DAG.getNode(X86ISD::VSHLI, dl, MVT::v16i16, R,
+                                    DAG.getConstant(ShiftAmt, MVT::i32));
+          SHL = DAG.getNode(ISD::BITCAST, dl, VT, SHL);
           // Zero out the rightmost bits.
-          SmallVector<SDValue, 32> V(32, DAG.getConstant(uint8_t(-1U << ShiftAmt),
-                                                         MVT::i8));
+          SmallVector<SDValue, 32> V(32,
+                                     DAG.getConstant(uint8_t(-1U << ShiftAmt),
+                                                     MVT::i8));
           return DAG.getNode(ISD::AND, dl, VT, SHL,
                              DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &V[0], 32));
         }
         if (Op.getOpcode() == ISD::SRL) {
           // Make a large shift.
-          SDValue SRL =
-            DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                        DAG.getConstant(Intrinsic::x86_avx2_psrli_w, MVT::i32),
-                        R, DAG.getConstant(ShiftAmt, MVT::i32));
+          SDValue SRL = DAG.getNode(X86ISD::VSRLI, dl, MVT::v16i16, R,
+                                    DAG.getConstant(ShiftAmt, MVT::i32));
+          SRL = DAG.getNode(ISD::BITCAST, dl, VT, SRL);
           // Zero out the leftmost bits.
-          SmallVector<SDValue, 32> V(32, DAG.getConstant(uint8_t(-1U) >> ShiftAmt,
-                                                         MVT::i8));
+          SmallVector<SDValue, 32> V(32,
+                                     DAG.getConstant(uint8_t(-1U) >> ShiftAmt,
+                                                     MVT::i8));
           return DAG.getNode(ISD::AND, dl, VT, SRL,
                              DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &V[0], 32));
         }
@@ -10159,9 +10170,8 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
 
   // Lower SHL with variable shift amount.
   if (VT == MVT::v4i32 && Op->getOpcode() == ISD::SHL) {
-    Op = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_sse2_pslli_d, MVT::i32),
-                     Op.getOperand(1), DAG.getConstant(23, MVT::i32));
+    Op = DAG.getNode(X86ISD::VSHLI, dl, VT, Op.getOperand(1),
+                     DAG.getConstant(23, MVT::i32));
 
     ConstantInt *CI = ConstantInt::get(*Context, APInt(32, 0x3f800000U));
 
@@ -10181,47 +10191,41 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
     assert(Subtarget->hasSSE2() && "Need SSE2 for pslli/pcmpeq.");
 
     // a = a << 5;
-    Op = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                     DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32),
-                     Op.getOperand(1), DAG.getConstant(5, MVT::i32));
+    Op = DAG.getNode(X86ISD::VSHLI, dl, MVT::v8i16, Op.getOperand(1),
+                     DAG.getConstant(5, MVT::i32));
+    Op = DAG.getNode(ISD::BITCAST, dl, VT, Op);
 
     // Turn 'a' into a mask suitable for VSELECT
     SDValue VSelM = DAG.getConstant(0x80, VT);
     SDValue OpVSel = DAG.getNode(ISD::AND, dl, VT, VSelM, Op);
-    OpVSel = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                        DAG.getConstant(Intrinsic::x86_sse2_pcmpeq_b, MVT::i32),
-                        OpVSel, VSelM);
+    OpVSel = DAG.getNode(X86ISD::PCMPEQB, dl, VT, OpVSel, VSelM);
 
     SDValue CM1 = DAG.getConstant(0x0f, VT);
     SDValue CM2 = DAG.getConstant(0x3f, VT);
 
     // r = VSELECT(r, psllw(r & (char16)15, 4), a);
     SDValue M = DAG.getNode(ISD::AND, dl, VT, R, CM1);
-    M = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                    DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32), M,
-                    DAG.getConstant(4, MVT::i32));
+    M = getTargetVShiftNode(X86ISD::VSHLI, dl, MVT::v8i16, M,
+                            DAG.getConstant(4, MVT::i32), DAG);
+    M = DAG.getNode(ISD::BITCAST, dl, VT, M);
     R = DAG.getNode(ISD::VSELECT, dl, VT, OpVSel, M, R);
 
     // a += a
     Op = DAG.getNode(ISD::ADD, dl, VT, Op, Op);
     OpVSel = DAG.getNode(ISD::AND, dl, VT, VSelM, Op);
-    OpVSel = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                        DAG.getConstant(Intrinsic::x86_sse2_pcmpeq_b, MVT::i32),
-                        OpVSel, VSelM);
+    OpVSel = DAG.getNode(X86ISD::PCMPEQB, dl, VT, OpVSel, VSelM);
 
     // r = VSELECT(r, psllw(r & (char16)63, 2), a);
     M = DAG.getNode(ISD::AND, dl, VT, R, CM2);
-    M = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                    DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32), M,
-                    DAG.getConstant(2, MVT::i32));
+    M = getTargetVShiftNode(X86ISD::VSHLI, dl, MVT::v8i16, M,
+                            DAG.getConstant(2, MVT::i32), DAG);
+    M = DAG.getNode(ISD::BITCAST, dl, VT, M);
     R = DAG.getNode(ISD::VSELECT, dl, VT, OpVSel, M, R);
 
     // a += a
     Op = DAG.getNode(ISD::ADD, dl, VT, Op, Op);
     OpVSel = DAG.getNode(ISD::AND, dl, VT, VSelM, Op);
-    OpVSel = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                        DAG.getConstant(Intrinsic::x86_sse2_pcmpeq_b, MVT::i32),
-                        OpVSel, VSelM);
+    OpVSel = DAG.getNode(X86ISD::PCMPEQB, dl, VT, OpVSel, VSelM);
 
     // return VSELECT(r, r+r, a);
     R = DAG.getNode(ISD::VSELECT, dl, VT, OpVSel,
@@ -10231,7 +10235,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
 
   // Decompose 256-bit shifts into smaller 128-bit shifts.
   if (VT.getSizeInBits() == 256) {
-    int NumElems = VT.getVectorNumElements();
+    unsigned NumElems = VT.getVectorNumElements();
     MVT EltVT = VT.getVectorElementType().getSimpleVT();
     EVT NewVT = MVT::getVectorVT(EltVT, NumElems/2);
 
@@ -10246,9 +10250,9 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
       // Constant shift amount
       SmallVector<SDValue, 4> Amt1Csts;
       SmallVector<SDValue, 4> Amt2Csts;
-      for (int i = 0; i < NumElems/2; ++i)
+      for (unsigned i = 0; i != NumElems/2; ++i)
         Amt1Csts.push_back(Amt->getOperand(i));
-      for (int i = NumElems/2; i < NumElems; ++i)
+      for (unsigned i = NumElems/2; i != NumElems; ++i)
         Amt2Csts.push_back(Amt->getOperand(i));
 
       Amt1 = DAG.getNode(ISD::BUILD_VECTOR, dl, NewVT,
@@ -10354,72 +10358,52 @@ SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
   EVT ExtraVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
   EVT VT = Op.getValueType();
 
-  if (Subtarget->hasSSE2() && VT.isVector()) {
-    unsigned BitsDiff = VT.getScalarType().getSizeInBits() -
-                        ExtraVT.getScalarType().getSizeInBits();
-    SDValue ShAmt = DAG.getConstant(BitsDiff, MVT::i32);
+  if (!Subtarget->hasSSE2() || !VT.isVector())
+    return SDValue();
 
-    unsigned SHLIntrinsicsID = 0;
-    unsigned SRAIntrinsicsID = 0;
-    switch (VT.getSimpleVT().SimpleTy) {
-      default:
+  unsigned BitsDiff = VT.getScalarType().getSizeInBits() -
+                      ExtraVT.getScalarType().getSizeInBits();
+  SDValue ShAmt = DAG.getConstant(BitsDiff, MVT::i32);
+
+  switch (VT.getSimpleVT().SimpleTy) {
+    default: return SDValue();
+    case MVT::v8i32:
+    case MVT::v16i16:
+      if (!Subtarget->hasAVX())
         return SDValue();
-      case MVT::v4i32:
-        SHLIntrinsicsID = Intrinsic::x86_sse2_pslli_d;
-        SRAIntrinsicsID = Intrinsic::x86_sse2_psrai_d;
-        break;
-      case MVT::v8i16:
-        SHLIntrinsicsID = Intrinsic::x86_sse2_pslli_w;
-        SRAIntrinsicsID = Intrinsic::x86_sse2_psrai_w;
-        break;
-      case MVT::v8i32:
-      case MVT::v16i16:
-        if (!Subtarget->hasAVX())
-          return SDValue();
-        if (!Subtarget->hasAVX2()) {
-          // needs to be split
-          int NumElems = VT.getVectorNumElements();
-          SDValue Idx0 = DAG.getConstant(0, MVT::i32);
-          SDValue Idx1 = DAG.getConstant(NumElems/2, MVT::i32);
+      if (!Subtarget->hasAVX2()) {
+        // needs to be split
+        int NumElems = VT.getVectorNumElements();
+        SDValue Idx0 = DAG.getConstant(0, MVT::i32);
+        SDValue Idx1 = DAG.getConstant(NumElems/2, MVT::i32);
 
-          // Extract the LHS vectors
-          SDValue LHS = Op.getOperand(0);
-          SDValue LHS1 = Extract128BitVector(LHS, Idx0, DAG, dl);
-          SDValue LHS2 = Extract128BitVector(LHS, Idx1, DAG, dl);
+        // Extract the LHS vectors
+        SDValue LHS = Op.getOperand(0);
+        SDValue LHS1 = Extract128BitVector(LHS, Idx0, DAG, dl);
+        SDValue LHS2 = Extract128BitVector(LHS, Idx1, DAG, dl);
 
-          MVT EltVT = VT.getVectorElementType().getSimpleVT();
-          EVT NewVT = MVT::getVectorVT(EltVT, NumElems/2);
+        MVT EltVT = VT.getVectorElementType().getSimpleVT();
+        EVT NewVT = MVT::getVectorVT(EltVT, NumElems/2);
 
-          EVT ExtraEltVT = ExtraVT.getVectorElementType();
-          int ExtraNumElems = ExtraVT.getVectorNumElements();
-          ExtraVT = EVT::getVectorVT(*DAG.getContext(), ExtraEltVT,
-                                     ExtraNumElems/2);
-          SDValue Extra = DAG.getValueType(ExtraVT);
+        EVT ExtraEltVT = ExtraVT.getVectorElementType();
+        int ExtraNumElems = ExtraVT.getVectorNumElements();
+        ExtraVT = EVT::getVectorVT(*DAG.getContext(), ExtraEltVT,
+                                   ExtraNumElems/2);
+        SDValue Extra = DAG.getValueType(ExtraVT);
 
-          LHS1 = DAG.getNode(Op.getOpcode(), dl, NewVT, LHS1, Extra);
-          LHS2 = DAG.getNode(Op.getOpcode(), dl, NewVT, LHS2, Extra);
+        LHS1 = DAG.getNode(Op.getOpcode(), dl, NewVT, LHS1, Extra);
+        LHS2 = DAG.getNode(Op.getOpcode(), dl, NewVT, LHS2, Extra);
 
-          return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, LHS1, LHS2);;
-        }
-        if (VT == MVT::v8i32) {
-          SHLIntrinsicsID = Intrinsic::x86_avx2_pslli_d;
-          SRAIntrinsicsID = Intrinsic::x86_avx2_psrai_d;
-        } else {
-          SHLIntrinsicsID = Intrinsic::x86_avx2_pslli_w;
-          SRAIntrinsicsID = Intrinsic::x86_avx2_psrai_w;
-        }
+        return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, LHS1, LHS2);;
+      }
+      // fall through
+    case MVT::v4i32:
+    case MVT::v8i16: {
+      SDValue Tmp1 = getTargetVShiftNode(X86ISD::VSHLI, dl, VT,
+                                         Op.getOperand(0), ShAmt, DAG);
+      return getTargetVShiftNode(X86ISD::VSRAI, dl, VT, Tmp1, ShAmt, DAG);
     }
-
-    SDValue Tmp1 = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                         DAG.getConstant(SHLIntrinsicsID, MVT::i32),
-                         Op.getOperand(0), ShAmt);
-
-    return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(SRAIntrinsicsID, MVT::i32),
-                       Tmp1, ShAmt);
   }
-
-  return SDValue();
 }
 
 
@@ -10951,8 +10935,14 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::ATOMNAND64_DAG:     return "X86ISD::ATOMNAND64_DAG";
   case X86ISD::VZEXT_MOVL:         return "X86ISD::VZEXT_MOVL";
   case X86ISD::VZEXT_LOAD:         return "X86ISD::VZEXT_LOAD";
+  case X86ISD::VSHLDQ:             return "X86ISD::VSHLDQ";
+  case X86ISD::VSRLDQ:             return "X86ISD::VSRLDQ";
   case X86ISD::VSHL:               return "X86ISD::VSHL";
   case X86ISD::VSRL:               return "X86ISD::VSRL";
+  case X86ISD::VSRA:               return "X86ISD::VSRA";
+  case X86ISD::VSHLI:              return "X86ISD::VSHLI";
+  case X86ISD::VSRLI:              return "X86ISD::VSRLI";
+  case X86ISD::VSRAI:              return "X86ISD::VSRAI";
   case X86ISD::CMPPD:              return "X86ISD::CMPPD";
   case X86ISD::CMPPS:              return "X86ISD::CMPPS";
   case X86ISD::PCMPEQB:            return "X86ISD::PCMPEQB";
@@ -13485,77 +13475,37 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
   default:
     llvm_unreachable("Unknown shift opcode!");
   case ISD::SHL:
-    if (VT == MVT::v2i64)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
-                         DAG.getConstant(Intrinsic::x86_sse2_pslli_q, MVT::i32),
-                         ValOp, BaseShAmt);
-    if (VT == MVT::v4i32)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
-                         DAG.getConstant(Intrinsic::x86_sse2_pslli_d, MVT::i32),
-                         ValOp, BaseShAmt);
-    if (VT == MVT::v8i16)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
-                         DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32),
-                         ValOp, BaseShAmt);
-    if (VT == MVT::v4i64)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
-                         DAG.getConstant(Intrinsic::x86_avx2_pslli_q, MVT::i32),
-                         ValOp, BaseShAmt);
-    if (VT == MVT::v8i32)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
-                         DAG.getConstant(Intrinsic::x86_avx2_pslli_d, MVT::i32),
-                         ValOp, BaseShAmt);
-    if (VT == MVT::v16i16)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
-                         DAG.getConstant(Intrinsic::x86_avx2_pslli_w, MVT::i32),
-                         ValOp, BaseShAmt);
-    break;
+    switch (VT.getSimpleVT().SimpleTy) {
+    default: return SDValue();
+    case MVT::v2i64:
+    case MVT::v4i32:
+    case MVT::v8i16:
+    case MVT::v4i64:
+    case MVT::v8i32:
+    case MVT::v16i16:
+      return getTargetVShiftNode(X86ISD::VSHLI, DL, VT, ValOp, BaseShAmt, DAG);
+    }
   case ISD::SRA:
-    if (VT == MVT::v4i32)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
-                         DAG.getConstant(Intrinsic::x86_sse2_psrai_d, MVT::i32),
-                         ValOp, BaseShAmt);
-    if (VT == MVT::v8i16)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
-                         DAG.getConstant(Intrinsic::x86_sse2_psrai_w, MVT::i32),
-                         ValOp, BaseShAmt);
-    if (VT == MVT::v8i32)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
-                         DAG.getConstant(Intrinsic::x86_avx2_psrai_d, MVT::i32),
-                         ValOp, BaseShAmt);
-    if (VT == MVT::v16i16)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
-                         DAG.getConstant(Intrinsic::x86_avx2_psrai_w, MVT::i32),
-                         ValOp, BaseShAmt);
-    break;
+    switch (VT.getSimpleVT().SimpleTy) {
+    default: return SDValue();
+    case MVT::v4i32:
+    case MVT::v8i16:
+    case MVT::v8i32:
+    case MVT::v16i16:
+      return getTargetVShiftNode(X86ISD::VSRAI, DL, VT, ValOp, BaseShAmt, DAG);
+    }
   case ISD::SRL:
-    if (VT == MVT::v2i64)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
-                         DAG.getConstant(Intrinsic::x86_sse2_psrli_q, MVT::i32),
-                         ValOp, BaseShAmt);
-    if (VT == MVT::v4i32)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
-                         DAG.getConstant(Intrinsic::x86_sse2_psrli_d, MVT::i32),
-                         ValOp, BaseShAmt);
-    if (VT ==  MVT::v8i16)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
-                         DAG.getConstant(Intrinsic::x86_sse2_psrli_w, MVT::i32),
-                         ValOp, BaseShAmt);
-    if (VT == MVT::v4i64)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
-                         DAG.getConstant(Intrinsic::x86_avx2_psrli_q, MVT::i32),
-                         ValOp, BaseShAmt);
-    if (VT == MVT::v8i32)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
-                         DAG.getConstant(Intrinsic::x86_avx2_psrli_d, MVT::i32),
-                         ValOp, BaseShAmt);
-    if (VT ==  MVT::v16i16)
-      return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, VT,
-                         DAG.getConstant(Intrinsic::x86_avx2_psrli_w, MVT::i32),
-                         ValOp, BaseShAmt);
-    break;
+    switch (VT.getSimpleVT().SimpleTy) {
+    default: return SDValue();
+    case MVT::v2i64:
+    case MVT::v4i32:
+    case MVT::v8i16:
+    case MVT::v4i64:
+    case MVT::v8i32:
+    case MVT::v16i16:
+      return getTargetVShiftNode(X86ISD::VSRLI, DL, VT, ValOp, BaseShAmt, DAG);
+    }
   }
-  return SDValue();
 }
 
 
@@ -13791,24 +13741,29 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
       Mask = Mask.getOperand(0);
       EVT MaskVT = Mask.getValueType();
 
-      // Validate that the Mask operand is a vector sra node.  The sra node
-      // will be an intrinsic.
-      if (Mask.getOpcode() != ISD::INTRINSIC_WO_CHAIN)
-        return SDValue();
-
+      // Validate that the Mask operand is a vector sra node.
       // FIXME: what to do for bytes, since there is a psignb/pblendvb, but
       // there is no psrai.b
-      switch (cast<ConstantSDNode>(Mask.getOperand(0))->getZExtValue()) {
-      case Intrinsic::x86_sse2_psrai_w:
-      case Intrinsic::x86_sse2_psrai_d:
-      case Intrinsic::x86_avx2_psrai_w:
-      case Intrinsic::x86_avx2_psrai_d:
-        break;
-      default: return SDValue();
-      }
+      SDValue SraSrc, SraC;
+      if (Mask.getOpcode() == ISD::INTRINSIC_WO_CHAIN) {
+        switch (cast<ConstantSDNode>(Mask.getOperand(0))->getZExtValue()) {
+        case Intrinsic::x86_sse2_psrai_w:
+        case Intrinsic::x86_sse2_psrai_d:
+        case Intrinsic::x86_avx2_psrai_w:
+        case Intrinsic::x86_avx2_psrai_d:
+          break;
+        default: return SDValue();
+        }
+
+        SraSrc = Mask.getOperand(1);
+        SraC = Mask.getOperand(2);
+      } else if (Mask.getOpcode() == X86ISD::VSRAI) {
+        SraSrc = Mask.getOperand(0);
+        SraC = Mask.getOperand(1);
+      } else
+        return SDValue();
 
       // Check that the SRA is all signbits.
-      SDValue SraC = Mask.getOperand(2);
       unsigned SraAmt  = cast<ConstantSDNode>(SraC)->getZExtValue();
       unsigned EltBits = MaskVT.getVectorElementType().getSizeInBits();
       if ((SraAmt + 1) != EltBits)
@@ -13823,11 +13778,11 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
       Y = Y.getOperand(0);
       if (Y.getOpcode() == ISD::SUB && Y.getOperand(1) == X &&
           ISD::isBuildVectorAllZeros(Y.getOperand(0).getNode()) &&
-          X.getValueType() == MaskVT && X.getValueType() == Y.getValueType() &&
-          (EltBits == 8 || EltBits == 16 || EltBits == 32)) {
-        SDValue Sign = DAG.getNode(X86ISD::PSIGN, DL, MaskVT, X,
-                                   Mask.getOperand(1));
-        return DAG.getNode(ISD::BITCAST, DL, VT, Sign);
+          X.getValueType() == MaskVT && Y.getValueType() == MaskVT) {
+        assert((EltBits == 8 || EltBits == 16 || EltBits == 32) &&
+               "Unsupported VT for PSIGN");
+        Mask = DAG.getNode(X86ISD::PSIGN, DL, MaskVT, X, SraSrc);
+        return DAG.getNode(ISD::BITCAST, DL, VT, Mask);
       }
       // PBLENDVB only available on SSE 4.1
       if (!Subtarget->hasSSE41())
