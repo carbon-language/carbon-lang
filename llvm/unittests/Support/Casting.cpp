@@ -69,7 +69,9 @@ namespace {
 
 const foo *null_foo = NULL;
 
+bar B;
 extern bar &B1;
+bar &B1 = B;
 extern const bar *B2;
 // test various configurations of const
 const bar &B3 = B1;
@@ -145,9 +147,6 @@ TEST(CastingTest, dyn_cast_or_null) {
 //foo &F23 = cast_or_null<foo>(B1);
 //const foo &F24 = cast_or_null<foo>(B3);
 
-
-bar B;
-bar &B1 = B;
 const bar *B2 = &B;
 }  // anonymous namespace
 
