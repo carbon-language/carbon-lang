@@ -3768,20 +3768,22 @@ defm VPSRAD : PDI_binop_rmi_int<0xE2, 0x72, MRM4r, "vpsrad",
                                 VR128, 0>, VEX_4V;
 
 let ExeDomain = SSEPackedInt in {
-  let neverHasSideEffects = 1 in {
-    // 128-bit logical shifts.
-    def VPSLLDQri : PDIi8<0x73, MRM7r,
-                      (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
-                      "vpslldq\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
-                      VEX_4V;
-    def VPSRLDQri : PDIi8<0x73, MRM3r,
-                      (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
-                      "vpsrldq\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
-                      VEX_4V;
-    // PSRADQri doesn't exist in SSE[1-3].
-  }
+  // 128-bit logical shifts.
+  def VPSLLDQri : PDIi8<0x73, MRM7r,
+                    (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
+                    "vpslldq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                    [(set VR128:$dst,
+                      (int_x86_sse2_psll_dq_bs VR128:$src1, imm:$src2))]>,
+                    VEX_4V;
+  def VPSRLDQri : PDIi8<0x73, MRM3r,
+                    (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
+                    "vpsrldq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                    [(set VR128:$dst,
+                      (int_x86_sse2_psrl_dq_bs VR128:$src1, imm:$src2))]>,
+                    VEX_4V;
+  // PSRADQri doesn't exist in SSE[1-3].
 }
-}
+} // Predicates = [HasAVX]
 
 let Predicates = [HasAVX2] in {
 defm VPSLLWY : PDI_binop_rmi_int<0xF1, 0x71, MRM6r, "vpsllw",
@@ -3812,20 +3814,22 @@ defm VPSRADY : PDI_binop_rmi_int<0xE2, 0x72, MRM4r, "vpsrad",
                                  VR256, 0>, VEX_4V;
 
 let ExeDomain = SSEPackedInt in {
-  let neverHasSideEffects = 1 in {
-    // 128-bit logical shifts.
-    def VPSLLDQYri : PDIi8<0x73, MRM7r,
-                      (outs VR256:$dst), (ins VR256:$src1, i32i8imm:$src2),
-                      "vpslldq\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
-                      VEX_4V;
-    def VPSRLDQYri : PDIi8<0x73, MRM3r,
-                      (outs VR256:$dst), (ins VR256:$src1, i32i8imm:$src2),
-                      "vpsrldq\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
-                      VEX_4V;
-    // PSRADQYri doesn't exist in SSE[1-3].
-  }
+  // 256-bit logical shifts.
+  def VPSLLDQYri : PDIi8<0x73, MRM7r,
+                    (outs VR256:$dst), (ins VR256:$src1, i32i8imm:$src2),
+                    "vpslldq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                    [(set VR256:$dst,
+                      (int_x86_avx2_psll_dq_bs VR256:$src1, imm:$src2))]>,
+                    VEX_4V;
+  def VPSRLDQYri : PDIi8<0x73, MRM3r,
+                    (outs VR256:$dst), (ins VR256:$src1, i32i8imm:$src2),
+                    "vpsrldq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                    [(set VR256:$dst,
+                      (int_x86_avx2_psrl_dq_bs VR256:$src1, imm:$src2))]>,
+                    VEX_4V;
+  // PSRADQYri doesn't exist in SSE[1-3].
 }
-}
+} // Predicates = [HasAVX2]
 
 let Constraints = "$src1 = $dst" in {
 defm PSLLW : PDI_binop_rmi_int<0xF1, 0x71, MRM6r, "psllw",
@@ -3856,16 +3860,18 @@ defm PSRAD : PDI_binop_rmi_int<0xE2, 0x72, MRM4r, "psrad",
                                VR128>;
 
 let ExeDomain = SSEPackedInt in {
-  let neverHasSideEffects = 1 in {
-    // 128-bit logical shifts.
-    def PSLLDQri : PDIi8<0x73, MRM7r,
-                         (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
-                         "pslldq\t{$src2, $dst|$dst, $src2}", []>;
-    def PSRLDQri : PDIi8<0x73, MRM3r,
-                         (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
-                         "psrldq\t{$src2, $dst|$dst, $src2}", []>;
-    // PSRADQri doesn't exist in SSE[1-3].
-  }
+  // 128-bit logical shifts.
+  def PSLLDQri : PDIi8<0x73, MRM7r,
+                       (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
+                       "pslldq\t{$src2, $dst|$dst, $src2}",
+                       [(set VR128:$dst,
+                         (int_x86_sse2_psll_dq_bs VR128:$src1, imm:$src2))]>;
+  def PSRLDQri : PDIi8<0x73, MRM3r,
+                       (outs VR128:$dst), (ins VR128:$src1, i32i8imm:$src2),
+                       "psrldq\t{$src2, $dst|$dst, $src2}",
+                       [(set VR128:$dst,
+                         (int_x86_sse2_psrl_dq_bs VR128:$src1, imm:$src2))]>;
+  // PSRADQri doesn't exist in SSE[1-3].
 }
 } // Constraints = "$src1 = $dst"
 
@@ -3874,10 +3880,6 @@ let Predicates = [HasAVX] in {
             (VPSLLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
   def : Pat<(int_x86_sse2_psrl_dq VR128:$src1, imm:$src2),
             (VPSRLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
-  def : Pat<(int_x86_sse2_psll_dq_bs VR128:$src1, imm:$src2),
-            (VPSLLDQri VR128:$src1, imm:$src2)>;
-  def : Pat<(int_x86_sse2_psrl_dq_bs VR128:$src1, imm:$src2),
-            (VPSRLDQri VR128:$src1, imm:$src2)>;
   def : Pat<(v2f64 (X86fsrl VR128:$src1, i32immSExt8:$src2)),
             (VPSRLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
 
@@ -3893,10 +3895,6 @@ let Predicates = [HasAVX2] in {
             (VPSLLDQYri VR256:$src1, (BYTE_imm imm:$src2))>;
   def : Pat<(int_x86_avx2_psrl_dq VR256:$src1, imm:$src2),
             (VPSRLDQYri VR256:$src1, (BYTE_imm imm:$src2))>;
-  def : Pat<(int_x86_avx2_psll_dq_bs VR256:$src1, imm:$src2),
-            (VPSLLDQYri VR256:$src1, imm:$src2)>;
-  def : Pat<(int_x86_avx2_psrl_dq_bs VR256:$src1, imm:$src2),
-            (VPSRLDQYri VR256:$src1, imm:$src2)>;
 }
 
 let Predicates = [HasSSE2] in {
@@ -3904,10 +3902,6 @@ let Predicates = [HasSSE2] in {
             (PSLLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
   def : Pat<(int_x86_sse2_psrl_dq VR128:$src1, imm:$src2),
             (PSRLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
-  def : Pat<(int_x86_sse2_psll_dq_bs VR128:$src1, imm:$src2),
-            (PSLLDQri VR128:$src1, imm:$src2)>;
-  def : Pat<(int_x86_sse2_psrl_dq_bs VR128:$src1, imm:$src2),
-            (PSRLDQri VR128:$src1, imm:$src2)>;
   def : Pat<(v2f64 (X86fsrl VR128:$src1, i32immSExt8:$src2)),
             (PSRLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
 
