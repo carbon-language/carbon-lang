@@ -14,6 +14,7 @@
 
 #include "unwind.h"
 #include "cxa_exception.hpp"
+#include "private_typeinfo.h"
 #include <typeinfo>
 #include <stdlib.h>
 #include <assert.h>
@@ -219,6 +220,8 @@ getTTypeEntry(int64_t typeOffset, const uint8_t* classInfo, uint8_t ttypeEncodin
     return classInfo - typeOffset;
 }
 
+static const uint64_t kOurDependentExceptionClass = 0x434C4E47432B2B01; // CLNGC++\1
+
 /// Deals with Dwarf actions matching our type infos 
 /// (OurExceptionType_t instances). Returns whether or not a dwarf emitted 
 /// action matches the supplied exception type. If such a match succeeds, 
@@ -240,7 +243,12 @@ handleActionValue(const uint8_t* classInfo, uintptr_t actionEntry,
                   _Unwind_Exception* unwind_exception, uint8_t ttypeEncoding)
 {
     __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
-    const std::type_info* excpType = exception_header->exceptionType;
+    void* thrown_object =
+        unwind_exception->exception_class == kOurDependentExceptionClass ?
+            ((__cxa_dependent_exception*)exception_header)->primaryException :
+            exception_header + 1;
+    const __shim_type_info* excpType =
+        static_cast<const __shim_type_info*>(exception_header->exceptionType);
     const uint8_t* actionPos = (uint8_t*)actionEntry;
     while (true)
     {
@@ -255,14 +263,17 @@ handleActionValue(const uint8_t* classInfo, uintptr_t actionEntry,
         {
             const uint8_t* TTypeEntry = getTTypeEntry(typeOffset, classInfo,
                                                       ttypeEncoding);
-            const std::type_info* catchType =
-                       (const std::type_info*)readEncodedPointer(&TTypeEntry,
+            const __shim_type_info* catchType =
+                       (const __shim_type_info*)readEncodedPointer(&TTypeEntry,
                                                                  ttypeEncoding);
+            void* adjustedPtr = thrown_object;
             // catchType == 0 -> catch (...)
-            if (catchType == 0 || excpType == catchType)
+            if (catchType == 0 || catchType->can_catch(excpType, adjustedPtr))
             {
                 exception_header->handlerSwitchValue = typeOffset;
-                exception_header->actionRecord = SactionPos;
+                exception_header->actionRecord = SactionPos;  // unnecessary?
+                // used by __cxa_get_exception_ptr and __cxa_begin_catch
+                exception_header->adjustedPtr = adjustedPtr;
                 return true;
             }
         }
@@ -289,9 +300,6 @@ contains_handler(_Unwind_Exception* unwind_exception, _Unwind_Context* context)
     __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
     const uint8_t* lsda = (const uint8_t*)_Unwind_GetLanguageSpecificData(context);
     exception_header->languageSpecificData = lsda;
-    // set adjustedPtr!  __cxa_get_exception_ptr and __cxa_begin_catch use it.
-    // TODO:  Put it where it is supposed to be and adjust it properly
-    exception_header->adjustedPtr = unwind_exception+1;
     if (lsda)
     {
         // Get the current instruction pointer and offset it before next

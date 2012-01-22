@@ -198,6 +198,42 @@ __pointer_to_member_type_info::display() const
     __pointee->display();
 }
 
+// can_catch
+
+// A handler is a match for an exception object of type E if
+//   * The handler is of type cv T or cv T& and E and T are the same type
+//     (ignoring the top-level cv-qualifiers), or
+//   * the handler is of type cv T or cv T& and T is an unambiguous public
+//     base class of E, or
+//   * the handler is of type cv1 T* cv2 and E is a pointer type that can be
+//     converted to the type of the handler by either or both of
+//     * a standard pointer conversion (4.10) not involving conversions to
+//       pointers to private or protected or ambiguous classes
+//     * a qualification conversion
+//   * the handler is a pointer or pointer to member type and E is std::nullptr_t.
+
+// adjustedPtr:
+// 
+// catch (A& a) : adjustedPtr == &a
+// catch (A* a) : adjustedPtr == a
+// catch (A** a) : adjustedPtr == a
+// 
+// catch (D2& d2) : adjustedPtr == &d2  (d2 is base class of thrown object)
+// catch (D2* d2) : adjustedPtr == d2
+// catch (D2*& d2) : adjustedPtr == d2
+// 
+// catch (...) : adjustedPtr == & of the exception
+
+// TODO:  can_catch looks similar to search_above_dst.  Reuse?
+
+bool
+__shim_type_info::can_catch(const __shim_type_info* thrown_type,
+                            void*&) const
+{
+    return this == thrown_type;
+}
+
+
 #pragma GCC visibility pop
 #pragma GCC visibility push(default)
 
