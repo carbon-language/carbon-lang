@@ -382,7 +382,7 @@ void MachOObject::printHeader(raw_ostream &O) const {
   O << "('num_load_commands', " << Header.NumLoadCommands << ")\n";
   O << "('load_commands_size', " << Header.SizeOfLoadCommands << ")\n";
   O << "('flag', " << Header.Flags << ")\n";
-  
+
   // Print extended header if 64-bit.
   if (is64Bit())
     O << "('reserved', " << Header64Ext.Reserved << ")\n";
@@ -392,6 +392,6 @@ void MachOObject::print(raw_ostream &O) const {
   O << "Header:\n";
   printHeader(O);
   O << "Load Commands:\n";
-  
+
   O << "Buffer:\n";
 }
