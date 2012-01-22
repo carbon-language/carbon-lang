@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wswitch-enum %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 
 void test() {
   bool x = true;
