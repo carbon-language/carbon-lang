@@ -16,7 +16,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/IntervalMap.h"
-#include "RuntimeDyldImpl.h"
+#include "RuntimeDyldELF.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/ADT/Triple.h"

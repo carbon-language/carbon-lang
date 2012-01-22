@@ -15,14 +15,11 @@
 #define LLVM_RUNTIME_DYLD_IMPL_H
 
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
-#include "llvm/Object/MachOObject.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/Memory.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/system_error.h"
@@ -31,7 +28,6 @@
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
-using namespace llvm::object;
 
 namespace llvm {
 class RuntimeDyldImpl {
@@ -107,135 +103,6 @@ public:
   StringRef getErrorString() { return ErrorStr; }
 
   virtual bool isCompatibleFormat(const MemoryBuffer *InputBuffer) const = 0;
-};
-
-class RuntimeDyldELF : public RuntimeDyldImpl {
-    // For each symbol, keep a list of relocations based on it. Anytime
-    // its address is reassigned (the JIT re-compiled the function, e.g.),
-    // the relocations get re-resolved.
-    struct RelocationEntry {
-      // Function or section this relocation is contained in.
-      std::string Target;
-      // Offset into the target function or section for the relocation.
-      uint32_t    Offset;
-      // Relocation type
-      uint32_t    Type;
-      // Addend encoded in the instruction itself, if any.
-      int32_t     Addend;
-      // Has the relocation been recalcuated as an offset within a function?
-      bool        IsFunctionRelative;
-      // Has this relocation been resolved previously?
-      bool        isResolved;
-
-      RelocationEntry(StringRef t,
-                      uint32_t offset,
-                      uint32_t type,
-                      int32_t addend,
-                      bool isFunctionRelative)
-        : Target(t)
-        , Offset(offset)
-        , Type(type)
-        , Addend(addend)
-        , IsFunctionRelative(isFunctionRelative)
-        , isResolved(false) { }
-    };
-    typedef SmallVector<RelocationEntry, 4> RelocationList;
-    StringMap<RelocationList> Relocations;
-    unsigned Arch;
-
-    void resolveRelocations();
-
-    void resolveX86_64Relocation(StringRef Name,
-                                 uint8_t *Addr,
-                                 const RelocationEntry &RE);
-
-    void resolveX86Relocation(StringRef Name,
-                              uint8_t *Addr,
-                              const RelocationEntry &RE);
-
-    void resolveArmRelocation(StringRef Name,
-                              uint8_t *Addr,
-                              const RelocationEntry &RE);
-
-    void resolveRelocation(StringRef Name,
-                           uint8_t *Addr,
-                           const RelocationEntry &RE);
-
-public:
-  RuntimeDyldELF(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
-
-  bool loadObject(MemoryBuffer *InputBuffer);
-
-  void reassignSymbolAddress(StringRef Name, uint8_t *Addr);
-  void reassignSectionAddress(unsigned SectionID, uint64_t Addr);
-
-  bool isCompatibleFormat(const MemoryBuffer *InputBuffer) const;
-};
-
-
-class RuntimeDyldMachO : public RuntimeDyldImpl {
-
-  // For each symbol, keep a list of relocations based on it. Anytime
-  // its address is reassigned (the JIT re-compiled the function, e.g.),
-  // the relocations get re-resolved.
-  // The symbol (or section) the relocation is sourced from is the Key
-  // in the relocation list where it's stored.
-  struct RelocationEntry {
-    unsigned    SectionID;  // Section the relocation is contained in.
-    uint64_t    Offset;     // Offset into the section for the relocation.
-    uint32_t    Data;       // Second word of the raw macho relocation entry.
-    int64_t     Addend;     // Addend encoded in the instruction itself, if any,
-                            // plus the offset into the source section for
-                            // the symbol once the relocation is resolvable.
-
-    RelocationEntry(unsigned id, uint64_t offset, uint32_t data, int64_t addend)
-      : SectionID(id), Offset(offset), Data(data), Addend(addend) {}
-  };
-  typedef SmallVector<RelocationEntry, 4> RelocationList;
-  // Relocations to sections already loaded. Indexed by SectionID which is the
-  // source of the address. The target where the address will be writen is
-  // SectionID/Offset in the relocation itself.
-  IndexedMap<RelocationList> Relocations;
-  // Relocations to symbols that are not yet resolved. Must be external
-  // relocations by definition. Indexed by symbol name.
-  StringMap<RelocationList> UnresolvedRelocations;
-
-  bool resolveRelocation(uint8_t *Address, uint64_t Value, bool isPCRel,
-                         unsigned Type, unsigned Size, int64_t Addend);
-  bool resolveX86_64Relocation(uintptr_t Address, uintptr_t Value, bool isPCRel,
-                               unsigned Type, unsigned Size, int64_t Addend);
-  bool resolveARMRelocation(uintptr_t Address, uintptr_t Value, bool isPCRel,
-                            unsigned Type, unsigned Size, int64_t Addend);
-
-  bool loadSegment32(const MachOObject *Obj,
-                     const MachOObject::LoadCommandInfo *SegmentLCI,
-                     const InMemoryStruct<macho::SymtabLoadCommand> &SymtabLC);
-  bool loadSegment64(const MachOObject *Obj,
-                     const MachOObject::LoadCommandInfo *SegmentLCI,
-                     const InMemoryStruct<macho::SymtabLoadCommand> &SymtabLC);
-  bool processSymbols32(const MachOObject *Obj,
-                      SmallVectorImpl<unsigned> &SectionMap,
-                      SmallVectorImpl<StringRef> &SymbolNames,
-                      const InMemoryStruct<macho::SymtabLoadCommand> &SymtabLC);
-  bool processSymbols64(const MachOObject *Obj,
-                      SmallVectorImpl<unsigned> &SectionMap,
-                      SmallVectorImpl<StringRef> &SymbolNames,
-                      const InMemoryStruct<macho::SymtabLoadCommand> &SymtabLC);
-
-  void resolveSymbol(StringRef Name);
-
-public:
-  RuntimeDyldMachO(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
-
-  bool loadObject(MemoryBuffer *InputBuffer);
-
-  void reassignSectionAddress(unsigned SectionID, uint64_t Addr);
-
-  static bool isKnownFormat(const MemoryBuffer *InputBuffer);
-
-  bool isCompatibleFormat(const MemoryBuffer *InputBuffer) const {
-    return isKnownFormat(InputBuffer);
-  }
 };
 
 } // end namespace llvm

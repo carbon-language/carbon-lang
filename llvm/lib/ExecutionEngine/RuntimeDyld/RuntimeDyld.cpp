@@ -13,7 +13,10 @@
 
 #define DEBUG_TYPE "dyld"
 #include "RuntimeDyldImpl.h"
+#include "RuntimeDyldELF.h"
+#include "RuntimeDyldMachO.h"
 #include "llvm/Support/Path.h"
+
 using namespace llvm;
 using namespace llvm::object;
 

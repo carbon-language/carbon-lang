@@ -15,7 +15,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/STLExtras.h"
-#include "RuntimeDyldImpl.h"
+#include "RuntimeDyldMachO.h"
 using namespace llvm;
 using namespace llvm::object;
 
