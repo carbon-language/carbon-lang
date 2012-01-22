@@ -5052,11 +5052,10 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   if (ISD::isBuildVectorAllZeros(Op.getNode())) {
     // Canonicalize this to <4 x i32> to 1) ensure the zero vectors are CSE'd
     // and 2) ensure that i64 scalars are eliminated on x86-32 hosts.
-    if (Op.getValueType() == MVT::v4i32 ||
-        Op.getValueType() == MVT::v8i32)
+    if (VT == MVT::v4i32 || VT == MVT::v8i32)
       return Op;
 
-    return getZeroVector(Op.getValueType(), Subtarget->hasSSE2(),
+    return getZeroVector(VT, Subtarget->hasSSE2(),
                          Subtarget->hasAVX2(), DAG, dl);
   }
 
@@ -5064,11 +5063,10 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   // vectors or broken into v4i32 operations on 256-bit vectors. AVX2 can use
   // vpcmpeqd on 256-bit vectors.
   if (ISD::isBuildVectorAllOnes(Op.getNode())) {
-    if (Op.getValueType() == MVT::v4i32 ||
-        (Op.getValueType() == MVT::v8i32 && Subtarget->hasAVX2()))
+    if (VT == MVT::v4i32 || (VT == MVT::v8i32 && Subtarget->hasAVX2()))
       return Op;
 
-    return getOnesVector(Op.getValueType(), Subtarget->hasAVX2(), DAG, dl);
+    return getOnesVector(VT, Subtarget->hasAVX2(), DAG, dl);
   }
 
   SDValue LD = isVectorBroadcast(Op, Subtarget);
@@ -5137,7 +5135,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
                                       DAG.getUNDEF(Item.getValueType()),
                                       &Mask[0]);
         }
-        return DAG.getNode(ISD::BITCAST, dl, Op.getValueType(), Item);
+        return DAG.getNode(ISD::BITCAST, dl, VT, Item);
       }
     }
 
