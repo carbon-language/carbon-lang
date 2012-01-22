@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the ELFObjectFile class.
+// This file defines the ELFObjectFile and DyldELFObject classes.
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,6 +16,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -53,20 +54,22 @@ struct ELFDataTypeTypedefHelper;
 template<support::endianness target_endianness>
 struct ELFDataTypeTypedefHelper<target_endianness, false>
   : ELFDataTypeTypedefHelperCommon<target_endianness> {
+  typedef uint32_t value_type;
   typedef support::detail::packed_endian_specific_integral
-    <uint32_t, target_endianness, support::aligned> Elf_Addr;
+    <value_type, target_endianness, support::aligned> Elf_Addr;
   typedef support::detail::packed_endian_specific_integral
-    <uint32_t, target_endianness, support::aligned> Elf_Off;
+    <value_type, target_endianness, support::aligned> Elf_Off;
 };
 
 /// ELF 64bit types.
 template<support::endianness target_endianness>
 struct ELFDataTypeTypedefHelper<target_endianness, true>
   : ELFDataTypeTypedefHelperCommon<target_endianness>{
+  typedef uint64_t value_type;
   typedef support::detail::packed_endian_specific_integral
-    <uint64_t, target_endianness, support::aligned> Elf_Addr;
+    <value_type, target_endianness, support::aligned> Elf_Addr;
   typedef support::detail::packed_endian_specific_integral
-    <uint64_t, target_endianness, support::aligned> Elf_Off;
+    <value_type, target_endianness, support::aligned> Elf_Off;
 };
 }
 
@@ -263,6 +266,7 @@ class ELFObjectFile : public ObjectFile {
   typedef Elf_Rel_Impl<target_endianness, is64Bits, false> Elf_Rel;
   typedef Elf_Rel_Impl<target_endianness, is64Bits, true> Elf_Rela;
 
+protected:
   struct Elf_Ehdr {
     unsigned char e_ident[ELF::EI_NIDENT]; // ELF Identification bytes
     Elf_Half e_type;     // Type of file (see ET_*)
@@ -285,7 +289,12 @@ class ELFObjectFile : public ObjectFile {
     unsigned char getFileClass() const { return e_ident[ELF::EI_CLASS]; }
     unsigned char getDataEncoding() const { return e_ident[ELF::EI_DATA]; }
   };
+  // This flag is used for classof, to distinguish ELFObjectFile from
+  // its subclass. If more subclasses will be created, this flag will
+  // have to become an enum.
+  bool isDyldELFObject;
 
+private:
   typedef SmallVector<const Elf_Shdr*, 1> Sections_t;
   typedef DenseMap<unsigned, unsigned> IndexMap_t;
   typedef DenseMap<const Elf_Shdr*, SmallVector<uint32_t, 1> > RelocMap_t;
@@ -307,13 +316,11 @@ class ELFObjectFile : public ObjectFile {
     return getSection(Rel.w.b);
   }
 
-  void            validateSymbol(DataRefImpl Symb) const;
   bool            isRelocationHasAddend(DataRefImpl Rel) const;
   template<typename T>
   const T        *getEntry(uint16_t Section, uint32_t Entry) const;
   template<typename T>
   const T        *getEntry(const Elf_Shdr *Section, uint32_t Entry) const;
-  const Elf_Sym  *getSymbol(DataRefImpl Symb) const;
   const Elf_Shdr *getSection(DataRefImpl index) const;
   const Elf_Shdr *getSection(uint32_t index) const;
   const Elf_Rel  *getRel(DataRefImpl Rel) const;
@@ -321,6 +328,10 @@ class ELFObjectFile : public ObjectFile {
   const char     *getString(uint32_t section, uint32_t offset) const;
   const char     *getString(const Elf_Shdr *section, uint32_t offset) const;
   error_code      getSymbolName(const Elf_Sym *Symb, StringRef &Res) const;
+
+protected:
+  const Elf_Sym  *getSymbol(DataRefImpl Symb) const; // FIXME: Should be private?
+  void            validateSymbol(DataRefImpl Symb) const;
 
 protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
@@ -384,8 +395,10 @@ public:
   ELF::Elf64_Word getSymbolTableIndex(const Elf_Sym *symb) const;
   const Elf_Shdr *getSection(const Elf_Sym *symb) const;
 
+  // Methods for type inquiry through isa, cast, and dyn_cast
+  bool isDyldType() const { return isDyldELFObject; }
   static inline bool classof(const Binary *v) {
-    return v->getType() == isELF;
+    return v->getType() == Binary::isELF;
   }
   static inline bool classof(const ELFObjectFile *v) { return true; }
 };
@@ -471,7 +484,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   const Elf_Shdr *Section;
   switch (getSymbolTableIndex(symb)) {
   case ELF::SHN_COMMON:
-   // Undefined symbols have no address yet.
+   // Unintialized symbols have no offset in the object file
   case ELF::SHN_UNDEF:
     Result = UnknownAddressOrSize;
     return object_error::success;
@@ -489,7 +502,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   case ELF::STT_OBJECT:
   case ELF::STT_NOTYPE:
     Result = symb->st_value +
-             (Section ? Section->sh_offset - Section->sh_addr : 0);
+             (Section ? Section->sh_offset : 0);
     return object_error::success;
   default:
     Result = UnknownAddressOrSize;
@@ -506,7 +519,6 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   const Elf_Shdr *Section;
   switch (getSymbolTableIndex(symb)) {
   case ELF::SHN_COMMON:
-   // Undefined symbols have no address yet.
   case ELF::SHN_UNDEF:
     Result = UnknownAddressOrSize;
     return object_error::success;
@@ -523,7 +535,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   case ELF::STT_FUNC:
   case ELF::STT_OBJECT:
   case ELF::STT_NOTYPE:
-    Result = symb->st_value;
+    Result = symb->st_value + (Section ? Section->sh_addr : 0);
     return object_error::success;
   default:
     Result = UnknownAddressOrSize;
@@ -1157,6 +1169,7 @@ template<support::endianness target_endianness, bool is64Bits>
 ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
                                                           , error_code &ec)
   : ObjectFile(Binary::isELF, Object, ec)
+  , isDyldELFObject(false)
   , SectionHeaderTable(0)
   , dot_shstrtab_sec(0)
   , dot_strtab_sec(0) {
@@ -1168,10 +1181,12 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
   SectionHeaderTable =
     reinterpret_cast<const Elf_Shdr *>(base() + Header->e_shoff);
   uint64_t SectionTableSize = getNumSections() * Header->e_shentsize;
-  if (!(  (const uint8_t *)SectionHeaderTable + SectionTableSize
-         <= base() + Data->getBufferSize()))
+
+  if ((const uint8_t *)SectionHeaderTable + SectionTableSize
+         > base() + Data->getBufferSize()) {
     // FIXME: Proper error handling.
     report_fatal_error("Section table goes past end of file!");
+  }
 
 
   // To find the symbol tables we walk the section table to find SHT_SYMTAB.
@@ -1466,21 +1481,226 @@ getElfArchType(MemoryBuffer *Object) {
                        , (uint8_t)Object->getBufferStart()[ELF::EI_DATA]);
 }
 
+
+namespace {
+  template<support::endianness target_endianness, bool is64Bits>
+  class DyldELFObject : public ELFObjectFile<target_endianness, is64Bits> {
+    LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
+
+    typedef Elf_Shdr_Impl<target_endianness, is64Bits> Elf_Shdr;
+    typedef Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
+    typedef Elf_Rel_Impl<target_endianness, is64Bits, false> Elf_Rel;
+    typedef Elf_Rel_Impl<target_endianness, is64Bits, true> Elf_Rela;
+
+    typedef typename ELFObjectFile<target_endianness, is64Bits>::
+      Elf_Ehdr Elf_Ehdr;
+    Elf_Ehdr *Header;
+
+    // Update section headers according to the current location in memory
+    virtual void rebaseObject(std::vector<uint8_t*> *MemoryMap);
+    // Record memory addresses for cleanup
+    virtual void saveAddress(std::vector<uint8_t*> *MemoryMap, uint8_t *addr);
+
+  protected:
+    virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const;
+
+  public:
+    DyldELFObject(MemoryBuffer *Object, std::vector<uint8_t*> *MemoryMap,
+                  error_code &ec);
+
+    // Methods for type inquiry through isa, cast, and dyn_cast
+    static inline bool classof(const Binary *v) {
+      return (isa<ELFObjectFile<target_endianness, is64Bits> >(v)
+              && classof(cast<ELFObjectFile<target_endianness, is64Bits> >(v)));
+    }
+    static inline bool classof(
+        const ELFObjectFile<target_endianness, is64Bits> *v) {
+      return v->isDyldType();
+    }
+    static inline bool classof(const DyldELFObject *v) {
+      return true;
+    }
+  };
+} // end anonymous namespace
+
+template<support::endianness target_endianness, bool is64Bits>
+DyldELFObject<target_endianness, is64Bits>::DyldELFObject(MemoryBuffer *Object,
+      std::vector<uint8_t*> *MemoryMap, error_code &ec)
+  : ELFObjectFile<target_endianness, is64Bits>(Object, ec)
+  , Header(0) {
+  this->isDyldELFObject = true;
+  Header = const_cast<Elf_Ehdr *>(
+      reinterpret_cast<const Elf_Ehdr *>(this->base()));
+  if (Header->e_shoff == 0)
+    return;
+
+  // Mark the image as a dynamic shared library
+  Header->e_type = ELF::ET_DYN;
+
+  rebaseObject(MemoryMap);
+}
+
+// Walk through the ELF headers, updating virtual addresses to reflect where
+// the object is currently loaded in memory
+template<support::endianness target_endianness, bool is64Bits>
+void DyldELFObject<target_endianness, is64Bits>::rebaseObject(
+    std::vector<uint8_t*> *MemoryMap) {
+  typedef typename ELFDataTypeTypedefHelper<
+          target_endianness, is64Bits>::value_type addr_type;
+
+  uint8_t *base_p = const_cast<uint8_t *>(this->base());
+  Elf_Shdr *sectionTable =
+      reinterpret_cast<Elf_Shdr *>(base_p + Header->e_shoff);
+  uint64_t numSections = this->getNumSections();
+
+  // Allocate memory space for NOBITS sections (such as .bss), which only exist
+  // in memory, but don't occupy space in the object file.
+  // Update the address in the section headers to reflect this allocation.
+  for (uint64_t index = 0; index < numSections; index++) {
+    Elf_Shdr *sec = reinterpret_cast<Elf_Shdr *>(
+        reinterpret_cast<char *>(sectionTable) + index * Header->e_shentsize);
+
+    // Only update sections that are meant to be present in program memory
+    if (sec->sh_flags & ELF::SHF_ALLOC) {
+      uint8_t *addr = base_p + sec->sh_offset;
+      if (sec->sh_type == ELF::SHT_NOBITS) {
+        addr = static_cast<uint8_t *>(calloc(sec->sh_size, 1));
+        saveAddress(MemoryMap, addr);
+      }
+      else {
+        // FIXME: Currently memory with RWX permissions is allocated. In the
+        // future, make sure that permissions are as necessary
+        if (sec->sh_flags & ELF::SHF_WRITE) {
+            // see FIXME above
+        }
+        if (sec->sh_flags & ELF::SHF_EXECINSTR) {
+            // see FIXME above
+        }
+      }
+      assert(sizeof(addr_type) == sizeof(intptr_t) &&
+             "Cross-architecture ELF dy-load is not supported!");
+      sec->sh_addr = static_cast<addr_type>(intptr_t(addr));
+    }
+  }
+
+  // Now allocate actual space for COMMON symbols, which also don't occupy
+  // space in the object file.
+  // We want to allocate space for all COMMON symbols at once, so the flow is:
+  // 1. Go over all symbols, find those that are in COMMON. For each such
+  //    symbol, record its size and the value field in its symbol header in a
+  //    special vector.
+  // 2. Allocate memory for all COMMON symbols in one fell swoop.
+  // 3. Using the recorded information from (1), update the address fields in
+  //    the symbol headers of the COMMON symbols to reflect their allocated
+  //    address.
+  uint64_t TotalSize = 0;
+  std::vector<std::pair<Elf_Addr *, uint64_t> > SymbAddrInfo;
+  error_code ec = object_error::success;
+  for (symbol_iterator si = this->begin_symbols(),
+       se = this->end_symbols(); si != se; si.increment(ec)) {
+    uint64_t Size = 0;
+    ec = si->getSize(Size);
+    Elf_Sym* symb = const_cast<Elf_Sym*>(
+        this->getSymbol(si->getRawDataRefImpl()));
+    if (ec == object_error::success &&
+        this->getSymbolTableIndex(symb) == ELF::SHN_COMMON && Size > 0) {
+      SymbAddrInfo.push_back(std::make_pair(&(symb->st_value), Size));
+      TotalSize += Size;
+    }
+  }
+
+  uint8_t* SectionPtr = (uint8_t *)calloc(TotalSize, 1);
+  saveAddress(MemoryMap, SectionPtr);
+
+  typedef typename std::vector<std::pair<Elf_Addr *, uint64_t> >::iterator
+      AddrInfoIterator;
+  AddrInfoIterator EndIter = SymbAddrInfo.end();
+  for (AddrInfoIterator AddrIter = SymbAddrInfo.begin();
+       AddrIter != EndIter; ++AddrIter) {
+    assert(sizeof(addr_type) == sizeof(intptr_t) &&
+           "Cross-architecture ELF dy-load is not supported!");
+    *(AddrIter->first) = static_cast<addr_type>(intptr_t(SectionPtr));
+    SectionPtr += AddrIter->second;
+  }
+}
+
+// Record memory addresses for callers
+template<support::endianness target_endianness, bool is64Bits>
+void DyldELFObject<target_endianness, is64Bits>::saveAddress(
+    std::vector<uint8_t*> *MemoryMap, uint8_t* addr) {
+  if (MemoryMap)
+    MemoryMap->push_back(addr);
+  else
+    errs() << "WARNING: Memory leak - cannot record memory for ELF dyld.";
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code DyldELFObject<target_endianness, is64Bits>::getSymbolAddress(
+    DataRefImpl Symb, uint64_t &Result) const {
+  this->validateSymbol(Symb);
+  const Elf_Sym *symb = this->getSymbol(Symb);
+  if (this->getSymbolTableIndex(symb) == ELF::SHN_COMMON) {
+    Result = symb->st_value;
+    return object_error::success;
+  }
+  else {
+    return ELFObjectFile<target_endianness, is64Bits>::getSymbolAddress(
+        Symb, Result);
+  }
+}
+
 namespace llvm {
 
-  ObjectFile *ObjectFile::createELFObjectFile(MemoryBuffer *Object) {
+  // Creates an in-memory object-file by default: createELFObjectFile(Buffer)
+  // Set doDyld to true to create a live (executable/debug-worthy) image
+  //   If doDyld is true, any memory allocated for non-resident sections and
+  //   symbols is recorded in MemoryMap.
+  ObjectFile *ObjectFile::createELFObjectFile(MemoryBuffer *Object,
+      bool doDyld, std::vector<uint8_t *> *MemoryMap) {
     std::pair<unsigned char, unsigned char> Ident = getElfArchType(Object);
     error_code ec;
+
+    if (doDyld) {
+      if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2LSB)
+        return new DyldELFObject<support::little, false>(Object, MemoryMap, ec);
+      else if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2MSB)
+        return new DyldELFObject<support::big, false>(Object, MemoryMap, ec);
+      else if (Ident.first == ELF::ELFCLASS64 && Ident.second == ELF::ELFDATA2MSB)
+        return new DyldELFObject<support::big, true>(Object, MemoryMap, ec);
+      else if (Ident.first == ELF::ELFCLASS64 && Ident.second == ELF::ELFDATA2LSB) {
+        DyldELFObject<support::little, true> *result =
+            new DyldELFObject<support::little, true>(Object, MemoryMap, ec);
+
+        // Unit testing for type inquiry
+        bool isBinary = isa<Binary>(result);
+        bool isDyld = isa<DyldELFObject<support::little, true> >(result);
+        bool isFile = isa<ELFObjectFile<support::little, true> >(result);
+        assert(isBinary && isDyld && isFile &&
+            "Type inquiry failed for ELF object!");
+        return result;
+      }
+    }
+
     if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2LSB)
       return new ELFObjectFile<support::little, false>(Object, ec);
     else if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2MSB)
       return new ELFObjectFile<support::big, false>(Object, ec);
-    else if (Ident.first == ELF::ELFCLASS64 && Ident.second == ELF::ELFDATA2LSB)
-      return new ELFObjectFile<support::little, true>(Object, ec);
     else if (Ident.first == ELF::ELFCLASS64 && Ident.second == ELF::ELFDATA2MSB)
       return new ELFObjectFile<support::big, true>(Object, ec);
-    // FIXME: Proper error handling.
-    report_fatal_error("Not an ELF object file!");
+    else if (Ident.first == ELF::ELFCLASS64 && Ident.second == ELF::ELFDATA2LSB) {
+      ELFObjectFile<support::little, true> *result =
+            new ELFObjectFile<support::little, true>(Object, ec);
+
+      // Unit testing for type inquiry
+      bool isBinary = isa<Binary>(result);
+      bool isDyld = isa<DyldELFObject<support::little, true> >(result);
+      bool isFile = isa<ELFObjectFile<support::little, true> >(result);
+      assert(isBinary && isFile && !isDyld &&
+          "Type inquiry failed for ELF object!");
+      return result;
+    }
+
+    report_fatal_error("Buffer is not an ELF object file!");
   }
 
 } // end namespace llvm
