@@ -10986,9 +10986,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PALIGN:             return "X86ISD::PALIGN";
   case X86ISD::PSHUFD:             return "X86ISD::PSHUFD";
   case X86ISD::PSHUFHW:            return "X86ISD::PSHUFHW";
-  case X86ISD::PSHUFHW_LD:         return "X86ISD::PSHUFHW_LD";
   case X86ISD::PSHUFLW:            return "X86ISD::PSHUFLW";
-  case X86ISD::PSHUFLW_LD:         return "X86ISD::PSHUFLW_LD";
   case X86ISD::SHUFP:              return "X86ISD::SHUFP";
   case X86ISD::MOVLHPS:            return "X86ISD::MOVLHPS";
   case X86ISD::MOVLHPD:            return "X86ISD::MOVLHPD";
@@ -10998,8 +10996,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::MOVDDUP:            return "X86ISD::MOVDDUP";
   case X86ISD::MOVSHDUP:           return "X86ISD::MOVSHDUP";
   case X86ISD::MOVSLDUP:           return "X86ISD::MOVSLDUP";
-  case X86ISD::MOVSHDUP_LD:        return "X86ISD::MOVSHDUP_LD";
-  case X86ISD::MOVSLDUP_LD:        return "X86ISD::MOVSLDUP_LD";
   case X86ISD::MOVSD:              return "X86ISD::MOVSD";
   case X86ISD::MOVSS:              return "X86ISD::MOVSS";
   case X86ISD::UNPCKL:             return "X86ISD::UNPCKL";
