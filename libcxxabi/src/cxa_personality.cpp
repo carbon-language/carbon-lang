@@ -18,6 +18,17 @@
 #include <stdlib.h>
 #include <assert.h>
 
+// +---------------------------+-----------------------------+---------------+
+// | __cxa_exception           | _Unwind_Exception CLNGC++\0 | thrown object |
+// +---------------------------+-----------------------------+---------------+
+//                                                           ^
+//                                                           |
+//   +-------------------------------------------------------+
+//   |
+// +---------------------------+-----------------------------+
+// | __cxa_dependent_exception | _Unwind_Exception CLNGC++\1 |
+// +---------------------------+-----------------------------+
+
 namespace __cxxabiv1
 {
 
@@ -220,16 +231,16 @@ getTTypeEntry(int64_t typeOffset, const uint8_t* classInfo, uint8_t ttypeEncodin
 /// @param classInfo our array of type info pointers (to globals)
 /// @param actionEntry index into above type info array or 0 (clean up). 
 ///        We do not support filters.
-/// @param exceptionObject thrown _Unwind_Exception instance.
+/// @param unwind_exception thrown _Unwind_Exception instance.
 /// @returns whether or not a type info was found. False is returned if only
 ///          a cleanup was found
 static
 bool
 handleActionValue(const uint8_t* classInfo, uintptr_t actionEntry,
-                  _Unwind_Exception* exceptionObject, uint8_t ttypeEncoding)
+                  _Unwind_Exception* unwind_exception, uint8_t ttypeEncoding)
 {
-    __cxa_exception* excp = (__cxa_exception*)(exceptionObject+1) - 1;
-    const std::type_info* excpType = excp->exceptionType;
+    __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
+    const std::type_info* excpType = exception_header->exceptionType;
     const uint8_t* actionPos = (uint8_t*)actionEntry;
     while (true)
     {
@@ -250,8 +261,8 @@ handleActionValue(const uint8_t* classInfo, uintptr_t actionEntry,
             // catchType == 0 -> catch (...)
             if (catchType == 0 || excpType == catchType)
             {
-                excp->handlerSwitchValue = typeOffset;
-                excp->actionRecord = SactionPos;
+                exception_header->handlerSwitchValue = typeOffset;
+                exception_header->actionRecord = SactionPos;
                 return true;
             }
         }
@@ -273,14 +284,14 @@ handleActionValue(const uint8_t* classInfo, uintptr_t actionEntry,
 //    catchTemp and adjustedPtr here.
 static
 bool
-contains_handler(_Unwind_Exception* exceptionObject, _Unwind_Context* context)
+contains_handler(_Unwind_Exception* unwind_exception, _Unwind_Context* context)
 {
-    __cxa_exception* excp = (__cxa_exception*)(exceptionObject+1) - 1;
+    __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
     const uint8_t* lsda = (const uint8_t*)_Unwind_GetLanguageSpecificData(context);
-    excp->languageSpecificData = lsda;
+    exception_header->languageSpecificData = lsda;
     // set adjustedPtr!  __cxa_get_exception_ptr and __cxa_begin_catch use it.
     // TODO:  Put it where it is supposed to be and adjust it properly
-    excp->adjustedPtr = exceptionObject+1;
+    exception_header->adjustedPtr = unwind_exception+1;
     if (lsda)
     {
         // Get the current instruction pointer and offset it before next
@@ -328,11 +339,11 @@ contains_handler(_Unwind_Exception* exceptionObject, _Unwind_Context* context)
                 actionEntry += ((uintptr_t)actionTableStart) - 1;
             if ((start <= pcOffset) && (pcOffset < (start + length)))
             {
-                excp->catchTemp = (void*)(funcStart + landingPad);
+                exception_header->catchTemp = (void*)(funcStart + landingPad);
                 if (actionEntry)
                     return handleActionValue(classInfo, 
                                              actionEntry, 
-                                             exceptionObject,
+                                             unwind_exception,
                                              ttypeEncoding);
                 // Note: Only non-clean up handlers are marked as
                 //       found. Otherwise the clean up handlers will be 
@@ -348,24 +359,24 @@ contains_handler(_Unwind_Exception* exceptionObject, _Unwind_Context* context)
 
 static
 _Unwind_Reason_Code
-transfer_control_to_landing_pad(_Unwind_Exception* exceptionObject,
+transfer_control_to_landing_pad(_Unwind_Exception* unwind_exception,
                                 _Unwind_Context* context)
 {
-    __cxa_exception* excp = (__cxa_exception*)(exceptionObject+1) - 1;
-    _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)exceptionObject);
-    _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), excp->handlerSwitchValue);
-    _Unwind_SetIP(context, (uintptr_t)excp->catchTemp);
+    __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
+    _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)unwind_exception);
+    _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), exception_header->handlerSwitchValue);
+    _Unwind_SetIP(context, (uintptr_t)exception_header->catchTemp);
     return _URC_INSTALL_CONTEXT;
 }
 
 static
 _Unwind_Reason_Code
-perform_cleanup(_Unwind_Exception* exceptionObject, _Unwind_Context* context)
+perform_cleanup(_Unwind_Exception* unwind_exception, _Unwind_Context* context)
 {
-    __cxa_exception* excp = (__cxa_exception*)(exceptionObject+1) - 1;
-    _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)exceptionObject);
+    __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
+    _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)unwind_exception);
     _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), 0);
-    _Unwind_SetIP(context, (uintptr_t)excp->catchTemp);
+    _Unwind_SetIP(context, (uintptr_t)exception_header->catchTemp);
     return _URC_INSTALL_CONTEXT;
 }
 
@@ -376,13 +387,13 @@ perform_cleanup(_Unwind_Exception* exceptionObject, _Unwind_Context* context)
 //                    == _UA_CLEANUP_PHASE, or
 //                    == _UA_CLEANUP_PHASE | _UA_HANDLER_FRAME, or
 //                    == _UA_CLEANUP_PHASE | _UA_FORCE_UNWIND
-//            exceptionObject != nullptr
+//            unwind_exception != nullptr
 //            context != nullptr
 _Unwind_Reason_Code
 __gxx_personality_v0(int version, _Unwind_Action actions, uint64_t exceptionClass,
-                     _Unwind_Exception* exceptionObject, _Unwind_Context* context)
+                     _Unwind_Exception* unwind_exception, _Unwind_Context* context)
 {
-    if (version == 1 && exceptionObject != 0 && context != 0)
+    if (version == 1 && unwind_exception != 0 && context != 0)
     {
         bool native_exception = (exceptionClass & 0xFFFFFF00) == 0x432B2B00;
         bool force_unwind = actions & _UA_FORCE_UNWIND;
@@ -392,7 +403,7 @@ __gxx_personality_v0(int version, _Unwind_Action actions, uint64_t exceptionClas
             {
                 if (actions & _UA_CLEANUP_PHASE)
                     return _URC_FATAL_PHASE1_ERROR;
-                if (contains_handler(exceptionObject, context))
+                if (contains_handler(unwind_exception, context))
                     return _URC_HANDLER_FOUND;
                 return _URC_CONTINUE_UNWIND;
             }
@@ -401,10 +412,10 @@ __gxx_personality_v0(int version, _Unwind_Action actions, uint64_t exceptionClas
                 if (actions & _UA_HANDLER_FRAME)
                 {
                     // return _URC_INSTALL_CONTEXT or _URC_FATAL_PHASE2_ERROR
-                    return transfer_control_to_landing_pad(exceptionObject, context);
+                    return transfer_control_to_landing_pad(unwind_exception, context);
                 }
                 // return _URC_CONTINUE_UNWIND or _URC_FATAL_PHASE2_ERROR
-                return perform_cleanup(exceptionObject, context);
+                return perform_cleanup(unwind_exception, context);
             }
         }
         else // foreign exception or force_unwind
@@ -420,7 +431,7 @@ __gxx_personality_v0(int version, _Unwind_Action actions, uint64_t exceptionClas
                 if (actions & _UA_HANDLER_FRAME)
                     return _URC_FATAL_PHASE2_ERROR;
                 // return _URC_CONTINUE_UNWIND or _URC_FATAL_PHASE2_ERROR
-                return perform_cleanup(exceptionObject, context);
+                return perform_cleanup(unwind_exception, context);
             }
         }
     }
