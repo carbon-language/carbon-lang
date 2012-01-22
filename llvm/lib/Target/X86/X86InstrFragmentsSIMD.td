@@ -75,8 +75,7 @@ def X86vzload  : SDNode<"X86ISD::VZEXT_LOAD", SDTLoad,
                         [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
 def X86vshldq  : SDNode<"X86ISD::VSHLDQ",    SDTIntShiftOp>;
 def X86vshrdq  : SDNode<"X86ISD::VSRLDQ",    SDTIntShiftOp>;
-def X86cmpps   : SDNode<"X86ISD::CMPPS",     SDTX86VFCMP>;
-def X86cmppd   : SDNode<"X86ISD::CMPPD",     SDTX86VFCMP>;
+def X86cmpp    : SDNode<"X86ISD::CMPP",      SDTX86VFCMP>;
 def X86pcmpeq  : SDNode<"X86ISD::PCMPEQ", SDTIntBinOp, [SDNPCommutative]>;
 def X86pcmpgt  : SDNode<"X86ISD::PCMPGT", SDTIntBinOp>;
 

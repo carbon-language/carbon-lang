@@ -228,9 +228,8 @@ namespace llvm {
       // VSHLI, VSRLI, VSRAI - Vector shift elements by immediate
       VSHLI, VSRLI, VSRAI,
 
-      // CMPPD, CMPPS - Vector double/float comparison.
-      // CMPPD, CMPPS - Vector double/float comparison.
-      CMPPD, CMPPS,
+      // CMPP - Vector packed double/float comparison.
+      CMPP,
 
       // PCMP* - Vector integer comparisons.
       PCMPEQ, PCMPGT,

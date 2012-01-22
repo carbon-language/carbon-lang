@@ -8357,7 +8357,6 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
     EVT EltVT = Op0.getValueType().getVectorElementType();
     assert(EltVT == MVT::f32 || EltVT == MVT::f64);
 
-    unsigned Opc = EltVT == MVT::f32 ? X86ISD::CMPPS : X86ISD::CMPPD;
     bool Swap = false;
 
     // SSE Condition code mapping:
@@ -8397,19 +8396,24 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
     if (SSECC == 8) {
       if (SetCCOpcode == ISD::SETUEQ) {
         SDValue UNORD, EQ;
-        UNORD = DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(3, MVT::i8));
-        EQ = DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(0, MVT::i8));
+        UNORD = DAG.getNode(X86ISD::CMPP, dl, VT, Op0, Op1,
+                            DAG.getConstant(3, MVT::i8));
+        EQ = DAG.getNode(X86ISD::CMPP, dl, VT, Op0, Op1,
+                         DAG.getConstant(0, MVT::i8));
         return DAG.getNode(ISD::OR, dl, VT, UNORD, EQ);
       } else if (SetCCOpcode == ISD::SETONE) {
         SDValue ORD, NEQ;
-        ORD = DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(7, MVT::i8));
-        NEQ = DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(4, MVT::i8));
+        ORD = DAG.getNode(X86ISD::CMPP, dl, VT, Op0, Op1,
+                          DAG.getConstant(7, MVT::i8));
+        NEQ = DAG.getNode(X86ISD::CMPP, dl, VT, Op0, Op1,
+                          DAG.getConstant(4, MVT::i8));
         return DAG.getNode(ISD::AND, dl, VT, ORD, NEQ);
       }
       llvm_unreachable("Illegal FP comparison");
     }
     // Handle all other FP comparisons here.
-    return DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(SSECC, MVT::i8));
+    return DAG.getNode(X86ISD::CMPP, dl, VT, Op0, Op1,
+                       DAG.getConstant(SSECC, MVT::i8));
   }
 
   // Break 256-bit integer vector compare into smaller ones.
@@ -10935,8 +10939,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VSHLI:              return "X86ISD::VSHLI";
   case X86ISD::VSRLI:              return "X86ISD::VSRLI";
   case X86ISD::VSRAI:              return "X86ISD::VSRAI";
-  case X86ISD::CMPPD:              return "X86ISD::CMPPD";
-  case X86ISD::CMPPS:              return "X86ISD::CMPPS";
+  case X86ISD::CMPP:               return "X86ISD::CMPP";
   case X86ISD::PCMPEQ:             return "X86ISD::PCMPEQ";
   case X86ISD::PCMPGT:             return "X86ISD::PCMPGT";
   case X86ISD::ADD:                return "X86ISD::ADD";
