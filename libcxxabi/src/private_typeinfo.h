@@ -16,32 +16,47 @@
 namespace __cxxabiv1
 {
 
-class __fundamental_type_info
+#pragma GCC visibility push(hidden)
+
+class __shim_type_info
     : public std::type_info
+{
+public:
+    virtual ~__shim_type_info();
+
+    virtual void display() const = 0;
+};
+
+class __fundamental_type_info
+    : public __shim_type_info
 {
 public:
     virtual ~__fundamental_type_info();
+    virtual void display() const;
 };
 
 class __array_type_info
-    : public std::type_info
+    : public __shim_type_info
 {
 public:
     virtual ~__array_type_info();
+    virtual void display() const;
 };
 
 class __function_type_info
-    : public std::type_info
+    : public __shim_type_info
 {
 public:
     virtual ~__function_type_info();
+    virtual void display() const;
 };
 
 class __enum_type_info
-    : public std::type_info
+    : public __shim_type_info
 {
 public:
     virtual ~__enum_type_info();
+    virtual void display() const;
 };
 
 enum
@@ -104,7 +119,7 @@ struct __dynamic_cast_info
 
 // Has no base class
 class __class_type_info
-    : public std::type_info
+    : public __shim_type_info
 {
 public:
     virtual ~__class_type_info();
@@ -113,6 +128,7 @@ public:
     void process_static_type_below_dst(__dynamic_cast_info*, const void*, int) const;
     virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
     virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
+    virtual void display() const;
 };
 
 // Has one non-virtual public base class at offset zero
@@ -126,6 +142,7 @@ public:
 
     virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
     virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
+    virtual void display() const;
 };
 
 struct __base_class_type_info
@@ -143,6 +160,7 @@ public:
 
     void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
     void search_below_dst(__dynamic_cast_info*, const void*, int) const;
+    void display() const;
 };
 
 // Has one or more base classes
@@ -166,14 +184,15 @@ public:
 
     virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
     virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
+    virtual void display() const;
 };
 
 class __pbase_type_info
-    : public std::type_info
+    : public __shim_type_info
 {
 public:
     unsigned int __flags;
-    const std::type_info* __pointee;
+    const __shim_type_info* __pointee;
 
     enum __masks
     {
@@ -192,6 +211,7 @@ class __pointer_type_info
 {
 public:
     virtual ~__pointer_type_info();
+    virtual void display() const;
 };
 
 class __pointer_to_member_type_info
@@ -201,7 +221,10 @@ public:
     const __class_type_info* __context;
 
     virtual ~__pointer_to_member_type_info();
+    virtual void display() const;
 };
+
+#pragma GCC visibility pop
 
 }  // __cxxabiv1
 

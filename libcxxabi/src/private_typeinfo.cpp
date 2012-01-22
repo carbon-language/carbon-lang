@@ -7,19 +7,35 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define __name __type_name
+
 #include "private_typeinfo.h"
+
+#include <iostream>
 
 namespace std
 {
+
+#pragma GCC visibility push(default)
 
 type_info::~type_info()
 {
 }
 
+#pragma GCC visibility pop
+
 }  // std
 
 namespace __cxxabiv1
 {
+
+#pragma GCC visibility push(hidden)
+
+// __shim_type_info
+
+__shim_type_info::~__shim_type_info()
+{
+}
 
 // __fundamental_type_info
 
@@ -31,10 +47,22 @@ __fundamental_type_info::~__fundamental_type_info()
 {
 }
 
+void
+__fundamental_type_info::display() const
+{
+    std::cout << "__fundamental_type_info " << __type_name << '\n';
+}
+
 // __array_type_info
 
 __array_type_info::~__array_type_info()
 {
+}
+
+void
+__array_type_info::display() const
+{
+    std::cout << "__array_type_info " << __type_name << '\n';
 }
 
 // __function_type_info
@@ -43,10 +71,22 @@ __function_type_info::~__function_type_info()
 {
 }
 
+void
+__function_type_info::display() const
+{
+    std::cout << "__function_type_info " << __type_name << '\n';
+}
+
 // __enum_type_info
 
 __enum_type_info::~__enum_type_info()
 {
+}
+
+void
+__enum_type_info::display() const
+{
+    std::cout << "__enum_type_info " << __type_name << '\n';
 }
 
 // __class_type_info
@@ -55,16 +95,51 @@ __class_type_info::~__class_type_info()
 {
 }
 
+void
+__class_type_info::display() const
+{
+    std::cout << "__class_type_info " << __type_name << '\n';
+}
+
 // __si_class_type_info
 
 __si_class_type_info::~__si_class_type_info()
 {
 }
 
+void
+__si_class_type_info::display() const
+{
+    std::cout << "__si_class_type_info " << __type_name << '\n';
+    std::cout << "derived from ";
+    __base_type->display();
+}
+
 // __vmi_class_type_info
 
 __vmi_class_type_info::~__vmi_class_type_info()
 {
+}
+
+void
+__vmi_class_type_info::display() const
+{
+    std::cout << "__vmi_class_type_info " << __type_name << '\n';
+    if (__flags & __non_diamond_repeat_mask)
+        std::cout << "__non_diamond_repeat_mask\n";
+    if (__flags & __diamond_shaped_mask)
+        std::cout << "__diamond_shaped_mask\n";
+    std::cout << "derived from\n";
+    for (const __base_class_type_info* p = __base_info; p < __base_info + __base_count; ++p)
+        p->display();
+}
+
+void
+__base_class_type_info::display() const
+{
+    if (__offset_flags & __public_mask)
+        std::cout << "public ";
+    __base_type->display();
 }
 
 // __pbase_type_info
@@ -79,11 +154,52 @@ __pointer_type_info::~__pointer_type_info()
 {
 }
 
+void
+__pointer_type_info::display() const
+{
+    std::cout << "__pointer_type_info " << __type_name << '\n';
+    if (__flags & __const_mask)
+        std::cout << "const ";
+    if (__flags & __volatile_mask)
+        std::cout << "volatile ";
+    if (__flags & __restrict_mask)
+        std::cout << "restrict ";
+    if (__flags & __incomplete_mask)
+        std::cout << "__incomplete_mask ";
+    if (__flags & __incomplete_class_mask)
+        std::cout << "__incomplete_class_mask ";
+    std::cout << "pointer to ";
+    __pointee->display();
+}
+
 // __pointer_to_member_type_info
 
 __pointer_to_member_type_info::~__pointer_to_member_type_info()
 {
 }
+
+void
+__pointer_to_member_type_info::display() const
+{
+    std::cout << "__pointer_to_member_type_info " << __type_name << '\n';
+    if (__flags & __const_mask)
+        std::cout << "const ";
+    if (__flags & __volatile_mask)
+        std::cout << "volatile ";
+    if (__flags & __restrict_mask)
+        std::cout << "restrict ";
+    if (__flags & __incomplete_mask)
+        std::cout << "__incomplete_mask ";
+    if (__flags & __incomplete_class_mask)
+        std::cout << "__incomplete_class_mask ";
+    std::cout << "member pointer to class ";
+    __context->display();
+    std::cout << "and type ";
+    __pointee->display();
+}
+
+#pragma GCC visibility pop
+#pragma GCC visibility push(default)
 
 // __dynamic_cast
 
@@ -137,6 +253,7 @@ __pointer_to_member_type_info::~__pointer_to_member_type_info()
 // static_type in the DAG.
 //
 // dst_type != static_type:  The compiler computes the dynamic_cast in this case too.
+// dynamic_type != static_type:  The compiler computes the dynamic_cast in this case too.
 //
 // Returns:
 //
@@ -147,7 +264,7 @@ __pointer_to_member_type_info::~__pointer_to_member_type_info()
 //        path from (dynamic_ptr, dynamic_type) to the one dst_type, then return
 //        a pointer to that dst_type.
 // Else if there are 0 dst_types of flavor 1 and exactly 1 dst_type of flavor 2, and
-//    if there is a public path (dynamic_ptr, dynamic_type) to
+//    if there is a public path from (dynamic_ptr, dynamic_type) to
 //    (static_ptr, static_type) and a public path from (dynamic_ptr, dynamic_type)
 //    to the one dst_type, then return a pointer to that one dst_type.
 // Else return nullptr.
@@ -219,6 +336,9 @@ __dynamic_cast(const void* static_ptr,
     return const_cast<void*>(dst_ptr);
 }
 
+#pragma GCC visibility pop
+#pragma GCC visibility push(hidden)
+
 // Call this function when you hit a static_type which is a base (above) a dst_type.
 // Let caller know you hit a static_type.  But only start recording details if
 // this is (static_ptr, static_type) -- the node we are casting from.
@@ -272,8 +392,6 @@ __class_type_info::process_static_type_above_dst(__dynamic_cast_info* info,
 }
 
 // Call this function when you hit a static_type which is not a base (above) a dst_type.
-// Let caller know you hit a static_type (this may not be necessary).
-// But only start recording details if this is (static_ptr, static_type) -- the node we are casting from.
 // If this is (static_ptr, static_type)
 //   Record the path (public or not) from (dynamic_ptr, dynamic_type) to here.  There may be
 //   multiple paths from (dynamic_ptr, dynamic_type) to here, record the "most public" one.
@@ -302,18 +420,48 @@ __class_type_info::process_static_type_below_dst(__dynamic_cast_info* info,
 // If this is neither a static_type nor a dst_type node, continue searching
 // base classes above.
 // All the hoopla surrounding the search code is doing nothing but looking for
-// excuses to stop the search prematurely (break out of the for-loop):
-//
-//             const Iter e = __base_info + __base_count;
-//             for (Iter p = __base_info; p < e; ++p)
-//                 p->search_above_dst(info, current_ptr, current_ptr, path_below);
-//
-// or:
-//
-//             const Iter e = __base_info + __base_count;
-//             for (Iter p = __base_info; p < e; ++p)
-//                 p->search_below_dst(info, current_ptr, path_below);
-//
+// excuses to stop the search prematurely (break out of the for-loop).  That is,
+// the algorithm below is simply an optimization of this:
+// void
+// __vmi_class_type_info::search_below_dst(__dynamic_cast_info* info,
+//                                         const void* current_ptr,
+//                                         int path_below) const
+// {
+//     typedef const __base_class_type_info* Iter;
+//     if (this == info->static_type)
+//         process_static_type_below_dst(info, current_ptr, path_below);
+//     else if (this == info->dst_type)
+//     {
+//         // Record the most public access path that got us here
+//         if (info->path_dynamic_ptr_to_dst_ptr != public_path)
+//             info->path_dynamic_ptr_to_dst_ptr = path_below;
+//         bool does_dst_type_point_to_our_static_type = false;
+//         for (Iter p = __base_info, e= __base_info + __base_count; p < e; ++p)
+//         {
+//             p->search_above_dst(info, current_ptr, current_ptr, public_path);
+//             if (info->found_our_static_ptr)
+//                 does_dst_type_point_to_our_static_type = true;
+//             // break out early here if you can detect it doesn't matter if you do
+//         }
+//         if (!does_dst_type_point_to_our_static_type)
+//         {
+//             // We found a dst_type that doesn't point to (static_ptr, static_type)
+//             // So record the address of this dst_ptr and increment the
+//             // count of the number of such dst_types found in the tree.
+//             info->dst_ptr_not_leading_to_static_ptr = current_ptr;
+//             info->number_to_dst_ptr += 1;
+//         }
+//     }
+//     else
+//     {
+//         // This is not a static_type and not a dst_type.
+//         for (Iter p = __base_info, e = __base_info + __base_count; p < e; ++p)
+//         {
+//             p->search_below_dst(info, current_ptr, public_path);
+//             // break out early here if you can detect it doesn't matter if you do
+//         }
+//     }
+// }
 void
 __vmi_class_type_info::search_below_dst(__dynamic_cast_info* info,
                                         const void* current_ptr,
@@ -608,14 +756,28 @@ __class_type_info::search_below_dst(__dynamic_cast_info* info,
 // for a public path to (static_ptr, static_type).
 // This function is guaranteed not to find a node of type dst_type.
 // Theoretically this is a very simple function which just stops if it finds a
-// static_type node, else keeps searching with:
-//
-//             const Iter e = __base_info + __base_count;
-//             for (Iter p = __base_info; p < e; ++p)
-//                 p->search_above_dst(info, dst_ptr, current_ptr, path_below);
-//
-// All the hoopla surrounding the search code is doing nothing but looking for
-// excuses to stop the search prematurely (break out of the for-loop).
+// static_type node:  All the hoopla surrounding the search code is doing
+// nothing but looking for excuses to stop the search prematurely (break out of
+// the for-loop).  That is, the algorithm below is simply an optimization of this:
+// void
+// __vmi_class_type_info::search_above_dst(__dynamic_cast_info* info,
+//                                         const void* dst_ptr,
+//                                         const void* current_ptr,
+//                                         int path_below) const
+// {
+//     if (this == info->static_type)
+//         process_static_type_above_dst(info, dst_ptr, current_ptr, path_below);
+//     else
+//     {
+//         typedef const __base_class_type_info* Iter;
+//         // This is not a static_type and not a dst_type
+//         for (Iter p = __base_info, e = __base_info + __base_count; p < e; ++p)
+//         {
+//             p->search_above_dst(info, dst_ptr, current_ptr, public_path);
+//             // break out early here if you can detect it doesn't matter if you do
+//         }
+//     }
+// }
 void
 __vmi_class_type_info::search_above_dst(__dynamic_cast_info* info,
                                         const void* dst_ptr,
@@ -749,5 +911,7 @@ __base_class_type_info::search_below_dst(__dynamic_cast_info* info,
                                       path_below :
                                       not_public_path);
 }
+
+#pragma GCC visibility pop
 
 }  // __cxxabiv1
