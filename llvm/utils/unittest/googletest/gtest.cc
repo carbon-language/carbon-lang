@@ -2481,6 +2481,9 @@ static const char * TestPartResultTypeToString(TestPartResult::Type type) {
       return "Failure\n";
 #endif
   }
+
+  // All cases return, so this is unreachable but GCC doesn't know it
+  abort();
 }
 
 // Prints a TestPartResult to a String.
