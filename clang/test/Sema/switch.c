@@ -297,3 +297,11 @@ int test18() {
   default: return 2; // expected-warning {{default is unreachable as all enumeration values are accounted for}}
   }
 }
+
+int test19() {
+  enum { A, B } a;
+  switch (a) {
+  case 7: return 1; // expected-warning {{case value not in enumerated type}}
+  default: return 3;
+  }
+}
