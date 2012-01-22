@@ -32,9 +32,15 @@ def FeatureVFP2 : SubtargetFeature<"vfp2", "HasVFPv2", "true",
 def FeatureVFP3 : SubtargetFeature<"vfp3", "HasVFPv3", "true",
                                    "Enable VFP3 instructions",
                                    [FeatureVFP2]>;
+def FeatureVFP4 : SubtargetFeature<"vfp4", "HasVFPv4", "true",
+                                   "Enable VFP4 instructions",
+                                   [FeatureVFP3]>;
 def FeatureNEON : SubtargetFeature<"neon", "HasNEON", "true",
                                    "Enable NEON instructions",
                                    [FeatureVFP3]>;
+def FeatureNEONVFP4 : SubtargetFeature<"neon-vfpv4", "HasNEONVFPv4", "true",
+                                       "Enable NEON-VFP4 instructions",
+                                       [FeatureVFP4, FeatureNEON]>;
 def FeatureThumb2 : SubtargetFeature<"thumb2", "HasThumb2", "true",
                                      "Enable Thumb2 instructions">;
 def FeatureNoARM  : SubtargetFeature<"noarm", "NoARM", "true",
