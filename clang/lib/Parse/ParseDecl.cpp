@@ -690,7 +690,7 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
   // Record this attribute
   attrs.addNew(&Availability, 
                SourceRange(AvailabilityLoc, T.getCloseLocation()), 
-               0, SourceLocation(),
+               0, AvailabilityLoc,
                Platform, PlatformLoc,
                Changes[Introduced],
                Changes[Deprecated],

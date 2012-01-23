@@ -17,3 +17,10 @@ void test_10095131() {
   ATSFontGetName("Hello"); // expected-warning {{'ATSFontGetName' is deprecated: first deprecated in Mac OS X 9.0 - use CTFontCopyFullName}}
   ATSFontGetPostScriptName(100); // expected-error {{'ATSFontGetPostScriptName' is unavailable: obsoleted in Mac OS X 9.0 - use ATSFontGetFullPostScriptName}}
 }
+
+// rdar://10711037
+__attribute__((availability(macos, unavailable))) // expected-warning {{attribute 'availability' is ignored}}
+enum {
+    NSDataWritingFileProtectionWriteOnly = 0x30000000,
+    NSDataWritingFileProtectionCompleteUntilUserAuthentication = 0x40000000,
+};
