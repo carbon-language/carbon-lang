@@ -50,6 +50,8 @@ Simply compile and link your program with <tt>-faddress-sanitizer</tt> flag. <BR
 To get a reasonable performance add <tt>-O1</tt> or higher. <BR>
 To get nicer stack traces in error messages add
 <tt>-fno-omit-frame-pointer</tt>. <BR>
+To get perfect stack traces you may need to disable inlining (just use <tt>-O1</tt>) and tail call
+elimination (</tt>-fno-optimize-sibling-calls</tt>).
 
 <pre>
 % cat example_UseAfterFree.cc
