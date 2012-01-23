@@ -44,6 +44,22 @@ public:
   bool VisitFunctionDecl(FunctionDecl *D) {
     IndexCtx.handleFunction(D);
     handleDeclarator(D);
+
+    if (CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(D)) {
+      // Constructor initializers.
+      for (CXXConstructorDecl::init_iterator I = Ctor->init_begin(),
+                                             E = Ctor->init_end();
+           I != E; ++I) {
+        CXXCtorInitializer *Init = *I;
+        if (Init->isWritten()) {
+          IndexCtx.indexTypeSourceInfo(Init->getTypeSourceInfo(), D);
+          if (const FieldDecl *Member = Init->getAnyMember())
+            IndexCtx.handleReference(Member, Init->getMemberLocation(), D, D);
+          IndexCtx.indexBody(Init->getInit(), D, D);
+        }
+      }
+    }
+
     if (D->isThisDeclarationADefinition()) {
       const Stmt *Body = D->getBody();
       if (Body) {
