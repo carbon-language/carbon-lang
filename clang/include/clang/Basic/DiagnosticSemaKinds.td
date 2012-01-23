@@ -4053,6 +4053,9 @@ def err_operator_arrow_circular : Error<
 def err_pseudo_dtor_base_not_scalar : Error<
   "object expression of non-scalar type %0 cannot be used in a "
   "pseudo-destructor expression">;
+def ext_pseudo_dtor_on_void : ExtWarn<
+  "pseudo-destructors on type void are a Microsoft extension">,
+  InGroup<Microsoft>;
 def err_pseudo_dtor_type_mismatch : Error<
   "the type of object expression (%0) does not match the type being destroyed "
   "(%1) in pseudo-destructor expression">;

@@ -163,3 +163,14 @@ enum ENUM2 {
 };
 
 
+namespace PR11791 {
+  template<class _Ty>
+  void del(_Ty *_Ptr) {
+    _Ptr->~_Ty();  // expected-warning {{pseudo-destructors on type void are a Microsoft extension}}
+  }
+
+  void f() {
+    int* a = 0;
+    del((void*)a);  // expected-note {{in instantiation of function template specialization}}
+  }
+}

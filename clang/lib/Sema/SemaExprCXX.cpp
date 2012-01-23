@@ -4380,8 +4380,11 @@ ExprResult Sema::BuildPseudoDestructorExpr(Expr *Base,
     return ExprError();
 
   if (!ObjectType->isDependentType() && !ObjectType->isScalarType()) {
-    Diag(OpLoc, diag::err_pseudo_dtor_base_not_scalar)
-      << ObjectType << Base->getSourceRange();
+    if (getLangOptions().MicrosoftMode && ObjectType->isVoidType())
+      Diag(OpLoc, diag::ext_pseudo_dtor_on_void);
+    else
+      Diag(OpLoc, diag::err_pseudo_dtor_base_not_scalar)
+        << ObjectType << Base->getSourceRange();
     return ExprError();
   }
 
