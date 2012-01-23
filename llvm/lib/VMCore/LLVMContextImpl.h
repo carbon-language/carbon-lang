@@ -27,7 +27,6 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
 #include <vector>
@@ -139,8 +138,7 @@ public:
   // on Context destruction.
   SmallPtrSet<MDNode*, 1> NonUniquedMDNodes;
   
-  typedef DenseMap<Type*, OwningPtr<ConstantAggregateZero> > CAZMapTy;
-  CAZMapTy CAZConstants;
+  ConstantUniqueMap<char, char, Type, ConstantAggregateZero> AggZeroConstants;
 
   typedef ConstantUniqueMap<std::vector<Constant*>, ArrayRef<Constant*>,
     ArrayType, ConstantArray, true /*largekey*/> ArrayConstantsTy;
@@ -154,11 +152,9 @@ public:
                             VectorType, ConstantVector> VectorConstantsTy;
   VectorConstantsTy VectorConstants;
   
-  typedef DenseMap<PointerType*, OwningPtr<ConstantPointerNull> > CPNMapTy;
-  CPNMapTy CPNConstants;
-
-  typedef DenseMap<Type*, OwningPtr<UndefValue> > UVMapTy;
-  UVMapTy UVConstants;
+  ConstantUniqueMap<char, char, PointerType, ConstantPointerNull>
+    NullPtrConstants;
+  ConstantUniqueMap<char, char, Type, UndefValue> UndefValueConstants;
   
   DenseMap<std::pair<Function*, BasicBlock*> , BlockAddress*> BlockAddresses;
   ConstantUniqueMap<ExprMapKeyType, const ExprMapKeyType&, Type, ConstantExpr>

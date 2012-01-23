@@ -993,33 +993,18 @@ bool ConstantFP::isValueValidForType(Type *Ty, const APFloat& Val) {
 //===----------------------------------------------------------------------===//
 //                      Factory Function Implementation
 
-ConstantAggregateZero *ConstantAggregateZero::get(Type *Ty) {
+ConstantAggregateZero* ConstantAggregateZero::get(Type* Ty) {
   assert((Ty->isStructTy() || Ty->isArrayTy() || Ty->isVectorTy()) &&
          "Cannot create an aggregate zero of non-aggregate type!");
   
-  OwningPtr<ConstantAggregateZero> &Entry =
-    Ty->getContext().pImpl->CAZConstants[Ty];
-  if (Entry == 0)
-    Entry.reset(new ConstantAggregateZero(Ty));
-  
-  return Entry.get();
+  LLVMContextImpl *pImpl = Ty->getContext().pImpl;
+  return pImpl->AggZeroConstants.getOrCreate(Ty, 0);
 }
 
 /// destroyConstant - Remove the constant from the constant table...
 ///
 void ConstantAggregateZero::destroyConstant() {
-  // Drop ownership of the CAZ object before removing the entry so that it
-  // doesn't get double deleted.
-  LLVMContextImpl::CAZMapTy &CAZConstants = getContext().pImpl->CAZConstants;
-  LLVMContextImpl::CAZMapTy::iterator I = CAZConstants.find(getType());
-  assert(I != CAZConstants.end() && "CAZ object not in uniquing map");
-  I->second.take();
-  
-  // Actually remove the entry from the DenseMap now, which won't free the
-  // constant.
-  CAZConstants.erase(I);
-  
-  // Free the constant and any dangling references to it.
+  getType()->getContext().pImpl->AggZeroConstants.remove(this);
   destroyConstantImpl();
 }
 
@@ -1127,29 +1112,13 @@ Constant *ConstantVector::getSplatValue() const {
 //
 
 ConstantPointerNull *ConstantPointerNull::get(PointerType *Ty) {
-  OwningPtr<ConstantPointerNull> &Entry =
-    Ty->getContext().pImpl->CPNConstants[Ty];
-  if (Entry == 0)
-    Entry.reset(new ConstantPointerNull(Ty));
-  
-  return Entry.get();
+  return Ty->getContext().pImpl->NullPtrConstants.getOrCreate(Ty, 0);
 }
 
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantPointerNull::destroyConstant() {
-  // Drop ownership of the CPN object before removing the entry so that it
-  // doesn't get double deleted.
-  LLVMContextImpl::CPNMapTy &CPNConstants = getContext().pImpl->CPNConstants;
-  LLVMContextImpl::CPNMapTy::iterator I = CPNConstants.find(getType());
-  assert(I != CPNConstants.end() && "CPN object not in uniquing map");
-  I->second.take();
-  
-  // Actually remove the entry from the DenseMap now, which won't free the
-  // constant.
-  CPNConstants.erase(I);
-  
-  // Free the constant and any dangling references to it.
+  getType()->getContext().pImpl->NullPtrConstants.remove(this);
   destroyConstantImpl();
 }
 
@@ -1158,28 +1127,13 @@ void ConstantPointerNull::destroyConstant() {
 //
 
 UndefValue *UndefValue::get(Type *Ty) {
-  OwningPtr<UndefValue> &Entry = Ty->getContext().pImpl->UVConstants[Ty];
-  if (Entry == 0)
-    Entry.reset(new UndefValue(Ty));
-  
-  return Entry.get();
+  return Ty->getContext().pImpl->UndefValueConstants.getOrCreate(Ty, 0);
 }
 
 // destroyConstant - Remove the constant from the constant table.
 //
 void UndefValue::destroyConstant() {
-  // Drop ownership of the object before removing the entry so that it
-  // doesn't get double deleted.
-  LLVMContextImpl::UVMapTy &UVConstants = getContext().pImpl->UVConstants;
-  LLVMContextImpl::UVMapTy::iterator I = UVConstants.find(getType());
-  assert(I != UVConstants.end() && "UV object not in uniquing map");
-  I->second.take();
-  
-  // Actually remove the entry from the DenseMap now, which won't free the
-  // constant.
-  UVConstants.erase(I);
-  
-  // Free the constant and any dangling references to it.
+  getType()->getContext().pImpl->UndefValueConstants.remove(this);
   destroyConstantImpl();
 }
 
