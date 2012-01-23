@@ -3267,15 +3267,17 @@ llvm::Value* MipsABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   CGBuilderTy &Builder = CGF.Builder;
   llvm::Value *VAListAddrAsBPP = Builder.CreateBitCast(VAListAddr, BPP, "ap");
   llvm::Value *Addr = Builder.CreateLoad(VAListAddrAsBPP, "ap.cur");
-  unsigned TypeAlign = getContext().getTypeAlign(Ty) / 8;
+  int64_t TypeAlign = getContext().getTypeAlign(Ty) / 8;
   llvm::Type *PTy = llvm::PointerType::getUnqual(CGF.ConvertType(Ty));
   llvm::Value *AddrTyped;
+  unsigned PtrWidth = getContext().getTargetInfo().getPointerWidth(0);
+  llvm::IntegerType *IntTy = (PtrWidth == 32) ? CGF.Int32Ty : CGF.Int64Ty;
 
   if (TypeAlign > MinABIStackAlignInBytes) {
-    llvm::Value *AddrAsInt32 = CGF.Builder.CreatePtrToInt(Addr, CGF.Int32Ty);
-    llvm::Value *Inc = llvm::ConstantInt::get(CGF.Int32Ty, TypeAlign - 1);
-    llvm::Value *Mask = llvm::ConstantInt::get(CGF.Int32Ty, -TypeAlign);
-    llvm::Value *Add = CGF.Builder.CreateAdd(AddrAsInt32, Inc);
+    llvm::Value *AddrAsInt = CGF.Builder.CreatePtrToInt(Addr, IntTy);
+    llvm::Value *Inc = llvm::ConstantInt::get(IntTy, TypeAlign - 1);
+    llvm::Value *Mask = llvm::ConstantInt::get(IntTy, -TypeAlign);
+    llvm::Value *Add = CGF.Builder.CreateAdd(AddrAsInt, Inc);
     llvm::Value *And = CGF.Builder.CreateAnd(Add, Mask);
     AddrTyped = CGF.Builder.CreateIntToPtr(And, PTy);
   }
@@ -3283,11 +3285,11 @@ llvm::Value* MipsABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     AddrTyped = Builder.CreateBitCast(Addr, PTy);  
 
   llvm::Value *AlignedAddr = Builder.CreateBitCast(AddrTyped, BP);
-  TypeAlign = std::max(TypeAlign, MinABIStackAlignInBytes);
+  TypeAlign = std::max((unsigned)TypeAlign, MinABIStackAlignInBytes);
   uint64_t Offset =
     llvm::RoundUpToAlignment(CGF.getContext().getTypeSize(Ty) / 8, TypeAlign);
   llvm::Value *NextAddr =
-    Builder.CreateGEP(AlignedAddr, llvm::ConstantInt::get(CGF.Int32Ty, Offset),
+    Builder.CreateGEP(AlignedAddr, llvm::ConstantInt::get(IntTy, Offset),
                       "ap.next");
   Builder.CreateStore(NextAddr, VAListAddrAsBPP);
   
