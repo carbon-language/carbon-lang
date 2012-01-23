@@ -34,6 +34,14 @@ int test_more_props(Sub *s) {
   return s.myOtherPropLikeThing;
 }
 
+@interface Other
+@property Sub *sub;
+@end
+
+int test_two_levels(Other *other) {
+  return other.sub.myProp;
+}
+
 // RUN: c-index-test -code-completion-at=%s:21:7 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: ObjCPropertyDecl:{ResultType int}{TypedText prop1}
 // CHECK-CC1: ObjCPropertyDecl:{ResultType float}{TypedText ProtoProp}
@@ -60,3 +68,10 @@ int test_more_props(Sub *s) {
 // CHECK-CC3-NEXT: Container Kind: ObjCInterfaceDecl
 // CHECK-CC3-NEXT: Container is complete
 // CHECK-CC3-NEXT: Container USR: c:objc(cs)Sub
+
+// RUN: c-index-test -code-completion-at=%s:42:20 %s | FileCheck -check-prefix=CHECK-CC4 %s
+// CHECK-CC4: ObjCInstanceMethodDecl:{ResultType int}{TypedText myOtherPropLikeThing} (37)
+// CHECK-CC4-NEXT: ObjCPropertyDecl:{ResultType int}{TypedText myProp} (35)
+// CHECK-CC4-NEXT: ObjCPropertyDecl:{ResultType int}{TypedText prop1} (35)
+// CHECK-CC4-NEXT: ObjCPropertyDecl:{ResultType float}{TypedText ProtoProp} (35)
+

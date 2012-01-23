@@ -3351,15 +3351,19 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
   }
 }
 
-void Sema::CodeCompleteMemberReferenceExpr(Scope *S, Expr *BaseE,
+void Sema::CodeCompleteMemberReferenceExpr(Scope *S, Expr *Base,
                                            SourceLocation OpLoc,
                                            bool IsArrow) {
-  if (!BaseE || !CodeCompleter)
+  if (!Base || !CodeCompleter)
     return;
   
+  ExprResult ConvertedBase = PerformMemberExprBaseConversion(Base, IsArrow);
+  if (ConvertedBase.isInvalid())
+    return;
+  Base = ConvertedBase.get();
+
   typedef CodeCompletionResult Result;
   
-  Expr *Base = static_cast<Expr *>(BaseE);
   QualType BaseType = Base->getType();
 
   if (IsArrow) {
