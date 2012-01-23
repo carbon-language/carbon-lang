@@ -4973,7 +4973,7 @@ def warn_missing_cases : Warning<
 
 def warn_unreachable_default : Warning<
   "default is unreachable as all enumeration values are accounted for">,
-  InGroup<SwitchEnumRedundantDefault>;
+  InGroup<SwitchRedundantDefault>;
 def warn_not_in_enum : Warning<"case value not in enumerated type %0">,
   InGroup<Switch>; 
 def err_typecheck_statement_requires_scalar : Error<

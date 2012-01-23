@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wswitch-enum -Wno-switch-enum-redundant-default %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wswitch-enum -Wno-switch-redundant-default %s
 
 int test1() {
   enum { A, B } a;
