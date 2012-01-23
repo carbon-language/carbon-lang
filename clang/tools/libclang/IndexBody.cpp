@@ -34,6 +34,11 @@ public:
     return true;
   }
 
+  bool TraverseNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS) {
+    IndexCtx.indexNestedNameSpecifierLoc(NNS, Parent, ParentDC);
+    return true;
+  }
+
   bool VisitDeclRefExpr(DeclRefExpr *E) {
     IndexCtx.handleReference(E->getDecl(), E->getLocation(),
                              Parent, ParentDC, E);
