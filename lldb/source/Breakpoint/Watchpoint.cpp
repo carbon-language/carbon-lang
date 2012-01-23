@@ -66,7 +66,8 @@ Watchpoint::SetDeclInfo (std::string &str)
     return;
 }
 
-
+// Override default impl of StoppointLocation::IsHardware() since m_is_hardware
+// member field is more accurate.
 bool
 Watchpoint::IsHardware () const
 {
@@ -79,12 +80,12 @@ Watchpoint::IsHardware () const
 bool
 Watchpoint::ShouldStop (StoppointCallbackContext *context)
 {
-    ++m_hit_count;
+    IncrementHitCount();
 
     if (!IsEnabled())
         return false;
 
-    if (m_hit_count <= GetIgnoreCount())
+    if (GetHitCount() <= GetIgnoreCount())
         return false;
 
     return true;

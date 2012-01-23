@@ -70,7 +70,10 @@ public:
     }
 
     void
-    IncrementHitCount ();
+    IncrementHitCount ()
+    {
+        ++m_hit_count;
+    }
 
     uint32_t
     GetHardwareIndex () const

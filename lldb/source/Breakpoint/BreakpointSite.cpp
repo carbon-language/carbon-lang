@@ -61,7 +61,7 @@ BreakpointSite::GetNextID()
 bool
 BreakpointSite::ShouldStop (StoppointCallbackContext *context)
 {
-    m_hit_count++;
+    IncrementHitCount();
     return m_owners.ShouldStop (context);
 }
 

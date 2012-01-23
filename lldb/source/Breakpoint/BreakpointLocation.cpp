@@ -212,12 +212,12 @@ BreakpointLocation::ShouldStop (StoppointCallbackContext *context)
     bool should_stop = true;
     LogSP log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
 
-    m_hit_count++;
+    IncrementHitCount();
 
     if (!IsEnabled())
         return false;
 
-    if (m_hit_count <= GetIgnoreCount())
+    if (GetHitCount() <= GetIgnoreCount())
         return false;
 
     // We only run synchronous callbacks in ShouldStop:
