@@ -1898,7 +1898,7 @@ TEST(AddressSanitizerMac, DISABLED_TSDWorkqueueTest) {
 }
 
 // Test that CFStringCreateCopy does not copy constant strings.
-TEST(AddressSanitizerMac, DISABLED_CFStringCreateCopy) {
+TEST(AddressSanitizerMac, CFStringCreateCopy) {
   CFStringRef str = CFSTR("Hello world!\n");
   CFStringRef str2 = CFStringCreateCopy(0, str);
   EXPECT_EQ(str, str2);

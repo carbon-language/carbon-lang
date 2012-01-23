@@ -22,6 +22,7 @@
 #include <dispatch/dispatch.h>
 #include <mach/mach_error.h>
 #include <setjmp.h>
+#include <CoreFoundation/CFString.h>
 
 typedef void* pthread_workqueue_t;
 typedef void* pthread_workitem_handle_t;
@@ -44,7 +45,8 @@ typedef void (*dispatch_group_async_f_f)(dispatch_group_t group,
 typedef int (*pthread_workqueue_additem_np_f)(pthread_workqueue_t workq,
     void *(*workitem_func)(void *), void * workitem_arg,
     pthread_workitem_handle_t * itemhandlep, unsigned int *gencountp);
-
+typedef CFStringRef (*CFStringCreateCopy_f)(CFAllocatorRef alloc,
+                                            CFStringRef str);
 
 // A wrapper for the ObjC blocks used to support libdispatch.
 typedef struct {
@@ -90,6 +92,7 @@ void WRAP(dispatch_group_async_f)(dispatch_group_t group,
 int WRAP(pthread_workqueue_additem_np)(pthread_workqueue_t workq,
     void *(*workitem_func)(void *), void * workitem_arg,
     pthread_workitem_handle_t * itemhandlep, unsigned int *gencountp);
+CFStringRef WRAP(CFStringCreateCopy)(CFAllocatorRef alloc, CFStringRef str);
 }
 
 #endif  // ASAN_MAC_H

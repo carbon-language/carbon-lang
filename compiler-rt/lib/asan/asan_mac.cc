@@ -42,6 +42,7 @@ extern dispatch_after_f_f real_dispatch_after_f;
 extern dispatch_barrier_async_f_f real_dispatch_barrier_async_f;
 extern dispatch_group_async_f_f real_dispatch_group_async_f;
 extern pthread_workqueue_additem_np_f real_pthread_workqueue_additem_np;
+extern CFStringCreateCopy_f real_CFStringCreateCopy;
 
 void GetPcSpBp(void *context, uintptr_t *pc, uintptr_t *sp, uintptr_t *bp) {
   ucontext_t *ucontext = (ucontext_t*)context;
@@ -512,6 +513,47 @@ int WRAP(pthread_workqueue_additem_np)(pthread_workqueue_t workq,
   }
   return real_pthread_workqueue_additem_np(workq, wrap_workitem_func, asan_ctxt,
                                            itemhandlep, gencountp);
+}
+
+// CF_RC_BITS, the layout of CFRuntimeBase and __CFStrIsConstant are internal
+// and subject to change in further CoreFoundation versions. Apple does not
+// guarantee any binary compatibility from release to release.
+
+// See http://opensource.apple.com/source/CF/CF-635.15/CFInternal.h
+#if defined(__BIG_ENDIAN__)
+#define CF_RC_BITS 0
+#endif
+
+#if defined(__LITTLE_ENDIAN__)
+#define CF_RC_BITS 3
+#endif
+
+// See http://opensource.apple.com/source/CF/CF-635.15/CFRuntime.h
+typedef struct __CFRuntimeBase {
+  uintptr_t _cfisa;
+  uint8_t _cfinfo[4];
+#if __LP64__
+  uint32_t _rc;
+#endif
+} CFRuntimeBase;
+
+// See http://opensource.apple.com/source/CF/CF-635.15/CFString.c
+int __CFStrIsConstant(CFStringRef str) {
+  CFRuntimeBase *base = (CFRuntimeBase*)str;
+#if __LP64__
+  return base->_rc == 0;
+#else
+  return (base->_cfinfo[CF_RC_BITS]) == 0;
+#endif
+}
+
+extern "C"
+CFStringRef WRAP(CFStringCreateCopy)(CFAllocatorRef alloc, CFStringRef str) {
+  if (__CFStrIsConstant(str)) {
+    return str;
+  } else {
+    return real_CFStringCreateCopy(alloc, str);
+  }
 }
 
 #endif  // __APPLE__

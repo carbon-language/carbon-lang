@@ -94,6 +94,7 @@ dispatch_after_f_f real_dispatch_after_f;
 dispatch_barrier_async_f_f real_dispatch_barrier_async_f;
 dispatch_group_async_f_f real_dispatch_group_async_f;
 pthread_workqueue_additem_np_f real_pthread_workqueue_additem_np;
+CFStringCreateCopy_f real_CFStringCreateCopy;
 #endif
 
 sigaction_f             real_sigaction;
@@ -648,6 +649,14 @@ void InitializeAsanInterceptors() {
   if (FLAG_v >= 2) {
     INTERCEPT_FUNCTION(pthread_workqueue_additem_np);
   }
+  // Normally CFStringCreateCopy should not copy constant CF strings.
+  // Replacing the default CFAllocator causes constant strings to be copied
+  // rather than just returned, which leads to bugs in big applications like
+  // Chromium and WebKit, see
+  // http://code.google.com/p/address-sanitizer/issues/detail?id=10
+  // Until this problem is fixed we need to check that the string is
+  // non-constant before calling CFStringCreateCopy.
+  INTERCEPT_FUNCTION(CFStringCreateCopy);
 #else
   // On Darwin siglongjmp tailcalls longjmp, so we don't want to intercept it
   // there.
