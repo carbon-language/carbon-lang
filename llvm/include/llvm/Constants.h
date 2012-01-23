@@ -34,6 +34,7 @@ class IntegerType;
 class StructType;
 class PointerType;
 class VectorType;
+class SequentialType;
 
 template<class ConstantClass, class TypeClass, class ValType>
 struct ConstantCreator;
@@ -298,7 +299,6 @@ public:
 /// ConstantAggregateZero - All zero aggregate value
 ///
 class ConstantAggregateZero : public Constant {
-  friend struct ConstantCreator<ConstantAggregateZero, Type, char>;
   void *operator new(size_t, unsigned);                      // DO NOT IMPLEMENT
   ConstantAggregateZero(const ConstantAggregateZero &);      // DO NOT IMPLEMENT
 protected:
@@ -503,7 +503,6 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantVector, Constant)
 /// ConstantPointerNull - a constant pointer value that points to null
 ///
 class ConstantPointerNull : public Constant {
-  friend struct ConstantCreator<ConstantPointerNull, PointerType, char>;
   void *operator new(size_t, unsigned);                  // DO NOT IMPLEMENT
   ConstantPointerNull(const ConstantPointerNull &);      // DO NOT IMPLEMENT
 protected:
@@ -535,6 +534,166 @@ public:
     return V->getValueID() == ConstantPointerNullVal;
   }
 };
+  
+//===----------------------------------------------------------------------===//
+/// ConstantDataSequential - A vector or array of data that contains no
+/// relocations, and whose element type is a simple 1/2/4/8-byte integer or
+/// float/double.  This is the common base class of ConstantDataArray and
+/// ConstantDataVector.
+///
+class ConstantDataSequential : public Constant {
+  friend class LLVMContextImpl;
+  /// DataElements - A pointer to the bytes underlying this constant (which is
+  /// owned by the uniquing StringMap).
+  const char *DataElements;
+  
+  /// Next - This forms a link list of ConstantDataSequential nodes that have
+  /// the same value but different type.  For example, 0,0,0,1 could be a 4
+  /// element array of i8, or a 1-element array of i32.  They'll both end up in
+  /// the same StringMap bucket, linked up.
+  ConstantDataSequential *Next;
+  void *operator new(size_t, unsigned);                      // DO NOT IMPLEMENT
+  ConstantDataSequential(const ConstantDataSequential &);    // DO NOT IMPLEMENT
+protected:
+  explicit ConstantDataSequential(Type *ty, ValueTy VT, const char *Data)
+    : Constant(ty, VT, 0, 0), DataElements(Data) {}
+  ~ConstantDataSequential() { delete Next; }
+  
+  static Constant *getImpl(StringRef Bytes, Type *Ty);
+
+protected:
+  // allocate space for exactly zero operands.
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
+public:
+  
+  virtual void destroyConstant();
+
+  /// getElementAsInteger - If this is a sequential container of integers (of
+  /// any size), return the specified element in the low bits of a uint64_t.
+  uint64_t getElementAsInteger(unsigned i) const;
+
+  /// getElementAsAPFloat - If this is a sequential container of floating point
+  /// type, return the specified element as an APFloat.
+  APFloat getElementAsAPFloat(unsigned i) const;
+
+  /// getElementAsFloat - If this is an sequential container of floats, return
+  /// the specified element as a float.
+  float getElementAsFloat(unsigned i) const;
+  
+  /// getElementAsDouble - If this is an sequential container of doubles, return
+  /// the specified element as a float.
+  double getElementAsDouble(unsigned i) const;
+  
+  /// getElementAsConstant - Return a Constant for a specified index's element.
+  /// Note that this has to compute a new constant to return, so it isn't as
+  /// efficient as getElementAsInteger/Float/Double.
+  Constant *getElementAsConstant(unsigned i) const;
+  
+  /// getType - Specialize the getType() method to always return a
+  /// SequentialType, which reduces the amount of casting needed in parts of the
+  /// compiler.
+  inline SequentialType *getType() const {
+    return reinterpret_cast<SequentialType*>(Value::getType());
+  }
+
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  ///
+  static bool classof(const ConstantDataSequential *) { return true; }
+  static bool classof(const Value *V) {
+    return V->getValueID() == ConstantDataArrayVal ||
+           V->getValueID() == ConstantDataVectorVal;
+  }
+};
+
+//===----------------------------------------------------------------------===//
+/// ConstantDataArray - An array of data that contains no relocations, and whose
+/// element type is a simple 1/2/4/8-byte integer or float/double.
+///
+class ConstantDataArray : public ConstantDataSequential {
+  void *operator new(size_t, unsigned);            // DO NOT IMPLEMENT
+  ConstantDataArray(const ConstantDataArray &);    // DO NOT IMPLEMENT
+  virtual void anchor();
+  friend class ConstantDataSequential;
+  explicit ConstantDataArray(Type *ty, const char *Data)
+    : ConstantDataSequential(ty, ConstantDataArrayVal, Data) {}
+protected:
+  // allocate space for exactly zero operands.
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
+public:
+  
+  /// get() constructors - Return a constant with array type with an element
+  /// count and element type matching the ArrayRef passed in.  Note that this
+  /// can return a ConstantAggregateZero object.
+  static Constant *get(ArrayRef<uint8_t> Elts, LLVMContext &Context);
+  static Constant *get(ArrayRef<uint16_t> Elts, LLVMContext &Context);
+  static Constant *get(ArrayRef<uint32_t> Elts, LLVMContext &Context);
+  static Constant *get(ArrayRef<uint64_t> Elts, LLVMContext &Context);
+  static Constant *get(ArrayRef<float> Elts, LLVMContext &Context);
+  static Constant *get(ArrayRef<double> Elts, LLVMContext &Context);
+  
+  /// getType - Specialize the getType() method to always return an ArrayType,
+  /// which reduces the amount of casting needed in parts of the compiler.
+  ///
+  inline ArrayType *getType() const {
+    return reinterpret_cast<ArrayType*>(Value::getType());
+  }
+  
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  ///
+  static bool classof(const ConstantDataArray *) { return true; }
+  static bool classof(const Value *V) {
+    return V->getValueID() == ConstantDataArrayVal;
+  }
+};
+  
+//===----------------------------------------------------------------------===//
+/// ConstantDataVector - A vector of data that contains no relocations, and
+/// whose element type is a simple 1/2/4/8-byte integer or float/double.
+///
+class ConstantDataVector : public ConstantDataSequential {
+  void *operator new(size_t, unsigned);              // DO NOT IMPLEMENT
+  ConstantDataVector(const ConstantDataVector &);    // DO NOT IMPLEMENT
+  virtual void anchor();
+  friend class ConstantDataSequential;
+  explicit ConstantDataVector(Type *ty, const char *Data)
+  : ConstantDataSequential(ty, ConstantDataVectorVal, Data) {}
+protected:
+  // allocate space for exactly zero operands.
+  void *operator new(size_t s) {
+    return User::operator new(s, 0);
+  }
+public:
+  
+  /// get() constructors - Return a constant with vector type with an element
+  /// count and element type matching the ArrayRef passed in.  Note that this
+  /// can return a ConstantAggregateZero object.
+  static Constant *get(ArrayRef<uint8_t> Elts, LLVMContext &Context);
+  static Constant *get(ArrayRef<uint16_t> Elts, LLVMContext &Context);
+  static Constant *get(ArrayRef<uint32_t> Elts, LLVMContext &Context);
+  static Constant *get(ArrayRef<uint64_t> Elts, LLVMContext &Context);
+  static Constant *get(ArrayRef<float> Elts, LLVMContext &Context);
+  static Constant *get(ArrayRef<double> Elts, LLVMContext &Context);
+  
+  /// getType - Specialize the getType() method to always return a VectorType,
+  /// which reduces the amount of casting needed in parts of the compiler.
+  ///
+  inline VectorType *getType() const {
+    return reinterpret_cast<VectorType*>(Value::getType());
+  }
+  
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  ///
+  static bool classof(const ConstantDataVector *) { return true; }
+  static bool classof(const Value *V) {
+    return V->getValueID() == ConstantDataVectorVal;
+  }
+};
+
+
 
 /// BlockAddress - The address of a basic block.
 ///
@@ -893,7 +1052,6 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantExpr, Constant)
 /// LangRef.html#undefvalues for details.
 ///
 class UndefValue : public Constant {
-  friend struct ConstantCreator<UndefValue, Type, char>;
   void *operator new(size_t, unsigned); // DO NOT IMPLEMENT
   UndefValue(const UndefValue &);      // DO NOT IMPLEMENT
 protected:

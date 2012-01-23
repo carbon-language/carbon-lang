@@ -79,6 +79,11 @@ LLVMContextImpl::~LLVMContextImpl() {
   DeleteContainerSeconds(IntConstants);
   DeleteContainerSeconds(FPConstants);
   
+  for (StringMap<ConstantDataSequential*>::iterator I = CDSConstants.begin(),
+       E = CDSConstants.end(); I != E; ++I)
+    delete I->second;
+  CDSConstants.clear();
+  
   // Destroy MDNodes.  ~MDNode can move and remove nodes between the MDNodeSet
   // and the NonUniquedMDNodes sets, so copy the values out first.
   SmallVector<MDNode*, 8> MDNodes;

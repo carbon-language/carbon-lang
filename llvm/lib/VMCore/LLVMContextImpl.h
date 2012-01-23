@@ -156,6 +156,9 @@ public:
 
   DenseMap<Type*, UndefValue*> UVConstants;
   
+  StringMap<ConstantDataSequential*> CDSConstants;
+
+  
   DenseMap<std::pair<Function*, BasicBlock*> , BlockAddress*> BlockAddresses;
   ConstantUniqueMap<ExprMapKeyType, const ExprMapKeyType&, Type, ConstantExpr>
     ExprConstants;

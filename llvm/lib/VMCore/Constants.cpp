@@ -1913,6 +1913,154 @@ GetElementPtrConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
     OperandList[i+1] = IdxList[i];
 }
 
+//===----------------------------------------------------------------------===//
+//                       ConstantData* implementations
+
+void ConstantDataArray::anchor() {}
+void ConstantDataVector::anchor() {}
+
+/// isAllZeros - return true if the array is empty or all zeros.
+static bool isAllZeros(StringRef Arr) {
+  for (StringRef::iterator I = Arr.begin(), E = Arr.end(); I != E; ++I)
+    if (*I != 0)
+      return false;
+  return true;
+}
+/// getImpl - This is the underlying implementation of all of the
+/// ConstantDataSequential::get methods.  They all thunk down to here, providing
+/// the correct element type.  We take the bytes in as an StringRef because
+/// we *want* an underlying "char*" to avoid TBAA type punning violations.
+Constant *ConstantDataSequential::getImpl(StringRef Elements, Type *Ty) {
+  // If the elements are all zero, return a CAZ, which is more dense.
+  if (isAllZeros(Elements))
+    return ConstantAggregateZero::get(Ty);
+
+  // Do a lookup to see if we have already formed one of these.
+  StringMap<ConstantDataSequential*>::MapEntryTy &Slot =
+    Ty->getContext().pImpl->CDSConstants.GetOrCreateValue(Elements);
+  
+  // The bucket can point to a linked list of different CDS's that have the same
+  // body but different types.  For example, 0,0,0,1 could be a 4 element array
+  // of i8, or a 1-element array of i32.  They'll both end up in the same
+  /// StringMap bucket, linked up by their Next pointers.  Walk the list.
+  ConstantDataSequential **Entry = &Slot.getValue();
+  for (ConstantDataSequential *Node = *Entry; Node != 0;
+       Entry = &Node->Next, Node = *Entry)
+    if (Node->getType() == Ty)
+      return Node;
+  
+  // Okay, we didn't get a hit.  Create a node of the right class, link it in,
+  // and return it.
+  if (isa<ArrayType>(Ty))
+    return *Entry = new ConstantDataArray(Ty, Slot.getKeyData());
+
+  assert(isa<VectorType>(Ty));
+  return *Entry = new ConstantDataVector(Ty, Slot.getKeyData());
+}
+
+void ConstantDataSequential::destroyConstant() {
+  uint64_t ByteSize =
+    getType()->getElementType()->getPrimitiveSizeInBits()/8 *
+    getType()->getElementType()->getNumElements();
+  
+  // Remove the constant from the StringMap.
+  StringMap<ConstantDataSequential*> &CDSConstants = 
+    getType()->getContext().pImpl->CDSConstants;
+  
+  StringMap<ConstantDataSequential*>::iterator Slot =
+    CDSConstants.find(StringRef(DataElements, ByteSize));
+
+  assert(Slot != CDSConstants.end() && "CDS not found in uniquing table");
+
+  ConstantDataSequential **Entry = &Slot->getValue();
+
+  // Remove the entry from the hash table.
+  if ((*Entry)->Next == 0) {
+    // If there is only one value in the bucket (common case) it must be this
+    // entry, and removing the entry should remove the bucket completely.
+    assert((*Entry) == this && "Hash mismatch in ConstantDataSequential");
+    getContext().pImpl->CDSConstants.erase(Slot);
+  } else {
+    // Otherwise, there are multiple entries linked off the bucket, unlink the 
+    // node we care about but keep the bucket around.
+    for (ConstantDataSequential *Node = *Entry; ;
+         Entry = &Node->Next, Node = *Entry) {
+      assert(Node && "Didn't find entry in its uniquing hash table!");
+      // If we found our entry, unlink it from the list and we're done.
+      if (Node == this) {
+        *Entry = Node->Next;
+        break;
+      }
+    }
+  }
+  
+  // If we were part of a list, make sure that we don't delete the list that is
+  // still owned by the uniquing map.
+  Next = 0;
+  
+  // Finally, actually delete it.
+  destroyConstantImpl();
+}
+
+/// get() constructors - Return a constant with array type with an element
+/// count and element type matching the ArrayRef passed in.  Note that this
+/// can return a ConstantAggregateZero object.
+Constant *ConstantDataArray::get(ArrayRef<uint8_t> Elts, LLVMContext &Context) {
+  Type *Ty = ArrayType::get(Type::getInt8Ty(Context), Elts.size());
+  return getImpl(StringRef((char*)Elts.data(), Elts.size()*1), Ty);
+}
+Constant *ConstantDataArray::get(ArrayRef<uint16_t> Elts, LLVMContext &Context){
+  Type *Ty = ArrayType::get(Type::getInt16Ty(Context), Elts.size());
+  return getImpl(StringRef((char*)Elts.data(), Elts.size()*2), Ty);
+}
+Constant *ConstantDataArray::get(ArrayRef<uint32_t> Elts, LLVMContext &Context){
+  Type *Ty = ArrayType::get(Type::getInt32Ty(Context), Elts.size());
+  return getImpl(StringRef((char*)Elts.data(), Elts.size()*4), Ty);
+}
+Constant *ConstantDataArray::get(ArrayRef<uint64_t> Elts, LLVMContext &Context){
+  Type *Ty = ArrayType::get(Type::getInt64Ty(Context), Elts.size());
+  return getImpl(StringRef((char*)Elts.data(), Elts.size()*8), Ty);
+}
+Constant *ConstantDataArray::get(ArrayRef<float> Elts, LLVMContext &Context) {
+  Type *Ty = ArrayType::get(Type::getFloatTy(Context), Elts.size());
+  return getImpl(StringRef((char*)Elts.data(), Elts.size()*4), Ty);
+}
+Constant *ConstantDataArray::get(ArrayRef<double> Elts, LLVMContext &Context) {
+  Type *Ty = ArrayType::get(Type::getDoubleTy(Context), Elts.size());
+  return getImpl(StringRef((char*)Elts.data(), Elts.size()*8), Ty);
+}
+
+
+/// get() constructors - Return a constant with vector type with an element
+/// count and element type matching the ArrayRef passed in.  Note that this
+/// can return a ConstantAggregateZero object.
+Constant *ConstantDataVector::get(ArrayRef<uint8_t> Elts, LLVMContext &Context) {
+  Type *Ty = VectorType::get(Type::getInt8Ty(Context), Elts.size());
+  return getImpl(StringRef((char*)Elts.data(), Elts.size()*1), Ty);
+}
+Constant *ConstantDataVector::get(ArrayRef<uint16_t> Elts, LLVMContext &Context){
+  Type *Ty = VectorType::get(Type::getInt16Ty(Context), Elts.size());
+  return getImpl(StringRef((char*)Elts.data(), Elts.size()*2), Ty);
+}
+Constant *ConstantDataVector::get(ArrayRef<uint32_t> Elts, LLVMContext &Context){
+  Type *Ty = VectorType::get(Type::getInt32Ty(Context), Elts.size());
+  return getImpl(StringRef((char*)Elts.data(), Elts.size()*4), Ty);
+}
+Constant *ConstantDataVector::get(ArrayRef<uint64_t> Elts, LLVMContext &Context){
+  Type *Ty = VectorType::get(Type::getInt64Ty(Context), Elts.size());
+  return getImpl(StringRef((char*)Elts.data(), Elts.size()*8), Ty);
+}
+Constant *ConstantDataVector::get(ArrayRef<float> Elts, LLVMContext &Context) {
+  Type *Ty = VectorType::get(Type::getFloatTy(Context), Elts.size());
+  return getImpl(StringRef((char*)Elts.data(), Elts.size()*4), Ty);
+}
+Constant *ConstantDataVector::get(ArrayRef<double> Elts, LLVMContext &Context) {
+  Type *Ty = VectorType::get(Type::getDoubleTy(Context), Elts.size());
+  return getImpl(StringRef((char*)Elts.data(), Elts.size()*8), Ty);
+}
+
+
+
 
 //===----------------------------------------------------------------------===//
 //                replaceUsesOfWithOnConstant implementations
