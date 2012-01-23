@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ArchiveInternals.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Module.h"
@@ -504,7 +505,7 @@ Archive::findModuleDefiningSymbol(const std::string& symbol,
 // Modules that define those symbols.
 bool
 Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
-                                    std::set<Module*>& result,
+                                    SmallVectorImpl<Module*>& result,
                                     std::string* error) {
   if (!mapfile || !base) {
     if (error)
@@ -569,21 +570,22 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
   // At this point we have a valid symbol table (one way or another) so we
   // just use it to quickly find the symbols requested.
 
+  SmallPtrSet<Module*, 16> Added;
   for (std::set<std::string>::iterator I=symbols.begin(),
-       E=symbols.end(); I != E;) {
+       E=symbols.end(); I != E; ++I) {
     // See if this symbol exists
     Module* m = findModuleDefiningSymbol(*I,error);
-    if (m) {
-      // The symbol exists, insert the Module into our result, duplicates will
-      // be ignored.
-      result.insert(m);
+    if (!m)
+      continue;
+    bool NewMember = Added.insert(m);
+    if (!NewMember)
+      continue;
 
-      // Remove the symbol now that its been resolved, being careful to
-      // post-increment the iterator.
-      symbols.erase(I++);
-    } else {
-      ++I;
-    }
+    // The symbol exists, insert the Module into our result.
+    result.push_back(m);
+
+    // Remove the symbol now that its been resolved.
+    symbols.erase(I);
   }
   return true;
 }

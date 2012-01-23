@@ -394,7 +394,7 @@ class Archive {
     /// @brief Look up multiple symbols in the archive.
     bool findModulesDefiningSymbols(
       std::set<std::string>& symbols,     ///< Symbols to be sought
-      std::set<Module*>& modules,         ///< The modules matching \p symbols
+      SmallVectorImpl<Module*>& modules,  ///< The modules matching \p symbols
       std::string* ErrMessage             ///< Error msg storage, if non-zero
     );
 

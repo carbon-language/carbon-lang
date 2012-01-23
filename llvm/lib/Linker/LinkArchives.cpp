@@ -140,7 +140,7 @@ Linker::LinkInArchive(const sys::Path &Filename, bool &is_native) {
     // Find the modules we need to link into the target module.  Note that arch
     // keeps ownership of these modules and may return the same Module* from a
     // subsequent call.
-    std::set<Module*> Modules;
+    SmallVector<Module*, 16> Modules;
     if (!arch->findModulesDefiningSymbols(UndefinedSymbols, Modules, &ErrMsg))
       return error("Cannot find symbols in '" + Filename.str() + 
                    "': " + ErrMsg);
@@ -157,7 +157,7 @@ Linker::LinkInArchive(const sys::Path &Filename, bool &is_native) {
         UndefinedSymbols.end());
 
     // Loop over all the Modules that we got back from the archive
-    for (std::set<Module*>::iterator I=Modules.begin(), E=Modules.end();
+    for (SmallVectorImpl<Module*>::iterator I=Modules.begin(), E=Modules.end();
          I != E; ++I) {
 
       // Get the module we must link in.
