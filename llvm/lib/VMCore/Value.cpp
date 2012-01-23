@@ -349,7 +349,8 @@ Value *Value::stripPointerCasts() {
 
 /// isDereferenceablePointer - Test if this value is always a pointer to
 /// allocated and suitably aligned memory for a simple load or store.
-bool Value::isDereferenceablePointer() const {
+static bool isDereferenceablePointer(const Value *V,
+                                     SmallPtrSet<const Value *, 32> &Visited) {
   // Note that it is not safe to speculate into a malloc'd region because
   // malloc may return null.
   // It's also not always safe to follow a bitcast, for example:
@@ -358,20 +359,22 @@ bool Value::isDereferenceablePointer() const {
   // be handled using TargetData to check sizes and alignments though.
 
   // These are obviously ok.
-  if (isa<AllocaInst>(this)) return true;
+  if (isa<AllocaInst>(V)) return true;
 
   // Global variables which can't collapse to null are ok.
-  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(this))
+  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
     return !GV->hasExternalWeakLinkage();
 
   // byval arguments are ok.
-  if (const Argument *A = dyn_cast<Argument>(this))
+  if (const Argument *A = dyn_cast<Argument>(V))
     return A->hasByValAttr();
-  
+
   // For GEPs, determine if the indexing lands within the allocated object.
-  if (const GEPOperator *GEP = dyn_cast<GEPOperator>(this)) {
+  if (const GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
     // Conservatively require that the base pointer be fully dereferenceable.
-    if (!GEP->getOperand(0)->isDereferenceablePointer())
+    if (!Visited.insert(GEP->getOperand(0)))
+      return false;
+    if (!isDereferenceablePointer(GEP->getOperand(0), Visited))
       return false;
     // Check the indices.
     gep_type_iterator GTI = gep_type_begin(GEP);
@@ -403,6 +406,13 @@ bool Value::isDereferenceablePointer() const {
 
   // If we don't know, assume the worst.
   return false;
+}
+
+/// isDereferenceablePointer - Test if this value is always a pointer to
+/// allocated and suitably aligned memory for a simple load or store.
+bool Value::isDereferenceablePointer() const {
+  SmallPtrSet<const Value *, 32> Visited;
+  return ::isDereferenceablePointer(this, Visited);
 }
 
 /// DoPHITranslation - If this value is a PHI node with CurBB as its parent,
