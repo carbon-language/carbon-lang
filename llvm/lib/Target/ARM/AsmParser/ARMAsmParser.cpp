@@ -5173,7 +5173,7 @@ validateInstruction(MCInst &Inst,
   return false;
 }
 
-static unsigned getRealVSTLNOpcode(unsigned Opc, unsigned &Spacing) {
+static unsigned getRealVSTOpcode(unsigned Opc, unsigned &Spacing) {
   switch(Opc) {
   default: assert(0 && "unexpected opcode!");
   // VST1LN
@@ -5253,10 +5253,66 @@ static unsigned getRealVSTLNOpcode(unsigned Opc, unsigned &Spacing) {
   case ARM::VST2LNqAsm_32:
     Spacing = 2;
     return ARM::VST2LNq32;
+
+  // VST3
+  case ARM::VST3dWB_fixed_Asm_8:
+    Spacing = 1;
+    return ARM::VST3d8_UPD;
+  case ARM::VST3dWB_fixed_Asm_16:
+    Spacing = 1;
+    return ARM::VST3d16_UPD;
+  case ARM::VST3dWB_fixed_Asm_32:
+    Spacing = 1;
+    return ARM::VST3d32_UPD;
+  case ARM::VST3qWB_fixed_Asm_8:
+    Spacing = 2;
+    return ARM::VST3q8_UPD;
+  case ARM::VST3qWB_fixed_Asm_16:
+    Spacing = 2;
+    return ARM::VST3q16_UPD;
+  case ARM::VST3qWB_fixed_Asm_32:
+    Spacing = 2;
+    return ARM::VST3q32_UPD;
+  case ARM::VST3dWB_register_Asm_8:
+    Spacing = 1;
+    return ARM::VST3d8_UPD;
+  case ARM::VST3dWB_register_Asm_16:
+    Spacing = 1;
+    return ARM::VST3d16_UPD;
+  case ARM::VST3dWB_register_Asm_32:
+    Spacing = 1;
+    return ARM::VST3d32_UPD;
+  case ARM::VST3qWB_register_Asm_8:
+    Spacing = 2;
+    return ARM::VST3q8_UPD;
+  case ARM::VST3qWB_register_Asm_16:
+    Spacing = 2;
+    return ARM::VST3q16_UPD;
+  case ARM::VST3qWB_register_Asm_32:
+    Spacing = 2;
+    return ARM::VST3q32_UPD;
+  case ARM::VST3dAsm_8:
+    Spacing = 1;
+    return ARM::VST3d8;
+  case ARM::VST3dAsm_16:
+    Spacing = 1;
+    return ARM::VST3d16;
+  case ARM::VST3dAsm_32:
+    Spacing = 1;
+    return ARM::VST3d32;
+  case ARM::VST3qAsm_8:
+    Spacing = 2;
+    return ARM::VST3q8;
+  case ARM::VST3qAsm_16:
+    Spacing = 2;
+    return ARM::VST3q16;
+  case ARM::VST3qAsm_32:
+    Spacing = 2;
+    return ARM::VST3q32;
   }
 }
 
-static unsigned getRealVLDLNOpcode(unsigned Opc, unsigned &Spacing) {
+static unsigned getRealVLDOpcode(unsigned Opc, unsigned &Spacing) {
   switch(Opc) {
   default: assert(0 && "unexpected opcode!");
   // VLD1LN
@@ -5468,7 +5524,7 @@ processInstruction(MCInst &Inst,
     // Shuffle the operands around so the lane index operand is in the
     // right place.
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVSTOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
@@ -5490,7 +5546,7 @@ processInstruction(MCInst &Inst,
     // Shuffle the operands around so the lane index operand is in the
     // right place.
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVSTOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
@@ -5511,7 +5567,7 @@ processInstruction(MCInst &Inst,
     // Shuffle the operands around so the lane index operand is in the
     // right place.
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVSTOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
@@ -5533,7 +5589,7 @@ processInstruction(MCInst &Inst,
     // Shuffle the operands around so the lane index operand is in the
     // right place.
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVSTOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
@@ -5554,7 +5610,7 @@ processInstruction(MCInst &Inst,
     // Shuffle the operands around so the lane index operand is in the
     // right place.
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVSTOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
@@ -5574,7 +5630,7 @@ processInstruction(MCInst &Inst,
     // Shuffle the operands around so the lane index operand is in the
     // right place.
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVSTLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVSTOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
@@ -5594,7 +5650,7 @@ processInstruction(MCInst &Inst,
     // Shuffle the operands around so the lane index operand is in the
     // right place.
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
@@ -5617,7 +5673,7 @@ processInstruction(MCInst &Inst,
     // Shuffle the operands around so the lane index operand is in the
     // right place.
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
     TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
                                             Spacing));
@@ -5644,7 +5700,7 @@ processInstruction(MCInst &Inst,
     // Shuffle the operands around so the lane index operand is in the
     // right place.
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
     TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
                                             Spacing));
@@ -5673,7 +5729,7 @@ processInstruction(MCInst &Inst,
     // Shuffle the operands around so the lane index operand is in the
     // right place.
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
     TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
@@ -5696,7 +5752,7 @@ processInstruction(MCInst &Inst,
     // Shuffle the operands around so the lane index operand is in the
     // right place.
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
     TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
                                             Spacing));
@@ -5723,7 +5779,7 @@ processInstruction(MCInst &Inst,
     // Shuffle the operands around so the lane index operand is in the
     // right place.
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
     TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
                                             Spacing));
@@ -5752,7 +5808,7 @@ processInstruction(MCInst &Inst,
     // Shuffle the operands around so the lane index operand is in the
     // right place.
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
     TmpInst.addOperand(Inst.getOperand(2)); // Rn
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
@@ -5773,7 +5829,7 @@ processInstruction(MCInst &Inst,
     // Shuffle the operands around so the lane index operand is in the
     // right place.
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
     TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
                                             Spacing));
@@ -5798,7 +5854,7 @@ processInstruction(MCInst &Inst,
     // Shuffle the operands around so the lane index operand is in the
     // right place.
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
     TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
                                             Spacing));
@@ -5827,7 +5883,7 @@ processInstruction(MCInst &Inst,
   case ARM::VLD3qAsm_32: {
     MCInst TmpInst;
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
     TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
                                             Spacing));
@@ -5849,7 +5905,7 @@ processInstruction(MCInst &Inst,
   case ARM::VLD3qWB_fixed_Asm_32: {
     MCInst TmpInst;
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
     TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
                                             Spacing));
@@ -5873,7 +5929,7 @@ processInstruction(MCInst &Inst,
   case ARM::VLD3qWB_register_Asm_32: {
     MCInst TmpInst;
     unsigned Spacing;
-    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.setOpcode(getRealVLDOpcode(Inst.getOpcode(), Spacing));
     TmpInst.addOperand(Inst.getOperand(0)); // Vd
     TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
                                             Spacing));
@@ -5883,6 +5939,77 @@ processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(1)); // Rn_wb == tied Rn
     TmpInst.addOperand(Inst.getOperand(2)); // alignment
     TmpInst.addOperand(Inst.getOperand(3)); // Rm
+    TmpInst.addOperand(Inst.getOperand(4)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(5));
+    Inst = TmpInst;
+    return true;
+  }
+
+  // VST3 multiple 3-element structure instructions.
+  case ARM::VST3dAsm_8:
+  case ARM::VST3dAsm_16:
+  case ARM::VST3dAsm_32:
+  case ARM::VST3qAsm_8:
+  case ARM::VST3qAsm_16:
+  case ARM::VST3qAsm_32: {
+    MCInst TmpInst;
+    unsigned Spacing;
+    TmpInst.setOpcode(getRealVSTOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.addOperand(Inst.getOperand(1)); // Rn
+    TmpInst.addOperand(Inst.getOperand(2)); // alignment
+    TmpInst.addOperand(Inst.getOperand(0)); // Vd
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing * 2));
+    TmpInst.addOperand(Inst.getOperand(3)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(4));
+    Inst = TmpInst;
+    return true;
+  }
+
+  case ARM::VST3dWB_fixed_Asm_8:
+  case ARM::VST3dWB_fixed_Asm_16:
+  case ARM::VST3dWB_fixed_Asm_32:
+  case ARM::VST3qWB_fixed_Asm_8:
+  case ARM::VST3qWB_fixed_Asm_16:
+  case ARM::VST3qWB_fixed_Asm_32: {
+    MCInst TmpInst;
+    unsigned Spacing;
+    TmpInst.setOpcode(getRealVSTOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.addOperand(Inst.getOperand(1)); // Rn
+    TmpInst.addOperand(Inst.getOperand(1)); // Rn_wb == tied Rn
+    TmpInst.addOperand(Inst.getOperand(2)); // alignment
+    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(Inst.getOperand(0)); // Vd
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing * 2));
+    TmpInst.addOperand(Inst.getOperand(3)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(4));
+    Inst = TmpInst;
+    return true;
+  }
+
+  case ARM::VST3dWB_register_Asm_8:
+  case ARM::VST3dWB_register_Asm_16:
+  case ARM::VST3dWB_register_Asm_32:
+  case ARM::VST3qWB_register_Asm_8:
+  case ARM::VST3qWB_register_Asm_16:
+  case ARM::VST3qWB_register_Asm_32: {
+    MCInst TmpInst;
+    unsigned Spacing;
+    TmpInst.setOpcode(getRealVSTOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.addOperand(Inst.getOperand(1)); // Rn
+    TmpInst.addOperand(Inst.getOperand(1)); // Rn_wb == tied Rn
+    TmpInst.addOperand(Inst.getOperand(2)); // alignment
+    TmpInst.addOperand(Inst.getOperand(3)); // Rm
+    TmpInst.addOperand(Inst.getOperand(0)); // Vd
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing * 2));
     TmpInst.addOperand(Inst.getOperand(4)); // CondCode
     TmpInst.addOperand(Inst.getOperand(5));
     Inst = TmpInst;

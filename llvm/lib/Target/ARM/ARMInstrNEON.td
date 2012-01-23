@@ -6085,6 +6085,65 @@ def VLD3qWB_register_Asm_32 :
                   (ins VecListThreeQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
+// VST3 multiple structurepseudo-instructions. These need special handling for
+// the vector operands that the normal instructions don't yet model.
+// FIXME: Remove these when the register classes and instructions are updated.
+def VST3dAsm_8 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr",
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
+def VST3dAsm_16 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr",
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
+def VST3dAsm_32 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr",
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
+def VST3qAsm_8 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr",
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
+def VST3qAsm_16 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr",
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
+def VST3qAsm_32 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr",
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
+
+def VST3dWB_fixed_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr!",
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
+def VST3dWB_fixed_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr!",
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
+def VST3dWB_fixed_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr!",
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
+def VST3qWB_fixed_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr!",
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
+def VST3qWB_fixed_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr!",
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
+def VST3qWB_fixed_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr!",
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
+def VST3dWB_register_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr, $Rm",
+                  (ins VecListThreeD:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VST3dWB_register_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr, $Rm",
+                  (ins VecListThreeD:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VST3dWB_register_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr, $Rm",
+                  (ins VecListThreeD:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VST3qWB_register_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr, $Rm",
+                  (ins VecListThreeQ:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VST3qWB_register_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr, $Rm",
+                  (ins VecListThreeQ:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VST3qWB_register_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr, $Rm",
+                  (ins VecListThreeQ:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+
 
 
 // VMOV takes an optional datatype suffix
