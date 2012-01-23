@@ -54,7 +54,7 @@ private:
   X86Operand *ParseATTOperand();
   X86Operand *ParseIntelOperand();
   X86Operand *ParseIntelMemOperand();
-  X86Operand *ParseIntelBracExpression(unsigned Size);
+  X86Operand *ParseIntelBracExpression(unsigned SegReg, unsigned Size);
   X86Operand *ParseMemOperand(unsigned SegReg, SMLoc StartLoc);
 
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
@@ -593,8 +593,9 @@ static unsigned getIntelMemOperandSize(StringRef OpStr) {
   return Size;
 }
 
-X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned Size) {
-  unsigned SegReg = 0, BaseReg = 0, IndexReg = 0, Scale = 1;
+X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
+                                                   unsigned Size) {
+  unsigned BaseReg = 0, IndexReg = 0, Scale = 1;
   SMLoc Start = Parser.getTok().getLoc(), End;
 
   const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
@@ -669,6 +670,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned Size) {
 X86Operand *X86AsmParser::ParseIntelMemOperand() {
   const AsmToken &Tok = Parser.getTok();
   SMLoc Start = Parser.getTok().getLoc(), End;
+  unsigned SegReg = 0;
 
   unsigned Size = getIntelMemOperandSize(Tok.getString());
   if (Size) {
@@ -678,7 +680,17 @@ X86Operand *X86AsmParser::ParseIntelMemOperand() {
   }
 
   if (getLexer().is(AsmToken::LBrac))
-    return ParseIntelBracExpression(Size);
+    return ParseIntelBracExpression(SegReg, Size);
+
+  if (!ParseRegister(SegReg, Start, End)) {
+    // Handel SegReg : [ ... ]
+    if (getLexer().isNot(AsmToken::Colon))
+      return ErrorOperand(Start, "Expected ':' token!");
+    Parser.Lex(); // Eat :
+    if (getLexer().isNot(AsmToken::LBrac))
+      return ErrorOperand(Start, "Expected '[' token!");
+    return ParseIntelBracExpression(SegReg, Size);
+  }
 
   const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
   if (getParser().ParseExpression(Disp, End)) return 0;

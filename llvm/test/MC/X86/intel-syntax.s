@@ -55,4 +55,6 @@ _main:
 	and	rax, -257
 // CHECK:	fld	%st(0)
 	fld	ST(0)
+// CHECK:	movl	%fs:(%rdi), %eax
+mov     EAX, DWORD PTR FS:[RDI]        
 	ret
