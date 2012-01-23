@@ -138,7 +138,7 @@ public:
   // on Context destruction.
   SmallPtrSet<MDNode*, 1> NonUniquedMDNodes;
   
-  ConstantUniqueMap<char, char, Type, ConstantAggregateZero> AggZeroConstants;
+  DenseMap<Type*, ConstantAggregateZero*> CAZConstants;
 
   typedef ConstantUniqueMap<std::vector<Constant*>, ArrayRef<Constant*>,
     ArrayType, ConstantArray, true /*largekey*/> ArrayConstantsTy;
@@ -152,9 +152,9 @@ public:
                             VectorType, ConstantVector> VectorConstantsTy;
   VectorConstantsTy VectorConstants;
   
-  ConstantUniqueMap<char, char, PointerType, ConstantPointerNull>
-    NullPtrConstants;
-  ConstantUniqueMap<char, char, Type, UndefValue> UndefValueConstants;
+  DenseMap<PointerType*, ConstantPointerNull*> CPNConstants;
+
+  DenseMap<Type*, UndefValue*> UVConstants;
   
   DenseMap<std::pair<Function*, BasicBlock*> , BlockAddress*> BlockAddresses;
   ConstantUniqueMap<ExprMapKeyType, const ExprMapKeyType&, Type, ConstantExpr>

@@ -993,18 +993,21 @@ bool ConstantFP::isValueValidForType(Type *Ty, const APFloat& Val) {
 //===----------------------------------------------------------------------===//
 //                      Factory Function Implementation
 
-ConstantAggregateZero* ConstantAggregateZero::get(Type* Ty) {
+ConstantAggregateZero *ConstantAggregateZero::get(Type *Ty) {
   assert((Ty->isStructTy() || Ty->isArrayTy() || Ty->isVectorTy()) &&
          "Cannot create an aggregate zero of non-aggregate type!");
   
-  LLVMContextImpl *pImpl = Ty->getContext().pImpl;
-  return pImpl->AggZeroConstants.getOrCreate(Ty, 0);
+  ConstantAggregateZero *&Entry = Ty->getContext().pImpl->CAZConstants[Ty];
+  if (Entry == 0)
+    Entry = new ConstantAggregateZero(Ty);
+  
+  return Entry;
 }
 
 /// destroyConstant - Remove the constant from the constant table...
 ///
 void ConstantAggregateZero::destroyConstant() {
-  getType()->getContext().pImpl->AggZeroConstants.remove(this);
+  getContext().pImpl->CAZConstants.erase(getType());
   destroyConstantImpl();
 }
 
@@ -1112,13 +1115,18 @@ Constant *ConstantVector::getSplatValue() const {
 //
 
 ConstantPointerNull *ConstantPointerNull::get(PointerType *Ty) {
-  return Ty->getContext().pImpl->NullPtrConstants.getOrCreate(Ty, 0);
+  ConstantPointerNull *&Entry = Ty->getContext().pImpl->CPNConstants[Ty];
+  if (Entry == 0)
+    Entry = new ConstantPointerNull(Ty);
+  
+  return Entry;
 }
 
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantPointerNull::destroyConstant() {
-  getType()->getContext().pImpl->NullPtrConstants.remove(this);
+  getContext().pImpl->CPNConstants.erase(getType());
+  // Free the constant and any dangling references to it.
   destroyConstantImpl();
 }
 
@@ -1127,13 +1135,18 @@ void ConstantPointerNull::destroyConstant() {
 //
 
 UndefValue *UndefValue::get(Type *Ty) {
-  return Ty->getContext().pImpl->UndefValueConstants.getOrCreate(Ty, 0);
+  UndefValue *&Entry = Ty->getContext().pImpl->UVConstants[Ty];
+  if (Entry == 0)
+    Entry = new UndefValue(Ty);
+  
+  return Entry;
 }
 
 // destroyConstant - Remove the constant from the constant table.
 //
 void UndefValue::destroyConstant() {
-  getType()->getContext().pImpl->UndefValueConstants.remove(this);
+  // Free the constant and any dangling references to it.
+  getContext().pImpl->UVConstants.erase(getType());
   destroyConstantImpl();
 }
 
