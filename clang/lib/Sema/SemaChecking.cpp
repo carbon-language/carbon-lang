@@ -722,6 +722,12 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   // casts here.
   // FIXME: We don't allow floating point scalars as input.
   Expr *FirstArg = TheCall->getArg(0);
+  ExprResult FirstArgResult = DefaultFunctionArrayLvalueConversion(FirstArg);
+  if (FirstArgResult.isInvalid())
+    return ExprError();
+  FirstArg = FirstArgResult.take();
+  TheCall->setArg(0, FirstArg);
+
   const PointerType *pointerType = FirstArg->getType()->getAs<PointerType>();
   if (!pointerType) {
     Diag(DRE->getLocStart(), diag::err_atomic_builtin_must_be_pointer)

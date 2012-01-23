@@ -495,7 +495,7 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
   if (!Cond)
     return StmtError();
 
-  CondResult = CheckPlaceholderExpr(Cond);
+  CondResult = DefaultFunctionArrayLvalueConversion(Cond);
   if (CondResult.isInvalid())
     return StmtError();
 

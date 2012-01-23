@@ -993,8 +993,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   // C++ 5.3.4p6: "The expression in a direct-new-declarator shall have integral
   //   or enumeration type with a non-negative value."
   if (ArraySize && !ArraySize->isTypeDependent()) {
-    // Eliminate placeholders.
-    ExprResult ConvertedSize = CheckPlaceholderExpr(ArraySize);
+    ExprResult ConvertedSize = DefaultFunctionArrayLvalueConversion(ArraySize);
     if (ConvertedSize.isInvalid())
       return ExprError();
     ArraySize = ConvertedSize.take();
