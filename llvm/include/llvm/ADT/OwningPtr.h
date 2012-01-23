@@ -25,14 +25,11 @@ namespace llvm {
 /// pointee object can be taken away from OwningPtr by using the take method.
 template<class T>
 class OwningPtr {
-  OwningPtr &operator=(const OwningPtr &);  // DO NOT IMPLEMENT
+  OwningPtr(OwningPtr const &);             // DO NOT IMPLEMENT
+  OwningPtr &operator=(OwningPtr const &);  // DO NOT IMPLEMENT
   T *Ptr;
 public:
   explicit OwningPtr(T *P = 0) : Ptr(P) {}
-
-  OwningPtr(const OwningPtr &RHS) : Ptr(0) {
-    assert(RHS.Ptr == 0 && "Only null OwningPtr's are copyable!");
-  }
 
   ~OwningPtr() {
     delete Ptr;
