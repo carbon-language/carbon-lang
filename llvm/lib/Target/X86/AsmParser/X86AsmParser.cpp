@@ -655,8 +655,13 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
         Disp = isPlus ? ValExpr : MCConstantExpr::Create(0-Val, getContext());
       } else
         return ErrorOperand(PlusLoc, "unexpected token after +");
-    } else if (getLexer().is(AsmToken::Identifier))
-      ParseRegister(IndexReg, Start, End);
+    } else if (getLexer().is(AsmToken::Identifier)) {
+      // This could be an index registor or a displacement expression.
+      End = Parser.getTok().getLoc();
+      if (!IndexReg)
+        ParseRegister(IndexReg, Start, End);
+      else if (getParser().ParseExpression(Disp, End)) return 0;        
+    }
   }
 
   if (getLexer().isNot(AsmToken::RBrac))
