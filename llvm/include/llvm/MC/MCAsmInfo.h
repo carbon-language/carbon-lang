@@ -30,6 +30,7 @@ namespace llvm {
 
   namespace ExceptionHandling {
     enum ExceptionsType { None, DwarfCFI, SjLj, ARM, Win64 };
+    enum ARMEHABIMode { ARMEHABIDisabled, ARMEHABIUnwind, ARMEHABIFull };
   }
 
   namespace LCOMM {

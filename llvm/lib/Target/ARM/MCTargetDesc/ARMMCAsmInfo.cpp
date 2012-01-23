@@ -16,10 +16,7 @@
 
 using namespace llvm;
 
-cl::opt<bool>
-EnableARMEHABI("arm-enable-ehabi", cl::Hidden,
-  cl::desc("Generate ARM EHABI tables"),
-  cl::init(false));
+extern cl::opt<ExceptionHandling::ARMEHABIMode> EnableARMEHABI;
 
 
 static const char *const arm_asm_table[] = {
@@ -82,6 +79,6 @@ ARMELFMCAsmInfo::ARMELFMCAsmInfo() {
   SupportsDebugInformation = true;
 
   // Exceptions handling
-  if (EnableARMEHABI)
+  if (EnableARMEHABI != ExceptionHandling::ARMEHABIDisabled)
     ExceptionsType = ExceptionHandling::ARM;
 }

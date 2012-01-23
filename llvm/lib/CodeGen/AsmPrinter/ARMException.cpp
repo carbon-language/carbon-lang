@@ -29,12 +29,25 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 using namespace llvm;
+
+cl::opt<ExceptionHandling::ARMEHABIMode>
+EnableARMEHABI("arm-enable-ehabi", cl::Hidden,
+    cl::desc("Generate ARM EHABI tables:"),
+    cl::values(clEnumValN(ExceptionHandling::ARMEHABIDisabled, "no",
+            "Do not generate ARM EHABI tables"),
+        clEnumValN(ExceptionHandling::ARMEHABIUnwind, "unwind",
+            "Emit unwinding instructions, but not descriptors"),
+        clEnumValN(ExceptionHandling::ARMEHABIFull, "full",
+            "Generate full ARM EHABI tables"),
+        clEnumValEnd));
+
 
 ARMException::ARMException(AsmPrinter *A)
   : DwarfException(A),
@@ -72,13 +85,15 @@ void ARMException::EndFunction() {
       Asm->OutStreamer.EmitPersonality(PerSym);
     }
 
-    // Map all labels and get rid of any dead landing pads.
-    MMI->TidyLandingPads();
+    if (EnableARMEHABI == ExceptionHandling::ARMEHABIFull) {
+      // Map all labels and get rid of any dead landing pads.
+      MMI->TidyLandingPads();
 
-    Asm->OutStreamer.EmitHandlerData();
+      Asm->OutStreamer.EmitHandlerData();
 
-    // Emit actual exception table
-    EmitExceptionTable();
+      // Emit actual exception table
+      EmitExceptionTable();
+    }
   }
 
   Asm->OutStreamer.EmitFnEnd();
