@@ -22,6 +22,8 @@
 //  for each chunk. The overhead of each chunk is kept low by keeping pointers
 //  as two byte offsets within the heap, rather than (4 or 8 byte) pointers.
 
+#include <pthread.h>
+
 namespace {
 
 static pthread_mutex_t heap_mutex = PTHREAD_MUTEX_INITIALIZER;
