@@ -7852,8 +7852,8 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   //   there is no user-declared move assignment operator, a copy assignment
   //   operator is implicitly declared as defaulted.
   if ((ClassDecl->hasUserDeclaredMoveConstructor() &&
-          !getLangOptions().MicrosoftExt) ||
-      ClassDecl->hasUserDeclaredMoveAssignment() &&
+          !getLangOptions().MicrosoftMode) ||
+      ClassDecl->hasUserDeclaredMoveAssignment() ||
       ShouldDeleteCopyAssignmentOperator(CopyAssignment))
     CopyAssignment->setDeletedAsWritten();
   
@@ -8758,7 +8758,7 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
   //   declared as defaulted.
   if (ClassDecl->hasUserDeclaredMoveConstructor() ||
       (ClassDecl->hasUserDeclaredMoveAssignment() &&
-          !getLangOptions().MicrosoftExt) ||
+          !getLangOptions().MicrosoftMode) ||
       ShouldDeleteSpecialMember(CopyConstructor, CXXCopyConstructor))
     CopyConstructor->setDeletedAsWritten();
   
