@@ -6011,7 +6011,8 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
   // C++11 [decl.spec.auto]p6. Deduce the type which 'auto' stands in for.
   if (TypeMayContainAuto && VDecl->getType()->getContainedAutoType()) {
     TypeSourceInfo *DeducedType = 0;
-    if (!DeduceAutoType(VDecl->getTypeSourceInfo(), Init, DeducedType))
+    if (DeduceAutoType(VDecl->getTypeSourceInfo(), Init, DeducedType) ==
+            DAR_Failed)
       DiagnoseAutoDeductionFailure(VDecl, Init);
     if (!DeducedType) {
       RealDecl->setInvalidDecl();

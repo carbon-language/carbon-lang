@@ -28,7 +28,7 @@ struct X {
 - (int) z;
 @end
 void test2(Test2 *a) {
-  auto y = a.y; // expected-error {{expected getter method not found on object of type 'Test2 *'}} expected-error {{variable 'y' with type 'auto' has incompatible initializer of type}}
+  auto y = a.y; // expected-error {{expected getter method not found on object of type 'Test2 *'}}
   auto z = a.z;
 }
 

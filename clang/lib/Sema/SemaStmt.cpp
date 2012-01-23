@@ -1201,7 +1201,8 @@ static bool FinishForRangeVarDecl(Sema &SemaRef, VarDecl *Decl, Expr *Init,
   // AddInitializerToDecl, so we can produce a more suitable diagnostic.
   TypeSourceInfo *InitTSI = 0;
   if ((!isa<InitListExpr>(Init) && Init->getType()->isVoidType()) ||
-      !SemaRef.DeduceAutoType(Decl->getTypeSourceInfo(), Init, InitTSI))
+      SemaRef.DeduceAutoType(Decl->getTypeSourceInfo(), Init, InitTSI) ==
+          Sema::DAR_Failed)
     SemaRef.Diag(Loc, diag) << Init->getType();
   if (!InitTSI) {
     Decl->setInvalidDecl();

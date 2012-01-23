@@ -4111,7 +4111,7 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
   Result.setBad(BadConversionSequence::no_conversion, From, ToType);
   Result.setListInitializationSequence();
 
-  // We need a complete type for what follows. Incomplete types can bever be
+  // We need a complete type for what follows. Incomplete types can never be
   // initialized from init lists.
   if (S.RequireCompleteType(From->getLocStart(), ToType, S.PDiag()))
     return Result;

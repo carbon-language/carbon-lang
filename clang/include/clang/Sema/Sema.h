@@ -4644,8 +4644,15 @@ public:
                           FunctionDecl *&Specialization,
                           sema::TemplateDeductionInfo &Info);
 
-  bool DeduceAutoType(TypeSourceInfo *AutoType, Expr *&Initializer,
-                      TypeSourceInfo *&Result);
+  /// \brief Result type of DeduceAutoType.
+  enum DeduceAutoResult {
+    DAR_Succeeded,
+    DAR_Failed,
+    DAR_FailedAlreadyDiagnosed
+  };
+
+  DeduceAutoResult DeduceAutoType(TypeSourceInfo *AutoType, Expr *&Initializer,
+                                  TypeSourceInfo *&Result);
   void DiagnoseAutoDeductionFailure(VarDecl *VDecl, Expr *Init);
 
   FunctionTemplateDecl *getMoreSpecializedTemplate(FunctionTemplateDecl *FT1,

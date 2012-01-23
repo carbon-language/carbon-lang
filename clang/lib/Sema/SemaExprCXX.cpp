@@ -952,7 +952,8 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                        << AllocType << TypeRange);
     }
     TypeSourceInfo *DeducedType = 0;
-    if (!DeduceAutoType(AllocTypeInfo, ConstructorArgs.get()[0], DeducedType))
+    if (DeduceAutoType(AllocTypeInfo, ConstructorArgs.get()[0], DeducedType) ==
+            DAR_Failed)
       return ExprError(Diag(StartLoc, diag::err_auto_new_deduction_failure)
                        << AllocType
                        << ConstructorArgs.get()[0]->getType()

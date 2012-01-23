@@ -5809,12 +5809,13 @@ bool Sema::isStdInitializerList(QualType Ty, QualType *Element) {
     CXXRecordDecl *TemplateClass = Template->getTemplatedDecl();
     if (TemplateClass->getIdentifier() !=
             &PP.getIdentifierTable().get("initializer_list") ||
-        !TemplateClass->getDeclContext()->Equals(getStdNamespace()))
+        !getStdNamespace()->InEnclosingNamespaceSetOf(
+            TemplateClass->getDeclContext()))
       return false;
     // This is a template called std::initializer_list, but is it the right
     // template?
     TemplateParameterList *Params = Template->getTemplateParameters();
-    if (Params->size() != 1)
+    if (Params->getMinRequiredArguments() != 1)
       return false;
     if (!isa<TemplateTypeParmDecl>(Params->getParam(0)))
       return false;
@@ -5857,7 +5858,8 @@ static ClassTemplateDecl *LookupStdInitializerList(Sema &S, SourceLocation Loc){
   // We found some template called std::initializer_list. Now verify that it's
   // correct.
   TemplateParameterList *Params = Template->getTemplateParameters();
-  if (Params->size() != 1 || !isa<TemplateTypeParmDecl>(Params->getParam(0))) {
+  if (Params->getMinRequiredArguments() != 1 ||
+      !isa<TemplateTypeParmDecl>(Params->getParam(0))) {
     S.Diag(Template->getLocation(), diag::err_malformed_std_initializer_list);
     return 0;
   }
@@ -9102,7 +9104,8 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
 
     Expr *Init = Exprs.get()[0];
     TypeSourceInfo *DeducedType = 0;
-    if (!DeduceAutoType(VDecl->getTypeSourceInfo(), Init, DeducedType))
+    if (DeduceAutoType(VDecl->getTypeSourceInfo(), Init, DeducedType) ==
+            DAR_Failed)
       DiagnoseAutoDeductionFailure(VDecl, Init);
     if (!DeducedType) {
       RealDecl->setInvalidDecl();

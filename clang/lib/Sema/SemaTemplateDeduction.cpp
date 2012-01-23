@@ -3376,20 +3376,18 @@ namespace {
 /// dependent. This will be set to null if deduction succeeded, but auto
 /// substitution failed; the appropriate diagnostic will already have been
 /// produced in that case.
-///
-/// \returns true if deduction succeeded, false if it failed.
-bool
+Sema::DeduceAutoResult
 Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init,
                      TypeSourceInfo *&Result) {
   if (Init->getType()->isNonOverloadPlaceholderType()) {
     ExprResult result = CheckPlaceholderExpr(Init);
-    if (result.isInvalid()) return false;
+    if (result.isInvalid()) return DAR_FailedAlreadyDiagnosed;
     Init = result.take();
   }
 
   if (Init->isTypeDependent()) {
     Result = Type;
-    return true;
+    return DAR_Succeeded;
   }
 
   SourceLocation Loc = Init->getExprLoc();
@@ -3418,7 +3416,7 @@ Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init,
   if (AdjustFunctionParmAndArgTypesForDeduction(*this, &TemplateParams,
                                                 FuncParam, InitType, Init,
                                                 TDF))
-    return false;
+    return DAR_Failed;
 
   TemplateDeductionInfo Info(Context, Loc);
 
@@ -3428,22 +3426,22 @@ Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init,
       if (DeduceTemplateArgumentsByTypeMatch(*this, &TemplateParams, FuncParam,
                                              InitList->getInit(i)->getType(),
                                              Info, Deduced, TDF))
-        return false;
+        return DAR_Failed;
     }
   } else {
     if (DeduceTemplateArgumentsByTypeMatch(*this, &TemplateParams, FuncParam,
                                            InitType, Info, Deduced, TDF))
-      return false;
+      return DAR_Failed;
   }
 
   QualType DeducedType = Deduced[0].getAsType();
   if (DeducedType.isNull())
-    return false;
+    return DAR_Failed;
 
   if (InitList) {
     DeducedType = BuildStdInitializerList(DeducedType, Loc);
     if (DeducedType.isNull())
-      return false;
+      return DAR_FailedAlreadyDiagnosed;
   }
 
   Result = SubstituteAutoTransform(*this, DeducedType).TransformType(Type);
@@ -3455,10 +3453,10 @@ Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init,
                                     Sema::OriginalCallArg(FuncParam,0,InitType),
                                     Result->getType())) {
     Result = 0;
-    return false;
+    return DAR_Failed;
   }
 
-  return true;
+  return DAR_Succeeded;
 }
 
 void Sema::DiagnoseAutoDeductionFailure(VarDecl *VDecl, Expr *Init) {

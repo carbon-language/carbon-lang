@@ -1,5 +1,10 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
 
+// This must obviously come before the definition of std::initializer_list.
+void missing_initializerlist() {
+  auto l = {1, 2, 3, 4}; // expected-error {{std::initializer_list was not found}}
+}
+
 namespace std {
   typedef decltype(sizeof(int)) size_t;
 
