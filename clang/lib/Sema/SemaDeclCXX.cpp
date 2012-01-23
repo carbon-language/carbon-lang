@@ -7846,12 +7846,14 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
     PushOnScopeChains(CopyAssignment, S, false);
   ClassDecl->addDecl(CopyAssignment);
   
-  // C++0x [class.copy]p18:
-  //   ... If the class definition declares a move constructor or move
-  //   assignment operator, the implicitly declared copy assignment operator is
-  //   defined as deleted; ...
-  if (ClassDecl->hasUserDeclaredMoveConstructor() ||
-      ClassDecl->hasUserDeclaredMoveAssignment() ||
+  // C++0x [class.copy]p19:
+  //   ....  If the class definition does not explicitly declare a copy
+  //   assignment operator, there is no user-declared move constructor, and
+  //   there is no user-declared move assignment operator, a copy assignment
+  //   operator is implicitly declared as defaulted.
+  if ((ClassDecl->hasUserDeclaredMoveConstructor() &&
+          !getLangOptions().MicrosoftExt) ||
+      ClassDecl->hasUserDeclaredMoveAssignment() &&
       ShouldDeleteCopyAssignmentOperator(CopyAssignment))
     CopyAssignment->setDeletedAsWritten();
   
@@ -8749,12 +8751,14 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
     PushOnScopeChains(CopyConstructor, S, false);
   ClassDecl->addDecl(CopyConstructor);
 
-  // C++0x [class.copy]p7:
-  //   ... If the class definition declares a move constructor or move
-  //   assignment operator, the implicitly declared constructor is defined as
-  //   deleted; ...
+  // C++11 [class.copy]p8:
+  //   ... If the class definition does not explicitly declare a copy
+  //   constructor, there is no user-declared move constructor, and there is no
+  //   user-declared move assignment operator, a copy constructor is implicitly
+  //   declared as defaulted.
   if (ClassDecl->hasUserDeclaredMoveConstructor() ||
-      ClassDecl->hasUserDeclaredMoveAssignment() ||
+      (ClassDecl->hasUserDeclaredMoveAssignment() &&
+          !getLangOptions().MicrosoftExt) ||
       ShouldDeleteSpecialMember(CopyConstructor, CXXCopyConstructor))
     CopyConstructor->setDeletedAsWritten();
   
