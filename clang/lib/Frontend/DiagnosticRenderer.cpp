@@ -69,6 +69,43 @@ static SourceLocation getImmediateMacroCalleeLoc(const SourceManager &SM,
   return SM.getImmediateSpellingLoc(Loc);
 }
 
+/// \brief Retrieve the name of the immediate macro expansion.
+///
+/// This routine starts from a source location, and finds the name of the macro
+/// responsible for its immediate expansion. It looks through any intervening
+/// macro argument expansions to compute this. It returns a StringRef which
+/// refers to the SourceManager-owned buffer of the source where that macro
+/// name is spelled. Thus, the result shouldn't out-live that SourceManager.
+///
+/// This differs from Lexer::getImmediateMacroName in that any macro argument
+/// location will result in the topmost function macro that accepted it.
+/// e.g.
+/// \code
+///   MAC1( MAC2(foo) )
+/// \endcode
+/// for location of 'foo' token, this function will return "MAC1" while
+/// Lexer::getImmediateMacroName will return "MAC2".
+static StringRef getImmediateMacroName(SourceLocation Loc,
+                                       const SourceManager &SM,
+                                       const LangOptions &LangOpts) {
+   assert(Loc.isMacroID() && "Only reasonble to call this on macros");
+   // Walk past macro argument expanions.
+   while (SM.isMacroArgExpansion(Loc))
+     Loc = SM.getImmediateExpansionRange(Loc).first;
+
+   // Find the spelling location of the start of the non-argument expansion
+   // range. This is where the macro name was spelled in order to begin
+   // expanding this macro.
+   Loc = SM.getSpellingLoc(SM.getImmediateExpansionRange(Loc).first);
+
+   // Dig out the buffer where the macro name was spelled and the extents of the
+   // name so that we can render it into the expansion note.
+   std::pair<FileID, unsigned> ExpansionInfo = SM.getDecomposedLoc(Loc);
+   unsigned MacroTokenLength = Lexer::MeasureTokenLength(Loc, SM, LangOpts);
+   StringRef ExpansionBuffer = SM.getBufferData(ExpansionInfo.first);
+   return ExpansionBuffer.substr(ExpansionInfo.second, MacroTokenLength);
+}
+
 /// Get the presumed location of a diagnostic message. This computes the
 /// presumed location for the top of any macro backtrace when present.
 static PresumedLoc getDiagnosticPresumedLoc(const SourceManager &SM,
@@ -260,7 +297,7 @@ void DiagnosticRenderer::emitMacroExpansionsAndCarets(
   llvm::SmallString<100> MessageStorage;
   llvm::raw_svector_ostream Message(MessageStorage);
   Message << "expanded from macro '"
-          << Lexer::getImmediateMacroName(MacroLoc, SM, LangOpts) << "'";
+          << getImmediateMacroName(MacroLoc, SM, LangOpts) << "'";
   emitDiagnostic(SM.getSpellingLoc(Loc), DiagnosticsEngine::Note,
                  Message.str(),
                  Ranges, ArrayRef<FixItHint>());

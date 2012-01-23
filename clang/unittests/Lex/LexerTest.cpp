@@ -59,7 +59,12 @@ TEST_F(LexerTest, LexAPI) {
   const char *source =
     "#define M(x) [x]\n"
     "#define N(x) x\n"
-    "M(foo) N([bar])";
+    "#define INN(x) x\n"
+    "#define NOF1 INN(val)\n"
+    "#define NOF2 val\n"
+    "M(foo) N([bar])\n"
+    "N(INN(val)) N(NOF1) N(NOF2) N(val)";
+
   MemoryBuffer *buf = MemoryBuffer::getMemBuffer(source);
   SourceMgr.createMainFileIDForMemBuffer(buf);
 
@@ -83,13 +88,17 @@ TEST_F(LexerTest, LexAPI) {
   }
 
   // Make sure we got the tokens that we expected.
-  ASSERT_EQ(6U, toks.size());
+  ASSERT_EQ(10U, toks.size());
   ASSERT_EQ(tok::l_square, toks[0].getKind());
   ASSERT_EQ(tok::identifier, toks[1].getKind());
   ASSERT_EQ(tok::r_square, toks[2].getKind());
   ASSERT_EQ(tok::l_square, toks[3].getKind());
   ASSERT_EQ(tok::identifier, toks[4].getKind());
   ASSERT_EQ(tok::r_square, toks[5].getKind());
+  ASSERT_EQ(tok::identifier, toks[6].getKind());
+  ASSERT_EQ(tok::identifier, toks[7].getKind());
+  ASSERT_EQ(tok::identifier, toks[8].getKind());
+  ASSERT_EQ(tok::identifier, toks[9].getKind());
   
   SourceLocation lsqrLoc = toks[0].getLocation();
   SourceLocation idLoc = toks[1].getLocation();
@@ -151,6 +160,16 @@ TEST_F(LexerTest, LexAPI) {
           CharSourceRange::getTokenRange(SourceRange(macroLsqrLoc, macroIdLoc)),
           SourceMgr, LangOpts);
   EXPECT_EQ(text, "[bar");
+
+
+  SourceLocation idLoc1 = toks[6].getLocation();
+  SourceLocation idLoc2 = toks[7].getLocation();
+  SourceLocation idLoc3 = toks[8].getLocation();
+  SourceLocation idLoc4 = toks[9].getLocation();
+  EXPECT_EQ("INN", Lexer::getImmediateMacroName(idLoc1, SourceMgr, LangOpts));
+  EXPECT_EQ("INN", Lexer::getImmediateMacroName(idLoc2, SourceMgr, LangOpts));
+  EXPECT_EQ("NOF2", Lexer::getImmediateMacroName(idLoc3, SourceMgr, LangOpts));
+  EXPECT_EQ("N", Lexer::getImmediateMacroName(idLoc4, SourceMgr, LangOpts));
 }
 
 } // anonymous namespace

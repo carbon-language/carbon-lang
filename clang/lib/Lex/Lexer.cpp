@@ -917,14 +917,40 @@ StringRef Lexer::getImmediateMacroName(SourceLocation Loc,
                                        const SourceManager &SM,
                                        const LangOptions &LangOpts) {
   assert(Loc.isMacroID() && "Only reasonble to call this on macros");
-  // Walk past macro argument expanions.
-  while (SM.isMacroArgExpansion(Loc))
+
+  // Find the location of the immediate macro expansion.
+  while (1) {
+    FileID FID = SM.getFileID(Loc);
+    const SrcMgr::SLocEntry *E = &SM.getSLocEntry(FID);
+    const SrcMgr::ExpansionInfo &Expansion = E->getExpansion();
+    Loc = Expansion.getExpansionLocStart();
+    if (!Expansion.isMacroArgExpansion())
+      break;
+
+    // For macro arguments we need to check that the argument did not come
+    // from an inner macro, e.g: "MAC1( MAC2(foo) )"
+    
+    // Loc points to the argument id of the macro definition, move to the
+    // macro expansion.
     Loc = SM.getImmediateExpansionRange(Loc).first;
+    SourceLocation SpellLoc = Expansion.getSpellingLoc();
+    if (SpellLoc.isFileID())
+      break; // No inner macro.
+
+    // If spelling location resides in the same FileID as macro expansion
+    // location, it means there is no inner macro.
+    FileID MacroFID = SM.getFileID(Loc);
+    if (SM.isInFileID(SpellLoc, MacroFID))
+      break;
+
+    // Argument came from inner macro.
+    Loc = SpellLoc;
+  }
 
   // Find the spelling location of the start of the non-argument expansion
   // range. This is where the macro name was spelled in order to begin
   // expanding this macro.
-  Loc = SM.getSpellingLoc(SM.getImmediateExpansionRange(Loc).first);
+  Loc = SM.getSpellingLoc(Loc);
 
   // Dig out the buffer where the macro name was spelled and the extents of the
   // name so that we can render it into the expansion note.
