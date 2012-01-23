@@ -850,7 +850,6 @@ bool RegisterCoalescer::ReMaterializeTrivialDef(LiveInterval &SrcInt,
       RemoveCopyFlag(MO.getReg(), CopyMI);
   }
 
-  NewMI->copyImplicitOps(CopyMI);
   LIS->ReplaceMachineInstrInMaps(CopyMI, NewMI);
   CopyMI->eraseFromParent();
   ReMatCopies.insert(CopyMI);
