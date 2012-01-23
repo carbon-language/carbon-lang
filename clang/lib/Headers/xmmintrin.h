@@ -938,7 +938,7 @@ _mm_movemask_ps(__m128 a)
 
 #define _MM_FLUSH_ZERO_MASK   (0x8000)
 #define _MM_FLUSH_ZERO_ON     (0x8000)
-#define _MM_FLUSH_ZERO_OFF    (0x8000)
+#define _MM_FLUSH_ZERO_OFF    (0x0000)
 
 #define _MM_GET_EXCEPTION_MASK() (_mm_getcsr() & _MM_MASK_MASK)
 #define _MM_GET_EXCEPTION_STATE() (_mm_getcsr() & _MM_EXCEPT_MASK)
