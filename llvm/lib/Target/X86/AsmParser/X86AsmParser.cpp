@@ -618,13 +618,23 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       return X86Operand::CreateMem(Disp, Start, End, Size);
     }
   } else if (getLexer().is(AsmToken::Integer)) {
-      // Handle '[' number ']'
-      const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
-      if (getParser().ParseExpression(Disp, End)) return 0;
-      if (getLexer().isNot(AsmToken::RBrac))
-        return ErrorOperand(Start, "Expected ']' token!");
+      int64_t Val = Parser.getTok().getIntVal();
       Parser.Lex();
-      return X86Operand::CreateMem(Disp, Start, End, Size);
+      SMLoc Loc = Parser.getTok().getLoc();
+      if (getLexer().is(AsmToken::RBrac)) {
+        // Handle '[' number ']'
+        Parser.Lex();
+        return X86Operand::CreateMem(MCConstantExpr::Create(Val, getContext()),
+                                     Start, End, Size);
+      } else if (getLexer().is(AsmToken::Star)) {
+        // Handle '[' Scale*IndexReg ']'
+        Parser.Lex();
+        SMLoc IdxRegLoc = Parser.getTok().getLoc();
+	if (ParseRegister(IndexReg, IdxRegLoc, End))
+	  return ErrorOperand(IdxRegLoc, "Expected register");
+        Scale = Val;
+      } else
+        return ErrorOperand(Loc, "Unepxeted token");
   }
 
   if (getLexer().is(AsmToken::Plus) || getLexer().is(AsmToken::Minus)) {

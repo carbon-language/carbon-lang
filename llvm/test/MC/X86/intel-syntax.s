@@ -56,5 +56,7 @@ _main:
 // CHECK:	fld	%st(0)
 	fld	ST(0)
 // CHECK:	movl	%fs:(%rdi), %eax
-mov     EAX, DWORD PTR FS:[RDI]        
+mov     EAX, DWORD PTR FS:[RDI]
+// CHECK:	leal	(,%rdi,4), %r8d
+lea     R8D, DWORD PTR [4*RDI]        
 	ret
