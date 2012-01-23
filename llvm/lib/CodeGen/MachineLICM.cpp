@@ -462,13 +462,13 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
     // register, then this is not safe.  Two defs is indicated by setting a
     // PhysRegClobbers bit.
     for (const unsigned *AS = TRI->getOverlaps(Reg); *AS; ++AS) {
-      if (PhysRegDefs.test(Reg))
-        PhysRegClobbers.set(Reg);
-      if (PhysRegClobbers.test(Reg))
+      if (PhysRegDefs.test(*AS))
+        PhysRegClobbers.set(*AS);
+      if (PhysRegClobbers.test(*AS))
         // MI defined register is seen defined by another instruction in
         // the loop, it cannot be a LICM candidate.
         RuledOut = true;
-      PhysRegDefs.set(Reg);
+      PhysRegDefs.set(*AS);
     }
   }
 
