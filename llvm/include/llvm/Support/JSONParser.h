@@ -174,7 +174,7 @@ public:
         return true;
       case JK_KeyValuePair:
         return false;
-    };
+    }
     llvm_unreachable("Invalid JSONAtom kind");
   }
   static bool classof(const JSONValue *Value) { return true; }
@@ -190,7 +190,7 @@ public:
   ///
   /// This is the unescaped content of the JSON text.
   /// See http://www.ietf.org/rfc/rfc4627.txt for details.
-  StringRef getRawText() const { return RawText; };
+  StringRef getRawText() const { return RawText; }
 
 private:
   JSONString(StringRef RawText) : JSONValue(JK_String), RawText(RawText) {}
@@ -380,7 +380,7 @@ public:
       case JK_KeyValuePair:
       case JK_String:
         return false;
-    };
+    }
     llvm_unreachable("Invalid JSONAtom kind");
   }
   static bool classof(const JSONContainer *Container) { return true; }

@@ -207,7 +207,7 @@ public:
 
     HashDataContents(DIE *D, char Flags) :
       Die(D),
-      Flags(Flags) { };
+      Flags(Flags) { }
     #ifndef NDEBUG
     void print(raw_ostream &O) const {
       O << "  Offset: " << Die->getOffset() << "\n";
