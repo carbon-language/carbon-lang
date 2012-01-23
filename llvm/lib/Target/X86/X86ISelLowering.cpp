@@ -9934,12 +9934,10 @@ SDValue X86TargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) const {
     //  AhiBlo = __builtin_ia32_psllqi256( AhiBlo, 32 );
     //  return AloBlo + AloBhi + AhiBlo;
 
-    SDValue Ahi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                         DAG.getConstant(Intrinsic::x86_avx2_psrli_q, MVT::i32),
-                         A, DAG.getConstant(32, MVT::i32));
-    SDValue Bhi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                         DAG.getConstant(Intrinsic::x86_avx2_psrli_q, MVT::i32),
-                         B, DAG.getConstant(32, MVT::i32));
+    SDValue Ahi = DAG.getNode(X86ISD::VSRLI, dl, VT, A,
+                              DAG.getConstant(32, MVT::i32));
+    SDValue Bhi = DAG.getNode(X86ISD::VSRLI, dl, VT, B,
+                              DAG.getConstant(32, MVT::i32));
     SDValue AloBlo = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                          DAG.getConstant(Intrinsic::x86_avx2_pmulu_dq, MVT::i32),
                          A, B);
@@ -9949,12 +9947,10 @@ SDValue X86TargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) const {
     SDValue AhiBlo = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                          DAG.getConstant(Intrinsic::x86_avx2_pmulu_dq, MVT::i32),
                          Ahi, B);
-    AloBhi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                         DAG.getConstant(Intrinsic::x86_avx2_pslli_q, MVT::i32),
-                         AloBhi, DAG.getConstant(32, MVT::i32));
-    AhiBlo = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                         DAG.getConstant(Intrinsic::x86_avx2_pslli_q, MVT::i32),
-                         AhiBlo, DAG.getConstant(32, MVT::i32));
+    AloBhi = DAG.getNode(X86ISD::VSHLI, dl, VT, AloBhi,
+                         DAG.getConstant(32, MVT::i32));
+    AhiBlo = DAG.getNode(X86ISD::VSHLI, dl, VT, AhiBlo,
+                         DAG.getConstant(32, MVT::i32));
     SDValue Res = DAG.getNode(ISD::ADD, dl, VT, AloBlo, AloBhi);
     Res = DAG.getNode(ISD::ADD, dl, VT, Res, AhiBlo);
     return Res;
@@ -9972,12 +9968,10 @@ SDValue X86TargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) const {
   //  AhiBlo = __builtin_ia32_psllqi128( AhiBlo, 32 );
   //  return AloBlo + AloBhi + AhiBlo;
 
-  SDValue Ahi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(Intrinsic::x86_sse2_psrli_q, MVT::i32),
-                       A, DAG.getConstant(32, MVT::i32));
-  SDValue Bhi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(Intrinsic::x86_sse2_psrli_q, MVT::i32),
-                       B, DAG.getConstant(32, MVT::i32));
+  SDValue Ahi = DAG.getNode(X86ISD::VSRLI, dl, VT, A,
+                            DAG.getConstant(32, MVT::i32));
+  SDValue Bhi = DAG.getNode(X86ISD::VSRLI, dl, VT, B,
+                            DAG.getConstant(32, MVT::i32));
   SDValue AloBlo = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                        DAG.getConstant(Intrinsic::x86_sse2_pmulu_dq, MVT::i32),
                        A, B);
@@ -9987,12 +9981,10 @@ SDValue X86TargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) const {
   SDValue AhiBlo = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                        DAG.getConstant(Intrinsic::x86_sse2_pmulu_dq, MVT::i32),
                        Ahi, B);
-  AloBhi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(Intrinsic::x86_sse2_pslli_q, MVT::i32),
-                       AloBhi, DAG.getConstant(32, MVT::i32));
-  AhiBlo = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(Intrinsic::x86_sse2_pslli_q, MVT::i32),
-                       AhiBlo, DAG.getConstant(32, MVT::i32));
+  AloBhi = DAG.getNode(X86ISD::VSHLI, dl, VT, AloBhi,
+                       DAG.getConstant(32, MVT::i32));
+  AhiBlo = DAG.getNode(X86ISD::VSHLI, dl, VT, AhiBlo,
+                       DAG.getConstant(32, MVT::i32));
   SDValue Res = DAG.getNode(ISD::ADD, dl, VT, AloBlo, AloBhi);
   Res = DAG.getNode(ISD::ADD, dl, VT, Res, AhiBlo);
   return Res;
@@ -13688,26 +13680,11 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
       // Validate that the Mask operand is a vector sra node.
       // FIXME: what to do for bytes, since there is a psignb/pblendvb, but
       // there is no psrai.b
-      SDValue SraSrc, SraC;
-      if (Mask.getOpcode() == ISD::INTRINSIC_WO_CHAIN) {
-        switch (cast<ConstantSDNode>(Mask.getOperand(0))->getZExtValue()) {
-        case Intrinsic::x86_sse2_psrai_w:
-        case Intrinsic::x86_sse2_psrai_d:
-        case Intrinsic::x86_avx2_psrai_w:
-        case Intrinsic::x86_avx2_psrai_d:
-          break;
-        default: return SDValue();
-        }
-
-        SraSrc = Mask.getOperand(1);
-        SraC = Mask.getOperand(2);
-      } else if (Mask.getOpcode() == X86ISD::VSRAI) {
-        SraSrc = Mask.getOperand(0);
-        SraC = Mask.getOperand(1);
-      } else
+      if (Mask.getOpcode() != X86ISD::VSRAI)
         return SDValue();
 
       // Check that the SRA is all signbits.
+      SDValue SraC = Mask.getOperand(1);
       unsigned SraAmt  = cast<ConstantSDNode>(SraC)->getZExtValue();
       unsigned EltBits = MaskVT.getVectorElementType().getSizeInBits();
       if ((SraAmt + 1) != EltBits)
@@ -13725,7 +13702,7 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
           X.getValueType() == MaskVT && Y.getValueType() == MaskVT) {
         assert((EltBits == 8 || EltBits == 16 || EltBits == 32) &&
                "Unsupported VT for PSIGN");
-        Mask = DAG.getNode(X86ISD::PSIGN, DL, MaskVT, X, SraSrc);
+        Mask = DAG.getNode(X86ISD::PSIGN, DL, MaskVT, X, Mask.getOperand(0));
         return DAG.getNode(ISD::BITCAST, DL, VT, Mask);
       }
       // PBLENDVB only available on SSE 4.1
