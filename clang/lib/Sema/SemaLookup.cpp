@@ -3569,6 +3569,11 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 
   TypoCorrectionConsumer Consumer(*this, Typo);
 
+  // If a callback object returns true for an empty typo correction candidate,
+  // assume it does not do any actual validation of the candidates.
+  TypoCorrection EmptyCorrection;
+  bool ValidatingCallback = CCC && !CCC->ValidateCandidate(EmptyCorrection);
+
   // Perform name lookup to find visible, similarly-named entities.
   bool IsUnqualifiedLookup = false;
   if (MemberContext) {
@@ -3598,41 +3603,46 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
     IsUnqualifiedLookup = true;
     UnqualifiedTyposCorrectedMap::iterator Cached
       = UnqualifiedTyposCorrected.find(Typo);
-    if (Cached == UnqualifiedTyposCorrected.end() ||
-        (Cached->second && CCC && !CCC->ValidateCandidate(Cached->second))) {
+    if (Cached != UnqualifiedTyposCorrected.end()) {
+      // Add the cached value, unless it's a keyword or fails validation. In the
+      // keyword case, we'll end up adding the keyword below.
+      if (Cached->second) {
+        if (!Cached->second.isKeyword() &&
+            (!CCC || CCC->ValidateCandidate(Cached->second)))
+          Consumer.addCorrection(Cached->second);
+      } else {
+        // Only honor no-correction cache hits when a callback that will validate
+        // correction candidates is not being used.
+        if (!ValidatingCallback)
+          return TypoCorrection();
+      }
+    }
+    if (Cached == UnqualifiedTyposCorrected.end()) {
       // Provide a stop gap for files that are just seriously broken.  Trying
       // to correct all typos can turn into a HUGE performance penalty, causing
       // some files to take minutes to get rejected by the parser.
       if (TyposCorrected + UnqualifiedTyposCorrected.size() >= 20)
         return TypoCorrection();
+    }
 
-      // For unqualified lookup, look through all of the names that we have
-      // seen in this translation unit.
-      for (IdentifierTable::iterator I = Context.Idents.begin(),
-                                  IEnd = Context.Idents.end();
-           I != IEnd; ++I)
-        Consumer.FoundName(I->getKey());
+    // For unqualified lookup, look through all of the names that we have
+    // seen in this translation unit.
+    for (IdentifierTable::iterator I = Context.Idents.begin(),
+                                IEnd = Context.Idents.end();
+         I != IEnd; ++I)
+      Consumer.FoundName(I->getKey());
 
-      // Walk through identifiers in external identifier sources.
-      if (IdentifierInfoLookup *External
-                              = Context.Idents.getExternalIdentifierLookup()) {
-        llvm::OwningPtr<IdentifierIterator> Iter(External->getIdentifiers());
-        do {
-          StringRef Name = Iter->Next();
-          if (Name.empty())
-            break;
+    // Walk through identifiers in external identifier sources.
+    if (IdentifierInfoLookup *External
+                            = Context.Idents.getExternalIdentifierLookup()) {
+      llvm::OwningPtr<IdentifierIterator> Iter(External->getIdentifiers());
+      do {
+        StringRef Name = Iter->Next();
+        if (Name.empty())
+          break;
 
-          Consumer.FoundName(Name);
-        } while (true);
-      }
-    } else {
-      // Use the cached value, unless it's a keyword. In the keyword case, we'll
-      // end up adding the keyword below.
-      if (!Cached->second)
-        return TypoCorrection();
-
-      if (!Cached->second.isKeyword())
-        Consumer.addCorrection(Cached->second);
+        Consumer.FoundName(Name);
+      } while (true);
     }
   }
 
@@ -3813,8 +3823,10 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   ED = Consumer.begin()->first;
 
   if (ED > 0 && Typo->getName().size() / ED < 3) {
-    // If this was an unqualified lookup, note that no correction was found.
-    if (IsUnqualifiedLookup)
+    // If this was an unqualified lookup and we believe the callback
+    // object wouldn't have filtered out possible corrections, note
+    // that no correction was found.
+    if (IsUnqualifiedLookup && !ValidatingCallback)
       (void)UnqualifiedTyposCorrected[Typo];
 
     return TypoCorrection();
@@ -3872,7 +3884,9 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
     return BestResults["super"];
   }
 
-  if (IsUnqualifiedLookup)
+  // If this was an unqualified lookup and we believe the callback object did
+  // not filter out possible corrections, note that no correction was found.
+  if (IsUnqualifiedLookup && !ValidatingCallback)
     (void)UnqualifiedTyposCorrected[Typo];
 
   return TypoCorrection();

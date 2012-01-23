@@ -85,10 +85,25 @@ template<typename ...TypeNames> struct count { // expected-note{{parameter pack 
 
 // Test the typo-correction callback in Sema::DiagnoseUnknownTypeName.
 namespace unknown_type_test {
-  class StreamOut {}; // expected-note{{'StreamOut' declared here}}
-  long stream_count;
+  class StreamOut {}; // expected-note 2 {{'StreamOut' declared here}}
+  long stream_count; // expected-note 2 {{'stream_count' declared here}}
 };
 unknown_type_test::stream_out out; // expected-error{{no type named 'stream_out' in namespace 'unknown_type_test'; did you mean 'StreamOut'?}}
+
+// Demonstrate a case where using only the cached value returns the wrong thing
+// when the cached value was the result of a previous callback object that only
+// accepts a subset of the current callback object.
+namespace {
+using namespace unknown_type_test;
+void bar(long i);
+void before_caching_classname() {
+  bar((stream_out)); // expected-error{{use of undeclared identifier 'stream_out'; did you mean 'stream_count'?}}
+}
+stream_out out; // expected-error{{unknown type name 'stream_out'; did you mean 'StreamOut'?}}
+void after_caching_classname() {
+  bar((stream_out)); // expected-error{{use of undeclared identifier 'stream_out'; did you mean 'stream_count'?}}
+}
+}
 
 // Test the typo-correction callback in Sema::DiagnoseInvalidRedeclaration.
 struct BaseDecl {
