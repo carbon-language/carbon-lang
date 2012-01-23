@@ -889,10 +889,6 @@ let Predicates = [HasSSE2] in
 // Use vmovaps/vmovups for AVX integer load/store.
 let Predicates = [HasAVX] in {
   // 128-bit load/store
-  def : Pat<(alignedloadv4i32 addr:$src),
-            (VMOVAPSrm addr:$src)>;
-  def : Pat<(loadv4i32 addr:$src),
-            (VMOVUPSrm addr:$src)>;
   def : Pat<(alignedloadv2i64 addr:$src),
             (VMOVAPSrm addr:$src)>;
   def : Pat<(loadv2i64 addr:$src),
@@ -920,10 +916,6 @@ let Predicates = [HasAVX] in {
             (VMOVAPSYrm addr:$src)>;
   def : Pat<(loadv4i64 addr:$src),
             (VMOVUPSYrm addr:$src)>;
-  def : Pat<(alignedloadv8i32 addr:$src),
-            (VMOVAPSYrm addr:$src)>;
-  def : Pat<(loadv8i32 addr:$src),
-            (VMOVUPSYrm addr:$src)>;
   def : Pat<(alignedstore256 (v4i64 VR256:$src), addr:$dst),
             (VMOVAPSYmr addr:$dst, VR256:$src)>;
   def : Pat<(alignedstore256 (v8i32 VR256:$src), addr:$dst),
@@ -946,10 +938,6 @@ let Predicates = [HasAVX] in {
 // The instructions selected below are then converted to MOVDQA/MOVDQU
 // during the SSE domain pass.
 let Predicates = [HasSSE1] in {
-  def : Pat<(alignedloadv4i32 addr:$src),
-            (MOVAPSrm addr:$src)>;
-  def : Pat<(loadv4i32 addr:$src),
-            (MOVUPSrm addr:$src)>;
   def : Pat<(alignedloadv2i64 addr:$src),
             (MOVAPSrm addr:$src)>;
   def : Pat<(loadv2i64 addr:$src),
@@ -4799,8 +4787,6 @@ def MOVZDI2PDIrm : PDI<0x6E, MRMSrcMem, (outs VR128:$dst), (ins i32mem:$src),
 let Predicates = [HasAVX] in {
   // AVX 128-bit movd/movq instruction write zeros in the high 128-bit part.
   let AddedComplexity = 20 in {
-    def : Pat<(v4i32 (X86vzmovl (loadv4i32 addr:$src))),
-              (VMOVZDI2PDIrm addr:$src)>;
     def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv4f32 addr:$src)))),
               (VMOVZDI2PDIrm addr:$src)>;
     def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv2i64 addr:$src)))),
@@ -4816,8 +4802,6 @@ let Predicates = [HasAVX] in {
 }
 
 let Predicates = [HasSSE2], AddedComplexity = 20 in {
-  def : Pat<(v4i32 (X86vzmovl (loadv4i32 addr:$src))),
-            (MOVZDI2PDIrm addr:$src)>;
   def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv4f32 addr:$src)))),
             (MOVZDI2PDIrm addr:$src)>;
   def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv2i64 addr:$src)))),
@@ -4949,13 +4933,13 @@ def MOVZPQILo2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
 
 let AddedComplexity = 20 in {
   let Predicates = [HasAVX] in {
-    def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4i32 addr:$src)))),
+    def : Pat<(v2i64 (X86vzmovl (loadv2i64 addr:$src))),
               (VMOVZPQILo2PQIrm addr:$src)>;
     def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
               (VMOVZPQILo2PQIrr VR128:$src)>;
   }
   let Predicates = [HasSSE2] in {
-    def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4i32 addr:$src)))),
+    def : Pat<(v2i64 (X86vzmovl (loadv2i64 addr:$src))),
               (MOVZPQILo2PQIrm addr:$src)>;
     def : Pat<(v2f64 (X86vzmovl (v2f64 VR128:$src))),
               (MOVZPQILo2PQIrr VR128:$src)>;

@@ -178,13 +178,11 @@ def sdmem : Operand<v2f64> {
 // 128-bit load pattern fragments
 def loadv4f32    : PatFrag<(ops node:$ptr), (v4f32 (load node:$ptr))>;
 def loadv2f64    : PatFrag<(ops node:$ptr), (v2f64 (load node:$ptr))>;
-def loadv4i32    : PatFrag<(ops node:$ptr), (v4i32 (load node:$ptr))>;
 def loadv2i64    : PatFrag<(ops node:$ptr), (v2i64 (load node:$ptr))>;
 
 // 256-bit load pattern fragments
 def loadv8f32    : PatFrag<(ops node:$ptr), (v8f32 (load node:$ptr))>;
 def loadv4f64    : PatFrag<(ops node:$ptr), (v4f64 (load node:$ptr))>;
-def loadv8i32    : PatFrag<(ops node:$ptr), (v8i32 (load node:$ptr))>;
 def loadv4i64    : PatFrag<(ops node:$ptr), (v4i64 (load node:$ptr))>;
 
 // Like 'store', but always requires 128-bit vector alignment.
@@ -219,8 +217,6 @@ def alignedloadv4f32 : PatFrag<(ops node:$ptr),
                                (v4f32 (alignedload node:$ptr))>;
 def alignedloadv2f64 : PatFrag<(ops node:$ptr),
                                (v2f64 (alignedload node:$ptr))>;
-def alignedloadv4i32 : PatFrag<(ops node:$ptr),
-                               (v4i32 (alignedload node:$ptr))>;
 def alignedloadv2i64 : PatFrag<(ops node:$ptr),
                                (v2i64 (alignedload node:$ptr))>;
 
@@ -229,8 +225,6 @@ def alignedloadv8f32 : PatFrag<(ops node:$ptr),
                                (v8f32 (alignedload256 node:$ptr))>;
 def alignedloadv4f64 : PatFrag<(ops node:$ptr),
                                (v4f64 (alignedload256 node:$ptr))>;
-def alignedloadv8i32 : PatFrag<(ops node:$ptr),
-                               (v8i32 (alignedload256 node:$ptr))>;
 def alignedloadv4i64 : PatFrag<(ops node:$ptr),
                                (v4i64 (alignedload256 node:$ptr))>;
 
@@ -251,18 +245,12 @@ def memopfsf64 : PatFrag<(ops node:$ptr), (f64   (memop node:$ptr))>;
 // 128-bit memop pattern fragments
 def memopv4f32 : PatFrag<(ops node:$ptr), (v4f32 (memop node:$ptr))>;
 def memopv2f64 : PatFrag<(ops node:$ptr), (v2f64 (memop node:$ptr))>;
-def memopv4i32 : PatFrag<(ops node:$ptr), (v4i32 (memop node:$ptr))>;
 def memopv2i64 : PatFrag<(ops node:$ptr), (v2i64 (memop node:$ptr))>;
-def memopv8i16 : PatFrag<(ops node:$ptr), (v8i16 (memop node:$ptr))>;
-def memopv16i8 : PatFrag<(ops node:$ptr), (v16i8 (memop node:$ptr))>;
 
 // 256-bit memop pattern fragments
 def memopv8f32 : PatFrag<(ops node:$ptr), (v8f32 (memop node:$ptr))>;
 def memopv4f64 : PatFrag<(ops node:$ptr), (v4f64 (memop node:$ptr))>;
 def memopv4i64 : PatFrag<(ops node:$ptr), (v4i64 (memop node:$ptr))>;
-def memopv8i32 : PatFrag<(ops node:$ptr), (v8i32 (memop node:$ptr))>;
-def memopv16i16 : PatFrag<(ops node:$ptr), (v16i16 (memop node:$ptr))>;
-def memopv32i8 : PatFrag<(ops node:$ptr), (v32i8 (memop node:$ptr))>;
 
 // SSSE3 uses MMX registers for some instructions. They aren't aligned on a
 // 16-byte boundary.
