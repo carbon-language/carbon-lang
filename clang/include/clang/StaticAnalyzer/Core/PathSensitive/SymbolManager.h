@@ -63,7 +63,7 @@ public:
 
   virtual void dump() const;
 
-  virtual void dumpToStream(raw_ostream &os) const {};
+  virtual void dumpToStream(raw_ostream &os) const {}
 
   virtual QualType getType(ASTContext&) const = 0;
   virtual void Profile(llvm::FoldingSetNodeID& profile) = 0;
