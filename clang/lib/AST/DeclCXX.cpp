@@ -43,7 +43,8 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     Aggregate(true), PlainOldData(true), Empty(true), Polymorphic(false),
     Abstract(false), IsStandardLayout(true), HasNoNonEmptyBases(true),
     HasPrivateFields(false), HasProtectedFields(false), HasPublicFields(false),
-    HasMutableFields(false), HasTrivialDefaultConstructor(true),
+    HasMutableFields(false), HasOnlyFields(true),
+    HasTrivialDefaultConstructor(true),
     HasConstexprNonCopyMoveConstructor(false),
     DefaultedDefaultConstructorIsConstexpr(true),
     DefaultedCopyConstructorIsConstexpr(true),
@@ -456,6 +457,9 @@ void CXXRecordDecl::markedVirtualFunctionPure() {
 }
 
 void CXXRecordDecl::addedMember(Decl *D) {
+  if (!isa<FieldDecl>(D) && !isa<IndirectFieldDecl>(D) && !D->isImplicit())
+    data().HasOnlyFields = false;
+
   // Ignore friends and invalid declarations.
   if (D->getFriendObjectKind() || D->isInvalidDecl())
     return;
@@ -955,6 +959,18 @@ NotASpecialMember:;
     if (Shadow->getDeclName().getNameKind()
           == DeclarationName::CXXConversionFunctionName)
       data().Conversions.addDecl(Shadow, Shadow->getAccess());
+}
+
+bool CXXRecordDecl::isCLike() const {
+  if (getTagKind() == TTK_Class || !TemplateOrInstantiation.isNull())
+    return false;
+  if (!hasDefinition())
+    return true;
+
+  return data().HasOnlyFields &&
+      !data().HasPrivateFields &&
+      !data().HasProtectedFields &&
+      !data().NumBases;
 }
 
 static CanQualType GetConversionType(ASTContext &Context, NamedDecl *Conv) {

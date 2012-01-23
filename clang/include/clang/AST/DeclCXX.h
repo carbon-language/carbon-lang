@@ -348,6 +348,9 @@ class CXXRecordDecl : public RecordDecl {
     /// \brief True if this class (or any subobject) has mutable fields.
     bool HasMutableFields : 1;
 
+    /// \brief True if there no non-field members declared by the user.
+    bool HasOnlyFields : 1;
+
     /// HasTrivialDefaultConstructor - True when, if this class has a default
     /// constructor, this default constructor is trivial.
     ///
@@ -961,6 +964,10 @@ public:
   /// reference data members, no user-defined copy assignment operator and no
   /// user-defined destructor.
   bool isPOD() const { return data().PlainOldData; }
+
+  /// \brief True if this class is C-like, without C++-specific features, e.g.
+  /// it contains only public fields, no bases, tag kind is not 'class', etc.
+  bool isCLike() const;
 
   /// isEmpty - Whether this class is empty (C++0x [meta.unary.prop]), which
   /// means it has a virtual function, virtual base, data member (other than
