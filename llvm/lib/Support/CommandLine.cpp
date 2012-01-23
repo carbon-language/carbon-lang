@@ -882,7 +882,6 @@ bool Option::addOccurrence(unsigned pos, StringRef ArgName,
   case OneOrMore:
   case ZeroOrMore:
   case ConsumeAfter: break;
-  default: return error("bad num occurrences flag value!");
   }
 
   return handleOccurrence(pos, ArgName, Value);
