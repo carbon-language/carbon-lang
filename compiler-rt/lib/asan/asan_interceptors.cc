@@ -235,6 +235,18 @@ char *internal_strncat(char *dst, const char *src, size_t n) {
   return dst;
 }
 
+int internal_strcmp(const char *s1, const char *s2) {
+  while (true) {
+    unsigned c1 = *s1;
+    unsigned c2 = *s2;
+    if (c1 != c2) return (c1 < c2) ? -1 : 1;
+    if (c1 == 0) break;
+    s1++;
+    s2++;
+  }
+  return 0;
+}
+
 }  // namespace __asan
 
 // ---------------------- Wrappers ---------------- {{{1
@@ -490,10 +502,8 @@ char *WRAP(strcat)(char *to, const char *from) {  // NOLINT
 
 extern "C"
 int WRAP(strcmp)(const char *s1, const char *s2) {
-  // strcmp is called from malloc_default_purgeable_zone()
-  // in __asan::ReplaceSystemAlloc() on Mac.
-  if (asan_init_is_running) {
-    return real_strcmp(s1, s2);
+  if (!asan_inited) {
+    return internal_strcmp(s1, s2);
   }
   unsigned char c1, c2;
   size_t i;
