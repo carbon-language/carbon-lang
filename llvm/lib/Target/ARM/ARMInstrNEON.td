@@ -184,6 +184,7 @@ def VecListOneDWordIndexed : Operand<i32> {
   let ParserMatchClass = VecListOneDWordIndexAsmOperand;
   let MIOperandInfo = (ops DPR:$Vd, i32imm:$idx);
 }
+
 // Register list of two D registers with byte lane subscripting.
 def VecListTwoDByteIndexAsmOperand : AsmOperandClass {
   let Name = "VecListTwoDByteIndexed";
@@ -234,6 +235,59 @@ def VecListTwoQWordIndexed : Operand<i32> {
   let ParserMatchClass = VecListTwoQWordIndexAsmOperand;
   let MIOperandInfo = (ops DPR:$Vd, i32imm:$idx);
 }
+
+
+// Register list of three D registers with byte lane subscripting.
+def VecListThreeDByteIndexAsmOperand : AsmOperandClass {
+  let Name = "VecListThreeDByteIndexed";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListIndexedOperands";
+}
+def VecListThreeDByteIndexed : Operand<i32> {
+  let ParserMatchClass = VecListThreeDByteIndexAsmOperand;
+  let MIOperandInfo = (ops DPR:$Vd, i32imm:$idx);
+}
+// ...with half-word lane subscripting.
+def VecListThreeDHWordIndexAsmOperand : AsmOperandClass {
+  let Name = "VecListThreeDHWordIndexed";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListIndexedOperands";
+}
+def VecListThreeDHWordIndexed : Operand<i32> {
+  let ParserMatchClass = VecListThreeDHWordIndexAsmOperand;
+  let MIOperandInfo = (ops DPR:$Vd, i32imm:$idx);
+}
+// ...with word lane subscripting.
+def VecListThreeDWordIndexAsmOperand : AsmOperandClass {
+  let Name = "VecListThreeDWordIndexed";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListIndexedOperands";
+}
+def VecListThreeDWordIndexed : Operand<i32> {
+  let ParserMatchClass = VecListThreeDWordIndexAsmOperand;
+  let MIOperandInfo = (ops DPR:$Vd, i32imm:$idx);
+}
+// Register list of three Q registers with half-word lane subscripting.
+def VecListThreeQHWordIndexAsmOperand : AsmOperandClass {
+  let Name = "VecListThreeQHWordIndexed";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListIndexedOperands";
+}
+def VecListThreeQHWordIndexed : Operand<i32> {
+  let ParserMatchClass = VecListThreeQHWordIndexAsmOperand;
+  let MIOperandInfo = (ops DPR:$Vd, i32imm:$idx);
+}
+// ...with word lane subscripting.
+def VecListThreeQWordIndexAsmOperand : AsmOperandClass {
+  let Name = "VecListThreeQWordIndexed";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListIndexedOperands";
+}
+def VecListThreeQWordIndexed : Operand<i32> {
+  let ParserMatchClass = VecListThreeQWordIndexAsmOperand;
+  let MIOperandInfo = (ops DPR:$Vd, i32imm:$idx);
+}
+
 
 //===----------------------------------------------------------------------===//
 // NEON-specific DAG Nodes.
@@ -5913,6 +5967,55 @@ def VST2LNqWB_register_Asm_32 :
                   (ins VecListTwoQWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
+
+// VLD3 single-lane pseudo-instructions. These need special handling for
+// the lane index that an InstAlias can't handle, so we use these instead.
+def VLD3LNdAsm_8 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr",
+               (ins VecListThreeDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VLD3LNdAsm_16 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr",
+               (ins VecListThreeDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VLD3LNdAsm_32 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr",
+               (ins VecListThreeDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VLD3LNqAsm_16 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr",
+               (ins VecListThreeQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VLD3LNqAsm_32 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr",
+               (ins VecListThreeQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+
+def VLD3LNdWB_fixed_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr!",
+               (ins VecListThreeDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VLD3LNdWB_fixed_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr!",
+               (ins VecListThreeDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VLD3LNdWB_fixed_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr!",
+               (ins VecListThreeDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VLD3LNqWB_fixed_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr!",
+               (ins VecListThreeQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VLD3LNqWB_fixed_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr!",
+               (ins VecListThreeQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VLD3LNdWB_register_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr, $Rm",
+                  (ins VecListThreeDByteIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD3LNdWB_register_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr, $Rm",
+                  (ins VecListThreeDHWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD3LNdWB_register_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr, $Rm",
+                  (ins VecListThreeDWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD3LNqWB_register_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr, $Rm",
+                  (ins VecListThreeQHWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD3LNqWB_register_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr, $Rm",
+                  (ins VecListThreeQWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
 
 // VMOV takes an optional datatype suffix
 defm : VFPDTAnyInstAlias<"vmov${p}", "$Vd, $Vm",

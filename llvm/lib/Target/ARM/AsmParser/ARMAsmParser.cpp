@@ -1168,6 +1168,31 @@ public:
     return VectorList.Count == 2 && VectorList.LaneIndex <= 1;
   }
 
+  bool isVecListThreeDByteIndexed() const {
+    if (!isSingleSpacedVectorIndexed()) return false;
+    return VectorList.Count == 3 && VectorList.LaneIndex <= 7;
+  }
+
+  bool isVecListThreeDHWordIndexed() const {
+    if (!isSingleSpacedVectorIndexed()) return false;
+    return VectorList.Count == 3 && VectorList.LaneIndex <= 3;
+  }
+
+  bool isVecListThreeQWordIndexed() const {
+    if (!isDoubleSpacedVectorIndexed()) return false;
+    return VectorList.Count == 3 && VectorList.LaneIndex <= 1;
+  }
+
+  bool isVecListThreeQHWordIndexed() const {
+    if (!isDoubleSpacedVectorIndexed()) return false;
+    return VectorList.Count == 3 && VectorList.LaneIndex <= 3;
+  }
+
+  bool isVecListThreeDWordIndexed() const {
+    if (!isSingleSpacedVectorIndexed()) return false;
+    return VectorList.Count == 3 && VectorList.LaneIndex <= 1;
+  }
+
   bool isVectorIndex8() const {
     if (Kind != k_VectorIndex) return false;
     return VectorIndex.Val < 8;
@@ -5304,6 +5329,53 @@ static unsigned getRealVLDLNOpcode(unsigned Opc, unsigned &Spacing) {
   case ARM::VLD2LNqAsm_32:
     Spacing = 2;
     return ARM::VLD2LNq32;
+
+  // VLD3LN
+  case ARM::VLD3LNdWB_fixed_Asm_8:
+    Spacing = 1;
+    return ARM::VLD3LNd8_UPD;
+  case ARM::VLD3LNdWB_fixed_Asm_16:
+    Spacing = 1;
+    return ARM::VLD3LNd16_UPD;
+  case ARM::VLD3LNdWB_fixed_Asm_32:
+    Spacing = 1;
+    return ARM::VLD3LNd32_UPD;
+  case ARM::VLD3LNqWB_fixed_Asm_16:
+    Spacing = 1;
+    return ARM::VLD3LNq16_UPD;
+  case ARM::VLD3LNqWB_fixed_Asm_32:
+    Spacing = 2;
+    return ARM::VLD3LNq32_UPD;
+  case ARM::VLD3LNdWB_register_Asm_8:
+    Spacing = 1;
+    return ARM::VLD3LNd8_UPD;
+  case ARM::VLD3LNdWB_register_Asm_16:
+    Spacing = 1;
+    return ARM::VLD3LNd16_UPD;
+  case ARM::VLD3LNdWB_register_Asm_32:
+    Spacing = 1;
+    return ARM::VLD3LNd32_UPD;
+  case ARM::VLD3LNqWB_register_Asm_16:
+    Spacing = 2;
+    return ARM::VLD3LNq16_UPD;
+  case ARM::VLD3LNqWB_register_Asm_32:
+    Spacing = 2;
+    return ARM::VLD3LNq32_UPD;
+  case ARM::VLD3LNdAsm_8:
+    Spacing = 1;
+    return ARM::VLD3LNd8;
+  case ARM::VLD3LNdAsm_16:
+    Spacing = 1;
+    return ARM::VLD3LNd16;
+  case ARM::VLD3LNdAsm_32:
+    Spacing = 1;
+    return ARM::VLD3LNd32;
+  case ARM::VLD3LNqAsm_16:
+    Spacing = 2;
+    return ARM::VLD3LNq16;
+  case ARM::VLD3LNqAsm_32:
+    Spacing = 2;
+    return ARM::VLD3LNq32;
   }
 }
 
@@ -5502,6 +5574,37 @@ processInstruction(MCInst &Inst,
     return true;
   }
 
+  case ARM::VLD3LNdWB_register_Asm_8:
+  case ARM::VLD3LNdWB_register_Asm_16:
+  case ARM::VLD3LNdWB_register_Asm_32:
+  case ARM::VLD3LNqWB_register_Asm_16:
+  case ARM::VLD3LNqWB_register_Asm_32: {
+    MCInst TmpInst;
+    // Shuffle the operands around so the lane index operand is in the
+    // right place.
+    unsigned Spacing;
+    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.addOperand(Inst.getOperand(0)); // Vd
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn
+    TmpInst.addOperand(Inst.getOperand(3)); // alignment
+    TmpInst.addOperand(Inst.getOperand(4)); // Rm
+    TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
+    TmpInst.addOperand(Inst.getOperand(1)); // lane
+    TmpInst.addOperand(Inst.getOperand(5)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(6));
+    Inst = TmpInst;
+    return true;
+  }
+
   case ARM::VLD1LNdWB_fixed_Asm_8:
   case ARM::VLD1LNdWB_fixed_Asm_16:
   case ARM::VLD1LNdWB_fixed_Asm_32: {
@@ -5541,6 +5644,37 @@ processInstruction(MCInst &Inst,
     TmpInst.addOperand(Inst.getOperand(3)); // alignment
     TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
     TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
+    TmpInst.addOperand(Inst.getOperand(1)); // lane
+    TmpInst.addOperand(Inst.getOperand(4)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(5));
+    Inst = TmpInst;
+    return true;
+  }
+
+  case ARM::VLD3LNdWB_fixed_Asm_8:
+  case ARM::VLD3LNdWB_fixed_Asm_16:
+  case ARM::VLD3LNdWB_fixed_Asm_32:
+  case ARM::VLD3LNqWB_fixed_Asm_16:
+  case ARM::VLD3LNqWB_fixed_Asm_32: {
+    MCInst TmpInst;
+    // Shuffle the operands around so the lane index operand is in the
+    // right place.
+    unsigned Spacing;
+    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.addOperand(Inst.getOperand(0)); // Vd
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn_wb
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn
+    TmpInst.addOperand(Inst.getOperand(3)); // alignment
+    TmpInst.addOperand(MCOperand::CreateReg(0)); // Rm
+    TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
     TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
                                             Spacing));
     TmpInst.addOperand(Inst.getOperand(1)); // lane
@@ -5593,6 +5727,36 @@ processInstruction(MCInst &Inst,
     Inst = TmpInst;
     return true;
   }
+
+  case ARM::VLD3LNdAsm_8:
+  case ARM::VLD3LNdAsm_16:
+  case ARM::VLD3LNdAsm_32:
+  case ARM::VLD3LNqAsm_16:
+  case ARM::VLD3LNqAsm_32: {
+    MCInst TmpInst;
+    // Shuffle the operands around so the lane index operand is in the
+    // right place.
+    unsigned Spacing;
+    TmpInst.setOpcode(getRealVLDLNOpcode(Inst.getOpcode(), Spacing));
+    TmpInst.addOperand(Inst.getOperand(0)); // Vd
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
+    TmpInst.addOperand(Inst.getOperand(2)); // Rn
+    TmpInst.addOperand(Inst.getOperand(3)); // alignment
+    TmpInst.addOperand(Inst.getOperand(0)); // Tied operand src (== Vd)
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
+    TmpInst.addOperand(MCOperand::CreateReg(Inst.getOperand(0).getReg() +
+                                            Spacing));
+    TmpInst.addOperand(Inst.getOperand(1)); // lane
+    TmpInst.addOperand(Inst.getOperand(4)); // CondCode
+    TmpInst.addOperand(Inst.getOperand(5));
+    Inst = TmpInst;
+    return true;
+  }
+
   // Handle the Thumb2 mode MOV complex aliases.
   case ARM::t2MOVsr:
   case ARM::t2MOVSsr: {
