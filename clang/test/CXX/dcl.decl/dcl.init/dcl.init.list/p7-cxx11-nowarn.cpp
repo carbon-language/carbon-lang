@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 -Wno-error=c++11-narrowing -triple x86_64-apple-macosx10.6.7 -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 -Wno-error=narrowing -triple x86_64-apple-macosx10.6.7 -verify %s
 
 // Verify that narrowing conversions in initializer lists cause errors in C++0x
 // mode.

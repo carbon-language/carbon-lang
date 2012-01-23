@@ -72,7 +72,12 @@ def CXX98Compat : DiagGroup<"c++98-compat",
 def CXX98CompatPedantic : DiagGroup<"c++98-compat-pedantic", [CXX98Compat]>;
 
 def CXX11Narrowing : DiagGroup<"c++11-narrowing">;
+
+// Original name of this warning in Clang
 def : DiagGroup<"c++0x-narrowing", [CXX11Narrowing]>;
+
+// Name of this warning in GCC
+def : DiagGroup<"narrowing", [CXX11Narrowing]>;
 
 def CXX11Compat : DiagGroup<"c++11-compat", [CXX11Narrowing]>;
 def : DiagGroup<"c++0x-compat", [CXX11Compat]>;
