@@ -29,6 +29,8 @@
 
 #ifndef __APPLE__
 #include <malloc.h>
+#else
+#include <CoreFoundation/CFString.h>
 #endif  // __APPLE__
 
 #ifdef __APPLE__
@@ -1894,6 +1896,14 @@ TEST(AddressSanitizerMac, DISABLED_TSDWorkqueueTest) {
   pthread_join(th, NULL);
   pthread_key_delete(test_key);
 }
+
+// Test that CFStringCreateCopy does not copy constant strings.
+TEST(AddressSanitizerMac, DISABLED_CFStringCreateCopy) {
+  CFStringRef str = CFSTR("Hello world!\n");
+  CFStringRef str2 = CFStringCreateCopy(0, str);
+  EXPECT_EQ(str, str2);
+}
+
 #endif  // __APPLE__
 
 int main(int argc, char **argv) {
