@@ -64,17 +64,6 @@ static cl::opt<bool> UseRegMask("x86-use-regmask",
 static SDValue getMOVL(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
                        SDValue V2);
 
-static SDValue Insert128BitVector(SDValue Result,
-                                  SDValue Vec,
-                                  SDValue Idx,
-                                  SelectionDAG &DAG,
-                                  DebugLoc dl);
-
-static SDValue Extract128BitVector(SDValue Vec,
-                                   SDValue Idx,
-                                   SelectionDAG &DAG,
-                                   DebugLoc dl);
-
 /// Generate a DAG to grab 128-bits from a vector > 128 bits.  This
 /// sets things up to match to an AVX VEXTRACTF128 instruction or a
 /// simple subregister reference.  Idx is an index in the 128 bits we
@@ -9157,6 +9146,43 @@ SDValue X86TargetLowering::LowerVACOPY(SDValue Op, SelectionDAG &DAG) const {
                        MachinePointerInfo(DstSV), MachinePointerInfo(SrcSV));
 }
 
+// getTargetVShiftNOde - Handle vector element shifts where the shift amount
+// may or may not be a constant. Takes immediate version of shift as input.
+static SDValue getTargetVShiftNode(unsigned Opc, DebugLoc dl, EVT VT,
+                                   SDValue SrcOp, SDValue ShAmt,
+                                   SelectionDAG &DAG) {
+  assert(ShAmt.getValueType() == MVT::i32 && "ShAmt is not i32");
+
+  if (isa<ConstantSDNode>(ShAmt)) {
+    switch (Opc) {
+      default: llvm_unreachable("Unknown target vector shift node");
+      case X86ISD::VSHLI:
+      case X86ISD::VSRLI:
+      case X86ISD::VSRAI:
+        return DAG.getNode(Opc, dl, VT, SrcOp, ShAmt);
+    }
+  }
+
+  // Change opcode to non-immediate version
+  switch (Opc) {
+    default: llvm_unreachable("Unknown target vector shift node");
+    case X86ISD::VSHLI: Opc = X86ISD::VSHL; break;
+    case X86ISD::VSRLI: Opc = X86ISD::VSRL; break;
+    case X86ISD::VSRAI: Opc = X86ISD::VSRA; break;
+  }
+
+  // Need to build a vector containing shift amount
+  // Shift amount is 32-bits, but SSE instructions read 64-bit, so fill with 0
+  SDValue ShOps[4];
+  ShOps[0] = ShAmt;
+  ShOps[1] = DAG.getConstant(0, MVT::i32);
+  ShOps[2] = DAG.getUNDEF(MVT::i32);
+  ShOps[3] = DAG.getUNDEF(MVT::i32);
+  ShAmt = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, &ShOps[0], 4);
+  ShAmt = DAG.getNode(ISD::BITCAST, dl, VT, ShAmt);
+  return DAG.getNode(Opc, dl, VT, SrcOp, ShAmt);
+}
+
 SDValue
 X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc dl = Op.getDebugLoc();
@@ -9359,24 +9385,53 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
     return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
   }
 
-  // Fix vector shift instructions where the last operand is a non-immediate
-  // i32 value.
-  case Intrinsic::x86_avx2_pslli_w:
-  case Intrinsic::x86_avx2_pslli_d:
-  case Intrinsic::x86_avx2_pslli_q:
-  case Intrinsic::x86_avx2_psrli_w:
-  case Intrinsic::x86_avx2_psrli_d:
-  case Intrinsic::x86_avx2_psrli_q:
-  case Intrinsic::x86_avx2_psrai_w:
-  case Intrinsic::x86_avx2_psrai_d:
+  // SSE/AVX shift intrinsics
+  case Intrinsic::x86_sse2_psll_w:
+  case Intrinsic::x86_sse2_psll_d:
+  case Intrinsic::x86_sse2_psll_q:
+  case Intrinsic::x86_avx2_psll_w:
+  case Intrinsic::x86_avx2_psll_d:
+  case Intrinsic::x86_avx2_psll_q:
+    return DAG.getNode(X86ISD::VSHL, dl, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
+  case Intrinsic::x86_sse2_psrl_w:
+  case Intrinsic::x86_sse2_psrl_d:
+  case Intrinsic::x86_sse2_psrl_q:
+  case Intrinsic::x86_avx2_psrl_w:
+  case Intrinsic::x86_avx2_psrl_d:
+  case Intrinsic::x86_avx2_psrl_q:
+    return DAG.getNode(X86ISD::VSRL, dl, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
+  case Intrinsic::x86_sse2_psra_w:
+  case Intrinsic::x86_sse2_psra_d:
+  case Intrinsic::x86_avx2_psra_w:
+  case Intrinsic::x86_avx2_psra_d:
+    return DAG.getNode(X86ISD::VSRA, dl, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
   case Intrinsic::x86_sse2_pslli_w:
   case Intrinsic::x86_sse2_pslli_d:
   case Intrinsic::x86_sse2_pslli_q:
+  case Intrinsic::x86_avx2_pslli_w:
+  case Intrinsic::x86_avx2_pslli_d:
+  case Intrinsic::x86_avx2_pslli_q:
+    return getTargetVShiftNode(X86ISD::VSHLI, dl, Op.getValueType(),
+                               Op.getOperand(1), Op.getOperand(2), DAG);
   case Intrinsic::x86_sse2_psrli_w:
   case Intrinsic::x86_sse2_psrli_d:
   case Intrinsic::x86_sse2_psrli_q:
+  case Intrinsic::x86_avx2_psrli_w:
+  case Intrinsic::x86_avx2_psrli_d:
+  case Intrinsic::x86_avx2_psrli_q:
+    return getTargetVShiftNode(X86ISD::VSRLI, dl, Op.getValueType(),
+                               Op.getOperand(1), Op.getOperand(2), DAG);
   case Intrinsic::x86_sse2_psrai_w:
   case Intrinsic::x86_sse2_psrai_d:
+  case Intrinsic::x86_avx2_psrai_w:
+  case Intrinsic::x86_avx2_psrai_d:
+    return getTargetVShiftNode(X86ISD::VSRAI, dl, Op.getValueType(),
+                               Op.getOperand(1), Op.getOperand(2), DAG);
+  // Fix vector shift instructions where the last operand is a non-immediate
+  // i32 value.
   case Intrinsic::x86_mmx_pslli_w:
   case Intrinsic::x86_mmx_pslli_d:
   case Intrinsic::x86_mmx_pslli_q:
@@ -9390,103 +9445,40 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
       return SDValue();
 
     unsigned NewIntNo = 0;
-    EVT ShAmtVT = MVT::v4i32;
     switch (IntNo) {
-    case Intrinsic::x86_sse2_pslli_w:
-      NewIntNo = Intrinsic::x86_sse2_psll_w;
+    case Intrinsic::x86_mmx_pslli_w:
+      NewIntNo = Intrinsic::x86_mmx_psll_w;
       break;
-    case Intrinsic::x86_sse2_pslli_d:
-      NewIntNo = Intrinsic::x86_sse2_psll_d;
+    case Intrinsic::x86_mmx_pslli_d:
+      NewIntNo = Intrinsic::x86_mmx_psll_d;
       break;
-    case Intrinsic::x86_sse2_pslli_q:
-      NewIntNo = Intrinsic::x86_sse2_psll_q;
+    case Intrinsic::x86_mmx_pslli_q:
+      NewIntNo = Intrinsic::x86_mmx_psll_q;
       break;
-    case Intrinsic::x86_sse2_psrli_w:
-      NewIntNo = Intrinsic::x86_sse2_psrl_w;
+    case Intrinsic::x86_mmx_psrli_w:
+      NewIntNo = Intrinsic::x86_mmx_psrl_w;
       break;
-    case Intrinsic::x86_sse2_psrli_d:
-      NewIntNo = Intrinsic::x86_sse2_psrl_d;
+    case Intrinsic::x86_mmx_psrli_d:
+      NewIntNo = Intrinsic::x86_mmx_psrl_d;
       break;
-    case Intrinsic::x86_sse2_psrli_q:
-      NewIntNo = Intrinsic::x86_sse2_psrl_q;
+    case Intrinsic::x86_mmx_psrli_q:
+      NewIntNo = Intrinsic::x86_mmx_psrl_q;
       break;
-    case Intrinsic::x86_sse2_psrai_w:
-      NewIntNo = Intrinsic::x86_sse2_psra_w;
+    case Intrinsic::x86_mmx_psrai_w:
+      NewIntNo = Intrinsic::x86_mmx_psra_w;
       break;
-    case Intrinsic::x86_sse2_psrai_d:
-      NewIntNo = Intrinsic::x86_sse2_psra_d;
+    case Intrinsic::x86_mmx_psrai_d:
+      NewIntNo = Intrinsic::x86_mmx_psra_d;
       break;
-    case Intrinsic::x86_avx2_pslli_w:
-      NewIntNo = Intrinsic::x86_avx2_psll_w;
-      break;
-    case Intrinsic::x86_avx2_pslli_d:
-      NewIntNo = Intrinsic::x86_avx2_psll_d;
-      break;
-    case Intrinsic::x86_avx2_pslli_q:
-      NewIntNo = Intrinsic::x86_avx2_psll_q;
-      break;
-    case Intrinsic::x86_avx2_psrli_w:
-      NewIntNo = Intrinsic::x86_avx2_psrl_w;
-      break;
-    case Intrinsic::x86_avx2_psrli_d:
-      NewIntNo = Intrinsic::x86_avx2_psrl_d;
-      break;
-    case Intrinsic::x86_avx2_psrli_q:
-      NewIntNo = Intrinsic::x86_avx2_psrl_q;
-      break;
-    case Intrinsic::x86_avx2_psrai_w:
-      NewIntNo = Intrinsic::x86_avx2_psra_w;
-      break;
-    case Intrinsic::x86_avx2_psrai_d:
-      NewIntNo = Intrinsic::x86_avx2_psra_d;
-      break;
-    default: {
-      ShAmtVT = MVT::v2i32;
-      switch (IntNo) {
-      case Intrinsic::x86_mmx_pslli_w:
-        NewIntNo = Intrinsic::x86_mmx_psll_w;
-        break;
-      case Intrinsic::x86_mmx_pslli_d:
-        NewIntNo = Intrinsic::x86_mmx_psll_d;
-        break;
-      case Intrinsic::x86_mmx_pslli_q:
-        NewIntNo = Intrinsic::x86_mmx_psll_q;
-        break;
-      case Intrinsic::x86_mmx_psrli_w:
-        NewIntNo = Intrinsic::x86_mmx_psrl_w;
-        break;
-      case Intrinsic::x86_mmx_psrli_d:
-        NewIntNo = Intrinsic::x86_mmx_psrl_d;
-        break;
-      case Intrinsic::x86_mmx_psrli_q:
-        NewIntNo = Intrinsic::x86_mmx_psrl_q;
-        break;
-      case Intrinsic::x86_mmx_psrai_w:
-        NewIntNo = Intrinsic::x86_mmx_psra_w;
-        break;
-      case Intrinsic::x86_mmx_psrai_d:
-        NewIntNo = Intrinsic::x86_mmx_psra_d;
-        break;
-      default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
-      }
-      break;
-    }
+    default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
     }
 
     // The vector shift intrinsics with scalars uses 32b shift amounts but
     // the sse2/mmx shift instructions reads 64 bits. Set the upper 32 bits
     // to be zero.
-    SDValue ShOps[4];
-    ShOps[0] = ShAmt;
-    ShOps[1] = DAG.getConstant(0, MVT::i32);
-    if (ShAmtVT == MVT::v4i32) {
-      ShOps[2] = DAG.getUNDEF(MVT::i32);
-      ShOps[3] = DAG.getUNDEF(MVT::i32);
-      ShAmt =  DAG.getNode(ISD::BUILD_VECTOR, dl, ShAmtVT, &ShOps[0], 4);
-    } else {
-      ShAmt =  DAG.getNode(ISD::BUILD_VECTOR, dl, ShAmtVT, &ShOps[0], 2);
+    ShAmt =  DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v2i32, ShAmt,
+                         DAG.getConstant(0, MVT::i32));
 // FIXME this must be lowered to get rid of the invalid type.
-    }
 
     EVT VT = Op.getValueType();
     ShAmt = DAG.getNode(ISD::BITCAST, dl, VT, ShAmt);
@@ -10004,43 +9996,6 @@ SDValue X86TargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) const {
   SDValue Res = DAG.getNode(ISD::ADD, dl, VT, AloBlo, AloBhi);
   Res = DAG.getNode(ISD::ADD, dl, VT, Res, AhiBlo);
   return Res;
-}
-
-// getTargetVShiftNOde - Handle vector element shifts where the shift amount
-// may or may not be a constant. Takes immediate version of shift as input.
-static SDValue getTargetVShiftNode(unsigned Opc, DebugLoc dl, EVT VT,
-                                   SDValue SrcOp, SDValue ShAmt,
-                                   SelectionDAG &DAG) {
-  assert(ShAmt.getValueType() == MVT::i32 && "ShAmt is not i32");
-
-  if (isa<ConstantSDNode>(ShAmt)) {
-    switch (Opc) {
-      default: llvm_unreachable("Unknown target vector shift node");
-      case X86ISD::VSHLI:
-      case X86ISD::VSRLI:
-      case X86ISD::VSRAI:
-        return DAG.getNode(Opc, dl, VT, SrcOp, ShAmt);
-    }
-  }
-
-  // Change opcode to non-immediate version
-  switch (Opc) {
-    default: llvm_unreachable("Unknown target vector shift node");
-    case X86ISD::VSHLI: Opc = X86ISD::VSHL; break;
-    case X86ISD::VSRLI: Opc = X86ISD::VSRL; break;
-    case X86ISD::VSRAI: Opc = X86ISD::VSRA; break;
-  }
-
-  // Need to build a vector containing shift amount
-  // Shift amount is 32-bits, but SSE instructions read 64-bit, so fill with 0
-  SDValue ShOps[4];
-  ShOps[0] = ShAmt;
-  ShOps[1] = DAG.getConstant(0, MVT::i32);
-  ShOps[2] = DAG.getUNDEF(MVT::i32);
-  ShOps[3] = DAG.getUNDEF(MVT::i32);
-  ShAmt = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, &ShOps[0], 4);
-  ShAmt = DAG.getNode(ISD::BITCAST, dl, VT, ShAmt);
-  return DAG.getNode(Opc, dl, VT, SrcOp, ShAmt);
 }
 
 SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
