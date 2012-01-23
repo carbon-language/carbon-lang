@@ -656,7 +656,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       } else
         return ErrorOperand(PlusLoc, "unexpected token after +");
     } else if (getLexer().is(AsmToken::Identifier)) {
-      // This could be an index registor or a displacement expression.
+      // This could be an index register or a displacement expression.
       End = Parser.getTok().getLoc();
       if (!IndexReg)
         ParseRegister(IndexReg, Start, End);
