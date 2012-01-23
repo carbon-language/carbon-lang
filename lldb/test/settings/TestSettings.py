@@ -27,6 +27,39 @@ class SettingsCommandTestCase(TestBase):
                        "environment variables",
                        "executable's environment"])
 
+    def test_append_target_env_vars(self):
+        """Test that 'replace target.run-args' works."""
+        # Append the env-vars.
+        self.runCmd('settings append target.env-vars MY_ENV_VAR=YES')
+        # And add hooks to restore the settings during tearDown().
+        self.addTearDownHook(
+            lambda: self.runCmd("settings set -r target.env-vars"))
+
+        # Check it immediately!
+        self.expect('settings show target.env-vars',
+            substrs = ['MY_ENV_VAR=YES'])
+
+    def test_insert_before_and_after_target_run_args(self):
+        """Test that 'insert-before/after target.run-args' works."""
+        # Set the run-args first.
+        self.runCmd('settings set target.run-args a b c')
+        # And add hooks to restore the settings during tearDown().
+        self.addTearDownHook(
+            lambda: self.runCmd("settings set -r target.run-args"))
+
+        # Now insert-before the index-0 element with '__a__'.
+        self.runCmd('settings insert-before target.run-args 0 __a__')
+        # And insert-after the index-1 element with '__A__'.
+        self.runCmd('settings insert-after target.run-args 1 __A__')
+        # Check it immediately!
+        self.expect('settings show target.run-args',
+            substrs = ['target.run-args (array) = ',
+                       '[0]: "__a__"',
+                       '[1]: "a"',
+                       '[2]: "__A__"',
+                       '[3]: "b"',
+                       '[4]: "c"'])
+
     def test_replace_target_run_args(self):
         """Test that 'replace target.run-args' works."""
         # Set the run-args and then replace the index-0 element.
