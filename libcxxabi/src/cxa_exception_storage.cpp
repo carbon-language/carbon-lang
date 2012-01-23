@@ -42,7 +42,6 @@ extern "C" {
 
 namespace __cxxabiv1 {
 namespace {
-    pthread_once_t flag_ = PTHREAD_ONCE_INIT;
     pthread_key_t  key_;
 
     void destruct_ (void *p) throw () {
@@ -51,17 +50,15 @@ namespace {
             abort_message("cannot zero out thread value for __cxa_get_globals()");
         }
 
-    void construct_ () throw () {
+    int construct_ () throw () {
         if ( 0 != pthread_key_create ( &key_, destruct_ ) )
             abort_message("cannot create pthread key for __cxa_get_globals()");
+        return 0;
         }
 }   
 
 extern "C" {
     __cxa_eh_globals * __cxa_get_globals () throw () {
-    //  First time through, create the key.
-        if ( 0 != pthread_once ( &flag_, construct_ ) ) 
-            abort_message("cannot run pthread_once for __cxa_get_globals()");
 
     //  Try to get the globals for this thread
         __cxa_eh_globals* retVal = __cxa_get_globals_fast ();
@@ -79,6 +76,8 @@ extern "C" {
         }
 
     __cxa_eh_globals * __cxa_get_globals_fast () throw () {
+    //  First time through, create the key.
+        static int init = construct_();
         return static_cast<__cxa_eh_globals*>(::pthread_getspecific(key_));
         }
     
