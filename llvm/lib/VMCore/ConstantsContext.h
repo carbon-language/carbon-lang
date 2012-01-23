@@ -514,37 +514,6 @@ struct ConstantKeyData<ConstantStruct> {
   }
 };
 
-// ConstantPointerNull does not take extra "value" argument...
-template<class ValType>
-struct ConstantCreator<ConstantPointerNull, PointerType, ValType> {
-  static ConstantPointerNull *create(PointerType *Ty, const ValType &V){
-    return new ConstantPointerNull(Ty);
-  }
-};
-
-template<>
-struct ConstantKeyData<ConstantPointerNull> {
-  typedef char ValType;
-  static ValType getValType(ConstantPointerNull *C) {
-    return 0;
-  }
-};
-
-// UndefValue does not take extra "value" argument...
-template<class ValType>
-struct ConstantCreator<UndefValue, Type, ValType> {
-  static UndefValue *create(Type *Ty, const ValType &V) {
-    return new UndefValue(Ty);
-  }
-};
-
-template<>
-struct ConstantKeyData<UndefValue> {
-  typedef char ValType;
-  static ValType getValType(UndefValue *C) {
-    return 0;
-  }
-};
 
 template<>
 struct ConstantCreator<InlineAsm, PointerType, InlineAsmKeyType> {

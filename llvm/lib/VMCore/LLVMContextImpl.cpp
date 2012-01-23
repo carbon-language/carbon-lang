@@ -58,6 +58,8 @@ LLVMContextImpl::~LLVMContextImpl() {
   std::vector<Module*> Modules(OwnedModules.begin(), OwnedModules.end());
   DeleteContainerPointers(Modules);
   
+  // Free the constants.  This is important to do here to ensure that they are
+  // freed before the LeakDetector is torn down.
   std::for_each(ExprConstants.map_begin(), ExprConstants.map_end(),
                 DropReferences());
   std::for_each(ArrayConstants.map_begin(), ArrayConstants.map_end(),
@@ -71,8 +73,8 @@ LLVMContextImpl::~LLVMContextImpl() {
   StructConstants.freeConstants();
   VectorConstants.freeConstants();
   CAZConstants.clear();
-  NullPtrConstants.freeConstants();
-  UndefValueConstants.freeConstants();
+  CPNConstants.clear();
+  UVConstants.clear();
   InlineAsms.freeConstants();
   DeleteContainerSeconds(IntConstants);
   DeleteContainerSeconds(FPConstants);

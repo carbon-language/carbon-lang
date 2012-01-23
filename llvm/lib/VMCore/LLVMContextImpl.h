@@ -154,9 +154,11 @@ public:
                             VectorType, ConstantVector> VectorConstantsTy;
   VectorConstantsTy VectorConstants;
   
-  ConstantUniqueMap<char, char, PointerType, ConstantPointerNull>
-    NullPtrConstants;
-  ConstantUniqueMap<char, char, Type, UndefValue> UndefValueConstants;
+  typedef DenseMap<PointerType*, OwningPtr<ConstantPointerNull> > CPNMapTy;
+  CPNMapTy CPNConstants;
+
+  typedef DenseMap<Type*, OwningPtr<UndefValue> > UVMapTy;
+  UVMapTy UVConstants;
   
   DenseMap<std::pair<Function*, BasicBlock*> , BlockAddress*> BlockAddresses;
   ConstantUniqueMap<ExprMapKeyType, const ExprMapKeyType&, Type, ConstantExpr>
