@@ -143,6 +143,7 @@ class BlackList {
 /// AddressSanitizer: instrument the code in module to find memory bugs.
 struct AddressSanitizer : public ModulePass {
   AddressSanitizer();
+  virtual const char *getPassName() const;
   void instrumentMop(Instruction *I);
   void instrumentAddress(Instruction *OrigIns, IRBuilder<> &IRB,
                          Value *Addr, uint32_t TypeSize, bool IsWrite);
@@ -203,6 +204,10 @@ INITIALIZE_PASS(AddressSanitizer, "asan",
 AddressSanitizer::AddressSanitizer() : ModulePass(ID) { }
 ModulePass *llvm::createAddressSanitizerPass() {
   return new AddressSanitizer();
+}
+
+const char *AddressSanitizer::getPassName() const {
+  return "AddressSanitizer";
 }
 
 // Create a constant for Str so that we can pass it to the run-time lib.
