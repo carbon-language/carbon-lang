@@ -30,14 +30,14 @@ class DisassembleRawDataTestCase(TestBase):
 
         inst = insts.GetInstructionAtIndex(0)
 
-        self.assertTrue (inst.GetMnemonic(target) == "movq")
-        self.assertTrue (inst.GetOperands(target) == '%' + "rsp, " + '%' + "rbp")
-
         if self.TraceOn():
             print
             print "Raw bytes:   ", [hex(x) for x in raw_bytes]
             print "Disassembled:", inst
  
+        self.assertTrue (inst.GetMnemonic(target) == "movq")
+        self.assertTrue (inst.GetOperands(target) == '%' + "rsp, " + '%' + "rbp")
+
 if __name__ == '__main__':
     import atexit
     lldb.SBDebugger.Initialize()
