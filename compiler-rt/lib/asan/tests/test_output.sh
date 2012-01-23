@@ -5,7 +5,7 @@ set -e # fail on any error
 OS=`uname`
 CXX=$1
 CC=$2
-CXXFLAGS="-mno-omit-leaf-frame-pointer -fno-omit-frame-pointer"
+CXXFLAGS="-mno-omit-leaf-frame-pointer -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 SYMBOLIZER=../scripts/asan_symbolize.py
 
 C_TEST=use-after-free
