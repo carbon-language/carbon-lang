@@ -1675,6 +1675,9 @@ namespace llvm {
         bool isBinary = isa<Binary>(result);
         bool isDyld = isa<DyldELFObject<support::little, true> >(result);
         bool isFile = isa<ELFObjectFile<support::little, true> >(result);
+        (void)isBinary;
+        (void)isDyld;
+        (void)isFile;
         assert(isBinary && isDyld && isFile &&
             "Type inquiry failed for ELF object!");
         return result;
@@ -1695,6 +1698,9 @@ namespace llvm {
       bool isBinary = isa<Binary>(result);
       bool isDyld = isa<DyldELFObject<support::little, true> >(result);
       bool isFile = isa<ELFObjectFile<support::little, true> >(result);
+      (void)isBinary;
+      (void)isDyld;
+      (void)isFile;
       assert(isBinary && isFile && !isDyld &&
           "Type inquiry failed for ELF object!");
       return result;
