@@ -840,6 +840,7 @@ namespace {
                             const MCSymbol *personality,
                             unsigned personalityEncoding,
                             const MCSymbol *lsda,
+                            bool IsSignalFrame,
                             unsigned lsdaEncoding);
     MCSymbol *EmitFDE(MCStreamer &streamer,
                       const MCSymbol &cieStart,
@@ -1111,6 +1112,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
                                           const MCSymbol *personality,
                                           unsigned personalityEncoding,
                                           const MCSymbol *lsda,
+                                          bool IsSignalFrame,
                                           unsigned lsdaEncoding) {
   MCContext &context = streamer.getContext();
   const MCRegisterInfo &MRI = context.getRegisterInfo();
@@ -1153,6 +1155,8 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
     if (lsda)
       Augmentation += "L";
     Augmentation += "R";
+    if (IsSignalFrame)
+      Augmentation += "S";
     streamer.EmitBytes(Augmentation.str(), 0);
   }
   streamer.EmitIntValue(0, 1);
@@ -1312,17 +1316,18 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
 
 namespace {
   struct CIEKey {
-    static const CIEKey getEmptyKey() { return CIEKey(0, 0, -1); }
-    static const CIEKey getTombstoneKey() { return CIEKey(0, -1, 0); }
+    static const CIEKey getEmptyKey() { return CIEKey(0, 0, -1, false); }
+    static const CIEKey getTombstoneKey() { return CIEKey(0, -1, 0, false); }
 
     CIEKey(const MCSymbol* Personality_, unsigned PersonalityEncoding_,
-           unsigned LsdaEncoding_) : Personality(Personality_),
-                                     PersonalityEncoding(PersonalityEncoding_),
-                                     LsdaEncoding(LsdaEncoding_) {
+           unsigned LsdaEncoding_, bool IsSignalFrame_) :
+      Personality(Personality_), PersonalityEncoding(PersonalityEncoding_),
+      LsdaEncoding(LsdaEncoding_), IsSignalFrame(IsSignalFrame_) {
     }
     const MCSymbol* Personality;
     unsigned PersonalityEncoding;
     unsigned LsdaEncoding;
+    bool IsSignalFrame;
   };
 }
 
@@ -1340,13 +1345,15 @@ namespace llvm {
       ID.AddPointer(Key.Personality);
       ID.AddInteger(Key.PersonalityEncoding);
       ID.AddInteger(Key.LsdaEncoding);
+      ID.AddBoolean(Key.IsSignalFrame);
       return ID.ComputeHash();
     }
     static bool isEqual(const CIEKey &LHS,
                         const CIEKey &RHS) {
       return LHS.Personality == RHS.Personality &&
         LHS.PersonalityEncoding == RHS.PersonalityEncoding &&
-        LHS.LsdaEncoding == RHS.LsdaEncoding;
+        LHS.LsdaEncoding == RHS.LsdaEncoding &&
+        LHS.IsSignalFrame == RHS.IsSignalFrame;
     }
   };
 }
@@ -1382,11 +1389,12 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
   for (unsigned i = 0, n = FrameArray.size(); i < n; ++i) {
     const MCDwarfFrameInfo &Frame = FrameArray[i];
     CIEKey Key(Frame.Personality, Frame.PersonalityEncoding,
-               Frame.LsdaEncoding);
+               Frame.LsdaEncoding, Frame.IsSignalFrame);
     const MCSymbol *&CIEStart = IsEH ? CIEStarts[Key] : DummyDebugKey;
     if (!CIEStart)
       CIEStart = &Emitter.EmitCIE(Streamer, Frame.Personality,
                                   Frame.PersonalityEncoding, Frame.Lsda,
+                                  Frame.IsSignalFrame,
                                   Frame.LsdaEncoding);
 
     FDEEnd = Emitter.EmitFDE(Streamer, *CIEStart, Frame);

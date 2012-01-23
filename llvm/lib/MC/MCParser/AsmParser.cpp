@@ -306,6 +306,8 @@ public:
       &GenericAsmParser::ParseDirectiveCFIRestore>(".cfi_restore");
     AddDirectiveHandler<
       &GenericAsmParser::ParseDirectiveCFIEscape>(".cfi_escape");
+    AddDirectiveHandler<
+      &GenericAsmParser::ParseDirectiveCFISignalFrame>(".cfi_signal_frame");
 
     // Macro directives.
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveMacrosOnOff>(
@@ -341,6 +343,7 @@ public:
   bool ParseDirectiveCFISameValue(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIRestore(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIEscape(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveCFISignalFrame(StringRef, SMLoc DirectiveLoc);
 
   bool ParseDirectiveMacrosOnOff(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveMacro(StringRef, SMLoc DirectiveLoc);
@@ -2852,6 +2855,19 @@ bool GenericAsmParser::ParseDirectiveCFIEscape(StringRef IDVal,
   }
 
   getStreamer().EmitCFIEscape(Values);
+  return false;
+}
+
+/// ParseDirectiveCFISignalFrame
+/// ::= .cfi_signal_frame
+bool GenericAsmParser::ParseDirectiveCFISignalFrame(StringRef Directive,
+                                                    SMLoc DirectiveLoc) {
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return Error(getLexer().getLoc(),
+                 "unexpected token in '" + Directive + "' directive");
+
+  getStreamer().EmitCFISignalFrame();
+
   return false;
 }
 

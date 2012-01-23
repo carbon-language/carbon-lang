@@ -439,6 +439,12 @@ void MCStreamer::EmitCFIEscape(StringRef Values) {
   CurFrame->Instructions.push_back(Instruction);
 }
 
+void MCStreamer::EmitCFISignalFrame() {
+  EnsureValidFrame();
+  MCDwarfFrameInfo *CurFrame = getCurrentFrameInfo();
+  CurFrame->IsSignalFrame = true;
+}
+
 void MCStreamer::setCurrentW64UnwindInfo(MCWin64EHUnwindInfo *Frame) {
   W64UnwindInfos.push_back(Frame);
   CurrentW64UnwindInfo = W64UnwindInfos.back();

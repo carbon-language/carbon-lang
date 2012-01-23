@@ -555,6 +555,7 @@ namespace llvm {
     virtual void EmitCFIRelOffset(int64_t Register, int64_t Offset);
     virtual void EmitCFIAdjustCfaOffset(int64_t Adjustment);
     virtual void EmitCFIEscape(StringRef Values);
+    virtual void EmitCFISignalFrame();
 
     virtual void EmitWin64EHStartProc(const MCSymbol *Symbol);
     virtual void EmitWin64EHEndProc();
