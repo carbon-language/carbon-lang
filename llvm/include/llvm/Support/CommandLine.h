@@ -163,12 +163,14 @@ class Option {
   virtual void anchor();
 
   int NumOccurrences;     // The number of times specified
-  enum NumOccurrencesFlag Occurrences : 3;
+  // Occurrences, HiddenFlag, and Formatting are all enum types but to avoid
+  // with signed enums in bitfields in MSVC we'll store them as unsigned
+  unsigned Occurrences : 3; // enum NumOccurrencesFlag
   // not using the enum type for 'Value' because zero is an implementation
   // detail representing the non-value
   unsigned Value : 2;
-  enum OptionHidden HiddenFlag : 2;
-  enum FormattingFlags Formatting : 2;
+  unsigned HiddenFlag : 2; // enum OptionHidden
+  unsigned Formatting : 2; // enum FormattingFlags
   unsigned Misc : 3;
   unsigned Position;      // Position of last occurrence of the option
   unsigned AdditionalVals;// Greater than 0 for multi-valued option.
@@ -179,17 +181,17 @@ public:
   const char *ValueStr;   // String describing what the value of this option is
 
   inline enum NumOccurrencesFlag getNumOccurrencesFlag() const {
-    return Occurrences;
+    return (enum NumOccurrencesFlag)Occurrences;
   }
   inline enum ValueExpected getValueExpectedFlag() const {
-    return Value ? static_cast<enum ValueExpected>(Value)
+    return Value ? ((enum ValueExpected)Value)
               : getValueExpectedFlagDefault();
   }
   inline enum OptionHidden getOptionHiddenFlag() const {
-    return HiddenFlag;
+    return (enum OptionHidden)HiddenFlag;
   }
   inline enum FormattingFlags getFormattingFlag() const {
-    return Formatting;
+    return (enum FormattingFlags)Formatting;
   }
   inline unsigned getMiscFlags() const {
     return Misc;
