@@ -133,41 +133,6 @@
 @ CHECK: vst2.32 {d5[0], d7[0]}, [r4, :64], r7 @ encoding: [0x57,0x59,0x84,0xf4]
 
 
-	vld3.8 {d16[1], d17[1], d18[1]}, [r1]
-	vld3.16 {d6[1], d7[1], d8[1]}, [r2]
-	vld3.32 {d1[1], d2[1], d3[1]}, [r3]
-	vld3.u16 {d27[2], d29[2], d31[2]}, [r4]
-	vld3.i32 {d6[0], d8[0], d10[0]}, [r5]
-
-	vld3.i8 {d12[3], d13[3], d14[3]}, [r6], r1
-	vld3.i16 {d11[2], d12[2], d13[2]}, [r7], r2
-	vld3.u32 {d2[1], d3[1], d4[1]}, [r8], r3
-	vld3.u16 {d14[2], d16[2], d18[2]}, [r9], r4
-	vld3.i32 {d16[0], d18[0], d20[0]}, [r10], r5
-
-	vld3.p8 {d6[6], d7[6], d8[6]}, [r8]!
-	vld3.16 {d9[2], d10[2], d11[2]}, [r7]!
-	vld3.f32 {d1[1], d2[1], d3[1]}, [r6]!
-	vld3.p16 {d20[2], d22[2], d24[2]}, [r5]!
-	vld3.32 {d5[0], d7[0], d9[0]}, [r4]!
-
-@ CHECK: vld3.8	{d16[1], d17[1], d17[1]}, [r1] @ encoding: [0x2f,0x02,0xe1,0xf4]
-@ CHECK: vld3.16 {d6[1], d7[1], d7[1]}, [r2] @ encoding: [0x4f,0x66,0xa2,0xf4]
-@ CHECK: vld3.32 {d1[1], d2[1], d2[1]}, [r3] @ encoding: [0x8f,0x1a,0xa3,0xf4]
-@ CHECK: vld3.16 {d27[2], d29[2], d29[2]}, [r4] @ encoding: [0xaf,0xb6,0xe4,0xf4]
-@ CHECK: vld3.32 {d6[0], d8[0], d8[0]}, [r5] @ encoding: [0x4f,0x6a,0xa5,0xf4]
-@ CHECK: vld3.8	{d12[3], d13[3], d13[3]}, [r6], r1 @ encoding: [0x61,0xc2,0xa6,0xf4]
-@ CHECK: vld3.16 {d11[2], d12[2], d12[2]}, [r7], r2 @ encoding: [0x82,0xb6,0xa7,0xf4]
-@ CHECK: vld3.32 {d2[1], d3[1], d3[1]}, [r8], r3 @ encoding: [0x83,0x2a,0xa8,0xf4]
-@ CHECK: vld3.16 {d14[2], d16[2], d16[2]}, [r9], r4 @ encoding: [0xa4,0xe6,0xa9,0xf4]
-@ CHECK: vld3.32 {d16[0], d18[0], d18[0]}, [r10], r5 @ encoding: [0x45,0x0a,0xea,0xf4]
-@ CHECK: vld3.8	{d6[6], d7[6], d7[6]}, [r8]! @ encoding: [0xcd,0x62,0xa8,0xf4]
-@ CHECK: vld3.16 {d9[2], d10[2], d10[2]}, [r7]! @ encoding: [0x8d,0x96,0xa7,0xf4]
-@ CHECK: vld3.32 {d1[1], d2[1], d2[1]}, [r6]! @ encoding: [0x8d,0x1a,0xa6,0xf4]
-@ CHECK: vld3.16 {d20[2], d21[2], d21[2]}, [r5]! @ encoding: [0xad,0x46,0xe5,0xf4]
-@ CHECK: vld3.32 {d5[0], d7[0], d7[0]}, [r4]! @ encoding: [0x4d,0x5a,0xa4,0xf4]
-
-
 @	vst4.8	{d16[1], d17[1], d18[1], d19[1]}, [r0, :32]
 @	vst4.16	{d16[1], d17[1], d18[1], d19[1]}, [r0]
 @	vst4.32	{d16[1], d17[1], d18[1], d19[1]}, [r0, :128]
