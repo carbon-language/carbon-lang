@@ -70,6 +70,14 @@ public:
     }
     return true;
   }
+
+  bool VisitTemplateSpecializationTypeLoc(TemplateSpecializationTypeLoc TL) {
+    if (const TemplateSpecializationType *T = TL.getTypePtr())
+      if (const TemplateDecl *D = T->getTemplateName().getAsTemplateDecl())
+        IndexCtx.handleReference(D, TL.getTemplateNameLoc(),
+                                 Parent, ParentDC);
+    return true;
+  }
 };
 
 } // anonymous namespace
