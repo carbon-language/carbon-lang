@@ -4273,14 +4273,14 @@ def STREXH: AIstrex<0b11, (outs GPR:$Rd), (ins GPR:$Rt, addr_offset_none:$addr),
                     NoItinerary, "strexh", "\t$Rd, $Rt, $addr", []>;
 def STREX : AIstrex<0b00, (outs GPR:$Rd), (ins GPR:$Rt, addr_offset_none:$addr),
                     NoItinerary, "strex", "\t$Rd, $Rt, $addr", []>;
-}
-
-let hasExtraSrcRegAllocReq = 1, Constraints = "@earlyclobber $Rd" in
+let hasExtraSrcRegAllocReq = 1 in
 def STREXD : AIstrex<0b01, (outs GPR:$Rd),
                     (ins GPR:$Rt, GPR:$Rt2, addr_offset_none:$addr),
                     NoItinerary, "strexd", "\t$Rd, $Rt, $Rt2, $addr", []> {
   let DecoderMethod = "DecodeDoubleRegStore";
 }
+}
+
 
 def CLREX : AXI<(outs), (ins), MiscFrm, NoItinerary, "clrex", []>,
             Requires<[IsARM, HasV7]>  {

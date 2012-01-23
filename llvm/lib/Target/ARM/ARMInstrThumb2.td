@@ -3065,9 +3065,7 @@ def t2STREX  : Thumb2I<(outs rGPR:$Rd), (ins rGPR:$Rt,
   let Inst{11-8}  = Rd;
   let Inst{7-0} = addr{7-0};
 }
-}
-
-let hasExtraSrcRegAllocReq = 1, Constraints = "@earlyclobber $Rd" in
+let hasExtraSrcRegAllocReq = 1 in
 def t2STREXD : T2I_strex<0b11, (outs rGPR:$Rd),
                          (ins rGPR:$Rt, rGPR:$Rt2, addr_offset_none:$addr),
                          AddrModeNone, 4, NoItinerary,
@@ -3075,6 +3073,7 @@ def t2STREXD : T2I_strex<0b11, (outs rGPR:$Rd),
                          {?, ?, ?, ?}> {
   bits<4> Rt2;
   let Inst{11-8} = Rt2;
+}
 }
 
 def t2CLREX : T2I<(outs), (ins), NoItinerary, "clrex", "", []>,
