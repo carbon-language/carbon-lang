@@ -5817,9 +5817,11 @@ static void DiagnoseNarrowingInInitList(Sema &S, InitializationSequence &Seq,
     // narrowing conversion even if the value is a constant and can be
     // represented exactly as an integer.
     S.Diag(PostInit->getLocStart(),
-           S.getLangOptions().CPlusPlus0x && !S.getLangOptions().MicrosoftExt
-           ? diag::err_init_list_type_narrowing
-           : diag::warn_init_list_type_narrowing)
+           S.getLangOptions().MicrosoftExt || !S.getLangOptions().CPlusPlus0x? 
+             diag::warn_init_list_type_narrowing
+           : S.isSFINAEContext()?
+             diag::err_init_list_type_narrowing_sfinae
+           : diag::err_init_list_type_narrowing)
       << PostInit->getSourceRange()
       << PreNarrowingType.getLocalUnqualifiedType()
       << EntityType.getLocalUnqualifiedType();
@@ -5828,9 +5830,11 @@ static void DiagnoseNarrowingInInitList(Sema &S, InitializationSequence &Seq,
   case NK_Constant_Narrowing:
     // A constant value was narrowed.
     S.Diag(PostInit->getLocStart(),
-           S.getLangOptions().CPlusPlus0x && !S.getLangOptions().MicrosoftExt
-           ? diag::err_init_list_constant_narrowing
-           : diag::warn_init_list_constant_narrowing)
+           S.getLangOptions().MicrosoftExt || !S.getLangOptions().CPlusPlus0x? 
+             diag::warn_init_list_constant_narrowing
+           : S.isSFINAEContext()?
+             diag::err_init_list_constant_narrowing_sfinae
+           : diag::err_init_list_constant_narrowing)
       << PostInit->getSourceRange()
       << ConstantValue.getAsString(S.getASTContext(), EntityType)
       << EntityType.getLocalUnqualifiedType();
@@ -5839,9 +5843,11 @@ static void DiagnoseNarrowingInInitList(Sema &S, InitializationSequence &Seq,
   case NK_Variable_Narrowing:
     // A variable's value may have been narrowed.
     S.Diag(PostInit->getLocStart(),
-           S.getLangOptions().CPlusPlus0x && !S.getLangOptions().MicrosoftExt
-           ? diag::err_init_list_variable_narrowing
-           : diag::warn_init_list_variable_narrowing)
+           S.getLangOptions().MicrosoftExt || !S.getLangOptions().CPlusPlus0x? 
+             diag::warn_init_list_variable_narrowing
+           : S.isSFINAEContext()?
+             diag::err_init_list_variable_narrowing_sfinae
+           : diag::err_init_list_variable_narrowing)
       << PostInit->getSourceRange()
       << PreNarrowingType.getLocalUnqualifiedType()
       << EntityType.getLocalUnqualifiedType();

@@ -193,3 +193,17 @@ void test_qualifiers(int i) {
   // Template arguments make it harder to avoid printing qualifiers:
   Agg<const unsigned char> c2 = {j};  // expected-error {{from type 'int' to 'const unsigned char' in}} expected-note {{override}}
 }
+
+// Test SFINAE checks.
+template<unsigned> struct Value { };
+
+template<typename T>
+int &check_narrowed(Value<sizeof((T){1.1})>);
+
+template<typename T>
+float &check_narrowed(...);
+
+void test_narrowed(Value<sizeof(int)> vi, Value<sizeof(double)> vd) {
+  int &ir = check_narrowed<double>(vd);
+  float &fr = check_narrowed<int>(vi);
+}
