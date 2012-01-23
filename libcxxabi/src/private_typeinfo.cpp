@@ -201,16 +201,17 @@ __pointer_to_member_type_info::display() const
 // can_catch
 
 // A handler is a match for an exception object of type E if
-//   * The handler is of type cv T or cv T& and E and T are the same type
-//     (ignoring the top-level cv-qualifiers), or
-//   * the handler is of type cv T or cv T& and T is an unambiguous public
-//     base class of E, or
-//   * the handler is of type cv1 T* cv2 and E is a pointer type that can be
-//     converted to the type of the handler by either or both of
-//     * a standard pointer conversion (4.10) not involving conversions to
-//       pointers to private or protected or ambiguous classes
-//     * a qualification conversion
-//   * the handler is a pointer or pointer to member type and E is std::nullptr_t.
+//   1. The handler is of type cv T or cv T& and E and T are the same type
+//      (ignoring the top-level cv-qualifiers), or
+//   2. the handler is of type cv T or cv T& and T is an unambiguous public
+//       base class of E, or
+//   3. the handler is of type cv1 T* cv2 and E is a pointer type that can be
+//      converted to the type of the handler by either or both of
+//      A. a standard pointer conversion (4.10) not involving conversions to
+//         pointers to private or protected or ambiguous classes
+//      B. a qualification conversion
+//   4. the handler is a pointer or pointer to member type and E is
+//      std::nullptr_t.
 
 // adjustedPtr:
 // 
@@ -233,6 +234,207 @@ __shim_type_info::can_catch(const __shim_type_info* thrown_type,
     return this == thrown_type;
 }
 
+// Handles bullet 1
+// TODO:  Let __shim_type_info handle it?
+bool
+__fundamental_type_info::can_catch(const __shim_type_info* thrown_type,
+                                   void*&) const
+{
+    return this == thrown_type;
+}
+
+bool
+__array_type_info::can_catch(const __shim_type_info* thrown_type,
+                             void*&) const
+{
+    // TODO:  Can this be called?
+    return false;
+}
+
+bool
+__function_type_info::can_catch(const __shim_type_info* thrown_type,
+                                void*&) const
+{
+    // TODO:  Can this be called?
+    return false;
+}
+
+// Handles bullet 1
+// TODO:  Let __shim_type_info handle it?
+bool
+__enum_type_info::can_catch(const __shim_type_info* thrown_type,
+                            void*&) const
+{
+    return this == thrown_type;
+}
+
+// Handles bullets 1 and 2
+bool
+__class_type_info::can_catch(const __shim_type_info* thrown_type,
+                             void*& adjustedPtr) const
+{
+    // bullet 1
+    if (this == thrown_type)
+        return true;
+    const __class_type_info* thrown_class_type =
+        dynamic_cast<const __class_type_info*>(thrown_type);
+    if (thrown_class_type == 0)
+        return false;
+    // bullet 2
+    __dynamic_cast_info info = {thrown_class_type, 0, this, -1, 0};
+    info.number_of_dst_type = 1;
+    thrown_class_type->has_unambiguous_public_base(&info, adjustedPtr, public_path);
+    if (info.path_dst_ptr_to_static_ptr == public_path)
+    {
+        adjustedPtr = const_cast<void*>(info.dst_ptr_leading_to_static_ptr);
+        return true;
+    }
+    return false;
+}
+
+void
+__class_type_info::process_found_base_class(__dynamic_cast_info* info,
+                                               void* adjustedPtr,
+                                               int path_below) const
+{
+    if (info->dst_ptr_leading_to_static_ptr == 0)
+    {
+        // First time here
+        info->dst_ptr_leading_to_static_ptr = adjustedPtr;
+        info->path_dst_ptr_to_static_ptr = path_below;
+        info->number_to_static_ptr = 1;
+    }
+    else if (info->dst_ptr_leading_to_static_ptr == adjustedPtr)
+    {
+        // We've been here before.  Update path to "most public"
+        if (info->path_dst_ptr_to_static_ptr == not_public_path)
+            info->path_dst_ptr_to_static_ptr = path_below;
+    }
+    else
+    {
+        // We've detected an ambiguous cast from (thrown_class_type, adjustedPtr)
+        //   to a static_type
+        info->number_to_static_ptr += 1;
+        info->path_dst_ptr_to_static_ptr = not_public_path;
+        info->search_done = true;
+    }
+}
+
+void
+__class_type_info::has_unambiguous_public_base(__dynamic_cast_info* info,
+                                               void* adjustedPtr,
+                                               int path_below) const
+{
+    if (this == info->static_type)
+        process_found_base_class(info, adjustedPtr, path_below);
+}
+
+void
+__si_class_type_info::has_unambiguous_public_base(__dynamic_cast_info* info,
+                                                  void* adjustedPtr,
+                                                  int path_below) const
+{
+    if (this == info->static_type)
+        process_found_base_class(info, adjustedPtr, path_below);
+    else
+        __base_type->has_unambiguous_public_base(info, adjustedPtr, path_below);
+}
+
+void
+__base_class_type_info::has_unambiguous_public_base(__dynamic_cast_info* info,
+                                                    void* adjustedPtr,
+                                                    int path_below) const
+{
+    ptrdiff_t offset_to_base = __offset_flags >> __offset_shift;
+    if (__offset_flags & __virtual_mask)
+    {
+        const char* vtable = *static_cast<const char*const*>(adjustedPtr);
+        offset_to_base = *reinterpret_cast<const ptrdiff_t*>(vtable + offset_to_base);
+    }
+    __base_type->has_unambiguous_public_base(info,
+                                             static_cast<char*>(adjustedPtr) + offset_to_base,
+                                             (__offset_flags & __public_mask) ?
+                                                 path_below :
+                                                 not_public_path);
+}
+
+void
+__vmi_class_type_info::has_unambiguous_public_base(__dynamic_cast_info* info,
+                                                   void* adjustedPtr,
+                                                   int path_below) const
+{
+    if (this == info->static_type)
+        process_found_base_class(info, adjustedPtr, path_below);
+    else
+    {
+        typedef const __base_class_type_info* Iter;
+        const Iter e = __base_info + __base_count;
+        Iter p = __base_info;
+        p->has_unambiguous_public_base(info, adjustedPtr, path_below);
+        if (++p < e)
+        {
+            do
+            {
+                p->has_unambiguous_public_base(info, adjustedPtr, path_below);
+                if (info->search_done)
+                    break;
+            } while (++p < e);
+        }
+    }
+}
+
+// Handles bullets 1 and 4
+// TODO:  Are we good to go here for __pointer_to_member_type_info?
+bool
+__pbase_type_info::can_catch(const __shim_type_info* thrown_type,
+                             void*&) const
+{
+    if (this == thrown_type)
+        return true;
+    return thrown_type == &typeid(std::nullptr_t);
+}
+
+// Handles bullets 1, 3 and 4
+bool
+__pointer_type_info::can_catch(const __shim_type_info* thrown_type,
+                               void*& adjustedPtr) const
+{
+    // Do the dereference adjustment
+    adjustedPtr = *static_cast<void**>(adjustedPtr);
+    // bullets 1 and 4
+    if (__pbase_type_info::can_catch(thrown_type, adjustedPtr))
+        return true;
+    // bullet 3
+    const __pointer_type_info* thrown_pointer_type =
+        dynamic_cast<const __pointer_type_info*>(thrown_type);
+    if (thrown_pointer_type == 0)
+        return false;
+    // bullet 3B
+    if (thrown_pointer_type->__flags & ~__flags)
+        return false;
+    if (__pointee == thrown_pointer_type->__pointee)
+        return true;
+    // bullet 3A
+    if (__pointee == &typeid(void))
+        return true;
+    const __class_type_info* catch_class_type =
+        dynamic_cast<const __class_type_info*>(__pointee);
+    if (catch_class_type == 0)
+        return false;
+    const __class_type_info* thrown_class_type =
+        dynamic_cast<const __class_type_info*>(thrown_pointer_type->__pointee);
+    if (thrown_class_type == 0)
+        return false;
+    __dynamic_cast_info info = {thrown_class_type, 0, catch_class_type, -1, 0};
+    info.number_of_dst_type = 1;
+    thrown_class_type->has_unambiguous_public_base(&info, adjustedPtr, public_path);
+    if (info.path_dst_ptr_to_static_ptr == public_path)
+    {
+        adjustedPtr = const_cast<void*>(info.dst_ptr_leading_to_static_ptr);
+        return true;
+    }
+    return false;
+}
 
 #pragma GCC visibility pop
 #pragma GCC visibility push(default)

@@ -33,6 +33,7 @@ class __fundamental_type_info
 {
 public:
     virtual ~__fundamental_type_info();
+    virtual bool can_catch(const __shim_type_info*, void*&) const;
     virtual void display() const;
 };
 
@@ -41,6 +42,7 @@ class __array_type_info
 {
 public:
     virtual ~__array_type_info();
+    virtual bool can_catch(const __shim_type_info*, void*&) const;
     virtual void display() const;
 };
 
@@ -49,6 +51,7 @@ class __function_type_info
 {
 public:
     virtual ~__function_type_info();
+    virtual bool can_catch(const __shim_type_info*, void*&) const;
     virtual void display() const;
 };
 
@@ -57,6 +60,7 @@ class __enum_type_info
 {
 public:
     virtual ~__enum_type_info();
+    virtual bool can_catch(const __shim_type_info*, void*&) const;
     virtual void display() const;
 };
 
@@ -127,8 +131,11 @@ public:
 
     void process_static_type_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
     void process_static_type_below_dst(__dynamic_cast_info*, const void*, int) const;
+    void process_found_base_class(__dynamic_cast_info*, void*, int) const;
     virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
     virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
+    virtual bool can_catch(const __shim_type_info*, void*&) const;
+    virtual void has_unambiguous_public_base(__dynamic_cast_info*, void*, int) const;
     virtual void display() const;
 };
 
@@ -143,6 +150,7 @@ public:
 
     virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
     virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
+    virtual void has_unambiguous_public_base(__dynamic_cast_info*, void*, int) const;
     virtual void display() const;
 };
 
@@ -161,6 +169,7 @@ public:
 
     void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
     void search_below_dst(__dynamic_cast_info*, const void*, int) const;
+    void has_unambiguous_public_base(__dynamic_cast_info*, void*, int) const;
     void display() const;
 };
 
@@ -185,6 +194,7 @@ public:
 
     virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
     virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
+    virtual void has_unambiguous_public_base(__dynamic_cast_info*, void*, int) const;
     virtual void display() const;
 };
 
@@ -205,6 +215,7 @@ public:
     };
 
     virtual ~__pbase_type_info();
+    virtual bool can_catch(const __shim_type_info*, void*&) const;
 };
 
 class __pointer_type_info
@@ -212,6 +223,7 @@ class __pointer_type_info
 {
 public:
     virtual ~__pointer_type_info();
+    virtual bool can_catch(const __shim_type_info*, void*&) const;
     virtual void display() const;
 };
 
