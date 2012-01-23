@@ -477,13 +477,6 @@ struct ConstantKeyData<ConstantExpr> {
   }
 };
 
-// ConstantAggregateZero does not take extra "value" argument...
-template<class ValType>
-struct ConstantCreator<ConstantAggregateZero, Type, ValType> {
-  static ConstantAggregateZero *create(Type *Ty, const ValType &V){
-    return new ConstantAggregateZero(Ty);
-  }
-};
 
 template<>
 struct ConstantKeyData<ConstantVector> {
@@ -494,14 +487,6 @@ struct ConstantKeyData<ConstantVector> {
     for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
       Elements.push_back(CP->getOperand(i));
     return Elements;
-  }
-};
-
-template<>
-struct ConstantKeyData<ConstantAggregateZero> {
-  typedef char ValType;
-  static ValType getValType(ConstantAggregateZero *C) {
-    return 0;
   }
 };
 

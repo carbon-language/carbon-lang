@@ -70,7 +70,7 @@ LLVMContextImpl::~LLVMContextImpl() {
   ArrayConstants.freeConstants();
   StructConstants.freeConstants();
   VectorConstants.freeConstants();
-  AggZeroConstants.freeConstants();
+  CAZConstants.clear();
   NullPtrConstants.freeConstants();
   UndefValueConstants.freeConstants();
   InlineAsms.freeConstants();

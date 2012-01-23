@@ -993,18 +993,33 @@ bool ConstantFP::isValueValidForType(Type *Ty, const APFloat& Val) {
 //===----------------------------------------------------------------------===//
 //                      Factory Function Implementation
 
-ConstantAggregateZero* ConstantAggregateZero::get(Type* Ty) {
+ConstantAggregateZero *ConstantAggregateZero::get(Type *Ty) {
   assert((Ty->isStructTy() || Ty->isArrayTy() || Ty->isVectorTy()) &&
          "Cannot create an aggregate zero of non-aggregate type!");
   
-  LLVMContextImpl *pImpl = Ty->getContext().pImpl;
-  return pImpl->AggZeroConstants.getOrCreate(Ty, 0);
+  OwningPtr<ConstantAggregateZero> &Entry =
+    Ty->getContext().pImpl->CAZConstants[Ty];
+  if (Entry == 0)
+    Entry.reset(new ConstantAggregateZero(Ty));
+  
+  return Entry.get();
 }
 
 /// destroyConstant - Remove the constant from the constant table...
 ///
 void ConstantAggregateZero::destroyConstant() {
-  getType()->getContext().pImpl->AggZeroConstants.remove(this);
+  // Drop ownership of the CAZ object before removing the entry so that it
+  // doesn't get double deleted.
+  LLVMContextImpl::CAZMapTy &CAZConstants = getContext().pImpl->CAZConstants;
+  LLVMContextImpl::CAZMapTy::iterator I = CAZConstants.find(getType());
+  assert(I != CAZConstants.end() && "CAZ object not in uniquing map");
+  I->second.take();
+  
+  // Actually remove the entry from the DenseMap now, which won't free the
+  // constant.
+  CAZConstants.erase(I);
+  
+  // Free the constant and any dangling references to it.
   destroyConstantImpl();
 }
 
