@@ -326,6 +326,7 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
   Options.UseSoftFloat = CodeGenOpts.SoftFloat;
   Options.StackAlignmentOverride = CodeGenOpts.StackAlignment;
   Options.RealignStack = CodeGenOpts.StackRealignment;
+  Options.DisableTailCalls = CodeGenOpts.DisableTailCalls;
 
   TargetMachine *TM = TheTarget->createTargetMachine(Triple, TargetOpts.CPU,
                                                      FeaturesStr, Options,

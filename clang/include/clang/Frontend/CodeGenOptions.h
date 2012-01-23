@@ -50,6 +50,7 @@ public:
                                   /// internal state before optimizations are
                                   /// done.
   unsigned DisableRedZone    : 1; /// Set when -mno-red-zone is enabled.
+  unsigned DisableTailCalls  : 1; /// Do not emit tail calls.
   unsigned EmitDeclMetadata  : 1; /// Emit special metadata indicating what
                                   /// Decl* various IR entities came from.  Only
                                   /// useful when running CodeGen as a
@@ -166,6 +167,7 @@ public:
     DisableFPElim = 0;
     DisableLLVMOpts = 0;
     DisableRedZone = 0;
+    DisableTailCalls = 0;
     EmitDeclMetadata = 0;
     EmitGcovArcs = 0;
     EmitGcovNotes = 0;
