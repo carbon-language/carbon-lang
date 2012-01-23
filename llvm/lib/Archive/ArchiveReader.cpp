@@ -572,7 +572,11 @@ Archive::findModulesDefiningSymbols(std::set<std::string>& symbols,
 
   SmallPtrSet<Module*, 16> Added;
   for (std::set<std::string>::iterator I=symbols.begin(),
-       E=symbols.end(); I != E; ++I) {
+         Next = I,
+         E=symbols.end(); I != E; I = Next) {
+    // Increment Next before we invalidate it.
+    ++Next;
+
     // See if this symbol exists
     Module* m = findModuleDefiningSymbol(*I,error);
     if (!m)
