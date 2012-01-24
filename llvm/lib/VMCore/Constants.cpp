@@ -599,6 +599,57 @@ bool ConstantFP::isExactlyValue(const APFloat &V) const {
 }
 
 //===----------------------------------------------------------------------===//
+//                   ConstantAggregateZero Implementation
+//===----------------------------------------------------------------------===//
+
+/// getSequentialElement - If this CAZ has array or vector type, return a zero
+/// with the right element type.
+Constant *ConstantAggregateZero::getSequentialElement() {
+  return Constant::getNullValue(
+                            cast<SequentialType>(getType())->getElementType());
+}
+
+/// getStructElement - If this CAZ has struct type, return a zero with the
+/// right element type for the specified element.
+Constant *ConstantAggregateZero::getStructElement(unsigned Elt) {
+  return Constant::getNullValue(
+                              cast<StructType>(getType())->getElementType(Elt));
+}
+
+/// getElementValue - Return a zero of the right value for the specified GEP
+/// index if we can, otherwise return null (e.g. if C is a ConstantExpr).
+Constant *ConstantAggregateZero::getElementValue(Constant *C) {
+  if (isa<SequentialType>(getType()))
+    return getSequentialElement();
+  return getStructElement(cast<ConstantInt>(C)->getZExtValue());
+}
+
+//===----------------------------------------------------------------------===//
+//                         UndefValue Implementation
+//===----------------------------------------------------------------------===//
+
+/// getSequentialElement - If this undef has array or vector type, return an
+/// undef with the right element type.
+UndefValue *UndefValue::getSequentialElement() {
+  return UndefValue::get(cast<SequentialType>(getType())->getElementType());
+}
+
+/// getStructElement - If this undef has struct type, return a zero with the
+/// right element type for the specified element.
+UndefValue *UndefValue::getStructElement(unsigned Elt) {
+  return UndefValue::get(cast<StructType>(getType())->getElementType(Elt));
+}
+
+/// getElementValue - Return an undef of the right value for the specified GEP
+/// index if we can, otherwise return null (e.g. if C is a ConstantExpr).
+UndefValue *UndefValue::getElementValue(Constant *C) {
+  if (isa<SequentialType>(getType()))
+    return getSequentialElement();
+  return getStructElement(cast<ConstantInt>(C)->getZExtValue());
+}
+
+
+//===----------------------------------------------------------------------===//
 //                            ConstantXXX Classes
 //===----------------------------------------------------------------------===//
 
@@ -990,6 +1041,7 @@ bool ConstantFP::isValueValidForType(Type *Ty, const APFloat& Val) {
   }
 }
 
+
 //===----------------------------------------------------------------------===//
 //                      Factory Function Implementation
 
@@ -1004,7 +1056,7 @@ ConstantAggregateZero *ConstantAggregateZero::get(Type *Ty) {
   return Entry;
 }
 
-/// destroyConstant - Remove the constant from the constant table...
+/// destroyConstant - Remove the constant from the constant table.
 ///
 void ConstantAggregateZero::destroyConstant() {
   getContext().pImpl->CAZConstants.erase(getType());
@@ -1924,9 +1976,11 @@ Type *ConstantDataSequential::getElementType() const {
   return getType()->getElementType();
 }
 
-/// isElementTypeConstantDataCompatible - Return true if this type is valid for
-/// a ConstantDataSequential.  This is i8/i16/i32/i64/float/double.
-static bool isElementTypeConstantDataCompatible(const Type *Ty) {
+/// isElementTypeCompatible - Return true if a ConstantDataSequential can be
+/// formed with a vector or array of the specified element type.
+/// ConstantDataArray only works with normal float and int types that are
+/// stored densely in memory, not with things like i42 or x86_f80.
+bool ConstantDataSequential::isElementTypeCompatible(const Type *Ty) {
   if (Ty->isFloatTy() || Ty->isDoubleTy()) return true;
   if (const IntegerType *IT = dyn_cast<IntegerType>(Ty)) {
     switch (IT->getBitWidth()) {
@@ -1960,13 +2014,13 @@ static bool isAllZeros(StringRef Arr) {
       return false;
   return true;
 }
+
 /// getImpl - This is the underlying implementation of all of the
 /// ConstantDataSequential::get methods.  They all thunk down to here, providing
 /// the correct element type.  We take the bytes in as an StringRef because
 /// we *want* an underlying "char*" to avoid TBAA type punning violations.
 Constant *ConstantDataSequential::getImpl(StringRef Elements, Type *Ty) {
-  assert(isElementTypeConstantDataCompatible(cast<SequentialType>(Ty)->
-                                             getElementType()));
+  assert(isElementTypeCompatible(cast<SequentialType>(Ty)->getElementType()));
   // If the elements are all zero, return a CAZ, which is more dense.
   if (isAllZeros(Elements))
     return ConstantAggregateZero::get(Ty);

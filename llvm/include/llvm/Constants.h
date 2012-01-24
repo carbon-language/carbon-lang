@@ -310,10 +310,22 @@ protected:
     return User::operator new(s, 0);
   }
 public:
-  static ConstantAggregateZero* get(Type *Ty);
+  static ConstantAggregateZero *get(Type *Ty);
   
   virtual void destroyConstant();
 
+  /// getSequentialElement - If this CAZ has array or vector type, return a zero
+  /// with the right element type.
+  Constant *getSequentialElement();
+
+  /// getStructElement - If this CAZ has struct type, return a zero with the
+  /// right element type for the specified element.
+  Constant *getStructElement(unsigned Elt);
+
+  /// getElementValue - Return a zero of the right value for the specified GEP
+  /// index.
+  Constant *getElementValue(Constant *C);
+  
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   ///
   static bool classof(const ConstantAggregateZero *) { return true; }
@@ -568,8 +580,12 @@ protected:
   }
 public:
   
-  virtual void destroyConstant();
-
+  /// isElementTypeCompatible - Return true if a ConstantDataSequential can be
+  /// formed with a vector or array of the specified element type.
+  /// ConstantDataArray only works with normal float and int types that are
+  /// stored densely in memory, not with things like i42 or x86_f80.
+  static bool isElementTypeCompatible(const Type *Ty);
+  
   /// getElementAsInteger - If this is a sequential container of integers (of
   /// any size), return the specified element in the low bits of a uint64_t.
   uint64_t getElementAsInteger(unsigned i) const;
@@ -601,7 +617,13 @@ public:
   /// getElementType - Return the element type of the array/vector.
   Type *getElementType() const;
 
+  /// getElementByteSize - Return the size (in bytes) of each element in the
+  /// array/vector.  The size of the elements is known to be a multiple of one
+  /// byte.
+  uint64_t getElementByteSize() const;
 
+  virtual void destroyConstant();
+  
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   ///
   static bool classof(const ConstantDataSequential *) { return true; }
@@ -610,7 +632,6 @@ public:
            V->getValueID() == ConstantDataVectorVal;
   }
 private:
-  uint64_t getElementByteSize() const;
   const char *getElementPointer(unsigned Elt) const;
 };
 
@@ -1074,6 +1095,18 @@ public:
   ///
   static UndefValue *get(Type *T);
 
+  /// getSequentialElement - If this Undef has array or vector type, return a
+  /// undef with the right element type.
+  UndefValue *getSequentialElement();
+  
+  /// getStructElement - If this undef has struct type, return a undef with the
+  /// right element type for the specified element.
+  UndefValue *getStructElement(unsigned Elt);
+  
+  /// getElementValue - Return an undef of the right value for the specified GEP
+  /// index.
+  UndefValue *getElementValue(Constant *C);
+  
   virtual void destroyConstant();
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
