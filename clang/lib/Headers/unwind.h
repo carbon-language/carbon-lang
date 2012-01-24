@@ -23,10 +23,9 @@
 
 /* See "Data Definitions for libgcc_s" in the Linux Standard Base.*/
 
-#if defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) && \
-    __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >=  1070
-/* Starting in OS X Lion the SDK includes a unwind.h. We should just use it. */
-#include_next <unwind.h>
+#if defined(__APPLE__) && __has_include_next(<unwind.h>)
+/* Darwin typically has its own unwind.h; use it. */
+#  include_next <unwind.h>
 #else
 
 #include <stdint.h>
