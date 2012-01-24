@@ -176,23 +176,40 @@ _foo:
 @ CHECK: vsri.64 q7, q7, #63            @ encoding: [0xde,0xe4,0x81,0xf3]
 
 
-	vsli.8   d16, d16, #7
-	vsli.16  d16, d16, #15
-	vsli.32  d16, d16, #31
-	vsli.64  d16, d16, #63
-	vsli.8   q8, q8, #7
-	vsli.16  q8, q8, #15
-	vsli.32  q8, q8, #31
-	vsli.64  q8, q8, #63
+	vsli.8   d16, d6, #7
+	vsli.16  d26, d18, #15
+	vsli.32  d11, d10, #31
+	vsli.64  d12, d19, #63
+	vsli.8   q1, q8, #7
+	vsli.16  q2, q7, #15
+	vsli.32  q3, q6, #31
+	vsli.64  q4, q5, #63
 
-@ CHECK: vsli.8   d16, d16, #7  @ encoding: [0x30,0x05,0xcf,0xf3]
-@ CHECK: vsli.16  d16, d16, #15 @ encoding: [0x30,0x05,0xdf,0xf3]
-@ CHECK: vsli.32  d16, d16, #31 @ encoding: [0x30,0x05,0xff,0xf3]
-@ CHECK: vsli.64  d16, d16, #63 @ encoding: [0xb0,0x05,0xff,0xf3]
-@ CHECK: vsli.8   q8, q8, #7    @ encoding: [0x70,0x05,0xcf,0xf3]
-@ CHECK: vsli.16  q8, q8, #15   @ encoding: [0x70,0x05,0xdf,0xf3]
-@ CHECK: vsli.32  q8, q8, #31   @ encoding: [0x70,0x05,0xff,0xf3]
-@ CHECK: vsli.64  q8, q8, #63   @ encoding: [0xf0,0x05,0xff,0xf3]
+	vsli.8   d16, #7
+	vsli.16  d15, #15
+	vsli.32  d14, #31
+	vsli.64  d13, #63
+	vsli.8   q4, #7
+	vsli.16  q5, #15
+	vsli.32  q6, #31
+	vsli.64  q7, #63
+
+@ CHECK: vsli.8	d16, d6, #7             @ encoding: [0x16,0x05,0xcf,0xf3]
+@ CHECK: vsli.16 d26, d18, #15          @ encoding: [0x32,0xa5,0xdf,0xf3]
+@ CHECK: vsli.32 d11, d10, #31          @ encoding: [0x1a,0xb5,0xbf,0xf3]
+@ CHECK: vsli.64 d12, d19, #63          @ encoding: [0xb3,0xc5,0xbf,0xf3]
+@ CHECK: vsli.8	q1, q8, #7              @ encoding: [0x70,0x25,0x8f,0xf3]
+@ CHECK: vsli.16 q2, q7, #15            @ encoding: [0x5e,0x45,0x9f,0xf3]
+@ CHECK: vsli.32 q3, q6, #31            @ encoding: [0x5c,0x65,0xbf,0xf3]
+@ CHECK: vsli.64 q4, q5, #63            @ encoding: [0xda,0x85,0xbf,0xf3]
+@ CHECK: vsli.8	d16, d16, #7            @ encoding: [0x30,0x05,0xcf,0xf3]
+@ CHECK: vsli.16 d15, d15, #15          @ encoding: [0x1f,0xf5,0x9f,0xf3]
+@ CHECK: vsli.32 d14, d14, #31          @ encoding: [0x1e,0xe5,0xbf,0xf3]
+@ CHECK: vsli.64 d13, d13, #63          @ encoding: [0x9d,0xd5,0xbf,0xf3]
+@ CHECK: vsli.8	q4, q4, #7              @ encoding: [0x58,0x85,0x8f,0xf3]
+@ CHECK: vsli.16 q5, q5, #15            @ encoding: [0x5a,0xa5,0x9f,0xf3]
+@ CHECK: vsli.32 q6, q6, #31            @ encoding: [0x5c,0xc5,0xbf,0xf3]
+@ CHECK: vsli.64 q7, q7, #63            @ encoding: [0xde,0xe5,0xbf,0xf3]
 
 
 @ CHECK: vshll.s8	q8, d16, #7  @ encoding: [0x30,0x0a,0xcf,0xf2]
