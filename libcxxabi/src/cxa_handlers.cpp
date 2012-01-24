@@ -14,7 +14,10 @@
 #include <new>
 #include <exception>
 #include "abort_message.h"
+#include "cxxabi.h"
 #include "cxa_handlers.hpp"
+#include "cxa_exception.hpp"
+#include "private_typeinfo.h"
 
 namespace std
 {
@@ -23,23 +26,39 @@ static const char* cause = "uncaught";
 
 static void default_terminate_handler()
 {
-    std::exception_ptr cp = std::current_exception();
-    if (cp)
+    // If there might be an uncaught exception
+    using namespace __cxxabiv1;
+    __cxa_eh_globals* globals = __cxa_get_globals_fast();
+    if (globals)
     {
-        try
+        __cxa_exception* exception_header = globals->caughtExceptions;
+        // If there is an uncaught exception
+        if (exception_header)
         {
-            rethrow_exception(cp);
-        }
-        catch (const std::exception& e)
-        {
-            abort_message("terminating with %s exception: %s\n", cause, e.what());
-        }
-        catch (...)
-        {
-            abort_message("terminating with %s exception\n", cause);
+            _Unwind_Exception* unwind_exception =
+                reinterpret_cast<_Unwind_Exception*>(exception_header + 1) - 1;
+            void* thrown_object =
+                unwind_exception->exception_class == kOurDependentExceptionClass ?
+                    ((__cxa_dependent_exception*)exception_header)->primaryException :
+                    exception_header + 1;
+            const __shim_type_info* thrown_type =
+                static_cast<const __shim_type_info*>(exception_header->exceptionType);
+            const __shim_type_info* catch_type =
+                static_cast<const __shim_type_info*>(&typeid(exception));
+            // If the uncaught exception can be caught with std::exception&
+            if (catch_type->can_catch(thrown_type, thrown_object))
+            {
+                // Include the what() message from the exception
+                const exception* e = static_cast<const exception*>(thrown_object);
+                abort_message("terminating with %s exception: %s", cause, e->what());
+            }
+            else
+                // Else just note that we're terminating with an exception
+                abort_message("terminating with %s exception", cause);
         }
     }
-    abort_message("terminating\n");
+    // Else just note that we're terminating
+    abort_message("terminating");
 }
 
 static void default_unexpected_handler()
@@ -66,8 +85,7 @@ get_unexpected() _NOEXCEPT
     return __sync_fetch_and_add(&__unexpected_handler, (unexpected_handler)0);
 }
 
-_LIBCPP_HIDDEN
-_ATTRIBUTE(noreturn)
+__attribute__((visibility("hidden"), noreturn))
 void
 __unexpected(unexpected_handler func)
 {
@@ -76,7 +94,7 @@ __unexpected(unexpected_handler func)
     abort_message("unexpected_handler unexpectedly returned");
 }
 
-_ATTRIBUTE(noreturn)
+__attribute__((noreturn))
 void
 unexpected()
 {
@@ -97,8 +115,7 @@ get_terminate() _NOEXCEPT
     return __sync_fetch_and_add(&__terminate_handler, (terminate_handler)0);
 }
 
-_LIBCPP_HIDDEN
-_ATTRIBUTE(noreturn)
+__attribute__((visibility("hidden"), noreturn))
 void
 __terminate(terminate_handler func) _NOEXCEPT
 {
@@ -119,7 +136,7 @@ __terminate(terminate_handler func) _NOEXCEPT
 #endif  // #if __has_feature(cxx_exceptions)
 }
 
-_ATTRIBUTE(noreturn)
+__attribute__((noreturn))
 void
 terminate() _NOEXCEPT
 {

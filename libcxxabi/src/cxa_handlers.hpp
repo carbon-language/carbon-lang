@@ -15,13 +15,11 @@
 namespace std
 {
 
-_LIBCPP_HIDDEN
-_ATTRIBUTE(noreturn)
+__attribute__((visibility("hidden"), noreturn))
 void
 __unexpected(unexpected_handler func);
 
-_LIBCPP_HIDDEN
-_ATTRIBUTE(noreturn)
+__attribute__((visibility("hidden"), noreturn))
 void
 __terminate(terminate_handler func) _NOEXCEPT;
 
