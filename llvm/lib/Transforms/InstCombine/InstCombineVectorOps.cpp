@@ -16,7 +16,8 @@
 using namespace llvm;
 
 /// CheapToScalarize - Return true if the value is cheaper to scalarize than it
-/// is to leave as a vector operation.
+/// is to leave as a vector operation.  isConstant indicates whether we're
+/// extracting one known element.  If false we're extracting a variable index.
 static bool CheapToScalarize(Value *V, bool isConstant) {
   if (isa<ConstantAggregateZero>(V))
     return true;
@@ -335,10 +336,14 @@ static Value *CollectShuffleElements(Value *V, std::vector<Constant*> &Mask,
   if (isa<UndefValue>(V)) {
     Mask.assign(NumElts, UndefValue::get(Type::getInt32Ty(V->getContext())));
     return V;
-  } else if (isa<ConstantAggregateZero>(V)) {
+  }
+  
+  if (isa<ConstantAggregateZero>(V)) {
     Mask.assign(NumElts, ConstantInt::get(Type::getInt32Ty(V->getContext()),0));
     return V;
-  } else if (InsertElementInst *IEI = dyn_cast<InsertElementInst>(V)) {
+  }
+  
+  if (InsertElementInst *IEI = dyn_cast<InsertElementInst>(V)) {
     // If this is an insert of an extract from some other vector, include it.
     Value *VecOp    = IEI->getOperand(0);
     Value *ScalarOp = IEI->getOperand(1);
