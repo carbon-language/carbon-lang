@@ -750,13 +750,12 @@ void CFGBuilder::addImplicitDtorsForDestructor(const CXXDestructorDecl *DD) {
   // Before virtual bases destroy direct base objects.
   for (CXXRecordDecl::base_class_const_iterator BI = RD->bases_begin(),
       BE = RD->bases_end(); BI != BE; ++BI) {
-    if (!BI->isVirtual()) {
-      const CXXRecordDecl *CD = BI->getType()->getAsCXXRecordDecl();
-      if (!CD->hasTrivialDestructor()) {
-        autoCreateBlock();
-        appendBaseDtor(Block, BI);
-      }
-    }
+    if (!BI->isVirtual())
+      if (const CXXRecordDecl *CD = BI->getType()->getAsCXXRecordDecl())
+        if (!CD->hasTrivialDestructor()) {
+          autoCreateBlock();
+          appendBaseDtor(Block, BI);
+        }
   }
 
   // First destroy member objects.
