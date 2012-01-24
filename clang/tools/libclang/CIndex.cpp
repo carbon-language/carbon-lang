@@ -3922,9 +3922,7 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
       if (ObjCProtocolDecl *Def = Prot->getDefinition())
         return MakeCXCursor(Def, tu);
 
-      CXCursor C = MakeCXCursor(Prot, tu);
-      C.kind = CXCursor_ObjCProtocolDecl; // override "Unexposed".
-      return C;
+      return MakeCXCursor(Prot, tu);
     }
 
     case CXCursor_ObjCClassRef: {
@@ -3932,9 +3930,7 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
       if (ObjCInterfaceDecl *Def = Class->getDefinition())
         return MakeCXCursor(Def, tu);
 
-      CXCursor C = MakeCXCursor(Class, tu);
-      C.kind = CXCursor_ObjCInterfaceDecl; // override "Unexposed".
-      return C;
+      return MakeCXCursor(Class, tu);
     }
 
     case CXCursor_TypeRef:

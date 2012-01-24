@@ -2782,13 +2782,7 @@ CXCursorKind clang::getCursorKindForDecl(Decl *D) {
     case Decl::ObjCCategoryImpl:   return CXCursor_ObjCCategoryImplDecl;
     case Decl::ObjCImplementation: return CXCursor_ObjCImplementationDecl;
 
-    case Decl::ObjCInterface:
-      if (cast<ObjCInterfaceDecl>(D)->isThisDeclarationADefinition())
-        return CXCursor_ObjCInterfaceDecl;
-      
-      // Forward declarations are not directly exposed.
-      return CXCursor_UnexposedDecl;
-
+    case Decl::ObjCInterface:      return CXCursor_ObjCInterfaceDecl;
     case Decl::ObjCIvar:           return CXCursor_ObjCIvarDecl; 
     case Decl::ObjCMethod:
       return cast<ObjCMethodDecl>(D)->isInstanceMethod()
@@ -2798,12 +2792,7 @@ CXCursorKind clang::getCursorKindForDecl(Decl *D) {
     case Decl::CXXDestructor:      return CXCursor_Destructor;
     case Decl::CXXConversion:      return CXCursor_ConversionFunction;
     case Decl::ObjCProperty:       return CXCursor_ObjCPropertyDecl;
-    case Decl::ObjCProtocol:       
-      if (cast<ObjCProtocolDecl>(D)->isThisDeclarationADefinition())
-        return CXCursor_ObjCProtocolDecl;
-      
-      return CXCursor_UnexposedDecl;
-      
+    case Decl::ObjCProtocol:       return CXCursor_ObjCProtocolDecl;
     case Decl::ParmVar:            return CXCursor_ParmDecl;
     case Decl::Typedef:            return CXCursor_TypedefDecl;
     case Decl::TypeAlias:          return CXCursor_TypeAliasDecl;
