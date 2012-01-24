@@ -15,7 +15,7 @@ Type:
 for help.
 """
 
-import os, sys
+import os, sys, datetime
 import re
 
 # If True, redo with no '-t' option for the test driver.
@@ -36,13 +36,17 @@ arch_specs = set()
 
 def usage():
     print"""\
-Usage: redo.py [-n] session_dir
+Usage: redo.py [-n] [session_dir]
 where options:
 -n : when running the tests, do not turn on trace mode, i.e, no '-t' option
      is passed to the test driver (this will run the tests faster)
 
 and session_dir specifies the session directory which contains previously
-recorded session infos for all the test cases which either failed or errored."""
+recorded session infos for all the test cases which either failed or errored.
+
+If sessin_dir is left unspecified, this script uses the heuristic to find the
+possible session directories with names starting with %Y-%m-%d- (for example,
+2012-01-23-) and employs the one with the latest timestamp."""
     sys.exit(0)
 
 def where(session_dir, test_dir):
@@ -97,7 +101,12 @@ def main():
     global no_trace
     global redo_specs
 
-    if len(sys.argv) < 2 or len(sys.argv) > 3:
+    test_dir = sys.path[0]
+    if not test_dir.endswith('test'):
+        print "This script expects to reside in lldb's test directory."
+        sys.exit(-1)
+
+    if len(sys.argv) > 3:
         usage()
 
     index = 1
@@ -116,19 +125,28 @@ def main():
             no_trace = True
             index += 1
 
-    session_dir = sys.argv[index]
-
-    test_dir = sys.path[0]
-    if not test_dir.endswith('test'):
-        print "This script expects to reside in lldb's test directory."
-        sys.exit(-1)
+    if index < len(sys.argv):
+        # Get the specified session directory.
+        session_dir = sys.argv[index]
+    else:
+        # Use heuristic to find the latest session directory.
+        name = datetime.datetime.now().strftime("%Y-%m-%d-")
+        dirs = [d for d in os.listdir(os.getcwd()) if d.startswith(name)]
+        session_dir = max(dirs, key=os.path.getmtime)
+        if not session_dir or not os.path.exists(session_dir):
+            print "No default session directory found, please specify it explicitly."
+            usage()
 
     #print "The test directory:", test_dir
     session_dir_path = where(session_dir, test_dir)
 
-    #print "Session dir path:", session_dir_path
+    print "Using session dir path:", session_dir_path
     os.chdir(test_dir)
     os.path.walk(session_dir_path, redo, ".log")
+
+    if not redo_specs:
+        print "No failures/errors recorded within the session directory, please specify a different session directory."
+        usage()
 
     filters = " -f ".join(redo_specs)
     compilers = (" -C %s" % "^".join(comp_specs)) if comp_specs else None
