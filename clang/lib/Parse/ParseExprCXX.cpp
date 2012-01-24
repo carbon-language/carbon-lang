@@ -1418,8 +1418,11 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
   case tok::kw_bool:
     DS.SetTypeSpecType(DeclSpec::TST_bool, Loc, PrevSpec, DiagID);
     break;
+  case tok::annot_decltype:
+  case tok::kw_decltype:
+    DS.SetRangeEnd(ParseDecltypeSpecifier(DS));
+    return DS.Finish(Diags, PP);
 
-    // FIXME: C++0x decltype support.
   // GNU typeof support.
   case tok::kw_typeof:
     ParseTypeofSpecifier(DS);

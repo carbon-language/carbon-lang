@@ -914,6 +914,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     }
     // Fall through
       
+  case tok::annot_decltype:
   case tok::kw_char:
   case tok::kw_wchar_t:
   case tok::kw_char16_t:

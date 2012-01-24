@@ -1009,6 +1009,7 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
   case tok::kw_float:
   case tok::kw_double:
   case tok::kw_void:
+  case tok::annot_decltype:
     if (NextToken().is(tok::l_paren))
       return TPResult::Ambiguous();
 
@@ -1037,10 +1038,6 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
 
     return TPResult::True();
   }
-
-  // C++0x decltype support.
-  case tok::annot_decltype:
-    return TPResult::True();
 
   // C++0x type traits support
   case tok::kw___underlying_type:
