@@ -258,7 +258,7 @@ void __cxa_vec_dtor(
         size_t idx = element_count;
         st_cxa_cleanup cleanup ( array_address, idx, element_size, destructor );        
         {
-            st_terminate exception_guard (std::uncaught_exception ());
+            st_terminate exception_guard (__cxa_uncaught_exception ());
             ptr +=  element_count * element_size;   // one past the last element
 
             while ( idx-- > 0 ) {
