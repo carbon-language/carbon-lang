@@ -2324,12 +2324,14 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     // Nothing to do.
     break;
 
-  case ICK_Lvalue_To_Rvalue:
+  case ICK_Lvalue_To_Rvalue: {
     assert(From->getObjectKind() != OK_ObjCProperty);
     FromType = FromType.getUnqualifiedType();
-    From = ImplicitCastExpr::Create(Context, FromType, CK_LValueToRValue,
-                                    From, 0, VK_RValue);
+    ExprResult FromRes = DefaultLvalueConversion(From);
+    assert(!FromRes.isInvalid() && "Can't perform deduced conversion?!");
+    From = FromRes.take();
     break;
+  }
 
   case ICK_Array_To_Pointer:
     FromType = Context.getArrayDecayedType(FromType);
