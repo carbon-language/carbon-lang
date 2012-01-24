@@ -295,6 +295,6 @@ int test18() {
   case A: return 0;
   case B: return 1;
   case 7: return 1; // expected-warning {{case value not in enumerated type}}
-  default: return 2; // expected-warning {{default is unreachable as all enumeration values are accounted for}}
+  default: return 2; // expected-warning {{default label in switch which covers all enumeration values}}
   }
 }

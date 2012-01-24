@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -Wno-switch-redundant-default %s
+// RUN: %clang_cc1 -verify -Wno-covered-switch-default %s
 
 enum E {
     one,
