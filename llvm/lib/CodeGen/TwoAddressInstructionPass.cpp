@@ -1728,8 +1728,10 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
         CanCoalesce = false;
         break;
       }
-      // Keep track of one of the uses.
-      SomeMI = UseMI;
+      // Keep track of one of the uses.  Preferably the first one which has a
+      // <def,undef> flag.
+      if (!SomeMI || UseMI->getOperand(0).isUndef())
+        SomeMI = UseMI;
     }
     if (!CanCoalesce)
       continue;
@@ -1738,7 +1740,9 @@ TwoAddressInstructionPass::CoalesceExtSubRegs(SmallVector<unsigned,4> &Srcs,
     MachineInstr *CopyMI = BuildMI(*SomeMI->getParent(), SomeMI,
                                    SomeMI->getDebugLoc(),
                                    TII->get(TargetOpcode::COPY))
-      .addReg(DstReg, RegState::Define, NewDstSubIdx)
+      .addReg(DstReg, RegState::Define |
+                      getUndefRegState(SomeMI->getOperand(0).isUndef()),
+              NewDstSubIdx)
       .addReg(SrcReg, 0, NewSrcSubIdx);
 
     // Remove all the old extract instructions.
