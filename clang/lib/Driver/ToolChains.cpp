@@ -1099,10 +1099,10 @@ bool Generic_GCC::GCCVersion::operator<(const GCCVersion &RHS) const {
 /// Once constructed, a GCCInstallation is esentially immutable.
 Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(const Driver &D)
   : IsValid(false),
-    // FIXME: GccTriple is using the target triple as both the target and host
+    // FIXME: GCCTriple is using the target triple as both the target and host
     // triple here. It also shouldn't be using the string representation, and
     // should instead be using the Triple object.
-    GccTriple(D.TargetTriple.str()) {
+    GCCTriple(D.TargetTriple.str()) {
   // FIXME: Using CXX_INCLUDE_ROOT is here is a bit of a hack, but
   // avoids adding yet another option to configure/cmake.
   // It would probably be cleaner to break it in two variables
@@ -1121,17 +1121,17 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(const Driver &D)
     llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the version
     llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the c++
     llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the include
-    GccInstallPath = CxxIncludeRoot.str();
-    GccInstallPath.append("/lib/gcc/");
-    GccInstallPath.append(CXX_INCLUDE_ARCH);
-    GccInstallPath.append("/");
-    GccInstallPath.append(Version);
-    GccParentLibPath = GccInstallPath + "/../../..";
+    GCCInstallPath = CxxIncludeRoot.str();
+    GCCInstallPath.append("/lib/gcc/");
+    GCCInstallPath.append(CXX_INCLUDE_ARCH);
+    GCCInstallPath.append("/");
+    GCCInstallPath.append(Version);
+    GCCParentLibPath = GCCInstallPath + "/../../..";
     IsValid = true;
     return;
   }
 
-  llvm::Triple::ArchType HostArch = llvm::Triple(GccTriple).getArch();
+  llvm::Triple::ArchType HostArch = llvm::Triple(GCCTriple).getArch();
   // The library directories which may contain GCC installations.
   SmallVector<StringRef, 4> CandidateLibDirs;
   // The compatible GCC triples for this particular architecture.
@@ -1284,7 +1284,7 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
         continue;
 
       // Some versions of SUSE and Fedora on ppc64 put 32-bit libs
-      // in what would normally be GccInstallPath and put the 64-bit
+      // in what would normally be GCCInstallPath and put the 64-bit
       // libs in a subdirectory named 64. We need the 64-bit libs
       // for linking.
       bool UseSlash64 = false;
@@ -1296,13 +1296,13 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
         continue;
 
       Version = CandidateVersion;
-      GccTriple = CandidateTriple.str();
+      GCCTriple = CandidateTriple.str();
       // FIXME: We hack together the directory name here instead of
       // using LI to ensure stable path separators across Windows and
       // Linux.
-      GccInstallPath = LibDir + Suffixes[i] + "/" + VersionText.str();
-      GccParentLibPath = GccInstallPath + InstallSuffixes[i];
-      if (UseSlash64) GccInstallPath = GccInstallPath + "/64";
+      GCCInstallPath = LibDir + Suffixes[i] + "/" + VersionText.str();
+      GCCParentLibPath = GCCInstallPath + InstallSuffixes[i];
+      if (UseSlash64) GCCInstallPath = GCCInstallPath + "/64";
       IsValid = true;
     }
   }
@@ -1983,9 +1983,9 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   // Add the multilib suffixed paths where they are available.
   if (GCCInstallation.isValid()) {
     const std::string &LibPath = GCCInstallation.getParentLibPath();
-    const std::string &GccTriple = GCCInstallation.getTriple();
+    const std::string &GCCTriple = GCCInstallation.getTriple();
     addPathIfExists(GCCInstallation.getInstallPath() + Suffix, Paths);
-    addPathIfExists(LibPath + "/../" + GccTriple + "/lib/../" + Multilib,
+    addPathIfExists(LibPath + "/../" + GCCTriple + "/lib/../" + Multilib,
                     Paths);
     addPathIfExists(LibPath + "/" + MultiarchTriple, Paths);
     addPathIfExists(LibPath + "/../" + Multilib, Paths);
@@ -2004,10 +2004,10 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   // Add the non-multilib suffixed paths (if potentially different).
   if (GCCInstallation.isValid()) {
     const std::string &LibPath = GCCInstallation.getParentLibPath();
-    const std::string &GccTriple = GCCInstallation.getTriple();
+    const std::string &GCCTriple = GCCInstallation.getTriple();
     if (!Suffix.empty())
       addPathIfExists(GCCInstallation.getInstallPath(), Paths);
-    addPathIfExists(LibPath + "/../" + GccTriple + "/lib", Paths);
+    addPathIfExists(LibPath + "/../" + GCCTriple + "/lib", Paths);
     addPathIfExists(LibPath, Paths);
   }
   addPathIfExists(SysRoot + "/lib", Paths);

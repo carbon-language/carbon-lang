@@ -69,11 +69,11 @@ protected:
   class GCCInstallationDetector {
 
     bool IsValid;
-    std::string GccTriple;
+    std::string GCCTriple;
 
     // FIXME: These might be better as path objects.
-    std::string GccInstallPath;
-    std::string GccParentLibPath;
+    std::string GCCInstallPath;
+    std::string GCCParentLibPath;
 
     GCCVersion Version;
 
@@ -84,13 +84,13 @@ protected:
     bool isValid() const { return IsValid; }
 
     /// \brief Get the GCC triple for the detected install.
-    StringRef getTriple() const { return GccTriple; }
+    StringRef getTriple() const { return GCCTriple; }
 
     /// \brief Get the detected GCC installation path.
-    StringRef getInstallPath() const { return GccInstallPath; }
+    StringRef getInstallPath() const { return GCCInstallPath; }
 
     /// \brief Get the detected GCC parent lib path.
-    StringRef getParentLibPath() const { return GccParentLibPath; }
+    StringRef getParentLibPath() const { return GCCParentLibPath; }
 
     /// \brief Get the detected GCC version string.
     StringRef getVersion() const { return Version.Text; }
