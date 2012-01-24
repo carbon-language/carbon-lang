@@ -2299,7 +2299,10 @@ MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
       Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, LocVT, Arg);
       break;
     case CCValAssign::AExt:
-      Arg = DAG.getNode(ISD::ANY_EXTEND, dl, LocVT, Arg);
+      if (ValVT == MVT::i32)
+        Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, LocVT, Arg);
+      else
+        Arg = DAG.getNode(ISD::ANY_EXTEND, dl, LocVT, Arg);
       break;
     }
 
