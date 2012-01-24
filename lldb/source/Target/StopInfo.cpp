@@ -534,7 +534,7 @@ public:
                 {
                     Debugger &debugger = context.exe_ctx.GetTargetRef().GetDebugger();
                     StreamSP error_sp = debugger.GetAsyncErrorStream ();
-                    error_sp->Printf ("Stopped due to an error evaluating condition of breakpoint ");
+                    error_sp->Printf ("Stopped due to an error evaluating condition of watchpoint ");
                     wp_sp->GetDescription (error_sp.get(), eDescriptionLevelBrief);
                     error_sp->Printf (": \"%s\"", 
                                       wp_sp->GetConditionText());
