@@ -33,17 +33,18 @@ def ls(debugger, command, result, dict):
     
     for arg in args:
         if options.verbose:
-            print commands.getoutput('/bin/ls "%s"' % arg)
+            result.PutCString(commands.getoutput('/bin/ls "%s"' % arg))
         else:
-            print commands.getoutput('/bin/ls -lAF "%s"' % arg)
+            result.PutCString(commands.getoutput('/bin/ls -lAF "%s"' % arg))
 
 if __name__ == '__main__':
     # This script is being run from the command line, create a debugger in case we are
     # going to use any debugger functions in our function.
     lldb.debugger = lldb.SBDebugger.Create()
     ls (sys.argv)
-elif lldb.debugger:
-    # This script is being run from LLDB in the emabedded command interpreter
+
+def __lldb_init_module (debugger, dict):
+    # This initializer is being run from LLDB in the embedded command interpreter
     # Add any commands contained in this module to LLDB
-    lldb.debugger.HandleCommand('command script add -f cmdtemplate.ls ls')
+    debugger.HandleCommand('command script add -f cmdtemplate.ls ls')
     print '"ls" command installed, type "ls --help" for detailed help'

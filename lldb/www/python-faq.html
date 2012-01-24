@@ -19,8 +19,13 @@
 				<h1 class ="postheader">Introduction</h1>
 				<div class="postcontent">
 
-                    <p>The entire LLDB API is available through a script bridging interface in Python. Python can be used
-                    as an embedded script interpreter, or it can be used directly from python at the command line.</p>
+                    <p>The entire LLDB API is available as Python functions through a script bridging interface. 
+                    This means the LLDB API's can be used directly from python either interactively or to build python apps that
+                    provide debugger features.  </p>
+                    <p>Additionally, Python can be used as a programmatic interface within the 
+                    lldb command interpreter (we refer to this for brevity as the embedded interpreter).  Of course,
+                    in this context it has full access to the LLDB API - with some additional conveniences we will 
+                    call out in the FAQ.</p>
 
 				</div>
 				<div class="postfooter"></div>
@@ -29,8 +34,8 @@
 				<h1 class ="postheader">Embedded Python Interpreter</h1>
 				<div class="postcontent">
 
-                    <p>The embedded python interpreter can be accessed in a variety of way from within LLDB. The
-                    easiest way is to type <b>script</b> command prompt:</p>
+                    <p>The embedded python interpreter can be accessed in a variety of ways from within LLDB. The
+                    easiest way is to use the lldb command <b>script</b> with no arguments at the lldb command prompt:</p>
 <code><pre><tt>(lldb) <strong>script</strong>
 Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
 >>> 2+3
@@ -40,9 +45,14 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
 >>> 
 </tt></pre></code>
 
-                    <p>This drops you into the embedded python interpreter. There are a some convenience variables
-                        that are set for you in the <b>lldb</b> python module that refer to the current program
-                        and debugger state:</p>
+                    <p>This drops you into the embedded python interpreter. When running under the <b>script</b> command, 
+                       lldb sets some convenience variables that give you quick access to the currently selected entities that characterize
+                       the program and debugger state.  In each case, if there is no currently selected entity of the appropriate
+                       type, the variable's <b>IsValid</b> method will return false.  
+                    <p>Note also, these variables hold the values
+                       of the selected objects on entry to the embedded interpreter.  They do not update as you use the LLDB
+                       API's to change, for example, the currently selected stack frame or thread.</p>
+                       These are all global variables contained in the <b>lldb</b> python namespace :</p>
                     <table class="stats" width="620" cellspacing="0">
                     <tr>
                         <td class="hed" width="20%">Variable</td>
@@ -58,9 +68,10 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
                             <b>lldb.SBDebugger</b>
                         </td>
                         <td class="content">
-                            A module global variable containing the current debugger object.
-                            The type is a <b>lldb.SBDebugger</b> object and it contains a reference to the debegger
-                            object that owns the command interpreter and all targets in your debug session.
+                            Contains the debugger object whose <b>script</b> command was invoked.
+                            The <b>lldb.SBDebugger</b> object owns the command interpreter 
+                            and all the targets in your debug session.  There will always be a 
+                            Debugger in the embedded interpreter.
                         </td>
                     </tr>
                     <tr>
@@ -71,10 +82,10 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
                             <b>lldb.SBTarget</b>
                         </td>
                         <td class="content">
-                            A module global variable containing the currently selected target. 
-                            The type is a <b>lldb.SBTarget</b> object and the object will only be valid if there is a current target.
-                            The <b>target select &lt;target-index&gt;</b> commmand can be used to change the 
-                            currently selected target.
+                            Contains the currently selected target - for instance the one made with the
+                            <b>file</b> or selected by the <b>target select &lt;target-index&gt;</b> command.
+                            The <b>lldb.SBTarget</b> manages one running process, and all the executable
+                            and debug files for the process.
                         </td>
                     </tr>
                     <tr>
@@ -85,9 +96,9 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
                             <b>lldb.SBProcess</b>
                         </td>
                         <td class="content">
-                            A module global variable containing the current process.
-                            The type is a <b>lldb.SBProcess</b> object and the object will only be 
-                            valid if there is a current target and that target has a process.
+                            Contains the process of the currently selected target.
+                            The <b>lldb.SBProcess</b> object manages the threads and allows access to
+                            memory for the process.
                         </td>
                     </tr>
                     <tr>
@@ -98,12 +109,12 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
                             <b>lldb.SBThread</b>
                         </td>
                         <td class="content">
-                            A module global variable containing the current thread.
-                            The type is a <b>lldb.SBThread</b> object and the object will only be valid if 
-                            the process has threads, and if the process has a thread selected. 
+                            Contains the currently selected thread.
+                            The <b>lldb.SBThread</b> object manages the stack frames in that thread.
                             A thread is always selected in the command interpreter when a target stops.
                             The <b>thread select &lt;thread-index&gt;</b> commmand can be used to change the 
-                            currently selected thread.
+                            currently selected thread.  So as long as you have a stopped process, there will be
+                            some selected thread.
                         </td>
                     </tr>
                     <tr>
@@ -114,18 +125,20 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
                             <b>lldb.SBFrame</b>
                         </td>
                         <td class="content">
-                            A module global variable containing the current stack frame.
-                            The type is a <b>lldb.SBFrame</b> object and the object will only be valid if 
-                            the thread is stopped and has a frame selected.
+                            Contains the currently selected stack frame.
+                            The <b>lldb.SBFrame</b> object manage the stack locals and the register set for
+                            that stack.
                             A stack frame is always selected in the command interpreter when a target stops.
                             The <b>frame select &lt;frame-index&gt;</b> commmand can be used to change the 
-                            currently selected thread.
+                            currently selected frame.  So as long as you have a stopped process, there will
+                            be some selected frame.
                         </td>
                     </tr>
                     </table>
 
-                    <p>One in the embedded interpreter, these objects can be used. Almost all of the <b>lldb.SB</b> objects
-                        are able to briefly describe themselves by printing them:
+                    <p>Once in the embedded interpreter, these objects can be used. To get started, note that almost 
+                       all of the <b>lldb</b> Python objects are able to briefly describe themselves when you pass them 
+                       to the Python <b>print</b> function:
 <code><pre><tt>(lldb) <b>script</b>
 Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
 >>> <strong>print lldb.debugger</strong>
@@ -148,13 +161,13 @@ frame #0: 0x0000000100000bb6 a.out main + 54 at main.c:16
 			<h1 class ="postheader">Running a Python script when a breakpoint gets hit</h1>
 			<div class="postcontent">
 
-                <p>A python script can be run when a breakpoint gets hit. Adding python
+                <p>One very powerful use of the lldb Python API is to have a python script run when a breakpoint gets hit. Adding python
                     scripts to breakpoints provides a way to create complex breakpoint
                     conditions and also allows for smart logging and data gathering.</p>
-                <p>A python function gets run when a breakpoint, and this function has
-                    two arguments:</p>
+                <p>When your process hits a breakpoint to which you have attached some python code, the code is executed as the
+                   body of a function which takes two arguments:</p>
                     <p>
-<code><pre><tt>def breakpoint_function(<b>frame</b>, <b>bp_loc</b>):
+<code><pre><tt>def breakpoint_function_wrapper(<b>frame</b>, <b>bp_loc</b>):
   <font color=green># Your code goes here</font>
 </tt></pre></code>
                     <p><table class="stats" width="620" cellspacing="0">
@@ -173,7 +186,7 @@ frame #0: 0x0000000100000bb6 a.out main + 54 at main.c:16
                         </td>
                         <td class="content">
                             The current stack frame where the breakpoint got hit.
-                            The type is a <b>lldb.SBFrame</b> object and the object will always be valid.
+                            The object will always be valid.
                             This <b>frame</b> argument might <i>not</i> match the currently selected stack frame found in the <b>lldb</b> module global variable <b>lldb.frame</b>.
                         </td>
                     </tr>
@@ -191,25 +204,34 @@ frame #0: 0x0000000100000bb6 a.out main + 54 at main.c:16
                         </td>
                     </tr>
                     </table>
-            <p>Now we are ready to create a python function and attach it to a breakpoint. The following example will wllow you to 
-                create an order file for a shared library. We do this by setting a regular exprsssion breakpoint
-                at every function in a shared library. The regular expression we will use is '.' which will match
-                any function that has at least any character in the function name. 
+             <p>An example will show how simple it is to write some python code and attach it to a breakpoint. 
+                The following example will allow you to track the order in which the functions in a given shared library 
+                are first executed during one run of your program.  This is a simple method to gather an order file which
+                can be used to optimize function placement within a binary for execution locality.</p>
+             <p>We do this by setting a regular expression breakpoint
+                that will match every function in the shared library. The regular expression '.' will match
+                any string that has at least one character in it, so we will use that. 
                 This will result in one <b>lldb.SBBreakpoint</b> object
-                that contains many <b>lldb.SBBreakpointLocation</b> objects. As the breakpoint continually gets
-                hit, we use the hit count on the main <b>lldb.SBBreakpoint</b> to tell us the breakpoint hit
-                number, and we disable the location (not the main breakpoint) on the <b>lldb.SBBreakpointLocation</b>
-                object. Then we log some info and continue the process.
+                that contains an <b>lldb.SBBreakpointLocation</b> object for each function. As the breakpoint gets
+                hit, we use a counter to track the order in which the function at this particular breakpoint location got hit.
+                Since our code is passed the location that was hit, we can get the name of the function from the location,
+                disable the location so we won't count this function again; then log some info and continue the process.</p>
+             <p>Note we also have to initialize our counter, which we do with the simple one-line version of the <b>script</b>
+                command.
+             <p>Here is the code:
+
 <code><pre><tt>(lldb) <strong>breakpoint set --func-regex=. --shlib=libfoo.dylib</strong>
 Breakpoint created: 1: regex = '.', module = libfoo.dylib, locations = 223
+(lldb) <strong>script counter = 0</strong>
 (lldb) <strong>breakpoint command add --script-type python 1</strong>
 Enter your Python command(s). Type 'DONE' to end.
-> <font color=green># Get the hit count of the main breakpoint</font>
-> <strong>hit_count = bp_loc.GetBreakpoint().GetHitCount()</strong>
+> <font color=green># Increment our counter.  Since we are in a function, this must be a global python variable</font>
+> <strong>global counter</strong> 
+> <strong>counter += 1</strong>
 > <font color=green># Get the name of the function</font>
 > <strong>name = frame.GetFunctionName()</strong>
 > <font color=green># Print the order and the function name</font>
-> <strong>print '[%i] %s' % (hit_count, name)</strong>
+> <strong>print '[%i] %s' % (counter, name)</strong>
 > <font color=green># Disable the current breakpoint location so it doesn't get hit again</font>
 > <strong>bp_loc.SetEnabled(False)</strong>
 > <font color=green># How continue the process</font>
@@ -225,13 +247,10 @@ Enter your Python command(s). Type 'DONE' to end.
 			<h1 class ="postheader">Create a new LLDB command using a python function</h1>
 			<div class="postcontent">
 
-                <p>Python functions can be used to create new commands that the LLDB command interpreter
-                    doesn't have. This provides a very flexible and easy way to extend LLDB to meet your
+                <p>Python functions can be used to create new LLDB command interpreter commands, which will work
+                   like all the natively defined lldb commands. This provides a very flexible and easy way to extend LLDB to meet your
                     debugging requirements. </p>
-                <p>A python function that implements a new LDB command has four arguments:</p>
-                    <p>
-                        def Symbolicate(debugger, command, result, dict):
-                            SymbolicateCrashLog (command.split())
+                <p>To write a python function that implements a new LDB command define the function to take four arguments as follows:</p>
                         
         <code><pre><tt>def command_function(<b>debugger</b>, <b>command</b>, <b>result</b>, <b>dict</b>):
           <font color=green># Your code goes here</font>
@@ -277,7 +296,8 @@ Enter your Python command(s). Type 'DONE' to end.
             <td class="content">
                 A return object where you can indicate the success or failure of your command. You can also
                 provide information for the command result by printing data into it. You can also just print
-                data as you normally would in a python script and the outout will show up.
+                data as you normally would in a python script and the output will show up; this is useful for
+                logging, but the real output for your command should go in the result object.
             </td>
         </tr>
         <tr>
@@ -293,8 +313,19 @@ Enter your Python command(s). Type 'DONE' to end.
             </td>
         </tr>
         </table>
+        <p>One other handy convenience when defining lldb command-line commands is the command
+          <b>command script import</b> which will import a module specified by file path - so you
+          don't have to change your PYTHONPATH for temporary scripts.  It also has another convenience
+          that if your new script module has a function of the form:</p>
+
+        <code><pre><tt>def __lldb_module_init(<b>debugger</b>, <b>dict</b>):
+          <font color=green># Command Initialization code goes here</font>
+          </tt></pre></code>
+
+        <p>where <b>debugger</b> and <b>dict</b> are as above, that function will get run when the module is loaded
+           allowing you to add whatever commands you want into the current debugger.</p>
         <p>Now we can create a module called <b>ls.py</b> that will implement a function that
-            can be used by LLDB's python command code:</p>
+           can be used by LLDB's python command code:</p>
         
 <code><pre><tt><font color=green>#!/usr/bin/python</font>
 
@@ -304,18 +335,16 @@ import optparse
 import shlex
 
 def ls(debugger, command, result, dict):
-    print commands.getoutput('/bin/ls %s' % command)
+    result.PutCString(commands.getoutput('/bin/ls %s' % command))
 
-<font color=green># Any code that isn't in a function in python gets run when the module is loaded</font>
-if lldb.debugger:
-    <font color=green># This script is being run from LLDB in the emabedded command interpreter
-    # lets register the 'ls' command with the command interpreter automatically!</font>
-    lldb.debugger.HandleCommand('command script add -f ls.ls ls')
+<font color=green># And the initialization code to add your commands </font>
+def __lldb_module_init(debugger, dict):
+    debugger.HandleCommand('command script add -f ls.ls ls')
     print 'The "ls" python command has been installed and is ready for use.'
 </tt></pre></code>
         <p>Now we can load the module into LLDB and use it</p>
 <code><pre><tt>% lldb
-(lldb) <strong>script import ls</strong>
+(lldb) <strong>command script import ls</strong>
 The "ls" python command has been installed and is ready for use.
 (lldb) <strong>ls -l /tmp/</strong>
 total 365848
@@ -333,17 +362,23 @@ total 365848
                 <p>LLDB has all of its core code build into a shared library which gets
                     used by the <b>lldb</b> command line application. On Mac OS X this
                     shared library is a framework: <b>LLDB.framework</b> and on other
-                    unix variants the program is a shared library <b>lldb.so</b>. The
-                    <b>LLDB.framework</b> contains the <b>lldb.py</b> module and you will
+                    unix variants the program is a shared library: <b>lldb.so</b>. LLDB also
+                    provides an lldb.py module that contains the bindings from LLDB into Python.
+                    To use the 
+                    <b>LLDB.framework</b> to create your own stand-alone python programs, you will
                     need to tell python where to look in order to find this module. This
-                    is done by setting the <b>PYTHONPATH</b> environment variable contain
-                    a path to the directory that contains the <b>lldb.py</b> python module:
+                    is done by setting the <b>PYTHONPATH</b> environment variable, adding
+                    a path to the directory that contains the <b>lldb.py</b> python module.  On 
+                    Mac OS X, this is contained inside the LLDB.framework, so you would do:
                     
                     <p>For csh and tcsh:</p>
                     <p><code>% <b>setenv PYTHONPATH /Developer/Library/PrivateFrameworks/LLDB.framework/Resources/Python</b></code></p>
                     <p>For sh and bash:
                     <p><code>% <b>export PYTHONPATH=/Developer/Library/PrivateFrameworks/LLDB.framework/Resources/Python</b></code></p>
                     
+                    <p> Alternately, you can append the LLDB Python directory to the <b>sys.path</b> list directly in
+                    your Python code before importing the lldb module.</p>
+
                     <p>
                         Now your python scripts are ready to import the lldb module. Below is a
                         python script that will launch a program from the current working directory
@@ -362,7 +397,8 @@ exe = "./a.out"
 debugger = lldb.SBDebugger.Create()
 
 <font color=green># When we step or continue, don't return from the function until the process 
-# stops. We do this by setting the async mode to false.</font>
+# stops. Otherwise we would have to handle the process events ourselves which, while doable is
+#a little tricky.  We do this by setting the async mode to false.</font>
 debugger.SetAsync (False)
 
 <font color=green># Create a target from a file and arch</font>
