@@ -17,3 +17,10 @@ entry:
   ret i64 %conv
 }
 
+define i64 @i64_float(float %f) nounwind readnone {
+entry:
+; CHECK: trunc.l.s 
+  %conv = fptosi float %f to i64
+  ret i64 %conv
+}
+

@@ -337,6 +337,7 @@ let Predicates = [IsFP64bit] in {
             (CVT_D64_L (DMTC1 CPU64Regs:$src))>;
 
   def : Pat<(i32 (fp_to_sint FGR64:$src)), (MFC1 (TRUNC_W_D64 FGR64:$src))>;
+  def : Pat<(i64 (fp_to_sint FGR32:$src)), (DMFC1 (TRUNC_L_S FGR32:$src))>;    
   def : Pat<(i64 (fp_to_sint FGR64:$src)), (DMFC1 (TRUNC_L_D64 FGR64:$src))>;
 
   def : Pat<(f32 (fround FGR64:$src)), (CVT_S_D64 FGR64:$src)>;
