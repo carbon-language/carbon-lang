@@ -31,17 +31,17 @@ namespace llvm {
   class DIEAbbrevData {
     /// Attribute - Dwarf attribute code.
     ///
-    unsigned Attribute;
+    uint16_t Attribute;
 
     /// Form - Dwarf form code.
     ///
-    unsigned Form;
+    uint16_t Form;
   public:
-    DIEAbbrevData(unsigned A, unsigned F) : Attribute(A), Form(F) {}
+    DIEAbbrevData(uint16_t A, uint16_t F) : Attribute(A), Form(F) {}
 
     // Accessors.
-    unsigned getAttribute() const { return Attribute; }
-    unsigned getForm()      const { return Form; }
+    uint16_t getAttribute() const { return Attribute; }
+    uint16_t getForm()      const { return Form; }
 
     /// Profile - Used to gather unique data for the abbreviation folding set.
     ///
@@ -54,41 +54,41 @@ namespace llvm {
   class DIEAbbrev : public FoldingSetNode {
     /// Tag - Dwarf tag code.
     ///
-    unsigned Tag;
+    uint16_t Tag;
+
+    /// ChildrenFlag - Dwarf children flag.
+    ///
+    uint16_t ChildrenFlag;
 
     /// Unique number for node.
     ///
     unsigned Number;
-
-    /// ChildrenFlag - Dwarf children flag.
-    ///
-    unsigned ChildrenFlag;
 
     /// Data - Raw data bytes for abbreviation.
     ///
     SmallVector<DIEAbbrevData, 8> Data;
 
   public:
-    DIEAbbrev(unsigned T, unsigned C) : Tag(T), ChildrenFlag(C), Data() {}
+    DIEAbbrev(uint16_t T, uint16_t C) : Tag(T), ChildrenFlag(C), Data() {}
 
     // Accessors.
-    unsigned getTag() const { return Tag; }
+    uint16_t getTag() const { return Tag; }
     unsigned getNumber() const { return Number; }
-    unsigned getChildrenFlag() const { return ChildrenFlag; }
+    uint16_t getChildrenFlag() const { return ChildrenFlag; }
     const SmallVector<DIEAbbrevData, 8> &getData() const { return Data; }
-    void setTag(unsigned T) { Tag = T; }
-    void setChildrenFlag(unsigned CF) { ChildrenFlag = CF; }
+    void setTag(uint16_t T) { Tag = T; }
+    void setChildrenFlag(uint16_t CF) { ChildrenFlag = CF; }
     void setNumber(unsigned N) { Number = N; }
 
     /// AddAttribute - Adds another set of attribute information to the
     /// abbreviation.
-    void AddAttribute(unsigned Attribute, unsigned Form) {
+    void AddAttribute(uint16_t Attribute, uint16_t Form) {
       Data.push_back(DIEAbbrevData(Attribute, Form));
     }
 
     /// AddFirstAttribute - Adds a set of attribute information to the front
     /// of the abbreviation.
-    void AddFirstAttribute(unsigned Attribute, unsigned Form) {
+    void AddFirstAttribute(uint16_t Attribute, uint16_t Form) {
       Data.insert(Data.begin(), DIEAbbrevData(Attribute, Form));
     }
 
@@ -113,10 +113,6 @@ namespace llvm {
 
   class DIE {
   protected:
-    /// Abbrev - Buffer for constructing abbreviation.
-    ///
-    DIEAbbrev Abbrev;
-
     /// Offset - Offset in debug info section.
     ///
     unsigned Offset;
@@ -124,6 +120,10 @@ namespace llvm {
     /// Size - Size of instance + children.
     ///
     unsigned Size;
+
+    /// Abbrev - Buffer for constructing abbreviation.
+    ///
+    DIEAbbrev Abbrev;
 
     /// Children DIEs.
     ///
@@ -139,8 +139,8 @@ namespace llvm {
     mutable unsigned IndentCount;
   public:
     explicit DIE(unsigned Tag)
-      : Abbrev(Tag, dwarf::DW_CHILDREN_no), Offset(0),
-        Size(0), Parent(0), IndentCount(0) {}
+      : Offset(0), Size(0), Abbrev(Tag, dwarf::DW_CHILDREN_no), Parent(0),
+        IndentCount(0) {}
     virtual ~DIE();
 
     // Accessors.
