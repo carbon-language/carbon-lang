@@ -65,15 +65,18 @@ class AnalysisDiagnostic:
         filename = self.report.run.getSourceName(self.report.files[loc['file']])
         line = loc['line']
         column = loc['col']
+        category = self.data['category']
+        description = self.data['description']
 
         # FIXME: Get a report number based on this key, to 'distinguish'
         # reports, or something.
         
-        return '%s:%d:%d' % (filename, line, column)
+        return '%s:%d:%d, %s: %s' % (filename, line, column, category, 
+                                   description)
 
     def getReportData(self):
         if self.htmlReport is None:
-            return "This diagnostic does not have any report data."
+            return " "
 
         return open(os.path.join(self.report.run.path,
                                  self.htmlReport), "rb").read() 
