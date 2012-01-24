@@ -102,6 +102,11 @@ public:
   /// Information about the host which can be overridden by the user.
   std::string HostBits, HostMachine, HostSystem, HostRelease;
 
+  /// \brief Target triple.
+  /// Represents which platforms this driver will target at each stage of the
+  /// compilation.
+  llvm::Triple TargetTriple;
+
   /// The file to log CC_PRINT_OPTIONS output to, if enabled.
   const char *CCPrintOptionsFilename;
 
@@ -381,7 +386,7 @@ public:
 
   /// GetHostInfo - Construct a new host info object for the given
   /// host triple.
-  const HostInfo *GetHostInfo(const char *HostTriple) const;
+  const HostInfo *GetHostInfo(const llvm::Triple &Triple) const;
 
   /// ShouldUseClangCompilar - Should the clang compiler be used to
   /// handle this action.
