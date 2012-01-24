@@ -756,6 +756,11 @@ LIBBUILTIN(objc_sync_exit, "iG", "f", "objc/objc-sync.h", OBJC_LANG)
 
 BUILTIN(__builtin_objc_memmove_collectable, "v*v*vC*z", "nF")
 
+// void NSLog(NSString *fmt, ...)
+LIBBUILTIN(NSLog, "vG.", "fp:0:", "Foundation/NSObjCRuntime.h", OBJC_LANG)
+// void NSLogv(NSString *fmt, va_list args)
+LIBBUILTIN(NSLogv, "vGa", "fP:0:", "Foundation/NSObjCRuntime.h", OBJC_LANG)
+
 // Builtin math library functions
 LIBBUILTIN(pow, "ddd", "fe", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(powl, "LdLdLd", "fe", "math.h", ALL_LANGUAGES)
