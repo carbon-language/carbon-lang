@@ -102,10 +102,10 @@ static const uint64_t kOurDependentExceptionClass = 0x434C4E47432B2B01; // CLNGC
 #endif
     };
 
-    extern "C" __cxa_eh_globals * __cxa_get_globals      () throw();
-    extern "C" __cxa_eh_globals * __cxa_get_globals_fast () throw();
+    extern "C" __cxa_eh_globals * __cxa_get_globals      () noexcept;
+    extern "C" __cxa_eh_globals * __cxa_get_globals_fast () noexcept;
 
-    extern "C" void * __cxa_allocate_dependent_exception () throw();
-    extern "C" void __cxa_free_dependent_exception (void * dependent_exception) throw();
+    extern "C" void * __cxa_allocate_dependent_exception () noexcept;
+    extern "C" void __cxa_free_dependent_exception (void * dependent_exception) noexcept;
 
 }

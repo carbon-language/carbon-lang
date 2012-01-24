@@ -18,15 +18,15 @@
 namespace __cxxabiv1 {
 
 namespace {
-    __cxa_eh_globals * __globals () throw () {
+    __cxa_eh_globals * __globals () noexcept {
         static thread_local __cxa_eh_globals eh_globals;
         return &eh_globals;
         }
     }
 
 extern "C" {
-    __cxa_eh_globals * __cxa_get_globals      () throw() { return __globals (); }
-    __cxa_eh_globals * __cxa_get_globals_fast () throw() { return __globals (); }
+    __cxa_eh_globals * __cxa_get_globals      () noexcept { return __globals (); }
+    __cxa_eh_globals * __cxa_get_globals_fast () noexcept { return __globals (); }
     }
 }
 
@@ -44,13 +44,13 @@ namespace __cxxabiv1 {
 namespace {
     pthread_key_t  key_;
 
-    void destruct_ (void *p) throw () {
+    void destruct_ (void *p) noexcept {
         std::free ( p );
         if ( 0 != ::pthread_setspecific ( key_, NULL ) ) 
             abort_message("cannot zero out thread value for __cxa_get_globals()");
         }
 
-    int construct_ () throw () {
+    int construct_ () noexcept {
         if ( 0 != pthread_key_create ( &key_, destruct_ ) )
             abort_message("cannot create pthread key for __cxa_get_globals()");
         return 0;
@@ -58,7 +58,7 @@ namespace {
 }   
 
 extern "C" {
-    __cxa_eh_globals * __cxa_get_globals () throw () {
+    __cxa_eh_globals * __cxa_get_globals () noexcept {
 
     //  Try to get the globals for this thread
         __cxa_eh_globals* retVal = __cxa_get_globals_fast ();
@@ -75,7 +75,7 @@ extern "C" {
         return retVal;
         }
 
-    __cxa_eh_globals * __cxa_get_globals_fast () throw () {
+    __cxa_eh_globals * __cxa_get_globals_fast () noexcept {
     //  First time through, create the key.
         static int init = construct_();
         return static_cast<__cxa_eh_globals*>(::pthread_getspecific(key_));

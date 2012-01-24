@@ -39,7 +39,7 @@ namespace __cxxabiv1 {
 static
 inline
 __cxa_exception*
-cxa_exception_from_thrown_object(void* thrown_object) throw()
+cxa_exception_from_thrown_object(void* thrown_object) noexcept
 {
     return static_cast<__cxa_exception*>(thrown_object) - 1;
 }
@@ -49,7 +49,7 @@ cxa_exception_from_thrown_object(void* thrown_object) throw()
 static
 inline
 void*
-thrown_object_from_cxa_exception(__cxa_exception* exception_header) throw()
+thrown_object_from_cxa_exception(__cxa_exception* exception_header) noexcept
 {
     return static_cast<void*>(exception_header + 1);
 }
@@ -60,7 +60,7 @@ thrown_object_from_cxa_exception(__cxa_exception* exception_header) throw()
 static
 inline
 __cxa_exception*
-cxa_exception_from_exception_unwind_exception(_Unwind_Exception* unwind_exception) throw()
+cxa_exception_from_exception_unwind_exception(_Unwind_Exception* unwind_exception) noexcept
 {
     return cxa_exception_from_thrown_object(unwind_exception + 1 );
 }
@@ -68,50 +68,50 @@ cxa_exception_from_exception_unwind_exception(_Unwind_Exception* unwind_exceptio
 static
 inline
 size_t
-cxa_exception_size_from_exception_thrown_size(size_t size) throw()
+cxa_exception_size_from_exception_thrown_size(size_t size) noexcept
 {
     return size + sizeof (__cxa_exception);
 }
 
-static void setExceptionClass(_Unwind_Exception* unwind_exception) throw() {
+static void setExceptionClass(_Unwind_Exception* unwind_exception) noexcept {
     unwind_exception->exception_class = kOurExceptionClass;
 }
 
-static void setDependentExceptionClass(_Unwind_Exception* unwind_exception) throw() {
+static void setDependentExceptionClass(_Unwind_Exception* unwind_exception) noexcept {
     unwind_exception->exception_class = kOurDependentExceptionClass;
 }
 
 //  Is it one of ours?
-static bool isOurExceptionClass(_Unwind_Exception* unwind_exception) throw() {
+static bool isOurExceptionClass(_Unwind_Exception* unwind_exception) noexcept {
     return(unwind_exception->exception_class == kOurExceptionClass)||
                (unwind_exception->exception_class == kOurDependentExceptionClass);
 }
 
-static bool isDependentException(_Unwind_Exception* unwind_exception) throw() {
+static bool isDependentException(_Unwind_Exception* unwind_exception) noexcept {
     return (unwind_exception->exception_class & 0xFF) == 0x01;
 }
 
 //  This does not need to be atomic
-static inline int incrementHandlerCount(__cxa_exception *exception) throw() {
+static inline int incrementHandlerCount(__cxa_exception *exception) noexcept {
     return ++exception->handlerCount;
 }
 
 //  This does not need to be atomic
-static inline  int decrementHandlerCount(__cxa_exception *exception) throw() {
+static inline  int decrementHandlerCount(__cxa_exception *exception) noexcept {
     return --exception->handlerCount;
 }
 
 #include "fallback_malloc.ipp"
 
 //  Allocate some memory from _somewhere_
-static void *do_malloc(size_t size) throw() {
+static void *do_malloc(size_t size) noexcept {
     void *ptr = std::malloc(size);
     if (NULL == ptr) // if malloc fails, fall back to emergency stash
         ptr = fallback_malloc(size);
     return ptr;
 }
 
-static void do_free(void *ptr) throw() {
+static void do_free(void *ptr) noexcept {
     is_fallback_ptr(ptr) ? fallback_free(ptr) : std::free(ptr);
 }
 
@@ -136,7 +136,7 @@ exception_cleanup_func(_Unwind_Reason_Code reason, _Unwind_Exception* unwind_exc
     __cxa_free_exception(thrown_object);
 }
 
-static LIBCXXABI_NORETURN void failed_throw(__cxa_exception* exception_header) throw() {
+static LIBCXXABI_NORETURN void failed_throw(__cxa_exception* exception_header) noexcept {
 //  Section 2.5.3 says:
 //      * For purposes of this ABI, several things are considered exception handlers:
 //      ** A terminate() call due to a throw.
@@ -155,7 +155,7 @@ extern "C" {
 //  object. Zero-fill the object. If memory can't be allocated, call
 //  std::terminate. Return a pointer to the memory to be used for the
 //  user's exception object.
-void * __cxa_allocate_exception (size_t thrown_size) throw() {
+void * __cxa_allocate_exception (size_t thrown_size) noexcept {
     size_t actual_size = cxa_exception_size_from_exception_thrown_size(thrown_size);
     __cxa_exception* exception_header = static_cast<__cxa_exception*>(do_malloc(actual_size));
     if (NULL == exception_header)
@@ -166,7 +166,7 @@ void * __cxa_allocate_exception (size_t thrown_size) throw() {
 
 
 //  Free a __cxa_exception object allocated with __cxa_allocate_exception.
-void __cxa_free_exception (void * thrown_object) throw() {
+void __cxa_free_exception (void * thrown_object) noexcept {
     do_free(cxa_exception_from_thrown_object(thrown_object));
 }
 
@@ -174,7 +174,7 @@ void __cxa_free_exception (void * thrown_object) throw() {
 //  This function shall allocate a __cxa_dependent_exception and
 //  return a pointer to it. (Really to the object, not past its' end).
 //  Otherwise, it will work like __cxa_allocate_exception.
-void * __cxa_allocate_dependent_exception () throw() {
+void * __cxa_allocate_dependent_exception () noexcept {
     size_t actual_size = sizeof(__cxa_dependent_exception);
     void *ptr = do_malloc(actual_size);
     if (NULL == ptr)
@@ -186,7 +186,7 @@ void * __cxa_allocate_dependent_exception () throw() {
 
 //  This function shall free a dependent_exception.
 //  It does not affect the reference count of the primary exception.
-void __cxa_free_dependent_exception (void * dependent_exception) throw() {
+void __cxa_free_dependent_exception (void * dependent_exception) noexcept {
     do_free(dependent_exception);
 }
 
@@ -250,7 +250,7 @@ The adjusted pointer is computed by the personality routine during phase 1
   __cxa_dependent_exception).
 */
 void*
-__cxa_get_exception_ptr(void* unwind_exception) throw()
+__cxa_get_exception_ptr(void* unwind_exception) noexcept
 {
     return cxa_exception_from_exception_unwind_exception
            (
@@ -268,7 +268,7 @@ This routine:
 * Returns the adjusted pointer to the exception object.
 */
 void*
-__cxa_begin_catch(void* unwind_exception) throw()
+__cxa_begin_catch(void* unwind_exception) noexcept
 {
     __cxa_eh_globals *globals = __cxa_get_globals();
     __cxa_exception* exception_header =
@@ -396,7 +396,7 @@ extern LIBCXXABI_NORETURN void __cxa_rethrow() {
     __cxa_exception header associated with the thrown object referred to by p.
 */
 void
-__cxa_increment_exception_refcount(void* thrown_object) throw()
+__cxa_increment_exception_refcount(void* thrown_object) noexcept
 {
     if (thrown_object != NULL )
     {
@@ -411,7 +411,7 @@ __cxa_increment_exception_refcount(void* thrown_object) throw()
     If the referenceCount drops to zero, destroy and deallocate the exception.
 */
 void
-__cxa_decrement_exception_refcount(void* thrown_object) throw()
+__cxa_decrement_exception_refcount(void* thrown_object) noexcept
 {
     if (thrown_object != NULL )
     {
@@ -435,7 +435,7 @@ __cxa_decrement_exception_refcount(void* thrown_object) throw()
     the need to allocate the exception-handling globals.
 */
 void*
-__cxa_current_primary_exception() throw()
+__cxa_current_primary_exception() noexcept
 {
 //  get the current exception
     __cxa_eh_globals* globals = __cxa_get_globals_fast();
@@ -504,7 +504,7 @@ __cxa_rethrow_primary_exception(void* thrown_object)
 }
 
 bool
-__cxa_uncaught_exception() throw()
+__cxa_uncaught_exception() noexcept
 {
     __cxa_eh_globals* globals = __cxa_get_globals_fast();
     if (globals == 0)
