@@ -38,8 +38,9 @@ public:
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
 
 private:
-  static const unsigned ReturnValueIndex = UINT_MAX;
-  static const unsigned InvalidArgIndex = UINT_MAX - 1;
+  static const unsigned InvalidArgIndex = UINT_MAX;
+  /// Denotes the return vale.
+  static const unsigned ReturnValueIndex = UINT_MAX - 1;
 
   mutable llvm::OwningPtr<BugType> BT;
   inline void initBugType() const {
@@ -60,17 +61,13 @@ private:
   /// \brief Add taint sources on a post visit.
   void addSourcesPost(const CallExpr *CE, CheckerContext &C) const;
 
+  /// Check if the region the expression evaluates to is the standard input,
+  /// and thus, is tainted.
+  static bool isStdin(const Expr *E, CheckerContext &C);
+
   /// \brief Given a pointer argument, get the symbol of the value it contains
   /// (points to).
   static SymbolRef getPointedToSymbol(CheckerContext &C, const Expr *Arg);
-
-  static inline bool isTaintedOrPointsToTainted(const Expr *E,
-                                                const ProgramState *State,
-                                                CheckerContext &C) {
-    return (State->isTainted(E, C.getLocationContext()) ||
-            (E->getType().getTypePtr()->isPointerType() &&
-             State->isTainted(getPointedToSymbol(C, E))));
-  }
 
   /// Functions defining the attack surface.
   typedef const ProgramState *(GenericTaintChecker::*FnCheck)(const CallExpr *,
@@ -81,10 +78,6 @@ private:
 
   /// Taint the scanned input if the file is tainted.
   const ProgramState *preFscanf(const CallExpr *CE, CheckerContext &C) const;
-
-  /// Check if the region the expression evaluates to is the standard input,
-  /// and thus, is tainted.
-  bool isStdin(const Expr *E, CheckerContext &C) const;
 
   /// Check for CWE-134: Uncontrolled Format String.
   static const char MsgUncontrolledFormatString[];
@@ -162,6 +155,14 @@ private:
                         DstArgs.end(), ArgNum) != DstArgs.end());
     }
 
+    static inline bool isTaintedOrPointsToTainted(const Expr *E,
+                                                  const ProgramState *State,
+                                                  CheckerContext &C) {
+      return (State->isTainted(E, C.getLocationContext()) || isStdin(E, C) ||
+              (E->getType().getTypePtr()->isPointerType() &&
+               State->isTainted(getPointedToSymbol(C, E))));
+    }
+
     /// \brief Pre-process a function which propagates taint according to the
     /// taint rule.
     const ProgramState *process(const CallExpr *CE, CheckerContext &C) const;
@@ -203,13 +204,29 @@ GenericTaintChecker::TaintPropagationRule::getTaintPropagationRule(
                                                      const FunctionDecl *FDecl,
                                                      StringRef Name,
                                                      CheckerContext &C) {
+  // TODO: Currently, we might loose precision here: we always mark a return
+  // value as tainted even if it's just a pointer, pointing to tainted data.
+
   // Check for exact name match for functions without builtin substitutes.
   TaintPropagationRule Rule = llvm::StringSwitch<TaintPropagationRule>(Name)
     .Case("atoi", TaintPropagationRule(0, ReturnValueIndex))
     .Case("atol", TaintPropagationRule(0, ReturnValueIndex))
     .Case("atoll", TaintPropagationRule(0, ReturnValueIndex))
+    .Case("getc", TaintPropagationRule(0, ReturnValueIndex))
+    .Case("fgetc", TaintPropagationRule(0, ReturnValueIndex))
+    .Case("getc_unlocked", TaintPropagationRule(0, ReturnValueIndex))
+    .Case("getw", TaintPropagationRule(0, ReturnValueIndex))
+    .Case("toupper", TaintPropagationRule(0, ReturnValueIndex))
+    .Case("tolower", TaintPropagationRule(0, ReturnValueIndex))
+    .Case("strchr", TaintPropagationRule(0, ReturnValueIndex))
+    .Case("strrchr", TaintPropagationRule(0, ReturnValueIndex))
     .Case("read", TaintPropagationRule(0, 2, 1, true))
     .Case("pread", TaintPropagationRule(InvalidArgIndex, 1, true))
+    .Case("gets", TaintPropagationRule(InvalidArgIndex, 0, true))
+    .Case("fgets", TaintPropagationRule(2, 0, true))
+    .Case("getline", TaintPropagationRule(2, 0))
+    .Case("getdelim", TaintPropagationRule(3, 0))
+    .Case("fgetln", TaintPropagationRule(0, ReturnValueIndex))
     .Default(TaintPropagationRule());
 
   if (!Rule.isNull())
@@ -317,6 +334,9 @@ bool GenericTaintChecker::propagateFromPre(const CallExpr *CE,
   // arguments which should be tainted after the function returns. These are
   // stored in the state as TaintArgsOnPostVisit set.
   llvm::ImmutableSet<unsigned> TaintArgs = State->get<TaintArgsOnPostVisit>();
+  if (TaintArgs.isEmpty())
+    return false;
+
   for (llvm::ImmutableSet<unsigned>::iterator
          I = TaintArgs.begin(), E = TaintArgs.end(); I != E; ++I) {
     unsigned ArgNum  = *I;
@@ -356,10 +376,13 @@ void GenericTaintChecker::addSourcesPost(const CallExpr *CE,
     .Case("scanf", &GenericTaintChecker::postScanf)
     // TODO: Add support for vfscanf & family.
     .Case("getchar", &GenericTaintChecker::postRetTaint)
+    .Case("getchar_unlocked", &GenericTaintChecker::postRetTaint)
     .Case("getenv", &GenericTaintChecker::postRetTaint)
     .Case("fopen", &GenericTaintChecker::postRetTaint)
     .Case("fdopen", &GenericTaintChecker::postRetTaint)
     .Case("freopen", &GenericTaintChecker::postRetTaint)
+    .Case("getch", &GenericTaintChecker::postRetTaint)
+    .Case("wgetch", &GenericTaintChecker::postRetTaint)
     .Case("socket", &GenericTaintChecker::postSocket)
     .Default(0);
 
@@ -428,18 +451,14 @@ GenericTaintChecker::TaintPropagationRule::process(const CallExpr *CE,
       for (unsigned int i = 0; i < CE->getNumArgs(); ++i) {
         if (isDestinationArgument(i))
           continue;
-        if ((IsTainted =
-               GenericTaintChecker::isTaintedOrPointsToTainted(CE->getArg(i),
-                                                               State, C)))
+        if ((IsTainted = isTaintedOrPointsToTainted(CE->getArg(i), State, C)))
           break;
       }
       break;
     }
 
     assert(ArgNum < CE->getNumArgs());
-    if ((IsTainted =
-           GenericTaintChecker::isTaintedOrPointsToTainted(CE->getArg(ArgNum),
-                                                           State, C)))
+    if ((IsTainted = isTaintedOrPointsToTainted(CE->getArg(ArgNum), State, C)))
       break;
   }
   if (!IsTainted)
@@ -541,8 +560,7 @@ const ProgramState *GenericTaintChecker::postRetTaint(const CallExpr *CE,
   return C.getState()->addTaint(CE, C.getLocationContext());
 }
 
-bool GenericTaintChecker::isStdin(const Expr *E,
-                                  CheckerContext &C) const {
+bool GenericTaintChecker::isStdin(const Expr *E, CheckerContext &C) {
   const ProgramState *State = C.getState();
   SVal Val = State->getSVal(E, C.getLocationContext());
 
@@ -642,6 +660,9 @@ bool GenericTaintChecker::checkUncontrolledFormatString(const CallExpr *CE,
 bool GenericTaintChecker::checkSystemCall(const CallExpr *CE,
                                           StringRef Name,
                                           CheckerContext &C) const {
+  // TODO: It might make sense to run this check on demand. In some cases, 
+  // we should check if the environment has been cleansed here. We also might 
+  // need to know if the user was reset before these calls(seteuid).
   unsigned ArgNum = llvm::StringSwitch<unsigned>(Name)
     .Case("system", 0)
     .Case("popen", 0)
@@ -651,6 +672,8 @@ bool GenericTaintChecker::checkSystemCall(const CallExpr *CE,
     .Case("execv", 0)
     .Case("execvp", 0)
     .Case("execvP", 0)
+    .Case("execve", 0)
+    .Case("dlopen", 0)
     .Default(UINT_MAX);
 
   if (ArgNum == UINT_MAX)
