@@ -178,6 +178,10 @@ def MTLO64 : MoveToLOHI<0x13, "mtlo", CPU64Regs, [LO64]>;
 def MFHI64 : MoveFromLOHI<0x10, "mfhi", CPU64Regs, [HI64]>;
 def MFLO64 : MoveFromLOHI<0x12, "mflo", CPU64Regs, [LO64]>;
 
+/// Sign Ext In Register Instructions.
+def SEB64 : SignExtInReg<0x10, "seb", i8, CPU64Regs>;
+def SEH64 : SignExtInReg<0x18, "seh", i16, CPU64Regs>;
+
 /// Count Leading
 def DCLZ : CountLeading0<0x24, "dclz", CPU64Regs>;
 def DCLO : CountLeading1<0x25, "dclo", CPU64Regs>;

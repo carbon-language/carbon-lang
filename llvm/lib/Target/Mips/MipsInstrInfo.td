@@ -616,10 +616,11 @@ class CountLeading1<bits<6> func, string instr_asm, RegisterClass RC>:
 }
 
 // Sign Extend in Register.
-class SignExtInReg<bits<5> sa, string instr_asm, ValueType vt>:
-  FR<0x1f, 0x20, (outs CPURegs:$rd), (ins CPURegs:$rt),
+class SignExtInReg<bits<5> sa, string instr_asm, ValueType vt,
+                   RegisterClass RC>:
+  FR<0x1f, 0x20, (outs RC:$rd), (ins RC:$rt),
      !strconcat(instr_asm, "\t$rd, $rt"),
-     [(set CPURegs:$rd, (sext_inreg CPURegs:$rt, vt))], NoItinerary> {
+     [(set RC:$rd, (sext_inreg RC:$rt, vt))], NoItinerary> {
   let rs = 0;
   let shamt = sa;
   let Predicates = [HasSEInReg];
@@ -889,8 +890,8 @@ def MFHI : MoveFromLOHI<0x10, "mfhi", CPURegs, [HI]>;
 def MFLO : MoveFromLOHI<0x12, "mflo", CPURegs, [LO]>;
 
 /// Sign Ext In Register Instructions.
-def SEB : SignExtInReg<0x10, "seb", i8>;
-def SEH : SignExtInReg<0x18, "seh", i16>;
+def SEB : SignExtInReg<0x10, "seb", i8, CPURegs>;
+def SEH : SignExtInReg<0x18, "seh", i16, CPURegs>;
 
 /// Count Leading
 def CLZ : CountLeading0<0x20, "clz", CPURegs>;
