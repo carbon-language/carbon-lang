@@ -372,12 +372,8 @@ Value *BlockGenerator::generateStrideZeroLoad(const LoadInst *Load,
   if (!Aligned)
     ScalarLoad->setAlignment(8);
 
-  std::vector<Constant*> Splat;
-
-  for (int i = 0; i < Size; i++)
-    Splat.push_back (Builder.getInt32(0));
-
-  Constant *SplatVector = ConstantVector::get(Splat);
+  Constant *SplatVector =
+    Constant::getNullValue(VectorType::get(Builder.getInt32Ty(), Size));
 
   Value *VectorLoad = Builder.CreateShuffleVector(ScalarLoad, ScalarLoad,
                                                   SplatVector,
