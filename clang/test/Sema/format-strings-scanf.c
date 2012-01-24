@@ -103,3 +103,13 @@ void test_alloc_extension(char **sp, wchar_t **lsp, float *fp) {
   scanf("%m[abc]", fp); // expected-warning{{format specifies type 'char **' but the argument has type 'float *'}}
 }
 
+void test_longlong(long long *x, unsigned long long *y) {
+  scanf("%Ld", y); // no-warning
+  scanf("%Lu", y); // no-warning
+  scanf("%Lx", y); // no-warning
+  scanf("%Ld", x); // no-warning
+  scanf("%Lu", x); // no-warning
+  scanf("%Lx", x); // no-warning
+  scanf("%Ls", "hello"); // expected-warning {{length modifier 'L' results in undefined behavior or no effect with 's' conversion specifier}}
+}
+

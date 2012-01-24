@@ -548,6 +548,14 @@ bool FormatSpecifier::hasValidLengthModifier() const {
         case ConversionSpecifier::gArg:
         case ConversionSpecifier::GArg:
           return true;
+        // GNU extension.
+        case ConversionSpecifier::dArg:
+        case ConversionSpecifier::iArg:
+        case ConversionSpecifier::oArg:
+        case ConversionSpecifier::uArg:
+        case ConversionSpecifier::xArg:
+        case ConversionSpecifier::XArg:
+          return true;
         default:
           return false;
       }

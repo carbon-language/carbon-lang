@@ -469,3 +469,14 @@ void pr9751() {
   // when the original string is within the argument expression.
   printf(1 ? "yes %d" : "no %d"); // expected-warning 2{{more '%' conversions than data arguments}}
 }
+
+// PR 9466: clang: doesn't know about %Lu, %Ld, and %Lx 
+void printf_longlong(long long x, unsigned long long y) {
+  printf("%Ld", y); // no-warning
+  printf("%Lu", y); // no-warning
+  printf("%Lx", y); // no-warning
+  printf("%Ld", x); // no-warning
+  printf("%Lu", x); // no-warning
+  printf("%Lx", x); // no-warning
+  printf("%Ls", "hello"); // expected-warning {{length modifier 'L' results in undefined behavior or no effect with 's' conversion specifier}}
+}

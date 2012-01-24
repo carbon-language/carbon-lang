@@ -218,7 +218,9 @@ ScanfArgTypeResult ScanfSpecifier::getArgType(ASTContext &Ctx) const {
           return ScanfArgTypeResult();
         case LengthModifier::AsPtrDiff:
           return ScanfArgTypeResult(Ctx.getPointerDiffType(), "ptrdiff_t *");
-        case LengthModifier::AsLongDouble: return ScanfArgTypeResult::Invalid();
+        case LengthModifier::AsLongDouble:
+          // GNU extension.
+          return ArgTypeResult(Ctx.LongLongTy);
         case LengthModifier::AsAllocate: return ScanfArgTypeResult::Invalid();
         case LengthModifier::AsMAllocate: return ScanfArgTypeResult::Invalid();
       }
@@ -242,7 +244,9 @@ ScanfArgTypeResult ScanfSpecifier::getArgType(ASTContext &Ctx) const {
         case LengthModifier::AsPtrDiff:
           // FIXME: Unsigned version of ptrdiff_t?
           return ScanfArgTypeResult();
-        case LengthModifier::AsLongDouble: return ScanfArgTypeResult::Invalid();
+        case LengthModifier::AsLongDouble:
+          // GNU extension.
+          return ArgTypeResult(Ctx.UnsignedLongLongTy);
         case LengthModifier::AsAllocate: return ScanfArgTypeResult::Invalid();
         case LengthModifier::AsMAllocate: return ScanfArgTypeResult::Invalid();
       }
