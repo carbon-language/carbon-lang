@@ -1055,6 +1055,23 @@ SDValue SelectionDAGBuilder::getValueImpl(const Value *V) {
       return DAG.getMergeValues(&Constants[0], Constants.size(),
                                 getCurDebugLoc());
     }
+    
+    if (const ConstantDataSequential *CDS =
+          dyn_cast<ConstantDataSequential>(C)) {
+      SmallVector<SDValue, 4> Ops;
+      for (unsigned i = 0, e = CDS->getType()->getNumElements(); i != e; ++i) {
+        SDNode *Val = getValue(CDS->getElementAsConstant(i)).getNode();
+        // Add each leaf value from the operand to the Constants list
+        // to form a flattened list of all the values.
+        for (unsigned i = 0, e = Val->getNumValues(); i != e; ++i)
+          Ops.push_back(SDValue(Val, i));
+      }
+
+      if (isa<ArrayType>(CDS->getType()))
+        return DAG.getMergeValues(&Ops[0], Ops.size(), getCurDebugLoc());
+      return NodeMap[V] = DAG.getNode(ISD::BUILD_VECTOR, getCurDebugLoc(),
+                                      VT, &Ops[0], Ops.size());
+    }
 
     if (C->getType()->isStructTy() || C->getType()->isArrayTy()) {
       assert((isa<ConstantAggregateZero>(C) || isa<UndefValue>(C)) &&
@@ -1089,9 +1106,9 @@ SDValue SelectionDAGBuilder::getValueImpl(const Value *V) {
     // Now that we know the number and type of the elements, get that number of
     // elements into the Ops array based on what kind of constant it is.
     SmallVector<SDValue, 16> Ops;
-    if (const ConstantVector *CP = dyn_cast<ConstantVector>(C)) {
+    if (const ConstantVector *CV = dyn_cast<ConstantVector>(C)) {
       for (unsigned i = 0; i != NumElements; ++i)
-        Ops.push_back(getValue(CP->getOperand(i)));
+        Ops.push_back(getValue(CV->getOperand(i)));
     } else {
       assert(isa<ConstantAggregateZero>(C) && "Unknown vector constant!");
       EVT EltVT = TLI.getValueType(VecTy->getElementType());

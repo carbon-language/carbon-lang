@@ -623,6 +623,9 @@ public:
   
   /// getElementType - Return the element type of the array/vector.
   Type *getElementType() const;
+  
+  /// getNumElements - Return the number of elements in the array or vector.
+  unsigned getNumElements() const;
 
   /// getElementByteSize - Return the size (in bytes) of each element in the
   /// array/vector.  The size of the elements is known to be a multiple of one

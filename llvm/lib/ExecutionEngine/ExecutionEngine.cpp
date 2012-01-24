@@ -307,13 +307,12 @@ void ExecutionEngine::runStaticConstructorsDestructors(Module *module,
 
   // Should be an array of '{ i32, void ()* }' structs.  The first value is
   // the init priority, which we ignore.
-  if (isa<ConstantAggregateZero>(GV->getInitializer()))
+  ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
+  if (InitList == 0)
     return;
-  ConstantArray *InitList = cast<ConstantArray>(GV->getInitializer());
   for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i) {
-    if (isa<ConstantAggregateZero>(InitList->getOperand(i)))
-      continue;
-    ConstantStruct *CS = cast<ConstantStruct>(InitList->getOperand(i));
+    ConstantStruct *CS = dyn_cast<ConstantStruct>(InitList->getOperand(i));
+    if (CS == 0) continue;
 
     Constant *FP = CS->getOperand(1);
     if (FP->isNullValue())
@@ -954,30 +953,47 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
 void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   DEBUG(dbgs() << "JIT: Initializing " << Addr << " ");
   DEBUG(Init->dump());
-  if (isa<UndefValue>(Init)) {
+  if (isa<UndefValue>(Init))
     return;
-  } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(Init)) {
+  
+  if (const ConstantVector *CP = dyn_cast<ConstantVector>(Init)) {
     unsigned ElementSize =
       getTargetData()->getTypeAllocSize(CP->getType()->getElementType());
     for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
       InitializeMemory(CP->getOperand(i), (char*)Addr+i*ElementSize);
     return;
-  } else if (isa<ConstantAggregateZero>(Init)) {
+  }
+  
+  if (isa<ConstantAggregateZero>(Init)) {
     memset(Addr, 0, (size_t)getTargetData()->getTypeAllocSize(Init->getType()));
     return;
-  } else if (const ConstantArray *CPA = dyn_cast<ConstantArray>(Init)) {
+  }
+  
+  if (const ConstantArray *CPA = dyn_cast<ConstantArray>(Init)) {
     unsigned ElementSize =
       getTargetData()->getTypeAllocSize(CPA->getType()->getElementType());
     for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i)
       InitializeMemory(CPA->getOperand(i), (char*)Addr+i*ElementSize);
     return;
-  } else if (const ConstantStruct *CPS = dyn_cast<ConstantStruct>(Init)) {
+  }
+  
+  if (const ConstantStruct *CPS = dyn_cast<ConstantStruct>(Init)) {
     const StructLayout *SL =
       getTargetData()->getStructLayout(cast<StructType>(CPS->getType()));
     for (unsigned i = 0, e = CPS->getNumOperands(); i != e; ++i)
       InitializeMemory(CPS->getOperand(i), (char*)Addr+SL->getElementOffset(i));
     return;
-  } else if (Init->getType()->isFirstClassType()) {
+  }
+
+  if (const ConstantDataSequential *CDS =
+               dyn_cast<ConstantDataSequential>(Init)) {
+    // CDS is already laid out in host memory order.
+    StringRef Data = CDS->getRawDataValues();
+    memcpy(Addr, Data.data(), Data.size());
+    return;
+  }
+
+  if (Init->getType()->isFirstClassType()) {
     GenericValue Val = getConstantValue(Init);
     StoreValueToMemory(Val, (GenericValue*)Addr, Init->getType());
     return;

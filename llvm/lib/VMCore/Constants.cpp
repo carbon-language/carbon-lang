@@ -1995,8 +1995,7 @@ Type *ConstantDataSequential::getElementType() const {
 }
 
 StringRef ConstantDataSequential::getRawDataValues() const {
-  return StringRef(DataElements,
-                   getType()->getNumElements()*getElementByteSize());
+  return StringRef(DataElements, getNumElements()*getElementByteSize());
 }
 
 /// isElementTypeCompatible - Return true if a ConstantDataSequential can be
@@ -2018,6 +2017,12 @@ bool ConstantDataSequential::isElementTypeCompatible(const Type *Ty) {
   return false;
 }
 
+/// getNumElements - Return the number of elements in the array or vector.
+unsigned ConstantDataSequential::getNumElements() const {
+  return getType()->getNumElements();
+}
+
+
 /// getElementByteSize - Return the size in bytes of the elements in the data.
 uint64_t ConstantDataSequential::getElementByteSize() const {
   return getElementType()->getPrimitiveSizeInBits()/8;
@@ -2025,7 +2030,7 @@ uint64_t ConstantDataSequential::getElementByteSize() const {
 
 /// getElementPointer - Return the start of the specified element.
 const char *ConstantDataSequential::getElementPointer(unsigned Elt) const {
-  assert(Elt < getElementType()->getNumElements() && "Invalid Elt");
+  assert(Elt < getNumElements() && "Invalid Elt");
   return DataElements+Elt*getElementByteSize();
 }
 

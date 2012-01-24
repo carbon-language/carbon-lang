@@ -843,29 +843,32 @@ bool ModuleLinker::linkAliasProto(GlobalAlias *SGA) {
   return false;
 }
 
+static void getArrayElements(Constant *C, SmallVectorImpl<Constant*> &Dest) {
+  if (ConstantArray *I = dyn_cast<ConstantArray>(C)) {
+    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+      Dest.push_back(I->getOperand(i));
+    return;
+  }
+  
+  if (ConstantDataSequential *CDS = dyn_cast<ConstantDataSequential>(C)) {
+    for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i)
+      Dest.push_back(CDS->getElementAsConstant(i));
+    return;
+  }
+  
+  ConstantAggregateZero *CAZ = cast<ConstantAggregateZero>(C);
+  Dest.append(cast<ArrayType>(C->getType())->getNumElements(),
+              CAZ->getSequentialElement());
+}
+                             
 void ModuleLinker::linkAppendingVarInit(const AppendingVarInfo &AVI) {
   // Merge the initializer.
   SmallVector<Constant*, 16> Elements;
-  if (ConstantArray *I = dyn_cast<ConstantArray>(AVI.DstInit)) {
-    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-      Elements.push_back(I->getOperand(i));
-  } else {
-    assert(isa<ConstantAggregateZero>(AVI.DstInit));
-    ArrayType *DstAT = cast<ArrayType>(AVI.DstInit->getType());
-    Type *EltTy = DstAT->getElementType();
-    Elements.append(DstAT->getNumElements(), Constant::getNullValue(EltTy));
-  }
+  getArrayElements(AVI.DstInit, Elements);
   
   Constant *SrcInit = MapValue(AVI.SrcInit, ValueMap, RF_None, &TypeMap);
-  if (const ConstantArray *I = dyn_cast<ConstantArray>(SrcInit)) {
-    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-      Elements.push_back(I->getOperand(i));
-  } else {
-    assert(isa<ConstantAggregateZero>(SrcInit));
-    ArrayType *SrcAT = cast<ArrayType>(SrcInit->getType());
-    Type *EltTy = SrcAT->getElementType();
-    Elements.append(SrcAT->getNumElements(), Constant::getNullValue(EltTy));
-  }
+  getArrayElements(SrcInit, Elements);
+  
   ArrayType *NewType = cast<ArrayType>(AVI.NewGV->getType()->getElementType());
   AVI.NewGV->setInitializer(ConstantArray::get(NewType, Elements));
 }
