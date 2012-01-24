@@ -34,9 +34,7 @@
 
 
 namespace __cxxabiv1 {
-static const uint64_t kOurExceptionClass          = 0x434C4E47432B2B00; // CLNGC++\0
-static const uint64_t kOurDependentExceptionClass = 0x434C4E47432B2B01; // CLNGC++\1
-                                                    
+
 //  Utility routines
 static
 inline
