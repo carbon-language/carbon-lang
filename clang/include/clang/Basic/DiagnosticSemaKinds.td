@@ -4962,16 +4962,16 @@ def warn_missing_case_for_condition :
   Warning<"no case matching constant switch condition '%0'">;
 
 def warn_def_missing_case1 : Warning<
-  "enumeration value %0 not handled in switch">,
+  "enumeration value %0 not explicitly handled in switch">,
   InGroup<SwitchEnum>, DefaultIgnore;
 def warn_def_missing_case2 : Warning<
-  "enumeration values %0 and %1 not handled in switch">,
+  "enumeration values %0 and %1 not explicitly handled in switch">,
   InGroup<SwitchEnum>, DefaultIgnore;
 def warn_def_missing_case3 : Warning<
-  "enumeration values %0, %1, and %2 not handled in switch">,
+  "enumeration values %0, %1, and %2 not explicitly handled in switch">,
   InGroup<SwitchEnum>, DefaultIgnore;
 def warn_def_missing_cases : Warning<
-  "%0 enumeration values not handled in switch: %1, %2, %3...">,
+  "%0 enumeration values not explicitly handled in switch: %1, %2, %3...">,
   InGroup<SwitchEnum>, DefaultIgnore;
 
 def warn_missing_case1 : Warning<"enumeration value %0 not handled in switch">,

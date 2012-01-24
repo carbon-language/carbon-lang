@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wswitch-enum %s
 void f (int z) { 
   while (z) { 
     default: z--;            // expected-error {{statement not in switch}}
@@ -203,7 +203,7 @@ void test11() {
       break;
   }
 
-  switch(a) {
+  switch(a) { //expected-warning{{enumeration value 'A' not explicitly handled in switch}}
     case B:
     case C:
       break;
@@ -294,14 +294,7 @@ int test18() {
   switch (a) {
   case A: return 0;
   case B: return 1;
-  default: return 2; // expected-warning {{default is unreachable as all enumeration values are accounted for}}
-  }
-}
-
-int test19() {
-  enum { A, B } a;
-  switch (a) {
   case 7: return 1; // expected-warning {{case value not in enumerated type}}
-  default: return 3;
+  default: return 2; // expected-warning {{default is unreachable as all enumeration values are accounted for}}
   }
 }
