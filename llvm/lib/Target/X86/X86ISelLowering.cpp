@@ -14349,7 +14349,8 @@ static SDValue PerformVZEXT_MOVLCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
-static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG) {
+static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG,
+                                  const X86Subtarget *Subtarget) {
   // (i32 zext (and (i8  x86isd::setcc_carry), 1)) ->
   //           (and (i32 x86isd::setcc_carry), 1)
   // This eliminates the zext. This transformation is necessary because
@@ -14357,6 +14358,8 @@ static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG) {
   DebugLoc dl = N->getDebugLoc();
   SDValue N0 = N->getOperand(0);
   EVT VT = N->getValueType(0);
+  EVT OpVT = N0.getValueType();
+
   if (N0.getOpcode() == ISD::AND &&
       N0.hasOneUse() &&
       N0.getOperand(0).hasOneUse()) {
@@ -14371,6 +14374,38 @@ static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG) {
                                    N00.getOperand(0), N00.getOperand(1)),
                        DAG.getConstant(1, VT));
   }
+  // Optimize vectors in AVX mode:
+  //
+  //   v8i16 -> v8i32
+  //   Use vpunpcklwd for 4 lower elements  v8i16 -> v4i32.
+  //   Use vpunpckhwd for 4 upper elements  v8i16 -> v4i32.
+  //   Concat upper and lower parts.
+  //
+  //   v4i32 -> v4i64
+  //   Use vpunpckldq for 4 lower elements  v4i32 -> v2i64.
+  //   Use vpunpckhdq for 4 upper elements  v4i32 -> v2i64.
+  //   Concat upper and lower parts.
+  //
+  if (Subtarget->hasAVX()) {
+
+    if (((VT == MVT::v8i32) && (OpVT == MVT::v8i16))  ||
+      ((VT == MVT::v4i64) && (OpVT == MVT::v4i32)))  {
+
+      SDValue ZeroVec = getZeroVector(OpVT, Subtarget->hasSSE2(), Subtarget->hasAVX2(), 
+        DAG, dl);
+      SDValue OpLo = getTargetShuffleNode(X86ISD::UNPCKL, dl, OpVT, N0, ZeroVec, DAG);
+      SDValue OpHi = getTargetShuffleNode(X86ISD::UNPCKH, dl, OpVT, N0, ZeroVec, DAG);
+
+      EVT HVT = EVT::getVectorVT(*DAG.getContext(), VT.getVectorElementType(), 
+        VT.getVectorNumElements()/2);
+
+      OpLo = DAG.getNode(ISD::BITCAST, dl, HVT, OpLo);
+      OpHi = DAG.getNode(ISD::BITCAST, dl, HVT, OpHi);
+
+      return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, OpLo, OpHi);
+    }
+  }
+
 
   return SDValue();
 }
@@ -14558,7 +14593,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::FAND:        return PerformFANDCombine(N, DAG);
   case X86ISD::BT:          return PerformBTCombine(N, DAG, DCI);
   case X86ISD::VZEXT_MOVL:  return PerformVZEXT_MOVLCombine(N, DAG);
-  case ISD::ZERO_EXTEND:    return PerformZExtCombine(N, DAG);
+  case ISD::ZERO_EXTEND:    return PerformZExtCombine(N, DAG, Subtarget);
   case X86ISD::SETCC:       return PerformSETCCCombine(N, DAG);
   case X86ISD::SHUFP:       // Handle all target specific shuffles
   case X86ISD::PALIGN:
