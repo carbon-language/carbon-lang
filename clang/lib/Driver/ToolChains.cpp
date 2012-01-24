@@ -1099,7 +1099,10 @@ bool Generic_GCC::GCCVersion::operator<(const GCCVersion &RHS) const {
 /// Once constructed, a GCCInstallation is esentially immutable.
 Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(const Driver &D)
   : IsValid(false),
-    GccTriple(D.DefaultTargetTriple) {
+    // FIXME: GccTriple is using the target triple as both the target and host
+    // triple here. It also shouldn't be using the string representation, and
+    // should instead be using the Triple object.
+    GccTriple(D.TargetTriple.str()) {
   // FIXME: Using CXX_INCLUDE_ROOT is here is a bit of a hack, but
   // avoids adding yet another option to configure/cmake.
   // It would probably be cleaner to break it in two variables
@@ -1137,7 +1140,8 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(const Driver &D)
 
   // Always include the default host triple as the final fallback if no
   // specific triple is detected.
-  CandidateTriples.push_back(D.DefaultTargetTriple);
+  // FIXME: This is using the Driver's target triple as the host triple!
+  CandidateTriples.push_back(D.TargetTriple.str());
 
   // Compute the set of prefixes for our search.
   SmallVector<std::string, 8> Prefixes(D.PrefixDirs.begin(),
@@ -1543,14 +1547,14 @@ FreeBSD::FreeBSD(const HostInfo &Host, const llvm::Triple& Triple)
 
   // Determine if we are compiling 32-bit code on an x86_64 platform.
   bool Lib32 = false;
+  // FIXME: This is using the Driver's target triple as the host triple!
   if (Triple.getArch() == llvm::Triple::x86 &&
-      llvm::Triple(getDriver().DefaultTargetTriple).getArch() ==
-        llvm::Triple::x86_64)
+      getDriver().TargetTriple.getArch() == llvm::Triple::x86_64)
     Lib32 = true;
 
+  // FIXME: This is using the Driver's target triple as the host triple!
   if (Triple.getArch() == llvm::Triple::ppc &&
-      llvm::Triple(getDriver().DefaultTargetTriple).getArch() ==
-        llvm::Triple::ppc64)
+      getDriver().TargetTriple.getArch() == llvm::Triple::ppc64)
     Lib32 = true;
 
   if (Lib32) {
@@ -1894,8 +1898,8 @@ static std::string getMultiarchTriple(const llvm::Triple TargetTriple,
 
 Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   : Generic_ELF(Host, Triple) {
-  llvm::Triple::ArchType Arch =
-    llvm::Triple(getDriver().DefaultTargetTriple).getArch();
+  // FIXME: This is using the Driver's target triple to emulate the host triple!
+  llvm::Triple::ArchType Arch = getDriver().TargetTriple.getArch();
   const std::string &SysRoot = getDriver().SysRoot;
 
   // OpenSuse stores the linker with the compiler, add that to the search
@@ -2186,8 +2190,8 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
   // Check if the target architecture specific dirs need a suffix. Note that we
   // only support the suffix-based bi-arch-like header scheme for host/target
   // mismatches of just bit width.
-  llvm::Triple::ArchType HostArch =
-    llvm::Triple(getDriver().DefaultTargetTriple).getArch();
+  // FIXME: This is using the Driver's target triple to emulate the host triple!
+  llvm::Triple::ArchType HostArch = getDriver().TargetTriple.getArch();
   llvm::Triple::ArchType TargetArch = TargetTriple.getArch();
   StringRef Suffix;
   if ((HostArch == llvm::Triple::x86 && TargetArch == llvm::Triple::x86_64) ||

@@ -237,6 +237,18 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
   return DAL;
 }
 
+/// \brief Compute target triple from args.
+///
+/// This routine provides the logic to compute a target triple from various
+/// args passed to the driver and the default triple string.
+static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
+                                        const ArgList &Args) {
+  if (const Arg *A = Args.getLastArg(options::OPT_target))
+    DefaultTargetTriple = A->getValue(Args);
+
+  return llvm::Triple(llvm::Triple::normalize(DefaultTargetTriple));
+}
+
 Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   llvm::PrettyStackTraceString CrashInfo("Compilation construction");
 
@@ -305,10 +317,6 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
       Cur = Split.second;
     }
   }
-  // FIXME: We shouldn't overwrite the default host triple here, but we have
-  // nowhere else to put this currently.
-  if (const Arg *A = Args->getLastArg(options::OPT_target))
-    DefaultTargetTriple = A->getValue(*Args);
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_install_dir))
     Dir = InstalledDir = A->getValue(*Args);
   for (arg_iterator it = Args->filtered_begin(options::OPT_B),
@@ -322,10 +330,8 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   if (Args->hasArg(options::OPT_nostdlib))
     UseStdLib = false;
 
-  // Reset the target triple here as we may have adjusted the
-  // DefaultTargetTriple string for flags above.
-  // FIXME: Same fix is needed here when the above flag management is fixed.
-  TargetTriple = llvm::Triple(llvm::Triple::normalize(DefaultTargetTriple));
+  // Recompute the target triple based on the args.
+  TargetTriple = computeTargetTriple(DefaultTargetTriple, *Args);
   Host = GetHostInfo(TargetTriple);
 
   // Perform the default argument translations.
