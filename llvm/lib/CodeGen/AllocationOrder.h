@@ -34,8 +34,7 @@ public:
   /// AllocationOrder - Create a new AllocationOrder for VirtReg.
   /// @param VirtReg      Virtual register to allocate for.
   /// @param VRM          Virtual register map for function.
-  /// @param ReservedRegs Set of reserved registers as returned by
-  ///        TargetRegisterInfo::getReservedRegs().
+  /// @param RegClassInfo Information about reserved and allocatable registers.
   AllocationOrder(unsigned VirtReg,
                   const VirtRegMap &VRM,
                   const RegisterClassInfo &RegClassInfo);
