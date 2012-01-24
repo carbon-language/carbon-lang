@@ -608,6 +608,7 @@ bool AddressSanitizer::runOnModule(Module &M) {
 bool AddressSanitizer::handleFunction(Module &M, Function &F) {
   if (BL->isIn(F)) return false;
   if (&F == AsanCtorFunction) return false;
+  if (!F.hasFnAttr(Attribute::AddressSafety)) return false;
 
   if (!ClDebugFunc.empty() && ClDebugFunc != F.getName())
     return false;
