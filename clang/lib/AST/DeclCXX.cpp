@@ -967,7 +967,8 @@ bool CXXRecordDecl::isCLike() const {
   if (!hasDefinition())
     return true;
 
-  return data().HasOnlyFields &&
+  return isPOD() &&
+      data().HasOnlyFields &&
       !data().HasPrivateFields &&
       !data().HasProtectedFields &&
       !data().NumBases;
