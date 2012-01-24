@@ -1,7 +1,7 @@
 # Returns the host triple.
 # Invokes config.guess
 
-function( get_target_triple var )
+function( get_host_triple var )
   if( MSVC )
     if( CMAKE_CL_64 )
       set( value "x86_64-pc-win32" )
@@ -27,4 +27,4 @@ function( get_target_triple var )
   endif( MSVC )
   set( ${var} ${value} PARENT_SCOPE )
   message(STATUS "Target triple: ${value}")
-endfunction( get_target_triple var )
+endfunction( get_host_triple var )

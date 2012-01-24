@@ -32,6 +32,6 @@ install(DIRECTORY .
   PATTERN LLVMConfig.cmake EXCLUDE
   PATTERN LLVMConfigVersion.cmake EXCLUDE
   PATTERN LLVM-Config.cmake EXCLUDE
-  PATTERN GetTargetTriple.cmake EXCLUDE
+  PATTERN GetHostTriple.cmake EXCLUDE
   PATTERN VersionFromVCS.cmake EXCLUDE
   PATTERN CheckAtomic.cmake EXCLUDE)
