@@ -1946,7 +1946,7 @@ static bool CC_Mips64Byval(unsigned ValNo, MVT ValVT, MVT LocVT,
 #include "MipsGenCallingConv.inc"
 
 static void
-AnalyzeMips64CallOperands(CCState CCInfo,
+AnalyzeMips64CallOperands(CCState &CCInfo,
                           const SmallVectorImpl<ISD::OutputArg> &Outs) {
   unsigned NumOps = Outs.size();
   for (unsigned i = 0; i != NumOps; ++i) {
