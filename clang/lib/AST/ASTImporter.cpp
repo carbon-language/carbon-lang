@@ -78,7 +78,7 @@ namespace clang {
     QualType VisitObjCObjectType(const ObjCObjectType *T);
     QualType VisitObjCObjectPointerType(const ObjCObjectPointerType *T);
                             
-    // Importing declarations
+    // Importing declarations                            
     bool ImportDeclParts(NamedDecl *D, DeclContext *&DC, 
                          DeclContext *&LexicalDC, DeclarationName &Name, 
                          SourceLocation &Loc);
@@ -86,8 +86,22 @@ namespace clang {
     void ImportDeclarationNameLoc(const DeclarationNameInfo &From,
                                   DeclarationNameInfo& To);
     void ImportDeclContext(DeclContext *FromDC, bool ForceImport = false);
+                            
+    /// \brief What we should import from the definition.
+    enum ImportDefinitionKind { 
+      /// \brief Import the default subset of the definition, which might be
+      /// nothing (if minimal import is set) or might be everything (if minimal
+      /// import is not set).
+      IDK_Default,
+      /// \brief Import everything.
+      IDK_Everything,
+      /// \brief Import only the bare bones needed to establish a valid
+      /// DeclContext.
+      IDK_Basic
+    };
+
     bool ImportDefinition(RecordDecl *From, RecordDecl *To, 
-                          bool ForceImport = false);
+                          ImportDefinitionKind Kind = IDK_Default);
     bool ImportDefinition(EnumDecl *From, EnumDecl *To,
                           bool ForceImport = false);
     bool ImportDefinition(ObjCInterfaceDecl *From, ObjCInterfaceDecl *To,
@@ -1793,9 +1807,13 @@ void ASTNodeImporter::ImportDeclContext(DeclContext *FromDC, bool ForceImport) {
 }
 
 bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To, 
-                                       bool ForceImport) {
-  if (To->getDefinition() || To->isBeingDefined())
+                                       ImportDefinitionKind Kind) {
+  if (To->getDefinition() || To->isBeingDefined()) {
+    if (Kind == IDK_Everything)
+      ImportDeclContext(From, /*ForceImport=*/true);
+    
     return false;
+  }
   
   To->startDefinition();
   
@@ -1874,7 +1892,10 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To,
       ToCXX->setBases(Bases.data(), Bases.size());
   }
   
-  ImportDeclContext(From, ForceImport);
+  if (Kind == IDK_Everything || 
+      (Kind == IDK_Default && !Importer.isMinimalImport()))
+    ImportDeclContext(From, /*ForceImport=*/true);
+  
   To->completeDefinition();
   return false;
 }
@@ -2350,7 +2371,7 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
   
   Importer.Imported(D, D2);
 
-  if (D->isCompleteDefinition() && ImportDefinition(D, D2))
+  if (D->isCompleteDefinition() && ImportDefinition(D, D2, IDK_Default))
     return 0;
   
   return D2;
@@ -4167,7 +4188,16 @@ DeclContext *ASTImporter::ImportContext(DeclContext *FromDC) {
   if (!FromDC)
     return FromDC;
 
-  return cast_or_null<DeclContext>(Import(cast<Decl>(FromDC)));
+  DeclContext *ToDC = cast_or_null<DeclContext>(Import(cast<Decl>(FromDC)));
+  if (RecordDecl *ToRecord = dyn_cast_or_null<RecordDecl>(ToDC)) {
+    // When we're using a record declaration as a context, we need it to have
+    // a definition.
+    ASTNodeImporter Importer(*this);
+    Importer.ImportDefinition(cast<RecordDecl>(FromDC), ToRecord,
+                              ASTNodeImporter::IDK_Basic);
+  }
+  
+  return ToDC;
 }
 
 Expr *ASTImporter::Import(Expr *FromE) {
@@ -4408,7 +4438,7 @@ void ASTImporter::ImportDefinition(Decl *From) {
     if (RecordDecl *ToRecord = dyn_cast<RecordDecl>(To)) {
       if (!ToRecord->getDefinition()) {
         Importer.ImportDefinition(cast<RecordDecl>(FromDC), ToRecord, 
-                                  /*ForceImport=*/true);
+                                  ASTNodeImporter::IDK_Everything);
         return;
       }      
     }
