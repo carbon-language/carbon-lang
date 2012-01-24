@@ -3,8 +3,8 @@
 
 ; test that the DW_AT_specification is a back edge in the file.
 
-; CHECK: 0x00000063:     DW_TAG_subprogram [5]
-; CHECK: 0x00000089:     DW_AT_specification [DW_FORM_ref4]      (cu + 0x0063 => {0x00000063})
+; CHECK: 0x0000005b:     DW_TAG_subprogram [5]
+; CHECK: 0x0000007d:     DW_AT_specification [DW_FORM_ref4]      (cu + 0x005b => {0x0000005b})
 
 %struct.foo = type { i8 }
 

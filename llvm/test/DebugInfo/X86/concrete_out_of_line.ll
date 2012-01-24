@@ -7,8 +7,7 @@
 ; first check that we have a TAG_subprogram at a given offset and it has
 ; AT_inline.
 
-; CHECK: 0x0000014a:   DW_TAG_subprogram
-; CHECK-NEXT:     DW_AT_sibling
+; CHECK: 0x00000136:   DW_TAG_subprogram
 ; CHECK-NEXT:     DW_AT_MIPS_linkage_name
 ; CHECK-NEXT:     DW_AT_specification
 ; CHECK-NEXT:     DW_AT_inline
@@ -16,8 +15,8 @@
 
 ; and then that a TAG_subprogram refers to it with AT_abstract_origin.
 
-; CHECK: 0x000001a6:   DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_abstract_origin [DW_FORM_ref4]    (cu + 0x014a => {0x0000014a})
+; CHECK: 0x00000186:   DW_TAG_subprogram
+; CHECK-NEXT: DW_AT_abstract_origin [DW_FORM_ref4]    (cu + 0x0136 => {0x00000136})
 
 define i32 @_ZN17nsAutoRefCnt7ReleaseEv() {
 entry:

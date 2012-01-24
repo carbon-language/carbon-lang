@@ -2,7 +2,6 @@
 ; Check struct X for dead variable xyz from inlined function foo.
 
 ; CHECK:	DW_TAG_structure_type
-; CHECK-NEXT:	DW_AT_sibling
 ; CHECK-NEXT:	DW_AT_name
  
 
