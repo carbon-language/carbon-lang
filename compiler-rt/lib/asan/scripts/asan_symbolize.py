@@ -72,15 +72,20 @@ def symbolize_atos(line):
     addr = patch_address(frameno, addr)
     load_addr = int(addr, 16) - int(offset, 16)
     if not pipes.has_key(binary):
-      #print "atos -o %s -l %s" % (binary, hex(load_addr))
-      pipes[binary] = subprocess.Popen(["atos", "-o", binary],
+      # Guess which arch we're running. 10 = len("0x") + 8 hex digits.
+      if len(addr) > 10:
+        arch = "x86_64"
+      else:
+        arch = "i386"
+      #print "atos -o %s -arch %s " % (binary, arch)
+      pipes[binary] = subprocess.Popen(["atos", "-o", binary, "-arch", arch],
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE,)
     p = pipes[binary]
     # TODO(glider): how to tell if the address is absolute?
     if ".app/" in binary and not ".framework" in binary:
       print >>p.stdin, "%s" % addr
     else:
-      print >>p.stdin, "%s" % offset
+      print >>p.stdin, "%s" % addr
     # TODO(glider): it's more efficient to make a batch atos run for each binary.
     p.stdin.close()
     atos_line = p.stdout.readline().rstrip()

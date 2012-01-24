@@ -27,7 +27,9 @@ for t in  *.tmpl; do
       exe=$c.$b.O$O
       so=$c.$b.O$O-so.so
       echo testing $exe
-      $CXX $CXXFLAGS -g -m$b -faddress-sanitizer -O$O $c.cc -o $exe
+      build_command="$CXX $CXXFLAGS -g -m$b -faddress-sanitizer -O$O $c.cc -o $exe"
+      [ "$DEBUG" == "1" ] && echo $build_command
+      $build_command
       [ -e "$c_so.cc" ] && $CXX $CXXFLAGS -g -m$b -faddress-sanitizer -O$O $c_so.cc -fPIC -shared -o $so
       # If there's an OS-specific template, use it.
       # Please minimize the use of OS-specific templates.
