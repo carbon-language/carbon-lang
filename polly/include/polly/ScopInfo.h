@@ -140,15 +140,18 @@ public:
 
   /// @brief Get the stride of this memory access in the specified domain
   ///        subset.
-  isl_set *getStride(const isl_set *domainSubset) const;
+  isl_set *getStride(__isl_take const isl_set *domainSubset) const;
+
+  /// @brief Is the stride of the access equal to a certain width.
+  bool isStrideX(__isl_take const isl_set *DomainSubset, int StrideWidth) const;
 
   /// @brief Is consecutive memory accessed for a given
   ///        statement instance set?
-  bool isStrideOne(const isl_set *domainSubset) const;
+  bool isStrideOne(__isl_take const isl_set *domainSubset) const;
 
   /// @brief Is always the same memory accessed for a given
   ///        statement instance set?
-  bool isStrideZero(const isl_set *domainSubset) const;
+  bool isStrideZero(__isl_take const isl_set *domainSubset) const;
 
   /// @brief Get the statement that contains this memory access.
   ScopStmt *getStatement() const { return statement; }

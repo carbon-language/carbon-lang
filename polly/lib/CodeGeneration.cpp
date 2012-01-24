@@ -456,9 +456,9 @@ public:
 
     assert(scatteringDomain && "No scattering domain available");
 
-    if (Access.isStrideZero(scatteringDomain))
+    if (Access.isStrideZero(isl_set_copy(scatteringDomain)))
       newLoad = generateStrideZeroLoad(load, scalarMaps[0], vectorWidth);
-    else if (Access.isStrideOne(scatteringDomain))
+    else if (Access.isStrideOne(isl_set_copy(scatteringDomain)))
       newLoad = generateStrideOneLoad(load, scalarMaps[0], vectorWidth);
     else
       newLoad = generateUnknownStrideLoad(load, scalarMaps, vectorWidth);
@@ -515,7 +515,7 @@ public:
     const Value *pointer = store->getPointerOperand();
     Value *vector = getOperand(store->getValueOperand(), BBMap, &vectorMap);
 
-    if (Access.isStrideOne(scatteringDomain)) {
+    if (Access.isStrideOne(isl_set_copy(scatteringDomain))) {
       Type *vectorPtrType = getVectorPtrTy(pointer, vectorWidth);
       Value *newPointer = getOperand(pointer, BBMap, &vectorMap);
 
@@ -1259,7 +1259,8 @@ public:
     for (int i = 1; i < vectorWidth; i++)
       IVS[i] = Builder.CreateAdd(IVS[i-1], StrideValue, "p_vector_iv");
 
-    isl_set *scatteringDomain = isl_set_from_cloog_domain(f->domain);
+    isl_set *scatteringDomain =
+      isl_set_copy(isl_set_from_cloog_domain(f->domain));
 
     // Add loop iv to symbols.
     (*clastVars)[f->iterator] = LB;
@@ -1273,6 +1274,7 @@ public:
     }
 
     // Loop is finished, so remove its iv from the live symbols.
+    isl_set_free(scatteringDomain);
     clastVars->erase(f->iterator);
   }
 

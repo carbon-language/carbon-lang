@@ -429,9 +429,9 @@ static isl_map *getEqualAndLarger(isl_space *setDomain) {
   return isl_map_from_basic_map(bmap);
 }
 
-isl_set *MemoryAccess::getStride(const isl_set *domainSubset) const {
+isl_set *MemoryAccess::getStride(__isl_take const isl_set *domainSubset) const {
   isl_map *accessRelation = getAccessRelation();
-  isl_set *scatteringDomain = isl_set_copy(const_cast<isl_set*>(domainSubset));
+  isl_set *scatteringDomain = const_cast<isl_set*>(domainSubset);
   isl_map *scattering = getStatement()->getScattering();
 
   scattering = isl_map_reverse(scattering);
@@ -458,34 +458,28 @@ isl_set *MemoryAccess::getStride(const isl_set *domainSubset) const {
   return isl_map_deltas(nextScatt);
 }
 
-bool MemoryAccess::isStrideZero(const isl_set *DomainSubset) const {
-  isl_set *Stride, *StrideZero;
-  bool IsStrideZero;
+bool MemoryAccess::isStrideX(__isl_take const isl_set *DomainSubset,
+                             int StrideWidth) const {
+  isl_set *Stride, *StrideX;
+  bool IsStrideX;
 
   Stride = getStride(DomainSubset);
-  StrideZero = isl_set_universe(isl_set_get_space(Stride));
-  StrideZero = isl_set_fix_si(StrideZero, isl_dim_set, 0, 0);
-  IsStrideZero = isl_set_is_equal(Stride, StrideZero);
+  StrideX = isl_set_universe(isl_set_get_space(Stride));
+  StrideX = isl_set_fix_si(StrideX, isl_dim_set, 0, StrideWidth);
+  IsStrideX = isl_set_is_equal(Stride, StrideX);
 
-  isl_set_free(StrideZero);
+  isl_set_free(StrideX);
   isl_set_free(Stride);
 
-  return IsStrideZero;
+  return IsStrideX;
+}
+
+bool MemoryAccess::isStrideZero(const isl_set *DomainSubset) const {
+  return isStrideX(DomainSubset, 0);
 }
 
 bool MemoryAccess::isStrideOne(const isl_set *DomainSubset) const {
-  isl_set *Stride, *StrideOne;
-  bool IsStrideOne;
-
-  Stride = getStride(DomainSubset);
-  StrideOne = isl_set_universe(isl_set_get_space(Stride));
-  StrideOne = isl_set_fix_si(StrideOne, isl_dim_set, 0, 1);
-  IsStrideOne = isl_set_is_equal(Stride, StrideOne);
-
-  isl_set_free(StrideOne);
-  isl_set_free(Stride);
-
-  return IsStrideOne;
+  return isStrideX(DomainSubset, 1);
 }
 
 void MemoryAccess::setNewAccessRelation(isl_map *newAccess) {
