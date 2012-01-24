@@ -163,16 +163,6 @@ namespace llvm {
       Values.push_back(Value);
     }
 
-    /// SiblingOffset - Return the offset of the debug information entry's
-    /// sibling.
-    unsigned getSiblingOffset() const { return Offset + Size; }
-
-    /// addSiblingOffset - Add a sibling offset field to the front of the DIE.
-    /// The caller is responsible for deleting the return value at or after the
-    /// same time it destroys this DIE.
-    ///
-    DIEValue *addSiblingOffset(BumpPtrAllocator &A);
-
     /// addChild - Add a child to the DIE.
     ///
     void addChild(DIE *Child) {

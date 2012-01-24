@@ -1488,10 +1488,6 @@ DwarfDebug::computeSizeAndOffset(DIE *Die, unsigned Offset, bool Last) {
   // Get the children.
   const std::vector<DIE *> &Children = Die->getChildren();
 
-  // If not last sibling and has children then add sibling offset attribute.
-  if (!Last && !Children.empty())
-    Die->addSiblingOffset(DIEValueAllocator);
-
   // Record the abbreviation.
   assignAbbrevNumber(Die->getAbbrev());
 
@@ -1602,9 +1598,6 @@ void DwarfDebug::emitDIE(DIE *Die) {
       Asm->OutStreamer.AddComment(dwarf::AttributeString(Attr));
 
     switch (Attr) {
-    case dwarf::DW_AT_sibling:
-      Asm->EmitInt32(Die->getSiblingOffset());
-      break;
     case dwarf::DW_AT_abstract_origin: {
       DIEEntry *E = cast<DIEEntry>(Values[i]);
       DIE *Origin = E->getEntry();

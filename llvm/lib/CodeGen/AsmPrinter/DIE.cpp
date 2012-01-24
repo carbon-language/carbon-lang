@@ -112,15 +112,6 @@ DIE::~DIE() {
     delete Children[i];
 }
 
-/// addSiblingOffset - Add a sibling offset field to the front of the DIE.
-///
-DIEValue *DIE::addSiblingOffset(BumpPtrAllocator &A) {
-  DIEInteger *DI = new (A) DIEInteger(0);
-  Values.insert(Values.begin(), DI);
-  Abbrev.AddFirstAttribute(dwarf::DW_AT_sibling, dwarf::DW_FORM_ref4);
-  return DI;
-}
-
 #ifndef NDEBUG
 void DIE::print(raw_ostream &O, unsigned IncIndent) {
   IndentCount += IncIndent;
