@@ -285,7 +285,7 @@ struct MatchableInfo {
     /// Register record if this token is singleton register.
     Record *SingletonReg;
 
-    explicit AsmOperand(StringRef T) : Token(T), Class(0), SubOpIdx(-1), 
+    explicit AsmOperand(StringRef T) : Token(T), Class(0), SubOpIdx(-1),
 				       SingletonReg(0) {}
   };
 
@@ -408,24 +408,24 @@ struct MatchableInfo {
   std::string ConversionFnKind;
 
   MatchableInfo(const CodeGenInstruction &CGI)
-    : AsmVariantID(0), TheDef(CGI.TheDef), DefRec(&CGI), 
+    : AsmVariantID(0), TheDef(CGI.TheDef), DefRec(&CGI),
       AsmString(CGI.AsmString) {
   }
 
   MatchableInfo(const CodeGenInstAlias *Alias)
-    : AsmVariantID(0), TheDef(Alias->TheDef), DefRec(Alias), 
+    : AsmVariantID(0), TheDef(Alias->TheDef), DefRec(Alias),
       AsmString(Alias->AsmString) {
   }
 
   void Initialize(const AsmMatcherInfo &Info,
-                  SmallPtrSet<Record*, 16> &SingletonRegisters, 
+                  SmallPtrSet<Record*, 16> &SingletonRegisters,
 		  int AsmVariantNo, std::string &RegisterPrefix);
 
   /// Validate - Return true if this matchable is a valid thing to match against
   /// and perform a bunch of validity checking.
   bool Validate(StringRef CommentDelimiter, bool Hack) const;
 
-  /// extractSingletonRegisterForAsmOperand - Extract singleton register, 
+  /// extractSingletonRegisterForAsmOperand - Extract singleton register,
   /// if present, from specified token.
   void
   extractSingletonRegisterForAsmOperand(unsigned i, const AsmMatcherInfo &Info,
@@ -652,7 +652,7 @@ void MatchableInfo::Initialize(const AsmMatcherInfo &Info,
                                SmallPtrSet<Record*, 16> &SingletonRegisters,
                                int AsmVariantNo, std::string &RegisterPrefix) {
   AsmVariantID = AsmVariantNo;
-  AsmString = 
+  AsmString =
     CodeGenInstruction::FlattenAsmStringVariants(AsmString, AsmVariantNo);
 
   TokenizeAsmString(Info);
@@ -811,10 +811,10 @@ bool MatchableInfo::Validate(StringRef CommentDelimiter, bool Hack) const {
   return true;
 }
 
-/// extractSingletonRegisterForAsmOperand - Extract singleton register, 
+/// extractSingletonRegisterForAsmOperand - Extract singleton register,
 /// if present, from specified token.
 void MatchableInfo::
-extractSingletonRegisterForAsmOperand(unsigned OperandNo, 
+extractSingletonRegisterForAsmOperand(unsigned OperandNo,
                                       const AsmMatcherInfo &Info,
 				      std::string &RegisterPrefix) {
   StringRef Tok = AsmOperands[OperandNo].Token;
@@ -823,7 +823,7 @@ extractSingletonRegisterForAsmOperand(unsigned OperandNo,
     if (const CodeGenRegister *Reg = Info.Target.getRegisterByName(LoweredTok))
       AsmOperands[OperandNo].SingletonReg = Reg->TheDef;
     return;
-  } 
+  }
 
   if (!Tok.startswith(RegisterPrefix))
     return;
@@ -1182,20 +1182,20 @@ void AsmMatcherInfo::BuildInfo() {
     std::string CommentDelimiter = AsmVariant->getValueAsString("CommentDelimiter");
     std::string RegisterPrefix = AsmVariant->getValueAsString("RegisterPrefix");
     int AsmVariantNo = AsmVariant->getValueAsInt("Variant");
-    
+
     for (CodeGenTarget::inst_iterator I = Target.inst_begin(),
 	   E = Target.inst_end(); I != E; ++I) {
       const CodeGenInstruction &CGI = **I;
-      
+
       // If the tblgen -match-prefix option is specified (for tblgen hackers),
       // filter the set of instructions we consider.
       if (!StringRef(CGI.TheDef->getName()).startswith(MatchPrefix))
 	continue;
-      
+
       // Ignore "codegen only" instructions.
       if (CGI.TheDef->getValueAsBit("isCodeGenOnly"))
 	continue;
-      
+
       // Validate the operand list to ensure we can handle this instruction.
       for (unsigned i = 0, e = CGI.Operands.size(); i != e; ++i) {
 	const CGIOperandList::OperandInfo &OI = CGI.Operands[i];
@@ -1216,47 +1216,47 @@ void AsmMatcherInfo::BuildInfo() {
 	  }
 	}
       }
-      
+
       OwningPtr<MatchableInfo> II(new MatchableInfo(CGI));
-      
+
       II->Initialize(*this, SingletonRegisters, AsmVariantNo, RegisterPrefix);
-      
+
       // Ignore instructions which shouldn't be matched and diagnose invalid
       // instruction definitions with an error.
       if (!II->Validate(CommentDelimiter, true))
 	continue;
-      
+
       // Ignore "Int_*" and "*_Int" instructions, which are internal aliases.
       //
       // FIXME: This is a total hack.
       if (StringRef(II->TheDef->getName()).startswith("Int_") ||
 	  StringRef(II->TheDef->getName()).endswith("_Int"))
 	continue;
-      
+
       Matchables.push_back(II.take());
     }
-    
+
     // Parse all of the InstAlias definitions and stick them in the list of
     // matchables.
     std::vector<Record*> AllInstAliases =
       Records.getAllDerivedDefinitions("InstAlias");
     for (unsigned i = 0, e = AllInstAliases.size(); i != e; ++i) {
       CodeGenInstAlias *Alias = new CodeGenInstAlias(AllInstAliases[i], Target);
-      
+
       // If the tblgen -match-prefix option is specified (for tblgen hackers),
       // filter the set of instruction aliases we consider, based on the target
       // instruction.
       if (!StringRef(Alias->ResultInst->TheDef->getName()).startswith(
 								      MatchPrefix))
 	continue;
-      
+
       OwningPtr<MatchableInfo> II(new MatchableInfo(Alias));
-      
+
       II->Initialize(*this, SingletonRegisters, AsmVariantNo, RegisterPrefix);
-      
+
       // Validate the alias definitions.
       II->Validate(CommentDelimiter, false);
-      
+
       Matchables.push_back(II.take());
     }
   }
