@@ -1672,14 +1672,11 @@ namespace llvm {
             new DyldELFObject<support::little, true>(Object, MemoryMap, ec);
 
         // Unit testing for type inquiry
-        bool isBinary = isa<Binary>(result);
-        bool isDyld = isa<DyldELFObject<support::little, true> >(result);
-        bool isFile = isa<ELFObjectFile<support::little, true> >(result);
-        (void)isBinary;
-        (void)isDyld;
-        (void)isFile;
-        assert(isBinary && isDyld && isFile &&
-            "Type inquiry failed for ELF object!");
+        assert(isa<Binary>(result) && "Type inquiry failed for ELF object!");
+        assert((isa<DyldELFObject<support::little, true> >(result)) &&
+               "Type inquiry failed for ELF object!");
+        assert((isa<ELFObjectFile<support::little, true> >(result)) &&
+               "Type inquiry failed for ELF object!");
         return result;
       }
     }
@@ -1695,14 +1692,11 @@ namespace llvm {
             new ELFObjectFile<support::little, true>(Object, ec);
 
       // Unit testing for type inquiry
-      bool isBinary = isa<Binary>(result);
-      bool isDyld = isa<DyldELFObject<support::little, true> >(result);
-      bool isFile = isa<ELFObjectFile<support::little, true> >(result);
-      (void)isBinary;
-      (void)isDyld;
-      (void)isFile;
-      assert(isBinary && isFile && !isDyld &&
-          "Type inquiry failed for ELF object!");
+      assert(isa<Binary>(result) && "Type inquiry failed for ELF object!");
+      assert((!isa<DyldELFObject<support::little, true> >(result)) &&
+             "Type inquiry failed for ELF object!");
+      assert((isa<ELFObjectFile<support::little, true> >(result)) &&
+             "Type inquiry failed for ELF object!");
       return result;
     }
 
