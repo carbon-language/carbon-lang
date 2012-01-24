@@ -152,83 +152,21 @@ class BlockGenerator {
   ValueMapT &VMap;
   VectorValueMapT &ValueMaps;
   Scop &S;
-  ScopStmt &statement;
-  isl_set *scatteringDomain;
+  ScopStmt &Statement;
+  isl_set *ScatteringDomain;
 
 public:
   BlockGenerator(IRBuilder<> &B, ValueMapT &vmap, VectorValueMapT &vmaps,
-                 ScopStmt &Stmt, isl_set *domain)
-    : Builder(B), VMap(vmap), ValueMaps(vmaps), S(*Stmt.getParent()),
-    statement(Stmt), scatteringDomain(domain) {}
+                 ScopStmt &Stmt, __isl_keep isl_set *domain);
 
-  const Region &getRegion() {
-    return S.getRegion();
-  }
+  const Region &getRegion();
 
-  Value *makeVectorOperand(Value *operand, int vectorWidth) {
-    if (operand->getType()->isVectorTy())
-      return operand;
-
-    VectorType *vectorType = VectorType::get(operand->getType(), vectorWidth);
-    Value *vector = UndefValue::get(vectorType);
-    vector = Builder.CreateInsertElement(vector, operand, Builder.getInt32(0));
-
-    std::vector<Constant*> splat;
-
-    for (int i = 0; i < vectorWidth; i++)
-      splat.push_back (Builder.getInt32(0));
-
-    Constant *splatVector = ConstantVector::get(splat);
-
-    return Builder.CreateShuffleVector(vector, vector, splatVector);
-  }
+  Value *makeVectorOperand(Value *operand, int vectorWidth);
 
   Value *getOperand(const Value *oldOperand, ValueMapT &BBMap,
-                    ValueMapT *VectorMap = 0) {
-    const Instruction *OpInst = dyn_cast<Instruction>(oldOperand);
+                    ValueMapT *VectorMap = 0);
 
-    if (!OpInst)
-      return const_cast<Value*>(oldOperand);
-
-    if (VectorMap && VectorMap->count(oldOperand))
-      return (*VectorMap)[oldOperand];
-
-    // IVS and Parameters.
-    if (VMap.count(oldOperand)) {
-      Value *NewOperand = VMap[oldOperand];
-
-      // Insert a cast if types are different
-      if (oldOperand->getType()->getScalarSizeInBits()
-          < NewOperand->getType()->getScalarSizeInBits())
-        NewOperand = Builder.CreateTruncOrBitCast(NewOperand,
-                                                   oldOperand->getType());
-
-      return NewOperand;
-    }
-
-    // Instructions calculated in the current BB.
-    if (BBMap.count(oldOperand)) {
-      return BBMap[oldOperand];
-    }
-
-    // Ignore instructions that are referencing ops in the old BB. These
-    // instructions are unused. They where replace by new ones during
-    // createIndependentBlocks().
-    if (getRegion().contains(OpInst->getParent()))
-      return NULL;
-
-    return const_cast<Value*>(oldOperand);
-  }
-
-  Type *getVectorPtrTy(const Value *V, int vectorWidth) {
-    PointerType *pointerType = dyn_cast<PointerType>(V->getType());
-    assert(pointerType && "PointerType expected");
-
-    Type *scalarType = pointerType->getElementType();
-    VectorType *vectorType = VectorType::get(scalarType, vectorWidth);
-
-    return PointerType::getUnqual(vectorType);
-  }
+  Type *getVectorPtrTy(const Value *V, int vectorWidth);
 
   /// @brief Load a vector from a set of adjacent scalars
   ///
@@ -239,19 +177,7 @@ public:
   /// %vec_full = load <4 x double>* %vector_ptr
   ///
   Value *generateStrideOneLoad(const LoadInst *load, ValueMapT &BBMap,
-                               int size) {
-    const Value *pointer = load->getPointerOperand();
-    Type *vectorPtrType = getVectorPtrTy(pointer, size);
-    Value *newPointer = getOperand(pointer, BBMap);
-    Value *VectorPtr = Builder.CreateBitCast(newPointer, vectorPtrType,
-                                             "vector_ptr");
-    LoadInst *VecLoad = Builder.CreateLoad(VectorPtr,
-                                           load->getName() + "_p_vec_full");
-    if (!Aligned)
-      VecLoad->setAlignment(8);
-
-    return VecLoad;
-  }
+                               int size);
 
   /// @brief Load a vector initialized from a single scalar in memory
   ///
@@ -264,31 +190,7 @@ public:
   ///       double> %splat_one, <4 x i32> zeroinitializer
   ///
   Value *generateStrideZeroLoad(const LoadInst *load, ValueMapT &BBMap,
-                                int size) {
-    const Value *pointer = load->getPointerOperand();
-    Type *vectorPtrType = getVectorPtrTy(pointer, 1);
-    Value *newPointer = getOperand(pointer, BBMap);
-    Value *vectorPtr = Builder.CreateBitCast(newPointer, vectorPtrType,
-                                             load->getName() + "_p_vec_p");
-    LoadInst *scalarLoad= Builder.CreateLoad(vectorPtr,
-                                             load->getName() + "_p_splat_one");
-
-    if (!Aligned)
-      scalarLoad->setAlignment(8);
-
-    std::vector<Constant*> splat;
-
-    for (int i = 0; i < size; i++)
-      splat.push_back (Builder.getInt32(0));
-
-    Constant *splatVector = ConstantVector::get(splat);
-
-    Value *vectorLoad = Builder.CreateShuffleVector(scalarLoad, scalarLoad,
-                                                    splatVector,
-                                                    load->getName()
-                                                    + "_p_splat");
-    return vectorLoad;
-  }
+                                int size);
 
   /// @Load a vector from scalars distributed in memory
   ///
@@ -302,322 +204,59 @@ public:
   /// %vec_2 = insertelement <2 x double> %vec_1, double %scalar_1, i32 1
   ///
   Value *generateUnknownStrideLoad(const LoadInst *load,
-                                   VectorValueMapT &scalarMaps,
-                                   int size) {
-    const Value *pointer = load->getPointerOperand();
-    VectorType *vectorType = VectorType::get(
-      dyn_cast<PointerType>(pointer->getType())->getElementType(), size);
-
-    Value *vector = UndefValue::get(vectorType);
-
-    for (int i = 0; i < size; i++) {
-      Value *newPointer = getOperand(pointer, scalarMaps[i]);
-      Value *scalarLoad = Builder.CreateLoad(newPointer,
-                                             load->getName() + "_p_scalar_");
-      vector = Builder.CreateInsertElement(vector, scalarLoad,
-                                           Builder.getInt32(i),
-                                           load->getName() + "_p_vec_");
-    }
-
-    return vector;
-  }
+                                   VectorValueMapT &scalarMaps, int size);
 
   static Value* islAffToValue(__isl_take isl_aff *Aff,
-                              IslPwAffUserInfo *UserInfo) {
-    assert(isl_aff_is_cst(Aff) && "Only constant access functions supported");
-
-    IRBuilder<> *Builder = UserInfo->Builder;
-
-    isl_int OffsetIsl;
-    mpz_t OffsetMPZ;
-
-    isl_int_init(OffsetIsl);
-    mpz_init(OffsetMPZ);
-    isl_aff_get_constant(Aff, &OffsetIsl);
-    isl_int_get_gmp(OffsetIsl, OffsetMPZ);
-
-    Value *OffsetValue = NULL;
-    APInt Offset = APInt_from_MPZ(OffsetMPZ);
-    OffsetValue = ConstantInt::get(Builder->getContext(), Offset);
-
-    mpz_clear(OffsetMPZ);
-    isl_int_clear(OffsetIsl);
-    isl_aff_free(Aff);
-
-    return OffsetValue;
-  }
+                              IslPwAffUserInfo *UserInfo);
 
   static int mergeIslAffValues(__isl_take isl_set *Set,
-                               __isl_take isl_aff *Aff, void *User) {
-    IslPwAffUserInfo *UserInfo = (IslPwAffUserInfo *)User;
+                               __isl_take isl_aff *Aff, void *User);
 
-    assert((UserInfo->Result == NULL) && "Result is already set."
-           "Currently only single isl_aff is supported");
-    assert(isl_set_plain_is_universe(Set)
-           && "Code generation failed because the set is not universe");
-
-    UserInfo->Result = islAffToValue(Aff, UserInfo);
-
-    isl_set_free(Set);
-    return 0;
-  }
-
-  Value* islPwAffToValue(__isl_take isl_pw_aff *PwAff, Value *BaseAddress) {
-    IslPwAffUserInfo UserInfo;
-    UserInfo.BaseAddress = BaseAddress;
-    UserInfo.Result = NULL;
-    UserInfo.Builder = &Builder;
-    isl_pw_aff_foreach_piece(PwAff, mergeIslAffValues, &UserInfo);
-    assert(UserInfo.Result && "Code generation for isl_pw_aff failed");
-
-    isl_pw_aff_free(PwAff);
-    return UserInfo.Result;
-  }
+  Value* islPwAffToValue(__isl_take isl_pw_aff *PwAff, Value *BaseAddress);
 
   /// @brief Get the memory access offset to be added to the base address
   std::vector <Value*> getMemoryAccessIndex(__isl_keep isl_map *AccessRelation,
-                                            Value *BaseAddress) {
-    assert((isl_map_dim(AccessRelation, isl_dim_out) == 1)
-           && "Only single dimensional access functions supported");
-
-    isl_pw_aff *PwAff = isl_map_dim_max(isl_map_copy(AccessRelation), 0);
-    Value *OffsetValue = islPwAffToValue(PwAff, BaseAddress);
-
-    PointerType *BaseAddressType = dyn_cast<PointerType>(
-                                   BaseAddress->getType());
-    Type *ArrayTy = BaseAddressType->getElementType();
-    Type *ArrayElementType = dyn_cast<ArrayType>(ArrayTy)->getElementType();
-    OffsetValue = Builder.CreateSExtOrBitCast(OffsetValue, ArrayElementType);
-
-    std::vector<Value*> IndexArray;
-    Value *NullValue = Constant::getNullValue(ArrayElementType);
-    IndexArray.push_back(NullValue);
-    IndexArray.push_back(OffsetValue);
-    return IndexArray;
-  }
+                                            Value *BaseAddress);
 
   /// @brief Get the new operand address according to the changed access in
   ///        JSCOP file.
   Value *getNewAccessOperand(__isl_keep isl_map *NewAccessRelation,
                              Value *BaseAddress, const Value *OldOperand,
-                             ValueMapT &BBMap) {
-    std::vector<Value*> IndexArray = getMemoryAccessIndex(NewAccessRelation,
-                                                          BaseAddress);
-    Value *NewOperand = Builder.CreateGEP(BaseAddress, IndexArray,
-                                          "p_newarrayidx_");
-    return NewOperand;
-  }
+                             ValueMapT &BBMap);
 
   /// @brief Generate the operand address
   Value *generateLocationAccessed(const Instruction *Inst,
-                                  const Value *Pointer, ValueMapT &BBMap ) {
-    MemoryAccess &Access = statement.getAccessFor(Inst);
-    isl_map *CurrentAccessRelation = Access.getAccessRelation();
-    isl_map *NewAccessRelation = Access.getNewAccessRelation();
+                                  const Value *Pointer, ValueMapT &BBMap );
 
-    assert(isl_map_has_equal_space(CurrentAccessRelation, NewAccessRelation)
-           && "Current and new access function use different spaces");
-
-    Value *NewPointer;
-
-    if (!NewAccessRelation) {
-      NewPointer = getOperand(Pointer, BBMap);
-    } else {
-      Value *BaseAddress = const_cast<Value*>(Access.getBaseAddr());
-      NewPointer = getNewAccessOperand(NewAccessRelation, BaseAddress, Pointer,
-                                       BBMap);
-    }
-
-    isl_map_free(CurrentAccessRelation);
-    isl_map_free(NewAccessRelation);
-    return NewPointer;
-  }
-
-  Value *generateScalarLoad(const LoadInst *load, ValueMapT &BBMap) {
-    const Value *pointer = load->getPointerOperand();
-    const Instruction *Inst = dyn_cast<Instruction>(load);
-    Value *newPointer = generateLocationAccessed(Inst, pointer, BBMap);
-    Value *scalarLoad = Builder.CreateLoad(newPointer,
-                                           load->getName() + "_p_scalar_");
-    return scalarLoad;
-  }
+  Value *generateScalarLoad(const LoadInst *load, ValueMapT &BBMap);
 
   /// @brief Load a value (or several values as a vector) from memory.
   void generateLoad(const LoadInst *load, ValueMapT &vectorMap,
-                    VectorValueMapT &scalarMaps, int vectorWidth) {
-    if (scalarMaps.size() == 1) {
-      scalarMaps[0][load] = generateScalarLoad(load, scalarMaps[0]);
-      return;
-    }
-
-    Value *newLoad;
-
-    MemoryAccess &Access = statement.getAccessFor(load);
-
-    assert(scatteringDomain && "No scattering domain available");
-
-    if (Access.isStrideZero(isl_set_copy(scatteringDomain)))
-      newLoad = generateStrideZeroLoad(load, scalarMaps[0], vectorWidth);
-    else if (Access.isStrideOne(isl_set_copy(scatteringDomain)))
-      newLoad = generateStrideOneLoad(load, scalarMaps[0], vectorWidth);
-    else
-      newLoad = generateUnknownStrideLoad(load, scalarMaps, vectorWidth);
-
-    vectorMap[load] = newLoad;
-  }
+                    VectorValueMapT &scalarMaps, int vectorWidth);
 
   void copyUnaryInst(const UnaryInstruction *Inst, ValueMapT &BBMap,
                      ValueMapT &VectorMap, int VectorDimension,
-                     int VectorWidth) {
-    Value *NewOperand = getOperand(Inst->getOperand(0), BBMap, &VectorMap);
-    NewOperand = makeVectorOperand(NewOperand, VectorWidth);
-
-    if (const CastInst *Cast = dyn_cast<CastInst>(Inst)) {
-      VectorType *DestType = VectorType::get(Inst->getType(), VectorWidth);
-      VectorMap[Inst] = Builder.CreateCast(Cast->getOpcode(), NewOperand,
-                                           DestType);
-    } else
-      llvm_unreachable("Can not generate vector code for instruction");
-    return;
-  }
+                     int VectorWidth);
 
   void copyBinInst(const BinaryOperator *Inst, ValueMapT &BBMap,
-                   ValueMapT &vectorMap, int vectorDimension, int vectorWidth) {
-    Value *opZero = Inst->getOperand(0);
-    Value *opOne = Inst->getOperand(1);
-
-    Value *newOpZero, *newOpOne;
-    newOpZero = getOperand(opZero, BBMap, &vectorMap);
-    newOpOne = getOperand(opOne, BBMap, &vectorMap);
-
-    newOpZero = makeVectorOperand(newOpZero, vectorWidth);
-    newOpOne = makeVectorOperand(newOpOne, vectorWidth);
-
-    Value *newInst = Builder.CreateBinOp(Inst->getOpcode(), newOpZero,
-                                         newOpOne,
-                                         Inst->getName() + "p_vec");
-    vectorMap[Inst] = newInst;
-
-    return;
-  }
+                   ValueMapT &vectorMap, int vectorDimension, int vectorWidth);
 
   void copyVectorStore(const StoreInst *store, ValueMapT &BBMap,
                        ValueMapT &vectorMap, VectorValueMapT &scalarMaps,
-                       int vectorDimension, int vectorWidth) {
-    // In vector mode we only generate a store for the first dimension.
-    if (vectorDimension > 0)
-      return;
+                       int vectorDimension, int vectorWidth);
 
-    MemoryAccess &Access = statement.getAccessFor(store);
+  void copyInstScalar(const Instruction *Inst, ValueMapT &BBMap);
 
-    assert(scatteringDomain && "No scattering domain available");
+  bool hasVectorOperands(const Instruction *Inst, ValueMapT &VectorMap);
 
-    const Value *pointer = store->getPointerOperand();
-    Value *vector = getOperand(store->getValueOperand(), BBMap, &vectorMap);
+  int getVectorSize();
 
-    if (Access.isStrideOne(isl_set_copy(scatteringDomain))) {
-      Type *vectorPtrType = getVectorPtrTy(pointer, vectorWidth);
-      Value *newPointer = getOperand(pointer, BBMap, &vectorMap);
-
-      Value *VectorPtr = Builder.CreateBitCast(newPointer, vectorPtrType,
-                                               "vector_ptr");
-      StoreInst *Store = Builder.CreateStore(vector, VectorPtr);
-
-      if (!Aligned)
-        Store->setAlignment(8);
-    } else {
-      for (unsigned i = 0; i < scalarMaps.size(); i++) {
-        Value *scalar = Builder.CreateExtractElement(vector,
-                                                     Builder.getInt32(i));
-        Value *newPointer = getOperand(pointer, scalarMaps[i]);
-        Builder.CreateStore(scalar, newPointer);
-      }
-    }
-
-    return;
-  }
-
-  void copyInstScalar(const Instruction *Inst, ValueMapT &BBMap) {
-    Instruction *NewInst = Inst->clone();
-
-    // Replace old operands with the new ones.
-    for (Instruction::const_op_iterator OI = Inst->op_begin(),
-         OE = Inst->op_end(); OI != OE; ++OI) {
-      Value *OldOperand = *OI;
-      Value *NewOperand = getOperand(OldOperand, BBMap);
-
-      if (!NewOperand) {
-        assert(!isa<StoreInst>(NewInst)
-               && "Store instructions are always needed!");
-        delete NewInst;
-        return;
-      }
-
-      NewInst->replaceUsesOfWith(OldOperand, NewOperand);
-    }
-
-    Builder.Insert(NewInst);
-    BBMap[Inst] = NewInst;
-
-    if (!NewInst->getType()->isVoidTy())
-      NewInst->setName("p_" + Inst->getName());
-  }
-
-  bool hasVectorOperands(const Instruction *Inst, ValueMapT &VectorMap) {
-    for (Instruction::const_op_iterator OI = Inst->op_begin(),
-         OE = Inst->op_end(); OI != OE; ++OI)
-      if (VectorMap.count(*OI))
-        return true;
-    return false;
-  }
-
-  int getVectorSize() {
-    return ValueMaps.size();
-  }
-
-  bool isVectorBlock() {
-    return getVectorSize() > 1;
-  }
+  bool isVectorBlock();
 
   void copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
                        ValueMapT &vectorMap, VectorValueMapT &scalarMaps,
-                       int vectorDimension, int vectorWidth) {
-    // Terminator instructions control the control flow. They are explicitally
-    // expressed in the clast and do not need to be copied.
-    if (Inst->isTerminator())
-      return;
+                       int vectorDimension, int vectorWidth);
 
-    if (isVectorBlock()) {
-      // If this instruction is already in the vectorMap, a vector instruction
-      // was already issued, that calculates the values of all dimensions. No
-      // need to create any more instructions.
-      if (vectorMap.count(Inst))
-        return;
-    }
-
-    if (const LoadInst *load = dyn_cast<LoadInst>(Inst)) {
-      generateLoad(load, vectorMap, scalarMaps, vectorWidth);
-      return;
-    }
-
-    if (isVectorBlock() && hasVectorOperands(Inst, vectorMap)) {
-      if (const UnaryInstruction *UnaryInst = dyn_cast<UnaryInstruction>(Inst))
-        copyUnaryInst(UnaryInst, BBMap, vectorMap, vectorDimension,
-                      vectorWidth);
-      else if
-        (const BinaryOperator *binaryInst = dyn_cast<BinaryOperator>(Inst))
-        copyBinInst(binaryInst, BBMap, vectorMap, vectorDimension, vectorWidth);
-      else if (const StoreInst *store = dyn_cast<StoreInst>(Inst))
-        copyVectorStore(store, BBMap, vectorMap, scalarMaps, vectorDimension,
-                          vectorWidth);
-      else
-        llvm_unreachable("Cannot issue vector code for this instruction");
-
-      return;
-    }
-
-    copyInstScalar(Inst, BBMap);
-  }
   // Insert a copy of a basic block in the newly generated code.
   //
   // @param Builder The builder used to insert the code. It also specifies
@@ -627,44 +266,477 @@ public:
   //                is used to update the operands of the statements.
   //                For new statements a relation old->new is inserted in this
   //                map.
-  void copyBB(BasicBlock *BB, DominatorTree *DT) {
-    Function *F = Builder.GetInsertBlock()->getParent();
-    LLVMContext &Context = F->getContext();
-    BasicBlock *CopyBB = BasicBlock::Create(Context,
-                                            "polly." + BB->getName() + ".stmt",
-                                            F);
-    Builder.CreateBr(CopyBB);
-    DT->addNewBlock(CopyBB, Builder.GetInsertBlock());
-    Builder.SetInsertPoint(CopyBB);
-
-    // Create two maps that store the mapping from the original instructions of
-    // the old basic block to their copies in the new basic block. Those maps
-    // are basic block local.
-    //
-    // As vector code generation is supported there is one map for scalar values
-    // and one for vector values.
-    //
-    // In case we just do scalar code generation, the vectorMap is not used and
-    // the scalarMap has just one dimension, which contains the mapping.
-    //
-    // In case vector code generation is done, an instruction may either appear
-    // in the vector map once (as it is calculating >vectorwidth< values at a
-    // time. Or (if the values are calculated using scalar operations), it
-    // appears once in every dimension of the scalarMap.
-    VectorValueMapT scalarBlockMap(getVectorSize());
-    ValueMapT vectorBlockMap;
-
-    for (BasicBlock::const_iterator II = BB->begin(), IE = BB->end();
-         II != IE; ++II)
-      for (int i = 0; i < getVectorSize(); i++) {
-        if (isVectorBlock())
-          VMap = ValueMaps[i];
-
-        copyInstruction(II, scalarBlockMap[i], vectorBlockMap,
-                        scalarBlockMap, i, getVectorSize());
-      }
-  }
+  void copyBB(BasicBlock *BB, DominatorTree *DT);
 };
+
+BlockGenerator::BlockGenerator(IRBuilder<> &B, ValueMapT &vmap,
+                               VectorValueMapT &vmaps, ScopStmt &Stmt,
+                               __isl_keep isl_set *domain)
+    : Builder(B), VMap(vmap), ValueMaps(vmaps), S(*Stmt.getParent()),
+      Statement(Stmt), ScatteringDomain(domain) {}
+
+const Region &BlockGenerator::getRegion() {
+  return S.getRegion();
+}
+
+Value *BlockGenerator::makeVectorOperand(Value *Operand, int VectorWidth) {
+  if (Operand->getType()->isVectorTy())
+    return Operand;
+
+  VectorType *VectorType = VectorType::get(Operand->getType(), VectorWidth);
+  Value *Vector = UndefValue::get(VectorType);
+  Vector = Builder.CreateInsertElement(Vector, Operand, Builder.getInt32(0));
+
+  std::vector<Constant*> Splat;
+
+  for (int i = 0; i < VectorWidth; i++)
+    Splat.push_back (Builder.getInt32(0));
+
+  Constant *SplatVector = ConstantVector::get(Splat);
+
+  return Builder.CreateShuffleVector(Vector, Vector, SplatVector);
+}
+
+Value *BlockGenerator::getOperand(const Value *OldOperand, ValueMapT &BBMap,
+                                  ValueMapT *VectorMap) {
+  const Instruction *OpInst = dyn_cast<Instruction>(OldOperand);
+
+  if (!OpInst)
+    return const_cast<Value*>(OldOperand);
+
+  if (VectorMap && VectorMap->count(OldOperand))
+    return (*VectorMap)[OldOperand];
+
+  // IVS and Parameters.
+  if (VMap.count(OldOperand)) {
+    Value *NewOperand = VMap[OldOperand];
+
+    // Insert a cast if types are different
+    if (OldOperand->getType()->getScalarSizeInBits()
+        < NewOperand->getType()->getScalarSizeInBits())
+      NewOperand = Builder.CreateTruncOrBitCast(NewOperand,
+                                                OldOperand->getType());
+
+    return NewOperand;
+  }
+
+  // Instructions calculated in the current BB.
+  if (BBMap.count(OldOperand)) {
+    return BBMap[OldOperand];
+  }
+
+  // Ignore instructions that are referencing ops in the old BB. These
+  // instructions are unused. They where replace by new ones during
+  // createIndependentBlocks().
+  if (getRegion().contains(OpInst->getParent()))
+    return NULL;
+
+  return const_cast<Value*>(OldOperand);
+}
+
+Type *BlockGenerator::getVectorPtrTy(const Value *Val, int VectorWidth) {
+  PointerType *PointerTy = dyn_cast<PointerType>(Val->getType());
+  assert(PointerTy && "PointerType expected");
+
+  Type *ScalarType = PointerTy->getElementType();
+  VectorType *VectorType = VectorType::get(ScalarType, VectorWidth);
+
+  return PointerType::getUnqual(VectorType);
+}
+
+Value *BlockGenerator::generateStrideOneLoad(const LoadInst *Load,
+                                             ValueMapT &BBMap, int Size) {
+  const Value *Pointer = Load->getPointerOperand();
+  Type *VectorPtrType = getVectorPtrTy(Pointer, Size);
+  Value *NewPointer = getOperand(Pointer, BBMap);
+  Value *VectorPtr = Builder.CreateBitCast(NewPointer, VectorPtrType,
+                                           "vector_ptr");
+  LoadInst *VecLoad = Builder.CreateLoad(VectorPtr,
+                                         Load->getName() + "_p_vec_full");
+  if (!Aligned)
+    VecLoad->setAlignment(8);
+
+  return VecLoad;
+}
+
+Value *BlockGenerator::generateStrideZeroLoad(const LoadInst *Load,
+                                              ValueMapT &BBMap, int Size) {
+  const Value *Pointer = Load->getPointerOperand();
+  Type *VectorPtrType = getVectorPtrTy(Pointer, 1);
+  Value *NewPointer = getOperand(Pointer, BBMap);
+  Value *VectorPtr = Builder.CreateBitCast(NewPointer, VectorPtrType,
+                                           Load->getName() + "_p_vec_p");
+  LoadInst *ScalarLoad= Builder.CreateLoad(VectorPtr,
+                                           Load->getName() + "_p_splat_one");
+
+  if (!Aligned)
+    ScalarLoad->setAlignment(8);
+
+  std::vector<Constant*> Splat;
+
+  for (int i = 0; i < Size; i++)
+    Splat.push_back (Builder.getInt32(0));
+
+  Constant *SplatVector = ConstantVector::get(Splat);
+
+  Value *VectorLoad = Builder.CreateShuffleVector(ScalarLoad, ScalarLoad,
+                                                  SplatVector,
+                                                  Load->getName()
+                                                  + "_p_splat");
+  return VectorLoad;
+}
+
+Value *BlockGenerator::generateUnknownStrideLoad(const LoadInst *Load,
+                                                 VectorValueMapT &ScalarMaps,
+                                                 int Size) {
+  const Value *Pointer = Load->getPointerOperand();
+  VectorType *VectorType = VectorType::get(
+    dyn_cast<PointerType>(Pointer->getType())->getElementType(), Size);
+
+  Value *Vector = UndefValue::get(VectorType);
+
+  for (int i = 0; i < Size; i++) {
+    Value *NewPointer = getOperand(Pointer, ScalarMaps[i]);
+    Value *ScalarLoad = Builder.CreateLoad(NewPointer,
+                                           Load->getName() + "_p_scalar_");
+    Vector = Builder.CreateInsertElement(Vector, ScalarLoad,
+                                         Builder.getInt32(i),
+                                         Load->getName() + "_p_vec_");
+  }
+
+  return Vector;
+}
+
+Value *BlockGenerator::islAffToValue(__isl_take isl_aff *Aff,
+                                     IslPwAffUserInfo *UserInfo) {
+  assert(isl_aff_is_cst(Aff) && "Only constant access functions supported");
+
+  IRBuilder<> *Builder = UserInfo->Builder;
+
+  isl_int OffsetIsl;
+  mpz_t OffsetMPZ;
+
+  isl_int_init(OffsetIsl);
+  mpz_init(OffsetMPZ);
+  isl_aff_get_constant(Aff, &OffsetIsl);
+  isl_int_get_gmp(OffsetIsl, OffsetMPZ);
+
+  Value *OffsetValue = NULL;
+  APInt Offset = APInt_from_MPZ(OffsetMPZ);
+  OffsetValue = ConstantInt::get(Builder->getContext(), Offset);
+
+  mpz_clear(OffsetMPZ);
+  isl_int_clear(OffsetIsl);
+  isl_aff_free(Aff);
+
+  return OffsetValue;
+}
+
+int BlockGenerator::mergeIslAffValues(__isl_take isl_set *Set,
+                                      __isl_take isl_aff *Aff, void *User) {
+  IslPwAffUserInfo *UserInfo = (IslPwAffUserInfo *)User;
+
+  assert((UserInfo->Result == NULL) && "Result is already set."
+         "Currently only single isl_aff is supported");
+  assert(isl_set_plain_is_universe(Set)
+         && "Code generation failed because the set is not universe");
+
+  UserInfo->Result = islAffToValue(Aff, UserInfo);
+
+  isl_set_free(Set);
+  return 0;
+}
+
+Value *BlockGenerator::islPwAffToValue(__isl_take isl_pw_aff *PwAff,
+                                       Value *BaseAddress) {
+  IslPwAffUserInfo UserInfo;
+  UserInfo.BaseAddress = BaseAddress;
+  UserInfo.Result = NULL;
+  UserInfo.Builder = &Builder;
+  isl_pw_aff_foreach_piece(PwAff, mergeIslAffValues, &UserInfo);
+  assert(UserInfo.Result && "Code generation for isl_pw_aff failed");
+
+  isl_pw_aff_free(PwAff);
+  return UserInfo.Result;
+}
+
+std::vector <Value*> BlockGenerator::getMemoryAccessIndex(
+  __isl_keep isl_map *AccessRelation, Value *BaseAddress) {
+  assert((isl_map_dim(AccessRelation, isl_dim_out) == 1)
+         && "Only single dimensional access functions supported");
+
+  isl_pw_aff *PwAff = isl_map_dim_max(isl_map_copy(AccessRelation), 0);
+  Value *OffsetValue = islPwAffToValue(PwAff, BaseAddress);
+
+  PointerType *BaseAddressType = dyn_cast<PointerType>(
+    BaseAddress->getType());
+  Type *ArrayTy = BaseAddressType->getElementType();
+  Type *ArrayElementType = dyn_cast<ArrayType>(ArrayTy)->getElementType();
+  OffsetValue = Builder.CreateSExtOrBitCast(OffsetValue, ArrayElementType);
+
+  std::vector<Value*> IndexArray;
+  Value *NullValue = Constant::getNullValue(ArrayElementType);
+  IndexArray.push_back(NullValue);
+  IndexArray.push_back(OffsetValue);
+  return IndexArray;
+}
+
+Value *BlockGenerator::getNewAccessOperand(
+  __isl_keep isl_map *NewAccessRelation, Value *BaseAddress, const Value
+  *OldOperand, ValueMapT &BBMap) {
+  std::vector<Value*> IndexArray = getMemoryAccessIndex(NewAccessRelation,
+                                                        BaseAddress);
+  Value *NewOperand = Builder.CreateGEP(BaseAddress, IndexArray,
+                                        "p_newarrayidx_");
+  return NewOperand;
+}
+
+Value *BlockGenerator::generateLocationAccessed(const Instruction *Inst,
+                                                const Value *Pointer,
+                                                ValueMapT &BBMap ) {
+  MemoryAccess &Access = Statement.getAccessFor(Inst);
+  isl_map *CurrentAccessRelation = Access.getAccessRelation();
+  isl_map *NewAccessRelation = Access.getNewAccessRelation();
+
+  assert(isl_map_has_equal_space(CurrentAccessRelation, NewAccessRelation)
+         && "Current and new access function use different spaces");
+
+  Value *NewPointer;
+
+  if (!NewAccessRelation) {
+    NewPointer = getOperand(Pointer, BBMap);
+  } else {
+    Value *BaseAddress = const_cast<Value*>(Access.getBaseAddr());
+    NewPointer = getNewAccessOperand(NewAccessRelation, BaseAddress, Pointer,
+                                     BBMap);
+  }
+
+  isl_map_free(CurrentAccessRelation);
+  isl_map_free(NewAccessRelation);
+  return NewPointer;
+}
+
+Value *BlockGenerator::generateScalarLoad(const LoadInst *Load,
+                                          ValueMapT &BBMap) {
+  const Value *Pointer = Load->getPointerOperand();
+  const Instruction *Inst = dyn_cast<Instruction>(Load);
+  Value *NewPointer = generateLocationAccessed(Inst, Pointer, BBMap);
+  Value *ScalarLoad = Builder.CreateLoad(NewPointer,
+                                         Load->getName() + "_p_scalar_");
+  return ScalarLoad;
+}
+
+void BlockGenerator::generateLoad(const LoadInst *Load, ValueMapT &VectorMap,
+                                  VectorValueMapT &ScalarMaps,
+                                  int VectorWidth) {
+  if (ScalarMaps.size() == 1) {
+    ScalarMaps[0][Load] = generateScalarLoad(Load, ScalarMaps[0]);
+    return;
+  }
+
+  Value *NewLoad;
+
+  MemoryAccess &Access = Statement.getAccessFor(Load);
+
+  assert(ScatteringDomain && "No scattering domain available");
+
+  if (Access.isStrideZero(isl_set_copy(ScatteringDomain)))
+    NewLoad = generateStrideZeroLoad(Load, ScalarMaps[0], VectorWidth);
+  else if (Access.isStrideOne(isl_set_copy(ScatteringDomain)))
+    NewLoad = generateStrideOneLoad(Load, ScalarMaps[0], VectorWidth);
+  else
+    NewLoad = generateUnknownStrideLoad(Load, ScalarMaps, VectorWidth);
+
+  VectorMap[Load] = NewLoad;
+}
+
+void BlockGenerator::copyUnaryInst(const UnaryInstruction *Inst,
+                                   ValueMapT &BBMap, ValueMapT &VectorMap,
+                                   int VectorDimension, int VectorWidth) {
+  Value *NewOperand = getOperand(Inst->getOperand(0), BBMap, &VectorMap);
+  NewOperand = makeVectorOperand(NewOperand, VectorWidth);
+
+  assert(isa<CastInst>(Inst) && "Can not generate vector code for instruction");
+
+  const CastInst *Cast = dyn_cast<CastInst>(Inst);
+  VectorType *DestType = VectorType::get(Inst->getType(), VectorWidth);
+  VectorMap[Inst] = Builder.CreateCast(Cast->getOpcode(), NewOperand, DestType);
+}
+
+void BlockGenerator::copyBinInst(const BinaryOperator *Inst, ValueMapT &BBMap,
+                                 ValueMapT &VectorMap, int VectorDimension,
+                                 int VectorWidth) {
+  Value *OpZero = Inst->getOperand(0);
+  Value *OpOne = Inst->getOperand(1);
+
+  Value *NewOpZero, *NewOpOne;
+  NewOpZero = getOperand(OpZero, BBMap, &VectorMap);
+  NewOpOne = getOperand(OpOne, BBMap, &VectorMap);
+
+  NewOpZero = makeVectorOperand(NewOpZero, VectorWidth);
+  NewOpOne = makeVectorOperand(NewOpOne, VectorWidth);
+
+  Value *NewInst = Builder.CreateBinOp(Inst->getOpcode(), NewOpZero,
+                                       NewOpOne,
+                                       Inst->getName() + "p_vec");
+  VectorMap[Inst] = NewInst;
+}
+
+void BlockGenerator::copyVectorStore(const StoreInst *Store, ValueMapT &BBMap,
+                                     ValueMapT &VectorMap,
+                                     VectorValueMapT &ScalarMaps,
+                                     int VectorDimension, int VectorWidth) {
+  // In vector mode we only generate a store for the first dimension.
+  if (VectorDimension > 0)
+    return;
+
+  MemoryAccess &Access = Statement.getAccessFor(Store);
+
+  assert(ScatteringDomain && "No scattering domain available");
+
+  const Value *Pointer = Store->getPointerOperand();
+  Value *Vector = getOperand(Store->getValueOperand(), BBMap, &VectorMap);
+
+  if (Access.isStrideOne(isl_set_copy(ScatteringDomain))) {
+    Type *VectorPtrType = getVectorPtrTy(Pointer, VectorWidth);
+    Value *NewPointer = getOperand(Pointer, BBMap, &VectorMap);
+
+    Value *VectorPtr = Builder.CreateBitCast(NewPointer, VectorPtrType,
+                                             "vector_ptr");
+    StoreInst *Store = Builder.CreateStore(Vector, VectorPtr);
+
+    if (!Aligned)
+      Store->setAlignment(8);
+  } else {
+    for (unsigned i = 0; i < ScalarMaps.size(); i++) {
+      Value *Scalar = Builder.CreateExtractElement(Vector,
+                                                   Builder.getInt32(i));
+      Value *NewPointer = getOperand(Pointer, ScalarMaps[i]);
+      Builder.CreateStore(Scalar, NewPointer);
+    }
+  }
+}
+
+void BlockGenerator::copyInstScalar(const Instruction *Inst, ValueMapT &BBMap) {
+  Instruction *NewInst = Inst->clone();
+
+  // Replace old operands with the new ones.
+  for (Instruction::const_op_iterator OI = Inst->op_begin(),
+       OE = Inst->op_end(); OI != OE; ++OI) {
+    Value *OldOperand = *OI;
+    Value *NewOperand = getOperand(OldOperand, BBMap);
+
+    if (!NewOperand) {
+      assert(!isa<StoreInst>(NewInst)
+             && "Store instructions are always needed!");
+      delete NewInst;
+      return;
+    }
+
+    NewInst->replaceUsesOfWith(OldOperand, NewOperand);
+  }
+
+  Builder.Insert(NewInst);
+  BBMap[Inst] = NewInst;
+
+  if (!NewInst->getType()->isVoidTy())
+    NewInst->setName("p_" + Inst->getName());
+}
+
+bool BlockGenerator::hasVectorOperands(const Instruction *Inst,
+                                       ValueMapT &VectorMap) {
+  for (Instruction::const_op_iterator OI = Inst->op_begin(),
+       OE = Inst->op_end(); OI != OE; ++OI)
+    if (VectorMap.count(*OI))
+      return true;
+  return false;
+}
+
+int BlockGenerator::getVectorSize() {
+  return ValueMaps.size();
+}
+
+bool BlockGenerator::isVectorBlock() {
+  return getVectorSize() > 1;
+}
+
+void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
+                                     ValueMapT &VectorMap,
+                                     VectorValueMapT &ScalarMaps,
+                                     int VectorDimension, int VectorWidth) {
+  // Terminator instructions control the control flow. They are explicitally
+  // expressed in the clast and do not need to be copied.
+  if (Inst->isTerminator())
+    return;
+
+  if (isVectorBlock()) {
+    // If this instruction is already in the vectorMap, a vector instruction
+    // was already issued, that calculates the values of all dimensions. No
+    // need to create any more instructions.
+    if (VectorMap.count(Inst))
+      return;
+  }
+
+  if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
+    generateLoad(Load, VectorMap, ScalarMaps, VectorWidth);
+    return;
+  }
+
+  if (isVectorBlock() && hasVectorOperands(Inst, VectorMap)) {
+    if (const UnaryInstruction *UnaryInst = dyn_cast<UnaryInstruction>(Inst))
+      copyUnaryInst(UnaryInst, BBMap, VectorMap, VectorDimension, VectorWidth);
+    else if
+      (const BinaryOperator *BinaryInst = dyn_cast<BinaryOperator>(Inst))
+        copyBinInst(BinaryInst, BBMap, VectorMap, VectorDimension, VectorWidth);
+    else if (const StoreInst *Store = dyn_cast<StoreInst>(Inst))
+      copyVectorStore(Store, BBMap, VectorMap, ScalarMaps, VectorDimension,
+                      VectorWidth);
+    else
+      llvm_unreachable("Cannot issue vector code for this instruction");
+
+    return;
+  }
+
+  copyInstScalar(Inst, BBMap);
+}
+
+void BlockGenerator::copyBB(BasicBlock *BB, DominatorTree *DT) {
+  Function *F = Builder.GetInsertBlock()->getParent();
+  LLVMContext &Context = F->getContext();
+  BasicBlock *CopyBB = BasicBlock::Create(Context,
+                                          "polly." + BB->getName() + ".stmt",
+                                          F);
+  Builder.CreateBr(CopyBB);
+  DT->addNewBlock(CopyBB, Builder.GetInsertBlock());
+  Builder.SetInsertPoint(CopyBB);
+
+  // Create two maps that store the mapping from the original instructions of
+  // the old basic block to their copies in the new basic block. Those maps
+  // are basic block local.
+  //
+  // As vector code generation is supported there is one map for scalar values
+  // and one for vector values.
+  //
+  // In case we just do scalar code generation, the vectorMap is not used and
+  // the scalarMap has just one dimension, which contains the mapping.
+  //
+  // In case vector code generation is done, an instruction may either appear
+  // in the vector map once (as it is calculating >vectorwidth< values at a
+  // time. Or (if the values are calculated using scalar operations), it
+  // appears once in every dimension of the scalarMap.
+  VectorValueMapT ScalarBlockMap(getVectorSize());
+  ValueMapT VectorBlockMap;
+
+  for (BasicBlock::const_iterator II = BB->begin(), IE = BB->end();
+       II != IE; ++II)
+    for (int i = 0; i < getVectorSize(); i++) {
+      if (isVectorBlock())
+        VMap = ValueMaps[i];
+
+      copyInstruction(II, ScalarBlockMap[i], VectorBlockMap,
+                      ScalarBlockMap, i, getVectorSize());
+    }
+}
 
 /// Class to generate LLVM-IR that calculates the value of a clast_expr.
 class ClastExpCodeGen {
