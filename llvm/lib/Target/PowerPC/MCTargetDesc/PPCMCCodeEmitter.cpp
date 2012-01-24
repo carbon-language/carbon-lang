@@ -57,7 +57,7 @@ public:
   
   // getBinaryCodeForInstr - TableGen'erated function for getting the
   // binary encoding for an instruction.
-  unsigned getBinaryCodeForInstr(const MCInst &MI,
+  uint64_t getBinaryCodeForInstr(const MCInst &MI,
                                  SmallVectorImpl<MCFixup> &Fixups) const;
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups) const {

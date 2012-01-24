@@ -169,13 +169,13 @@ AddCodeToMergeInOperand(Record *R, BitsInit *BI, const std::string &VarName,
     opShift = beginInstBit - beginVarBit;
     
     if (opShift > 0) {
-      Case += "      Value |= (op & " + utostr(opMask) + "U) << " +
+      Case += "      Value |= (op & UINT64_C(" + utostr(opMask) + ")) << " +
               itostr(opShift) + ";\n";
     } else if (opShift < 0) {
-      Case += "      Value |= (op & " + utostr(opMask) + "U) >> " + 
+      Case += "      Value |= (op & UINT64_C(" + utostr(opMask) + ")) >> " + 
               itostr(-opShift) + ";\n";
     } else {
-      Case += "      Value |= op & " + utostr(opMask) + "U;\n";
+      Case += "      Value |= op & UINT64_C(" + utostr(opMask) + ");\n";
     }
   }
 }
@@ -220,7 +220,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
     Target.getInstructionsByEnumValue();
 
   // Emit function declaration
-  o << "unsigned " << Target.getName();
+  o << "uint64_t " << Target.getName();
   if (MCEmitter)
     o << "MCCodeEmitter::getBinaryCodeForInstr(const MCInst &MI,\n"
       << "    SmallVectorImpl<MCFixup> &Fixups) const {\n";
@@ -238,7 +238,7 @@ void CodeEmitterGen::run(raw_ostream &o) {
 
     if (R->getValueAsString("Namespace") == "TargetOpcode" ||
         R->getValueAsBit("isPseudo")) {
-      o << "    0U,\n";
+      o << "    UINT64_C(0),\n";
       continue;
     }
 
@@ -250,9 +250,9 @@ void CodeEmitterGen::run(raw_ostream &o) {
       if (BitInit *B = dynamic_cast<BitInit*>(BI->getBit(e-i-1)))
         Value |= B->getValue() << (e-i-1);
     }
-    o << "    " << Value << "U," << '\t' << "// " << R->getName() << "\n";
+    o << "    UINT64_C(" << Value << ")," << '\t' << "// " << R->getName() << "\n";
   }
-  o << "    0U\n  };\n";
+  o << "    UINT64_C(0)\n  };\n";
 
   // Map to accumulate all the cases.
   std::map<std::string, std::vector<std::string> > CaseMap;
