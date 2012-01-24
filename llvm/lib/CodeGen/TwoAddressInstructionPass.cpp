@@ -1646,6 +1646,36 @@ static void UpdateRegSequenceSrcs(unsigned SrcReg,
   }
 }
 
+// Find the first def of Reg, assuming they are all in the same basic block.
+static MachineInstr *findFirstDef(unsigned Reg, MachineRegisterInfo *MRI) {
+  SmallPtrSet<MachineInstr*, 8> Defs;
+  MachineInstr *First = 0;
+  for (MachineRegisterInfo::def_iterator RI = MRI->def_begin(Reg);
+       MachineInstr *MI = RI.skipInstruction(); Defs.insert(MI))
+    First = MI;
+  if (!First)
+    return 0;
+
+  MachineBasicBlock *MBB = First->getParent();
+  MachineBasicBlock::iterator A = First, B = First;
+  bool Moving;
+  do {
+    Moving = false;
+    if (A != MBB->begin()) {
+      Moving = true;
+      --A;
+      if (Defs.erase(A)) First = A;
+    }
+    if (B != MBB->end()) {
+      Defs.erase(B);
+      ++B;
+      Moving = true;
+    }
+  } while (Moving && !Defs.empty());
+  assert(Defs.empty() && "Instructions outside basic block!");
+  return First;
+}
+
 /// CoalesceExtSubRegs - If a number of sources of the REG_SEQUENCE are
 /// EXTRACT_SUBREG from the same register and to the same virtual register
 /// with different sub-register indices, attempt to combine the
@@ -1872,6 +1902,22 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
       if (!SrcReg) continue;
       unsigned SubIdx = MI->getOperand(i+1).getImm();
       UpdateRegSequenceSrcs(SrcReg, DstReg, SubIdx, MRI, *TRI);
+    }
+
+    // Set <def,undef> flags on the first DstReg def in the basic block.
+    // It marks the beginning of the live range. All the other defs are
+    // read-modify-write.
+    if (MachineInstr *Def = findFirstDef(DstReg, MRI)) {
+      for (unsigned i = 0, e = Def->getNumOperands(); i != e; ++i) {
+        MachineOperand &MO = Def->getOperand(i);
+        if (MO.isReg() && MO.isDef() && MO.getReg() == DstReg)
+          MO.setIsUndef();
+      }
+      // Make sure there is a full non-subreg imp-def operand on the
+      // instruction.  This shouldn't be necessary, but it seems that at least
+      // RAFast requires it.
+      Def->addRegisterDefined(DstReg, TRI);
+      DEBUG(dbgs() << "First def: " << *Def);
     }
 
     if (IsImpDef) {

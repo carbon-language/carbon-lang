@@ -12,7 +12,7 @@ target triple = "thumbv7-apple-darwin10"
 
 ; CHECK: vld1.64 {d16, d17}, [r{{.}}]
 ; CHECK-NOT: vld1.64 {d16, d17}
-; CHECK: vmov.f64 d19, d16
+; CHECK: vmov.f64
 
 define i32 @test(i8* %arg) nounwind {
 entry:
