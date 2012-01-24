@@ -1168,11 +1168,21 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
        Name.startswith("rcl") || Name.startswith("rcr") ||
        Name.startswith("rol") || Name.startswith("ror")) &&
       Operands.size() == 3) {
-    X86Operand *Op1 = static_cast<X86Operand*>(Operands[1]);
-    if (Op1->isImm() && isa<MCConstantExpr>(Op1->getImm()) &&
-        cast<MCConstantExpr>(Op1->getImm())->getValue() == 1) {
-      delete Operands[1];
-      Operands.erase(Operands.begin() + 1);
+    if (getParser().getAssemblerDialect()) {
+      // Intel syntax
+      X86Operand *Op1 = static_cast<X86Operand*>(Operands[2]);
+      if (Op1->isImm() && isa<MCConstantExpr>(Op1->getImm()) &&
+	  cast<MCConstantExpr>(Op1->getImm())->getValue() == 1) {
+	delete Operands[2];
+	Operands.pop_back();
+      }
+    } else {
+      X86Operand *Op1 = static_cast<X86Operand*>(Operands[1]);
+      if (Op1->isImm() && isa<MCConstantExpr>(Op1->getImm()) &&
+	  cast<MCConstantExpr>(Op1->getImm())->getValue() == 1) {
+	delete Operands[1];
+	Operands.erase(Operands.begin() + 1);
+      }
     }
   }
   
