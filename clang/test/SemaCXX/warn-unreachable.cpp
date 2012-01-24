@@ -98,6 +98,24 @@ void test_unreachable_templates_harness() {
   test_unreachable_templates<TestUnreachableB>(); 
 }
 
+// Do warn about non-dependent unreachable code in templates
+// Warn even if the template is never instantiated
+
+template<typename T> void test_non_dependent_unreachable_templates() {
+  TestUnreachableA::foo();
+  isUnreachable(); // expected-warning {{will never be executed}}
+}
+
+// Warn only once even if the template is instantiated multiple times
+
+template<typename T> void test_non_dependent_unreachable_templates2() {
+  TestUnreachableA::foo();
+  isUnreachable(); // expected-warning {{will never be executed}}
+}
+
+template void test_non_dependent_unreachable_templates2<int>();
+template void test_non_dependent_unreachable_templates2<long>();
+
 // Do warn about explict template specializations, as they represent
 // actual concrete functions that somebody wrote.
 
@@ -106,4 +124,3 @@ template <> void funcToSpecialize<int>() {
   halt();
   dead(); // expected-warning {{will never be executed}}
 }
-
