@@ -165,3 +165,10 @@ def S9d : Set<(sequence "S%ua", 7, 9)>;
 // CHECK: S9b = [ e7 e6 e5 e4 e3 ]
 // CHECK: S9c = [ e0 ]
 // CHECK: S9d = [ a b c d e0 e3 e6 e9 e4 e5 e7 ]
+
+// The 'interleave' operator is almost the inverse of 'decimate'.
+def interleave;
+def T0a : Set<(interleave S9a, S9b)>;
+def T0b : Set<(interleave S8e, S8d)>;
+// CHECK: T0a = [ e3 e7 e4 e6 e5 ]
+// CHECK: T0b = [ e0 e1 e2 e3 e4 e5 e6 e7 e8 e9 ]

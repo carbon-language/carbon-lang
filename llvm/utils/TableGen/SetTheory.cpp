@@ -139,6 +139,24 @@ struct DecimateOp : public SetIntBinOp {
   }
 };
 
+// (interleave S1, S2, ...) Interleave elements of the arguments.
+struct InterleaveOp : public SetTheory::Operator {
+  void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts) {
+    // Evaluate the arguments individually.
+    SmallVector<RecSet, 4> Args(Expr->getNumArgs());
+    unsigned MaxSize = 0;
+    for (unsigned i = 0, e = Expr->getNumArgs(); i != e; ++i) {
+      ST.evaluate(Expr->getArg(i), Args[i]);
+      MaxSize = std::max(MaxSize, unsigned(Args[i].size()));
+    }
+    // Interleave arguments into Elts.
+    for (unsigned n = 0; n != MaxSize; ++n)
+      for (unsigned i = 0, e = Expr->getNumArgs(); i != e; ++i)
+        if (n < Args[i].size())
+          Elts.insert(Args[i][n]);
+  }
+};
+
 // (sequence "Format", From, To) Generate a sequence of records by name.
 struct SequenceOp : public SetTheory::Operator {
   void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts) {
@@ -211,6 +229,7 @@ SetTheory::SetTheory() {
   addOperator("rotl", new RotOp(false));
   addOperator("rotr", new RotOp(true));
   addOperator("decimate", new DecimateOp);
+  addOperator("interleave", new InterleaveOp);
   addOperator("sequence", new SequenceOp);
 }
 

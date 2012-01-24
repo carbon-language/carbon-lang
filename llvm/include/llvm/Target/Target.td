@@ -200,12 +200,15 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
 //
 // (decimate GPR, 2) - Pick every N'th element, starting with the first.
 //
+// (interleave A, B, ...) - Interleave the elements from each argument list.
+//
 // All of these operators work on ordered sets, not lists. That means
 // duplicates are removed from sub-expressions.
 
 // Set operators. The rest is defined in TargetSelectionDAG.td.
 def sequence;
 def decimate;
+def interleave;
 
 // RegisterTuples - Automatically generate super-registers by forming tuples of
 // sub-registers. This is useful for modeling register sequence constraints
