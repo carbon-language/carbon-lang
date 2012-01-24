@@ -7252,14 +7252,9 @@ QualType Sema::CheckAssignmentOperands(Expr *LHSExpr, ExprResult &RHS,
       ConvTy = Compatible;
 
     if (ConvTy == Compatible &&
-        LHSType->isObjCObjectType()) {
-      if (getLangOptions().ObjCNonFragileABI)
-        Diag(Loc, diag::err_assignment_requires_nonfragile_object)
-          << LHSType;
-      else
+        LHSType->isObjCObjectType())
         Diag(Loc, diag::err_objc_object_assignment)
           << LHSType;
-    }
 
     // If the RHS is a unary plus or minus, check to see if they = and + are
     // right next to each other.  If so, the user may have typo'd "x =+ 4"

@@ -6,7 +6,7 @@
 
 @implementation NSView
  - (id)initWithView:(id)realView {
-     *(NSView *)self = *(NSView *)realView;	// expected-error {{cannot assign to class object in non-fragile ABI}}
+     *(NSView *)self = *(NSView *)realView;	// expected-error {{cannot assign to class object}}
  }
 @end
 

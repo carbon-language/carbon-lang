@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin11 -fsyntax-only -fobjc-fragile-abi -verify %s
+// RUN: %clang_cc1 -x objective-c++ -triple x86_64-apple-darwin11 -fsyntax-only -fobjc-fragile-abi -verify %s
 // rdar://10731065
 
 @interface MyView {}
@@ -7,7 +7,7 @@
 @implementation MyViewTemplate // expected-warning {{cannot find interface declaration for 'MyViewTemplate'}}
 - (id) createRealObject {
   id realObj;
-  *(MyView *) realObj = *(MyView *) self; // expected-error {{cannot assign to class object - use memcpy instead}}
+  *(MyView *) realObj = *(MyView *) self; // expected-error {{cannot assign to class object}}
 }
 @end
 
