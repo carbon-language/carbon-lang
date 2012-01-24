@@ -640,7 +640,10 @@ public:
   /// getAsString - If this array is isString(), then this method returns the
   /// array as a StringRef.  Otherwise, it asserts out.
   ///
-  StringRef getAsString() const;
+  StringRef getAsString() const {
+    assert(isString() && "Not a string");
+    return getRawDataValues();
+  }
   
   /// getAsCString - If this array is isCString(), then this method returns the
   /// array (without the trailing null byte) as a StringRef. Otherwise, it
@@ -652,6 +655,10 @@ public:
     return Str.substr(0, Str.size()-1);
   }
   
+  /// getRawDataValues - Return the raw, underlying, bytes of this data.  Note
+  /// that this is an extremely tricky thing to work with, as it exposes the
+  /// host endianness of the data elements.
+  StringRef getRawDataValues() const;
   
   virtual void destroyConstant();
   

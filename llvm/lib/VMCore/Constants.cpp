@@ -1994,6 +1994,11 @@ Type *ConstantDataSequential::getElementType() const {
   return getType()->getElementType();
 }
 
+StringRef ConstantDataSequential::getRawDataValues() const {
+  return StringRef(DataElements,
+                   getType()->getNumElements()*getElementByteSize());
+}
+
 /// isElementTypeCompatible - Return true if a ConstantDataSequential can be
 /// formed with a vector or array of the specified element type.
 /// ConstantDataArray only works with normal float and int types that are
@@ -2067,14 +2072,12 @@ Constant *ConstantDataSequential::getImpl(StringRef Elements, Type *Ty) {
 }
 
 void ConstantDataSequential::destroyConstant() {
-  uint64_t ByteSize = getElementByteSize() * getElementType()->getNumElements();
-  
   // Remove the constant from the StringMap.
   StringMap<ConstantDataSequential*> &CDSConstants = 
     getType()->getContext().pImpl->CDSConstants;
   
   StringMap<ConstantDataSequential*>::iterator Slot =
-    CDSConstants.find(StringRef(DataElements, ByteSize));
+    CDSConstants.find(getRawDataValues());
 
   assert(Slot != CDSConstants.end() && "CDS not found in uniquing table");
 
@@ -2225,15 +2228,6 @@ Constant *ConstantDataSequential::getElementAsConstant(unsigned Elt) const {
 bool ConstantDataSequential::isString() const {
   return isa<ArrayType>(getType()) && getElementType()->isIntegerTy(8);
 }
-
-/// getAsString - If this array is isString(), then this method returns the
-/// array as a StringRef.  Otherwise, it asserts out.
-///
-StringRef ConstantDataSequential::getAsString() const {
-  assert(isString() && "Not a string");
-  return StringRef(DataElements, getType()->getNumElements());
-}
-
 
 /// isCString - This method returns true if the array "isString", ends with a
 /// nul byte, and does not contains any other nul bytes.
