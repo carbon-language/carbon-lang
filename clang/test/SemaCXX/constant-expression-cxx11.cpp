@@ -1027,3 +1027,22 @@ namespace InstantiateCaseStmt {
   template<int x> int g(int c) { switch(c) { case f<x>(): return 1; } return 0; }
   int gg(int c) { return g<4>(c); }
 }
+
+namespace ConvertedConstantExpr {
+  extern int &m;
+  extern int &n;
+
+  constexpr int k = 4;
+  int &m = const_cast<int&>(k);
+
+  // If we have nothing more interesting to say, ensure we don't produce a
+  // useless note and instead just point to the non-constant subexpression.
+  enum class E {
+    em = m,
+    en = n, // expected-error {{not a constant expression}}
+    eo = (m +
+          n // expected-error {{not a constant expression}}
+          ),
+    eq = reinterpret_cast<int>((int*)0) // expected-error {{not a constant expression}} expected-note {{reinterpret_cast}}
+  };
+}
