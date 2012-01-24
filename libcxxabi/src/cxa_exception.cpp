@@ -505,6 +505,15 @@ __cxa_rethrow_primary_exception(void* thrown_object)
     // If we return client will call terminate()
 }
 
+bool
+__cxa_uncaught_exception() throw()
+{
+    __cxa_eh_globals* globals = __cxa_get_globals_fast();
+    if (globals == 0)
+        return false;
+    return globals->uncaughtExceptions != 0;
+}
+
 }  // extern "C"
 
 }  // abi
