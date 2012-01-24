@@ -124,3 +124,11 @@ template <> void funcToSpecialize<int>() {
   halt();
   dead(); // expected-warning {{will never be executed}}
 }
+
+// Ensure we don't regress a fix involving undefined bases to template
+// destructors when computing the CFG for unreachable code analysis
+template<int> struct imp;
+template<int a>
+struct aligned_storage : imp<a> {
+ ~aligned_storage() { }
+};
