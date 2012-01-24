@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wover-aligned %s -isystem %S/Inputs -verify
+// RUN: %clang_cc1 -triple=x86_64-pc-linux-gnu -Wover-aligned %s -isystem %S/Inputs -verify
 
 // This test ensures that we still get the warning even if we #include <new>
 // where the header here simulates <new>.

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wover-aligned -verify %s
+// RUN: %clang_cc1 -triple=x86_64-pc-linux-gnu -Wover-aligned -verify %s
 
 // This test verifies that we don't warn when the global operator new is
 // overridden. That's why we can't merge this with the other test file.

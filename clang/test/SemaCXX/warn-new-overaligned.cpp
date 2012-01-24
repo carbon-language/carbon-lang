@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -Wover-aligned -verify %s
+// RUN: %clang_cc1 -triple=x86_64-pc-linux-gnu -Wover-aligned -verify %s
 
 namespace test1 {
 struct Test {
