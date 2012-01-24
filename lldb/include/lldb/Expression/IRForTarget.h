@@ -12,6 +12,7 @@
 
 #include "lldb/lldb-public.h"
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/Error.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/TaggedASTType.h"
 #include "llvm/Pass.h"
@@ -115,6 +116,10 @@ public:
     ///     $__lldb_expr, and that function is passed to the passes one by 
     ///     one.
     ///
+    /// @param[in] interpreter_error
+    ///     An error.  If the expression fails to be interpreted, this error
+    ///     is set to a reason why.
+    ///
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
@@ -146,10 +151,10 @@ public:
     ///
     /// Returns true if it did; false otherwise.
     //------------------------------------------------------------------
-    bool
-    interpretSuccess ()
+    lldb_private::Error &
+    getInterpreterError ()
     {
-        return m_interpret_success;
+        return m_interpreter_error;
     }
 
 private:
@@ -632,6 +637,7 @@ private:
     llvm::Constant                         *m_sel_registerName;         ///< The address of the function sel_registerName, cast to the appropriate function pointer type
     lldb::ClangExpressionVariableSP        &m_const_result;             ///< This value should be set to the return value of the expression if it is constant and the expression has no side effects
     lldb_private::Stream                   *m_error_stream;             ///< If non-NULL, the stream on which errors should be printed
+    lldb_private::Error                     m_interpreter_error;        ///< The error result from the IR interpreter
     
     bool                                    m_has_side_effects;         ///< True if the function's result cannot be simply determined statically
     llvm::StoreInst                        *m_result_store;             ///< If non-NULL, the store instruction that writes to the result variable.  If m_has_side_effects is true, this is NULL.

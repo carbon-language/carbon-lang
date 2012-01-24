@@ -79,6 +79,9 @@ public:
     /// @param[in] llvm_module
     ///     The module containing the function.
     ///
+    /// @param[in] error
+    ///     If the expression fails to interpret, a reason why.
+    ///
     /// @return
     ///     True on success; false otherwise
     //------------------------------------------------------------------
@@ -87,21 +90,24 @@ public:
                         const lldb_private::ConstString &result_name,
                         lldb_private::TypeFromParser result_type,
                         llvm::Function &llvm_function,
-                        llvm::Module &llvm_module);
+                        llvm::Module &llvm_module,
+                        lldb_private::Error &err);
 private:
     /// Flags
     lldb_private::ClangExpressionDeclMap &m_decl_map;       ///< The DeclMap containing the Decls 
     lldb_private::Stream *m_error_stream;
     
     bool
-    supportsFunction (llvm::Function &llvm_function);
+    supportsFunction (llvm::Function &llvm_function,
+                      lldb_private::Error &err);
     
     bool 
     runOnFunction (lldb::ClangExpressionVariableSP &result,
                    const lldb_private::ConstString &result_name,
                    lldb_private::TypeFromParser result_type,
                    llvm::Function &llvm_function,
-                   llvm::Module &llvm_module);
+                   llvm::Module &llvm_module,
+                   lldb_private::Error &err);
 };
 
 #endif

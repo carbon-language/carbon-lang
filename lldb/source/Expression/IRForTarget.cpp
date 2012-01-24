@@ -2663,11 +2663,10 @@ IRForTarget::runOnModule (Module &llvm_module)
         IRInterpreter interpreter (*m_decl_map,
                                    m_error_stream);
 
-        if (interpreter.maybeRunOnFunction(m_const_result, m_result_name, m_result_type, *function, llvm_module))
-        {
-            m_interpret_success = true;
+        interpreter.maybeRunOnFunction(m_const_result, m_result_name, m_result_type, *function, llvm_module, m_interpreter_error);
+        
+        if (m_interpreter_error.Success())
             return true;
-        }
     }
     
     if (log && log->GetVerbose())

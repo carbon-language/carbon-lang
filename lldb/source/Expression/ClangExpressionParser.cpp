@@ -187,7 +187,6 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     m_expr (expr),
     m_compiler (),
     m_code_generator (NULL),
-    m_execution_engine (),
     m_jitted_functions ()
 {
     // Initialize targets first, so that --version shows registered targets.
@@ -447,6 +446,8 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
 	func_end = LLDB_INVALID_ADDRESS;
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
+    std::auto_ptr<llvm::ExecutionEngine> execution_engine;
+    
     Error err;
     
     llvm::Module *module = m_code_generator->ReleaseModule();
@@ -498,7 +499,9 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
             return err;
         }
         
-        if (execution_policy != eExecutionPolicyAlways && ir_for_target.interpretSuccess())
+        Error &interpreter_error(ir_for_target.getInterpreterError());
+        
+        if (execution_policy != eExecutionPolicyAlways && interpreter_error.Success())
         {
             if (const_result)
                 const_result->TransferAddress();
@@ -512,7 +515,10 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
         if (!process || execution_policy == eExecutionPolicyNever)
         {
             err.SetErrorToGenericError();
-            err.SetErrorString("Execution needed to run in the target, but the target can't be run");
+            if (execution_policy == eExecutionPolicyAlways)
+                err.SetErrorString("Execution needed to run in the target, but the target can't be run");
+            else
+                err.SetErrorStringWithFormat("Interpreting the expression locally failed: %s", interpreter_error.AsCString());
             return err;
         }
         
@@ -571,15 +577,6 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
         log->Printf ("Module being sent to JIT: \n%s", s.c_str());
     }
     
-#if defined (USE_STANDARD_JIT)
-    m_execution_engine.reset(llvm::ExecutionEngine::createJIT (module, 
-                                                               &error_string, 
-                                                               jit_memory_manager,
-                                                               CodeGenOpt::Less,
-                                                               true,
-                                                               Reloc::Default,
-                                                               CodeModel::Small));
-#else
     EngineBuilder builder(module);
     builder.setEngineKind(EngineKind::JIT)
         .setErrorStr(&error_string)
@@ -589,24 +586,23 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
         .setAllocateGVsWithCode(true)
         .setCodeModel(CodeModel::Small)
         .setUseMCJIT(true);
-    m_execution_engine.reset(builder.create());
-#endif
+    execution_engine.reset(builder.create());
         
-    if (!m_execution_engine.get())
+    if (!execution_engine.get())
     {
         err.SetErrorToGenericError();
         err.SetErrorStringWithFormat("Couldn't JIT the function: %s", error_string.c_str());
         return err;
     }
     
-    m_execution_engine->DisableLazyCompilation();
+    execution_engine->DisableLazyCompilation();
     
     llvm::Function *function = module->getFunction (function_name.c_str());
     
     // We don't actually need the function pointer here, this just forces it to get resolved.
     
-    void *fun_ptr = m_execution_engine->getPointerToFunction(function);
-    
+    void *fun_ptr = execution_engine->getPointerToFunction(function);
+        
     // Errors usually cause failures in the JIT, but if we're lucky we get here.
     
     if (!function)
@@ -716,6 +712,8 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
             log->Printf("Function disassembly:\n%s", disassembly_stream.GetData());
         }
     }
+    
+    execution_engine.reset();
     
     err.Clear();
     return err;

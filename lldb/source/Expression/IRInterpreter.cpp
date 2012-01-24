@@ -851,20 +851,32 @@ IRInterpreter::maybeRunOnFunction (lldb::ClangExpressionVariableSP &result,
                                    const lldb_private::ConstString &result_name,
                                    lldb_private::TypeFromParser result_type,
                                    Function &llvm_function,
-                                   Module &llvm_module)
+                                   Module &llvm_module,
+                                   lldb_private::Error &err)
 {
-    if (supportsFunction (llvm_function))
+    if (supportsFunction (llvm_function, err))
         return runOnFunction(result,
                              result_name, 
                              result_type, 
                              llvm_function,
-                             llvm_module);
+                             llvm_module,
+                             err);
     else
         return false;
 }
 
+static const char *unsupported_opcode_error         = "Interpreter doesn't handle one of the expression's opcodes";
+static const char *interpreter_initialization_error = "Interpreter couldn't be initialized";
+static const char *interpreter_internal_error       = "Interpreter encountered an internal error";
+static const char *bad_value_error                  = "Interpreter couldn't resolve a value during execution";
+static const char *memory_allocation_error          = "Interpreter couldn't allocate memory";
+static const char *memory_write_error               = "Interpreter couldn't write to memory";
+static const char *memory_read_error                = "Interpreter couldn't read from memory";
+static const char *infinite_loop_error              = "Interpreter ran for too many cycles";
+
 bool
-IRInterpreter::supportsFunction (Function &llvm_function)
+IRInterpreter::supportsFunction (Function &llvm_function, 
+                                 lldb_private::Error &err)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
@@ -882,6 +894,8 @@ IRInterpreter::supportsFunction (Function &llvm_function)
                 {
                     if (log)
                         log->Printf("Unsupported instruction: %s", PrintValue(ii).c_str());
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(unsupported_opcode_error);
                     return false;
                 }
             case Instruction::Add:
@@ -895,7 +909,11 @@ IRInterpreter::supportsFunction (Function &llvm_function)
                     ICmpInst *icmp_inst = dyn_cast<ICmpInst>(ii);
                     
                     if (!icmp_inst)
+                    {
+                        err.SetErrorToGenericError();
+                        err.SetErrorString(interpreter_internal_error);
                         return false;
+                    }
                     
                     switch (icmp_inst->getPredicate())
                     {
@@ -903,6 +921,9 @@ IRInterpreter::supportsFunction (Function &llvm_function)
                         {
                             if (log)
                                 log->Printf("Unsupported ICmp predicate: %s", PrintValue(ii).c_str());
+                            
+                            err.SetErrorToGenericError();
+                            err.SetErrorString(unsupported_opcode_error);
                             return false;
                         }
                     case CmpInst::ICMP_EQ:
@@ -940,14 +961,19 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                               const lldb_private::ConstString &result_name,
                               lldb_private::TypeFromParser result_type,
                               Function &llvm_function,
-                              Module &llvm_module)
+                              Module &llvm_module,
+                              lldb_private::Error &err)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     lldb_private::ClangExpressionDeclMap::TargetInfo target_info = m_decl_map.GetTargetInfo();
     
     if (!target_info.IsValid())
+    {
+        err.SetErrorToGenericError();
+        err.SetErrorString(interpreter_initialization_error);
         return false;
+    }
     
     lldb::addr_t alloc_min;
     lldb::addr_t alloc_max;
@@ -955,7 +981,9 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
     switch (target_info.address_byte_size)
     {
     default:
-        return false;
+        err.SetErrorToGenericError();
+        err.SetErrorString(interpreter_initialization_error);
+        return false;    
     case 4:
         alloc_min = 0x00001000llu;
         alloc_max = 0x0000ffffllu;
@@ -968,9 +996,17 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
     
     TargetData target_data(&llvm_module);
     if (target_data.getPointerSize() != target_info.address_byte_size)
+    {
+        err.SetErrorToGenericError();
+        err.SetErrorString(interpreter_initialization_error);
         return false;
+    }
     if (target_data.isLittleEndian() != (target_info.byte_order == lldb::eByteOrderLittle))
+    {
+        err.SetErrorToGenericError();
+        err.SetErrorString(interpreter_initialization_error);
         return false;
+    }
     
     Memory memory(target_data, m_decl_map, alloc_min, alloc_max);
     InterpreterStackFrame frame(target_data, memory, m_decl_map);
@@ -1002,8 +1038,9 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("getOpcode() returns %s, but instruction is not a BinaryOperator", inst->getOpcodeName());
-                    
-                    return false;
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(interpreter_internal_error);
+                    return false;                
                 }
                 
                 Value *lhs = inst->getOperand(0);
@@ -1016,7 +1053,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("Couldn't evaluate %s", PrintValue(lhs).c_str());
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(bad_value_error);
                     return false;
                 }
                 
@@ -1024,7 +1062,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("Couldn't evaluate %s", PrintValue(rhs).c_str());
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(bad_value_error);                 
                     return false;
                 }
                 
@@ -1070,7 +1109,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("getOpcode() returns Alloca, but instruction is not an AllocaInst");
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(interpreter_internal_error);
                     return false;
                 }
                 
@@ -1078,7 +1118,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("AllocaInsts are not handled if isArrayAllocation() is true");
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(unsupported_opcode_error);
                     return false;
                 }
                 
@@ -1096,7 +1137,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("Couldn't allocate memory for an AllocaInst");
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(memory_allocation_error);
                     return false;
                 }
                 
@@ -1106,7 +1148,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("Couldn't allocate the result pointer for an AllocaInst");
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(memory_allocation_error);
                     return false;
                 }
                 
@@ -1115,8 +1158,9 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 if (P_encoder->PutAddress(0, R.m_base) == UINT32_MAX)
                 {
                     if (log)
-                        log->Printf("Couldn't write the reseult pointer for an AllocaInst");
-                    
+                        log->Printf("Couldn't write the result pointer for an AllocaInst");
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(memory_write_error);
                     return false;
                 }
                 
@@ -1138,7 +1182,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("getOpcode() returns BitCast, but instruction is not a BitCastInst");
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(interpreter_internal_error);
                     return false;
                 }
                 
@@ -1150,7 +1195,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("Couldn't evaluate %s", PrintValue(source).c_str());
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(bad_value_error);
                     return false;
                 }
                 
@@ -1165,7 +1211,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("getOpcode() returns Br, but instruction is not a BranchInst");
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(interpreter_internal_error);
                     return false;
                 }
                 
@@ -1179,7 +1226,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     {
                         if (log)
                             log->Printf("Couldn't evaluate %s", PrintValue(condition).c_str());
-                        
+                        err.SetErrorToGenericError();
+                        err.SetErrorString(bad_value_error);
                         return false;
                     }
                 
@@ -1213,7 +1261,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("getOpcode() returns GetElementPtr, but instruction is not a GetElementPtrInst");
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(interpreter_internal_error);
                     return false;
                 }
              
@@ -1223,8 +1272,14 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 lldb_private::Scalar P;
                 
                 if (!frame.EvaluateValue(P, pointer_operand, llvm_module))
+                {
+                    if (log)
+                        log->Printf("Couldn't evaluate %s", PrintValue(pointer_operand).c_str());
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(bad_value_error);
                     return false;
-                
+                }
+                    
                 SmallVector <Value *, 8> indices (gep_inst->idx_begin(),
                                                   gep_inst->idx_end());
                 
@@ -1250,7 +1305,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("getOpcode() returns ICmp, but instruction is not an ICmpInst");
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(interpreter_internal_error);
                     return false;
                 }
                 
@@ -1266,7 +1322,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("Couldn't evaluate %s", PrintValue(lhs).c_str());
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(bad_value_error);
                     return false;
                 }
                 
@@ -1274,7 +1331,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("Couldn't evaluate %s", PrintValue(rhs).c_str());
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(bad_value_error);
                     return false;
                 }
                 
@@ -1335,7 +1393,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("getOpcode() returns IntToPtr, but instruction is not an IntToPtrInst");
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(interpreter_internal_error);
                     return false;
                 }
                 
@@ -1344,7 +1403,13 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 lldb_private::Scalar I;
                 
                 if (!frame.EvaluateValue(I, src_operand, llvm_module))
+                {
+                    if (log)
+                        log->Printf("Couldn't evaluate %s", PrintValue(src_operand).c_str());
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(bad_value_error);
                     return false;
+                }
                 
                 frame.AssignValue(inst, I, llvm_module);
                 
@@ -1364,7 +1429,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("getOpcode() returns Load, but instruction is not a LoadInst");
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(interpreter_internal_error);
                     return false;
                 }
                 
@@ -1379,7 +1445,13 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 Type *pointer_ty = pointer_operand->getType();
                 PointerType *pointer_ptr_ty = dyn_cast<PointerType>(pointer_ty);
                 if (!pointer_ptr_ty)
+                {
+                    if (log)
+                        log->Printf("getPointerOperand()->getType() is not a PointerType");
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(interpreter_internal_error);
                     return false;
+                }
                 Type *target_ty = pointer_ptr_ty->getElementType();
                 
                 Memory::Region D = frame.ResolveValue(load_inst, llvm_module);
@@ -1389,7 +1461,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("LoadInst's value doesn't resolve to anything");
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(bad_value_error);
                     return false;
                 }
                 
@@ -1397,7 +1470,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("LoadInst's pointer doesn't resolve to anything");
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(bad_value_error);
                     return false;
                 }
                 
@@ -1415,7 +1489,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     {
                         if (log)
                             log->Printf("Couldn't read from a region on behalf of a LoadInst");
-                        
+                        err.SetErrorToGenericError();
+                        err.SetErrorString(memory_read_error);
                         return false;
                     }
                 }
@@ -1425,7 +1500,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     {
                         if (log)
                             log->Printf("Couldn't read from a raw pointer on behalf of a LoadInst");
-                        
+                        err.SetErrorToGenericError();
+                        err.SetErrorString(memory_read_error);
                         return false;
                     }
                 }
@@ -1458,7 +1534,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("getOpcode() returns Store, but instruction is not a StoreInst");
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(interpreter_internal_error);
                     return false;
                 }
                 
@@ -1484,7 +1561,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("StoreInst's value doesn't resolve to anything");
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(bad_value_error);
                     return false;
                 }
                 
@@ -1492,7 +1570,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                 {
                     if (log)
                         log->Printf("StoreInst's pointer doesn't resolve to anything");
-                    
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(bad_value_error);
                     return false;
                 }
                 
@@ -1513,7 +1592,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     {
                         if (log)
                             log->Printf("Couldn't write to a region on behalf of a LoadInst");
-                        
+                        err.SetErrorToGenericError();
+                        err.SetErrorString(memory_write_error);
                         return false;
                     }
                 }
@@ -1523,7 +1603,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     {
                         if (log)
                             log->Printf("Couldn't write to a raw pointer on behalf of a LoadInst");
-                        
+                        err.SetErrorToGenericError();
+                        err.SetErrorString(memory_write_error);
                         return false;
                     }
                 }
@@ -1544,7 +1625,11 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
     }
     
     if (num_insts >= 4096)
+    {
+        err.SetErrorToGenericError();
+        err.SetErrorString(infinite_loop_error);
         return false;
-    
+    }
+        
     return false; 
 }

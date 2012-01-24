@@ -189,7 +189,6 @@ private:
     std::auto_ptr<clang::SelectorTable>         m_selector_table;       ///< Selector table for Objective-C methods
     std::auto_ptr<clang::ASTContext>            m_ast_context;          ///< The AST context used to hold types and names for the parser
     std::auto_ptr<clang::CodeGenerator>         m_code_generator;       ///< [owned by the Execution Engine] The Clang object that generates IR
-    std::auto_ptr<llvm::ExecutionEngine>        m_execution_engine;     ///< The LLVM JIT
     std::vector<JittedFunction>                 m_jitted_functions;     ///< A vector of all functions that have been JITted into machine code (just one, if ParseExpression() was called)
 };
     
