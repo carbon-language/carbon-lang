@@ -358,6 +358,8 @@ public:
   /// of the array by one (you've been warned).  However, in some situations 
   /// this is not desired so if AddNull==false then the string is copied without
   /// null termination.
+  
+  // FIXME Remove this.
   static Constant *get(LLVMContext &Context, StringRef Initializer,
                        bool AddNull = true);
   
@@ -697,13 +699,21 @@ public:
   /// get() constructors - Return a constant with array type with an element
   /// count and element type matching the ArrayRef passed in.  Note that this
   /// can return a ConstantAggregateZero object.
-  static Constant *get(ArrayRef<uint8_t> Elts, LLVMContext &Context);
-  static Constant *get(ArrayRef<uint16_t> Elts, LLVMContext &Context);
-  static Constant *get(ArrayRef<uint32_t> Elts, LLVMContext &Context);
-  static Constant *get(ArrayRef<uint64_t> Elts, LLVMContext &Context);
-  static Constant *get(ArrayRef<float> Elts, LLVMContext &Context);
-  static Constant *get(ArrayRef<double> Elts, LLVMContext &Context);
+  static Constant *get(LLVMContext &Context, ArrayRef<uint8_t> Elts);
+  static Constant *get(LLVMContext &Context, ArrayRef<uint16_t> Elts);
+  static Constant *get(LLVMContext &Context, ArrayRef<uint32_t> Elts);
+  static Constant *get(LLVMContext &Context, ArrayRef<uint64_t> Elts);
+  static Constant *get(LLVMContext &Context, ArrayRef<float> Elts);
+  static Constant *get(LLVMContext &Context, ArrayRef<double> Elts);
   
+  /// getString - This method constructs a CDS and initializes it with a text
+  /// string. The default behavior (AddNull==true) causes a null terminator to
+  /// be placed at the end of the array (increasing the length of the string by
+  /// one more than the StringRef would normally indicate.  Pass AddNull=false
+  /// to disable this behavior.
+  static Constant *getString(LLVMContext &Context, StringRef Initializer,
+                             bool AddNull = true);
+
   /// getType - Specialize the getType() method to always return an ArrayType,
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
@@ -740,12 +750,12 @@ public:
   /// get() constructors - Return a constant with vector type with an element
   /// count and element type matching the ArrayRef passed in.  Note that this
   /// can return a ConstantAggregateZero object.
-  static Constant *get(ArrayRef<uint8_t> Elts, LLVMContext &Context);
-  static Constant *get(ArrayRef<uint16_t> Elts, LLVMContext &Context);
-  static Constant *get(ArrayRef<uint32_t> Elts, LLVMContext &Context);
-  static Constant *get(ArrayRef<uint64_t> Elts, LLVMContext &Context);
-  static Constant *get(ArrayRef<float> Elts, LLVMContext &Context);
-  static Constant *get(ArrayRef<double> Elts, LLVMContext &Context);
+  static Constant *get(LLVMContext &Context, ArrayRef<uint8_t> Elts);
+  static Constant *get(LLVMContext &Context, ArrayRef<uint16_t> Elts);
+  static Constant *get(LLVMContext &Context, ArrayRef<uint32_t> Elts);
+  static Constant *get(LLVMContext &Context, ArrayRef<uint64_t> Elts);
+  static Constant *get(LLVMContext &Context, ArrayRef<float> Elts);
+  static Constant *get(LLVMContext &Context, ArrayRef<double> Elts);
   
   /// getType - Specialize the getType() method to always return a VectorType,
   /// which reduces the amount of casting needed in parts of the compiler.

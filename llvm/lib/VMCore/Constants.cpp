@@ -718,9 +718,8 @@ Constant *ConstantArray::get(LLVMContext &Context, StringRef Str,
     ElementVals.push_back(ConstantInt::get(Type::getInt8Ty(Context), Str[i]));
 
   // Add a null terminator to the string...
-  if (AddNull) {
+  if (AddNull)
     ElementVals.push_back(ConstantInt::get(Type::getInt8Ty(Context), 0));
-  }
 
   ArrayType *ATy = ArrayType::get(Type::getInt8Ty(Context), ElementVals.size());
   return get(ATy, ElementVals);
@@ -2119,56 +2118,71 @@ void ConstantDataSequential::destroyConstant() {
 /// get() constructors - Return a constant with array type with an element
 /// count and element type matching the ArrayRef passed in.  Note that this
 /// can return a ConstantAggregateZero object.
-Constant *ConstantDataArray::get(ArrayRef<uint8_t> Elts, LLVMContext &Context) {
+Constant *ConstantDataArray::get(LLVMContext &Context, ArrayRef<uint8_t> Elts) {
   Type *Ty = ArrayType::get(Type::getInt8Ty(Context), Elts.size());
   return getImpl(StringRef((char*)Elts.data(), Elts.size()*1), Ty);
 }
-Constant *ConstantDataArray::get(ArrayRef<uint16_t> Elts, LLVMContext &Context){
+Constant *ConstantDataArray::get(LLVMContext &Context, ArrayRef<uint16_t> Elts){
   Type *Ty = ArrayType::get(Type::getInt16Ty(Context), Elts.size());
   return getImpl(StringRef((char*)Elts.data(), Elts.size()*2), Ty);
 }
-Constant *ConstantDataArray::get(ArrayRef<uint32_t> Elts, LLVMContext &Context){
+Constant *ConstantDataArray::get(LLVMContext &Context, ArrayRef<uint32_t> Elts){
   Type *Ty = ArrayType::get(Type::getInt32Ty(Context), Elts.size());
   return getImpl(StringRef((char*)Elts.data(), Elts.size()*4), Ty);
 }
-Constant *ConstantDataArray::get(ArrayRef<uint64_t> Elts, LLVMContext &Context){
+Constant *ConstantDataArray::get(LLVMContext &Context, ArrayRef<uint64_t> Elts){
   Type *Ty = ArrayType::get(Type::getInt64Ty(Context), Elts.size());
   return getImpl(StringRef((char*)Elts.data(), Elts.size()*8), Ty);
 }
-Constant *ConstantDataArray::get(ArrayRef<float> Elts, LLVMContext &Context) {
+Constant *ConstantDataArray::get(LLVMContext &Context, ArrayRef<float> Elts) {
   Type *Ty = ArrayType::get(Type::getFloatTy(Context), Elts.size());
   return getImpl(StringRef((char*)Elts.data(), Elts.size()*4), Ty);
 }
-Constant *ConstantDataArray::get(ArrayRef<double> Elts, LLVMContext &Context) {
+Constant *ConstantDataArray::get(LLVMContext &Context, ArrayRef<double> Elts) {
   Type *Ty = ArrayType::get(Type::getDoubleTy(Context), Elts.size());
   return getImpl(StringRef((char*)Elts.data(), Elts.size()*8), Ty);
 }
 
+/// getString - This method constructs a CDS and initializes it with a text
+/// string. The default behavior (AddNull==true) causes a null terminator to
+/// be placed at the end of the array (increasing the length of the string by
+/// one more than the StringRef would normally indicate.  Pass AddNull=false
+/// to disable this behavior.
+Constant *ConstantDataArray::getString(LLVMContext &Context,
+                                       StringRef Str, bool AddNull) {
+  if (!AddNull)
+    return get(Context, ArrayRef<uint8_t>((uint8_t*)Str.data(), Str.size()));
+  
+  SmallVector<uint8_t, 64> ElementVals;
+  ElementVals.append(Str.begin(), Str.end());
+  ElementVals.push_back(0);
+  return get(Context, ElementVals);
+}
 
 /// get() constructors - Return a constant with vector type with an element
 /// count and element type matching the ArrayRef passed in.  Note that this
 /// can return a ConstantAggregateZero object.
-Constant *ConstantDataVector::get(ArrayRef<uint8_t> Elts, LLVMContext &Context) {
+Constant *ConstantDataVector::get(LLVMContext &Context, ArrayRef<uint8_t> Elts){
   Type *Ty = VectorType::get(Type::getInt8Ty(Context), Elts.size());
   return getImpl(StringRef((char*)Elts.data(), Elts.size()*1), Ty);
 }
-Constant *ConstantDataVector::get(ArrayRef<uint16_t> Elts, LLVMContext &Context){
+Constant *ConstantDataVector::get(LLVMContext &Context, ArrayRef<uint16_t> Elts){
   Type *Ty = VectorType::get(Type::getInt16Ty(Context), Elts.size());
   return getImpl(StringRef((char*)Elts.data(), Elts.size()*2), Ty);
 }
-Constant *ConstantDataVector::get(ArrayRef<uint32_t> Elts, LLVMContext &Context){
+Constant *ConstantDataVector::get(LLVMContext &Context, ArrayRef<uint32_t> Elts){
   Type *Ty = VectorType::get(Type::getInt32Ty(Context), Elts.size());
   return getImpl(StringRef((char*)Elts.data(), Elts.size()*4), Ty);
 }
-Constant *ConstantDataVector::get(ArrayRef<uint64_t> Elts, LLVMContext &Context){
+Constant *ConstantDataVector::get(LLVMContext &Context, ArrayRef<uint64_t> Elts){
   Type *Ty = VectorType::get(Type::getInt64Ty(Context), Elts.size());
   return getImpl(StringRef((char*)Elts.data(), Elts.size()*8), Ty);
 }
-Constant *ConstantDataVector::get(ArrayRef<float> Elts, LLVMContext &Context) {
+Constant *ConstantDataVector::get(LLVMContext &Context, ArrayRef<float> Elts) {
   Type *Ty = VectorType::get(Type::getFloatTy(Context), Elts.size());
   return getImpl(StringRef((char*)Elts.data(), Elts.size()*4), Ty);
 }
-Constant *ConstantDataVector::get(ArrayRef<double> Elts, LLVMContext &Context) {
+Constant *ConstantDataVector::get(LLVMContext &Context, ArrayRef<double> Elts) {
   Type *Ty = VectorType::get(Type::getDoubleTy(Context), Elts.size());
   return getImpl(StringRef((char*)Elts.data(), Elts.size()*8), Ty);
 }
