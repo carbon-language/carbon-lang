@@ -73,21 +73,17 @@ void test() {
   (*array_ptr)[3] = 1; // expected-warning {{array index 3 is past the end of the array (which contains 2 elements)}}
 }
 
-// FIXME: we should see the next note only 3 times and the following warning once, not twice
-//        since it is independent of the template parameter 'I'.
 template <int I> struct S {
-  char arr[I]; // expected-note 4 {{declared here}}
+  char arr[I]; // expected-note 2 {{declared here}}
 };
 template <int I> void f() {
   S<3> s;
-  s.arr[4] = 0; // expected-warning 2 {{array index 4 is past the end of the array (which contains 3 elements)}}
-  s.arr[I] = 0; // expected-warning {{array index 5 is past the end of the array (which contains 3 elements)}} \
-                   expected-warning {{array index 3 is past the end of the array (which contains 3 elements)}}
+  s.arr[4] = 0; // expected-warning {{array index 4 is past the end of the array (which contains 3 elements)}}
+  s.arr[I] = 0; // expected-warning {{array index 5 is past the end of the array (which contains 3 elements)}}
 }
 
 void test_templates() {
   f<5>(); // expected-note {{in instantiation}}
-  f<3>(); // expected-note {{in instantiation}}
 }
 
 #define SIZE 10

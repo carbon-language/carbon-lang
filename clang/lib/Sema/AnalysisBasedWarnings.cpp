@@ -782,7 +782,8 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
     return;
 
   // For code in dependent contexts, we'll do this at instantiation time.
-  bool Dependent = cast<DeclContext>(D)->isDependentContext();
+  if (cast<DeclContext>(D)->isDependentContext())
+    return;
 
   if (Diags.hasErrorOccurred() || Diags.hasFatalErrorOccurred()) {
     // Flush out any possibly unreachable diagnostics.
@@ -825,7 +826,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   // Construct the analysis context with the specified CFG build options.
   
   // Emit delayed diagnostics.
-  if (!fscope->PossiblyUnreachableDiags.empty() && !Dependent) {
+  if (!fscope->PossiblyUnreachableDiags.empty()) {
     bool analyzed = false;
 
     // Register the expressions with the CFGBuilder.
@@ -873,7 +874,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   
   
   // Warning: check missing 'return'
-  if (P.enableCheckFallThrough && !Dependent) {
+  if (P.enableCheckFallThrough) {
     const CheckFallThroughDiagnostics &CD =
       (isa<BlockDecl>(D) ? CheckFallThroughDiagnostics::MakeForBlock()
                          : CheckFallThroughDiagnostics::MakeForFunction(D));
@@ -894,7 +895,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   }
 
   // Check for thread safety violations
-  if (P.enableThreadSafetyAnalysis && !Dependent) {
+  if (P.enableThreadSafetyAnalysis) {
     SourceLocation FL = AC.getDecl()->getLocation();
     thread_safety::ThreadSafetyReporter Reporter(S, FL);
     thread_safety::runThreadSafetyAnalysis(AC, Reporter);

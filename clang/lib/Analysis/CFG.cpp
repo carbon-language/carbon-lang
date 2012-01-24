@@ -721,7 +721,7 @@ void CFGBuilder::addAutomaticObjDtors(LocalScope::const_iterator B,
     }
     
     const CXXDestructorDecl *Dtor = Ty->getAsCXXRecordDecl()->getDestructor();
-    if (Dtor && cast<FunctionType>(Dtor->getType())->getNoReturnAttr())
+    if (cast<FunctionType>(Dtor->getType())->getNoReturnAttr())
       Block = createNoReturnBlock();
     else
       autoCreateBlock();
@@ -750,12 +750,13 @@ void CFGBuilder::addImplicitDtorsForDestructor(const CXXDestructorDecl *DD) {
   // Before virtual bases destroy direct base objects.
   for (CXXRecordDecl::base_class_const_iterator BI = RD->bases_begin(),
       BE = RD->bases_end(); BI != BE; ++BI) {
-    if (!BI->isVirtual())
-      if (const CXXRecordDecl *CD = BI->getType()->getAsCXXRecordDecl())
-        if (!CD->hasTrivialDestructor()) {
-          autoCreateBlock();
-          appendBaseDtor(Block, BI);
-        }
+    if (!BI->isVirtual()) {
+      const CXXRecordDecl *CD = BI->getType()->getAsCXXRecordDecl();
+      if (!CD->hasTrivialDestructor()) {
+        autoCreateBlock();
+        appendBaseDtor(Block, BI);
+      }
+    }
   }
 
   // First destroy member objects.
@@ -864,7 +865,7 @@ LocalScope* CFGBuilder::addLocalScopeForVarDecl(VarDecl *VD,
 
   // Check if type is a C++ class with non-trivial destructor.
   if (const CXXRecordDecl *CD = QT->getAsCXXRecordDecl())
-    if (CD->hasDefinition() && !CD->hasTrivialDestructor()) {
+    if (!CD->hasTrivialDestructor()) {
       // Add the variable to scope
       Scope = createOrReuseLocalScope(Scope);
       Scope->addVar(VD);
