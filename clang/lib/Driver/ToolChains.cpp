@@ -1897,8 +1897,7 @@ static std::string getMultiarchTriple(const llvm::Triple TargetTriple,
 
 Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   : Generic_ELF(Host, Triple) {
-  // FIXME: This is using the Driver's target triple to emulate the host triple!
-  llvm::Triple::ArchType Arch = getDriver().TargetTriple.getArch();
+  llvm::Triple::ArchType Arch = Triple.getArch();
   const std::string &SysRoot = getDriver().SysRoot;
 
   // OpenSuse stores the linker with the compiler, add that to the search
@@ -1961,28 +1960,33 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   // possible permutations of these directories, and seeing which ones it added
   // to the link paths.
   path_list &Paths = getFilePaths();
-  const bool Is32Bits = (getArch() == llvm::Triple::x86 ||
-                         getArch() == llvm::Triple::mips ||
-                         getArch() == llvm::Triple::mipsel ||
-                         getArch() == llvm::Triple::ppc);
 
-  StringRef Suffix32;
-  StringRef Suffix64;
-  if (Arch == llvm::Triple::x86_64 || Arch == llvm::Triple::ppc64) {
-    Suffix32 = "/32";
-    Suffix64 = "";
-  } else {
-    Suffix32 = "";
-    Suffix64 = "/64";
-  }
-  const std::string Suffix = Is32Bits ? Suffix32 : Suffix64;
+  const bool Is32Bits = (Arch == llvm::Triple::x86 ||
+                         Arch == llvm::Triple::mips ||
+                         Arch == llvm::Triple::mipsel ||
+                         Arch == llvm::Triple::ppc);
+
   const std::string Multilib = Is32Bits ? "lib32" : "lib64";
   const std::string MultiarchTriple = getMultiarchTriple(Triple, SysRoot);
 
   // Add the multilib suffixed paths where they are available.
+  bool SuffixedGCCInstallation = false;
   if (GCCInstallation.isValid()) {
-    const std::string &LibPath = GCCInstallation.getParentLibPath();
+    StringRef Suffix32;
+    StringRef Suffix64;
     const llvm::Triple &GCCTriple = GCCInstallation.getTriple();
+    if (GCCTriple.getArch() == llvm::Triple::x86_64 ||
+        GCCTriple.getArch() == llvm::Triple::ppc64) {
+      Suffix32 = "/32";
+      Suffix64 = "";
+    } else {
+      Suffix32 = "";
+      Suffix64 = "/64";
+    }
+    const std::string Suffix = Is32Bits ? Suffix32 : Suffix64;
+    SuffixedGCCInstallation = !Suffix.empty();
+
+    const std::string &LibPath = GCCInstallation.getParentLibPath();
     addPathIfExists(GCCInstallation.getInstallPath() + Suffix, Paths);
     addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib/../" + Multilib,
                     Paths);
@@ -2004,7 +2008,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   if (GCCInstallation.isValid()) {
     const std::string &LibPath = GCCInstallation.getParentLibPath();
     const llvm::Triple &GCCTriple = GCCInstallation.getTriple();
-    if (!Suffix.empty())
+    if (SuffixedGCCInstallation)
       addPathIfExists(GCCInstallation.getInstallPath(), Paths);
     addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib", Paths);
     addPathIfExists(LibPath, Paths);
