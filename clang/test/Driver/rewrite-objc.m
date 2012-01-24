@@ -1,4 +1,4 @@
-// RUN: %clang -target x86_64-apple-macosx10.7.0 -rewrite-objc %s -o - -### 2>&1 | \
+// RUN: %clang -no-canonical-prefixes -target x86_64-apple-macosx10.7.0 -rewrite-objc %s -o - -### 2>&1 | \
 // RUN:   FileCheck -check-prefix=TEST0 %s
 // TEST0: clang{{.*}}" "-cc1"
 // TEST0: "-rewrite-objc"

@@ -1,4 +1,4 @@
-// RUN: %clang -ccc-clang-archs "" -target powerpc64-pc-freebsd8 %s -### 2> %t
+// RUN: %clang -no-canonical-prefixes -ccc-clang-archs "" -target powerpc64-pc-freebsd8 %s -### 2> %t
 // RUN: FileCheck --check-prefix=CHECK-PPC < %t %s
 //
 // CHECK-PPC: clang{{.*}}" "-cc1" "-triple" "powerpc64-pc-freebsd8"
@@ -7,7 +7,7 @@
 
 // Check that -m32 properly adjusts the toolchain flags.
 //
-// RUN: %clang -target x86_64-pc-freebsd8 -m32 -### %s 2> %t
+// RUN: %clang -no-canonical-prefixes -target x86_64-pc-freebsd8 -m32 -### %s 2> %t
 // RUN: FileCheck --check-prefix=CHECK-LIB32 < %t %s
 //
 // CHECK-LIB32: clang{{.*}}" "-cc1" "-triple" "i386-pc-freebsd8"
