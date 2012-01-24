@@ -766,7 +766,7 @@ def am2offset_reg : Operand<i32>,
   let PrintMethod = "printAddrMode2OffsetOperand";
   // When using this for assembly, it's always as a post-index offset.
   let ParserMatchClass = PostIdxRegShiftedAsmOperand;
-  let MIOperandInfo = (ops GPR, i32imm);
+  let MIOperandInfo = (ops GPRnopc, i32imm);
 }
 
 // FIXME: am2offset_imm should only need the immediate, not the GPR. Having
@@ -778,7 +778,7 @@ def am2offset_imm : Operand<i32>,
   let EncoderMethod = "getAddrMode2OffsetOpValue";
   let PrintMethod = "printAddrMode2OffsetOperand";
   let ParserMatchClass = AM2OffsetImmAsmOperand;
-  let MIOperandInfo = (ops GPR, i32imm);
+  let MIOperandInfo = (ops GPRnopc, i32imm);
 }
 
 
