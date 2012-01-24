@@ -3507,6 +3507,7 @@ public:
                                     CXXScopeSpec &SS,
                                     IdentifierInfo *MemberOrBase,
                                     ParsedType TemplateTypeTy,
+                                    const DeclSpec &DS,
                                     SourceLocation IdLoc,
                                     SourceLocation LParenLoc,
                                     Expr **Args, unsigned NumArgs,
@@ -3518,6 +3519,7 @@ public:
                                     CXXScopeSpec &SS,
                                     IdentifierInfo *MemberOrBase,
                                     ParsedType TemplateTypeTy,
+                                    const DeclSpec &DS,
                                     SourceLocation IdLoc,
                                     Expr *InitList,
                                     SourceLocation EllipsisLoc);
@@ -3527,6 +3529,7 @@ public:
                                     CXXScopeSpec &SS,
                                     IdentifierInfo *MemberOrBase,
                                     ParsedType TemplateTypeTy,
+                                    const DeclSpec &DS,
                                     SourceLocation IdLoc,
                                     const MultiInitializer &Init,
                                     SourceLocation EllipsisLoc);

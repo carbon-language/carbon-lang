@@ -2414,15 +2414,28 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
       TemplateTypeTy = getTypeAnnotation(Tok);
     }
   }
-  if (!TemplateTypeTy && Tok.isNot(tok::identifier)) {
+  // Uses of decltype will already have been converted to annot_decltype by
+  // ParseOptionalCXXScopeSpecifier at this point.
+  if (!TemplateTypeTy && Tok.isNot(tok::identifier)
+      && Tok.isNot(tok::annot_decltype)) {
     Diag(Tok, diag::err_expected_member_or_base_name);
     return true;
   }
 
-  // Get the identifier. This may be a member name or a class name,
-  // but we'll let the semantic analysis determine which it is.
-  IdentifierInfo *II = Tok.is(tok::identifier) ? Tok.getIdentifierInfo() : 0;
-  SourceLocation IdLoc = ConsumeToken();
+  IdentifierInfo *II = 0;
+  DeclSpec DS(AttrFactory);
+  SourceLocation IdLoc = Tok.getLocation();
+  if (Tok.is(tok::annot_decltype)) {
+    // Get the decltype expression, if there is one.
+    ParseDecltypeSpecifier(DS);
+  } else {
+    if (Tok.is(tok::identifier))
+      // Get the identifier. This may be a member name or a class name,
+      // but we'll let the semantic analysis determine which it is.
+      II = Tok.getIdentifierInfo();
+    ConsumeToken();
+  }
+
 
   // Parse the '('.
   if (getLang().CPlusPlus0x && Tok.is(tok::l_brace)) {
@@ -2437,8 +2450,8 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
       EllipsisLoc = ConsumeToken();
 
     return Actions.ActOnMemInitializer(ConstructorDecl, getCurScope(), SS, II,
-                                       TemplateTypeTy, IdLoc, InitList.take(),
-                                       EllipsisLoc);
+                                       TemplateTypeTy, DS, IdLoc, 
+                                       InitList.take(), EllipsisLoc);
   } else if(Tok.is(tok::l_paren)) {
     BalancedDelimiterTracker T(*this, tok::l_paren);
     T.consumeOpen();
@@ -2458,7 +2471,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
       EllipsisLoc = ConsumeToken();
 
     return Actions.ActOnMemInitializer(ConstructorDecl, getCurScope(), SS, II,
-                                       TemplateTypeTy, IdLoc,
+                                       TemplateTypeTy, DS, IdLoc,
                                        T.getOpenLocation(), ArgExprs.take(),
                                        ArgExprs.size(), T.getCloseLocation(),
                                        EllipsisLoc);

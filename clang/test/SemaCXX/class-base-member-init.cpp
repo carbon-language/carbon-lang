@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 -verify %s
 
 class S {
 public:
@@ -72,5 +72,21 @@ namespace test4 {
     A(short _) : a(0), c(0) {} // expected-error {{initializing multiple members of union}} expected-note {{previous initialization is here}}
     A(int _) : d(0), e(0) {} // expected-error {{initializing multiple members of union}} expected-note {{previous initialization is here}}
     A(long _) : a(0), d(0) {} // expected-error {{initializing multiple members of union}} expected-note {{previous initialization is here}}
+  };
+}
+
+namespace test5 {
+  struct Base {
+    Base(int);
+  };
+  struct A : Base {
+    A() : decltype(Base(1))(3) {
+    }
+    A(int) : Base(3), // expected-note {{previous initialization is here}}
+             decltype(Base(1))(2), // expected-error {{multiple initializations given for base 'decltype(test5::Base(1))' (aka 'test5::Base')}}
+             decltype(int())() { // expected-error {{constructor initializer 'decltype(int())' (aka 'int') does not name a class}}
+    }
+    A(float) : decltype(A())(3) {
+    }
   };
 }

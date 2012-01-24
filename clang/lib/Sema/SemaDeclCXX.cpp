@@ -1722,11 +1722,13 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
                           CXXScopeSpec &SS,
                           IdentifierInfo *MemberOrBase,
                           ParsedType TemplateTypeTy,
+                          const DeclSpec &DS,
                           SourceLocation IdLoc,
                           Expr *InitList,
                           SourceLocation EllipsisLoc) {
   return BuildMemInitializer(ConstructorD, S, SS, MemberOrBase, TemplateTypeTy,
-                             IdLoc, MultiInitializer(InitList), EllipsisLoc);
+                             DS, IdLoc, MultiInitializer(InitList), 
+                             EllipsisLoc);
 }
 
 /// \brief Handle a C++ member initializer using parentheses syntax.
@@ -1736,14 +1738,15 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
                           CXXScopeSpec &SS,
                           IdentifierInfo *MemberOrBase,
                           ParsedType TemplateTypeTy,
+                          const DeclSpec &DS,
                           SourceLocation IdLoc,
                           SourceLocation LParenLoc,
                           Expr **Args, unsigned NumArgs,
                           SourceLocation RParenLoc,
                           SourceLocation EllipsisLoc) {
   return BuildMemInitializer(ConstructorD, S, SS, MemberOrBase, TemplateTypeTy,
-                             IdLoc, MultiInitializer(LParenLoc, Args, NumArgs,
-                                                     RParenLoc),
+                             DS, IdLoc, MultiInitializer(LParenLoc, Args, 
+                                                         NumArgs, RParenLoc),
                              EllipsisLoc);
 }
 
@@ -1779,6 +1782,7 @@ Sema::BuildMemInitializer(Decl *ConstructorD,
                           CXXScopeSpec &SS,
                           IdentifierInfo *MemberOrBase,
                           ParsedType TemplateTypeTy,
+                          const DeclSpec &DS,
                           SourceLocation IdLoc,
                           const MultiInitializer &Args,
                           SourceLocation EllipsisLoc) {
@@ -1831,6 +1835,8 @@ Sema::BuildMemInitializer(Decl *ConstructorD,
 
   if (TemplateTypeTy) {
     BaseType = GetTypeFromParser(TemplateTypeTy, &TInfo);
+  } else if (DS.getTypeSpecType() == TST_decltype) {
+    BaseType = BuildDecltypeType(DS.getRepAsExpr(), DS.getTypeSpecTypeLoc());
   } else {
     LookupResult R(*this, MemberOrBase, IdLoc, LookupOrdinaryName);
     LookupParsedName(R, S, &SS);
