@@ -1100,9 +1100,8 @@ bool Generic_GCC::GCCVersion::operator<(const GCCVersion &RHS) const {
 Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(const Driver &D)
   : IsValid(false),
     // FIXME: GCCTriple is using the target triple as both the target and host
-    // triple here. It also shouldn't be using the string representation, and
-    // should instead be using the Triple object.
-    GCCTriple(D.TargetTriple.str()) {
+    // triple here.
+    GCCTriple(D.TargetTriple) {
   // FIXME: Using CXX_INCLUDE_ROOT is here is a bit of a hack, but
   // avoids adding yet another option to configure/cmake.
   // It would probably be cleaner to break it in two variables
@@ -1131,7 +1130,7 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(const Driver &D)
     return;
   }
 
-  llvm::Triple::ArchType HostArch = llvm::Triple(GCCTriple).getArch();
+  llvm::Triple::ArchType HostArch = GCCTriple.getArch();
   // The library directories which may contain GCC installations.
   SmallVector<StringRef, 4> CandidateLibDirs;
   // The compatible GCC triples for this particular architecture.
@@ -1296,7 +1295,7 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
         continue;
 
       Version = CandidateVersion;
-      GCCTriple = CandidateTriple.str();
+      GCCTriple.setTriple(CandidateTriple);
       // FIXME: We hack together the directory name here instead of
       // using LI to ensure stable path separators across Windows and
       // Linux.
@@ -1906,7 +1905,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   // path.
   ToolChain::path_list &PPaths = getProgramPaths();
   PPaths.push_back(Twine(GCCInstallation.getParentLibPath() + "/../" +
-                         GCCInstallation.getTriple() + "/bin").str());
+                         GCCInstallation.getTriple().str() + "/bin").str());
 
   Linker = GetProgramPath("ld");
 
@@ -1983,9 +1982,9 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   // Add the multilib suffixed paths where they are available.
   if (GCCInstallation.isValid()) {
     const std::string &LibPath = GCCInstallation.getParentLibPath();
-    const std::string &GCCTriple = GCCInstallation.getTriple();
+    const llvm::Triple &GCCTriple = GCCInstallation.getTriple();
     addPathIfExists(GCCInstallation.getInstallPath() + Suffix, Paths);
-    addPathIfExists(LibPath + "/../" + GCCTriple + "/lib/../" + Multilib,
+    addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib/../" + Multilib,
                     Paths);
     addPathIfExists(LibPath + "/" + MultiarchTriple, Paths);
     addPathIfExists(LibPath + "/../" + Multilib, Paths);
@@ -1998,16 +1997,16 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   // Try walking via the GCC triple path in case of multiarch GCC
   // installations with strange symlinks.
   if (GCCInstallation.isValid())
-    addPathIfExists(SysRoot + "/usr/lib/" + GCCInstallation.getTriple() +
+    addPathIfExists(SysRoot + "/usr/lib/" + GCCInstallation.getTriple().str() +
                     "/../../" + Multilib, Paths);
 
   // Add the non-multilib suffixed paths (if potentially different).
   if (GCCInstallation.isValid()) {
     const std::string &LibPath = GCCInstallation.getParentLibPath();
-    const std::string &GCCTriple = GCCInstallation.getTriple();
+    const llvm::Triple &GCCTriple = GCCInstallation.getTriple();
     if (!Suffix.empty())
       addPathIfExists(GCCInstallation.getInstallPath(), Paths);
-    addPathIfExists(LibPath + "/../" + GCCTriple + "/lib", Paths);
+    addPathIfExists(LibPath + "/../" + GCCTriple.str() + "/lib", Paths);
     addPathIfExists(LibPath, Paths);
   }
   addPathIfExists(SysRoot + "/lib", Paths);
@@ -2208,12 +2207,12 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
   StringRef InstallDir = GCCInstallation.getInstallPath();
   StringRef Version = GCCInstallation.getVersion();
   if (!addLibStdCXXIncludePaths(LibDir + "/../include/c++/" + Version,
-                                GCCInstallation.getTriple() + Suffix,
+                                GCCInstallation.getTriple().str() + Suffix,
                                 DriverArgs, CC1Args)) {
     // Gentoo is weird and places its headers inside the GCC install, so if the
     // first attempt to find the headers fails, try this pattern.
     addLibStdCXXIncludePaths(InstallDir + "/include/g++-v4",
-                             GCCInstallation.getTriple() + Suffix,
+                             GCCInstallation.getTriple().str() + Suffix,
                              DriverArgs, CC1Args);
   }
 }

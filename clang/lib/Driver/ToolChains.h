@@ -69,7 +69,7 @@ protected:
   class GCCInstallationDetector {
 
     bool IsValid;
-    std::string GCCTriple;
+    llvm::Triple GCCTriple;
 
     // FIXME: These might be better as path objects.
     std::string GCCInstallPath;
@@ -84,7 +84,7 @@ protected:
     bool isValid() const { return IsValid; }
 
     /// \brief Get the GCC triple for the detected install.
-    StringRef getTriple() const { return GCCTriple; }
+    const llvm::Triple &getTriple() const { return GCCTriple; }
 
     /// \brief Get the detected GCC installation path.
     StringRef getInstallPath() const { return GCCInstallPath; }
