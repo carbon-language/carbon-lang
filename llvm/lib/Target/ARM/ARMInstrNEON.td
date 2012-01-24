@@ -6026,7 +6026,7 @@ def VLD3LNqWB_register_Asm_32 :
                   (ins VecListThreeQWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
-// VLD3 multiple structurepseudo-instructions. These need special handling for
+// VLD3 multiple structure pseudo-instructions. These need special handling for
 // the vector operands that the normal instructions don't yet model.
 // FIXME: Remove these when the register classes and instructions are updated.
 def VLD3dAsm_8 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr",
@@ -6135,7 +6135,7 @@ def VST3LNqWB_register_Asm_32 :
                        rGPR:$Rm, pred:$p)>;
 
 
-// VST3 multiple structurepseudo-instructions. These need special handling for
+// VST3 multiple structure pseudo-instructions. These need special handling for
 // the vector operands that the normal instructions don't yet model.
 // FIXME: Remove these when the register classes and instructions are updated.
 def VST3dAsm_8 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr",
