@@ -3608,6 +3608,8 @@ def warn_pointer_indirection_from_incompatible_type : Warning<
 
 def err_assignment_requires_nonfragile_object : Error<
   "cannot assign to class object in non-fragile ABI (%0 invalid)">;
+def err_objc_object_assignment : Error<
+  "cannot assign to class object - use memcpy instead">;
 def err_direct_interface_unsupported : Error<
   "indirection to an interface is not supported (%0 invalid)">;
 def err_typecheck_invalid_operands : Error<
