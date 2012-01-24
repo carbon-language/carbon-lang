@@ -133,6 +133,15 @@ def VecListThreeQAsmOperand : AsmOperandClass {
 def VecListThreeQ : RegisterOperand<DPR, "printVectorListThreeSpaced"> {
   let ParserMatchClass = VecListThreeQAsmOperand;
 }
+// Register list of three D registers spaced by 2 (three Q registers).
+def VecListFourQAsmOperand : AsmOperandClass {
+  let Name = "VecListFourQ";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListOperands";
+}
+def VecListFourQ : RegisterOperand<DPR, "printVectorListFourSpaced"> {
+  let ParserMatchClass = VecListFourQAsmOperand;
+}
 
 // Register list of one D register, with "all lanes" subscripting.
 def VecListOneDAllLanesAsmOperand : AsmOperandClass {
@@ -6195,6 +6204,65 @@ def VST3qWB_register_Asm_32 :
                        rGPR:$Rm, pred:$p)>;
 
 
+
+// VLD4 multiple structure pseudo-instructions. These need special handling for
+// the vector operands that the normal instructions don't yet model.
+// FIXME: Remove these when the register classes and instructions are updated.
+def VLD4dAsm_8 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr",
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
+def VLD4dAsm_16 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr",
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
+def VLD4dAsm_32 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr",
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
+def VLD4qAsm_8 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr",
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
+def VLD4qAsm_16 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr",
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
+def VLD4qAsm_32 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr",
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
+
+def VLD4dWB_fixed_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr!",
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
+def VLD4dWB_fixed_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr!",
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
+def VLD4dWB_fixed_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr!",
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
+def VLD4qWB_fixed_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr!",
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
+def VLD4qWB_fixed_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr!",
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
+def VLD4qWB_fixed_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr!",
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
+def VLD4dWB_register_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr, $Rm",
+                  (ins VecListFourD:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD4dWB_register_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr, $Rm",
+                  (ins VecListFourD:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD4dWB_register_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr, $Rm",
+                  (ins VecListFourD:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD4qWB_register_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr, $Rm",
+                  (ins VecListFourQ:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD4qWB_register_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr, $Rm",
+                  (ins VecListFourQ:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD4qWB_register_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr, $Rm",
+                  (ins VecListFourQ:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
 
 // VMOV takes an optional datatype suffix
 defm : VFPDTAnyInstAlias<"vmov${p}", "$Vd, $Vm",

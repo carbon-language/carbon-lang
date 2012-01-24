@@ -145,6 +145,8 @@ public:
                                         raw_ostream &O);
   void printVectorListThreeSpaced(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O);
+  void printVectorListFourSpaced(const MCInst *MI, unsigned OpNum,
+                                  raw_ostream &O);
 };
 
 } // end namespace llvm
