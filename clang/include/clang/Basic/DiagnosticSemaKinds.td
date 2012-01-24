@@ -4024,6 +4024,11 @@ def note_hidden_overloaded_virtual_declared_here : Note<
 def warn_using_directive_in_header : Warning<
   "using namespace directive in global context in header">,
   InGroup<HeaderHygiene>, DefaultIgnore;
+def warn_overaligned_type : Warning<
+  "type %0 requires %1 bytes of alignment and the default allocator only "
+  "guarantees %2 bytes">,
+  InGroup<OveralignedType>, DefaultIgnore;
+def note_overaligned_type : Note<"over-aligned here">;
 
 def err_conditional_void_nonvoid : Error<
   "%select{left|right}1 operand to ? is void, but %select{right|left}1 operand "

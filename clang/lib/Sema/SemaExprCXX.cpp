@@ -20,6 +20,7 @@
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/TemplateDeduction.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprCXX.h"
@@ -1102,6 +1103,21 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     NumPlaceArgs = AllPlaceArgs.size();
     if (NumPlaceArgs > 0)
       PlaceArgs = &AllPlaceArgs[0];
+  }
+
+  // Warn if the type is over-aligned and is being allocated by global operator
+  // new.
+  if (OperatorNew &&
+      (OperatorNew->isImplicit() ||
+       getSourceManager().isInSystemHeader(OperatorNew->getLocStart()))) {
+    if (unsigned Align = Context.getPreferredTypeAlign(AllocType.getTypePtr())){
+      unsigned SuitableAlign = Context.getTargetInfo().getSuitableAlign();
+      if (Align > SuitableAlign)
+        Diag(StartLoc, diag::warn_overaligned_type)
+            << AllocType
+            << unsigned(Align / Context.getCharWidth())
+            << unsigned(SuitableAlign / Context.getCharWidth());
+    }
   }
 
   bool Init = ConstructorLParen.isValid();
