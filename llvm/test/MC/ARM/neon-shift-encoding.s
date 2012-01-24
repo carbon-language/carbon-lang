@@ -140,23 +140,40 @@ _foo:
 @ CHECK: vsra.s64 q8, q8, #63    @ encoding: [0xf0,0x01,0xc1,0xf2]
 
 
-	vsri.8   d16, d16, #7
-	vsri.16  d16, d16, #15
-	vsri.32  d16, d16, #31
-	vsri.64  d16, d16, #63
-	vsri.8   q8, q8, #7
-	vsri.16  q8, q8, #15
-	vsri.32  q8, q8, #31
-	vsri.64  q8, q8, #63
+	vsri.8   d16, d6, #7
+	vsri.16  d26, d18, #15
+	vsri.32  d11, d10, #31
+	vsri.64  d12, d19, #63
+	vsri.8   q1, q8, #7
+	vsri.16  q2, q7, #15
+	vsri.32  q3, q6, #31
+	vsri.64  q4, q5, #63
 
-@ CHECK: vsri.8   d16, d16, #7  @ encoding: [0x30,0x04,0xc9,0xf3]
-@ CHECK: vsri.16  d16, d16, #15 @ encoding: [0x30,0x04,0xd1,0xf3]
-@ CHECK: vsri.32  d16, d16, #31 @ encoding: [0x30,0x04,0xe1,0xf3]
-@ CHECK: vsri.64  d16, d16, #63 @ encoding: [0xb0,0x04,0xc1,0xf3]
-@ CHECK: vsri.8   q8, q8, #7    @ encoding: [0x70,0x04,0xc9,0xf3]
-@ CHECK: vsri.16  q8, q8, #15   @ encoding: [0x70,0x04,0xd1,0xf3]
-@ CHECK: vsri.32  q8, q8, #31   @ encoding: [0x70,0x04,0xe1,0xf3]
-@ CHECK: vsri.64  q8, q8, #63   @ encoding: [0xf0,0x04,0xc1,0xf3]
+	vsri.8   d16, #7
+	vsri.16  d15, #15
+	vsri.32  d14, #31
+	vsri.64  d13, #63
+	vsri.8   q4, #7
+	vsri.16  q5, #15
+	vsri.32  q6, #31
+	vsri.64  q7, #63
+
+@ CHECK: vsri.8	d16, d6, #7             @ encoding: [0x16,0x04,0xc9,0xf3]
+@ CHECK: vsri.16 d26, d18, #15          @ encoding: [0x32,0xa4,0xd1,0xf3]
+@ CHECK: vsri.32 d11, d10, #31          @ encoding: [0x1a,0xb4,0xa1,0xf3]
+@ CHECK: vsri.64 d12, d19, #63          @ encoding: [0xb3,0xc4,0x81,0xf3]
+@ CHECK: vsri.8	q1, q8, #7              @ encoding: [0x70,0x24,0x89,0xf3]
+@ CHECK: vsri.16 q2, q7, #15            @ encoding: [0x5e,0x44,0x91,0xf3]
+@ CHECK: vsri.32 q3, q6, #31            @ encoding: [0x5c,0x64,0xa1,0xf3]
+@ CHECK: vsri.64 q4, q5, #63            @ encoding: [0xda,0x84,0x81,0xf3]
+@ CHECK: vsri.8	d16, d16, #7            @ encoding: [0x30,0x04,0xc9,0xf3]
+@ CHECK: vsri.16 d15, d15, #15          @ encoding: [0x1f,0xf4,0x91,0xf3]
+@ CHECK: vsri.32 d14, d14, #31          @ encoding: [0x1e,0xe4,0xa1,0xf3]
+@ CHECK: vsri.64 d13, d13, #63          @ encoding: [0x9d,0xd4,0x81,0xf3]
+@ CHECK: vsri.8	q4, q4, #7              @ encoding: [0x58,0x84,0x89,0xf3]
+@ CHECK: vsri.16 q5, q5, #15            @ encoding: [0x5a,0xa4,0x91,0xf3]
+@ CHECK: vsri.32 q6, q6, #31            @ encoding: [0x5c,0xc4,0xa1,0xf3]
+@ CHECK: vsri.64 q7, q7, #63            @ encoding: [0xde,0xe4,0x81,0xf3]
 
 
 	vsli.8   d16, d16, #7
