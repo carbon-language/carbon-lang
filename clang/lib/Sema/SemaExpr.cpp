@@ -249,7 +249,7 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
   Expr *sentinelExpr = args[numArgs - numArgsAfterSentinel - 1];
   if (!sentinelExpr) return;
   if (sentinelExpr->isValueDependent()) return;
-  if (isNullExpr(sentinelExpr)) return;
+  if (isSentinelNullExpr(sentinelExpr)) return;
 
   // Pick a reasonable string to insert.  Optimistically use 'nil' or
   // 'NULL' if those are actually defined in the context.  Only use
@@ -279,7 +279,7 @@ SourceRange Sema::getExprRange(Expr *E) const {
   return E ? E->getSourceRange() : SourceRange();
 }
 
-bool Sema::isNullExpr(const Expr *E) const {
+bool Sema::isSentinelNullExpr(const Expr *E) const {
   if (!E)
     return false;
 
