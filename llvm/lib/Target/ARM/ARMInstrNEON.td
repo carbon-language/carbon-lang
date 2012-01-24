@@ -5605,21 +5605,21 @@ def : NEONInstAlias<"vaddw${p}.u32 $Vdn, $Vm",
                     (VADDWuv2i64 QPR:$Vdn, QPR:$Vdn, DPR:$Vm, pred:$p)>;
 
 // VAND/VBIC/VEOR/VORR accept but do not require a type suffix.
-defm : VFPDTAnyInstAlias<"vand${p}", "$Vd, $Vn, $Vm",
+defm : NEONDTAnyInstAlias<"vand${p}", "$Vd, $Vn, $Vm",
                          (VANDd DPR:$Vd, DPR:$Vn, DPR:$Vm, pred:$p)>;
-defm : VFPDTAnyInstAlias<"vand${p}", "$Vd, $Vn, $Vm",
+defm : NEONDTAnyInstAlias<"vand${p}", "$Vd, $Vn, $Vm",
                          (VANDq QPR:$Vd, QPR:$Vn, QPR:$Vm, pred:$p)>;
-defm : VFPDTAnyInstAlias<"vbic${p}", "$Vd, $Vn, $Vm",
+defm : NEONDTAnyInstAlias<"vbic${p}", "$Vd, $Vn, $Vm",
                          (VBICd DPR:$Vd, DPR:$Vn, DPR:$Vm, pred:$p)>;
-defm : VFPDTAnyInstAlias<"vbic${p}", "$Vd, $Vn, $Vm",
+defm : NEONDTAnyInstAlias<"vbic${p}", "$Vd, $Vn, $Vm",
                          (VBICq QPR:$Vd, QPR:$Vn, QPR:$Vm, pred:$p)>;
-defm : VFPDTAnyInstAlias<"veor${p}", "$Vd, $Vn, $Vm",
+defm : NEONDTAnyInstAlias<"veor${p}", "$Vd, $Vn, $Vm",
                          (VEORd DPR:$Vd, DPR:$Vn, DPR:$Vm, pred:$p)>;
-defm : VFPDTAnyInstAlias<"veor${p}", "$Vd, $Vn, $Vm",
+defm : NEONDTAnyInstAlias<"veor${p}", "$Vd, $Vn, $Vm",
                          (VEORq QPR:$Vd, QPR:$Vn, QPR:$Vm, pred:$p)>;
-defm : VFPDTAnyInstAlias<"vorr${p}", "$Vd, $Vn, $Vm",
+defm : NEONDTAnyInstAlias<"vorr${p}", "$Vd, $Vn, $Vm",
                          (VORRd DPR:$Vd, DPR:$Vn, DPR:$Vm, pred:$p)>;
-defm : VFPDTAnyInstAlias<"vorr${p}", "$Vd, $Vn, $Vm",
+defm : NEONDTAnyInstAlias<"vorr${p}", "$Vd, $Vn, $Vm",
                          (VORRq QPR:$Vd, QPR:$Vn, QPR:$Vm, pred:$p)>;
 // ... two-operand aliases
 def : NEONInstAlias<"vand${p} $Vdn, $Vm",
@@ -5639,17 +5639,17 @@ def : NEONInstAlias<"vorr${p} $Vdn, $Vm",
 def : NEONInstAlias<"vorr${p} $Vdn, $Vm",
                     (VORRq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
 
-defm : VFPDTAnyInstAlias<"vand${p}", "$Vdn, $Vm",
+defm : NEONDTAnyInstAlias<"vand${p}", "$Vdn, $Vm",
                          (VANDd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
-defm : VFPDTAnyInstAlias<"vand${p}", "$Vdn, $Vm",
+defm : NEONDTAnyInstAlias<"vand${p}", "$Vdn, $Vm",
                          (VANDq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
-defm : VFPDTAnyInstAlias<"veor${p}", "$Vdn, $Vm",
+defm : NEONDTAnyInstAlias<"veor${p}", "$Vdn, $Vm",
                          (VEORd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
-defm : VFPDTAnyInstAlias<"veor${p}", "$Vdn, $Vm",
+defm : NEONDTAnyInstAlias<"veor${p}", "$Vdn, $Vm",
                          (VEORq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
-defm : VFPDTAnyInstAlias<"vorr${p}", "$Vdn, $Vm",
+defm : NEONDTAnyInstAlias<"vorr${p}", "$Vdn, $Vm",
                          (VORRd DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
-defm : VFPDTAnyInstAlias<"vorr${p}", "$Vdn, $Vm",
+defm : NEONDTAnyInstAlias<"vorr${p}", "$Vdn, $Vm",
                          (VORRq QPR:$Vdn, QPR:$Vdn, QPR:$Vm, pred:$p)>;
 
 // VMUL two-operand aliases.
@@ -6325,9 +6325,9 @@ def VST4qWB_register_Asm_32 :
                        rGPR:$Rm, pred:$p)>;
 
 // VMOV takes an optional datatype suffix
-defm : VFPDTAnyInstAlias<"vmov${p}", "$Vd, $Vm",
+defm : NEONDTAnyInstAlias<"vmov${p}", "$Vd, $Vm",
                          (VORRd DPR:$Vd, DPR:$Vm, DPR:$Vm, pred:$p)>;
-defm : VFPDTAnyInstAlias<"vmov${p}", "$Vd, $Vm",
+defm : NEONDTAnyInstAlias<"vmov${p}", "$Vd, $Vm",
                          (VORRq QPR:$Vd, QPR:$Vm, QPR:$Vm, pred:$p)>;
 
 // VCLT (register) is an assembler alias for VCGT w/ the operands reversed.
@@ -6495,9 +6495,9 @@ def : NEONInstAlias<"vpadd${p}.f32 $Vdn, $Vm",
                     (VPADDf DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
 
 // VSWP allows, but does not require, a type suffix.
-defm : VFPDTAnyInstAlias<"vswp${p}", "$Vd, $Vm",
+defm : NEONDTAnyInstAlias<"vswp${p}", "$Vd, $Vm",
                          (VSWPd DPR:$Vd, DPR:$Vm, pred:$p)>;
-defm : VFPDTAnyInstAlias<"vswp${p}", "$Vd, $Vm",
+defm : NEONDTAnyInstAlias<"vswp${p}", "$Vd, $Vm",
                          (VSWPq QPR:$Vd, QPR:$Vm, pred:$p)>;
 
 // "vmov Rd, #-imm" can be handled via "vmvn".

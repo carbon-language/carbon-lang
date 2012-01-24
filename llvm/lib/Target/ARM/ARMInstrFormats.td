@@ -2022,6 +2022,15 @@ multiclass VFPDTAnyInstAlias<string opc, string asm, dag Result> {
   def : VFPDataTypeInstAlias<opc, ".64", asm, Result>;
 }
 
+multiclass NEONDTAnyInstAlias<string opc, string asm, dag Result> {
+  let Predicates = [HasNEON] in {
+  def : VFPDataTypeInstAlias<opc, ".8", asm, Result>;
+  def : VFPDataTypeInstAlias<opc, ".16", asm, Result>;
+  def : VFPDataTypeInstAlias<opc, ".32", asm, Result>;
+  def : VFPDataTypeInstAlias<opc, ".64", asm, Result>;
+}
+}
+
 // The same alias classes using AsmPseudo instead, for the more complex
 // stuff in NEON that InstAlias can't quite handle.
 // Note that we can't use anonymous defm references here like we can
