@@ -4580,39 +4580,6 @@ EvaluateConstantChrecAtConstant(const SCEVAddRecExpr *AddRec, ConstantInt *C,
   return cast<SCEVConstant>(Val)->getValue();
 }
 
-/// GetAddressedElementFromGlobal - Given a global variable with an initializer
-/// and a GEP expression (missing the pointer index) indexing into it, return
-/// the addressed element of the initializer or null if the index expression is
-/// invalid.
-static Constant *
-GetAddressedElementFromGlobal(GlobalVariable *GV,
-                              const std::vector<ConstantInt*> &Indices) {
-  Constant *Init = GV->getInitializer();
-  for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
-    uint64_t Idx = Indices[i]->getZExtValue();
-    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Init)) {
-      assert(Idx < CS->getNumOperands() && "Bad struct index!");
-      Init = cast<Constant>(CS->getOperand(Idx));
-    } else if (ConstantArray *CA = dyn_cast<ConstantArray>(Init)) {
-      if (Idx >= CA->getNumOperands()) return 0;  // Bogus program
-      Init = cast<Constant>(CA->getOperand(Idx));
-    } else if (isa<ConstantAggregateZero>(Init)) {
-      if (StructType *STy = dyn_cast<StructType>(Init->getType())) {
-        assert(Idx < STy->getNumElements() && "Bad struct index!");
-        Init = Constant::getNullValue(STy->getElementType(Idx));
-      } else if (ArrayType *ATy = dyn_cast<ArrayType>(Init->getType())) {
-        if (Idx >= ATy->getNumElements()) return 0;  // Bogus program
-        Init = Constant::getNullValue(ATy->getElementType());
-      } else {
-        llvm_unreachable("Unknown constant aggregate type!");
-      }
-    } else {
-      return 0; // Unknown initializer type
-    }
-  }
-  return Init;
-}
-
 /// ComputeLoadConstantCompareExitLimit - Given an exit condition of
 /// 'icmp op load X, cst', try to see if we can compute the backedge
 /// execution count.
@@ -4640,7 +4607,7 @@ ScalarEvolution::ComputeLoadConstantCompareExitLimit(
 
   // Okay, we allow one non-constant index into the GEP instruction.
   Value *VarIdx = 0;
-  std::vector<ConstantInt*> Indexes;
+  std::vector<Constant*> Indexes;
   unsigned VarIdxNum = 0;
   for (unsigned i = 2, e = GEP->getNumOperands(); i != e; ++i)
     if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP->getOperand(i))) {
@@ -4674,7 +4641,8 @@ ScalarEvolution::ComputeLoadConstantCompareExitLimit(
     // Form the GEP offset.
     Indexes[VarIdxNum] = Val;
 
-    Constant *Result = GetAddressedElementFromGlobal(GV, Indexes);
+    Constant *Result = ConstantFoldLoadThroughGEPIndices(GV->getInitializer(),
+                                                         Indexes);
     if (Result == 0) break;  // Cannot compute!
 
     // Evaluate the condition for this iteration.
