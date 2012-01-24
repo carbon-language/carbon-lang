@@ -12,11 +12,11 @@
 
 #include "cxxabi.h"
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
-extern LIBCXXABI_NORETURN
+__attribute__((visibility("hidden"), noreturn))
        void abort_message(const char* format, ...) 
             __attribute__((format(printf, 1, 2)));
 
