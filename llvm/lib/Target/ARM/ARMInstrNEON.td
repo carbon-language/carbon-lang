@@ -6085,6 +6085,56 @@ def VLD3qWB_register_Asm_32 :
                   (ins VecListThreeQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
+// VST3 single-lane pseudo-instructions. These need special handling for
+// the lane index that an InstAlias can't handle, so we use these instead.
+def VST3LNdAsm_8 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr",
+               (ins VecListThreeDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST3LNdAsm_16 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr",
+               (ins VecListThreeDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST3LNdAsm_32 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr",
+               (ins VecListThreeDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST3LNqAsm_16 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr",
+               (ins VecListThreeQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST3LNqAsm_32 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr",
+               (ins VecListThreeQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+
+def VST3LNdWB_fixed_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr!",
+               (ins VecListThreeDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST3LNdWB_fixed_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr!",
+               (ins VecListThreeDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST3LNdWB_fixed_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr!",
+               (ins VecListThreeDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST3LNqWB_fixed_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr!",
+               (ins VecListThreeQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST3LNqWB_fixed_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr!",
+               (ins VecListThreeQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST3LNdWB_register_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr, $Rm",
+                  (ins VecListThreeDByteIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VST3LNdWB_register_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr, $Rm",
+                  (ins VecListThreeDHWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VST3LNdWB_register_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr, $Rm",
+                  (ins VecListThreeDWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VST3LNqWB_register_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr, $Rm",
+                  (ins VecListThreeQHWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VST3LNqWB_register_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr, $Rm",
+                  (ins VecListThreeQWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+
+
 // VST3 multiple structurepseudo-instructions. These need special handling for
 // the vector operands that the normal instructions don't yet model.
 // FIXME: Remove these when the register classes and instructions are updated.
