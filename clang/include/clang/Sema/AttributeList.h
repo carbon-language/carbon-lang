@@ -218,6 +218,7 @@ public:
     AT_naked,
     AT_neon_polyvector_type,    // Clang-specific.
     AT_neon_vector_type,        // Clang-specific.
+    AT_no_address_safety_analysis,
     AT_no_instrument_function,
     AT_no_thread_safety_analysis,
     AT_nocommon,

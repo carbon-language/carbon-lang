@@ -1019,6 +1019,14 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
   if (ExtraAttrs != llvm::Attribute::None)
     F->addFnAttr(ExtraAttrs);
 
+  if (Features.AddressSanitizer) {
+    // When AddressSanitizer is enabled, set AddressSafety attribute
+    // unless __attribute__((no_address_safety_analysis)) is used.
+    const FunctionDecl *FD = cast_or_null<FunctionDecl>(D.getDecl());
+    if (!FD || !FD->hasAttr<NoAddressSafetyAnalysisAttr>())
+      F->addFnAttr(llvm::Attribute::AddressSafety);
+  }
+
   // This is the first use or definition of a mangled name.  If there is a
   // deferred decl with this name, remember that we need to emit it at the end
   // of the file.

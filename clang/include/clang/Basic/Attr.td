@@ -576,6 +576,10 @@ def X86ForceAlignArgPointer : InheritableAttr {
   let Spellings = [];
 }
 
+// AddressSafety attribute (e.g. for AddressSanitizer)
+def NoAddressSafetyAnalysis : InheritableAttr {
+  let Spellings = ["no_address_safety_analysis"];
+}
 
 // C/C++ Thread safety attributes (e.g. for deadlock, data race checking)
 

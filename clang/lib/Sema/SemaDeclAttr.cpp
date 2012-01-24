@@ -444,6 +444,23 @@ static void handleNoThreadSafetyAttr(Sema &S, Decl *D,
                                                           S.Context));
 }
 
+static void handleNoAddressSafetyAttr(Sema &S, Decl *D,
+                                     const AttributeList &Attr) {
+  assert(!Attr.isInvalid());
+
+  if (!checkAttributeNumArgs(S, Attr, 0))
+    return;
+
+  if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFunctionOrMethod;
+    return;
+  }
+
+  D->addAttr(::new (S.Context) NoAddressSafetyAnalysisAttr(Attr.getRange(),
+                                                          S.Context));
+}
+
 static void handleAcquireOrderAttr(Sema &S, Decl *D, const AttributeList &Attr,
                                    bool before) {
   assert(!Attr.isInvalid());
@@ -3677,6 +3694,9 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_scoped_lockable:
     handleLockableAttr(S, D, Attr, /*scoped = */true);
+    break;
+  case AttributeList::AT_no_address_safety_analysis:
+    handleNoAddressSafetyAttr(S, D, Attr);
     break;
   case AttributeList::AT_no_thread_safety_analysis:
     handleNoThreadSafetyAttr(S, D, Attr);

@@ -1453,6 +1453,10 @@ balance in some way.</p>
 to check if the code is being built with <a
   href="AddressSanitizer.html">AddressSanitizer</a>.
 </p>
+<p>Use <tt>__attribute__((no_address_safety_analysis))</tt> on a function
+declaration to specify that address safety instrumentation (e.g.
+AddressSanitizer) should not be applied to that function.
+</p>
 
 <!-- ======================================================================= -->
 <h2 id="threadsafety">Thread-Safety Annotation Checking</h2>

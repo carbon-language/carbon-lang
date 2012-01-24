@@ -218,6 +218,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("pt_guarded_var", AT_pt_guarded_var)
     .Case("scoped_lockable", AT_scoped_lockable)
     .Case("lockable", AT_lockable)
+    .Case("no_address_safety_analysis", AT_no_address_safety_analysis)
     .Case("no_thread_safety_analysis", AT_no_thread_safety_analysis)
     .Case("guarded_by", AT_guarded_by)
     .Case("pt_guarded_by", AT_pt_guarded_by)
