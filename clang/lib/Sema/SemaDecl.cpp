@@ -604,19 +604,19 @@ Corrected:
         // Update the name, so that the caller has the new name.
         Name = Corrected.getCorrectionAsIdentifierInfo();
         
+        // Typo correction corrected to a keyword.
+        if (Corrected.isKeyword())
+          return Corrected.getCorrectionAsIdentifierInfo();
+
         // Also update the LookupResult...
         // FIXME: This should probably go away at some point
         Result.clear();
         Result.setLookupName(Corrected.getCorrection());
-        if (FirstDecl) Result.addDecl(FirstDecl);
-
-        // Typo correction corrected to a keyword.
-        if (Corrected.isKeyword())
-          return Corrected.getCorrectionAsIdentifierInfo();
-        
-        if (FirstDecl)
+        if (FirstDecl) {
+          Result.addDecl(FirstDecl);
           Diag(FirstDecl->getLocation(), diag::note_previous_decl)
             << CorrectedQuotedStr;
+        }
 
         // If we found an Objective-C instance variable, let
         // LookupInObjCMethod build the appropriate expression to
