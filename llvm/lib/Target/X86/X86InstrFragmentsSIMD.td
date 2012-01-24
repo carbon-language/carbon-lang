@@ -176,11 +176,13 @@ def sdmem : Operand<v2f64> {
 //===----------------------------------------------------------------------===//
 
 // 128-bit load pattern fragments
+// NOTE: all 128-bit integer vector loads are promoted to v2i64
 def loadv4f32    : PatFrag<(ops node:$ptr), (v4f32 (load node:$ptr))>;
 def loadv2f64    : PatFrag<(ops node:$ptr), (v2f64 (load node:$ptr))>;
 def loadv2i64    : PatFrag<(ops node:$ptr), (v2i64 (load node:$ptr))>;
 
 // 256-bit load pattern fragments
+// NOTE: all 256-bit integer vector loads are promoted to v4i64
 def loadv8f32    : PatFrag<(ops node:$ptr), (v8f32 (load node:$ptr))>;
 def loadv4f64    : PatFrag<(ops node:$ptr), (v4f64 (load node:$ptr))>;
 def loadv4i64    : PatFrag<(ops node:$ptr), (v4i64 (load node:$ptr))>;
@@ -213,6 +215,7 @@ def alignedloadfsf64 : PatFrag<(ops node:$ptr),
                                (f64 (alignedload node:$ptr))>;
 
 // 128-bit aligned load pattern fragments
+// NOTE: all 128-bit integer vector loads are promoted to v2i64
 def alignedloadv4f32 : PatFrag<(ops node:$ptr),
                                (v4f32 (alignedload node:$ptr))>;
 def alignedloadv2f64 : PatFrag<(ops node:$ptr),
@@ -221,6 +224,7 @@ def alignedloadv2i64 : PatFrag<(ops node:$ptr),
                                (v2i64 (alignedload node:$ptr))>;
 
 // 256-bit aligned load pattern fragments
+// NOTE: all 256-bit integer vector loads are promoted to v4i64
 def alignedloadv8f32 : PatFrag<(ops node:$ptr),
                                (v8f32 (alignedload256 node:$ptr))>;
 def alignedloadv4f64 : PatFrag<(ops node:$ptr),
@@ -243,11 +247,13 @@ def memopfsf32 : PatFrag<(ops node:$ptr), (f32   (memop node:$ptr))>;
 def memopfsf64 : PatFrag<(ops node:$ptr), (f64   (memop node:$ptr))>;
 
 // 128-bit memop pattern fragments
+// NOTE: all 128-bit integer vector loads are promoted to v2i64
 def memopv4f32 : PatFrag<(ops node:$ptr), (v4f32 (memop node:$ptr))>;
 def memopv2f64 : PatFrag<(ops node:$ptr), (v2f64 (memop node:$ptr))>;
 def memopv2i64 : PatFrag<(ops node:$ptr), (v2i64 (memop node:$ptr))>;
 
 // 256-bit memop pattern fragments
+// NOTE: all 256-bit integer vector loads are promoted to v4i64
 def memopv8f32 : PatFrag<(ops node:$ptr), (v8f32 (memop node:$ptr))>;
 def memopv4f64 : PatFrag<(ops node:$ptr), (v4f64 (memop node:$ptr))>;
 def memopv4i64 : PatFrag<(ops node:$ptr), (v4i64 (memop node:$ptr))>;
