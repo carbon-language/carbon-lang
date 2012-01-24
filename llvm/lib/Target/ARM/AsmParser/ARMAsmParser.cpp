@@ -1106,6 +1106,11 @@ public:
     return VectorList.Count == 3;
   }
 
+  bool isVecListFourQ() const {
+    if (!isDoubleSpacedVectorList()) return false;
+    return VectorList.Count == 4;
+  }
+
   bool isSingleSpacedVectorAllLanes() const {
     return Kind == k_VectorListAllLanes && !VectorList.isDoubleSpaced;
   }
@@ -5177,185 +5182,71 @@ static unsigned getRealVSTOpcode(unsigned Opc, unsigned &Spacing) {
   switch(Opc) {
   default: assert(0 && "unexpected opcode!");
   // VST1LN
-  case ARM::VST1LNdWB_fixed_Asm_8:
-    Spacing = 1;
-    return ARM::VST1LNd8_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_16:
-    Spacing = 1;
-    return ARM::VST1LNd16_UPD;
-  case ARM::VST1LNdWB_fixed_Asm_32:
-    Spacing = 1;
-    return ARM::VST1LNd32_UPD;
-  case ARM::VST1LNdWB_register_Asm_8:
-    Spacing = 1;
-    return ARM::VST1LNd8_UPD;
-  case ARM::VST1LNdWB_register_Asm_16:
-    Spacing = 1;
-    return ARM::VST1LNd16_UPD;
-  case ARM::VST1LNdWB_register_Asm_32:
-    Spacing = 1;
-    return ARM::VST1LNd32_UPD;
-  case ARM::VST1LNdAsm_8:
-    Spacing = 1;
-    return ARM::VST1LNd8;
-  case ARM::VST1LNdAsm_16:
-    Spacing = 1;
-    return ARM::VST1LNd16;
-  case ARM::VST1LNdAsm_32:
-    Spacing = 1;
-    return ARM::VST1LNd32;
+  case ARM::VST1LNdWB_fixed_Asm_8:  Spacing = 1; return ARM::VST1LNd8_UPD;
+  case ARM::VST1LNdWB_fixed_Asm_16: Spacing = 1; return ARM::VST1LNd16_UPD;
+  case ARM::VST1LNdWB_fixed_Asm_32: Spacing = 1; return ARM::VST1LNd32_UPD;
+  case ARM::VST1LNdWB_register_Asm_8:  Spacing = 1; return ARM::VST1LNd8_UPD;
+  case ARM::VST1LNdWB_register_Asm_16: Spacing = 1; return ARM::VST1LNd16_UPD;
+  case ARM::VST1LNdWB_register_Asm_32: Spacing = 1; return ARM::VST1LNd32_UPD;
+  case ARM::VST1LNdAsm_8:  Spacing = 1; return ARM::VST1LNd8;
+  case ARM::VST1LNdAsm_16: Spacing = 1; return ARM::VST1LNd16;
+  case ARM::VST1LNdAsm_32: Spacing = 1; return ARM::VST1LNd32;
 
   // VST2LN
-  case ARM::VST2LNdWB_fixed_Asm_8:
-    Spacing = 1;
-    return ARM::VST2LNd8_UPD;
-  case ARM::VST2LNdWB_fixed_Asm_16:
-    Spacing = 1;
-    return ARM::VST2LNd16_UPD;
-  case ARM::VST2LNdWB_fixed_Asm_32:
-    Spacing = 1;
-    return ARM::VST2LNd32_UPD;
-  case ARM::VST2LNqWB_fixed_Asm_16:
-    Spacing = 2;
-    return ARM::VST2LNq16_UPD;
-  case ARM::VST2LNqWB_fixed_Asm_32:
-    Spacing = 2;
-    return ARM::VST2LNq32_UPD;
+  case ARM::VST2LNdWB_fixed_Asm_8:  Spacing = 1; return ARM::VST2LNd8_UPD;
+  case ARM::VST2LNdWB_fixed_Asm_16: Spacing = 1; return ARM::VST2LNd16_UPD;
+  case ARM::VST2LNdWB_fixed_Asm_32: Spacing = 1; return ARM::VST2LNd32_UPD;
+  case ARM::VST2LNqWB_fixed_Asm_16: Spacing = 2; return ARM::VST2LNq16_UPD;
+  case ARM::VST2LNqWB_fixed_Asm_32: Spacing = 2; return ARM::VST2LNq32_UPD;
 
-  case ARM::VST2LNdWB_register_Asm_8:
-    Spacing = 1;
-    return ARM::VST2LNd8_UPD;
-  case ARM::VST2LNdWB_register_Asm_16:
-    Spacing = 1;
-    return ARM::VST2LNd16_UPD;
-  case ARM::VST2LNdWB_register_Asm_32:
-    Spacing = 1;
-    return ARM::VST2LNd32_UPD;
-  case ARM::VST2LNqWB_register_Asm_16:
-    Spacing = 2;
-    return ARM::VST2LNq16_UPD;
-  case ARM::VST2LNqWB_register_Asm_32:
-    Spacing = 2;
-    return ARM::VST2LNq32_UPD;
+  case ARM::VST2LNdWB_register_Asm_8:  Spacing = 1; return ARM::VST2LNd8_UPD;
+  case ARM::VST2LNdWB_register_Asm_16: Spacing = 1; return ARM::VST2LNd16_UPD;
+  case ARM::VST2LNdWB_register_Asm_32: Spacing = 1; return ARM::VST2LNd32_UPD;
+  case ARM::VST2LNqWB_register_Asm_16: Spacing = 2; return ARM::VST2LNq16_UPD;
+  case ARM::VST2LNqWB_register_Asm_32: Spacing = 2; return ARM::VST2LNq32_UPD;
 
-  case ARM::VST2LNdAsm_8:
-    Spacing = 1;
-    return ARM::VST2LNd8;
-  case ARM::VST2LNdAsm_16:
-    Spacing = 1;
-    return ARM::VST2LNd16;
-  case ARM::VST2LNdAsm_32:
-    Spacing = 1;
-    return ARM::VST2LNd32;
-  case ARM::VST2LNqAsm_16:
-    Spacing = 2;
-    return ARM::VST2LNq16;
-  case ARM::VST2LNqAsm_32:
-    Spacing = 2;
-    return ARM::VST2LNq32;
+  case ARM::VST2LNdAsm_8:  Spacing = 1; return ARM::VST2LNd8;
+  case ARM::VST2LNdAsm_16: Spacing = 1; return ARM::VST2LNd16;
+  case ARM::VST2LNdAsm_32: Spacing = 1; return ARM::VST2LNd32;
+  case ARM::VST2LNqAsm_16: Spacing = 2; return ARM::VST2LNq16;
+  case ARM::VST2LNqAsm_32: Spacing = 2; return ARM::VST2LNq32;
 
   // VST3LN
-  case ARM::VST3LNdWB_fixed_Asm_8:
-    Spacing = 1;
-    return ARM::VST3LNd8_UPD;
-  case ARM::VST3LNdWB_fixed_Asm_16:
-    Spacing = 1;
-    return ARM::VST3LNd16_UPD;
-  case ARM::VST3LNdWB_fixed_Asm_32:
-    Spacing = 1;
-    return ARM::VST3LNd32_UPD;
-  case ARM::VST3LNqWB_fixed_Asm_16:
-    Spacing = 1;
-    return ARM::VST3LNq16_UPD;
-  case ARM::VST3LNqWB_fixed_Asm_32:
-    Spacing = 2;
-    return ARM::VST3LNq32_UPD;
-  case ARM::VST3LNdWB_register_Asm_8:
-    Spacing = 1;
-    return ARM::VST3LNd8_UPD;
-  case ARM::VST3LNdWB_register_Asm_16:
-    Spacing = 1;
-    return ARM::VST3LNd16_UPD;
-  case ARM::VST3LNdWB_register_Asm_32:
-    Spacing = 1;
-    return ARM::VST3LNd32_UPD;
-  case ARM::VST3LNqWB_register_Asm_16:
-    Spacing = 2;
-    return ARM::VST3LNq16_UPD;
-  case ARM::VST3LNqWB_register_Asm_32:
-    Spacing = 2;
-    return ARM::VST3LNq32_UPD;
-  case ARM::VST3LNdAsm_8:
-    Spacing = 1;
-    return ARM::VST3LNd8;
-  case ARM::VST3LNdAsm_16:
-    Spacing = 1;
-    return ARM::VST3LNd16;
-  case ARM::VST3LNdAsm_32:
-    Spacing = 1;
-    return ARM::VST3LNd32;
-  case ARM::VST3LNqAsm_16:
-    Spacing = 2;
-    return ARM::VST3LNq16;
-  case ARM::VST3LNqAsm_32:
-    Spacing = 2;
-    return ARM::VST3LNq32;
+  case ARM::VST3LNdWB_fixed_Asm_8:  Spacing = 1; return ARM::VST3LNd8_UPD;
+  case ARM::VST3LNdWB_fixed_Asm_16: Spacing = 1; return ARM::VST3LNd16_UPD;
+  case ARM::VST3LNdWB_fixed_Asm_32: Spacing = 1; return ARM::VST3LNd32_UPD;
+  case ARM::VST3LNqWB_fixed_Asm_16: Spacing = 1; return ARM::VST3LNq16_UPD;
+  case ARM::VST3LNqWB_fixed_Asm_32: Spacing = 2; return ARM::VST3LNq32_UPD;
+  case ARM::VST3LNdWB_register_Asm_8:  Spacing = 1; return ARM::VST3LNd8_UPD;
+  case ARM::VST3LNdWB_register_Asm_16: Spacing = 1; return ARM::VST3LNd16_UPD;
+  case ARM::VST3LNdWB_register_Asm_32: Spacing = 1; return ARM::VST3LNd32_UPD;
+  case ARM::VST3LNqWB_register_Asm_16: Spacing = 2; return ARM::VST3LNq16_UPD;
+  case ARM::VST3LNqWB_register_Asm_32: Spacing = 2; return ARM::VST3LNq32_UPD;
+  case ARM::VST3LNdAsm_8:  Spacing = 1; return ARM::VST3LNd8;
+  case ARM::VST3LNdAsm_16: Spacing = 1; return ARM::VST3LNd16;
+  case ARM::VST3LNdAsm_32: Spacing = 1; return ARM::VST3LNd32;
+  case ARM::VST3LNqAsm_16: Spacing = 2; return ARM::VST3LNq16;
+  case ARM::VST3LNqAsm_32: Spacing = 2; return ARM::VST3LNq32;
 
   // VST3
-  case ARM::VST3dWB_fixed_Asm_8:
-    Spacing = 1;
-    return ARM::VST3d8_UPD;
-  case ARM::VST3dWB_fixed_Asm_16:
-    Spacing = 1;
-    return ARM::VST3d16_UPD;
-  case ARM::VST3dWB_fixed_Asm_32:
-    Spacing = 1;
-    return ARM::VST3d32_UPD;
-  case ARM::VST3qWB_fixed_Asm_8:
-    Spacing = 2;
-    return ARM::VST3q8_UPD;
-  case ARM::VST3qWB_fixed_Asm_16:
-    Spacing = 2;
-    return ARM::VST3q16_UPD;
-  case ARM::VST3qWB_fixed_Asm_32:
-    Spacing = 2;
-    return ARM::VST3q32_UPD;
-  case ARM::VST3dWB_register_Asm_8:
-    Spacing = 1;
-    return ARM::VST3d8_UPD;
-  case ARM::VST3dWB_register_Asm_16:
-    Spacing = 1;
-    return ARM::VST3d16_UPD;
-  case ARM::VST3dWB_register_Asm_32:
-    Spacing = 1;
-    return ARM::VST3d32_UPD;
-  case ARM::VST3qWB_register_Asm_8:
-    Spacing = 2;
-    return ARM::VST3q8_UPD;
-  case ARM::VST3qWB_register_Asm_16:
-    Spacing = 2;
-    return ARM::VST3q16_UPD;
-  case ARM::VST3qWB_register_Asm_32:
-    Spacing = 2;
-    return ARM::VST3q32_UPD;
-  case ARM::VST3dAsm_8:
-    Spacing = 1;
-    return ARM::VST3d8;
-  case ARM::VST3dAsm_16:
-    Spacing = 1;
-    return ARM::VST3d16;
-  case ARM::VST3dAsm_32:
-    Spacing = 1;
-    return ARM::VST3d32;
-  case ARM::VST3qAsm_8:
-    Spacing = 2;
-    return ARM::VST3q8;
-  case ARM::VST3qAsm_16:
-    Spacing = 2;
-    return ARM::VST3q16;
-  case ARM::VST3qAsm_32:
-    Spacing = 2;
-    return ARM::VST3q32;
+  case ARM::VST3dWB_fixed_Asm_8:  Spacing = 1; return ARM::VST3d8_UPD;
+  case ARM::VST3dWB_fixed_Asm_16: Spacing = 1; return ARM::VST3d16_UPD;
+  case ARM::VST3dWB_fixed_Asm_32: Spacing = 1; return ARM::VST3d32_UPD;
+  case ARM::VST3qWB_fixed_Asm_8:  Spacing = 2; return ARM::VST3q8_UPD;
+  case ARM::VST3qWB_fixed_Asm_16: Spacing = 2; return ARM::VST3q16_UPD;
+  case ARM::VST3qWB_fixed_Asm_32: Spacing = 2; return ARM::VST3q32_UPD;
+  case ARM::VST3dWB_register_Asm_8:  Spacing = 1; return ARM::VST3d8_UPD;
+  case ARM::VST3dWB_register_Asm_16: Spacing = 1; return ARM::VST3d16_UPD;
+  case ARM::VST3dWB_register_Asm_32: Spacing = 1; return ARM::VST3d32_UPD;
+  case ARM::VST3qWB_register_Asm_8:  Spacing = 2; return ARM::VST3q8_UPD;
+  case ARM::VST3qWB_register_Asm_16: Spacing = 2; return ARM::VST3q16_UPD;
+  case ARM::VST3qWB_register_Asm_32: Spacing = 2; return ARM::VST3q32_UPD;
+  case ARM::VST3dAsm_8:  Spacing = 1; return ARM::VST3d8;
+  case ARM::VST3dAsm_16: Spacing = 1; return ARM::VST3d16;
+  case ARM::VST3dAsm_32: Spacing = 1; return ARM::VST3d32;
+  case ARM::VST3qAsm_8:  Spacing = 2; return ARM::VST3q8;
+  case ARM::VST3qAsm_16: Spacing = 2; return ARM::VST3q16;
+  case ARM::VST3qAsm_32: Spacing = 2; return ARM::VST3q32;
   }
 }
 
@@ -5363,183 +5254,69 @@ static unsigned getRealVLDOpcode(unsigned Opc, unsigned &Spacing) {
   switch(Opc) {
   default: assert(0 && "unexpected opcode!");
   // VLD1LN
-  case ARM::VLD1LNdWB_fixed_Asm_8:
-    Spacing = 1;
-    return ARM::VLD1LNd8_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_16:
-    Spacing = 1;
-    return ARM::VLD1LNd16_UPD;
-  case ARM::VLD1LNdWB_fixed_Asm_32:
-    Spacing = 1;
-    return ARM::VLD1LNd32_UPD;
-  case ARM::VLD1LNdWB_register_Asm_8:
-    Spacing = 1;
-    return ARM::VLD1LNd8_UPD;
-  case ARM::VLD1LNdWB_register_Asm_16:
-    Spacing = 1;
-    return ARM::VLD1LNd16_UPD;
-  case ARM::VLD1LNdWB_register_Asm_32:
-    Spacing = 1;
-    return ARM::VLD1LNd32_UPD;
-  case ARM::VLD1LNdAsm_8:
-    Spacing = 1;
-    return ARM::VLD1LNd8;
-  case ARM::VLD1LNdAsm_16:
-    Spacing = 1;
-    return ARM::VLD1LNd16;
-  case ARM::VLD1LNdAsm_32:
-    Spacing = 1;
-    return ARM::VLD1LNd32;
+  case ARM::VLD1LNdWB_fixed_Asm_8:  Spacing = 1; return ARM::VLD1LNd8_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_16: Spacing = 1; return ARM::VLD1LNd16_UPD;
+  case ARM::VLD1LNdWB_fixed_Asm_32: Spacing = 1; return ARM::VLD1LNd32_UPD;
+  case ARM::VLD1LNdWB_register_Asm_8:  Spacing = 1; return ARM::VLD1LNd8_UPD;
+  case ARM::VLD1LNdWB_register_Asm_16: Spacing = 1; return ARM::VLD1LNd16_UPD;
+  case ARM::VLD1LNdWB_register_Asm_32: Spacing = 1; return ARM::VLD1LNd32_UPD;
+  case ARM::VLD1LNdAsm_8:  Spacing = 1; return ARM::VLD1LNd8;
+  case ARM::VLD1LNdAsm_16: Spacing = 1; return ARM::VLD1LNd16;
+  case ARM::VLD1LNdAsm_32: Spacing = 1; return ARM::VLD1LNd32;
 
   // VLD2LN
-  case ARM::VLD2LNdWB_fixed_Asm_8:
-    Spacing = 1;
-    return ARM::VLD2LNd8_UPD;
-  case ARM::VLD2LNdWB_fixed_Asm_16:
-    Spacing = 1;
-    return ARM::VLD2LNd16_UPD;
-  case ARM::VLD2LNdWB_fixed_Asm_32:
-    Spacing = 1;
-    return ARM::VLD2LNd32_UPD;
-  case ARM::VLD2LNqWB_fixed_Asm_16:
-    Spacing = 1;
-    return ARM::VLD2LNq16_UPD;
-  case ARM::VLD2LNqWB_fixed_Asm_32:
-    Spacing = 2;
-    return ARM::VLD2LNq32_UPD;
-  case ARM::VLD2LNdWB_register_Asm_8:
-    Spacing = 1;
-    return ARM::VLD2LNd8_UPD;
-  case ARM::VLD2LNdWB_register_Asm_16:
-    Spacing = 1;
-    return ARM::VLD2LNd16_UPD;
-  case ARM::VLD2LNdWB_register_Asm_32:
-    Spacing = 1;
-    return ARM::VLD2LNd32_UPD;
-  case ARM::VLD2LNqWB_register_Asm_16:
-    Spacing = 2;
-    return ARM::VLD2LNq16_UPD;
-  case ARM::VLD2LNqWB_register_Asm_32:
-    Spacing = 2;
-    return ARM::VLD2LNq32_UPD;
-  case ARM::VLD2LNdAsm_8:
-    Spacing = 1;
-    return ARM::VLD2LNd8;
-  case ARM::VLD2LNdAsm_16:
-    Spacing = 1;
-    return ARM::VLD2LNd16;
-  case ARM::VLD2LNdAsm_32:
-    Spacing = 1;
-    return ARM::VLD2LNd32;
-  case ARM::VLD2LNqAsm_16:
-    Spacing = 2;
-    return ARM::VLD2LNq16;
-  case ARM::VLD2LNqAsm_32:
-    Spacing = 2;
-    return ARM::VLD2LNq32;
+  case ARM::VLD2LNdWB_fixed_Asm_8:  Spacing = 1; return ARM::VLD2LNd8_UPD;
+  case ARM::VLD2LNdWB_fixed_Asm_16: Spacing = 1; return ARM::VLD2LNd16_UPD;
+  case ARM::VLD2LNdWB_fixed_Asm_32: Spacing = 1; return ARM::VLD2LNd32_UPD;
+  case ARM::VLD2LNqWB_fixed_Asm_16: Spacing = 1; return ARM::VLD2LNq16_UPD;
+  case ARM::VLD2LNqWB_fixed_Asm_32: Spacing = 2; return ARM::VLD2LNq32_UPD;
+  case ARM::VLD2LNdWB_register_Asm_8:  Spacing = 1; return ARM::VLD2LNd8_UPD;
+  case ARM::VLD2LNdWB_register_Asm_16: Spacing = 1; return ARM::VLD2LNd16_UPD;
+  case ARM::VLD2LNdWB_register_Asm_32: Spacing = 1; return ARM::VLD2LNd32_UPD;
+  case ARM::VLD2LNqWB_register_Asm_16: Spacing = 2; return ARM::VLD2LNq16_UPD;
+  case ARM::VLD2LNqWB_register_Asm_32: Spacing = 2; return ARM::VLD2LNq32_UPD;
+  case ARM::VLD2LNdAsm_8:  Spacing = 1; return ARM::VLD2LNd8;
+  case ARM::VLD2LNdAsm_16: Spacing = 1; return ARM::VLD2LNd16;
+  case ARM::VLD2LNdAsm_32: Spacing = 1; return ARM::VLD2LNd32;
+  case ARM::VLD2LNqAsm_16: Spacing = 2; return ARM::VLD2LNq16;
+  case ARM::VLD2LNqAsm_32: Spacing = 2; return ARM::VLD2LNq32;
 
   // VLD3LN
-  case ARM::VLD3LNdWB_fixed_Asm_8:
-    Spacing = 1;
-    return ARM::VLD3LNd8_UPD;
-  case ARM::VLD3LNdWB_fixed_Asm_16:
-    Spacing = 1;
-    return ARM::VLD3LNd16_UPD;
-  case ARM::VLD3LNdWB_fixed_Asm_32:
-    Spacing = 1;
-    return ARM::VLD3LNd32_UPD;
-  case ARM::VLD3LNqWB_fixed_Asm_16:
-    Spacing = 1;
-    return ARM::VLD3LNq16_UPD;
-  case ARM::VLD3LNqWB_fixed_Asm_32:
-    Spacing = 2;
-    return ARM::VLD3LNq32_UPD;
-  case ARM::VLD3LNdWB_register_Asm_8:
-    Spacing = 1;
-    return ARM::VLD3LNd8_UPD;
-  case ARM::VLD3LNdWB_register_Asm_16:
-    Spacing = 1;
-    return ARM::VLD3LNd16_UPD;
-  case ARM::VLD3LNdWB_register_Asm_32:
-    Spacing = 1;
-    return ARM::VLD3LNd32_UPD;
-  case ARM::VLD3LNqWB_register_Asm_16:
-    Spacing = 2;
-    return ARM::VLD3LNq16_UPD;
-  case ARM::VLD3LNqWB_register_Asm_32:
-    Spacing = 2;
-    return ARM::VLD3LNq32_UPD;
-  case ARM::VLD3LNdAsm_8:
-    Spacing = 1;
-    return ARM::VLD3LNd8;
-  case ARM::VLD3LNdAsm_16:
-    Spacing = 1;
-    return ARM::VLD3LNd16;
-  case ARM::VLD3LNdAsm_32:
-    Spacing = 1;
-    return ARM::VLD3LNd32;
-  case ARM::VLD3LNqAsm_16:
-    Spacing = 2;
-    return ARM::VLD3LNq16;
-  case ARM::VLD3LNqAsm_32:
-    Spacing = 2;
-    return ARM::VLD3LNq32;
+  case ARM::VLD3LNdWB_fixed_Asm_8:  Spacing = 1; return ARM::VLD3LNd8_UPD;
+  case ARM::VLD3LNdWB_fixed_Asm_16: Spacing = 1; return ARM::VLD3LNd16_UPD;
+  case ARM::VLD3LNdWB_fixed_Asm_32: Spacing = 1; return ARM::VLD3LNd32_UPD;
+  case ARM::VLD3LNqWB_fixed_Asm_16: Spacing = 1; return ARM::VLD3LNq16_UPD;
+  case ARM::VLD3LNqWB_fixed_Asm_32: Spacing = 2; return ARM::VLD3LNq32_UPD;
+  case ARM::VLD3LNdWB_register_Asm_8:  Spacing = 1; return ARM::VLD3LNd8_UPD;
+  case ARM::VLD3LNdWB_register_Asm_16: Spacing = 1; return ARM::VLD3LNd16_UPD;
+  case ARM::VLD3LNdWB_register_Asm_32: Spacing = 1; return ARM::VLD3LNd32_UPD;
+  case ARM::VLD3LNqWB_register_Asm_16: Spacing = 2; return ARM::VLD3LNq16_UPD;
+  case ARM::VLD3LNqWB_register_Asm_32: Spacing = 2; return ARM::VLD3LNq32_UPD;
+  case ARM::VLD3LNdAsm_8:  Spacing = 1; return ARM::VLD3LNd8;
+  case ARM::VLD3LNdAsm_16: Spacing = 1; return ARM::VLD3LNd16;
+  case ARM::VLD3LNdAsm_32: Spacing = 1; return ARM::VLD3LNd32;
+  case ARM::VLD3LNqAsm_16: Spacing = 2; return ARM::VLD3LNq16;
+  case ARM::VLD3LNqAsm_32: Spacing = 2; return ARM::VLD3LNq32;
 
   // VLD3
-  case ARM::VLD3dWB_fixed_Asm_8:
-    Spacing = 1;
-    return ARM::VLD3d8_UPD;
-  case ARM::VLD3dWB_fixed_Asm_16:
-    Spacing = 1;
-    return ARM::VLD3d16_UPD;
-  case ARM::VLD3dWB_fixed_Asm_32:
-    Spacing = 1;
-    return ARM::VLD3d32_UPD;
-  case ARM::VLD3qWB_fixed_Asm_8:
-    Spacing = 2;
-    return ARM::VLD3q8_UPD;
-  case ARM::VLD3qWB_fixed_Asm_16:
-    Spacing = 2;
-    return ARM::VLD3q16_UPD;
-  case ARM::VLD3qWB_fixed_Asm_32:
-    Spacing = 2;
-    return ARM::VLD3q32_UPD;
-  case ARM::VLD3dWB_register_Asm_8:
-    Spacing = 1;
-    return ARM::VLD3d8_UPD;
-  case ARM::VLD3dWB_register_Asm_16:
-    Spacing = 1;
-    return ARM::VLD3d16_UPD;
-  case ARM::VLD3dWB_register_Asm_32:
-    Spacing = 1;
-    return ARM::VLD3d32_UPD;
-  case ARM::VLD3qWB_register_Asm_8:
-    Spacing = 2;
-    return ARM::VLD3q8_UPD;
-  case ARM::VLD3qWB_register_Asm_16:
-    Spacing = 2;
-    return ARM::VLD3q16_UPD;
-  case ARM::VLD3qWB_register_Asm_32:
-    Spacing = 2;
-    return ARM::VLD3q32_UPD;
-  case ARM::VLD3dAsm_8:
-    Spacing = 1;
-    return ARM::VLD3d8;
-  case ARM::VLD3dAsm_16:
-    Spacing = 1;
-    return ARM::VLD3d16;
-  case ARM::VLD3dAsm_32:
-    Spacing = 1;
-    return ARM::VLD3d32;
-  case ARM::VLD3qAsm_8:
-    Spacing = 2;
-    return ARM::VLD3q8;
-  case ARM::VLD3qAsm_16:
-    Spacing = 2;
-    return ARM::VLD3q16;
-  case ARM::VLD3qAsm_32:
-    Spacing = 2;
-    return ARM::VLD3q32;
+  case ARM::VLD3dWB_fixed_Asm_8:  Spacing = 1; return ARM::VLD3d8_UPD;
+  case ARM::VLD3dWB_fixed_Asm_16: Spacing = 1; return ARM::VLD3d16_UPD;
+  case ARM::VLD3dWB_fixed_Asm_32: Spacing = 1; return ARM::VLD3d32_UPD;
+  case ARM::VLD3qWB_fixed_Asm_8:  Spacing = 2; return ARM::VLD3q8_UPD;
+  case ARM::VLD3qWB_fixed_Asm_16: Spacing = 2; return ARM::VLD3q16_UPD;
+  case ARM::VLD3qWB_fixed_Asm_32: Spacing = 2; return ARM::VLD3q32_UPD;
+  case ARM::VLD3dWB_register_Asm_8:  Spacing = 1; return ARM::VLD3d8_UPD;
+  case ARM::VLD3dWB_register_Asm_16: Spacing = 1; return ARM::VLD3d16_UPD;
+  case ARM::VLD3dWB_register_Asm_32: Spacing = 1; return ARM::VLD3d32_UPD;
+  case ARM::VLD3qWB_register_Asm_8:  Spacing = 2; return ARM::VLD3q8_UPD;
+  case ARM::VLD3qWB_register_Asm_16: Spacing = 2; return ARM::VLD3q16_UPD;
+  case ARM::VLD3qWB_register_Asm_32: Spacing = 2; return ARM::VLD3q32_UPD;
+  case ARM::VLD3dAsm_8:  Spacing = 1; return ARM::VLD3d8;
+  case ARM::VLD3dAsm_16: Spacing = 1; return ARM::VLD3d16;
+  case ARM::VLD3dAsm_32: Spacing = 1; return ARM::VLD3d32;
+  case ARM::VLD3qAsm_8:  Spacing = 2; return ARM::VLD3q8;
+  case ARM::VLD3qAsm_16: Spacing = 2; return ARM::VLD3q16;
+  case ARM::VLD3qAsm_32: Spacing = 2; return ARM::VLD3q32;
   }
 }
 
