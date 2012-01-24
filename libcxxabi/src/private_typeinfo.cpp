@@ -13,19 +13,6 @@
 
 #include <iostream>
 
-namespace std
-{
-
-#pragma GCC visibility push(default)
-
-type_info::~type_info()
-{
-}
-
-#pragma GCC visibility pop
-
-}  // std
-
 namespace __cxxabiv1
 {
 
