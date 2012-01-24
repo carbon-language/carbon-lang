@@ -592,7 +592,8 @@ IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
     if (!Asm.getBackend().hasReliableSymbolDifference()) {
       if (!SA.isInSection() || &SecA != &SecB ||
           (!SA.isTemporary() &&
-           FB.getAtom() != Asm.getSymbolData(SA).getFragment()->getAtom()))
+           FB.getAtom() != Asm.getSymbolData(SA).getFragment()->getAtom() &&
+           Asm.getSubsectionsViaSymbols()))
         return false;
       return true;
     }
