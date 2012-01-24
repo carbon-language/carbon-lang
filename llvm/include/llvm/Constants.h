@@ -371,6 +371,9 @@ public:
     return reinterpret_cast<ArrayType*>(Value::getType());
   }
 
+  // FIXME: String methods will eventually be removed.
+  
+  
   /// isString - This method returns true if the array is an array of i8 and
   /// the elements of the array are all ConstantInt's.
   bool isString() const;
@@ -626,6 +629,30 @@ public:
   /// byte.
   uint64_t getElementByteSize() const;
 
+  
+  /// isString - This method returns true if this is an array of i8.
+  bool isString() const;
+  
+  /// isCString - This method returns true if the array "isString", ends with a
+  /// nul byte, and does not contains any other nul bytes.
+  bool isCString() const;
+  
+  /// getAsString - If this array is isString(), then this method returns the
+  /// array as a StringRef.  Otherwise, it asserts out.
+  ///
+  StringRef getAsString() const;
+  
+  /// getAsCString - If this array is isCString(), then this method returns the
+  /// array (without the trailing null byte) as a StringRef. Otherwise, it
+  /// asserts out.
+  ///
+  StringRef getAsCString() const {
+    assert(isCString() && "Isn't a C string");
+    StringRef Str = getAsString();
+    return Str.substr(0, Str.size()-1);
+  }
+  
+  
   virtual void destroyConstant();
   
   /// Methods for support type inquiry through isa, cast, and dyn_cast:

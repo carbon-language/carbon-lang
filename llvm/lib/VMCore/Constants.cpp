@@ -2221,7 +2221,34 @@ Constant *ConstantDataSequential::getElementAsConstant(unsigned Elt) const {
   return ConstantInt::get(getElementType(), getElementAsInteger(Elt));
 }
 
+/// isString - This method returns true if this is an array of i8.
+bool ConstantDataSequential::isString() const {
+  return isa<ArrayType>(getType()) && getElementType()->isIntegerTy(8);
+}
 
+/// getAsString - If this array is isString(), then this method returns the
+/// array as a StringRef.  Otherwise, it asserts out.
+///
+StringRef ConstantDataSequential::getAsString() const {
+  assert(isString() && "Not a string");
+  return StringRef(DataElements, getType()->getNumElements());
+}
+
+
+/// isCString - This method returns true if the array "isString", ends with a
+/// nul byte, and does not contains any other nul bytes.
+bool ConstantDataSequential::isCString() const {
+  if (!isString())
+    return false;
+  
+  StringRef Str = getAsString();
+  
+  // The last value must be nul.
+  if (Str.back() != 0) return false;
+  
+  // Other elements must be non-nul.
+  return Str.drop_back().find(0) == StringRef::npos;
+}
 
 
 //===----------------------------------------------------------------------===//
