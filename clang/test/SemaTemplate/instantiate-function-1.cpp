@@ -194,7 +194,7 @@ template struct IndirectGoto0<int>; // expected-note{{instantiation}}
 template<typename T> struct TryCatch0 {
   void f() {
     try {
-    } catch (T t) { // expected-warning{{incomplete type}} \
+    } catch (T t) { // expected-error{{incomplete type}} \
                     // expected-error{{abstract class}}
     } catch (...) {
     }

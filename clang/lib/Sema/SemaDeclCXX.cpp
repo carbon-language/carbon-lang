@@ -9734,28 +9734,21 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S,
     Invalid = true;
   }
 
-  // GCC allows catching pointers and references to incomplete types
-  // as an extension; so do we, but we warn by default.
-
   QualType BaseType = ExDeclType;
   int Mode = 0; // 0 for direct type, 1 for pointer, 2 for reference
   unsigned DK = diag::err_catch_incomplete;
-  bool IncompleteCatchIsInvalid = true;
   if (const PointerType *Ptr = BaseType->getAs<PointerType>()) {
     BaseType = Ptr->getPointeeType();
     Mode = 1;
-    DK = diag::ext_catch_incomplete_ptr;
-    IncompleteCatchIsInvalid = false;
+    DK = diag::err_catch_incomplete_ptr;
   } else if (const ReferenceType *Ref = BaseType->getAs<ReferenceType>()) {
     // For the purpose of error recovery, we treat rvalue refs like lvalue refs.
     BaseType = Ref->getPointeeType();
     Mode = 2;
-    DK = diag::ext_catch_incomplete_ref;
-    IncompleteCatchIsInvalid = false;
+    DK = diag::err_catch_incomplete_ref;
   }
   if (!Invalid && (Mode == 0 || !BaseType->isVoidType()) &&
-      !BaseType->isDependentType() && RequireCompleteType(Loc, BaseType, DK) &&
-      IncompleteCatchIsInvalid)
+      !BaseType->isDependentType() && RequireCompleteType(Loc, BaseType, DK))
     Invalid = true;
 
   if (!Invalid && !ExDeclType->isDependentType() &&

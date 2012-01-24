@@ -31,7 +31,6 @@ def BuiltinRequiresHeader : DiagGroup<"builtin-requires-header">;
 def CXXCompat: DiagGroup<"c++-compat">;
 def CastAlign : DiagGroup<"cast-align">;
 def : DiagGroup<"cast-qual">;
-def CatchIncompleteExtension : DiagGroup<"catch-incomplete-type-extensions">;
 def : DiagGroup<"char-align">;
 def Comment : DiagGroup<"comment">;
 def : DiagGroup<"ctor-dtor-privacy">;
