@@ -139,10 +139,14 @@ public:
                                   raw_ostream &O);
   void printVectorListTwoAllLanes(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O);
+  void printVectorListThreeAllLanes(const MCInst *MI, unsigned OpNum,
+                                    raw_ostream &O);
   void printVectorListTwoSpaced(const MCInst *MI, unsigned OpNum,
                                 raw_ostream &O);
   void printVectorListTwoSpacedAllLanes(const MCInst *MI, unsigned OpNum,
                                         raw_ostream &O);
+  void printVectorListThreeSpacedAllLanes(const MCInst *MI, unsigned OpNum,
+                                          raw_ostream &O);
   void printVectorListThreeSpaced(const MCInst *MI, unsigned OpNum,
                                   raw_ostream &O);
   void printVectorListFourSpaced(const MCInst *MI, unsigned OpNum,

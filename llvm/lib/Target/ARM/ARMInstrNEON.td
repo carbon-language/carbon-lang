@@ -171,6 +171,27 @@ def VecListTwoQAllLanes : RegisterOperand<DPR,
                                          "printVectorListTwoSpacedAllLanes"> {
   let ParserMatchClass = VecListTwoQAllLanesAsmOperand;
 }
+// Register list of three D registers, with "all lanes" subscripting.
+def VecListThreeDAllLanesAsmOperand : AsmOperandClass {
+  let Name = "VecListThreeDAllLanes";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListOperands";
+}
+def VecListThreeDAllLanes : RegisterOperand<DPR,
+                                            "printVectorListThreeAllLanes"> {
+  let ParserMatchClass = VecListThreeDAllLanesAsmOperand;
+}
+// Register list of three D registers spaced by 2 (three sequential Q regs).
+def VecListThreeQAllLanesAsmOperand : AsmOperandClass {
+  let Name = "VecListThreeQAllLanes";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListOperands";
+}
+def VecListThreeQAllLanes : RegisterOperand<DPR,
+                                         "printVectorListThreeSpacedAllLanes"> {
+  let ParserMatchClass = VecListThreeQAllLanesAsmOperand;
+}
+
 
 // Register list of one D register, with byte lane subscripting.
 def VecListOneDByteIndexAsmOperand : AsmOperandClass {
@@ -1433,9 +1454,9 @@ def VLD3DUPd16Pseudo : VLDQQPseudo<IIC_VLD3dup>;
 def VLD3DUPd32Pseudo : VLDQQPseudo<IIC_VLD3dup>;
 
 // ...with double-spaced registers (not used for codegen):
-def VLD3DUPd8x2  : VLD3DUP<{0,0,1,?}, "8">;
-def VLD3DUPd16x2 : VLD3DUP<{0,1,1,?}, "16">;
-def VLD3DUPd32x2 : VLD3DUP<{1,0,1,?}, "32">;
+def VLD3DUPq8  : VLD3DUP<{0,0,1,?}, "8">;
+def VLD3DUPq16 : VLD3DUP<{0,1,1,?}, "16">;
+def VLD3DUPq32 : VLD3DUP<{1,0,1,?}, "32">;
 
 // ...with address register writeback:
 class VLD3DUPWB<bits<4> op7_4, string Dt>
@@ -1451,9 +1472,9 @@ def VLD3DUPd8_UPD  : VLD3DUPWB<{0,0,0,0}, "8">;
 def VLD3DUPd16_UPD : VLD3DUPWB<{0,1,0,?}, "16">;
 def VLD3DUPd32_UPD : VLD3DUPWB<{1,0,0,?}, "32">;
 
-def VLD3DUPd8x2_UPD  : VLD3DUPWB<{0,0,1,0}, "8">;
-def VLD3DUPd16x2_UPD : VLD3DUPWB<{0,1,1,?}, "16">;
-def VLD3DUPd32x2_UPD : VLD3DUPWB<{1,0,1,?}, "32">;
+def VLD3DUPq8_UPD  : VLD3DUPWB<{0,0,1,0}, "8">;
+def VLD3DUPq16_UPD : VLD3DUPWB<{0,1,1,?}, "16">;
+def VLD3DUPq32_UPD : VLD3DUPWB<{1,0,1,?}, "32">;
 
 def VLD3DUPd8Pseudo_UPD  : VLDQQWBPseudo<IIC_VLD3dupu>;
 def VLD3DUPd16Pseudo_UPD : VLDQQWBPseudo<IIC_VLD3dupu>;
@@ -6034,6 +6055,64 @@ def VST2LNqWB_register_Asm_16 :
 def VST2LNqWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst2${p}", ".32", "$list, $addr, $Rm",
                   (ins VecListTwoQWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+
+// VLD3 all-lanes pseudo-instructions. These need special handling for
+// the lane index that an InstAlias can't handle, so we use these instead.
+def VLD3DUPdAsm_8  : NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr",
+               (ins VecListThreeDAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD3DUPdAsm_16 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr",
+               (ins VecListThreeDAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD3DUPdAsm_32 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr",
+               (ins VecListThreeDAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD3DUPqAsm_8  : NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr",
+               (ins VecListThreeQAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD3DUPqAsm_16 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr",
+               (ins VecListThreeQAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD3DUPqAsm_32 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr",
+               (ins VecListThreeQAllLanes:$list, addrmode6:$addr, pred:$p)>;
+
+def VLD3DUPdWB_fixed_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr!",
+               (ins VecListThreeDAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD3DUPdWB_fixed_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr!",
+               (ins VecListThreeDAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD3DUPdWB_fixed_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr!",
+               (ins VecListThreeDAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD3DUPqWB_fixed_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr!",
+               (ins VecListThreeQAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD3DUPqWB_fixed_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr!",
+               (ins VecListThreeQAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD3DUPqWB_fixed_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr!",
+               (ins VecListThreeQAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD3DUPdWB_register_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr, $Rm",
+                  (ins VecListThreeDAllLanes:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD3DUPdWB_register_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr, $Rm",
+                  (ins VecListThreeDAllLanes:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD3DUPdWB_register_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr, $Rm",
+                  (ins VecListThreeDAllLanes:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD3DUPqWB_register_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr, $Rm",
+                  (ins VecListThreeQAllLanes:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD3DUPqWB_register_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr, $Rm",
+                  (ins VecListThreeQAllLanes:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD3DUPqWB_register_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr, $Rm",
+                  (ins VecListThreeQAllLanes:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
 
