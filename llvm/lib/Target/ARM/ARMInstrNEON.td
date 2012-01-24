@@ -6364,6 +6364,55 @@ def VLD4qWB_register_Asm_32 :
                   (ins VecListFourQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
+// VST4 single-lane pseudo-instructions. These need special handling for
+// the lane index that an InstAlias can't handle, so we use these instead.
+def VST4LNdAsm_8 : NEONDataTypeAsmPseudoInst<"vst4${p}", ".8", "$list, $addr",
+               (ins VecListFourDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST4LNdAsm_16 : NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr",
+               (ins VecListFourDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST4LNdAsm_32 : NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr",
+               (ins VecListFourDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST4LNqAsm_16 : NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr",
+               (ins VecListFourQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST4LNqAsm_32 : NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr",
+               (ins VecListFourQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+
+def VST4LNdWB_fixed_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vst4${p}", ".8", "$list, $addr!",
+               (ins VecListFourDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST4LNdWB_fixed_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr!",
+               (ins VecListFourDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST4LNdWB_fixed_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr!",
+               (ins VecListFourDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST4LNqWB_fixed_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr!",
+               (ins VecListFourQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST4LNqWB_fixed_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr!",
+               (ins VecListFourQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
+def VST4LNdWB_register_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vst4${p}", ".8", "$list, $addr, $Rm",
+                  (ins VecListFourDByteIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VST4LNdWB_register_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr, $Rm",
+                  (ins VecListFourDHWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VST4LNdWB_register_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr, $Rm",
+                  (ins VecListFourDWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VST4LNqWB_register_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr, $Rm",
+                  (ins VecListFourQHWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VST4LNqWB_register_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr, $Rm",
+                  (ins VecListFourQWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+
 
 // VST4 multiple structure pseudo-instructions. These need special handling for
 // the vector operands that the normal instructions don't yet model.
