@@ -20,10 +20,10 @@ id f4(struct objc_super *super, SEL op) { // expected-warning {{declaration of '
 
 id f5(id val, id *dest) {
   return objc_assign_strongCast(val, dest); // expected-warning {{implicitly declaring C library function 'objc_assign_strongCast' with type 'id (id, id *)'}} \
-					    // expected-note {{please include the header </objc/objc-auto.h> or explicitly provide a declaration for 'objc_assign_strongCast'}}
+					    // expected-note {{please include the header <objc/objc-auto.h> or explicitly provide a declaration for 'objc_assign_strongCast'}}
 }
 
 int f6(Class exceptionClass, id exception) {
   return objc_exception_match(exceptionClass, exception); // expected-warning {{implicitly declaring C library function 'objc_exception_match' with type 'int (id, id)'}} \
-  							  // expected-note {{please include the header </objc/objc-exception.h> or explicitly provide a declaration for 'objc_exception_match'}}
+  							  // expected-note {{please include the header <objc/objc-exception.h> or explicitly provide a declaration for 'objc_exception_match'}}
 }
