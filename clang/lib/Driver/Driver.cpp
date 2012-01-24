@@ -348,8 +348,9 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   InputList Inputs;
   BuildInputs(C->getDefaultToolChain(), C->getArgs(), Inputs);
 
-  // Construct the list of abstract actions to perform for this compilation.
-  if (Host->useDriverDriver())
+  // Construct the list of abstract actions to perform for this compilation. On
+  // Darwin target OSes this uses the driver-driver and universal actions.
+  if (TargetTriple.isOSDarwin())
     BuildUniversalActions(C->getDefaultToolChain(), C->getArgs(),
                           Inputs, C->getActions());
   else
@@ -437,8 +438,9 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
     return;
   }
 
-  // Construct the list of abstract actions to perform for this compilation.
-  if (Host->useDriverDriver())
+  // Construct the list of abstract actions to perform for this compilation. On
+  // Darwin OSes this uses the driver-driver and builds universal actions.
+  if (TargetTriple.isOSDarwin())
     BuildUniversalActions(C.getDefaultToolChain(), C.getArgs(),
                           Inputs, C.getActions());
   else

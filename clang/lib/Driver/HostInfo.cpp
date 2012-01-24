@@ -45,8 +45,6 @@ public:
   DarwinHostInfo(const Driver &D, const llvm::Triple &Triple);
   ~DarwinHostInfo();
 
-  virtual bool useDriverDriver() const;
-
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;
 };
@@ -59,10 +57,6 @@ DarwinHostInfo::~DarwinHostInfo() {
   for (llvm::DenseMap<unsigned, ToolChain*>::iterator
          it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
     delete it->second;
-}
-
-bool DarwinHostInfo::useDriverDriver() const {
-  return true;
 }
 
 ToolChain *DarwinHostInfo::CreateToolChain(const ArgList &Args,
@@ -132,18 +126,12 @@ public:
   TCEHostInfo(const Driver &D, const llvm::Triple &Triple);
   ~TCEHostInfo() {}
 
-  virtual bool useDriverDriver() const;
-
   virtual ToolChain *CreateToolChain(const ArgList &Args, 
                                      const char *ArchName) const;
 };
 
 TCEHostInfo::TCEHostInfo(const Driver &D, const llvm::Triple& Triple)
   : HostInfo(D, Triple) {
-}
-
-bool TCEHostInfo::useDriverDriver() const { 
-  return false;
 }
 
 ToolChain *TCEHostInfo::CreateToolChain(const ArgList &Args, 
@@ -165,8 +153,6 @@ public:
   UnknownHostInfo(const Driver &D, const llvm::Triple& Triple);
   ~UnknownHostInfo();
 
-  virtual bool useDriverDriver() const;
-
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;
 };
@@ -179,10 +165,6 @@ UnknownHostInfo::~UnknownHostInfo() {
   for (llvm::StringMap<ToolChain*>::iterator
          it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
     delete it->second;
-}
-
-bool UnknownHostInfo::useDriverDriver() const {
-  return false;
 }
 
 ToolChain *UnknownHostInfo::CreateToolChain(const ArgList &Args,
@@ -228,8 +210,6 @@ public:
     : HostInfo(D, Triple) {}
   ~OpenBSDHostInfo();
 
-  virtual bool useDriverDriver() const;
-
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;
 };
@@ -238,10 +218,6 @@ OpenBSDHostInfo::~OpenBSDHostInfo() {
   for (llvm::StringMap<ToolChain*>::iterator
          it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
     delete it->second;
-}
-
-bool OpenBSDHostInfo::useDriverDriver() const {
-  return false;
 }
 
 ToolChain *OpenBSDHostInfo::CreateToolChain(const ArgList &Args,
@@ -275,8 +251,6 @@ public:
     : HostInfo(D, Triple) {}
   ~AuroraUXHostInfo();
 
-  virtual bool useDriverDriver() const;
-
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;
 };
@@ -285,10 +259,6 @@ AuroraUXHostInfo::~AuroraUXHostInfo() {
   for (llvm::StringMap<ToolChain*>::iterator
          it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
     delete it->second;
-}
-
-bool AuroraUXHostInfo::useDriverDriver() const {
-  return false;
 }
 
 ToolChain *AuroraUXHostInfo::CreateToolChain(const ArgList &Args,
@@ -320,8 +290,6 @@ public:
     : HostInfo(D, Triple) {}
   ~FreeBSDHostInfo();
 
-  virtual bool useDriverDriver() const;
-
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;
 };
@@ -330,10 +298,6 @@ FreeBSDHostInfo::~FreeBSDHostInfo() {
   for (llvm::StringMap<ToolChain*>::iterator
          it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
     delete it->second;
-}
-
-bool FreeBSDHostInfo::useDriverDriver() const {
-  return false;
 }
 
 ToolChain *FreeBSDHostInfo::CreateToolChain(const ArgList &Args,
@@ -379,8 +343,6 @@ public:
     : HostInfo(D, Triple) {}
   ~NetBSDHostInfo();
 
-  virtual bool useDriverDriver() const;
-
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;
 };
@@ -389,10 +351,6 @@ NetBSDHostInfo::~NetBSDHostInfo() {
   for (llvm::StringMap<ToolChain*>::iterator
          it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
     delete it->second;
-}
-
-bool NetBSDHostInfo::useDriverDriver() const {
-  return false;
 }
 
 ToolChain *NetBSDHostInfo::CreateToolChain(const ArgList &Args,
@@ -443,8 +401,6 @@ public:
     : HostInfo(D, Triple) {}
   ~MinixHostInfo();
 
-  virtual bool useDriverDriver() const;
-
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;
 };
@@ -454,10 +410,6 @@ MinixHostInfo::~MinixHostInfo() {
          it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it){
     delete it->second;
   }
-}
-
-bool MinixHostInfo::useDriverDriver() const {
-  return false;
 }
 
 ToolChain *MinixHostInfo::CreateToolChain(const ArgList &Args,
@@ -491,8 +443,6 @@ public:
     : HostInfo(D, Triple) {}
   ~DragonFlyHostInfo();
 
-  virtual bool useDriverDriver() const;
-
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;
 };
@@ -501,10 +451,6 @@ DragonFlyHostInfo::~DragonFlyHostInfo() {
   for (llvm::StringMap<ToolChain*>::iterator
          it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
     delete it->second;
-}
-
-bool DragonFlyHostInfo::useDriverDriver() const {
-  return false;
 }
 
 ToolChain *DragonFlyHostInfo::CreateToolChain(const ArgList &Args,
@@ -536,8 +482,6 @@ public:
     : HostInfo(D, Triple) {}
   ~LinuxHostInfo();
 
-  virtual bool useDriverDriver() const;
-
   virtual ToolChain *CreateToolChain(const ArgList &Args,
                                      const char *ArchName) const;
 };
@@ -546,10 +490,6 @@ LinuxHostInfo::~LinuxHostInfo() {
   for (llvm::StringMap<ToolChain*>::iterator
          it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
     delete it->second;
-}
-
-bool LinuxHostInfo::useDriverDriver() const {
-  return false;
 }
 
 ToolChain *LinuxHostInfo::CreateToolChain(const ArgList &Args,
@@ -601,8 +541,6 @@ public:
   WindowsHostInfo(const Driver &D, const llvm::Triple& Triple);
   ~WindowsHostInfo();
 
-  virtual bool useDriverDriver() const;
-
   virtual types::ID lookupTypeForExtension(const char *Ext) const {
     return types::lookupTypeForExtension(Ext);
   }
@@ -619,10 +557,6 @@ WindowsHostInfo::~WindowsHostInfo() {
   for (llvm::StringMap<ToolChain*>::iterator
          it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
     delete it->second;
-}
-
-bool WindowsHostInfo::useDriverDriver() const {
-  return false;
 }
 
 ToolChain *WindowsHostInfo::CreateToolChain(const ArgList &Args,

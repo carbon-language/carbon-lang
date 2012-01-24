@@ -43,10 +43,6 @@ public:
   std::string getPlatformName() const { return Triple.getVendorName(); }
   std::string getOSName() const { return Triple.getOSName(); }
 
-  /// useDriverDriver - Whether the driver should act as a driver driver for
-  /// this host and support -arch, -Xarch, etc.
-  virtual bool useDriverDriver() const = 0;
-
   /// CreateToolChain - Construct the toolchain to use for this host (which the
   /// host retains ownership of).
   ///
