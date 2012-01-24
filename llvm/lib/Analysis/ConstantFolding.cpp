@@ -273,7 +273,7 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
     }
     return false;
   }
-
+  
   if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
     const StructLayout *SL = TD.getStructLayout(CS->getType());
     unsigned Index = SL->getElementContainingOffset(ByteOffset);
@@ -347,6 +347,24 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
     return true;
   }
   
+  if (ConstantDataSequential *CDS = dyn_cast<ConstantDataSequential>(C)) {
+    uint64_t EltSize = CDS->getElementByteSize();
+    uint64_t Index = ByteOffset / EltSize;    
+    uint64_t Offset = ByteOffset - Index * EltSize;
+    for (; Index != CDS->getType()->getNumElements(); ++Index) {
+      if (!ReadDataFromGlobal(CDS->getElementAsConstant(Index), Offset, CurPtr,
+                              BytesLeft, TD))
+        return false;
+      if (EltSize >= BytesLeft)
+        return true;
+      
+      Offset = 0;
+      BytesLeft -= EltSize;
+      CurPtr += EltSize;
+    }
+    return true;
+  }
+    
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
     if (CE->getOpcode() == Instruction::IntToPtr &&
         CE->getOperand(0)->getType() == TD.getIntPtrType(CE->getContext())) 
@@ -990,56 +1008,51 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
 /// constant expression, or null if something is funny and we can't decide.
 Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C, 
                                                        ConstantExpr *CE) {
-  if (CE->getOperand(1) != Constant::getNullValue(CE->getOperand(1)->getType()))
+  if (!CE->getOperand(1)->isNullValue())
     return 0;  // Do not allow stepping over the value!
   
+  SmallVector<Constant*, 8> Indices(CE->getNumOperands()-2);
+  for (unsigned i = 2, e = CE->getNumOperands(); i != e; ++i)
+    Indices[i-2] = CE->getOperand(i);
+  return ConstantFoldLoadThroughGEPIndices(C, Indices);
+}
+
+/// ConstantFoldLoadThroughGEPIndices - Given a constant and getelementptr
+/// indices (with an *implied* zero pointer index that is not in the list),
+/// return the constant value being addressed by a virtual load, or null if
+/// something is funny and we can't decide.
+Constant *llvm::ConstantFoldLoadThroughGEPIndices(Constant *C,
+                                                  ArrayRef<Constant*> Indices) {
   // Loop over all of the operands, tracking down which value we are
-  // addressing...
-  gep_type_iterator I = gep_type_begin(CE), E = gep_type_end(CE);
-  for (++I; I != E; ++I)
-    if (StructType *STy = dyn_cast<StructType>(*I)) {
-      ConstantInt *CU = cast<ConstantInt>(I.getOperand());
-      assert(CU->getZExtValue() < STy->getNumElements() &&
-             "Struct index out of range!");
-      unsigned El = (unsigned)CU->getZExtValue();
-      if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
-        C = CS->getOperand(El);
-      } else if (isa<ConstantAggregateZero>(C)) {
-        C = Constant::getNullValue(STy->getElementType(El));
-      } else if (isa<UndefValue>(C)) {
-        C = UndefValue::get(STy->getElementType(El));
-      } else {
+  // addressing.
+  for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
+    ConstantInt *Idx = dyn_cast<ConstantInt>(Indices[i]);
+    if (Idx == 0) return 0;
+    
+    uint64_t IdxVal = Idx->getZExtValue();
+    
+    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
+      C = CS->getOperand(IdxVal);
+    } else if (ConstantAggregateZero *CAZ = dyn_cast<ConstantAggregateZero>(C)){
+      C = CAZ->getElementValue(Idx);
+    } else if (UndefValue *UV = dyn_cast<UndefValue>(C)) {
+      C = UV->getElementValue(Idx);
+    } else if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
+      if (IdxVal >= CA->getType()->getNumElements())
         return 0;
-      }
-    } else if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand())) {
-      if (ArrayType *ATy = dyn_cast<ArrayType>(*I)) {
-        if (CI->getZExtValue() >= ATy->getNumElements())
-         return 0;
-        if (ConstantArray *CA = dyn_cast<ConstantArray>(C))
-          C = CA->getOperand(CI->getZExtValue());
-        else if (isa<ConstantAggregateZero>(C))
-          C = Constant::getNullValue(ATy->getElementType());
-        else if (isa<UndefValue>(C))
-          C = UndefValue::get(ATy->getElementType());
-        else
-          return 0;
-      } else if (VectorType *VTy = dyn_cast<VectorType>(*I)) {
-        if (CI->getZExtValue() >= VTy->getNumElements())
-          return 0;
-        if (ConstantVector *CP = dyn_cast<ConstantVector>(C))
-          C = CP->getOperand(CI->getZExtValue());
-        else if (isa<ConstantAggregateZero>(C))
-          C = Constant::getNullValue(VTy->getElementType());
-        else if (isa<UndefValue>(C))
-          C = UndefValue::get(VTy->getElementType());
-        else
-          return 0;
-      } else {
+      C = CA->getOperand(IdxVal);
+    } else if (ConstantDataSequential *CDS=dyn_cast<ConstantDataSequential>(C)){
+      if (IdxVal >= CDS->getType()->getNumElements())
         return 0;
-      }
+      C = CDS->getElementAsConstant(IdxVal);
+    } else if (ConstantVector *CV = dyn_cast<ConstantVector>(C)) {
+      if (IdxVal >= CV->getType()->getNumElements())
+        return 0;
+      C = CV->getOperand(IdxVal);
     } else {
       return 0;
     }
+  }
   return C;
 }
 
