@@ -2048,7 +2048,8 @@ static bool isAllZeros(StringRef Arr) {
 /// we *want* an underlying "char*" to avoid TBAA type punning violations.
 Constant *ConstantDataSequential::getImpl(StringRef Elements, Type *Ty) {
   assert(isElementTypeCompatible(cast<SequentialType>(Ty)->getElementType()));
-  // If the elements are all zero, return a CAZ, which is more dense.
+  // If the elements are all zero or there are no elements, return a CAZ, which
+  // is more dense and canonical.
   if (isAllZeros(Elements))
     return ConstantAggregateZero::get(Ty);
 

@@ -73,12 +73,12 @@ static bool isSuitableForBSS(const GlobalVariable *GV, bool NoZerosInBSS) {
 
 /// IsNullTerminatedString - Return true if the specified constant (which is
 /// known to have a type that is an array of 1/2/4 byte elements) ends with a
-/// nul value and contains no other nuls in it.
+/// nul value and contains no other nuls in it.  Note that this is more general
+/// than ConstantDataSequential::isString because we allow 2 & 4 byte strings.
 static bool IsNullTerminatedString(const Constant *C) {
-  ArrayType *ATy = cast<ArrayType>(C->getType());
-
-  // First check: is we have constant array of i8 terminated with zero
+  // First check: is we have constant array terminated with zero
   if (const ConstantArray *CVA = dyn_cast<ConstantArray>(C)) {
+    ArrayType *ATy = cast<ArrayType>(C->getType());
     if (ATy->getNumElements() == 0) return false;
 
     ConstantInt *Null =
@@ -94,10 +94,23 @@ static bool IsNullTerminatedString(const Constant *C) {
         return false;
     return true;
   }
+  if (const ConstantDataSequential *CDS = dyn_cast<ConstantDataSequential>(C)) {
+    unsigned NumElts = CDS->getNumElements();
+    assert(NumElts != 0 && "Can't have an empty CDS");
+    
+    if (CDS->getElementAsInteger(NumElts-1) != 0)
+      return false; // Not null terminated.
+    
+    // Verify that the null doesn't occur anywhere else in the string.
+    for (unsigned i = 0; i != NumElts-1; ++i)
+      if (CDS->getElementAsInteger(i) == 0)
+        return false;
+    return true;
+  }
 
   // Another possibility: [1 x i8] zeroinitializer
   if (isa<ConstantAggregateZero>(C))
-    return ATy->getNumElements() == 1;
+    return cast<ArrayType>(C->getType())->getNumElements() == 1;
 
   return false;
 }

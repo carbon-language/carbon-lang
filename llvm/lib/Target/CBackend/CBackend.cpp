@@ -215,6 +215,8 @@ namespace {
     bool printConstExprCast(const ConstantExpr *CE, bool Static);
     void printConstantArray(ConstantArray *CPA, bool Static);
     void printConstantVector(ConstantVector *CV, bool Static);
+    void printConstantDataSequential(ConstantDataSequential *CDS, bool Static);
+
 
     /// isAddressExposed - Return true if the specified value's name needs to
     /// have its address taken in order to get a C value of the correct type.
@@ -556,20 +558,10 @@ raw_ostream &CWriter::printType(raw_ostream &Out, Type *Ty,
 }
 
 void CWriter::printConstantArray(ConstantArray *CPA, bool Static) {
-
   // As a special case, print the array as a string if it is an array of
   // ubytes or an array of sbytes with positive values.
   //
-  Type *ETy = CPA->getType()->getElementType();
-  bool isString = (ETy == Type::getInt8Ty(CPA->getContext()) ||
-                   ETy == Type::getInt8Ty(CPA->getContext()));
-
-  // Make sure the last character is a null char, as automatically added by C
-  if (isString && (CPA->getNumOperands() == 0 ||
-                   !cast<Constant>(*(CPA->op_end()-1))->isNullValue()))
-    isString = false;
-
-  if (isString) {
+  if (CPA->isCString()) {
     Out << '\"';
     // Keep track of whether the last number was a hexadecimal escape.
     bool LastWasHex = false;
@@ -636,6 +628,66 @@ void CWriter::printConstantVector(ConstantVector *CP, bool Static) {
   }
   Out << " }";
 }
+
+void CWriter::printConstantDataSequential(ConstantDataSequential *CDS,
+                                          bool Static) {
+  // As a special case, print the array as a string if it is an array of
+  // ubytes or an array of sbytes with positive values.
+  //
+  if (CDS->isCString()) {
+    Out << '\"';
+    // Keep track of whether the last number was a hexadecimal escape.
+    bool LastWasHex = false;
+    
+    StringRef Bytes = CDS->getAsCString();
+    
+    // Do not include the last character, which we know is null
+    for (unsigned i = 0, e = Bytes.size(); i != e; ++i) {
+      unsigned char C = Bytes[i];
+      
+      // Print it out literally if it is a printable character.  The only thing
+      // to be careful about is when the last letter output was a hex escape
+      // code, in which case we have to be careful not to print out hex digits
+      // explicitly (the C compiler thinks it is a continuation of the previous
+      // character, sheesh...)
+      //
+      if (isprint(C) && (!LastWasHex || !isxdigit(C))) {
+        LastWasHex = false;
+        if (C == '"' || C == '\\')
+          Out << "\\" << (char)C;
+        else
+          Out << (char)C;
+      } else {
+        LastWasHex = false;
+        switch (C) {
+          case '\n': Out << "\\n"; break;
+          case '\t': Out << "\\t"; break;
+          case '\r': Out << "\\r"; break;
+          case '\v': Out << "\\v"; break;
+          case '\a': Out << "\\a"; break;
+          case '\"': Out << "\\\""; break;
+          case '\'': Out << "\\\'"; break;
+          default:
+            Out << "\\x";
+            Out << (char)(( C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A'));
+            Out << (char)(((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A'));
+            LastWasHex = true;
+            break;
+        }
+      }
+    }
+    Out << '\"';
+  } else {
+    Out << "{ ";
+    printConstant(CDS->getElementAsConstant(0), Static);
+    for (unsigned i = 1, e = CDS->getNumOperands(); i != e; ++i) {
+      Out << ", ";
+      printConstant(CDS->getElementAsConstant(i), Static);
+    }
+    Out << " }";
+  }
+}
+
 
 // isFPCSafeToPrint - Returns true if we may assume that CFP may be written out
 // textually as a double (rather than as a reference to a stack-allocated
@@ -1024,6 +1076,9 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
     Out << "{ "; // Arrays are wrapped in struct types.
     if (ConstantArray *CA = dyn_cast<ConstantArray>(CPV)) {
       printConstantArray(CA, Static);
+    } else if (ConstantDataSequential *CDS = 
+                 dyn_cast<ConstantDataSequential>(CPV)) {
+      printConstantDataSequential(CDS, Static);
     } else {
       assert(isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV));
       ArrayType *AT = cast<ArrayType>(CPV->getType());
@@ -1051,6 +1106,9 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
     }
     if (ConstantVector *CV = dyn_cast<ConstantVector>(CPV)) {
       printConstantVector(CV, Static);
+    } else if (ConstantDataSequential *CDS = 
+               dyn_cast<ConstantDataSequential>(CPV)) {
+      printConstantDataSequential(CDS, Static);
     } else {
       assert(isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV));
       VectorType *VT = cast<VectorType>(CPV->getType());

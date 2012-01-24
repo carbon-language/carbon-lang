@@ -698,9 +698,7 @@ void CppWriter::printConstant(const Constant *CV) {
     printCFP(CFP);
     Out << ";";
   } else if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {
-    if (CA->isString() &&
-        CA->getType()->getElementType() ==
-            Type::getInt8Ty(CA->getContext())) {
+    if (CA->isString()) {
       Out << "Constant* " << constName <<
              " = ConstantArray::get(mod->getContext(), \"";
       std::string tmp = CA->getAsString();
@@ -757,6 +755,41 @@ void CppWriter::printConstant(const Constant *CV) {
   } else if (isa<UndefValue>(CV)) {
     Out << "UndefValue* " << constName << " = UndefValue::get("
         << typeName << ");";
+  } else if (const ConstantDataSequential *CDS =
+               dyn_cast<ConstantDataSequential>(CV)) {
+    if (CDS->isString()) {
+      Out << "Constant *" << constName <<
+      " = ConstantDataArray::getString(mod->getContext(), \"";
+      StringRef Str = CA->getAsString();
+      bool nullTerminate = false;
+      if (Str.back() == 0) {
+        Str = Str.drop_back();
+        nullTerminate = true;
+      }
+      printEscapedString(Str);
+      // Determine if we want null termination or not.
+      if (nullTerminate)
+        Out << "\", true);";
+      else
+        Out << "\", false);";// No null terminator
+    } else {
+      // TODO: Could generate more efficient code generating CDS calls instead.
+      Out << "std::vector<Constant*> " << constName << "_elems;";
+      nl(Out);
+      for (unsigned i = 0; i != CDS->getNumElements(); ++i) {
+        Constant *Elt = CDS->getElementAsConstant(i);
+        printConstant(Elt);
+        Out << constName << "_elems.push_back(" << getCppName(Elt) << ");";
+        nl(Out);
+      }
+      Out << "Constant* " << constName;
+      
+      if (isa<ArrayType>(CDS->getType()))
+        Out << " = ConstantArray::get(";
+      else
+        Out << " = ConstantVector::get(";
+      Out << typeName << ", " << constName << "_elems);";
+    }
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     if (CE->getOpcode() == Instruction::GetElementPtr) {
       Out << "std::vector<Constant*> " << constName << "_indices;";
