@@ -6494,6 +6494,45 @@ def : NEONInstAlias<"vpadd${p}.i32 $Vdn, $Vm",
 def : NEONInstAlias<"vpadd${p}.f32 $Vdn, $Vm",
                     (VPADDf DPR:$Vdn, DPR:$Vdn, DPR:$Vm, pred:$p)>;
 
+// Two-operand variants for VSRA.
+    // Signed.
+def : NEONInstAlias<"vsra${p}.s8 $Vdm, $imm",
+                    (VSRAsv8i8 DPR:$Vdm, DPR:$Vdm, shr_imm8:$imm, pred:$p)>;
+def : NEONInstAlias<"vsra${p}.s16 $Vdm, $imm",
+                    (VSRAsv4i16 DPR:$Vdm, DPR:$Vdm, shr_imm16:$imm, pred:$p)>;
+def : NEONInstAlias<"vsra${p}.s32 $Vdm, $imm",
+                    (VSRAsv2i32 DPR:$Vdm, DPR:$Vdm, shr_imm32:$imm, pred:$p)>;
+def : NEONInstAlias<"vsra${p}.s64 $Vdm, $imm",
+                    (VSRAsv1i64 DPR:$Vdm, DPR:$Vdm, shr_imm64:$imm, pred:$p)>;
+
+def : NEONInstAlias<"vsra${p}.s8 $Vdm, $imm",
+                    (VSRAsv16i8 QPR:$Vdm, QPR:$Vdm, shr_imm8:$imm, pred:$p)>;
+def : NEONInstAlias<"vsra${p}.s16 $Vdm, $imm",
+                    (VSRAsv8i16 QPR:$Vdm, QPR:$Vdm, shr_imm16:$imm, pred:$p)>;
+def : NEONInstAlias<"vsra${p}.s32 $Vdm, $imm",
+                    (VSRAsv4i32 QPR:$Vdm, QPR:$Vdm, shr_imm32:$imm, pred:$p)>;
+def : NEONInstAlias<"vsra${p}.s64 $Vdm, $imm",
+                    (VSRAsv2i64 QPR:$Vdm, QPR:$Vdm, shr_imm64:$imm, pred:$p)>;
+
+    // Unsigned.
+def : NEONInstAlias<"vsra${p}.u8 $Vdm, $imm",
+                    (VSRAuv8i8 DPR:$Vdm, DPR:$Vdm, shr_imm8:$imm, pred:$p)>;
+def : NEONInstAlias<"vsra${p}.u16 $Vdm, $imm",
+                    (VSRAuv4i16 DPR:$Vdm, DPR:$Vdm, shr_imm16:$imm, pred:$p)>;
+def : NEONInstAlias<"vsra${p}.u32 $Vdm, $imm",
+                    (VSRAuv2i32 DPR:$Vdm, DPR:$Vdm, shr_imm32:$imm, pred:$p)>;
+def : NEONInstAlias<"vsra${p}.u64 $Vdm, $imm",
+                    (VSRAuv1i64 DPR:$Vdm, DPR:$Vdm, shr_imm64:$imm, pred:$p)>;
+
+def : NEONInstAlias<"vsra${p}.u8 $Vdm, $imm",
+                    (VSRAuv16i8 QPR:$Vdm, QPR:$Vdm, shr_imm8:$imm, pred:$p)>;
+def : NEONInstAlias<"vsra${p}.u16 $Vdm, $imm",
+                    (VSRAuv8i16 QPR:$Vdm, QPR:$Vdm, shr_imm16:$imm, pred:$p)>;
+def : NEONInstAlias<"vsra${p}.u32 $Vdm, $imm",
+                    (VSRAuv4i32 QPR:$Vdm, QPR:$Vdm, shr_imm32:$imm, pred:$p)>;
+def : NEONInstAlias<"vsra${p}.u64 $Vdm, $imm",
+                    (VSRAuv2i64 QPR:$Vdm, QPR:$Vdm, shr_imm64:$imm, pred:$p)>;
+
 // Two-operand variants for VSRI.
 def : NEONInstAlias<"vsri${p}.8 $Vdm, $imm",
                     (VSRIv8i8 DPR:$Vdm, DPR:$Vdm, shr_imm8:$imm, pred:$p)>;

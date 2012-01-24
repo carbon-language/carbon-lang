@@ -105,39 +105,77 @@ _foo:
 @ CHECK: vshr.s32	q8, q8, #31  @ encoding: [0x70,0x00,0xe1,0xf2]
 @ CHECK: vshr.s64	q8, q8, #63  @ encoding: [0xf0,0x00,0xc1,0xf2]
 
-	vsra.u8   d16, d16, #7
-	vsra.u16  d16, d16, #15
-	vsra.u32  d16, d16, #31
-	vsra.u64  d16, d16, #63
-	vsra.u8   q8, q8, #7
-	vsra.u16  q8, q8, #15
-	vsra.u32  q8, q8, #31
-	vsra.u64  q8, q8, #63
-	vsra.s8   d16, d16, #7
-	vsra.s16  d16, d16, #15
-	vsra.s32  d16, d16, #31
-	vsra.s64  d16, d16, #63
-	vsra.s8   q8, q8, #7
-	vsra.s16  q8, q8, #15
-	vsra.s32  q8, q8, #31
-	vsra.s64  q8, q8, #63
 
-@ CHECK: vsra.u8  d16, d16, #7   @ encoding: [0x30,0x01,0xc9,0xf3]
-@ CHECK: vsra.u16 d16, d16, #15  @ encoding: [0x30,0x01,0xd1,0xf3]
-@ CHECK: vsra.u32 d16, d16, #31  @ encoding: [0x30,0x01,0xe1,0xf3]
-@ CHECK: vsra.u64 d16, d16, #63  @ encoding: [0xb0,0x01,0xc1,0xf3]
-@ CHECK: vsra.u8  q8, q8, #7     @ encoding: [0x70,0x01,0xc9,0xf3]
-@ CHECK: vsra.u16 q8, q8, #15    @ encoding: [0x70,0x01,0xd1,0xf3]
-@ CHECK: vsra.u32 q8, q8, #31    @ encoding: [0x70,0x01,0xe1,0xf3]
-@ CHECK: vsra.u64 q8, q8, #63    @ encoding: [0xf0,0x01,0xc1,0xf3]
-@ CHECK: vsra.s8  d16, d16, #7   @ encoding: [0x30,0x01,0xc9,0xf2]
-@ CHECK: vsra.s16 d16, d16, #15  @ encoding: [0x30,0x01,0xd1,0xf2]
-@ CHECK: vsra.s32 d16, d16, #31  @ encoding: [0x30,0x01,0xe1,0xf2]
-@ CHECK: vsra.s64 d16, d16, #63  @ encoding: [0xb0,0x01,0xc1,0xf2]
-@ CHECK: vsra.s8  q8, q8, #7     @ encoding: [0x70,0x01,0xc9,0xf2]
-@ CHECK: vsra.s16 q8, q8, #15    @ encoding: [0x70,0x01,0xd1,0xf2]
-@ CHECK: vsra.s32 q8, q8, #31    @ encoding: [0x70,0x01,0xe1,0xf2]
-@ CHECK: vsra.s64 q8, q8, #63    @ encoding: [0xf0,0x01,0xc1,0xf2]
+	vsra.s8   d16, d6, #7
+	vsra.s16  d26, d18, #15
+	vsra.s32  d11, d10, #31
+	vsra.s64  d12, d19, #63
+	vsra.s8   q1, q8, #7
+	vsra.s16  q2, q7, #15
+	vsra.s32  q3, q6, #31
+	vsra.s64  q4, q5, #63
+
+	vsra.s8   d16, #7
+	vsra.s16  d15, #15
+	vsra.s32  d14, #31
+	vsra.s64  d13, #63
+	vsra.s8   q4, #7
+	vsra.s16  q5, #15
+	vsra.s32  q6, #31
+	vsra.s64  q7, #63
+
+@ CHECK: vsra.s8	d16, d6, #7     @ encoding: [0x16,0x01,0xc9,0xf2]
+@ CHECK: vsra.s16	d26, d18, #15   @ encoding: [0x32,0xa1,0xd1,0xf2]
+@ CHECK: vsra.s32	d11, d10, #31   @ encoding: [0x1a,0xb1,0xa1,0xf2]
+@ CHECK: vsra.s64	d12, d19, #63   @ encoding: [0xb3,0xc1,0x81,0xf2]
+@ CHECK: vsra.s8	q1, q8, #7      @ encoding: [0x70,0x21,0x89,0xf2]
+@ CHECK: vsra.s16	q2, q7, #15     @ encoding: [0x5e,0x41,0x91,0xf2]
+@ CHECK: vsra.s32	q3, q6, #31     @ encoding: [0x5c,0x61,0xa1,0xf2]
+@ CHECK: vsra.s64	q4, q5, #63     @ encoding: [0xda,0x81,0x81,0xf2]
+@ CHECK: vsra.s8	d16, d16, #7    @ encoding: [0x30,0x01,0xc9,0xf2]
+@ CHECK: vsra.s16	d15, d15, #15   @ encoding: [0x1f,0xf1,0x91,0xf2]
+@ CHECK: vsra.s32	d14, d14, #31   @ encoding: [0x1e,0xe1,0xa1,0xf2]
+@ CHECK: vsra.s64	d13, d13, #63   @ encoding: [0x9d,0xd1,0x81,0xf2]
+@ CHECK: vsra.s8	q4, q4, #7      @ encoding: [0x58,0x81,0x89,0xf2]
+@ CHECK: vsra.s16	q5, q5, #15     @ encoding: [0x5a,0xa1,0x91,0xf2]
+@ CHECK: vsra.s32	q6, q6, #31     @ encoding: [0x5c,0xc1,0xa1,0xf2]
+@ CHECK: vsra.s64	q7, q7, #63     @ encoding: [0xde,0xe1,0x81,0xf2]
+
+
+	vsra.u8   d16, d6, #7
+	vsra.u16  d26, d18, #15
+	vsra.u32  d11, d10, #31
+	vsra.u64  d12, d19, #63
+	vsra.u8   q1, q8, #7
+	vsra.u16  q2, q7, #15
+	vsra.u32  q3, q6, #31
+	vsra.u64  q4, q5, #63
+
+	vsra.u8   d16, #7
+	vsra.u16  d15, #15
+	vsra.u32  d14, #31
+	vsra.u64  d13, #63
+	vsra.u8   q4, #7
+	vsra.u16  q5, #15
+	vsra.u32  q6, #31
+	vsra.u64  q7, #63
+
+@ CHECK: vsra.u8	d16, d6, #7     @ encoding: [0x16,0x01,0xc9,0xf3]
+@ CHECK: vsra.u16	d26, d18, #15   @ encoding: [0x32,0xa1,0xd1,0xf3]
+@ CHECK: vsra.u32	d11, d10, #31   @ encoding: [0x1a,0xb1,0xa1,0xf3]
+@ CHECK: vsra.u64	d12, d19, #63   @ encoding: [0xb3,0xc1,0x81,0xf3]
+@ CHECK: vsra.u8	q1, q8, #7      @ encoding: [0x70,0x21,0x89,0xf3]
+@ CHECK: vsra.u16	q2, q7, #15     @ encoding: [0x5e,0x41,0x91,0xf3]
+@ CHECK: vsra.u32	q3, q6, #31     @ encoding: [0x5c,0x61,0xa1,0xf3]
+@ CHECK: vsra.u64	q4, q5, #63     @ encoding: [0xda,0x81,0x81,0xf3]
+@ CHECK: vsra.u8	d16, d16, #7    @ encoding: [0x30,0x01,0xc9,0xf3]
+@ CHECK: vsra.u16	d15, d15, #15   @ encoding: [0x1f,0xf1,0x91,0xf3]
+@ CHECK: vsra.u32	d14, d14, #31   @ encoding: [0x1e,0xe1,0xa1,0xf3]
+@ CHECK: vsra.u64	d13, d13, #63   @ encoding: [0x9d,0xd1,0x81,0xf3]
+@ CHECK: vsra.u8	q4, q4, #7      @ encoding: [0x58,0x81,0x89,0xf3]
+@ CHECK: vsra.u16	q5, q5, #15     @ encoding: [0x5a,0xa1,0x91,0xf3]
+@ CHECK: vsra.u32	q6, q6, #31     @ encoding: [0x5c,0xc1,0xa1,0xf3]
+@ CHECK: vsra.u64	q7, q7, #63     @ encoding: [0xde,0xe1,0x81,0xf3]
 
 
 	vsri.8   d16, d6, #7
