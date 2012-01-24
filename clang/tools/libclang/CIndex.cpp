@@ -3918,14 +3918,23 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
       return MakeCXCursor(getCursorObjCSuperClassRef(C).first, tu);
 
     case CXCursor_ObjCProtocolRef: {
-      return MakeCXCursor(getCursorObjCProtocolRef(C).first, tu);
+      ObjCProtocolDecl *Prot = getCursorObjCProtocolRef(C).first;
+      if (ObjCProtocolDecl *Def = Prot->getDefinition())
+        return MakeCXCursor(Def, tu);
+
+      CXCursor C = MakeCXCursor(Prot, tu);
+      C.kind = CXCursor_ObjCProtocolDecl; // override "Unexposed".
+      return C;
+    }
 
     case CXCursor_ObjCClassRef: {
       ObjCInterfaceDecl *Class = getCursorObjCClassRef(C).first;
       if (ObjCInterfaceDecl *Def = Class->getDefinition())
         return MakeCXCursor(Def, tu);
 
-      return MakeCXCursor(Class, tu);
+      CXCursor C = MakeCXCursor(Class, tu);
+      C.kind = CXCursor_ObjCInterfaceDecl; // override "Unexposed".
+      return C;
     }
 
     case CXCursor_TypeRef:
@@ -3960,7 +3969,6 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
     default:
       // We would prefer to enumerate all non-reference cursor kinds here.
       llvm_unreachable("Unhandled reference cursor kind");
-    }
   }
 }
 
