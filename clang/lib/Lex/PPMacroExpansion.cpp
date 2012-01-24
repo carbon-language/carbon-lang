@@ -47,16 +47,17 @@ MacroInfo *Preprocessor::getInfoForMacro(IdentifierInfo *II) const {
 
 /// setMacroInfo - Specify a macro for this identifier.
 ///
-void Preprocessor::setMacroInfo(IdentifierInfo *II, MacroInfo *MI) {
+void Preprocessor::setMacroInfo(IdentifierInfo *II, MacroInfo *MI,
+                                bool LoadedFromAST) {
   if (MI) {
     Macros[II] = MI;
     II->setHasMacroDefinition(true);
-    if (II->isFromAST())
+    if (II->isFromAST() && !LoadedFromAST)
       II->setChangedSinceDeserialization();
   } else if (II->hasMacroDefinition()) {
     Macros.erase(II);
     II->setHasMacroDefinition(false);
-    if (II->isFromAST())
+    if (II->isFromAST() && !LoadedFromAST)
       II->setChangedSinceDeserialization();
   }
 }

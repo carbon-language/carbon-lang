@@ -202,10 +202,6 @@ void IdentifierResolver::InsertDeclAfter(iterator Pos, NamedDecl *D) {
     return;
   }
 
-  if (IdentifierInfo *II = Name.getAsIdentifierInfo())
-    if (II->isFromAST())
-      II->setChangedSinceDeserialization();
-  
   // General case: insert the declaration at the appropriate point in the 
   // list, which already has at least two elements.
   IdDeclInfo *IDI = toIdDeclInfo(Ptr);
@@ -323,7 +319,7 @@ static DeclMatchKind compareDeclarations(NamedDecl *Existing, NamedDecl *New) {
 
 bool IdentifierResolver::tryAddTopLevelDecl(NamedDecl *D, DeclarationName Name){
   if (IdentifierInfo *II = Name.getAsIdentifierInfo())
-    updatingIdentifier(*II);
+    readingIdentifier(*II);
   
   void *Ptr = Name.getFETokenInfo<void>();
     

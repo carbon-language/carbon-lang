@@ -433,7 +433,8 @@ public:
 
   /// setMacroInfo - Specify a macro for this identifier.
   ///
-  void setMacroInfo(IdentifierInfo *II, MacroInfo *MI);
+  void setMacroInfo(IdentifierInfo *II, MacroInfo *MI,
+                    bool LoadedFromAST = false);
 
   /// macro_iterator/macro_begin/macro_end - This allows you to walk the current
   /// state of the macro table.  This visits every currently-defined macro.

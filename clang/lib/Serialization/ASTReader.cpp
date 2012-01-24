@@ -510,8 +510,10 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
     // For uninteresting identifiers, just build the IdentifierInfo
     // and associate it with the persistent ID.
     IdentifierInfo *II = KnownII;
-    if (!II)
+    if (!II) {
       II = &Reader.getIdentifierTable().getOwn(StringRef(k.first, k.second));
+      KnownII = II;
+    }
     Reader.SetIdentifierInfo(ID, II);
     II->setIsFromAST();
     Reader.markIdentifierUpToDate(II);    
@@ -538,8 +540,10 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
   // Build the IdentifierInfo itself and link the identifier ID with
   // the new IdentifierInfo.
   IdentifierInfo *II = KnownII;
-  if (!II)
+  if (!II) {
     II = &Reader.getIdentifierTable().getOwn(StringRef(k.first, k.second));
+    KnownII = II;
+  }
   Reader.markIdentifierUpToDate(II);
   II->setIsFromAST();
 
@@ -1362,7 +1366,7 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
       }
 
       // Finally, install the macro.
-      PP.setMacroInfo(II, MI);
+      PP.setMacroInfo(II, MI, /*LoadedFromAST=*/true);
 
       // Remember that we saw this macro last so that we add the tokens that
       // form its body to it.
@@ -1541,7 +1545,7 @@ void ASTReader::ReadDefinedMacros() {
 }
 
 void ASTReader::LoadMacroDefinition(
-                     llvm::DenseMap<IdentifierInfo *, uint64_t>::iterator Pos) {
+                    llvm::DenseMap<IdentifierInfo *, uint64_t>::iterator Pos) {
   assert(Pos != UnreadMacroRecordOffsets.end() && "Unknown macro definition");
   uint64_t Offset = Pos->second;
   UnreadMacroRecordOffsets.erase(Pos);
@@ -1579,9 +1583,12 @@ namespace {
       if (!IdTable)
         return false;
       
+      ASTIdentifierLookupTrait Trait(IdTable->getInfoObj().getReader(),
+                                     M, This->Found);
+                                     
       std::pair<const char*, unsigned> Key(This->Name.begin(), 
                                            This->Name.size());
-      ASTIdentifierLookupTable::iterator Pos = IdTable->find(Key);
+      ASTIdentifierLookupTable::iterator Pos = IdTable->find(Key, &Trait);
       if (Pos == IdTable->end())
         return false;
       

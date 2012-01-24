@@ -129,6 +129,9 @@ public:
   IdentifierInfo *ReadData(const internal_key_type& k,
                            const unsigned char* d,
                            unsigned DataLen);
+  
+  ASTReader &getReader() const { return Reader; }
+  
 };
   
 /// \brief The on-disk hash table used to contain information about
