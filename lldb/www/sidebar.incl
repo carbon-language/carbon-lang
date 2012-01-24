@@ -20,7 +20,7 @@
         <li><a href="faq.html">FAQ</a></li>
         <li><a href="formats.html">Frame and Thread Formatting</a></li>
         <li><a href="lldb-gdb.html">LLDB and GDB</a></li>
-        <li><a href="python-faq.html">Python FAQ</a></li>
+        <li><a href="python-reference.html">Python Reference</a></li>
         <li><a href="scripting.html">Python Scripting</a></li>
         <li><a href="tutorial.html">Tutorial</a></li>
         <li><a href="varformats.html">Variable Formatting</a></li>
