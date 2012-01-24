@@ -100,6 +100,19 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     }
     return;
   }
+  if (ConstantDataSequential *CDS = dyn_cast<ConstantDataSequential>(V)) {
+    // We know that CDS must be a vector of integers. Take the intersection of
+    // each element.
+    KnownZero.setAllBits(); KnownOne.setAllBits();
+    APInt Elt(KnownZero.getBitWidth(), 0);
+    for (unsigned i = 0, e = CDS->getType()->getNumElements(); i != e; ++i) {
+      Elt = CDS->getElementAsInteger(i);
+      KnownZero &= ~Elt;
+      KnownOne &= Elt;      
+    }
+    return;
+  }
+  
   // The address of an aligned GlobalValue has trailing zeros.
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     unsigned Align = GV->getAlignment();
@@ -1472,50 +1485,51 @@ static Value *BuildSubAggregate(Value *From, ArrayRef<unsigned> idx_range,
 Value *llvm::FindInsertedValue(Value *V, ArrayRef<unsigned> idx_range,
                                Instruction *InsertBefore) {
   // Nothing to index? Just return V then (this is useful at the end of our
-  // recursion)
+  // recursion).
   if (idx_range.empty())
     return V;
-  // We have indices, so V should have an indexable type
-  assert((V->getType()->isStructTy() || V->getType()->isArrayTy())
-         && "Not looking at a struct or array?");
-  assert(ExtractValueInst::getIndexedType(V->getType(), idx_range)
-         && "Invalid indices for type?");
+  // We have indices, so V should have an indexable type.
+  assert((V->getType()->isStructTy() || V->getType()->isArrayTy()) &&
+         "Not looking at a struct or array?");
+  assert(ExtractValueInst::getIndexedType(V->getType(), idx_range) &&
+         "Invalid indices for type?");
   CompositeType *PTy = cast<CompositeType>(V->getType());
 
   if (isa<UndefValue>(V))
-    return UndefValue::get(ExtractValueInst::getIndexedType(PTy,
-                                                              idx_range));
-  else if (isa<ConstantAggregateZero>(V))
+    return UndefValue::get(ExtractValueInst::getIndexedType(PTy, idx_range));
+  if (isa<ConstantAggregateZero>(V))
     return Constant::getNullValue(ExtractValueInst::getIndexedType(PTy, 
                                                                   idx_range));
-  else if (Constant *C = dyn_cast<Constant>(V)) {
-    if (isa<ConstantArray>(C) || isa<ConstantStruct>(C))
-      // Recursively process this constant
-      return FindInsertedValue(C->getOperand(idx_range[0]), idx_range.slice(1),
-                               InsertBefore);
-  } else if (InsertValueInst *I = dyn_cast<InsertValueInst>(V)) {
+  if (isa<ConstantArray>(V) || isa<ConstantStruct>(V))
+    // Recursively process this constant
+    return FindInsertedValue(cast<Constant>(V)->getOperand(idx_range[0]),
+                             idx_range.slice(1), InsertBefore);
+  if (ConstantDataSequential *CDS = dyn_cast<ConstantDataSequential>(V))
+    return CDS->getElementAsConstant(idx_range[0]);
+    
+  if (InsertValueInst *I = dyn_cast<InsertValueInst>(V)) {
     // Loop the indices for the insertvalue instruction in parallel with the
     // requested indices
     const unsigned *req_idx = idx_range.begin();
     for (const unsigned *i = I->idx_begin(), *e = I->idx_end();
          i != e; ++i, ++req_idx) {
       if (req_idx == idx_range.end()) {
-        if (InsertBefore)
-          // The requested index identifies a part of a nested aggregate. Handle
-          // this specially. For example,
-          // %A = insertvalue { i32, {i32, i32 } } undef, i32 10, 1, 0
-          // %B = insertvalue { i32, {i32, i32 } } %A, i32 11, 1, 1
-          // %C = extractvalue {i32, { i32, i32 } } %B, 1
-          // This can be changed into
-          // %A = insertvalue {i32, i32 } undef, i32 10, 0
-          // %C = insertvalue {i32, i32 } %A, i32 11, 1
-          // which allows the unused 0,0 element from the nested struct to be
-          // removed.
-          return BuildSubAggregate(V, makeArrayRef(idx_range.begin(), req_idx),
-                                   InsertBefore);
-        else
-          // We can't handle this without inserting insertvalues
+        // We can't handle this without inserting insertvalues
+        if (!InsertBefore)
           return 0;
+
+        // The requested index identifies a part of a nested aggregate. Handle
+        // this specially. For example,
+        // %A = insertvalue { i32, {i32, i32 } } undef, i32 10, 1, 0
+        // %B = insertvalue { i32, {i32, i32 } } %A, i32 11, 1, 1
+        // %C = extractvalue {i32, { i32, i32 } } %B, 1
+        // This can be changed into
+        // %A = insertvalue {i32, i32 } undef, i32 10, 0
+        // %C = insertvalue {i32, i32 } %A, i32 11, 1
+        // which allows the unused 0,0 element from the nested struct to be
+        // removed.
+        return BuildSubAggregate(V, makeArrayRef(idx_range.begin(), req_idx),
+                                 InsertBefore);
       }
       
       // This insert value inserts something else than what we are looking for.
@@ -1531,7 +1545,9 @@ Value *llvm::FindInsertedValue(Value *V, ArrayRef<unsigned> idx_range,
     return FindInsertedValue(I->getInsertedValueOperand(),
                              makeArrayRef(req_idx, idx_range.end()),
                              InsertBefore);
-  } else if (ExtractValueInst *I = dyn_cast<ExtractValueInst>(V)) {
+  }
+  
+  if (ExtractValueInst *I = dyn_cast<ExtractValueInst>(V)) {
     // If we're extracting a value from an aggregrate that was extracted from
     // something else, we can extract from that something else directly instead.
     // However, we will need to chain I's indices with the requested indices.

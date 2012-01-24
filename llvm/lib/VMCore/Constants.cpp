@@ -624,6 +624,15 @@ Constant *ConstantAggregateZero::getElementValue(Constant *C) {
   return getStructElement(cast<ConstantInt>(C)->getZExtValue());
 }
 
+/// getElementValue - Return a zero of the right value for the specified GEP
+/// index.
+Constant *ConstantAggregateZero::getElementValue(unsigned Idx) {
+  if (isa<SequentialType>(getType()))
+    return getSequentialElement();
+  return getStructElement(Idx);
+}
+
+
 //===----------------------------------------------------------------------===//
 //                         UndefValue Implementation
 //===----------------------------------------------------------------------===//
@@ -647,6 +656,15 @@ UndefValue *UndefValue::getElementValue(Constant *C) {
     return getSequentialElement();
   return getStructElement(cast<ConstantInt>(C)->getZExtValue());
 }
+
+/// getElementValue - Return an undef of the right value for the specified GEP
+/// index.
+UndefValue *UndefValue::getElementValue(unsigned Idx) {
+  if (isa<SequentialType>(getType()))
+    return getSequentialElement();
+  return getStructElement(Idx);
+}
+
 
 
 //===----------------------------------------------------------------------===//

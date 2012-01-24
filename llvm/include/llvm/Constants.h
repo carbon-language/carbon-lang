@@ -325,7 +325,11 @@ public:
   /// getElementValue - Return a zero of the right value for the specified GEP
   /// index.
   Constant *getElementValue(Constant *C);
-  
+
+  /// getElementValue - Return a zero of the right value for the specified GEP
+  /// index.
+  Constant *getElementValue(unsigned Idx);
+
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   ///
   static bool classof(const ConstantAggregateZero *) { return true; }
@@ -1106,7 +1110,11 @@ public:
   /// getElementValue - Return an undef of the right value for the specified GEP
   /// index.
   UndefValue *getElementValue(Constant *C);
-  
+
+  /// getElementValue - Return an undef of the right value for the specified GEP
+  /// index.
+  UndefValue *getElementValue(unsigned Idx);
+
   virtual void destroyConstant();
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
