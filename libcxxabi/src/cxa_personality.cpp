@@ -220,8 +220,6 @@ getTTypeEntry(int64_t typeOffset, const uint8_t* classInfo, uint8_t ttypeEncodin
     return classInfo - typeOffset;
 }
 
-static const uint64_t kOurDependentExceptionClass = 0x434C4E47432B2B01; // CLNGC++\1
-
 /// Deals with Dwarf actions matching our type infos 
 /// (OurExceptionType_t instances). Returns whether or not a dwarf emitted 
 /// action matches the supplied exception type. If such a match succeeds, 
