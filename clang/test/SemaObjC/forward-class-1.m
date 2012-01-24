@@ -31,14 +31,14 @@
 
 @protocol XCElementP @end
 
-typedef NSObject <XCElementP> XCElement;
+typedef NSObject <XCElementP> XCElement; // expected-note {{previous definition is here}}
 
 @interface XCElementMainImp  {
   XCElement * _editingElement;
 }
 @end
 
-@class XCElement;
+@class XCElement; // expected-warning {{redefinition of forward class 'XCElement' of a typedef name of an object type is ignored}}
 
 @implementation XCElementMainImp
 - (XCElement *)editingElement  { return _editingElement;  }

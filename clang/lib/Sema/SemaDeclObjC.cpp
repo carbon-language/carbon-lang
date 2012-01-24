@@ -1776,17 +1776,22 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
       // typedef NSObject < XCElementTogglerP > XCElementToggler;
       // @class XCElementToggler;
       //
-      // FIXME: Make an extension?
+      // Here we have chosen to ignore the forward class declaration
+      // with a warning. Since this is the implied behavior.
       TypedefNameDecl *TDD = dyn_cast<TypedefNameDecl>(PrevDecl);
       if (!TDD || !TDD->getUnderlyingType()->isObjCObjectType()) {
         Diag(AtClassLoc, diag::err_redefinition_different_kind) << IdentList[i];
         Diag(PrevDecl->getLocation(), diag::note_previous_definition);
       } else {
         // a forward class declaration matching a typedef name of a class refers
-        // to the underlying class.
-        if (const ObjCObjectType *OI =
-              TDD->getUnderlyingType()->getAs<ObjCObjectType>())
-          PrevDecl = OI->getInterface();
+        // to the underlying class. Just ignore the forward class with a warning
+        // as this will force the intended behavior which is to lookup the typedef
+        // name.
+        if (isa<ObjCObjectType>(TDD->getUnderlyingType())) {
+          Diag(AtClassLoc, diag::warn_forward_class_redefinition) << IdentList[i];
+          Diag(PrevDecl->getLocation(), diag::note_previous_definition);
+          continue;
+        }
       }
     }
     

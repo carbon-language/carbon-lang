@@ -2809,6 +2809,9 @@ def err_redefinition_different_type : Error<
   "redefinition of %0 with a different type">;
 def err_redefinition_different_kind : Error<
   "redefinition of %0 as different kind of symbol">;
+def warn_forward_class_redefinition : Warning<
+  "redefinition of forward class %0 of a typedef name of an object type is ignored">,
+  InGroup<DiagGroup<"objc-forward-class-redefinition">>;
 def err_redefinition_different_typedef : Error<
   "%select{typedef|type alias|type alias template}0 redefinition with different types (%1 vs %2)">;
 def err_tag_reference_non_tag : Error<
