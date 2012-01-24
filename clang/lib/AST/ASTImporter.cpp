@@ -90,6 +90,10 @@ namespace clang {
                           bool ForceImport = false);
     bool ImportDefinition(EnumDecl *From, EnumDecl *To,
                           bool ForceImport = false);
+    bool ImportDefinition(ObjCInterfaceDecl *From, ObjCInterfaceDecl *To,
+                          bool ForceImport = false);
+    bool ImportDefinition(ObjCProtocolDecl *From, ObjCProtocolDecl *To,
+                          bool ForceImport = false);
     TemplateParameterList *ImportTemplateParameterList(
                                                  TemplateParameterList *Params);
     TemplateArgument ImportTemplateArgument(const TemplateArgument &From);
@@ -3098,7 +3102,56 @@ Decl *ASTNodeImporter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
   return ToCategory;
 }
 
+bool ASTNodeImporter::ImportDefinition(ObjCProtocolDecl *From, 
+                                       ObjCProtocolDecl *To,
+                                       bool ForceImport) {
+  if (To->getDefinition()) {
+    ImportDeclContext(From);
+    return false;
+  }
+
+  // Start the protocol definition
+  To->startDefinition();
+  
+  // Import protocols
+  SmallVector<ObjCProtocolDecl *, 4> Protocols;
+  SmallVector<SourceLocation, 4> ProtocolLocs;
+  ObjCProtocolDecl::protocol_loc_iterator 
+  FromProtoLoc = From->protocol_loc_begin();
+  for (ObjCProtocolDecl::protocol_iterator FromProto = From->protocol_begin(),
+                                        FromProtoEnd = From->protocol_end();
+       FromProto != FromProtoEnd;
+       ++FromProto, ++FromProtoLoc) {
+    ObjCProtocolDecl *ToProto
+      = cast_or_null<ObjCProtocolDecl>(Importer.Import(*FromProto));
+    if (!ToProto)
+      return true;
+    Protocols.push_back(ToProto);
+    ProtocolLocs.push_back(Importer.Import(*FromProtoLoc));
+  }
+  
+  // FIXME: If we're merging, make sure that the protocol list is the same.
+  To->setProtocolList(Protocols.data(), Protocols.size(),
+                      ProtocolLocs.data(), Importer.getToContext());
+
+  // Import all of the members of this protocol.
+  ImportDeclContext(From);
+  return false;
+}
+
 Decl *ASTNodeImporter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
+  // If this protocol has a definition in the translation unit we're coming 
+  // from, but this particular declaration is not that definition, import the
+  // definition and map to that.
+  ObjCProtocolDecl *Definition = D->getDefinition();
+  if (Definition && Definition != D) {
+    Decl *ImportedDef = Importer.Import(Definition);
+    if (!ImportedDef)
+      return 0;
+    
+    return Importer.Imported(D, ImportedDef);
+  }
+
   // Import the major distinguishing characteristics of a protocol.
   DeclContext *DC, *LexicalDC;
   DeclarationName Name;
@@ -3118,51 +3171,131 @@ Decl *ASTNodeImporter::VisitObjCProtocolDecl(ObjCProtocolDecl *D) {
   }
   
   ObjCProtocolDecl *ToProto = MergeWithProtocol;
-  if (!ToProto || !ToProto->hasDefinition()) {
-    if (!ToProto) {
-      ToProto = ObjCProtocolDecl::Create(Importer.getToContext(), DC,
-                                         Name.getAsIdentifierInfo(), Loc,
-                                         Importer.Import(D->getAtStartLoc()),
-                                         /*PrevDecl=*/0);
-      ToProto->setLexicalDeclContext(LexicalDC);
-      LexicalDC->addDeclInternal(ToProto);
-    }
-    if (!ToProto->hasDefinition())
-      ToProto->startDefinition();
-    
-    Importer.Imported(D, ToProto);
-
-    // Import protocols
-    SmallVector<ObjCProtocolDecl *, 4> Protocols;
-    SmallVector<SourceLocation, 4> ProtocolLocs;
-    ObjCProtocolDecl::protocol_loc_iterator 
-      FromProtoLoc = D->protocol_loc_begin();
-    for (ObjCProtocolDecl::protocol_iterator FromProto = D->protocol_begin(),
-                                          FromProtoEnd = D->protocol_end();
-       FromProto != FromProtoEnd;
-       ++FromProto, ++FromProtoLoc) {
-      ObjCProtocolDecl *ToProto
-        = cast_or_null<ObjCProtocolDecl>(Importer.Import(*FromProto));
-      if (!ToProto)
-        return 0;
-      Protocols.push_back(ToProto);
-      ProtocolLocs.push_back(Importer.Import(*FromProtoLoc));
-    }
-    
-    // FIXME: If we're merging, make sure that the protocol list is the same.
-    ToProto->setProtocolList(Protocols.data(), Protocols.size(),
-                             ProtocolLocs.data(), Importer.getToContext());
-  } else {
-    Importer.Imported(D, ToProto);
+  if (!ToProto) {
+    ToProto = ObjCProtocolDecl::Create(Importer.getToContext(), DC,
+                                       Name.getAsIdentifierInfo(), Loc,
+                                       Importer.Import(D->getAtStartLoc()),
+                                       /*PrevDecl=*/0);
+    ToProto->setLexicalDeclContext(LexicalDC);
+    LexicalDC->addDeclInternal(ToProto);
   }
+    
+  Importer.Imported(D, ToProto);
 
-  // Import all of the members of this protocol.
-  ImportDeclContext(D);
-
+  if (D->isThisDeclarationADefinition() && ImportDefinition(D, ToProto))
+    return 0;
+  
   return ToProto;
 }
 
+bool ASTNodeImporter::ImportDefinition(ObjCInterfaceDecl *From, 
+                                       ObjCInterfaceDecl *To,
+                                       bool ForceImport) {
+  if (To->getDefinition()) {
+    // Check consistency of superclass.
+    ObjCInterfaceDecl *FromSuper = From->getSuperClass();
+    if (FromSuper) {
+      FromSuper = cast_or_null<ObjCInterfaceDecl>(Importer.Import(FromSuper));
+      if (!FromSuper)
+        return true;
+    }
+    
+    ObjCInterfaceDecl *ToSuper = To->getSuperClass();    
+    if ((bool)FromSuper != (bool)ToSuper ||
+        (FromSuper && !declaresSameEntity(FromSuper, ToSuper))) {
+      Importer.ToDiag(To->getLocation(), 
+                      diag::err_odr_objc_superclass_inconsistent)
+        << To->getDeclName();
+      if (ToSuper)
+        Importer.ToDiag(To->getSuperClassLoc(), diag::note_odr_objc_superclass)
+          << To->getSuperClass()->getDeclName();
+      else
+        Importer.ToDiag(To->getLocation(), 
+                        diag::note_odr_objc_missing_superclass);
+      if (From->getSuperClass())
+        Importer.FromDiag(From->getSuperClassLoc(), 
+                          diag::note_odr_objc_superclass)
+        << From->getSuperClass()->getDeclName();
+      else
+        Importer.FromDiag(From->getLocation(), 
+                          diag::note_odr_objc_missing_superclass);        
+    }
+    
+    ImportDeclContext(From);
+    return false;
+  }
+  
+  // Start the definition.
+  To->startDefinition();
+  
+  // If this class has a superclass, import it.
+  if (From->getSuperClass()) {
+    ObjCInterfaceDecl *Super = cast_or_null<ObjCInterfaceDecl>(
+                                 Importer.Import(From->getSuperClass()));
+    if (!Super)
+      return true;
+    
+    To->setSuperClass(Super);
+    To->setSuperClassLoc(Importer.Import(From->getSuperClassLoc()));
+  }
+  
+  // Import protocols
+  SmallVector<ObjCProtocolDecl *, 4> Protocols;
+  SmallVector<SourceLocation, 4> ProtocolLocs;
+  ObjCInterfaceDecl::protocol_loc_iterator 
+  FromProtoLoc = From->protocol_loc_begin();
+  
+  for (ObjCInterfaceDecl::protocol_iterator FromProto = From->protocol_begin(),
+                                         FromProtoEnd = From->protocol_end();
+       FromProto != FromProtoEnd;
+       ++FromProto, ++FromProtoLoc) {
+    ObjCProtocolDecl *ToProto
+      = cast_or_null<ObjCProtocolDecl>(Importer.Import(*FromProto));
+    if (!ToProto)
+      return true;
+    Protocols.push_back(ToProto);
+    ProtocolLocs.push_back(Importer.Import(*FromProtoLoc));
+  }
+  
+  // FIXME: If we're merging, make sure that the protocol list is the same.
+  To->setProtocolList(Protocols.data(), Protocols.size(),
+                      ProtocolLocs.data(), Importer.getToContext());
+  
+  // Import categories. When the categories themselves are imported, they'll
+  // hook themselves into this interface.
+  for (ObjCCategoryDecl *FromCat = From->getCategoryList(); FromCat;
+       FromCat = FromCat->getNextClassCategory())
+    Importer.Import(FromCat);
+
+  // If we have an @implementation, import it as well.
+  if (From->getImplementation()) {
+    ObjCImplementationDecl *Impl = cast_or_null<ObjCImplementationDecl>(
+                                     Importer.Import(From->getImplementation()));
+    if (!Impl)
+      return true;
+    
+    To->setImplementation(Impl);
+  }
+
+  // Import all of the members of this class.
+  ImportDeclContext(From);
+  
+  return false;
+}
+
 Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
+  // If this class has a definition in the translation unit we're coming from,
+  // but this particular declaration is not that definition, import the
+  // definition and map to that.
+  ObjCInterfaceDecl *Definition = D->getDefinition();
+  if (Definition && Definition != D) {
+    Decl *ImportedDef = Importer.Import(Definition);
+    if (!ImportedDef)
+      return 0;
+    
+    return Importer.Imported(D, ImportedDef);
+  }
+
   // Import the major distinguishing characteristics of an @interface.
   DeclContext *DC, *LexicalDC;
   DeclarationName Name;
@@ -3170,6 +3303,7 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   if (ImportDeclParts(D, DC, LexicalDC, Name, Loc))
     return 0;
 
+  // Look for an existing interface with the same name.
   ObjCInterfaceDecl *MergeWithIface = 0;
   llvm::SmallVector<NamedDecl *, 2> FoundDecls;
   DC->localUncachedLookup(Name, FoundDecls);
@@ -3181,127 +3315,22 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
       break;
   }
   
+  // Create an interface declaration, if one does not already exist.
   ObjCInterfaceDecl *ToIface = MergeWithIface;
-  if (!ToIface || !ToIface->hasDefinition()) {
-    if (!ToIface) {
-      ToIface = ObjCInterfaceDecl::Create(Importer.getToContext(), DC,
-                                          Importer.Import(D->getAtStartLoc()),
-                                          Name.getAsIdentifierInfo(), 
-                                          /*PrevDecl=*/0,Loc,
-                                          D->isImplicitInterfaceDecl());
-      ToIface->setLexicalDeclContext(LexicalDC);
-      LexicalDC->addDeclInternal(ToIface);
-    }
-    Importer.Imported(D, ToIface);
-
-    if (D->hasDefinition()) {
-      if (!ToIface->hasDefinition())
-        ToIface->startDefinition();
-      
-      if (D->getSuperClass()) {
-        ObjCInterfaceDecl *Super
-          = cast_or_null<ObjCInterfaceDecl>(
-              Importer.Import(D->getSuperClass()));
-        if (!Super)
-          return 0;
-        
-        ToIface->setSuperClass(Super);
-        ToIface->setSuperClassLoc(Importer.Import(D->getSuperClassLoc()));
-      }
-      
-      // Import protocols
-      SmallVector<ObjCProtocolDecl *, 4> Protocols;
-      SmallVector<SourceLocation, 4> ProtocolLocs;
-      ObjCInterfaceDecl::protocol_loc_iterator 
-        FromProtoLoc = D->protocol_loc_begin();
-      
-      for (ObjCInterfaceDecl::protocol_iterator FromProto = D->protocol_begin(),
-                                             FromProtoEnd = D->protocol_end();
-         FromProto != FromProtoEnd;
-         ++FromProto, ++FromProtoLoc) {
-        ObjCProtocolDecl *ToProto
-          = cast_or_null<ObjCProtocolDecl>(Importer.Import(*FromProto));
-        if (!ToProto)
-          return 0;
-        Protocols.push_back(ToProto);
-        ProtocolLocs.push_back(Importer.Import(*FromProtoLoc));
-      }
-      
-      // FIXME: If we're merging, make sure that the protocol list is the same.
-      ToIface->setProtocolList(Protocols.data(), Protocols.size(),
-                               ProtocolLocs.data(), Importer.getToContext());
-    }
-    
-    // Import @end range
-    ToIface->setAtEndRange(Importer.Import(D->getAtEndRange()));
-  } else {
-    Importer.Imported(D, ToIface);
-
-    if (D->hasDefinition()) {
-      // Check for consistency of superclasses.
-      DeclarationName FromSuperName, ToSuperName;
-      
-      // If the superclass hasn't been imported yet, do so before checking.
-      ObjCInterfaceDecl *DSuperClass = D->getSuperClass();
-      ObjCInterfaceDecl *ToIfaceSuperClass = ToIface->getSuperClass();
-      
-      if (DSuperClass && !ToIfaceSuperClass) {
-        Decl *ImportedSuperClass = Importer.Import(DSuperClass);
-        ObjCInterfaceDecl *ImportedSuperIface
-          = cast<ObjCInterfaceDecl>(ImportedSuperClass);
-        
-        ToIface->setSuperClass(ImportedSuperIface);
-      }
-
-      if (D->getSuperClass())
-        FromSuperName = Importer.Import(D->getSuperClass()->getDeclName());
-      if (ToIface->getSuperClass())
-        ToSuperName = ToIface->getSuperClass()->getDeclName();
-      if (FromSuperName != ToSuperName) {
-        Importer.ToDiag(ToIface->getLocation(), 
-                        diag::err_odr_objc_superclass_inconsistent)
-          << ToIface->getDeclName();
-        if (ToIface->getSuperClass())
-          Importer.ToDiag(ToIface->getSuperClassLoc(), 
-                          diag::note_odr_objc_superclass)
-            << ToIface->getSuperClass()->getDeclName();
-        else
-          Importer.ToDiag(ToIface->getLocation(), 
-                          diag::note_odr_objc_missing_superclass);
-        if (D->getSuperClass())
-          Importer.FromDiag(D->getSuperClassLoc(), 
-                            diag::note_odr_objc_superclass)
-            << D->getSuperClass()->getDeclName();
-        else
-          Importer.FromDiag(D->getLocation(), 
-                            diag::note_odr_objc_missing_superclass);
-        return 0;
-      }
-    }
+  if (!ToIface) {
+    ToIface = ObjCInterfaceDecl::Create(Importer.getToContext(), DC,
+                                        Importer.Import(D->getAtStartLoc()),
+                                        Name.getAsIdentifierInfo(), 
+                                        /*PrevDecl=*/0,Loc,
+                                        D->isImplicitInterfaceDecl());
+    ToIface->setLexicalDeclContext(LexicalDC);
+    LexicalDC->addDeclInternal(ToIface);
   }
+  Importer.Imported(D, ToIface);
   
-  if (!D->hasDefinition())
-    return ToIface;
-  
-  // Import categories. When the categories themselves are imported, they'll
-  // hook themselves into this interface.
-  for (ObjCCategoryDecl *FromCat = D->getCategoryList(); FromCat;
-       FromCat = FromCat->getNextClassCategory())
-    Importer.Import(FromCat);
-  
-  // Import all of the members of this class.
-  ImportDeclContext(D);
-  
-  // If we have an @implementation, import it as well.
-  if ( D->getImplementation()) {
-    ObjCImplementationDecl *Impl = cast_or_null<ObjCImplementationDecl>(
-                                       Importer.Import(D->getImplementation()));
-    if (!Impl)
-      return 0;
+  if (D->isThisDeclarationADefinition() && ImportDefinition(D, ToIface))
+    return 0;
     
-    ToIface->setImplementation(Impl);
-  }
-  
   return ToIface;
 }
 
@@ -4391,7 +4420,23 @@ void ASTImporter::ImportDefinition(Decl *From) {
         return;
       }      
     }
+    
+    if (ObjCInterfaceDecl *ToIFace = dyn_cast<ObjCInterfaceDecl>(To)) {
+      if (!ToIFace->getDefinition()) {
+        Importer.ImportDefinition(cast<ObjCInterfaceDecl>(FromDC), ToIFace,
+                                  /*ForceImport=*/true);
+        return;
+      }
+    }
 
+    if (ObjCProtocolDecl *ToProto = dyn_cast<ObjCProtocolDecl>(To)) {
+      if (!ToProto->getDefinition()) {
+        Importer.ImportDefinition(cast<ObjCProtocolDecl>(FromDC), ToProto,
+                                  /*ForceImport=*/true);
+        return;
+      }
+    }
+    
     Importer.ImportDeclContext(FromDC, true);
   }
 }
