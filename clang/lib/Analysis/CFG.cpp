@@ -721,7 +721,7 @@ void CFGBuilder::addAutomaticObjDtors(LocalScope::const_iterator B,
     }
     
     const CXXDestructorDecl *Dtor = Ty->getAsCXXRecordDecl()->getDestructor();
-    if (cast<FunctionType>(Dtor->getType())->getNoReturnAttr())
+    if (Dtor && cast<FunctionType>(Dtor->getType())->getNoReturnAttr())
       Block = createNoReturnBlock();
     else
       autoCreateBlock();
@@ -864,7 +864,7 @@ LocalScope* CFGBuilder::addLocalScopeForVarDecl(VarDecl *VD,
 
   // Check if type is a C++ class with non-trivial destructor.
   if (const CXXRecordDecl *CD = QT->getAsCXXRecordDecl())
-    if (!CD->hasTrivialDestructor()) {
+    if (CD->hasDefinition() && !CD->hasTrivialDestructor()) {
       // Add the variable to scope
       Scope = createOrReuseLocalScope(Scope);
       Scope->addVar(VD);

@@ -132,3 +132,12 @@ template<int a>
 struct aligned_storage : imp<a> {
  ~aligned_storage() { }
 };
+
+// is this valid?
+template<typename T>
+class outer {
+  class inner;
+  void func() {
+    inner t;
+  }
+};
