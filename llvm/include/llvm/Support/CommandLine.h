@@ -164,7 +164,7 @@ class Option {
 
   int NumOccurrences;     // The number of times specified
   // Occurrences, HiddenFlag, and Formatting are all enum types but to avoid
-  // with signed enums in bitfields in MSVC we'll store them as unsigned
+  // problems with signed enums in bitfields.
   unsigned Occurrences : 3; // enum NumOccurrencesFlag
   // not using the enum type for 'Value' because zero is an implementation
   // detail representing the non-value
