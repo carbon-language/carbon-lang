@@ -192,3 +192,40 @@ operator delete[] (void* ptr, const std::nothrow_t&)
 {
     ::operator delete[](ptr);
 }
+
+namespace std
+{
+
+//  bad_alloc
+
+bad_alloc::bad_alloc() _NOEXCEPT
+{
+}
+
+bad_alloc::~bad_alloc() _NOEXCEPT
+{
+}
+
+const char*
+bad_alloc::what() const _NOEXCEPT
+{
+    return "std::bad_alloc";
+}
+
+// bad_array_new_length
+
+bad_array_new_length::bad_array_new_length() _NOEXCEPT
+{
+}
+
+bad_array_new_length::~bad_array_new_length() _NOEXCEPT
+{
+}
+
+const char*
+bad_array_new_length::what() const _NOEXCEPT
+{
+    return "bad_array_new_length";
+}
+
+}  // std

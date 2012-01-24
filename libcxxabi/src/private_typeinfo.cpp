@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define __name __type_name
-
 #include "private_typeinfo.h"
 
+#ifdef DEBUG
 #include <iostream>
+#endif
 
 namespace __cxxabiv1
 {
@@ -34,22 +34,10 @@ __fundamental_type_info::~__fundamental_type_info()
 {
 }
 
-void
-__fundamental_type_info::display() const
-{
-    std::cout << "__fundamental_type_info " << __type_name << '\n';
-}
-
 // __array_type_info
 
 __array_type_info::~__array_type_info()
 {
-}
-
-void
-__array_type_info::display() const
-{
-    std::cout << "__array_type_info " << __type_name << '\n';
 }
 
 // __function_type_info
@@ -58,22 +46,10 @@ __function_type_info::~__function_type_info()
 {
 }
 
-void
-__function_type_info::display() const
-{
-    std::cout << "__function_type_info " << __type_name << '\n';
-}
-
 // __enum_type_info
 
 __enum_type_info::~__enum_type_info()
 {
-}
-
-void
-__enum_type_info::display() const
-{
-    std::cout << "__enum_type_info " << __type_name << '\n';
 }
 
 // __class_type_info
@@ -82,16 +58,66 @@ __class_type_info::~__class_type_info()
 {
 }
 
-void
-__class_type_info::display() const
-{
-    std::cout << "__class_type_info " << __type_name << '\n';
-}
-
 // __si_class_type_info
 
 __si_class_type_info::~__si_class_type_info()
 {
+}
+
+// __vmi_class_type_info
+
+__vmi_class_type_info::~__vmi_class_type_info()
+{
+}
+
+// __pbase_type_info
+
+__pbase_type_info::~__pbase_type_info()
+{
+}
+
+// __pointer_type_info
+
+__pointer_type_info::~__pointer_type_info()
+{
+}
+
+// __pointer_to_member_type_info
+
+__pointer_to_member_type_info::~__pointer_to_member_type_info()
+{
+}
+
+#ifdef DEBUG
+
+void
+__fundamental_type_info::display() const
+{
+    std::cout << "__fundamental_type_info " << __type_name << '\n';
+}
+
+void
+__array_type_info::display() const
+{
+    std::cout << "__array_type_info " << __type_name << '\n';
+}
+
+void
+__function_type_info::display() const
+{
+    std::cout << "__function_type_info " << __type_name << '\n';
+}
+
+void
+__enum_type_info::display() const
+{
+    std::cout << "__enum_type_info " << __type_name << '\n';
+}
+
+void
+__class_type_info::display() const
+{
+    std::cout << "__class_type_info " << __type_name << '\n';
 }
 
 void
@@ -100,12 +126,6 @@ __si_class_type_info::display() const
     std::cout << "__si_class_type_info " << __type_name << '\n';
     std::cout << "derived from ";
     __base_type->display();
-}
-
-// __vmi_class_type_info
-
-__vmi_class_type_info::~__vmi_class_type_info()
-{
 }
 
 void
@@ -129,18 +149,6 @@ __base_class_type_info::display() const
     __base_type->display();
 }
 
-// __pbase_type_info
-
-__pbase_type_info::~__pbase_type_info()
-{
-}
-
-// __pointer_type_info
-
-__pointer_type_info::~__pointer_type_info()
-{
-}
-
 void
 __pointer_type_info::display() const
 {
@@ -157,12 +165,6 @@ __pointer_type_info::display() const
         std::cout << "__incomplete_class_mask ";
     std::cout << "pointer to ";
     __pointee->display();
-}
-
-// __pointer_to_member_type_info
-
-__pointer_to_member_type_info::~__pointer_to_member_type_info()
-{
 }
 
 void
@@ -184,6 +186,8 @@ __pointer_to_member_type_info::display() const
     std::cout << "and type ";
     __pointee->display();
 }
+
+#endif
 
 // can_catch
 
