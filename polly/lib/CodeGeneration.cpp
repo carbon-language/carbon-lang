@@ -739,107 +739,10 @@ class ClastExpCodeGen {
   IRBuilder<> &Builder;
   const CharMapT *IVS;
 
-  Value *codegen(const clast_name *e, Type *Ty) {
-    CharMapT::const_iterator I = IVS->find(e->name);
-
-    if (I != IVS->end())
-      return Builder.CreateSExtOrBitCast(I->second, Ty);
-    else
-      llvm_unreachable("Clast name not found");
-  }
-
-  Value *codegen(const clast_term *e, Type *Ty) {
-    APInt a = APInt_from_MPZ(e->val);
-
-    Value *ConstOne = ConstantInt::get(Builder.getContext(), a);
-    ConstOne = Builder.CreateSExtOrBitCast(ConstOne, Ty);
-
-    if (e->var) {
-      Value *var = codegen(e->var, Ty);
-      return Builder.CreateMul(ConstOne, var);
-    }
-
-    return ConstOne;
-  }
-
-  Value *codegen(const clast_binary *e, Type *Ty) {
-    Value *LHS = codegen(e->LHS, Ty);
-
-    APInt RHS_AP = APInt_from_MPZ(e->RHS);
-
-    Value *RHS = ConstantInt::get(Builder.getContext(), RHS_AP);
-    RHS = Builder.CreateSExtOrBitCast(RHS, Ty);
-
-    switch (e->type) {
-    case clast_bin_mod:
-      return Builder.CreateSRem(LHS, RHS);
-    case clast_bin_fdiv:
-      {
-        // floord(n,d) ((n < 0) ? (n - d + 1) : n) / d
-        Value *One = ConstantInt::get(Builder.getInt1Ty(), 1);
-        Value *Zero = ConstantInt::get(Builder.getInt1Ty(), 0);
-        One = Builder.CreateZExtOrBitCast(One, Ty);
-        Zero = Builder.CreateZExtOrBitCast(Zero, Ty);
-        Value *Sum1 = Builder.CreateSub(LHS, RHS);
-        Value *Sum2 = Builder.CreateAdd(Sum1, One);
-        Value *isNegative = Builder.CreateICmpSLT(LHS, Zero);
-        Value *Dividend = Builder.CreateSelect(isNegative, Sum2, LHS);
-        return Builder.CreateSDiv(Dividend, RHS);
-      }
-    case clast_bin_cdiv:
-      {
-        // ceild(n,d) ((n < 0) ? n : (n + d - 1)) / d
-        Value *One = ConstantInt::get(Builder.getInt1Ty(), 1);
-        Value *Zero = ConstantInt::get(Builder.getInt1Ty(), 0);
-        One = Builder.CreateZExtOrBitCast(One, Ty);
-        Zero = Builder.CreateZExtOrBitCast(Zero, Ty);
-        Value *Sum1 = Builder.CreateAdd(LHS, RHS);
-        Value *Sum2 = Builder.CreateSub(Sum1, One);
-        Value *isNegative = Builder.CreateICmpSLT(LHS, Zero);
-        Value *Dividend = Builder.CreateSelect(isNegative, LHS, Sum2);
-        return Builder.CreateSDiv(Dividend, RHS);
-      }
-    case clast_bin_div:
-      return Builder.CreateSDiv(LHS, RHS);
-    default:
-      llvm_unreachable("Unknown clast binary expression type");
-    };
-  }
-
-  Value *codegen(const clast_reduction *r, Type *Ty) {
-    assert((   r->type == clast_red_min
-            || r->type == clast_red_max
-            || r->type == clast_red_sum)
-           && "Clast reduction type not supported");
-    Value *old = codegen(r->elts[0], Ty);
-
-    for (int i=1; i < r->n; ++i) {
-      Value *exprValue = codegen(r->elts[i], Ty);
-
-      switch (r->type) {
-      case clast_red_min:
-        {
-          Value *cmp = Builder.CreateICmpSLT(old, exprValue);
-          old = Builder.CreateSelect(cmp, old, exprValue);
-          break;
-        }
-      case clast_red_max:
-        {
-          Value *cmp = Builder.CreateICmpSGT(old, exprValue);
-          old = Builder.CreateSelect(cmp, old, exprValue);
-          break;
-        }
-      case clast_red_sum:
-        old = Builder.CreateAdd(old, exprValue);
-        break;
-      default:
-        llvm_unreachable("Clast unknown reduction type");
-      }
-    }
-
-    return old;
-  }
-
+  Value *codegen(const clast_name *e, Type *Ty);
+  Value *codegen(const clast_term *e, Type *Ty);
+  Value *codegen(const clast_binary *e, Type *Ty);
+  Value *codegen(const clast_reduction *r, Type *Ty);
 public:
 
   // A generator for clast expressions.
@@ -849,36 +752,141 @@ public:
   // @param IVMAP A Map that translates strings describing the induction
   //              variables to the Values* that represent these variables
   //              on the LLVM side.
-  ClastExpCodeGen(IRBuilder<> &B, CharMapT *IVMap) : Builder(B), IVS(IVMap) {}
+  ClastExpCodeGen(IRBuilder<> &B, CharMapT *IVMap);
 
   // Generates code to calculate a given clast expression.
   //
   // @param e The expression to calculate.
   // @return The Value that holds the result.
-  Value *codegen(const clast_expr *e, Type *Ty) {
-    switch(e->type) {
-      case clast_expr_name:
-	return codegen((const clast_name *)e, Ty);
-      case clast_expr_term:
-	return codegen((const clast_term *)e, Ty);
-      case clast_expr_bin:
-	return codegen((const clast_binary *)e, Ty);
-      case clast_expr_red:
-	return codegen((const clast_reduction *)e, Ty);
-      default:
-        llvm_unreachable("Unknown clast expression!");
-    }
-  }
+  Value *codegen(const clast_expr *e, Type *Ty);
 
   // @brief Reset the CharMap.
   //
   // This function is called to reset the CharMap to new one, while generating
   // OpenMP code.
-  void setIVS(CharMapT *IVSNew) {
-    IVS = IVSNew;
+  void setIVS(CharMapT *IVSNew);
+};
+
+Value *ClastExpCodeGen::codegen(const clast_name *e, Type *Ty) {
+  CharMapT::const_iterator I = IVS->find(e->name);
+
+  assert(I != IVS->end() && "Clast name not found");
+
+  return Builder.CreateSExtOrBitCast(I->second, Ty);
+}
+
+Value *ClastExpCodeGen::codegen(const clast_term *e, Type *Ty) {
+  APInt a = APInt_from_MPZ(e->val);
+
+  Value *ConstOne = ConstantInt::get(Builder.getContext(), a);
+  ConstOne = Builder.CreateSExtOrBitCast(ConstOne, Ty);
+
+  if (!e->var)
+    return ConstOne;
+
+  Value *var = codegen(e->var, Ty);
+  return Builder.CreateMul(ConstOne, var);
+}
+
+Value *ClastExpCodeGen::codegen(const clast_binary *e, Type *Ty) {
+  Value *LHS = codegen(e->LHS, Ty);
+
+  APInt RHS_AP = APInt_from_MPZ(e->RHS);
+
+  Value *RHS = ConstantInt::get(Builder.getContext(), RHS_AP);
+  RHS = Builder.CreateSExtOrBitCast(RHS, Ty);
+
+  switch (e->type) {
+  case clast_bin_mod:
+    return Builder.CreateSRem(LHS, RHS);
+  case clast_bin_fdiv:
+    {
+      // floord(n,d) ((n < 0) ? (n - d + 1) : n) / d
+      Value *One = ConstantInt::get(Builder.getInt1Ty(), 1);
+      Value *Zero = ConstantInt::get(Builder.getInt1Ty(), 0);
+      One = Builder.CreateZExtOrBitCast(One, Ty);
+      Zero = Builder.CreateZExtOrBitCast(Zero, Ty);
+      Value *Sum1 = Builder.CreateSub(LHS, RHS);
+      Value *Sum2 = Builder.CreateAdd(Sum1, One);
+      Value *isNegative = Builder.CreateICmpSLT(LHS, Zero);
+      Value *Dividend = Builder.CreateSelect(isNegative, Sum2, LHS);
+      return Builder.CreateSDiv(Dividend, RHS);
+    }
+  case clast_bin_cdiv:
+    {
+      // ceild(n,d) ((n < 0) ? n : (n + d - 1)) / d
+      Value *One = ConstantInt::get(Builder.getInt1Ty(), 1);
+      Value *Zero = ConstantInt::get(Builder.getInt1Ty(), 0);
+      One = Builder.CreateZExtOrBitCast(One, Ty);
+      Zero = Builder.CreateZExtOrBitCast(Zero, Ty);
+      Value *Sum1 = Builder.CreateAdd(LHS, RHS);
+      Value *Sum2 = Builder.CreateSub(Sum1, One);
+      Value *isNegative = Builder.CreateICmpSLT(LHS, Zero);
+      Value *Dividend = Builder.CreateSelect(isNegative, LHS, Sum2);
+      return Builder.CreateSDiv(Dividend, RHS);
+    }
+  case clast_bin_div:
+    return Builder.CreateSDiv(LHS, RHS);
+  };
+
+  llvm_unreachable("Unknown clast binary expression type");
+}
+
+Value *ClastExpCodeGen::codegen(const clast_reduction *r, Type *Ty) {
+  assert((   r->type == clast_red_min
+             || r->type == clast_red_max
+             || r->type == clast_red_sum)
+         && "Clast reduction type not supported");
+  Value *old = codegen(r->elts[0], Ty);
+
+  for (int i=1; i < r->n; ++i) {
+    Value *exprValue = codegen(r->elts[i], Ty);
+
+    switch (r->type) {
+    case clast_red_min:
+      {
+        Value *cmp = Builder.CreateICmpSLT(old, exprValue);
+        old = Builder.CreateSelect(cmp, old, exprValue);
+        break;
+      }
+    case clast_red_max:
+      {
+        Value *cmp = Builder.CreateICmpSGT(old, exprValue);
+        old = Builder.CreateSelect(cmp, old, exprValue);
+        break;
+      }
+    case clast_red_sum:
+      old = Builder.CreateAdd(old, exprValue);
+      break;
+    default:
+      llvm_unreachable("Clast unknown reduction type");
+    }
   }
 
-};
+  return old;
+}
+
+ClastExpCodeGen::ClastExpCodeGen(IRBuilder<> &B, CharMapT *IVMap)
+  : Builder(B), IVS(IVMap) {}
+
+Value *ClastExpCodeGen::codegen(const clast_expr *e, Type *Ty) {
+  switch(e->type) {
+  case clast_expr_name:
+    return codegen((const clast_name *)e, Ty);
+  case clast_expr_term:
+    return codegen((const clast_term *)e, Ty);
+  case clast_expr_bin:
+    return codegen((const clast_binary *)e, Ty);
+  case clast_expr_red:
+    return codegen((const clast_reduction *)e, Ty);
+  }
+
+  llvm_unreachable("Unknown clast expression!");
+}
+
+void ClastExpCodeGen::setIVS(CharMapT *IVSNew) {
+  IVS = IVSNew;
+}
 
 class ClastStmtCodeGen {
   // The Scop we code generate.
