@@ -961,7 +961,11 @@ OPTIONS:
 
  -plist         - By default the output of scan-build is a set of HTML files.
                   This option outputs the results as a set of .plist files.
-
+ 
+ -plist-html    - By default the output of scan-build is a set of HTML files.
+                  This option outputs the results as a set of HTML 
+                  and .plist files.
+ 
  --status-bugs  - By default, the exit status of $Prog is the same as the
                   executed build command.  Specifying this option causes the
                   exit status of $Prog to be 1 if it found potential bugs

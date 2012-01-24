@@ -77,9 +77,10 @@ class AnalysisDiagnostic:
     def getReportData(self):
         if self.htmlReport is None:
             return " "
-
-        return open(os.path.join(self.report.run.path,
-                                 self.htmlReport), "rb").read() 
+        return os.path.join(self.report.run.path, self.htmlReport)
+        # We could also dump the report with:
+        # return open(os.path.join(self.report.run.path,
+        #                         self.htmlReport), "rb").read() 
 
 class AnalysisRun:
     def __init__(self, path, opts):

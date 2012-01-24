@@ -132,7 +132,7 @@ def runScanBuild(Dir, SBOutputDir, PBuildLogFile):
     if not os.path.exists(BuildScriptPath):
         print "Error: build script is not defined: %s" % BuildScriptPath
         sys.exit(-1)       
-    SBOptions = "-plist -o " + SBOutputDir + " "
+    SBOptions = "-plist-html -o " + SBOutputDir + " "
     SBOptions += "-enable-checker " + Checkers + " "  
     try:
         SBCommandFile = open(BuildScriptPath, "r")
