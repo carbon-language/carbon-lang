@@ -597,6 +597,10 @@ public:
   inline SequentialType *getType() const {
     return reinterpret_cast<SequentialType*>(Value::getType());
   }
+  
+  /// getElementType - Return the element type of the array/vector.
+  Type *getElementType() const;
+
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   ///
@@ -605,6 +609,9 @@ public:
     return V->getValueID() == ConstantDataArrayVal ||
            V->getValueID() == ConstantDataVectorVal;
   }
+private:
+  uint64_t getElementByteSize() const;
+  const char *getElementPointer(unsigned Elt) const;
 };
 
 //===----------------------------------------------------------------------===//

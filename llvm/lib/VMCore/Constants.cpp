@@ -1919,6 +1919,40 @@ GetElementPtrConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
 void ConstantDataArray::anchor() {}
 void ConstantDataVector::anchor() {}
 
+/// getElementType - Return the element type of the array/vector.
+Type *ConstantDataSequential::getElementType() const {
+  return getType()->getElementType();
+}
+
+/// isElementTypeConstantDataCompatible - Return true if this type is valid for
+/// a ConstantDataSequential.  This is i8/i16/i32/i64/float/double.
+static bool isElementTypeConstantDataCompatible(const Type *Ty) {
+  if (Ty->isFloatTy() || Ty->isDoubleTy()) return true;
+  if (const IntegerType *IT = dyn_cast<IntegerType>(Ty)) {
+    switch (IT->getBitWidth()) {
+    case 8:
+    case 16:
+    case 32:
+    case 64:
+      return true;
+    default: break;
+    }
+  }
+  return false;
+}
+
+/// getElementByteSize - Return the size in bytes of the elements in the data.
+uint64_t ConstantDataSequential::getElementByteSize() const {
+  return getElementType()->getPrimitiveSizeInBits()/8;
+}
+
+/// getElementPointer - Return the start of the specified element.
+const char *ConstantDataSequential::getElementPointer(unsigned Elt) const {
+  assert(Elt < getElementType()->getNumElements() && "Invalid Elt");
+  return DataElements+Elt*getElementByteSize();
+}
+
+
 /// isAllZeros - return true if the array is empty or all zeros.
 static bool isAllZeros(StringRef Arr) {
   for (StringRef::iterator I = Arr.begin(), E = Arr.end(); I != E; ++I)
@@ -1931,6 +1965,8 @@ static bool isAllZeros(StringRef Arr) {
 /// the correct element type.  We take the bytes in as an StringRef because
 /// we *want* an underlying "char*" to avoid TBAA type punning violations.
 Constant *ConstantDataSequential::getImpl(StringRef Elements, Type *Ty) {
+  assert(isElementTypeConstantDataCompatible(cast<SequentialType>(Ty)->
+                                             getElementType()));
   // If the elements are all zero, return a CAZ, which is more dense.
   if (isAllZeros(Elements))
     return ConstantAggregateZero::get(Ty);
@@ -1959,9 +1995,7 @@ Constant *ConstantDataSequential::getImpl(StringRef Elements, Type *Ty) {
 }
 
 void ConstantDataSequential::destroyConstant() {
-  uint64_t ByteSize =
-    getType()->getElementType()->getPrimitiveSizeInBits()/8 *
-    getType()->getElementType()->getNumElements();
+  uint64_t ByteSize = getElementByteSize() * getElementType()->getNumElements();
   
   // Remove the constant from the StringMap.
   StringMap<ConstantDataSequential*> &CDSConstants = 
@@ -2057,6 +2091,62 @@ Constant *ConstantDataVector::get(ArrayRef<float> Elts, LLVMContext &Context) {
 Constant *ConstantDataVector::get(ArrayRef<double> Elts, LLVMContext &Context) {
   Type *Ty = VectorType::get(Type::getDoubleTy(Context), Elts.size());
   return getImpl(StringRef((char*)Elts.data(), Elts.size()*8), Ty);
+}
+
+/// getElementAsInteger - If this is a sequential container of integers (of
+/// any size), return the specified element in the low bits of a uint64_t.
+uint64_t ConstantDataSequential::getElementAsInteger(unsigned Elt) const {
+  assert(isa<IntegerType>(getElementType()) &&
+         "Accessor can only be used when element is an integer");
+  const char *EltPtr = getElementPointer(Elt);
+  
+  // The data is stored in host byte order, make sure to cast back to the right
+  // type to load with the right endianness.
+  switch (cast<IntegerType>(getElementType())->getBitWidth()) {
+  default: assert(0 && "Invalid bitwidth for CDS");
+  case 8:  return *(uint8_t*)EltPtr;
+  case 16: return *(uint16_t*)EltPtr;
+  case 32: return *(uint32_t*)EltPtr;
+  case 64: return *(uint64_t*)EltPtr;
+  }
+}
+
+/// getElementAsAPFloat - If this is a sequential container of floating point
+/// type, return the specified element as an APFloat.
+APFloat ConstantDataSequential::getElementAsAPFloat(unsigned Elt) const {
+  const char *EltPtr = getElementPointer(Elt);
+
+  switch (getElementType()->getTypeID()) {
+  default: assert("Accessor can only be used when element is float/double!");
+  case Type::FloatTyID: return APFloat(*(float*)EltPtr);
+  case Type::DoubleTyID: return APFloat(*(double*)EltPtr);
+  }
+}
+
+/// getElementAsFloat - If this is an sequential container of floats, return
+/// the specified element as a float.
+float ConstantDataSequential::getElementAsFloat(unsigned Elt) const {
+  assert(getElementType()->isFloatTy() &&
+         "Accessor can only be used when element is a 'float'");
+  return *(float*)getElementPointer(Elt);
+}
+
+/// getElementAsDouble - If this is an sequential container of doubles, return
+/// the specified element as a float.
+double ConstantDataSequential::getElementAsDouble(unsigned Elt) const {
+  assert(getElementType()->isDoubleTy() &&
+         "Accessor can only be used when element is a 'float'");
+  return *(double*)getElementPointer(Elt);
+}
+
+/// getElementAsConstant - Return a Constant for a specified index's element.
+/// Note that this has to compute a new constant to return, so it isn't as
+/// efficient as getElementAsInteger/Float/Double.
+Constant *ConstantDataSequential::getElementAsConstant(unsigned Elt) const {
+  if (getElementType()->isFloatTy() || getElementType()->isDoubleTy())
+    return ConstantFP::get(getContext(), getElementAsAPFloat(Elt));
+  
+  return ConstantInt::get(getElementType(), getElementAsInteger(Elt));
 }
 
 
