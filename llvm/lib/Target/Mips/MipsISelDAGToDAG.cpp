@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "mips-isel"
 #include "Mips.h"
+#include "MipsAnalyzeImmediate.h"
 #include "MipsMachineFunction.h"
 #include "MipsRegisterInfo.h"
 #include "MipsSubtarget.h"
@@ -315,6 +316,47 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
                                     Zero);
     }
     break;
+  }
+
+  case ISD::Constant: {
+    const ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Node);
+    unsigned Size = CN->getValueSizeInBits(0);
+
+    if (Size == 32)
+      break;
+
+    MipsAnalyzeImmediate AnalyzeImm;
+    int64_t Imm = CN->getSExtValue();
+
+    const MipsAnalyzeImmediate::InstSeq &Seq =
+      AnalyzeImm.Analyze(Imm, Size, false);
+    
+    MipsAnalyzeImmediate::InstSeq::const_iterator Inst = Seq.begin();
+    DebugLoc DL = CN->getDebugLoc();
+    SDNode *RegOpnd;
+    SDValue ImmOpnd = CurDAG->getTargetConstant(SignExtend64<16>(Inst->ImmOpnd),
+                                                MVT::i64);
+
+    // The first instruction can be a LUi which is different from other
+    // instructions (ADDiu, ORI and SLL) in that it does not have a register
+    // operand.
+    if (Inst->Opc == Mips::LUi64)
+      RegOpnd = CurDAG->getMachineNode(Inst->Opc, DL, MVT::i64, ImmOpnd);
+    else
+      RegOpnd =
+        CurDAG->getMachineNode(Inst->Opc, DL, MVT::i64,
+                               CurDAG->getRegister(Mips::ZERO_64, MVT::i64),
+                               ImmOpnd);
+
+    // The remaining instructions in the sequence are handled here.
+    for (++Inst; Inst != Seq.end(); ++Inst) {
+      ImmOpnd = CurDAG->getTargetConstant(SignExtend64<16>(Inst->ImmOpnd),
+                                          MVT::i64);
+      RegOpnd = CurDAG->getMachineNode(Inst->Opc, DL, MVT::i64,
+                                       SDValue(RegOpnd, 0), ImmOpnd);
+    }
+
+    return RegOpnd;
   }
 
   case MipsISD::ThreadPointer: {
