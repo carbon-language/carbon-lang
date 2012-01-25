@@ -389,8 +389,8 @@ ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy) const {
           ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
 }
 
-/// UseX86_MMXType - Return true if this is an MMX type that should use the special
-/// x86_mmx type.
+/// UseX86_MMXType - Return true if this is an MMX type that should use the
+/// special x86_mmx type.
 bool UseX86_MMXType(llvm::Type *IRType) {
   // If the type is an MMX type <2 x i32>, <4 x i16>, or <8 x i8>, use the
   // special x86_mmx type.
@@ -418,6 +418,7 @@ class X86_32ABIInfo : public ABIInfo {
   bool IsDarwinVectorABI;
   bool IsSmallStructInRegABI;
   bool IsMMXDisabled;
+  bool IsWin32FloatStructABI;
 
   static bool isRegisterSize(unsigned Size) {
     return (Size == 8 || Size == 16 || Size == 32 || Size == 64);
@@ -447,15 +448,16 @@ public:
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
 
-  X86_32ABIInfo(CodeGen::CodeGenTypes &CGT, bool d, bool p, bool m)
+  X86_32ABIInfo(CodeGen::CodeGenTypes &CGT, bool d, bool p, bool m, bool w)
     : ABIInfo(CGT), IsDarwinVectorABI(d), IsSmallStructInRegABI(p),
-      IsMMXDisabled(m) {}
+      IsMMXDisabled(m), IsWin32FloatStructABI(w) {}
 };
 
 class X86_32TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  X86_32TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, bool d, bool p, bool m)
-    :TargetCodeGenInfo(new X86_32ABIInfo(CGT, d, p, m)) {}
+  X86_32TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT,
+      bool d, bool p, bool m, bool w)
+    :TargetCodeGenInfo(new X86_32ABIInfo(CGT, d, p, m, w)) {}
 
   void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &CGM) const;
@@ -586,10 +588,12 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy) const {
 
       // As a special-case, if the struct is a "single-element" struct, and
       // the field is of type "float" or "double", return it in a
-      // floating-point register.  We apply a similar transformation for
-      // pointer types to improve the quality of the generated IR.
+      // floating-point register. (MSVC does not apply this special case.)
+      // We apply a similar transformation for pointer types to improve the
+      // quality of the generated IR.
       if (const Type *SeltTy = isSingleElementStruct(RetTy, getContext()))
-        if (SeltTy->isRealFloatingType() || SeltTy->hasPointerRepresentation())
+        if ((!IsWin32FloatStructABI && SeltTy->isRealFloatingType())
+            || SeltTy->hasPointerRepresentation())
           return ABIArgInfo::getDirect(CGT.ConvertType(QualType(SeltTy, 0)));
 
       // FIXME: We should be able to narrow this integer in cases with dead
@@ -2238,7 +2242,8 @@ ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty) const {
 
     // FIXME: mingw-w64-gcc emits 128-bit struct as i128
     if (Size == 128 &&
-        getContext().getTargetInfo().getTriple().getOS() == llvm::Triple::MinGW32)
+        getContext().getTargetInfo().getTriple().getOS()
+          == llvm::Triple::MinGW32)
       return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
                                                           Size));
 
@@ -2373,7 +2378,8 @@ public:
   ARMABIInfo(CodeGenTypes &CGT, ABIKind _Kind) : ABIInfo(CGT), Kind(_Kind) {}
 
   bool isEABI() const {
-    StringRef Env = getContext().getTargetInfo().getTriple().getEnvironmentName();
+    StringRef Env =
+      getContext().getTargetInfo().getTriple().getEnvironmentName();
     return (Env == "gnueabi" || Env == "eabi" || Env == "androideabi");
   }
 
@@ -3591,7 +3597,8 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
 
     if (Triple.isOSDarwin())
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Types, true, true, DisableMMX));
+               new X86_32TargetCodeGenInfo(
+                 Types, true, true, DisableMMX, false));
 
     switch (Triple.getOS()) {
     case llvm::Triple::Cygwin:
@@ -3601,11 +3608,18 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     case llvm::Triple::FreeBSD:
     case llvm::Triple::OpenBSD:
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Types, false, true, DisableMMX));
+               new X86_32TargetCodeGenInfo(
+                 Types, false, true, DisableMMX, false));
+
+    case llvm::Triple::Win32:
+      return *(TheTargetCodeGenInfo =
+               new X86_32TargetCodeGenInfo(
+                 Types, false, true, DisableMMX, true));
 
     default:
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Types, false, false, DisableMMX));
+               new X86_32TargetCodeGenInfo(
+                 Types, false, false, DisableMMX, false));
     }
   }
 
