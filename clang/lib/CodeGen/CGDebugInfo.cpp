@@ -1054,7 +1054,7 @@ llvm::DIType CGDebugInfo::getOrCreateVTablePtrType(llvm::DIFile Unit) {
 
 /// getVTableName - Get vtable name for the given Class.
 StringRef CGDebugInfo::getVTableName(const CXXRecordDecl *RD) {
-  // Otherwise construct gdb compatible name name.
+  // Construct gdb compatible name name.
   std::string Name = "_vptr$" + RD->getNameAsString();
 
   // Copy this name on the side and use its reference.
