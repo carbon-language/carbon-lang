@@ -302,9 +302,6 @@ public:
   /// The first argument is the property being queried.
   /// The second argument indicates whether the query should look inside
   /// instruction bundles.
-  /// If the third argument is true, than the query can return true when *any*
-  /// of the bundled instructions has the queried property. If it's false, then
-  /// this can return true iff *all* of the instructions have the property.
   bool hasProperty(unsigned Flag, QueryType Type = AnyInBundle) const;
 
   /// isVariadic - Return true if this instruction can have a variable number of
