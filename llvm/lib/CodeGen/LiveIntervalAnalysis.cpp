@@ -582,11 +582,6 @@ void LiveIntervals::computeIntervals() {
     for (MachineBasicBlock::livein_iterator LI = MBB->livein_begin(),
            LE = MBB->livein_end(); LI != LE; ++LI) {
       handleLiveInRegister(MBB, MIIndex, getOrCreateInterval(*LI));
-      // Multiple live-ins can alias the same register.
-      for (const unsigned* AS = tri_->getSubRegisters(*LI); *AS; ++AS)
-        if (!hasInterval(*AS))
-          handleLiveInRegister(MBB, MIIndex, getOrCreateInterval(*AS),
-                               true);
     }
 
     // Skip over empty initial indices.
