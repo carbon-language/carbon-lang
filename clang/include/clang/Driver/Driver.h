@@ -102,11 +102,6 @@ public:
   /// Information about the host which can be overridden by the user.
   std::string HostBits, HostMachine, HostSystem, HostRelease;
 
-  /// \brief Target triple.
-  /// Represents which platforms this driver will target at each stage of the
-  /// compilation.
-  llvm::Triple TargetTriple;
-
   /// The file to log CC_PRINT_OPTIONS output to, if enabled.
   const char *CCPrintOptionsFilename;
 

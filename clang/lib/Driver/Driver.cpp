@@ -57,7 +57,6 @@ Driver::Driver(StringRef ClangExecutable,
     DefaultImageName(DefaultImageName),
     DriverTitle("clang \"gcc-compatible\" driver"),
     Host(0),
-    TargetTriple(llvm::Triple::normalize(DefaultTargetTriple)),
     CCPrintOptionsFilename(0), CCPrintHeadersFilename(0),
     CCLogDiagnosticsFilename(0), CCCIsCXX(false),
     CCCIsCPP(false),CCCEcho(false), CCCPrintBindings(false),
@@ -330,16 +329,18 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   if (Args->hasArg(options::OPT_nostdlib))
     UseStdLib = false;
 
-  // Recompute the target triple based on the args.
-  TargetTriple = computeTargetTriple(DefaultTargetTriple, *Args);
-  Host = GetHostInfo(TargetTriple);
+  // Compute the target triple based on the args, and build a Host out of it.
+  // FIXME: Yes, this makes no sense. HostInfo has little to do with the host.
+  Host = GetHostInfo(computeTargetTriple(DefaultTargetTriple, *Args));
 
   // Perform the default argument translations.
   DerivedArgList *TranslatedArgs = TranslateInputArgs(*Args);
 
+  // Owned by the host.
+  const ToolChain &TC = *Host->CreateToolChain(*Args);
+
   // The compilation takes ownership of Args.
-  Compilation *C = new Compilation(*this, *Host->CreateToolChain(*Args), Args,
-                                   TranslatedArgs);
+  Compilation *C = new Compilation(*this, TC, Args, TranslatedArgs);
 
   // FIXME: This behavior shouldn't be here.
   if (CCCPrintOptions) {
@@ -356,7 +357,7 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
 
   // Construct the list of abstract actions to perform for this compilation. On
   // Darwin target OSes this uses the driver-driver and universal actions.
-  if (TargetTriple.isOSDarwin())
+  if (TC.getTriple().isOSDarwin())
     BuildUniversalActions(C->getDefaultToolChain(), C->getArgs(),
                           Inputs, C->getActions());
   else
@@ -446,12 +447,11 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
 
   // Construct the list of abstract actions to perform for this compilation. On
   // Darwin OSes this uses the driver-driver and builds universal actions.
-  if (TargetTriple.isOSDarwin())
-    BuildUniversalActions(C.getDefaultToolChain(), C.getArgs(),
-                          Inputs, C.getActions());
+  const ToolChain &TC = C.getDefaultToolChain();
+  if (TC.getTriple().isOSDarwin())
+    BuildUniversalActions(TC, C.getArgs(), Inputs, C.getActions());
   else
-    BuildActions(C.getDefaultToolChain(), C.getArgs(), Inputs,
-                 C.getActions());
+    BuildActions(TC, C.getArgs(), Inputs, C.getActions());
 
   BuildJobs(C);
 
