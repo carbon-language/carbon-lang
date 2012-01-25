@@ -1622,23 +1622,19 @@ Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA,
   return *T;
 }
 
-static void addPathIfExists(Twine Path, ToolChain::path_list &Paths) {
-  if (llvm::sys::fs::exists(Path)) Paths.push_back(Path.str());
-}
-
 /// FreeBSD - FreeBSD tool chain which can call as(1) and ld(1) directly.
 
 FreeBSD::FreeBSD(const Driver &D, const llvm::Triple& Triple)
   : Generic_ELF(D, Triple) {
 
-  // When targeting 32-bit platforms, look for libraries in '/usr/lib32' first;
-  // for 64-bit hosts that's where they will live. We fall back to '/usr/lib'
-  // for the remaining cases.
-  if (Triple.getArch() == llvm::Triple::x86 ||
-      Triple.getArch() == llvm::Triple::ppc)
-    addPathIfExists(getDriver().SysRoot + "/usr/lib32", getFilePaths());
-
-  addPathIfExists(getDriver().SysRoot + "/usr/lib", getFilePaths());
+  // When targeting 32-bit platforms, look for '/usr/lib32' first and fall back
+  // to '/usr/lib' for the remaining cases.
+  if ((Triple.getArch() == llvm::Triple::x86 ||
+       Triple.getArch() == llvm::Triple::ppc) &&
+      llvm::sys::fs::exists(getDriver().SysRoot + "/usr/lib32"))
+    getFilePaths().push_back(getDriver().SysRoot + "/usr/lib32");
+  else
+    getFilePaths().push_back(getDriver().SysRoot + "/usr/lib");
 }
 
 Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA,
@@ -1966,6 +1962,10 @@ static std::string getMultiarchTriple(const llvm::Triple TargetTriple,
       return "mipsel-linux-gnu";
     return TargetTriple.str();
   }
+}
+
+static void addPathIfExists(Twine Path, ToolChain::path_list &Paths) {
+  if (llvm::sys::fs::exists(Path)) Paths.push_back(Path.str());
 }
 
 Linux::Linux(const Driver &D, const llvm::Triple &Triple)
