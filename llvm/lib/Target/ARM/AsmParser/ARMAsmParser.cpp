@@ -5080,10 +5080,11 @@ validateInstruction(MCInst &Inst,
   const MCInstrDesc &MCID = getInstDesc(Inst.getOpcode());
   SMLoc Loc = Operands[0]->getStartLoc();
   // Check the IT block state first.
-  // NOTE: In Thumb mode, the BKPT instruction has the interesting property of
-  // being allowed in IT blocks, but not being predicable.  It just always
+  // NOTE: BKPT instruction has the interesting property of being
+  // allowed in IT blocks, but not being predicable.  It just always
   // executes.
-  if (inITBlock() && Inst.getOpcode() != ARM::tBKPT) {
+  if (inITBlock() && Inst.getOpcode() != ARM::tBKPT &&
+      Inst.getOpcode() != ARM::BKPT) {
     unsigned bit = 1;
     if (ITState.FirstCond)
       ITState.FirstCond = false;
@@ -7048,6 +7049,7 @@ processInstruction(MCInst &Inst,
     }
     return false;
   }
+  case ARM::ITasm:
   case ARM::t2IT: {
     // The mask bits for all but the first condition are represented as
     // the low bit of the condition code value implies 't'. We currently
@@ -7153,6 +7155,11 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     // and process gets a consistent answer about whether we're in an IT
     // block.
     forwardITPosition();
+
+    // ITasm is an ARM mode pseudo-instruction that just sets the ITblock and
+    // doesn't actually encode.
+    if (Inst.getOpcode() == ARM::ITasm)
+      return false;
 
     Out.EmitInstruction(Inst);
     return false;

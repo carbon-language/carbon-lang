@@ -5179,3 +5179,7 @@ def : ARMInstAlias<"mul${s}${p} $Rn, $Rm",
 // "neg" is and alias for "rsb rd, rn, #0"
 def : ARMInstAlias<"neg${s}${p} $Rd, $Rm",
                    (RSBri GPR:$Rd, GPR:$Rm, 0, pred:$p, cc_out:$s)>;
+
+// 'it' blocks in ARM mode just validate the predicates. The IT itself
+// is discarded.
+def ITasm : ARMAsmPseudo<"it$mask $cc", (ins it_pred:$cc, it_mask:$mask)>;
