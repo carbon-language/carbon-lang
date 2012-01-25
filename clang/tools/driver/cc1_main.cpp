@@ -140,8 +140,6 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
   bool Success;
   Success = CompilerInvocation::CreateFromArgs(Clang->getInvocation(),
                                                ArgBegin, ArgEnd, Diags);
-  if (!Success)
-    return 1;
 
   // Infer the builtin include path if unspecified.
   if (Clang->getHeaderSearchOpts().UseBuiltinIncludes &&
@@ -160,6 +158,8 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
                                   static_cast<void*>(&Clang->getDiagnostics()));
 
   DiagsBuffer->FlushDiagnostics(Clang->getDiagnostics());
+  if (!Success)
+    return 1;
 
   // Execute the frontend actions.
   Success = ExecuteCompilerInvocation(Clang.get());
