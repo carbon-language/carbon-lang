@@ -130,3 +130,11 @@ static const int k_cVal3 = (int)(1000*0.2f);
     char rgch[k_cVal3] = {0};
   }
 }
+
+namespace PR11744 {
+  template<typename T> int f(int n) {
+    T arr[3][n]; // expected-warning 3 {{variable length arrays are a C99 feature}}
+    return 3;
+  }
+  int test = f<int>(0); // expected-note {{instantiation of}}
+}
