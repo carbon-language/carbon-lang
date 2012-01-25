@@ -118,8 +118,12 @@ typedef enum {
     LLVMStackAlignment = 7<<26,
     LLVMReturnsTwice = 1 << 29,
     LLVMUWTable = 1 << 30,
-    LLVMNonLazyBind = 1U << 31,
-    LLVMAddressSafety = 1ULL << 32
+    LLVMNonLazyBind = 1 << 31
+
+    // FIXME: This attribute is currently not included in the C API as
+    // a temporary measure until the API/ABI impact to the C API is understood
+    // and the path forward agreed upon.
+    //LLVMAddressSafety = 1ULL << 32
 } LLVMAttribute;
 
 typedef enum {
