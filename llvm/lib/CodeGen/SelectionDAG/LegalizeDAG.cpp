@@ -1699,7 +1699,7 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
 
   // If all elements are constants, create a load from the constant pool.
   if (isConstant) {
-    std::vector<Constant*> CV;
+    SmallVector<Constant*, 16> CV;
     for (unsigned i = 0, e = NumElems; i != e; ++i) {
       if (ConstantFPSDNode *V =
           dyn_cast<ConstantFPSDNode>(Node->getOperand(i))) {

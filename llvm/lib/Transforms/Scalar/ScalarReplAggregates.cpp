@@ -2157,8 +2157,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *Inst,
           // If the requested value was a vector constant, create it.
           if (EltTy->isVectorTy()) {
             unsigned NumElts = cast<VectorType>(EltTy)->getNumElements();
-            SmallVector<Constant*, 16> Elts(NumElts, StoreVal);
-            StoreVal = ConstantVector::get(Elts);
+            StoreVal = ConstantVector::getSplat(NumElts, StoreVal);
           }
         }
         new StoreInst(StoreVal, EltPtr, MI);

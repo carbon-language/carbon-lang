@@ -851,8 +851,8 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
       }
 
     // If we changed the constant, return it.
-    Constant *NewCP = ConstantVector::get(Elts);
-    return NewCP != CV ? NewCP : 0;
+    Constant *NewCV = ConstantVector::get(Elts);
+    return NewCV != CV ? NewCV : 0;
   }
   
   if (ConstantDataVector *CDV = dyn_cast<ConstantDataVector>(V)) {

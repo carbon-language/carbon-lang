@@ -7591,12 +7591,8 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op,
   Constant *C0 = ConstantVector::get(CV0);
   SDValue CPIdx0 = DAG.getConstantPool(C0, getPointerTy(), 16);
 
-  SmallVector<Constant*,2> CV1;
-  CV1.push_back(
-    ConstantFP::get(*Context, APFloat(APInt(64, 0x4330000000000000ULL))));
-  CV1.push_back(
-    ConstantFP::get(*Context, APFloat(APInt(64, 0x4530000000000000ULL))));
-  Constant *C1 = ConstantVector::get(CV1);
+  Constant *C1 = ConstantVector::getSplat(2,
+        ConstantFP::get(*Context, APFloat(APInt(64, 0x4330000000000000ULL))));
   SDValue CPIdx1 = DAG.getConstantPool(C1, getPointerTy(), 16);
 
   // Load the 64-bit value into an XMM register.
@@ -7878,15 +7874,14 @@ SDValue X86TargetLowering::LowerFABS(SDValue Op,
   EVT EltVT = VT;
   if (VT.isVector())
     EltVT = VT.getVectorElementType();
-  SmallVector<Constant*,4> CV;
+  Constant *C;
   if (EltVT == MVT::f64) {
-    Constant *C = ConstantFP::get(*Context, APFloat(APInt(64, ~(1ULL << 63))));
-    CV.assign(2, C);
+    C = ConstantVector::getSplat(2, 
+                ConstantFP::get(*Context, APFloat(APInt(64, ~(1ULL << 63)))));
   } else {
-    Constant *C = ConstantFP::get(*Context, APFloat(APInt(32, ~(1U << 31))));
-    CV.assign(4, C);
+    C = ConstantVector::getSplat(4,
+               ConstantFP::get(*Context, APFloat(APInt(32, ~(1U << 31)))));
   }
-  Constant *C = ConstantVector::get(CV);
   SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
   SDValue Mask = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
                              MachinePointerInfo::getConstantPool(),
@@ -7904,15 +7899,12 @@ SDValue X86TargetLowering::LowerFNEG(SDValue Op, SelectionDAG &DAG) const {
     EltVT = VT.getVectorElementType();
     NumElts = VT.getVectorNumElements();
   }
-  SmallVector<Constant*,8> CV;
-  if (EltVT == MVT::f64) {
-    Constant *C = ConstantFP::get(*Context, APFloat(APInt(64, 1ULL << 63)));
-    CV.assign(NumElts, C);
-  } else {
-    Constant *C = ConstantFP::get(*Context, APFloat(APInt(32, 1U << 31)));
-    CV.assign(NumElts, C);
-  }
-  Constant *C = ConstantVector::get(CV);
+  Constant *C;
+  if (EltVT == MVT::f64)
+    C = ConstantFP::get(*Context, APFloat(APInt(64, 1ULL << 63)));
+  else
+    C = ConstantFP::get(*Context, APFloat(APInt(32, 1U << 31)));
+  C = ConstantVector::getSplat(NumElts, C);
   SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
   SDValue Mask = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
                              MachinePointerInfo::getConstantPool(),
@@ -10149,9 +10141,7 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
                      DAG.getConstant(23, MVT::i32));
 
     ConstantInt *CI = ConstantInt::get(*Context, APInt(32, 0x3f800000U));
-
-    std::vector<Constant*> CV(4, CI);
-    Constant *C = ConstantVector::get(CV);
+    Constant *C = ConstantVector::getSplat(4, CI);
     SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
     SDValue Addend = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
                                  MachinePointerInfo::getConstantPool(),

@@ -1873,46 +1873,27 @@ BinaryOperator *BinaryOperator::CreateNUWNeg(Value *Op, const Twine &Name,
 BinaryOperator *BinaryOperator::CreateFNeg(Value *Op, const Twine &Name,
                                            Instruction *InsertBefore) {
   Value *zero = ConstantFP::getZeroValueForNegation(Op->getType());
-  return new BinaryOperator(Instruction::FSub,
-                            zero, Op,
+  return new BinaryOperator(Instruction::FSub, zero, Op,
                             Op->getType(), Name, InsertBefore);
 }
 
 BinaryOperator *BinaryOperator::CreateFNeg(Value *Op, const Twine &Name,
                                            BasicBlock *InsertAtEnd) {
   Value *zero = ConstantFP::getZeroValueForNegation(Op->getType());
-  return new BinaryOperator(Instruction::FSub,
-                            zero, Op,
+  return new BinaryOperator(Instruction::FSub, zero, Op,
                             Op->getType(), Name, InsertAtEnd);
 }
 
 BinaryOperator *BinaryOperator::CreateNot(Value *Op, const Twine &Name,
                                           Instruction *InsertBefore) {
-  Constant *C;
-  if (VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
-    C = Constant::getAllOnesValue(PTy->getElementType());
-    C = ConstantVector::get(
-                              std::vector<Constant*>(PTy->getNumElements(), C));
-  } else {
-    C = Constant::getAllOnesValue(Op->getType());
-  }
-  
+  Constant *C = Constant::getAllOnesValue(Op->getType());
   return new BinaryOperator(Instruction::Xor, Op, C,
                             Op->getType(), Name, InsertBefore);
 }
 
 BinaryOperator *BinaryOperator::CreateNot(Value *Op, const Twine &Name,
                                           BasicBlock *InsertAtEnd) {
-  Constant *AllOnes;
-  if (VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
-    // Create a vector of all ones values.
-    Constant *Elt = Constant::getAllOnesValue(PTy->getElementType());
-    AllOnes = ConstantVector::get(
-                            std::vector<Constant*>(PTy->getNumElements(), Elt));
-  } else {
-    AllOnes = Constant::getAllOnesValue(Op->getType());
-  }
-  
+  Constant *AllOnes = Constant::getAllOnesValue(Op->getType());
   return new BinaryOperator(Instruction::Xor, Op, AllOnes,
                             Op->getType(), Name, InsertAtEnd);
 }
