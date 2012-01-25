@@ -10,6 +10,7 @@
 #define MIPS_ANALYZE_IMMEDIATE_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 
