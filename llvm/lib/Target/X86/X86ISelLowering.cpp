@@ -7591,8 +7591,12 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op,
   Constant *C0 = ConstantVector::get(CV0);
   SDValue CPIdx0 = DAG.getConstantPool(C0, getPointerTy(), 16);
 
-  Constant *C1 = ConstantVector::getSplat(2,
+  SmallVector<Constant*,2> CV1;
+  CV1.push_back(
         ConstantFP::get(*Context, APFloat(APInt(64, 0x4330000000000000ULL))));
+  CV1.push_back(
+        ConstantFP::get(*Context, APFloat(APInt(64, 0x4530000000000000ULL))));
+  Constant *C1 = ConstantVector::get(CV1);
   SDValue CPIdx1 = DAG.getConstantPool(C1, getPointerTy(), 16);
 
   // Load the 64-bit value into an XMM register.
