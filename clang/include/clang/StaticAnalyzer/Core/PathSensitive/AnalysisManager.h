@@ -138,7 +138,7 @@ public:
   
   void FlushDiagnostics() {
     if (PD.get())
-      PD->FlushDiagnostics();
+      PD->FlushDiagnostics(0);
   }
 
   unsigned getMaxNodes() const { return MaxNodes; }

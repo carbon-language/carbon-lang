@@ -31,9 +31,8 @@ public:
   TextPathDiagnostics(const std::string& output, DiagnosticsEngine &diag)
     : OutputFile(output), Diag(diag) {}
 
-  void HandlePathDiagnosticImpl(const PathDiagnostic* D);
-
-  void FlushDiagnostics(SmallVectorImpl<std::string> *FilesMade) { }
+  void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
+                            SmallVectorImpl<std::string> *FilesMade);
   
   virtual StringRef getName() const {
     return "TextPathDiagnostics";
@@ -53,18 +52,17 @@ ento::createTextPathDiagnosticConsumer(const std::string& out,
   return new TextPathDiagnostics(out, PP.getDiagnostics());
 }
 
-void TextPathDiagnostics::HandlePathDiagnosticImpl(const PathDiagnostic* D) {
-  if (!D)
-    return;
-
-  if (D->empty()) {
-    delete D;
-    return;
-  }
-
-  for (PathDiagnostic::const_iterator I=D->begin(), E=D->end(); I != E; ++I) {
-    unsigned diagID = Diag.getDiagnosticIDs()->getCustomDiagID(
-                                           DiagnosticIDs::Note, I->getString());
-    Diag.Report(I->getLocation().asLocation(), diagID);
+void TextPathDiagnostics::FlushDiagnosticsImpl(
+                              std::vector<const PathDiagnostic *> &Diags,
+                              SmallVectorImpl<std::string> *FilesMade) {
+  for (std::vector<const PathDiagnostic *>::iterator it = Diags.begin(),
+       et = Diags.end(); it != et; ++it) {
+    const PathDiagnostic *D = *it;
+    for (PathDiagnostic::const_iterator I=D->begin(), E=D->end(); I != E; ++I) {
+      unsigned diagID =
+        Diag.getDiagnosticIDs()->getCustomDiagID(DiagnosticIDs::Note,
+                                                 I->getString());
+      Diag.Report(I->getLocation().asLocation(), diagID);
+    }
   }
 }

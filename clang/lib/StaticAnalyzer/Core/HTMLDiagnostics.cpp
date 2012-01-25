@@ -39,15 +39,13 @@ class HTMLDiagnostics : public PathDiagnosticConsumer {
   llvm::sys::Path Directory, FilePrefix;
   bool createdDir, noDir;
   const Preprocessor &PP;
-  std::vector<const PathDiagnostic*> BatchedDiags;
 public:
   HTMLDiagnostics(const std::string& prefix, const Preprocessor &pp);
 
   virtual ~HTMLDiagnostics() { FlushDiagnostics(NULL); }
 
-  virtual void FlushDiagnostics(SmallVectorImpl<std::string> *FilesMade);
-
-  virtual void HandlePathDiagnosticImpl(const PathDiagnostic* D);
+  virtual void FlushDiagnosticsImpl(std::vector<const PathDiagnostic *> &Diags,
+                                    SmallVectorImpl<std::string> *FilesMade);
 
   virtual StringRef getName() const {
     return "HTMLDiagnostics";
@@ -88,30 +86,13 @@ ento::createHTMLDiagnosticConsumer(const std::string& prefix,
 // Report processing.
 //===----------------------------------------------------------------------===//
 
-void HTMLDiagnostics::HandlePathDiagnosticImpl(const PathDiagnostic* D) {
-  if (!D)
-    return;
-
-  if (D->empty()) {
-    delete D;
-    return;
+void HTMLDiagnostics::FlushDiagnosticsImpl(
+  std::vector<const PathDiagnostic *> &Diags,
+  SmallVectorImpl<std::string> *FilesMade) {
+  for (std::vector<const PathDiagnostic *>::iterator it = Diags.begin(),
+       et = Diags.end(); it != et; ++it) {
+    ReportDiag(**it, FilesMade);
   }
-
-  const_cast<PathDiagnostic*>(D)->flattenLocations();
-  BatchedDiags.push_back(D);
-}
-
-void
-HTMLDiagnostics::FlushDiagnostics(SmallVectorImpl<std::string> *FilesMade)
-{
-  while (!BatchedDiags.empty()) {
-    const PathDiagnostic* D = BatchedDiags.back();
-    BatchedDiags.pop_back();
-    ReportDiag(*D, FilesMade);
-    delete D;
-  }
-
-  BatchedDiags.clear();
 }
 
 void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
