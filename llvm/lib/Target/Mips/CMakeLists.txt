@@ -11,6 +11,7 @@ tablegen(LLVM MipsGenSubtargetInfo.inc -gen-subtarget)
 add_public_tablegen_target(MipsCommonTableGen)
 
 add_llvm_target(MipsCodeGen
+  MipsAnalyzeImmediate.cpp
   MipsAsmPrinter.cpp
   MipsCodeEmitter.cpp
   MipsDelaySlotFiller.cpp
