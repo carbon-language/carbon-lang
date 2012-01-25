@@ -7,13 +7,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "cxxabi.h"
 #include "abort_message.h"
 
 #include <pthread.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
+
+/*
+    This implementation must be careful to not call code external to this file
+    which will turn around and try to call __cxa_guard_acquire reentrantly.
+    For this reason, the headers of this file are as restricted as possible.
+    Previous implementations of this code for __APPLE__ have used
+    pthread_mutex_lock and the abort_message utility without problem.  This
+    implementation also uses pthread_cond_wait which has tested to not be a
+    problem.
+*/
 
 namespace __cxxabiv1
 {
