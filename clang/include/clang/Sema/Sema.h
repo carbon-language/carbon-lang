@@ -5100,7 +5100,8 @@ public:
   ParmVarDecl *SubstParmVarDecl(ParmVarDecl *D,
                             const MultiLevelTemplateArgumentList &TemplateArgs,
                                 int indexAdjustment,
-                                llvm::Optional<unsigned> NumExpansions);
+                                llvm::Optional<unsigned> NumExpansions,
+                                bool ExpectParameterPack);
   bool SubstParmTypes(SourceLocation Loc,
                       ParmVarDecl **Params, unsigned NumParams,
                       const MultiLevelTemplateArgumentList &TemplateArgs,

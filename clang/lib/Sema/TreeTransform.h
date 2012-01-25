@@ -530,7 +530,8 @@ public:
   ///   scope index;  can be negative
   ParmVarDecl *TransformFunctionTypeParam(ParmVarDecl *OldParm,
                                           int indexAdjustment,
-                                        llvm::Optional<unsigned> NumExpansions);
+                                        llvm::Optional<unsigned> NumExpansions,
+                                          bool ExpectParameterPack);
 
   QualType TransformReferenceType(TypeLocBuilder &TLB, ReferenceTypeLoc TL);
 
@@ -3814,12 +3815,14 @@ template<typename Derived>
 ParmVarDecl *
 TreeTransform<Derived>::TransformFunctionTypeParam(ParmVarDecl *OldParm,
                                                    int indexAdjustment,
-                                       llvm::Optional<unsigned> NumExpansions) {
+                                         llvm::Optional<unsigned> NumExpansions,
+                                                   bool ExpectParameterPack) {
   TypeSourceInfo *OldDI = OldParm->getTypeSourceInfo();
   TypeSourceInfo *NewDI = 0;
   
   if (NumExpansions && isa<PackExpansionType>(OldDI->getType())) {
     // If we're substituting into a pack expansion type and we know the 
+    // length we want to expand to, just substitute for the pattern.
     TypeLoc OldTL = OldDI->getTypeLoc();
     PackExpansionTypeLoc OldExpansionTL = cast<PackExpansionTypeLoc>(OldTL);
     
@@ -3916,7 +3919,8 @@ bool TreeTransform<Derived>::
             ParmVarDecl *NewParm 
               = getDerived().TransformFunctionTypeParam(OldParm,
                                                         indexAdjustment++,
-                                                        OrigNumExpansions);
+                                                        OrigNumExpansions,
+                                                /*ExpectParameterPack=*/false);
             if (!NewParm)
               return true;
             
@@ -3932,7 +3936,8 @@ bool TreeTransform<Derived>::
             ParmVarDecl *NewParm 
               = getDerived().TransformFunctionTypeParam(OldParm,
                                                         indexAdjustment++,
-                                                        OrigNumExpansions);
+                                                        OrigNumExpansions,
+                                                /*ExpectParameterPack=*/false);
             if (!NewParm)
               return true;
             
@@ -3956,11 +3961,13 @@ bool TreeTransform<Derived>::
         Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), -1);
         NewParm = getDerived().TransformFunctionTypeParam(OldParm,
                                                           indexAdjustment,
-                                                          NumExpansions);
+                                                          NumExpansions,
+                                                  /*ExpectParameterPack=*/true);
       } else {
         NewParm = getDerived().TransformFunctionTypeParam(OldParm,
                                                           indexAdjustment,
-                                                  llvm::Optional<unsigned>());
+                                                          llvm::Optional<unsigned>(),
+                                                /*ExpectParameterPack=*/false);
       }
 
       if (!NewParm)

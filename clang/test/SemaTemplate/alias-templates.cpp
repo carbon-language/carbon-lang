@@ -85,7 +85,7 @@ namespace PR11848 {
   template<typename T>
   struct Hidden1 {
     template<typename ...Ts>
-    Hidden1(typename T::template U<Ts> ...ts);
+    Hidden1(typename T::template U<Ts> ...ts); // expected-error{{type 'typename Hide::U<Ts>' (aka 'int') of function parameter pack does not contain any unexpanded parameter packs}}
   };
 
   template<typename T, typename ...Ts>
@@ -97,7 +97,6 @@ namespace PR11848 {
     template<typename T> using U = int;
   };
 
-  // FIXME: This case crashes clang at the moment.
-  //Hidden1<Hide> h1;
+  Hidden1<Hide> h1;  // expected-note{{in instantiation of template class 'PR11848::Hidden1<PR11848::Hide>' requested here}}
   Hidden2<Hide, double, char> h2(1, 2);
 }

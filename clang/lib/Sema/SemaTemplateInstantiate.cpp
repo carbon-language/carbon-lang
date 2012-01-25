@@ -778,7 +778,8 @@ namespace {
                                         FunctionProtoTypeLoc TL);
     ParmVarDecl *TransformFunctionTypeParam(ParmVarDecl *OldParm,
                                             int indexAdjustment,
-                                      llvm::Optional<unsigned> NumExpansions);
+                                        llvm::Optional<unsigned> NumExpansions,
+                                            bool ExpectParameterPack);
 
     /// \brief Transforms a template type parameter type by performing
     /// substitution of the corresponding template type argument.
@@ -1194,9 +1195,10 @@ QualType TemplateInstantiator::TransformFunctionProtoType(TypeLocBuilder &TLB,
 ParmVarDecl *
 TemplateInstantiator::TransformFunctionTypeParam(ParmVarDecl *OldParm,
                                                  int indexAdjustment,
-                                       llvm::Optional<unsigned> NumExpansions) {
+                                       llvm::Optional<unsigned> NumExpansions,
+                                                 bool ExpectParameterPack) {
   return SemaRef.SubstParmVarDecl(OldParm, TemplateArgs, indexAdjustment,
-                                  NumExpansions);
+                                  NumExpansions, ExpectParameterPack);
 }
 
 QualType
@@ -1450,7 +1452,8 @@ TypeSourceInfo *Sema::SubstFunctionDeclType(TypeSourceInfo *T,
 ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm, 
                             const MultiLevelTemplateArgumentList &TemplateArgs,
                                     int indexAdjustment,
-                                    llvm::Optional<unsigned> NumExpansions) {
+                                    llvm::Optional<unsigned> NumExpansions,
+                                    bool ExpectParameterPack) {
   TypeSourceInfo *OldDI = OldParm->getTypeSourceInfo();
   TypeSourceInfo *NewDI = 0;
   
@@ -1471,7 +1474,16 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
       // Therefore, make its type a pack expansion type.
       NewDI = CheckPackExpansion(NewDI, ExpansionTL.getEllipsisLoc(),
                                  NumExpansions);
-    }
+    } else if (ExpectParameterPack) {
+      // We expected to get a parameter pack but didn't (because the type
+      // itself is not a pack expansion type), so complain. This can occur when
+      // the substitution goes through an alias template that "loses" the
+      // pack expansion.
+      Diag(OldParm->getLocation(), 
+           diag::err_function_parameter_pack_without_parameter_packs)
+        << NewDI->getType();
+      return 0;
+    } 
   } else {
     NewDI = SubstType(OldDI, TemplateArgs, OldParm->getLocation(), 
                       OldParm->getDeclName());
@@ -1506,9 +1518,7 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
     NewParm->setUninstantiatedDefaultArg(Arg);
 
   NewParm->setHasInheritedDefaultArg(OldParm->hasInheritedDefaultArg());
-
-  // FIXME: When OldParm is a parameter pack and NewParm is not a parameter
-  // pack, we actually have a set of instantiated locations. Maintain this set!
+  
   if (OldParm->isParameterPack() && !NewParm->isParameterPack()) {
     // Add the new parameter to the instantiated parameter pack.
     CurrentInstantiationScope->InstantiatedLocalPackArg(OldParm, NewParm);
