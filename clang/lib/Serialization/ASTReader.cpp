@@ -5212,13 +5212,15 @@ IdentifierIterator *ASTReader::getIdentifiers() const {
 namespace clang { namespace serialization {
   class ReadMethodPoolVisitor {
     ASTReader &Reader;
-    Selector Sel;    
+    Selector Sel;
+    unsigned PriorGeneration;
     llvm::SmallVector<ObjCMethodDecl *, 4> InstanceMethods;
     llvm::SmallVector<ObjCMethodDecl *, 4> FactoryMethods;
 
   public:
-    ReadMethodPoolVisitor(ASTReader &Reader, Selector Sel)
-      : Reader(Reader), Sel(Sel) { }
+    ReadMethodPoolVisitor(ASTReader &Reader, Selector Sel, 
+                          unsigned PriorGeneration)
+      : Reader(Reader), Sel(Sel), PriorGeneration(PriorGeneration) { }
     
     static bool visit(ModuleFile &M, void *UserData) {
       ReadMethodPoolVisitor *This
@@ -5227,6 +5229,10 @@ namespace clang { namespace serialization {
       if (!M.SelectorLookupTable)
         return false;
       
+      // If we've already searched this module file, skip it now.
+      if (M.Generation <= This->PriorGeneration)
+        return true;
+
       ASTSelectorLookupTable *PoolTable
         = (ASTSelectorLookupTable*)M.SelectorLookupTable;
       ASTSelectorLookupTable::iterator Pos = PoolTable->find(This->Sel);
@@ -5269,7 +5275,13 @@ static void addMethodsToPool(Sema &S, ArrayRef<ObjCMethodDecl *> Methods,
 }
                              
 void ASTReader::ReadMethodPool(Selector Sel) {
-  ReadMethodPoolVisitor Visitor(*this, Sel);
+  // Get the selector generation and update it to the current generation.
+  unsigned &Generation = SelectorGeneration[Sel];
+  unsigned PriorGeneration = Generation;
+  Generation = CurrentGeneration;
+  
+  // Search for methods defined with this selector.
+  ReadMethodPoolVisitor Visitor(*this, Sel, PriorGeneration);
   ModuleMgr.visit(&ReadMethodPoolVisitor::visit, &Visitor);
   
   if (Visitor.getInstanceMethods().empty() &&

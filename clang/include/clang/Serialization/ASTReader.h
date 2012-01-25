@@ -424,6 +424,10 @@ private:
   /// global selector ID to produce a local ID.
   GlobalSelectorMapType GlobalSelectorMap;
 
+  /// \brief The generation number of the last time we loaded data from the
+  /// global method pool for this selector.
+  llvm::DenseMap<Selector, unsigned> SelectorGeneration;
+
   /// \brief Mapping from identifiers that represent macros whose definitions
   /// have not yet been deserialized to the global offset where the macro
   /// record resides.
@@ -656,7 +660,8 @@ private:
   /// loaded once the recursive loading has completed.
   std::deque<PendingIdentifierInfo> PendingIdentifierInfos;
 
-  /// \brief The generation number of 
+  /// \brief The generation number of each identifier, which keeps track of
+  /// the last time we loaded information about this identifier.
   llvm::DenseMap<IdentifierInfo *, unsigned> IdentifierGeneration;
   
   /// \brief Contains declarations and definitions that will be
