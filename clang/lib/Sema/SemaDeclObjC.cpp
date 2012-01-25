@@ -1983,17 +1983,13 @@ void Sema::ReadMethodPool(Selector Sel) {
 
 void Sema::AddMethodToGlobalPool(ObjCMethodDecl *Method, bool impl,
                                  bool instance) {
+  if (ExternalSource)
+    ReadMethodPool(Method->getSelector());
+  
   GlobalMethodPool::iterator Pos = MethodPool.find(Method->getSelector());
-  if (Pos == MethodPool.end()) {
-    if (ExternalSource) {
-      ReadMethodPool(Method->getSelector());
-      Pos = MethodPool.find(Method->getSelector());
-    }
-    
-    if (Pos == MethodPool.end())
-      Pos = MethodPool.insert(std::make_pair(Method->getSelector(),
-                                             GlobalMethods())).first;
-  }
+  if (Pos == MethodPool.end())
+    Pos = MethodPool.insert(std::make_pair(Method->getSelector(),
+                                           GlobalMethods())).first;
   
   Method->setDefined(impl);
   
@@ -2023,18 +2019,12 @@ static bool isAcceptableMethodMismatch(ObjCMethodDecl *chosen,
 ObjCMethodDecl *Sema::LookupMethodInGlobalPool(Selector Sel, SourceRange R,
                                                bool receiverIdOrClass,
                                                bool warn, bool instance) {
+  if (ExternalSource)
+    ReadMethodPool(Sel);
+    
   GlobalMethodPool::iterator Pos = MethodPool.find(Sel);
-  if (Pos == MethodPool.end()) {
-    if (ExternalSource) {
-      ReadMethodPool(Sel);
-      
-      Pos = MethodPool.find(Sel);
-      if (Pos == MethodPool.end())
-        return 0;
-      
-    } else
-      return 0;
-  }
+  if (Pos == MethodPool.end())
+    return 0;
 
   ObjCMethodList &MethList = instance ? Pos->second.first : Pos->second.second;
 

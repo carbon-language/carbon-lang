@@ -75,3 +75,9 @@ module namespaces_right {
   header "namespaces-right.h"
   export *
 }
+module MethodPoolA {
+  header "MethodPoolA.h"
+}
+module MethodPoolB {
+  header "MethodPoolB.h"
+}
