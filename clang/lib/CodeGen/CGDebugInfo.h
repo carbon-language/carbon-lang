@@ -232,7 +232,7 @@ private:
   /// getContextDescriptor - Get context info for the decl.
   llvm::DIDescriptor getContextDescriptor(const Decl *Decl);
 
-  /// CreateContextChain - Create a set of decls for the context chain.
+  /// createContextChain - Create a set of decls for the context chain.
   llvm::DIDescriptor createContextChain(const Decl *Decl);
 
   /// getCurrentDirname - Return current directory name.
