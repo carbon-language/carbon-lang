@@ -23,7 +23,6 @@ namespace driver {
   class Compilation;
   class DerivedArgList;
   class Driver;
-  class HostInfo;
   class InputArgList;
   class JobAction;
   class ObjCRuntime;
@@ -45,7 +44,7 @@ public:
   };
 
 private:
-  const HostInfo &Host;
+  const Driver &D;
   const llvm::Triple Triple;
 
   /// The list of toolchain specific path prefixes to search for
@@ -57,7 +56,7 @@ private:
   path_list ProgramPaths;
 
 protected:
-  ToolChain(const HostInfo &Host, const llvm::Triple &_Triple);
+  ToolChain(const Driver &D, const llvm::Triple &T);
 
   /// \name Utilities for implementing subclasses.
   ///@{

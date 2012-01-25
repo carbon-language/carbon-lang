@@ -14,31 +14,30 @@
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
-#include "clang/Driver/HostInfo.h"
 #include "clang/Driver/ObjCRuntime.h"
 #include "clang/Driver/Options.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang::driver;
 using namespace clang;
 
-ToolChain::ToolChain(const HostInfo &H, const llvm::Triple &T)
-  : Host(H), Triple(T) {
+ToolChain::ToolChain(const Driver &D, const llvm::Triple &T)
+  : D(D), Triple(T) {
 }
 
 ToolChain::~ToolChain() {
 }
 
 const Driver &ToolChain::getDriver() const {
- return Host.getDriver();
+ return D;
 }
 
 std::string ToolChain::GetFilePath(const char *Name) const {
-  return Host.getDriver().GetFilePath(Name, *this);
+  return D.GetFilePath(Name, *this);
 
 }
 
 std::string ToolChain::GetProgramPath(const char *Name, bool WantFile) const {
-  return Host.getDriver().GetProgramPath(Name, *this, WantFile);
+  return D.GetProgramPath(Name, *this, WantFile);
 }
 
 types::ID ToolChain::LookupTypeForExtension(const char *Ext) const {

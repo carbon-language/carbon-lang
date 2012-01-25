@@ -18,7 +18,6 @@
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
-#include "clang/Driver/HostInfo.h"
 #include "clang/Driver/ObjCRuntime.h"
 #include "clang/Driver/OptTable.h"
 #include "clang/Driver/Option.h"
@@ -46,8 +45,8 @@ using namespace clang;
 
 /// Darwin - Darwin tool chain for i386 and x86_64.
 
-Darwin::Darwin(const HostInfo &Host, const llvm::Triple& Triple)
-  : ToolChain(Host, Triple), TargetInitialized(false),
+Darwin::Darwin(const Driver &D, const llvm::Triple& Triple)
+  : ToolChain(D, Triple), TargetInitialized(false),
     ARCRuntimeForSimulator(ARCSimulator_None),
     LibCXXForSimulator(LibCXXSimulator_None)
 {
@@ -251,8 +250,8 @@ Tool &Darwin::SelectTool(const Compilation &C, const JobAction &JA,
 }
 
 
-DarwinClang::DarwinClang(const HostInfo &Host, const llvm::Triple& Triple)
-  : Darwin(Host, Triple)
+DarwinClang::DarwinClang(const Driver &D, const llvm::Triple& Triple)
+  : Darwin(D, Triple)
 {
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
@@ -1391,8 +1390,8 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
   }
 }
 
-Generic_GCC::Generic_GCC(const HostInfo &Host, const llvm::Triple& Triple)
-  : ToolChain(Host, Triple), GCCInstallation(getDriver(), Triple) {
+Generic_GCC::Generic_GCC(const Driver &D, const llvm::Triple& Triple)
+  : ToolChain(D, Triple), GCCInstallation(getDriver(), Triple) {
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
     getProgramPaths().push_back(getDriver().Dir);
@@ -1462,8 +1461,8 @@ const char *Generic_GCC::GetForcedPicModel() const {
 }
 /// Hexagon Toolchain
 
-Hexagon_TC::Hexagon_TC(const HostInfo &Host, const llvm::Triple& Triple)
-  : ToolChain(Host, Triple) {
+Hexagon_TC::Hexagon_TC(const Driver &D, const llvm::Triple& Triple)
+  : ToolChain(D, Triple) {
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir.c_str())
     getProgramPaths().push_back(getDriver().Dir);
@@ -1532,8 +1531,8 @@ const char *Hexagon_TC::GetForcedPicModel() const {
 /// all subcommands. See http://tce.cs.tut.fi for our peculiar target.
 /// Currently does not support anything else but compilation.
 
-TCEToolChain::TCEToolChain(const HostInfo &Host, const llvm::Triple& Triple)
-  : ToolChain(Host, Triple) {
+TCEToolChain::TCEToolChain(const Driver &D, const llvm::Triple& Triple)
+  : ToolChain(D, Triple) {
   // Path mangling to find libexec
   std::string Path(getDriver().Dir);
 
@@ -1585,8 +1584,8 @@ Tool &TCEToolChain::SelectTool(const Compilation &C,
 
 /// OpenBSD - OpenBSD tool chain which can call as(1) and ld(1) directly.
 
-OpenBSD::OpenBSD(const HostInfo &Host, const llvm::Triple& Triple)
-  : Generic_ELF(Host, Triple) {
+OpenBSD::OpenBSD(const Driver &D, const llvm::Triple& Triple)
+  : Generic_ELF(D, Triple) {
   getFilePaths().push_back(getDriver().Dir + "/../lib");
   getFilePaths().push_back("/usr/lib");
 }
@@ -1629,8 +1628,8 @@ static void addPathIfExists(Twine Path, ToolChain::path_list &Paths) {
 
 /// FreeBSD - FreeBSD tool chain which can call as(1) and ld(1) directly.
 
-FreeBSD::FreeBSD(const HostInfo &Host, const llvm::Triple& Triple)
-  : Generic_ELF(Host, Triple) {
+FreeBSD::FreeBSD(const Driver &D, const llvm::Triple& Triple)
+  : Generic_ELF(D, Triple) {
 
   // When targeting 32-bit platforms, look for libraries in '/usr/lib32' first;
   // for 64-bit hosts that's where they will live. We fall back to '/usr/lib'
@@ -1675,9 +1674,9 @@ Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA,
 
 /// NetBSD - NetBSD tool chain which can call as(1) and ld(1) directly.
 
-NetBSD::NetBSD(const HostInfo &Host, const llvm::Triple& Triple,
+NetBSD::NetBSD(const Driver &D, const llvm::Triple& Triple,
                const llvm::Triple& ToolTriple)
-  : Generic_ELF(Host, Triple), ToolTriple(ToolTriple) {
+  : Generic_ELF(D, Triple), ToolTriple(ToolTriple) {
 
   // Determine if we are compiling 32-bit code on an x86_64 platform.
   bool Lib32 = false;
@@ -1727,8 +1726,8 @@ Tool &NetBSD::SelectTool(const Compilation &C, const JobAction &JA,
 
 /// Minix - Minix tool chain which can call as(1) and ld(1) directly.
 
-Minix::Minix(const HostInfo &Host, const llvm::Triple& Triple)
-  : Generic_ELF(Host, Triple) {
+Minix::Minix(const Driver &D, const llvm::Triple& Triple)
+  : Generic_ELF(D, Triple) {
   getFilePaths().push_back(getDriver().Dir + "/../lib");
   getFilePaths().push_back("/usr/lib");
 }
@@ -1758,8 +1757,8 @@ Tool &Minix::SelectTool(const Compilation &C, const JobAction &JA,
 
 /// AuroraUX - AuroraUX tool chain which can call as(1) and ld(1) directly.
 
-AuroraUX::AuroraUX(const HostInfo &Host, const llvm::Triple& Triple)
-  : Generic_GCC(Host, Triple) {
+AuroraUX::AuroraUX(const Driver &D, const llvm::Triple& Triple)
+  : Generic_GCC(D, Triple) {
 
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
@@ -1970,8 +1969,8 @@ static std::string getMultiarchTriple(const llvm::Triple TargetTriple,
   }
 }
 
-Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
-  : Generic_ELF(Host, Triple) {
+Linux::Linux(const Driver &D, const llvm::Triple &Triple)
+  : Generic_ELF(D, Triple) {
   llvm::Triple::ArchType Arch = Triple.getArch();
   const std::string &SysRoot = getDriver().SysRoot;
 
@@ -2279,8 +2278,8 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
 
 /// DragonFly - DragonFly tool chain which can call as(1) and ld(1) directly.
 
-DragonFly::DragonFly(const HostInfo &Host, const llvm::Triple& Triple)
-  : Generic_ELF(Host, Triple) {
+DragonFly::DragonFly(const Driver &D, const llvm::Triple& Triple)
+  : Generic_ELF(D, Triple) {
 
   // Path mangling to find libexec
   getProgramPaths().push_back(getDriver().getInstalledDir());

@@ -109,9 +109,9 @@ ToolChain *DarwinHostInfo::CreateToolChain(const ArgList &Args,
     // If we recognized the arch, match it to the toolchains we support.
     if (Arch == llvm::Triple::x86 || Arch == llvm::Triple::x86_64 ||
         Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb) {
-      TC = new toolchains::DarwinClang(*this, TCTriple);
+      TC = new toolchains::DarwinClang(getDriver(), TCTriple);
     } else
-      TC = new toolchains::Darwin_Generic_GCC(*this, TCTriple);
+      TC = new toolchains::Darwin_Generic_GCC(getDriver(), TCTriple);
   }
 
   return TC;
@@ -138,7 +138,7 @@ ToolChain *TCEHostInfo::CreateToolChain(const ArgList &Args,
                                         const char *ArchName) const {
   llvm::Triple TCTriple(getTriple());
 //  TCTriple.setArchName(ArchName);
-  return new toolchains::TCEToolChain(*this, TCTriple);
+  return new toolchains::TCEToolChain(getDriver(), TCTriple);
 }
 
 
@@ -192,7 +192,7 @@ ToolChain *UnknownHostInfo::CreateToolChain(const ArgList &Args,
     llvm::Triple TCTriple(getTriple());
     TCTriple.setArchName(ArchName);
 
-    TC = new toolchains::Generic_GCC(*this, TCTriple);
+    TC = new toolchains::Generic_GCC(getDriver(), TCTriple);
   }
 
   return TC;
@@ -233,7 +233,7 @@ ToolChain *OpenBSDHostInfo::CreateToolChain(const ArgList &Args,
     llvm::Triple TCTriple(getTriple());
     TCTriple.setArchName(ArchName);
 
-    TC = new toolchains::OpenBSD(*this, TCTriple);
+    TC = new toolchains::OpenBSD(getDriver(), TCTriple);
   }
 
   return TC;
@@ -272,7 +272,7 @@ ToolChain *AuroraUXHostInfo::CreateToolChain(const ArgList &Args,
     llvm::Triple TCTriple(getTriple());
     TCTriple.setArchName(getArchName());
 
-    TC = new toolchains::AuroraUX(*this, TCTriple);
+    TC = new toolchains::AuroraUX(getDriver(), TCTriple);
   }
 
   return TC;
@@ -325,7 +325,7 @@ ToolChain *FreeBSDHostInfo::CreateToolChain(const ArgList &Args,
     llvm::Triple TCTriple(getTriple());
     TCTriple.setArchName(ArchName);
 
-    TC = new toolchains::FreeBSD(*this, TCTriple);
+    TC = new toolchains::FreeBSD(getDriver(), TCTriple);
   }
 
   return TC;
@@ -384,7 +384,7 @@ ToolChain *NetBSDHostInfo::CreateToolChain(const ArgList &Args,
       return TC;
   }
 
-  TC = new toolchains::NetBSD(*this, TargetTriple, getTriple());
+  TC = new toolchains::NetBSD(getDriver(), TargetTriple, getTriple());
 
   return TC;
 }
@@ -425,7 +425,7 @@ ToolChain *MinixHostInfo::CreateToolChain(const ArgList &Args,
     llvm::Triple TCTriple(getTriple());
     TCTriple.setArchName(ArchName);
 
-    TC = new toolchains::Minix(*this, TCTriple);
+    TC = new toolchains::Minix(getDriver(), TCTriple);
   }
 
   return TC;
@@ -464,7 +464,7 @@ ToolChain *DragonFlyHostInfo::CreateToolChain(const ArgList &Args,
     llvm::Triple TCTriple(getTriple());
     TCTriple.setArchName(getArchName());
 
-    TC = new toolchains::DragonFly(*this, TCTriple);
+    TC = new toolchains::DragonFly(getDriver(), TCTriple);
   }
 
   return TC;
@@ -517,14 +517,14 @@ ToolChain *LinuxHostInfo::CreateToolChain(const ArgList &Args,
 
   if (!TC && !Arch.compare ("hexagon")) {
     llvm::Triple TCTriple (getTriple());
-    TC = new toolchains::Hexagon_TC (*this, TCTriple);
+    TC = new toolchains::Hexagon_TC (getDriver(), TCTriple);
   }
 
   if (!TC) {
     llvm::Triple TCTriple(getTriple());
     TCTriple.setArchName(ArchName);
 
-    TC = new toolchains::Linux(*this, TCTriple);
+    TC = new toolchains::Linux(getDriver(), TCTriple);
   }
 
   return TC;
@@ -580,7 +580,7 @@ ToolChain *WindowsHostInfo::CreateToolChain(const ArgList &Args,
     llvm::Triple TCTriple(getTriple());
     TCTriple.setArchName(ArchName);
 
-    TC = new toolchains::Windows(*this, TCTriple);
+    TC = new toolchains::Windows(getDriver(), TCTriple);
   }
 
   return TC;
