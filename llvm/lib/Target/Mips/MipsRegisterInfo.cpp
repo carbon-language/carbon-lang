@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "mips-reg-info"
 
 #include "Mips.h"
+#include "MipsAnalyzeImmediate.h"
 #include "MipsSubtarget.h"
 #include "MipsRegisterInfo.h"
 #include "MipsMachineFunction.h"
@@ -168,8 +169,8 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
         errs() << "<--------->\n" << MI);
 
   int FrameIndex = MI.getOperand(i).getIndex();
-  int stackSize  = MF.getFrameInfo()->getStackSize();
-  int spOffset   = MF.getFrameInfo()->getObjectOffset(FrameIndex);
+  uint64_t stackSize = MF.getFrameInfo()->getStackSize();
+  int64_t spOffset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
 
   DEBUG(errs() << "FrameIndex : " << FrameIndex << "\n"
                << "spOffset   : " << spOffset << "\n"
@@ -205,13 +206,13 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   // - If the frame object is any of the following, its offset must be adjusted
   //   by adding the size of the stack:
   //   incoming argument, callee-saved register location or local variable.  
-  int Offset;
+  int64_t Offset;
 
   if (MipsFI->isOutArgFI(FrameIndex) || MipsFI->isGPFI(FrameIndex) ||
       MipsFI->isDynAllocFI(FrameIndex))
     Offset = spOffset;
   else
-    Offset = spOffset + stackSize;
+    Offset = spOffset + (int64_t)stackSize;
 
   Offset    += MI.getOperand(i+1).getImm();
 
@@ -219,20 +220,41 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
 
   // If MI is not a debug value, make sure Offset fits in the 16-bit immediate
   // field. 
-  if (!MI.isDebugValue() && (Offset >= 0x8000 || Offset < -0x8000)) {
+  if (!MI.isDebugValue() && !isInt<16>(Offset)) {
     MachineBasicBlock &MBB = *MI.getParent();
     DebugLoc DL = II->getDebugLoc();
-    int ImmHi = (((unsigned)Offset & 0xffff0000) >> 16) +
-                ((Offset & 0x8000) != 0);
+    MipsAnalyzeImmediate AnalyzeImm;
+    unsigned Size = Subtarget.isABI_N64() ? 64 : 32;
+    unsigned LUi = Subtarget.isABI_N64() ? Mips::LUi64 : Mips::LUi;
+    unsigned ADDu = Subtarget.isABI_N64() ? Mips::DADDu : Mips::ADDu;
+    unsigned ZEROReg = Subtarget.isABI_N64() ? Mips::ZERO_64 : Mips::ZERO;    
+    unsigned ATReg = Subtarget.isABI_N64() ? Mips::AT_64 : Mips::AT;
+    const MipsAnalyzeImmediate::InstSeq &Seq =
+      AnalyzeImm.Analyze(Offset, Size, true /* LastInstrIsADDiu */);
+    MipsAnalyzeImmediate::InstSeq::const_iterator Inst = Seq.begin();
 
     // FIXME: change this when mips goes MC".
     BuildMI(MBB, II, DL, TII.get(Mips::NOAT));
-    BuildMI(MBB, II, DL, TII.get(Mips::LUi), Mips::AT).addImm(ImmHi);
-    BuildMI(MBB, II, DL, TII.get(Mips::ADDu), Mips::AT).addReg(FrameReg)
-                                                       .addReg(Mips::AT);
-    FrameReg = Mips::AT;
-    Offset = (short)(Offset & 0xffff);
 
+    // The first instruction can be a LUi, which is different from other
+    // instructions (ADDiu, ORI and SLL) in that it does not have a register
+    // operand.
+    if (Inst->Opc == LUi)
+      BuildMI(MBB, II, DL, TII.get(LUi), ATReg)
+        .addImm(SignExtend64<16>(Inst->ImmOpnd));
+    else
+      BuildMI(MBB, II, DL, TII.get(Inst->Opc), ATReg).addReg(ZEROReg)
+        .addImm(SignExtend64<16>(Inst->ImmOpnd));
+
+    // Build the remaining instructions in Seq except for the last one.
+    for (++Inst; Inst != Seq.end() - 1; ++Inst)
+      BuildMI(MBB, II, DL, TII.get(Inst->Opc), ATReg).addReg(ATReg)
+        .addImm(SignExtend64<16>(Inst->ImmOpnd));
+
+    BuildMI(MBB, II, DL, TII.get(ADDu), ATReg).addReg(FrameReg).addReg(ATReg);
+
+    FrameReg = ATReg;
+    Offset = SignExtend64<16>(Inst->ImmOpnd);
     BuildMI(MBB, ++II, MI.getDebugLoc(), TII.get(Mips::ATMACRO));
   }
 
