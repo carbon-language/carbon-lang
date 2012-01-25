@@ -4360,12 +4360,21 @@ ExprResult Sema::DiagnoseDtorReference(SourceLocation NameLoc,
                        /*RPLoc*/ ExpectedLParenLoc);
 }
 
-static bool CheckArrow(Sema& S, QualType& ObjectType, Expr *Base, 
+static bool CheckArrow(Sema& S, QualType& ObjectType, Expr *&Base, 
                    tok::TokenKind& OpKind, SourceLocation OpLoc) {
+  if (Base->hasPlaceholderType()) {
+    ExprResult result = S.CheckPlaceholderExpr(Base);
+    if (result.isInvalid()) return true;
+    Base = result.take();
+  }
+  ObjectType = Base->getType();
+
   // C++ [expr.pseudo]p2:
   //   The left-hand side of the dot operator shall be of scalar type. The
   //   left-hand side of the arrow operator shall be of pointer to scalar type.
   //   This scalar type is the object type.
+  // Note that this is rather different from the normal handling for the
+  // arrow operator.
   if (OpKind == tok::arrow) {
     if (const PointerType *Ptr = ObjectType->getAs<PointerType>()) {
       ObjectType = Ptr->getPointeeType();
@@ -4395,7 +4404,6 @@ ExprResult Sema::BuildPseudoDestructorExpr(Expr *Base,
                                            bool HasTrailingLParen) {
   TypeSourceInfo *DestructedTypeInfo = Destructed.getTypeSourceInfo();
 
-  QualType ObjectType = Base->getType();
   if (CheckArrow(*this, ObjectType, Base, OpKind, OpLoc))
     return ExprError();
 
@@ -4500,7 +4508,6 @@ ExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
           SecondTypeName.getKind() == UnqualifiedId::IK_Identifier) &&
          "Invalid second type name in pseudo-destructor");
 
-  QualType ObjectType = Base->getType();
   if (CheckArrow(*this, ObjectType, Base, OpKind, OpLoc))
     return ExprError();
 
@@ -4629,7 +4636,6 @@ ExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
                                            const DeclSpec& DS,
                                            bool HasTrailingLParen) {
   
-  QualType ObjectType = Base->getType();
   if (CheckArrow(*this, ObjectType, Base, OpKind, OpLoc))
     return ExprError();
 
