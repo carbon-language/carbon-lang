@@ -126,7 +126,7 @@ Breakpoint::GetLocationAtIndex (uint32_t index)
 
 // For each of the overall options we need to decide how they propagate to
 // the location options.  This will determine the precedence of options on
-// the breakpoint vrs. its locations.
+// the breakpoint vs. its locations.
 
 // Disable at the breakpoint level should override the location settings.
 // That way you can conveniently turn off a whole breakpoint without messing
