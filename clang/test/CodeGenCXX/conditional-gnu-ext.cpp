@@ -140,3 +140,11 @@ namespace test3 {
   }
 
 }
+
+namespace test4 {
+  // Make sure this doesn't crash.
+  void f() {
+    const int a = 10, b = 20;
+    const int *c = &(a ?: b);
+  }
+}

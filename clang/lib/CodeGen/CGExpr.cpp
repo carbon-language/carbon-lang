@@ -1999,6 +1999,8 @@ EmitConditionalOperatorLValue(const AbstractConditionalOperator *expr) {
     return EmitAggExprToLValue(expr);
   }
 
+  OpaqueValueMapping binding(*this, expr);
+
   const Expr *condExpr = expr->getCond();
   bool CondExprBool;
   if (ConstantFoldsToSimpleInteger(condExpr, CondExprBool)) {
@@ -2008,8 +2010,6 @@ EmitConditionalOperatorLValue(const AbstractConditionalOperator *expr) {
     if (!ContainsLabel(dead))
       return EmitLValue(live);
   }
-
-  OpaqueValueMapping binding(*this, expr);
 
   llvm::BasicBlock *lhsBlock = createBasicBlock("cond.true");
   llvm::BasicBlock *rhsBlock = createBasicBlock("cond.false");
