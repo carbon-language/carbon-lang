@@ -1,7 +1,7 @@
 Name: @PACKAGE_NAME@
 Version: @PACKAGE_VERSION@
 Release: 0
-Summary: The Low Level Virtual Machine (An Optimizing Compiler Infrastructure)
+Summary: LLVM (An Optimizing Compiler Infrastructure)
 License: University of Illinois/NCSA Open Source License
 Vendor: None (open source)
 Group: Development/Compilers

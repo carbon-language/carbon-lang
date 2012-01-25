@@ -1,7 +1,7 @@
-/// @mainpage Low Level Virtual Machine
+/// @mainpage LLVM
 ///
 /// @section main_intro Introduction
-/// Welcome to the Low Level Virtual Machine (LLVM).
+/// Welcome to LLVM.
 ///
 /// This documentation describes the @b internal software that makes 
 /// up LLVM, not the @b external use of  LLVM. There are no instructions

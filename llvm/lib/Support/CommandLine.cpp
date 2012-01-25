@@ -1345,7 +1345,7 @@ class VersionPrinter {
 public:
   void print() {
     raw_ostream &OS = outs();
-    OS << "Low Level Virtual Machine (http://llvm.org/):\n"
+    OS << "LLVM (http://llvm.org/):\n"
        << "  " << PACKAGE_NAME << " version " << PACKAGE_VERSION;
 #ifdef LLVM_VERSION_INFO
     OS << LLVM_VERSION_INFO;

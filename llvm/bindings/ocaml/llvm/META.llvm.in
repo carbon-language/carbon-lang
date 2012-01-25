@@ -1,6 +1,6 @@
 name = "llvm"
 version = "@PACKAGE_VERSION@"
-description = "Low Level Virtual Machine OCaml bindings"
+description = "LLVM OCaml bindings"
 archive(byte) = "llvm.cma"
 archive(native) = "llvm.cmxa"
 directory = "."
