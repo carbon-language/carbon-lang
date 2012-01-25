@@ -1441,6 +1441,10 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, Expr **Args,
       } else if (const PointerType *PT = T->getAs<PointerType>()) {
         isConstant = T.isConstant(Context) &&
                      PT->getPointeeType().isConstant(Context);
+      } else if (T->isObjCObjectPointerType()) {
+        // In ObjC, there is usually no "const ObjectPointer" type,
+        // so don't check if the pointee type is constant.
+        isConstant = T.isConstant(Context);
       }
 
       if (isConstant) {
