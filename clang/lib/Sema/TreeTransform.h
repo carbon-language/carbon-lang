@@ -8125,8 +8125,10 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
   if (getDerived().TransformFunctionTypeParams(E->getCaretLocation(),
                                                oldBlock->param_begin(),
                                                oldBlock->param_size(),
-                                               0, paramTypes, &params))
+                                               0, paramTypes, &params)) {
+    getSema().ActOnBlockError(E->getCaretLocation(), /*Scope=*/0);
     return ExprError();
+  }
 
   const FunctionType *exprFunctionType = E->getFunctionType();
   QualType exprResultType = exprFunctionType->getResultType();
@@ -8147,6 +8149,7 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
     getSema().Diag(E->getCaretLocation(), 
                    diag::err_object_cannot_be_passed_returned_by_value) 
       << 0 << blockScope->ReturnType;
+    getSema().ActOnBlockError(E->getCaretLocation(), /*Scope=*/0);
     return ExprError();
   }
 
@@ -8171,8 +8174,10 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
   
   // Transform the body
   StmtResult body = getDerived().TransformStmt(E->getBody());
-  if (body.isInvalid())
+  if (body.isInvalid()) {
+    getSema().ActOnBlockError(E->getCaretLocation(), /*Scope=*/0);
     return ExprError();
+  }
 
 #ifndef NDEBUG
   // In builds with assertions, make sure that we captured everything we
