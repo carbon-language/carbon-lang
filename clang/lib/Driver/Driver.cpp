@@ -1663,7 +1663,10 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
       TC = new toolchains::Minix(*this, Target);
       break;
     case llvm::Triple::Linux:
-      TC = new toolchains::Linux(*this, Target);
+      if (Target.getArch() == llvm::Triple::hexagon)
+        TC = new toolchains::Hexagon_TC(*this, Target);
+      else
+        TC = new toolchains::Linux(*this, Target);
       break;
     case llvm::Triple::Win32:
       TC = new toolchains::Windows(*this, Target);
