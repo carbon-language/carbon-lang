@@ -1506,8 +1506,9 @@ Constant *ConstantExpr::getPtrToInt(Constant *C, Type *DstTy) {
   assert(DstTy->getScalarType()->isIntegerTy() && 
          "PtrToInt destination must be integer or integer vector");
   assert(isa<VectorType>(C->getType()) == isa<VectorType>(DstTy));
-  if (VectorType *VT = dyn_cast<VectorType>(C->getType()))
-    assert(VT->getNumElements() == cast<VectorType>(DstTy)->getNumElements() &&
+  if (isa<VectorType>(C->getType()))
+    assert(cast<VectorType>(C->getType())->getNumElements() ==
+           cast<VectorType>(DstTy)->getNumElements() &&
            "Invalid cast between a different number of vector elements");
   return getFoldedCast(Instruction::PtrToInt, C, DstTy);
 }
@@ -1518,8 +1519,9 @@ Constant *ConstantExpr::getIntToPtr(Constant *C, Type *DstTy) {
   assert(DstTy->getScalarType()->isPointerTy() &&
          "IntToPtr destination must be a pointer or pointer vector");
   assert(isa<VectorType>(C->getType()) == isa<VectorType>(DstTy));
-  if (VectorType *VT = dyn_cast<VectorType>(C->getType()))
-    assert(VT->getNumElements() == cast<VectorType>(DstTy)->getNumElements() &&
+  if (isa<VectorType>(C->getType()))
+    assert(cast<VectorType>(C->getType())->getNumElements() ==
+           cast<VectorType>(DstTy)->getNumElements() &&
            "Invalid cast between a different number of vector elements");
   return getFoldedCast(Instruction::IntToPtr, C, DstTy);
 }
@@ -2218,7 +2220,8 @@ APFloat ConstantDataSequential::getElementAsAPFloat(unsigned Elt) const {
   const char *EltPtr = getElementPointer(Elt);
 
   switch (getElementType()->getTypeID()) {
-  default: assert("Accessor can only be used when element is float/double!");
+  default:
+    assert(0 && "Accessor can only be used when element is float/double!");
   case Type::FloatTyID: return APFloat(*(float*)EltPtr);
   case Type::DoubleTyID: return APFloat(*(double*)EltPtr);
   }
