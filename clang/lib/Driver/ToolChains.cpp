@@ -1623,6 +1623,10 @@ Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA,
   return *T;
 }
 
+static void addPathIfExists(Twine Path, ToolChain::path_list &Paths) {
+  if (llvm::sys::fs::exists(Path)) Paths.push_back(Path.str());
+}
+
 /// FreeBSD - FreeBSD tool chain which can call as(1) and ld(1) directly.
 
 FreeBSD::FreeBSD(const HostInfo &Host, const llvm::Triple& Triple)
@@ -1633,9 +1637,9 @@ FreeBSD::FreeBSD(const HostInfo &Host, const llvm::Triple& Triple)
   // for the remaining cases.
   if (Triple.getArch() == llvm::Triple::x86 ||
       Triple.getArch() == llvm::Triple::ppc)
-    getFilePaths().push_back("/usr/lib32");
+    addPathIfExists(getDriver().SysRoot + "/usr/lib32", getFilePaths());
 
-  getFilePaths().push_back("/usr/lib");
+  addPathIfExists(getDriver().SysRoot + "/usr/lib", getFilePaths());
 }
 
 Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA,
@@ -1927,10 +1931,6 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
     return ArchLinux;
 
   return UnknownDistro;
-}
-
-static void addPathIfExists(Twine Path, ToolChain::path_list &Paths) {
-  if (llvm::sys::fs::exists(Path)) Paths.push_back(Path.str());
 }
 
 /// \brief Get our best guess at the multiarch triple for a target.
