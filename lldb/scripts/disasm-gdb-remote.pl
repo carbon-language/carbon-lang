@@ -25,6 +25,12 @@ our $float32_href = { extract => \&get32, format => "0x%8.8x" };
 our $float64_href = { extract => \&get64, format => "0x%s" };
 our $float96_href = { extract => \&get96, format => "0x%s" };
 our $curr_cmd = undef;
+our $curr_full_cmd = undef;
+our %packet_times;
+our $curr_time = 0.0;
+our $last_time = 0.0;
+our $base_time = 0.0;
+our $packet_start_time = 0.0;
 our $reg_cmd_reg;
 our %reg_map = (
 	'i386-gdb' => [ 
@@ -1829,8 +1835,22 @@ sub dump_raw_command
 	my $cmd_aref = shift;
 	my $callback_ref;
 	$curr_cmd = $$cmd_aref[0];
-	$curr_cmd eq '_' and $curr_cmd .= $$cmd_aref[1];
-	    
+
+    if ($curr_cmd eq 'q' or $curr_cmd eq 'Q' or $curr_cmd eq '_')
+    {
+        $curr_full_cmd = '';
+        foreach my $ch (@$cmd_aref)
+        {
+            $ch !~ /[A-Za-z_]/ and last;
+            $curr_full_cmd .= $ch;
+        }
+    }
+    else
+    {
+        $curr_full_cmd = $curr_cmd;
+    }
+	
+	$curr_cmd eq '_' and $curr_cmd .= $$cmd_aref[1];	
 	$callback_ref = $cmd_callbacks{$curr_cmd};
 	if ($callback_ref)
 	{
@@ -1873,6 +1893,19 @@ sub dump_raw_response
 {
 	my $cmd_aref = shift;
 	my $callback_ref;
+	
+	if ($packet_start_time != 0.0)
+	{
+	    if (length($curr_full_cmd) > 0)
+	    {
+            $packet_times{$curr_full_cmd} += $curr_time - $packet_start_time;
+	    }
+	    else
+	    {
+            $packet_times{$curr_cmd} += $curr_time - $packet_start_time;
+	    }
+        $packet_start_time = 0.0;
+	}
 	
 	$callback_ref = $rsp_callbacks{$curr_cmd};
 
@@ -1956,16 +1989,41 @@ sub dump_command
 #----------------------------------------------------------------------
 # Process a gdbserver log line by looking for getpkt and putkpt and
 # tossing any other lines.
+
 #----------------------------------------------------------------------
 sub process_log_line
 {
 	my $line = shift;
 	#($opt_v and $opt_g) and print "# $line";
+
 	my $extract_cmd = 0;
+	my $delta_time = 0.0;
+	if ($line =~ /^(\s*)([1-9][0-9]+\.[0-9]+)([^0-9].*)$/)
+	{
+	    my $leading_space = $1;
+	    $curr_time = $2;
+	    $line = $3;
+	    if ($base_time == 0.0)
+	    {
+	        $base_time = $curr_time;
+	    }
+	    else
+	    {
+	        $delta_time = $curr_time - $last_time;
+	    }
+	    printf ("(%.6f, %+.6f): ",  $curr_time - $base_time, $delta_time);
+	    $last_time = $curr_time;
+	}
+	else
+	{
+	    $curr_time = 0.0
+	}
+
 	if ($line =~ /getpkt /)
 	{
 		$extract_cmd = 1;
 		print "\n--> ";
+		$packet_start_time = $curr_time;
 	}
 	elsif ($line =~ /putpkt /)
 	{
@@ -1976,6 +2034,7 @@ sub process_log_line
 	{
 		$opt_g and print "maintenance dump-packets command: $1\n";
 		my @raw_cmd_bytes = split(/ */, $1);
+		$packet_start_time = $curr_time;
 		print "\n--> ";
 		dump_raw_command(\@raw_cmd_bytes);
 		process_log_line($2);
@@ -1995,6 +2054,7 @@ sub process_log_line
 			$opt_g and print "command: $1\n";
 			my @raw_cmd_bytes = split(/ */, $1);
 			print "--> ";
+    		$packet_start_time = $curr_time;
 			dump_raw_command(\@raw_cmd_bytes);			
 		}
 		elsif ($1 =~ /\+/)
@@ -2032,6 +2092,7 @@ sub process_log_line
 			$opt_g and print "command: $1\n";
 			my @raw_cmd_bytes = split(/ */, $1);
 			print "--> ";
+    		$packet_start_time = $curr_time;
 			dump_raw_command(\@raw_cmd_bytes);			
 		}
 		elsif ($1 =~ /\+/)
@@ -2067,6 +2128,7 @@ sub process_log_line
 		$opt_g and print "command: $1\n";
 		my @raw_cmd_bytes = split(/ */, $1);
 		print "\n--> ";
+		$packet_start_time = $curr_time;
 		dump_raw_command(\@raw_cmd_bytes);
 		process_log_line($2);
 	}
@@ -2083,6 +2145,7 @@ sub process_log_line
 	{
 		my $beg = index($line, '("') + 2;
 		my $end = rindex($line, '");');
+		$packet_start_time = $curr_time;
 		dump_command(substr($line, $beg, $end - $beg));
 	}
 }
@@ -2095,6 +2158,38 @@ while(<>)
 	$opt_q or printf("# %5d: $_", $line_num);
 	process_log_line($_);
 }
+
+if (%packet_times)
+{
+    print "----------------------------------------------------------------------\n";
+    print "Packet timing summary:\n";
+    print "----------------------------------------------------------------------\n";
+    print "Packet                 Time       %\n";
+    print "---------------------- -------- ------\n";
+    my @packet_names = keys %packet_times;
+    my $total_packet_times = 0.0;
+    foreach my $key (@packet_names)
+    {
+        $total_packet_times += $packet_times{$key};
+    }
+
+    foreach my $value (sort {$packet_times{$b} cmp $packet_times{$a}} @packet_names)
+    {
+        my $percent = ($packet_times{$value} / $total_packet_times) * 100.0;
+        if ($percent < 10.0)
+        {
+            printf("%22s %1.6f   %2.2f\n", $value, $packet_times{$value}, $percent);
+            
+        }
+        else
+        {
+            printf("%22s %1.6f  %2.2f\n", $value, $packet_times{$value}, $percent);            
+        }
+    }   
+    print "---------------------- -------- ------\n";
+    printf ("                 Total %1.6f 100.00\n", $total_packet_times);
+}
+
 
 
 
