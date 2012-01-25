@@ -489,6 +489,10 @@ public:
   // ConstantVector accessors
   static Constant *get(ArrayRef<Constant*> V);
   
+  /// getSplat - Return a ConstantVector with the specified constant in each
+  /// element.
+  static Constant *getSplat(unsigned NumElts, Constant *Elt);
+  
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 
@@ -757,6 +761,11 @@ public:
   static Constant *get(LLVMContext &Context, ArrayRef<float> Elts);
   static Constant *get(LLVMContext &Context, ArrayRef<double> Elts);
   
+  /// getSplat - Return a ConstantVector with the specified constant in each
+  /// element.  The specified constant has to be a of a compatible type (i8/i16/
+  /// i32/i64/float/double) and must be a ConstantFP or ConstantInt.
+  static Constant *getSplat(unsigned NumElts, Constant *Elt);
+
   /// getType - Specialize the getType() method to always return a VectorType,
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
