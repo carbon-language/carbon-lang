@@ -2671,13 +2671,19 @@ CastInst::castIsValid(Instruction::CastOps op, Value *S, Type *DstTy) {
     return SrcTy->isFPOrFPVectorTy() && DstTy->isIntOrIntVectorTy() &&
       SrcLength == DstLength;
   case Instruction::PtrToInt:
-    if (SrcTy->getNumElements() != DstTy->getNumElements())
+    if (isa<VectorType>(SrcTy) != isa<VectorType>(DstTy))
       return false;
+    if (VectorType *VT = dyn_cast<VectorType>(SrcTy))
+      if (VT->getNumElements() != cast<VectorType>(DstTy)->getNumElements())
+        return false;
     return SrcTy->getScalarType()->isPointerTy() &&
            DstTy->getScalarType()->isIntegerTy();
   case Instruction::IntToPtr:
-    if (SrcTy->getNumElements() != DstTy->getNumElements())
+    if (isa<VectorType>(SrcTy) != isa<VectorType>(DstTy))
       return false;
+    if (VectorType *VT = dyn_cast<VectorType>(SrcTy))
+      if (VT->getNumElements() != cast<VectorType>(DstTy)->getNumElements())
+        return false;
     return SrcTy->getScalarType()->isIntegerTy() &&
            DstTy->getScalarType()->isPointerTy();
   case Instruction::BitCast:

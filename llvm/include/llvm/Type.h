@@ -294,10 +294,6 @@ public:
   /// otherwise return 'this'.
   Type *getScalarType();
 
-  /// getNumElements - If this is a vector type, return the number of elements,
-  /// otherwise return zero.
-  unsigned getNumElements();
-
   //===--------------------------------------------------------------------===//
   // Type Iteration support.
   //

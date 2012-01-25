@@ -47,14 +47,6 @@ Type *Type::getScalarType() {
   return this;
 }
 
-/// getNumElements - If this is a vector type, return the number of elements,
-/// otherwise return zero.
-unsigned Type::getNumElements() {
-  if (VectorType *VTy = dyn_cast<VectorType>(this))
-    return VTy->getNumElements();
-  return 0;
-}
-
 /// isIntegerTy - Return true if this is an IntegerType of the specified width.
 bool Type::isIntegerTy(unsigned Bitwidth) const {
   return isIntegerTy() && cast<IntegerType>(this)->getBitWidth() == Bitwidth;

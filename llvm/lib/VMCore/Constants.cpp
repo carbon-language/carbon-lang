@@ -1505,8 +1505,10 @@ Constant *ConstantExpr::getPtrToInt(Constant *C, Type *DstTy) {
          "PtrToInt source must be pointer or pointer vector");
   assert(DstTy->getScalarType()->isIntegerTy() && 
          "PtrToInt destination must be integer or integer vector");
-  assert(C->getType()->getNumElements() == DstTy->getNumElements() &&
-    "Invalid cast between a different number of vector elements");
+  assert(isa<VectorType>(C->getType()) == isa<VectorType>(DstTy));
+  if (VectorType *VT = dyn_cast<VectorType>(C->getType()))
+    assert(VT->getNumElements() == cast<VectorType>(DstTy)->getNumElements() &&
+           "Invalid cast between a different number of vector elements");
   return getFoldedCast(Instruction::PtrToInt, C, DstTy);
 }
 
@@ -1515,8 +1517,10 @@ Constant *ConstantExpr::getIntToPtr(Constant *C, Type *DstTy) {
          "IntToPtr source must be integer or integer vector");
   assert(DstTy->getScalarType()->isPointerTy() &&
          "IntToPtr destination must be a pointer or pointer vector");
-  assert(C->getType()->getNumElements() == DstTy->getNumElements() &&
-    "Invalid cast between a different number of vector elements");
+  assert(isa<VectorType>(C->getType()) == isa<VectorType>(DstTy));
+  if (VectorType *VT = dyn_cast<VectorType>(C->getType()))
+    assert(VT->getNumElements() == cast<VectorType>(DstTy)->getNumElements() &&
+           "Invalid cast between a different number of vector elements");
   return getFoldedCast(Instruction::IntToPtr, C, DstTy);
 }
 
@@ -2018,7 +2022,9 @@ bool ConstantDataSequential::isElementTypeCompatible(const Type *Ty) {
 
 /// getNumElements - Return the number of elements in the array or vector.
 unsigned ConstantDataSequential::getNumElements() const {
-  return getType()->getNumElements();
+  if (ArrayType *AT = dyn_cast<ArrayType>(getType()))
+    return AT->getNumElements();
+  return cast<VectorType>(getType())->getNumElements();
 }
 
 
