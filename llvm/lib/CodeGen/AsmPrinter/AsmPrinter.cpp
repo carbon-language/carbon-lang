@@ -1630,7 +1630,7 @@ static void EmitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
   // Otherwise, emit the values in successive locations.
   unsigned ElementByteSize = CDS->getElementByteSize();
   if (isa<IntegerType>(CDS->getElementType())) {
-    for (unsigned i = 0, e = CDS->getType()->getNumElements(); i != e; ++i) {
+    for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
       AP.OutStreamer.EmitIntValue(CDS->getElementAsInteger(i),
                                   ElementByteSize, AddrSpace);
     }
@@ -1643,7 +1643,7 @@ static void EmitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
          CDS->getElementType()->isDoubleTy());
 
   if (ElementByteSize == 4) {
-    for (unsigned i = 0, e = CDS->getType()->getNumElements(); i != e; ++i) {
+    for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
       union {
         float F;
         uint32_t I;
@@ -1657,7 +1657,7 @@ static void EmitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
     return;
   }
 
-  for (unsigned i = 0, e = CDS->getType()->getNumElements(); i != e; ++i) {
+  for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
     union {
       double F;
       uint64_t I;

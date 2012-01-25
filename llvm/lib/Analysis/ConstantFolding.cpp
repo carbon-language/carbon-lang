@@ -351,7 +351,7 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
     uint64_t EltSize = CDS->getElementByteSize();
     uint64_t Index = ByteOffset / EltSize;    
     uint64_t Offset = ByteOffset - Index * EltSize;
-    for (; Index != CDS->getType()->getNumElements(); ++Index) {
+    for (unsigned e = CDS->getNumElements(); Index != e; ++Index) {
       if (!ReadDataFromGlobal(CDS->getElementAsConstant(Index), Offset, CurPtr,
                               BytesLeft, TD))
         return false;
@@ -1042,7 +1042,7 @@ Constant *llvm::ConstantFoldLoadThroughGEPIndices(Constant *C,
         return 0;
       C = CA->getOperand(IdxVal);
     } else if (ConstantDataSequential *CDS=dyn_cast<ConstantDataSequential>(C)){
-      if (IdxVal >= CDS->getType()->getNumElements())
+      if (IdxVal >= CDS->getNumElements())
         return 0;
       C = CDS->getElementAsConstant(IdxVal);
     } else if (ConstantVector *CV = dyn_cast<ConstantVector>(C)) {

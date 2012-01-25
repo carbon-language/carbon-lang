@@ -105,7 +105,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     // each element.
     KnownZero.setAllBits(); KnownOne.setAllBits();
     APInt Elt(KnownZero.getBitWidth(), 0);
-    for (unsigned i = 0, e = CDS->getType()->getNumElements(); i != e; ++i) {
+    for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
       Elt = CDS->getElementAsInteger(i);
       KnownZero &= ~Elt;
       KnownOne &= Elt;      
