@@ -138,17 +138,20 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *N,
   if (!StoreSite) {
     const ExplodedNode *Node = N, *Last = NULL;
 
-    for ( ; Node ; Last = Node, Node = Node->getFirstPred()) {
+    for ( ; Node ; Node = Node->getFirstPred()) {
 
       if (const VarRegion *VR = dyn_cast<VarRegion>(R)) {
         if (const PostStmt *P = Node->getLocationAs<PostStmt>())
           if (const DeclStmt *DS = P->getStmtAs<DeclStmt>())
             if (DS->getSingleDecl() == VR->getDecl()) {
+              // Record the last seen initialization point.
               Last = Node;
               break;
             }
       }
 
+      // Does the region still bind to value V?  If not, we are done
+      // looking for store sites.
       if (Node->getState()->getSVal(R) != V)
         break;
     }
