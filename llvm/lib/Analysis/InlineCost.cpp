@@ -331,7 +331,7 @@ unsigned CodeMetrics::CountCodeReductionForAlloca(Value *V) {
         if (BranchInst *BI = dyn_cast<BranchInst>(I)) {
           BasicBlock *BB = BI->getSuccessor(Result ? 0 : 1);
           if (BB->getSinglePredecessor())
-            Reduction += InlineConstants::InstrCost * BB->size();
+            Reduction += InlineConstants::InstrCost * NumBBInsts[BB];
         }
       }
     } while (!Worklist.empty());
