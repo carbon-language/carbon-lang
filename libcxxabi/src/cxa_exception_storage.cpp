@@ -75,6 +75,10 @@ extern "C" {
         return retVal;
         }
 
+    // Note that this implementation will reliably return NULL if not
+    // preceeded by a call to __cxa_get_globals().  This is an extension
+    // to the Itanium ABI and is taken advantage of in several places in
+    // libc++abi.
     __cxa_eh_globals * __cxa_get_globals_fast () noexcept {
     //  First time through, create the key.
         static int init = construct_();
