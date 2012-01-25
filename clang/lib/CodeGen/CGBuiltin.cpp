@@ -1212,7 +1212,8 @@ static llvm::VectorType *GetNeonType(LLVMContext &C, NeonTypeFlags TypeFlags) {
 
 Value *CodeGenFunction::EmitNeonSplat(Value *V, Constant *C) {
   unsigned nElts = cast<llvm::VectorType>(V->getType())->getNumElements();
-  Value* SV = llvm::ConstantVector::getSplat(nElts, C);
+  SmallVector<Constant*, 16> Indices(nElts, C);
+  Value* SV = llvm::ConstantVector::get(Indices);
   return Builder.CreateShuffleVector(V, V, SV, "lane");
 }
 
@@ -1232,11 +1233,13 @@ Value *CodeGenFunction::EmitNeonCall(Function *F, SmallVectorImpl<Value*> &Ops,
 
 Value *CodeGenFunction::EmitNeonShiftVector(Value *V, llvm::Type *Ty, 
                                             bool neg) {
-  int SV = cast<ConstantInt>(V)->getSExtValue();
+  ConstantInt *CI = cast<ConstantInt>(V);
+  int SV = CI->getSExtValue();
   
   llvm::VectorType *VTy = cast<llvm::VectorType>(Ty);
   llvm::Constant *C = ConstantInt::get(VTy->getElementType(), neg ? -SV : SV);
-  return llvm::ConstantVector::getSplat(VTy->getNumElements(), C);
+  SmallVector<llvm::Constant*, 16> CV(VTy->getNumElements(), C);
+  return llvm::ConstantVector::get(CV);
 }
 
 /// GetPointeeAlignment - Given an expression with a pointer type, find the
@@ -1954,8 +1957,8 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     for (unsigned vi = 0; vi != 2; ++vi) {
       SmallVector<Constant*, 16> Indices;
       for (unsigned i = 0, e = VTy->getNumElements(); i != e; i += 2) {
-        Indices.push_back(Builder.getInt32(i+vi));
-        Indices.push_back(Builder.getInt32(i+e+vi));
+        Indices.push_back(ConstantInt::get(Int32Ty, i+vi));
+        Indices.push_back(ConstantInt::get(Int32Ty, i+e+vi));
       }
       Value *Addr = Builder.CreateConstInBoundsGEP1_32(Ops[0], vi);
       SV = llvm::ConstantVector::get(Indices);
@@ -2016,7 +2019,7 @@ BuildVector(const SmallVectorImpl<llvm::Value*> &Ops) {
 
   // If this is a constant vector, create a ConstantVector.
   if (AllConstants) {
-    SmallVector<llvm::Constant*, 16> CstOps;
+    std::vector<llvm::Constant*> CstOps;
     for (unsigned i = 0, e = Ops.size(); i != e; ++i)
       CstOps.push_back(cast<Constant>(Ops[i]));
     return llvm::ConstantVector::get(CstOps);
@@ -2027,7 +2030,8 @@ BuildVector(const SmallVectorImpl<llvm::Value*> &Ops) {
     llvm::UndefValue::get(llvm::VectorType::get(Ops[0]->getType(), Ops.size()));
 
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-    Result = Builder.CreateInsertElement(Result, Ops[i], Builder.getInt32(i));
+    Result = Builder.CreateInsertElement(Result, Ops[i],
+               llvm::ConstantInt::get(llvm::Type::getInt32Ty(getLLVMContext()), i));
 
   return Result;
 }
