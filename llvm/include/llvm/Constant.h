@@ -97,6 +97,13 @@ public:
   /// constant exprs and other cases we can't handle, we return an empty vector.
   void getVectorElements(SmallVectorImpl<Constant*> &Elts) const;
 
+  /// getAggregateElement - For aggregates (struct/array/vector) return the
+  /// constant that corresponds to the specified element if possible, or null if
+  /// not.  This can return null if the element index is a ConstantExpr, or if
+  /// 'this' is a constant expr.
+  Constant *getAggregateElement(unsigned Elt) const;
+  Constant *getAggregateElement(Constant *Elt) const;
+  
   /// destroyConstant - Called if some element of this constant is no longer
   /// valid.  At this point only other constants may be on the use_list for this
   /// constant.  Any constants on our Use list must also be destroy'd.  The

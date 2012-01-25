@@ -150,6 +150,39 @@ Constant *Constant::getAllOnesValue(Type *Ty) {
                                   getAllOnesValue(VTy->getElementType()));
 }
 
+/// getAggregateElement - For aggregates (struct/array/vector) return the
+/// constant that corresponds to the specified element if possible, or null if
+/// not.  This can return null if the element index is a ConstantExpr, or if
+/// 'this' is a constant expr.
+Constant *Constant::getAggregateElement(unsigned Elt) const {
+  if (const ConstantStruct *CS = dyn_cast<ConstantStruct>(this))
+    return Elt < CS->getNumOperands() ? CS->getOperand(Elt) : 0;
+  
+  if (const ConstantArray *CA = dyn_cast<ConstantArray>(this))
+    return Elt < CA->getNumOperands() ? CA->getOperand(Elt) : 0;
+  
+  if (const ConstantVector *CV = dyn_cast<ConstantVector>(this))
+    return Elt < CV->getNumOperands() ? CV->getOperand(Elt) : 0;
+  
+  if (const ConstantAggregateZero *CAZ =dyn_cast<ConstantAggregateZero>(this))
+    return CAZ->getElementValue(Elt);
+  
+  if (const UndefValue *UV = dyn_cast<UndefValue>(this))
+    return UV->getElementValue(Elt);
+  
+  if (const ConstantDataSequential *CDS = dyn_cast<ConstantDataSequential>(this))
+    return CDS->getElementAsConstant(Elt);
+  return 0;
+}
+
+Constant *Constant::getAggregateElement(Constant *Elt) const {
+  assert(isa<IntegerType>(Elt->getType()) && "Index must be an integer");
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(Elt))
+    return getAggregateElement(CI->getZExtValue());
+  return 0;
+}
+
+
 void Constant::destroyConstantImpl() {
   // When a Constant is destroyed, there may be lingering
   // references to the constant by other constants in the constant pool.  These
@@ -594,21 +627,21 @@ bool ConstantFP::isExactlyValue(const APFloat &V) const {
 
 /// getSequentialElement - If this CAZ has array or vector type, return a zero
 /// with the right element type.
-Constant *ConstantAggregateZero::getSequentialElement() {
+Constant *ConstantAggregateZero::getSequentialElement() const {
   return Constant::getNullValue(
                             cast<SequentialType>(getType())->getElementType());
 }
 
 /// getStructElement - If this CAZ has struct type, return a zero with the
 /// right element type for the specified element.
-Constant *ConstantAggregateZero::getStructElement(unsigned Elt) {
+Constant *ConstantAggregateZero::getStructElement(unsigned Elt) const {
   return Constant::getNullValue(
                               cast<StructType>(getType())->getElementType(Elt));
 }
 
 /// getElementValue - Return a zero of the right value for the specified GEP
 /// index if we can, otherwise return null (e.g. if C is a ConstantExpr).
-Constant *ConstantAggregateZero::getElementValue(Constant *C) {
+Constant *ConstantAggregateZero::getElementValue(Constant *C) const {
   if (isa<SequentialType>(getType()))
     return getSequentialElement();
   return getStructElement(cast<ConstantInt>(C)->getZExtValue());
@@ -616,7 +649,7 @@ Constant *ConstantAggregateZero::getElementValue(Constant *C) {
 
 /// getElementValue - Return a zero of the right value for the specified GEP
 /// index.
-Constant *ConstantAggregateZero::getElementValue(unsigned Idx) {
+Constant *ConstantAggregateZero::getElementValue(unsigned Idx) const {
   if (isa<SequentialType>(getType()))
     return getSequentialElement();
   return getStructElement(Idx);
@@ -629,19 +662,19 @@ Constant *ConstantAggregateZero::getElementValue(unsigned Idx) {
 
 /// getSequentialElement - If this undef has array or vector type, return an
 /// undef with the right element type.
-UndefValue *UndefValue::getSequentialElement() {
+UndefValue *UndefValue::getSequentialElement() const {
   return UndefValue::get(cast<SequentialType>(getType())->getElementType());
 }
 
 /// getStructElement - If this undef has struct type, return a zero with the
 /// right element type for the specified element.
-UndefValue *UndefValue::getStructElement(unsigned Elt) {
+UndefValue *UndefValue::getStructElement(unsigned Elt) const {
   return UndefValue::get(cast<StructType>(getType())->getElementType(Elt));
 }
 
 /// getElementValue - Return an undef of the right value for the specified GEP
 /// index if we can, otherwise return null (e.g. if C is a ConstantExpr).
-UndefValue *UndefValue::getElementValue(Constant *C) {
+UndefValue *UndefValue::getElementValue(Constant *C) const {
   if (isa<SequentialType>(getType()))
     return getSequentialElement();
   return getStructElement(cast<ConstantInt>(C)->getZExtValue());
@@ -649,7 +682,7 @@ UndefValue *UndefValue::getElementValue(Constant *C) {
 
 /// getElementValue - Return an undef of the right value for the specified GEP
 /// index.
-UndefValue *UndefValue::getElementValue(unsigned Idx) {
+UndefValue *UndefValue::getElementValue(unsigned Idx) const {
   if (isa<SequentialType>(getType()))
     return getSequentialElement();
   return getStructElement(Idx);

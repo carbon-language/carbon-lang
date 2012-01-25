@@ -316,19 +316,19 @@ public:
 
   /// getSequentialElement - If this CAZ has array or vector type, return a zero
   /// with the right element type.
-  Constant *getSequentialElement();
+  Constant *getSequentialElement() const;
 
   /// getStructElement - If this CAZ has struct type, return a zero with the
   /// right element type for the specified element.
-  Constant *getStructElement(unsigned Elt);
+  Constant *getStructElement(unsigned Elt) const;
 
   /// getElementValue - Return a zero of the right value for the specified GEP
   /// index.
-  Constant *getElementValue(Constant *C);
+  Constant *getElementValue(Constant *C) const;
 
   /// getElementValue - Return a zero of the right value for the specified GEP
   /// index.
-  Constant *getElementValue(unsigned Idx);
+  Constant *getElementValue(unsigned Idx) const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   ///
@@ -1157,19 +1157,19 @@ public:
 
   /// getSequentialElement - If this Undef has array or vector type, return a
   /// undef with the right element type.
-  UndefValue *getSequentialElement();
+  UndefValue *getSequentialElement() const;
   
   /// getStructElement - If this undef has struct type, return a undef with the
   /// right element type for the specified element.
-  UndefValue *getStructElement(unsigned Elt);
+  UndefValue *getStructElement(unsigned Elt) const;
   
   /// getElementValue - Return an undef of the right value for the specified GEP
   /// index.
-  UndefValue *getElementValue(Constant *C);
+  UndefValue *getElementValue(Constant *C) const;
 
   /// getElementValue - Return an undef of the right value for the specified GEP
   /// index.
-  UndefValue *getElementValue(unsigned Idx);
+  UndefValue *getElementValue(unsigned Idx) const;
 
   virtual void destroyConstant();
 
