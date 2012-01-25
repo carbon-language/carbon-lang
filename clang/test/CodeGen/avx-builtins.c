@@ -20,6 +20,6 @@ __m256d test__mm256_loadu_pd(void* p) {
 }
 
 __m256i test__mm256_loadu_si256(void* p) {
-  // CHECK: load <4 x i64>* %0, align 1
+  // CHECK: load <4 x i64>* %{{.+}}, align 1
   return _mm256_loadu_si256(p);
 }
