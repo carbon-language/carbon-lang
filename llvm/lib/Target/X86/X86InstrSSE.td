@@ -5148,20 +5148,20 @@ let isCommutable = 0 in {
                                   memopv2i64, i128mem, 0>, VEX_4V;
   defm VPHSUBD    : SS3I_binop_rm<0x06, "vphsubd", X86hsub, v4i32, VR128,
                                   memopv2i64, i128mem, 0>, VEX_4V;
+  defm VPSIGNB    : SS3I_binop_rm<0x08, "vpsignb", X86psign, v16i8, VR128,
+                                  memopv2i64, i128mem, 0>, VEX_4V;
+  defm VPSIGNW    : SS3I_binop_rm<0x09, "vpsignw", X86psign, v8i16, VR128,
+                                  memopv2i64, i128mem, 0>, VEX_4V;
+  defm VPSIGND    : SS3I_binop_rm<0x0A, "vpsignd", X86psign, v4i32, VR128,
+                                  memopv2i64, i128mem, 0>, VEX_4V;
+  defm VPSHUFB    : SS3I_binop_rm<0x00, "vpshufb", X86pshufb, v16i8, VR128,
+                                  memopv2i64, i128mem, 0>, VEX_4V;
   defm VPHADDSW   : SS3I_binop_rm_int<0x03, "vphaddsw",
                                       int_x86_ssse3_phadd_sw_128, 0>, VEX_4V;
   defm VPHSUBSW   : SS3I_binop_rm_int<0x07, "vphsubsw",
                                       int_x86_ssse3_phsub_sw_128, 0>, VEX_4V;
   defm VPMADDUBSW : SS3I_binop_rm_int<0x04, "vpmaddubsw",
                                       int_x86_ssse3_pmadd_ub_sw_128, 0>, VEX_4V;
-  defm VPSHUFB    : SS3I_binop_rm_int<0x00, "vpshufb",
-                                      int_x86_ssse3_pshuf_b_128, 0>, VEX_4V;
-  defm VPSIGNB    : SS3I_binop_rm_int<0x08, "vpsignb",
-                                      int_x86_ssse3_psign_b_128, 0>, VEX_4V;
-  defm VPSIGNW    : SS3I_binop_rm_int<0x09, "vpsignw",
-                                      int_x86_ssse3_psign_w_128, 0>, VEX_4V;
-  defm VPSIGND    : SS3I_binop_rm_int<0x0A, "vpsignd",
-                                      int_x86_ssse3_psign_d_128, 0>, VEX_4V;
 }
 defm VPMULHRSW    : SS3I_binop_rm_int<0x0B, "vpmulhrsw",
                                       int_x86_ssse3_pmul_hr_sw_128, 0>, VEX_4V;
@@ -5177,20 +5177,20 @@ let isCommutable = 0 in {
                                   memopv4i64, i256mem, 0>, VEX_4V;
   defm VPHSUBDY   : SS3I_binop_rm<0x06, "vphsubd", X86hsub, v8i32, VR256,
                                   memopv4i64, i256mem, 0>, VEX_4V;
+  defm VPSIGNBY   : SS3I_binop_rm<0x08, "vpsignb", X86psign, v32i8, VR256,
+                                  memopv4i64, i256mem, 0>, VEX_4V;
+  defm VPSIGNWY   : SS3I_binop_rm<0x09, "vpsignw", X86psign, v16i16, VR256,
+                                  memopv4i64, i256mem, 0>, VEX_4V;
+  defm VPSIGNDY   : SS3I_binop_rm<0x0A, "vpsignd", X86psign, v8i32, VR256,
+                                  memopv4i64, i256mem, 0>, VEX_4V;
+  defm VPSHUFBY   : SS3I_binop_rm<0x00, "vpshufb", X86pshufb, v32i8, VR256,
+                                  memopv4i64, i256mem, 0>, VEX_4V;
   defm VPHADDSW   : SS3I_binop_rm_int_y<0x03, "vphaddsw",
                                         int_x86_avx2_phadd_sw>, VEX_4V;
   defm VPHSUBSW   : SS3I_binop_rm_int_y<0x07, "vphsubsw",
                                         int_x86_avx2_phsub_sw>, VEX_4V;
   defm VPMADDUBSW : SS3I_binop_rm_int_y<0x04, "vpmaddubsw",
                                         int_x86_avx2_pmadd_ub_sw>, VEX_4V;
-  defm VPSHUFB    : SS3I_binop_rm_int_y<0x00, "vpshufb",
-                                        int_x86_avx2_pshuf_b>, VEX_4V;
-  defm VPSIGNB    : SS3I_binop_rm_int_y<0x08, "vpsignb",
-                                        int_x86_avx2_psign_b>, VEX_4V;
-  defm VPSIGNW    : SS3I_binop_rm_int_y<0x09, "vpsignw",
-                                        int_x86_avx2_psign_w>, VEX_4V;
-  defm VPSIGND    : SS3I_binop_rm_int_y<0x0A, "vpsignd",
-                                        int_x86_avx2_psign_d>, VEX_4V;
 }
 defm VPMULHRSW    : SS3I_binop_rm_int_y<0x0B, "vpmulhrsw",
                                         int_x86_avx2_pmul_hr_sw>, VEX_4V;
@@ -5207,60 +5207,23 @@ let isCommutable = 0 in {
                                  memopv2i64, i128mem>;
   defm PHSUBD    : SS3I_binop_rm<0x06, "phsubd", X86hsub, v4i32, VR128,
                                  memopv2i64, i128mem>;
+  defm PSIGNB    : SS3I_binop_rm<0x08, "psignb", X86psign, v16i8, VR128,
+                                 memopv2i64, i128mem>;
+  defm PSIGNW    : SS3I_binop_rm<0x09, "psignw", X86psign, v8i16, VR128,
+                                 memopv2i64, i128mem>;
+  defm PSIGND    : SS3I_binop_rm<0x0A, "psignd", X86psign, v4i32, VR128,
+                                 memopv2i64, i128mem>;
+  defm PSHUFB    : SS3I_binop_rm<0x00, "pshufb", X86pshufb, v16i8, VR128,
+                                 memopv2i64, i128mem>;
   defm PHADDSW   : SS3I_binop_rm_int<0x03, "phaddsw",
                                      int_x86_ssse3_phadd_sw_128>;
   defm PHSUBSW   : SS3I_binop_rm_int<0x07, "phsubsw",
                                      int_x86_ssse3_phsub_sw_128>;
   defm PMADDUBSW : SS3I_binop_rm_int<0x04, "pmaddubsw",
                                      int_x86_ssse3_pmadd_ub_sw_128>;
-  defm PSHUFB    : SS3I_binop_rm_int<0x00, "pshufb",
-                                     int_x86_ssse3_pshuf_b_128>;
-  defm PSIGNB    : SS3I_binop_rm_int<0x08, "psignb",
-                                     int_x86_ssse3_psign_b_128>;
-  defm PSIGNW    : SS3I_binop_rm_int<0x09, "psignw",
-                                     int_x86_ssse3_psign_w_128>;
-  defm PSIGND    : SS3I_binop_rm_int<0x0A, "psignd",
-                                       int_x86_ssse3_psign_d_128>;
 }
 defm PMULHRSW    : SS3I_binop_rm_int<0x0B, "pmulhrsw",
                                      int_x86_ssse3_pmul_hr_sw_128>;
-}
-
-let Predicates = [HasAVX] in {
-  def : Pat<(X86pshufb VR128:$src, VR128:$mask),
-            (VPSHUFBrr128 VR128:$src, VR128:$mask)>;
-  def : Pat<(X86pshufb VR128:$src, (bc_v16i8 (memopv2i64 addr:$mask))),
-            (VPSHUFBrm128 VR128:$src, addr:$mask)>;
-
-  def : Pat<(v16i8 (X86psign VR128:$src1, VR128:$src2)),
-            (VPSIGNBrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(v8i16 (X86psign VR128:$src1, VR128:$src2)),
-            (VPSIGNWrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4i32 (X86psign VR128:$src1, VR128:$src2)),
-            (VPSIGNDrr128 VR128:$src1, VR128:$src2)>;
-}
-
-let Predicates = [HasAVX2] in {
-  def : Pat<(v32i8 (X86psign VR256:$src1, VR256:$src2)),
-            (VPSIGNBrr256 VR256:$src1, VR256:$src2)>;
-  def : Pat<(v16i16 (X86psign VR256:$src1, VR256:$src2)),
-            (VPSIGNWrr256 VR256:$src1, VR256:$src2)>;
-  def : Pat<(v8i32 (X86psign VR256:$src1, VR256:$src2)),
-            (VPSIGNDrr256 VR256:$src1, VR256:$src2)>;
-}
-
-let Predicates = [HasSSSE3] in {
-  def : Pat<(X86pshufb VR128:$src, VR128:$mask),
-            (PSHUFBrr128 VR128:$src, VR128:$mask)>;
-  def : Pat<(X86pshufb VR128:$src, (bc_v16i8 (memopv2i64 addr:$mask))),
-            (PSHUFBrm128 VR128:$src, addr:$mask)>;
-
-  def : Pat<(v16i8 (X86psign VR128:$src1, VR128:$src2)),
-            (PSIGNBrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(v8i16 (X86psign VR128:$src1, VR128:$src2)),
-            (PSIGNWrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4i32 (X86psign VR128:$src1, VR128:$src2)),
-            (PSIGNDrr128 VR128:$src1, VR128:$src2)>;
 }
 
 //===---------------------------------------------------------------------===//
