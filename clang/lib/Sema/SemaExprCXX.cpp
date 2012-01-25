@@ -4404,6 +4404,7 @@ ExprResult Sema::BuildPseudoDestructorExpr(Expr *Base,
                                            bool HasTrailingLParen) {
   TypeSourceInfo *DestructedTypeInfo = Destructed.getTypeSourceInfo();
 
+  QualType ObjectType;
   if (CheckArrow(*this, ObjectType, Base, OpKind, OpLoc))
     return ExprError();
 
@@ -4508,6 +4509,7 @@ ExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
           SecondTypeName.getKind() == UnqualifiedId::IK_Identifier) &&
          "Invalid second type name in pseudo-destructor");
 
+  QualType ObjectType;
   if (CheckArrow(*this, ObjectType, Base, OpKind, OpLoc))
     return ExprError();
 
@@ -4635,7 +4637,7 @@ ExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
                                            SourceLocation TildeLoc, 
                                            const DeclSpec& DS,
                                            bool HasTrailingLParen) {
-  
+  QualType ObjectType;
   if (CheckArrow(*this, ObjectType, Base, OpKind, OpLoc))
     return ExprError();
 
